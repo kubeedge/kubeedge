@@ -34,7 +34,7 @@ type MetaServer struct {
 	RequestTimeout        time.Duration
 	Handler               http.Handler
 	NegotiatedSerializer  runtime.NegotiatedSerializer
-	Factory               handlerfactory.Factory
+	Factory               *handlerfactory.Factory
 }
 
 func NewMetaServer() *MetaServer {
@@ -96,8 +96,11 @@ func BuildHandlerChain(handler http.Handler, ls *MetaServer) http.Handler {
 	cfg := &server.Config{
 		LegacyAPIGroupPrefixes: sets.NewString(server.DefaultLegacyAPIPrefix),
 	}
+
+	requestInfoResolver := &apirequest.RequestInfoFactory{}
+
 	handler = genericfilters.WithWaitGroup(handler, ls.LongRunningFunc, ls.HandlerChainWaitGroup)
 	handler = genericapifilters.WithRequestInfo(handler, server.NewRequestInfoResolver(cfg))
-	handler = genericfilters.WithPanicRecovery(handler)
+	handler = genericfilters.WithPanicRecovery(handler, requestInfoResolver)
 	return handler
 }

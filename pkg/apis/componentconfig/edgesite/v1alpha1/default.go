@@ -17,7 +17,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"os"
 	"path"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,10 +30,7 @@ import (
 
 // NewDefaultEdgeSiteConfig returns a full EdgeSiteConfig object
 func NewDefaultEdgeSiteConfig() *EdgeSiteConfig {
-	hostnameOverride, err := os.Hostname()
-	if err != nil {
-		hostnameOverride = constants.DefaultHostnameOverride
-	}
+	hostnameOverride := util.GetHostname()
 	localIP, _ := util.GetLocalIP(hostnameOverride)
 	return &EdgeSiteConfig{
 		TypeMeta: metav1.TypeMeta{
@@ -75,6 +71,7 @@ func NewDefaultEdgeSiteConfig() *EdgeSiteConfig {
 					QueryNode:                  constants.DefaultQueryNodeBuffer,
 					UpdateNode:                 constants.DefaultUpdateNodeBuffer,
 					DeletePod:                  constants.DefaultDeletePodBuffer,
+					ServiceAccountToken:        constants.DefaultServiceAccountTokenBuffer,
 				},
 				Context: &cloudcoreconfig.ControllerContext{
 					SendModule:     metaconfig.ModuleNameMetaManager,
@@ -94,6 +91,8 @@ func NewDefaultEdgeSiteConfig() *EdgeSiteConfig {
 					QueryNodeWorkers:                  constants.DefaultQueryNodeWorkers,
 					UpdateNodeWorkers:                 constants.DefaultUpdateNodeWorkers,
 					DeletePodWorkers:                  constants.DefaultDeletePodWorkers,
+					UpdateRuleStatusWorkers:           constants.DefaultUpdateRuleStatusWorkers,
+					ServiceAccountTokenWorkers:        constants.DefaultServiceAccountTokenWorkers,
 				},
 			},
 			Edged: &edgecoreconfig.Edged{
@@ -134,10 +133,7 @@ func NewDefaultEdgeSiteConfig() *EdgeSiteConfig {
 
 // NewMinEdgeSiteConfig returns a common EdgeSiteConfig object
 func NewMinEdgeSiteConfig() *EdgeSiteConfig {
-	hostnameOverride, err := os.Hostname()
-	if err != nil {
-		hostnameOverride = constants.DefaultHostnameOverride
-	}
+	hostnameOverride := util.GetHostname()
 	localIP, _ := util.GetLocalIP(hostnameOverride)
 	return &EdgeSiteConfig{
 		TypeMeta: metav1.TypeMeta{

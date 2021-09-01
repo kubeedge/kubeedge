@@ -241,7 +241,7 @@ func TestBuildRequest(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := BuildRequest(tt.args.method, tt.args.urlStr, tt.args.body, tt.args.token, tt.args.nodeName)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("BuildRequest() error = %w, expectedError = %v", err, tt.wantErr)
+				t.Errorf("BuildRequest() error = %v, expectedError = %v", err, tt.wantErr)
 				return
 			}
 			//needed to handle failure testcase because can't deep compare field in nil

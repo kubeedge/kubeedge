@@ -151,11 +151,19 @@ func TestGetResourceType(t *testing.T) {
 		wantErr error
 	}{
 		{
-			"TestGetNodeID() Case 1: success",
+			"TestGetResourceType ResourceTypeTwinEdgeUpdated: success",
 			args{
 				resource: fmt.Sprintf("node/%s/%s", "nid", deviceconstants.ResourceTypeTwinEdgeUpdated),
 			},
 			deviceconstants.ResourceTypeTwinEdgeUpdated,
+			nil,
+		},
+		{
+			"TestGetResourceType() ResourceTypeMembershipDetail: success",
+			args{
+				resource: deviceconstants.ResourceTypeMembershipDetail,
+			},
+			deviceconstants.ResourceTypeMembershipDetail,
 			nil,
 		},
 		{
@@ -164,7 +172,7 @@ func TestGetResourceType(t *testing.T) {
 				resource: "",
 			},
 			"",
-			fmt.Errorf("unknown resource"),
+			fmt.Errorf("unknown resource, found: %s", ""),
 		},
 	}
 	for _, tt := range tests {

@@ -50,17 +50,16 @@ func StartServer(address string) {
 
 // ExtractMessage extracts message from clients
 func ExtractMessage(context string) (*model.Message, error) {
+	if context == "" {
+		return nil, errors.New("failed with error: context is empty")
+	}
+
 	var msg *model.Message
-	if context != "" {
-		err := json.Unmarshal([]byte(context), &msg)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		err := errors.New("failed with error: context is empty")
-		klog.Errorf("%v", err)
+	err := json.Unmarshal([]byte(context), &msg)
+	if err != nil {
 		return nil, err
 	}
+
 	return msg, nil
 }
 

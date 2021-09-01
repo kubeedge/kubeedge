@@ -25,6 +25,11 @@ func admitRuleEndpoint(review admissionv1beta1.AdmissionReview) *admissionv1beta
 			msg = err.Error()
 			break
 		}
+		err := validateRuleEndpoint(&ruleEndpoint)
+		if err != nil {
+			msg = err.Error()
+			break
+		}
 		reviewResponse.Allowed = true
 		klog.Info("admission validation passed!")
 	case admissionv1beta1.Delete, admissionv1beta1.Connect:
@@ -39,6 +44,17 @@ func admitRuleEndpoint(review admissionv1beta1.AdmissionReview) *admissionv1beta
 		reviewResponse.Result = &metav1.Status{Message: strings.TrimSpace(msg)}
 	}
 	return &reviewResponse
+}
+
+func validateRuleEndpoint(ruleEndpoint *rulesv1.RuleEndpoint) error {
+	switch ruleEndpoint.Spec.RuleEndpointType {
+	case rulesv1.RuleEndpointTypeServiceBus:
+		_, exist := ruleEndpoint.Spec.Properties["service_port"]
+		if !exist {
+			return fmt.Errorf("\"service_port\" property missed in property when ruleEndpoint is \"servicebus\"")
+		}
+	}
+	return nil
 }
 
 func serveRuleEndpoint(w http.ResponseWriter, r *http.Request) {

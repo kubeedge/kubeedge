@@ -1,8 +1,8 @@
 package constants
 
 const (
-	RestProvider     string = "rest"
-	RestEndpoint     string = "rest"
-	EventbusProvider string = "eventbus"
-	EventbusEndpoint string = "eventbus"
+	RestProvider       string = "rest"
+	EventbusProvider   string = "eventbus"
+	GroupResource      string = "resource"
+	ServicebusProvider string = "servicebus"
 )

@@ -13,7 +13,6 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin"
@@ -24,7 +23,6 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/servicebus"
 	"github.com/kubeedge/kubeedge/edge/test"
-	edgemesh "github.com/kubeedge/kubeedge/edgemesh/pkg"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1/validation"
 	"github.com/kubeedge/kubeedge/pkg/util"
@@ -86,10 +84,7 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 
 			// get edge node local ip
 			if config.Modules.Edged.NodeIP == "" {
-				hostnameOverride, err := os.Hostname()
-				if err != nil {
-					hostnameOverride = constants.DefaultHostnameOverride
-				}
+				hostnameOverride := util.GetHostname()
 				localIP, _ := util.GetLocalIP(hostnameOverride)
 				config.Modules.Edged.NodeIP = localIP
 			}
@@ -151,7 +146,6 @@ func registerModules(c *v1alpha1.EdgeCoreConfig) {
 	edged.Register(c.Modules.Edged)
 	edgehub.Register(c.Modules.EdgeHub, c.Modules.Edged.HostnameOverride)
 	eventbus.Register(c.Modules.EventBus, c.Modules.Edged.HostnameOverride)
-	edgemesh.Register(c.Modules.EdgeMesh)
 	metamanager.Register(c.Modules.MetaManager)
 	servicebus.Register(c.Modules.ServiceBus)
 	edgestream.Register(c.Modules.EdgeStream, c.Modules.Edged.HostnameOverride, c.Modules.Edged.NodeIP)

@@ -34,7 +34,7 @@ func (sctl *SyncController) manageObject(sync *v1alpha1.ObjectSync) {
 
 	//ret, err := informers.GetInformersManager().GetDynamicSharedInformerFactory().ForResource(gvr).Lister().ByNamespace(sync.Namespace).Get(sync.Spec.ObjectName)
 	ret, err := sctl.kubeclient.Resource(gvr).Namespace(sync.Namespace).Get(context.TODO(), sync.Spec.ObjectName, metav1.GetOptions{})
-	if err != nil {
+	if err != nil || ret == nil {
 		klog.Errorf("failed to get obj(gvr:%v,namespace:%v,name:%v), %v", gvr, sync.Namespace, sync.Spec.ObjectName, err)
 		sendFailEvents(sync, err)
 		return
@@ -98,17 +98,18 @@ func sendEvents(sync *v1alpha1.ObjectSync, objectResourceVersion string, obj int
 }
 
 func buildEdgeControllerMessage(nodeName, namespace, resourceType, resourceName, operationType string, obj interface{}) *model.Message {
-	msg := model.NewMessage("")
 	resource, err := edgectrmessagelayer.BuildResource(nodeName, namespace, resourceType, resourceName)
 	if err != nil {
 		klog.Warningf("build message resource failed with error: %s", err)
 		return nil
 	}
-	msg.BuildRouter(modules.EdgeControllerModuleName, edgectrconst.GroupResource, resource, operationType)
-	msg.Content = obj
 
 	resourceVersion := GetObjectResourceVersion(obj)
-	msg.SetResourceVersion(resourceVersion)
+
+	msg := model.NewMessage("").
+		BuildRouter(modules.EdgeControllerModuleName, edgectrconst.GroupResource, resource, operationType).
+		FillBody(obj).
+		SetResourceVersion(resourceVersion)
 
 	return msg
 }

@@ -9,8 +9,8 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
-//KubeCloudInstTool embedes Common struct
-//It implements ToolsInstaller interface
+// KubeCloudInstTool embeds Common struct
+// It implements ToolsInstaller interface
 type KubeCloudInstTool struct {
 	Common
 	AdvertiseAddress string
@@ -70,7 +70,7 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 	return nil
 }
 
-//RunCloudCore starts cloudcore process
+// RunCloudCore starts cloudcore process
 func (cu *KubeCloudInstTool) RunCloudCore() error {
 	// create the log dir for kubeedge
 	err := os.MkdirAll(KubeEdgeLogPath, os.ModePerm)
@@ -105,12 +105,12 @@ func (cu *KubeCloudInstTool) RunCloudCore() error {
 	return nil
 }
 
-//TearDown method will remove the edge node from api-server and stop cloudcore process
+// TearDown method will remove the edge node from api-server and stop cloudcore process
 func (cu *KubeCloudInstTool) TearDown() error {
 	cu.SetOSInterface(GetOSInterface())
 	cu.SetKubeEdgeVersion(cu.ToolVersion)
 
-	//Kill cloudcore process
+	// Kill cloudcore process
 	if err := cu.KillKubeEdgeBinary(KubeCloudBinaryName); err != nil {
 		return err
 	}

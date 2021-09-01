@@ -352,10 +352,6 @@ func (mh *MessageHandle) UnregisterNode(info *model.HubInfo, code ExitCode) {
 	mh.Nodes.Delete(info.NodeID)
 	atomic.AddInt32(&mh.NodeNumber, -1)
 
-	if err != nil {
-		klog.Errorf("fail to close connection, reason: %s", err.Error())
-	}
-
 	// delete the nodeQueue and nodeStore when node stopped
 	if code == nodeStop {
 		mh.MessageQueue.Close(info)
@@ -446,10 +442,20 @@ func (mh *MessageHandle) MessageWriteLoop(info *model.HubInfo, stopServe chan Ex
 		copyMsg := deepcopy(msg)
 		trimMessage(copyMsg)
 
+		// initialize timer and retry count for sending message
+		var (
+			retry                       = 0
+			retryInterval time.Duration = 2
+		)
+
 		for {
 			conn, ok := mh.nodeConns.Load(info.NodeID)
 			if !ok {
-				time.Sleep(time.Second * 2)
+				if retry == 1 {
+					break
+				}
+				retry++
+				time.Sleep(time.Second * retryInterval)
 				continue
 			}
 			err := mh.sendMsg(conn.(hubio.CloudHubIO), info, copyMsg, msg, nodeStore)

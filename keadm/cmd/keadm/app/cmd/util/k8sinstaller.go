@@ -32,7 +32,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-//K8SInstTool embedes Common struct and contains the default K8S version and
+//K8SInstTool embeds Common struct and contains the default K8S version and
 //a flag depicting if host is an edge or cloud node
 //It implements ToolsInstaller interface
 type K8SInstTool struct {
@@ -193,7 +193,7 @@ func createKubeEdgeV1CRD(clientset crdclient.Interface, crdFile string) error {
 	return err
 }
 
-//TearDown shoud uninstall K8S, but it is not required either for cloud or edge node.
+//TearDown should uninstall K8S, but it is not required either for cloud or edge node.
 //It is defined so that K8SInstTool implements ToolsInstaller interface
 func (ks *K8SInstTool) TearDown() error {
 	return nil

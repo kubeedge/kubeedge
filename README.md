@@ -19,7 +19,7 @@ KubeEdge is an incubation-level hosted project by the [Cloud Native Computing Fo
 
 **Note**:
 
-The versions before *1.3* have not been supported, please try upgrade.
+The versions before *1.4* have not been supported, please try upgrade.
 
 ## Advantages
 
@@ -58,9 +58,9 @@ KubeEdge consists of cloud part and edge part.
 
 |                        | Kubernetes 1.13 | Kubernetes 1.14 | Kubernetes 1.15 | Kubernetes 1.16 | Kubernetes 1.17 | Kubernetes 1.18 | Kubernetes 1.19 |
 |------------------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|
-| KubeEdge 1.3           | ✓               | ✓               | ✓               | ✓               | ✓             | ✓               | ✓               |
-| KubeEdge 1.4           | ✓               | ✓               | ✓               | ✓               | ✓             | ✓               | ✓               |
 | KubeEdge 1.5           | ✓               | ✓               | ✓               | ✓               | ✓             | ✓               | ✓               |
+| KubeEdge 1.6           | ✓               | ✓               | ✓               | ✓               | ✓             | ✓               | ✓               |
+| KubeEdge 1.7           | ✓               | ✓               | ✓               | ✓               | ✓             | ✓               | ✓               |
 | KubeEdge HEAD (master) | ✓               | ✓               | ✓               | ✓               | ✓             | ✓               | ✓               |
 
 Key:

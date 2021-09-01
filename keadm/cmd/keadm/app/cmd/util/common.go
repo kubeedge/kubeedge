@@ -21,6 +21,7 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -176,7 +177,7 @@ func GetLatestVersion() (string, error) {
 	return string(latestReleaseData), nil
 }
 
-// build Config from flags
+// BuildConfig builds config from flags
 func BuildConfig(kubeConfig, master string) (conf *rest.Config, err error) {
 	config, err := clientcmd.BuildConfigFromFlags(master, kubeConfig)
 	if err != nil {
@@ -447,15 +448,31 @@ func checkSum(filename, checksumFilename string, version semver.Version, tarball
 	}
 
 	fmt.Printf("%s content: \n", checksumFilename)
-	getDesiredCheckSum := NewCommand(fmt.Sprintf("wget -qO- %s/v%s/%s", KubeEdgeDownloadURL, version, checksumFilename))
-	if err := getDesiredCheckSum.Exec(); err != nil {
-		return false, err
+	checksumFilepath := fmt.Sprintf("%s/%s", tarballPath, checksumFilename)
+
+	if _, err := os.Stat(checksumFilepath); err == nil {
+		fmt.Printf("Expected or Default checksum file %s is already downloaded. \n", checksumFilename)
+		content, err := ioutil.ReadFile(checksumFilepath)
+		if err != nil {
+			return false, err
+		}
+		checksum := strings.Replace(string(content), "\n", "", -1)
+		if checksum != getActualCheckSum.GetStdOut() {
+			fmt.Printf("Failed to verify the checksum of %s ... \n\n", filename)
+			return false, nil
+		}
+	} else {
+		getDesiredCheckSum := NewCommand(fmt.Sprintf("wget -qO- %s/v%s/%s", KubeEdgeDownloadURL, version, checksumFilename))
+		if err := getDesiredCheckSum.Exec(); err != nil {
+			return false, err
+		}
+
+		if getDesiredCheckSum.GetStdOut() != getActualCheckSum.GetStdOut() {
+			fmt.Printf("Failed to verify the checksum of %s ... \n\n", filename)
+			return false, nil
+		}
 	}
 
-	if getDesiredCheckSum.GetStdOut() != getActualCheckSum.GetStdOut() {
-		fmt.Printf("Failed to verify the checksum of %s ... \n\n", filename)
-		return false, nil
-	}
 	return true, nil
 }
 
@@ -486,7 +503,7 @@ func retryDownload(filename, checksumFilename string, version semver.Version, ta
 	return fmt.Errorf("failed to download %s", filename)
 }
 
-// Compressed folders or files
+// Compress compresses folders or files
 func Compress(tarName string, paths []string) (err error) {
 	tarFile, err := os.Create(tarName)
 	if err != nil {
@@ -597,7 +614,7 @@ func askForconfirm() (bool, error) {
 	}
 }
 
-// Execute shell script and filter
+// ExecShellFilter executes shell script and filter
 func ExecShellFilter(c string) (string, error) {
 	cmd := NewCommand(c)
 	if err := cmd.Exec(); err != nil {
@@ -623,7 +640,7 @@ func ParseEdgecoreConfig(edgecorePath string) (*v1alpha1.EdgeCoreConfig, error) 
 	return edgeCoreConfig, nil
 }
 
-// Determine if it is in the array
+// IsContain determines if it is in the array
 func IsContain(items []string, item string) bool {
 	for _, eachItem := range items {
 		if eachItem == item {
@@ -633,13 +650,13 @@ func IsContain(items []string, item string) bool {
 	return false
 }
 
-// print fail
+// PrintFail prints fail
 func PrintFail(cmd string, s string) {
 	v := fmt.Sprintf("|%s %s failed|", s, cmd)
 	printResult(v)
 }
 
-//print success
+// PrintSucceed prints success
 func PrintSucceed(cmd string, s string) {
 	v := fmt.Sprintf("|%s %s succeed|", s, cmd)
 	printResult(v)

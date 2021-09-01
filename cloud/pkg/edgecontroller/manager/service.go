@@ -4,7 +4,7 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
 // ServiceManager manage all events of service by SharedInformer
@@ -18,8 +18,8 @@ func (sm *ServiceManager) Events() chan watch.Event {
 }
 
 // NewServiceManager create ServiceManager by kube clientset and namespace
-func NewServiceManager(si cache.SharedIndexInformer) (*ServiceManager, error) {
-	events := make(chan watch.Event, config.Config.Buffer.ServiceEvent)
+func NewServiceManager(config *v1alpha1.EdgeController, si cache.SharedIndexInformer) (*ServiceManager, error) {
+	events := make(chan watch.Event, config.Buffer.ServiceEvent)
 	rh := NewCommonResourceEventHandler(events)
 	si.AddEventHandler(rh)
 

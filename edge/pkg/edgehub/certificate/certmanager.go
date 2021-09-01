@@ -13,6 +13,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
+	nethttp "net/http"
 	"strings"
 	"time"
 
@@ -243,7 +244,7 @@ func (cm *CertManager) getCA() ([]byte, error) {
 // GetCACert gets the cloudcore CA certificate
 func GetCACert(url string) ([]byte, error) {
 	client := http.NewHTTPClient()
-	req, err := http.BuildRequest("GET", url, nil, "", "")
+	req, err := http.BuildRequest(nethttp.MethodGet, url, nil, "", "")
 	if err != nil {
 		return nil, err
 	}
@@ -273,7 +274,7 @@ func (cm *CertManager) GetEdgeCert(url string, capem []byte, cert tls.Certificat
 		return nil, nil, fmt.Errorf("falied to create http client:%v", err)
 	}
 
-	req, err := http.BuildRequest("GET", url, bytes.NewReader(csr), token, cm.NodeName)
+	req, err := http.BuildRequest(nethttp.MethodGet, url, bytes.NewReader(csr), token, cm.NodeName)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to generate http request:%v", err)
 	}

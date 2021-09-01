@@ -10,11 +10,10 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 )
 
 const (
-	NamespaceSystem string = "kubeedge"
-
 	TokenSecretName      string = "tokensecret"
 	TokenDataName        string = "tokendata"
 	CaSecretName         string = "casecret"
@@ -53,7 +52,7 @@ func CreateTokenSecret(caHashAndToken []byte) error {
 		TypeMeta: metav1.TypeMeta{Kind: "Secret", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      TokenSecretName,
-			Namespace: NamespaceSystem,
+			Namespace: modules.NamespaceSystem,
 		},
 		Data: map[string][]byte{
 			TokenDataName: caHashAndToken,
@@ -61,7 +60,7 @@ func CreateTokenSecret(caHashAndToken []byte) error {
 		StringData: map[string]string{},
 		Type:       "Opaque",
 	}
-	return CreateSecret(token, NamespaceSystem)
+	return CreateSecret(token, modules.NamespaceSystem)
 }
 
 func CreateCaSecret(certDER, key []byte) error {
@@ -69,7 +68,7 @@ func CreateCaSecret(certDER, key []byte) error {
 		TypeMeta: metav1.TypeMeta{Kind: "Secret", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      CaSecretName,
-			Namespace: NamespaceSystem,
+			Namespace: modules.NamespaceSystem,
 		},
 		Data: map[string][]byte{
 			CaDataName:    certDER,
@@ -78,7 +77,7 @@ func CreateCaSecret(certDER, key []byte) error {
 		StringData: map[string]string{},
 		Type:       "Opaque",
 	}
-	return CreateSecret(caSecret, NamespaceSystem)
+	return CreateSecret(caSecret, modules.NamespaceSystem)
 }
 
 func CreateCloudCoreSecret(certDER, key []byte) error {
@@ -86,7 +85,7 @@ func CreateCloudCoreSecret(certDER, key []byte) error {
 		TypeMeta: metav1.TypeMeta{Kind: "Secret", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      CloudCoreSecretName,
-			Namespace: NamespaceSystem,
+			Namespace: modules.NamespaceSystem,
 		},
 		Data: map[string][]byte{
 			CloudCoreCertName:    certDER,
@@ -95,7 +94,7 @@ func CreateCloudCoreSecret(certDER, key []byte) error {
 		StringData: map[string]string{},
 		Type:       "Opaque",
 	}
-	return CreateSecret(cloudCoreCert, NamespaceSystem)
+	return CreateSecret(cloudCoreCert, modules.NamespaceSystem)
 }
 
 func CreateNamespaceIfNeeded(cli kubernetes.Interface, ns string) error {

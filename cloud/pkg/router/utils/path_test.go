@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"strings"
 	"testing"
 )
 
@@ -41,17 +40,6 @@ func TestPathMatch(t *testing.T) {
 
 	rule = "/a/b/d"
 	AssertTrue(t, !IsMatch(rule, req), "7")
-}
-
-func normalizeResource(resource string) string {
-	finalResource := resource
-	if strings.HasPrefix(finalResource, "/") {
-		finalResource = "/" + strings.TrimLeft(finalResource, "/")
-	}
-	if strings.HasSuffix(finalResource, "/") {
-		finalResource = strings.TrimRight(finalResource, "/")
-	}
-	return finalResource
 }
 
 // AssertTrue triggers testing error if the passed-in is true.

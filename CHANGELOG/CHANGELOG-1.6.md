@@ -1,9 +1,15 @@
+  * [v1.6.2](#v162)
+     * [Downloads for v1.6.2](#downloads-for-v162)
+        * [KubeEdge Binaries](#kubeedge-binaries)
+        * [Installer Binaries](#installer-binaries)
+     * [KubeEdge v1.6.2 Release Notes](#kubeedge-v162-release-notes)
+        * [Changelog since v1.6.1](#changelog-since-v161) 
   * [v1.6.1](#v161)
      * [Downloads for v1.6.1](#downloads-for-v161)
         * [KubeEdge Binaries](#kubeedge-binaries)
         * [Installer Binaries](#installer-binaries)
      * [KubeEdge v1.6.1 Release Notes](#kubeedge-v161-release-notes)
-        * [Changelog since v1.6.0](#changelog-since-v130)  
+        * [Changelog since v1.6.0](#changelog-since-v160)  
   * [v1.6.0](#v160)
      * [Downloads for v1.6.0](#downloads-for-v160)
         * [KubeEdge Binaries](#kubeedge-binaries)
@@ -14,9 +20,9 @@
         * [Other Notable Changes](#other-notable-changes)
         * [Bug Fixes](#bug-fixes)
 
-# v1.6.1
+# v1.6.2
 
-## Downloads for v1.6.1
+## Downloads for v1.6.2
 
 ### KubeEdge Binaries
 | filename | Size | sha512 hash |
@@ -26,6 +32,34 @@
 ### Installer Binaries
 | filename | Size | sha512 hash |
 | -------- | ---- | ----------- |
+
+
+## KubeEdge v1.6.2 Release Notes
+
+### Changelog since v1.6.1
+
+- Bump k8s to 1.19.10 to fix metrics missing issue. ([#2824](https://github.com/kubeedge/kubeedge/pull/2824), [@fisherxu](https://github.com/fisherxu))
+- keadm: install CRDs corresponding to the version. ([#2805](https://github.com/kubeedge/kubeedge/pull/2805), [@daixiang0](https://github.com/daixiang0))
+
+
+# v1.6.1
+
+## Downloads for v1.6.1
+
+### KubeEdge Binaries
+| filename | Size | sha512 hash |
+| -------- | ---- | ----------- |
+| [kubeedge-v1.6.1-linux-arm64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.6.1/kubeedge-v1.6.1-linux-arm64.tar.gz) |  82.8 MB | dba8a3009c63a37f709710b6c245e08c232d4a42c95103436e4a02d46655a1c77d1263dc85ec88d4ee0efe4457b5c8ad58985de639067678ed886695aa05a474 |
+| [kubeedge-v1.6.1-linux-arm.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.6.1/kubeedge-v1.6.1-linux-arm.tar.gz) | 81.4 MB | 7f65d213f904466d81b617bd2913edd0cb0a904278c77f4c47bc5bf56ddfae7dbcf797536766cedd1b89c4080ee92a24d3c7bad6ad86a65a9c7afacd93e3fead |
+| [kubeedge-v1.6.1-linux-amd64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.6.1/kubeedge-v1.6.1-linux-amd64.tar.gz) | 48 MB | 1fa572e21abac67a0a60005177f38b0a209797ca43548b6812ea7da17d457a579a1c00d50684e7084d6b3b132cd2c6fcf7f749f26f31975b34970b98fccb9e93 |
+
+
+### Installer Binaries
+| filename | Size | sha512 hash |
+| -------- | ---- | ----------- |
+| [keadm-v1.6.1-linux-amd64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.6.1/keadm-v1.6.1-linux-arm64.tar.gz) |  20 MB | 215dc4bd585a0a05f89c9be98da207bfef237b7f7a5a54ac23a31d9ac3b36c99b4ebd4d0bfef8f40d57bac49eccdc7cd45d46de7d25da197a0d103c8d91fb890 |
+| [keadm-v1.6.1-linux-amd64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.6.1/keadm-v1.6.1-linux-arm.tar.gz) |  19.8 MB | 3a7805c72dd5ec7cb7be90fef5ef34f38daf36d81d174354de4829a0d226e9e2f9368dafae9e3641f64a7861279e65669bfe775008ac47659b38d47e91970f22 |
+| [keadm-v1.6.1-linux-amd64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.6.1/keadm-v1.6.1-linux-amd64.tar.gz) |  11.6 MB | 55b21aee8f53bf3bae329342a528a4bf179b57065eaf599a7f3641a9608f85e15ddc863212b39f1b6bf3075eaa43226298c96b2ac05196b9ce37bdfb267d3d16 |
 
 
 ## KubeEdge v1.6.1 Release Notes

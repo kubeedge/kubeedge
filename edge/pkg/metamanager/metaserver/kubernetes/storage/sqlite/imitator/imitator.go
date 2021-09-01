@@ -105,7 +105,9 @@ func (s *imitator) Delete(ctx context.Context, key string) error {
 	}
 	s.lock.Lock()
 	_, err := dbm.DBAccess.Delete(&m)
-	klog.Errorf("[imitator] delete error: %v", err)
+	if err != nil {
+		klog.Errorf("[imitator] delete error: %v", err)
+	}
 	s.lock.Unlock()
 	return nil
 }
@@ -147,9 +149,6 @@ func (s *imitator) List(ctx context.Context, key string) (Resp, error) {
 	s.lock.RUnlock()
 	if err != nil {
 		return Resp{}, err
-	}
-	if len(*results) == 0 {
-		return Resp{}, fmt.Errorf("the server could not find the requested resource")
 	}
 	resp.Kvs = results
 	return resp, nil

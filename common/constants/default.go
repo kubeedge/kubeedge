@@ -38,9 +38,6 @@ const (
 	DefaultMqttCertFile = "/etc/kubeedge/certs/server.crt"
 	DefaultMqttKeyFile  = "/etc/kubeedge/certs/server.key"
 
-	// Election
-	DefaultCloudCoreReadyCheckURL = "/readyz"
-
 	// Edged
 	DefaultDockerAddress               = "unix:///var/run/docker.sock"
 	DefaultRuntimeType                 = "docker"
@@ -94,6 +91,8 @@ const (
 	DefaultQueryNodeWorkers                  = 4
 	DefaultUpdateNodeWorkers                 = 4
 	DefaultDeletePodWorkers                  = 4
+	DefaultUpdateRuleStatusWorkers           = 4
+	DefaultServiceAccountTokenWorkers        = 4
 
 	DefaultUpdatePodStatusBuffer            = 1024
 	DefaultUpdateNodeStatusBuffer           = 1024
@@ -107,6 +106,7 @@ const (
 	DefaultQueryNodeBuffer                  = 1024
 	DefaultUpdateNodeBuffer                 = 1024
 	DefaultDeletePodBuffer                  = 1024
+	DefaultServiceAccountTokenBuffer        = 1024
 
 	DefaultPodEventBuffer           = 1
 	DefaultConfigMapEventBuffer     = 1
@@ -125,11 +125,8 @@ const (
 	// Resource sep
 	ResourceSep = "/"
 
-	ResourceTypeService       = "service"
-	ResourceTypeServiceList   = "servicelist"
-	ResourceTypeEndpoints     = "endpoints"
-	ResourceTypeEndpointsList = "endpointslist"
-	ResourceTypeListener      = "listener"
+	ResourceTypeService   = "service"
+	ResourceTypeEndpoints = "endpoints"
 
 	ResourceTypePersistentVolume      = "persistentvolume"
 	ResourceTypePersistentVolumeClaim = "persistentvolumeclaim"

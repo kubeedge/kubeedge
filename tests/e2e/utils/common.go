@@ -895,7 +895,7 @@ func CompareTwin(deviceTwin map[string]*MsgTwin, expectedDeviceTwin map[string]*
 	return true
 }
 
-func SendMsg(url string, message []byte) (bool, int) {
+func SendMsg(url string, message []byte, header map[string]string) (bool, int) {
 	var req *http.Request
 	var err error
 
@@ -910,6 +910,9 @@ func SendMsg(url string, message []byte) (bool, int) {
 		// handle error
 		Fatalf("Frame HTTP request failed, request: %s, reason: %v", req.URL.String(), err)
 		return false, 0
+	}
+	for k, v := range header {
+		req.Header.Add(k, v)
 	}
 	t := time.Now()
 	resp, err := client.Do(req)
@@ -931,8 +934,21 @@ func StartEchoServer() (string, error) {
 			Errorf("Echo server write failed. reason: %s", err.Error())
 		}
 	}
+	url := func(response http.ResponseWriter, request *http.Request) {
+		b, _ := ioutil.ReadAll(request.Body)
+		var buff bytes.Buffer
+		buff.WriteString("Reply from server: ")
+		buff.Write(b)
+		buff.WriteString(" Header of the message: [user]: " + request.Header.Get("user") +
+			", [passwd]: " + request.Header.Get("passwd"))
+		if _, err := response.Write(buff.Bytes()); err != nil {
+			Errorf("Echo server write failed. reason: %s", err.Error())
+		}
+		r <- buff.String()
+	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/echo", echo)
+	mux.HandleFunc("/url", url)
 	server := &http.Server{Addr: "0.0.0.0:9000", Handler: mux}
 	go func() {
 		err := server.ListenAndServe()

@@ -51,8 +51,6 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/util"
 )
 
-//GPUInfoQueryTool sets information monitoring tool location for GPU
-var GPUInfoQueryTool = "/var/IEF/nvidia/bin/nvidia-smi"
 var initNode v1.Node
 var reservationMemory = resource.MustParse(fmt.Sprintf("%dMi", 100))
 
@@ -91,6 +89,8 @@ func (e *edged) initialNode() (*v1.Node, error) {
 	for k, v := range config.Config.Labels {
 		node.Labels[k] = v
 	}
+
+	e.labels = node.Labels
 
 	if node.Annotations == nil {
 		node.Annotations = make(map[string]string)
@@ -283,17 +283,14 @@ func (e *edged) getNodeInfo() (v1.NodeSystemInfo, error) {
 }
 
 func (e *edged) setGPUInfo(nodeStatus *edgeapi.NodeStatusRequest) error {
-	_, err := os.Stat(GPUInfoQueryTool)
+	smiCommand := "nvidia-smi"
+	result, err := util.Command("sh", []string{"-c", smiCommand})
 	if err != nil {
-		return fmt.Errorf("can not get file in path: %s, err: %v", GPUInfoQueryTool, err)
+		return fmt.Errorf("nvidia-smi run failed: %s", err)
 	}
 
 	nodeStatus.ExtendResources = make(map[v1.ResourceName][]edgeapi.ExtendResource)
 
-	result, err := util.Command("sh", []string{"-c", fmt.Sprintf("%s -L", GPUInfoQueryTool)})
-	if err != nil {
-		return err
-	}
 	re := regexp.MustCompile(`GPU .*:.*\(.*\)`)
 	gpuInfos := re.FindAllString(result, -1)
 	gpuResources := make([]edgeapi.ExtendResource, 0)
@@ -306,7 +303,7 @@ func (e *edged) setGPUInfo(nodeStatus *edgeapi.NodeStatusRequest) error {
 		}
 		gpuName := params[1]
 		gpuType := params[2]
-		result, err = util.Command("sh", []string{"-c", fmt.Sprintf("%s -i %s -a|grep -A 3 \"FB Memory Usage\"| grep Total", GPUInfoQueryTool, gpuName)})
+		result, err = util.Command("sh", []string{"-c", fmt.Sprintf("%s -i %s -a|grep -A 3 \"FB Memory Usage\"| grep Total", smiCommand, gpuName)})
 		if err != nil {
 			klog.Errorf("get gpu(%v) memory failed, err: %v", gpuName, err)
 			continue

@@ -39,6 +39,7 @@ import (
 	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/features"
 	"k8s.io/kubernetes/pkg/volume"
+	utiltypes "k8s.io/kubernetes/pkg/volume/util/types"
 	utilstrings "k8s.io/utils/strings"
 )
 
@@ -285,10 +286,6 @@ func (c *csiMountMgr) SetUpAt(dir string, mounterArgs volume.MounterArgs) error 
 }
 
 func (c *csiMountMgr) podAttributes() (map[string]string, error) {
-	if !utilfeature.DefaultFeatureGate.Enabled(features.CSIDriverRegistry) {
-		return nil, nil
-	}
-
 	kletHost, ok := c.plugin.host.(volume.KubeletVolumeHost)
 	if ok {
 		kletHost.WaitForCacheSync()
@@ -399,7 +396,7 @@ func (c *csiMountMgr) applyFSGroup(fsType string, fsGroup *int64) error {
 			return nil
 		}
 
-		err := volume.SetVolumeOwnership(c, fsGroup, api.PodSecurityContext{}.FSGroupChangePolicy)
+		err := volume.SetVolumeOwnership(c, fsGroup, api.PodSecurityContext{}.FSGroupChangePolicy, func(utiltypes.CompleteFuncParam) {})
 		if err != nil {
 			return err
 		}

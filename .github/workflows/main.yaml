@@ -9,7 +9,7 @@ on:
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     timeout-minutes: 30
     name: Verify vendor, licenses, do lint
     env:
@@ -43,7 +43,7 @@ jobs:
         run: make lint
         working-directory: ./src/github.com/${{ github.repository }}
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     timeout-minutes: 30
     name: Multiple build
     steps:
@@ -58,7 +58,9 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
       - name: Install dependences
-        run: sudo apt-get install -y upx-ucl gcc-aarch64-linux-gnu libc6-dev-arm64-cross gcc-arm-linux-gnueabi libc6-dev-armel-cross
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y upx-ucl gcc-aarch64-linux-gnu libc6-dev-arm64-cross gcc-arm-linux-gnueabi libc6-dev-armel-cross
 
       - name: Checkout code
         uses: actions/checkout@v2
@@ -74,7 +76,7 @@ jobs:
       - run: make crossbuild GOARM=GOARM7
 
   basic_test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     timeout-minutes: 30
     name: Unit test, integration test edge
     env:
@@ -104,7 +106,7 @@ jobs:
       - run: make integrationtest
 
   e2e_test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     timeout-minutes: 30
     name: E2e test
     env:
@@ -123,7 +125,7 @@ jobs:
       - name: Install dependences
         run: |
           command -v ginkgo || go get github.com/onsi/ginkgo/ginkgo
-          command -v kind || go get sigs.k8s.io/kind@v0.9.0
+          go get sigs.k8s.io/kind@v0.11.1
           curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.19.3/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
@@ -134,7 +136,7 @@ jobs:
       - run: make e2e
 
   keadm_e2e_test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     timeout-minutes: 30
     name: Keadm e2e test
     env:
@@ -153,7 +155,7 @@ jobs:
       - name: Install dependences
         run: |
           command -v ginkgo || go get github.com/onsi/ginkgo/ginkgo
-          command -v kind || go get sigs.k8s.io/kind@v0.9.0
+          go get sigs.k8s.io/kind@v0.11.1
           curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.19.3/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
           export RELEASE_VERSION=$(wget -qO - https://kubeedge.io/latestversion | cat)
           sudo wget -qP /etc/kubeedge https://github.com/kubeedge/kubeedge/releases/download/${RELEASE_VERSION}/checksum_kubeedge-${RELEASE_VERSION}-linux-amd64.tar.gz.txt
@@ -168,7 +170,7 @@ jobs:
       - run: make keadm_e2e
 
   docker_build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     timeout-minutes: 30
     name: Multiple docker image build
     steps:
@@ -193,4 +195,6 @@ jobs:
 
       - run: make edgeimage ARCH="amd64"
 
-      - run: make edgesiteimage ARCH="amd64"
+      - run: make edgesite-agent-image ARCH="amd64"
+
+      - run: make edgesite-server-image ARCH="amd64"

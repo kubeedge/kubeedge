@@ -15,6 +15,8 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/utils"
 )
 
+const MaxMessageBytes = 12 * (1 << 20)
+
 var (
 	RestHandlerInstance = &RestHandler{}
 )
@@ -122,7 +124,8 @@ func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 		klog.Errorf("invalid convert to Handle. match path: %s", matchPath)
 		return
 	}
-	b, err := ioutil.ReadAll(r.Body)
+	aReaderCloser := http.MaxBytesReader(w, r.Body, MaxMessageBytes)
+	b, err := ioutil.ReadAll(aReaderCloser)
 	if err != nil {
 		klog.Errorf("request error, write result: %v", err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -142,9 +145,7 @@ func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 
 		v, err := handle(params)
 		if err != nil {
-			//w.WriteHeader(http.StatusInternalServerError)
-			//_, err := w.Write([]byte(err.Error()))
-			//klog.Warningf("operation timeout, msg id: %s, write result: %v", msgID, err)
+			klog.Errorf("handle request error, msg id: %s, err: %v", msgID, err)
 			return
 		}
 		response, ok := v.(*http.Response)
@@ -156,6 +157,11 @@ func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			klog.Errorf("response body read error, msg id: %s, reason: %v", msgID, err)
 			return
+		}
+		for key, values := range response.Header {
+			for _, value := range values {
+				w.Header().Add(key, value)
+			}
 		}
 		w.WriteHeader(response.StatusCode)
 		if _, err = w.Write(body); err != nil {

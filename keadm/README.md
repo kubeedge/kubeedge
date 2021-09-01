@@ -1,4 +1,4 @@
 
 # KubeEdge Installer
 
-Click [here](../docs/setup/keadm.md) for detailed documentation of the KubeEdge installer.
+Click [here](https://kubeedge.io/en/docs/setup/keadm/) for detailed documentation of the KubeEdge installer.

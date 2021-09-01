@@ -23,6 +23,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/klog/v2"
+	"k8s.io/kubernetes/pkg/apis/core/validation"
 
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 	utilvalidation "github.com/kubeedge/kubeedge/pkg/util/validation"
@@ -39,7 +40,6 @@ func ValidateEdgeCoreConfiguration(c *v1alpha1.EdgeCoreConfig) field.ErrorList {
 	allErrs = append(allErrs, ValidateModuleServiceBus(*c.Modules.ServiceBus)...)
 	allErrs = append(allErrs, ValidateModuleDeviceTwin(*c.Modules.DeviceTwin)...)
 	allErrs = append(allErrs, ValidateModuleDBTest(*c.Modules.DBTest)...)
-	allErrs = append(allErrs, ValidateModuleEdgeMesh(*c.Modules.EdgeMesh)...)
 	allErrs = append(allErrs, ValidateModuleEdgeStream(*c.Modules.EdgeStream)...)
 	return allErrs
 }
@@ -63,6 +63,10 @@ func ValidateModuleEdged(e v1alpha1.Edged) field.ErrorList {
 		return field.ErrorList{}
 	}
 	allErrs := field.ErrorList{}
+	messages := validation.ValidateNodeName(e.HostnameOverride, false)
+	for _, msg := range messages {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("HostnameOverride"), e.HostnameOverride, msg))
+	}
 	if e.NodeIP == "" {
 		klog.Warningf("NodeIP is empty , use default ip which can connect to cloud.")
 	}
@@ -136,16 +140,6 @@ func ValidateModuleDBTest(d v1alpha1.DBTest) field.ErrorList {
 	if !d.Enable {
 		return field.ErrorList{}
 	}
-	allErrs := field.ErrorList{}
-	return allErrs
-}
-
-// ValidateModuleEdgeMesh validates `m` and returns an errorList if it is invalid
-func ValidateModuleEdgeMesh(m v1alpha1.EdgeMesh) field.ErrorList {
-	if !m.Enable {
-		return field.ErrorList{}
-	}
-	// TODO check meshconfig @kadisi
 	allErrs := field.ErrorList{}
 	return allErrs
 }
