@@ -157,7 +157,7 @@ func NewMinEdgeSiteConfig() *EdgeSiteConfig {
 				ClusterDomain:         "",
 				RemoteRuntimeEndpoint: constants.DefaultRemoteRuntimeEndpoint,
 				RemoteImageEndpoint:   constants.DefaultRemoteImageEndpoint,
-				PodSandboxImage:       util.GetPodSandboxImage(),
+				PodSandboxImage:       constants.DefaultPodSandboxImage,
 				HostnameOverride:      hostnameOverride,
 				CustomInterfaceName:   "",
 				DevicePluginEnabled:   false,
