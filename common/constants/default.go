@@ -44,7 +44,7 @@ const (
 	DefaultEdgedMemoryCapacity         = 7852396000
 	DefaultRemoteRuntimeEndpoint       = "unix:///var/run/dockershim.sock"
 	DefaultRemoteImageEndpoint         = "unix:///var/run/dockershim.sock"
-	DefaultPodSandboxImage             = "k8s.gcr.io/pause:3.1"
+	DefaultPodSandboxImage             = "kubeedge/pause:3.1"
 	DefaultNodeStatusUpdateFrequency   = 10
 	DefaultImagePullProgressDeadline   = 60
 	DefaultRuntimeRequestTimeout       = 2

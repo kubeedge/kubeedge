@@ -160,7 +160,7 @@ func WriteEdgeYamlFile(path string, modifiedEdgeYaml *EdgeYamlSt) error {
 			RuntimeEndpoint:                   "/var/run/containerd/containerd.sock",
 			ImageEndpoint:                     "/var/run/containerd/containerd.sock",
 			RequestTimeout:                    2,
-			PodSandboxImage:                   "k8s.gcr.io/pause",
+			PodSandboxImage:                   "kubeedge/pause",
 		},
 		Mesh: Mesh{
 			LB: LoadBalance{
