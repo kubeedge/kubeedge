@@ -945,8 +945,20 @@ func (e *edged) convertToAPIContainerStatuses(pod *v1.Pod, podStatus *kubecontai
 			continue
 		}
 		cstatus := statuses[container.Name]
+		reason, ok := e.reasonCache.Get(pod.UID, container.Name)
+		if !ok {
+			continue
+		}
+
 		if cstatus.State.Terminated != nil {
 			cstatus.LastTerminationState = cstatus.State
+		}
+
+		cstatus.State = v1.ContainerState{
+			Waiting: &v1.ContainerStateWaiting{
+				Reason:  reason.Err.Error(),
+				Message: reason.Message,
+			},
 		}
 		statuses[container.Name] = cstatus
 	}

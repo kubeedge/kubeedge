@@ -1291,9 +1291,12 @@ k8s.io/client-go/tools/record
 k8s.io/client-go/tools/record/util
 k8s.io/client-go/tools/reference
 k8s.io/client-go/tools/remotecommand
+k8s.io/client-go/tools/watch
 k8s.io/client-go/transport
 k8s.io/client-go/transport/spdy
 k8s.io/client-go/util/cert
+k8s.io/client-go/util/certificate
+k8s.io/client-go/util/certificate/csr
 k8s.io/client-go/util/connrotation
 k8s.io/client-go/util/exec
 k8s.io/client-go/util/flowcontrol
@@ -1305,6 +1308,7 @@ k8s.io/client-go/util/workqueue
 # k8s.io/cloud-provider v0.21.4
 ## explicit
 k8s.io/cloud-provider
+k8s.io/cloud-provider/api
 k8s.io/cloud-provider/volume/errors
 # k8s.io/cluster-bootstrap v0.21.4
 ## explicit
@@ -1337,6 +1341,7 @@ k8s.io/code-generator/pkg/util
 ## explicit
 k8s.io/component-base/cli/flag
 k8s.io/component-base/cli/globalflag
+k8s.io/component-base/codec
 k8s.io/component-base/config
 k8s.io/component-base/config/v1alpha1
 k8s.io/component-base/config/validation
@@ -1354,6 +1359,7 @@ k8s.io/component-base/metrics/testutil
 k8s.io/component-base/term
 k8s.io/component-base/version
 # k8s.io/component-helpers v0.21.4
+k8s.io/component-helpers/apimachinery/lease
 k8s.io/component-helpers/scheduling/corev1
 k8s.io/component-helpers/scheduling/corev1/nodeaffinity
 k8s.io/component-helpers/storage/volume
@@ -1399,6 +1405,7 @@ k8s.io/kube-scheduler/extender/v1
 ## explicit
 k8s.io/kubelet/config/v1alpha1
 k8s.io/kubelet/config/v1beta1
+k8s.io/kubelet/pkg/apis
 k8s.io/kubelet/pkg/apis/credentialprovider
 k8s.io/kubelet/pkg/apis/credentialprovider/install
 k8s.io/kubelet/pkg/apis/credentialprovider/v1alpha1
@@ -1435,6 +1442,7 @@ k8s.io/kubernetes/cmd/kubeadm/app/util/patches
 k8s.io/kubernetes/cmd/kubeadm/app/util/runtime
 k8s.io/kubernetes/cmd/kubeadm/app/util/staticpod
 k8s.io/kubernetes/pkg/api/legacyscheme
+k8s.io/kubernetes/pkg/api/pod
 k8s.io/kubernetes/pkg/api/service
 k8s.io/kubernetes/pkg/api/v1/pod
 k8s.io/kubernetes/pkg/api/v1/resource
@@ -1446,6 +1454,7 @@ k8s.io/kubernetes/pkg/apis/apps/install
 k8s.io/kubernetes/pkg/apis/apps/v1
 k8s.io/kubernetes/pkg/apis/apps/v1beta1
 k8s.io/kubernetes/pkg/apis/apps/v1beta2
+k8s.io/kubernetes/pkg/apis/apps/validation
 k8s.io/kubernetes/pkg/apis/authentication
 k8s.io/kubernetes/pkg/apis/authentication/install
 k8s.io/kubernetes/pkg/apis/authentication/v1
@@ -1499,6 +1508,7 @@ k8s.io/kubernetes/pkg/apis/policy
 k8s.io/kubernetes/pkg/apis/policy/install
 k8s.io/kubernetes/pkg/apis/policy/v1
 k8s.io/kubernetes/pkg/apis/policy/v1beta1
+k8s.io/kubernetes/pkg/apis/policy/validation
 k8s.io/kubernetes/pkg/apis/rbac
 k8s.io/kubernetes/pkg/apis/rbac/install
 k8s.io/kubernetes/pkg/apis/rbac/v1
@@ -1522,13 +1532,19 @@ k8s.io/kubernetes/pkg/credentialprovider/plugin
 k8s.io/kubernetes/pkg/credentialprovider/secrets
 k8s.io/kubernetes/pkg/features
 k8s.io/kubernetes/pkg/fieldpath
+k8s.io/kubernetes/pkg/kubelet
 k8s.io/kubernetes/pkg/kubelet/apis/config
+k8s.io/kubernetes/pkg/kubelet/apis/config/scheme
 k8s.io/kubernetes/pkg/kubelet/apis/config/v1alpha1
+k8s.io/kubernetes/pkg/kubelet/apis/config/v1beta1
+k8s.io/kubernetes/pkg/kubelet/apis/config/validation
 k8s.io/kubernetes/pkg/kubelet/apis/podresources
 k8s.io/kubernetes/pkg/kubelet/cadvisor
+k8s.io/kubernetes/pkg/kubelet/certificate
 k8s.io/kubernetes/pkg/kubelet/checkpointmanager
 k8s.io/kubernetes/pkg/kubelet/checkpointmanager/checksum
 k8s.io/kubernetes/pkg/kubelet/checkpointmanager/errors
+k8s.io/kubernetes/pkg/kubelet/cloudresource
 k8s.io/kubernetes/pkg/kubelet/cm
 k8s.io/kubernetes/pkg/kubelet/cm/containermap
 k8s.io/kubernetes/pkg/kubelet/cm/cpumanager
@@ -1561,9 +1577,19 @@ k8s.io/kubernetes/pkg/kubelet/dockershim/network/hostport
 k8s.io/kubernetes/pkg/kubelet/dockershim/network/kubenet
 k8s.io/kubernetes/pkg/kubelet/dockershim/network/metrics
 k8s.io/kubernetes/pkg/kubelet/dockershim/remote
+k8s.io/kubernetes/pkg/kubelet/envvars
 k8s.io/kubernetes/pkg/kubelet/events
+k8s.io/kubernetes/pkg/kubelet/eviction
 k8s.io/kubernetes/pkg/kubelet/eviction/api
 k8s.io/kubernetes/pkg/kubelet/images
+k8s.io/kubernetes/pkg/kubelet/kubeletconfig
+k8s.io/kubernetes/pkg/kubelet/kubeletconfig/checkpoint
+k8s.io/kubernetes/pkg/kubelet/kubeletconfig/checkpoint/store
+k8s.io/kubernetes/pkg/kubelet/kubeletconfig/configfiles
+k8s.io/kubernetes/pkg/kubelet/kubeletconfig/status
+k8s.io/kubernetes/pkg/kubelet/kubeletconfig/util/codec
+k8s.io/kubernetes/pkg/kubelet/kubeletconfig/util/files
+k8s.io/kubernetes/pkg/kubelet/kubeletconfig/util/panic
 k8s.io/kubernetes/pkg/kubelet/kuberuntime
 k8s.io/kubernetes/pkg/kubelet/kuberuntime/logs
 k8s.io/kubernetes/pkg/kubelet/leaky
@@ -1573,6 +1599,10 @@ k8s.io/kubernetes/pkg/kubelet/logs
 k8s.io/kubernetes/pkg/kubelet/metrics
 k8s.io/kubernetes/pkg/kubelet/metrics/collectors
 k8s.io/kubernetes/pkg/kubelet/network/dns
+k8s.io/kubernetes/pkg/kubelet/nodeshutdown
+k8s.io/kubernetes/pkg/kubelet/nodeshutdown/systemd
+k8s.io/kubernetes/pkg/kubelet/nodestatus
+k8s.io/kubernetes/pkg/kubelet/oom
 k8s.io/kubernetes/pkg/kubelet/pleg
 k8s.io/kubernetes/pkg/kubelet/pluginmanager
 k8s.io/kubernetes/pkg/kubelet/pluginmanager/cache
@@ -1584,6 +1614,7 @@ k8s.io/kubernetes/pkg/kubelet/pluginmanager/pluginwatcher/example_plugin_apis/v1
 k8s.io/kubernetes/pkg/kubelet/pluginmanager/reconciler
 k8s.io/kubernetes/pkg/kubelet/pod
 k8s.io/kubernetes/pkg/kubelet/pod/testing
+k8s.io/kubernetes/pkg/kubelet/preemption
 k8s.io/kubernetes/pkg/kubelet/prober
 k8s.io/kubernetes/pkg/kubelet/prober/results
 k8s.io/kubernetes/pkg/kubelet/qos
@@ -1595,6 +1626,8 @@ k8s.io/kubernetes/pkg/kubelet/server/stats
 k8s.io/kubernetes/pkg/kubelet/stats
 k8s.io/kubernetes/pkg/kubelet/stats/pidlimit
 k8s.io/kubernetes/pkg/kubelet/status
+k8s.io/kubernetes/pkg/kubelet/sysctl
+k8s.io/kubernetes/pkg/kubelet/token
 k8s.io/kubernetes/pkg/kubelet/types
 k8s.io/kubernetes/pkg/kubelet/util
 k8s.io/kubernetes/pkg/kubelet/util/cache
@@ -1636,6 +1669,9 @@ k8s.io/kubernetes/pkg/scheduler/framework/plugins/noderesources
 k8s.io/kubernetes/pkg/scheduler/internal/parallelize
 k8s.io/kubernetes/pkg/scheduler/util
 k8s.io/kubernetes/pkg/security/apparmor
+k8s.io/kubernetes/pkg/security/podsecuritypolicy/seccomp
+k8s.io/kubernetes/pkg/security/podsecuritypolicy/sysctl
+k8s.io/kubernetes/pkg/security/podsecuritypolicy/util
 k8s.io/kubernetes/pkg/securitycontext
 k8s.io/kubernetes/pkg/util/async
 k8s.io/kubernetes/pkg/util/bandwidth
@@ -1656,8 +1692,11 @@ k8s.io/kubernetes/pkg/util/selinux
 k8s.io/kubernetes/pkg/util/slice
 k8s.io/kubernetes/pkg/util/sysctl
 k8s.io/kubernetes/pkg/util/tail
+k8s.io/kubernetes/pkg/util/taints
 k8s.io/kubernetes/pkg/volume
 k8s.io/kubernetes/pkg/volume/configmap
+k8s.io/kubernetes/pkg/volume/csi
+k8s.io/kubernetes/pkg/volume/csi/nodeinfomanager
 k8s.io/kubernetes/pkg/volume/csimigration
 k8s.io/kubernetes/pkg/volume/downwardapi
 k8s.io/kubernetes/pkg/volume/emptydir

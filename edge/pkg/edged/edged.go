@@ -54,6 +54,7 @@ import (
 	internalapi "k8s.io/cri-api/pkg/apis"
 	"k8s.io/klog/v2"
 	pluginwatcherapi "k8s.io/kubelet/pkg/apis/pluginregistration/v1"
+	"k8s.io/kubernetes/pkg/kubelet"
 	kubeletinternalconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
 	"k8s.io/kubernetes/pkg/kubelet/cadvisor"
 	"k8s.io/kubernetes/pkg/kubelet/cm"
@@ -203,6 +204,7 @@ type edged struct {
 	readinessManager   proberesults.Manager
 	startupManager     proberesults.Manager
 	server             *server.Server
+	reasonCache        *kubelet.ReasonCache
 	podAdditionQueue   *workqueue.Type
 	podAdditionBackoff *flowcontrol.Backoff
 	podDeletionQueue   *workqueue.Type
@@ -457,6 +459,7 @@ func newEdged(enable bool) (*edged, error) {
 		podDeletionBackoff:        backoff,
 		metaClient:                metaClient,
 		kubeClient:                fakekube.NewSimpleClientset(metaClient),
+		reasonCache:               kubelet.NewReasonCache(),
 		nodeStatusUpdateFrequency: time.Duration(edgedconfig.Config.NodeStatusUpdateFrequency) * time.Second,
 		mounter:                   mount.New(""),
 		uid:                       types.UID("38796d14-1df3-11e8-8e5a-286ed488f209"),
@@ -1048,6 +1051,7 @@ func (e *edged) consumePodAddition(namespacedName *types.NamespacedName) error {
 	}
 	result := e.containerRuntime.SyncPod(pod, curPodStatus, secrets, e.podAdditionBackoff)
 	e.podLastSyncTime.Store(podUID, time.Now())
+	e.reasonCache.Update(pod.UID, result)
 	if err := result.Error(); err != nil {
 		// Do not return error if the only failures were pods in backoff
 		for _, r := range result.SyncResults {
