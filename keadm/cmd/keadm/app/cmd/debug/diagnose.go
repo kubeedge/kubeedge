@@ -90,7 +90,7 @@ func NewDiagnoseOptions() *common.DiagnoseOptions {
 }
 
 func (da Diagnose) ExecuteDiagnose(use string, ops *common.DiagnoseOptions, args []string) {
-	err := fmt.Errorf("")
+	var err error
 	switch use {
 	case common.ArgDiagnoseNode:
 		err = DiagnoseNode(ops)
@@ -178,7 +178,7 @@ func DiagnosePod(ops *common.DiagnoseOptions, podName string) error {
 	}
 	err := InitDB(v1alpha1.DataBaseDriverName, v1alpha1.DataBaseAliasName, ops.DBPath)
 	if err != nil {
-		return fmt.Errorf("Failed to initialize database: %v ", err)
+		return fmt.Errorf("failed to initialize database: %v ", err)
 	}
 	fmt.Printf("Database %s is exist \n", v1alpha1.DataBaseDataSource)
 	podStatus, err := QueryPodFromDatabase(ops.Namespace, podName)
