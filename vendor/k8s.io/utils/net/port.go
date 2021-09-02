@@ -65,10 +65,10 @@ type LocalPort struct {
 // consistent and that the given protocol is valid.
 func NewLocalPort(desc, ip string, ipFamily IPFamily, port int, protocol Protocol) (*LocalPort, error) {
 	if protocol != TCP && protocol != UDP {
-		return nil, fmt.Errorf("Unsupported protocol %s", protocol)
+		return nil, fmt.Errorf("unsupported protocol %s", protocol)
 	}
 	if ipFamily != "" && ipFamily != "4" && ipFamily != "6" {
-		return nil, fmt.Errorf("Invalid IP family %s", ipFamily)
+		return nil, fmt.Errorf("invalid IP family %s", ipFamily)
 	}
 	if ip != "" {
 		parsedIP := net.ParseIP(ip)

@@ -136,7 +136,7 @@ func GenAgentIdentifiers(addrs string) (Identifiers, error) {
 				agentIDs.DefaultRoute = true
 			}
 		default:
-			return agentIDs, fmt.Errorf("Unknown address type: %s", idType)
+			return agentIDs, fmt.Errorf("unknown address type: %s", idType)
 		}
 	}
 	return agentIDs, nil

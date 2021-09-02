@@ -61,7 +61,7 @@ func GenProxyStrategiesFromStr(proxyStrategies string) ([]ProxyStrategy, error) 
 		case string(ProxyStrategyDefaultRoute):
 			ps = append(ps, ProxyStrategyDefaultRoute)
 		default:
-			return nil, fmt.Errorf("Unknown proxy strategy %s", s)
+			return nil, fmt.Errorf("unknown proxy strategy %s", s)
 		}
 	}
 	return ps, nil
