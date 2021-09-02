@@ -560,7 +560,7 @@ type Edged struct {
 	EdgedMemoryCapacity int64 `json:"edgedMemoryCapacity,omitempty"`
 	// PodSandboxImage is the image whose network/ipc namespaces containers in each pod will use.
 	// +Required
-	// default k8s.gcr.io/pause
+	// default kubeedge/pause
 	PodSandboxImage string `json:"podSandboxImage,omitempty"`
 	// ImagePullProgressDeadline indicates image pull progress dead line (second)
 	// default 60
@@ -979,7 +979,7 @@ modules:
     maximumDeadContainersPerPod: 1
     nodeIP: 192.168.4.3
     nodeStatusUpdateFrequency: 10
-    podSandboxImage: k8s.gcr.io/pause:3.1
+    podSandboxImage: kubeedge/pause:3.1
     registerNode: true
     registerNodeNamespace: default
     remoteImageEndpoint: unix:///var/run/dockershim.sock
@@ -1044,7 +1044,7 @@ modules:
     hostnameOverride: zhangjiedeMacBook-Pro.local
     interfaceName: eth0
     nodeIP: 192.168.4.3
-    podSandboxImage: k8s.gcr.io/pause:3.1
+    podSandboxImage: kubeedge/pause:3.1
     remoteImageEndpoint: unix:///var/run/dockershim.sock
     remoteRuntimeEndpoint: unix:///var/run/dockershim.sock
     runtimeType: docker
@@ -1143,7 +1143,7 @@ modules:
     maximumDeadContainersPerPod: 1
     nodeIP: 192.168.4.3
     nodeStatusUpdateFrequency: 10
-    podSandboxImage: k8s.gcr.io/pause:3.1
+    podSandboxImage: kubeedge/pause:3.1
     registerNode: true
     registerNodeNamespace: default
     remoteImageEndpoint: unix:///var/run/dockershim.sock
@@ -1180,7 +1180,7 @@ modules:
     hostnameOverride: zhangjiedeMacBook-Pro.local
     interfaceName: eth0
     nodeIP: 192.168.4.3
-    podSandboxImage: k8s.gcr.io/pause:3.1
+    podSandboxImage: kubeedge/pause:3.1
     remoteImageEndpoint: unix:///var/run/dockershim.sock
     remoteRuntimeEndpoint: unix:///var/run/dockershim.sock
     runtimeType: docker
