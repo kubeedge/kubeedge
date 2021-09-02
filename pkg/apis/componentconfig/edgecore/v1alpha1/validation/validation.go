@@ -21,6 +21,7 @@ import (
 	"os"
 	"path"
 
+	unversionedvalidation "k8s.io/apimachinery/pkg/apis/meta/v1/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/apis/core/validation"
@@ -59,17 +60,21 @@ func ValidateDataBase(db v1alpha1.DataBase) field.ErrorList {
 
 // ValidateModuleEdged validates `e` and returns an errorList if it is invalid
 func ValidateModuleEdged(e v1alpha1.Edged) field.ErrorList {
-	if !e.Enable {
-		return field.ErrorList{}
-	}
 	allErrs := field.ErrorList{}
+	if !e.Enable {
+		return allErrs
+	}
+	if e.NodeIP == "" {
+		klog.Warningf("NodeIP is empty, use default ip to connect to cloud.")
+	}
+
 	messages := validation.ValidateNodeName(e.HostnameOverride, false)
 	for _, msg := range messages {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("HostnameOverride"), e.HostnameOverride, msg))
 	}
-	if e.NodeIP == "" {
-		klog.Warningf("NodeIP is empty , use default ip which can connect to cloud.")
-	}
+	allErrs = append(allErrs, unversionedvalidation.ValidateLabels(e.Labels, field.NewPath("Labels"))...)
+	allErrs = append(allErrs, validation.ValidateAnnotations(e.Annotations, field.NewPath("Annotations"))...)
+
 	switch e.CGroupDriver {
 	case v1alpha1.CGroupDriverCGroupFS, v1alpha1.CGroupDriverSystemd:
 	default:
