@@ -6,7 +6,7 @@
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
         * [Other Notable Changes](#other-notable-changes)
         * [Bug Fixes](#bug-fixes)
-      
+
 
 # v1.8.0
 
@@ -21,7 +21,7 @@ Download v1.8.0 in the [v1.8.0 release page](https://github.com/kubeedge/kubeedg
 **Active-Active HA Support of CloudCore for Large Scale Cluster [Beta]**
 
 CloudCore now supports Active-Active HA mode deployment, which provides better scalability support for large scale clusters.
-Cloud-Edge tunnel can also work with multiple CloudCore instances. 
+Cloud-Edge tunnel can also work with multiple CloudCore instances.
 CloudCore now can add the iptable rules for Cloud-Edge tunnel automatically.
 
 Refer to the links for more details.
@@ -29,17 +29,19 @@ Refer to the links for more details.
 
 
 **EdgeMesh Architecture Modification**
-EdgeMesh now has two parts: edgemesh-server and edgemesh-agent. The edgemesh-server requires a public IP address, when users use cross lan communication, 
-it can act as a relay server in the LibP2P mode or assist the agent to establish p2p hole punching. 
-The edgemesh-agent is used to proxy all application traffic of user nodes, acts as an agent for communication between pods 
-at different locations. 
+
+EdgeMesh now has two parts: edgemesh-server and edgemesh-agent. The edgemesh-server requires a public IP address, when users use cross lan communication,
+it can act as a relay server in the LibP2P mode or assist the agent to establish p2p hole punching.
+The edgemesh-agent is used to proxy all application traffic of user nodes, acts as an agent for communication between pods
+at different locations.
 
 Refer to the links for more details.
 ([#19](https://github.com/kubeedge/edgemesh/pull/19))
 
 **EdgeMesh Cross LAN Communication**
-Users can use cross LAN communication feature to implement cross LAN edge to edge application communication and 
-cross LAN edge to cloud application communication. 
+
+Users can use cross LAN communication feature to implement cross LAN edge to edge application communication and
+cross LAN edge to cloud application communication.
 
 Refer to the links for more details.
 ([#26](https://github.com/kubeedge/edgemesh/pull/26), [#37](https://github.com/kubeedge/edgemesh/pull/37), [#57](https://github.com/kubeedge/edgemesh/pull/57))
@@ -56,7 +58,7 @@ Refer to the links for more details.
 **Kubernetes Dependencies Upgrade**
 
 Upgrade the vendered kubernetes version to v1.21.4, users now can use the feature of new version
-on the cloud and on the edge side. 
+on the cloud and on the edge side.
 
 Refer to the links for more details.
 ([#3021](https://github.com/kubeedge/kubeedge/pull/3021), [#3034](https://github.com/kubeedge/kubeedge/pull/3034))
@@ -64,7 +66,7 @@ Refer to the links for more details.
 
 ### Important Steps before Upgrading
 
-**NOTE:** 
+**NOTE:**
 In v1.8 EdgeMesh has been decoupled from edgecore and moved to [edgemesh](https://github.com/kubeedge/edgemesh) repo, if you are using EdgeMesh,
 Please install the latest version of edgemesh.
 
