@@ -92,7 +92,7 @@ type ProtocolConfigOpcUA struct {
 // Only one of its members may be specified.
 type ProtocolConfigModbus struct {
 	// Required. 0-255
-	SlaveID int64 `json:"slaveID,omitempty"`
+	SlaveID *int64 `json:"slaveID,omitempty"`
 }
 
 // Only one of COM or TCP may be specified.
