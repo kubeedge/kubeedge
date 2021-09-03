@@ -33,6 +33,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -737,7 +738,13 @@ func (e *edged) podFieldSelectorRuntimeValue(fs *v1.ObjectFieldSelector, pod *v1
 	case "spec.serviceAccountName":
 		return pod.Spec.ServiceAccountName, nil
 	case "status.hostIP":
-		hostIP, err := pkgutil.GetLocalIP(e.nodeName)
+		var hostIP string
+		var err error
+		if e.customInterfaceEnabled {
+			hostIP, err = e.getHostIPByInterface()
+		} else {
+			hostIP, err = pkgutil.GetLocalIP(e.nodeName)
+		}
 		if err != nil {
 			return "", err
 		}
@@ -788,8 +795,14 @@ func (e *edged) makeBlockVolumes(pod *v1.Pod, container *v1.Container, podVolume
 // alter the kubelet state at all.
 func (e *edged) convertStatusToAPIStatus(pod *v1.Pod, podStatus *kubecontainer.PodStatus) *v1.PodStatus {
 	var apiPodStatus v1.PodStatus
+	var hostIP string
+	var err error
 
-	hostIP, err := pkgutil.GetLocalIP(e.nodeName)
+	if e.customInterfaceEnabled {
+		hostIP, err = e.getHostIPByInterface()
+	} else {
+		hostIP, err = pkgutil.GetLocalIP(e.nodeName)
+	}
 	if err != nil {
 		klog.Errorf("Failed to get host IP: %v", err)
 	} else {
@@ -1437,4 +1450,30 @@ func (pk *podKillerWithChannel) PerformPodKillingWork() {
 			}(apiPod, runningPod)
 		}
 	}
+}
+
+// getHostIPByInterface gets the IP address of a the custom network interface
+func (e *edged) getHostIPByInterface() (string, error) {
+	iface, err := net.InterfaceByName(e.customInterfaceName)
+	if err != nil {
+		return "", fmt.Errorf("failed to get network interface: %v err:%v", e.customInterfaceName, err)
+	}
+	if iface == nil {
+		return "", fmt.Errorf("input iface is nil")
+	}
+
+	addrs, err := iface.Addrs()
+	if err != nil {
+		return "", err
+	}
+	for _, addr := range addrs {
+		ip, _, err := net.ParseCIDR(addr.String())
+		if err != nil {
+			continue
+		}
+		if ip.To4() != nil {
+			return ip.String(), nil
+		}
+	}
+	return "", fmt.Errorf("no ip and mask in this network card")
 }
