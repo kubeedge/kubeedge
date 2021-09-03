@@ -384,8 +384,9 @@ type MetaManager struct {
 }
 
 type MetaServer struct {
-	Enable bool `json:"enable"`
-	Debug  bool `json:"debug"`
+	Enable bool   `json:"enable"`
+	Debug  bool   `json:"debug"`
+	Server string `json:"server"`
 }
 
 // ServiceBus indicates the ServiceBus module config
