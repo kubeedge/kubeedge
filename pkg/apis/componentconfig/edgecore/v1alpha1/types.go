@@ -142,9 +142,6 @@ type Edged struct {
 	EdgedMemoryCapacity int64 `json:"edgedMemoryCapacity,omitempty"`
 	// PodSandboxImage is the image whose network/ipc namespaces containers in each pod will use.
 	// +Required
-	// kubeedge/pause:3.1 for x86 arch
-	// kubeedge/pause-arm:3.1 for arm arch
-	// kubeedge/pause-arm64 for arm64 arch
 	// default kubeedge/pause:3.1
 	PodSandboxImage string `json:"podSandboxImage,omitempty"`
 	// ImagePullProgressDeadline indicates image pull progress dead line (second)
@@ -162,10 +159,12 @@ type Edged struct {
 	//RegisterNodeNamespace indicates register node namespace
 	// default "default"
 	RegisterNodeNamespace string `json:"registerNodeNamespace,omitempty"`
-	// InterfaceName indicates interface name
-	// default "eth0"
-	// DEPRECATED after v1.5
-	InterfaceName string `json:"interfaceName,omitempty"`
+	// CustomInterfaceEnabled enables the use of a custom network interface for obtaining the IP address
+	// default false
+	CustomInterfaceEnabled bool `json:"customInterfaceEnabled,omitempty"`
+	// CustomInterfaceName indicates the name of the network interface used for obtaining the IP address
+	// default ""
+	CustomInterfaceName string `json:"interfaceName,omitempty"`
 	// ConcurrentConsumers indicates concurrent consumers for pod add or remove operation
 	// default 5
 	ConcurrentConsumers int `json:"concurrentConsumers,omitempty"`

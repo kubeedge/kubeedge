@@ -55,6 +55,7 @@ const (
 	DefaultMaximumDeadContainersPerPod = 1
 	DefaultHostnameOverride            = "default-edge-node"
 	DefaultRegisterNodeNamespace       = "default"
+	DefaultInterfaceName               = ""
 	DefaultCNIConfDir                  = "/etc/cni/net.d"
 	DefaultCNIBinDir                   = "/opt/cni/bin"
 	DefaultCNICacheDir                 = "/var/lib/cni/cache"
