@@ -31,11 +31,10 @@ spec:
               description: 'Required: DeviceModelRef is reference to the device model
                 used as a template to create the device instance.'
               type: object
-            nodeSelector:
-              description: NodeSelector indicates the binding preferences between
-                devices and nodes. Refer to k8s.io/kubernetes/pkg/apis/core NodeSelector
-                for more details
-              type: object
+            nodeName:
+              description: NodeName indicates the binding preferences between
+                device and node.
+              type: string
             protocol:
               description: 'Required: The protocol configuration used to connect to
                 the device.'
@@ -392,7 +391,6 @@ spec:
               type: object
           required:
             - deviceModelRef
-            - nodeSelector
           type: object
         status:
           properties:
