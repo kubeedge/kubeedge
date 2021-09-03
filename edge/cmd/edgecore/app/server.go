@@ -78,7 +78,7 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 			if checkEnv != "false" {
 				// Check running environment before run edge core
 				if err := environmentCheck(); err != nil {
-					klog.Fatal(fmt.Errorf("Failed to check the running environment: %v", err))
+					klog.Fatal(fmt.Errorf("failed to check the running environment: %v", err))
 				}
 			}
 

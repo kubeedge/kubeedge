@@ -145,7 +145,7 @@ func getMsgKey(obj interface{}) (string, error) {
 		return strings.Join([]string{resourceType, resourceNamespace, resourceName}, "/"), nil
 	}
 
-	return "", fmt.Errorf("Failed to get message key")
+	return "", fmt.Errorf("failed to get message key")
 }
 
 func getListMsgKey(obj interface{}) (string, error) {
@@ -213,7 +213,7 @@ func GetNodeID(msg *beehiveModel.Message) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("No nodeID in Message.Router.Resource: %s", resource)
+	return "", fmt.Errorf("no nodeID in Message.Router.Resource: %s", resource)
 }
 
 // Connect allocates the queues and stores for given node

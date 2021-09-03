@@ -109,7 +109,7 @@ func (s *StreamServer) getContainerLogs(r *restful.Request, w *restful.Response)
 	sessionKey := strings.Split(r.Request.Host, ":")[0]
 	session, ok := s.tunnel.getSession(sessionKey)
 	if !ok {
-		err = fmt.Errorf("Can not find %v session ", sessionKey)
+		err = fmt.Errorf("can not find %v session ", sessionKey)
 		return
 	}
 
@@ -117,7 +117,7 @@ func (s *StreamServer) getContainerLogs(r *restful.Request, w *restful.Response)
 	w.WriteHeader(http.StatusOK)
 
 	if _, ok := w.ResponseWriter.(http.Flusher); !ok {
-		err = fmt.Errorf("Unable to convert %v into http.Flusher, cannot show logs", reflect.TypeOf(w))
+		err = fmt.Errorf("unable to convert %v into http.Flusher, cannot show logs", reflect.TypeOf(w))
 		return
 	}
 	fw := flushwriter.Wrap(w.ResponseWriter)
@@ -168,7 +168,7 @@ func (s *StreamServer) getMetrics(r *restful.Request, w *restful.Response) {
 	}
 	session, ok := s.tunnel.getSession(sessionKey)
 	if !ok {
-		err = fmt.Errorf("Can not find %v session ", sessionKey)
+		err = fmt.Errorf("can not find %v session ", sessionKey)
 		return
 	}
 
@@ -212,12 +212,12 @@ func (s *StreamServer) getExec(request *restful.Request, response *restful.Respo
 	sessionKey := strings.Split(request.Request.Host, ":")[0]
 	session, ok := s.tunnel.getSession(sessionKey)
 	if !ok {
-		err = fmt.Errorf("Exec: Can not find %v session ", sessionKey)
+		err = fmt.Errorf("exec: can not find %v session ", sessionKey)
 		return
 	}
 
 	if !httpstream.IsUpgradeRequest(request.Request) {
-		err = fmt.Errorf("Request was not an upgrade")
+		err = fmt.Errorf("request was not an upgrade")
 		return
 	}
 
