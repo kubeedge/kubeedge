@@ -159,12 +159,9 @@ type Edged struct {
 	//RegisterNodeNamespace indicates register node namespace
 	// default "default"
 	RegisterNodeNamespace string `json:"registerNodeNamespace,omitempty"`
-	// CustomInterfaceEnabled enables the use of a custom network interface for obtaining the IP address
-	// default false
-	CustomInterfaceEnabled bool `json:"customInterfaceEnabled,omitempty"`
 	// CustomInterfaceName indicates the name of the network interface used for obtaining the IP address
 	// default ""
-	CustomInterfaceName string `json:"interfaceName,omitempty"`
+	CustomInterfaceName string `json:"customInterfaceName,omitempty"`
 	// ConcurrentConsumers indicates concurrent consumers for pod add or remove operation
 	// default 5
 	ConcurrentConsumers int `json:"concurrentConsumers,omitempty"`
