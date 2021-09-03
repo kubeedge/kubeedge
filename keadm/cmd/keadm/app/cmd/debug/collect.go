@@ -87,7 +87,7 @@ func ExecuteCollect(collectOptions *common.CollectOptions) error {
 	if err != nil {
 		return err
 	}
-	printDetail(fmt.Sprintf("create tmp file: %s", tmpName))
+	printDetail(fmt.Sprintf("Create tmp file: %s", tmpName))
 
 	err = collectSystemData(fmt.Sprintf("%s/system", tmpName))
 	if err != nil {
@@ -169,7 +169,7 @@ func makeDirTmp() (string, string, error) {
 
 // collect system data
 func collectSystemData(tmpPath string) error {
-	printDetail(fmt.Sprintf("create tmp file: %s", tmpPath))
+	printDetail(fmt.Sprintf("Create tmp file: %s", tmpPath))
 	err := os.Mkdir(tmpPath, os.ModePerm)
 	if err != nil {
 		return err
@@ -225,7 +225,7 @@ func collectSystemData(tmpPath string) error {
 
 // collect edgecore data
 func collectEdgecoreData(tmpPath string, config *v1alpha1.EdgeCoreConfig, ops *common.CollectOptions) error {
-	printDetail(fmt.Sprintf("create tmp file: %s", tmpPath))
+	printDetail(fmt.Sprintf("Create tmp file: %s", tmpPath))
 	err := os.Mkdir(tmpPath, os.ModePerm)
 	if err != nil {
 		return err
@@ -265,7 +265,7 @@ func collectEdgecoreData(tmpPath string, config *v1alpha1.EdgeCoreConfig, ops *c
 			return err
 		}
 	} else {
-		printDetail(fmt.Sprintf("not found cert config, use default path: %s", tmpPath))
+		printDetail(fmt.Sprintf("Not found cert config, use default path: %s", tmpPath))
 		if err = CopyFile(common.DefaultCertPath+"/", tmpPath); err != nil {
 			return err
 		}
@@ -276,7 +276,7 @@ func collectEdgecoreData(tmpPath string, config *v1alpha1.EdgeCoreConfig, ops *c
 			return err
 		}
 	} else {
-		printDetail(fmt.Sprintf("not found ca config, use default path: %s", tmpPath))
+		printDetail(fmt.Sprintf("Not found ca config, use default path: %s", tmpPath))
 		if err = CopyFile(constants.DefaultCAKeyFile, tmpPath); err != nil {
 			return err
 		}
@@ -290,7 +290,7 @@ func collectEdgecoreData(tmpPath string, config *v1alpha1.EdgeCoreConfig, ops *c
 
 // collect runtime/docker data
 func collectRuntimeData(tmpPath string) error {
-	printDetail(fmt.Sprintf("create tmp file: %s", tmpPath))
+	printDetail(fmt.Sprintf("Create tmp file: %s", tmpPath))
 	err := os.Mkdir(tmpPath, os.ModePerm)
 	if err != nil {
 		return err

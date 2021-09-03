@@ -69,9 +69,9 @@ func (c *WSClient) Connect() (conn.Connection, error) {
 	if resp != nil {
 		body, errRead := ioutil.ReadAll(resp.Body)
 		if errRead == nil {
-			respMsg = fmt.Sprintf("response code: %d, response body: %s", resp.StatusCode, string(body))
+			respMsg = fmt.Sprintf("Response code: %d, response body: %s", resp.StatusCode, string(body))
 		} else {
-			respMsg = fmt.Sprintf("response code: %d", resp.StatusCode)
+			respMsg = fmt.Sprintf("Response code: %d", resp.StatusCode)
 		}
 		resp.Body.Close()
 	}

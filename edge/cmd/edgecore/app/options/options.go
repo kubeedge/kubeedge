@@ -48,7 +48,7 @@ func (o *EdgeCoreOptions) Validate() []error {
 	var errs []error
 	if !validation.FileIsExist(o.ConfigFile) {
 		errs = append(errs, field.Required(field.NewPath("config"),
-			fmt.Sprintf("config file %v not exist. For the configuration file format, please refer to --minconfig and --defaultconfig command", o.ConfigFile)))
+			fmt.Sprintf("Config file %v not exist. For the configuration file format, please refer to --minconfig and --defaultconfig command", o.ConfigFile)))
 	}
 	return errs
 }

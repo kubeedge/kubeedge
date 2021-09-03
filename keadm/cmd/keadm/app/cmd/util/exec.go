@@ -30,7 +30,7 @@ func (cmd *Command) Exec() error {
 	cmd.Cmd.Stdout = &stdoutBuf
 	cmd.Cmd.Stderr = &stderrBuf
 
-	errString := fmt.Sprintf("failed to exec '%s'", cmd.GetCommand())
+	errString := fmt.Sprintf("Failed to exec '%s'", cmd.GetCommand())
 
 	err := cmd.Cmd.Start()
 	if err != nil {

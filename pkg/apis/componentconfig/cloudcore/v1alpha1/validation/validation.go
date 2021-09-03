@@ -89,7 +89,7 @@ func ValidateModuleCloudHub(c v1alpha1.CloudHub) field.ErrorList {
 	if len(s) > 1 && !utilvalidation.FileIsExist(path.Dir(s[1])) {
 		if err := os.MkdirAll(path.Dir(s[1]), os.ModePerm); err != nil {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("address"),
-				c.UnixSocket.Address, fmt.Sprintf("create unixSocketAddress %v dir %v error: %v",
+				c.UnixSocket.Address, fmt.Sprintf("Create unixSocketAddress %v dir %v error: %v",
 					c.UnixSocket.Address, path.Dir(s[1]), err)))
 		}
 	}

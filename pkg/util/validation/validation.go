@@ -40,5 +40,5 @@ func IsValidPortNum(port int) []string {
 // InclusiveRangeError returns a string explanation of a numeric "must be
 // between" validation failure.
 func InclusiveRangeError(lo, hi int) string {
-	return fmt.Sprintf(`must be between %d and %d, inclusive`, lo, hi)
+	return fmt.Sprintf(`Must be between %d and %d, inclusive`, lo, hi)
 }

@@ -51,7 +51,7 @@ func ValidateDataBase(db v1alpha1.DataBase) field.ErrorList {
 	if !utilvalidation.FileIsExist(sourceDir) {
 		if err := os.MkdirAll(sourceDir, os.ModePerm); err != nil {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("DataSource"), db.DataSource,
-				fmt.Sprintf("create DataSoure dir %v error ", sourceDir)))
+				fmt.Sprintf("Create DataSoure dir %v error ", sourceDir)))
 		}
 	}
 	return allErrs
