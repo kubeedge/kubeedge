@@ -590,7 +590,7 @@ func (mh *MessageHandle) deleteSuccessPoint(resourceNamespace, objectSyncName st
 func (mh *MessageHandle) getNodeConnection(nodeid string) (hubio.CloudHubIO, error) {
 	conn, ok := mh.nodeConns.Load(nodeid)
 	if !ok {
-		return nil, fmt.Errorf("Failed to get connection for node: %s", nodeid)
+		return nil, fmt.Errorf("failed to get connection for node: %s", nodeid)
 	}
 
 	return conn.(hubio.CloudHubIO), nil

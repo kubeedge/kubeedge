@@ -298,7 +298,7 @@ func (a *Agent) Generate(ctx context.Context, verb applicationVerb, option inter
 func (a *Agent) Apply(app *Application) error {
 	store, ok := a.Applications.Load(app.Identifier())
 	if !ok {
-		return fmt.Errorf("Application %v has not been registered to agent", app.String())
+		return fmt.Errorf("application %v has not been registered to agent", app.String())
 	}
 	app = store.(*Application)
 	switch app.getStatus() {
