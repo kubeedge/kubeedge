@@ -487,7 +487,6 @@ func (uc *UpstreamController) updateNodeStatus() {
 				}
 
 				if getNode.Annotations == nil {
-					klog.Warningf("node annotations is nil map, new a map for it. namespace: %s, name: %s", getNode.Namespace, getNode.Name)
 					getNode.Annotations = make(map[string]string)
 				}
 				for name, v := range nodeStatusRequest.ExtendResources {
@@ -771,7 +770,6 @@ func (uc *UpstreamController) updateNode() {
 				}
 				// update node labels
 				if getNode.Labels == nil {
-					klog.Warningf("node labels is nil map, new a map for it. namespace: %s, name: %s", getNode.Namespace, getNode.Name)
 					getNode.Labels = make(map[string]string)
 				}
 				for key, value := range noderequest.Labels {
@@ -779,7 +777,6 @@ func (uc *UpstreamController) updateNode() {
 				}
 
 				if getNode.Annotations == nil {
-					klog.Warningf("node annotations is nil map, new a map for it. namespace: %s, name: %s", getNode.Namespace, getNode.Name)
 					getNode.Annotations = make(map[string]string)
 				}
 				for k, v := range noderequest.Annotations {
