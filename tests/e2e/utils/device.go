@@ -337,19 +337,7 @@ func NewLedDeviceInstance(nodeSelector string) v1alpha2.Device {
 			DeviceModelRef: &v12.LocalObjectReference{
 				Name: "led-light",
 			},
-			NodeSelector: &v12.NodeSelector{
-				NodeSelectorTerms: []v12.NodeSelectorTerm{
-					{
-						MatchExpressions: []v12.NodeSelectorRequirement{
-							{
-								Key:      "",
-								Operator: v12.NodeSelectorOpIn,
-								Values:   []string{nodeSelector},
-							},
-						},
-					},
-				},
-			},
+			NodeName: nodeSelector,
 		},
 		Status: v1alpha2.DeviceStatus{
 			Twins: []v1alpha2.Twin{
@@ -392,19 +380,7 @@ func NewMockInstance(nodeSelector string) v1alpha2.Device {
 			DeviceModelRef: &v12.LocalObjectReference{
 				Name: "mock-temp-sensor-model",
 			},
-			NodeSelector: &v12.NodeSelector{
-				NodeSelectorTerms: []v12.NodeSelectorTerm{
-					{
-						MatchExpressions: []v12.NodeSelectorRequirement{
-							{
-								Key:      "",
-								Operator: v12.NodeSelectorOpIn,
-								Values:   []string{nodeSelector},
-							},
-						},
-					},
-				},
-			},
+			NodeName: nodeSelector,
 		},
 		Status: v1alpha2.DeviceStatus{
 			Twins: []v1alpha2.Twin{
@@ -473,20 +449,8 @@ func NewModbusDeviceInstance(nodeSelector string) v1alpha2.Device {
 			DeviceModelRef: &v12.LocalObjectReference{
 				Name: "sensor-tag-model",
 			},
-			NodeSelector: &v12.NodeSelector{
-				NodeSelectorTerms: []v12.NodeSelectorTerm{
-					{
-						MatchExpressions: []v12.NodeSelectorRequirement{
-							{
-								Key:      "",
-								Operator: v12.NodeSelectorOpIn,
-								Values:   []string{nodeSelector},
-							},
-						},
-					},
-				},
-			},
 			PropertyVisitors: propertyVisitors,
+			NodeName:         nodeSelector,
 		},
 		Status: v1alpha2.DeviceStatus{
 			Twins: []v1alpha2.Twin{
@@ -621,25 +585,13 @@ func NewBluetoothDeviceInstance(nodeSelector string) v1alpha2.Device {
 			DeviceModelRef: &v12.LocalObjectReference{
 				Name: "cc2650-sensortag",
 			},
-			NodeSelector: &v12.NodeSelector{
-				NodeSelectorTerms: []v12.NodeSelectorTerm{
-					{
-						MatchExpressions: []v12.NodeSelectorRequirement{
-							{
-								Key:      "",
-								Operator: v12.NodeSelectorOpIn,
-								Values:   []string{nodeSelector},
-							},
-						},
-					},
-				},
-			},
 			Protocol: v1alpha2.ProtocolConfig{
 				Bluetooth: &v1alpha2.ProtocolConfigBluetooth{
 					MACAddress: "BC:6A:29:AE:CC:96",
 				},
 			},
 			PropertyVisitors: propertyVisitors,
+			NodeName:         nodeSelector,
 		},
 		Status: v1alpha2.DeviceStatus{
 			Twins: []v1alpha2.Twin{
@@ -699,19 +651,6 @@ func NewCustomizedDeviceInstance(nodeSelector string) v1alpha2.Device {
 			DeviceModelRef: &v12.LocalObjectReference{
 				Name: "sensor-tag-customized-model",
 			},
-			NodeSelector: &v12.NodeSelector{
-				NodeSelectorTerms: []v12.NodeSelectorTerm{
-					{
-						MatchExpressions: []v12.NodeSelectorRequirement{
-							{
-								Key:      "",
-								Operator: v12.NodeSelectorOpIn,
-								Values:   []string{nodeSelector},
-							},
-						},
-					},
-				},
-			},
 			Protocol: v1alpha2.ProtocolConfig{
 				CustomizedProtocol: &v1alpha2.ProtocolConfigCustomized{
 					ProtocolName: "CustomizedProtocol1",
@@ -728,6 +667,7 @@ func NewCustomizedDeviceInstance(nodeSelector string) v1alpha2.Device {
 				},
 			},
 			PropertyVisitors: propertyVisitors,
+			NodeName:         nodeSelector,
 		},
 		Status: v1alpha2.DeviceStatus{
 			Twins: []v1alpha2.Twin{
@@ -767,19 +707,7 @@ func UpdatedLedDeviceInstance(nodeSelector string) v1alpha2.Device {
 			DeviceModelRef: &v12.LocalObjectReference{
 				Name: "led-light",
 			},
-			NodeSelector: &v12.NodeSelector{
-				NodeSelectorTerms: []v12.NodeSelectorTerm{
-					{
-						MatchExpressions: []v12.NodeSelectorRequirement{
-							{
-								Key:      "",
-								Operator: v12.NodeSelectorOpIn,
-								Values:   []string{nodeSelector},
-							},
-						},
-					},
-				},
-			},
+			NodeName: nodeSelector,
 		},
 		Status: v1alpha2.DeviceStatus{
 			Twins: []v1alpha2.Twin{
@@ -847,19 +775,6 @@ func UpdatedModbusDeviceInstance(nodeSelector string) v1alpha2.Device {
 			DeviceModelRef: &v12.LocalObjectReference{
 				Name: "sensor-tag-model",
 			},
-			NodeSelector: &v12.NodeSelector{
-				NodeSelectorTerms: []v12.NodeSelectorTerm{
-					{
-						MatchExpressions: []v12.NodeSelectorRequirement{
-							{
-								Key:      "",
-								Operator: v12.NodeSelectorOpIn,
-								Values:   []string{nodeSelector},
-							},
-						},
-					},
-				},
-			},
 			Protocol: v1alpha2.ProtocolConfig{
 				Modbus: &v1alpha2.ProtocolConfigModbus{
 					SlaveID: 1,
@@ -874,7 +789,6 @@ func UpdatedModbusDeviceInstance(nodeSelector string) v1alpha2.Device {
 					},
 				},
 			},
-			PropertyVisitors: propertyVisitors,
 			Data: v1alpha2.DeviceData{
 				DataProperties: []v1alpha2.DataProperty{
 					{
@@ -886,6 +800,8 @@ func UpdatedModbusDeviceInstance(nodeSelector string) v1alpha2.Device {
 				},
 				DataTopic: "$ke/events/+/device/customized/update",
 			},
+			PropertyVisitors: propertyVisitors,
+			NodeName:         nodeSelector,
 		},
 		Status: v1alpha2.DeviceStatus{
 			Twins: []v1alpha2.Twin{
@@ -1019,25 +935,13 @@ func UpdatedBluetoothDeviceInstance(nodeSelector string) v1alpha2.Device {
 			DeviceModelRef: &v12.LocalObjectReference{
 				Name: "cc2650-sensortag",
 			},
-			NodeSelector: &v12.NodeSelector{
-				NodeSelectorTerms: []v12.NodeSelectorTerm{
-					{
-						MatchExpressions: []v12.NodeSelectorRequirement{
-							{
-								Key:      "",
-								Operator: v12.NodeSelectorOpIn,
-								Values:   []string{nodeSelector},
-							},
-						},
-					},
-				},
-			},
 			Protocol: v1alpha2.ProtocolConfig{
 				Bluetooth: &v1alpha2.ProtocolConfigBluetooth{
 					MACAddress: "BC:6A:29:AE:CC:69",
 				},
 			},
 			PropertyVisitors: propertyVisitors,
+			NodeName:         nodeSelector,
 		},
 		Status: v1alpha2.DeviceStatus{
 			Twins: []v1alpha2.Twin{

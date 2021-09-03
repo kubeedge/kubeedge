@@ -38,10 +38,9 @@ type DeviceSpec struct {
 	// on edge node.
 	// +optional
 	Data DeviceData `json:"data,omitempty"`
-	// NodeSelector indicates the binding preferences between devices and nodes.
-	// Refer to k8s.io/kubernetes/pkg/apis/core NodeSelector for more details
+	// NodeName indicates the binding preferences between device and node.
 	// +optional
-	NodeSelector *v1.NodeSelector `json:"nodeSelector,omitempty"`
+	NodeName string `json:"nodeName,omitempty"`
 }
 
 // Only one of its members may be specified.
