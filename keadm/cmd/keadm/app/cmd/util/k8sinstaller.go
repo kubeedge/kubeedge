@@ -75,11 +75,11 @@ func (ks *K8SInstTool) InstallTools() error {
 func createKubeEdgeNs(kubeConfig, master string) error {
 	config, err := BuildConfig(kubeConfig, master)
 	if err != nil {
-		return fmt.Errorf("Failed to build config, err: %v", err)
+		return fmt.Errorf("failed to build config, err: %v", err)
 	}
 	client, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return fmt.Errorf("Failed to create client, err: %v", err)
+		return fmt.Errorf("failed to create client, err: %v", err)
 	}
 	ns := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -105,7 +105,7 @@ func createKubeEdgeNs(kubeConfig, master string) error {
 func installCRDs(ks *K8SInstTool) error {
 	config, err := BuildConfig(ks.KubeConfig, ks.Master)
 	if err != nil {
-		return fmt.Errorf("Failed to build config, err: %v", err)
+		return fmt.Errorf("failed to build config, err: %v", err)
 	}
 
 	crdClient, err := crdclient.NewForConfig(config)

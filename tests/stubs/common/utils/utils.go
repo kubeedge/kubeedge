@@ -42,7 +42,7 @@ func BuildResource(nodeID, namespace, resourceType, resourceID string) (resource
 func GetNodeID(msg model.Message) (string, error) {
 	sli := strings.Split(msg.GetResource(), constants.ResourceSep)
 	if len(sli) <= testconstants.ResourceNodeIDIndex {
-		return "", fmt.Errorf("Node id not found")
+		return "", fmt.Errorf("node id not found")
 	}
 	return sli[testconstants.ResourceNodeIDIndex], nil
 }
@@ -51,7 +51,7 @@ func GetNodeID(msg model.Message) (string, error) {
 func GetNamespace(msg model.Message) (string, error) {
 	sli := strings.Split(msg.GetResource(), constants.ResourceSep)
 	if len(sli) <= testconstants.ResourceNamespaceIndex {
-		return "", fmt.Errorf("Namespace not found")
+		return "", fmt.Errorf("namespace not found")
 	}
 	return sli[testconstants.ResourceNamespaceIndex], nil
 }
@@ -60,7 +60,7 @@ func GetNamespace(msg model.Message) (string, error) {
 func GetResourceType(msg model.Message) (string, error) {
 	sli := strings.Split(msg.GetResource(), constants.ResourceSep)
 	if len(sli) <= testconstants.ResourceResourceTypeIndex {
-		return "", fmt.Errorf("Resource type not found")
+		return "", fmt.Errorf("resource type not found")
 	}
 	return sli[testconstants.ResourceResourceTypeIndex], nil
 }
@@ -69,7 +69,7 @@ func GetResourceType(msg model.Message) (string, error) {
 func GetResourceName(msg model.Message) (string, error) {
 	sli := strings.Split(msg.GetResource(), constants.ResourceSep)
 	if len(sli) <= testconstants.ResourceResourceNameIndex {
-		return "", fmt.Errorf("Resource name not found")
+		return "", fmt.Errorf("resource name not found")
 	}
 	return sli[testconstants.ResourceResourceNameIndex], nil
 }
@@ -83,6 +83,6 @@ func ParseResourceEdge(resource string, operation string) (string, string, strin
 	} else if operation == model.QueryOperation || operation == model.ResponseOperation && len(resourceSplits) == 2 {
 		return resourceSplits[0], resourceSplits[1], "", nil
 	} else {
-		return "", "", "", fmt.Errorf("Resource: %s format incorrect, or Operation: %s is not query/response", resource, operation)
+		return "", "", "", fmt.Errorf("resource: %s format incorrect, or Operation: %s is not query/response", resource, operation)
 	}
 }

@@ -284,7 +284,7 @@ func initializeCSINode(host volume.VolumeHost) error {
 			klog.V(4).Infof("Initializing migrated drivers on CSINodeInfo")
 			err := nim.InitializeCSINodeWithAnnotation()
 			if err != nil {
-				kvh.SetKubeletError(fmt.Errorf("Failed to initialize CSINodeInfo: %v", err))
+				kvh.SetKubeletError(fmt.Errorf("failed to initialize CSINodeInfo: %v", err))
 				klog.Errorf("Failed to initialize CSINodeInfo: %v", err)
 				return false, nil
 			}
@@ -731,7 +731,7 @@ func highestSupportedVersion(versions []string) (*utilversion.Version, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("None of the CSI versions reported by this driver are supported")
+	return nil, fmt.Errorf("none of the CSI versions reported by this driver are supported")
 }
 
 // Only drivers that implement CSI 0.x are allowed to use deprecated socket dir.

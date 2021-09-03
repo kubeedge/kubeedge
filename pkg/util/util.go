@@ -96,7 +96,7 @@ func ValidateNodeIP(nodeIP net.IP) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("Node IP: %q not found in the host's network interfaces", nodeIP.String())
+	return fmt.Errorf("node IP: %q not found in the host's network interfaces", nodeIP.String())
 }
 
 //Command executes command and returns output
