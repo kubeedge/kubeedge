@@ -118,7 +118,7 @@ type ProtocolConfig struct {
 
 type ProtocolConfigModbus struct {
 	// Required. 0-255
-	SlaveID int64 `json:"slaveID,omitempty"`
+	SlaveID *int64 `json:"slaveID,omitempty"`
 }
 
 // Only one of COM or TCP may be specified.
