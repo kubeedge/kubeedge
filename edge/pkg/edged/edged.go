@@ -536,7 +536,7 @@ func newEdged(enable bool) (*edged, error) {
 	// create a log manager
 	logManager, err := logs.NewContainerLogManager(runtimeService, ed.os, "10Mi", 5)
 	if err != nil {
-		return nil, fmt.Errorf("New container log manager failed, err: %s", err.Error())
+		return nil, fmt.Errorf("new container log manager failed, err: %s", err.Error())
 	}
 
 	ed.logManager = logManager
@@ -568,7 +568,7 @@ func newEdged(enable bool) (*edged, error) {
 		ed.runtimeClassManager,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("New generic runtime manager failed, err: %s", err.Error())
+		return nil, fmt.Errorf("new generic runtime manager failed, err: %s", err.Error())
 	}
 
 	if edgedconfig.Config.CgroupsPerQOS && edgedconfig.Config.CgroupRoot == "" {
@@ -1516,7 +1516,7 @@ func (e *edged) HandlePodCleanups() error {
 	e.removeOrphanedPodStatuses(pods)
 	err = e.cleanupOrphanedPodDirs(pods, containerRunningPods)
 	if err != nil {
-		return fmt.Errorf("Failed cleaning up orphaned pod directories: %s", err.Error())
+		return fmt.Errorf("failed cleaning up orphaned pod directories: %s", err.Error())
 	}
 
 	return nil
