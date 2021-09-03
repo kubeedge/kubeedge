@@ -70,8 +70,10 @@ import (
 	"k8s.io/kubernetes/third_party/forked/golang/expansion"
 	utilfile "k8s.io/utils/path"
 
+	"github.com/kubeedge/kubeedge/common/constants"
 	edgedconfig "github.com/kubeedge/kubeedge/edge/pkg/edged/config"
 	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
+	netutil "k8s.io/apimachinery/pkg/util/net"
 )
 
 const (
@@ -740,8 +742,12 @@ func (e *edged) podFieldSelectorRuntimeValue(fs *v1.ObjectFieldSelector, pod *v1
 	case "status.hostIP":
 		var hostIP string
 		var err error
-		if e.customInterfaceEnabled {
-			hostIP, err = e.getHostIPByInterface()
+		var ip net.IP
+		if e.customInterfaceName != constants.DefaultCustomInterfaceName {
+			ip, err = netutil.ChooseBindAddressForInterface(e.customInterfaceName)
+			if ip != nil {
+				hostIP = ip.String()
+			}
 		} else {
 			hostIP, err = pkgutil.GetLocalIP(e.nodeName)
 		}
@@ -797,9 +803,12 @@ func (e *edged) convertStatusToAPIStatus(pod *v1.Pod, podStatus *kubecontainer.P
 	var apiPodStatus v1.PodStatus
 	var hostIP string
 	var err error
-
-	if e.customInterfaceEnabled {
-		hostIP, err = e.getHostIPByInterface()
+	var ip net.IP
+	if e.customInterfaceName != constants.DefaultCustomInterfaceName {
+		ip, err = netutil.ChooseBindAddressForInterface(e.customInterfaceName)
+		if ip != nil {
+			hostIP = ip.String()
+		}
 	} else {
 		hostIP, err = pkgutil.GetLocalIP(e.nodeName)
 	}
