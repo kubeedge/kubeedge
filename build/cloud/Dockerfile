@@ -12,4 +12,6 @@ FROM alpine:3.11
 
 COPY --from=builder /usr/local/bin/cloudcore /usr/local/bin/cloudcore
 
+RUN apk add iptables
+
 ENTRYPOINT ["cloudcore"]
