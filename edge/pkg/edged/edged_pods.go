@@ -710,7 +710,7 @@ func (e *edged) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container, p
 					if optional {
 						continue
 					}
-					return result, fmt.Errorf("Couldn't find key %v in ConfigMap %v/%v", key, pod.Namespace, name)
+					return result, fmt.Errorf("couldn't find key %v in ConfigMap %v/%v", key, pod.Namespace, name)
 				}
 			}
 		}

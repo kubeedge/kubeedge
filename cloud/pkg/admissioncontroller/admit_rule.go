@@ -79,7 +79,7 @@ func validateRule(rule *rulesv1.Rule) error {
 		}
 	}
 	if !exist {
-		return fmt.Errorf("The rule which is from source ruleEndpoint type %s to target ruleEndpoint type %s is not validate ",
+		return fmt.Errorf("the rule which is from source ruleEndpoint type %s to target ruleEndpoint type %s is not validate ",
 			sourceEndpoint.Spec.RuleEndpointType, targetEndpoint.Spec.RuleEndpointType)
 	}
 	return nil
