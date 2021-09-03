@@ -191,18 +191,18 @@ func BuildConfig(kubeConfig, master string) (conf *rest.Config, err error) {
 func isK8SComponentInstalled(kubeConfig, master string) error {
 	config, err := BuildConfig(kubeConfig, master)
 	if err != nil {
-		return fmt.Errorf("Failed to build config, err: %v", err)
+		return fmt.Errorf("failed to build config, err: %v", err)
 	}
 
 	discoveryClient, err := discovery.NewDiscoveryClientForConfig(config)
 	if err != nil {
-		return fmt.Errorf("Failed to init discovery client, err: %v", err)
+		return fmt.Errorf("failed to init discovery client, err: %v", err)
 	}
 
 	discoveryClient.RESTClient().Post()
 	serverVersion, err := discoveryClient.ServerVersion()
 	if err != nil {
-		return fmt.Errorf("Failed to get the version of K8s master, please check whether K8s was successfully installed, err: %v", err)
+		return fmt.Errorf("failed to get the version of K8s master, please check whether K8s was successfully installed, err: %v", err)
 	}
 
 	return checkKubernetesVersion(serverVersion)
@@ -214,13 +214,13 @@ func checkKubernetesVersion(serverVersion *version.Info) error {
 
 	k8sMinorVersion, err := strconv.Atoi(minorVersion)
 	if err != nil {
-		return fmt.Errorf("Could not parse the minor version of K8s, error: %s", err)
+		return fmt.Errorf("could not parse the minor version of K8s, error: %s", err)
 	}
 	if k8sMinorVersion >= types.DefaultK8SMinimumVersion {
 		return nil
 	}
 
-	return fmt.Errorf("Your minor version of K8s is lower than %d, please reinstall newer version", types.DefaultK8SMinimumVersion)
+	return fmt.Errorf("your minor version of K8s is lower than %d, please reinstall newer version", types.DefaultK8SMinimumVersion)
 }
 
 // installKubeEdge downloads the provided version of KubeEdge.
@@ -610,7 +610,7 @@ func askForconfirm() (bool, error) {
 	} else if s == "n" {
 		return false, nil
 	} else {
-		return false, fmt.Errorf("Invalid Input")
+		return false, fmt.Errorf("invalid Input")
 	}
 }
 

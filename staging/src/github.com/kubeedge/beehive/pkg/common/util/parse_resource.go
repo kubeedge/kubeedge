@@ -16,7 +16,7 @@ func ParseResourceEdge(resource string, operation string) (string, string, strin
 	} else if operation == model.QueryOperation || operation == model.ResponseOperation && len(resourceSplits) == 2 {
 		return resourceSplits[0], resourceSplits[1], "", nil
 	} else {
-		return "", "", "", fmt.Errorf("Resource: %s format incorrect, or Operation: %s is not query/response", resource, operation)
+		return "", "", "", fmt.Errorf("resource: %s format incorrect, or Operation: %s is not query/response", resource, operation)
 	}
 }
 
@@ -29,7 +29,7 @@ func ParseResourceMaster(resource string, operation string) (string, string, str
 	} else if operation == model.QueryOperation || operation == model.ResponseOperation && len(resourceSplits) == 6 {
 		return resourceSplits[1], resourceSplits[3], resourceSplits[4], resourceSplits[5], "", nil
 	} else {
-		return "", "", "", "", "", fmt.Errorf("Resource: %s format incorrect, or Operation: %s is not query/response", resource, operation)
+		return "", "", "", "", "", fmt.Errorf("resource: %s format incorrect, or Operation: %s is not query/response", resource, operation)
 
 	}
 }
