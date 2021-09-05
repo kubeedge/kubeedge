@@ -43,6 +43,8 @@ spec:
         - name: cloudcore
           image: kubeedge/cloudcore:{tag}
           imagePullPolicy: IfNotPresent
+          securityContext:
+            privileged: true
           ports:
             - containerPort: 10000
               name: cloudhub
