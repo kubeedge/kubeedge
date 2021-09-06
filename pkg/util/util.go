@@ -26,7 +26,6 @@ import (
 	"strings"
 
 	utilnet "k8s.io/apimachinery/pkg/util/net"
-
 	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/apis/core/validation"
 
@@ -60,28 +59,6 @@ func GetLocalIP(hostName string) (string, error) {
 		}
 	}
 	return ipAddr.String(), nil
-}
-
-// GetNodeIP returns node ip
-func GetNodeIP(hostname string, interfaceName string) (string, error) {
-	var hostIP string
-	var err error
-	var ip net.IP
-	if interfaceName != "" {
-		ip, err = utilnet.ChooseBindAddressForInterface(interfaceName)
-		if err != nil {
-			klog.Errorf("Cannot obtain the IP Address using the interface %q: %+v", interfaceName, err)
-			return "", err
-		}
-		hostIP = ip.String()
-	} else {
-		hostIP, err = GetLocalIP(hostname)
-		if err != nil {
-			klog.Errorf("Cannot obtain the IP Address using the hostname %q: %+v", hostname, err)
-			return "", err
-		}
-	}
-	return hostIP, nil
 }
 
 // ValidateNodeIP validates given node IP belongs to the current host

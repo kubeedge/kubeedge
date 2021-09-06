@@ -262,7 +262,7 @@ func (ctx *ChannelContext) SendToGroupSync(moduleType string, message model.Mess
 		case <-sendTimer.C:
 			cleanup()
 			if timeoutCounter != 0 {
-				return  fmt.Errorf("timeout to send message, several %d timeout when send", timeoutCounter)
+				return fmt.Errorf("timeout to send message, several %d timeout when send", timeoutCounter)
 			}
 			klog.Error("Timeout to sendToGroupsync message")
 			return fmt.Errorf("timeout to send message")
