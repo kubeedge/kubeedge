@@ -34,7 +34,6 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/client"
 	"io"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -1439,22 +1438,20 @@ func (pk *podKillerWithChannel) PerformPodKillingWork() {
 
 // GetNodeIP returns node ip
 func (e *edged) getNodeIP(hostname string, interfaceName string) (string, error) {
-	var hostIP string
-	var err error
-	var ip net.IP
 	if interfaceName != "" {
-		ip, err = utilnet.ChooseBindAddressForInterface(interfaceName)
+		ip, err := utilnet.ChooseBindAddressForInterface(interfaceName)
 		if err != nil {
 			klog.Errorf("Cannot obtain the IP Address using the interface %q: %+v", interfaceName, err)
 			return "", err
 		}
-		hostIP = ip.String()
-	} else {
-		hostIP, err = pkgutil.GetLocalIP(hostname)
-		if err != nil {
-			klog.Errorf("Cannot obtain the IP Address using the hostname %q: %+v", hostname, err)
-			return "", err
-		}
+		return ip.String(), nil
 	}
+
+	hostIP, err := pkgutil.GetLocalIP(hostname)
+	if err != nil {
+		klog.Errorf("Cannot obtain the IP Address using the hostname %q: %+v", hostname, err)
+		return "", err
+	}
+
 	return hostIP, nil
 }
