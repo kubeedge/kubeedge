@@ -89,7 +89,7 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 				klog.Infof("Getting IP address by custom interface: %s", config.Modules.Edged.CustomInterfaceName)
 				ip, err := netutil.ChooseBindAddressForInterface(config.Modules.Edged.CustomInterfaceName)
 				if err != nil {
-					klog.Errorf("Failed to get IP address by custom interface: %s: %v", config.Modules.Edged.CustomInterfaceName, err)
+					klog.Errorf("Failed to get IP address by custom interface: %s: %s", config.Modules.Edged.CustomInterfaceName, err)
 					os.Exit(1)
 				}
 				config.Modules.Edged.NodeIP = ip.String()
