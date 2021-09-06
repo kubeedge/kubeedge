@@ -47,6 +47,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	utilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/apimachinery/pkg/util/sets"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
@@ -737,11 +738,7 @@ func (e *edged) podFieldSelectorRuntimeValue(fs *v1.ObjectFieldSelector, pod *v1
 	case "spec.serviceAccountName":
 		return pod.Spec.ServiceAccountName, nil
 	case "status.hostIP":
-		hostIP, err := pkgutil.GetLocalIP(e.nodeName)
-		if err != nil {
-			return "", err
-		}
-		return hostIP, nil
+		return e.getNodeIP(e.nodeName, e.customInterfaceName)
 	case "status.podIP":
 		return podIP, nil
 	case "status.podIPs":
@@ -788,8 +785,7 @@ func (e *edged) makeBlockVolumes(pod *v1.Pod, container *v1.Container, podVolume
 // alter the kubelet state at all.
 func (e *edged) convertStatusToAPIStatus(pod *v1.Pod, podStatus *kubecontainer.PodStatus) *v1.PodStatus {
 	var apiPodStatus v1.PodStatus
-
-	hostIP, err := pkgutil.GetLocalIP(e.nodeName)
+	hostIP, err := e.getNodeIP(e.nodeName, e.customInterfaceName)
 	if err != nil {
 		klog.Errorf("Failed to get host IP: %v", err)
 	} else {
@@ -1437,4 +1433,24 @@ func (pk *podKillerWithChannel) PerformPodKillingWork() {
 			}(apiPod, runningPod)
 		}
 	}
+}
+
+// GetNodeIP returns node ip
+func (e *edged) getNodeIP(hostname string, interfaceName string) (string, error) {
+	if interfaceName != "" {
+		ip, err := utilnet.ChooseBindAddressForInterface(interfaceName)
+		if err != nil {
+			klog.Errorf("Cannot obtain the IP Address using the interface %q: %+v", interfaceName, err)
+			return "", err
+		}
+		return ip.String(), nil
+	}
+
+	hostIP, err := pkgutil.GetLocalIP(hostname)
+	if err != nil {
+		klog.Errorf("Cannot obtain the IP Address using the hostname %q: %+v", hostname, err)
+		return "", err
+	}
+
+	return hostIP, nil
 }

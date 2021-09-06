@@ -179,6 +179,7 @@ type edged struct {
 	namespace                 string
 	nodeName                  string
 	runtimeCache              kubecontainer.RuntimeCache
+	customInterfaceName       string
 	uid                       types.UID
 	nodeStatusUpdateFrequency time.Duration
 	registrationCompleted     bool
@@ -444,6 +445,7 @@ func newEdged(enable bool) (*edged, error) {
 
 	ed := &edged{
 		nodeName:                  edgedconfig.Config.HostnameOverride,
+		customInterfaceName:       edgedconfig.Config.CustomInterfaceName,
 		namespace:                 edgedconfig.Config.RegisterNodeNamespace,
 		containerRuntimeName:      edgedconfig.Config.RuntimeType,
 		gpuPluginEnabled:          edgedconfig.Config.GPUPluginEnabled,
