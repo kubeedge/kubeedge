@@ -117,6 +117,7 @@ func UnsafeKindToResource(k string) string {
 	case "s":
 		return r + "es"
 	case "y":
+		// Rule: When a word ends with y, and the penultimate letter is a vowel, the plural form should change "y" to "ies"
 		if string(r[len(r)-2]) == "a" || string(r[len(r)-2]) == "e" || string(r[len(r)-2]) == "i" ||
 			string(r[len(r)-2]) == "o" || string(r[len(r)-2]) == "u" {
 			return r + "s"
