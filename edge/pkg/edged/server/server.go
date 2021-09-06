@@ -35,7 +35,9 @@ func NewServer(podManager podmanager.Manager) *Server {
 func (s *Server) ListenAndServe(host server.HostInterface, resourceAnalyzer stats.ResourceAnalyzer, enableCAdvisorJSONEndpoints bool) {
 	klog.Infof("starting to listen read-only on %s:%v", ServerAddr, constants.ServerPort)
 
-	kubeCfg := &config.KubeletConfiguration{}
+	kubeCfg := &config.KubeletConfiguration{
+		EnableDebuggingHandlers: true,
+	}
 	handler := server.NewServer(host, resourceAnalyzer, nil, kubeCfg)
 
 	server := &http.Server{
