@@ -33,7 +33,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -70,10 +69,8 @@ import (
 	"k8s.io/kubernetes/third_party/forked/golang/expansion"
 	utilfile "k8s.io/utils/path"
 
-	"github.com/kubeedge/kubeedge/common/constants"
 	edgedconfig "github.com/kubeedge/kubeedge/edge/pkg/edged/config"
 	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
-	netutil "k8s.io/apimachinery/pkg/util/net"
 )
 
 const (
@@ -740,21 +737,7 @@ func (e *edged) podFieldSelectorRuntimeValue(fs *v1.ObjectFieldSelector, pod *v1
 	case "spec.serviceAccountName":
 		return pod.Spec.ServiceAccountName, nil
 	case "status.hostIP":
-		var hostIP string
-		var err error
-		var ip net.IP
-		if e.customInterfaceName != constants.DefaultCustomInterfaceName {
-			ip, err = netutil.ChooseBindAddressForInterface(e.customInterfaceName)
-			if ip != nil {
-				hostIP = ip.String()
-			}
-		} else {
-			hostIP, err = pkgutil.GetLocalIP(e.nodeName)
-		}
-		if err != nil {
-			return "", err
-		}
-		return hostIP, nil
+		return pkgutil.GetNodeIP(e.nodeName, e.customInterfaceName)
 	case "status.podIP":
 		return podIP, nil
 	case "status.podIPs":
@@ -801,17 +784,7 @@ func (e *edged) makeBlockVolumes(pod *v1.Pod, container *v1.Container, podVolume
 // alter the kubelet state at all.
 func (e *edged) convertStatusToAPIStatus(pod *v1.Pod, podStatus *kubecontainer.PodStatus) *v1.PodStatus {
 	var apiPodStatus v1.PodStatus
-	var hostIP string
-	var err error
-	var ip net.IP
-	if e.customInterfaceName != constants.DefaultCustomInterfaceName {
-		ip, err = netutil.ChooseBindAddressForInterface(e.customInterfaceName)
-		if ip != nil {
-			hostIP = ip.String()
-		}
-	} else {
-		hostIP, err = pkgutil.GetLocalIP(e.nodeName)
-	}
+	hostIP, err := pkgutil.GetNodeIP(e.nodeName, e.customInterfaceName)
 	if err != nil {
 		klog.Errorf("Failed to get host IP: %v", err)
 	} else {
@@ -1459,30 +1432,4 @@ func (pk *podKillerWithChannel) PerformPodKillingWork() {
 			}(apiPod, runningPod)
 		}
 	}
-}
-
-// getHostIPByInterface gets the IP address of a the custom network interface
-func (e *edged) getHostIPByInterface() (string, error) {
-	iface, err := net.InterfaceByName(e.customInterfaceName)
-	if err != nil {
-		return "", fmt.Errorf("failed to get network interface: %v err:%v", e.customInterfaceName, err)
-	}
-	if iface == nil {
-		return "", fmt.Errorf("input iface is nil")
-	}
-
-	addrs, err := iface.Addrs()
-	if err != nil {
-		return "", err
-	}
-	for _, addr := range addrs {
-		ip, _, err := net.ParseCIDR(addr.String())
-		if err != nil {
-			continue
-		}
-		if ip.To4() != nil {
-			return ip.String(), nil
-		}
-	}
-	return "", fmt.Errorf("no ip and mask in this network card")
 }

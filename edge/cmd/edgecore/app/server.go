@@ -3,7 +3,6 @@ package app
 import (
 	"errors"
 	"fmt"
-	"net"
 	"os"
 
 	"github.com/mitchellh/go-ps"
@@ -15,7 +14,6 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin"
@@ -87,15 +85,14 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 
 			// Get edge node local ip only when the custiomInterfaceName has been set.
 			// Defaults to the local IP from the default interface by the default config
-			if config.Modules.Edged.CustomInterfaceName != constants.DefaultCustomInterfaceName {
-				var ip net.IP
-				var localIP string
+			if config.Modules.Edged.CustomInterfaceName != "" {
 				klog.Infof("Getting IP address by custom interface: %s", config.Modules.Edged.CustomInterfaceName)
-				ip, err = netutil.ChooseBindAddressForInterface(config.Modules.Edged.CustomInterfaceName)
-				if ip != nil {
-					localIP = ip.String()
+				ip, err := netutil.ChooseBindAddressForInterface(config.Modules.Edged.CustomInterfaceName)
+				if err != nil {
+					klog.Errorf("Failed to get IP address by custom interface: %s: %v", config.Modules.Edged.CustomInterfaceName, err)
+					os.Exit(1)
 				}
-				config.Modules.Edged.NodeIP = localIP
+				config.Modules.Edged.NodeIP = ip.String()
 			}
 			klog.Infof("Local IP: %s", config.Modules.Edged.NodeIP)
 
