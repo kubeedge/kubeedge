@@ -25,6 +25,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/test"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1/validation"
+	"github.com/kubeedge/kubeedge/pkg/features"
 	"github.com/kubeedge/kubeedge/pkg/util"
 	"github.com/kubeedge/kubeedge/pkg/util/flag"
 	"github.com/kubeedge/kubeedge/pkg/version"
@@ -61,9 +62,12 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 			if err != nil {
 				klog.Fatal(err)
 			}
-
 			if errs := validation.ValidateEdgeCoreConfiguration(config); len(errs) > 0 {
 				klog.Fatal(util.SpliceErrors(errs.ToAggregate().Errors()))
+			}
+
+			if err := features.DefaultMutableFeatureGate.SetFromMap(config.FeatureGates); err != nil {
+				klog.Fatal(err)
 			}
 
 			// To help debugging, immediately log version

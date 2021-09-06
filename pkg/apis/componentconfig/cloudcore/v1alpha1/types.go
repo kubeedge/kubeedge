@@ -36,6 +36,8 @@ type CloudCoreConfig struct {
 	// Modules indicates cloudCore modules config
 	// +Required
 	Modules *Modules `json:"modules,omitempty"`
+	// FeatureGates is a map of feature names to bools that enable or disable alpha/experimental features.
+	FeatureGates map[string]bool `json:"featureGates,omitempty"`
 }
 
 // KubeAPIConfig indicates the configuration for interacting with k8s server
