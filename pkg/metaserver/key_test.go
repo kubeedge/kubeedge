@@ -42,10 +42,6 @@ func TestKeyFuncObj(t *testing.T) {
 			attr:      []string{"", "v1", "KindFoo", "", "name-whatever"},
 			stdResult: "/core/v1/kindfoos/null/name-whatever",
 		},
-		{
-			attr:      []string{"", "v1", "KindFoo", "", "name-whatever"},
-			stdResult: "/core/v1/kindfoos/null/name-whatever",
-		},
 	}
 	for _, test := range cases {
 		t.Run("parseKey", func(t *testing.T) {
