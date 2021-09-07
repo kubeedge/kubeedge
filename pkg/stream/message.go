@@ -76,7 +76,7 @@ func (m *Message) Bytes() []byte {
 }
 
 func (m *Message) String() string {
-	return fmt.Sprintf("MESSAGE: connectid %v MessageType %s", m.ConnectID, m.MessageType)
+	return fmt.Sprintf("MESSAGE: ConnectID %v MessageType %s", m.ConnectID, m.MessageType)
 }
 
 func ReadMessageFromTunnel(r io.Reader) (*Message, error) {
@@ -93,7 +93,7 @@ func ReadMessageFromTunnel(r io.Reader) (*Message, error) {
 	if err != nil {
 		return nil, err
 	}
-	klog.V(6).Infof("Receive Tunnel message Connectid %d messageType %s data:%v string:[%v]",
+	klog.V(6).Infof("Receive Tunnel message connectID %d messageType %s data:%v string:[%v]",
 		connectID, MessageType(messageType), data, string(data))
 	return &Message{
 		ConnectID:   connectID,
