@@ -33,3 +33,31 @@ func TestSpliceErrors(t *testing.T) {
 		return
 	}
 }
+
+func TestConcatStrings(t *testing.T) {
+	cases := []struct {
+		args   []string
+		expect string
+	}{
+		{
+			args:   []string{},
+			expect: "",
+		},
+		{
+			args:   nil,
+			expect: "",
+		},
+		{
+			args:   []string{"a", "", "b"},
+			expect: "ab",
+		},
+	}
+	var s string
+	for _, c := range cases {
+		s = ConcatStrings(c.args...)
+		if s != c.expect {
+			t.Errorf("the func return failed. expect: %s, actual: %s\n", c.expect, s)
+			return
+		}
+	}
+}
