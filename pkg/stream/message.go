@@ -76,7 +76,7 @@ func (m *Message) Bytes() []byte {
 }
 
 func (m *Message) String() string {
-	return fmt.Sprintf("MESSAGE: ConnectID %v MessageType %s", m.ConnectID, m.MessageType)
+	return fmt.Sprintf("MESSAGE: connectID %v messageType %s", m.ConnectID, m.MessageType)
 }
 
 func ReadMessageFromTunnel(r io.Reader) (*Message, error) {
