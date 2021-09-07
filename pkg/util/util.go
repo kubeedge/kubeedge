@@ -1,5 +1,5 @@
 /*
-Copyright 2016 The Kubernetes Authors.
+Copyright 2018 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ limitations under the License.
 package util
 
 import (
+	"bytes"
 	"fmt"
 	"net"
 	"os"
@@ -154,4 +155,13 @@ func GetHostname() string {
 		return constants.DefaultHostnameOverride
 	}
 	return hostnameOverride
+}
+
+// ConcatStrings use bytes.buffer to concatenate string variable
+func ConcatStrings(ss ...string) string {
+	var bff bytes.Buffer
+	for _, s := range ss {
+		bff.WriteString(s)
+	}
+	return bff.String()
 }
