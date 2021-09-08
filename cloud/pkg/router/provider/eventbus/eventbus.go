@@ -112,18 +112,24 @@ func (*EventBus) Forward(target provider.Target, data interface{}) (response int
 
 func (eb *EventBus) GoToTarget(data map[string]interface{}, stop chan struct{}) (interface{}, error) {
 	messageID, ok := data["messageID"].(string)
-	body, ok := data["data"].([]byte)
-	param, ok := data["param"].(string)
+	if !ok {
+		return nil, buildAndLogError("messageID")
+	}
 	nodeName, ok := data["nodeName"].(string)
 	if !ok {
-		err := errors.New("data transform failed")
-		klog.Error(err.Error())
-		return nil, err
+		return nil, buildAndLogError("nodeName")
 	}
+	body, ok := data["data"].([]byte)
+	if !ok {
+		return nil, buildAndLogError("data body")
+	}
+	// use zero value if not found param
+	param, _ := data["param"].(string)
+
 	msg := model.NewMessage("")
 	msg.BuildHeader(messageID, "", msg.GetTimestamp())
 	resource := "node/" + nodeName + "/"
-	if !ok || param == "" {
+	if param == "" {
 		resource = resource + eb.pubTopic
 	} else {
 		resource = resource + strings.TrimSuffix(eb.pubTopic, "/") + "/" + strings.TrimPrefix(param, "/")
@@ -133,4 +139,10 @@ func (eb *EventBus) GoToTarget(data map[string]interface{}, stop chan struct{}) 
 	msg.SetRoute("router_eventbus", modules.UserGroup)
 	beehiveContext.Send(modules.CloudHubModuleName, *msg)
 	return nil, nil
+}
+
+func buildAndLogError(key string) error {
+	err := fmt.Errorf("data transform failed, %s type is not matched or value is nil", key)
+	klog.Error(err.Error())
+	return err
 }
