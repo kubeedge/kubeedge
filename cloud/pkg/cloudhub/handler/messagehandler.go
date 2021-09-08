@@ -167,7 +167,9 @@ func (mh *MessageHandle) OnRegister(connection conn.Connection) {
 
 	if _, ok := mh.nodeRegistered.Load(nodeID); ok {
 		if conn, exist := mh.nodeConns.Load(nodeID); exist {
-			conn.(hubio.CloudHubIO).Close()
+			if err := conn.(hubio.CloudHubIO).Close(); err != nil {
+				klog.Errorf("failed to close connection %v, err is %v", conn, err)
+			}
 		}
 		mh.nodeConns.Store(nodeID, io)
 		return
@@ -205,7 +207,9 @@ func (mh *MessageHandle) KeepaliveCheckLoop(info *model.HubInfo, stopServe chan 
 		case <-keepaliveTicker.C:
 			if conn, ok := mh.nodeConns.Load(info.NodeID); ok {
 				klog.Warningf("Timeout to receive heart beat from edge node %s for project %s", info.NodeID, info.ProjectID)
-				conn.(hubio.CloudHubIO).Close()
+				if err := conn.(hubio.CloudHubIO).Close(); err != nil {
+					klog.Errorf("failed to close connection %v, err is %v", conn, err)
+				}
 				mh.nodeConns.Delete(info.NodeID)
 			}
 		}
