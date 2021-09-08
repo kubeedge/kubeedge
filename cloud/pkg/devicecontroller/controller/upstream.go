@@ -33,6 +33,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/types"
+	commonconst "github.com/kubeedge/kubeedge/common/constants"
 )
 
 // DeviceStatus is structure to patch device status
@@ -178,7 +179,7 @@ func (uc *UpstreamController) updateDeviceStatus() {
 				continue
 			}
 			resMsg.BuildRouter(modules.DeviceControllerModuleName, constants.GroupTwin, resource, model.ResponseOperation)
-			resMsg.Content = "OK"
+			resMsg.Content = commonconst.MessageSuccessfulContent
 			err = uc.messageLayer.Response(*resMsg)
 			if err != nil {
 				klog.Warningf("Message: %s process failure, response failed with error: %s", msg.GetID(), err)
