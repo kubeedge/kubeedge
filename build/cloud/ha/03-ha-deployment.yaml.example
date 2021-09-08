@@ -57,6 +57,8 @@ spec:
             requests:
               cpu: 100m
               memory: 512Mi
+          securityContext:
+            privileged: true
           volumeMounts:
             - name: conf
               mountPath: /etc/kubeedge/config
