@@ -4,6 +4,64 @@ import (
 	"testing"
 )
 
+func TestCommand_GetStdOut(t *testing.T) {
+	cases := []struct {
+		name     string
+		cmd      Command
+		expected string
+	}{
+		{
+			name: "case1",
+			cmd: Command{
+				StdOut: []byte("success\n"),
+			},
+			expected: "success",
+		},
+		{
+			name: "case2",
+			cmd: Command{
+				StdOut: nil,
+			},
+			expected: "",
+		},
+	}
+	for _, c := range cases {
+		out := c.cmd.GetStdOut()
+		if out != c.expected {
+			t.Errorf("expected %v, got %v", c.expected, out)
+		}
+	}
+}
+
+func TestCommand_GetStdErr(t *testing.T) {
+	cases := []struct {
+		name     string
+		cmd      Command
+		expected string
+	}{
+		{
+			name: "case1",
+			cmd: Command{
+				StdErr: []byte("failed\n"),
+			},
+			expected: "failed",
+		},
+		{
+			name: "case2",
+			cmd: Command{
+				StdErr: nil,
+			},
+			expected: "",
+		},
+	}
+	for _, c := range cases {
+		out := c.cmd.GetStdErr()
+		if out != c.expected {
+			t.Errorf("%v: expected %v, got %v", c.name, c.expected, out)
+		}
+	}
+}
+
 func TestExecutorNoArgs(t *testing.T) {
 	cmd := NewCommand("true")
 	err := cmd.Exec()
