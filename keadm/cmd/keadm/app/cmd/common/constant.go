@@ -57,7 +57,7 @@ const (
 	RuntimeType = "runtimetype"
 
 	// DefaultKubeEdgeVersion is the default KubeEdge version
-	DefaultKubeEdgeVersion = "1.5.0"
+	DefaultKubeEdgeVersion = "1.8.0"
 
 	// Token sets the token used when edge applying for the certificate
 	Token = "token"
@@ -69,6 +69,8 @@ const (
 
 	CloudCoreRunMode          = "cloudcore-run-mode"
 	CloudCoreContainerRunMode = "container"
+	Replicas                  = "replicas"
+	NodeSelector              = "nodeselector"
 	TokenSecretName           = "tokensecret"
 
 	TokenDataName = "tokendata"

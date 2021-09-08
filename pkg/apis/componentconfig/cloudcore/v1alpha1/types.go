@@ -38,7 +38,7 @@ type CloudCoreConfig struct {
 	Modules *Modules `json:"modules,omitempty"`
 }
 
-// KubeAPIConfig indicates the configuration for interacting with k8s server
+// CommonConfig indicates the common configuration
 type CommonConfig struct {
 	// TunnelPort indicates the port that the cloudcore tunnel listened
 	TunnelPort int `json:"tunnelPort,omitempty"`

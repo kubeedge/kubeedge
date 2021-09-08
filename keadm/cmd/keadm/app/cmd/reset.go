@@ -93,9 +93,10 @@ func NewKubeEdgeReset(out io.Writer, reset *common.ResetOptions) *cobra.Command 
 					return fmt.Errorf("aborted reset operation")
 				}
 			}
+
 			// 1. kill cloudcore/edgecore process.
 			// For edgecore, don't delete node from K8S
-			if err := TearDownKubeEdge(IsEdgeNode, reset.Kubeconfig); err != nil {
+			if err := TearDownKubeEdge(IsEdgeNode, reset.Kubeconfig, reset.CloudCoreRunMode); err != nil {
 				return err
 			}
 
@@ -121,9 +122,14 @@ func NewKubeEdgeReset(out io.Writer, reset *common.ResetOptions) *cobra.Command 
 
 // TearDownKubeEdge will bring down either cloud or edge components,
 // depending upon in which type of node it is executed
-func TearDownKubeEdge(isEdgeNode bool, kubeConfig string) error {
+func TearDownKubeEdge(isEdgeNode bool, kubeConfig string, cloudCoreRunMode string) error {
 	var ke common.ToolsInstaller
-	ke = &util.KubeCloudInstTool{Common: util.Common{KubeConfig: kubeConfig}}
+	ke = &util.KubeCloudInstTool{
+		Common: util.Common{
+			KubeConfig: kubeConfig,
+		},
+		CloudCoreRunMode: cloudCoreRunMode,
+	}
 	if isEdgeNode {
 		ke = &util.KubeEdgeInstTool{Common: util.Common{}}
 	}
@@ -186,5 +192,5 @@ func addResetFlags(cmd *cobra.Command, resetOpts *common.ResetOptions) {
 	cmd.Flags().BoolVar(&resetOpts.Force, "force", resetOpts.Force,
 		"Reset the node without prompting for confirmation")
 	cmd.Flags().StringVar(&resetOpts.CloudCoreRunMode, common.CloudCoreRunMode, resetOpts.CloudCoreRunMode,
-		"User this key to determine cloudcore running mode, eg: container")
+		"User this key to determine cloudcore running mode, eg: --cloudcore-run-mode=\"container\"")
 }

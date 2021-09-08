@@ -165,7 +165,7 @@ func RunningModule(reset *types.ResetOptions) (types.ModuleRunning, error) {
 		}
 	} else {
 		// running as container: check whether pods exist to determine whether cloudcore is running
-		cloudCoreRunning, err := IsCloudcoreContainerRunning(constants.KubeEdgeNameSpace, reset.Kubeconfig)
+		cloudCoreRunning, err := IsCloudcoreContainerRunning(constants.SystemNamespace, reset.Kubeconfig)
 		if err != nil {
 			return types.NoneRunning, err
 		}

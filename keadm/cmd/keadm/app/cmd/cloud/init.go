@@ -81,6 +81,7 @@ func NewCloudInit(out io.Writer, init *types.InitOptions) *cobra.Command {
 func newInitOptions() *types.InitOptions {
 	opts := &types.InitOptions{}
 	opts.KubeConfig = types.DefaultKubeConfig
+	opts.Replicas = 1
 	return opts
 }
 
@@ -105,7 +106,13 @@ func addJoinOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 		"Use this key to set the temp directory path for KubeEdge tarball, if not exist, download it")
 
 	cmd.Flags().StringVar(&initOpts.CloudCoreRunMode, types.CloudCoreRunMode, initOpts.CloudCoreRunMode,
-		"Use this key to run cloudcore in container mode")
+		"Use this key to run cloudcore in container mode, eg: --cloudcore-run-mode=\"container\"")
+
+	cmd.Flags().Int32Var(&initOpts.Replicas, types.Replicas, initOpts.Replicas,
+		"Use this key to decide replicas of cloudcore in container mode, eg: --replicas=2")
+
+	cmd.Flags().StringVar(&initOpts.NodeSelector, types.NodeSelector, initOpts.NodeSelector,
+		"Use this key to configure the nodeSelector to directly schedule pods to specific nodes, eg: --nodeselector=\"disktype=ssd,label=value\"")
 }
 
 //Add2ToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
@@ -134,6 +141,16 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 			kubeVer = types.DefaultKubeEdgeVersion
 		}
 	}
+
+	// initOptions.NodeSelector is like "name=abc,label=hh"
+	node := strings.Split(initOptions.NodeSelector, ",")
+	nodeSelector := make(map[string]string)
+	for _, value := range node {
+		if value != "" {
+			label := strings.Split(value, "=")
+			nodeSelector[label[0]] = label[1]
+		}
+	}
 	common := util.Common{
 		ToolVersion: semver.MustParse(kubeVer),
 		KubeConfig:  initOptions.KubeConfig,
@@ -145,6 +162,8 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 		DNSName:          initOptions.DNS,
 		TarballPath:      initOptions.TarballPath,
 		CloudCoreRunMode: initOptions.CloudCoreRunMode,
+		Replicas:         initOptions.Replicas,
+		NodeSelector:     nodeSelector,
 	}
 	toolList["Kubernetes"] = &util.K8SInstTool{
 		Common:           common,

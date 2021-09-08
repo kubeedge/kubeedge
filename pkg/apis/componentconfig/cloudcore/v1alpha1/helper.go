@@ -29,6 +29,8 @@ func (c *CloudCoreConfig) Parse(filename string) error {
 		klog.Errorf("Failed to read configfile %s: %v", filename, err)
 		return err
 	}
+
+	klog.Infof("data from config file is: \n%s", string(data))
 	err = yaml.Unmarshal(data, c)
 	if err != nil {
 		klog.Errorf("Failed to unmarshal configfile %s: %v", filename, err)

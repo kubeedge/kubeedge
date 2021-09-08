@@ -31,6 +31,8 @@ type InitOptions struct {
 	DNS              string
 	TarballPath      string
 	CloudCoreRunMode string
+	Replicas         int32
+	NodeSelector     string
 }
 
 //JoinOptions has the kubeedge cloud init information filled by CLI

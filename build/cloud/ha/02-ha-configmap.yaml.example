@@ -13,14 +13,6 @@ data:
     kubeAPIConfig:
       kubeConfig: ""
       master: ""
-    leaderelection:
-      LeaderElect: true
-      LeaseDuration: 15s
-      RenewDeadline: 10s
-      ResourceLock: endpointsleases
-      ResourceName: cloudcorelease
-      ResourceNamespace: kubeedge
-      RetryPeriod: 2s
     modules:
       cloudHub:
         advertiseAddress:
@@ -58,8 +50,8 @@ data:
         enable: true
         load:
           updateDeviceStatusWorkers: 1
-      dynamicController: 
-        enable: false      
+      dynamicController:
+        enable: false
       edgeController:
         buffer:
           configMapEvent: 1
