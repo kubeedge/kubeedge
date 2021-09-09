@@ -72,3 +72,6 @@ edgecore以deployment部署的相关步骤及说明
 
 ## deployment.yaml
 deployment的模板,用于部署nginx到edge node使用
+
+## rpm
+制作rpm包相关文件,如`kubeedge.spec`
