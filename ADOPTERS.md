@@ -8,6 +8,7 @@ KubeEdge is used by many companies. If you are using KubeEdge in your organizati
 <a href="https://kubesphere.io" border="0" target="_blank"><img alt="KubeSphere Container Platform" src="docs/adopters/kubesphere-logo.png" height="70"></a> &nbsp; &nbsp; &nbsp;
 <a href="http://xh-iot.net/" border="0" target="_blank"><img alt="XH-iot" src="docs/adopters/xh-iot.png" height="70"></a> &nbsp; &nbsp; &nbsp;
 <a href="http://www.jylink.com/" border="0" target="_blank"><img alt="jylink" src="docs/adopters/jylink.png" height="70"></a> &nbsp; &nbsp; &nbsp;<br/><br/>
+<a href="http://www.ictnj.ac.cn/" border="0" target="_blank"><img alt="ictnj" src="docs/adopters/ictnj.svg " height="70"></a>&nbsp; &nbsp; &nbsp;<br/><br/>
 
 ## Success Stories
 

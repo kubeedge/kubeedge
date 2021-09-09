@@ -154,6 +154,7 @@ ALL_BINARIES_AND_TARGETS=(
   edgecore:edge/cmd/edgecore
   edgesite-agent:edgesite/cmd/edgesite-agent
   edgesite-server:edgesite/cmd/edgesite-server
+  csidriver:cloud/cmd/csidriver
 )
 
 kubeedge::golang::get_target_by_binary() {

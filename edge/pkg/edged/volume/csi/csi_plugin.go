@@ -85,8 +85,7 @@ const ephemeralDriverMode driverMode = "ephemeral"
 // ProbeVolumePlugins returns implemented plugins
 func ProbeVolumePlugins() []volume.VolumePlugin {
 	p := &csiPlugin{
-		host:         nil,
-		blockEnabled: utilfeature.DefaultFeatureGate.Enabled(features.CSIBlockVolume),
+		host: nil,
 	}
 	return []volume.VolumePlugin{p}
 }
@@ -206,25 +205,23 @@ func (h *RegistrationHandler) DeRegisterPlugin(pluginName string) {
 func (p *csiPlugin) Init(host volume.VolumeHost) error {
 	p.host = host
 
-	if utilfeature.DefaultFeatureGate.Enabled(features.CSIDriverRegistry) {
-		csiClient := host.GetKubeClient()
-		if csiClient == nil {
-			klog.Warning(log("kubeclient not set, assuming standalone kubelet"))
-		} else {
-			// set CSIDriverLister
-			adcHost, ok := host.(volume.AttachDetachVolumeHost)
-			if ok {
-				p.csiDriverLister = adcHost.CSIDriverLister()
-				if p.csiDriverLister == nil {
-					klog.Error(log("CSIDriverLister not found on AttachDetachVolumeHost"))
-				}
+	csiClient := host.GetKubeClient()
+	if csiClient == nil {
+		klog.Warning(log("kubeclient not set, assuming standalone kubelet"))
+	} else {
+		// set CSIDriverLister
+		adcHost, ok := host.(volume.AttachDetachVolumeHost)
+		if ok {
+			p.csiDriverLister = adcHost.CSIDriverLister()
+			if p.csiDriverLister == nil {
+				klog.Error(log("CSIDriverLister not found on AttachDetachVolumeHost"))
 			}
-			kletHost, ok := host.(volume.KubeletVolumeHost)
-			if ok {
-				p.csiDriverLister = kletHost.CSIDriverLister()
-				if p.csiDriverLister == nil {
-					klog.Error(log("CSIDriverLister not found on KubeletVolumeHost"))
-				}
+		}
+		kletHost, ok := host.(volume.KubeletVolumeHost)
+		if ok {
+			p.csiDriverLister = kletHost.CSIDriverLister()
+			if p.csiDriverLister == nil {
+				klog.Error(log("CSIDriverLister not found on KubeletVolumeHost"))
 			}
 		}
 	}
@@ -287,7 +284,7 @@ func initializeCSINode(host volume.VolumeHost) error {
 			klog.V(4).Infof("Initializing migrated drivers on CSINodeInfo")
 			err := nim.InitializeCSINodeWithAnnotation()
 			if err != nil {
-				kvh.SetKubeletError(fmt.Errorf("Failed to initialize CSINodeInfo: %v", err))
+				kvh.SetKubeletError(fmt.Errorf("failed to initialize CSINodeInfo: %v", err))
 				klog.Errorf("Failed to initialize CSINodeInfo: %v", err)
 				return false, nil
 			}
@@ -343,7 +340,7 @@ func (p *csiPlugin) IsMigratedToCSI() bool {
 	return false
 }
 
-func (p *csiPlugin) RequiresRemount() bool {
+func (p *csiPlugin) RequiresRemount(*volume.Spec) bool {
 	return false
 }
 
@@ -734,7 +731,7 @@ func highestSupportedVersion(versions []string) (*utilversion.Version, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("None of the CSI versions reported by this driver are supported")
+	return nil, fmt.Errorf("none of the CSI versions reported by this driver are supported")
 }
 
 // Only drivers that implement CSI 0.x are allowed to use deprecated socket dir.

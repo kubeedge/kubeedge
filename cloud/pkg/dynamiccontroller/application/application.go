@@ -27,7 +27,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
+	edgemodule "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
 )
@@ -298,7 +298,7 @@ func (a *Agent) Generate(ctx context.Context, verb applicationVerb, option inter
 func (a *Agent) Apply(app *Application) error {
 	store, ok := a.Applications.Load(app.Identifier())
 	if !ok {
-		return fmt.Errorf("Application %v has not been registered to agent", app.String())
+		return fmt.Errorf("application %v has not been registered to agent", app.String())
 	}
 	app = store.(*Application)
 	switch app.getStatus() {
@@ -328,7 +328,7 @@ func (a *Agent) doApply(app *Application) {
 	app.Status = InApplying
 	msg := model.NewMessage("").SetRoute(MetaServerSource, modules.DynamicControllerModuleGroup).FillBody(app)
 	msg.SetResourceOperation("null", "null")
-	resp, err := beehiveContext.SendSync(edgehub.ModuleNameEdgeHub, *msg, 10*time.Second)
+	resp, err := beehiveContext.SendSync(edgemodule.EdgeHubModuleName, *msg, 10*time.Second)
 	if err != nil {
 		app.Status = Failed
 		app.Reason = fmt.Sprintf("failed to access cloud Application center: %v", err)

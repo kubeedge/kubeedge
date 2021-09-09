@@ -19,6 +19,7 @@ package fixtures
 import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
 )
@@ -76,7 +77,7 @@ func withProtocolConfig(protocol deviceProtocol) DeviceOption {
 		case deviceProtocolModbusRTU:
 			op.device.Spec.Protocol = v1alpha2.ProtocolConfig{
 				Modbus: &v1alpha2.ProtocolConfigModbus{
-					SlaveID: 1,
+					SlaveID: pointer.Int64Ptr(1),
 				},
 				Common: &v1alpha2.ProtocolConfigCommon{
 					COM: &v1alpha2.ProtocolConfigCOM{},
@@ -85,7 +86,7 @@ func withProtocolConfig(protocol deviceProtocol) DeviceOption {
 		case deviceProtocolModbusTCP:
 			op.device.Spec.Protocol = v1alpha2.ProtocolConfig{
 				Modbus: &v1alpha2.ProtocolConfigModbus{
-					SlaveID: 1,
+					SlaveID: pointer.Int64Ptr(1),
 				},
 				Common: &v1alpha2.ProtocolConfigCommon{
 					TCP: &v1alpha2.ProtocolConfigTCP{},
@@ -140,7 +141,7 @@ func withStopBits(stopBits int64) DeviceOption {
 
 func withSlaveID(slaveID int64) DeviceOption {
 	return func(op *DeviceOp) {
-		op.device.Spec.Protocol.Modbus.SlaveID = slaveID
+		op.device.Spec.Protocol.Modbus.SlaveID = &slaveID
 	}
 }
 
@@ -152,7 +153,7 @@ func withTCPPort(port int64) DeviceOption {
 
 func withTCPSlaveID(tcpSlaveID int64) DeviceOption {
 	return func(op *DeviceOp) {
-		op.device.Spec.Protocol.Modbus.SlaveID = tcpSlaveID
+		op.device.Spec.Protocol.Modbus.SlaveID = &tcpSlaveID
 	}
 }
 
@@ -268,13 +269,13 @@ func withRegister(register v1alpha2.ModbusRegisterType) DevicePropertyVisitorOpt
 
 func withOffset(offset int64) DevicePropertyVisitorOption {
 	return func(op *DevicePropertyVisitorOp) {
-		op.devicePropertyVisitor.VisitorConfig.Modbus.Offset = offset
+		op.devicePropertyVisitor.VisitorConfig.Modbus.Offset = &offset
 	}
 }
 
 func withLimit(limit int64) DevicePropertyVisitorOption {
 	return func(op *DevicePropertyVisitorOp) {
-		op.devicePropertyVisitor.VisitorConfig.Modbus.Limit = limit
+		op.devicePropertyVisitor.VisitorConfig.Modbus.Limit = &limit
 	}
 }
 

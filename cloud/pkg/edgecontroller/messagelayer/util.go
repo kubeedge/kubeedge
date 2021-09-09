@@ -9,6 +9,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	controller "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/common/constants"
+	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
 )
 
 // BuildResource return a string as "beehive/pkg/core/model".Message.Router.Resource
@@ -18,9 +19,9 @@ func BuildResource(nodeID, namespace, resourceType, resourceID string) (resource
 		return
 	}
 
-	resource = fmt.Sprintf("%s%s%s%s%s%s%s", controller.ResourceNode, constants.ResourceSep, nodeID, constants.ResourceSep, namespace, constants.ResourceSep, resourceType)
+	resource = pkgutil.ConcatStrings(controller.ResourceNode, constants.ResourceSep, nodeID, constants.ResourceSep, namespace, constants.ResourceSep, resourceType)
 	if resourceID != "" {
-		resource += fmt.Sprintf("%s%s", constants.ResourceSep, resourceID)
+		resource += pkgutil.ConcatStrings(constants.ResourceSep, resourceID)
 	}
 	return
 }
@@ -30,7 +31,7 @@ func BuildResourceForRouter(resourceType, resourceID string) (string, error) {
 	if resourceID == "" || resourceType == "" {
 		return "", fmt.Errorf("required parameter are not set (resourceID or resource type)")
 	}
-	return fmt.Sprintf("%s%s%s", resourceType, constants.ResourceSep, resourceID), nil
+	return pkgutil.ConcatStrings(resourceType, constants.ResourceSep, resourceID), nil
 }
 
 // getElementByIndex returns a string from "beehive/pkg/core/model".Message.Router.Resource by index

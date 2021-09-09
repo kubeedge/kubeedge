@@ -28,14 +28,10 @@ type DeviceInstance struct {
 	// Optional: A passive device won't have twin properties and this list could be empty.
 	// +optional
 	Twins []v1alpha2.Twin `json:"twins,omitempty"`
-	// A list of data properties, which are not required to be processed by edgecore
+	// Data section describe a list of time-series properties which should be processed
+	// on edge node.
 	// +optional
-	DataProperties []v1alpha2.DataProperty `json:"dataProperties,omitempty"`
-	// Topic used by mapper, all data collected from dataProperties
-	// should be published to this topic,
-	// the default value is $ke/events/device/+/data/update
-	// +optional
-	DataTopic string `json:"dataTopic,omitempty"`
+	Data *v1alpha2.DeviceData `json:"data,omitempty"`
 	// PropertyVisitors is list of all PropertyVisitors in DeviceModels
 	PropertyVisitors []*PropertyVisitor `json:"propertyVisitors,omitempty"`
 }

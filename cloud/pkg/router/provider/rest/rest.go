@@ -212,11 +212,9 @@ func (r *Rest) GoToTarget(data map[string]interface{}, stop chan struct{}) (inte
 
 func normalizeResource(resource string) string {
 	finalResource := resource
-	if strings.HasPrefix(finalResource, "/") {
-		finalResource = strings.TrimPrefix(finalResource, "/")
-	}
-	if strings.HasSuffix(finalResource, "/") {
-		finalResource = strings.TrimSuffix(finalResource, "/")
-	}
+
+	finalResource = strings.TrimPrefix(finalResource, "/")
+	finalResource = strings.TrimSuffix(finalResource, "/")
+
 	return finalResource
 }
