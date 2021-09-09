@@ -11,7 +11,8 @@ BINARIES=cloudcore \
 	edgecore \
 	edgesite-agent \
 	edgesite-server \
-	keadm
+	keadm \
+	csidriver
 
 COMPONENTS=cloud \
 	edge
