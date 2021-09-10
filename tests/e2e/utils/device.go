@@ -862,7 +862,7 @@ func UpdatedModbusDeviceInstance(nodeSelector string) v1alpha2.Device {
 			},
 			Protocol: v1alpha2.ProtocolConfig{
 				Modbus: &v1alpha2.ProtocolConfigModbus{
-					SlaveID: 1,
+					SlaveID: pointer.Int64Ptr(1),
 				},
 				Common: &v1alpha2.ProtocolConfigCommon{
 					COM: &v1alpha2.ProtocolConfigCOM{
@@ -1591,7 +1591,7 @@ func UpdatedConfigMapModbusForDataAndTwins(nodeSelector string) v12.ConfigMap {
 			Name:     "modbus-sensor-tag-instance-02",
 			Protocol: "modbus",
 			ProtocolConfig: &v1alpha2.ProtocolConfigModbus{
-				SlaveID: 1,
+				SlaveID: pointer.Int64Ptr(1),
 			},
 			ProtocolCommonConfig: &v1alpha2.ProtocolConfigCommon{
 				COM: &v1alpha2.ProtocolConfigCOM{
