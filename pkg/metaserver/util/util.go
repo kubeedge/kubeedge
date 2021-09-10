@@ -38,8 +38,9 @@ func UpdateCrdMap() error {
 		plural := crd.Spec.Names.Plural
 		CRDResourceToKind[plural] = kind
 		CRDKindToResource[kind] = plural
+		klog.V(4).Infof("for resource: %s, Kind: %s, Plural: %s", crd.Name, kind, plural)
 	}
-	klog.Infof("CRD Resource-Kind map updated")
+	klog.V(4).Infof("The Kind-Resource relationship of all CRD resources has been updated")
 	return nil
 }
 

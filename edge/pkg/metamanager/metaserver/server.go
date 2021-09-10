@@ -25,11 +25,6 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
-const (
-	// TODO: make addrs configurable
-	Httpaddr = "127.0.0.1:10550"
-)
-
 // MetaServer is simplification of server.GenericAPIServer
 type MetaServer struct {
 	HandlerChainWaitGroup *utilwaitgroup.SafeWaitGroup
@@ -54,7 +49,7 @@ func (ls *MetaServer) Start(stopChan <-chan struct{}) {
 	h := ls.BuildBasicHandler()
 	h = BuildHandlerChain(h, ls)
 	s := http.Server{
-		Addr:    Httpaddr,
+		Addr:    client.Httpaddr,
 		Handler: h,
 	}
 
@@ -67,7 +62,7 @@ func (ls *MetaServer) Start(stopChan <-chan struct{}) {
 	}, time.Second*30, stopChan)
 
 	utilruntime.HandleError(s.ListenAndServe())
-	klog.Infof("[metaserver]start to listen and server at %v", Httpaddr)
+	klog.Infof("[metaserver]start to listen and server at %v", client.Httpaddr)
 
 	<-stopChan
 }

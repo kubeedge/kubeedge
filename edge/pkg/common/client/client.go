@@ -25,6 +25,11 @@ import (
 	"k8s.io/klog/v2"
 )
 
+const (
+	// TODO: make addrs configurable
+	Httpaddr = "127.0.0.1:10550"
+)
+
 var (
 	initOnce sync.Once
 	keClient *kubeEdgeClient
@@ -32,7 +37,7 @@ var (
 
 func InitKubeEdgeClient() {
 	initOnce.Do(func() {
-		config, err := clientcmd.BuildConfigFromFlags("127.0.0.1:10550", "")
+		config, err := clientcmd.BuildConfigFromFlags(Httpaddr, "")
 		if err != nil {
 			klog.Errorf("Failed to build config, err: %v", err)
 		}
