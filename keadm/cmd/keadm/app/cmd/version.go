@@ -9,8 +9,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	yaml "gopkg.in/yaml.v2"
 	"k8s.io/klog/v2"
+	"sigs.k8s.io/yaml"
 
 	"github.com/kubeedge/kubeedge/pkg/version"
 )
