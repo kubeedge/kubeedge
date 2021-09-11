@@ -30,6 +30,8 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 //K8SInstTool embeds Common struct and contains the default K8S version and
@@ -83,18 +85,17 @@ func createKubeEdgeNs(kubeConfig, master string) error {
 	}
 	ns := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "kubeedge",
+			Name: constants.SystemNamespace,
 		},
 	}
 
-	_, err = client.CoreV1().Namespaces().Get(context.Background(), "kubeedge", metav1.GetOptions{})
+	_, err = client.CoreV1().Namespaces().Get(context.Background(), ns.Name, metav1.GetOptions{})
 	if err != nil {
-		if apierrors.IsNotFound(err) {
-			_, err = client.CoreV1().Namespaces().Create(context.Background(), ns, metav1.CreateOptions{})
-			if err != nil {
-				return err
-			}
-		} else {
+		if !apierrors.IsNotFound(err) {
+			return err
+		}
+		if _, err = client.CoreV1().Namespaces().Create(
+			context.Background(), ns, metav1.CreateOptions{}); err != nil {
 			return err
 		}
 	}

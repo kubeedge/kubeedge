@@ -10,7 +10,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
-	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 const (
@@ -52,7 +52,7 @@ func CreateTokenSecret(caHashAndToken []byte) error {
 		TypeMeta: metav1.TypeMeta{Kind: "Secret", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      TokenSecretName,
-			Namespace: modules.NamespaceSystem,
+			Namespace: constants.SystemNamespace,
 		},
 		Data: map[string][]byte{
 			TokenDataName: caHashAndToken,
@@ -60,7 +60,7 @@ func CreateTokenSecret(caHashAndToken []byte) error {
 		StringData: map[string]string{},
 		Type:       "Opaque",
 	}
-	return CreateSecret(token, modules.NamespaceSystem)
+	return CreateSecret(token, constants.SystemNamespace)
 }
 
 func CreateCaSecret(certDER, key []byte) error {
@@ -68,7 +68,7 @@ func CreateCaSecret(certDER, key []byte) error {
 		TypeMeta: metav1.TypeMeta{Kind: "Secret", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      CaSecretName,
-			Namespace: modules.NamespaceSystem,
+			Namespace: constants.SystemNamespace,
 		},
 		Data: map[string][]byte{
 			CaDataName:    certDER,
@@ -77,7 +77,7 @@ func CreateCaSecret(certDER, key []byte) error {
 		StringData: map[string]string{},
 		Type:       "Opaque",
 	}
-	return CreateSecret(caSecret, modules.NamespaceSystem)
+	return CreateSecret(caSecret, constants.SystemNamespace)
 }
 
 func CreateCloudCoreSecret(certDER, key []byte) error {
@@ -85,7 +85,7 @@ func CreateCloudCoreSecret(certDER, key []byte) error {
 		TypeMeta: metav1.TypeMeta{Kind: "Secret", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      CloudCoreSecretName,
-			Namespace: modules.NamespaceSystem,
+			Namespace: constants.SystemNamespace,
 		},
 		Data: map[string][]byte{
 			CloudCoreCertName:    certDER,
@@ -94,7 +94,7 @@ func CreateCloudCoreSecret(certDER, key []byte) error {
 		StringData: map[string]string{},
 		Type:       "Opaque",
 	}
-	return CreateSecret(cloudCoreCert, modules.NamespaceSystem)
+	return CreateSecret(cloudCoreCert, constants.SystemNamespace)
 }
 
 func CreateNamespaceIfNeeded(cli kubernetes.Interface, ns string) error {
