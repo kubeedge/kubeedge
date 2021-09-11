@@ -573,7 +573,7 @@ func kubeClientGet(uc *UpstreamController, namespace string, name string, queryT
 	case model.ResourceTypeServiceAccountToken:
 		obj, err = uc.getServiceAccountToken(namespace, name, msg)
 	default:
-		err := stderrors.New("Wrong query type")
+		err := stderrors.New("wrong query type")
 		klog.Error(err)
 		return nil, err
 	}
