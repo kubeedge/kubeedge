@@ -54,6 +54,28 @@ func TestBuildResource(t *testing.T) {
 			"",
 			fmt.Errorf("required parameter are not set (node id, namespace or resource type)"),
 		},
+		{
+			"TestBuildResource(): Case 2: no resourceID.",
+			args{
+				nodeID:       NodeID,
+				namespace:    Namespace,
+				resourceType: ResourceType,
+				resourceID:   "",
+			},
+			"node/" + NodeID + "/" + Namespace + "/" + ResourceType,
+			nil,
+		},
+		{
+			"TestBuildResource(): Case 1: with resourceID.",
+			args{
+				nodeID:       NodeID,
+				namespace:    Namespace,
+				resourceType: ResourceType,
+				resourceID:   ResourceID,
+			},
+			"node/" + NodeID + "/" + Namespace + "/" + ResourceType + "/" + ResourceID,
+			nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -64,6 +86,59 @@ func TestBuildResource(t *testing.T) {
 			}
 			if gotResource != tt.wantResource {
 				t.Errorf("BuildResource() = %v, want %v", gotResource, tt.wantResource)
+			}
+		})
+	}
+}
+
+func TestBuildResourceForRouter(t *testing.T) {
+	type args struct {
+		resourceType string
+		resourceID   string
+	}
+	tests := []struct {
+		name         string
+		args         args
+		wantResource string
+		wantErr      error
+	}{
+		{
+			"TestBuildResourceForRouter(): Case 1: no resourceType.",
+			args{
+				resourceType: "",
+				resourceID:   ResourceID,
+			},
+			"",
+			fmt.Errorf("required parameter are not set (resourceID or resource type)"),
+		},
+		{
+			"TestBuildResourceForRouter(): Case 2: no resourceID.",
+			args{
+				resourceType: ResourceType,
+				resourceID:   "",
+			},
+			"",
+			fmt.Errorf("required parameter are not set (resourceID or resource type)"),
+		},
+		{
+			"TestBuildResourceForRouter(): Case 3: success.",
+			args{
+				resourceType: ResourceType,
+				resourceID:   ResourceID,
+			},
+			ResourceType + "/" + ResourceID,
+			nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotResource, err := BuildResourceForRouter(tt.args.resourceType, tt.args.resourceID)
+			if err != nil && err.Error() != tt.wantErr.Error() {
+				t.Errorf("BuildResourceForRouter() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if gotResource != tt.wantResource {
+				t.Errorf("BuildResourceForRouter() = %v, want %v", gotResource, tt.wantResource)
 			}
 		})
 	}
