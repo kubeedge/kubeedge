@@ -25,7 +25,7 @@ func TestApplicationGC(t *testing.T) {
 			requestInfo := &apirequest.RequestInfo{
 				IsResourceRequest: true,
 				Verb:              "GET",
-				Path:              "http://127.0.0.1:10550/api/v1/nodes",
+				Path:              "http://" + metaserverconfig.Config.Addr + "/api/v1/nodes",
 				APIPrefix:         "api",
 				APIGroup:          "",
 				APIVersion:        "v1",

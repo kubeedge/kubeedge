@@ -19,6 +19,7 @@ func InitConfigure(c *v1alpha1.MetaServer) {
 	once.Do(func() {
 		Config.Enable = c.Enable
 		Config.Debug = c.Debug
+		Config.Addr = c.Addr
 		// so edgehub must register before metamanager
 		Config.NodeName = edgehubconfig.Config.NodeName
 	})

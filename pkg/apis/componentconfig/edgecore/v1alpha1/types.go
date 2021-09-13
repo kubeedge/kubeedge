@@ -385,6 +385,9 @@ type MetaManager struct {
 type MetaServer struct {
 	Enable bool `json:"enable"`
 	Debug  bool `json:"debug"`
+	// Addr indicates metaServer address
+	// default "127.0.0.1:10550"
+	Addr string `json:"addr"`
 }
 
 // ServiceBus indicates the ServiceBus module config

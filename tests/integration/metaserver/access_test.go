@@ -10,12 +10,12 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver"
+	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
 )
 
 func TestGet(t *testing.T) {
 	kubeclient, err := kubernetes.NewForConfig(&rest.Config{
-		Host: "http://" + metaserver.Httpaddr,
+		Host: "http://" + metaserverconfig.Config.Addr,
 	})
 	if err != nil {
 		t.Fatalf("failed to new a kubeclient for testing")
@@ -29,7 +29,7 @@ func TestGet(t *testing.T) {
 
 func TestService(t *testing.T) {
 	kubeclient, err := kubernetes.NewForConfig(&rest.Config{
-		Host: "http://" + metaserver.Httpaddr,
+		Host: "http://" + metaserverconfig.Config.Addr,
 	})
 	if err != nil {
 		t.Fatalf("failed to get kubeclient, %v", err)

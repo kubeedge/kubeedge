@@ -139,6 +139,7 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				MetaServer: &MetaServer{
 					Enable: false,
 					Debug:  false,
+					Addr:   "127.0.0.1:10550",
 				},
 			},
 			ServiceBus: &ServiceBus{
