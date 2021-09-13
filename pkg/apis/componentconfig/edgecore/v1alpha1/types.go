@@ -233,6 +233,9 @@ type Edged struct {
 	// EnableMetrics indicates whether enable the metrics
 	// default true
 	EnableMetrics bool `json:"enableMetrics,omitempty"`
+	// Version is Edged version
+	// default ""
+	Version string `json:"version,omitempty"`
 }
 
 // EdgeHub indicates the EdgeHub module config

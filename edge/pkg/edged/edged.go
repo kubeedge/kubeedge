@@ -443,6 +443,13 @@ func newEdged(enable bool) (*edged, error) {
 
 	metaClient := client.New()
 
+	edgedVersion := ""
+	if edgedconfig.Config.Version != "" {
+		edgedVersion = edgedconfig.Config.Version
+	} else {
+		edgedVersion = fmt.Sprintf("%s-kubeedge-%s", constants.CurrentSupportK8sVersion, version.Get())
+	}
+
 	ed := &edged{
 		nodeName:                  edgedconfig.Config.HostnameOverride,
 		customInterfaceName:       edgedconfig.Config.CustomInterfaceName,
@@ -462,7 +469,7 @@ func newEdged(enable bool) (*edged, error) {
 		nodeStatusUpdateFrequency: time.Duration(edgedconfig.Config.NodeStatusUpdateFrequency) * time.Second,
 		mounter:                   mount.New(""),
 		uid:                       types.UID("38796d14-1df3-11e8-8e5a-286ed488f209"),
-		version:                   fmt.Sprintf("%s-kubeedge-%s", constants.CurrentSupportK8sVersion, version.Get()),
+		version:                   edgedVersion,
 		rootDirectory:             DefaultRootDir,
 		secretStore:               cache.NewStore(cache.MetaNamespaceKeyFunc),
 		configMapStore:            cache.NewStore(cache.MetaNamespaceKeyFunc),
