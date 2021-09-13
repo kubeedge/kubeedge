@@ -8,7 +8,6 @@ import (
 
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/beehive/pkg/common/util"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	cloudmodules "github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
@@ -16,6 +15,7 @@ import (
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
 	metaManagerConfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"

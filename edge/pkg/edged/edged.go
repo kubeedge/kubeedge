@@ -103,6 +103,7 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/client"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis"
 	edgecadvisor "github.com/kubeedge/kubeedge/edge/pkg/edged/cadvisor"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/clcm"
