@@ -346,7 +346,6 @@ github.com/json-iterator/go
 github.com/karrick/godirwalk
 # github.com/kubeedge/beehive v0.0.0 => ./staging/src/github.com/kubeedge/beehive
 ## explicit
-github.com/kubeedge/beehive/pkg/common/util
 github.com/kubeedge/beehive/pkg/core
 github.com/kubeedge/beehive/pkg/core/context
 github.com/kubeedge/beehive/pkg/core/model
