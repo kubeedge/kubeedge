@@ -14,7 +14,7 @@
 1. 使用`rpmdev-setuptree`命令创建工作目录
    目录结构如下:
    ```bash
-   /roorpmbuild/
+   /root/rpmbuild/
    ├── BUILD
    ├── RPMS
    ├── SOURCES
