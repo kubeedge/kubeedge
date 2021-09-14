@@ -37,6 +37,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/klog/v2"
+	"k8s.io/kubernetes/pkg/kubelet/cadvisor"
 
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -52,6 +53,7 @@ import (
 
 var initNode v1.Node
 var reservationMemory = resource.MustParse(fmt.Sprintf("%dMi", 100))
+var reservationEphemeralStorage = resource.MustParse(fmt.Sprintf("%dGi", 1))
 
 func (e *edged) initialNode() (*v1.Node, error) {
 	var node = &v1.Node{}
@@ -116,6 +118,11 @@ func (e *edged) initialNode() (*v1.Node, error) {
 	}
 
 	err = e.setCPUInfo(node.Status.Capacity, node.Status.Allocatable)
+	if err != nil {
+		return nil, err
+	}
+
+	err = e.setEphemeralStorageInfo(node.Status.Capacity, node.Status.Allocatable)
 	if err != nil {
 		return nil, err
 	}
@@ -325,7 +332,7 @@ func (e *edged) setGPUInfo(nodeStatus *edgeapi.NodeStatusRequest) error {
 	return nil
 }
 
-func (e *edged) setMemInfo(total, allocated v1.ResourceList) error {
+func (e *edged) setMemInfo(total, allocatable v1.ResourceList) error {
 	out, err := ioutil.ReadFile("/proc/meminfo")
 	if err != nil {
 		return err
@@ -345,14 +352,31 @@ func (e *edged) setMemInfo(total, allocated v1.ResourceList) error {
 	if mem.Cmp(reservationMemory) > 0 {
 		mem.Sub(reservationMemory)
 	}
-	allocated[v1.ResourceMemory] = mem.DeepCopy()
+	allocatable[v1.ResourceMemory] = mem.DeepCopy()
 
 	return nil
 }
 
-func (e *edged) setCPUInfo(total, allocated v1.ResourceList) error {
+func (e *edged) setCPUInfo(total, allocatable v1.ResourceList) error {
 	total[v1.ResourceCPU] = resource.MustParse(fmt.Sprintf("%d", runtime.NumCPU()))
-	allocated[v1.ResourceCPU] = total[v1.ResourceCPU].DeepCopy()
+	allocatable[v1.ResourceCPU] = total[v1.ResourceCPU].DeepCopy()
+
+	return nil
+}
+
+func (e *edged) setEphemeralStorageInfo(total, allocatable v1.ResourceList) error {
+	rootfs, err := e.cadvisor.GetDirFsInfo(e.getRootDir())
+	if err != nil {
+		return err
+	}
+
+	for rName, rCap := range cadvisor.EphemeralStorageCapacityFromFsInfo(rootfs) {
+		total[rName] = rCap.DeepCopy()
+		if rCap.Cmp(reservationEphemeralStorage) > 0 {
+			rCap.Sub(reservationEphemeralStorage)
+		}
+		allocatable[rName] = rCap.DeepCopy()
+	}
 
 	return nil
 }
