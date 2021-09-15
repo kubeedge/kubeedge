@@ -163,6 +163,18 @@ func TestStartHeartBeat(t *testing.T) {
 	}
 }
 
+// TestDealSendToEdge is function to test dealSendToEdge().
+func TestDealSendToEdge(t *testing.T) {
+	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
+	msg := model.Message{
+		Header: model.MessageHeader{
+			ID: "message",
+		},
+	}
+
+	dealSendToEdge(nil, "", &msg)
+}
+
 // TestDealSendToCloud is function to test dealSendToCloud().
 func TestDealSendToCloud(t *testing.T) {
 	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
