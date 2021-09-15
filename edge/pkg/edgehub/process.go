@@ -12,6 +12,7 @@ import (
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/msghandler"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
 )
 
@@ -37,11 +38,25 @@ func (eh *EdgeHub) initial() (err error) {
 	return nil
 }
 
-func (eh *EdgeHub) isSyncResponse(msgID string) bool {
+func isSyncResponse(msgID string) bool {
 	return msgID != ""
 }
 
-func (eh *EdgeHub) dispatch(message model.Message) error {
+func init() {
+	handler := &defaultHandler{}
+	msghandler.RegisterHandler(handler)
+}
+
+type defaultHandler struct {
+}
+
+func (*defaultHandler) Filter(message *model.Message) bool {
+	group := message.GetGroup()
+	return group == messagepkg.ResourceGroupName || group == messagepkg.TwinGroupName ||
+		group == messagepkg.FuncGroupName || group == messagepkg.UserGroupName
+}
+
+func (*defaultHandler) Process(message *model.Message, clientHub clients.Adapter) error {
 	group := message.GetGroup()
 	md := ""
 	switch group {
@@ -53,23 +68,30 @@ func (eh *EdgeHub) dispatch(message model.Message) error {
 		md = modules.MetaGroup
 	case messagepkg.UserGroupName:
 		md = modules.BusGroup
-	default:
-		klog.Warningf("msg_group not found")
-		return fmt.Errorf("msg_group not found")
 	}
 
-	isResponse := eh.isSyncResponse(message.GetParentID())
+	isResponse := isSyncResponse(message.GetParentID())
 	if isResponse {
-		beehiveContext.SendResp(message)
+		beehiveContext.SendResp(*message)
 		return nil
 	}
 	if group == messagepkg.UserGroupName && message.GetSource() == "router_eventbus" {
-		beehiveContext.Send(modules.EventBusModuleName, message)
+		beehiveContext.Send(modules.EventBusModuleName, *message)
 	} else if group == messagepkg.UserGroupName && message.GetSource() == "router_servicebus" {
-		beehiveContext.Send(modules.ServiceBusModuleName, message)
+		beehiveContext.Send(modules.ServiceBusModuleName, *message)
 	} else {
-		beehiveContext.SendToGroup(md, message)
+		beehiveContext.SendToGroup(md, *message)
 	}
+	return nil
+}
+
+func (eh *EdgeHub) dispatch(message model.Message) error {
+	// handler for msg.
+	err := msghandler.ProcessHandler(message, eh.chClient)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
