@@ -66,6 +66,13 @@ func TestNewResource(t *testing.T) {
 			info:    &HubInfo{ProjectID: "Project1", NodeID: "Node1"},
 			str:     "node/Node1/node/res1",
 		},
+		{
+			name:    "TestNewResource(): Case 3: info is nil",
+			resType: ResNode,
+			resID:   "res1",
+			info:    nil,
+			str:     "node/res1",
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

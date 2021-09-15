@@ -4,7 +4,7 @@ import (
 
 	// Mapping value of json to struct member
 	_ "encoding/json"
-	"fmt"
+	"path"
 	"strings"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -72,14 +72,15 @@ type HubInfo struct {
 
 // NewResource constructs a resource field using resource type and ID
 func NewResource(resType, resID string, info *HubInfo) string {
-	var prefix string
+	paths := make([]string, 0, 4)
 	if info != nil {
-		prefix = fmt.Sprintf("%s/%s/", model.ResourceTypeNode, info.NodeID)
+		paths = append(paths, model.ResourceTypeNode, info.NodeID)
 	}
-	if resID == "" {
-		return fmt.Sprintf("%s%s", prefix, resType)
+	paths = append(paths, resType)
+	if resID != "" {
+		paths = append(paths, resID)
 	}
-	return fmt.Sprintf("%s%s/%s", prefix, resType, resID)
+	return path.Join(paths...)
 }
 
 // IsNodeStopped indicates if the node is stopped or running
