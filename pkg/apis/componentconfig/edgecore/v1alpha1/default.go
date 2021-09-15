@@ -136,6 +136,7 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				MetaServer: &MetaServer{
 					Enable: false,
 					Debug:  false,
+					Server: constants.DefaultMetaServerAddr,
 				},
 			},
 			ServiceBus: &ServiceBus{

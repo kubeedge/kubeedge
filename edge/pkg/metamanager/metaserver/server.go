@@ -18,13 +18,9 @@ import (
 	genericfilters "k8s.io/apiserver/pkg/server/filters"
 	"k8s.io/klog/v2"
 
+	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/handlerfactory"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/serializer"
-)
-
-const (
-	// TODO: make addrs configurable
-	Httpaddr = "127.0.0.1:10550"
 )
 
 // MetaServer is simplification of server.GenericAPIServer
@@ -51,11 +47,11 @@ func (ls *MetaServer) Start(stopChan <-chan struct{}) {
 	h := ls.BuildBasicHandler()
 	h = BuildHandlerChain(h, ls)
 	s := http.Server{
-		Addr:    Httpaddr,
+		Addr:    metaserverconfig.Config.Server,
 		Handler: h,
 	}
 	utilruntime.HandleError(s.ListenAndServe())
-	klog.Infof("[metaserver]start to listen and server at %v", Httpaddr)
+	klog.Infof("[metaserver]start to listen and server at %v", s.Addr)
 	<-stopChan
 }
 
