@@ -14,6 +14,7 @@ const (
 	DeleteOperation        = "delete"
 	QueryOperation         = "query"
 	UpdateOperation        = "update"
+	UploadOperation        = "upload"
 	ResponseOperation      = "response"
 	ResponseErrorOperation = "error"
 
