@@ -19,20 +19,33 @@ import (
 	genericfilters "k8s.io/apiserver/pkg/server/filters"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/common/client"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/handlerfactory"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/serializer"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
+	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
 )
 
 // MetaServer is simplification of server.GenericAPIServer
 type MetaServer struct {
-	HandlerChainWaitGroup *utilwaitgroup.SafeWaitGroup
+	HandlerChainWaitGroup *
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  waitgroup.SafeWaitGroup
 	LongRunningFunc       apirequest.LongRunningRequestCheck
 	RequestTimeout        time.Duration
 	Handler               http.Handler
 	NegotiatedSerializer  runtime.NegotiatedSerializer
-	Factory               handlerfactory.Factory
+	Factory               *handlerfactory.Factory
 }
 
 func NewMetaServer() *MetaServer {
@@ -49,7 +62,7 @@ func (ls *MetaServer) Start(stopChan <-chan struct{}) {
 	h := ls.BuildBasicHandler()
 	h = BuildHandlerChain(h, ls)
 	s := http.Server{
-		Addr:    client.Httpaddr,
+		Addr:    metaserverconfig.Config.Server,
 		Handler: h,
 	}
 
@@ -62,8 +75,7 @@ func (ls *MetaServer) Start(stopChan <-chan struct{}) {
 	}, time.Second*30, stopChan)
 
 	utilruntime.HandleError(s.ListenAndServe())
-	klog.Infof("[metaserver]start to listen and server at %v", client.Httpaddr)
-
+	klog.Infof("[metaserver]start to listen and server at %v", s.Addr)
 	<-stopChan
 }
 
@@ -104,8 +116,11 @@ func BuildHandlerChain(handler http.Handler, ls *MetaServer) http.Handler {
 	cfg := &server.Config{
 		LegacyAPIGroupPrefixes: sets.NewString(server.DefaultLegacyAPIPrefix),
 	}
+
+	requestInfoResolver := &apirequest.RequestInfoFactory{}
+
 	handler = genericfilters.WithWaitGroup(handler, ls.LongRunningFunc, ls.HandlerChainWaitGroup)
 	handler = genericapifilters.WithRequestInfo(handler, server.NewRequestInfoResolver(cfg))
-	handler = genericfilters.WithPanicRecovery(handler)
+	handler = genericfilters.WithPanicRecovery(handler, requestInfoResolver)
 	return handler
 }

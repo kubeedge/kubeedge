@@ -37,7 +37,7 @@ func NewGettoken(out io.Writer, init *common.GettokenOptions) *cobra.Command {
 		Long:    gettokenLongDescription,
 		Example: gettokenExample,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			token, err := queryToken(constants.KubeEdgeNameSpace, common.TokenSecretName, init.Kubeconfig)
+			token, err := queryToken(constants.SystemNamespace, common.TokenSecretName, init.Kubeconfig)
 			if err != nil {
 				fmt.Println("failed to get token")
 				return err
@@ -54,7 +54,7 @@ func addGettokenFlags(cmd *cobra.Command, gettokenOptions *common.GettokenOption
 		"Use this key to set kube-config path, eg: $HOME/.kube/config")
 }
 
-//
+// newGettokenOptions return common options
 func newGettokenOptions() *common.GettokenOptions {
 	opts := &common.GettokenOptions{}
 	opts.Kubeconfig = common.DefaultKubeConfig

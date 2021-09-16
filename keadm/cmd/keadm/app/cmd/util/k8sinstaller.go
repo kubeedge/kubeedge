@@ -22,7 +22,6 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/ghodss/yaml"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
@@ -30,9 +29,12 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/yaml"
+
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
-//K8SInstTool embedes Common struct and contains the default K8S version and
+//K8SInstTool embeds Common struct and contains the default K8S version and
 //a flag depicting if host is an edge or cloud node
 //It implements ToolsInstaller interface
 type K8SInstTool struct {
@@ -75,26 +77,25 @@ func (ks *K8SInstTool) InstallTools() error {
 func createKubeEdgeNs(kubeConfig, master string) error {
 	config, err := BuildConfig(kubeConfig, master)
 	if err != nil {
-		return fmt.Errorf("Failed to build config, err: %v", err)
+		return fmt.Errorf("failed to build config, err: %v", err)
 	}
 	client, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return fmt.Errorf("Failed to create client, err: %v", err)
+		return fmt.Errorf("failed to create client, err: %v", err)
 	}
 	ns := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "kubeedge",
+			Name: constants.SystemNamespace,
 		},
 	}
 
-	_, err = client.CoreV1().Namespaces().Get(context.Background(), "kubeedge", metav1.GetOptions{})
+	_, err = client.CoreV1().Namespaces().Get(context.Background(), ns.Name, metav1.GetOptions{})
 	if err != nil {
-		if apierrors.IsNotFound(err) {
-			_, err = client.CoreV1().Namespaces().Create(context.Background(), ns, metav1.CreateOptions{})
-			if err != nil {
-				return err
-			}
-		} else {
+		if !apierrors.IsNotFound(err) {
+			return err
+		}
+		if _, err = client.CoreV1().Namespaces().Create(
+			context.Background(), ns, metav1.CreateOptions{}); err != nil {
 			return err
 		}
 	}
@@ -105,7 +106,7 @@ func createKubeEdgeNs(kubeConfig, master string) error {
 func installCRDs(ks *K8SInstTool) error {
 	config, err := BuildConfig(ks.KubeConfig, ks.Master)
 	if err != nil {
-		return fmt.Errorf("Failed to build config, err: %v", err)
+		return fmt.Errorf("failed to build config, err: %v", err)
 	}
 
 	crdClient, err := crdclient.NewForConfig(config)
@@ -193,7 +194,7 @@ func createKubeEdgeV1CRD(clientset crdclient.Interface, crdFile string) error {
 	return err
 }
 
-//TearDown shoud uninstall K8S, but it is not required either for cloud or edge node.
+//TearDown should uninstall K8S, but it is not required either for cloud or edge node.
 //It is defined so that K8SInstTool implements ToolsInstaller interface
 func (ks *K8SInstTool) TearDown() error {
 	return nil

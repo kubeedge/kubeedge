@@ -26,13 +26,6 @@ import (
 )
 
 const (
-	EdgeMeshDefaultLoadBalanceStrategy = "RoundRobin"
-	EdgeMeshDefaultInterface           = "docker0"
-	EdgeMeshDefaultSubNet              = "9.251.0.0/16"
-	EdgeMeshDefaultListenPort          = 40001
-)
-
-const (
 	MqttModeInternal MqttMode = 0
 	MqttModeBoth     MqttMode = 1
 	MqttModeExternal MqttMode = 2
@@ -99,9 +92,6 @@ type Modules struct {
 	DeviceTwin *DeviceTwin `json:"deviceTwin,omitempty"`
 	// DBTest indicates dbTest module config
 	DBTest *DBTest `json:"dbTest,omitempty"`
-	// EdgeMesh indicates edgeMesh module config
-	// +Required
-	EdgeMesh *EdgeMesh `json:"edgeMesh,omitempty"`
 	// EdgeStream indicates edgestream module config
 	// +Required
 	EdgeStream *EdgeStream `json:"edgeStream,omitempty"`
@@ -135,7 +125,8 @@ type Edged struct {
 	// RemoteImageEndpoint indicates remote image endpoint
 	// default "unix:///var/run/dockershim.sock"
 	RemoteImageEndpoint string `json:"remoteImageEndpoint,omitempty"`
-	// NodeIP indicates current node ip
+	// NodeIP indicates current node ip.
+	// Setting the value overwrites the automatically detected IP address
 	// default get local host ip
 	NodeIP string `json:"nodeIP"`
 	// ClusterDNS indicates cluster dns
@@ -150,9 +141,6 @@ type Edged struct {
 	EdgedMemoryCapacity int64 `json:"edgedMemoryCapacity,omitempty"`
 	// PodSandboxImage is the image whose network/ipc namespaces containers in each pod will use.
 	// +Required
-	// kubeedge/pause:3.1 for x86 arch
-	// kubeedge/pause-arm:3.1 for arm arch
-	// kubeedge/pause-arm64 for arm64 arch
 	// default kubeedge/pause:3.1
 	PodSandboxImage string `json:"podSandboxImage,omitempty"`
 	// ImagePullProgressDeadline indicates image pull progress dead line (second)
@@ -170,10 +158,11 @@ type Edged struct {
 	//RegisterNodeNamespace indicates register node namespace
 	// default "default"
 	RegisterNodeNamespace string `json:"registerNodeNamespace,omitempty"`
-	// InterfaceName indicates interface name
-	// default "eth0"
-	// DEPRECATED after v1.5
-	InterfaceName string `json:"interfaceName,omitempty"`
+	// CustomInterfaceName indicates the name of the network interface used for obtaining the IP address.
+	// Setting this will override the setting 'NodeIP' if provided.
+	// If this is not defined the IP address is obtained by the hostname.
+	// default ""
+	CustomInterfaceName string `json:"customInterfaceName,omitempty"`
 	// ConcurrentConsumers indicates concurrent consumers for pod add or remove operation
 	// default 5
 	ConcurrentConsumers int `json:"concurrentConsumers,omitempty"`
@@ -393,8 +382,9 @@ type MetaManager struct {
 }
 
 type MetaServer struct {
-	Enable bool `json:"enable"`
-	Debug  bool `json:"debug"`
+	Enable bool   `json:"enable"`
+	Debug  bool   `json:"debug"`
+	Server string `json:"server"`
 }
 
 // ServiceBus indicates the ServiceBus module config
@@ -419,26 +409,6 @@ type DBTest struct {
 	// if set to false (for debugging etc.), skip checking other DBTest configs.
 	// default false
 	Enable bool `json:"enable"`
-}
-
-// EdgeMesh indicates the EdgeMesh module config
-type EdgeMesh struct {
-	// Enable indicates whether EdgeMesh is enabled,
-	// if set to false (for debugging etc.), skip checking other EdgeMesh configs.
-	// default true
-	Enable bool `json:"enable"`
-	// lbStrategy indicates load balance strategy name
-	// default "RoundRobin"
-	LBStrategy string `json:"lbStrategy,omitempty"`
-	// ListenInterface indicates the listen interface of EdgeMesh
-	// default "docker0"
-	ListenInterface string `json:"listenInterface,omitempty"`
-	// SubNet indicates the subnet of EdgeMesh
-	// default "9.251.0.0/16"
-	SubNet string `json:"subNet,omitempty"`
-	// ListenPort indicates the listen port of EdgeMesh
-	// default 40001
-	ListenPort int `json:"listenPort,omitempty"`
 }
 
 // EdgeSream indicates the stream controller

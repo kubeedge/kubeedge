@@ -7,6 +7,8 @@
 
 <img src="./docs/images/kubeedge-logo-only.png">
 
+English | [简体中文](./README_zh.md)
+
 KubeEdge is built upon Kubernetes and extends native containerized application orchestration and device management to hosts at the Edge.
 It consists of cloud part and edge part, provides core infrastructure support for networking, application deployment and metadata synchronization
 between cloud and edge. It also supports **MQTT** which enables edge devices to access through edge nodes.
@@ -19,7 +21,7 @@ KubeEdge is an incubation-level hosted project by the [Cloud Native Computing Fo
 
 **Note**:
 
-The versions before *1.3* have not been supported, please try upgrade.
+The versions before *1.5* have not been supported, please try upgrade.
 
 ## Advantages
 
@@ -56,12 +58,12 @@ KubeEdge consists of cloud part and edge part.
 
 ## Kubernetes compatibility
 
-|                        | Kubernetes 1.13 | Kubernetes 1.14 | Kubernetes 1.15 | Kubernetes 1.16 | Kubernetes 1.17 | Kubernetes 1.18 | Kubernetes 1.19 |
+|                        | Kubernetes 1.15 | Kubernetes 1.16 | Kubernetes 1.17 | Kubernetes 1.18 | Kubernetes 1.19 | Kubernetes 1.20 | Kubernetes 1.21 |
 |------------------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|
-| KubeEdge 1.3           | ✓               | ✓               | ✓               | ✓               | ✓             | ✓               | ✓               |
-| KubeEdge 1.4           | ✓               | ✓               | ✓               | ✓               | ✓             | ✓               | ✓               |
-| KubeEdge 1.5           | ✓               | ✓               | ✓               | ✓               | ✓             | ✓               | ✓               |
-| KubeEdge HEAD (master) | ✓               | ✓               | ✓               | ✓               | ✓             | ✓               | ✓               |
+| KubeEdge 1.6           | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               | -               |
+| KubeEdge 1.7           | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               |
+| KubeEdge 1.8           | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               |
+| KubeEdge HEAD (master) | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               |
 
 Key:
 * `✓` KubeEdge and the Kubernetes version are exactly compatible.

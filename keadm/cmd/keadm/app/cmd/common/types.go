@@ -43,6 +43,7 @@ type JoinOptions struct {
 	Token                 string
 	CertPort              string
 	CGroupDriver          string
+	Labels                []string
 }
 
 type CheckOptions struct {
@@ -112,7 +113,7 @@ const (
 	KubeEdgeEdgeRunning
 )
 
-//ModuleRunning is defined to know the running status of KubeEdge components
+// ComponentType is the type of KubeEdge components, cloudcore or edgecore
 type ComponentType string
 
 //All Component type

@@ -21,11 +21,12 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"strings"
+	"strconv"
 
 	"github.com/emicklei/go-restful"
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/stream"
 )
 
@@ -74,9 +75,8 @@ func (ms *ContainerMetricsConnection) SendConnection() (stream.EdgedConnection, 
 		URL:    *ms.r.Request.URL,
 		Header: ms.r.Request.Header,
 	}
-	targetPort := strings.Split(ms.r.Request.Host, ":")[1]
 	connector.URL.Scheme = httpScheme
-	connector.URL.Host = net.JoinHostPort(defaultServerHost, targetPort)
+	connector.URL.Host = net.JoinHostPort(defaultServerHost, strconv.Itoa(constants.ServerPort))
 	m, err := connector.CreateConnectMessage()
 	if err != nil {
 		return nil, err
@@ -114,8 +114,7 @@ func (ms *ContainerMetricsConnection) Serve() error {
 			klog.Infof("%s send close message to edge successfully", ms.String())
 			return nil
 		case <-ms.EdgePeerDone():
-			klog.Infof("%s find edge peer done, so stop this connection", ms.String())
-			return nil
+			return fmt.Errorf("%s find edge peer done, so stop this connection", ms.String())
 		}
 	}
 }

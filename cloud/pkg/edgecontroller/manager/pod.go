@@ -10,7 +10,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
 // CachePod is the struct save pod data for check pod is really changed
@@ -78,9 +78,9 @@ func (pm *PodManager) Events() chan watch.Event {
 }
 
 // NewPodManager create PodManager from config
-func NewPodManager(si cache.SharedIndexInformer) (*PodManager, error) {
-	realEvents := make(chan watch.Event, config.Config.Buffer.PodEvent)
-	mergedEvents := make(chan watch.Event, config.Config.Buffer.PodEvent)
+func NewPodManager(config *v1alpha1.EdgeController, si cache.SharedIndexInformer) (*PodManager, error) {
+	realEvents := make(chan watch.Event, config.Buffer.PodEvent)
+	mergedEvents := make(chan watch.Event, config.Buffer.PodEvent)
 	rh := NewCommonResourceEventHandler(realEvents)
 	si.AddEventHandler(rh)
 	pm := &PodManager{realEvents: realEvents, mergedEvents: mergedEvents}

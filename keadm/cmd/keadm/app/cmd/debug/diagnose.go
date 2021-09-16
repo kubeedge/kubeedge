@@ -52,7 +52,7 @@ func NewDiagnose(out io.Writer, diagnoseOptions *common.DiagnoseOptions) *cobra.
 }
 
 func NewSubDiagnose(out io.Writer, object Diagnose) *cobra.Command {
-	do := NewDiagnoseOptins()
+	do := NewDiagnoseOptions()
 	cmd := &cobra.Command{
 		Short: object.Desc,
 		Use:   object.Use,
@@ -76,8 +76,8 @@ func NewSubDiagnose(out io.Writer, object Diagnose) *cobra.Command {
 	return cmd
 }
 
-// Add flags
-func NewDiagnoseOptins() *common.DiagnoseOptions {
+// NewDiagnoseOptions returns diagnose options
+func NewDiagnoseOptions() *common.DiagnoseOptions {
 	do := &common.DiagnoseOptions{}
 	do.Namespace = "default"
 	do.Config = common.EdgecoreConfigPath
@@ -90,7 +90,7 @@ func NewDiagnoseOptins() *common.DiagnoseOptions {
 }
 
 func (da Diagnose) ExecuteDiagnose(use string, ops *common.DiagnoseOptions, args []string) {
-	err := fmt.Errorf("")
+	var err error
 	switch use {
 	case common.ArgDiagnoseNode:
 		err = DiagnoseNode(ops)
@@ -178,7 +178,7 @@ func DiagnosePod(ops *common.DiagnoseOptions, podName string) error {
 	}
 	err := InitDB(v1alpha1.DataBaseDriverName, v1alpha1.DataBaseAliasName, ops.DBPath)
 	if err != nil {
-		return fmt.Errorf("Failed to initialize database: %v ", err)
+		return fmt.Errorf("failed to initialize database: %v ", err)
 	}
 	fmt.Printf("Database %s is exist \n", v1alpha1.DataBaseDataSource)
 	podStatus, err := QueryPodFromDatabase(ops.Namespace, podName)

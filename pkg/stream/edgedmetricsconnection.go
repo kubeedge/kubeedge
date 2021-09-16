@@ -56,7 +56,7 @@ func (ms *EdgedMetricsConnection) String() string {
 func (ms *EdgedMetricsConnection) Serve(tunnel SafeWriteTunneler) error {
 	//connect edged
 	client := http.Client{}
-	req, err := http.NewRequest("GET", ms.URL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, ms.URL.String(), nil)
 	if err != nil {
 		klog.Errorf("create new metrics request error %v", err)
 		return err

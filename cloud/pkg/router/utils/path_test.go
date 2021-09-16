@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"strings"
 	"testing"
 )
 
@@ -43,15 +42,32 @@ func TestPathMatch(t *testing.T) {
 	AssertTrue(t, !IsMatch(rule, req), "7")
 }
 
-func normalizeResource(resource string) string {
-	finalResource := resource
-	if strings.HasPrefix(finalResource, "/") {
-		finalResource = "/" + strings.TrimLeft(finalResource, "/")
+func TestRuleContains(t *testing.T) {
+	cases := []struct {
+		name      string
+		rulePath  string
+		rule2Path string
+		want      bool
+	}{
+		{
+			name:      "case1",
+			rulePath:  "/a",
+			rule2Path: "/a/b",
+			want:      true,
+		},
+		{
+			name:      "case2",
+			rulePath:  "/a",
+			rule2Path: "/b",
+			want:      false,
+		},
 	}
-	if strings.HasSuffix(finalResource, "/") {
-		finalResource = strings.TrimRight(finalResource, "/")
+
+	for _, c := range cases {
+		if actual := RuleContains(c.rulePath, c.rule2Path); c.want != actual {
+			t.Errorf("%v: expected %v, but got %v", c.name, c.want, actual)
+		}
 	}
-	return finalResource
 }
 
 // AssertTrue triggers testing error if the passed-in is true.

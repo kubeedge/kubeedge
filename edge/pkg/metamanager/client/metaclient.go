@@ -24,12 +24,10 @@ type CoreInterface interface {
 	NodesGetter
 	NodeStatusGetter
 	SecretsGetter
-	EndpointsGetter
-	ServiceGetter
+	ServiceAccountTokenGetter
 	PersistentVolumesGetter
 	PersistentVolumeClaimsGetter
 	VolumeAttachmentsGetter
-	ListenerGetter
 }
 
 type metaClient struct {
@@ -56,18 +54,12 @@ func (m *metaClient) Secrets(namespace string) SecretsInterface {
 	return newSecrets(namespace, m.send)
 }
 
+func (m *metaClient) ServiceAccountToken() ServiceAccountTokenInterface {
+	return newServiceAccountToken(m.send)
+}
+
 func (m *metaClient) PodStatus(namespace string) PodStatusInterface {
 	return newPodStatus(namespace, m.send)
-}
-
-//New creates a new metaclient
-func (m *metaClient) Endpoints(namespace string) EndpointsInterface {
-	return newEndpoints(namespace, m.send)
-}
-
-// New Services metaClient
-func (m *metaClient) Services(namespace string) ServiceInterface {
-	return newServices(namespace, m.send)
 }
 
 // New PersistentVolumes metaClient
@@ -83,11 +75,6 @@ func (m *metaClient) PersistentVolumeClaims(namespace string) PersistentVolumeCl
 // New VolumeAttachments metaClient
 func (m *metaClient) VolumeAttachments(namespace string) VolumeAttachmentsInterface {
 	return newVolumeAttachments(namespace, m.send)
-}
-
-// New Listener metaClient
-func (m *metaClient) Listener() ListenInterface {
-	return newListener(m.send)
 }
 
 // New creates new metaclient

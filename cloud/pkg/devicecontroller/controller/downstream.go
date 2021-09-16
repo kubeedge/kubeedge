@@ -25,6 +25,7 @@ import (
 
 	"github.com/google/uuid"
 	v1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
@@ -186,10 +187,12 @@ func (dc *DownstreamController) addToConfigMap(device *v1alpha2.Device) {
 		dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
 
 		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Get(context.Background(), nodeConfigMap.Name, metav1.GetOptions{}); err != nil {
-			if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Create(context.Background(), nodeConfigMap, metav1.CreateOptions{}); err != nil {
-				klog.Errorf("Failed to create config map %v in namespace %v, error %v", nodeConfigMap, device.Namespace, err)
-				return
+			if apierrors.IsNotFound(err) {
+				if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Create(context.Background(), nodeConfigMap, metav1.CreateOptions{}); err != nil {
+					klog.Errorf("Failed to create config map %v in namespace %v, error %v", nodeConfigMap, device.Namespace, err)
+				}
 			}
+			return
 		}
 		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(context.Background(), nodeConfigMap, metav1.UpdateOptions{}); err != nil {
 			klog.Errorf("Failed to update config map %v in namespace %v, error %v", nodeConfigMap, device.Namespace, err)
@@ -374,8 +377,14 @@ func addDeviceInstanceAndProtocol(device *v1alpha2.Device, deviceProfile *types.
 	}
 
 	deviceInstance.Twins = device.Status.Twins
-	deviceInstance.DataProperties = device.Spec.Data.DataProperties
-	deviceInstance.DataTopic = device.Spec.Data.DataTopic
+
+	// add dataProperties and dataTopic
+	if len(device.Spec.Data.DataProperties) > 0 || len(device.Spec.Data.DataTopic) > 0 {
+		deviceInstance.Data = &v1alpha2.DeviceData{
+			DataProperties: device.Spec.Data.DataProperties,
+			DataTopic:      device.Spec.Data.DataTopic,
+		}
+	}
 
 	addPropertyVisitorsToDeviceInstance(device, deviceInstance)
 
@@ -558,10 +567,14 @@ func (dc *DownstreamController) updateConfigMap(device *v1alpha2.Device) {
 				addPropertyVisitorsToDeviceInstance(device, devInst)
 				// update twins
 				devInst.Twins = device.Status.Twins
-				// update data
-				devInst.DataProperties = device.Spec.Data.DataProperties
-				// update data topic
-				devInst.DataTopic = device.Spec.Data.DataTopic
+
+				// update data and data topic
+				if len(device.Spec.Data.DataProperties) > 0 || len(device.Spec.Data.DataTopic) > 0 {
+					devInst.Data = &v1alpha2.DeviceData{
+						DataProperties: device.Spec.Data.DataProperties,
+						DataTopic:      device.Spec.Data.DataTopic,
+					}
+				}
 				// update protocol
 				devInst.Protocol = deviceProtocol.Name
 				break

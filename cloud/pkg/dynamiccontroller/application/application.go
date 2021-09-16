@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/klog/v2"
@@ -26,7 +27,8 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
+	edgemodule "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
 )
 
@@ -95,6 +97,7 @@ type Application struct {
 
 	count     uint64 // count the number of current citations
 	countLock sync.Mutex
+	tim       time.Time // record the last closing time of application, only make sense when count == 0
 	//TODO: add lock
 }
 
@@ -120,6 +123,7 @@ func newApplication(ctx context.Context, key string, verb applicationVerb, noden
 		cancel:    cancel,
 		count:     0,
 		countLock: sync.Mutex{},
+		tim:       time.Time{},
 	}
 	app.add()
 	return app
@@ -239,10 +243,20 @@ func (a *Application) Close() {
 		return
 	}
 
+	a.tim = time.Now()
 	a.count--
 	if a.count == 0 {
 		a.Status = Completed
 	}
+}
+
+func (a *Application) LastCloseTime() time.Time {
+	a.countLock.Lock()
+	defer a.countLock.Unlock()
+	if a.count == 0 && !a.tim.IsZero() {
+		return a.tim
+	}
+	return time.Time{}
 }
 
 // used for generating application and do apply
@@ -251,9 +265,18 @@ type Agent struct {
 	nodeName     string
 }
 
+var defaultAgent *Agent
+var once sync.Once
+
 // edged config.Config.HostnameOverride
-func NewApplicationAgent(nodeName string) *Agent {
-	return &Agent{nodeName: nodeName}
+func NewApplicationAgent() *Agent {
+	defaultAgent := &Agent{nodeName: metaserverconfig.Config.NodeName}
+	once.Do(func() {
+		go wait.Until(func() {
+			defaultAgent.GC()
+		}, time.Minute*5, beehiveContext.Done())
+	})
+	return defaultAgent
 }
 
 func (a *Agent) Generate(ctx context.Context, verb applicationVerb, option interface{}, obj runtime.Object) *Application {
@@ -275,7 +298,7 @@ func (a *Agent) Generate(ctx context.Context, verb applicationVerb, option inter
 func (a *Agent) Apply(app *Application) error {
 	store, ok := a.Applications.Load(app.Identifier())
 	if !ok {
-		return fmt.Errorf("Application %v has not been registered to agent", app.String())
+		return fmt.Errorf("application %v has not been registered to agent", app.String())
 	}
 	app = store.(*Application)
 	switch app.getStatus() {
@@ -305,7 +328,7 @@ func (a *Agent) doApply(app *Application) {
 	app.Status = InApplying
 	msg := model.NewMessage("").SetRoute(MetaServerSource, modules.DynamicControllerModuleGroup).FillBody(app)
 	msg.SetResourceOperation("null", "null")
-	resp, err := beehiveContext.SendSync(edgehub.ModuleNameEdgeHub, *msg, 10*time.Second)
+	resp, err := beehiveContext.SendSync(edgemodule.EdgeHubModuleName, *msg, 10*time.Second)
 	if err != nil {
 		app.Status = Failed
 		app.Reason = fmt.Sprintf("failed to access cloud Application center: %v", err)
@@ -326,7 +349,14 @@ func (a *Agent) doApply(app *Application) {
 }
 
 func (a *Agent) GC() {
-
+	a.Applications.Range(func(key, value interface{}) bool {
+		app := value.(*Application)
+		lastCloseTime := app.LastCloseTime()
+		if !lastCloseTime.IsZero() && time.Since(lastCloseTime) >= time.Minute*5 {
+			a.Applications.Delete(key)
+		}
+		return true
+	})
 }
 
 type Center struct {
@@ -364,7 +394,12 @@ func toBytes(i interface{}) (bytes []byte) {
 // extract application in message's Content
 func msgToApplication(msg model.Message) (*Application, error) {
 	var app = new(Application)
-	err := json.Unmarshal(toBytes(msg.Content), app)
+	contentData, err := msg.GetContentData()
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(contentData, app)
 	if err != nil {
 		return nil, err
 	}

@@ -75,7 +75,7 @@ func GenerateToken() error {
 	tokenString, err := token.SignedString(keyPEM)
 
 	if err != nil {
-		return fmt.Errorf("Failed to generate the token for EdgeCore register, err: %v", err)
+		return fmt.Errorf("failed to generate the token for EdgeCore register, err: %v", err)
 	}
 
 	caHash := getCaHash()
@@ -84,7 +84,7 @@ func GenerateToken() error {
 	// save caHashAndToken to secret
 	err = CreateTokenSecret([]byte(caHashToken))
 	if err != nil {
-		return fmt.Errorf("Failed to create tokenSecret, err: %v", err)
+		return fmt.Errorf("failed to create tokenSecret, err: %v", err)
 	}
 
 	t := time.NewTicker(time.Hour * hubconfig.Config.CloudHub.TokenRefreshDuration)

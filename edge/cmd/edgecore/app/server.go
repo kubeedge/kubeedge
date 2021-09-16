@@ -7,13 +7,13 @@ import (
 
 	"github.com/mitchellh/go-ps"
 	"github.com/spf13/cobra"
+	netutil "k8s.io/apimachinery/pkg/util/net"
 	cliflag "k8s.io/component-base/cli/flag"
 	"k8s.io/component-base/cli/globalflag"
 	"k8s.io/component-base/term"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin"
@@ -24,7 +24,6 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/servicebus"
 	"github.com/kubeedge/kubeedge/edge/test"
-	edgemesh "github.com/kubeedge/kubeedge/edgemesh/pkg"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1/validation"
 	"github.com/kubeedge/kubeedge/pkg/util"
@@ -80,19 +79,22 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 			if checkEnv != "false" {
 				// Check running environment before run edge core
 				if err := environmentCheck(); err != nil {
-					klog.Fatal(fmt.Errorf("Failed to check the running environment: %v", err))
+					klog.Fatal(fmt.Errorf("failed to check the running environment: %v", err))
 				}
 			}
 
-			// get edge node local ip
-			if config.Modules.Edged.NodeIP == "" {
-				hostnameOverride, err := os.Hostname()
+			// Get edge node local ip only when the custiomInterfaceName has been set.
+			// Defaults to the local IP from the default interface by the default config
+			if config.Modules.Edged.CustomInterfaceName != "" {
+				klog.Infof("Getting IP address by custom interface: %s", config.Modules.Edged.CustomInterfaceName)
+				ip, err := netutil.ChooseBindAddressForInterface(config.Modules.Edged.CustomInterfaceName)
 				if err != nil {
-					hostnameOverride = constants.DefaultHostnameOverride
+					klog.Errorf("Failed to get IP address by custom interface: %s: %s", config.Modules.Edged.CustomInterfaceName, err)
+					os.Exit(1)
 				}
-				localIP, _ := util.GetLocalIP(hostnameOverride)
-				config.Modules.Edged.NodeIP = localIP
+				config.Modules.Edged.NodeIP = ip.String()
 			}
+			klog.Infof("Local IP: %s", config.Modules.Edged.NodeIP)
 
 			registerModules(config)
 			// start all modules
@@ -151,7 +153,6 @@ func registerModules(c *v1alpha1.EdgeCoreConfig) {
 	edged.Register(c.Modules.Edged)
 	edgehub.Register(c.Modules.EdgeHub, c.Modules.Edged.HostnameOverride)
 	eventbus.Register(c.Modules.EventBus, c.Modules.Edged.HostnameOverride)
-	edgemesh.Register(c.Modules.EdgeMesh)
 	metamanager.Register(c.Modules.MetaManager)
 	servicebus.Register(c.Modules.ServiceBus)
 	edgestream.Register(c.Modules.EdgeStream, c.Modules.Edged.HostnameOverride, c.Modules.Edged.NodeIP)

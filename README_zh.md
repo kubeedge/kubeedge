@@ -5,13 +5,14 @@
 [![Releases](https://img.shields.io/github/release/kubeedge/kubeedge/all.svg?style=flat-square)](https://github.com/kubeedge/kubeedge/releases)
 [![Documentation Status](https://readthedocs.org/projects/kubeedge/badge/?version=latest)](https://kubeedge.readthedocs.io/en/latest/?badge=latest)
 
-
 ![logo](./docs/images/KubeEdge_logo.png)
+
+[English](./README.md) | 简体中文
 
 KubeEdge 是一个开源的系统，可将本机容器化应用编排和管理扩展到边缘端设备。 它基于Kubernetes构建，为网络和应用程序提供核心基础架构支持，并在云端和边缘端部署应用，同步元数据。KubeEdge 还支持 **MQTT** 协议，允许开发人员编写客户逻辑，并在边缘端启用设备通信的资源约束。KubeEdge 包含云端和边缘端两部分。
 
 注意：
-1.3以前的版本不再支持，请尝试升级到支持版本。
+1.5以前的版本不再支持，请尝试升级到支持版本。
 
 ## 优势
 
@@ -58,26 +59,17 @@ KubeEdge 由以下组件构成:
 
 ### Kubernetes 版本兼容
 
-|                     | Kubernetes 1.13 | Kubernetes 1.14 | Kubernetes 1.15 | Kubernetes 1.16 | Kubernetes 1.17 | Kubernetes 1.18 | Kubernetes 1.19 |
+|                     | Kubernetes 1.15 | Kubernetes 1.16 | Kubernetes 1.17 | Kubernetes 1.18 | Kubernetes 1.19 | Kubernetes 1.20 | Kubernetes 1.21 |
 |---------------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|
-| KubeEdge 1.3        | ✓               | ✓              | ✓               | ✓               | ✓               | ✓               | ✓              |
-| KubeEdge 1.4        | ✓               | ✓              | ✓               | ✓               | ✓              | ✓               | ✓               |
-| KubeEdge 1.5        | ✓               | ✓              | ✓               | ✓               | ✓              | ✓               | ✓               |
-| KubeEdge HEAD       | ✓               | ✓              | ✓               | ✓               | ✓              | ✓               | ✓               |
+| KubeEdge 1.6        | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               | -               |
+| KubeEdge 1.7        | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               |
+| KubeEdge 1.8        | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               |
+| KubeEdge HEAD       | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               |
 
 说明:
 * `✓` KubeEdge和Kubernetes的版本是完全兼容的
 * `+` KubeEdge中有些特性或API对象可能在对应的Kubernetes版本中不存在
 * `-` Kubernetes中有些特性或API对象可能在对应的KubeEdge版本中不可用
-
-### Golang 版本依赖
-
-|                         | Golang 1.11     | Golang 1.12     | Golang 1.13     | Golang 1.14     |
-|-------------------------|-----------------|-----------------|-----------------|-----------------|
-| KubeEdge 1.2            | ✗               | ✓               | ✓               | ✓               |
-| KubeEdge 1.3            | ✗               | ✓               | ✓               | ✓               |
-| KubeEdge 1.4            | ✗               | ✗               | ✗               | ✓               |
-| KubeEdge HEAD (master)  | ✗               | ✗               | ✗               | ✓               |
 
 ## 使用
 

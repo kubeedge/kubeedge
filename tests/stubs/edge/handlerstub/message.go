@@ -21,9 +21,9 @@ import (
 
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/beehive/pkg/common/util"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
 	"github.com/kubeedge/kubeedge/tests/stubs/common/constants"
 	"github.com/kubeedge/kubeedge/tests/stubs/common/types"
 )
@@ -76,17 +76,11 @@ func (hs *HandlerStub) ProcessInsert(msg model.Message) {
 		// receive pod add event
 		klog.V(4).Infof("Message content: %v", msg)
 
-		// Marshal message content
-		var data []byte
-		switch msg.Content.(type) {
-		case []byte:
-			data = msg.GetContent().([]byte)
-		default:
-			data, err = json.Marshal(msg.GetContent())
-			if err != nil {
-				klog.Warningf("message: %s process failure, marshal content failed with error: %s", msg.GetID(), err)
-				return
-			}
+		// get message content data
+		data, err := msg.GetContentData()
+		if err != nil {
+			klog.Warningf("message: %s process failure, get content data failed: %s", msg.GetID(), err)
+			return
 		}
 
 		// Get pod
@@ -123,18 +117,11 @@ func (hs *HandlerStub) ProcessDelete(msg model.Message) {
 		// Receive pod delete event
 		klog.V(4).Infof("Message content: %v", msg)
 
-		// Marshal message content
-		var data []byte
-		switch msg.Content.(type) {
-		case []byte:
-			data = msg.GetContent().([]byte)
-		default:
-			var err error
-			data, err = json.Marshal(msg.GetContent())
-			if err != nil {
-				klog.Warningf("message: %s process failure, marshal content failed with error: %s", msg.GetID(), err)
-				return
-			}
+		// get message content data
+		data, err := msg.GetContentData()
+		if err != nil {
+			klog.Warningf("message: %s process failure, get content data failed with error: %s", msg.GetID(), err)
+			return
 		}
 
 		// Get pod

@@ -1,5 +1,5 @@
 /*
-Copyright 2016 The Kubernetes Authors.
+Copyright 2018 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ limitations under the License.
 package util
 
 import (
+	"bytes"
 	"fmt"
 	"net"
 	"os"
@@ -27,6 +28,7 @@ import (
 
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/klog/v2"
+	"k8s.io/kubernetes/pkg/apis/core/validation"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 )
@@ -95,7 +97,7 @@ func ValidateNodeIP(nodeIP net.IP) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("Node IP: %q not found in the host's network interfaces", nodeIP.String())
+	return fmt.Errorf("node IP: %q not found in the host's network interfaces", nodeIP.String())
 }
 
 //Command executes command and returns output
@@ -140,4 +142,26 @@ func GetPodSandboxImage() string {
 	default:
 		return constants.DefaultPodSandboxImage
 	}
+}
+
+// GetHostname returns a reasonable hostname
+func GetHostname() string {
+	hostnameOverride, err := os.Hostname()
+	if err != nil {
+		return constants.DefaultHostnameOverride
+	}
+	msgs := validation.ValidateNodeName(hostnameOverride, false)
+	if len(msgs) > 0 {
+		return constants.DefaultHostnameOverride
+	}
+	return hostnameOverride
+}
+
+// ConcatStrings use bytes.buffer to concatenate string variable
+func ConcatStrings(ss ...string) string {
+	var bff bytes.Buffer
+	for _, s := range ss {
+		bff.WriteString(s)
+	}
+	return bff.String()
 }

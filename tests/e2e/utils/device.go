@@ -5,6 +5,7 @@ import (
 
 	v12 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/types"
@@ -431,8 +432,8 @@ func NewModbusDeviceInstance(nodeSelector string) v1alpha2.Device {
 		VisitorConfig: v1alpha2.VisitorConfig{
 			Modbus: &v1alpha2.VisitorConfigModbus{
 				Register:       "CoilRegister",
-				Offset:         2,
-				Limit:          1,
+				Offset:         pointer.Int64Ptr(2),
+				Limit:          pointer.Int64Ptr(1),
 				Scale:          1,
 				IsSwap:         true,
 				IsRegisterSwap: true,
@@ -444,8 +445,8 @@ func NewModbusDeviceInstance(nodeSelector string) v1alpha2.Device {
 		VisitorConfig: v1alpha2.VisitorConfig{
 			Modbus: &v1alpha2.VisitorConfigModbus{
 				Register:       "DiscreteInputRegister",
-				Offset:         3,
-				Limit:          1,
+				Offset:         pointer.Int64Ptr(3),
+				Limit:          pointer.Int64Ptr(1),
 				Scale:          1.0,
 				IsSwap:         true,
 				IsRegisterSwap: true,
@@ -806,8 +807,8 @@ func UpdatedModbusDeviceInstance(nodeSelector string) v1alpha2.Device {
 		VisitorConfig: v1alpha2.VisitorConfig{
 			Modbus: &v1alpha2.VisitorConfigModbus{
 				Register:       "CoilRegister",
-				Offset:         2,
-				Limit:          1,
+				Offset:         pointer.Int64Ptr(2),
+				Limit:          pointer.Int64Ptr(1),
 				Scale:          2,
 				IsSwap:         true,
 				IsRegisterSwap: true,
@@ -819,8 +820,8 @@ func UpdatedModbusDeviceInstance(nodeSelector string) v1alpha2.Device {
 		VisitorConfig: v1alpha2.VisitorConfig{
 			Modbus: &v1alpha2.VisitorConfigModbus{
 				Register:       "DiscreteInputRegister",
-				Offset:         1,
-				Limit:          1,
+				Offset:         pointer.Int64Ptr(1),
+				Limit:          pointer.Int64Ptr(1),
 				Scale:          1.0,
 				IsSwap:         true,
 				IsRegisterSwap: true,
@@ -861,7 +862,7 @@ func UpdatedModbusDeviceInstance(nodeSelector string) v1alpha2.Device {
 			},
 			Protocol: v1alpha2.ProtocolConfig{
 				Modbus: &v1alpha2.ProtocolConfigModbus{
-					SlaveID: 1,
+					SlaveID: pointer.Int64Ptr(1),
 				},
 				Common: &v1alpha2.ProtocolConfigCommon{
 					COM: &v1alpha2.ProtocolConfigCOM{
@@ -1399,8 +1400,8 @@ func NewConfigMapModbus(nodeSelector string) v12.ConfigMap {
 			Protocol:     "modbus",
 			VisitorConfig: v1alpha2.VisitorConfigModbus{
 				Register:       "CoilRegister",
-				Offset:         2,
-				Limit:          1,
+				Offset:         pointer.Int64Ptr(2),
+				Limit:          pointer.Int64Ptr(1),
 				Scale:          1,
 				IsSwap:         true,
 				IsRegisterSwap: true,
@@ -1413,8 +1414,8 @@ func NewConfigMapModbus(nodeSelector string) v12.ConfigMap {
 			Protocol:     "modbus",
 			VisitorConfig: v1alpha2.VisitorConfigModbus{
 				Register:       "DiscreteInputRegister",
-				Offset:         3,
-				Limit:          1,
+				Offset:         pointer.Int64Ptr(3),
+				Limit:          pointer.Int64Ptr(1),
 				Scale:          1,
 				IsSwap:         true,
 				IsRegisterSwap: true,
@@ -1505,8 +1506,8 @@ func UpdatedConfigMapModbusForDataAndTwins(nodeSelector string) v12.ConfigMap {
 			Protocol:     "modbus",
 			VisitorConfig: v1alpha2.VisitorConfigModbus{
 				Register:       "CoilRegister",
-				Offset:         2,
-				Limit:          1,
+				Offset:         pointer.Int64Ptr(2),
+				Limit:          pointer.Int64Ptr(1),
 				Scale:          1,
 				IsSwap:         true,
 				IsRegisterSwap: true,
@@ -1519,8 +1520,8 @@ func UpdatedConfigMapModbusForDataAndTwins(nodeSelector string) v12.ConfigMap {
 			Protocol:     "modbus",
 			VisitorConfig: v1alpha2.VisitorConfigModbus{
 				Register:       "DiscreteInputRegister",
-				Offset:         3,
-				Limit:          1,
+				Offset:         pointer.Int64Ptr(3),
+				Limit:          pointer.Int64Ptr(1),
 				Scale:          1,
 				IsSwap:         true,
 				IsRegisterSwap: true,
@@ -1548,15 +1549,17 @@ func UpdatedConfigMapModbusForDataAndTwins(nodeSelector string) v12.ConfigMap {
 					},
 				},
 			},
-			DataProperties: []v1alpha2.DataProperty{
-				{
-					PropertyName: "temperature",
-					Metadata: map[string]string{
-						"type": "string",
+			Data: &v1alpha2.DeviceData{
+				DataProperties: []v1alpha2.DataProperty{
+					{
+						PropertyName: "temperature",
+						Metadata: map[string]string{
+							"type": "string",
+						},
 					},
 				},
+				DataTopic: "$ke/events/+/device/customized/update",
 			},
-			DataTopic:        "$ke/events/+/device/customized/update",
 			PropertyVisitors: propertyVisitors,
 		},
 	}
@@ -1590,7 +1593,7 @@ func UpdatedConfigMapModbusForDataAndTwins(nodeSelector string) v12.ConfigMap {
 			Name:     "modbus-sensor-tag-instance-02",
 			Protocol: "modbus",
 			ProtocolConfig: &v1alpha2.ProtocolConfigModbus{
-				SlaveID: 1,
+				SlaveID: pointer.Int64Ptr(1),
 			},
 			ProtocolCommonConfig: &v1alpha2.ProtocolConfigCommon{
 				COM: &v1alpha2.ProtocolConfigCOM{

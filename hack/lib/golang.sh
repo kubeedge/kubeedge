@@ -152,7 +152,9 @@ ALL_BINARIES_AND_TARGETS=(
   admission:cloud/cmd/admission
   keadm:keadm/cmd/keadm
   edgecore:edge/cmd/edgecore
-  edgesite:edgesite/cmd/edgesite
+  edgesite-agent:edgesite/cmd/edgesite-agent
+  edgesite-server:edgesite/cmd/edgesite-server
+  csidriver:cloud/cmd/csidriver
 )
 
 kubeedge::golang::get_target_by_binary() {
@@ -221,7 +223,6 @@ kubeedge::golang::build_binaries() {
 
 KUBEEDGE_ALL_CROSS_BINARIES=(
 edgecore
-edgesite
 )
 
 kubeedge::golang::is_cross_build_binary() {
@@ -305,7 +306,6 @@ kubeedge::golang::cross_build_place_binaries() {
 
 KUBEEDGE_ALL_SMALL_BINARIES=(
 edgecore
-edgesite
 )
 
 kubeedge::golang::is_small_build_binary() {

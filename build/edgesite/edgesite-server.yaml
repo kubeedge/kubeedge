@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: edgesite-server
+  namespace: default
+  labels:
+    app: edgesite-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: edgesite-server
+  template:
+    metadata:
+      labels:
+        app: edgesite-server
+    spec:
+      hostNetwork: true
+      containers:
+        - name: edgesite-server
+          image: kubeedge/edgesite-server-amd64:[YOUR-VERSION]
+          imagePullPolicy: IfNotPresent
+          command: [ "/edgesite-server"]
+          args: [
+            "--cluster-ca-cert=/root/ca/rootCA.crt",
+            "--cluster-cert=/root/certs/edgesite-server.crt",
+            "--cluster-key=/root/certs/edgesite-server.key",
+            "--mode=http-connect",
+            "--proxy-strategies=destHost",
+            "--server-ca-cert=/root/ca/rootCA.crt",
+            "--server-cert=/root/certs/server.crt",
+            "--server-key=/root/certs/server.key",
+          ]
+          ports:
+            - name: serverport
+              containerPort: 8090
+              hostPort: 8090
+            - name: agentport
+              containerPort: 8091
+              hostPort: 8091
+            - name: healthport
+              containerPort: 8092
+              hostPort: 8092
+            - name: adminport
+              containerPort: 8095
+              hostPort: 8095
+          volumeMounts:
+            - mountPath: /root/certs
+              name: certs
+            - mountPath: /root/ca
+              name: ca
+      volumes:
+        - name: certs
+          hostPath:
+            path: /etc/kubeedge/certs
+        - name: ca
+          hostPath:
+            path: /etc/kubeedge/ca

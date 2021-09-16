@@ -30,9 +30,6 @@ and maintenance personnel to locate the problem`
         # Check all items .
         keadm debug check all
 
-        # Check whether the node arch is supported .
-        keadm debug check arch
-
         # Check whether the node CPU meets  requirements.
         keadm debug check cpu
 
@@ -58,7 +55,7 @@ and maintenance personnel to locate the problem`
 
 type CheckObject common.CheckObject
 
-// NewEdgecheck returns KubeEdge edge check command.
+// NewCheck returns KubeEdge edge check command.
 func NewCheck(out io.Writer, collectOptions *common.CheckOptions) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "check",
@@ -72,9 +69,9 @@ func NewCheck(out io.Writer, collectOptions *common.CheckOptions) *cobra.Command
 	return cmd
 }
 
-// NewEdgecheck returns KubeEdge edge check subcommand.
+// NewSubEdgeCheck returns KubeEdge edge check subcommand.
 func NewSubEdgeCheck(out io.Writer, object CheckObject) *cobra.Command {
-	co := NewCheckOptins()
+	co := NewCheckOptions()
 	cmd := &cobra.Command{
 		Short: object.Desc,
 		Use:   object.Use,
@@ -106,8 +103,8 @@ func NewSubEdgeCheck(out io.Writer, object CheckObject) *cobra.Command {
 	return cmd
 }
 
-// Add flags
-func NewCheckOptins() *common.CheckOptions {
+// NewCheckOptions returns check options
+func NewCheckOptions() *common.CheckOptions {
 	co := &common.CheckOptions{}
 	co.Runtime = common.DefaultRuntime
 	co.Domain = "www.github.com"
@@ -115,7 +112,7 @@ func NewCheckOptins() *common.CheckOptions {
 	return co
 }
 
-// Start to check data
+// ExecuteCheck starts to check data
 func (co *CheckObject) ExecuteCheck(use string, ob *common.CheckOptions) {
 	err := fmt.Errorf("")
 
@@ -288,11 +285,10 @@ func CheckNetWork(IP string, timeout int, cloudhubServer string, edgecoreServer 
 	if config != "" {
 		edgeConfig, err := util.ParseEdgecoreConfig(config)
 		if err != nil {
-			err = fmt.Errorf("parse Edgecore config failed")
-		} else {
-			if cloudhubServer == "" {
-				cloudhubServer = edgeConfig.Modules.EdgeHub.WebSocket.Server
-			}
+			return fmt.Errorf("parse Edgecore config failed")
+		}
+		if cloudhubServer == "" {
+			cloudhubServer = edgeConfig.Modules.EdgeHub.WebSocket.Server
 		}
 	}
 
@@ -326,7 +322,7 @@ func CheckNetWork(IP string, timeout int, cloudhubServer string, edgecoreServer 
 	if edgecoreServer != "" {
 		err := CheckHTTP("http://" + edgecoreServer)
 		if err != nil {
-			return fmt.Errorf("check edgecoreServer %s failed, %v", edgecoreServer, edgecoreServer)
+			return fmt.Errorf("check edgecoreServer %s failed, %v", edgecoreServer, err)
 		}
 		fmt.Printf("check edgecoreServer %s success\n", edgecoreServer)
 	}

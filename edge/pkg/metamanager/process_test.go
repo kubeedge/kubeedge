@@ -46,8 +46,6 @@ const (
 	ModuleNameEdgeHub = "websocket"
 	// ModuleNameController is the name of the controller module
 	ModuleNameController = "edgecontroller"
-	// MarshalErroris common jsonMarshall error
-	MarshalError = "Error to marshal message content: json: unsupported type: chan int"
 	// OperationNodeConnection is message with operation publish
 	OperationNodeConnection = "publish"
 )
@@ -113,7 +111,7 @@ func TestProcessInsert(t *testing.T) {
 	meta.processInsert(*msg)
 	message, _ = beehiveContext.Receive(ModuleNameEdged)
 	t.Run("MarshallFail", func(t *testing.T) {
-		want := MarshalError
+		want := "Error to get insert message content data: marshal message content failed: json: unsupported type: chan int"
 		if message.GetContent() != want {
 			t.Errorf("Wrong Error message received : Wanted %v and Got %v", want, message.GetContent())
 		}
@@ -162,7 +160,7 @@ func TestProcessUpdate(t *testing.T) {
 	meta.processUpdate(*msg)
 	message, _ := beehiveContext.Receive(ModuleNameEdged)
 	t.Run("MarshallFail", func(t *testing.T) {
-		want := MarshalError
+		want := "Error to get update message content data: marshal message content failed: json: unsupported type: chan int"
 		if message.GetContent() != want {
 			t.Errorf("Wrong Error message received : Wanted %v and Got %v", want, message.GetContent())
 		}
@@ -290,7 +288,7 @@ func TestProcessResponse(t *testing.T) {
 	meta.processResponse(*msg)
 	message, _ := beehiveContext.Receive(ModuleNameEdged)
 	t.Run("MarshallFail", func(t *testing.T) {
-		want := MarshalError
+		want := "Error to get response message content data: marshal message content failed: json: unsupported type: chan int"
 		if message.GetContent() != want {
 			t.Errorf("Wrong Error message received : Wanted %v and Got %v", want, message.GetContent())
 		}
@@ -427,7 +425,7 @@ func TestProcessQuery(t *testing.T) {
 	beehiveContext.SendResp(*msg)
 	message, _ = beehiveContext.Receive(ModuleNameEdgeHub)
 	t.Run("ProcessRemoteQueryMarshallFail", func(t *testing.T) {
-		want := MarshalError
+		want := "Error to get remote query response message content data: marshal message content failed: json: unsupported type: chan int"
 		if message.GetContent() != want {
 			t.Errorf("Wrong Error message received : Wanted %v and Got %v", want, message.GetContent())
 		}
@@ -618,7 +616,7 @@ func TestProcessFunctionAction(t *testing.T) {
 	//beehiveContext.Send(MetaManagerModuleName, *msg)
 	message, _ := beehiveContext.Receive(ModuleNameEdgeHub)
 	t.Run("MarshallFail", func(t *testing.T) {
-		want := MarshalError
+		want := "Error to get action message content data: marshal message content failed: json: unsupported type: chan int"
 		if message.GetContent() != want {
 			t.Errorf("Wrong Error message received : Wanted %v and Got %v", want, message.GetContent())
 		}
@@ -670,7 +668,7 @@ func TestProcessFunctionActionResult(t *testing.T) {
 	meta.processFunctionActionResult(*msg)
 	message, _ := beehiveContext.Receive(ModuleNameEdgeHub)
 	t.Run("MarshallFail", func(t *testing.T) {
-		want := MarshalError
+		want := "Error to get action_result message content data: marshal message content failed: json: unsupported type: chan int"
 		if message.GetContent() != want {
 			t.Errorf("Wrong Error message received : Wanted %v and Got %v", want, message.GetContent())
 		}

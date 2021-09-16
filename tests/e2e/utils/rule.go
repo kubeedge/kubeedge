@@ -16,17 +16,14 @@ import (
 	rulesv1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
 )
 
-const (
-	RestType     = "rest"
-	EventbusType = "eventbus"
-)
-
-func NewRule(sourceType, targetType string) *rulesv1.Rule {
+func NewRule(sourceType, targetType rulesv1.RuleEndpointTypeDef) *rulesv1.Rule {
 	switch {
-	case sourceType == RestType && targetType == EventbusType:
+	case sourceType == rulesv1.RuleEndpointTypeRest && targetType == rulesv1.RuleEndpointTypeEventBus:
 		return NewRest2EventbusRule()
-	case sourceType == EventbusType && targetType == RestType:
+	case sourceType == rulesv1.RuleEndpointTypeEventBus && targetType == rulesv1.RuleEndpointTypeRest:
 		return NewEventbus2RestRule()
+	case sourceType == rulesv1.RuleEndpointTypeRest && targetType == rulesv1.RuleEndpointTypeServiceBus:
+		return NewRest2ServicebusRule()
 	}
 	return nil
 }
@@ -86,12 +83,41 @@ func NewRest2EventbusRule() *rulesv1.Rule {
 	return &rule
 }
 
-func NewRuleEndpoint(endpointType string) *rulesv1.RuleEndpoint {
+func NewRest2ServicebusRule() *rulesv1.Rule {
+	rule := rulesv1.Rule{
+		TypeMeta: v1.TypeMeta{
+			Kind:       "Rule",
+			APIVersion: "rules.kubeedge.io/v1",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "rule-rest-servicebus-test",
+			Namespace: Namespace,
+		},
+		Spec: rulesv1.RuleSpec{
+			Source: "rest-test",
+			SourceResource: map[string]string{
+				"path": "/ddd",
+			},
+			Target: "servicebus-test",
+			TargetResource: map[string]string{
+				"path": "/url",
+			},
+		},
+		Status: rulesv1.RuleStatus{
+			Errors: []string{},
+		},
+	}
+	return &rule
+}
+
+func NewRuleEndpoint(endpointType rulesv1.RuleEndpointTypeDef) *rulesv1.RuleEndpoint {
 	switch endpointType {
-	case RestType:
+	case rulesv1.RuleEndpointTypeRest:
 		return newRestRuleEndpoint()
-	case EventbusType:
+	case rulesv1.RuleEndpointTypeEventBus:
 		return newEventBusRuleEndpoint()
+	case rulesv1.RuleEndpointTypeServiceBus:
+		return newServiceBusRuleEndpoint()
 	}
 	return newRestRuleEndpoint()
 }
@@ -107,7 +133,7 @@ func newRestRuleEndpoint() *rulesv1.RuleEndpoint {
 			Namespace: Namespace,
 		},
 		Spec: rulesv1.RuleEndpointSpec{
-			RuleEndpointType: RestType,
+			RuleEndpointType: rulesv1.RuleEndpointTypeRest,
 		},
 	}
 	return &restRuleEndpoint
@@ -124,10 +150,29 @@ func newEventBusRuleEndpoint() *rulesv1.RuleEndpoint {
 			Namespace: Namespace,
 		},
 		Spec: rulesv1.RuleEndpointSpec{
-			RuleEndpointType: EventbusType,
+			RuleEndpointType: rulesv1.RuleEndpointTypeEventBus,
 		},
 	}
 	return &eventbusRuleEndpoint
+}
+
+func newServiceBusRuleEndpoint() *rulesv1.RuleEndpoint {
+	servicebusRuleEndpoint := rulesv1.RuleEndpoint{
+		TypeMeta: v1.TypeMeta{
+			Kind:       "RuleEndpoint",
+			APIVersion: "rules.kubeedge.io/v1",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "servicebus-test",
+			Namespace: Namespace,
+		},
+		Spec: rulesv1.RuleEndpointSpec{
+			RuleEndpointType: rulesv1.RuleEndpointTypeServiceBus,
+			Properties: map[string]string{
+				"service_port": "9000"},
+		},
+	}
+	return &servicebusRuleEndpoint
 }
 
 // GetRuleList to get the rule list and verify whether the contents of the rule matches with what is expected
@@ -164,7 +209,7 @@ func GetRuleList(list *rulesv1.RuleList, getRuleAPI string, expectedRule *rulesv
 }
 
 // HandleRule to handle rule.
-func HandleRule(operation, apiserver, UID, sourceType, targetType string) (bool, int) {
+func HandleRule(operation, apiserver, UID string, sourceType, targetType rulesv1.RuleEndpointTypeDef) (bool, int) {
 	var req *http.Request
 	var err error
 	var body io.Reader
@@ -207,7 +252,7 @@ func HandleRule(operation, apiserver, UID, sourceType, targetType string) (bool,
 }
 
 // HandleRuleEndpoint to handle ruleendpoint.
-func HandleRuleEndpoint(operation string, apiserver string, UID string, endpointType string) (bool, int) {
+func HandleRuleEndpoint(operation string, apiserver string, UID string, endpointType rulesv1.RuleEndpointTypeDef) (bool, int) {
 	var req *http.Request
 	var err error
 	var body io.Reader

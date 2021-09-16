@@ -105,7 +105,9 @@ func (s *imitator) Delete(ctx context.Context, key string) error {
 	}
 	s.lock.Lock()
 	_, err := dbm.DBAccess.Delete(&m)
-	klog.Errorf("[imitator] delete error: %v", err)
+	if err != nil {
+		klog.Errorf("[imitator] delete error: %v", err)
+	}
 	s.lock.Unlock()
 	return nil
 }

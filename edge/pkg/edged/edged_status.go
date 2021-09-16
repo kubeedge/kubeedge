@@ -37,6 +37,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/klog/v2"
+	"k8s.io/kubernetes/pkg/kubelet/cadvisor"
 
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -47,14 +48,12 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/config"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
 	"github.com/kubeedge/kubeedge/pkg/util"
 )
 
-//GPUInfoQueryTool sets information monitoring tool location for GPU
-var GPUInfoQueryTool = "/var/IEF/nvidia/bin/nvidia-smi"
 var initNode v1.Node
 var reservationMemory = resource.MustParse(fmt.Sprintf("%dMi", 100))
+var reservationEphemeralStorage = resource.MustParse(fmt.Sprintf("%dGi", 1))
 
 func (e *edged) initialNode() (*v1.Node, error) {
 	var node = &v1.Node{}
@@ -119,6 +118,11 @@ func (e *edged) initialNode() (*v1.Node, error) {
 	}
 
 	err = e.setCPUInfo(node.Status.Capacity, node.Status.Allocatable)
+	if err != nil {
+		return nil, err
+	}
+
+	err = e.setEphemeralStorageInfo(node.Status.Capacity, node.Status.Allocatable)
 	if err != nil {
 		return nil, err
 	}
@@ -285,17 +289,14 @@ func (e *edged) getNodeInfo() (v1.NodeSystemInfo, error) {
 }
 
 func (e *edged) setGPUInfo(nodeStatus *edgeapi.NodeStatusRequest) error {
-	_, err := os.Stat(GPUInfoQueryTool)
+	smiCommand := "nvidia-smi"
+	result, err := util.Command("sh", []string{"-c", smiCommand})
 	if err != nil {
-		return fmt.Errorf("can not get file in path: %s, err: %v", GPUInfoQueryTool, err)
+		return fmt.Errorf("nvidia-smi run failed: %s", err)
 	}
 
 	nodeStatus.ExtendResources = make(map[v1.ResourceName][]edgeapi.ExtendResource)
 
-	result, err := util.Command("sh", []string{"-c", fmt.Sprintf("%s -L", GPUInfoQueryTool)})
-	if err != nil {
-		return err
-	}
 	re := regexp.MustCompile(`GPU .*:.*\(.*\)`)
 	gpuInfos := re.FindAllString(result, -1)
 	gpuResources := make([]edgeapi.ExtendResource, 0)
@@ -308,7 +309,7 @@ func (e *edged) setGPUInfo(nodeStatus *edgeapi.NodeStatusRequest) error {
 		}
 		gpuName := params[1]
 		gpuType := params[2]
-		result, err = util.Command("sh", []string{"-c", fmt.Sprintf("%s -i %s -a|grep -A 3 \"FB Memory Usage\"| grep Total", GPUInfoQueryTool, gpuName)})
+		result, err = util.Command("sh", []string{"-c", fmt.Sprintf("%s -i %s -a|grep -A 3 \"FB Memory Usage\"| grep Total", smiCommand, gpuName)})
 		if err != nil {
 			klog.Errorf("get gpu(%v) memory failed, err: %v", gpuName, err)
 			continue
@@ -331,7 +332,7 @@ func (e *edged) setGPUInfo(nodeStatus *edgeapi.NodeStatusRequest) error {
 	return nil
 }
 
-func (e *edged) setMemInfo(total, allocated v1.ResourceList) error {
+func (e *edged) setMemInfo(total, allocatable v1.ResourceList) error {
 	out, err := ioutil.ReadFile("/proc/meminfo")
 	if err != nil {
 		return err
@@ -351,14 +352,31 @@ func (e *edged) setMemInfo(total, allocated v1.ResourceList) error {
 	if mem.Cmp(reservationMemory) > 0 {
 		mem.Sub(reservationMemory)
 	}
-	allocated[v1.ResourceMemory] = mem.DeepCopy()
+	allocatable[v1.ResourceMemory] = mem.DeepCopy()
 
 	return nil
 }
 
-func (e *edged) setCPUInfo(total, allocated v1.ResourceList) error {
+func (e *edged) setCPUInfo(total, allocatable v1.ResourceList) error {
 	total[v1.ResourceCPU] = resource.MustParse(fmt.Sprintf("%d", runtime.NumCPU()))
-	allocated[v1.ResourceCPU] = total[v1.ResourceCPU].DeepCopy()
+	allocatable[v1.ResourceCPU] = total[v1.ResourceCPU].DeepCopy()
+
+	return nil
+}
+
+func (e *edged) setEphemeralStorageInfo(total, allocatable v1.ResourceList) error {
+	rootfs, err := e.cadvisor.GetDirFsInfo(e.getRootDir())
+	if err != nil {
+		return err
+	}
+
+	for rName, rCap := range cadvisor.EphemeralStorageCapacityFromFsInfo(rootfs) {
+		total[rName] = rCap.DeepCopy()
+		if rCap.Cmp(reservationEphemeralStorage) > 0 {
+			rCap.Sub(reservationEphemeralStorage)
+		}
+		allocatable[rName] = rCap.DeepCopy()
+	}
 
 	return nil
 }
@@ -392,15 +410,15 @@ func (e *edged) registerNode() error {
 	resource := fmt.Sprintf("%s/%s/%s", e.namespace, model.ResourceTypeNodeStatus, e.nodeName)
 	nodeInfoMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.InsertOperation, node)
 	var res model.Message
-	if _, ok := core.GetModules()[edgehub.ModuleNameEdgeHub]; ok {
-		res, err = beehiveContext.SendSync(edgehub.ModuleNameEdgeHub, *nodeInfoMsg, syncMsgRespTimeout)
+	if _, ok := core.GetModules()[modules.EdgeHubModuleName]; ok {
+		res, err = beehiveContext.SendSync(modules.EdgeHubModuleName, *nodeInfoMsg, syncMsgRespTimeout)
 	} else {
 		res, err = beehiveContext.SendSync(EdgeController, *nodeInfoMsg, syncMsgRespTimeout)
 	}
 
-	if err != nil || res.Content != "OK" {
+	if err != nil || res.Content != constants.MessageSuccessfulContent {
 		klog.Errorf("register node failed, error: %v", err)
-		if res.Content != "OK" {
+		if res.Content != constants.MessageSuccessfulContent {
 			klog.Errorf("response from cloud core: %v", res.Content)
 		}
 		return err

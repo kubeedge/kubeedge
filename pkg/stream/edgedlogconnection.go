@@ -57,7 +57,7 @@ func (l *EdgedLogsConnection) String() string {
 func (l *EdgedLogsConnection) Serve(tunnel SafeWriteTunneler) error {
 	//connect edged
 	client := http.Client{}
-	req, err := http.NewRequest("GET", l.URL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, l.URL.String(), nil)
 	if err != nil {
 		klog.Errorf("create new logs request error %v", err)
 		return err

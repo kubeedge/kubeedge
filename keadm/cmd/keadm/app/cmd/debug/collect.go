@@ -24,7 +24,7 @@ keadm debug collect --output-path .
 `
 )
 
-var pringDeatilFlag = false
+var printDeatilFlag = false
 
 // NewCollect returns KubeEdge collect command.
 func NewCollect(out io.Writer, collectOptions *common.CollectOptions) *cobra.Command {
@@ -73,7 +73,7 @@ func newCollectOptions() *common.CollectOptions {
 	return opts
 }
 
-//Start to collect data
+// ExecuteCollect starts to collect data
 func ExecuteCollect(collectOptions *common.CollectOptions) error {
 	//verification parameters
 	err := VerificationParameters(collectOptions)
@@ -139,7 +139,7 @@ func ExecuteCollect(collectOptions *common.CollectOptions) error {
 	return nil
 }
 
-// verification parameters for debug collect
+// VerificationParameters verifies parameters for debug collect
 func VerificationParameters(collectOptions *common.CollectOptions) error {
 	if !util.FileExists(collectOptions.Config) {
 		return fmt.Errorf("edgecore config %s does not exist", collectOptions.Config)
@@ -155,7 +155,7 @@ func VerificationParameters(collectOptions *common.CollectOptions) error {
 	collectOptions.OutputPath = path
 
 	if collectOptions.Detail {
-		pringDeatilFlag = true
+		printDeatilFlag = true
 	}
 
 	return nil
@@ -329,7 +329,7 @@ func ExecuteShell(cmdStr string, tmpPath string) error {
 }
 
 func printDetail(msg string) {
-	if pringDeatilFlag {
+	if printDeatilFlag {
 		fmt.Println(msg)
 	}
 }

@@ -20,7 +20,6 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/application"
-	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
@@ -62,7 +61,7 @@ func NewREST() (*REST, error) {
 	store.Storage.Storage = sqlite.New()
 	store.Storage.Codec = unstructured.UnstructuredJSONScheme
 
-	return &REST{store, application.NewApplicationAgent(metaserverconfig.Config.NodeName)}, nil
+	return &REST{store, application.NewApplicationAgent()}, nil
 }
 
 // decorateList set list's gvk if it's gvk is empty

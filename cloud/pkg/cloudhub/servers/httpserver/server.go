@@ -40,9 +40,8 @@ import (
 // StartHTTPServer starts the http service
 func StartHTTPServer() {
 	router := mux.NewRouter()
-	router.HandleFunc(constants.DefaultCertURL, edgeCoreClientCert).Methods("GET")
-	router.HandleFunc(constants.DefaultCAURL, getCA).Methods("GET")
-	router.HandleFunc(constants.DefaultCloudCoreReadyCheckURL, electionHandler).Methods("GET")
+	router.HandleFunc(constants.DefaultCertURL, edgeCoreClientCert).Methods(http.MethodGet)
+	router.HandleFunc(constants.DefaultCAURL, getCA).Methods(http.MethodGet)
 
 	addr := fmt.Sprintf("%s:%d", hubconfig.Config.HTTPS.Address, hubconfig.Config.HTTPS.Port)
 
@@ -68,29 +67,6 @@ func getCA(w http.ResponseWriter, r *http.Request) {
 	caCertDER := hubconfig.Config.Ca
 	if _, err := w.Write(caCertDER); err != nil {
 		klog.Errorf("failed to write caCertDER, err: %v", err)
-	}
-}
-
-//electionHandler returns the status whether the cloudcore is ready
-func electionHandler(w http.ResponseWriter, r *http.Request) {
-	checker := hubconfig.Config.Checker
-	if checker == nil {
-		w.WriteHeader(http.StatusOK)
-		if _, err := w.Write([]byte("Cloudcore is ready with no leaderelection")); err != nil {
-			klog.Errorf("failed to write http response, err: %v", err)
-		}
-		return
-	}
-	if checker.Check(r) != nil {
-		w.WriteHeader(http.StatusNotFound)
-		if _, err := w.Write([]byte("Cloudcore is not ready")); err != nil {
-			klog.Errorf("failed to write http response, err: %v", err)
-		}
-	} else {
-		w.WriteHeader(http.StatusOK)
-		if _, err := w.Write([]byte("Cloudcore is ready")); err != nil {
-			klog.Errorf("failed to write http response, err: %v", err)
-		}
 	}
 }
 
@@ -196,15 +172,18 @@ func signEdgeCert(w http.ResponseWriter, r *http.Request) {
 	csrContent, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		klog.Errorf("fail to read file when signing the cert for edgenode:%s! error:%v", r.Header.Get(constants.NodeName), err)
+		return
 	}
 	csr, err := x509.ParseCertificateRequest(csrContent)
 	if err != nil {
 		klog.Errorf("fail to ParseCertificateRequest of edgenode: %s! error:%v", r.Header.Get(constants.NodeName), err)
+		return
 	}
 	subject := csr.Subject
 	clientCertDER, err := signCerts(subject, csr.PublicKey)
 	if err != nil {
 		klog.Errorf("fail to signCerts for edgenode:%s! error:%v", r.Header.Get(constants.NodeName), err)
+		return
 	}
 
 	if _, err := w.Write(clientCertDER); err != nil {
@@ -244,7 +223,7 @@ func signCerts(subInfo pkix.Name, pbKey crypto.PublicKey) ([]byte, error) {
 
 // CheckCaExistsFromSecret checks ca from secret
 func CheckCaExistsFromSecret() bool {
-	if _, err := GetSecret(CaSecretName, NamespaceSystem); err != nil {
+	if _, err := GetSecret(CaSecretName, constants.SystemNamespace); err != nil {
 		return false
 	}
 	return true
@@ -252,7 +231,7 @@ func CheckCaExistsFromSecret() bool {
 
 // CheckCertExistsFromSecret checks CloudCore certificate from secret
 func CheckCertExistsFromSecret() bool {
-	if _, err := GetSecret(CloudCoreSecretName, NamespaceSystem); err != nil {
+	if _, err := GetSecret(CloudCoreSecretName, constants.SystemNamespace); err != nil {
 		return false
 	}
 	return true
@@ -288,7 +267,7 @@ func PrepareAllCerts() error {
 
 			UpdateConfig(caDER, caKeyDER, nil, nil)
 		} else {
-			s, err := GetSecret(CaSecretName, NamespaceSystem)
+			s, err := GetSecret(CaSecretName, constants.SystemNamespace)
 			if err != nil {
 				klog.Errorf("failed to get CaSecret, error: %v", err)
 				return err
@@ -327,7 +306,7 @@ func PrepareAllCerts() error {
 
 			UpdateConfig(nil, nil, certDER, keyDER)
 		} else {
-			s, err := GetSecret(CloudCoreSecretName, NamespaceSystem)
+			s, err := GetSecret(CloudCoreSecretName, constants.SystemNamespace)
 			if err != nil {
 				klog.Errorf("failed to get CloudCore secret, error: %v", err)
 				return err

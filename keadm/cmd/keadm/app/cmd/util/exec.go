@@ -64,14 +64,14 @@ func (cmd Command) GetCommand() string {
 
 func (cmd Command) GetStdOut() string {
 	if len(cmd.StdOut) != 0 {
-		return strings.TrimRight(string(cmd.StdOut), "\n")
+		return strings.TrimSuffix(string(cmd.StdOut), "\n")
 	}
 	return ""
 }
 
 func (cmd Command) GetStdErr() string {
 	if len(cmd.StdErr) != 0 {
-		return strings.TrimRight(string(cmd.StdErr), "\n")
+		return strings.TrimSuffix(string(cmd.StdErr), "\n")
 	}
 	return ""
 }

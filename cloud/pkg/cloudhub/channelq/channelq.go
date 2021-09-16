@@ -100,9 +100,10 @@ func (q *ChannelMessageQueue) addMessageToQueue(nodeID string, msg *beehiveModel
 		return
 	}
 
-	item, exist, _ := nodeStore.GetByKey(messageKey)
-
-	if !isDeleteMessage(msg) {
+	//if the operation is delete, force to sync the resource message
+	//if the operation is response, force to sync the resource message, since the edgecore requests it
+	if !isDeleteMessage(msg) && msg.GetOperation() != beehiveModel.ResponseOperation {
+		item, exist, _ := nodeStore.GetByKey(messageKey)
 		// If the message doesn't exist in the store, then compare it with
 		// the version stored in the database
 		if !exist {
@@ -144,7 +145,7 @@ func getMsgKey(obj interface{}) (string, error) {
 		return strings.Join([]string{resourceType, resourceNamespace, resourceName}, "/"), nil
 	}
 
-	return "", fmt.Errorf("Failed to get message key")
+	return "", fmt.Errorf("failed to get message key")
 }
 
 func getListMsgKey(obj interface{}) (string, error) {
@@ -156,10 +157,9 @@ func getListMsgKey(obj interface{}) (string, error) {
 func isListResource(msg *beehiveModel.Message) bool {
 	msgResource := msg.GetResource()
 	if strings.Contains(msgResource, beehiveModel.ResourceTypePodlist) ||
-		strings.Contains(msgResource, commonconst.ResourceTypeServiceList) ||
-		strings.Contains(msgResource, commonconst.ResourceTypeEndpointsList) ||
 		strings.Contains(msgResource, "membership") ||
-		strings.Contains(msgResource, "twin/cloud_updated") {
+		strings.Contains(msgResource, "twin/cloud_updated") ||
+		strings.Contains(msgResource, beehiveModel.ResourceTypeServiceAccountToken) {
 		return true
 	}
 
@@ -168,7 +168,7 @@ func isListResource(msg *beehiveModel.Message) bool {
 	}
 	if msg.GetOperation() == beehiveModel.ResponseOperation {
 		content, ok := msg.Content.(string)
-		if ok && content == "OK" {
+		if ok && content == commonconst.MessageSuccessfulContent {
 			return true
 		}
 	}
@@ -213,7 +213,7 @@ func GetNodeID(msg *beehiveModel.Message) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("No nodeID in Message.Router.Resource: %s", resource)
+	return "", fmt.Errorf("no nodeID in Message.Router.Resource: %s", resource)
 }
 
 // Connect allocates the queues and stores for given node

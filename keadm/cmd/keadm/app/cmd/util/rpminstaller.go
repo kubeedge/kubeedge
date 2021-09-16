@@ -18,10 +18,15 @@ package util
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/blang/semver"
 
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+)
+
+const (
+	openEulerVendorName = "openEuler"
 )
 
 // RpmOS struct objects shall have information of the tools version to be installed
@@ -51,13 +56,24 @@ func (r *RpmOS) InstallMQTT() error {
 		return nil
 	}
 
-	// install MQTT
-	for _, command := range []string{
+	commands := []string{
 		"yum -y install epel-release",
 		"yum -y install mosquitto",
 		"systemctl start mosquitto",
 		"systemctl enable mosquitto",
-	} {
+	}
+
+	vendorName, err := getOSVendorName()
+	if err != nil {
+		fmt.Printf("Get OS vendor name failed: %v\n", err)
+	}
+	// epel-release package does not included in openEuler
+	if vendorName == openEulerVendorName {
+		commands = commands[1:]
+	}
+
+	// install MQTT
+	for _, command := range commands {
 		cmd := NewCommand(command)
 		if err := cmd.Exec(); err != nil {
 			return err
@@ -112,7 +128,17 @@ func (r *RpmOS) IsKubeEdgeProcessRunning(proc string) (bool, error) {
 	return isKubeEdgeProcessRunning(proc)
 }
 
-// IsKubeEdgeProcessRunning checks if the given process is running or not
+// IsProcessRunning checks if the given process is running or not
 func (r *RpmOS) IsProcessRunning(proc string) (bool, error) {
 	return isKubeEdgeProcessRunning(proc)
+}
+
+func getOSVendorName() (string, error) {
+	cmd := NewCommand("cat /etc/os-release | grep -E \"^NAME=\" | awk -F'=' '{print $2}'")
+	if err := cmd.Exec(); err != nil {
+		return "", err
+	}
+	vendor := strings.Trim(cmd.GetStdOut(), "\"")
+
+	return vendor, nil
 }

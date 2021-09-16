@@ -20,7 +20,6 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	componentbaseconfig "k8s.io/component-base/config"
 
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
 )
@@ -28,14 +27,21 @@ import (
 // CloudCoreConfig indicates the config of cloudCore which get from cloudCore config file
 type CloudCoreConfig struct {
 	metav1.TypeMeta
+	// CommonConfig indicates common config for all modules
+	// +Required
+	CommonConfig *CommonConfig `json:"commonConfig,omitempty"`
 	// KubeAPIConfig indicates the kubernetes cluster info which cloudCore will connected
 	// +Required
 	KubeAPIConfig *KubeAPIConfig `json:"kubeAPIConfig,omitempty"`
 	// Modules indicates cloudCore modules config
 	// +Required
 	Modules *Modules `json:"modules,omitempty"`
-	// Configuration for LeaderElection
-	LeaderElection *componentbaseconfig.LeaderElectionConfiguration `json:"leaderelection,omitempty"`
+}
+
+// KubeAPIConfig indicates the configuration for interacting with k8s server
+type CommonConfig struct {
+	// TunnelPort indicates the port that the cloudcore tunnel listened
+	TunnelPort int `json:"tunnelPort,omitempty"`
 }
 
 // KubeAPIConfig indicates the configuration for interacting with k8s server
@@ -257,6 +263,9 @@ type EdgeControllerBuffer struct {
 	// DeletePod indicates the buffer of delete pod message from edge
 	// default 1024
 	DeletePod int32 `json:"deletePod,omitempty"`
+	// ServiceAccount indicates the buffer of service account token
+	// default 1024
+	ServiceAccountToken int32 `json:"serviceAccountToken,omitempty"`
 }
 
 // ControllerContext indicates the message layer context for all controllers
@@ -312,6 +321,9 @@ type EdgeControllerLoad struct {
 	// UpdateRuleStatusWorkers indicates the load of update rule status
 	// default 4
 	UpdateRuleStatusWorkers int32 `json:"UpdateRuleStatusWorkers,omitempty"`
+	// ServiceAccountTokenWorkers indicates the load of service account token
+	// default 4
+	ServiceAccountTokenWorkers int32 `json:"ServiceAccountTokenWorkers,omitempty"`
 }
 
 // DeviceController indicates the device controller

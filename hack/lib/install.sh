@@ -32,7 +32,7 @@ function check_kind {
   command -v kind >/dev/null 2>&1
   if [[ $? -ne 0 ]]; then
     echo "installing kind ."
-    GO111MODULE="on" go get sigs.k8s.io/kind@v0.9.0
+    GO111MODULE="on" go get sigs.k8s.io/kind@v0.11.1
     if [[ $? -ne 0 ]]; then
       echo "kind installed failed, exiting."
       exit 1
@@ -50,19 +50,31 @@ function check_kind {
 # check if golangci-lint installed
 function check_golangci-lint {
   echo "checking golangci-lint"
+  export PATH=$PATH:$GOPATH/bin
+  expectedVersion="1.42.0"
   command -v golangci-lint >/dev/null 2>&1
   if [[ $? -ne 0 ]]; then
-    echo "installing golangci-lint ."
-    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.30.0
+    install_golangci-lint
+  else
+    version=$(golangci-lint version)
+    if [[ $version =~ $expectedVersion ]]; then
+      echo -n "found golangci-lint, version: " && golangci-lint version
+    else
+      echo "golangci-lint version not matched, now version is $version, begin to install new version $expectedVersion"
+      install_golangci-lint
+    fi
+  fi
+}
+
+function install_golangci-lint {
+  echo "installing golangci-lint ."
+    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.42.0
     if [[ $? -ne 0 ]]; then
       echo "golangci-lint installed failed, exiting."
       exit 1
     fi
 
     export PATH=$PATH:$GOPATH/bin
-  else
-    echo -n "found golangci-lint, version: " && golangci-lint version
-  fi
 }
 
 verify_go_version(){

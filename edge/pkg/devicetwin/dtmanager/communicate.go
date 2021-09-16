@@ -43,7 +43,7 @@ func (cw CommWorker) Start() {
 			}
 			if dtMsg, isDTMessage := msg.(*dttype.DTMessage); isDTMessage {
 				if fn, exist := ActionCallBack[dtMsg.Action]; exist {
-					_, err := fn(cw.DTContexts, dtMsg.Identity, dtMsg.Msg)
+					err := fn(cw.DTContexts, dtMsg.Identity, dtMsg.Msg)
 					if err != nil {
 						klog.Errorf("CommModule deal %s event failed: %v", dtMsg.Action, err)
 					}
@@ -73,29 +73,29 @@ func initActionCallBack() {
 	ActionCallBack[dtcommon.Confirm] = dealConfirm
 }
 
-func dealSendToEdge(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
+func dealSendToEdge(context *dtcontext.DTContext, resource string, msg interface{}) error {
 	beehiveContext.Send(dtcommon.EventHubModule, *msg.(*model.Message))
-	return nil, nil
+	return nil
 }
-func dealSendToCloud(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
+func dealSendToCloud(context *dtcontext.DTContext, resource string, msg interface{}) error {
 	if strings.Compare(context.State, dtcommon.Disconnected) == 0 {
 		klog.Infof("Disconnected with cloud, not send msg to cloud")
-		return nil, nil
+		return nil
 	}
 	message, ok := msg.(*model.Message)
 	if !ok {
-		return nil, errors.New("msg not Message type")
+		return errors.New("msg not Message type")
 	}
 	beehiveContext.Send(dtcommon.HubModule, *message)
 	msgID := message.GetID()
 	context.ConfirmMap.Store(msgID, &dttype.DTMessage{Msg: message, Action: dtcommon.SendToCloud, Type: dtcommon.CommModule})
-	return nil, nil
+	return nil
 }
-func dealLifeCycle(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
+func dealLifeCycle(context *dtcontext.DTContext, resource string, msg interface{}) error {
 	klog.V(2).Infof("CONNECTED EVENT")
 	message, ok := msg.(*model.Message)
 	if !ok {
-		return nil, errors.New("msg not Message type")
+		return errors.New("msg not Message type")
 	}
 	connectedInfo, _ := (message.Content.(string))
 	if strings.Compare(connectedInfo, connect.CloudConnected) == 0 {
@@ -103,16 +103,16 @@ func dealLifeCycle(context *dtcontext.DTContext, resource string, msg interface{
 			_, err := detailRequest(context, msg)
 			if err != nil {
 				klog.Errorf("detail request: %v", err)
-				return nil, err
+				return err
 			}
 		}
 		context.State = dtcommon.Connected
 	} else if strings.Compare(connectedInfo, connect.CloudDisconnected) == 0 {
 		context.State = dtcommon.Disconnected
 	}
-	return nil, nil
+	return nil
 }
-func dealConfirm(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
+func dealConfirm(context *dtcontext.DTContext, resource string, msg interface{}) error {
 	klog.V(2).Infof("CONFIRM EVENT")
 	value, ok := msg.(*model.Message)
 
@@ -121,9 +121,9 @@ func dealConfirm(context *dtcontext.DTContext, resource string, msg interface{})
 		klog.Infof("CommModule deal confirm msgID %s", parentMsgID)
 		context.ConfirmMap.Delete(parentMsgID)
 	} else {
-		return nil, errors.New("CommModule deal confirm, type not correct")
+		return errors.New("CommModule deal confirm, type not correct")
 	}
-	return nil, nil
+	return nil
 }
 
 func detailRequest(context *dtcontext.DTContext, msg interface{}) (interface{}, error) {
@@ -157,7 +157,7 @@ func (cw CommWorker) checkConfirm(context *dtcontext.DTContext, msg interface{})
 		} else {
 			klog.V(2).Info("redo task due to no recv")
 			if fn, exist := ActionCallBack[dtmsg.Action]; exist {
-				_, err := fn(cw.DTContexts, dtmsg.Identity, dtmsg.Msg)
+				err := fn(cw.DTContexts, dtmsg.Identity, dtmsg.Msg)
 				if err != nil {
 					klog.Errorf("CommModule deal %s event failed: %v", dtmsg.Action, err)
 				}

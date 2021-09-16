@@ -55,12 +55,22 @@ type RuleList struct {
 // RuleEndpointSpec defines endpoint of rule.
 type RuleEndpointSpec struct {
 	// RuleEndpointType defines type: servicebus, rest
-	RuleEndpointType string `json:"ruleEndpointType"`
+	RuleEndpointType RuleEndpointTypeDef `json:"ruleEndpointType"`
 	// Properties: properties of endpoint. for example:
 	// servicebus:
 	// {"service_port":"8080"}
 	Properties map[string]string `json:"properties,omitempty"`
 }
+
+// RuleEndpointTypeDef defines ruleEndpoint's type
+type RuleEndpointTypeDef string
+
+// RuleEndpoint's types.
+const (
+	RuleEndpointTypeRest       RuleEndpointTypeDef = "rest"
+	RuleEndpointTypeEventBus   RuleEndpointTypeDef = "eventbus"
+	RuleEndpointTypeServiceBus RuleEndpointTypeDef = "servicebus"
+)
 
 // +genclient
 // +genclient:noStatus
