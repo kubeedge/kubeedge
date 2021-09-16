@@ -49,6 +49,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/apimachinery/pkg/util/sets"
+	utilvalidation "k8s.io/apimachinery/pkg/util/validation"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"k8s.io/klog/v2"
@@ -671,6 +672,45 @@ func (e *edged) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container, p
 		tmpEnv      = make(map[string]string)
 		mappingFunc = expansion.MappingFuncFor(tmpEnv)
 	)
+
+	// Env will override EnvFrom variables.
+	// Process EnvFrom first then allow Env to replace existing values.
+	for _, envFrom := range container.EnvFrom {
+		switch {
+		case envFrom.ConfigMapRef != nil:
+			cm := envFrom.ConfigMapRef
+			name := cm.Name
+			configMap, ok := configMaps[name]
+			if !ok {
+				if e.kubeClient == nil {
+					return result, fmt.Errorf("couldn't get configMap %v/%v, no kubeClient defined", pod.Namespace, name)
+				}
+				optional := cm.Optional != nil && *cm.Optional
+				configMap, err = e.configMapManager.GetConfigMap(pod.Namespace, name)
+				if err != nil {
+					if apierrors.IsNotFound(err) && optional {
+						// ignore error when marked optional
+						continue
+					}
+					return result, err
+				}
+				configMaps[name] = configMap
+			}
+
+			invalidKeys := []string{}
+			for k, v := range configMap.Data {
+				if errMsgs := utilvalidation.IsEnvVarName(k); len(errMsgs) != 0 {
+					invalidKeys = append(invalidKeys, k)
+					continue
+				}
+				tmpEnv[k] = v
+			}
+			if len(invalidKeys) > 0 {
+				sort.Strings(invalidKeys)
+				klog.Errorf("keys [%s] from the EnvFrom configMap %s/%s were skipped since they are considered invalid environment variable names", strings.Join(invalidKeys, ", "), pod.Namespace, name)
+			}
+		}
+	}
 
 	for _, envVar := range container.Env {
 		runtimeVal := envVar.Value
