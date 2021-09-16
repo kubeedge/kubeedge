@@ -19,28 +19,16 @@ import (
 	genericfilters "k8s.io/apiserver/pkg/server/filters"
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/kubeedge/edge/pkg/common/client"
+	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/handlerfactory"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/serializer"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
-	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
 )
 
 // MetaServer is simplification of server.GenericAPIServer
 type MetaServer struct {
-	HandlerChainWaitGroup *
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  waitgroup.SafeWaitGroup
+	HandlerChainWaitGroup *utilwaitgroup.SafeWaitGroup
 	LongRunningFunc       apirequest.LongRunningRequestCheck
 	RequestTimeout        time.Duration
 	Handler               http.Handler
