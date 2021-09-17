@@ -70,8 +70,8 @@ type MessageHeader struct {
 	ResourceVersion string `json:"resourceversion,omitempty"`
 	// the flag will be set in sendsync
 	Sync bool `json:"sync,omitempty"`
-
-	// message type
+	// message type indicates the context type that delivers the message, such as channel, unixsocket, etc.
+	// if the value is empty, the channel context type will be used.
 	MessageType string `json:"type,omitempty"`
 }
 
@@ -82,7 +82,7 @@ func (msg *Message) BuildRouter(source, group, res, opr string) *Message {
 	return msg
 }
 
-// SetType set type
+// SetType set message context type
 func (msg *Message) SetType(msgType string) *Message {
 	msg.Header.MessageType = msgType
 	return msg
@@ -94,7 +94,7 @@ func (msg *Message) SetDestination(dest string) *Message {
 	return msg
 }
 
-// GetType get type
+// GetType get message context type
 func (msg *Message) GetType() string {
 	return msg.Header.MessageType
 }

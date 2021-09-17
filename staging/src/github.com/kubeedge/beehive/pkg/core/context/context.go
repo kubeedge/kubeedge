@@ -10,7 +10,6 @@ import (
 // ModuleContext is interface for context module management
 type ModuleContext interface {
 	AddModule(info *common.ModuleInfo)
-	//AddModuleRemote(module string)
 	AddModuleGroup(module, group string)
 	Cleanup(module string)
 }
@@ -24,6 +23,6 @@ type MessageContext interface {
 	SendSync(module string, message model.Message, timeout time.Duration) (model.Message, error)
 	SendResp(message model.Message)
 	// group broadcast
-	SendToGroup(moduleType string, message model.Message)
-	SendToGroupSync(moduleType string, message model.Message, timeout time.Duration) error
+	SendToGroup(group string, message model.Message)
+	SendToGroupSync(group string, message model.Message, timeout time.Duration) error
 }
