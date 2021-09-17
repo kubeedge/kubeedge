@@ -121,7 +121,7 @@ func (m *SocketServer) processModuleMessage(conn wrapper.Conn, message *model.Me
 		moduleName := message.GetSource()
 		moduleGroup := message.GetSource()
 
-		add := common.ModuleInfo{
+		add := &common.ModuleInfo{
 			ModuleName: moduleName,
 			ModuleType: m.socketType,
 			ModuleSocket: common.ModuleSocket{

@@ -17,39 +17,42 @@ type Module interface {
 
 var (
 	// Modules map
-	modules         map[string]moduleInfo
-	disabledModules map[string]moduleInfo
+	modules           map[string]*moduleInfo
+	disabledModules   map[string]*moduleInfo
+	groupContextType  map[string]string
+	moduleContextType map[string]string
 )
 
 func init() {
-	modules = make(map[string]moduleInfo)
-	disabledModules = make(map[string]moduleInfo)
+	modules = make(map[string]*moduleInfo)
+	disabledModules = make(map[string]*moduleInfo)
+	groupContextType = make(map[string]string)
+	moduleContextType = make(map[string]string)
 }
 
 // moduleInfo represent a module info
 type moduleInfo struct {
-	moduleType string
-	remote     bool
-	module     Module
+	contextType string
+	remote      bool
+	module      Module
 }
 
 // Register register module
-// if not passed in parameter opts, default moduleType is "channel"
+// if not passed in parameter opts, default contextType is "channel"
 func Register(m Module, opts ...string) {
-	var info moduleInfo
-	if len(opts) == 0 {
-		info = moduleInfo{
-			module:     m,
-			moduleType: common.MsgCtxTypeChannel,
-			remote:     false,
-		}
-	} else {
-		info = moduleInfo{
-			module:     m,
-			moduleType: opts[0],
-			remote:     true,
-		}
+	info := &moduleInfo{
+		module:      m,
+		contextType: common.MsgCtxTypeChannel,
+		remote:      false,
 	}
+
+	if len(opts) > 0 {
+		info.contextType = opts[0]
+		info.remote = true
+	}
+
+	moduleContextType[m.Name()] = info.contextType
+	groupContextType[m.Group()] = info.contextType
 
 	if m.Enable() {
 		modules[m.Name()] = info
@@ -61,7 +64,7 @@ func Register(m Module, opts ...string) {
 }
 
 // GetModules gets modules map
-func GetModules() map[string]moduleInfo {
+func GetModules() map[string]*moduleInfo {
 	return modules
 }
 

@@ -11,54 +11,37 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 )
 
-func moduleKeeper(info moduleInfo) {
-	for {
-		info.module.Start()
-		// local modules are always online
-		if !info.remote {
-			return
-		}
-		//moduleInfo.module.Cleanup()
-		// try to add module for remote modules
-		module := common.ModuleInfo{
-			ModuleName: info.module.Name(),
-			ModuleType: info.moduleType,
-			ModuleSocket: common.ModuleSocket{
-				IsRemote: info.remote,
-			},
-		}
-		beehiveContext.AddModule(module)
-		beehiveContext.AddModuleGroup(info.module.Name(), info.module.Group())
-	}
-}
-
 // StartModules starts modules that are registered
 func StartModules() {
-	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel}, moduleContextType, groupContextType)
 
 	modules := GetModules()
-	for name, moduleInfo := range modules {
+
+	for name, module := range modules {
 		var m common.ModuleInfo
-		if moduleInfo.moduleType == "" || moduleInfo.moduleType == common.MsgCtxTypeChannel {
+		switch module.contextType {
+		case common.MsgCtxTypeChannel:
 			m = common.ModuleInfo{
 				ModuleName: name,
-				ModuleType: moduleInfo.moduleType,
+				ModuleType: module.contextType,
 			}
-		} else {
+		case common.MsgCtxTypeUS:
 			m = common.ModuleInfo{
 				ModuleName: name,
-				ModuleType: moduleInfo.moduleType,
+				ModuleType: module.contextType,
 				// the below field ModuleSocket is only required for using socket.
 				ModuleSocket: common.ModuleSocket{
-					IsRemote: moduleInfo.remote,
+					IsRemote: module.remote,
 				},
 			}
+		default:
+			klog.Fatalf("unsupported context type: %s", module.contextType)
 		}
 
-		beehiveContext.AddModule(m)
-		beehiveContext.AddModuleGroup(name, moduleInfo.module.Group())
+		beehiveContext.AddModule(&m)
+		beehiveContext.AddModuleGroup(name, module.module.Group())
 
-		go moduleKeeper(moduleInfo)
+		go module.module.Start()
 		klog.Infof("starting module %s", name)
 	}
 }

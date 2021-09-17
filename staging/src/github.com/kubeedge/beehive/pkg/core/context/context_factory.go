@@ -14,55 +14,59 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/socket"
 )
 
-// BeehiveContext is global context: only use for local cache to dispatch message
-type BeehiveContext struct {
-	// module -> ModuleInfo
-	moduleInfo map[string]*common.ModuleInfo
-	moduleLock sync.RWMutex
-	// group -> ModuleInfo
-	groupInfo map[string]*common.ModuleInfo
-	groupLock sync.RWMutex
+// GlobalContext is global context: only use for local cache to dispatch message
+type GlobalContext struct {
+	// context type(socket/channel) -> context
+	moduleContext  map[string]ModuleContext
+	messageContext map[string]MessageContext
 
-	// type(socket/channel) -> context
-	moduleHandler  map[string]ModuleContext
-	messageHandler map[string]MessageContext
+	// group name to context type
+	groupContextType map[string]string
+	// module name to context type
+	moduleContextType map[string]string
 
-	ctx    gocontext.Context
-	cancel gocontext.CancelFunc
+	ctx     gocontext.Context
+	cancel  gocontext.CancelFunc
+	ctxLock sync.RWMutex
 }
 
 func init() {
 	ctx, cancel := gocontext.WithCancel(gocontext.Background())
-	globalContext = &BeehiveContext{
-		moduleInfo:     make(map[string]*common.ModuleInfo),
-		groupInfo:      make(map[string]*common.ModuleInfo),
-		moduleHandler:  make(map[string]ModuleContext),
-		messageHandler: make(map[string]MessageContext),
-		ctx:            ctx,
-		cancel:         cancel,
+	globalContext = &GlobalContext{
+		moduleContext:  make(map[string]ModuleContext),
+		messageContext: make(map[string]MessageContext),
+
+		moduleContextType: make(map[string]string),
+		groupContextType:  make(map[string]string),
+
+		ctx:    ctx,
+		cancel: cancel,
 	}
 }
 
 var (
 	// singleton
-	globalContext *BeehiveContext
+	globalContext *GlobalContext
 	once          sync.Once
 )
 
 // InitContext gets global context instance
-func InitContext(contextTypes []string) {
+func InitContext(contextTypes []string, moduleContextType, groupContextType map[string]string) {
+	globalContext.moduleContextType = moduleContextType
+	globalContext.groupContextType = groupContextType
+
 	for _, contextType := range contextTypes {
 		switch contextType {
 		case common.MsgCtxTypeChannel:
 			channelContext := channel.NewChannelContext()
-			globalContext.moduleHandler[contextType] = channelContext
-			globalContext.messageHandler[contextType] = channelContext
+			globalContext.moduleContext[contextType] = channelContext
+			globalContext.messageContext[contextType] = channelContext
 		case common.MsgCtxTypeUS:
 			socketContext := socket.InitSocketContext()
-			globalContext.moduleHandler[common.MsgCtxTypeUS] = socketContext
-			globalContext.messageHandler[common.MsgCtxTypeUS] = socketContext
+			globalContext.moduleContext[contextType] = socketContext
+			globalContext.messageContext[contextType] = socketContext
 		default:
-			klog.Fatalf("Do not support context type:%s", contextType)
+			klog.Fatalf("unsupported context type: %s", contextType)
 		}
 	}
 }
@@ -76,13 +80,25 @@ func Done() <-chan struct{} {
 }
 
 // AddModule adds module into module context
-func AddModule(module common.ModuleInfo) {
-	globalContext.AddModule(&module)
+func AddModule(module *common.ModuleInfo) {
+	moduleContext, err := getModuleContext(module.ModuleName)
+	if err != nil {
+		klog.Fatalf("failed to get module context, module name: %s, err: %v", module.ModuleName, err)
+		return
+	}
+
+	moduleContext.AddModule(module)
 }
 
 // AddModuleGroup adds module into module context group
 func AddModuleGroup(module, group string) {
-	globalContext.AddModuleGroup(module, group)
+	moduleContext, err := getModuleContext(module)
+	if err != nil {
+		klog.Errorf("failed to get module context, module name: %s, err: %v", module, err)
+		return
+	}
+
+	moduleContext.AddModuleGroup(module, group)
 }
 
 // Cancel function
@@ -92,18 +108,34 @@ func Cancel() {
 
 // Cleanup cleans up module
 func Cleanup(module string) {
-	globalContext.Cleanup(module)
+	moduleContext, err := getModuleContext(module)
+	if err != nil {
+		klog.Errorf("failed to get module context, module name: %s, err: %v", module, err)
+		return
+	}
+
+	moduleContext.Cleanup(module)
 }
 
 // Send the message
 func Send(module string, message model.Message) {
-	globalContext.Send(module, message)
+	messageContext, err := getMessageContextByMessageType(message.GetType())
+	if err != nil {
+		return
+	}
+
+	messageContext.Send(module, message)
 }
 
 // Receive the message
 // module : local module name
 func Receive(module string) (model.Message, error) {
-	return globalContext.Receive(module)
+	messageContext, err := getMessageContext(module)
+	if err != nil {
+		return model.Message{}, err
+	}
+
+	return messageContext.Receive(module)
 }
 
 // SendSync sends message in sync mode
@@ -111,211 +143,93 @@ func Receive(module string) (model.Message, error) {
 // timeout: if <= 0 using default value(30s)
 func SendSync(module string,
 	message model.Message, timeout time.Duration) (model.Message, error) {
-	return globalContext.SendSync(module, message, timeout)
+	messageContext, err := getMessageContextByMessageType(message.GetType())
+	if err != nil {
+		return model.Message{}, err
+	}
+
+	return messageContext.SendSync(module, message, timeout)
 }
 
 // SendResp sends response
 // please get resp message using model.NewRespByMessage
 func SendResp(resp model.Message) {
-	globalContext.SendResp(resp)
+	messageContext, err := getMessageContextByMessageType(resp.GetType())
+	if err != nil {
+		klog.Errorf("message context for module doesn't exist, module name: %s", resp.GetSource())
+		return
+	}
+
+	messageContext.SendResp(resp)
 }
 
 // SendToGroup broadcasts the message to all of group members
-func SendToGroup(moduleType string, message model.Message) {
-	globalContext.SendToGroup(moduleType, message)
+func SendToGroup(group string, message model.Message) {
+	messageContext, err := getMessageContextByMessageType(message.GetType())
+	if err != nil {
+		klog.Errorf("message context for group doesn't exist, group name: %s", group)
+		return
+	}
+
+	messageContext.SendToGroup(group, message)
 }
 
 // SendToGroupSync broadcasts the message to all of group members in sync mode
-func SendToGroupSync(moduleType string, message model.Message, timeout time.Duration) error {
-	return globalContext.sendToGroupSync(moduleType, message, timeout)
-}
-
-// AddModule add module into module context
-func (ctx *BeehiveContext) AddModule(module *common.ModuleInfo) {
-	storeModuleInfo(module)
-
-	handler, err := getModuleHandler(module.ModuleName)
+func SendToGroupSync(group string, message model.Message, timeout time.Duration) error {
+	messageContext, err := getMessageContextByMessageType(message.GetType())
 	if err != nil {
-		klog.Errorf("failed to get module handler, err is %v", err)
-		return
+		return fmt.Errorf("message context for group doesn't exist, group name: %s", group)
 	}
 
-	handler.AddModule(module)
+	return messageContext.SendToGroupSync(group, message, timeout)
 }
 
-// AddModuleGroup add module into module context group
-func (ctx *BeehiveContext) AddModuleGroup(module, group string) {
-	handler, err := getModuleHandler(module)
-	if err != nil {
-		klog.Errorf("failed to get module handler, err is %v", err)
-		return
-	}
-	handler.AddModuleGroup(module, group)
+func getModuleContext(moduleName string) (ModuleContext, error) {
+	globalContext.ctxLock.RLock()
+	defer globalContext.ctxLock.RUnlock()
 
-	// store group info
-	storeGroupInfo(module, group)
-	return
-}
-
-// Cleanup clean up module
-func (ctx *BeehiveContext) Cleanup(module string) {
-	handler, err := getModuleHandler(module)
-	if err != nil {
-		klog.Errorf("failed to get module handler, err is %v", err)
-		return
+	moduleContextType := getModuleContextType(moduleName)
+	moduleContext, ok := globalContext.moduleContext[moduleContextType]
+	if !ok {
+		return nil, fmt.Errorf("module context %v doesn't exist", moduleContextType)
 	}
 
-	handler.Cleanup(module)
-
-	removeHandler(module)
-	return
+	return moduleContext, nil
 }
 
-// Send send the message
-func (ctx *BeehiveContext) Send(module string, message model.Message) {
-	handler, err := getMessageHandler(module)
-	if err != nil {
-		return
+func getMessageContext(moduleName string) (MessageContext, error) {
+	globalContext.ctxLock.RLock()
+	defer globalContext.ctxLock.RUnlock()
+
+	moduleContextType := getModuleContextType(moduleName)
+	messageContext, ok := globalContext.messageContext[moduleContextType]
+	if !ok {
+		return nil, fmt.Errorf("message context %v doesn't exist", moduleContextType)
 	}
 
-	handler.Send(module, message)
-	return
+	return messageContext, nil
 }
 
-// Receive receive the message
-// module : local module name
-func (ctx *BeehiveContext) Receive(module string) (model.Message, error) {
-	handler, err := getMessageHandler(module)
-	if err != nil {
-		return model.Message{}, err
-	}
-	return handler.Receive(module)
-}
-
-// SendSync send message in sync mode
-// module: the destination of the message
-// timeout: if <= 0 using default value(30s)
-func (ctx *BeehiveContext) SendSync(module string,
-	message model.Message, timeout time.Duration) (model.Message, error) {
-	handler, err := getMessageHandler(module)
-	if err != nil {
-		return model.Message{}, err
-	}
-	return handler.SendSync(module, message, timeout)
-}
-
-// SendResp send response to local
-// please get resp message using model.NewRespByMessage
-// opts[0]: module name
-func (ctx *BeehiveContext) SendResp(resp model.Message, opts ...string) {
-	messageType := resp.GetType()
+func getMessageContextByMessageType(messageType string) (MessageContext, error) {
 	if messageType == "" {
 		messageType = common.MsgCtxTypeChannel
 	}
 
-	if messageType == common.MsgCtxTypeChannel {
-		moduleContext := channel.GetChannelContext()
-		moduleContext.SendResp(resp)
-		return
-	}
+	globalContext.ctxLock.RLock()
+	defer globalContext.ctxLock.RUnlock()
 
-	handler, err := getMessageHandler(resp.GetSource())
-	if err != nil {
-		return
-	}
-	handler.SendResp(resp)
-	return
-}
-
-// SendToGroup broadcast the message to all of group members
-func (ctx *BeehiveContext) SendToGroup(groupType string, message model.Message) {
-	handler, err := getGroupMessageHandler(groupType)
-	if err != nil {
-		klog.Errorf("failed to send message to group %v, err is %v", groupType, err)
-		return
-	}
-
-	handler.SendToGroup(groupType, message)
-
-	return
-}
-
-// send2GroupSync broadcast the message to all of group members in sync mode
-func (ctx *BeehiveContext) sendToGroupSync(groupType string, message model.Message, timeout time.Duration) error {
-	handler, err := getGroupMessageHandler(groupType)
-	if err != nil {
-		klog.Errorf("failed to send sync message to group %v, err is %v", groupType, err)
-		return err
-	}
-
-	return handler.SendToGroupSync(groupType, message, timeout)
-}
-
-func storeModuleInfo(module *common.ModuleInfo) {
-	globalContext.moduleLock.Lock()
-	defer globalContext.moduleLock.Unlock()
-	globalContext.moduleInfo[module.ModuleName] = module
-
-}
-
-func storeGroupInfo(module string, group string) {
-	globalContext.moduleLock.RLock()
-	info, _ := globalContext.moduleInfo[module]
-	globalContext.moduleLock.RUnlock()
-
-	globalContext.groupLock.Lock()
-	globalContext.groupInfo[group] = info
-	globalContext.groupLock.Unlock()
-}
-
-func getGroupMessageHandler(group string) (MessageContext, error) {
-	globalContext.moduleLock.RLock()
-	defer globalContext.moduleLock.RUnlock()
-	info, ok := globalContext.groupInfo[group]
+	messageContext, ok := globalContext.messageContext[messageType]
 	if !ok {
-		return nil, fmt.Errorf("group %s not exist", group)
-	}
-	handler, ok := globalContext.messageHandler[info.ModuleType]
-	if !ok {
-		return nil, fmt.Errorf("message handler %v not exist", info.ModuleType)
+		return nil, fmt.Errorf("message context for message type doesn't exist, message type: %s", messageType)
 	}
 
-	return handler, nil
+	return messageContext, nil
 }
 
-func getModuleHandler(moduleName string) (ModuleContext, error) {
-	globalContext.moduleLock.RLock()
-	defer globalContext.moduleLock.RUnlock()
-	info, ok := globalContext.moduleInfo[moduleName]
-	if !ok {
-		return nil, fmt.Errorf("module %s not exist", moduleName)
-	}
-	handler, ok := globalContext.moduleHandler[info.ModuleType]
-	if !ok {
-		return nil, fmt.Errorf("module handler %v not exist", info.ModuleType)
-	}
-
-	return handler, nil
+func getModuleContextType(moduleName string) string {
+	return globalContext.moduleContextType[moduleName]
 }
 
-func getMessageHandler(moduleName string) (MessageContext, error) {
-	globalContext.moduleLock.RLock()
-	defer globalContext.moduleLock.RUnlock()
-	info, ok := globalContext.moduleInfo[moduleName]
-	if !ok {
-		return nil, fmt.Errorf("module %s not exist", moduleName)
-	}
-	handler, ok := globalContext.messageHandler[info.ModuleType]
-	if !ok {
-		return nil, fmt.Errorf("message handler %v not exist", info.ModuleType)
-	}
-
-	return handler, nil
-}
-
-func removeHandler(module string) {
-	globalContext.moduleLock.Lock()
-	delete(globalContext.moduleInfo, module)
-	delete(globalContext.messageHandler, module)
-	globalContext.moduleLock.Unlock()
+func getGroupContextType(groupName string) string {
+	return globalContext.groupContextType[groupName]
 }
