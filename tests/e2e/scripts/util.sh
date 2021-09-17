@@ -14,24 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-setuptype=$1
-
-KUBEEDGE_ROOT=$PWD
-source ${KUBEEDGE_ROOT}/tests/e2e/scripts/util.sh
-
-kill_all_components() {
-    local components="cloudcore edgecore edgesite"
-    for component in $components; do
-        kill_component "$component"
-    done
+kill_component() {
+    local component=$1
+    if pgrep "$component" &>/dev/null; then
+        # edgesite process is found, kill the process.
+        sudo pkill $component &>/dev/null
+        if [[ "$?" == "0" ]]; then
+            echo "$component is successfully killed !!"
+        else
+            echo "Failed to kill $component process !!"
+            exit 1
+        fi
+    fi
 }
-
-cleanup_files(){
-    sudo rm -rf /tmp/etc/kubeedge /tmp/var/lib/kubeedge
-    sudo rm -f tests/e2e/config.json
-    find -name "*.test" | xargs sudo rm -f
-}
-
-kill_all_components
-
-cleanup_files

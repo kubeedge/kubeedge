@@ -194,4 +194,27 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+constants.AppHandler, podlist)
 		})
 	})
+
+	Context("Test Edge Autonomy", func() {
+		BeforeEach(func() {
+			// Get current test description
+			testDescription = CurrentGinkgoTestDescription()
+			// Start test timer
+			testTimer = DeploymentTestTimerGroup.NewTestTimer(testDescription.TestText)
+		})
+		AfterEach(func() {
+			// End test timer
+			testTimer.End()
+			// Print result
+			testTimer.PrintResult()
+		})
+
+		It("E2E_POD_AUTONOMY_1: Create a pod and check the pod is coming up correctly, but don't delete it.", func() {
+			//Generate the random string and assign as podName
+			podName := "autonomy-" + utils.GetRandomString(5)
+			pod := utils.NewPodObj(podName, ctx.Cfg.AppImageURL[0], nodeSelector)
+
+			CreatePodTest(nodeName, podName, ctx, pod)
+		})
+	})
 })
