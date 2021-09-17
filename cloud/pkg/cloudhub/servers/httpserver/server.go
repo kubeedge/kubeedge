@@ -17,11 +17,10 @@ limitations under the License.
 package httpserver
 
 import (
-	"crypto"
 	"crypto/ecdsa"
 	"crypto/tls"
 	"crypto/x509"
-	"crypto/x509/pkix"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
@@ -35,6 +34,7 @@ import (
 
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/common/constants"
+	"github.com/kubeedge/kubeedge/common/types"
 )
 
 // StartHTTPServer starts the http service
@@ -169,18 +169,22 @@ func verifyAuthorization(w http.ResponseWriter, r *http.Request) bool {
 
 // signEdgeCert signs the CSR from EdgeCore
 func signEdgeCert(w http.ResponseWriter, r *http.Request) {
-	csrContent, err := ioutil.ReadAll(r.Body)
+	content, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		klog.Errorf("fail to read file when signing the cert for edgenode:%s! error:%v", r.Header.Get(constants.NodeName), err)
 		return
 	}
-	csr, err := x509.ParseCertificateRequest(csrContent)
+	var signingRequest types.CertificateSigningRequest
+	err = json.Unmarshal(content, &signingRequest)
+	// Compatible with edgecore's original certificate application request. We will delete in next release version.
 	if err != nil {
-		klog.Errorf("fail to ParseCertificateRequest of edgenode: %s! error:%v", r.Header.Get(constants.NodeName), err)
-		return
+		klog.Infof("unmarshal failed, the signEdgeCert content is not a CertificateSigningRequest struct, "+
+			"please use the latest edgecore version. Now try to fetch x509.CertificateRequest struct, err: %v", err)
+		signingRequest.Request = content
+		signingRequest.Usages = []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth}
 	}
-	subject := csr.Subject
-	clientCertDER, err := signCerts(subject, csr.PublicKey)
+
+	clientCertDER, err := signCerts(&signingRequest)
 	if err != nil {
 		klog.Errorf("fail to signCerts for edgenode:%s! error:%v", r.Header.Get(constants.NodeName), err)
 		return
@@ -192,13 +196,17 @@ func signEdgeCert(w http.ResponseWriter, r *http.Request) {
 }
 
 // signCerts will create a certificate for EdgeCore
-func signCerts(subInfo pkix.Name, pbKey crypto.PublicKey) ([]byte, error) {
-	cfgs := &certutil.Config{
-		CommonName:   subInfo.CommonName,
-		Organization: subInfo.Organization,
-		Usages:       []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+func signCerts(signingRequest *types.CertificateSigningRequest) ([]byte, error) {
+	csr, err := x509.ParseCertificateRequest(signingRequest.Request)
+	if err != nil {
+		return nil, fmt.Errorf("fail to ParseCertificateRequest of edgenode: %s! error:%v", "edge-node", err)
 	}
-	clientKey := pbKey
+	cfgs := &certutil.Config{
+		CommonName:   csr.Subject.CommonName,
+		Organization: csr.Subject.Organization,
+		Usages:       signingRequest.Usages,
+	}
+	clientKey := csr.PublicKey
 
 	ca := hubconfig.Config.Ca
 	caCert, err := x509.ParseCertificate(ca)

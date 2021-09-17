@@ -1,6 +1,8 @@
 package types
 
 import (
+	"crypto/x509"
+
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
@@ -25,4 +27,10 @@ type NodeStatusRequest struct {
 	UID             types.UID
 	Status          v1.NodeStatus
 	ExtendResources map[v1.ResourceName][]ExtendResource
+}
+
+// CertificateSigningRequest is message which use for certificate request from cloudcore
+type CertificateSigningRequest struct {
+	Request []byte             `json:"request"`
+	Usages  []x509.ExtKeyUsage `json:"usages"`
 }

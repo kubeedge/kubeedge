@@ -10,6 +10,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/hex"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
@@ -23,6 +24,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/common/constants"
+	"github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/certutil"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/http"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
@@ -274,7 +276,17 @@ func (cm *CertManager) GetEdgeCert(url string, capem []byte, cert tls.Certificat
 		return nil, nil, fmt.Errorf("falied to create http client:%v", err)
 	}
 
-	req, err := http.BuildRequest(nethttp.MethodGet, url, bytes.NewReader(csr), token, cm.NodeName)
+	signingRequest := types.CertificateSigningRequest{
+		Request: csr,
+		Usages:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	}
+
+	jsonContent, err := json.Marshal(&signingRequest)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to marshal signingReqeust:%v", err)
+	}
+
+	req, err := http.BuildRequest(nethttp.MethodGet, url, bytes.NewReader(jsonContent), token, cm.NodeName)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to generate http request:%v", err)
 	}
