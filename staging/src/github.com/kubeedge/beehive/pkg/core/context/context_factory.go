@@ -20,8 +20,6 @@ type GlobalContext struct {
 	moduleContext  map[string]ModuleContext
 	messageContext map[string]MessageContext
 
-	// group name to context type
-	groupContextType map[string]string
 	// module name to context type
 	moduleContextType map[string]string
 
@@ -37,7 +35,6 @@ func init() {
 		messageContext: make(map[string]MessageContext),
 
 		moduleContextType: make(map[string]string),
-		groupContextType:  make(map[string]string),
 
 		ctx:    ctx,
 		cancel: cancel,
@@ -51,10 +48,7 @@ var (
 )
 
 // InitContext gets global context instance
-func InitContext(contextTypes []string, moduleContextType, groupContextType map[string]string) {
-	globalContext.moduleContextType = moduleContextType
-	globalContext.groupContextType = groupContextType
-
+func InitContext(contextTypes []string) {
 	for _, contextType := range contextTypes {
 		switch contextType {
 		case common.MsgCtxTypeChannel:
@@ -81,9 +75,11 @@ func Done() <-chan struct{} {
 
 // AddModule adds module into module context
 func AddModule(module *common.ModuleInfo) {
+	setModuleContextType(module.ModuleName, module.ModuleType)
+
 	moduleContext, err := getModuleContext(module.ModuleName)
 	if err != nil {
-		klog.Fatalf("failed to get module context, module name: %s, err: %v", module.ModuleName, err)
+		klog.Errorf("failed to get module context, module name: %s, err: %v", module.ModuleName, err)
 		return
 	}
 
@@ -226,10 +222,13 @@ func getMessageContextByMessageType(messageType string) (MessageContext, error) 
 	return messageContext, nil
 }
 
+// caller must lock the globalContext.ctxLock
 func getModuleContextType(moduleName string) string {
 	return globalContext.moduleContextType[moduleName]
 }
 
-func getGroupContextType(groupName string) string {
-	return globalContext.groupContextType[groupName]
+func setModuleContextType(moduleName string, contextType string) {
+	globalContext.ctxLock.Lock()
+	defer globalContext.ctxLock.Unlock()
+	globalContext.moduleContextType[moduleName] = contextType
 }

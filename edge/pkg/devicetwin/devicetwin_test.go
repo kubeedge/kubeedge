@@ -24,8 +24,7 @@ const (
 )
 
 func init() {
-	moduleContextType := map[string]string{TestModule: common.MsgCtxTypeChannel, DeviceTwinModuleName: common.MsgCtxTypeChannel}
-	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel}, moduleContextType, nil)
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 	add := &common.ModuleInfo{
 		ModuleName: TestModule,
 		ModuleType: common.MsgCtxTypeChannel,
