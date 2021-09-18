@@ -18,6 +18,8 @@ package deployment
 
 import (
 	"net/http"
+	"os/exec"
+	"path"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -207,6 +209,25 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			testTimer.End()
 			// Print result
 			testTimer.PrintResult()
+			// run tests/e2e/scripts/autonomy.sh to test autonomy function
+
+			gopath, err := utils.GetGOPATH()
+			if err != nil {
+				utils.Fatalf("failed to get GOPATH: %v", err)
+				return
+			}
+			utils.Infof("gopath is %s", gopath)
+
+			script := path.Join(gopath, "src/github.com/kubeedge/kubeedge/tests/e2e/scripts/autonomy.sh")
+			utils.Infof("autonomy scripts path is %v", script)
+
+			cmd := exec.Command("/bin/bash", "-c", script)
+			output, err := cmd.Output()
+			utils.Infof("autonomy.sh exec output is\n%s", string(output))
+			if err != nil {
+				utils.Fatalf("exec autonomy scripts failed: %v", err)
+				return
+			}
 		})
 
 		It("E2E_POD_AUTONOMY_1: Create a pod and check the pod is coming up correctly, but don't delete it.", func() {

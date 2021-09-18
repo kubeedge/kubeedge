@@ -22,9 +22,11 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"go/build"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"os/exec"
 	"reflect"
 	"strings"
@@ -1011,4 +1013,21 @@ func PublishMqtt(topic, message string) error {
 	}
 	Infof("publish topic %s message %s", topic, message)
 	return nil
+}
+
+func GetGOPATH() (string, error) {
+	cmd := exec.Command("/bin/bash", "-c", "go env GOPATH")
+	output, err := cmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("failed to get GOPATH: %v", err)
+	}
+
+	gopath := strings.TrimRight(string(output), "\r\n")
+
+	goPathSlice := strings.Split(gopath, string(os.PathListSeparator))
+	if len(goPathSlice) == 0 || goPathSlice[0] == ""{
+		return build.Default.GOPATH, nil
+	}
+
+	return goPathSlice[0], nil
 }

@@ -17,10 +17,10 @@
 workdir=`pwd`
 cd $workdir
 
-curpath=$PWD
-echo $PWD
+rootPath=$(cd ../../.. && pwd)
+echo $rootPath
 
-source ${curpath}/tests/e2e/scripts/util.sh
+source ${rootPath}/tests/e2e/scripts/util.sh
 
 checkContainerExist() {
   echo "wait for pod restart automatically..."
@@ -45,8 +45,8 @@ checkContainerExist() {
 }
 
 start_edgecore() {
-  EDGE_CONFIGFILE=${curpath}/_output/local/bin/edgecore.yaml
-  EDGE_BIN=${curpath}/_output/local/bin/edgecore
+  EDGE_CONFIGFILE=${rootPath}/_output/local/bin/edgecore.yaml
+  EDGE_BIN=${rootPath}/_output/local/bin/edgecore
   EDGECORE_LOG="/tmp/edgecore.log"
 
   echo "start edgecore..."

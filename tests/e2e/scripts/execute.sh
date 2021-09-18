@@ -22,6 +22,9 @@ cd $workdir
 curpath=$PWD
 echo $PWD
 
+rootpath=$(cd $curpath/../../.. && pwd)
+echo "root path is " + $rootpath
+
 source ${curpath}/tests/e2e/scripts/util.sh
 
 which ginkgo &> /dev/null || (
@@ -52,16 +55,6 @@ kubectl create clusterrolebinding system:anonymous --clusterrole=cluster-admin -
 :> /tmp/testcase.log
 
 bash -x ${E2E_DIR}/scripts/fast_test.sh $1
-
-#failed cases number
-fail=`grep -e "SUCCESS\!" -e "FAIL\!" /tmp/testcase.log | awk '{print $6}' | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" | awk '{sum+=$1} END {print sum}'`
-
-#test Edge Autonomy
-#only when the above are all successful, we need to test Edge Autonomy function.
-if [ "$fail" == "0" ]
-  then
-    bash ${E2E_DIR}/scripts/autonomy.sh
-fi
 
 #stop the edgecore after the test completion
 grep  -e "Running Suite" -e "SUCCESS\!" -e "FAIL\!" /tmp/testcase.log | sed -r 's/\x1B\[([0-9];)?([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g' | sed -r 's/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g'
