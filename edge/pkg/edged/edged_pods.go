@@ -699,6 +699,9 @@ func (e *edged) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container, p
 
 			invalidKeys := []string{}
 			for k, v := range configMap.Data {
+				if len(envFrom.Prefix) > 0 {
+					k = envFrom.Prefix + k
+				}
 				if errMsgs := utilvalidation.IsEnvVarName(k); len(errMsgs) != 0 {
 					invalidKeys = append(invalidKeys, k)
 					continue
