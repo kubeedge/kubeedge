@@ -13,7 +13,7 @@ import (
 
 // StartModules starts modules that are registered
 func StartModules() {
-	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel}, moduleContextType, groupContextType)
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 
 	modules := GetModules()
 

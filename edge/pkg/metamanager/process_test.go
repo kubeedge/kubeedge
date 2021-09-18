@@ -58,13 +58,7 @@ func init() {
 	cfg := v1alpha1.NewDefaultEdgeCoreConfig()
 	metaManagerConfig.InitConfigure(cfg.Modules.MetaManager)
 
-	moduleContextType := map[string]string{
-		MetaManagerModuleName: common.MsgCtxTypeChannel,
-		ModuleNameEdgeHub:     common.MsgCtxTypeChannel,
-		ModuleNameEdged:       common.MsgCtxTypeChannel,
-		EdgeFunctionModel:     common.MsgCtxTypeChannel,
-	}
-	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel}, moduleContextType, nil)
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 	add := &common.ModuleInfo{
 		ModuleName: MetaManagerModuleName,
 		ModuleType: common.MsgCtxTypeChannel,

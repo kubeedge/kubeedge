@@ -19,15 +19,11 @@ var (
 	// Modules map
 	modules           map[string]*moduleInfo
 	disabledModules   map[string]*moduleInfo
-	groupContextType  map[string]string
-	moduleContextType map[string]string
 )
 
 func init() {
 	modules = make(map[string]*moduleInfo)
 	disabledModules = make(map[string]*moduleInfo)
-	groupContextType = make(map[string]string)
-	moduleContextType = make(map[string]string)
 }
 
 // moduleInfo represent a module info
@@ -50,9 +46,6 @@ func Register(m Module, opts ...string) {
 		info.contextType = opts[0]
 		info.remote = true
 	}
-
-	moduleContextType[m.Name()] = info.contextType
-	groupContextType[m.Group()] = info.contextType
 
 	if m.Enable() {
 		modules[m.Name()] = info
