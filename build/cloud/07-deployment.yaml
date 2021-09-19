@@ -26,6 +26,12 @@ spec:
             - containerPort: 10000
               name: cloudhub
               protocol: TCP
+            - containerPort: 10003
+              name: stream
+              protocol: TCP
+            - containerPort: 10004
+              name: tunnel
+              protocol: TCP
           resources:
             limits:
               cpu: 200m
