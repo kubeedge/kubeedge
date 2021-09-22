@@ -236,6 +236,7 @@ func (msg *Message) Clone(message *Message) *Message {
 func (msg *Message) NewRespByMessage(message *Message, content interface{}) *Message {
 	return NewMessage(message.GetID()).SetRoute(message.GetSource(), message.GetGroup()).
 		SetResourceOperation(message.GetResource(), ResponseOperation).
+		SetType(message.GetType()).
 		FillBody(content)
 }
 

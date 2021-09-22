@@ -6,7 +6,6 @@ import (
 
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/beehive/pkg/common"
 	"github.com/kubeedge/beehive/pkg/core/socket/wrapper/reader"
 	"github.com/kubeedge/beehive/pkg/core/socket/wrapper/writer"
 )
@@ -35,14 +34,6 @@ type ConnWrapper struct {
 func NewWrapper(connType string, conn interface{}, buffSize int) Conn {
 	readerType := reader.ReaderTypeRaw
 	writerType := writer.WriterTypeRaw
-
-	switch connType {
-	case common.MsgCtxTypeUS:
-		readerType = reader.ReaderTypePackage
-		writerType = writer.WriterTypePackage
-	default:
-		klog.Warningf("connection type is %v", connType)
-	}
 
 	return &ConnWrapper{
 		conn:   conn,

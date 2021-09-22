@@ -115,7 +115,7 @@ func Cleanup(module string) {
 
 // Send the message
 func Send(module string, message model.Message) {
-	messageContext, err := getMessageContextByMessageType(message.GetType())
+	messageContext, err := getMessageContext(module)
 	if err != nil {
 		return
 	}
@@ -139,7 +139,7 @@ func Receive(module string) (model.Message, error) {
 // timeout: if <= 0 using default value(30s)
 func SendSync(module string,
 	message model.Message, timeout time.Duration) (model.Message, error) {
-	messageContext, err := getMessageContextByMessageType(message.GetType())
+	messageContext, err := getMessageContext(module)
 	if err != nil {
 		return model.Message{}, err
 	}
