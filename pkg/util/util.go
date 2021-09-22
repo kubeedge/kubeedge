@@ -23,7 +23,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	utilnet "k8s.io/apimachinery/pkg/util/net"
@@ -130,18 +129,6 @@ func SpliceErrors(errors []error) string {
 	}
 	stb.WriteString("]\n")
 	return stb.String()
-}
-
-// GetPodSandboxImage return snadbox image name based on arch, default image is for amd64.
-func GetPodSandboxImage() string {
-	switch runtime.GOARCH {
-	case "arm":
-		return constants.DefaultArmPodSandboxImage
-	case "arm64":
-		return constants.DefaultArm64PodSandboxImage
-	default:
-		return constants.DefaultPodSandboxImage
-	}
 }
 
 // GetHostname returns a reasonable hostname
