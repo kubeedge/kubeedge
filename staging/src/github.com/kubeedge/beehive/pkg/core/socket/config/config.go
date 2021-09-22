@@ -11,15 +11,15 @@ import (
 
 // SocketConfig socket config
 type SocketConfig struct {
-	ModuleName    string `yaml:"module"`
-	Server        bool   `yaml:"server"`
-	Address       string `yaml:"address"`
-	SocketType    string `yaml:"sockettype,omitempty"`
-	ConnNumberMax int    `yaml:"connmax"`
-	BufferSize    int    `yaml:"buffersize,omitempty"`
-	CaRoot        string `yaml:"ca,omitempty"`
-	Cert          string `yaml:"cert,omitempty"`
-	Key           string `yaml:"key,omitempty"`
+	ModuleName    string `json:"module"`
+	Server        bool   `json:"server"`
+	Address       string `json:"address"`
+	SocketType    string `json:"sockettype,omitempty"`
+	ConnNumberMax int    `json:"connmax"`
+	BufferSize    int    `json:"buffersize,omitempty"`
+	CaRoot        string `json:"ca,omitempty"`
+	Cert          string `json:"cert,omitempty"`
+	Key           string `json:"key,omitempty"`
 }
 
 // BuildinModuleConfig buildin module config
@@ -38,7 +38,7 @@ func init() {
 		}
 	}
 
-	InitBuildinModuleConfig(filepath)
+	buildinModuleConfig = InitBuildinModuleConfig(filepath)
 }
 
 var (

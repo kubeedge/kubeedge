@@ -51,7 +51,7 @@ func NewChannelContext() *ChannelContext {
 	return channelContext
 }
 
-func GetChannelContext() *ChannelContext{
+func GetChannelContext() *ChannelContext {
 	return channelContext
 }
 
