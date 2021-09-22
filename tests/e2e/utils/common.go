@@ -1025,7 +1025,7 @@ func GetGOPATH() (string, error) {
 	gopath := strings.TrimRight(string(output), "\r\n")
 
 	goPathSlice := strings.Split(gopath, string(os.PathListSeparator))
-	if len(goPathSlice) == 0 || goPathSlice[0] == ""{
+	if len(goPathSlice) == 0 || goPathSlice[0] == "" {
 		return build.Default.GOPATH, nil
 	}
 

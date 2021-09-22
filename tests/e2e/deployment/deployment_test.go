@@ -198,6 +198,7 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 	})
 
 	Context("Test Edge Autonomy", func() {
+		var podName string
 		BeforeEach(func() {
 			// Get current test description
 			testDescription = CurrentGinkgoTestDescription()
@@ -220,8 +221,9 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 
 			script := path.Join(gopath, "src/github.com/kubeedge/kubeedge/tests/e2e/scripts/autonomy.sh")
 			utils.Infof("autonomy scripts path is %v", script)
+			shellCommand := script + " " + podName
 
-			cmd := exec.Command("/bin/bash", "-c", script)
+			cmd := exec.Command("/bin/bash", "-c", shellCommand)
 			output, err := cmd.Output()
 			utils.Infof("autonomy.sh exec output is\n%s", string(output))
 			if err != nil {
@@ -232,7 +234,7 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 
 		It("E2E_POD_AUTONOMY_1: Create a pod and check the pod is coming up correctly, but don't delete it.", func() {
 			//Generate the random string and assign as podName
-			podName := "autonomy-" + utils.GetRandomString(5)
+			podName = "autonomy-" + utils.GetRandomString(5)
 			pod := utils.NewPodObj(podName, ctx.Cfg.AppImageURL[0], nodeSelector)
 
 			CreatePodTest(nodeName, podName, ctx, pod)

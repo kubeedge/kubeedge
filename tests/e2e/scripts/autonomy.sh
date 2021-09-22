@@ -14,24 +14,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-workdir=`pwd`
+workdir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 cd $workdir
+echo "workdir is "$workdir
 
 rootPath=$(cd ../../.. && pwd)
-echo $rootPath
+echo "rootPath is "$rootPath
 
 source ${rootPath}/tests/e2e/scripts/util.sh
+
+podName=$1
+echo "podName is "$podName
 
 checkContainerExist() {
   echo "wait for pod restart automatically..."
   for ((integer = 1; integer <= 20; integer++))
   do
-    num=$(docker ps | grep nginx_autonomy | wc -l)
+    num=$(docker ps | grep nginx_$podName | wc -l)
     if [[ "$num" == "0" ]]; then
       sleep 10
     else
       echo "found autonomy pod restart automatically"
-      docker ps | grep nginx_autonomy
+      docker ps | grep nginx_$podName
       break
     fi
   done
@@ -59,7 +63,7 @@ start_edgecore() {
 testAutonomy() {
   # print docker progresses for user debug.
   echo "now we have autonomy test pod as follows."
-  docker ps --filter "name=nginx_autonomy"
+  docker ps --filter "name=nginx_$podName"
 
   # pkill edgecore
   kill_component "edgecore"
@@ -68,9 +72,9 @@ testAutonomy() {
   kill_component "cloudcore"
 
   # kill all docker container progresses
-  for id in $(docker ps --filter "name=nginx_autonomy" -q)
+  for id in $(docker ps --filter "name=nginx_$podName" -q)
   do
-    docker ps --filter "name=nginx_autonomy"
+    docker ps --filter "name=nginx_$podName"
     docker kill $id
   done
 
@@ -81,9 +85,9 @@ testAutonomy() {
   checkContainerExist
 
   # ensure all the related containers stopped.
-  for id in $(docker ps --filter "name=nginx_autonomy" -q)
+  for id in $(docker ps --filter "name=nginx_$podName" -q)
   do
-    docker ps --filter "name=nginx_autonomy"
+    docker ps --filter "name=nginx_$podName"
     docker kill $id
   done
 }
