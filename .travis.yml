@@ -11,7 +11,7 @@ services:
   - docker
 
 go:
-  - 1.14
+  - 1.16
 
 env:
   - HOME=/home/travis
