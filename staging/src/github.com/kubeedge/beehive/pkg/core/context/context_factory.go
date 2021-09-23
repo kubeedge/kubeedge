@@ -22,6 +22,8 @@ type GlobalContext struct {
 
 	// module name to context type
 	moduleContextType map[string]string
+	// group name to context type
+	groupContextType map[string]string
 
 	ctx     gocontext.Context
 	cancel  gocontext.CancelFunc
@@ -35,6 +37,7 @@ func init() {
 		messageContext: make(map[string]MessageContext),
 
 		moduleContextType: make(map[string]string),
+		groupContextType: make(map[string]string),
 
 		ctx:    ctx,
 		cancel: cancel,
@@ -88,6 +91,8 @@ func AddModule(module *common.ModuleInfo) {
 
 // AddModuleGroup adds module into module context group
 func AddModuleGroup(module, group string) {
+	setGroupContextType(module, group)
+
 	moduleContext, err := getModuleContext(module)
 	if err != nil {
 		klog.Errorf("failed to get module context, module name: %s, err: %v", module, err)
@@ -161,7 +166,7 @@ func SendResp(resp model.Message) {
 
 // SendToGroup broadcasts the message to all of group members
 func SendToGroup(group string, message model.Message) {
-	messageContext, err := getMessageContextByMessageType(message.GetType())
+	messageContext, err := getMessageContextByGroup(group)
 	if err != nil {
 		klog.Errorf("message context for group doesn't exist, group name: %s", group)
 		return
@@ -172,7 +177,7 @@ func SendToGroup(group string, message model.Message) {
 
 // SendToGroupSync broadcasts the message to all of group members in sync mode
 func SendToGroupSync(group string, message model.Message, timeout time.Duration) error {
-	messageContext, err := getMessageContextByMessageType(message.GetType())
+	messageContext, err := getMessageContextByGroup(group)
 	if err != nil {
 		return fmt.Errorf("message context for group doesn't exist, group name: %s", group)
 	}
@@ -222,6 +227,19 @@ func getMessageContextByMessageType(messageType string) (MessageContext, error) 
 	return messageContext, nil
 }
 
+func getMessageContextByGroup(group string) (MessageContext, error) {
+	globalContext.ctxLock.RLock()
+	defer globalContext.ctxLock.RUnlock()
+
+	contextType := globalContext.groupContextType[group]
+	messageContext, ok := globalContext.messageContext[contextType]
+	if !ok {
+		return nil, fmt.Errorf("message context doesn't exist, group: %s, contextType: %s", group, contextType)
+	}
+
+	return messageContext, nil
+}
+
 // caller must lock the globalContext.ctxLock
 func getModuleContextType(moduleName string) string {
 	return globalContext.moduleContextType[moduleName]
@@ -231,4 +249,11 @@ func setModuleContextType(moduleName string, contextType string) {
 	globalContext.ctxLock.Lock()
 	defer globalContext.ctxLock.Unlock()
 	globalContext.moduleContextType[moduleName] = contextType
+}
+
+func setGroupContextType(module string, group string) {
+	globalContext.ctxLock.Lock()
+	defer globalContext.ctxLock.Unlock()
+
+	globalContext.groupContextType[group] = globalContext.moduleContextType[module]
 }
