@@ -182,13 +182,10 @@ func (m *SocketServer) stopServer() {
 }
 
 func IsModuleEnabled(m string) bool {
-	modules := core.GetModules()
-
-	for name, _ := range modules {
-		if m == name {
-			return true
-		}
+	_, err := config.GetClientSocketConfig(m)
+	if err != nil {
+		return false
 	}
 
-	return false
+	return true
 }

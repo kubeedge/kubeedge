@@ -13,6 +13,7 @@ import (
 
 // StartModules starts modules that are registered
 func StartModules() {
+	// only register channel mode, if want to use socket mode, we should also pass in common.MsgCtxTypeUS parameter
 	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 
 	modules := GetModules()
@@ -41,7 +42,7 @@ func StartModules() {
 		beehiveContext.AddModule(&m)
 		beehiveContext.AddModuleGroup(name, module.module.Group())
 
-		go module.module.Start()
+		go moduleKeeper(name, module, m)
 		klog.Infof("starting module %s", name)
 	}
 }
@@ -69,4 +70,17 @@ func Run() {
 	StartModules()
 	// monitor system signal and shutdown gracefully
 	GracefulShutdown()
+}
+
+func moduleKeeper(name string, moduleInfo *moduleInfo, m common.ModuleInfo) {
+	for {
+		moduleInfo.module.Start()
+		// local modules are always online
+		if !moduleInfo.remote {
+			return
+		}
+		// try to add module for remote modules
+		beehiveContext.AddModule(&m)
+		beehiveContext.AddModuleGroup(name, moduleInfo.module.Group())
+	}
 }

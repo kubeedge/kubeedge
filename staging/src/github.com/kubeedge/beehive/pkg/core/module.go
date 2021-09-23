@@ -17,8 +17,8 @@ type Module interface {
 
 var (
 	// Modules map
-	modules           map[string]*moduleInfo
-	disabledModules   map[string]*moduleInfo
+	modules         map[string]*moduleInfo
+	disabledModules map[string]*moduleInfo
 )
 
 func init() {
