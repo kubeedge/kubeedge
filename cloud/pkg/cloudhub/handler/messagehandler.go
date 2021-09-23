@@ -456,6 +456,7 @@ func (mh *MessageHandle) MessageWriteLoop(info *model.HubInfo, stopServe chan Ex
 			conn, ok := mh.nodeConns.Load(info.NodeID)
 			if !ok {
 				if retry == 1 {
+					nodeQueue.AddRateLimited(key.(string))
 					break
 				}
 				retry++
