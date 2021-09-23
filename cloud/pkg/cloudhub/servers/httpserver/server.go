@@ -28,7 +28,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
 	certutil "k8s.io/client-go/util/cert"
 	"k8s.io/klog/v2"
