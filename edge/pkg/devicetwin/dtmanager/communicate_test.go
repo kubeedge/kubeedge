@@ -22,6 +22,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kubeedge/beehive/pkg/common"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	cloudconn "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
@@ -32,7 +33,7 @@ import (
 
 // TestStartAction is function to test Start() when value is passed in ReceiverChan.
 func TestStartAction(t *testing.T) {
-	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 
 	dtContextStateConnected, _ := dtcontext.InitDTContext()
 	dtContextStateConnected.State = dtcommon.Connected
@@ -105,7 +106,7 @@ func TestStartAction(t *testing.T) {
 
 // TestStartHeartBeat is function to test Start() when value is passed in HeartBeatChan.
 func TestStartHeartBeat(t *testing.T) {
-	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 
 	dtContexts, _ := dtcontext.InitDTContext()
 	heartChanStop := make(chan interface{}, 1)
@@ -163,9 +164,21 @@ func TestStartHeartBeat(t *testing.T) {
 	}
 }
 
+// TestDealSendToEdge is function to test dealSendToEdge().
+func TestDealSendToEdge(t *testing.T) {
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
+	msg := model.Message{
+		Header: model.MessageHeader{
+			ID: "message",
+		},
+	}
+
+	dealSendToEdge(nil, "", &msg)
+}
+
 // TestDealSendToCloud is function to test dealSendToCloud().
 func TestDealSendToCloud(t *testing.T) {
-	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 
 	dtContextStateDisconnected, _ := dtcontext.InitDTContext()
 	dtContextStateConnected, _ := dtcontext.InitDTContext()
@@ -231,7 +244,7 @@ func TestDealSendToCloud(t *testing.T) {
 
 // TestDealLifeCycle is function to test dealLifeCycle().
 func TestDealLifeCycle(t *testing.T) {
-	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 	dtContext, _ := dtcontext.InitDTContext()
 	tests := []struct {
 		name     string
@@ -271,7 +284,7 @@ func TestDealLifeCycle(t *testing.T) {
 
 // TestDealConfirm is function to test dealConfirm().
 func TestDealConfirm(t *testing.T) {
-	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 	dtContext, _ := dtcontext.InitDTContext()
 	tests := []struct {
 		name     string
@@ -312,7 +325,7 @@ func TestDealConfirm(t *testing.T) {
 
 // TestCheckConfirm is function to test checkConfirm().
 func TestCheckConfirm(t *testing.T) {
-	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 	dtContext, _ := dtcontext.InitDTContext()
 	dtContext.State = dtcommon.Connected
 	dtContext.ConfirmMap.Store("emptyMessage", &dttype.DTMessage{})

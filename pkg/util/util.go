@@ -1,5 +1,5 @@
 /*
-Copyright 2016 The Kubernetes Authors.
+Copyright 2018 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@ limitations under the License.
 package util
 
 import (
+	"bytes"
 	"fmt"
 	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	utilnet "k8s.io/apimachinery/pkg/util/net"
@@ -131,18 +131,6 @@ func SpliceErrors(errors []error) string {
 	return stb.String()
 }
 
-// GetPodSandboxImage return snadbox image name based on arch, default image is for amd64.
-func GetPodSandboxImage() string {
-	switch runtime.GOARCH {
-	case "arm":
-		return constants.DefaultArmPodSandboxImage
-	case "arm64":
-		return constants.DefaultArm64PodSandboxImage
-	default:
-		return constants.DefaultPodSandboxImage
-	}
-}
-
 // GetHostname returns a reasonable hostname
 func GetHostname() string {
 	hostnameOverride, err := os.Hostname()
@@ -154,4 +142,13 @@ func GetHostname() string {
 		return constants.DefaultHostnameOverride
 	}
 	return hostnameOverride
+}
+
+// ConcatStrings use bytes.buffer to concatenate string variable
+func ConcatStrings(ss ...string) string {
+	var bff bytes.Buffer
+	for _, s := range ss {
+		bff.WriteString(s)
+	}
+	return bff.String()
 }

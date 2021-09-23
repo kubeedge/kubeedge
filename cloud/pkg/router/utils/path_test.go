@@ -42,6 +42,34 @@ func TestPathMatch(t *testing.T) {
 	AssertTrue(t, !IsMatch(rule, req), "7")
 }
 
+func TestRuleContains(t *testing.T) {
+	cases := []struct {
+		name      string
+		rulePath  string
+		rule2Path string
+		want      bool
+	}{
+		{
+			name:      "case1",
+			rulePath:  "/a",
+			rule2Path: "/a/b",
+			want:      true,
+		},
+		{
+			name:      "case2",
+			rulePath:  "/a",
+			rule2Path: "/b",
+			want:      false,
+		},
+	}
+
+	for _, c := range cases {
+		if actual := RuleContains(c.rulePath, c.rule2Path); c.want != actual {
+			t.Errorf("%v: expected %v, but got %v", c.name, c.want, actual)
+		}
+	}
+}
+
 // AssertTrue triggers testing error if the passed-in is true.
 func AssertTrue(t *testing.T, value bool, errMsg string) {
 	if !value {

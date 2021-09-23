@@ -22,6 +22,8 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	commonconst "github.com/kubeedge/kubeedge/common/constants"
 )
 
 var (
@@ -211,7 +213,7 @@ func TestDeleteSecret(t *testing.T) {
 func TestIsEdgeNode(t *testing.T) {
 	nodeName := nodes[0]
 	locationCache := LocationCache{}
-	locationCache.EdgeNodes.Store(nodeName, "OK")
+	locationCache.EdgeNodes.Store(nodeName, commonconst.MessageSuccessfulContent)
 
 	tests := []struct {
 		name     string
@@ -247,7 +249,7 @@ func TestGetNodeStatus(t *testing.T) {
 	nodeOK := nodes[0]
 	nodeUnknown := nodes[1]
 	locationCache := LocationCache{}
-	locationCache.EdgeNodes.Store(nodeOK, "OK")
+	locationCache.EdgeNodes.Store(nodeOK, commonconst.MessageSuccessfulContent)
 	locationCache.EdgeNodes.Store(nodeUnknown, "Unknown")
 
 	tests := []struct {
@@ -261,7 +263,7 @@ func TestGetNodeStatus(t *testing.T) {
 			name:     "TestGetNodeStatus() Case: Node status is OK",
 			lc:       &locationCache,
 			nodeName: nodeOK,
-			want:     "OK",
+			want:     commonconst.MessageSuccessfulContent,
 			exist:    true,
 		},
 		{
@@ -303,7 +305,7 @@ func TestUpdateEdgeNode(t *testing.T) {
 		{
 			name: "TestUpdateEdgeNode() Case: Node status update to OK",
 			lc:   &locationCache,
-			want: "OK",
+			want: commonconst.MessageSuccessfulContent,
 		},
 		{
 			name: "TestUpdateEdgeNode() Case: Node status update to Unknown",
@@ -326,7 +328,7 @@ func TestUpdateEdgeNode(t *testing.T) {
 func TestDeleteNode(t *testing.T) {
 	locationCache := LocationCache{}
 	nodeName := nodes[0]
-	locationCache.EdgeNodes.Store(nodeName, "OK")
+	locationCache.EdgeNodes.Store(nodeName, commonconst.MessageSuccessfulContent)
 
 	tests := []struct {
 		name     string

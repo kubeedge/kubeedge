@@ -204,9 +204,6 @@ github.com/euank/go-kmsg-parser/kmsgparser
 github.com/evanphx/json-patch
 # github.com/fsnotify/fsnotify v1.4.9
 github.com/fsnotify/fsnotify
-# github.com/ghodss/yaml v1.0.0
-## explicit
-github.com/ghodss/yaml
 # github.com/go-errors/errors v1.0.1
 github.com/go-errors/errors
 # github.com/go-logr/logr v0.4.0
@@ -346,10 +343,20 @@ github.com/json-iterator/go
 github.com/karrick/godirwalk
 # github.com/kubeedge/beehive v0.0.0 => ./staging/src/github.com/kubeedge/beehive
 ## explicit
-github.com/kubeedge/beehive/pkg/common/util
+github.com/kubeedge/beehive/pkg/common
 github.com/kubeedge/beehive/pkg/core
+github.com/kubeedge/beehive/pkg/core/channel
 github.com/kubeedge/beehive/pkg/core/context
 github.com/kubeedge/beehive/pkg/core/model
+github.com/kubeedge/beehive/pkg/core/socket
+github.com/kubeedge/beehive/pkg/core/socket/broker
+github.com/kubeedge/beehive/pkg/core/socket/config
+github.com/kubeedge/beehive/pkg/core/socket/store
+github.com/kubeedge/beehive/pkg/core/socket/synckeeper
+github.com/kubeedge/beehive/pkg/core/socket/wrapper
+github.com/kubeedge/beehive/pkg/core/socket/wrapper/packer
+github.com/kubeedge/beehive/pkg/core/socket/wrapper/reader
+github.com/kubeedge/beehive/pkg/core/socket/wrapper/writer
 # github.com/kubeedge/viaduct v0.0.0 => ./staging/src/github.com/kubeedge/viaduct
 ## explicit
 github.com/kubeedge/viaduct/pkg/api
@@ -793,7 +800,6 @@ gopkg.in/tomb.v1
 # gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637
 gopkg.in/tomb.v2
 # gopkg.in/yaml.v2 v2.4.0
-## explicit
 gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
 gopkg.in/yaml.v3

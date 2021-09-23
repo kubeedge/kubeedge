@@ -7,7 +7,7 @@ require (
 	github.com/cheekybits/genny v0.0.0-20170328200008-9127e812e1e9 // indirect
 	github.com/golang/mock v0.0.0-20190508161146-9fa652df1129
 	github.com/golang/protobuf v1.3.1
-	github.com/gorilla/websocket v1.4.0
+	github.com/gorilla/websocket v1.4.2
 	github.com/hashicorp/golang-lru v0.0.0-20180201235237-0fb14efe8c47 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/kubeedge/beehive v0.0.0

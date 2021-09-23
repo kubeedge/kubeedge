@@ -47,7 +47,9 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	utilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/apimachinery/pkg/util/sets"
+	utilvalidation "k8s.io/apimachinery/pkg/util/validation"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"k8s.io/klog/v2"
@@ -671,6 +673,48 @@ func (e *edged) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container, p
 		mappingFunc = expansion.MappingFuncFor(tmpEnv)
 	)
 
+	// Env will override EnvFrom variables.
+	// Process EnvFrom first then allow Env to replace existing values.
+	for _, envFrom := range container.EnvFrom {
+		switch {
+		case envFrom.ConfigMapRef != nil:
+			cm := envFrom.ConfigMapRef
+			name := cm.Name
+			configMap, ok := configMaps[name]
+			if !ok {
+				if e.kubeClient == nil {
+					return result, fmt.Errorf("couldn't get configMap %v/%v, no kubeClient defined", pod.Namespace, name)
+				}
+				optional := cm.Optional != nil && *cm.Optional
+				configMap, err = e.configMapManager.GetConfigMap(pod.Namespace, name)
+				if err != nil {
+					if apierrors.IsNotFound(err) && optional {
+						// ignore error when marked optional
+						continue
+					}
+					return result, err
+				}
+				configMaps[name] = configMap
+			}
+
+			invalidKeys := []string{}
+			for k, v := range configMap.Data {
+				if len(envFrom.Prefix) > 0 {
+					k = envFrom.Prefix + k
+				}
+				if errMsgs := utilvalidation.IsEnvVarName(k); len(errMsgs) != 0 {
+					invalidKeys = append(invalidKeys, k)
+					continue
+				}
+				tmpEnv[k] = v
+			}
+			if len(invalidKeys) > 0 {
+				sort.Strings(invalidKeys)
+				klog.Errorf("keys [%s] from the EnvFrom configMap %s/%s were skipped since they are considered invalid environment variable names", strings.Join(invalidKeys, ", "), pod.Namespace, name)
+			}
+		}
+	}
+
 	for _, envVar := range container.Env {
 		runtimeVal := envVar.Value
 		if runtimeVal != "" {
@@ -737,11 +781,7 @@ func (e *edged) podFieldSelectorRuntimeValue(fs *v1.ObjectFieldSelector, pod *v1
 	case "spec.serviceAccountName":
 		return pod.Spec.ServiceAccountName, nil
 	case "status.hostIP":
-		hostIP, err := pkgutil.GetLocalIP(e.nodeName)
-		if err != nil {
-			return "", err
-		}
-		return hostIP, nil
+		return e.getNodeIP(e.nodeName, e.customInterfaceName)
 	case "status.podIP":
 		return podIP, nil
 	case "status.podIPs":
@@ -788,8 +828,7 @@ func (e *edged) makeBlockVolumes(pod *v1.Pod, container *v1.Container, podVolume
 // alter the kubelet state at all.
 func (e *edged) convertStatusToAPIStatus(pod *v1.Pod, podStatus *kubecontainer.PodStatus) *v1.PodStatus {
 	var apiPodStatus v1.PodStatus
-
-	hostIP, err := pkgutil.GetLocalIP(e.nodeName)
+	hostIP, err := e.getNodeIP(e.nodeName, e.customInterfaceName)
 	if err != nil {
 		klog.Errorf("Failed to get host IP: %v", err)
 	} else {
@@ -1437,4 +1476,24 @@ func (pk *podKillerWithChannel) PerformPodKillingWork() {
 			}(apiPod, runningPod)
 		}
 	}
+}
+
+// GetNodeIP returns node ip
+func (e *edged) getNodeIP(hostname string, interfaceName string) (string, error) {
+	if interfaceName != "" {
+		ip, err := utilnet.ChooseBindAddressForInterface(interfaceName)
+		if err != nil {
+			klog.Errorf("Cannot obtain the IP Address using the interface %q: %+v", interfaceName, err)
+			return "", err
+		}
+		return ip.String(), nil
+	}
+
+	hostIP, err := pkgutil.GetLocalIP(hostname)
+	if err != nil {
+		klog.Errorf("Cannot obtain the IP Address using the hostname %q: %+v", hostname, err)
+		return "", err
+	}
+
+	return hostIP, nil
 }

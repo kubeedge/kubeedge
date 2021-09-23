@@ -427,7 +427,7 @@ func (uc *UpstreamController) updateNodeStatus() {
 				_, err := uc.kubeClient.CoreV1().Nodes().Get(context.Background(), name, metaV1.GetOptions{})
 				if err == nil {
 					klog.Infof("node: %s already exists, do nothing", name)
-					uc.nodeMsgResponse(name, namespace, "OK", msg)
+					uc.nodeMsgResponse(name, namespace, common.MessageSuccessfulContent, msg)
 					continue
 				}
 
@@ -454,7 +454,7 @@ func (uc *UpstreamController) updateNodeStatus() {
 					continue
 				}
 
-				uc.nodeMsgResponse(name, namespace, "OK", msg)
+				uc.nodeMsgResponse(name, namespace, common.MessageSuccessfulContent, msg)
 
 			case model.UpdateOperation:
 				nodeStatusRequest := &edgeapi.NodeStatusRequest{}
@@ -537,7 +537,7 @@ func (uc *UpstreamController) updateNodeStatus() {
 
 				resMsg := model.NewMessage(msg.GetID()).
 					SetResourceVersion(node.ResourceVersion).
-					FillBody("OK").
+					FillBody(common.MessageSuccessfulContent).
 					BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.ResponseOperation)
 				if err = uc.messageLayer.Response(*resMsg); err != nil {
 					klog.Warningf("Message: %s process failure, response failed with error: %s", msg.GetID(), err)
@@ -574,7 +574,7 @@ func kubeClientGet(uc *UpstreamController, namespace string, name string, queryT
 	case model.ResourceTypeServiceAccountToken:
 		obj, err = uc.getServiceAccountToken(namespace, name, msg)
 	default:
-		err := stderrors.New("Wrong query type")
+		err := stderrors.New("wrong query type")
 		klog.Error(err)
 		return nil, err
 	}
@@ -807,7 +807,7 @@ func (uc *UpstreamController) updateNode() {
 
 				resMsg := model.NewMessage(msg.GetID()).
 					SetResourceVersion(node.ResourceVersion).
-					FillBody("OK").
+					FillBody(common.MessageSuccessfulContent).
 					BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.ResponseOperation)
 				if err = uc.messageLayer.Response(*resMsg); err != nil {
 					klog.Warningf("Message: %s process failure, response failed with error: %s", msg.GetID(), err)

@@ -14,8 +14,8 @@ const (
 	// NodeName is for the clearer log of cloudcore.
 	NodeName = "NodeName"
 
-	KubeEdge          = "kubeedge"
-	KubeEdgeNameSpace = "kubeedge"
+	SystemName      = "kubeedge"
+	SystemNamespace = SystemName
 )
 
 // Resources
@@ -45,8 +45,6 @@ const (
 	DefaultRemoteRuntimeEndpoint       = "unix:///var/run/dockershim.sock"
 	DefaultRemoteImageEndpoint         = "unix:///var/run/dockershim.sock"
 	DefaultPodSandboxImage             = "kubeedge/pause:3.1"
-	DefaultArmPodSandboxImage          = "kubeedge/pause-arm:3.1"
-	DefaultArm64PodSandboxImage        = "kubeedge/pause-arm64:3.1"
 	DefaultNodeStatusUpdateFrequency   = 10
 	DefaultImagePullProgressDeadline   = 60
 	DefaultRuntimeRequestTimeout       = 2
@@ -69,6 +67,7 @@ const (
 	// MetaManager
 	DefaultPodStatusSyncInterval = 60
 	DefaultRemoteQueryTimeout    = 60
+	DefaultMetaServerAddr        = "127.0.0.1:10550"
 
 	// Config
 	DefaultKubeContentType         = "application/vnd.kubernetes.protobuf"
@@ -142,4 +141,7 @@ const (
 	// ServerPort is the default port for the edgecore server on each host machine.
 	// May be overridden by a flag at startup in the future.
 	ServerPort = 10350
+
+	// MessageSuccessfulContent is the successful content value of Message struct
+	MessageSuccessfulContent string = "OK"
 )

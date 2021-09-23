@@ -1,4 +1,7 @@
-
+  * [v1.8.1](#v181)
+     * [Downloads for v1.8.1](#downloads-for-v181)
+     * [KubeEdge v1.8.1 Release Notes](#kubeedge-v181-release-notes)
+        * [Changelog since v1.8.0](#changelog-since-v180)
   * [v1.8.0](#v180)
      * [Downloads for v1.8.0](#downloads-for-v180)
      * [KubeEdge v1.8 Release Notes](#kubeedge-v18-release-notes)
@@ -6,6 +9,23 @@
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
         * [Other Notable Changes](#other-notable-changes)
         * [Bug Fixes](#bug-fixes)
+
+
+# v1.8.1
+
+## Downloads for v1.8.1
+
+Download v1.8.1 in the [v1.8.1 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.8.1).
+
+## KubeEdge v1.8.1 Release Notes
+
+### Changelog since v1.8.0
+
+- Enabled install debug handlers to enable the logs feature. ([#3134](https://github.com/kubeedge/kubeedge/pull/3134), [@siredmar](https://github.com/siredmar))
+- Added iptables to Dockerfile and made cloudcore privileged. ([#3129](https://github.com/kubeedge/kubeedge/pull/3129), [@siredmar](https://github.com/siredmar))
+- Fix modbus slaveID cannot be 0. ([#3117](https://github.com/kubeedge/kubeedge/pull/3117), [@TianTianBigWang](https://github.com/TianTianBigWang))
+
+
 
 
 # v1.8.0

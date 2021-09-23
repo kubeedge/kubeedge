@@ -1,4 +1,4 @@
-package context
+package channel
 
 import (
 	"errors"
@@ -9,6 +9,7 @@ import (
 
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/beehive/pkg/common"
 	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
@@ -32,17 +33,26 @@ type ChannelContext struct {
 	anonChsLock  sync.RWMutex
 }
 
+var channelContext *ChannelContext
+var once sync.Once
+
 // NewChannelContext creates and returns object of new channel context
-// TODO: Singleton
 func NewChannelContext() *ChannelContext {
-	channelMap := make(map[string]chan model.Message)
-	moduleChannels := make(map[string]map[string]chan model.Message)
-	anonChannels := make(map[string]chan model.Message)
-	return &ChannelContext{
-		channels:     channelMap,
-		typeChannels: moduleChannels,
-		anonChannels: anonChannels,
-	}
+	once.Do(func() {
+		channelMap := make(map[string]chan model.Message)
+		moduleChannels := make(map[string]map[string]chan model.Message)
+		anonChannels := make(map[string]chan model.Message)
+		channelContext = &ChannelContext{
+			channels:     channelMap,
+			typeChannels: moduleChannels,
+			anonChannels: anonChannels,
+		}
+	})
+	return channelContext
+}
+
+func GetChannelContext() *ChannelContext{
+	return channelContext
 }
 
 // Cleanup close modules
@@ -262,7 +272,7 @@ func (ctx *ChannelContext) SendToGroupSync(moduleType string, message model.Mess
 		case <-sendTimer.C:
 			cleanup()
 			if timeoutCounter != 0 {
-				return  fmt.Errorf("timeout to send message, several %d timeout when send", timeoutCounter)
+				return fmt.Errorf("timeout to send message, several %d timeout when send", timeoutCounter)
 			}
 			klog.Error("Timeout to sendToGroupsync message")
 			return fmt.Errorf("timeout to send message")
@@ -361,9 +371,9 @@ func (ctx *ChannelContext) addTypeChannel(module, group string, moduleCh chan mo
 }
 
 // AddModule adds module into module context
-func (ctx *ChannelContext) AddModule(module string) {
+func (ctx *ChannelContext) AddModule(info *common.ModuleInfo) {
 	channel := ctx.newChannel()
-	ctx.addChannel(module, channel)
+	ctx.addChannel(info.ModuleName, channel)
 }
 
 // AddModuleGroup adds modules into module context group

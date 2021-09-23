@@ -26,7 +26,7 @@ metadata:
     kubeedge: cloudcore
 rules:
   - apiGroups: [""]
-    resources: ["nodes", "nodes/status", "configmaps", "pods", "pods/status", "secrets", "endpoints", "services"]
+    resources: ["nodes", "nodes/status", "configmaps", "pods", "pods/status", "secrets", "endpoints", "services","persistentvolumes","persistentvolumeclaims"]
     verbs: ["get", "list", "watch", "create", "update"]
   - apiGroups: [""]
     resources: ["namespaces"]

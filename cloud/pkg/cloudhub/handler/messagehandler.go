@@ -142,7 +142,7 @@ func (mh *MessageHandle) HandleServer(container *mux.MessageContainer, writer mu
 			mh.MessageAcks.Delete(container.Message.Header.ParentID)
 		}
 		return
-	} else if container.Message.GetOperation() == "upload" && container.Message.GetGroup() == modules.UserGroup {
+	} else if container.Message.GetOperation() == beehiveModel.UploadOperation && container.Message.GetGroup() == modules.UserGroup {
 		container.Message.Router.Resource = fmt.Sprintf("node/%s/%s", nodeID, container.Message.Router.Resource)
 		beehiveContext.Send(modules.RouterModuleName, *container.Message)
 	} else {
@@ -167,7 +167,9 @@ func (mh *MessageHandle) OnRegister(connection conn.Connection) {
 
 	if _, ok := mh.nodeRegistered.Load(nodeID); ok {
 		if conn, exist := mh.nodeConns.Load(nodeID); exist {
-			conn.(hubio.CloudHubIO).Close()
+			if err := conn.(hubio.CloudHubIO).Close(); err != nil {
+				klog.Errorf("failed to close connection %v, err is %v", conn, err)
+			}
 		}
 		mh.nodeConns.Store(nodeID, io)
 		return
@@ -205,7 +207,9 @@ func (mh *MessageHandle) KeepaliveCheckLoop(info *model.HubInfo, stopServe chan 
 		case <-keepaliveTicker.C:
 			if conn, ok := mh.nodeConns.Load(info.NodeID); ok {
 				klog.Warningf("Timeout to receive heart beat from edge node %s for project %s", info.NodeID, info.ProjectID)
-				conn.(hubio.CloudHubIO).Close()
+				if err := conn.(hubio.CloudHubIO).Close(); err != nil {
+					klog.Errorf("failed to close connection %v, err is %v", conn, err)
+				}
 				mh.nodeConns.Delete(info.NodeID)
 			}
 		}

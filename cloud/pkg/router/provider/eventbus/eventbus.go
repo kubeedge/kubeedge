@@ -3,6 +3,7 @@ package eventbus
 import (
 	"errors"
 	"fmt"
+	"path"
 	"strings"
 
 	"k8s.io/klog/v2"
@@ -60,9 +61,9 @@ func (factory *eventbusFactory) GetSource(ep *v1.RuleEndpoint, sourceResource ma
 }
 
 func (eb *EventBus) RegisterListener(handle listener.Handle) error {
-	listener.MessageHandlerInstance.AddListener(fmt.Sprintf("%s/node/%s/%s/%s", "bus", eb.nodeName, eb.namespace, eb.subTopic), handle)
+	listener.MessageHandlerInstance.AddListener(path.Join("bus/node", eb.nodeName, eb.namespace, eb.subTopic), handle)
 	msg := model.NewMessage("")
-	msg.SetResourceOperation(fmt.Sprintf("node/%s/%s/%s", eb.nodeName, eb.namespace, eb.subTopic), "subscribe")
+	msg.SetResourceOperation(path.Join("node", eb.nodeName, eb.namespace, eb.subTopic), "subscribe")
 	msg.SetRoute("router_eventbus", modules.UserGroup)
 	beehiveContext.Send(modules.CloudHubModuleName, *msg)
 	return nil
@@ -70,10 +71,10 @@ func (eb *EventBus) RegisterListener(handle listener.Handle) error {
 
 func (eb *EventBus) UnregisterListener() {
 	msg := model.NewMessage("")
-	msg.SetResourceOperation(fmt.Sprintf("node/%s/%s/%s", eb.nodeName, eb.namespace, eb.subTopic), "unsubscribe")
+	msg.SetResourceOperation(path.Join("node", eb.nodeName, eb.namespace, eb.subTopic), "unsubscribe")
 	msg.SetRoute("router_eventbus", modules.UserGroup)
 	beehiveContext.Send(modules.CloudHubModuleName, *msg)
-	listener.MessageHandlerInstance.RemoveListener(fmt.Sprintf("%s/node/%s/%s/%s", "bus", eb.nodeName, eb.namespace, eb.subTopic))
+	listener.MessageHandlerInstance.RemoveListener(path.Join("bus/node", eb.nodeName, eb.namespace, eb.subTopic))
 }
 
 func (factory *eventbusFactory) GetTarget(ep *v1.RuleEndpoint, targetResource map[string]string) provider.Target {
@@ -112,18 +113,24 @@ func (*EventBus) Forward(target provider.Target, data interface{}) (response int
 
 func (eb *EventBus) GoToTarget(data map[string]interface{}, stop chan struct{}) (interface{}, error) {
 	messageID, ok := data["messageID"].(string)
-	body, ok := data["data"].([]byte)
-	param, ok := data["param"].(string)
+	if !ok {
+		return nil, buildAndLogError("messageID")
+	}
 	nodeName, ok := data["nodeName"].(string)
 	if !ok {
-		err := errors.New("data transform failed")
-		klog.Error(err.Error())
-		return nil, err
+		return nil, buildAndLogError("nodeName")
 	}
+	body, ok := data["data"].([]byte)
+	if !ok {
+		return nil, buildAndLogError("data body")
+	}
+	// use zero value if not found param
+	param, _ := data["param"].(string)
+
 	msg := model.NewMessage("")
 	msg.BuildHeader(messageID, "", msg.GetTimestamp())
 	resource := "node/" + nodeName + "/"
-	if !ok || param == "" {
+	if param == "" {
 		resource = resource + eb.pubTopic
 	} else {
 		resource = resource + strings.TrimSuffix(eb.pubTopic, "/") + "/" + strings.TrimPrefix(param, "/")
@@ -133,4 +140,10 @@ func (eb *EventBus) GoToTarget(data map[string]interface{}, stop chan struct{}) 
 	msg.SetRoute("router_eventbus", modules.UserGroup)
 	beehiveContext.Send(modules.CloudHubModuleName, *msg)
 	return nil, nil
+}
+
+func buildAndLogError(key string) error {
+	err := fmt.Errorf("data transform failed, %s type is not matched or value is nil", key)
+	klog.Error(err.Error())
+	return err
 }
