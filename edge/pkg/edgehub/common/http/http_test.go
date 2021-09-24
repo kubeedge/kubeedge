@@ -162,7 +162,7 @@ func TestNewHTTPClientWithCA(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Wrong certifcate given when getting HTTP client",
+			name: "Wrong certificate given when getting HTTP client",
 			args: args{
 				capem:       []byte{},
 				certificate: certificate,
@@ -178,8 +178,22 @@ func TestNewHTTPClientWithCA(t *testing.T) {
 				t.Errorf("NewHTTPClientWithCA() error = %w, expectedError = %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewHTTPClientWithCA() = %v, want %v", got, tt.want)
+			if got != nil && tt.want != nil {
+				//due to x509.CertPool cannot be checked equal using reflect.DeepEqual, so need to check whether equal as below
+				//ref: https://github.com/golang/go/issues/46057
+				gotTransport := got.Transport.(*http.Transport)
+				wantTransport := tt.want.Transport.(*http.Transport)
+				isEqual := reflect.DeepEqual(gotTransport.TLSClientConfig.RootCAs.Subjects(), wantTransport.TLSClientConfig.RootCAs.Subjects()) &&
+					(gotTransport.TLSClientConfig.InsecureSkipVerify == wantTransport.TLSClientConfig.InsecureSkipVerify) &&
+					reflect.DeepEqual(gotTransport.TLSClientConfig.Certificates, wantTransport.TLSClientConfig.Certificates) &&
+					got.Timeout == tt.want.Timeout
+				if !isEqual {
+					t.Errorf("NewHTTPClientWithCA() = %v, want %v", got, tt.want)
+				}
+			} else {
+				if !reflect.DeepEqual(got, tt.want) {
+					t.Errorf("NewHTTPClientWithCA() = %v, want %v", got, tt.want)
+				}
 			}
 		})
 	}
