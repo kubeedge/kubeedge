@@ -220,8 +220,7 @@ func NegotiateTunnelPort() (*int, error) {
 }
 
 func negotiatePort(portRecord map[int]bool) int {
-	for port := constants.ServerPort; ; {
-		port++
+	for port := constants.ServerPort; ; port++ {
 		if _, found := portRecord[port]; !found {
 			return port
 		}
