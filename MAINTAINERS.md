@@ -11,6 +11,7 @@
 
 | Maintainer | GitHub ID | Affiliation | Email |
 | --------------- | --------- | ----------- | ----------- |
+| Ce Zheng | @zc2638 | DaoCloud | <ce.zheng@daocloud.io> |
 | Dave Chen | @chendave | Arm | <dave.chen@arm.com> |
 | Fei Xu | @fisherxu | Huawei | <xufei40@huawei.com> |
 | Jie Zhang | @kadisi | Chinaunicom | <zhangj1165@chinaunicom.cn> |
