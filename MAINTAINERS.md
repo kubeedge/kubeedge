@@ -3,10 +3,10 @@
  Official list of KubeEdge Maintainers.
 
  Please keep the below list sorted in ascending order.
- 
+
  [GOVERNANCE.md](https://github.com/kubeedge/community/blob/master/GOVERNANCE.md)
  describes governance guidelines and maintainer responsibilities.
- 
+
 ## Maintainers
 
 | Maintainer | GitHub ID | Affiliation | Email |
