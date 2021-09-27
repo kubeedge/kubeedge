@@ -37,7 +37,7 @@ func init() {
 		messageContext: make(map[string]MessageContext),
 
 		moduleContextType: make(map[string]string),
-		groupContextType: make(map[string]string),
+		groupContextType:  make(map[string]string),
 
 		ctx:    ctx,
 		cancel: cancel,
