@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
@@ -115,7 +116,7 @@ func (cu *KubeCloudInstTool) TearDown() error {
 		return err
 	}
 	// clean kubeedge namespace
-	err := cu.cleanNameSpace("kubeedge", cu.KubeConfig)
+	err := cu.cleanNameSpace(constants.SystemNamespace, cu.KubeConfig)
 	if err != nil {
 		return fmt.Errorf("fail to clean kubeedge namespace, err:%v", err)
 	}

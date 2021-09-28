@@ -28,7 +28,7 @@ import (
 	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/beehive/pkg/core/model"
+	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/dao"
@@ -106,17 +106,17 @@ func (m *Server) onSubscribe(msg *packet.Message) {
 	// for other, send to hub
 	// for "SYS/dis/upload_records", no need to base64 topic
 	var target string
-	var message *model.Message
+	var message *beehiveModel.Message
 	if strings.HasPrefix(msg.Topic, "$hw/events/device") || strings.HasPrefix(msg.Topic, "$hw/events/node") {
 		target = modules.TwinGroup
 		resource := base64.URLEncoding.EncodeToString([]byte(msg.Topic))
 		// routing key will be $hw.<project_id>.events.user.bus.response.cluster.<cluster_id>.node.<node_id>.<base64_topic>
-		message = model.NewMessage("").BuildRouter(modules.BusGroup, modules.UserGroup,
+		message = beehiveModel.NewMessage("").BuildRouter(modules.BusGroup, modules.UserGroup,
 			resource, messagepkg.OperationResponse).FillBody(string(msg.Payload))
 	} else {
 		target = modules.HubGroup
-		message = model.NewMessage("").BuildRouter(modules.BusGroup, modules.UserGroup,
-			msg.Topic, "upload").FillBody(string(msg.Payload))
+		message = beehiveModel.NewMessage("").BuildRouter(modules.BusGroup, modules.UserGroup,
+			msg.Topic, beehiveModel.UploadOperation).FillBody(string(msg.Payload))
 	}
 	klog.Info(fmt.Sprintf("Received msg from mqttserver, deliver to %s with resource %s", target, message.GetResource()))
 	beehiveContext.SendToGroup(target, *message)

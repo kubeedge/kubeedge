@@ -37,7 +37,7 @@ func NewGettoken(out io.Writer, init *common.GettokenOptions) *cobra.Command {
 		Long:    gettokenLongDescription,
 		Example: gettokenExample,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			token, err := queryToken(constants.KubeEdgeNameSpace, common.TokenSecretName, init.Kubeconfig)
+			token, err := queryToken(constants.SystemNamespace, common.TokenSecretName, init.Kubeconfig)
 			if err != nil {
 				fmt.Println("failed to get token")
 				return err

@@ -25,6 +25,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 
+	"github.com/kubeedge/beehive/pkg/common"
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -33,9 +34,20 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
 )
 
+func init() {
+	add := &common.ModuleInfo{
+		ModuleName: module.EdgeHubModuleName,
+		ModuleType: common.MsgCtxTypeChannel,
+	}
+
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
+
+	beehiveContext.AddModule(add)
+	beehiveContext.AddModuleGroup(module.EdgeHubModuleName, module.EdgeHubModuleName)
+}
+
 //TestIsSyncResponse() tests whether there exists a channel with the given message_id in the syncKeeper
 func TestIsSyncResponse(t *testing.T) {
-	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	tests := []struct {
 		name  string
 		hub   *EdgeHub
@@ -57,7 +69,7 @@ func TestIsSyncResponse(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.hub.isSyncResponse(tt.msgID); got != tt.want {
+			if got := isSyncResponse(tt.msgID); got != tt.want {
 				t.Errorf("TestController_isSyncResponse() = %v, want %v", got, tt.want)
 			}
 		})
@@ -66,7 +78,6 @@ func TestIsSyncResponse(t *testing.T) {
 
 //TestDispatch() tests whether the messages are properly dispatched to their respective modules
 func TestDispatch(t *testing.T) {
-	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	tests := []struct {
 		name          string
 		hub           *EdgeHub
@@ -85,7 +96,7 @@ func TestDispatch(t *testing.T) {
 			name:          "Error Case in dispatch",
 			hub:           &EdgeHub{},
 			message:       model.NewMessage("test").BuildRouter(module.EdgeHubModuleName, module.EdgedGroup, "", ""),
-			expectedError: fmt.Errorf("msg_group not found"),
+			expectedError: fmt.Errorf("failed to handle message, no handler found for the message, message group: edged"),
 			isResponse:    true,
 		},
 		{
@@ -108,7 +119,6 @@ func TestDispatch(t *testing.T) {
 
 //TestRouteToEdge() is used to test whether the message received from websocket is dispatched to the required modules
 func TestRouteToEdge(t *testing.T) {
-	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
@@ -147,7 +157,6 @@ func TestRouteToEdge(t *testing.T) {
 
 //TestSendToCloud() tests whether the send to cloud functionality works properly
 func TestSendToCloud(t *testing.T) {
-	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
@@ -207,7 +216,6 @@ func TestSendToCloud(t *testing.T) {
 
 //TestRouteToCloud() tests the reception of the message from the beehive framework and forwarding of that message to cloud
 func TestRouteToCloud(t *testing.T) {
-	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
@@ -226,10 +234,12 @@ func TestRouteToCloud(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockAdapter.EXPECT().Send(gomock.Any()).Return(errors.New("Connection Refused")).AnyTimes()
+
+			core.Register(&EdgeHub{enable: true})
+
 			go tt.hub.routeToCloud()
 			time.Sleep(2 * time.Second)
-			core.Register(&EdgeHub{})
-			beehiveContext.AddModule(module.EdgeHubModuleName)
+
 			msg := model.NewMessage("").BuildHeader("test_id", "", 1)
 			beehiveContext.Send(module.EdgeHubModuleName, *msg)
 			stopChan := <-tt.hub.reconnectChan
@@ -244,7 +254,7 @@ func TestRouteToCloud(t *testing.T) {
 func TestKeepalive(t *testing.T) {
 	CertFile := "/tmp/kubeedge/certs/edge.crt"
 	KeyFile := "/tmp/kubeedge/certs/edge.key"
-	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
+
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	mockAdapter := edgehub.NewMockAdapter(mockCtrl)

@@ -54,6 +54,28 @@ func TestBuildResource(t *testing.T) {
 			"",
 			fmt.Errorf("required parameter are not set (node id, namespace or resource type)"),
 		},
+		{
+			"TestBuildResource(): Case 2: no resourceID.",
+			args{
+				nodeID:       NodeID,
+				namespace:    Namespace,
+				resourceType: ResourceType,
+				resourceID:   "",
+			},
+			"node/" + NodeID + "/" + Namespace + "/" + ResourceType,
+			nil,
+		},
+		{
+			"TestBuildResource(): Case 3: with resourceID.",
+			args{
+				nodeID:       NodeID,
+				namespace:    Namespace,
+				resourceType: ResourceType,
+				resourceID:   ResourceID,
+			},
+			"node/" + NodeID + "/" + Namespace + "/" + ResourceType + "/" + ResourceID,
+			nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

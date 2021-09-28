@@ -24,8 +24,7 @@ const (
 
 	UserGroup = "user"
 
-	NamespaceSystem string = "kubeedge"
-	TunnelPort      string = "tunnelport"
+	TunnelPort string = "tunnelport"
 
 	TunnelPortRecordAnnotationKey string = "tunnelportrecord.kubeedge.io"
 )

@@ -7,6 +7,7 @@ import (
 
 	"github.com/mitchellh/go-ps"
 	"github.com/spf13/cobra"
+	netutil "k8s.io/apimachinery/pkg/util/net"
 	cliflag "k8s.io/component-base/cli/flag"
 	"k8s.io/component-base/cli/globalflag"
 	"k8s.io/component-base/term"
@@ -86,12 +87,18 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 				}
 			}
 
-			// get edge node local ip
-			if config.Modules.Edged.NodeIP == "" {
-				hostnameOverride := util.GetHostname()
-				localIP, _ := util.GetLocalIP(hostnameOverride)
-				config.Modules.Edged.NodeIP = localIP
+			// Get edge node local ip only when the custiomInterfaceName has been set.
+			// Defaults to the local IP from the default interface by the default config
+			if config.Modules.Edged.CustomInterfaceName != "" {
+				klog.Infof("Getting IP address by custom interface: %s", config.Modules.Edged.CustomInterfaceName)
+				ip, err := netutil.ChooseBindAddressForInterface(config.Modules.Edged.CustomInterfaceName)
+				if err != nil {
+					klog.Errorf("Failed to get IP address by custom interface: %s: %s", config.Modules.Edged.CustomInterfaceName, err)
+					os.Exit(1)
+				}
+				config.Modules.Edged.NodeIP = ip.String()
 			}
+			klog.Infof("Local IP: %s", config.Modules.Edged.NodeIP)
 
 			registerModules(config)
 			// start all modules

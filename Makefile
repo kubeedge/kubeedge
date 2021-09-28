@@ -11,7 +11,8 @@ BINARIES=cloudcore \
 	edgecore \
 	edgesite-agent \
 	edgesite-server \
-	keadm
+	keadm \
+	csidriver
 
 COMPONENTS=cloud \
 	edge
@@ -280,7 +281,7 @@ edgeimage:
 	tar -xzf ./build/edge/tmp/qemu-${QEMU_ARCH}-static.tar.gz -C ./build/edge/tmp
 	docker build -t kubeedge/edgecore:${IMAGE_TAG} \
 	--build-arg GO_LDFLAGS=${GO_LDFLAGS} \
-	--build-arg BUILD_FROM=${ARCH}/golang:1.14-alpine3.11 \
+	--build-arg BUILD_FROM=${ARCH}/golang:1.16-alpine3.13 \
 	--build-arg RUN_FROM=${ARCH}/docker:dind \
 	-f build/edge/Dockerfile .
 

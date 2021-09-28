@@ -1,4 +1,5 @@
 /*
+Copyright 2019 The KubeEdge Authors.
 Copyright 2014 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -272,7 +273,7 @@ func (uc *UpstreamController) updateRuleStatus() {
 				klog.Warningf("message: %s process failure, content marshal err: %s", msg.GetID(), err)
 				continue
 			}
-			var data []byte = []byte(body)
+			var data = []byte(body)
 			_, err = uc.crdClient.RulesV1().Rules(namespace).Patch(context.Background(), ruleID, controller.MergePatchType, data, metaV1.PatchOptions{})
 			if err != nil {
 				klog.Warningf("message: %s process failure, update ruleStatus failed with error: %s, namespace: %s, name: %s", msg.GetID(), err, namespace, ruleID)
@@ -426,7 +427,7 @@ func (uc *UpstreamController) updateNodeStatus() {
 				_, err := uc.kubeClient.CoreV1().Nodes().Get(context.Background(), name, metaV1.GetOptions{})
 				if err == nil {
 					klog.Infof("node: %s already exists, do nothing", name)
-					uc.nodeMsgResponse(name, namespace, "OK", msg)
+					uc.nodeMsgResponse(name, namespace, common.MessageSuccessfulContent, msg)
 					continue
 				}
 
@@ -453,7 +454,7 @@ func (uc *UpstreamController) updateNodeStatus() {
 					continue
 				}
 
-				uc.nodeMsgResponse(name, namespace, "OK", msg)
+				uc.nodeMsgResponse(name, namespace, common.MessageSuccessfulContent, msg)
 
 			case model.UpdateOperation:
 				nodeStatusRequest := &edgeapi.NodeStatusRequest{}
@@ -536,7 +537,7 @@ func (uc *UpstreamController) updateNodeStatus() {
 
 				resMsg := model.NewMessage(msg.GetID()).
 					SetResourceVersion(node.ResourceVersion).
-					FillBody("OK").
+					FillBody(common.MessageSuccessfulContent).
 					BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.ResponseOperation)
 				if err = uc.messageLayer.Response(*resMsg); err != nil {
 					klog.Warningf("Message: %s process failure, response failed with error: %s", msg.GetID(), err)
@@ -573,7 +574,7 @@ func kubeClientGet(uc *UpstreamController, namespace string, name string, queryT
 	case model.ResourceTypeServiceAccountToken:
 		obj, err = uc.getServiceAccountToken(namespace, name, msg)
 	default:
-		err := stderrors.New("Wrong query type")
+		err := stderrors.New("wrong query type")
 		klog.Error(err)
 		return nil, err
 	}
@@ -806,7 +807,7 @@ func (uc *UpstreamController) updateNode() {
 
 				resMsg := model.NewMessage(msg.GetID()).
 					SetResourceVersion(node.ResourceVersion).
-					FillBody("OK").
+					FillBody(common.MessageSuccessfulContent).
 					BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.ResponseOperation)
 				if err = uc.messageLayer.Response(*resMsg); err != nil {
 					klog.Warningf("Message: %s process failure, response failed with error: %s", msg.GetID(), err)

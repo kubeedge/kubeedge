@@ -168,7 +168,7 @@ func isListResource(msg *beehiveModel.Message) bool {
 	}
 	if msg.GetOperation() == beehiveModel.ResponseOperation {
 		content, ok := msg.Content.(string)
-		if ok && content == "OK" {
+		if ok && content == commonconst.MessageSuccessfulContent {
 			return true
 		}
 	}

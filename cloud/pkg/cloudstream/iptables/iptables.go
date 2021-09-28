@@ -17,6 +17,7 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
@@ -161,7 +162,7 @@ func (im *Manager) getAddedAndDeletedCloudCoreIPPort() ([]string, []string, erro
 }
 
 func (im *Manager) getLatestTunnelPortRecords() (*TunnelPortRecord, error) {
-	configmap, err := im.cmLister.ConfigMaps(modules.NamespaceSystem).Get(modules.TunnelPort)
+	configmap, err := im.cmLister.ConfigMaps(constants.SystemNamespace).Get(modules.TunnelPort)
 	if err != nil {
 		return nil, errors.New("failed to get configmap for iptables manager")
 	}

@@ -137,12 +137,12 @@ func registerModules(c *v1alpha1.CloudCoreConfig) {
 
 func NegotiateTunnelPort() (*int, error) {
 	kubeClient := client.GetKubeClient()
-	err := httpserver.CreateNamespaceIfNeeded(kubeClient, modules.NamespaceSystem)
+	err := httpserver.CreateNamespaceIfNeeded(kubeClient, constants.SystemNamespace)
 	if err != nil {
 		return nil, errors.New("failed to create system namespace")
 	}
 
-	tunnelPort, err := kubeClient.CoreV1().ConfigMaps(modules.NamespaceSystem).Get(context.TODO(), modules.TunnelPort, metav1.GetOptions{})
+	tunnelPort, err := kubeClient.CoreV1().ConfigMaps(constants.SystemNamespace).Get(context.TODO(), modules.TunnelPort, metav1.GetOptions{})
 
 	if err != nil && !apierror.IsNotFound(err) {
 		return nil, err
@@ -180,7 +180,7 @@ func NegotiateTunnelPort() (*int, error) {
 
 		tunnelPort.Annotations[modules.TunnelPortRecordAnnotationKey] = string(recordBytes)
 
-		_, err = kubeClient.CoreV1().ConfigMaps(modules.NamespaceSystem).Update(context.TODO(), tunnelPort, metav1.UpdateOptions{})
+		_, err = kubeClient.CoreV1().ConfigMaps(constants.SystemNamespace).Update(context.TODO(), tunnelPort, metav1.UpdateOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -203,10 +203,10 @@ func NegotiateTunnelPort() (*int, error) {
 			return nil, err
 		}
 
-		_, err = kubeClient.CoreV1().ConfigMaps(modules.NamespaceSystem).Create(context.TODO(), &v1.ConfigMap{
+		_, err = kubeClient.CoreV1().ConfigMaps(constants.SystemNamespace).Create(context.TODO(), &v1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      modules.TunnelPort,
-				Namespace: modules.NamespaceSystem,
+				Namespace: constants.SystemNamespace,
 				Annotations: map[string]string{
 					modules.TunnelPortRecordAnnotationKey: string(recordBytes),
 				},

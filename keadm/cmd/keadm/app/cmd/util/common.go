@@ -640,16 +640,6 @@ func ParseEdgecoreConfig(edgecorePath string) (*v1alpha1.EdgeCoreConfig, error) 
 	return edgeCoreConfig, nil
 }
 
-// IsContain determines if it is in the array
-func IsContain(items []string, item string) bool {
-	for _, eachItem := range items {
-		if eachItem == item {
-			return true
-		}
-	}
-	return false
-}
-
 // PrintFail prints fail
 func PrintFail(cmd string, s string) {
 	v := fmt.Sprintf("|%s %s failed|", s, cmd)

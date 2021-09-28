@@ -155,9 +155,6 @@ github.com/coreos/pkg/capnslog
 github.com/cyphar/filepath-securejoin
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
-# github.com/dgrijalva/jwt-go v3.2.0+incompatible
-## explicit
-github.com/dgrijalva/jwt-go
 # github.com/docker/distribution v2.7.1+incompatible
 github.com/docker/distribution/digestset
 github.com/docker/distribution/reference
@@ -204,9 +201,6 @@ github.com/euank/go-kmsg-parser/kmsgparser
 github.com/evanphx/json-patch
 # github.com/fsnotify/fsnotify v1.4.9
 github.com/fsnotify/fsnotify
-# github.com/ghodss/yaml v1.0.0
-## explicit
-github.com/ghodss/yaml
 # github.com/go-errors/errors v1.0.1
 github.com/go-errors/errors
 # github.com/go-logr/logr v0.4.0
@@ -231,6 +225,9 @@ github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/protoc-gen-gogo/descriptor
 github.com/gogo/protobuf/sortkeys
 github.com/gogo/protobuf/types
+# github.com/golang-jwt/jwt v3.2.2+incompatible
+## explicit
+github.com/golang-jwt/jwt
 # github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e
 github.com/golang/groupcache/lru
 # github.com/golang/mock v1.4.4
@@ -346,10 +343,20 @@ github.com/json-iterator/go
 github.com/karrick/godirwalk
 # github.com/kubeedge/beehive v0.0.0 => ./staging/src/github.com/kubeedge/beehive
 ## explicit
-github.com/kubeedge/beehive/pkg/common/util
+github.com/kubeedge/beehive/pkg/common
 github.com/kubeedge/beehive/pkg/core
+github.com/kubeedge/beehive/pkg/core/channel
 github.com/kubeedge/beehive/pkg/core/context
 github.com/kubeedge/beehive/pkg/core/model
+github.com/kubeedge/beehive/pkg/core/socket
+github.com/kubeedge/beehive/pkg/core/socket/broker
+github.com/kubeedge/beehive/pkg/core/socket/config
+github.com/kubeedge/beehive/pkg/core/socket/store
+github.com/kubeedge/beehive/pkg/core/socket/synckeeper
+github.com/kubeedge/beehive/pkg/core/socket/wrapper
+github.com/kubeedge/beehive/pkg/core/socket/wrapper/packer
+github.com/kubeedge/beehive/pkg/core/socket/wrapper/reader
+github.com/kubeedge/beehive/pkg/core/socket/wrapper/writer
 # github.com/kubeedge/viaduct v0.0.0 => ./staging/src/github.com/kubeedge/viaduct
 ## explicit
 github.com/kubeedge/viaduct/pkg/api
@@ -793,7 +800,6 @@ gopkg.in/tomb.v1
 # gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637
 gopkg.in/tomb.v2
 # gopkg.in/yaml.v2 v2.4.0
-## explicit
 gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
 gopkg.in/yaml.v3
