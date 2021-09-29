@@ -178,7 +178,34 @@ crossbuild: clean
 	hack/make-rules/crossbuild.sh $(WHAT) $(GOARM)
 endif
 
+crdVersions ?= v1
+crdOutputs ?= build/crds
+devicesVersion ?= v1alpha2
+reliablesyncsVersion ?= v1alpha1
+listCRDParams := crdVersions crdOutputs devicesVersion reliablesyncsVersion
 
+define GENERATE_CRDS_HELP_INFO
+# generate crds.
+#
+# Args:
+#     crdVersions, default: v1
+#     crdOutputs, default: build/crd
+#     devicesVersion, default: v1alpha2
+#     reliablesyncsVersion, default: v1alpha1
+#
+# Example:
+#     make generate 
+#     make generate -e crdVersions=v1 -e crdOutputs=build/crds
+#
+endef
+.PHONY: generate
+ifeq ($(HELP),y)
+generate:
+	@echo "$$GENERATE_CRDS_HELP_INFO"
+else
+generate:
+	chmod a+x hack/generate-crds.sh && ./hack/generate-crds.sh  $(foreach p, $(listCRDParams),--$(p)=$($(p)) )
+endif
 
 SMALLBUILD_COMPONENTS=edgecore
 define SMALLBUILD_HELP_INFO
