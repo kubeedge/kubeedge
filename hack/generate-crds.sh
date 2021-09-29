@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright 2020 Authors of Arktos.
-# Copyright 2020 The KubeEdge Authors - file modified.
+# Copyright 2020 The KubeEdge Authors 
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,32 +18,27 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-crdVersions=v1
-crdOutputs=build/crds
-devicesVersion=v1alpha2
-reliablesyncsVersion=v1alpha1
-crdOptions="crd:crdVersions=${crdVersions},generateEmbeddedObjectMeta=true,allowDangerousTypes=true"
-
-# install controller-gen tool if not exsit
-if [ $(which controller-gen) == "" ]; then
-    echo "Start to install controller-gen tool"
-    GO111MODULE=on go get -v sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.2
-fi
+CRD_VERSIONS=v1
+CRD_OUTPUTS=build/crds
+DEVICES_VERSION=v1alpha2
+RELIABLESYNCS_VERSION=v1alpha1
+_crdOptions="crd:crdVersions=${CRD_VERSIONS},generateEmbeddedObjectMeta=true,allowDangerousTypes=true"
+_tmpdir=/tmp/crds
 
 # try to parse named parameters
 while [ $# -gt 0 ]; do
   case "$1" in
-    --crdVersions=*)
-      crdVersions="${1#*=}"
+    --CRD_VERSIONS=*)
+      CRD_VERSIONS="${1#*=}"
       ;;
-    --crdOutputs=*)
-      crdOutputs="${1#*=}"
+    --CRD_OUTPUTS=*)
+      CRD_OUTPUTS="${1#*=}"
       ;;
-    --devicesVersion=*)
-      devicesVersion="${1#*=}"
+    --DEVICES_VERSION=*)
+      DEVICES_VERSION="${1#*=}"
       ;;
-    --reliablesyncsVersion=*)
-      reliablesyncsVersion="${1#*=}"
+    --RELIABLESYNCS_VERSION=*)
+      RELIABLESYNCS_VERSION="${1#*=}"
       ;;
     *)
       printf "***************************\n"
@@ -55,31 +49,50 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-# generate crds
-$($(which controller-gen) paths="./..." $crdOptions output:crd:artifacts:config=/tmp/crds  2> >(grep -i InterfaceType))
+function :prepare:install: {
+  # install controller-gen tool if not exsit
+  if [ $(which controller-gen) == "" ]; then
+      echo "Start to install controller-gen tool"
+      GO111MODULE=on go get -v sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.2
+  fi
+}
 
-# rename files, copy files
-mkdir -p ${crdOutputs}/devices
-mkdir -p ${crdOutputs}/reliablesyncs
+function :gen:crds: {
+  # generate crds
+  $(which controller-gen) paths="./..." ${_crdOptions} output:crd:artifacts:config=${_tmpdir}
+}
 
-for entry in `ls /tmp/crds/*.yaml`; do
-    crdName=$(echo ${entry} | cut -d'.' -f3 | cut -d'_' -f2)
+function :copy:to:targets {
+  # rename files, copy files
+  mkdir -p ${CRD_OUTPUTS}/devices
+  mkdir -p ${CRD_OUTPUTS}/reliablesyncs
 
-    if [ "$crdName" == "devices" ] || [ "$crdName" == "devicemodels" ]; then
-        # remove the last element if it ends with "s",i.e: devicemodels -> devicemodel
-        if [ "${crdName:-1}" == "s" ]; then
-          crdName="${crdName%?}"
-        fi
-        cp -v ${entry} ${crdOutputs}/devices/devices_${devicesVersion}_${crdName}.yaml 
-    elif [ "$crdName" == "clusterobjectsyncs" ]; then
-        cp -v ${entry} ${crdOutputs}/reliablesyncs/cluster_objectsync_${reliablesyncsVersion}.yaml
-    elif [ "$crdName" == "objectsyncs" ]; then
-        cp -v ${entry} ${crdOutputs}/reliablesyncs/objectsync_${reliablesyncsVersion}.yaml
-    else
-        # other cases would not handle
-        continue
-    fi
-done
+  for entry in `ls /tmp/crds/*.yaml`; do
+      CRD_NAME=$(echo ${entry} | cut -d'.' -f3 | cut -d'_' -f2)
 
-# clean
-rm -rf /tmp/crds
+      if [ "$CRD_NAME" == "devices" ] || [ "$CRD_NAME" == "devicemodels" ]; then
+          # remove the last element if it ends with "s",i.e: devicemodels -> devicemodel
+          if [ "${CRD_NAME: -1}" == "s" ]; then
+            CRD_NAME=${CRD_NAME%?}
+          fi
+          cp -v ${entry} ${CRD_OUTPUTS}/devices/devices_${DEVICES_VERSION}_${CRD_NAME}.yaml 
+      elif [ "$CRD_NAME" == "clusterobjectsyncs" ]; then
+          cp -v ${entry} ${CRD_OUTPUTS}/reliablesyncs/cluster_objectsync_${RELIABLESYNCS_VERSION}.yaml
+      elif [ "$CRD_NAME" == "objectsyncs" ]; then
+          cp -v ${entry} ${CRD_OUTPUTS}/reliablesyncs/objectsync_${RELIABLESYNCS_VERSION}.yaml
+      else
+          # other cases would not handle
+          continue
+      fi
+  done
+}
+
+function cleanup {
+  #echo "Removing templates files: ${_tmpdir}"
+  rm -rf "${_tmpdir}"
+}
+
+:prepare:install:
+:gen:crds:
+:copy:to:targets
+cleanup
