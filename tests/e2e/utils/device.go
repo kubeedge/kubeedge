@@ -667,7 +667,12 @@ func NewCustomizedDeviceInstance(nodeSelector string) v1alpha2.Device {
 		VisitorConfig: v1alpha2.VisitorConfig{
 			CustomizedProtocol: &v1alpha2.VisitorConfigCustomized{
 				ProtocolName: "CustomizedProtocol1",
-				ConfigData:   &v1alpha2.CustomizedValue{"config1": "config-val1", "config2": "config-val2"},
+				ConfigData: &v1alpha2.CustomizedValue{
+					Data: map[string]interface{}{
+						"config1": "config-val1",
+						"config2": "config-val2",
+					},
+				},
 			},
 		},
 	}
@@ -676,7 +681,12 @@ func NewCustomizedDeviceInstance(nodeSelector string) v1alpha2.Device {
 		VisitorConfig: v1alpha2.VisitorConfig{
 			CustomizedProtocol: &v1alpha2.VisitorConfigCustomized{
 				ProtocolName: "CustomizedProtocol1",
-				ConfigData:   &v1alpha2.CustomizedValue{"config3": "config-val3", "config4": "config-val4"},
+				ConfigData: &v1alpha2.CustomizedValue{
+					Data: map[string]interface{}{
+						"config3": "config-val3",
+						"config4": "config-val4",
+					},
+				},
 			},
 		},
 	}
@@ -715,7 +725,12 @@ func NewCustomizedDeviceInstance(nodeSelector string) v1alpha2.Device {
 			Protocol: v1alpha2.ProtocolConfig{
 				CustomizedProtocol: &v1alpha2.ProtocolConfigCustomized{
 					ProtocolName: "CustomizedProtocol1",
-					ConfigData:   &v1alpha2.CustomizedValue{"config1": "config-val1", "config2": "config-val2"},
+					ConfigData: &v1alpha2.CustomizedValue{
+						Data: map[string]interface{}{
+							"config1": "config-val1",
+							"config2": "config-val2",
+						},
+					},
 				},
 				Common: &v1alpha2.ProtocolConfigCommon{
 					COM: &v1alpha2.ProtocolConfigCOM{
@@ -1638,7 +1653,12 @@ func NewConfigMapCustomized(nodeSelector string) v12.ConfigMap {
 
 			VisitorConfig: v1alpha2.VisitorConfigCustomized{
 				ProtocolName: "CustomizedProtocol1",
-				ConfigData:   &v1alpha2.CustomizedValue{"config1": "config-val1", "config2": "config-val2"},
+				ConfigData: &v1alpha2.CustomizedValue{
+					Data: map[string]interface{}{
+						"config1": "config-val1",
+						"config2": "config-val2",
+					},
+				},
 			},
 		},
 		{
@@ -1648,7 +1668,12 @@ func NewConfigMapCustomized(nodeSelector string) v12.ConfigMap {
 			Protocol:     "customized-protocol",
 			VisitorConfig: v1alpha2.VisitorConfigCustomized{
 				ProtocolName: "CustomizedProtocol1",
-				ConfigData:   &v1alpha2.CustomizedValue{"config3": "config-val3", "config4": "config-val4"},
+				ConfigData: &v1alpha2.CustomizedValue{
+					Data: map[string]interface{}{
+						"config3": "config-val3",
+						"config4": "config-val4",
+					},
+				},
 			},
 		},
 	}
@@ -1708,7 +1733,12 @@ func NewConfigMapCustomized(nodeSelector string) v12.ConfigMap {
 			Protocol: "customized-protocol",
 			ProtocolConfig: &v1alpha2.ProtocolConfigCustomized{
 				ProtocolName: "CustomizedProtocol1",
-				ConfigData:   &v1alpha2.CustomizedValue{"config1": "config-val1", "config2": "config-val2"},
+				ConfigData: &v1alpha2.CustomizedValue{
+					Data: map[string]interface{}{
+						"config1": "config-val1",
+						"config2": "config-val2",
+					},
+				},
 			},
 			ProtocolCommonConfig: &v1alpha2.ProtocolConfigCommon{
 				COM: &v1alpha2.ProtocolConfigCOM{
