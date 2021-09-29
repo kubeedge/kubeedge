@@ -121,6 +121,7 @@ type ProtocolConfigCommon struct {
 	CollectType string `json:"collectType,omitempty"`
 	// Customized values for provided protocol
 	// +optional
+	// +kubebuilder:validation:XPreserveUnknownFields
 	CustomizedValues *CustomizedValue `json:"customizedValues,omitempty"`
 }
 
@@ -156,6 +157,7 @@ type ProtocolConfigCustomized struct {
 	ProtocolName string `json:"protocolName,omitempty"`
 	// Any config data
 	// +optional
+	// +kubebuilder:validation:XPreserveUnknownFields
 	ConfigData *CustomizedValue `json:"configData,omitempty"`
 }
 
@@ -231,6 +233,7 @@ type DevicePropertyVisitor struct {
 	CollectCycle int64 `json:"collectCycle,omitempty"`
 	// Customized values for visitor of provided protocols
 	// +optional
+	// +kubebuilder:validation:XPreserveUnknownFields
 	CustomizedValues *CustomizedValue `json:"customizedValues,omitempty"`
 	// Required: Protocol relevant config details about the how to access the device property.
 	VisitorConfig `json:",inline"`
@@ -349,6 +352,7 @@ type VisitorConfigCustomized struct {
 	// Required: name of customized protocol
 	ProtocolName string `json:"protocolName,omitempty"`
 	// Required: The configData of customized protocol
+	// +kubebuilder:validation:XPreserveUnknownFields
 	ConfigData *CustomizedValue `json:"configData,omitempty"`
 }
 
@@ -374,11 +378,35 @@ type DeviceList struct {
 	Items           []Device `json:"items"`
 }
 
-type CustomizedValue map[string]interface{}
+// +kubebuilder:validation:Type=object
+type CustomizedValue struct {
+	Data map[string]interface{} `json:"-"`
+}
+
+// MarshalJSON implements the Marshaler interface.
+func (c *CustomizedValue) MarshalJSON() ([]byte, error) {
+	return json.Marshal(c.Data)
+}
+
+// UnmarshalJSON implements the Unmarshaler interface.
+func (c *CustomizedValue) UnmarshalJSON(data []byte) error {
+	var out map[string]interface{}
+	err := json.Unmarshal(data, &out)
+	if err != nil {
+		return err
+	}
+	c.Data = out
+	return nil
+}
 
 func (in *CustomizedValue) DeepCopyInto(out *CustomizedValue) {
 	bytes, _ := json.Marshal(*in)
-	_ = json.Unmarshal(bytes, out)
+	var clone map[string]interface{}
+	err := json.Unmarshal(bytes, &clone)
+	if err != nil {
+		panic(err)
+	}
+	out.Data = clone
 }
 
 func (in *CustomizedValue) DeepCopy() *CustomizedValue {
