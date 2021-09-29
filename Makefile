@@ -178,24 +178,24 @@ crossbuild: clean
 	hack/make-rules/crossbuild.sh $(WHAT) $(GOARM)
 endif
 
-crdVersions ?= v1
-crdOutputs ?= build/crds
-devicesVersion ?= v1alpha2
-reliablesyncsVersion ?= v1alpha1
-listCRDParams := crdVersions crdOutputs devicesVersion reliablesyncsVersion
+CRD_VERSIONS=v1
+CRD_OUTPUTS=build/crds
+DEVICES_VERSION=v1alpha2
+RELIABLESYNCS_VERSION=v1alpha1
+listCRDParams := CRD_VERSIONS CRD_OUTPUTS DEVICES_VERSION RELIABLESYNCS_VERSION
 
 define GENERATE_CRDS_HELP_INFO
 # generate crds.
 #
 # Args:
-#     crdVersions, default: v1
-#     crdOutputs, default: build/crd
-#     devicesVersion, default: v1alpha2
-#     reliablesyncsVersion, default: v1alpha1
+#     CRD_VERSIONS, default: v1
+#     CRD_OUTPUTS, default: build/crd
+#     DEVICES_VERSION, default: v1alpha2
+#     RELIABLESYNCS_VERSION, default: v1alpha1
 #
 # Example:
 #     make generate 
-#     make generate -e crdVersions=v1 -e crdOutputs=build/crds
+#     make generate -e CRD_VERSIONS=v1 -e CRD_OUTPUTS=build/crds
 #
 endef
 .PHONY: generate
