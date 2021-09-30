@@ -76,6 +76,7 @@ func validateRule(rule *rulesv1.Rule) error {
 	for _, s2t := range sourceToTarget {
 		if s2t[0] == sourceEndpoint.Spec.RuleEndpointType && s2t[1] == targetEndpoint.Spec.RuleEndpointType {
 			exist = true
+			break
 		}
 	}
 	if !exist {
