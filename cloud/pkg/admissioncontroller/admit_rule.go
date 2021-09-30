@@ -88,25 +88,25 @@ func validateRule(rule *rulesv1.Rule) error {
 func validateSourceRuleEndpoint(ruleEndpoint *rulesv1.RuleEndpoint, sourceResource map[string]string) error {
 	switch ruleEndpoint.Spec.RuleEndpointType {
 	case rulesv1.RuleEndpointTypeRest:
-		_, exist := sourceResource["path"]
+		_, exist := sourceResource[SourceResourcePathKey]
 		if !exist {
-			return fmt.Errorf("\"path\" property missed in sourceResource when ruleEndpoint is \"rest\"")
+			return fmt.Errorf(`%q property missed in sourceResource when ruleEndpoint is "rest"`, SourceResourcePathKey)
 		}
 		rules, err := controller.listRule(ruleEndpoint.Namespace)
 		if err != nil {
 			return err
 		}
 		for _, r := range rules {
-			if sourceResource["path"] == r.Spec.SourceResource["path"] {
-				return fmt.Errorf("source properties exist in Rule %s/%s. Path: %s", r.Namespace, r.Name, sourceResource["path"])
+			if sourceResource[SourceResourcePathKey] == r.Spec.SourceResource[SourceResourcePathKey] {
+				return fmt.Errorf("source properties exist in Rule %s/%s. Path: %s", r.Namespace, r.Name, sourceResource[SourceResourcePathKey])
 			}
 		}
 	case rulesv1.RuleEndpointTypeEventBus:
-		_, exist := sourceResource["topic"]
+		_, exist := sourceResource[SourceResourceTopicKey]
 		if !exist {
-			return fmt.Errorf("\"topic\" property missed in sourceResource when ruleEndpoint is \"eventbus\"")
+			return fmt.Errorf(`%q property missed in sourceResource when ruleEndpoint is "eventbus"`, SourceResourceTopicKey)
 		}
-		_, exist = sourceResource["node_name"]
+		_, exist = sourceResource[SourceResourceNodeNameKey]
 		if !exist {
 			return fmt.Errorf("eventbus")
 		}
@@ -115,8 +115,10 @@ func validateSourceRuleEndpoint(ruleEndpoint *rulesv1.RuleEndpoint, sourceResour
 			return err
 		}
 		for _, r := range rules {
-			if sourceResource["topic"] == r.Spec.SourceResource["topic"] && sourceResource["node_name"] == r.Spec.SourceResource["node_name"] {
-				return fmt.Errorf("source properties exist in Rule %s/%s. Node_name: %s, topic: %s", r.Namespace, r.Name, sourceResource["node_name"], sourceResource["topic"])
+			if sourceResource[SourceResourceTopicKey] == r.Spec.SourceResource[SourceResourceTopicKey] &&
+				sourceResource[SourceResourceNodeNameKey] == r.Spec.SourceResource[SourceResourceNodeNameKey] {
+				return fmt.Errorf("source properties exist in Rule %s/%s. Node_name: %s, topic: %s", r.Namespace, r.Name,
+					sourceResource[SourceResourceNodeNameKey], sourceResource[SourceResourceTopicKey])
 			}
 		}
 	}
@@ -126,19 +128,19 @@ func validateSourceRuleEndpoint(ruleEndpoint *rulesv1.RuleEndpoint, sourceResour
 func validateTargetRuleEndpoint(ruleEndpoint *rulesv1.RuleEndpoint, targetResource map[string]string) error {
 	switch ruleEndpoint.Spec.RuleEndpointType {
 	case rulesv1.RuleEndpointTypeRest:
-		_, exist := targetResource["resource"]
+		_, exist := targetResource[SourceResourceResourceKey]
 		if !exist {
-			return fmt.Errorf("\"resource\" property missed in targetResource when ruleEndpoint is \"rest\"")
+			return fmt.Errorf(`%q property missed in targetResource when ruleEndpoint is "rest"`, SourceResourceResourceKey)
 		}
 	case rulesv1.RuleEndpointTypeEventBus:
-		_, exist := targetResource["topic"]
+		_, exist := targetResource[SourceResourceTopicKey]
 		if !exist {
-			return fmt.Errorf("\"topic\" property missed in targetResource when ruleEndpoint is \"eventbus\"")
+			return fmt.Errorf(`%q property missed in targetResource when ruleEndpoint is "eventbus"`, SourceResourceTopicKey)
 		}
 	case rulesv1.RuleEndpointTypeServiceBus:
-		_, exist := targetResource["path"]
+		_, exist := targetResource[SourceResourcePathKey]
 		if !exist {
-			return fmt.Errorf("\"path\" property missed in targetResource when ruleEndpoint is \"servicebus\"")
+			return fmt.Errorf(`%q property missed in targetResource when ruleEndpoint is "servicebus"`, SourceResourcePathKey)
 		}
 	}
 	return nil
