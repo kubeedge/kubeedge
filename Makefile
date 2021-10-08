@@ -51,7 +51,7 @@ endif
 
 
 define VERIFY_HELP_INFO
-# verify golang,vendor,codegen and verify-crds
+# verify golang, vendor, codegen and crds
 #
 # Example:
 # make verify

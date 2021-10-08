@@ -117,6 +117,7 @@ type PropertyTypeBytes struct {
 }
 
 // The access mode for  a device property.
+// +kubebuilder:validation:Enum=ReadWrite;ReadOnly
 type PropertyAccessMode string
 
 // Access mode constants for a device property.

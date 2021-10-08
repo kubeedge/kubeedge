@@ -118,6 +118,7 @@ type ProtocolConfigCommon struct {
 	CollectRetryTimes int64 `json:"collectRetryTimes,omitempty"`
 	// Define collect type, sync or async.
 	// +optional
+	// +kubebuilder:validation:Enum=sync;async
 	CollectType string `json:"collectType,omitempty"`
 	// Customized values for provided protocol
 	// +optional
@@ -136,12 +137,16 @@ type ProtocolConfigCOM struct {
 	// Required.
 	SerialPort string `json:"serialPort,omitempty"`
 	// Required. BaudRate 115200|57600|38400|19200|9600|4800|2400|1800|1200|600|300|200|150|134|110|75|50
+	// +kubebuilder:validation:Enum=115200;57600;38400;19200;9600;4800;2400;1800;1200;600;300;200;150;134;110;75;50
 	BaudRate int64 `json:"baudRate,omitempty"`
 	// Required. Valid values are 8, 7, 6, 5.
+	// +kubebuilder:validation:Enum=8;7;6;5
 	DataBits int64 `json:"dataBits,omitempty"`
 	// Required. Valid options are "none", "even", "odd". Defaults to "none".
+	// +kubebuilder:validation:Enum=none;even;odd
 	Parity string `json:"parity,omitempty"`
 	// Required. Bit that stops 1|2
+	// +kubebuilder:validation:Enum=1;2
 	StopBits int64 `json:"stopBits,omitempty"`
 }
 
@@ -296,6 +301,7 @@ type BluetoothOperations struct {
 }
 
 // Operations supported by Bluetooth protocol to convert the value being read from the device into an understandable form
+// +kubebuilder:validation:Enum:Add;Subtract;Multiply;Divide
 type BluetoothArithmeticOperationType string
 
 // Bluetooth Protocol Operation type
@@ -337,6 +343,7 @@ type VisitorConfigModbus struct {
 }
 
 // The Modbus register type to read a device property.
+// +kubebuilder:validation:Enum=CoilRegister;DiscreteInputRegister;InputRegister;HoldingRegister
 type ModbusRegisterType string
 
 // Modbus protocol register types

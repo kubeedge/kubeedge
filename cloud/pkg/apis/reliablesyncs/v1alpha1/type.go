@@ -27,6 +27,7 @@ import (
 // ClusterObjectSync stores the state of the cluster level, nonNamespaced object that was successfully persisted to the edge node.
 // ClusterObjectSync name is a concatenation of the node name which receiving the object and the object UUID.
 // +k8s:openapi-gen=true
+// +kubebuilder:subresource:status
 type ClusterObjectSync struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
