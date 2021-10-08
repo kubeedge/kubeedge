@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright 2020 The KubeEdge Authors 
+# Copyright 2021 The KubeEdge Authors 
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -49,11 +49,11 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-function :prepare:install: {
+function :pre:install: {
   # install controller-gen tool if not exsit
-  if [ $(which controller-gen) == "" ]; then
+  if [ "$(which controller-gen)" == "" ]; then
       echo "Start to install controller-gen tool"
-      GO111MODULE=on go get -v sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.2
+      GO111MODULE=on go install -v sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.2
   fi
 }
 
@@ -62,7 +62,7 @@ function :gen:crds: {
   $(which controller-gen) paths="./..." ${_crdOptions} output:crd:artifacts:config=${_tmpdir}
 }
 
-function :copy:to:targets {
+function :copy:to:destination {
   # rename files, copy files
   mkdir -p ${CRD_OUTPUTS}/devices
   mkdir -p ${CRD_OUTPUTS}/reliablesyncs
@@ -92,7 +92,10 @@ function cleanup {
   rm -rf "${_tmpdir}"
 }
 
-:prepare:install:
+:pre:install:
+
 :gen:crds:
-:copy:to:targets
+
+:copy:to:destination
+
 cleanup

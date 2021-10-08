@@ -274,6 +274,11 @@ spec:
                           type: integer
                         register:
                           description: 'Required: Type of register'
+                          enum:
+                          - CoilRegister
+                          - DiscreteInputRegister
+                          - InputRegister
+                          - HoldingRegister
                           type: string
                         scale:
                           description: The scale to convert raw property data into
@@ -327,26 +332,59 @@ spec:
                         type: integer
                       collectType:
                         description: Define collect type, sync or async.
+                        enum:
+                        - sync
+                        - async
                         type: string
                       com:
                         properties:
                           baudRate:
                             description: Required. BaudRate 115200|57600|38400|19200|9600|4800|2400|1800|1200|600|300|200|150|134|110|75|50
+                            enum:
+                            - 115200
+                            - 57600
+                            - 38400
+                            - 19200
+                            - 9600
+                            - 4800
+                            - 2400
+                            - 1800
+                            - 1200
+                            - 600
+                            - 300
+                            - 200
+                            - 150
+                            - 134
+                            - 110
+                            - 75
+                            - 50
                             format: int64
                             type: integer
                           dataBits:
                             description: Required. Valid values are 8, 7, 6, 5.
+                            enum:
+                            - 8
+                            - 7
+                            - 6
+                            - 5
                             format: int64
                             type: integer
                           parity:
                             description: Required. Valid options are "none", "even",
                               "odd". Defaults to "none".
+                            enum:
+                            - none
+                            - even
+                            - odd
                             type: string
                           serialPort:
                             description: Required.
                             type: string
                           stopBits:
                             description: Required. Bit that stops 1|2
+                            enum:
+                            - 1
+                            - 2
                             format: int64
                             type: integer
                         type: object

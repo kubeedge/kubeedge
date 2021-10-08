@@ -59,6 +59,9 @@ spec:
                             accessMode:
                               description: 'Required: Access mode of property, ReadWrite
                                 or ReadOnly.'
+                              enum:
+                              - ReadWrite
+                              - ReadOnly
                               type: string
                             defaultValue:
                               type: boolean
@@ -68,6 +71,9 @@ spec:
                             accessMode:
                               description: 'Required: Access mode of property, ReadWrite
                                 or ReadOnly.'
+                              enum:
+                              - ReadWrite
+                              - ReadOnly
                               type: string
                           type: object
                         double:
@@ -75,6 +81,9 @@ spec:
                             accessMode:
                               description: 'Required: Access mode of property, ReadWrite
                                 or ReadOnly.'
+                              enum:
+                              - ReadWrite
+                              - ReadOnly
                               type: string
                             defaultValue:
                               type: number
@@ -91,6 +100,9 @@ spec:
                             accessMode:
                               description: 'Required: Access mode of property, ReadWrite
                                 or ReadOnly.'
+                              enum:
+                              - ReadWrite
+                              - ReadOnly
                               type: string
                             defaultValue:
                               type: number
@@ -107,6 +119,9 @@ spec:
                             accessMode:
                               description: 'Required: Access mode of property, ReadWrite
                                 or ReadOnly.'
+                              enum:
+                              - ReadWrite
+                              - ReadOnly
                               type: string
                             defaultValue:
                               format: int64
@@ -126,6 +141,9 @@ spec:
                             accessMode:
                               description: 'Required: Access mode of property, ReadWrite
                                 or ReadOnly.'
+                              enum:
+                              - ReadWrite
+                              - ReadOnly
                               type: string
                             defaultValue:
                               type: string
