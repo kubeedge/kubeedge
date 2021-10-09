@@ -299,6 +299,10 @@ func NewPodObj(podName, imgURL, nodeselector string) *v1.Pod {
 // GetDeployments to get the deployments list
 func GetDeployments(list *apps.DeploymentList, getDeploymentAPI string) error {
 	resp, err := SendHTTPRequest(http.MethodGet, getDeploymentAPI)
+	if err != nil {
+		Fatalf("HTTP Response reading has failed: %v", err)
+		return err
+	}
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -315,7 +319,8 @@ func GetDeployments(list *apps.DeploymentList, getDeploymentAPI string) error {
 func VerifyDeleteDeployment(getDeploymentAPI string) int {
 	resp, err := SendHTTPRequest(http.MethodGet, getDeploymentAPI)
 	if err != nil {
-		Fatalf("SendHTTPRequest is failed: %v", err)
+		Fatalf("Send HTTP Request failed: %v", err)
+		return -1
 	}
 	defer resp.Body.Close()
 	return resp.StatusCode
@@ -357,6 +362,7 @@ func HandlePod(operation string, apiserver string, UID string, pod *v1.Pod) bool
 		Fatalf("HTTP request is failed :%v", err)
 		return false
 	}
+	defer resp.Body.Close()
 	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	return true
 }
@@ -402,6 +408,7 @@ func HandleDeployment(IsCloudCore, IsEdgeCore bool, operation, apiserver, UID, I
 		Fatalf("HTTP request is failed :%v", err)
 		return false
 	}
+	defer resp.Body.Close()
 	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	return true
 }
@@ -456,6 +463,7 @@ func ExposeCloudService(name, serviceHandler string) error {
 		Fatalf("HTTP request is failed :%v", err)
 		return err
 	}
+	defer resp.Body.Close()
 	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	gomega.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusCreated))
 	return nil
@@ -494,6 +502,7 @@ func GetServicePort(cloudName, serviceHandler string) (int32, int32) {
 		Fatalf("HTTP request is failed :%v", err)
 		return -1, -1
 	}
+	defer resp.Body.Close()
 
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -506,7 +515,6 @@ func GetServicePort(cloudName, serviceHandler string) (int32, int32) {
 		Fatalf("Unmarshal HTTP Response has failed: %v", err)
 		return -1, -1
 	}
-	defer resp.Body.Close()
 
 	for _, svcs := range svc.Items {
 		if svcs.Name == cloudName {
@@ -584,6 +592,7 @@ func HandleDeviceModel(operation string, apiserver string, UID string, protocolT
 		Fatalf("HTTP request is failed :%v", err)
 		return false, 0
 	}
+	defer resp.Body.Close()
 	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	return true, resp.StatusCode
 }
@@ -633,6 +642,7 @@ func HandleDeviceInstance(operation string, apiserver string, nodeSelector strin
 		Fatalf("HTTP request is failed :%v", err)
 		return false, 0
 	}
+	defer resp.Body.Close()
 	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	return true, resp.StatusCode
 }
@@ -702,6 +712,10 @@ func newDeviceModelObject(protocolType string, updated bool) *v1alpha2.DeviceMod
 // GetDeviceModel to get the deviceModel list and verify whether the contents of the device model matches with what is expected
 func GetDeviceModel(list *v1alpha2.DeviceModelList, getDeviceModelAPI string, expectedDeviceModel *v1alpha2.DeviceModel) ([]v1alpha2.DeviceModel, error) {
 	resp, err := SendHTTPRequest(http.MethodGet, getDeviceModelAPI)
+	if err != nil {
+		Fatalf("Send HTTP Request failed: %v", err)
+		return nil, err
+	}
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -735,6 +749,10 @@ func GetDeviceModel(list *v1alpha2.DeviceModelList, getDeviceModelAPI string, ex
 // GetDevice to get the device list
 func GetDevice(list *v1alpha2.DeviceList, getDeviceAPI string, expectedDevice *v1alpha2.Device) ([]v1alpha2.Device, error) {
 	resp, err := SendHTTPRequest(http.MethodGet, getDeviceAPI)
+	if err != nil {
+		Fatalf("Send HTTP Request failed: %v", err)
+		return nil, err
+	}
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -921,6 +939,7 @@ func SendMsg(url string, message []byte, header map[string]string) (bool, int) {
 		Fatalf("HTTP request is failed: %v", err)
 		return false, 0
 	}
+	defer resp.Body.Close()
 	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	return true, resp.StatusCode
 }
