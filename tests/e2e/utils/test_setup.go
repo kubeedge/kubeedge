@@ -103,6 +103,9 @@ func getSecret(master string) string {
 	secret := v1.Secret{}
 
 	resp, err := SendHTTPRequest(http.MethodGet, master+"/api/v1/namespaces/kubeedge/secrets/tokensecret")
+	if err != nil {
+		Fatalf("Send HTTP Request failed: %v", err)
+	}
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
