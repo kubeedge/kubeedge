@@ -326,7 +326,6 @@ func GetEnv(key string, dfault string, combineWith ...string) string {
 		copy(all[1:], combineWith)
 		return filepath.Join(all...)
 	}
-	panic("invalid switch case")
 }
 
 func HostProc(combineWith ...string) string {
@@ -351,6 +350,16 @@ func HostRun(combineWith ...string) string {
 
 func HostDev(combineWith ...string) string {
 	return GetEnv("HOST_DEV", "/dev", combineWith...)
+}
+
+// MockEnv set environment variable and return revert function.
+// MockEnv should be used testing only.
+func MockEnv(key string, value string) func() {
+	original := os.Getenv(key)
+	os.Setenv(key, value)
+	return func() {
+		os.Setenv(key, original)
+	}
 }
 
 // getSysctrlEnv sets LC_ALL=C in a list of env vars for use when running
