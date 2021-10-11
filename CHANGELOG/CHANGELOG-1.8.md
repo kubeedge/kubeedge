@@ -1,3 +1,7 @@
+  * [v1.8.2](#v182)
+    * [Downloads for v1.8.2](#downloads-for-v182)
+    * [KubeEdge v1.8.2 Release Notes](#kubeedge-v182-release-notes)
+        * [Changelog since v1.8.1](#changelog-since-v181)
   * [v1.8.1](#v181)
      * [Downloads for v1.8.1](#downloads-for-v181)
      * [KubeEdge v1.8.1 Release Notes](#kubeedge-v181-release-notes)
@@ -9,6 +13,22 @@
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
         * [Other Notable Changes](#other-notable-changes)
         * [Bug Fixes](#bug-fixes)
+
+
+# v1.8.2
+
+## Downloads for v1.8.2
+
+Download v1.8.2 in the [v1.8.2 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.8.2).
+
+## KubeEdge v1.8.2 Release Notes
+
+### Changelog since v1.8.1
+
+- Idenfifying session not by IP of node. ([#3136](https://github.com/kubeedge/kubeedge/pull/3136), [@siredmar](https://github.com/siredmar))
+- Replaced 'kubeedge/pause' with 'k8s.gcr.io/pause' multi arch image. ([#3114](https://github.com/kubeedge/kubeedge/pull/3114), [@siredmar](https://github.com/siredmar))
+- CloudCore certificate application restful api supports certificate usages. ([#3177](https://github.com/kubeedge/kubeedge/pull/317), [@khalid-jobs](https://github.com/khalid-jobs))
+
 
 
 # v1.8.1
