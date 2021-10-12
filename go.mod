@@ -63,6 +63,8 @@ require (
 	sigs.k8s.io/apiserver-network-proxy v0.0.20
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.22
 	sigs.k8s.io/yaml v1.2.0
+    github.com/edgexfoundry/go-mod-core-contracts/v2 v2.0.0-dev.76
+    sigs.k8s.io/controller-runtime v0.8.3
 )
 
 replace (
