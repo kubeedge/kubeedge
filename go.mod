@@ -33,7 +33,6 @@ require (
 	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.8.1
 	github.com/paypal/gatt v0.0.0-20151011220935-4ae819d591cf
-	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.7.1
 	github.com/shirou/gopsutil v2.20.9+incompatible
 	github.com/spf13/cobra v1.1.1

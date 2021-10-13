@@ -33,7 +33,6 @@ import (
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
-	"github.com/pkg/errors"
 	apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -735,12 +734,12 @@ func GetDeviceModel(list *v1alpha2.DeviceModelList, getDeviceModelAPI string, ex
 				if !reflect.DeepEqual(expectedDeviceModel.TypeMeta, deviceModel.TypeMeta) ||
 					expectedDeviceModel.ObjectMeta.Namespace != deviceModel.ObjectMeta.Namespace ||
 					!reflect.DeepEqual(expectedDeviceModel.Spec, deviceModel.Spec) {
-					return nil, errors.New("The device model is not matching with what was expected")
+					return nil, fmt.Errorf("The device model is not matching with what was expected")
 				}
 			}
 		}
 		if !modelExists {
-			return nil, errors.New("The requested device model is not found")
+			return nil, fmt.Errorf("The requested device model is not found")
 		}
 	}
 	return list.Items, nil
@@ -773,7 +772,7 @@ func GetDevice(list *v1alpha2.DeviceList, getDeviceAPI string, expectedDevice *v
 					expectedDevice.ObjectMeta.Namespace != device.ObjectMeta.Namespace ||
 					!reflect.DeepEqual(expectedDevice.ObjectMeta.Labels, device.ObjectMeta.Labels) ||
 					!reflect.DeepEqual(expectedDevice.Spec, device.Spec) {
-					return nil, errors.New("The device is not matching with what was expected")
+					return nil, fmt.Errorf("The device is not matching with what was expected")
 				}
 				twinExists := false
 				for _, expectedTwin := range expectedDevice.Status.Twins {
@@ -781,18 +780,18 @@ func GetDevice(list *v1alpha2.DeviceList, getDeviceAPI string, expectedDevice *v
 						if expectedTwin.PropertyName == twin.PropertyName {
 							twinExists = true
 							if !reflect.DeepEqual(expectedTwin.Desired, twin.Desired) {
-								return nil, errors.New("Status twin " + twin.PropertyName + " not as expected")
+								return nil, fmt.Errorf("Status twin " + twin.PropertyName + " not as expected")
 							}
 						}
 					}
 				}
 				if !twinExists {
-					return nil, errors.New("status twin(s) not found")
+					return nil, fmt.Errorf("status twin(s) not found")
 				}
 			}
 		}
 		if !deviceExists {
-			return nil, errors.New("The requested device is not found")
+			return nil, fmt.Errorf("The requested device is not found")
 		}
 	}
 	return list.Items, nil
@@ -818,7 +817,7 @@ func MqttConnect() error {
 	ClientOpts = MqttClientInit("tcp://127.0.0.1:1884", "eventbus", "", "")
 	Client = MQTT.NewClient(ClientOpts)
 	if TokenClient = Client.Connect(); TokenClient.Wait() && TokenClient.Error() != nil {
-		return errors.New("client.Connect() Error is %s" + TokenClient.Error().Error())
+		return fmt.Errorf("client.Connect() Error is %s" + TokenClient.Error().Error())
 	}
 	return nil
 }
@@ -827,12 +826,12 @@ func MqttConnect() error {
 func ChangeTwinValue(updateMessage DeviceTwinUpdate, deviceID string) error {
 	twinUpdateBody, err := json.Marshal(updateMessage)
 	if err != nil {
-		return errors.New("Error in marshalling: %s" + err.Error())
+		return fmt.Errorf("Error in marshalling: %s" + err.Error())
 	}
 	deviceTwinUpdate := DeviceETPrefix + deviceID + TwinETUpdateSuffix
 	TokenClient = Client.Publish(deviceTwinUpdate, 0, false, twinUpdateBody)
 	if TokenClient.Wait() && TokenClient.Error() != nil {
-		return errors.New("client.publish() Error in device twin update is %s" + TokenClient.Error().Error())
+		return fmt.Errorf("client.publish() Error in device twin update is %s" + TokenClient.Error().Error())
 	}
 	return nil
 }
@@ -842,11 +841,11 @@ func GetTwin(updateMessage DeviceTwinUpdate, deviceID string) error {
 	getTwin := DeviceETPrefix + deviceID + TwinETGetSuffix
 	twinUpdateBody, err := json.Marshal(updateMessage)
 	if err != nil {
-		return errors.New("Error in marshalling: %s" + err.Error())
+		return fmt.Errorf("Error in marshalling: %s" + err.Error())
 	}
 	TokenClient = Client.Publish(getTwin, 0, false, twinUpdateBody)
 	if TokenClient.Wait() && TokenClient.Error() != nil {
-		return errors.New("client.publish() Error in device twin get  is: %s " + TokenClient.Error().Error())
+		return fmt.Errorf("client.publish() Error in device twin get  is: %s " + TokenClient.Error().Error())
 	}
 	return nil
 }
@@ -1001,7 +1000,7 @@ func SubscribeMqtt(topic string) (string, error) {
 		return result, nil
 	case <-t.C:
 		close(r)
-		return "", errors.New("Wait for MQTT message time out. ")
+		return "", fmt.Errorf("Wait for MQTT message time out. ")
 	}
 }
 
