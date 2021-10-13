@@ -17,7 +17,7 @@ limitations under the License.
 package common
 
 import (
-	"io/ioutil"
+	"os"
 
 	"sigs.k8s.io/yaml"
 )
@@ -29,5 +29,5 @@ func Write2File(path string, data interface{}) error {
 		return err
 	}
 
-	return ioutil.WriteFile(path, d, 0666)
+	return os.WriteFile(path, d, 0666)
 }

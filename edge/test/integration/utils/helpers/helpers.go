@@ -22,7 +22,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -334,7 +333,7 @@ func GetPods(EdgedEndpoint string) (v1.PodList, error) {
 	}
 	common.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	defer resp.Body.Close()
-	contents, err := ioutil.ReadAll(resp.Body)
+	contents, err := io.ReadAll(resp.Body)
 	if err != nil {
 		common.Fatalf("HTTP Response reading has failed: %v", err)
 		return pods, nil

@@ -21,8 +21,8 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"reflect"
 	"strings"
 
@@ -286,7 +286,7 @@ func (s *StreamServer) Start() {
 	s.installDebugHandler()
 
 	pool := x509.NewCertPool()
-	data, err := ioutil.ReadFile(config.Config.TLSStreamCAFile)
+	data, err := os.ReadFile(config.Config.TLSStreamCAFile)
 	if err != nil {
 		klog.Exitf("Read tls stream ca file error %v", err)
 		return

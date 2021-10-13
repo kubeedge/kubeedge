@@ -3,7 +3,7 @@ package servicebus
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"path"
 	"strings"
@@ -95,7 +95,7 @@ func (sb *ServiceBus) Forward(target provider.Target, data interface{}) (respons
 	klog.Infof("message is send to target successfully. msgID: %s, target: %s", message.GetID(), target.Name())
 	httpResp, ok := resp.(*http.Response)
 	if ok {
-		byteData, _ := ioutil.ReadAll(httpResp.Body)
+		byteData, _ := io.ReadAll(httpResp.Body)
 		beehiveContext.SendToGroup(modules.CloudHubModuleGroup, *message.NewRespByMessage(message, string(byteData)))
 	}
 	return resp, nil

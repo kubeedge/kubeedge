@@ -19,7 +19,7 @@ package v1alpha1
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"os"
 
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/yaml"
@@ -33,7 +33,7 @@ const (
 )
 
 func (c *CloudCoreConfig) Parse(filename string) error {
-	data, err := ioutil.ReadFile(filename)
+	data, err := os.ReadFile(filename)
 	if err != nil {
 		klog.Errorf("Failed to read configfile %s: %v", filename, err)
 		return err

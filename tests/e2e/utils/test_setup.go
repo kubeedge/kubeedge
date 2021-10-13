@@ -19,7 +19,7 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"os/exec"
@@ -107,7 +107,7 @@ func getSecret(master string) string {
 		Fatalf("Send HTTP Request failed: %v", err)
 	}
 	defer resp.Body.Close()
-	contents, err := ioutil.ReadAll(resp.Body)
+	contents, err := io.ReadAll(resp.Body)
 	if err != nil {
 		Fatalf("HTTP Response reading has failed: %v", err)
 		return ""
@@ -185,7 +185,7 @@ func createCloudCoreConfigFile(kubeConfigPath string) {
 		fmt.Printf("Marshal cloudcore config to yaml error %v\n", err)
 		os.Exit(1)
 	}
-	if err := ioutil.WriteFile(constants.CloudCoreConfigFile, data, os.ModePerm); err != nil {
+	if err := os.WriteFile(constants.CloudCoreConfigFile, data, os.ModePerm); err != nil {
 		fmt.Printf("Create cloudcore config file %v error %v\n", constants.CloudCoreConfigFile, err)
 		os.Exit(1)
 	}
@@ -208,7 +208,7 @@ func createEdgeCoreConfigFile(token, nodeName string) {
 		fmt.Printf("Marshal edgecore config to yaml error %v\n", err)
 		os.Exit(1)
 	}
-	if err := ioutil.WriteFile(constants.EdgeCoreConfigFile, data, os.ModePerm); err != nil {
+	if err := os.WriteFile(constants.EdgeCoreConfigFile, data, os.ModePerm); err != nil {
 		fmt.Printf("Create edgecore config file %v error %v\n", constants.EdgeCoreConfigFile, err)
 		os.Exit(1)
 	}
@@ -227,7 +227,7 @@ func createEdgeSiteConfigFile(kubeMaster, nodeName string) {
 		fmt.Printf("Marshal edgesite config to yaml error %v\n", err)
 		os.Exit(1)
 	}
-	if err := ioutil.WriteFile(constants.EdgeSiteConfigFile, data, os.ModePerm); err != nil {
+	if err := os.WriteFile(constants.EdgeSiteConfigFile, data, os.ModePerm); err != nil {
 		fmt.Printf("Create edgesite config file %v error %v\n", constants.EdgeSiteConfigFile, err)
 		os.Exit(1)
 	}

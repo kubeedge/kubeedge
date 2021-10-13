@@ -21,7 +21,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"io/ioutil"
 
 	"k8s.io/klog/v2"
 )
@@ -89,7 +88,7 @@ func ReadMessageFromTunnel(r io.Reader) (*Message, error) {
 	if err != nil {
 		return nil, err
 	}
-	data, err := ioutil.ReadAll(buf)
+	data, err := io.ReadAll(buf)
 	if err != nil {
 		return nil, err
 	}

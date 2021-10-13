@@ -23,7 +23,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os/exec"
 	"reflect"
@@ -309,7 +308,7 @@ func GetDeployments(list *apps.DeploymentList, getDeploymentAPI string) error {
 		return err
 	}
 	defer resp.Body.Close()
-	contents, err := ioutil.ReadAll(resp.Body)
+	contents, err := io.ReadAll(resp.Body)
 	if err != nil {
 		Fatalf("HTTP Response reading has failed: %v", err)
 		return err
@@ -509,7 +508,7 @@ func GetServicePort(cloudName, serviceHandler string) (int32, int32) {
 	}
 	defer resp.Body.Close()
 
-	contents, err := ioutil.ReadAll(resp.Body)
+	contents, err := io.ReadAll(resp.Body)
 	if err != nil {
 		Fatalf("HTTP Response reading has failed: %v", err)
 		return -1, -1
@@ -722,7 +721,7 @@ func GetDeviceModel(list *v1alpha2.DeviceModelList, getDeviceModelAPI string, ex
 		return nil, err
 	}
 	defer resp.Body.Close()
-	contents, err := ioutil.ReadAll(resp.Body)
+	contents, err := io.ReadAll(resp.Body)
 	if err != nil {
 		Fatalf("HTTP Response reading has failed: %v", err)
 		return nil, err
@@ -759,7 +758,7 @@ func GetDevice(list *v1alpha2.DeviceList, getDeviceAPI string, expectedDevice *v
 		return nil, err
 	}
 	defer resp.Body.Close()
-	contents, err := ioutil.ReadAll(resp.Body)
+	contents, err := io.ReadAll(resp.Body)
 	if err != nil {
 		Fatalf("HTTP Response reading has failed: %v", err)
 		return nil, err
@@ -952,14 +951,14 @@ func SendMsg(url string, message []byte, header map[string]string) (bool, int) {
 func StartEchoServer() (string, error) {
 	r := make(chan string)
 	echo := func(response http.ResponseWriter, request *http.Request) {
-		b, _ := ioutil.ReadAll(request.Body)
+		b, _ := io.ReadAll(request.Body)
 		r <- string(b)
 		if _, err := response.Write([]byte("Hello World")); err != nil {
 			Errorf("Echo server write failed. reason: %s", err.Error())
 		}
 	}
 	url := func(response http.ResponseWriter, request *http.Request) {
-		b, _ := ioutil.ReadAll(request.Body)
+		b, _ := io.ReadAll(request.Body)
 		var buff bytes.Buffer
 		buff.WriteString("Reply from server: ")
 		buff.Write(b)
@@ -1026,7 +1025,7 @@ func CallServicebus() (response string, err error) {
 	req, _ := http.NewRequest(http.MethodPost, "http://127.0.0.1:9060", payload)
 	req.Header.Add("Content-Type", "application/json")
 	resp, _ := client.Do(req)
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, _ := io.ReadAll(resp.Body)
 	err = json.Unmarshal(body, &servicebusResponse)
 	response = servicebusResponse.Body
 	return

@@ -5,8 +5,8 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"time"
 
 	"k8s.io/klog/v2"
@@ -55,7 +55,7 @@ func (wsc *WebSocketClient) Init() error {
 		return fmt.Errorf("failed to load x509 key pair, error: %v", err)
 	}
 
-	caCert, err := ioutil.ReadFile(config.Config.TLSCAFile)
+	caCert, err := os.ReadFile(config.Config.TLSCAFile)
 	if err != nil {
 		return err
 	}
