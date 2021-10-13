@@ -19,6 +19,7 @@ package util
 import (
 	"archive/tar"
 	"compress/gzip"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -68,7 +69,7 @@ const (
 
 	KubeEdgeCRDDownloadURL = "https://raw.githubusercontent.com/kubeedge/kubeedge/release-%s/build/crds"
 
-	latestReleaseVersionURL = "https://kubeedge.io/latestversion"
+	latestReleaseVersionURL = "https://api.github.com/repos/kubeedge/kubeedge/releases/latest"
 	RetryTimes              = 5
 
 	OSArchAMD64 string = "amd64"
@@ -169,12 +170,16 @@ func GetLatestVersion() (string, error) {
 	//Download the tar from repo
 	versionURL := "curl -k " + latestReleaseVersionURL
 	cmd := exec.Command("sh", "-c", versionURL)
-	latestReleaseData, err := cmd.Output()
+	latestInfo, err := cmd.Output()
 	if err != nil {
 		return "", err
 	}
-
-	return string(latestReleaseData), nil
+	latestData := make(map[string]string)
+	err = json.Unmarshal(latestInfo, &latestData)
+	if err != nil {
+		return "", err
+	}
+	return latestData["tag_name"], nil
 }
 
 // BuildConfig builds config from flags
