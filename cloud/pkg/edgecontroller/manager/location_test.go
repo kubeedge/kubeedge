@@ -244,53 +244,6 @@ func TestIsEdgeNode(t *testing.T) {
 	}
 }
 
-// TestGetNodeStatus is function to test GetNodeStatus
-func TestGetNodeStatus(t *testing.T) {
-	nodeOK := nodes[0]
-	nodeUnknown := nodes[1]
-	locationCache := LocationCache{}
-	locationCache.EdgeNodes.Store(nodeOK, commonconst.MessageSuccessfulContent)
-	locationCache.EdgeNodes.Store(nodeUnknown, "Unknown")
-
-	tests := []struct {
-		name     string
-		lc       *LocationCache
-		nodeName string
-		want     string
-		exist    bool
-	}{
-		{
-			name:     "TestGetNodeStatus() Case: Node status is OK",
-			lc:       &locationCache,
-			nodeName: nodeOK,
-			want:     commonconst.MessageSuccessfulContent,
-			exist:    true,
-		},
-		{
-			name:     "TestGetNodeStatus() Case: Node status is Unknown",
-			lc:       &locationCache,
-			nodeName: nodeUnknown,
-			want:     "Unknown",
-			exist:    true,
-		},
-		{
-			name:     "TestGetNodeStatus() Case: Node not exist",
-			lc:       &locationCache,
-			nodeName: "notExistNode",
-			want:     "",
-			exist:    false,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			if got, exist := test.lc.GetNodeStatus(test.nodeName); !reflect.DeepEqual(got, test.want) || !reflect.DeepEqual(exist, test.exist) {
-				t.Errorf("Manager.TestGetNodeStatus() case failed: gotStatus = %v,gotExist = %v, wantStatus = %v.  wantExist: %v", got, exist, test.want, test.exist)
-			}
-		})
-	}
-}
-
 // TestUpdateEdgeNode is function to test UpdateEdgeNode
 func TestUpdateEdgeNode(t *testing.T) {
 	locationCache := LocationCache{}
@@ -300,25 +253,25 @@ func TestUpdateEdgeNode(t *testing.T) {
 	tests := []struct {
 		name string
 		lc   *LocationCache
-		want string
+		want bool
 	}{
 		{
 			name: "TestUpdateEdgeNode() Case: Node status update to OK",
 			lc:   &locationCache,
-			want: commonconst.MessageSuccessfulContent,
+			want: true,
 		},
 		{
 			name: "TestUpdateEdgeNode() Case: Node status update to Unknown",
 			lc:   &locationCache,
-			want: "Unknown",
+			want: true,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			test.lc.UpdateEdgeNode(nodeName, test.want)
-			if got, _ := test.lc.EdgeNodes.Load(nodeName); !reflect.DeepEqual(got, test.want) {
-				t.Errorf("Manager.TestUpdateEdgeNode() case failed: got = %v, want = %v.", got, test.want)
+			test.lc.UpdateEdgeNode(nodeName)
+			if _, ok := test.lc.EdgeNodes.Load(nodeName); !ok {
+				t.Errorf("Manager.TestUpdateEdgeNode() case failed: got = %v, want = %v.", ok, test.want)
 			}
 		})
 	}
