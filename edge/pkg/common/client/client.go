@@ -23,11 +23,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
-)
 
-const (
-	// TODO: make addrs configurable
-	Httpaddr = "127.0.0.1:10550"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 var (
@@ -37,7 +34,7 @@ var (
 
 func InitKubeEdgeClient() {
 	initOnce.Do(func() {
-		config, err := clientcmd.BuildConfigFromFlags(Httpaddr, "")
+		config, err := clientcmd.BuildConfigFromFlags(constants.DefaultMetaServerAddr, "")
 		if err != nil {
 			klog.Errorf("Failed to build config, err: %v", err)
 		}

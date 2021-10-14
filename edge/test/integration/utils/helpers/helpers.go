@@ -18,6 +18,7 @@ package helpers
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"database/sql"
 	"encoding/json"
@@ -30,12 +31,19 @@ import (
 	"github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/edge"
+)
+
+const (
+	OperationPut    = "PUT"
+	OperationDelete = "DELETE"
 )
 
 //DeviceUpdate device update
@@ -228,12 +236,12 @@ func HandleAddAndDeleteDevice(operation, testMgrEndPoint string, device dttype.D
 	var httpMethod string
 	var payload dttype.MembershipUpdate
 	switch operation {
-	case "PUT":
+	case OperationPut:
 		httpMethod = http.MethodPut
 		payload = dttype.MembershipUpdate{AddDevices: []dttype.Device{
 			device,
 		}}
-	case "DELETE":
+	case OperationDelete:
 		httpMethod = http.MethodDelete
 		payload = dttype.MembershipUpdate{RemoveDevices: []dttype.Device{
 			device,
@@ -274,9 +282,9 @@ func HandleAddAndDeleteDevice(operation, testMgrEndPoint string, device dttype.D
 func HandleAddAndDeletePods(operation string, edgedpoint string, UID string, container []v1.Container, restartPolicy v1.RestartPolicy) bool {
 	var httpMethod string
 	switch operation {
-	case "PUT":
+	case OperationPut:
 		httpMethod = http.MethodPut
-	case "DELETE":
+	case OperationDelete:
 		httpMethod = http.MethodDelete
 	default:
 		common.Fatalf("operation %q is invalid", operation)
@@ -377,4 +385,94 @@ func CheckPodDeletion(EdgedEndPoint, UID string) {
 		}
 		return IsExist
 	}, "30s", "4s").Should(gomega.Equal(false), "Delete Application deployment is Unsuccessful, Pod has not come to Running State")
+}
+
+//HandleAddAndDeleteCRDs is function to handle crd deployment/delete deployment.
+func HandleAddAndDeleteCRDs(operation string, UID string, kind string, plural string) bool {
+	crd := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "apiextensions.k8s.io/v1beta1",
+			"kind":       "CustomResourceDefinition",
+			"metadata": map[string]interface{}{
+				"name": UID,
+			},
+			"spec": map[string]interface{}{
+				"group": "networking.istio.io",
+				"names": map[string]string{
+					"kind":   kind,
+					"plural": plural,
+				},
+				"scope":   "Namespaced",
+				"version": "v1alpha3",
+			},
+		},
+	}
+
+	switch operation {
+	case OperationPut:
+		err := imitator.DefaultV2Client.InsertOrUpdateObj(context.TODO(), crd)
+		if err != nil {
+			common.Fatalf("Failed to insert crd, err: %v", err)
+		}
+	case OperationDelete:
+		err := imitator.DefaultV2Client.DeleteObj(context.TODO(), crd)
+		if err != nil {
+			common.Fatalf("Failed to insert crd, err: %v", err)
+		}
+
+	default:
+		common.Fatalf("operation %q is invalid", operation)
+		return false
+	}
+	return true
+}
+
+//HandleAddAndDeleteCRDInstances is function to handle crd instance deployment/delete deployment.
+func HandleAddAndDeleteCRDInstances(operation string, edgedpoint string, UID string, kind string) bool {
+	var httpMethod string
+	switch operation {
+	case OperationPut:
+		httpMethod = http.MethodPut
+	case OperationDelete:
+		httpMethod = http.MethodDelete
+	default:
+		common.Fatalf("operation %q is invalid", operation)
+		return false
+	}
+
+	crdInstance := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "networking.istio.io/v1alpha3",
+			"kind":       kind,
+			"metadata": map[string]interface{}{
+				"name":      UID,
+				"namespace": "default",
+			},
+		},
+	}
+
+	respbytes, err := json.Marshal(crdInstance)
+	if err != nil {
+		common.Fatalf("Payload marshalling failed: %v", err)
+		return false
+	}
+
+	req, err := http.NewRequest(httpMethod, edgedpoint, bytes.NewBuffer(respbytes))
+	if err != nil {
+		// handle error
+		common.Fatalf("Frame HTTP request failed: %v", err)
+		return false
+	}
+
+	req.Header.Set("Content-Type", "application/json; charset=utf-8")
+	t := time.Now()
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		// handle error
+		common.Fatalf("HTTP request is failed :%v", err)
+		return false
+	}
+	common.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
+	return true
 }
