@@ -289,4 +289,7 @@ func TestSendRequestFailure(t *testing.T) {
 	if resp != nil && respErr == nil {
 		t.Errorf("Error, response should not come as data is not valid")
 	}
+	if respErr == nil {
+		resp.Body.Close()
+	}
 }

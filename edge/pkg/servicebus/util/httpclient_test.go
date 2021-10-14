@@ -16,6 +16,8 @@ func TestURLClient_HTTPDo(t *testing.T) {
 	resp, err := client.HTTPDo("GET", ts.URL+"/test", http.Header{}, nil)
 	if err != nil {
 		t.Errorf("HTTPDo error: %v", err)
+	} else {
+		defer resp.Body.Close()
 	}
 
 	if resp.StatusCode != http.StatusOK {
