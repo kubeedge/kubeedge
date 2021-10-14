@@ -133,6 +133,7 @@ func processMessage(msg *beehiveModel.Message) {
 		}
 		return
 	}
+	defer resp.Body.Close()
 	resp.Body = http.MaxBytesReader(nil, resp.Body, maxBodySize)
 	resBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

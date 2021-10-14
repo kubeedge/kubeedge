@@ -246,6 +246,7 @@ func HandleRule(operation, apiserver, UID string, sourceType, targetType rulesv1
 		Fatalf("HTTP request is failed :%v", err)
 		return false, 0
 	}
+	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
 	Infof("%s %s %v  %v in %v", req.Method, req.URL, resp.Status, string(contents), time.Since(t))
 	return true, resp.StatusCode
@@ -289,6 +290,7 @@ func HandleRuleEndpoint(operation string, apiserver string, UID string, endpoint
 		Fatalf("HTTP request is failed :%v", err)
 		return false, 0
 	}
+	defer resp.Body.Close()
 	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	return true, resp.StatusCode
 }
