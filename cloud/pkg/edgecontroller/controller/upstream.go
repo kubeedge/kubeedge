@@ -481,10 +481,6 @@ func (uc *UpstreamController) updateNodeStatus() {
 					if time.Since(nodeStatusRequest.Status.Conditions[i].LastHeartbeatTime.Time) > time.Duration(uc.config.NodeUpdateFrequency)*time.Second {
 						nodeStatusRequest.Status.Conditions[i].LastHeartbeatTime = metaV1.NewTime(time.Now())
 					}
-
-					if time.Since(nodeStatusRequest.Status.Conditions[i].LastTransitionTime.Time) > time.Duration(uc.config.NodeUpdateFrequency)*time.Second {
-						nodeStatusRequest.Status.Conditions[i].LastTransitionTime = metaV1.NewTime(time.Now())
-					}
 				}
 
 				if getNode.Annotations == nil {
