@@ -441,6 +441,9 @@ func (e *edged) updateNodeStatus() error {
 	if err != nil {
 		klog.Errorf("update node failed, error: %v", err)
 	}
+	e.setInitNode(&v1.Node{
+		Status: *nodeStatus.Status.DeepCopy(),
+	})
 	return nil
 }
 
