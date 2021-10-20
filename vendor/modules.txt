@@ -374,7 +374,6 @@ github.com/kubeedge/viaduct/pkg/protos/message
 github.com/kubeedge/viaduct/pkg/server
 github.com/kubeedge/viaduct/pkg/smgr
 github.com/kubeedge/viaduct/pkg/translator
-github.com/kubeedge/viaduct/pkg/utils
 # github.com/kubernetes-csi/csi-lib-utils v0.6.1
 ## explicit
 github.com/kubernetes-csi/csi-lib-utils/protosanitizer
