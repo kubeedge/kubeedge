@@ -113,7 +113,6 @@ var _ = Describe("Test MetaServer", func() {
 				"Unusual Case: Get Gateway":       {"GET", "/apis/networking.istio.io/v1alpha3/namespaces/default/gateways/test-gateway", "Gateway", http.StatusOK},
 			}
 
-			time.Sleep(time.Second * 90)
 			client := http.Client{}
 			url := "http://" + constants.DefaultMetaServerAddr
 			for _, v := range cases {
