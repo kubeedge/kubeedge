@@ -29,10 +29,10 @@ var (
 // NewHTTPClient create new client
 func NewHTTPClient() *http.Client {
 	transport := &http.Transport{
-		Dial: (&net.Dialer{
+		DialContext: (&net.Dialer{
 			Timeout:   connectTimeout,
 			KeepAlive: keepaliveTimeout,
-		}).Dial,
+		}).DialContext,
 		MaxIdleConnsPerHost:   maxIdleConnectionsPerHost,
 		ResponseHeaderTimeout: responseReadTimeout,
 		TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
