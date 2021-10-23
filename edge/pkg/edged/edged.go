@@ -171,6 +171,26 @@ type podReady struct {
 	podReadyLock sync.RWMutex
 }
 
+type fakePodStateProvider struct {
+	shouldRemove map[types.UID]struct{}
+	terminating  map[types.UID]struct{}
+}
+
+func (p *fakePodStateProvider) ShouldPodRuntimeBeRemoved(uid types.UID) bool {
+	klog.Errorf("not supported ShouldPodRuntimeBeRemoved")
+	return false
+}
+
+func (p *fakePodStateProvider) ShouldPodContainersBeTerminating(uid types.UID) bool {
+	klog.Errorf("not supported ShouldPodContainersBeTerminating")
+	return true
+}
+
+func (p *fakePodStateProvider) ShouldPodContentBeRemoved(uid types.UID) bool {
+	klog.Errorf("not supported ShouldPodContentBeRemoved")
+	return true
+}
+
 // edged is the main edged implementation.
 type edged struct {
 	// dns config
@@ -198,6 +218,7 @@ type edged struct {
 	podManager         podmanager.Manager
 	pleg               pleg.PodLifecycleEventGenerator
 	statusManager      kubestatus.Manager
+	podStateProvider   *fakePodStateProvider
 	kubeClient         clientset.Interface
 	probeManager       prober.Manager
 	livenessManager    proberesults.Manager
@@ -307,7 +328,7 @@ func (e *edged) Start() {
 		true,
 		types.NodeName(e.nodeName),
 		e.podManager,
-		e.statusManager,
+		e.podStateProvider,
 		e.kubeClient,
 		e.volumePluginMgr,
 		e.containerRuntime,
@@ -457,6 +478,7 @@ func newEdged(enable bool) (*edged, error) {
 		podAdditionBackoff:        backoff,
 		podDeletionQueue:          workqueue.New(),
 		podDeletionBackoff:        backoff,
+		podStateProvider:          &fakePodStateProvider{},
 		metaClient:                metaClient,
 		kubeClient:                fakekube.NewSimpleClientset(metaClient),
 		nodeStatusUpdateFrequency: time.Duration(edgedconfig.Config.NodeStatusUpdateFrequency) * time.Second,
@@ -550,7 +572,7 @@ func newEdged(enable bool) (*edged, error) {
 		ed.startupManager,
 		"",
 		ed.machineInfo,
-		ed,
+		ed.podStateProvider,
 		ed.os,
 		ed,
 		httpClient,
@@ -568,6 +590,10 @@ func newEdged(enable bool) (*edged, error) {
 		ed.dockerLegacyService,
 		ed.logManager,
 		ed.runtimeClassManager,
+		false,
+		"",
+		nil,
+		0.8,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("new generic runtime manager failed, err: %s", err.Error())
@@ -591,6 +617,7 @@ func newEdged(enable bool) (*edged, error) {
 			CgroupRoot:                        edgedconfig.Config.CgroupRoot,
 			ExperimentalTopologyManagerPolicy: "none",
 			ExperimentalTopologyManagerScope:  "container",
+			ExperimentalMemoryManagerPolicy:   "None",
 		},
 		false,
 		edgedconfig.Config.DevicePluginEnabled,
@@ -765,7 +792,8 @@ func (e *edged) newStatsProvider(useLegacyCadvisorStats bool, imageService inter
 		e.runtimeCache,
 		e.runtimeService,
 		imageService,
-		hostStatsProvider)
+		hostStatsProvider,
+		false)
 }
 
 // getEtcHostsPath returns the full host-side path to a pod's generated /etc/hosts file
