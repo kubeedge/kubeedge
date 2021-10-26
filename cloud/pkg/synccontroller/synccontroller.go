@@ -117,8 +117,6 @@ func (sctl *SyncController) reconcile() {
 		klog.Errorf("Failed to list all the ObjectSyncs: %v", err)
 	}
 	sctl.manageObjectSync(allObjectSyncs)
-
-	sctl.manageCreateFailedObject()
 }
 
 // Compare the cluster scope objects that have been persisted to the edge with the cluster scope objects in K8s,

@@ -1,10 +1,12 @@
 package channelq
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"sync"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/cache"
@@ -13,14 +15,18 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/reliablesyncs/v1alpha1"
+	crdClientset "github.com/kubeedge/kubeedge/cloud/pkg/client/clientset/versioned"
 	reliablesyncslisters "github.com/kubeedge/kubeedge/cloud/pkg/client/listers/reliablesyncs/v1alpha1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/application"
 	edgeconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	edgemessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
+	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
 // ChannelMessageQueue is the channel implementation of MessageQueue
@@ -33,6 +39,8 @@ type ChannelMessageQueue struct {
 
 	objectSyncLister        reliablesyncslisters.ObjectSyncLister
 	clusterObjectSyncLister reliablesyncslisters.ClusterObjectSyncLister
+
+	crdClient crdClientset.Interface
 }
 
 // NewChannelMessageQueue initializes a new ChannelMessageQueue
@@ -40,6 +48,7 @@ func NewChannelMessageQueue(objectSyncLister reliablesyncslisters.ObjectSyncList
 	return &ChannelMessageQueue{
 		objectSyncLister:        objectSyncLister,
 		clusterObjectSyncLister: clusterObjectSyncLister,
+		crdClient:               client.GetCRDClient(),
 	}
 }
 
@@ -108,14 +117,36 @@ func (q *ChannelMessageQueue) addMessageToQueue(nodeID string, msg *beehiveModel
 		// the version stored in the database
 		if !exist {
 			resourceNamespace, _ := edgemessagelayer.GetNamespace(*msg)
+			resourceName, _ := edgemessagelayer.GetResourceName(*msg)
 			resourceUID, err := GetMessageUID(*msg)
+			objectSyncName := synccontroller.BuildObjectSyncName(nodeID, resourceUID)
 			if err != nil {
 				klog.Errorf("fail to get message UID for message: %s", msg.Header.ID)
 				return
 			}
-			objectSync, err := q.objectSyncLister.ObjectSyncs(resourceNamespace).Get(synccontroller.BuildObjectSyncName(nodeID, resourceUID))
+			objectSync, err := q.objectSyncLister.ObjectSyncs(resourceNamespace).Get(objectSyncName)
 			if err == nil && objectSync.Status.ObjectResourceVersion != "" && synccontroller.CompareResourceVersion(msg.GetResourceVersion(), objectSync.Status.ObjectResourceVersion) <= 0 {
 				return
+			} else if err != nil && apierrors.IsNotFound(err) {
+				objectSync := &v1alpha1.ObjectSync{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: objectSyncName,
+					},
+					Spec: v1alpha1.ObjectSyncSpec{
+						ObjectAPIVersion: util.GetMessageAPIVerison(msg),
+						ObjectKind:       util.GetMessageResourceType(msg),
+						ObjectName:       resourceName,
+					},
+				}
+				objectSyncStatus, err := q.crdClient.ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).Create(context.Background(), objectSync, metav1.CreateOptions{})
+				if err != nil {
+					klog.Errorf("Failed to create objectSync: %s, err: %v", objectSyncName, err)
+					return
+				}
+				objectSyncStatus.Status.ObjectResourceVersion = "0"
+				if _, err := q.crdClient.ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).UpdateStatus(context.Background(), objectSyncStatus, metav1.UpdateOptions{}); err != nil {
+					klog.Errorf("Failed to update objectSync: %s, err: %v", objectSyncName, err)
+				}
 			}
 		}
 
