@@ -21,7 +21,7 @@ import (
 	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
-  "github.com/kubeedge/kubeedge/edge/pkg/common/client"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/client"
 	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/handlerfactory"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/serializer"
@@ -55,7 +55,7 @@ func (ls *MetaServer) Start(stopChan <-chan struct{}) {
 		Addr:    metaserverconfig.Config.Server,
 		Handler: h,
 	}
-  
+
 	go func() {
 		<-stopChan
 
@@ -66,7 +66,7 @@ func (ls *MetaServer) Start(stopChan <-chan struct{}) {
 		}
 	}()
 
-  client.InitKubeEdgeClient()
+	client.InitKubeEdgeClient()
 	go wait.Until(func() {
 		err := util.UpdateCrdMap()
 		if err != nil {
