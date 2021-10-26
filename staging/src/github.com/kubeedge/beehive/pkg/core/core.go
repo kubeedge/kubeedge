@@ -7,21 +7,43 @@ import (
 
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/beehive/pkg/common"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 )
 
 // StartModules starts modules that are registered
 func StartModules() {
-	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
+	// only register channel mode, if want to use socket mode, we should also pass in common.MsgCtxTypeUS parameter
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 
 	modules := GetModules()
+
 	for name, module := range modules {
-		// Init the module
-		beehiveContext.AddModule(name)
-		// Assemble typeChannels for sendToGroup
-		beehiveContext.AddModuleGroup(name, module.Group())
-		go module.Start()
-		klog.Infof("Starting module %v", name)
+		var m common.ModuleInfo
+		switch module.contextType {
+		case common.MsgCtxTypeChannel:
+			m = common.ModuleInfo{
+				ModuleName: name,
+				ModuleType: module.contextType,
+			}
+		case common.MsgCtxTypeUS:
+			m = common.ModuleInfo{
+				ModuleName: name,
+				ModuleType: module.contextType,
+				// the below field ModuleSocket is only required for using socket.
+				ModuleSocket: common.ModuleSocket{
+					IsRemote: module.remote,
+				},
+			}
+		default:
+			klog.Fatalf("unsupported context type: %s", module.contextType)
+		}
+
+		beehiveContext.AddModule(&m)
+		beehiveContext.AddModuleGroup(name, module.module.Group())
+
+		go moduleKeeper(name, module, m)
+		klog.Infof("starting module %s", name)
 	}
 }
 
@@ -48,4 +70,17 @@ func Run() {
 	StartModules()
 	// monitor system signal and shutdown gracefully
 	GracefulShutdown()
+}
+
+func moduleKeeper(name string, moduleInfo *moduleInfo, m common.ModuleInfo) {
+	for {
+		moduleInfo.module.Start()
+		// local modules are always online
+		if !moduleInfo.remote {
+			return
+		}
+		// try to add module for remote modules
+		beehiveContext.AddModule(&m)
+		beehiveContext.AddModuleGroup(name, moduleInfo.module.Group())
+	}
 }

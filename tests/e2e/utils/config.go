@@ -68,7 +68,7 @@ func loadConfigJSOMFromPath() *Config {
 		Infof("Failed to get Abs path: %v", err)
 		panic(err)
 	}
-	var config *Config = &Config{}
+	var config = &Config{}
 	configFile, err := os.Open(path)
 	if err != nil {
 		panic(err)

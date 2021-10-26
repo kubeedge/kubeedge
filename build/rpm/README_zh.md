@@ -77,7 +77,7 @@ RPM包编译结束后，会在RPMS目录下出现对应的rpm包:
 	│   │   └── cloudcore
 	│   └── csidriver
 	│       └── csidriver
-	├── crds	
+	├── crds
 	│   ├── devices
 	│   │   ├── devices_v1alpha1_devicemodel.yaml
 	│   │   ├── devices_v1alpha1_device.yaml

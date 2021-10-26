@@ -51,7 +51,7 @@ linters:
     - goconst
     - errcheck
     - gofmt
-    - golint
+    - revive
     - gosimple
     - govet
     - misspell

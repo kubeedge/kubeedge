@@ -274,6 +274,7 @@ func HandleAddAndDeleteDevice(operation, testMgrEndPoint string, device dttype.D
 		common.Fatalf("HTTP request is failed :%v", err)
 		return false
 	}
+	defer resp.Body.Close()
 	common.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	return true
 }
@@ -317,6 +318,7 @@ func HandleAddAndDeletePods(operation string, edgedpoint string, UID string, con
 		common.Fatalf("HTTP request is failed :%v", err)
 		return false
 	}
+	defer resp.Body.Close()
 	common.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	return true
 }

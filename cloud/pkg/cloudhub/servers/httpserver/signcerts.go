@@ -25,7 +25,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 	certutil "k8s.io/client-go/util/cert"
 	"k8s.io/klog/v2"
 

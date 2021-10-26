@@ -95,10 +95,6 @@ func (s *TunnelServer) getNodeIP(node string) (string, bool) {
 
 func (s *TunnelServer) connect(r *restful.Request, w *restful.Response) {
 	hostNameOverride := r.HeaderParameter(stream.SessionKeyHostNameOverride)
-	if hostNameOverride == "" {
-		// TODO: Fix SessionHostNameOverride typo, remove this in v1.7.x
-		hostNameOverride = r.HeaderParameter(stream.SessionKeyHostNameOverrideOld)
-	}
 	internalIP := r.HeaderParameter(stream.SessionKeyInternalIP)
 	if internalIP == "" {
 		internalIP = strings.Split(r.Request.RemoteAddr, ":")[0]

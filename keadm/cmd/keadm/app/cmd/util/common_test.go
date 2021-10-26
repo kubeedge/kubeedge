@@ -21,6 +21,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"testing"
 
 	"github.com/blang/semver"
@@ -151,4 +152,43 @@ func TestPrivateDownloadServiceFile(t *testing.T) {
 		}
 		clean(testTmpDir)
 	})
+}
+
+func TestGetPackageManager(t *testing.T) {
+	if pm := GetPackageManager(); pm == "" {
+		t.Errorf("failed to get package manager")
+	}
+}
+
+func TestGetLatestVersion(t *testing.T) {
+	_, err := GetLatestVersion()
+	if err != nil {
+		t.Errorf("failed to query kubeedge version: %v", err)
+	}
+}
+
+func TestHasSystemd(t *testing.T) {
+	hasSystemd()
+}
+
+func TestFileExists(t *testing.T) {
+	dir, err := ioutil.TempDir("", "TestTempFile_BadDir")
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	defer os.RemoveAll(dir)
+
+	ef, err := ioutil.TempFile(dir, "FileExist")
+	if err == nil {
+		if !FileExists(ef.Name()) {
+			t.Fatalf("file %v should exist", ef.Name())
+		}
+	}
+
+	nonexistentDir := filepath.Join(dir, "not_exists_dir")
+	notExistFile := filepath.Join(nonexistentDir, "not_exist_file")
+
+	if FileExists(notExistFile) {
+		t.Fatalf("file %v should not exist", notExistFile)
+	}
 }
