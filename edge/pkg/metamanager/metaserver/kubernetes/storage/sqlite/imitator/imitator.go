@@ -11,7 +11,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/klog/v2"
@@ -45,10 +44,8 @@ func (s *imitator) Inject(msg model.Message) {
 		switch e.Type {
 		case watch.Added, watch.Modified:
 			err = s.InsertOrUpdateObj(context.TODO(), e.Object)
-			utilruntime.Must(err)
 		case watch.Deleted:
 			err = s.DeleteObj(context.TODO(), e.Object)
-			utilruntime.Must(err)
 		}
 		if err != nil {
 			key := metaserver.KeyFunc(e.Object)
@@ -63,15 +60,18 @@ func (s *imitator) Inject(msg model.Message) {
 //TODO: filter out insert or update req that the obj's rev is smaller than the stored
 func (s *imitator) InsertOrUpdateObj(ctx context.Context, obj runtime.Object) error {
 	key, err := metaserver.KeyFuncObj(obj)
-	utilruntime.Must(err)
+	if err != nil {
+		return err
+	}
 	gvr, ns, name := metaserver.ParseKey(key)
 	unstr, isUnstr := obj.(*unstructured.Unstructured)
 	if !isUnstr {
 		return fmt.Errorf("obj is not unstructrued type")
 	}
 	buf := bytes.NewBuffer(nil)
-	err = s.codec.Encode(unstr, buf)
-	utilruntime.Must(err)
+	if err = s.codec.Encode(unstr, buf); err != nil {
+		return err
+	}
 	objRv, err := s.versioner.ObjectResourceVersion(obj)
 	m := v2.MetaV2{
 		Key:                  key,
@@ -113,10 +113,10 @@ func (s *imitator) Delete(ctx context.Context, key string) error {
 }
 func (s *imitator) DeleteObj(ctx context.Context, obj runtime.Object) error {
 	key, err := metaserver.KeyFuncObj(obj)
-	utilruntime.Must(err)
-	err = s.Delete(context.TODO(), key)
-	utilruntime.Must(err)
-	return nil
+	if err != nil {
+		return err
+	}
+	return s.Delete(context.TODO(), key)
 }
 func (s *imitator) Get(ctx context.Context, key string) (Resp, error) {
 	var resp Resp
@@ -194,18 +194,21 @@ func (s *imitator) Event(msg *model.Message) []watch.Event {
 	//skip nodestatus and podstatus
 	if strings.Contains(resType, "status") {
 		klog.V(4).Infof("skip status messages")
-		return []watch.Event{}
+		return nil
 	}
-	var bytes []byte
+	var data []byte
 	var err error
 	var body = msg.GetContent()
 	// convert body to bytes
 	switch body := body.(type) {
 	case []byte:
-		bytes = body
+		data = body
 	default:
-		bytes, err = json.Marshal(body)
-		utilruntime.Must(err)
+		data, err = json.Marshal(body)
+		if err != nil {
+			klog.Errorf("failed to marshal message content: %v", err)
+			return nil
+		}
 	}
 	var op watch.EventType
 	switch msg.Router.Operation {
@@ -219,24 +222,28 @@ func (s *imitator) Event(msg *model.Message) []watch.Event {
 	//TODO: support array List like []obj
 	var ret []watch.Event
 	obj := new(unstructured.Unstructured)
-	err = runtime.DecodeInto(s.codec, bytes, obj)
+	err = runtime.DecodeInto(s.codec, data, obj)
 	if err != nil {
 		klog.Errorf("failed to unmarshal message content to unstructured obj: %+v", err)
+		return nil
+	}
+
+	if !obj.IsList() {
+		ret = append(ret, watch.Event{Type: op, Object: obj})
 		return ret
 	}
-	if obj.IsList() {
-		fn := func(object runtime.Object) error {
-			event := watch.Event{
-				Type:   op,
-				Object: object,
-			}
-			ret = append(ret, event)
-			return nil
+
+	fn := func(object runtime.Object) error {
+		event := watch.Event{
+			Type:   op,
+			Object: object,
 		}
-		err := obj.EachListItem(fn)
-		utilruntime.Must(err)
-	} else {
-		ret = append(ret, watch.Event{Type: op, Object: obj})
+		ret = append(ret, event)
+		return nil
+	}
+	if err := obj.EachListItem(fn); err != nil {
+		klog.Errorf("process list item failed: %v", err)
+		return nil
 	}
 	return ret
 }
