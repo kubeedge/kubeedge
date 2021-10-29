@@ -107,12 +107,14 @@ func (sctl *SyncController) reconcile() {
 	allClusterObjectSyncs, err := sctl.clusterObjectSyncLister.List(labels.Everything())
 	if err != nil {
 		klog.Errorf("Filed to list all the ClusterObjectSyncs: %v", err)
+		return
 	}
 	sctl.manageClusterObjectSync(allClusterObjectSyncs)
 
 	allObjectSyncs, err := sctl.objectSyncLister.List(labels.Everything())
 	if err != nil {
 		klog.Errorf("Failed to list all the ObjectSyncs: %v", err)
+		return
 	}
 	sctl.manageObjectSync(allObjectSyncs)
 
@@ -137,12 +139,14 @@ func (sctl *SyncController) deleteObjectSyncs() {
 	syncs, err := sctl.objectSyncLister.List(labels.Everything())
 	if err != nil {
 		klog.Errorf("Failed to list all the ObjectSyncs: %v", err)
+		return
 	}
 	for _, sync := range syncs {
 		nodeName := getNodeName(sync.Name)
 		isGarbage, err := sctl.checkObjectSync(sync)
 		if err != nil {
 			klog.Errorf("failed to check ObjectSync outdated, %s", err)
+			continue
 		}
 		if isGarbage {
 			klog.Infof("ObjectSync %s will be deleted since node %s has been deleted", sync.Name, nodeName)
