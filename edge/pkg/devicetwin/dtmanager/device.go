@@ -104,13 +104,13 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 		time.Sleep(dtcommon.RetryInterval)
 	}
 	if err != nil {
-
+		return err
 	}
 	device.State = updatedDevice.State
 	device.LastOnline = lastOnline
 	payload, err := dttype.BuildDeviceState(dttype.BuildBaseMessage(), *device)
 	if err != nil {
-
+		return err
 	}
 	topic := dtcommon.DeviceETPrefix + device.ID + dtcommon.DeviceETStateUpdateSuffix + "/result"
 	context.Send(device.ID,
