@@ -542,18 +542,18 @@ func SplitSelectorParameters(args string) ([]Selector, error) {
 func HumanReadablePrint(results []dao.Meta, printer printers.ResourcePrinter, out io.Writer) error {
 	res, err := ParseMetaToAPIList(results)
 	if err != nil {
-		klog.Fatal(err)
+		klog.Exit(err)
 	}
 	for _, r := range res {
 		table, err := ConvertDataToTable(r)
 		if err != nil {
-			klog.Fatal(err)
+			klog.Exit(err)
 		}
 		if err := printer.PrintObj(table, out); err != nil {
-			klog.Fatal(err)
+			klog.Exit(err)
 		}
 		if _, err := fmt.Fprintln(out); err != nil {
-			klog.Fatal(err)
+			klog.Exit(err)
 		}
 	}
 	return nil

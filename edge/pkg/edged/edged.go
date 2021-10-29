@@ -783,7 +783,7 @@ func (e *edged) initializeModules() error {
 		if err := e.cadvisor.Start(); err != nil {
 			// Fail kubelet and rely on the babysitter to retry starting kubelet.
 			// TODO(random-liu): Add backoff logic in the babysitter
-			klog.Fatalf("Failed to start cAdvisor %v", err)
+			klog.Exitf("Failed to start cAdvisor %v", err)
 		}
 
 		// trigger on-demand stats collection once so that we have capacity information for ephemeral storage.

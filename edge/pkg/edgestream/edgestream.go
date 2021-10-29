@@ -77,7 +77,7 @@ func (e *edgestream) Start() {
 	if ok {
 		cert, err := tls.LoadX509KeyPair(config.Config.TLSTunnelCertFile, config.Config.TLSTunnelPrivateKeyFile)
 		if err != nil {
-			klog.Fatalf("Failed to load x509 key pair: %v", err)
+			klog.Exitf("Failed to load x509 key pair: %v", err)
 		}
 		tlsConfig := &tls.Config{
 			InsecureSkipVerify: true,

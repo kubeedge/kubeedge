@@ -40,7 +40,7 @@ func RunVersion(out io.Writer, cmd *cobra.Command) error {
 	const flag = "output"
 	of, err := cmd.Flags().GetString(flag)
 	if err != nil {
-		klog.Fatalf("error accessing flag %s for command %s: %v", flag, cmd.Name(), err)
+		klog.Exitf("error accessing flag %s for command %s: %v", flag, cmd.Name(), err)
 	}
 
 	switch of {

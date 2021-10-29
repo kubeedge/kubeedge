@@ -74,7 +74,7 @@ func serve(w http.ResponseWriter, r *http.Request, hook hookFunc) {
 	// verify the content type is accurate
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {
-		klog.Fatalf("contentType=%s, expect application/json", contentType)
+		klog.Exitf("contentType=%s, expect application/json", contentType)
 		return
 	}
 
@@ -86,7 +86,7 @@ func serve(w http.ResponseWriter, r *http.Request, hook hookFunc) {
 
 	deserializer := codecs.UniversalDeserializer()
 	if _, _, err := deserializer.Decode(body, nil, &requestedAdmissionReview); err != nil {
-		klog.Fatalf("decode failed with error: %v", err)
+		klog.Exitf("decode failed with error: %v", err)
 		responseAdmissionReview.Response = toAdmissionResponse(err)
 	} else {
 		responseAdmissionReview.Response = hook(requestedAdmissionReview)
@@ -98,9 +98,9 @@ func serve(w http.ResponseWriter, r *http.Request, hook hookFunc) {
 
 	respBytes, err := json.Marshal(responseAdmissionReview)
 	if err != nil {
-		klog.Fatalf("cannot marshal to a valid response %v", err)
+		klog.Exitf("cannot marshal to a valid response %v", err)
 	}
 	if _, err := w.Write(respBytes); err != nil {
-		klog.Fatalf("cannot write response %v", err)
+		klog.Exitf("cannot write response %v", err)
 	}
 }

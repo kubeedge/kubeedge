@@ -49,7 +49,7 @@ func StartHTTPServer() {
 	cert, err := tls.X509KeyPair(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: hubconfig.Config.Cert}), pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: hubconfig.Config.Key}))
 
 	if err != nil {
-		klog.Fatal(err)
+		klog.Exit(err)
 	}
 
 	server := &http.Server{
@@ -60,7 +60,7 @@ func StartHTTPServer() {
 			ClientAuth:   tls.RequestClientCert,
 		},
 	}
-	klog.Fatal(server.ListenAndServeTLS("", ""))
+	klog.Exit(server.ListenAndServeTLS("", ""))
 }
 
 // getCA returns the caCertDER

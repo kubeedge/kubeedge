@@ -45,5 +45,5 @@ func (s *Server) ListenAndServe(host server.HostInterface, resourceAnalyzer stat
 		Handler:        &handler,
 		MaxHeaderBytes: 1 << 20,
 	}
-	klog.Fatal(server.ListenAndServe())
+	klog.Exit(server.ListenAndServe())
 }
