@@ -167,6 +167,11 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 				Port:        9443,
 				RestTimeout: 60,
 			},
+			IptablesManager: &IptablesManager{
+				Enable:      true,
+				Mode:        "internal",
+				ForwardPort: 10003,
+			},
 		},
 	}
 	return c
@@ -213,6 +218,11 @@ func NewMinCloudCoreConfig() *CloudCoreConfig {
 				Address:     "0.0.0.0",
 				Port:        9443,
 				RestTimeout: 60,
+			},
+			IptablesManager: &IptablesManager{
+				Enable:      true,
+				Mode:        "internal",
+				ForwardPort: 10003,
 			},
 		},
 	}

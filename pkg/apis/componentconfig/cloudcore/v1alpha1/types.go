@@ -84,6 +84,8 @@ type Modules struct {
 	CloudStream *CloudStream `json:"cloudStream,omitempty"`
 	// Router indicates router module config
 	Router *Router `json:"router,omitempty"`
+	// IptablesManager indicates iptables module config
+	IptablesManager *IptablesManager `json:"iptablesManager,omitempty"`
 }
 
 // CloudHub indicates the config of CloudHub module.
@@ -417,4 +419,20 @@ type Router struct {
 	Address     string `json:"address,omitempty"`
 	Port        uint32 `json:"port,omitempty"`
 	RestTimeout uint32 `json:"restTimeout,omitempty"`
+}
+
+// IptablesManager indicates the config of Iptables
+type IptablesManager struct {
+	// Enable indicates whether enable IptablesManager
+	// default true
+	Enable bool `json:"enable"`
+	// It indicates how the component is deployed, valid mode can use "internal" or "external".
+	// The iptables manager component with the internal mode is always deployed inside the cloudcore, will share the host network, forward to the internal port of the tunnel port.
+	// The iptables manager component with the external mode is always deployed outside the cloudcore, will share the host network, forward to the internal cloudcore service and port.
+	// default internal.
+	Mode string `json:"mode,omitempty"`
+	// It indicates the destination port that the component wants to forward.
+	// The stream port(10003) is used by default.
+	// occurs in containerized deployment outside cloudcore, it needs to be modified as needed.
+	ForwardPort uint32 `json:"forwardPort,omitempty"`
 }
