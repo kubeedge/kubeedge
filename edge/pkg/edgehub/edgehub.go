@@ -73,7 +73,7 @@ func (eh *EdgeHub) Start() {
 		}
 		err := eh.initial()
 		if err != nil {
-			klog.Fatalf("failed to init controller: %v", err)
+			klog.Exitf("failed to init controller: %v", err)
 			return
 		}
 

@@ -90,7 +90,7 @@ func (cm *CertManager) Start() {
 	if err != nil {
 		err = cm.applyCerts()
 		if err != nil {
-			klog.Fatalf("Error: %v", err)
+			klog.Exitf("Error: %v", err)
 		}
 	}
 	if cm.RotateCertificates {

@@ -67,7 +67,7 @@ func InitConfigure(stream *v1alpha1.CloudStream) {
 			Config.Cert = cert
 			Config.Key = key
 		} else if !(cert == nil && key == nil) {
-			klog.Fatal("Both of tunnelCert and key should be specified!")
+			klog.Exit("Both of tunnelCert and key should be specified!")
 		}
 	})
 }

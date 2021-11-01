@@ -26,11 +26,11 @@ func newDeviceController(enable bool) *DeviceController {
 	}
 	downstream, err := controller.NewDownstreamController(informers.GetInformersManager().GetCRDInformerFactory())
 	if err != nil {
-		klog.Fatalf("New downstream controller failed with error: %s", err)
+		klog.Exitf("New downstream controller failed with error: %s", err)
 	}
 	upstream, err := controller.NewUpstreamController(downstream)
 	if err != nil {
-		klog.Fatalf("new upstream controller failed with error: %s", err)
+		klog.Exitf("new upstream controller failed with error: %s", err)
 	}
 	return &DeviceController{
 		downstream: downstream,
@@ -62,12 +62,12 @@ func (dc *DeviceController) Enable() bool {
 // Start controller
 func (dc *DeviceController) Start() {
 	if err := dc.downstream.Start(); err != nil {
-		klog.Fatalf("start downstream failed with error: %s", err)
+		klog.Exitf("start downstream failed with error: %s", err)
 	}
 	// wait for downstream controller to start and load deviceModels and devices
 	// TODO think about sync
 	time.Sleep(1 * time.Second)
 	if err := dc.upstream.Start(); err != nil {
-		klog.Fatalf("start upstream failed with error: %s", err)
+		klog.Exitf("start upstream failed with error: %s", err)
 	}
 }

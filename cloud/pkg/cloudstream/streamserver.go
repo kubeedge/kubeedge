@@ -116,7 +116,7 @@ func (s *StreamServer) getContainerLogs(r *restful.Request, w *restful.Response)
 
 	kubeClient := client.GetKubeClient()
 	if kubeClient == nil {
-		klog.Fatalf("cannot get kube client\n")
+		klog.Exitf("cannot get kube client\n")
 		return
 	}
 
@@ -288,7 +288,7 @@ func (s *StreamServer) Start() {
 	pool := x509.NewCertPool()
 	data, err := ioutil.ReadFile(config.Config.TLSStreamCAFile)
 	if err != nil {
-		klog.Fatalf("Read tls stream ca file error %v", err)
+		klog.Exitf("Read tls stream ca file error %v", err)
 		return
 	}
 	pool.AppendCertsFromPEM(data)
@@ -305,7 +305,7 @@ func (s *StreamServer) Start() {
 	klog.Infof("Prepare to start stream server ...")
 	err = streamServer.ListenAndServeTLS(config.Config.TLSStreamCertFile, config.Config.TLSStreamPrivateKeyFile)
 	if err != nil {
-		klog.Fatalf("Start stream server error %v\n", err)
+		klog.Exitf("Start stream server error %v\n", err)
 		return
 	}
 }

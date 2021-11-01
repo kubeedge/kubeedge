@@ -56,19 +56,19 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 			flag.PrintFlags(cmd.Flags())
 
 			if errs := opts.Validate(); len(errs) > 0 {
-				klog.Fatal(util.SpliceErrors(errs))
+				klog.Exit(util.SpliceErrors(errs))
 			}
 
 			config, err := opts.Config()
 			if err != nil {
-				klog.Fatal(err)
+				klog.Exit(err)
 			}
 			if errs := validation.ValidateEdgeCoreConfiguration(config); len(errs) > 0 {
-				klog.Fatal(util.SpliceErrors(errs.ToAggregate().Errors()))
+				klog.Exit(util.SpliceErrors(errs.ToAggregate().Errors()))
 			}
 
 			if err := features.DefaultMutableFeatureGate.SetFromMap(config.FeatureGates); err != nil {
-				klog.Fatal(err)
+				klog.Exit(err)
 			}
 
 			// To help debugging, immediately log version
@@ -83,7 +83,7 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 			if checkEnv != "false" {
 				// Check running environment before run edge core
 				if err := environmentCheck(); err != nil {
-					klog.Fatal(fmt.Errorf("failed to check the running environment: %v", err))
+					klog.Exit(fmt.Errorf("failed to check the running environment: %v", err))
 				}
 			}
 

@@ -63,7 +63,7 @@ func (dctl *DynamicController) Start() {
 	dctl.dynamicSharedInformerFactory.Start(beehiveContext.Done())
 	for gvr, cacheSync := range dctl.dynamicSharedInformerFactory.WaitForCacheSync(beehiveContext.Done()) {
 		if !cacheSync {
-			klog.Fatalf("unable to sync caches for: %s", gvr.String())
+			klog.Exitf("unable to sync caches for: %s", gvr.String())
 		}
 	}
 

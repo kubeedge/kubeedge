@@ -113,7 +113,7 @@ func NewCommonResourceEventHandler(gvr schema.GroupVersionResource, informerFact
 	klog.Infof("[metaserver/resourceEventHandler] handler(%v) init, wait for informer starting...", gvr)
 	for gvr, cacheSync := range informerFactory.WaitForCacheSync(beehiveContext.Done()) {
 		if !cacheSync {
-			klog.Fatalf("unable to sync caches for: %s", gvr.String())
+			klog.Exitf("unable to sync caches for: %s", gvr.String())
 		}
 	}
 	handler.informer = informer
