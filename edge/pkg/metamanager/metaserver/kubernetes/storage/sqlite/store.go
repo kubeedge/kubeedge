@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/conversion"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/storage"
@@ -99,6 +100,18 @@ func (s *store) List(ctx context.Context, key string, opts storage.ListOptions, 
 		if err != nil {
 			return err
 		}
+
+		if !opts.Predicate.Label.Empty() {
+			tmpObjLabels := unstrObj.GetLabels()
+			if tmpObjLabels == nil {
+				continue
+			}
+			var objLabels = (labels.Set)(tmpObjLabels)
+			if !opts.Predicate.Label.Matches(objLabels) {
+				continue
+			}
+		}
+
 		unstrList.Items = append(unstrList.Items, unstrObj)
 	}
 	rv := strconv.FormatUint(resp.Revision, 10)
