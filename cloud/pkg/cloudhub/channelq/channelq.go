@@ -142,6 +142,9 @@ func getMsgKey(obj interface{}) (string, error) {
 		resourceType, _ := edgemessagelayer.GetResourceType(*msg)
 		resourceNamespace, _ := edgemessagelayer.GetNamespace(*msg)
 		resourceName, _ := edgemessagelayer.GetResourceName(*msg)
+		if msg.Router.Source == modules.DynamicControllerModuleName {
+			return strings.Join([]string{resourceType, resourceNamespace, resourceName, msg.Router.Source}, "/"), nil
+		}
 		return strings.Join([]string{resourceType, resourceNamespace, resourceName}, "/"), nil
 	}
 
