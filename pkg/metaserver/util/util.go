@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/klog/v2"
@@ -21,12 +22,11 @@ import (
 
 const (
 	EmptyString = ""
+	CrdGroup    = "apiextensions.k8s.io"
+	CrdVersion  = "v1beta1"
 )
 
-var (
-	CRDResourceToKind = make(map[string]string)
-	CRDKindToResource = make(map[string]string)
-)
+var CRDMapper *meta.DefaultRESTMapper
 
 func UpdateCrdMap() error {
 	list, err := client.GetCRDClient().ApiextensionsV1beta1().CustomResourceDefinitions().List(context.TODO(), metav1.ListOptions{})
@@ -34,11 +34,13 @@ func UpdateCrdMap() error {
 		return err
 	}
 	for _, crd := range list.Items {
-		kind := crd.Spec.Names.Kind
-		plural := crd.Spec.Names.Plural
-		CRDResourceToKind[plural] = kind
-		CRDKindToResource[kind] = plural
-		klog.V(4).Infof("for resource: %s, Kind: %s, Plural: %s", crd.Name, kind, plural)
+		CRDMapper.AddSpecific(
+			schema.GroupVersionKind{Group: CrdGroup, Version: CrdVersion, Kind: crd.Spec.Names.Kind},
+			schema.GroupVersionResource{Group: CrdGroup, Version: CrdVersion, Resource: crd.Spec.Names.Plural},
+			schema.GroupVersionResource{Group: CrdGroup, Version: CrdVersion, Resource: crd.Spec.Names.Plural},
+			meta.RESTScopeNamespace,
+		)
+		klog.V(4).Infof("for resource: %s, Kind: %s, Plural: %s", crd.Name, crd.Spec.Names.Kind, crd.Spec.Names.Plural)
 	}
 	klog.V(4).Infof("The Kind-Resource relationship of all CRD resources has been updated")
 	return nil
@@ -83,8 +85,11 @@ func UnsafeResourceToKind(r string) string {
 	if v, isUnusual := unusualResourceToKind[r]; isUnusual {
 		return v
 	}
-	if v, isCRD := CRDResourceToKind[r]; isCRD {
-		return v
+	if CRDMapper != nil {
+		gvk, err := CRDMapper.KindFor(schema.GroupVersionResource{Resource: r})
+		if err == nil && !gvk.Empty() {
+			return gvk.Kind
+		}
 	}
 	k := strings.Title(r)
 	switch {
@@ -110,8 +115,11 @@ func UnsafeKindToResource(k string) string {
 	if v, isUnusual := unusualKindToResource[k]; isUnusual {
 		return v
 	}
-	if v, isCRD := CRDKindToResource[k]; isCRD {
-		return v
+	if CRDMapper != nil {
+		mapping, err := CRDMapper.RESTMapping(schema.GroupKind{Group: CrdGroup, Kind: k}, CrdVersion)
+		if err == nil && mapping != nil && !mapping.Resource.Empty() {
+			return mapping.Resource.Resource
+		}
 	}
 	r := strings.ToLower(k)
 	switch string(r[len(r)-1]) {

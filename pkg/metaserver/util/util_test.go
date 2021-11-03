@@ -6,6 +6,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/fields"
@@ -57,6 +58,7 @@ func TestGetMessageAPIVerison(t *testing.T) {
 }
 
 func TestGetMessageResourceType(t *testing.T) {
+	CRDMapper = meta.NewDefaultRESTMapper([]schema.GroupVersion{{Group: "apiextensions.k8s.io", Version: "v1beta1"}})
 	type args struct {
 		msg *beehiveModel.Message
 	}
@@ -155,6 +157,7 @@ func TestUnsafeKindToResource(t *testing.T) {
 			want: "services",
 		},
 	}
+	CRDMapper = meta.NewDefaultRESTMapper([]schema.GroupVersion{{Group: "apiextensions.k8s.io", Version: "v1beta1"}})
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := UnsafeKindToResource(tt.args.k); got != tt.want {
@@ -209,6 +212,7 @@ func TestUnsafeResourceToKind(t *testing.T) {
 			want: "Other",
 		},
 	}
+	CRDMapper = meta.NewDefaultRESTMapper([]schema.GroupVersion{{Group: "apiextensions.k8s.io", Version: "v1beta1"}})
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := UnsafeResourceToKind(tt.args.r); got != tt.want {

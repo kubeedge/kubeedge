@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -67,6 +68,8 @@ func (ls *MetaServer) Start(stopChan <-chan struct{}) {
 	}()
 
 	client.InitKubeEdgeClient()
+
+	util.CRDMapper = meta.NewDefaultRESTMapper([]schema.GroupVersion{{Group: "apiextensions.k8s.io", Version: "v1beta1"}})
 	go wait.Until(func() {
 		err := util.UpdateCrdMap()
 		if err != nil {
