@@ -616,13 +616,13 @@ func (dc *DownstreamController) deviceUpdated(device *v1alpha2.Device) {
 		if isDeviceUpdated(cachedDevice, device) {
 			// if node selector updated delete from old node and create in new node
 			if isNodeSelectorUpdated(cachedDevice.Spec.NodeSelector, device.Spec.NodeSelector) {
-				dc.deviceAdded(device)
 				deletedDevice := &v1alpha2.Device{ObjectMeta: cachedDevice.ObjectMeta,
 					Spec:     cachedDevice.Spec,
 					Status:   cachedDevice.Status,
 					TypeMeta: device.TypeMeta,
 				}
 				dc.deviceDeleted(deletedDevice)
+				dc.deviceAdded(device)
 			} else {
 				// update config map if spec, data or twins changed
 				if isProtocolConfigUpdated(&cachedDevice.Spec.Protocol, &device.Spec.Protocol) ||
