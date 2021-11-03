@@ -2,7 +2,6 @@ package debug
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"time"
@@ -27,10 +26,8 @@ keadm debug collect --output-path .
 var printDeatilFlag = false
 
 // NewCollect returns KubeEdge collect command.
-func NewCollect(out io.Writer, collectOptions *common.CollectOptions) *cobra.Command {
-	if collectOptions == nil {
-		collectOptions = newCollectOptions()
-	}
+func NewCollect() *cobra.Command {
+	collectOptions := newCollectOptions()
 
 	cmd := &cobra.Command{
 		Use:     "collect",

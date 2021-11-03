@@ -14,8 +14,6 @@ limitations under the License.
 package debug
 
 import (
-	"io"
-
 	"github.com/spf13/cobra"
 )
 
@@ -25,16 +23,16 @@ var (
 )
 
 // NewEdgeDebug returns KubeEdge edge debug command.
-func NewEdgeDebug(out io.Writer) *cobra.Command {
+func NewEdgeDebug() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "debug",
 		Short: edgeDebugShortDescription,
 		Long:  edgeDebugLongDescription,
 	}
 
-	cmd.AddCommand(NewCmdDebugGet(out, nil))
-	cmd.AddCommand(NewDiagnose(out, nil))
-	cmd.AddCommand(NewCheck(out, nil))
-	cmd.AddCommand(NewCollect(out, nil))
+	cmd.AddCommand(NewCmdDebugGet())
+	cmd.AddCommand(NewDiagnose())
+	cmd.AddCommand(NewCheck())
+	cmd.AddCommand(NewCollect())
 	return cmd
 }
