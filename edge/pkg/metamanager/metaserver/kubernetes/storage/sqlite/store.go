@@ -101,15 +101,9 @@ func (s *store) List(ctx context.Context, key string, opts storage.ListOptions, 
 			return err
 		}
 
-		if !opts.Predicate.Label.Empty() {
-			tmpObjLabels := unstrObj.GetLabels()
-			if tmpObjLabels == nil {
-				continue
-			}
-			var objLabels = (labels.Set)(tmpObjLabels)
-			if !opts.Predicate.Label.Matches(objLabels) {
-				continue
-			}
+		labelSet := labels.Set(unstrObj.GetLabels())
+		if !opts.Predicate.Label.Matches(labelSet) {
+			continue
 		}
 
 		unstrList.Items = append(unstrList.Items, unstrObj)
