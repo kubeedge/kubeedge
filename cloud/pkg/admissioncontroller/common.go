@@ -104,3 +104,12 @@ func serve(w http.ResponseWriter, r *http.Request, hook hookFunc) {
 		klog.Exitf("cannot write response %v", err)
 	}
 }
+
+// toAdmissionResponse is a helper function to create an AdmissionResponse
+func toAdmissionResponse(err error) *admissionv1beta1.AdmissionResponse {
+	return &admissionv1beta1.AdmissionResponse{
+		Result: &metav1.Status{
+			Message: err.Error(),
+		},
+	}
+}
