@@ -82,17 +82,16 @@ func TestValidateModuleCloudHub(t *testing.T) {
 		{
 			name: "case2 invalid https port",
 			input: v1alpha1.CloudHub{
-				Enable: true,
+				Enable:      true,
+				BindAddress: "127.0.0.1",
 				HTTPS: &v1alpha1.CloudHubHTTPS{
 					Port: 0,
 				},
 				WebSocket: &v1alpha1.CloudHubWebSocket{
-					Port:    10002,
-					Address: "127.0.0.1",
+					Port: 10002,
 				},
 				Quic: &v1alpha1.CloudHubQUIC{
-					Port:    10002,
-					Address: "127.0.0.1",
+					Port: 10002,
 				},
 				UnixSocket: &v1alpha1.CloudHubUnixSocket{
 					Address: unixAddr,
@@ -104,17 +103,16 @@ func TestValidateModuleCloudHub(t *testing.T) {
 		{
 			name: "case3 invalid websocket port",
 			input: v1alpha1.CloudHub{
-				Enable: true,
+				Enable:      true,
+				BindAddress: "127.0.0.1",
 				HTTPS: &v1alpha1.CloudHubHTTPS{
 					Port: 10000,
 				},
 				WebSocket: &v1alpha1.CloudHubWebSocket{
-					Port:    0,
-					Address: "127.0.0.1",
+					Port: 0,
 				},
 				Quic: &v1alpha1.CloudHubQUIC{
-					Port:    10002,
-					Address: "127.0.0.1",
+					Port: 10002,
 				},
 				UnixSocket: &v1alpha1.CloudHubUnixSocket{
 					Address: unixAddr,
@@ -124,19 +122,18 @@ func TestValidateModuleCloudHub(t *testing.T) {
 			expected: field.ErrorList{field.Invalid(field.NewPath("port"), uint32(0), "must be between 1 and 65535, inclusive")},
 		},
 		{
-			name: "case4 invalid websocket addr",
+			name: "case4 invalid bind address",
 			input: v1alpha1.CloudHub{
-				Enable: true,
+				Enable:      true,
+				BindAddress: "xxx.xxx.xxx.xxx",
 				HTTPS: &v1alpha1.CloudHubHTTPS{
 					Port: 10000,
 				},
 				WebSocket: &v1alpha1.CloudHubWebSocket{
-					Port:    10002,
-					Address: "xxx.xxx.xxx.xxx",
+					Port: 10002,
 				},
 				Quic: &v1alpha1.CloudHubQUIC{
-					Port:    10002,
-					Address: "127.0.0.1",
+					Port: 10002,
 				},
 				UnixSocket: &v1alpha1.CloudHubUnixSocket{
 					Address: unixAddr,
@@ -148,17 +145,16 @@ func TestValidateModuleCloudHub(t *testing.T) {
 		{
 			name: "case5 invalid quic port",
 			input: v1alpha1.CloudHub{
-				Enable: true,
+				Enable:      true,
+				BindAddress: "127.0.0.1",
 				HTTPS: &v1alpha1.CloudHubHTTPS{
 					Port: 10000,
 				},
 				WebSocket: &v1alpha1.CloudHubWebSocket{
-					Port:    10002,
-					Address: "127.0.0.1",
+					Port: 10002,
 				},
 				Quic: &v1alpha1.CloudHubQUIC{
-					Port:    0,
-					Address: "127.0.0.1",
+					Port: 0,
 				},
 				UnixSocket: &v1alpha1.CloudHubUnixSocket{
 					Address: unixAddr,
@@ -168,41 +164,18 @@ func TestValidateModuleCloudHub(t *testing.T) {
 			expected: field.ErrorList{field.Invalid(field.NewPath("port"), uint32(0), "must be between 1 and 65535, inclusive")},
 		},
 		{
-			name: "case6 invalid websocket addr",
+			name: "case6 invalid unixSocketAddress",
 			input: v1alpha1.CloudHub{
-				Enable: true,
+				Enable:      true,
+				BindAddress: "127.0.0.1",
 				HTTPS: &v1alpha1.CloudHubHTTPS{
 					Port: 10000,
 				},
 				WebSocket: &v1alpha1.CloudHubWebSocket{
-					Port:    10002,
-					Address: "127.0.0.1",
+					Port: 10002,
 				},
 				Quic: &v1alpha1.CloudHubQUIC{
-					Port:    10002,
-					Address: "xxx.xxx.xxx.xxx",
-				},
-				UnixSocket: &v1alpha1.CloudHubUnixSocket{
-					Address: unixAddr,
-				},
-				TokenRefreshDuration: 1,
-			},
-			expected: field.ErrorList{field.Invalid(field.NewPath("Address"), "xxx.xxx.xxx.xxx", "must be a valid IP address, (e.g. 10.9.8.7)")},
-		},
-		{
-			name: "case7 invalid unixSocketAddress",
-			input: v1alpha1.CloudHub{
-				Enable: true,
-				HTTPS: &v1alpha1.CloudHubHTTPS{
-					Port: 10000,
-				},
-				WebSocket: &v1alpha1.CloudHubWebSocket{
-					Port:    10002,
-					Address: "127.0.0.1",
-				},
-				Quic: &v1alpha1.CloudHubQUIC{
-					Port:    10002,
-					Address: "127.0.0.1",
+					Port: 10002,
 				},
 				UnixSocket: &v1alpha1.CloudHubUnixSocket{
 					Address: "var/lib/kubeedge/kubeedge.sock",
@@ -213,19 +186,18 @@ func TestValidateModuleCloudHub(t *testing.T) {
 				"var/lib/kubeedge/kubeedge.sock", "unixSocketAddress must has prefix unix://")},
 		},
 		{
-			name: "case8 invalid TokenRefreshDuration",
+			name: "case7 invalid TokenRefreshDuration",
 			input: v1alpha1.CloudHub{
-				Enable: true,
+				Enable:      true,
+				BindAddress: "127.0.0.1",
 				HTTPS: &v1alpha1.CloudHubHTTPS{
 					Port: 10000,
 				},
 				WebSocket: &v1alpha1.CloudHubWebSocket{
-					Port:    10002,
-					Address: "127.0.0.1",
+					Port: 10002,
 				},
 				Quic: &v1alpha1.CloudHubQUIC{
-					Port:    10002,
-					Address: "127.0.0.1",
+					Port: 10002,
 				},
 				UnixSocket: &v1alpha1.CloudHubUnixSocket{
 					Address: unixAddr,

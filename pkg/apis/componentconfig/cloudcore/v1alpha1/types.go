@@ -129,6 +129,9 @@ type CloudHub struct {
 	HTTPS *CloudHubHTTPS `json:"https,omitempty"`
 	// AdvertiseAddress sets the IP address for the cloudcore to advertise.
 	AdvertiseAddress []string `json:"advertiseAddress,omitempty"`
+	// BindAddress sets the IP address for WebSocket, Quic, and HTTPS addresses.
+	// default "0.0.0.0"
+	BindAddress string `json:"bindAddress,omitempty"`
 	// DNSNames sets the DNSNames for CloudCore.
 	DNSNames []string `json:"dnsNames,omitempty"`
 	// EdgeCertSigningDuration indicates the validity period of edge certificate
@@ -144,9 +147,6 @@ type CloudHubQUIC struct {
 	// Enable indicates whether enable quic protocol
 	// default false
 	Enable bool `json:"enable"`
-	// Address set server ip address
-	// default 0.0.0.0
-	Address string `json:"address,omitempty"`
 	// Port set open port for quic server
 	// default 10001
 	Port uint32 `json:"port,omitempty"`
@@ -170,9 +170,6 @@ type CloudHubWebSocket struct {
 	// Enable indicates whether enable websocket protocol
 	// default true
 	Enable bool `json:"enable"`
-	// Address indicates server ip address
-	// default 0.0.0.0
-	Address string `json:"address,omitempty"`
 	// Port indicates the open port for websocket server
 	// default 10000
 	Port uint32 `json:"port,omitempty"`
@@ -183,9 +180,6 @@ type CloudHubHTTPS struct {
 	// Enable indicates whether enable Https protocol
 	// default true
 	Enable bool `json:"enable"`
-	// Address indicates server ip address
-	// default 0.0.0.0
-	Address string `json:"address,omitempty"`
 	// Port indicates the open port for HTTPS server
 	// default 10002
 	Port uint32 `json:"port,omitempty"`

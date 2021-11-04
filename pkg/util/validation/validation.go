@@ -22,10 +22,11 @@ import (
 )
 
 // IsValidIP tests that the argument is a valid IP address.
-func IsValidIP(value string) []string {
-	if net.ParseIP(value) == nil {
+func IsValidIP(IP string) []string {
+	if net.ParseIP(IP) == nil {
 		return []string{"must be a valid IP address, (e.g. 10.9.8.7)"}
 	}
+
 	return nil
 }
 

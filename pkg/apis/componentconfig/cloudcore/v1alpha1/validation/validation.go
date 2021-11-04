@@ -52,9 +52,8 @@ func ValidateModuleCloudHub(c v1alpha1.CloudHub) field.ErrorList {
 	allErrs := field.ErrorList{}
 	validHTTPSPort := utilvalidation.IsValidPortNum(int(c.HTTPS.Port))
 	validWPort := utilvalidation.IsValidPortNum(int(c.WebSocket.Port))
-	validAddress := utilvalidation.IsValidIP(c.WebSocket.Address)
+	validAddress := utilvalidation.IsValidIP(c.BindAddress)
 	validQPort := utilvalidation.IsValidPortNum(int(c.Quic.Port))
-	validQAddress := utilvalidation.IsValidIP(c.Quic.Address)
 
 	if len(validHTTPSPort) > 0 {
 		for _, m := range validHTTPSPort {
@@ -68,17 +67,12 @@ func ValidateModuleCloudHub(c v1alpha1.CloudHub) field.ErrorList {
 	}
 	if len(validAddress) > 0 {
 		for _, m := range validAddress {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("Address"), c.WebSocket.Address, m))
+			allErrs = append(allErrs, field.Invalid(field.NewPath("Address"), c.BindAddress, m))
 		}
 	}
 	if len(validQPort) > 0 {
 		for _, m := range validQPort {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("port"), c.Quic.Port, m))
-		}
-	}
-	if len(validQAddress) > 0 {
-		for _, m := range validQAddress {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("Address"), c.Quic.Address, m))
 		}
 	}
 	if !strings.HasPrefix(strings.ToLower(c.UnixSocket.Address), "unix://") {

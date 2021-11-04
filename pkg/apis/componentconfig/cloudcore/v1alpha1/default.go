@@ -56,12 +56,12 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 				TLSPrivateKeyFile:       constants.DefaultKeyFile,
 				WriteTimeout:            30,
 				AdvertiseAddress:        []string{advertiseAddress.String()},
+				BindAddress:             "0.0.0.0",
 				DNSNames:                []string{""},
 				EdgeCertSigningDuration: 365,
 				TokenRefreshDuration:    12,
 				Quic: &CloudHubQUIC{
 					Enable:             false,
-					Address:            "0.0.0.0",
 					Port:               10001,
 					MaxIncomingStreams: 10000,
 				},
@@ -70,14 +70,12 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					Address: "unix:///var/lib/kubeedge/kubeedge.sock",
 				},
 				WebSocket: &CloudHubWebSocket{
-					Enable:  true,
-					Port:    10000,
-					Address: "0.0.0.0",
+					Enable: true,
+					Port:   10000,
 				},
 				HTTPS: &CloudHubHTTPS{
-					Enable:  true,
-					Port:    10002,
-					Address: "0.0.0.0",
+					Enable: true,
+					Port:   10002,
 				},
 			},
 			EdgeController: &EdgeController{
@@ -197,19 +195,18 @@ func NewMinCloudCoreConfig() *CloudCoreConfig {
 				TLSCertFile:       constants.DefaultCertFile,
 				TLSPrivateKeyFile: constants.DefaultKeyFile,
 				AdvertiseAddress:  []string{advertiseAddress.String()},
+				BindAddress:       "0.0.0.0",
 				UnixSocket: &CloudHubUnixSocket{
 					Enable:  true,
 					Address: "unix:///var/lib/kubeedge/kubeedge.sock",
 				},
 				WebSocket: &CloudHubWebSocket{
-					Enable:  true,
-					Port:    10000,
-					Address: "0.0.0.0",
+					Enable: true,
+					Port:   10000,
 				},
 				HTTPS: &CloudHubHTTPS{
-					Enable:  true,
-					Port:    10002,
-					Address: "0.0.0.0",
+					Enable: true,
+					Port:   10002,
 				},
 			},
 			Router: &Router{

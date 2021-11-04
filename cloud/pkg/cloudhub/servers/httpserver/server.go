@@ -44,7 +44,7 @@ func StartHTTPServer() {
 	router.HandleFunc(constants.DefaultCertURL, edgeCoreClientCert).Methods(http.MethodGet)
 	router.HandleFunc(constants.DefaultCAURL, getCA).Methods(http.MethodGet)
 
-	addr := fmt.Sprintf("%s:%d", hubconfig.Config.HTTPS.Address, hubconfig.Config.HTTPS.Port)
+	addr := fmt.Sprintf("%s:%d", hubconfig.Config.BindAddress, hubconfig.Config.HTTPS.Port)
 
 	cert, err := tls.X509KeyPair(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: hubconfig.Config.Cert}), pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: hubconfig.Config.Key}))
 
