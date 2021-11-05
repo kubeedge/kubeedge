@@ -32,7 +32,7 @@ function check_kind {
   command -v kind >/dev/null 2>&1
   if [[ $? -ne 0 ]]; then
     echo "installing kind ."
-    GO111MODULE="on" go get sigs.k8s.io/kind@v0.11.1
+    GO111MODULE="on" go install sigs.k8s.io/kind@v0.11.1
     if [[ $? -ne 0 ]]; then
       echo "kind installed failed, exiting."
       exit 1
