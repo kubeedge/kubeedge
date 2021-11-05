@@ -95,6 +95,9 @@ func addJoinOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 	cmd.Flags().StringVar(&initOpts.AdvertiseAddress, types.AdvertiseAddress, initOpts.AdvertiseAddress,
 		"Use this key to set IPs in cloudcore's certificate SubAltNames field. eg: 10.10.102.78,10.10.102.79")
 
+	cmd.Flags().StringVar(&initOpts.BindAddress, types.BindAddress, initOpts.BindAddress,
+		"Use this key to set IP in cloudcore's bind-address as mqtt/websocket/https IP address field. eg: 0.0.0.0")
+
 	cmd.Flags().StringVar(&initOpts.DNS, types.DomainName, initOpts.DNS,
 		"Use this key to set domain names in cloudcore's certificate SubAltNames field. eg: www.cloudcore.cn,www.kubeedge.cn")
 
@@ -136,6 +139,7 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 	toolList["Cloud"] = &util.KubeCloudInstTool{
 		Common:           common,
 		AdvertiseAddress: initOptions.AdvertiseAddress,
+		BindAddress:      initOptions.BindAddress,
 		DNSName:          initOptions.DNS,
 		TarballPath:      initOptions.TarballPath,
 	}

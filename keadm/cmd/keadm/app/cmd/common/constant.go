@@ -61,6 +61,8 @@ const (
 
 	AdvertiseAddress = "advertise-address"
 
+	BindAddress = "bind-address"
+
 	TokenSecretName = "tokensecret"
 
 	TokenDataName = "tokendata"

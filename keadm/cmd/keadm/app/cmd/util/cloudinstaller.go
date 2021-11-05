@@ -15,6 +15,7 @@ import (
 type KubeCloudInstTool struct {
 	Common
 	AdvertiseAddress string
+	BindAddress      string
 	DNSName          string
 	TarballPath      string
 }
@@ -52,6 +53,10 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 
 	if cu.AdvertiseAddress != "" {
 		cloudCoreConfig.Modules.CloudHub.AdvertiseAddress = strings.Split(cu.AdvertiseAddress, ",")
+	}
+
+	if cu.BindAddress != "" {
+		cloudCoreConfig.Modules.CloudHub.BindAddress = cu.BindAddress
 	}
 
 	if cu.DNSName != "" {

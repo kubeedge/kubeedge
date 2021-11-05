@@ -26,6 +26,7 @@ type InitOptions struct {
 	KubeConfig       string
 	Master           string
 	AdvertiseAddress string
+	BindAddress      string
 	DNS              string
 	TarballPath      string
 }
