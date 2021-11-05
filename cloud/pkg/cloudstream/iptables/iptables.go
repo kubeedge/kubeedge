@@ -145,9 +145,7 @@ func (im *Manager) getAddedAndDeletedCloudCoreIPPort() ([]string, []string, erro
 
 	addedIPPorts := []string{}
 	for ip, port := range latestRecord.IPTunnelPort {
-		if _, ok := im.preTunnelPortRecord.IPTunnelPort[ip]; !ok {
-			addedIPPorts = append(addedIPPorts, strings.Join([]string{ip, strconv.Itoa(port)}, ":"))
-		}
+		addedIPPorts = append(addedIPPorts, strings.Join([]string{ip, strconv.Itoa(port)}, ":"))
 	}
 
 	deletedIPPorts := []string{}
