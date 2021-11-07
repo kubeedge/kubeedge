@@ -524,6 +524,9 @@ func (mh *MessageHandle) send(hi hubio.CloudHubIO, info *model.HubInfo, msg *bee
 func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model.HubInfo, nodeStore cache.Store) {
 	if msg.GetGroup() == edgeconst.GroupResource {
 		resourceNamespace, _ := edgemessagelayer.GetNamespace(*msg)
+		if resourceNamespace == "" {
+			return
+		}
 		resourceName, _ := edgemessagelayer.GetResourceName(*msg)
 		resourceType, _ := edgemessagelayer.GetResourceType(*msg)
 		resourceUID, err := channelq.GetMessageUID(*msg)
