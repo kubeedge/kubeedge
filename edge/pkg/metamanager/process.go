@@ -117,7 +117,14 @@ func (m *metaManager) processInsert(message model.Message) {
 		return
 	}
 
-	imitator.DefaultV2Client.Inject(message)
+	if message.GetSource() == cloudmodules.DynamicControllerModuleName {
+		// only update dc msg into meta_v2, and not notify edged
+		imitator.DefaultV2Client.Inject(message)
+		resp := message.NewRespByMessage(&message, OK)
+		sendToCloud(resp)
+		return
+	}
+
 	resKey, resType, _ := parseResource(message.GetResource())
 
 	meta := &dao.Meta{
@@ -146,7 +153,14 @@ func (m *metaManager) processUpdate(message model.Message) {
 		return
 	}
 
-	imitator.DefaultV2Client.Inject(message)
+	msgSource := message.GetSource()
+	if msgSource == cloudmodules.DynamicControllerModuleName {
+		// only update dc msg into meta_v2, and not notify edged
+		imitator.DefaultV2Client.Inject(message)
+		resp := message.NewRespByMessage(&message, OK)
+		sendToCloud(resp)
+		return
+	}
 
 	resKey, resType, _ := parseResource(message.GetResource())
 
@@ -168,14 +182,13 @@ func (m *metaManager) processUpdate(message model.Message) {
 		return
 	}
 
-	msgSource := message.GetSource()
 	switch msgSource {
 	//case core.EdgedModuleName:
 	case modules.EdgedModuleName:
 		sendToCloud(&message)
 		resp := message.NewRespByMessage(&message, OK)
 		sendToEdged(resp, message.IsSync())
-	case cloudmodules.EdgeControllerModuleName, cloudmodules.DynamicControllerModuleName:
+	case cloudmodules.EdgeControllerModuleName:
 		sendToEdged(&message, message.IsSync())
 		resp := message.NewRespByMessage(&message, OK)
 		sendToCloud(resp)
@@ -218,7 +231,14 @@ func (m *metaManager) processResponse(message model.Message) {
 }
 
 func (m *metaManager) processDelete(message model.Message) {
-	imitator.DefaultV2Client.Inject(message)
+	if message.GetSource() == cloudmodules.DynamicControllerModuleName {
+		// only update dc msg into meta_v2, and not notify edged
+		imitator.DefaultV2Client.Inject(message)
+		resp := message.NewRespByMessage(&message, OK)
+		sendToCloud(resp)
+		return
+	}
+
 	err := dao.DeleteMetaByKey(message.GetResource())
 	if err != nil {
 		klog.Errorf("delete meta failed, %s", msgDebugInfo(&message))
@@ -291,6 +311,15 @@ func (m *metaManager) processRemoteQuery(message model.Message) {
 		if err != nil {
 			klog.Errorf("get remote query response content data failed, %s", msgDebugInfo(&resp))
 			feedbackError(err, "Error to get remote query response message content data", message)
+			return
+		}
+
+		if resp.GetSource() == cloudmodules.DynamicControllerModuleName {
+			// only update dc msg into meta_v2, and not notify edged
+			imitator.DefaultV2Client.Inject(resp)
+
+			resp := message.NewRespByMessage(&resp, OK)
+			sendToCloud(resp)
 			return
 		}
 
