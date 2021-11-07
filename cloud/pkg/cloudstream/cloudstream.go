@@ -26,17 +26,21 @@ import (
 
 type cloudStream struct {
 	enable bool
+
+	tunnelPort int
 }
 
-func newCloudStream(enable bool) *cloudStream {
+func newCloudStream(enable bool, tunnelPort int) *cloudStream {
 	return &cloudStream{
 		enable: enable,
+
+		tunnelPort: tunnelPort,
 	}
 }
 
-func Register(controller *v1alpha1.CloudStream) {
+func Register(controller *v1alpha1.CloudStream, commonConfig *v1alpha1.CommonConfig) {
 	config.InitConfigure(controller)
-	core.Register(newCloudStream(controller.Enable))
+	core.Register(newCloudStream(controller.Enable, commonConfig.TunnelPort))
 }
 
 func (s *cloudStream) Name() string {
@@ -51,7 +55,7 @@ func (s *cloudStream) Start() {
 	// TODO: Will improve in the future
 	ok := <-cloudhub.DoneTLSTunnelCerts
 	if ok {
-		ts := newTunnelServer()
+		ts := newTunnelServer(s.tunnelPort)
 
 		// start new tunnel server
 		go ts.Start()

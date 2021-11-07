@@ -17,6 +17,7 @@ limitations under the License.
 package cloudstream
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
@@ -28,11 +29,14 @@ import (
 
 	"github.com/emicklei/go-restful"
 	"github.com/gorilla/websocket"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	certutil "k8s.io/client-go/util/cert"
 	"k8s.io/klog/v2"
 
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	streamconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/config"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/pkg/stream"
 )
 
@@ -42,12 +46,14 @@ type TunnelServer struct {
 	sync.Mutex
 	sessions   map[string]*Session
 	nodeNameIP sync.Map
+	tunnelPort int
 }
 
-func newTunnelServer() *TunnelServer {
+func newTunnelServer(tunnelPort int) *TunnelServer {
 	return &TunnelServer{
-		container: restful.NewContainer(),
-		sessions:  make(map[string]*Session),
+		container:  restful.NewContainer(),
+		sessions:   make(map[string]*Session),
+		tunnelPort: tunnelPort,
 		upgrader: websocket.Upgrader{
 			HandshakeTimeout: time.Second * 2,
 			ReadBufferSize:   1024,
@@ -112,6 +118,7 @@ func (s *TunnelServer) connect(r *restful.Request, w *restful.Response) {
 		sessionID:     hostNameOverride,
 	}
 
+	s.updateNodeKubeletEndpoint(hostNameOverride)
 	s.addSession(hostNameOverride, session)
 	s.addSession(internalIP, session)
 	s.addNodeIP(hostNameOverride, internalIP)
@@ -168,4 +175,26 @@ func (s *TunnelServer) Start() {
 		klog.Exitf("Start tunnelServer error %v\n", err)
 		return
 	}
+}
+
+func (s *TunnelServer) updateNodeKubeletEndpoint(nodeName string) {
+	getNode, err := client.GetKubeClient().CoreV1().Nodes().Get(context.Background(), nodeName, metav1.GetOptions{})
+	if errors.IsNotFound(err) {
+		klog.Warningf("node %s not found", nodeName)
+		return
+	}
+	if err != nil {
+		klog.Warningf("get node %s failed with error: %s", nodeName, err)
+		return
+	}
+
+	getNode.Status.DaemonEndpoints.KubeletEndpoint.Port = int32(s.tunnelPort)
+	node, err := client.GetKubeClient().CoreV1().Nodes().UpdateStatus(context.Background(), getNode, metav1.UpdateOptions{})
+	if err != nil {
+		klog.Errorf("update node KubeletEndpoint Port failed with error: %s, node: %v, tunnelPort:%v",
+			err, getNode.Name, s.tunnelPort)
+		return
+	}
+	klog.Infof("update node KubeletEndpoint Port success. node: %s, tunnelPort:%v->%v", node.Name,
+		getNode.Status.DaemonEndpoints.KubeletEndpoint.Port, node.Status.DaemonEndpoints.KubeletEndpoint.Port)
 }

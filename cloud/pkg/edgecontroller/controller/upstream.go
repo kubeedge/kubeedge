@@ -93,8 +93,6 @@ type UpstreamController struct {
 
 	config v1alpha1.EdgeController
 
-	TunnelPort int
-
 	// message channel
 	nodeStatusChan            chan model.Message
 	podStatusChan             chan model.Message
@@ -392,7 +390,6 @@ func (uc *UpstreamController) updatePodStatus() {
 // createNode create new edge node to kubernetes
 func (uc *UpstreamController) createNode(name string, node *v1.Node) (*v1.Node, error) {
 	node.Name = name
-	node.Status.DaemonEndpoints.KubeletEndpoint.Port = int32(uc.TunnelPort)
 	return uc.kubeClient.CoreV1().Nodes().Create(context.Background(), node, metaV1.CreateOptions{})
 }
 
@@ -508,10 +505,9 @@ func (uc *UpstreamController) updateNodeStatus() {
 				// Keep the same "VolumesAttached" attribute with upstream,
 				// since this value is maintained by kube-controller-manager.
 				nodeStatusRequest.Status.VolumesAttached = getNode.Status.VolumesAttached
+				nodeStatusRequest.Status.DaemonEndpoints.KubeletEndpoint.Port = getNode.Status.DaemonEndpoints.KubeletEndpoint.Port
 
 				getNode.Status = nodeStatusRequest.Status
-
-				getNode.Status.DaemonEndpoints.KubeletEndpoint.Port = int32(uc.TunnelPort)
 
 				node, err := uc.kubeClient.CoreV1().Nodes().UpdateStatus(context.Background(), getNode, metaV1.UpdateOptions{})
 				if err != nil {
