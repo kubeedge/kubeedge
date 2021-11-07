@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/conversion"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
@@ -71,9 +72,8 @@ func (s *store) Get(ctx context.Context, key string, opts storage.GetOptions, ob
 	return nil
 }
 
-//TODO: implement it
 func (s *store) GetToList(ctx context.Context, key string, opts storage.ListOptions, listObj runtime.Object) error {
-	panic("GetToList implement me")
+	return s.List(ctx, key, opts, listObj)
 }
 
 func (s *store) List(ctx context.Context, key string, opts storage.ListOptions, listObj runtime.Object) error {
@@ -103,6 +103,15 @@ func (s *store) List(ctx context.Context, key string, opts storage.ListOptions, 
 
 		labelSet := labels.Set(unstrObj.GetLabels())
 		if !opts.Predicate.Label.Matches(labelSet) {
+			continue
+		}
+
+		// only support metadata.name & metadata.namespace
+		fieldSet := fields.Set{
+			"metadata.name":      unstrObj.GetName(),
+			"metadata.namespace": unstrObj.GetNamespace(),
+		}
+		if !opts.Predicate.Field.Matches(fieldSet) {
 			continue
 		}
 
