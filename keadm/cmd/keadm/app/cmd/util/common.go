@@ -35,7 +35,6 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/klog/v2"
 
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
@@ -271,12 +270,12 @@ func installKubeEdge(options types.InstallOptions, arch string, version semver.V
 					if err := NewCommand(cmdStr).Exec(); err != nil {
 						return err
 					}
-					klog.Infof("%v have been deleted and will try to download again", filename)
+					fmt.Printf("%v have been deleted and will try to download again\n", filename)
 					if err := retryDownload(filename, checksumFilename, version, options.TarballPath); err != nil {
 						return err
 					}
 				} else {
-					klog.Warningf("failed to checksum and will continue to install.")
+					fmt.Println("failed to checksum and will continue to install.")
 				}
 				break
 			}
