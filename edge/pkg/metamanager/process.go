@@ -19,6 +19,7 @@ import (
 	metaManagerConfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
+	msutil "github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
 //Constants to check metamanager processes
@@ -35,6 +36,8 @@ const (
 	EdgeFunctionModel   = "edgefunction"
 	CloudFunctionModel  = "funcmgr"
 	CloudControlerModel = "edgecontroller"
+
+	CustomResourceDefinitionResType = "customresourcedefinition"
 )
 
 func feedbackError(err error, info string, request model.Message) {
@@ -119,6 +122,13 @@ func (m *metaManager) processInsert(message model.Message) {
 
 	imitator.DefaultV2Client.Inject(message)
 	resKey, resType, _ := parseResource(message.GetResource())
+	// sync crd
+	if resType == CustomResourceDefinitionResType && message.GetSource() == cloudmodules.DynamicControllerModuleName {
+		// update the correspondence between Kind and Resource for CRD resource
+		if err := msutil.UpdateCRDMapper(); err != nil {
+			klog.Infof("failed to update the correspondence between Kind and Resource for CRD: %v", err)
+		}
+	}
 
 	meta := &dao.Meta{
 		Key:   resKey,
@@ -149,6 +159,13 @@ func (m *metaManager) processUpdate(message model.Message) {
 	imitator.DefaultV2Client.Inject(message)
 
 	resKey, resType, _ := parseResource(message.GetResource())
+	// sync crd
+	if resType == CustomResourceDefinitionResType && message.GetSource() == cloudmodules.DynamicControllerModuleName {
+		// update the correspondence between Kind and Resource for CRD resource
+		if err := msutil.UpdateCRDMapper(); err != nil {
+			klog.Infof("failed to update the correspondence between Kind and Resource for CRD: %v", err)
+		}
+	}
 
 	if resourceUnchanged(resType, resKey, content) {
 		resp := message.NewRespByMessage(&message, OK)
@@ -227,6 +244,13 @@ func (m *metaManager) processDelete(message model.Message) {
 	}
 
 	_, resType, _ := parseResource(message.GetResource())
+	// sync crd
+	if resType == CustomResourceDefinitionResType && message.GetSource() == cloudmodules.DynamicControllerModuleName {
+		// update the correspondence between Kind and Resource for CRD resource
+		if err := msutil.UpdateCRDMapper(); err != nil {
+			klog.Infof("failed to update the correspondence between Kind and Resource for CRD: %v", err)
+		}
+	}
 
 	if resType == model.ResourceTypePod && message.GetSource() == modules.EdgedModuleName {
 		sendToCloud(&message)

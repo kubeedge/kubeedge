@@ -18,7 +18,6 @@ package helpers
 
 import (
 	"bytes"
-	"context"
 	"crypto/tls"
 	"database/sql"
 	"encoding/json"
@@ -35,7 +34,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/edge"
@@ -390,7 +388,7 @@ func CheckPodDeletion(EdgedEndPoint, UID string) {
 }
 
 //HandleAddAndDeleteCRDs is function to handle crd deployment/delete deployment.
-func HandleAddAndDeleteCRDs(operation string, UID string, kind string, plural string) bool {
+func HandleAddAndDeleteCRDs(operation string, edgedpoint string, UID string, kind string, plural string) bool {
 	crd := &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "apiextensions.k8s.io/v1beta1",
@@ -404,28 +402,44 @@ func HandleAddAndDeleteCRDs(operation string, UID string, kind string, plural st
 					"kind":   kind,
 					"plural": plural,
 				},
-				"scope":   "Namespaced",
-				"version": "v1alpha3",
 			},
 		},
 	}
 
+	var httpMethod string
 	switch operation {
 	case OperationPut:
-		err := imitator.DefaultV2Client.InsertOrUpdateObj(context.TODO(), crd)
-		if err != nil {
-			common.Fatalf("Failed to insert crd, err: %v", err)
-		}
+		httpMethod = http.MethodPut
 	case OperationDelete:
-		err := imitator.DefaultV2Client.DeleteObj(context.TODO(), crd)
-		if err != nil {
-			common.Fatalf("Failed to insert crd, err: %v", err)
-		}
-
+		httpMethod = http.MethodDelete
 	default:
 		common.Fatalf("operation %q is invalid", operation)
 		return false
 	}
+
+	respbytes, err := json.Marshal(crd)
+	if err != nil {
+		common.Fatalf("Payload marshalling failed: %v", err)
+		return false
+	}
+
+	req, err := http.NewRequest(httpMethod, edgedpoint, bytes.NewBuffer(respbytes))
+	if err != nil {
+		// handle error
+		common.Fatalf("Frame HTTP request failed: %v", err)
+		return false
+	}
+
+	req.Header.Set("Content-Type", "application/json; charset=utf-8")
+	t := time.Now()
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		// handle error
+		common.Fatalf("HTTP request is failed :%v", err)
+		return false
+	}
+	common.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	return true
 }
 

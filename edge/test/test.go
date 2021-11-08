@@ -247,6 +247,42 @@ func (tm *testManager) crdHandler(w http.ResponseWriter, req *http.Request) {
 			ns = crd.GetNamespace()
 		}
 
+		resource := ns + "/customresourcedefinition/" + crd.GetName()
+		msgReq := message.BuildMsg("resource", string(crd.GetUID()), "dynamiccontroller", resource, operation, &crd)
+		beehiveContext.Send("metaManager", *msgReq)
+		klog.Infof("send message to metaManager is %+v\n", msgReq)
+	}
+}
+
+func (tm *testManager) crdInstanceHandler(w http.ResponseWriter, req *http.Request) {
+	var operation string
+	var crd = unstructured.Unstructured{}
+	if req.Body != nil {
+		body, err := ioutil.ReadAll(req.Body)
+		if err != nil {
+			klog.Errorf("read body error %v", err)
+			w.Write([]byte("read request body error"))
+		}
+		klog.Infof("request body is %s\n", string(body))
+		if err = json.Unmarshal(body, &crd); err != nil {
+			klog.Errorf("unmarshal request body error %v", err)
+			w.Write([]byte("unmarshal request body error"))
+		}
+
+		switch req.Method {
+		case http.MethodPost:
+			operation = model.InsertOperation
+		case http.MethodDelete:
+			operation = model.DeleteOperation
+		case http.MethodPut:
+			operation = model.UpdateOperation
+		}
+
+		ns := v1.NamespaceDefault
+		if crd.GetNamespace() != "" {
+			ns = crd.GetNamespace()
+		}
+
 		var resource string
 		if crd.GetKind() == "Gateway" {
 			resource = ns + "/gateway/" + crd.GetName()
@@ -264,7 +300,8 @@ func (tm *testManager) Start() {
 	http.HandleFunc("/configmap", tm.configmapHandler)
 	http.HandleFunc("/secret", tm.secretHandler)
 	http.HandleFunc("/devices", tm.deviceHandler)
-	http.HandleFunc("/crds", tm.crdHandler)
+	http.HandleFunc("/crd", tm.crdHandler)
+	http.HandleFunc("/crdinstance", tm.crdInstanceHandler)
 	err := http.ListenAndServe(":12345", nil)
 	if err != nil {
 		klog.Errorf("ListenAndServe: %v", err)

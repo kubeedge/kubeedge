@@ -16,7 +16,10 @@ import (
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/helpers"
 )
 
-const CrdHandler = "/crds"
+const (
+	CrdHandler         = "/crd"
+	CrdInstanceHandler = "/crdinstance"
+)
 
 var (
 	gatewaysName       = "gateways.networking.istio.io"
@@ -62,7 +65,7 @@ var _ = Describe("Test MetaServer", func() {
 				//"Watch param with bad method": {"POST", "/" + prefix + "/" + testGroupVersion.Group + "/" + testGroupVersion.Version + "/namespaces/ns-foo/simples?watch=true", http.StatusMethodNotAllowed},
 			}
 			client := http.Client{}
-			url := "http://127.0.0.1:10550"
+			url := "http://" + constants.DefaultMetaServerAddr
 			for _, v := range cases {
 				request, err := http.NewRequest(v.Method, url+v.Path, nil)
 				Expect(err).Should(BeNil())
@@ -76,27 +79,27 @@ var _ = Describe("Test MetaServer", func() {
 
 	Context("Test CRDMap in MetaServer", func() {
 		BeforeEach(func() {
-			isCRDDeployed := helpers.HandleAddAndDeleteCRDs(http.MethodPut, gatewaysName, gatewaysKind, gatewaysPlural)
+			isCRDDeployed := helpers.HandleAddAndDeleteCRDs(http.MethodPut, ctx.Cfg.TestManager+CrdHandler, gatewaysName, gatewaysKind, gatewaysPlural)
 			Expect(isCRDDeployed).Should(BeTrue())
-			isCRDDeployed = helpers.HandleAddAndDeleteCRDs(http.MethodPut, serviceentryName, serviceentryKind, serviceentryPlural)
+			isCRDDeployed = helpers.HandleAddAndDeleteCRDs(http.MethodPut, ctx.Cfg.TestManager+CrdHandler, serviceentryName, serviceentryKind, serviceentryPlural)
 			Expect(isCRDDeployed).Should(BeTrue())
-			time.Sleep(40 * time.Second)
-			isCRDDeployed = helpers.HandleAddAndDeleteCRDInstances(http.MethodPut, ctx.Cfg.TestManager+CrdHandler, "test-gateway", gatewaysKind)
+			time.Sleep(2 * time.Second)
+			isCRDDeployed = helpers.HandleAddAndDeleteCRDInstances(http.MethodPut, ctx.Cfg.TestManager+CrdInstanceHandler, "test-gateway", gatewaysKind)
 			Expect(isCRDDeployed).Should(BeTrue())
-			isCRDDeployed = helpers.HandleAddAndDeleteCRDInstances(http.MethodPut, ctx.Cfg.TestManager+CrdHandler, "test-serviceentry", serviceentryKind)
+			isCRDDeployed = helpers.HandleAddAndDeleteCRDInstances(http.MethodPut, ctx.Cfg.TestManager+CrdInstanceHandler, "test-serviceentry", serviceentryKind)
 			Expect(isCRDDeployed).Should(BeTrue())
 		})
 		AfterEach(func() {
-			IsCRDDeleted := helpers.HandleAddAndDeleteCRDs(http.MethodDelete, gatewaysName, gatewaysKind, gatewaysPlural)
+			IsCRDDeleted := helpers.HandleAddAndDeleteCRDs(http.MethodDelete, ctx.Cfg.TestManager+CrdHandler, gatewaysName, gatewaysKind, gatewaysPlural)
 			Expect(IsCRDDeleted).Should(BeTrue())
 			time.Sleep(2 * time.Second)
-			IsCRDDeleted = helpers.HandleAddAndDeleteCRDs(http.MethodDelete, serviceentryName, serviceentryKind, serviceentryPlural)
+			IsCRDDeleted = helpers.HandleAddAndDeleteCRDs(http.MethodDelete, ctx.Cfg.TestManager+CrdHandler, serviceentryName, serviceentryKind, serviceentryPlural)
 			Expect(IsCRDDeleted).Should(BeTrue())
 			time.Sleep(2 * time.Second)
-			IsCRDDeleted = helpers.HandleAddAndDeleteCRDInstances(http.MethodDelete, ctx.Cfg.TestManager+CrdHandler, "test-gateway", gatewaysKind)
+			IsCRDDeleted = helpers.HandleAddAndDeleteCRDInstances(http.MethodDelete, ctx.Cfg.TestManager+CrdInstanceHandler, "test-gateway", gatewaysKind)
 			Expect(IsCRDDeleted).Should(BeTrue())
 			time.Sleep(2 * time.Second)
-			IsCRDDeleted = helpers.HandleAddAndDeleteCRDInstances(http.MethodDelete, ctx.Cfg.TestManager+CrdHandler, "test-serviceentry", serviceentryKind)
+			IsCRDDeleted = helpers.HandleAddAndDeleteCRDInstances(http.MethodDelete, ctx.Cfg.TestManager+CrdInstanceHandler, "test-serviceentry", serviceentryKind)
 			Expect(IsCRDDeleted).Should(BeTrue())
 		})
 		It("Test CRD Map in MetaServer", func() {

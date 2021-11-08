@@ -12,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/apimachinery/pkg/util/wait"
 	utilwaitgroup "k8s.io/apimachinery/pkg/util/waitgroup"
 	genericapifilters "k8s.io/apiserver/pkg/endpoints/filters"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
@@ -68,19 +67,17 @@ func (ls *MetaServer) Start(stopChan <-chan struct{}) {
 	}()
 
 	client.InitKubeEdgeClient()
-
 	util.CRDMapper = meta.NewDefaultRESTMapper([]schema.GroupVersion{{Group: "apiextensions.k8s.io", Version: "v1beta1"}})
-	go wait.Until(func() {
-		err := util.UpdateCrdMap()
-		if err != nil {
-			klog.Warningf("CRD Resource-Kind Map update failed: %v", err)
-		}
-	}, time.Second*30, stopChan)
 
 	klog.Infof("[metaserver]start to listen and server at %v", s.Addr)
 	utilruntime.HandleError(s.ListenAndServe())
 	// When the MetaServer stops abnormally, other module services are stopped at the same time.
 	beehiveContext.Cancel()
+
+	// sync CRD resource
+	if err := util.SyncCrdResource(); err != nil {
+		klog.Errorf("Sync crd resource failed, err: %v", err)
+	}
 }
 
 func (ls *MetaServer) BuildBasicHandler() http.Handler {
