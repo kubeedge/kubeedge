@@ -34,35 +34,27 @@ func (m MapClaims) VerifyAudience(cmp string, req bool) bool {
 // Compares the exp claim against cmp.
 // If required is false, this method will return true if the value matches or is unset
 func (m MapClaims) VerifyExpiresAt(cmp int64, req bool) bool {
-	exp, ok := m["exp"]
-	if !ok {
-		return !req
-	}
-	switch expType := exp.(type) {
+	switch exp := m["exp"].(type) {
 	case float64:
-		return verifyExp(int64(expType), cmp, req)
+		return verifyExp(int64(exp), cmp, req)
 	case json.Number:
-		v, _ := expType.Int64()
+		v, _ := exp.Int64()
 		return verifyExp(v, cmp, req)
 	}
-	return false
+	return !req
 }
 
 // Compares the iat claim against cmp.
 // If required is false, this method will return true if the value matches or is unset
 func (m MapClaims) VerifyIssuedAt(cmp int64, req bool) bool {
-	iat, ok := m["iat"]
-	if !ok {
-		return !req
-	}
-	switch iatType := iat.(type) {
+	switch iat := m["iat"].(type) {
 	case float64:
-		return verifyIat(int64(iatType), cmp, req)
+		return verifyIat(int64(iat), cmp, req)
 	case json.Number:
-		v, _ := iatType.Int64()
+		v, _ := iat.Int64()
 		return verifyIat(v, cmp, req)
 	}
-	return false
+	return !req
 }
 
 // Compares the iss claim against cmp.
@@ -75,18 +67,14 @@ func (m MapClaims) VerifyIssuer(cmp string, req bool) bool {
 // Compares the nbf claim against cmp.
 // If required is false, this method will return true if the value matches or is unset
 func (m MapClaims) VerifyNotBefore(cmp int64, req bool) bool {
-	nbf, ok := m["nbf"]
-	if !ok {
-		return !req
-	}
-	switch nbfType := nbf.(type) {
+	switch nbf := m["nbf"].(type) {
 	case float64:
-		return verifyNbf(int64(nbfType), cmp, req)
+		return verifyNbf(int64(nbf), cmp, req)
 	case json.Number:
-		v, _ := nbfType.Int64()
+		v, _ := nbf.Int64()
 		return verifyNbf(v, cmp, req)
 	}
-	return false
+	return !req
 }
 
 // Validates time based claims "exp, iat, nbf".
