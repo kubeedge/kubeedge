@@ -151,7 +151,7 @@ func TestDTController_distributeMsg(t *testing.T) {
 			//Failure Case
 			name:    "distributeMsgTest-NilMessage",
 			message: "",
-			wantErr: errors.New("Distribute message, msg is nil"),
+			wantErr: errors.New("distribute message, msg is nil"),
 		},
 		{
 			//Failure Case
