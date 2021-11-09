@@ -19,7 +19,6 @@ import (
 	crdClientset "github.com/kubeedge/kubeedge/cloud/pkg/client/clientset/versioned"
 	reliablesyncslisters "github.com/kubeedge/kubeedge/cloud/pkg/client/listers/reliablesyncs/v1alpha1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
-	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/application"
 	edgeconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
@@ -44,11 +43,11 @@ type ChannelMessageQueue struct {
 }
 
 // NewChannelMessageQueue initializes a new ChannelMessageQueue
-func NewChannelMessageQueue(objectSyncLister reliablesyncslisters.ObjectSyncLister, clusterObjectSyncLister reliablesyncslisters.ClusterObjectSyncLister) *ChannelMessageQueue {
+func NewChannelMessageQueue(objectSyncLister reliablesyncslisters.ObjectSyncLister, clusterObjectSyncLister reliablesyncslisters.ClusterObjectSyncLister, crdClient crdClientset.Interface) *ChannelMessageQueue {
 	return &ChannelMessageQueue{
 		objectSyncLister:        objectSyncLister,
 		clusterObjectSyncLister: clusterObjectSyncLister,
-		crdClient:               client.GetCRDClient(),
+		crdClient:               crdClient,
 	}
 }
 
@@ -148,10 +147,8 @@ func (q *ChannelMessageQueue) addMessageToQueue(nodeID string, msg *beehiveModel
 					klog.Errorf("Failed to update objectSync: %s, err: %v", objectSyncName, err)
 				}
 			}
-		}
-
-		// Check if message is older than already in store, if it is, discard it directly
-		if exist {
+		} else {
+			// Check if message is older than already in store, if it is, discard it directly
 			msgInStore := item.(*beehiveModel.Message)
 			if isDeleteMessage(msgInStore) || synccontroller.CompareResourceVersion(msg.GetResourceVersion(), msgInStore.GetResourceVersion()) <= 0 {
 				return
