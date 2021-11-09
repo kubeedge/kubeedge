@@ -40,11 +40,10 @@ func (dt *DeviceTwin) RegisterDTModule(name string) {
 }
 
 //distributeMsg distribute message to diff module
-func (dt *DeviceTwin) distributeMsg(m interface{}) error {
+func (dt *DeviceTwin) gitdistributeMsg(m interface{}) error {
 	msg, ok := m.(model.Message)
 	if !ok {
-		klog.Errorf("Distribute message, msg is nil")
-		return errors.New("Distribute message, msg is nil")
+		return errors.New("distribute message, msg is nil")
 	}
 	message := dttype.DTMessage{Msg: &msg}
 	if message.Msg.GetParentID() != "" {
