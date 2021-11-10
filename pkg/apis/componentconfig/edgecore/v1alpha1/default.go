@@ -140,7 +140,10 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				},
 			},
 			ServiceBus: &ServiceBus{
-				Enable: false,
+				Enable:  false,
+				Server:  "0.0.0.0",
+				Port:    9060,
+				Timeout: 60,
 			},
 			DeviceTwin: &DeviceTwin{
 				Enable: true,

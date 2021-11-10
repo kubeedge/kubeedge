@@ -24,6 +24,8 @@ func NewRule(sourceType, targetType rulesv1.RuleEndpointTypeDef) *rulesv1.Rule {
 		return NewEventbus2RestRule()
 	case sourceType == rulesv1.RuleEndpointTypeRest && targetType == rulesv1.RuleEndpointTypeServiceBus:
 		return NewRest2ServicebusRule()
+	case sourceType == rulesv1.RuleEndpointTypeServiceBus && targetType == rulesv1.RuleEndpointTypeRest:
+		return NewServicebus2Rest()
 	}
 	return nil
 }
@@ -101,6 +103,34 @@ func NewRest2ServicebusRule() *rulesv1.Rule {
 			Target: "servicebus-test",
 			TargetResource: map[string]string{
 				"path": "/url",
+			},
+		},
+		Status: rulesv1.RuleStatus{
+			Errors: []string{},
+		},
+	}
+	return &rule
+}
+
+func NewServicebus2Rest() *rulesv1.Rule {
+	rule := rulesv1.Rule{
+		TypeMeta: v1.TypeMeta{
+			Kind:       "Rule",
+			APIVersion: "rules.kubeedge.io/v1",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "rule-servicebus-rest-test",
+			Namespace: Namespace,
+		},
+		Spec: rulesv1.RuleSpec{
+			Source: "servicebus-test",
+			SourceResource: map[string]string{
+				"target_url": "http://127.0.0.1:9000/echo",
+				"node_name":  "edge-node",
+			},
+			Target: "rest-test",
+			TargetResource: map[string]string{
+				"resource": "http://127.0.0.1:9000/echo",
 			},
 		},
 		Status: rulesv1.RuleStatus{

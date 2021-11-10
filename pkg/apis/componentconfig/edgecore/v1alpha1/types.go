@@ -395,6 +395,12 @@ type ServiceBus struct {
 	// if set to false (for debugging etc.), skip checking other ServiceBus configs.
 	// default false
 	Enable bool `json:"enable"`
+	// Address indicates address for http server
+	Server string `json:"server"`
+	// Port indicates port for http server
+	Port int `json:"port"`
+	// Timeout indicates port for servicebus receive mseeage
+	Timeout int `json:"timeout"`
 }
 
 // DeviceTwin indicates the DeviceTwin module config
