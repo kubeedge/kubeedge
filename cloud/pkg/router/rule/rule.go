@@ -1,15 +1,19 @@
 package rule
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
 
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	routerv1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
+	keclient "github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
+	routerConst "github.com/kubeedge/kubeedge/cloud/pkg/router/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/listener"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/provider"
 )
@@ -141,8 +145,13 @@ func delRule(namespace, name string) {
 	ruleKey := getKey(namespace, name)
 	v, exist := rules.Load(ruleKey)
 	if !exist {
-		klog.Warningf("rule %s does not exist", ruleKey)
-		return
+		// if not exist in cache, require api
+		data, err := getResourceFromAPI(namespace, name, ruleKey, routerConst.ResourceTypeRules)
+		if err != nil || data == nil {
+			klog.Warningf("rule %s does not exist", ruleKey)
+			return
+		}
+		v = data
 	}
 	rule := v.(*routerv1.Rule)
 
@@ -161,7 +170,12 @@ func getSourceOfRule(rule *routerv1.Rule) (provider.Source, error) {
 	sourceKey := getKey(rule.Namespace, rule.Spec.Source)
 	v, exist := ruleEndpoints.Load(sourceKey)
 	if !exist {
-		return nil, fmt.Errorf("source rule endpoint %s does not existing", sourceKey)
+		// if not exist in cache, require api
+		data, err := getResourceFromAPI(rule.Namespace, rule.Spec.Source, sourceKey, routerConst.ResourceTypeRuleEndpoints)
+		if err != nil || data == nil {
+			return nil, fmt.Errorf("source rule endpoint %s does not existing", sourceKey)
+		}
+		v = data
 	}
 
 	sourceEp := v.(*routerv1.RuleEndpoint)
@@ -181,7 +195,12 @@ func getTargetOfRule(rule *routerv1.Rule) (provider.Target, error) {
 	targetKey := getKey(rule.Namespace, rule.Spec.Target)
 	v, exist := ruleEndpoints.Load(targetKey)
 	if !exist {
-		return nil, fmt.Errorf("target rule endpoint %s does not existing", targetKey)
+		// if not exist in cache, require api
+		data, err := getResourceFromAPI(rule.Namespace, rule.Spec.Source, targetKey, routerConst.ResourceTypeRuleEndpoints)
+		if err != nil || data == nil {
+			return nil, fmt.Errorf("target rule endpoint %s does not existing", targetKey)
+		}
+		v = data
 	}
 
 	targetEp := v.(*routerv1.RuleEndpoint)
@@ -210,4 +229,27 @@ func addRuleWithRetry(rule *routerv1.Rule) {
 		klog.Errorf("add rule fail, wait to retry. retry time: %d", i+1)
 		time.Sleep(time.Duration(waitTime*(i+1)) * time.Second)
 	}
+}
+
+func getResourceFromAPI(namespace, name, key, resourceType string) (interface{}, error) {
+	if resourceType == routerConst.ResourceTypeRuleEndpoints {
+		ruleEndpoint, err := keclient.GetCRDClient().RulesV1().RuleEndpoints(namespace).Get(context.Background(), name, metaV1.GetOptions{})
+		if err != nil {
+			klog.Errorf("getResourceFromApi: get rule endpoint:%s failed:%v", key, err)
+			return nil, err
+		}
+		klog.Infof("getResourceFromApi: get rule endpoint:%s success", key)
+		ruleEndpoints.Store(key, ruleEndpoint)
+		return ruleEndpoint, nil
+	} else if resourceType == routerConst.ResourceTypeRules {
+		rule, err := keclient.GetCRDClient().RulesV1().Rules(namespace).Get(context.Background(), name, metaV1.GetOptions{})
+		if err != nil {
+			klog.Errorf("getResourceFromApi: get rule:%s failed:%v", key, err)
+			return nil, err
+		}
+		klog.Infof("getResourceFromApi: get rule:%s success", key)
+		rules.Store(key, rule)
+		return rule, nil
+	}
+	return nil, nil
 }

@@ -5,4 +5,7 @@ const (
 	EventbusProvider   string = "eventbus"
 	GroupResource      string = "resource"
 	ServicebusProvider string = "servicebus"
+
+	ResourceTypeRules         string = "rules"
+	ResourceTypeRuleEndpoints string = "ruleendpoints"
 )
