@@ -25,6 +25,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	edgemodule "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
@@ -328,7 +329,7 @@ func (a *Agent) doApply(app *Application) {
 	app.Status = InApplying
 	msg := model.NewMessage("").SetRoute(MetaServerSource, modules.DynamicControllerModuleGroup).FillBody(app)
 	msg.SetResourceOperation("null", "null")
-	resp, err := beehiveContext.SendSync(edgemodule.EdgeHubModuleName, *msg, 10*time.Second)
+	resp, err := beehiveContext.SendSync(edgemodule.EdgeHubModuleName, *msg, time.Duration(config.Config.DynamicController.MsgTimeOut)*time.Second)
 	if err != nil {
 		app.Status = Failed
 		app.Reason = fmt.Sprintf("failed to access cloud Application center: %v", err)

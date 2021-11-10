@@ -148,7 +148,8 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 				Enable: true,
 			},
 			DynamicController: &DynamicController{
-				Enable: false,
+				Enable:     false,
+				MsgTimeOut: 10,
 			},
 			CloudStream: &CloudStream{
 				Enable:                  false,

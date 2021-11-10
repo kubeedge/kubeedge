@@ -376,6 +376,10 @@ type DynamicController struct {
 	// if set to false (for debugging etc.), skip checking other dynamicController configs.
 	// default true
 	Enable bool `json:"enable"`
+
+	// MsgTimeOut indicates the overtime of send sync message
+	// default 10
+	MsgTimeOut int64 `json:"msgTimeOut,omitempty"`
 }
 
 // CloudSream indicates the stream controller
