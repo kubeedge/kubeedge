@@ -9,8 +9,7 @@ import (
 
 //constant metatable name reference
 const (
-	NewMetaTableName    = "meta_v2"
-	WatchCacheTableName = "watchcache"
+	NewMetaTableName = "meta_v2"
 
 	// column name
 	KEY  = "Key"
