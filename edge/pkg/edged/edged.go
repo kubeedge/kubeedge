@@ -161,6 +161,11 @@ const (
 	redirectContainerStream = false
 	// ResolvConfDefault gives the default dns resolv configration file
 	ResolvConfDefault = "/etc/resolv.conf"
+
+	ResourceTypePods       = "pods"
+	ResourceTypeSecrets    = "secrets"
+	ResourceTypeConfigMaps = "configmaps"
+	CSIResourceTypeVolumes = "volumes"
 )
 
 // podReady holds the initPodReady flag and its lock
@@ -1120,7 +1125,7 @@ func (e *edged) syncPod() {
 		}
 		klog.Infof("result content is %s", result.Content)
 		switch resType {
-		case model.ResourceTypePod:
+		case model.ResourceTypePod, ResourceTypePods:
 			if op == model.ResponseOperation && resID == "" && result.GetSource() == metamanager.MetaManagerModuleName {
 				err := e.handlePodListFromMetaManager(content)
 				if err != nil {
@@ -1142,7 +1147,7 @@ func (e *edged) syncPod() {
 					continue
 				}
 			}
-		case model.ResourceTypeConfigmap:
+		case model.ResourceTypeConfigmap, ResourceTypeConfigMaps:
 			if op != model.ResponseOperation {
 				err := e.handleConfigMap(op, content)
 				if err != nil {
@@ -1152,7 +1157,7 @@ func (e *edged) syncPod() {
 				klog.Infof("skip to handle configMap with type response")
 				continue
 			}
-		case model.ResourceTypeSecret:
+		case model.ResourceTypeSecret, ResourceTypeSecrets:
 			if op != model.ResponseOperation {
 				err := e.handleSecret(op, content)
 				if err != nil {
@@ -1162,7 +1167,7 @@ func (e *edged) syncPod() {
 				klog.Infof("skip to handle secret with type response")
 				continue
 			}
-		case constants.CSIResourceTypeVolume:
+		case constants.CSIResourceTypeVolume, CSIResourceTypeVolumes:
 			klog.Infof("volume operation type: %s", op)
 			res, err := e.handleVolume(op, content)
 			if err != nil {
