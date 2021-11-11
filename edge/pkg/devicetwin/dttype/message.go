@@ -11,7 +11,7 @@ type MsgSubPub struct {
 	Qos     int    `json:"qos"`
 }
 
-//DTMessage the struct of message for commutinating between cloud and edge
+//DTMessage the struct of message for communicating between cloud and edge
 type DTMessage struct {
 	Msg      *model.Message
 	Identity string
