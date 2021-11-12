@@ -150,6 +150,9 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 			DynamicController: &DynamicController{
 				Enable: false,
 			},
+			NodeLeaseController: &NodeLeaseController{
+				Enable: true,
+			},
 			CloudStream: &CloudStream{
 				Enable:                  false,
 				TLSTunnelCAFile:         constants.DefaultCAFile,

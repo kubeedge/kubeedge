@@ -260,6 +260,13 @@ type edged struct {
 
 	// Pod killer handles pods to be killed
 	podKiller PodKiller
+
+	// nodeStatusReportFrequency is the frequency that edged posts node status.
+	nodeStatusReportFrequency time.Duration
+	// lastStatusReportTime is the time when node status was last reported.
+	lastStatusReportTime time.Time
+	// lastReportStatus is the node status reported at lastStatusReportTime
+	lastReportStatus *v1.NodeStatus
 }
 
 // Register register edged
@@ -460,6 +467,7 @@ func newEdged(enable bool) (*edged, error) {
 		metaClient:                metaClient,
 		kubeClient:                fakekube.NewSimpleClientset(metaClient),
 		nodeStatusUpdateFrequency: time.Duration(edgedconfig.Config.NodeStatusUpdateFrequency) * time.Second,
+		nodeStatusReportFrequency: time.Duration(edgedconfig.Config.NodeStatusReportFrequency) * time.Second,
 		mounter:                   mount.New(""),
 		uid:                       types.UID("38796d14-1df3-11e8-8e5a-286ed488f209"),
 		version:                   fmt.Sprintf("%s-kubeedge-%s", constants.CurrentSupportK8sVersion, version.Get()),

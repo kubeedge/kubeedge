@@ -8,6 +8,7 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/common/constants"
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
@@ -166,7 +167,7 @@ func (eh *EdgeHub) keepalive() {
 		}
 		msg := model.NewMessage("").
 			BuildRouter(modules.EdgeHubModuleName, "resource", "node", messagepkg.OperationKeepalive).
-			FillBody("ping")
+			FillBody(time.Now().Format(constants.DefaultTimestampLayout))
 
 		// post message to cloud hub
 		err := eh.sendToCloud(*msg)

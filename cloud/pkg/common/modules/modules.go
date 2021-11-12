@@ -16,6 +16,9 @@ const (
 	DynamicControllerModuleName  = "dynamiccontroller"
 	DynamicControllerModuleGroup = "dynamiccontroller"
 
+	NodeLeaseControllerModuleName  = "nodeleasecontroller"
+	NodeLeaseControllerModuleGroup = "nodeleasecontroller"
+
 	CloudStreamModuleName = "cloudStream"
 	CloudStreamGroupName  = "cloudStream"
 

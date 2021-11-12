@@ -115,6 +115,10 @@ type Edged struct {
 	// NodeStatusUpdateFrequency indicates node status update frequency (second)
 	// default 10
 	NodeStatusUpdateFrequency int32 `json:"nodeStatusUpdateFrequency,omitempty"`
+	// nodeStatusReportFrequency indicates the interval between two reports of node status
+	// to the cloud. (second)
+	// default 60
+	NodeStatusReportFrequency int32 `json:"nodeStatusReportFrequency,omitempty"`
 	// RuntimeType indicates cri runtime ,support: docker, remote
 	// default "docker"
 	RuntimeType string `json:"runtimeType,omitempty"`

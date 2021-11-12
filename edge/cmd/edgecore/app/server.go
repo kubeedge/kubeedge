@@ -100,6 +100,12 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 			}
 			klog.Infof("Local IP: %s", config.Modules.Edged.NodeIP)
 
+			if !features.DefaultMutableFeatureGate.Enabled(features.NodeLease) {
+				// if not enable nodelease feature gate, ignore NodeStatusReportFrequency
+				// then the edged will update node status at the frequency of NodeStatusUpdateFrequency
+				config.Modules.Edged.NodeStatusReportFrequency = 0
+			}
+
 			registerModules(config)
 			// start all modules
 			core.Run()

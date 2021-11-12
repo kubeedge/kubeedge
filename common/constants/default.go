@@ -46,6 +46,7 @@ const (
 	DefaultRemoteImageEndpoint         = "unix:///var/run/dockershim.sock"
 	DefaultPodSandboxImage             = "kubeedge/pause:3.1"
 	DefaultNodeStatusUpdateFrequency   = 10
+	DefaultNodeStatusReportFrequency   = 60
 	DefaultImagePullProgressDeadline   = 60
 	DefaultRuntimeRequestTimeout       = 2
 	DefaultImageGCHighThreshold        = 80
@@ -63,6 +64,9 @@ const (
 	DefaultTunnelPort                  = 10004
 
 	CurrentSupportK8sVersion = "v1.19.3"
+
+	// DefaultTimestampLayout represents the heartbeat timestamp format
+	DefaultTimestampLayout = time.RFC1123Z
 
 	// MetaManager
 	DefaultPodStatusSyncInterval = 60

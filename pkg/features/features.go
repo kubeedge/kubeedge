@@ -21,6 +21,9 @@ func init() {
 const (
 	// ProcessStatusSync supports synchronization between process message channel statuses
 	ProcessStatusSync featuregate.Feature = "ProcessStatusSync"
+
+	// NodeLease allow cloudcore to use lease to report edge node heartbeats
+	NodeLease featuregate.Feature = "NodeLease"
 )
 
 // defaultFeatureGates consists of all known Kubeedge-specific feature keys.
@@ -28,4 +31,5 @@ const (
 // available throughout Kubeedge binaries.
 var defaultFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
 	ProcessStatusSync: {Default: false, PreRelease: featuregate.Alpha},
+	NodeLease:         {Default: false, PreRelease: featuregate.Alpha},
 }

@@ -30,6 +30,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller"
+	"github.com/kubeedge/kubeedge/cloud/pkg/nodeleasecontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
 	"github.com/kubeedge/kubeedge/common/constants"
@@ -89,6 +90,11 @@ kubernetes controller which manages devices so that the device metadata/status d
 
 			gis := informers.GetInformersManager()
 
+			if !features.DefaultMutableFeatureGate.Enabled(features.NodeLease) {
+				// If not enable NodeLease feature gate, nodelease controller should not run.
+				config.Modules.NodeLeaseController.Enable = false
+			}
+
 			registerModules(config)
 
 			// IptablesManager manages tunnel port related iptables rules
@@ -133,6 +139,7 @@ func registerModules(c *v1alpha1.CloudCoreConfig) {
 	cloudstream.Register(c.Modules.CloudStream)
 	router.Register(c.Modules.Router)
 	dynamiccontroller.Register(c.Modules.DynamicController)
+	nodeleasecontroller.Register(c.Modules.NodeLeaseController)
 }
 
 func NegotiateTunnelPort() (*int, error) {

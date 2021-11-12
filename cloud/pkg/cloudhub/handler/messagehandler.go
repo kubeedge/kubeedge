@@ -28,8 +28,10 @@ import (
 	deviceconst "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	edgeconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	edgemessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
+	nodelease "github.com/kubeedge/kubeedge/cloud/pkg/nodeleasecontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
 	"github.com/kubeedge/kubeedge/common/constants"
+	"github.com/kubeedge/kubeedge/pkg/features"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 	"github.com/kubeedge/viaduct/pkg/conn"
 	"github.com/kubeedge/viaduct/pkg/mux"
@@ -125,7 +127,7 @@ func (mh *MessageHandle) HandleServer(container *mux.MessageContainer, writer mu
 			klog.Errorf("Failed to load node : %s", nodeID)
 			return
 		}
-		nodeKeepalive.(chan struct{}) <- struct{}{}
+		nodeKeepalive.(chan interface{}) <- container.Message.GetContent()
 		return
 	}
 
@@ -160,7 +162,7 @@ func (mh *MessageHandle) OnRegister(connection conn.Connection) {
 	projectID := connection.ConnectionState().Headers.Get("project_id")
 
 	if _, ok := mh.KeepaliveChannel.Load(nodeID); !ok {
-		mh.KeepaliveChannel.Store(nodeID, make(chan struct{}, 1))
+		mh.KeepaliveChannel.Store(nodeID, make(chan interface{}, 1))
 	}
 
 	io := &hubio.JSONIO{Connection: connection}
@@ -189,7 +191,7 @@ func (mh *MessageHandle) KeepaliveCheckLoop(info *model.HubInfo, stopServe chan 
 
 	for {
 		select {
-		case _, ok := <-nodeKeepaliveChannel.(chan struct{}):
+		case heartbeatMsg, ok := <-nodeKeepaliveChannel.(chan interface{}):
 			if !ok {
 				klog.Warningf("Stop keepalive check for node: %s", info.NodeID)
 				return
@@ -203,6 +205,14 @@ func (mh *MessageHandle) KeepaliveCheckLoop(info *model.HubInfo, stopServe chan 
 				}
 			}
 			klog.V(4).Infof("Node %s is still alive", info.NodeID)
+			if features.DefaultMutableFeatureGate.Enabled(features.NodeLease) {
+				// Send to nodelease controller
+				msg := beehiveModel.NewMessage("").FillBody(nodelease.HeartbeatMsg{
+					NodeName:  info.NodeID,
+					Timestamp: heartbeatMsg.(string),
+				})
+				beehiveContext.Send(modules.NodeLeaseControllerModuleName, *msg)
+			}
 			keepaliveTicker.Reset(time.Duration(mh.KeepaliveInterval) * time.Second)
 		case <-keepaliveTicker.C:
 			if conn, ok := mh.nodeConns.Load(info.NodeID); ok {

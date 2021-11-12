@@ -28,11 +28,13 @@ import (
 	"os"
 	"regexp"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -48,6 +50,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/config"
+	"github.com/kubeedge/kubeedge/pkg/features"
 	"github.com/kubeedge/kubeedge/pkg/util"
 )
 
@@ -426,6 +429,8 @@ func (e *edged) registerNode() error {
 
 	klog.Infof("Successfully registered node %s", e.nodeName)
 	e.registrationCompleted = true
+	e.lastReportStatus = node.Status.DeepCopy()
+	e.lastStatusReportTime = time.Now()
 
 	return nil
 }
@@ -437,14 +442,55 @@ func (e *edged) updateNodeStatus() error {
 		return err
 	}
 
+	now := time.Now()
+	if features.DefaultMutableFeatureGate.Enabled(features.NodeLease) {
+		// If enable NodeLease feature gate, check if it's the time to report status or
+		// if the nodestatus has changed since last report. If it's not in any situation of both,
+		// skip update nodestaus.
+		if now.Before(e.lastStatusReportTime.Add(e.nodeStatusReportFrequency)) && !e.nodeStatusHasChanged(&nodeStatus.Status) {
+			return nil
+		}
+	}
 	err = e.metaClient.NodeStatus(e.namespace).Update(e.nodeName, *nodeStatus)
 	if err != nil {
 		klog.Errorf("update node failed, error: %v", err)
+		return err
 	}
 	e.setInitNode(&v1.Node{
 		Status: *nodeStatus.Status.DeepCopy(),
 	})
+	e.lastReportStatus = nodeStatus.Status.DeepCopy()
+	e.lastStatusReportTime = time.Now()
 	return nil
+}
+
+func (e *edged) nodeStatusHasChanged(currentStatus *v1.NodeStatus) bool {
+	originalStatusCopy := e.lastReportStatus.DeepCopy()
+	currentStatusCopy := currentStatus.DeepCopy()
+
+	// compare NodeStatus.Condition
+	if len(originalStatusCopy.Conditions) != len(currentStatusCopy.Conditions) {
+		return true
+	}
+	sort.SliceStable(originalStatusCopy.Conditions, func(i, j int) bool {
+		return originalStatusCopy.Conditions[i].Type < originalStatusCopy.Conditions[j].Type
+	})
+	sort.SliceStable(currentStatusCopy.Conditions, func(i, j int) bool {
+		return currentStatusCopy.Conditions[i].Type < currentStatusCopy.Conditions[j].Type
+	})
+	emptyHeartbeatTime := metav1.Time{}
+	for i := range currentStatusCopy.Conditions {
+		// ignore difference of LastHeartbeatTime
+		originalStatusCopy.Conditions[i].LastHeartbeatTime = emptyHeartbeatTime
+		currentStatusCopy.Conditions[i].LastHeartbeatTime = emptyHeartbeatTime
+		if !apiequality.Semantic.DeepEqual(originalStatusCopy.Conditions[i], currentStatusCopy.Conditions[i]) {
+			return true
+		}
+	}
+
+	// compare other fields of NodeStatus
+	originalStatusCopy.Conditions, currentStatusCopy.Conditions = nil, nil
+	return !apiequality.Semantic.DeepEqual(originalStatusCopy, currentStatusCopy)
 }
 
 func (e *edged) syncNodeStatus() {

@@ -80,6 +80,8 @@ type Modules struct {
 	SyncController *SyncController `json:"syncController,omitempty"`
 	// DynamicController indicates DynamicController module config
 	DynamicController *DynamicController `json:"dynamicController,omitempty"`
+	// NodeLeaseController indicates NodeLeaseController module config
+	NodeLeaseController *NodeLeaseController `json:"nodeLeaseController,omitempty"`
 	// CloudStream indicates cloudstream module config
 	CloudStream *CloudStream `json:"cloudStream,omitempty"`
 	// Router indicates router module config
@@ -374,6 +376,14 @@ type SyncController struct {
 type DynamicController struct {
 	// Enable indicates whether dynamicController is enabled,
 	// if set to false (for debugging etc.), skip checking other dynamicController configs.
+	// default true
+	Enable bool `json:"enable"`
+}
+
+// NodeLeaseController indicates the nodelease controller
+type NodeLeaseController struct {
+	// Enable indicates whether nodeleaseController is enabled,
+	// if set to false (for debugging etc.), skip checking other nodeleaseController configs.
 	// default true
 	Enable bool `json:"enable"`
 }
