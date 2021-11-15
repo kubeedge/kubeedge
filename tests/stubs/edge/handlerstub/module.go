@@ -33,6 +33,8 @@ type HandlerStub struct {
 	podManager *PodManager
 }
 
+var _ core.Module = (*HandlerStub)(nil)
+
 func (*HandlerStub) Enable() bool {
 	return true
 }

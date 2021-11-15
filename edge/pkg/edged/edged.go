@@ -262,6 +262,8 @@ type edged struct {
 	podKiller PodKiller
 }
 
+var _ core.Module = (*edged)(nil)
+
 // Register register edged
 func Register(e *v1alpha1.Edged) {
 	edgedconfig.InitConfigure(e)

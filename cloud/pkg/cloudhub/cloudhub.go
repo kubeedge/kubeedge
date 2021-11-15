@@ -26,6 +26,8 @@ type cloudHub struct {
 	messageq             *channelq.ChannelMessageQueue
 }
 
+var _ core.Module = (*cloudHub)(nil)
+
 func newCloudHub(enable bool) *cloudHub {
 	crdFactory := informers.GetInformersManager().GetCRDInformerFactory()
 	// declare used informer

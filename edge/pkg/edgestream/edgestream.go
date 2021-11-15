@@ -40,6 +40,8 @@ type edgestream struct {
 	nodeIP           string
 }
 
+var _ core.Module = (*edgestream)(nil)
+
 func newEdgeStream(enable bool, hostnameOverride, nodeIP string) *edgestream {
 	return &edgestream{
 		enable:           enable,

@@ -38,6 +38,8 @@ type DynamicController struct {
 	applicationCenter            *application.Center
 }
 
+var _ core.Module = (*DynamicController)(nil)
+
 func Register(dc *configv1alpha1.DynamicController) {
 	config.InitConfigure(dc)
 	core.Register(newDynamicController(dc.Enable))
