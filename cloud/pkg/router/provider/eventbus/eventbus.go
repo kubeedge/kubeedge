@@ -104,7 +104,7 @@ func (*EventBus) Forward(target provider.Target, data interface{}) (response int
 	res["data"] = []byte(v)
 	resp, err := target.GoToTarget(res, nil)
 	if err != nil {
-		klog.Errorf("message is send to target fail. msgID: %s, target: %s, err:%v", message.GetID(), target.Name(), err)
+		klog.Errorf("message is send to target failed. msgID: %s, target: %s, err:%v", message.GetID(), target.Name(), err)
 		return nil, err
 	}
 	klog.Infof("message is send to target successfully. msgID: %s, target: %s", message.GetID(), target.Name())
