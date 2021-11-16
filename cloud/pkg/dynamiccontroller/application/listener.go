@@ -1,6 +1,8 @@
 package application
 
 import (
+	"strings"
+
 	"github.com/google/uuid"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -13,6 +15,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
 type SelectorListener struct {
@@ -54,7 +57,9 @@ func (l *SelectorListener) sendObj(event watch.Event, messageLayer messagelayer.
 	if namespace == "" {
 		namespace = v2.NullNamespace
 	}
-	resource, err := messagelayer.BuildResource(l.nodeName, namespace, l.gvr.Resource, accessor.GetName())
+	kind := util.UnsafeResourceToKind(l.gvr.Resource)
+	resourceType := strings.ToLower(kind)
+	resource, err := messagelayer.BuildResource(l.nodeName, namespace, resourceType, accessor.GetName())
 	if err != nil {
 		klog.Warningf("built message resource failed with error: %s", err)
 		return
