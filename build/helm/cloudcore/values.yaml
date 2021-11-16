@@ -1,0 +1,57 @@
+# Default values for kubeedge cloudcore.
+appVersion: "1.8.0"
+
+cloudCore:
+  hostNetWork: "true"
+  replicaCount: 1
+  image:
+    repository: "kubeedge/cloudcore"
+    tag: "v1.8.2"
+    pullPolicy: "IfNotPresent"
+  labels:
+    k8s-app: kubeedge
+    kubeedge: cloudcore
+  annotations: []
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: node-role.kubernetes.io/edge
+            operator: DoesNotExist
+          # - key: node-role.kubernetes.io/worker
+          #   operator: Exists
+  nodeSelector: []
+  tolerations: []
+  resources:
+    limits:
+      cpu: 200m
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 512Mi
+  modules:
+    cloudHub:
+      advertiseAddress:
+        - ""            
+      nodeLimit: "1000"
+      websocket:
+        enable: true
+      quic:
+        enable: false
+        maxIncomingStreams: "10000"
+      https:
+        enable: true
+    cloudStream:
+      enable: true
+    dynamicController:
+      enable: false
+    router:
+      enable: false
+  service:
+    type: NodePort
+    cloudhubNodePort: "30000"
+    cloudhubQuicNodePort: "30001"
+    cloudhubHttpsNodePort: "30002"
+    cloudstreamNodePort: "30003"
+    tunnelNodePort: "30004"
