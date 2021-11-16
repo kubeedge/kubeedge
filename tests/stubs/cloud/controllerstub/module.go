@@ -34,6 +34,8 @@ func init() {
 type ControllerStub struct {
 }
 
+var _ core.Module = (*ControllerStub)(nil)
+
 func (*ControllerStub) Enable() bool {
 	return true
 }

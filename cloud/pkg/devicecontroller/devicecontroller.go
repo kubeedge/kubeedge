@@ -20,6 +20,8 @@ type DeviceController struct {
 	enable     bool
 }
 
+var _ core.Module = (*DeviceController)(nil)
+
 func newDeviceController(enable bool) *DeviceController {
 	if !enable {
 		return &DeviceController{enable: enable}

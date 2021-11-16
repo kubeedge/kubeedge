@@ -17,6 +17,8 @@ type EdgeController struct {
 	downstream *controller.DownstreamController
 }
 
+var _ core.Module = (*EdgeController)(nil)
+
 func newEdgeController(config *v1alpha1.EdgeController, tunnelPort int) *EdgeController {
 	ec := &EdgeController{config: *config}
 	if !ec.Enable() {

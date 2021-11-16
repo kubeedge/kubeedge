@@ -30,6 +30,8 @@ type servicebus struct {
 	enable bool
 }
 
+var _ core.Module = (*servicebus)(nil)
+
 var htc = new(http.Client)
 var uc = new(util.URLClient)
 

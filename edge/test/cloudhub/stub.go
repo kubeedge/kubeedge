@@ -31,6 +31,8 @@ type stubCloudHub struct {
 	enable bool
 }
 
+var _ core.Module = (*stubCloudHub)(nil)
+
 func (*stubCloudHub) Name() string {
 	return "stubCloudHub"
 }

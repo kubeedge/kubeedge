@@ -26,6 +26,8 @@ type router struct {
 	enable bool
 }
 
+var _ core.Module = (*router)(nil)
+
 func newRouter(enable bool) *router {
 	return &router{
 		enable: enable,

@@ -28,6 +28,8 @@ type cloudStream struct {
 	enable bool
 }
 
+var _ core.Module = (*cloudStream)(nil)
+
 func newCloudStream(enable bool) *cloudStream {
 	return &cloudStream{
 		enable: enable,

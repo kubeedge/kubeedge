@@ -26,6 +26,8 @@ type eventbus struct {
 	enable bool
 }
 
+var _ core.Module = (*eventbus)(nil)
+
 func newEventbus(enable bool) *eventbus {
 	return &eventbus{
 		enable: enable,
