@@ -1,0 +1,534 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.6.2
+  creationTimestamp: null
+  name: devices.devices.kubeedge.io
+spec:
+  group: devices.kubeedge.io
+  names:
+    kind: Device
+    listKind: DeviceList
+    plural: devices
+    singular: device
+  scope: Namespaced
+  versions:
+  - name: v1alpha2
+    schema:
+      openAPIV3Schema:
+        description: Device is the Schema for the devices API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: DeviceSpec represents a single device instance. It is an
+              instantation of a device model.
+            properties:
+              data:
+                description: Data section describe a list of time-series properties
+                  which should be processed on edge node.
+                properties:
+                  dataProperties:
+                    description: 'Required: A list of data properties, which are not
+                      required to be processed by edgecore'
+                    items:
+                      description: DataProperty represents the device property for
+                        external use.
+                      properties:
+                        metadata:
+                          additionalProperties:
+                            type: string
+                          description: Additional metadata like timestamp when the
+                            value was reported etc.
+                          type: object
+                        propertyName:
+                          description: 'Required: The property name for which should
+                            be processed by external apps. This property should be
+                            present in the device model.'
+                          type: string
+                      type: object
+                    type: array
+                  dataTopic:
+                    description: Topic used by mapper, all data collected from dataProperties
+                      should be published to this topic, the default value is $ke/events/device/+/data/update
+                    type: string
+                type: object
+              deviceModelRef:
+                description: 'Required: DeviceModelRef is reference to the device
+                  model used as a template to create the device instance.'
+                properties:
+                  name:
+                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                      TODO: Add other useful fields. apiVersion, kind, uid?'
+                    type: string
+                type: object
+              nodeSelector:
+                description: NodeSelector indicates the binding preferences between
+                  devices and nodes. Refer to k8s.io/kubernetes/pkg/apis/core NodeSelector
+                  for more details
+                properties:
+                  nodeSelectorTerms:
+                    description: Required. A list of node selector terms. The terms
+                      are ORed.
+                    items:
+                      description: A null or empty node selector term matches no objects.
+                        The requirements of them are ANDed. The TopologySelectorTerm
+                        type implements a subset of the NodeSelectorTerm.
+                      properties:
+                        matchExpressions:
+                          description: A list of node selector requirements by node's
+                            labels.
+                          items:
+                            description: A node selector requirement is a selector
+                              that contains values, a key, and an operator that relates
+                              the key and values.
+                            properties:
+                              key:
+                                description: The label key that the selector applies
+                                  to.
+                                type: string
+                              operator:
+                                description: Represents a key's relationship to a
+                                  set of values. Valid operators are In, NotIn, Exists,
+                                  DoesNotExist. Gt, and Lt.
+                                type: string
+                              values:
+                                description: An array of string values. If the operator
+                                  is In or NotIn, the values array must be non-empty.
+                                  If the operator is Exists or DoesNotExist, the values
+                                  array must be empty. If the operator is Gt or Lt,
+                                  the values array must have a single element, which
+                                  will be interpreted as an integer. This array is
+                                  replaced during a strategic merge patch.
+                                items:
+                                  type: string
+                                type: array
+                            required:
+                            - key
+                            - operator
+                            type: object
+                          type: array
+                        matchFields:
+                          description: A list of node selector requirements by node's
+                            fields.
+                          items:
+                            description: A node selector requirement is a selector
+                              that contains values, a key, and an operator that relates
+                              the key and values.
+                            properties:
+                              key:
+                                description: The label key that the selector applies
+                                  to.
+                                type: string
+                              operator:
+                                description: Represents a key's relationship to a
+                                  set of values. Valid operators are In, NotIn, Exists,
+                                  DoesNotExist. Gt, and Lt.
+                                type: string
+                              values:
+                                description: An array of string values. If the operator
+                                  is In or NotIn, the values array must be non-empty.
+                                  If the operator is Exists or DoesNotExist, the values
+                                  array must be empty. If the operator is Gt or Lt,
+                                  the values array must have a single element, which
+                                  will be interpreted as an integer. This array is
+                                  replaced during a strategic merge patch.
+                                items:
+                                  type: string
+                                type: array
+                            required:
+                            - key
+                            - operator
+                            type: object
+                          type: array
+                      type: object
+                    type: array
+                required:
+                - nodeSelectorTerms
+                type: object
+              propertyVisitors:
+                description: List of property visitors which describe how to access
+                  the device properties. PropertyVisitors must unique by propertyVisitor.propertyName.
+                items:
+                  description: DevicePropertyVisitor describes the specifics of accessing
+                    a particular device property. Visitors are intended to be consumed
+                    by device mappers which connect to devices and collect data /
+                    perform actions on the device.
+                  properties:
+                    bluetooth:
+                      description: Bluetooth represents a set of additional visitor
+                        config fields of bluetooth protocol.
+                      properties:
+                        characteristicUUID:
+                          description: 'Required: Unique ID of the corresponding operation'
+                          type: string
+                        dataConverter:
+                          description: Responsible for converting the data being read
+                            from the bluetooth device into a form that is understandable
+                            by the platform
+                          properties:
+                            endIndex:
+                              description: 'Required: Specifies the end index of incoming
+                                byte stream to be considered to convert the data the
+                                value specified should be inclusive for example if
+                                3 is specified it includes the third index'
+                              type: integer
+                            orderOfOperations:
+                              description: Specifies in what order the operations(which
+                                are required to be performed to convert incoming data
+                                into understandable form) are performed
+                              items:
+                                description: Specify the operation that should be
+                                  performed to convert incoming data into understandable
+                                  form
+                                properties:
+                                  operationType:
+                                    description: 'Required: Specifies the operation
+                                      to be performed to convert incoming data'
+                                    type: string
+                                  operationValue:
+                                    description: 'Required: Specifies with what value
+                                      the operation is to be performed'
+                                    type: number
+                                type: object
+                              type: array
+                            shiftLeft:
+                              description: Refers to the number of bits to shift left,
+                                if left-shift operation is necessary for conversion
+                              type: integer
+                            shiftRight:
+                              description: Refers to the number of bits to shift right,
+                                if right-shift operation is necessary for conversion
+                              type: integer
+                            startIndex:
+                              description: 'Required: Specifies the start index of
+                                the incoming byte stream to be considered to convert
+                                the data. For example: start-index:2, end-index:3
+                                concatenates the value present at second and third
+                                index of the incoming byte stream. If we want to reverse
+                                the order we can give it as start-index:3, end-index:2'
+                              type: integer
+                          type: object
+                        dataWrite:
+                          additionalProperties:
+                            format: byte
+                            type: string
+                          description: 'Responsible for converting the data coming
+                            from the platform into a form that is understood by the
+                            bluetooth device For example: "ON":[1], "OFF":[0]'
+                          type: object
+                      type: object
+                    collectCycle:
+                      description: Define how frequent mapper will collect from device.
+                      format: int64
+                      type: integer
+                    customizedProtocol:
+                      description: CustomizedProtocol represents a set of visitor
+                        config fields of bluetooth protocol.
+                      properties:
+                        configData:
+                          description: 'Required: The configData of customized protocol'
+                          type: object
+                          x-kubernetes-preserve-unknown-fields: true
+                        protocolName:
+                          description: 'Required: name of customized protocol'
+                          type: string
+                      type: object
+                    customizedValues:
+                      description: Customized values for visitor of provided protocols
+                      type: object
+                      x-kubernetes-preserve-unknown-fields: true
+                    modbus:
+                      description: Modbus represents a set of additional visitor config
+                        fields of modbus protocol.
+                      properties:
+                        isRegisterSwap:
+                          description: Indicates whether the high and low register
+                            swapped. Defaults to false.
+                          type: boolean
+                        isSwap:
+                          description: Indicates whether the high and low byte swapped.
+                            Defaults to false.
+                          type: boolean
+                        limit:
+                          description: 'Required: Limit number of registers to read/write.'
+                          format: int64
+                          type: integer
+                        offset:
+                          description: 'Required: Offset indicates the starting register
+                            number to read/write data.'
+                          format: int64
+                          type: integer
+                        register:
+                          description: 'Required: Type of register'
+                          enum:
+                          - CoilRegister
+                          - DiscreteInputRegister
+                          - InputRegister
+                          - HoldingRegister
+                          type: string
+                        scale:
+                          description: The scale to convert raw property data into
+                            final units. Defaults to 1.0
+                          type: number
+                      type: object
+                    opcua:
+                      description: Opcua represents a set of additional visitor config
+                        fields of opc-ua protocol.
+                      properties:
+                        browseName:
+                          description: The name of opc-ua node
+                          type: string
+                        nodeID:
+                          description: 'Required: The ID of opc-ua node, e.g. "ns=1,i=1005"'
+                          type: string
+                      type: object
+                    propertyName:
+                      description: 'Required: The device property name to be accessed.
+                        This should refer to one of the device properties defined
+                        in the device model.'
+                      type: string
+                    reportCycle:
+                      description: Define how frequent mapper will report the value.
+                      format: int64
+                      type: integer
+                  type: object
+                type: array
+              protocol:
+                description: 'Required: The protocol configuration used to connect
+                  to the device.'
+                properties:
+                  bluetooth:
+                    description: Protocol configuration for bluetooth
+                    properties:
+                      macAddress:
+                        description: Unique identifier assigned to the device.
+                        type: string
+                    type: object
+                  common:
+                    description: Configuration for protocol common part
+                    properties:
+                      collectRetryTimes:
+                        description: Define retry times of mapper will collect from
+                          device.
+                        format: int64
+                        type: integer
+                      collectTimeout:
+                        description: Define timeout of mapper collect from device.
+                        format: int64
+                        type: integer
+                      collectType:
+                        description: Define collect type, sync or async.
+                        enum:
+                        - sync
+                        - async
+                        type: string
+                      com:
+                        properties:
+                          baudRate:
+                            description: Required. BaudRate 115200|57600|38400|19200|9600|4800|2400|1800|1200|600|300|200|150|134|110|75|50
+                            enum:
+                            - 115200
+                            - 57600
+                            - 38400
+                            - 19200
+                            - 9600
+                            - 4800
+                            - 2400
+                            - 1800
+                            - 1200
+                            - 600
+                            - 300
+                            - 200
+                            - 150
+                            - 134
+                            - 110
+                            - 75
+                            - 50
+                            format: int64
+                            type: integer
+                          dataBits:
+                            description: Required. Valid values are 8, 7, 6, 5.
+                            enum:
+                            - 8
+                            - 7
+                            - 6
+                            - 5
+                            format: int64
+                            type: integer
+                          parity:
+                            description: Required. Valid options are "none", "even",
+                              "odd". Defaults to "none".
+                            enum:
+                            - none
+                            - even
+                            - odd
+                            type: string
+                          serialPort:
+                            description: Required.
+                            type: string
+                          stopBits:
+                            description: Required. Bit that stops 1|2
+                            enum:
+                            - 1
+                            - 2
+                            format: int64
+                            type: integer
+                        type: object
+                      commType:
+                        description: Communication type, like tcp client, tcp server
+                          or COM
+                        type: string
+                      customizedValues:
+                        description: Customized values for provided protocol
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      reconnRetryTimes:
+                        description: Reconnecting retry times
+                        format: int64
+                        type: integer
+                      reconnTimeout:
+                        description: Reconnection timeout
+                        format: int64
+                        type: integer
+                      tcp:
+                        properties:
+                          ip:
+                            description: Required.
+                            type: string
+                          port:
+                            description: Required.
+                            format: int64
+                            type: integer
+                        type: object
+                    type: object
+                  customizedProtocol:
+                    description: Configuration for customized protocol
+                    properties:
+                      configData:
+                        description: Any config data
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      protocolName:
+                        description: Unique protocol name Required.
+                        type: string
+                    type: object
+                  modbus:
+                    description: Protocol configuration for modbus
+                    properties:
+                      slaveID:
+                        description: Required. 0-255
+                        format: int64
+                        type: integer
+                    type: object
+                  opcua:
+                    description: Protocol configuration for opc-ua
+                    properties:
+                      certificate:
+                        description: Certificate for access opc server.
+                        type: string
+                      password:
+                        description: Password for access opc server.
+                        type: string
+                      privateKey:
+                        description: PrivateKey for access opc server.
+                        type: string
+                      securityMode:
+                        description: Defaults to "none".
+                        type: string
+                      securityPolicy:
+                        description: Defaults to "none".
+                        type: string
+                      timeout:
+                        description: Timeout seconds for the opc server connection.???
+                        format: int64
+                        type: integer
+                      url:
+                        description: 'Required: The URL for opc server endpoint.'
+                        type: string
+                      userName:
+                        description: Username for access opc server.
+                        type: string
+                    type: object
+                type: object
+            type: object
+          status:
+            description: DeviceStatus reports the device state and the desired/reported
+              values of twin attributes.
+            properties:
+              twins:
+                description: 'A list of device twins containing desired/reported desired/reported
+                  values of twin properties.. Optional: A passive device won''t have
+                  twin properties and this list could be empty.'
+                items:
+                  description: Twin provides a logical representation of control properties
+                    (writable properties in the device model). The properties can
+                    have a Desired state and a Reported state. The cloud configures
+                    the `Desired`state of a device property and this configuration
+                    update is pushed to the edge node. The mapper sends a command
+                    to the device to change this property value as per the desired
+                    state . It receives the `Reported` state of the property once
+                    the previous operation is complete and sends the reported state
+                    to the cloud. Offline device interaction in the edge is possible
+                    via twin properties for control/command operations.
+                  properties:
+                    desired:
+                      description: 'Required: the desired property value.'
+                      properties:
+                        metadata:
+                          additionalProperties:
+                            type: string
+                          description: Additional metadata like timestamp when the
+                            value was reported etc.
+                          type: object
+                        value:
+                          description: 'Required: The value for this property.'
+                          type: string
+                      required:
+                      - value
+                      type: object
+                    propertyName:
+                      description: 'Required: The property name for which the desired/reported
+                        values are specified. This property should be present in the
+                        device model.'
+                      type: string
+                    reported:
+                      description: 'Required: the reported property value.'
+                      properties:
+                        metadata:
+                          additionalProperties:
+                            type: string
+                          description: Additional metadata like timestamp when the
+                            value was reported etc.
+                          type: object
+                        value:
+                          description: 'Required: The value for this property.'
+                          type: string
+                      required:
+                      - value
+                      type: object
+                  type: object
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
