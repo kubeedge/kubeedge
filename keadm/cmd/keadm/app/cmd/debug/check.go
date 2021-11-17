@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"strconv"
@@ -56,7 +55,7 @@ and maintenance personnel to locate the problem`
 type CheckObject common.CheckObject
 
 // NewCheck returns KubeEdge edge check command.
-func NewCheck(out io.Writer, collectOptions *common.CheckOptions) *cobra.Command {
+func NewCheck() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "check",
 		Short:   edgeCheckShortDescription,
@@ -64,13 +63,13 @@ func NewCheck(out io.Writer, collectOptions *common.CheckOptions) *cobra.Command
 		Example: edgeCheckExample,
 	}
 	for _, v := range common.CheckObjectMap {
-		cmd.AddCommand(NewSubEdgeCheck(out, CheckObject(v)))
+		cmd.AddCommand(NewSubEdgeCheck(CheckObject(v)))
 	}
 	return cmd
 }
 
 // NewSubEdgeCheck returns KubeEdge edge check subcommand.
-func NewSubEdgeCheck(out io.Writer, object CheckObject) *cobra.Command {
+func NewSubEdgeCheck(object CheckObject) *cobra.Command {
 	co := NewCheckOptions()
 	cmd := &cobra.Command{
 		Short: object.Desc,

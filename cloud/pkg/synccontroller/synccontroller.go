@@ -41,6 +41,8 @@ type SyncController struct {
 	informersSyncedFuncs []cache.InformerSynced
 }
 
+var _ core.Module = (*SyncController)(nil)
+
 func newSyncController(enable bool) *SyncController {
 	var sctl = &SyncController{
 		enable:     enable,

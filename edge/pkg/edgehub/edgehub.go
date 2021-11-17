@@ -26,6 +26,8 @@ type EdgeHub struct {
 	enable        bool
 }
 
+var _ core.Module = (*EdgeHub)(nil)
+
 func newEdgeHub(enable bool) *EdgeHub {
 	return &EdgeHub{
 		reconnectChan: make(chan struct{}),

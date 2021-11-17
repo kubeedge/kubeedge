@@ -147,14 +147,16 @@ func delRule(namespace, name string) {
 	rule := v.(*routerv1.Rule)
 
 	source, err := getSourceOfRule(rule)
-	if err != nil {
-		klog.Error(err)
-		return
+	// if source not exist, skip UnregisterListener
+	if err == nil {
+		klog.V(4).Infof("delRule: source of rule:%s exist, do UnregisterListener", rule.Spec.Source)
+		source.UnregisterListener()
+	} else {
+		klog.Warningf("delRule: source of rule:%s not exist, unnecessary do UnregisterListener:%v", rule.Spec.Source, err)
 	}
-	source.UnregisterListener()
 
 	rules.Delete(ruleKey)
-	klog.Infof("delete rule success: %s", ruleKey)
+	klog.V(4).Infof("delete rule success: %s", ruleKey)
 }
 
 func getSourceOfRule(rule *routerv1.Rule) (provider.Source, error) {

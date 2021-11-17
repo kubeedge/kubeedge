@@ -17,7 +17,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"strings"
 
@@ -29,7 +28,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/cli-runtime/pkg/printers"
-	"k8s.io/klog/v2"
 	api "k8s.io/kubernetes/pkg/apis/core"
 	k8s_v1_api "k8s.io/kubernetes/pkg/apis/core/v1"
 	k8sprinters "k8s.io/kubernetes/pkg/printers"
@@ -90,10 +88,8 @@ keadm debug get all -o yaml`
 )
 
 // NewCmdDebugGet returns keadm debug get command.
-func NewCmdDebugGet(out io.Writer, getOption *GetOptions) *cobra.Command {
-	if getOption == nil {
-		getOption = NewGetOptions()
-	}
+func NewCmdDebugGet() *cobra.Command {
+	getOption := NewGetOptions()
 
 	cmd := &cobra.Command{
 		Use:     "get",
@@ -104,7 +100,7 @@ func NewCmdDebugGet(out io.Writer, getOption *GetOptions) *cobra.Command {
 			if err := getOption.Validate(args); err != nil {
 				CheckErr(err, fatal)
 			}
-			if err := getOption.Run(args, out); err != nil {
+			if err := getOption.Run(args); err != nil {
 				CheckErr(err, fatal)
 			}
 		},
@@ -169,7 +165,7 @@ type GetOptions struct {
 }
 
 // Run performs the get operation.
-func (g *GetOptions) Run(args []string, out io.Writer) error {
+func (g *GetOptions) Run(args []string) error {
 	resType := args[0]
 	resNames := args[1:]
 	results, err := g.queryDataFromDatabase(availableResources[resType], resNames)
@@ -196,16 +192,16 @@ func (g *GetOptions) Run(args []string, out io.Writer) error {
 	}
 
 	if len(results) == 0 {
-		if _, err := fmt.Fprintf(out, "No resources found in %v namespace.\n", g.Namespace); err != nil {
+		if _, err := fmt.Printf("No resources found in %v namespace.\n", g.Namespace); err != nil {
 			return err
 		}
 		return nil
 	}
 	if *g.PrintFlags.OutputFormat == "" || *g.PrintFlags.OutputFormat == FormatTypeWIDE {
-		return HumanReadablePrint(results, printer, out)
+		return HumanReadablePrint(results, printer)
 	}
 
-	return JSONYamlPrint(results, printer, out)
+	return JSONYamlPrint(results, printer)
 }
 
 // IsAllowedFormat verification support format
@@ -539,21 +535,18 @@ func SplitSelectorParameters(args string) ([]Selector, error) {
 	return results, nil
 }
 
-func HumanReadablePrint(results []dao.Meta, printer printers.ResourcePrinter, out io.Writer) error {
+func HumanReadablePrint(results []dao.Meta, printer printers.ResourcePrinter) error {
 	res, err := ParseMetaToAPIList(results)
 	if err != nil {
-		klog.Exit(err)
+		return err
 	}
 	for _, r := range res {
 		table, err := ConvertDataToTable(r)
 		if err != nil {
-			klog.Exit(err)
+			return err
 		}
-		if err := printer.PrintObj(table, out); err != nil {
-			klog.Exit(err)
-		}
-		if _, err := fmt.Fprintln(out); err != nil {
-			klog.Exit(err)
+		if err := printer.PrintObj(table, os.Stdout); err != nil {
+			return err
 		}
 	}
 	return nil
@@ -649,7 +642,7 @@ func ConvertDataToTable(obj runtime.Object) (runtime.Object, error) {
 }
 
 // JSONYamlPrint Output the data in json|yaml format
-func JSONYamlPrint(results []dao.Meta, printer printers.ResourcePrinter, out io.Writer) error {
+func JSONYamlPrint(results []dao.Meta, printer printers.ResourcePrinter) error {
 	var obj runtime.Object
 	list := v1.List{
 		TypeMeta: metav1.TypeMeta{
@@ -686,7 +679,7 @@ func JSONYamlPrint(results []dao.Meta, printer printers.ResourcePrinter, out io.
 	} else {
 		obj = objectList[0]
 	}
-	if err := PrintGeneric(printer, obj, out); err != nil {
+	if err := PrintGeneric(printer, obj); err != nil {
 		return err
 	}
 
@@ -850,7 +843,7 @@ func ParseMetaToV1List(results []dao.Meta) ([]runtime.Object, error) {
 }
 
 // PrintGeneric Output object data to out stream through printer
-func PrintGeneric(printer printers.ResourcePrinter, obj runtime.Object, out io.Writer) error {
+func PrintGeneric(printer printers.ResourcePrinter, obj runtime.Object) error {
 	isList := meta.IsListType(obj)
 	if isList {
 		items, err := meta.ExtractList(obj)
@@ -876,7 +869,7 @@ func PrintGeneric(printer printers.ResourcePrinter, obj runtime.Object, out io.W
 		for _, item := range items {
 			list.Items = append(list.Items, *item.(*unstructured.Unstructured))
 		}
-		if err := printer.PrintObj(list, out); err != nil {
+		if err := printer.PrintObj(list, os.Stdout); err != nil {
 			return err
 		}
 	} else {
@@ -888,7 +881,7 @@ func PrintGeneric(printer printers.ResourcePrinter, obj runtime.Object, out io.W
 		if err := json.Unmarshal(data, &value); err != nil {
 			return err
 		}
-		if err := printer.PrintObj(&unstructured.Unstructured{Object: value}, out); err != nil {
+		if err := printer.PrintObj(&unstructured.Unstructured{Object: value}, os.Stdout); err != nil {
 			return err
 		}
 	}

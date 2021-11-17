@@ -30,6 +30,8 @@ type cloudStream struct {
 	tunnelPort int
 }
 
+var _ core.Module = (*cloudStream)(nil)
+
 func newCloudStream(enable bool, tunnelPort int) *cloudStream {
 	return &cloudStream{
 		enable: enable,

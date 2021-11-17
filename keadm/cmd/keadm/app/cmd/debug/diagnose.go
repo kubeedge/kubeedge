@@ -3,7 +3,6 @@ package debug
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
@@ -38,7 +37,7 @@ keadm debug diagnose install -i 192.168.1.2
 type Diagnose common.DiagnoseObject
 
 // NewDiagnose returns KubeEdge edge debug Diagnose command.
-func NewDiagnose(out io.Writer, diagnoseOptions *common.DiagnoseOptions) *cobra.Command {
+func NewDiagnose() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "diagnose",
 		Short:   edgeDiagnoseShortDescription,
@@ -46,12 +45,12 @@ func NewDiagnose(out io.Writer, diagnoseOptions *common.DiagnoseOptions) *cobra.
 		Example: edgeDiagnoseExample,
 	}
 	for _, v := range common.DiagnoseObjectMap {
-		cmd.AddCommand(NewSubDiagnose(out, Diagnose(v)))
+		cmd.AddCommand(NewSubDiagnose(Diagnose(v)))
 	}
 	return cmd
 }
 
-func NewSubDiagnose(out io.Writer, object Diagnose) *cobra.Command {
+func NewSubDiagnose(object Diagnose) *cobra.Command {
 	do := NewDiagnoseOptions()
 	cmd := &cobra.Command{
 		Short: object.Desc,
