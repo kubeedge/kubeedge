@@ -75,23 +75,27 @@ func (e *edgestream) Start() {
 		Path:   "/v1/kubeedge/connect",
 	}
 	// TODO: Will improve in the future
-	ok := <-edgehub.HasTLSTunnelCerts
-	if ok {
-		cert, err := tls.LoadX509KeyPair(config.Config.TLSTunnelCertFile, config.Config.TLSTunnelPrivateKeyFile)
-		if err != nil {
-			klog.Exitf("Failed to load x509 key pair: %v", err)
-		}
-		tlsConfig := &tls.Config{
-			InsecureSkipVerify: true,
-			Certificates:       []tls.Certificate{cert},
-		}
+	if ok := <-edgehub.HasTLSTunnelCerts; !ok {
+		klog.Exitf("Failed to find cert key pair")
+	}
 
-		for range time.NewTicker(time.Second * 2).C {
-			select {
-			case <-beehiveContext.Done():
-				return
-			default:
-			}
+	cert, err := tls.LoadX509KeyPair(config.Config.TLSTunnelCertFile, config.Config.TLSTunnelPrivateKeyFile)
+	if err != nil {
+		klog.Exitf("Failed to load x509 key pair: %v", err)
+	}
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+		Certificates:       []tls.Certificate{cert},
+	}
+
+	ticker := time.NewTicker(time.Second * 2)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-beehiveContext.Done():
+			return
+		case <-ticker.C:
 			err := e.TLSClientConnect(serverURL, tlsConfig)
 			if err != nil {
 				klog.Errorf("TLSClientConnect error %v", err)

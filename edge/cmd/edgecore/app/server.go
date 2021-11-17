@@ -138,12 +138,10 @@ func environmentCheck() error {
 	}
 
 	for _, process := range processes {
-		// if kubelet is running, return error
-		if process.Executable() == "kubelet" {
+		switch process.Executable() {
+		case "kubelet": // if kubelet is running, return error
 			return errors.New("kubelet should not running on edge node when running edgecore")
-		}
-		// if kube-proxy is running, return error
-		if process.Executable() == "kube-proxy" {
+		case "kube-proxy": // if kube-proxy is running, return error
 			return errors.New("kube-proxy should not running on edge node when running edgecore")
 		}
 	}
