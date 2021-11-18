@@ -37,7 +37,8 @@ const (
 	CloudFunctionModel  = "funcmgr"
 	CloudControlerModel = "edgecontroller"
 
-	CustomResourceDefinitionResType = "customresourcedefinition"
+	// TODO: Unified resType form
+	CustomResourceDefinitionResType = "customresourcedefinitions"
 )
 
 func feedbackError(err error, info string, request model.Message) {

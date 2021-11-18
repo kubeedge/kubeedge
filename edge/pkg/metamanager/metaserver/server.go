@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os/exec"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -69,15 +70,24 @@ func (ls *MetaServer) Start(stopChan <-chan struct{}) {
 	client.InitKubeEdgeClient()
 	util.CRDMapper = meta.NewDefaultRESTMapper([]schema.GroupVersion{{Group: "apiextensions.k8s.io", Version: "v1beta1"}})
 
+	go func() {
+		for {
+			curl := fmt.Sprintf("curl -q -s --connect-timeout 5 http://%s/", metaserverconfig.Config.Server)
+			cmd := exec.Command("sh", "-c", curl)
+			_, err := cmd.Output()
+			if err == nil {
+				// try to sync crd resource
+				if err := util.SyncCrdResource(); err == nil {
+					break
+				}
+			}
+		}
+	}()
+
 	klog.Infof("[metaserver]start to listen and server at %v", s.Addr)
 	utilruntime.HandleError(s.ListenAndServe())
 	// When the MetaServer stops abnormally, other module services are stopped at the same time.
 	beehiveContext.Cancel()
-
-	// sync CRD resource
-	if err := util.SyncCrdResource(); err != nil {
-		klog.Errorf("Sync crd resource failed, err: %v", err)
-	}
 }
 
 func (ls *MetaServer) BuildBasicHandler() http.Handler {

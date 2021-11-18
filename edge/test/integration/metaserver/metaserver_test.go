@@ -92,13 +92,10 @@ var _ = Describe("Test MetaServer", func() {
 		AfterEach(func() {
 			IsCRDDeleted := helpers.HandleAddAndDeleteCRDs(http.MethodDelete, ctx.Cfg.TestManager+CrdHandler, gatewaysName, gatewaysKind, gatewaysPlural)
 			Expect(IsCRDDeleted).Should(BeTrue())
-			time.Sleep(2 * time.Second)
 			IsCRDDeleted = helpers.HandleAddAndDeleteCRDs(http.MethodDelete, ctx.Cfg.TestManager+CrdHandler, serviceentryName, serviceentryKind, serviceentryPlural)
 			Expect(IsCRDDeleted).Should(BeTrue())
-			time.Sleep(2 * time.Second)
 			IsCRDDeleted = helpers.HandleAddAndDeleteCRDInstances(http.MethodDelete, ctx.Cfg.TestManager+CrdInstanceHandler, "test-gateway", gatewaysKind)
 			Expect(IsCRDDeleted).Should(BeTrue())
-			time.Sleep(2 * time.Second)
 			IsCRDDeleted = helpers.HandleAddAndDeleteCRDInstances(http.MethodDelete, ctx.Cfg.TestManager+CrdInstanceHandler, "test-serviceentry", serviceentryKind)
 			Expect(IsCRDDeleted).Should(BeTrue())
 		})
