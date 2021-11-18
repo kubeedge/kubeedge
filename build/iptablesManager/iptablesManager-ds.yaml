@@ -17,19 +17,25 @@ spec:
     spec:
       serviceAccount: iptables-manager-sa
       hostNetwork: true
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/edge
+                operator: DoesNotExist
+      restartPolicy: Always
       containers:
         - name: iptables-manager
           command: ['iptables-manager']
           image: kubeedge/iptables-manager:latest
           imagePullPolicy: IfNotPresent
-          env:
-            - name: FORWARD_PORT
-              value: "10003"
           securityContext:
             capabilities:
               add:
                 - NET_ADMIN
                 - NET_RAW
+
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -39,6 +45,7 @@ metadata:
     kubeedge: iptables-manager
   name: iptables-manager-sa
   namespace: kubeedge
+
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -55,6 +62,7 @@ subjects:
 - kind: ServiceAccount
   name: iptables-manager-sa
   namespace: kubeedge
+
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole

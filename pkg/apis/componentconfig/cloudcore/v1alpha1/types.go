@@ -430,9 +430,6 @@ type IptablesManager struct {
 	// The iptables manager component with the internal mode is always deployed inside the cloudcore, will share the host network, forward to the internal port of the tunnel port.
 	// The iptables manager component with the external mode is always deployed outside the cloudcore, will share the host network, forward to the internal cloudcore service and port.
 	// default internal.
+	// +kubebuilder:validation:Enum=internal;external
 	Mode string `json:"mode,omitempty"`
-	// It indicates the destination port that the component wants to forward.
-	// The stream port(10003) is used by default.
-	// occurs in containerized deployment outside cloudcore, it needs to be modified as needed.
-	ForwardPort uint32 `json:"forwardPort,omitempty"`
 }

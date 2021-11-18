@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 
 	"github.com/spf13/cobra"
@@ -48,28 +47,14 @@ func NewIptablesManagerCommand() *cobra.Command {
 			verflag.PrintAndExitIfRequested()
 			flag.PrintFlags(cmd.Flags())
 
-			if opts.ForwardPort == 0 {
-				// try to get from env
-				forwardPort, err := strconv.ParseInt(os.Getenv("FORWARD_PORT"), 10, 32)
-				if err != nil {
-					opts.ForwardPort = 10003
-				} else {
-					opts.ForwardPort = uint32(forwardPort)
-				}
-			}
-
 			// init kubeedge client
 			var kubeAPIConfig v1alpha1.KubeAPIConfig
 			kubeAPIConfig.KubeConfig = opts.KubeConfig
 			client.InitKubeEdgeClient(&kubeAPIConfig)
 
-			var imConfig v1alpha1.IptablesManager
-			imConfig.Enable = true
-			imConfig.ForwardPort = opts.ForwardPort
-			imConfig.Mode = "external"
 			gis := informers.GetInformersManager()
 			// The external mode will share the host network, forward to the inner stream port of the cloudcore.
-			go iptables.NewIptablesManager(&imConfig).Run()
+			go iptables.NewIptablesManager().Run()
 			gis.Start(beehiveContext.Done())
 
 			c := make(chan os.Signal, 1)

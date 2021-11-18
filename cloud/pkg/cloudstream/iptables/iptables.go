@@ -18,7 +18,6 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/common/constants"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
 type Manager struct {
@@ -26,7 +25,6 @@ type Manager struct {
 	cmLister            v1.ConfigMapLister
 	cmListerSynced      cache.InformerSynced
 	preTunnelPortRecord *TunnelPortRecord
-	config              *v1alpha1.IptablesManager
 }
 
 type TunnelPortRecord struct {
@@ -45,6 +43,7 @@ type iptablesJumpChain struct {
 const (
 	// the tunnelPort chain
 	tunnelPortChain utiliptables.Chain = "TUNNEL-PORT"
+	streamPort                         = 10003
 )
 
 var iptablesJumpChains = []iptablesJumpChain{
@@ -52,7 +51,7 @@ var iptablesJumpChains = []iptablesJumpChain{
 	{utiliptables.TableNAT, tunnelPortChain, utiliptables.ChainPrerouting, "kubeedge tunnel port", nil},
 }
 
-func NewIptablesManager(config *v1alpha1.IptablesManager) *Manager {
+func NewIptablesManager() *Manager {
 	protocol := utiliptables.ProtocolIPv4
 	exec := utilexec.New()
 	iptInterface := utiliptables.New(exec, protocol)
@@ -63,7 +62,6 @@ func NewIptablesManager(config *v1alpha1.IptablesManager) *Manager {
 			IPTunnelPort: make(map[string]int),
 			Port:         make(map[int]bool),
 		},
-		config: config,
 	}
 
 	// informer factory
@@ -114,12 +112,10 @@ func (im *Manager) reconcile() {
 		return
 	}
 
-	var forwardPort uint32 = im.config.ForwardPort
-
 	for _, ipports := range addedIPPort {
 		ipport := strings.Split(ipports, ":")
 		ip, port := ipport[0], ipport[1]
-		args := append([]string{"-p", "tcp", "-j", "DNAT", "--dport", port, "--to", ip + ":" + strconv.Itoa(int(forwardPort))})
+		args := append([]string{"-p", "tcp", "-j", "DNAT", "--dport", port, "--to", ip + ":" + strconv.Itoa(int(streamPort))})
 		if _, err := im.iptables.EnsureRule(utiliptables.Append, utiliptables.TableNAT, tunnelPortChain, args...); err != nil {
 			klog.ErrorS(err, "Failed to ensure rules", "table", utiliptables.TableNAT, "chain", tunnelPortChain)
 			return
@@ -129,7 +125,7 @@ func (im *Manager) reconcile() {
 	for _, ipports := range deletedIPPort {
 		ipport := strings.Split(ipports, ":")
 		ip, port := ipport[0], ipport[1]
-		args := append([]string{"-p", "tcp", "-j", "DNAT", "--dport", port, "--to", ip + ":" + strconv.Itoa(int(forwardPort))})
+		args := append([]string{"-p", "tcp", "-j", "DNAT", "--dport", port, "--to", ip + ":" + strconv.Itoa(int(streamPort))})
 		if err := im.iptables.DeleteRule(utiliptables.TableNAT, tunnelPortChain, args...); err != nil {
 			klog.ErrorS(err, "Failed to delete rules", "table", utiliptables.TableNAT, "chain", tunnelPortChain)
 			return
@@ -163,7 +159,7 @@ func (im *Manager) getAddedAndDeletedCloudCoreIPPort() ([]string, []string, erro
 func (im *Manager) getLatestTunnelPortRecords() (*TunnelPortRecord, error) {
 	configmap, err := im.cmLister.ConfigMaps(constants.SystemNamespace).Get(modules.TunnelPort)
 	if err != nil {
-		return nil, errors.New("failed to get configmap for iptables manager")
+		return nil, errors.New("failed to get tunnelport configmap for iptables manager")
 	}
 
 	recordStr, found := configmap.Annotations[modules.TunnelPortRecordAnnotationKey]
