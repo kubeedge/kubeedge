@@ -69,10 +69,9 @@ spec:
         - mountPath: /etc/localtime
           name: host-time
           readOnly: true
-        {{- if eq .Values.cloudCore.hostNetWork "true" }}
-        securityContext:
-          privileged: true
-        {{- end }}
+        {{- with .Values.cloudCore.securityContext }}
+        securityContext: {{ toYaml . | nindent 10 }}
+        {{- end }} 
         {{- with .Values.cloudCore.resources }}
         resources: {{ toYaml . | nindent 10 }}
         {{- end }} 

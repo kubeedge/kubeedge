@@ -8,6 +8,8 @@ cloudCore:
     repository: "kubeedge/cloudcore"
     tag: "v1.8.2"
     pullPolicy: "IfNotPresent"
+  securityContext:
+    privileged: true
   labels:
     k8s-app: kubeedge
     kubeedge: cloudcore
