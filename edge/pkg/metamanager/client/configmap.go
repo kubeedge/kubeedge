@@ -71,7 +71,7 @@ func (c *configMaps) Get(name string) (*api.ConfigMap, error) {
 
 func handleConfigMapFromMetaDB(content []byte) (*api.ConfigMap, error) {
 	var lists []string
-	err := json.Unmarshal([]byte(content), &lists)
+	err := json.Unmarshal(content, &lists)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal message to ConfigMap list from db failed, err: %v", err)
 	}
