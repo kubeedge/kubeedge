@@ -100,6 +100,9 @@ func addJoinOtherFlags(cmd *cobra.Command, joinOptions *types.JoinOptions) {
 	cmd.Flags().StringVarP(&joinOptions.EdgeNodeName, types.EdgeNodeName, "i", joinOptions.EdgeNodeName,
 		"KubeEdge Node unique identification string, If flag not used then the command will generate a unique id on its own")
 
+	cmd.Flags().StringVarP(&joinOptions.EdgeNodeIP, types.EdgeNodeIP, "a", joinOptions.EdgeNodeIP,
+		"KubeEdge Node internal IP reported to K8s cluster, If flag not used then the command will use the IP address read from node network")
+
 	cmd.Flags().StringVarP(&joinOptions.RemoteRuntimeEndpoint, types.RemoteRuntimeEndpoint, "p", joinOptions.RemoteRuntimeEndpoint,
 		"KubeEdge Edge Node RemoteRuntimeEndpoint string, If flag not set, it will use unix:///var/run/dockershim.sock")
 
@@ -109,11 +112,36 @@ func addJoinOtherFlags(cmd *cobra.Command, joinOptions *types.JoinOptions) {
 	cmd.Flags().StringVarP(&joinOptions.CertPort, types.CertPort, "s", joinOptions.CertPort,
 		"The port where to apply for the edge certificate")
 
+	cmd.Flags().StringVarP(&joinOptions.QuicPort, types.QuicPort, "q", joinOptions.QuicPort,
+		"The port where to apply for the edge quic")
+
+	cmd.Flags().StringVarP(&joinOptions.TunnelPort, types.TunnelPort, "n", joinOptions.TunnelPort,
+		"The port where to apply for the edge stream connected tunnel")
+
 	cmd.Flags().StringVar(&joinOptions.TarballPath, types.TarballPath, joinOptions.TarballPath,
 		"Use this key to set the temp directory path for KubeEdge tarball, if not exist, download it")
 
 	cmd.Flags().StringSliceVarP(&joinOptions.Labels, types.Labels, "l", joinOptions.Labels,
-		`use this key to set the customized labels for node. you can input customized labels like key1=value1,key2=value2`)
+		`Use this key to set the customized labels for node. you can input customized labels like key1=value1,key2=value2`)
+
+	cmd.Flags().BoolVarP(&joinOptions.EnableDefaultTaint, types.EnableDefaultTaint, "w", joinOptions.EnableDefaultTaint,
+		"To determine whether to add NoSchedule taint to the edge node")
+
+	cmd.Flags().BoolVarP(&joinOptions.EnableMetaServer, types.EnableMetaServer, "m", joinOptions.EnableMetaServer,
+		"To determine whether to enable metaServer component on edge node")
+
+	cmd.Flags().BoolVarP(&joinOptions.EnableServiceBus, types.EnableServiceBus, "k", joinOptions.EnableServiceBus,
+		"To determine whether to enable serviceBus component on edge node")
+
+	cmd.Flags().StringVarP(&joinOptions.DownloadRegion, types.DownloadRegion, "z", joinOptions.DownloadRegion,
+		"To distinguish download links for KubeEdge EdgeCore and Services, could be 'zh' or 'en'")
+
+	cmd.Flags().StringVarP(&joinOptions.KubeEdgeDownloadURL, types.KubeEdgeDownloadURL, "d", joinOptions.KubeEdgeDownloadURL,
+		"The custom download url for KubeEdge tar file and checksum file. i.e: https://github.com/kubeedge/kubeedge/releases/download")
+
+	cmd.Flags().StringVarP(&joinOptions.ServiceFileURLFormat, types.ServiceFileURLFormat, "c", joinOptions.ServiceFileURLFormat,
+		"The custom download url format for service file. i.e: https://raw.githubusercontent.com/kubeedge/kubeedge/release-%s/build/tools/%s, "+
+			"the first %s means the version number like 1.8, the second %s means the service name like edgecore.service")
 }
 
 // newJoinOptions returns a struct ready for being used for creating cmd join flags.
@@ -157,14 +185,23 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 		},
 		CloudCoreIP:           joinOptions.CloudCoreIPPort,
 		EdgeNodeName:          joinOptions.EdgeNodeName,
+		EdgeNodeIP:            joinOptions.EdgeNodeIP,
 		RuntimeType:           joinOptions.RuntimeType,
 		CertPath:              joinOptions.CertPath,
 		RemoteRuntimeEndpoint: joinOptions.RemoteRuntimeEndpoint,
 		Token:                 joinOptions.Token,
 		CertPort:              joinOptions.CertPort,
+		QuicPort:              joinOptions.QuicPort,
+		TunnelPort:            joinOptions.TunnelPort,
 		CGroupDriver:          joinOptions.CGroupDriver,
 		TarballPath:           joinOptions.TarballPath,
 		Labels:                joinOptions.Labels,
+		EnableDefaultTaint:    joinOptions.EnableDefaultTaint,
+		EnableMetaServer:      joinOptions.EnableMetaServer,
+		EnableServiceBus:      joinOptions.EnableServiceBus,
+		DownloadRegion:        joinOptions.DownloadRegion,
+		KubeEdgeDownloadURL:   joinOptions.KubeEdgeDownloadURL,
+		ServiceFileURLFormat:  joinOptions.ServiceFileURLFormat,
 	}
 
 	toolList["MQTT"] = &util.MQTTInstTool{}

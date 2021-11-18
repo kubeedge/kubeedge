@@ -24,6 +24,8 @@ import (
 	"strconv"
 	"strings"
 
+	v1 "k8s.io/api/core/v1"
+
 	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
@@ -38,13 +40,22 @@ type KubeEdgeInstTool struct {
 	CertPath              string
 	CloudCoreIP           string
 	EdgeNodeName          string
+	EdgeNodeIP            string
 	RuntimeType           string
 	RemoteRuntimeEndpoint string
 	Token                 string
 	CertPort              string
+	QuicPort              string
+	TunnelPort            string
 	CGroupDriver          string
 	TarballPath           string
 	Labels                []string
+	EnableDefaultTaint    bool
+	EnableMetaServer      bool
+	EnableServiceBus      bool
+	DownloadRegion        string
+	KubeEdgeDownloadURL   string
+	ServiceFileURLFormat  string
 }
 
 // InstallTools downloads KubeEdge for the specified version
@@ -65,6 +76,11 @@ func (ku *KubeEdgeInstTool) InstallTools() error {
 	opts := &types.InstallOptions{
 		TarballPath:   ku.TarballPath,
 		ComponentType: types.EdgeCore,
+	}
+
+	if ku.DownloadRegion == "zh" && ku.KubeEdgeDownloadURL != "" && ku.ServiceFileURLFormat != "" {
+		KubeEdgeDownloadURL = ku.KubeEdgeDownloadURL
+		ServiceFileURLFormat = ku.ServiceFileURLFormat
 	}
 
 	err = ku.InstallKubeEdge(*opts)
@@ -97,9 +113,15 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 	if ku.EdgeNodeName != "" {
 		edgeCoreConfig.Modules.Edged.HostnameOverride = ku.EdgeNodeName
 	}
+
+	if ku.EdgeNodeIP != "" {
+		edgeCoreConfig.Modules.Edged.NodeIP = ku.EdgeNodeIP
+	}
+
 	if ku.RuntimeType != "" {
 		edgeCoreConfig.Modules.Edged.RuntimeType = ku.RuntimeType
 	}
+
 	if ku.CGroupDriver != "" {
 		switch ku.CGroupDriver {
 		case v1alpha1.CGroupDriverSystemd:
@@ -115,16 +137,41 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 		edgeCoreConfig.Modules.Edged.RemoteRuntimeEndpoint = ku.RemoteRuntimeEndpoint
 		edgeCoreConfig.Modules.Edged.RemoteImageEndpoint = ku.RemoteRuntimeEndpoint
 	}
+
 	if ku.Token != "" {
 		edgeCoreConfig.Modules.EdgeHub.Token = ku.Token
 	}
+
+	// Edge nodes will connect these exposed servers
 	cloudCoreIP := strings.Split(ku.CloudCoreIP, ":")[0]
 	if ku.CertPort != "" {
 		edgeCoreConfig.Modules.EdgeHub.HTTPServer = "https://" + cloudCoreIP + ":" + ku.CertPort
 	} else {
 		edgeCoreConfig.Modules.EdgeHub.HTTPServer = "https://" + cloudCoreIP + ":10002"
 	}
-	edgeCoreConfig.Modules.EdgeStream.TunnelServer = net.JoinHostPort(cloudCoreIP, strconv.Itoa(constants.DefaultTunnelPort))
+	if ku.QuicPort != "" {
+		edgeCoreConfig.Modules.EdgeHub.Quic.Server = cloudCoreIP + ":" + ku.QuicPort
+	} else {
+		edgeCoreConfig.Modules.EdgeHub.Quic.Server = cloudCoreIP + ":10001"
+	}
+	if ku.TunnelPort != "" {
+		edgeCoreConfig.Modules.EdgeStream.TunnelServer = net.JoinHostPort(cloudCoreIP, ku.TunnelPort)
+	} else {
+		edgeCoreConfig.Modules.EdgeStream.TunnelServer = net.JoinHostPort(cloudCoreIP, strconv.Itoa(constants.DefaultTunnelPort))
+	}
+
+	// Determine whether to add the default NoSchedule taints or not
+	if ku.EnableDefaultTaint {
+		taint := v1.Taint{
+			Key:    "node-role.kubernetes.io/edge",
+			Effect: "NoSchedule",
+		}
+		edgeCoreConfig.Modules.Edged.Taints = append(edgeCoreConfig.Modules.Edged.Taints, taint)
+	}
+
+	// Determin whether to enable these related compoents
+	edgeCoreConfig.Modules.MetaManager.MetaServer.Enable = ku.EnableMetaServer
+	edgeCoreConfig.Modules.ServiceBus.Enable = ku.EnableServiceBus
 
 	if len(ku.Labels) >= 1 {
 		labelsMap := make(map[string]string)

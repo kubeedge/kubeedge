@@ -223,6 +223,7 @@ kubeedge::golang::build_binaries() {
 
 KUBEEDGE_ALL_CROSS_BINARIES=(
 edgecore
+keadm
 )
 
 kubeedge::golang::is_cross_build_binary() {
