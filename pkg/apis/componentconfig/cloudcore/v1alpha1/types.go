@@ -411,10 +411,19 @@ type CloudStream struct {
 	StreamPort uint32 `json:"streamPort,omitempty"`
 }
 
+// Router indicates router module config
 type Router struct {
+	// Enable indicates whether Router is enabled,
+	// if set to false (for debugging etc.), skip checking other Router configs.
 	// default true
-	Enable      bool   `json:"enable"`
-	Address     string `json:"address,omitempty"`
-	Port        uint32 `json:"port,omitempty"`
+	Enable bool `json:"enable"`
+	// Address indicates router address
+	// default "0.0.0.0"
+	Address string `json:"address,omitempty"`
+	// Port indicates the open port for router
+	// default 9443
+	Port uint32 `json:"port,omitempty"`
+	// RestTimeout indicates rest time (second)
+	// default 60
 	RestTimeout uint32 `json:"restTimeout,omitempty"`
 }
