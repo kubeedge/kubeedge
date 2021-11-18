@@ -232,32 +232,33 @@ func (wc *watchChan) processEvent(wg *sync.WaitGroup) {
 	for {
 		select {
 		case e := <-wc.incomingEventChan:
-			var res = e
-			key, err := metaserver.KeyFuncObj(e.Object)
+			eCopy := e.DeepCopy()
+			var res = eCopy
+			key, err := metaserver.KeyFuncObj(eCopy.Object)
 			if err != nil {
 				klog.Errorf("failed to get key from obj:%v", err)
 				continue
 			}
 			hasBeenAdded := wc.added[key]
-			matched := wc.filter(e.Object) //drop if not matched
+			matched := wc.filter(eCopy.Object) //drop if not matched
 			switch {
 			case hasBeenAdded && !matched:
 				// stop to watch this obj because it's field or label are no longer meet the internalPred
 				res = &watch.Event{
 					Type:   watch.Deleted,
-					Object: e.Object,
+					Object: eCopy.Object,
 				}
 			case hasBeenAdded && matched:
 				//It has been added and is not dropped. Continue
 			case !hasBeenAdded && !matched:
 				//It has been added and is not dropped. Continue
-				klog.V(4).Infof("[apiservelite-watchChan]drop event: %v", e)
+				klog.V(4).Infof("[apiservelite-watchChan]drop event: %v", eCopy)
 				continue
 			case !hasBeenAdded && matched && res.Type == watch.Modified:
 				//It has not been added but event is modified, force set to add.
 				res = &watch.Event{
 					Type:   watch.Added,
-					Object: e.Object,
+					Object: eCopy.Object,
 				}
 			}
 			if len(wc.resultChan) == outgoingBufSize {
