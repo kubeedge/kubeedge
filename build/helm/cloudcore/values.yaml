@@ -1,5 +1,5 @@
 # Default values for kubeedge cloudcore.
-appVersion: "1.8.0"
+appVersion: "1.8.2"
 
 cloudCore:
   hostNetWork: "true"
