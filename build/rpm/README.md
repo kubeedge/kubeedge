@@ -78,7 +78,7 @@ This package provides:
 	│   │   └── cloudcore
 	│   └── csidriver
 	│       └── csidriver
-	├── crds	
+	├── crds
 	│   ├── devices
 	│   │   ├── devices_v1alpha1_devicemodel.yaml
 	│   │   ├── devices_v1alpha1_device.yaml

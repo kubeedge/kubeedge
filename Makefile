@@ -51,7 +51,7 @@ endif
 
 
 define VERIFY_HELP_INFO
-# verify golang,vendor and codegen
+# verify golang, vendor, codegen and crds
 #
 # Example:
 # make verify
@@ -61,7 +61,7 @@ ifeq ($(HELP),y)
 verify:
 	@echo "$$VERIFY_HELP_INFO"
 else
-verify:verify-golang verify-vendor verify-codegen verify-vendor-licenses
+verify:verify-golang verify-vendor verify-codegen verify-vendor-licenses verify-crds
 endif
 
 .PHONY: verify-golang
@@ -77,6 +77,9 @@ verify-codegen:
 .PHONY: verify-vendor-licenses
 verify-vendor-licenses:
 	hack/verify-vendor-licenses.sh
+.PHONY: verify-crds
+verify-crds:
+	hack/verify-crds.sh
 
 define TEST_HELP_INFO
 # run golang test case.
@@ -175,7 +178,34 @@ crossbuild: clean
 	hack/make-rules/crossbuild.sh $(WHAT) $(GOARM)
 endif
 
+CRD_VERSIONS=v1
+CRD_OUTPUTS=build/crds
+DEVICES_VERSION=v1alpha2
+RELIABLESYNCS_VERSION=v1alpha1
+listCRDParams := CRD_VERSIONS CRD_OUTPUTS DEVICES_VERSION RELIABLESYNCS_VERSION
 
+define GENERATE_CRDS_HELP_INFO
+# generate crds.
+#
+# Args:
+#     CRD_VERSIONS, default: v1
+#     CRD_OUTPUTS, default: build/crd
+#     DEVICES_VERSION, default: v1alpha2
+#     RELIABLESYNCS_VERSION, default: v1alpha1
+#
+# Example:
+#     make generate 
+#     make generate -e CRD_VERSIONS=v1 -e CRD_OUTPUTS=build/crds
+#
+endef
+.PHONY: generate
+ifeq ($(HELP),y)
+generate:
+	@echo "$$GENERATE_CRDS_HELP_INFO"
+else
+generate:
+	chmod a+x hack/generate-crds.sh && ./hack/generate-crds.sh  $(foreach p, $(listCRDParams),--$(p)=$($(p)) )
+endif
 
 SMALLBUILD_COMPONENTS=edgecore
 define SMALLBUILD_HELP_INFO
@@ -281,7 +311,7 @@ edgeimage:
 	tar -xzf ./build/edge/tmp/qemu-${QEMU_ARCH}-static.tar.gz -C ./build/edge/tmp
 	docker build -t kubeedge/edgecore:${IMAGE_TAG} \
 	--build-arg GO_LDFLAGS=${GO_LDFLAGS} \
-	--build-arg BUILD_FROM=${ARCH}/golang:1.14-alpine3.11 \
+	--build-arg BUILD_FROM=${ARCH}/golang:1.16-alpine3.13 \
 	--build-arg RUN_FROM=${ARCH}/docker:dind \
 	-f build/edge/Dockerfile .
 

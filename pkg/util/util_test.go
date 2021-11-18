@@ -7,8 +7,6 @@ import (
 	"reflect"
 	"strings"
 	"testing"
-
-	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 func TestValidateNodeIP(t *testing.T) {
@@ -108,13 +106,6 @@ func TestGetLocalIP(t *testing.T) {
 	_, err := GetLocalIP(GetHostname())
 	if err != nil {
 		t.Errorf("get local ip failed")
-	}
-}
-
-func TestGetPodSandboxImage(t *testing.T) {
-	image := GetPodSandboxImage()
-	if image != constants.DefaultPodSandboxImage {
-		t.Errorf("get pod sandbox image failed, get %v, expected %v", image, constants.DefaultPodSandboxImage)
 	}
 }
 

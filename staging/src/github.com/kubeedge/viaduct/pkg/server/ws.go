@@ -12,7 +12,6 @@ import (
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/conn"
 	"github.com/kubeedge/viaduct/pkg/lane"
-	"github.com/kubeedge/viaduct/pkg/utils"
 )
 
 // websocket protocol server
@@ -89,7 +88,7 @@ func (srv *WSServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		CtrlLane: lane.NewLane(api.ProtocolTypeWS, wsConn),
 		State: &conn.ConnectionState{
 			State:   api.StatConnected,
-			Headers: utils.DeepCopyHeader(req.Header),
+			Headers: req.Header.Clone(),
 		},
 		AutoRoute: srv.options.AutoRoute,
 	})

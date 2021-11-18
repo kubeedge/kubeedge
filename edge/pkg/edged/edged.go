@@ -262,6 +262,8 @@ type edged struct {
 	podKiller PodKiller
 }
 
+var _ core.Module = (*edged)(nil)
+
 // Register register edged
 func Register(e *v1alpha1.Edged) {
 	edgedconfig.InitConfigure(e)
@@ -783,7 +785,7 @@ func (e *edged) initializeModules() error {
 		if err := e.cadvisor.Start(); err != nil {
 			// Fail kubelet and rely on the babysitter to retry starting kubelet.
 			// TODO(random-liu): Add backoff logic in the babysitter
-			klog.Fatalf("Failed to start cAdvisor %v", err)
+			klog.Exitf("Failed to start cAdvisor %v", err)
 		}
 
 		// trigger on-demand stats collection once so that we have capacity information for ephemeral storage.
@@ -1180,7 +1182,7 @@ func (e *edged) syncPod() {
 				beehiveContext.SendResp(*resp)
 			}
 		default:
-			klog.Errorf("resType is not pod or configmap or secret or volume: esType is %s", resType)
+			klog.Errorf("resType is not pod or configmap or secret or volume: resType is %s", resType)
 			continue
 		}
 	}

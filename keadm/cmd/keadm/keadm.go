@@ -17,13 +17,15 @@ limitations under the License.
 package main
 
 import (
-	"k8s.io/klog/v2"
+	"fmt"
+	"os"
 
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app"
 )
 
 func main() {
 	if err := app.Run(); err != nil {
-		klog.Fatal(err)
+		fmt.Println("execute keadm command failed: ", err)
+		os.Exit(1)
 	}
 }

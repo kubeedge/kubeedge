@@ -19,12 +19,10 @@ package cmd
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
-	"k8s.io/klog/v2"
 	phases "k8s.io/kubernetes/cmd/kubeadm/app/cmd/phases/reset"
 	utilruntime "k8s.io/kubernetes/cmd/kubeadm/app/util/runtime"
 	utilsexec "k8s.io/utils/exec"
@@ -55,11 +53,9 @@ func newResetOptions() *common.ResetOptions {
 }
 
 // NewKubeEdgeReset represents the reset command
-func NewKubeEdgeReset(out io.Writer, reset *common.ResetOptions) *cobra.Command {
+func NewKubeEdgeReset() *cobra.Command {
 	IsEdgeNode := false
-	if reset == nil {
-		reset = newResetOptions()
-	}
+	reset := newResetOptions()
 
 	var cmd = &cobra.Command{
 		Use:     "reset",
@@ -101,7 +97,7 @@ func NewKubeEdgeReset(out io.Writer, reset *common.ResetOptions) *cobra.Command 
 
 			// 2. Remove containers managed by KubeEdge. Only for edge node.
 			if err := RemoveContainers(IsEdgeNode, utilsexec.New()); err != nil {
-				klog.Warningf("Failed to remove containers: %v\n", err)
+				fmt.Printf("Failed to remove containers: %v\n", err)
 			}
 
 			// 3. Clean stateful directories
@@ -173,7 +169,7 @@ func cleanDirectories(isEdgeNode bool) error {
 
 	for _, dir := range dirToClean {
 		if err := phases.CleanDir(dir); err != nil {
-			klog.Warningf("Failed to delete directory %s: %v", dir, err)
+			fmt.Printf("Failed to delete directory %s: %v\n", dir, err)
 		}
 	}
 

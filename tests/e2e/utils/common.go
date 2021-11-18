@@ -33,7 +33,6 @@ import (
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
-	"github.com/pkg/errors"
 	apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -299,6 +298,10 @@ func NewPodObj(podName, imgURL, nodeselector string) *v1.Pod {
 // GetDeployments to get the deployments list
 func GetDeployments(list *apps.DeploymentList, getDeploymentAPI string) error {
 	resp, err := SendHTTPRequest(http.MethodGet, getDeploymentAPI)
+	if err != nil {
+		Fatalf("HTTP Response reading has failed: %v", err)
+		return err
+	}
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -315,7 +318,8 @@ func GetDeployments(list *apps.DeploymentList, getDeploymentAPI string) error {
 func VerifyDeleteDeployment(getDeploymentAPI string) int {
 	resp, err := SendHTTPRequest(http.MethodGet, getDeploymentAPI)
 	if err != nil {
-		Fatalf("SendHTTPRequest is failed: %v", err)
+		Fatalf("Send HTTP Request failed: %v", err)
+		return -1
 	}
 	defer resp.Body.Close()
 	return resp.StatusCode
@@ -357,6 +361,7 @@ func HandlePod(operation string, apiserver string, UID string, pod *v1.Pod) bool
 		Fatalf("HTTP request is failed :%v", err)
 		return false
 	}
+	defer resp.Body.Close()
 	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	return true
 }
@@ -402,6 +407,7 @@ func HandleDeployment(IsCloudCore, IsEdgeCore bool, operation, apiserver, UID, I
 		Fatalf("HTTP request is failed :%v", err)
 		return false
 	}
+	defer resp.Body.Close()
 	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	return true
 }
@@ -456,6 +462,7 @@ func ExposeCloudService(name, serviceHandler string) error {
 		Fatalf("HTTP request is failed :%v", err)
 		return err
 	}
+	defer resp.Body.Close()
 	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	gomega.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusCreated))
 	return nil
@@ -494,6 +501,7 @@ func GetServicePort(cloudName, serviceHandler string) (int32, int32) {
 		Fatalf("HTTP request is failed :%v", err)
 		return -1, -1
 	}
+	defer resp.Body.Close()
 
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -506,7 +514,6 @@ func GetServicePort(cloudName, serviceHandler string) (int32, int32) {
 		Fatalf("Unmarshal HTTP Response has failed: %v", err)
 		return -1, -1
 	}
-	defer resp.Body.Close()
 
 	for _, svcs := range svc.Items {
 		if svcs.Name == cloudName {
@@ -584,6 +591,7 @@ func HandleDeviceModel(operation string, apiserver string, UID string, protocolT
 		Fatalf("HTTP request is failed :%v", err)
 		return false, 0
 	}
+	defer resp.Body.Close()
 	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	return true, resp.StatusCode
 }
@@ -633,6 +641,7 @@ func HandleDeviceInstance(operation string, apiserver string, nodeSelector strin
 		Fatalf("HTTP request is failed :%v", err)
 		return false, 0
 	}
+	defer resp.Body.Close()
 	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	return true, resp.StatusCode
 }
@@ -702,6 +711,10 @@ func newDeviceModelObject(protocolType string, updated bool) *v1alpha2.DeviceMod
 // GetDeviceModel to get the deviceModel list and verify whether the contents of the device model matches with what is expected
 func GetDeviceModel(list *v1alpha2.DeviceModelList, getDeviceModelAPI string, expectedDeviceModel *v1alpha2.DeviceModel) ([]v1alpha2.DeviceModel, error) {
 	resp, err := SendHTTPRequest(http.MethodGet, getDeviceModelAPI)
+	if err != nil {
+		Fatalf("Send HTTP Request failed: %v", err)
+		return nil, err
+	}
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -721,12 +734,12 @@ func GetDeviceModel(list *v1alpha2.DeviceModelList, getDeviceModelAPI string, ex
 				if !reflect.DeepEqual(expectedDeviceModel.TypeMeta, deviceModel.TypeMeta) ||
 					expectedDeviceModel.ObjectMeta.Namespace != deviceModel.ObjectMeta.Namespace ||
 					!reflect.DeepEqual(expectedDeviceModel.Spec, deviceModel.Spec) {
-					return nil, errors.New("The device model is not matching with what was expected")
+					return nil, fmt.Errorf("The device model is not matching with what was expected")
 				}
 			}
 		}
 		if !modelExists {
-			return nil, errors.New("The requested device model is not found")
+			return nil, fmt.Errorf("The requested device model is not found")
 		}
 	}
 	return list.Items, nil
@@ -735,6 +748,10 @@ func GetDeviceModel(list *v1alpha2.DeviceModelList, getDeviceModelAPI string, ex
 // GetDevice to get the device list
 func GetDevice(list *v1alpha2.DeviceList, getDeviceAPI string, expectedDevice *v1alpha2.Device) ([]v1alpha2.Device, error) {
 	resp, err := SendHTTPRequest(http.MethodGet, getDeviceAPI)
+	if err != nil {
+		Fatalf("Send HTTP Request failed: %v", err)
+		return nil, err
+	}
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -755,7 +772,7 @@ func GetDevice(list *v1alpha2.DeviceList, getDeviceAPI string, expectedDevice *v
 					expectedDevice.ObjectMeta.Namespace != device.ObjectMeta.Namespace ||
 					!reflect.DeepEqual(expectedDevice.ObjectMeta.Labels, device.ObjectMeta.Labels) ||
 					!reflect.DeepEqual(expectedDevice.Spec, device.Spec) {
-					return nil, errors.New("The device is not matching with what was expected")
+					return nil, fmt.Errorf("The device is not matching with what was expected")
 				}
 				twinExists := false
 				for _, expectedTwin := range expectedDevice.Status.Twins {
@@ -763,18 +780,18 @@ func GetDevice(list *v1alpha2.DeviceList, getDeviceAPI string, expectedDevice *v
 						if expectedTwin.PropertyName == twin.PropertyName {
 							twinExists = true
 							if !reflect.DeepEqual(expectedTwin.Desired, twin.Desired) {
-								return nil, errors.New("Status twin " + twin.PropertyName + " not as expected")
+								return nil, fmt.Errorf("Status twin " + twin.PropertyName + " not as expected")
 							}
 						}
 					}
 				}
 				if !twinExists {
-					return nil, errors.New("status twin(s) not found")
+					return nil, fmt.Errorf("status twin(s) not found")
 				}
 			}
 		}
 		if !deviceExists {
-			return nil, errors.New("The requested device is not found")
+			return nil, fmt.Errorf("The requested device is not found")
 		}
 	}
 	return list.Items, nil
@@ -800,7 +817,7 @@ func MqttConnect() error {
 	ClientOpts = MqttClientInit("tcp://127.0.0.1:1884", "eventbus", "", "")
 	Client = MQTT.NewClient(ClientOpts)
 	if TokenClient = Client.Connect(); TokenClient.Wait() && TokenClient.Error() != nil {
-		return errors.New("client.Connect() Error is %s" + TokenClient.Error().Error())
+		return fmt.Errorf("client.Connect() Error is %s" + TokenClient.Error().Error())
 	}
 	return nil
 }
@@ -809,12 +826,12 @@ func MqttConnect() error {
 func ChangeTwinValue(updateMessage DeviceTwinUpdate, deviceID string) error {
 	twinUpdateBody, err := json.Marshal(updateMessage)
 	if err != nil {
-		return errors.New("Error in marshalling: %s" + err.Error())
+		return fmt.Errorf("Error in marshalling: %s" + err.Error())
 	}
 	deviceTwinUpdate := DeviceETPrefix + deviceID + TwinETUpdateSuffix
 	TokenClient = Client.Publish(deviceTwinUpdate, 0, false, twinUpdateBody)
 	if TokenClient.Wait() && TokenClient.Error() != nil {
-		return errors.New("client.publish() Error in device twin update is %s" + TokenClient.Error().Error())
+		return fmt.Errorf("client.publish() Error in device twin update is %s" + TokenClient.Error().Error())
 	}
 	return nil
 }
@@ -824,11 +841,11 @@ func GetTwin(updateMessage DeviceTwinUpdate, deviceID string) error {
 	getTwin := DeviceETPrefix + deviceID + TwinETGetSuffix
 	twinUpdateBody, err := json.Marshal(updateMessage)
 	if err != nil {
-		return errors.New("Error in marshalling: %s" + err.Error())
+		return fmt.Errorf("Error in marshalling: %s" + err.Error())
 	}
 	TokenClient = Client.Publish(getTwin, 0, false, twinUpdateBody)
 	if TokenClient.Wait() && TokenClient.Error() != nil {
-		return errors.New("client.publish() Error in device twin get  is: %s " + TokenClient.Error().Error())
+		return fmt.Errorf("client.publish() Error in device twin get  is: %s " + TokenClient.Error().Error())
 	}
 	return nil
 }
@@ -921,6 +938,7 @@ func SendMsg(url string, message []byte, header map[string]string) (bool, int) {
 		Fatalf("HTTP request is failed: %v", err)
 		return false, 0
 	}
+	defer resp.Body.Close()
 	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	return true, resp.StatusCode
 }
@@ -982,7 +1000,7 @@ func SubscribeMqtt(topic string) (string, error) {
 		return result, nil
 	case <-t.C:
 		close(r)
-		return "", errors.New("Wait for MQTT message time out. ")
+		return "", fmt.Errorf("Wait for MQTT message time out. ")
 	}
 }
 

@@ -25,7 +25,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 	certutil "k8s.io/client-go/util/cert"
 	"k8s.io/klog/v2"
 
@@ -93,7 +93,7 @@ func GenerateToken() error {
 			<-t.C
 			refreshedCaHashToken := refreshToken()
 			if err := CreateTokenSecret([]byte(refreshedCaHashToken)); err != nil {
-				klog.Fatalf("failed to create the ca token for edgecore register, err: %v", err)
+				klog.Exitf("failed to create the ca token for edgecore register, err: %v", err)
 			}
 		}
 	}()

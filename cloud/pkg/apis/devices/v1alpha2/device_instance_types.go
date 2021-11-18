@@ -118,9 +118,11 @@ type ProtocolConfigCommon struct {
 	CollectRetryTimes int64 `json:"collectRetryTimes,omitempty"`
 	// Define collect type, sync or async.
 	// +optional
+	// +kubebuilder:validation:Enum=sync;async
 	CollectType string `json:"collectType,omitempty"`
 	// Customized values for provided protocol
 	// +optional
+	// +kubebuilder:validation:XPreserveUnknownFields
 	CustomizedValues *CustomizedValue `json:"customizedValues,omitempty"`
 }
 
@@ -135,12 +137,16 @@ type ProtocolConfigCOM struct {
 	// Required.
 	SerialPort string `json:"serialPort,omitempty"`
 	// Required. BaudRate 115200|57600|38400|19200|9600|4800|2400|1800|1200|600|300|200|150|134|110|75|50
+	// +kubebuilder:validation:Enum=115200;57600;38400;19200;9600;4800;2400;1800;1200;600;300;200;150;134;110;75;50
 	BaudRate int64 `json:"baudRate,omitempty"`
 	// Required. Valid values are 8, 7, 6, 5.
+	// +kubebuilder:validation:Enum=8;7;6;5
 	DataBits int64 `json:"dataBits,omitempty"`
 	// Required. Valid options are "none", "even", "odd". Defaults to "none".
+	// +kubebuilder:validation:Enum=none;even;odd
 	Parity string `json:"parity,omitempty"`
 	// Required. Bit that stops 1|2
+	// +kubebuilder:validation:Enum=1;2
 	StopBits int64 `json:"stopBits,omitempty"`
 }
 
@@ -156,6 +162,7 @@ type ProtocolConfigCustomized struct {
 	ProtocolName string `json:"protocolName,omitempty"`
 	// Any config data
 	// +optional
+	// +kubebuilder:validation:XPreserveUnknownFields
 	ConfigData *CustomizedValue `json:"configData,omitempty"`
 }
 
@@ -231,6 +238,7 @@ type DevicePropertyVisitor struct {
 	CollectCycle int64 `json:"collectCycle,omitempty"`
 	// Customized values for visitor of provided protocols
 	// +optional
+	// +kubebuilder:validation:XPreserveUnknownFields
 	CustomizedValues *CustomizedValue `json:"customizedValues,omitempty"`
 	// Required: Protocol relevant config details about the how to access the device property.
 	VisitorConfig `json:",inline"`
@@ -293,6 +301,7 @@ type BluetoothOperations struct {
 }
 
 // Operations supported by Bluetooth protocol to convert the value being read from the device into an understandable form
+// +kubebuilder:validation:Enum:Add;Subtract;Multiply;Divide
 type BluetoothArithmeticOperationType string
 
 // Bluetooth Protocol Operation type
@@ -334,6 +343,7 @@ type VisitorConfigModbus struct {
 }
 
 // The Modbus register type to read a device property.
+// +kubebuilder:validation:Enum=CoilRegister;DiscreteInputRegister;InputRegister;HoldingRegister
 type ModbusRegisterType string
 
 // Modbus protocol register types
@@ -349,6 +359,7 @@ type VisitorConfigCustomized struct {
 	// Required: name of customized protocol
 	ProtocolName string `json:"protocolName,omitempty"`
 	// Required: The configData of customized protocol
+	// +kubebuilder:validation:XPreserveUnknownFields
 	ConfigData *CustomizedValue `json:"configData,omitempty"`
 }
 
@@ -374,13 +385,43 @@ type DeviceList struct {
 	Items           []Device `json:"items"`
 }
 
-type CustomizedValue map[string]interface{}
-
-func (in *CustomizedValue) DeepCopyInto(out *CustomizedValue) {
-	bytes, _ := json.Marshal(*in)
-	_ = json.Unmarshal(bytes, out)
+// CustomizedValue contains a map type data
+// +kubebuilder:validation:Type=object
+type CustomizedValue struct {
+	Data map[string]interface{} `json:"-"`
 }
 
+// MarshalJSON implements the Marshaler interface.
+func (in *CustomizedValue) MarshalJSON() ([]byte, error) {
+	return json.Marshal(in.Data)
+}
+
+// UnmarshalJSON implements the Unmarshaler interface.
+func (in *CustomizedValue) UnmarshalJSON(data []byte) error {
+	var out map[string]interface{}
+	err := json.Unmarshal(data, &out)
+	if err != nil {
+		return err
+	}
+	in.Data = out
+	return nil
+}
+
+// DeepCopyInto implements the DeepCopyInto interface.
+func (in *CustomizedValue) DeepCopyInto(out *CustomizedValue) {
+	bytes, err := json.Marshal(*in)
+	if err != nil {
+		panic(err)
+	}
+	var clone map[string]interface{}
+	err = json.Unmarshal(bytes, &clone)
+	if err != nil {
+		panic(err)
+	}
+	out.Data = clone
+}
+
+// DeepCopy implements the DeepCopy interface.
 func (in *CustomizedValue) DeepCopy() *CustomizedValue {
 	if in == nil {
 		return nil

@@ -35,6 +35,7 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1/validation"
+	"github.com/kubeedge/kubeedge/pkg/features"
 	"github.com/kubeedge/kubeedge/pkg/util"
 	"github.com/kubeedge/kubeedge/pkg/util/flag"
 	"github.com/kubeedge/kubeedge/pkg/version"
@@ -57,16 +58,19 @@ kubernetes controller which manages devices so that the device metadata/status d
 			flag.PrintFlags(cmd.Flags())
 
 			if errs := opts.Validate(); len(errs) > 0 {
-				klog.Fatal(util.SpliceErrors(errs))
+				klog.Exit(util.SpliceErrors(errs))
 			}
 
 			config, err := opts.Config()
 			if err != nil {
-				klog.Fatal(err)
+				klog.Exit(err)
+			}
+			if errs := validation.ValidateCloudCoreConfiguration(config); len(errs) > 0 {
+				klog.Exit(util.SpliceErrors(errs.ToAggregate().Errors()))
 			}
 
-			if errs := validation.ValidateCloudCoreConfiguration(config); len(errs) > 0 {
-				klog.Fatal(util.SpliceErrors(errs.ToAggregate().Errors()))
+			if err := features.DefaultMutableFeatureGate.SetFromMap(config.FeatureGates); err != nil {
+				klog.Exit(err)
 			}
 
 			// To help debugging, immediately log version

@@ -10,7 +10,6 @@ import (
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/conn"
 	"github.com/kubeedge/viaduct/pkg/lane"
-	"github.com/kubeedge/viaduct/pkg/utils"
 )
 
 // the client based on websocket
@@ -58,7 +57,7 @@ func (c *WSClient) Connect() (conn.Connection, error) {
 			CtrlLane: lane.NewLane(api.ProtocolTypeWS, wsConn),
 			State: &conn.ConnectionState{
 				State:   api.StatConnected,
-				Headers: utils.DeepCopyHeader(c.exOpts.Header),
+				Headers: c.exOpts.Header.Clone(),
 			},
 			AutoRoute: c.options.AutoRoute,
 		}), nil

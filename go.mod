@@ -1,6 +1,6 @@
 module github.com/kubeedge/kubeedge
 
-go 1.14
+go 1.16
 
 require (
 	github.com/256dpi/gomqtt v0.10.4
@@ -11,11 +11,11 @@ require (
 	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/container-storage-interface/spec v1.3.0
 	github.com/coreos/go-systemd v0.0.0-20190620071333-e64a0ec8b42a // indirect
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/docker v20.10.2+incompatible
 	github.com/eclipse/paho.mqtt.golang v1.2.0
 	github.com/emicklei/go-restful v2.9.6+incompatible
 	github.com/go-ole/go-ole v1.2.4 // indirect
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang/mock v1.4.4
 	github.com/golang/protobuf v1.4.3
 	github.com/google/cadvisor v0.39.0
@@ -33,7 +33,6 @@ require (
 	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.8.1
 	github.com/paypal/gatt v0.0.0-20151011220935-4ae819d591cf
-	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.7.1
 	github.com/shirou/gopsutil v2.20.9+incompatible
 	github.com/spf13/cobra v1.1.1

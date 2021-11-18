@@ -153,17 +153,16 @@ func (cw CommWorker) checkConfirm(context *dtcontext.DTContext, msg interface{})
 		dtmsg, ok := value.(*dttype.DTMessage)
 		klog.V(2).Info("has msg")
 		if !ok {
-
-		} else {
-			klog.V(2).Info("redo task due to no recv")
-			if fn, exist := ActionCallBack[dtmsg.Action]; exist {
-				err := fn(cw.DTContexts, dtmsg.Identity, dtmsg.Msg)
-				if err != nil {
-					klog.Errorf("CommModule deal %s event failed: %v", dtmsg.Action, err)
-				}
-			} else {
-				klog.Errorf("CommModule deal %s event failed, not found callback", dtmsg.Action)
+			klog.Warningf("confirm map key %s 's value is not the *DTMessage type", key.(string))
+			return true
+		}
+		klog.V(2).Info("redo task due to no recv")
+		if fn, exist := ActionCallBack[dtmsg.Action]; exist {
+			if err := fn(cw.DTContexts, dtmsg.Identity, dtmsg.Msg); err != nil {
+				klog.Errorf("CommModule deal %s event failed: %v", dtmsg.Action, err)
 			}
+		} else {
+			klog.Errorf("CommModule deal %s event failed, not found callback", dtmsg.Action)
 		}
 		return true
 	})

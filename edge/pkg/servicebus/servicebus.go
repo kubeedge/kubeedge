@@ -30,6 +30,8 @@ type servicebus struct {
 	enable bool
 }
 
+var _ core.Module = (*servicebus)(nil)
+
 var htc = new(http.Client)
 var uc = new(util.URLClient)
 
@@ -133,6 +135,7 @@ func processMessage(msg *beehiveModel.Message) {
 		}
 		return
 	}
+	defer resp.Body.Close()
 	resp.Body = http.MaxBytesReader(nil, resp.Body, maxBodySize)
 	resBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

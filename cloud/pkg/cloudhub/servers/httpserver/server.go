@@ -22,13 +22,14 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
 	certutil "k8s.io/client-go/util/cert"
 	"k8s.io/klog/v2"
@@ -48,7 +49,7 @@ func StartHTTPServer() {
 	cert, err := tls.X509KeyPair(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: hubconfig.Config.Cert}), pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: hubconfig.Config.Key}))
 
 	if err != nil {
-		klog.Fatal(err)
+		klog.Exit(err)
 	}
 
 	server := &http.Server{
@@ -59,7 +60,7 @@ func StartHTTPServer() {
 			ClientAuth:   tls.RequestClientCert,
 		},
 	}
-	klog.Fatal(server.ListenAndServeTLS("", ""))
+	klog.Exit(server.ListenAndServeTLS("", ""))
 }
 
 // getCA returns the caCertDER
@@ -179,8 +180,19 @@ func signEdgeCert(w http.ResponseWriter, r *http.Request) {
 		klog.Errorf("fail to ParseCertificateRequest of edgenode: %s! error:%v", r.Header.Get(constants.NodeName), err)
 		return
 	}
-	subject := csr.Subject
-	clientCertDER, err := signCerts(subject, csr.PublicKey)
+	usagesStr := r.Header.Get("ExtKeyUsages")
+	var usages []x509.ExtKeyUsage
+	if usagesStr == "" {
+		usages = []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth}
+	} else {
+		err := json.Unmarshal([]byte(usagesStr), &usages)
+		if err != nil {
+			klog.Errorf("unmarshal http header ExtKeyUsages fail, err: %v", err)
+			return
+		}
+	}
+	klog.V(4).Infof("receive sign crt request, ExtKeyUsages: %v", usages)
+	clientCertDER, err := signCerts(csr.Subject, csr.PublicKey, usages)
 	if err != nil {
 		klog.Errorf("fail to signCerts for edgenode:%s! error:%v", r.Header.Get(constants.NodeName), err)
 		return
@@ -192,11 +204,11 @@ func signEdgeCert(w http.ResponseWriter, r *http.Request) {
 }
 
 // signCerts will create a certificate for EdgeCore
-func signCerts(subInfo pkix.Name, pbKey crypto.PublicKey) ([]byte, error) {
+func signCerts(subInfo pkix.Name, pbKey crypto.PublicKey, usages []x509.ExtKeyUsage) ([]byte, error) {
 	cfgs := &certutil.Config{
 		CommonName:   subInfo.CommonName,
 		Organization: subInfo.Organization,
-		Usages:       []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+		Usages:       usages,
 	}
 	clientKey := pbKey
 

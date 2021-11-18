@@ -183,8 +183,8 @@ func TestPodManager_merge(t *testing.T) {
 				pm.pods.Store(tt.fields.pods.GetUID(), tt.fields.pods)
 			}
 
-			go pm.merge()
 			tt.fields.realEvents <- tt.args.event
+			go pm.merge()
 		})
 	}
 }

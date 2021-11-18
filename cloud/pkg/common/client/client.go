@@ -32,8 +32,10 @@ import (
 )
 
 var (
-	initOnce sync.Once
-	keClient *kubeEdgeClient
+	initOnce      sync.Once
+	kubeClient    kubernetes.Interface
+	crdClient     crdClientset.Interface
+	dynamicClient dynamic.Interface
 )
 
 func InitKubeEdgeClient(config *cloudcoreConfig.KubeAPIConfig) {
@@ -43,41 +45,28 @@ func InitKubeEdgeClient(config *cloudcoreConfig.KubeAPIConfig) {
 			klog.Errorf("Failed to build config, err: %v", err)
 			os.Exit(1)
 		}
-
 		kubeConfig.QPS = float32(config.QPS)
 		kubeConfig.Burst = int(config.Burst)
 
-		dynamicClient := dynamic.NewForConfigOrDie(kubeConfig)
+		dynamicClient = dynamic.NewForConfigOrDie(kubeConfig)
 
 		kubeConfig.ContentType = runtime.ContentTypeProtobuf
-		kubeClient := kubernetes.NewForConfigOrDie(kubeConfig)
+		kubeClient = kubernetes.NewForConfigOrDie(kubeConfig)
 
 		crdKubeConfig := rest.CopyConfig(kubeConfig)
 		crdKubeConfig.ContentType = runtime.ContentTypeJSON
-		crdClient := crdClientset.NewForConfigOrDie(crdKubeConfig)
-
-		keClient = &kubeEdgeClient{
-			kubeClient:    kubeClient,
-			crdClient:     crdClient,
-			dynamicClient: dynamicClient,
-		}
+		crdClient = crdClientset.NewForConfigOrDie(crdKubeConfig)
 	})
 }
 
 func GetKubeClient() kubernetes.Interface {
-	return keClient.kubeClient
+	return kubeClient
 }
 
 func GetCRDClient() crdClientset.Interface {
-	return keClient.crdClient
+	return crdClient
 }
 
 func GetDynamicClient() dynamic.Interface {
-	return keClient.dynamicClient
-}
-
-type kubeEdgeClient struct {
-	kubeClient    *kubernetes.Clientset
-	crdClient     *crdClientset.Clientset
-	dynamicClient dynamic.Interface
+	return dynamicClient
 }

@@ -220,18 +220,8 @@ func (dc *DownstreamController) syncEdgeNodes() {
 			case watch.Added:
 				fallthrough
 			case watch.Modified:
-				// When node comes to running, send all the service/endpoints/pods information to edge
-				for _, nsc := range node.Status.Conditions {
-					if nsc.Type != v1.NodeReady {
-						continue
-					}
-					nstatus := string(nsc.Status)
-					status, _ := dc.lc.GetNodeStatus(node.ObjectMeta.Name)
-					dc.lc.UpdateEdgeNode(node.ObjectMeta.Name, nstatus)
-					if nsc.Status != v1.ConditionTrue || status == nstatus {
-						continue
-					}
-				}
+				// update local cache
+				dc.lc.UpdateEdgeNode(node.ObjectMeta.Name)
 			case watch.Deleted:
 				dc.lc.DeleteNode(node.ObjectMeta.Name)
 
@@ -376,15 +366,8 @@ func (dc *DownstreamController) initLocating() error {
 	if err != nil {
 		return err
 	}
-	var status string
 	for _, node := range nodes.Items {
-		for _, nsc := range node.Status.Conditions {
-			if nsc.Type == "Ready" {
-				status = string(nsc.Status)
-				break
-			}
-		}
-		dc.lc.UpdateEdgeNode(node.ObjectMeta.Name, status)
+		dc.lc.UpdateEdgeNode(node.ObjectMeta.Name)
 	}
 
 	pods, err := dc.kubeClient.CoreV1().Pods(v1.NamespaceAll).List(context.Background(), metav1.ListOptions{})

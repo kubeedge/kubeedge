@@ -68,16 +68,16 @@ func Run(opt *options.AdmissionOptions) {
 	klog.V(4).Infof("AdmissionOptions: %+v", *opt)
 	restConfig, err := clientcmd.BuildConfigFromFlags(opt.Master, opt.Kubeconfig)
 	if err != nil {
-		klog.Fatal(err)
+		klog.Exit(err)
 	}
 
 	cli, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
-		klog.Fatalf("Create kube client failed with error: %v", err)
+		klog.Exitf("Create kube client failed with error: %v", err)
 	}
 	vcli, err := versioned.NewForConfig(restConfig)
 	if err != nil {
-		klog.Fatalf("Create versioned client failed with error: %v", err)
+		klog.Exitf("Create versioned client failed with error: %v", err)
 	}
 
 	controller.Client = cli
@@ -85,13 +85,13 @@ func Run(opt *options.AdmissionOptions) {
 
 	caBundle, err := ioutil.ReadFile(opt.CaCertFile)
 	if err != nil {
-		klog.Fatalf("Unable to read cacert file: %v\n", err)
+		klog.Exitf("Unable to read cacert file: %v\n", err)
 	}
 
 	//TODO: read somewhere to get what's kind of webhook is enabled, register those webhook only.
 	err = controller.registerWebhooks(opt, caBundle)
 	if err != nil {
-		klog.Fatalf("Failed to register the webhook with error: %v", err)
+		klog.Exitf("Failed to register the webhook with error: %v", err)
 	}
 
 	http.HandleFunc("/devicemodels", serveDeviceModel)
@@ -105,7 +105,7 @@ func Run(opt *options.AdmissionOptions) {
 	}
 
 	if err := server.ListenAndServeTLS("", ""); err != nil {
-		klog.Fatalf("Start server failed with error: %v", err)
+		klog.Exitf("Start server failed with error: %v", err)
 	}
 }
 
@@ -116,7 +116,7 @@ func configTLS(opt *options.AdmissionOptions, restConfig *restclient.Config) *tl
 	if len(opt.CertFile) != 0 && len(opt.KeyFile) != 0 {
 		sCert, err := tls.LoadX509KeyPair(opt.CertFile, opt.KeyFile)
 		if err != nil {
-			klog.Fatal(err)
+			klog.Exit(err)
 		}
 
 		return &tls.Config{
@@ -127,7 +127,7 @@ func configTLS(opt *options.AdmissionOptions, restConfig *restclient.Config) *tl
 	if len(restConfig.CertData) != 0 && len(restConfig.KeyData) != 0 {
 		sCert, err := tls.X509KeyPair(restConfig.CertData, restConfig.KeyData)
 		if err != nil {
-			klog.Fatal(err)
+			klog.Exit(err)
 		}
 
 		return &tls.Config{
@@ -135,7 +135,7 @@ func configTLS(opt *options.AdmissionOptions, restConfig *restclient.Config) *tl
 		}
 	}
 
-	klog.Fatal("tls: failed to find any tls config data")
+	klog.Exit("tls: failed to find any tls config data")
 	return &tls.Config{}
 }
 

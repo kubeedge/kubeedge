@@ -26,6 +26,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/test"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1/validation"
+	"github.com/kubeedge/kubeedge/pkg/features"
 	"github.com/kubeedge/kubeedge/pkg/util"
 	"github.com/kubeedge/kubeedge/pkg/util/flag"
 	"github.com/kubeedge/kubeedge/pkg/version"
@@ -55,16 +56,19 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 			flag.PrintFlags(cmd.Flags())
 
 			if errs := opts.Validate(); len(errs) > 0 {
-				klog.Fatal(util.SpliceErrors(errs))
+				klog.Exit(util.SpliceErrors(errs))
 			}
 
 			config, err := opts.Config()
 			if err != nil {
-				klog.Fatal(err)
+				klog.Exit(err)
+			}
+			if errs := validation.ValidateEdgeCoreConfiguration(config); len(errs) > 0 {
+				klog.Exit(util.SpliceErrors(errs.ToAggregate().Errors()))
 			}
 
-			if errs := validation.ValidateEdgeCoreConfiguration(config); len(errs) > 0 {
-				klog.Fatal(util.SpliceErrors(errs.ToAggregate().Errors()))
+			if err := features.DefaultMutableFeatureGate.SetFromMap(config.FeatureGates); err != nil {
+				klog.Exit(err)
 			}
 
 			// To help debugging, immediately log version
@@ -79,7 +83,7 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 			if checkEnv != "false" {
 				// Check running environment before run edge core
 				if err := environmentCheck(); err != nil {
-					klog.Fatal(fmt.Errorf("failed to check the running environment: %v", err))
+					klog.Exit(fmt.Errorf("failed to check the running environment: %v", err))
 				}
 			}
 
@@ -134,12 +138,10 @@ func environmentCheck() error {
 	}
 
 	for _, process := range processes {
-		// if kubelet is running, return error
-		if process.Executable() == "kubelet" {
+		switch process.Executable() {
+		case "kubelet": // if kubelet is running, return error
 			return errors.New("kubelet should not running on edge node when running edgecore")
-		}
-		// if kube-proxy is running, return error
-		if process.Executable() == "kube-proxy" {
+		case "kube-proxy": // if kube-proxy is running, return error
 			return errors.New("kube-proxy should not running on edge node when running edgecore")
 		}
 	}
