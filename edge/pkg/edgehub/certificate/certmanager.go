@@ -271,7 +271,7 @@ func (cm *CertManager) GetEdgeCert(url string, capem []byte, cert tls.Certificat
 
 	client, err := http.NewHTTPClientWithCA(capem, cert)
 	if err != nil {
-		return nil, nil, fmt.Errorf("falied to create http client:%v", err)
+		return nil, nil, fmt.Errorf("failed to create http client:%v", err)
 	}
 
 	req, err := http.BuildRequest(nethttp.MethodGet, url, bytes.NewReader(csr), token, cm.NodeName)

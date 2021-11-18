@@ -256,7 +256,7 @@ func (q *ChannelMessageQueue) Close(info *model.HubInfo) {
 	_, listStoreExit := q.listStorePool.Load(info.NodeID)
 
 	if !queueExist && !storeExist && !listQueueExist && !listStoreExit {
-		klog.Warningf("rChannel for edge node %s is already removed", info.NodeID)
+		klog.Warningf("Channel for edge node %s is already removed", info.NodeID)
 		return
 	}
 

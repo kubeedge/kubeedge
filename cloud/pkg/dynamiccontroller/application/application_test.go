@@ -42,7 +42,7 @@ func TestApplicationGC(t *testing.T) {
 			a.GC()
 			_, ok := a.Applications.Load(app.Identifier())
 			if ok == true {
-				t.Errorf("Application delete falied")
+				t.Errorf("Application delete failed")
 			}
 		})
 	}
