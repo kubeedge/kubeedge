@@ -22,8 +22,8 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: node-role.kubernetes.io/edge
-                operator: DoesNotExist
+              - key: node-role.kubernetes.io/master
+                operator: Exists
       restartPolicy: Always
       containers:
         - name: iptables-manager
