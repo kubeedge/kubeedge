@@ -16,26 +16,28 @@ helm upgrade --install cloudcore ./cloudcore --namespace kubeedge --create-names
 
 - `cloudCore.modules.cloudHub.advertiseAddress`, defines the unmissable public IPs which can be accessed by edge nodes.
 - `cloudCore.hostNetWork`, default `true`, which shares the host network, used for setting the forward iptables rules on the host.
-- `cloudCore.image.repository`, default `kubeedge`, which defines the image repo.
-- `cloudCore.image.tag`, default `v1.8.2`, which defines the image tag.
-- `cloudCore.image.pullPolicy`, default `IfNotPresent`, which defines the policies to pull images.
-- `cloudCore.labels`.
-- `cloudCore.annotions`.
-- `cloudCore.affinity`, `cloudCore.nodeSelector`, `cloudCore.tolerations`, which defines the node scheduling policies.
+- `cloudCore.image.repository`, default `kubeedge`, defines the image repo.
+- `cloudCore.image.tag`, default `v1.8.2`, defines the image tag.
+- `cloudCore.image.pullPolicy`, default `IfNotPresent`, defines the policies to pull images.
+- `cloudCore.image.imagePullSecrets`, defines the secrets to pull images.
+- `cloudCore.labels`, defines common labels.
+- `cloudCore.service.ingressLabels`, defines extra labels to the service if loadbalancer is enabed.
+- `cloudCore.annotions`, defines common annotions.
+- `cloudCore.affinity`, `cloudCore.nodeSelector`, `cloudCore.tolerations`, defines the node scheduling policies.
 - `cloudCore.resources`, defines the resources limits and requests.
 - `cloudCore.modules.cloudHub.nodeLimit`, defines the edge nodes limits.
-- `cloudCore.modules.cloudHub.websocket.enable`, default `true`
-- `cloudCore.modules.cloudHub.quic.enable`, default `false`
-- `cloudCore.modules.cloudHub.https.enable`, default `true`
-- `cloudCore.modules.cloudStream.enable`, default `true`
-- `cloudCore.modules.dynamicController.enable`,  default `false`
-- `cloudCore.modules.router.enable`,  default `false`
-- `cloudCore.service.type`,  default `NodePort`
-- `cloudCore.service.cloudhubNodePort`,  default `30000`, which defines the exposed node port for cloudhub service
-- `cloudCore.service.cloudhubQuicNodePort`,  default `30001`, which defines the exposed node port for cloudhub quic protocol
-- `cloudCore.service.cloudhubHttpsNodePort`,  default `30002`, which defines the exposed node port for cloudhub https protocol
-- `cloudCore.service.cloudstreamNodePort`,  default `30003`, which defines the exposed node port for cloud stream service
-- `cloudCore.service.tunnelNodePort`,  default `30004`, which defines the exposed node port for cloud tunnel service
+- `cloudCore.modules.cloudHub.websocket.enable`, default `true`.
+- `cloudCore.modules.cloudHub.quic.enable`, default `false`.
+- `cloudCore.modules.cloudHub.https.enable`, default `true`.
+- `cloudCore.modules.cloudStream.enable`, default `true`.
+- `cloudCore.modules.dynamicController.enable`,  default `false`.
+- `cloudCore.modules.router.enable`,  default `false`.
+- `cloudCore.service.type`,  default `NodePort`.
+- `cloudCore.service.cloudhubNodePort`,  default `30000`, which defines the exposed node port for cloudhub service.
+- `cloudCore.service.cloudhubQuicNodePort`,  default `30001`, which defines the exposed node port for cloudhub quic protocol.
+- `cloudCore.service.cloudhubHttpsNodePort`,  default `30002`, which defines the exposed node port for cloudhub https protocol.
+- `cloudCore.service.cloudstreamNodePort`,  default `30003`, which defines the exposed node port for cloud stream service.
+- `cloudCore.service.tunnelNodePort`,  default `30004`, which defines the exposed node port for cloud tunnel service.
 
 ## Uninstall
 

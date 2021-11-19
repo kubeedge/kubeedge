@@ -38,7 +38,10 @@ spec:
       tolerations: {{ toYaml . | nindent 8 }}
       {{- end }}
       serviceAccount: cloudcore
-      serviceAccountName: cloudcore 
+      serviceAccountName: cloudcore
+      {{- with .Values.imagePullSecrets }} 
+      imagePullSecrets: {{- toYaml . | indent 8 }} 
+      {{- end }}  
       containers:
       - name: cloudcore
         image: {{ .Values.cloudCore.image.repository }}:{{ .Values.cloudCore.image.tag }}

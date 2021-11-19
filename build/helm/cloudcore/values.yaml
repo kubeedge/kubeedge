@@ -8,6 +8,7 @@ cloudCore:
     repository: "kubeedge/cloudcore"
     tag: "v1.8.2"
     pullPolicy: "IfNotPresent"
+    imagePullSecrets: []
   securityContext:
     privileged: true
   labels:
