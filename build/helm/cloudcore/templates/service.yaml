@@ -4,6 +4,11 @@ metadata:
   {{- with .Values.cloudCore.labels }}
   labels: {{- toYaml . | nindent 4 }}
   {{- end }}
+  {{- if eq .Values.cloudCore.service.type "LoadBalancer" }}
+  {{- with .Values.cloudCore.service.ingressLabels }}
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- end }}
   name: cloudcore
 spec:
   type: {{ .Values.cloudCore.service.type }}
@@ -42,5 +47,11 @@ spec:
     {{- end }}
     name: tunnelport
   selector:
-    k8s-app: kubeedge
-    kubeedge: cloudcore
+  {{- with .Values.cloudCore.labels }}
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- if eq .Values.cloudCore.service.type "LoadBalancer" }}
+  {{- with .Values.cloudCore.service.ingressLabels }}
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- end }}
