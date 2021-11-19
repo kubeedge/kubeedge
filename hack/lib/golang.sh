@@ -214,7 +214,7 @@ kubeedge::golang::build_binaries() {
     echo "building $bin"
     local name="${bin##*/}"
     set -x
-    GOOS="linux" CGO_ENABLED=1 go build -o ${KUBEEDGE_OUTPUT_BINPATH}/${name} -gcflags="${gogcflags:-}" -ldflags "${goldflags:-}" $bin
+    GOOS="linux" go build -o ${KUBEEDGE_OUTPUT_BINPATH}/${name} -gcflags="${gogcflags:-}" -ldflags "${goldflags:-}" $bin
     set +x
   done
 }
