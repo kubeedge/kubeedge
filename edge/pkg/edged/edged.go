@@ -1121,10 +1121,18 @@ func (e *edged) syncPod() {
 		}
 		op := result.GetOperation()
 
-		content, err := result.GetContentData()
-		if err != nil {
-			klog.Errorf("get message content data failed: %v", err)
-			continue
+		var content []byte
+		switch result.Content.(type) {
+		case []byte:
+			content = result.GetContent().([]byte)
+		case string:
+			content = []byte(result.GetContent().(string))
+		default:
+			content, err = json.Marshal(result.Content)
+			if err != nil {
+				klog.Errorf("marshal message content failed: %v", err)
+				continue
+			}
 		}
 		klog.Infof("result content is %s", result.Content)
 		switch resType {
