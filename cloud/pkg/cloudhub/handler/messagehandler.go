@@ -48,8 +48,7 @@ const (
 
 // constants for error message
 const (
-	MsgFormatError = "message format not correct"
-	VolumePattern  = `^\w[-\w.+]*/` + constants.CSIResourceTypeVolume + `/\w[-\w.+]*`
+	VolumePattern = `^\w[-\w.+]*/` + constants.CSIResourceTypeVolume + `/\w[-\w.+]*`
 )
 
 // VolumeRegExp is used to validate the volume resource

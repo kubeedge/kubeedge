@@ -76,8 +76,7 @@ import (
 )
 
 const (
-	etcHostsPath  = "/etc/hosts"
-	systemdSuffix = ".slice"
+	etcHostsPath = "/etc/hosts"
 
 	windows = "windows"
 
@@ -1047,7 +1046,6 @@ func (e *edged) updatePodStatus(pod *v1.Pod) error {
 		spec := &pod.Spec
 		newStatus.Conditions = append(newStatus.Conditions, status.GeneratePodInitializedCondition(spec, newStatus.InitContainerStatuses, newStatus.Phase))
 		newStatus.Conditions = append(newStatus.Conditions, status.GeneratePodReadyCondition(spec, newStatus.Conditions, newStatus.ContainerStatuses, newStatus.Phase))
-		//newStatus.Conditions = append(newStatus.Conditions, status.GenerateContainersReadyCondition(spec, newStatus.ContainerStatuses, newStatus.Phase))
 		newStatus.Conditions = append(newStatus.Conditions, v1.PodCondition{
 			Type:   v1.PodScheduled,
 			Status: v1.ConditionTrue,

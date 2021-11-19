@@ -16,10 +16,6 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
 )
 
-const (
-	waitConnectionPeriod = time.Minute
-)
-
 var groupMap = map[string]string{
 	"resource": modules.MetaGroup,
 	"twin":     modules.TwinGroup,
