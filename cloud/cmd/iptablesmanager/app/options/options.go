@@ -22,17 +22,22 @@ import (
 
 // IptablesManagerOptions config
 type IptablesManagerOptions struct {
-	KubeConfig string
+	KubeConfig  string
+	ForwardPort int
 }
 
 // NewIptablesManagerOptions returns options object
 func NewIptablesManagerOptions() *IptablesManagerOptions {
-	return &IptablesManagerOptions{}
+	return &IptablesManagerOptions{
+		KubeConfig:  "",
+		ForwardPort: 10003,
+	}
 }
 
 // Flags return flag sets
 func (o *IptablesManagerOptions) Flags() (fss cliflag.NamedFlagSets) {
 	fs := fss.FlagSet("IptablesManager")
 	fs.StringVar(&o.KubeConfig, "kubeConfig", o.KubeConfig, "The KubeConfig path. Flags override values in this file.")
+	fs.IntVar(&o.ForwardPort, "ForwardPort", o.ForwardPort, "The forward port, default is the stream port, 10003.")
 	return
 }

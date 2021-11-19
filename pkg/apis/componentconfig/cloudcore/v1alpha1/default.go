@@ -169,7 +169,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 			},
 			IptablesManager: &IptablesManager{
 				Enable: true,
-				Mode:   "internal",
+				Mode:   InternalMode,
 			},
 		},
 	}
@@ -220,7 +220,7 @@ func NewMinCloudCoreConfig() *CloudCoreConfig {
 			},
 			IptablesManager: &IptablesManager{
 				Enable: true,
-				Mode:   "internal",
+				Mode:   InternalMode,
 			},
 		},
 	}

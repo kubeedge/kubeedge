@@ -25,6 +25,7 @@ type Manager struct {
 	cmLister            v1.ConfigMapLister
 	cmListerSynced      cache.InformerSynced
 	preTunnelPortRecord *TunnelPortRecord
+	streamPort          int
 }
 
 type TunnelPortRecord struct {
@@ -43,7 +44,6 @@ type iptablesJumpChain struct {
 const (
 	// the tunnelPort chain
 	tunnelPortChain utiliptables.Chain = "TUNNEL-PORT"
-	streamPort                         = 10003
 )
 
 var iptablesJumpChains = []iptablesJumpChain{
@@ -51,7 +51,7 @@ var iptablesJumpChains = []iptablesJumpChain{
 	{utiliptables.TableNAT, tunnelPortChain, utiliptables.ChainPrerouting, "kubeedge tunnel port", nil},
 }
 
-func NewIptablesManager() *Manager {
+func NewIptablesManager(streamPort int) *Manager {
 	protocol := utiliptables.ProtocolIPv4
 	exec := utilexec.New()
 	iptInterface := utiliptables.New(exec, protocol)
@@ -62,6 +62,7 @@ func NewIptablesManager() *Manager {
 			IPTunnelPort: make(map[string]int),
 			Port:         make(map[int]bool),
 		},
+		streamPort: streamPort,
 	}
 
 	// informer factory
@@ -115,7 +116,7 @@ func (im *Manager) reconcile() {
 	for _, ipports := range addedIPPort {
 		ipport := strings.Split(ipports, ":")
 		ip, port := ipport[0], ipport[1]
-		args := append([]string{"-p", "tcp", "-j", "DNAT", "--dport", port, "--to", ip + ":" + strconv.Itoa(int(streamPort))})
+		args := append([]string{"-p", "tcp", "-j", "DNAT", "--dport", port, "--to", ip + ":" + strconv.Itoa(int(im.streamPort))})
 		if _, err := im.iptables.EnsureRule(utiliptables.Append, utiliptables.TableNAT, tunnelPortChain, args...); err != nil {
 			klog.ErrorS(err, "Failed to ensure rules", "table", utiliptables.TableNAT, "chain", tunnelPortChain)
 			return
@@ -125,7 +126,7 @@ func (im *Manager) reconcile() {
 	for _, ipports := range deletedIPPort {
 		ipport := strings.Split(ipports, ":")
 		ip, port := ipport[0], ipport[1]
-		args := append([]string{"-p", "tcp", "-j", "DNAT", "--dport", port, "--to", ip + ":" + strconv.Itoa(int(streamPort))})
+		args := append([]string{"-p", "tcp", "-j", "DNAT", "--dport", port, "--to", ip + ":" + strconv.Itoa(int(im.streamPort))})
 		if err := im.iptables.DeleteRule(utiliptables.TableNAT, tunnelPortChain, args...); err != nil {
 			klog.ErrorS(err, "Failed to delete rules", "table", utiliptables.TableNAT, "chain", tunnelPortChain)
 			return

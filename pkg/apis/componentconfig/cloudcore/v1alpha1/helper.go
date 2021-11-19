@@ -17,10 +17,19 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"encoding/json"
+	"errors"
 	"io/ioutil"
 
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/yaml"
+)
+
+type IptablesMgrMode string
+
+const (
+	InternalMode IptablesMgrMode = "internal"
+	ExternalMode IptablesMgrMode = "external"
 )
 
 func (c *CloudCoreConfig) Parse(filename string) error {
@@ -35,4 +44,27 @@ func (c *CloudCoreConfig) Parse(filename string) error {
 		return err
 	}
 	return nil
+}
+
+func (in *IptablesManager) UnmarshalJSON(data []byte) error {
+	if len(data) == 0 {
+		return nil
+	}
+
+	// Define a secondary type so that we don't end up with a recursive call to json.Unmarshal
+	type IM IptablesManager
+	var out = (*IM)(in)
+	err := json.Unmarshal(data, &out)
+	if err != nil {
+		return err
+	}
+
+	// Validate the valid enum values
+	switch in.Mode {
+	case InternalMode, ExternalMode:
+		return nil
+	default:
+		in.Mode = ""
+		return errors.New("invalid value for iptablesmgr mode")
+	}
 }

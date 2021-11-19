@@ -305,7 +305,7 @@ csidriverimage:
 
 .PHONY: iptablesmgrimage
 iptablesmgrimage:
-	docker build --build-arg GO_LDFLAGS=${GO_LDFLAGS} -t kubeedge/iptables-manager:${IMAGE_TAG} -f build/iptablesManager/Dockerfile .
+	docker build --build-arg GO_LDFLAGS=${GO_LDFLAGS} -t kubeedge/iptables-manager:${IMAGE_TAG} -f build/iptablesmanager/Dockerfile .
 
 .PHONY: edgeimage
 edgeimage:

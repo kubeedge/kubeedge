@@ -431,5 +431,5 @@ type IptablesManager struct {
 	// The iptables manager component with the external mode is always deployed outside the cloudcore, will share the host network, forward to the internal cloudcore service and port.
 	// default internal.
 	// +kubebuilder:validation:Enum=internal;external
-	Mode string `json:"mode,omitempty"`
+	Mode IptablesMgrMode `json:"mode,omitempty"`
 }

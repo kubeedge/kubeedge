@@ -91,10 +91,11 @@ kubernetes controller which manages devices so that the device metadata/status d
 
 			registerModules(config)
 
-			if config.Modules.IptablesManager == nil || config.Modules.IptablesManager.Enable && config.Modules.IptablesManager.Mode == "internal" {
+			if config.Modules.IptablesManager == nil || config.Modules.IptablesManager.Enable && config.Modules.IptablesManager.Mode == v1alpha1.InternalMode {
 				// By default, IptablesManager manages tunnel port related iptables rules
 				// The internal mode will share the host network, forward to the stream port.
-				go iptables.NewIptablesManager().Run()
+				streamPort := int(config.Modules.CloudStream.StreamPort)
+				go iptables.NewIptablesManager(streamPort).Run()
 			}
 
 			// Start all modules
