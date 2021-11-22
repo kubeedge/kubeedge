@@ -20,6 +20,7 @@ func InitConfigure(c *v1alpha1.MetaServer) {
 		Config.Enable = c.Enable
 		Config.Debug = c.Debug
 		Config.Server = c.Server
+		Config.RemoteRequestTimeout = c.RemoteRequestTimeout
 		// so edgehub must register before metamanager
 		Config.NodeName = edgehubconfig.Config.NodeName
 	})

@@ -384,9 +384,10 @@ type MetaManager struct {
 }
 
 type MetaServer struct {
-	Enable bool   `json:"enable"`
-	Debug  bool   `json:"debug"`
-	Server string `json:"server"`
+	Enable               bool   `json:"enable"`
+	Debug                bool   `json:"debug"`
+	RemoteRequestTimeout int32  `json:"remoteRequestTimeout"`
+	Server               string `json:"server"`
 }
 
 // ServiceBus indicates the ServiceBus module config

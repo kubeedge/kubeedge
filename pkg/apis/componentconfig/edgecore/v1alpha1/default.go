@@ -134,9 +134,10 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				PodStatusSyncInterval: constants.DefaultPodStatusSyncInterval,
 				RemoteQueryTimeout:    constants.DefaultRemoteQueryTimeout,
 				MetaServer: &MetaServer{
-					Enable: false,
-					Debug:  false,
-					Server: constants.DefaultMetaServerAddr,
+					Enable:               false,
+					Debug:                false,
+					RemoteRequestTimeout: constants.DefaultRemoteRequestTimeout,
+					Server:               constants.DefaultMetaServerAddr,
 				},
 			},
 			ServiceBus: &ServiceBus{

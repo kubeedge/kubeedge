@@ -92,6 +92,8 @@ type Application struct {
 	ReqBody  []byte // better a k8s api instance
 	RespBody []byte
 
+	remoteRequestTimeout int32
+
 	ctx    context.Context // to end app.Wait
 	cancel context.CancelFunc
 
@@ -113,17 +115,18 @@ func newApplication(ctx context.Context, key string, verb applicationVerb, noden
 	}
 	ctx2, cancel := context.WithCancel(ctx)
 	app := &Application{
-		Key:       key,
-		Verb:      verb,
-		Nodename:  nodename,
-		Status:    PreApplying,
-		Option:    toBytes(option),
-		ReqBody:   toBytes(reqBody),
-		ctx:       ctx2,
-		cancel:    cancel,
-		count:     0,
-		countLock: sync.Mutex{},
-		tim:       time.Time{},
+		Key:                  key,
+		Verb:                 verb,
+		Nodename:             nodename,
+		Status:               PreApplying,
+		Option:               toBytes(option),
+		ReqBody:              toBytes(reqBody),
+		remoteRequestTimeout: metaserverconfig.Config.RemoteRequestTimeout,
+		ctx:                  ctx2,
+		cancel:               cancel,
+		count:                0,
+		countLock:            sync.Mutex{},
+		tim:                  time.Time{},
 	}
 	app.add()
 	return app
@@ -328,7 +331,7 @@ func (a *Agent) doApply(app *Application) {
 	app.Status = InApplying
 	msg := model.NewMessage("").SetRoute(MetaServerSource, modules.DynamicControllerModuleGroup).FillBody(app)
 	msg.SetResourceOperation("null", "null")
-	resp, err := beehiveContext.SendSync(edgemodule.EdgeHubModuleName, *msg, 10*time.Second)
+	resp, err := beehiveContext.SendSync(edgemodule.EdgeHubModuleName, *msg, time.Duration(app.remoteRequestTimeout)*time.Second)
 	if err != nil {
 		app.Status = Failed
 		app.Reason = fmt.Sprintf("failed to access cloud Application center: %v", err)
