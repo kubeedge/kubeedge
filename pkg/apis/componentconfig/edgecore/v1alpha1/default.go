@@ -83,6 +83,7 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				NetworkPluginMTU:            constants.DefaultNetworkPluginMTU,
 				VolumeStatsAggPeriod:        constants.DefaultVolumeStatsAggPeriod,
 				EnableMetrics:               true,
+				CsiDriverName:               "csi-hostpath",
 			},
 			EdgeHub: &EdgeHub{
 				Enable:            true,
@@ -190,6 +191,7 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 				CGroupDriver:          CGroupDriverCGroupFS,
 				CgroupsPerQOS:         true,
 				CgroupRoot:            constants.DefaultCgroupRoot,
+				CsiDriverName:         "csi-hostpath",
 			},
 			EdgeHub: &EdgeHub{
 				Heartbeat:         15,

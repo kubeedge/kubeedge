@@ -235,6 +235,9 @@ type Edged struct {
 	// EnableMetrics indicates whether enable the metrics
 	// default true
 	EnableMetrics bool `json:"enableMetrics,omitempty"`
+	// CsiDriverName indicates the csi driver name used by edge node
+	// default "csi-hostpath"
+	CsiDriverName string `json:"csiDriverName"`
 }
 
 // EdgeHub indicates the EdgeHub module config

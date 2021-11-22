@@ -21,6 +21,8 @@ import (
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"k8s.io/klog/v2"
+
+	edgedconfig "github.com/kubeedge/kubeedge/edge/pkg/edged/config"
 )
 
 type Controller struct {
@@ -30,7 +32,7 @@ type Controller struct {
 func (c *Controller) CreateVolume(req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error) {
 	if c.csiClient == nil {
 		var err error
-		c.csiClient, err = newCsiDriverClient(csiDriverName("csi-hostpath"))
+		c.csiClient, err = newCsiDriverClient(csiDriverName(edgedconfig.Config.CsiDriverName))
 		if err != nil {
 			klog.Errorf("failed to create newCsiDriverClient: %v", err)
 			return nil, err
@@ -58,7 +60,7 @@ func (c *Controller) CreateVolume(req *csi.CreateVolumeRequest) (*csi.CreateVolu
 func (c *Controller) DeleteVolume(req *csi.DeleteVolumeRequest) (*csi.DeleteVolumeResponse, error) {
 	if c.csiClient == nil {
 		var err error
-		c.csiClient, err = newCsiDriverClient(csiDriverName("csi-hostpath"))
+		c.csiClient, err = newCsiDriverClient(csiDriverName(edgedconfig.Config.CsiDriverName))
 		if err != nil {
 			klog.Errorf("failed to create newCsiDriverClient: %v", err)
 			return nil, err
@@ -86,7 +88,7 @@ func (c *Controller) DeleteVolume(req *csi.DeleteVolumeRequest) (*csi.DeleteVolu
 func (c *Controller) ControllerPublishVolume(req *csi.ControllerPublishVolumeRequest) (*csi.ControllerPublishVolumeResponse, error) {
 	if c.csiClient == nil {
 		var err error
-		c.csiClient, err = newCsiDriverClient(csiDriverName("csi-hostpath"))
+		c.csiClient, err = newCsiDriverClient(csiDriverName(edgedconfig.Config.CsiDriverName))
 		if err != nil {
 			klog.Errorf("failed to create newCsiDriverClient: %v", err)
 			return nil, err
@@ -114,7 +116,7 @@ func (c *Controller) ControllerPublishVolume(req *csi.ControllerPublishVolumeReq
 func (c *Controller) ControllerUnpublishVolume(req *csi.ControllerUnpublishVolumeRequest) (*csi.ControllerUnpublishVolumeResponse, error) {
 	if c.csiClient == nil {
 		var err error
-		c.csiClient, err = newCsiDriverClient(csiDriverName("csi-hostpath"))
+		c.csiClient, err = newCsiDriverClient(csiDriverName(edgedconfig.Config.CsiDriverName))
 		if err != nil {
 			klog.Errorf("failed to create newCsiDriverClient: %v", err)
 			return nil, err
