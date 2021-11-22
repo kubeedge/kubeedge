@@ -219,8 +219,6 @@ func (dc *DownstreamController) addDeviceProfile(device *v1alpha2.Device, config
 		// create deviceProfileStruct
 		deviceProfile.DeviceInstances = make([]*types.DeviceInstance, 0)
 		deviceProfile.DeviceModels = make([]*types.DeviceModel, 0)
-		//deviceProfile.PropertyVisitors = make([]*types.PropertyVisitor, 0)
-		//deviceProfile.Protocols = make([]*types.Protocol, 0)
 	} else {
 		err := json.Unmarshal([]byte(dp), deviceProfile)
 		if err != nil {
