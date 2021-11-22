@@ -265,17 +265,14 @@ type Agent struct {
 	nodeName     string
 }
 
-var defaultAgent *Agent
-var once sync.Once
-
 // edged config.Config.HostnameOverride
 func NewApplicationAgent() *Agent {
 	defaultAgent := &Agent{nodeName: metaserverconfig.Config.NodeName}
-	once.Do(func() {
-		go wait.Until(func() {
-			defaultAgent.GC()
-		}, time.Minute*5, beehiveContext.Done())
-	})
+
+	go wait.Until(func() {
+		defaultAgent.GC()
+	}, time.Minute*5, beehiveContext.Done())
+
 	return defaultAgent
 }
 
