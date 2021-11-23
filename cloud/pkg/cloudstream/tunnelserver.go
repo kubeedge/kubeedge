@@ -23,14 +23,15 @@ import (
 	"encoding/pem"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/emicklei/go-restful"
 	"github.com/gorilla/websocket"
-	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 	certutil "k8s.io/client-go/util/cert"
 	"k8s.io/klog/v2"
 
@@ -38,6 +39,12 @@ import (
 	streamconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/pkg/stream"
+)
+
+const (
+	// The amount of time the tunnelserver should sleep between retrying node status updates
+	retrySleepTime        = 20 * time.Second
+	nodeStatusUpdateRetry = 3
 )
 
 type TunnelServer struct {
@@ -178,23 +185,23 @@ func (s *TunnelServer) Start() {
 }
 
 func (s *TunnelServer) updateNodeKubeletEndpoint(nodeName string) {
-	getNode, err := client.GetKubeClient().CoreV1().Nodes().Get(context.Background(), nodeName, metav1.GetOptions{})
-	if errors.IsNotFound(err) {
-		klog.Warningf("node %s not found", nodeName)
-		return
-	}
-	if err != nil {
-		klog.Warningf("get node %s failed with error: %s", nodeName, err)
-		return
-	}
+	if err := wait.PollImmediate(retrySleepTime, nodeStatusUpdateRetry, func() (bool, error) {
+		getNode, err := client.GetKubeClient().CoreV1().Nodes().Get(context.Background(), nodeName, metav1.GetOptions{})
+		if err != nil {
+			klog.Errorf("Failed while getting a Node to retry updating node KubeletEndpoint Port, node: %s, error: %v", nodeName, err)
+			return false, nil
+		}
 
-	getNode.Status.DaemonEndpoints.KubeletEndpoint.Port = int32(s.tunnelPort)
-	node, err := client.GetKubeClient().CoreV1().Nodes().UpdateStatus(context.Background(), getNode, metav1.UpdateOptions{})
-	if err != nil {
-		klog.Errorf("update node KubeletEndpoint Port failed with error: %s, node: %v, tunnelPort:%v",
-			err, getNode.Name, s.tunnelPort)
-		return
+		getNode.Status.DaemonEndpoints.KubeletEndpoint.Port = int32(s.tunnelPort)
+		_, err = client.GetKubeClient().CoreV1().Nodes().UpdateStatus(context.Background(), getNode, metav1.UpdateOptions{})
+		if err != nil {
+			klog.Errorf("Failed to update node KubeletEndpoint Port, node: %s, tunnelPort: %s, err: %v", nodeName, s.tunnelPort, err)
+			return false, nil
+		}
+		return true, nil
+	}); err != nil {
+		klog.Errorf("Update KubeletEndpoint Port of Node '%v' error: %v. ", nodeName, err)
+		os.Exit(1)
 	}
-	klog.Infof("update node KubeletEndpoint Port success. node: %s, tunnelPort:%v->%v", node.Name,
-		getNode.Status.DaemonEndpoints.KubeletEndpoint.Port, node.Status.DaemonEndpoints.KubeletEndpoint.Port)
+	klog.V(4).Infof("Update node KubeletEndpoint Port successfully, node: %s, tunnelPort: %s", nodeName, s.tunnelPort)
 }

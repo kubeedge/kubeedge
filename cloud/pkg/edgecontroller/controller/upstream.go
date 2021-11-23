@@ -505,7 +505,9 @@ func (uc *UpstreamController) updateNodeStatus() {
 				// Keep the same "VolumesAttached" attribute with upstream,
 				// since this value is maintained by kube-controller-manager.
 				nodeStatusRequest.Status.VolumesAttached = getNode.Status.VolumesAttached
-				nodeStatusRequest.Status.DaemonEndpoints.KubeletEndpoint.Port = getNode.Status.DaemonEndpoints.KubeletEndpoint.Port
+				if getNode.Status.DaemonEndpoints.KubeletEndpoint.Port != 0 {
+					nodeStatusRequest.Status.DaemonEndpoints.KubeletEndpoint.Port = getNode.Status.DaemonEndpoints.KubeletEndpoint.Port
+				}
 
 				getNode.Status = nodeStatusRequest.Status
 
