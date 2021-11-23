@@ -3,9 +3,11 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
@@ -13,70 +15,60 @@ import (
 )
 
 var (
-	gettokenLongDescription = `
-"keadm gettoken" command prints the token to use for establishing bidirectional trust between edge nodes and cloudcore.
-A token can be used when a edge node is about to join the cluster. With this token the cloudcore then approve the
-certificate request.
-`
-	gettokenExample = `
+	gettokenLongDescription = `Outputs the cloudcore token for edge nodes to join the cluster with "keadm join".
+
+This command prints the token to use for establishing bidirectional trust between the edge nodes and cloudcore.
+With this token, cloudcore will approve the certificate request from the edge nodes.`
+	gettokenExample = `# Obtaining the token
 keadm gettoken --kube-config /root/.kube/config
-- kube-config is the absolute path of kubeconfig which used to build secure connectivity between keadm and kube-apiserver
-to get the token.
-`
+
+# From the edge node
+keadm join <token>`
 )
 
 // NewGettoken gets the token for edge nodes to join the cluster
 func NewGettoken() *cobra.Command {
-	init := newGettokenOptions()
+	init := &common.GettokenOptions{
+		Kubeconfig: common.DefaultKubeConfig,
+	}
 
 	cmd := &cobra.Command{
 		Use:     "gettoken",
-		Short:   "To get the token for edge nodes to join the cluster",
+		Args:    cobra.NoArgs,
+		Short:   "Outputs the cloudcore token.",
 		Long:    gettokenLongDescription,
 		Example: gettokenExample,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			token, err := queryToken(constants.SystemNamespace, common.TokenSecretName, init.Kubeconfig)
+			client, err := util.KubeClient(init.Kubeconfig)
 			if err != nil {
-				fmt.Printf("failed to get token, err is %s\n", err)
-				return err
+				fmt.Fprint(os.Stderr, err)
+				os.Exit(1)
 			}
-			return showToken(token)
+			token, err := queryToken(client, constants.SystemNamespace, common.TokenSecretName)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Unable to get the cloudcore token: %v", err)
+				os.Exit(1)
+			}
+			_, err = fmt.Printf("%s", string(token))
+			if err != nil {
+				fmt.Fprint(os.Stderr, err)
+				os.Exit(1)
+			}
+			return nil
 		},
 	}
-	addGettokenFlags(cmd, init)
+
+	cmd.Flags().StringVar(&init.Kubeconfig, common.KubeConfig, init.Kubeconfig,
+		"The absolute path to the kubeconfig file (default /root/.kube/config)")
+
 	return cmd
 }
 
-func addGettokenFlags(cmd *cobra.Command, gettokenOptions *common.GettokenOptions) {
-	cmd.Flags().StringVar(&gettokenOptions.Kubeconfig, common.KubeConfig, gettokenOptions.Kubeconfig,
-		"Use this key to set kube-config path, eg: $HOME/.kube/config")
-}
-
-// newGettokenOptions return common options
-func newGettokenOptions() *common.GettokenOptions {
-	opts := &common.GettokenOptions{}
-	opts.Kubeconfig = common.DefaultKubeConfig
-	return opts
-}
-
 // queryToken gets token from k8s
-func queryToken(namespace string, name string, kubeConfigPath string) ([]byte, error) {
-	client, err := util.KubeClient(kubeConfigPath)
-	if err != nil {
-		return nil, err
-	}
-	secret, err := client.CoreV1().Secrets(namespace).Get(context.Background(), name, metaV1.GetOptions{})
+func queryToken(kubeClient kubernetes.Interface, namespace string, name string) ([]byte, error) {
+	secret, err := kubeClient.CoreV1().Secrets(namespace).Get(context.Background(), name, metaV1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 	return secret.Data[common.TokenDataName], nil
-}
-
-// showToken prints the token
-func showToken(data []byte) error {
-	_, err := fmt.Printf(string(data))
-	if err != nil {
-		return err
-	}
-	return nil
 }

@@ -87,7 +87,7 @@ func addJoinOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 	cmd.Flags().Lookup(types.KubeEdgeVersion).NoOptDefVal = initOpts.KubeEdgeVersion
 
 	cmd.Flags().StringVar(&initOpts.KubeConfig, types.KubeConfig, initOpts.KubeConfig,
-		"Use this key to set kube-config path, eg: $HOME/.kube/config")
+		"The absolute path to the kubeconfig file (default /root/.kube/config)")
 
 	cmd.Flags().StringVar(&initOpts.Master, types.Master, initOpts.Master,
 		"Use this key to set K8s master address, eg: http://127.0.0.1:8080")
