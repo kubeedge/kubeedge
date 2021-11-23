@@ -570,10 +570,12 @@ func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model
 			objectSyncStatus, err := mh.crdClient.ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).Get(context.Background(), objectSyncName, metav1.GetOptions{})
 			if err != nil {
 				klog.Errorf("Failed to get objectSync: %s, err: %v", objectSyncName, err)
+				return
 			}
 			objectSyncStatus.Status.ObjectResourceVersion = msg.GetResourceVersion()
 			if _, err := mh.crdClient.ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).UpdateStatus(context.Background(), objectSyncStatus, metav1.UpdateOptions{}); err != nil {
 				klog.Errorf("Failed to update objectSync: %s, err: %v", objectSyncName, err)
+				return
 			}
 		}
 	}
