@@ -550,7 +550,7 @@ func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model
 				klog.Errorf("Failed to update objectSync: %v, resourceType: %s, resourceNamespace: %s, resourceName: %s",
 					err, resourceType, resourceNamespace, resourceName)
 			}
-		} else if err != nil && apierrors.IsNotFound(err) {
+		} else if apierrors.IsNotFound(err) {
 			objectSync := &v1alpha1.ObjectSync{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: objectSyncName,

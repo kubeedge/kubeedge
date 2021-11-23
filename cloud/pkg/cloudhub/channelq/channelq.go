@@ -50,7 +50,7 @@ func (q *ChannelMessageQueue) DispatchMessage() {
 	for {
 		select {
 		case <-beehiveContext.Done():
-			klog.Warning("Cloudhub channel eventqueue dispatch message loop stoped")
+			klog.Warning("Cloudhub channel eventqueue dispatch message loop stopped")
 			return
 		default:
 		}
