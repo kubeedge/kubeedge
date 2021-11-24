@@ -168,7 +168,7 @@ func TestDTController_distributeMsg(t *testing.T) {
 			//Failure Case
 			name:    "distributeMsgTest-ActualMessage-NoChanel",
 			message: *msg,
-			wantErr: errors.New("not found chan to communicate"),
+			wantErr: errors.New("Not found chan to communicate"),
 		},
 	}
 	for _, tt := range tests {
