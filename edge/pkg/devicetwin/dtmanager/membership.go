@@ -241,7 +241,6 @@ func addDevice(context *dtcontext.DTContext, toAdd []dttype.Device, baseMessage 
 		result, err := dttype.MarshalMembershipUpdate(addDeviceResult)
 		if err != nil {
 			klog.Errorf("add device %s failed, marshal membership err: %s", device.ID, err)
-			continue
 		} else {
 			context.Send("",
 				dtcommon.SendToEdge,
