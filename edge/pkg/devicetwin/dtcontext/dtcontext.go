@@ -57,7 +57,7 @@ func (dtc *DTContext) CommTo(dtmName string, content interface{}) error {
 	return errors.New("Not found chan to communicate")
 }
 
-//HeartBeat hearbeat to dtcontroller
+//HeartBeat heartbeat to dtcontroller
 func (dtc *DTContext) HeartBeat(dtmName string, content interface{}) error {
 	if strings.Compare(content.(string), "ping") == 0 {
 		dtc.ModulesHealth.Store(dtmName, time.Now().Unix())
