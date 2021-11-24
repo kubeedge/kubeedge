@@ -15,16 +15,13 @@ jobs:
           go-version: "^1.16.x"
       - run: go version
       # Runs a set of commands to initialize and analyze with FOSSA
-      - uses: fossas/fossa-action@v1
-        with:
-          api-key: 87a9c35cbed49f802657f98b60134ee8
-        name: run FOSSA analysis
-#        env:
-#          # FOSSA Push-Only API Token
-#          FOSSA_API_KEY: '87a9c35cbed49f802657f98b60134ee8'
-#        run: |
-#          export GOPATH=$HOME/go
-#          export PATH=$PATH:$(go env GOPATH)/bin
-#          sudo curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | sudo bash
-#          sudo fossa init
-#          sudo -E fossa analyze
+      - name: run FOSSA analysis
+        env:
+          # FOSSA Push-Only API Token
+          FOSSA_API_KEY: '87a9c35cbed49f802657f98b60134ee8'
+        run: |
+          export GOPATH=$HOME/go
+          export PATH=$PATH:$(go env GOPATH)/bin
+          sudo curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install-latest.sh | sudo bash
+          sudo fossa init
+          sudo -E fossa analyze
