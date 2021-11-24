@@ -41,7 +41,7 @@ func GenerateTestCertificate(path string, certFileName string, keyFileName strin
 		SerialNumber:          big.NewInt(1234),
 		Subject: pkix.Name{
 			Country:      []string{"test"},
-			Organization: []string{"testor"},
+			Organization: []string{"tester"},
 		},
 		DNSNames:    []string{"localhost"},
 		NotBefore:   time.Now(),
