@@ -23,5 +23,4 @@ jobs:
           export GOPATH=$HOME/go
           export PATH=$PATH:$(go env GOPATH)/bin
           sudo curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | sudo bash
-          sudo fossa init
           sudo -E fossa analyze
