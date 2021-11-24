@@ -116,7 +116,7 @@ func ParseKey(key string) (gvr schema.GroupVersionResource, namespace string, na
 	slices := strings.Split(sl, "/")
 	length := len(slices)
 	if len(slices) == 0 || slices[0] != "" {
-		//klog.Errorf("[metaserver]falied to parse key: format error, %v",key)
+		//klog.Errorf("[metaserver]failed to parse key: format error, %v",key)
 		return
 	}
 	var (
