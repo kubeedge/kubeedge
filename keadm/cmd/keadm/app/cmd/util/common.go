@@ -19,6 +19,7 @@ package util
 import (
 	"archive/tar"
 	"compress/gzip"
+	"crypto/sha512"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -438,12 +439,30 @@ func hasSystemd() bool {
 	return fi.IsDir()
 }
 
+// computeSHA512Checksum returns the SHA512 checksum of the given file
+func computeSHA512Checksum(filepath string) (string, error) {
+	f, err := os.Open(filepath)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
+	h := sha512.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
+}
+
 func checkSum(filename, checksumFilename string, version semver.Version, tarballPath string) (bool, error) {
 	//Verify the tar with checksum
 	fmt.Printf("%s checksum: \n", filename)
-	getActualCheckSum := NewCommand(fmt.Sprintf("cd %s && sha512sum %s | awk '{split($0,a,\"[ ]\"); print a[1]}'", tarballPath, filename))
-	if err := getActualCheckSum.Exec(); err != nil {
-		return false, err
+
+	filepath := fmt.Sprintf("%s/%s", tarballPath, filename)
+	actualChecksum, err := computeSHA512Checksum(filepath)
+	if err != nil {
+		return false, fmt.Errorf("failed to compute checksum for %s: %v", filename, err)
 	}
 
 	fmt.Printf("%s content: \n", checksumFilename)
@@ -456,7 +475,7 @@ func checkSum(filename, checksumFilename string, version semver.Version, tarball
 			return false, err
 		}
 		checksum := strings.Replace(string(content), "\n", "", -1)
-		if checksum != getActualCheckSum.GetStdOut() {
+		if checksum != actualChecksum {
 			fmt.Printf("Failed to verify the checksum of %s ... \n\n", filename)
 			return false, nil
 		}
@@ -466,7 +485,7 @@ func checkSum(filename, checksumFilename string, version semver.Version, tarball
 			return false, err
 		}
 
-		if getDesiredCheckSum.GetStdOut() != getActualCheckSum.GetStdOut() {
+		if getDesiredCheckSum.GetStdOut() != actualChecksum {
 			fmt.Printf("Failed to verify the checksum of %s ... \n\n", filename)
 			return false, nil
 		}

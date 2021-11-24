@@ -192,3 +192,37 @@ func TestFileExists(t *testing.T) {
 		t.Fatalf("file %v should not exist", notExistFile)
 	}
 }
+
+func TestComputeSHA512Checksum(t *testing.T) {
+	tests := []struct {
+		name     string
+		expected string
+	}{
+		{
+			name:     "a",
+			expected: "1f40fc92da241694750979ee6cf582f2d5d7d28e18335de05abc54d0560e0f5302860c652bf08d560252aa5e74210546f369fbbbce8c12cfc7957b2652fe9a75",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			tmpfile, err := ioutil.TempFile("", test.name)
+			if err != nil {
+				t.Errorf("Unable to create temp file: %v", err)
+			}
+
+			defer tmpfile.Close()
+			if _, err := tmpfile.Write([]byte(test.name)); err != nil {
+				t.Errorf("Unable to write to temp file: %v", err)
+			}
+
+			actual, err := computeSHA512Checksum(tmpfile.Name())
+			if err != nil {
+				t.Errorf("Unable to compute checksum: %v", err)
+			}
+			if actual != test.expected {
+				t.Errorf("expected %s, got %s", test.expected, actual)
+			}
+		})
+	}
+}
