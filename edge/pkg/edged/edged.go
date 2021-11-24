@@ -370,8 +370,7 @@ func (e *edged) Start() {
 		return
 	}
 	e.logManager.Start()
-	stopChan := make(chan struct{})
-	e.runtimeClassManager.Start(stopChan)
+	e.runtimeClassManager.Start(utilwait.NeverStop)
 	klog.Infof("starting syncPod")
 	e.syncPod()
 }
