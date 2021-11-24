@@ -135,7 +135,6 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				RemoteQueryTimeout:    constants.DefaultRemoteQueryTimeout,
 				MetaServer: &MetaServer{
 					Enable: false,
-					Debug:  false,
 					Server: constants.DefaultMetaServerAddr,
 				},
 			},
