@@ -199,7 +199,7 @@ func (e *edged) getNodeStatusRequest(node *v1.Node) (*edgeapi.NodeStatusRequest,
 		node.Status.VolumesInUse = nil
 	}
 	e.volumeManager.MarkVolumesAsReportedInUse(node.Status.VolumesInUse)
-	klog.Infof("Sync VolumesInUse: %v", node.Status.VolumesInUse)
+	klog.V(5).Infof("Sync VolumesInUse: %v", node.Status.VolumesInUse)
 
 	return nodeStatus, nil
 }
