@@ -219,7 +219,7 @@ func (c *csiMountMgr) SetUpAt(dir string, mounterArgs volume.MounterArgs) error 
 
 	// create target_dir before call to NodePublish
 	if err := os.MkdirAll(dir, 0750); err != nil {
-		klog.Error(log("mouter.SetUpAt failed to create dir %#v:  %v", dir, err))
+		klog.Error(log("mounter.SetUpAt failed to create dir %#v:  %v", dir, err))
 		return err
 	}
 	klog.V(4).Info(log("created target path successfully [%s]", dir))
