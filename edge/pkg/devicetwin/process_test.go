@@ -162,13 +162,13 @@ func TestDTController_distributeMsg(t *testing.T) {
 					Resource: "membership/detail",
 				},
 			},
-			wantErr: errors.New("Not found action"),
+			wantErr: errors.New("not found action"),
 		},
 		{
 			//Failure Case
 			name:    "distributeMsgTest-ActualMessage-NoChanel",
 			message: *msg,
-			wantErr: errors.New("Not found chan to communicate"),
+			wantErr: errors.New("not found chan to communicate"),
 		},
 	}
 	for _, tt := range tests {

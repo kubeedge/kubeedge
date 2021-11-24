@@ -55,7 +55,7 @@ func (dt *DeviceTwin) distributeMsg(m interface{}) error {
 		}
 	}
 	if !classifyMsg(&message) {
-		return errors.New("Not found action")
+		return errors.New("not found action")
 	}
 	if ActionModuleMap == nil {
 		initActionModuleMap()
@@ -69,7 +69,7 @@ func (dt *DeviceTwin) distributeMsg(m interface{}) error {
 		}
 	} else {
 		klog.Info("Not found deal module for msg")
-		return errors.New("Not found deal module for msg")
+		return errors.New("not found deal module for msg")
 	}
 
 	return nil
