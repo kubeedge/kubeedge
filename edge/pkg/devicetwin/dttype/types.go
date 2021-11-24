@@ -29,10 +29,10 @@ type BaseMessage struct {
 	Timestamp int64  `json:"timestamp"`
 }
 
-var ErrorUnmarshal = errors.New("Unmarshal update request body failed, please check the request")
-var ErrorUpdate = errors.New("Update twin error, key:twin does not exist")
-var ErrorKey = errors.New("The key of twin must only include upper or lowercase letters, number, english, and special letter - _ . , : / @ # and the length of key should be less than 128 bytes")
-var ErrorValue = errors.New("The value of twin must only include upper or lowercase letters, number, english, and special letter - _ . , : / @ # and the length of value should be less than 512 bytes")
+var ErrorUnmarshal = errors.New("unmarshal update request body failed, please check the request")
+var ErrorUpdate = errors.New("update twin error, key:twin does not exist")
+var ErrorKey = errors.New("the key of twin must only include upper or lowercase letters, number, english, and special letter - _ . , : / @ # and the length of key should be less than 128 bytes")
+var ErrorValue = errors.New("the value of twin must only include upper or lowercase letters, number, english, and special letter - _ . , : / @ # and the length of value should be less than 512 bytes")
 
 //SetEventID set event id
 func (bs *BaseMessage) SetEventID(eventID string) {
