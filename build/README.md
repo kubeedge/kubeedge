@@ -1,4 +1,4 @@
-# build目录说明
+# build description
 
 ```
 # tree build/
@@ -50,28 +50,29 @@ build/
 - tools
 
 ## cloud
-cloudcore使用kubernetes deployment部署的相关步骤及说明
+Relevant steps and instructions for cloudcore deployment with kubernetes deployment
+
 
 ## crds
 
 ## crd-samples
 
 ## edge
-edgecore使用kubernetes deployment部署的相关步骤及说明（仅测试环境使用）
+Relevant steps and instructions for edgecore deployment with kubernetes deployment (Only for test)
 
 ## node.json
-创建node资源的示例
+Example of creating node resources
 
 ## tools
-`certgen.sh` 用于生成证书和密钥的脚本,主要用于两个地方
-- 生成cloud和edge的证书,生成的路径在 `/etc/kubeedge/ca`和`/etc/kubeedge/certs`
+`certgen.sh` used to generate certificates and keys, mainly used in two places
+- Generate cloud and edge certificates, the generated path is in `/etc/kubeedge/ca` and `/etc/kubeedge/certs`
   ```
   certgen.sh genCertAndKey edge
   ```
-- 用于生成`06-secret.yaml`
+- used to generate `06-secret.yaml`
 
 ## deployment.yaml
-deployment的模板,用于部署nginx到edge node使用
+deployment template, used to deploy nginx to edge node
 
 ## rpm
-制作rpm包相关文件,如`kubeedge.spec`
+Make rpm package related files, such as `kubeedge.spec`
