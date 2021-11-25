@@ -79,7 +79,7 @@ func (m *manager) updatePodStatus() {
 		}
 		s := *podStatus.DeepCopy()
 		var conditionFlag bool
-		podCondition := v1.PodCondition{Type: v1.PodReady, Status: v1.ConditionFalse, Reason: "ContainersNotReady"}
+		podCondition := v1.PodCondition{Type: v1.PodReady, Status: v1.ConditionFalse, Reason: status.ContainersNotReady}
 		for idx, cs := range podStatus.ContainerStatuses {
 			if cs.State.Running != nil && cs.State.Running.StartedAt.Unix() == 0 {
 				newState := v1.ContainerState{Waiting: &v1.ContainerStateWaiting{
@@ -98,7 +98,7 @@ func (m *manager) updatePodStatus() {
 				for index, condition := range s.Conditions {
 					if condition.Type == v1.PodReady {
 						s.Conditions[index].Status = v1.ConditionFalse
-						s.Conditions[index].Reason = "ContainersNotReady"
+						s.Conditions[index].Reason = status.ContainersNotReady
 						podReadyFlag = true
 						break
 					}
