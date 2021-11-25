@@ -46,9 +46,6 @@ const (
 
 	PodResource = "/pods"
 
-	PodPending   = "Pending"
-	PodRunning   = "Running"
-	PodSucceeded = "Succeeded"
-	PodFailed    = "Failed"
-	PodUnknown   = "Unknown"
+	PodPending = "Pending"
+	PodRunning = "Running"
 )
