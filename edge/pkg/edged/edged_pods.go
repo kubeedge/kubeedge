@@ -668,6 +668,7 @@ func (e *edged) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container, p
 	// 3.  Add remaining service environment vars
 	var (
 		configMaps  = make(map[string]*v1.ConfigMap)
+		secrets     = make(map[string]*v1.Secret)
 		tmpEnv      = make(map[string]string)
 		mappingFunc = expansion.MappingFuncFor(tmpEnv)
 	)
@@ -710,6 +711,42 @@ func (e *edged) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container, p
 			if len(invalidKeys) > 0 {
 				sort.Strings(invalidKeys)
 				klog.Errorf("keys [%s] from the EnvFrom configMap %s/%s were skipped since they are considered invalid environment variable names", strings.Join(invalidKeys, ", "), pod.Namespace, name)
+			}
+		case envFrom.SecretRef != nil:
+			sc := envFrom.SecretRef
+			name := sc.Name
+			secret, ok := secrets[name]
+			if !ok {
+				if e.kubeClient == nil {
+					return result, fmt.Errorf("couldn't get secret %v/%v, no kubeClient defined", pod.Namespace, name)
+				}
+				optional := sc.Optional != nil && *sc.Optional
+				// K8s secretClient can't be used to obtain secret here, it's empty.
+				secret, err = e.metaClient.Secrets(pod.Namespace).Get(name)
+				if err != nil {
+					if apierrors.IsNotFound(err) && optional {
+						// ignore error when marked optional
+						continue
+					}
+					return result, err
+				}
+				secrets[name] = secret
+			}
+
+			invalidKeys := []string{}
+			for k, v := range secret.Data {
+				if len(envFrom.Prefix) > 0 {
+					k = envFrom.Prefix + k
+				}
+				if errMsgs := utilvalidation.IsEnvVarName(k); len(errMsgs) != 0 {
+					invalidKeys = append(invalidKeys, k)
+					continue
+				}
+				tmpEnv[k] = string(v)
+			}
+			if len(invalidKeys) > 0 {
+				sort.Strings(invalidKeys)
+				klog.Errorf("keys [%s] from the EnvFrom secret %s/%s were skipped since they are considered invalid environment variable names", strings.Join(invalidKeys, ", "), pod.Namespace, name)
 			}
 		}
 	}
@@ -754,6 +791,35 @@ func (e *edged) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container, p
 					}
 					return result, fmt.Errorf("couldn't find key %v in ConfigMap %v/%v", key, pod.Namespace, name)
 				}
+			case envVar.ValueFrom.SecretKeyRef != nil:
+				sc := envVar.ValueFrom.SecretKeyRef
+				name := sc.Name
+				key := sc.Key
+				optional := sc.Optional != nil && *sc.Optional
+				secret, ok := secrets[name]
+				if !ok {
+					if e.kubeClient == nil {
+						return result, fmt.Errorf("couldn't get secret %v/%v, no kubeClient defined", pod.Namespace, name)
+					}
+					// K8s secretClient can't be used to obtain secret here, it's empty.
+					secret, err = e.metaClient.Secrets(pod.Namespace).Get(name)
+					if err != nil {
+						if apierrors.IsNotFound(err) && optional {
+							// ignore error when marked optional
+							continue
+						}
+						return result, err
+					}
+					secrets[name] = secret
+				}
+				runtimeValBytes, ok := secret.Data[key]
+				if !ok {
+					if optional {
+						continue
+					}
+					return result, fmt.Errorf("couldn't find key %v in Secret %v/%v", key, pod.Namespace, name)
+				}
+				runtimeVal = string(runtimeValBytes)
 			}
 		}
 
