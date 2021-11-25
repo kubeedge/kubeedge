@@ -69,7 +69,7 @@ var (
 type nodeInfoManager struct {
 	nodeName        types.NodeName
 	volumeHost      volume.VolumeHost
-	migratedPlugins map[string](func() bool)
+	migratedPlugins map[string]func() bool
 }
 
 // If no updates is needed, the function must return the same Node object as the input.
@@ -97,7 +97,7 @@ type Interface interface {
 func NewNodeInfoManager(
 	nodeName types.NodeName,
 	volumeHost volume.VolumeHost,
-	migratedPlugins map[string](func() bool)) Interface {
+	migratedPlugins map[string]func() bool) Interface {
 	return &nodeInfoManager{
 		nodeName:        nodeName,
 		volumeHost:      volumeHost,
@@ -458,7 +458,7 @@ func (nim *nodeInfoManager) CreateCSINode() (*storagev1beta1.CSINode, error) {
 	return csiKubeClient.StorageV1beta1().CSINodes().Create(context.Background(), nodeInfo, metav1.CreateOptions{})
 }
 
-func setMigrationAnnotation(migratedPlugins map[string](func() bool), nodeInfo *storagev1beta1.CSINode) (modified bool) {
+func setMigrationAnnotation(migratedPlugins map[string]func() bool, nodeInfo *storagev1beta1.CSINode) (modified bool) {
 	if migratedPlugins == nil {
 		return false
 	}
