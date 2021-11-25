@@ -207,14 +207,12 @@ func DealDeviceTwin(context *dtcontext.DTContext, deviceID string, eventID strin
 		}
 	}
 
-	if err != nil && dealType == RestDealType {
-		updateResult, _ := dttype.BuildDeviceTwinResult(dttype.BaseMessage{EventID: eventID, Timestamp: now}, dealTwinResult.Result, dealType)
-		dealUpdateResult(context, deviceID, eventID, dtcommon.InternalErrorCode, err, updateResult)
-		return err
-	}
 	if dealType == RestDealType {
 		updateResult, _ := dttype.BuildDeviceTwinResult(dttype.BaseMessage{EventID: eventID, Timestamp: now}, dealTwinResult.Result, dealType)
-		dealUpdateResult(context, deviceID, eventID, dtcommon.InternalErrorCode, nil, updateResult)
+		dealUpdateResult(context, deviceID, eventID, dtcommon.InternalErrorCode, err, updateResult)
+		if err != nil {
+			return err
+		}
 	}
 	if len(dealTwinResult.Document) > 0 {
 		dealDocument(context, deviceID, dttype.BaseMessage{EventID: eventID, Timestamp: now}, dealTwinResult.Document)
