@@ -714,11 +714,7 @@ func (e *edged) startDockerServer() error {
 func (e *edged) newCadvisor(useLegacyCadvisorStats bool) (cadvisor.Interface, error) {
 	if edgedconfig.Config.EnableMetrics {
 		imageFsInfoProvider := cadvisor.NewImageFsInfoProvider(edgedconfig.Config.RuntimeType, edgedconfig.Config.RemoteRuntimeEndpoint)
-		cadvisorInterface, err := cadvisor.New(imageFsInfoProvider, e.rootDirectory, e.cgroupRoots(), useLegacyCadvisorStats)
-		if err != nil {
-			return nil, err
-		}
-		return cadvisorInterface, nil
+		return cadvisor.New(imageFsInfoProvider, e.rootDirectory, e.cgroupRoots(), useLegacyCadvisorStats)
 	}
 
 	cadvisorInterface, err := edgecadvisor.New("")
@@ -730,11 +726,7 @@ func (e *edged) newCadvisor(useLegacyCadvisorStats bool) (cadvisor.Interface, er
 
 func (e *edged) newMachineInfo() (*cadvisorapi.MachineInfo, error) {
 	if edgedconfig.Config.EnableMetrics {
-		machineInfo, err := e.cadvisor.MachineInfo()
-		if err != nil {
-			return nil, err
-		}
-		return machineInfo, nil
+		return e.cadvisor.MachineInfo()
 	}
 
 	var machineInfo cadvisorapi.MachineInfo
