@@ -230,21 +230,24 @@ func CheckDisk() error {
 		return err
 	}
 
-	diskInfo, err := disk.Usage(parts[0].Mountpoint)
-	if err != nil {
-		return err
+	fmt.Printf("Required: total >= %v MB, free total >= %vMB, usage rate <= %v\n", common.AllowedValueDisk/common.MB, common.AllowedCurrentValueDisk/common.MB, common.AllowedCurrentValueDiskRate)
+	checkFlag := false
+	for _, part := range parts {
+		usageInfo, err := disk.Usage(part.Mountpoint)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Device: %s, MountPoint: %s, Total: %.2f MB, Free Total: %.2f MB, Usage Rate: %.2f\n", part.Device, part.Mountpoint, float32(usageInfo.Total)/common.MB, float32(usageInfo.Free)/common.MB, usageInfo.UsedPercent/100)
+		if usageInfo.Total >= common.AllowedValueDisk &&
+			usageInfo.Free >= common.AllowedCurrentValueDisk &&
+			usageInfo.UsedPercent/100 <= common.AllowedCurrentValueDiskRate {
+			checkFlag = true
+		}
 	}
 
-	fmt.Printf("Disk total: %.2f MB, Allowed > %v MB\n", float32(diskInfo.Total)/common.MB, common.AllowedValueDisk/common.MB)
-	fmt.Printf("Disk Free total: %.2f MB, Allowed > %vMB\n", float32(diskInfo.Free)/common.MB, common.AllowedCurrentValueDisk/common.MB)
-	fmt.Printf("Disk usage rate: %.2f, Allowed rate < %v\n", diskInfo.UsedPercent/100, common.AllowedCurrentValueDiskRate)
-
-	if diskInfo.Total < common.AllowedValueDisk ||
-		diskInfo.Free < common.AllowedCurrentValueDisk ||
-		diskInfo.UsedPercent/100 > common.AllowedCurrentValueDiskRate {
+	if !checkFlag {
 		return errors.New("disk check failed")
 	}
-
 	return nil
 }
 
