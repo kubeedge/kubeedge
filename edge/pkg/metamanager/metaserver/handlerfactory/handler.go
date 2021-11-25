@@ -181,7 +181,6 @@ func (f *Factory) Patch(reqInfo *request.RequestInfo) http.Handler {
 
 		responsewriters.WriteObjectNegotiated(scope.Serializer, scope, scope.Kind.GroupVersion(), w, req, 200, retObj)
 	}
-	//handlers.PatchResource()
 	return http.HandlerFunc(h)
 }
 

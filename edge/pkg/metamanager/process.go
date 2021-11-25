@@ -170,7 +170,6 @@ func (m *metaManager) processUpdate(message model.Message) {
 
 	msgSource := message.GetSource()
 	switch msgSource {
-	//case core.EdgedModuleName:
 	case modules.EdgedModuleName:
 		sendToCloud(&message)
 		resp := message.NewRespByMessage(&message, OK)

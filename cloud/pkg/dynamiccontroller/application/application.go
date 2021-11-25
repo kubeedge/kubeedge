@@ -268,17 +268,14 @@ type Agent struct {
 	nodeName     string
 }
 
-var defaultAgent *Agent
-var once sync.Once
-
 // edged config.Config.HostnameOverride
 func NewApplicationAgent() *Agent {
 	defaultAgent := &Agent{nodeName: metaserverconfig.Config.NodeName}
-	once.Do(func() {
-		go wait.Until(func() {
-			defaultAgent.GC()
-		}, time.Minute*5, beehiveContext.Done())
-	})
+
+	go wait.Until(func() {
+		defaultAgent.GC()
+	}, time.Minute*5, beehiveContext.Done())
+
 	return defaultAgent
 }
 
@@ -430,9 +427,9 @@ func (c *Center) Process(msg model.Message) {
 }
 
 // ProcessApplication processes application by re-translating it to kube-api request with kube client,
-// which will be processed and responced by apiserver eventually.
-// Specially if app.verb == watch, it transform app to a listener and register it to HandlerCenter, rather
-// then requetes to apiserver directly. Listener will then continuously listen kube-api change events and
+// which will be processed and responded by apiserver eventually.
+// Specially if app.verb == watch, it transforms app to a listener and register it to HandlerCenter, rather
+// than request to apiserver directly. Listener will then continuously listen kube-api change events and
 // push them to edge node.
 func (c *Center) ProcessApplication(app *Application) (interface{}, error) {
 	app.Status = InProcessing

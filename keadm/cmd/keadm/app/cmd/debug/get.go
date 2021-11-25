@@ -180,7 +180,7 @@ func (g *GetOptions) Run(args []string) error {
 		}
 	}
 
-	if g.AllNamespace {
+	if g.AllNamespace && resType != "nodes" && resType != "node" {
 		if err := g.PrintFlags.EnsureWithNamespace(); err != nil {
 			return err
 		}

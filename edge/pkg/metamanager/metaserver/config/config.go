@@ -18,7 +18,6 @@ type Configure struct {
 func InitConfigure(c *v1alpha1.MetaServer) {
 	once.Do(func() {
 		Config.Enable = c.Enable
-		Config.Debug = c.Debug
 		Config.Server = c.Server
 		Config.RemoteRequestTimeout = c.RemoteRequestTimeout
 		// so edgehub must register before metamanager

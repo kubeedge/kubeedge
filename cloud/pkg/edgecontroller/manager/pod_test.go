@@ -43,7 +43,7 @@ func TestPodManager_isPodUpdated(t *testing.T) {
 		want bool
 	}{
 		{
-			"TestPodManager_isPodUpdated(): Case 1: check differet pod",
+			"TestPodManager_isPodUpdated(): Case 1: check different pod",
 			args{
 				&CachePod{
 					ObjectMeta: TestOldPodObject.ObjectMeta,

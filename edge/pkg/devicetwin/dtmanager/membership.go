@@ -240,7 +240,8 @@ func addDevice(context *dtcontext.DTContext, toAdd []dttype.Device, baseMessage 
 		addDeviceResult := dttype.MembershipUpdate{BaseMessage: baseMessage, AddDevices: addDeviceDevices}
 		result, err := dttype.MarshalMembershipUpdate(addDeviceResult)
 		if err != nil {
-
+			klog.Errorf("add device %s failed, marshal membership err: %s", device.ID, err)
+			continue
 		} else {
 			context.Send("",
 				dtcommon.SendToEdge,
@@ -328,7 +329,7 @@ func dealMembershipGetInner(context *dtcontext.DTContext, payload []byte) error 
 		context.DeviceList.Range(func(key interface{}, value interface{}) bool {
 			device, ok := value.(*dttype.Device)
 			if !ok {
-
+				klog.Warningf("deviceList found invalid key-value pair, key: %s, value: %#v", key, value)
 			} else {
 				devices = append(devices, device)
 			}

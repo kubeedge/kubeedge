@@ -29,7 +29,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -74,8 +73,6 @@ type DownstreamController struct {
 	deviceManager      *manager.DeviceManager
 	deviceModelManager *manager.DeviceModelManager
 	configMapManager   *manager.ConfigMapManager
-
-	crdClient *rest.RESTClient
 }
 
 // syncDeviceModel is used to get events from informer
@@ -222,8 +219,6 @@ func (dc *DownstreamController) addDeviceProfile(device *v1alpha2.Device, config
 		// create deviceProfileStruct
 		deviceProfile.DeviceInstances = make([]*types.DeviceInstance, 0)
 		deviceProfile.DeviceModels = make([]*types.DeviceModel, 0)
-		//deviceProfile.PropertyVisitors = make([]*types.PropertyVisitor, 0)
-		//deviceProfile.Protocols = make([]*types.Protocol, 0)
 	} else {
 		err := json.Unmarshal([]byte(dp), deviceProfile)
 		if err != nil {

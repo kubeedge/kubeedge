@@ -19,7 +19,7 @@ type SelectorListener struct {
 	id       string
 	nodeName string
 	gvr      schema.GroupVersionResource
-	// e.g. lables and fields(metadata.namespace metadata.name spec.nodename)
+	// e.g. labels and fields(metadata.namespace metadata.name spec.nodename)
 	selector LabelFieldSelector
 }
 

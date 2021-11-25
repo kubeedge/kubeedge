@@ -273,7 +273,7 @@ func dealDelta(context *dtcontext.DTContext, deviceID string, payload []byte) er
 // dealSyncResult build and send sync result, is delta update
 func dealSyncResult(context *dtcontext.DTContext, deviceID string, baseMessage dttype.BaseMessage, twin map[string]*dttype.MsgTwin) error {
 	klog.Infof("Deal sync result of device %s: sync with cloud", deviceID)
-	resource := "device/" + deviceID + "/twin/edge_updated"
+	resource := "device/" + deviceID + dtcommon.TwinETEdgeSyncSuffix
 	return context.Send("",
 		dtcommon.SendToCloud,
 		dtcommon.CommModule,

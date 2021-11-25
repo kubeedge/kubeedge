@@ -3,6 +3,7 @@ package app
 import (
 	"errors"
 	"fmt"
+	"net"
 	"os"
 
 	"github.com/mitchellh/go-ps"
@@ -90,15 +91,29 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 			// Get edge node local ip only when the custiomInterfaceName has been set.
 			// Defaults to the local IP from the default interface by the default config
 			if config.Modules.Edged.CustomInterfaceName != "" {
-				klog.Infof("Getting IP address by custom interface: %s", config.Modules.Edged.CustomInterfaceName)
 				ip, err := netutil.ChooseBindAddressForInterface(config.Modules.Edged.CustomInterfaceName)
 				if err != nil {
-					klog.Errorf("Failed to get IP address by custom interface: %s: %s", config.Modules.Edged.CustomInterfaceName, err)
+					klog.Errorf("Failed to get IP address by custom interface %s, err: %v", config.Modules.Edged.CustomInterfaceName, err)
 					os.Exit(1)
 				}
 				config.Modules.Edged.NodeIP = ip.String()
+				klog.Infof("Get IP address by custom interface successfully, %s: %s", config.Modules.Edged.CustomInterfaceName, config.Modules.Edged.NodeIP)
+			} else {
+				if net.ParseIP(config.Modules.Edged.NodeIP) != nil {
+					klog.Infof("Use node IP address from config: %s", config.Modules.Edged.NodeIP)
+				} else if config.Modules.Edged.NodeIP != "" {
+					klog.Errorf("invalid node IP address specified: %s", config.Modules.Edged.NodeIP)
+					os.Exit(1)
+				} else {
+					nodeIP, err := util.GetLocalIP(util.GetHostname())
+					if err != nil {
+						klog.Errorf("Failed to get Local IP address: %v", err)
+						os.Exit(1)
+					}
+					config.Modules.Edged.NodeIP = nodeIP
+					klog.Infof("Get node local IP address successfully: %s", nodeIP)
+				}
 			}
-			klog.Infof("Local IP: %s", config.Modules.Edged.NodeIP)
 
 			registerModules(config)
 			// start all modules

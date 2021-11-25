@@ -370,8 +370,7 @@ func (e *edged) Start() {
 		return
 	}
 	e.logManager.Start()
-	stopChan := make(chan struct{})
-	e.runtimeClassManager.Start(stopChan)
+	e.runtimeClassManager.Start(utilwait.NeverStop)
 	klog.Infof("starting syncPod")
 	e.syncPod()
 }
@@ -1182,7 +1181,7 @@ func (e *edged) syncPod() {
 				beehiveContext.SendResp(*resp)
 			}
 		default:
-			klog.Errorf("resType is not pod or configmap or secret or volume: esType is %s", resType)
+			klog.Errorf("resType is not pod or configmap or secret or volume: resType is %s", resType)
 			continue
 		}
 	}
