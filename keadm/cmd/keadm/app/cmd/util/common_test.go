@@ -32,54 +32,52 @@ import (
 
 var PrivateDownloadServiceFile = downloadServiceFile
 
-func TestManagedKubernetesVersion(t *testing.T) {
-	vers := version.Info{Minor: "17"}
-	t.Run("test with minor version of 17", func(t *testing.T) {
-		err := checkKubernetesVersion(&vers)
-		if err != nil {
-			t.Fatalf("checked errored with: %s\n", err)
-		}
-	})
+func TestCheckKubernetesVersion(t *testing.T) {
+	tests := []struct {
+		name        string
+		version     *version.Info
+		expectError bool
+	}{
+		{
+			name: "Supported version",
+			version: &version.Info{
+				Major: "1",
+				Minor: "11",
+			},
+			expectError: false,
+		},
+		{
+			name: "Badly formatted version",
+			version: &version.Info{
+				Major: "1",
+				Minor: "a",
+			},
+			expectError: true,
+		},
+		{
+			name: "Old version",
+			version: &version.Info{
+				Major: "1",
+				Minor: "3",
+			},
+			expectError: true,
+		},
+	}
 
-	vers.Minor = "17+"
-	t.Run("test with minor version of 17+", func(t *testing.T) {
-		err := checkKubernetesVersion(&vers)
-		if err != nil {
-			t.Fatalf("checked errored with: %s\n", err)
-		}
-	})
-
-	vers.Minor = "100"
-	t.Run("test with minor version of 100", func(t *testing.T) {
-		err := checkKubernetesVersion(&vers)
-		if err != nil {
-			t.Fatalf("checked errored with: %s\n", err)
-		}
-	})
-
-	vers.Minor = "100+"
-	t.Run("test with minor version of 100+", func(t *testing.T) {
-		err := checkKubernetesVersion(&vers)
-		if err != nil {
-			t.Fatalf("checked errored with: %s\n", err)
-		}
-	})
-
-	vers.Minor = "3"
-	t.Run("test with minor version of 3", func(t *testing.T) {
-		err := checkKubernetesVersion(&vers)
-		if err == nil {
-			t.Fatalf("check should return an error and didn't")
-		}
-	})
-
-	vers.Minor = "3+"
-	t.Run("test with minor version of 3+", func(t *testing.T) {
-		err := checkKubernetesVersion(&vers)
-		if err == nil {
-			t.Fatalf("check should return an error and didn't")
-		}
-	})
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := checkKubernetesVersion(test.version)
+			if test.expectError {
+				if err == nil {
+					t.Errorf("Expected error but got nil")
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Expected no error but got %v", err)
+				}
+			}
+		})
+	}
 }
 
 func TestPrivateDownloadServiceFile(t *testing.T) {
