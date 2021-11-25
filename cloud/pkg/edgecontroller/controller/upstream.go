@@ -31,12 +31,14 @@ import (
 	stderrors "errors"
 	"fmt"
 	"sort"
+	"strconv"
 	"time"
 
 	authenticationv1 "k8s.io/api/authentication/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	apimachineryType "k8s.io/apimachinery/pkg/types"
 	k8sinformer "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -426,8 +428,9 @@ func (uc *UpstreamController) updateNodeStatus() {
 			case model.InsertOperation:
 				_, err := uc.kubeClient.CoreV1().Nodes().Get(context.Background(), name, metaV1.GetOptions{})
 				if err == nil {
-					klog.Infof("node: %s already exists, do nothing", name)
+					klog.Infof("node: %s already exists, sync DaemonSet pods to edge", name)
 					uc.nodeMsgResponse(name, namespace, common.MessageSuccessfulContent, msg)
+					uc.syncNodePods(name)
 					continue
 				}
 
@@ -990,6 +993,42 @@ func (uc *UpstreamController) nodeMsgResponse(nodeName, namespace, content strin
 		klog.Warningf("Response message: %s failed, response failed with error: %s", msg.GetID(), err)
 		return
 	}
+}
+
+// sync DaemonSet pods in this node to edge
+func (uc *UpstreamController) syncNodePods(nodeName string) {
+	pods, err := uc.kubeClient.CoreV1().Pods(v1.NamespaceAll).List(context.Background(),
+		metaV1.ListOptions{FieldSelector: fields.Set{"spec.nodeName": nodeName}.AsSelector().String()})
+	if err != nil {
+		return
+	}
+	for _, p := range pods.Items {
+		// only support DaemonSet
+		if matchPodKind(p, "DaemonSet") {
+			rv, _ := strconv.ParseUint(p.ResourceVersion, 10, 64)
+			msg := model.NewMessage("").SetResourceVersion(strconv.FormatUint(rv+1, 10)).FillBody(&p)
+			resource, err := messagelayer.BuildResource(p.Spec.NodeName, p.Namespace, model.ResourceTypePod, p.Name)
+			if err != nil {
+				klog.Warningf("built message resource failed with error: %s", err)
+				continue
+			}
+			msg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.UpdateOperation)
+			if err := uc.messageLayer.Send(*msg); err != nil {
+				klog.Warningf("send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
+			} else {
+				klog.V(4).Infof("send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
+			}
+		}
+	}
+}
+
+func matchPodKind(p v1.Pod, kind string) bool {
+	for _, ref := range p.OwnerReferences {
+		if ref.Kind == kind {
+			return true
+		}
+	}
+	return false
 }
 
 // NewUpstreamController create UpstreamController from config
