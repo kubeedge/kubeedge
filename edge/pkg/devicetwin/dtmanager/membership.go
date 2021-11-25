@@ -329,7 +329,7 @@ func dealMembershipGetInner(context *dtcontext.DTContext, payload []byte) error 
 		context.DeviceList.Range(func(key interface{}, value interface{}) bool {
 			device, ok := value.(*dttype.Device)
 			if !ok {
-
+				klog.Warningf("deviceList found invalid key-value pair, key: %s, value: %#v", key, value)
 			} else {
 				devices = append(devices, device)
 			}
