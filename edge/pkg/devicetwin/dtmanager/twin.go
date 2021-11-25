@@ -347,24 +347,24 @@ func DealGetTwin(context *dtcontext.DTContext, deviceID string, payload []byte) 
 }
 
 //dealtype 0:update ,2:cloud_update,1:detail result,3:deleted
-func dealVersion(version *dttype.TwinVersion, reqVesion *dttype.TwinVersion, dealType int) (bool, error) {
+func dealVersion(version *dttype.TwinVersion, reqVersion *dttype.TwinVersion, dealType int) (bool, error) {
 	if dealType == RestDealType {
 		version.EdgeVersion = version.EdgeVersion + 1
 	} else if dealType >= SyncDealType {
-		if reqVesion == nil {
+		if reqVersion == nil {
 			if dealType == SyncTwinDeleteDealType {
 				return true, nil
 			}
-			return false, errors.New("Version not allowed be nil while syncing")
+			return false, errors.New("version not allowed be nil while syncing")
 		}
-		if version.CloudVersion > reqVesion.CloudVersion {
-			return false, errors.New("Version not allowed")
+		if version.CloudVersion > reqVersion.CloudVersion {
+			return false, errors.New("version not allowed")
 		}
-		if version.EdgeVersion > reqVesion.EdgeVersion {
-			return false, errors.New("Not allowed to sync due to version conflict")
+		if version.EdgeVersion > reqVersion.EdgeVersion {
+			return false, errors.New("not allowed to sync due to version conflict")
 		}
-		version.CloudVersion = reqVesion.CloudVersion
-		version.EdgeVersion = reqVesion.EdgeVersion
+		version.CloudVersion = reqVersion.CloudVersion
+		version.EdgeVersion = reqVersion.EdgeVersion
 	}
 	return true, nil
 }
