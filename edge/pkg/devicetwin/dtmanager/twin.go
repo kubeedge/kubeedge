@@ -103,7 +103,7 @@ func dealTwinSync(context *dtcontext.DTContext, resource string, msg interface{}
 	msgTwin, err := dttype.UnmarshalDeviceTwinUpdate(content)
 	if err != nil {
 		klog.Errorf("Unmarshal update request body failed, err: %#v", err)
-		dealUpdateResult(context, "", "", dtcommon.BadRequestCode, errors.New("Unmarshal update request body failed, Please check the request"), result)
+		dealUpdateResult(context, "", "", dtcommon.BadRequestCode, errors.New("unmarshal update request body failed, Please check the request"), result)
 		return err
 	}
 
@@ -172,8 +172,8 @@ func DealDeviceTwin(context *dtcontext.DTContext, deviceID string, eventID strin
 	device, isExist := context.GetDevice(deviceID)
 	if !isExist {
 		klog.Errorf("Update twin rejected due to the device %s is not existed", deviceID)
-		dealUpdateResult(context, deviceID, eventID, dtcommon.NotFoundCode, errors.New("Update rejected due to the device is not existed"), result)
-		return errors.New("Update rejected due to the device is not existed")
+		dealUpdateResult(context, deviceID, eventID, dtcommon.NotFoundCode, errors.New("update rejected due to the device is not existed"), result)
+		return errors.New("update rejected due to the device is not existed")
 	}
 	content := msgTwin
 	var err error
@@ -751,7 +751,7 @@ func dealTwinAdd(returnResult *dttype.DealTwinResult, deviceID string, key strin
 	document[key] = &dttype.TwinDoc{}
 	document[key].LastState = nil
 	if msgTwin == nil {
-		return errors.New("The request body is wrong")
+		return errors.New("the request body is wrong")
 	}
 	deviceTwin := dttype.MsgTwinToDeviceTwin(key, msgTwin)
 	deviceTwin.DeviceID = deviceID
