@@ -73,6 +73,7 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/pleg"
 	"k8s.io/kubernetes/pkg/kubelet/pluginmanager"
 	plugincache "k8s.io/kubernetes/pkg/kubelet/pluginmanager/cache"
+	"k8s.io/kubernetes/pkg/kubelet/pod"
 	"k8s.io/kubernetes/pkg/kubelet/prober"
 	proberesults "k8s.io/kubernetes/pkg/kubelet/prober/results"
 	"k8s.io/kubernetes/pkg/kubelet/runtimeclass"
@@ -195,7 +196,7 @@ type edged struct {
 	os                 kubecontainer.OSInterface
 	resourceAnalyzer   serverstats.ResourceAnalyzer
 	runtimeService     internalapi.RuntimeService
-	podManager         podmanager.Manager
+	podManager         pod.Manager
 	pleg               pleg.PodLifecycleEventGenerator
 	statusManager      kubestatus.Manager
 	kubeClient         clientset.Interface
@@ -433,7 +434,7 @@ func newEdged(enable bool) (*edged, error) {
 	}
 	backoff := flowcontrol.NewBackOff(backOffPeriod, MaxContainerBackOff)
 
-	podManager := podmanager.NewPodManager()
+	podManager := podmanager.NewEdgedPodManager()
 	policy := images.ImageGCPolicy{
 		HighThresholdPercent: int(edgedconfig.Config.ImageGCHighThreshold),
 		LowThresholdPercent:  int(edgedconfig.Config.ImageGCLowThreshold),

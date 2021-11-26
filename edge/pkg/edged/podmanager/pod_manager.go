@@ -14,8 +14,8 @@ limitations under the License.
 KubeEdge Authors: To create mini-kubelet for edge deployment scenario,
 This file is derived from K8S Kubelet code with pruned structures and interfaces
 and changed most of the realization.
-1. Manager struct is dericed from basicManager struct in kubernetes/pkg/kubelet/pod/pod_manager.go
-2. The methods are also pruned and modifed
+1. The edgedManager struct is derived from the basicManager struct in kubernetes/pkg/kubelet/pod/pod_manager.go
+2. The methods are also pruned and modifed since edged does not have static/mirror pods.
 */
 
 package podmanager
@@ -27,48 +27,127 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/kubernetes/pkg/kubelet/container"
 	"k8s.io/kubernetes/pkg/kubelet/pod"
-	"k8s.io/kubernetes/pkg/kubelet/pod/testing"
 	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
 )
 
-//Manager is derived from kubernetes/pkg/kubelet/pod/pod_manager.go
-type Manager interface {
-	pod.Manager
-}
+// edgedManager implements the pod.Manager interface.
+//
+// All fields are read-only and are updated calling SetPods, AddPod, UpdatePod, or DeletePod.
+type edgedManager struct {
+	// Protects all internal maps.
+	lock sync.RWMutex
 
-type podManager struct {
-	lock          sync.RWMutex
-	podByUID      map[types.UID]*v1.Pod
+	// Pods indexed by UID.
+	podByUID map[types.UID]*v1.Pod
+
+	// Pods indexed by full name for easy access.
 	podByFullName map[string]*v1.Pod
-	*testing.MockManager
+
+	// There are no static pods in edged, and thus no mirror pods.
+	// This is here for interface compatibility.
+	pod.MirrorClient
 }
 
-//NewPodManager creates new pod manager object
-func NewPodManager() pod.Manager {
-	pm := &podManager{
-		MockManager: new(testing.MockManager),
-	}
-	pm.podByUID = make(map[types.UID]*v1.Pod)
-	pm.podByFullName = make(map[string]*v1.Pod)
-	return pm
+// NewEdgedPodManager returns a functional pod.Manager.
+func NewEdgedPodManager() pod.Manager {
+	em := &edgedManager{}
+	em.MirrorClient = &edgedMirrorClient{}
+	em.SetPods(nil)
+	return em
 }
 
-func (pm *podManager) AddPod(pod *v1.Pod) {
-	pm.UpdatePod(pod)
+// SetPods sets the internal pods based on new pods.
+func (em *edgedManager) SetPods(newPods []*v1.Pod) {
+	em.lock.Lock()
+	defer em.lock.Unlock()
+
+	em.podByUID = make(map[types.UID]*v1.Pod)
+	em.podByFullName = make(map[string]*v1.Pod)
+
+	em.updatePodsInternal(newPods...)
 }
 
-func (pm *podManager) UpdatePod(pod *v1.Pod) {
-	pm.lock.Lock()
-	defer pm.lock.Unlock()
-	pm.updatePodsInternal(pod)
+func (em *edgedManager) AddPod(pod *v1.Pod) {
+	em.UpdatePod(pod)
 }
 
-func (pm *podManager) updatePodsInternal(pods ...*v1.Pod) {
+func (em *edgedManager) UpdatePod(pod *v1.Pod) {
+	em.lock.Lock()
+	defer em.lock.Unlock()
+	em.updatePodsInternal(pod)
+}
+
+// updatePodsInternal replaces the given pods in the current state of the
+// manager, updating the various indices.  The caller is assumed to hold the
+// lock.
+func (em *edgedManager) updatePodsInternal(pods ...*v1.Pod) {
 	for _, pod := range pods {
 		podFullName := container.GetPodFullName(pod)
-		pm.podByUID[pod.UID] = pod
-		pm.podByFullName[podFullName] = pod
+		em.podByUID[pod.UID] = pod
+		em.podByFullName[podFullName] = pod
 	}
+}
+
+func (em *edgedManager) DeletePod(pod *v1.Pod) {
+	em.lock.Lock()
+	defer em.lock.Unlock()
+	podFullName := container.GetPodFullName(pod)
+	delete(em.podByUID, pod.UID)
+	delete(em.podByFullName, podFullName)
+}
+
+func (em *edgedManager) GetPods() []*v1.Pod {
+	em.lock.RLock()
+	defer em.lock.RUnlock()
+	return podsMapToPods(em.podByUID)
+}
+
+// GetPodsAndMirrorPods returns a list of pods and nil because edged does not have mirror pods.
+func (em *edgedManager) GetPodsAndMirrorPods() ([]*v1.Pod, []*v1.Pod) {
+	em.lock.RLock()
+	defer em.lock.RUnlock()
+	pods := podsMapToPods(em.podByUID)
+
+	return pods, nil
+}
+
+func (em *edgedManager) GetPodByUID(uid types.UID) (*v1.Pod, bool) {
+	em.lock.RLock()
+	defer em.lock.RUnlock()
+	pod, ok := em.podByUID[uid]
+	return pod, ok
+}
+
+func (em *edgedManager) GetPodByName(namespace, name string) (*v1.Pod, bool) {
+	podFullName := container.BuildPodFullName(name, namespace)
+	return em.GetPodByFullName(podFullName)
+}
+
+func (em *edgedManager) GetPodByFullName(podFullName string) (*v1.Pod, bool) {
+	em.lock.RLock()
+	defer em.lock.RUnlock()
+	pod, ok := em.podByFullName[podFullName]
+	return pod, ok
+}
+
+func (em *edgedManager) TranslatePodUID(uid types.UID) kubetypes.ResolvedPodUID {
+	return kubetypes.ResolvedPodUID(uid)
+}
+
+// GetUIDTranslations is a no-op because edged does not have mirror pods.
+func (em *edgedManager) GetUIDTranslations() (podToMirror map[kubetypes.ResolvedPodUID]kubetypes.MirrorPodUID,
+	mirrorToPod map[kubetypes.MirrorPodUID]kubetypes.ResolvedPodUID) {
+	return nil, nil
+}
+
+// GetOrphanedMirrorPods is a no-op because edged does not have mirror pods.
+func (em *edgedManager) GetOrphanedMirrorPodNames() []string {
+	return nil
+}
+
+// IsMirrorPodOf is a no-op because edged does not have mirror pods.
+func (em *edgedManager) IsMirrorPodOf(mirrorPod, pod *v1.Pod) bool {
+	return false
 }
 
 func podsMapToPods(UIDMap map[types.UID]*v1.Pod) []*v1.Pod {
@@ -79,50 +158,12 @@ func podsMapToPods(UIDMap map[types.UID]*v1.Pod) []*v1.Pod {
 	return pods
 }
 
-func (pm *podManager) GetPods() []*v1.Pod {
-	pm.lock.RLock()
-	defer pm.lock.RUnlock()
-	return podsMapToPods(pm.podByUID)
+// GetMirrorPodByPod is a no-op because edged does not have mirror pods.
+func (em *edgedManager) GetMirrorPodByPod(mirrodPod *v1.Pod) (*v1.Pod, bool) {
+	return nil, false
 }
 
-func (pm *podManager) GetPodByUID(uid types.UID) (*v1.Pod, bool) {
-	pm.lock.RLock()
-	defer pm.lock.RUnlock()
-	pod, ok := pm.podByUID[uid]
-	return pod, ok
-}
-
-func (pm *podManager) GetPodByName(namespace, name string) (*v1.Pod, bool) {
-	podFullName := container.BuildPodFullName(name, namespace)
-	return pm.GetPodByFullName(podFullName)
-}
-
-func (pm *podManager) GetPodByFullName(podFullName string) (*v1.Pod, bool) {
-	pm.lock.RLock()
-	defer pm.lock.RUnlock()
-	pod, ok := pm.podByFullName[podFullName]
-	return pod, ok
-}
-
-func (pm *podManager) DeletePod(pod *v1.Pod) {
-	pm.lock.Lock()
-	defer pm.lock.Unlock()
-	podFullName := container.GetPodFullName(pod)
-	delete(pm.podByUID, pod.UID)
-	delete(pm.podByFullName, podFullName)
-}
-
-// GetUIDTranslations is part of the interface
-// We don't have static pod, so don't have podToMirror and mirrorToPod
-func (pm *podManager) GetUIDTranslations() (podToMirror map[kubetypes.ResolvedPodUID]kubetypes.MirrorPodUID,
-	mirrorToPod map[kubetypes.MirrorPodUID]kubetypes.ResolvedPodUID) {
-	return nil, nil
-}
-
-func (pm *podManager) TranslatePodUID(uid types.UID) kubetypes.ResolvedPodUID {
-	return kubetypes.ResolvedPodUID(uid)
-}
-
-func (pm *podManager) GetMirrorPodByPod(*v1.Pod) (*v1.Pod, bool) {
+// GetPodByMirrorPod is a no-op because edged does not have mirror pods.
+func (em *edgedManager) GetPodByMirrorPod(mirrorPod *v1.Pod) (*v1.Pod, bool) {
 	return nil, false
 }

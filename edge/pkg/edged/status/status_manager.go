@@ -9,11 +9,11 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/klog/v2"
+	"k8s.io/kubernetes/pkg/kubelet/pod"
 	"k8s.io/kubernetes/pkg/kubelet/status"
 	"k8s.io/kubernetes/pkg/kubelet/util/format"
 
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 )
 
@@ -22,14 +22,14 @@ import (
 type manager struct {
 	status.Manager
 	// TODO: consider need lock?
-	podManager        podmanager.Manager
+	podManager        pod.Manager
 	apiStatusVersions map[types.UID]*v1.PodStatus
 	metaClient        client.CoreInterface
 	podDeletionSafety status.PodDeletionSafetyProvider
 }
 
 //NewManager creates and returns a new manager object
-func NewManager(kubeClient clientset.Interface, podManager podmanager.Manager, podDeletionSafety status.PodDeletionSafetyProvider, metaClient client.CoreInterface) status.Manager {
+func NewManager(kubeClient clientset.Interface, podManager pod.Manager, podDeletionSafety status.PodDeletionSafetyProvider, metaClient client.CoreInterface) status.Manager {
 	kubeManager := status.NewManager(kubeClient, podManager, podDeletionSafety)
 	return &manager{
 		Manager:           kubeManager,

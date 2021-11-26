@@ -7,11 +7,11 @@ import (
 
 	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/kubelet/apis/config"
+	"k8s.io/kubernetes/pkg/kubelet/pod"
 	"k8s.io/kubernetes/pkg/kubelet/server"
 	"k8s.io/kubernetes/pkg/kubelet/server/stats"
 
 	"github.com/kubeedge/kubeedge/common/constants"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
 )
 
 //constants to define server address
@@ -21,11 +21,11 @@ const (
 
 //Server is object to define server
 type Server struct {
-	podManager podmanager.Manager
+	podManager pod.Manager
 }
 
 //NewServer creates and returns a new server object
-func NewServer(podManager podmanager.Manager) *Server {
+func NewServer(podManager pod.Manager) *Server {
 	return &Server{
 		podManager: podManager,
 	}
