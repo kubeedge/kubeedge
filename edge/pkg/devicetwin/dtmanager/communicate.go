@@ -97,7 +97,7 @@ func dealLifeCycle(context *dtcontext.DTContext, resource string, msg interface{
 	if !ok {
 		return errors.New("msg not Message type")
 	}
-	connectedInfo, _ := (message.Content.(string))
+	connectedInfo, _ := message.Content.(string)
 	if strings.Compare(connectedInfo, connect.CloudConnected) == 0 {
 		if strings.Compare(context.State, dtcommon.Disconnected) == 0 {
 			_, err := detailRequest(context, msg)
