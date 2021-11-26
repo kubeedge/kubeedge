@@ -16,9 +16,6 @@ spec:
     {{- end }}
   template:
     metadata:
-      {{- with .Values.cloudCore.annotations }}
-      annotations: {{- toYaml . | nindent 8 }}
-      {{- end }}
       {{- with .Values.cloudCore.labels }}
       labels: {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -38,7 +35,6 @@ spec:
       tolerations: {{ toYaml . | nindent 8 }}
       {{- end }}
       serviceAccount: cloudcore
-      serviceAccountName: cloudcore
       {{- with .Values.imagePullSecrets }} 
       imagePullSecrets: {{- toYaml . | indent 8 }} 
       {{- end }}  

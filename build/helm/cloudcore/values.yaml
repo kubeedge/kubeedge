@@ -1,20 +1,22 @@
-# Default values for kubeedge cloudcore.
+# Default values for kubeedge.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
 appVersion: "1.8.2"
 
 cloudCore:
-  hostNetWork: "true"
   replicaCount: 1
+  hostNetWork: "true"
   image:
     repository: "kubeedge/cloudcore"
     tag: "v1.8.2"
     pullPolicy: "IfNotPresent"
     imagePullSecrets: []
-  securityContext:
+  securityContext: 
     privileged: true
   labels:
     k8s-app: kubeedge
     kubeedge: cloudcore
-  annotations: []
+  annotations: {}
   affinity:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
@@ -22,10 +24,8 @@ cloudCore:
         - matchExpressions:
           - key: node-role.kubernetes.io/edge
             operator: DoesNotExist
-          # - key: node-role.kubernetes.io/worker
-          #   operator: Exists
-  nodeSelector: []
-  tolerations: []
+  tolerations: {}
+  nodeSelector: {}
   resources:
     limits:
       cpu: 200m
@@ -35,26 +35,61 @@ cloudCore:
       memory: 512Mi
   modules:
     cloudHub:
-      advertiseAddress:
-        - ""            
+      advertiseAddress:   # Causion!: Leave this entry to empty will cause CloudCore to exit abnormally once KubeEdge is enabled. 
+        - ""              # At least a public IP Address or an IP which can be accessed by edge nodes must be provided!           
       nodeLimit: "1000"
       websocket:
-        enable: true
+        enable: "true"
       quic:
-        enable: false
+        enable: "false"
         maxIncomingStreams: "10000"
       https:
-        enable: true
+        enable: "true"
     cloudStream:
-      enable: true
+      enable: "true"
     dynamicController:
-      enable: false
+      enable: "false"
     router:
-      enable: false
+      enable: "false"
   service:
-    type: NodePort
+    type: "NodePort"
     cloudhubNodePort: "30000"
     cloudhubQuicNodePort: "30001"
     cloudhubHttpsNodePort: "30002"
     cloudstreamNodePort: "30003"
     tunnelNodePort: "30004"
+
+iptablesManager:
+  enable: "true"
+  mode: "internal"
+  hostNetWork: true
+  image:
+    repository: "kubeedge/iptables-manager"
+    tag: "v1.8.2"
+    pullPolicy: "IfNotPresent"
+    imagePullSecrets: []
+  securityContext: 
+    capabilities:
+      add:
+        - NET_ADMIN
+        - NET_RAW
+  labels:
+    k8s-app: iptables-manager
+    kubeedge: iptables-manager
+  annotations: {}
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: node-role.kubernetes.io/edge
+            operator: DoesNotExist
+  tolerations: {}
+  nodeSelector: {}
+  resources:
+    limits:
+      cpu: 200m
+      memory: 50Mi
+    requests:
+      cpu: 100m
+      memory: 25Mi
