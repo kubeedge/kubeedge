@@ -32,7 +32,7 @@ func ValidateValue(valueType string, value string) error {
 			return errors.New("the bool value must be true or false")
 		}
 		return nil
-	case "deleted":
+	case TypeDeleted:
 		return nil
 	default:
 		return errors.New("the value type is not allowed")

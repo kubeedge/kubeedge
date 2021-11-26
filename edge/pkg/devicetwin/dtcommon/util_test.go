@@ -65,7 +65,7 @@ func TestValidateValue(t *testing.T) {
 	}, {
 		// deleted
 		name:      "ValidateValueDeletedSuccessCase",
-		valueType: "deleted",
+		valueType: TypeDeleted,
 		value:     "test",
 		wantErr:   nil,
 	}, {
