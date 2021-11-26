@@ -52,6 +52,7 @@ cloudCore:
     router:
       enable: "false"
   service:
+    enable: "true"
     type: "NodePort"
     cloudhubNodePort: "30000"
     cloudhubQuicNodePort: "30001"

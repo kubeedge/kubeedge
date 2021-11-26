@@ -1,3 +1,4 @@
+{{- if and (.Values.cloudCore.service.enable) }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -46,3 +47,4 @@ spec:
   {{- with .Values.cloudCore.labels }}
   {{- toYaml . | nindent 4 }}
   {{- end }}
+{{- end }}
