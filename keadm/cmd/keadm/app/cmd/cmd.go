@@ -17,6 +17,8 @@ limitations under the License.
 package cmd
 
 import (
+	"io"
+
 	"github.com/spf13/cobra"
 
 	cloud "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/cloud"
@@ -58,7 +60,7 @@ var (
 )
 
 // NewKubeedgeCommand returns cobra.Command to run keadm commands
-func NewKubeedgeCommand() *cobra.Command {
+func NewKubeedgeCommand(out io.Writer) *cobra.Command {
 	cmds := &cobra.Command{
 		Use:     "keadm",
 		Short:   "keadm: Bootstrap KubeEdge cluster",
@@ -70,7 +72,7 @@ func NewKubeedgeCommand() *cobra.Command {
 	cmds.AddCommand(cloud.NewCloudInit())
 	cmds.AddCommand(edge.NewEdgeJoin())
 	cmds.AddCommand(NewKubeEdgeReset())
-	cmds.AddCommand(NewCmdVersion())
+	cmds.AddCommand(newCmdVersion(out))
 	cmds.AddCommand(cloud.NewGettoken())
 	cmds.AddCommand(debug.NewEdgeDebug())
 

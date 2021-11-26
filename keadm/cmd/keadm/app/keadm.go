@@ -18,6 +18,7 @@ package app
 
 import (
 	"flag"
+	"os"
 
 	"github.com/spf13/pflag"
 
@@ -28,6 +29,6 @@ import (
 func Run() error {
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 
-	cmd := cmd.NewKubeedgeCommand()
+	cmd := cmd.NewKubeedgeCommand(os.Stdout)
 	return cmd.Execute()
 }
