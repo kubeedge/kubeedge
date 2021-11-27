@@ -56,7 +56,7 @@ type KubeAPIConfig struct {
 	// ContentType indicates the ContentType of message transmission when interacting with k8s
 	// default "application/vnd.kubernetes.protobuf"
 	ContentType string `json:"contentType,omitempty"`
-	// QPS to while talking with kubernetes apiserve
+	// QPS to while talking with kubernetes apiserver
 	// default 100
 	QPS int32 `json:"qps,omitempty"`
 	// Burst to use while talking with kubernetes apiserver

@@ -412,7 +412,7 @@ type DBTest struct {
 	Enable bool `json:"enable"`
 }
 
-// EdgeSream indicates the stream controller
+// EdgeStream indicates the stream controller
 type EdgeStream struct {
 	// Enable indicates whether edgestream is enabled, if set to false (for debugging etc.), skip checking other configs.
 	// default true
