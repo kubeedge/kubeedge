@@ -137,22 +137,6 @@ func (e *edged) setInitNode(node *v1.Node) {
 	initNode.Status = *node.Status.DeepCopy()
 }
 
-// Retrieve node status
-func retrieveDevicePluginStatus(s string) (string, error) {
-	tagLen := len(apis.StatusTag)
-	if len(s) <= tagLen {
-		return "", fmt.Errorf("no node status wrapped in")
-	}
-
-	tag := s[:tagLen]
-	if string(tag) != apis.StatusTag {
-		return "", fmt.Errorf("not a node status json string")
-	}
-	statusList := s[tagLen:]
-	klog.Infof("retrieve piggybacked status: %v", statusList)
-	return statusList, nil
-}
-
 func (e *edged) getNodeStatusRequest(node *v1.Node) (*edgeapi.NodeStatusRequest, error) {
 	var nodeStatus = &edgeapi.NodeStatusRequest{}
 	nodeStatus.UID = e.uid
@@ -171,19 +155,10 @@ func (e *edged) getNodeStatusRequest(node *v1.Node) (*edgeapi.NodeStatusRequest,
 
 	for _, removedResource := range removedDevicePlugins {
 		// if the remmovedReousrce is not contained in the nameSet and contains specific tag
-		if !nameSet.Has(removedResource) {
-			status, err := retrieveDevicePluginStatus(removedResource)
-			if err == nil {
-				if node.Annotations == nil {
-					node.Annotations = make(map[string]string)
-				}
-				node.Annotations[apis.NvidiaGPUStatusAnnotationKey] = status
-				klog.Infof("Setting node annotation to add node status list to Scheduler")
-				continue
-			}
+		if nameSet.Has(removedResource) {
+			klog.Infof("Remove capacity for %s", removedResource)
+			delete(node.Status.Capacity, v1.ResourceName(removedResource))
 		}
-		klog.Infof("Remove capacity for %s", removedResource)
-		delete(node.Status.Capacity, v1.ResourceName(removedResource))
 	}
 	e.setNodeStatusDaemonEndpoints(nodeStatus)
 	e.setNodeStatusConditions(nodeStatus)

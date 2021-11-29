@@ -10,18 +10,12 @@ import (
 )
 
 const (
-	// NvidiaGPUStatusAnnotationKey is the key of the node annotation for GPU status
-	NvidiaGPUStatusAnnotationKey = "huawei.com/gpu-status"
-	// NvidiaGPUDecisionAnnotationKey is the key of the pod annotation for scheduler GPU decision
-	NvidiaGPUDecisionAnnotationKey = "huawei.com/gpu-decision"
 	// NvidiaGPUScalarResourceName is the device plugin resource name used for special handling
 	NvidiaGPUScalarResourceName = "nvidia.com/gpu"
 	// NvidiaGPUMaxUsage is the maximum possible usage of a GPU in millis
 	NvidiaGPUMaxUsage = 1000
 	// NvidiaGPUResource is the extend resource name
 	NvidiaGPUResource = "alpha.kubernetes.io/nvidia-gpu"
-	//StatusTag is to compare status of resources
-	StatusTag = "StatusTag"
 )
 
 // Container defines container object
