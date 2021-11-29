@@ -30,6 +30,7 @@ type AdmissionOptions struct {
 	PrintVersion              bool
 	AdmissionServiceName      string
 	AdmissionServiceNamespace string
+	WebhookConfigurationNames string
 	SchedulerName             string
 }
 
@@ -50,5 +51,6 @@ func (o *AdmissionOptions) Flags() (fss cliflag.NamedFlagSets) {
 	fs.Int32Var(&o.Port, "port", 443, "the port used by admission-controller-server.")
 	fs.StringVar(&o.AdmissionServiceNamespace, "webhook-namespace", "kubeedge", "The namespace of this webhook")
 	fs.StringVar(&o.AdmissionServiceName, "webhook-service-name", "kubeedge-admission-service", "The name of this admission service")
+	fs.StringVar(&o.WebhookConfigurationNames, "webhook-configuration-names", "all", "Names of webhook configuration selected to be used. (default all) (eg: --webhook-configuration-names=validate-devicemodel,mutate-offlinemigration)")
 	return
 }

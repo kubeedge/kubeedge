@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 	admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1beta1"
@@ -43,6 +44,9 @@ var scheme = runtime.NewScheme()
 var codecs = serializer.NewCodecFactory(scheme)
 
 var controller = &AdmissionController{}
+
+var validatingWebhookConfigurations map[string]admissionregistrationv1beta1.ValidatingWebhookConfiguration
+var mutatingWebhookConfigurations map[string]admissionregistrationv1beta1.MutatingWebhookConfiguration
 
 func init() {
 	addToScheme(scheme)
@@ -89,7 +93,11 @@ func Run(opt *options.AdmissionOptions) {
 	}
 
 	//TODO: read somewhere to get what's kind of webhook is enabled, register those webhook only.
-	err = controller.registerWebhooks(opt, caBundle)
+	err = controller.initializeWebhookConfigurations(opt, caBundle)
+	if err != nil {
+		klog.Exitf("Failed to initialize webhook configuration with error: %v", err)
+	}
+	err = controller.registerWebhooks(opt)
 	if err != nil {
 		klog.Exitf("Failed to register the webhook with error: %v", err)
 	}
@@ -139,8 +147,10 @@ func configTLS(opt *options.AdmissionOptions, restConfig *restclient.Config) *tl
 	return &tls.Config{}
 }
 
-// registerWebhooks registers the admission webhook.
-func (ac *AdmissionController) registerWebhooks(opt *options.AdmissionOptions, cabundle []byte) error {
+func (ac *AdmissionController) initializeWebhookConfigurations(opt *options.AdmissionOptions, cabundle []byte) error {
+	validatingWebhookConfigurations = make(map[string]admissionregistrationv1beta1.ValidatingWebhookConfiguration)
+	mutatingWebhookConfigurations = make(map[string]admissionregistrationv1beta1.MutatingWebhookConfiguration)
+
 	ignorePolicy := admissionregistrationv1beta1.Ignore
 	failPolicy := admissionregistrationv1beta1.Fail
 	deviceModelCRDWebhook := admissionregistrationv1beta1.ValidatingWebhookConfiguration{
@@ -224,6 +234,7 @@ func (ac *AdmissionController) registerWebhooks(opt *options.AdmissionOptions, c
 			},
 		},
 	}
+	validatingWebhookConfigurations[ValidateDeviceModelConfigName] = deviceModelCRDWebhook
 
 	objectSelector, err := metav1.ParseToLabelSelector(AutonomyLabel)
 	if err != nil {
@@ -261,13 +272,44 @@ func (ac *AdmissionController) registerWebhooks(opt *options.AdmissionOptions, c
 			},
 		},
 	}
+	mutatingWebhookConfigurations[OfflineMigrationConfigName] = offlineMigrationWebhook
+
+	return nil
+}
+
+// registerWebhooks registers the admission webhook.
+func (ac *AdmissionController) registerWebhooks(opt *options.AdmissionOptions) error {
+	webhookConfigurationNames := strings.Split(opt.WebhookConfigurationNames, ",")
+
+	var validatingWebhookConfigurationList []admissionregistrationv1beta1.ValidatingWebhookConfiguration
+	var mutatingWebhookConfigurationList []admissionregistrationv1beta1.MutatingWebhookConfiguration
+
+	for _, webhookConfigurationName := range webhookConfigurationNames {
+		if webhookConfigurationName == "all" {
+			validatingWebhookConfigurationList = []admissionregistrationv1beta1.ValidatingWebhookConfiguration{}
+			for _, value := range validatingWebhookConfigurations {
+				validatingWebhookConfigurationList = append(validatingWebhookConfigurationList, value)
+			}
+			mutatingWebhookConfigurationList = []admissionregistrationv1beta1.MutatingWebhookConfiguration{}
+			for _, value := range mutatingWebhookConfigurations {
+				mutatingWebhookConfigurationList = append(mutatingWebhookConfigurationList, value)
+			}
+			break
+		}
+		if _, ok := validatingWebhookConfigurations[webhookConfigurationName]; ok {
+			validatingWebhookConfigurationList = append(validatingWebhookConfigurationList, validatingWebhookConfigurations[webhookConfigurationName])
+		}
+		if _, ok := mutatingWebhookConfigurations[webhookConfigurationName]; ok {
+			mutatingWebhookConfigurationList = append(mutatingWebhookConfigurationList, mutatingWebhookConfigurations[webhookConfigurationName])
+		}
+	}
 
 	if err := registerValidateWebhook(ac.Client.AdmissionregistrationV1beta1().ValidatingWebhookConfigurations(),
-		[]admissionregistrationv1beta1.ValidatingWebhookConfiguration{deviceModelCRDWebhook}); err != nil {
+		validatingWebhookConfigurationList); err != nil {
 		return err
 	}
 	return registerMutatingWebhook(ac.Client.AdmissionregistrationV1beta1().MutatingWebhookConfigurations(),
-		[]admissionregistrationv1beta1.MutatingWebhookConfiguration{offlineMigrationWebhook})
+		mutatingWebhookConfigurationList)
 }
 
 func (ac *AdmissionController) getRuleEndpoint(namespace, name string) (*v1.RuleEndpoint, error) {
