@@ -1,6 +1,7 @@
 package status
 
 import (
+	"sync"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
@@ -21,7 +22,7 @@ import (
 // inherit it's method but refactored Start() function to periodicity update status to IEF
 type manager struct {
 	status.Manager
-	// TODO: consider need lock?
+	mu                sync.Mutex
 	podManager        podmanager.Manager
 	apiStatusVersions map[types.UID]*v1.PodStatus
 	metaClient        client.CoreInterface
@@ -58,6 +59,8 @@ func (m *manager) Start() {
 }
 
 func (m *manager) updatePodStatus() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	for _, pod := range m.podManager.GetPods() {
 		uid := pod.UID
 		podStatus, ok := m.GetPodStatus(uid)
