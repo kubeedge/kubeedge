@@ -97,8 +97,7 @@ type Application struct {
 
 	count     uint64 // count the number of current citations
 	countLock sync.Mutex
-	tim       time.Time // record the last closing time of application, only make sense when count == 0
-	//TODO: add lock
+	timestamp time.Time // record the last closing time of application, only make sense when count == 0
 }
 
 func newApplication(ctx context.Context, key string, verb applicationVerb, nodename string, option interface{}, reqBody interface{}) *Application {
@@ -123,7 +122,7 @@ func newApplication(ctx context.Context, key string, verb applicationVerb, noden
 		cancel:    cancel,
 		count:     0,
 		countLock: sync.Mutex{},
-		tim:       time.Time{},
+		timestamp: time.Time{},
 	}
 	app.add()
 	return app
@@ -243,7 +242,7 @@ func (a *Application) Close() {
 		return
 	}
 
-	a.tim = time.Now()
+	a.timestamp = time.Now()
 	a.count--
 	if a.count == 0 {
 		a.Status = Completed
@@ -253,8 +252,8 @@ func (a *Application) Close() {
 func (a *Application) LastCloseTime() time.Time {
 	a.countLock.Lock()
 	defer a.countLock.Unlock()
-	if a.count == 0 && !a.tim.IsZero() {
-		return a.tim
+	if a.count == 0 && !a.timestamp.IsZero() {
+		return a.timestamp
 	}
 	return time.Time{}
 }
