@@ -271,7 +271,6 @@ func Register(e *v1alpha1.Edged) {
 	if err != nil {
 		klog.Errorf("init new edged error, %v", err)
 		os.Exit(1)
-		return
 	}
 	core.Register(edged)
 }
