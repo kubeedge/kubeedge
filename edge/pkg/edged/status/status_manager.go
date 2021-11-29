@@ -21,7 +21,6 @@ import (
 // inherit it's method but refactored Start() function to periodicity update status to IEF
 type manager struct {
 	status.Manager
-	// TODO: consider need lock?
 	podManager        podmanager.Manager
 	apiStatusVersions map[types.UID]*v1.PodStatus
 	metaClient        client.CoreInterface

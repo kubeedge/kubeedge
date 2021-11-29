@@ -484,7 +484,7 @@ func newEdged(enable bool) (*edged, error) {
 
 	nodeRef := &v1.ObjectReference{
 		Kind:      "Node",
-		Name:      string(ed.nodeName),
+		Name:      ed.nodeName,
 		UID:       types.UID(ed.nodeName),
 		Namespace: "",
 	}
