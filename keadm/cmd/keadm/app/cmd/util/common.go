@@ -22,9 +22,8 @@ import (
 	"crypto/sha512"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -166,15 +165,22 @@ func RunningModule() (types.ModuleRunning, error) {
 
 // GetLatestVersion return the latest non-prerelease, non-draft version of kubeedge in releases
 func GetLatestVersion() (string, error) {
-	//Download the tar from repo
-	versionURL := "curl -k " + latestReleaseVersionURL
-	cmd := exec.Command("sh", "-c", versionURL)
-	latestReleaseData, err := cmd.Output()
+	// curl https://kubeedge.io/latestversion
+	resp, err := http.Get(latestReleaseVersionURL)
+	if err != nil {
+		return "", fmt.Errorf("failed to get latest version from %s: %v", latestReleaseVersionURL, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("failed to get latest version from %s, expected %d, got status code: %d", latestReleaseVersionURL, http.StatusOK, resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
-
-	return string(latestReleaseData), nil
+	return string(body), nil
 }
 
 // BuildConfig builds config from flags
@@ -470,7 +476,7 @@ func checkSum(filename, checksumFilename string, version semver.Version, tarball
 
 	if _, err := os.Stat(checksumFilepath); err == nil {
 		fmt.Printf("Expected or Default checksum file %s is already downloaded. \n", checksumFilename)
-		content, err := ioutil.ReadFile(checksumFilepath)
+		content, err := os.ReadFile(checksumFilepath)
 		if err != nil {
 			return false, err
 		}
