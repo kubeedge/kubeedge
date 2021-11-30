@@ -17,7 +17,11 @@ limitations under the License.
 package cmd
 
 import (
+	"bufio"
 	"fmt"
+	"io"
+	"os"
+	"strconv"
 	"strings"
 
 	"github.com/blang/semver"
@@ -90,8 +94,10 @@ func addJoinOtherFlags(cmd *cobra.Command, joinOptions *types.JoinOptions) {
 	cmd.Flags().StringVarP(&joinOptions.CloudCoreIPPort, types.CloudCoreIPPort, "e", joinOptions.CloudCoreIPPort,
 		"IP:Port address of KubeEdge CloudCore")
 
-	if err := cmd.MarkFlagRequired(types.CloudCoreIPPort); err != nil {
-		fmt.Printf("mark flag required failed with error: %v\n", err)
+	if joinOptions.CloudCoreIPPort == "" {
+		if err := cmd.MarkFlagRequired(types.CloudCoreIPPort); err != nil {
+			fmt.Printf("mark flag required failed with error: %v\n", err)
+		}
 	}
 
 	cmd.Flags().StringVarP(&joinOptions.RuntimeType, types.RuntimeType, "r", joinOptions.RuntimeType,
@@ -146,10 +152,114 @@ func addJoinOtherFlags(cmd *cobra.Command, joinOptions *types.JoinOptions) {
 
 // newJoinOptions returns a struct ready for being used for creating cmd join flags.
 func newJoinOptions() *types.JoinOptions {
-	opts := &types.JoinOptions{}
-	opts.CertPath = types.DefaultCertPath
+	opts := &types.JoinOptions{
+		CertPath: types.DefaultCertPath,
+	}
+
+	// reads extra flag and vals from the specified path
+	extraFlagsVals := make(map[string]string)
+	getExtraFlagsVals(extraFlagsVals)
+
+	// add additional default parameter values if the field exists
+	// these fields below are generic
+	kubeedgeVersion, ok := extraFlagsVals[types.KubeEdgeVersion]
+	if ok {
+		opts.KubeEdgeVersion = kubeedgeVersion
+	}
+	certPath, ok := extraFlagsVals[types.CertPath]
+	if ok {
+		opts.CertPath = certPath
+	}
+	cloudCoreIPPort, ok := extraFlagsVals[types.CloudCoreIPPort]
+	if ok {
+		opts.CloudCoreIPPort = cloudCoreIPPort
+	}
+	token, ok := extraFlagsVals[types.Token]
+	if ok {
+		opts.Token = token
+	}
+	runtimeType, ok := extraFlagsVals[types.RuntimeType]
+	if ok {
+		opts.RuntimeType = runtimeType
+	}
+	remoteRuntimeEndpoint, ok := extraFlagsVals[types.RemoteRuntimeEndpoint]
+	if ok {
+		opts.RemoteRuntimeEndpoint = remoteRuntimeEndpoint
+	}
+	certPort, ok := extraFlagsVals[types.CertPort]
+	if ok {
+		opts.CertPort = certPort
+	}
+	quicPort, ok := extraFlagsVals[types.QuicPort]
+	if ok {
+		opts.QuicPort = quicPort
+	}
+	tunnelPort, ok := extraFlagsVals[types.TunnelPort]
+	if ok {
+		opts.TunnelPort = tunnelPort
+	}
+	cgroupDriver, ok := extraFlagsVals[types.CGroupDriver]
+	if ok {
+		opts.CGroupDriver = cgroupDriver
+	}
+	labels, ok := extraFlagsVals[types.Labels]
+	if ok {
+		opts.Labels = strings.Split(labels, ",")
+	}
+	enableDefaultTaint, ok := extraFlagsVals[types.EnableDefaultTaint]
+	if ok {
+		opts.EnableDefaultTaint, _ = strconv.ParseBool(enableDefaultTaint)
+	}
+	enableMetaServer, ok := extraFlagsVals[types.EnableMetaServer]
+	if ok {
+		opts.EnableMetaServer, _ = strconv.ParseBool(enableMetaServer)
+	}
+	enableServiceBus, ok := extraFlagsVals[types.EnableServiceBus]
+	if ok {
+		opts.EnableServiceBus, _ = strconv.ParseBool(enableServiceBus)
+	}
+	downloadRegion, ok := extraFlagsVals[types.DownloadRegion]
+	if ok {
+		opts.DownloadRegion = downloadRegion
+	}
+	kubeEdgeDownloadURL, ok := extraFlagsVals[types.KubeEdgeDownloadURL]
+	if ok {
+		opts.KubeEdgeDownloadURL = kubeEdgeDownloadURL
+	}
+	serviceFileURLFormat, ok := extraFlagsVals[types.ServiceFileURLFormat]
+	if ok {
+		opts.ServiceFileURLFormat = serviceFileURLFormat
+	}
 
 	return opts
+}
+
+func getExtraFlagsVals(extraFlagsVals map[string]string) {
+	file, err := os.Open(types.KeadmJoinFlagsPath)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+
+	rd := bufio.NewReader(file)
+	for {
+		line, err := rd.ReadString('\n')
+		if err != nil || line == "\n" {
+			if err == io.EOF {
+				break
+			}
+			continue
+		}
+		lineSplited := strings.Split(strings.ReplaceAll(line, "\n", ""), "=")
+		flagName := strings.ReplaceAll(lineSplited[0], " ", "")
+		if len(lineSplited) >= 2 {
+			flagVal := strings.ReplaceAll(lineSplited[1], " ", "")
+			extraFlagsVals[flagName] = flagVal
+		} else if len(lineSplited) == 1 {
+			// confirms it must be a bool type
+			extraFlagsVals[flagName] = "true"
+		}
+	}
 }
 
 //Add2ToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
@@ -159,6 +269,9 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 	flgData, ok := flagData[types.KubeEdgeVersion]
 	if ok {
 		kubeVer = util.CheckIfAvailable(flgData.Val.(string), flgData.DefVal.(string))
+	}
+	if kubeVer == "" {
+		kubeVer = joinOptions.KubeEdgeVersion
 	}
 	if kubeVer == "" {
 		var latestVersion string

@@ -86,6 +86,9 @@ const (
 	// Custom download url for service file
 	ServiceFileURLFormat = "service-file-url-format"
 
+	// Env file contains extra flags for building edgecore setup configuration
+	KeadmJoinFlagsPath = "/etc/kubeedge/keadm-join-flags.env"
+
 	AdvertiseAddress = "advertise-address"
 
 	TokenSecretName = "tokensecret"
