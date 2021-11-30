@@ -22,7 +22,6 @@ import (
 	"crypto/sha512"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -177,7 +176,7 @@ func GetLatestVersion() (string, error) {
 		return "", fmt.Errorf("failed to get latest version from %s, expected %d, got status code: %d", latestReleaseVersionURL, http.StatusOK, resp.StatusCode)
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
@@ -477,7 +476,7 @@ func checkSum(filename, checksumFilename string, version semver.Version, tarball
 
 	if _, err := os.Stat(checksumFilepath); err == nil {
 		fmt.Printf("Expected or Default checksum file %s is already downloaded. \n", checksumFilename)
-		content, err := ioutil.ReadFile(checksumFilepath)
+		content, err := os.ReadFile(checksumFilepath)
 		if err != nil {
 			return false, err
 		}
