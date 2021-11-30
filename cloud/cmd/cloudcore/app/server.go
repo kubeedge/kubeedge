@@ -131,10 +131,10 @@ kubernetes controller which manages devices so that the device metadata/status d
 // registerModules register all the modules started in cloudcore
 func registerModules(c *v1alpha1.CloudCoreConfig) {
 	cloudhub.Register(c.Modules.CloudHub)
-	edgecontroller.Register(c.Modules.EdgeController, c.CommonConfig)
+	edgecontroller.Register(c.Modules.EdgeController)
 	devicecontroller.Register(c.Modules.DeviceController)
 	synccontroller.Register(c.Modules.SyncController)
-	cloudstream.Register(c.Modules.CloudStream)
+	cloudstream.Register(c.Modules.CloudStream, c.CommonConfig)
 	router.Register(c.Modules.Router)
 	dynamiccontroller.Register(c.Modules.DynamicController)
 }
