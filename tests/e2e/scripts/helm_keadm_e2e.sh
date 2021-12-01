@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright 2020 The KubeEdge Authors.
+# Copyright 2021 The KubeEdge Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,11 +16,13 @@
 
 KUBEEDGE_ROOT=$PWD
 WORKDIR=$(dirname $0)
+HELM_DIR=$KUBEEDGE_ROOT/build/helm
 E2E_DIR=$(realpath $(dirname $0)/..)
+IMAGE_TAG=$(date +%Y%m%d)
 
 function cleanup() {
   sudo pkill edgecore || true
-  sudo pkill cloudcore || true
+  helm uninstall cloudcore -n kubeedge && kubectl delete ns kubeedge  || true
   kind delete cluster --name test
   sudo rm -rf /var/log/kubeedge /etc/kubeedge /etc/systemd/system/edgecore.service $E2E_DIR/keadm/keadm.test $E2E_DIR/config.json
 }
@@ -35,12 +37,18 @@ function prepare_cluster() {
   kind create cluster --name test
 
   echo "wait the control-plane ready..."
-  kubectl wait --for=condition=Ready node/test-control-plane
+  kubectl wait --for=condition=Ready node/test-control-plane --timeout=60s
 
   kubectl create clusterrolebinding system:anonymous --clusterrole=cluster-admin --user=system:anonymous
 
   # edge side don't support kind cni now, delete kind cni plugin for workaround
-  kubectl delete daemonset kindnet -nkube-system
+  # kubectl delete daemonset kindnet -nkube-system
+}
+
+function build_cloud_image() {
+  cd $KUBEEDGE_ROOT
+  make cloudimage -f $KUBEEDGE_ROOT/Makefile -e IMAGE_TAG=$IMAGE_TAG
+  kind load docker-image kubeedge/cloudcore:$IMAGE_TAG --name test
 }
 
 function start_kubeedge() {
@@ -48,18 +56,21 @@ function start_kubeedge() {
   cd $KUBEEDGE_ROOT
   export KUBECONFIG=$HOME/.kube/config
 
-  sudo -E _output/local/bin/keadm init --kube-config=$KUBECONFIG --advertise-address=127.0.0.1
-  export MASTER_IP=`docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' test-control-plane`
+  cd $HELM_DIR
+  SET_ARGS="--set cloudCore.modules.cloudHub.advertiseAddress[0]=$MASTER_IP --set cloudCore.image.tag=$IMAGE_TAG --set cloudCore.service.enable=false"
+  helm upgrade --install --wait --timeout 30s cloudcore ./cloudcore --namespace kubeedge --create-namespace -f ./cloudcore/values.yaml $SET_ARGS
+  export MASTER_IP=`kubectl get node test-control-plane -o jsonpath={.status.addresses[0].address}`
 
   # ensure tokensecret is generated
   while true; do
       sleep 3
       kubectl get secret -nkubeedge 2>/dev/null | grep -q tokensecret && break
   done
-
+  
+  cd $KUBEEDGE_ROOT
   export TOKEN=$(sudo _output/local/bin/keadm gettoken --kube-config=$KUBECONFIG)
   sudo systemctl set-environment CHECK_EDGECORE_ENVIRONMENT="false"
-  sudo -E CHECK_EDGECORE_ENVIRONMENT="false" _output/local/bin/keadm join --token=$TOKEN --cloudcore-ipport=127.0.0.1:10000 --edgenode-name=edge-node
+  sudo -E CHECK_EDGECORE_ENVIRONMENT="false" _output/local/bin/keadm join --token=$TOKEN --cloudcore-ipport=$MASTER_IP:10000 --edgenode-name=edge-node
 
   #Pre-configurations required for running the suite.
   #Any new config addition required corresponding code changes.
@@ -117,6 +128,9 @@ export KUBECONFIG=$HOME/.kube/config
 
 echo -e "\nPrepare cluster..."
 prepare_cluster
+
+echo -e "\nBuild cloud image..."
+build_cloud_image
 
 echo -e "\nStart kubeedge..."
 start_kubeedge

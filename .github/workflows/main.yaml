@@ -169,6 +169,45 @@ jobs:
 
       - run: make keadm_e2e
 
+  helm_keadm_e2e_test:
+    runs-on: ubuntu-18.04
+    timeout-minutes: 30
+    name: Helm Keadm e2e test
+    env:
+      GO111MODULE: on
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16.x
+
+      - uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+
+      - name: Install dependences
+        run: |
+          command -v ginkgo || go install github.com/onsi/ginkgo/ginkgo@latest
+          go install sigs.k8s.io/kind@v0.11.1
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.19.3/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          export RELEASE_VERSION=$(wget -qO - https://kubeedge.io/latestversion | cat)
+          sudo wget -qP /etc/kubeedge https://github.com/kubeedge/kubeedge/releases/download/${RELEASE_VERSION}/checksum_kubeedge-${RELEASE_VERSION}-linux-amd64.tar.gz.txt
+          sudo wget -qP /etc/kubeedge https://github.com/kubeedge/kubeedge/releases/download/${RELEASE_VERSION}/kubeedge-${RELEASE_VERSION}-linux-amd64.tar.gz
+          echo "$(cat /etc/kubeedge/checksum_kubeedge-${RELEASE_VERSION}-linux-amd64.tar.gz.txt) /etc/kubeedge/kubeedge-${RELEASE_VERSION}-linux-amd64.tar.gz" | sha512sum -c
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Helm
+        uses: azure/setup-helm@v1
+        with:
+          version: v3.4.0
+
+      - run: make helm_keadm_e2e
+
   docker_build:
     runs-on: ubuntu-18.04
     timeout-minutes: 30
