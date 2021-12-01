@@ -123,6 +123,7 @@ func (c *ContainerExecConnection) Serve() error {
 			msg := stream.NewMessage(connector.GetMessageID(), stream.MessageTypeData, data[:n])
 			if err := c.WriteToTunnel(msg); err != nil {
 				klog.Errorf("%s failed to write to tunnel server, err: %v", c.String(), err)
+				break
 			}
 		}
 	}
