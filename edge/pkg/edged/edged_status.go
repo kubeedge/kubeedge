@@ -58,7 +58,7 @@ var reservationEphemeralStorage = resource.MustParse(fmt.Sprintf("%dGi", 1))
 func (e *edged) initialNode() (*v1.Node, error) {
 	var node = &v1.Node{}
 
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == windows {
 		return node, nil
 	}
 
