@@ -96,8 +96,12 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 	}
 	lastOnline := time.Now().Format("2006-01-02 15:04:05")
 	for i := 1; i <= dtcommon.RetryTimes; i++ {
-		err = dtclient.UpdateDeviceField(device.ID, "state", updatedDevice.State)
-		err = dtclient.UpdateDeviceField(device.ID, "last_online", lastOnline)
+		err = dtclient.UpdateDeviceFields(
+			device.ID,
+			map[string]interface{}{
+				"last_online": lastOnline,
+				"state":       updatedDevice.State,
+			})
 		if err == nil {
 			break
 		}
