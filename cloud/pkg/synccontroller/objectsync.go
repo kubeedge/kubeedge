@@ -33,7 +33,16 @@ func (sctl *SyncController) manageObject(sync *v1alpha1.ObjectSync) {
 	//ret, err := informers.GetInformersManager().GetDynamicSharedInformerFactory().ForResource(gvr).Lister().ByNamespace(sync.Namespace).Get(sync.Spec.ObjectName)
 	ret, err := sctl.kubeclient.Resource(gvr).Namespace(sync.Namespace).Get(context.TODO(), sync.Spec.ObjectName, metav1.GetOptions{})
 	if err != nil || ret == nil {
-		klog.Errorf("failed to get obj(gvr:%v,namespace:%v,name:%v), %v", gvr, sync.Namespace, sync.Spec.ObjectName, err)
+		klog.Warningf("failed to get obj(gvr:%v,namespace:%v,name:%v), %v", gvr, sync.Namespace, sync.Spec.ObjectName, err)
+
+		// if obj not found, delete objectsync for obj
+		if err != nil && apierrors.IsNotFound(err) {
+			klog.Infof("delete objectsync(%s) for obj(gvr:%v,namespace:%v,name:%v)", sync.Name, gvr, sync.Namespace, sync.Spec.ObjectName)
+			err = sctl.crdclient.ReliablesyncsV1alpha1().ObjectSyncs(sync.Namespace).Delete(context.Background(), sync.Name, *metav1.NewDeleteOptions(0))
+			if err != nil {
+				klog.Errorf("failed to delete objectSync %s, err: %v", sync.Name, err)
+			}
+		}
 		return
 	}
 
