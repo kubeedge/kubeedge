@@ -3,6 +3,7 @@ kind: Service
 metadata:
   labels:
     app: kubeedge-admission
+    noproxy: edgemesh
   name: kubeedge-admission-service
   namespace: kubeedge
 spec:
