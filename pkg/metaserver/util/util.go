@@ -50,9 +50,13 @@ func UnsafeResourceToKind(r string) string {
 		return r
 	}
 	unusualResourceToKind := map[string]string{
-		"endpoints": "Endpoints",
-		"nodes":     "Node",
-		"services":  "Service",
+		"endpoints":                    "Endpoints",
+		"nodes":                        "Node",
+		"services":                     "Service",
+		"podstatus":                    "PodStatus",
+		"nodestatus":                   "NodeStatus",
+		"customresourcedefinitions":    "CustomResourceDefinition",
+		"customresourcedefinitionlist": "CustomResourceDefinitionList",
 	}
 	if v, isUnusual := unusualResourceToKind[r]; isUnusual {
 		return v
@@ -74,7 +78,11 @@ func UnsafeKindToResource(k string) string {
 		return k
 	}
 	unusualKindToResource := map[string]string{
-		"Endpoints": "endpoints",
+		"Endpoints":                    "endpoints",
+		"PodStatus":                    "podstatus",
+		"NodeStatus":                   "nodestatus",
+		"CustomResourceDefinition":     "customresourcedefinitions",
+		"CustomResourceDefinitionList": "customresourcedefinitionlist",
 	}
 	if v, isUnusual := unusualKindToResource[k]; isUnusual {
 		return v
