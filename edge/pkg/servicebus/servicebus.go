@@ -17,7 +17,6 @@ import (
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
-
 	commonType "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	servicebusConfig "github.com/kubeedge/kubeedge/edge/pkg/servicebus/config"
