@@ -399,7 +399,7 @@ type ServiceBus struct {
 	Server string `json:"server"`
 	// Port indicates port for http server
 	Port int `json:"port"`
-	// Timeout indicates port for servicebus receive mseeage
+	// Timeout indicates timeout for servicebus receive mseeage
 	Timeout int `json:"timeout"`
 }
 

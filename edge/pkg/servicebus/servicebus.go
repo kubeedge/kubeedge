@@ -17,6 +17,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
+
 	commonType "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	servicebusConfig "github.com/kubeedge/kubeedge/edge/pkg/servicebus/config"
@@ -111,7 +112,7 @@ func (sb *servicebus) Start() {
 		}
 
 		// build new message with required field & send message to servicebus
-		klog.Infof("servicebus receive msg")
+		klog.V(4).Info("servicebus receive msg")
 		go processMessage(&msg)
 	}
 }

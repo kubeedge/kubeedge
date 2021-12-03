@@ -14,6 +14,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
+
 	v1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/listener"
@@ -44,7 +45,7 @@ func (factory *restFactory) Type() v1.RuleEndpointTypeDef {
 }
 
 func (*restFactory) GetSource(ep *v1.RuleEndpoint, sourceResource map[string]string) provider.Source {
-	path, exist := sourceResource["path"]
+	path, exist := sourceResource[constants.Path]
 	if !exist {
 		klog.Errorf("source resource attributes \"path\" does not exist")
 		return nil
@@ -59,7 +60,7 @@ func (*restFactory) GetSource(ep *v1.RuleEndpoint, sourceResource map[string]str
 }
 
 func (*restFactory) GetTarget(ep *v1.RuleEndpoint, targetResource map[string]string) provider.Target {
-	endpoint, exist := targetResource["resource"]
+	endpoint, exist := targetResource[constants.Resource]
 	if !exist {
 		klog.Errorf("target resource attributes \"resource\" does not exist")
 		return nil

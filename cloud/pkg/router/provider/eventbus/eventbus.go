@@ -10,6 +10,7 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+
 	v1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/constants"
@@ -41,12 +42,12 @@ func (factory *eventbusFactory) Type() v1.RuleEndpointTypeDef {
 }
 
 func (factory *eventbusFactory) GetSource(ep *v1.RuleEndpoint, sourceResource map[string]string) provider.Source {
-	subTopic, exist := sourceResource["topic"]
+	subTopic, exist := sourceResource[constants.Topic]
 	if !exist {
 		klog.Errorf("source resource attributes \"topic\" does not exist")
 		return nil
 	}
-	nodeName, exist := sourceResource["node_name"]
+	nodeName, exist := sourceResource[constants.NodeNmae]
 	if !exist {
 		klog.Errorf("source resource attributes \"node_name\" does not exist")
 		return nil
