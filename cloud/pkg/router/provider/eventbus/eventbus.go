@@ -41,12 +41,12 @@ func (factory *eventbusFactory) Type() v1.RuleEndpointTypeDef {
 }
 
 func (factory *eventbusFactory) GetSource(ep *v1.RuleEndpoint, sourceResource map[string]string) provider.Source {
-	subTopic, exist := sourceResource["topic"]
+	subTopic, exist := sourceResource[constants.Topic]
 	if !exist {
 		klog.Errorf("source resource attributes \"topic\" does not exist")
 		return nil
 	}
-	nodeName, exist := sourceResource["node_name"]
+	nodeName, exist := sourceResource[constants.NodeNmae]
 	if !exist {
 		klog.Errorf("source resource attributes \"node_name\" does not exist")
 		return nil
@@ -104,7 +104,7 @@ func (*EventBus) Forward(target provider.Target, data interface{}) (response int
 	res["data"] = []byte(v)
 	resp, err := target.GoToTarget(res, nil)
 	if err != nil {
-		klog.Errorf("message is send to target fail. msgID: %s, target: %s, err:%v", message.GetID(), target.Name(), err)
+		klog.Errorf("message is send to target failed. msgID: %s, target: %s, err:%v", message.GetID(), target.Name(), err)
 		return nil, err
 	}
 	klog.Infof("message is send to target successfully. msgID: %s, target: %s", message.GetID(), target.Name())
