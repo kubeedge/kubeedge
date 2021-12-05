@@ -205,7 +205,7 @@ Flags:
         * docker (currently 18.06.0ce3-0~ubuntu) and check if service is up
         * kubelet, kubeadm & kubectl (latest version)
         * openssl (latest available in OS repos)
-    3. Generate certificates using openssl and save the certs in a predefined static path.
+    3. Generate certificates using openssl and save the certs in cloud secret (or in a predefined static path for versions < 1.3).
     It will also compress the folder and display on the terminal so that user can pick it up and transfer it to edge node (VM/host) manually.
     4. It will update the certificate information in `controller.yaml`
     5. Start `keadm init`.
