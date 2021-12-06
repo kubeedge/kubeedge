@@ -3,6 +3,7 @@ package app
 import (
 	"errors"
 	"fmt"
+	"net"
 	"os"
 
 	"github.com/mitchellh/go-ps"
@@ -56,19 +57,19 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 			flag.PrintFlags(cmd.Flags())
 
 			if errs := opts.Validate(); len(errs) > 0 {
-				klog.Fatal(util.SpliceErrors(errs))
+				klog.Exit(util.SpliceErrors(errs))
 			}
 
 			config, err := opts.Config()
 			if err != nil {
-				klog.Fatal(err)
+				klog.Exit(err)
 			}
 			if errs := validation.ValidateEdgeCoreConfiguration(config); len(errs) > 0 {
-				klog.Fatal(util.SpliceErrors(errs.ToAggregate().Errors()))
+				klog.Exit(util.SpliceErrors(errs.ToAggregate().Errors()))
 			}
 
 			if err := features.DefaultMutableFeatureGate.SetFromMap(config.FeatureGates); err != nil {
-				klog.Fatal(err)
+				klog.Exit(err)
 			}
 
 			// To help debugging, immediately log version
@@ -83,22 +84,36 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 			if checkEnv != "false" {
 				// Check running environment before run edge core
 				if err := environmentCheck(); err != nil {
-					klog.Fatal(fmt.Errorf("failed to check the running environment: %v", err))
+					klog.Exit(fmt.Errorf("failed to check the running environment: %v", err))
 				}
 			}
 
 			// Get edge node local ip only when the custiomInterfaceName has been set.
 			// Defaults to the local IP from the default interface by the default config
 			if config.Modules.Edged.CustomInterfaceName != "" {
-				klog.Infof("Getting IP address by custom interface: %s", config.Modules.Edged.CustomInterfaceName)
 				ip, err := netutil.ChooseBindAddressForInterface(config.Modules.Edged.CustomInterfaceName)
 				if err != nil {
-					klog.Errorf("Failed to get IP address by custom interface: %s: %s", config.Modules.Edged.CustomInterfaceName, err)
+					klog.Errorf("Failed to get IP address by custom interface %s, err: %v", config.Modules.Edged.CustomInterfaceName, err)
 					os.Exit(1)
 				}
 				config.Modules.Edged.NodeIP = ip.String()
+				klog.Infof("Get IP address by custom interface successfully, %s: %s", config.Modules.Edged.CustomInterfaceName, config.Modules.Edged.NodeIP)
+			} else {
+				if net.ParseIP(config.Modules.Edged.NodeIP) != nil {
+					klog.Infof("Use node IP address from config: %s", config.Modules.Edged.NodeIP)
+				} else if config.Modules.Edged.NodeIP != "" {
+					klog.Errorf("invalid node IP address specified: %s", config.Modules.Edged.NodeIP)
+					os.Exit(1)
+				} else {
+					nodeIP, err := util.GetLocalIP(util.GetHostname())
+					if err != nil {
+						klog.Errorf("Failed to get Local IP address: %v", err)
+						os.Exit(1)
+					}
+					config.Modules.Edged.NodeIP = nodeIP
+					klog.Infof("Get node local IP address successfully: %s", nodeIP)
+				}
 			}
-			klog.Infof("Local IP: %s", config.Modules.Edged.NodeIP)
 
 			registerModules(config)
 			// start all modules
@@ -138,12 +153,10 @@ func environmentCheck() error {
 	}
 
 	for _, process := range processes {
-		// if kubelet is running, return error
-		if process.Executable() == "kubelet" {
+		switch process.Executable() {
+		case "kubelet": // if kubelet is running, return error
 			return errors.New("kubelet should not running on edge node when running edgecore")
-		}
-		// if kube-proxy is running, return error
-		if process.Executable() == "kube-proxy" {
+		case "kube-proxy": // if kube-proxy is running, return error
 			return errors.New("kube-proxy should not running on edge node when running edgecore")
 		}
 	}

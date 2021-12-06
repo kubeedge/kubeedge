@@ -29,11 +29,10 @@ func admitDeviceModel(review admissionv1beta1.AdmissionReview) *admissionv1beta1
 	case admissionv1beta1.Delete, admissionv1beta1.Connect:
 		//no rule defined for above operations, greenlight for all of above.
 		reviewResponse.Allowed = true
-		klog.Info("admission validation passed!")
 	default:
 		klog.Infof("Unsupported webhook operation %v", review.Request.Operation)
 		reviewResponse.Allowed = false
-		msg = msg + "Unsupported webhook operation!"
+		msg = "Unsupported webhook operation!"
 	}
 	if !reviewResponse.Allowed {
 		reviewResponse.Result = &metav1.Status{Message: strings.TrimSpace(msg)}
@@ -54,15 +53,6 @@ func validateDeviceModel(devicemodel *devicesv1alpha2.DeviceModel, response *adm
 		}
 	}
 	return msg
-}
-
-// toAdmissionResponse is a helper function to create an AdmissionResponse
-func toAdmissionResponse(err error) *admissionv1beta1.AdmissionResponse {
-	return &admissionv1beta1.AdmissionResponse{
-		Result: &metav1.Status{
-			Message: err.Error(),
-		},
-	}
 }
 
 func serveDeviceModel(w http.ResponseWriter, r *http.Request) {

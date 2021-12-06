@@ -51,7 +51,7 @@ func (e *edged) newVolumeMounterFromPlugins(spec *volume.Spec, pod *api.Pod, opt
 	if err != nil {
 		return nil, fmt.Errorf("failed to instantiate mounter for volume: %s using plugin: %s with a root cause: %v", spec.Name(), plugin.GetPluginName(), err)
 	}
-	klog.Infof("Using volume plugin %q to mount %s", plugin.GetPluginName(), spec.Name())
+	klog.V(5).Infof("Using volume plugin %q to mount %s", plugin.GetPluginName(), spec.Name())
 	return physicalMounter, nil
 }
 

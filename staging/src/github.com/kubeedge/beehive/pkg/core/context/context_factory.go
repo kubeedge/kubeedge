@@ -63,7 +63,7 @@ func InitContext(contextTypes []string) {
 			globalContext.moduleContext[contextType] = socketContext
 			globalContext.messageContext[contextType] = socketContext
 		default:
-			klog.Fatalf("unsupported context type: %s", contextType)
+			klog.Exitf("unsupported context type: %s", contextType)
 		}
 	}
 }

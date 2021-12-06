@@ -28,6 +28,8 @@ type metaManager struct {
 	enable bool
 }
 
+var _ core.Module = (*metaManager)(nil)
+
 func newMetaManager(enable bool) *metaManager {
 	return &metaManager{enable: enable}
 }

@@ -262,6 +262,8 @@ type edged struct {
 	podKiller PodKiller
 }
 
+var _ core.Module = (*edged)(nil)
+
 // Register register edged
 func Register(e *v1alpha1.Edged) {
 	edgedconfig.InitConfigure(e)
@@ -269,7 +271,6 @@ func Register(e *v1alpha1.Edged) {
 	if err != nil {
 		klog.Errorf("init new edged error, %v", err)
 		os.Exit(1)
-		return
 	}
 	core.Register(edged)
 }
@@ -368,8 +369,7 @@ func (e *edged) Start() {
 		return
 	}
 	e.logManager.Start()
-	stopChan := make(chan struct{})
-	e.runtimeClassManager.Start(stopChan)
+	e.runtimeClassManager.Start(utilwait.NeverStop)
 	klog.Infof("starting syncPod")
 	e.syncPod()
 }
@@ -484,7 +484,7 @@ func newEdged(enable bool) (*edged, error) {
 
 	nodeRef := &v1.ObjectReference{
 		Kind:      "Node",
-		Name:      string(ed.nodeName),
+		Name:      ed.nodeName,
 		UID:       types.UID(ed.nodeName),
 		Namespace: "",
 	}
@@ -713,11 +713,7 @@ func (e *edged) startDockerServer() error {
 func (e *edged) newCadvisor(useLegacyCadvisorStats bool) (cadvisor.Interface, error) {
 	if edgedconfig.Config.EnableMetrics {
 		imageFsInfoProvider := cadvisor.NewImageFsInfoProvider(edgedconfig.Config.RuntimeType, edgedconfig.Config.RemoteRuntimeEndpoint)
-		cadvisorInterface, err := cadvisor.New(imageFsInfoProvider, e.rootDirectory, e.cgroupRoots(), useLegacyCadvisorStats)
-		if err != nil {
-			return nil, err
-		}
-		return cadvisorInterface, nil
+		return cadvisor.New(imageFsInfoProvider, e.rootDirectory, e.cgroupRoots(), useLegacyCadvisorStats)
 	}
 
 	cadvisorInterface, err := edgecadvisor.New("")
@@ -729,11 +725,7 @@ func (e *edged) newCadvisor(useLegacyCadvisorStats bool) (cadvisor.Interface, er
 
 func (e *edged) newMachineInfo() (*cadvisorapi.MachineInfo, error) {
 	if edgedconfig.Config.EnableMetrics {
-		machineInfo, err := e.cadvisor.MachineInfo()
-		if err != nil {
-			return nil, err
-		}
-		return machineInfo, nil
+		return e.cadvisor.MachineInfo()
 	}
 
 	var machineInfo cadvisorapi.MachineInfo
@@ -783,7 +775,7 @@ func (e *edged) initializeModules() error {
 		if err := e.cadvisor.Start(); err != nil {
 			// Fail kubelet and rely on the babysitter to retry starting kubelet.
 			// TODO(random-liu): Add backoff logic in the babysitter
-			klog.Fatalf("Failed to start cAdvisor %v", err)
+			klog.Exitf("Failed to start cAdvisor %v", err)
 		}
 
 		// trigger on-demand stats collection once so that we have capacity information for ephemeral storage.
@@ -1180,7 +1172,7 @@ func (e *edged) syncPod() {
 				beehiveContext.SendResp(*resp)
 			}
 		default:
-			klog.Errorf("resType is not pod or configmap or secret or volume: esType is %s", resType)
+			klog.Errorf("resType is not pod or configmap or secret or volume: resType is %s", resType)
 			continue
 		}
 	}

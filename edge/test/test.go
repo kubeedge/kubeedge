@@ -34,6 +34,8 @@ type testManager struct {
 	enable bool
 }
 
+var _ core.Module = (*testManager)(nil)
+
 func (tm *testManager) Name() string {
 	return name
 }

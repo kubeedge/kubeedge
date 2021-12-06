@@ -18,7 +18,6 @@ package cmd
 
 import (
 	"fmt"
-	"io"
 	"strings"
 
 	"github.com/blang/semver"
@@ -47,10 +46,8 @@ keadm init --kubeedge-version=%s  --kube-config=/root/.kube/config
 )
 
 // NewCloudInit represents the keadm init command for cloud component
-func NewCloudInit(out io.Writer, init *types.InitOptions) *cobra.Command {
-	if init == nil {
-		init = newInitOptions()
-	}
+func NewCloudInit() *cobra.Command {
+	init := newInitOptions()
 
 	tools := make(map[string]types.ToolsInstaller)
 	flagVals := make(map[string]types.FlagData)

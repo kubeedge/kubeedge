@@ -21,7 +21,6 @@ import (
 // inherit it's method but refactored Start() function to periodicity update status to IEF
 type manager struct {
 	status.Manager
-	// TODO: consider need lock?
 	podManager        podmanager.Manager
 	apiStatusVersions map[types.UID]*v1.PodStatus
 	metaClient        client.CoreInterface
@@ -66,9 +65,9 @@ func (m *manager) updatePodStatus() {
 			if m.canBeDeleted(pod, podStatus) {
 				err := m.metaClient.Pods(pod.Namespace).Delete(pod.Name, string(pod.UID))
 				if err != nil {
-					klog.Warningf("Failed to delete status for pod %q: %v", format.Pod(pod), err)
+					klog.Errorf("Failed to delete the pod %q: %v", format.Pod(pod), err)
 				} else {
-					klog.Errorf("Successfully sent delete event to cloud for pod: %s", format.Pod(pod))
+					klog.V(2).Infof("Successfully sent delete event to cloud for pod: %s", format.Pod(pod))
 				}
 			}
 			continue

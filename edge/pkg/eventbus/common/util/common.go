@@ -17,6 +17,8 @@ import (
 var (
 	// TokenWaitTime to wait
 	TokenWaitTime = 120 * time.Second
+	// Loop connect to wait
+	LoopConnectPeriord = 5 * time.Second
 )
 
 // CheckKeyExist check dis info format
@@ -101,6 +103,6 @@ func LoopConnect(clientID string, client MQTT.Client) {
 		} else {
 			return
 		}
-		time.Sleep(5 * time.Second)
+		time.Sleep(LoopConnectPeriord)
 	}
 }

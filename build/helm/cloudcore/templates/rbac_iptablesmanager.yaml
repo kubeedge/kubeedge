@@ -1,0 +1,40 @@
+{{- if and (.Values.iptablesManager.enable) (eq .Values.iptablesManager.mode "external") }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  {{- with .Values.iptablesManager.labels }}
+  labels: {{- toYaml . | nindent 4 }}
+  {{- end }}
+  name: iptables-manager-sa
+  namespace: {{ .Release.Namespace }}
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: iptables-manager
+  {{- with .Values.iptablesManager.labels }}
+  labels: {{- toYaml . | nindent 4 }}
+  {{- end }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: iptables-manager
+subjects:
+- kind: ServiceAccount
+  name: iptables-manager-sa
+  namespace: {{ .Release.Namespace }}
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: iptables-manager
+  {{- with .Values.iptablesManager.labels }}
+  labels: {{- toYaml . | nindent 4 }}
+  {{- end }}
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch"]
+{{- end }}

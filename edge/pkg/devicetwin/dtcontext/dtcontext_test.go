@@ -72,7 +72,7 @@ func TestCommTo(t *testing.T) {
 				return
 			}
 			if !reflect.DeepEqual(returnValue, test.content) {
-				t.Errorf("Got %v on channel, Want % v on Channel", returnValue, test.content)
+				t.Errorf("Got %v on channel, Want %v on Channel", returnValue, test.content)
 				return
 			}
 		})

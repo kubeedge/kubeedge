@@ -21,8 +21,6 @@ spec:
       nodeSelector: # configure the nodeSelector here to directly schedule pods to specific nodes
         [key]: [value]
       hostNetwork: true
-      readinessGates:
-        - conditionType: "kubeedge.io/CloudCoreIsLeader"
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

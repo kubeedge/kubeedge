@@ -2,7 +2,10 @@ package servicebus
 
 import (
 	"errors"
+	"fmt"
+	"io/ioutil"
 	"net/http"
+	"path"
 	"strings"
 
 	"k8s.io/klog/v2"
@@ -21,20 +24,84 @@ type servicebusFactory struct{}
 
 type ServiceBus struct {
 	targetPath  string
-	namespace   string
 	servicePort string
+	nodeName    string
+	TargetURL   string
 }
 
 func init() {
 	factory := &servicebusFactory{}
+	provider.RegisterSource(factory)
 	provider.RegisterTarget(factory)
 }
 
-func (factory *servicebusFactory) Type() v1.RuleEndpointTypeDef {
+func (sf *servicebusFactory) Type() v1.RuleEndpointTypeDef {
 	return v1.RuleEndpointTypeServiceBus
 }
 
-func (factory *servicebusFactory) GetTarget(ep *v1.RuleEndpoint, targetResource map[string]string) provider.Target {
+func (sf *servicebusFactory) GetSource(ep *v1.RuleEndpoint, sourceResource map[string]string) provider.Source {
+	targetURL, exist := sourceResource[constants.TargetURL]
+	if !exist {
+		klog.Errorf("source resource attributes \"target_url\" does not exist")
+		return nil
+	}
+	nodeName, exist := sourceResource[constants.NodeNmae]
+	if !exist {
+		klog.Errorf("source resource attributes \"node_name\" does not exist")
+		return nil
+	}
+	cli := &ServiceBus{
+		nodeName:  nodeName,
+		TargetURL: targetURL,
+	}
+
+	return cli
+}
+
+func (sb *ServiceBus) RegisterListener(handle listener.Handle) error {
+	listener.MessageHandlerInstance.AddListener(fmt.Sprintf("servicebus/%v/%v", path.Join("node", sb.nodeName), sb.TargetURL), handle)
+	msg := model.NewMessage("")
+	msg.SetResourceOperation(fmt.Sprintf("%v/%v", path.Join("node", sb.nodeName), sb.TargetURL), "start")
+	msg.SetRoute("router_servicebus", modules.UserGroup)
+	beehiveContext.Send(modules.CloudHubModuleName, *msg)
+	return nil
+}
+
+func (sb *ServiceBus) UnregisterListener() {
+	msg := model.NewMessage("")
+	msg.SetResourceOperation(path.Join("node", sb.nodeName, sb.TargetURL), "stop")
+	msg.SetRoute("router_servicebus", modules.UserGroup)
+	beehiveContext.Send(modules.CloudHubModuleName, *msg)
+	listener.MessageHandlerInstance.RemoveListener(path.Join("servicebus/node", sb.nodeName, sb.TargetURL))
+}
+
+func (sb *ServiceBus) Name() string {
+	return constants.ServicebusProvider
+}
+
+func (sb *ServiceBus) Forward(target provider.Target, data interface{}) (response interface{}, err error) {
+	message := data.(*model.Message)
+	res := make(map[string]interface{})
+	v, ok := message.Content.(string)
+	if !ok {
+		return nil, errors.New("message content invalid convert to string")
+	}
+	res["data"] = []byte(v)
+	resp, err := target.GoToTarget(res, nil)
+	if err != nil {
+		klog.Errorf("message is send to target failed. msgID: %s, target: %s, err:%v", message.GetID(), target.Name(), err)
+		return nil, err
+	}
+	klog.Infof("message is send to target successfully. msgID: %s, target: %s", message.GetID(), target.Name())
+	httpResp, ok := resp.(*http.Response)
+	if ok {
+		byteData, _ := ioutil.ReadAll(httpResp.Body)
+		beehiveContext.SendToGroup(modules.CloudHubModuleGroup, *message.NewRespByMessage(message, string(byteData)))
+	}
+	return resp, nil
+}
+
+func (sf *servicebusFactory) GetTarget(ep *v1.RuleEndpoint, targetResource map[string]string) provider.Target {
 	targetPath, exist := targetResource["path"]
 	if !exist {
 		klog.Errorf("target resource attributes \"targetPath\" does not exist")
@@ -42,17 +109,12 @@ func (factory *servicebusFactory) GetTarget(ep *v1.RuleEndpoint, targetResource 
 	}
 	cli := &ServiceBus{
 		targetPath:  targetPath,
-		namespace:   ep.Namespace,
 		servicePort: ep.Spec.Properties["service_port"],
 	}
 	return cli
 }
 
-func (eb *ServiceBus) Name() string {
-	return constants.ServicebusProvider
-}
-
-func (eb *ServiceBus) GoToTarget(data map[string]interface{}, stop chan struct{}) (interface{}, error) {
+func (sb *ServiceBus) GoToTarget(data map[string]interface{}, stop chan struct{}) (interface{}, error) {
 	var response *model.Message
 	messageID, ok := data["messageID"].(string)
 	param, ok := data["param"].(string)
@@ -69,11 +131,11 @@ func (eb *ServiceBus) GoToTarget(data map[string]interface{}, stop chan struct{}
 
 	msg := model.NewMessage("")
 	msg.BuildHeader(messageID, "", msg.GetTimestamp())
-	resource := "node/" + nodeName + "/" + eb.servicePort + ":"
+	resource := "node/" + nodeName + "/" + sb.servicePort + ":"
 	if !ok || param == "" {
-		resource = resource + eb.targetPath
+		resource = resource + sb.targetPath
 	} else {
-		resource = resource + strings.TrimSuffix(eb.targetPath, "/") + "/" + strings.TrimPrefix(param, "/")
+		resource = resource + strings.TrimSuffix(sb.targetPath, "/") + "/" + strings.TrimPrefix(param, "/")
 	}
 	msg.SetResourceOperation(resource, request.Method)
 	msg.FillBody(request)

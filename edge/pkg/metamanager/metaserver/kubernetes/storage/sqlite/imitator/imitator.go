@@ -82,7 +82,7 @@ func (s *imitator) InsertOrUpdateObj(ctx context.Context, obj runtime.Object) er
 		Value:                buf.String(),
 	}
 	s.lock.Lock()
-	//_, err = dbm.DBAccess.Insert(&m)
+	defer s.lock.Unlock()
 	_, err = dbm.DBAccess.Raw("INSERT OR REPLACE INTO meta_v2 (key, groupversionresource, namespace,name,resourceversion,value) VALUES (?,?,?,?,?,?)", m.Key, m.GroupVersionResource, m.Namespace, m.Name, m.ResourceVersion, m.Value).Exec()
 	var maxRetryTimes = 3
 	for i := 1; err != nil; i++ {
@@ -95,7 +95,6 @@ func (s *imitator) InsertOrUpdateObj(ctx context.Context, obj runtime.Object) er
 	if objRv > s.GetRevision() {
 		s.SetRevision(objRv)
 	}
-	s.lock.Unlock()
 	klog.V(4).Infof("[metaserver]successfully insert or update obj:%v", key)
 	return nil
 }

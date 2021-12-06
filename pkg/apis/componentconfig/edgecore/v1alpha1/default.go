@@ -135,12 +135,14 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				RemoteQueryTimeout:    constants.DefaultRemoteQueryTimeout,
 				MetaServer: &MetaServer{
 					Enable: false,
-					Debug:  false,
 					Server: constants.DefaultMetaServerAddr,
 				},
 			},
 			ServiceBus: &ServiceBus{
-				Enable: false,
+				Enable:  false,
+				Server:  "127.0.0.1",
+				Port:    9060,
+				Timeout: 60,
 			},
 			DeviceTwin: &DeviceTwin{
 				Enable: true,

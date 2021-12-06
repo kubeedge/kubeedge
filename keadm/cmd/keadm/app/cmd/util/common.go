@@ -19,11 +19,11 @@ package util
 import (
 	"archive/tar"
 	"compress/gzip"
+	"crypto/sha512"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -35,7 +35,6 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/klog/v2"
 
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
@@ -166,15 +165,22 @@ func RunningModule() (types.ModuleRunning, error) {
 
 // GetLatestVersion return the latest non-prerelease, non-draft version of kubeedge in releases
 func GetLatestVersion() (string, error) {
-	//Download the tar from repo
-	versionURL := "curl -k " + latestReleaseVersionURL
-	cmd := exec.Command("sh", "-c", versionURL)
-	latestReleaseData, err := cmd.Output()
+	// curl https://kubeedge.io/latestversion
+	resp, err := http.Get(latestReleaseVersionURL)
+	if err != nil {
+		return "", fmt.Errorf("failed to get latest version from %s: %v", latestReleaseVersionURL, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("failed to get latest version from %s, expected %d, got status code: %d", latestReleaseVersionURL, http.StatusOK, resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
-
-	return string(latestReleaseData), nil
+	return string(body), nil
 }
 
 // BuildConfig builds config from flags
@@ -271,12 +277,12 @@ func installKubeEdge(options types.InstallOptions, arch string, version semver.V
 					if err := NewCommand(cmdStr).Exec(); err != nil {
 						return err
 					}
-					klog.Infof("%v have been deleted and will try to download again", filename)
+					fmt.Printf("%v have been deleted and will try to download again\n", filename)
 					if err := retryDownload(filename, checksumFilename, version, options.TarballPath); err != nil {
 						return err
 					}
 				} else {
-					klog.Warningf("failed to checksum and will continue to install.")
+					fmt.Println("failed to checksum and will continue to install.")
 				}
 				break
 			}
@@ -439,12 +445,30 @@ func hasSystemd() bool {
 	return fi.IsDir()
 }
 
+// computeSHA512Checksum returns the SHA512 checksum of the given file
+func computeSHA512Checksum(filepath string) (string, error) {
+	f, err := os.Open(filepath)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
+	h := sha512.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
+}
+
 func checkSum(filename, checksumFilename string, version semver.Version, tarballPath string) (bool, error) {
 	//Verify the tar with checksum
 	fmt.Printf("%s checksum: \n", filename)
-	getActualCheckSum := NewCommand(fmt.Sprintf("cd %s && sha512sum %s | awk '{split($0,a,\"[ ]\"); print a[1]}'", tarballPath, filename))
-	if err := getActualCheckSum.Exec(); err != nil {
-		return false, err
+
+	filepath := fmt.Sprintf("%s/%s", tarballPath, filename)
+	actualChecksum, err := computeSHA512Checksum(filepath)
+	if err != nil {
+		return false, fmt.Errorf("failed to compute checksum for %s: %v", filename, err)
 	}
 
 	fmt.Printf("%s content: \n", checksumFilename)
@@ -452,12 +476,12 @@ func checkSum(filename, checksumFilename string, version semver.Version, tarball
 
 	if _, err := os.Stat(checksumFilepath); err == nil {
 		fmt.Printf("Expected or Default checksum file %s is already downloaded. \n", checksumFilename)
-		content, err := ioutil.ReadFile(checksumFilepath)
+		content, err := os.ReadFile(checksumFilepath)
 		if err != nil {
 			return false, err
 		}
 		checksum := strings.Replace(string(content), "\n", "", -1)
-		if checksum != getActualCheckSum.GetStdOut() {
+		if checksum != actualChecksum {
 			fmt.Printf("Failed to verify the checksum of %s ... \n\n", filename)
 			return false, nil
 		}
@@ -467,7 +491,7 @@ func checkSum(filename, checksumFilename string, version semver.Version, tarball
 			return false, err
 		}
 
-		if getDesiredCheckSum.GetStdOut() != getActualCheckSum.GetStdOut() {
+		if getDesiredCheckSum.GetStdOut() != actualChecksum {
 			fmt.Printf("Failed to verify the checksum of %s ... \n\n", filename)
 			return false, nil
 		}

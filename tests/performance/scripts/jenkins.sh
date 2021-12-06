@@ -36,7 +36,7 @@ sudo rm -rf $PWD/loadtest/loadtest.test
 sudo rm -rf $PWD/nodedensity/nodedensity.test
 sudo rm -rf $PWD/hubtest/hubtest.test
 
-go get github.com/onsi/ginkgo/ginkgo
+go install github.com/onsi/ginkgo/ginkgo@latest
 sudo cp $GOPATH/bin/ginkgo /usr/bin/
 # Specify the module name to compile in below command
 bash -x $PWD/scripts/compileperf.sh $1

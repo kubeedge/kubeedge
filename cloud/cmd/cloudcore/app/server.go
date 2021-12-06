@@ -58,19 +58,19 @@ kubernetes controller which manages devices so that the device metadata/status d
 			flag.PrintFlags(cmd.Flags())
 
 			if errs := opts.Validate(); len(errs) > 0 {
-				klog.Fatal(util.SpliceErrors(errs))
+				klog.Exit(util.SpliceErrors(errs))
 			}
 
 			config, err := opts.Config()
 			if err != nil {
-				klog.Fatal(err)
+				klog.Exit(err)
 			}
 			if errs := validation.ValidateCloudCoreConfiguration(config); len(errs) > 0 {
-				klog.Fatal(util.SpliceErrors(errs.ToAggregate().Errors()))
+				klog.Exit(util.SpliceErrors(errs.ToAggregate().Errors()))
 			}
 
 			if err := features.DefaultMutableFeatureGate.SetFromMap(config.FeatureGates); err != nil {
-				klog.Fatal(err)
+				klog.Exit(err)
 			}
 
 			// To help debugging, immediately log version
@@ -91,8 +91,12 @@ kubernetes controller which manages devices so that the device metadata/status d
 
 			registerModules(config)
 
-			// IptablesManager manages tunnel port related iptables rules
-			go iptables.NewIptablesManager(config.Modules.CloudStream).Run()
+			if config.Modules.IptablesManager == nil || config.Modules.IptablesManager.Enable && config.Modules.IptablesManager.Mode == v1alpha1.InternalMode {
+				// By default, IptablesManager manages tunnel port related iptables rules
+				// The internal mode will share the host network, forward to the stream port.
+				streamPort := int(config.Modules.CloudStream.StreamPort)
+				go iptables.NewIptablesManager(streamPort).Run()
+			}
 
 			// Start all modules
 			core.StartModules()
@@ -127,10 +131,10 @@ kubernetes controller which manages devices so that the device metadata/status d
 // registerModules register all the modules started in cloudcore
 func registerModules(c *v1alpha1.CloudCoreConfig) {
 	cloudhub.Register(c.Modules.CloudHub)
-	edgecontroller.Register(c.Modules.EdgeController, c.CommonConfig)
+	edgecontroller.Register(c.Modules.EdgeController)
 	devicecontroller.Register(c.Modules.DeviceController)
 	synccontroller.Register(c.Modules.SyncController)
-	cloudstream.Register(c.Modules.CloudStream)
+	cloudstream.Register(c.Modules.CloudStream, c.CommonConfig)
 	router.Register(c.Modules.Router)
 	dynamiccontroller.Register(c.Modules.DynamicController)
 }

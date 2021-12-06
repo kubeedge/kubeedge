@@ -18,7 +18,6 @@ package cmd
 
 import (
 	"fmt"
-	"io"
 	"strings"
 
 	"github.com/blang/semver"
@@ -47,10 +46,8 @@ keadm join --cloudcore-ipport=10.20.30.40:10000 --edgenode-name=testing123 --kub
 )
 
 // NewEdgeJoin returns KubeEdge edge join command.
-func NewEdgeJoin(out io.Writer, joinOptions *types.JoinOptions) *cobra.Command {
-	if joinOptions == nil {
-		joinOptions = newJoinOptions()
-	}
+func NewEdgeJoin() *cobra.Command {
+	joinOptions := newJoinOptions()
 
 	tools := make(map[string]types.ToolsInstaller)
 	flagVals := make(map[string]types.FlagData)

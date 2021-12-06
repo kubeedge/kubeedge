@@ -58,7 +58,7 @@ var reservationEphemeralStorage = resource.MustParse(fmt.Sprintf("%dGi", 1))
 func (e *edged) initialNode() (*v1.Node, error) {
 	var node = &v1.Node{}
 
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == windows {
 		return node, nil
 	}
 
@@ -199,7 +199,7 @@ func (e *edged) getNodeStatusRequest(node *v1.Node) (*edgeapi.NodeStatusRequest,
 		node.Status.VolumesInUse = nil
 	}
 	e.volumeManager.MarkVolumesAsReportedInUse(node.Status.VolumesInUse)
-	klog.Infof("Sync VolumesInUse: %v", node.Status.VolumesInUse)
+	klog.V(5).Infof("Sync VolumesInUse: %v", node.Status.VolumesInUse)
 
 	return nodeStatus, nil
 }

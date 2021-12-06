@@ -17,7 +17,9 @@ type EdgeController struct {
 	downstream *controller.DownstreamController
 }
 
-func newEdgeController(config *v1alpha1.EdgeController, tunnelPort int) *EdgeController {
+var _ core.Module = (*EdgeController)(nil)
+
+func newEdgeController(config *v1alpha1.EdgeController) *EdgeController {
 	ec := &EdgeController{config: *config}
 	if !ec.Enable() {
 		return ec
@@ -25,19 +27,18 @@ func newEdgeController(config *v1alpha1.EdgeController, tunnelPort int) *EdgeCon
 	var err error
 	ec.upstream, err = controller.NewUpstreamController(config, informers.GetInformersManager().GetK8sInformerFactory())
 	if err != nil {
-		klog.Fatalf("new upstream controller failed with error: %s", err)
+		klog.Exitf("new upstream controller failed with error: %s", err)
 	}
-	ec.upstream.TunnelPort = tunnelPort
 
 	ec.downstream, err = controller.NewDownstreamController(config, informers.GetInformersManager().GetK8sInformerFactory(), informers.GetInformersManager(), informers.GetInformersManager().GetCRDInformerFactory())
 	if err != nil {
-		klog.Fatalf("new downstream controller failed with error: %s", err)
+		klog.Exitf("new downstream controller failed with error: %s", err)
 	}
 	return ec
 }
 
-func Register(ec *v1alpha1.EdgeController, commonConfig *v1alpha1.CommonConfig) {
-	core.Register(newEdgeController(ec, commonConfig.TunnelPort))
+func Register(ec *v1alpha1.EdgeController) {
+	core.Register(newEdgeController(ec))
 }
 
 // Name of controller
@@ -58,10 +59,10 @@ func (ec *EdgeController) Enable() bool {
 // Start controller
 func (ec *EdgeController) Start() {
 	if err := ec.upstream.Start(); err != nil {
-		klog.Fatalf("start upstream failed with error: %s", err)
+		klog.Exitf("start upstream failed with error: %s", err)
 	}
 
 	if err := ec.downstream.Start(); err != nil {
-		klog.Fatalf("start downstream failed with error: %s", err)
+		klog.Exitf("start downstream failed with error: %s", err)
 	}
 }
