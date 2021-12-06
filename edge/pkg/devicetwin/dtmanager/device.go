@@ -116,7 +116,7 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 	if err != nil {
 		return err
 	}
-	topic := dtcommon.DeviceETPrefix + device.ID + dtcommon.DeviceETStateUpdateSuffix + "/result"
+	topic := dtcommon.DeviceETPrefix + device.ID + dtcommon.DeviceETStateUpdateResultSuffix
 	context.Send(device.ID,
 		dtcommon.SendToEdge,
 		dtcommon.CommModule,
