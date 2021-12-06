@@ -49,6 +49,8 @@ const (
 	DeviceETUpdatedSuffix = "/updated"
 	// DeviceETStateUpdateSuffix the topic suffix for device state update event
 	DeviceETStateUpdateSuffix = "/state/update"
+	// DeviceETStateUpdateResultSuffix the topic suffix for device state update result event
+	DeviceETStateUpdateResultSuffix = "/state/update/result"
 	// DeviceETStateGetSuffix the topic suffix for device state get event
 	DeviceETStateGetSuffix = "/state/get"
 
