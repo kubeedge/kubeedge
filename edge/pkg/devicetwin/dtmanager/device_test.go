@@ -237,7 +237,7 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 			updateReturnInt:  int64(1),
 			updateReturnErr:  nil,
 			queryTableReturn: querySeterMock,
-			times:            2,
+			times:            1,
 		},
 	}
 	for _, test := range tests {
