@@ -17,7 +17,7 @@ import (
 
 var HasTLSTunnelCerts = make(chan bool, 1)
 
-//EdgeHub defines edgehub object structure
+//EdgeHub defines EdgeHub object structure
 type EdgeHub struct {
 	certManager   certificate.CertManager
 	chClient      clients.Adapter
@@ -35,7 +35,7 @@ func newEdgeHub(enable bool) *EdgeHub {
 	}
 }
 
-// Register register edgehub
+// Register register EdgeHub
 func Register(eh *v1alpha1.EdgeHub, nodeName string) {
 	config.InitConfigure(eh, nodeName)
 	core.Register(newEdgeHub(eh.Enable))
