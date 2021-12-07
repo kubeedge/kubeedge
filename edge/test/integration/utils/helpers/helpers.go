@@ -21,6 +21,7 @@ import (
 	"crypto/tls"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -349,18 +350,20 @@ func GetPods(EdgedEndpoint string) (v1.PodList, error) {
 
 //CheckPodRunningState is function to check the Pod state
 func CheckPodRunningState(EdgedEndPoint, podname string) {
-	gomega.Eventually(func() string {
-		var status string
+	gomega.Eventually(func() error {
 		pods, _ := GetPods(EdgedEndPoint)
 		for index := range pods.Items {
 			pod := &pods.Items[index]
 			if podname == pod.Name {
-				status = string(pod.Status.Phase)
 				common.Infof("PodName: %s PodStatus: %s", pod.Name, pod.Status.Phase)
+				if pod.Status.Phase == v1.PodRunning || pod.Status.Phase == v1.PodSucceeded {
+					return nil
+				}
+				return fmt.Errorf("pod status is not expected: %s", pod.Status.Phase)
 			}
 		}
-		return status
-	}, "240s", "2s").Should(gomega.Equal("Running"), "Application Deployment is Unsuccessful, Pod has not come to Running State")
+		return fmt.Errorf("no pod found")
+	}, "240s", "2s").Should(gomega.BeNil(), "Application Deployment is Unsuccessful, Pod has not come to Running State")
 }
 
 //CheckPodDeletion is function to check pod deletion
