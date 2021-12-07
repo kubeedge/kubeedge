@@ -35,8 +35,8 @@ spec:
       tolerations: {{ toYaml . | nindent 8 }}
       {{- end }}
       serviceAccount: cloudcore
-      {{- with .Values.imagePullSecrets }} 
-      imagePullSecrets: {{- toYaml . | indent 8 }} 
+      {{- with .Values.cloudCore.image.imagePullSecrets }} 
+      imagePullSecrets: {{ toYaml . | nindent 8 }} 
       {{- end }}  
       containers:
       - name: cloudcore
