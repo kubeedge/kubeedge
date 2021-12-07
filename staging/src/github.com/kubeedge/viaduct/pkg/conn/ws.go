@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"k8s.io/klog/v2"
 
-	"github.com/gorilla/websocket"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/comm"
@@ -176,7 +176,7 @@ func (conn *WSConnection) Write(raw []byte) (int, error) {
 
 func (conn *WSConnection) WriteMessageAsync(msg *model.Message) error {
 	lane := lane.NewLane(api.ProtocolTypeWS, conn.wsConn)
-	lane.SetWriteDeadline(conn.WriteDeadline)
+	_ = lane.SetWriteDeadline(conn.WriteDeadline)
 	msg.Header.Sync = false
 	conn.locker.Lock()
 	defer conn.locker.Unlock()
@@ -186,7 +186,7 @@ func (conn *WSConnection) WriteMessageAsync(msg *model.Message) error {
 func (conn *WSConnection) WriteMessageSync(msg *model.Message) (*model.Message, error) {
 	lane := lane.NewLane(api.ProtocolTypeWS, conn.wsConn)
 	// send msg
-	lane.SetWriteDeadline(conn.WriteDeadline)
+	_ = lane.SetWriteDeadline(conn.WriteDeadline)
 	msg.Header.Sync = true
 	conn.locker.Lock()
 	err := lane.WriteMessage(msg)

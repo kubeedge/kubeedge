@@ -4,9 +4,9 @@ import (
 	"io"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"k8s.io/klog/v2"
 
-	"github.com/gorilla/websocket"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/viaduct/pkg/packer"
 	"github.com/kubeedge/viaduct/pkg/translator"

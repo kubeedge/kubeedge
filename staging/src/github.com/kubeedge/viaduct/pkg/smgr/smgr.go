@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/lucas-clemente/quic-go"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/comm"
-	"github.com/lucas-clemente/quic-go"
 )
 
 const (
@@ -86,9 +86,9 @@ func (pool *streamPool) freeStream(s quic.Stream) bool {
 	for streamID := range pool.streamMap {
 		if streamID == s.StreamID() {
 			delete(pool.streamMap, s.StreamID())
-			s.CancelRead(quic.ErrorCode(comm.StatusCodeFreeStream))
+			_ = s.CancelRead(quic.ErrorCode(comm.StatusCodeFreeStream))
 			s.Close()
-			s.CancelWrite(quic.ErrorCode(comm.StatusCodeFreeStream))
+			_ = s.CancelWrite(quic.ErrorCode(comm.StatusCodeFreeStream))
 			return true
 		}
 	}
@@ -99,9 +99,9 @@ func (pool *streamPool) destroyStreams() {
 	pool.lock.Lock()
 	defer pool.lock.Unlock()
 	for _, stream := range pool.streamMap {
-		stream.Stream.CancelRead(quic.ErrorCode(comm.StatusCodeFreeStream))
+		_ = stream.Stream.CancelRead(quic.ErrorCode(comm.StatusCodeFreeStream))
 		stream.Stream.Close()
-		stream.Stream.CancelWrite(quic.ErrorCode(comm.StatusCodeFreeStream))
+		_ = stream.Stream.CancelWrite(quic.ErrorCode(comm.StatusCodeFreeStream))
 	}
 	pool.streamMap = make(map[quic.StreamID]*Stream)
 }

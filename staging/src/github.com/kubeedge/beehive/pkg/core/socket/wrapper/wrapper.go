@@ -71,7 +71,7 @@ func (w *ConnWrapper) SetReadDeadline(t time.Time) error {
 		conn := w.conn.(net.Conn)
 		err = conn.SetReadDeadline(t)
 	default:
-		klog.Warning("unsupported conn type: %T", w.conn)
+		klog.Warningf("unsupported conn type: %T", w.conn)
 	}
 	return err
 }
@@ -85,7 +85,7 @@ func (w *ConnWrapper) Close() error {
 		conn := w.conn.(net.Conn)
 		err = conn.Close()
 	default:
-		klog.Warning("unsupported conn type: %T", w.conn)
+		klog.Warningf("unsupported conn type: %T", w.conn)
 	}
 	return err
 }

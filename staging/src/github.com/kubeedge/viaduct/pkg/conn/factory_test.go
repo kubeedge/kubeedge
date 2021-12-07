@@ -36,12 +36,12 @@ func TestNewConnection(t *testing.T) {
 	}{
 		{
 			name: "TestQuic",
-			opts: &ConnectionOptions{ConnType: api.ProtocolTypeQuic, Base: mockSession, Handler: muxhandler},
+			opts: &ConnectionOptions{ConnType: api.ProtocolTypeQuic, Base: mockSession, Handler: nil},
 			want: &QuicConnection{},
 		},
 		{
 			name: "TestWS",
-			opts: &ConnectionOptions{ConnType: api.ProtocolTypeWS, Base: wsConn, Handler: muxhandler},
+			opts: &ConnectionOptions{ConnType: api.ProtocolTypeWS, Base: wsConn, Handler: nil},
 			want: &WSConnection{},
 		},
 		{
