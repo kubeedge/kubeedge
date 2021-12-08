@@ -6,7 +6,7 @@
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
         * [Other Notable Changes](#other-notable-changes)
         * [Bug Fixes](#bug-fixes)
-    
+
 
 # v1.9.0
 
@@ -21,7 +21,7 @@ Download v1.9.0 in the [v1.9.0 release page](https://github.com/kubeedge/kubeedg
 
 - **Support Custom HTTP Request Routing from Edge to Cloud through ServiceBus for Applications**
 
-A HTTP server is added to ServiceBus, to support custom http request routing from edge to cloud 
+A HTTP server is added to ServiceBus, to support custom http request routing from edge to cloud
 for applications. This simplifies the rest api access with http server on the cloud while client is in the edge.
 
 Refer to the links for more details.
@@ -32,7 +32,7 @@ Refer to the links for more details.
 - **Support CloudCore to run independently of the Kubernetes Master host**
 
 CloudCore now supports to run independently of the Kubernetes Master host, iptablesmanager has been added as an independent
-component, users only need to deploy the iptablesmanager to Kubernetes Master host, which now can 
+component, users only need to deploy the iptablesmanager to Kubernetes Master host, which now can
 add the iptable rules for Cloud-Edge tunnel automatically
 
 Refer to the links for more details.
@@ -42,8 +42,8 @@ Refer to the links for more details.
 
 - **EdgeMesh add tls and encryption security**
 
-EdgeMesh's tunnel module adds tls and encryption security capabilities. 
-These features bring more secure protection measures to the user's edgemesh-server component and 
+EdgeMesh's tunnel module adds tls and encryption security capabilities.
+These features bring more secure protection measures to the user's edgemesh-server component and
 reduce the risk of edgemesh-server being attacked.
 
 Refer to the links for more details.
@@ -54,7 +54,7 @@ Refer to the links for more details.
 - **Enhanced the ease of use of EdgeMesh**
 
 EdgeMesh has many improvements in ease of use. Now users can easily deploy EdgeMesh's server and
-agent components with a single command of helm. At the same time, the restriction on service port 
+agent components with a single command of helm. At the same time, the restriction on service port
 naming is removed, and the docker0 dependency is removed, making it easier for users to use EdgeMesh.
 
 Refer to the links for more details.
