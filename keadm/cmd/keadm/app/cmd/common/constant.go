@@ -41,6 +41,16 @@ const (
 	// EnableMetaServer is used to determining whether to enable metaServer component on edge node
 	EnableMetaServer = "with-meta-server"
 
+	// EdgedClusterDomain defines the edged cluster dns, part of the EdgeMesh configuration.
+	EdgedClusterDNS = "edged-cluster-dns"
+
+	DefaultEdgedClusterDNS = "169.254.96.16"
+
+	// EdgedClusterDomain defines the edged cluster domain, part of the EdgeMesh configuration.
+	EdgedClusterDomain = "edged-cluster-domain"
+
+	DefaultEdgedClusterDomain = "cluster.local"
+
 	// EnableServiceBus is used to determining whether to enable serviceBus component on edge node
 	EnableServiceBus = "with-service-bus"
 
@@ -74,7 +84,7 @@ const (
 	// QuicServer sets the port where to apply for the edge quic
 	QuicPort = "quicport"
 
-	// Used to distinguish download links  for KubeEdge EdgeCore and Services
+	// Used to distinguish download links for KubeEdge EdgeCore and Services
 	DownloadRegion = "download-region"
 
 	// Tunnel sets the port where to apply for the edge stream

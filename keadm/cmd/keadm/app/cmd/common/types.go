@@ -37,6 +37,8 @@ type JoinOptions struct {
 	CloudCoreIPPort       string
 	EdgeNodeName          string
 	EdgeNodeIP            string
+	EdgedClusterDNS       string
+	EdgedClusterDomain    string
 	RuntimeType           string
 	RemoteRuntimeEndpoint string
 	Token                 string

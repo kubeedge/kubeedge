@@ -41,6 +41,8 @@ type KubeEdgeInstTool struct {
 	CloudCoreIP           string
 	EdgeNodeName          string
 	EdgeNodeIP            string
+	EdgedClusterDNS       string
+	EdgedClusterDomain    string
 	RuntimeType           string
 	RemoteRuntimeEndpoint string
 	Token                 string
@@ -145,14 +147,14 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 	// Edge nodes will connect these exposed servers
 	cloudCoreIP := strings.Split(ku.CloudCoreIP, ":")[0]
 	if ku.CertPort != "" {
-		edgeCoreConfig.Modules.EdgeHub.HTTPServer = "https://" + cloudCoreIP + ":" + ku.CertPort
+		edgeCoreConfig.Modules.EdgeHub.HTTPServer = "https://" + net.JoinHostPort(cloudCoreIP, ku.CertPort)
 	} else {
-		edgeCoreConfig.Modules.EdgeHub.HTTPServer = "https://" + cloudCoreIP + ":10002"
+		edgeCoreConfig.Modules.EdgeHub.HTTPServer = "https://" + net.JoinHostPort(cloudCoreIP, "10002")
 	}
 	if ku.QuicPort != "" {
-		edgeCoreConfig.Modules.EdgeHub.Quic.Server = cloudCoreIP + ":" + ku.QuicPort
+		edgeCoreConfig.Modules.EdgeHub.Quic.Server = net.JoinHostPort(cloudCoreIP, ku.QuicPort)
 	} else {
-		edgeCoreConfig.Modules.EdgeHub.Quic.Server = cloudCoreIP + ":10001"
+		edgeCoreConfig.Modules.EdgeHub.Quic.Server = net.JoinHostPort(cloudCoreIP, "10001")
 	}
 	if ku.TunnelPort != "" {
 		edgeCoreConfig.Modules.EdgeStream.TunnelServer = net.JoinHostPort(cloudCoreIP, ku.TunnelPort)
@@ -169,10 +171,6 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 		edgeCoreConfig.Modules.Edged.Taints = append(edgeCoreConfig.Modules.Edged.Taints, taint)
 	}
 
-	// Determin whether to enable these related compoents
-	edgeCoreConfig.Modules.MetaManager.MetaServer.Enable = ku.EnableMetaServer
-	edgeCoreConfig.Modules.ServiceBus.Enable = ku.EnableServiceBus
-
 	if len(ku.Labels) >= 1 {
 		labelsMap := make(map[string]string)
 		for _, label := range ku.Labels {
@@ -182,6 +180,14 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 		}
 		edgeCoreConfig.Modules.Edged.Labels = labelsMap
 	}
+
+	// Determin whether to enable service bus
+	edgeCoreConfig.Modules.ServiceBus.Enable = ku.EnableServiceBus
+
+	// For edgemesh configuration
+	edgeCoreConfig.Modules.MetaManager.MetaServer.Enable = ku.EnableMetaServer
+	edgeCoreConfig.Modules.Edged.ClusterDNS = ku.EdgedClusterDNS
+	edgeCoreConfig.Modules.Edged.ClusterDomain = ku.EdgedClusterDomain
 
 	if errs := validation.ValidateEdgeCoreConfiguration(edgeCoreConfig); len(errs) > 0 {
 		return errors.New(util.SpliceErrors(errs.ToAggregate().Errors()))
