@@ -3,6 +3,7 @@ package dtmanager
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -163,6 +164,9 @@ func UpdateDeviceAttr(context *dtcontext.DTContext, deviceID string, attributes 
 		return nil, nil
 	}
 	dealAttrResult := DealMsgAttr(context, Device.ID, attributes, dealType)
+	if dealAttrResult.Err != nil {
+		return nil, nil
+	}
 	add, delete, update, result := dealAttrResult.Add, dealAttrResult.Delete, dealAttrResult.Update, dealAttrResult.Result
 	if len(add) != 0 || len(delete) != 0 || len(update) != 0 {
 		for i := 1; i <= dtcommon.RetryTimes; i++ {
@@ -198,7 +202,9 @@ func UpdateDeviceAttr(context *dtcontext.DTContext, deviceID string, attributes 
 func DealMsgAttr(context *dtcontext.DTContext, deviceID string, msgAttrs map[string]*dttype.MsgAttr, dealType int) dttype.DealAttrResult {
 	device, ok := context.GetDevice(deviceID)
 	if !ok {
-
+		return dttype.DealAttrResult{
+			Err: fmt.Errorf("can not get deviceID %s in DealMsgAttr", deviceID),
+		}
 	}
 	attrs := device.Attributes
 	if attrs == nil {
