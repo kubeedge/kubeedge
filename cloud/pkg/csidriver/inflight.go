@@ -1,0 +1,48 @@
+/*
+Copyright 2019 The KubeEdge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+package csidriver
+
+import (
+	"sync"
+)
+
+type inFlight struct {
+	mux    *sync.Mutex
+	lookup map[string]bool
+}
+
+func newInFlight() *inFlight {
+	return &inFlight{
+		mux:    &sync.Mutex{},
+		lookup: map[string]bool{},
+	}
+}
+
+func (i *inFlight) Insert(key string) bool {
+	i.mux.Lock()
+	defer i.mux.Unlock()
+	if _, ok := i.lookup[key]; ok {
+		return false
+	}
+	i.lookup[key] = true
+	return true
+}
+
+func (i *inFlight) Delete(key string) {
+	i.mux.Lock()
+	defer i.mux.Unlock()
+	delete(i.lookup, key)
+}

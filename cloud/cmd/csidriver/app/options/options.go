@@ -24,9 +24,10 @@ import (
 type CSIDriverOptions struct {
 	Endpoint         string
 	DriverName       string
-	NodeID           string
 	KubeEdgeEndpoint string
 	Version          string
+	StatePath        string
+	TopologyKey      string
 }
 
 // NewCSIDriverOptions returns options object
@@ -39,7 +40,8 @@ func (o *CSIDriverOptions) Flags() (fss cliflag.NamedFlagSets) {
 	fs := fss.FlagSet("csidriver")
 	fs.StringVar(&o.Endpoint, "endpoint", "unix:///csi/csi.sock", "CSI endpoint")
 	fs.StringVar(&o.DriverName, "drivername", "csidriver", "name of the driver")
-	fs.StringVar(&o.NodeID, "nodeid", "", "node id determines which node will be used to create/delete volumes")
+	fs.StringVar(&o.StatePath, "state-path", "/kubeedge/csidriver", "path to the state storage")
+	fs.StringVar(&o.TopologyKey, "topology-key", "csi.kubeedge.io/nodeid", "topology key to use when considering accessibility requirements. The topology value must be the kubeedge node name which is used for routing CSI requests. The topology key must be defined")
 	fs.StringVar(&o.KubeEdgeEndpoint, "kubeedge-endpoint", "unix:///kubeedge/kubeedge.sock", "kubeedge endpoint")
 	fs.StringVar(&o.Version, "version", "dev", "version")
 	return

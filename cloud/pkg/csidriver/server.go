@@ -22,13 +22,15 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/cloud/cmd/csidriver/app/options"
+	"github.com/kubeedge/kubeedge/cloud/pkg/csidriver/state"
 )
 
 type CSIDriver struct {
 	options.CSIDriverOptions
 
-	ids *identityServer
-	cs  *controllerServer
+	store *state.Store
+	ids   *identityServer
+	cs    *controllerServer
 }
 
 func NewCSIDriver(opts *options.CSIDriverOptions) (*CSIDriver, error) {
@@ -38,17 +40,25 @@ func NewCSIDriver(opts *options.CSIDriverOptions) (*CSIDriver, error) {
 	if opts.DriverName == "" {
 		return nil, fmt.Errorf("no driver name provided")
 	}
-	if opts.NodeID == "" {
-		return nil, fmt.Errorf("no node id provided")
-	}
 	if opts.KubeEdgeEndpoint == "" {
 		return nil, fmt.Errorf("no kubeedge endpoint provided")
 	}
 	if opts.Version == "" {
 		return nil, fmt.Errorf("no version provided")
 	}
+	if opts.StatePath == "" {
+		return nil, fmt.Errorf("no statepath provided")
+	}
+	if opts.TopologyKey == "" {
+		return nil, fmt.Errorf("no topology-key provided")
+	}
+	store, err := state.New(opts.StatePath)
+	if err != nil {
+		return nil, err
+	}
 	return &CSIDriver{
 		CSIDriverOptions: *opts,
+		store:            store,
 	}, nil
 }
 
@@ -57,7 +67,7 @@ func (cd *CSIDriver) Run() {
 
 	// Create GRPC servers
 	cd.ids = newIdentityServer(cd.DriverName, cd.Version)
-	cd.cs = newControllerServer(cd.NodeID, cd.KubeEdgeEndpoint)
+	cd.cs = newControllerServer(cd.KubeEdgeEndpoint, cd.store, cd.TopologyKey)
 
 	s := newNonBlockingGRPCServer()
 	s.Start(cd.Endpoint, cd.ids, cd.cs, nil)

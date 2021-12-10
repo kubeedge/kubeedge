@@ -17,8 +17,8 @@ limitations under the License.
 package csidriver
 
 import (
+	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -26,6 +26,8 @@ import (
 	"sync"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
+	"github.com/golang/protobuf/jsonpb"
+	"github.com/golang/protobuf/proto"
 	"github.com/kubernetes-csi/csi-lib-utils/protosanitizer"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -150,34 +152,55 @@ func buildResource(nodeID, namespace, resourceType, resourceID string) (string, 
 }
 
 // sendToKubeEdge sends messages to KubeEdge
-func sendToKubeEdge(context, kubeEdgeEndpoint string) (string, error) {
+func sendToKubeEdge(req interface{}, nodeID, volumeID, csiOp string, csiResponse interface{}, kubeEdgeEndpoint string) error {
+	// encode csi request -> beehive model message
+	resource, err := buildResource(nodeID,
+		DefaultNamespace,
+		constants.CSIResourceTypeVolume,
+		volumeID)
+	if err != nil {
+		return fmt.Errorf("failed to build message resource: %w", err)
+	}
+	m := jsonpb.Marshaler{}
+	js, err := m.MarshalToString(proto.MessageV1(req))
+	if err != nil {
+		return fmt.Errorf("failed to marshal csi request: %w", err)
+	}
+	msg := model.NewMessage("").
+		BuildRouter(DefaultReceiveModuleName, GroupResource, resource, csiOp).
+		FillBody(js)
+	reqData, err := json.Marshal(msg)
+	if err != nil {
+		return fmt.Errorf("failed to marshal message: %w", err)
+	}
+
 	us := NewUnixDomainSocket(kubeEdgeEndpoint)
-	// connect
 	r, err := us.Connect()
 	if err != nil {
-		return "", err
+		return fmt.Errorf("failed to connecto to uds: %w", err)
 	}
-	// send
-	res, err := us.Send(r, context)
+	defer r.Close()
+	res, err := us.Send(r, string(reqData))
 	if err != nil {
-		return "", err
-	}
-	return res, nil
-}
-
-// extractMessage extracts message
-func extractMessage(context string) (*model.Message, error) {
-	var msg *model.Message
-	if context == "" {
-		err := errors.New("failed to extract message with empty context")
-		klog.Errorf("%v", err)
-		return nil, err
+		return fmt.Errorf("failed to send msg: %w", err)
 	}
 
-	err := json.Unmarshal([]byte(context), &msg)
+	// decode beehive msg -> csi response
+	msg = &model.Message{}
+	err = json.Unmarshal([]byte(res), &msg)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("failed to unmarshal beehive msg: %w", err)
 	}
-
-	return msg, nil
+	content, ok := msg.GetContent().(string)
+	if !ok {
+		return fmt.Errorf("unexpected message content type: %s", msg.GetContent())
+	}
+	if msg.GetOperation() == model.ResponseErrorOperation {
+		return fmt.Errorf("unexpected message error: %#v", msg)
+	}
+	err = jsonpb.Unmarshal(bytes.NewReader([]byte(content)), proto.MessageV1(csiResponse))
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal '%s' to csi response type %T: %w", content, csiResponse, err)
+	}
+	return nil
 }
