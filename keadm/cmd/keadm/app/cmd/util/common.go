@@ -364,31 +364,20 @@ func runEdgeCore(version semver.Version) error {
 // killKubeEdgeBinary will search for KubeEdge process and forcefully kill it
 func killKubeEdgeBinary(proc string) error {
 	var binExec string
-	if proc == "cloudcore" {
-		binExec = fmt.Sprintf("pkill %s", proc)
+	running, err := isEdgeCoreServiceRunning(proc)
+	if err == nil && running && hasSystemd() {
+		// remove the system service.
+		serviceFilePath := fmt.Sprintf("/etc/systemd/system/%s.service", proc)
+		serviceFileRemoveExec := fmt.Sprintf("&& sudo rm %s", serviceFilePath)
+		if _, err := os.Stat(serviceFilePath); err != nil && os.IsNotExist(err) {
+			serviceFileRemoveExec = ""
+		}
+		binExec = fmt.Sprintf("sudo systemctl stop %s.service && sudo systemctl disable %s.service %s && sudo systemctl daemon-reload",
+			proc, proc, serviceFileRemoveExec)
 	} else {
-		systemdExist := hasSystemd()
-
-		var serviceName string
-		if running, err := isEdgeCoreServiceRunning("edge"); err == nil && running {
-			serviceName = "edge"
-		}
-		if running, err := isEdgeCoreServiceRunning("edgecore"); err == nil && running {
-			serviceName = "edgecore"
-		}
-
-		if systemdExist && serviceName != "" {
-			// remove the system service.
-			serviceFilePath := fmt.Sprintf("/etc/systemd/system/%s.service", serviceName)
-			serviceFileRemoveExec := fmt.Sprintf("&& sudo rm %s", serviceFilePath)
-			if _, err := os.Stat(serviceFilePath); err != nil && os.IsNotExist(err) {
-				serviceFileRemoveExec = ""
-			}
-			binExec = fmt.Sprintf("sudo systemctl stop %s.service && sudo systemctl disable %s.service %s && sudo systemctl daemon-reload", serviceName, serviceName, serviceFileRemoveExec)
-		} else {
-			binExec = fmt.Sprintf("pkill %s", proc)
-		}
+		binExec = fmt.Sprintf("pkill %s", proc)
 	}
+
 	cmd := NewCommand(binExec)
 	if err := cmd.Exec(); err != nil {
 		return err

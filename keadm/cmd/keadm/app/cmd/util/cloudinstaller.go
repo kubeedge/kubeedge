@@ -3,6 +3,7 @@ package util
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/kubeedge/kubeedge/common/constants"
@@ -90,19 +91,28 @@ func (cu *KubeCloudInstTool) RunCloudCore() error {
 		return err
 	}
 
-	// start cloudcore
-	command = fmt.Sprintf("%s/%s > %s/%s.log 2>&1 &", KubeEdgeUsrBinPath, KubeCloudBinaryName, KubeEdgeLogPath, KubeCloudBinaryName)
+	systemdExist := hasSystemd()
 
-	cmd = NewCommand(command)
+	var binExec string
+	if systemdExist {
+		binExec = fmt.Sprintf("sudo ln /etc/kubeedge/%s.service /etc/systemd/system/%s.service && sudo systemctl daemon-reload && sudo systemctl enable %s && sudo systemctl start %s",
+			types.CloudCore, types.CloudCore, types.CloudCore, types.CloudCore)
+	} else {
+		binExec = fmt.Sprintf("%s/%s > %s/%s.log 2>&1 &",
+			KubeEdgeUsrBinPath, KubeCloudBinaryName, KubeEdgeLogPath, KubeCloudBinaryName)
+	}
 
+	cmd = NewCommand(binExec)
 	if err := cmd.Exec(); err != nil {
 		return err
 	}
-
 	fmt.Println(cmd.GetStdOut())
 
-	fmt.Println("KubeEdge cloudcore is running, For logs visit: ", KubeEdgeLogPath+KubeCloudBinaryName+".log")
-
+	if systemdExist {
+		fmt.Printf("KubeEdge cloudcore is running, For logs visit: journalctl -u %s.service -xe\n", types.CloudCore)
+	} else {
+		fmt.Printf("KubeEdge cloudcore is running, For logs visit: %s\n", filepath.Join(KubeEdgeLogPath, KubeCloudBinaryName+".log"))
+	}
 	return nil
 }
 
