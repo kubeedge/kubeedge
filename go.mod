@@ -37,7 +37,6 @@ require (
 	github.com/shirou/gopsutil v2.20.9+incompatible
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.6.1
 	golang.org/x/net v0.0.0-20210224082022-3d97a244fca7
 	google.golang.org/grpc v1.27.1
 	k8s.io/api v0.21.4
