@@ -159,7 +159,8 @@ func isListResource(msg *beehiveModel.Message) bool {
 	if strings.Contains(msgResource, beehiveModel.ResourceTypePodlist) ||
 		strings.Contains(msgResource, "membership") ||
 		strings.Contains(msgResource, "twin/cloud_updated") ||
-		strings.Contains(msgResource, beehiveModel.ResourceTypeServiceAccountToken) {
+		strings.Contains(msgResource, beehiveModel.ResourceTypeServiceAccountToken) ||
+		isVolumeOperation(msg.GetOperation()) {
 		return true
 	}
 
@@ -185,6 +186,13 @@ func isListResource(msg *beehiveModel.Message) bool {
 	}
 
 	return false
+}
+
+func isVolumeOperation(op string) bool {
+	return op == commonconst.CSIOperationTypeCreateVolume ||
+		op == commonconst.CSIOperationTypeDeleteVolume ||
+		op == commonconst.CSIOperationTypeControllerPublishVolume ||
+		op == commonconst.CSIOperationTypeControllerUnpublishVolume
 }
 
 func isDeleteMessage(msg *beehiveModel.Message) bool {
