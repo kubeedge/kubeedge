@@ -91,16 +91,17 @@ kubernetes controller which manages devices so that the device metadata/status d
 
 			registerModules(config)
 
+			ctx := beehiveContext.GetContext()
 			if config.Modules.IptablesManager == nil || config.Modules.IptablesManager.Enable && config.Modules.IptablesManager.Mode == v1alpha1.InternalMode {
 				// By default, IptablesManager manages tunnel port related iptables rules
 				// The internal mode will share the host network, forward to the stream port.
 				streamPort := int(config.Modules.CloudStream.StreamPort)
-				go iptables.NewIptablesManager(streamPort).Run()
+				go iptables.NewIptablesManager(config.KubeAPIConfig, streamPort).Run(ctx)
 			}
 
 			// Start all modules
 			core.StartModules()
-			gis.Start(beehiveContext.Done())
+			gis.Start(ctx.Done())
 			core.GracefulShutdown()
 		},
 	}
