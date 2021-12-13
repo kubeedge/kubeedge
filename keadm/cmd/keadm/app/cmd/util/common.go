@@ -333,14 +333,12 @@ func runEdgeCore(version semver.Version) error {
 		return fmt.Errorf("not able to create %s folder path", KubeEdgeLogPath)
 	}
 
-	var binExec string
-
 	systemdExist := hasSystemd()
 
-	edgecoreServiceName := "edgecore"
-
+	var binExec string
 	if systemdExist {
-		binExec = fmt.Sprintf("sudo ln /etc/kubeedge/%s.service /etc/systemd/system/%s.service && sudo systemctl daemon-reload && sudo systemctl enable %s && sudo systemctl start %s", edgecoreServiceName, edgecoreServiceName, edgecoreServiceName, edgecoreServiceName)
+		binExec = fmt.Sprintf("sudo ln /etc/kubeedge/%s.service /etc/systemd/system/%s.service && sudo systemctl daemon-reload && sudo systemctl enable %s && sudo systemctl start %s",
+			types.EdgeCore, types.EdgeCore, types.EdgeCore, types.EdgeCore)
 	} else {
 		binExec = fmt.Sprintf("%s/%s > %skubeedge/edge/%s.log 2>&1 &", KubeEdgeUsrBinPath, KubeEdgeBinaryName, KubeEdgePath, KubeEdgeBinaryName)
 	}
@@ -349,15 +347,13 @@ func runEdgeCore(version semver.Version) error {
 	if err := cmd.Exec(); err != nil {
 		return err
 	}
-
 	fmt.Println(cmd.GetStdOut())
 
 	if systemdExist {
-		fmt.Printf("KubeEdge edgecore is running, For logs visit: journalctl -u %s.service -b\n", edgecoreServiceName)
+		fmt.Printf("KubeEdge edgecore is running, For logs visit: journalctl -u %s.service -xe\n", types.EdgeCore)
 	} else {
 		fmt.Println("KubeEdge edgecore is running, For logs visit: ", KubeEdgeLogPath+KubeEdgeBinaryName+".log")
 	}
-
 	return nil
 }
 
