@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
-	"io/ioutil"
 	"os"
 	"time"
 
@@ -66,7 +65,7 @@ func HubClientInit(server, clientID, username, password string) *MQTT.ClientOpti
 			return nil
 		}
 
-		caCert, err := ioutil.ReadFile(eventconfig.Config.TLS.TLSMqttCAFile)
+		caCert, err := os.ReadFile(eventconfig.Config.TLS.TLSMqttCAFile)
 		if err != nil {
 			klog.Errorf("Failed to read TLSMqttCAFile")
 			return nil

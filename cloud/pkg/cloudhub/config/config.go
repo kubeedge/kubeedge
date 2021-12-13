@@ -2,7 +2,7 @@ package config
 
 import (
 	"encoding/pem"
-	"io/ioutil"
+	"os"
 	"sync"
 
 	"k8s.io/client-go/tools/cache"
@@ -36,14 +36,14 @@ func InitConfigure(hub *v1alpha1.CloudHub) {
 			CloudHub: *hub,
 		}
 
-		ca, err := ioutil.ReadFile(hub.TLSCAFile)
+		ca, err := os.ReadFile(hub.TLSCAFile)
 		if err == nil {
 			block, _ := pem.Decode(ca)
 			ca = block.Bytes
 			klog.Info("Succeed in loading CA certificate from local directory")
 		}
 
-		caKey, err := ioutil.ReadFile(hub.TLSCAKeyFile)
+		caKey, err := os.ReadFile(hub.TLSCAKeyFile)
 		if err == nil {
 			block, _ := pem.Decode(caKey)
 			caKey = block.Bytes
@@ -57,13 +57,13 @@ func InitConfigure(hub *v1alpha1.CloudHub) {
 			klog.Exit("Both of ca and caKey should be specified!")
 		}
 
-		cert, err := ioutil.ReadFile(hub.TLSCertFile)
+		cert, err := os.ReadFile(hub.TLSCertFile)
 		if err == nil {
 			block, _ := pem.Decode(cert)
 			cert = block.Bytes
 			klog.Info("Succeed in loading certificate from local directory")
 		}
-		key, err := ioutil.ReadFile(hub.TLSPrivateKeyFile)
+		key, err := os.ReadFile(hub.TLSPrivateKeyFile)
 		if err == nil {
 			block, _ := pem.Decode(key)
 			key = block.Bytes

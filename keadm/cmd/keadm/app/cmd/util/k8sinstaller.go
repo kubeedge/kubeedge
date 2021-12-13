@@ -19,7 +19,6 @@ package util
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	corev1 "k8s.io/api/core/v1"
@@ -165,7 +164,7 @@ func installCRDs(ks *K8SInstTool) error {
 }
 
 func createKubeEdgeV1CRD(dynamicClient dynamic.Interface, crdFile string) error {
-	content, err := ioutil.ReadFile(crdFile)
+	content, err := os.ReadFile(crdFile)
 	if err != nil {
 		return fmt.Errorf("read crd yaml error: %v", err)
 	}

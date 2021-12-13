@@ -12,8 +12,9 @@ import (
 	"encoding/hex"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
+	"io"
 	nethttp "net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -238,7 +239,7 @@ func (cm *CertManager) rotateCert() (bool, error) {
 
 // getCA returns the CA in pem format.
 func (cm *CertManager) getCA() ([]byte, error) {
-	return ioutil.ReadFile(cm.caFile)
+	return os.ReadFile(cm.caFile)
 }
 
 // GetCACert gets the cloudcore CA certificate
@@ -254,7 +255,7 @@ func GetCACert(url string) ([]byte, error) {
 	}
 	defer res.Body.Close()
 
-	caCert, err := ioutil.ReadAll(res.Body)
+	caCert, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -285,7 +286,7 @@ func (cm *CertManager) GetEdgeCert(url string, capem []byte, cert tls.Certificat
 	}
 	defer res.Body.Close()
 
-	content, err := ioutil.ReadAll(res.Body)
+	content, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, nil, err
 	}

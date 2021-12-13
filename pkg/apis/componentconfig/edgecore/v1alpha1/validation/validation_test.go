@@ -18,7 +18,6 @@ package validation
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -30,14 +29,14 @@ import (
 )
 
 func TestValidateEdgeCoreConfiguration(t *testing.T) {
-	dir, err := ioutil.TempDir("", "TestTempFile_Dir")
+	dir, err := os.MkdirTemp("", "TestTempFile_Dir")
 	if err != nil {
 		t.Errorf("create temp dir error %v", err)
 		return
 	}
 	defer os.RemoveAll(dir)
 
-	ef, err := ioutil.TempFile(dir, "existFile")
+	ef, err := os.CreateTemp(dir, "existFile")
 	if err != nil {
 		t.Errorf("create temp file failed: %v", err)
 		return
@@ -53,13 +52,13 @@ func TestValidateEdgeCoreConfiguration(t *testing.T) {
 }
 
 func TestValidateDataBase(t *testing.T) {
-	dir, err := ioutil.TempDir("", "TestTempFile_BadDir")
+	dir, err := os.MkdirTemp("", "TestTempFile_BadDir")
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
 	defer os.RemoveAll(dir)
 
-	ef, err := ioutil.TempFile(dir, "FileIsExist")
+	ef, err := os.CreateTemp(dir, "FileIsExist")
 	if err == nil {
 		db := v1alpha1.DataBase{
 			DataSource: ef.Name(),

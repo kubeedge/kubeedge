@@ -18,7 +18,7 @@ package utils
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -51,7 +51,7 @@ func GetPods(apiserver, label string) (v1.PodList, error) {
 		return pods, nil
 	}
 	defer resp.Body.Close()
-	contents, err := ioutil.ReadAll(resp.Body)
+	contents, err := io.ReadAll(resp.Body)
 	if err != nil {
 		Fatalf("HTTP Response reading has failed: %v", err)
 		return pods, nil
@@ -75,7 +75,7 @@ func GetPodState(apiserver string) (string, int) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNotFound {
-		contents, err := ioutil.ReadAll(resp.Body)
+		contents, err := io.ReadAll(resp.Body)
 		if err != nil {
 			Fatalf("HTTP Response reading has failed: %v", err)
 		}
@@ -99,7 +99,7 @@ func DeletePods(apiserver string) (string, int) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNotFound {
-		contents, err := ioutil.ReadAll(resp.Body)
+		contents, err := io.ReadAll(resp.Body)
 		if err != nil {
 			Fatalf("HTTP Response reading has failed: %v", err)
 		}

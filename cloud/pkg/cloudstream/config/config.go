@@ -18,7 +18,7 @@ package config
 
 import (
 	"encoding/pem"
-	"io/ioutil"
+	"os"
 	"sync"
 
 	"k8s.io/klog/v2"
@@ -42,7 +42,7 @@ func InitConfigure(stream *v1alpha1.CloudStream) {
 			CloudStream: *stream,
 		}
 
-		ca, err := ioutil.ReadFile(stream.TLSTunnelCAFile)
+		ca, err := os.ReadFile(stream.TLSTunnelCAFile)
 		if err == nil {
 			block, _ := pem.Decode(ca)
 			ca = block.Bytes
@@ -51,13 +51,13 @@ func InitConfigure(stream *v1alpha1.CloudStream) {
 			Config.Ca = ca
 		}
 
-		cert, err := ioutil.ReadFile(stream.TLSTunnelCertFile)
+		cert, err := os.ReadFile(stream.TLSTunnelCertFile)
 		if err == nil {
 			block, _ := pem.Decode(cert)
 			cert = block.Bytes
 		}
 
-		key, err := ioutil.ReadFile(stream.TLSTunnelPrivateKeyFile)
+		key, err := os.ReadFile(stream.TLSTunnelPrivateKeyFile)
 		if err == nil {
 			block, _ := pem.Decode(key)
 			key = block.Bytes

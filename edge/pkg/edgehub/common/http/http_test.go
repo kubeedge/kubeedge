@@ -21,8 +21,8 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"io"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"reflect"
 	"testing"
 
@@ -120,7 +120,7 @@ func TestNewHTTPClientWithCA(t *testing.T) {
 		t.Errorf("Error in generating fake certificates: %w", err)
 		return
 	}
-	capem, err := ioutil.ReadFile(CertFile)
+	capem, err := os.ReadFile(CertFile)
 	if err != nil {
 		t.Errorf("Error in loading Cert file: %w", err)
 		return

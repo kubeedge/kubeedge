@@ -18,7 +18,6 @@ package util
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -91,14 +90,14 @@ func TestPrivateDownloadServiceFile(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		files, _ := ioutil.ReadDir(path.Dir(serviceFilePath))
+		files, _ := os.ReadDir(path.Dir(serviceFilePath))
 		if len(files) > 1 {
 			return fmt.Errorf("download redundancy files")
 		}
 		return err
 	}
 	var clean = func(testTmpDir string) {
-		dir, err := ioutil.ReadDir(testTmpDir)
+		dir, err := os.ReadDir(testTmpDir)
 		if err != nil {
 			t.Fatalf("failed to clean test tmp dir!\n")
 		}
@@ -109,7 +108,7 @@ func TestPrivateDownloadServiceFile(t *testing.T) {
 		}
 	}
 
-	testTmpDir, err := ioutil.TempDir("", "kubeedge")
+	testTmpDir, err := os.MkdirTemp("", "kubeedge")
 	if err != nil {
 		t.Fatalf("failed to create temp dir for testing:{%s}\n", err.Error())
 	}
@@ -170,13 +169,13 @@ func TestHasSystemd(t *testing.T) {
 }
 
 func TestFileExists(t *testing.T) {
-	dir, err := ioutil.TempDir("", "TestTempFile_BadDir")
+	dir, err := os.MkdirTemp("", "TestTempFile_BadDir")
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
 	defer os.RemoveAll(dir)
 
-	ef, err := ioutil.TempFile(dir, "FileExist")
+	ef, err := os.CreateTemp(dir, "FileExist")
 	if err == nil {
 		if !FileExists(ef.Name()) {
 			t.Fatalf("file %v should exist", ef.Name())
@@ -204,7 +203,7 @@ func TestComputeSHA512Checksum(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			tmpfile, err := ioutil.TempFile("", test.name)
+			tmpfile, err := os.CreateTemp("", test.name)
 			if err != nil {
 				t.Errorf("Unable to create temp file: %v", err)
 			}

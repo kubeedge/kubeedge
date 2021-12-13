@@ -3,7 +3,7 @@ package admissioncontroller
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
@@ -66,7 +66,7 @@ type hookFunc func(admissionv1beta1.AdmissionReview) *admissionv1beta1.Admission
 func serve(w http.ResponseWriter, r *http.Request, hook hookFunc) {
 	var body []byte
 	if r.Body != nil {
-		if data, err := ioutil.ReadAll(r.Body); err == nil {
+		if data, err := io.ReadAll(r.Body); err == nil {
 			body = data
 		}
 	}

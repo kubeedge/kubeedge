@@ -2,7 +2,7 @@ package client
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 
 	"k8s.io/klog/v2"
 
@@ -66,7 +66,7 @@ func (c *WSClient) Connect() (conn.Connection, error) {
 	// something wrong!!
 	var respMsg string
 	if resp != nil {
-		body, errRead := ioutil.ReadAll(resp.Body)
+		body, errRead := io.ReadAll(resp.Body)
 		if errRead == nil {
 			respMsg = fmt.Sprintf("response code: %d, response body: %s", resp.StatusCode, string(body))
 		} else {
