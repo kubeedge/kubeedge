@@ -351,3 +351,26 @@ install: _output/local/bin
           done ; \
         fi
 endif
+
+define RELEASE_HELP_INFO
+# release components.
+#
+# Args:
+#   WHAT: Component names to be released. Support: kubeedge/edgesite/keadm
+#         If not specified, "everything" will be built and released.
+#
+# Example:
+#   make release
+#   make release HELP=y
+#   make release WHAT=kubeedge
+#   make release WHAT=kubeedge GOARM=GOARM7
+#
+endef
+.PHONY: release
+ifeq ($(HELP),y)
+release:
+	@echo "$$RELEASE_HELP_INFO"
+else
+release:
+	hack/make-rules/release.sh $(WHAT) $(GOARM)
+endif
