@@ -8,7 +8,7 @@ metadata:
   {{- end }}
 rules:
 - apiGroups: [""]
-  resources: ["nodes", "nodes/status", "configmaps", "pods", "pods/status", "secrets", "endpoints", "services","persistentvolumes","persistentvolumeclaims"]
+  resources: ["nodes",  "nodes/status", "serviceaccounts/token", "configmaps", "pods", "pods/status", "secrets", "endpoints", "services","persistentvolumes","persistentvolumeclaims"]
   verbs: ["get", "list", "watch", "create", "update"]
 - apiGroups: [""]
   resources: ["namespaces"]

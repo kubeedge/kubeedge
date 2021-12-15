@@ -35,7 +35,7 @@ function prepare_cluster() {
   kind create cluster --name test
 
   echo "wait the control-plane ready..."
-  kubectl wait --for=condition=Ready node/test-control-plane
+  kubectl wait --for=condition=Ready node/test-control-plane --timeout=60s
 
   kubectl create clusterrolebinding system:anonymous --clusterrole=cluster-admin --user=system:anonymous
 
@@ -110,16 +110,16 @@ set -Ee
 trap cleanup EXIT
 trap cleanup ERR
 
-echo -e "\nBuild keadm..."
+echo -e "\nBuilding keadm..."
 build_keadm
 
 export KUBECONFIG=$HOME/.kube/config
 
-echo -e "\nPrepare cluster..."
+echo -e "\nPreparing cluster..."
 prepare_cluster
 
-echo -e "\nStart kubeedge..."
+echo -e "\nStarting kubeedge..."
 start_kubeedge
 
-echo -e "\nRun test..."
+echo -e "\nRunning test..."
 run_test

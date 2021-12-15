@@ -121,19 +121,19 @@ set -Ee
 trap cleanup EXIT
 trap cleanup ERR
 
-echo -e "\nBuild keadm..."
+echo -e "\nBuilding keadm..."
 build_keadm
 
 export KUBECONFIG=$HOME/.kube/config
 
-echo -e "\nPrepare cluster..."
+echo -e "\nPreparing cluster..."
 prepare_cluster
 
-echo -e "\nBuild cloud image..."
+echo -e "\nBuilding cloud image..."
 build_cloud_image
 
-echo -e "\nStart kubeedge..."
+echo -e "\nStarting kubeedge..."
 start_kubeedge
 
-echo -e "\nRun test..."
+echo -e "\nRunning test..."
 run_test
