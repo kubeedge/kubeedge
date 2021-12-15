@@ -9,13 +9,13 @@ import (
 	"crypto/x509/pkix"
 	"errors"
 	"fmt"
-	"github.com/kubeedge/kubeedge/common/constants"
 	"math"
 	"math/big"
 	"time"
 
 	certutil "k8s.io/client-go/util/cert"
 
+	"github.com/kubeedge/kubeedge/common/constants"
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 )
 

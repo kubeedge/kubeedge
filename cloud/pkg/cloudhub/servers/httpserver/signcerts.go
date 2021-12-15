@@ -21,7 +21,6 @@ import (
 	"crypto/x509"
 	"encoding/hex"
 	"fmt"
-	"github.com/kubeedge/kubeedge/common/constants"
 	"net"
 	"strings"
 	"time"
@@ -30,6 +29,7 @@ import (
 	certutil "k8s.io/client-go/util/cert"
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/kubeedge/common/constants"
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 )
 
