@@ -14,6 +14,8 @@ const (
 	// NodeName is for the clearer log of cloudcore.
 	NodeName = "NodeName"
 
+	CommonName = "KubeEdge"
+
 	SystemName      = "kubeedge"
 	SystemNamespace = SystemName
 )

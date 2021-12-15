@@ -9,6 +9,7 @@ import (
 	"crypto/x509/pkix"
 	"errors"
 	"fmt"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"math"
 	"math/big"
 	"time"
@@ -43,7 +44,7 @@ func NewSelfSignedCACertDERBytes(key crypto.Signer) ([]byte, error) {
 	tmpl := x509.Certificate{
 		SerialNumber: big.NewInt(1024),
 		Subject: pkix.Name{
-			CommonName: "KubeEdge",
+			CommonName: constants.CommonName,
 		},
 		NotBefore: time.Now().UTC(),
 		NotAfter:  time.Now().Add(time.Hour * 24 * 365 * 100),

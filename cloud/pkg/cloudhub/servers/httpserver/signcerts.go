@@ -21,6 +21,7 @@ import (
 	"crypto/x509"
 	"encoding/hex"
 	"fmt"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"net"
 	"strings"
 	"time"
@@ -35,8 +36,8 @@ import (
 // SignCerts creates server's certificate and key
 func SignCerts() ([]byte, []byte, error) {
 	cfg := &certutil.Config{
-		CommonName:   "KubeEdge",
-		Organization: []string{"KubeEdge"},
+		CommonName:   constants.CommonName,
+		Organization: []string{constants.CommonName},
 		Usages:       []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		AltNames: certutil.AltNames{
 			DNSNames: hubconfig.Config.DNSNames,
