@@ -265,6 +265,7 @@ keadm_e2e:
 	@echo "KEADM_E2E_HELP_INFO"
 else
 keadm_e2e:
+	hack/make-rules/release.sh kubeedge
 	tests/e2e/scripts/keadm_e2e.sh
 endif
 
