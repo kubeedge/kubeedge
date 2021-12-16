@@ -19,13 +19,13 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/kubeedge/kubeedge/common/constants"
 	"strings"
 
 	"github.com/blang/semver"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
+	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
