@@ -29,8 +29,8 @@ import (
 	certutil "k8s.io/client-go/util/cert"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/kubeedge/common/constants"
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 // SignCerts creates server's certificate and key

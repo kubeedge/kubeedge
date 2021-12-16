@@ -15,8 +15,8 @@ import (
 
 	certutil "k8s.io/client-go/util/cert"
 
-	"github.com/kubeedge/kubeedge/common/constants"
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 const validalityPeriod time.Duration = 365 * 100
