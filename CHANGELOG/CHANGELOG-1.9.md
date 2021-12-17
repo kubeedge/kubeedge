@@ -1,4 +1,8 @@
 
+* [v1.9.1](#v191)
+    * [Downloads for v1.9.1](#downloads-for-v191)
+    * [KubeEdge v1.9.1 Release Notes](#kubeedge-v191-release-notes)
+        * [Changelog since v1.9.0](#changelog-since-v190)
 * [v1.9.0](#v190)
     * [Downloads for v1.9.0](#downloads-for-v190)
     * [KubeEdge v1.9 Release Notes](#kubeedge-v19-release-notes)
@@ -6,6 +10,22 @@
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
         * [Other Notable Changes](#other-notable-changes)
         * [Bug Fixes](#bug-fixes)
+
+
+
+
+
+# v1.9.1
+
+## Downloads for v1.9.1
+
+Download v1.9.1 in the [v1.9.1 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.9.1).
+
+## KubeEdge v1.9.1 Release Notes
+
+### Changelog since v1.9.0
+
+- Fix crd created failed when install kubeedge using keadm. ([#3444](https://github.com/kubeedge/kubeedge/pull/3444), [@gy95](https://github.com/gy95))
 
 
 # v1.9.0
