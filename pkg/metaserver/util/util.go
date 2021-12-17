@@ -126,7 +126,7 @@ func UnstructuredAttr(obj runtime.Object) (labels.Set, fields.Set, error) {
 }
 
 // GetMessageUID returns the UID of the object in message
-func GetMessageAPIVerison(msg *beehiveModel.Message) string {
+func GetMessageAPIVersion(msg *beehiveModel.Message) string {
 	obj, ok := msg.Content.(runtime.Object)
 	if ok {
 		return obj.GetObjectKind().GroupVersionKind().GroupVersion().String()
