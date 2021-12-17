@@ -556,7 +556,7 @@ func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model
 					Name: objectSyncName,
 				},
 				Spec: v1alpha1.ObjectSyncSpec{
-					ObjectAPIVersion: util.GetMessageAPIVerison(msg),
+					ObjectAPIVersion: util.GetMessageAPIVersion(msg),
 					ObjectKind:       util.GetMessageResourceType(msg),
 					ObjectName:       resourceName,
 				},
