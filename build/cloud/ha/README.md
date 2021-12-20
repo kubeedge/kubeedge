@@ -79,33 +79,37 @@ The `keepalived` configuration we recommend is as following. You can adjust it a
 ! Configuration File for keepalived
 
 global_defs {
-  router_id lb01
-  vrrp_mcast_group4 224.0.0.19
+  vrrp_version 2
+  vrrp_garp_master_delay 1
+  vrrp_garp_master_refresh 1
 }
-# CloudCore
-vrrp_script CloudCore_check {
-  script "/etc/keepalived/check_cloudcore.sh" # the script for health check
+
+vrrp_script check_haproxy_alive {
+  script "/usr/bin/curl -sLk -o /dev/null -w %{response_code} 10.10.102.101:1984" # this is haproxy service port
+  timeout 5
   interval 2
-  weight 2
   fall 2
-  rise 2
+  rise 10
 }
-vrrp_instance CloudCore {
+
+vrrp_instance VIP_242 {
   state MASTER
+  nopreempt
   interface eth0 # based on your host
-  virtual_router_id 167
-  priority 100
+  virtual_router_id 242
+  priority 1
   advert_int 1
+  virtual_ipaddress {
+    10.10.102.242/24 # VIP
+  }
   authentication {
     auth_type PASS
     auth_pass 1111
   }
-  virtual_ipaddress {
-    10.10.102.242/24 # VIP
-  }
+
   track_script {
-    CloudCore_check
- }
+    check_haproxy_alive
+  }
 }
 ```
 
@@ -115,46 +119,97 @@ vrrp_instance CloudCore {
 ! Configuration File for keepalived
 
 global_defs {
-  router_id lb02
-  vrrp_mcast_group4 224.0.0.19
+  vrrp_version 2
+  vrrp_garp_master_delay 1
+  vrrp_garp_master_refresh 1
 }
-# CloudCore
-vrrp_script CloudCore_check {
-  script "/etc/keepalived/check_cloudcore.sh" # the script for health check
+
+vrrp_script check_haproxy_alive {
+  script "/usr/bin/curl -sLk -o /dev/null -w %{response_code} 10.10.102.102:1984" # this is haproxy service port
+  timeout 5
   interval 2
-  weight 2
   fall 2
-  rise 2
+  rise 10
 }
-vrrp_instance CloudCore {
+
+vrrp_instance VIP_242 {
   state BACKUP
+  nopreempt
   interface eth0 # based on your host
-  virtual_router_id 167
-  priority 99
+  virtual_router_id 242
+  priority 1
   advert_int 1
+  virtual_ipaddress {
+    10.10.102.242/24 # VIP
+  }
   authentication {
     auth_type PASS
     auth_pass 1111
   }
-  virtual_ipaddress {
-    10.10.102.242/24 # VIP
-  }
+
   track_script {
-    CloudCore_check
- }
+    check_haproxy_alive
+  }
 }
 ```
 
-check_cloudcore.sh:
 
-```shell
-#!/usr/bin/env bash
-http_code=`curl -k -o /dev/null -s -w %{http_code} https://127.0.0.1:10002/readyz`
-if [ $http_code == 200 ]; then
-    exit 0
-else
-    exit 1
-fi
+## haproxy
 
+The `haproxy` configuration, perform the following operations. Enter the node/etc/kubenetes/plugins/lb - config directory, modify haproxy.cfg file, add the following configuration in a file.You can adjust it according to your needs.
+
+**haproxy.cfg:**
+
+- master:
+
+```config
+listen http-10000
+  mode tcp
+  balance source
+  timeout client 3600s
+  timeout server 3600s
+  bind *:10010
+  server node1 10.10.102.101:10000 ckeck inter 2000 rise 2 fall 5
+  server node2 10.10.102.102:10000 ckeck inter 2000 rise 2 fall 5 backup
+  server node3 10.10.102.103:10000 ckeck inter 2000 rise 2 fall 5 backup
+  
+listen http-10001
+  mode tcp
+  balance source
+  timeout client 3600s
+  timeout server 3600s
+  bind *:10011
+  server node1 10.10.102.101:10001 ckeck inter 2000 rise 2 fall 5
+  server node2 10.10.102.102:10001 ckeck inter 2000 rise 2 fall 5 backup
+  server node3 10.10.102.103:10001 ckeck inter 2000 rise 2 fall 5 backup
+
+listen http-10002
+  mode tcp
+  balance source
+  timeout client 3600s
+  timeout server 3600s
+  bind *:10012
+  server node1 10.10.102.101:10002 ckeck inter 2000 rise 2 fall 5
+  server node2 10.10.102.102:10002 ckeck inter 2000 rise 2 fall 5 backup
+  server node3 10.10.102.103:10002 ckeck inter 2000 rise 2 fall 5 backup
+  
+listen http-10003
+  mode tcp
+  balance source
+  timeout client 3600s
+  timeout server 3600s
+  bind *:10013
+  server node1 10.10.102.101:10003 ckeck inter 2000 rise 2 fall 5
+  server node2 10.10.102.102:10003 ckeck inter 2000 rise 2 fall 5 backup
+  server node3 10.10.102.103:10003 ckeck inter 2000 rise 2 fall 5 backup
+  
+listen http-10004
+  mode tcp
+  balance source
+  timeout client 3600s
+  timeout server 3600s
+  bind *:10014
+  server node1 10.10.102.101:10004 ckeck inter 2000 rise 2 fall 5
+  server node2 10.10.102.102:10004 ckeck inter 2000 rise 2 fall 5 backup
+  server node3 10.10.102.103:10004 ckeck inter 2000 rise 2 fall 5 backup
 ```
-
