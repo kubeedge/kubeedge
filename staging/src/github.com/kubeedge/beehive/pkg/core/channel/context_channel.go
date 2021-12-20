@@ -22,8 +22,8 @@ const (
 	TickerTimeoutDefault = 20 * time.Millisecond
 )
 
-// ChannelContext is object for Context channel
-type ChannelContext struct {
+// Context is object for Context channel
+type Context struct {
 	//ConfigFactory goarchaius.ConfigurationFactory
 	channels     map[string]chan model.Message
 	chsLock      sync.RWMutex
@@ -33,16 +33,16 @@ type ChannelContext struct {
 	anonChsLock  sync.RWMutex
 }
 
-var channelContext *ChannelContext
+var channelContext *Context
 var once sync.Once
 
 // NewChannelContext creates and returns object of new channel context
-func NewChannelContext() *ChannelContext {
+func NewChannelContext() *Context {
 	once.Do(func() {
 		channelMap := make(map[string]chan model.Message)
 		moduleChannels := make(map[string]map[string]chan model.Message)
 		anonChannels := make(map[string]chan model.Message)
-		channelContext = &ChannelContext{
+		channelContext = &Context{
 			channels:     channelMap,
 			typeChannels: moduleChannels,
 			anonChannels: anonChannels,
@@ -51,12 +51,12 @@ func NewChannelContext() *ChannelContext {
 	return channelContext
 }
 
-func GetChannelContext() *ChannelContext {
+func GetChannelContext() *Context {
 	return channelContext
 }
 
 // Cleanup close modules
-func (ctx *ChannelContext) Cleanup(module string) {
+func (ctx *Context) Cleanup(module string) {
 	if channel := ctx.getChannel(module); channel != nil {
 		ctx.delChannel(module)
 		// decrease probable exception of channel closing
@@ -66,7 +66,7 @@ func (ctx *ChannelContext) Cleanup(module string) {
 }
 
 // Send send msg to a module. Todo: do not stuck
-func (ctx *ChannelContext) Send(module string, message model.Message) {
+func (ctx *Context) Send(module string, message model.Message) {
 	// avoid exception because of channel closing
 	// TODO: need reconstruction
 	defer func() {
@@ -83,7 +83,7 @@ func (ctx *ChannelContext) Send(module string, message model.Message) {
 }
 
 // Receive msg from channel of module
-func (ctx *ChannelContext) Receive(module string) (model.Message, error) {
+func (ctx *Context) Receive(module string) (model.Message, error) {
 	if channel := ctx.getChannel(module); channel != nil {
 		content := <-channel
 		return content, nil
@@ -98,7 +98,7 @@ func getAnonChannelName(msgID string) string {
 }
 
 // SendSync sends message in a sync way
-func (ctx *ChannelContext) SendSync(module string, message model.Message, timeout time.Duration) (model.Message, error) {
+func (ctx *Context) SendSync(module string, message model.Message, timeout time.Duration) (model.Message, error) {
 	// avoid exception because of channel closing
 	// TODO: need reconstruction
 	defer func() {
@@ -155,7 +155,7 @@ func (ctx *ChannelContext) SendSync(module string, message model.Message, timeou
 }
 
 // SendResp send resp for this message when using sync mode
-func (ctx *ChannelContext) SendResp(message model.Message) {
+func (ctx *Context) SendResp(message model.Message) {
 	anonName := getAnonChannelName(message.GetParentID())
 
 	ctx.anonChsLock.RLock()
@@ -169,7 +169,7 @@ func (ctx *ChannelContext) SendResp(message model.Message) {
 }
 
 // SendToGroup send msg to modules. Todo: do not stuck
-func (ctx *ChannelContext) SendToGroup(moduleType string, message model.Message) {
+func (ctx *Context) SendToGroup(moduleType string, message model.Message) {
 	send := func(module string, ch chan model.Message) {
 		// avoid exception because of channel closing
 		// TODO: need reconstruction
@@ -196,7 +196,7 @@ func (ctx *ChannelContext) SendToGroup(moduleType string, message model.Message)
 
 // SendToGroupSync : broadcast the message to echo module channel, the module send response back anon channel
 // check timeout and the size of anon channel
-func (ctx *ChannelContext) SendToGroupSync(moduleType string, message model.Message, timeout time.Duration) error {
+func (ctx *Context) SendToGroupSync(moduleType string, message model.Message, timeout time.Duration) error {
 	if timeout <= 0 {
 		timeout = MessageTimeoutDefault
 	}
@@ -270,7 +270,10 @@ func (ctx *ChannelContext) SendToGroupSync(moduleType string, message model.Mess
 		select {
 		case <-ticker.C:
 		case <-sendTimer.C:
-			cleanup()
+			err := cleanup()
+			if err != nil {
+				klog.Errorf("Failed to cleanup, error: %v", err)
+			}
 			if timeoutCounter != 0 {
 				return fmt.Errorf("timeout to send message, several %d timeout when send", timeoutCounter)
 			}
@@ -283,13 +286,13 @@ func (ctx *ChannelContext) SendToGroupSync(moduleType string, message model.Mess
 }
 
 // New Channel
-func (ctx *ChannelContext) newChannel() chan model.Message {
+func (ctx *Context) newChannel() chan model.Message {
 	channel := make(chan model.Message, ChannelSizeDefault)
 	return channel
 }
 
 // getChannel return chan
-func (ctx *ChannelContext) getChannel(module string) chan model.Message {
+func (ctx *Context) getChannel(module string) chan model.Message {
 	ctx.chsLock.RLock()
 	defer ctx.chsLock.RUnlock()
 
@@ -302,7 +305,7 @@ func (ctx *ChannelContext) getChannel(module string) chan model.Message {
 }
 
 // addChannel return chan
-func (ctx *ChannelContext) addChannel(module string, moduleCh chan model.Message) {
+func (ctx *Context) addChannel(module string, moduleCh chan model.Message) {
 	ctx.chsLock.Lock()
 	defer ctx.chsLock.Unlock()
 
@@ -310,7 +313,7 @@ func (ctx *ChannelContext) addChannel(module string, moduleCh chan model.Message
 }
 
 // deleteChannel by module name
-func (ctx *ChannelContext) delChannel(module string) {
+func (ctx *Context) delChannel(module string) {
 	// delete module channel from channels map
 	ctx.chsLock.Lock()
 	if _, exist := ctx.channels[module]; !exist {
@@ -333,7 +336,7 @@ func (ctx *ChannelContext) delChannel(module string) {
 }
 
 // getTypeChannel return chan
-func (ctx *ChannelContext) getTypeChannel(moduleType string) map[string]chan model.Message {
+func (ctx *Context) getTypeChannel(moduleType string) map[string]chan model.Message {
 	ctx.typeChsLock.RLock()
 	defer ctx.typeChsLock.RUnlock()
 
@@ -345,7 +348,7 @@ func (ctx *ChannelContext) getTypeChannel(moduleType string) map[string]chan mod
 	return nil
 }
 
-func (ctx *ChannelContext) getModuleByChannel(ch chan model.Message) string {
+func (ctx *Context) getModuleByChannel(ch chan model.Message) string {
 	ctx.chsLock.RLock()
 	defer ctx.chsLock.RUnlock()
 
@@ -360,7 +363,7 @@ func (ctx *ChannelContext) getModuleByChannel(ch chan model.Message) string {
 }
 
 // addTypeChannel put modules into moduleType map
-func (ctx *ChannelContext) addTypeChannel(module, group string, moduleCh chan model.Message) {
+func (ctx *Context) addTypeChannel(module, group string, moduleCh chan model.Message) {
 	ctx.typeChsLock.Lock()
 	defer ctx.typeChsLock.Unlock()
 
@@ -371,13 +374,13 @@ func (ctx *ChannelContext) addTypeChannel(module, group string, moduleCh chan mo
 }
 
 // AddModule adds module into module context
-func (ctx *ChannelContext) AddModule(info *common.ModuleInfo) {
+func (ctx *Context) AddModule(info *common.ModuleInfo) {
 	channel := ctx.newChannel()
 	ctx.addChannel(info.ModuleName, channel)
 }
 
 // AddModuleGroup adds modules into module context group
-func (ctx *ChannelContext) AddModuleGroup(module, group string) {
+func (ctx *Context) AddModuleGroup(module, group string) {
 	if channel := ctx.getChannel(module); channel != nil {
 		ctx.addTypeChannel(module, group, channel)
 		return

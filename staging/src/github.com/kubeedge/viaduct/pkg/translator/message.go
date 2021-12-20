@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/golang/protobuf/proto"
 	"k8s.io/klog/v2"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/viaduct/pkg/protos/message"
 )
@@ -39,11 +39,11 @@ func (t *MessageTranslator) modelToProto(src *model.Message, dst *message.Messag
 	dst.Router.Resouce = src.GetResource()
 	dst.Router.Operaion = src.GetOperation()
 	if content := src.GetContent(); content != nil {
-		switch content.(type) {
+		switch content := content.(type) {
 		case []byte:
-			dst.Content = content.([]byte)
+			dst.Content = content
 		case string:
-			dst.Content = []byte(content.(string))
+			dst.Content = []byte(content)
 		default:
 			bytes, err := json.Marshal(content)
 			if err != nil {
@@ -68,7 +68,7 @@ func (t *MessageTranslator) Decode(raw []byte, msg interface{}) error {
 		klog.Error("failed to unmarshal payload")
 		return err
 	}
-	t.protoToModel(&protoMessage, modelMessage)
+	_ = t.protoToModel(&protoMessage, modelMessage)
 	return nil
 }
 

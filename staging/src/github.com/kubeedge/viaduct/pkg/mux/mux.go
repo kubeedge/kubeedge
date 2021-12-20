@@ -105,7 +105,7 @@ func (mux *MessageMux) ServeConn(req *MessageRequest, writer ResponseWriter) {
 	if err != nil {
 		return
 	}
-	mux.dispatch(req, writer)
+	_ = mux.dispatch(req, writer)
 }
 
 func Entry(pattern *MessagePattern, handle func(*MessageContainer, ResponseWriter)) *MessageMux {

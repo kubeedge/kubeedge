@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/lucas-clemente/quic-go"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -11,7 +12,6 @@ import (
 	"github.com/kubeedge/viaduct/pkg/comm"
 	"github.com/kubeedge/viaduct/pkg/conn"
 	"github.com/kubeedge/viaduct/pkg/lane"
-	"github.com/lucas-clemente/quic-go"
 )
 
 // the client based on quic

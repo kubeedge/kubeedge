@@ -129,7 +129,7 @@ func (broker *RemoteBroker) SendSync(conn wrapper.Conn, message model.Message, t
 	}
 
 	tempChannel := broker.keeper.AddKeepChannel(message.GetID())
-	sendTimer := time.NewTimer(deadline.Sub(time.Now()))
+	sendTimer := time.NewTimer(time.Until(deadline))
 	select {
 	case response := <-tempChannel:
 		sendTimer.Stop()
