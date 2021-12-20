@@ -30,9 +30,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/httpserver"
-	cloudcore "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 	edgecore "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
-	edgesite "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgesite/v1alpha1"
 	"github.com/kubeedge/kubeedge/tests/e2e/constants"
 )
 
@@ -147,19 +145,6 @@ func StartEdgeSite() error {
 	return nil
 }
 
-func DeploySetup(ctx *TestContext, nodeName, setupType string) error {
-	// TODO change as constants or delete this function @kadisi
-	switch setupType {
-	case "deployment":
-		createCloudCoreConfigFile(ctx.Cfg.KubeConfigPath)
-	case "edgesite":
-		createEdgeSiteConfigFile(ctx.Cfg.K8SMasterForKubeEdge, nodeName)
-	}
-	//Expect(err).Should(BeNil())
-	time.Sleep(1 * time.Second)
-	return nil
-}
-
 func CleanUp(setupType string) error {
 	fmt.Println("**********************************", setupType)
 	cmd := exec.Command("bash", "-x", "scripts/cleanup.sh", setupType)
@@ -168,27 +153,6 @@ func CleanUp(setupType string) error {
 	}
 	time.Sleep(2 * time.Second)
 	return nil
-}
-
-func createCloudCoreConfigFile(kubeConfigPath string) {
-	c := cloudcore.NewDefaultCloudCoreConfig()
-	c.KubeAPIConfig.KubeConfig = kubeConfigPath
-	c.KubeAPIConfig.Master = ""
-	// TODO change ca file path @kadisi
-	c.Modules.CloudHub.TLSCAFile = "/tmp/cloudcore/rootCA.crt"
-	c.Modules.CloudHub.TLSCertFile = "/tmp/cloudcore/kubeedge.crt"
-	c.Modules.CloudHub.TLSPrivateKeyFile = "/tmp/cloudcore/kubeedge.key"
-	c.Modules.CloudStream.Enable = false
-
-	data, err := yaml.Marshal(c)
-	if err != nil {
-		fmt.Printf("Marshal cloudcore config to yaml error %v\n", err)
-		os.Exit(1)
-	}
-	if err := os.WriteFile(constants.CloudCoreConfigFile, data, os.ModePerm); err != nil {
-		fmt.Printf("Create cloudcore config file %v error %v\n", constants.CloudCoreConfigFile, err)
-		os.Exit(1)
-	}
 }
 
 func createEdgeCoreConfigFile(token, nodeName string) {
@@ -210,25 +174,6 @@ func createEdgeCoreConfigFile(token, nodeName string) {
 	}
 	if err := os.WriteFile(constants.EdgeCoreConfigFile, data, os.ModePerm); err != nil {
 		fmt.Printf("Create edgecore config file %v error %v\n", constants.EdgeCoreConfigFile, err)
-		os.Exit(1)
-	}
-}
-
-func createEdgeSiteConfigFile(kubeMaster, nodeName string) {
-	c := edgesite.NewDefaultEdgeSiteConfig()
-	// TODO change ca file path @kadisi
-	c.Modules.Edged.HostnameOverride = nodeName
-	c.KubeAPIConfig.Master = kubeMaster
-	c.KubeAPIConfig.KubeConfig = ""
-	c.DataBase.DataSource = "/tmp/edgesite/edgesite.db"
-
-	data, err := yaml.Marshal(c)
-	if err != nil {
-		fmt.Printf("Marshal edgesite config to yaml error %v\n", err)
-		os.Exit(1)
-	}
-	if err := os.WriteFile(constants.EdgeSiteConfigFile, data, os.ModePerm); err != nil {
-		fmt.Printf("Create edgesite config file %v error %v\n", constants.EdgeSiteConfigFile, err)
 		os.Exit(1)
 	}
 }
