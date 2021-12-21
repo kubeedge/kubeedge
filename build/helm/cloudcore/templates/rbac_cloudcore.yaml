@@ -14,7 +14,7 @@ rules:
   resources: ["namespaces"]
   verbs: ["get", "create"]
 - apiGroups: [""]
-  resources: ["pods/status"]
+  resources: ["nodes", "pods/status"]
   verbs: ["patch"]
 - apiGroups: [""]
   resources: ["pods"]
@@ -34,6 +34,9 @@ rules:
 - apiGroups: ["apiextensions.k8s.io"]
   resources: ["customresourcedefinitions"]
   verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["networking.istio.io"]
+  resources: ["*"]
+  verbs: ["get", "list", "watch"]
 
 ---
 apiVersion: v1

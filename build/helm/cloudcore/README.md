@@ -21,7 +21,7 @@ helm upgrade --install cloudcore ./cloudcore --namespace kubeedge --create-names
 - `cloudCore.image.repository`, default `kubeedge`, defines the image repo.
 - `cloudCore.image.tag`, default `v1.8.2`, defines the image tag.
 - `cloudCore.image.pullPolicy`, default `IfNotPresent`, defines the policies to pull images.
-- `cloudCore.image.imagePullSecrets`, defines the secrets to pull images.
+- `cloudCore.image.pullSecrets`, defines the secrets to pull images.
 - `cloudCore.labels`, defines the labels.
 - `cloudCore.annotions`, defines the annotions.
 - `cloudCore.affinity`, `cloudCore.nodeSelector`, `cloudCore.tolerations`, defines the node scheduling policies.
@@ -46,7 +46,7 @@ helm upgrade --install cloudcore ./cloudcore --namespace kubeedge --create-names
 - `iptablesManager.image.repository`, default `kubeedge`, defines the image repo.
 - `iptablesManager.image.tag`, default `v1.8.2`, defines the image tag.
 - `iptablesManager.image.pullPolicy`, default `IfNotPresent`, defines the policies to pull images.
-- `iptablesManager.image.imagePullSecrets`, defines the secrets to pull images.
+- `iptablesManager.image.pullSecrets`, defines the secrets to pull images.
 - `iptablesManager.labels`, defines the labels.
 - `iptablesManager.annotions`, defines the annotions.
 - `iptablesManager.affinity`, `iptablesManager.nodeSelector`, `iptablesManager.tolerations`, defines the node scheduling policies.
