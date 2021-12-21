@@ -10,7 +10,7 @@ cloudCore:
     repository: "kubeedge/cloudcore"
     tag: "v1.8.2"
     pullPolicy: "IfNotPresent"
-    imagePullSecrets: []
+    pullSecrets: []
   securityContext: 
     privileged: true
   labels:
@@ -68,7 +68,7 @@ iptablesManager:
     repository: "kubeedge/iptables-manager"
     tag: "v1.8.2"
     pullPolicy: "IfNotPresent"
-    imagePullSecrets: []
+    pullSecrets: []
   securityContext: 
     capabilities:
       add:
