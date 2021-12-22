@@ -73,7 +73,11 @@ KubeEdge 由以下组件构成:
 
 ## 使用
 
-* [快速部署](https://kubeedge.io/en/docs/setup/keadm)
+* 开始使用此[文档](https://kubeedge.io/en/docs/)
+* 有关更多详细信息，请参阅我们在[kubeedge.io](https://kubeedge.io/en/)
+上的文档。
+* 要深入了解 KubeEdge，请在[examples](https://github.com/kubeedge/examples)
+中尝试一些[示例](https://github.com/kubeedge/examples)
 
 ## 路线图
 
