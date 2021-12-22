@@ -55,7 +55,7 @@ func (client *URLClient) HTTPDo(method, rawURL string, headers http.Header, body
 	//sign a request
 	if SignRequest != nil {
 		if err = SignRequest(req); err != nil {
-			return nil, errors.New("Add auth info failed, err: " + err.Error())
+			return nil, errors.New("add auth info failed, err: " + err.Error())
 		}
 	}
 	resp, err = client.Client.Do(req)
