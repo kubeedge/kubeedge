@@ -121,14 +121,6 @@ func (ctx *Context) SendSync(module string, message model.Message, timeout time.
 		return model.Message{}, fmt.Errorf("bad request module name(%s)", module)
 	}
 
-	sendTimer := time.NewTimer(timeout)
-	select {
-	case reqChannel <- message:
-	case <-sendTimer.C:
-		return model.Message{}, errors.New("timeout to send message")
-	}
-	sendTimer.Stop()
-
 	// new anonymous channel for response
 	anonChan := make(chan model.Message)
 	anonName := getAnonChannelName(message.GetID())
@@ -142,14 +134,18 @@ func (ctx *Context) SendSync(module string, message model.Message, timeout time.
 		ctx.anonChsLock.Unlock()
 	}()
 
+	select {
+	case reqChannel <- message:
+	case <-time.After(timeout):
+		return model.Message{}, errors.New("timeout to send message")
+	}
+
 	var resp model.Message
-	respTimer := time.NewTimer(time.Until(deadline))
 	select {
 	case resp = <-anonChan:
-	case <-respTimer.C:
+	case <-time.After(time.Until(deadline)):
 		return model.Message{}, errors.New("timeout to get response")
 	}
-	respTimer.Stop()
 
 	return resp, nil
 }
