@@ -138,7 +138,7 @@ func GetMessageAPIVersion(msg *beehiveModel.Message) string {
 func GetMessageResourceType(msg *beehiveModel.Message) string {
 	obj, ok := msg.Content.(runtime.Object)
 	if ok {
-		return UnsafeKindToResource(obj.GetObjectKind().GroupVersionKind().Kind)
+		return obj.GetObjectKind().GroupVersionKind().Kind
 	}
 	return ""
 }
