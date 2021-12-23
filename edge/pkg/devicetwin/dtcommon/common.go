@@ -115,4 +115,6 @@ const (
 	ConflictCode = 409
 	// InternalErrorCode server internal error
 	InternalErrorCode = 500
+
+	TypeDeleted = "deleted"
 )

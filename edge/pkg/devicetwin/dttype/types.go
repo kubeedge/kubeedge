@@ -79,7 +79,7 @@ func MarshalMembershipUpdate(result MembershipUpdate) ([]byte, error) {
 	for i := range result.AddDevices {
 		if result.AddDevices[i].Twin != nil {
 			for k, v := range result.AddDevices[i].Twin {
-				if v.Metadata != nil && strings.Compare(v.Metadata.Type, "deleted") == 0 {
+				if v.Metadata != nil && strings.Compare(v.Metadata.Type, dtcommon.TypeDeleted) == 0 {
 					result.AddDevices[i].Twin[k] = nil
 				}
 				v.ActualVersion = nil
@@ -90,7 +90,7 @@ func MarshalMembershipUpdate(result MembershipUpdate) ([]byte, error) {
 	for i := range result.RemoveDevices {
 		if result.RemoveDevices[i].Twin != nil {
 			for k, v := range result.RemoveDevices[i].Twin {
-				if v.Metadata != nil && strings.Compare(v.Metadata.Type, "deleted") == 0 {
+				if v.Metadata != nil && strings.Compare(v.Metadata.Type, dtcommon.TypeDeleted) == 0 {
 					result.RemoveDevices[i].Twin[k] = nil
 				}
 				v.ActualVersion = nil

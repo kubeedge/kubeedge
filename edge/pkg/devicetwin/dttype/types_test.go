@@ -24,6 +24,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
+	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 )
 
 // TestSetEventID is function to test SetEventID().
@@ -75,7 +77,7 @@ func createDevTwinMetaDeleted(deviceID string) map[string]*MsgTwin {
 	value := "ON"
 	devTwin := map[string]*MsgTwin{}
 	metaData := TypeMetadata{
-		Type: "deleted",
+		Type: dtcommon.TypeDeleted,
 	}
 	msgTwin := MsgTwin{
 		Expected: &TwinValue{

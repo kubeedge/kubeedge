@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
+	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 )
 
 //UnmarshalMembershipDetail Unmarshal membershipdetail
@@ -226,7 +227,7 @@ func BuildDeviceTwinResult(baseMessage BaseMessage, twins map[string]*MsgTwin, d
 				result[k] = nil
 				continue
 			}
-			if v.Metadata != nil && strings.Compare(v.Metadata.Type, "deleted") == 0 {
+			if v.Metadata != nil && strings.Compare(v.Metadata.Type, dtcommon.TypeDeleted) == 0 {
 				continue
 			}
 			twin := *v
@@ -288,7 +289,7 @@ func BuildDeviceTwinDelta(baseMessage BaseMessage, twins map[string]*MsgTwin) ([
 	result := make(map[string]*MsgTwin, len(twins))
 	delta := make(map[string]string)
 	for k, v := range twins {
-		if v.Metadata != nil && strings.Compare(v.Metadata.Type, "deleted") == 0 {
+		if v.Metadata != nil && strings.Compare(v.Metadata.Type, dtcommon.TypeDeleted) == 0 {
 			continue
 		}
 		if v.Expected != nil {
