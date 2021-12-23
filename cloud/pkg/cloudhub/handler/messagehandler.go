@@ -30,7 +30,8 @@ import (
 	edgemessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
 	"github.com/kubeedge/kubeedge/common/constants"
-	"github.com/kubeedge/kubeedge/pkg/util"
+	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
+	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
 	"github.com/kubeedge/viaduct/pkg/conn"
 	"github.com/kubeedge/viaduct/pkg/mux"
 )
@@ -546,7 +547,7 @@ func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model
 		if err == nil {
 			// Update objectSync.Label
 			source := strings.Split(objectSync.Labels["source"], ",")
-			if !util.IsExist(source, msg.GetSource()) {
+			if !pkgutil.IsExist(source, msg.GetSource()) {
 				newLabel := strings.Join([]string{objectSync.Labels["source"], msg.GetSource()}, ",")
 				objectSync.Labels["source"] = newLabel
 			}
