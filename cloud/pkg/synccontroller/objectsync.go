@@ -3,6 +3,7 @@ package synccontroller
 import (
 	"context"
 	"strconv"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -28,7 +29,8 @@ func (sctl *SyncController) manageObject(sync *v1alpha1.ObjectSync) {
 	if err != nil {
 		return
 	}
-	gvr := gv.WithResource(sync.Spec.ObjectKind)
+	resource := util.UnsafeKindToResource(sync.Spec.ObjectKind)
+	gvr := gv.WithResource(resource)
 
 	//ret, err := informers.GetInformersManager().GetDynamicSharedInformerFactory().ForResource(gvr).Lister().ByNamespace(sync.Namespace).Get(sync.Spec.ObjectName)
 	ret, err := sctl.kubeclient.Resource(gvr).Namespace(sync.Namespace).Get(context.TODO(), sync.Spec.ObjectName, metav1.GetOptions{})
@@ -48,11 +50,11 @@ func (sctl *SyncController) manageObject(sync *v1alpha1.ObjectSync) {
 	if syncObjUID != string(object.GetUID()) {
 		err = apierrors.NewNotFound(schema.GroupResource{
 			Group:    "",
-			Resource: sync.Spec.ObjectKind,
+			Resource: resource,
 		}, sync.Spec.ObjectName)
 	}
 
-	sendEvents(err, nodeName, sync, sync.Spec.ObjectKind, object.GetResourceVersion(), object)
+	sendEvents(err, nodeName, sync, strings.ToLower(sync.Spec.ObjectKind), object.GetResourceVersion(), object)
 }
 
 func sendEvents(err error, nodeName string, sync *v1alpha1.ObjectSync, resourceType string,
