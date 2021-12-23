@@ -26,7 +26,6 @@ import (
 	"strings"
 
 	utilnet "k8s.io/apimachinery/pkg/util/net"
-	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/apis/core/validation"
 
 	"github.com/kubeedge/kubeedge/common/constants"
@@ -104,7 +103,6 @@ func Command(name string, arg []string) (string, error) {
 	cmd := exec.Command(name, arg...)
 	ret, err := cmd.Output()
 	if err != nil {
-		klog.Errorf("exec command failed: %v", err)
 		return string(ret), err
 	}
 	return strings.Trim(string(ret), "\n"), nil
