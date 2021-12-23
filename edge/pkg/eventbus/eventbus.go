@@ -26,6 +26,8 @@ type eventbus struct {
 	enable bool
 }
 
+var _ core.Module = (*eventbus)(nil)
+
 func newEventbus(enable bool) *eventbus {
 	return &eventbus{
 		enable: enable,
@@ -60,7 +62,7 @@ func (eb *eventbus) Start() {
 		mqttBus.MQTTHub = hub
 		hub.InitSubClient()
 		hub.InitPubClient()
-		klog.Infof("Init Sub And Pub Client for externel mqtt broker %v successfully", eventconfig.Config.MqttServerExternal)
+		klog.Infof("Init Sub And Pub Client for external mqtt broker %v successfully", eventconfig.Config.MqttServerExternal)
 	}
 
 	if eventconfig.Config.MqttMode <= v1alpha1.MqttModeBoth {
@@ -73,10 +75,10 @@ func (eb *eventbus) Start() {
 		mqttServer.InitInternalTopics()
 		err := mqttServer.Run()
 		if err != nil {
-			klog.Errorf("Launch internel mqtt broker failed, %s", err.Error())
+			klog.Errorf("Launch internal mqtt broker failed, %s", err.Error())
 			os.Exit(1)
 		}
-		klog.Infof("Launch internel mqtt broker %v successfully", eventconfig.Config.MqttServerInternal)
+		klog.Infof("Launch internal mqtt broker %v successfully", eventconfig.Config.MqttServerInternal)
 	}
 
 	eb.pubCloudMsgToEdge()

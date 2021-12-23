@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"io"
 
 	"github.com/spf13/cobra"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,22 +26,21 @@ to get the token.
 )
 
 // NewGettoken gets the token for edge nodes to join the cluster
-func NewGettoken(out io.Writer, init *common.GettokenOptions) *cobra.Command {
-	if init == nil {
-		init = newGettokenOptions()
-	}
+func NewGettoken() *cobra.Command {
+	init := newGettokenOptions()
+
 	cmd := &cobra.Command{
 		Use:     "gettoken",
 		Short:   "To get the token for edge nodes to join the cluster",
 		Long:    gettokenLongDescription,
 		Example: gettokenExample,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			token, err := queryToken(constants.KubeEdgeNameSpace, common.TokenSecretName, init.Kubeconfig)
+			token, err := queryToken(constants.SystemNamespace, common.TokenSecretName, init.Kubeconfig)
 			if err != nil {
-				fmt.Println("failed to get token")
+				fmt.Printf("failed to get token, err is %s\n", err)
 				return err
 			}
-			return showToken(token, out)
+			return showToken(token)
 		},
 	}
 	addGettokenFlags(cmd, init)
@@ -75,8 +73,8 @@ func queryToken(namespace string, name string, kubeConfigPath string) ([]byte, e
 }
 
 // showToken prints the token
-func showToken(data []byte, out io.Writer) error {
-	_, err := fmt.Fprintln(out, string(data))
+func showToken(data []byte) error {
+	_, err := fmt.Printf(string(data))
 	if err != nil {
 		return err
 	}

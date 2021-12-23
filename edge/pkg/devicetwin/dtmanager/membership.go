@@ -240,7 +240,7 @@ func addDevice(context *dtcontext.DTContext, toAdd []dttype.Device, baseMessage 
 		addDeviceResult := dttype.MembershipUpdate{BaseMessage: baseMessage, AddDevices: addDeviceDevices}
 		result, err := dttype.MarshalMembershipUpdate(addDeviceResult)
 		if err != nil {
-
+			klog.Errorf("add device %s failed, marshal membership err: %s", device.ID, err)
 		} else {
 			context.Send("",
 				dtcommon.SendToEdge,
@@ -294,13 +294,13 @@ func removeDevice(context *dtcontext.DTContext, toRemove []dttype.Device, baseMe
 		deleteResult := dttype.MembershipUpdate{BaseMessage: baseMessage, RemoveDevices: RemoveDevices}
 		result, err := dttype.MarshalMembershipUpdate(deleteResult)
 		if err != nil {
-
-		} else {
-			context.Send("",
-				dtcommon.SendToEdge,
-				dtcommon.CommModule,
-				context.BuildModelMessage(modules.BusGroup, "", topic, messagepkg.OperationPublish, result))
+			klog.Errorf("Remove device %s failed, marshal membership err: %s", device.ID, err)
+			continue
 		}
+		context.Send("",
+			dtcommon.SendToEdge,
+			dtcommon.CommModule,
+			context.BuildModelMessage(modules.BusGroup, "", topic, messagepkg.OperationPublish, result))
 
 		klog.Infof("Remove device %s successful", device.ID)
 	}
@@ -328,7 +328,7 @@ func dealMembershipGetInner(context *dtcontext.DTContext, payload []byte) error 
 		context.DeviceList.Range(func(key interface{}, value interface{}) bool {
 			device, ok := value.(*dttype.Device)
 			if !ok {
-
+				klog.Warningf("deviceList found invalid key-value pair, key: %s, value: %#v", key, value)
 			} else {
 				devices = append(devices, device)
 			}

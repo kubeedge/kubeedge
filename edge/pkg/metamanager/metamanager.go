@@ -12,7 +12,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	metamanagerconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver"
 	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
@@ -27,6 +27,8 @@ const (
 type metaManager struct {
 	enable bool
 }
+
+var _ core.Module = (*metaManager)(nil)
 
 func newMetaManager(enable bool) *metaManager {
 	return &metaManager{enable: enable}

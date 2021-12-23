@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -43,8 +44,7 @@ func (dt *DeviceTwin) RegisterDTModule(name string) {
 func (dt *DeviceTwin) distributeMsg(m interface{}) error {
 	msg, ok := m.(model.Message)
 	if !ok {
-		klog.Errorf("Distribute message, msg is nil")
-		return errors.New("Distribute message, msg is nil")
+		return errors.New("distribute message, msg is nil")
 	}
 	message := dttype.DTMessage{Msg: &msg}
 	if message.Msg.GetParentID() != "" {
@@ -55,7 +55,7 @@ func (dt *DeviceTwin) distributeMsg(m interface{}) error {
 		}
 	}
 	if !classifyMsg(&message) {
-		return errors.New("Not found action")
+		return errors.New("not found action")
 	}
 	if ActionModuleMap == nil {
 		initActionModuleMap()
@@ -68,8 +68,9 @@ func (dt *DeviceTwin) distributeMsg(m interface{}) error {
 			return err
 		}
 	} else {
-		klog.Info("Not found deal module for msg")
-		return errors.New("Not found deal module for msg")
+		err := fmt.Errorf("not found deal module for msg, action: %s", message.Action)
+		klog.Errorf(err.Error())
+		return err
 	}
 
 	return nil

@@ -37,7 +37,7 @@ if [ $X -lt 1 ] ; then
 	exit 1
 fi
 
-if [ $Y -lt 12 ] ; then
-	echo "go minor version must >= 12, now is $Y"
+if [ $Y -lt 16 ] ; then
+	echo "go minor version must >= 16, now is $Y"
 	exit 1
 fi

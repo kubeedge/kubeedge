@@ -25,18 +25,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 	certutil "k8s.io/client-go/util/cert"
 	"k8s.io/klog/v2"
 
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 // SignCerts creates server's certificate and key
 func SignCerts() ([]byte, []byte, error) {
 	cfg := &certutil.Config{
-		CommonName:   "KubeEdge",
-		Organization: []string{"KubeEdge"},
+		CommonName:   constants.ProjectName,
+		Organization: []string{constants.ProjectName},
 		Usages:       []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		AltNames: certutil.AltNames{
 			DNSNames: hubconfig.Config.DNSNames,
@@ -93,7 +94,7 @@ func GenerateToken() error {
 			<-t.C
 			refreshedCaHashToken := refreshToken()
 			if err := CreateTokenSecret([]byte(refreshedCaHashToken)); err != nil {
-				klog.Fatalf("failed to create the ca token for edgecore register, err: %v", err)
+				klog.Exitf("failed to create the ca token for edgecore register, err: %v", err)
 			}
 		}
 	}()

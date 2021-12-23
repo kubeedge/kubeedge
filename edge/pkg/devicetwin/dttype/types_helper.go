@@ -149,7 +149,7 @@ func MsgTwinToDeviceTwin(name string, msgTwin *MsgTwin) dtclient.DeviceTwin {
 		Optional: optional}
 }
 
-//DeviceMsg the struct of device statte msg
+//DeviceMsg the struct of device state msg
 type DeviceMsg struct {
 	BaseMessage
 	Device Device `json:"device"`

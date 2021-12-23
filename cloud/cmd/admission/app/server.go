@@ -10,7 +10,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/cloud/cmd/admission/app/options"
-	admissioncontroller "github.com/kubeedge/kubeedge/cloud/pkg/admissioncontroller"
+	"github.com/kubeedge/kubeedge/cloud/pkg/admissioncontroller"
 	"github.com/kubeedge/kubeedge/pkg/util/flag"
 	"github.com/kubeedge/kubeedge/pkg/version"
 	"github.com/kubeedge/kubeedge/pkg/version/verflag"

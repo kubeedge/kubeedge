@@ -17,14 +17,14 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"io/ioutil"
+	"os"
 
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/yaml"
 )
 
 func (c *EdgeCoreConfig) Parse(filename string) error {
-	data, err := ioutil.ReadFile(filename)
+	data, err := os.ReadFile(filename)
 	if err != nil {
 		klog.Errorf("Failed to read configfile %s: %v", filename, err)
 		return err

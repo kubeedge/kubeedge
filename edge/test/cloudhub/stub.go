@@ -3,7 +3,6 @@ package test
 import (
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -30,6 +29,8 @@ type stubCloudHub struct {
 	wsConn *websocket.Conn
 	enable bool
 }
+
+var _ core.Module = (*stubCloudHub)(nil)
 
 func (*stubCloudHub) Name() string {
 	return "stubCloudHub"
@@ -76,7 +77,7 @@ func (tm *stubCloudHub) serveEvent(w http.ResponseWriter, r *http.Request) {
 
 func (tm *stubCloudHub) podHandler(w http.ResponseWriter, req *http.Request) {
 	if req.Body != nil {
-		body, err := ioutil.ReadAll(req.Body)
+		body, err := io.ReadAll(req.Body)
 		if err != nil {
 			klog.Errorf("read body error %v", err)
 			w.Write([]byte("read request body error"))

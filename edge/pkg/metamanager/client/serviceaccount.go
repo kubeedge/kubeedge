@@ -56,7 +56,7 @@ func (c *serviceAccountToken) GetServiceAccountToken(namespace string, name stri
 
 func handleServiceAccountTokenFromMetaDB(content []byte) (*authenticationv1.TokenRequest, error) {
 	var lists []string
-	err := json.Unmarshal([]byte(content), &lists)
+	err := json.Unmarshal(content, &lists)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal message to serviceaccount list from db failed, err: %v", err)
 	}

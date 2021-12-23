@@ -176,5 +176,32 @@ var _ = Describe("Rule Management test in E2E scenario", func() {
 				return b.String() == newMsg
 			}, "30s", "2s").Should(Equal(true), "servicebus did not return any response.")
 		})
+		It("E2E_CREATE_RULE_4: Create rule: servicebus to rest.", func() {
+			r := "Hello World"
+			// create rest ruleendpoint
+			IsRestRuleEndpointCreated, status := utils.HandleRuleEndpoint(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+RuleEndpointHandler, "", v1.RuleEndpointTypeRest)
+			Expect(IsRestRuleEndpointCreated).Should(BeTrue())
+			Expect(status).Should(Equal(http.StatusCreated))
+			// create servicebus ruleendpoint
+			IsServicebusRuleEndpointCreated, status := utils.HandleRuleEndpoint(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+RuleEndpointHandler, "", v1.RuleEndpointTypeServiceBus)
+			Expect(IsServicebusRuleEndpointCreated).Should(BeTrue())
+			Expect(status).Should(Equal(http.StatusCreated))
+			// create rule: servicebus to rest
+			IsRuleCreated, statusCode := utils.HandleRule(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+RuleHandler, "", v1.RuleEndpointTypeServiceBus, v1.RuleEndpointTypeRest)
+			Expect(IsRuleCreated).Should(BeTrue())
+			Expect(statusCode).Should(Equal(http.StatusCreated))
+			b := new(bytes.Buffer)
+			go func() {
+				recieveMsg, err := utils.StartEchoServer()
+				if err != nil {
+					utils.Fatalf("fail to call cloud-app's API. reason: %s. ", err.Error())
+				}
+				b.WriteString(recieveMsg)
+			}()
+			time.Sleep(3 * time.Second)
+			resp, err := utils.CallServicebus()
+			Expect(err).Should(BeNil())
+			Expect(resp).Should(Equal(r))
+		})
 	})
 })

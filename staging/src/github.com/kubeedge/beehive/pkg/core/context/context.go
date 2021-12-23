@@ -1,15 +1,15 @@
 package context
 
 import (
-	gocontext "context"
 	"time"
 
+	"github.com/kubeedge/beehive/pkg/common"
 	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
 // ModuleContext is interface for context module management
 type ModuleContext interface {
-	AddModule(module string)
+	AddModule(info *common.ModuleInfo)
 	AddModuleGroup(module, group string)
 	Cleanup(module string)
 }
@@ -23,14 +23,6 @@ type MessageContext interface {
 	SendSync(module string, message model.Message, timeout time.Duration) (model.Message, error)
 	SendResp(message model.Message)
 	// group broadcast
-	SendToGroup(moduleType string, message model.Message)
-	SendToGroupSync(moduleType string, message model.Message, timeout time.Duration) error
-}
-
-// Context is global context object
-type beehiveContext struct {
-	moduleContext  ModuleContext
-	messageContext MessageContext
-	ctx            gocontext.Context
-	cancel         gocontext.CancelFunc
+	SendToGroup(group string, message model.Message)
+	SendToGroupSync(group string, message model.Message, timeout time.Duration) error
 }

@@ -17,7 +17,6 @@ limitations under the License.
 package manager
 
 import (
-	"io/ioutil"
 	"os"
 	"reflect"
 	"sync"
@@ -43,7 +42,7 @@ func TestPodManager_isPodUpdated(t *testing.T) {
 		want bool
 	}{
 		{
-			"TestPodManager_isPodUpdated(): Case 1: check differet pod",
+			"TestPodManager_isPodUpdated(): Case 1: check different pod",
 			args{
 				&CachePod{
 					ObjectMeta: TestOldPodObject.ObjectMeta,
@@ -183,8 +182,8 @@ func TestPodManager_merge(t *testing.T) {
 				pm.pods.Store(tt.fields.pods.GetUID(), tt.fields.pods)
 			}
 
-			go pm.merge()
 			tt.fields.realEvents <- tt.args.event
+			go pm.merge()
 		})
 	}
 }
@@ -234,12 +233,12 @@ func TestNewPodManager(t *testing.T) {
 		},
 	}
 
-	tmpfile, err := ioutil.TempFile("", "kubeconfig")
+	tmpfile, err := os.CreateTemp("", "kubeconfig")
 	if err != nil {
 		t.Error(err)
 	}
 	defer os.Remove(tmpfile.Name())
-	if err := ioutil.WriteFile(tmpfile.Name(), []byte(mockKubeConfigContent), 0666); err != nil {
+	if err := os.WriteFile(tmpfile.Name(), []byte(mockKubeConfigContent), 0666); err != nil {
 		t.Error(err)
 	}
 	client.InitKubeEdgeClient(&v1alpha1.KubeAPIConfig{

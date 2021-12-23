@@ -21,8 +21,8 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"io"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"reflect"
 	"testing"
 
@@ -120,7 +120,7 @@ func TestNewHTTPClientWithCA(t *testing.T) {
 		t.Errorf("Error in generating fake certificates: %w", err)
 		return
 	}
-	capem, err := ioutil.ReadFile(CertFile)
+	capem, err := os.ReadFile(CertFile)
 	if err != nil {
 		t.Errorf("Error in loading Cert file: %w", err)
 		return
@@ -162,7 +162,7 @@ func TestNewHTTPClientWithCA(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Wrong certifcate given when getting HTTP client",
+			name: "Wrong certificate given when getting HTTP client",
 			args: args{
 				capem:       []byte{},
 				certificate: certificate,
@@ -178,8 +178,22 @@ func TestNewHTTPClientWithCA(t *testing.T) {
 				t.Errorf("NewHTTPClientWithCA() error = %w, expectedError = %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewHTTPClientWithCA() = %v, want %v", got, tt.want)
+			if got != nil && tt.want != nil {
+				//due to x509.CertPool cannot be checked equal using reflect.DeepEqual, so need to check whether equal as below
+				//ref: https://github.com/golang/go/issues/46057
+				gotTransport := got.Transport.(*http.Transport)
+				wantTransport := tt.want.Transport.(*http.Transport)
+				isEqual := reflect.DeepEqual(gotTransport.TLSClientConfig.RootCAs.Subjects(), wantTransport.TLSClientConfig.RootCAs.Subjects()) &&
+					(gotTransport.TLSClientConfig.InsecureSkipVerify == wantTransport.TLSClientConfig.InsecureSkipVerify) &&
+					reflect.DeepEqual(gotTransport.TLSClientConfig.Certificates, wantTransport.TLSClientConfig.Certificates) &&
+					got.Timeout == tt.want.Timeout
+				if !isEqual {
+					t.Errorf("NewHTTPClientWithCA() = %v, want %v", got, tt.want)
+				}
+			} else {
+				if !reflect.DeepEqual(got, tt.want) {
+					t.Errorf("NewHTTPClientWithCA() = %v, want %v", got, tt.want)
+				}
 			}
 		})
 	}
@@ -274,5 +288,8 @@ func TestSendRequestFailure(t *testing.T) {
 	resp, respErr := SendRequest(req, httpClient)
 	if resp != nil && respErr == nil {
 		t.Errorf("Error, response should not come as data is not valid")
+	}
+	if respErr == nil {
+		resp.Body.Close()
 	}
 }

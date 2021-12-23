@@ -62,7 +62,6 @@ func (c *secrets) Get(name string) (*api.Secret, error) {
 		return nil, fmt.Errorf("parse message to secret failed, err: %v", err)
 	}
 
-	//op := msg.GetOperation()
 	if msg.GetOperation() == model.ResponseOperation && msg.GetSource() == metamanager.MetaManagerModuleName {
 		return handleSecretFromMetaDB(content)
 	}

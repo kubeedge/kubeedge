@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strings"
 	"sync"
@@ -181,7 +180,6 @@ func (f *Factory) Patch(reqInfo *request.RequestInfo) http.Handler {
 
 		responsewriters.WriteObjectNegotiated(scope.Serializer, scope, scope.Kind.GroupVersion(), w, req, 200, retObj)
 	}
-	//handlers.PatchResource()
 	return http.HandlerFunc(h)
 }
 
@@ -208,13 +206,13 @@ func parseTimeout(str string) time.Duration {
 func limitedReadBody(req *http.Request, limit int64) ([]byte, error) {
 	defer req.Body.Close()
 	if limit <= 0 {
-		return ioutil.ReadAll(req.Body)
+		return io.ReadAll(req.Body)
 	}
 	lr := &io.LimitedReader{
 		R: req.Body,
 		N: limit + 1,
 	}
-	data, err := ioutil.ReadAll(lr)
+	data, err := io.ReadAll(lr)
 	if err != nil {
 		return nil, err
 	}

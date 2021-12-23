@@ -12,7 +12,7 @@
 KubeEdge 是一个开源的系统，可将本机容器化应用编排和管理扩展到边缘端设备。 它基于Kubernetes构建，为网络和应用程序提供核心基础架构支持，并在云端和边缘端部署应用，同步元数据。KubeEdge 还支持 **MQTT** 协议，允许开发人员编写客户逻辑，并在边缘端启用设备通信的资源约束。KubeEdge 包含云端和边缘端两部分。
 
 注意：
-1.5以前的版本不再支持，请尝试升级到支持版本。
+1.6以前的版本不再支持，请尝试升级到支持版本。
 
 ## 优势
 
@@ -59,12 +59,12 @@ KubeEdge 由以下组件构成:
 
 ### Kubernetes 版本兼容
 
-|                     | Kubernetes 1.15 | Kubernetes 1.16 | Kubernetes 1.17 | Kubernetes 1.18 | Kubernetes 1.19 | Kubernetes 1.20 | Kubernetes 1.21 |
-|---------------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|
-| KubeEdge 1.6        | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               | -               |
-| KubeEdge 1.7        | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               |
-| KubeEdge 1.8        | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               |
-| KubeEdge HEAD       | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               |
+|                        | Kubernetes 1.15 | Kubernetes 1.16 | Kubernetes 1.17 | Kubernetes 1.18 | Kubernetes 1.19 | Kubernetes 1.20 | Kubernetes 1.21 |
+|------------------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|
+| KubeEdge 1.7           | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               |
+| KubeEdge 1.8           | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               |
+| KubeEdge 1.9           | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               |
+| KubeEdge HEAD (master) | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               |
 
 说明:
 * `✓` KubeEdge和Kubernetes的版本是完全兼容的
@@ -73,7 +73,11 @@ KubeEdge 由以下组件构成:
 
 ## 使用
 
-* [快速部署](https://kubeedge.io/en/docs/setup/keadm)
+* 开始使用此[文档](https://kubeedge.io/en/docs/)
+* 有关更多详细信息，请参阅我们在[kubeedge.io](https://kubeedge.io/en/)
+上的文档。
+* 要深入了解 KubeEdge，请在[examples](https://github.com/kubeedge/examples)
+中尝试一些[示例](https://github.com/kubeedge/examples)
 
 ## 路线图
 

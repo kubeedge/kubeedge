@@ -18,7 +18,6 @@ package cmd
 
 import (
 	"fmt"
-	"io"
 	"strings"
 
 	"github.com/blang/semver"
@@ -47,10 +46,8 @@ keadm init --kubeedge-version=%s  --kube-config=/root/.kube/config
 )
 
 // NewCloudInit represents the keadm init command for cloud component
-func NewCloudInit(out io.Writer, init *types.InitOptions) *cobra.Command {
-	if init == nil {
-		init = newInitOptions()
-	}
+func NewCloudInit() *cobra.Command {
+	init := newInitOptions()
 
 	tools := make(map[string]types.ToolsInstaller)
 	flagVals := make(map[string]types.FlagData)
@@ -117,7 +114,7 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 		for i := 0; i < util.RetryTimes; i++ {
 			version, err := util.GetLatestVersion()
 			if err != nil {
-				fmt.Println("Failed to get the latest KubeEdge release version")
+				fmt.Println("Failed to get the latest KubeEdge release version, error: ", err)
 				continue
 			}
 			if len(version) > 0 {
@@ -127,8 +124,8 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 			}
 		}
 		if len(latestVersion) == 0 {
-			fmt.Println("Failed to get the latest KubeEdge release version, will use default version")
 			kubeVer = types.DefaultKubeEdgeVersion
+			fmt.Println("Failed to get the latest KubeEdge release version, will use default version: ", kubeVer)
 		}
 	}
 	common := util.Common{

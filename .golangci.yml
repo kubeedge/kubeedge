@@ -51,13 +51,15 @@ linters:
     - goconst
     - errcheck
     - gofmt
-    - golint
+    - revive
     - gosimple
     - govet
     - misspell
     - whitespace
 
 issues:
+    # Maximum count of issues with the same text. Set to 0 to disable. Default is 3.
+    max-same-issues: 0
     # Excluding configuration per-path, per-linter, per-text and per-source
     exclude-rules:
       - path: edge

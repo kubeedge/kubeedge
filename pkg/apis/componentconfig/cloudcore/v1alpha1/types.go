@@ -36,6 +36,8 @@ type CloudCoreConfig struct {
 	// Modules indicates cloudCore modules config
 	// +Required
 	Modules *Modules `json:"modules,omitempty"`
+	// FeatureGates is a map of feature names to bools that enable or disable alpha/experimental features.
+	FeatureGates map[string]bool `json:"featureGates,omitempty"`
 }
 
 // KubeAPIConfig indicates the configuration for interacting with k8s server
@@ -54,7 +56,7 @@ type KubeAPIConfig struct {
 	// ContentType indicates the ContentType of message transmission when interacting with k8s
 	// default "application/vnd.kubernetes.protobuf"
 	ContentType string `json:"contentType,omitempty"`
-	// QPS to while talking with kubernetes apiserve
+	// QPS to while talking with kubernetes apiserver
 	// default 100
 	QPS int32 `json:"qps,omitempty"`
 	// Burst to use while talking with kubernetes apiserver
@@ -82,6 +84,8 @@ type Modules struct {
 	CloudStream *CloudStream `json:"cloudStream,omitempty"`
 	// Router indicates router module config
 	Router *Router `json:"router,omitempty"`
+	// IptablesManager indicates iptables module config
+	IptablesManager *IptablesManager `json:"iptablesManager,omitempty"`
 }
 
 // CloudHub indicates the config of CloudHub module.
@@ -415,4 +419,17 @@ type Router struct {
 	Address     string `json:"address,omitempty"`
 	Port        uint32 `json:"port,omitempty"`
 	RestTimeout uint32 `json:"restTimeout,omitempty"`
+}
+
+// IptablesManager indicates the config of Iptables
+type IptablesManager struct {
+	// Enable indicates whether enable IptablesManager
+	// default true
+	Enable bool `json:"enable"`
+	// It indicates how the component is deployed, valid mode can use "internal" or "external".
+	// The iptables manager component with the internal mode is always deployed inside the cloudcore, will share the host network, forward to the internal port of the tunnel port.
+	// The iptables manager component with the external mode is always deployed outside the cloudcore, will share the host network, forward to the internal cloudcore service and port.
+	// default internal.
+	// +kubebuilder:validation:Enum=internal;external
+	Mode IptablesMgrMode `json:"mode,omitempty"`
 }

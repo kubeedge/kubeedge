@@ -19,17 +19,18 @@ package util
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 
-	"github.com/ghodss/yaml"
 	corev1 "k8s.io/api/core/v1"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
-	crdclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/yaml"
+
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 //K8SInstTool embeds Common struct and contains the default K8S version and
@@ -83,18 +84,17 @@ func createKubeEdgeNs(kubeConfig, master string) error {
 	}
 	ns := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "kubeedge",
+			Name: constants.SystemNamespace,
 		},
 	}
 
-	_, err = client.CoreV1().Namespaces().Get(context.Background(), "kubeedge", metav1.GetOptions{})
+	_, err = client.CoreV1().Namespaces().Get(context.Background(), ns.Name, metav1.GetOptions{})
 	if err != nil {
-		if apierrors.IsNotFound(err) {
-			_, err = client.CoreV1().Namespaces().Create(context.Background(), ns, metav1.CreateOptions{})
-			if err != nil {
-				return err
-			}
-		} else {
+		if !apierrors.IsNotFound(err) {
+			return err
+		}
+		if _, err = client.CoreV1().Namespaces().Create(
+			context.Background(), ns, metav1.CreateOptions{}); err != nil {
 			return err
 		}
 	}
@@ -108,16 +108,24 @@ func installCRDs(ks *K8SInstTool) error {
 		return fmt.Errorf("failed to build config, err: %v", err)
 	}
 
-	crdClient, err := crdclient.NewForConfig(config)
+	dynamicClient, err := dynamic.NewForConfig(config)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create a new dynamic client: %v", err)
 	}
 
-	crds := map[string][]string{"devices": {"devices/devices_v1alpha2_device.yaml",
-		"devices/devices_v1alpha2_devicemodel.yaml"}, "reliablesyncs": {"reliablesyncs/cluster_objectsync_v1alpha1.yaml",
-		"reliablesyncs/objectsync_v1alpha1.yaml"},
-		"router": {"router/router_v1_rule.yaml",
-			"router/router_v1_ruleEndpoint.yaml"},
+	crds := map[string][]string{
+		"devices": {
+			"devices_v1alpha2_device.yaml",
+			"devices_v1alpha2_devicemodel.yaml",
+		},
+		"reliablesyncs": {
+			"cluster_objectsync_v1alpha1.yaml",
+			"objectsync_v1alpha1.yaml",
+		},
+		"router": {
+			"router_v1_rule.yaml",
+			"router_v1_ruleEndpoint.yaml",
+		},
 	}
 	version := fmt.Sprintf("%d.%d", ks.ToolVersion.Major, ks.ToolVersion.Minor)
 	CRDDownloadURL := fmt.Sprintf(KubeEdgeCRDDownloadURL, version)
@@ -130,11 +138,11 @@ func installCRDs(ks *K8SInstTool) error {
 
 		for _, crdFile := range crds[dir] {
 			// check it first, do not download when it exists
-			_, err := os.Lstat(KubeEdgeCrdPath + "/" + crdFile)
+			_, err := os.Lstat(crdPath + "/" + crdFile)
 			if err != nil {
 				if os.IsNotExist(err) {
 					// Download the tar from repo
-					downloadURL := fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/%s", KubeEdgeCrdPath+"/"+dir, CRDDownloadURL, crdFile)
+					downloadURL := fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/%s", KubeEdgeCrdPath+"/"+dir, CRDDownloadURL, dir+"/"+crdFile)
 					cmd := NewCommand(downloadURL)
 					if err := cmd.Exec(); err != nil {
 						return err
@@ -145,11 +153,7 @@ func installCRDs(ks *K8SInstTool) error {
 			}
 
 			// not found err, create crd from crd file
-			if dir == "router" {
-				err = createKubeEdgeV1CRD(crdClient, KubeEdgeCrdPath+"/"+crdFile)
-			} else {
-				err = createKubeEdgeV1beta1CRD(crdClient, KubeEdgeCrdPath+"/"+crdFile)
-			}
+			err = createKubeEdgeV1CRD(dynamicClient, crdPath+"/"+crdFile)
 			if err != nil && !apierrors.IsAlreadyExists(err) {
 				return err
 			}
@@ -159,36 +163,22 @@ func installCRDs(ks *K8SInstTool) error {
 	return nil
 }
 
-func createKubeEdgeV1beta1CRD(clientset crdclient.Interface, crdFile string) error {
-	content, err := ioutil.ReadFile(crdFile)
+func createKubeEdgeV1CRD(dynamicClient dynamic.Interface, crdFile string) error {
+	content, err := os.ReadFile(crdFile)
 	if err != nil {
 		return fmt.Errorf("read crd yaml error: %v", err)
 	}
 
-	kubeEdgeCRD := &apiextensionsv1beta1.CustomResourceDefinition{}
+	kubeEdgeCRD := &unstructured.Unstructured{}
 	err = yaml.Unmarshal(content, kubeEdgeCRD)
 	if err != nil {
 		return fmt.Errorf("unmarshal tfjobCRD error: %v", err)
 	}
 
-	_, err = clientset.ApiextensionsV1beta1().CustomResourceDefinitions().Create(context.Background(), kubeEdgeCRD, metav1.CreateOptions{})
+	gvk := kubeEdgeCRD.GetObjectKind().GroupVersionKind()
+	gvr, _ := meta.UnsafeGuessKindToResource(gvk)
 
-	return err
-}
-
-func createKubeEdgeV1CRD(clientset crdclient.Interface, crdFile string) error {
-	content, err := ioutil.ReadFile(crdFile)
-	if err != nil {
-		return fmt.Errorf("read crd yaml error: %v", err)
-	}
-
-	kubeEdgeCRD := &apiextensionsv1.CustomResourceDefinition{}
-	err = yaml.Unmarshal(content, kubeEdgeCRD)
-	if err != nil {
-		return fmt.Errorf("unmarshal tfjobCRD error: %v", err)
-	}
-
-	_, err = clientset.ApiextensionsV1().CustomResourceDefinitions().Create(context.Background(), kubeEdgeCRD, metav1.CreateOptions{})
+	_, err = dynamicClient.Resource(gvr).Create(context.Background(), kubeEdgeCRD, metav1.CreateOptions{})
 
 	return err
 }

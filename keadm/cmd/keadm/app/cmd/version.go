@@ -3,14 +3,11 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	yaml "gopkg.in/yaml.v2"
-	"k8s.io/klog/v2"
+	"sigs.k8s.io/yaml"
 
 	"github.com/kubeedge/kubeedge/pkg/version"
 )
@@ -20,12 +17,12 @@ const (
 	DefaultErrorExitCode = 1
 )
 
-func NewCmdVersion(out io.Writer) *cobra.Command {
+func NewCmdVersion() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "version",
 		Short: "Print the version of keadm",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := RunVersion(out, cmd)
+			err := RunVersion(cmd)
 			CheckErr(err, fatal)
 		},
 	}
@@ -35,34 +32,35 @@ func NewCmdVersion(out io.Writer) *cobra.Command {
 
 // RunVersion provides the version information of keadm in format depending on arguments
 // specified in cobra.Command.
-func RunVersion(out io.Writer, cmd *cobra.Command) error {
+func RunVersion(cmd *cobra.Command) error {
 	v := version.Get()
 
 	const flag = "output"
 	of, err := cmd.Flags().GetString(flag)
 	if err != nil {
-		klog.Fatalf("error accessing flag %s for command %s: %v", flag, cmd.Name(), err)
+		fmt.Printf("error accessing flag %s for command %s: %v\n", flag, cmd.Name(), err)
+		os.Exit(1)
 	}
 
 	switch of {
 	case "":
-		fmt.Fprintf(out, "version: %#v\n", v)
+		fmt.Printf("version: %#v\n", v)
 	case "short":
-		fmt.Fprintf(out, "%s\n", v)
+		fmt.Printf("%s\n", v)
 	case "yaml":
 		y, err := yaml.Marshal(&v)
 		if err != nil {
 			return err
 		}
-		fmt.Fprintln(out, string(y))
+		fmt.Printf(string(y))
 	case "json":
 		y, err := json.MarshalIndent(&v, "", "  ")
 		if err != nil {
 			return err
 		}
-		fmt.Fprintln(out, string(y))
+		fmt.Printf(string(y))
 	default:
-		return errors.Errorf("invalid output format: %s", of)
+		return fmt.Errorf("invalid output format: %s", of)
 	}
 
 	return nil

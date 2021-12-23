@@ -21,16 +21,17 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
+	"os"
 	"path"
 	"path/filepath"
 	"runtime"
 	"time"
 
-	"github.com/ghodss/yaml"
 	"github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
+	"sigs.k8s.io/yaml"
 )
 
 func getpwd() string {
@@ -121,7 +122,7 @@ func CheckNodeReadyStatus(nodehandler, nodename string) string {
 	}
 	defer resp.Body.Close()
 
-	contents, err := ioutil.ReadAll(resp.Body)
+	contents, err := io.ReadAll(resp.Body)
 	if err != nil {
 		Fatalf("HTTP Response reading has failed: %v", err)
 		return nodeStatus
@@ -156,7 +157,7 @@ func HandleConfigmap(configName chan error, operation, confighandler string, IsE
 	} else {
 		file = path.Join(curpath, "../../performance/assets/01-configmap.yaml")
 	}
-	body, err := ioutil.ReadFile(file)
+	body, err := os.ReadFile(file)
 	if err == nil {
 		client := &http.Client{}
 		t := time.Now()
@@ -208,7 +209,7 @@ func GetConfigmap(apiConfigMap string) (int, []byte) {
 		Fatalf("Sending SenHttpRequest failed: %v", err)
 		return -1, nil
 	}
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, _ := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	return resp.StatusCode, body
 }
@@ -268,7 +269,7 @@ func GetNodes(api string) v1.NodeList {
 	}
 	defer resp.Body.Close()
 
-	contents, err := ioutil.ReadAll(resp.Body)
+	contents, err := io.ReadAll(resp.Body)
 	if err != nil {
 		Fatalf("HTTP Response reading has failed: %v", err)
 	}

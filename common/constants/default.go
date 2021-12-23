@@ -14,8 +14,10 @@ const (
 	// NodeName is for the clearer log of cloudcore.
 	NodeName = "NodeName"
 
-	KubeEdge          = "kubeedge"
-	KubeEdgeNameSpace = "kubeedge"
+	ProjectName = "KubeEdge"
+
+	SystemName      = "kubeedge"
+	SystemNamespace = SystemName
 )
 
 // Resources
@@ -45,8 +47,6 @@ const (
 	DefaultRemoteRuntimeEndpoint       = "unix:///var/run/dockershim.sock"
 	DefaultRemoteImageEndpoint         = "unix:///var/run/dockershim.sock"
 	DefaultPodSandboxImage             = "kubeedge/pause:3.1"
-	DefaultArmPodSandboxImage          = "kubeedge/pause-arm:3.1"
-	DefaultArm64PodSandboxImage        = "kubeedge/pause-arm64:3.1"
 	DefaultNodeStatusUpdateFrequency   = 10
 	DefaultImagePullProgressDeadline   = 60
 	DefaultRuntimeRequestTimeout       = 2
@@ -64,11 +64,12 @@ const (
 	DefaultVolumeStatsAggPeriod        = time.Minute
 	DefaultTunnelPort                  = 10004
 
-	CurrentSupportK8sVersion = "v1.19.3"
+	CurrentSupportK8sVersion = "v1.21.4"
 
 	// MetaManager
 	DefaultPodStatusSyncInterval = 60
 	DefaultRemoteQueryTimeout    = 60
+	DefaultMetaServerAddr        = "127.0.0.1:10550"
 
 	// Config
 	DefaultKubeContentType         = "application/vnd.kubernetes.protobuf"

@@ -30,7 +30,6 @@ import (
 	edgemessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
 	"github.com/kubeedge/kubeedge/common/constants"
-	metautil "github.com/kubeedge/kubeedge/pkg/metaserver/util"
 	"github.com/kubeedge/kubeedge/pkg/util"
 	"github.com/kubeedge/viaduct/pkg/conn"
 	"github.com/kubeedge/viaduct/pkg/mux"
@@ -49,8 +48,7 @@ const (
 
 // constants for error message
 const (
-	MsgFormatError = "message format not correct"
-	VolumePattern  = `^\w[-\w.+]*/` + constants.CSIResourceTypeVolume + `/\w[-\w.+]*`
+	VolumePattern = `^\w[-\w.+]*/` + constants.CSIResourceTypeVolume + `/\w[-\w.+]*`
 )
 
 // VolumeRegExp is used to validate the volume resource
@@ -143,7 +141,7 @@ func (mh *MessageHandle) HandleServer(container *mux.MessageContainer, writer mu
 			mh.MessageAcks.Delete(container.Message.Header.ParentID)
 		}
 		return
-	} else if container.Message.GetOperation() == "upload" && container.Message.GetGroup() == modules.UserGroup {
+	} else if container.Message.GetOperation() == beehiveModel.UploadOperation && container.Message.GetGroup() == modules.UserGroup {
 		container.Message.Router.Resource = fmt.Sprintf("node/%s/%s", nodeID, container.Message.Router.Resource)
 		beehiveContext.Send(modules.RouterModuleName, *container.Message)
 	} else {
@@ -558,7 +556,7 @@ func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model
 				klog.Errorf("Failed to update objectSync: %v, resourceType: %s, resourceNamespace: %s, resourceName: %s",
 					err, resourceType, resourceNamespace, resourceName)
 			}
-		} else if err != nil && apierrors.IsNotFound(err) {
+		} else if apierrors.IsNotFound(err) {
 			label := map[string]string{
 				"source": msg.GetSource(),
 			}
@@ -568,8 +566,8 @@ func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model
 					Labels: label,
 				},
 				Spec: v1alpha1.ObjectSyncSpec{
-					ObjectAPIVersion: metautil.GetMessageAPIVerison(msg),
-					ObjectKind:       metautil.GetMessageResourceType(msg),
+					ObjectAPIVersion: util.GetMessageAPIVersion(msg),
+					ObjectKind:       util.GetMessageResourceType(msg),
 					ObjectName:       resourceName,
 				},
 			}
@@ -582,10 +580,12 @@ func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model
 			objectSyncStatus, err := mh.crdClient.ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).Get(context.Background(), objectSyncName, metav1.GetOptions{})
 			if err != nil {
 				klog.Errorf("Failed to get objectSync: %s, err: %v", objectSyncName, err)
+				return
 			}
 			objectSyncStatus.Status.ObjectResourceVersion = msg.GetResourceVersion()
 			if _, err := mh.crdClient.ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).UpdateStatus(context.Background(), objectSyncStatus, metav1.UpdateOptions{}); err != nil {
 				klog.Errorf("Failed to update objectSync: %s, err: %v", objectSyncName, err)
+				return
 			}
 		}
 	}

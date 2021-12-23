@@ -17,7 +17,6 @@ limitations under the License.
 package manager
 
 import (
-	"io/ioutil"
 	"os"
 	"reflect"
 	"testing"
@@ -71,12 +70,12 @@ func TestNewServiceManager(t *testing.T) {
 		},
 	}
 
-	tmpfile, err := ioutil.TempFile("", "kubeconfig")
+	tmpfile, err := os.CreateTemp("", "kubeconfig")
 	if err != nil {
 		t.Error(err)
 	}
 	defer os.Remove(tmpfile.Name())
-	if err := ioutil.WriteFile(tmpfile.Name(), []byte(mockKubeConfigContent), 0666); err != nil {
+	if err := os.WriteFile(tmpfile.Name(), []byte(mockKubeConfigContent), 0666); err != nil {
 		t.Error(err)
 	}
 	client.InitKubeEdgeClient(&v1alpha1.KubeAPIConfig{

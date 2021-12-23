@@ -22,7 +22,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -266,6 +265,7 @@ func HandleAddAndDeleteDevice(operation, testMgrEndPoint string, device dttype.D
 		common.Fatalf("HTTP request is failed :%v", err)
 		return false
 	}
+	defer resp.Body.Close()
 	common.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	return true
 }
@@ -309,6 +309,7 @@ func HandleAddAndDeletePods(operation string, edgedpoint string, UID string, con
 		common.Fatalf("HTTP request is failed :%v", err)
 		return false
 	}
+	defer resp.Body.Close()
 	common.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	return true
 }
@@ -332,7 +333,7 @@ func GetPods(EdgedEndpoint string) (v1.PodList, error) {
 	}
 	common.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	defer resp.Body.Close()
-	contents, err := ioutil.ReadAll(resp.Body)
+	contents, err := io.ReadAll(resp.Body)
 	if err != nil {
 		common.Fatalf("HTTP Response reading has failed: %v", err)
 		return pods, nil

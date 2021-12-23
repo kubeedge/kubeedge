@@ -41,6 +41,8 @@ type SyncController struct {
 	informersSyncedFuncs []cache.InformerSynced
 }
 
+var _ core.Module = (*SyncController)(nil)
+
 func newSyncController(enable bool) *SyncController {
 	var sctl = &SyncController{
 		enable:     enable,
@@ -106,7 +108,7 @@ func (sctl *SyncController) Start() {
 func (sctl *SyncController) reconcile() {
 	allClusterObjectSyncs, err := sctl.clusterObjectSyncLister.List(labels.Everything())
 	if err != nil {
-		klog.Errorf("Filed to list all the ClusterObjectSyncs: %v", err)
+		klog.Errorf("Failed to list all the ClusterObjectSyncs: %v", err)
 	}
 	sctl.manageClusterObjectSync(allClusterObjectSyncs)
 

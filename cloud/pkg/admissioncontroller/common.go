@@ -3,7 +3,7 @@ package admissioncontroller
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
@@ -66,7 +66,7 @@ type hookFunc func(admissionv1beta1.AdmissionReview) *admissionv1beta1.Admission
 func serve(w http.ResponseWriter, r *http.Request, hook hookFunc) {
 	var body []byte
 	if r.Body != nil {
-		if data, err := ioutil.ReadAll(r.Body); err == nil {
+		if data, err := io.ReadAll(r.Body); err == nil {
 			body = data
 		}
 	}
@@ -74,7 +74,7 @@ func serve(w http.ResponseWriter, r *http.Request, hook hookFunc) {
 	// verify the content type is accurate
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {
-		klog.Fatalf("contentType=%s, expect application/json", contentType)
+		klog.Exitf("contentType=%s, expect application/json", contentType)
 		return
 	}
 
@@ -86,7 +86,7 @@ func serve(w http.ResponseWriter, r *http.Request, hook hookFunc) {
 
 	deserializer := codecs.UniversalDeserializer()
 	if _, _, err := deserializer.Decode(body, nil, &requestedAdmissionReview); err != nil {
-		klog.Fatalf("decode failed with error: %v", err)
+		klog.Exitf("decode failed with error: %v", err)
 		responseAdmissionReview.Response = toAdmissionResponse(err)
 	} else {
 		responseAdmissionReview.Response = hook(requestedAdmissionReview)
@@ -98,9 +98,18 @@ func serve(w http.ResponseWriter, r *http.Request, hook hookFunc) {
 
 	respBytes, err := json.Marshal(responseAdmissionReview)
 	if err != nil {
-		klog.Fatalf("cannot marshal to a valid response %v", err)
+		klog.Exitf("cannot marshal to a valid response %v", err)
 	}
 	if _, err := w.Write(respBytes); err != nil {
-		klog.Fatalf("cannot write response %v", err)
+		klog.Exitf("cannot write response %v", err)
+	}
+}
+
+// toAdmissionResponse is a helper function to create an AdmissionResponse
+func toAdmissionResponse(err error) *admissionv1beta1.AdmissionResponse {
+	return &admissionv1beta1.AdmissionResponse{
+		Result: &metav1.Status{
+			Message: err.Error(),
+		},
 	}
 }

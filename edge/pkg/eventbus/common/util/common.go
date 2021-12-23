@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
-	"io/ioutil"
 	"os"
 	"time"
 
@@ -17,6 +16,8 @@ import (
 var (
 	// TokenWaitTime to wait
 	TokenWaitTime = 120 * time.Second
+	// Loop connect to wait
+	LoopConnectPeriord = 5 * time.Second
 )
 
 // CheckKeyExist check dis info format
@@ -64,7 +65,7 @@ func HubClientInit(server, clientID, username, password string) *MQTT.ClientOpti
 			return nil
 		}
 
-		caCert, err := ioutil.ReadFile(eventconfig.Config.TLS.TLSMqttCAFile)
+		caCert, err := os.ReadFile(eventconfig.Config.TLS.TLSMqttCAFile)
 		if err != nil {
 			klog.Errorf("Failed to read TLSMqttCAFile")
 			return nil
@@ -101,6 +102,6 @@ func LoopConnect(clientID string, client MQTT.Client) {
 		} else {
 			return
 		}
-		time.Sleep(5 * time.Second)
+		time.Sleep(LoopConnectPeriord)
 	}
 }

@@ -155,9 +155,6 @@ github.com/coreos/pkg/capnslog
 github.com/cyphar/filepath-securejoin
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
-# github.com/dgrijalva/jwt-go v3.2.0+incompatible
-## explicit
-github.com/dgrijalva/jwt-go
 # github.com/docker/distribution v2.7.1+incompatible
 github.com/docker/distribution/digestset
 github.com/docker/distribution/reference
@@ -204,9 +201,6 @@ github.com/euank/go-kmsg-parser/kmsgparser
 github.com/evanphx/json-patch
 # github.com/fsnotify/fsnotify v1.4.9
 github.com/fsnotify/fsnotify
-# github.com/ghodss/yaml v1.0.0
-## explicit
-github.com/ghodss/yaml
 # github.com/go-errors/errors v1.0.1
 github.com/go-errors/errors
 # github.com/go-logr/logr v0.4.0
@@ -231,6 +225,9 @@ github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/protoc-gen-gogo/descriptor
 github.com/gogo/protobuf/sortkeys
 github.com/gogo/protobuf/types
+# github.com/golang-jwt/jwt v3.2.2+incompatible
+## explicit
+github.com/golang-jwt/jwt
 # github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e
 github.com/golang/groupcache/lru
 # github.com/golang/mock v1.4.4
@@ -346,10 +343,20 @@ github.com/json-iterator/go
 github.com/karrick/godirwalk
 # github.com/kubeedge/beehive v0.0.0 => ./staging/src/github.com/kubeedge/beehive
 ## explicit
-github.com/kubeedge/beehive/pkg/common/util
+github.com/kubeedge/beehive/pkg/common
 github.com/kubeedge/beehive/pkg/core
+github.com/kubeedge/beehive/pkg/core/channel
 github.com/kubeedge/beehive/pkg/core/context
 github.com/kubeedge/beehive/pkg/core/model
+github.com/kubeedge/beehive/pkg/core/socket
+github.com/kubeedge/beehive/pkg/core/socket/broker
+github.com/kubeedge/beehive/pkg/core/socket/config
+github.com/kubeedge/beehive/pkg/core/socket/store
+github.com/kubeedge/beehive/pkg/core/socket/synckeeper
+github.com/kubeedge/beehive/pkg/core/socket/wrapper
+github.com/kubeedge/beehive/pkg/core/socket/wrapper/packer
+github.com/kubeedge/beehive/pkg/core/socket/wrapper/reader
+github.com/kubeedge/beehive/pkg/core/socket/wrapper/writer
 # github.com/kubeedge/viaduct v0.0.0 => ./staging/src/github.com/kubeedge/viaduct
 ## explicit
 github.com/kubeedge/viaduct/pkg/api
@@ -367,7 +374,6 @@ github.com/kubeedge/viaduct/pkg/protos/message
 github.com/kubeedge/viaduct/pkg/server
 github.com/kubeedge/viaduct/pkg/smgr
 github.com/kubeedge/viaduct/pkg/translator
-github.com/kubeedge/viaduct/pkg/utils
 # github.com/kubernetes-csi/csi-lib-utils v0.6.1
 ## explicit
 github.com/kubernetes-csi/csi-lib-utils/protosanitizer
@@ -396,7 +402,7 @@ github.com/lucas-clemente/quic-go-certificates
 github.com/mailru/easyjson/buffer
 github.com/mailru/easyjson/jlexer
 github.com/mailru/easyjson/jwriter
-# github.com/mattn/go-sqlite3 v1.11.0
+# github.com/mattn/go-sqlite3 v1.14.9
 ## explicit
 github.com/mattn/go-sqlite3
 # github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369
@@ -516,7 +522,6 @@ github.com/paypal/gatt/xpc
 # github.com/peterbourgon/diskv v2.0.1+incompatible
 github.com/peterbourgon/diskv
 # github.com/pkg/errors v0.9.1
-## explicit
 github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
@@ -537,8 +542,6 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
-# github.com/satori/go.uuid v1.2.0
-github.com/satori/go.uuid
 # github.com/seccomp/libseccomp-golang v0.9.1
 github.com/seccomp/libseccomp-golang
 # github.com/shirou/gopsutil v2.20.9+incompatible
@@ -561,7 +564,6 @@ github.com/spf13/pflag
 # github.com/stretchr/objx v0.2.0
 github.com/stretchr/objx
 # github.com/stretchr/testify v1.6.1
-## explicit
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/mock
 # github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635
@@ -793,7 +795,6 @@ gopkg.in/tomb.v1
 # gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637
 gopkg.in/tomb.v2
 # gopkg.in/yaml.v2 v2.4.0
-## explicit
 gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
 gopkg.in/yaml.v3
@@ -846,13 +847,6 @@ k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
 # k8s.io/apiextensions-apiserver v0.21.4
 ## explicit
-k8s.io/apiextensions-apiserver/pkg/apis/apiextensions
-k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1
-k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1
-k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset
-k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme
-k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1
-k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1
 k8s.io/apiextensions-apiserver/pkg/crdserverscheme
 # k8s.io/apimachinery v0.21.4
 ## explicit
@@ -1803,7 +1797,6 @@ sigs.k8s.io/yaml
 # github.com/Sirupsen/logrus v1.0.5 => github.com/sirupsen/logrus v1.0.5
 # github.com/Sirupsen/logrus v1.3.0 => github.com/Sirupsen/logrus v1.0.6
 # github.com/Sirupsen/logrus v1.4.0 => github.com/sirupsen/logrus v1.0.6
-# github.com/apache/servicecomb-kie v0.1.0 => github.com/apache/servicecomb-kie v0.0.0-20190905062319-5ee098c8886f
 # github.com/gopherjs/gopherjs v0.0.0 => github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e
 # github.com/kubeedge/beehive => ./staging/src/github.com/kubeedge/beehive
 # github.com/kubeedge/viaduct => ./staging/src/github.com/kubeedge/viaduct

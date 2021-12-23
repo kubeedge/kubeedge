@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math"
 	"net/http"
 	"os/exec"
@@ -238,7 +237,7 @@ func AddFakePod(ControllerHubURL string, pod types.FakePod) {
 	if resp != nil {
 		defer resp.Body.Close()
 
-		contents, err := ioutil.ReadAll(resp.Body)
+		contents, err := io.ReadAll(resp.Body)
 		if err != nil {
 			utils.Fatalf("HTTP Response reading has failed: %v", err)
 		}
@@ -264,7 +263,7 @@ func DeleteFakePod(ControllerHubURL string, pod types.FakePod) {
 	if resp != nil {
 		defer resp.Body.Close()
 
-		contents, err := ioutil.ReadAll(resp.Body)
+		contents, err := io.ReadAll(resp.Body)
 		if err != nil {
 			utils.Fatalf("HTTP Response reading has failed: %v", err)
 		}
@@ -288,7 +287,7 @@ func ListFakePods(ControllerHubURL string) []types.FakePod {
 	if resp != nil {
 		defer resp.Body.Close()
 
-		contents, err := ioutil.ReadAll(resp.Body)
+		contents, err := io.ReadAll(resp.Body)
 		if err != nil {
 			utils.Fatalf("HTTP Response reading has failed: %v", err)
 		}

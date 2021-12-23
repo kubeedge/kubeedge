@@ -3,10 +3,10 @@ package smgr
 import (
 	"io"
 
+	"github.com/lucas-clemente/quic-go"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/viaduct/pkg/api"
-	"github.com/lucas-clemente/quic-go"
 )
 
 // wrapper for session manager

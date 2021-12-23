@@ -19,7 +19,7 @@ package controllerstub
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sync"
 	"time"
@@ -118,7 +118,7 @@ func (pm *PodManager) PodHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		var p types.FakePod
 		// Get request body
 		if req.Body != nil {
-			body, err := ioutil.ReadAll(req.Body)
+			body, err := io.ReadAll(req.Body)
 			if err != nil {
 				klog.Errorf("Read body error %v", err)
 				if _, err := w.Write([]byte("Read request body error")); err != nil {

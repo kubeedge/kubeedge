@@ -20,6 +20,8 @@ type DeviceTwin struct {
 	enable            bool
 }
 
+var _ core.Module = (*DeviceTwin)(nil)
+
 func newDeviceTwin(enable bool) *DeviceTwin {
 	return &DeviceTwin{
 		HeartBeatToModule: make(map[string]chan interface{}),

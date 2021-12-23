@@ -2,15 +2,14 @@ package client
 
 import (
 	"fmt"
-	"io/ioutil"
-
-	"k8s.io/klog/v2"
+	"io"
 
 	"github.com/gorilla/websocket"
+	"k8s.io/klog/v2"
+
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/conn"
 	"github.com/kubeedge/viaduct/pkg/lane"
-	"github.com/kubeedge/viaduct/pkg/utils"
 )
 
 // the client based on websocket
@@ -58,7 +57,7 @@ func (c *WSClient) Connect() (conn.Connection, error) {
 			CtrlLane: lane.NewLane(api.ProtocolTypeWS, wsConn),
 			State: &conn.ConnectionState{
 				State:   api.StatConnected,
-				Headers: utils.DeepCopyHeader(c.exOpts.Header),
+				Headers: c.exOpts.Header.Clone(),
 			},
 			AutoRoute: c.options.AutoRoute,
 		}), nil
@@ -67,7 +66,7 @@ func (c *WSClient) Connect() (conn.Connection, error) {
 	// something wrong!!
 	var respMsg string
 	if resp != nil {
-		body, errRead := ioutil.ReadAll(resp.Body)
+		body, errRead := io.ReadAll(resp.Body)
 		if errRead == nil {
 			respMsg = fmt.Sprintf("response code: %d, response body: %s", resp.StatusCode, string(body))
 		} else {

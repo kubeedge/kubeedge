@@ -10,7 +10,7 @@ import (
 
 // LocationCache cache the map of node, pod, configmap, secret
 type LocationCache struct {
-	// EdgeNodes is a map, key is nodeName, value is Status
+	// EdgeNodes is a set, key is nodeName
 	EdgeNodes sync.Map
 	// configMapNode is a map, key is namespace/configMapName, value is nodeName
 	configMapNode sync.Map
@@ -130,16 +130,9 @@ func (lc *LocationCache) IsEdgeNode(nodeName string) bool {
 	return ok
 }
 
-//
-func (lc *LocationCache) GetNodeStatus(nodeName string) (string, bool) {
-	value, ok := lc.EdgeNodes.Load(nodeName)
-	status, ok := value.(string)
-	return status, ok
-}
-
 // UpdateEdgeNode is to maintain edge nodes name upto-date by querying kubernetes client
-func (lc *LocationCache) UpdateEdgeNode(nodeName string, status string) {
-	lc.EdgeNodes.Store(nodeName, status)
+func (lc *LocationCache) UpdateEdgeNode(nodeName string) {
+	lc.EdgeNodes.Store(nodeName, struct{}{})
 }
 
 // DeleteConfigMap from cache

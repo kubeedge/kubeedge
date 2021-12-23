@@ -1,11 +1,13 @@
 package model
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"time"
 
-	uuid "github.com/satori/go.uuid"
+	uuid "github.com/google/uuid"
 )
 
 // Constants for database operations and resource type settings
@@ -14,6 +16,7 @@ const (
 	DeleteOperation        = "delete"
 	QueryOperation         = "query"
 	UpdateOperation        = "update"
+	UploadOperation        = "upload"
 	ResponseOperation      = "response"
 	ResponseErrorOperation = "error"
 
@@ -41,6 +44,8 @@ type Message struct {
 type MessageRoute struct {
 	// where the message come from
 	Source string `json:"source,omitempty"`
+	// where the message will send to
+	Destination string `json:"destination,omitempty"`
 	// where the message will broadcast to
 	Group string `json:"group,omitempty"`
 
@@ -65,6 +70,9 @@ type MessageHeader struct {
 	ResourceVersion string `json:"resourceversion,omitempty"`
 	// the flag will be set in sendsync
 	Sync bool `json:"sync,omitempty"`
+	// message type indicates the context type that delivers the message, such as channel, unixsocket, etc.
+	// if the value is empty, the channel context type will be used.
+	MessageType string `json:"type,omitempty"`
 }
 
 // BuildRouter sets route and resource operation in message
@@ -72,6 +80,28 @@ func (msg *Message) BuildRouter(source, group, res, opr string) *Message {
 	msg.SetRoute(source, group)
 	msg.SetResourceOperation(res, opr)
 	return msg
+}
+
+// SetType set message context type
+func (msg *Message) SetType(msgType string) *Message {
+	msg.Header.MessageType = msgType
+	return msg
+}
+
+// SetDestination set destination
+func (msg *Message) SetDestination(dest string) *Message {
+	msg.Router.Destination = dest
+	return msg
+}
+
+// GetType get message context type
+func (msg *Message) GetType() string {
+	return msg.Header.MessageType
+}
+
+// IsEmpty is empty
+func (msg *Message) IsEmpty() bool {
+	return reflect.DeepEqual(msg, &Message{})
 }
 
 // SetResourceOperation sets router resource and operation in message
@@ -159,7 +189,7 @@ func (msg *Message) GetResourceVersion() string {
 
 // UpdateID returns message object updating its ID
 func (msg *Message) UpdateID() *Message {
-	msg.Header.ID = uuid.NewV4().String()
+	msg.Header.ID = uuid.New().String()
 	return msg
 }
 
@@ -187,7 +217,7 @@ func NewRawMessage() *Message {
 // model.NewMessage().BuildRouter().FillBody()
 func NewMessage(parentID string) *Message {
 	msg := &Message{}
-	msg.Header.ID = uuid.NewV4().String()
+	msg.Header.ID = uuid.New().String()
 	msg.Header.ParentID = parentID
 	msg.Header.Timestamp = time.Now().UnixNano() / 1e6
 	return msg
@@ -196,7 +226,7 @@ func NewMessage(parentID string) *Message {
 // Clone a message
 // only update message id
 func (msg *Message) Clone(message *Message) *Message {
-	msgID := uuid.NewV4().String()
+	msgID := uuid.New().String()
 	return NewRawMessage().BuildHeader(msgID, message.GetParentID(), message.GetTimestamp()).
 		BuildRouter(message.GetSource(), message.GetGroup(), message.GetResource(), message.GetOperation()).
 		FillBody(message.GetContent())
@@ -206,6 +236,7 @@ func (msg *Message) Clone(message *Message) *Message {
 func (msg *Message) NewRespByMessage(message *Message, content interface{}) *Message {
 	return NewMessage(message.GetID()).SetRoute(message.GetSource(), message.GetGroup()).
 		SetResourceOperation(message.GetResource(), ResponseOperation).
+		SetType(message.GetType()).
 		FillBody(content)
 }
 
@@ -214,4 +245,21 @@ func NewErrorMessage(message *Message, errContent string) *Message {
 	return NewMessage(message.Header.ParentID).
 		SetResourceOperation(message.Router.Resource, ResponseErrorOperation).
 		FillBody(errContent)
+}
+
+// GetDestination get destination
+func (msg *Message) GetDestination() string {
+	return msg.Router.Destination
+}
+
+// String the content that you want to send
+func (msg *Message) String() string {
+	var buffer bytes.Buffer
+	buffer.WriteString("MessageID: " + msg.GetID())
+	buffer.WriteString(" ParentID: " + msg.GetParentID())
+	buffer.WriteString(" Source: " + msg.GetSource())
+	buffer.WriteString(" Destination: " + msg.GetDestination())
+	buffer.WriteString(" Resource: " + msg.GetResource())
+	buffer.WriteString(" Operation: " + msg.GetOperation())
+	return buffer.String()
 }

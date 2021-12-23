@@ -657,10 +657,10 @@ func TestDealDeviceTwinTrans(t *testing.T) {
 			deviceID:         deviceB,
 			msgTwin:          msgTwin,
 			dealType:         RestDealType,
-			err:              errors.New("Failed DB Operation"),
+			err:              errors.New("failed DB Operation"),
 			filterReturn:     mockQuerySeter,
 			insertReturnInt:  int64(1),
-			insertReturnErr:  errors.New("Failed DB Operation"),
+			insertReturnErr:  errors.New("failed DB Operation"),
 			deleteReturnInt:  int64(1),
 			deleteReturnErr:  nil,
 			updateReturnInt:  int64(1),
@@ -743,7 +743,7 @@ func TestDealVersion(t *testing.T) {
 			reqVersion: &twinCloudVersion,
 			dealType:   SyncDealType,
 			errorWant:  false,
-			err:        errors.New("Not allowed to sync due to version conflict"),
+			err:        errors.New("not allowed to sync due to version conflict"),
 		},
 	}
 	for _, test := range tests {
@@ -1144,7 +1144,7 @@ func TestDealTwinAdd(t *testing.T) {
 			deviceID: deviceA,
 			key:      key1,
 			dealType: RestDealType,
-			err:      errors.New("The request body is wrong"),
+			err:      errors.New("the request body is wrong"),
 		},
 		{
 			name: "TestDealTwinAdd(): Case 2: msgTwin.Expected is not nil; dealVersion() returns false",

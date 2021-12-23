@@ -67,8 +67,9 @@ stream() {
     readonly STREAM_KEY_FILE=${certPath}/stream.key
     readonly STREAM_CSR_FILE=${certPath}/stream.csr
     readonly STREAM_CRT_FILE=${certPath}/stream.crt
-    readonly K8SCA_FILE=/etc/kubernetes/pki/ca.crt
-    readonly K8SCA_KEY_FILE=/etc/kubernetes/pki/ca.key
+
+    readonly K8SCA_FILE=${K8SCA_FILE:-/etc/kubernetes/pki/ca.crt}
+    readonly K8SCA_KEY_FILE=${K8SCA_KEY_FILE:-/etc/kubernetes/pki/ca.key}
 
     if [ -z ${CLOUDCOREIPS} ]; then
         echo "You must set CLOUDCOREIPS Env,The environment variable is set to specify the IP addresses of all cloudcore"
@@ -84,7 +85,7 @@ stream() {
         SUBJECTALTNAME="${SUBJECTALTNAME}IP.${index}:${ip}"
     done
 
-    cp /etc/kubernetes/pki/ca.crt ${caPath}/streamCA.crt
+    cp ${K8SCA_FILE} ${caPath}/streamCA.crt
     echo $SUBJECTALTNAME > /tmp/server-extfile.cnf
 
     openssl genrsa -out ${STREAM_KEY_FILE}  2048

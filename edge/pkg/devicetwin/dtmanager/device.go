@@ -3,6 +3,7 @@ package dtmanager
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -96,23 +97,27 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 	}
 	lastOnline := time.Now().Format("2006-01-02 15:04:05")
 	for i := 1; i <= dtcommon.RetryTimes; i++ {
-		err = dtclient.UpdateDeviceField(device.ID, "state", updatedDevice.State)
-		err = dtclient.UpdateDeviceField(device.ID, "last_online", lastOnline)
+		err = dtclient.UpdateDeviceFields(
+			device.ID,
+			map[string]interface{}{
+				"last_online": lastOnline,
+				"state":       updatedDevice.State,
+			})
 		if err == nil {
 			break
 		}
 		time.Sleep(dtcommon.RetryInterval)
 	}
 	if err != nil {
-
+		return err
 	}
 	device.State = updatedDevice.State
 	device.LastOnline = lastOnline
 	payload, err := dttype.BuildDeviceState(dttype.BuildBaseMessage(), *device)
 	if err != nil {
-
+		return err
 	}
-	topic := dtcommon.DeviceETPrefix + device.ID + dtcommon.DeviceETStateUpdateSuffix + "/result"
+	topic := dtcommon.DeviceETPrefix + device.ID + dtcommon.DeviceETStateUpdateResultSuffix
 	context.Send(device.ID,
 		dtcommon.SendToEdge,
 		dtcommon.CommModule,
@@ -159,6 +164,9 @@ func UpdateDeviceAttr(context *dtcontext.DTContext, deviceID string, attributes 
 		return nil, nil
 	}
 	dealAttrResult := DealMsgAttr(context, Device.ID, attributes, dealType)
+	if dealAttrResult.Err != nil {
+		return nil, nil
+	}
 	add, delete, update, result := dealAttrResult.Add, dealAttrResult.Delete, dealAttrResult.Update, dealAttrResult.Result
 	if len(add) != 0 || len(delete) != 0 || len(update) != 0 {
 		for i := 1; i <= dtcommon.RetryTimes; i++ {
@@ -194,7 +202,9 @@ func UpdateDeviceAttr(context *dtcontext.DTContext, deviceID string, attributes 
 func DealMsgAttr(context *dtcontext.DTContext, deviceID string, msgAttrs map[string]*dttype.MsgAttr, dealType int) dttype.DealAttrResult {
 	device, ok := context.GetDevice(deviceID)
 	if !ok {
-
+		return dttype.DealAttrResult{
+			Err: fmt.Errorf("can not get deviceID %s in DealMsgAttr", deviceID),
+		}
 	}
 	attrs := device.Attributes
 	if attrs == nil {

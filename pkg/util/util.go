@@ -23,11 +23,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	utilnet "k8s.io/apimachinery/pkg/util/net"
-	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/apis/core/validation"
 
 	"github.com/kubeedge/kubeedge/common/constants"
@@ -105,7 +103,6 @@ func Command(name string, arg []string) (string, error) {
 	cmd := exec.Command(name, arg...)
 	ret, err := cmd.Output()
 	if err != nil {
-		klog.Errorf("exec command failed: %v", err)
 		return string(ret), err
 	}
 	return strings.Trim(string(ret), "\n"), nil
@@ -130,18 +127,6 @@ func SpliceErrors(errors []error) string {
 	}
 	stb.WriteString("]\n")
 	return stb.String()
-}
-
-// GetPodSandboxImage return snadbox image name based on arch, default image is for amd64.
-func GetPodSandboxImage() string {
-	switch runtime.GOARCH {
-	case "arm":
-		return constants.DefaultArmPodSandboxImage
-	case "arm64":
-		return constants.DefaultArm64PodSandboxImage
-	default:
-		return constants.DefaultPodSandboxImage
-	}
 }
 
 // GetHostname returns a reasonable hostname

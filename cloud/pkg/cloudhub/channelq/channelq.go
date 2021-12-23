@@ -51,7 +51,7 @@ func (q *ChannelMessageQueue) DispatchMessage() {
 	for {
 		select {
 		case <-beehiveContext.Done():
-			klog.Warning("Cloudhub channel eventqueue dispatch message loop stoped")
+			klog.Warning("Cloudhub channel eventqueue dispatch message loop stopped")
 			return
 		default:
 		}
@@ -171,7 +171,8 @@ func isListResource(msg *beehiveModel.Message) bool {
 	if strings.Contains(msgResource, beehiveModel.ResourceTypePodlist) ||
 		strings.Contains(msgResource, "membership") ||
 		strings.Contains(msgResource, "twin/cloud_updated") ||
-		strings.Contains(msgResource, beehiveModel.ResourceTypeServiceAccountToken) {
+		strings.Contains(msgResource, beehiveModel.ResourceTypeServiceAccountToken) ||
+		isVolumeOperation(msg.GetOperation()) {
 		return true
 	}
 
@@ -197,6 +198,13 @@ func isListResource(msg *beehiveModel.Message) bool {
 	}
 
 	return false
+}
+
+func isVolumeOperation(op string) bool {
+	return op == commonconst.CSIOperationTypeCreateVolume ||
+		op == commonconst.CSIOperationTypeDeleteVolume ||
+		op == commonconst.CSIOperationTypeControllerPublishVolume ||
+		op == commonconst.CSIOperationTypeControllerUnpublishVolume
 }
 
 func isDeleteMessage(msg *beehiveModel.Message) bool {
@@ -268,7 +276,7 @@ func (q *ChannelMessageQueue) Close(info *model.HubInfo) {
 	_, listStoreExit := q.listStorePool.Load(info.NodeID)
 
 	if !queueExist && !storeExist && !listQueueExist && !listStoreExit {
-		klog.Warningf("rChannel for edge node %s is already removed", info.NodeID)
+		klog.Warningf("Channel for edge node %s is already removed", info.NodeID)
 		return
 	}
 

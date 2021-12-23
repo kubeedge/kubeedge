@@ -1,4 +1,5 @@
 /*
+Copyright 2019 The KubeEdge Authors.
 Copyright 2014 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -91,8 +92,6 @@ type UpstreamController struct {
 	crdClient    crdClientset.Interface
 
 	config v1alpha1.EdgeController
-
-	TunnelPort int
 
 	// message channel
 	nodeStatusChan            chan model.Message
@@ -272,7 +271,7 @@ func (uc *UpstreamController) updateRuleStatus() {
 				klog.Warningf("message: %s process failure, content marshal err: %s", msg.GetID(), err)
 				continue
 			}
-			var data []byte = []byte(body)
+			var data = []byte(body)
 			_, err = uc.crdClient.RulesV1().Rules(namespace).Patch(context.Background(), ruleID, controller.MergePatchType, data, metaV1.PatchOptions{})
 			if err != nil {
 				klog.Warningf("message: %s process failure, update ruleStatus failed with error: %s, namespace: %s, name: %s", msg.GetID(), err, namespace, ruleID)
@@ -391,7 +390,6 @@ func (uc *UpstreamController) updatePodStatus() {
 // createNode create new edge node to kubernetes
 func (uc *UpstreamController) createNode(name string, node *v1.Node) (*v1.Node, error) {
 	node.Name = name
-	node.Status.DaemonEndpoints.KubeletEndpoint.Port = int32(uc.TunnelPort)
 	return uc.kubeClient.CoreV1().Nodes().Create(context.Background(), node, metaV1.CreateOptions{})
 }
 
@@ -480,10 +478,6 @@ func (uc *UpstreamController) updateNodeStatus() {
 					if time.Since(nodeStatusRequest.Status.Conditions[i].LastHeartbeatTime.Time) > time.Duration(uc.config.NodeUpdateFrequency)*time.Second {
 						nodeStatusRequest.Status.Conditions[i].LastHeartbeatTime = metaV1.NewTime(time.Now())
 					}
-
-					if time.Since(nodeStatusRequest.Status.Conditions[i].LastTransitionTime.Time) > time.Duration(uc.config.NodeUpdateFrequency)*time.Second {
-						nodeStatusRequest.Status.Conditions[i].LastTransitionTime = metaV1.NewTime(time.Now())
-					}
 				}
 
 				if getNode.Annotations == nil {
@@ -511,10 +505,11 @@ func (uc *UpstreamController) updateNodeStatus() {
 				// Keep the same "VolumesAttached" attribute with upstream,
 				// since this value is maintained by kube-controller-manager.
 				nodeStatusRequest.Status.VolumesAttached = getNode.Status.VolumesAttached
+				if getNode.Status.DaemonEndpoints.KubeletEndpoint.Port != 0 {
+					nodeStatusRequest.Status.DaemonEndpoints.KubeletEndpoint.Port = getNode.Status.DaemonEndpoints.KubeletEndpoint.Port
+				}
 
 				getNode.Status = nodeStatusRequest.Status
-
-				getNode.Status.DaemonEndpoints.KubeletEndpoint.Port = int32(uc.TunnelPort)
 
 				node, err := uc.kubeClient.CoreV1().Nodes().UpdateStatus(context.Background(), getNode, metaV1.UpdateOptions{})
 				if err != nil {
@@ -573,7 +568,7 @@ func kubeClientGet(uc *UpstreamController, namespace string, name string, queryT
 	case model.ResourceTypeServiceAccountToken:
 		obj, err = uc.getServiceAccountToken(namespace, name, msg)
 	default:
-		err := stderrors.New("Wrong query type")
+		err := stderrors.New("wrong query type")
 		klog.Error(err)
 		return nil, err
 	}

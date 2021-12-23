@@ -25,7 +25,6 @@ package edged
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -160,7 +159,7 @@ func (e *edged) getPodVolumePathListFromDisk(podUID types.UID) ([]string, error)
 		return volumes, nil
 	}
 
-	volumePluginDirs, err := ioutil.ReadDir(podVolDir)
+	volumePluginDirs, err := os.ReadDir(podVolDir)
 	if err != nil {
 		klog.Errorf("Could not read directory %s: %v", podVolDir, err)
 		return volumes, err
