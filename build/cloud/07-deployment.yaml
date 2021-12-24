@@ -26,14 +26,17 @@ spec:
             - containerPort: 10000
               name: cloudhub
               protocol: TCP
+            - containerPort: 10001
+              name: cloudhub-quic
+              protocol: TCP
             - containerPort: 10002
-              name: certandreadyz
+              name: cloudhub-https
               protocol: TCP
             - containerPort: 10003
-              name: stream
+              name: cloudstream
               protocol: TCP
             - containerPort: 10004
-              name: tunnel
+              name: tunnelport
               protocol: TCP
           resources:
             limits:
