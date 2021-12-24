@@ -6,7 +6,7 @@ There are several ways to achieve the HA of cloudcore, for example, ingress, kee
 
 ## Determine the virtual IP of CloudCore
 
-Determine a VIP that the CloudCore service exposed to the edge nodes. Here we recommend `keepalived` to do that. You had better directly schedule pods to specific number of nodes by `nodeSelector` when using  `keepalived`. And you have  to install `keepalived` in each of nodes where CloudCore runs. The configuration of `keepalived` is shown in the end. Here suppose the VIP is 10.10.102.242.
+Determine a VIP that the CloudCore service exposed to the edge nodes. Here we recommend `keepalived` to do that. You had better directly schedule pods to specific number of nodes by `nodeSelector` when using  `keepalived`. And you have  to install `keepalived` in each of nodes where CloudCore runs. The configuration of `keepalived` is shown in the end. Here suppose the VIP is 10.10.102.242,and suppose the three nodes are: 10.10.102.101, 10.10.102.102 and 10.10.102.103.
 
 The use of `nodeSelector` is as follow:
 
