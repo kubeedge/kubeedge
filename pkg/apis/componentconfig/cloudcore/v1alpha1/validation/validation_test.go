@@ -129,7 +129,7 @@ func TestValidateModuleCloudHub(t *testing.T) {
 			name: "case4 invalid websocket addr",
 			input: v1alpha1.CloudHub{
 				Enable:      true,
-				BindAddress: "xxx.xxx.xxx.xxx",
+				BindAddress: "127.0.0.1",
 				HTTPS: &v1alpha1.CloudHubHTTPS{
 					Port: 10000,
 				},
@@ -172,7 +172,7 @@ func TestValidateModuleCloudHub(t *testing.T) {
 			expected: field.ErrorList{field.Invalid(field.NewPath("port"), uint32(0), "must be between 1 and 65535, inclusive")},
 		},
 		{
-			name: "case6 invalid websocket addr",
+			name: "case6 invalid quic addr",
 			input: v1alpha1.CloudHub{
 				Enable:      true,
 				BindAddress: "127.0.0.1",

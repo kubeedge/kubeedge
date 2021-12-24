@@ -72,13 +72,13 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 				},
 				WebSocket: &CloudHubWebSocket{
 					Enable:  true,
-					Address: "0.0.0.0",
 					Port:    10000,
+					Address: "0.0.0.0",
 				},
 				HTTPS: &CloudHubHTTPS{
 					Enable:  true,
-					Address: "0.0.0.0",
 					Port:    10002,
+					Address: "0.0.0.0",
 				},
 			},
 			EdgeController: &EdgeController{
@@ -205,13 +205,13 @@ func NewMinCloudCoreConfig() *CloudCoreConfig {
 				},
 				WebSocket: &CloudHubWebSocket{
 					Enable:  true,
-					Address: "0.0.0.0",
 					Port:    10000,
+					Address: "0.0.0.0",
 				},
 				HTTPS: &CloudHubHTTPS{
 					Enable:  true,
-					Address: "0.0.0.0",
 					Port:    10002,
+					Address: "0.0.0.0",
 				},
 			},
 			Router: &Router{
