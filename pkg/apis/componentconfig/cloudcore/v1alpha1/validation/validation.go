@@ -68,18 +68,17 @@ func ValidateModuleCloudHub(c v1alpha1.CloudHub) field.ErrorList {
 		}
 	}
 	if len(validAddress) > 0 {
-		for _, m := range validAddress {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("Address"), c.BindAddress, m))
-		}
-	}
-	if len(validWSAddress) > 0 {
-		for _, m := range validWSAddress {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("Address"), c.WebSocket.Address, m))
-		}
-	}
-	if len(validQAddress) > 0 {
-		for _, m := range validQAddress {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("Address"), c.Quic.Address, m))
+		if len(validWSAddress) > 0 || len(validQAddress) > 0 {
+			for _, m := range validWSAddress {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("Address"), c.WebSocket.Address, m))
+			}
+			for _, m := range validQAddress {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("Address"), c.Quic.Address, m))
+			}
+		} else {
+			for _, m := range validAddress {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("Address"), c.BindAddress, m))
+			}
 		}
 	}
 

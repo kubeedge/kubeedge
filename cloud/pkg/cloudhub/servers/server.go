@@ -53,13 +53,19 @@ func createTLSConfig(ca, cert, key []byte) tls.Config {
 
 func startWebsocketServer() {
 	tlsConfig := createTLSConfig(hubconfig.Config.Ca, hubconfig.Config.Cert, hubconfig.Config.Key)
+	var addr string
+	if hubconfig.Config.BindAddress != "" {
+		addr = fmt.Sprintf("%s:%d", hubconfig.Config.BindAddress, hubconfig.Config.WebSocket.Port)
+	} else {
+		addr = fmt.Sprintf("%s:%d", hubconfig.Config.WebSocket.Address, hubconfig.Config.WebSocket.Port)
+	}
 
 	svc := server.Server{
 		Type:       api.ProtocolTypeWS,
 		TLSConfig:  &tlsConfig,
 		AutoRoute:  true,
 		ConnNotify: handler.CloudhubHandler.OnRegister,
-		Addr:       fmt.Sprintf("%s:%d", hubconfig.Config.BindAddress, hubconfig.Config.WebSocket.Port),
+		Addr:       addr,
 		ExOpts:     api.WSServerOption{Path: "/"},
 	}
 	klog.Infof("Starting cloudhub %s server", api.ProtocolTypeWS)
@@ -68,13 +74,19 @@ func startWebsocketServer() {
 
 func startQuicServer() {
 	tlsConfig := createTLSConfig(hubconfig.Config.Ca, hubconfig.Config.Cert, hubconfig.Config.Key)
+	var addr string
+	if hubconfig.Config.BindAddress != "" {
+		addr = fmt.Sprintf("%s:%d", hubconfig.Config.BindAddress, hubconfig.Config.WebSocket.Port)
+	} else {
+		addr = fmt.Sprintf("%s:%d", hubconfig.Config.BindAddress, hubconfig.Config.Quic.Port)
+	}
 
 	svc := server.Server{
 		Type:       api.ProtocolTypeQuic,
 		TLSConfig:  &tlsConfig,
 		AutoRoute:  true,
 		ConnNotify: handler.CloudhubHandler.OnRegister,
-		Addr:       fmt.Sprintf("%s:%d", hubconfig.Config.BindAddress, hubconfig.Config.Quic.Port),
+		Addr:       addr,
 		ExOpts:     api.QuicServerOption{MaxIncomingStreams: int(hubconfig.Config.Quic.MaxIncomingStreams)},
 	}
 
