@@ -62,6 +62,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 				TokenRefreshDuration:    12,
 				Quic: &CloudHubQUIC{
 					Enable:             false,
+					Address:            "0.0.0.0",
 					Port:               10001,
 					MaxIncomingStreams: 10000,
 				},
@@ -70,12 +71,14 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					Address: "unix:///var/lib/kubeedge/kubeedge.sock",
 				},
 				WebSocket: &CloudHubWebSocket{
-					Enable: true,
-					Port:   10000,
+					Enable:  true,
+					Address: "0.0.0.0",
+					Port:    10000,
 				},
 				HTTPS: &CloudHubHTTPS{
-					Enable: true,
-					Port:   10002,
+					Enable:  true,
+					Address: "0.0.0.0",
+					Port:    10002,
 				},
 			},
 			EdgeController: &EdgeController{
@@ -201,12 +204,14 @@ func NewMinCloudCoreConfig() *CloudCoreConfig {
 					Address: "unix:///var/lib/kubeedge/kubeedge.sock",
 				},
 				WebSocket: &CloudHubWebSocket{
-					Enable: true,
-					Port:   10000,
+					Enable:  true,
+					Address: "0.0.0.0",
+					Port:    10000,
 				},
 				HTTPS: &CloudHubHTTPS{
-					Enable: true,
-					Port:   10002,
+					Enable:  true,
+					Address: "0.0.0.0",
+					Port:    10002,
 				},
 			},
 			Router: &Router{

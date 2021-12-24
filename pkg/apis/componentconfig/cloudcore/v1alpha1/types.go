@@ -147,6 +147,10 @@ type CloudHubQUIC struct {
 	// Enable indicates whether enable quic protocol
 	// default false
 	Enable bool `json:"enable"`
+	// Address set server ip address
+	// default 0.0.0.0
+	//TODO: remove this field at v1.13, be replaced by CloudHub.BindAddress
+	Address string `json:"address,omitempty"`
 	// Port set open port for quic server
 	// default 10001
 	Port uint32 `json:"port,omitempty"`
@@ -170,6 +174,10 @@ type CloudHubWebSocket struct {
 	// Enable indicates whether enable websocket protocol
 	// default true
 	Enable bool `json:"enable"`
+	// Address indicates server ip address
+	// default 0.0.0.0
+	//TODO: remove this field at v1.13, be replaced by CloudHub.BindAddress
+	Address string `json:"address,omitempty"`
 	// Port indicates the open port for websocket server
 	// default 10000
 	Port uint32 `json:"port,omitempty"`
@@ -180,6 +188,10 @@ type CloudHubHTTPS struct {
 	// Enable indicates whether enable Https protocol
 	// default true
 	Enable bool `json:"enable"`
+	// Address indicates server ip address
+	// default 0.0.0.0
+	//TODO: remove this field at v1.13, be replaced by CloudHub.BindAddress
+	Address string `json:"address,omitempty"`
 	// Port indicates the open port for HTTPS server
 	// default 10002
 	Port uint32 `json:"port,omitempty"`
