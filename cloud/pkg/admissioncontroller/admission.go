@@ -4,8 +4,8 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 	admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1beta1"
@@ -83,7 +83,7 @@ func Run(opt *options.AdmissionOptions) {
 	controller.Client = cli
 	controller.CrdClient = vcli
 
-	caBundle, err := ioutil.ReadFile(opt.CaCertFile)
+	caBundle, err := os.ReadFile(opt.CaCertFile)
 	if err != nil {
 		klog.Exitf("Unable to read cacert file: %v\n", err)
 	}

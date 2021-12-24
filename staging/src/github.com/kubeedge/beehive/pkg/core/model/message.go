@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"time"
 
-	uuid "github.com/satori/go.uuid"
+	uuid "github.com/google/uuid"
 )
 
 // Constants for database operations and resource type settings
@@ -189,7 +189,7 @@ func (msg *Message) GetResourceVersion() string {
 
 // UpdateID returns message object updating its ID
 func (msg *Message) UpdateID() *Message {
-	msg.Header.ID = uuid.NewV4().String()
+	msg.Header.ID = uuid.New().String()
 	return msg
 }
 
@@ -217,7 +217,7 @@ func NewRawMessage() *Message {
 // model.NewMessage().BuildRouter().FillBody()
 func NewMessage(parentID string) *Message {
 	msg := &Message{}
-	msg.Header.ID = uuid.NewV4().String()
+	msg.Header.ID = uuid.New().String()
 	msg.Header.ParentID = parentID
 	msg.Header.Timestamp = time.Now().UnixNano() / 1e6
 	return msg
@@ -226,7 +226,7 @@ func NewMessage(parentID string) *Message {
 // Clone a message
 // only update message id
 func (msg *Message) Clone(message *Message) *Message {
-	msgID := uuid.NewV4().String()
+	msgID := uuid.New().String()
 	return NewRawMessage().BuildHeader(msgID, message.GetParentID(), message.GetTimestamp()).
 		BuildRouter(message.GetSource(), message.GetGroup(), message.GetResource(), message.GetOperation()).
 		FillBody(message.GetContent())

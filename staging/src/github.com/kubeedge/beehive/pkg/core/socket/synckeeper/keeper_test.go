@@ -15,7 +15,8 @@ func TestNewKeeper(t *testing.T) {
 	go func() {
 		err := keeper.SendToKeepChannel(*message.NewRespByMessage(message, "response"))
 		if err != nil {
-			t.Fatalf("failed to send to keeper")
+			t.Errorf("failed to send to keeper")
+			return
 		}
 	}()
 

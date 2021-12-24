@@ -46,7 +46,7 @@ func (r *RpmOS) SetKubeEdgeVersion(version semver.Version) {
 // Information is used from https://www.digitalocean.com/community/tutorials/how-to-install-and-secure-the-mosquitto-mqtt-messaging-broker-on-centos-7
 func (r *RpmOS) InstallMQTT() error {
 	// check MQTT
-	cmd := NewCommand("ps aux |awk '/mosquitto/ {print $1}' | awk '/mosquit/ {print}'")
+	cmd := NewCommand("ps aux |awk '/mosquitto/ {print $11}' | awk '/mosquit/ {print}'")
 	if err := cmd.Exec(); err != nil {
 		return err
 	}

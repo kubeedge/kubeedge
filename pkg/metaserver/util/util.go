@@ -50,9 +50,13 @@ func UnsafeResourceToKind(r string) string {
 		return r
 	}
 	unusualResourceToKind := map[string]string{
-		"endpoints": "Endpoints",
-		"nodes":     "Node",
-		"services":  "Service",
+		"endpoints":                    "Endpoints",
+		"nodes":                        "Node",
+		"services":                     "Service",
+		"podstatus":                    "PodStatus",
+		"nodestatus":                   "NodeStatus",
+		"customresourcedefinitions":    "CustomResourceDefinition",
+		"customresourcedefinitionlist": "CustomResourceDefinitionList",
 	}
 	if v, isUnusual := unusualResourceToKind[r]; isUnusual {
 		return v
@@ -74,7 +78,11 @@ func UnsafeKindToResource(k string) string {
 		return k
 	}
 	unusualKindToResource := map[string]string{
-		"Endpoints": "endpoints",
+		"Endpoints":                    "endpoints",
+		"PodStatus":                    "podstatus",
+		"NodeStatus":                   "nodestatus",
+		"CustomResourceDefinition":     "customresourcedefinitions",
+		"CustomResourceDefinitionList": "customresourcedefinitionlist",
 	}
 	if v, isUnusual := unusualKindToResource[k]; isUnusual {
 		return v
@@ -118,7 +126,7 @@ func UnstructuredAttr(obj runtime.Object) (labels.Set, fields.Set, error) {
 }
 
 // GetMessageUID returns the UID of the object in message
-func GetMessageAPIVerison(msg *beehiveModel.Message) string {
+func GetMessageAPIVersion(msg *beehiveModel.Message) string {
 	obj, ok := msg.Content.(runtime.Object)
 	if ok {
 		return obj.GetObjectKind().GroupVersionKind().GroupVersion().String()
@@ -130,7 +138,7 @@ func GetMessageAPIVerison(msg *beehiveModel.Message) string {
 func GetMessageResourceType(msg *beehiveModel.Message) string {
 	obj, ok := msg.Content.(runtime.Object)
 	if ok {
-		return UnsafeKindToResource(obj.GetObjectKind().GroupVersionKind().Kind)
+		return obj.GetObjectKind().GroupVersionKind().Kind
 	}
 	return ""
 }

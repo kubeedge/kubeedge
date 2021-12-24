@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/lucas-clemente/quic-go"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -18,7 +19,6 @@ import (
 	"github.com/kubeedge/viaduct/pkg/lane"
 	"github.com/kubeedge/viaduct/pkg/mux"
 	"github.com/kubeedge/viaduct/pkg/smgr"
-	"github.com/lucas-clemente/quic-go"
 )
 
 var (
@@ -46,7 +46,7 @@ type QuicConnection struct {
 func NewQuicConn(options *ConnectionOptions) *QuicConnection {
 	quicSession := options.Base.(quic.Session)
 	return &QuicConnection{
-		session:       smgr.Session{quicSession},
+		session:       smgr.Session{Sess: quicSession},
 		handler:       options.Handler,
 		ctrlLan:       options.CtrlLane.(lane.Lane),
 		state:         options.State,
@@ -276,7 +276,7 @@ func (conn *QuicConnection) WriteMessageSync(msg *model.Message) (*model.Message
 	defer conn.streamManager.ReleaseStream(api.UseTypeMessage, stream)
 
 	lane := lane.NewLane(api.ProtocolTypeQuic, stream)
-	lane.SetWriteDeadline(conn.writeDeadline)
+	_ = lane.SetWriteDeadline(conn.writeDeadline)
 	msg.Header.Sync = true
 	err = lane.WriteMessage(msg)
 	if err != nil {
@@ -303,7 +303,7 @@ func (conn *QuicConnection) WriteMessageAsync(msg *model.Message) error {
 	defer conn.streamManager.ReleaseStream(api.UseTypeMessage, stream)
 
 	lane := lane.NewLane(api.ProtocolTypeQuic, stream)
-	lane.SetWriteDeadline(conn.writeDeadline)
+	_ = lane.SetWriteDeadline(conn.writeDeadline)
 	msg.Header.Sync = false
 	return lane.WriteMessage(msg)
 }

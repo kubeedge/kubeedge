@@ -385,7 +385,6 @@ type MetaManager struct {
 
 type MetaServer struct {
 	Enable bool   `json:"enable"`
-	Debug  bool   `json:"debug"`
 	Server string `json:"server"`
 }
 
@@ -395,6 +394,12 @@ type ServiceBus struct {
 	// if set to false (for debugging etc.), skip checking other ServiceBus configs.
 	// default false
 	Enable bool `json:"enable"`
+	// Address indicates address for http server
+	Server string `json:"server"`
+	// Port indicates port for http server
+	Port int `json:"port"`
+	// Timeout indicates timeout for servicebus receive mseeage
+	Timeout int `json:"timeout"`
 }
 
 // DeviceTwin indicates the DeviceTwin module config
@@ -413,7 +418,7 @@ type DBTest struct {
 	Enable bool `json:"enable"`
 }
 
-// EdgeSream indicates the stream controller
+// EdgeStream indicates the stream controller
 type EdgeStream struct {
 	// Enable indicates whether edgestream is enabled, if set to false (for debugging etc.), skip checking other configs.
 	// default true

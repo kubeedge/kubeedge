@@ -17,17 +17,17 @@ type Module interface {
 
 var (
 	// Modules map
-	modules         map[string]*moduleInfo
-	disabledModules map[string]*moduleInfo
+	modules         map[string]*ModuleInfo
+	disabledModules map[string]*ModuleInfo
 )
 
 func init() {
-	modules = make(map[string]*moduleInfo)
-	disabledModules = make(map[string]*moduleInfo)
+	modules = make(map[string]*ModuleInfo)
+	disabledModules = make(map[string]*ModuleInfo)
 }
 
-// moduleInfo represent a module info
-type moduleInfo struct {
+// ModuleInfo represent a module info
+type ModuleInfo struct {
 	contextType string
 	remote      bool
 	module      Module
@@ -36,7 +36,7 @@ type moduleInfo struct {
 // Register register module
 // if not passed in parameter opts, default contextType is "channel"
 func Register(m Module, opts ...string) {
-	info := &moduleInfo{
+	info := &ModuleInfo{
 		module:      m,
 		contextType: common.MsgCtxTypeChannel,
 		remote:      false,
@@ -57,12 +57,12 @@ func Register(m Module, opts ...string) {
 }
 
 // GetModules gets modules map
-func GetModules() map[string]*moduleInfo {
+func GetModules() map[string]*ModuleInfo {
 	return modules
 }
 
 // GetModule gets module
-func (m *moduleInfo) GetModule() Module {
+func (m *ModuleInfo) GetModule() Module {
 	return m.module
 }
 

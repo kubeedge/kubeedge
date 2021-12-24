@@ -28,7 +28,7 @@ require (
 	github.com/kubeedge/viaduct v0.0.0
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1
 	github.com/lib/pq v1.2.0 // indirect
-	github.com/mattn/go-sqlite3 v1.11.0
+	github.com/mattn/go-sqlite3 v1.14.9
 	github.com/mitchellh/go-ps v0.0.0-20190716172923-621e5597135b
 	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.8.1
@@ -37,7 +37,6 @@ require (
 	github.com/shirou/gopsutil v2.20.9+incompatible
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.6.1
 	golang.org/x/net v0.0.0-20210224082022-3d97a244fca7
 	google.golang.org/grpc v1.27.1
 	k8s.io/api v0.21.4
@@ -68,7 +67,6 @@ replace (
 	github.com/Sirupsen/logrus v1.0.5 => github.com/sirupsen/logrus v1.0.5
 	github.com/Sirupsen/logrus v1.3.0 => github.com/Sirupsen/logrus v1.0.6
 	github.com/Sirupsen/logrus v1.4.0 => github.com/sirupsen/logrus v1.0.6
-	github.com/apache/servicecomb-kie v0.1.0 => github.com/apache/servicecomb-kie v0.0.0-20190905062319-5ee098c8886f // indirect. TODO: remove this line when servicecomb-kie has a stable release
 	github.com/gopherjs/gopherjs v0.0.0 => github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/kubeedge/beehive => ./staging/src/github.com/kubeedge/beehive
 	github.com/kubeedge/viaduct => ./staging/src/github.com/kubeedge/viaduct

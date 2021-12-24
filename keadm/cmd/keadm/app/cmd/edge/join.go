@@ -24,6 +24,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
+	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
@@ -151,7 +152,7 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 			kubeVer = types.DefaultKubeEdgeVersion
 		}
 	}
-	toolList["KubeEdge"] = &util.KubeEdgeInstTool{
+	toolList[constants.ProjectName] = &util.KubeEdgeInstTool{
 		Common: util.Common{
 			ToolVersion: semver.MustParse(kubeVer),
 		},
@@ -175,7 +176,7 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 func Execute(toolList map[string]types.ToolsInstaller) error {
 	//Install all the required pre-requisite tools
 	for name, tool := range toolList {
-		if name != "KubeEdge" {
+		if name != constants.ProjectName {
 			err := tool.InstallTools()
 			if err != nil {
 				return err
@@ -184,5 +185,5 @@ func Execute(toolList map[string]types.ToolsInstaller) error {
 	}
 
 	//Install and Start KubeEdge Node
-	return toolList["KubeEdge"].InstallTools()
+	return toolList[constants.ProjectName].InstallTools()
 }

@@ -1,0 +1,77 @@
+---
+kind: DaemonSet
+apiVersion: apps/v1
+metadata:
+  name: cloud-iptables-manager
+  namespace: kubeedge
+  labels:
+    app: iptables-manager
+spec:
+  selector:
+    matchLabels:
+      app: iptables-manager
+  template:
+    metadata:
+      labels:
+        app: iptables-manager
+    spec:
+      serviceAccount: iptables-manager-sa
+      hostNetwork: true
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/master
+                operator: Exists
+      restartPolicy: Always
+      containers:
+        - name: iptables-manager
+          command: ['iptables-manager']
+          image: kubeedge/iptables-manager:latest
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+                - NET_RAW
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    k8s-app: kubeedge
+    kubeedge: iptables-manager
+  name: iptables-manager-sa
+  namespace: kubeedge
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: iptables-manager
+  labels:
+    k8s-app: kubeedge
+    kubeedge: iptables-manager
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: iptables-manager
+subjects:
+- kind: ServiceAccount
+  name: iptables-manager-sa
+  namespace: kubeedge
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: iptables-manager
+  labels:
+    k8s-app: kubeedge
+    kubeedge: iptables-manager
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch"]

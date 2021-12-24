@@ -2,7 +2,6 @@ package utils
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -28,7 +27,7 @@ func CfgToFile(c *edgecore.EdgeCoreConfig) error {
 		fmt.Printf("Marshal edgecore config to yaml error %v\n", err)
 		os.Exit(1)
 	}
-	if err := ioutil.WriteFile(EdgeCoreConfigFile, data, os.ModePerm); err != nil {
+	if err := os.WriteFile(EdgeCoreConfigFile, data, os.ModePerm); err != nil {
 		fmt.Printf("Create edgecore config file %v error %v\n", EdgeCoreConfigFile, err)
 		os.Exit(1)
 	}
@@ -52,7 +51,7 @@ func CreateEdgeCoreConfigFile(nodeName string) error {
 		fmt.Printf("Marshal edgecore config to yaml error %v\n", err)
 		os.Exit(1)
 	}
-	if err := ioutil.WriteFile(EdgeCoreConfigFile, data, os.ModePerm); err != nil {
+	if err := os.WriteFile(EdgeCoreConfigFile, data, os.ModePerm); err != nil {
 		fmt.Printf("Create edgecore config file %v error %v\n", EdgeCoreConfigFile, err)
 		os.Exit(1)
 	}

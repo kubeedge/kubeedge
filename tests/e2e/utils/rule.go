@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"reflect"
 	"time"
@@ -24,6 +23,8 @@ func NewRule(sourceType, targetType rulesv1.RuleEndpointTypeDef) *rulesv1.Rule {
 		return NewEventbus2RestRule()
 	case sourceType == rulesv1.RuleEndpointTypeRest && targetType == rulesv1.RuleEndpointTypeServiceBus:
 		return NewRest2ServicebusRule()
+	case sourceType == rulesv1.RuleEndpointTypeServiceBus && targetType == rulesv1.RuleEndpointTypeRest:
+		return NewServicebus2Rest()
 	}
 	return nil
 }
@@ -110,6 +111,34 @@ func NewRest2ServicebusRule() *rulesv1.Rule {
 	return &rule
 }
 
+func NewServicebus2Rest() *rulesv1.Rule {
+	rule := rulesv1.Rule{
+		TypeMeta: v1.TypeMeta{
+			Kind:       "Rule",
+			APIVersion: "rules.kubeedge.io/v1",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "rule-servicebus-rest-test",
+			Namespace: Namespace,
+		},
+		Spec: rulesv1.RuleSpec{
+			Source: "servicebus-test",
+			SourceResource: map[string]string{
+				"target_url": "http://127.0.0.1:9000/echo",
+				"node_name":  "edge-node",
+			},
+			Target: "rest-test",
+			TargetResource: map[string]string{
+				"resource": "http://127.0.0.1:9000/echo",
+			},
+		},
+		Status: rulesv1.RuleStatus{
+			Errors: []string{},
+		},
+	}
+	return &rule
+}
+
 func NewRuleEndpoint(endpointType rulesv1.RuleEndpointTypeDef) *rulesv1.RuleEndpoint {
 	switch endpointType {
 	case rulesv1.RuleEndpointTypeRest:
@@ -179,7 +208,7 @@ func newServiceBusRuleEndpoint() *rulesv1.RuleEndpoint {
 func GetRuleList(list *rulesv1.RuleList, getRuleAPI string, expectedRule *rulesv1.Rule) ([]rulesv1.Rule, error) {
 	resp, err := SendHTTPRequest(http.MethodGet, getRuleAPI)
 	defer resp.Body.Close()
-	contents, err := ioutil.ReadAll(resp.Body)
+	contents, err := io.ReadAll(resp.Body)
 	if err != nil {
 		Fatalf("HTTP Response reading has failed: %v", err)
 		return nil, err
@@ -247,7 +276,7 @@ func HandleRule(operation, apiserver, UID string, sourceType, targetType rulesv1
 		return false, 0
 	}
 	defer resp.Body.Close()
-	contents, err := ioutil.ReadAll(resp.Body)
+	contents, err := io.ReadAll(resp.Body)
 	Infof("%s %s %v  %v in %v", req.Method, req.URL, resp.Status, string(contents), time.Since(t))
 	return true, resp.StatusCode
 }
@@ -299,7 +328,7 @@ func HandleRuleEndpoint(operation string, apiserver string, UID string, endpoint
 func GetRuleEndpointList(list *rulesv1.RuleEndpointList, getRuleEndpointAPI string, expectedRule *rulesv1.RuleEndpoint) ([]rulesv1.RuleEndpoint, error) {
 	resp, err := SendHTTPRequest(http.MethodGet, getRuleEndpointAPI)
 	defer resp.Body.Close()
-	contents, err := ioutil.ReadAll(resp.Body)
+	contents, err := io.ReadAll(resp.Body)
 	if err != nil {
 		Fatalf("HTTP Response reading has failed: %v", err)
 		return nil, err

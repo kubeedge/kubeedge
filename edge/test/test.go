@@ -3,7 +3,6 @@ package test
 import (
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -67,7 +66,7 @@ func GetPodListFromEdged(w http.ResponseWriter) error {
 	}
 	klog.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	defer resp.Body.Close()
-	contents, err := ioutil.ReadAll(resp.Body)
+	contents, err := io.ReadAll(resp.Body)
 	if err != nil {
 		klog.Errorf("HTTP Response reading has failed: %v", err)
 		return err
@@ -98,7 +97,7 @@ func (tm *testManager) podHandler(w http.ResponseWriter, req *http.Request) {
 			klog.Errorf("Get podlist from Edged has failed: %v", err)
 		}
 	} else if req.Body != nil {
-		body, err := ioutil.ReadAll(req.Body)
+		body, err := io.ReadAll(req.Body)
 		if err != nil {
 			klog.Errorf("read body error %v", err)
 			w.Write([]byte("read request body error"))
@@ -134,7 +133,7 @@ func (tm *testManager) deviceHandler(w http.ResponseWriter, req *http.Request) {
 	var Content interface{}
 
 	if req.Body != nil {
-		body, err := ioutil.ReadAll(req.Body)
+		body, err := io.ReadAll(req.Body)
 		if err != nil {
 			klog.Errorf("read body error %v", err)
 			w.Write([]byte("read request body error"))
@@ -163,7 +162,7 @@ func (tm *testManager) secretHandler(w http.ResponseWriter, req *http.Request) {
 	var operation string
 	var p v1.Secret
 	if req.Body != nil {
-		body, err := ioutil.ReadAll(req.Body)
+		body, err := io.ReadAll(req.Body)
 		if err != nil {
 			klog.Errorf("read body error %v", err)
 			w.Write([]byte("read request body error"))
@@ -193,7 +192,7 @@ func (tm *testManager) configmapHandler(w http.ResponseWriter, req *http.Request
 	var operation string
 	var p v1.ConfigMap
 	if req.Body != nil {
-		body, err := ioutil.ReadAll(req.Body)
+		body, err := io.ReadAll(req.Body)
 		if err != nil {
 			klog.Errorf("read body error %v", err)
 			w.Write([]byte("read request body error"))

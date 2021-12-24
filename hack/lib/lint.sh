@@ -21,6 +21,7 @@ set -o nounset
 set -o pipefail
 
 SED_CMD=""
+KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 
 if [[ "$OSTYPE" == "darwin"* ]]
 then
@@ -69,7 +70,7 @@ kubeedge::lint::check() {
     echo "check any issue by golangci-lint ..."
     GOOS="linux" golangci-lint run -v
 
-    # only check format issue under staging dir
-    echo "check any issue under staging dir by gofmt ..."
-    gofmt -l -w staging
+    # check codes under staging dir, this will also use .golangci.yaml in the {KUBEEDGE_ROOT} dir
+    cd "${KUBEEDGE_ROOT}/staging/src/github.com/kubeedge/beehive" && GOOS="linux" golangci-lint run -v
+    cd "${KUBEEDGE_ROOT}/staging/src/github.com/kubeedge/viaduct" && GOOS="linux" golangci-lint run -v
 }

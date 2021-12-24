@@ -22,6 +22,9 @@ CRD_VERSIONS=v1
 CRD_OUTPUTS=build/crds
 DEVICES_VERSION=v1alpha2
 RELIABLESYNCS_VERSION=v1alpha1
+HELM_CRDS_DIR=build/helm/cloudcore/crds
+ROUTER_DIR=build/crds/router
+
 _crdOptions="crd:crdVersions=${CRD_VERSIONS},generateEmbeddedObjectMeta=true,allowDangerousTypes=true"
 _tmpdir=/tmp/crds
 
@@ -76,15 +79,23 @@ function :copy:to:destination {
           if [ "${CRD_NAME: -1}" == "s" ]; then
             CRD_NAME=${CRD_NAME%?}
           fi
-          cp -v ${entry} ${CRD_OUTPUTS}/devices/devices_${DEVICES_VERSION}_${CRD_NAME}.yaml 
+          cp -v ${entry} ${CRD_OUTPUTS}/devices/devices_${DEVICES_VERSION}_${CRD_NAME}.yaml
+          cp -v ${entry} ${HELM_CRDS_DIR}/devices_${DEVICES_VERSION}_${CRD_NAME}.yaml 
       elif [ "$CRD_NAME" == "clusterobjectsyncs" ]; then
           cp -v ${entry} ${CRD_OUTPUTS}/reliablesyncs/cluster_objectsync_${RELIABLESYNCS_VERSION}.yaml
+          cp -v ${entry} ${HELM_CRDS_DIR}/cluster_objectsync_${RELIABLESYNCS_VERSION}.yaml
       elif [ "$CRD_NAME" == "objectsyncs" ]; then
           cp -v ${entry} ${CRD_OUTPUTS}/reliablesyncs/objectsync_${RELIABLESYNCS_VERSION}.yaml
+          cp -v ${entry} ${HELM_CRDS_DIR}/objectsync_${RELIABLESYNCS_VERSION}.yaml
       else
           # other cases would not handle
           continue
       fi
+  done
+
+  for r_entry in `ls ${ROUTER_DIR}/*.yaml`; do
+    # cp router CRDs  
+    cp -v ${r_entry} ${HELM_CRDS_DIR}/
   done
 }
 

@@ -17,7 +17,6 @@ limitations under the License.
 package validation
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -30,14 +29,14 @@ import (
 )
 
 func TestValidateCloudCoreConfiguration(t *testing.T) {
-	dir, err := ioutil.TempDir("", "TestTempFile_Dir")
+	dir, err := os.MkdirTemp("", "TestTempFile_Dir")
 	if err != nil {
 		t.Errorf("create temp dir error %v", err)
 		return
 	}
 	defer os.RemoveAll(dir)
 
-	ef, err := ioutil.TempFile(dir, "existFile")
+	ef, err := os.CreateTemp(dir, "existFile")
 	if err != nil {
 		t.Errorf("create temp file failed: %v", err)
 		return
@@ -54,14 +53,14 @@ func TestValidateCloudCoreConfiguration(t *testing.T) {
 }
 
 func TestValidateModuleCloudHub(t *testing.T) {
-	dir, err := ioutil.TempDir("", "TestTempFile_Dir")
+	dir, err := os.MkdirTemp("", "TestTempFile_Dir")
 	if err != nil {
 		t.Errorf("create temp dir error %v", err)
 		return
 	}
 	defer os.RemoveAll(dir)
 
-	ef, err := ioutil.TempFile(dir, "existFile")
+	ef, err := os.CreateTemp(dir, "existFile")
 	if err != nil {
 		t.Errorf("create temp file failed: %v", err)
 		return
@@ -373,14 +372,14 @@ func TestValidateModuleDynamicController(t *testing.T) {
 }
 
 func TestValidateModuleCloudStream(t *testing.T) {
-	dir, err := ioutil.TempDir("", "TestTempFile_Dir")
+	dir, err := os.MkdirTemp("", "TestTempFile_Dir")
 	if err != nil {
 		t.Errorf("create temp dir error %v", err)
 		return
 	}
 	defer os.RemoveAll(dir)
 
-	ef, err := ioutil.TempFile(dir, "existFile")
+	ef, err := os.CreateTemp(dir, "existFile")
 	if err != nil {
 		t.Errorf("create temp file failed: %v", err)
 		return
@@ -454,14 +453,14 @@ func TestValidateModuleCloudStream(t *testing.T) {
 }
 
 func TestValidateKubeAPIConfig(t *testing.T) {
-	dir, err := ioutil.TempDir("", "TestTempFile_Dir")
+	dir, err := os.MkdirTemp("", "TestTempFile_Dir")
 	if err != nil {
 		t.Errorf("create temp dir error %v", err)
 		return
 	}
 	defer os.RemoveAll(dir)
 
-	ef, err := ioutil.TempFile(dir, "existFile")
+	ef, err := os.CreateTemp(dir, "existFile")
 	if err != nil {
 		t.Errorf("create temp file failed: %v", err)
 		return

@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -54,7 +55,7 @@ func (dt *DeviceTwin) distributeMsg(m interface{}) error {
 		}
 	}
 	if !classifyMsg(&message) {
-		return errors.New("Not found action")
+		return errors.New("not found action")
 	}
 	if ActionModuleMap == nil {
 		initActionModuleMap()
@@ -67,8 +68,9 @@ func (dt *DeviceTwin) distributeMsg(m interface{}) error {
 			return err
 		}
 	} else {
-		klog.Info("Not found deal module for msg")
-		return errors.New("Not found deal module for msg")
+		err := fmt.Errorf("not found deal module for msg, action: %s", message.Action)
+		klog.Errorf(err.Error())
+		return err
 	}
 
 	return nil

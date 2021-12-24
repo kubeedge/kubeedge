@@ -6,14 +6,14 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
-type FilterFunc func(*model.Message) error
+type Func func(*model.Message) error
 
 type MessageFilter struct {
-	Filters []FilterFunc
+	Filters []Func
 	Index   int
 }
 
-func (filter *MessageFilter) AddFilterFunc(filterFunc FilterFunc) {
+func (filter *MessageFilter) AddFilterFunc(filterFunc Func) {
 	filter.Filters = append(filter.Filters, filterFunc)
 }
 

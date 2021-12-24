@@ -24,7 +24,6 @@ package edged
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"regexp"
 	"runtime"
@@ -58,7 +57,7 @@ var reservationEphemeralStorage = resource.MustParse(fmt.Sprintf("%dGi", 1))
 func (e *edged) initialNode() (*v1.Node, error) {
 	var node = &v1.Node{}
 
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == windows {
 		return node, nil
 	}
 
@@ -199,7 +198,7 @@ func (e *edged) getNodeStatusRequest(node *v1.Node) (*edgeapi.NodeStatusRequest,
 		node.Status.VolumesInUse = nil
 	}
 	e.volumeManager.MarkVolumesAsReportedInUse(node.Status.VolumesInUse)
-	klog.Infof("Sync VolumesInUse: %v", node.Status.VolumesInUse)
+	klog.V(5).Infof("Sync VolumesInUse: %v", node.Status.VolumesInUse)
 
 	return nodeStatus, nil
 }
@@ -333,7 +332,7 @@ func (e *edged) setGPUInfo(nodeStatus *edgeapi.NodeStatusRequest) error {
 }
 
 func (e *edged) setMemInfo(total, allocatable v1.ResourceList) error {
-	out, err := ioutil.ReadFile("/proc/meminfo")
+	out, err := os.ReadFile("/proc/meminfo")
 	if err != nil {
 		return err
 	}

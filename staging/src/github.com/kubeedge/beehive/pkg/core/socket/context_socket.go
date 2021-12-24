@@ -17,7 +17,8 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/socket/wrapper"
 )
 
-type SocketContext struct {
+// Context is object for Context Socket
+type Context struct {
 	// module -> context
 	contexts map[string]*context
 	// group -> context
@@ -25,10 +26,10 @@ type SocketContext struct {
 	sync.RWMutex
 }
 
-var globalSocketContext SocketContext
+var globalSocketContext Context
 var once = sync.Once{}
 
-func InitSocketContext() *SocketContext {
+func InitSocketContext() *Context {
 	once.Do(func() {
 		globalSocketContext.contexts = make(map[string]*context)
 		globalSocketContext.groups = make(map[string]*context)
@@ -36,7 +37,7 @@ func InitSocketContext() *SocketContext {
 	return &globalSocketContext
 }
 
-func (s *SocketContext) AddModule(info *common.ModuleInfo) {
+func (s *Context) AddModule(info *common.ModuleInfo) {
 	name := info.ModuleName
 	s.setContext(name)
 	context := s.getContext(name)
@@ -48,7 +49,7 @@ func (s *SocketContext) AddModule(info *common.ModuleInfo) {
 }
 
 // AddModuleGroup add module group
-func (s *SocketContext) AddModuleGroup(module, group string) {
+func (s *Context) AddModuleGroup(module, group string) {
 	s.Lock()
 	s.groups[module] = s.contexts[module]
 	s.Unlock()
@@ -57,57 +58,57 @@ func (s *SocketContext) AddModuleGroup(module, group string) {
 }
 
 // Cleanup cleanup
-func (s *SocketContext) Cleanup(module string) {
+func (s *Context) Cleanup(module string) {
 	s.getContext(module).Cleanup(module)
 }
 
 // Send send
-func (s *SocketContext) Send(module string, message model.Message) {
+func (s *Context) Send(module string, message model.Message) {
 	s.getContext(module).Send(module, message)
 }
 
 // Receive receive
-func (s *SocketContext) Receive(module string) (model.Message, error) {
+func (s *Context) Receive(module string) (model.Message, error) {
 	return s.getContext(module).Receive(module)
 }
 
 // SendSync send sync
-func (s *SocketContext) SendSync(module string, message model.Message, timeout time.Duration) (model.Message, error) {
+func (s *Context) SendSync(module string, message model.Message, timeout time.Duration) (model.Message, error) {
 	return s.getContext(module).SendSync(module, message, timeout)
 }
 
 // SendResp send the response that got by NewRespByMessage
-func (s *SocketContext) SendResp(message model.Message) {
+func (s *Context) SendResp(message model.Message) {
 	module := message.GetSource()
 	s.getContext(module).SendResp(message)
 }
 
 // SendToGroup send to group
-func (s *SocketContext) SendToGroup(group string, message model.Message) {
+func (s *Context) SendToGroup(group string, message model.Message) {
 	s.getGroupContext(group).SendToGroup(group, message)
 }
 
 // SendToGroupSync send to group sync
-func (s *SocketContext) SendToGroupSync(module string, message model.Message, timeout time.Duration) error {
+func (s *Context) SendToGroupSync(module string, message model.Message, timeout time.Duration) error {
 	return s.getContext(module).SendToGroupSync(module, message, timeout)
 }
 
-func (m *SocketContext) getGroupContext(group string) *context {
-	m.RLock()
-	defer m.RUnlock()
-	return m.groups[group]
+func (s *Context) getGroupContext(group string) *context {
+	s.RLock()
+	defer s.RUnlock()
+	return s.groups[group]
 }
 
-func (m *SocketContext) getContext(module string) *context {
-	m.RLock()
-	defer m.RUnlock()
-	return m.contexts[module]
+func (s *Context) getContext(module string) *context {
+	s.RLock()
+	defer s.RUnlock()
+	return s.contexts[module]
 }
 
-func (m *SocketContext) setContext(module string) {
-	m.Lock()
-	defer m.Unlock()
-	m.contexts[module] = newContext(module)
+func (s *Context) setContext(module string) {
+	s.Lock()
+	defer s.Unlock()
+	s.contexts[module] = newContext(module)
 }
 
 // context module socket

@@ -49,8 +49,8 @@ func TestGetMessageAPIVerison(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := GetMessageAPIVerison(tt.args.msg); got != tt.want {
-				t.Errorf("GetMessageAPIVerison() = %v, want %v", got, tt.want)
+			if got := GetMessageAPIVersion(tt.args.msg); got != tt.want {
+				t.Errorf("GetMessageAPIVersion() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -76,7 +76,7 @@ func TestGetMessageResourceType(t *testing.T) {
 						},
 					},
 				}},
-			want: UnsafeKindToResource("Pod"),
+			want: "Pod",
 		},
 		{
 			name: "TestGetMessageResourceType(): Case 2: Content other",

@@ -91,12 +91,17 @@ kubernetes controller which manages devices so that the device metadata/status d
 
 			registerModules(config)
 
-			// IptablesManager manages tunnel port related iptables rules
-			go iptables.NewIptablesManager(config.Modules.CloudStream).Run()
+			ctx := beehiveContext.GetContext()
+			if config.Modules.IptablesManager == nil || config.Modules.IptablesManager.Enable && config.Modules.IptablesManager.Mode == v1alpha1.InternalMode {
+				// By default, IptablesManager manages tunnel port related iptables rules
+				// The internal mode will share the host network, forward to the stream port.
+				streamPort := int(config.Modules.CloudStream.StreamPort)
+				go iptables.NewIptablesManager(config.KubeAPIConfig, streamPort).Run(ctx)
+			}
 
 			// Start all modules
 			core.StartModules()
-			gis.Start(beehiveContext.Done())
+			gis.Start(ctx.Done())
 			core.GracefulShutdown()
 		},
 	}
@@ -127,10 +132,10 @@ kubernetes controller which manages devices so that the device metadata/status d
 // registerModules register all the modules started in cloudcore
 func registerModules(c *v1alpha1.CloudCoreConfig) {
 	cloudhub.Register(c.Modules.CloudHub)
-	edgecontroller.Register(c.Modules.EdgeController, c.CommonConfig)
+	edgecontroller.Register(c.Modules.EdgeController)
 	devicecontroller.Register(c.Modules.DeviceController)
 	synccontroller.Register(c.Modules.SyncController)
-	cloudstream.Register(c.Modules.CloudStream)
+	cloudstream.Register(c.Modules.CloudStream, c.CommonConfig)
 	router.Register(c.Modules.Router)
 	dynamiccontroller.Register(c.Modules.DynamicController)
 }
@@ -139,7 +144,7 @@ func NegotiateTunnelPort() (*int, error) {
 	kubeClient := client.GetKubeClient()
 	err := httpserver.CreateNamespaceIfNeeded(kubeClient, constants.SystemNamespace)
 	if err != nil {
-		return nil, errors.New("failed to create system namespace")
+		return nil, fmt.Errorf("failed to create system namespace: %v", err)
 	}
 
 	tunnelPort, err := kubeClient.CoreV1().ConfigMaps(constants.SystemNamespace).Get(context.TODO(), modules.TunnelPort, metav1.GetOptions{})

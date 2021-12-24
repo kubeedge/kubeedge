@@ -20,9 +20,6 @@ const (
 	// KubeEdgeVersion sets the version of KubeEdge to be used
 	KubeEdgeVersion = "kubeedge-version"
 
-	// KubernetesVersion sets the version of Kuberneted to be used
-	KubernetesVersion = "kubernetes-version"
-
 	// KubeConfig sets the path of kubeconfig
 	KubeConfig = "kube-config"
 
@@ -50,14 +47,11 @@ const (
 	// DefaultKubeConfig is the default path of kubeconfig
 	DefaultKubeConfig = "/root/.kube/config"
 
-	// DefaultProjectID is default project id
-	DefaultProjectID = "e632aba927ea4ac2b575ec1603d56f10"
-
 	// RuntimeType is default runtime type
 	RuntimeType = "runtimetype"
 
 	// DefaultKubeEdgeVersion is the default KubeEdge version
-	DefaultKubeEdgeVersion = "1.5.0"
+	DefaultKubeEdgeVersion = "1.9.0"
 
 	// Token sets the token used when edge applying for the certificate
 	Token = "token"
@@ -138,9 +132,6 @@ const (
 	DescPID     = "Check node PID requirements"
 
 	/**Diagnose**/
-	ArgDiagnoseAll  = "all"
-	DescDiagnoseAll = "Diagnose all iteams"
-
 	ArgDiagnoseNode  = "node"
 	DescDiagnoseNode = "Diagnose edge node"
 

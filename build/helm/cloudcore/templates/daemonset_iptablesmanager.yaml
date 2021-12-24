@@ -1,0 +1,50 @@
+{{- if and (.Values.iptablesManager.enable) (eq .Values.iptablesManager.mode "external") }}
+kind: DaemonSet
+apiVersion: apps/v1
+metadata:
+  name: cloud-iptables-manager
+  {{- with .Values.iptablesManager.labels }}
+  labels: {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.iptablesManager.annotations }}
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- with .Values.iptablesManager.labels }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+  template:
+    metadata:
+      {{- with .Values.iptablesManager.labels }}
+      labels: {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccount: iptables-manager-sa
+      hostNetwork: {{ .Values.iptablesManager.hostNetWork }}
+      {{- with .Values.iptablesManager.affinity }}
+      affinity: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.iptablesManager.tolerations }}
+      tolerations: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.iptablesManager.nodeSelector }}
+      nodeSelector: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      restartPolicy: Always
+      {{- with .Values.iptablesManager.image.pullSecrets }} 
+      imagePullSecrets: {{ toYaml . | nindent 8 }} 
+      {{- end }}  
+      containers:
+      - name: iptables-manager
+        command: ['iptables-manager']
+        image: {{ .Values.iptablesManager.image.repository }}:{{ .Values.iptablesManager.image.tag }}
+        imagePullPolicy: {{ .Values.iptablesManager.image.pullPolicy }}
+        {{- with .Values.iptablesManager.securityContext }}
+        securityContext: {{ toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.iptablesManager.resources }}
+        resources: {{ toYaml . | nindent 10 }}
+        {{- end }} 
+{{- end }}

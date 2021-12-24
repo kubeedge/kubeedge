@@ -26,6 +26,9 @@ spec:
             - containerPort: 10000
               name: cloudhub
               protocol: TCP
+            - containerPort: 10002
+              name: certandreadyz
+              protocol: TCP
             - containerPort: 10003
               name: stream
               protocol: TCP

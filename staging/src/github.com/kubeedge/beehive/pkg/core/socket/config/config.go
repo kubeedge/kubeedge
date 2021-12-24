@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"k8s.io/klog/v2"
@@ -48,7 +47,7 @@ var (
 // InitBuildinModuleConfig init buildin module config
 func InitBuildinModuleConfig(filepath string) *BuildinModuleConfig {
 	moduleConfig := BuildinModuleConfig{}
-	data, err := ioutil.ReadFile(filepath)
+	data, err := os.ReadFile(filepath)
 	if err != nil {
 		klog.Errorf("failed to read file %v: %v", filepath, err)
 		return nil

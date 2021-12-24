@@ -4,8 +4,8 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"time"
 
 	"k8s.io/klog/v2"
@@ -48,7 +48,7 @@ func (qcc *QuicClient) Init() error {
 		klog.Errorf("Failed to load x509 key pair: %v", err)
 		return fmt.Errorf("failed to load x509 key pair, error: %v", err)
 	}
-	caCrt, err := ioutil.ReadFile(qcc.config.CaFilePath)
+	caCrt, err := os.ReadFile(qcc.config.CaFilePath)
 	if err != nil {
 		klog.Errorf("Failed to load ca file: %s", err.Error())
 		return fmt.Errorf("failed to load ca file: %s", err.Error())

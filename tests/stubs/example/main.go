@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"flag"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -76,7 +75,7 @@ func AddPod(pod types.FakePod) {
 	}
 	defer resp.Body.Close()
 
-	contents, err := ioutil.ReadAll(resp.Body)
+	contents, err := io.ReadAll(resp.Body)
 	if err != nil {
 		klog.Errorf("HTTP Response reading has failed: %v", err)
 	}
@@ -95,7 +94,7 @@ func DeletePod(pod types.FakePod) {
 	}
 	defer resp.Body.Close()
 
-	contents, err := ioutil.ReadAll(resp.Body)
+	contents, err := io.ReadAll(resp.Body)
 	if err != nil {
 		klog.Errorf("HTTP Response reading has failed: %v", err)
 	}
@@ -111,7 +110,7 @@ func ListPods() {
 	}
 	defer resp.Body.Close()
 
-	contents, err := ioutil.ReadAll(resp.Body)
+	contents, err := io.ReadAll(resp.Body)
 	if err != nil {
 		klog.Errorf("HTTP Response reading has failed: %v", err)
 	}

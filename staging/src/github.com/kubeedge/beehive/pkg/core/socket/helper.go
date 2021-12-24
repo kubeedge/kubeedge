@@ -40,14 +40,14 @@ func getCert(config *config.SocketConfig) (tls.Certificate, error) {
 func GetConnectFunc(moduleType string) broker.ConnectFunc {
 	switch moduleType {
 	case common.MsgCtxTypeUS:
-		return SocketConnect
+		return Connect
 	}
-	klog.Warning("not supported module type: %v", moduleType)
+	klog.Warningf("not supported module type: %v", moduleType)
 	return nil
 }
 
-// SocketConnect socket connect
-func SocketConnect(opts broker.ConnectOptions) (interface{}, error) {
+// Connect socket connect
+func Connect(opts broker.ConnectOptions) (interface{}, error) {
 	conn, err := net.Dial(opts.MessageType, opts.Address)
 	if err != nil {
 		klog.Errorf("failed to dail addrs: %s", opts.Address)

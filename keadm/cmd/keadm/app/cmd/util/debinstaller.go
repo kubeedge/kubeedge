@@ -41,7 +41,7 @@ func (d *DebOS) SetKubeEdgeVersion(version semver.Version) {
 
 // InstallMQTT checks if MQTT is already installed and running, if not then install it from OS repo
 func (d *DebOS) InstallMQTT() error {
-	cmd := NewCommand("ps aux |awk '/mosquitto/ {print $1}' | awk '/mosquit/ {print}'")
+	cmd := NewCommand("ps aux |awk '/mosquitto/ {print $11}' | awk '/mosquit/ {print}'")
 	if err := cmd.Exec(); err != nil {
 		return err
 	}

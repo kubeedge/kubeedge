@@ -50,14 +50,14 @@ build/
 - tools
 
 ## cloud
-edegcontroller以deployment部署的相关步骤及说明
+cloudcore使用kubernetes deployment部署的相关步骤及说明
 
 ## crds
 
 ## crd-samples
 
 ## edge
-edgecore以deployment部署的相关步骤及说明
+edgecore使用kubernetes deployment部署的相关步骤及说明（仅测试环境使用）
 
 ## node.json
 创建node资源的示例

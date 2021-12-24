@@ -1,20 +1,19 @@
 package validation
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
 )
 
 func TestFileIsExist(t *testing.T) {
-	dir, err := ioutil.TempDir("", "TestTempFile_BadDir")
+	dir, err := os.MkdirTemp("", "TestTempFile_BadDir")
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
 	defer os.RemoveAll(dir)
 
-	ef, err := ioutil.TempFile(dir, "CheckFileIsExist")
+	ef, err := os.CreateTemp(dir, "CheckFileIsExist")
 	if err == nil {
 		if !FileIsExist(ef.Name()) {
 			t.Fatalf("file %v should exist", ef.Name())

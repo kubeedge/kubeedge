@@ -38,7 +38,7 @@ func TestApplicationGC(t *testing.T) {
 			app.count = 0
 			app.countLock.Unlock()
 			// make sure that the last closing time is more than 5 minutes from now
-			app.tim = time.Unix(1469579899, 0)
+			app.timestamp = time.Unix(1469579899, 0)
 			a.GC()
 			_, ok := a.Applications.Load(app.Identifier())
 			if ok == true {

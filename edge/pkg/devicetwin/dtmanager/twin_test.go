@@ -44,9 +44,8 @@ var (
 	event1  = "Event1"
 	key1    = "key1"
 
-	typeDeleted = "deleted"
-	typeInt     = "int"
-	typeString  = "string"
+	typeInt    = "int"
+	typeString = "string"
 
 	valueType = "value"
 )
@@ -402,7 +401,7 @@ func TestDealDeviceTwin(t *testing.T) {
 	msgTwin[key1] = &dttype.MsgTwin{
 		Expected: twinValueFunc(),
 		Metadata: &dttype.TypeMetadata{
-			Type: typeDeleted,
+			Type: dtcommon.TypeDeleted,
 		},
 	}
 	contextDeviceB := contextFunc(deviceB)
@@ -536,7 +535,7 @@ func TestDealDeviceTwinResult(t *testing.T) {
 		Expected: &dttype.TwinValue{Value: &str},
 		Actual:   &dttype.TwinValue{Value: &str},
 		Optional: &optionTrue,
-		Metadata: &dttype.TypeMetadata{Type: typeDeleted},
+		Metadata: &dttype.TypeMetadata{Type: dtcommon.TypeDeleted},
 	}
 	deviceATwin := dttype.Device{Twin: twinDeviceA}
 	contextDeviceA.DeviceList.Store(deviceA, &deviceATwin)
@@ -617,7 +616,7 @@ func TestDealDeviceTwinTrans(t *testing.T) {
 	msgTwin[key1] = &dttype.MsgTwin{
 		Expected: twinValueFunc(),
 		Metadata: &dttype.TypeMetadata{
-			Type: typeDeleted,
+			Type: dtcommon.TypeDeleted,
 		},
 	}
 
@@ -657,10 +656,10 @@ func TestDealDeviceTwinTrans(t *testing.T) {
 			deviceID:         deviceB,
 			msgTwin:          msgTwin,
 			dealType:         RestDealType,
-			err:              errors.New("Failed DB Operation"),
+			err:              errors.New("failed DB Operation"),
 			filterReturn:     mockQuerySeter,
 			insertReturnInt:  int64(1),
-			insertReturnErr:  errors.New("Failed DB Operation"),
+			insertReturnErr:  errors.New("failed DB Operation"),
 			deleteReturnInt:  int64(1),
 			deleteReturnErr:  nil,
 			updateReturnInt:  int64(1),
@@ -743,7 +742,7 @@ func TestDealVersion(t *testing.T) {
 			reqVersion: &twinCloudVersion,
 			dealType:   SyncDealType,
 			errorWant:  false,
-			err:        errors.New("Not allowed to sync due to version conflict"),
+			err:        errors.New("not allowed to sync due to version conflict"),
 		},
 	}
 	for _, test := range tests {
@@ -772,7 +771,7 @@ func TestDealTwinDelete(t *testing.T) {
 		Expected:        twinValueFunc(),
 		Actual:          twinValueFunc(),
 		Optional:        &optionTrue,
-		Metadata:        &dttype.TypeMetadata{Type: typeDeleted},
+		Metadata:        &dttype.TypeMetadata{Type: dtcommon.TypeDeleted},
 		ExpectedVersion: &dttype.TwinVersion{},
 		ActualVersion:   &dttype.TwinVersion{},
 	}
@@ -801,7 +800,7 @@ func TestDealTwinDelete(t *testing.T) {
 			twin: &dttype.MsgTwin{
 				Optional: &optionTrue,
 				Metadata: &dttype.TypeMetadata{
-					Type: typeDeleted,
+					Type: dtcommon.TypeDeleted,
 				},
 				ExpectedVersion: &dttype.TwinVersion{},
 			},
@@ -849,7 +848,7 @@ func TestDealTwinDelete(t *testing.T) {
 				},
 				Optional: &optionFalse,
 				Metadata: &dttype.TypeMetadata{
-					Type: typeDeleted,
+					Type: dtcommon.TypeDeleted,
 				},
 				ExpectedVersion: &dttype.TwinVersion{
 					CloudVersion: 0,
@@ -886,7 +885,7 @@ func TestDealTwinDelete(t *testing.T) {
 				},
 				Optional: &optionFalse,
 				Metadata: &dttype.TypeMetadata{
-					Type: typeDeleted,
+					Type: dtcommon.TypeDeleted,
 				},
 				ExpectedVersion: &dttype.TwinVersion{},
 				ActualVersion: &dttype.TwinVersion{
@@ -937,7 +936,7 @@ func TestDealTwinDelete(t *testing.T) {
 				},
 				Optional: &optionFalse,
 				Metadata: &dttype.TypeMetadata{
-					Type: typeDeleted,
+					Type: dtcommon.TypeDeleted,
 				},
 				ExpectedVersion: &dttype.TwinVersion{},
 				ActualVersion:   &dttype.TwinVersion{},
@@ -967,7 +966,7 @@ func TestDealTwinCompare(t *testing.T) {
 		Expected:        twinValueFunc(),
 		Actual:          twinValueFunc(),
 		Optional:        &optionTrue,
-		Metadata:        &dttype.TypeMetadata{Type: typeDeleted},
+		Metadata:        &dttype.TypeMetadata{Type: dtcommon.TypeDeleted},
 		ExpectedVersion: &dttype.TwinVersion{},
 		ActualVersion:   &dttype.TwinVersion{},
 	}
@@ -991,7 +990,7 @@ func TestDealTwinCompare(t *testing.T) {
 			key:          key1,
 			twin: &dttype.MsgTwin{
 				Optional: &optionTrue,
-				Metadata: &dttype.TypeMetadata{Type: typeDeleted},
+				Metadata: &dttype.TypeMetadata{Type: dtcommon.TypeDeleted},
 			},
 			dealType: RestDealType,
 			err:      nil,
@@ -1005,7 +1004,7 @@ func TestDealTwinCompare(t *testing.T) {
 				Expected: &dttype.TwinValue{Value: &str},
 				Actual:   &dttype.TwinValue{Value: &str},
 				Optional: &optionTrue,
-				Metadata: &dttype.TypeMetadata{Type: typeDeleted},
+				Metadata: &dttype.TypeMetadata{Type: dtcommon.TypeDeleted},
 			},
 			msgTwin: &dttype.MsgTwin{
 				Actual:   &dttype.TwinValue{Value: &str},
@@ -1045,7 +1044,7 @@ func TestDealTwinCompare(t *testing.T) {
 				Expected: &dttype.TwinValue{Value: &str},
 				Actual:   &dttype.TwinValue{Value: &str},
 				Optional: &optionTrue,
-				Metadata: &dttype.TypeMetadata{Type: typeDeleted},
+				Metadata: &dttype.TypeMetadata{Type: dtcommon.TypeDeleted},
 			},
 			msgTwin: &dttype.MsgTwin{
 				Actual:   &dttype.TwinValue{Value: &str},
@@ -1062,7 +1061,7 @@ func TestDealTwinCompare(t *testing.T) {
 			key:          key1,
 			twin: &dttype.MsgTwin{
 				Optional: &optionTrue,
-				Metadata: &dttype.TypeMetadata{Type: typeDeleted},
+				Metadata: &dttype.TypeMetadata{Type: dtcommon.TypeDeleted},
 			},
 			msgTwin: &dttype.MsgTwin{
 				Expected:      &dttype.TwinValue{Value: &str},
@@ -1081,7 +1080,7 @@ func TestDealTwinCompare(t *testing.T) {
 			key:          key1,
 			twin: &dttype.MsgTwin{
 				Optional: &optionTrue,
-				Metadata: &dttype.TypeMetadata{Type: typeDeleted},
+				Metadata: &dttype.TypeMetadata{Type: dtcommon.TypeDeleted},
 			},
 			msgTwin: &dttype.MsgTwin{
 				Optional:      &optionFalse,
@@ -1114,7 +1113,7 @@ func TestDealTwinAdd(t *testing.T) {
 	twinDelete := make(map[string]*dttype.MsgTwin)
 	twinDelete[key1] = &dttype.MsgTwin{
 		Metadata: &dttype.TypeMetadata{
-			Type: typeDeleted,
+			Type: dtcommon.TypeDeleted,
 		},
 	}
 	twinInt := make(map[string]*dttype.MsgTwin)
@@ -1144,7 +1143,7 @@ func TestDealTwinAdd(t *testing.T) {
 			deviceID: deviceA,
 			key:      key1,
 			dealType: RestDealType,
-			err:      errors.New("The request body is wrong"),
+			err:      errors.New("the request body is wrong"),
 		},
 		{
 			name: "TestDealTwinAdd(): Case 2: msgTwin.Expected is not nil; dealVersion() returns false",
@@ -1165,7 +1164,7 @@ func TestDealTwinAdd(t *testing.T) {
 				},
 				Optional: &optionTrue,
 				Metadata: &dttype.TypeMetadata{
-					Type: typeDeleted,
+					Type: dtcommon.TypeDeleted,
 				},
 				ActualVersion: &dttype.TwinVersion{},
 			},
@@ -1217,7 +1216,7 @@ func TestDealTwinAdd(t *testing.T) {
 				},
 				Optional: &optionTrue,
 				Metadata: &dttype.TypeMetadata{
-					Type: typeDeleted,
+					Type: dtcommon.TypeDeleted,
 				},
 				ExpectedVersion: &dttype.TwinVersion{},
 			},
@@ -1308,7 +1307,7 @@ func TestDealTwinAdd(t *testing.T) {
 				},
 				Optional: &optionTrue,
 				Metadata: &dttype.TypeMetadata{
-					Type: typeDeleted,
+					Type: dtcommon.TypeDeleted,
 				},
 				ExpectedVersion: &dttype.TwinVersion{},
 				ActualVersion:   &dttype.TwinVersion{},
@@ -1353,7 +1352,7 @@ func TestDealMsgTwin(t *testing.T) {
 			},
 			Optional: &optionTrue,
 			Metadata: &dttype.TypeMetadata{
-				Type: typeDeleted,
+				Type: dtcommon.TypeDeleted,
 			},
 		},
 	}
@@ -1395,7 +1394,7 @@ func TestDealMsgTwin(t *testing.T) {
 		},
 		Optional: &optionTrue,
 		Metadata: &dttype.TypeMetadata{
-			Type: typeDeleted,
+			Type: dtcommon.TypeDeleted,
 		},
 	}
 	device := dttype.Device{Twin: twin}
