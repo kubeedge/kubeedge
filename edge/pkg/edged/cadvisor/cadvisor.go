@@ -24,6 +24,8 @@ import (
 	cadvisorapi "github.com/google/cadvisor/info/v1"
 	cadvisorapi2 "github.com/google/cadvisor/info/v2"
 	"k8s.io/kubernetes/pkg/kubelet/cadvisor"
+	"syscall"
+	"time"
 )
 
 type cadvisorClient struct {
@@ -95,5 +97,22 @@ func (cadvisorClient) WatchEvents(request *events.Request) (*events.EventChannel
 }
 
 func (cadvisorClient) GetDirFsInfo(path string) (cadvisorapi2.FsInfo, error) {
-	return cadvisorapi2.FsInfo{}, nil
+	var freeBytesAvailable, totalNumberOfBytes uint64
+
+	sf := syscall.Statfs_t{}
+	err := syscall.Statfs(path, &sf)
+
+	if err != nil {
+		return cadvisorapi2.FsInfo{}, err
+	}
+
+	totalNumberOfBytes = sf.Blocks * uint64(sf.Bsize)
+	freeBytesAvailable = sf.Bfree * uint64(sf.Bsize)
+
+	return cadvisorapi2.FsInfo{
+		Timestamp: time.Now(),
+		Capacity:  totalNumberOfBytes,
+		Available: freeBytesAvailable,
+		Usage:     totalNumberOfBytes - freeBytesAvailable,
+	}, nil
 }
