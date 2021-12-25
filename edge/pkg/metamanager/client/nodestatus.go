@@ -41,7 +41,7 @@ func (c *nodeStatus) Create(ns *edgeapi.NodeStatusRequest) (*edgeapi.NodeStatusR
 func (c *nodeStatus) Update(rsName string, ns edgeapi.NodeStatusRequest) error {
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypeNodeStatus, rsName)
 	nodeStatusMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.UpdateOperation, ns)
-	_, err := c.send.SendSync(nodeStatusMsg)
+	_, err := c.send.SendSync(nodeStatusMsg, true, nil)
 	if err != nil {
 		return fmt.Errorf("update nodeStatus failed, err: %v", err)
 	}

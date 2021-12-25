@@ -25,6 +25,7 @@ type CoreInterface interface {
 	NodeStatusGetter
 	SecretsGetter
 	ServiceAccountTokenGetter
+	LeaseGetter
 	PersistentVolumesGetter
 	PersistentVolumeClaimsGetter
 	VolumeAttachmentsGetter
@@ -58,6 +59,10 @@ func (m *metaClient) ServiceAccountToken() ServiceAccountTokenInterface {
 	return newServiceAccountToken(m.send)
 }
 
+func (m *metaClient) Lease(namespace string) LeaseInterface {
+	return newLeases(namespace, m.send)
+}
+
 func (m *metaClient) PodStatus(namespace string) PodStatusInterface {
 	return newPodStatus(namespace, m.send)
 }
@@ -86,7 +91,11 @@ func New() CoreInterface {
 
 //SendInterface is to sync interface
 type SendInterface interface {
-	SendSync(message *model.Message) (*model.Message, error)
+	// SendSync will send message in a sync way.
+	// When withRetry is ture, it will retry for 3 times if error occurs.
+	// timeout represents the duration SendSync will wait for the response. If timeout is nil,
+	// it will use the default timout which is 1 min.
+	SendSync(message *model.Message, withRetry bool, timeout *time.Duration) (*model.Message, error)
 	Send(message *model.Message)
 }
 
@@ -97,18 +106,22 @@ func newSend() SendInterface {
 	return &send{}
 }
 
-func (s *send) SendSync(message *model.Message) (*model.Message, error) {
+func (s *send) SendSync(message *model.Message, withRetry bool, timeout *time.Duration) (*model.Message, error) {
 	var err error
 	var resp model.Message
 	retries := 0
 	err = wait.Poll(syncPeriod, syncMsgRespTimeout, func() (bool, error) {
-		resp, err = beehiveContext.SendSync(metamanager.MetaManagerModuleName, *message, syncMsgRespTimeout)
+		syncTimeout := syncMsgRespTimeout
+		if timeout != nil {
+			syncTimeout = *timeout
+		}
+		resp, err = beehiveContext.SendSync(metamanager.MetaManagerModuleName, *message, syncTimeout)
 		retries++
 		if err == nil {
 			klog.V(4).Infof("send sync message %s successed and response: %v", message.GetResource(), resp)
 			return true, nil
 		}
-		if retries < 3 {
+		if withRetry && retries < 3 {
 			klog.Errorf("send sync message %s failed, error:%v, retries: %d", message.GetResource(), err, retries)
 			return false, nil
 		}

@@ -36,7 +36,7 @@ func newServiceAccountToken(s SendInterface) *serviceAccountToken {
 func (c *serviceAccountToken) GetServiceAccountToken(namespace string, name string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
 	resource := fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypeServiceAccountToken, name)
 	tokenMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, tr)
-	msg, err := c.send.SendSync(tokenMsg)
+	msg, err := c.send.SendSync(tokenMsg, true, nil)
 	if err != nil {
 		klog.Errorf("get service account token from metaManager failed, err: %v", err)
 		return nil, fmt.Errorf("get service account token from metaManager failed, err: %v", err)

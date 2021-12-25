@@ -40,7 +40,7 @@ func (c *podStatus) Create(ps *edgeapi.PodStatusRequest) (*edgeapi.PodStatusRequ
 
 func (c *podStatus) Update(rsName string, ps edgeapi.PodStatusRequest) error {
 	podStatusMsg := message.BuildMsg(commodule.MetaGroup, "", commodule.EdgedModuleName, c.namespace+"/"+model.ResourceTypePodStatus+"/"+rsName, model.UpdateOperation, ps)
-	_, err := c.send.SendSync(podStatusMsg)
+	_, err := c.send.SendSync(podStatusMsg, true, nil)
 	if err != nil {
 		return fmt.Errorf("update podstatus failed, err: %v", err)
 	}

@@ -113,8 +113,21 @@ type Edged struct {
 	// Taints indicates current node taints
 	Taints []v1.Taint `json:"taints,omitempty"`
 	// NodeStatusUpdateFrequency indicates node status update frequency (second)
+	// If enable the NodeLease feature gate, it will be the node lease update frequency, and
+	// node status computation frequency.
 	// default 10
 	NodeStatusUpdateFrequency int32 `json:"nodeStatusUpdateFrequency,omitempty"`
+	// nodeStatusReportFrequency is the frequency that edged posts node status to master if node status does not change.
+	// Edged will ignore this frequency and post node status immediately if any change is detected.
+	// It is only used when node lease feature is enabled. (second)
+	// default 300
+	NodeStatusReportFrequency int32 `json:"nodeStatusReportFrequency,omitempty"`
+	// nodeLeaseDurationSeconds is the duration the edged will set on its corresponding Lease.
+	// NodeLease provides an indicator of node health by having the Kubelet create and
+	// periodically renew a lease, named after the node, in the kube-node-lease namespace.
+	// If the lease expires, the node can be considered unhealthy.
+	// The field value must be greater than 0. Default: 40
+	NodeLeaseDurationSeconds int32 `json:"nodeLeaseDurationSeconds,omitempty"`
 	// RuntimeType indicates cri runtime ,support: docker, remote
 	// default "docker"
 	RuntimeType string `json:"runtimeType,omitempty"`

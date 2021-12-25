@@ -126,6 +126,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					DeletePodWorkers:                  constants.DefaultDeletePodWorkers,
 					UpdateRuleStatusWorkers:           constants.DefaultUpdateRuleStatusWorkers,
 					ServiceAccountTokenWorkers:        constants.DefaultServiceAccountTokenWorkers,
+					LeaseWorkers:                      constants.DefaultLeaseWorkers,
 				},
 			},
 			DeviceController: &DeviceController{

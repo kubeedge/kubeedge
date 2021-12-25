@@ -44,7 +44,7 @@ func (c *nodes) Create(cm *api.Node) (*api.Node, error) {
 func (c *nodes) Update(cm *api.Node) error {
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypeNode, cm.Name)
 	nodeMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.UpdateOperation, cm)
-	_, err := c.send.SendSync(nodeMsg)
+	_, err := c.send.SendSync(nodeMsg, true, nil)
 	if err != nil {
 		return fmt.Errorf("update node failed, err: %v", err)
 	}
@@ -58,7 +58,7 @@ func (c *nodes) Delete(name string) error {
 func (c *nodes) Get(name string) (*api.Node, error) {
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypeNode, name)
 	nodeMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, nil)
-	msg, err := c.send.SendSync(nodeMsg)
+	msg, err := c.send.SendSync(nodeMsg, true, nil)
 	if err != nil {
 		return nil, fmt.Errorf("get node failed, err: %v", err)
 	}

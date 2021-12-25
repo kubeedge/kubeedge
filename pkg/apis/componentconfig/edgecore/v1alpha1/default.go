@@ -52,6 +52,8 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				Annotations:                 map[string]string{},
 				Taints:                      []v1.Taint{},
 				NodeStatusUpdateFrequency:   constants.DefaultNodeStatusUpdateFrequency,
+				NodeStatusReportFrequency:   constants.DefaultNodeStatusReportFrequency,
+				NodeLeaseDurationSeconds:    constants.DefaultNodeLeaseDurationSeconds,
 				RuntimeType:                 constants.DefaultRuntimeType,
 				DockerAddress:               constants.DefaultDockerAddress,
 				RemoteRuntimeEndpoint:       constants.DefaultRemoteRuntimeEndpoint,

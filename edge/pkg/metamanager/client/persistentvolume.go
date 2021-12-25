@@ -53,7 +53,7 @@ func (c *persistentvolumes) Delete(name string) error {
 func (c *persistentvolumes) Get(name string, options metav1.GetOptions) (*api.PersistentVolume, error) {
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, "persistentvolume", name)
 	pvMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, nil)
-	msg, err := c.send.SendSync(pvMsg)
+	msg, err := c.send.SendSync(pvMsg, true, nil)
 	if err != nil {
 		return nil, fmt.Errorf("get persistentvolume from metaManager failed, err: %v", err)
 	}

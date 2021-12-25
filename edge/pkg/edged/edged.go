@@ -117,6 +117,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/features"
 	"github.com/kubeedge/kubeedge/pkg/version"
 )
 
@@ -189,7 +190,10 @@ type edged struct {
 	customInterfaceName       string
 	uid                       types.UID
 	nodeStatusUpdateFrequency time.Duration
+	nodeStatusReportFrequency time.Duration
+	nodeLeaseDurationSeconds  int32
 	registrationCompleted     bool
+	nodeLeaseCreated          bool
 	containerManager          cm.ContainerManager
 	containerRuntimeName      string
 	concurrentConsumers       int
@@ -267,6 +271,11 @@ type edged struct {
 
 	// Pod killer handles pods to be killed
 	podKiller PodKiller
+
+	// lastStatusReportTime is the time when node status was last reported.
+	lastStatusReportTime time.Time
+	// lastReportStatus is the node status reported at lastStatusReportTime
+	lastReportStatus *v1.NodeStatus
 }
 
 var _ core.Module = (*edged)(nil)
@@ -328,7 +337,16 @@ func (e *edged) Start() {
 		volumepathhandler.NewBlockVolumePathHandler(),
 	)
 	go e.volumeManager.Run(edgedutil.NewSourcesReady(e.isInitPodReady), utilwait.NeverStop)
-	go utilwait.Until(e.syncNodeStatus, e.nodeStatusUpdateFrequency, utilwait.NeverStop)
+
+	if features.DefaultMutableFeatureGate.Enabled(features.NodeLease) {
+		client.SetLeaseClientTimeout(e.nodeStatusUpdateFrequency)
+		go utilwait.Until(e.syncNodeLease, e.nodeStatusUpdateFrequency, utilwait.NeverStop)
+		// check nodestatus every nodeStatusUpdateFrequency, but do not update nodestatus if there's no change.
+		// nodestatus will be updated at least every nodeStatusReportFrequenct even there's no change.
+		go utilwait.Until(e.syncNodeStatus, e.nodeStatusReportFrequency, utilwait.NeverStop)
+	} else {
+		go utilwait.Until(e.syncNodeStatus, e.nodeStatusUpdateFrequency, utilwait.NeverStop)
+	}
 
 	// Start a goroutine responsible for killing pods (that are not properly
 	// handled by pod workers).
@@ -467,6 +485,8 @@ func newEdged(enable bool) (*edged, error) {
 		metaClient:                metaClient,
 		kubeClient:                fakekube.NewSimpleClientset(metaClient),
 		nodeStatusUpdateFrequency: time.Duration(edgedconfig.Config.NodeStatusUpdateFrequency) * time.Second,
+		nodeStatusReportFrequency: time.Duration(edgedconfig.Config.NodeStatusReportFrequency) * time.Second,
+		nodeLeaseDurationSeconds:  edgedconfig.Config.NodeLeaseDurationSeconds,
 		mounter:                   mount.New(""),
 		uid:                       types.UID("38796d14-1df3-11e8-8e5a-286ed488f209"),
 		version:                   fmt.Sprintf("%s-kubeedge-%s", constants.CurrentSupportK8sVersion, version.Get()),

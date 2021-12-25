@@ -53,7 +53,7 @@ func (c *persistentvolumeclaims) Delete(name string) error {
 func (c *persistentvolumeclaims) Get(name string, options metav1.GetOptions) (*api.PersistentVolumeClaim, error) {
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, "persistentvolumeclaim", name)
 	pvcMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, nil)
-	msg, err := c.send.SendSync(pvcMsg)
+	msg, err := c.send.SendSync(pvcMsg, true, nil)
 	if err != nil {
 		return nil, fmt.Errorf("get persistentvolumeclaim from metaManager failed, err: %v", err)
 	}

@@ -52,7 +52,7 @@ func (c *secrets) Delete(name string) error {
 func (c *secrets) Get(name string) (*api.Secret, error) {
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypeSecret, name)
 	secretMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, nil)
-	msg, err := c.send.SendSync(secretMsg)
+	msg, err := c.send.SendSync(secretMsg, true, nil)
 	if err != nil {
 		return nil, fmt.Errorf("get secret from metaManager failed, err: %v", err)
 	}

@@ -41,7 +41,7 @@ func newVolumeAttachments(n string, s SendInterface) *volumeattachments {
 func (c *volumeattachments) Create(va *api.VolumeAttachment) (*api.VolumeAttachment, error) {
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, "volumeattachment", va.Name)
 	vaMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.InsertOperation, va)
-	_, err := c.send.SendSync(vaMsg)
+	_, err := c.send.SendSync(vaMsg, true, nil)
 	if err != nil {
 		return nil, fmt.Errorf("create VolumeAttachment failed, err: %v", err)
 	}
@@ -55,7 +55,7 @@ func (c *volumeattachments) Update(va *api.VolumeAttachment) error {
 func (c *volumeattachments) Delete(name string) error {
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, "volumeattachment", name)
 	vaMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.DeleteOperation, nil)
-	_, err := c.send.SendSync(vaMsg)
+	_, err := c.send.SendSync(vaMsg, true, nil)
 	if err != nil {
 		return fmt.Errorf("delete VolumeAttachment failed, err: %v", err)
 	}
@@ -65,7 +65,7 @@ func (c *volumeattachments) Delete(name string) error {
 func (c *volumeattachments) Get(name string, options metav1.GetOptions) (*api.VolumeAttachment, error) {
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, "volumeattachment", name)
 	vaMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, nil)
-	msg, err := c.send.SendSync(vaMsg)
+	msg, err := c.send.SendSync(vaMsg, true, nil)
 	if err != nil {
 		return nil, fmt.Errorf("get volumeattachment from metaManager failed, err: %v", err)
 	}

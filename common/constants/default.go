@@ -48,6 +48,8 @@ const (
 	DefaultRemoteImageEndpoint         = "unix:///var/run/dockershim.sock"
 	DefaultPodSandboxImage             = "kubeedge/pause:3.1"
 	DefaultNodeStatusUpdateFrequency   = 10
+	DefaultNodeStatusReportFrequency   = 300
+	DefaultNodeLeaseDurationSeconds    = 40
 	DefaultImagePullProgressDeadline   = 60
 	DefaultRuntimeRequestTimeout       = 2
 	DefaultImageGCHighThreshold        = 80
@@ -94,6 +96,7 @@ const (
 	DefaultDeletePodWorkers                  = 4
 	DefaultUpdateRuleStatusWorkers           = 4
 	DefaultServiceAccountTokenWorkers        = 4
+	DefaultLeaseWorkers                      = 4
 
 	DefaultUpdatePodStatusBuffer            = 1024
 	DefaultUpdateNodeStatusBuffer           = 1024
@@ -108,6 +111,7 @@ const (
 	DefaultUpdateNodeBuffer                 = 1024
 	DefaultDeletePodBuffer                  = 1024
 	DefaultServiceAccountTokenBuffer        = 1024
+	DefaultLeaseBuffer                      = 1024
 
 	DefaultPodEventBuffer           = 1
 	DefaultConfigMapEventBuffer     = 1

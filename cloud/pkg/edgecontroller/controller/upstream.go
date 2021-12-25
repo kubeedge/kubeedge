@@ -34,6 +34,7 @@ import (
 	"time"
 
 	authenticationv1 "k8s.io/api/authentication/v1"
+	coordinationv1 "k8s.io/api/coordination/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -110,6 +111,7 @@ type UpstreamController struct {
 	updateNodeChan            chan model.Message
 	podDeleteChan             chan model.Message
 	ruleStatusChan            chan model.Message
+	leaseChan                 chan model.Message
 
 	// lister
 	podLister       corelisters.PodLister
@@ -140,6 +142,9 @@ func (uc *UpstreamController) Start() error {
 	}
 	for i := 0; i < int(uc.config.Load.ServiceAccountTokenWorkers); i++ {
 		go uc.processServiceAccountToken()
+	}
+	for i := 0; i < int(uc.config.Load.LeaseWorkers); i++ {
+		go uc.processLease()
 	}
 	for i := 0; i < int(uc.config.Load.QueryPersistentVolumeWorkers); i++ {
 		go uc.queryPersistentVolume()
@@ -224,6 +229,8 @@ func (uc *UpstreamController) dispatchMessage() {
 			}
 		case model.ResourceTypeRuleStatus:
 			uc.ruleStatusChan <- msg
+		case model.ResourceTypeLease:
+			uc.leaseChan <- msg
 
 		default:
 			klog.Errorf("message: %s, resource type: %s unsupported", msg.GetID(), resourceType)
@@ -569,6 +576,8 @@ func kubeClientGet(uc *UpstreamController, namespace string, name string, queryT
 		obj, err = uc.nodeLister.Get(name)
 	case model.ResourceTypeServiceAccountToken:
 		obj, err = uc.getServiceAccountToken(namespace, name, msg)
+	case model.ResourceTypeLease:
+		obj, err = uc.kubeClient.CoordinationV1().Leases(namespace).Get(context.Background(), name, metaV1.GetOptions{})
 	default:
 		err := stderrors.New("wrong query type")
 		klog.Error(err)
@@ -665,6 +674,81 @@ func (uc *UpstreamController) processServiceAccountToken() {
 			queryInner(uc, msg, model.ResourceTypeServiceAccountToken)
 		}
 	}
+}
+
+func (uc *UpstreamController) processLease() {
+	for {
+		select {
+		case <-beehiveContext.Done():
+			klog.Warning("stop process lease")
+			return
+		case msg := <-uc.leaseChan:
+			content, err := msg.GetContentData()
+			if err != nil {
+				klog.Errorf("failed to get content data from lease message: %s, %v", msg.String(), err)
+				continue
+			}
+			lease := &coordinationv1.Lease{}
+			if err = json.Unmarshal(content, lease); err != nil {
+				klog.Errorf("unmarshal lease query request failed err: %v", err)
+				continue
+			}
+			sendResponseAccordingError := func(err error) {
+				resp := model.NewMessage(msg.GetID()).
+					BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, msg.GetResource(), model.ResponseOperation)
+				if err == nil {
+					resp.FillBody(common.MessageSuccessfulContent)
+				} else if status := errors.APIStatus(nil); stderrors.As(err, &status) {
+					resp.FillBody(status.Status().Reason)
+				} else {
+					resp.FillBody(err.Error())
+				}
+				if err := uc.messageLayer.Response(*resp); err != nil {
+					klog.Warningf("message: %s process failure, response failed with error: %s", msg.GetID(), err)
+				}
+			}
+
+			err = uc.handleLeaseMsgAccordingOperation(lease, msg.GetOperation())
+			if err != nil {
+				klog.Errorf("failed to process lease msg: %s, %v", msg.GetID(), err)
+			}
+			sendResponseAccordingError(err)
+		}
+	}
+}
+
+// handleLeaseMsgAccordingOperation will process lease msg according to its operation
+func (uc *UpstreamController) handleLeaseMsgAccordingOperation(leaseInMsg *coordinationv1.Lease, op string) error {
+	switch op {
+	case model.InsertOperation:
+		_, err := uc.kubeClient.CoordinationV1().Leases(leaseInMsg.Namespace).Create(context.Background(), leaseInMsg, metaV1.CreateOptions{})
+		if errors.IsAlreadyExists(err) {
+			klog.Infof("lease %s/%s already exists, do nothing", leaseInMsg.Namespace, leaseInMsg.Name)
+			return nil
+		}
+		if err != nil {
+			return fmt.Errorf("create lease %s/%s failed, %v", leaseInMsg.Namespace, leaseInMsg.Name, err)
+		}
+	case model.UpdateOperation:
+		oldlease, err := uc.kubeClient.CoordinationV1().Leases(leaseInMsg.Namespace).Get(context.Background(), leaseInMsg.Name, metaV1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("update lease %s/%s failed, %v", leaseInMsg.Namespace, leaseInMsg.Name, err)
+		}
+		// set new RenewTime for oldlease
+		oldlease.Spec.RenewTime = leaseInMsg.Spec.RenewTime.DeepCopy()
+		buf, err := json.Marshal(oldlease)
+		if err != nil {
+			return fmt.Errorf("marshal failed when update lease %s/%s, %v", leaseInMsg.Namespace, leaseInMsg.Name, err)
+		}
+		_, err = uc.kubeClient.CoordinationV1().Leases(leaseInMsg.Namespace).
+			Patch(context.Background(), oldlease.Name, apimachineryType.StrategicMergePatchType, buf, metaV1.PatchOptions{})
+		if err != nil {
+			return fmt.Errorf("patch lease %s/%s failed, %v", leaseInMsg.Namespace, leaseInMsg.Name, err)
+		}
+	default:
+		return fmt.Errorf("operation type: %s unsupported", op)
+	}
+	return nil
 }
 
 func (uc *UpstreamController) getServiceAccountToken(namespace string, name string, msg model.Message) (metaV1.Object, error) {
@@ -1024,5 +1108,6 @@ func NewUpstreamController(config *v1alpha1.EdgeController, factory k8sinformer.
 	uc.updateNodeChan = make(chan model.Message, config.Buffer.UpdateNode)
 	uc.podDeleteChan = make(chan model.Message, config.Buffer.DeletePod)
 	uc.ruleStatusChan = make(chan model.Message, config.Buffer.UpdateNodeStatus)
+	uc.leaseChan = make(chan model.Message, config.Buffer.Lease)
 	return uc, nil
 }

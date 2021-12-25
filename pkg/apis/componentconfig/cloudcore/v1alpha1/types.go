@@ -270,6 +270,9 @@ type EdgeControllerBuffer struct {
 	// ServiceAccount indicates the buffer of service account token
 	// default 1024
 	ServiceAccountToken int32 `json:"serviceAccountToken,omitempty"`
+	// Lease indicates the buffer of lease message from edge
+	// default 1024
+	Lease int32 `json:"lease,omitempty"`
 }
 
 // ControllerContext indicates the message layer context for all controllers
@@ -328,6 +331,9 @@ type EdgeControllerLoad struct {
 	// ServiceAccountTokenWorkers indicates the load of service account token
 	// default 4
 	ServiceAccountTokenWorkers int32 `json:"ServiceAccountTokenWorkers,omitempty"`
+	// LeaseWrokers indicates the load of process leases
+	// default 4
+	LeaseWorkers int32
 }
 
 // DeviceController indicates the device controller

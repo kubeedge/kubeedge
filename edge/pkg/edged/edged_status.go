@@ -47,6 +47,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/config"
+	"github.com/kubeedge/kubeedge/pkg/features"
 	"github.com/kubeedge/kubeedge/pkg/util"
 )
 
@@ -425,6 +426,8 @@ func (e *edged) registerNode() error {
 
 	klog.Infof("Successfully registered node %s", e.nodeName)
 	e.registrationCompleted = true
+	e.lastReportStatus = node.Status.DeepCopy()
+	e.lastStatusReportTime = time.Now()
 
 	return nil
 }
@@ -436,13 +439,25 @@ func (e *edged) updateNodeStatus() error {
 		return err
 	}
 
+	now := time.Now()
+	if features.DefaultMutableFeatureGate.Enabled(features.NodeLease) {
+		// If enable NodeLease feature gate, check if it's the time to update nodestatus or
+		// if the nodestatus has changed since last report. If it's not in any situation of both,
+		// skip update nodestaus.
+		if now.Before(e.lastStatusReportTime.Add(e.nodeStatusReportFrequency)) && !e.nodeStatusHasChanged(&nodeStatus.Status) {
+			return nil
+		}
+	}
 	err = e.metaClient.NodeStatus(e.namespace).Update(e.nodeName, *nodeStatus)
 	if err != nil {
 		klog.Errorf("update node failed, error: %v", err)
+		return err
 	}
 	e.setInitNode(&v1.Node{
 		Status: *nodeStatus.Status.DeepCopy(),
 	})
+	e.lastReportStatus = nodeStatus.Status.DeepCopy()
+	e.lastStatusReportTime = time.Now()
 	return nil
 }
 
