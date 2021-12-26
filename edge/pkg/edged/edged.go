@@ -1118,7 +1118,8 @@ func (e *edged) syncPod() {
 			klog.Errorf("get message content data failed: %v", err)
 			continue
 		}
-		klog.Infof("result content is %s", result.Content)
+		klog.Infof("result resource is %s, group is %s, operation is %s, source is %s, content is %s",
+			result.GetResource(), result.GetGroup(), result.GetOperation(), result.GetSource(), result.Content)
 		switch resType {
 		case model.ResourceTypePod:
 			if op == model.ResponseOperation && resID == "" && result.GetSource() == metamanager.MetaManagerModuleName {
@@ -1323,38 +1324,42 @@ func (e *edged) handlePodListFromEdgeController(content []byte) (err error) {
 
 func (e *edged) addPod(obj interface{}) {
 	pod := obj.(*v1.Pod)
-	klog.Infof("start sync addition for pod [%s]", pod.Name)
-	attrs := &lifecycle.PodAdmitAttributes{}
-	attrs.Pod = pod
-	otherpods := e.podManager.GetPods()
-	attrs.OtherPods = otherpods
-	nodeInfo := schedulercache.NewNodeInfo(pod)
-	e.containerManager.UpdatePluginResources(nodeInfo, attrs)
-	key := types.NamespacedName{
-		Namespace: pod.Namespace,
-		Name:      pod.Name,
+	if e.matchPodNodeName(pod, e.nodeName) {
+		klog.Infof("start sync addition for pod [%s]", pod.Name)
+		attrs := &lifecycle.PodAdmitAttributes{}
+		attrs.Pod = pod
+		otherpods := e.podManager.GetPods()
+		attrs.OtherPods = otherpods
+		nodeInfo := schedulercache.NewNodeInfo(pod)
+		e.containerManager.UpdatePluginResources(nodeInfo, attrs)
+		key := types.NamespacedName{
+			Namespace: pod.Namespace,
+			Name:      pod.Name,
+		}
+		e.podManager.AddPod(pod)
+		e.probeManager.AddPod(pod)
+		e.podAdditionQueue.Add(key.String())
+		klog.Infof("success sync addition for pod [%s]", pod.Name)
 	}
-	e.podManager.AddPod(pod)
-	e.probeManager.AddPod(pod)
-	e.podAdditionQueue.Add(key.String())
-	klog.Infof("success sync addition for pod [%s]", pod.Name)
 }
 
 func (e *edged) updatePod(obj interface{}) {
 	newPod := obj.(*v1.Pod)
-	klog.Infof("start update pod [%s]", newPod.Name)
-	key := types.NamespacedName{
-		Namespace: newPod.Namespace,
-		Name:      newPod.Name,
+	if e.matchPodNodeName(newPod, e.nodeName) {
+		klog.Infof("start update pod [%s]", newPod.Name)
+		key := types.NamespacedName{
+			Namespace: newPod.Namespace,
+			Name:      newPod.Name,
+		}
+		e.podManager.UpdatePod(newPod)
+		e.probeManager.AddPod(newPod)
+		if newPod.DeletionTimestamp == nil {
+			e.podAdditionQueue.Add(key.String())
+		} else {
+			e.podDeletionQueue.Add(key.String())
+		}
+		klog.Infof("success update pod is %+v\n", newPod)
 	}
-	e.podManager.UpdatePod(newPod)
-	e.probeManager.AddPod(newPod)
-	if newPod.DeletionTimestamp == nil {
-		e.podAdditionQueue.Add(key.String())
-	} else {
-		e.podDeletionQueue.Add(key.String())
-	}
-	klog.Infof("success update pod is %+v\n", newPod)
 }
 
 func (e *edged) deletePod(obj interface{}) {
@@ -1525,4 +1530,8 @@ func convertStrToIP(s string) []net.IP {
 		}
 	}
 	return ips
+}
+
+func (e *edged) matchPodNodeName(pod *v1.Pod, shouldBeNodeName string) bool {
+	return pod.Spec.NodeName == shouldBeNodeName
 }
