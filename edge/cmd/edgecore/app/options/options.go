@@ -30,6 +30,7 @@ import (
 
 type EdgeCoreOptions struct {
 	ConfigFile string
+	Test       string
 }
 
 func NewEdgeCoreOptions() *EdgeCoreOptions {
