@@ -194,7 +194,7 @@ define GENERATE_CRDS_HELP_INFO
 #     RELIABLESYNCS_VERSION, default: v1alpha1
 #
 # Example:
-#     make generate 
+#     make generate
 #     make generate -e CRD_VERSIONS=v1 -e CRD_OUTPUTS=build/crds
 #
 endef

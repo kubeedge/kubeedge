@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -132,7 +134,7 @@ func (m *metaManager) processInsert(message model.Message) {
 	}
 
 	// Notify edged
-	sendToEdged(&message, false)
+	sendToEdgedByNodeName(message, resType, false)
 
 	resp := message.NewRespByMessage(&message, OK)
 	sendToCloud(resp)
@@ -175,7 +177,7 @@ func (m *metaManager) processUpdate(message model.Message) {
 		resp := message.NewRespByMessage(&message, OK)
 		sendToEdged(resp, message.IsSync())
 	case cloudmodules.EdgeControllerModuleName, cloudmodules.DynamicControllerModuleName:
-		sendToEdged(&message, message.IsSync())
+		sendToEdgedByNodeName(message, resType, message.IsSync())
 		resp := message.NewRespByMessage(&message, OK)
 		sendToCloud(resp)
 	case CloudFunctionModel:
@@ -476,4 +478,40 @@ func (m *metaManager) runMetaManager() {
 			m.process(msg)
 		}
 	}()
+}
+
+func sendToEdgedByNodeName(message model.Message, resType string, isSync bool) {
+	switch resType {
+	case model.ResourceTypePod:
+		if podMatchByNodeName(message, metaManagerConfig.Config.NodeName) {
+			sendToEdged(&message, isSync)
+		}
+	default:
+		sendToEdged(&message, isSync)
+	}
+}
+
+func podMatchByNodeName(message model.Message, nodeName string) (isMatched bool) {
+	content := message.GetContent()
+	var k8sResourcePod v1.Pod
+
+	if k8sResourceMap, ok := content.(map[string]interface{}); ok {
+		mv1usd := metav1.Unstructured{}
+		mv1usd.SetUnstructuredContent(k8sResourceMap)
+		stdJSON, err := mv1usd.MarshalJSON()
+		if err != nil {
+			klog.Errorf("convert Unstructured to json failed: %v", err)
+			return
+		}
+		err = json.Unmarshal(stdJSON, &k8sResourcePod)
+		if err != nil {
+			klog.Errorf("unmarshal pod failed: %s, err: %v", string(stdJSON), err)
+			return
+		}
+	} else {
+		klog.Warningf("message content is not a map: %v", content)
+	}
+
+	isMatched = k8sResourcePod.Spec.NodeName == nodeName
+	return
 }

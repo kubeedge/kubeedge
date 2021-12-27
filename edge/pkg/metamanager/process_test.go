@@ -56,7 +56,7 @@ var errFailedDBOperation = errors.New(FailedDBOperation)
 
 func init() {
 	cfg := v1alpha1.NewDefaultEdgeCoreConfig()
-	metaManagerConfig.InitConfigure(cfg.Modules.MetaManager)
+	metaManagerConfig.InitConfigure(cfg.Modules.MetaManager, metaManagerConfig.Config.NodeName)
 
 	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 	add := &common.ModuleInfo{

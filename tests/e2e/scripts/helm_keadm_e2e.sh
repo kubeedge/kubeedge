@@ -66,7 +66,7 @@ function start_kubeedge() {
       sleep 3
       kubectl get secret -nkubeedge 2>/dev/null | grep -q tokensecret && break
   done
-  
+
   cd $KUBEEDGE_ROOT
   export TOKEN=$(sudo _output/local/bin/keadm gettoken --kube-config=$KUBECONFIG)
   sudo systemctl set-environment CHECK_EDGECORE_ENVIRONMENT="false"
