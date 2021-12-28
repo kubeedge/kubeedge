@@ -23,8 +23,8 @@ exemptAssignees: false
 staleLabel: lifecycle/stale
 
 pull:
-  daysUntilClose: 60
-  daysUntilStale: 90
+  daysUntilClose: 90
+  daysUntilStale: 365
   markComment: >
     Hello 👋 Looks like there was no activity on this amazing PR for last 90 days.
 
@@ -36,8 +36,8 @@ pull:
     Closing for now as there was no activity for last 60 days after marked as stale, let us know if you need this to be reopened! 🤗
 
 issues:
-  daysUntilClose: 60
-  daysUntilStale: 90
+  daysUntilClose: 90
+  daysUntilStale: 365
   markComment: >
     Hello 👋 Looks like there was no activity on this issue for last 90 days.
 
@@ -49,4 +49,4 @@ issues:
     Closing for now as there was no activity for last 60 days after marked as stale, let us know if you need this to be reopened! 🤗
 
 # Limit the number of actions per hour, from 1-30. Default is 30
-limitPerRun: 30
+limitPerRun: 5
