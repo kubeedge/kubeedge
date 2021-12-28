@@ -47,7 +47,7 @@ function prepare_cluster() {
 
 function build_cloud_image() {
   cd $KUBEEDGE_ROOT
-  make cloudimage -f $KUBEEDGE_ROOT/Makefile -e IMAGE_TAG=$IMAGE_TAG
+  make image WHAT=cloudcore -f $KUBEEDGE_ROOT/Makefile -e IMAGE_TAG=$IMAGE_TAG
   kind load docker-image kubeedge/cloudcore:$IMAGE_TAG --name test
 }
 

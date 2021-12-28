@@ -307,33 +307,26 @@ ARCH ?= amd64
 IMAGE_TAG ?= $(shell git describe --tags)
 GO_LDFLAGS='$(shell hack/make-rules/version.sh)'
 
-.PHONY: cloudimage
-cloudimage:
-	docker build --build-arg GO_LDFLAGS=${GO_LDFLAGS} -t kubeedge/cloudcore:${IMAGE_TAG} -f build/cloud/Dockerfile .
-
-.PHONY: admissionimage
-admissionimage:
-	docker build --build-arg GO_LDFLAGS=${GO_LDFLAGS} -t kubeedge/admission:${IMAGE_TAG} -f build/admission/Dockerfile .
-
-.PHONY: csidriverimage
-csidriverimage:
-	docker build --build-arg GO_LDFLAGS=${GO_LDFLAGS} -t kubeedge/csidriver:${IMAGE_TAG} -f build/csidriver/Dockerfile .
-
-.PHONY: iptablesmgrimage
-iptablesmgrimage:
-	docker build --build-arg GO_LDFLAGS=${GO_LDFLAGS} -t kubeedge/iptables-manager:${IMAGE_TAG} -f build/iptablesmanager/Dockerfile .
-
-.PHONY: edgeimage
-edgeimage:
-	docker build --build-arg GO_LDFLAGS=${GO_LDFLAGS} -t kubeedge/edgecore:${IMAGE_TAG} -f build/edge/Dockerfile .
-
-.PHONY: edgesite-server-image
-edgesite-server-image:
-	docker build . --build-arg ARCH=${ARCH} -f build/edgesite/server-build.Dockerfile -t kubeedge/edgesite-server-${ARCH}:${IMAGE_TAG}
-
-.PHONY: edgesite-agent-image
-edgesite-agent-image:
-	docker build . --build-arg ARCH=${ARCH} -f build/edgesite/agent-build.Dockerfile -t kubeedge/edgesite-agent-${ARCH}:${IMAGE_TAG}
+define IMAGE_HELP_INFO
+# Build image.
+#
+# Args:
+#   WHAT: component names to build. support: $(BINARIES)
+#         If not specified, "everything" will be built.
+#
+# Example:
+#   make image
+#   make image HELP=y
+#   make image WHAT=cloudcore
+endef
+.PHONY: image
+ifeq ($(HELP),y)
+image:
+	@echo "IMAGE_HELP_INFO"
+else
+image:
+	hack/make-rules/image.sh $(WHAT)
+endif
 
 define INSTALL_HELP_INFO
 # install
