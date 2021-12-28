@@ -12,7 +12,8 @@ BINARIES=cloudcore \
 	edgesite-agent \
 	edgesite-server \
 	keadm \
-	csidriver
+	csidriver \
+	iptablesmanager
 
 COMPONENTS=cloud \
 	edge
