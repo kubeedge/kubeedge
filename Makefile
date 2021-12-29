@@ -159,7 +159,7 @@ define CROSSBUILD_HELP_INFO
 #         If not specified, "everything" will be cross build.
 #
 # GOARM: go arm value, now support:$(GOARM_VALUES)
-#        If not specified ,default use GOARM=GOARM8
+#        If not specified, build binary for ARMv8 by default.
 #
 #
 # Example:
