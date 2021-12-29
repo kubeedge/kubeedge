@@ -76,7 +76,7 @@ func TestGetMessageResourceType(t *testing.T) {
 						},
 					},
 				}},
-			want: UnsafeKindToResource("Pod"),
+			want: "Pod",
 		},
 		{
 			name: "TestGetMessageResourceType(): Case 2: Content other",
