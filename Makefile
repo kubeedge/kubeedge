@@ -325,15 +325,7 @@ iptablesmgrimage:
 
 .PHONY: edgeimage
 edgeimage:
-	mkdir -p ./build/edge/tmp
-	rm -rf ./build/edge/tmp/*
-	curl -L -o ./build/edge/tmp/qemu-${QEMU_ARCH}-static.tar.gz https://github.com/multiarch/qemu-user-static/releases/download/v3.0.0/qemu-${QEMU_ARCH}-static.tar.gz
-	tar -xzf ./build/edge/tmp/qemu-${QEMU_ARCH}-static.tar.gz -C ./build/edge/tmp
-	docker build -t kubeedge/edgecore:${IMAGE_TAG} \
-	--build-arg GO_LDFLAGS=${GO_LDFLAGS} \
-	--build-arg BUILD_FROM=${ARCH}/golang:1.16-alpine3.13 \
-	--build-arg RUN_FROM=${ARCH}/docker:dind \
-	-f build/edge/Dockerfile .
+	docker build --build-arg GO_LDFLAGS=${GO_LDFLAGS} -t kubeedge/edgecore:${IMAGE_TAG} -f build/edge/Dockerfile .
 
 .PHONY: edgesite-server-image
 edgesite-server-image:
