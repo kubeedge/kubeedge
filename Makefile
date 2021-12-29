@@ -147,7 +147,6 @@ integrationtest:
 	edge/test/integration/scripts/execute.sh
 endif
 
-CROSSBUILD_COMPONENTS=edgecore
 GOARM_VALUES=GOARM7 \
 	GOARM8
 
@@ -155,7 +154,7 @@ define CROSSBUILD_HELP_INFO
 # cross build components.
 #
 # Args:
-#   WHAT: Component names to be lint check. support: $(CROSSBUILD_COMPONENTS)
+#   WHAT: Component names to be lint check. support: $(BINARIES)
 #         If not specified, "everything" will be cross build.
 #
 # GOARM: go arm value, now support:$(GOARM_VALUES)
