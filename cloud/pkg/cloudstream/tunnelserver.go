@@ -114,6 +114,7 @@ func (s *TunnelServer) connect(r *restful.Request, w *restful.Response) {
 	}
 	con, err := s.upgrader.Upgrade(w, r.Request, nil)
 	if err != nil {
+		klog.Error("Failed to upgrade the HTTP server connection to the WebSocket protocol: %v", err)
 		return
 	}
 	klog.Infof("get a new tunnel agent hostname %v, internalIP %v", hostNameOverride, internalIP)
