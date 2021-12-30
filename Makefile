@@ -301,12 +301,6 @@ clean:
 	hack/make-rules/clean.sh
 endif
 
-
-QEMU_ARCH ?= x86_64
-ARCH ?= amd64
-IMAGE_TAG ?= $(shell git describe --tags)
-GO_LDFLAGS='$(shell hack/make-rules/version.sh)'
-
 define IMAGE_HELP_INFO
 # Build image.
 #
