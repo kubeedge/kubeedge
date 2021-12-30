@@ -323,6 +323,27 @@ image:
 	hack/make-rules/image.sh $(WHAT)
 endif
 
+define CROSS_IMAGE_HELP_INFO
+# Use Buildx to build multi-architecture docker images.
+#
+# Args:
+#   WHAT: component names to build. support: $(BINARIES)
+#         If not specified, "everything" will be built.
+#
+# Example:
+#   make crossbuildimage
+#   make crossbuildimage HELP=y
+#   make crossbuildimage WHAT=cloudcore
+endef
+.PHONY: crossbuildimage
+ifeq ($(HELP),y)
+crossbuildimage:
+	@echo "CROSS_IMAGE_HELP_INFO"
+else
+crossbuildimage:
+	hack/make-rules/crossbuildimage.sh $(WHAT)
+endif
+
 define INSTALL_HELP_INFO
 # install
 #
