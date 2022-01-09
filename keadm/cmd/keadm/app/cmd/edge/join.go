@@ -169,6 +169,7 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 	}
 
 	toolList["MQTT"] = &util.MQTTInstTool{}
+
 	return nil
 }
 
