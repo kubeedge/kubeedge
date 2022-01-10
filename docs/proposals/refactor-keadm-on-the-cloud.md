@@ -1,5 +1,21 @@
 # Proposal for refactoring keadm cmds on the cloud
 
+---
+title: Reliable message delivery
+authors:
+  - "@fisherxu"
+  - "@zc2638"
+  - "@gy95"
+  - "@zhu733756"
+approvers:
+  - "@fisherxu"
+  - "@zc2638"
+  - "@gy95"
+creation-date: 2021-12-28
+last-updated: 2022-01-14
+status: Implememted
+---
+
 ## Plan A: using operator and CRD
 
 By using k8s CRDs to install cloud components, this plan can be flexibly installed according to different scenarios like istioctl.
@@ -199,8 +215,8 @@ enableEdgeMesh=true
 
 A list of set flags like helm flags.
 
-#### --charts
-Allow appending file directories of charts to keadm, separated by commas
+#### --external-helm-root
+External helm root path to install charts for kubeedge.
 
 ##### --files, -f, --manifests
 Allow appending file paths of manifests to keadm, separated by commas
