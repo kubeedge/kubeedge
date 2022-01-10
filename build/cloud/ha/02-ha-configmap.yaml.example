@@ -50,8 +50,8 @@ data:
         enable: true
         load:
           updateDeviceStatusWorkers: 1
-      dynamicController: 
-        enable: false      
+      dynamicController:
+        enable: false
       edgeController:
         buffer:
           configMapEvent: 1
@@ -92,6 +92,8 @@ data:
           updateNodeStatusWorkers: 1
           updateNodeWorkers: 4
           updatePodStatusWorkers: 1
+          queryCSINodeWorkers: 1
+          UpdateCSINodeWorkers: 1
         nodeUpdateFrequency: 10
       router:
         address: 0.0.0.0

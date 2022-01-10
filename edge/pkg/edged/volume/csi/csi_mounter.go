@@ -33,6 +33,8 @@ import (
 
 	api "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	"k8s.io/client-go/kubernetes"
@@ -334,6 +336,18 @@ func (c *csiMountMgr) GetAttributes() volume.Attributes {
 		Managed:         !c.readOnly,
 		SupportsSELinux: supportSelinux,
 	}
+}
+
+func (c *csiMountMgr) GetMetrics() (*volume.Metrics, error) {
+	msg := "NOT_IMPLEMENTED"
+	return &volume.Metrics{
+		Time:       v1.Now(),
+		Used:       resource.NewMilliQuantity(100, resource.BinarySI),
+		Capacity:   resource.NewMilliQuantity(1000, resource.BinarySI),
+		Available:  resource.NewMilliQuantity(900, resource.BinarySI),
+		InodesUsed: resource.NewMilliQuantity(100, resource.BinarySI),
+		Message:    &msg,
+	}, nil
 }
 
 // volume.Unmounter methods

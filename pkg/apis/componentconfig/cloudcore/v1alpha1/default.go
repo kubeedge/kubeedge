@@ -123,6 +123,8 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					QueryVolumeAttachmentWorkers:      constants.DefaultQueryVolumeAttachmentWorkers,
 					QueryNodeWorkers:                  constants.DefaultQueryNodeWorkers,
 					UpdateNodeWorkers:                 constants.DefaultUpdateNodeWorkers,
+					QueryCSINodeWorkers:               constants.DefaultQueryCSINodeWorkers,
+					UpdateCSINodeWorkers:              constants.DefaultUpdateCSINodeWorkers,
 					DeletePodWorkers:                  constants.DefaultDeletePodWorkers,
 					UpdateRuleStatusWorkers:           constants.DefaultUpdateRuleStatusWorkers,
 					ServiceAccountTokenWorkers:        constants.DefaultServiceAccountTokenWorkers,

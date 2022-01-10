@@ -25,6 +25,7 @@ const (
 	ResourceTypeServiceAccountToken = "serviceaccounttoken"
 	ResourceTypeSecret              = "secret"
 	ResourceTypeNode                = "node"
+	ResourceTypeCSINode             = "csinode"
 	ResourceTypePodlist             = "podlist"
 	ResourceTypePodStatus           = "podstatus"
 	ResourceTypeNodeStatus          = "nodestatus"

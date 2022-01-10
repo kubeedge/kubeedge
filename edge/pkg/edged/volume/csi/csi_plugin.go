@@ -155,6 +155,10 @@ func (h *RegistrationHandler) RegisterPlugin(pluginName string, endpoint string,
 		return err
 	}
 
+	// add nodeid to topology info
+	// this allows csidriver to forward CreateVolume requests to this specific node
+	accessibleTopology["csi.kubeedge.io/nodeid"] = driverNodeID
+
 	err = nim.InstallCSIDriver(pluginName, driverNodeID, maxVolumePerNode, accessibleTopology)
 	if err != nil {
 		if unregErr := unregisterDriver(pluginName); unregErr != nil {
@@ -241,15 +245,12 @@ func (p *csiPlugin) Init(host volume.VolumeHost) error {
 	// Initializing the label management channels
 	nim = nodeinfomanager.NewNodeInfoManager(host.GetNodeName(), host, migratedPlugins)
 
-	// TODO: Evaluate the feature releated to csi
-	/*if utilfeature.DefaultFeatureGate.Enabled(features.CSINodeInfo) &&
-		utilfeature.DefaultFeatureGate.Enabled(features.CSIMigration) {
-		// This function prevents Kubelet from posting Ready status until CSINodeInfo
-		// is both installed and initialized
-		if err := initializeCSINode(host); err != nil {
-			return fmt.Errorf("failed to initialize CSINodeInfo: %v", err)
-		}
-	}*/
+	// This function prevents Kubelet from posting Ready status until CSINodeInfo
+	// is both installed and initialized
+	klog.Infof("initializing CSINode")
+	if err := initializeCSINode(host); err != nil {
+		return fmt.Errorf("failed to initialize CSINodeInfo: %v", err)
+	}
 
 	return nil
 }

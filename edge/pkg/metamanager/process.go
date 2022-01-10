@@ -87,7 +87,8 @@ func requireRemoteQuery(resType string) bool {
 		resType == constants.ResourceTypePersistentVolumeClaim ||
 		resType == constants.ResourceTypeVolumeAttachment ||
 		resType == model.ResourceTypeNode ||
-		resType == model.ResourceTypeServiceAccountToken
+		resType == model.ResourceTypeServiceAccountToken ||
+		resType == model.ResourceTypeCSINode
 }
 
 func isConnected() bool {
@@ -110,6 +111,7 @@ func resourceUnchanged(resType string, resKey string, content []byte) bool {
 }
 
 func (m *metaManager) processInsert(message model.Message) {
+	resKey, resType, _ := parseResource(message.GetResource())
 	content, err := message.GetContentData()
 	if err != nil {
 		klog.Errorf("get insert message content data failed, %s", msgDebugInfo(&message))
@@ -118,7 +120,6 @@ func (m *metaManager) processInsert(message model.Message) {
 	}
 
 	imitator.DefaultV2Client.Inject(message)
-	resKey, resType, _ := parseResource(message.GetResource())
 
 	meta := &dao.Meta{
 		Key:   resKey,
@@ -131,11 +132,18 @@ func (m *metaManager) processInsert(message model.Message) {
 		return
 	}
 
-	// Notify edged
-	sendToEdged(&message, false)
-
-	resp := message.NewRespByMessage(&message, OK)
-	sendToCloud(resp)
+	// CSINode objects must be forwarded to upstream
+	// everything else is sent to edged
+	switch resType {
+	case model.ResourceTypeCSINode:
+		sendToCloud(&message)
+		resp := message.NewRespByMessage(&message, OK)
+		sendToEdged(resp, message.IsSync())
+	default:
+		sendToEdged(&message, false)
+		resp := message.NewRespByMessage(&message, OK)
+		sendToCloud(resp)
+	}
 }
 
 func (m *metaManager) processUpdate(message model.Message) {
@@ -244,7 +252,7 @@ func (m *metaManager) processQuery(message model.Message) {
 	var err error
 	if requireRemoteQuery(resType) && isConnected() {
 		metas, err = dao.QueryMeta("key", resKey)
-		if err != nil || len(*metas) == 0 || resType == model.ResourceTypeNode || resType == constants.ResourceTypeVolumeAttachment {
+		if err != nil || len(*metas) == 0 || resType == model.ResourceTypeNode || resType == constants.ResourceTypeVolumeAttachment || resType == constants.ResourceTypePersistentVolume || resType == constants.ResourceTypePersistentVolumeClaim || resType == model.ResourceTypeCSINode {
 			m.processRemoteQuery(message)
 		} else {
 			resp := message.NewRespByMessage(&message, *metas)

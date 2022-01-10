@@ -91,6 +91,8 @@ const (
 	DefaultQueryVolumeAttachmentWorkers      = 4
 	DefaultQueryNodeWorkers                  = 4
 	DefaultUpdateNodeWorkers                 = 4
+	DefaultQueryCSINodeWorkers               = 1
+	DefaultUpdateCSINodeWorkers              = 1
 	DefaultDeletePodWorkers                  = 4
 	DefaultUpdateRuleStatusWorkers           = 4
 	DefaultServiceAccountTokenWorkers        = 4

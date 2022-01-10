@@ -35,6 +35,7 @@ import (
 
 	authenticationv1 "k8s.io/api/authentication/v1"
 	v1 "k8s.io/api/core/v1"
+	storagev1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apimachineryType "k8s.io/apimachinery/pkg/types"
@@ -106,6 +107,8 @@ type UpstreamController struct {
 	volumeAttachmentChan      chan model.Message
 	queryNodeChan             chan model.Message
 	updateNodeChan            chan model.Message
+	queryCSINodeChan          chan model.Message
+	updateCSINodeChan         chan model.Message
 	podDeleteChan             chan model.Message
 	ruleStatusChan            chan model.Message
 
@@ -153,6 +156,12 @@ func (uc *UpstreamController) Start() error {
 	}
 	for i := 0; i < int(uc.config.Load.UpdateNodeWorkers); i++ {
 		go uc.updateNode()
+	}
+	for i := 0; i < int(uc.config.Load.QueryCSINodeWorkers); i++ {
+		go uc.queryCSINode()
+	}
+	for i := 0; i < int(uc.config.Load.UpdateCSINodeWorkers); i++ {
+		go uc.updateCSINode()
 	}
 	for i := 0; i < int(uc.config.Load.DeletePodWorkers); i++ {
 		go uc.deletePod()
@@ -213,6 +222,15 @@ func (uc *UpstreamController) dispatchMessage() {
 				uc.updateNodeChan <- msg
 			default:
 				klog.Errorf("message: %s, operation type: %s unsupported", msg.GetID(), msg.GetOperation())
+			}
+		case model.ResourceTypeCSINode:
+			switch msg.GetOperation() {
+			case model.QueryOperation:
+				uc.queryCSINodeChan <- msg
+			case model.UpdateOperation:
+				uc.updateCSINodeChan <- msg
+			case model.InsertOperation:
+				uc.updateCSINodeChan <- msg
 			}
 		case model.ResourceTypePod:
 			if msg.GetOperation() == model.DeleteOperation {
@@ -565,6 +583,8 @@ func kubeClientGet(uc *UpstreamController, namespace string, name string, queryT
 		obj, err = uc.kubeClient.StorageV1().VolumeAttachments().Get(context.Background(), name, metaV1.GetOptions{})
 	case model.ResourceTypeNode:
 		obj, err = uc.nodeLister.Get(name)
+	case model.ResourceTypeCSINode:
+		obj, err = uc.kubeClient.StorageV1().CSINodes().Get(context.Background(), name, metaV1.GetOptions{})
 	case model.ResourceTypeServiceAccountToken:
 		obj, err = uc.getServiceAccountToken(namespace, name, msg)
 	default:
@@ -716,6 +736,108 @@ func (uc *UpstreamController) queryVolumeAttachment() {
 			return
 		case msg := <-uc.volumeAttachmentChan:
 			queryInner(uc, msg, common.ResourceTypeVolumeAttachment)
+		}
+	}
+}
+
+func (uc *UpstreamController) queryCSINode() {
+	for {
+		select {
+		case <-beehiveContext.Done():
+			klog.Warning("stop queryCSINode")
+			return
+		case msg := <-uc.queryCSINodeChan:
+			queryInner(uc, msg, model.ResourceTypeCSINode)
+		}
+	}
+}
+
+func (uc *UpstreamController) updateCSINode() {
+	klog.Infof("starting updateCSINode worker")
+	for {
+		select {
+		case <-beehiveContext.Done():
+			klog.Warning("stop updateCSINode")
+			return
+		case msg := <-uc.updateCSINodeChan:
+			klog.V(5).Infof("update CSI Node: %s, operation is: %s, and resource is %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
+			csinoderequest := &storagev1.CSINode{}
+			data, err := msg.GetContentData()
+			if err != nil {
+				klog.Warningf("message: %s process failure, get content data failed with error: %s", msg.GetID(), err)
+				continue
+			}
+
+			if err := json.Unmarshal(data, csinoderequest); err != nil {
+				klog.Warningf("message: %s process failure, unmarshal message content data with error: %s", msg.GetID(), err)
+				continue
+			}
+
+			namespace, err := messagelayer.GetNamespace(msg)
+			if err != nil {
+				klog.Warningf("message: %s process failure, get namespace failed with error: %s", msg.GetID(), err)
+				continue
+			}
+			name, err := messagelayer.GetResourceName(msg)
+			if err != nil {
+				klog.Warningf("message: %s process failure, get resource name failed with error: %s", msg.GetID(), err)
+				continue
+			}
+			nodeID, err := messagelayer.GetNodeID(msg)
+			if err != nil {
+				klog.Warningf("Message: %s process failure, get node id failed with error: %s", msg.GetID(), err)
+				continue
+			}
+			resource, err := messagelayer.BuildResource(nodeID, namespace, model.ResourceTypeCSINode, name)
+			if err != nil {
+				klog.Warningf("Message: %s process failure, build message resource failed with error: %s", msg.GetID(), err)
+				continue
+			}
+
+			switch msg.GetOperation() {
+			case model.UpdateOperation:
+				getNode, err := uc.kubeClient.StorageV1().CSINodes().Get(context.Background(), name, metaV1.GetOptions{})
+				if errors.IsNotFound(err) {
+					klog.Warningf("message: %s process failure, csinode %s not found", msg.GetID(), name)
+					continue
+				}
+				getNode.Spec.Drivers = csinoderequest.Spec.Drivers
+				byteNode, err := json.Marshal(getNode)
+				if err != nil {
+					klog.Warningf("marshal csinode data failed with err: %s", err)
+					continue
+				}
+				node, err := uc.kubeClient.StorageV1().CSINodes().Patch(context.Background(), getNode.Name, apimachineryType.StrategicMergePatchType, byteNode, metaV1.PatchOptions{})
+				if err != nil {
+					klog.Warningf("message: %s process failure, update csi node failed with error: %s, namespace: %s, name: %s", msg.GetID(), err, getNode.Namespace, getNode.Name)
+					continue
+				}
+				resMsg := model.NewMessage(msg.GetID()).
+					SetResourceVersion(node.ResourceVersion).
+					FillBody(node).
+					BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.ResponseOperation)
+				if err = uc.messageLayer.Response(*resMsg); err != nil {
+					klog.Warningf("Message: %s process failure, response failed with error: %s", msg.GetID(), err)
+					continue
+				}
+				klog.V(4).Infof("message: %s, update csinode successfully, namespace: %s, name: %s", msg.GetID(), getNode.Namespace, getNode.Name)
+			case model.InsertOperation:
+				node, err := uc.kubeClient.StorageV1().CSINodes().Create(context.Background(), csinoderequest, metaV1.CreateOptions{})
+				if err != nil {
+					klog.Warningf("message: %s process failure, create CSINode: %s", msg.GetID(), err)
+				}
+				resMsg := model.NewMessage(msg.GetID()).
+					SetResourceVersion(node.ResourceVersion).
+					FillBody(node).
+					BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.ResponseOperation)
+				if err = uc.messageLayer.Response(*resMsg); err != nil {
+					klog.Warningf("Message: %s process failure, response failed with error: %s", msg.GetID(), err)
+					continue
+				}
+				klog.V(4).Infof("message: %s, created csinode successfully, namespace: %s, name: %s", msg.GetID(), node.Namespace, node.Name)
+			default:
+				klog.Warningf("invalid updateCSINode operation: %s", msg.GetOperation())
+			}
 		}
 	}
 }
@@ -1017,6 +1139,8 @@ func NewUpstreamController(config *v1alpha1.EdgeController, factory k8sinformer.
 	uc.volumeAttachmentChan = make(chan model.Message, config.Buffer.QueryVolumeAttachment)
 	uc.queryNodeChan = make(chan model.Message, config.Buffer.QueryNode)
 	uc.updateNodeChan = make(chan model.Message, config.Buffer.UpdateNode)
+	uc.queryCSINodeChan = make(chan model.Message, config.Buffer.QueryCSINode)
+	uc.updateCSINodeChan = make(chan model.Message, config.Buffer.UpdateCSINode)
 	uc.podDeleteChan = make(chan model.Message, config.Buffer.DeletePod)
 	uc.ruleStatusChan = make(chan model.Message, config.Buffer.UpdateNodeStatus)
 	return uc, nil

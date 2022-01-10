@@ -15,3 +15,7 @@ type FakeStorageV1 struct {
 func (c *FakeStorageV1) VolumeAttachments() storagev1.VolumeAttachmentInterface {
 	return &FakeVolumeAttachments{fakestoragev1.FakeVolumeAttachments{Fake: &c.FakeStorageV1}, c.MetaClient}
 }
+
+func (c *FakeStorageV1) CSINodes() storagev1.CSINodeInterface {
+	return &FakeCSINodes{fakestoragev1.FakeCSINodes{Fake: &c.FakeStorageV1}, c.MetaClient}
+}
