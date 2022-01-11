@@ -176,6 +176,10 @@ type Edged struct {
 	// default false,
 	// Note: Can not use "omitempty" option, it will affect the output of the default configuration file
 	GPUPluginEnabled bool `json:"gpuPluginEnabled"`
+	// PodResourcesEnabled indicates enable pod resource sock
+	// default false,
+	// Note: Can not use "omitempty" option, it will affect the output of the default configuration file
+	PodResourcesEnabled bool `json:"podResourcesEnabled"`
 	// ImageGCHighThreshold indicates image gc high threshold (percent)
 	// default 80
 	ImageGCHighThreshold int32 `json:"imageGCHighThreshold,omitempty"`

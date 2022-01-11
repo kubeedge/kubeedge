@@ -27,6 +27,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"k8s.io/kubernetes/pkg/kubelet/apis/podresources"
+	utils "k8s.io/kubernetes/pkg/kubelet/util"
 	"net"
 	"net/http"
 	"os"
@@ -161,6 +163,8 @@ const (
 	redirectContainerStream = false
 	// ResolvConfDefault gives the default dns resolv configration file
 	ResolvConfDefault = "/etc/resolv.conf"
+
+	DefaultPodResourcesDirName = "/var/lib/kubelet/pod-resources"
 )
 
 type GetRuntimeServiceFunc func(
@@ -198,34 +202,35 @@ type edged struct {
 	// Streaming runtime handles container streaming.
 	streamingRuntime kubecontainer.StreamingRuntime
 
-	podCache           kubecontainer.Cache
-	os                 kubecontainer.OSInterface
-	resourceAnalyzer   serverstats.ResourceAnalyzer
-	runtimeService     internalapi.RuntimeService
-	podManager         podmanager.Manager
-	pleg               pleg.PodLifecycleEventGenerator
-	statusManager      kubestatus.Manager
-	kubeClient         clientset.Interface
-	probeManager       prober.Manager
-	livenessManager    proberesults.Manager
-	readinessManager   proberesults.Manager
-	startupManager     proberesults.Manager
-	server             *server.Server
-	podAdditionQueue   *workqueue.Type
-	podAdditionBackoff *flowcontrol.Backoff
-	podDeletionQueue   *workqueue.Type
-	podDeletionBackoff *flowcontrol.Backoff
-	imageGCManager     images.ImageGCManager
-	containerGCManager kubecontainer.GC
-	metaClient         client.CoreInterface
-	volumePluginMgr    *volume.VolumePluginMgr
-	mounter            mount.Interface
-	hostUtil           hostutil.HostUtils
-	volumeManager      volumemanager.VolumeManager
-	rootDirectory      string
-	gpuPluginEnabled   bool
-	version            string
-	labels             map[string]string
+	podCache            kubecontainer.Cache
+	os                  kubecontainer.OSInterface
+	resourceAnalyzer    serverstats.ResourceAnalyzer
+	runtimeService      internalapi.RuntimeService
+	podManager          podmanager.Manager
+	pleg                pleg.PodLifecycleEventGenerator
+	statusManager       kubestatus.Manager
+	kubeClient          clientset.Interface
+	probeManager        prober.Manager
+	livenessManager     proberesults.Manager
+	readinessManager    proberesults.Manager
+	startupManager      proberesults.Manager
+	server              *server.Server
+	podAdditionQueue    *workqueue.Type
+	podAdditionBackoff  *flowcontrol.Backoff
+	podDeletionQueue    *workqueue.Type
+	podDeletionBackoff  *flowcontrol.Backoff
+	imageGCManager      images.ImageGCManager
+	containerGCManager  kubecontainer.GC
+	metaClient          client.CoreInterface
+	volumePluginMgr     *volume.VolumePluginMgr
+	mounter             mount.Interface
+	hostUtil            hostutil.HostUtils
+	volumeManager       volumemanager.VolumeManager
+	rootDirectory       string
+	gpuPluginEnabled    bool
+	podResourcesEnabled bool
+	version             string
+	labels              map[string]string
 	// podReady is structure with initPodReady flag and its lock
 	podReady
 	// cache for secret
@@ -369,6 +374,10 @@ func (e *edged) Start() {
 	klog.Infof("starting plugin manager")
 	go e.pluginManager.Run(edgedutil.NewSourcesReady(e.isInitPodReady), utilwait.NeverStop)
 
+	// start  runs the kubelet podresources grpc service
+	if e.podResourcesEnabled {
+		go e.ListenAndServePodResources()
+	}
 	// start the CPU manager in the clcm
 	err := e.clcm.StartCPUManager(e.GetActivePods, edgedutil.NewSourcesReady(e.isInitPodReady), e.statusManager, e.runtimeService)
 	if err != nil {
@@ -456,6 +465,7 @@ func newEdged(enable bool) (*edged, error) {
 		namespace:                 edgedconfig.Config.RegisterNodeNamespace,
 		containerRuntimeName:      edgedconfig.Config.RuntimeType,
 		gpuPluginEnabled:          edgedconfig.Config.GPUPluginEnabled,
+		podResourcesEnabled:       edgedconfig.Config.PodResourcesEnabled,
 		cgroupDriver:              edgedconfig.Config.CGroupDriver,
 		concurrentConsumers:       edgedconfig.Config.ConcurrentConsumers,
 		podManager:                podManager,
@@ -1405,6 +1415,16 @@ func (e *edged) deletePod(obj interface{}) {
 	e.statusManager.TerminatePod(pod)
 	e.probeManager.RemovePod(pod)
 	klog.Infof("success remove pod [%s]", pod.Name)
+}
+
+//// ListenAndServePodResources runs the kubelet podresources grpc service
+func (e *edged) ListenAndServePodResources() {
+	socket, err := utils.LocalEndpoint(DefaultPodResourcesDirName, podresources.Socket)
+	if err != nil {
+		klog.V(2).InfoS("Failed to get local endpoint for PodResources endpoint", "err", err)
+		return
+	}
+	server.ListenAndServePodResources(socket, e.podManager, e.containerManager, e.containerManager, e.containerManager)
 }
 
 func (e *edged) getImagePullSecretsForPod(pod *v1.Pod) []v1.Secret {

@@ -4,6 +4,8 @@ go 1.16
 
 require (
 	github.com/256dpi/gomqtt v0.10.4
+	github.com/Microsoft/go-winio v0.4.17
+	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/armon/circbuf v0.0.0-20190214190532-5111143e8da2 // indirect
 	github.com/astaxie/beego v1.12.0
 	github.com/blang/semver v3.5.1+incompatible
@@ -26,6 +28,7 @@ require (
 	github.com/kubeedge/beehive v0.0.0
 	github.com/kubeedge/viaduct v0.0.0
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1
+	github.com/lucas-clemente/quic-go v0.10.2 // indirect
 	github.com/mattn/go-sqlite3 v1.14.9
 	github.com/mitchellh/go-ps v0.0.0-20190716172923-621e5597135b
 	github.com/onsi/ginkgo v1.14.0
@@ -36,6 +39,7 @@ require (
 	github.com/shirou/gopsutil v2.21.11+incompatible
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
+	github.com/stretchr/testify v1.7.0
 	github.com/tklauser/go-sysconf v0.3.10 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	golang.org/x/net v0.0.0-20211209124913-491a49abca63
@@ -62,6 +66,29 @@ require (
 	k8s.io/utils v0.0.0-20210819203725-bdf08cb9a70a
 	sigs.k8s.io/apiserver-network-proxy v0.0.27
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.27
+	golang.org/x/net v0.0.0-20210224082022-3d97a244fca7
+	google.golang.org/grpc v1.27.1
+	k8s.io/api v0.21.4
+	k8s.io/apiextensions-apiserver v0.21.4
+	k8s.io/apimachinery v0.21.4
+	k8s.io/apiserver v0.21.4
+	k8s.io/cli-runtime v0.21.4
+	k8s.io/client-go v0.21.4
+	k8s.io/cloud-provider v0.21.4
+	k8s.io/cluster-bootstrap v0.21.4 // indirect
+	k8s.io/code-generator v0.21.4
+	k8s.io/component-base v0.21.4
+	k8s.io/cri-api v0.21.4
+	k8s.io/csi-translation-lib v0.21.4
+	k8s.io/klog/v2 v2.8.0
+	k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7
+	k8s.io/kube-scheduler v0.21.4 // indirect
+	k8s.io/kubelet v0.21.4
+	k8s.io/kubernetes v1.21.4
+	k8s.io/mount-utils v0.21.4
+	k8s.io/utils v0.0.0-20201110183641-67b214c5f920
+	sigs.k8s.io/apiserver-network-proxy v0.0.20
+	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.22
 	sigs.k8s.io/yaml v1.2.0
 )
 
