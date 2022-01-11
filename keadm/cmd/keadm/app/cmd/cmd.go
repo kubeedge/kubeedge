@@ -19,6 +19,7 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/beta"
 	cloud "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/cloud"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/debug"
 	edge "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/edge"
@@ -73,6 +74,6 @@ func NewKubeedgeCommand() *cobra.Command {
 	cmds.AddCommand(NewCmdVersion())
 	cmds.AddCommand(cloud.NewGettoken())
 	cmds.AddCommand(debug.NewEdgeDebug())
-
+	cmds.AddCommand(beta.NewBeta())
 	return cmds
 }
