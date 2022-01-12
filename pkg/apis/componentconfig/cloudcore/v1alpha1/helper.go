@@ -23,6 +23,8 @@ import (
 
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/yaml"
+
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 type IptablesMgrMode string
@@ -44,6 +46,14 @@ func (c *CloudCoreConfig) Parse(filename string) error {
 		return err
 	}
 	return nil
+}
+
+func (c *CloudCoreConfig) GetNamespace() string {
+	if ns := os.Getenv(constants.NamespaceEnvKey); ns != "" {
+		return ns
+	}
+
+	return constants.SystemName
 }
 
 func (in *IptablesManager) UnmarshalJSON(data []byte) error {

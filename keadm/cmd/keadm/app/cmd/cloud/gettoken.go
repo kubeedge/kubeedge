@@ -66,8 +66,13 @@ func queryToken(namespace string, name string, kubeConfigPath string) ([]byte, e
 		return nil, err
 	}
 	secret, err := client.CoreV1().Secrets(namespace).Get(context.Background(), name, metaV1.GetOptions{})
+	// The kubeedge system namespace changed from kubeedge to kubeedge-system.
+	// The following is only for forward compatibility, and will be deleted in future release.
 	if err != nil {
-		return nil, err
+		secret, err = client.CoreV1().Secrets("kubeedge").Get(context.Background(), name, metaV1.GetOptions{})
+		if err != nil {
+			return nil, err
+		}
 	}
 	return secret.Data[common.TokenDataName], nil
 }

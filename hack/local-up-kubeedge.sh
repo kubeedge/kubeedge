@@ -111,7 +111,7 @@ function start_cloudcore {
   # ensure tokensecret is generated
   while true; do
       sleep 3
-      kubectl get secret -nkubeedge| grep -q tokensecret && break
+      kubectl get secret -nkubeedge-system| grep -q tokensecret && break
   done
 }
 
@@ -121,7 +121,7 @@ function start_edgecore {
   ${EDGE_BIN} --defaultconfig >  ${EDGE_CONFIGFILE}
 
   sed -i '/edgeStream:/{n;s/false/true/;}' ${EDGE_CONFIGFILE}
-  token=`kubectl get secret -nkubeedge tokensecret -o=jsonpath='{.data.tokendata}' | base64 -d`
+  token=`kubectl get secret -nkubeedge-system tokensecret -o=jsonpath='{.data.tokendata}' | base64 -d`
 
   sed -i -e "s|token: .*|token: ${token}|g" \
       -e "s|hostnameOverride: .*|hostnameOverride: edge-node|g" \

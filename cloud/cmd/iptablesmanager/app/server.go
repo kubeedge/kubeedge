@@ -57,6 +57,9 @@ func NewIptablesManagerCommand() *cobra.Command {
 				Burst:       constants.DefaultKubeBurst,
 				KubeConfig:  opts.KubeConfig,
 			}
+
+			// init namespace
+			constants.SystemNamespaceInit(os.Getenv(constants.NamespaceEnvKey))
 			go iptables.NewIptablesManager(kubeAPIConfig, opts.ForwardPort).Run(ctx)
 
 			c := make(chan os.Signal, 1)

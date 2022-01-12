@@ -57,6 +57,11 @@ function build_image() {
 function start_kubeedge() {
   sudo mkdir -p /var/lib/kubeedge
   cd $KUBEEDGE_ROOT
+  export KUBECONFIG=$HOME/.kube/config
+
+  cd $HELM_DIR
+  SET_ARGS="--set cloudCore.modules.cloudHub.advertiseAddress[0]=$MASTER_IP --set cloudCore.image.tag=$IMAGE_TAG --set cloudCore.service.enable=false"
+  helm upgrade --install --wait --timeout 30s cloudcore ./cloudcore --namespace kubeedge-system --create-namespace -f ./cloudcore/values.yaml $SET_ARGS
   export MASTER_IP=`kubectl get node test-control-plane -o jsonpath={.status.addresses[0].address}`
   export KUBECONFIG=$HOME/.kube/config
   docker run --rm kubeedge/installation-package:$IMAGE_TAG cat /usr/local/bin/keadm > /usr/local/bin/keadm && chmod +x /usr/local/bin/keadm
@@ -66,7 +71,7 @@ function start_kubeedge() {
   # ensure tokensecret is generated
   while true; do
       sleep 3
-      kubectl get secret -nkubeedge 2>/dev/null | grep -q tokensecret && break
+      kubectl get secret -nkubeedge-system 2>/dev/null | grep -q tokensecret && break
   done
   
   cd $KUBEEDGE_ROOT

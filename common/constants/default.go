@@ -1,6 +1,7 @@
 package constants
 
 import (
+	"sync"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
@@ -15,9 +16,9 @@ const (
 	NodeName = "NodeName"
 
 	ProjectName = "KubeEdge"
+	SystemName  = "kubeedge-system"
 
-	SystemName      = "kubeedge"
-	SystemNamespace = SystemName
+	NamespaceEnvKey = "NAMESPACE"
 )
 
 // Resources
@@ -146,3 +147,20 @@ const (
 	// MessageSuccessfulContent is the successful content value of Message struct
 	MessageSuccessfulContent string = "OK"
 )
+
+var (
+	SystemNamespace = SystemName
+
+	once sync.Once
+)
+
+func SystemNamespaceInit(ns string) {
+	once.Do(
+		func() {
+			if ns == "" {
+				return
+			}
+			SystemNamespace = ns
+		},
+	)
+}

@@ -73,6 +73,8 @@ kubernetes controller which manages devices so that the device metadata/status d
 				klog.Exit(err)
 			}
 
+			constants.SystemNamespaceInit(config.GetNamespace())
+
 			// To help debugging, immediately log version
 			klog.Infof("Version: %+v", version.Get())
 			client.InitKubeEdgeClient(config.KubeAPIConfig)
