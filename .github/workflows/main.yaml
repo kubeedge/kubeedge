@@ -73,7 +73,9 @@ jobs:
 
       - run: make crossbuild
 
-      - run: make crossbuild GOARM=GOARM7
+      - run: make crossbuild ARM_VERSION=GOARM7
+
+      - run: make crossbuild WHAT=cloudcore ARM_VERSION=GOARM8
 
   basic_test:
     runs-on: ubuntu-18.04
