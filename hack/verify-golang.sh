@@ -20,24 +20,9 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-# The root of the build/dist directory
-KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+KUBEEDGE_ROOT=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/..
 
-echo "go detail version: $(go version)"
+source "${KUBEEDGE_ROOT}/hack/lib/golang.sh"
 
-goversion=$(go version |awk -F ' ' '{printf $3}' |sed 's/go//g')
+kubeedge::golang::verify_golang_version
 
-echo "go version: $goversion"
-
-X=$(echo $goversion|awk -F '.' '{printf $1}')
-Y=$(echo $goversion|awk -F '.' '{printf $2}')
-
-if [ $X -lt 1 ] ; then
-	echo "go major version must >= 1, now is $X"
-	exit 1
-fi
-
-if [ $Y -lt 15 ] ; then
-	echo "go minor version must >= 15, now is $Y"
-	exit 1
-fi

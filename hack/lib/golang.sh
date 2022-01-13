@@ -26,6 +26,27 @@ set -o pipefail
 YES="y"
 NO="n"
 
+kubeedge::golang::verify_golang_version() {
+  echo "go detail version: $(go version)"
+
+  goversion=$(go version |awk -F ' ' '{printf $3}' |sed 's/go//g')
+
+  echo "go version: $goversion"
+
+  X=$(echo $goversion|awk -F '.' '{printf $1}')
+  Y=$(echo $goversion|awk -F '.' '{printf $2}')
+
+  if [ $X -lt 1 ] ; then
+	  echo "go major version must >= 1, now is $X"
+	  exit 1
+  fi
+
+  if [ $Y -lt 16 ] ; then
+	  echo "go minor version must >= 16, now is $Y"
+	  exit 1
+  fi
+}
+
 kubeedge::version::get_version_info() {
 
   GIT_COMMIT=$(git rev-parse "HEAD^{commit}" 2>/dev/null)
@@ -290,7 +311,7 @@ kubeedge::golang::cross_build_place_binaries() {
 
   mkdir -p ${KUBEEDGE_OUTPUT_BINPATH}
   for bin in ${binaries[@]}; do
-    echo "cross buildding $bin GOARM${goarm}"
+    echo "cross building $bin GOARM${goarm}"
     local name="${bin##*/}"
     if [ "${goarm}" == "8" ]; then
       set -x
