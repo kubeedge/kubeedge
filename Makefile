@@ -46,7 +46,7 @@ ifeq ($(HELP),y)
 all: clean
 	@echo "$$ALL_HELP_INFO"
 else
-all: clean 
+all: 
 	KUBEEDGE_OUTPUT_SUBPATH=$(OUT_DIR) hack/make-rules/build.sh $(WHAT)
 endif
 
@@ -363,7 +363,7 @@ define RELEASE_HELP_INFO
 #   make release
 #   make release HELP=y
 #   make release WHAT=kubeedge
-#   make release WHAT=kubeedge GOARM=GOARM7
+#   make release WHAT=kubeedge ARM_VERSION=GOARM7
 #
 endef
 .PHONY: release
@@ -372,5 +372,5 @@ release:
 	@echo "$$RELEASE_HELP_INFO"
 else
 release:
-	hack/make-rules/release.sh $(WHAT) $(GOARM)
+	hack/make-rules/release.sh $(WHAT) $(ARM_VERSION)
 endif
