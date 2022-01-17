@@ -38,6 +38,7 @@ import (
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/golang/protobuf/jsonpb"
+	"github.com/golang/protobuf/proto"
 	cadvisorapi "github.com/google/cadvisor/info/v1"
 	cadvisorapi2 "github.com/google/cadvisor/info/v2"
 	v1 "k8s.io/api/core/v1"
@@ -1163,14 +1164,29 @@ func (e *edged) syncPod() {
 				continue
 			}
 		case constants.CSIResourceTypeVolume:
-			klog.Infof("volume operation type: %s", op)
-			res, err := e.handleVolume(op, content)
+			klog.Infof("volume operation type=%s content=%#v", op, result.Content)
+			cb, ok := result.GetContent().(string)
+			if !ok {
+				klog.Errorf("unexpected volume content: %#v, expected string", content)
+				beehiveContext.SendResp(*model.NewErrorMessage(&result, err.Error()))
+				continue
+			}
+			res, err := e.handleVolume(op, []byte(cb))
 			if err != nil {
 				klog.Errorf("handle volume failed: %v", err)
-			} else {
-				resp := result.NewRespByMessage(&result, res)
-				beehiveContext.SendResp(*resp)
+				beehiveContext.SendResp(*model.NewErrorMessage(&result, err.Error()))
+				continue
 			}
+			js, err := (&jsonpb.Marshaler{}).MarshalToString(proto.MessageV1(res))
+			if err != nil {
+				klog.Error("failed to marshal handle volume response")
+				beehiveContext.SendResp(*model.NewErrorMessage(&result, err.Error()))
+				continue
+			}
+			resp := result.NewRespByMessage(&result, js)
+			klog.Infof("handle volume sending response to cloud content=%s resp=%#v", js, resp)
+			beehiveContext.SendResp(*resp)
+
 		default:
 			klog.Errorf("resType is not pod or configmap or secret or volume: resType is %s", resType)
 			continue
