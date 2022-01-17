@@ -18,14 +18,21 @@ KUBEEDGE_ROOT=$PWD
 WORKDIR=$(dirname $0)
 E2E_DIR=$(realpath $(dirname $0)/..)
 
+debugflag="-test.v -ginkgo.v"
+source "${KUBEEDGE_ROOT}/hack/lib/golang.sh"
+kubeedge::version::get_version_info
+VERSION=${GIT_VERSION}
+
 function cleanup() {
   sudo pkill edgecore || true
   sudo pkill cloudcore || true
   kind delete cluster --name test
   sudo rm -rf /var/log/kubeedge /etc/kubeedge /etc/systemd/system/edgecore.service $E2E_DIR/keadm/keadm.test $E2E_DIR/config.json
+  sudo rm -rf ${KUBEEDGE_ROOT}/_output/release/${VERSION}/
 }
 
 function build_keadm() {
+  cd $KUBEEDGE_ROOT
   make all WHAT=keadm
   cd $E2E_DIR
   ginkgo build -r keadm/
@@ -44,11 +51,13 @@ function prepare_cluster() {
 }
 
 function start_kubeedge() {
+  local KUBEEDGE_VERSION="$@"
+
   sudo mkdir -p /var/lib/kubeedge
   cd $KUBEEDGE_ROOT
   export KUBECONFIG=$HOME/.kube/config
 
-  sudo -E _output/local/bin/keadm init --kube-config=$KUBECONFIG --advertise-address=127.0.0.1
+  sudo -E _output/local/bin/keadm init --kube-config=$KUBECONFIG --advertise-address=127.0.0.1 --kubeedge-version=${KUBEEDGE_VERSION}
   export MASTER_IP=`docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' test-control-plane`
 
   # ensure tokensecret is generated
@@ -59,7 +68,7 @@ function start_kubeedge() {
 
   export TOKEN=$(sudo _output/local/bin/keadm gettoken --kube-config=$KUBECONFIG)
   sudo systemctl set-environment CHECK_EDGECORE_ENVIRONMENT="false"
-  sudo -E CHECK_EDGECORE_ENVIRONMENT="false" _output/local/bin/keadm join --token=$TOKEN --cloudcore-ipport=127.0.0.1:10000 --edgenode-name=edge-node
+  sudo -E CHECK_EDGECORE_ENVIRONMENT="false" _output/local/bin/keadm join --token=$TOKEN --cloudcore-ipport=127.0.0.1:10000 --edgenode-name=edge-node --kubeedge-version=${KUBEEDGE_VERSION}
 
   #Pre-configurations required for running the suite.
   #Any new config addition required corresponding code changes.
@@ -102,13 +111,14 @@ function run_test() {
       exit 1
   else
       echo "Integration suite successfully passed all the tests !!"
-      exit 0
   fi
 }
 
 set -Ee
 trap cleanup EXIT
 trap cleanup ERR
+
+echo -e "\nUsing latest commit code to do keadm_e2e test..."
 
 echo -e "\nBuilding keadm..."
 build_keadm
@@ -118,8 +128,31 @@ export KUBECONFIG=$HOME/.kube/config
 echo -e "\nPreparing cluster..."
 prepare_cluster
 
+kubeedge_version=${VERSION: 1}
+#if we use the local release version compiled with the latest codes, we need to copy release file and checksum file.
+sudo mkdir -p /etc/kubeedge
+
+sudo cp ${KUBEEDGE_ROOT}/_output/release/${VERSION}/kubeedge-${VERSION}-linux-amd64.tar.gz ${KUBEEDGE_ROOT}/_output/release/${VERSION}/checksum_kubeedge-${VERSION}-linux-amd64.tar.gz.txt /etc/kubeedge
+
+echo -e "\nStarting kubeedge..." ${kubeedge_version}
+start_kubeedge ${kubeedge_version}
+
+echo -e "\nRunning test..."
+run_test
+
+# clean the before test
+cleanup
+
+echo -e "\nUsing latest official release version to do keadm_e2e test..."
+
+echo -e "\nBuilding keadm..."
+build_keadm
+
+echo -e "\nPreparing cluster..."
+prepare_cluster
+
 echo -e "\nStarting kubeedge..."
-start_kubeedge
+start_kubeedge ""
 
 echo -e "\nRunning test..."
 run_test
