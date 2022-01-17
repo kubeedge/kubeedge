@@ -541,7 +541,7 @@ func managedHostsFileContent(hostIP, hostName, hostDomainName string, hostAliase
 	return hostsFileContent
 }
 
-// IsPodTerminated returns trus if the pod with the provided UID is in a terminated state ("Failed" or "Succeeded")
+// IsPodTerminated returns true if the pod with the provided UID is in a terminated state ("Failed" or "Succeeded")
 // or if the pod has been deleted or removed
 func (e *edged) IsPodTerminated(uid types.UID) bool {
 	pod, podFound := e.podManager.GetPodByUID(uid)
