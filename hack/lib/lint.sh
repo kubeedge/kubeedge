@@ -20,33 +20,36 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-SED_CMD=""
-KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
+function kubeedge::lint::init() {
+    SED_CMD=""
+    KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 
-if [[ "$OSTYPE" == "darwin"* ]]
-then
-    if ! which gsed >/dev/null 2>&1
+    if [[ "$OSTYPE" == "darwin"* ]]
     then
-        echo "Please install gnu-sed (brew install gnu-sed)"
-        exit 1
-    else
-        SED_CMD=`which gsed`
-    fi
-elif [[ "$OSTYPE" == "linux"* ]]
-then
-    if ! which sed >/dev/null 2>&1
+        if ! which gsed >/dev/null 2>&1
+        then
+            echo "Please install gnu-sed (brew install gnu-sed)"
+            exit 1
+        else
+            SED_CMD=`which gsed`
+        fi
+    elif [[ "$OSTYPE" == "linux"* ]]
     then
-        echo "Please install sed"
-        exit 1
+        if ! which sed >/dev/null 2>&1
+        then
+            echo "Please install sed"
+            exit 1
+        else
+            SED_CMD=`which sed`
+        fi
     else
-        SED_CMD=`which sed`
+        echo "Unsupported OS $OSTYPE"
+        exit 1
     fi
-else
-    echo "Unsupported OS $OSTYPE"
-    exit 1
-fi
+}
 
 kubeedge::lint::check() {
+    kubeedge::lint::init
     cd ${KUBEEDGE_ROOT}
     echo "start lint ..."
     set +o pipefail
