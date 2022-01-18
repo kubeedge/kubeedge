@@ -25,19 +25,21 @@ KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 
 if [[ "$OSTYPE" == "darwin"* ]]
 then
-    SED_CMD=`which gsed`
-    if [ -z $SED_CMD ]
+    if ! which gsed >/dev/null 2>&1
     then
         echo "Please install gnu-sed (brew install gnu-sed)"
         exit 1
+    else
+        SED_CMD=`which gsed`
     fi
 elif [[ "$OSTYPE" == "linux"* ]]
 then
-    SED_CMD=`which sed`
-    if [ -z $SED_CMD ]
+    if ! which sed >/dev/null 2>&1
     then
         echo "Please install sed"
         exit 1
+    else
+        SED_CMD=`which sed`
     fi
 else
     echo "Unsupported OS $OSTYPE"
