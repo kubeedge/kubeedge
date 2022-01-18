@@ -46,7 +46,7 @@ ifeq ($(HELP),y)
 all: clean
 	@echo "$$ALL_HELP_INFO"
 else
-all: verify-golang
+all: 
 	KUBEEDGE_OUTPUT_SUBPATH=$(OUT_DIR) hack/make-rules/build.sh $(WHAT)
 endif
 
@@ -158,7 +158,7 @@ define CROSSBUILD_HELP_INFO
 #   WHAT: Component names to be lint check. support: $(BINARIES)
 #         If not specified, "everything" will be cross build.
 #
-# GOARM: go arm value, now support:$(GOARM_VALUES)
+# ARM_VERSION: go arm value, now support:$(GOARM_VALUES)
 #        If not specified, build binary for ARMv8 by default.
 #
 #
@@ -166,7 +166,7 @@ define CROSSBUILD_HELP_INFO
 #   make crossbuild
 #   make crossbuild HELP=y
 #   make crossbuild WHAT=edgecore
-#   make crossbuild WHAT=edgecore GOARM=GOARM7
+#   make crossbuild WHAT=edgecore ARM_VERSION=GOARM7
 #
 endef
 .PHONY: crossbuild
@@ -174,8 +174,8 @@ ifeq ($(HELP),y)
 crossbuild:
 	@echo "$$CROSSBUILD_HELP_INFO"
 else
-crossbuild: clean
-	hack/make-rules/crossbuild.sh $(WHAT) $(GOARM)
+crossbuild: 
+	hack/make-rules/crossbuild.sh $(WHAT) $(ARM_VERSION)
 endif
 
 CRD_VERSIONS=v1
@@ -227,7 +227,7 @@ ifeq ($(HELP),y)
 smallbuild:
 	@echo "$$SMALLBUILD_HELP_INFO"
 else
-smallbuild: clean
+smallbuild: 
 	hack/make-rules/smallbuild.sh $(WHAT)
 endif
 
@@ -364,7 +364,7 @@ define RELEASE_HELP_INFO
 #   make release
 #   make release HELP=y
 #   make release WHAT=kubeedge
-#   make release WHAT=kubeedge GOARM=GOARM7
+#   make release WHAT=kubeedge ARM_VERSION=GOARM7
 #
 endef
 .PHONY: release
@@ -373,5 +373,5 @@ release:
 	@echo "$$RELEASE_HELP_INFO"
 else
 release:
-	hack/make-rules/release.sh $(WHAT) $(GOARM)
+	hack/make-rules/release.sh $(WHAT) $(ARM_VERSION)
 endif
