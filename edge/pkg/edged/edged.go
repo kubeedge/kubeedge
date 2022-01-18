@@ -163,6 +163,13 @@ const (
 	ResolvConfDefault = "/etc/resolv.conf"
 )
 
+type GetRuntimeServiceFunc func(
+	remoteRuntimeEndpoint,
+	remoteImageEndpoint string,
+	runtimeRequestTimeout metav1.Duration) (internalapi.RuntimeService, internalapi.ImageManagerService, error)
+
+var DefaultGetRuntimeService GetRuntimeServiceFunc = getRuntimeAndImageServices
+
 // podReady holds the initPodReady flag and its lock
 type podReady struct {
 	// initPodReady is flag to check Pod ready status
@@ -509,7 +516,7 @@ func newEdged(enable bool) (*edged, error) {
 		ResolvConfDefault)
 
 	httpClient := &http.Client{}
-	runtimeService, imageService, err := getRuntimeAndImageServices(
+	runtimeService, imageService, err := DefaultGetRuntimeService(
 		edgedconfig.Config.RemoteRuntimeEndpoint,
 		edgedconfig.Config.RemoteImageEndpoint,
 		metav1.Duration{
@@ -518,6 +525,7 @@ func newEdged(enable bool) (*edged, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if ed.os == nil {
 		ed.os = kubecontainer.RealOS{}
 	}

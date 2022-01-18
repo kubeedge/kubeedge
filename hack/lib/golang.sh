@@ -177,6 +177,7 @@ ALL_BINARIES_AND_TARGETS=(
   edgesite-server:edgesite/cmd/edgesite-server
   csidriver:cloud/cmd/csidriver
   iptablesmanager:cloud/cmd/iptablesmanager
+  edgemark:edge/cmd/edgemark
 )
 
 kubeedge::golang::get_target_by_binary() {
