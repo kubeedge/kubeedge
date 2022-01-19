@@ -157,8 +157,11 @@ func (eh *EdgeHub) routeToCloud() {
 	}
 }
 func (eh *EdgeHub) cacheToCloud() {
+	if !edgeCache.IsEnabled() {
+		return
+	}
+	edgeCache.SetEnabled(false)
 	klog.Infof("start sending cache to cloud")
-
 	ci := edgeCache.GetCacheIndex()
 	cache := edgeCache.GetCache()
 	for _, name := range ci {
@@ -166,6 +169,38 @@ func (eh *EdgeHub) cacheToCloud() {
 		edgeCache.RemoveCache(name)
 	}
 	edgeCache.CleanIndex()
+	klog.Infof("finished sending cache to cloud")
+}
+func (eh *EdgeHub) cacheOnEdge() {
+	if edgeCache.IsEnabled() {
+		return
+	}
+	edgeCache.SetEnabled(true)
+	klog.Infof("start caching on edge")
+	go func() {
+		for {
+			select {
+			case <-beehiveContext.Done():
+				klog.Warning("EdgeHub CacheOnEdge stop")
+				return
+			default:
+			}
+			if !edgeCache.IsEnabled() {
+				klog.Infof("stop caching on edge")
+				return
+			}
+			message, err := beehiveContext.Receive(ModuleNameEdgeHub)
+			if err != nil {
+				klog.Errorf("failed to receive message from edge: %v", err)
+				time.Sleep(time.Second)
+				continue
+			}
+
+			// save message to cache
+			edgeCache.SaveToCache(&message)
+
+		}
+	}()
 }
 
 func (eh *EdgeHub) keepalive() {
@@ -191,40 +226,14 @@ func (eh *EdgeHub) keepalive() {
 		time.Sleep(time.Duration(config.Config.Heartbeat) * time.Second)
 	}
 }
-func (eh *EdgeHub) cacheOnEdge() {
-	klog.Infof("start caching on edge")
-	for {
-		select {
-		case <-beehiveContext.Done():
-			klog.Warning("EdgeHub CacheOnEdge stop")
-			return
-		default:
-		}
-		if !edgeCache.IsEnabled() {
-			return
-		}
-		message, err := beehiveContext.Receive(ModuleNameEdgeHub)
-		if err != nil {
-			klog.Errorf("failed to receive message from edge: %v", err)
-			time.Sleep(time.Second)
-			continue
-		}
-
-		// save message to cache
-		edgeCache.SaveToCache(&message)
-
-	}
-}
 
 func (eh *EdgeHub) pubConnectInfo(isConnected bool) {
 	// var info model.Message
 	content := connect.CloudConnected
 	if !isConnected {
 		content = connect.CloudDisconnected
-		edgeCache.SetEnabled(!isConnected)
-		go eh.cacheOnEdge()
+		eh.cacheOnEdge()
 	} else {
-		edgeCache.SetEnabled(!isConnected)
 		eh.cacheToCloud()
 	}
 

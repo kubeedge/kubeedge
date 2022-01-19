@@ -83,6 +83,7 @@ func (eh *EdgeHub) Start() {
 
 		err = eh.chClient.Init()
 		if err != nil {
+			eh.cacheOnEdge()
 			klog.Errorf("connection failed: %v, will reconnect after %s", err, waitTime.String())
 			time.Sleep(waitTime)
 			continue
