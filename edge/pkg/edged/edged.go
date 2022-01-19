@@ -1324,19 +1324,24 @@ func (e *edged) handlePodListFromEdgeController(content []byte) (err error) {
 func (e *edged) addPod(obj interface{}) {
 	pod := obj.(*v1.Pod)
 	klog.Infof("start sync addition for pod [%s]", pod.Name)
-	attrs := &lifecycle.PodAdmitAttributes{}
-	attrs.Pod = pod
-	otherpods := e.podManager.GetPods()
-	attrs.OtherPods = otherpods
-	nodeInfo := schedulercache.NewNodeInfo(pod)
-	e.containerManager.UpdatePluginResources(nodeInfo, attrs)
+
 	key := types.NamespacedName{
 		Namespace: pod.Namespace,
 		Name:      pod.Name,
 	}
 	e.podManager.AddPod(pod)
 	e.probeManager.AddPod(pod)
-	e.podAdditionQueue.Add(key.String())
+	if pod.DeletionTimestamp == nil {
+		attrs := &lifecycle.PodAdmitAttributes{}
+		attrs.Pod = pod
+		otherpods := e.podManager.GetPods()
+		attrs.OtherPods = otherpods
+		nodeInfo := schedulercache.NewNodeInfo(pod)
+		e.containerManager.UpdatePluginResources(nodeInfo, attrs)
+		e.podAdditionQueue.Add(key.String())
+	} else {
+		e.podDeletionQueue.Add(key.String())
+	}
 	klog.Infof("success sync addition for pod [%s]", pod.Name)
 }
 
