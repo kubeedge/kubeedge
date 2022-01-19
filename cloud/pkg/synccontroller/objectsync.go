@@ -31,15 +31,20 @@ func (sctl *SyncController) manageObject(sync *v1alpha1.ObjectSync) {
 	}
 	resource := util.UnsafeKindToResource(sync.Spec.ObjectKind)
 	gvr := gv.WithResource(resource)
-
+	nodeName := getNodeName(sync.Name)
+	resourceType := strings.ToLower(sync.Spec.ObjectKind)
 	//ret, err := informers.GetInformersManager().GetDynamicSharedInformerFactory().ForResource(gvr).Lister().ByNamespace(sync.Namespace).Get(sync.Spec.ObjectName)
 	ret, err := sctl.kubeclient.Resource(gvr).Namespace(sync.Namespace).Get(context.TODO(), sync.Spec.ObjectName, metav1.GetOptions{})
-	if err != nil || ret == nil {
+	if apierrors.IsNotFound(err) {
+		// trigger the delete event
+		klog.V(4).Infof("%s: %s has been deleted in K8s, send the delete event to edge in sync loop", resourceType, sync.Spec.ObjectName)
+		msg := buildEdgeControllerMessage(nodeName, sync.Namespace, resourceType, sync.Spec.ObjectName, model.DeleteOperation, sync)
+		beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
+		return
+	} else if err != nil || ret == nil {
 		klog.Errorf("failed to get obj(gvr:%v,namespace:%v,name:%v), %v", gvr, sync.Namespace, sync.Spec.ObjectName, err)
 		return
 	}
-
-	nodeName := getNodeName(sync.Name)
 
 	object, err = meta.Accessor(ret)
 	if err != nil {
@@ -54,7 +59,7 @@ func (sctl *SyncController) manageObject(sync *v1alpha1.ObjectSync) {
 		}, sync.Spec.ObjectName)
 	}
 
-	sendEvents(err, nodeName, sync, strings.ToLower(sync.Spec.ObjectKind), object.GetResourceVersion(), object)
+	sendEvents(err, nodeName, sync, resourceType, object.GetResourceVersion(), object)
 }
 
 func sendEvents(err error, nodeName string, sync *v1alpha1.ObjectSync, resourceType string,
