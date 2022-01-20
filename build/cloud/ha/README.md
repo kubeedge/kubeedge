@@ -36,7 +36,7 @@ First, ensure your k8s cluster can pull cloudcore image. If the image not exist.
 
 ```bash
 cd $GOPATH/src/github.com/kubeedge/kubeedge
-make cloudimage
+make image WHAT=cloudcore
 ```
 
 We create k8s resources from the manifests in name order. Before creating, **check the content of each manifest to make sure it meets your environment.**
