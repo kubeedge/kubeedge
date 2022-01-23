@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -68,6 +69,7 @@ const (
 	Update       applicationVerb = "update"
 	UpdateStatus applicationVerb = "updatestatus"
 	Patch        applicationVerb = "patch"
+	Version      applicationVerb = "version"
 )
 
 type PatchInfo struct {
@@ -360,12 +362,14 @@ type Center struct {
 	HandlerCenter
 	messageLayer messagelayer.MessageLayer
 	kubeclient   dynamic.Interface
+	k8sclient    kubernetes.Interface
 }
 
 func NewApplicationCenter(dynamicSharedInformerFactory dynamicinformer.DynamicSharedInformerFactory) *Center {
 	a := &Center{
 		HandlerCenter: NewHandlerCenter(dynamicSharedInformerFactory),
 		kubeclient:    client.GetDynamicClient(),
+		k8sclient:     client.GetKubeClient(),
 		messageLayer:  messagelayer.NewContextMessageLayer(),
 	}
 	return a
@@ -522,6 +526,16 @@ func (c *Center) ProcessApplication(app *Application) (interface{}, error) {
 			return nil, err
 		}
 		return retObj, nil
+	case Version:
+		kubeClient, ok := c.k8sclient.(*kubernetes.Clientset)
+		if !ok {
+			return nil, fmt.Errorf("not a *kubernetes.Clientset type")
+		}
+		retObj, err := kubeClient.ServerVersion()
+		if err != nil {
+			return nil, err
+		}
+		return retObj, err
 	default:
 		return nil, fmt.Errorf("unsupported Application Verb type :%v", app.Verb)
 	}

@@ -94,6 +94,8 @@ func (ls *MetaServer) BuildBasicHandler() http.Handler {
 				responsewriters.ErrorNegotiated(errors.NewInternalError(err), ls.NegotiatedSerializer, schema.GroupVersion{}, w, req)
 				return
 			}
+		} else if ok && reqInfo.Path == "/version" {
+			ls.Factory.Version().ServeHTTP(w, req)
 		} else {
 			err := fmt.Errorf("not a resource req")
 			responsewriters.ErrorNegotiated(errors.NewInternalError(err), ls.NegotiatedSerializer, schema.GroupVersion{}, w, req)

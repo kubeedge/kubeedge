@@ -3,7 +3,9 @@ package storage
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -238,4 +240,85 @@ func (r *REST) Patch(ctx context.Context, pi application.PatchInfo) (runtime.Obj
 		return nil, errors.NewInternalError(err)
 	}
 	return retObj, nil
+}
+
+const (
+	kubeVersionName      = "kube-version"
+	kubeVersionNamespace = "kube-system"
+)
+
+// ServerVersion retrieves and parses the kube-apiserver's version (git version).
+func (r *REST) ServerVersion(ctx context.Context) ([]byte, error) {
+	objPtr, err := r.doVersion(ctx)
+	if err != nil {
+		return nil, err
+	}
+	cmData := objPtr.(*unstructured.Unstructured).Object["data"].(map[string]interface{})
+	kubeVersion := cmData[kubeVersionName].(string)
+	return []byte(kubeVersion), nil
+}
+
+func (r *REST) doVersion(ctx context.Context) (runtime.Object, error) {
+	info, _ := apirequest.RequestInfoFrom(ctx)
+	path := info.Path
+	// try remote cloud
+	obj, err := func() (runtime.Object, error) {
+		app := r.Agent.Generate(ctx, application.Version, nil, nil)
+		err := r.Agent.Apply(app)
+		defer app.Close()
+		if err != nil {
+			klog.Errorf("[metaserver/reststorage] failed to get obj from cloud, %v", err)
+			return nil, err
+		}
+		versionBytes, err := kubeVersionBytes(app.RespBody)
+		if err != nil {
+			return nil, err
+		}
+		var obj = new(unstructured.Unstructured)
+		err = json.Unmarshal(versionBytes, obj)
+		if err != nil {
+			return nil, err
+		}
+		err = imitator.DefaultV2Client.InsertOrUpdateObj(context.TODO(), obj)
+		if err != nil {
+			return nil, err
+		}
+		klog.Infof("[metaserver/reststorage] successfully process get req (%v) through cloud", path)
+		return obj, nil
+	}()
+	// try local
+	if err != nil {
+		// get kube-version configmap from local
+		obj = new(unstructured.Unstructured)
+		key := fmt.Sprintf("/core/v1/configmaps/%s/%s", kubeVersionNamespace, kubeVersionName)
+		err = r.Storage.Storage.Get(ctx, key, storage.GetOptions{}, obj)
+		if err != nil {
+			return nil, err
+		}
+		klog.Infof("[metaserver/reststorage] successfully process get req (%v) at local", path)
+	}
+	return obj, err
+}
+
+// kubeVersionBytes generate a configmap to store kube-apiserver version,
+// returns this configmap bytes
+func kubeVersionBytes(respBody []byte) ([]byte, error) {
+	cmData := make(map[string]string)
+	cmData[kubeVersionName] = string(respBody)
+	kubeVersion := v1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ConfigMap",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      kubeVersionName,
+			Namespace: kubeVersionNamespace,
+		},
+		Data: cmData,
+	}
+	bytes, err := json.Marshal(kubeVersion)
+	if err != nil {
+		return nil, err
+	}
+	return bytes, nil
 }

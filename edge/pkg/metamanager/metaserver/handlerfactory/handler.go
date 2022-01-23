@@ -183,6 +183,26 @@ func (f *Factory) Patch(reqInfo *request.RequestInfo) http.Handler {
 	return http.HandlerFunc(h)
 }
 
+func (f *Factory) Version() http.Handler {
+	if h, ok := f.getHandler("version"); ok {
+		return h
+	}
+	f.lock.Lock()
+	defer f.lock.Unlock()
+	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		result, err := f.storage.ServerVersion(req.Context())
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(result)
+	})
+	f.handlers["version"] = h
+	return h
+}
+
 type wrapScope struct {
 	*handlers.RequestScope
 }

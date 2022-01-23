@@ -56,6 +56,9 @@ func KeyFuncObj(obj runtime.Object) (string, error) {
 // KeyFuncReq generate key from req context
 func KeyFuncReq(ctx context.Context, _ string) (string, error) {
 	info, ok := apirequest.RequestInfoFrom(ctx)
+	if ok && info.Path == "/version" {
+		return "/version", nil
+	}
 	if !ok || !info.IsResourceRequest {
 		return "", fmt.Errorf("no request info in context")
 	}
