@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -59,6 +60,7 @@ type MessageHandle struct {
 	KeepaliveInterval int
 	WriteTimeout      int
 	Nodes             sync.Map
+	nodeCond          sync.Map
 	nodeConns         sync.Map
 	nodeLocks         sync.Map
 	nodeRegistered    sync.Map
@@ -164,6 +166,10 @@ func (mh *MessageHandle) OnRegister(connection conn.Connection) {
 
 	io := &hubio.JSONIO{Connection: connection}
 
+	if _, ok := mh.nodeCond.Load(nodeID); !ok {
+		mh.nodeCond.Store(nodeID, sync.NewCond(&sync.Mutex{}))
+	}
+
 	if _, ok := mh.nodeRegistered.Load(nodeID); ok {
 		if conn, exist := mh.nodeConns.Load(nodeID); exist {
 			if err := conn.(hubio.CloudHubIO).Close(); err != nil {
@@ -171,6 +177,8 @@ func (mh *MessageHandle) OnRegister(connection conn.Connection) {
 			}
 		}
 		mh.nodeConns.Store(nodeID, io)
+		cond, _ := mh.nodeCond.Load(nodeID)
+		cond.(*sync.Cond).Signal()
 		return
 	}
 	mh.nodeConns.Store(nodeID, io)
@@ -336,6 +344,7 @@ func (mh *MessageHandle) UnregisterNode(info *model.HubInfo, code ExitCode) {
 		hi.Close()
 	}
 
+	mh.nodeCond.Delete(info.NodeID)
 	mh.nodeLocks.Delete(info.NodeID)
 	mh.nodeConns.Delete(info.NodeID)
 	mh.nodeRegistered.Delete(info.NodeID)
@@ -419,8 +428,20 @@ func (mh *MessageHandle) ListMessageWriteLoop(info *model.HubInfo, stopServe cha
 func (mh *MessageHandle) MessageWriteLoop(info *model.HubInfo, stopServe chan ExitCode) {
 	nodeQueue := mh.MessageQueue.GetNodeQueue(info.NodeID)
 	nodeStore := mh.MessageQueue.GetNodeStore(info.NodeID)
+	var conn interface{}
+	var ok bool
 
 	for {
+		for {
+			if conn, ok = mh.nodeConns.Load(info.NodeID); ok {
+				break
+			}
+			value, _ := mh.nodeCond.Load(info.NodeID)
+			c, _ := value.(*sync.Cond)
+			c.L.Lock()
+			c.Wait()
+			c.L.Unlock()
+		}
 		key, quit := nodeQueue.Get()
 		if quit {
 			klog.Errorf("nodeQueue for node %s has shutdown", info.NodeID)
@@ -445,30 +466,12 @@ func (mh *MessageHandle) MessageWriteLoop(info *model.HubInfo, stopServe chan Ex
 		copyMsg := deepcopy(msg)
 		trimMessage(copyMsg)
 
-		// initialize timer and retry count for sending message
-		var (
-			retry                       = 0
-			retryInterval time.Duration = 2
-		)
-
-		for {
-			conn, ok := mh.nodeConns.Load(info.NodeID)
-			if !ok {
-				if retry == 1 {
-					break
-				}
-				retry++
-				time.Sleep(time.Second * retryInterval)
-				continue
-			}
-			err := mh.sendMsg(conn.(hubio.CloudHubIO), info, copyMsg, msg, nodeStore)
-			if err != nil {
-				klog.Errorf("Failed to send event to node: %s, affected event: %s, err: %s",
-					info.NodeID, dumpMessageMetadata(copyMsg), err.Error())
-				nodeQueue.AddRateLimited(key.(string))
-				time.Sleep(time.Second * 2)
-			}
-			break
+		err := mh.sendMsg(conn.(hubio.CloudHubIO), info, copyMsg, msg, nodeStore)
+		if err != nil {
+			klog.Errorf("Failed to send event to node: %s, affected event: %s, err: %s",
+				info.NodeID, dumpMessageMetadata(copyMsg), err.Error())
+			nodeQueue.Add(key.(string))
+			time.Sleep(time.Second * 2)
 		}
 
 		nodeQueue.Forget(key.(string))
@@ -499,7 +502,7 @@ LOOP:
 			break LOOP
 		case <-ticker.C:
 			if retry == 4 {
-				break LOOP
+				return errors.New("failed to send message in five times")
 			}
 			err := mh.send(hi, info, copyMsg)
 			if err != nil {
