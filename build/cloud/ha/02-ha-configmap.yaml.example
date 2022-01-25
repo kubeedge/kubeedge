@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: cloudcore
-  namespace: kubeedge
+  namespace: kubeedge-system
   labels:
     k8s-app: kubeedge
     kubeedge: cloudcore

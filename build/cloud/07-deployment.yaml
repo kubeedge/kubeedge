@@ -5,7 +5,7 @@ metadata:
     k8s-app: kubeedge
     kubeedge: cloudcore
   name: cloudcore
-  namespace: kubeedge
+  namespace: kubeedge-system
 spec:
   selector:
     matchLabels:
