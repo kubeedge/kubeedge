@@ -1,14 +1,14 @@
 # Default values for kubeedge.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
-appVersion: "1.8.2"
+appVersion: "1.9.1"
 
 cloudCore:
   replicaCount: 1
   hostNetWork: "true"
   image:
     repository: "kubeedge/cloudcore"
-    tag: "v1.8.2"
+    tag: "v1.9.1"
     pullPolicy: "IfNotPresent"
     pullSecrets: []
   securityContext: 
@@ -66,7 +66,7 @@ iptablesManager:
   hostNetWork: true
   image:
     repository: "kubeedge/iptables-manager"
-    tag: "v1.8.2"
+    tag: "v1.9.1"
     pullPolicy: "IfNotPresent"
     pullSecrets: []
   securityContext: 
