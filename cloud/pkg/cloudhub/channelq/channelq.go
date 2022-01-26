@@ -132,7 +132,7 @@ func (q *ChannelMessageQueue) addMessageToQueue(nodeID string, msg *beehiveModel
 						Name: objectSyncName,
 					},
 					Spec: v1alpha1.ObjectSyncSpec{
-						ObjectAPIVersion: util.GetMessageAPIVerison(msg),
+						ObjectAPIVersion: util.GetMessageAPIVersion(msg),
 						ObjectKind:       util.GetMessageResourceType(msg),
 						ObjectName:       resourceName,
 					},
