@@ -18,8 +18,10 @@ package validation
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"path"
+	"time"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/klog/v2"
@@ -35,6 +37,7 @@ func ValidateEdgeCoreConfiguration(c *v1alpha1.EdgeCoreConfig) field.ErrorList {
 	allErrs = append(allErrs, ValidateDataBase(*c.DataBase)...)
 	allErrs = append(allErrs, ValidateModuleEdged(*c.Modules.Edged)...)
 	allErrs = append(allErrs, ValidateModuleEdgeHub(*c.Modules.EdgeHub)...)
+	allErrs = append(allErrs, ValidateModuleEdgeHubVault(*c.Modules.EdgeHub.Vault)...)
 	allErrs = append(allErrs, ValidateModuleEventBus(*c.Modules.EventBus)...)
 	allErrs = append(allErrs, ValidateModuleMetaManager(*c.Modules.MetaManager)...)
 	allErrs = append(allErrs, ValidateModuleServiceBus(*c.Modules.ServiceBus)...)
@@ -101,6 +104,54 @@ func ValidateModuleEdgeHub(h v1alpha1.EdgeHub) field.ErrorList {
 			"MessageBurst must not be a negative number"))
 	}
 
+	return allErrs
+}
+
+// ValidateModuleEdgeHubVault validates `h` and returns an errorList if it is invalid
+func ValidateModuleEdgeHubVault(h v1alpha1.EdgeHubVault) field.ErrorList {
+	if !h.Enable {
+		return field.ErrorList{}
+	}
+	allErrs := field.ErrorList{}
+
+	if h.Enable {
+		if h.TokenFile == "" {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("TokenFile"), h.TokenFile,
+				"TokenFile must not be empty"))
+		}
+		if h.CommonName == "" {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("CommonName"), h.CommonName,
+				"CommonName must not be empty"))
+		}
+		if h.TTL == "" {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("TTL"), h.TTL,
+				"TTL must not be empty"))
+		}
+		if _, err := time.ParseDuration(h.TTL); err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("TTL"), h.TTL,
+				"invalid TTL"))
+		}
+
+		if d, err := time.ParseDuration(h.TTL); d < 0 && err == nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("TTL"), h.TTL,
+				"TTL cannot be negative"))
+		}
+
+		if h.Vault == "" {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("Vault"), h.Vault,
+				"Vault must not be empty"))
+		}
+
+		if _, err := url.ParseRequestURI(h.Vault); err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("Vault"), h.Vault,
+				"Vault must be a valid URI, e.g. https://vault.example.com"))
+		}
+
+		if h.Role == "" {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("Role"), h.Role,
+				"Role must not be empty"))
+		}
+	}
 	return allErrs
 }
 

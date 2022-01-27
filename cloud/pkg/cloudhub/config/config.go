@@ -46,12 +46,11 @@ func InitConfigure(hub *v1alpha1.CloudHub) {
 			klog.Info("Succeed in loading CA key from local directory")
 		}
 
-		if ca != nil && caKey != nil {
+		if ca != nil {
 			Config.Ca = ca
 			Config.CaKey = caKey
-		} else if !(ca == nil && caKey == nil) {
-			klog.Exit("Both of ca and caKey should be specified!")
 		}
+		// with the vault integration, the ca key may be missing!
 
 		cert, err := os.ReadFile(hub.TLSCertFile)
 		if err == nil {

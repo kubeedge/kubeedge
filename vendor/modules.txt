@@ -253,6 +253,9 @@ github.com/docker/go-units
 ## explicit
 github.com/eclipse/paho.mqtt.golang
 github.com/eclipse/paho.mqtt.golang/packets
+# github.com/edgefarm/vault-integration v0.0.0-20220209150523-94707fa43665
+## explicit
+github.com/edgefarm/vault-integration/pkg/certretrieval
 # github.com/emicklei/go-restful v2.9.6+incompatible
 ## explicit
 github.com/emicklei/go-restful

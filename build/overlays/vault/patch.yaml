@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudcore
+  namespace: kubeedge
+spec:
+  template:
+    spec:
+      initContainers:
+        - image: localhost:5000/certretrieval:latest
+          imagePullPolicy: Always
+          name: initial-certretrieval
+          command:
+            - /certretrieval
+            - -config
+            - /opt/certretrieval/settings/certretrieval.config
+          resources:
+            limits:
+              cpu: 250m
+              memory: 256Mi
+            requests:
+              cpu: 125m
+              memory: 128Mi
+          volumeMounts:
+            - mountPath: /etc/kubeedge/certs
+              name: certs
+            - mountPath: /opt/certretrieval/settings
+              name: settings
+              readOnly: true
+            - mountPath: /opt/certretrieval/cert
+              name: cacert
+              readOnly: true
+      containers:
+        - name: cloudcore
+          image: localhost:5000/cloudcore:latest
+          imagePullPolicy: Always
+        - image: localhost:5000/certretrieval:latest
+          imagePullPolicy: Always
+          name: certertrieval
+          command:
+            - /certretrieval
+            - -config
+            - /opt/certretrieval/settings/certretrieval.config
+            - -loopdelay
+            - "12h"
+          resources:
+            limits:
+              cpu: 250m
+              memory: 256Mi
+            requests:
+              cpu: 125m
+              memory: 128Mi
+          volumeMounts:
+            - mountPath: /etc/kubeedge/certs
+              name: certs
+            - mountPath: /opt/certretrieval/settings
+              name: settings
+              readOnly: true
+            - mountPath: /opt/certretrieval/cert
+              name: cacert
+              readOnly: true
+      volumes:
+        - name: cacert
+          configMap:
+            name: cacert
+            items:
+              - key: ca.crt
+                path: ca.crt
+        - name: settings
+          configMap:
+            name: certretrieval.config
+            items:
+              - key: certretrieval.config
+                path: certretrieval.config

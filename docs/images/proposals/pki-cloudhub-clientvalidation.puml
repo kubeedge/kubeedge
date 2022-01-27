@@ -1,0 +1,15 @@
+@startuml
+participant "Cloud Hub" as ch
+participant Vault as vault
+ch -> ch : assert validity period
+ch -> vault : retrieve certificate via serial number
+return certificate
+ch -> ch : check revocation state
+ch -> vault : retrieve ca certificate chain
+note right 
+As the CA certificate changes rarely, 
+this may be done only once
+end note
+return ca certificate chain
+ch -> ch : check certificate chain(certificate, ca certificate chain)
+@enduml

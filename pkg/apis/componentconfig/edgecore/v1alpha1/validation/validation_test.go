@@ -384,3 +384,127 @@ func TestValidateModuleEdgeStream(t *testing.T) {
 		}
 	}
 }
+
+func TestValidateModuleEdgeHubVault(t *testing.T) {
+	cases := []struct {
+		name     string
+		input    v1alpha1.EdgeHubVault
+		expected field.ErrorList
+	}{
+		{
+			name: "case1 not enabled",
+			input: v1alpha1.EdgeHubVault{
+				Enable: false,
+			},
+			expected: field.ErrorList{},
+		},
+		{
+			name: "case2 enabled, but missing settings",
+			input: v1alpha1.EdgeHubVault{
+				Enable: true,
+			},
+			expected: field.ErrorList{
+				&field.Error{
+					Type:     "FieldValueInvalid",
+					Field:    "TokenFile",
+					BadValue: "",
+					Detail:   "TokenFile must not be empty",
+				},
+				&field.Error{
+					Type:     "FieldValueInvalid",
+					Field:    "CommonName",
+					BadValue: "",
+					Detail:   "CommonName must not be empty",
+				}, &field.Error{
+					Type:     "FieldValueInvalid",
+					Field:    "TTL",
+					BadValue: "",
+					Detail:   "TTL must not be empty",
+				},
+				&field.Error{
+					Type:     "FieldValueInvalid",
+					Field:    "TTL",
+					BadValue: "",
+					Detail:   "invalid TTL",
+				},
+				&field.Error{
+					Type:     "FieldValueInvalid",
+					Field:    "Vault",
+					BadValue: "",
+					Detail:   "Vault must not be empty",
+				},
+				&field.Error{
+					Type:     "FieldValueInvalid",
+					Field:    "Vault",
+					BadValue: "",
+					Detail:   "Vault must be a valid URI, e.g. https://vault.example.com",
+				},
+				&field.Error{
+					Type:     "FieldValueInvalid",
+					Field:    "Role",
+					BadValue: "",
+					Detail:   "Role must not be empty",
+				}},
+		},
+		{
+			name: "case3 invalid TTL",
+			input: v1alpha1.EdgeHubVault{
+				Enable:     true,
+				TokenFile:  "token.txt",
+				CommonName: "commonname",
+				TTL:        "foo",
+				Vault:      "https://vault.example.com",
+				Role:       "role",
+			},
+			expected: field.ErrorList{
+				&field.Error{
+					Type:     "FieldValueInvalid",
+					Field:    "TTL",
+					BadValue: "foo",
+					Detail:   "invalid TTL",
+				}},
+		},
+		{
+			name: "case4 negative TTL",
+			input: v1alpha1.EdgeHubVault{
+				Enable:     true,
+				TokenFile:  "token.txt",
+				CommonName: "commonname",
+				TTL:        "-1h",
+				Vault:      "https://vault.example.com",
+				Role:       "role",
+			},
+			expected: field.ErrorList{
+				&field.Error{
+					Type:     "FieldValueInvalid",
+					Field:    "TTL",
+					BadValue: "-1h",
+					Detail:   "TTL cannot be negative",
+				}},
+		},
+		{
+			name: "case5 invalid vault address",
+			input: v1alpha1.EdgeHubVault{
+				Enable:     true,
+				TokenFile:  "token.txt",
+				CommonName: "commonname",
+				TTL:        "1h",
+				Vault:      "vault.example.com",
+				Role:       "role",
+			},
+			expected: field.ErrorList{
+				&field.Error{
+					Type:     "FieldValueInvalid",
+					Field:    "Vault",
+					BadValue: "vault.example.com",
+					Detail:   "Vault must be a valid URI, e.g. https://vault.example.com",
+				}},
+		},
+	}
+
+	for _, c := range cases {
+		if result := ValidateModuleEdgeHubVault(c.input); !reflect.DeepEqual(result, c.expected) {
+			t.Errorf("%v: expected %v, but got %v", c.name, c.expected, result)
+		}
+	}
+}

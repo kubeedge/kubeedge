@@ -15,6 +15,7 @@ require (
 	github.com/docker/docker v20.10.2+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/eclipse/paho.mqtt.golang v1.2.0
+	github.com/edgefarm/vault-integration v0.0.0-20220209150523-94707fa43665
 	github.com/emicklei/go-restful v2.9.6+incompatible
 	github.com/evanphx/json-patch v4.11.0+incompatible
 	github.com/golang-jwt/jwt v3.2.2+incompatible
