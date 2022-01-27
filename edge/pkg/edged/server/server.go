@@ -2,12 +2,6 @@ package server
 
 import (
 	"fmt"
-	"k8s.io/kubernetes/pkg/kubelet/apis/podresources"
-	podresourcesapiv1alpha1 "k8s.io/kubelet/pkg/apis/podresources/v1alpha1"
-	podresourcesapi "k8s.io/kubelet/pkg/apis/podresources/v1"
-	"os"
-	"google.golang.org/grpc"
-	"k8s.io/kubernetes/pkg/kubelet/util"
 	"net"
 	"net/http"
 
@@ -52,21 +46,4 @@ func (s *Server) ListenAndServe(host server.HostInterface, resourceAnalyzer stat
 		MaxHeaderBytes: 1 << 20,
 	}
 	klog.Exit(server.ListenAndServe())
-}
-
-// ListenAndServePodResources initializes a gRPC server to serve the PodResources service
-func ListenAndServePodResources(socket string, podsProvider podresources.PodsProvider, devicesProvider podresources.DevicesProvider, cpusProvider podresources.CPUsProvider) {
-	server := grpc.NewServer()
-	podresourcesapiv1alpha1.RegisterPodResourcesListerServer(server, podresources.NewV1alpha1PodResourcesServer(podsProvider, devicesProvider))
-	podresourcesapi.RegisterPodResourcesListerServer(server, podresources.NewV1PodResourcesServer(podsProvider, devicesProvider, cpusProvider))
-	l, err := util.CreateListener(socket)
-	if err != nil {
-		klog.ErrorS(err, "Failed to create listener for podResources endpoint")
-		os.Exit(1)
-	}
-
-	if err := server.Serve(l); err != nil {
-		klog.ErrorS(err, "Failed to serve")
-		os.Exit(1)
-	}
 }
