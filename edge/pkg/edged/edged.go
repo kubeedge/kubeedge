@@ -28,6 +28,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"k8s.io/kubernetes/pkg/kubelet/apis/podresources"
+	utils "k8s.io/kubernetes/pkg/kubelet/util"
 	"net/http"
 	"os"
 	"path"
@@ -161,6 +163,8 @@ const (
 	redirectContainerStream = false
 	// ResolvConfDefault gives the default dns resolv configration file
 	ResolvConfDefault = "/etc/resolv.conf"
+
+	DefaultPodResourcesDirName = "/var/lib/kubelet/pod-resources"
 )
 
 // podReady holds the initPodReady flag and its lock
@@ -217,6 +221,7 @@ type edged struct {
 	volumeManager      volumemanager.VolumeManager
 	rootDirectory      string
 	gpuPluginEnabled   bool
+	podResourcesEnabled bool
 	version            string
 	labels             map[string]string
 	// podReady is structure with initPodReady flag and its lock
@@ -362,6 +367,9 @@ func (e *edged) Start() {
 	klog.Infof("starting plugin manager")
 	go e.pluginManager.Run(edgedutil.NewSourcesReady(e.isInitPodReady), utilwait.NeverStop)
 
+	if e.podResourcesEnabled {
+		go e.ListenAndServePodResources()
+	}
 	// start the CPU manager in the clcm
 	err := e.clcm.StartCPUManager(e.GetActivePods, edgedutil.NewSourcesReady(e.isInitPodReady), e.statusManager, e.runtimeService)
 	if err != nil {
@@ -449,6 +457,7 @@ func newEdged(enable bool) (*edged, error) {
 		namespace:                 edgedconfig.Config.RegisterNodeNamespace,
 		containerRuntimeName:      edgedconfig.Config.RuntimeType,
 		gpuPluginEnabled:          edgedconfig.Config.GPUPluginEnabled,
+		podResourcesEnabled:       edgedconfig.Config.PodResourcesEnabled,
 		cgroupDriver:              edgedconfig.Config.CGroupDriver,
 		concurrentConsumers:       edgedconfig.Config.ConcurrentConsumers,
 		podManager:                podManager,
@@ -643,6 +652,15 @@ func newEdged(enable bool) (*edged, error) {
 
 	ed.server = server.NewServer(ed.podManager)
 	return ed, nil
+}
+
+func (e *edged)ListenAndServePodResources()  {
+	socket, err := utils.LocalEndpoint(DefaultPodResourcesDirName, podresources.Socket)
+	if err != nil {
+		klog.V(2).InfoS("Failed to get local endpoint for PodResources endpoint", "err", err)
+		return
+	}
+	server.ListenAndServePodResources(socket, e.podManager, e.containerManager, e.containerManager)
 }
 
 func (e *edged) startDockerServer() error {
