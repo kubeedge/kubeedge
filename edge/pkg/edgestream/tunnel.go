@@ -165,6 +165,10 @@ func (s *TunnelSession) Serve() error {
 			return err
 		}
 
+		if mess.MessageType == stream.MessageTypeCloseConnect {
+			return fmt.Errorf("close tunnel stream connection, error:%s", string(mess.Data))
+		}
+
 		if mess.MessageType < stream.MessageTypeData {
 			go s.ServeConnection(mess)
 		}
