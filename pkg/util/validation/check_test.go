@@ -7,11 +7,7 @@ import (
 )
 
 func TestFileIsExist(t *testing.T) {
-	dir, err := os.MkdirTemp("", "TestTempFile_BadDir")
-	if err != nil {
-		t.Fatalf("%v", err)
-	}
-	defer os.RemoveAll(dir)
+	dir := t.TempDir()
 
 	ef, err := os.CreateTemp(dir, "CheckFileIsExist")
 	if err == nil {
