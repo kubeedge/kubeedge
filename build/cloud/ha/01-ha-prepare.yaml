@@ -30,7 +30,7 @@ rules:
     verbs: ["get", "list", "watch", "create", "update"]
   - apiGroups: [""]
     resources: ["namespaces"]
-    verbs: ["get", "create", "list", "watch"]
+    verbs: ["get", "create"]
   - apiGroups: [""]
     resources: ["nodes", "pods/status"]
     verbs: ["patch"]

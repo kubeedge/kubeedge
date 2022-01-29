@@ -111,9 +111,8 @@ func (m *manager) updatePodStatus() {
 		err := m.metaClient.PodStatus(pod.Namespace).Update(pod.Name, edgeapi.PodStatusRequest{UID: pod.UID, Name: pod.Name, Status: s})
 		if err != nil {
 			klog.Errorf("Update pod status failed err :%v", err)
-			return
 		}
-		klog.V(4).Infof("Status for pod %s updated successfully", pod.Name)
+		klog.Infof("Status for pod %s updated successfully: %+v", pod.Name, podStatus)
 		m.apiStatusVersions[pod.UID] = podStatus.DeepCopy()
 	}
 }

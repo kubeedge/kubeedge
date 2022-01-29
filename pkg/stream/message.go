@@ -33,7 +33,6 @@ const (
 	MessageTypeMetricConnect
 	MessageTypeData
 	MessageTypeRemoveConnect
-	MessageTypeCloseConnect
 )
 
 func (m MessageType) String() string {

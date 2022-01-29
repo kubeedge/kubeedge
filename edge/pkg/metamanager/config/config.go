@@ -16,12 +16,15 @@ var Connected = false
 
 type Configure struct {
 	v1alpha1.MetaManager
+	NodeName string
+	NodeIP   string
 }
 
-func InitConfigure(m *v1alpha1.MetaManager) {
+func InitConfigure(m *v1alpha1.MetaManager, nodeName string) {
 	once.Do(func() {
 		Config = Configure{
 			MetaManager: *m,
+			NodeName:    nodeName,
 		}
 		metaserverconfig.InitConfigure(Config.MetaServer)
 	})

@@ -35,8 +35,8 @@ func newMetaManager(enable bool) *metaManager {
 }
 
 // Register register metamanager
-func Register(metaManager *v1alpha1.MetaManager) {
-	metamanagerconfig.InitConfigure(metaManager)
+func Register(metaManager *v1alpha1.MetaManager, nodeName string) {
+	metamanagerconfig.InitConfigure(metaManager, nodeName)
 	meta := newMetaManager(metaManager.Enable)
 	initDBTable(meta)
 	core.Register(meta)

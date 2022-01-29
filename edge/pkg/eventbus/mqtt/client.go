@@ -58,13 +58,9 @@ var (
 
 // Client struct
 type Client struct {
-	MQTTUrl     string
-	PubClientID string
-	SubClientID string
-	Username    string
-	Password    string
-	PubCli      MQTT.Client
-	SubCli      MQTT.Client
+	MQTTUrl string
+	PubCli  MQTT.Client
+	SubCli  MQTT.Client
 }
 
 // AccessInfo that deliver between edge-hub and cloud-hub
@@ -144,16 +140,13 @@ func (mq *Client) InitSubClient() {
 	if right > 10 {
 		right = 10
 	}
-	// if SubClientID is NOT set, we need to generate it by ourselves.
-	if mq.SubClientID == "" {
-		mq.SubClientID = fmt.Sprintf("hub-client-sub-%s", timeStr[0:right])
-	}
-	subOpts := util.HubClientInit(mq.MQTTUrl, mq.SubClientID, mq.Username, mq.Password)
+	subID := fmt.Sprintf("hub-client-sub-%s", timeStr[0:right])
+	subOpts := util.HubClientInit(mq.MQTTUrl, subID, "", "")
 	subOpts.OnConnect = onSubConnect
 	subOpts.AutoReconnect = false
 	subOpts.OnConnectionLost = onSubConnectionLost
 	mq.SubCli = MQTT.NewClient(subOpts)
-	util.LoopConnect(mq.SubClientID, mq.SubCli)
+	util.LoopConnect(subID, mq.SubCli)
 	klog.Info("finish hub-client sub")
 }
 
@@ -164,14 +157,11 @@ func (mq *Client) InitPubClient() {
 	if right > 10 {
 		right = 10
 	}
-	// if PubClientID is NOT set, we need to generate it by ourselves.
-	if mq.PubClientID == "" {
-		mq.PubClientID = fmt.Sprintf("hub-client-pub-%s", timeStr[0:right])
-	}
-	pubOpts := util.HubClientInit(mq.MQTTUrl, mq.PubClientID, mq.Username, mq.Password)
+	pubID := fmt.Sprintf("hub-client-pub-%s", timeStr[0:right])
+	pubOpts := util.HubClientInit(mq.MQTTUrl, pubID, "", "")
 	pubOpts.OnConnectionLost = onPubConnectionLost
 	pubOpts.AutoReconnect = false
 	mq.PubCli = MQTT.NewClient(pubOpts)
-	util.LoopConnect(mq.PubClientID, mq.PubCli)
+	util.LoopConnect(pubID, mq.PubCli)
 	klog.Info("finish hub-client pub")
 }

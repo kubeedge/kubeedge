@@ -33,6 +33,5 @@ kubeedge::clean::bin(){
   rm -rf $KUBEEDGE_OUTPUT_BINPATH/*
 }
 
-kubeedge::golang::verify_golang_version
 kubeedge::clean::cache
 kubeedge::clean::bin

@@ -56,7 +56,7 @@ var errFailedDBOperation = errors.New(FailedDBOperation)
 
 func init() {
 	cfg := v1alpha1.NewDefaultEdgeCoreConfig()
-	metaManagerConfig.InitConfigure(cfg.Modules.MetaManager)
+	metaManagerConfig.InitConfigure(cfg.Modules.MetaManager, metaManagerConfig.Config.NodeName)
 
 	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 	add := &common.ModuleInfo{
@@ -253,14 +253,14 @@ func TestProcessUpdate(t *testing.T) {
 		}
 	})
 
-	//Success Case Source CloudControllerModel
+	//Success Case Source CloudControlerModel
 	ormerMock.EXPECT().Raw(gomock.Any(), gomock.Any()).Return(rawSeterMock).Times(1)
 	rawSeterMock.EXPECT().Exec().Return(nil, nil).Times(1)
-	msg = model.NewMessage("").BuildRouter(CloudControllerModel, GroupResource, model.ResourceTypePodStatus, model.UpdateOperation)
+	msg = model.NewMessage("").BuildRouter(CloudControlerModel, GroupResource, model.ResourceTypePodStatus, model.UpdateOperation)
 	meta.processUpdate(*msg)
 	message, _ = beehiveContext.Receive(ModuleNameEdged)
 	t.Run("SuccessSend[CloudController->Edged]", func(t *testing.T) {
-		want := CloudControllerModel
+		want := CloudControlerModel
 		if message.GetSource() != want {
 			t.Errorf("Wrong message received : Wanted from source %v and Got from source %v", want, message.GetSource())
 		}

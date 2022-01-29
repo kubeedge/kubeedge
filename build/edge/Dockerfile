@@ -6,10 +6,7 @@ FROM ${BUILD_FROM} AS builder
 ARG GO_LDFLAGS
 ARG QEMU_ARCH=x86_64
 
-RUN apk update && apk add curl && \
-curl -L -o /tmp/qemu-${QEMU_ARCH}-static.tar.gz https://github.com/multiarch/qemu-user-static/releases/download/v3.0.0/qemu-${QEMU_ARCH}-static.tar.gz && \
-tar -xzf /tmp/qemu-${QEMU_ARCH}-static.tar.gz -C /usr/bin
-
+COPY ./build/edge/tmp/qemu-${QEMU_ARCH}-static /usr/bin/
 COPY . /go/src/github.com/kubeedge/kubeedge
 
 RUN apk --no-cache update && \

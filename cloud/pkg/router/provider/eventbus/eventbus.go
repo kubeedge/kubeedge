@@ -46,7 +46,7 @@ func (factory *eventbusFactory) GetSource(ep *v1.RuleEndpoint, sourceResource ma
 		klog.Errorf("source resource attributes \"topic\" does not exist")
 		return nil
 	}
-	nodeName, exist := sourceResource[constants.NodeName]
+	nodeName, exist := sourceResource[constants.NodeNmae]
 	if !exist {
 		klog.Errorf("source resource attributes \"node_name\" does not exist")
 		return nil

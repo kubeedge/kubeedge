@@ -111,7 +111,7 @@ func (ms *EdgedMetricsConnection) Serve(tunnel SafeWriteTunneler) error {
 				klog.Errorf("write tunnel message %v error", msg)
 				return
 			}
-			klog.V(4).Infof("%v write metrics data %v", ms.String(), string(scan.Bytes()))
+			klog.Infof("%v write metrics data %v", ms.String(), string(scan.Bytes()))
 		}
 	}()
 

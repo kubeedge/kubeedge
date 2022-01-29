@@ -18,7 +18,7 @@ KUBEEDGE_ROOT=$PWD
 WORKDIR=$(dirname $0)
 HELM_DIR=$KUBEEDGE_ROOT/build/helm
 E2E_DIR=$(realpath $(dirname $0)/..)
-IMAGE_TAG=$(git describe --tags)
+IMAGE_TAG=$(date +%Y%m%d)
 
 function cleanup() {
   sudo pkill edgecore || true
@@ -47,7 +47,7 @@ function prepare_cluster() {
 
 function build_cloud_image() {
   cd $KUBEEDGE_ROOT
-  make image WHAT=cloudcore -f $KUBEEDGE_ROOT/Makefile
+  make cloudimage -f $KUBEEDGE_ROOT/Makefile -e IMAGE_TAG=$IMAGE_TAG
   kind load docker-image kubeedge/cloudcore:$IMAGE_TAG --name test
 }
 
@@ -66,7 +66,7 @@ function start_kubeedge() {
       sleep 3
       kubectl get secret -nkubeedge 2>/dev/null | grep -q tokensecret && break
   done
-  
+
   cd $KUBEEDGE_ROOT
   export TOKEN=$(sudo _output/local/bin/keadm gettoken --kube-config=$KUBECONFIG)
   sudo systemctl set-environment CHECK_EDGECORE_ENVIRONMENT="false"

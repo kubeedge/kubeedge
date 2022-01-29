@@ -956,7 +956,7 @@ func (e *edged) podAddWorkerRun(consumers int) {
 				err := e.consumePodAddition(&namespacedName)
 				if err != nil {
 					if err == apis.ErrPodNotFound {
-						klog.Errorf("worker [%d] handle pod addition item [%s] failed with not found error.", i, podName)
+						klog.Infof("worker [%d] handle pod addition item [%s] failed with not found error.", i, podName)
 						e.podAdditionBackoff.Reset(backOffKey)
 					} else {
 						go func() {
@@ -1016,16 +1016,18 @@ func (e *edged) consumePodAddition(namespacedName *types.NamespacedName) error {
 	}
 
 	if err := e.makePodDataDirs(pod); err != nil {
-		return fmt.Errorf("unable to make pod data directories for pod %q: %v", format.Pod(pod), err)
+		klog.Errorf("Unable to make pod data directories for pod %q: %v", format.Pod(pod), err)
+		return err
 	}
 
 	if err := e.volumeManager.WaitForAttachAndMount(pod); err != nil {
-		return fmt.Errorf("unable to mount volumes for pod %q: %v; skipping pod", format.Pod(pod), err)
+		klog.Errorf("Unable to mount volumes for pod %q: %v; skipping pod", format.Pod(pod), err)
+		return err
 	}
 
 	secrets, err := e.getSecretsFromMetaManager(pod)
 	if err != nil {
-		return fmt.Errorf("unable to get secret for pod %q: %v", format.Pod(pod), err)
+		return err
 	}
 
 	podUID := pod.GetUID()
@@ -1035,7 +1037,8 @@ func (e *edged) consumePodAddition(namespacedName *types.NamespacedName) error {
 	}
 	curPodStatus, err := e.podCache.GetNewerThan(podUID, t.(time.Time))
 	if err != nil {
-		return fmt.Errorf("pod %s cache newer failed: %v", podName, err)
+		klog.Errorf("pod %s cache newer failed: %v", podName, err)
+		return err
 	}
 	result := e.containerRuntime.SyncPod(pod, curPodStatus, secrets, e.podAdditionBackoff)
 	e.podLastSyncTime.Store(podUID, time.Now())
@@ -1045,7 +1048,7 @@ func (e *edged) consumePodAddition(namespacedName *types.NamespacedName) error {
 			if r.Error != kubecontainer.ErrCrashLoopBackOff && r.Error != images.ErrImagePullBackOff {
 				// Do not record an event here, as we keep all event logging for sync pod failures
 				// local to container runtime so we get better errors
-				return fmt.Errorf("sync pod failed: %v", err)
+				return err
 			}
 		}
 
@@ -1067,7 +1070,8 @@ func (e *edged) consumePodDeletion(namespacedName *types.NamespacedName) error {
 
 	podStatus, err := e.podCache.Get(pod.GetUID())
 	if err != nil {
-		return fmt.Errorf("pod status for %s from cache failed: %v", podName, err)
+		klog.Errorf("Pod status for %s from cache failed: %v", podName, err)
+		return err
 	}
 
 	e.podLastSyncTime.Delete(pod.GetUID())
@@ -1145,7 +1149,7 @@ func (e *edged) syncPod() {
 					klog.Errorf("handle configMap failed: %v", err)
 				}
 			} else {
-				klog.V(4).Infof("skip to handle configMap with type response")
+				klog.Infof("skip to handle configMap with type response")
 				continue
 			}
 		case model.ResourceTypeSecret:
@@ -1155,7 +1159,7 @@ func (e *edged) syncPod() {
 					klog.Errorf("handle secret failed: %v", err)
 				}
 			} else {
-				klog.V(4).Infof("skip to handle secret with type response")
+				klog.Infof("skip to handle secret with type response")
 				continue
 			}
 		case constants.CSIResourceTypeVolume:
@@ -1192,14 +1196,16 @@ func (e *edged) createVolume(content []byte) (interface{}, error) {
 	req := &csi.CreateVolumeRequest{}
 	err := jsonpb.Unmarshal(bytes.NewReader(content), req)
 	if err != nil {
-		return nil, fmt.Errorf("unmarshal create volume req error: %v", err)
+		klog.Errorf("unmarshal create volume req error: %v", err)
+		return nil, err
 	}
 
 	klog.V(4).Infof("start create volume: %s", req.Name)
 	ctl := csiplugin.NewController()
 	res, err := ctl.CreateVolume(req)
 	if err != nil {
-		return nil, fmt.Errorf("create volume error: %v", err)
+		klog.Errorf("create volume error: %v", err)
+		return nil, err
 	}
 	klog.V(4).Infof("end create volume: %s result: %v", req.Name, res)
 	return res, nil
@@ -1209,13 +1215,15 @@ func (e *edged) deleteVolume(content []byte) (interface{}, error) {
 	req := &csi.DeleteVolumeRequest{}
 	err := jsonpb.Unmarshal(bytes.NewReader(content), req)
 	if err != nil {
-		return nil, fmt.Errorf("unmarshal delete volume req error: %v", err)
+		klog.Errorf("unmarshal delete volume req error: %v", err)
+		return nil, err
 	}
 	klog.V(4).Infof("start delete volume: %s", req.VolumeId)
 	ctl := csiplugin.NewController()
 	res, err := ctl.DeleteVolume(req)
 	if err != nil {
-		return nil, fmt.Errorf("delete volume error: %v", err)
+		klog.Errorf("delete volume error: %v", err)
+		return nil, err
 	}
 	klog.V(4).Infof("end delete volume: %s result: %v", req.VolumeId, res)
 	return res, nil
@@ -1225,13 +1233,15 @@ func (e *edged) controllerPublishVolume(content []byte) (interface{}, error) {
 	req := &csi.ControllerPublishVolumeRequest{}
 	err := jsonpb.Unmarshal(bytes.NewReader(content), req)
 	if err != nil {
-		return nil, fmt.Errorf("unmarshal controller publish volume req error: %v", err)
+		klog.Errorf("unmarshal controller publish volume req error: %v", err)
+		return nil, err
 	}
 	klog.V(4).Infof("start controller publish volume: %s", req.VolumeId)
 	ctl := csiplugin.NewController()
 	res, err := ctl.ControllerPublishVolume(req)
 	if err != nil {
-		return nil, fmt.Errorf("controller publish volume error: %v", err)
+		klog.Errorf("controller publish volume error: %v", err)
+		return nil, err
 	}
 	klog.V(4).Infof("end controller publish volume:: %s result: %v", req.VolumeId, res)
 	return res, nil
@@ -1241,13 +1251,15 @@ func (e *edged) controllerUnpublishVolume(content []byte) (interface{}, error) {
 	req := &csi.ControllerUnpublishVolumeRequest{}
 	err := jsonpb.Unmarshal(bytes.NewReader(content), req)
 	if err != nil {
-		return nil, fmt.Errorf("unmarshal controller publish volume req error: %v", err)
+		klog.Errorf("unmarshal controller publish volume req error: %v", err)
+		return nil, err
 	}
 	klog.V(4).Infof("start controller unpublish volume: %s", req.VolumeId)
 	ctl := csiplugin.NewController()
 	res, err := ctl.ControllerUnpublishVolume(req)
 	if err != nil {
-		return nil, fmt.Errorf("controller unpublish volume error: %v", err)
+		klog.Errorf("controller unpublish volume error: %v", err)
+		return nil, err
 	}
 	klog.V(4).Infof("end controller unpublish volume:: %s result: %v", req.VolumeId, res)
 	return res, nil

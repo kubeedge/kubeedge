@@ -13,7 +13,7 @@ image not exist. We can make one, and push to your registry.
 
 ```bash
 cd $GOPATH/src/github.com/kubeedge/kubeedge
-make image WHAT=cloudcore
+make cloudimage
 ```
 
 ### Create secret(Optional)
