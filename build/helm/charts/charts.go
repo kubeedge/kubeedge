@@ -13,27 +13,30 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
-package beta
+package charts
 
 import (
-	"github.com/spf13/cobra"
-
-	edge "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/edge"
+	"embed"
+	"io/fs"
+	"os"
 )
 
-// NewBeta represents the beta command
-func NewBeta() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "beta",
-		Short: "keadm beta command",
-		Long:  `keadm beta command provides some subcommands that are still in testing, but have complete functions and can be used in advance`,
+// FS embeds the manifests
+//go:embed cloudcore/* profiles/* addons/*
+//go:embed cloudcore/templates/_helpers.tpl
+var FS embed.FS
+
+var (
+	_ fs.FS         = FS
+	_ fs.ReadFileFS = FS
+	_ fs.ReadDirFS  = FS
+)
+
+// BuiltinOrDir returns a FS for the provided directory. If no directory is passed, the compiled in
+// FS will be used
+func BuiltinOrDir(dir string) fs.FS {
+	if dir == "" {
+		return FS
 	}
-	cmd.ResetFlags()
-
-	cmd.AddCommand(edge.NewJoinBetaCommand())
-	cmd.AddCommand(NewBetaInit())
-	cmd.AddCommand(NewBetaManifestGenerate())
-
-	return cmd
+	return os.DirFS(dir)
 }

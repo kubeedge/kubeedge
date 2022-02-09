@@ -75,5 +75,6 @@ func NewKubeedgeCommand() *cobra.Command {
 	cmds.AddCommand(cloud.NewGettoken())
 	cmds.AddCommand(debug.NewEdgeDebug())
 	cmds.AddCommand(beta.NewBeta())
+
 	return cmds
 }

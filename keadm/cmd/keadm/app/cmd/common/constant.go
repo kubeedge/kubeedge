@@ -79,6 +79,36 @@ const (
 	StrCheck    = "check"
 	StrDiagnose = "diagnose"
 
+	// Init-beta flags combined below:
+
+	// Allow appending manifests paths of manifests to keadm, separated by commas
+	Manifests = "manifests"
+
+	// Allow appending manifests paths of manifests to keadm, separated by commas, another supported flag
+	Files = "files"
+
+	// Dry-run flag
+	DryRun = "dry-run"
+
+	// Forced install
+	Force = "force"
+
+	// Skip CRDs
+	SkipCRDs = "skip-crds"
+
+	// External Helm Root
+	ExternalHelmRoot = "external-helm-root"
+
+	// Helm action
+	HelmInstallAction  = "install"
+	HelmManifestAction = "manifest"
+
+	// Images and tags
+	CloudcoreImage   = "cloudcore-image"
+	CloudcoreTag     = "cloudcore-tag"
+	IptablesMgrImage = "iptablesmgr-image"
+	IptablesMgrTag   = "iptablesmgr-tag"
+
 	CmdGetDNSIP         = "cat /etc/resolv.conf | grep nameserver | grep -v -E ':|#' | awk '{print $2}' | head -n1"
 	CmdGetStatusDocker  = "systemctl status docker |grep Active | awk '{print $2}'"
 	CmdPing             = "ping %s -w %d |grep 'packets transmitted' |awk '{print $6}'"
@@ -169,9 +199,17 @@ const (
 
 	AllowedCurrentValueMem  = 128 * MB
 	AllowedCurrentValueDisk = 512 * MB
+
+	VersionProfileKey       = "version"
+	IptablesMgrProfileKey   = "iptablesmgr"
+	ExternalIptablesMgrMode = "external"
+	InternalIptablesMgrMode = "internal"
+	EdgemeshProfileKey      = "edgemesh"
+	HelmSupportedMinVersion = "v1.9.0"
 )
 
 var (
+	ValidProfiles  = map[string]bool{VersionProfileKey: true, IptablesMgrProfileKey: true}
 	CheckObjectMap = []CheckObject{
 		{
 			Use:  ArgCheckAll,

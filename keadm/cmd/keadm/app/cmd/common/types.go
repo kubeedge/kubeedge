@@ -30,6 +30,24 @@ type InitOptions struct {
 	TarballPath      string
 }
 
+//BetaInitOptions has the kubeedge cloud init-beta information filled by CLI
+type BetaInitOptions struct {
+	KubeConfig       string
+	AdvertiseAddress string
+	Manifests        string
+	Namespace        string
+	CloudcoreImage   string
+	CloudcoreTag     string
+	IptablesMgrImage string
+	IptablesMgrTag   string
+	Sets             []string
+	Profile          string
+	ExternalHelmRoot string
+	Force            bool
+	SkipCRDs         bool
+	DryRun           bool
+}
+
 //JoinOptions has the kubeedge cloud init information filled by CLI
 type JoinOptions struct {
 	InitOptions

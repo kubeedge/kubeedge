@@ -1,0 +1,96 @@
+# Default values for kubeedge.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+appVersion: "1.9.1"
+
+cloudCore:
+  replicaCount: 1
+  hostNetWork: "true"
+  image:
+    repository: "kubeedge/cloudcore"
+    tag: "v1.9.1"
+    pullPolicy: "IfNotPresent"
+    pullSecrets: []
+  securityContext: 
+    privileged: true
+  labels:
+    k8s-app: kubeedge
+    kubeedge: cloudcore
+  annotations: {}
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: node-role.kubernetes.io/edge
+            operator: DoesNotExist
+  tolerations: {}
+  nodeSelector: {}
+  resources:
+    limits:
+      cpu: 200m
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 512Mi
+  modules:
+    cloudHub:
+      advertiseAddress:   # Causion!: Leave this entry to empty will cause CloudCore to exit abnormally once KubeEdge is enabled. 
+        - ""              # At least a public IP Address or an IP which can be accessed by edge nodes must be provided!           
+      nodeLimit: "1000"
+      websocket:
+        enable: "true"
+      quic:
+        enable: "false"
+        maxIncomingStreams: "10000"
+      https:
+        enable: "true"
+    cloudStream:
+      enable: "true"
+    dynamicController:
+      enable: "false"
+    router:
+      enable: "false"
+  service:
+    enable: "false"
+    type: "NodePort"
+    cloudhubNodePort: "30000"
+    cloudhubQuicNodePort: "30001"
+    cloudhubHttpsNodePort: "30002"
+    cloudstreamNodePort: "30003"
+    tunnelNodePort: "30004"
+
+iptablesManager:
+  enable: "true"
+  mode: "internal"
+  hostNetWork: true
+  image:
+    repository: "kubeedge/iptables-manager"
+    tag: "v1.9.1"
+    pullPolicy: "IfNotPresent"
+    pullSecrets: []
+  securityContext: 
+    capabilities:
+      add:
+        - NET_ADMIN
+        - NET_RAW
+  labels:
+    k8s-app: iptables-manager
+    kubeedge: iptables-manager
+  annotations: {}
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: node-role.kubernetes.io/edge
+            operator: DoesNotExist
+  tolerations: {}
+  nodeSelector: {}
+  resources:
+    limits:
+      cpu: 200m
+      memory: 50Mi
+    requests:
+      cpu: 100m
+      memory: 25Mi
