@@ -11,7 +11,7 @@ cloudCore:
     tag: "v1.8.2"
     pullPolicy: "IfNotPresent"
     imagePullSecrets: []
-  securityContext: 
+  securityContext:
     privileged: true
   labels:
     k8s-app: kubeedge
@@ -35,8 +35,10 @@ cloudCore:
       memory: 512Mi
   modules:
     cloudHub:
-      advertiseAddress:   # Causion!: Leave this entry to empty will cause CloudCore to exit abnormally once KubeEdge is enabled. 
-        - ""              # At least a public IP Address or an IP which can be accessed by edge nodes must be provided!           
+      # Causion!: Leave this entry to empty will cause CloudCore to exit abnormally once KubeEdge is enabled.
+      # At least a public IP Address or an IP which can be accessed by edge nodes must be provided!
+      advertiseAddress:
+        - ""
       nodeLimit: "1000"
       websocket:
         enable: "true"
@@ -69,7 +71,7 @@ iptablesManager:
     tag: "v1.8.2"
     pullPolicy: "IfNotPresent"
     imagePullSecrets: []
-  securityContext: 
+  securityContext:
     capabilities:
       add:
         - NET_ADMIN
