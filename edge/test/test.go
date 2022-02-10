@@ -3,6 +3,7 @@ package test
 import (
 	"encoding/json"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"time"
 
