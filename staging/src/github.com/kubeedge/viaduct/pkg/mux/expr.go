@@ -57,7 +57,7 @@ func (exp *MessageExpression) GetExpression(resource string) *MessageExpression 
 				buffer.WriteString("([^/]+?)")
 			}
 			varNames = append(varNames, varName)
-			varCount += 1
+			varCount++
 		} else {
 			buffer.WriteString(regexp.QuoteMeta(field))
 		}

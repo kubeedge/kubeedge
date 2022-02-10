@@ -49,7 +49,7 @@ func StartModules() {
 
 // GracefulShutdown is if it gets the special signals it does modules cleanup
 func GracefulShutdown() {
-	c := make(chan os.Signal)
+	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM,
 		syscall.SIGQUIT, syscall.SIGILL, syscall.SIGTRAP, syscall.SIGABRT)
 	s := <-c
@@ -72,7 +72,7 @@ func Run() {
 	GracefulShutdown()
 }
 
-func moduleKeeper(name string, moduleInfo *moduleInfo, m common.ModuleInfo) {
+func moduleKeeper(name string, moduleInfo *ModuleInfo, m common.ModuleInfo) {
 	for {
 		moduleInfo.module.Start()
 		// local modules are always online

@@ -22,7 +22,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -293,7 +292,7 @@ func HandleAddAndDeletePods(operation string, edgedpoint string, UID string, con
 	payload := &v1.Pod{
 		TypeMeta:   metav1.TypeMeta{Kind: "Job", APIVersion: "batch/v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: UID, Namespace: metav1.NamespaceDefault, UID: types.UID(UID)},
-		Spec:       v1.PodSpec{RestartPolicy: restartPolicy, Containers: container},
+		Spec:       v1.PodSpec{RestartPolicy: restartPolicy, Containers: container, NodeName: "edge-node"},
 	}
 	respbytes, err := json.Marshal(payload)
 	if err != nil {
@@ -340,7 +339,7 @@ func GetPods(EdgedEndpoint string) (v1.PodList, error) {
 	}
 	common.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	defer resp.Body.Close()
-	contents, err := ioutil.ReadAll(resp.Body)
+	contents, err := io.ReadAll(resp.Body)
 	if err != nil {
 		common.Fatalf("HTTP Response reading has failed: %v", err)
 		return pods, nil

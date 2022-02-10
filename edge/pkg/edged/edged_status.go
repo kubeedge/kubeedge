@@ -24,7 +24,6 @@ package edged
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"regexp"
 	"runtime"
@@ -333,7 +332,7 @@ func (e *edged) setGPUInfo(nodeStatus *edgeapi.NodeStatusRequest) error {
 }
 
 func (e *edged) setMemInfo(total, allocatable v1.ResourceList) error {
-	out, err := ioutil.ReadFile("/proc/meminfo")
+	out, err := os.ReadFile("/proc/meminfo")
 	if err != nil {
 		return err
 	}

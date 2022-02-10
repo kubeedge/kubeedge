@@ -16,6 +16,7 @@ import (
 	certutil "k8s.io/client-go/util/cert"
 
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 const validalityPeriod time.Duration = 365 * 100
@@ -43,7 +44,7 @@ func NewSelfSignedCACertDERBytes(key crypto.Signer) ([]byte, error) {
 	tmpl := x509.Certificate{
 		SerialNumber: big.NewInt(1024),
 		Subject: pkix.Name{
-			CommonName: "KubeEdge",
+			CommonName: constants.ProjectName,
 		},
 		NotBefore: time.Now().UTC(),
 		NotAfter:  time.Now().Add(time.Hour * 24 * 365 * 100),

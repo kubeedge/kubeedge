@@ -105,7 +105,7 @@ func (s *send) SendSync(message *model.Message) (*model.Message, error) {
 		resp, err = beehiveContext.SendSync(metamanager.MetaManagerModuleName, *message, syncMsgRespTimeout)
 		retries++
 		if err == nil {
-			klog.V(2).Infof("send sync message %s successed and response: %v", message.GetResource(), resp)
+			klog.V(4).Infof("send sync message %s successed and response: %v", message.GetResource(), resp)
 			return true, nil
 		}
 		if retries < 3 {

@@ -294,13 +294,13 @@ func removeDevice(context *dtcontext.DTContext, toRemove []dttype.Device, baseMe
 		deleteResult := dttype.MembershipUpdate{BaseMessage: baseMessage, RemoveDevices: RemoveDevices}
 		result, err := dttype.MarshalMembershipUpdate(deleteResult)
 		if err != nil {
-
-		} else {
-			context.Send("",
-				dtcommon.SendToEdge,
-				dtcommon.CommModule,
-				context.BuildModelMessage(modules.BusGroup, "", topic, messagepkg.OperationPublish, result))
+			klog.Errorf("Remove device %s failed, marshal membership err: %s", device.ID, err)
+			continue
 		}
+		context.Send("",
+			dtcommon.SendToEdge,
+			dtcommon.CommModule,
+			context.BuildModelMessage(modules.BusGroup, "", topic, messagepkg.OperationPublish, result))
 
 		klog.Infof("Remove device %s successful", device.ID)
 	}

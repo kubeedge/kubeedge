@@ -10,6 +10,14 @@ spec:
   ports:
   - port: 10000
     name: cloudhub
+  - port: 10001
+    name: cloudhub-quic
+  - port: 10002
+    name: cloudhub-https
+  - port: 10003
+    name: cloudstream
+  - port: 10004
+    name: tunnelport
   selector:
     k8s-app: kubeedge
     kubeedge: cloudcore

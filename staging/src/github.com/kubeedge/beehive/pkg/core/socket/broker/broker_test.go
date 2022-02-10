@@ -76,7 +76,8 @@ func TestMessageBroker_SendReceive(t *testing.T) {
 	go func() {
 		err := serveSocket("tcp", "127.0.0.1:1234", handle)
 		if err != nil {
-			t.Fatalf("failed to serve socket")
+			t.Errorf("failed to serve socket")
+			return
 		}
 	}()
 
@@ -92,7 +93,7 @@ func TestMessageBroker_SendReceive(t *testing.T) {
 	if conn == nil {
 		t.Fatalf("failed to connect tcp")
 	}
-	brokerClient.Send(conn, *model.NewMessage("").FillBody("hello"))
+	_ = brokerClient.Send(conn, *model.NewMessage("").FillBody("hello"))
 
 	select {
 	case _, ok := <-time.After(syncMessageTimeoutDefault):
@@ -120,12 +121,13 @@ func TestMessageBroker_SendSync(t *testing.T) {
 			t.Fatalf("bad message content")
 		}
 		resp := message.NewRespByMessage(&message, "hello_response")
-		brokerServer.Send(conn, *resp)
+		_ = brokerServer.Send(conn, *resp)
 	}
 	go func() {
 		err := serveSocket("tcp", "127.0.0.1:1234", handle)
 		if err != nil {
-			t.Fatalf("failed to serve socket")
+			t.Errorf("failed to serve socket")
+			return
 		}
 	}()
 
@@ -142,17 +144,19 @@ func TestMessageBroker_SendSync(t *testing.T) {
 	}
 
 	go func() {
-		brokerClient.Receive(conn)
+		_, _ = brokerClient.Receive(conn)
 	}()
 
 	go func() {
 		resp, err := brokerClient.SendSync(conn, *model.NewMessage("").
 			SetRoute("source", "dest").FillBody("hello"), 0)
 		if err != nil {
-			t.Fatalf("failed to send sync message, error: %+v", err)
+			t.Errorf("failed to send sync message, error: %+v", err)
+			return
 		}
 		if resp.GetContent() != "hello_response" {
-			t.Fatalf("unexpected receive message")
+			t.Errorf("unexpected receive message")
+			return
 		}
 		stopTChan <- struct{}{}
 	}()

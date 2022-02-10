@@ -17,9 +17,8 @@ limitations under the License.
 package dtmodule_test
 
 import (
+	"reflect"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
@@ -32,7 +31,9 @@ func TestDTModule_InitWorker(t *testing.T) {
 		Name string
 	}
 	ctx, err := dtcontext.InitDTContext()
-	assert.Nil(t, err)
+	if err != nil {
+		t.Fatalf("failed to init devicetwin context: %v", err)
+	}
 	recvCh, confirmCh, heartBearCh := make(chan interface{}), make(chan interface{}), make(chan interface{})
 	tests := []struct {
 		name   string
@@ -106,7 +107,9 @@ func TestDTModule_InitWorker(t *testing.T) {
 				Name: tt.fields.Name,
 			}
 			dm.InitWorker(recvCh, confirmCh, heartBearCh, ctx)
-			assert.Equal(t, tt.want, dm.Worker)
+			if !reflect.DeepEqual(tt.want, dm.Worker) {
+				t.Errorf("Test %v failed: expected %v, but got %v", tt.name, tt.want, dm.Worker)
+			}
 		})
 	}
 }
@@ -120,7 +123,9 @@ func TestDTModule_Start(t *testing.T) {
 		Ctx         *dtcontext.DTContext
 	}
 	ctx, err := dtcontext.InitDTContext()
-	assert.Nil(t, err)
+	if err != nil {
+		t.Fatalf("failed to init devicetwin context: %v", err)
+	}
 	tests := []struct {
 		name   string
 		fields fields
@@ -143,16 +148,20 @@ func TestDTModule_Start(t *testing.T) {
 			}
 			dm.InitWorker(tt.fields.RecvCh, tt.fields.ConfirmCh, tt.fields.HeartBeatCh, tt.fields.Ctx)
 			_, ok := ctx.ModulesHealth.Load(dtcommon.MemModule)
-			assert.False(t, ok)
+			if ok {
+				t.Fatalf("%s not exist", dtcommon.MemModule)
+			}
 			go dm.Start()
 			ping := "ping"
 			tt.fields.HeartBeatCh <- ping
 			tt.fields.HeartBeatCh <- ping
 			lastTime, ok := ctx.ModulesHealth.Load(dtcommon.MemModule)
-			assert.True(t, ok)
-			healthTime, ok := lastTime.(int64)
-			if assert.True(t, ok) {
-				t.Logf("last health time: %d", healthTime)
+			if !ok {
+				t.Fatalf("%s not exist", dtcommon.MemModule)
+			}
+			_, ok = lastTime.(int64)
+			if !ok {
+				t.Fatalf("time type is not valid: %T", lastTime)
 			}
 		})
 	}

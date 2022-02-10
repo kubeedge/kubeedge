@@ -26,9 +26,9 @@ fi
 export CLUSTER_CONTEXT="--name ${CLUSTER_NAME}"
 
 function check_prerequisites {
+  kubeedge::golang::verify_golang_version
   check_kubectl
   check_kind
-  verify_go_version
   verify_docker_installed
 }
 
@@ -191,6 +191,7 @@ function generate_streamserver_cert {
 
 cleanup
 
+source "${KUBEEDGE_ROOT}/hack/lib/golang.sh"
 source "${KUBEEDGE_ROOT}/hack/lib/install.sh"
 
 check_prerequisites

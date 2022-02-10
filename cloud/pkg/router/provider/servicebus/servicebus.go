@@ -3,7 +3,7 @@ package servicebus
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"path"
 	"strings"
@@ -45,7 +45,7 @@ func (sf *servicebusFactory) GetSource(ep *v1.RuleEndpoint, sourceResource map[s
 		klog.Errorf("source resource attributes \"target_url\" does not exist")
 		return nil
 	}
-	nodeName, exist := sourceResource[constants.NodeNmae]
+	nodeName, exist := sourceResource[constants.NodeName]
 	if !exist {
 		klog.Errorf("source resource attributes \"node_name\" does not exist")
 		return nil
@@ -95,7 +95,7 @@ func (sb *ServiceBus) Forward(target provider.Target, data interface{}) (respons
 	klog.Infof("message is send to target successfully. msgID: %s, target: %s", message.GetID(), target.Name())
 	httpResp, ok := resp.(*http.Response)
 	if ok {
-		byteData, _ := ioutil.ReadAll(httpResp.Body)
+		byteData, _ := io.ReadAll(httpResp.Body)
 		beehiveContext.SendToGroup(modules.CloudHubModuleGroup, *message.NewRespByMessage(message, string(byteData)))
 	}
 	return resp, nil

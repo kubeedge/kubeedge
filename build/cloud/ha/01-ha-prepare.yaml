@@ -26,13 +26,13 @@ metadata:
     kubeedge: cloudcore
 rules:
   - apiGroups: [""]
-    resources: ["nodes", "nodes/status", "configmaps", "pods", "pods/status", "secrets", "endpoints", "services","persistentvolumes","persistentvolumeclaims"]
+    resources: ["nodes", "nodes/status", "serviceaccounts/token", "configmaps", "pods", "pods/status", "secrets", "endpoints", "services", "persistentvolumes", "persistentvolumeclaims"]
     verbs: ["get", "list", "watch", "create", "update"]
   - apiGroups: [""]
     resources: ["namespaces"]
-    verbs: ["get", "create"]
+    verbs: ["get", "create", "list", "watch"]
   - apiGroups: [""]
-    resources: ["pods/status"]
+    resources: ["nodes", "pods/status"]
     verbs: ["patch"]
   - apiGroups: [""]
     resources: ["pods"]
@@ -49,6 +49,12 @@ rules:
   - apiGroups: ["rules.kubeedge.io"]
     resources: ["rules", "ruleendpoints", "rules/status", "ruleendpoints/status"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["apiextensions.k8s.io"]
+    resources: ["customresourcedefinitions"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["networking.istio.io"]
+    resources: ["*"]
+    verbs: ["get", "list", "watch"]
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1

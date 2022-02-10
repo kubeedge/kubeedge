@@ -17,6 +17,7 @@ limitations under the License.
 package app
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -28,11 +29,8 @@ import (
 	"k8s.io/component-base/term"
 	"k8s.io/klog/v2"
 
-	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/cmd/iptablesmanager/app/options"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/iptables"
-	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
-	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/util/flag"
@@ -48,7 +46,10 @@ func NewIptablesManagerCommand() *cobra.Command {
 			verflag.PrintAndExitIfRequested()
 			flag.PrintFlags(cmd.Flags())
 
-			// init kubeedge client
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			// The external mode will share the host network, forward to the inner stream port of the cloudcore.
 			kubeAPIConfig := &v1alpha1.KubeAPIConfig{
 				Master:      "",
 				ContentType: constants.DefaultKubeContentType,
@@ -56,14 +57,7 @@ func NewIptablesManagerCommand() *cobra.Command {
 				Burst:       constants.DefaultKubeBurst,
 				KubeConfig:  opts.KubeConfig,
 			}
-			client.InitKubeEdgeClient(kubeAPIConfig)
-
-			gis := informers.GetInformersManager()
-			ctx := beehiveContext.GetContext()
-
-			// The external mode will share the host network, forward to the inner stream port of the cloudcore.
-			go iptables.NewIptablesManager(opts.ForwardPort).Run()
-			gis.Start(ctx.Done())
+			go iptables.NewIptablesManager(kubeAPIConfig, opts.ForwardPort).Run(ctx)
 
 			c := make(chan os.Signal, 1)
 			signal.Notify(c, syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM,

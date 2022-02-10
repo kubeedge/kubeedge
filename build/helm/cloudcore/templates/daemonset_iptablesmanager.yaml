@@ -33,6 +33,9 @@ spec:
       nodeSelector: {{ toYaml . | nindent 8 }}
       {{- end }}
       restartPolicy: Always
+      {{- with .Values.iptablesManager.image.pullSecrets }} 
+      imagePullSecrets: {{ toYaml . | nindent 8 }} 
+      {{- end }}  
       containers:
       - name: iptables-manager
         command: ['iptables-manager']

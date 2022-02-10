@@ -29,7 +29,7 @@ func init() {
 	}
 
 	for _, sConfig := range configList {
-		core.Register(&SocketServer{
+		core.Register(&Server{
 			enable:     true,
 			name:       sConfig.ModuleName,
 			address:    sConfig.Address,
@@ -42,7 +42,7 @@ func init() {
 	}
 }
 
-func (m *SocketServer) serveSocket() error {
+func (m *Server) serveSocket() error {
 	if strings.Contains(m.socketType, "unix") {
 		err := os.Remove(m.address)
 		if err != nil {
@@ -90,7 +90,7 @@ func (m *SocketServer) serveSocket() error {
 }
 
 // HandleServerConn handler sever
-func (m *SocketServer) handleServerConn(c net.Conn) {
+func (m *Server) handleServerConn(c net.Conn) {
 	conn := wrapper.NewWrapper(m.socketType, c, int(m.buffSize))
 
 	// close connectinon
@@ -112,7 +112,7 @@ func (m *SocketServer) handleServerConn(c net.Conn) {
 	}
 }
 
-func (m *SocketServer) processModuleMessage(conn wrapper.Conn, message *model.Message) error {
+func (m *Server) processModuleMessage(conn wrapper.Conn, message *model.Message) error {
 	switch message.GetOperation() {
 	case common.OperationTypeModule:
 		if !IsModuleEnabled(message.GetSource()) {
@@ -139,7 +139,7 @@ func (m *SocketServer) processModuleMessage(conn wrapper.Conn, message *model.Me
 }
 
 // HandleServerContext handler ctx
-func (m *SocketServer) handleServerMessage(conn wrapper.Conn) error {
+func (m *Server) handleServerMessage(conn wrapper.Conn) error {
 	var message model.Message
 	err := conn.ReadJSON(&message)
 	if err != nil {
@@ -166,7 +166,7 @@ func (m *SocketServer) handleServerMessage(conn wrapper.Conn) error {
 }
 
 // StartServer start server
-func (m *SocketServer) startServer() {
+func (m *Server) startServer() {
 	err := m.serveSocket()
 	if err != nil {
 		klog.Errorf("failed to start server")
@@ -174,7 +174,7 @@ func (m *SocketServer) startServer() {
 }
 
 // StopServer start server
-func (m *SocketServer) stopServer() {
+func (m *Server) stopServer() {
 	err := m.listener.Close()
 	if err != nil {
 		klog.Errorf("failed to close server with error %+v", err)
@@ -183,9 +183,5 @@ func (m *SocketServer) stopServer() {
 
 func IsModuleEnabled(m string) bool {
 	_, err := config.GetClientSocketConfig(m)
-	if err != nil {
-		return false
-	}
-
-	return true
+	return err == nil
 }

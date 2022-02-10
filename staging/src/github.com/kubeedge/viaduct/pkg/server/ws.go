@@ -6,9 +6,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/gorilla/websocket"
 	"k8s.io/klog/v2"
 
-	"github.com/gorilla/websocket"
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/conn"
 	"github.com/kubeedge/viaduct/pkg/lane"

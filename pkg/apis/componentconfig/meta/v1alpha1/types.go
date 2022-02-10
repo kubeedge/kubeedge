@@ -48,5 +48,4 @@ const (
 	GroupNameMeta           GroupName = "meta"
 	GroupNameEdged          GroupName = "edged"
 	GroupNameUser           GroupName = "user"
-	GroupNameMesh           GroupName = "mesh"
 )

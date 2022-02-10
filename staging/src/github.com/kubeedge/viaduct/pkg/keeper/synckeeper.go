@@ -64,7 +64,7 @@ func (k *SyncKeeper) MatchAndNotify(msg model.Message) bool {
 func (k *SyncKeeper) WaitResponse(msg *model.Message, deadline time.Time) (model.Message, error) {
 	msgID := msg.GetID()
 	channel := k.addKeepChannel(msgID)
-	timer := time.NewTimer(deadline.Sub(time.Now()))
+	timer := time.NewTimer(time.Until(deadline))
 	select {
 	case resp := <-channel:
 		timer.Stop()

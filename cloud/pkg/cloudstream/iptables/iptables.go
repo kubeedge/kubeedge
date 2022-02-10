@@ -1,31 +1,37 @@
 package iptables
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
+	k8sinformer "k8s.io/client-go/informers"
+	"k8s.io/client-go/kubernetes"
 	v1 "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
 	utiliptables "k8s.io/kubernetes/pkg/util/iptables"
 	utilexec "k8s.io/utils/exec"
 
-	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/common/constants"
+	cloudcoreConfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
 type Manager struct {
-	iptables            utiliptables.Interface
-	cmLister            v1.ConfigMapLister
-	cmListerSynced      cache.InformerSynced
-	preTunnelPortRecord *TunnelPortRecord
-	streamPort          int
+	iptables              utiliptables.Interface
+	sharedInformerFactory k8sinformer.SharedInformerFactory
+	cmLister              v1.ConfigMapLister
+	cmListerSynced        cache.InformerSynced
+	preTunnelPortRecord   *TunnelPortRecord
+	streamPort            int
 }
 
 type TunnelPortRecord struct {
@@ -46,12 +52,15 @@ const (
 	tunnelPortChain utiliptables.Chain = "TUNNEL-PORT"
 )
 
-var iptablesJumpChains = []iptablesJumpChain{
-	{utiliptables.TableNAT, tunnelPortChain, utiliptables.ChainOutput, "kubeedge tunnel port", nil},
-	{utiliptables.TableNAT, tunnelPortChain, utiliptables.ChainPrerouting, "kubeedge tunnel port", nil},
-}
+var (
+	iptablesJumpChains = []iptablesJumpChain{
+		{utiliptables.TableNAT, tunnelPortChain, utiliptables.ChainOutput, "kubeedge tunnel port", nil},
+		{utiliptables.TableNAT, tunnelPortChain, utiliptables.ChainPrerouting, "kubeedge tunnel port", nil},
+	}
+	kubeClient *kubernetes.Clientset
+)
 
-func NewIptablesManager(streamPort int) *Manager {
+func NewIptablesManager(config *cloudcoreConfig.KubeAPIConfig, streamPort int) *Manager {
 	protocol := utiliptables.ProtocolIPv4
 	exec := utilexec.New()
 	iptInterface := utiliptables.New(exec, protocol)
@@ -65,19 +74,34 @@ func NewIptablesManager(streamPort int) *Manager {
 		streamPort: streamPort,
 	}
 
+	if kubeClient == nil {
+		kubeConfig, err := clientcmd.BuildConfigFromFlags(config.Master, config.KubeConfig)
+		if err != nil {
+			klog.Errorf("Failed to build config, err: %v", err)
+			os.Exit(1)
+		}
+		kubeConfig.QPS = float32(config.QPS)
+		kubeConfig.Burst = int(config.Burst)
+		kubeConfig.ContentType = runtime.ContentTypeProtobuf
+		kubeClient = kubernetes.NewForConfigOrDie(kubeConfig)
+	}
+
 	// informer factory
-	k8sInformerFactory := informers.GetInformersManager().GetK8sInformerFactory()
+	k8sInformerFactory := k8sinformer.NewSharedInformerFactory(kubeClient, 0)
 	configMapsInformer := k8sInformerFactory.Core().V1().ConfigMaps()
 
 	// lister
 	iptablesMgr.cmLister = configMapsInformer.Lister()
 	iptablesMgr.cmListerSynced = configMapsInformer.Informer().HasSynced
 
+	iptablesMgr.sharedInformerFactory = k8sInformerFactory
 	return iptablesMgr
 }
 
-func (im *Manager) Run() {
-	if !cache.WaitForCacheSync(beehiveContext.Done(), im.cmListerSynced) {
+func (im *Manager) Run(ctx context.Context) {
+	im.sharedInformerFactory.Start(ctx.Done())
+
+	if !cache.WaitForCacheSync(ctx.Done(), im.cmListerSynced) {
 		klog.Error("unable to sync caches for iptables manager")
 		return
 	}
@@ -87,7 +111,7 @@ func (im *Manager) Run() {
 		klog.Warningf("failed to delete all rules in tunnel port iptables chain: %v", err)
 	}
 
-	go wait.Until(im.reconcile, 10*time.Second, beehiveContext.Done())
+	go wait.Until(im.reconcile, 10*time.Second, ctx.Done())
 }
 
 func (im *Manager) reconcile() {

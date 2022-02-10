@@ -12,7 +12,8 @@ BINARIES=cloudcore \
 	edgesite-agent \
 	edgesite-server \
 	keadm \
-	csidriver
+	csidriver \
+	iptablesmanager
 
 COMPONENTS=cloud \
 	edge
@@ -45,7 +46,7 @@ ifeq ($(HELP),y)
 all: clean
 	@echo "$$ALL_HELP_INFO"
 else
-all: verify-golang
+all: 
 	KUBEEDGE_OUTPUT_SUBPATH=$(OUT_DIR) hack/make-rules/build.sh $(WHAT)
 endif
 
@@ -147,7 +148,6 @@ integrationtest:
 	edge/test/integration/scripts/execute.sh
 endif
 
-CROSSBUILD_COMPONENTS=edgecore
 GOARM_VALUES=GOARM7 \
 	GOARM8
 
@@ -155,18 +155,18 @@ define CROSSBUILD_HELP_INFO
 # cross build components.
 #
 # Args:
-#   WHAT: Component names to be lint check. support: $(CROSSBUILD_COMPONENTS)
+#   WHAT: Component names to be lint check. support: $(BINARIES)
 #         If not specified, "everything" will be cross build.
 #
-# GOARM: go arm value, now support:$(GOARM_VALUES)
-#        If not specified ,default use GOARM=GOARM8
+# ARM_VERSION: go arm value, now support:$(GOARM_VALUES)
+#        If not specified, build binary for ARMv8 by default.
 #
 #
 # Example:
 #   make crossbuild
 #   make crossbuild HELP=y
 #   make crossbuild WHAT=edgecore
-#   make crossbuild WHAT=edgecore GOARM=GOARM7
+#   make crossbuild WHAT=edgecore ARM_VERSION=GOARM7
 #
 endef
 .PHONY: crossbuild
@@ -174,8 +174,8 @@ ifeq ($(HELP),y)
 crossbuild:
 	@echo "$$CROSSBUILD_HELP_INFO"
 else
-crossbuild: clean
-	hack/make-rules/crossbuild.sh $(WHAT) $(GOARM)
+crossbuild: 
+	hack/make-rules/crossbuild.sh $(WHAT) $(ARM_VERSION)
 endif
 
 CRD_VERSIONS=v1
@@ -227,7 +227,7 @@ ifeq ($(HELP),y)
 smallbuild:
 	@echo "$$SMALLBUILD_HELP_INFO"
 else
-smallbuild: clean
+smallbuild: 
 	hack/make-rules/smallbuild.sh $(WHAT)
 endif
 
@@ -265,7 +265,25 @@ keadm_e2e:
 	@echo "KEADM_E2E_HELP_INFO"
 else
 keadm_e2e:
+	hack/make-rules/release.sh kubeedge
 	tests/e2e/scripts/keadm_e2e.sh
+endif
+
+define HELM_KEADM_E2E_HELP_INFO
+# helm keadm e2e test.
+#
+# Example:
+#   make helm_keadm_e2e
+#   make helm_keadm_e2e HELP=y
+#
+endef
+.PHONY: helm_keadm_e2e
+ifeq ($(HELP),y)
+helm_keadm_e2e:
+	@echo "HELM_KEADM_E2E_HELP_INFO"
+else
+helm_keadm_e2e:
+	tests/e2e/scripts/helm_keadm_e2e.sh
 endif
 
 define CLEAN_HELP_INFO
@@ -285,47 +303,47 @@ clean:
 	hack/make-rules/clean.sh
 endif
 
+define IMAGE_HELP_INFO
+# Build image.
+#
+# Args:
+#   WHAT: component names to build. support: $(BINARIES)
+#         If not specified, "everything" will be built.
+#
+# Example:
+#   make image
+#   make image HELP=y
+#   make image WHAT=cloudcore
+endef
+.PHONY: image
+ifeq ($(HELP),y)
+image:
+	@echo "IMAGE_HELP_INFO"
+else
+image:
+	hack/make-rules/image.sh $(WHAT)
+endif
 
-QEMU_ARCH ?= x86_64
-ARCH ?= amd64
-IMAGE_TAG ?= $(shell git describe --tags)
-GO_LDFLAGS='$(shell hack/make-rules/version.sh)'
-
-.PHONY: cloudimage
-cloudimage:
-	docker build --build-arg GO_LDFLAGS=${GO_LDFLAGS} -t kubeedge/cloudcore:${IMAGE_TAG} -f build/cloud/Dockerfile .
-
-.PHONY: admissionimage
-admissionimage:
-	docker build --build-arg GO_LDFLAGS=${GO_LDFLAGS} -t kubeedge/admission:${IMAGE_TAG} -f build/admission/Dockerfile .
-
-.PHONY: csidriverimage
-csidriverimage:
-	docker build --build-arg GO_LDFLAGS=${GO_LDFLAGS} -t kubeedge/csidriver:${IMAGE_TAG} -f build/csidriver/Dockerfile .
-
-.PHONY: iptablesmgrimage
-iptablesmgrimage:
-	docker build --build-arg GO_LDFLAGS=${GO_LDFLAGS} -t kubeedge/iptables-manager:${IMAGE_TAG} -f build/iptablesmanager/Dockerfile .
-
-.PHONY: edgeimage
-edgeimage:
-	mkdir -p ./build/edge/tmp
-	rm -rf ./build/edge/tmp/*
-	curl -L -o ./build/edge/tmp/qemu-${QEMU_ARCH}-static.tar.gz https://github.com/multiarch/qemu-user-static/releases/download/v3.0.0/qemu-${QEMU_ARCH}-static.tar.gz
-	tar -xzf ./build/edge/tmp/qemu-${QEMU_ARCH}-static.tar.gz -C ./build/edge/tmp
-	docker build -t kubeedge/edgecore:${IMAGE_TAG} \
-	--build-arg GO_LDFLAGS=${GO_LDFLAGS} \
-	--build-arg BUILD_FROM=${ARCH}/golang:1.16-alpine3.13 \
-	--build-arg RUN_FROM=${ARCH}/docker:dind \
-	-f build/edge/Dockerfile .
-
-.PHONY: edgesite-server-image
-edgesite-server-image:
-	docker build . --build-arg ARCH=${ARCH} -f build/edgesite/server-build.Dockerfile -t kubeedge/edgesite-server-${ARCH}:${IMAGE_TAG}
-
-.PHONY: edgesite-agent-image
-edgesite-agent-image:
-	docker build . --build-arg ARCH=${ARCH} -f build/edgesite/agent-build.Dockerfile -t kubeedge/edgesite-agent-${ARCH}:${IMAGE_TAG}
+define CROSS_IMAGE_HELP_INFO
+# Use Buildx to build multi-architecture docker images.
+#
+# Args:
+#   WHAT: component names to build. support: $(BINARIES)
+#         If not specified, "everything" will be built.
+#
+# Example:
+#   make crossbuildimage
+#   make crossbuildimage HELP=y
+#   make crossbuildimage WHAT=cloudcore
+endef
+.PHONY: crossbuildimage
+ifeq ($(HELP),y)
+crossbuildimage:
+	@echo "CROSS_IMAGE_HELP_INFO"
+else
+crossbuildimage:
+	hack/make-rules/crossbuildimage.sh $(WHAT)
+endif
 
 define INSTALL_HELP_INFO
 # install
@@ -354,4 +372,27 @@ install: _output/local/bin
             install "$</$${file}"  "${INSTALL_BIN_DIR}" ;\
           done ; \
         fi
+endif
+
+define RELEASE_HELP_INFO
+# release components.
+#
+# Args:
+#   WHAT: Component names to be released. Support: kubeedge/edgesite/keadm
+#         If not specified, "everything" will be built and released.
+#
+# Example:
+#   make release
+#   make release HELP=y
+#   make release WHAT=kubeedge
+#   make release WHAT=kubeedge ARM_VERSION=GOARM7
+#
+endef
+.PHONY: release
+ifeq ($(HELP),y)
+release:
+	@echo "$$RELEASE_HELP_INFO"
+else
+release:
+	hack/make-rules/release.sh $(WHAT) $(ARM_VERSION)
 endif

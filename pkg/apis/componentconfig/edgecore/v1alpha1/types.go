@@ -336,6 +336,18 @@ type EventBus struct {
 	// MqttServerExternal indicates external mqtt broker url
 	// default "tcp://127.0.0.1:1883"
 	MqttServerExternal string `json:"mqttServerExternal,omitempty"`
+	// MqttSubClientID indicates mqtt subscribe ClientID
+	// default ""
+	MqttSubClientID string `json:"mqttSubClientID"`
+	// MqttPubClientID indicates mqtt publish ClientID
+	// default ""
+	MqttPubClientID string `json:"mqttPubClientID"`
+	// MqttUsername indicates mqtt username
+	// default ""
+	MqttUsername string `json:"mqttUsername"`
+	// MqttPassword indicates mqtt password
+	// default ""
+	MqttPassword string `json:"mqttPassword"`
 	// MqttMode indicates which broker type will be choose
 	// 0: internal mqtt broker enable only.
 	// 1: internal and external mqtt broker enable.

@@ -37,7 +37,7 @@ func NewIptablesManagerOptions() *IptablesManagerOptions {
 // Flags return flag sets
 func (o *IptablesManagerOptions) Flags() (fss cliflag.NamedFlagSets) {
 	fs := fss.FlagSet("IptablesManager")
-	fs.StringVar(&o.KubeConfig, "kubeConfig", o.KubeConfig, "The KubeConfig path. Flags override values in this file.")
-	fs.IntVar(&o.ForwardPort, "ForwardPort", o.ForwardPort, "The forward port, default is the stream port, 10003.")
+	fs.StringVar(&o.KubeConfig, "kubeconfig", o.KubeConfig, "The KubeConfig path. Flags override values in this file.")
+	fs.IntVar(&o.ForwardPort, "forwardport", o.ForwardPort, "The forward port, default is the stream port, 10003.")
 	return
 }

@@ -78,7 +78,7 @@ func (m *manager) updatePodStatus() {
 		}
 		s := *podStatus.DeepCopy()
 		var conditionFlag bool
-		podCondition := v1.PodCondition{Type: v1.PodReady, Status: v1.ConditionFalse, Reason: "ContainersNotReady"}
+		podCondition := v1.PodCondition{Type: v1.PodReady, Status: v1.ConditionFalse, Reason: status.ContainersNotReady}
 		for idx, cs := range podStatus.ContainerStatuses {
 			if cs.State.Running != nil && cs.State.Running.StartedAt.Unix() == 0 {
 				newState := v1.ContainerState{Waiting: &v1.ContainerStateWaiting{
@@ -97,7 +97,7 @@ func (m *manager) updatePodStatus() {
 				for index, condition := range s.Conditions {
 					if condition.Type == v1.PodReady {
 						s.Conditions[index].Status = v1.ConditionFalse
-						s.Conditions[index].Reason = "ContainersNotReady"
+						s.Conditions[index].Reason = status.ContainersNotReady
 						podReadyFlag = true
 						break
 					}
@@ -111,8 +111,9 @@ func (m *manager) updatePodStatus() {
 		err := m.metaClient.PodStatus(pod.Namespace).Update(pod.Name, edgeapi.PodStatusRequest{UID: pod.UID, Name: pod.Name, Status: s})
 		if err != nil {
 			klog.Errorf("Update pod status failed err :%v", err)
+			return
 		}
-		klog.Infof("Status for pod %s updated successfully: %+v", pod.Name, podStatus)
+		klog.V(4).Infof("Status for pod %s updated successfully", pod.Name)
 		m.apiStatusVersions[pod.UID] = podStatus.DeepCopy()
 	}
 }

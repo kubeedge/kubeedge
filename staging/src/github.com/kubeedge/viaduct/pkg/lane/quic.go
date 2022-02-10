@@ -3,12 +3,12 @@ package lane
 import (
 	"time"
 
+	"github.com/lucas-clemente/quic-go"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/viaduct/pkg/packer"
 	"github.com/kubeedge/viaduct/pkg/translator"
-	"github.com/lucas-clemente/quic-go"
 )
 
 type QuicLane struct {

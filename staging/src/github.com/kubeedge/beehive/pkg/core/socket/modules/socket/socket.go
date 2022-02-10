@@ -4,8 +4,8 @@ import (
 	"net"
 )
 
-// SocketServer module socket server
-type SocketServer struct {
+// Server module socket server
+type Server struct {
 	enable     bool
 	name       string
 	address    string
@@ -18,21 +18,21 @@ type SocketServer struct {
 }
 
 // Name name
-func (m *SocketServer) Name() string {
+func (m *Server) Name() string {
 	return m.name
 }
 
 // Group group
-func (m *SocketServer) Group() string {
+func (m *Server) Group() string {
 	return m.name
 }
 
 // Start start
-func (m *SocketServer) Start() {
+func (m *Server) Start() {
 	m.startServer()
 }
 
 // Enable enable
-func (m *SocketServer) Enable() bool {
+func (m *Server) Enable() bool {
 	return m.enable
 }

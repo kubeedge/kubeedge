@@ -14,6 +14,8 @@ const (
 	// NodeName is for the clearer log of cloudcore.
 	NodeName = "NodeName"
 
+	ProjectName = "KubeEdge"
+
 	SystemName      = "kubeedge"
 	SystemNamespace = SystemName
 )
@@ -62,7 +64,7 @@ const (
 	DefaultVolumeStatsAggPeriod        = time.Minute
 	DefaultTunnelPort                  = 10004
 
-	CurrentSupportK8sVersion = "v1.19.3"
+	CurrentSupportK8sVersion = "v1.21.4"
 
 	// MetaManager
 	DefaultPodStatusSyncInterval = 60

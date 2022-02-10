@@ -30,13 +30,14 @@ import (
 	"k8s.io/klog/v2"
 
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 // SignCerts creates server's certificate and key
 func SignCerts() ([]byte, []byte, error) {
 	cfg := &certutil.Config{
-		CommonName:   "KubeEdge",
-		Organization: []string{"KubeEdge"},
+		CommonName:   constants.ProjectName,
+		Organization: []string{constants.ProjectName},
 		Usages:       []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		AltNames: certutil.AltNames{
 			DNSNames: hubconfig.Config.DNSNames,

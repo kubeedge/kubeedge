@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"sync/atomic"
@@ -138,38 +138,38 @@ func (r *Rest) Forward(target provider.Target, data interface{}) (interface{}, e
 		timer.Stop()
 		if resp == nil {
 			httpResponse.StatusCode = http.StatusOK
-			httpResponse.Body = ioutil.NopCloser(strings.NewReader("message delivered"))
+			httpResponse.Body = io.NopCloser(strings.NewReader("message delivered"))
 		} else {
 			msg, ok := resp.(*model.Message)
 			if !ok {
 				klog.Error("response can not convert to Message")
 				httpResponse.StatusCode = http.StatusInternalServerError
-				httpResponse.Body = ioutil.NopCloser(strings.NewReader("invalid response"))
+				httpResponse.Body = io.NopCloser(strings.NewReader("invalid response"))
 				return httpResponse, nil
 			}
 			content, err := json.Marshal(msg.GetContent())
 			if err != nil {
 				klog.Error("message content can not convert to json")
 				httpResponse.StatusCode = http.StatusInternalServerError
-				httpResponse.Body = ioutil.NopCloser(strings.NewReader("invalid response"))
+				httpResponse.Body = io.NopCloser(strings.NewReader("invalid response"))
 				return httpResponse, nil
 			}
 			var response commonType.HTTPResponse
 			if err := json.Unmarshal(content, &response); err != nil {
 				klog.Error("message content can not convert to HTTPResponse")
 				httpResponse.StatusCode = http.StatusInternalServerError
-				httpResponse.Body = ioutil.NopCloser(strings.NewReader("invalid response"))
+				httpResponse.Body = io.NopCloser(strings.NewReader("invalid response"))
 				return httpResponse, nil
 			}
 			httpResponse.StatusCode = response.StatusCode
-			httpResponse.Body = ioutil.NopCloser(bytes.NewReader(response.Body))
+			httpResponse.Body = io.NopCloser(bytes.NewReader(response.Body))
 			httpResponse.Header = response.Header
 		}
 		klog.Infof("response from client, msg id: %s, write result success", messageID)
 	case err := <-errch:
 		timer.Stop()
 		httpResponse.StatusCode = http.StatusInternalServerError
-		httpResponse.Body = ioutil.NopCloser(strings.NewReader(err.Error()))
+		httpResponse.Body = io.NopCloser(strings.NewReader(err.Error()))
 		klog.Errorf("failed to get response, msg id: %s, write result: %v", messageID, err)
 	case _, ok := <-timer.C:
 		if !ok {
@@ -177,7 +177,7 @@ func (r *Rest) Forward(target provider.Target, data interface{}) (interface{}, e
 		}
 		stop <- struct{}{}
 		httpResponse.StatusCode = http.StatusRequestTimeout
-		httpResponse.Body = ioutil.NopCloser(strings.NewReader("wait to get response time out"))
+		httpResponse.Body = io.NopCloser(strings.NewReader("wait to get response time out"))
 		klog.Warningf("operation timeout, msg id: %s, write result: get response timeout", messageID)
 	case _, ok := <-request.Context().Done():
 		if !ok {

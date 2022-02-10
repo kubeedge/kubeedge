@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"k8s.io/klog/v2"
 
@@ -18,17 +18,17 @@ func GetTlsConfig(cfg *config.Config) (*tls.Config, error) {
 		return nil, fmt.Errorf("bad cert certification files")
 	}
 
-	caBytes, err := ioutil.ReadFile(cfg.CaFile)
+	caBytes, err := os.ReadFile(cfg.CaFile)
 	if err != nil {
 		klog.Errorf("failed to read ca file(%s), error: %+v", cfg.CaFile, err)
 		return nil, err
 	}
-	cerBytes, err := ioutil.ReadFile(cfg.CertFile)
+	cerBytes, err := os.ReadFile(cfg.CertFile)
 	if err != nil {
 		klog.Errorf("failed to read cert file(%s), error: %+v", cfg.CertFile, err)
 		return nil, err
 	}
-	keyBytes, err := ioutil.ReadFile(cfg.KeyFile)
+	keyBytes, err := os.ReadFile(cfg.KeyFile)
 	if err != nil {
 		klog.Errorf("failed to read key file(%s), error: %+v", cfg.KeyFile, err)
 		return nil, err

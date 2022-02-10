@@ -25,7 +25,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -170,7 +170,7 @@ func verifyAuthorization(w http.ResponseWriter, r *http.Request) bool {
 
 // signEdgeCert signs the CSR from EdgeCore
 func signEdgeCert(w http.ResponseWriter, r *http.Request) {
-	csrContent, err := ioutil.ReadAll(r.Body)
+	csrContent, err := io.ReadAll(r.Body)
 	if err != nil {
 		klog.Errorf("fail to read file when signing the cert for edgenode:%s! error:%v", r.Header.Get(constants.NodeName), err)
 		return
