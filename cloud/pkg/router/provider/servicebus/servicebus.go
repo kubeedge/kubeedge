@@ -45,7 +45,7 @@ func (sf *servicebusFactory) GetSource(ep *v1.RuleEndpoint, sourceResource map[s
 		klog.Errorf("source resource attributes \"target_url\" does not exist")
 		return nil
 	}
-	nodeName, exist := sourceResource[constants.NodeNmae]
+	nodeName, exist := sourceResource[constants.NodeName]
 	if !exist {
 		klog.Errorf("source resource attributes \"node_name\" does not exist")
 		return nil

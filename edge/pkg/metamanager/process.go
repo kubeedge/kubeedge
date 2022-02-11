@@ -32,9 +32,9 @@ const (
 
 	OperationFunctionActionResult = "action_result"
 
-	EdgeFunctionModel   = "edgefunction"
-	CloudFunctionModel  = "funcmgr"
-	CloudControlerModel = "edgecontroller"
+	EdgeFunctionModel    = "edgefunction"
+	CloudFunctionModel   = "funcmgr"
+	CloudControllerModel = "edgecontroller"
 )
 
 func feedbackError(err error, info string, request model.Message) {
@@ -153,7 +153,7 @@ func (m *metaManager) processUpdate(message model.Message) {
 	if resourceUnchanged(resType, resKey, content) {
 		resp := message.NewRespByMessage(&message, OK)
 		sendToEdged(resp, message.IsSync())
-		klog.Infof("resource[%s] unchanged, no notice", resKey)
+		klog.V(4).Infof("resource[%s] unchanged, no notice", resKey)
 		return
 	}
 
@@ -208,7 +208,7 @@ func (m *metaManager) processResponse(message model.Message) {
 	}
 
 	// Notify edged if the data is coming from cloud
-	if message.GetSource() == CloudControlerModel {
+	if message.GetSource() == CloudControllerModel {
 		sendToEdged(&message, message.IsSync())
 	} else {
 		// Send to cloud if the update request is coming from edged

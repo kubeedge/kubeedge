@@ -29,12 +29,7 @@ import (
 )
 
 func TestValidateCloudCoreConfiguration(t *testing.T) {
-	dir, err := os.MkdirTemp("", "TestTempFile_Dir")
-	if err != nil {
-		t.Errorf("create temp dir error %v", err)
-		return
-	}
-	defer os.RemoveAll(dir)
+	dir := t.TempDir()
 
 	ef, err := os.CreateTemp(dir, "existFile")
 	if err != nil {
@@ -53,12 +48,7 @@ func TestValidateCloudCoreConfiguration(t *testing.T) {
 }
 
 func TestValidateModuleCloudHub(t *testing.T) {
-	dir, err := os.MkdirTemp("", "TestTempFile_Dir")
-	if err != nil {
-		t.Errorf("create temp dir error %v", err)
-		return
-	}
-	defer os.RemoveAll(dir)
+	dir := t.TempDir()
 
 	ef, err := os.CreateTemp(dir, "existFile")
 	if err != nil {
@@ -372,12 +362,7 @@ func TestValidateModuleDynamicController(t *testing.T) {
 }
 
 func TestValidateModuleCloudStream(t *testing.T) {
-	dir, err := os.MkdirTemp("", "TestTempFile_Dir")
-	if err != nil {
-		t.Errorf("create temp dir error %v", err)
-		return
-	}
-	defer os.RemoveAll(dir)
+	dir := t.TempDir()
 
 	ef, err := os.CreateTemp(dir, "existFile")
 	if err != nil {
@@ -453,12 +438,7 @@ func TestValidateModuleCloudStream(t *testing.T) {
 }
 
 func TestValidateKubeAPIConfig(t *testing.T) {
-	dir, err := os.MkdirTemp("", "TestTempFile_Dir")
-	if err != nil {
-		t.Errorf("create temp dir error %v", err)
-		return
-	}
-	defer os.RemoveAll(dir)
+	dir := t.TempDir()
 
 	ef, err := os.CreateTemp(dir, "existFile")
 	if err != nil {

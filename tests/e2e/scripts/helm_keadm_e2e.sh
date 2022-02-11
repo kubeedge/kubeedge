@@ -18,7 +18,7 @@ KUBEEDGE_ROOT=$PWD
 WORKDIR=$(dirname $0)
 HELM_DIR=$KUBEEDGE_ROOT/build/helm
 E2E_DIR=$(realpath $(dirname $0)/..)
-IMAGE_TAG=$(date +%Y%m%d)
+IMAGE_TAG=$(git describe --tags)
 
 function cleanup() {
   sudo pkill edgecore || true
@@ -47,7 +47,7 @@ function prepare_cluster() {
 
 function build_cloud_image() {
   cd $KUBEEDGE_ROOT
-  make cloudimage -f $KUBEEDGE_ROOT/Makefile -e IMAGE_TAG=$IMAGE_TAG
+  make image WHAT=cloudcore -f $KUBEEDGE_ROOT/Makefile
   kind load docker-image kubeedge/cloudcore:$IMAGE_TAG --name test
 }
 

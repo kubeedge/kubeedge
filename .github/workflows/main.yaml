@@ -73,7 +73,9 @@ jobs:
 
       - run: make crossbuild
 
-      - run: make crossbuild GOARM=GOARM7
+      - run: make crossbuild ARM_VERSION=GOARM7
+
+      - run: make crossbuild WHAT=cloudcore ARM_VERSION=GOARM8
 
   basic_test:
     runs-on: ubuntu-18.04
@@ -220,14 +222,4 @@ jobs:
         with:
           fetch-depth: 0
 
-      - run: make cloudimage
-
-      - run: make admissionimage
-
-      - run: make edgeimage ARCH="amd64"
-
-      - run: make edgesite-agent-image ARCH="amd64"
-
-      - run: make edgesite-server-image ARCH="amd64"
-
-      - run: make iptablesmgrimage
+      - run: make image

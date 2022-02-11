@@ -83,6 +83,7 @@ spec:
 
 **Note:** If you want to reset the CloudCore, run this before creating k8s resources:
 
+
 ```shell script
 kubectl delete namespace kubeedge
 ```

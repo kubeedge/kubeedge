@@ -29,12 +29,7 @@ import (
 )
 
 func TestValidateEdgeCoreConfiguration(t *testing.T) {
-	dir, err := os.MkdirTemp("", "TestTempFile_Dir")
-	if err != nil {
-		t.Errorf("create temp dir error %v", err)
-		return
-	}
-	defer os.RemoveAll(dir)
+	dir := t.TempDir()
 
 	ef, err := os.CreateTemp(dir, "existFile")
 	if err != nil {
@@ -52,11 +47,7 @@ func TestValidateEdgeCoreConfiguration(t *testing.T) {
 }
 
 func TestValidateDataBase(t *testing.T) {
-	dir, err := os.MkdirTemp("", "TestTempFile_BadDir")
-	if err != nil {
-		t.Fatalf("%v", err)
-	}
-	defer os.RemoveAll(dir)
+	dir := t.TempDir()
 
 	ef, err := os.CreateTemp(dir, "FileIsExist")
 	if err == nil {

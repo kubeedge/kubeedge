@@ -105,27 +105,16 @@ func (s *StreamServer) getContainerLogs(r *restful.Request, w *restful.Response)
 	defer func() {
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			klog.Errorf(err.Error())
+			klog.Errorf("Failed to get container logs, err: %v", err)
 		}
 	}()
 
-	// extract pod namespace and pod name from request
-	meta := strings.Split(r.Request.URL.Path, "/")
-	namespaceName := meta[2]
-	podName := meta[3]
-
-	kubeClient := client.GetKubeClient()
-	if kubeClient == nil {
-		klog.Exitf("cannot get kube client\n")
-		return
-	}
-
-	pod, err := kubeClient.CoreV1().Pods(namespaceName).Get(context.Background(), podName, v1.GetOptions{})
+	sessionKey, err := s.getSessionKey(r.Request.URL.Path)
 	if err != nil {
-		klog.Errorf("get pod %s/%s failed: %v\n", namespaceName, podName, err)
+		err = fmt.Errorf("can not get session key: %v", err)
 		return
 	}
-	sessionKey := pod.Spec.NodeName
+
 	session, ok := s.tunnel.getSession(sessionKey)
 	if !ok {
 		err = fmt.Errorf("can not find %v session ", sessionKey)
@@ -172,7 +161,7 @@ func (s *StreamServer) getMetrics(r *restful.Request, w *restful.Response) {
 	defer func() {
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			klog.Errorf(err.Error())
+			klog.Errorf("Failed to get metrics, err: %v", err)
 		}
 	}()
 
@@ -224,11 +213,15 @@ func (s *StreamServer) getExec(request *restful.Request, response *restful.Respo
 	defer func() {
 		if err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
-			klog.Errorf(err.Error())
+			klog.Errorf("Failed to get exec, err: %v", err)
 		}
 	}()
 
-	sessionKey := strings.Split(request.Request.Host, ":")[0]
+	sessionKey, err := s.getSessionKey(request.Request.URL.Path)
+	if err != nil {
+		err = fmt.Errorf("can not get session key: %v", err)
+		return
+	}
 	session, ok := s.tunnel.getSession(sessionKey)
 	if !ok {
 		err = fmt.Errorf("exec: can not find %v session ", sessionKey)
@@ -280,6 +273,27 @@ func (s *StreamServer) getExec(request *restful.Request, response *restful.Respo
 			execConnection.String(), session.String(), err)
 		return
 	}
+}
+
+func (s *StreamServer) getSessionKey(urlPath string) (string, error) {
+	// extract pod namespace and pod name from request
+	meta := strings.Split(urlPath, "/")
+	if len(meta) < 4 {
+		return "", fmt.Errorf("can not get pod name from url path: %s", urlPath)
+	}
+	namespaceName := meta[2]
+	podName := meta[3]
+
+	kubeClient := client.GetKubeClient()
+	if kubeClient == nil {
+		return "", fmt.Errorf("can not get kube client")
+	}
+
+	pod, err := kubeClient.CoreV1().Pods(namespaceName).Get(context.Background(), podName, v1.GetOptions{})
+	if err != nil {
+		return "", fmt.Errorf("get pod %s/%s failed: %v", namespaceName, podName, err)
+	}
+	return pod.Spec.NodeName, nil
 }
 
 func (s *StreamServer) Start() {
