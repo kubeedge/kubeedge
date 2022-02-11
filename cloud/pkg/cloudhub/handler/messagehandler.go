@@ -471,6 +471,10 @@ func (mh *MessageHandle) MessageWriteLoop(info *model.HubInfo, stopServe chan Ex
 			klog.Errorf("Failed to send event to node: %s, affected event: %s, err: %s",
 				info.NodeID, dumpMessageMetadata(copyMsg), err.Error())
 			nodeQueue.Add(key.(string))
+			if strings.Contains(err.Error(), "use of closed network connection") {
+				mh.nodeConns.Delete(info.NodeID)
+				continue
+			}
 			time.Sleep(time.Second * 2)
 		}
 
