@@ -13,6 +13,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/httpserver"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/udsserver"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
@@ -33,7 +34,7 @@ func newCloudHub(enable bool) *cloudHub {
 	// declare used informer
 	clusterObjectSyncInformer := crdFactory.Reliablesyncs().V1alpha1().ClusterObjectSyncs()
 	objectSyncInformer := crdFactory.Reliablesyncs().V1alpha1().ObjectSyncs()
-	messageq := channelq.NewChannelMessageQueue(objectSyncInformer.Lister(), clusterObjectSyncInformer.Lister())
+	messageq := channelq.NewChannelMessageQueue(objectSyncInformer.Lister(), clusterObjectSyncInformer.Lister(), client.GetCRDClient())
 	ch := &cloudHub{
 		enable:   enable,
 		messageq: messageq,
