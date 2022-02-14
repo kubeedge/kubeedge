@@ -19,29 +19,29 @@ data:
         - {{  .  }}
         {{- end}}
         nodeLimit: {{ .Values.cloudCore.modules.cloudHub.nodeLimit }}
-        tlsCAFile: /etc/kubeedge/ca/rootCA.crt
-        tlsCertFile: /etc/kubeedge/certs/edge.crt
-        tlsPrivateKeyFile: /etc/kubeedge/certs/edge.key
+        tlsCAFile: {{ .Values.cloudCore.modules.cloudHub.tlsCAFile }}
+        tlsCertFile: {{ .Values.cloudCore.modules.cloudHub.tlsCertFile }}
+        tlsPrivateKeyFile: {{ .Values.cloudCore.modules.cloudHub.tlsPrivateKeyFile }}
         unixsocket:
-          address: unix:///var/lib/kubeedge/kubeedge.sock
-          enable: true
+          address: {{ .Values.cloudCore.modules.cloudHub.unixsocket.address }}
+          enable: {{ .Values.cloudCore.modules.cloudHub.unixsocket.enable }}
         websocket:
-          address: 0.0.0.0
+          address: {{ .Values.cloudCore.modules.cloudHub.websocket.address }}
           enable: {{ .Values.cloudCore.modules.cloudHub.websocket.enable }}
-          port: 10000
+          port: {{ .Values.cloudCore.modules.cloudHub.websocket.port }}
         quic:
-          address: 0.0.0.0
+          address: {{ .Values.cloudCore.modules.cloudHub.quic.address }}
           enable: {{ .Values.cloudCore.modules.cloudHub.quic.enable }}
           maxIncomingStreams: {{ .Values.cloudCore.modules.cloudHub.quic.maxIncomingStreams }}
-          port: 10001
+          port: {{ .Values.cloudCore.modules.cloudHub.quic.port }}
         https:
-          address: 0.0.0.0
+          address: {{ .Values.cloudCore.modules.cloudHub.https.address }}
           enable: {{ .Values.cloudCore.modules.cloudHub.https.enable }}
-          port: 10002
+          port: {{ .Values.cloudCore.modules.cloudHub.https.port }}
       cloudStream:
         enable: {{ .Values.cloudCore.modules.cloudStream.enable }}
-        streamPort: 10003
-        tunnelPort: 10004
+        streamPort: {{ .Values.cloudCore.modules.cloudStream.streamPort }}
+        tunnelPort: {{ .Values.cloudCore.modules.cloudStream.tunnelPort }}
       dynamicController:
         enable: {{ .Values.cloudCore.modules.dynamicController.enable }}
       router:
