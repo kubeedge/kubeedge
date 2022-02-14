@@ -568,6 +568,10 @@ func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model
 					ObjectName:       resourceName,
 				},
 			}
+			if objectSync.Spec.ObjectKind == "" {
+				klog.Errorf("Failed to init objectSync: %s, ObjectKind is empty, msg content: %v", objectSyncName, msg.GetContent())
+				return
+			}
 			_, err := mh.crdClient.ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).Create(context.Background(), objectSync, metav1.CreateOptions{})
 			if err != nil {
 				klog.Errorf("Failed to create objectSync: %s, err: %v", objectSyncName, err)

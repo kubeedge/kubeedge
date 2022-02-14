@@ -44,8 +44,13 @@ func (sctl *SyncController) manageObject(sync *v1alpha1.ObjectSync) {
 		newObject.SetNamespace(sync.Namespace)
 		newObject.SetName(sync.Spec.ObjectName)
 		newObject.SetUID(types.UID(getObjectUID(sync.Name)))
-		msg := buildEdgeControllerMessage(nodeName, sync.Namespace, resourceType, sync.Spec.ObjectName, model.DeleteOperation, newObject)
-		beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
+		if msg := buildEdgeControllerMessage(nodeName, sync.Namespace, resourceType, sync.Spec.ObjectName, model.DeleteOperation, newObject); msg != nil {
+			beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
+		} else {
+			if err := sctl.crdclient.ReliablesyncsV1alpha1().ObjectSyncs(sync.Namespace).Delete(context.Background(), sync.Name, *metav1.NewDeleteOptions(0)); err != nil {
+				klog.Errorf("Failed to delete objectsync %s: %v", sync.Name, err)
+			}
+		}
 		return
 	} else if err != nil || ret == nil {
 		klog.Errorf("failed to get obj(gvr:%v,namespace:%v,name:%v), %v", gvr, sync.Namespace, sync.Spec.ObjectName, err)
@@ -77,8 +82,9 @@ func sendEvents(err error, nodeName string, sync *v1alpha1.ObjectSync, resourceT
 	if err != nil && apierrors.IsNotFound(err) {
 		//trigger the delete event
 		klog.Infof("%s: %s has been deleted in K8s, send the delete event to edge", resourceType, sync.Spec.ObjectName)
-		msg := buildEdgeControllerMessage(nodeName, sync.Namespace, resourceType, sync.Spec.ObjectName, model.DeleteOperation, obj)
-		beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
+		if msg := buildEdgeControllerMessage(nodeName, sync.Namespace, resourceType, sync.Spec.ObjectName, model.DeleteOperation, obj); msg != nil {
+			beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
+		}
 		return
 	}
 
