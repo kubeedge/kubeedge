@@ -253,13 +253,20 @@ func (msg *Message) GetDestination() string {
 }
 
 // String the content that you want to send
-func (msg *Message) String() string {
+func (msg Message) String() string {
 	var buffer bytes.Buffer
 	buffer.WriteString("MessageID: " + msg.GetID())
-	buffer.WriteString(" ParentID: " + msg.GetParentID())
-	buffer.WriteString(" Source: " + msg.GetSource())
-	buffer.WriteString(" Destination: " + msg.GetDestination())
-	buffer.WriteString(" Resource: " + msg.GetResource())
-	buffer.WriteString(" Operation: " + msg.GetOperation())
+	buffer.WriteString(" ParentID: " + handleEmptyString(msg.GetParentID()))
+	buffer.WriteString(" Source: " + handleEmptyString(msg.GetSource()))
+	buffer.WriteString(" Destination: " + handleEmptyString(msg.GetDestination()))
+	buffer.WriteString(" Resource: " + handleEmptyString(msg.GetResource()))
+	buffer.WriteString(" Operation: " + handleEmptyString(msg.GetOperation()))
 	return buffer.String()
+}
+
+func handleEmptyString(s string) string {
+	if len(s) == 0 {
+		return "\"\""
+	}
+	return s
 }
