@@ -48,11 +48,4 @@ func (m *testModuleDest) Start() {
 		resp = message.NewRespByMessage(&message, "fine")
 		beehiveContext.SendResp(*resp)
 	}
-
-	//message, err = c.Receive(DestinationModule)
-	//fmt.Printf("destination module receive message:%v error:%v\n", message, err)
-	//if message.IsSync() {
-	//	resp = message.NewRespByMessage(&message, "20 years old")
-	//	c.SendResp(*resp)
-	//}
 }
