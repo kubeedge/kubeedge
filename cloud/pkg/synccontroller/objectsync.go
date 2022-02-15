@@ -4,6 +4,7 @@ import (
 	"context"
 	"strconv"
 	"strings"
+	"unicode"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -31,6 +32,17 @@ func (sctl *SyncController) manageObject(sync *v1alpha1.ObjectSync) {
 	if err != nil {
 		return
 	}
+
+	if sync.Spec.ObjectKind != "" && unicode.IsLower(rune(sync.Spec.ObjectKind[0])) {
+		// when cloudcore upgrade from old version, which objectsync.Spec.ObjectKind is resources, we should update it to kind first.
+		sync.Spec.ObjectKind = util.UnsafeResourceToKind(sync.Spec.ObjectKind)
+		_, err := sctl.crdclient.ReliablesyncsV1alpha1().ObjectSyncs(sync.Namespace).Update(context.Background(), sync, metav1.UpdateOptions{})
+		if err != nil {
+			klog.Errorf("Failed to update objectSync: %s, err: %v", sync.Name, err)
+		}
+		return
+	}
+
 	resource := util.UnsafeKindToResource(sync.Spec.ObjectKind)
 	gvr := gv.WithResource(resource)
 	nodeName := getNodeName(sync.Name)
