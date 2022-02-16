@@ -156,22 +156,25 @@ func (eh *EdgeHub) routeToCloud() {
 		}
 	}
 }
-func (eh *EdgeHub) cacheToCloud() {
-	if !edgeCache.IsEnabled() {
-		return
-	}
-	edgeCache.SetEnabled(false)
+func (eh *EdgeHub) cacheToCloud() error {
 	klog.Infof("start sending cache to cloud")
 	ci := edgeCache.GetCacheIndex()
 	cache := edgeCache.GetCache()
 	for _, name := range ci {
-		eh.chClient.Send(*cache[name])
+		err := eh.chClient.Send(*cache[name])
+		if err != nil {
+			return err
+		}
 		edgeCache.RemoveCache(name)
 	}
 	edgeCache.CleanIndex()
 	klog.Infof("finished sending cache to cloud")
+	return nil
 }
-func (eh *EdgeHub) cacheOnEdge() {
+func (eh *EdgeHub) disableCache() {
+	edgeCache.SetEnabled(false)
+}
+func (eh *EdgeHub) enableCache() {
 	if edgeCache.IsEnabled() {
 		return
 	}
@@ -187,6 +190,10 @@ func (eh *EdgeHub) cacheOnEdge() {
 			}
 			if !edgeCache.IsEnabled() {
 				klog.Infof("stop caching on edge")
+				err := eh.cacheToCloud()
+				if err != nil {
+					klog.Warning("sending Cache to cloud failed: %v", err)
+				}
 				return
 			}
 			message, err := beehiveContext.Receive(ModuleNameEdgeHub)
@@ -232,9 +239,6 @@ func (eh *EdgeHub) pubConnectInfo(isConnected bool) {
 	content := connect.CloudConnected
 	if !isConnected {
 		content = connect.CloudDisconnected
-		eh.cacheOnEdge()
-	} else {
-		eh.cacheToCloud()
 	}
 
 	for _, group := range groupMap {

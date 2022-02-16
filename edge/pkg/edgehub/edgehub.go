@@ -83,13 +83,14 @@ func (eh *EdgeHub) Start() {
 
 		err = eh.chClient.Init()
 		if err != nil {
-			eh.cacheOnEdge()
+			eh.enableCache()
 			klog.Errorf("connection failed: %v, will reconnect after %s", err, waitTime.String())
 			time.Sleep(waitTime)
 			continue
 		}
 		// execute hook func after connect
 		eh.pubConnectInfo(true)
+		eh.disableCache()
 		go eh.routeToEdge()
 		go eh.routeToCloud()
 		go eh.keepalive()

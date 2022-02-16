@@ -24,7 +24,7 @@ func NewMetaCache() *EdgeCache {
 }
 
 func (ec *EdgeCache) SaveToCache(m *model.Message) error {
-	hash := fmt.Sprintf("%s-%s", m.Router.Resource, m.Router.Operation)
+	hash := fmt.Sprintf("%s-%s-%s", m.GetResource(), m.GetOperation(), m.GetSource())
 	ec.cacheStore[hash] = m
 	ec.sortIndex(hash)
 	return nil
@@ -53,7 +53,7 @@ func toMd5(v string) string {
 	return hex.EncodeToString(m.Sum(nil))
 }
 func (ec *EdgeCache) sortIndex(hash string) {
-	klog.Errorf("ec cacheIndex: %v", ec.cacheIndex)
+	klog.Info("ec cacheIndex: %v", ec.cacheIndex)
 	for index, item := range ec.cacheIndex {
 		if item == hash {
 			if (index + 1) != len(ec.cacheIndex) {
