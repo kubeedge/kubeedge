@@ -38,19 +38,7 @@ func (sctl *SyncController) manageObject(sync *v1alpha1.ObjectSync) {
 	//ret, err := informers.GetInformersManager().GetDynamicSharedInformerFactory().ForResource(gvr).Lister().ByNamespace(sync.Namespace).Get(sync.Spec.ObjectName)
 	ret, err := sctl.kubeclient.Resource(gvr).Namespace(sync.Namespace).Get(context.TODO(), sync.Spec.ObjectName, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
-		// trigger the delete event
-		klog.V(4).Infof("%s: %s has been deleted in K8s, send the delete event to edge in sync loop", resourceType, sync.Spec.ObjectName)
-		newObject := &unstructured.Unstructured{}
-		newObject.SetNamespace(sync.Namespace)
-		newObject.SetName(sync.Spec.ObjectName)
-		newObject.SetUID(types.UID(getObjectUID(sync.Name)))
-		if msg := buildEdgeControllerMessage(nodeName, sync.Namespace, resourceType, sync.Spec.ObjectName, model.DeleteOperation, newObject); msg != nil {
-			beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
-		} else {
-			if err := sctl.crdclient.ReliablesyncsV1alpha1().ObjectSyncs(sync.Namespace).Delete(context.Background(), sync.Name, *metav1.NewDeleteOptions(0)); err != nil {
-				klog.Errorf("Failed to delete objectsync %s: %v", sync.Name, err)
-			}
-		}
+		sctl.gcOrphanedObjectSync(sync)
 		return
 	} else if err != nil || ret == nil {
 		klog.Errorf("failed to get obj(gvr:%v,namespace:%v,name:%v), %v", gvr, sync.Namespace, sync.Spec.ObjectName, err)
@@ -64,28 +52,41 @@ func (sctl *SyncController) manageObject(sync *v1alpha1.ObjectSync) {
 
 	syncObjUID := getObjectUID(sync.Name)
 	if syncObjUID != string(object.GetUID()) {
-		err = apierrors.NewNotFound(schema.GroupResource{
-			Group:    "",
-			Resource: resource,
-		}, sync.Spec.ObjectName)
+		sctl.gcOrphanedObjectSync(sync)
+		return
 	}
 
-	sendEvents(err, nodeName, sync, resourceType, object.GetResourceVersion(), object)
+	sendEvents(nodeName, sync, resourceType, object.GetResourceVersion(), object)
 }
 
-func sendEvents(err error, nodeName string, sync *v1alpha1.ObjectSync, resourceType string,
+// gcOrphanedObjectSync try to send delete message to the edge node
+// to make sure that the resource is deleted in the edge node. After the
+// message ACK is received by `cloudHub`, the objectSync will be deleted
+// directly in the `cloudHub`. But if message build failed, the objectSync
+// will be deleted directly in the `syncController`.
+func (sctl *SyncController) gcOrphanedObjectSync(sync *v1alpha1.ObjectSync) {
+	resourceType := strings.ToLower(sync.Spec.ObjectKind)
+	nodeName := getNodeName(sync.Name)
+	klog.V(4).Infof("%s: %s has been deleted in K8s, send the delete event to edge in sync loop", resourceType, sync.Spec.ObjectName)
+
+	object := &unstructured.Unstructured{}
+	object.SetNamespace(sync.Namespace)
+	object.SetName(sync.Spec.ObjectName)
+	object.SetUID(types.UID(getObjectUID(sync.Name)))
+	if msg := buildEdgeControllerMessage(nodeName, sync.Namespace, resourceType, sync.Spec.ObjectName, model.DeleteOperation, object); msg != nil {
+		beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
+	} else {
+		if err := sctl.crdclient.ReliablesyncsV1alpha1().ObjectSyncs(sync.Namespace).Delete(context.Background(), sync.Name, *metav1.NewDeleteOptions(0)); err != nil {
+			klog.Errorf("Failed to delete objectsync %s: %v", sync.Name, err)
+		}
+	}
+}
+
+func sendEvents(nodeName string, sync *v1alpha1.ObjectSync, resourceType string,
 	objectResourceVersion string, obj interface{}) {
 	runtimeObj := obj.(runtime.Object)
 	if err := util.SetMetaType(runtimeObj); err != nil {
 		klog.Warningf("failed to set metatype :%v", err)
-	}
-	if err != nil && apierrors.IsNotFound(err) {
-		//trigger the delete event
-		klog.Infof("%s: %s has been deleted in K8s, send the delete event to edge", resourceType, sync.Spec.ObjectName)
-		if msg := buildEdgeControllerMessage(nodeName, sync.Namespace, resourceType, sync.Spec.ObjectName, model.DeleteOperation, obj); msg != nil {
-			beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
-		}
-		return
 	}
 
 	if sync.Status.ObjectResourceVersion == "" {
