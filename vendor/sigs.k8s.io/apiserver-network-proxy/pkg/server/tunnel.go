@@ -21,10 +21,12 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
+	"sync"
 	"time"
 
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/apiserver-network-proxy/konnectivity-client/proto/client"
+	"sigs.k8s.io/apiserver-network-proxy/pkg/server/metrics"
 )
 
 // Tunnel implements Proxy based on HTTP Connect, which tunnels the traffic to
@@ -34,6 +36,9 @@ type Tunnel struct {
 }
 
 func (t *Tunnel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	metrics.Metrics.HTTPConnectionInc()
+	defer metrics.Metrics.HTTPConnectionDec()
+
 	klog.V(2).InfoS("Received request for host", "method", r.Method, "host", r.Host, "userAgent", r.UserAgent())
 	if r.TLS != nil {
 		klog.V(2).InfoS("TLS", "commonName", r.TLS.PeerCertificates[0].Subject.CommonName)
@@ -55,6 +60,8 @@ func (t *Tunnel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	var closeOnce sync.Once
+	defer closeOnce.Do(func() { conn.Close() })
 
 	random := rand.Int63() /* #nosec G404 */
 	dialRequest := &client.Packet{
@@ -74,10 +81,16 @@ func (t *Tunnel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("currently no tunnels available: %v", err), http.StatusInternalServerError)
 		return
 	}
+	closed := make(chan struct{})
 	connected := make(chan struct{})
 	connection := &ProxyClientConnection{
-		Mode:      "http-connect",
-		HTTP:      conn,
+		Mode: "http-connect",
+		HTTP: io.ReadWriter(conn), // pass as ReadWriter so the caller must close with CloseHTTP
+		CloseHTTP: func() error {
+			closeOnce.Do(func() { conn.Close() })
+			close(closed)
+			return nil
+		},
 		connected: connected,
 		start:     time.Now(),
 		backend:   backend,
@@ -100,6 +113,7 @@ func (t *Tunnel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	select {
 	case <-connection.connected: // Waiting for response before we begin full communication.
+	case <-closed: // Connection was closed before being established
 	}
 
 	defer func() {
@@ -119,7 +133,7 @@ func (t *Tunnel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	klog.V(3).InfoS("Starting proxy to host", "host", r.Host)
-	pkt := make([]byte, 1<<12)
+	pkt := make([]byte, 1<<15) // Match GRPC Window size
 
 	connID := connection.connectID
 	agentID := connection.agentID

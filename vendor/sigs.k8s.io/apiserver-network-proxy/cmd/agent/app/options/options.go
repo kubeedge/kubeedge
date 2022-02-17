@@ -40,9 +40,21 @@ type GrpcProxyAgentOptions struct {
 	SyncInterval     time.Duration
 	ProbeInterval    time.Duration
 	SyncIntervalCap  time.Duration
+	// After a duration of this time if the agent doesn't see any activity it
+	// pings the server to see if the transport is still alive.
+	KeepaliveTime time.Duration
 
 	// file contains service account authorization token for enabling proxy-server token based authorization
 	ServiceAccountTokenPath string
+
+	// This warns if we attempt to push onto a "full" transfer channel.
+	// However checking that the transfer channel is full is not safe.
+	// It violates our race condition checking. Adding locks around a potentially
+	// blocking call has its own problems, so it cannot easily be made race condition safe.
+	// The check is an "unlocked" read but is still use at your own peril.
+	WarnOnChannelLimit bool
+
+	SyncForever bool
 }
 
 func (o *GrpcProxyAgentOptions) ClientSetConfig(dialOptions ...grpc.DialOption) *agent.ClientSetConfig {
@@ -55,6 +67,8 @@ func (o *GrpcProxyAgentOptions) ClientSetConfig(dialOptions ...grpc.DialOption) 
 		SyncIntervalCap:         o.SyncIntervalCap,
 		DialOptions:             dialOptions,
 		ServiceAccountTokenPath: o.ServiceAccountTokenPath,
+		WarnOnChannelLimit:      o.WarnOnChannelLimit,
+		SyncForever:             o.SyncForever,
 	}
 }
 
@@ -74,8 +88,11 @@ func (o *GrpcProxyAgentOptions) Flags() *pflag.FlagSet {
 	flags.DurationVar(&o.SyncInterval, "sync-interval", o.SyncInterval, "The initial interval by which the agent periodically checks if it has connections to all instances of the proxy server.")
 	flags.DurationVar(&o.ProbeInterval, "probe-interval", o.ProbeInterval, "The interval by which the agent periodically checks if its connections to the proxy server are ready.")
 	flags.DurationVar(&o.SyncIntervalCap, "sync-interval-cap", o.SyncIntervalCap, "The maximum interval for the SyncInterval to back off to when unable to connect to the proxy server")
+	flags.DurationVar(&o.KeepaliveTime, "keepalive-time", o.KeepaliveTime, "Time for gRPC agent server keepalive.")
 	flags.StringVar(&o.ServiceAccountTokenPath, "service-account-token-path", o.ServiceAccountTokenPath, "If non-empty proxy agent uses this token to prove its identity to the proxy server.")
 	flags.StringVar(&o.AgentIdentifiers, "agent-identifiers", o.AgentIdentifiers, "Identifiers of the agent that will be used by the server when choosing agent. N.B. the list of identifiers must be in URL encoded format. e.g.,host=localhost&host=node1.mydomain.com&cidr=127.0.0.1/16&ipv4=1.2.3.4&ipv4=5.6.7.8&ipv6=:::::&default-route=true")
+	flags.BoolVar(&o.WarnOnChannelLimit, "warn-on-channel-limit", o.WarnOnChannelLimit, "Turns on a warning if the system is going to push to a full channel. The check involves an unsafe read.")
+	flags.BoolVar(&o.SyncForever, "sync-forever", o.SyncForever, "If true, the agent continues syncing, in order to support server count changes.")
 	return flags
 }
 
@@ -94,8 +111,11 @@ func (o *GrpcProxyAgentOptions) Print() {
 	klog.V(1).Infof("SyncInterval set to %v.\n", o.SyncInterval)
 	klog.V(1).Infof("ProbeInterval set to %v.\n", o.ProbeInterval)
 	klog.V(1).Infof("SyncIntervalCap set to %v.\n", o.SyncIntervalCap)
+	klog.V(1).Infof("Keepalive time set to %v.\n", o.KeepaliveTime)
 	klog.V(1).Infof("ServiceAccountTokenPath set to %q.\n", o.ServiceAccountTokenPath)
 	klog.V(1).Infof("AgentIdentifiers set to %s.\n", util.PrettyPrintURL(o.AgentIdentifiers))
+	klog.V(1).Infof("WarnOnChannelLimit set to %t.\n", o.WarnOnChannelLimit)
+	klog.V(1).Infof("SyncForever set to %v.\n", o.SyncForever)
 }
 
 func (o *GrpcProxyAgentOptions) Validate() error {
@@ -181,7 +201,10 @@ func NewGrpcProxyAgentOptions() *GrpcProxyAgentOptions {
 		SyncInterval:              1 * time.Second,
 		ProbeInterval:             1 * time.Second,
 		SyncIntervalCap:           10 * time.Second,
+		KeepaliveTime:             1 * time.Hour,
 		ServiceAccountTokenPath:   "",
+		WarnOnChannelLimit:        false,
+		SyncForever:               false,
 	}
 	return &o
 }
