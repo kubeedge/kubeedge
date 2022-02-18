@@ -160,14 +160,15 @@ func (eh *EdgeHub) cacheToCloud() error {
 	klog.Infof("start sending cache to cloud")
 	ci := edgeCache.GetCacheIndex()
 	cache := edgeCache.GetCache()
-	for _, name := range ci {
+	for len(ci) > 0 {
+		name := ci[0]
 		err := eh.chClient.Send(*cache[name])
 		if err != nil {
 			return err
 		}
+		ci = ci[1:]
 		edgeCache.RemoveCache(name)
 	}
-	edgeCache.CleanIndex()
 	klog.Infof("finished sending cache to cloud")
 	return nil
 }
