@@ -64,7 +64,7 @@ const (
 	DefaultVolumeStatsAggPeriod        = time.Minute
 	DefaultTunnelPort                  = 10004
 
-	CurrentSupportK8sVersion = "v1.21.4"
+	CurrentSupportK8sVersion = "v1.22.6"
 
 	// MetaManager
 	DefaultPodStatusSyncInterval = 60
