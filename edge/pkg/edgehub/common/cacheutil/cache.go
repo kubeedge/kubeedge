@@ -64,7 +64,7 @@ func (ec *EdgeCache) GetFirstIndex() string {
 }
 
 func (ec *EdgeCache) sortIndex(hash string) {
-	klog.Infof("ec cacheIndex: %v", ec.cacheIndex)
+	klog.V(4).Infof("ec cacheIndex: %v", ec.cacheIndex)
 	for index, item := range ec.cacheIndex {
 		if item == hash {
 			if (index + 1) != len(ec.cacheIndex) {
