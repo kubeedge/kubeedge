@@ -1,7 +1,6 @@
-= vendor/gopkg.in/fsnotify.v1 licensed under: =
+= vendor/github.com/bits-and-blooms/bitset licensed under: =
 
-Copyright (c) 2012 The Go Authors. All rights reserved.
-Copyright (c) 2012 fsnotify Authors. All rights reserved.
+Copyright (c) 2014 Will Fitzgerald. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -29,4 +28,4 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-= vendor/gopkg.in/fsnotify.v1/LICENSE c38914c9a7ab03bb2b96d4baaee10769
+= vendor/github.com/bits-and-blooms/bitset/LICENSE 0d2b5d66dabaff0df8e1ffe191a21bd1
