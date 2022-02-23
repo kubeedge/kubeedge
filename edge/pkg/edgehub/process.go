@@ -157,16 +157,18 @@ func (eh *EdgeHub) routeToCloud() {
 	}
 }
 func (eh *EdgeHub) cacheToCloud() error {
+	edgeCache.GetLock()
+	defer edgeCache.ReleaseLock()
 	klog.Infof("start sending cache to cloud")
-	ci := edgeCache.GetCacheIndex()
 	cache := edgeCache.GetCache()
-	for len(ci) > 0 {
-		name := ci[0]
-		err := eh.chClient.Send(*cache[name])
+	for edgeCache.GetIndexLength() > 0 {
+		name := edgeCache.GetFirstIndex()
+		err := eh.sendToCloud(*cache[name])
 		if err != nil {
 			return err
 		}
-		ci = ci[1:]
+		klog.Infof("successfully send cache %s to cloud", name)
+		edgeCache.ShiftIndex()
 		edgeCache.RemoveCache(name)
 	}
 	klog.Infof("finished sending cache to cloud")
