@@ -1,0 +1,14 @@
+FROM kubeedge/build-tools:latest as builder
+WORKDIR /work
+ADD . .
+RUN mkdir -p bin && \
+    make WHAT=edgecore && cp _output/local/bin/edgecore bin/edgecore && \
+    make WHAT=keadm && cp _output/local/bin/keadm bin/keadm
+
+FROM ubuntu:18.04
+COPY --from=builder /work/_output/local/bin/edgecore /usr/local/bin/edgecore
+COPY --from=builder /work/_output/local/bin/keadm /usr/local/bin/keadm
+
+WORKDIR /etc/kubeedge
+# Custom image can add more content here.
+# e.g. config
