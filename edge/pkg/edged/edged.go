@@ -308,7 +308,7 @@ func (e *edged) Start() {
 		true,
 		types.NodeName(e.nodeName),
 		e.podManager,
-		e.statusManager,
+		e,
 		e.kubeClient,
 		e.volumePluginMgr,
 		e.containerRuntime,
@@ -568,6 +568,10 @@ func newEdged(enable bool) (*edged, error) {
 		ed.dockerLegacyService,
 		ed.logManager,
 		ed.runtimeClassManager,
+		false,
+		"",
+		nil,
+		0.8,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("new generic runtime manager failed, err: %s", err.Error())
@@ -588,6 +592,7 @@ func newEdged(enable bool) (*edged, error) {
 			CgroupsPerQOS:                     edgedconfig.Config.CgroupsPerQOS,
 			KubeletRootDir:                    DefaultRootDir,
 			ExperimentalCPUManagerPolicy:      string(cpumanager.PolicyNone),
+			ExperimentalMemoryManagerPolicy:   "None",
 			CgroupRoot:                        edgedconfig.Config.CgroupRoot,
 			ExperimentalTopologyManagerPolicy: "none",
 			ExperimentalTopologyManagerScope:  "container",
@@ -757,7 +762,7 @@ func (e *edged) newStatsProvider(useLegacyCadvisorStats bool, imageService inter
 		e.runtimeCache,
 		e.runtimeService,
 		imageService,
-		hostStatsProvider)
+		hostStatsProvider, true)
 }
 
 // getEtcHostsPath returns the full host-side path to a pod's generated /etc/hosts file

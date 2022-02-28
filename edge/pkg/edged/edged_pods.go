@@ -541,9 +541,9 @@ func managedHostsFileContent(hostIP, hostName, hostDomainName string, hostAliase
 	return hostsFileContent
 }
 
-// IsPodTerminated returns true if the pod with the provided UID is in a terminated state ("Failed" or "Succeeded")
+// ShouldPodRuntimeBeRemoved returns true if the pod with the provided UID is in a terminated state ("Failed" or "Succeeded")
 // or if the pod has been deleted or removed
-func (e *edged) IsPodTerminated(uid types.UID) bool {
+func (e *edged) ShouldPodRuntimeBeRemoved(uid types.UID) bool {
 	pod, podFound := e.podManager.GetPodByUID(uid)
 	if !podFound {
 		return true
@@ -555,11 +555,39 @@ func podIsEvicted(podStatus v1.PodStatus) bool {
 	return podStatus.Phase == v1.PodFailed && podStatus.Reason == "Evicted"
 }
 
-// IsPodDeleted returns true if the pod is deleted.  For the pod to be deleted, either:
+// IsPodTerminationRequested returns true if the pod is deleted.  For the pod to be deleted, either:
 // 1. The pod object is deleted
 // 2. The pod's status is evicted
 // 3. The pod's deletion timestamp is set, and containers are not running
-func (e *edged) IsPodDeleted(uid types.UID) bool {
+func (e *edged) IsPodTerminationRequested(uid types.UID) bool {
+	pod, podFound := e.podManager.GetPodByUID(uid)
+	if !podFound {
+		return true
+	}
+	status, statusFound := e.statusManager.GetPodStatus(pod.UID)
+	if !statusFound {
+		status = pod.Status
+	}
+	return podIsEvicted(status) || (pod.DeletionTimestamp != nil && notRunning(status.ContainerStatuses))
+}
+
+// ShouldPodContentBeRemoved returns true if the pod is deleted.  For the pod to be deleted, either:
+// 1. The pod object is deleted
+// 2. The pod's status is evicted
+// 3. The pod's deletion timestamp is set, and containers are not running
+func (e *edged) ShouldPodContentBeRemoved(uid types.UID) bool {
+	pod, podFound := e.podManager.GetPodByUID(uid)
+	if !podFound {
+		return true
+	}
+	status, statusFound := e.statusManager.GetPodStatus(pod.UID)
+	if !statusFound {
+		status = pod.Status
+	}
+	return podIsEvicted(status) || (pod.DeletionTimestamp != nil && notRunning(status.ContainerStatuses))
+}
+
+func (e *edged) ShouldPodContainersBeTerminating(uid types.UID) bool {
 	pod, podFound := e.podManager.GetPodByUID(uid)
 	if !podFound {
 		return true

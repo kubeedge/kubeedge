@@ -11,6 +11,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"sigs.k8s.io/apiserver-network-proxy/pkg/server"
+	"sigs.k8s.io/apiserver-network-proxy/pkg/util"
 )
 
 type ProxyRunOptions struct {
@@ -38,7 +39,7 @@ type ProxyRunOptions struct {
 	HealthPort uint
 	// After a duration of this time if the server doesn't see any activity it
 	// pings the client to see if the transport is still alive.
-	KeepaliveTime       time.Duration
+	KeepaliveTime         time.Duration
 	FrontendKeepaliveTime time.Duration
 	// Enables pprof at host:AdminPort/debug/pprof.
 	EnableProfiling bool
@@ -70,6 +71,20 @@ type ProxyRunOptions struct {
 	// backend within the destCIDR. if it still can't find any backend,
 	// it will use the default backend manager to choose a random backend.
 	ProxyStrategies string
+
+	// This controls if we attempt to push onto a "full" transfer channel.
+	// However checking that the transfer channel is full is not safe.
+	// It violates our race condition checking. Adding locks around a potentially
+	// blocking call has its own problems, so it cannot easily be made race condition safe.
+	// The check is an "unlocked" read but is still use at your own peril.
+	WarnOnChannelLimit bool
+
+	// Cipher suites used by the server.
+	// If empty, the default suite will be used from tls.CipherSuites(),
+	// also checks if given comma separated list contains cipher from tls.InsecureCipherSuites().
+	// NOTE that cipher suites are not configurable for TLS1.3,
+	// see: https://pkg.go.dev/crypto/tls#Config, so in that case, this option won't have any effect.
+	CipherSuites string
 }
 
 func (o *ProxyRunOptions) Flags() *pflag.FlagSet {
@@ -100,6 +115,8 @@ func (o *ProxyRunOptions) Flags() *pflag.FlagSet {
 	flags.IntVar(&o.KubeconfigBurst, "kubeconfig-burst", o.KubeconfigBurst, "Maximum client burst (proxy server uses this client to authenticate agent tokens).")
 	flags.StringVar(&o.AuthenticationAudience, "authentication-audience", o.AuthenticationAudience, "Expected agent's token authentication audience (used with agent-namespace, agent-service-account, kubeconfig).")
 	flags.StringVar(&o.ProxyStrategies, "proxy-strategies", o.ProxyStrategies, "The list of proxy strategies used by the server to pick a backend/tunnel, available strategies are: default, destHost.")
+	flags.BoolVar(&o.WarnOnChannelLimit, "warn-on-channel-limit", o.WarnOnChannelLimit, "Turns on a warning if the system is going to push to a full channel. The check involves an unsafe read.")
+	flags.StringVar(&o.CipherSuites, "cipher-suites", o.CipherSuites, "The comma separated list of allowed cipher suites. Has no effect on TLS1.3. Empty means allow default list.")
 	return flags
 }
 
@@ -130,6 +147,8 @@ func (o *ProxyRunOptions) Print() {
 	klog.V(1).Infof("KubeconfigQPS set to %f.\n", o.KubeconfigQPS)
 	klog.V(1).Infof("KubeconfigBurst set to %d.\n", o.KubeconfigBurst)
 	klog.V(1).Infof("ProxyStrategies set to %q.\n", o.ProxyStrategies)
+	klog.V(1).Infof("WarnOnChannelLimit set to %t.\n", o.WarnOnChannelLimit)
+	klog.V(1).Infof("CipherSuites set to %q.\n", o.CipherSuites)
 }
 
 func (o *ProxyRunOptions) Validate() error {
@@ -252,8 +271,21 @@ func (o *ProxyRunOptions) Validate() error {
 			switch ps {
 			case string(server.ProxyStrategyDestHost):
 			case string(server.ProxyStrategyDefault):
+			case string(server.ProxyStrategyDefaultRoute):
 			default:
-				return fmt.Errorf("unknown proxy strategy: %s, available strategy are: default, destHost", ps)
+				return fmt.Errorf("unknown proxy strategy: %s, available strategy are: default, destHost, defaultRoute", ps)
+			}
+		}
+	}
+
+	// validate the cipher suites
+	if o.CipherSuites != "" {
+		acceptedCiphers := util.GetAcceptedCiphers()
+		css := strings.Split(o.CipherSuites, ",")
+		for _, cipher := range css {
+			_, ok := acceptedCiphers[cipher]
+			if !ok {
+				return fmt.Errorf("cipher suite %s not supported, doesn't exist or considered as insecure", cipher)
 			}
 		}
 	}
@@ -289,6 +321,8 @@ func NewProxyRunOptions() *ProxyRunOptions {
 		KubeconfigBurst:           0,
 		AuthenticationAudience:    "",
 		ProxyStrategies:           "default",
+		WarnOnChannelLimit:        false,
+		CipherSuites:              "",
 	}
 	return &o
 }

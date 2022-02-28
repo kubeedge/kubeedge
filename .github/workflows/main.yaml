@@ -128,7 +128,7 @@ jobs:
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/ginkgo@latest
           go install sigs.k8s.io/kind@v0.11.1
-          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.21.4/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.22.6/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v2
@@ -158,7 +158,7 @@ jobs:
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/ginkgo@latest
           go install sigs.k8s.io/kind@v0.11.1
-          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.21.4/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.22.6/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v2
@@ -188,7 +188,7 @@ jobs:
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/ginkgo@latest
           go install sigs.k8s.io/kind@v0.11.1
-          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.21.4/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.22.6/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v2

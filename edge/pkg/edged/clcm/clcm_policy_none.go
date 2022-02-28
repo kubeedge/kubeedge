@@ -53,6 +53,7 @@ func NewContainerLifecycleManager(kubeletRootDir string) (ContainerLifecycleMana
 	result := make(v1.ResourceList)
 	clcm.cpuManager, err = cpumanager.NewManager(
 		PolicyNone,
+		nil,
 		reconcilePeriod,
 		nil,
 		cpuset.NewCPUSet(),
