@@ -60,6 +60,7 @@ func (eh *EdgeHub) Enable() bool {
 func (eh *EdgeHub) Start() {
 	eh.certManager = certificate.NewCertManager(config.Config.EdgeHub, config.Config.NodeName)
 	eh.certManager.Start()
+	eh.initCache()
 
 	HasTLSTunnelCerts <- true
 	close(HasTLSTunnelCerts)
