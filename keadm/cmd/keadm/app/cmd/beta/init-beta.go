@@ -27,6 +27,7 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
+	"github.com/kubeedge/kubeedge/pkg/version"
 )
 
 var (
@@ -81,6 +82,13 @@ func NewBetaInit() *cobra.Command {
 func newBetaInitOptions() *types.BetaInitOptions {
 	opts := &types.BetaInitOptions{}
 	opts.KubeConfig = types.DefaultKubeConfig
+
+	// By default, the static version number set at build time is used.
+	currentVersion := version.Get().String()
+	if !strings.Contains(currentVersion, "v0.0.0-master+$Format:%h$") {
+		opts.CloudcoreTag = currentVersion
+		opts.IptablesMgrTag = currentVersion
+	}
 	return opts
 }
 
@@ -104,13 +112,13 @@ func addBetaInitJoinOtherFlags(cmd *cobra.Command, BetaInitOpts *types.BetaInitO
 		"The image repo of the cloudcore, default is kubeedge/cloudcore")
 
 	cmd.Flags().StringVar(&BetaInitOpts.CloudcoreTag, types.CloudcoreTag, BetaInitOpts.CloudcoreTag,
-		"The image tag of the cloudcore, default is v1.9.0")
+		"The image tag of the cloudcore, the default version is from the git tag")
 
 	cmd.Flags().StringVar(&BetaInitOpts.IptablesMgrImage, types.IptablesMgrImage, BetaInitOpts.IptablesMgrImage,
 		"The image repo of the iptables manager, default is kubeedge/iptables-manager")
 
 	cmd.Flags().StringVar(&BetaInitOpts.IptablesMgrTag, types.IptablesMgrTag, BetaInitOpts.IptablesMgrTag,
-		"The image tag of the iptables manager, default is v1.9.0")
+		"The image tag of the iptables manager, the default version is from the git tag")
 
 	cmd.Flags().StringVar(&BetaInitOpts.ExternalHelmRoot, types.ExternalHelmRoot, BetaInitOpts.ExternalHelmRoot,
 		"Add external helm root path to keadm.")

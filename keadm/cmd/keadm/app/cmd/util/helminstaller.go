@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/blang/semver"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
@@ -172,7 +171,7 @@ func (cu *KubeCloudHelmInstTool) RunHelmManifest(baseHelmRoot string) error {
 // beforeRenderer handles the value of the profile.
 func (cu *KubeCloudHelmInstTool) beforeRenderer(baseHelmRoot string) error {
 	if cu.Profile == "" {
-		cu.Profile = fmt.Sprintf("%s=%s", types.VersionProfileKey, types.HelmSupportedMinVersion)
+		cu.Profile = fmt.Sprintf("%s=%s", types.VersionProfileKey, types.HelmDefaultVersion)
 	}
 	// profile must be invalid
 	p := strings.Split(cu.Profile, "=")
@@ -361,6 +360,9 @@ func (cu *KubeCloudHelmInstTool) checkProfile(baseHelmRoot string) error {
 	if err != nil {
 		return ErrListProfiles
 	}
+
+	// iptalesmgr is also an valid profile key.
+	validProfiles[types.IptablesMgrProfileKey] = true
 	if ok := validProfiles[cu.ProfileKey]; !ok {
 		validKeys := make([]string, len(validProfiles))
 		for k := range validProfiles {
@@ -377,20 +379,11 @@ func (cu *KubeCloudHelmInstTool) handleProfile(profileValue string) error {
 	switch cu.ProfileKey {
 	case types.VersionProfileKey:
 		if profileValue == "" {
-			profileValue = types.HelmSupportedMinVersion
+			profileValue = types.HelmDefaultVersion
 		}
 		profileValueSuffix := strings.TrimPrefix(profileValue, "v")
 		// confirm it startswith "v"
 		if profileValue != profileValueSuffix {
-			version, err := semver.Make(profileValueSuffix)
-			if err != nil {
-				return err
-			}
-			minVersion, _ := semver.Make(strings.TrimPrefix(types.HelmSupportedMinVersion, "v"))
-			if version.LT(minVersion) {
-				return fmt.Errorf("the given version %s is not supported, you can try binary deployments with this version", profileValue)
-			}
-
 			cu.Sets = append(cu.Sets, fmt.Sprintf("%s=v%s", "cloudCore.image.tag", profileValueSuffix))
 			cu.Sets = append(cu.Sets, fmt.Sprintf("%s=v%s", "iptablesManager.image.tag", profileValueSuffix))
 		} else {
@@ -443,7 +436,11 @@ func (cu *KubeCloudHelmInstTool) isInnerProfile() bool {
 func (cu *KubeCloudHelmInstTool) combineProfVals() (map[string]interface{}, error) {
 	profileValsMap := map[string]interface{}{}
 
-	profileValue, err := loadValues(cu.ExternalHelmRoot, cu.ProfileKey, cu.existsProfile)
+	profilekey := cu.ProfileKey
+	if profilekey == types.IptablesMgrProfileKey {
+		profilekey = types.VersionProfileKey
+	}
+	profileValue, err := loadValues(cu.ExternalHelmRoot, profilekey, cu.existsProfile)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load profile yaml:%s", err.Error())
 	}

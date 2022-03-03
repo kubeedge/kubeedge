@@ -205,7 +205,7 @@ const (
 	ExternalIptablesMgrMode = "external"
 	InternalIptablesMgrMode = "internal"
 	EdgemeshProfileKey      = "edgemesh"
-	HelmSupportedMinVersion = "v1.9.0"
+	HelmDefaultVersion      = "v1.9.0"
 )
 
 var (
