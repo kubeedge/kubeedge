@@ -222,6 +222,11 @@ for PACKAGE in $(go list -m -json all | jq -r .Path | sort -f); do
       echo "${PACKAGE} has no files, skipping" >&2
       continue
   fi
+  if [[ "${PACKAGE}" = "go.etcd.io/etcd" ]]; then
+    # temporarily treat this way until find out a better rule
+    echo "${PACKAGE}, temporarily skipping" >&2
+    continue
+  fi
   echo "${PACKAGE}"
 
   process_content "${PACKAGE}" LICENSE
