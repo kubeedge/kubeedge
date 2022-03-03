@@ -12,8 +12,8 @@ import (
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/msghandler"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/cacheutil"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/msghandler"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
 )
 
@@ -184,7 +184,7 @@ func (eh *EdgeHub) enableCache() {
 				}
 				return
 			}
-			message, err := beehiveContext.Receive(ModuleNameEdgeHub)
+			message, err := beehiveContext.Receive(modules.EdgeHubModuleName)
 			if err != nil {
 				klog.Errorf("failed to receive message from edge: %v", err)
 				time.Sleep(time.Second)
