@@ -22,7 +22,7 @@ CRD_VERSIONS=v1
 CRD_OUTPUTS=build/crds
 DEVICES_VERSION=v1alpha2
 RELIABLESYNCS_VERSION=v1alpha1
-HELM_CRDS_DIR=build/helm/cloudcore/crds
+HELM_CRDS_DIR=build/helm/charts/cloudcore/crds
 ROUTER_DIR=build/crds/router
 
 _crdOptions="crd:crdVersions=${CRD_VERSIONS},generateEmbeddedObjectMeta=true,allowDangerousTypes=true"
