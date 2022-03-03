@@ -78,7 +78,7 @@ func NewJoinBetaCommand() *cobra.Command {
 
 			step.Printf("Check if the management directory is clean")
 			if _, err := os.Stat(util.KubeEdgePath); err != nil {
-				if err == os.ErrNotExist {
+				if os.IsNotExist(err) {
 					return
 				}
 				klog.Exitf("Stat management directory %s failed: %v", util.KubeEdgePath, err)
@@ -183,7 +183,7 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 
 	configFilePath := filepath.Join(util.KubeEdgePath, "config/edgecore.yaml")
 	_, err := os.Stat(configFilePath)
-	if err == nil || err == os.ErrExist {
+	if err == nil || os.IsExist(err) {
 		klog.Infoln("Read existing configuration file")
 		b, err := os.ReadFile(configFilePath)
 		if err != nil {
