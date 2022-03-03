@@ -125,12 +125,12 @@ func (r *RpmOS) KillKubeEdgeBinary(proc string) error {
 
 // IsKubeEdgeProcessRunning checks if the given process is running or not
 func (r *RpmOS) IsKubeEdgeProcessRunning(proc string) (bool, error) {
-	return isKubeEdgeProcessRunning(proc)
+	return IsKubeEdgeProcessRunning(proc)
 }
 
 // IsProcessRunning checks if the given process is running or not
 func (r *RpmOS) IsProcessRunning(proc string) (bool, error) {
-	return isKubeEdgeProcessRunning(proc)
+	return IsKubeEdgeProcessRunning(proc)
 }
 
 func getOSVendorName() (string, error) {

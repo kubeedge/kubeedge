@@ -14,23 +14,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package beta
+package common
 
 import (
-	"github.com/spf13/cobra"
+	"fmt"
+	"strconv"
 
-	edge "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/edge"
+	"k8s.io/klog/v2"
 )
 
-// NewBeta represents the beta command
-func NewBeta() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "beta",
-		Short: "keadm beta command",
-		Long:  `keadm beta command provides some subcommands that are still in testing, but have complete functions and can be used in advance`,
-	}
-	cmd.ResetFlags()
+func NewStep() *Step {
+	return &Step{}
+}
 
-	cmd.AddCommand(edge.NewJoinBetaCommand())
-	return cmd
+type Step struct {
+	n int
+}
+
+func (s *Step) Printf(format string, args ...interface{}) {
+	s.n++
+	format = strconv.Itoa(s.n) + ". " + format
+	klog.InfoDepth(2, fmt.Sprintf(format, args...))
 }
