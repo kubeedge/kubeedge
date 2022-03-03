@@ -42,6 +42,7 @@ type JoinOptions struct {
 	CertPort              string
 	CGroupDriver          string
 	Labels                []string
+	WithMQTT              bool
 }
 
 type CheckOptions struct {

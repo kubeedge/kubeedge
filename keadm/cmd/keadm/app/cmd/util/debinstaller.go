@@ -92,7 +92,7 @@ func (d *DebOS) KillKubeEdgeBinary(proc string) error {
 
 // IsKubeEdgeProcessRunning checks if the given process is running or not
 func (d *DebOS) IsKubeEdgeProcessRunning(proc string) (bool, error) {
-	return isKubeEdgeProcessRunning(proc)
+	return IsKubeEdgeProcessRunning(proc)
 }
 
 func getSystemArch() (string, error) {
@@ -105,5 +105,5 @@ func getSystemArch() (string, error) {
 }
 
 func (d *DebOS) IsProcessRunning(proc string) (bool, error) {
-	return isKubeEdgeProcessRunning(proc)
+	return IsKubeEdgeProcessRunning(proc)
 }

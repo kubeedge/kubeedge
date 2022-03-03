@@ -161,7 +161,7 @@ func TestGetLatestVersion(t *testing.T) {
 }
 
 func TestHasSystemd(t *testing.T) {
-	hasSystemd()
+	HasSystemd()
 }
 
 func TestFileExists(t *testing.T) {

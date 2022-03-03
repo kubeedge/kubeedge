@@ -47,6 +47,7 @@ const (
 	CloudServiceFile     = "cloudcore.service"
 	ServiceFileURLFormat = "https://raw.githubusercontent.com/kubeedge/kubeedge/release-%s/build/tools/%s"
 	KubeEdgePath         = "/etc/kubeedge/"
+	KubeEdgeTmpPath      = "/tmp/kubeedge"
 	KubeEdgeUsrBinPath   = "/usr/local/bin"
 	KubeEdgeBinaryName   = "edgecore"
 
@@ -333,7 +334,7 @@ func runEdgeCore(version semver.Version) error {
 		return fmt.Errorf("not able to create %s folder path", KubeEdgeLogPath)
 	}
 
-	systemdExist := hasSystemd()
+	systemdExist := HasSystemd()
 
 	var binExec string
 	if systemdExist {
@@ -363,7 +364,7 @@ func killKubeEdgeBinary(proc string) error {
 	if proc == "cloudcore" {
 		binExec = fmt.Sprintf("pkill %s", proc)
 	} else {
-		systemdExist := hasSystemd()
+		systemdExist := HasSystemd()
 
 		var serviceName string
 		if running, err := isEdgeCoreServiceRunning("edge"); err == nil && running {
@@ -394,8 +395,8 @@ func killKubeEdgeBinary(proc string) error {
 	return nil
 }
 
-// isKubeEdgeProcessRunning checks if the given process is running or not
-func isKubeEdgeProcessRunning(proc string) (bool, error) {
+// IsKubeEdgeProcessRunning checks if the given process is running or not
+func IsKubeEdgeProcessRunning(proc string) (bool, error) {
 	procRunning := fmt.Sprintf("pidof %s 2>&1", proc)
 	cmd := NewCommand(procRunning)
 
@@ -424,9 +425,9 @@ func isEdgeCoreServiceRunning(serviceName string) (bool, error) {
 	return false, err
 }
 
-// check if systemd exist
-// if command run failed, then check it by sd_booted
-func hasSystemd() bool {
+// HasSystemd checks if systemd exist.
+// if command run failed, then check it by sd_booted.
+func HasSystemd() bool {
 	cmd := "file /sbin/init"
 
 	if err := NewCommand(cmd).Exec(); err == nil {
@@ -691,7 +692,7 @@ func downloadServiceFile(componentType types.ComponentType, version semver.Versi
 	// No need to download if
 	// 1. the systemd not exists
 	// 2. the service file already exists
-	if hasSystemd() {
+	if HasSystemd() {
 		var ServiceFileName string
 		switch componentType {
 		case types.CloudCore:

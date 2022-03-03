@@ -18,6 +18,8 @@ package beta
 
 import (
 	"github.com/spf13/cobra"
+
+	edge "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/edge"
 )
 
 // NewBeta represents the beta command
@@ -29,5 +31,6 @@ func NewBeta() *cobra.Command {
 	}
 	cmd.ResetFlags()
 
+	cmd.AddCommand(edge.NewJoinBetaCommand())
 	return cmd
 }
