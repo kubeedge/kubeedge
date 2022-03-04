@@ -32,5 +32,8 @@ func NewBeta() *cobra.Command {
 	cmd.ResetFlags()
 
 	cmd.AddCommand(edge.NewJoinBetaCommand())
+	cmd.AddCommand(NewBetaInit())
+	cmd.AddCommand(NewBetaManifestGenerate())
+
 	return cmd
 }
