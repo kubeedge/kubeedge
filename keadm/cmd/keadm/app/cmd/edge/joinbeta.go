@@ -37,7 +37,6 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1/validation"
 	"github.com/kubeedge/kubeedge/pkg/image"
 	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
-	"github.com/kubeedge/kubeedge/pkg/version"
 )
 
 var (
@@ -92,6 +91,13 @@ func NewJoinBetaCommand() *cobra.Command {
 			}
 		},
 		Run: func(cmd *cobra.Command, args []string) {
+			ver, err := util.GetCurrentVersion(joinOptions.KubeEdgeVersion)
+			if err != nil {
+				klog.Errorf("Edge node join failed: %v", err)
+				os.Exit(1)
+			}
+			joinOptions.KubeEdgeVersion = ver
+
 			if err := join(joinOptions, step); err != nil {
 				klog.Errorf("Edge node join failed: %v", err)
 				os.Exit(1)
@@ -110,13 +116,6 @@ func newOption() *common.JoinOptions {
 	joinOptions.CGroupDriver = v1alpha1.CGroupDriverCGroupFS
 	joinOptions.CertPath = common.DefaultCertPath
 	joinOptions.RuntimeType = kubetypes.DockerContainerRuntime
-	joinOptions.KubeEdgeVersion = "v" + common.DefaultKubeEdgeVersion
-
-	// By default, the static version number set at build time is used.
-	currentVersion := version.Get().String()
-	if !strings.Contains(currentVersion, "v0.0.0-master+$Format:%h$") {
-		joinOptions.KubeEdgeVersion = currentVersion
-	}
 	return joinOptions
 }
 

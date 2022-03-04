@@ -17,7 +17,6 @@ limitations under the License.
 package beta
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/blang/semver"
@@ -27,7 +26,6 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
-	"github.com/kubeedge/kubeedge/pkg/version"
 )
 
 var (
@@ -60,12 +58,23 @@ func NewBetaInit() *cobra.Command {
 		Long:    cloudBetaInitLongDescription,
 		Example: cloudBetaInitExample,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			ver, err := util.GetCurrentVersion(BetaInit.CloudcoreTag)
+			if err != nil {
+				return err
+			}
+			BetaInit.CloudcoreTag = ver
+
+			ver, err = util.GetCurrentVersion(BetaInit.IptablesMgrTag)
+			if err != nil {
+				return err
+			}
+			BetaInit.IptablesMgrTag = ver
+
 			checkFlags := func(f *pflag.Flag) {
 				util.AddToolVals(f, flagVals)
 			}
 			cmd.Flags().VisitAll(checkFlags)
-			err := AddBetaInit2ToolsList(tools, flagVals, BetaInit)
-			if err != nil {
+			if err := AddBetaInit2ToolsList(tools, flagVals, BetaInit); err != nil {
 				return err
 			}
 			return ExecuteBetaInit(tools)
@@ -82,13 +91,6 @@ func NewBetaInit() *cobra.Command {
 func newBetaInitOptions() *types.BetaInitOptions {
 	opts := &types.BetaInitOptions{}
 	opts.KubeConfig = types.DefaultKubeConfig
-
-	// By default, the static version number set at build time is used.
-	currentVersion := version.Get().String()
-	if !strings.Contains(currentVersion, "v0.0.0-master+$Format:%h$") {
-		opts.CloudcoreTag = currentVersion
-		opts.IptablesMgrTag = currentVersion
-	}
 	return opts
 }
 
@@ -136,31 +138,13 @@ func addForceOptionsFlags(cmd *cobra.Command, BetaInitOpts *types.BetaInitOption
 
 //AddBetaInit2ToolsList reads the flagData (containing val and default val) and join options to fill the list of tools.
 func AddBetaInit2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string]types.FlagData, BetaInitOptions *types.BetaInitOptions) error {
-	var kubeVer string
-	var latestVersion string
-	for i := 0; i < util.RetryTimes; i++ {
-		version, err := util.GetLatestVersion()
-		if err != nil {
-			fmt.Println("Failed to get the latest KubeEdge release version, error: ", err)
-			continue
-		}
-		if len(version) > 0 {
-			kubeVer = strings.TrimPrefix(version, "v")
-			latestVersion = version
-			break
-		}
-	}
-	if len(latestVersion) == 0 {
-		kubeVer = types.DefaultKubeEdgeVersion
-		fmt.Println("Failed to get the latest KubeEdge release version, will use default version: ", kubeVer)
-	}
-
 	if BetaInitOptions.Namespace == "" {
 		BetaInitOptions.Namespace = constants.SystemNamespace
 	}
 
+	cleanVersion := strings.TrimPrefix(BetaInitOptions.CloudcoreTag, "v")
 	common := util.Common{
-		ToolVersion: semver.MustParse(kubeVer),
+		ToolVersion: semver.MustParse(cleanVersion),
 		KubeConfig:  BetaInitOptions.KubeConfig,
 	}
 	toolList["helm"] = &util.KubeCloudHelmInstTool{
