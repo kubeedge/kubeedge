@@ -20,6 +20,9 @@ const (
 	// KubeEdgeVersion sets the version of KubeEdge to be used
 	KubeEdgeVersion = "kubeedge-version"
 
+	// ImageRepository sets the image repository to pull images
+	ImageRepository = "image-repository"
+
 	// KubeConfig sets the path of kubeconfig
 	KubeConfig = "kube-config"
 

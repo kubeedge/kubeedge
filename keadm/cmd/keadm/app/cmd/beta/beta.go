@@ -29,11 +29,13 @@ func NewBeta() *cobra.Command {
 		Short: "keadm beta command",
 		Long:  `keadm beta command provides some subcommands that are still in testing, but have complete functions and can be used in advance`,
 	}
+
 	cmd.ResetFlags()
 
 	cmd.AddCommand(edge.NewJoinBetaCommand())
 	cmd.AddCommand(NewBetaInit())
 	cmd.AddCommand(NewBetaManifestGenerate())
+	cmd.AddCommand(newCmdConfig())
 
 	return cmd
 }
