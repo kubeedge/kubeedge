@@ -11,14 +11,12 @@ require (
 	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/container-storage-interface/spec v1.3.0
 	github.com/coreos/go-systemd v0.0.0-20190620071333-e64a0ec8b42a // indirect
-	github.com/docker/docker v20.10.2+incompatible
 	github.com/eclipse/paho.mqtt.golang v1.2.0
 	github.com/emicklei/go-restful v2.9.6+incompatible
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang/mock v1.4.4
 	github.com/golang/protobuf v1.4.3
-	github.com/google/cadvisor v0.39.0
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2
@@ -45,18 +43,16 @@ require (
 	k8s.io/apiserver v0.21.4
 	k8s.io/cli-runtime v0.21.4
 	k8s.io/client-go v0.21.4
-	k8s.io/cloud-provider v0.21.4
 	k8s.io/cluster-bootstrap v0.21.4 // indirect
 	k8s.io/code-generator v0.21.4
 	k8s.io/component-base v0.21.4
-	k8s.io/cri-api v0.21.4
-	k8s.io/csi-translation-lib v0.21.4
+	k8s.io/cri-api v0.21.4 // indirect
 	k8s.io/klog/v2 v2.8.0
 	k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7
 	k8s.io/kube-scheduler v0.21.4 // indirect
-	k8s.io/kubelet v0.21.4
+	k8s.io/kubelet v0.21.4 // indirect
 	k8s.io/kubernetes v1.21.4
-	k8s.io/mount-utils v0.21.4
+	k8s.io/mount-utils v0.21.4 // indirect
 	k8s.io/utils v0.0.0-20201110183641-67b214c5f920
 	sigs.k8s.io/apiserver-network-proxy v0.0.20
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.22
@@ -95,6 +91,7 @@ replace (
 	k8s.io/kube-scheduler v0.0.0 => k8s.io/kube-scheduler v0.21.4
 	k8s.io/kubectl => k8s.io/kubectl v0.21.4
 	k8s.io/kubelet v0.0.0 => k8s.io/kubelet v0.21.4
+	k8s.io/kubernetes v0.0.0 => github.com/kubeedge/kubernetes v1.21.4-ke1
 	k8s.io/legacy-cloud-providers v0.0.0 => k8s.io/legacy-cloud-providers v0.21.4
 	k8s.io/metrics v0.0.0 => k8s.io/metrics v0.21.4
 	k8s.io/mount-utils v0.0.0 => k8s.io/mount-utils v0.21.4
