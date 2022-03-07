@@ -36,6 +36,7 @@ func NewBeta() *cobra.Command {
 	cmd.AddCommand(NewBetaInit())
 	cmd.AddCommand(NewBetaManifestGenerate())
 	cmd.AddCommand(newCmdConfig())
+	cmd.AddCommand(NewKubeEdgeResetBeta())
 
 	return cmd
 }
