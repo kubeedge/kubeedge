@@ -25,6 +25,7 @@ import (
 
 	versioned "github.com/kubeedge/kubeedge/cloud/pkg/client/clientset/versioned"
 	devices "github.com/kubeedge/kubeedge/cloud/pkg/client/informers/externalversions/devices"
+	groupmanagement "github.com/kubeedge/kubeedge/cloud/pkg/client/informers/externalversions/groupmanagement"
 	internalinterfaces "github.com/kubeedge/kubeedge/cloud/pkg/client/informers/externalversions/internalinterfaces"
 	reliablesyncs "github.com/kubeedge/kubeedge/cloud/pkg/client/informers/externalversions/reliablesyncs"
 	rules "github.com/kubeedge/kubeedge/cloud/pkg/client/informers/externalversions/rules"
@@ -175,12 +176,17 @@ type SharedInformerFactory interface {
 	WaitForCacheSync(stopCh <-chan struct{}) map[reflect.Type]bool
 
 	Devices() devices.Interface
+	Groupmanagement() groupmanagement.Interface
 	Reliablesyncs() reliablesyncs.Interface
 	Rules() rules.Interface
 }
 
 func (f *sharedInformerFactory) Devices() devices.Interface {
 	return devices.New(f, f.namespace, f.tweakListOptions)
+}
+
+func (f *sharedInformerFactory) Groupmanagement() groupmanagement.Interface {
+	return groupmanagement.New(f, f.namespace, f.tweakListOptions)
 }
 
 func (f *sharedInformerFactory) Reliablesyncs() reliablesyncs.Interface {
