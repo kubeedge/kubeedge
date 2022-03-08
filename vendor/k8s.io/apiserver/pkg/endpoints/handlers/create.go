@@ -84,7 +84,6 @@ func createHandler(r rest.NamedCreater, scope *RequestScope, admit admission.Int
 			return
 		}
 
-		gv := scope.Kind.GroupVersion()
 		s, err := negotiation.NegotiateInputSerializer(req, false, scope.Serializer)
 		if err != nil {
 			scope.err(err, w, req)
@@ -122,11 +121,7 @@ func createHandler(r rest.NamedCreater, scope *RequestScope, admit admission.Int
 			scope.err(err, w, req)
 			return
 		}
-		if gvk.GroupVersion() != gv {
-			err = errors.NewBadRequest(fmt.Sprintf("the API version in the data (%s) does not match the expected API version (%v)", gvk.GroupVersion().String(), gv.String()))
-			scope.err(err, w, req)
-			return
-		}
+		
 		trace.Step("Conversion done")
 
 		// On create, get name from new object if unset
