@@ -30,7 +30,7 @@ Keadm adds some new sub-commands to improve the user experience, including conta
 
 - `beta join`: Installing edgecore as system service from docker image, no need to download from github release.
 
-- `beta reset`: Installing edgecore as system service from docker image, no need to download from github release.
+- `beta reset`: Reset the node, clean up the resources installed on the node by `beta init` or `beta join`. It will automatically detect the type of node to clean up.
 
 - `beta manifest generate`: Generate all the manifests to deploy the cloudside components.
 
