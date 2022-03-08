@@ -334,6 +334,9 @@ func (s *projectedVolumeMounter) collectData(mounterArgs volume.MounterArgs) (ma
 				auds = []string{tp.Audience}
 			}
 			tr, err := s.plugin.getServiceAccountToken(s.pod.Namespace, s.pod.Spec.ServiceAccountName, &authenticationv1.TokenRequest{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: s.pod.Spec.ServiceAccountName,
+				},
 				Spec: authenticationv1.TokenRequestSpec{
 					Audiences:         auds,
 					ExpirationSeconds: tp.ExpirationSeconds,
