@@ -28,18 +28,41 @@ const (
 
 type Set map[string]string
 
-func (s Set) Current(ver string) Set {
+var cloudComponentSet = Set{}
+
+var cloudThirdPartySet = Set{}
+
+var edgeComponentSet = Set{
+	EdgeCore: "kubeedge/installation-package",
+}
+
+var edgeThirdPartySet = Set{
+	EdgeMQTT:  "eclipse-mosquitto:1.6.15",
+	EdgePause: "kubeedge/pause:3.1",
+}
+
+// Current replace repository and version for set
+func (s Set) Current(imageRepository, ver string) Set {
 	// To prevent the initial set from being modified,
 	// a new set is returned anyway.
 	set := make(Set)
+
 	for k, v := range s {
-		if ver == "" {
-			set[k] = v
-			continue
+		cur := v
+		if ver != "" {
+			arr := strings.SplitN(v, ":", 2)
+			cur = arr[0] + ":" + ver
 		}
-		arr := strings.SplitN(v, ":", 2)
-		set[k] = arr[0] + ":" + ver
+		if imageRepository != "" {
+			arr := strings.SplitN(cur, "/", 2)
+			cur = imageRepository + "/" + arr[0]
+			if len(arr) == 2 {
+				cur = imageRepository + "/" + arr[1]
+			}
+		}
+		set[k] = cur
 	}
+
 	return set
 }
 
@@ -47,13 +70,16 @@ func (s Set) Get(name string) string {
 	return s[name]
 }
 
-var edgeSet = Set{
-	EdgeCore: "kubeedge/installation-package",
+func (s Set) Merge(src Set) Set {
+	for k, v := range src {
+		s[k] = v
+	}
+	return s
 }
 
-func EdgeSet(version string) Set {
-	set := edgeSet.Current(version)
-	set[EdgeMQTT] = "eclipse-mosquitto:1.6.15"
-	set[EdgePause] = "kubeedge/pause:3.1"
+func EdgeSet(imageRepository, version string) Set {
+	set := edgeComponentSet.Current(imageRepository, version)
+	thirdSet := edgeThirdPartySet.Current(imageRepository, "")
+	set = set.Merge(thirdSet)
 	return set
 }
