@@ -46,3 +46,6 @@ data:
         enable: {{ .Values.cloudCore.modules.dynamicController.enable }}
       router:
         enable: {{ .Values.cloudCore.modules.router.enable }}
+      iptablesManager:
+        enable: {{ .Values.iptablesManager.enable }}
+        mode: {{ .Values.iptablesManager.mode }}
