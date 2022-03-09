@@ -19,6 +19,7 @@ package metamanager
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -448,6 +449,21 @@ func TestProcessDelete(t *testing.T) {
 			t.Errorf("Wrong message received : Wanted %v and Got %v", want, message.GetContent())
 		}
 	})
+
+	// Success Case
+	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).Times(2)
+	querySeterMock.EXPECT().Delete().Return(int64(1), nil).Times(2)
+	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(2)
+	resource := fmt.Sprintf("test/%s/nginx", model.ResourceTypePod)
+	msg = model.NewMessage("").BuildRouter(ModuleNameEdged, modules.MetaGroup, resource, model.DeleteOperation)
+	meta.processDelete(*msg)
+	message, _ = beehiveContext.Receive(ModuleNameEdgeHub)
+	t.Run("SuccessSourceEdged", func(t *testing.T) {
+		want := ModuleNameEdged
+		if message.GetSource() != want {
+			t.Errorf("Wrong message received : Wanted from source %v and Got from source %v", want, message.GetSource())
+		}
+	})
 }
 
 // TestProcessQuery is function to test processQuery
@@ -643,50 +659,6 @@ func TestProcessNodeConnection(t *testing.T) {
 	t.Run("ConnectedFalse", func(t *testing.T) {
 		if metaManagerConfig.Connected != false {
 			t.Errorf("Connected was not set to false")
-		}
-	})
-}
-
-// TestProcessSync is function to test processSync
-func TestProcessSync(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-	ormerMock := beego.NewMockOrmer(mockCtrl)
-	querySeterMock := beego.NewMockQuerySeter(mockCtrl)
-	dbm.DBAccess = ormerMock
-	meta := newMetaManager(true)
-	core.Register(meta)
-
-	add := &common.ModuleInfo{
-		ModuleName: meta.Name(),
-		ModuleType: common.MsgCtxTypeChannel,
-	}
-	beehiveContext.AddModule(add)
-	beehiveContext.AddModuleGroup(meta.Name(), meta.Group())
-	edgeHub := &common.ModuleInfo{
-		ModuleName: ModuleNameEdgeHub,
-		ModuleType: common.MsgCtxTypeChannel,
-	}
-	beehiveContext.AddModule(edgeHub)
-	beehiveContext.AddModuleGroup(ModuleNameEdgeHub, modules.HubGroup)
-
-	//QueryMeta Length > 0 Success Case
-	fakeDao := new([]dao.Meta)
-	fakeDaoArray := make([]dao.Meta, 1)
-	fakeDaoArray[0] = dao.Meta{Key: "Test/Test/Test", Value: "\"Test\""}
-	fakeDao = &fakeDaoArray
-	querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDao).Return(int64(1), nil).Times(2)
-	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).Times(2)
-	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(2)
-	meta.processSync()
-	message, _ := beehiveContext.Receive(ModuleNameEdgeHub)
-	t.Run("QueryMetaLengthSuccess Case", func(t *testing.T) {
-		want := make([]interface{}, 1)
-		want[0] = "Test"
-		bytesWant, _ := json.Marshal(want)
-		bytesGot, _ := json.Marshal(message.GetContent())
-		if string(bytesGot) != string(bytesWant) {
-			t.Errorf("Wrong message receive : Wanted %v and Got %v", want, message.GetContent())
 		}
 	})
 }

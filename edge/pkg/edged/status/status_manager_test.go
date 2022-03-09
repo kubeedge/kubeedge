@@ -1,0 +1,154 @@
+/*
+Copyright 2022 The KubeEdge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package status
+
+import (
+	"testing"
+	"time"
+
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes/fake"
+	statustest "k8s.io/kubernetes/pkg/kubelet/status/testing"
+
+	"github.com/kubeedge/beehive/pkg/common"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
+)
+
+func init() {
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
+
+	metaManager := &common.ModuleInfo{
+		ModuleName: "metaManager",
+		ModuleType: common.MsgCtxTypeChannel,
+	}
+	beehiveContext.AddModule(metaManager)
+	beehiveContext.AddModuleGroup("metaManager", "meta")
+
+	edgeHub := &common.ModuleInfo{
+		ModuleName: "websocket",
+		ModuleType: common.MsgCtxTypeChannel,
+	}
+	beehiveContext.AddModule(edgeHub)
+	beehiveContext.AddModuleGroup("websocket", modules.HubGroup)
+
+	edged := &common.ModuleInfo{
+		ModuleName: "edged",
+		ModuleType: common.MsgCtxTypeChannel,
+	}
+	beehiveContext.AddModule(edged)
+}
+
+// Generate new instance of test pod with the same initial value.
+func getTestPod() *v1.Pod {
+	return &v1.Pod{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Pod",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			UID:       "12345678",
+			Name:      "foo",
+			Namespace: "new",
+		},
+	}
+}
+
+func getPodStatus(reason string) v1.PodStatus {
+	return v1.PodStatus{
+		Reason: reason,
+	}
+}
+
+func newTestManager() *manager {
+	podManager := podmanager.NewPodManager()
+	podManager.AddPod(getTestPod())
+	metaClient := client.New()
+	return NewManager(&fake.Clientset{}, podManager, &statustest.FakePodDeletionSafetyProvider{}, metaClient).(*manager)
+}
+
+func TestUpdatePodStatusSucceed(t *testing.T) {
+	manager := newTestManager()
+	manager.Start()
+
+	testPod := getTestPod()
+
+	newReason := "test reason"
+	manager.SetPodStatus(testPod, getPodStatus(newReason))
+
+	msg, err := beehiveContext.Receive("metaManager")
+	if err != nil {
+		t.Fatalf("receive message error: %v", err)
+	}
+
+	if msg.GetResource() != "new/podstatus/foo" &&
+		msg.GetOperation() != model.UpdateOperation {
+		t.Fatalf("unexpected message: %v", msg)
+	}
+
+	// send response
+	ackMessage := model.NewMessage(msg.GetID()).SetResourceOperation("new/podstatus/foo", "response")
+	beehiveContext.SendResp(*ackMessage)
+
+	time.Sleep(2 * time.Second)
+
+	statusVersion, exist := manager.apiStatusVersions[testPod.GetUID()]
+	if !exist {
+		t.Fatalf("pod %s status should exist in apiStatusVersions", testPod.GetName())
+	}
+
+	if statusVersion.Reason != newReason {
+		t.Fatalf("expected statusVersion.Reason %s, but got %s", newReason, statusVersion.Reason)
+	}
+}
+
+func TestUpdatePodStatusFailure(t *testing.T) {
+	manager := newTestManager()
+	manager.Start()
+
+	testPod := getTestPod()
+
+	oldReason := "test reason"
+	manager.SetPodStatus(testPod, getPodStatus(oldReason))
+
+	msg, err := beehiveContext.Receive("metaManager")
+	if err != nil {
+		t.Fatalf("receive message error: %v", err)
+	}
+
+	if msg.GetResource() != "new/podstatus/foo" &&
+		msg.GetOperation() != model.UpdateOperation {
+		t.Fatalf("unexpected message: %v", msg)
+	}
+
+	client.SetSyncPeriod(1 * time.Second)
+	client.SetSyncMsgRespTimeout(1 * time.Second)
+
+	// updatePosStatus timeout is 6s and sync interval time is 10s
+	// so we set max wait time to 20s and then check the result
+	waitTime := 20 * time.Second
+
+	<-time.After(waitTime)
+	_, exist := manager.apiStatusVersions[testPod.GetUID()]
+	if exist {
+		t.Fatalf("pod %s status should not exist in apiStatusVersions", testPod.GetName())
+	}
+}

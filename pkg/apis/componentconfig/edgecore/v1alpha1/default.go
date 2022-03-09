@@ -132,11 +132,10 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				},
 			},
 			MetaManager: &MetaManager{
-				Enable:                true,
-				ContextSendGroup:      metaconfig.GroupNameHub,
-				ContextSendModule:     metaconfig.ModuleNameEdgeHub,
-				PodStatusSyncInterval: constants.DefaultPodStatusSyncInterval,
-				RemoteQueryTimeout:    constants.DefaultRemoteQueryTimeout,
+				Enable:             true,
+				ContextSendGroup:   metaconfig.GroupNameHub,
+				ContextSendModule:  metaconfig.ModuleNameEdgeHub,
+				RemoteQueryTimeout: constants.DefaultRemoteQueryTimeout,
 				MetaServer: &MetaServer{
 					Enable: false,
 					Server: constants.DefaultMetaServerAddr,

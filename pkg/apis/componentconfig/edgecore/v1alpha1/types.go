@@ -385,9 +385,6 @@ type MetaManager struct {
 	ContextSendGroup metaconfig.GroupName `json:"contextSendGroup,omitempty"`
 	// ContextSendModule indicates send module
 	ContextSendModule metaconfig.ModuleName `json:"contextSendModule,omitempty"`
-	// PodStatusSyncInterval indicates pod status sync
-	// default 60
-	PodStatusSyncInterval int32 `json:"podStatusSyncInterval,omitempty"`
 	// RemoteQueryTimeout indicates remote query timeout (second)
 	// default 60
 	RemoteQueryTimeout int32 `json:"remoteQueryTimeout,omitempty"`
