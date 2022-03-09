@@ -29,8 +29,6 @@ import (
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
 
-var PrivateDownloadServiceFile = downloadServiceFile
-
 func TestCheckKubernetesVersion(t *testing.T) {
 	tests := []struct {
 		name        string
