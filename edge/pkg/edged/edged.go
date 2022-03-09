@@ -873,6 +873,41 @@ func (e *edged) syncLoopIteration(plegCh <-chan *pleg.PodLifecycleEvent, houseke
 				}
 				e.podAdditionQueue.Add(key.String())
 			}
+
+		case update := <-e.readinessManager.Updates():
+			ready := update.Result == proberesults.Success
+			e.statusManager.SetContainerReadiness(update.PodUID, update.ContainerID, ready)
+			pod, ok := e.podManager.GetPodByUID(update.PodUID)
+			if !ok {
+				// If the pod no longer exists, ignore the update.
+				klog.V(4).InfoS("SyncLoop (probe): ignore irrelevant update",
+					"probe", "readiness", "status", map[bool]string{true: "ready", false: ""}[ready], "update", update)
+				break
+			}
+
+			key := types.NamespacedName{
+				Namespace: pod.Namespace,
+				Name:      pod.Name,
+			}
+			e.podAdditionQueue.Add(key.String())
+
+		case update := <-e.startupManager.Updates():
+			started := update.Result == proberesults.Success
+			e.statusManager.SetContainerStartup(update.PodUID, update.ContainerID, started)
+			pod, ok := e.podManager.GetPodByUID(update.PodUID)
+			if !ok {
+				// If the pod no longer exists, ignore the update.
+				klog.V(4).InfoS("SyncLoop (probe): ignore irrelevant update",
+					"probe", "startup", "status", map[bool]string{true: "started", false: "unhealthy"}[started], "update", update)
+				break
+			}
+
+			key := types.NamespacedName{
+				Namespace: pod.Namespace,
+				Name:      pod.Name,
+			}
+			e.podAdditionQueue.Add(key.String())
+
 		case plegEvent := <-plegCh:
 			if pod, ok := e.podManager.GetPodByUID(plegEvent.ID); ok {
 				if err := e.updatePodStatus(pod); err != nil {
