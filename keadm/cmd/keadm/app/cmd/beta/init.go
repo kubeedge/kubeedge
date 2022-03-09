@@ -108,13 +108,13 @@ func addBetaInitJoinOtherFlags(cmd *cobra.Command, BetaInitOpts *types.BetaInitO
 	cmd.Flags().BoolVarP(&BetaInitOpts.DryRun, types.DryRun, "d", BetaInitOpts.DryRun,
 		"Print the generated k8s resources on the stdout, not actual excute. Always use in debug mode")
 
-	cmd.Flags().StringVar(&BetaInitOpts.CloudcoreImage, types.CloudcoreImage, BetaInitOpts.CloudcoreImage,
+	cmd.Flags().StringVar(&BetaInitOpts.CloudcoreRepo, types.CloudcoreRepo, BetaInitOpts.CloudcoreRepo,
 		"The image repo of the cloudcore, default is kubeedge/cloudcore")
 
 	cmd.Flags().StringVar(&BetaInitOpts.CloudcoreTag, types.CloudcoreTag, BetaInitOpts.CloudcoreTag,
 		"The image tag of the cloudcore, the default version is from the git tag")
 
-	cmd.Flags().StringVar(&BetaInitOpts.IptablesMgrImage, types.IptablesMgrImage, BetaInitOpts.IptablesMgrImage,
+	cmd.Flags().StringVar(&BetaInitOpts.IptablesMgrRepo, types.IptablesMgrRepo, BetaInitOpts.IptablesMgrRepo,
 		"The image repo of the iptables manager, default is kubeedge/iptables-manager")
 
 	cmd.Flags().StringVar(&BetaInitOpts.IptablesMgrTag, types.IptablesMgrTag, BetaInitOpts.IptablesMgrTag,
@@ -125,13 +125,13 @@ func addBetaInitJoinOtherFlags(cmd *cobra.Command, BetaInitOpts *types.BetaInitO
 }
 
 func addHelmValueOptionsFlags(cmd *cobra.Command, BetaInitOpts *types.BetaInitOptions) {
-	cmd.Flags().StringArrayVar(&BetaInitOpts.Sets, "set", []string{}, "set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
-	cmd.Flags().StringVar(&BetaInitOpts.Profile, "profile", BetaInitOpts.Profile, "set profile on the command line (iptablesMgrMode=external or version=1.9.1)")
+	cmd.Flags().StringArrayVar(&BetaInitOpts.Sets, "set", []string{}, "Set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
+	cmd.Flags().StringVar(&BetaInitOpts.Profile, "profile", BetaInitOpts.Profile, "Set profile on the command line (iptablesMgrMode=external or version=v1.9.1)")
 }
 
 func addForceOptionsFlags(cmd *cobra.Command, BetaInitOpts *types.BetaInitOptions) {
 	cmd.Flags().BoolVar(&BetaInitOpts.Force, types.Force, BetaInitOpts.Force,
-		"Forced installing the cloud components.")
+		"Forced installing the cloud components without waiting.")
 }
 
 //AddBetaInit2ToolsList reads the flagData (containing val and default val) and join options to fill the list of tools.
@@ -169,9 +169,9 @@ func AddBetaInit2ToolsList(toolList map[string]types.ToolsInstaller, flagData ma
 		Manifests:        BetaInitOptions.Manifests,
 		Namespace:        constants.SystemNamespace,
 		DryRun:           BetaInitOptions.DryRun,
-		CloudcoreImage:   BetaInitOptions.CloudcoreImage,
+		CloudcoreRepo:    BetaInitOptions.CloudcoreRepo,
 		CloudcoreTag:     BetaInitOptions.CloudcoreTag,
-		IptablesMgrImage: BetaInitOptions.IptablesMgrImage,
+		IptablesMgrRepo:  BetaInitOptions.IptablesMgrRepo,
 		IptablesMgrTag:   BetaInitOptions.IptablesMgrTag,
 		Sets:             BetaInitOptions.Sets,
 		Profile:          BetaInitOptions.Profile,

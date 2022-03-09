@@ -107,10 +107,10 @@ const (
 	HelmManifestAction = "manifest"
 
 	// Images and tags
-	CloudcoreImage   = "cloudcore-image"
-	CloudcoreTag     = "cloudcore-tag"
-	IptablesMgrImage = "iptablesmgr-image"
-	IptablesMgrTag   = "iptablesmgr-tag"
+	CloudcoreRepo   = "cloudcore-repo"
+	CloudcoreTag    = "cloudcore-tag"
+	IptablesMgrRepo = "iptablesmgr-repo"
+	IptablesMgrTag  = "iptablesmgr-tag"
 
 	CmdGetDNSIP         = "cat /etc/resolv.conf | grep nameserver | grep -v -E ':|#' | awk '{print $2}' | head -n1"
 	CmdGetStatusDocker  = "systemctl status docker |grep Active | awk '{print $2}'"

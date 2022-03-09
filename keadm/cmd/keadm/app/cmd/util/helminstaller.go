@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"io/ioutil"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -18,8 +19,8 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"sigs.k8s.io/yaml"
 
-	keCharts "github.com/kubeedge/kubeedge/build/helm/charts"
 	"github.com/kubeedge/kubeedge/common/constants"
+	kecharts "github.com/kubeedge/kubeedge/helm/charts"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
 
@@ -42,7 +43,8 @@ const (
 )
 
 var (
-	ErrListProfiles = errors.New("can not list profiles")
+	ErrListProfiles  = errors.New("can not list profiles")
+	kubeReleaseRegex = regexp.MustCompile(`^v?(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)([-0-9a-zA-Z_\.+]*)?$`)
 )
 
 // KubeCloudHelmInstTool embeds Common struct
@@ -52,9 +54,9 @@ type KubeCloudHelmInstTool struct {
 	AdvertiseAddress string
 	Manifests        string
 	Namespace        string
-	CloudcoreImage   string
+	CloudcoreRepo    string
 	CloudcoreTag     string
-	IptablesMgrImage string
+	IptablesMgrRepo  string
 	IptablesMgrTag   string
 	Sets             []string
 	Profile          string
@@ -205,17 +207,21 @@ func (cu *KubeCloudHelmInstTool) beforeRenderer(baseHelmRoot string) error {
 				cu.Sets = append(cu.Sets, fmt.Sprintf("%s[%d]=%s", "cloudCore.modules.cloudHub.advertiseAddress", index, addr))
 			}
 		}
-		if cu.CloudcoreImage != "" {
-			cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "cloudCore.image.repository", cu.CloudcoreImage))
+
+		if cu.CloudcoreRepo != "" {
+			cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "cloudCore.image.repository", cu.CloudcoreRepo))
 		}
+
 		if cu.CloudcoreTag != "" {
-			cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "cloudCore.image.tag", cu.CloudcoreTag))
+			cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "cloudCore.image.tag", normalizedBuildVersion(cu.CloudcoreTag)))
 		}
-		if cu.IptablesMgrImage != "" {
-			cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "iptablesManager.image.repository", cu.IptablesMgrImage))
+
+		if cu.IptablesMgrRepo != "" {
+			cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "iptablesManager.image.repository", cu.IptablesMgrRepo))
 		}
+
 		if cu.IptablesMgrTag != "" {
-			cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "iptablesManager.image.tag", cu.IptablesMgrTag))
+			cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "iptablesManager.image.tag", normalizedBuildVersion(cu.IptablesMgrTag)))
 		}
 	}
 
@@ -254,7 +260,7 @@ func (cu *KubeCloudHelmInstTool) buildRenderer(baseHelmRoot string) (*Renderer, 
 	}
 
 	// returns the renderer instance
-	renderer := NewGenericRenderer(keCharts.BuiltinOrDir(baseHelmRoot), subDir, componentName, cu.Namespace, profileValsMap, cu.SkipCRDs)
+	renderer := NewGenericRenderer(kecharts.BuiltinOrDir(baseHelmRoot), subDir, componentName, cu.Namespace, profileValsMap, cu.SkipCRDs)
 
 	// load the charts to this renderer
 	if err := renderer.LoadChart(); err != nil {
@@ -381,15 +387,10 @@ func (cu *KubeCloudHelmInstTool) handleProfile(profileValue string) error {
 		if profileValue == "" {
 			profileValue = types.HelmDefaultVersion
 		}
-		profileValueSuffix := strings.TrimPrefix(profileValue, "v")
-		// confirm it startswith "v"
-		if profileValue != profileValueSuffix {
-			cu.Sets = append(cu.Sets, fmt.Sprintf("%s=v%s", "cloudCore.image.tag", profileValueSuffix))
-			cu.Sets = append(cu.Sets, fmt.Sprintf("%s=v%s", "iptablesManager.image.tag", profileValueSuffix))
-		} else {
-			cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "cloudCore.image.tag", profileValue))
-			cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "iptablesManager.image.tag", profileValue))
-		}
+
+		cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "cloudCore.image.tag", normalizedBuildVersion(profileValue)))
+		cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "iptablesManager.image.tag", normalizedBuildVersion(profileValue)))
+
 	case types.IptablesMgrProfileKey:
 		if profileValue == "" {
 			profileValue = types.ExternalIptablesMgrMode
@@ -405,6 +406,19 @@ func (cu *KubeCloudHelmInstTool) handleProfile(profileValue string) error {
 	}
 
 	return nil
+}
+
+// Internal helper: returns normalized build version (with "v" prefix if needed)
+// If input doesn't match known version pattern, returns the raw string.
+func normalizedBuildVersion(version string) string {
+	if kubeReleaseRegex.MatchString(version) {
+		if strings.HasPrefix(version, "v") {
+			return version
+		}
+		return "v" + version
+	}
+
+	return version
 }
 
 func (cu *KubeCloudHelmInstTool) rebuildFlagVals() error {
@@ -461,7 +475,7 @@ func (cu *KubeCloudHelmInstTool) combineProfVals() (map[string]interface{}, erro
 func (cu *KubeCloudHelmInstTool) readProfiles(baseHelmDir, profilesDir string) (map[string]bool, error) {
 	validProfiles := make(map[string]bool)
 
-	f := keCharts.BuiltinOrDir(baseHelmDir)
+	f := kecharts.BuiltinOrDir(baseHelmDir)
 	dir, err := fs.ReadDir(f, profilesDir)
 	if err != nil {
 		return nil, err
@@ -490,7 +504,7 @@ func loadValues(chartsDir string, profileKey string, existsProfile bool) (string
 	} else {
 		path = strings.Join([]string{profileKey, DefaultHelmValuesPath}, "/")
 	}
-	by, err := fs.ReadFile(keCharts.BuiltinOrDir(chartsDir), path)
+	by, err := fs.ReadFile(kecharts.BuiltinOrDir(chartsDir), path)
 	if err != nil {
 		return "", err
 	}

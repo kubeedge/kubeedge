@@ -36,9 +36,9 @@ type BetaInitOptions struct {
 	AdvertiseAddress string
 	Manifests        string
 	Namespace        string
-	CloudcoreImage   string
+	CloudcoreRepo    string
 	CloudcoreTag     string
-	IptablesMgrImage string
+	IptablesMgrRepo  string
 	IptablesMgrTag   string
 	Sets             []string
 	Profile          string
