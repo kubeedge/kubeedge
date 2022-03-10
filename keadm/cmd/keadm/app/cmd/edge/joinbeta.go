@@ -135,11 +135,9 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 			return err
 		}
 	case kubetypes.RemoteContainerRuntime:
-		// TODO (@zc2638) The function is not completed, it needs to be tested and perfected
-		//if err := remoteRequest(opt, step, imageSet); err != nil {
-		//	return err
-		//}
-		return fmt.Errorf("remote runtime will be supported soon")
+		if err := remoteRequest(opt, step, imageSet); err != nil {
+			return err
+		}
 	default:
 		return fmt.Errorf("unsupport CRI runtime: %s", opt.RuntimeType)
 	}
