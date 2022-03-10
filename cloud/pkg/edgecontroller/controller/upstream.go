@@ -574,10 +574,13 @@ func kubeClientGet(uc *UpstreamController, namespace string, name string, queryT
 		klog.Error(err)
 		return nil, err
 	}
-	if err == nil && obj != nil {
-		util.SetMetaType(obj.(runtime.Object))
+	if err != nil {
+		return nil, err
 	}
-	return obj, err
+	if err := util.SetMetaType(obj.(runtime.Object)); err != nil {
+		return nil, err
+	}
+	return obj, nil
 }
 
 func queryInner(uc *UpstreamController, msg model.Message, queryType string) {
