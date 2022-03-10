@@ -19,10 +19,6 @@
 # KubeEdge Authors:
 # To Get Detail Version Info for KubeEdge Project
 
-set -o errexit
-set -o nounset
-set -o pipefail
-
 YES="y"
 NO="n"
 
