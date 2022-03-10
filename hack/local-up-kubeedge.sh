@@ -17,6 +17,7 @@
 KUBEEDGE_ROOT=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/..
 ENABLE_DAEMON=${ENABLE_DAEMON:-false}
 LOG_DIR=${LOG_DIR:-"/tmp"}
+LOG_LEVEL=${LOG_LEVEL:-2}
 TIMEOUT=${TIMEOUT:-60}s
 
 if [[ "${CLUSTER_NAME}x" == "x" ]];then
@@ -104,7 +105,7 @@ function start_cloudcore {
     -e '/router:/{n;N;N;N;N;s/false/true/}' ${CLOUD_CONFIGFILE}
   CLOUDCORE_LOG=${LOG_DIR}/cloudcore.log
   echo "start cloudcore..."
-  nohup sudo ${CLOUD_BIN} --config=${CLOUD_CONFIGFILE} > "${CLOUDCORE_LOG}" 2>&1 &
+  nohup sudo ${CLOUD_BIN} --config=${CLOUD_CONFIGFILE} --v=${LOG_LEVEL} > "${CLOUDCORE_LOG}" 2>&1 &
   CLOUDCORE_PID=$!
 
   # ensure tokensecret is generated
@@ -133,7 +134,7 @@ function start_edgecore {
 
   echo "start edgecore..."
   export CHECK_EDGECORE_ENVIRONMENT="false"
-  nohup sudo -E ${EDGE_BIN} --config=${EDGE_CONFIGFILE} > "${EDGECORE_LOG}" 2>&1 &
+  nohup sudo -E ${EDGE_BIN} --config=${EDGE_CONFIGFILE} --v=${LOG_LEVEL} > "${EDGECORE_LOG}" 2>&1 &
   EDGECORE_PID=$!
 }
 
