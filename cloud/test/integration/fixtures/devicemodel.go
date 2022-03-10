@@ -19,7 +19,7 @@ package fixtures
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
+	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
 )
 
 type DevicePropertyOp struct {

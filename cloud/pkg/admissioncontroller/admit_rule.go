@@ -7,7 +7,7 @@ import (
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 	"k8s.io/klog/v2"
 
-	rulesv1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
+	rulesv1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
 )
 
 var (

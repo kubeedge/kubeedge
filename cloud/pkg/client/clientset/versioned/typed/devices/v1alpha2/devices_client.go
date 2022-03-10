@@ -19,8 +19,8 @@ limitations under the License.
 package v1alpha2
 
 import (
-	v1alpha2 "github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
 	"github.com/kubeedge/kubeedge/cloud/pkg/client/clientset/versioned/scheme"
+	v1alpha2 "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
 	rest "k8s.io/client-go/rest"
 )
 

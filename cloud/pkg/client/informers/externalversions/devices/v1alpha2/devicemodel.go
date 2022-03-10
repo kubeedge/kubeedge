@@ -22,10 +22,10 @@ import (
 	"context"
 	time "time"
 
-	devicesv1alpha2 "github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
 	versioned "github.com/kubeedge/kubeedge/cloud/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/kubeedge/kubeedge/cloud/pkg/client/informers/externalversions/internalinterfaces"
 	v1alpha2 "github.com/kubeedge/kubeedge/cloud/pkg/client/listers/devices/v1alpha2"
+	devicesv1alpha2 "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"

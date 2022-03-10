@@ -21,7 +21,7 @@ package fake
 import (
 	"context"
 
-	v1alpha2 "github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
+	v1alpha2 "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"

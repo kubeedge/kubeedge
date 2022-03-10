@@ -22,8 +22,8 @@ import (
 	"context"
 	"time"
 
-	v1alpha2 "github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
 	scheme "github.com/kubeedge/kubeedge/cloud/pkg/client/clientset/versioned/scheme"
+	v1alpha2 "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"

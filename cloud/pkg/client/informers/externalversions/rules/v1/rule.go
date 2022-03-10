@@ -22,10 +22,10 @@ import (
 	"context"
 	time "time"
 
-	rulesv1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
 	versioned "github.com/kubeedge/kubeedge/cloud/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/kubeedge/kubeedge/cloud/pkg/client/informers/externalversions/internalinterfaces"
 	v1 "github.com/kubeedge/kubeedge/cloud/pkg/client/listers/rules/v1"
+	rulesv1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"

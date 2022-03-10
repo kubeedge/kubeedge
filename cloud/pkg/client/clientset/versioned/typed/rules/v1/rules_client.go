@@ -19,8 +19,8 @@ limitations under the License.
 package v1
 
 import (
-	v1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/client/clientset/versioned/scheme"
+	v1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
 	rest "k8s.io/client-go/rest"
 )
 

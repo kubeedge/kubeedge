@@ -21,7 +21,7 @@ package fake
 import (
 	"context"
 
-	rulesv1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
+	rulesv1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
