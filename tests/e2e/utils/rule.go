@@ -12,7 +12,7 @@ import (
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	rulesv1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
+	rulesv1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
 )
 
 func NewRule(sourceType, targetType rulesv1.RuleEndpointTypeDef) *rulesv1.Rule {

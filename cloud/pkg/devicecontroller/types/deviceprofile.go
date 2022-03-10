@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
+	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
 )
 
 // DeviceProfile is structure to store in configMap. These types would be consumed by mappers to marshal / unmarshal the device profile json
