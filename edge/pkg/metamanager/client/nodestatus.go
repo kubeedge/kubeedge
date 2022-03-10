@@ -5,6 +5,7 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
+	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
@@ -39,6 +40,14 @@ func (c *nodeStatus) Create(ns *edgeapi.NodeStatusRequest) (*edgeapi.NodeStatusR
 }
 
 func (c *nodeStatus) Update(rsName string, ns edgeapi.NodeStatusRequest) error {
+	// node status is periodic reporting to the cloud, if edge and cloud connection
+	// is interrupted, we just return error to prevent a large number of messages
+	// accumulating in the channel, and mass message hits cloudCore when network
+	// connection is established between edge and cloud.
+	if !connect.IsConnected() {
+		return fmt.Errorf("edge and cloud connection is interrupted")
+	}
+
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypeNodeStatus, rsName)
 	nodeStatusMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.UpdateOperation, ns)
 	_, err := c.send.SendSync(nodeStatusMsg)

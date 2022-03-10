@@ -13,7 +13,6 @@ import (
 	cloudmodules "github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/common/constants"
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
-	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
 	metaManagerConfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
@@ -88,10 +87,6 @@ func requireRemoteQuery(resType string) bool {
 		resType == constants.ResourceTypeVolumeAttachment ||
 		resType == model.ResourceTypeNode ||
 		resType == model.ResourceTypeServiceAccountToken
-}
-
-func isConnected() bool {
-	return metaManagerConfig.Connected
 }
 
 func msgDebugInfo(message *model.Message) string {
@@ -242,7 +237,7 @@ func (m *metaManager) processQuery(message model.Message) {
 	resKey, resType, resID := parseResource(message.GetResource())
 	var metas *[]string
 	var err error
-	if requireRemoteQuery(resType) && isConnected() {
+	if requireRemoteQuery(resType) && connect.IsConnected() {
 		metas, err = dao.QueryMeta("key", resKey)
 		if err != nil || len(*metas) == 0 || resType == model.ResourceTypeNode || resType == constants.ResourceTypeVolumeAttachment {
 			m.processRemoteQuery(message)
@@ -309,16 +304,6 @@ func (m *metaManager) processRemoteQuery(message model.Message) {
 		respToCloud := message.NewRespByMessage(&resp, OK)
 		sendToCloud(respToCloud)
 	}()
-}
-
-func (m *metaManager) processNodeConnection(message model.Message) {
-	content, _ := message.GetContent().(string)
-	klog.Infof("node connection event occur: %s", content)
-	if content == connect.CloudConnected {
-		metaManagerConfig.Connected = true
-	} else if content == connect.CloudDisconnected {
-		metaManagerConfig.Connected = false
-	}
 }
 
 func (m *metaManager) processSync() {
@@ -440,8 +425,6 @@ func (m *metaManager) process(message model.Message) {
 		m.processQuery(message)
 	case model.ResponseOperation:
 		m.processResponse(message)
-	case messagepkg.OperationNodeConnection:
-		m.processNodeConnection(message)
 	case OperationMetaSync:
 		m.processSync()
 	case OperationFunctionAction:

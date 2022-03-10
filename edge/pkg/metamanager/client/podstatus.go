@@ -5,6 +5,7 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
+	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	commodule "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
@@ -39,6 +40,14 @@ func (c *podStatus) Create(ps *edgeapi.PodStatusRequest) (*edgeapi.PodStatusRequ
 }
 
 func (c *podStatus) Update(rsName string, ps edgeapi.PodStatusRequest) error {
+	// if edge and cloud connection is interrupted, we just return error to
+	// prevent a large number of messages accumulating in the channel, and
+	// mass message hits cloudCore when network connection is established
+	// between edge and cloud. status manager will retry update pod status
+	// until send successfully.
+	if !connect.IsConnected() {
+		return fmt.Errorf("edge and cloud connection is interrupted")
+	}
 	podStatusMsg := message.BuildMsg(commodule.MetaGroup, "", commodule.EdgedModuleName, c.namespace+"/"+model.ResourceTypePodStatus+"/"+rsName, model.UpdateOperation, ps)
 	_, err := c.send.SendSync(podStatusMsg)
 	if err != nil {

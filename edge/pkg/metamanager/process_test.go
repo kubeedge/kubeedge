@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"errors"
 	"testing"
-	"time"
 
 	"github.com/golang/mock/gomock"
 
@@ -479,22 +478,13 @@ func TestProcessQuery(t *testing.T) {
 	}
 	beehiveContext.AddModule(edged)
 
-	//process remote query sync error case
-	msg := model.NewMessage("").BuildRouter(ModuleNameEdged, GroupResource, model.ResourceTypePodStatus, OperationNodeConnection).FillBody(connect.CloudConnected)
-	meta.processNodeConnection(*msg)
-	//wait for message to be received by metaManager and get processed
-	time.Sleep(1 * time.Second)
-	t.Run("ConnectedTrue", func(t *testing.T) {
-		if metaManagerConfig.Connected != true {
-			t.Errorf("Connected was not set to true")
-		}
-	})
+	connect.SetConnected(true)
 
 	//process remote query jsonMarshall error
 	querySeterMock.EXPECT().All(gomock.Any()).Return(int64(1), errFailedDBOperation).Times(1)
 	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).Times(1)
 	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(1)
-	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, "test/"+model.ResourceTypeConfigmap, model.QueryOperation)
+	msg := model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, "test/"+model.ResourceTypeConfigmap, model.QueryOperation)
 	meta.processQuery(*msg)
 	message, _ := beehiveContext.Receive(ModuleNameEdgeHub)
 	msg = model.NewMessage(message.GetID()).BuildRouter(ModuleNameEdgeHub, GroupResource, "test/"+model.ResourceTypeConfigmap, model.QueryOperation).FillBody(make(chan int))
@@ -594,55 +584,6 @@ func TestProcessQuery(t *testing.T) {
 		bytesGot, _ := json.Marshal(message.GetContent())
 		if string(bytesGot) != string(bytesWant) {
 			t.Errorf("Wrong message receive : Wanted %v and Got %v", want, message.GetContent())
-		}
-	})
-}
-
-// TestProcessNodeConnection is function to test processNodeConnection
-func TestProcessNodeConnection(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-	ormerMock := beego.NewMockOrmer(mockCtrl)
-	dbm.DBAccess = ormerMock
-	meta := newMetaManager(true)
-	core.Register(meta)
-
-	add := &common.ModuleInfo{
-		ModuleName: meta.Name(),
-		ModuleType: common.MsgCtxTypeChannel,
-	}
-	beehiveContext.AddModule(add)
-	beehiveContext.AddModuleGroup(meta.Name(), meta.Group())
-	edgeHub := &common.ModuleInfo{
-		ModuleName: ModuleNameEdgeHub,
-		ModuleType: common.MsgCtxTypeChannel,
-	}
-	beehiveContext.AddModule(edgeHub)
-	edgeFunctionModel := &common.ModuleInfo{
-		ModuleName: EdgeFunctionModel,
-		ModuleType: common.MsgCtxTypeChannel,
-	}
-	beehiveContext.AddModule(edgeFunctionModel)
-
-	//connected true
-	msg := model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, model.ResourceTypePodStatus, OperationNodeConnection).FillBody(connect.CloudConnected)
-	meta.processNodeConnection(*msg)
-	//wait for message to be received by metaManager and get processed
-	time.Sleep(1 * time.Second)
-	t.Run("ConnectedTrue", func(t *testing.T) {
-		if metaManagerConfig.Connected != true {
-			t.Errorf("Connected was not set to true")
-		}
-	})
-
-	//connected false
-	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, model.ResourceTypePodStatus, OperationNodeConnection).FillBody(connect.CloudDisconnected)
-	meta.processNodeConnection(*msg)
-	//wait for message to be received by metaManager and get processed
-	time.Sleep(1 * time.Second)
-	t.Run("ConnectedFalse", func(t *testing.T) {
-		if metaManagerConfig.Connected != false {
-			t.Errorf("Connected was not set to false")
 		}
 	})
 }
