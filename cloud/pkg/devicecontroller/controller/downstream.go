@@ -57,9 +57,6 @@ const (
 	DataTypeBoolean = "boolean"
 	DataTypeBytes   = "bytes"
 
-	ConfigMapKind    = "ConfigMap"
-	ConfigMapVersion = "v1"
-
 	DeviceProfileConfigPrefix = "device-profile-config-"
 
 	DeviceProfileJSON = "deviceProfile.json"
