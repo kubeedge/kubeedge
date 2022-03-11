@@ -68,6 +68,10 @@ kubeedge::lint::check() {
 
     [[ $(git diff --name-only) ]] && {
       echo "Some files have white noise issue, please run \`make lint\` to solve and \`git status\` to find and fix this issue"
+      echo "run git status to print white noise"
+      git status
+      echo "run git diff to print white noise"
+      git diff
       return 1
     }
     set -o pipefail
