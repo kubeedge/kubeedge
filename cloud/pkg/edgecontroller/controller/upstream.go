@@ -46,7 +46,6 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	crdClientset "github.com/kubeedge/kubeedge/cloud/pkg/client/clientset/versioned"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/controller"
@@ -58,6 +57,7 @@ import (
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 	rulesv1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
+	crdClientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 

@@ -33,7 +33,6 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	crdinformers "github.com/kubeedge/kubeedge/cloud/pkg/client/informers/externalversions"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
@@ -41,6 +40,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/types"
 	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
+	crdinformers "github.com/kubeedge/kubeedge/pkg/client/informers/externalversions"
 )
 
 // Constants for protocol, datatype, configmap, deviceProfile
