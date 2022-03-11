@@ -8,7 +8,7 @@
         * [Bug Fixes](#bug-fixes)
 
 
-    
+
 
 # v1.10.0
 
@@ -36,7 +36,7 @@ Keadm adds some new sub-commands to improve the user experience, including conta
 
 
 
-`config` is used to configure kubeedge cluster, like cluster upgrade, API conversion, image preloading. 
+`config` is used to configure kubeedge cluster, like cluster upgrade, API conversion, image preloading.
 Now the image preloading has supported, sub-commands including: config images list, config images pull.
 
 - `config images list`: List all images required for kubeedge installation.
@@ -59,12 +59,12 @@ Refer to the links for more details.
 
 ### Edgemark: Support large-scale KubeEdge cluster performance testing
 
-Edgemark is a performance testing tool inherited from Kubemark. The primary use case of Edgemark is also scalability testing, 
+Edgemark is a performance testing tool inherited from Kubemark. The primary use case of Edgemark is also scalability testing,
 it allows users to simulate edge clusters, which can be much bigger than the real ones.
 
 Edgemark consists of two parts: real cloud part components and a set of "Hollow" Edge Nodes. In "Hollow" Edge Nodes, EdgeCore runs in container.
-The edged module runs with an injected mock CRI part that doesn't do anything. 
-So the hollow edge node doesn't actually start any containers, and also doesn't mount any volumes. 
+The edged module runs with an injected mock CRI part that doesn't do anything.
+So the hollow edge node doesn't actually start any containers, and also doesn't mount any volumes.
 
 
 Refer to the links for more details.
