@@ -32,6 +32,7 @@ import (
 	utilsexec "k8s.io/utils/exec"
 
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/helm"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
 
@@ -154,7 +155,7 @@ func RemoveMqttContainer() error {
 // depending upon in which type of node it is executed
 func TearDownKubeEdge(isEdgeNode bool, kubeConfig string) error {
 	var ke common.ToolsInstaller
-	ke = &util.KubeCloudHelmInstTool{
+	ke = &helm.KubeCloudHelmInstTool{
 		Common: util.Common{
 			KubeConfig: kubeConfig,
 		},

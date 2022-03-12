@@ -117,7 +117,7 @@ func (cu *KubeCloudInstTool) TearDown() error {
 	}
 
 	// clean kubeedge namespace
-	err := cu.cleanNameSpace(constants.SystemNamespace, cu.KubeConfig)
+	err := cu.CleanNameSpace(constants.SystemNamespace, cu.KubeConfig)
 	if err != nil {
 		return fmt.Errorf("fail to clean kubeedge namespace, err:%v", err)
 	}

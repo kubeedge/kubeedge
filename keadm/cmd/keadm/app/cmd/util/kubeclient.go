@@ -33,7 +33,7 @@ func KubeClient(kubeConfigPath string) (*kubernetes.Clientset, error) {
 	return kubernetes.NewForConfig(kubeConfig)
 }
 
-func (co *Common) cleanNameSpace(ns, kubeConfigPath string) error {
+func (co *Common) CleanNameSpace(ns, kubeConfigPath string) error {
 	cli, err := KubeClient(kubeConfigPath)
 	if err != nil {
 		return fmt.Errorf("failed to create KubeClient, error: %s", err)

@@ -106,12 +106,6 @@ const (
 	HelmInstallAction  = "install"
 	HelmManifestAction = "manifest"
 
-	// Images and tags
-	CloudcoreRepo   = "cloudcore-repo"
-	CloudcoreTag    = "cloudcore-tag"
-	IptablesMgrRepo = "iptablesmgr-repo"
-	IptablesMgrTag  = "iptablesmgr-tag"
-
 	CmdGetDNSIP         = "cat /etc/resolv.conf | grep nameserver | grep -v -E ':|#' | awk '{print $2}' | head -n1"
 	CmdGetStatusDocker  = "systemctl status docker |grep Active | awk '{print $2}'"
 	CmdPing             = "ping %s -w %d |grep 'packets transmitted' |awk '{print $6}'"
@@ -202,17 +196,9 @@ const (
 
 	AllowedCurrentValueMem  = 128 * MB
 	AllowedCurrentValueDisk = 512 * MB
-
-	VersionProfileKey       = "version"
-	IptablesMgrProfileKey   = "iptablesmgr"
-	ExternalIptablesMgrMode = "external"
-	InternalIptablesMgrMode = "internal"
-	EdgemeshProfileKey      = "edgemesh"
-	HelmDefaultVersion      = "v1.10.0"
 )
 
 var (
-	ValidProfiles  = map[string]bool{VersionProfileKey: true, IptablesMgrProfileKey: true}
 	CheckObjectMap = []CheckObject{
 		{
 			Use:  ArgCheckAll,
