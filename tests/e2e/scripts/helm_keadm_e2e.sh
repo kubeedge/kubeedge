@@ -16,7 +16,7 @@
 
 KUBEEDGE_ROOT=$PWD
 WORKDIR=$(dirname $0)
-HELM_DIR=$KUBEEDGE_ROOT/build/helm/charts
+HELM_DIR=$KUBEEDGE_ROOT/helm/charts
 E2E_DIR=$(realpath $(dirname $0)/..)
 IMAGE_TAG=$(git describe --tags)
 

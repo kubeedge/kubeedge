@@ -20,7 +20,7 @@ spec:
       labels: {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
-      {{- if eq .Values.cloudCore.hostNetWork "true" }}
+      {{- if .Values.cloudCore.hostNetWork }}
       hostNetwork: {{ .Values.cloudCore.hostNetWork }}
       dnsPolicy: ClusterFirstWithHostNet
       {{- end }}
