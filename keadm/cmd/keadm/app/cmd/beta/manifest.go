@@ -26,6 +26,7 @@ import (
 
 	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/helm"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
 
@@ -43,7 +44,7 @@ keadm beta manifest
 
 - This command will render Kubernetes resources
 
-keadm manifest generate --advertise-address=127.0.0.1 [--set cloudcore-tag=v1.9.0] --profile version=v1.9.0 -n kubeedge --kube-config=/root/.kube/config
+keadm manifest generate --advertise-address=127.0.0.1 --profile version=v1.9.0 --kube-config=/root/.kube/config
 
   - kube-config is the absolute path of kubeconfig which used to secure connectivity between cloudcore and kube-apiserver
 `
@@ -53,15 +54,15 @@ keadm beta manifest generate
 
 - This command will render and generate Kubernetes resources
 
-keadm manifest generate --advertise-address=127.0.0.1 [--set cloudcore-tag=v1.9.0] --profile version=v1.9.0 -n kubeedge --kube-config=/root/.kube/config
+keadm manifest generate --advertise-address=127.0.0.1 --profile version=v1.9.0 --kube-config=/root/.kube/config
 
   - kube-config is the absolute path of kubeconfig which used to secure connectivity between cloudcore and kube-apiserver
 `
 )
 
-// NewBetaManifestGenerate represents the keadm beta manifest command for cloud component
-func NewBetaManifestGenerate() *cobra.Command {
-	BetaInit := newBetaInitOptions()
+// NewManifestGenerateBeta represents the keadm beta manifest command for cloud component
+func NewManifestGenerateBeta() *cobra.Command {
+	BetaInit := newInitBetaOptions()
 	tools := make(map[string]types.ToolsInstaller)
 	flagVals := make(map[string]types.FlagData)
 
@@ -95,18 +96,18 @@ func NewBetaManifestGenerate() *cobra.Command {
 	return manifestCmd
 }
 
-func addManifestsGenerateJoinOtherFlags(cmd *cobra.Command, BetaInitOpts *types.BetaInitOptions) {
-	addBetaInitJoinOtherFlags(cmd, BetaInitOpts)
-	addHelmValueOptionsFlags(cmd, BetaInitOpts)
+func addManifestsGenerateJoinOtherFlags(cmd *cobra.Command, initBetaOpts *types.InitBetaOptions) {
+	addInitBetaJoinOtherFlags(cmd, initBetaOpts)
+	addHelmValueOptionsFlags(cmd, initBetaOpts)
 
-	cmd.Flags().BoolVar(&BetaInitOpts.SkipCRDs, types.SkipCRDs, BetaInitOpts.SkipCRDs,
+	cmd.Flags().BoolVar(&initBetaOpts.SkipCRDs, types.SkipCRDs, initBetaOpts.SkipCRDs,
 		"Skip printing the contents of CRDs to stdout")
 }
 
 //AddManifestsGenerate2ToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
-func AddManifestsGenerate2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string]types.FlagData, BetaInitOptions *types.BetaInitOptions) error {
-	var kubeVer string
+func AddManifestsGenerate2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string]types.FlagData, initBetaOpts *types.InitBetaOptions) error {
 	var latestVersion string
+	var kubeedgeVersion string
 	for i := 0; i < util.RetryTimes; i++ {
 		version, err := util.GetLatestVersion()
 		if err != nil {
@@ -114,43 +115,36 @@ func AddManifestsGenerate2ToolsList(toolList map[string]types.ToolsInstaller, fl
 			continue
 		}
 		if len(version) > 0 {
-			kubeVer = strings.TrimPrefix(version, "v")
+			kubeedgeVersion = strings.TrimPrefix(version, "v")
 			latestVersion = version
 			break
 		}
 	}
 	if len(latestVersion) == 0 {
-		kubeVer = types.DefaultKubeEdgeVersion
-		fmt.Println("Failed to get the latest KubeEdge release version, will use default version: ", kubeVer)
-	}
-
-	if BetaInitOptions.Namespace == "" {
-		BetaInitOptions.Namespace = constants.SystemNamespace
+		kubeedgeVersion = types.DefaultKubeEdgeVersion
+		fmt.Println("Failed to get the latest KubeEdge release version, will use default version: ", kubeedgeVersion)
 	}
 
 	common := util.Common{
-		ToolVersion: semver.MustParse(kubeVer),
-		KubeConfig:  BetaInitOptions.KubeConfig,
+		ToolVersion: semver.MustParse(kubeedgeVersion),
+		KubeConfig:  initBetaOpts.KubeConfig,
 	}
-	toolList["helm"] = &util.KubeCloudHelmInstTool{
+	toolList["helm"] = &helm.KubeCloudHelmInstTool{
 		Common:           common,
-		AdvertiseAddress: BetaInitOptions.AdvertiseAddress,
-		Manifests:        BetaInitOptions.Manifests,
+		AdvertiseAddress: initBetaOpts.AdvertiseAddress,
+		KubeEdgeVersion:  initBetaOpts.KubeEdgeVersion,
+		Manifests:        initBetaOpts.Manifests,
 		Namespace:        constants.SystemNamespace,
-		DryRun:           BetaInitOptions.DryRun,
-		CloudcoreImage:   BetaInitOptions.CloudcoreImage,
-		CloudcoreTag:     BetaInitOptions.CloudcoreTag,
-		IptablesMgrImage: BetaInitOptions.IptablesMgrImage,
-		IptablesMgrTag:   BetaInitOptions.IptablesMgrTag,
-		Sets:             BetaInitOptions.Sets,
-		Profile:          BetaInitOptions.Profile,
-		SkipCRDs:         BetaInitOptions.SkipCRDs,
+		DryRun:           initBetaOpts.DryRun,
+		Sets:             initBetaOpts.Sets,
+		Profile:          initBetaOpts.Profile,
+		SkipCRDs:         initBetaOpts.SkipCRDs,
 		Action:           types.HelmManifestAction,
 	}
 	return nil
 }
 
-//ExecuteBetaInit the installation for each tool and start cloudcore
+//ExecuteInitBeta the installation for each tool and start cloudcore
 func ExecuteManifestsGenerate(toolList map[string]types.ToolsInstaller) error {
 	return toolList["helm"].InstallTools()
 }

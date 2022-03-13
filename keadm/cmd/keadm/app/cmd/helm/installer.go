@@ -1,4 +1,4 @@
-package util
+package helm
 
 import (
 	"bytes"
@@ -18,9 +18,10 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"sigs.k8s.io/yaml"
 
-	keCharts "github.com/kubeedge/kubeedge/build/helm/charts"
 	"github.com/kubeedge/kubeedge/common/constants"
+	kecharts "github.com/kubeedge/kubeedge/helm/charts"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
 
 const (
@@ -39,23 +40,27 @@ const (
 	DefaultHelmInstall  = true
 	DefaultHelmWait     = true
 	DefaultHelmCreateNs = true
+
+	VersionProfileKey       = "version"
+	IptablesMgrProfileKey   = "iptablesmgr"
+	ExternalIptablesMgrMode = "external"
+	InternalIptablesMgrMode = "internal"
+	EdgemeshProfileKey      = "edgemesh"
 )
 
 var (
 	ErrListProfiles = errors.New("can not list profiles")
+	ValidProfiles   = map[string]bool{VersionProfileKey: true, IptablesMgrProfileKey: true}
 )
 
 // KubeCloudHelmInstTool embeds Common struct
 // It implements ToolsInstaller interface
 type KubeCloudHelmInstTool struct {
-	Common
+	util.Common
 	AdvertiseAddress string
+	KubeEdgeVersion  string
 	Manifests        string
 	Namespace        string
-	CloudcoreImage   string
-	CloudcoreTag     string
-	IptablesMgrImage string
-	IptablesMgrTag   string
 	Sets             []string
 	Profile          string
 	ProfileKey       string
@@ -70,7 +75,7 @@ type KubeCloudHelmInstTool struct {
 // InstallTools downloads KubeEdge for the specified version
 // and makes the required configuration changes and initiates cloudcore.
 func (cu *KubeCloudHelmInstTool) InstallTools() error {
-	cu.SetOSInterface(GetOSInterface())
+	cu.SetOSInterface(util.GetOSInterface())
 	cu.SetKubeEdgeVersion(cu.ToolVersion)
 
 	baseHelmRoot := DefaultBaseHelmDir
@@ -99,7 +104,7 @@ func (cu *KubeCloudHelmInstTool) RunHelmInstall(baseHelmRoot string) error {
 	// --force would not care about whether the cloud components exist or not
 	// Also, if gives a external helm root, no need to check and verify. Because it is always not a cloudcore.
 	if !cu.Force && cu.ExternalHelmRoot == "" {
-		cloudCoreRunning, err := cu.IsKubeEdgeProcessRunning(KubeCloudBinaryName)
+		cloudCoreRunning, err := cu.IsKubeEdgeProcessRunning(util.KubeCloudBinaryName)
 		if err != nil {
 			return err
 		}
@@ -171,7 +176,7 @@ func (cu *KubeCloudHelmInstTool) RunHelmManifest(baseHelmRoot string) error {
 // beforeRenderer handles the value of the profile.
 func (cu *KubeCloudHelmInstTool) beforeRenderer(baseHelmRoot string) error {
 	if cu.Profile == "" {
-		cu.Profile = fmt.Sprintf("%s=%s", types.VersionProfileKey, types.HelmDefaultVersion)
+		cu.Profile = fmt.Sprintf("%s=v%s", VersionProfileKey, cu.ToolVersion.String())
 	}
 	// profile must be invalid
 	p := strings.Split(cu.Profile, "=")
@@ -205,18 +210,6 @@ func (cu *KubeCloudHelmInstTool) beforeRenderer(baseHelmRoot string) error {
 				cu.Sets = append(cu.Sets, fmt.Sprintf("%s[%d]=%s", "cloudCore.modules.cloudHub.advertiseAddress", index, addr))
 			}
 		}
-		if cu.CloudcoreImage != "" {
-			cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "cloudCore.image.repository", cu.CloudcoreImage))
-		}
-		if cu.CloudcoreTag != "" {
-			cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "cloudCore.image.tag", cu.CloudcoreTag))
-		}
-		if cu.IptablesMgrImage != "" {
-			cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "iptablesManager.image.repository", cu.IptablesMgrImage))
-		}
-		if cu.IptablesMgrTag != "" {
-			cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "iptablesManager.image.tag", cu.IptablesMgrTag))
-		}
 	}
 
 	// rebuild flag values
@@ -238,7 +231,7 @@ func (cu *KubeCloudHelmInstTool) buildRenderer(baseHelmRoot string) (*Renderer, 
 	var subDir string
 	if cu.existsProfile && cu.isInnerProfile() {
 		switch cu.ProfileKey {
-		case types.VersionProfileKey, types.IptablesMgrProfileKey:
+		case VersionProfileKey, IptablesMgrProfileKey:
 			componentName = CloudCoreHelmComponent
 			subDir = CloudCoreSubDir
 		// we can implement edgemesh here later.
@@ -254,7 +247,7 @@ func (cu *KubeCloudHelmInstTool) buildRenderer(baseHelmRoot string) (*Renderer, 
 	}
 
 	// returns the renderer instance
-	renderer := NewGenericRenderer(keCharts.BuiltinOrDir(baseHelmRoot), subDir, componentName, cu.Namespace, profileValsMap, cu.SkipCRDs)
+	renderer := NewGenericRenderer(kecharts.BuiltinOrDir(baseHelmRoot), subDir, componentName, cu.Namespace, profileValsMap, cu.SkipCRDs)
 
 	// load the charts to this renderer
 	if err := renderer.LoadChart(); err != nil {
@@ -347,7 +340,7 @@ func (cu *KubeCloudHelmInstTool) runHelmInstall(r *Renderer) (*release.Release, 
 // TearDown method will remove the edge node from api-server and stop cloudcore process
 func (cu *KubeCloudHelmInstTool) TearDown() error {
 	// clean kubeedge namespace
-	err := cu.cleanNameSpace(constants.SystemNamespace, cu.KubeConfig)
+	err := cu.CleanNameSpace(constants.SystemNamespace, cu.KubeConfig)
 	if err != nil {
 		return fmt.Errorf("fail to clean kubeedge namespace, err:%v", err)
 	}
@@ -362,7 +355,7 @@ func (cu *KubeCloudHelmInstTool) checkProfile(baseHelmRoot string) error {
 	}
 
 	// iptalesmgr is also an valid profile key.
-	validProfiles[types.IptablesMgrProfileKey] = true
+	validProfiles[IptablesMgrProfileKey] = true
 	if ok := validProfiles[cu.ProfileKey]; !ok {
 		validKeys := make([]string, len(validProfiles))
 		for k := range validProfiles {
@@ -376,27 +369,30 @@ func (cu *KubeCloudHelmInstTool) checkProfile(baseHelmRoot string) error {
 
 // handleProfile only handles inner profile
 func (cu *KubeCloudHelmInstTool) handleProfile(profileValue string) error {
+	// the current version
+	currentVersion := cu.ToolVersion.String()
 	switch cu.ProfileKey {
-	case types.VersionProfileKey:
+	case VersionProfileKey:
 		if profileValue == "" {
-			profileValue = types.HelmDefaultVersion
-		}
-		profileValueSuffix := strings.TrimPrefix(profileValue, "v")
-		// confirm it startswith "v"
-		if profileValue != profileValueSuffix {
-			cu.Sets = append(cu.Sets, fmt.Sprintf("%s=v%s", "cloudCore.image.tag", profileValueSuffix))
-			cu.Sets = append(cu.Sets, fmt.Sprintf("%s=v%s", "iptablesManager.image.tag", profileValueSuffix))
-		} else {
-			cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "cloudCore.image.tag", profileValue))
-			cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "iptablesManager.image.tag", profileValue))
-		}
-	case types.IptablesMgrProfileKey:
-		if profileValue == "" {
-			profileValue = types.ExternalIptablesMgrMode
+			profileValue = currentVersion
 		}
 
-		if profileValue == types.InternalIptablesMgrMode || profileValue == types.ExternalIptablesMgrMode {
+		if !strings.HasPrefix(profileValue, "v") {
+			profileValue = "v" + profileValue
+		}
+
+		cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "cloudCore.image.tag", profileValue))
+		cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "iptablesManager.image.tag", profileValue))
+
+	case IptablesMgrProfileKey:
+		if profileValue == "" {
+			profileValue = ExternalIptablesMgrMode
+		}
+
+		if profileValue == InternalIptablesMgrMode || profileValue == ExternalIptablesMgrMode {
 			cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "iptablesManager.mode", profileValue))
+			cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "cloudCore.image.tag", currentVersion))
+			cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "iptablesManager.image.tag", currentVersion))
 			return nil
 		}
 
@@ -429,7 +425,7 @@ func (cu *KubeCloudHelmInstTool) rebuildFlagVals() error {
 }
 
 func (cu *KubeCloudHelmInstTool) isInnerProfile() bool {
-	return cu.ProfileKey == "" || cu.ProfileKey == DefaultProfileString || cu.ProfileKey == types.IptablesMgrProfileKey
+	return cu.ProfileKey == "" || cu.ProfileKey == DefaultProfileString || cu.ProfileKey == IptablesMgrProfileKey
 }
 
 // combineProfVals combines the values of the given manifests and flags into a map.
@@ -437,8 +433,8 @@ func (cu *KubeCloudHelmInstTool) combineProfVals() (map[string]interface{}, erro
 	profileValsMap := map[string]interface{}{}
 
 	profilekey := cu.ProfileKey
-	if profilekey == types.IptablesMgrProfileKey {
-		profilekey = types.VersionProfileKey
+	if profilekey == IptablesMgrProfileKey {
+		profilekey = VersionProfileKey
 	}
 	profileValue, err := loadValues(cu.ExternalHelmRoot, profilekey, cu.existsProfile)
 	if err != nil {
@@ -461,7 +457,7 @@ func (cu *KubeCloudHelmInstTool) combineProfVals() (map[string]interface{}, erro
 func (cu *KubeCloudHelmInstTool) readProfiles(baseHelmDir, profilesDir string) (map[string]bool, error) {
 	validProfiles := make(map[string]bool)
 
-	f := keCharts.BuiltinOrDir(baseHelmDir)
+	f := kecharts.BuiltinOrDir(baseHelmDir)
 	dir, err := fs.ReadDir(f, profilesDir)
 	if err != nil {
 		return nil, err
@@ -490,7 +486,7 @@ func loadValues(chartsDir string, profileKey string, existsProfile bool) (string
 	} else {
 		path = strings.Join([]string{profileKey, DefaultHelmValuesPath}, "/")
 	}
-	by, err := fs.ReadFile(keCharts.BuiltinOrDir(chartsDir), path)
+	by, err := fs.ReadFile(kecharts.BuiltinOrDir(chartsDir), path)
 	if err != nil {
 		return "", err
 	}

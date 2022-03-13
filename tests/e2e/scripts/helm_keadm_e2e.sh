@@ -18,6 +18,8 @@ KUBEEDGE_ROOT=$PWD
 WORKDIR=$(dirname $0)
 HELM_DIR=$KUBEEDGE_ROOT/helm/charts
 E2E_DIR=$(realpath $(dirname $0)/..)
+
+debugflag="-test.v -ginkgo.v"
 IMAGE_TAG=$(git describe --tags)
 
 function cleanup() {
@@ -28,6 +30,7 @@ function cleanup() {
 }
 
 function build_keadm() {
+  cd $KUBEEDGE_ROOT
   make all WHAT=keadm
   cd $E2E_DIR
   ginkgo build -r keadm/
@@ -42,7 +45,7 @@ function prepare_cluster() {
   kubectl create clusterrolebinding system:anonymous --clusterrole=cluster-admin --user=system:anonymous
 
   # edge side don't support kind cni now, delete kind cni plugin for workaround
-  # kubectl delete daemonset kindnet -nkube-system
+  kubectl delete daemonset kindnet -nkube-system
 }
 
 function build_cloud_image() {
@@ -52,6 +55,8 @@ function build_cloud_image() {
 }
 
 function start_kubeedge() {
+  local KUBEEDGE_VERSION="$@"
+
   sudo mkdir -p /var/lib/kubeedge
   cd $KUBEEDGE_ROOT
   export KUBECONFIG=$HOME/.kube/config
@@ -70,7 +75,7 @@ function start_kubeedge() {
   cd $KUBEEDGE_ROOT
   export TOKEN=$(sudo _output/local/bin/keadm gettoken --kube-config=$KUBECONFIG)
   sudo systemctl set-environment CHECK_EDGECORE_ENVIRONMENT="false"
-  sudo -E CHECK_EDGECORE_ENVIRONMENT="false" _output/local/bin/keadm join --token=$TOKEN --cloudcore-ipport=$MASTER_IP:10000 --edgenode-name=edge-node
+  sudo -E CHECK_EDGECORE_ENVIRONMENT="false" _output/local/bin/keadm join --token=$TOKEN --cloudcore-ipport=$MASTER_IP:10000 --edgenode-name=edge-node --kubeedge-version=${KUBEEDGE_VERSION}
 
   #Pre-configurations required for running the suite.
   #Any new config addition required corresponding code changes.
@@ -133,7 +138,7 @@ echo -e "\nBuilding cloud image..."
 build_cloud_image
 
 echo -e "\nStarting kubeedge..."
-start_kubeedge
+start_kubeedge ""
 
 echo -e "\nRunning test..."
 run_test
