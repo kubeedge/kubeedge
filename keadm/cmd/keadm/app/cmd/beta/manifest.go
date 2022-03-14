@@ -42,17 +42,19 @@ var (
 	cloudManifestExample = `
 keadm beta manifest
 - This command will render Kubernetes resources
+
 keadm manifest generate --advertise-address=127.0.0.1 --profile version=v1.9.0 --kube-config=/root/.kube/config
   - kube-config is the absolute path of kubeconfig which used to secure connectivity between cloudcore and kube-apiserver
-	- a list of helm style set flags like "--set key=value" can be implemented, ref: https://github.com/kubeedge/kubeedge/tree/master/charts/cloudcore/README.md
+	- a list of helm style set flags like "--set key=value" can be implemented, ref: https://github.com/kubeedge/kubeedge/tree/master/manifests/charts/cloudcore/README.md
 `
 
 	cloudManifestGenerateExample = `
 keadm beta manifest generate
 - This command will render and generate Kubernetes resources
+
 keadm manifest generate --advertise-address=127.0.0.1 --profile version=v1.9.0 --kube-config=/root/.kube/config
   - kube-config is the absolute path of kubeconfig which used to secure connectivity between cloudcore and kube-apiserver
-	- a list of helm style set flags like "--set key=value" can be implemented, ref: https://github.com/kubeedge/kubeedge/tree/master/charts/cloudcore/README.md
+	- a list of helm style set flags like "--set key=value" can be implemented, ref: https://github.com/kubeedge/kubeedge/tree/master/manifests/charts/cloudcore/README.md
 `
 )
 

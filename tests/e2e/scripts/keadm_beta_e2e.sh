@@ -16,11 +16,11 @@
 
 KUBEEDGE_ROOT=$PWD
 WORKDIR=$(dirname $0)
-HELM_DIR=$KUBEEDGE_ROOT/manifests/charts
 E2E_DIR=$(realpath $(dirname $0)/..)
+IMAGE_TAG=$(git describe --tags)
+KUBEEDGE_VERSION=$IMAGE_TAG
 
 debugflag="-test.v -ginkgo.v"
-IMAGE_TAG=$(git describe --tags)
 
 function cleanup() {
   sudo pkill edgecore || true
@@ -29,9 +29,7 @@ function cleanup() {
   sudo rm -rf /var/log/kubeedge /etc/kubeedge /etc/systemd/system/edgecore.service $E2E_DIR/keadm/keadm.test $E2E_DIR/config.json
 }
 
-function build_keadm() {
-  cd $KUBEEDGE_ROOT
-  make all WHAT=keadm
+function build_ginkgo() {
   cd $E2E_DIR
   ginkgo build -r keadm/
 }
@@ -48,24 +46,23 @@ function prepare_cluster() {
   kubectl delete daemonset kindnet -nkube-system
 }
 
-function build_cloud_image() {
+function build_image() {
   cd $KUBEEDGE_ROOT
   make image WHAT=cloudcore -f $KUBEEDGE_ROOT/Makefile
+  make image WHAT=installation-package -f $KUBEEDGE_ROOT/Makefile
   kind load docker-image kubeedge/cloudcore:$IMAGE_TAG --name test
+  kind load docker-image kubeedge/installation-package:$IMAGE_TAG --name test
 }
 
 function start_kubeedge() {
-  local KUBEEDGE_VERSION="$@"
-
   sudo mkdir -p /var/lib/kubeedge
   cd $KUBEEDGE_ROOT
-  export KUBECONFIG=$HOME/.kube/config
-
-  cd $HELM_DIR
-  SET_ARGS="--set cloudCore.modules.cloudHub.advertiseAddress[0]=$MASTER_IP --set cloudCore.image.tag=$IMAGE_TAG --set cloudCore.service.enable=false"
-  helm upgrade --install --wait --timeout 30s cloudcore ./cloudcore --namespace kubeedge --create-namespace -f ./cloudcore/values.yaml $SET_ARGS
   export MASTER_IP=`kubectl get node test-control-plane -o jsonpath={.status.addresses[0].address}`
+  export KUBECONFIG=$HOME/.kube/config
+  docker run --rm kubeedge/installation-package:$IMAGE_TAG cat /usr/local/bin/keadm > /usr/local/bin/keadm && chmod +x /usr/local/bin/keadm
 
+  /usr/local/bin/keadm beta init --advertise-address=$MASTER_IP --profile version=$KUBEEDGE_VERSION --set cloudCore.service.enable=false --kube-config=$KUBECONFIG --force
+  
   # ensure tokensecret is generated
   while true; do
       sleep 3
@@ -73,9 +70,9 @@ function start_kubeedge() {
   done
   
   cd $KUBEEDGE_ROOT
-  export TOKEN=$(sudo _output/local/bin/keadm gettoken --kube-config=$KUBECONFIG)
+  export TOKEN=$(sudo /usr/local/bin/keadm gettoken --kube-config=$KUBECONFIG)
   sudo systemctl set-environment CHECK_EDGECORE_ENVIRONMENT="false"
-  sudo -E CHECK_EDGECORE_ENVIRONMENT="false" _output/local/bin/keadm join --token=$TOKEN --cloudcore-ipport=$MASTER_IP:10000 --edgenode-name=edge-node --kubeedge-version=${KUBEEDGE_VERSION}
+  sudo -E CHECK_EDGECORE_ENVIRONMENT="false" /usr/local/bin/keadm beta join --token=$TOKEN --cloudcore-ipport=$MASTER_IP:10000 --edgenode-name=edge-node --kubeedge-version=$KUBEEDGE_VERSION
 
   #Pre-configurations required for running the suite.
   #Any new config addition required corresponding code changes.
@@ -126,8 +123,8 @@ set -Ee
 trap cleanup EXIT
 trap cleanup ERR
 
-echo -e "\nBuilding keadm..."
-build_keadm
+echo -e "\nBuilding ginkgo test cases..."
+build_ginkgo
 
 export KUBECONFIG=$HOME/.kube/config
 
@@ -135,10 +132,10 @@ echo -e "\nPreparing cluster..."
 prepare_cluster
 
 echo -e "\nBuilding cloud image..."
-build_cloud_image
+build_image
 
 echo -e "\nStarting kubeedge..."
-start_kubeedge ""
+start_kubeedge
 
 echo -e "\nRunning test..."
 run_test

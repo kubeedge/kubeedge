@@ -274,17 +274,17 @@ define HELM_KEADM_E2E_HELP_INFO
 # helm keadm e2e test.
 #
 # Example:
-#   make helm_keadm_e2e
-#   make helm_keadm_e2e HELP=y
+#   make keadm_beta_e2e
+#   make keadm_beta_e2e HELP=y
 #
 endef
-.PHONY: helm_keadm_e2e
+.PHONY: keadm_beta_e2e
 ifeq ($(HELP),y)
-helm_keadm_e2e:
+keadm_beta_e2e:
 	@echo "HELM_KEADM_E2E_HELP_INFO"
 else
-helm_keadm_e2e:
-	tests/e2e/scripts/helm_keadm_e2e.sh
+keadm_beta_e2e:
+	tests/e2e/scripts/keadm_beta_e2e.sh
 endif
 
 define CLEAN_HELP_INFO
