@@ -1,4 +1,8 @@
 
+* [v1.9.2](#v192)
+    * [Downloads for v1.9.2](#downloads-for-v192)
+    * [KubeEdge v1.9.2 Release Notes](#kubeedge-v192-release-notes)
+        * [Changelog since v1.9.1](#changelog-since-v191)
 * [v1.9.1](#v191)
     * [Downloads for v1.9.1](#downloads-for-v191)
     * [KubeEdge v1.9.1 Release Notes](#kubeedge-v191-release-notes)
@@ -12,7 +16,27 @@
         * [Bug Fixes](#bug-fixes)
 
 
+# v1.9.2
 
+## Downloads for v1.9.2
+
+Download v1.9.2 in the [v1.9.2 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.9.2).
+
+## KubeEdge v1.9.2 Release Notes
+
+### Changelog since v1.9.1
+
+- Update current support K8s version to v1.21.4. ([#3486](https://github.com/kubeedge/kubeedge/pull/3486), [@gy95](https://github.com/gy95))
+
+- Fix: change the resourceType of msg issued by synccontroller. ([#3496](https://github.com/kubeedge/kubeedge/pull/3496), [@Rachel-Shao](https://github.com/Rachel-Shao))
+
+- Fix lots of duplicate logs "Failed to get obj" in objectsync.go. ([#3570](https://github.com/kubeedge/kubeedge/pull/3570), [@vincentgoat](https://github.com/vincentgoat))
+
+- Filter pod by nodeName. ([#3594](https://github.com/kubeedge/kubeedge/pull/3594), [@yz271544](https://github.com/yz271544))
+
+- Fix pv's objectsync spec.ObjectKind is empty. ([#3613](https://github.com/kubeedge/kubeedge/pull/3613), [@neiba](https://github.com/neiba))
+
+- Fix readinessProbe and startupProbe bug. ([#3665](https://github.com/kubeedge/kubeedge/pull/3665), [@wackxu](https://github.com/wackxu))
 
 
 # v1.9.1
