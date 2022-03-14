@@ -38,6 +38,12 @@ Download v1.9.2 in the [v1.9.2 release page](https://github.com/kubeedge/kubeedg
 
 - Fix readinessProbe and startupProbe bug. ([#3665](https://github.com/kubeedge/kubeedge/pull/3665), [@wackxu](https://github.com/wackxu))
 
+- Fix memory leak in edgesite kube-api. ([#3605](https://github.com/kubeedge/kubeedge/pull/3605), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+
+- Add subresource field in list-watch application. ([#3693](https://github.com/kubeedge/kubeedge/pull/3693), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+
+- Fix concurrent map iteration and map write bug. ([#3670](https://github.com/kubeedge/kubeedge/pull/3670), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+
 
 # v1.9.1
 
