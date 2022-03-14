@@ -182,6 +182,7 @@ func (s *imitator) Watch(ctx context.Context, key string, rev uint64) <-chan wat
 	go func() {
 		<-ctx.Done()
 		wh.Stop()
+		close(wch)
 	}()
 	return wch
 }
