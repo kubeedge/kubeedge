@@ -176,6 +176,7 @@ ALL_BINARIES_AND_TARGETS=(
   edgesite-agent:edgesite/cmd/edgesite-agent
   edgesite-server:edgesite/cmd/edgesite-server
   csidriver:cloud/cmd/csidriver
+  iptablesmanager:cloud/cmd/iptablesmanager
 )
 
 kubeedge::golang::get_target_by_binary() {
@@ -241,22 +242,6 @@ kubeedge::golang::build_binaries() {
 
 }
 
-
-KUBEEDGE_ALL_CROSS_BINARIES=(
-edgecore
-)
-
-kubeedge::golang::is_cross_build_binary() {
-  local key=$1
-  for bin in "${KUBEEDGE_ALL_CROSS_BINARIES[@]}" ; do
-    if [ "${bin}" == "${key}" ]; then
-      echo ${YES}
-      return
-    fi
-  done
-  echo ${NO}
-}
-
 KUBEEDGE_ALL_CROSS_GOARMS=(
 8
 7
@@ -284,18 +269,12 @@ kubeedge::golang::cross_build_place_binaries() {
         # Assume arguments starting with a dash are flags to pass to go.
         goarm="${arg##*GOARM}"
       else
-        if [ "$(kubeedge::golang::is_cross_build_binary ${arg})" == "${NO}" ]; then
-          echo "${arg} does not support cross build"
-          exit 1
-        fi
         targets+=("$(kubeedge::golang::get_target_by_binary $arg)")
       fi
   done
 
   if [[ ${#targets[@]} -eq 0 ]]; then
-    for bin in ${KUBEEDGE_ALL_CROSS_BINARIES[@]}; do
-        targets+=("$(kubeedge::golang::get_target_by_binary $bin)")
-    done
+    targets+=("${KUBEEDGE_ALL_TARGETS[@]}")
   fi
 
   if [ "$(kubeedge::golang::is_supported_goarm ${goarm})" == "${NO}" ]; then
@@ -315,6 +294,7 @@ kubeedge::golang::cross_build_place_binaries() {
     local name="${bin##*/}"
     if [ "${goarm}" == "8" ]; then
       set -x
+      GOARM="" # need to clear the value since golang compiler doesn't allow this env when building the binary for ARMv8.
       GOARCH=arm64 GOOS="linux" CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc go build -o ${KUBEEDGE_OUTPUT_BINPATH}/${name} -ldflags "$ldflags" $bin
       set +x
     elif [ "${goarm}" == "7" ]; then
@@ -474,3 +454,4 @@ kubeedge::golang::run_test() {
     go test ${testdirs[@]}
   fi
 }
+
