@@ -1,5 +1,5 @@
 /*
-Copyright 2022 The KubeEdge Authors.
+Copyright 2017 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,24 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package charts
 
-import (
-	"embed"
-	"io/fs"
-	"os"
-)
-
-// FS embeds the manifests
-//go:embed cloudcore/* profiles/* addons/*
-//go:embed cloudcore/templates/_helpers.tpl
-var FS embed.FS
-
-// BuiltinOrDir returns a FS for the provided directory. If no directory is passed, the compiled in
-// FS will be used
-func BuiltinOrDir(dir string) fs.FS {
-	if dir == "" {
-		return FS
-	}
-	return os.DirFS(dir)
-}
+// Package fake containers a fake gRPC implementation of internalapi.RuntimeService
+// and internalapi.ImageManagerService.
+package fake

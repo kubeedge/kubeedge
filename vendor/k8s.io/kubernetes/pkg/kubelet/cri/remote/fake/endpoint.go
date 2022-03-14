@@ -1,5 +1,7 @@
+// +build !windows
+
 /*
-Copyright 2022 The KubeEdge Authors.
+Copyright 2017 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,24 +15,20 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package charts
+
+package fake
 
 import (
-	"embed"
-	"io/fs"
-	"os"
+	"fmt"
+	"k8s.io/apimachinery/pkg/util/rand"
 )
 
-// FS embeds the manifests
-//go:embed cloudcore/* profiles/* addons/*
-//go:embed cloudcore/templates/_helpers.tpl
-var FS embed.FS
+const (
+	defaultUnixEndpoint = "unix:///tmp/kubelet_remote_%v.sock"
+)
 
-// BuiltinOrDir returns a FS for the provided directory. If no directory is passed, the compiled in
-// FS will be used
-func BuiltinOrDir(dir string) fs.FS {
-	if dir == "" {
-		return FS
-	}
-	return os.DirFS(dir)
+// GenerateEndpoint generates a new unix socket server of grpc server.
+func GenerateEndpoint() (string, error) {
+	// use random int be a part fo file name
+	return fmt.Sprintf(defaultUnixEndpoint, rand.Int()), nil
 }

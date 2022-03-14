@@ -34,6 +34,7 @@ ALL_IMAGES_AND_TARGETS=(
   edgesite-server:edgesite-server:build/edgesite/server-build.Dockerfile
   csidriver:csidriver:build/csidriver/Dockerfile
   iptablesmanager:iptables-manager:build/iptablesmanager/Dockerfile
+  edgemark:edgemark:build/edgemark/Dockerfile
 )
 
 function get_imagename_by_target() {
@@ -82,7 +83,7 @@ function build_multi_arch_images() {
     DOCKERFILE_PATH="$(get_dockerfile_by_target ${arg})"
 
     set -x
-    
+
     # If there's any issues when using buildx, can refer to the issue below
     # https://github.com/docker/buildx/issues/495
     # https://github.com/multiarch/qemu-user-static/issues/100

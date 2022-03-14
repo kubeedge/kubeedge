@@ -38,6 +38,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 	pkgversion "github.com/kubeedge/kubeedge/pkg/version"
@@ -147,6 +148,28 @@ func GetOSInterface() types.OSTypeInstaller {
 		fmt.Println("Failed to detect supported package manager command(apt, yum, pacman), exit")
 		panic("Failed to detect supported package manager command(apt, yum, pacman), exit")
 	}
+}
+
+// RunningModuleV2 identifies cloudcore/edgecore running or not.
+// only used for cloudcore container install and edgecore binary install
+func RunningModuleV2(opt *types.ResetOptions) (types.ModuleRunning, error) {
+	osType := GetOSInterface()
+	cloudCoreRunning, err := IsCloudcoreContainerRunning(constants.SystemNamespace, opt.Kubeconfig)
+	if err != nil {
+		return types.NoneRunning, err
+	}
+	if cloudCoreRunning {
+		return types.KubeEdgeCloudRunning, nil
+	}
+
+	edgeCoreRunning, err := osType.IsKubeEdgeProcessRunning(KubeEdgeBinaryName)
+	if edgeCoreRunning {
+		return types.KubeEdgeEdgeRunning, nil
+	} else if err != nil {
+		return types.NoneRunning, err
+	}
+
+	return types.NoneRunning, nil
 }
 
 // RunningModule identifies cloudcore/edgecore running or not.

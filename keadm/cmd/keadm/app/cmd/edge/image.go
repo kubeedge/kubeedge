@@ -53,7 +53,7 @@ func dockerRequest(opt *common.JoinOptions, step *common.Step, imageSet image.Se
 	}
 
 	step.Printf("Copy resources from the image to the management directory")
-	if err := dockerCopyResources(ctx, opt, imageSet, cli); err != nil {
+	if err := dockerCopyResources(ctx, imageSet, cli); err != nil {
 		return fmt.Errorf("copy resources failed: %v", err)
 	}
 
@@ -96,7 +96,7 @@ func dockerPullImages(ctx context.Context, imageSet image.Set, cli *dockerclient
 //
 // docker run -v /etc/kubeedge:/tmp/kubeedge/data -v /usr/local/bin:/tmp/kubeedge/bin <IMAGE-NAME> \
 // bash -c cp -r /etc/kubeedge:/tmp/kubeedge/data cp /usr/local/bin/edgecore:/tmp/kubeedge/bin/edgecore
-func dockerCopyResources(ctx context.Context, opt *common.JoinOptions, imageSet image.Set, cli *dockerclient.Client) error {
+func dockerCopyResources(ctx context.Context, imageSet image.Set, cli *dockerclient.Client) error {
 	containerDataTmpPath := filepath.Join(util.KubeEdgeTmpPath, "data")
 	containerBinTmpPath := filepath.Join(util.KubeEdgeTmpPath, "bin")
 	config := &dockercontainer.Config{
@@ -170,7 +170,7 @@ func remoteRequest(opt *common.JoinOptions, step *common.Step, imageSet image.Se
 	}
 
 	step.Printf("Copy resources from the image to the management directory")
-	if err := copyResources(opt, imageSet, runtimeService); err != nil {
+	if err := copyResources(imageSet, runtimeService); err != nil {
 		return fmt.Errorf("copy resources failed: %v", err)
 	}
 
@@ -206,7 +206,9 @@ func pullImages(opt *common.JoinOptions, imageSet image.Set) error {
 	return nil
 }
 
-func copyResources(opt *common.JoinOptions, imageSet image.Set, runtimeService cri.RuntimeService) error {
+// copyResources copies binary and configuration file from the image to the host.
+// The same way as dockerCopyResources.
+func copyResources(imageSet image.Set, runtimeService cri.RuntimeService) error {
 	containerDataTmpPath := filepath.Join(util.KubeEdgeTmpPath, "data")
 	containerBinTmpPath := filepath.Join(util.KubeEdgeTmpPath, "bin")
 	psc := &runtimeapi.PodSandboxConfig{

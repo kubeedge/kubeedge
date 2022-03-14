@@ -1,7 +1,6 @@
 package util
 
 import (
-	"fmt"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -34,7 +33,7 @@ func SetMetaType(obj runtime.Object) error {
 	//gvr,_,_ := apiserverlite.ParseKey(accessor.GetSelfLink())
 	kinds, _, err := scheme.Scheme.ObjectKinds(obj)
 	if err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 	gvk := kinds[0]
 	obj.GetObjectKind().SetGroupVersionKind(gvk)

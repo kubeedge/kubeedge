@@ -163,6 +163,13 @@ const (
 	ResolvConfDefault = "/etc/resolv.conf"
 )
 
+type GetRuntimeServiceFunc func(
+	remoteRuntimeEndpoint,
+	remoteImageEndpoint string,
+	runtimeRequestTimeout metav1.Duration) (internalapi.RuntimeService, internalapi.ImageManagerService, error)
+
+var DefaultGetRuntimeService GetRuntimeServiceFunc = getRuntimeAndImageServices
+
 // podReady holds the initPodReady flag and its lock
 type podReady struct {
 	// initPodReady is flag to check Pod ready status
@@ -509,7 +516,7 @@ func newEdged(enable bool) (*edged, error) {
 		ResolvConfDefault)
 
 	httpClient := &http.Client{}
-	runtimeService, imageService, err := getRuntimeAndImageServices(
+	runtimeService, imageService, err := DefaultGetRuntimeService(
 		edgedconfig.Config.RemoteRuntimeEndpoint,
 		edgedconfig.Config.RemoteImageEndpoint,
 		metav1.Duration{
@@ -518,6 +525,7 @@ func newEdged(enable bool) (*edged, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if ed.os == nil {
 		ed.os = kubecontainer.RealOS{}
 	}
@@ -865,6 +873,41 @@ func (e *edged) syncLoopIteration(plegCh <-chan *pleg.PodLifecycleEvent, houseke
 				}
 				e.podAdditionQueue.Add(key.String())
 			}
+
+		case update := <-e.readinessManager.Updates():
+			ready := update.Result == proberesults.Success
+			e.statusManager.SetContainerReadiness(update.PodUID, update.ContainerID, ready)
+			pod, ok := e.podManager.GetPodByUID(update.PodUID)
+			if !ok {
+				// If the pod no longer exists, ignore the update.
+				klog.V(4).InfoS("SyncLoop (probe): ignore irrelevant update",
+					"probe", "readiness", "status", map[bool]string{true: "ready", false: ""}[ready], "update", update)
+				break
+			}
+
+			key := types.NamespacedName{
+				Namespace: pod.Namespace,
+				Name:      pod.Name,
+			}
+			e.podAdditionQueue.Add(key.String())
+
+		case update := <-e.startupManager.Updates():
+			started := update.Result == proberesults.Success
+			e.statusManager.SetContainerStartup(update.PodUID, update.ContainerID, started)
+			pod, ok := e.podManager.GetPodByUID(update.PodUID)
+			if !ok {
+				// If the pod no longer exists, ignore the update.
+				klog.V(4).InfoS("SyncLoop (probe): ignore irrelevant update",
+					"probe", "startup", "status", map[bool]string{true: "started", false: "unhealthy"}[started], "update", update)
+				break
+			}
+
+			key := types.NamespacedName{
+				Namespace: pod.Namespace,
+				Name:      pod.Name,
+			}
+			e.podAdditionQueue.Add(key.String())
+
 		case plegEvent := <-plegCh:
 			if pod, ok := e.podManager.GetPodByUID(plegEvent.ID); ok {
 				if err := e.updatePodStatus(pod); err != nil {

@@ -54,7 +54,7 @@ const (
 	RuntimeType = "runtimetype"
 
 	// DefaultKubeEdgeVersion is the default KubeEdge version
-	DefaultKubeEdgeVersion = "1.9.0"
+	DefaultKubeEdgeVersion = "1.10.0"
 
 	// Token sets the token used when edge applying for the certificate
 	Token = "token"
@@ -208,7 +208,7 @@ const (
 	ExternalIptablesMgrMode = "external"
 	InternalIptablesMgrMode = "internal"
 	EdgemeshProfileKey      = "edgemesh"
-	HelmDefaultVersion      = "v1.9.0"
+	HelmDefaultVersion      = "v1.10.0"
 )
 
 var (

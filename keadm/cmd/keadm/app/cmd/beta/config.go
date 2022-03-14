@@ -17,18 +17,20 @@ limitations under the License.
 package beta
 
 import (
+	"context"
 	"fmt"
+	"io"
 	"strings"
 
+	dockertypes "github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
+	dockerclient "github.com/docker/docker/client"
 	"github.com/spf13/cobra"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 	cmdcommon "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
-
-// PullImageRetry represent pulling images retry times
-const PullImageRetry = 5
 
 // Configuration represent keadm config options
 type Configuration struct {
@@ -119,7 +121,7 @@ func newCmdConfigImagesPull() *cobra.Command {
 			cfg.KubeEdgeVersion = ver
 
 			images := GetKubeEdgeImages(cfg)
-			return PullControlPlaneImages(images)
+			return DockerPullImages(images)
 		},
 		Args: cobra.NoArgs,
 	}
@@ -128,11 +130,18 @@ func newCmdConfigImagesPull() *cobra.Command {
 	return cmd
 }
 
-// PullControlPlaneImages pulls all images
-func PullControlPlaneImages(images []string) error {
+// DockerPullImages pulls all images
+func DockerPullImages(images []string) error {
+	cli, err := dockerclient.NewClientWithOpts(dockerclient.FromEnv)
+	if err != nil {
+		return fmt.Errorf("init docker dockerclient failed: %v", err)
+	}
+
+	ctx := context.Background()
+
 	for _, image := range images {
 		fmt.Printf("Pulling %s ...\n", image)
-		if err := dockerPullImage(image); err != nil {
+		if err := dockerPullImage(ctx, image, cli); err != nil {
 			fmt.Printf("Failed to pull image %q: %v", image, err)
 			return fmt.Errorf("failed to pull image %q: %v", image, err)
 		}
@@ -210,14 +219,24 @@ func GetPauseImage() string {
 }
 
 // dockerPullImage uses Docker to pull the image
-func dockerPullImage(image string) error {
-	var err error
-	for i := 0; i < PullImageRetry; i++ {
-		pullCommand := fmt.Sprintf("docker pull %s", image)
-		err = util.NewCommand(pullCommand).Exec()
-		if err == nil {
-			return nil
-		}
+func dockerPullImage(ctx context.Context, image string, cli *dockerclient.Client) error {
+	args := filters.NewArgs()
+	args.Add("reference", image)
+	list, err := cli.ImageList(ctx, dockertypes.ImageListOptions{Filters: args})
+	if err != nil {
+		return err
 	}
-	return fmt.Errorf("dcoker pull image failed: %v", err)
+	if len(list) > 0 {
+		return nil
+	}
+
+	rc, err := cli.ImagePull(ctx, image, dockertypes.ImagePullOptions{})
+	if err != nil {
+		return err
+	}
+	defer rc.Close()
+	if _, err = io.Copy(io.Discard, rc); err != nil {
+		return err
+	}
+	return nil
 }
