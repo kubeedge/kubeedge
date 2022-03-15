@@ -1,9 +1,10 @@
+
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
+    controller-gen.kubebuilder.io/version: v0.6.2
   creationTimestamp: null
   name: edgeapplications.groupmanagement.kubeedge.io
 spec:
@@ -90,14 +91,14 @@ spec:
                                       case, the system will automatically detect image
                                       fields if the resource type is Pod, ReplicaSet,
                                       Deployment or StatefulSet by following rule:
-                                      - Pod: spec/containers/<N>/image - ReplicaSet:
-                                      spec/template/spec/containers/<N>/image - Deployment:
-                                      spec/template/spec/containers/<N>/image - StatefulSet:
-                                      spec/template/spec/containers/<N>/image In addition,
-                                      all images will be processed if the resource
-                                      object has more than one containers. \n If not
-                                      nil, only images matches the filters will be
-                                      processed."
+                                      \  - Pod: spec/containers/<N>/image   - ReplicaSet:
+                                      spec/template/spec/containers/<N>/image   -
+                                      Deployment: spec/template/spec/containers/<N>/image
+                                      \  - StatefulSet: spec/template/spec/containers/<N>/image
+                                      In addition, all images will be processed if
+                                      the resource object has more than one containers.
+                                      \n If not nil, only images matches the filters
+                                      will be processed."
                                     properties:
                                       path:
                                         description: Path indicates the path of target

@@ -26,17 +26,59 @@ type NodeGroupSpec struct {
 	// +optional
 	Nodes []string `json:"nodes,omitempty"`
 
-	// MatchLabels match the nodes that have the labels
+	// MatchLabels are used to select nodes that have these labels.
 	// +optional
 	MatchLabels map[string]string `json:"matchLabels,omitempty"`
 }
 
-// NodeGroupStatus defines the observed state of NodeGroup
+// NodeGroupStatus contains the observed status of all selected nodes in
+// this NodeGroup, including nodes that have been one of the members of this NodeGroup
+// and those have not.
 type NodeGroupStatus struct {
-	// ContainedNodes represents names of all nodes the nodegroup contains.
+	// NodeStatuses is a status list of all selected nodes.
 	// +optional
-	ContainedNodes []string `json:"containedNodes,omitempty"`
+	NodeStatuses []NodeStatus `json:"nodeStatuses,omitempty"`
 }
+
+// NodeStatus contains status of node that selected by this NodeGroup.
+type NodeStatus struct {
+	// NodeName contains name of this node.
+	// +required
+	NodeName string `json:"nodeName"`
+	// ReadyStatus contains ready status of this node.
+	// +required
+	ReadyStatus ReadyStatus `json:"readyStatus"`
+	// SelectionStatus contains status of the selection result for this node.
+	// +required
+	SelectionStatus SelectionStatus `json:"selectionStatus"`
+	// SelectionStatusReason contains human-readable reason for this SelectionStatus.
+	// +optional
+	SelectionStatusReason string `json:"selectionStatusReason,omitempty"`
+}
+
+// HealthyStatus represents the healthy status of node.
+type ReadyStatus string
+
+const (
+	// NodeReady indicates that this node is ready.
+	NodeReady ReadyStatus = "Ready"
+
+	// NodeNotReady indicates that this node is not ready.
+	NodeNotReady ReadyStatus = "NotReady"
+
+	// Unknown indicates that the status of this node is unknown.
+	Unknown ReadyStatus = "Unknown"
+)
+
+// SelectionStatus represents the status of selecting a node as a member of this NodeGroup.
+type SelectionStatus string
+
+const (
+	// SucceededSelection represents that this node has been selected as a member of this NodeGroup.
+	SucceededSelection SelectionStatus = "Succeeded"
+	// FailedSelection represents that this node failed to become a member of this NodeGroup.
+	FailedSelection SelectionStatus = "Failed"
+)
 
 // +genclient
 // +genclient:nonNamespaced

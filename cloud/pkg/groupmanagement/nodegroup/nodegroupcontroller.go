@@ -3,6 +3,7 @@ package nodegroup
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -28,12 +29,32 @@ const (
 	NodeGroupControllerFinalizer = "groupmanagement.kubeedge.io/nodegroup-controller"
 )
 
+var (
+	conditionStatusReadyStatusMap = map[corev1.ConditionStatus]groupmanagementv1alpha1.ReadyStatus{
+		corev1.ConditionTrue:    groupmanagementv1alpha1.NodeReady,
+		corev1.ConditionFalse:   groupmanagementv1alpha1.NodeNotReady,
+		corev1.ConditionUnknown: groupmanagementv1alpha1.Unknown,
+		// for the convinence of processing the situation that node has no ready condition
+		"": groupmanagementv1alpha1.Unknown,
+	}
+)
+
+// nodeGroupStatusSort implements sort.Interface for NodeGroupStatus
+type nodeGroupStatusSort struct {
+	list []groupmanagementv1alpha1.NodeStatus
+}
+
+func (n *nodeGroupStatusSort) Len() int           { return len(n.list) }
+func (n *nodeGroupStatusSort) Less(i, j int) bool { return n.list[i].NodeName < n.list[j].NodeName }
+func (n *nodeGroupStatusSort) Swap(i, j int) {
+	tmp := n.list[i].DeepCopy()
+	n.list[i] = *n.list[j].DeepCopy()
+	n.list[j] = *tmp
+}
+
 // Controller is to sync NodeGroup.
 type Controller struct {
 	client.Client
-
-	// TODO: add event recoder
-	// eventRecoder record.EventRecoder
 }
 
 // Reconcile performs a full reconciliation for the object referred to by the Request.
@@ -53,10 +74,12 @@ func (c *Controller) Reconcile(ctx context.Context, req controllerruntime.Reques
 	}
 
 	if !nodeGroup.DeletionTimestamp.IsZero() {
+		// remove labels it added to nodes before deleting this NodeGroup
 		klog.Infof("begin to remove node group label on nodes selected by nodegroup %s", nodeGroup.Name)
-		if err := c.removeBelongingLabelOnOfNodeGroup(nodeGroup.Name); err != nil {
+		if err := c.removeBelongingLabelOfNodeGroup(nodeGroup.Name); err != nil {
 			return controllerruntime.Result{Requeue: true}, err
 		}
+		// this NodeGroup can be deleted now
 		if err := c.removeFinalizer(nodeGroup); err != nil {
 			return controllerruntime.Result{Requeue: true}, err
 		}
@@ -86,18 +109,33 @@ func (c *Controller) syncNodeGroup(nodeGroup *groupmanagementv1alpha1.NodeGroup)
 	}
 	allNodes = append(allNodes, nodes...)
 
-	updatedNode := []string{}
+	// collect statuses of nodes
+	nodeStatusList := []groupmanagementv1alpha1.NodeStatus{}
 	for _, node := range allNodes {
-		if err := c.addOrUpdateNodeLabel(&node, nodeGroup.Name); err != nil {
-			klog.Errorf("failed to update belonging label to node %s, %s, continue to reconcile other nodes", node, err)
-			continue
+		nodeStatus := groupmanagementv1alpha1.NodeStatus{
+			NodeName: node.Name,
 		}
-		updatedNode = append(updatedNode, node.Name)
+		// update ReadyStatus
+		nodeReadyConditionStatus, _ := getNodeReadyConditionFromNode(&node)
+		nodeStatus.ReadyStatus = conditionStatusReadyStatusMap[nodeReadyConditionStatus]
+
+		// try to add node group label to this node
+		if err := c.addOrUpdateNodeLabel(&node, nodeGroup.Name); err != nil {
+			klog.Errorf("failed to update belonging label for node %s, %s, continue to reconcile other nodes", node, err)
+			nodeStatus.SelectionStatus = groupmanagementv1alpha1.FailedSelection
+			nodeStatus.SelectionStatusReason = err.Error()
+		}
 	}
 
-	if !equality.Semantic.DeepEqual(nodeGroup.Status.ContainedNodes, updatedNode) {
-		nodeGroup.Status.ContainedNodes = updatedNode
-		c.Status().Update(context.TODO(), nodeGroup)
+	sort.Sort(&nodeGroupStatusSort{nodeStatusList})
+	newNodeGroupStatus := groupmanagementv1alpha1.NodeGroupStatus{NodeStatuses: nodeStatusList}
+	if !equality.Semantic.DeepEqual(nodeGroup.Status, newNodeGroupStatus) {
+		// the status of this NodeGroup has changed, try to update status
+		nodeGroup.Status = newNodeGroupStatus
+		if err := c.Status().Update(context.TODO(), nodeGroup); err != nil {
+			klog.Errorf("failed to update status for nodegroup %s, %s", nodeGroup.Name, err)
+			return controllerruntime.Result{Requeue: true}, nil
+		}
 	}
 
 	return controllerruntime.Result{}, nil
@@ -123,6 +161,9 @@ func (c *Controller) removeFinalizer(nodeGroup *groupmanagementv1alpha1.NodeGrou
 	return nil
 }
 
+// We can assume that one node can only be in one of following conditions:
+// 1. This node is an orphan, do not and will not belong to any NodeGroup.
+// 2. This node is or will be a member of one NodeGroup.
 func (c *Controller) nodeMapFunc(obj client.Object) []controllerruntime.Request {
 	node := obj.(*corev1.Node)
 	nodegroupList := &groupmanagementv1alpha1.NodeGroupList{}
@@ -131,20 +172,23 @@ func (c *Controller) nodeMapFunc(obj client.Object) []controllerruntime.Request 
 		return nil
 	}
 
-	requests := []controllerruntime.Request{}
 	for _, nodegroup := range nodegroupList.Items {
-		if IfMatchNodeGroup(node, &nodegroup) {
-			requests = append(requests, controllerruntime.Request{
-				NamespacedName: types.NamespacedName{
-					Name: nodegroup.Name,
+		if IfMatchNodeGroup(node, &nodegroup) && c.ifReconcile(node, &nodegroup) {
+			return []controllerruntime.Request{
+				{
+					NamespacedName: types.NamespacedName{
+						Name: nodegroup.Name,
+					},
 				},
-			})
+			}
 		}
 	}
-	return requests
+
+	// an orphan node, do not reconcile
+	return []controllerruntime.Request{}
 }
 
-func (c *Controller) removeBelongingLabelOnOfNodeGroup(nodeGroupName string) error {
+func (c *Controller) removeBelongingLabelOfNodeGroup(nodeGroupName string) error {
 	selector := labels.SelectorFromSet(labels.Set(
 		map[string]string{LabelBelongingTo: nodeGroupName},
 	))
@@ -154,14 +198,14 @@ func (c *Controller) removeBelongingLabelOnOfNodeGroup(nodeGroupName string) err
 		return err
 	}
 
+	errs := []error{}
 	for _, node := range nodeList.Items {
 		delete(node.Labels, LabelBelongingTo)
 		if err := c.Client.Update(context.TODO(), &node); err != nil {
-			klog.Errorf("failed to delete node group label on node %s, %s", node, err)
-			return err
+			klog.Errorf("failed to delete node group label of %s on node %s, %s", nodeGroupName, node, err)
 		}
 	}
-	return nil
+	return utilerrors.NewAggregate(errs)
 }
 
 // getNodesByMatchLabels can get all nodes matching these labels.
@@ -200,7 +244,6 @@ func (c *Controller) addOrUpdateNodeLabel(node *corev1.Node, nodeGroupName strin
 		return nil
 	}
 	if ok && v != nodeGroupName {
-		// TODO: event it
 		return fmt.Errorf("node %s has already belonged to NodeGroup %s", node.Name, nodeGroupName)
 	}
 
@@ -214,6 +257,41 @@ func (c *Controller) addOrUpdateNodeLabel(node *corev1.Node, nodeGroupName strin
 	return nil
 }
 
+func (c *Controller) ifReconcile(node *corev1.Node, nodeGroup *groupmanagementv1alpha1.NodeGroup) bool {
+	currentNode := &corev1.Node{}
+	if err := c.Client.Get(context.TODO(), types.NamespacedName{Name: currentNode.Name}, currentNode); err != nil {
+		if apierrors.IsNotFound(err) {
+			// this node has been deleted, need to update its nodegroup status.
+			return true
+		}
+		klog.Errorf("failed to check if node %s has been deleted, %s", node.Name, err)
+	}
+
+	// NodeGroup of this node has changed, or
+	// this node will be added to a NodeGroup
+	if oldNodeGroup, exist := node.Labels[LabelBelongingTo]; oldNodeGroup != nodeGroup.Name || !exist {
+		return true
+	}
+	// This controller also cares about the update of node status.
+	findNode := false
+	nodeReadyConditionStatus, hasReadyCondition := getNodeReadyConditionFromNode(node)
+	for _, nodeStatus := range nodeGroup.Status.NodeStatuses {
+		if nodeStatus.NodeName == node.Name {
+			findNode = true
+			oldReadyStatus := nodeStatus.ReadyStatus
+			newReadyStatus := conditionStatusReadyStatusMap[nodeReadyConditionStatus]
+			if oldReadyStatus != newReadyStatus {
+				return true
+			}
+			break
+		}
+	}
+
+	// findNode == false && hasReadyCondition == true: node starts to post ready condition
+	// findNode == true && hasReadyCondition == false: normally impossible, reconcile it in case
+	return findNode != hasReadyCondition
+}
+
 // IfMatchNodeGroup will check if the node is selected by the nodegroup.
 func IfMatchNodeGroup(node *corev1.Node, nodegroup *groupmanagementv1alpha1.NodeGroup) bool {
 	// check if nodename is in the nodegroup.Spec.Nodes
@@ -222,8 +300,16 @@ func IfMatchNodeGroup(node *corev1.Node, nodegroup *groupmanagementv1alpha1.Node
 			return true
 		}
 	}
-
-	// check if the label of this node selected by nodegroup.Spec.MatchLabels
+	// check if labels of this node selected by nodegroup.Spec.MatchLabels
 	selector := labels.SelectorFromSet(labels.Set(nodegroup.Spec.MatchLabels))
 	return selector.Matches(labels.Set(node.Labels))
+}
+
+func getNodeReadyConditionFromNode(node *corev1.Node) (corev1.ConditionStatus, bool) {
+	for _, condition := range node.Status.Conditions {
+		if condition.Type == corev1.NodeReady {
+			return condition.Status, true
+		}
+	}
+	return "", false
 }

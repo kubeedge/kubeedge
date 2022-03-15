@@ -22,6 +22,7 @@ CRD_VERSIONS=v1
 CRD_OUTPUTS=build/crds
 DEVICES_VERSION=v1alpha2
 RELIABLESYNCS_VERSION=v1alpha1
+GROUPMANAGEMENT_VERSION=v1alpha1
 HELM_CRDS_DIR=build/helm/charts/cloudcore/crds
 ROUTER_DIR=build/crds/router
 
@@ -66,21 +67,30 @@ function :gen:crds: {
   $(which controller-gen) paths="./..." ${_crdOptions} output:crd:artifacts:config=${_tmpdir}
 }
 
+# remove the last element if it ends with "s",i.e: devicemodels -> devicemodel
+function remove_suffix_s {
+  if [ "${1: -1}" == "s" ]; then
+    echo ${1%?}
+  fi
+}
+
 function :copy:to:destination {
   # rename files, copy files
   mkdir -p ${CRD_OUTPUTS}/devices
   mkdir -p ${CRD_OUTPUTS}/reliablesyncs
+  mkdir -p ${CRD_OUTPUTS}/groupmanagement
 
   for entry in `ls /tmp/crds/*.yaml`; do
       CRD_NAME=$(echo ${entry} | cut -d'.' -f3 | cut -d'_' -f2)
 
       if [ "$CRD_NAME" == "devices" ] || [ "$CRD_NAME" == "devicemodels" ]; then
-          # remove the last element if it ends with "s",i.e: devicemodels -> devicemodel
-          if [ "${CRD_NAME: -1}" == "s" ]; then
-            CRD_NAME=${CRD_NAME%?}
-          fi
+          CRD_NAME=$(remove_suffix_s "$CRD_NAME") 
           cp -v ${entry} ${CRD_OUTPUTS}/devices/devices_${DEVICES_VERSION}_${CRD_NAME}.yaml
           cp -v ${entry} ${HELM_CRDS_DIR}/devices_${DEVICES_VERSION}_${CRD_NAME}.yaml 
+      elif [ "$CRD_NAME" == "edgeapplications" ] || [ "$CRD_NAME" == "nodegroups" ]; then
+          CRD_NAME=$(remove_suffix_s "$CRD_NAME")
+          cp -v ${entry} ${CRD_OUTPUTS}/groupmanagement/groupmanagement_${GROUPMANAGEMENT_VERSION}_${CRD_NAME}.yaml
+          cp -v ${entry} ${HELM_CRDS_DIR}/groupmanagement_${GROUPMANAGEMENT_VERSION}_${CRD_NAME}.yaml
       elif [ "$CRD_NAME" == "clusterobjectsyncs" ]; then
           cp -v ${entry} ${CRD_OUTPUTS}/reliablesyncs/cluster_objectsync_${RELIABLESYNCS_VERSION}.yaml
           cp -v ${entry} ${HELM_CRDS_DIR}/cluster_objectsync_${RELIABLESYNCS_VERSION}.yaml

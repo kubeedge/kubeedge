@@ -1,9 +1,10 @@
+
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
+    controller-gen.kubebuilder.io/version: v0.6.2
   creationTimestamp: null
   name: nodegroups.groupmanagement.kubeedge.io
 spec:
@@ -41,7 +42,8 @@ spec:
               matchLabels:
                 additionalProperties:
                   type: string
-                description: MatchLabels match the nodes that have the labels
+                description: MatchLabels are used to select nodes that have these
+                  labels.
                 type: object
               nodes:
                 description: Nodes contains names of all the nodes in the nodegroup.
@@ -52,11 +54,31 @@ spec:
           status:
             description: Status represents the status of member nodegroup.
             properties:
-              containedNodes:
-                description: ContainedNodes represents names of all nodes the nodegroup
-                  contains.
+              nodeStatuses:
+                description: NodeStatuses is a status list of all selected nodes.
                 items:
-                  type: string
+                  description: NodeStatus contains status of node that selected by
+                    this NodeGroup.
+                  properties:
+                    nodeName:
+                      description: NodeName contains name of this node.
+                      type: string
+                    readyStatus:
+                      description: ReadyStatus contains ready status of this node.
+                      type: string
+                    selectionStatus:
+                      description: SelectionStatus contains status of the selection
+                        result for this node.
+                      type: string
+                    selectionStatusReason:
+                      description: SelectionStatusReason contains human-readable reason
+                        for this SelectionStatus.
+                      type: string
+                  required:
+                  - nodeName
+                  - readyStatus
+                  - selectionStatus
+                  type: object
                 type: array
             type: object
         type: object
