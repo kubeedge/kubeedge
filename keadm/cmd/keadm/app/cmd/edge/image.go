@@ -45,7 +45,13 @@ func request(opt *common.JoinOptions, step *common.Step) error {
 	}
 
 	step.Printf("Copy resources from the image to the management directory")
-	if err := runtime.CopyResources(imageSet.Get(image.EdgeCore)); err != nil {
+	dirs := map[string]string{
+		util.KubeEdgePath: filepath.Join(util.KubeEdgeTmpPath, "data"),
+	}
+	files := map[string]string{
+		filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName): filepath.Join(util.KubeEdgeTmpPath, "bin", util.KubeEdgeBinaryName),
+	}
+	if err := runtime.CopyResources(imageSet.Get(image.EdgeCore), dirs, files); err != nil {
 		return fmt.Errorf("copy resources failed: %v", err)
 	}
 

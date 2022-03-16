@@ -23,7 +23,7 @@ import (
 
 type ContainerRuntime interface {
 	PullImages(images []string) error
-	CopyResources(edgeImage string) error
+	CopyResources(edgeImage string, dirs map[string]string, files map[string]string) error
 	RunMQTT(mqttImage string) error
 }
 
@@ -127,26 +127,31 @@ func (runtime *DockerRuntime) RunMQTT(mqttImage string) error {
 //
 // docker run -v /etc/kubeedge:/tmp/kubeedge/data -v /usr/local/bin:/tmp/kubeedge/bin <IMAGE-NAME> \
 // bash -c cp -r /etc/kubeedge:/tmp/kubeedge/data cp /usr/local/bin/edgecore:/tmp/kubeedge/bin/edgecore
-func (runtime *DockerRuntime) CopyResources(edgeImage string) error {
-	containerDataTmpPath := filepath.Join(KubeEdgeTmpPath, "data")
-	containerBinTmpPath := filepath.Join(KubeEdgeTmpPath, "bin")
+func (runtime *DockerRuntime) CopyResources(image string, dirs map[string]string, files map[string]string) error {
+	if len(files) == 0 && len(dirs) == 0 {
+		return fmt.Errorf("no resources need copying")
+	}
+
+	copyCmd := copyResourcesCmd(dirs, files)
+
 	config := &dockercontainer.Config{
-		Image: edgeImage,
+		Image: image,
 		Cmd: []string{
 			"/bin/sh",
 			"-c",
-			fmt.Sprintf("cp -r %s %s && cp %s %s",
-				KubeEdgePath, containerDataTmpPath,
-				filepath.Join(KubeEdgeUsrBinPath, KubeEdgeBinaryName),
-				filepath.Join(containerBinTmpPath, KubeEdgeBinaryName),
-			),
+			copyCmd,
 		},
 	}
+	var binds []string
+	for origin, bind := range dirs {
+		binds = append(binds, origin+":"+bind)
+	}
+	for origin, bind := range files {
+		binds = append(binds, filepath.Dir(origin)+":"+filepath.Dir(bind))
+	}
+
 	hostConfig := &dockercontainer.HostConfig{
-		Binds: []string{
-			KubeEdgePath + ":" + containerDataTmpPath,
-			KubeEdgeUsrBinPath + ":" + containerBinTmpPath,
-		},
+		Binds: binds,
 	}
 
 	// Randomly generate container names to prevent duplicate names.
@@ -189,9 +194,8 @@ func (runtime *CRIRuntime) PullImages(images []string) error {
 
 // CopyResources copies binary and configuration file from the image to the host.
 // The same way as func (runtime *DockerRuntime) CopyResources
-func (runtime *CRIRuntime) CopyResources(edgeImage string) error {
-	containerDataTmpPath := filepath.Join(KubeEdgeTmpPath, "data")
-	containerBinTmpPath := filepath.Join(KubeEdgeTmpPath, "bin")
+func (runtime *CRIRuntime) CopyResources(edgeImage string, dirs map[string]string, files map[string]string) error {
+
 	psc := &runtimeapi.PodSandboxConfig{
 		Metadata: &runtimeapi.PodSandboxMetadata{Name: KubeEdgeBinaryName},
 	}
@@ -205,6 +209,20 @@ func (runtime *CRIRuntime) CopyResources(edgeImage string) error {
 		}
 	}()
 
+	copyCmd := copyResourcesCmd(dirs, files)
+	var mounts []*runtimeapi.Mount
+	for origin, bind := range dirs {
+		mounts = append(mounts, &runtimeapi.Mount{
+			HostPath:      origin,
+			ContainerPath: bind,
+		})
+	}
+	for origin, bind := range files {
+		mounts = append(mounts, &runtimeapi.Mount{
+			HostPath:      filepath.Dir(origin),
+			ContainerPath: filepath.Dir(bind),
+		})
+	}
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: &runtimeapi.ContainerMetadata{
 			Name: "container",
@@ -215,22 +233,9 @@ func (runtime *CRIRuntime) CopyResources(edgeImage string) error {
 		Command: []string{
 			"/bin/sh",
 			"-c",
-			fmt.Sprintf("cp -r %s %s && cp %s %s",
-				KubeEdgePath, containerDataTmpPath,
-				filepath.Join(KubeEdgeUsrBinPath, KubeEdgeBinaryName),
-				filepath.Join(containerBinTmpPath, KubeEdgeBinaryName),
-			),
+			copyCmd,
 		},
-		Mounts: []*runtimeapi.Mount{
-			{
-				HostPath:      KubeEdgePath,
-				ContainerPath: containerDataTmpPath,
-			},
-			{
-				HostPath:      KubeEdgeUsrBinPath,
-				ContainerPath: containerBinTmpPath,
-			},
-		},
+		Mounts: mounts,
 	}
 	containerID, err := runtime.RuntimeService.CreateContainer(sandbox, containerConfig, psc)
 	if err != nil {
@@ -281,4 +286,26 @@ func (runtime *CRIRuntime) RunMQTT(mqttImage string) error {
 		return err
 	}
 	return runtime.RuntimeService.StartContainer(containerID)
+}
+
+func copyResourcesCmd(dirs map[string]string, files map[string]string) string {
+	var copyCmd string
+	first := true
+	for origin, bind := range dirs {
+		if first {
+			copyCmd = copyCmd + fmt.Sprintf("cp -r %s %s", origin, bind)
+		} else {
+			copyCmd = copyCmd + fmt.Sprintf(" && cp -r %s %s", origin, bind)
+		}
+		first = false
+	}
+	for origin, bind := range files {
+		if first {
+			copyCmd = copyCmd + fmt.Sprintf("cp %s %s", origin, bind)
+		} else {
+			copyCmd = copyCmd + fmt.Sprintf(" && cp %s %s", origin, bind)
+		}
+		first = false
+	}
+	return copyCmd
 }
