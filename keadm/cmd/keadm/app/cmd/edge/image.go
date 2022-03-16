@@ -20,10 +20,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
-
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
-	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
 
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
@@ -62,26 +58,6 @@ func request(opt *common.JoinOptions, step *common.Step) error {
 		}
 		if err := runtime.RunMQTT(imageSet.Get(image.EdgeMQTT)); err != nil {
 			return fmt.Errorf("run MQTT failed: %v", err)
-		}
-	}
-	return nil
-}
-
-func pullImages(opt *common.JoinOptions, imageSet image.Set) error {
-	imageService, err := remote.NewRemoteImageService(opt.RemoteRuntimeEndpoint, time.Second*10)
-	if err != nil {
-		return err
-	}
-	for _, v := range imageSet {
-		imageSpec := &runtimeapi.ImageSpec{Image: v}
-		status, err := imageService.ImageStatus(imageSpec)
-		if err != nil {
-			return err
-		}
-		if status == nil || status.Id == "" {
-			if _, err := imageService.PullImage(imageSpec, nil, nil); err != nil {
-				return err
-			}
 		}
 	}
 	return nil
