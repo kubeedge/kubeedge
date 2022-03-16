@@ -16,7 +16,7 @@
 
 KUBEEDGE_ROOT=$PWD
 WORKDIR=$(dirname $0)
-HELM_DIR=$KUBEEDGE_ROOT/helm/charts
+HELM_DIR=$KUBEEDGE_ROOT/manifests/charts
 E2E_DIR=$(realpath $(dirname $0)/..)
 
 debugflag="-test.v -ginkgo.v"

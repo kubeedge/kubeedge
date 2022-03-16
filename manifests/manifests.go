@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package charts
+package manifests
 
 import (
 	"embed"
@@ -22,8 +22,8 @@ import (
 )
 
 // FS embeds the manifests
-//go:embed cloudcore/* profiles/* addons/*
-//go:embed cloudcore/templates/_helpers.tpl
+//go:embed charts/* addons/* profiles/*
+//go:embed charts/cloudcore/templates/_helpers.tpl
 var FS embed.FS
 
 // BuiltinOrDir returns a FS for the provided directory. If no directory is passed, the compiled in

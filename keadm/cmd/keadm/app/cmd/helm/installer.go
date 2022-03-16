@@ -19,14 +19,14 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/kubeedge/kubeedge/common/constants"
-	kecharts "github.com/kubeedge/kubeedge/helm/charts"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
+	kecharts "github.com/kubeedge/kubeedge/manifests"
 )
 
 const (
 	CloudCoreHelmComponent = "cloudcore"
-	CloudCoreSubDir        = "cloudcore"
+	ChartsSubDir           = "charts"
 
 	DefaultBaseHelmDir   = ""
 	DefaultAddonsHelmDir = "addons"
@@ -233,7 +233,7 @@ func (cu *KubeCloudHelmInstTool) buildRenderer(baseHelmRoot string) (*Renderer, 
 		switch cu.ProfileKey {
 		case VersionProfileKey, IptablesMgrProfileKey:
 			componentName = CloudCoreHelmComponent
-			subDir = CloudCoreSubDir
+			subDir = fmt.Sprintf("%s/%s", ChartsSubDir, CloudCoreHelmComponent)
 		// we can implement edgemesh here later.
 		default:
 			// By default, will search charts in addons dir.
