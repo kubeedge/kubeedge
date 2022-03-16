@@ -83,3 +83,11 @@ func EdgeSet(imageRepository, version string) Set {
 	set = set.Merge(thirdSet)
 	return set
 }
+
+func (s Set) ToSlice() []string {
+	var result []string
+	for _, v := range s {
+		result = append(result, v)
+	}
+	return result
+}

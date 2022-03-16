@@ -17,18 +17,10 @@ limitations under the License.
 package beta
 
 import (
-	"context"
 	"fmt"
-	"io"
 	"strings"
-	"time"
 
-	dockertypes "github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/filters"
-	dockerclient "github.com/docker/docker/client"
 	"github.com/spf13/cobra"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
-	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
 	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
 
 	"github.com/kubeedge/kubeedge/common/constants"
@@ -137,7 +129,7 @@ func newCmdConfigImagesPull() *cobra.Command {
 		RunE: func(_ *cobra.Command, _ []string) error {
 			images := GetKubeEdgeImages(cfg)
 
-			return PullImages(cfg.RuntimeType, cfg.RemoteRuntimeEndpoint, images)
+			return pullImages(cfg.RuntimeType, cfg.RemoteRuntimeEndpoint, images)
 		},
 		Args: cobra.NoArgs,
 	}
@@ -146,20 +138,13 @@ func newCmdConfigImagesPull() *cobra.Command {
 	return cmd
 }
 
-func PullImages(runtimeType string, endpoint string, images []string) error {
-	runtime, err := NewContainerRuntime(runtimeType, endpoint)
+func pullImages(runtimeType string, endpoint string, images []string) error {
+	runtime, err := util.NewContainerRuntime(runtimeType, endpoint)
 	if err != nil {
 		return err
 	}
-	for _, image := range images {
-		fmt.Printf("Pulling %s ...\n", image)
-		if err := runtime.PullImage(image); err != nil {
-			fmt.Printf("Failed to pull image %q: %v", image, err)
-			return fmt.Errorf("failed to pull image %s: %v", image, err)
-		}
-		fmt.Printf("Successfully pulled %s\n", image)
-	}
-	return nil
+
+	return runtime.PullImages(images)
 }
 
 // AddImagesCommonConfigFlags adds the flags that configure keadm
@@ -234,82 +219,4 @@ func GetImage(image string, cfg *Configuration) string {
 
 func GetPauseImage() string {
 	return constants.DefaultPodSandboxImage
-}
-
-type ContainerRuntime interface {
-	PullImage(image string) error
-}
-
-func NewContainerRuntime(runtimeType string, endpoint string) (ContainerRuntime, error) {
-	var runtime ContainerRuntime
-	switch runtimeType {
-	case kubetypes.DockerContainerRuntime:
-		// default using docker
-		runtime = &DockerRuntime{}
-	case kubetypes.RemoteContainerRuntime:
-		runtime = &CRIRuntime{
-			endpoint: endpoint,
-		}
-	default:
-		return runtime, fmt.Errorf("unsupport CRI runtime: %s", runtimeType)
-	}
-
-	return runtime, nil
-}
-
-type CRIRuntime struct {
-	endpoint string
-}
-
-func (runtime *CRIRuntime) PullImage(image string) error {
-	imageService, err := remote.NewRemoteImageService(runtime.endpoint, time.Second*10)
-	if err != nil {
-		return err
-	}
-
-	imageSpec := &runtimeapi.ImageSpec{Image: image}
-	status, err := imageService.ImageStatus(imageSpec)
-	if err != nil {
-		return err
-	}
-	if status == nil || status.Id == "" {
-		if _, err := imageService.PullImage(imageSpec, nil, nil); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-type DockerRuntime struct {
-}
-
-func (runtime *DockerRuntime) PullImage(image string) error {
-	cli, err := dockerclient.NewClientWithOpts(dockerclient.FromEnv)
-	if err != nil {
-		return fmt.Errorf("init docker client failed: %v", err)
-	}
-
-	ctx := context.Background()
-	cli.NegotiateAPIVersion(ctx)
-
-	args := filters.NewArgs()
-	args.Add("reference", image)
-	list, err := cli.ImageList(ctx, dockertypes.ImageListOptions{Filters: args})
-	if err != nil {
-		return err
-	}
-	if len(list) > 0 {
-		return nil
-	}
-
-	rc, err := cli.ImagePull(ctx, image, dockertypes.ImagePullOptions{})
-	if err != nil {
-		return err
-	}
-	defer rc.Close()
-	if _, err = io.Copy(io.Discard, rc); err != nil {
-		return err
-	}
-	return nil
 }
