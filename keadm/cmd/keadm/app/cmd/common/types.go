@@ -61,6 +61,7 @@ type JoinOptions struct {
 	CGroupDriver          string
 	Labels                []string
 	WithMQTT              bool
+	ImageRepository       string
 }
 
 type CheckOptions struct {

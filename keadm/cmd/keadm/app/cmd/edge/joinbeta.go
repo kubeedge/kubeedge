@@ -99,7 +99,6 @@ func NewJoinBetaCommand() *cobra.Command {
 		},
 	}
 
-	// TODO (@zc2638) need support to custom image repo
 	addJoinOtherFlags(cmd, joinOptions)
 	return cmd
 }
@@ -128,7 +127,7 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 
 	// Do not create any files in the management directory,
 	// you need to mount the contents of the mirror first.
-	imageSet := image.EdgeSet(opt.KubeEdgeVersion)
+	imageSet := image.EdgeSet(opt.ImageRepository, opt.KubeEdgeVersion)
 	switch opt.RuntimeType {
 	case kubetypes.DockerContainerRuntime:
 		if err := dockerRequest(opt, step, imageSet); err != nil {
