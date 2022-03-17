@@ -68,18 +68,6 @@ func NewManifestGenerateBeta() *cobra.Command {
 		Long:    cloudManifestGenerateLongDescription,
 		Example: cloudManifestGenerateExample,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ver, err := util.GetCurrentVersion(BetaInit.CloudcoreTag)
-			if err != nil {
-				return err
-			}
-			BetaInit.CloudcoreTag = ver
-
-			ver, err = util.GetCurrentVersion(BetaInit.IptablesMgrTag)
-			if err != nil {
-				return err
-			}
-			BetaInit.IptablesMgrTag = ver
-
 			checkFlags := func(f *pflag.Flag) {
 				util.AddToolVals(f, flagVals)
 			}
