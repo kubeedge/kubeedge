@@ -33,7 +33,7 @@ import (
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
-	"github.com/kubeedge/kubeedge/common/constants"
+	"github.com/kubeedge/kubeedge/pkg/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/stream/flushwriter"
 )
 

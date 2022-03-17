@@ -8,7 +8,7 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	controller "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
-	"github.com/kubeedge/kubeedge/common/constants"
+	"github.com/kubeedge/kubeedge/pkg/common/constants"
 	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
 )
 

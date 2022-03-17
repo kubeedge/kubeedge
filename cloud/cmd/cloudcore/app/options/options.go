@@ -23,8 +23,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	cliflag "k8s.io/component-base/cli/flag"
 
-	"github.com/kubeedge/kubeedge/common/constants"
 	config "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/util/validation"
 )
 

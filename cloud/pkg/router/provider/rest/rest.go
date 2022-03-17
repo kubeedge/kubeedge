@@ -18,8 +18,8 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/listener"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/provider"
 	httpUtils "github.com/kubeedge/kubeedge/cloud/pkg/router/utils/http"
-	commonType "github.com/kubeedge/kubeedge/common/types"
 	v1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
+	commonType "github.com/kubeedge/kubeedge/pkg/common/types"
 )
 
 var inited int32

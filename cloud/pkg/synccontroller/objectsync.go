@@ -19,8 +19,8 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	edgectrconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	edgectrmessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
-	commonconst "github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1"
+	commonconst "github.com/kubeedge/kubeedge/pkg/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 

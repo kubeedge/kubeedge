@@ -21,7 +21,7 @@ import (
 	"strings"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
-	constants "github.com/kubeedge/kubeedge/common/constants"
+	constants "github.com/kubeedge/kubeedge/pkg/common/constants"
 	testconstants "github.com/kubeedge/kubeedge/tests/stubs/common/constants"
 )
 

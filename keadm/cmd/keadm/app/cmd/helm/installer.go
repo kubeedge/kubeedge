@@ -18,10 +18,10 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"sigs.k8s.io/yaml"
 
-	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	kecharts "github.com/kubeedge/kubeedge/manifests"
+	"github.com/kubeedge/kubeedge/pkg/common/constants"
 )
 
 const (

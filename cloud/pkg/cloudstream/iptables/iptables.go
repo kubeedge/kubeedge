@@ -21,8 +21,8 @@ import (
 	utilexec "k8s.io/utils/exec"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/common/constants"
 	cloudcoreConfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/common/constants"
 )
 
 type Manager struct {

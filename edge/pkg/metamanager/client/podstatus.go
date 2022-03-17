@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
-	edgeapi "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	commodule "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	edgeapi "github.com/kubeedge/kubeedge/pkg/common/types"
 )
 
 //PodStatusGetter is interface to get pod status

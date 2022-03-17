@@ -12,9 +12,9 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/status"
 	"k8s.io/kubernetes/pkg/kubelet/util/format"
 
-	edgeapi "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
+	edgeapi "github.com/kubeedge/kubeedge/pkg/common/types"
 )
 
 // manager as status manager, embedded a k8s.io/kubernetes/pkg/kubelet/status.Manager

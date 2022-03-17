@@ -53,11 +53,11 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/types"
 	routerrule "github.com/kubeedge/kubeedge/cloud/pkg/router/rule"
-	common "github.com/kubeedge/kubeedge/common/constants"
-	edgeapi "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 	rulesv1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
 	crdClientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
+	common "github.com/kubeedge/kubeedge/pkg/common/constants"
+	edgeapi "github.com/kubeedge/kubeedge/pkg/common/types"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 

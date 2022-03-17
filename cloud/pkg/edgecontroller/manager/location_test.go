@@ -23,7 +23,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	commonconst "github.com/kubeedge/kubeedge/common/constants"
+	commonconst "github.com/kubeedge/kubeedge/pkg/common/constants"
 )
 
 var (

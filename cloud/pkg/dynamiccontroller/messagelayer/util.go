@@ -8,7 +8,7 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	controller "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
-	"github.com/kubeedge/kubeedge/common/constants"
+	"github.com/kubeedge/kubeedge/pkg/common/constants"
 )
 
 // BuildResource return a string as "beehive/pkg/core/model".Message.Router.Resource

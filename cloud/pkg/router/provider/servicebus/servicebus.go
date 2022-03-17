@@ -16,8 +16,8 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/listener"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/provider"
-	commonType "github.com/kubeedge/kubeedge/common/types"
 	v1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
+	commonType "github.com/kubeedge/kubeedge/pkg/common/types"
 )
 
 type servicebusFactory struct{}

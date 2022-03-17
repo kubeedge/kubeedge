@@ -3,7 +3,7 @@ package messagelayer
 import (
 	"fmt"
 
-	"github.com/kubeedge/kubeedge/common/constants"
+	"github.com/kubeedge/kubeedge/pkg/common/constants"
 )
 
 // BuildResourceForRouter return a string as "beehive/pkg/core/model".Message.Router.Resource

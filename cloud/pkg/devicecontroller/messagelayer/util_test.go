@@ -6,7 +6,7 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	deviceconstants "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
-	"github.com/kubeedge/kubeedge/common/constants"
+	"github.com/kubeedge/kubeedge/pkg/common/constants"
 )
 
 func TestBuildResource(t *testing.T) {
