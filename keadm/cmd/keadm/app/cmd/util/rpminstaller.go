@@ -93,24 +93,7 @@ func (r *RpmOS) IsK8SComponentInstalled(kubeConfig, master string) error {
 // Untar's in the specified location /etc/kubeedge/ and then copies
 // the binary to excecutables' path (eg: /usr/local/bin)
 func (r *RpmOS) InstallKubeEdge(options types.InstallOptions) error {
-	arch := "amd64"
-	cmd := NewCommand("arch")
-	if err := cmd.Exec(); err != nil {
-		return err
-	}
-	result := cmd.GetStdOut()
-	switch result {
-	case "armv7l":
-		arch = OSArchARM32
-	case "aarch64":
-		arch = OSArchARM64
-	case "x86_64":
-		arch = OSArchAMD64
-	default:
-		return fmt.Errorf("can't support this architecture of RpmOS: %s", result)
-	}
-
-	return installKubeEdge(options, arch, r.KubeEdgeVersion)
+	return installKubeEdge(options, r.KubeEdgeVersion)
 }
 
 // RunEdgeCore starts edgecore with logs being captured

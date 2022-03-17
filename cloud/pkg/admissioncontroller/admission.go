@@ -20,9 +20,9 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/cloud/cmd/admission/app/options"
-	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
-	v1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
-	"github.com/kubeedge/kubeedge/cloud/pkg/client/clientset/versioned"
+	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
+	v1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
+	"github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 )
 
 const (

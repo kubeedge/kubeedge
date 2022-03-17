@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	v1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
+	v1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 )
 

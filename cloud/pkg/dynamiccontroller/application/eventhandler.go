@@ -18,6 +18,7 @@ package application
 
 import (
 	"fmt"
+	"sync"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -82,10 +83,11 @@ func (c *handlerCenter) DeleteListener(s *SelectorListener) {
 type CommonResourceEventHandler struct {
 	events chan watch.Event
 	//TODO: num of listeners is proportional to the number of request, need reduce.
-	listeners    map[string]*SelectorListener
-	messageLayer messagelayer.MessageLayer
-	gvr          schema.GroupVersionResource
-	informer     informers.GenericInformer
+	listeners     map[string]*SelectorListener
+	listenersLock sync.RWMutex
+	messageLayer  messagelayer.MessageLayer
+	gvr           schema.GroupVersionResource
+	informer      informers.GenericInformer
 }
 
 func NewCommonResourceEventHandler(gvr schema.GroupVersionResource, informerFactory dynamicinformer.DynamicSharedInformerFactory, layer messagelayer.MessageLayer) *CommonResourceEventHandler {
@@ -144,20 +146,26 @@ func (c *CommonResourceEventHandler) AddListener(s *SelectorListener) error {
 		return fmt.Errorf("failed to list: %v", err)
 	}
 	s.sendAllObjects(ret, c.messageLayer)
+	c.listenersLock.Lock()
 	c.listeners[s.id] = s
+	c.listenersLock.Unlock()
 	return nil
 }
 
 func (c *CommonResourceEventHandler) DeleteListener(s *SelectorListener) {
+	c.listenersLock.Lock()
 	delete(c.listeners, s.id)
+	c.listenersLock.Unlock()
 }
 
 func (c *CommonResourceEventHandler) dispatchEvents() {
 	for event := range c.events {
 		klog.V(4).Infof("[metaserver/resourceEventHandler] handler(%v), send obj event{%v/%v} to listeners", c.gvr, event.Type, event.Object.GetObjectKind().GroupVersionKind().String())
+		c.listenersLock.RLock()
 		for _, listener := range c.listeners {
 			listener.sendObj(event, c.messageLayer)
 		}
+		c.listenersLock.RUnlock()
 	}
 	klog.Warningf("[metaserver/resourceEventHandler] handler(%v) stopped!", c.gvr.String())
 }

@@ -75,7 +75,7 @@ verify-vendor:
 	hack/verify-vendor.sh
 .PHONY: verify-codegen
 verify-codegen:
-	cloud/hack/verify-codegen.sh
+	hack/verify-codegen.sh
 .PHONY: verify-vendor-licenses
 verify-vendor-licenses:
 	hack/verify-vendor-licenses.sh

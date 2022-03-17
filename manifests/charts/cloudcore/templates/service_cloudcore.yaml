@@ -1,0 +1,50 @@
+{{- if and (.Values.cloudCore.service.enable) }}
+apiVersion: v1
+kind: Service
+metadata:
+  {{- with .Values.cloudCore.labels }}
+  labels: {{- toYaml . | nindent 4 }}
+  {{- end }}
+  name: cloudcore
+spec:
+  {{- if and (eq .Values.cloudCore.service.type "NodePort") ( not .Values.cloudCore.hostNetWork) }}
+  type: {{ .Values.cloudCore.service.type }}
+  {{- else }}
+  type: ClusterIP
+  {{- end }}
+  ports:
+  - port: 10000
+    targetPort: 10000
+    {{- if and (eq .Values.cloudCore.service.type "NodePort") ( not .Values.cloudCore.hostNetWork) }}
+    nodePort: {{ .Values.cloudCore.service.cloudhubNodePort }}
+    {{- end }}
+    name: cloudhub
+  - port: 10001
+    targetPort: 10001
+    {{- if and (eq .Values.cloudCore.service.type "NodePort") ( not .Values.cloudCore.hostNetWork) }}
+    nodePort: {{ .Values.cloudCore.service.cloudhubQuicNodePort }}
+    {{- end }}
+    name: cloudhub-quic
+  - port: 10002
+    targetPort: 10002
+    {{- if and (eq .Values.cloudCore.service.type "NodePort") ( not .Values.cloudCore.hostNetWork) }}
+    nodePort: {{ .Values.cloudCore.service.cloudhubHttpsNodePort }}
+    {{- end }}
+    name: cloudhub-https
+  - port: 10003
+    targetPort: 10003
+    {{- if and (eq .Values.cloudCore.service.type "NodePort") ( not .Values.cloudCore.hostNetWork) }}
+    nodePort: {{ .Values.cloudCore.service.cloudstreamNodePort }}
+    {{- end }}
+    name: cloudstream
+  - port: 10004
+    targetPort: 10004
+    {{- if and (eq .Values.cloudCore.service.type "NodePort") ( not .Values.cloudCore.hostNetWork) }}
+    nodePort: {{ .Values.cloudCore.service.tunnelNodePort }}
+    {{- end }}
+    name: tunnelport
+  selector:
+  {{- with .Values.cloudCore.labels }}
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}

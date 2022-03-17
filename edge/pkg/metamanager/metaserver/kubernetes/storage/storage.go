@@ -183,7 +183,7 @@ func (r *REST) Create(ctx context.Context, obj runtime.Object, createValidation 
 		return retObj, nil
 	}()
 	if err != nil {
-		klog.Infof("[metaserver/reststorage] failed to create (%v)", metaserver.KeyFunc(obj))
+		klog.Errorf("[metaserver/reststorage] failed to create (%v)", metaserver.KeyFunc(obj))
 		return nil, errors.NewInternalError(err)
 	}
 	klog.Infof("[metaserver/reststorage] successfully create (%v)", metaserver.KeyFunc(obj))
@@ -196,7 +196,7 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 	err := r.Agent.Apply(app)
 	defer app.Close()
 	if err != nil {
-		klog.Infof("[metaserver/reststorage] failed to delete (%v) through cloud", key)
+		klog.Errorf("[metaserver/reststorage] failed to delete (%v) through cloud", key)
 		return nil, false, errors.NewInternalError(err)
 	}
 	klog.Infof("[metaserver/reststorage] successfully delete (%v) through cloud", key)

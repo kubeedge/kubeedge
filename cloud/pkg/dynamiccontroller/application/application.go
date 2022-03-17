@@ -17,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/klog/v2"
@@ -82,15 +83,16 @@ type PatchInfo struct {
 // 0.use Agent.Generate to generate application
 // 1.use Agent.Apply to apply application( generate msg and send it to cloud dynamiccontroller)
 type Application struct {
-	ID       string
-	Key      string // group version resource namespaces name
-	Verb     applicationVerb
-	Nodename string
-	Status   applicationStatus
-	Reason   string // why in this status
-	Option   []byte //
-	ReqBody  []byte // better a k8s api instance
-	RespBody []byte
+	ID          string
+	Key         string // group version resource namespaces name
+	Verb        applicationVerb
+	Nodename    string
+	Status      applicationStatus
+	Reason      string // why in this status
+	Option      []byte //
+	ReqBody     []byte // better a k8s api instance
+	RespBody    []byte
+	Subresource string
 
 	ctx    context.Context // to end app.Wait
 	cancel context.CancelFunc
@@ -100,7 +102,7 @@ type Application struct {
 	timestamp time.Time // record the last closing time of application, only make sense when count == 0
 }
 
-func newApplication(ctx context.Context, key string, verb applicationVerb, nodename string, option interface{}, reqBody interface{}) *Application {
+func newApplication(ctx context.Context, key string, verb applicationVerb, nodename, subresource string, option interface{}, reqBody interface{}) *Application {
 	var v1 metav1.ListOptions
 	if internal, ok := option.(metainternalversion.ListOptions); ok {
 		err := metainternalversion.Convert_internalversion_ListOptions_To_v1_ListOptions(&internal, &v1, nil)
@@ -112,17 +114,18 @@ func newApplication(ctx context.Context, key string, verb applicationVerb, noden
 	}
 	ctx2, cancel := context.WithCancel(ctx)
 	app := &Application{
-		Key:       key,
-		Verb:      verb,
-		Nodename:  nodename,
-		Status:    PreApplying,
-		Option:    toBytes(option),
-		ReqBody:   toBytes(reqBody),
-		ctx:       ctx2,
-		cancel:    cancel,
-		count:     0,
-		countLock: sync.Mutex{},
-		timestamp: time.Time{},
+		Key:         key,
+		Verb:        verb,
+		Nodename:    nodename,
+		Subresource: subresource,
+		Status:      PreApplying,
+		Option:      toBytes(option),
+		ReqBody:     toBytes(reqBody),
+		ctx:         ctx2,
+		cancel:      cancel,
+		count:       0,
+		countLock:   sync.Mutex{},
+		timestamp:   time.Time{},
 	}
 	app.add()
 	return app
@@ -281,7 +284,14 @@ func (a *Agent) Generate(ctx context.Context, verb applicationVerb, option inter
 		klog.Errorf("%v", err)
 		return &Application{}
 	}
-	app := newApplication(ctx, key, verb, a.nodeName, option, obj)
+
+	info, ok := apirequest.RequestInfoFrom(ctx)
+	if !ok || !info.IsResourceRequest {
+		klog.Errorf("no request info in context")
+		return &Application{}
+	}
+
+	app := newApplication(ctx, key, verb, a.nodeName, info.Subresource, option, obj)
 	store, ok := a.Applications.LoadOrStore(app.Identifier(), app)
 	if ok {
 		app = store.(*Application)
@@ -470,7 +480,13 @@ func (c *Center) ProcessApplication(app *Application) (interface{}, error) {
 		if err := app.ReqBodyTo(obj); err != nil {
 			return nil, err
 		}
-		retObj, err := c.kubeclient.Resource(gvr).Namespace(ns).Create(context.TODO(), obj, *option)
+		var retObj interface{}
+		var err error
+		if app.Subresource == "" {
+			retObj, err = c.kubeclient.Resource(gvr).Namespace(ns).Create(context.TODO(), obj, *option)
+		} else {
+			retObj, err = c.kubeclient.Resource(gvr).Namespace(ns).Create(context.TODO(), obj, *option, app.Subresource)
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -493,7 +509,13 @@ func (c *Center) ProcessApplication(app *Application) (interface{}, error) {
 		if err := app.ReqBodyTo(obj); err != nil {
 			return nil, err
 		}
-		retObj, err := c.kubeclient.Resource(gvr).Namespace(ns).Update(context.TODO(), obj, *option)
+		var retObj interface{}
+		var err error
+		if app.Subresource == "" {
+			retObj, err = c.kubeclient.Resource(gvr).Namespace(ns).Update(context.TODO(), obj, *option)
+		} else {
+			retObj, err = c.kubeclient.Resource(gvr).Namespace(ns).Update(context.TODO(), obj, *option, app.Subresource)
+		}
 		if err != nil {
 			return nil, err
 		}

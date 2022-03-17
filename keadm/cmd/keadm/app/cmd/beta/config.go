@@ -17,15 +17,11 @@ limitations under the License.
 package beta
 
 import (
-	"context"
 	"fmt"
-	"io"
 	"strings"
 
-	dockertypes "github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/filters"
-	dockerclient "github.com/docker/docker/client"
 	"github.com/spf13/cobra"
+	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 	cmdcommon "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
@@ -40,12 +36,16 @@ type Configuration struct {
 	ImageRepository string
 	// eg. cloud/edge
 	Part string
+
+	RuntimeType           string
+	RemoteRuntimeEndpoint string
 }
 
 func newDefaultConfiguration() *Configuration {
 	return &Configuration{
 		ImageRepository: "kubeedge",
 		Part:            "",
+		RuntimeType:     kubetypes.DockerContainerRuntime,
 	}
 }
 
@@ -106,7 +106,6 @@ func newCmdConfigImagesList() *cobra.Command {
 }
 
 // newCmdConfigImagesPull returns the `keadm config images pull` command
-// TODO: Now we only support docker images. If can, we will need to support more CRIs.
 func newCmdConfigImagesPull() *cobra.Command {
 	cfg := newDefaultConfiguration()
 
@@ -121,7 +120,7 @@ func newCmdConfigImagesPull() *cobra.Command {
 			cfg.KubeEdgeVersion = ver
 
 			images := GetKubeEdgeImages(cfg)
-			return DockerPullImages(images)
+			return pullImages(cfg.RuntimeType, cfg.RemoteRuntimeEndpoint, images)
 		},
 		Args: cobra.NoArgs,
 	}
@@ -130,24 +129,13 @@ func newCmdConfigImagesPull() *cobra.Command {
 	return cmd
 }
 
-// DockerPullImages pulls all images
-func DockerPullImages(images []string) error {
-	cli, err := dockerclient.NewClientWithOpts(dockerclient.FromEnv)
+func pullImages(runtimeType string, endpoint string, images []string) error {
+	runtime, err := util.NewContainerRuntime(runtimeType, endpoint)
 	if err != nil {
-		return fmt.Errorf("init docker dockerclient failed: %v", err)
+		return err
 	}
 
-	ctx := context.Background()
-
-	for _, image := range images {
-		fmt.Printf("Pulling %s ...\n", image)
-		if err := dockerPullImage(ctx, image, cli); err != nil {
-			fmt.Printf("Failed to pull image %q: %v", image, err)
-			return fmt.Errorf("failed to pull image %q: %v", image, err)
-		}
-		fmt.Printf("Successfully pulled %s\n", image)
-	}
-	return nil
+	return runtime.PullImages(images)
 }
 
 // AddImagesCommonConfigFlags adds the flags that configure keadm
@@ -160,6 +148,12 @@ func AddImagesCommonConfigFlags(cmd *cobra.Command, cfg *Configuration) {
 	)
 	cmd.Flags().StringVar(&cfg.Part, "part", cfg.Part,
 		"Use this key to set which part keadm will install: cloud part or edge part. If not set, keadm will list/pull all images used by both cloud part and edge part.")
+
+	cmd.Flags().StringVar(&cfg.RuntimeType, cmdcommon.RuntimeType, cfg.RuntimeType,
+		"Container runtime type, default is docker")
+
+	cmd.Flags().StringVar(&cfg.RemoteRuntimeEndpoint, cmdcommon.RemoteRuntimeEndpoint, cfg.RemoteRuntimeEndpoint,
+		"The endpoint of remote runtime service in edge node")
 }
 
 // GetKubeEdgeImages returns a list of container images that related part expects to use
@@ -216,27 +210,4 @@ func GetImage(image string, cfg *Configuration) string {
 
 func GetPauseImage() string {
 	return constants.DefaultPodSandboxImage
-}
-
-// dockerPullImage uses Docker to pull the image
-func dockerPullImage(ctx context.Context, image string, cli *dockerclient.Client) error {
-	args := filters.NewArgs()
-	args.Add("reference", image)
-	list, err := cli.ImageList(ctx, dockertypes.ImageListOptions{Filters: args})
-	if err != nil {
-		return err
-	}
-	if len(list) > 0 {
-		return nil
-	}
-
-	rc, err := cli.ImagePull(ctx, image, dockertypes.ImagePullOptions{})
-	if err != nil {
-		return err
-	}
-	defer rc.Close()
-	if _, err = io.Copy(io.Discard, rc); err != nil {
-		return err
-	}
-	return nil
 }

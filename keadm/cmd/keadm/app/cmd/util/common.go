@@ -26,6 +26,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -78,10 +79,6 @@ const (
 
 	latestReleaseVersionURL = "https://kubeedge.io/latestversion"
 	RetryTimes              = 5
-
-	OSArchAMD64 string = "amd64"
-	OSArchARM64 string = "arm64"
-	OSArchARM32 string = "arm"
 
 	APT    string = "apt"
 	YUM    string = "yum"
@@ -358,7 +355,10 @@ func checkKubernetesVersion(serverVersion *version.Info) error {
 // installKubeEdge downloads the provided version of KubeEdge.
 // Untar's in the specified location /etc/kubeedge/ and then copies
 // the binary to excecutables' path (eg: /usr/local/bin)
-func installKubeEdge(options types.InstallOptions, arch string, version semver.Version) error {
+func installKubeEdge(options types.InstallOptions, version semver.Version) error {
+	// program's architecture: amd64, arm64, arm
+	arch := runtime.GOARCH
+
 	// create the storage path of the kubeedge installation packages
 	if options.TarballPath == "" {
 		options.TarballPath = KubeEdgePath
@@ -372,10 +372,6 @@ func installKubeEdge(options types.InstallOptions, arch string, version semver.V
 	err := os.MkdirAll(KubeEdgePath, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("not able to create %s folder path", KubeEdgePath)
-	}
-
-	if arch == "armhf" {
-		arch = "arm"
 	}
 
 	//Check if the same version exists, then skip the download and just checksum for it

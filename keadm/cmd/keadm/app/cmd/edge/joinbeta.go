@@ -35,7 +35,6 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1/validation"
-	"github.com/kubeedge/kubeedge/pkg/image"
 	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
 )
 
@@ -105,7 +104,6 @@ func NewJoinBetaCommand() *cobra.Command {
 		},
 	}
 
-	// TODO (@zc2638) need support to custom image repo
 	addJoinOtherFlags(cmd, joinOptions)
 	return cmd
 }
@@ -127,18 +125,8 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 
 	// Do not create any files in the management directory,
 	// you need to mount the contents of the mirror first.
-	imageSet := image.EdgeSet(opt.KubeEdgeVersion)
-	switch opt.RuntimeType {
-	case kubetypes.DockerContainerRuntime:
-		if err := dockerRequest(opt, step, imageSet); err != nil {
-			return err
-		}
-	case kubetypes.RemoteContainerRuntime:
-		if err := remoteRequest(opt, step, imageSet); err != nil {
-			return err
-		}
-	default:
-		return fmt.Errorf("unsupport CRI runtime: %s", opt.RuntimeType)
+	if err := request(opt, step); err != nil {
+		return err
 	}
 
 	step.Printf("Generate systemd service file")
