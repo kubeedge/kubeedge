@@ -17,20 +17,12 @@ limitations under the License.
 package mqtt
 
 import (
-	"encoding/base64"
-	"fmt"
-	"strings"
-
 	"github.com/256dpi/gomqtt/broker"
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/256dpi/gomqtt/topic"
 	"github.com/256dpi/gomqtt/transport"
 	"k8s.io/klog/v2"
 
-	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
-	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
-	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/dao"
 )
 
@@ -102,24 +94,8 @@ func (m *Server) Run() error {
 
 // onSubscribe will be called if the topic is matched in topic tree.
 func (m *Server) onSubscribe(msg *packet.Message) {
-	// for "$hw/events/device/+/twin/+", "$hw/events/node/+/membership/get", send to twin
-	// for other, send to hub
-	// for "SYS/dis/upload_records", no need to base64 topic
-	var target string
-	var message *beehiveModel.Message
-	if strings.HasPrefix(msg.Topic, "$hw/events/device") || strings.HasPrefix(msg.Topic, "$hw/events/node") {
-		target = modules.TwinGroup
-		resource := base64.URLEncoding.EncodeToString([]byte(msg.Topic))
-		// routing key will be $hw.<project_id>.events.user.bus.response.cluster.<cluster_id>.node.<node_id>.<base64_topic>
-		message = beehiveModel.NewMessage("").BuildRouter(modules.BusGroup, modules.UserGroup,
-			resource, messagepkg.OperationResponse).FillBody(string(msg.Payload))
-	} else {
-		target = modules.HubGroup
-		message = beehiveModel.NewMessage("").BuildRouter(modules.BusGroup, modules.UserGroup,
-			msg.Topic, beehiveModel.UploadOperation).FillBody(string(msg.Payload))
-	}
-	klog.Info(fmt.Sprintf("Received msg from mqttserver, deliver to %s with resource %s", target, message.GetResource()))
-	beehiveContext.SendToGroup(target, *message)
+	klog.Infof("OnSubscribe recevie msg from topic: %s", msg.Topic)
+	NewMessageMux().Dispatch(msg.Topic, msg.Payload)
 }
 
 // InitInternalTopics sets internal topics to server by default.
