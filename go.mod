@@ -9,6 +9,7 @@ require (
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/container-storage-interface/spec v1.5.0
+	github.com/containerd/containerd v1.5.10 // indirect
 	github.com/docker/distribution v2.8.0+incompatible // indirect
 	github.com/docker/docker v20.10.2+incompatible
 	github.com/docker/go-connections v0.4.0
@@ -29,7 +30,6 @@ require (
 	github.com/mitchellh/go-ps v0.0.0-20190716172923-621e5597135b
 	github.com/onsi/ginkgo v1.14.0
 	github.com/onsi/gomega v1.10.3
-	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/opencontainers/runc v1.0.3 // indirect
 	github.com/paypal/gatt v0.0.0-20151011220935-4ae819d591cf
 	github.com/prometheus/client_golang v1.11.0
