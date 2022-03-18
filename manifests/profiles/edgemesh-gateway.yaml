@@ -1,0 +1,65 @@
+image: kubeedge/edgemesh-agent:latest
+nodeName: "your node name"
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: node-role.kubernetes.io/edge
+          operator: DoesNotExist
+nodeSelector: {}
+tolerations: {}
+resources:
+  limits:
+    cpu: 1
+    memory: 256Mi
+  requests:
+    cpu: 0.5
+    memory: 128Mi
+
+# edgemesh-gateway configmap
+apiVersion: agent.edgemesh.config.kubeedge.io/v1alpha1
+kind: EdgeMeshAgent
+commonConfig:
+  dummyDeviceName: edgemesh0
+  dummyDeviceIP: 169.254.96.16
+goChassisConfig:
+  protocol:
+    tcpBufferSize: 8192
+    tcpClientTimeout: 5
+    tcpReconnectTimes: 3
+  loadBalancer:
+    defaultLBStrategy: RoundRobin
+    supportLBStrategies:
+    - RoundRobin
+    - Random
+    - ConsistentHash
+    consistentHash:
+      partitionCount: 100
+      replicationFactor: 10
+      load: 1.25
+modules:
+  edgeDNS:
+    enable: false
+    listenPort: 53
+    cacheDNS:
+      enable: false
+      autoDetect: true
+      upstreamServers:
+      cacheTTL: 30
+  edgeGateway:
+    enable: true
+    nic: "*"
+    includeIP: "*"
+    excludeIP: "*"
+  tunnel:
+    enable: true
+    listenPort: 20008
+    security:
+      enable: false
+      httpServer: ""
+      tlsCaFile: /etc/kubeedge/edgemesh/gateway/acls/rootCA.crt
+      tlsCertFile: /etc/kubeedge/edgemesh/gateway/acls/server.crt
+      tlsPrivateKeyFile: /etc/kubeedge/edgemesh/gateway/acls/server.key
+    enableHolePunch: true
+    transport: tcp

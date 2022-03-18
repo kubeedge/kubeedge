@@ -25,9 +25,6 @@ import (
 )
 
 const (
-	CloudCoreHelmComponent = "cloudcore"
-	ChartsSubDir           = "charts"
-
 	DefaultBaseHelmDir   = ""
 	DefaultAddonsHelmDir = "addons"
 	DefaultProfilesDir   = "profiles"
@@ -41,11 +38,16 @@ const (
 	DefaultHelmWait     = true
 	DefaultHelmCreateNs = true
 
-	VersionProfileKey       = "version"
-	IptablesMgrProfileKey   = "iptablesmgr"
+	CloudCoreHelmComponent = "cloudcore"
+	ChartsSubDir           = "charts"
+
+	VersionProfileKey         = "version"
+	IptablesMgrProfileKey     = "iptablesmgr"
+	EdgemeshProfileKey        = "edgemesh"
+	EdgemeshGatewayProfileKey = "edgemesh-gateway"
+
 	ExternalIptablesMgrMode = "external"
 	InternalIptablesMgrMode = "internal"
-	EdgemeshProfileKey      = "edgemesh"
 )
 
 var (
@@ -64,6 +66,7 @@ type KubeCloudHelmInstTool struct {
 	Sets             []string
 	Profile          string
 	ProfileKey       string
+	ProfileValue     string
 	ExternalHelmRoot string
 	Force            bool
 	SkipCRDs         bool
@@ -81,6 +84,17 @@ func (cu *KubeCloudHelmInstTool) InstallTools() error {
 	baseHelmRoot := DefaultBaseHelmDir
 	if cu.ExternalHelmRoot != "" {
 		baseHelmRoot = cu.ExternalHelmRoot
+	}
+
+	// Gets the profile key
+	if cu.Profile == "" {
+		cu.Profile = fmt.Sprintf("%s=v%s", VersionProfileKey, cu.ToolVersion.String())
+	}
+	// profile must be invalid
+	p := strings.Split(cu.Profile, "=")
+	cu.ProfileKey = p[0]
+	if len(p) >= 2 {
+		cu.ProfileValue = p[1]
 	}
 
 	switch cu.Action {
@@ -103,7 +117,7 @@ func (cu *KubeCloudHelmInstTool) InstallTools() error {
 func (cu *KubeCloudHelmInstTool) RunHelmInstall(baseHelmRoot string) error {
 	// --force would not care about whether the cloud components exist or not
 	// Also, if gives a external helm root, no need to check and verify. Because it is always not a cloudcore.
-	if !cu.Force && cu.ExternalHelmRoot == "" {
+	if cu.isCloudcore() && !cu.Force && cu.ExternalHelmRoot == "" {
 		cloudCoreRunning, err := cu.IsKubeEdgeProcessRunning(util.KubeCloudBinaryName)
 		if err != nil {
 			return err
@@ -175,13 +189,6 @@ func (cu *KubeCloudHelmInstTool) RunHelmManifest(baseHelmRoot string) error {
 
 // beforeRenderer handles the value of the profile.
 func (cu *KubeCloudHelmInstTool) beforeRenderer(baseHelmRoot string) error {
-	if cu.Profile == "" {
-		cu.Profile = fmt.Sprintf("%s=v%s", VersionProfileKey, cu.ToolVersion.String())
-	}
-	// profile must be invalid
-	p := strings.Split(cu.Profile, "=")
-	cu.ProfileKey = p[0]
-
 	// check profile if the {baseHelmRoot}/profiles/{profileKey}.yaml exists
 	if err := cu.checkProfile(baseHelmRoot); err != nil {
 		if errors.Is(err, ErrListProfiles) {
@@ -196,11 +203,7 @@ func (cu *KubeCloudHelmInstTool) beforeRenderer(baseHelmRoot string) error {
 
 	// Only handle profiles when cu.ExternalHelmRoot is empty.
 	if cu.ExternalHelmRoot == "" {
-		var profileValue string
-		if len(p) >= 2 {
-			profileValue = p[1]
-		}
-		if err := cu.handleProfile(profileValue); err != nil {
+		if err := cu.handleProfile(cu.ProfileValue); err != nil {
 			return fmt.Errorf("can not handle profile %s", cu.Profile)
 		}
 
@@ -234,7 +237,9 @@ func (cu *KubeCloudHelmInstTool) buildRenderer(baseHelmRoot string) (*Renderer, 
 		case VersionProfileKey, IptablesMgrProfileKey:
 			componentName = CloudCoreHelmComponent
 			subDir = fmt.Sprintf("%s/%s", ChartsSubDir, CloudCoreHelmComponent)
-		// we can implement edgemesh here later.
+		case EdgemeshProfileKey, EdgemeshGatewayProfileKey:
+			componentName = cu.ProfileKey
+			subDir = fmt.Sprintf("%s/%s", DefaultAddonsHelmDir, cu.ProfileKey)
 		default:
 			// By default, will search charts in addons dir.
 			componentName = cu.ProfileKey
@@ -359,6 +364,9 @@ func (cu *KubeCloudHelmInstTool) checkProfile(baseHelmRoot string) error {
 	if ok := validProfiles[cu.ProfileKey]; !ok {
 		validKeys := make([]string, len(validProfiles))
 		for k := range validProfiles {
+			if k == "" {
+				continue
+			}
 			validKeys = append(validKeys, k)
 		}
 		return fmt.Errorf(fmt.Sprintf("profile %s not in %s", cu.ProfileKey, strings.Join(validKeys, ",")))
@@ -425,6 +433,10 @@ func (cu *KubeCloudHelmInstTool) rebuildFlagVals() error {
 }
 
 func (cu *KubeCloudHelmInstTool) isInnerProfile() bool {
+	return cu.ProfileKey == "" || cu.ProfileKey == DefaultProfileString || cu.ProfileKey == IptablesMgrProfileKey || cu.ProfileKey == EdgemeshProfileKey || cu.ProfileKey == EdgemeshGatewayProfileKey
+}
+
+func (cu *KubeCloudHelmInstTool) isCloudcore() bool {
 	return cu.ProfileKey == "" || cu.ProfileKey == DefaultProfileString || cu.ProfileKey == IptablesMgrProfileKey
 }
 

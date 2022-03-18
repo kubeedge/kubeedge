@@ -1,9 +1,13 @@
 package helm
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -12,6 +16,8 @@ import (
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/engine"
+
+	kecharts "github.com/kubeedge/kubeedge/manifests"
 )
 
 // Inspired by https://github.com/istio/istio/blob/194bc3c820a37a38ef40a1cf305529638fbfa169/operator/pkg/helm/renderer.go
@@ -29,6 +35,9 @@ const (
 
 	// Chart Release Name
 	ReleaseName = "kubeedge"
+
+	// Default dir root for online chart tarball
+	DefaultDestDirRoot = ""
 )
 
 type TemplateFilterFunc func(string) bool
@@ -45,7 +54,6 @@ type Renderer struct {
 }
 
 // NewFileTemplateRenderer creates a TemplateRenderer with the given parameters and returns a pointer to it.
-// helmChartDirPath must be an absolute file path to the root of the helm charts.
 func NewGenericRenderer(files fs.FS, dir, componentName, namespace string, profileValsMap map[string]interface{}, skipCRDs bool) *Renderer {
 	return &Renderer{
 		namespace:      namespace,
@@ -78,13 +86,35 @@ func (h *Renderer) RenderManifestFiltered(filter TemplateFilterFunc) (string, er
 
 // loadChart implements the TemplateRenderer interface.
 func (h *Renderer) loadChart() error {
-	fnames, err := GetFilesRecursive(h.files, h.dir)
+	root := h.dir
+	tarball, err := h.checkTarball(h.files, root)
+	if err != nil {
+		return fmt.Errorf("check tarball for component %s failed", h.componentName)
+	}
+
+	if tarball != "" {
+		destination, err := h.extractTarball(tarball)
+		if err != nil {
+			return err
+		}
+		// destination: /tmp/addons/edgemesh
+		// root: edgemesh
+		h.files = kecharts.BuiltinOrDir(destination)
+		root = h.componentName
+
+		defer func(destination string) {
+			os.Remove(destination)
+		}(destination)
+	}
+
+	fnames, err := GetFilesRecursive(h.files, root)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return fmt.Errorf("component %q does not exist", h.componentName)
 		}
 		return fmt.Errorf("list files: %v", err)
 	}
+
 	var bfs []*loader.BufferedFile
 	for _, fname := range fnames {
 		b, err := fs.ReadFile(h.files, fname)
@@ -92,7 +122,7 @@ func (h *Renderer) loadChart() error {
 			return fmt.Errorf("read file: %v", err)
 		}
 		// Helm expects unix / separator, but on windows this will be \
-		name := strings.ReplaceAll(stripPrefix(fname, h.dir), string(filepath.Separator), "/")
+		name := strings.ReplaceAll(stripPrefix(fname, root), string(filepath.Separator), "/")
 		bf := &loader.BufferedFile{
 			Name: name,
 			Data: b,
@@ -180,8 +210,85 @@ func (h *Renderer) renderChart(filterFunc TemplateFilterFunc) (string, error) {
 	return sb.String(), nil
 }
 
+func (h *Renderer) checkTarball(f fs.FS, root string) (string, error) {
+	var tarball string
+
+	if err := fs.WalkDir(f, root, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if tarball == "" && strings.HasSuffix(d.Name(), ".tgz") {
+			tarball = path
+			return nil
+		}
+
+		return nil
+	}); err != nil {
+		return "", err
+	}
+
+	return tarball, nil
+}
+
+func (h *Renderer) extractTarball(tarball string) (string, error) {
+	destination := filepath.Join(os.TempDir(), h.dir)
+
+	gzipStream, err := h.files.Open(tarball)
+	if err != nil {
+		return "", err
+	}
+
+	uncompressedStream, err := gzip.NewReader(gzipStream)
+	if err != nil {
+		return "", fmt.Errorf("create gzip reader: %v", err)
+	}
+
+	tarReader := tar.NewReader(uncompressedStream)
+
+	for {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return "", fmt.Errorf("next: %v", err)
+		}
+
+		dest := filepath.Join(destination, header.Name)
+		switch header.Typeflag {
+		case tar.TypeDir:
+			if _, err := os.Stat(dest); err != nil {
+				if err := os.Mkdir(dest, 0o755); err != nil {
+					return "", fmt.Errorf("mkdir: %v", err)
+				}
+			}
+		case tar.TypeReg:
+			// Create containing folder if not present
+			dir := path.Dir(dest)
+			if _, err := os.Stat(dir); err != nil {
+				if err := os.MkdirAll(dir, 0o755); err != nil {
+					return "", err
+				}
+			}
+			outFile, err := os.Create(dest)
+			if err != nil {
+				return "", fmt.Errorf("create: %v", err)
+			}
+			if _, err := io.Copy(outFile, tarReader); err != nil {
+				return "", fmt.Errorf("copy: %v", err)
+			}
+			outFile.Close()
+		default:
+			return "", fmt.Errorf("unknown type: %v in %v", header.Typeflag, header.Name)
+		}
+	}
+	return destination, nil
+}
+
 func GetFilesRecursive(f fs.FS, root string) ([]string, error) {
 	res := []string{}
+
 	err := fs.WalkDir(f, root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -192,6 +299,7 @@ func GetFilesRecursive(f fs.FS, root string) ([]string, error) {
 		res = append(res, path)
 		return nil
 	})
+
 	return res, err
 }
 
