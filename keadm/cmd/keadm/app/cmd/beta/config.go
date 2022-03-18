@@ -23,9 +23,9 @@ import (
 	"github.com/spf13/cobra"
 	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
 
-	"github.com/kubeedge/kubeedge/common/constants"
 	cmdcommon "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
+	"github.com/kubeedge/kubeedge/pkg/image"
 )
 
 // Configuration represent keadm config options
@@ -106,8 +106,8 @@ func newCmdConfigImagesList() *cobra.Command {
 		Short: "Print a list of images keadm will use.",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			images := GetKubeEdgeImages(cfg)
-			for _, image := range images {
-				fmt.Println(image)
+			for _, v := range images {
+				fmt.Println(v)
 			}
 
 			return nil
@@ -168,55 +168,16 @@ func AddImagesCommonConfigFlags(cmd *cobra.Command, cfg *Configuration) {
 // GetKubeEdgeImages returns a list of container images that related part expects to use
 func GetKubeEdgeImages(cfg *Configuration) []string {
 	var images []string
-
-	part := strings.ToLower(cfg.Part)
-
-	if part == "cloud" {
-		images = append(images, GetKubeEdgeCloudPartImages(cfg)...)
-	} else if part == "edge" {
-		images = append(images, GetKubeEdgeEdgePartImages(cfg)...)
-	} else {
+	switch strings.ToLower(cfg.Part) {
+	case "cloud":
+		images = image.CloudSet(cfg.ImageRepository, cfg.KubeEdgeVersion).List()
+	case "edge":
+		images = image.EdgeSet(cfg.ImageRepository, cfg.KubeEdgeVersion).List()
+	default:
 		// if not specified, will return all images used by both cloud part and edge part
-		images = append(images, GetKubeEdgeCloudPartImages(cfg)...)
-		images = append(images, GetKubeEdgeEdgePartImages(cfg)...)
+		cloudSet := image.CloudSet(cfg.ImageRepository, cfg.KubeEdgeVersion)
+		edgeSet := image.EdgeSet(cfg.ImageRepository, cfg.KubeEdgeVersion)
+		images = cloudSet.Merge(edgeSet).List()
 	}
-
 	return images
-}
-
-// GetKubeEdgeCloudPartImages returns a list of container images that Cloud part expects to use
-func GetKubeEdgeCloudPartImages(cfg *Configuration) []string {
-	images := []string{}
-
-	// Cloud part images
-	images = append(images, GetImage("admission", cfg))
-	images = append(images, GetImage("cloudcore", cfg))
-	images = append(images, GetImage("iptables-manager", cfg))
-	images = append(images, GetImage("installation-package", cfg))
-
-	return images
-}
-
-// GetKubeEdgeEdgePartImages returns a list of container images that Edge expects to use
-func GetKubeEdgeEdgePartImages(cfg *Configuration) []string {
-	images := []string{}
-
-	// Edge part images
-	images = append(images, GetPauseImage())
-	images = append(images, GetImage("installation-package", cfg))
-	images = append(images, "eclipse-mosquitto:1.6.15")
-
-	return images
-}
-
-// GetImage generates the image required for the KubeEdge
-func GetImage(image string, cfg *Configuration) string {
-	repoPrefix := cfg.GetImageRepository()
-	imageTag := cfg.KubeEdgeVersion
-
-	return fmt.Sprintf("%s/%s:%s", repoPrefix, image, imageTag)
-}
-
-func GetPauseImage() string {
-	return constants.DefaultPodSandboxImage
 }

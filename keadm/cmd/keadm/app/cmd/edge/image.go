@@ -28,7 +28,7 @@ import (
 
 func request(opt *common.JoinOptions, step *common.Step) error {
 	imageSet := image.EdgeSet(opt.ImageRepository, opt.KubeEdgeVersion)
-	images := imageSet.ToSlice()
+	images := imageSet.List()
 
 	runtime, err := util.NewContainerRuntime(opt.RuntimeType, opt.RemoteRuntimeEndpoint)
 	if err != nil {
