@@ -40,6 +40,7 @@ type InitBetaOptions struct {
 	Sets             []string
 	Profile          string
 	ExternalHelmRoot string
+	TarballURL       string
 	Force            bool
 	SkipCRDs         bool
 	DryRun           bool

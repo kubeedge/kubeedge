@@ -92,6 +92,9 @@ func (h *Renderer) loadChart() error {
 		return fmt.Errorf("check tarball for component %s failed", h.componentName)
 	}
 
+	// We can download the online chart tarball to the builtin dir or the local path.
+	// builtin dir: addons/edgemesh/edgemesh.tgz, this method will compile into the binary.
+	// local path: /tmp/addons/edgemesh/edgemesh.tgz, this method will download to the host path and will not compile into the binary.
 	if tarball != "" {
 		destination, err := h.extractTarball(tarball)
 		if err != nil {

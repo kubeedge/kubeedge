@@ -68,6 +68,7 @@ type KubeCloudHelmInstTool struct {
 	ProfileKey       string
 	ProfileValue     string
 	ExternalHelmRoot string
+	TarballURL       string
 	Force            bool
 	SkipCRDs         bool
 	DryRun           bool
@@ -249,6 +250,18 @@ func (cu *KubeCloudHelmInstTool) buildRenderer(baseHelmRoot string) (*Renderer, 
 		// handle external chart
 		componentName = cu.ProfileKey
 		subDir = cu.ProfileKey
+	}
+
+	// downloads the online tarball file to local path
+	if componentName != CloudCoreHelmComponent && cu.TarballURL != "" {
+		urlFetcher := NewURLFetcher(cu.TarballURL, "", subDir)
+		if _, err := urlFetcher.DownloadTo(); err != nil {
+			return nil, fmt.Errorf("cannot download the given tarball url %s, error: %s", cu.TarballURL, err.Error())
+		}
+
+		// destDirRoot: /tmp/kubeedge-install-packages
+		// subDir: addons/edgemesh/
+		baseHelmRoot = urlFetcher.destDir
 	}
 
 	// returns the renderer instance

@@ -106,6 +106,9 @@ func addInitBetaJoinOtherFlags(cmd *cobra.Command, initBetaOpts *types.InitBetaO
 
 	cmd.Flags().StringVar(&initBetaOpts.ExternalHelmRoot, types.ExternalHelmRoot, initBetaOpts.ExternalHelmRoot,
 		"Add external helm root path to keadm.")
+
+	cmd.Flags().StringVar(&initBetaOpts.TarballURL, types.TarballURL, initBetaOpts.TarballURL,
+		"Add online helm tarball url to download packaged tgz file.")
 }
 
 func addHelmValueOptionsFlags(cmd *cobra.Command, initBetaOpts *types.InitBetaOptions) {
@@ -148,6 +151,7 @@ func AddInitBeta2ToolsList(toolList map[string]types.ToolsInstaller, flagData ma
 		AdvertiseAddress: initBetaOpts.AdvertiseAddress,
 		KubeEdgeVersion:  initBetaOpts.KubeEdgeVersion,
 		Manifests:        initBetaOpts.Manifests,
+		TarballURL:       initBetaOpts.TarballURL,
 		Namespace:        constants.SystemNamespace,
 		DryRun:           initBetaOpts.DryRun,
 		Sets:             initBetaOpts.Sets,

@@ -102,6 +102,9 @@ const (
 	// External Helm Root
 	ExternalHelmRoot = "external-helm-root"
 
+	// Helm tarball url
+	TarballURL = "tarball-url"
+
 	// Helm action
 	HelmInstallAction  = "install"
 	HelmManifestAction = "manifest"
