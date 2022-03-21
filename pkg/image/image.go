@@ -21,6 +21,12 @@ import (
 )
 
 const (
+	CloudAdmission       = "admission"
+	CloudCloudcore       = "cloudcore"
+	CloudIptablesManager = "iptables-manager"
+)
+
+const (
 	EdgePause = "pause"
 	EdgeCore  = "edgecore"
 	EdgeMQTT  = "mqtt"
@@ -28,7 +34,11 @@ const (
 
 type Set map[string]string
 
-var cloudComponentSet = Set{}
+var cloudComponentSet = Set{
+	CloudAdmission:       "kubeedge/admission",
+	CloudCloudcore:       "kubeedge/cloudcore",
+	CloudIptablesManager: "kubeedge/iptables-manager",
+}
 
 var cloudThirdPartySet = Set{}
 
@@ -39,6 +49,20 @@ var edgeComponentSet = Set{
 var edgeThirdPartySet = Set{
 	EdgeMQTT:  "eclipse-mosquitto:1.6.15",
 	EdgePause: "kubeedge/pause:3.1",
+}
+
+func EdgeSet(imageRepository, version string) Set {
+	set := edgeComponentSet.Current(imageRepository, version)
+	thirdSet := edgeThirdPartySet.Current(imageRepository, "")
+	set = set.Merge(thirdSet)
+	return set
+}
+
+func CloudSet(imageRepository, version string) Set {
+	set := cloudComponentSet.Current(imageRepository, version)
+	thirdSet := cloudThirdPartySet.Current(imageRepository, "")
+	set = set.Merge(thirdSet)
+	return set
 }
 
 // Current replace repository and version for set
@@ -77,14 +101,7 @@ func (s Set) Merge(src Set) Set {
 	return s
 }
 
-func EdgeSet(imageRepository, version string) Set {
-	set := edgeComponentSet.Current(imageRepository, version)
-	thirdSet := edgeThirdPartySet.Current(imageRepository, "")
-	set = set.Merge(thirdSet)
-	return set
-}
-
-func (s Set) ToSlice() []string {
+func (s Set) List() []string {
 	var result []string
 	for _, v := range s {
 		result = append(result, v)
