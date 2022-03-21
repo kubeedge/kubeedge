@@ -91,7 +91,8 @@ func (cu *KubeCloudHelmInstTool) InstallTools() error {
 	if cu.Profile == "" {
 		cu.Profile = fmt.Sprintf("%s=v%s", VersionProfileKey, cu.ToolVersion.String())
 	}
-	// profile must be invalid
+
+	// Profile key must be valid
 	p := strings.Split(cu.Profile, "=")
 	cu.ProfileKey = p[0]
 	if len(p) >= 2 {

@@ -35,9 +35,6 @@ const (
 
 	// Chart Release Name
 	ReleaseName = "kubeedge"
-
-	// Default dir root for online chart tarball
-	DefaultDestDirRoot = ""
 )
 
 type TemplateFilterFunc func(string) bool
@@ -53,7 +50,7 @@ type Renderer struct {
 	skipCRDs       bool
 }
 
-// NewFileTemplateRenderer creates a TemplateRenderer with the given parameters and returns a pointer to it.
+// NewGenericRenderer creates a TemplateRenderer with the given parameters and returns a pointer to it.
 func NewGenericRenderer(files fs.FS, dir, componentName, namespace string, profileValsMap map[string]interface{}, skipCRDs bool) *Renderer {
 	return &Renderer{
 		namespace:      namespace,

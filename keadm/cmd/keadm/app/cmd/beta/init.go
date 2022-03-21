@@ -105,10 +105,10 @@ func addInitBetaJoinOtherFlags(cmd *cobra.Command, initBetaOpts *types.InitBetaO
 		"Print the generated k8s resources on the stdout, not actual excute. Always use in debug mode")
 
 	cmd.Flags().StringVar(&initBetaOpts.ExternalHelmRoot, types.ExternalHelmRoot, initBetaOpts.ExternalHelmRoot,
-		"Add external helm root path to keadm.")
+		"Allow adding the external helm path to keadm")
 
 	cmd.Flags().StringVar(&initBetaOpts.TarballURL, types.TarballURL, initBetaOpts.TarballURL,
-		"Add online helm tarball url to download packaged tgz file.")
+		"The online helm tarball url to download packaged tgz file")
 }
 
 func addHelmValueOptionsFlags(cmd *cobra.Command, initBetaOpts *types.InitBetaOptions) {
@@ -118,7 +118,7 @@ func addHelmValueOptionsFlags(cmd *cobra.Command, initBetaOpts *types.InitBetaOp
 
 func addForceOptionsFlags(cmd *cobra.Command, initBetaOpts *types.InitBetaOptions) {
 	cmd.Flags().BoolVar(&initBetaOpts.Force, types.Force, initBetaOpts.Force,
-		"Forced installing the cloud components without waiting.")
+		"Forced installing the cloud components without waiting")
 }
 
 //AddInitBeta2ToolsList reads the flagData (containing val and default val) and join options to fill the list of tools.
