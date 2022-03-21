@@ -300,7 +300,7 @@ kubeedge::golang::cross_build_place_binaries() {
       set +x
     elif [ "${goarm}" == "7" ]; then
       set -x
-      GOARCH=arm GOOS="linux" GOARM=${goarm} CGO_ENABLED=1 CC=arm-linux-gnueabi-gcc go build -o ${KUBEEDGE_OUTPUT_BINPATH}/${name} -ldflags "$ldflags" $bin
+      GOARCH=arm GOOS="linux" GOARM=${goarm} CGO_ENABLED=1 CC=arm-linux-gnueabihf-gcc go build -o ${KUBEEDGE_OUTPUT_BINPATH}/${name} -ldflags "$ldflags" $bin
       set +x
     fi
   done
