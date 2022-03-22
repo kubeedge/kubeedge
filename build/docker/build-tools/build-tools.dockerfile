@@ -4,7 +4,7 @@ ARG ARCH=amd64
 RUN apt-get update && apt-get install -y wget \
     vim git make gcc upx-ucl 
 
-RUN if [ "${ARCH}" = "amd64" ]; then apt-get install -y gcc-aarch64-linux-gnu libc6-dev-arm64-cross gcc-arm-linux-gnueabi libc6-dev-armel-cross ; fi
+RUN if [ "${ARCH}" = "amd64" ]; then apt-get install -y gcc-aarch64-linux-gnu libc6-dev-arm64-cross gcc-arm-linux-gnueabihf ; fi
  
 RUN apt-get autoremove -y &&\
     apt-get clean &&\
