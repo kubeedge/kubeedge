@@ -88,7 +88,7 @@ func (f *Factory) Delete() http.Handler {
 	}
 	f.lock.Lock()
 	defer f.lock.Unlock()
-	h := handlers.DeleteResource(f.storage, false, f.scope, fakers.NewAlwaysAdmit())
+	h := handlers.DeleteResource(f.storage, true, f.scope, fakers.NewAlwaysAdmit())
 	f.handlers["delete"] = h
 	return h
 }
