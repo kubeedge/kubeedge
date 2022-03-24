@@ -63,7 +63,7 @@ func NewInitBeta() *cobra.Command {
 				util.AddToolVals(f, flagVals)
 			}
 			cmd.Flags().VisitAll(checkFlags)
-			err := AddInitBeta2ToolsList(tools, flagVals, BetaInit)
+			err := AddInitBeta2ToolsList(tools, BetaInit)
 			if err != nil {
 				return err
 			}
@@ -119,7 +119,7 @@ func addForceOptionsFlags(cmd *cobra.Command, initBetaOpts *types.InitBetaOption
 }
 
 //AddInitBeta2ToolsList reads the flagData (containing val and default val) and join options to fill the list of tools.
-func AddInitBeta2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string]types.FlagData, initBetaOpts *types.InitBetaOptions) error {
+func AddInitBeta2ToolsList(toolList map[string]types.ToolsInstaller, initBetaOpts *types.InitBetaOptions) error {
 	var latestVersion string
 	var kubeedgeVersion string
 	for i := 0; i < util.RetryTimes; i++ {
