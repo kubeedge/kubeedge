@@ -1326,7 +1326,7 @@ func (e *edged) handlePod(op string, content []byte) (err error) {
 
 func (e *edged) handlePodListFromMetaManager(content []byte) (err error) {
 	var lists []string
-	err = json.Unmarshal([]byte(content), &lists)
+	err = json.Unmarshal(content, &lists)
 	if err != nil {
 		return err
 	}
