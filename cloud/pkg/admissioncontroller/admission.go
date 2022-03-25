@@ -64,20 +64,20 @@ type AdmissionController struct {
 func strPtr(s string) *string { return &s }
 
 // Run starts the webhook service
-func Run(opt *options.AdmissionOptions) {
+func Run(opt *options.AdmissionOptions) error {
 	klog.V(4).Infof("AdmissionOptions: %+v", *opt)
 	restConfig, err := clientcmd.BuildConfigFromFlags(opt.Master, opt.Kubeconfig)
 	if err != nil {
-		klog.Exit(err)
+		return err
 	}
 
 	cli, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
-		klog.Exitf("Create kube client failed with error: %v", err)
+		return fmt.Errorf("create kube client failed with error: %v", err)
 	}
 	vcli, err := versioned.NewForConfig(restConfig)
 	if err != nil {
-		klog.Exitf("Create versioned client failed with error: %v", err)
+		return fmt.Errorf("create versioned client failed with error: %v", err)
 	}
 
 	controller.Client = cli
@@ -85,13 +85,12 @@ func Run(opt *options.AdmissionOptions) {
 
 	caBundle, err := os.ReadFile(opt.CaCertFile)
 	if err != nil {
-		klog.Exitf("Unable to read cacert file: %v\n", err)
+		return fmt.Errorf("unable to read cacert file: %v", err)
 	}
 
 	//TODO: read somewhere to get what's kind of webhook is enabled, register those webhook only.
-	err = controller.registerWebhooks(opt, caBundle)
-	if err != nil {
-		klog.Exitf("Failed to register the webhook with error: %v", err)
+	if err = controller.registerWebhooks(opt, caBundle); err != nil {
+		return fmt.Errorf("failed to register the webhook with error: %v", err)
 	}
 
 	http.HandleFunc("/devicemodels", serveDeviceModel)
@@ -105,8 +104,9 @@ func Run(opt *options.AdmissionOptions) {
 	}
 
 	if err := server.ListenAndServeTLS("", ""); err != nil {
-		klog.Exitf("Start server failed with error: %v", err)
+		return fmt.Errorf("start server failed with error: %v", err)
 	}
+	return nil
 }
 
 // configTLS is a helper function that generate tls certificates from directly defined tls config or kubeconfig
