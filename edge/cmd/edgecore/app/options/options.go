@@ -54,7 +54,7 @@ func (o *EdgeCoreOptions) Validate() []error {
 }
 
 func (o *EdgeCoreOptions) Config() (*v1alpha1.EdgeCoreConfig, error) {
-	cfg := v1alpha1.NewDefaultEdgeCoreConfig()
+	cfg := v1alpha1.NewDefaultEdgeCoreConfig(nil)
 	if err := cfg.Parse(o.ConfigFile); err != nil {
 		return nil, err
 	}

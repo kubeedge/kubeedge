@@ -37,7 +37,7 @@ var clientOptions = MQTT.NewClientOptions()
 
 func init() {
 	nodeName := "testEdge"
-	cfg := v1alpha1.NewDefaultEdgeCoreConfig()
+	cfg := v1alpha1.NewDefaultEdgeCoreConfig(nil)
 	eventconfig.InitConfigure(cfg.Modules.EventBus, nodeName)
 }
 

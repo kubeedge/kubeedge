@@ -48,6 +48,12 @@ const (
 type ProtocolName string
 type MqttMode int
 
+// ConfigOptions used to replace EdgeCore custom configuration
+type ConfigOptions struct {
+	ImageRepository string
+	KubeEdgeVersion string
+}
+
 // EdgeCoreConfig indicates the EdgeCore config which read from EdgeCore config file
 type EdgeCoreConfig struct {
 	metav1.TypeMeta

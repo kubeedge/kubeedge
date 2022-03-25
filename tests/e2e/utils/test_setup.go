@@ -156,7 +156,7 @@ func CleanUp(setupType string) error {
 }
 
 func createEdgeCoreConfigFile(token, nodeName string) {
-	c := edgecore.NewDefaultEdgeCoreConfig()
+	c := edgecore.NewDefaultEdgeCoreConfig(nil)
 	// TODO change ca file path @kadisi
 	c.Modules.EdgeHub.TLSCAFile = "/tmp/edgecore/rootCA.crt"
 	c.Modules.EdgeHub.TLSCertFile = "/tmp/edgecore/kubeedge.crt"

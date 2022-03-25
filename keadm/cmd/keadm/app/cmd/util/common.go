@@ -673,7 +673,7 @@ func FileExists(path string) bool {
 }
 
 func ParseEdgecoreConfig(edgecorePath string) (*v1alpha1.EdgeCoreConfig, error) {
-	edgeCoreConfig := v1alpha1.NewDefaultEdgeCoreConfig()
+	edgeCoreConfig := v1alpha1.NewDefaultEdgeCoreConfig(nil)
 	if err := edgeCoreConfig.Parse(edgecorePath); err != nil {
 		return nil, err
 	}

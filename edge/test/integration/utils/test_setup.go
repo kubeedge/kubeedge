@@ -35,7 +35,7 @@ func CfgToFile(c *edgecore.EdgeCoreConfig) error {
 }
 
 func CreateEdgeCoreConfigFile(nodeName string) error {
-	c := edgecore.NewDefaultEdgeCoreConfig()
+	c := edgecore.NewDefaultEdgeCoreConfig(nil)
 	c.Modules.Edged.HostnameOverride = nodeName
 	c.Modules.EdgeHub.TLSCAFile = "/tmp/edgecore/rootCA.crt"
 	c.Modules.EdgeHub.TLSCertFile = "/tmp/edgecore/kubeedge.crt"

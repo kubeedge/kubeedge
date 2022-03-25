@@ -110,7 +110,7 @@ func (c *hollowEdgeNodeConfig) addFlags(fs *pflag.FlagSet) {
 }
 
 func EdgeCoreConfig(config *hollowEdgeNodeConfig) *v1alpha1.EdgeCoreConfig {
-	edgeCoreConfig := v1alpha1.NewDefaultEdgeCoreConfig()
+	edgeCoreConfig := v1alpha1.NewDefaultEdgeCoreConfig(nil)
 
 	// overWrite config
 	edgeCoreConfig.DataBase.DataSource = "/edgecore.db"

@@ -91,7 +91,7 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 		return fmt.Errorf("not able to create %s folder path", KubeEdgeConfigDir)
 	}
 
-	edgeCoreConfig := v1alpha1.NewDefaultEdgeCoreConfig()
+	edgeCoreConfig := v1alpha1.NewDefaultEdgeCoreConfig(nil)
 	edgeCoreConfig.Modules.EdgeHub.WebSocket.Server = ku.CloudCoreIP
 
 	if ku.EdgeNodeName != "" {

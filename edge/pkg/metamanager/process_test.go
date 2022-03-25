@@ -55,7 +55,7 @@ const (
 var errFailedDBOperation = errors.New(FailedDBOperation)
 
 func init() {
-	cfg := v1alpha1.NewDefaultEdgeCoreConfig()
+	cfg := v1alpha1.NewDefaultEdgeCoreConfig(nil)
 	metaManagerConfig.InitConfigure(cfg.Modules.MetaManager)
 
 	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})

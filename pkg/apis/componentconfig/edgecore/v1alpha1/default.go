@@ -27,15 +27,15 @@ import (
 
 	"github.com/kubeedge/kubeedge/common/constants"
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/image"
 	"github.com/kubeedge/kubeedge/pkg/util"
 )
 
 // NewDefaultEdgeCoreConfig returns a full EdgeCoreConfig object
-func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
+func NewDefaultEdgeCoreConfig(opt *ConfigOptions) *EdgeCoreConfig {
 	hostnameOverride := util.GetHostname()
 	localIP, _ := util.GetLocalIP(hostnameOverride)
-
-	return &EdgeCoreConfig{
+	cfg := &EdgeCoreConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       Kind,
 			APIVersion: path.Join(GroupName, APIVersion),
@@ -166,13 +166,20 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 			},
 		},
 	}
+
+	if opt != nil {
+		edgeImageSet := image.EdgeSet(opt.ImageRepository, opt.KubeEdgeVersion)
+		cfg.Modules.Edged.PodSandboxImage = edgeImageSet.Get(image.EdgePause)
+	}
+
+	return cfg
 }
 
 // NewMinEdgeCoreConfig returns a common EdgeCoreConfig object
-func NewMinEdgeCoreConfig() *EdgeCoreConfig {
+func NewMinEdgeCoreConfig(opt *ConfigOptions) *EdgeCoreConfig {
 	hostnameOverride := util.GetHostname()
 	localIP, _ := util.GetLocalIP(hostnameOverride)
-	return &EdgeCoreConfig{
+	cfg := &EdgeCoreConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       Kind,
 			APIVersion: path.Join(GroupName, APIVersion),
@@ -228,4 +235,10 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 			},
 		},
 	}
+
+	if opt != nil {
+		edgeImageSet := image.EdgeSet(opt.ImageRepository, opt.KubeEdgeVersion)
+		cfg.Modules.Edged.PodSandboxImage = edgeImageSet.Get(image.EdgePause)
+	}
+	return cfg
 }

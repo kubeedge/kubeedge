@@ -37,7 +37,7 @@ func TestValidateEdgeCoreConfiguration(t *testing.T) {
 		return
 	}
 
-	config := v1alpha1.NewDefaultEdgeCoreConfig()
+	config := v1alpha1.NewDefaultEdgeCoreConfig(nil)
 	config.DataBase.DataSource = ef.Name()
 
 	errList := ValidateEdgeCoreConfiguration(config)

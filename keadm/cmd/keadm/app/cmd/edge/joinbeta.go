@@ -181,7 +181,11 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 	}
 	if edgeCoreConfig == nil {
 		klog.Infoln("The configuration does not exist or the parsing fails, and the default configuration is generated")
-		edgeCoreConfig = v1alpha1.NewDefaultEdgeCoreConfig()
+		cfgOpt := &v1alpha1.ConfigOptions{
+			ImageRepository: opt.ImageRepository,
+			KubeEdgeVersion: opt.KubeEdgeVersion,
+		}
+		edgeCoreConfig = v1alpha1.NewDefaultEdgeCoreConfig(cfgOpt)
 	}
 
 	edgeCoreConfig.Modules.EdgeHub.WebSocket.Server = opt.CloudCoreIPPort
