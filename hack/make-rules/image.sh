@@ -31,6 +31,8 @@ ALL_IMAGES_AND_TARGETS=(
   edgesite-server:edgesite-server:build/edgesite/server-build.Dockerfile
   csidriver:csidriver:build/csidriver/Dockerfile
   iptablesmanager:iptables-manager:build/iptablesmanager/Dockerfile
+  edgemark:edgemark:build/edgemark/Dockerfile
+  installation-package:installation-package:build/docker/installation-package/installation-package.dockerfile
 )
 
 GO_LDFLAGS="$(${KUBEEDGE_ROOT}/hack/make-rules/version.sh)"

@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  {{- with .Values.cloudCore.annotations }}
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.cloudCore.labels }}
+  labels: {{- toYaml . | nindent 4 }}
+  {{- end }}
+  name: cloudcore
+spec:
+  replicas: {{ .Values.cloudCore.replicaCount }}
+  selector:
+    {{- with .Values.cloudCore.labels }}
+    matchLabels: {{- toYaml . | nindent 6 }}
+    {{- end }}
+  template:
+    metadata:
+      {{- with .Values.cloudCore.labels }}
+      labels: {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- if .Values.cloudCore.hostNetWork }}
+      hostNetwork: {{ .Values.cloudCore.hostNetWork }}
+      dnsPolicy: ClusterFirstWithHostNet
+      {{- end }}
+      {{- with .Values.cloudCore.nodeSelector }}
+      nodeSelector: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      restartPolicy: Always
+      {{- with .Values.cloudCore.affinity }}
+      affinity: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.cloudCore.tolerations }}
+      tolerations: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccount: cloudcore
+      {{- with .Values.cloudCore.image.pullSecrets }} 
+      imagePullSecrets: {{ toYaml . | nindent 8 }} 
+      {{- end }}  
+      containers:
+      - name: cloudcore
+        image: {{ .Values.cloudCore.image.repository }}:{{ .Values.cloudCore.image.tag }}
+        imagePullPolicy: {{ .Values.cloudCore.image.pullPolicy }}
+        ports:
+        - containerPort: 10000
+          name: cloudhub
+          protocol: TCP
+        - containerPort: 10001
+          name: cloudhub-quic
+          protocol: TCP
+        - containerPort: 10002
+          name: cloudhub-https
+          protocol: TCP
+        - containerPort: 10003
+          name: cloudstream
+          protocol: TCP
+        - containerPort: 10004
+          name: tunnelport
+          protocol: TCP
+        volumeMounts:
+        - name: conf
+          mountPath: /etc/kubeedge/config
+        - name: certs
+          mountPath: /etc/kubeedge
+        - name: sock
+          mountPath: /var/lib/kubeedge
+        - mountPath: /etc/localtime
+          name: host-time
+          readOnly: true
+        {{- with .Values.cloudCore.securityContext }}
+        securityContext: {{ toYaml . | nindent 10 }}
+        {{- end }} 
+        {{- with .Values.cloudCore.resources }}
+        resources: {{ toYaml . | nindent 10 }}
+        {{- end }} 
+      volumes:
+      - name: conf
+        configMap:
+          name: cloudcore
+      - name: certs
+        secret:
+          secretName: cloudcore
+          items:
+          - key: stream.crt
+            path: certs/stream.crt
+          - key: stream.key
+            path: certs/stream.key
+          - key: streamCA.crt
+            path: ca/streamCA.crt
+      - name: sock
+        hostPath:
+          path: /var/lib/kubeedge
+          type: DirectoryOrCreate
+      - hostPath:
+          path: /etc/localtime
+          type: ""
+        name: host-time

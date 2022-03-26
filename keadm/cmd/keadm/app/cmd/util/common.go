@@ -26,6 +26,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -36,6 +37,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
@@ -47,6 +49,7 @@ const (
 	CloudServiceFile     = "cloudcore.service"
 	ServiceFileURLFormat = "https://raw.githubusercontent.com/kubeedge/kubeedge/release-%s/build/tools/%s"
 	KubeEdgePath         = "/etc/kubeedge/"
+	KubeEdgeTmpPath      = "/tmp/kubeedge"
 	KubeEdgeUsrBinPath   = "/usr/local/bin"
 	KubeEdgeBinaryName   = "edgecore"
 
@@ -69,10 +72,6 @@ const (
 
 	latestReleaseVersionURL = "https://kubeedge.io/latestversion"
 	RetryTimes              = 5
-
-	OSArchAMD64 string = "amd64"
-	OSArchARM64 string = "arm64"
-	OSArchARM32 string = "arm"
 
 	APT    string = "apt"
 	YUM    string = "yum"
@@ -139,6 +138,28 @@ func GetOSInterface() types.OSTypeInstaller {
 		fmt.Println("Failed to detect supported package manager command(apt, yum, pacman), exit")
 		panic("Failed to detect supported package manager command(apt, yum, pacman), exit")
 	}
+}
+
+// RunningModuleV2 identifies cloudcore/edgecore running or not.
+// only used for cloudcore container install and edgecore binary install
+func RunningModuleV2(opt *types.ResetOptions) (types.ModuleRunning, error) {
+	osType := GetOSInterface()
+	cloudCoreRunning, err := IsCloudcoreContainerRunning(constants.SystemNamespace, opt.Kubeconfig)
+	if err != nil {
+		return types.NoneRunning, err
+	}
+	if cloudCoreRunning {
+		return types.KubeEdgeCloudRunning, nil
+	}
+
+	edgeCoreRunning, err := osType.IsKubeEdgeProcessRunning(KubeEdgeBinaryName)
+	if edgeCoreRunning {
+		return types.KubeEdgeEdgeRunning, nil
+	} else if err != nil {
+		return types.NoneRunning, err
+	}
+
+	return types.NoneRunning, nil
 }
 
 // RunningModule identifies cloudcore/edgecore running or not.
@@ -232,7 +253,10 @@ func checkKubernetesVersion(serverVersion *version.Info) error {
 // installKubeEdge downloads the provided version of KubeEdge.
 // Untar's in the specified location /etc/kubeedge/ and then copies
 // the binary to excecutables' path (eg: /usr/local/bin)
-func installKubeEdge(options types.InstallOptions, arch string, version semver.Version) error {
+func installKubeEdge(options types.InstallOptions, version semver.Version) error {
+	// program's architecture: amd64, arm64, arm
+	arch := runtime.GOARCH
+
 	// create the storage path of the kubeedge installation packages
 	if options.TarballPath == "" {
 		options.TarballPath = KubeEdgePath
@@ -246,10 +270,6 @@ func installKubeEdge(options types.InstallOptions, arch string, version semver.V
 	err := os.MkdirAll(KubeEdgePath, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("not able to create %s folder path", KubeEdgePath)
-	}
-
-	if arch == "armhf" {
-		arch = "arm"
 	}
 
 	//Check if the same version exists, then skip the download and just checksum for it
@@ -333,7 +353,7 @@ func runEdgeCore(version semver.Version) error {
 		return fmt.Errorf("not able to create %s folder path", KubeEdgeLogPath)
 	}
 
-	systemdExist := hasSystemd()
+	systemdExist := HasSystemd()
 
 	var binExec string
 	if systemdExist {
@@ -363,7 +383,7 @@ func killKubeEdgeBinary(proc string) error {
 	if proc == "cloudcore" {
 		binExec = fmt.Sprintf("pkill %s", proc)
 	} else {
-		systemdExist := hasSystemd()
+		systemdExist := HasSystemd()
 
 		var serviceName string
 		if running, err := isEdgeCoreServiceRunning("edge"); err == nil && running {
@@ -394,8 +414,8 @@ func killKubeEdgeBinary(proc string) error {
 	return nil
 }
 
-// isKubeEdgeProcessRunning checks if the given process is running or not
-func isKubeEdgeProcessRunning(proc string) (bool, error) {
+// IsKubeEdgeProcessRunning checks if the given process is running or not
+func IsKubeEdgeProcessRunning(proc string) (bool, error) {
 	procRunning := fmt.Sprintf("pidof %s 2>&1", proc)
 	cmd := NewCommand(procRunning)
 
@@ -424,9 +444,9 @@ func isEdgeCoreServiceRunning(serviceName string) (bool, error) {
 	return false, err
 }
 
-// check if systemd exist
-// if command run failed, then check it by sd_booted
-func hasSystemd() bool {
+// HasSystemd checks if systemd exist.
+// if command run failed, then check it by sd_booted.
+func HasSystemd() bool {
 	cmd := "file /sbin/init"
 
 	if err := NewCommand(cmd).Exec(); err == nil {
@@ -691,7 +711,7 @@ func downloadServiceFile(componentType types.ComponentType, version semver.Versi
 	// No need to download if
 	// 1. the systemd not exists
 	// 2. the service file already exists
-	if hasSystemd() {
+	if HasSystemd() {
 		var ServiceFileName string
 		switch componentType {
 		case types.CloudCore:

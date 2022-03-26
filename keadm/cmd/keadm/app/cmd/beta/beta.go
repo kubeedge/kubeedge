@@ -18,6 +18,8 @@ package beta
 
 import (
 	"github.com/spf13/cobra"
+
+	edge "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/edge"
 )
 
 // NewBeta represents the beta command
@@ -27,7 +29,14 @@ func NewBeta() *cobra.Command {
 		Short: "keadm beta command",
 		Long:  `keadm beta command provides some subcommands that are still in testing, but have complete functions and can be used in advance`,
 	}
+
 	cmd.ResetFlags()
+
+	cmd.AddCommand(edge.NewJoinBetaCommand())
+	cmd.AddCommand(NewInitBeta())
+	cmd.AddCommand(NewManifestGenerateBeta())
+	cmd.AddCommand(newCmdConfig())
+	cmd.AddCommand(NewKubeEdgeResetBeta())
 
 	return cmd
 }

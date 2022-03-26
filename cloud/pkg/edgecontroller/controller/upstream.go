@@ -37,6 +37,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	apimachineryType "k8s.io/apimachinery/pkg/types"
 	k8sinformer "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -45,8 +46,6 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	rulesv1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
-	crdClientset "github.com/kubeedge/kubeedge/cloud/pkg/client/clientset/versioned"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/controller"
@@ -57,6 +56,9 @@ import (
 	common "github.com/kubeedge/kubeedge/common/constants"
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
+	rulesv1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
+	crdClientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
+	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
 // SortedContainerStatuses define A type to help sort container statuses based on container names.
@@ -568,11 +570,15 @@ func kubeClientGet(uc *UpstreamController, namespace string, name string, queryT
 	case model.ResourceTypeServiceAccountToken:
 		obj, err = uc.getServiceAccountToken(namespace, name, msg)
 	default:
-		err := stderrors.New("wrong query type")
-		klog.Error(err)
+		err = stderrors.New("wrong query type")
+	}
+	if err != nil {
 		return nil, err
 	}
-	return obj, err
+	if err := util.SetMetaType(obj.(runtime.Object)); err != nil {
+		return nil, err
+	}
+	return obj, nil
 }
 
 func queryInner(uc *UpstreamController, msg model.Message, queryType string) {

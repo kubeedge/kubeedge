@@ -30,6 +30,21 @@ type InitOptions struct {
 	TarballPath      string
 }
 
+//InitBetaOptions has the kubeedge cloud init-beta information filled by CLI
+type InitBetaOptions struct {
+	KubeConfig       string
+	KubeEdgeVersion  string
+	AdvertiseAddress string
+	Manifests        string
+	Namespace        string
+	Sets             []string
+	Profile          string
+	ExternalHelmRoot string
+	Force            bool
+	SkipCRDs         bool
+	DryRun           bool
+}
+
 //JoinOptions has the kubeedge cloud init information filled by CLI
 type JoinOptions struct {
 	InitOptions
@@ -42,6 +57,8 @@ type JoinOptions struct {
 	CertPort              string
 	CGroupDriver          string
 	Labels                []string
+	WithMQTT              bool
+	ImageRepository       string
 }
 
 type CheckOptions struct {

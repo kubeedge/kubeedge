@@ -25,7 +25,7 @@ type serverTLS struct {
 	params          *handshake.TransportParameters
 	cookieGenerator *handshake.CookieGenerator
 
-	newSession func(connection, sessionRunner, protocol.ConnectionID, protocol.ConnectionID, protocol.ConnectionID, protocol.PacketNumber, *Config, *mint.Config, <-chan handshake.TransportParameters, utils.Logger, protocol.VersionNumber) (quicSession, error)
+	newSession func(connection, sessionRunner, protocol.ConnectionID, protocol.ConnectionID, protocol.ConnectionID, protocol.PacketNumber, *Config, *mint.Config, *handshake.TransportParameters, utils.Logger, protocol.VersionNumber) (quicSession, error)
 
 	sessionRunner sessionRunner
 	sessionChan   chan<- tlsSession
@@ -132,7 +132,7 @@ func (s *serverTLS) handleInitialImpl(p *receivedPacket) (quicSession, protocol.
 		1,
 		s.config,
 		mconf,
-		extHandler.GetPeerParams(),
+		s.params,
 		s.logger,
 		hdr.Version,
 	)

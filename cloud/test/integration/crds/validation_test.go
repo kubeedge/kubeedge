@@ -23,11 +23,11 @@ import (
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
-	crdClientset "github.com/kubeedge/kubeedge/cloud/pkg/client/clientset/versioned"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/test/integration/fixtures"
 	cloudcoreConfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
+	crdClientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 )
 
 func buildCrdClient(t *testing.T) crdClientset.Interface {

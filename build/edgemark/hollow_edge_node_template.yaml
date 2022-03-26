@@ -1,0 +1,50 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: hollow-edge-node
+spec:
+  replicas: {{numreplicas}}
+  selector:
+    matchLabels:
+      app: hollow-edge-node
+  template:
+    metadata:
+      labels:
+        app: hollow-edge-node
+    spec:
+      containers:
+        - name: hollow-edgecore
+          image: {{edgemark_image_registry}}/edgemark:{{edgemark_image_tag}}
+          command:
+            - edgemark
+          args:
+            - --token=$(TOKEN)
+            - --name=$(NODE_NAME)
+            - --http-server=https://{{server}}:10002
+            - --websocket-server={{server}}:10000
+            - --alsologtostderr
+            - --v=2
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+            - name: TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: tokensecret
+                  key: tokendata
+          resources:
+            requests:
+              cpu: 20m
+              memory: 50M
+          securityContext:
+            privileged: true
+      tolerations:
+        - effect: NoExecute
+          key: node.kubernetes.io/unreachable
+          operator: Exists
+        - effect: NoExecute
+          key: node.kubernetes.io/not-ready
+          operator: Exists

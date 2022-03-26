@@ -25,7 +25,7 @@ import (
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
+	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 )
 

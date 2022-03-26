@@ -54,24 +54,7 @@ func (o *PacmanOS) IsK8SComponentInstalled(kubeConfig, master string) error {
 // Untar's in the specified location /etc/kubeedge/ and then copies
 // the binary to excecutables' path (eg: /usr/local/bin)
 func (o *PacmanOS) InstallKubeEdge(options types.InstallOptions) error {
-	arch := "amd64"
-	cmd := NewCommand("uname -m")
-	if err := cmd.Exec(); err != nil {
-		return err
-	}
-	result := cmd.GetStdOut()
-	switch result {
-	case "armv7l":
-		arch = OSArchARM32
-	case "aarch64":
-		arch = OSArchARM64
-	case "x86_64":
-		arch = OSArchAMD64
-	default:
-		return fmt.Errorf("can't support this architecture of PacmanOS: %s", result)
-	}
-
-	return installKubeEdge(options, arch, o.KubeEdgeVersion)
+	return installKubeEdge(options, o.KubeEdgeVersion)
 }
 
 // RunEdgeCore sets the environment variable GOARCHAIUS_CONFIG_PATH for the configuration path
@@ -87,10 +70,10 @@ func (o *PacmanOS) KillKubeEdgeBinary(proc string) error {
 
 // IsKubeEdgeProcessRunning checks if the given process is running or not
 func (o *PacmanOS) IsKubeEdgeProcessRunning(proc string) (bool, error) {
-	return isKubeEdgeProcessRunning(proc)
+	return IsKubeEdgeProcessRunning(proc)
 }
 
 // IsProcessRunning checks if the given process is running or not
 func (o *PacmanOS) IsProcessRunning(proc string) (bool, error) {
-	return isKubeEdgeProcessRunning(proc)
+	return IsKubeEdgeProcessRunning(proc)
 }

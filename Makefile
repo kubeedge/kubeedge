@@ -13,7 +13,8 @@ BINARIES=cloudcore \
 	edgesite-server \
 	keadm \
 	csidriver \
-	iptablesmanager
+	iptablesmanager \
+	edgemark
 
 COMPONENTS=cloud \
 	edge
@@ -46,7 +47,7 @@ ifeq ($(HELP),y)
 all: clean
 	@echo "$$ALL_HELP_INFO"
 else
-all: 
+all:
 	KUBEEDGE_OUTPUT_SUBPATH=$(OUT_DIR) hack/make-rules/build.sh $(WHAT)
 endif
 
@@ -74,7 +75,7 @@ verify-vendor:
 	hack/verify-vendor.sh
 .PHONY: verify-codegen
 verify-codegen:
-	cloud/hack/verify-codegen.sh
+	hack/verify-codegen.sh
 .PHONY: verify-vendor-licenses
 verify-vendor-licenses:
 	hack/verify-vendor-licenses.sh
@@ -174,7 +175,7 @@ ifeq ($(HELP),y)
 crossbuild:
 	@echo "$$CROSSBUILD_HELP_INFO"
 else
-crossbuild: 
+crossbuild:
 	hack/make-rules/crossbuild.sh $(WHAT) $(ARM_VERSION)
 endif
 
@@ -194,7 +195,7 @@ define GENERATE_CRDS_HELP_INFO
 #     RELIABLESYNCS_VERSION, default: v1alpha1
 #
 # Example:
-#     make generate 
+#     make generate
 #     make generate -e CRD_VERSIONS=v1 -e CRD_OUTPUTS=build/crds
 #
 endef
@@ -227,7 +228,7 @@ ifeq ($(HELP),y)
 smallbuild:
 	@echo "$$SMALLBUILD_HELP_INFO"
 else
-smallbuild: 
+smallbuild:
 	hack/make-rules/smallbuild.sh $(WHAT)
 endif
 
@@ -273,17 +274,17 @@ define HELM_KEADM_E2E_HELP_INFO
 # helm keadm e2e test.
 #
 # Example:
-#   make helm_keadm_e2e
-#   make helm_keadm_e2e HELP=y
+#   make keadm_beta_e2e
+#   make keadm_beta_e2e HELP=y
 #
 endef
-.PHONY: helm_keadm_e2e
+.PHONY: keadm_beta_e2e
 ifeq ($(HELP),y)
-helm_keadm_e2e:
+keadm_beta_e2e:
 	@echo "HELM_KEADM_E2E_HELP_INFO"
 else
-helm_keadm_e2e:
-	tests/e2e/scripts/helm_keadm_e2e.sh
+keadm_beta_e2e:
+	tests/e2e/scripts/keadm_beta_e2e.sh
 endif
 
 define CLEAN_HELP_INFO
@@ -322,6 +323,27 @@ image:
 else
 image:
 	hack/make-rules/image.sh $(WHAT)
+endif
+
+define CROSS_IMAGE_HELP_INFO
+# Use Buildx to build multi-architecture docker images.
+#
+# Args:
+#   WHAT: component names to build. support: $(BINARIES)
+#         If not specified, "everything" will be built.
+#
+# Example:
+#   make crossbuildimage
+#   make crossbuildimage HELP=y
+#   make crossbuildimage WHAT=cloudcore
+endef
+.PHONY: crossbuildimage
+ifeq ($(HELP),y)
+crossbuildimage:
+	@echo "CROSS_IMAGE_HELP_INFO"
+else
+crossbuildimage:
+	hack/make-rules/crossbuildimage.sh $(WHAT)
 endif
 
 define INSTALL_HELP_INFO

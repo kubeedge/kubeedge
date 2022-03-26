@@ -8,7 +8,7 @@
 
 ```bash
 cd $GOPATH/src/github.com/kubeedge/kubeedge
-make cloudimage
+make image WHAT=cloudcore
 ```
 
 (可选)然后，使用1.3.0以下版本时，需要手动生成 tls 证书。这步成功的话，会生成 `06-secret.yaml`。

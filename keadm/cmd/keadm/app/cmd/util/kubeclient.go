@@ -33,10 +33,26 @@ func KubeClient(kubeConfigPath string) (*kubernetes.Clientset, error) {
 	return kubernetes.NewForConfig(kubeConfig)
 }
 
-func (co *Common) cleanNameSpace(ns, kubeConfigPath string) error {
+func (co *Common) CleanNameSpace(ns, kubeConfigPath string) error {
 	cli, err := KubeClient(kubeConfigPath)
 	if err != nil {
 		return fmt.Errorf("failed to create KubeClient, error: %s", err)
 	}
 	return cli.CoreV1().Namespaces().Delete(context.Background(), ns, metav1.DeleteOptions{})
+}
+
+// IsCloudcoreContainerRunning judge whether cloudcore pod is running
+func IsCloudcoreContainerRunning(ns, kubeConfigPath string) (bool, error) {
+	cli, err := KubeClient(kubeConfigPath)
+	if err != nil {
+		return false, fmt.Errorf("failed to create KubeClient, error: %s", err)
+	}
+	podList, err := cli.CoreV1().Pods(ns).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return false, fmt.Errorf("failed to query pods, error: %s", err)
+	}
+	if podList.Items == nil || len(podList.Items) == 0 {
+		return false, nil
+	}
+	return true, nil
 }

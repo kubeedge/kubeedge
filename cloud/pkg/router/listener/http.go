@@ -150,7 +150,7 @@ func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		response, ok := v.(*http.Response)
 		if !ok {
-			klog.Errorf("response convert error, msg id: %s, reason: %v", msgID, err)
+			klog.Errorf("response convert error, msg id: %s", msgID)
 			return
 		}
 		body, err := io.ReadAll(response.Body)

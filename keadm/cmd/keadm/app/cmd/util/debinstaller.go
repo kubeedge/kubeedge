@@ -72,12 +72,7 @@ func (d *DebOS) IsK8SComponentInstalled(kubeConfig, master string) error {
 // Untar's in the specified location /etc/kubeedge/ and then copies
 // the binary to excecutables' path (eg: /usr/local/bin)
 func (d *DebOS) InstallKubeEdge(options types.InstallOptions) error {
-	arch, err := getSystemArch()
-	if err != nil {
-		return err
-	}
-
-	return installKubeEdge(options, arch, d.KubeEdgeVersion)
+	return installKubeEdge(options, d.KubeEdgeVersion)
 }
 
 // RunEdgeCore starts edgecore with logs being captured
@@ -92,18 +87,9 @@ func (d *DebOS) KillKubeEdgeBinary(proc string) error {
 
 // IsKubeEdgeProcessRunning checks if the given process is running or not
 func (d *DebOS) IsKubeEdgeProcessRunning(proc string) (bool, error) {
-	return isKubeEdgeProcessRunning(proc)
-}
-
-func getSystemArch() (string, error) {
-	cmd := NewCommand("dpkg --print-architecture")
-	if err := cmd.Exec(); err != nil {
-		return "", err
-	}
-
-	return cmd.GetStdOut(), nil
+	return IsKubeEdgeProcessRunning(proc)
 }
 
 func (d *DebOS) IsProcessRunning(proc string) (bool, error) {
-	return isKubeEdgeProcessRunning(proc)
+	return IsKubeEdgeProcessRunning(proc)
 }

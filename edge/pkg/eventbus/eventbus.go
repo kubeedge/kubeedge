@@ -57,7 +57,11 @@ func (eb *eventbus) Enable() bool {
 func (eb *eventbus) Start() {
 	if eventconfig.Config.MqttMode >= v1alpha1.MqttModeBoth {
 		hub := &mqttBus.Client{
-			MQTTUrl: eventconfig.Config.MqttServerExternal,
+			MQTTUrl:     eventconfig.Config.MqttServerExternal,
+			SubClientID: eventconfig.Config.MqttSubClientID,
+			PubClientID: eventconfig.Config.MqttPubClientID,
+			Username:    eventconfig.Config.MqttUsername,
+			Password:    eventconfig.Config.MqttPassword,
 		}
 		mqttBus.MQTTHub = hub
 		hub.InitSubClient()

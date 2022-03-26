@@ -29,8 +29,6 @@ import (
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
 
-var PrivateDownloadServiceFile = downloadServiceFile
-
 func TestCheckKubernetesVersion(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -108,11 +106,7 @@ func TestPrivateDownloadServiceFile(t *testing.T) {
 		}
 	}
 
-	testTmpDir, err := os.MkdirTemp("", "kubeedge")
-	if err != nil {
-		t.Fatalf("failed to create temp dir for testing:{%s}\n", err.Error())
-	}
-	defer os.RemoveAll(testTmpDir)
+	testTmpDir := t.TempDir()
 
 	componentType = types.CloudCore
 	targetVersion, _ = semver.Make(types.DefaultKubeEdgeVersion)
@@ -165,15 +159,11 @@ func TestGetLatestVersion(t *testing.T) {
 }
 
 func TestHasSystemd(t *testing.T) {
-	hasSystemd()
+	HasSystemd()
 }
 
 func TestFileExists(t *testing.T) {
-	dir, err := os.MkdirTemp("", "TestTempFile_BadDir")
-	if err != nil {
-		t.Fatalf("%v", err)
-	}
-	defer os.RemoveAll(dir)
+	dir := t.TempDir()
 
 	ef, err := os.CreateTemp(dir, "FileExist")
 	if err == nil {

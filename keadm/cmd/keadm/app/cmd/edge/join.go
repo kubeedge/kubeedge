@@ -115,6 +115,13 @@ func addJoinOtherFlags(cmd *cobra.Command, joinOptions *types.JoinOptions) {
 
 	cmd.Flags().StringSliceVarP(&joinOptions.Labels, types.Labels, "l", joinOptions.Labels,
 		`use this key to set the customized labels for node. you can input customized labels like key1=value1,key2=value2`)
+
+	cmd.Flags().BoolVar(&joinOptions.WithMQTT, "with-mqtt", joinOptions.WithMQTT,
+		`use this key to set whether to install and start MQTT Broker by default`)
+
+	cmd.Flags().StringVar(&joinOptions.ImageRepository, types.ImageRepository, joinOptions.ImageRepository,
+		`Use this key to decide which image repository to pull images from.`,
+	)
 }
 
 // newJoinOptions returns a struct ready for being used for creating cmd join flags.

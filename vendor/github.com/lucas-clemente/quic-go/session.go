@@ -302,7 +302,7 @@ func newTLSServerSession(
 	initialPacketNumber protocol.PacketNumber,
 	config *Config,
 	mintConf *mint.Config,
-	paramsChan <-chan handshake.TransportParameters,
+	peerParams *handshake.TransportParameters,
 	logger utils.Logger,
 	v protocol.VersionNumber,
 ) (quicSession, error) {
@@ -316,7 +316,6 @@ func newTLSServerSession(
 		perspective:    protocol.PerspectiveServer,
 		version:        v,
 		handshakeEvent: handshakeEvent,
-		paramsChan:     paramsChan,
 		logger:         logger,
 	}
 	s.preSetup()
@@ -350,6 +349,8 @@ func newTLSServerSession(
 	if err := s.postSetup(); err != nil {
 		return nil, err
 	}
+	s.peerParams = peerParams
+	s.processTransportParameters(peerParams)
 	s.unpacker = newPacketUnpacker(cs, s.version)
 	return s, nil
 }

@@ -17,6 +17,7 @@ limitations under the License.
 package util
 
 import (
+	"crypto/tls"
 	"strings"
 )
 
@@ -47,4 +48,13 @@ func RemovePortFromHost(host string) string {
 		host = host[:strings.LastIndexByte(host, ':')]
 	}
 	return strings.Trim(host, "[]")
+}
+
+// GetAcceptedCiphers returns all the ciphers supported by the crypto/tls package
+func GetAcceptedCiphers() map[string]uint16 {
+	acceptedCiphers := make(map[string]uint16, len(tls.CipherSuites()))
+	for _, v := range tls.CipherSuites() {
+		acceptedCiphers[v.Name] = v.ID
+	}
+	return acceptedCiphers
 }

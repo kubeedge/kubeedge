@@ -20,6 +20,9 @@ const (
 	// KubeEdgeVersion sets the version of KubeEdge to be used
 	KubeEdgeVersion = "kubeedge-version"
 
+	// ImageRepository sets the image repository to pull images
+	ImageRepository = "image-repository"
+
 	// KubeConfig sets the path of kubeconfig
 	KubeConfig = "kube-config"
 
@@ -51,7 +54,7 @@ const (
 	RuntimeType = "runtimetype"
 
 	// DefaultKubeEdgeVersion is the default KubeEdge version
-	DefaultKubeEdgeVersion = "1.9.0"
+	DefaultKubeEdgeVersion = "1.10.0"
 
 	// Token sets the token used when edge applying for the certificate
 	Token = "token"
@@ -78,6 +81,30 @@ const (
 
 	StrCheck    = "check"
 	StrDiagnose = "diagnose"
+
+	// Init-beta flags combined below:
+
+	// Allow appending manifests paths of manifests to keadm, separated by commas
+	Manifests = "manifests"
+
+	// Allow appending manifests paths of manifests to keadm, separated by commas, another supported flag
+	Files = "files"
+
+	// Dry-run flag
+	DryRun = "dry-run"
+
+	// Forced install
+	Force = "force"
+
+	// Skip CRDs
+	SkipCRDs = "skip-crds"
+
+	// External Helm Root
+	ExternalHelmRoot = "external-helm-root"
+
+	// Helm action
+	HelmInstallAction  = "install"
+	HelmManifestAction = "manifest"
 
 	CmdGetDNSIP         = "cat /etc/resolv.conf | grep nameserver | grep -v -E ':|#' | awk '{print $2}' | head -n1"
 	CmdGetStatusDocker  = "systemctl status docker |grep Active | awk '{print $2}'"
