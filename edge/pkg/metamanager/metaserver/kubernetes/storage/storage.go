@@ -135,7 +135,7 @@ func (r *REST) List(ctx context.Context, options *metainternalversion.ListOption
 		klog.Warningf("[metaserver/reststorage] failed to list obj from cloud, %v; try local", err)
 		list, err = r.Store.List(ctx, options)
 		if err != nil {
-			return nil, errors.NewInternalError(err)
+			return nil, err
 		}
 		klog.Infof("[metaserver/reststorage] successfully process list req (%v) at local", path)
 	}
@@ -184,7 +184,7 @@ func (r *REST) Create(ctx context.Context, obj runtime.Object, createValidation 
 	}()
 	if err != nil {
 		klog.Errorf("[metaserver/reststorage] failed to create (%v)", metaserver.KeyFunc(obj))
-		return nil, errors.NewInternalError(err)
+		return nil, err
 	}
 	klog.Infof("[metaserver/reststorage] successfully create (%v)", metaserver.KeyFunc(obj))
 	return obj, nil
@@ -197,7 +197,7 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 	defer app.Close()
 	if err != nil {
 		klog.Errorf("[metaserver/reststorage] failed to delete (%v) through cloud", key)
-		return nil, false, errors.NewInternalError(err)
+		return nil, false, err
 	}
 	klog.Infof("[metaserver/reststorage] successfully delete (%v) through cloud", key)
 	return nil, true, nil
@@ -218,7 +218,7 @@ func (r *REST) Update(ctx context.Context, name string, objInfo rest.UpdatedObje
 	}
 	defer app.Close()
 	if err := r.Agent.Apply(app); err != nil {
-		return nil, false, errors.NewInternalError(err)
+		return nil, false, err
 	}
 	retObj := new(unstructured.Unstructured)
 	if err := json.Unmarshal(app.RespBody, retObj); err != nil {
@@ -231,7 +231,7 @@ func (r *REST) Patch(ctx context.Context, pi application.PatchInfo) (runtime.Obj
 	app := r.Agent.Generate(ctx, application.Patch, pi, nil)
 	defer app.Close()
 	if err := r.Agent.Apply(app); err != nil {
-		return nil, errors.NewInternalError(err)
+		return nil, err
 	}
 	retObj := new(unstructured.Unstructured)
 	if err := json.Unmarshal(app.RespBody, retObj); err != nil {
