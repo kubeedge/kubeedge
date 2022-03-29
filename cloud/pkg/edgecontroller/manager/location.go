@@ -29,6 +29,16 @@ func (lc *LocationCache) PodConfigMapsAndSecrets(pod v1.Pod) (configMaps, secret
 		if v.Secret != nil {
 			secrets = append(secrets, v.Secret.SecretName)
 		}
+		if v.Projected != nil {
+			for _, source := range v.Projected.Sources {
+				switch {
+				case source.ConfigMap != nil:
+					configMaps = append(configMaps, source.ConfigMap.Name)
+				case source.Secret != nil:
+					secrets = append(secrets, source.Secret.Name)
+				}
+			}
+		}
 	}
 	// used by envs
 	for _, s := range pod.Spec.Containers {
