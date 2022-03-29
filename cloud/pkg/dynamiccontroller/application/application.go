@@ -25,8 +25,8 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	edgemodule "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
@@ -376,7 +376,7 @@ func NewApplicationCenter(dynamicSharedInformerFactory dynamicinformer.DynamicSh
 	a := &Center{
 		HandlerCenter: NewHandlerCenter(dynamicSharedInformerFactory),
 		kubeclient:    client.GetDynamicClient(),
-		messageLayer:  messagelayer.NewContextMessageLayer(),
+		messageLayer:  messagelayer.DynamicControllerMessageLayer(),
 	}
 	return a
 }

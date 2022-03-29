@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
-	edgemessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 )
 
 // constants for resource types
@@ -84,7 +84,7 @@ func NewResource(resType, resID string, info *HubInfo) string {
 
 // IsNodeStopped indicates if the node is stopped or running
 func IsNodeStopped(msg *model.Message) bool {
-	resourceType, _ := edgemessagelayer.GetResourceType(*msg)
+	resourceType, _ := messagelayer.GetResourceType(*msg)
 	if resourceType != model.ResourceTypeNode {
 		return false
 	}

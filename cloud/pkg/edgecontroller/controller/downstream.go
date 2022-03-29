@@ -16,10 +16,10 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/manager"
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 	routerv1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
 	crdinformers "github.com/kubeedge/kubeedge/pkg/client/informers/externalversions"
@@ -451,7 +451,7 @@ func NewDownstreamController(config *v1alpha1.EdgeController, k8sInformerFactory
 		nodeManager:          nodesManager,
 		serviceManager:       serviceManager,
 		endpointsManager:     endpointsManager,
-		messageLayer:         messagelayer.NewContextMessageLayer(config.Context),
+		messageLayer:         messagelayer.EdgeControllerMessageLayer(),
 		lc:                   lc,
 		svcLister:            svcInformer.Lister(),
 		podLister:            podInformer.Lister(),

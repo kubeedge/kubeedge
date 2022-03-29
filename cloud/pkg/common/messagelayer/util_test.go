@@ -1,5 +1,5 @@
 /*
-Copyright 2021 The KubeEdge Authors.
+Copyright 2022 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 const (
@@ -29,6 +30,186 @@ const (
 	Namespace    = "default"
 	ResourceType = "pod"
 )
+
+func TestBuildResourceForDevice(t *testing.T) {
+	type args struct {
+		nodeID       string
+		resourceType string
+		resourceID   string
+	}
+	tests := []struct {
+		name         string
+		args         args
+		wantResource string
+		wantErr      error
+	}{
+		{
+			name: "TestBuildResourceForDevice(): Case 1: Test with nodeID, resourceType and resourceID",
+			args: args{
+				nodeID:       "nid",
+				resourceType: constants.ResourceTypePersistentVolume,
+				resourceID:   "rid",
+			},
+			wantResource: fmt.Sprintf("%s%s%s%s%s%s%s", ResourceNode, constants.ResourceSep, "nid", constants.ResourceSep, constants.ResourceTypePersistentVolume, constants.ResourceSep, "rid"),
+			wantErr:      nil,
+		},
+		{
+			name: "TestBuildResourceForDevice(): Case 2: Test without nodeID",
+			args: args{
+				nodeID:       "",
+				resourceType: "",
+				resourceID:   "",
+			},
+			wantResource: "",
+			wantErr:      fmt.Errorf("required parameter are not set (node id, namespace or resource type)"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotResource, err := BuildResourceForDevice(tt.args.nodeID, tt.args.resourceType, tt.args.resourceID)
+			if err != nil && err.Error() != tt.wantErr.Error() {
+				t.Errorf("BuildResource() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if gotResource != tt.wantResource {
+				t.Errorf("BuildResourceForDevice() gotResource = %v, want %v", gotResource, tt.wantResource)
+			}
+		})
+	}
+}
+
+func TestGetDeviceID(t *testing.T) {
+	type args struct {
+		resource string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    string
+		wantErr error
+	}{
+		{
+			name: "TestGetDeviceID(): Case 1: success",
+			args: args{
+				resource: fmt.Sprintf("node/%s/%s/%s", "nid", ResourceDevice, "did"),
+			},
+			want:    "did",
+			wantErr: nil,
+		},
+		{
+			name: "TestGetDeviceID(): Case 2: length less then 4",
+			args: args{
+				resource: fmt.Sprintf("node/%s/%s", "nid", ResourceDevice),
+			},
+			want:    "",
+			wantErr: fmt.Errorf("failed to get device id"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := GetDeviceID(tt.args.resource)
+			if err != nil && err.Error() != tt.wantErr.Error() {
+				t.Errorf("GetDeviceID() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("GetDeviceID() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGetNodeID(t *testing.T) {
+	type args struct {
+		msg model.Message
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    string
+		wantErr error
+	}{
+		{
+			"TestGetNodeID(): Case 1: success",
+			args{
+				msg: model.Message{
+					Router: model.MessageRoute{
+						Resource: fmt.Sprintf("node/%s/%s/%s/%s", "nid", "default", constants.ResourceTypeEndpoints, "rid"),
+					},
+				},
+			},
+			"nid",
+			nil,
+		},
+		{
+			"TestGetNodeID(): Case 2: no nodeID",
+			args{msg: model.Message{}},
+			"",
+			fmt.Errorf("node id not found"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := GetNodeID(tt.args.msg)
+			if err != nil && err.Error() != tt.wantErr.Error() {
+				t.Errorf("GetNodeID() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("GetNodeID() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGetResourceTypeForDevice(t *testing.T) {
+	type args struct {
+		resource string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    string
+		wantErr error
+	}{
+		{
+			"GetResourceTypeForDevice ResourceTypeTwinEdgeUpdated: success",
+			args{
+				resource: fmt.Sprintf("node/%s/%s", "nid", ResourceTypeTwinEdgeUpdated),
+			},
+			ResourceTypeTwinEdgeUpdated,
+			nil,
+		},
+		{
+			"GetResourceTypeForDevice() ResourceTypeMembershipDetail: success",
+			args{
+				resource: ResourceTypeMembershipDetail,
+			},
+			ResourceTypeMembershipDetail,
+			nil,
+		},
+		{
+			"GetResourceTypeForDevice() Case 2: no resourceType",
+			args{
+				resource: "",
+			},
+			"",
+			fmt.Errorf("unknown resource, found: %s", ""),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := GetResourceTypeForDevice(tt.args.resource)
+			if err != nil && err.Error() != tt.wantErr.Error() {
+				t.Errorf("GetResourceType() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("GetResourceType() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
 
 func TestBuildResource(t *testing.T) {
 	type args struct {
@@ -139,49 +320,6 @@ func TestBuildResourceForRouter(t *testing.T) {
 			}
 			if gotResource != tt.wantResource {
 				t.Errorf("BuildResourceForRouter() = %v, want %v", gotResource, tt.wantResource)
-			}
-		})
-	}
-}
-
-func TestGetNodeID(t *testing.T) {
-	type args struct {
-		msg model.Message
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    string
-		wantErr error
-	}{
-		{
-			"TestGetNodeID() Case 1: has node ID",
-			args{
-				msg: model.Message{
-					Router: model.MessageRoute{
-						Resource: fmt.Sprintf("node/%s/%s/%s/%s", NodeID, Namespace, ResourceType, ResourceID),
-					},
-				},
-			},
-			NodeID,
-			nil,
-		},
-		{
-			"TestGetNodeID() Case 2: no node ID",
-			args{msg: model.Message{}},
-			"",
-			fmt.Errorf("node id not found"),
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := GetNodeID(tt.args.msg)
-			if err != nil && err.Error() != tt.wantErr.Error() {
-				t.Errorf("GetNodeID() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got != tt.want {
-				t.Errorf("GetNodeID() = %v, want %v", got, tt.want)
 			}
 		})
 	}

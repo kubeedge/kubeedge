@@ -23,7 +23,6 @@ import (
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 
 	"github.com/kubeedge/kubeedge/common/constants"
-	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
 )
 
 // NewDefaultCloudCoreConfig returns a full CloudCoreConfig object
@@ -105,12 +104,6 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					DeletePod:                  constants.DefaultDeletePodBuffer,
 					ServiceAccountToken:        constants.DefaultServiceAccountTokenBuffer,
 				},
-				Context: &ControllerContext{
-					SendModule:       metaconfig.ModuleNameCloudHub,
-					SendRouterModule: metaconfig.ModuleNameRouter,
-					ReceiveModule:    metaconfig.ModuleNameEdgeController,
-					ResponseModule:   metaconfig.ModuleNameCloudHub,
-				},
 				Load: &EdgeControllerLoad{
 					UpdatePodStatusWorkers:            constants.DefaultUpdatePodStatusWorkers,
 					UpdateNodeStatusWorkers:           constants.DefaultUpdateNodeStatusWorkers,
@@ -130,11 +123,6 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 			},
 			DeviceController: &DeviceController{
 				Enable: true,
-				Context: &ControllerContext{
-					SendModule:     metaconfig.ModuleNameCloudHub,
-					ReceiveModule:  metaconfig.ModuleNameDeviceController,
-					ResponseModule: metaconfig.ModuleNameCloudHub,
-				},
 				Buffer: &DeviceControllerBuffer{
 					UpdateDeviceStatus: constants.DefaultUpdateDeviceStatusBuffer,
 					DeviceEvent:        constants.DefaultDeviceEventBuffer,

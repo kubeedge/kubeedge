@@ -23,10 +23,10 @@ import (
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/application"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/config"
-	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/messagelayer"
 	configv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
@@ -75,7 +75,7 @@ func (dctl *DynamicController) Start() {
 func newDynamicController(enable bool) *DynamicController {
 	var dctl = &DynamicController{
 		enable:                       enable,
-		messageLayer:                 messagelayer.NewContextMessageLayer(),
+		messageLayer:                 messagelayer.DynamicControllerMessageLayer(),
 		dynamicSharedInformerFactory: informers.GetInformersManager().GetDynamicSharedInformerFactory(),
 	}
 	dctl.applicationCenter = application.NewApplicationCenter(dctl.dynamicSharedInformerFactory)

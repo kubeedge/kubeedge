@@ -29,7 +29,7 @@ import (
 	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/messagelayer"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
@@ -53,7 +53,7 @@ func NewHandlerCenter(informerFactory dynamicinformer.DynamicSharedInformerFacto
 	c := handlerCenter{
 		handlers:                     handlers,
 		dynamicSharedInformerFactory: informerFactory,
-		messageLayer:                 messagelayer.NewContextMessageLayer(),
+		messageLayer:                 messagelayer.DynamicControllerMessageLayer(),
 	}
 	return &c
 }

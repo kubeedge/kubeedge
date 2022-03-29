@@ -23,10 +23,10 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	deviceconst "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	edgeconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
-	edgemessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1"
@@ -529,9 +529,9 @@ func (mh *MessageHandle) send(hi hubio.CloudHubIO, info *model.HubInfo, msg *bee
 
 func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model.HubInfo, nodeStore cache.Store) {
 	if msg.GetGroup() == edgeconst.GroupResource {
-		resourceNamespace, _ := edgemessagelayer.GetNamespace(*msg)
-		resourceName, _ := edgemessagelayer.GetResourceName(*msg)
-		resourceType, _ := edgemessagelayer.GetResourceType(*msg)
+		resourceNamespace, _ := messagelayer.GetNamespace(*msg)
+		resourceName, _ := messagelayer.GetResourceName(*msg)
+		resourceType, _ := messagelayer.GetResourceType(*msg)
 		resourceUID, err := channelq.GetMessageUID(*msg)
 		if err != nil {
 			klog.Errorf("failed to get message UID %v, err: %v", msg, err)
