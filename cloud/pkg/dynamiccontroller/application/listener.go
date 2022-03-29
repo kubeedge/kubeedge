@@ -41,18 +41,17 @@ func (l *SelectorListener) sendAllObjects(rets []runtime.Object, messageLayer me
 }
 
 func (l *SelectorListener) sendObj(event watch.Event, messageLayer messagelayer.MessageLayer) {
-	accessor, _ := meta.Accessor(event.Object)
+	accessor, err := meta.Accessor(event.Object)
+	if err != nil {
+		klog.Error(err)
+		return
+	}
 	klog.V(4).Infof("[dynamiccontroller/selectorListener] listener(%v) is sending obj %v", *l, accessor.GetName())
 	// do not send obj if obj does not match listener's selector
 	if !l.selector.MatchObj(event.Object) {
 		return
 	}
 
-	accessor, err := meta.Accessor(event.Object)
-	if err != nil {
-		klog.Error(err)
-		return
-	}
 	namespace := accessor.GetNamespace()
 	if namespace == "" {
 		namespace = v2.NullNamespace
