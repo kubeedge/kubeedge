@@ -137,6 +137,45 @@ jobs:
 
       - run: make e2e
 
+  arm64_e2e_test:
+    runs-on: ubuntu-18.04
+    timeout-minutes: 30
+    name: Arm64 e2e test
+    env:
+      GO111MODULE: on
+    steps:
+      - uses: uraimo/run-on-arch-action@v2
+        name: Run commands
+        with:
+          arch: aarch64
+          distro: ubuntu18.04
+
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16.x
+
+      - uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+
+      - name: Install dependences
+        run: |
+          command -v ginkgo || go install github.com/onsi/ginkgo/ginkgo@latest
+          go install sigs.k8s.io/kind@v0.11.1
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.22.6/bin/linux/arm64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - run: |
+          echo "AAAAAAAAAAAAAA"
+          uname -a
+          make e2e
+
   keadm_e2e_test:
     runs-on: ubuntu-18.04
     timeout-minutes: 30
