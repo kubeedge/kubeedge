@@ -292,11 +292,11 @@ kubeedge::golang::cross_build_place_binaries() {
     if [ "${goarm}" == "8" ]; then
       set -x
       GOARM="" # need to clear the value since golang compiler doesn't allow this env when building the binary for ARMv8.
-      GOARCH=arm64 GOOS="linux" CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc go build -o ${KUBEEDGE_OUTPUT_BINPATH}/${name} -ldflags "$ldflags" $bin
+      GOARCH=arm64 GOOS="linux" CGO_ENABLED=0 CC=aarch64-linux-gnu-gcc go build -o ${KUBEEDGE_OUTPUT_BINPATH}/${name} -ldflags "$ldflags" $bin
       set +x
     elif [ "${goarm}" == "7" ]; then
       set -x
-      GOARCH=arm GOOS="linux" GOARM=${goarm} CGO_ENABLED=1 CC=arm-linux-gnueabihf-gcc go build -o ${KUBEEDGE_OUTPUT_BINPATH}/${name} -ldflags "$ldflags" $bin
+      GOARCH=arm GOOS="linux" GOARM=${goarm} CGO_ENABLED=0 CC=arm-linux-gnueabihf-gcc go build -o ${KUBEEDGE_OUTPUT_BINPATH}/${name} -ldflags "$ldflags" $bin
       set +x
     fi
   done
