@@ -22,13 +22,13 @@ func NewAdmissionCommand() *cobra.Command {
 		Use: "admission",
 		Long: `Admission leverage the feature of Dynamic Admission Control from kubernetes, start it
 if want to admission control some kubeedge resources.`,
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			verflag.PrintAndExitIfRequested()
 			flag.PrintFlags(cmd.Flags())
 
 			// To help debugging, immediately log version
 			klog.Infof("Version: %+v", version.Get())
-			admissioncontroller.Run(ops)
+			return admissioncontroller.Run(ops)
 		},
 	}
 

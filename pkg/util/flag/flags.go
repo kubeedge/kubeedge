@@ -104,7 +104,7 @@ func PrintMinConfigAndExitIfRequested(config interface{}) {
 	}
 }
 
-// PrintDefaultConfigAndExitIfRequested will check if the -defaultconfig flag was passed
+// PrintDefaultConfigAndExitIfRequested will check if the --defaultconfig flag was passed
 // and, if so, print the default config and exit.
 func PrintDefaultConfigAndExitIfRequested(config interface{}) {
 	if *defaultConfigFlag == ConfigTrue {
