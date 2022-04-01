@@ -233,39 +233,25 @@ func signCerts(subInfo pkix.Name, pbKey crypto.PublicKey, usages []x509.ExtKeyUs
 	return certDER, err
 }
 
-// CheckCaExistsFromSecret checks ca from secret
-func CheckCaExistsFromSecret() bool {
-	if _, err := GetSecret(CaSecretName, constants.SystemNamespace); err != nil {
-		return false
-	}
-	return true
-}
-
-// CheckCertExistsFromSecret checks CloudCore certificate from secret
-func CheckCertExistsFromSecret() bool {
-	if _, err := GetSecret(CloudCoreSecretName, constants.SystemNamespace); err != nil {
-		return false
-	}
-	return true
-}
-
 // PrepareAllCerts check whether the certificates exist in the local directory,
 // and then check whether certificates exist in the secret, generate if they don't exist
 func PrepareAllCerts() error {
 	// Check whether the ca exists in the local directory
 	if hubconfig.Config.Ca == nil && hubconfig.Config.CaKey == nil {
+		var caDER, caKeyDER []byte
 		klog.Info("Ca and CaKey don't exist in local directory, and will read from the secret")
 		// Check whether the ca exists in the secret
-		secretHasCA := CheckCaExistsFromSecret()
-		if !secretHasCA {
+		caSecret, err := GetSecret(CaSecretName, constants.SystemNamespace)
+		if err != nil {
 			klog.Info("Ca and CaKey don't exist in the secret, and will be created by CloudCore")
-			caDER, caKey, err := NewCertificateAuthorityDer()
+			var caKey crypto.Signer
+			caDER, caKey, err = NewCertificateAuthorityDer()
 			if err != nil {
 				klog.Errorf("failed to create Certificate Authority, error: %v", err)
 				return err
 			}
 
-			caKeyDER, err := x509.MarshalECPrivateKey(caKey.(*ecdsa.PrivateKey))
+			caKeyDER, err = x509.MarshalECPrivateKey(caKey.(*ecdsa.PrivateKey))
 			if err != nil {
 				klog.Errorf("failed to convert an EC private key to SEC 1, ASN.1 DER form, error: %v", err)
 				return err
@@ -276,19 +262,11 @@ func PrepareAllCerts() error {
 				klog.Errorf("failed to create ca to secrets, error: %v", err)
 				return err
 			}
-
-			UpdateConfig(caDER, caKeyDER, nil, nil)
 		} else {
-			s, err := GetSecret(CaSecretName, constants.SystemNamespace)
-			if err != nil {
-				klog.Errorf("failed to get CaSecret, error: %v", err)
-				return err
-			}
-			caDER := s.Data[CaDataName]
-			caKeyDER := s.Data[CaKeyDataName]
-
-			UpdateConfig(caDER, caKeyDER, nil, nil)
+			caDER = caSecret.Data[CaDataName]
+			caKeyDER = caSecret.Data[CaKeyDataName]
 		}
+		UpdateConfig(caDER, caKeyDER, nil, nil)
 	} else {
 		// HubConfig has been initialized
 		if err := CreateCaSecret(hubconfig.Config.Ca, hubconfig.Config.CaKey); err != nil {
@@ -301,10 +279,11 @@ func PrepareAllCerts() error {
 	if hubconfig.Config.Key == nil && hubconfig.Config.Cert == nil {
 		klog.Infof("CloudCoreCert and key don't exist in local directory, and will read from the secret")
 		// Check whether the CloudCore certificates exist in the secret
-		secretHasCert := CheckCertExistsFromSecret()
-		if !secretHasCert {
+		var certDER, keyDER []byte
+		cloudSecret, err := GetSecret(CloudCoreSecretName, constants.SystemNamespace)
+		if err != nil {
 			klog.Info("CloudCoreCert and key don't exist in the secret, and will be signed by CA")
-			certDER, keyDER, err := SignCerts()
+			certDER, keyDER, err = SignCerts()
 			if err != nil {
 				klog.Errorf("failed to sign a certificate, error: %v", err)
 				return err
@@ -315,19 +294,11 @@ func PrepareAllCerts() error {
 				klog.Errorf("failed to save CloudCore cert and key to secret, error: %v", err)
 				return err
 			}
-
-			UpdateConfig(nil, nil, certDER, keyDER)
 		} else {
-			s, err := GetSecret(CloudCoreSecretName, constants.SystemNamespace)
-			if err != nil {
-				klog.Errorf("failed to get CloudCore secret, error: %v", err)
-				return err
-			}
-			certDER := s.Data[CloudCoreCertName]
-			keyDER := s.Data[CloudCoreKeyDataName]
-
-			UpdateConfig(nil, nil, certDER, keyDER)
+			certDER = cloudSecret.Data[CloudCoreCertName]
+			keyDER = cloudSecret.Data[CloudCoreKeyDataName]
 		}
+		UpdateConfig(nil, nil, certDER, keyDER)
 	} else {
 		// HubConfig has been initialized
 		if err := CreateCloudCoreSecret(hubconfig.Config.Cert, hubconfig.Config.Key); err != nil {
