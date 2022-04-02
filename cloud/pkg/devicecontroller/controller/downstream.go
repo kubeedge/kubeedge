@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"reflect"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -40,6 +41,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/manager"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/types"
 	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
+	crdClientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 	crdinformers "github.com/kubeedge/kubeedge/pkg/client/informers/externalversions"
 )
 
@@ -65,6 +67,7 @@ const (
 // DownstreamController watch kubernetes api server and send change to edge
 type DownstreamController struct {
 	kubeClient   kubernetes.Interface
+	crdClient    crdClientset.Interface
 	messageLayer messagelayer.MessageLayer
 
 	deviceManager      *manager.DeviceManager
@@ -73,7 +76,23 @@ type DownstreamController struct {
 }
 
 // syncDeviceModel is used to get events from informer
-func (dc *DownstreamController) syncDeviceModel() {
+func (dc *DownstreamController) syncDeviceModel(syncChan *chan struct{}) {
+	klog.Infof("Begin to sync device model...")
+	// calculate device model total number
+	list, err := dc.crdClient.DevicesV1alpha2().DeviceModels(metav1.NamespaceAll).List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		klog.Exitf("Failed to list device model: %v", err)
+		return
+	}
+	modelTotalNum := len(list.Items)
+	// if no device model, we also should inform outer to sync device
+	syncOnce := &sync.Once{}
+	if modelTotalNum == 0 {
+		syncOnce.Do(func() {
+			*syncChan <- struct{}{}
+		})
+	}
+	added := 0
 	for {
 		select {
 		case <-beehiveContext.Done():
@@ -88,6 +107,14 @@ func (dc *DownstreamController) syncDeviceModel() {
 			switch e.Type {
 			case watch.Added:
 				dc.deviceModelAdded(deviceModel)
+				// when progress begins, first only trigger ADDED event, we add all device models,
+				// then once finish syncing all models, inform outer to begin to sync device
+				added++
+				if added >= modelTotalNum {
+					syncOnce.Do(func() {
+						*syncChan <- struct{}{}
+					})
+				}
 			case watch.Deleted:
 				dc.deviceModelDeleted(deviceModel)
 			case watch.Modified:
@@ -142,6 +169,7 @@ func (dc *DownstreamController) deviceModelDeleted(deviceModel *v1alpha2.DeviceM
 
 // syncDevice is used to get device events from informer
 func (dc *DownstreamController) syncDevice() {
+	klog.Infof("Begin to sync device...")
 	for {
 		select {
 		case <-beehiveContext.Done():
@@ -874,11 +902,19 @@ func (dc *DownstreamController) deviceDeleted(device *v1alpha2.Device) {
 func (dc *DownstreamController) Start() error {
 	klog.Info("Start downstream devicecontroller")
 
-	go dc.syncDeviceModel()
+	syncChan := make(chan struct{}, 1)
+	go dc.syncDeviceModel(&syncChan)
 
-	// Wait for adding all device model
-	// TODO need to think about sync
-	time.Sleep(1 * time.Second)
+	// waiting for finishing syncing device model
+	select {
+	case <-syncChan:
+		klog.Info("Sync all device models successfully, and begin to sync device.")
+		break
+	case <-time.After(1 * time.Second):
+		klog.Info("Sync device models time out, but still begin to sync device.")
+		break
+	}
+
 	go dc.syncDevice()
 
 	return nil
@@ -900,6 +936,7 @@ func NewDownstreamController(crdInformerFactory crdinformers.SharedInformerFacto
 
 	dc := &DownstreamController{
 		kubeClient:         client.GetKubeClient(),
+		crdClient:          client.GetCRDClient(),
 		deviceManager:      deviceManager,
 		deviceModelManager: deviceModelManager,
 		messageLayer:       messagelayer.DeviceControllerMessageLayer(),
