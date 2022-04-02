@@ -26,10 +26,10 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	keclient "github.com/kubeedge/kubeedge/cloud/pkg/common/client"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
-	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/types"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
@@ -88,7 +88,7 @@ func (uc *UpstreamController) dispatchMessage() {
 
 		klog.Infof("Dispatch message: %s", msg.GetID())
 
-		resourceType, err := messagelayer.GetResourceType(msg.GetResource())
+		resourceType, err := messagelayer.GetResourceTypeForDevice(msg.GetResource())
 		if err != nil {
 			klog.Warningf("Parse message: %s resource type with error: %s", msg.GetID(), err)
 			continue
@@ -173,7 +173,7 @@ func (uc *UpstreamController) updateDeviceStatus() {
 				klog.Warningf("Message: %s process failure, get node id failed with error: %s", msg.GetID(), err)
 				continue
 			}
-			resource, err := messagelayer.BuildResource(nodeID, "twin", "")
+			resource, err := messagelayer.BuildResourceForDevice(nodeID, "twin", "")
 			if err != nil {
 				klog.Warningf("Message: %s process failure, build message resource failed with error: %s", msg.GetID(), err)
 				continue
@@ -207,7 +207,7 @@ func (uc *UpstreamController) unmarshalDeviceStatusMessage(msg model.Message) (*
 func NewUpstreamController(dc *DownstreamController) (*UpstreamController, error) {
 	uc := &UpstreamController{
 		crdClient:    keclient.GetCRDClient(),
-		messageLayer: messagelayer.NewContextMessageLayer(),
+		messageLayer: messagelayer.DeviceControllerMessageLayer(),
 		dc:           dc,
 	}
 	return uc, nil

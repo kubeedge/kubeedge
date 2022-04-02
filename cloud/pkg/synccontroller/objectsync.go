@@ -16,9 +16,9 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	edgectrconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
-	edgectrmessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
@@ -102,7 +102,7 @@ func sendEvents(err error, nodeName string, sync *v1alpha1.ObjectSync, resourceT
 }
 
 func buildEdgeControllerMessage(nodeName, namespace, resourceType, resourceName, operationType string, obj interface{}) *model.Message {
-	resource, err := edgectrmessagelayer.BuildResource(nodeName, namespace, resourceType, resourceName)
+	resource, err := messagelayer.BuildResource(nodeName, namespace, resourceType, resourceName)
 	if err != nil {
 		klog.Warningf("build message resource failed with error: %s", err)
 		return nil

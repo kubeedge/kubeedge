@@ -20,8 +20,6 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
 )
 
 // CloudCoreConfig indicates the config of cloudCore which get from cloudCore config file
@@ -202,8 +200,6 @@ type EdgeController struct {
 	NodeUpdateFrequency int32 `json:"nodeUpdateFrequency,omitempty"`
 	// Buffer indicates k8s resource buffer
 	Buffer *EdgeControllerBuffer `json:"buffer,omitempty"`
-	// Context indicates send,receive,response modules for EdgeController module
-	Context *ControllerContext `json:"context,omitempty"`
 	// Load indicates EdgeController load
 	Load *EdgeControllerLoad `json:"load,omitempty"`
 }
@@ -272,18 +268,6 @@ type EdgeControllerBuffer struct {
 	ServiceAccountToken int32 `json:"serviceAccountToken,omitempty"`
 }
 
-// ControllerContext indicates the message layer context for all controllers
-type ControllerContext struct {
-	// SendModule indicates which module will send message to
-	SendModule metaconfig.ModuleName `json:"sendModule,omitempty"`
-	// SendRouterModule indicates which module will send router message to
-	SendRouterModule metaconfig.ModuleName `json:"sendRouterModule,omitempty"`
-	// ReceiveModule indicates which module will receive message from
-	ReceiveModule metaconfig.ModuleName `json:"receiveModule,omitempty"`
-	// ResponseModule indicates which module will response message to
-	ResponseModule metaconfig.ModuleName `json:"responseModule,omitempty"`
-}
-
 // EdgeControllerLoad indicates the EdgeController load
 type EdgeControllerLoad struct {
 	// UpdatePodStatusWorkers indicates the load of update pod status workers
@@ -336,8 +320,6 @@ type DeviceController struct {
 	// if set to false (for debugging etc.), skip checking other deviceController configs.
 	// default true
 	Enable bool `json:"enable"`
-	// Context indicates send,receive,response modules for deviceController module
-	Context *ControllerContext `json:"context,omitempty"`
 	// Buffer indicates Device controller buffer
 	Buffer *DeviceControllerBuffer `json:"buffer,omitempty"`
 	// Load indicates DeviceController Load

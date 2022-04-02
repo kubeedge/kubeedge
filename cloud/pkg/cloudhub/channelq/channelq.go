@@ -16,10 +16,10 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/application"
 	edgeconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
-	edgemessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1"
@@ -115,8 +115,8 @@ func (q *ChannelMessageQueue) addMessageToQueue(nodeID string, msg *beehiveModel
 		// If the message doesn't exist in the store, then compare it with
 		// the version stored in the database
 		if !exist {
-			resourceNamespace, _ := edgemessagelayer.GetNamespace(*msg)
-			resourceName, _ := edgemessagelayer.GetResourceName(*msg)
+			resourceNamespace, _ := messagelayer.GetNamespace(*msg)
+			resourceName, _ := messagelayer.GetResourceName(*msg)
 			resourceUID, err := GetMessageUID(*msg)
 			objectSyncName := synccontroller.BuildObjectSyncName(nodeID, resourceUID)
 			if err != nil {
@@ -167,9 +167,9 @@ func getMsgKey(obj interface{}) (string, error) {
 	msg := obj.(*beehiveModel.Message)
 
 	if msg.GetGroup() == edgeconst.GroupResource {
-		resourceType, _ := edgemessagelayer.GetResourceType(*msg)
-		resourceNamespace, _ := edgemessagelayer.GetNamespace(*msg)
-		resourceName, _ := edgemessagelayer.GetResourceName(*msg)
+		resourceType, _ := messagelayer.GetResourceType(*msg)
+		resourceNamespace, _ := messagelayer.GetNamespace(*msg)
+		resourceName, _ := messagelayer.GetResourceName(*msg)
 		return strings.Join([]string{resourceType, resourceNamespace, resourceName}, "/"), nil
 	}
 
@@ -203,7 +203,7 @@ func isListResource(msg *beehiveModel.Message) bool {
 	}
 
 	if msg.GetSource() == modules.EdgeControllerModuleName {
-		resourceType, _ := edgemessagelayer.GetResourceType(*msg)
+		resourceType, _ := messagelayer.GetResourceType(*msg)
 		if resourceType == beehiveModel.ResourceTypeNode {
 			return true
 		}

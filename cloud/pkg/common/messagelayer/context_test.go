@@ -1,5 +1,5 @@
 /*
-Copyright 2021 The KubeEdge Authors.
+Copyright 2022 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,11 +23,9 @@ import (
 	"github.com/kubeedge/beehive/pkg/common"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
 const (
-	thisModuleName     = "testcore"
 	sendModuleName     = "testcore"
 	receiveModuleName  = "testcore"
 	responseModuleName = "testcore"
@@ -87,29 +85,10 @@ func TestContextMessageLayer_Send_Receive_Response(t *testing.T) {
 				t.Errorf("ContextMessageLayer.Receive() failed. got: %v, want:%v", got, tt.args.message)
 			}
 
-			cml.Response(got)
-		})
-	}
-}
-
-func TestNewContextMessageLayer(t *testing.T) {
-	config := &v1alpha1.ControllerContext{
-		SendModule:     sendModuleName,
-		ReceiveModule:  receiveModuleName,
-		ResponseModule: responseModuleName,
-	}
-
-	tests := []struct {
-		name string
-	}{
-		{
-			"TestNewContextmessageLayer(): Case 1: create message layer",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := NewContextMessageLayer(config); got == nil {
-				t.Errorf("NewContextMessageLayer() = %v", got)
+			err = cml.Response(got)
+			if err != nil {
+				t.Errorf("ContextMessageLayer.Response() failed. err: %v", err)
+				return
 			}
 		})
 	}

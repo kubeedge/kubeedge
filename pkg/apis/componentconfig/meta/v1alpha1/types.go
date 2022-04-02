@@ -19,14 +19,6 @@ package v1alpha1
 type ModuleName string
 type GroupName string
 
-// Available modules for CloudCore
-const (
-	ModuleNameEdgeController   ModuleName = "edgecontroller"
-	ModuleNameDeviceController ModuleName = "devicecontroller"
-	ModuleNameCloudHub         ModuleName = "cloudhub"
-	ModuleNameRouter           ModuleName = "router"
-)
-
 // Available modules for EdgeCore
 const (
 	ModuleNameEventBus   ModuleName = "eventbus"
