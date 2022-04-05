@@ -22,7 +22,7 @@ CRD_VERSIONS=v1
 CRD_OUTPUTS=build/crds
 DEVICES_VERSION=v1alpha2
 RELIABLESYNCS_VERSION=v1alpha1
-GROUPING_VERSION=v1alpha1
+APPS_VERSION=v1alpha1
 HELM_CRDS_DIR=manifests/charts/cloudcore/crds
 ROUTER_DIR=build/crds/router
 
@@ -79,7 +79,7 @@ function :copy:to:destination {
   # rename files, copy files
   mkdir -p ${CRD_OUTPUTS}/devices
   mkdir -p ${CRD_OUTPUTS}/reliablesyncs
-  mkdir -p ${CRD_OUTPUTS}/grouping
+  mkdir -p ${CRD_OUTPUTS}/apps
 
   for entry in `ls /tmp/crds/*.yaml`; do
       CRD_NAME=$(echo ${entry} | cut -d'.' -f3 | cut -d'_' -f2)
@@ -90,8 +90,8 @@ function :copy:to:destination {
           cp -v ${entry} ${HELM_CRDS_DIR}/devices_${DEVICES_VERSION}_${CRD_NAME}.yaml 
       elif [ "$CRD_NAME" == "edgeapplications" ] || [ "$CRD_NAME" == "nodegroups" ]; then
           CRD_NAME=$(remove_suffix_s "$CRD_NAME")
-          cp -v ${entry} ${CRD_OUTPUTS}/grouping/grouping_${GROUPING_VERSION}_${CRD_NAME}.yaml
-          cp -v ${entry} ${HELM_CRDS_DIR}/grouping_${GROUPING_VERSION}_${CRD_NAME}.yaml
+          cp -v ${entry} ${CRD_OUTPUTS}/apps/apps_${APPS_VERSION}_${CRD_NAME}.yaml
+          cp -v ${entry} ${HELM_CRDS_DIR}/apps_${APPS_VERSION}_${CRD_NAME}.yaml
       elif [ "$CRD_NAME" == "clusterobjectsyncs" ]; then
           cp -v ${entry} ${CRD_OUTPUTS}/reliablesyncs/cluster_objectsync_${RELIABLESYNCS_VERSION}.yaml
           cp -v ${entry} ${HELM_CRDS_DIR}/cluster_objectsync_${RELIABLESYNCS_VERSION}.yaml

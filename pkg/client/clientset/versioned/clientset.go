@@ -21,8 +21,8 @@ package versioned
 import (
 	"fmt"
 
+	appsv1alpha1 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/apps/v1alpha1"
 	devicesv1alpha2 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/devices/v1alpha2"
-	groupingv1alpha1 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/grouping/v1alpha1"
 	reliablesyncsv1alpha1 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/reliablesyncs/v1alpha1"
 	rulesv1 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/rules/v1"
 	discovery "k8s.io/client-go/discovery"
@@ -32,8 +32,8 @@ import (
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
+	AppsV1alpha1() appsv1alpha1.AppsV1alpha1Interface
 	DevicesV1alpha2() devicesv1alpha2.DevicesV1alpha2Interface
-	GroupingV1alpha1() groupingv1alpha1.GroupingV1alpha1Interface
 	ReliablesyncsV1alpha1() reliablesyncsv1alpha1.ReliablesyncsV1alpha1Interface
 	RulesV1() rulesv1.RulesV1Interface
 }
@@ -42,20 +42,20 @@ type Interface interface {
 // version included in a Clientset.
 type Clientset struct {
 	*discovery.DiscoveryClient
+	appsV1alpha1          *appsv1alpha1.AppsV1alpha1Client
 	devicesV1alpha2       *devicesv1alpha2.DevicesV1alpha2Client
-	groupingV1alpha1      *groupingv1alpha1.GroupingV1alpha1Client
 	reliablesyncsV1alpha1 *reliablesyncsv1alpha1.ReliablesyncsV1alpha1Client
 	rulesV1               *rulesv1.RulesV1Client
+}
+
+// AppsV1alpha1 retrieves the AppsV1alpha1Client
+func (c *Clientset) AppsV1alpha1() appsv1alpha1.AppsV1alpha1Interface {
+	return c.appsV1alpha1
 }
 
 // DevicesV1alpha2 retrieves the DevicesV1alpha2Client
 func (c *Clientset) DevicesV1alpha2() devicesv1alpha2.DevicesV1alpha2Interface {
 	return c.devicesV1alpha2
-}
-
-// GroupingV1alpha1 retrieves the GroupingV1alpha1Client
-func (c *Clientset) GroupingV1alpha1() groupingv1alpha1.GroupingV1alpha1Interface {
-	return c.groupingV1alpha1
 }
 
 // ReliablesyncsV1alpha1 retrieves the ReliablesyncsV1alpha1Client
@@ -89,11 +89,11 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	}
 	var cs Clientset
 	var err error
-	cs.devicesV1alpha2, err = devicesv1alpha2.NewForConfig(&configShallowCopy)
+	cs.appsV1alpha1, err = appsv1alpha1.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
 	}
-	cs.groupingV1alpha1, err = groupingv1alpha1.NewForConfig(&configShallowCopy)
+	cs.devicesV1alpha2, err = devicesv1alpha2.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
 	}
@@ -117,8 +117,8 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 // panics if there is an error in the config.
 func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
+	cs.appsV1alpha1 = appsv1alpha1.NewForConfigOrDie(c)
 	cs.devicesV1alpha2 = devicesv1alpha2.NewForConfigOrDie(c)
-	cs.groupingV1alpha1 = groupingv1alpha1.NewForConfigOrDie(c)
 	cs.reliablesyncsV1alpha1 = reliablesyncsv1alpha1.NewForConfigOrDie(c)
 	cs.rulesV1 = rulesv1.NewForConfigOrDie(c)
 
@@ -129,8 +129,8 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
+	cs.appsV1alpha1 = appsv1alpha1.New(c)
 	cs.devicesV1alpha2 = devicesv1alpha2.New(c)
-	cs.groupingV1alpha1 = groupingv1alpha1.New(c)
 	cs.reliablesyncsV1alpha1 = reliablesyncsv1alpha1.New(c)
 	cs.rulesV1 = rulesv1.New(c)
 

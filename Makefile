@@ -13,7 +13,8 @@ BINARIES=cloudcore \
 	keadm \
 	csidriver \
 	iptablesmanager \
-	edgemark
+	edgemark \
+	controllermanager
 
 COMPONENTS=cloud \
 	edge

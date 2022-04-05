@@ -1,0 +1,94 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.6.2
+  creationTimestamp: null
+  name: nodegroups.apps.kubeedge.io
+spec:
+  group: apps.kubeedge.io
+  names:
+    kind: NodeGroup
+    listKind: NodeGroupList
+    plural: nodegroups
+    shortNames:
+    - ng
+    singular: nodegroup
+  scope: Cluster
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: NodeGroup is the Schema for the nodegroups API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: Spec represents the specification of the desired behavior
+              of member nodegroup.
+            properties:
+              matchLabels:
+                additionalProperties:
+                  type: string
+                description: MatchLabels are used to select nodes that have these
+                  labels.
+                type: object
+              nodes:
+                description: Nodes contains names of all the nodes in the nodegroup.
+                items:
+                  type: string
+                type: array
+            type: object
+          status:
+            description: Status represents the status of member nodegroup.
+            properties:
+              nodeStatuses:
+                description: NodeStatuses is a status list of all selected nodes.
+                items:
+                  description: NodeStatus contains status of node that selected by
+                    this NodeGroup.
+                  properties:
+                    nodeName:
+                      description: NodeName contains name of this node.
+                      type: string
+                    readyStatus:
+                      description: ReadyStatus contains ready status of this node.
+                      type: string
+                    selectionStatus:
+                      description: SelectionStatus contains status of the selection
+                        result for this node.
+                      type: string
+                    selectionStatusReason:
+                      description: SelectionStatusReason contains human-readable reason
+                        for this SelectionStatus.
+                      type: string
+                  required:
+                  - nodeName
+                  - readyStatus
+                  - selectionStatus
+                  type: object
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
