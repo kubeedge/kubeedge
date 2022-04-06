@@ -22,6 +22,8 @@ COMPONENTS=cloud \
 .EXPORT_ALL_VARIABLES:
 OUT_DIR ?= _output/local
 
+RUN = hack/make-rules/build_with_container.sh
+
 define ALL_HELP_INFO
 # Build code.
 #
@@ -40,12 +42,20 @@ define ALL_HELP_INFO
 #     to "-N -l" to disable optimizations and inlining, this will be helpful when you want to
 #     use the debugging tools like delve. When GOLDFLAGS is unspecified, it defaults to "-s -w" which strips
 #     debug information, see https://golang.org/cmd/link for other flags.
+#
+#     Set the environment variable or arg BUILD_WITH_CONTAINER to build inside container,
+#     only docker and make are required in this mode.
+#       1) make all WHAT=cloudcore BUILD_WITH_CONTAINER=true
+#       2) export BUILD_WITH_CONTAINER=true && make all WHAT=cloudcore
 
 endef
 .PHONY: all
 ifeq ($(HELP),y)
 all: clean
 	@echo "$$ALL_HELP_INFO"
+else ifeq ($(BUILD_WITH_CONTAINER),true)
+all:
+	$(RUN) hack/make-rules/build.sh $(WHAT)
 else
 all:
 	KUBEEDGE_OUTPUT_SUBPATH=$(OUT_DIR) hack/make-rules/build.sh $(WHAT)
