@@ -237,6 +237,7 @@ func createMessageTwinFromDeviceTwin(devTwin dtclient.DeviceTwin) map[string]*Ms
 	var actualMeta ValueMetadata
 	actualValue := &TwinValue{Value: &devTwin.Actual}
 	json.Unmarshal([]byte(devTwin.ActualMeta), &actualMeta)
+	actualValue.Metadata = &actualMeta
 	var expectedVersion TwinVersion
 	json.Unmarshal([]byte(devTwin.ExpectedVersion), &expectedVersion)
 	var actualVersion TwinVersion
