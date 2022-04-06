@@ -140,7 +140,7 @@ func (im *Manager) reconcile() {
 	for _, ipports := range addedIPPort {
 		ipport := strings.Split(ipports, ":")
 		ip, port := ipport[0], ipport[1]
-		args := append([]string{"-p", "tcp", "-j", "DNAT", "--dport", port, "--to", ip + ":" + strconv.Itoa(int(im.streamPort))})
+		args := append([]string{"-p", "tcp", "-j", "DNAT", "--dport", port, "--to", ip + ":" + strconv.Itoa(im.streamPort)})
 		if _, err := im.iptables.EnsureRule(utiliptables.Append, utiliptables.TableNAT, tunnelPortChain, args...); err != nil {
 			klog.ErrorS(err, "Failed to ensure rules", "table", utiliptables.TableNAT, "chain", tunnelPortChain)
 			return
@@ -150,7 +150,7 @@ func (im *Manager) reconcile() {
 	for _, ipports := range deletedIPPort {
 		ipport := strings.Split(ipports, ":")
 		ip, port := ipport[0], ipport[1]
-		args := append([]string{"-p", "tcp", "-j", "DNAT", "--dport", port, "--to", ip + ":" + strconv.Itoa(int(im.streamPort))})
+		args := append([]string{"-p", "tcp", "-j", "DNAT", "--dport", port, "--to", ip + ":" + strconv.Itoa(im.streamPort)})
 		if err := im.iptables.DeleteRule(utiliptables.TableNAT, tunnelPortChain, args...); err != nil {
 			klog.ErrorS(err, "Failed to delete rules", "table", utiliptables.TableNAT, "chain", tunnelPortChain)
 			return
