@@ -22,6 +22,7 @@ COMPONENTS=cloud \
 .EXPORT_ALL_VARIABLES:
 OUT_DIR ?= _output/local
 
+BUILD_WITH_CONTAINER?=true
 RUN = hack/make-rules/build_with_container.sh
 
 define ALL_HELP_INFO
@@ -43,10 +44,10 @@ define ALL_HELP_INFO
 #     use the debugging tools like delve. When GOLDFLAGS is unspecified, it defaults to "-s -w" which strips
 #     debug information, see https://golang.org/cmd/link for other flags.
 #
-#     Set the environment variable or arg BUILD_WITH_CONTAINER to build inside container,
-#     only docker and make are required in this mode.
-#       1) make all WHAT=cloudcore BUILD_WITH_CONTAINER=true
-#       2) export BUILD_WITH_CONTAINER=true && make all WHAT=cloudcore
+#     By default we build inside container, only docker and make are required in this mode.
+#     Set the environment variable or arg BUILD_WITH_CONTAINER to anything but true to build using local golang environtment.
+#       1) make all WHAT=cloudcore BUILD_WITH_CONTAINER=false
+#       2) export BUILD_WITH_CONTAINER=false && make all WHAT=cloudcore
 
 endef
 .PHONY: all
