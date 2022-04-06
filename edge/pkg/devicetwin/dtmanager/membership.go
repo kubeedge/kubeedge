@@ -364,23 +364,23 @@ func SyncDeviceFromSqlite(context *dtcontext.DTContext, deviceID string) error {
 
 	devices, err := dtclient.QueryDevice("id", deviceID)
 	if err != nil {
-		klog.Errorf("query device attr failed: %v", err)
+		klog.Errorf("query device failed, id: %s, err: %v", deviceID, err)
 		return err
 	}
 	if len(*devices) == 0 {
-		return errors.New("Not found device")
+		return errors.New("not found device")
 	}
 	dbDoc := (*devices)[0]
 
 	deviceAttr, err := dtclient.QueryDeviceAttr("deviceid", deviceID)
 	if err != nil {
-		klog.Errorf("query device attr failed: %v", err)
+		klog.Errorf("query device attr failed, id: %s, err: %v", deviceID, err)
 		return err
 	}
 
 	deviceTwin, err := dtclient.QueryDeviceTwin("deviceid", deviceID)
 	if err != nil {
-		klog.Errorf("query device twin failed: %v", err)
+		klog.Errorf("query device twin failed, id: %s, err: %v", deviceID, err)
 		return err
 	}
 
