@@ -25,5 +25,5 @@ MOUNTPATH="${MOUNTPATH:-/kubeedge}"
 KUBEEDGE_BUILD_IMAGE=${KUBEEDGE_BUILD_IMAGE:-"kubeedge/build-tools"}
 
 set -x
-docker run --rm -v ${KUBEEDGE_ROOT}:${MOUNTPATH} -w ${MOUNTPATH} ${KUBEEDGE_BUILD_IMAGE} "$@"
+docker run --rm -v ${KUBEEDGE_ROOT}:${MOUNTPATH} -w ${MOUNTPATH} --user $(id -u) ${KUBEEDGE_BUILD_IMAGE} "$@"
 set +x

@@ -342,7 +342,7 @@ kubeedge::golang::small_build_place_binaries() {
   read -r ldflags <<< "$(kubeedge::version::ldflags)"
 
   mkdir -p ${KUBEEDGE_OUTPUT_BINPATH}
-  sudo chmod -R 777 ${KUBEEDGE_ROOT}/_output
+#  sudo chmod -R 777 ${KUBEEDGE_ROOT}/_output
   for bin in ${binaries[@]}; do
     echo "small building $bin"
     local name="${bin##*/}"

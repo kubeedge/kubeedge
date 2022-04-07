@@ -98,7 +98,7 @@ function start_cloudcore {
   CLOUD_CONFIGFILE=${KUBEEDGE_ROOT}/_output/local/bin/cloudcore.yaml
   CLOUD_BIN=${KUBEEDGE_ROOT}/_output/local/bin/cloudcore
 
-  sudo chmod -R 777 ${KUBEEDGE_ROOT}/_output
+#  sudo chmod -R 777 ${KUBEEDGE_ROOT}/_output
 
   ${CLOUD_BIN} --defaultconfig >  ${CLOUD_CONFIGFILE}
   sed -i '/cloudStream:/{n;s/false/true/;}' ${CLOUD_CONFIGFILE}
