@@ -23,7 +23,13 @@ set -o pipefail
 KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 MOUNTPATH="${MOUNTPATH:-/kubeedge}"
 KUBEEDGE_BUILD_IMAGE=${KUBEEDGE_BUILD_IMAGE:-"kubeedge/build-tools"}
+DOCKER_GID="${DOCKER_GID:-$(grep '^docker:' /etc/group | cut -f3 -d:)}"
 
 set -x
-docker run --rm -v ${KUBEEDGE_ROOT}:${MOUNTPATH} -w ${MOUNTPATH} ${KUBEEDGE_BUILD_IMAGE} "$@"
+docker run --rm -u "${UID}:${DOCKER_GID}" \
+    --init \
+    --sig-proxy=false \
+    -e XDG_CACHE_HOME=/tmp/.cache \
+    -v ${KUBEEDGE_ROOT}:${MOUNTPATH} \
+    -w ${MOUNTPATH} ${KUBEEDGE_BUILD_IMAGE} "$@"
 set +x
