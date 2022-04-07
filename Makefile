@@ -178,6 +178,7 @@ define CROSSBUILD_HELP_INFO
 #   make crossbuild
 #   make crossbuild HELP=y
 #   make crossbuild WHAT=edgecore
+#   make crossbuild WHAT=edgecore BUILD_WITH_CONTAINER=false
 #   make crossbuild WHAT=edgecore ARM_VERSION=GOARM7
 #
 endef
@@ -185,6 +186,9 @@ endef
 ifeq ($(HELP),y)
 crossbuild:
 	@echo "$$CROSSBUILD_HELP_INFO"
+else ifeq ($(BUILD_WITH_CONTAINER),true)
+crossbuild:
+	$(RUN) hack/make-rules/crossbuild.sh $(WHAT) $(ARM_VERSION)
 else
 crossbuild:
 	hack/make-rules/crossbuild.sh $(WHAT) $(ARM_VERSION)
