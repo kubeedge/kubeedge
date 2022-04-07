@@ -1,0 +1,1 @@
+For further details please see [Security Policy](https://github.com/kubeedge/community/blob/master/sig-security/SECURITY.md) for our security process and how to report vulnerabilities.

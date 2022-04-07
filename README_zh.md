@@ -110,6 +110,11 @@ KubeEdge 由云端和边缘端部分构成：
 
 如果您有兴趣成为一个贡献者，也想参与到 KubeEdge 的代码开发中，请查看 [CONTRIBUTING](./CONTRIBUTING.md) 获取更多关于如何提交 Patch 和贡献的流程。
 
+## 安全
+
+我们鼓励漏洞研究人员和行业组织主动将KubeEdge社区的疑似安全漏洞报告给KubeEdge社区安全团队(`cncf-kubeedge-security@lists.cncf.io`)。我们会快速的响应、分析和解决上报的安全问题或安全漏洞。
+详细漏洞处理流程及如何上报漏洞请查看 [Security Policy](https://github.com/kubeedge/community/blob/master/sig-security/SECURITY.md)。
+
 ## 许可证
 
 KubeEdge 基于 Apache 2.0 许可证，查看 [LICENSE](./LICENSE) 获取更多信息。
