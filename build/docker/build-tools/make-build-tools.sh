@@ -17,7 +17,7 @@ done
 
 if [ "$PUSH_TAG" = 'push' ]; then
   echo "push edgecore image"
-  manifestCreateCmd="docker manifest create --amend $REPOSITORY:latest"
+  manifestCreateCmd="docker manifest create $REPOSITORY:latest"
   for arch in "${ARCHS[@]}" ; do
     REPOSITORY_ARCH="$REPOSITORY"-"$arch"
     if [ "$arch" = "amd64" ]; then
@@ -31,7 +31,7 @@ if [ "$PUSH_TAG" = 'push' ]; then
   echo "command: $manifestCreateCmd"
   doCreate="$($manifestCreateCmd)"
   echo "$doCreate"
-  docker manifest push "$REPOSITORY":latest
+  docker manifest push --purge "$REPOSITORY":latest
 else
   echo "image save in local"
 fi
