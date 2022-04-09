@@ -39,7 +39,6 @@ jobs:
       arch: arm64
       before_script:
         - export GOFLAGS=-mod=vendor
-        - sudo apt-get install upx-ucl -y
       script:
         - make
         - make smallbuild
