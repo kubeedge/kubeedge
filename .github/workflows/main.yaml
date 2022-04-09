@@ -7,6 +7,9 @@ on:
     tags:
   pull_request:
 
+env:
+  CONTAINER_RUN_OPTIONS: " "
+
 jobs:
   lint:
     runs-on: ubuntu-18.04

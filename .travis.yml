@@ -14,7 +14,7 @@ go:
   - 1.16
 
 env:
-  - HOME=/home/travis
+  - HOME=/home/travis CONTAINER_RUN_OPTIONS=" "
 
 cache:
   directories:

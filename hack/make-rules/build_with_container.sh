@@ -24,11 +24,12 @@ KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 MOUNTPATH="${MOUNTPATH:-/kubeedge}"
 KUBEEDGE_BUILD_IMAGE=${KUBEEDGE_BUILD_IMAGE:-"kubeedge/build-tools"}
 DOCKER_GID="${DOCKER_GID:-$(grep '^docker:' /etc/group | cut -f3 -d:)}"
+CONTAINER_RUN_OPTIONS="${CONTAINER_RUN_OPTIONS:--it}"
 
 echo "start building inside container"
-docker run --rm -u "${UID}:${DOCKER_GID}" \
+docker run --rm ${CONTAINER_RUN_OPTIONS} -u "${UID}:${DOCKER_GID}" \
     --init \
-    --sig-proxy=false \
+    --sig-proxy=true \
     -e XDG_CACHE_HOME=/tmp/.cache \
     -v ${KUBEEDGE_ROOT}:${MOUNTPATH} \
     -w ${MOUNTPATH} ${KUBEEDGE_BUILD_IMAGE} "$@"
