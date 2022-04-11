@@ -292,30 +292,19 @@ func BuildDeviceTwinDelta(baseMessage BaseMessage, twins map[string]*MsgTwin) ([
 		if v.Metadata != nil && strings.Compare(v.Metadata.Type, dtcommon.TypeDeleted) == 0 {
 			continue
 		}
-		if v.Expected != nil {
-			var expectedValue string
-			if v.Expected.Value != nil {
-				expectedValue = *v.Expected.Value
-			}
-			if v.Actual != nil {
-				var actualValue string
-				if v.Actual.Value != nil {
-					actualValue = *v.Actual.Value
-				}
-				if strings.Compare(expectedValue, actualValue) != 0 {
-					value := expectedValue
-					if expectedValue != "" {
-						delta[k] = value
-					}
-				}
-			} else {
-				if expectedValue != "" {
-					value := expectedValue
-					delta[k] = value
-				}
-			}
-		} else {
+		var expectedValue, actualValue string
+		if v.Expected != nil && v.Expected.Value != nil {
+			expectedValue = *v.Expected.Value
+		}
+		if expectedValue == "" {
 			continue
+		}
+
+		if v.Actual != nil && v.Actual.Value != nil {
+			actualValue = *v.Actual.Value
+		}
+		if expectedValue != actualValue {
+			delta[k] = expectedValue
 		}
 		twin := *v
 
