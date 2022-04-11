@@ -42,10 +42,29 @@ jobs:
       - name: Run lint test
         run: make lint
         working-directory: ./src/github.com/${{ github.repository }}
+
+  image-prepare:
+    runs-on: ubuntu-18.04
+    timeout-minutes: 30
+    name: Prepare kubeedge/build-tools image
+    steps:
+      - name: Pull kubeedge/build-tools image
+        run: |
+          docker pull kubeedge/build-tools
+          mkdir -p /home/runner/build-tools/
+          docker save kubeedge/build-tools > /home/runner/build-tools/build-tools.tar
+
+      - name: Temporarily save kubeedge/build-tools image
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-tools-docker-artifact
+          path: /home/runner/build-tools
+
   build:
     runs-on: ubuntu-18.04
     timeout-minutes: 30
     name: Multiple build
+    needs: image-prepare
     steps:
       - name: Install Go
         uses: actions/setup-go@v2
@@ -66,6 +85,16 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
+
+      - name: Retrieve saved kubeedge/build-tools image
+        uses: actions/download-artifact@v3
+        with:
+          name: build-tools-docker-artifact
+          path: /home/runner/build-tools
+
+      - name: docker load kubeedge/build-tools image
+        run: |
+          docker load < /home/runner/build-tools/build-tools.tar
 
       - run: make
 
@@ -111,6 +140,7 @@ jobs:
     runs-on: ubuntu-18.04
     timeout-minutes: 30
     name: E2e test
+    needs: image-prepare
     env:
       GO111MODULE: on
     steps:
@@ -134,6 +164,16 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
+
+      - name: Retrieve saved kubeedge/build-tools image
+        uses: actions/download-artifact@v3
+        with:
+          name: build-tools-docker-artifact
+          path: /home/runner/build-tools
+
+      - name: docker load kubeedge/build-tools image
+        run: |
+          docker load < /home/runner/build-tools/build-tools.tar
 
       - run: make e2e
 
@@ -141,6 +181,7 @@ jobs:
     runs-on: ubuntu-18.04
     timeout-minutes: 30
     name: Keadm e2e test
+    needs: image-prepare
     env:
       GO111MODULE: on
     steps:
@@ -164,6 +205,16 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
+
+      - name: Retrieve saved kubeedge/build-tools image
+        uses: actions/download-artifact@v3
+        with:
+          name: build-tools-docker-artifact
+          path: /home/runner/build-tools
+
+      - name: docker load kubeedge/build-tools image
+        run: |
+          docker load < /home/runner/build-tools/build-tools.tar
 
       - run: make keadm_e2e
 
