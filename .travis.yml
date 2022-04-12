@@ -28,6 +28,7 @@ before_install:
         echo "Only doc files were updated, skip running the CI."
         travis_terminate 0
       fi
+      docker pull kubeedge/build-tools
 
 install: skip
 
