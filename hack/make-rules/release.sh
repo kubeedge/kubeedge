@@ -33,11 +33,14 @@ function release() {
   local -a targets=()
   local VERSION=""
   local ARCH="amd64"
+  local arm_version=""
 
   for arg in "$@"; do
     if [[ "${arg}" == GOARM7 ]]; then
       ARCH="arm"
+      arm_version="GOARM7"
     elif [[ "${arg}" == GOARM8 ]]; then
+      arm_version="GOARM8"
       ARCH="arm64"
     else
       targets+=("${arg}")
@@ -57,7 +60,7 @@ function release() {
         if [ "${ARCH}" == "amd64" ]; then
           hack/make-rules/build.sh edgesite-server edgesite-agent
         else
-          hack/make-rules/crossbuild.sh edgesite-server edgesite-agent ${ARM_VERSION}
+          hack/make-rules/crossbuild.sh edgesite-server edgesite-agent ${arm_version}
         fi
 
         build_edgesite_release $VERSION $ARCH
@@ -66,7 +69,7 @@ function release() {
         if [ "${ARCH}" == "amd64" ]; then
           hack/make-rules/build.sh keadm
         else
-          hack/make-rules/crossbuild.sh keadm ${ARM_VERSION}
+          hack/make-rules/crossbuild.sh keadm ${arm_version}
         fi
 
         build_keadm_release $VERSION $ARCH
@@ -75,7 +78,7 @@ function release() {
         if [ "${ARCH}" == "amd64" ]; then
           hack/make-rules/build.sh cloudcore admission edgecore csidriver iptablesmanager
         else
-          hack/make-rules/crossbuild.sh cloudcore admission edgecore csidriver iptablesmanager ${ARM_VERSION}
+          hack/make-rules/crossbuild.sh cloudcore admission edgecore csidriver iptablesmanager ${arm_version}
         fi
 
         build_kubeedge_release $VERSION $ARCH
