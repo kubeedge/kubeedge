@@ -50,12 +50,12 @@ func TestNewHttpClient(t *testing.T) {
 func TestNewHTTPSClient(t *testing.T) {
 	err := util.GenerateTestCertificate(Path, BaseName, BaseName)
 	if err != nil {
-		t.Errorf("Error in generating fake certificates: %w", err)
+		t.Errorf("Error in generating fake certificates: %v", err)
 		return
 	}
 	certificate, err := tls.LoadX509KeyPair(CertFile, KeyFile)
 	if err != nil {
-		t.Errorf("Error in loading key pair: %w", err)
+		t.Errorf("Error in loading key pair: %v", err)
 		return
 	}
 	type args struct {
@@ -117,12 +117,12 @@ func TestNewHTTPSClient(t *testing.T) {
 func TestNewHTTPClientWithCA(t *testing.T) {
 	err := util.GenerateTestCertificate(Path, BaseName, BaseName)
 	if err != nil {
-		t.Errorf("Error in generating fake certificates: %w", err)
+		t.Errorf("Error in generating fake certificates: %v", err)
 		return
 	}
 	capem, err := os.ReadFile(CertFile)
 	if err != nil {
-		t.Errorf("Error in loading Cert file: %w", err)
+		t.Errorf("Error in loading Cert file: %v", err)
 		return
 	}
 	certificate := tls.Certificate{}
@@ -175,7 +175,7 @@ func TestNewHTTPClientWithCA(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := NewHTTPClientWithCA(tt.args.capem, tt.args.certificate)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("NewHTTPClientWithCA() error = %w, expectedError = %v", err, tt.wantErr)
+				t.Errorf("NewHTTPClientWithCA() error = %v, expectedError = %v", err, tt.wantErr)
 				return
 			}
 			if got != nil && tt.want != nil {
@@ -207,7 +207,7 @@ func TestBuildRequest(t *testing.T) {
 
 	req, err := http.NewRequest(Method, URL, reader)
 	if err != nil {
-		t.Errorf("Error in creating new http request message: %w", err)
+		t.Errorf("Error in creating new http request message: %v", err)
 		return
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
@@ -281,7 +281,7 @@ func TestSendRequestFailure(t *testing.T) {
 
 	req, err := http.NewRequest(Method, URL, bytes.NewReader([]byte{}))
 	if err != nil {
-		t.Errorf("Error in creating new http request message: %w", err)
+		t.Errorf("Error in creating new http request message: %v", err)
 		return
 	}
 
@@ -290,6 +290,6 @@ func TestSendRequestFailure(t *testing.T) {
 		t.Errorf("Error, response should not come as data is not valid")
 	}
 	if respErr == nil {
-		resp.Body.Close()
+		_ = resp.Body.Close()
 	}
 }
