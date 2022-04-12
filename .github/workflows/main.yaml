@@ -76,11 +76,6 @@ jobs:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
-      - name: Install dependences
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y upx-ucl
-
       - name: Checkout code
         uses: actions/checkout@v2
         with:

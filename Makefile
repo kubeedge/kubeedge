@@ -236,12 +236,16 @@ define SMALLBUILD_HELP_INFO
 #   make smallbuild
 #   make smallbuild HELP=y
 #   make smallbuild WHAT=edgecore
+#   make smallbuild WHAT=edgecore BUILD_WITH_CONTAINER=false
 #
 endef
 .PHONY: smallbuild
 ifeq ($(HELP),y)
 smallbuild:
 	@echo "$$SMALLBUILD_HELP_INFO"
+else ifeq ($(BUILD_WITH_CONTAINER),true)
+smallbuild:
+	$(RUN) hack/make-rules/smallbuild.sh $(WHAT)
 else
 smallbuild:
 	hack/make-rules/smallbuild.sh $(WHAT)
