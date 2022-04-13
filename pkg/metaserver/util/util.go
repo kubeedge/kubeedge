@@ -50,6 +50,7 @@ func UnsafeResourceToKind(r string) string {
 	}
 	unusualResourceToKind := map[string]string{
 		"endpoints":                    "Endpoints",
+		"endpointslices":               "EndpointSlice",
 		"nodes":                        "Node",
 		"services":                     "Service",
 		"podstatus":                    "PodStatus",
