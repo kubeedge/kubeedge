@@ -66,11 +66,6 @@ jobs:
     name: Multiple build
     needs: image-prepare
     steps:
-      - name: Install Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.16.x
-
       - uses: actions/cache@v2
         with:
           path: ~/go/pkg/mod
@@ -253,11 +248,6 @@ jobs:
     timeout-minutes: 30
     name: Multiple docker image build
     steps:
-      - name: Install Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.16.x
-
       - uses: actions/cache@v2
         with:
           path: ~/go/pkg/mod
