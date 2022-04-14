@@ -65,7 +65,3 @@ issues:
       - path: edge
         linters:
           - errcheck
-      - path: cloud/pkg/client
-        linters:
-          - gci
-
