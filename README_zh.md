@@ -18,7 +18,7 @@ KubeEdge 是一个开源的系统，可将本机容器化应用编排和管理�
 KubeEdge 是一个由 [Cloud Native Computing Foundation](https://cncf.io) (CNCF) 托管的孵化级项目，CNCF 对 KubeEdge 的 [孵化公告](https://www.cncf.io/blog/2020/09/16/toc-approves-kubeedge-as-incubating-project/)
 
 注意：
-1.6 以前的版本不再支持，请尝试升级到支持版本。
+1.7 以前的版本不再支持，请尝试升级到支持版本。
 
 ## 优势
 
@@ -59,11 +59,11 @@ KubeEdge 由云端和边缘端部分构成：
 
 ### Kubernetes 版本兼容
 
-|                        | Kubernetes 1.15 | Kubernetes 1.16 | Kubernetes 1.17 | Kubernetes 1.18 | Kubernetes 1.19 | Kubernetes 1.20 | Kubernetes 1.21 |
+|                        | Kubernetes 1.16 | Kubernetes 1.17 | Kubernetes 1.18 | Kubernetes 1.19 | Kubernetes 1.20 | Kubernetes 1.21 | Kubernetes 1.22 |
 |------------------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|
-| KubeEdge 1.7           | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               |
 | KubeEdge 1.8           | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               |
 | KubeEdge 1.9           | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               |
+| KubeEdge 1.10          | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               |
 | KubeEdge HEAD (master) | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               |
 
 说明：
