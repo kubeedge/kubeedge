@@ -27,15 +27,6 @@ import (
 
 type MessageType uint64
 
-const (
-	MessageTypeLogsConnect MessageType = iota
-	MessageTypeExecConnect
-	MessageTypeMetricConnect
-	MessageTypeData
-	MessageTypeRemoveConnect
-	MessageTypeCloseConnect
-)
-
 func (m MessageType) String() string {
 	switch m {
 	case MessageTypeLogsConnect:
