@@ -314,6 +314,7 @@ func (s *StreamServer) Start() {
 			ClientCAs: pool,
 			// Populate PeerCertificates in requests, but don't reject connections without verified certificates
 			ClientAuth: tls.RequestClientCert,
+			MinVersion: tls.VersionTLS12,
 		},
 	}
 	klog.Infof("Prepare to start stream server ...")
