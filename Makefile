@@ -285,7 +285,7 @@ keadm_e2e:
 	@echo "KEADM_E2E_HELP_INFO"
 else
 keadm_e2e:
-	hack/make-rules/release.sh kubeedge
+	$(RUN) hack/make-rules/release.sh kubeedge
 	tests/e2e/scripts/keadm_e2e.sh
 endif
 
@@ -405,6 +405,7 @@ define RELEASE_HELP_INFO
 #   make release
 #   make release HELP=y
 #   make release WHAT=kubeedge
+#   make release WHAT=kubeedge BUILD_WITH_CONTAINER=false
 #   make release WHAT=kubeedge ARM_VERSION=GOARM7
 #
 endef
@@ -412,6 +413,9 @@ endef
 ifeq ($(HELP),y)
 release:
 	@echo "$$RELEASE_HELP_INFO"
+else ifeq ($(BUILD_WITH_CONTAINER),true)
+release:
+	$(RUN) hack/make-rules/release.sh $(WHAT) $(ARM_VERSION)
 else
 release:
 	hack/make-rules/release.sh $(WHAT) $(ARM_VERSION)
