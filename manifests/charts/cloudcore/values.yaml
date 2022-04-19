@@ -39,6 +39,8 @@ cloudCore:
       # At least a public IP Address or an IP which can be accessed by edge nodes must be provided!
       advertiseAddress:
         - ""
+      dnsNames:
+        - ""
       nodeLimit: "1000"
       websocket:
         enable: "true"

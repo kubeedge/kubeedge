@@ -18,6 +18,10 @@ data:
         {{- range .Values.cloudCore.modules.cloudHub.advertiseAddress }}
         - {{  .  }}
         {{- end}}
+        dnsNames:
+        {{- range .Values.cloudCore.modules.cloudHub.dnsNames }}
+        - {{  .  }}
+        {{- end}}
         nodeLimit: {{ .Values.cloudCore.modules.cloudHub.nodeLimit }}
         tlsCAFile: /etc/kubeedge/ca/rootCA.crt
         tlsCertFile: /etc/kubeedge/certs/edge.crt
