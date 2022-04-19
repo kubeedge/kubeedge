@@ -60,7 +60,6 @@ func DeviceTwinToMsgTwin(deviceTwins []dtclient.DeviceTwin) map[string]*MsgTwin 
 		var actualMeta ValueMetadata
 		var expectedVersion TwinVersion
 		var actualVersion TwinVersion
-		// var err error
 
 		optional := twin.Optional
 		expected := twin.Expected
@@ -81,6 +80,7 @@ func DeviceTwinToMsgTwin(deviceTwins []dtclient.DeviceTwin) map[string]*MsgTwin 
 			actualValue := &TwinValue{Value: &actual}
 			if twin.ActualMeta != "" {
 				json.Unmarshal([]byte(twin.ActualMeta), &actualMeta)
+				actualValue.Metadata = &actualMeta
 			}
 			msgTwin.Actual = actualValue
 		}
