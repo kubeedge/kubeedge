@@ -17,6 +17,7 @@ helm upgrade --install cloudcore ./cloudcore --namespace kubeedge --create-names
 ### cloudcore
 
 - `cloudCore.modules.cloudHub.advertiseAddress`, defines the unmissable public IPs which can be accessed by edge nodes.
+- `cloudCore.modules.cloudHub.dnsNames`, defines the domain names which can be accessed by edge nodes.
 - `cloudCore.hostNetWork`, default `true`, which shares the host network, used for setting the forward iptables rules on the host.
 - `cloudCore.image.repository`, default `kubeedge`, defines the image repo.
 - `cloudCore.image.tag`, default `v1.9.1`, defines the image tag.
