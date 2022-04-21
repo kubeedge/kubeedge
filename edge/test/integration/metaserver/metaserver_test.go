@@ -47,6 +47,7 @@ var _ = Describe("Test MetaServer", func() {
 			for _, v := range cases {
 				request, err := http.NewRequest(v.Method, url+v.Path, nil)
 				Expect(err).Should(BeNil())
+				request.Header.Set("Authorization", "xxxxx")
 				response, err := client.Do(request)
 				Expect(err).Should(BeNil())
 				isEqual := v.Status == response.StatusCode

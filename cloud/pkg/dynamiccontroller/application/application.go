@@ -29,6 +29,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/filter"
+	commontypes "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	edgemodule "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
@@ -85,17 +86,18 @@ type PatchInfo struct {
 // 0.use Agent.Generate to generate application
 // 1.use Agent.Apply to apply application( generate msg and send it to cloud dynamiccontroller)
 type Application struct {
-	ID          string
-	Key         string // group version resource namespaces name
-	Verb        applicationVerb
-	Nodename    string
-	Status      applicationStatus
-	Reason      string // why in this status
-	Option      []byte //
-	ReqBody     []byte // better a k8s api instance
-	RespBody    []byte
-	Subresource string
-	Error       apierrors.StatusError
+	ID            string
+	Key           string // group version resource namespaces name
+	Verb          applicationVerb
+	Nodename      string
+	Status        applicationStatus
+	Reason        string // why in this status
+	Authorization string // authorization header from edge pod
+	Option        []byte //
+	ReqBody       []byte // better a k8s api instance
+	RespBody      []byte
+	Subresource   string
+	Error         apierrors.StatusError
 
 	ctx    context.Context // to end app.Wait
 	cancel context.CancelFunc
@@ -116,19 +118,21 @@ func newApplication(ctx context.Context, key string, verb applicationVerb, noden
 		option = v1
 	}
 	ctx2, cancel := context.WithCancel(ctx)
+	auth, _ := ctx.Value(commontypes.AuthorizationKey).(string)
 	app := &Application{
-		Key:         key,
-		Verb:        verb,
-		Nodename:    nodename,
-		Subresource: subresource,
-		Status:      PreApplying,
-		Option:      toBytes(option),
-		ReqBody:     toBytes(reqBody),
-		ctx:         ctx2,
-		cancel:      cancel,
-		count:       0,
-		countLock:   sync.Mutex{},
-		timestamp:   time.Time{},
+		Key:           key,
+		Verb:          verb,
+		Nodename:      nodename,
+		Subresource:   subresource,
+		Status:        PreApplying,
+		Authorization: auth,
+		Option:        toBytes(option),
+		ReqBody:       toBytes(reqBody),
+		ctx:           ctx2,
+		cancel:        cancel,
+		count:         0,
+		countLock:     sync.Mutex{},
+		timestamp:     time.Time{},
 	}
 	app.add()
 	return app
@@ -139,6 +143,7 @@ func (a *Application) Identifier() string {
 		return a.ID
 	}
 	b := []byte(a.Nodename)
+	b = append(b, []byte(a.Authorization)...)
 	b = append(b, []byte(a.Key)...)
 	b = append(b, []byte(a.Verb)...)
 	b = append(b, a.Option...)
@@ -448,7 +453,10 @@ func (c *Center) Process(msg model.Message) {
 // push them to edge node.
 func (c *Center) ProcessApplication(app *Application) (interface{}, error) {
 	app.Status = InProcessing
-
+	if len(app.Authorization) == 0 {
+		return nil, fmt.Errorf("authorization header is missing, invalid API request: %s %s", app.Verb, app.Key)
+	}
+	ctx := context.WithValue(context.TODO(), commontypes.AuthorizationKey, app.Authorization)
 	gvr, ns, name := metaserver.ParseKey(app.Key)
 	switch app.Verb {
 	case List:
@@ -456,7 +464,7 @@ func (c *Center) ProcessApplication(app *Application) (interface{}, error) {
 		if err := app.OptionTo(option); err != nil {
 			return nil, err
 		}
-		list, err := c.kubeclient.Resource(app.GVR()).Namespace(app.Namespace()).List(context.TODO(), *option)
+		list, err := c.kubeclient.Resource(gvr).Namespace(ns).List(ctx, *option)
 		if err != nil {
 			return nil, fmt.Errorf("successfully to add listener but failed to get current list, %v", err)
 		}
@@ -475,7 +483,7 @@ func (c *Center) ProcessApplication(app *Application) (interface{}, error) {
 		if err := app.OptionTo(option); err != nil {
 			return nil, err
 		}
-		retObj, err := c.kubeclient.Resource(gvr).Namespace(ns).Get(context.TODO(), name, *option)
+		retObj, err := c.kubeclient.Resource(gvr).Namespace(ns).Get(ctx, name, *option)
 		if err != nil {
 			return nil, err
 		}
@@ -492,9 +500,9 @@ func (c *Center) ProcessApplication(app *Application) (interface{}, error) {
 		var retObj interface{}
 		var err error
 		if app.Subresource == "" {
-			retObj, err = c.kubeclient.Resource(gvr).Namespace(ns).Create(context.TODO(), obj, *option)
+			retObj, err = c.kubeclient.Resource(gvr).Namespace(ns).Create(ctx, obj, *option)
 		} else {
-			retObj, err = c.kubeclient.Resource(gvr).Namespace(ns).Create(context.TODO(), obj, *option, app.Subresource)
+			retObj, err = c.kubeclient.Resource(gvr).Namespace(ns).Create(ctx, obj, *option, app.Subresource)
 		}
 		if err != nil {
 			return nil, err
@@ -505,7 +513,7 @@ func (c *Center) ProcessApplication(app *Application) (interface{}, error) {
 		if err := app.OptionTo(&option); err != nil {
 			return nil, err
 		}
-		if err := c.kubeclient.Resource(gvr).Namespace(ns).Delete(context.TODO(), name, *option); err != nil {
+		if err := c.kubeclient.Resource(gvr).Namespace(ns).Delete(ctx, name, *option); err != nil {
 			return nil, err
 		}
 		return nil, nil
@@ -521,9 +529,9 @@ func (c *Center) ProcessApplication(app *Application) (interface{}, error) {
 		var retObj interface{}
 		var err error
 		if app.Subresource == "" {
-			retObj, err = c.kubeclient.Resource(gvr).Namespace(ns).Update(context.TODO(), obj, *option)
+			retObj, err = c.kubeclient.Resource(gvr).Namespace(ns).Update(ctx, obj, *option)
 		} else {
-			retObj, err = c.kubeclient.Resource(gvr).Namespace(ns).Update(context.TODO(), obj, *option, app.Subresource)
+			retObj, err = c.kubeclient.Resource(gvr).Namespace(ns).Update(ctx, obj, *option, app.Subresource)
 		}
 		if err != nil {
 			return nil, err
@@ -538,7 +546,7 @@ func (c *Center) ProcessApplication(app *Application) (interface{}, error) {
 		if err := app.ReqBodyTo(obj); err != nil {
 			return nil, err
 		}
-		retObj, err := c.kubeclient.Resource(gvr).Namespace(ns).UpdateStatus(context.TODO(), obj, *option)
+		retObj, err := c.kubeclient.Resource(gvr).Namespace(ns).UpdateStatus(ctx, obj, *option)
 		if err != nil {
 			return nil, err
 		}
@@ -548,7 +556,7 @@ func (c *Center) ProcessApplication(app *Application) (interface{}, error) {
 		if err := app.OptionTo(pi); err != nil {
 			return nil, err
 		}
-		retObj, err := c.kubeclient.Resource(gvr).Namespace(ns).Patch(context.TODO(), pi.Name, pi.PatchType, pi.Data, pi.Options, pi.Subresources...)
+		retObj, err := c.kubeclient.Resource(gvr).Namespace(ns).Patch(ctx, pi.Name, pi.PatchType, pi.Data, pi.Options, pi.Subresources...)
 		if err != nil {
 			return nil, err
 		}

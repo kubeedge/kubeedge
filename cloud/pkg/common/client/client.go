@@ -48,7 +48,9 @@ func InitKubeEdgeClient(config *cloudcoreConfig.KubeAPIConfig) {
 		kubeConfig.QPS = float32(config.QPS)
 		kubeConfig.Burst = int(config.Burst)
 
+		kubeConfig.WrapTransport = AuthProxyRoundTripperWrapper
 		dynamicClient = dynamic.NewForConfigOrDie(kubeConfig)
+		kubeConfig.WrapTransport = nil
 
 		kubeConfig.ContentType = runtime.ContentTypeProtobuf
 		kubeClient = kubernetes.NewForConfigOrDie(kubeConfig)
