@@ -16,3 +16,9 @@ type HTTPResponse struct {
 	StatusCode int         `json:"status_code"`
 	Body       []byte      `json:"body"`
 }
+
+type AuthorizationHeader string
+
+const (
+	AuthorizationKey AuthorizationHeader = "Authorization"
+)

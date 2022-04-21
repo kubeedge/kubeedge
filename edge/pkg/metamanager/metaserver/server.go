@@ -20,6 +20,7 @@ import (
 	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
+	commontypes "github.com/kubeedge/kubeedge/common/types"
 	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/handlerfactory"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/serializer"
@@ -70,7 +71,7 @@ func (ls *MetaServer) Start(stopChan <-chan struct{}) {
 }
 
 func (ls *MetaServer) BuildBasicHandler() http.Handler {
-	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		reqInfo, ok := apirequest.RequestInfoFrom(ctx)
 		//klog.Infof("[metaserver]get a req(%v)(%v)", reqInfo.Path, reqInfo.Verb)
@@ -92,14 +93,13 @@ func (ls *MetaServer) BuildBasicHandler() http.Handler {
 			default:
 				err := fmt.Errorf("unsupported req verb")
 				responsewriters.ErrorNegotiated(errors.NewInternalError(err), ls.NegotiatedSerializer, schema.GroupVersion{}, w, req)
-				return
 			}
-		} else {
-			err := fmt.Errorf("not a resource req")
-			responsewriters.ErrorNegotiated(errors.NewInternalError(err), ls.NegotiatedSerializer, schema.GroupVersion{}, w, req)
+			return
 		}
+
+		err := fmt.Errorf("not a resource req")
+		responsewriters.ErrorNegotiated(errors.NewInternalError(err), ls.NegotiatedSerializer, schema.GroupVersion{}, w, req)
 	})
-	return h
 }
 
 func BuildHandlerChain(handler http.Handler, ls *MetaServer) http.Handler {
@@ -107,10 +107,21 @@ func BuildHandlerChain(handler http.Handler, ls *MetaServer) http.Handler {
 		LegacyAPIGroupPrefixes: sets.NewString(server.DefaultLegacyAPIPrefix),
 	}
 
-	requestInfoResolver := &apirequest.RequestInfoFactory{}
-
 	handler = genericfilters.WithWaitGroup(handler, ls.LongRunningFunc, ls.HandlerChainWaitGroup)
 	handler = genericapifilters.WithRequestInfo(handler, server.NewRequestInfoResolver(cfg))
-	handler = genericfilters.WithPanicRecovery(handler, requestInfoResolver)
+	handler = genericfilters.WithPanicRecovery(handler, &apirequest.RequestInfoFactory{})
+	handler = CheckAuthorizationHeader(handler)
 	return handler
+}
+
+func CheckAuthorizationHeader(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		auth := request.Header.Get(string(commontypes.AuthorizationKey))
+		if len(auth) == 0 {
+			http.Error(writer, "header Authorization is missing", http.StatusNetworkAuthenticationRequired)
+			return
+		}
+		request = request.WithContext(context.WithValue(request.Context(), commontypes.AuthorizationKey, auth))
+		handler.ServeHTTP(writer, request)
+	})
 }

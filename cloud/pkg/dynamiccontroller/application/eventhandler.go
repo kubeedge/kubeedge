@@ -70,7 +70,7 @@ func (c *handlerCenter) ForResource(gvr schema.GroupVersionResource) *CommonReso
 	return handler
 }
 
-// dispatch listeners to corresponding CommonResourceEventHandler according it's gvr
+// AddListener dispatch listeners to corresponding CommonResourceEventHandler according it's gvr
 func (c *handlerCenter) AddListener(s *SelectorListener) error {
 	return c.ForResource(s.gvr).AddListener(s)
 }
