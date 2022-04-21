@@ -148,7 +148,7 @@ kubeedge::golang::binaries_from_targets() {
 
 kubeedge::check::env() {
   errors=()
-  if [ -z $GOPATH ]; then
+  if [ -z $(go env GOPATH) ]; then
     errors+="GOPATH environment value not set"
   fi
 

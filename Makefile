@@ -2,7 +2,6 @@ DESTDIR?=
 USR_DIR?=/usr/local
 INSTALL_DIR?=${DESTDIR}${USR_DIR}
 INSTALL_BIN_DIR?=${INSTALL_DIR}/bin
-GOPATH?=$(shell go env GOPATH)
 
 # make all builds both cloud and edge binaries
 
