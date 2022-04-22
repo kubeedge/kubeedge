@@ -255,9 +255,9 @@ func runEdgeCore() error {
 	} else {
 		tip = fmt.Sprintf("KubeEdge edgecore is running, For logs visit: %s%s.log", util.KubeEdgeLogPath, util.KubeEdgeBinaryName)
 		binExec = fmt.Sprintf(
-			"%s > %skubeedge/edge/%s.log 2>&1 &",
-			filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName),
-			util.KubeEdgePath,
+			"%s > %s%s.log 2>&1 &",
+			filepath.Join(util.KubeEdgePath, util.KubeEdgeBinaryName),
+			util.KubeEdgeLogPath,
 			util.KubeEdgeBinaryName,
 		)
 	}

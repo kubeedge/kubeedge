@@ -56,9 +56,11 @@ const (
 	CloudServiceFile     = "cloudcore.service"
 	ServiceFileURLFormat = "https://raw.githubusercontent.com/kubeedge/kubeedge/release-%s/build/tools/%s"
 	KubeEdgePath         = "/etc/kubeedge/"
-	KubeEdgeTmpPath      = "/tmp/kubeedge"
+	KubeEdgeTmpPath      = "/tmp/etc/kubeedge/"
+	KubeEdgeUpgradePath  = "/etc/kubeedge/upgrade/"
 	KubeEdgeUsrBinPath   = "/usr/local/bin"
 	KubeEdgeBinaryName   = "edgecore"
+	KeadmBinaryName      = "keadm"
 
 	KubeCloudBinaryName = "cloudcore"
 

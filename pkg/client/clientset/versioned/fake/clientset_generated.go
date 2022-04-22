@@ -26,6 +26,8 @@ import (
 	fakereliablesyncsv1alpha1 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/reliablesyncs/v1alpha1/fake"
 	rulesv1 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/rules/v1"
 	fakerulesv1 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/rules/v1/fake"
+	upgradev1alpha2 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/upgrade/v1alpha2"
+	fakeupgradev1alpha2 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/upgrade/v1alpha2/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -96,4 +98,9 @@ func (c *Clientset) ReliablesyncsV1alpha1() reliablesyncsv1alpha1.ReliablesyncsV
 // RulesV1 retrieves the RulesV1Client
 func (c *Clientset) RulesV1() rulesv1.RulesV1Interface {
 	return &fakerulesv1.FakeRulesV1{Fake: &c.Fake}
+}
+
+// UpgradeV1alpha2 retrieves the UpgradeV1alpha2Client
+func (c *Clientset) UpgradeV1alpha2() upgradev1alpha2.UpgradeV1alpha2Interface {
+	return &fakeupgradev1alpha2.FakeUpgradeV1alpha2{Fake: &c.Fake}
 }

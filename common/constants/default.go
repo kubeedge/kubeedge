@@ -29,8 +29,9 @@ const (
 	DefaultCertFile  = "/etc/kubeedge/certs/server.crt"
 	DefaultKeyFile   = "/etc/kubeedge/certs/server.key"
 
-	DefaultCAURL   = "/ca.crt"
-	DefaultCertURL = "/edge.crt"
+	DefaultCAURL      = "/ca.crt"
+	DefaultCertURL    = "/edge.crt"
+	DefaultUpgradeURL = "/upgrade"
 
 	DefaultStreamCAFile   = "/etc/kubeedge/ca/streamCA.crt"
 	DefaultStreamCertFile = "/etc/kubeedge/certs/stream.crt"
@@ -121,6 +122,11 @@ const (
 	DefaultDeviceEventBuffer         = 1
 	DefaultDeviceModelEventBuffer    = 1
 	DefaultUpdateDeviceStatusWorkers = 1
+
+	// UpgradeController
+	DefaultUpgradeStatusBuffer = 1024
+	DefaultUpgradeEventBuffer  = 1
+	DefaultUpgradeWorkers      = 1
 
 	// Resource sep
 	ResourceSep = "/"

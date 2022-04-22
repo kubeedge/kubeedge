@@ -10,6 +10,9 @@ const (
 	DeviceControllerModuleName  = "devicecontroller"
 	DeviceControllerModuleGroup = "devicecontroller"
 
+	UpgradeControllerModuleName  = "upgradecontroller"
+	UpgradeControllerModuleGroup = "upgradecontroller"
+
 	SyncControllerModuleName  = "synccontroller"
 	SyncControllerModuleGroup = "synccontroller"
 

@@ -130,6 +130,16 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					UpdateDeviceStatusWorkers: constants.DefaultUpdateDeviceStatusWorkers,
 				},
 			},
+			UpgradeController: &UpgradeController{
+				Enable: true,
+				Buffer: &UpgradeControllerBuffer{
+					UpdateUpgradeStatus: constants.DefaultUpgradeStatusBuffer,
+					UpgradeEvent:        constants.DefaultUpgradeEventBuffer,
+				},
+				Load: &UpgradeControllerLoad{
+					UpgradeWorkers: constants.DefaultUpgradeWorkers,
+				},
+			},
 			SyncController: &SyncController{
 				Enable: true,
 			},

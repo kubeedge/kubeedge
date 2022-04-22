@@ -22,6 +22,7 @@ import (
 	devicesv1alpha2 "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
 	reliablesyncsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1"
 	rulesv1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
+	upgradev1alpha2 "github.com/kubeedge/kubeedge/pkg/apis/upgrade/v1alpha2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -36,6 +37,7 @@ var localSchemeBuilder = runtime.SchemeBuilder{
 	devicesv1alpha2.AddToScheme,
 	reliablesyncsv1alpha1.AddToScheme,
 	rulesv1.AddToScheme,
+	upgradev1alpha2.AddToScheme,
 }
 
 // AddToScheme adds all types of this clientset into the given scheme. This allows composition

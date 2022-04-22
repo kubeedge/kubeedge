@@ -426,10 +426,25 @@ func (uc *UpstreamController) updateNodeStatus() {
 
 			switch msg.GetOperation() {
 			case model.InsertOperation:
-				_, err := uc.kubeClient.CoreV1().Nodes().Get(context.Background(), name, metaV1.GetOptions{})
+				nodeInfo, err := uc.kubeClient.CoreV1().Nodes().Get(context.Background(), name, metaV1.GetOptions{})
 				if err == nil {
 					klog.Infof("node: %s already exists, do nothing", name)
 					uc.nodeMsgResponse(name, namespace, common.MessageSuccessfulContent, msg)
+
+					// TODO: think about a better way to process upgrade timeout how to deal with unschedulable
+					if nodeInfo.Labels != nil && nodeInfo.Labels["upgrade"] == "upgrade" {
+						// mark edge node schedulable
+						// the effect is like running cmd: kubectl uncordon <node-to-drain>
+						nodeInfo.Spec.Unschedulable = false
+						// remove upgrade label
+						delete(nodeInfo.Labels, "upgrade")
+
+						_, err = uc.kubeClient.CoreV1().Nodes().Update(context.Background(), nodeInfo, metaV1.UpdateOptions{})
+						if err != nil {
+							klog.Errorf("failed to uncordon node %s: %v", name, err)
+							continue
+						}
+					}
 					continue
 				}
 

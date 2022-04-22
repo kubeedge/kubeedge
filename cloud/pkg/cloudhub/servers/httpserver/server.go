@@ -43,6 +43,7 @@ func StartHTTPServer() {
 	router := mux.NewRouter()
 	router.HandleFunc(constants.DefaultCertURL, edgeCoreClientCert).Methods(http.MethodGet)
 	router.HandleFunc(constants.DefaultCAURL, getCA).Methods(http.MethodGet)
+	router.HandleFunc(constants.DefaultUpgradeURL, upgradeEdge).Methods(http.MethodPost)
 
 	addr := fmt.Sprintf("%s:%d", hubconfig.Config.HTTPS.Address, hubconfig.Config.HTTPS.Port)
 

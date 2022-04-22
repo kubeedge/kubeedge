@@ -24,6 +24,7 @@ import (
 	v1alpha2 "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
 	v1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1"
 	v1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
+	upgradev1alpha2 "github.com/kubeedge/kubeedge/pkg/apis/upgrade/v1alpha2"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -71,6 +72,10 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Rules().V1().Rules().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("ruleendpoints"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Rules().V1().RuleEndpoints().Informer()}, nil
+
+		// Group=upgrade, Version=v1alpha2
+	case upgradev1alpha2.SchemeGroupVersion.WithResource("upgrades"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Upgrade().V1alpha2().Upgrades().Informer()}, nil
 
 	}
 

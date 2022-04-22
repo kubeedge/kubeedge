@@ -24,5 +24,5 @@ export GOPATH="${GOPATH:-$(go env GOPATH)}"
 
 ${KUBEEDGE_ROOT}/hack/generate-groups.sh "deepcopy,client,informer,lister" \
 github.com/kubeedge/kubeedge/pkg/client github.com/kubeedge/kubeedge/pkg/apis \
-"devices:v1alpha2 reliablesyncs:v1alpha1 rules:v1" \
+"devices:v1alpha2 reliablesyncs:v1alpha1 rules:v1 upgrade:v1alpha2" \
 --go-header-file ${KUBEEDGE_ROOT}/hack/boilerplate/boilerplate.txt

@@ -1,0 +1,15 @@
+apiVersion: upgrade.kubeedge.io/v1alpha2
+kind: Upgrade
+metadata:
+  name: upgrade-example
+  labels:
+    description: upgrade-label
+spec:
+  version: "v1.10.0"
+  upgradeInstaller: ""
+  upgradeCmd: ""
+  labelSelector:
+    matchLabels:
+      "node-role.kubernetes.io/edge": ""
+      node-role.kubernetes.io/agent: ""
+

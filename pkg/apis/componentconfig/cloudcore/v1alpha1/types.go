@@ -74,6 +74,8 @@ type Modules struct {
 	EdgeController *EdgeController `json:"edgeController,omitempty"`
 	// DeviceController indicates DeviceController module config
 	DeviceController *DeviceController `json:"deviceController,omitempty"`
+	// UpgradeController indicates UpgradeController module config
+	UpgradeController *UpgradeController `json:"upgradeController,omitempty"`
 	// SyncController indicates SyncController module config
 	SyncController *SyncController `json:"syncController,omitempty"`
 	// DynamicController indicates DynamicController module config
@@ -344,6 +346,35 @@ type DeviceControllerLoad struct {
 	// UpdateDeviceStatusWorkers indicates the load of update device status workers
 	// default 1
 	UpdateDeviceStatusWorkers int32 `json:"updateDeviceStatusWorkers,omitempty"`
+}
+
+// UpgradeController indicates the upgrade controller
+type UpgradeController struct {
+	// Enable indicates whether UpgradeController is enabled,
+	// if set to false (for debugging etc.), skip checking other UpgradeController configs.
+	// default true
+	Enable bool `json:"enable"`
+	// Buffer indicates Upgrade Controller buffer
+	Buffer *UpgradeControllerBuffer `json:"buffer,omitempty"`
+	// Load indicates UpgradeController Load
+	Load *UpgradeControllerLoad `json:"load,omitempty"`
+}
+
+// UpgradeControllerBuffer indicates UpgradeController buffer
+type UpgradeControllerBuffer struct {
+	// UpdateDeviceStatus indicates the buffer of update device status
+	// default 1024
+	UpdateUpgradeStatus int32 `json:"updateDeviceStatus,omitempty"`
+	// DeviceEvent indicates the buffer of device event
+	// default 1
+	UpgradeEvent int32 `json:"deviceEvent,omitempty"`
+}
+
+// UpgradeControllerLoad indicates the UpgradeController load
+type UpgradeControllerLoad struct {
+	// UpgradeWorkers indicates the load of update Upgrade workers
+	// default 1
+	UpgradeWorkers int32 `json:"upgradeWorkers,omitempty"`
 }
 
 // SyncController indicates the sync controller

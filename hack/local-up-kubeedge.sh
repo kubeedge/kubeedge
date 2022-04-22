@@ -84,6 +84,11 @@ function create_rule_crd {
   kubectl apply -f ${KUBEEDGE_ROOT}/build/crds/router/router_v1_ruleEndpoint.yaml
 }
 
+function create_upgrade_crd {
+  echo "creating the upgrade crd..."
+  kubectl apply -f ${KUBEEDGE_ROOT}/build/crds/upgrade/upgrade_v1alpha2.yaml
+}
+
 function build_cloudcore {
   echo "building the cloudcore..."
   make -C "${KUBEEDGE_ROOT}" WHAT="cloudcore"
@@ -216,6 +221,7 @@ kubectl create ns kubeedge
 create_device_crd
 create_objectsync_crd
 create_rule_crd
+create_upgrade_crd
 
 generate_streamserver_cert
 

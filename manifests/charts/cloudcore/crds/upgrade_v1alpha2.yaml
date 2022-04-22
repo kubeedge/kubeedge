@@ -1,0 +1,147 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.6.2
+  creationTimestamp: null
+  name: upgrades.upgrade.kubeedge.io
+spec:
+  group: upgrade.kubeedge.io
+  names:
+    kind: Upgrade
+    listKind: UpgradeList
+    plural: upgrades
+    singular: upgrade
+  scope: Cluster
+  versions:
+  - name: v1alpha2
+    schema:
+      openAPIV3Schema:
+        description: Upgrade stores the state of the Upgrade, nonNamespaced object
+          that was used to upgrade edge node from cloud side.
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: Specification of the desired behavior of Upgrade.
+            properties:
+              labelSelector:
+                description: LabelSelector is a selector which must be true for the
+                  Upgrade to fit on a node. Selector which must match a node's labels
+                  for the Selector to be operated on that node.
+                properties:
+                  matchExpressions:
+                    description: matchExpressions is a list of label selector requirements.
+                      The requirements are ANDed.
+                    items:
+                      description: A label selector requirement is a selector that
+                        contains values, a key, and an operator that relates the key
+                        and values.
+                      properties:
+                        key:
+                          description: key is the label key that the selector applies
+                            to.
+                          type: string
+                        operator:
+                          description: operator represents a key's relationship to
+                            a set of values. Valid operators are In, NotIn, Exists
+                            and DoesNotExist.
+                          type: string
+                        values:
+                          description: values is an array of string values. If the
+                            operator is In or NotIn, the values array must be non-empty.
+                            If the operator is Exists or DoesNotExist, the values
+                            array must be empty. This array is replaced during a strategic
+                            merge patch.
+                          items:
+                            type: string
+                          type: array
+                      required:
+                      - key
+                      - operator
+                      type: object
+                    type: array
+                  matchLabels:
+                    additionalProperties:
+                      type: string
+                    description: matchLabels is a map of {key,value} pairs. A single
+                      {key,value} in the matchLabels map is equivalent to an element
+                      of matchExpressions, whose key field is "key", the operator
+                      is "In", and the values array contains only "value". The requirements
+                      are ANDed.
+                    type: object
+                type: object
+              nodeNames:
+                description: NodeNames is a request to select some specific nodes.
+                  If it is non-empty, the Upgrade simply select these edge nodes to
+                  do upgrade operation
+                items:
+                  type: string
+                type: array
+              upgradeCmd:
+                description: UpgradeCmd is the cmd to upgrade the edge node to the
+                  required version. If it is empty, will use keadm to do upgrade operation.
+                type: string
+              upgradeInstaller:
+                description: UpgradeInstaller is the cmd to install the latest upgrader
+                  If it is empty, will install the required version keadm from docker
+                  images.
+                type: string
+              version:
+                type: string
+            type: object
+          status:
+            description: Most recently observed status of the Upgrade.
+            items:
+              description: UpgradeStatus stores the status of Upgrade. contains multi
+                nodes status key is edge node name, value is []Status
+              properties:
+                history:
+                  items:
+                    properties:
+                      fromVersion:
+                        description: FromVersion is the version Upgrade from
+                        type: string
+                      operationStatus:
+                        description: Status is the status of Upgrade..
+                        enum:
+                        - upgrading
+                        - upgrade_success
+                        - upgrade_failed_rollback_success
+                        - upgrade_failed_rollback_failed
+                        type: string
+                      reason:
+                        description: Reason is the error reason of Upgrade failure.
+                        type: string
+                      toVersion:
+                        description: ToVersion is the version Upgrade to
+                        type: string
+                    type: object
+                  type: array
+                nodeName:
+                  type: string
+              type: object
+            type: array
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
