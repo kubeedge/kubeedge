@@ -20,6 +20,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/manager"
+	commonconstants "github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 	routerv1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
 	crdinformers "github.com/kubeedge/kubeedge/pkg/client/informers/externalversions"
@@ -354,7 +355,7 @@ func (dc *DownstreamController) Start() error {
 
 // initLocating to know configmap and secret should send to which nodes
 func (dc *DownstreamController) initLocating() error {
-	set := labels.Set{manager.NodeRoleKey: manager.NodeRoleValue}
+	set := labels.Set{commonconstants.EdgeNodeRoleKey: commonconstants.EdgeNodeRoleValue}
 	selector := labels.SelectorFromSet(set)
 	nodes, err := dc.kubeClient.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{LabelSelector: selector.String()})
 	if err != nil {

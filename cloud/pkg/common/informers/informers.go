@@ -30,6 +30,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
+	"github.com/kubeedge/kubeedge/common/constants"
 	crdinformers "github.com/kubeedge/kubeedge/pkg/client/informers/externalversions"
 )
 
@@ -88,7 +89,7 @@ func (ifs *informers) GetDynamicSharedInformerFactory() dynamicinformer.DynamicS
 
 func (ifs *informers) EdgeNode() cache.SharedIndexInformer {
 	return ifs.getInformer("edgenodesinformer", func() cache.SharedIndexInformer {
-		set := labels.Set{"node-role.kubernetes.io/edge": ""}
+		set := labels.Set{constants.EdgeNodeRoleKey: constants.EdgeNodeRoleValue}
 		selector := labels.SelectorFromSet(set)
 		optionModifier := func(options *metav1.ListOptions) {
 			options.LabelSelector = selector.String()

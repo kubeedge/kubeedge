@@ -74,6 +74,8 @@ type Modules struct {
 	EdgeController *EdgeController `json:"edgeController,omitempty"`
 	// DeviceController indicates DeviceController module config
 	DeviceController *DeviceController `json:"deviceController,omitempty"`
+	// NodeUpgradeJobController indicates NodeUpgradeJobController module config
+	NodeUpgradeJobController *NodeUpgradeJobController `json:"nodeUpgradeJobController,omitempty"`
 	// SyncController indicates SyncController module config
 	SyncController *SyncController `json:"syncController,omitempty"`
 	// DynamicController indicates DynamicController module config
@@ -374,6 +376,35 @@ type DeviceControllerLoad struct {
 	// UpdateDeviceStatusWorkers indicates the load of update device status workers
 	// default 1
 	UpdateDeviceStatusWorkers int32 `json:"updateDeviceStatusWorkers,omitempty"`
+}
+
+// NodeUpgradeJobController indicates the operations controller
+type NodeUpgradeJobController struct {
+	// Enable indicates whether NodeUpgradeJobController is enabled,
+	// if set to false (for debugging etc.), skip checking other NodeUpgradeJobController configs.
+	// default false
+	Enable bool `json:"enable"`
+	// Buffer indicates Operation Controller buffer
+	Buffer *NodeUpgradeJobControllerBuffer `json:"buffer,omitempty"`
+	// Load indicates Operation Controller Load
+	Load *NodeUpgradeJobControllerLoad `json:"load,omitempty"`
+}
+
+// NodeUpgradeJobControllerBuffer indicates NodeUpgradeJobController buffer
+type NodeUpgradeJobControllerBuffer struct {
+	// UpdateNodeUpgradeJobStatus indicates the buffer of update NodeUpgradeJob status
+	// default 1024
+	UpdateNodeUpgradeJobStatus int32 `json:"updateNodeUpgradeJobStatus,omitempty"`
+	// NodeUpgradeJobEvent indicates the buffer of NodeUpgradeJob event
+	// default 1
+	NodeUpgradeJobEvent int32 `json:"nodeUpgradeJobEvent,omitempty"`
+}
+
+// NodeUpgradeJobControllerLoad indicates the NodeUpgradeJobController load
+type NodeUpgradeJobControllerLoad struct {
+	// NodeUpgradeJobWorkers indicates the load of update NodeUpgradeJob workers
+	// default 1
+	NodeUpgradeJobWorkers int32 `json:"nodeUpgradeJobWorkers,omitempty"`
 }
 
 // SyncController indicates the sync controller

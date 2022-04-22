@@ -21,6 +21,7 @@ set -o pipefail
 CRD_VERSIONS=v1
 CRD_OUTPUTS=build/crds
 DEVICES_VERSION=v1alpha2
+OPERATIONS_VERSION=v1alpha1
 RELIABLESYNCS_VERSION=v1alpha1
 APPS_VERSION=v1alpha1
 HELM_CRDS_DIR=manifests/charts/cloudcore/crds
@@ -40,6 +41,9 @@ while [ $# -gt 0 ]; do
       ;;
     --DEVICES_VERSION=*)
       DEVICES_VERSION="${1#*=}"
+      ;;
+    --OPERATIONS_VERSION=*)
+      OPERATIONS_VERSION="${1#*=}"
       ;;
     --RELIABLESYNCS_VERSION=*)
       RELIABLESYNCS_VERSION="${1#*=}"
@@ -98,6 +102,10 @@ function :copy:to:destination {
       elif [ "$CRD_NAME" == "objectsyncs" ]; then
           cp -v ${entry} ${CRD_OUTPUTS}/reliablesyncs/objectsync_${RELIABLESYNCS_VERSION}.yaml
           cp -v ${entry} ${HELM_CRDS_DIR}/objectsync_${RELIABLESYNCS_VERSION}.yaml
+      elif [ "$CRD_NAME" == "nodeupgradejobs" ]; then
+          CRD_NAME=$(remove_suffix_s "$CRD_NAME")
+          cp -v ${entry} ${CRD_OUTPUTS}/operations/operations_${OPERATIONS_VERSION}_${CRD_NAME}.yaml
+          cp -v ${entry} ${HELM_CRDS_DIR}/operations_${OPERATIONS_VERSION}_${CRD_NAME}.yaml
       else
           # other cases would not handle
           continue

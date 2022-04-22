@@ -83,7 +83,7 @@ func (e *edged) initialNode() (*v1.Node, error) {
 		v1.LabelArchStable: runtime.GOARCH,
 
 		// KubeEdge specific labels
-		"node-role.kubernetes.io/edge":  "",
+		constants.EdgeNodeRoleKey:       constants.EdgeNodeRoleValue,
 		"node-role.kubernetes.io/agent": "",
 	}
 	for k, v := range config.Config.Labels {

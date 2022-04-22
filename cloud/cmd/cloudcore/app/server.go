@@ -46,6 +46,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller"
+	"github.com/kubeedge/kubeedge/cloud/pkg/nodeupgradejobcontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
 	"github.com/kubeedge/kubeedge/common/constants"
@@ -150,6 +151,7 @@ func registerModules(c *v1alpha1.CloudCoreConfig) {
 	cloudhub.Register(c.Modules.CloudHub)
 	edgecontroller.Register(c.Modules.EdgeController)
 	devicecontroller.Register(c.Modules.DeviceController)
+	nodeupgradejobcontroller.Register(c.Modules.NodeUpgradeJobController)
 	synccontroller.Register(c.Modules.SyncController)
 	cloudstream.Register(c.Modules.CloudStream, c.CommonConfig)
 	router.Register(c.Modules.Router)

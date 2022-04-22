@@ -5,11 +5,6 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-const (
-	NodeRoleKey   = "node-role.kubernetes.io/edge"
-	NodeRoleValue = ""
-)
-
 // NodesManager manage all events of nodes by SharedInformer
 type NodesManager struct {
 	events chan watch.Event

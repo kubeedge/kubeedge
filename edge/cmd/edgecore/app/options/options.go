@@ -32,10 +32,22 @@ type EdgeCoreOptions struct {
 	ConfigFile string
 }
 
+var edgeCoreOptions *EdgeCoreOptions
+var edgeCoreConfig *v1alpha1.EdgeCoreConfig
+
+func GetEdgeCoreOptions() *EdgeCoreOptions {
+	return edgeCoreOptions
+}
+
+func GetEdgeCoreConfig() *v1alpha1.EdgeCoreConfig {
+	return edgeCoreConfig
+}
+
 func NewEdgeCoreOptions() *EdgeCoreOptions {
-	return &EdgeCoreOptions{
+	edgeCoreOptions = &EdgeCoreOptions{
 		ConfigFile: path.Join(constants.DefaultConfigDir, "edgecore.yaml"),
 	}
+	return edgeCoreOptions
 }
 
 func (o *EdgeCoreOptions) Flags() (fss cliflag.NamedFlagSets) {
@@ -54,10 +66,10 @@ func (o *EdgeCoreOptions) Validate() []error {
 }
 
 func (o *EdgeCoreOptions) Config() (*v1alpha1.EdgeCoreConfig, error) {
-	cfg := v1alpha1.NewDefaultEdgeCoreConfig()
-	if err := cfg.Parse(o.ConfigFile); err != nil {
+	edgeCoreConfig = v1alpha1.NewDefaultEdgeCoreConfig()
+	if err := edgeCoreConfig.Parse(o.ConfigFile); err != nil {
 		return nil, err
 	}
 
-	return cfg, nil
+	return edgeCoreConfig, nil
 }

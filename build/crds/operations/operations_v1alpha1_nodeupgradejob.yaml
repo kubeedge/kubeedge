@@ -1,0 +1,187 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.6.2
+  creationTimestamp: null
+  name: nodeupgradejobs.operations.kubeedge.io
+spec:
+  group: operations.kubeedge.io
+  names:
+    kind: NodeUpgradeJob
+    listKind: NodeUpgradeJobList
+    plural: nodeupgradejobs
+    singular: nodeupgradejob
+  scope: Cluster
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: NodeUpgradeJob is used to upgrade edge node from cloud side.
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: Specification of the desired behavior of NodeUpgradeJob.
+            properties:
+              image:
+                description: 'Image specifies a container image name, the image contains:
+                  keadm and edgecore. keadm is used as upgradetool, to install the
+                  new version of edgecore. The image name consists of registry hostname
+                  and repository name, but cannot includes the tag, Version above
+                  will be used as the tag. If the registry hostname is empty, docker.io
+                  will be used as default. The default image name is: kubeedge/installation-package.'
+                type: string
+              labelSelector:
+                description: LabelSelector is a filter to select member clusters by
+                  labels. It must match a node's labels for the NodeUpgradeJob to
+                  be operated on that node. Please note that sets of NodeNames and
+                  LabelSelector are ORed. Users must set one and can only set one.
+                properties:
+                  matchExpressions:
+                    description: matchExpressions is a list of label selector requirements.
+                      The requirements are ANDed.
+                    items:
+                      description: A label selector requirement is a selector that
+                        contains values, a key, and an operator that relates the key
+                        and values.
+                      properties:
+                        key:
+                          description: key is the label key that the selector applies
+                            to.
+                          type: string
+                        operator:
+                          description: operator represents a key's relationship to
+                            a set of values. Valid operators are In, NotIn, Exists
+                            and DoesNotExist.
+                          type: string
+                        values:
+                          description: values is an array of string values. If the
+                            operator is In or NotIn, the values array must be non-empty.
+                            If the operator is Exists or DoesNotExist, the values
+                            array must be empty. This array is replaced during a strategic
+                            merge patch.
+                          items:
+                            type: string
+                          type: array
+                      required:
+                      - key
+                      - operator
+                      type: object
+                    type: array
+                  matchLabels:
+                    additionalProperties:
+                      type: string
+                    description: matchLabels is a map of {key,value} pairs. A single
+                      {key,value} in the matchLabels map is equivalent to an element
+                      of matchExpressions, whose key field is "key", the operator
+                      is "In", and the values array contains only "value". The requirements
+                      are ANDed.
+                    type: object
+                type: object
+              nodeNames:
+                description: NodeNames is a request to select some specific nodes.
+                  If it is non-empty, the upgrade job simply select these edge nodes
+                  to do upgrade operation. Please note that sets of NodeNames and
+                  LabelSelector are ORed. Users must set one and can only set one.
+                items:
+                  type: string
+                type: array
+              timeoutSeconds:
+                description: TimeoutSeconds limits the duration of the node upgrade
+                  job. Default to 300. If set to 0, we'll use the default value 300.
+                format: int32
+                type: integer
+              upgradeTool:
+                description: UpgradeTool is a request to decide use which upgrade
+                  tool. If it is empty, the upgrade job simply use default upgrade
+                  tool keadm to do upgrade operation.
+                type: string
+              version:
+                type: string
+            type: object
+          status:
+            description: Most recently observed status of the NodeUpgradeJob.
+            properties:
+              state:
+                description: 'State represents for the state phase of the NodeUpgradeJob.
+                  There are three possible state values: "", upgrading and completed.'
+                enum:
+                - upgrading
+                - completed
+                type: string
+              status:
+                description: Status contains upgrade Status for each edge node.
+                items:
+                  description: UpgradeStatus stores the status of Upgrade for each
+                    edge node.
+                  properties:
+                    history:
+                      description: History is the last upgrade result of the edge
+                        node.
+                      properties:
+                        fromVersion:
+                          description: FromVersion is the version which the edge node
+                            is upgraded from.
+                          type: string
+                        historyID:
+                          description: HistoryID is to uniquely identify an Upgrade
+                            Operation.
+                          type: string
+                        reason:
+                          description: Reason is the error reason of Upgrade failure.
+                            If the upgrade is successful, this reason is an empty
+                            string.
+                          type: string
+                        result:
+                          description: Result represents the result of upgrade.
+                          enum:
+                          - upgrade_success
+                          - upgrade_failed_rollback_success
+                          - upgrade_failed_rollback_failed
+                          type: string
+                        toVersion:
+                          description: ToVersion is the version which the edge node
+                            is upgraded to.
+                          type: string
+                        upgradeTime:
+                          description: UpgradeTime is the time of this Upgrade.
+                          type: string
+                      type: object
+                    nodeName:
+                      description: NodeName is the name of edge node.
+                      type: string
+                    state:
+                      description: 'State represents for the upgrade state phase of
+                        the edge node. There are three possible state values: "",
+                        upgrading and completed.'
+                      enum:
+                      - upgrading
+                      - completed
+                      type: string
+                  type: object
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

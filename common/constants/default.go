@@ -29,8 +29,9 @@ const (
 	DefaultCertFile  = "/etc/kubeedge/certs/server.crt"
 	DefaultKeyFile   = "/etc/kubeedge/certs/server.key"
 
-	DefaultCAURL   = "/ca.crt"
-	DefaultCertURL = "/edge.crt"
+	DefaultCAURL          = "/ca.crt"
+	DefaultCertURL        = "/edge.crt"
+	DefaultNodeUpgradeURL = "/nodeupgrade"
 
 	DefaultStreamCAFile   = "/etc/kubeedge/ca/streamCA.crt"
 	DefaultStreamCertFile = "/etc/kubeedge/certs/stream.crt"
@@ -131,6 +132,11 @@ const (
 	DefaultDeviceModelEventBuffer    = 1
 	DefaultUpdateDeviceStatusWorkers = 1
 
+	// NodeUpgradeJobController
+	DefaultNodeUpgradeJobStatusBuffer = 1024
+	DefaultNodeUpgradeJobEventBuffer  = 1
+	DefaultNodeUpgradeJobWorkers      = 1
+
 	// Resource sep
 	ResourceSep = "/"
 
@@ -158,4 +164,7 @@ const (
 	DefaultBurst                    = 60
 	// MaxRespBodyLength is the max length of http response body
 	MaxRespBodyLength = 1 << 20 // 1 MiB
+
+	EdgeNodeRoleKey   = "node-role.kubernetes.io/edge"
+	EdgeNodeRoleValue = ""
 )

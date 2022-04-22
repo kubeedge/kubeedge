@@ -95,3 +95,11 @@ func DynamicControllerMessageLayer() MessageLayer {
 		ResponseModuleName: modules.CloudHubModuleName,
 	}
 }
+
+func NodeUpgradeJobControllerMessageLayer() MessageLayer {
+	return &ContextMessageLayer{
+		SendModuleName:     modules.CloudHubModuleName,
+		ReceiveModuleName:  modules.NodeUpgradeJobControllerModuleName,
+		ResponseModuleName: modules.CloudHubModuleName,
+	}
+}

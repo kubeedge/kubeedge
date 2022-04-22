@@ -32,6 +32,8 @@ import (
 	"github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/yaml"
+
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 func getpwd() string {
@@ -61,7 +63,7 @@ func DeRegisterNodeFromMaster(nodehandler, nodename string) error {
 func GenerateNodeReqBody(nodeid, nodeselector string) (map[string]interface{}, error) {
 	var temp map[string]interface{}
 
-	body := fmt.Sprintf(`{"kind": "Node","apiVersion": "v1","metadata": {"name": "%s","labels": {"name": "edgenode", "disktype":"%s", "node-role.kubernetes.io/edge": ""}}}`, nodeid, nodeselector)
+	body := fmt.Sprintf(`{"kind": "Node","apiVersion": "v1","metadata": {"name": "%s","labels": {"name": "edgenode", "disktype":"%s", "%s": "%s"}}}`, nodeid, nodeselector, constants.EdgeNodeRoleKey, constants.EdgeNodeRoleValue)
 	err := json.Unmarshal([]byte(body), &temp)
 	if err != nil {
 		Fatalf("Unmarshal body failed: %v", err)

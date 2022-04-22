@@ -1,0 +1,14 @@
+apiVersion: operations.kubeedge.io/v1alpha1
+kind: NodeUpgradeJob
+metadata:
+  name: upgrade-example
+  labels:
+    description: upgrade-label
+spec:
+  version: "v1.10.0"
+  timeoutSeconds: 60
+  labelSelector:
+    matchLabels:
+      "node-role.kubernetes.io/edge": ""
+      node-role.kubernetes.io/agent: ""
+
