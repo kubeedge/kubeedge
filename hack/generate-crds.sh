@@ -57,6 +57,7 @@ function :pre:install: {
   if [ "$(which controller-gen)" == "" ]; then
       echo "Start to install controller-gen tool"
       GO111MODULE=on go install -v sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.2
+      GOPATH="${GOPATH:-$(go env GOPATH)}"
       export PATH=$PATH:$GOPATH/bin
   fi
 }

@@ -20,6 +20,8 @@ set -o pipefail
 
 KUBEEDGE_ROOT=$(unset CDPATH && cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)
 
+export GOPATH="${GOPATH:-$(go env GOPATH)}"
+
 ${KUBEEDGE_ROOT}/hack/generate-groups.sh "deepcopy,client,informer,lister" \
 github.com/kubeedge/kubeedge/pkg/client github.com/kubeedge/kubeedge/pkg/apis \
 "devices:v1alpha2 reliablesyncs:v1alpha1 rules:v1" \
