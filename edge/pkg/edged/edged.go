@@ -1071,10 +1071,8 @@ func (e *edged) consumePodAddition(namespacedName *types.NamespacedName) error {
 		return fmt.Errorf("unable to mount volumes for pod %q: %v; skipping pod", format.Pod(pod), err)
 	}
 
-	secrets, err := e.getSecretsFromMetaManager(pod)
-	if err != nil {
-		return fmt.Errorf("unable to get secret for pod %q: %v", format.Pod(pod), err)
-	}
+	// Fetch the pull secrets for the pod
+	secrets := e.getImagePullSecretsForPod(pod)
 
 	podUID := pod.GetUID()
 	t, ok := e.podLastSyncTime.Load(podUID)
@@ -1409,17 +1407,18 @@ func (e *edged) deletePod(obj interface{}) {
 	klog.Infof("success remove pod [%s]", pod.Name)
 }
 
-func (e *edged) getSecretsFromMetaManager(pod *v1.Pod) ([]v1.Secret, error) {
+func (e *edged) getImagePullSecretsForPod(pod *v1.Pod) []v1.Secret {
 	var secrets []v1.Secret
 	for _, imagePullSecret := range pod.Spec.ImagePullSecrets {
 		secret, err := e.metaClient.Secrets(pod.Namespace).Get(imagePullSecret.Name)
 		if err != nil {
-			return nil, err
+			klog.Warningf("Unable to retrieve pull secret %s/%s for %s/%s due to %v.  The image pull may not succeed.", pod.Namespace, imagePullSecret.Name, pod.Namespace, pod.Name, err)
+			continue
 		}
 		secrets = append(secrets, *secret)
 	}
 
-	return secrets, nil
+	return secrets
 }
 
 // Get pods which should be resynchronized. Currently, the following pod should be resynchronized:
