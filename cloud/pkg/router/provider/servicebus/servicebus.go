@@ -62,7 +62,7 @@ func (sb *ServiceBus) RegisterListener(handle listener.Handle) error {
 	listener.MessageHandlerInstance.AddListener(fmt.Sprintf("servicebus/%v/%v", path.Join("node", sb.nodeName), sb.TargetURL), handle)
 	msg := model.NewMessage("")
 	msg.SetResourceOperation(fmt.Sprintf("%v/%v", path.Join("node", sb.nodeName), sb.TargetURL), "start")
-	msg.SetRoute("router_servicebus", modules.UserGroup)
+	msg.SetRoute(modules.RouterSourceServiceBus, modules.UserGroup)
 	beehiveContext.Send(modules.CloudHubModuleName, *msg)
 	return nil
 }
@@ -70,7 +70,7 @@ func (sb *ServiceBus) RegisterListener(handle listener.Handle) error {
 func (sb *ServiceBus) UnregisterListener() {
 	msg := model.NewMessage("")
 	msg.SetResourceOperation(path.Join("node", sb.nodeName, sb.TargetURL), "stop")
-	msg.SetRoute("router_servicebus", modules.UserGroup)
+	msg.SetRoute(modules.RouterSourceServiceBus, modules.UserGroup)
 	beehiveContext.Send(modules.CloudHubModuleName, *msg)
 	listener.MessageHandlerInstance.RemoveListener(path.Join("servicebus/node", sb.nodeName, sb.TargetURL))
 }
@@ -139,7 +139,7 @@ func (sb *ServiceBus) GoToTarget(data map[string]interface{}, stop chan struct{}
 	}
 	msg.SetResourceOperation(resource, request.Method)
 	msg.FillBody(request)
-	msg.SetRoute("router_servicebus", modules.UserGroup)
+	msg.SetRoute(modules.RouterSourceServiceBus, modules.UserGroup)
 	beehiveContext.Send(modules.CloudHubModuleName, *msg)
 	if stop != nil {
 		listener.MessageHandlerInstance.SetCallback(messageID, func(message *model.Message) {
