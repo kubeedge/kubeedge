@@ -27,4 +27,7 @@ const (
 	TunnelPort string = "tunnelport"
 
 	TunnelPortRecordAnnotationKey string = "tunnelportrecord.kubeedge.io"
+
+	RouterSourceEventBus   = "router_eventbus"
+	RouterSourceServiceBus = "router_servicebus"
 )

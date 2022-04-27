@@ -64,7 +64,7 @@ func (eb *EventBus) RegisterListener(handle listener.Handle) error {
 	listener.MessageHandlerInstance.AddListener(path.Join("bus/node", eb.nodeName, eb.namespace, eb.subTopic), handle)
 	msg := model.NewMessage("")
 	msg.SetResourceOperation(path.Join("node", eb.nodeName, eb.namespace, eb.subTopic), "subscribe")
-	msg.SetRoute("router_eventbus", modules.UserGroup)
+	msg.SetRoute(modules.RouterSourceEventBus, modules.UserGroup)
 	beehiveContext.Send(modules.CloudHubModuleName, *msg)
 	return nil
 }
@@ -72,7 +72,7 @@ func (eb *EventBus) RegisterListener(handle listener.Handle) error {
 func (eb *EventBus) UnregisterListener() {
 	msg := model.NewMessage("")
 	msg.SetResourceOperation(path.Join("node", eb.nodeName, eb.namespace, eb.subTopic), "unsubscribe")
-	msg.SetRoute("router_eventbus", modules.UserGroup)
+	msg.SetRoute(modules.RouterSourceEventBus, modules.UserGroup)
 	beehiveContext.Send(modules.CloudHubModuleName, *msg)
 	listener.MessageHandlerInstance.RemoveListener(path.Join("bus/node", eb.nodeName, eb.namespace, eb.subTopic))
 }
@@ -137,7 +137,7 @@ func (eb *EventBus) GoToTarget(data map[string]interface{}, stop chan struct{}) 
 	}
 	msg.SetResourceOperation(resource, publishOperation)
 	msg.FillBody(string(body))
-	msg.SetRoute("router_eventbus", modules.UserGroup)
+	msg.SetRoute(modules.RouterSourceEventBus, modules.UserGroup)
 	beehiveContext.Send(modules.CloudHubModuleName, *msg)
 	return nil, nil
 }
