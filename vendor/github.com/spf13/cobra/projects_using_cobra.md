@@ -18,7 +18,7 @@
 - [Hugo](https://gohugo.io)
 - [Istio](https://istio.io)
 - [Kool](https://github.com/kool-dev/kool)
-- [Kubernetes](http://kubernetes.io/)
+- [Kubernetes](https://kubernetes.io/)
 - [Linkerd](https://linkerd.io/)
 - [Mattermost-server](https://github.com/mattermost/mattermost-server)
 - [Metal Stack CLI](https://github.com/metal-stack/metalctl)
