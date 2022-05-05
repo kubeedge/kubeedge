@@ -55,6 +55,8 @@ func (eb *eventbus) Enable() bool {
 }
 
 func (eb *eventbus) Start() {
+	mqttBus.RegisterMsgHandler()
+
 	if eventconfig.Config.MqttMode >= v1alpha1.MqttModeBoth {
 		hub := &mqttBus.Client{
 			MQTTUrl:     eventconfig.Config.MqttServerExternal,
