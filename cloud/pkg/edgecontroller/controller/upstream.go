@@ -267,14 +267,17 @@ func (uc *UpstreamController) updateRuleStatus() {
 				errSlice := make([]string, 0)
 				rule.Status.Errors = append(errSlice, content.Error.Detail)
 			}
-			newStatus := &rulesv1.RuleStatus{}
+			newStatus := &rulesv1.RuleStatus{
+				SuccessMessages: rule.Status.SuccessMessages,
+				FailMessages:    rule.Status.FailMessages,
+				Errors:          rule.Status.Errors,
+			}
 			body, err := json.Marshal(newStatus)
 			if err != nil {
 				klog.Warningf("message: %s process failure, content marshal err: %s", msg.GetID(), err)
 				continue
 			}
-			var data = []byte(body)
-			_, err = uc.crdClient.RulesV1().Rules(namespace).Patch(context.Background(), ruleID, controller.MergePatchType, data, metaV1.PatchOptions{})
+			_, err = uc.crdClient.RulesV1().Rules(namespace).Patch(context.Background(), ruleID, controller.MergePatchType, body, metaV1.PatchOptions{})
 			if err != nil {
 				klog.Warningf("message: %s process failure, update ruleStatus failed with error: %s, namespace: %s, name: %s", msg.GetID(), err, namespace, ruleID)
 			} else {
