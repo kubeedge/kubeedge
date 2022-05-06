@@ -184,7 +184,18 @@ func (runtime *DockerRuntime) CopyResources(image string, dirs map[string]string
 			klog.V(3).ErrorS(err, "Remove container failed", "containerID", container.ID)
 		}
 	}()
-	return runtime.Client.ContainerStart(runtime.ctx, container.ID, dockertypes.ContainerStartOptions{})
+
+	if err := runtime.Client.ContainerStart(runtime.ctx, container.ID, dockertypes.ContainerStartOptions{}); err != nil {
+		return fmt.Errorf("container start failed: %v", err)
+	}
+
+	statusCh, errCh := runtime.Client.ContainerWait(runtime.ctx, container.ID, "")
+	select {
+	case err := <-errCh:
+		klog.Errorf("container wait error %v", err)
+	case <-statusCh:
+	}
+	return nil
 }
 
 type CRIRuntime struct {
