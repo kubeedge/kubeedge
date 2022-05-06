@@ -128,7 +128,18 @@ func dockerCopyResources(ctx context.Context, opt *common.JoinOptions, imageSet 
 			klog.V(3).ErrorS(err, "Remove container failed", "containerID", container.ID)
 		}
 	}()
-	return cli.ContainerStart(ctx, container.ID, dockertypes.ContainerStartOptions{})
+
+	if err := cli.ContainerStart(ctx, container.ID, dockertypes.ContainerStartOptions{}); err != nil {
+		return fmt.Errorf("container start failed: %v", err)
+	}
+
+	statusCh, errCh := cli.ContainerWait(ctx, container.ID, "")
+	select {
+	case err := <-errCh:
+		klog.Errorf("container wait error %v", err)
+	case <-statusCh:
+	}
+	return nil
 }
 
 func dockerRunMQTT(ctx context.Context, imageSet image.Set, cli *dockerclient.Client) error {
