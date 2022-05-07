@@ -42,27 +42,7 @@ type Configuration struct {
 }
 
 func newDefaultConfiguration() *Configuration {
-	var latestVersion string
-	var kubeedgeVersion string
-	for i := 0; i < util.RetryTimes; i++ {
-		version, err := util.GetLatestVersion()
-		if err != nil {
-			fmt.Println("Failed to get the latest KubeEdge release version, error: ", err)
-			continue
-		}
-		if len(version) > 0 {
-			kubeedgeVersion = strings.TrimPrefix(version, "v")
-			latestVersion = version
-			break
-		}
-	}
-	if len(latestVersion) == 0 {
-		kubeedgeVersion = cmdcommon.DefaultKubeEdgeVersion
-		fmt.Println("Failed to get the latest KubeEdge release version, will use default version: ", kubeedgeVersion)
-	}
-
 	return &Configuration{
-		KubeEdgeVersion: "v" + kubeedgeVersion,
 		ImageRepository: "kubeedge",
 		Part:            "",
 		RuntimeType:     kubetypes.DockerContainerRuntime,
@@ -105,6 +85,12 @@ func newCmdConfigImagesList() *cobra.Command {
 		Use:   "list",
 		Short: "Print a list of images keadm will use.",
 		RunE: func(_ *cobra.Command, _ []string) error {
+			ver, err := util.GetCurrentVersion(cfg.KubeEdgeVersion)
+			if err != nil {
+				return err
+			}
+			cfg.KubeEdgeVersion = ver
+
 			images := GetKubeEdgeImages(cfg)
 			for _, v := range images {
 				fmt.Println(v)
@@ -127,8 +113,13 @@ func newCmdConfigImagesPull() *cobra.Command {
 		Use:   "pull",
 		Short: "Pull images used by keadm",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			images := GetKubeEdgeImages(cfg)
+			ver, err := util.GetCurrentVersion(cfg.KubeEdgeVersion)
+			if err != nil {
+				return err
+			}
+			cfg.KubeEdgeVersion = ver
 
+			images := GetKubeEdgeImages(cfg)
 			return pullImages(cfg.RuntimeType, cfg.RemoteRuntimeEndpoint, images)
 		},
 		Args: cobra.NoArgs,

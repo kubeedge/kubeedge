@@ -32,14 +32,21 @@ import (
 
 	"github.com/blang/semver"
 	"github.com/spf13/pflag"
+	versionutil "k8s.io/apimachinery/pkg/util/version"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
+	pkgversion "github.com/kubeedge/kubeedge/pkg/version"
+)
+
+var (
+	kubeReleaseRegex = regexp.MustCompile(`^v?(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)([-0-9a-zA-Z_\.+]*)?$`)
 )
 
 // Constants used by installers
@@ -202,6 +209,101 @@ func GetLatestVersion() (string, error) {
 		return "", err
 	}
 	return string(body), nil
+}
+
+func GetCurrentVersion(version string) (string, error) {
+	if kubeReleaseRegex.MatchString(version) {
+		if strings.HasPrefix(version, "v") {
+			return version, nil
+		}
+		return "v" + version, nil
+	}
+
+	// By default, the static version number set at build time is used.
+	clientVersion, clientVersionErr := keadmVersion(pkgversion.Get().String())
+	remoteVersion, err := GetLatestVersion()
+	if err != nil {
+		if clientVersionErr == nil {
+			// Handle air-gapped environments by falling back to the client version.
+			klog.Warningf("could not fetch a KubeEdge version from the internet: %v", err)
+			klog.Warningf("falling back to the local client version: %s", clientVersion)
+			return GetCurrentVersion(clientVersion)
+		}
+	}
+	if clientVersionErr != nil {
+		if err != nil {
+			klog.Warningf("could not obtain neither client nor remote version; fall back to: %s", types.DefaultKubeEdgeVersion)
+			return GetCurrentVersion(types.DefaultKubeEdgeVersion)
+		}
+
+		remoteVersion, err = keadmVersion(remoteVersion)
+		if err != nil {
+			return "", err
+		}
+		klog.Warningf("could not obtain client version; using remote version: %s", remoteVersion)
+		return GetCurrentVersion(remoteVersion)
+	}
+
+	// both the client and the remote version are obtained; validate them and pick a stable version
+	remoteVersion, err = validateStableVersion(remoteVersion, clientVersion)
+	if err != nil {
+		return "", err
+	}
+	return GetCurrentVersion(remoteVersion)
+}
+
+// keadmVersion returns the version of the client without metadata.
+func keadmVersion(info string) (string, error) {
+	v, err := versionutil.ParseSemantic(info)
+	if err != nil {
+		return "", fmt.Errorf("keadm version error: %v", err)
+	}
+	// There is no utility in versionutil to get the version without the metadata,
+	// so this needs some manual formatting.
+	// Discard offsets after a release label and keep the labels down to e.g. `alpha.0` instead of
+	// including the offset e.g. `alpha.0.206`. This is done to comply with GCR image tags.
+	pre := v.PreRelease()
+	patch := v.Patch()
+	if len(pre) > 0 {
+		if patch > 0 {
+			// If the patch version is more than zero, decrement it and remove the label.
+			// this is done to comply with the latest stable patch release.
+			patch = patch - 1
+			pre = ""
+		} else {
+			split := strings.Split(pre, ".")
+			if len(split) > 2 {
+				pre = split[0] + "." + split[1] // Exclude the third element
+			} else if len(split) < 2 {
+				pre = split[0] + ".0" // Append .0 to a partial label
+			}
+			pre = "-" + pre
+		}
+	}
+	vStr := fmt.Sprintf("v%d.%d.%d%s", v.Major(), v.Minor(), patch, pre)
+	return vStr, nil
+}
+
+// Validate if the remote version is one Minor release newer than the client version.
+// This is done to conform with "stable-X" and only allow remote versions from
+// the same Patch level release.
+func validateStableVersion(remoteVersion, clientVersion string) (string, error) {
+	verRemote, err := versionutil.ParseGeneric(remoteVersion)
+	if err != nil {
+		return "", fmt.Errorf("remote version error: %v", err)
+	}
+	verClient, err := versionutil.ParseGeneric(clientVersion)
+	if err != nil {
+		return "", fmt.Errorf("client version error: %v", err)
+	}
+	// If the remote Major version is bigger or if the Major versions are the same,
+	// but the remote Minor is bigger use the client version release. This handles Major bumps too.
+	if verClient.Major() < verRemote.Major() ||
+		(verClient.Major() == verRemote.Major()) && verClient.Minor() < verRemote.Minor() {
+		klog.Infof("remote version is much newer: %s; falling back to: %s", remoteVersion, clientVersion)
+		return clientVersion, nil
+	}
+	return remoteVersion, nil
 }
 
 // BuildConfig builds config from flags

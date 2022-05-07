@@ -74,8 +74,7 @@ func NewManifestGenerateBeta() *cobra.Command {
 				util.AddToolVals(f, flagVals)
 			}
 			cmd.Flags().VisitAll(checkFlags)
-			err := AddManifestsGenerate2ToolsList(tools, flagVals, BetaInit)
-			if err != nil {
+			if err := AddManifestsGenerate2ToolsList(tools, flagVals, BetaInit); err != nil {
 				return err
 			}
 			return ExecuteManifestsGenerate(tools)
