@@ -13,6 +13,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/filter"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
@@ -30,13 +31,13 @@ func NewSelectorListener(nodeName string, gvr schema.GroupVersionResource, selec
 	return &SelectorListener{id: uuid.New().String(), nodeName: nodeName, gvr: gvr, selector: selector}
 }
 
-func (l *SelectorListener) sendAllObjects(rets []runtime.Object, messageLayer messagelayer.MessageLayer) {
+func (l *SelectorListener) sendAllObjects(rets []runtime.Object, handler *CommonResourceEventHandler) {
 	for _, ret := range rets {
 		event := watch.Event{
 			Type:   watch.Added,
 			Object: ret,
 		}
-		l.sendObj(event, messageLayer)
+		l.sendObj(event, handler.messageLayer)
 	}
 }
 
@@ -51,6 +52,9 @@ func (l *SelectorListener) sendObj(event watch.Event, messageLayer messagelayer.
 	if !l.selector.MatchObj(event.Object) {
 		return
 	}
+	// filter message
+	filterEvent := *(event.DeepCopy())
+	filter.MessageFilter(filterEvent.Object, l.nodeName)
 
 	namespace := accessor.GetNamespace()
 	if namespace == "" {
@@ -65,7 +69,7 @@ func (l *SelectorListener) sendObj(event watch.Event, messageLayer messagelayer.
 	}
 
 	var operation string
-	switch event.Type {
+	switch filterEvent.Type {
 	case watch.Added:
 		operation = model.InsertOperation
 	case watch.Modified:
@@ -73,14 +77,14 @@ func (l *SelectorListener) sendObj(event watch.Event, messageLayer messagelayer.
 	case watch.Deleted:
 		operation = model.DeleteOperation
 	default:
-		klog.Warningf("event type: %s unsupported", event.Type)
+		klog.Warningf("event type: %s unsupported", filterEvent.Type)
 		return
 	}
 
 	msg := model.NewMessage("").
 		SetResourceVersion(accessor.GetResourceVersion()).
 		BuildRouter(modules.DynamicControllerModuleName, constants.GroupResource, resource, operation).
-		FillBody(event.Object)
+		FillBody(filterEvent.Object)
 
 	if err := messageLayer.Send(*msg); err != nil {
 		klog.Warningf("send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
