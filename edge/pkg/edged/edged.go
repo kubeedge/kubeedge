@@ -1083,6 +1083,16 @@ func (e *edged) consumePodAddition(namespacedName *types.NamespacedName) error {
 	if err != nil {
 		return fmt.Errorf("pod %s cache newer failed: %v", podName, err)
 	}
+
+	if pod.Spec.HostNetwork {
+		hostIP, err := e.getNodeIP(e.nodeName, e.customInterfaceName)
+		if err != nil {
+			klog.Errorf("Failed to get host IP: %v", err)
+		} else {
+			curPodStatus.IPs = []string{hostIP}
+		}
+	}
+
 	result := e.containerRuntime.SyncPod(pod, curPodStatus, secrets, e.podAdditionBackoff)
 	e.podLastSyncTime.Store(podUID, time.Now())
 	if err := result.Error(); err != nil {
