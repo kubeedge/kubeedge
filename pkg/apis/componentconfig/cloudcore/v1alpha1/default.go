@@ -38,11 +38,9 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 			TunnelPort: constants.ServerPort,
 		},
 		KubeAPIConfig: &KubeAPIConfig{
-			Master:      "",
 			ContentType: constants.DefaultKubeContentType,
 			QPS:         constants.DefaultKubeQPS,
 			Burst:       constants.DefaultKubeBurst,
-			KubeConfig:  constants.DefaultKubeConfig,
 		},
 		Modules: &Modules{
 			CloudHub: &CloudHub{
@@ -172,10 +170,6 @@ func NewMinCloudCoreConfig() *CloudCoreConfig {
 		TypeMeta: metav1.TypeMeta{
 			Kind:       Kind,
 			APIVersion: path.Join(GroupName, APIVersion),
-		},
-		KubeAPIConfig: &KubeAPIConfig{
-			Master:     "",
-			KubeConfig: constants.DefaultKubeConfig,
 		},
 		Modules: &Modules{
 			CloudHub: &CloudHub{
