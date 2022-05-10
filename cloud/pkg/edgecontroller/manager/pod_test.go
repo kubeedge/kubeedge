@@ -21,14 +21,95 @@ import (
 	"reflect"
 	"sync"
 	"testing"
+	"time"
 
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
+)
+
+const mockKubeConfigContent = `
+apiVersion: v1
+clusters:
+- cluster:
+    server: https://localhost:8080
+  name: foo-cluster
+contexts:
+- context:
+    cluster: foo-cluster
+    user: foo-user
+    namespace: bar
+  name: foo-context
+current-context: foo-context
+kind: Config
+users:
+- name: foo-user
+  user:
+    exec:
+      apiVersion: client.authentication.k8s.io/v1alpha1
+      args:
+      - arg-1
+      - arg-2
+      command: foo-command
+`
+
+var (
+	TestOldPodObject = &v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			UID:       types.UID("commontestpod"),
+			Name:      "TestPod",
+			Namespace: "default",
+		},
+		Spec: v1.PodSpec{
+			Containers: []v1.Container{
+				{
+					Name:  "TestPodContainer",
+					Image: "busybox",
+				},
+			},
+		},
+	}
+
+	TestNewPodObject = &v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			UID:       types.UID("commontestpod"),
+			Name:      "TestPod",
+			Namespace: "default",
+		},
+		Spec: v1.PodSpec{
+			Containers: []v1.Container{
+				{
+					Name:  "TestPodContainer",
+					Image: "nginx",
+				},
+			},
+		},
+	}
+
+	TestDeletingPodObject = &v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			UID:       types.UID("commontestpod"),
+			Name:      "TestPod",
+			Namespace: "default",
+			DeletionTimestamp: &metav1.Time{
+				Time: time.Now().Add(1 * time.Minute),
+			},
+		},
+		Spec: v1.PodSpec{
+			Containers: []v1.Container{
+				{
+					Name:  "TestPodContainer",
+					Image: "nginx",
+				},
+			},
+		},
+	}
 )
 
 func TestPodManager_isPodUpdated(t *testing.T) {

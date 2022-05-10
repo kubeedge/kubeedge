@@ -227,6 +227,9 @@ type EdgeControllerBuffer struct {
 	// PodEvent indicates the buffer of pod event
 	// default 1
 	PodEvent int32 `json:"podEvent,omitempty"`
+	// NodeEvent indicates the buffer of node event
+	// default 1
+	NodeEvent int32 `json:"nodeEvent,omitempty"`
 	// ConfigMapEvent indicates the buffer of configMap event
 	// default 1
 	ConfigMapEvent int32 `json:"configMapEvent,omitempty"`

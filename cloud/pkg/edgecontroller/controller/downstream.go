@@ -15,6 +15,7 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/eventmanager"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
@@ -33,19 +34,19 @@ type DownstreamController struct {
 
 	podManager *manager.PodManager
 
-	configmapManager *manager.ConfigMapManager
+	configmapManager eventmanager.Manager
 
-	secretManager *manager.SecretManager
+	secretManager eventmanager.Manager
 
-	nodeManager *manager.NodesManager
+	nodeManager eventmanager.Manager
 
-	serviceManager *manager.ServiceManager
+	serviceManager eventmanager.Manager
 
-	endpointsManager *manager.EndpointsManager
+	endpointsManager eventmanager.Manager
 
-	rulesManager *manager.RuleManager
+	rulesManager eventmanager.Manager
 
-	ruleEndpointsManager *manager.RuleEndpointManager
+	ruleEndpointsManager eventmanager.Manager
 
 	lc *manager.LocationCache
 
@@ -396,52 +397,25 @@ func NewDownstreamController(config *v1alpha1.EdgeController, k8sInformerFactory
 	}
 
 	configMapInformer := k8sInformerFactory.Core().V1().ConfigMaps()
-	configMapManager, err := manager.NewConfigMapManager(config, configMapInformer.Informer())
-	if err != nil {
-		klog.Warningf("create configmap manager failed with error: %s", err)
-		return nil, err
-	}
+	configMapManager := eventmanager.NewGenericManager(config.Buffer.ConfigMapEvent, configMapInformer.Informer())
 
 	secretInformer := k8sInformerFactory.Core().V1().Secrets()
-	secretManager, err := manager.NewSecretManager(config, secretInformer.Informer())
-	if err != nil {
-		klog.Warningf("create secret manager failed with error: %s", err)
-		return nil, err
-	}
+	secretManager := eventmanager.NewGenericManager(config.Buffer.SecretEvent, secretInformer.Informer())
+
 	nodeInformer := keInformerFactory.EdgeNode()
-	nodesManager, err := manager.NewNodesManager(nodeInformer)
-	if err != nil {
-		klog.Warningf("Create nodes manager failed with error: %s", err)
-		return nil, err
-	}
+	nodesManager := eventmanager.NewGenericManager(config.Buffer.NodeEvent, nodeInformer)
 
 	svcInformer := k8sInformerFactory.Core().V1().Services()
-	serviceManager, err := manager.NewServiceManager(config, svcInformer.Informer())
-	if err != nil {
-		klog.Warningf("Create service manager failed with error: %s", err)
-		return nil, err
-	}
+	serviceManager := eventmanager.NewGenericManager(config.Buffer.ServiceEvent, svcInformer.Informer())
 
 	endpointsInformer := k8sInformerFactory.Core().V1().Endpoints()
-	endpointsManager, err := manager.NewEndpointsManager(config, endpointsInformer.Informer())
-	if err != nil {
-		klog.Warningf("Create endpoints manager failed with error: %s", err)
-		return nil, err
-	}
+	endpointsManager := eventmanager.NewGenericManager(config.Buffer.EndpointsEvent, endpointsInformer.Informer())
 
 	rulesInformer := crdInformerFactory.Rules().V1().Rules().Informer()
-	rulesManager, err := manager.NewRuleManager(config, rulesInformer)
-	if err != nil {
-		klog.Warningf("Create rulesManager failed with error: %s", err)
-		return nil, err
-	}
+	rulesManager := eventmanager.NewGenericManager(config.Buffer.RulesEvent, rulesInformer)
 
 	ruleEndpointsInformer := crdInformerFactory.Rules().V1().RuleEndpoints().Informer()
-	ruleEndpointsManager, err := manager.NewRuleEndpointManager(config, ruleEndpointsInformer)
-	if err != nil {
-		klog.Warningf("Create ruleEndpointsManager failed with error: %s", err)
-		return nil, err
-	}
+	ruleEndpointsManager := eventmanager.NewGenericManager(config.Buffer.RuleEndpointsEvent, ruleEndpointsInformer)
 
 	dc := &DownstreamController{
 		kubeClient:           client.GetKubeClient(),

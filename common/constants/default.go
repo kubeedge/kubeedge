@@ -110,6 +110,7 @@ const (
 	DefaultServiceAccountTokenBuffer        = 1024
 
 	DefaultPodEventBuffer           = 1
+	DefaultNodeEventBuffer          = 1
 	DefaultConfigMapEventBuffer     = 1
 	DefaultSecretEventBuffer        = 1
 	DefaultServiceEventBuffer       = 1

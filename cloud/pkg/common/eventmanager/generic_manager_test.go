@@ -1,5 +1,5 @@
 /*
-Copyright 2021 The KubeEdge Authors.
+Copyright 2022 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package manager
+package eventmanager
 
 import (
 	"os"
@@ -29,10 +29,36 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
-func TestNodesManager_Events(t *testing.T) {
+const mockKubeConfigContent = `
+apiVersion: v1
+clusters:
+- cluster:
+    server: https://localhost:8080
+  name: foo-cluster
+contexts:
+- context:
+    cluster: foo-cluster
+    user: foo-user
+    namespace: bar
+  name: foo-context
+current-context: foo-context
+kind: Config
+users:
+- name: foo-user
+  user:
+    exec:
+      apiVersion: client.authentication.k8s.io/v1alpha1
+      args:
+      - arg-1
+      - arg-2
+      command: foo-command
+`
+
+func TestGenericManager_Events(t *testing.T) {
 	type fields struct {
 		events chan watch.Event
 	}
+
 	ch := make(chan watch.Event, 1)
 	tests := []struct {
 		name   string
@@ -40,7 +66,7 @@ func TestNodesManager_Events(t *testing.T) {
 		want   chan watch.Event
 	}{
 		{
-			"TestNodesManager_Events(): Case 1",
+			"TestGenericManager_Events(): Case 1",
 			fields{
 				events: ch,
 			},
@@ -49,20 +75,22 @@ func TestNodesManager_Events(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			nm := &NodesManager{
+			cmm := &genericManager{
 				events: tt.fields.events,
 			}
-			if got := nm.Events(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NodesManager.Events() = %v, want %v", got, tt.want)
+			if got := cmm.Events(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GenericManager.Events() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestNewNodesManager(t *testing.T) {
+func TestNewGenericManager(t *testing.T) {
 	type args struct {
 		informer cache.SharedIndexInformer
 	}
+
+	eventBuffer := 1024
 
 	tmpfile, err := os.CreateTemp("", "kubeconfig")
 	if err != nil {
@@ -84,15 +112,15 @@ func TestNewNodesManager(t *testing.T) {
 		args args
 	}{
 		{
-			"TestNewNodesManager(): Case 1",
+			"TestNewGenericManager(): Case 1",
 			args{
-				informers.GetInformersManager().EdgeNode(),
+				informers.GetInformersManager().GetK8sInformerFactory().Core().V1().ConfigMaps().Informer(),
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			NewNodesManager(tt.args.informer)
+			NewGenericManager(int32(eventBuffer), tt.args.informer)
 		})
 	}
 }

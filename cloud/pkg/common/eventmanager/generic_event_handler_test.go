@@ -1,5 +1,5 @@
 /*
-Copyright 2021 The KubeEdge Authors.
+Copyright 2019 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package manager
+package eventmanager
 
 import (
 	"reflect"
@@ -116,7 +116,7 @@ func TestCommonResourceEventHandler_obj2Event(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := &CommonResourceEventHandler{
+			c := &genericResourceEventHandler{
 				events: tt.fields.events,
 			}
 			c.obj2Event(tt.args.t, tt.args.obj)
@@ -155,7 +155,7 @@ func TestCommonResourceEventHandler_OnAdd(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := &CommonResourceEventHandler{
+			c := &genericResourceEventHandler{
 				events: tt.fields.events,
 			}
 			c.OnAdd(tt.args.obj)
@@ -193,7 +193,7 @@ func TestCommonResourceEventHandler_OnUpdate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := &CommonResourceEventHandler{
+			c := &genericResourceEventHandler{
 				events: tt.fields.events,
 			}
 			c.OnUpdate(tt.args.oldObj, tt.args.newObj)
@@ -229,7 +229,7 @@ func TestCommonResourceEventHandler_OnDelete(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := &CommonResourceEventHandler{
+			c := &genericResourceEventHandler{
 				events: tt.fields.events,
 			}
 			c.OnDelete(tt.args.obj)
@@ -249,22 +249,22 @@ func TestNewCommonResourceEventHandler(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want *CommonResourceEventHandler
+		want *genericResourceEventHandler
 	}{
 		{
 			"TestNewCommonResourceEventHandler(): Case 1: New with events",
 			args{
 				events: ch,
 			},
-			&CommonResourceEventHandler{
+			&genericResourceEventHandler{
 				events: ch,
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewCommonResourceEventHandler(tt.args.events); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewCommonResourceEventHandler() = %v, want %v", got, tt.want)
+			if got := NewGenericResourceEventHandler(tt.args.events); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewGenericResourceEventHandler() = %v, want %v", got, tt.want)
 			}
 		})
 	}
