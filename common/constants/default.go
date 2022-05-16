@@ -73,7 +73,6 @@ const (
 
 	// Config
 	DefaultKubeContentType         = "application/vnd.kubernetes.protobuf"
-	DefaultKubeConfig              = "/root/.kube/config"
 	DefaultKubeNamespace           = v1.NamespaceAll
 	DefaultKubeQPS                 = 100.0
 	DefaultKubeBurst               = 200
