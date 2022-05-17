@@ -49,6 +49,7 @@ function check_kind {
 
 # check if golangci-lint installed
 function check_golangci-lint {
+  GOPATH="${GOPATH:-$(go env GOPATH)}"
   echo "checking golangci-lint"
   export PATH=$PATH:$GOPATH/bin
   expectedVersion="1.42.0"
