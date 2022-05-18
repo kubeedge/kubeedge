@@ -63,6 +63,7 @@ cloudCore:
     cloudhubHttpsNodePort: "30002"
     cloudstreamNodePort: "30003"
     tunnelNodePort: "30004"
+    annotations: {}
 
 iptablesManager:
   enable: "true"
