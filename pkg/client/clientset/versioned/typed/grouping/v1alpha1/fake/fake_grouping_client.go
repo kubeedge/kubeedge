@@ -28,6 +28,10 @@ type FakeGroupingV1alpha1 struct {
 	*testing.Fake
 }
 
+func (c *FakeGroupingV1alpha1) EdgeApplications(namespace string) v1alpha1.EdgeApplicationInterface {
+	return &FakeEdgeApplications{c, namespace}
+}
+
 func (c *FakeGroupingV1alpha1) NodeGroups() v1alpha1.NodeGroupInterface {
 	return &FakeNodeGroups{c}
 }

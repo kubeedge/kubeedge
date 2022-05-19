@@ -26,12 +26,17 @@ import (
 
 type GroupingV1alpha1Interface interface {
 	RESTClient() rest.Interface
+	EdgeApplicationsGetter
 	NodeGroupsGetter
 }
 
 // GroupingV1alpha1Client is used to interact with features provided by the grouping.kubeedge.io group.
 type GroupingV1alpha1Client struct {
 	restClient rest.Interface
+}
+
+func (c *GroupingV1alpha1Client) EdgeApplications(namespace string) EdgeApplicationInterface {
+	return newEdgeApplications(c, namespace)
 }
 
 func (c *GroupingV1alpha1Client) NodeGroups() NodeGroupInterface {

@@ -18,6 +18,14 @@ limitations under the License.
 
 package v1alpha1
 
+// EdgeApplicationListerExpansion allows custom methods to be added to
+// EdgeApplicationLister.
+type EdgeApplicationListerExpansion interface{}
+
+// EdgeApplicationNamespaceListerExpansion allows custom methods to be added to
+// EdgeApplicationNamespaceLister.
+type EdgeApplicationNamespaceListerExpansion interface{}
+
 // NodeGroupListerExpansion allows custom methods to be added to
 // NodeGroupLister.
 type NodeGroupListerExpansion interface{}
