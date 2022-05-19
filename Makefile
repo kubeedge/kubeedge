@@ -89,7 +89,7 @@ verify-codegen:
 .PHONY: verify-vendor-licenses
 verify-vendor-licenses:
 	hack/verify-vendor-licenses.sh
-.PHONY: verify-crds
+.PHONY: verify-crds
 verify-crds:
 	hack/verify-crds.sh
 
