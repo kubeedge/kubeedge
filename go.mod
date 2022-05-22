@@ -10,6 +10,8 @@ require (
 	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/container-storage-interface/spec v1.5.0
 	github.com/containerd/containerd v1.5.10 // indirect
+	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
+	github.com/coreos/go-systemd/v22 v22.3.2
 	github.com/docker/distribution v2.8.0+incompatible // indirect
 	github.com/docker/docker v20.10.2+incompatible
 	github.com/docker/go-connections v0.4.0

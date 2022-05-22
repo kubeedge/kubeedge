@@ -19,6 +19,7 @@ package util
 import (
 	"archive/tar"
 	"compress/gzip"
+	"context"
 	"crypto/sha512"
 	"fmt"
 	"io"
@@ -31,6 +32,7 @@ import (
 	"strings"
 
 	"github.com/blang/semver"
+	"github.com/coreos/go-systemd/v22/dbus"
 	"github.com/spf13/pflag"
 	versionutil "k8s.io/apimachinery/pkg/util/version"
 	"k8s.io/apimachinery/pkg/version"
@@ -561,6 +563,44 @@ func HasSystemd() bool {
 		return false
 	}
 	return fi.IsDir()
+}
+
+// NewSystemdDbus creates a new system dbus connection to systemd
+func NewSystemdDbus(ctx context.Context) (*dbus.Conn, error) {
+	return dbus.NewSystemConnectionContext(ctx)
+}
+
+// ReloadSystemd reloads systemd (systemctl daemon-reload)
+func ReloadSystemdDaemon(ctx context.Context, d *dbus.Conn) error {
+	return d.ReloadContext(ctx)
+}
+
+// EnableSystemdService enables systemd unit persistently (systemctl enable unit)
+func EnableSystemdUnit(ctx context.Context, d *dbus.Conn, unit string) error {
+	_, _, err := d.EnableUnitFilesContext(ctx, []string{unit}, true, true)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// StartSystemddUnit starts systemd unit (systemctl start unit)
+func StartSystemdUnit(ctx context.Context, d *dbus.Conn, unit string) error {
+	doneChan := make(chan string)
+	defer close(doneChan)
+
+	_, err := d.StartUnitContext(ctx, unit, "replace", doneChan)
+	if err != nil {
+		return err
+	}
+
+	result := <-doneChan
+	if result != "done" {
+		return fmt.Errorf("failed to start %s: %s", unit, result)
+	}
+
+	return nil
 }
 
 // computeSHA512Checksum returns the SHA512 checksum of the given file

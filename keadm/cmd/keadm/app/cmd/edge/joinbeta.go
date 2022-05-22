@@ -17,6 +17,7 @@ limitations under the License.
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -248,10 +249,26 @@ func runEdgeCore() error {
 
 	var binExec, tip string
 	if systemdExist {
+		ctx := context.Background()
+
+		dbus, err := util.NewSystemdDbus(ctx)
+		if err != nil {
+			return err
+		}
+		defer dbus.Close()
+
+		err = util.EnableSystemdUnit(ctx, dbus, string(common.EdgeCore))
+		if err != nil {
+			return err
+		}
+
+		err = util.StartSystemdUnit(ctx, dbus, string(common.EdgeCore))
+		if err != nil {
+			return err
+		}
+
 		tip = fmt.Sprintf("KubeEdge edgecore is running, For logs visit: journalctl -u %s.service -xe", common.EdgeCore)
-		binExec = fmt.Sprintf(
-			"sudo systemctl daemon-reload && sudo systemctl enable %s && sudo systemctl start %s",
-			common.EdgeCore, common.EdgeCore)
+
 	} else {
 		tip = fmt.Sprintf("KubeEdge edgecore is running, For logs visit: %s%s.log", util.KubeEdgeLogPath, util.KubeEdgeBinaryName)
 		binExec = fmt.Sprintf(
