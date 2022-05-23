@@ -145,4 +145,7 @@ const (
 
 	// MessageSuccessfulContent is the successful content value of Message struct
 	MessageSuccessfulContent string = "OK"
+
+	DefaultQPS   = 30
+	DefaultBurst = 60
 )

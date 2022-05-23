@@ -87,6 +87,8 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 			EdgeHub: &EdgeHub{
 				Enable:            true,
 				Heartbeat:         15,
+				MessageQPS:        constants.DefaultQPS,
+				MessageBurst:      constants.DefaultBurst,
 				ProjectID:         "e632aba927ea4ac2b575ec1603d56f10",
 				TLSCAFile:         constants.DefaultCAFile,
 				TLSCertFile:       constants.DefaultCertFile,

@@ -219,6 +219,8 @@ func TestRouteToCloud(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
+	config.Config.MessageQPS = 3
+	config.Config.MessageBurst = 6
 	hub := newEdgeHub(true)
 	hub.chClient = mockAdapter
 
