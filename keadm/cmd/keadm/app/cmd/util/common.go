@@ -570,6 +570,35 @@ func NewSystemdDbus(ctx context.Context) (*dbus.Conn, error) {
 	return dbus.NewSystemConnectionContext(ctx)
 }
 
+// EnableAndRunSystemdUnit provides a wrapper around creating a new systemd system dbus connection, reloading
+// the systemd daemon if reload is true, and enabling and starting the systemd unit.
+func EnableAndRunSystemdUnit(ctx context.Context, unit string, reload bool) error {
+	d, err := NewSystemdDbus(ctx)
+	if err != nil {
+		return err
+	}
+	defer d.Close()
+
+	if reload {
+		err = ReloadSystemdDaemon(ctx, d)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = EnableSystemdUnit(ctx, d, unit)
+	if err != nil {
+		return err
+	}
+
+	err = StartSystemdUnit(ctx, d, unit)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
 // ReloadSystemd reloads systemd (systemctl daemon-reload)
 func ReloadSystemdDaemon(ctx context.Context, d *dbus.Conn) error {
 	return d.ReloadContext(ctx)
@@ -577,7 +606,7 @@ func ReloadSystemdDaemon(ctx context.Context, d *dbus.Conn) error {
 
 // EnableSystemdService enables systemd unit persistently (systemctl enable unit)
 func EnableSystemdUnit(ctx context.Context, d *dbus.Conn, unit string) error {
-	_, _, err := d.EnableUnitFilesContext(ctx, []string{unit}, true, true)
+	_, _, err := d.EnableUnitFilesContext(ctx, []string{unit}, false, true)
 	if err != nil {
 		return err
 	}

@@ -251,24 +251,13 @@ func runEdgeCore() error {
 	if systemdExist {
 		ctx := context.Background()
 
-		dbus, err := util.NewSystemdDbus(ctx)
-		if err != nil {
-			return err
-		}
-		defer dbus.Close()
-
-		err = util.EnableSystemdUnit(ctx, dbus, string(common.EdgeCore))
-		if err != nil {
-			return err
-		}
-
-		err = util.StartSystemdUnit(ctx, dbus, string(common.EdgeCore))
+		unitName := fmt.Sprintf("%s.service", common.EdgeCore)
+		err := util.EnableAndRunSystemdUnit(ctx, unitName, true)
 		if err != nil {
 			return err
 		}
 
 		tip = fmt.Sprintf("KubeEdge edgecore is running, For logs visit: journalctl -u %s.service -xe", common.EdgeCore)
-
 	} else {
 		tip = fmt.Sprintf("KubeEdge edgecore is running, For logs visit: %s%s.log", util.KubeEdgeLogPath, util.KubeEdgeBinaryName)
 		binExec = fmt.Sprintf(
