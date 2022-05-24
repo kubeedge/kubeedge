@@ -65,7 +65,6 @@ for docker runtime using dockershim is not considered in edged
 ## High Level Design
 
 ### Edged with CRI support
-<img src="../images/edged/docker-cri.png">
 
 ## Low Level Design
 
