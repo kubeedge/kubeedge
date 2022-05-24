@@ -29,6 +29,8 @@ export CLUSTER_CONTEXT="--name ${CLUSTER_NAME}"
 function check_prerequisites {
   kubeedge::golang::verify_golang_version
   check_kubectl
+  # you can execute the command `export CHINA_MAINLAND=y` to automatically set up some proxies.
+  prepare_setting_in_china_mainland
   check_kind
   verify_docker_installed
 }

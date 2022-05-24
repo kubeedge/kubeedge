@@ -86,3 +86,10 @@ verify_docker_installed(){
   }
 }
 
+# prepare_setting_in_china_mainland will do proxy setting in China mainland
+function prepare_setting_in_china_mainland(){
+  if [[ -n ${CHINA_MAINLAND:-} ]]; then
+    export GOPROXY=https://goproxy.cn,direct # set domestic go proxy
+  fi
+}
+
