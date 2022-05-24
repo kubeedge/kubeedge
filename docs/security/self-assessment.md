@@ -70,7 +70,7 @@ The scenarios solved by KubeEdge do not include the problems of getting through 
 
 The following diagram shows the logical architecture for KubeEdge: 
 
-<img src="../images/kubeedge_overview.png">
+<img src="../images/kubeedge_overview.PNG">
 
 KubeEdge consists of below major components:
 
