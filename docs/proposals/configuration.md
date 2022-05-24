@@ -92,7 +92,7 @@ We recommend referring to the kubernetes component config api design to redesign
 
 #### meta config apis
 
-defined in `pkg/apis/meta/v1alpha1/types.go`
+defined in `pkg/apis/componentconfig/meta/v1alpha1/types.go`
 
 ```go
 
@@ -138,7 +138,7 @@ const (
 
 #### cloudcore config apis
 
-defined in `pkg/apis/cloudcore/v1alpha1/types.go`
+defined in `pkg/apis/componentconfig/cloudcore/v1alpha1/types.go`
 
 ```go
 
@@ -436,7 +436,7 @@ type DeviceControllerLoad struct {
 
 #### edgecore config apis
 
-defined in `pkg/apis/edgecore/v1alpha1/types.go`
+defined in `pkg/apis/componentconfig/edgecore/v1alpha1/types.go`
 
 ```go
 
