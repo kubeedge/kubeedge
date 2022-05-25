@@ -58,7 +58,7 @@ func newResetOptions() *common.ResetOptions {
 }
 
 func NewKubeEdgeReset() *cobra.Command {
-	IsEdgeNode := false
+	isEdgeNode := false
 	reset := newResetOptions()
 
 	var cmd = &cobra.Command{
@@ -67,17 +67,16 @@ func NewKubeEdgeReset() *cobra.Command {
 		Long:    resetLongDescription,
 		Example: resetExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			whoRunning, err := util.RunningModuleV2(reset)
-			if err != nil {
-				return err
-			}
-			switch whoRunning {
-			case common.KubeEdgeEdgeRunning:
-				IsEdgeNode = true
-			case common.NoneRunning:
+			whoRunning := util.RunningModuleV2(reset)
+			if whoRunning == common.NoneRunning {
 				fmt.Println("None of KubeEdge components are running in this host, exit")
 				os.Exit(0)
 			}
+
+			if whoRunning == common.KubeEdgeEdgeRunning {
+				isEdgeNode = true
+			}
+
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -95,17 +94,17 @@ func NewKubeEdgeReset() *cobra.Command {
 			}
 			// 1. kill cloudcore/edgecore process.
 			// For edgecore, don't delete node from K8S
-			if err := TearDownKubeEdge(IsEdgeNode, reset.Kubeconfig); err != nil {
+			if err := TearDownKubeEdge(isEdgeNode, reset.Kubeconfig); err != nil {
 				return err
 			}
 
 			// 2. Remove containers managed by KubeEdge. Only for edge node.
-			if err := RemoveContainers(IsEdgeNode, utilsexec.New()); err != nil {
+			if err := RemoveContainers(isEdgeNode, utilsexec.New()); err != nil {
 				fmt.Printf("Failed to remove containers: %v\n", err)
 			}
 
 			// 3. Clean stateful directories
-			if err := cleanDirectories(IsEdgeNode); err != nil {
+			if err := cleanDirectories(isEdgeNode); err != nil {
 				return err
 			}
 

@@ -149,24 +149,27 @@ func GetOSInterface() types.OSTypeInstaller {
 
 // RunningModuleV2 identifies cloudcore/edgecore running or not.
 // only used for cloudcore container install and edgecore binary install
-func RunningModuleV2(opt *types.ResetOptions) (types.ModuleRunning, error) {
+func RunningModuleV2(opt *types.ResetOptions) types.ModuleRunning {
 	osType := GetOSInterface()
 	cloudCoreRunning, err := IsCloudcoreContainerRunning(constants.SystemNamespace, opt.Kubeconfig)
 	if err != nil {
-		return types.NoneRunning, err
+		// just log the error, maybe we do not care
+		klog.Warningf("failed to check cloudcore is running: %v", err)
 	}
 	if cloudCoreRunning {
-		return types.KubeEdgeCloudRunning, nil
+		return types.KubeEdgeCloudRunning
 	}
 
 	edgeCoreRunning, err := osType.IsKubeEdgeProcessRunning(KubeEdgeBinaryName)
+	if err != nil {
+		// just log the error, maybe we do not care
+		klog.Warningf("failed to check edgecore is running: %v", err)
+	}
 	if edgeCoreRunning {
-		return types.KubeEdgeEdgeRunning, nil
-	} else if err != nil {
-		return types.NoneRunning, err
+		return types.KubeEdgeEdgeRunning
 	}
 
-	return types.NoneRunning, nil
+	return types.NoneRunning
 }
 
 // RunningModule identifies cloudcore/edgecore running or not.
