@@ -50,22 +50,24 @@ var (
 	once          sync.Once
 )
 
-// InitContext gets global context instance
+// InitContext sets global context instance
 func InitContext(contextTypes []string) {
-	for _, contextType := range contextTypes {
-		switch contextType {
-		case common.MsgCtxTypeChannel:
-			channelContext := channel.NewChannelContext()
-			globalContext.moduleContext[contextType] = channelContext
-			globalContext.messageContext[contextType] = channelContext
-		case common.MsgCtxTypeUS:
-			socketContext := socket.InitSocketContext()
-			globalContext.moduleContext[contextType] = socketContext
-			globalContext.messageContext[contextType] = socketContext
-		default:
-			klog.Exitf("unsupported context type: %s", contextType)
+	once.Do(func() {
+		for _, contextType := range contextTypes {
+			switch contextType {
+			case common.MsgCtxTypeChannel:
+				channelContext := channel.NewChannelContext()
+				globalContext.moduleContext[contextType] = channelContext
+				globalContext.messageContext[contextType] = channelContext
+			case common.MsgCtxTypeUS:
+				socketContext := socket.InitSocketContext()
+				globalContext.moduleContext[contextType] = socketContext
+				globalContext.messageContext[contextType] = socketContext
+			default:
+				klog.Exitf("unsupported context type: %s", contextType)
+			}
 		}
-	}
+	})
 }
 
 func GetContext() gocontext.Context {
