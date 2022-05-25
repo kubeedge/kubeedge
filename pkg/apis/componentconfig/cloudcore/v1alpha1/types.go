@@ -218,9 +218,6 @@ type EdgeControllerBuffer struct {
 	// QuerySecret indicates the buffer of query secret
 	// default 1024
 	QuerySecret int32 `json:"querySecret,omitempty"`
-	// QueryService indicates the buffer of query service
-	// default 1024
-	QueryService int32 `json:"queryService,omitempty"`
 	// QueryEndpoints indicates the buffer of query endpoint
 	// default 1024
 	QueryEndpoints int32 `json:"queryEndpoints,omitempty"`

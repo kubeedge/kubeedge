@@ -98,8 +98,6 @@ const (
 	DefaultUpdateNodeStatusBuffer           = 1024
 	DefaultQueryConfigMapBuffer             = 1024
 	DefaultQuerySecretBuffer                = 1024
-	DefaultQueryServiceBuffer               = 1024
-	DefaultQueryEndpointsBuffer             = 1024
 	DefaultQueryPersistentVolumeBuffer      = 1024
 	DefaultQueryPersistentVolumeClaimBuffer = 1024
 	DefaultQueryVolumeAttachmentBuffer      = 1024

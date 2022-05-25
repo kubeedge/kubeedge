@@ -85,8 +85,6 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					UpdateNodeStatus:           constants.DefaultUpdateNodeStatusBuffer,
 					QueryConfigMap:             constants.DefaultQueryConfigMapBuffer,
 					QuerySecret:                constants.DefaultQuerySecretBuffer,
-					QueryService:               constants.DefaultQueryServiceBuffer,
-					QueryEndpoints:             constants.DefaultQueryEndpointsBuffer,
 					PodEvent:                   constants.DefaultPodEventBuffer,
 					ConfigMapEvent:             constants.DefaultConfigMapEventBuffer,
 					SecretEvent:                constants.DefaultSecretEventBuffer,
