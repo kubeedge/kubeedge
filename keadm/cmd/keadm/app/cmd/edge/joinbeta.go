@@ -64,43 +64,44 @@ func NewJoinBetaCommand() *cobra.Command {
 		Long:         edgeJoinBetaDescription,
 		Example:      edgeJoinBetaExample,
 		SilenceUsage: true,
-		PreRun: func(cmd *cobra.Command, args []string) {
+		PreRunE: func(cmd *cobra.Command, args []string) error {
 			step.Printf("Check KubeEdge edgecore process status")
 			running, err := util.IsKubeEdgeProcessRunning(util.KubeEdgeBinaryName)
 			if err != nil {
-				klog.Exitf("Check KubeEdge edgecore process status failed: %v", err)
+				return fmt.Errorf("check KubeEdge edgecore process status failed: %v", err)
 			}
 			if running {
-				klog.Exitln("EdgeCore is already running on this node, please run reset to clean up first")
+				return fmt.Errorf("EdgeCore is already running on this node, please run reset to clean up first")
 			}
 
 			step.Printf("Check if the management directory is clean")
 			if _, err := os.Stat(util.KubeEdgePath); err != nil {
 				if os.IsNotExist(err) {
-					return
+					return nil
 				}
-				klog.Exitf("Stat management directory %s failed: %v", util.KubeEdgePath, err)
+				return fmt.Errorf("Stat management directory %s failed: %v", util.KubeEdgePath, err)
 			}
 			entries, err := os.ReadDir(util.KubeEdgePath)
 			if err != nil {
-				klog.Exitf("Read management directory %s failed: %v", util.KubeEdgePath, err)
+				return fmt.Errorf("read management directory %s failed: %v", util.KubeEdgePath, err)
 			}
 			if len(entries) > 0 {
-				klog.Exitf("The management directory %s is not clean, please remove it first", util.KubeEdgePath)
+				return fmt.Errorf("the management directory %s is not clean, please remove it first", util.KubeEdgePath)
 			}
+			return nil
 		},
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			ver, err := util.GetCurrentVersion(joinOptions.KubeEdgeVersion)
 			if err != nil {
-				klog.Errorf("Edge node join failed: %v", err)
-				os.Exit(1)
+				return fmt.Errorf("edge node join failed: %v", err)
 			}
 			joinOptions.KubeEdgeVersion = ver
 
 			if err := join(joinOptions, step); err != nil {
-				klog.Errorf("Edge node join failed: %v", err)
-				os.Exit(1)
+				return fmt.Errorf("edge node join failed: %v", err)
 			}
+
+			return nil
 		},
 	}
 
