@@ -134,7 +134,7 @@ In cloud node it shuts down the cloud processes of KubeEdge
 In edge node it shuts down the edge processes of KubeEdge
 
 Usage:
-keadm reset [flags]
+  keadm reset [flags]
 
 Examples:
 
@@ -142,12 +142,13 @@ For cloud node:
 keadm reset
 
 For edge node:
-keadm reset --k8sserverip 10.20.30.40:8080
+keadm reset
 
 
 Flags:
+      --force                Reset the node without prompting for confirmation
   -h, --help                 help for reset
-  -k, --k8sserverip string   IP:Port address of cloud components host/VM
+      --kube-config string   Use this key to set kube-config path, eg: $HOME/.kube/config (default "/root/.kube/config")
 
 ```
 
@@ -155,11 +156,8 @@ Flags:
 
 ```
 
-"keadm join" command bootstraps KubeEdge's edge component.
-It checks if the pre-requisites are installed already,
-If not installed, this command will help in download,
-install and execute on the host.
-It will also connect with cloud component to receieve
+"keadm join" command bootstraps KubeEdge's worker node (at the edge) component.
+It will also connect with cloud component to receive
 further instructions and forward telemetry data from
 devices to cloud
 
@@ -168,26 +166,29 @@ Usage:
 
 Examples:
 
-keadm join --cloudcoreip=<ip address> --edgenodeid=<unique string as edge identifier>
+keadm join --cloudcore-ipport=<ip:port address> --edgenode-name=<unique string as edge identifier>
 
-  - For this command --cloudcoreip flag is a Mandatory flag
+  - For this command --cloudcore-ipport flag is a required option
   - This command will download and install the default version of pre-requisites and KubeEdge
 
-keadm join --cloudcoreip=10.20.30.40 --edgenodeid=testing123 --kubeedge-version=0.2.1 --k8sserverip=50.60.70.80:8080
-
-  - In case, any option is used in a format like as shown for "--docker-version" or "--docker-version=", without a value
-    then default values will be used.
-    Also options like "--docker-version", and "--kubeedge-version", version should be in
-    format like "18.06.3" and "0.2.1".
+keadm join --cloudcore-ipport=10.20.30.40:10000 --edgenode-name=testing123 --kubeedge-version=1.10.0
 
 
 Flags:
-      --docker-version string[="18.06.0"]          Use this key to download and use the required Docker version (default "18.06.0")
-  -e, --cloudcoreip string                         IP address of KubeEdge CloudCore
-  -i, --edgenodeid string                          KubeEdge Node unique identification string, If flag not used then the command will generate a unique id on its own
-  -h, --help                                       help for join
-  -k, --k8sserverip string                         IP:Port address of K8S API-Server
-      --kubeedge-version string[="0.3.0-beta.0"]   Use this key to download and use the required KubeEdge version (default "0.3.0-beta.0")
+      --certPath string                  The certPath used by edgecore, the default value is /etc/kubeedge/certs (default "/etc/kubeedge/certs")
+  -s, --certport string                  The port where to apply for the edge certificate
+      --cgroupdriver string              CGroupDriver that uses to manipulate cgroups on the host (cgroupfs or systemd), the default value is cgroupfs
+  -e, --cloudcore-ipport string          IP:Port address of KubeEdge CloudCore
+  -i, --edgenode-name string             KubeEdge Node unique identification string, If flag not used then the command will generate a unique id on its own
+  -h, --help                             help for join
+      --image-repository string          Use this key to decide which image repository to pull images from.
+      --kubeedge-version string          Use this key to download and use the required KubeEdge version
+  -l, --labels strings                   use this key to set the customized labels for node. you can input customized labels like key1=value1,key2=value2
+  -p, --remote-runtime-endpoint string   KubeEdge Edge Node RemoteRuntimeEndpoint string, If flag not set, it will use unix:///var/run/dockershim.sock
+  -r, --runtimetype string               Container runtime type
+      --tarballpath string               Use this key to set the temp directory path for KubeEdge tarball, if not exist, download it
+  -t, --token string                     Used for edge to apply for the certificate
+      --with-mqtt                        use this key to set whether to install and start MQTT Broker by default
 
 ```
 
