@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"reflect"
 	"strconv"
 	"time"
@@ -29,6 +30,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -70,6 +72,8 @@ type DownstreamController struct {
 	deviceManager      *manager.DeviceManager
 	deviceModelManager *manager.DeviceModelManager
 	configMapManager   *manager.ConfigMapManager
+
+	informerCacheSyncs []cache.InformerSynced
 }
 
 // syncDeviceModel is used to get events from informer
@@ -874,6 +878,10 @@ func (dc *DownstreamController) deviceDeleted(device *v1alpha2.Device) {
 func (dc *DownstreamController) Start() error {
 	klog.Info("Start downstream devicecontroller")
 
+	if !cache.WaitForCacheSync(beehiveContext.Done(), dc.informerCacheSyncs...) {
+		return errors.New("can not wait for informer cache sync")
+	}
+
 	go dc.syncDeviceModel()
 
 	// Wait for adding all device model
@@ -886,13 +894,15 @@ func (dc *DownstreamController) Start() error {
 
 // NewDownstreamController create a DownstreamController from config
 func NewDownstreamController(crdInformerFactory crdinformers.SharedInformerFactory) (*DownstreamController, error) {
-	deviceManager, err := manager.NewDeviceManager(crdInformerFactory.Devices().V1alpha2().Devices().Informer())
+	devicesInformer := crdInformerFactory.Devices().V1alpha2().Devices().Informer()
+	deviceManager, err := manager.NewDeviceManager(devicesInformer)
 	if err != nil {
 		klog.Warningf("Create device manager failed with error: %s", err)
 		return nil, err
 	}
 
-	deviceModelManager, err := manager.NewDeviceModelManager(crdInformerFactory.Devices().V1alpha2().DeviceModels().Informer())
+	deviceModelInformer := crdInformerFactory.Devices().V1alpha2().DeviceModels().Informer()
+	deviceModelManager, err := manager.NewDeviceModelManager(deviceModelInformer)
 	if err != nil {
 		klog.Warningf("Create device manager failed with error: %s", err)
 		return nil, err
@@ -905,5 +915,9 @@ func NewDownstreamController(crdInformerFactory crdinformers.SharedInformerFacto
 		messageLayer:       messagelayer.DeviceControllerMessageLayer(),
 		configMapManager:   manager.NewConfigMapManager(),
 	}
+
+	dc.informerCacheSyncs = append(dc.informerCacheSyncs, devicesInformer.HasSynced)
+	dc.informerCacheSyncs = append(dc.informerCacheSyncs, devicesInformer.HasSynced)
+
 	return dc, nil
 }

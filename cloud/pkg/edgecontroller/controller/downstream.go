@@ -2,7 +2,8 @@ package controller
 
 import (
 	"context"
-
+	"errors"
+	
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -10,6 +11,7 @@ import (
 	k8sinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	clientgov1 "k8s.io/client-go/listers/core/v1"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -52,6 +54,8 @@ type DownstreamController struct {
 	svcLister clientgov1.ServiceLister
 
 	podLister clientgov1.PodLister
+
+	informerCacheSyncs []cache.InformerSynced
 }
 
 func (dc *DownstreamController) syncPod() {
@@ -337,6 +341,11 @@ func (dc *DownstreamController) syncRuleEndpoint() {
 // Start DownstreamController
 func (dc *DownstreamController) Start() error {
 	klog.Info("start downstream controller")
+
+	if !cache.WaitForCacheSync(beehiveContext.Done(), dc.informerCacheSyncs...) {
+		return errors.New("can not wait for informer cache sync")
+	}
+
 	// pod
 	go dc.syncPod()
 
@@ -458,6 +467,15 @@ func NewDownstreamController(config *v1alpha1.EdgeController, k8sInformerFactory
 		rulesManager:         rulesManager,
 		ruleEndpointsManager: ruleEndpointsManager,
 	}
+
+	dc.informerCacheSyncs = append(dc.informerCacheSyncs, podInformer.Informer().HasSynced)
+	dc.informerCacheSyncs = append(dc.informerCacheSyncs, configMapInformer.Informer().HasSynced)
+	dc.informerCacheSyncs = append(dc.informerCacheSyncs, secretInformer.Informer().HasSynced)
+	dc.informerCacheSyncs = append(dc.informerCacheSyncs, endpointsInformer.Informer().HasSynced)
+	dc.informerCacheSyncs = append(dc.informerCacheSyncs, svcInformer.Informer().HasSynced)
+	dc.informerCacheSyncs = append(dc.informerCacheSyncs, rulesInformer.HasSynced)
+	dc.informerCacheSyncs = append(dc.informerCacheSyncs, ruleEndpointsInformer.HasSynced)
+
 	if err := dc.initLocating(); err != nil {
 		return nil, err
 	}

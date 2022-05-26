@@ -42,6 +42,7 @@ import (
 	k8sinformer "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	corelisters "k8s.io/client-go/listers/core/v1"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -118,11 +119,17 @@ type UpstreamController struct {
 	serviceLister   corelisters.ServiceLister
 	endpointLister  corelisters.EndpointsLister
 	nodeLister      corelisters.NodeLister
+
+	informerCacheSyncs []cache.InformerSynced
 }
 
 // Start UpstreamController
 func (uc *UpstreamController) Start() error {
 	klog.Info("start upstream controller")
+
+	if !cache.WaitForCacheSync(beehiveContext.Done(), uc.informerCacheSyncs...) {
+		return stderrors.New("can not wait for informer cache sync")
+	}
 
 	go uc.dispatchMessage()
 
@@ -1007,12 +1014,27 @@ func NewUpstreamController(config *v1alpha1.EdgeController, factory k8sinformer.
 		crdClient:    client.GetCRDClient(),
 		config:       *config,
 	}
-	uc.nodeLister = factory.Core().V1().Nodes().Lister()
-	uc.endpointLister = factory.Core().V1().Endpoints().Lister()
-	uc.serviceLister = factory.Core().V1().Services().Lister()
-	uc.podLister = factory.Core().V1().Pods().Lister()
-	uc.configMapLister = factory.Core().V1().ConfigMaps().Lister()
-	uc.secretLister = factory.Core().V1().Secrets().Lister()
+
+	podInformer := factory.Core().V1().Pods()
+	configMapInformer := factory.Core().V1().ConfigMaps()
+	secretInformer := factory.Core().V1().Secrets()
+	nodeInformer := factory.Core().V1().Nodes()
+	svcInformer := factory.Core().V1().Services()
+	endpointsInformer := factory.Core().V1().Endpoints()
+
+	uc.nodeLister = nodeInformer.Lister()
+	uc.endpointLister = endpointsInformer.Lister()
+	uc.serviceLister = svcInformer.Lister()
+	uc.podLister = podInformer.Lister()
+	uc.configMapLister = configMapInformer.Lister()
+	uc.secretLister = secretInformer.Lister()
+
+	uc.informerCacheSyncs = append(uc.informerCacheSyncs, podInformer.Informer().HasSynced)
+	uc.informerCacheSyncs = append(uc.informerCacheSyncs, configMapInformer.Informer().HasSynced)
+	uc.informerCacheSyncs = append(uc.informerCacheSyncs, secretInformer.Informer().HasSynced)
+	uc.informerCacheSyncs = append(uc.informerCacheSyncs, endpointsInformer.Informer().HasSynced)
+	uc.informerCacheSyncs = append(uc.informerCacheSyncs, svcInformer.Informer().HasSynced)
+	uc.informerCacheSyncs = append(uc.informerCacheSyncs, nodeInformer.Informer().HasSynced)
 
 	uc.nodeStatusChan = make(chan model.Message, config.Buffer.UpdateNodeStatus)
 	uc.podStatusChan = make(chan model.Message, config.Buffer.UpdatePodStatus)
