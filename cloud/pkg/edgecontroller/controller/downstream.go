@@ -1,10 +1,7 @@
 package controller
 
 import (
-	"context"
-
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/watch"
 	k8sinformers "k8s.io/client-go/informers"
@@ -52,6 +49,8 @@ type DownstreamController struct {
 	svcLister clientgov1.ServiceLister
 
 	podLister clientgov1.PodLister
+
+	nodeLister clientgov1.NodeLister
 }
 
 func (dc *DownstreamController) syncPod() {
@@ -337,6 +336,11 @@ func (dc *DownstreamController) syncRuleEndpoint() {
 // Start DownstreamController
 func (dc *DownstreamController) Start() error {
 	klog.Info("start downstream controller")
+
+	if err := dc.initLocating(); err != nil {
+		return err
+	}
+
 	// pod
 	go dc.syncPod()
 
@@ -362,21 +366,21 @@ func (dc *DownstreamController) Start() error {
 func (dc *DownstreamController) initLocating() error {
 	set := labels.Set{manager.NodeRoleKey: manager.NodeRoleValue}
 	selector := labels.SelectorFromSet(set)
-	nodes, err := dc.kubeClient.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{LabelSelector: selector.String()})
+	nodes, err := dc.nodeLister.List(selector)
 	if err != nil {
 		return err
 	}
-	for _, node := range nodes.Items {
+	for _, node := range nodes {
 		dc.lc.UpdateEdgeNode(node.ObjectMeta.Name)
 	}
 
-	pods, err := dc.kubeClient.CoreV1().Pods(v1.NamespaceAll).List(context.Background(), metav1.ListOptions{})
+	pods, err := dc.podLister.Pods(v1.NamespaceAll).List(labels.Everything())
 	if err != nil {
 		return err
 	}
-	for _, p := range pods.Items {
+	for _, p := range pods {
 		if dc.lc.IsEdgeNode(p.Spec.NodeName) {
-			dc.lc.AddOrUpdatePod(p)
+			dc.lc.AddOrUpdatePod(*p)
 		}
 	}
 
@@ -455,11 +459,9 @@ func NewDownstreamController(config *v1alpha1.EdgeController, k8sInformerFactory
 		lc:                   lc,
 		svcLister:            svcInformer.Lister(),
 		podLister:            podInformer.Lister(),
+		nodeLister:           k8sInformerFactory.Core().V1().Nodes().Lister(),
 		rulesManager:         rulesManager,
 		ruleEndpointsManager: ruleEndpointsManager,
-	}
-	if err := dc.initLocating(); err != nil {
-		return nil, err
 	}
 
 	return dc, nil
