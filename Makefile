@@ -270,22 +270,22 @@ e2e:
 	tests/e2e/scripts/execute.sh
 endif
 
-define KEADM_E2E_HELP_INFO
+define KEADM_DEPRECATED_E2E_HELP_INFO
 # keadm e2e test.
 #
 # Example:
-#   make keadm_e2e
-#   make keadm_e2e HELP=y
+#   make keadm_deprecated_e2e
+#   make keadm_deprecated_e2e HELP=y
 #
 endef
-.PHONY: keadm_e2e
+.PHONY: keadm_deprecated_e2e
 ifeq ($(HELP),y)
-keadm_e2e:
-	@echo "KEADM_E2E_HELP_INFO"
+keadm_deprecated_e2e:
+	@echo "KEADM_DEPRECATED_E2E_HELP_INFO"
 else
-keadm_e2e:
+keadm_deprecated_e2e:
 	$(RUN) hack/make-rules/release.sh kubeedge
-	tests/e2e/scripts/keadm_e2e.sh
+	tests/e2e/scripts/keadm_deprecated_e2e.sh
 endif
 
 define HELM_KEADM_E2E_HELP_INFO

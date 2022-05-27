@@ -22,7 +22,7 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/beta"
 	cloud "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/cloud"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/debug"
-	edge "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/edge"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/deprecated"
 )
 
 var (
@@ -68,12 +68,14 @@ func NewKubeedgeCommand() *cobra.Command {
 	}
 
 	cmds.ResetFlags()
-	cmds.AddCommand(cloud.NewCloudInit())
-	cmds.AddCommand(edge.NewEdgeJoin())
-	cmds.AddCommand(NewKubeEdgeReset())
+	// deprecated init/join/reset cmds
+	cmds.AddCommand(deprecated.NewDeprecated())
+
 	cmds.AddCommand(NewCmdVersion())
 	cmds.AddCommand(cloud.NewGettoken())
 	cmds.AddCommand(debug.NewEdgeDebug())
+
+	// beta cmds
 	cmds.AddCommand(beta.NewBeta())
 
 	return cmds

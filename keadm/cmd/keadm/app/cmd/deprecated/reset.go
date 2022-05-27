@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The KubeEdge Authors.
+Copyright 2022 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package cmd
+package deprecated
 
 import (
 	"bufio"
@@ -33,16 +33,18 @@ import (
 
 var (
 	resetLongDescription = `
-keadm reset command can be executed in both cloud and edge node
+Deprecated:
+keadm deprecated reset command can be executed in both cloud and edge node
 In cloud node it shuts down the cloud processes of KubeEdge
 In edge node it shuts down the edge processes of KubeEdge
 `
 	resetExample = `
+Deprecated:
 For cloud node:
-keadm reset
+keadm deprecated reset
 
 For edge node:
-keadm reset
+keadm deprecated reset
 `
 )
 
@@ -52,14 +54,14 @@ func newResetOptions() *common.ResetOptions {
 	return opts
 }
 
-// NewKubeEdgeReset represents the reset command
-func NewKubeEdgeReset() *cobra.Command {
+// NewDeprecatedKubeEdgeReset represents the reset command
+func NewDeprecatedKubeEdgeReset() *cobra.Command {
 	IsEdgeNode := false
 	reset := newResetOptions()
 
 	var cmd = &cobra.Command{
 		Use:     "reset",
-		Short:   "Teardowns KubeEdge (cloud & edge) component",
+		Short:   "Deprecated: Teardowns KubeEdge (cloud & edge) component",
 		Long:    resetLongDescription,
 		Example: resetExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {

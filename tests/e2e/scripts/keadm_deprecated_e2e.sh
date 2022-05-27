@@ -57,7 +57,7 @@ function start_kubeedge() {
   cd $KUBEEDGE_ROOT
   export KUBECONFIG=$HOME/.kube/config
 
-  sudo -E _output/local/bin/keadm init --kube-config=$KUBECONFIG --advertise-address=127.0.0.1 --kubeedge-version=${KUBEEDGE_VERSION}
+  sudo -E _output/local/bin/keadm deprecated init --kube-config=$KUBECONFIG --advertise-address=127.0.0.1 --kubeedge-version=${KUBEEDGE_VERSION}
   export MASTER_IP=`docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' test-control-plane`
 
   # ensure tokensecret is generated
@@ -68,7 +68,7 @@ function start_kubeedge() {
 
   export TOKEN=$(sudo _output/local/bin/keadm gettoken --kube-config=$KUBECONFIG)
   sudo systemctl set-environment CHECK_EDGECORE_ENVIRONMENT="false"
-  sudo -E CHECK_EDGECORE_ENVIRONMENT="false" _output/local/bin/keadm join --token=$TOKEN --cloudcore-ipport=127.0.0.1:10000 --edgenode-name=edge-node --kubeedge-version=${KUBEEDGE_VERSION}
+  sudo -E CHECK_EDGECORE_ENVIRONMENT="false" _output/local/bin/keadm deprecated join --token=$TOKEN --cloudcore-ipport=127.0.0.1:10000 --edgenode-name=edge-node --kubeedge-version=${KUBEEDGE_VERSION}
 
   #Pre-configurations required for running the suite.
   #Any new config addition required corresponding code changes.
@@ -118,7 +118,7 @@ set -Ee
 trap cleanup EXIT
 trap cleanup ERR
 
-echo -e "\nUsing latest commit code to do keadm_e2e test..."
+echo -e "\nUsing latest commit code to do keadm_deprecated_e2e test..."
 
 echo -e "\nBuilding keadm..."
 build_keadm
@@ -143,7 +143,7 @@ run_test
 # clean the before test
 cleanup
 
-echo -e "\nUsing latest official release version to do keadm_e2e test..."
+echo -e "\nUsing latest official release version to do keadm_deprecated_e2e test..."
 
 echo -e "\nBuilding keadm..."
 build_keadm
