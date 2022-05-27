@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The KubeEdge Authors.
+Copyright 2022 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package cmd
+package deprecated
 
 import (
 	"fmt"
@@ -30,23 +30,25 @@ import (
 
 var (
 	cloudInitLongDescription = `
-"keadm init" command install KubeEdge's master node (on the cloud) component.
+Deprecated:
+"keadm deprecated init" command install KubeEdge's master node (on the cloud) component.
 It checks if the Kubernetes Master are installed already,
 If not installed, please install the Kubernetes first.
 `
 	cloudInitExample = `
-keadm init
+Deprecated:
+keadm deprecated init
 
 - This command will download and install the default version of KubeEdge cloud component
 
-keadm init --kubeedge-version=%s  --kube-config=/root/.kube/config
+keadm deprecated init --kubeedge-version=%s  --kube-config=/root/.kube/config
 
   - kube-config is the absolute path of kubeconfig which used to secure connectivity between cloudcore and kube-apiserver
 `
 )
 
-// NewCloudInit represents the keadm init command for cloud component
-func NewCloudInit() *cobra.Command {
+// NewDeprecatedCloudInit represents the keadm init command for cloud component
+func NewDeprecatedCloudInit() *cobra.Command {
 	init := newInitOptions()
 
 	tools := make(map[string]types.ToolsInstaller)
@@ -54,7 +56,7 @@ func NewCloudInit() *cobra.Command {
 
 	var cmd = &cobra.Command{
 		Use:     "init",
-		Short:   "Bootstraps cloud component. Checks and install (if required) the pre-requisites.",
+		Short:   "Deprecated: Bootstraps cloud component. Checks and install (if required) the pre-requisites.",
 		Long:    cloudInitLongDescription,
 		Example: fmt.Sprintf(cloudInitExample, types.DefaultKubeEdgeVersion),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -62,15 +64,15 @@ func NewCloudInit() *cobra.Command {
 				util.AddToolVals(f, flagVals)
 			}
 			cmd.Flags().VisitAll(checkFlags)
-			err := Add2ToolsList(tools, flagVals, init)
+			err := Add2CloudToolsList(tools, flagVals, init)
 			if err != nil {
 				return err
 			}
-			return Execute(tools)
+			return executeCloud(tools)
 		},
 	}
 
-	addJoinOtherFlags(cmd, init)
+	addInitFlags(cmd, init)
 	return cmd
 }
 
@@ -81,7 +83,7 @@ func newInitOptions() *types.InitOptions {
 	return opts
 }
 
-func addJoinOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
+func addInitFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 	cmd.Flags().StringVar(&initOpts.KubeEdgeVersion, types.KubeEdgeVersion, initOpts.KubeEdgeVersion,
 		"Use this key to download and use the required KubeEdge version")
 	cmd.Flags().Lookup(types.KubeEdgeVersion).NoOptDefVal = initOpts.KubeEdgeVersion
@@ -102,8 +104,8 @@ func addJoinOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 		"Use this key to set the temp directory path for KubeEdge tarball, if not exist, download it")
 }
 
-//Add2ToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
-func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string]types.FlagData, initOptions *types.InitOptions) error {
+//Add2CloudToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
+func Add2CloudToolsList(toolList map[string]types.ToolsInstaller, flagData map[string]types.FlagData, initOptions *types.InitOptions) error {
 	var kubeVer string
 	flgData, ok := flagData[types.KubeEdgeVersion]
 	if ok {
@@ -145,8 +147,8 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 	return nil
 }
 
-//Execute the installation for each tool and start cloudcore
-func Execute(toolList map[string]types.ToolsInstaller) error {
+// executeCloud executes the installation for each tool and start cloudcore
+func executeCloud(toolList map[string]types.ToolsInstaller) error {
 	for name, tool := range toolList {
 		if name != "Cloud" {
 			err := tool.InstallTools()

@@ -105,8 +105,55 @@ func NewJoinBetaCommand() *cobra.Command {
 		},
 	}
 
-	addJoinOtherFlags(cmd, joinOptions)
+	AddJoinOtherFlags(cmd, joinOptions)
 	return cmd
+}
+
+func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
+	cmd.Flags().StringVar(&joinOptions.KubeEdgeVersion, common.KubeEdgeVersion, joinOptions.KubeEdgeVersion,
+		"Use this key to download and use the required KubeEdge version")
+	cmd.Flags().Lookup(common.KubeEdgeVersion).NoOptDefVal = joinOptions.KubeEdgeVersion
+
+	cmd.Flags().StringVar(&joinOptions.CGroupDriver, common.CGroupDriver, joinOptions.CGroupDriver,
+		"CGroupDriver that uses to manipulate cgroups on the host (cgroupfs or systemd), the default value is cgroupfs")
+
+	cmd.Flags().StringVar(&joinOptions.CertPath, common.CertPath, joinOptions.CertPath,
+		fmt.Sprintf("The certPath used by edgecore, the default value is %s", common.DefaultCertPath))
+
+	cmd.Flags().StringVarP(&joinOptions.CloudCoreIPPort, common.CloudCoreIPPort, "e", joinOptions.CloudCoreIPPort,
+		"IP:Port address of KubeEdge CloudCore")
+
+	if err := cmd.MarkFlagRequired(common.CloudCoreIPPort); err != nil {
+		fmt.Printf("mark flag required failed with error: %v\n", err)
+	}
+
+	cmd.Flags().StringVarP(&joinOptions.RuntimeType, common.RuntimeType, "r", joinOptions.RuntimeType,
+		"Container runtime type")
+
+	cmd.Flags().StringVarP(&joinOptions.EdgeNodeName, common.EdgeNodeName, "i", joinOptions.EdgeNodeName,
+		"KubeEdge Node unique identification string, If flag not used then the command will generate a unique id on its own")
+
+	cmd.Flags().StringVarP(&joinOptions.RemoteRuntimeEndpoint, common.RemoteRuntimeEndpoint, "p", joinOptions.RemoteRuntimeEndpoint,
+		"KubeEdge Edge Node RemoteRuntimeEndpoint string, If flag not set, it will use unix:///var/run/dockershim.sock")
+
+	cmd.Flags().StringVarP(&joinOptions.Token, common.Token, "t", joinOptions.Token,
+		"Used for edge to apply for the certificate")
+
+	cmd.Flags().StringVarP(&joinOptions.CertPort, common.CertPort, "s", joinOptions.CertPort,
+		"The port where to apply for the edge certificate")
+
+	cmd.Flags().StringVar(&joinOptions.TarballPath, common.TarballPath, joinOptions.TarballPath,
+		"Use this key to set the temp directory path for KubeEdge tarball, if not exist, download it")
+
+	cmd.Flags().StringSliceVarP(&joinOptions.Labels, common.Labels, "l", joinOptions.Labels,
+		`use this key to set the customized labels for node. you can input customized labels like key1=value1,key2=value2`)
+
+	cmd.Flags().BoolVar(&joinOptions.WithMQTT, "with-mqtt", joinOptions.WithMQTT,
+		`use this key to set whether to install and start MQTT Broker by default`)
+
+	cmd.Flags().StringVar(&joinOptions.ImageRepository, common.ImageRepository, joinOptions.ImageRepository,
+		`Use this key to decide which image repository to pull images from.`,
+	)
 }
 
 func newOption() *common.JoinOptions {
