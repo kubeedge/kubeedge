@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package beta
+package cmd
 
 import (
 	"fmt"
@@ -31,24 +31,24 @@ import (
 )
 
 var (
-	cloudBetaInitLongDescription = `
-"keadm beta init" command install KubeEdge's master node (on the cloud) component by using a list of set flags like helm.
+	cloudInitLongDescription = `
+"keadm init" command install KubeEdge's master node (on the cloud) component by using a list of set flags like helm.
 It checks if the Kubernetes Master are installed already,
 If not installed, please install the Kubernetes first.
 `
-	cloudBetaInitExample = `
-keadm beta init
+	cloudInitExample = `
+keadm init
 - This command will render and install the Charts for Kubeedge cloud component
 
-keadm beta init --advertise-address=127.0.0.1 --profile version=v1.9.0 --kube-config=/root/.kube/config
+keadm init --advertise-address=127.0.0.1 --profile version=v1.9.0 --kube-config=/root/.kube/config
   - kube-config is the absolute path of kubeconfig which used to secure connectivity between cloudcore and kube-apiserver
 	- a list of helm style set flags like "--set key=value" can be implemented, ref: https://github.com/kubeedge/kubeedge/tree/master/manifests/charts/cloudcore/README.md
 `
 )
 
-// NewInitBeta represents the beta version of keadm init command for cloud component
-func NewInitBeta() *cobra.Command {
-	BetaInit := newInitBetaOptions()
+// NewCloudInit represents the keadm init command for cloud component
+func NewCloudInit() *cobra.Command {
+	opts := newInitOptions()
 
 	tools := make(map[string]types.ToolsInstaller)
 	flagVals := make(map[string]types.FlagData)
@@ -56,70 +56,70 @@ func NewInitBeta() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:     "init",
 		Short:   "Bootstraps cloud component. Checks and install (if required) the pre-requisites.",
-		Long:    cloudBetaInitLongDescription,
-		Example: cloudBetaInitExample,
+		Long:    cloudInitLongDescription,
+		Example: cloudInitExample,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			checkFlags := func(f *pflag.Flag) {
 				util.AddToolVals(f, flagVals)
 			}
 			cmd.Flags().VisitAll(checkFlags)
-			err := AddInitBeta2ToolsList(tools, BetaInit)
+			err := AddInit2ToolsList(tools, opts)
 			if err != nil {
 				return err
 			}
-			return ExecuteInitBeta(tools)
+			return ExecuteInit(tools)
 		},
 	}
 
-	addInitBetaJoinOtherFlags(cmd, BetaInit)
-	addHelmValueOptionsFlags(cmd, BetaInit)
-	addForceOptionsFlags(cmd, BetaInit)
+	addInitOtherFlags(cmd, opts)
+	addHelmValueOptionsFlags(cmd, opts)
+	addForceOptionsFlags(cmd, opts)
 	return cmd
 }
 
-//newInitBetaOptions will initialise new instance of options everytime
-func newInitBetaOptions() *types.InitBetaOptions {
-	opts := &types.InitBetaOptions{}
+//newInitOptions will initialise new instance of options everytime
+func newInitOptions() *types.InitOptions {
+	opts := &types.InitOptions{}
 	opts.KubeConfig = types.DefaultKubeConfig
 
 	return opts
 }
 
-func addInitBetaJoinOtherFlags(cmd *cobra.Command, initBetaOpts *types.InitBetaOptions) {
-	cmd.Flags().StringVar(&initBetaOpts.KubeEdgeVersion, types.KubeEdgeVersion, initBetaOpts.KubeEdgeVersion,
+func addInitOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
+	cmd.Flags().StringVar(&initOpts.KubeEdgeVersion, types.KubeEdgeVersion, initOpts.KubeEdgeVersion,
 		"Use this key to set the default image tag")
 
-	cmd.Flags().StringVar(&initBetaOpts.AdvertiseAddress, types.AdvertiseAddress, initBetaOpts.AdvertiseAddress,
+	cmd.Flags().StringVar(&initOpts.AdvertiseAddress, types.AdvertiseAddress, initOpts.AdvertiseAddress,
 		"Use this key to set IPs in cloudcore's certificate SubAltNames field. eg: 10.10.102.78,10.10.102.79")
 
-	cmd.Flags().StringVar(&initBetaOpts.KubeConfig, types.KubeConfig, initBetaOpts.KubeConfig,
+	cmd.Flags().StringVar(&initOpts.KubeConfig, types.KubeConfig, initOpts.KubeConfig,
 		"Use this key to set kube-config path, eg: $HOME/.kube/config")
 
-	cmd.Flags().StringVar(&initBetaOpts.Manifests, types.Manifests, initBetaOpts.Manifests,
+	cmd.Flags().StringVar(&initOpts.Manifests, types.Manifests, initOpts.Manifests,
 		"Allow appending file directories of k8s resources to keadm, separated by commas")
 
-	cmd.Flags().StringVarP(&initBetaOpts.Manifests, types.Files, "f", initBetaOpts.Manifests,
+	cmd.Flags().StringVarP(&initOpts.Manifests, types.Files, "f", initOpts.Manifests,
 		"Allow appending file directories of k8s resources to keadm, separated by commas")
 
-	cmd.Flags().BoolVarP(&initBetaOpts.DryRun, types.DryRun, "d", initBetaOpts.DryRun,
+	cmd.Flags().BoolVarP(&initOpts.DryRun, types.DryRun, "d", initOpts.DryRun,
 		"Print the generated k8s resources on the stdout, not actual excute. Always use in debug mode")
 
-	cmd.Flags().StringVar(&initBetaOpts.ExternalHelmRoot, types.ExternalHelmRoot, initBetaOpts.ExternalHelmRoot,
+	cmd.Flags().StringVar(&initOpts.ExternalHelmRoot, types.ExternalHelmRoot, initOpts.ExternalHelmRoot,
 		"Add external helm root path to keadm.")
 }
 
-func addHelmValueOptionsFlags(cmd *cobra.Command, initBetaOpts *types.InitBetaOptions) {
-	cmd.Flags().StringArrayVar(&initBetaOpts.Sets, "set", []string{}, "Set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
-	cmd.Flags().StringVar(&initBetaOpts.Profile, "profile", initBetaOpts.Profile, "Set profile on the command line (iptablesMgrMode=external or version=v1.9.1)")
+func addHelmValueOptionsFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
+	cmd.Flags().StringArrayVar(&initOpts.Sets, "set", []string{}, "Set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
+	cmd.Flags().StringVar(&initOpts.Profile, "profile", initOpts.Profile, "Set profile on the command line (iptablesMgrMode=external or version=v1.9.1)")
 }
 
-func addForceOptionsFlags(cmd *cobra.Command, initBetaOpts *types.InitBetaOptions) {
-	cmd.Flags().BoolVar(&initBetaOpts.Force, types.Force, initBetaOpts.Force,
+func addForceOptionsFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
+	cmd.Flags().BoolVar(&initOpts.Force, types.Force, initOpts.Force,
 		"Forced installing the cloud components without waiting.")
 }
 
-//AddInitBeta2ToolsList reads the flagData (containing val and default val) and join options to fill the list of tools.
-func AddInitBeta2ToolsList(toolList map[string]types.ToolsInstaller, initBetaOpts *types.InitBetaOptions) error {
+//AddInit2ToolsList reads the flagData (containing val and default val) and join options to fill the list of tools.
+func AddInit2ToolsList(toolList map[string]types.ToolsInstaller, initOpts *types.InitOptions) error {
 	var latestVersion string
 	var kubeedgeVersion string
 	for i := 0; i < util.RetryTimes; i++ {
@@ -141,25 +141,25 @@ func AddInitBeta2ToolsList(toolList map[string]types.ToolsInstaller, initBetaOpt
 
 	common := util.Common{
 		ToolVersion: semver.MustParse(kubeedgeVersion),
-		KubeConfig:  initBetaOpts.KubeConfig,
+		KubeConfig:  initOpts.KubeConfig,
 	}
 	toolList["helm"] = &helm.KubeCloudHelmInstTool{
 		Common:           common,
-		AdvertiseAddress: initBetaOpts.AdvertiseAddress,
-		KubeEdgeVersion:  initBetaOpts.KubeEdgeVersion,
-		Manifests:        initBetaOpts.Manifests,
+		AdvertiseAddress: initOpts.AdvertiseAddress,
+		KubeEdgeVersion:  initOpts.KubeEdgeVersion,
+		Manifests:        initOpts.Manifests,
 		Namespace:        constants.SystemNamespace,
-		DryRun:           initBetaOpts.DryRun,
-		Sets:             initBetaOpts.Sets,
-		Profile:          initBetaOpts.Profile,
-		ExternalHelmRoot: initBetaOpts.ExternalHelmRoot,
-		Force:            initBetaOpts.Force,
+		DryRun:           initOpts.DryRun,
+		Sets:             initOpts.Sets,
+		Profile:          initOpts.Profile,
+		ExternalHelmRoot: initOpts.ExternalHelmRoot,
+		Force:            initOpts.Force,
 		Action:           types.HelmInstallAction,
 	}
 	return nil
 }
 
-//ExecuteInitBeta the installation for each tool and start cloudcore
-func ExecuteInitBeta(toolList map[string]types.ToolsInstaller) error {
+//ExecuteInit the installation for each tool and start cloudcore
+func ExecuteInit(toolList map[string]types.ToolsInstaller) error {
 	return toolList["helm"].InstallTools()
 }

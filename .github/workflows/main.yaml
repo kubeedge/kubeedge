@@ -218,10 +218,10 @@ jobs:
 
       - run: make keadm_deprecated_e2e
 
-  keadm_beta_e2e_test:
+  keadm_e2e_test:
     runs-on: ubuntu-18.04
     timeout-minutes: 30
-    name: Keadm beta e2e test
+    name: Keadm e2e test
     env:
       GO111MODULE: on
     steps:
@@ -251,7 +251,7 @@ jobs:
         with:
           version: v3.4.0
 
-      - run: make keadm_beta_e2e
+      - run: make keadm_e2e
 
   docker_build:
     runs-on: ubuntu-18.04

@@ -77,13 +77,13 @@ func NewDeprecatedCloudInit() *cobra.Command {
 }
 
 //newInitOptions will initialise new instance of options everytime
-func newInitOptions() *types.InitOptions {
-	opts := &types.InitOptions{}
+func newInitOptions() *types.InitBaseOptions {
+	opts := &types.InitBaseOptions{}
 	opts.KubeConfig = types.DefaultKubeConfig
 	return opts
 }
 
-func addInitFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
+func addInitFlags(cmd *cobra.Command, initOpts *types.InitBaseOptions) {
 	cmd.Flags().StringVar(&initOpts.KubeEdgeVersion, types.KubeEdgeVersion, initOpts.KubeEdgeVersion,
 		"Use this key to download and use the required KubeEdge version")
 	cmd.Flags().Lookup(types.KubeEdgeVersion).NoOptDefVal = initOpts.KubeEdgeVersion
@@ -105,7 +105,7 @@ func addInitFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 }
 
 //Add2CloudToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
-func Add2CloudToolsList(toolList map[string]types.ToolsInstaller, flagData map[string]types.FlagData, initOptions *types.InitOptions) error {
+func Add2CloudToolsList(toolList map[string]types.ToolsInstaller, flagData map[string]types.FlagData, initOptions *types.InitBaseOptions) error {
 	var kubeVer string
 	flgData, ok := flagData[types.KubeEdgeVersion]
 	if ok {

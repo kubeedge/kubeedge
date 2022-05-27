@@ -39,30 +39,30 @@ import (
 )
 
 var (
-	edgeJoinBetaDescription = `
-"keadm beta join" command bootstraps KubeEdge's worker node (at the edge) component.
+	edgeJoinDescription = `
+"keadm join" command bootstraps KubeEdge's worker node (at the edge) component.
 It will also connect with cloud component to receive
 further instructions and forward telemetry data from
 devices to cloud
 `
-	edgeJoinBetaExample = `
-keadm beta join --cloudcore-ipport=<ip:port address> --edgenode-name=<unique string as edge identifier>
+	edgeJoinExample = `
+keadm join --cloudcore-ipport=<ip:port address> --edgenode-name=<unique string as edge identifier>
 
   - For this command --cloudcore-ipport flag is a required option
   - This command will download and install the default version of pre-requisites and KubeEdge
 
-keadm beta join --cloudcore-ipport=10.20.30.40:10000 --edgenode-name=testing123 --kubeedge-version=v` + common.DefaultKubeEdgeVersion + `
+keadm join --cloudcore-ipport=10.20.30.40:10000 --edgenode-name=testing123 --kubeedge-version=v` + common.DefaultKubeEdgeVersion + `
 `
 )
 
-func NewJoinBetaCommand() *cobra.Command {
+func NewEdgeJoin() *cobra.Command {
 	joinOptions := newOption()
 	step := common.NewStep()
 	cmd := &cobra.Command{
 		Use:          "join",
 		Short:        "Bootstraps edge component. Checks and install (if required) the pre-requisites. Execute it on any edge node machine you wish to join",
-		Long:         edgeJoinBetaDescription,
-		Example:      edgeJoinBetaExample,
+		Long:         edgeJoinDescription,
+		Example:      edgeJoinExample,
 		SilenceUsage: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			step.Printf("Check KubeEdge edgecore process status")

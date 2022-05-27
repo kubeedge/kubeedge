@@ -288,21 +288,21 @@ keadm_deprecated_e2e:
 	tests/e2e/scripts/keadm_deprecated_e2e.sh
 endif
 
-define HELM_KEADM_E2E_HELP_INFO
-# helm keadm e2e test.
+define KEADM_E2E_HELP_INFO
+# eadm e2e test.
 #
 # Example:
-#   make keadm_beta_e2e
-#   make keadm_beta_e2e HELP=y
+#   make keadm_e2e
+#   make keadm_e2e HELP=y
 #
 endef
-.PHONY: keadm_beta_e2e
+.PHONY: keadm_e2e
 ifeq ($(HELP),y)
-keadm_beta_e2e:
-	@echo "HELM_KEADM_E2E_HELP_INFO"
+keadm_e2e:
+	@echo "KEADM_E2E_HELP_INFO"
 else
-keadm_beta_e2e:
-	tests/e2e/scripts/keadm_beta_e2e.sh
+keadm_e2e:
+	tests/e2e/scripts/keadm_e2e.sh
 endif
 
 define CLEAN_HELP_INFO

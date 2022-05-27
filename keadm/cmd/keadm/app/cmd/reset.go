@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package beta
+package cmd
 
 import (
 	"bufio"
@@ -44,10 +44,10 @@ In edge node it shuts down the edge processes of KubeEdge
 `
 	resetExample = `
 For cloud node:
-keadm beta reset
+keadm reset
 
 For edge node:
-keadm beta reset
+keadm reset
 `
 )
 
@@ -57,13 +57,13 @@ func newResetOptions() *common.ResetOptions {
 	return opts
 }
 
-func NewKubeEdgeResetBeta() *cobra.Command {
+func NewKubeEdgeReset() *cobra.Command {
 	IsEdgeNode := false
 	reset := newResetOptions()
 
 	var cmd = &cobra.Command{
 		Use:     "reset",
-		Short:   "Teardowns KubeEdge (cloud(helm installed) & edge) component, is in beta trial use",
+		Short:   "Teardowns KubeEdge (cloud(helm installed) & edge) component",
 		Long:    resetLongDescription,
 		Example: resetExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
