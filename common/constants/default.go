@@ -87,6 +87,8 @@ const (
 	DefaultQueryPersistentVolumeWorkers      = 4
 	DefaultQueryPersistentVolumeClaimWorkers = 4
 	DefaultQueryVolumeAttachmentWorkers      = 4
+	DefaultCreateNodeWorkers                 = 4
+	DefaultPatchNodeWorkers                  = 4
 	DefaultQueryNodeWorkers                  = 4
 	DefaultUpdateNodeWorkers                 = 4
 	DefaultDeletePodWorkers                  = 4
@@ -104,6 +106,8 @@ const (
 	DefaultQueryPersistentVolumeBuffer      = 1024
 	DefaultQueryPersistentVolumeClaimBuffer = 1024
 	DefaultQueryVolumeAttachmentBuffer      = 1024
+	DefaultCreateNodeBuffer                 = 1024
+	DefaultPatchNodeBuffer                  = 1024
 	DefaultQueryNodeBuffer                  = 1024
 	DefaultUpdateNodeBuffer                 = 1024
 	DefaultDeletePodBuffer                  = 1024
