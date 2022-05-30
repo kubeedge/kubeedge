@@ -38,6 +38,8 @@ import (
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	edgedconfig "github.com/kubeedge/kubeedge/edge/pkg/edged/config"
+	kubebridge "github.com/kubeedge/kubeedge/edge/pkg/edged/kubeclientbridge"
+	metaclient "github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
 
@@ -85,7 +87,7 @@ func (e *edged) Start() {
 	}
 }
 
-//newEdged creates new edged object and initialises it
+// newEdged creates new edged object and initialises it
 func newEdged(enable bool) (*edged, error) {
 	var ed *edged
 	var err error
@@ -102,6 +104,7 @@ func newEdged(enable bool) (*edged, error) {
 		klog.ErrorS(err, "Failed to construct kubelet dependencies")
 		return nil, fmt.Errorf("failed to construct kubelet dependencies")
 	}
+	MakeKubeClientBridge(kubeletDeps)
 
 	ed = &edged{
 		context:     context.Background(),
@@ -111,4 +114,13 @@ func newEdged(enable bool) (*edged, error) {
 	}
 
 	return ed, nil
+}
+
+// MakeKubeClientBridge make kubeclient bridge to replace kubeclient with metaclient
+func MakeKubeClientBridge(kubeletDeps *kubelet.Dependencies) {
+	client := kubebridge.NewSimpleClientset(metaclient.New())
+
+	kubeletDeps.KubeClient = client
+	kubeletDeps.EventClient = client.CoreV1()
+	kubeletDeps.HeartbeatClient = client
 }
