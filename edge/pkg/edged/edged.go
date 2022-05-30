@@ -79,6 +79,7 @@ import (
 	serverstats "k8s.io/kubernetes/pkg/kubelet/server/stats"
 	"k8s.io/kubernetes/pkg/kubelet/stats"
 	kubestatus "k8s.io/kubernetes/pkg/kubelet/status"
+	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
 	"k8s.io/kubernetes/pkg/kubelet/util/format"
 	"k8s.io/kubernetes/pkg/kubelet/util/queue"
 	"k8s.io/kubernetes/pkg/kubelet/volumemanager"
@@ -543,13 +544,16 @@ func newEdged(enable bool) (*edged, error) {
 		return nil, err
 	}
 
-	// create a log manager
-	logManager, err := logs.NewContainerLogManager(runtimeService, ed.os, "10Mi", 5)
-	if err != nil {
-		return nil, fmt.Errorf("new container log manager failed, err: %s", err.Error())
+	if ed.containerRuntimeName == kubetypes.RemoteContainerRuntime {
+		// create a log manager
+		logManager, err := logs.NewContainerLogManager(runtimeService, ed.os, "10Mi", 5)
+		if err != nil {
+			return nil, fmt.Errorf("new container log manager failed, err: %s", err.Error())
+		}
+		ed.logManager = logManager
+	} else {
+		ed.logManager = logs.NewStubContainerLogManager()
 	}
-
-	ed.logManager = logManager
 
 	containerRuntime, err := kuberuntime.NewKubeGenericRuntimeManager(
 		recorder,
