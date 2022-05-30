@@ -31,5 +31,6 @@ docker run --rm ${CONTAINER_RUN_OPTIONS} -u "${UID}:${DOCKER_GID}" \
     --init \
     --sig-proxy=true \
     -e XDG_CACHE_HOME=/tmp/.cache \
+    --env-file <(env | grep -E "^GO*") \
     -v ${KUBEEDGE_ROOT}:${MOUNTPATH} \
     -w ${MOUNTPATH} ${KUBEEDGE_BUILD_IMAGE} "$@"
