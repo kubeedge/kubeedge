@@ -131,11 +131,41 @@ func (m *metaManager) processInsert(message model.Message) {
 		return
 	}
 
+	if resType == model.ResourceTypeNode && message.GetSource() == modules.EdgedModuleName {
+		m.processRemoteInsert(message)
+		return
+	}
+
 	// Notify edged
 	sendToEdged(&message, false)
 
 	resp := message.NewRespByMessage(&message, OK)
 	sendToCloud(resp)
+}
+
+func (m *metaManager) processRemoteInsert(message model.Message) {
+	go func() {
+		// TODO: retry
+		originalID := message.GetID()
+		message.UpdateID()
+		resp, err := beehiveContext.SendSync(
+			string(metaManagerConfig.Config.ContextSendModule),
+			message,
+			time.Duration(metaManagerConfig.Config.RemoteQueryTimeout)*time.Second)
+		klog.Infof("########## process insert: resource[%s], err[%+v]", message.GetResource(), err)
+		klog.V(2).Infof("########## process insert: req[%+v], resp[%+v], err[%+v]", message, resp, err)
+		if err != nil {
+			klog.Errorf("remote insert failed: %v", err)
+			feedbackError(err, "Error to remote insert", message)
+			return
+		}
+
+		resp.BuildHeader(resp.GetID(), originalID, resp.GetTimestamp())
+		sendToEdged(&resp, message.IsSync())
+
+		respToCloud := message.NewRespByMessage(&resp, OK)
+		sendToCloud(respToCloud)
+	}()
 }
 
 func (m *metaManager) processUpdate(message model.Message) {
@@ -185,6 +215,52 @@ func (m *metaManager) processUpdate(message model.Message) {
 	default:
 		klog.Errorf("unsupport message source, %s", msgSource)
 	}
+}
+
+func (m *metaManager) processPatch(message model.Message) {
+	content, err := message.GetContentData()
+	if err != nil {
+		klog.Errorf("get patch message content data failed, %s", msgDebugInfo(&message))
+		feedbackError(err, "Error to get update message content data", message)
+		return
+	}
+
+	resKey, resType, _ := parseResource(message.GetResource())
+
+	go func() {
+		// TODO: retry
+		originalID := message.GetID()
+		message.UpdateID()
+		resp, err := beehiveContext.SendSync(
+			string(metaManagerConfig.Config.ContextSendModule),
+			message,
+			time.Duration(metaManagerConfig.Config.RemoteQueryTimeout)*time.Second)
+		klog.Infof("########## process patch: resource[%s], err[%+v]", message.GetResource(), err)
+		klog.V(2).Infof("########## process patch: req[%+v], resp[%+v], err[%+v]", message, resp, err)
+		if err != nil {
+			klog.Errorf("remote patch failed: %v", err)
+			feedbackError(err, "Error to patch", message)
+			return
+		}
+
+		meta := &dao.Meta{
+			Key:   resKey,
+			Type:  resType,
+			Value: string(content)}
+		err = dao.InsertOrUpdate(meta)
+		if err != nil {
+			klog.Errorf("update meta failed, %s", msgDebugInfo(&message))
+			feedbackError(err, "Error to update meta to DB", message)
+			return
+		}
+
+		resp.BuildHeader(resp.GetID(), originalID, resp.GetTimestamp())
+		sendToEdged(&resp, message.IsSync())
+
+		respToCloud := message.NewRespByMessage(&resp, OK)
+		sendToCloud(respToCloud)
+	}()
+
 }
 
 func (m *metaManager) processResponse(message model.Message) {
@@ -434,6 +510,8 @@ func (m *metaManager) process(message model.Message) {
 		m.processInsert(message)
 	case model.UpdateOperation:
 		m.processUpdate(message)
+	case model.PatchOperation:
+		m.processPatch(message)
 	case model.DeleteOperation:
 		m.processDelete(message)
 	case model.QueryOperation:
