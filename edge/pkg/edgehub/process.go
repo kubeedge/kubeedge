@@ -197,3 +197,5 @@ func (eh *EdgeHub) ifRotationDone() {
 		}
 	}
 }
+
+
