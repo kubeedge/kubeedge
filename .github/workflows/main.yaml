@@ -158,6 +158,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+
       - name: Retrieve saved kubeedge/build-tools image
         uses: actions/download-artifact@v3
         with:
@@ -168,10 +171,7 @@ jobs:
         run: |
           docker load < /home/runner/build-tools/build-tools.tar
 
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        run: |
-          make e2e
+      - run: make e2e
 
   keadm_e2e_test:
     runs-on: ubuntu-18.04
