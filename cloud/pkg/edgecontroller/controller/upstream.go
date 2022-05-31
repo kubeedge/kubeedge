@@ -286,6 +286,19 @@ func (uc *UpstreamController) updateRuleStatus() {
 		}
 	}
 }
+
+func (uc *UpstreamController) podStatusResponse(msg model.Message) {
+	resMsg := model.NewMessage(msg.GetID()).
+		FillBody(common.MessageSuccessfulContent).
+		BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, msg.Router.Resource, model.ResponseOperation)
+
+	if err := uc.messageLayer.Send(*resMsg); err != nil {
+		klog.Warningf("Send message failed: %s, operation: %s, resource: %s", err, resMsg.GetOperation(), resMsg.GetResource())
+	} else {
+		klog.V(4).Infof("Send message successfully, operation: %s, resource: %s", resMsg.GetOperation(), resMsg.GetResource())
+	}
+}
+
 func (uc *UpstreamController) updatePodStatus() {
 	for {
 		select {
@@ -371,6 +384,10 @@ func (uc *UpstreamController) updatePodStatus() {
 						klog.Warningf("message: %s, update pod status failed with error: %s, namespace: %s, name: %s", msg.GetID(), err, getPod.Namespace, getPod.Name)
 					} else {
 						klog.V(5).Infof("message: %s, update pod status successfully, namespace: %s, name: %s", msg.GetID(), updatedPod.Namespace, updatedPod.Name)
+
+						// send response message to edged
+						uc.podStatusResponse(msg)
+
 						if updatedPod.DeletionTimestamp != nil && (status.Phase == v1.PodSucceeded || status.Phase == v1.PodFailed) {
 							if uc.isPodNotRunning(status.ContainerStatuses) {
 								if err := uc.kubeClient.CoreV1().Pods(updatedPod.Namespace).Delete(context.Background(), updatedPod.Name, *metaV1.NewDeleteOptions(0)); err != nil {

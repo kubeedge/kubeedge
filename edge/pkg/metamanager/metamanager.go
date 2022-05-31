@@ -1,14 +1,11 @@
 package metamanager
 
 import (
-	"time"
-
 	"github.com/astaxie/beego/orm"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	metamanagerconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
@@ -31,7 +28,9 @@ type metaManager struct {
 var _ core.Module = (*metaManager)(nil)
 
 func newMetaManager(enable bool) *metaManager {
-	return &metaManager{enable: enable}
+	return &metaManager{
+		enable: enable,
+	}
 }
 
 // Register register metamanager
@@ -70,25 +69,6 @@ func (m *metaManager) Start() {
 		imitator.StorageInit()
 		go metaserver.NewMetaServer().Start(beehiveContext.Done())
 	}
-	go func() {
-		period := getSyncInterval()
-		timer := time.NewTimer(period)
-		for {
-			select {
-			case <-beehiveContext.Done():
-				klog.Warning("MetaManager stop")
-				return
-			case <-timer.C:
-				timer.Reset(period)
-				msg := model.NewMessage("").BuildRouter(MetaManagerModuleName, GroupResource, model.ResourceTypePodStatus, OperationMetaSync)
-				beehiveContext.Send(MetaManagerModuleName, *msg)
-			}
-		}
-	}()
 
 	m.runMetaManager()
-}
-
-func getSyncInterval() time.Duration {
-	return time.Duration(metamanagerconfig.Config.PodStatusSyncInterval) * time.Second
 }
