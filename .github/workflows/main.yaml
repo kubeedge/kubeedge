@@ -170,8 +170,8 @@ jobs:
 
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
-
-      - run: make e2e
+        run: |
+          make e2e
 
   keadm_e2e_test:
     runs-on: ubuntu-18.04
