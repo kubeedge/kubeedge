@@ -59,7 +59,7 @@ func startWebsocketServer() {
 		AutoRoute:  true,
 		ConnNotify: handler.CloudhubHandler.OnRegister,
 		Addr:       fmt.Sprintf("%s:%d", hubconfig.Config.WebSocket.Address, hubconfig.Config.WebSocket.Port),
-		ExOpts:     api.WSServerOption{Path: "/"},
+		ExOpts:     api.WSServerOption{Path: "/{project_id}/(node_name)/event"},
 	}
 	klog.Infof("Starting cloudhub %s server", api.ProtocolTypeWS)
 	klog.Exit(svc.ListenAndServeTLS("", ""))

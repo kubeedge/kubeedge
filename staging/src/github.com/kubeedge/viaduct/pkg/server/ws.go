@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"k8s.io/klog/v2"
 
@@ -50,7 +51,13 @@ func NewWSServer(opts Options, exOpts interface{}) *WSServer {
 		exOpts:  extendOption,
 		server:  &server,
 	}
-	http.HandleFunc(extendOption.Path, wsServer.ServeHTTP)
+
+	router := mux.NewRouter()
+	for path, handle := range extendOption.ExtendedHandler {
+		router.HandleFunc(path, handle)
+	}
+	router.HandleFunc(extendOption.Path, wsServer.ServeHTTP)
+	wsServer.server.Handler = router
 	return wsServer
 }
 

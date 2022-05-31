@@ -20,4 +20,6 @@ type WSServerOption struct {
 	Path string
 	// the necessary processing before upgrading
 	Filter WSFilterFunc
+	// the extended http handler
+	ExtendedHandler map[string]http.HandlerFunc
 }
