@@ -168,6 +168,9 @@ jobs:
         run: |
           docker load < /home/runner/build-tools/build-tools.tar
 
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+
       - run: make e2e
 
   keadm_e2e_test:
