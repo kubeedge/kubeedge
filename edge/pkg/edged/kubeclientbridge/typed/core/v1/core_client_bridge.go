@@ -32,3 +32,11 @@ func (c *CoreV1Bridge) Secrets(namespace string) corev1.SecretInterface {
 func (c *CoreV1Bridge) Pods(namespace string) corev1.PodInterface {
 	return &PodsBridge{fakecorev1.FakePods{Fake: &c.FakeCoreV1}, namespace, c.MetaClient}
 }
+
+func (c *CoreV1Bridge) PersistentVolumes() corev1.PersistentVolumeInterface {
+	return &PersistentVolumesBridge{fakecorev1.FakePersistentVolumes{Fake: &c.FakeCoreV1}, c.MetaClient}
+}
+
+func (c *CoreV1Bridge) PersistentVolumeClaims(namespace string) corev1.PersistentVolumeClaimInterface {
+	return &PersistentVolumeClaimsBridge{fakecorev1.FakePersistentVolumeClaims{Fake: &c.FakeCoreV1}, namespace, c.MetaClient}
+}
