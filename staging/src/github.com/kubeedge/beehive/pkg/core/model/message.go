@@ -28,6 +28,7 @@ const (
 	ResourceTypeNode                = "node"
 	ResourceTypePodlist             = "podlist"
 	ResourceTypePodStatus           = "podstatus"
+	ResourceTypePodPatch            = "podpatch"
 	ResourceTypeNodeStatus          = "nodestatus"
 	ResourceTypeNodePatch           = "nodepatch"
 	ResourceTypeRule                = "rule"

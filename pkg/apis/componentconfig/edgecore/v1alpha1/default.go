@@ -55,6 +55,7 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 	kubeletConfig.VolumeStatsAggPeriod = metav1.Duration{constants.DefaultVolumeStatsAggPeriod}
 	kubeletConfig.ImageGCLowThresholdPercent = constants.DefaultImageGCLowThreshold
 	kubeletConfig.ImageGCHighThresholdPercent = constants.DefaultImageGCHighThreshold
+	kubeletConfig.ConfigMapAndSecretChangeDetectionStrategy = kubeletconfig.GetChangeDetectionStrategy
 
 	kubeletserver := kubeletoptions.KubeletServer{
 		KubeletFlags:         *kubeletFlags,
@@ -75,6 +76,7 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 			Edged: &Edged{
 				KubeletServer:               kubeletserver,
 				CustomInterfaceName:         "",
+				RegisterNodeNamespace:       constants.DefaultRegisterNodeNamespace,
 			},
 			EdgeHub: &EdgeHub{
 				Enable:            true,

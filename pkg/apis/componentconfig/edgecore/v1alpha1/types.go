@@ -108,6 +108,9 @@ type Edged struct {
 	// If this is not defined the IP address is obtained by the hostname.
 	// default ""
 	CustomInterfaceName string `json:"customInterfaceName,omitempty"`
+	//RegisterNodeNamespace indicates register node namespace
+	// default "default"
+	RegisterNodeNamespace string `json:"registerNodeNamespace,omitempty"`
 }
 
 // EdgeHub indicates the EdgeHub module config

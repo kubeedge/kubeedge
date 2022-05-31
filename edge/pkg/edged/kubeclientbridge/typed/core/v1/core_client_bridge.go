@@ -28,3 +28,7 @@ func (c *CoreV1Bridge) ConfigMaps(namespace string) corev1.ConfigMapInterface {
 func (c *CoreV1Bridge) Secrets(namespace string) corev1.SecretInterface {
 	return &SecretBridge{fakecorev1.FakeSecrets{Fake: &c.FakeCoreV1}, namespace, c.MetaClient}
 }
+
+func (c *CoreV1Bridge) Pods(namespace string) corev1.PodInterface {
+	return &PodsBridge{fakecorev1.FakePods{Fake: &c.FakeCoreV1}, namespace, c.MetaClient}
+}

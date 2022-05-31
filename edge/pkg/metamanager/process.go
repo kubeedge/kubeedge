@@ -294,24 +294,51 @@ func (m *metaManager) processResponse(message model.Message) {
 
 func (m *metaManager) processDelete(message model.Message) {
 	imitator.DefaultV2Client.Inject(message)
-	err := dao.DeleteMetaByKey(message.GetResource())
-	if err != nil {
-		klog.Errorf("delete meta failed, %s", msgDebugInfo(&message))
-		feedbackError(err, "Error to delete meta to DB", message)
+
+	_, resType, _ := parseResource(message.GetResource())
+	if resType == model.ResourceTypePod && message.GetSource() == modules.EdgedModuleName {
+		m.processRemoteDelete(message)
 		return
 	}
 
-	_, resType, _ := parseResource(message.GetResource())
-
-	if resType == model.ResourceTypePod && message.GetSource() == modules.EdgedModuleName {
-		sendToCloud(&message)
-		return
+	if resType != model.ResourceTypePod {
+		err := dao.DeleteMetaByKey(message.GetResource())
+		if err != nil {
+			klog.Errorf("delete meta failed, %s", msgDebugInfo(&message))
+			feedbackError(err, "Error to delete meta to DB", message)
+			return
+		}
 	}
 
 	// Notify edged
 	sendToEdged(&message, false)
 	resp := message.NewRespByMessage(&message, OK)
 	sendToCloud(resp)
+}
+
+func (m *metaManager) processRemoteDelete(message model.Message) {
+	go func() {
+		// TODO: retry
+		originalID := message.GetID()
+		message.UpdateID()
+		resp, err := beehiveContext.SendSync(
+			string(metaManagerConfig.Config.ContextSendModule),
+			message,
+			time.Duration(metaManagerConfig.Config.RemoteQueryTimeout)*time.Second)
+		klog.Infof("########## process delete: resource[%s], err[%+v]", message.GetResource(), err)
+		klog.V(2).Infof("########## process delete: req[%+v], resp[%+v], err[%+v]", message, resp, err)
+		if err != nil {
+			klog.Errorf("remote delete failed: %v", err)
+			feedbackError(err, "Error to remote delete", message)
+			return
+		}
+
+		resp.BuildHeader(resp.GetID(), originalID, resp.GetTimestamp())
+		sendToEdged(&resp, message.IsSync())
+
+		respToCloud := message.NewRespByMessage(&resp, OK)
+		sendToCloud(respToCloud)
+	}()
 }
 
 func (m *metaManager) processQuery(message model.Message) {
