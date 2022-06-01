@@ -24,6 +24,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
 	statustest "k8s.io/kubernetes/pkg/kubelet/status/testing"
+	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
 
 	"github.com/kubeedge/beehive/pkg/common"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -110,13 +111,9 @@ func TestUpdatePodStatusSucceed(t *testing.T) {
 
 	time.Sleep(2 * time.Second)
 
-	statusVersion, exist := manager.apiStatusVersions[testPod.GetUID()]
+	_, exist := manager.apiStatusVersions[kubetypes.MirrorPodUID(testPod.GetUID())]
 	if !exist {
 		t.Fatalf("pod %s status should exist in apiStatusVersions", testPod.GetName())
-	}
-
-	if statusVersion.Reason != newReason {
-		t.Fatalf("expected statusVersion.Reason %s, but got %s", newReason, statusVersion.Reason)
 	}
 }
 
@@ -147,7 +144,7 @@ func TestUpdatePodStatusFailure(t *testing.T) {
 	waitTime := 20 * time.Second
 
 	<-time.After(waitTime)
-	_, exist := manager.apiStatusVersions[testPod.GetUID()]
+	_, exist := manager.apiStatusVersions[kubetypes.MirrorPodUID(testPod.GetUID())]
 	if exist {
 		t.Fatalf("pod %s status should not exist in apiStatusVersions", testPod.GetName())
 	}
