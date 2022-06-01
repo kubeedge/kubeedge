@@ -109,8 +109,8 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 	if ok {
 		kubeVer = util.CheckIfAvailable(flgData.Val.(string), flgData.DefVal.(string))
 	}
+	var latestVersion string
 	if kubeVer == "" {
-		var latestVersion string
 		for i := 0; i < util.RetryTimes; i++ {
 			version, err := util.GetLatestVersion()
 			if err != nil {
@@ -128,6 +128,25 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 			fmt.Println("Failed to get the latest KubeEdge release version, will use default version: ", kubeVer)
 		}
 	}
+
+	// For cloud binary installation, we will use the remote github release to download service file and install CRDs
+	// So we must ensure the remote version exist
+	// if the specified kubeedge version is greater than the latest version
+	// that means we haven't released the specified version, only occur in keadm e2e test
+	// we will use the latest version to download service file and install CRDs
+	if len(latestVersion) != 0 {
+		if v, err := semver.Parse(strings.TrimPrefix(latestVersion, "v")); err == nil {
+			if version, err := semver.Parse(kubeVer); err == nil {
+				if version.GT(v) {
+					// use the latest version
+					kubeVer = strings.TrimPrefix(latestVersion, "v")
+				}
+			}
+		}
+	}
+
+	fmt.Printf("keadm will use version %s kubeedge\n", kubeVer)
+
 	common := util.Common{
 		ToolVersion: semver.MustParse(kubeVer),
 		KubeConfig:  initOptions.KubeConfig,
