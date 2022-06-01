@@ -1160,7 +1160,7 @@ func (e *edged) syncPod() {
 			klog.Errorf("get message content data failed: %v", err)
 			continue
 		}
-		klog.Infof("result content is %s", result.Content)
+		klog.V(4).Infof("result content is %s", result.Content)
 		switch resType {
 		case model.ResourceTypePod:
 			if op == model.ResponseOperation && resID == "" && result.GetSource() == metamanager.MetaManagerModuleName {
