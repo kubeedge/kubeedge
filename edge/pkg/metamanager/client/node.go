@@ -85,19 +85,19 @@ func handleNodeFromMetaDB(content []byte) (*api.Node, error) {
 		return nil, fmt.Errorf("node length from meta db is %d", len(lists))
 	}
 
-	var node *api.Node
+	var node api.Node
 	err = json.Unmarshal([]byte(lists[0]), &node)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal message to node from db failed, err: %v", err)
 	}
-	return node, nil
+	return &node, nil
 }
 
 func handleNodeFromMetaManager(content []byte) (*api.Node, error) {
-	var node *api.Node
+	var node api.Node
 	err := json.Unmarshal(content, &node)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal message to node failed, err: %v", err)
 	}
-	return node, nil
+	return &node, nil
 }
