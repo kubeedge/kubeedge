@@ -80,19 +80,19 @@ func handlePersistentVolumeClaimFromMetaDB(content []byte) (*api.PersistentVolum
 		return nil, fmt.Errorf("persistentvolumeclaim length from meta db is %d", len(lists))
 	}
 
-	var pvc *api.PersistentVolumeClaim
+	var pvc api.PersistentVolumeClaim
 	err = json.Unmarshal([]byte(lists[0]), &pvc)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal message to persistentvolumeclaim from db failed, err: %v", err)
 	}
-	return pvc, nil
+	return &pvc, nil
 }
 
 func handlePersistentVolumeClaimFromMetaManager(content []byte) (*api.PersistentVolumeClaim, error) {
-	var pvc *api.PersistentVolumeClaim
+	var pvc api.PersistentVolumeClaim
 	err := json.Unmarshal(content, &pvc)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal message to persistentvolumeclaim failed, err: %v", err)
 	}
-	return pvc, nil
+	return &pvc, nil
 }
