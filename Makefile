@@ -159,8 +159,9 @@ integrationtest:
 	edge/test/integration/scripts/execute.sh
 endif
 
-GOARM_VALUES=GOARM7 \
-	GOARM8
+ARCHITECTURE_VALUES=arm64 \
+	arm \
+	riscv64
 
 define CROSSBUILD_HELP_INFO
 # cross build components.
@@ -169,8 +170,8 @@ define CROSSBUILD_HELP_INFO
 #   WHAT: Component names to be lint check. support: $(BINARIES)
 #         If not specified, "everything" will be cross build.
 #
-# ARM_VERSION: go arm value, now support:$(GOARM_VALUES)
-#        If not specified, build binary for ARMv8 by default.
+# ARCHITECTURE: go arch value, now support:$(ARCHITECTURE_VALUES)
+#        If not specified, build binary for arm64 by default.
 #
 #
 # Example:
@@ -178,7 +179,7 @@ define CROSSBUILD_HELP_INFO
 #   make crossbuild HELP=y
 #   make crossbuild WHAT=edgecore
 #   make crossbuild WHAT=edgecore BUILD_WITH_CONTAINER=false
-#   make crossbuild WHAT=edgecore ARM_VERSION=GOARM7
+#   make crossbuild WHAT=edgecore ARCHITECTURE=arm64
 #
 endef
 .PHONY: crossbuild
@@ -187,10 +188,10 @@ crossbuild:
 	@echo "$$CROSSBUILD_HELP_INFO"
 else ifeq ($(BUILD_WITH_CONTAINER),true)
 crossbuild:
-	$(RUN) hack/make-rules/crossbuild.sh $(WHAT) $(ARM_VERSION)
+	$(RUN) hack/make-rules/crossbuild.sh $(WHAT) $(ARCHITECTURE)
 else
 crossbuild:
-	hack/make-rules/crossbuild.sh $(WHAT) $(ARM_VERSION)
+	hack/make-rules/crossbuild.sh $(WHAT) $(ARCHITECTURE)
 endif
 
 CRD_VERSIONS=v1
@@ -405,7 +406,7 @@ define RELEASE_HELP_INFO
 #   make release HELP=y
 #   make release WHAT=kubeedge
 #   make release WHAT=kubeedge BUILD_WITH_CONTAINER=false
-#   make release WHAT=kubeedge ARM_VERSION=GOARM7
+#   make release WHAT=kubeedge ARCHITECTURE=ARMv8
 #
 endef
 .PHONY: release
@@ -414,8 +415,8 @@ release:
 	@echo "$$RELEASE_HELP_INFO"
 else ifeq ($(BUILD_WITH_CONTAINER),true)
 release:
-	$(RUN) hack/make-rules/release.sh $(WHAT) $(ARM_VERSION)
+	$(RUN) hack/make-rules/release.sh $(WHAT) $(ARCHITECTURE)
 else
 release:
-	hack/make-rules/release.sh $(WHAT) $(ARM_VERSION)
+	hack/make-rules/release.sh $(WHAT) $(ARCHITECTURE)
 endif

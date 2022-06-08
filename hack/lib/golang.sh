@@ -239,32 +239,33 @@ kubeedge::golang::build_binaries() {
 
 }
 
-KUBEEDGE_ALL_CROSS_GOARMS=(
-8
-7
-)
-
-kubeedge::golang::is_supported_goarm() {
-  local key=$1
-  for value in ${KUBEEDGE_ALL_CROSS_GOARMS[@]} ; do
-    if [ "${value}" == "${key}" ]; then
-      echo ${YES}
-      return
-    fi
-  done
-  echo ${NO}
-}
-
 kubeedge::golang::cross_build_place_binaries() {
   kubeedge::check::env
 
   local -a targets=()
-  local goarm=${goarm:-${KUBEEDGE_ALL_CROSS_GOARMS[0]}}
+
+  # By default, we will compile ARMv8 binaries
+  CC_FLAG="aarch64-linux-gnu-gcc"
+  GOOS_FLAG="linux"
+  GOARCH_FLAG="arm64"
+  GOARM_FLAG=""
 
   for arg in "$@"; do
-      if [[ "${arg}" == GOARM* ]]; then
-        # Assume arguments starting with a dash are flags to pass to go.
-        goarm="${arg##*GOARM}"
+      if [[ "${arg}" == arm ]]; then
+        CC_FLAG="arm-linux-gnueabihf-gcc"
+        GOOS_FLAG="linux"
+        GOARCH_FLAG="arm"
+        GOARM_FLAG="7"
+      elif [[ "${arg}" == arm64 ]]; then
+        CC_FLAG="aarch64-linux-gnu-gcc"
+        GOOS_FLAG="linux"
+        GOARCH_FLAG="arm64"
+        GOARM_FLAG=""
+      elif [[ "${arg}" == riscv64 ]]; then
+        CC_FLAG="riscv64-linux-gnu-gcc"
+        GOOS_FLAG="linux"
+        GOARCH_FLAG="riscv64"
+        GOARM_FLAG=""
       else
         targets+=("$(kubeedge::golang::get_target_by_binary $arg)")
       fi
@@ -272,11 +273,6 @@ kubeedge::golang::cross_build_place_binaries() {
 
   if [[ ${#targets[@]} -eq 0 ]]; then
     targets+=("${KUBEEDGE_ALL_TARGETS[@]}")
-  fi
-
-  if [ "$(kubeedge::golang::is_supported_goarm ${goarm})" == "${NO}" ]; then
-    echo "GOARM${goarm} does not support cross build"
-    exit 1
   fi
 
   local -a binaries
@@ -287,18 +283,12 @@ kubeedge::golang::cross_build_place_binaries() {
 
   mkdir -p ${KUBEEDGE_OUTPUT_BINPATH}
   for bin in ${binaries[@]}; do
-    echo "cross building $bin GOARM${goarm}"
+    echo "cross building $bin ${GOARCH_FLAG}"
     local name="${bin##*/}"
-    if [ "${goarm}" == "8" ]; then
-      set -x
-      GOARM="" # need to clear the value since golang compiler doesn't allow this env when building the binary for ARMv8.
-      GOARCH=arm64 GOOS="linux" CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc go build -o ${KUBEEDGE_OUTPUT_BINPATH}/${name} -ldflags "$ldflags" $bin
-      set +x
-    elif [ "${goarm}" == "7" ]; then
-      set -x
-      GOARCH=arm GOOS="linux" GOARM=${goarm} CGO_ENABLED=1 CC=arm-linux-gnueabihf-gcc go build -o ${KUBEEDGE_OUTPUT_BINPATH}/${name} -ldflags "$ldflags" $bin
-      set +x
-    fi
+
+    set -x
+    GOARCH="${GOARCH_FLAG}" GOARM="${GOARM_FLAG}" GOOS="${GOOS_FLAG}" CC="${CC_FLAG}" CGO_ENABLED=1 go build -o ${KUBEEDGE_OUTPUT_BINPATH}/${name} -ldflags "$ldflags" $bin
+    set +x
   done
 }
 
