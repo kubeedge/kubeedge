@@ -825,6 +825,19 @@ func downloadServiceFile(componentType types.ComponentType, version semver.Versi
 		}
 		ServiceFilePath := storeDir + "/" + ServiceFileName
 		strippedVersion := fmt.Sprintf("%d.%d", version.Major, version.Minor)
+
+		// if the specified the version is greater than the latest version
+		// this means we haven't released the version, this may only occur in keadm e2e test
+		// in this case, we will download the latest version service file
+		if latestVersion, err := GetLatestVersion(); err == nil {
+			if v, err := semver.Parse(strings.TrimPrefix(latestVersion, "v")); err == nil {
+				if version.GT(v) {
+					strippedVersion = fmt.Sprintf("%d.%d", v.Major, v.Minor)
+				}
+			}
+		}
+		fmt.Printf("keadm will download version %s service file\n", strippedVersion)
+
 		ServiceFileURL := fmt.Sprintf(ServiceFileURLFormat, strippedVersion, ServiceFileName)
 		if _, err := os.Stat(ServiceFilePath); err != nil {
 			if os.IsNotExist(err) {
