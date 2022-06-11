@@ -19,11 +19,13 @@ package controller
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"strconv"
 	"time"
 
 	"github.com/google/uuid"
+	appv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -60,6 +62,10 @@ const (
 	DeviceProfileConfigPrefix = "device-profile-config-"
 
 	DeviceProfileJSON = "deviceProfile.json"
+
+	Image              = "image"
+	App                = "app"
+	DeviceConfigVolume = "device-config-volume"
 )
 
 // DownstreamController watch kubernetes api server and send change to edge
@@ -164,6 +170,113 @@ func (dc *DownstreamController) syncDevice() {
 				klog.Warningf("Device event type: %s unsupported", e.Type)
 			}
 		}
+	}
+}
+
+// addDeviceMapper is function to add deviceMapper deployment
+func (dc *DownstreamController) addDeviceMapper(device *v1alpha2.Device, nodeName, image string) {
+	protocol, err := getProtocolNameOfDevice(device)
+	if err != nil {
+		klog.Warningf("fail to get the protocol name of device %s with err: %v", device.Name, err)
+		return
+	}
+
+	// if the deployment of mapper for the specific protocol on the specific node exists
+	// or cloudcore cannot get deployment from k8s,
+	// cloudcore will do nothing
+	mapperName := fmt.Sprintf("mapper-%s-%s", nodeName, protocol)
+	_, err = dc.kubeClient.AppsV1().Deployments(device.Namespace).Get(context.Background(), mapperName, metav1.GetOptions{})
+	if err != nil && !apierrors.IsNotFound(err) {
+		klog.Warningf("Failed to get mapper deployment %s in namespace %s, error %v", mapperName, device.Namespace, err)
+		return
+	}
+
+	if err == nil {
+		klog.Infof("the mapper deployment %s has existed on the node %s. do not need to create one.", mapperName, nodeName)
+		return
+	}
+
+	// if the deployment does not exist, cloudcore will create a default one using mapperName, namespace, nodeName and image
+	klog.Infof("the mapper deployment %s has not existed on the node %s. create one.", mapperName, nodeName)
+	mdp := generateMapperDeployment(mapperName, device.Namespace, nodeName, image)
+	if _, err := dc.kubeClient.AppsV1().Deployments(device.Namespace).Create(context.Background(), &mdp, metav1.CreateOptions{}); err != nil {
+		klog.Warningf("Failed to create mapper deployment %s in namespace %v, error %v", mapperName, device.Namespace, err)
+		return
+	}
+}
+
+// getProtocolNameOfDevice get the protocol name of a device
+func getProtocolNameOfDevice(device *v1alpha2.Device) (string, error) {
+	protocol := device.Spec.Protocol
+	if protocol.OpcUA != nil {
+		return OPCUA, nil
+	}
+	if protocol.Modbus != nil {
+		return Modbus, nil
+	}
+	if protocol.Bluetooth != nil {
+		return Bluetooth, nil
+	}
+	if protocol.CustomizedProtocol != nil {
+		return protocol.CustomizedProtocol.ProtocolName, nil
+	}
+	return "", fmt.Errorf("cannot find protocol name for device %s", device.Name)
+}
+
+// getImageOfDevice get the mapper image from the device annotation
+func getImageOfDevice(device *v1alpha2.Device) (string, error) {
+	if device.Annotations == nil {
+		return "", fmt.Errorf("device annotattion is empty")
+	}
+	image, ok := device.Annotations[Image]
+	if !ok || image == "" {
+		return "", fmt.Errorf("device image is empty in annotattion")
+	}
+	return image, nil
+}
+
+// generateMapperDeployment generate the deployment for a mapper
+func generateMapperDeployment(mapperName, namespace, nodeName, mapperImage string) appv1.Deployment {
+	appLabelInfo := map[string]string{
+		App: mapperName,
+	}
+	return appv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      mapperName,
+			Namespace: namespace,
+			Labels:    appLabelInfo,
+		},
+		Spec: appv1.DeploymentSpec{
+			Selector: &metav1.LabelSelector{
+				MatchLabels: appLabelInfo,
+			},
+			Template: v1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: appLabelInfo,
+				},
+				Spec: v1.PodSpec{
+					RestartPolicy: v1.RestartPolicyAlways,
+					NodeName:      nodeName,
+					Volumes: []v1.Volume{
+						{
+							Name: DeviceConfigVolume,
+							VolumeSource: v1.VolumeSource{
+								ConfigMap: &v1.ConfigMapVolumeSource{
+									LocalObjectReference: v1.LocalObjectReference{Name: DeviceProfileConfigPrefix + nodeName},
+								},
+							},
+						},
+					},
+					Containers: []v1.Container{
+						{
+							Name:            mapperName,
+							Image:           mapperImage,
+							ImagePullPolicy: v1.PullIfNotPresent,
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -389,6 +502,13 @@ func (dc *DownstreamController) deviceAdded(device *v1alpha2.Device) {
 	dc.deviceManager.Device.Store(device.Name, device)
 	if len(device.Spec.NodeSelector.NodeSelectorTerms) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values) != 0 {
 		dc.addToConfigMap(device)
+		// if the user fill the mapper image in device annotation, devicecontroller will create a mapper on the specific node with this image.
+		// if the user does not fill it, devicecontroller will skip the step of addDeviceMapper and everything will go as before.
+		image, err := getImageOfDevice(device)
+		if err == nil {
+			dc.addDeviceMapper(device, device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], image)
+		}
+
 		edgeDevice := createDevice(device)
 		msg := model.NewMessage("")
 
