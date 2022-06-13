@@ -89,10 +89,10 @@ func handlePersistentVolumeFromMetaDB(content []byte) (*api.PersistentVolume, er
 }
 
 func handlePersistentVolumeFromMetaManager(content []byte) (*api.PersistentVolume, error) {
-	var pv *api.PersistentVolume
+	var pv api.PersistentVolume
 	err := json.Unmarshal(content, &pv)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal message to persistentvolume failed, err: %v", err)
 	}
-	return pv, nil
+	return &pv, nil
 }
