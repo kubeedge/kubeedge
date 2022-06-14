@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright 2020 The KubeEdge Authors.
+# Copyright 2021 The KubeEdge Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,23 +17,19 @@
 KUBEEDGE_ROOT=$PWD
 WORKDIR=$(dirname $0)
 E2E_DIR=$(realpath $(dirname $0)/..)
+IMAGE_TAG=$(git describe --tags)
+KUBEEDGE_VERSION=$IMAGE_TAG
 
 debugflag="-test.v -ginkgo.v"
-source "${KUBEEDGE_ROOT}/hack/lib/golang.sh"
-kubeedge::version::get_version_info
-VERSION=${GIT_VERSION}
 
 function cleanup() {
   sudo pkill edgecore || true
-  sudo pkill cloudcore || true
+  helm uninstall cloudcore -n kubeedge && kubectl delete ns kubeedge  || true
   kind delete cluster --name test
   sudo rm -rf /var/log/kubeedge /etc/kubeedge /etc/systemd/system/edgecore.service $E2E_DIR/keadm/keadm.test $E2E_DIR/config.json
-  sudo rm -rf ${KUBEEDGE_ROOT}/_output/release/${VERSION}/
 }
 
-function build_keadm() {
-  cd $KUBEEDGE_ROOT
-  make all WHAT=keadm
+function build_ginkgo() {
   cd $E2E_DIR
   ginkgo build -r keadm/
 }
@@ -50,25 +46,33 @@ function prepare_cluster() {
   kubectl delete daemonset kindnet -nkube-system
 }
 
-function start_kubeedge() {
-  local KUBEEDGE_VERSION="$@"
+function build_image() {
+  cd $KUBEEDGE_ROOT
+  make image WHAT=cloudcore -f $KUBEEDGE_ROOT/Makefile
+  make image WHAT=installation-package -f $KUBEEDGE_ROOT/Makefile
+  kind load docker-image kubeedge/cloudcore:$IMAGE_TAG --name test
+  kind load docker-image kubeedge/installation-package:$IMAGE_TAG --name test
+}
 
+function start_kubeedge() {
   sudo mkdir -p /var/lib/kubeedge
   cd $KUBEEDGE_ROOT
+  export MASTER_IP=`kubectl get node test-control-plane -o jsonpath={.status.addresses[0].address}`
   export KUBECONFIG=$HOME/.kube/config
+  docker run --rm kubeedge/installation-package:$IMAGE_TAG cat /usr/local/bin/keadm > /usr/local/bin/keadm && chmod +x /usr/local/bin/keadm
 
-  sudo -E _output/local/bin/keadm init --kube-config=$KUBECONFIG --advertise-address=127.0.0.1 --kubeedge-version=${KUBEEDGE_VERSION}
-  export MASTER_IP=`docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' test-control-plane`
-
+  /usr/local/bin/keadm init --advertise-address=$MASTER_IP --profile version=$KUBEEDGE_VERSION --set cloudCore.service.enable=false --kube-config=$KUBECONFIG --force
+  
   # ensure tokensecret is generated
   while true; do
       sleep 3
       kubectl get secret -nkubeedge 2>/dev/null | grep -q tokensecret && break
   done
-
-  export TOKEN=$(sudo _output/local/bin/keadm gettoken --kube-config=$KUBECONFIG)
+  
+  cd $KUBEEDGE_ROOT
+  export TOKEN=$(sudo /usr/local/bin/keadm gettoken --kube-config=$KUBECONFIG)
   sudo systemctl set-environment CHECK_EDGECORE_ENVIRONMENT="false"
-  sudo -E CHECK_EDGECORE_ENVIRONMENT="false" _output/local/bin/keadm join --token=$TOKEN --cloudcore-ipport=127.0.0.1:10000 --edgenode-name=edge-node --kubeedge-version=${KUBEEDGE_VERSION}
+  sudo -E CHECK_EDGECORE_ENVIRONMENT="false" /usr/local/bin/keadm join --token=$TOKEN --cloudcore-ipport=$MASTER_IP:10000 --edgenode-name=edge-node --kubeedge-version=$KUBEEDGE_VERSION
 
   #Pre-configurations required for running the suite.
   #Any new config addition required corresponding code changes.
@@ -111,6 +115,7 @@ function run_test() {
       exit 1
   else
       echo "Integration suite successfully passed all the tests !!"
+      exit 0
   fi
 }
 
@@ -118,41 +123,19 @@ set -Ee
 trap cleanup EXIT
 trap cleanup ERR
 
-echo -e "\nUsing latest commit code to do keadm_e2e test..."
-
-echo -e "\nBuilding keadm..."
-build_keadm
+echo -e "\nBuilding ginkgo test cases..."
+build_ginkgo
 
 export KUBECONFIG=$HOME/.kube/config
 
 echo -e "\nPreparing cluster..."
 prepare_cluster
 
-kubeedge_version=${VERSION: 1}
-#if we use the local release version compiled with the latest codes, we need to copy release file and checksum file.
-sudo mkdir -p /etc/kubeedge
-
-sudo cp ${KUBEEDGE_ROOT}/_output/release/${VERSION}/kubeedge-${VERSION}-linux-amd64.tar.gz ${KUBEEDGE_ROOT}/_output/release/${VERSION}/checksum_kubeedge-${VERSION}-linux-amd64.tar.gz.txt /etc/kubeedge
-
-echo -e "\nStarting kubeedge..." ${kubeedge_version}
-start_kubeedge ${kubeedge_version}
-
-echo -e "\nRunning test..."
-run_test
-
-# clean the before test
-cleanup
-
-echo -e "\nUsing latest official release version to do keadm_e2e test..."
-
-echo -e "\nBuilding keadm..."
-build_keadm
-
-echo -e "\nPreparing cluster..."
-prepare_cluster
+echo -e "\nBuilding cloud image..."
+build_image
 
 echo -e "\nStarting kubeedge..."
-start_kubeedge ""
+start_kubeedge
 
 echo -e "\nRunning test..."
 run_test

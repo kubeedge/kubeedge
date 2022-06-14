@@ -14,40 +14,37 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package beta
+package deprecated
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"os"
 	"strings"
 
-	dockertypes "github.com/docker/docker/api/types"
-	dockerfilters "github.com/docker/docker/api/types/filters"
-	dockerclient "github.com/docker/docker/client"
 	"github.com/spf13/cobra"
 	phases "k8s.io/kubernetes/cmd/kubeadm/app/cmd/phases/reset"
 	utilruntime "k8s.io/kubernetes/cmd/kubeadm/app/util/runtime"
 	utilsexec "k8s.io/utils/exec"
 
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
-	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/helm"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
 
 var (
 	resetLongDescription = `
-keadm reset command can be executed in both cloud and edge node
+Deprecated:
+keadm deprecated reset command can be executed in both cloud and edge node
 In cloud node it shuts down the cloud processes of KubeEdge
 In edge node it shuts down the edge processes of KubeEdge
 `
 	resetExample = `
+Deprecated:
 For cloud node:
-keadm beta reset
+keadm deprecated reset
 
 For edge node:
-keadm beta reset
+keadm deprecated reset
 `
 )
 
@@ -57,17 +54,18 @@ func newResetOptions() *common.ResetOptions {
 	return opts
 }
 
-func NewKubeEdgeResetBeta() *cobra.Command {
+// NewDeprecatedKubeEdgeReset represents the reset command
+func NewDeprecatedKubeEdgeReset() *cobra.Command {
 	IsEdgeNode := false
 	reset := newResetOptions()
 
 	var cmd = &cobra.Command{
 		Use:     "reset",
-		Short:   "Teardowns KubeEdge (cloud(helm installed) & edge) component, is in beta trial use",
+		Short:   "Deprecated: Teardowns KubeEdge (cloud & edge) component",
 		Long:    resetLongDescription,
 		Example: resetExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			whoRunning, err := util.RunningModuleV2(reset)
+			whoRunning, err := util.RunningModule()
 			if err != nil {
 				return err
 			}
@@ -109,10 +107,6 @@ func NewKubeEdgeResetBeta() *cobra.Command {
 				return err
 			}
 
-			// cleanup mqtt container
-			if err := RemoveMqttContainer(); err != nil {
-				fmt.Printf("Failed to remove MQTT container: %v\n", err)
-			}
 			//4. TODO: clean status information
 
 			return nil
@@ -123,43 +117,11 @@ func NewKubeEdgeResetBeta() *cobra.Command {
 	return cmd
 }
 
-func RemoveMqttContainer() error {
-	ctx := context.Background()
-
-	cli, err := dockerclient.NewClientWithOpts(dockerclient.FromEnv)
-	if err != nil {
-		return fmt.Errorf("init docker dockerclient failed: %v", err)
-	}
-
-	options := dockertypes.ContainerListOptions{}
-	options.Filters = dockerfilters.NewArgs()
-	options.Filters.Add("ancestor", "eclipse-mosquitto:1.6.15")
-
-	mqttContainers, err := cli.ContainerList(ctx, options)
-	if err != nil {
-		fmt.Printf("List MQTT containers failed: %v\n", err)
-		return err
-	}
-
-	for _, c := range mqttContainers {
-		err = cli.ContainerRemove(ctx, c.ID, dockertypes.ContainerRemoveOptions{RemoveVolumes: true, Force: true})
-		if err != nil {
-			fmt.Printf("failed to remove MQTT container: %v\n", err)
-		}
-	}
-
-	return nil
-}
-
 // TearDownKubeEdge will bring down either cloud or edge components,
 // depending upon in which type of node it is executed
 func TearDownKubeEdge(isEdgeNode bool, kubeConfig string) error {
 	var ke common.ToolsInstaller
-	ke = &helm.KubeCloudHelmInstTool{
-		Common: util.Common{
-			KubeConfig: kubeConfig,
-		},
-	}
+	ke = &util.KubeCloudInstTool{Common: util.Common{KubeConfig: kubeConfig}}
 	if isEdgeNode {
 		ke = &util.KubeEdgeInstTool{Common: util.Common{}}
 	}
