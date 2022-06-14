@@ -173,7 +173,6 @@ func (ctx *Context) SendToGroup(moduleType string, message model.Message) {
 		case ch <- message:
 		default:
 			klog.Warningf("The module %s message channel is full, message: %+v", module, message)
-			ch <- message
 		}
 	}
 	if channelList := ctx.getTypeChannel(moduleType); channelList != nil {
