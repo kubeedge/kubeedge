@@ -18,7 +18,6 @@ KUBEEDGE_ROOT=$PWD
 WORKDIR=$(dirname $0)
 E2E_DIR=$(realpath $(dirname $0)/..)
 
-debugflag="-test.v -ginkgo.v"
 source "${KUBEEDGE_ROOT}/hack/lib/golang.sh"
 kubeedge::version::get_version_info
 VERSION=${GIT_VERSION}
@@ -70,16 +69,6 @@ function start_kubeedge() {
   sudo systemctl set-environment CHECK_EDGECORE_ENVIRONMENT="false"
   sudo -E CHECK_EDGECORE_ENVIRONMENT="false" _output/local/bin/keadm deprecated join --token=$TOKEN --cloudcore-ipport=127.0.0.1:10000 --edgenode-name=edge-node --kubeedge-version=${KUBEEDGE_VERSION}
 
-  #Pre-configurations required for running the suite.
-  #Any new config addition required corresponding code changes.
-  cat > $E2E_DIR/config.json <<END
-{
-        "image_url": ["nginx", "nginx"],
-        "k8smasterforkubeedge":"https://$MASTER_IP:6443",
-        "kubeconfigpath":"$KUBECONFIG"
-}
-END
-
   # ensure edgenode is ready
   while true; do
       sleep 3
@@ -90,7 +79,16 @@ END
 function run_test() {
   :> /tmp/testcase.log
   cd $E2E_DIR
-  ./keadm/keadm.test $debugflag 2>&1 | tee -a /tmp/testcase.log
+
+  export ACK_GINKGO_RC=true
+
+  ginkgo -v ./keadm/keadm.test -- \
+  --image-url=nginx \
+  --image-url=nginx \
+  --kube-master="https://$MASTER_IP:6443" \
+  --kubeconfig=$KUBECONFIG \
+  --test.v \
+  2>&1 | tee -a /tmp/testcase.log
 
   #stop the edgecore after the test completion
   grep  -e "Running Suite" -e "SUCCESS\!" -e "FAIL\!" /tmp/testcase.log | sed -r 's/\x1B\[([0-9];)?([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g' | sed -r 's/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g'
