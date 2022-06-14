@@ -36,9 +36,6 @@ cat >config.json<<END
 {
         "image_url": ["nginx", "nginx"],
         "k8smasterforkubeedge":"https://$MASTER_IP:6443",
-        "dockerhubusername":"user",
-        "dockerhubpassword":"password",
-        "mqttendpoint":"tcp://127.0.0.1:1884",
         "kubeconfigpath":"$KUBECONFIG"
 }
 END

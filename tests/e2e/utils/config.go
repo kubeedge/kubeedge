@@ -23,30 +23,17 @@ import (
 	"time"
 )
 
-type vmSpec struct {
-	IP       string `json:"ip"`
-	Username string `json:"username"`
-	Passwd   string `json:"password"`
-}
-
 //config.json decode struct
 type Config struct {
-	AppImageURL                    []string          `json:"image_url"`
-	K8SMasterForKubeEdge           string            `json:"k8smasterforkubeedge"`
-	Nodes                          map[string]vmSpec `json:"k8snodes"`
-	NumOfNodes                     int               `json:"node_num"`
-	ImageRepo                      string            `json:"imagerepo"`
-	K8SMasterForProvisionEdgeNodes string            `json:"k8smasterforprovisionedgenodes"`
-	CloudImageURL                  string            `json:"cloudimageurl"`
-	EdgeImageURL                   string            `json:"edgeimageurl"`
-	Namespace                      string            `json:"namespace"`
-	ControllerStubPort             int               `json:"controllerstubport"`
-	Protocol                       string            `json:"protocol"`
-	DockerHubUserName              string            `json:"dockerhubusername"`
-	DockerHubPassword              string            `json:"dockerhubpassword"`
-	MqttEndpoint                   string            `json:"mqttendpoint"`
-	KubeConfigPath                 string            `json:"kubeconfigpath"`
-	Token                          string            `json:"token"`
+	AppImageURL                    []string `json:"image_url"`
+	K8SMasterForKubeEdge           string   `json:"k8smasterforkubeedge"`
+	NumOfNodes                     int      `json:"node_num"`
+	K8SMasterForProvisionEdgeNodes string   `json:"k8smasterforprovisionedgenodes"`
+	CloudImageURL                  string   `json:"cloudimageurl"`
+	EdgeImageURL                   string   `json:"edgeimageurl"`
+	ControllerStubPort             int      `json:"controllerstubport"`
+	Protocol                       string   `json:"protocol"`
+	KubeConfigPath                 string   `json:"kubeconfigpath"`
 }
 
 //config struct
@@ -89,10 +76,6 @@ func getConfigPath() string {
 		path = "config.json"
 	}
 	return path
-}
-
-func RandomInt(min, max int) int {
-	return min + rand.Intn(max-min)
 }
 
 //function to Generate Random string
