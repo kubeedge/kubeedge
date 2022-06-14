@@ -111,11 +111,6 @@ func (r *RpmOS) IsKubeEdgeProcessRunning(proc string) (bool, error) {
 	return IsKubeEdgeProcessRunning(proc)
 }
 
-// IsProcessRunning checks if the given process is running or not
-func (r *RpmOS) IsProcessRunning(proc string) (bool, error) {
-	return IsKubeEdgeProcessRunning(proc)
-}
-
 func getOSVendorName() (string, error) {
 	cmd := NewCommand("cat /etc/os-release | grep -E \"^NAME=\" | awk -F'=' '{print $2}'")
 	if err := cmd.Exec(); err != nil {
