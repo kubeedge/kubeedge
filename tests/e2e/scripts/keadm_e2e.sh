@@ -20,8 +20,6 @@ E2E_DIR=$(realpath $(dirname $0)/..)
 IMAGE_TAG=$(git describe --tags)
 KUBEEDGE_VERSION=$IMAGE_TAG
 
-debugflag="-test.v -ginkgo.v"
-
 function cleanup() {
   sudo pkill edgecore || true
   helm uninstall cloudcore -n kubeedge && kubectl delete ns kubeedge  || true
@@ -74,16 +72,6 @@ function start_kubeedge() {
   sudo systemctl set-environment CHECK_EDGECORE_ENVIRONMENT="false"
   sudo -E CHECK_EDGECORE_ENVIRONMENT="false" /usr/local/bin/keadm join --token=$TOKEN --cloudcore-ipport=$MASTER_IP:10000 --edgenode-name=edge-node --kubeedge-version=$KUBEEDGE_VERSION
 
-  #Pre-configurations required for running the suite.
-  #Any new config addition required corresponding code changes.
-  cat > $E2E_DIR/config.json <<END
-{
-        "image_url": ["nginx", "nginx"],
-        "k8smasterforkubeedge":"https://$MASTER_IP:6443",
-        "kubeconfigpath":"$KUBECONFIG"
-}
-END
-
   # ensure edgenode is ready
   while true; do
       sleep 3
@@ -94,7 +82,12 @@ END
 function run_test() {
   :> /tmp/testcase.log
   cd $E2E_DIR
-  ./keadm/keadm.test $debugflag 2>&1 | tee -a /tmp/testcase.log
+  ginkgo ./keadm/keadm.test -- \
+  --image-url=nginx \
+  --image-url=nginx \
+  --kube-master="https://$MASTER_IP:6443" \
+  --kubeconfig=$KUBECONFIG \
+  2>&1 | tee -a /tmp/testcase.log
 
   #stop the edgecore after the test completion
   grep  -e "Running Suite" -e "SUCCESS\!" -e "FAIL\!" /tmp/testcase.log | sed -r 's/\x1B\[([0-9];)?([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g' | sed -r 's/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g'
