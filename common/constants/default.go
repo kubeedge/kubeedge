@@ -91,6 +91,8 @@ const (
 	DefaultUpdateNodeWorkers                 = 4
 	DefaultDeletePodWorkers                  = 4
 	DefaultUpdateRuleStatusWorkers           = 4
+	DefaultCreateLeaseWorkers                = 4
+	DefaultQueryLeaseWorkers                 = 4
 	DefaultServiceAccountTokenWorkers        = 4
 
 	DefaultUpdatePodStatusBuffer            = 1024
@@ -105,6 +107,8 @@ const (
 	DefaultQueryNodeBuffer                  = 1024
 	DefaultUpdateNodeBuffer                 = 1024
 	DefaultDeletePodBuffer                  = 1024
+	DefaultCreateLeaseBuffer                = 1024
+	DefaultQueryLeaseBuffer                 = 1024
 	DefaultServiceAccountTokenBuffer        = 1024
 
 	DefaultPodEventBuffer           = 1

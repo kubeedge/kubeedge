@@ -263,6 +263,12 @@ type EdgeControllerBuffer struct {
 	// DeletePod indicates the buffer of delete pod message from edge
 	// default 1024
 	DeletePod int32 `json:"deletePod,omitempty"`
+	// CreateLease indicates the buffer of create lease message from edge
+	// default 1024
+	CreateLease int32 `json:"createLease,omitempty"`
+	// QueryLease indicates the buffer of query lease message from edge
+	// default 1024
+	QueryLease int32 `json:"queryLease,omitempty"`
 	// ServiceAccount indicates the buffer of service account token
 	// default 1024
 	ServiceAccountToken int32 `json:"serviceAccountToken,omitempty"`
@@ -306,6 +312,12 @@ type EdgeControllerLoad struct {
 	// DeletePodWorkers indicates the load of delete pod workers
 	// default 4
 	DeletePodWorkers int32 `json:"deletePodWorkers,omitempty"`
+	// CreateLeaseWorkers indicates the load of create lease workers
+	// default 4
+	CreateLeaseWorkers int32 `json:"createLeaseWorkers,omitempty"`
+	// QueryLeaseWorkers indicates the load of query lease workers
+	// default 4
+	QueryLeaseWorkers int32 `json:"queryLeaseWorkers,omitempty"`
 	// UpdateRuleStatusWorkers indicates the load of update rule status
 	// default 4
 	UpdateRuleStatusWorkers int32 `json:"UpdateRuleStatusWorkers,omitempty"`

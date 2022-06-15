@@ -18,6 +18,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator/watchhook"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
@@ -199,10 +200,10 @@ func (s *imitator) Event(msg *model.Message) []watch.Event {
 	klog.V(4).Infof("[metaserver] get a message from metamanager: %+v", msg)
 	var ret []watch.Event
 	_, resType, _ := parseResource(msg.Router.Resource)
-	//skip nodestatus and podstatus
-	if strings.Contains(resType, "status") {
-		klog.V(4).Infof("skip status messages")
-		return ret
+	//skip nodestatus, podstatus and node-lease
+	if strings.Contains(resType, "status") || (strings.Contains(resType, "lease") && msg.GetSource() == modules.EdgedModuleName) {
+		klog.V(4).Infof("skip status or node-lease messages")
+		return []watch.Event{}
 	}
 	var bytes []byte
 	var err error
