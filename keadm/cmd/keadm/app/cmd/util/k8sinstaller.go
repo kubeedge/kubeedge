@@ -20,7 +20,9 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
+	"github.com/blang/semver"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -128,6 +130,19 @@ func installCRDs(ks *K8SInstTool) error {
 		},
 	}
 	version := fmt.Sprintf("%d.%d", ks.ToolVersion.Major, ks.ToolVersion.Minor)
+
+	// if the specified the version is greater than the latest version
+	// this means we haven't released the version, this may only occur in keadm e2e test
+	// in this case, we will install the latest version CRDs
+	if latestVersion, err := GetLatestVersion(); err == nil {
+		if v, err := semver.Parse(strings.TrimPrefix(latestVersion, "v")); err == nil {
+			if ks.ToolVersion.GT(v) {
+				version = fmt.Sprintf("%d.%d", v.Major, v.Minor)
+			}
+		}
+	}
+	fmt.Printf("keadm will install %s CRDs\n", version)
+
 	CRDDownloadURL := fmt.Sprintf(KubeEdgeCRDDownloadURL, version)
 	for dir := range crds {
 		crdPath := KubeEdgeCrdPath + "/" + dir

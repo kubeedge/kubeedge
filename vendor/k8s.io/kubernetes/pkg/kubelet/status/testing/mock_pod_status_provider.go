@@ -1,5 +1,5 @@
 /*
-Copyright 2022 The KubeEdge Authors.
+Copyright 2018 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,22 +14,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package beta
+package testing
 
 import (
-	"github.com/spf13/cobra"
+	"github.com/stretchr/testify/mock"
+
+	"k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
-// NewBeta represents the beta command
-func NewBeta() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "beta",
-		Short: "keadm beta command",
-		Long:  `keadm beta command provides some subcommands that are still in testing, but have complete functions and can be used in advance, but now it contains nothing`,
-	}
+// MockStatusProvider mocks a PodStatusProvider.
+type MockStatusProvider struct {
+	mock.Mock
+}
 
-	cmd.ResetFlags()
-
-	// here we will retain the beta sum-commands, in future we can add some beta commands
-	return cmd
+// GetPodStatus implements PodStatusProvider.
+func (m *MockStatusProvider) GetPodStatus(uid types.UID) (v1.PodStatus, bool) {
+	args := m.Called(uid)
+	return args.Get(0).(v1.PodStatus), args.Bool(1)
 }

@@ -11,7 +11,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 )
 
-const (
+var (
 	syncPeriod         = 10 * time.Millisecond
 	syncMsgRespTimeout = 1 * time.Minute
 )
@@ -105,7 +105,7 @@ func (s *send) SendSync(message *model.Message) (*model.Message, error) {
 		resp, err = beehiveContext.SendSync(metamanager.MetaManagerModuleName, *message, syncMsgRespTimeout)
 		retries++
 		if err == nil {
-			klog.V(4).Infof("send sync message %s successed and response: %v", message.GetResource(), resp)
+			klog.V(4).Infof("send sync message %s succeed and response: %v", message.GetResource(), resp)
 			return true, nil
 		}
 		if retries < 3 {
@@ -119,4 +119,12 @@ func (s *send) SendSync(message *model.Message) (*model.Message, error) {
 
 func (s *send) Send(message *model.Message) {
 	beehiveContext.Send(metamanager.MetaManagerModuleName, *message)
+}
+
+func SetSyncPeriod(time time.Duration) {
+	syncPeriod = time
+}
+
+func SetSyncMsgRespTimeout(time time.Duration) {
+	syncMsgRespTimeout = time
 }
