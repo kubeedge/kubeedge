@@ -83,8 +83,7 @@ function run_test() {
   :> /tmp/testcase.log
   cd $E2E_DIR
   ginkgo ./keadm/keadm.test -- \
-  --image-url=nginx \
-  --image-url=nginx \
+  --image-url=nginx,nginx \
   --kube-master="https://$MASTER_IP:6443" \
   --kubeconfig=$KUBECONFIG \
   2>&1 | tee -a /tmp/testcase.log

@@ -32,15 +32,13 @@ if [ $# -eq 0 ]
 then
     #run testcase
     ginkgo ./deployment/deployment.test -- \
-    --image-url=nginx \
-    --image-url=nginx \
+    --image-url=nginx,nginx \
     --kube-master="https://$MASTER_IP:6443" \
     --kubeconfig=$KUBECONFIG \
     2>&1 | tee -a /tmp/testcase.log
 else
    ginkgo ./$compilemodule/$compilemodule.test \
-    --image-url=nginx \
-    --image-url=nginx \
+    --image-url=nginx,nginx \
     --kube-master="https://$MASTER_IP:6443" \
     --kubeconfig=$KUBECONFIG \
    2>&1 | tee -a  /tmp/testcase.log
