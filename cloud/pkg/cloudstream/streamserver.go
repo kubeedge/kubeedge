@@ -306,15 +306,20 @@ func (s *StreamServer) Start() {
 		return
 	}
 	pool.AppendCertsFromPEM(data)
-
+	secureCiphers := tls.CipherSuites()
+	selectedCipherSuites := make([]uint16, 0, len(secureCiphers))
+	for _, s := range secureCiphers {
+		selectedCipherSuites = append(selectedCipherSuites, s.ID)
+	}
 	streamServer := &http.Server{
 		Addr:    fmt.Sprintf(":%d", config.Config.StreamPort),
 		Handler: s.container,
 		TLSConfig: &tls.Config{
 			ClientCAs: pool,
 			// Populate PeerCertificates in requests, but don't reject connections without verified certificates
-			ClientAuth: tls.RequestClientCert,
-			MinVersion: tls.VersionTLS12,
+			ClientAuth:   tls.RequestClientCert,
+			CipherSuites: selectedCipherSuites,
+			MinVersion:   tls.VersionTLS12,
 		},
 	}
 	klog.Infof("Prepare to start stream server ...")
