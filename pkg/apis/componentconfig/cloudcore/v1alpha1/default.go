@@ -106,6 +106,8 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					UpdateNode:                 constants.DefaultUpdateNodeBuffer,
 					PatchPod:                   constants.DefaultPatchPodBuffer,
 					DeletePod:                  constants.DefaultDeletePodBuffer,
+					CreateLease:                constants.DefaultCreateLeaseBuffer,
+					QueryLease:                 constants.DefaultQueryLeaseBuffer,
 					ServiceAccountToken:        constants.DefaultServiceAccountTokenBuffer,
 				},
 				Context: &ControllerContext{
@@ -130,6 +132,8 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					UpdateNodeWorkers:                 constants.DefaultUpdateNodeWorkers,
 					PatchPodWorkers:                   constants.DefaultPatchPodWorkers,
 					DeletePodWorkers:                  constants.DefaultDeletePodWorkers,
+					CreateLeaseWorkers:                constants.DefaultCreateLeaseWorkers,
+					QueryLeaseWorkers:                 constants.DefaultQueryLeaseWorkers,
 					UpdateRuleStatusWorkers:           constants.DefaultUpdateRuleStatusWorkers,
 					ServiceAccountTokenWorkers:        constants.DefaultServiceAccountTokenWorkers,
 				},

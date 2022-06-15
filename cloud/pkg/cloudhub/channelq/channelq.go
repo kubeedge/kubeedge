@@ -204,8 +204,8 @@ func isListResource(msg *beehiveModel.Message) bool {
 
 	if msg.GetSource() == modules.EdgeControllerModuleName {
 		resourceType, _ := edgemessagelayer.GetResourceType(*msg)
-		if resourceType == beehiveModel.ResourceTypeNode || resourceType == beehiveModel.ResourceTypeNodePatch ||
-			resourceType == beehiveModel.ResourceTypePodPatch {
+		if resourceType == beehiveModel.ResourceTypeNode || resourceType == beehiveModel.ResourceTypeLease ||
+			resourceType == beehiveModel.ResourceTypeNodePatch || resourceType == beehiveModel.ResourceTypePodPatch {
 			return true
 		}
 	}

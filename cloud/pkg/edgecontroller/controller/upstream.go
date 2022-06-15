@@ -35,6 +35,7 @@ import (
 	"time"
 
 	authenticationv1 "k8s.io/api/authentication/v1"
+	coordinationv1 "k8s.io/api/coordination/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -120,6 +121,8 @@ type UpstreamController struct {
 	patchPodChan              chan model.Message
 	podDeleteChan             chan model.Message
 	ruleStatusChan            chan model.Message
+	createLeaseChan           chan model.Message
+	queryLeaseChan            chan model.Message
 
 	// lister
 	podLister       corelisters.PodLister
@@ -177,6 +180,12 @@ func (uc *UpstreamController) Start() error {
 	}
 	for i := 0; i < int(uc.config.Load.DeletePodWorkers); i++ {
 		go uc.deletePod()
+	}
+	for i := 0; i < int(uc.config.Load.CreateLeaseWorkers); i++ {
+		go uc.createOrUpdateLease()
+	}
+	for i := 0; i < int(uc.config.Load.QueryLeaseWorkers); i++ {
+		go uc.queryLease()
 	}
 	for i := 0; i < int(uc.config.Load.UpdateRuleStatusWorkers); i++ {
 		go uc.updateRuleStatus()
@@ -249,12 +258,19 @@ func (uc *UpstreamController) dispatchMessage() {
 			}
 		case model.ResourceTypeRuleStatus:
 			uc.ruleStatusChan <- msg
-
+		case model.ResourceTypeLease:
+			switch msg.GetOperation() {
+			case model.InsertOperation, model.UpdateOperation:
+				uc.createLeaseChan <- msg
+			case model.QueryOperation:
+				uc.queryLeaseChan <- msg
+			}
 		default:
 			klog.Errorf("message: %s, resource type: %s unsupported", msg.GetID(), resourceType)
 		}
 	}
 }
+
 func (uc *UpstreamController) updateRuleStatus() {
 	for {
 		select {
@@ -1081,6 +1097,121 @@ func (uc *UpstreamController) queryNode() {
 	}
 }
 
+func (uc *UpstreamController) createOrUpdateLease() {
+	for {
+		select {
+		case <-beehiveContext.Done():
+			klog.Warning("stop queryLease")
+			return
+		case msg := <-uc.createLeaseChan:
+			klog.V(4).Infof("message: %s, operation is: %s, and resource is: %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
+
+			data, err := msg.GetContentData()
+			if err != nil {
+				klog.Warningf("message: %s process failure, get content data failed with error: %s", msg.GetID(), err)
+				continue
+			}
+
+			namespace, err := messagelayer.GetNamespace(msg)
+			if err != nil {
+				klog.Warningf("message: %s process failure, get namespace failed with error: %s", msg.GetID(), err)
+				return
+			}
+			name, err := messagelayer.GetResourceName(msg)
+			if err != nil {
+				klog.Warningf("message: %s process failure, get resource name failed with error: %s", msg.GetID(), err)
+				continue
+			}
+
+			lease := &coordinationv1.Lease{}
+			err = json.Unmarshal(data, lease)
+			if err != nil {
+				errLog := fmt.Sprintf("message: %s process failure, unmarshal marshaled message content with error: %s", msg.GetID(), err)
+				klog.Error(errLog)
+				uc.nodeMsgResponse(name, namespace, errLog, msg)
+				continue
+			}
+
+			switch msg.GetOperation() {
+			case model.InsertOperation:
+				resp, err := uc.kubeClient.CoordinationV1().Leases(namespace).Create(context.TODO(), lease, metaV1.CreateOptions{})
+				if err != nil {
+					errLog := fmt.Sprintf("create lease %s failed, error: %v", name, err)
+					klog.Error(errLog)
+				}
+
+				resMsg := model.NewMessage(msg.GetID()).
+					FillBody(&ObjectResp{Object: resp, Err: err}).
+					BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, msg.GetResource(), model.ResponseOperation)
+				if err = uc.messageLayer.Response(*resMsg); err != nil {
+					klog.Warningf("Response message: %s failed, response failed with error: %s", msg.GetID(), err)
+					continue
+				}
+
+				klog.V(4).Infof("message: %s, create lease successfully, namespace: %s, name: %s", msg.GetID(), namespace, name)
+
+			case model.UpdateOperation:
+				resp, err := uc.kubeClient.CoordinationV1().Leases(namespace).Update(context.TODO(), lease, metaV1.UpdateOptions{})
+				if err != nil {
+					errLog := fmt.Sprintf("update lease %s failed, error: %v", name, err)
+					klog.Error(errLog)
+				}
+
+				resMsg := model.NewMessage(msg.GetID()).
+					FillBody(&ObjectResp{Object: resp, Err: err}).
+					BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, msg.GetResource(), model.ResponseOperation)
+				if err = uc.messageLayer.Response(*resMsg); err != nil {
+					klog.Warningf("Response message: %s failed, response failed with error: %s", msg.GetID(), err)
+					continue
+				}
+
+				klog.V(4).Infof("message: %s, update lease successfully, namespace: %s, name: %s", msg.GetID(), namespace, name)
+
+			default:
+				klog.Warningf("message: %s process failure, operation: %s unsupported", msg.GetID(), msg.GetOperation())
+			}
+		}
+	}
+}
+
+func (uc *UpstreamController) queryLease() {
+	for {
+		select {
+		case <-beehiveContext.Done():
+			klog.Warning("stop queryLease")
+			return
+		case msg := <-uc.queryLeaseChan:
+			klog.V(4).Infof("message: %s, operation is: %s, and resource is: %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
+			namespace, err := messagelayer.GetNamespace(msg)
+			if err != nil {
+				klog.Warningf("message: %s process failure, get namespace failed with error: %s", msg.GetID(), err)
+				return
+			}
+			name, err := messagelayer.GetResourceName(msg)
+			if err != nil {
+				klog.Warningf("message: %s process failure, get resource name failed with error: %s", msg.GetID(), err)
+				return
+			}
+
+			leaseResp, err := uc.kubeClient.CoordinationV1().Leases(namespace).Get(context.TODO(), name, metaV1.GetOptions{})
+			if err != nil {
+				errLog := fmt.Sprintf("query lease %s failed, error: %v", name, err)
+				klog.Error(errLog)
+			}
+
+			resMsg := model.NewMessage(msg.GetID()).
+				FillBody(&ObjectResp{Object: leaseResp, Err: err}).
+				BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, msg.GetResource(), model.ResponseOperation)
+			if err = uc.messageLayer.Response(*resMsg); err != nil {
+				klog.Warningf("Response message: %s failed, response failed with error: %s", msg.GetID(), err)
+				continue
+			}
+
+			klog.V(4).Infof("message: %s, query lease successfully, namespace: %s, name: %s", msg.GetID(), namespace, name)
+		}
+	}
+}
+
 func (uc *UpstreamController) unmarshalPodStatusMessage(msg model.Message) (ns string, podStatuses []edgeapi.PodStatusRequest) {
 	ns, err := messagelayer.GetNamespace(msg)
 	if err != nil {
@@ -1233,6 +1364,8 @@ func NewUpstreamController(config *v1alpha1.EdgeController, factory k8sinformer.
 	uc.updateNodeChan = make(chan model.Message, config.Buffer.UpdateNode)
 	uc.patchPodChan = make(chan model.Message, config.Buffer.PatchPod)
 	uc.podDeleteChan = make(chan model.Message, config.Buffer.DeletePod)
+	uc.createLeaseChan = make(chan model.Message, config.Buffer.CreateLease)
+	uc.queryLeaseChan = make(chan model.Message, config.Buffer.QueryLease)
 	uc.ruleStatusChan = make(chan model.Message, config.Buffer.UpdateNodeStatus)
 	return uc, nil
 }

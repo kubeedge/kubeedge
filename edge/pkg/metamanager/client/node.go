@@ -14,12 +14,12 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 )
 
-//NodesGetter to get node interface
+// NodesGetter to get node interface
 type NodesGetter interface {
 	Nodes(namespace string) NodesInterface
 }
 
-//NodesInterface is interface for client nodes
+// NodesInterface is interface for client nodes
 type NodesInterface interface {
 	Create(*api.Node) (*api.Node, error)
 	Update(*api.Node) error
