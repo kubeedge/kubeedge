@@ -145,7 +145,7 @@ func (c *CommonResourceEventHandler) AddListener(s *SelectorListener) error {
 	if err != nil {
 		return fmt.Errorf("failed to list: %v", err)
 	}
-	s.sendAllObjects(ret, c.messageLayer)
+	s.sendAllObjects(ret, c)
 	c.listenersLock.Lock()
 	c.listeners[s.id] = s
 	c.listenersLock.Unlock()
