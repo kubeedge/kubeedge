@@ -171,6 +171,7 @@ jobs:
       - run: make e2e
 
       - uses: actions/upload-artifact@v3
+        if: always()
         with:
           name: e2e-test-logs
           path: |
