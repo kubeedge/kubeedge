@@ -149,17 +149,17 @@ const (
 	DockerShimEndpoint = "unix:///var/run/dockershim.sock"
 	//DockerShimEndpointDeprecated this is the deprecated dockershim endpoint
 	DockerShimEndpointDeprecated = "/var/run/dockershim.sock"
-	//DockershimRootDir givesthe default path to the dockershim root directory
+	//DockershimRootDir gives-the default path to the dockershim root directory
 	DockershimRootDir = "/var/lib/dockershim"
-	//HairpinMode only use forkubenetNetworkPlugin.Currently not working
+	//HairpinMode only use forkubenetNetworkPlugin.Currently, not working
 	HairpinMode = kubeletinternalconfig.HairpinVeth
-	//NonMasqueradeCIDR only use forkubenetNetworkPlugin.Currently not working
+	//NonMasqueradeCIDR only use forkubenetNetworkPlugin.Currently, not working
 	NonMasqueradeCIDR = "10.0.0.1/8"
 	//cgroupName used for check if the cgroup is mounted.(default "")
 	cgroupName = ""
 	// redirectContainerStream decide whether to redirect the container stream
 	redirectContainerStream = false
-	// ResolvConfDefault gives the default dns resolv configration file
+	// ResolvConfDefault gives the default dns resolve configuration file
 	ResolvConfDefault = "/etc/resolv.conf"
 )
 
@@ -1090,7 +1090,7 @@ func (e *edged) consumePodAddition(namespacedName *types.NamespacedName) error {
 		for _, r := range result.SyncResults {
 			if r.Error != kubecontainer.ErrCrashLoopBackOff && r.Error != images.ErrImagePullBackOff {
 				// Do not record an event here, as we keep all event logging for sync pod failures
-				// local to container runtime so we get better errors
+				// local to container runtime, so we get better errors
 				return fmt.Errorf("sync pod failed: %v", err)
 			}
 		}
@@ -1491,7 +1491,7 @@ func (e *edged) handleSecret(op string, content []byte) (err error) {
 	return
 }
 
-// ProbeVolumePlugins collects all volume plugins into an easy to use list.
+// ProbeVolumePlugins collects all volume plugins into an easy-to-use list.
 // PluginDir specifies the directory to search for additional third party
 // volume plugins.
 func ProbeVolumePlugins(pluginDir string) []volume.VolumePlugin {
