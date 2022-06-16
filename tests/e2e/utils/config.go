@@ -27,15 +27,23 @@ import (
 
 //config.json decode struct
 type Config struct {
-	AppImageURL                    []string `json:"image_url"`
-	K8SMasterForKubeEdge           string   `json:"k8smasterforkubeedge"`
-	NumOfNodes                     int      `json:"node_num"`
-	K8SMasterForProvisionEdgeNodes string   `json:"k8smasterforprovisionedgenodes"`
-	CloudImageURL                  string   `json:"cloudimageurl"`
-	EdgeImageURL                   string   `json:"edgeimageurl"`
-	ControllerStubPort             int      `json:"controllerstubport"`
-	Protocol                       string   `json:"protocol"`
-	KubeConfigPath                 string   `json:"kubeconfigpath"`
+	AppImageURL                    []string
+	K8SMasterForKubeEdge           string
+	NumOfNodes                     int
+	K8SMasterForProvisionEdgeNodes string
+	CloudImageURL                  string
+	EdgeImageURL                   string
+	ControllerStubPort             int
+	Protocol                       string
+	KubeConfigPath                 string
+	ReportDir                      string
+	ReportPrefix                   string
+	// SpecSummaryOutput is the file to write ginkgo.SpecSummary objects
+	// to as tests complete. Useful for debugging and test introspection.
+	SpecSummaryOutput string
+	// ProgressReportURL is the URL which progress updates will be posted
+	// to as tests complete. If empty, no updates are sent.
+	ProgressReportURL string
 }
 
 // config struct
@@ -46,6 +54,12 @@ func RegisterFlags(flags *flag.FlagSet) {
 	flags.StringVar(&config.KubeConfigPath, "kubeconfig", os.Getenv(clientcmd.RecommendedConfigPathEnvVar), "Path to kubeconfig containing embedded authinfo.")
 	flags.Var(cliflag.NewStringSlice(&config.AppImageURL), "image-url", "image url list for e2e")
 	flags.StringVar(&config.K8SMasterForKubeEdge, "kube-master", "", "the kubernetes master address")
+
+	flags.StringVar(&config.ReportPrefix, "report-prefix", "", "Optional prefix for JUnit XML reports. Default is empty, which doesn't prepend anything to the default name.")
+	flags.StringVar(&config.ReportDir, "report-dir", "", "Path to the directory where the JUnit XML reports should be saved. Default is empty, which doesn't generate these reports.")
+	flags.StringVar(&config.ProgressReportURL, "progress-report-url", "", "The URL to POST progress updates to as the suite runs to assist in aiding integrations. If empty, no messages sent.")
+	flags.StringVar(&config.SpecSummaryOutput, "spec-dump", "", "The file to dump all ginkgo.SpecSummary to after tests run. If empty, no objects are saved/printed.")
+
 }
 
 func CopyFlags(source *flag.FlagSet, target *flag.FlagSet) {
