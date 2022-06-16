@@ -1,6 +1,7 @@
 package edgehub
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -22,6 +23,13 @@ var groupMap = map[string]string{
 	"func":     modules.MetaGroup,
 	"user":     modules.BusGroup,
 }
+
+var (
+	// longThrottleLatency defines threshold for logging requests. All requests being
+	// throttled (via the provided rateLimiter) for more than longThrottleLatency will
+	// be logged.
+	longThrottleLatency = 1 * time.Second
+)
 
 func (eh *EdgeHub) initial() (err error) {
 	cloudHubClient, err := clients.GetClient()
@@ -141,6 +149,12 @@ func (eh *EdgeHub) routeToCloud() {
 			continue
 		}
 
+		err = eh.tryThrottle(message.GetID())
+		if err != nil {
+			klog.Errorf("msgID: %s, client rate limiter returned an error: %v ", message.GetID(), err)
+			continue
+		}
+
 		// post message to cloud hub
 		err = eh.sendToCloud(message)
 		if err != nil {
@@ -196,4 +210,22 @@ func (eh *EdgeHub) ifRotationDone() {
 			eh.reconnectChan <- struct{}{}
 		}
 	}
+}
+
+func (eh *EdgeHub) tryThrottle(msgID string) error {
+	now := time.Now()
+
+	err := eh.rateLimiter.Wait(context.TODO())
+	if err != nil {
+		return err
+	}
+
+	latency := time.Since(now)
+
+	message := fmt.Sprintf("Waited for %v due to client-side throttling, msgID: %s", latency, msgID)
+	if latency > longThrottleLatency {
+		klog.V(2).Info(message)
+	}
+
+	return nil
 }

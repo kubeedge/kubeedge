@@ -246,6 +246,12 @@ type EdgeHub struct {
 	// Heartbeat indicates heart beat (second)
 	// default 15
 	Heartbeat int32 `json:"heartbeat,omitempty"`
+	// MessageQPS is the QPS to allow while send message to cloudHub.
+	// DefaultQPS: 30
+	MessageQPS int32 `json:"messageQPS,omitempty"`
+	// MessageBurst is the burst to allow while send message to cloudHub.
+	// DefaultBurst: 60
+	MessageBurst int32 `json:"messageBurst,omitempty"`
 	// ProjectID indicates project id
 	// default e632aba927ea4ac2b575ec1603d56f10
 	ProjectID string `json:"projectID,omitempty"`
