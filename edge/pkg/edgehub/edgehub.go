@@ -80,8 +80,11 @@ func (eh *EdgeHub) Start() {
 		}
 		err := eh.initial()
 		if err != nil {
+
 			klog.Exitf("failed to init controller: %v", err)
+
 			return
+
 		}
 
 		waitTime := time.Duration(config.Config.Heartbeat) * time.Second * 2
@@ -91,6 +94,7 @@ func (eh *EdgeHub) Start() {
 			klog.Errorf("connection failed: %v, will reconnect after %s", err, waitTime.String())
 			time.Sleep(waitTime)
 			continue
+
 		}
 		// execute hook func after connect
 		eh.pubConnectInfo(true)
