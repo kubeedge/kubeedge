@@ -88,7 +88,7 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 				}
 			}
 
-			// Get edge node local ip only when the custiomInterfaceName has been set.
+			// Get edge node local ip only when the customInterfaceName has been set.
 			// Defaults to the local IP from the default interface by the default config
 			if config.Modules.Edged.CustomInterfaceName != "" {
 				ip, err := netutil.ChooseBindAddressForInterface(config.Modules.Edged.CustomInterfaceName)
