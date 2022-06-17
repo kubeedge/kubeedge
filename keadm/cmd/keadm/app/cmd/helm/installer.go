@@ -35,7 +35,7 @@ const (
 	DefaultProfileFilename = "version.yaml"
 	DefaultHelmValuesPath  = "values.yaml"
 
-	DefaultHelmTimeout = time.Duration(60 * time.Second)
+	DefaultHelmTimeout = 60 * time.Second
 
 	DefaultHelmInstall  = true
 	DefaultHelmWait     = true
@@ -277,7 +277,10 @@ func (cu *KubeCloudHelmInstTool) runHelmManifest(r *Renderer, stdout io.Writer) 
 	}
 	buf.WriteString(manifests)
 
-	stdout.Write(buf.Bytes())
+	_, err = stdout.Write(buf.Bytes())
+	if err != nil {
+		return fmt.Errorf("cannot write to stdout, error: %s", err.Error())
+	}
 	return nil
 }
 
