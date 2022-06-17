@@ -62,7 +62,7 @@ func NewSubDiagnose(object Diagnose) *cobra.Command {
 	switch object.Use {
 	case common.ArgDiagnoseNode:
 		cmd.Flags().StringVarP(&do.Config, common.EdgecoreConfig, "c", do.Config,
-			fmt.Sprintf("Specify configuration file, defalut is %s", common.EdgecoreConfigPath))
+			fmt.Sprintf("Specify configuration file, default is %s", common.EdgecoreConfigPath))
 	case common.ArgDiagnosePod:
 		cmd.Flags().StringVarP(&do.Namespace, "namespace", "n", do.Namespace, "specify namespace")
 	case common.ArgDiagnoseInstall:
