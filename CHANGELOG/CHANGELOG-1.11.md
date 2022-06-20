@@ -29,7 +29,7 @@ Users can deploy applications to several node groups without writing deployment 
 - Run different version of app instances in different node groups
 - Limit service endpoints in the same location as the client
 
-Introduce two new APIs below to implement Node Group Management.
+Introduced two new APIs below to implement Node Group Management.
 
 - **NodeGroup API**: represents a group of nodes that have the same labels.
 - **EdgeApplication API**: contains the template of the application orgainzed by node groups, and the information of how to deploy different editions of the application to different node groups.
@@ -53,7 +53,9 @@ Refer to the links for more details.
 ### Beta sub-commands in Keadm to GA
 
 Some new sub-commands in keadm move to GA, including containerized deployment, offline installation, etc.
-Original `init` and `join` are replaced by `beta init` and `beta join`.
+Original `init` and `join` behaviors are replaced by implementation from `beta init` and `beta join`:
+- CloudCore will be running in containers and managed by Kubernetes Deployment by default.
+- keadm now downloads releases that packed as container image to edge nodes for node setup.
 
 - `init`: CloudCore Helm Chart is integrated in init, which can be used to deploy containerized CloudCore.
 
@@ -85,5 +87,5 @@ Refer to the links for more details.
 
 ## Important Steps before Upgrading
 
-If you want to use keadm to deploy the KubeEdge v1.11.0, please note that the keadm `init` and `join` have been replaced by `beta init` and `beta join`.
+If you want to use keadm to deploy the KubeEdge v1.11.0, please note that the keadm `init` and `join` behaviors have been changed.
 
