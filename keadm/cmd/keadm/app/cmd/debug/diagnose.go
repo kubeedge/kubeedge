@@ -138,7 +138,7 @@ func DiagnoseNode(ops *common.DiagnoseOptions) error {
 		return fmt.Errorf("parse Edgecore config failed")
 	}
 
-	err = CheckRuntime(edgeconfig.Modules.Edged.RuntimeType)
+	err = CheckRuntime(edgeconfig.Modules.Edged.ContainerRuntime)
 	if err != nil {
 		return err
 	}

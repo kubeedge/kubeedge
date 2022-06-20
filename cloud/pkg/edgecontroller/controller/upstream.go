@@ -1055,13 +1055,13 @@ func (uc *UpstreamController) deletePod() {
 				if !ok {
 					continue
 				}
-				var period int64 = 0
+				var period int64
 				deleteOptions.GracePeriodSeconds = &period
 				// Use the pod UID as the precondition for deletion to prevent deleting a newly created pod with the same name and namespace.
 				deleteOptions.Preconditions = metaV1.NewUIDPreconditions(podUID)
 			} else {
 				err = json.Unmarshal(deleteByte, &deleteOptions)
-				if err != nil  {
+				if err != nil {
 					klog.Warningf("Failed to get podUID from msg, pod namesapce: %s, pod name: %s", namespace, name)
 					continue
 				}

@@ -111,8 +111,8 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 	var err error
 	if !enable {
 		return &edged{
-			enable:   enable,
-			nodeName: nodeName,
+			enable:    enable,
+			nodeName:  nodeName,
 			namespace: namespace,
 		}, nil
 	}
@@ -204,7 +204,6 @@ func (e *edged) syncPod(podCfg *config.PodConfig) {
 		}
 	}
 }
-
 
 // MakeKubeClientBridge make kubeclient bridge to replace kubeclient with metaclient
 func MakeKubeClientBridge(kubeletDeps *kubelet.Dependencies) {

@@ -260,7 +260,7 @@ type EdgeControllerBuffer struct {
 	QueryVolumeAttachment int32 `json:"queryVolumeAttachment,omitempty"`
 	// CreateNode indicates the buffer of create node
 	// default 1024
-	CreateNode int32 `json:"updateNode,omitempty"`
+	CreateNode int32 `json:"createNode,omitempty"`
 	// PatchNode indicates the buffer of patch node
 	// default 1024
 	PatchNode int32 `json:"patchNode,omitempty"`

@@ -19,8 +19,8 @@ package v1alpha1
 import (
 	"net"
 	"net/url"
-	"path"
 	"os"
+	"path"
 	"strconv"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -51,11 +51,12 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 	}
 	kubeletConfig.Authorization.Mode = kubeletconfig.KubeletAuthorizationModeAlwaysAllow
 	kubeletConfig.ContentType = "application/json"
-	kubeletConfig.NodeStatusUpdateFrequency = metav1.Duration{constants.DefaultNodeStatusUpdateFrequency}
-	kubeletConfig.VolumeStatsAggPeriod = metav1.Duration{constants.DefaultVolumeStatsAggPeriod}
+	kubeletConfig.NodeStatusUpdateFrequency = metav1.Duration{Duration: constants.DefaultNodeStatusUpdateFrequency}
+	kubeletConfig.VolumeStatsAggPeriod = metav1.Duration{Duration: constants.DefaultVolumeStatsAggPeriod}
 	kubeletConfig.ImageGCLowThresholdPercent = constants.DefaultImageGCLowThreshold
 	kubeletConfig.ImageGCHighThresholdPercent = constants.DefaultImageGCHighThreshold
 	kubeletConfig.ConfigMapAndSecretChangeDetectionStrategy = kubeletconfig.GetChangeDetectionStrategy
+	kubeletConfig.FailSwapOn = false
 
 	kubeletserver := kubeletoptions.KubeletServer{
 		KubeletFlags:         *kubeletFlags,
@@ -74,9 +75,9 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 		},
 		Modules: &Modules{
 			Edged: &Edged{
-				KubeletServer:               kubeletserver,
-				CustomInterfaceName:         "",
-				RegisterNodeNamespace:       constants.DefaultRegisterNodeNamespace,
+				KubeletServer:         kubeletserver,
+				CustomInterfaceName:   "",
+				RegisterNodeNamespace: constants.DefaultRegisterNodeNamespace,
 			},
 			EdgeHub: &EdgeHub{
 				Enable:            true,

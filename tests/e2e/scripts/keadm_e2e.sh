@@ -140,19 +140,3 @@ start_kubeedge ${kubeedge_version}
 echo -e "\nRunning test..."
 run_test
 
-# clean the before test
-cleanup
-
-echo -e "\nUsing latest official release version to do keadm_e2e test..."
-
-echo -e "\nBuilding keadm..."
-build_keadm
-
-echo -e "\nPreparing cluster..."
-prepare_cluster
-
-echo -e "\nStarting kubeedge..."
-start_kubeedge ""
-
-echo -e "\nRunning test..."
-run_test

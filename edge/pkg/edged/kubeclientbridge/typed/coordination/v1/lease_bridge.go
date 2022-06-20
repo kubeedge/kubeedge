@@ -17,7 +17,7 @@ type LeaseBridge struct {
 	MetaClient client.CoreInterface
 }
 
-func (c *LeaseBridge)  Create(ctx context.Context, lease *coordinationv1.Lease, opts metav1.CreateOptions) (result *coordinationv1.Lease, err error) {
+func (c *LeaseBridge) Create(ctx context.Context, lease *coordinationv1.Lease, opts metav1.CreateOptions) (result *coordinationv1.Lease, err error) {
 	return c.MetaClient.Leases(c.ns).Create(lease)
 }
 

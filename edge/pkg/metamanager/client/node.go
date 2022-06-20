@@ -36,7 +36,7 @@ type nodes struct {
 // NodeResp represents node response from the api-server
 type NodeResp struct {
 	Object *api.Node
-	Err apierrors.StatusError
+	Err    apierrors.StatusError
 }
 
 func newNodes(namespace string, s SendInterface) *nodes {
@@ -146,7 +146,7 @@ func handleNodeResp(content []byte) (*api.Node, error) {
 		return nil, fmt.Errorf("unmarshal message to node failed, err: %v", err)
 	}
 
-	if reflect.DeepEqual(nodeResp.Err, apierrors.StatusError{}){
+	if reflect.DeepEqual(nodeResp.Err, apierrors.StatusError{}) {
 		return nodeResp.Object, nil
 	}
 	return nodeResp.Object, &nodeResp.Err

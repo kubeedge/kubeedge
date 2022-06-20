@@ -265,7 +265,6 @@ func (m *metaManager) processPatch(message model.Message) {
 		respToCloud := message.NewRespByMessage(&resp, OK)
 		sendToCloud(respToCloud)
 	}()
-
 }
 
 func (m *metaManager) processResponse(message model.Message) {

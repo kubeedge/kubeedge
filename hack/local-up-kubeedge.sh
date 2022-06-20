@@ -123,11 +123,13 @@ function start_edgecore {
   token=`kubectl get secret -nkubeedge tokensecret -o=jsonpath='{.data.tokendata}' | base64 -d`
 
   sed -i -e "s|token: .*|token: ${token}|g" \
-      -e "s|hostnameOverride: .*|hostnameOverride: edge-node|g" \
+      -e "s|HostnameOverride: .*|HostnameOverride: edge-node|g" \
       -e "s|/etc/|/tmp/etc/|g" \
       -e "s|/var/lib/kubeedge/|/tmp&|g" \
       -e "s|mqttMode: .*|mqttMode: 0|g" \
       -e '/serviceBus:/{n;s/false/true/;}' ${EDGE_CONFIGFILE}
+
+  sed -i -e "s|/tmp/etc/resolv|/etc/resolv|g" ${EDGE_CONFIGFILE}
 
   EDGECORE_LOG=${LOG_DIR}/edgecore.log
 

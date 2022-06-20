@@ -24,6 +24,8 @@ import (
 	"testing"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	kubeletoptions "k8s.io/kubernetes/cmd/kubelet/app/options"
+	kubeletconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
 
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
@@ -80,16 +82,26 @@ func TestValidateModuleEdged(t *testing.T) {
 		{
 			name: "case1 not enabled",
 			input: v1alpha1.Edged{
-				Enable: false,
+				KubeletServer: kubeletoptions.KubeletServer{
+					KubeletConfiguration: kubeletconfig.KubeletConfiguration{
+						EnableServer: false,
+					},
+				},
 			},
 			result: field.ErrorList{},
 		},
 		{
 			name: "case2 not right CGroupDriver",
 			input: v1alpha1.Edged{
-				Enable:           true,
-				HostnameOverride: "example.com",
-				CGroupDriver:     "fake",
+				KubeletServer: kubeletoptions.KubeletServer{
+					KubeletFlags: kubeletoptions.KubeletFlags{
+						HostnameOverride: "example.com",
+					},
+					KubeletConfiguration: kubeletconfig.KubeletConfiguration{
+						EnableServer: true,
+						CgroupDriver: "fake",
+					},
+				},
 			},
 			result: field.ErrorList{field.Invalid(field.NewPath("CGroupDriver"), "fake",
 				"CGroupDriver value error")},
@@ -97,18 +109,31 @@ func TestValidateModuleEdged(t *testing.T) {
 		{
 			name: "case3 invalid hostname",
 			input: v1alpha1.Edged{
-				Enable:           true,
-				HostnameOverride: "Example%$#com",
-				CGroupDriver:     v1alpha1.CGroupDriverCGroupFS,
+				KubeletServer: kubeletoptions.KubeletServer{
+					KubeletFlags: kubeletoptions.KubeletFlags{
+						HostnameOverride: "Example%$#com",
+					},
+					KubeletConfiguration: kubeletconfig.KubeletConfiguration{
+						EnableServer: true,
+						CgroupDriver: v1alpha1.CGroupDriverCGroupFS,
+					},
+				},
 			},
 			result: field.ErrorList{field.Invalid(field.NewPath("HostnameOverride"), "Example%$#com", `a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*')`)},
 		},
 		{
 			name: "case4 success",
+
 			input: v1alpha1.Edged{
-				Enable:           true,
-				HostnameOverride: "example.com",
-				CGroupDriver:     v1alpha1.CGroupDriverCGroupFS,
+				KubeletServer: kubeletoptions.KubeletServer{
+					KubeletFlags: kubeletoptions.KubeletFlags{
+						HostnameOverride: "example.com",
+					},
+					KubeletConfiguration: kubeletconfig.KubeletConfiguration{
+						EnableServer: true,
+						CgroupDriver: v1alpha1.CGroupDriverCGroupFS,
+					},
+				},
 			},
 			result: field.ErrorList{},
 		},

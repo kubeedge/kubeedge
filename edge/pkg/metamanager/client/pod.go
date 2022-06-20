@@ -40,7 +40,7 @@ type pods struct {
 // PodResp represents pod response from the api-server
 type PodResp struct {
 	Object *api.Pod
-	Err apierrors.StatusError
+	Err    apierrors.StatusError
 }
 
 func newPods(namespace string, s SendInterface) *pods {
@@ -152,7 +152,7 @@ func handlePodResp(content []byte) (*api.Pod, error) {
 		return nil, fmt.Errorf("unmarshal message to pod failed, err: %v", err)
 	}
 
-	if reflect.DeepEqual(podResp.Err, apierrors.StatusError{}){
+	if reflect.DeepEqual(podResp.Err, apierrors.StatusError{}) {
 		return podResp.Object, nil
 	}
 
