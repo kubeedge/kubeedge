@@ -86,7 +86,7 @@ func NewSubEdgeCheck(object CheckObject) *cobra.Command {
 		cmd.Flags().StringVarP(&co.Runtime, "runtime", "r", co.Runtime, "specify test runtime")
 		cmd.Flags().StringVarP(&co.DNSIP, "dns-ip", "D", co.DNSIP, "specify test dns ip")
 		cmd.Flags().StringVarP(&co.Config, common.EdgecoreConfig, "c", co.Config,
-			fmt.Sprintf("Specify configuration file, defalut is %s", common.EdgecoreConfigPath))
+			fmt.Sprintf("Specify configuration file, default is %s", common.EdgecoreConfigPath))
 	case common.ArgCheckDNS:
 		cmd.Flags().StringVarP(&co.Domain, "domain", "d", co.Domain, "specify test domain")
 		cmd.Flags().StringVarP(&co.DNSIP, "dns-ip", "D", co.DNSIP, "specify test dns ip")
@@ -94,7 +94,7 @@ func NewSubEdgeCheck(object CheckObject) *cobra.Command {
 		cmd.Flags().StringVarP(&co.IP, "ip", "i", co.IP, "specify test ip")
 		cmd.Flags().StringVarP(&co.CloudHubServer, "cloud-hub-server", "s", co.CloudHubServer, "specify cloudhub server")
 		cmd.Flags().StringVarP(&co.Config, common.EdgecoreConfig, "c", co.Config,
-			fmt.Sprintf("Specify configuration file, defalut is %s", common.EdgecoreConfigPath))
+			fmt.Sprintf("Specify configuration file, default is %s", common.EdgecoreConfigPath))
 	case common.ArgCheckRuntime:
 		cmd.Flags().StringVarP(&co.Runtime, "runtime", "r", co.Runtime, "specify test runtime")
 	}

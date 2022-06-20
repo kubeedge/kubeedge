@@ -154,7 +154,7 @@ spec:
   profiles:
     # The following four fields represent four scenarios that can be combined or applied individually.
     version: "v1.9.0"     # will use the default recommended configuration to install.
-    iptablesMgrMode: "external" # defalut is internal.
+    iptablesMgrMode: "external" # default is internal.
     enableCloudCoreHaMode: true
     enableEdgemesh: true
 ```
