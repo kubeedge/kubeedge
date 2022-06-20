@@ -18,6 +18,7 @@ package utils
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -31,6 +32,9 @@ import (
 
 	"github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	clientset "k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/yaml"
 )
 
@@ -214,15 +218,12 @@ func GetConfigmap(apiConfigMap string) (int, []byte) {
 	return resp.StatusCode, body
 }
 
-//DeleteConfigmap function to delete configmaps
-func DeleteConfigmap(apiConfigMap string) int {
-	resp, err := SendHTTPRequest(http.MethodDelete, apiConfigMap)
-	if err != nil {
-		Fatalf("Sending SenHttpRequest failed: %v", err)
-		return -1
+func DeleteConfigMap(client clientset.Interface, ns, name string) error {
+	err := client.CoreV1().ConfigMaps(ns).Delete(context.TODO(), name, metav1.DeleteOptions{})
+	if err != nil && apierrors.IsNotFound(err) {
+		return nil
 	}
-	defer resp.Body.Close()
-	return resp.StatusCode
+	return err
 }
 
 func TaintEdgeDeployedNode(toTaint bool, taintHandler string) error {

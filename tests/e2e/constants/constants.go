@@ -3,9 +3,16 @@ package constants
 import "time"
 
 const (
-	AppHandler        = "/api/v1/namespaces/default/pods"
-	DeploymentHandler = "/apis/apps/v1/namespaces/default/deployments"
-
 	Interval = 5 * time.Second
 	Timeout  = 10 * time.Minute
+
+	E2ELabelKey   = "kubeedge"
+	E2ELabelValue = "e2e-test"
+)
+
+var (
+	// KubeEdgeE2ELabel labels resources created during e2e testing
+	KubeEdgeE2ELabel = map[string]string{
+		E2ELabelKey: E2ELabelValue,
+	}
 )

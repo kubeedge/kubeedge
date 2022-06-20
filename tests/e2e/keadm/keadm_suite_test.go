@@ -29,8 +29,6 @@ import (
 )
 
 var (
-	nodeName string
-
 	//context to load config and access across the package
 	ctx *utils.TestContext
 )
@@ -49,7 +47,6 @@ func TestKeadmAppDeployment(t *testing.T) {
 	var _ = BeforeSuite(func() {
 		utils.Infof("Before Suite Execution")
 		ctx = utils.NewTestContext(utils.LoadConfig())
-		nodeName = "edge-node"
 	})
 	AfterSuite(func() {
 		By("After Suite Execution....!")

@@ -29,8 +29,7 @@ import (
 )
 
 var (
-	nodeName     string
-	nodeSelector string
+	nodeName string
 	// context to load config and access across the package
 	ctx *utils.TestContext
 )
@@ -50,7 +49,6 @@ func TestE2E(t *testing.T) {
 		utils.Infof("Before Suite Execution")
 		ctx = utils.NewTestContext(utils.LoadConfig())
 		nodeName = "edge-node"
-		nodeSelector = "test"
 
 		err := utils.MqttConnect()
 		Expect(err).To(BeNil())
