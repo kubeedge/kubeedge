@@ -1966,6 +1966,7 @@ k8s.io/kubernetes/pkg/volume/util/subpath
 k8s.io/kubernetes/pkg/volume/util/types
 k8s.io/kubernetes/pkg/volume/util/volumepathhandler
 k8s.io/kubernetes/pkg/volume/validation
+k8s.io/kubernetes/test/e2e/reporters
 k8s.io/kubernetes/third_party/forked/golang/expansion
 # k8s.io/mount-utils v0.22.6
 ## explicit
