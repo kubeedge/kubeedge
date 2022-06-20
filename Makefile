@@ -327,6 +327,15 @@ edgesite-server-image:
 edgesite-agent-image:
 	docker build . --build-arg ARCH=${ARCH} -f build/edgesite/agent-build.Dockerfile -t kubeedge/edgesite-agent-${ARCH}:${IMAGE_TAG}
 
+.PHONY: upload-images
+upload-images: cloudimage admissionimage csidriverimage iptablesmgrimage edgesite-server-image edgesite-agent-image
+	docker push kubeedge/cloudcore:${IMAGE_TAG}
+	docker push kubeedge/admission:${IMAGE_TAG}
+	docker push kubeedge/csidriver:${IMAGE_TAG}
+	docker push kubeedge/iptables-manager:${IMAGE_TAG}
+	docker push kubeedge/edgesite-server-${ARCH}:${IMAGE_TAG}
+	docker push kubeedge/edgesite-agent-${ARCH}:${IMAGE_TAG}
+
 define INSTALL_HELP_INFO
 # install
 #
