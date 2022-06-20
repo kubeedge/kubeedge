@@ -1455,7 +1455,7 @@ k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1
 k8s.io/kubelet/pkg/apis/pluginregistration/v1
 k8s.io/kubelet/pkg/apis/podresources/v1
 k8s.io/kubelet/pkg/apis/stats/v1alpha1
-# k8s.io/kubernetes v1.21.4 => github.com/kubeedge/kubernetes v1.21.4-ke2
+# k8s.io/kubernetes v1.21.4 => github.com/kubeedge/kubernetes v1.21.4-ke3
 ## explicit
 k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm
 k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/scheme
@@ -1623,7 +1623,6 @@ k8s.io/kubernetes/pkg/kubelet/dockershim/network/hostport
 k8s.io/kubernetes/pkg/kubelet/dockershim/network/kubenet
 k8s.io/kubernetes/pkg/kubelet/dockershim/network/metrics
 k8s.io/kubernetes/pkg/kubelet/dockershim/remote
-k8s.io/kubernetes/pkg/kubelet/envvars
 k8s.io/kubernetes/pkg/kubelet/events
 k8s.io/kubernetes/pkg/kubelet/eviction
 k8s.io/kubernetes/pkg/kubelet/eviction/api
@@ -1918,7 +1917,7 @@ sigs.k8s.io/yaml
 # k8s.io/kube-scheduler => github.com/kubeedge/kubernetes/staging/src/k8s.io/kube-scheduler v1.21.4-ke2
 # k8s.io/kubectl => github.com/kubeedge/kubernetes/staging/src/k8s.io/kubectl v1.21.4-ke2
 # k8s.io/kubelet => github.com/kubeedge/kubernetes/staging/src/k8s.io/kubelet v1.21.4-ke2
-# k8s.io/kubernetes => github.com/kubeedge/kubernetes v1.21.4-ke2
+# k8s.io/kubernetes => github.com/kubeedge/kubernetes v1.21.4-ke3
 # k8s.io/legacy-cloud-providers => github.com/kubeedge/kubernetes/staging/src/k8s.io/legacy-cloud-providers v1.21.4-ke2
 # k8s.io/metrics => github.com/kubeedge/kubernetes/staging/src/k8s.io/metrics v1.21.4-ke2
 # k8s.io/mount-utils => github.com/kubeedge/kubernetes/staging/src/k8s.io/mount-utils v1.21.4-ke2

@@ -125,10 +125,6 @@ func (kl *Kubelet) runPod(pod *v1.Pod, retryDelay time.Duration) error {
 		}
 		klog.InfoS("Pod's containers not running: syncing", "pod", klog.KObj(pod))
 
-		klog.InfoS("Creating a mirror pod for static pod", "pod", klog.KObj(pod))
-		if err := kl.podManager.CreateMirrorPod(pod); err != nil {
-			klog.ErrorS(err, "Failed creating a mirror pod", "pod", klog.KObj(pod))
-		}
 		mirrorPod, _ := kl.podManager.GetMirrorPodByPod(pod)
 		if err = kl.syncPod(syncPodOptions{
 			pod:        pod,

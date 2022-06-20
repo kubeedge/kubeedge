@@ -35,7 +35,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	utilvalidation "k8s.io/apimachinery/pkg/util/validation"
@@ -45,7 +44,6 @@ import (
 	podutil "k8s.io/kubernetes/pkg/api/v1/pod"
 	"k8s.io/kubernetes/pkg/api/v1/resource"
 	podshelper "k8s.io/kubernetes/pkg/apis/core/pods"
-	v1helper "k8s.io/kubernetes/pkg/apis/core/v1/helper"
 	v1qos "k8s.io/kubernetes/pkg/apis/core/v1/helper/qos"
 	"k8s.io/kubernetes/pkg/features"
 	"k8s.io/kubernetes/pkg/fieldpath"
@@ -53,7 +51,6 @@ import (
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	"k8s.io/kubernetes/pkg/kubelet/cri/streaming/portforward"
 	remotecommandserver "k8s.io/kubernetes/pkg/kubelet/cri/streaming/remotecommand"
-	"k8s.io/kubernetes/pkg/kubelet/envvars"
 	"k8s.io/kubernetes/pkg/kubelet/eviction"
 	"k8s.io/kubernetes/pkg/kubelet/images"
 	"k8s.io/kubernetes/pkg/kubelet/status"
@@ -518,60 +515,6 @@ func (kl *Kubelet) GenerateRunContainerOptions(pod *v1.Pod, container *v1.Contai
 	return opts, cleanupAction, nil
 }
 
-var masterServices = sets.NewString("kubernetes")
-
-// getServiceEnvVarMap makes a map[string]string of env vars for services a
-// pod in namespace ns should see.
-func (kl *Kubelet) getServiceEnvVarMap(ns string, enableServiceLinks bool) (map[string]string, error) {
-	var (
-		serviceMap = make(map[string]*v1.Service)
-		m          = make(map[string]string)
-	)
-
-	// Get all service resources from the master (via a cache),
-	// and populate them into service environment variables.
-	if kl.serviceLister == nil {
-		// Kubelets without masters (e.g. plain GCE ContainerVM) don't set env vars.
-		return m, nil
-	}
-	services, err := kl.serviceLister.List(labels.Everything())
-	if err != nil {
-		return m, fmt.Errorf("failed to list services when setting up env vars")
-	}
-
-	// project the services in namespace ns onto the master services
-	for i := range services {
-		service := services[i]
-		// ignore services where ClusterIP is "None" or empty
-		if !v1helper.IsServiceIPSet(service) {
-			continue
-		}
-		serviceName := service.Name
-
-		// We always want to add environment variabled for master services
-		// from the master service namespace, even if enableServiceLinks is false.
-		// We also add environment variables for other services in the same
-		// namespace, if enableServiceLinks is true.
-		if service.Namespace == kl.masterServiceNamespace && masterServices.Has(serviceName) {
-			if _, exists := serviceMap[serviceName]; !exists {
-				serviceMap[serviceName] = service
-			}
-		} else if service.Namespace == ns && enableServiceLinks {
-			serviceMap[serviceName] = service
-		}
-	}
-
-	mappedServices := []*v1.Service{}
-	for key := range serviceMap {
-		mappedServices = append(mappedServices, serviceMap[key])
-	}
-
-	for _, e := range envvars.FromServices(mappedServices) {
-		m[e.Name] = e.Value
-	}
-	return m, nil
-}
-
 // Make the environment variables for a pod in the given namespace.
 func (kl *Kubelet) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container, podIP string, podIPs []string) ([]kubecontainer.EnvVar, error) {
 	if pod.Spec.EnableServiceLinks == nil {
@@ -591,19 +534,7 @@ func (kl *Kubelet) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container
 	}
 
 	var result []kubecontainer.EnvVar
-	// Note:  These are added to the docker Config, but are not included in the checksum computed
-	// by kubecontainer.HashContainer(...).  That way, we can still determine whether an
-	// v1.Container is already running by its hash. (We don't want to restart a container just
-	// because some service changed.)
-	//
-	// Note that there is a race between Kubelet seeing the pod and kubelet seeing the service.
-	// To avoid this users can: (1) wait between starting a service and starting; or (2) detect
-	// missing service env var and exit and be restarted; or (3) use DNS instead of env vars
-	// and keep trying to resolve the DNS name of the service (recommended).
-	serviceEnv, err := kl.getServiceEnvVarMap(pod.Namespace, *pod.Spec.EnableServiceLinks)
-	if err != nil {
-		return result, err
-	}
+	var err error
 
 	var (
 		configMaps = make(map[string]*v1.ConfigMap)
@@ -698,7 +629,7 @@ func (kl *Kubelet) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container
 	// 2.  Create the container's environment in the order variables are declared
 	// 3.  Add remaining service environment vars
 	var (
-		mappingFunc = expansion.MappingFuncFor(tmpEnv, serviceEnv)
+		mappingFunc = expansion.MappingFuncFor(tmpEnv)
 	)
 	for _, envVar := range container.Env {
 		runtimeVal := envVar.Value
@@ -779,12 +710,6 @@ func (kl *Kubelet) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container
 				runtimeVal = string(runtimeValBytes)
 			}
 		}
-		// Accesses apiserver+Pods.
-		// So, the master may set service env vars, or kubelet may.  In case both are doing
-		// it, we delete the key from the kubelet-generated ones so we don't have duplicate
-		// env vars.
-		// TODO: remove this next line once all platforms use apiserver+Pods.
-		delete(serviceEnv, envVar.Name)
 
 		tmpEnv[envVar.Name] = runtimeVal
 	}
@@ -794,17 +719,6 @@ func (kl *Kubelet) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container
 		result = append(result, kubecontainer.EnvVar{Name: k, Value: v})
 	}
 
-	// Append remaining service env vars.
-	for k, v := range serviceEnv {
-		// Accesses apiserver+Pods.
-		// So, the master may set service env vars, or kubelet may.  In case both are doing
-		// it, we skip the key from the kubelet-generated ones so we don't have duplicate
-		// env vars.
-		// TODO: remove this next line once all platforms use apiserver+Pods.
-		if _, present := tmpEnv[k]; !present {
-			result = append(result, kubecontainer.EnvVar{Name: k, Value: v})
-		}
-	}
 	return result, nil
 }
 
@@ -1042,23 +956,6 @@ func (kl *Kubelet) removeOrphanedPodStatuses(pods []*v1.Pod, mirrorPods []*v1.Po
 	kl.statusManager.RemoveOrphanedStatuses(podUIDs)
 }
 
-// deleteOrphanedMirrorPods checks whether pod killer has done with orphaned mirror pod.
-// If pod killing is done, podManager.DeleteMirrorPod() is called to delete mirror pod
-// from the API server
-func (kl *Kubelet) deleteOrphanedMirrorPods() {
-	podFullNames := kl.podManager.GetOrphanedMirrorPodNames()
-	for _, podFullname := range podFullNames {
-		if !kl.podKiller.IsPodPendingTerminationByPodName(podFullname) {
-			_, err := kl.podManager.DeleteMirrorPod(podFullname, nil)
-			if err != nil {
-				klog.ErrorS(err, "Encountered error when deleting mirror pod", "podName", podFullname)
-			} else {
-				klog.V(3).InfoS("Deleted pod", "podName", podFullname)
-			}
-		}
-	}
-}
-
 // HandlePodCleanups performs a series of cleanup work, including terminating
 // pod workers, killing unwanted pods, and removing orphaned volumes/pod
 // directories.
@@ -1135,9 +1032,6 @@ func (kl *Kubelet) HandlePodCleanups() error {
 		// This also applies to the other clean up tasks.
 		klog.ErrorS(err, "Failed cleaning up orphaned pod directories")
 	}
-
-	// Remove any orphaned mirror pods.
-	kl.deleteOrphanedMirrorPods()
 
 	// Remove any cgroups in the hierarchy for pods that are no longer running.
 	if kl.cgroupsPerQOS {

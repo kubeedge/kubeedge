@@ -292,6 +292,10 @@ func (kl *Kubelet) initialNode(ctx context.Context) (*v1.Node, error) {
 				v1.LabelArchStable:    goruntime.GOARCH,
 				kubeletapis.LabelOS:   goruntime.GOOS,
 				kubeletapis.LabelArch: goruntime.GOARCH,
+
+				// KubeEdge specific labels
+				"node-role.kubernetes.io/edge":  "",
+				"node-role.kubernetes.io/agent": "",
 			},
 		},
 		Spec: v1.NodeSpec{

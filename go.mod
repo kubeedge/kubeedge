@@ -89,7 +89,7 @@ replace (
 	k8s.io/kube-scheduler => github.com/kubeedge/kubernetes/staging/src/k8s.io/kube-scheduler v1.21.4-ke2
 	k8s.io/kubectl => github.com/kubeedge/kubernetes/staging/src/k8s.io/kubectl v1.21.4-ke2
 	k8s.io/kubelet => github.com/kubeedge/kubernetes/staging/src/k8s.io/kubelet v1.21.4-ke2
-	k8s.io/kubernetes => github.com/kubeedge/kubernetes v1.21.4-ke2
+	k8s.io/kubernetes => github.com/kubeedge/kubernetes v1.21.4-ke3
 	k8s.io/legacy-cloud-providers => github.com/kubeedge/kubernetes/staging/src/k8s.io/legacy-cloud-providers v1.21.4-ke2
 	k8s.io/metrics => github.com/kubeedge/kubernetes/staging/src/k8s.io/metrics v1.21.4-ke2
 	k8s.io/mount-utils => github.com/kubeedge/kubernetes/staging/src/k8s.io/mount-utils v1.21.4-ke2

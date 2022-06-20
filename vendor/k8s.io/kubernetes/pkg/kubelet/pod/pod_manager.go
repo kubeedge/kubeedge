@@ -191,22 +191,11 @@ func (pm *basicManager) updatePodsInternal(pods ...*v1.Pod) {
 			}
 		}
 		podFullName := kubecontainer.GetPodFullName(pod)
-		// This logic relies on a static pod and its mirror to have the same name.
-		// It is safe to type convert here due to the IsMirrorPod guard.
-		if kubetypes.IsMirrorPod(pod) {
-			mirrorPodUID := kubetypes.MirrorPodUID(pod.UID)
-			pm.mirrorPodByUID[mirrorPodUID] = pod
-			pm.mirrorPodByFullName[podFullName] = pod
-			if p, ok := pm.podByFullName[podFullName]; ok {
-				pm.translationByUID[mirrorPodUID] = kubetypes.ResolvedPodUID(p.UID)
-			}
-		} else {
-			resolvedPodUID := kubetypes.ResolvedPodUID(pod.UID)
-			pm.podByUID[resolvedPodUID] = pod
-			pm.podByFullName[podFullName] = pod
-			if mirror, ok := pm.mirrorPodByFullName[podFullName]; ok {
-				pm.translationByUID[kubetypes.MirrorPodUID(mirror.UID)] = resolvedPodUID
-			}
+		resolvedPodUID := kubetypes.ResolvedPodUID(pod.UID)
+		pm.podByUID[resolvedPodUID] = pod
+		pm.podByFullName[podFullName] = pod
+		if mirror, ok := pm.mirrorPodByFullName[podFullName]; ok {
+			pm.translationByUID[kubetypes.MirrorPodUID(mirror.UID)] = resolvedPodUID
 		}
 	}
 }
@@ -221,16 +210,8 @@ func (pm *basicManager) DeletePod(pod *v1.Pod) {
 		pm.configMapManager.UnregisterPod(pod)
 	}
 	podFullName := kubecontainer.GetPodFullName(pod)
-	// It is safe to type convert here due to the IsMirrorPod guard.
-	if kubetypes.IsMirrorPod(pod) {
-		mirrorPodUID := kubetypes.MirrorPodUID(pod.UID)
-		delete(pm.mirrorPodByUID, mirrorPodUID)
-		delete(pm.mirrorPodByFullName, podFullName)
-		delete(pm.translationByUID, mirrorPodUID)
-	} else {
-		delete(pm.podByUID, kubetypes.ResolvedPodUID(pod.UID))
-		delete(pm.podByFullName, podFullName)
-	}
+	delete(pm.podByUID, kubetypes.ResolvedPodUID(pod.UID))
+	delete(pm.podByFullName, podFullName)
 }
 
 func (pm *basicManager) GetPods() []*v1.Pod {

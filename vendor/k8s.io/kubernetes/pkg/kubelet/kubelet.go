@@ -31,15 +31,12 @@ import (
 	"sync/atomic"
 	"time"
 
-	"k8s.io/client-go/informers"
-
 	cadvisorapi "github.com/google/cadvisor/info/v1"
 	"k8s.io/mount-utils"
 	"k8s.io/utils/integer"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/clock"
@@ -172,6 +169,7 @@ const (
 	nodeLeaseRenewIntervalFraction = 0.25
 )
 
+
 var etcHostsPath = getContainerEtcHostsPath()
 
 func getContainerEtcHostsPath() string {
@@ -244,34 +242,6 @@ type DockerOptions struct {
 	DockerEndpoint            string
 	RuntimeRequestTimeout     time.Duration
 	ImagePullProgressDeadline time.Duration
-}
-
-// makePodSourceConfig creates a config.PodConfig from the given
-// KubeletConfiguration or returns an error.
-func makePodSourceConfig(kubeCfg *kubeletconfiginternal.KubeletConfiguration, kubeDeps *Dependencies, nodeName types.NodeName, nodeHasSynced func() bool) (*config.PodConfig, error) {
-	manifestURLHeader := make(http.Header)
-	if len(kubeCfg.StaticPodURLHeader) > 0 {
-		for k, v := range kubeCfg.StaticPodURLHeader {
-			for i := range v {
-				manifestURLHeader.Add(k, v[i])
-			}
-		}
-	}
-
-	// source of all configuration
-	cfg := config.NewPodConfig(config.PodConfigNotificationIncremental, kubeDeps.Recorder)
-
-	// define file config source
-	if kubeCfg.StaticPodPath != "" {
-		klog.InfoS("Adding static pod path", "path", kubeCfg.StaticPodPath)
-		config.NewSourceFile(kubeCfg.StaticPodPath, nodeName, kubeCfg.FileCheckFrequency.Duration, cfg.Channel(kubetypes.FileSource))
-	}
-
-	if kubeDeps.KubeClient != nil {
-		klog.InfoS("Adding apiserver pod source")
-		config.NewSourceApiserver(kubeDeps.KubeClient, nodeName, nodeHasSynced, cfg.Channel(kubetypes.ApiserverSource))
-	}
-	return cfg, nil
 }
 
 // PreInitRuntimeService will init runtime service before RunKubelet.
@@ -375,34 +345,9 @@ func NewMainKubelet(kubeCfg *kubeletconfiginternal.KubeletConfiguration,
 
 	var nodeHasSynced cache.InformerSynced
 	var nodeLister corelisters.NodeLister
-
-	// If kubeClient == nil, we are running in standalone mode (i.e. no API servers)
-	// If not nil, we are running as part of a cluster and should sync w/API
-	if kubeDeps.KubeClient != nil {
-		kubeInformers := informers.NewSharedInformerFactoryWithOptions(kubeDeps.KubeClient, 0, informers.WithTweakListOptions(func(options *metav1.ListOptions) {
-			options.FieldSelector = fields.Set{metav1.ObjectNameField: string(nodeName)}.String()
-		}))
-		nodeLister = kubeInformers.Core().V1().Nodes().Lister()
-		nodeHasSynced = func() bool {
-			return kubeInformers.Core().V1().Nodes().Informer().HasSynced()
-		}
-		kubeInformers.Start(wait.NeverStop)
-		klog.InfoS("Attempting to sync node with API server")
-	} else {
-		// we don't have a client to sync!
-		nodeIndexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{})
-		nodeLister = corelisters.NewNodeLister(nodeIndexer)
-		nodeHasSynced = func() bool { return true }
-		klog.InfoS("Kubelet is running in standalone mode, will skip API server sync")
-	}
-
-	if kubeDeps.PodConfig == nil {
-		var err error
-		kubeDeps.PodConfig, err = makePodSourceConfig(kubeCfg, kubeDeps, nodeName, nodeHasSynced)
-		if err != nil {
-			return nil, err
-		}
-	}
+	nodeIndexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{})
+	nodeLister = corelisters.NewNodeLister(nodeIndexer)
+	nodeHasSynced = func() bool { return true }
 
 	containerGCPolicy := kubecontainer.GCPolicy{
 		MinAge:             minimumGCAge.Duration,
@@ -439,16 +384,9 @@ func NewMainKubelet(kubeCfg *kubeletconfiginternal.KubeletConfiguration,
 
 	var serviceLister corelisters.ServiceLister
 	var serviceHasSynced cache.InformerSynced
-	if kubeDeps.KubeClient != nil {
-		kubeInformers := informers.NewSharedInformerFactory(kubeDeps.KubeClient, 0)
-		serviceLister = kubeInformers.Core().V1().Services().Lister()
-		serviceHasSynced = kubeInformers.Core().V1().Services().Informer().HasSynced
-		kubeInformers.Start(wait.NeverStop)
-	} else {
-		serviceIndexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
-		serviceLister = corelisters.NewServiceLister(serviceIndexer)
-		serviceHasSynced = func() bool { return true }
-	}
+	serviceIndexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
+	serviceLister = corelisters.NewServiceLister(serviceIndexer)
+	serviceHasSynced = func() bool { return true }
 
 	// construct a node reference used for events
 	nodeRef := &v1.ObjectReference{
@@ -1454,7 +1392,6 @@ func (kl *Kubelet) Run(updates <-chan kubetypes.PodUpdate) {
 func (kl *Kubelet) syncPod(o syncPodOptions) error {
 	// pull out the required options
 	pod := o.pod
-	mirrorPod := o.mirrorPod
 	podStatus := o.podStatus
 	updateType := o.updateType
 
@@ -1615,36 +1552,6 @@ func (kl *Kubelet) syncPod(o syncPodOptions) error {
 				if err := pcm.EnsureExists(pod); err != nil {
 					kl.recorder.Eventf(pod, v1.EventTypeWarning, events.FailedToCreatePodContainer, "unable to ensure pod container exists: %v", err)
 					return fmt.Errorf("failed to ensure that the pod: %v cgroups exist and are correctly applied: %v", pod.UID, err)
-				}
-			}
-		}
-	}
-
-	// Create Mirror Pod for Static Pod if it doesn't already exist
-	if kubetypes.IsStaticPod(pod) {
-		deleted := false
-		if mirrorPod != nil {
-			if mirrorPod.DeletionTimestamp != nil || !kl.podManager.IsMirrorPodOf(mirrorPod, pod) {
-				// The mirror pod is semantically different from the static pod. Remove
-				// it. The mirror pod will get recreated later.
-				klog.InfoS("Trying to delete pod", "pod", klog.KObj(pod), "podUID", mirrorPod.ObjectMeta.UID)
-				var err error
-				deleted, err = kl.podManager.DeleteMirrorPod(podFullName, &mirrorPod.ObjectMeta.UID)
-				if deleted {
-					klog.InfoS("Deleted mirror pod because it is outdated", "pod", klog.KObj(mirrorPod))
-				} else if err != nil {
-					klog.ErrorS(err, "Failed deleting mirror pod", "pod", klog.KObj(mirrorPod))
-				}
-			}
-		}
-		if mirrorPod == nil || deleted {
-			node, err := kl.GetNode()
-			if err != nil || node.DeletionTimestamp != nil {
-				klog.V(4).InfoS("No need to create a mirror pod, since node has been removed from the cluster", "node", klog.KRef("", string(kl.nodeName)))
-			} else {
-				klog.V(4).InfoS("Creating a mirror pod for static pod", "pod", klog.KObj(pod))
-				if err := kl.podManager.CreateMirrorPod(pod); err != nil {
-					klog.ErrorS(err, "Failed creating a mirror pod for", "pod", klog.KObj(pod))
 				}
 			}
 		}
@@ -2049,11 +1956,6 @@ func (kl *Kubelet) HandlePodAdditions(pods []*v1.Pod) {
 		// the apiserver and no action (other than cleanup) is required.
 		kl.podManager.AddPod(pod)
 
-		if kubetypes.IsMirrorPod(pod) {
-			kl.handleMirrorPod(pod, start)
-			continue
-		}
-
 		if !kl.podIsTerminated(pod) {
 			// Only go through the admission process if the pod is not
 			// terminated.
@@ -2080,10 +1982,6 @@ func (kl *Kubelet) HandlePodUpdates(pods []*v1.Pod) {
 	start := kl.clock.Now()
 	for _, pod := range pods {
 		kl.podManager.UpdatePod(pod)
-		if kubetypes.IsMirrorPod(pod) {
-			kl.handleMirrorPod(pod, start)
-			continue
-		}
 		mirrorPod, _ := kl.podManager.GetMirrorPodByPod(pod)
 		kl.dispatchWork(pod, kubetypes.SyncPodUpdate, mirrorPod, start)
 	}
@@ -2092,13 +1990,8 @@ func (kl *Kubelet) HandlePodUpdates(pods []*v1.Pod) {
 // HandlePodRemoves is the callback in the SyncHandler interface for pods
 // being removed from a config source.
 func (kl *Kubelet) HandlePodRemoves(pods []*v1.Pod) {
-	start := kl.clock.Now()
 	for _, pod := range pods {
 		kl.podManager.DeletePod(pod)
-		if kubetypes.IsMirrorPod(pod) {
-			kl.handleMirrorPod(pod, start)
-			continue
-		}
 		// Deletion is allowed to fail because the periodic cleanup routine
 		// will trigger deletion again.
 		if err := kl.deletePod(pod); err != nil {

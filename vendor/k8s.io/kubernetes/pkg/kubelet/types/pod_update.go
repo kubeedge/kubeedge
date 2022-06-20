@@ -157,9 +157,6 @@ func IsCriticalPod(pod *v1.Pod) bool {
 	if IsStaticPod(pod) {
 		return true
 	}
-	if IsMirrorPod(pod) {
-		return true
-	}
 	if pod.Spec.Priority != nil && IsCriticalPodBasedOnPriority(*pod.Spec.Priority) {
 		return true
 	}
