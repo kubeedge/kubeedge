@@ -41,6 +41,17 @@ type internalContainerLifecycleImpl struct {
 	cpuManager cpumanager.Manager
 }
 
+// Implements PreCreateContainer
+func (i *internalContainerLifecycleImpl) PreCreateContainer(pod *v1.Pod, container *v1.Container, containerConfig *runtimeapi.ContainerConfig) error {
+	if i.cpuManager != nil {
+		allocatedCPUs := i.cpuManager.GetCPUs(string(pod.UID), container.Name)
+		if !allocatedCPUs.IsEmpty() {
+			containerConfig.Linux.Resources.CpusetCpus = allocatedCPUs.String()
+		}
+	}
+	return nil
+}
+
 // Implements PreStartContainer
 func (i *internalContainerLifecycleImpl) PreStartContainer(pod *v1.Pod, container *v1.Container, containerID string) error {
 	if utilfeature.DefaultFeatureGate.Enabled(kubefeatures.CPUManager) {
