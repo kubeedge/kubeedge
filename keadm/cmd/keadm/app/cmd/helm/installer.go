@@ -41,16 +41,17 @@ const (
 	DefaultHelmWait     = true
 	DefaultHelmCreateNs = true
 
-	VersionProfileKey       = "version"
-	IptablesMgrProfileKey   = "iptablesmgr"
-	ExternalIptablesMgrMode = "external"
-	InternalIptablesMgrMode = "internal"
-	EdgemeshProfileKey      = "edgemesh"
+	VersionProfileKey           = "version"
+	IptablesMgrProfileKey       = "iptablesmgr"
+	ControllerManagerProfileKey = "controllermanager"
+	ExternalIptablesMgrMode     = "external"
+	InternalIptablesMgrMode     = "internal"
+	EdgemeshProfileKey          = "edgemesh"
 )
 
 var (
 	ErrListProfiles = errors.New("can not list profiles")
-	ValidProfiles   = map[string]bool{VersionProfileKey: true, IptablesMgrProfileKey: true}
+	ValidProfiles   = map[string]bool{VersionProfileKey: true, IptablesMgrProfileKey: true, ControllerManagerProfileKey: true}
 )
 
 // KubeCloudHelmInstTool embeds Common struct
@@ -231,7 +232,7 @@ func (cu *KubeCloudHelmInstTool) buildRenderer(baseHelmRoot string) (*Renderer, 
 	var subDir string
 	if cu.existsProfile && cu.isInnerProfile() {
 		switch cu.ProfileKey {
-		case VersionProfileKey, IptablesMgrProfileKey:
+		case VersionProfileKey, IptablesMgrProfileKey, ControllerManagerProfileKey:
 			componentName = CloudCoreHelmComponent
 			subDir = fmt.Sprintf("%s/%s", ChartsSubDir, CloudCoreHelmComponent)
 		// we can implement edgemesh here later.
@@ -356,6 +357,7 @@ func (cu *KubeCloudHelmInstTool) checkProfile(baseHelmRoot string) error {
 
 	// iptalesmgr is also an valid profile key.
 	validProfiles[IptablesMgrProfileKey] = true
+	validProfiles[ControllerManagerProfileKey] = true
 	if ok := validProfiles[cu.ProfileKey]; !ok {
 		validKeys := make([]string, len(validProfiles))
 		for k := range validProfiles {
@@ -383,6 +385,7 @@ func (cu *KubeCloudHelmInstTool) handleProfile(profileValue string) error {
 
 		cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "cloudCore.image.tag", profileValue))
 		cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "iptablesManager.image.tag", profileValue))
+		cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "controllerManager.image.tag", profileValue))
 
 	case IptablesMgrProfileKey:
 		if profileValue == "" {
@@ -397,6 +400,10 @@ func (cu *KubeCloudHelmInstTool) handleProfile(profileValue string) error {
 		}
 
 		return fmt.Errorf("the given mode of iptablesmgr %s is not supported, only support internal or external", profileValue)
+
+	case ControllerManagerProfileKey:
+		cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "controllerManager.image.tag", currentVersion))
+
 	default:
 	}
 
@@ -425,7 +432,8 @@ func (cu *KubeCloudHelmInstTool) rebuildFlagVals() error {
 }
 
 func (cu *KubeCloudHelmInstTool) isInnerProfile() bool {
-	return cu.ProfileKey == "" || cu.ProfileKey == DefaultProfileString || cu.ProfileKey == IptablesMgrProfileKey
+	return cu.ProfileKey == "" || cu.ProfileKey == DefaultProfileString || cu.ProfileKey == IptablesMgrProfileKey ||
+		cu.ProfileKey == ControllerManagerProfileKey
 }
 
 // combineProfVals combines the values of the given manifests and flags into a map.
@@ -433,7 +441,7 @@ func (cu *KubeCloudHelmInstTool) combineProfVals() (map[string]interface{}, erro
 	profileValsMap := map[string]interface{}{}
 
 	profilekey := cu.ProfileKey
-	if profilekey == IptablesMgrProfileKey {
+	if profilekey == IptablesMgrProfileKey || profilekey == ControllerManagerProfileKey {
 		profilekey = VersionProfileKey
 	}
 	profileValue, err := loadValues(cu.ExternalHelmRoot, profilekey, cu.existsProfile)

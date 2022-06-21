@@ -94,3 +94,34 @@ iptablesManager:
     requests:
       cpu: 100m
       memory: 25Mi
+
+controllerManager:
+  enable: false
+  image:
+    repository: "kubeedge/controller-manager"
+    tag: "v1.9.1"
+    pullPolicy: "IfNotPresent"
+    pullSecrets: []
+  labels:
+    k8s-app: controller-manager
+    kubeedge: controller-manager
+  annotations: {}
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/edge
+                operator: DoesNotExist
+  tolerations:
+    - key: "node-role.kubernetes.io/master"
+      operator: "Exists"
+      effect: "NoSchedule"
+  nodeSelector: {}
+  resources:
+    limits:
+      cpu: 200m
+      memory: 50Mi
+    requests:
+      cpu: 100m
+      memory: 25Mi
