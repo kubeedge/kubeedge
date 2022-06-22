@@ -3,6 +3,7 @@ package admissioncontroller
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -98,9 +99,13 @@ func Run(opt *options.AdmissionOptions) error {
 	http.HandleFunc("/ruleendpoints", serveRuleEndpoint)
 	http.HandleFunc("/offlinemigration", serveOfflineMigration)
 
+	tlsConfig, err := configTLS(opt, restConfig)
+	if err != nil {
+		return err
+	}
 	server := &http.Server{
 		Addr:      fmt.Sprintf(":%v", opt.Port),
-		TLSConfig: configTLS(opt, restConfig),
+		TLSConfig: tlsConfig,
 	}
 
 	if err := server.ListenAndServeTLS("", ""); err != nil {
@@ -112,31 +117,29 @@ func Run(opt *options.AdmissionOptions) error {
 // configTLS is a helper function that generate tls certificates from directly defined tls config or kubeconfig
 // These are passed in as command line for cluster certification. If tls config is passed in, we use the directly
 // defined tls config, else use that defined in kubeconfig
-func configTLS(opt *options.AdmissionOptions, restConfig *restclient.Config) *tls.Config {
+func configTLS(opt *options.AdmissionOptions, restConfig *restclient.Config) (*tls.Config, error) {
 	if len(opt.CertFile) != 0 && len(opt.KeyFile) != 0 {
 		sCert, err := tls.LoadX509KeyPair(opt.CertFile, opt.KeyFile)
 		if err != nil {
-			klog.Exit(err)
+			return nil, err
 		}
 
 		return &tls.Config{
 			Certificates: []tls.Certificate{sCert},
-		}
+		}, nil
 	}
 
 	if len(restConfig.CertData) != 0 && len(restConfig.KeyData) != 0 {
 		sCert, err := tls.X509KeyPair(restConfig.CertData, restConfig.KeyData)
 		if err != nil {
-			klog.Exit(err)
+			return nil, err
 		}
 
 		return &tls.Config{
 			Certificates: []tls.Certificate{sCert},
-		}
+		}, nil
 	}
-
-	klog.Exit("tls: failed to find any tls config data")
-	return &tls.Config{}
+	return nil, errors.New("tls: failed to find any tls config data")
 }
 
 // registerWebhooks registers the admission webhook.
