@@ -1,4 +1,8 @@
 
+* [v1.10.1](#v1101)
+    * [Downloads for v1.10.1](#downloads-for-v1101)
+    * [KubeEdge v1.10.1 Release Notes](#kubeedge-v1101-release-notes)
+        * [Changelog since v1.10.0](#changelog-since-v1100)
 * [v1.10.0](#v1100)
     * [Downloads for v1.10.0](#downloads-for-v1100)
     * [KubeEdge v1.10 Release Notes](#kubeedge-v110-release-notes)
@@ -8,7 +12,26 @@
         * [Bug Fixes](#bug-fixes)
 
 
-    
+
+
+# v1.10.1
+
+## Downloads for v1.10.1
+
+Download v1.10.1 in the [v1.10.1 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.10.1).
+
+## KubeEdge v1.10.1 Release Notes
+
+### Changelog since v1.10.0
+
+- Fix fuzzer extract message error. ([#3947](https://github.com/kubeedge/kubeedge/pull/3947), [@vincentgoat](https://github.com/vincentgoat))
+- Fix removing container failed issue. ([#3831](https://github.com/kubeedge/kubeedge/pull/3831), [@gy95](https://github.com/gy95))
+- Pods yaml configure imagePullSecret but doesn't exist in kubernetes cluster. ([#3819](https://github.com/kubeedge/kubeedge/pull/3819), [@vincentgoat](https://github.com/vincentgoat))
+- Set deleteResource function parameter `allowsOptions` value to true. ([#3741](https://github.com/kubeedge/kubeedge/pull/3741), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Support build tool `armhf`. ([#3726](https://github.com/kubeedge/kubeedge/pull/3726), [@fisherxu](https://github.com/fisherxu))
+- Fix concurrent map iteration and map write bug. ([#3710](https://github.com/kubeedge/kubeedge/pull/3710), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Add sub-resource field in application. ([#3703](https://github.com/kubeedge/kubeedge/pull/3703), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Fix readinessProbe and startupProbe unavailable issue after upgrade. ([#3685](https://github.com/kubeedge/kubeedge/pull/3685), [@wackxu](https://github.com/wackxu))
 
 # v1.10.0
 

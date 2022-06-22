@@ -22,7 +22,6 @@ import (
 	"github.com/kubeedge/beehive/pkg/common"
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/beehive/pkg/core/model"
 	commodule "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
@@ -60,37 +59,4 @@ func TestNameAndGroup(t *testing.T) {
 			t.Errorf("Group of module is not correct wanted: %v and got: %v", commodule.MetaGroup, metaModule.Group())
 		}
 	})
-}
-
-func TestStart(t *testing.T) {
-	core.Register(&metaManager{enable: true})
-	modules := core.GetModules()
-	for name, module := range modules {
-		if name == MetaManagerModuleName {
-			metaModule = module.GetModule()
-			break
-		}
-	}
-
-	if metaModule == nil {
-		t.Errorf("failed to register to beehive")
-	}
-
-	go metaModule.Start()
-
-	msg, err := beehiveContext.Receive(MetaManagerModuleName)
-	if err != nil {
-		t.Errorf("failed to reveive message")
-	}
-
-	if msg == (model.Message{}) {
-		t.Errorf("empty message")
-	}
-
-	if msg.GetSource() != MetaManagerModuleName ||
-		msg.GetGroup() != GroupResource ||
-		msg.GetResource() != model.ResourceTypePodStatus ||
-		msg.GetOperation() != OperationMetaSync {
-		t.Errorf("unexpected message: %v", msg)
-	}
 }

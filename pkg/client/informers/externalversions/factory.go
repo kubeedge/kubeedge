@@ -24,6 +24,7 @@ import (
 	time "time"
 
 	versioned "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
+	apps "github.com/kubeedge/kubeedge/pkg/client/informers/externalversions/apps"
 	devices "github.com/kubeedge/kubeedge/pkg/client/informers/externalversions/devices"
 	internalinterfaces "github.com/kubeedge/kubeedge/pkg/client/informers/externalversions/internalinterfaces"
 	reliablesyncs "github.com/kubeedge/kubeedge/pkg/client/informers/externalversions/reliablesyncs"
@@ -174,9 +175,14 @@ type SharedInformerFactory interface {
 	ForResource(resource schema.GroupVersionResource) (GenericInformer, error)
 	WaitForCacheSync(stopCh <-chan struct{}) map[reflect.Type]bool
 
+	Apps() apps.Interface
 	Devices() devices.Interface
 	Reliablesyncs() reliablesyncs.Interface
 	Rules() rules.Interface
+}
+
+func (f *sharedInformerFactory) Apps() apps.Interface {
+	return apps.New(f, f.namespace, f.tweakListOptions)
 }
 
 func (f *sharedInformerFactory) Devices() devices.Interface {

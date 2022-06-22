@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The KubeEdge Authors.
+Copyright 2022 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,16 +18,21 @@ package cmd
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os"
 	"strings"
 
+	dockertypes "github.com/docker/docker/api/types"
+	dockerfilters "github.com/docker/docker/api/types/filters"
+	dockerclient "github.com/docker/docker/client"
 	"github.com/spf13/cobra"
 	phases "k8s.io/kubernetes/cmd/kubeadm/app/cmd/phases/reset"
 	utilruntime "k8s.io/kubernetes/cmd/kubeadm/app/util/runtime"
 	utilsexec "k8s.io/utils/exec"
 
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/helm"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
 
@@ -52,28 +57,26 @@ func newResetOptions() *common.ResetOptions {
 	return opts
 }
 
-// NewKubeEdgeReset represents the reset command
 func NewKubeEdgeReset() *cobra.Command {
-	IsEdgeNode := false
+	isEdgeNode := false
 	reset := newResetOptions()
 
 	var cmd = &cobra.Command{
 		Use:     "reset",
-		Short:   "Teardowns KubeEdge (cloud & edge) component",
+		Short:   "Teardowns KubeEdge (cloud(helm installed) & edge) component",
 		Long:    resetLongDescription,
 		Example: resetExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			whoRunning, err := util.RunningModule()
-			if err != nil {
-				return err
-			}
-			switch whoRunning {
-			case common.KubeEdgeEdgeRunning:
-				IsEdgeNode = true
-			case common.NoneRunning:
+			whoRunning := util.RunningModuleV2(reset)
+			if whoRunning == common.NoneRunning {
 				fmt.Println("None of KubeEdge components are running in this host, exit")
 				os.Exit(0)
 			}
+
+			if whoRunning == common.KubeEdgeEdgeRunning {
+				isEdgeNode = true
+			}
+
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -91,20 +94,24 @@ func NewKubeEdgeReset() *cobra.Command {
 			}
 			// 1. kill cloudcore/edgecore process.
 			// For edgecore, don't delete node from K8S
-			if err := TearDownKubeEdge(IsEdgeNode, reset.Kubeconfig); err != nil {
+			if err := TearDownKubeEdge(isEdgeNode, reset.Kubeconfig); err != nil {
 				return err
 			}
 
 			// 2. Remove containers managed by KubeEdge. Only for edge node.
-			if err := RemoveContainers(IsEdgeNode, utilsexec.New()); err != nil {
+			if err := RemoveContainers(isEdgeNode, utilsexec.New()); err != nil {
 				fmt.Printf("Failed to remove containers: %v\n", err)
 			}
 
 			// 3. Clean stateful directories
-			if err := cleanDirectories(IsEdgeNode); err != nil {
+			if err := cleanDirectories(isEdgeNode); err != nil {
 				return err
 			}
 
+			// cleanup mqtt container
+			if err := RemoveMqttContainer(); err != nil {
+				fmt.Printf("Failed to remove MQTT container: %v\n", err)
+			}
 			//4. TODO: clean status information
 
 			return nil
@@ -115,11 +122,43 @@ func NewKubeEdgeReset() *cobra.Command {
 	return cmd
 }
 
+func RemoveMqttContainer() error {
+	ctx := context.Background()
+
+	cli, err := dockerclient.NewClientWithOpts(dockerclient.FromEnv)
+	if err != nil {
+		return fmt.Errorf("init docker dockerclient failed: %v", err)
+	}
+
+	options := dockertypes.ContainerListOptions{}
+	options.Filters = dockerfilters.NewArgs()
+	options.Filters.Add("ancestor", "eclipse-mosquitto:1.6.15")
+
+	mqttContainers, err := cli.ContainerList(ctx, options)
+	if err != nil {
+		fmt.Printf("List MQTT containers failed: %v\n", err)
+		return err
+	}
+
+	for _, c := range mqttContainers {
+		err = cli.ContainerRemove(ctx, c.ID, dockertypes.ContainerRemoveOptions{RemoveVolumes: true, Force: true})
+		if err != nil {
+			fmt.Printf("failed to remove MQTT container: %v\n", err)
+		}
+	}
+
+	return nil
+}
+
 // TearDownKubeEdge will bring down either cloud or edge components,
 // depending upon in which type of node it is executed
 func TearDownKubeEdge(isEdgeNode bool, kubeConfig string) error {
 	var ke common.ToolsInstaller
-	ke = &util.KubeCloudInstTool{Common: util.Common{KubeConfig: kubeConfig}}
+	ke = &helm.KubeCloudHelmInstTool{
+		Common: util.Common{
+			KubeConfig: kubeConfig,
+		},
+	}
 	if isEdgeNode {
 		ke = &util.KubeEdgeInstTool{Common: util.Common{}}
 	}

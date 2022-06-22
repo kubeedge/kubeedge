@@ -19,41 +19,31 @@ workdir=`pwd`
 cd $workdir
 
 compilemodule=$1
-runtest=$2
-debugflag="-test.v -ginkgo.v"
 
 #setup env
 cd ../
 
 export MASTER_IP=`docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' test-control-plane`
 export KUBECONFIG=$HOME/.kube/config
-
 export CHECK_EDGECORE_ENVIRONMENT="false"
-
-#Pre-configurations required for running the suite.
-#Any new config addition required corresponding code changes.
-cat >config.json<<END
-{
-        "image_url": ["nginx", "nginx"],
-        "k8smasterforkubeedge":"https://$MASTER_IP:6443",
-        "dockerhubusername":"user",
-        "dockerhubpassword":"password",
-        "mqttendpoint":"tcp://127.0.0.1:1884",
-        "kubeconfigpath":"$KUBECONFIG"
-}
-END
+export ACK_GINKGO_RC=true
 
 if [ $# -eq 0 ]
-  then
-    #run testcase
-    ./deployment/deployment.test $debugflag 2>&1 | tee -a /tmp/testcase.log
-    # @kadisi
-    #./edgesite/edgesite.test $debugflag 2>&1 | tee -a /tmp/testcase.log
-else
-if [[ $compilemodule = "bluetooth" ]]
 then
-    ./mapper/bluetooth/bluetooth.test  $debugflag $runtest 2>&1 | tee -a /tmp/testcase.log
+    #run testcase
+    ginkgo -v ./deployment/deployment.test -- \
+    --image-url=nginx \
+    --image-url=nginx \
+    --kube-master="https://$MASTER_IP:6443" \
+    --kubeconfig=$KUBECONFIG \
+    --test.v \
+    2>&1 | tee -a /tmp/testcase.log
 else
-    ./$compilemodule/$compilemodule.test  $debugflag  $runtest 2>&1 | tee -a  /tmp/testcase.log
-fi
+   ginkgo -v ./$compilemodule/$compilemodule.test -- \
+    --image-url=nginx \
+    --image-url=nginx \
+    --kube-master="https://$MASTER_IP:6443" \
+    --kubeconfig=$KUBECONFIG \
+    --test.v \
+   2>&1 | tee -a  /tmp/testcase.log
 fi

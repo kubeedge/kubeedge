@@ -17,6 +17,7 @@ limitations under the License.
 package dynamiccontroller
 
 import (
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/klog/v2"
 
@@ -27,6 +28,8 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/application"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/config"
+	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/filter/defaultmaster"
+	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/filter/endpointresource"
 	configv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
@@ -38,11 +41,15 @@ type DynamicController struct {
 	applicationCenter            *application.Center
 }
 
-var _ core.Module = (*DynamicController)(nil)
+var (
+	_                 core.Module = (*DynamicController)(nil)
+	dynamicController *DynamicController
+)
 
 func Register(dc *configv1alpha1.DynamicController) {
 	config.InitConfigure(dc)
-	core.Register(newDynamicController(dc.Enable))
+	dynamicController = newDynamicController(dc.Enable)
+	core.Register(dynamicController)
 }
 
 // Name of controller
@@ -62,6 +69,8 @@ func (dctl *DynamicController) Enable() bool {
 
 // Start controller
 func (dctl *DynamicController) Start() {
+	endpointresource.Register()
+	defaultmaster.Register()
 	dctl.dynamicSharedInformerFactory.Start(beehiveContext.Done())
 	for gvr, cacheSync := range dctl.dynamicSharedInformerFactory.WaitForCacheSync(beehiveContext.Done()) {
 		if !cacheSync {
@@ -79,7 +88,8 @@ func newDynamicController(enable bool) *DynamicController {
 		dynamicSharedInformerFactory: informers.GetInformersManager().GetDynamicSharedInformerFactory(),
 	}
 	dctl.applicationCenter = application.NewApplicationCenter(dctl.dynamicSharedInformerFactory)
-
+	dctl.applicationCenter.ForResource(v1.SchemeGroupVersion.WithResource("nodes"))
+	dctl.applicationCenter.ForResource(v1.SchemeGroupVersion.WithResource("services"))
 	return dctl
 }
 

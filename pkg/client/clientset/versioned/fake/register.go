@@ -19,6 +19,7 @@ limitations under the License.
 package fake
 
 import (
+	appsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1"
 	devicesv1alpha2 "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
 	reliablesyncsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1"
 	rulesv1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
@@ -33,6 +34,7 @@ var scheme = runtime.NewScheme()
 var codecs = serializer.NewCodecFactory(scheme)
 
 var localSchemeBuilder = runtime.SchemeBuilder{
+	appsv1alpha1.AddToScheme,
 	devicesv1alpha2.AddToScheme,
 	reliablesyncsv1alpha1.AddToScheme,
 	rulesv1.AddToScheme,

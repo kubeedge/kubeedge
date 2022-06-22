@@ -15,10 +15,6 @@ import (
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
 )
 
-const (
-	EmptyString = ""
-)
-
 // MetaType is generally consisted of apiversion, kind like:
 // {
 // apiVersion: apps/v1

@@ -28,6 +28,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/filter"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	edgemodule "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
@@ -569,6 +570,9 @@ func (c *Center) Response(app *Application, parentID string, status applicationS
 		}
 	}
 	if respContent != nil {
+		if app.Verb == List || app.Verb == Get {
+			filter.MessageFilter(respContent, app.Nodename)
+		}
 		app.RespBody = toBytes(respContent)
 	}
 

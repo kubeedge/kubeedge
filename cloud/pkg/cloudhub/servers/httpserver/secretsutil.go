@@ -33,7 +33,7 @@ func GetSecret(secretName string, ns string) (*corev1.Secret, error) {
 func CreateSecret(secret *corev1.Secret, ns string) error {
 	cli := client.GetKubeClient()
 	if err := CreateNamespaceIfNeeded(cli, ns); err != nil {
-		return fmt.Errorf("failed to create Namespace kubeedge, error: %s", err)
+		return fmt.Errorf("failed to create Namespace kubeedge, error: %v", err)
 	}
 	if _, err := cli.CoreV1().Secrets(ns).Create(context.Background(), secret, metav1.CreateOptions{}); err != nil {
 		if errors.IsAlreadyExists(err) {
@@ -49,7 +49,6 @@ func CreateSecret(secret *corev1.Secret, ns string) error {
 
 func CreateTokenSecret(caHashAndToken []byte) error {
 	token := &corev1.Secret{
-		TypeMeta: metav1.TypeMeta{Kind: "Secret", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      TokenSecretName,
 			Namespace: constants.SystemNamespace,
@@ -65,7 +64,6 @@ func CreateTokenSecret(caHashAndToken []byte) error {
 
 func CreateCaSecret(certDER, key []byte) error {
 	caSecret := &corev1.Secret{
-		TypeMeta: metav1.TypeMeta{Kind: "Secret", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      CaSecretName,
 			Namespace: constants.SystemNamespace,
@@ -82,7 +80,6 @@ func CreateCaSecret(certDER, key []byte) error {
 
 func CreateCloudCoreSecret(certDER, key []byte) error {
 	cloudCoreCert := &corev1.Secret{
-		TypeMeta: metav1.TypeMeta{Kind: "Secret", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      CloudCoreSecretName,
 			Namespace: constants.SystemNamespace,
@@ -104,8 +101,7 @@ func CreateNamespaceIfNeeded(cli kubernetes.Interface, ns string) error {
 	}
 	newNs := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      ns,
-			Namespace: "",
+			Name: ns,
 		},
 	}
 	_, err := c.Namespaces().Create(context.Background(), newNs, metav1.CreateOptions{})

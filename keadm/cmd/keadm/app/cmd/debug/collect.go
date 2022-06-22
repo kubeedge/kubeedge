@@ -49,7 +49,7 @@ func NewCollect() *cobra.Command {
 // dd flags
 func addCollectOtherFlags(cmd *cobra.Command, collectOptions *common.CollectOptions) {
 	cmd.Flags().StringVarP(&collectOptions.Config, common.EdgecoreConfig, "c", collectOptions.Config,
-		fmt.Sprintf("Specify configuration file, defalut is %s", common.EdgecoreConfigPath))
+		fmt.Sprintf("Specify configuration file, default is %s", common.EdgecoreConfigPath))
 	cmd.Flags().BoolVarP(&collectOptions.Detail, "detail", "d", false,
 		"Whether to print internal log output")
 	//cmd.Flags().StringVar(&collectOptions.OutputPath, "output-path", collectOptions.OutputPath,

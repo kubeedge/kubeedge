@@ -89,7 +89,3 @@ func (d *DebOS) KillKubeEdgeBinary(proc string) error {
 func (d *DebOS) IsKubeEdgeProcessRunning(proc string) (bool, error) {
 	return IsKubeEdgeProcessRunning(proc)
 }
-
-func (d *DebOS) IsProcessRunning(proc string) (bool, error) {
-	return IsKubeEdgeProcessRunning(proc)
-}
