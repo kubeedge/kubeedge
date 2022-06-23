@@ -34,9 +34,12 @@ jobs:
           # 0 indicates all history for all branches and tags.
           # for `git describe --tags` in Makefile.
           fetch-depth: 0
+      - name: Install dependences
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y upx-ucl gcc-aarch64-linux-gnu libc6-dev-arm64-cross gcc-arm-linux-gnueabihf
       - name: Making and packaging
         run: |
-          docker pull kubeedge/build-tools
           make release ARM_VERSION=${{ matrix.ARM_VERSION }}
       - name: Uploading assets...
         if: ${{ !env.ACT }}
