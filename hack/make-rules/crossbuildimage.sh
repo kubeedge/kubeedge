@@ -23,7 +23,7 @@ set -o pipefail
 KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 IMAGE_TAG=$(git describe --tags)
 GO_LDFLAGS="$(${KUBEEDGE_ROOT}/hack/make-rules/version.sh)"
-IMAGE_REPO_NAME="kubeedge"
+IMAGE_REPO_NAME="${IMAGE_REPO_NAME:-kubeedge}"
 
 ALL_IMAGES_AND_TARGETS=(
   #{target}:{IMAGE_NAME}:{DOCKERFILE_PATH}

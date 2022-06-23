@@ -1,0 +1,84 @@
+name: build release, release image to DockerHub
+on:
+  release:
+    types:
+      - published
+env:
+  CONTAINER_RUN_OPTIONS: " "
+
+jobs:
+  release-assests:
+    name: release kubeedge components
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        target:
+          - kubeedge
+          - edgesite
+          - keadm
+        os:
+          - linux
+        arch:
+          - amd64
+          - arm64
+          - arm
+        ARM_VERSION:
+          - GOARM7
+          - GOARM8
+          - ""
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v2
+        with:
+          # fetch-depth:
+          # 0 indicates all history for all branches and tags.
+          # for `git describe --tags` in Makefile.
+          fetch-depth: 0
+      - name: Making and packaging
+        run: |
+          docker pull kubeedge/build-tools
+          make release ARM_VERSION=${{ matrix.ARM_VERSION }}
+      - name: Uploading assets...
+        if: ${{ !env.ACT }}
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            _output/release/${{ github.ref_name }}/${{ matrix.target }}-${{ github.ref_name }}-${{ matrix.os }}-${{ matrix.arch }}.tar.gz
+            _output/release/${{ github.ref_name }}/checksum_${{ matrix.target }}-${{ github.ref_name }}-${{ matrix.os }}-${{ matrix.arch }}.tar.gz.txt
+
+  publish-image-to-dockerhub:
+    name: publish to DockerHub
+    strategy:
+      matrix:
+        target:
+          - cloudcore
+          - admission
+          #- edgecore
+          - edgesite-agent
+          - edgesite-server
+          - csidriver
+          - iptablesmanager
+          - edgemark
+          - installation-package
+    runs-on: ubuntu-18.04
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v2
+        with:
+          # fetch-depth:
+          # 0 indicates all history for all branches and tags.
+          # for `git describe --tags` in Makefile.
+          fetch-depth: 0
+      - name: install QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: install Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USER_NAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: build and publish images
+        env:
+          IMAGE_REPO_NAME: kubeedge
+        run: make crossbuildimage WHAT=${{ matrix.target }}
