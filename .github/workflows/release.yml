@@ -53,13 +53,13 @@ jobs:
         target:
           - cloudcore
           - admission
-          #- edgecore
           - edgesite-agent
           - edgesite-server
           - csidriver
           - iptablesmanager
           - edgemark
           - installation-package
+          - controllermanager
     runs-on: ubuntu-18.04
     steps:
       - name: checkout code
