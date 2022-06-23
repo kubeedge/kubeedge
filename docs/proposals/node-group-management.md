@@ -61,7 +61,7 @@ The implementation consists of two components. a new `GroupManagementControllerM
 
 NodeGroup will organize nodes according to their labels which should be set based on their locations in advance, `location: hangzhou` and `location: beijing` in this case. After applying the NodeGroup resource, nodes will be grouped in `hangzhou` and `beijing` logically.
 
-The EdgeApplication resource contains the template of the application to deploy.Through EdgeApplication API, users can apply the different editions of the application template for each node group, such as specifying the image registry for each node group. After applying the EdgeApplication resource, the EdgeApplication controller will take the application template and override it generating serval different editions according to the specification. And then these applications will run in their nodegroups repectively.
+The EdgeApplication resource contains the template of the application to deploy.Through EdgeApplication API, users can apply the different editions of the application template for each node group, such as specifying the image registry for each node group. After applying the EdgeApplication resource, the EdgeApplication controller will take the application template and override it generating serval different editions according to the specification. And then these applications will run in their nodegroups respectively.
 
 ### GroupManagementControllerManager 
 `GroupManagementControllerManager` contains two controllers, called `NodeGroupController`, and `EdgeApplicationController`, which take over the lifetime mangement of EdgeApplication and NodeGroup respectively.
