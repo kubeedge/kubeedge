@@ -27,6 +27,7 @@ import (
 	"time"
 
 	certutil "k8s.io/client-go/util/cert"
+	"k8s.io/klog/v2"
 )
 
 //GenerateTestCertificate generates fake certificates and stores them at the path specified.
@@ -91,7 +92,12 @@ func createPEMfile(path string, pemBlock pem.Block) error {
 		return err
 	}
 
-	defer file.Close()
+	defer func() {
+		err := file.Close()
+		if err != nil {
+			klog.Errorf("failed to close file, path: %v, error: %v", path, err)
+		}
+	}()
 	err = pem.Encode(file, &pemBlock)
 	return err
 }
