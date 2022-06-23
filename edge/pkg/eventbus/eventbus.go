@@ -124,12 +124,24 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 		case messagepkg.OperationMessage:
 			body, ok := accessInfo.GetContent().(map[string]interface{})
 			if !ok {
-				klog.Errorf("Message is not map type")
+				klog.Errorf("Message type is %T and not map type", accessInfo.GetContent())
 				continue
 			}
-			message := body["message"].(map[string]interface{})
-			topic := message["topic"].(string)
-			payload, _ := json.Marshal(&message)
+			message, ok := body["message"].(map[string]interface{})
+			if !ok {
+				klog.Errorf("Message body type is %T and not map type", body["message"])
+				continue
+			}
+			topic, ok := message["topic"].(string)
+			if !ok {
+				klog.Errorf("Message topic body type is %T and not string type", message["topic"])
+				continue
+			}
+			payload, err := json.Marshal(&message)
+			if err != nil {
+				klog.Errorf("marshal message %v error: %v", topic, err)
+				continue
+			}
 			eb.publish(topic, payload)
 		case messagepkg.OperationPublish:
 			topic := resource

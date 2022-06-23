@@ -78,7 +78,11 @@ func (rh *RestHandler) RemoveListener(key interface{}) {
 func (rh *RestHandler) matchedPath(uri string) (string, bool) {
 	var candidateRes string
 	rh.handlers.Range(func(key, value interface{}) bool {
-		pathReg := key.(string)
+		pathReg, ok := key.(string)
+		if !ok {
+			klog.Errorf("key type %T error", key)
+			return true
+		}
 		if match := utils.IsMatch(pathReg, uri); match {
 			if candidateRes != "" && utils.RuleContains(pathReg, candidateRes) {
 				return true
