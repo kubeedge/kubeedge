@@ -15,7 +15,7 @@ require (
 	github.com/lucas-clemente/quic-go-certificates v0.0.0-20160823095156-d2f86524cced // indirect
 	github.com/onsi/ginkgo v1.11.0 // indirect
 	github.com/onsi/gomega v1.8.1 // indirect
-	k8s.io/klog/v2 v2.9.0
+	k8s.io/klog/v2 v2.70.0
 )
 
 replace (

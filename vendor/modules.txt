@@ -272,7 +272,7 @@ github.com/felixge/httpsnoop
 github.com/fsnotify/fsnotify
 # github.com/go-errors/errors v1.0.1
 github.com/go-errors/errors
-# github.com/go-logr/logr v0.4.0
+# github.com/go-logr/logr v1.2.0
 github.com/go-logr/logr
 # github.com/go-ole/go-ole v1.2.6
 github.com/go-ole/go-ole
@@ -1636,9 +1636,13 @@ k8s.io/gengo/generator
 k8s.io/gengo/namer
 k8s.io/gengo/parser
 k8s.io/gengo/types
-# k8s.io/klog/v2 v2.9.0 => k8s.io/klog/v2 v2.8.0
+# k8s.io/klog/v2 v2.70.0 => k8s.io/klog/v2 v2.70.0
 ## explicit
 k8s.io/klog/v2
+k8s.io/klog/v2/internal/buffer
+k8s.io/klog/v2/internal/clock
+k8s.io/klog/v2/internal/serialize
+k8s.io/klog/v2/internal/severity
 # k8s.io/kube-openapi v0.0.0-20211115234752-e816edb12b65
 ## explicit
 k8s.io/kube-openapi/cmd/openapi-gen
@@ -2162,7 +2166,7 @@ sigs.k8s.io/yaml
 # k8s.io/csi-translation-lib v0.0.0 => k8s.io/csi-translation-lib v0.22.6
 # k8s.io/gengo v0.0.0 => k8s.io/gengo v0.22.6
 # k8s.io/heapster => k8s.io/heapster v1.2.0-beta.1
-# k8s.io/klog/v2 => k8s.io/klog/v2 v2.8.0
+# k8s.io/klog/v2 => k8s.io/klog/v2 v2.70.0
 # k8s.io/kube-aggregator v0.0.0 => k8s.io/kube-aggregator v0.22.6
 # k8s.io/kube-controller-manager v0.0.0 => k8s.io/kube-controller-manager v0.22.6
 # k8s.io/kube-proxy v0.0.0 => k8s.io/kube-proxy v0.22.6
