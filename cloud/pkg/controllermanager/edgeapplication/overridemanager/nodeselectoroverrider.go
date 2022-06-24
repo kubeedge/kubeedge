@@ -24,7 +24,7 @@ func (o *NodeSelectorOverrider) ApplyOverrides(rawObj *unstructured.Unstructured
 		deploymentObj.Spec.Template.Spec.NodeSelector = nodeGroupLabel
 		unstructured, err := runtime.DefaultUnstructuredConverter.ToUnstructured(deploymentObj)
 		if err != nil {
-			return fmt.Errorf("failed to convert Deployment to unstructrued object: %v", err)
+			return fmt.Errorf("failed to convert Deployment to unstructured object: %v", err)
 		}
 		rawObj.Object = unstructured
 	default:
