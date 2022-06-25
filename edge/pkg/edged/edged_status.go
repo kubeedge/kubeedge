@@ -116,10 +116,7 @@ func (e *edged) initialNode() (*v1.Node, error) {
 		return nil, err
 	}
 
-	err = e.setCPUInfo(node.Status.Capacity, node.Status.Allocatable)
-	if err != nil {
-		return nil, err
-	}
+	e.setCPUInfo(node.Status.Capacity, node.Status.Allocatable)
 
 	err = e.setEphemeralStorageInfo(node.Status.Capacity, node.Status.Allocatable)
 	if err != nil {
@@ -356,11 +353,9 @@ func (e *edged) setMemInfo(total, allocatable v1.ResourceList) error {
 	return nil
 }
 
-func (e *edged) setCPUInfo(total, allocatable v1.ResourceList) error {
+func (e *edged) setCPUInfo(total, allocatable v1.ResourceList) {
 	total[v1.ResourceCPU] = resource.MustParse(fmt.Sprintf("%d", runtime.NumCPU()))
 	allocatable[v1.ResourceCPU] = total[v1.ResourceCPU].DeepCopy()
-
-	return nil
 }
 
 func (e *edged) setEphemeralStorageInfo(total, allocatable v1.ResourceList) error {
