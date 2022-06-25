@@ -326,7 +326,7 @@ func installKubeEdge(options types.InstallOptions, arch string, version semver.V
 }
 
 // runEdgeCore starts edgecore with logs being captured
-func runEdgeCore(version semver.Version) error {
+func runEdgeCore() error {
 	// create the log dir for kubeedge
 	err := os.MkdirAll(KubeEdgeLogPath, os.ModePerm)
 	if err != nil {

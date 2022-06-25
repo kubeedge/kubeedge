@@ -19,6 +19,7 @@ package dtmanager
 import (
 	"encoding/json"
 	"errors"
+	"reflect"
 	"sync"
 	"testing"
 
@@ -280,7 +281,9 @@ func TestDealMembershipGetValid(t *testing.T) {
 		Content: content,
 	}
 	err := dealMembershipGet(dtc, "t", m)
-	assert.NoError(t, err)
+	if !reflect.DeepEqual(err, errors.New("Not found chan to communicate")) {
+		t.Errorf("expected %v, but got error: %v", errors.New("Not found chan to communicate"), err)
+	}
 }
 
 func TestDealMembershipGetInnerValid(t *testing.T) {
@@ -306,7 +309,9 @@ func TestDealMembershipGetInnerValid(t *testing.T) {
 	content, _ := json.Marshal(payload)
 
 	err := dealMembershipGetInner(dtc, content)
-	assert.NoError(t, err)
+	if !reflect.DeepEqual(err, errors.New("Not found chan to communicate")) {
+		t.Errorf("expected %v, but got error: %v", errors.New("Not found chan to communicate"), err)
+	}
 }
 
 func TestDealMembershipGetInnerInValid(t *testing.T) {
@@ -318,7 +323,9 @@ func TestDealMembershipGetInnerInValid(t *testing.T) {
 	}
 
 	err := dealMembershipGetInner(dtc, []byte("invalid"))
-	assert.NoError(t, err)
+	if !reflect.DeepEqual(err, errors.New("Not found chan to communicate")) {
+		t.Errorf("expected %v, but got error: %v", errors.New("Not found chan to communicate"), err)
+	}
 }
 
 //Commented As we are not considering about the coverage incase for coverage we can uncomment below cases.

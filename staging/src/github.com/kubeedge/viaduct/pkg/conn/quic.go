@@ -26,7 +26,7 @@ var (
 	autoFree = false
 )
 
-// the connection based on quic protocol
+// QuicConnection the connection based on quic protocol
 type QuicConnection struct {
 	writeDeadline time.Time
 	readDeadline  time.Time
@@ -42,7 +42,7 @@ type QuicConnection struct {
 	autoRoute     bool
 }
 
-// new quic connection
+// NewQuicConn new quic connection
 func NewQuicConn(options *ConnectionOptions) *QuicConnection {
 	quicSession := options.Base.(quic.Session)
 	return &QuicConnection{
@@ -71,16 +71,6 @@ func (conn *QuicConnection) headerMessage(msg *model.Message) error {
 	return nil
 }
 
-// process control messages
-func (conn *QuicConnection) processControlMessage(msg *model.Message) error {
-	switch msg.GetOperation() {
-	case comm.ControlTypeConfig:
-	case comm.ControlTypePing:
-	case comm.ControlTypePong:
-	}
-	return nil
-}
-
 // read control message from control lan and process
 func (conn *QuicConnection) serveControlLan() {
 	var msg model.Message
@@ -92,15 +82,8 @@ func (conn *QuicConnection) serveControlLan() {
 			return
 		}
 
-		// process control message
-		result := comm.RespTypeAck
-		err = conn.processControlMessage(&msg)
-		if err != nil {
-			result = comm.RespTypeNack
-		}
-
 		// feedback the response
-		resp := msg.NewRespByMessage(&msg, result)
+		resp := msg.NewRespByMessage(&msg, comm.RespTypeAck)
 		err = conn.ctrlLan.WriteMessage(resp)
 		if err != nil {
 			klog.Errorf("failed to send response back, error:%+v", err)
