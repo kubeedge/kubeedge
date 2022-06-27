@@ -21,9 +21,10 @@ import (
 )
 
 const (
-	CloudAdmission       = "admission"
-	CloudCloudcore       = "cloudcore"
-	CloudIptablesManager = "iptables-manager"
+	CloudAdmission         = "admission"
+	CloudCloudcore         = "cloudcore"
+	CloudIptablesManager   = "iptables-manager"
+	CloudControllerManager = "controller-manager"
 )
 
 const (
@@ -35,9 +36,10 @@ const (
 type Set map[string]string
 
 var cloudComponentSet = Set{
-	CloudAdmission:       "kubeedge/admission",
-	CloudCloudcore:       "kubeedge/cloudcore",
-	CloudIptablesManager: "kubeedge/iptables-manager",
+	CloudAdmission:         "kubeedge/admission",
+	CloudCloudcore:         "kubeedge/cloudcore",
+	CloudIptablesManager:   "kubeedge/iptables-manager",
+	CloudControllerManager: "kubeedge/controller-manager",
 }
 
 var cloudThirdPartySet = Set{}
