@@ -383,9 +383,15 @@ func (cu *KubeCloudHelmInstTool) handleProfile(profileValue string) error {
 			profileValue = "v" + profileValue
 		}
 
-		cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "cloudCore.image.tag", profileValue))
-		cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "iptablesManager.image.tag", profileValue))
-		cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "controllerManager.image.tag", profileValue))
+		if !SetsContainSubstring(cu.Sets, "cloudCore.image.tag") {
+			cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "cloudCore.image.tag", profileValue))
+		}
+		if !SetsContainSubstring(cu.Sets, "iptablesManager.image.tag") {
+			cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "iptablesManager.image.tag", profileValue))
+		}
+		if !SetsContainSubstring(cu.Sets, "controllerManager.image.tag") {
+			cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "controllerManager.image.tag", profileValue))
+		}
 
 	case IptablesMgrProfileKey:
 		if profileValue == "" {
@@ -410,6 +416,16 @@ func (cu *KubeCloudHelmInstTool) handleProfile(profileValue string) error {
 	return nil
 }
 
+// SetsContainSubstring checks whether a substring contains in string set
+func SetsContainSubstring(sets []string, sub string) bool {
+	for _, v := range sets {
+		if strings.Contains(v, sub) {
+			return true
+		}
+	}
+	return false
+}
+
 func (cu *KubeCloudHelmInstTool) rebuildFlagVals() error {
 	unDuplicatedStore := make(map[string]string)
 
@@ -423,6 +439,9 @@ func (cu *KubeCloudHelmInstTool) rebuildFlagVals() error {
 
 		unDuplicatedStore[p[0]] = p[1]
 	}
+
+	// clear Sets to avoid append on the exist slice
+	cu.Sets = []string{}
 
 	for k, v := range unDuplicatedStore {
 		cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", k, v))
