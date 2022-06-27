@@ -115,7 +115,7 @@ func NewCommonResourceEventHandler(gvr schema.GroupVersionResource, informerFact
 	klog.Infof("[metaserver/resourceEventHandler] handler(%v) init, wait for informer starting...", gvr)
 	for gvr, cacheSync := range informerFactory.WaitForCacheSync(beehiveContext.Done()) {
 		if !cacheSync {
-			klog.Exitf("unable to sync caches for: %s", gvr.String())
+			klog.Exitf("Unable to sync caches for: %s", gvr.String())
 		}
 	}
 	handler.informer = informer
@@ -127,14 +127,14 @@ func NewCommonResourceEventHandler(gvr schema.GroupVersionResource, informerFact
 func (c *CommonResourceEventHandler) objToEvent(t watch.EventType, obj interface{}) {
 	eventObj, ok := obj.(runtime.Object)
 	if !ok {
-		klog.Warningf("unknown type: %T, ignore", obj)
+		klog.Warningf("Unknown type: %T, ignore", obj)
 		return
 	}
 	// All obj from client has been removed the information of apiversion/kind called MetaType,
 	// which is fatal to decode the obj as unstructured.Unstructure or unstructured.UnstructureList at edge.
 	err := util.SetMetaType(eventObj)
 	if err != nil {
-		klog.Warningf("failed to set metatype :%v", err)
+		klog.Warningf("Failed to set metatype :%v", err)
 	}
 	c.events <- watch.Event{Type: t, Object: eventObj}
 }
@@ -143,7 +143,7 @@ func (c *CommonResourceEventHandler) AddListener(s *SelectorListener) error {
 	// filter s.selector.field when sendAllObjects
 	ret, err := c.informer.Lister().List(s.selector.Label)
 	if err != nil {
-		return fmt.Errorf("failed to list: %v", err)
+		return fmt.Errorf("Failed to list: %v", err)
 	}
 	s.sendAllObjects(ret, c)
 	c.listenersLock.Lock()
