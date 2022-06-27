@@ -74,7 +74,7 @@ func (dctl *DynamicController) Start() {
 	dctl.dynamicSharedInformerFactory.Start(beehiveContext.Done())
 	for gvr, cacheSync := range dctl.dynamicSharedInformerFactory.WaitForCacheSync(beehiveContext.Done()) {
 		if !cacheSync {
-			klog.Exitf("unable to sync caches for: %s", gvr.String())
+			klog.Exitf("Unable to sync caches for: %s", gvr.String())
 		}
 	}
 
@@ -97,13 +97,13 @@ func (dctl *DynamicController) receiveMessage() {
 	for {
 		select {
 		case <-beehiveContext.Done():
-			klog.Info("stop dispatchMessage")
+			klog.Info("Stop dispatchMessage")
 			return
 		default:
 		}
 		msg, err := dctl.messageLayer.Receive()
 		if err != nil {
-			klog.Warningf("receive message failed, %s", err)
+			klog.Warningf("Receive message failed, %s", err)
 			continue
 		}
 		dctl.applicationCenter.Process(msg)
