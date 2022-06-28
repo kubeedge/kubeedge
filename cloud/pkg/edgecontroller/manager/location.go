@@ -190,7 +190,7 @@ func (lc *LocationCache) IsEndpointsUpdated(new v1.Endpoints) bool {
 
 // GetAllEndpoints from cache
 func (lc *LocationCache) GetAllEndpoints() []v1.Endpoints {
-	endpoints := []v1.Endpoints{}
+	var endpoints []v1.Endpoints
 	lc.endpoints.Range(func(key interface{}, value interface{}) bool {
 		eps, ok := value.(v1.Endpoints)
 		if ok {
