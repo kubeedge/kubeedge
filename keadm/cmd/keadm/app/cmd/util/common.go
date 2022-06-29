@@ -572,7 +572,13 @@ func computeSHA512Checksum(filepath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer f.Close()
+
+	defer func() {
+		err := f.Close()
+		if err != nil {
+			fmt.Printf("failed to close file, path: %v, error: %v \n", filepath, err)
+		}
+	}()
 
 	h := sha512.New()
 	if _, err := io.Copy(h, f); err != nil {
@@ -649,13 +655,16 @@ func retryDownload(filename, checksumFilename string, version semver.Version, ta
 }
 
 // Compress compresses folders or files
-func Compress(tarName string, paths []string) (err error) {
+func Compress(tarName string, paths []string) error {
 	tarFile, err := os.Create(tarName)
 	if err != nil {
 		return err
 	}
 	defer func() {
-		err = tarFile.Close()
+		err := tarFile.Close()
+		if err != nil {
+			fmt.Printf("failed to close tar file, path: %v, error: %v \n", tarName, err)
+		}
 	}()
 
 	absTar, err := filepath.Abs(tarName)
@@ -724,7 +733,14 @@ func Compress(tarName string, paths []string) (err error) {
 			if err != nil {
 				return err
 			}
-			defer srcFile.Close()
+
+			defer func() {
+				err := srcFile.Close()
+				if err != nil {
+					fmt.Printf("failed to close file, path: %v, error: %v \n", file, err)
+				}
+			}()
+
 			_, err = io.Copy(tw, srcFile)
 			if err != nil {
 				return err
