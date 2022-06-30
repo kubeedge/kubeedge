@@ -62,6 +62,9 @@ const (
 	DeviceProfileJSON = "deviceProfile.json"
 )
 
+// ResourceTypeDeviceModel is type for device model distribute to node
+const ResourceTypeDeviceModel = "devicemodel"
+
 // DownstreamController watch kubernetes api server and send change to edge
 type DownstreamController struct {
 	kubeClient   kubernetes.Interface
@@ -410,6 +413,8 @@ func (dc *DownstreamController) deviceAdded(device *v1alpha2.Device) {
 		if err != nil {
 			klog.Errorf("Failed to send device addition message %v due to error %v", msg, err)
 		}
+
+		dc.sendDeviceModelMsg(device, model.InsertOperation)
 	}
 }
 
@@ -647,6 +652,11 @@ func (dc *DownstreamController) deviceUpdated(device *v1alpha2.Device) {
 						klog.Errorf("Failed to send deviceTwin message %v due to error %v", msg, err)
 					}
 				}
+				// distribute device model
+				if isDeviceStatusUpdated(&cachedDevice.Status, &device.Status) ||
+					isDeviceDataUpdated(&cachedDevice.Spec.Data, &device.Spec.Data) {
+					dc.sendDeviceModelMsg(device, model.UpdateOperation)
+				}
 			}
 		}
 	} else {
@@ -842,6 +852,50 @@ func deleteDeviceModelAndVisitors(deviceModel *v1alpha2.DeviceModel, deviceProfi
 	}
 }
 
+func (dc *DownstreamController) sendDeviceModelMsg(device *v1alpha2.Device, operation string) {
+	// send operate msg for device model
+	// now it is depended on device, maybe move this code to syncDeviceModel's method
+	if device == nil || device.Spec.DeviceModelRef == nil {
+		return
+	}
+	edgeDeviceModel, ok := dc.deviceModelManager.DeviceModel.Load(device.Spec.DeviceModelRef.Name)
+	if !ok {
+		klog.Warningf("not found device model for device: %s, operation: %s", device.Name, operation)
+		return
+	}
+
+	deviceModel := edgeDeviceModel.(v1alpha2.DeviceModel)
+	modelMsg := model.NewMessage("").
+		SetResourceVersion(deviceModel.ResourceVersion).
+		FillBody(deviceModel)
+	modelResource, err := messagelayer.BuildResource(
+		device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0],
+		deviceModel.Namespace,
+		ResourceTypeDeviceModel,
+		deviceModel.Name)
+	if err != nil {
+		klog.Warningf("Built message resource failed for device model, device: %s, operation: %s, error: %s", device.Name, operation, err)
+		return
+	}
+
+	// filter operation
+	switch operation {
+	case model.InsertOperation:
+	case model.DeleteOperation:
+	case model.UpdateOperation:
+	default:
+		klog.Warningf("unknown operation %s for device %s when send device model msg", operation, device.Name)
+		return
+	}
+	modelMsg.BuildRouter(modules.DeviceControllerModuleName, "resource", modelResource, operation)
+
+	err = dc.messageLayer.Send(*modelMsg)
+	if err != nil {
+		klog.Errorf("Failed to send device model addition message %v, device: %s, operation: %s, error: %v",
+			modelMsg, device.Name, operation, err)
+	}
+}
+
 // deviceDeleted send a deleted message to the edgeNode and deletes the device from the deviceManager.Device map
 func (dc *DownstreamController) deviceDeleted(device *v1alpha2.Device) {
 	dc.deviceManager.Device.Delete(device.Name)
@@ -867,6 +921,7 @@ func (dc *DownstreamController) deviceDeleted(device *v1alpha2.Device) {
 		if err != nil {
 			klog.Errorf("Failed to send device addition message %v due to error %v", msg, err)
 		}
+		dc.sendDeviceModelMsg(device, model.DeleteOperation)
 	}
 }
 
