@@ -19,7 +19,7 @@ package keadm
 import (
 	"net/http"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,13 +34,13 @@ var DeploymentTestTimerGroup *utils.TestTimerGroup = utils.NewTestTimerGroup()
 //Run Test cases
 var _ = Describe("Application deployment test in keadm E2E scenario", func() {
 	var testTimer *utils.TestTimer
-	var testDescription GinkgoTestDescription
+	var testSpecReport SpecReport
 	Context("Test application deployment using Pod spec", func() {
 		BeforeEach(func() {
-			// Get current test description
-			testDescription = CurrentGinkgoTestDescription()
+			// Get current test SpecReport
+			testSpecReport = CurrentSpecReport()
 			// Start test timer
-			testTimer = DeploymentTestTimerGroup.NewTestTimer(testDescription.TestText)
+			testTimer = DeploymentTestTimerGroup.NewTestTimer(testSpecReport.LeafNodeText)
 		})
 		AfterEach(func() {
 			// End test timer

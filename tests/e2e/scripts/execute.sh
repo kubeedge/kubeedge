@@ -22,15 +22,32 @@ cd $workdir
 curpath=$PWD
 echo $PWD
 
-which ginkgo &> /dev/null || (
-    go install github.com/onsi/ginkgo/ginkgo@latest
-    sudo cp $GOPATH/bin/ginkgo /usr/local/bin/
-)
+check_ginkgo_v2() {
+    # check if ginkgo is installed
+    which ginkgo &> /dev/null || (
+        echo "ginkgo is not found, install first"
+        go install github.com/onsi/ginkgo/v2/ginkgo@v2.1.4
+        sudo cp $GOPATH/bin/ginkgo /usr/local/bin/
+        return
+    )
+    
+    # check if the ginkgo version is v2
+    local -a ginkgo_version_output
+    read -ra ginkgo_version_output <<< $(ginkgo version)
+    # Assuming ginkgo version output format is: 
+    # Ginkgo Version 2.1.4
+    if [[ "${ginkgo_version_output[2]}" != "2.1.4" ]]; then
+        echo "ginkgo version is not v2.1.4, reinstall ginkgo v2.1.4"
+        go install github.com/onsi/ginkgo/v2/ginkgo@v2.1.4
+        sudo cp $GOPATH/bin/ginkgo /usr/local/bin/
+    fi
+}
 
 cleanup() {
     bash ${curpath}/tests/e2e/scripts/cleanup.sh
 }
 
+check_ginkgo_v2
 cleanup
 
 E2E_DIR=${curpath}/tests/e2e
