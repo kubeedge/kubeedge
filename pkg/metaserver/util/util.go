@@ -33,7 +33,7 @@ func SetMetaType(obj runtime.Object) error {
 	}
 	gvk := kinds[0]
 	obj.GetObjectKind().SetGroupVersionKind(gvk)
-	klog.V(4).Infof("[metaserver]successfully set MetaType for obj %v, %+v", obj.GetObjectKind(), accessor.GetName())
+	klog.V(6).Infof("[metaserver]successfully set MetaType for obj %v, %+v", obj.GetObjectKind(), accessor.GetName())
 	return nil
 }
 

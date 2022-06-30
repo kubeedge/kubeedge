@@ -25,6 +25,11 @@ import (
 )
 
 func (sctl *SyncController) manageObject(sync *v1alpha1.ObjectSync) {
+	klog.V(4).InfoS("start reconcile object",
+		"Object Kind", sync.Spec.ObjectKind,
+		"Object Namespace", sync.Namespace,
+		"Object Name", sync.Spec.ObjectName)
+
 	var object metav1.Object
 
 	gv, err := schema.ParseGroupVersion(sync.Spec.ObjectAPIVersion)
