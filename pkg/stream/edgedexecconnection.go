@@ -39,13 +39,6 @@ func (e *EdgedExecConnection) CacheTunnelMessage(msg *Message) {
 	e.ReadChan <- msg
 }
 
-type responder struct{}
-
-func (r *responder) Error(w http.ResponseWriter, req *http.Request, err error) {
-	klog.Errorf("failed to proxy request: %v", err)
-	http.Error(w, err.Error(), http.StatusInternalServerError)
-}
-
 func (e *EdgedExecConnection) Serve(tunnel SafeWriteTunneler) error {
 	tripper := spdy.NewRoundTripper(nil, true, false)
 	req, err := http.NewRequest(e.Method, e.URL.String(), nil)
