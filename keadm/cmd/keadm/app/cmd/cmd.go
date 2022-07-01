@@ -20,10 +20,10 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/beta"
-	cloud "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/cloud"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/cloud"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/debug"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/deprecated"
-	edge "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/edge"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/edge"
 )
 
 var (

@@ -161,6 +161,36 @@ func TestValidateModuleEdgeHub(t *testing.T) {
 			},
 			result: field.ErrorList{},
 		},
+		{
+			name: "case4 MessageQPS must not be a negative number",
+			input: v1alpha1.EdgeHub{
+				Enable: true,
+				WebSocket: &v1alpha1.EdgeHubWebSocket{
+					Enable: true,
+				},
+				Quic: &v1alpha1.EdgeHubQUIC{
+					Enable: false,
+				},
+				MessageQPS: -1,
+			},
+			result: field.ErrorList{field.Invalid(field.NewPath("messageQPS"),
+				int32(-1), "MessageQPS must not be a negative number")},
+		},
+		{
+			name: "case5 MessageBurst must not be a negative number",
+			input: v1alpha1.EdgeHub{
+				Enable: true,
+				WebSocket: &v1alpha1.EdgeHubWebSocket{
+					Enable: true,
+				},
+				Quic: &v1alpha1.EdgeHubQUIC{
+					Enable: false,
+				},
+				MessageBurst: -1,
+			},
+			result: field.ErrorList{field.Invalid(field.NewPath("messageBurst"),
+				int32(-1), "MessageBurst must not be a negative number")},
+		},
 	}
 
 	for _, c := range cases {

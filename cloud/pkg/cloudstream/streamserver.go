@@ -138,7 +138,7 @@ func (s *StreamServer) getContainerLogs(r *restful.Request, w *restful.Response)
 		edgePeerStop: make(chan struct{}),
 	})
 	if err != nil {
-		klog.Errorf("Add apiserver connection into %s error %v", session.String(), err)
+		err = fmt.Errorf("add apiServer connection into %s error %v", session.String(), err)
 		return
 	}
 
@@ -190,7 +190,7 @@ func (s *StreamServer) getMetrics(r *restful.Request, w *restful.Response) {
 		edgePeerStop: make(chan struct{}),
 	})
 	if err != nil {
-		klog.Errorf("Add apiserver connection into %s error %v", session.String(), err)
+		err = fmt.Errorf("add apiServer connection into %s error %v", session.String(), err)
 		return
 	}
 
@@ -257,7 +257,7 @@ func (s *StreamServer) getExec(request *restful.Request, response *restful.Respo
 		edgePeerStop: make(chan struct{}),
 	})
 	if err != nil {
-		klog.Errorf("Add apiserver exec connection into %s error %v", session.String(), err)
+		err = fmt.Errorf("add apiServer exec connection into %s error %v", session.String(), err)
 		return
 	}
 

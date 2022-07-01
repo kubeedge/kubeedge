@@ -66,7 +66,9 @@ func newTunnelServer(tunnelPort int) *TunnelServer {
 			Error: func(w http.ResponseWriter, r *http.Request, status int, reason error) {
 				w.WriteHeader(status)
 				_, err := w.Write([]byte(reason.Error()))
-				klog.Errorf("failed to write http response, err: %v", err)
+				if err != nil {
+					klog.Errorf("failed to write http response, err: %v", err)
+				}
 			},
 		},
 	}

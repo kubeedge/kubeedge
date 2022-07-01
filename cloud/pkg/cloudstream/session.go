@@ -128,7 +128,10 @@ func (s *Session) AddAPIServerConnection(ss *StreamServer, connection APIServerC
 
 func (s *Session) DeleteAPIServerConnection(con APIServerConnection) {
 	s.apiConnlock.Lock()
-	defer s.apiConnlock.Unlock()
 	delete(s.apiServerConn, con.GetMessageID())
+	// Other operations do not affect the release of the lock,
+	// but will increase the lock holding time,
+	// so the lock needs to be released in advance.
+	s.apiConnlock.Unlock()
 	klog.Infof("Delete a apiserver connection %s from %s", con.String(), s.String())
 }

@@ -91,6 +91,16 @@ func ValidateModuleEdgeHub(h v1alpha1.EdgeHub) field.ErrorList {
 			h.Quic.Enable, "websocket.enable and quic.enable cannot be true and false at the same time"))
 	}
 
+	if h.MessageQPS < 0 {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("messageQPS"), h.MessageQPS,
+			"MessageQPS must not be a negative number"))
+	}
+
+	if h.MessageBurst < 0 {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("messageBurst"), h.MessageBurst,
+			"MessageBurst must not be a negative number"))
+	}
+
 	return allErrs
 }
 

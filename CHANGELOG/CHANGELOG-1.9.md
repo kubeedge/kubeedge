@@ -1,4 +1,8 @@
 
+* [v1.9.3](#v193)
+    * [Downloads for v1.9.3](#downloads-for-v193)
+    * [KubeEdge v1.9.3 Release Notes](#kubeedge-v193-release-notes)
+      * [Changelog since v1.9.2](#changelog-since-v192)
 * [v1.9.2](#v192)
     * [Downloads for v1.9.2](#downloads-for-v192)
     * [KubeEdge v1.9.2 Release Notes](#kubeedge-v192-release-notes)
@@ -15,6 +19,19 @@
         * [Other Notable Changes](#other-notable-changes)
         * [Bug Fixes](#bug-fixes)
 
+# v1.9.3
+
+## Downloads for v1.9.3
+
+Download v1.9.3 in the [v1.9.3 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.9.3).
+
+## KubeEdge v1.9.3 Release Notes
+
+### Changelog since v1.9.2
+
+- Fix fuzzer extract message error. ([#3948](https://github.com/kubeedge/kubeedge/pull/3948), [@vincentgoat](https://github.com/vincentgoat))
+- Pods yaml configure imagePullSecret but doesn't exist in kubernetes cluster. ([#3820](https://github.com/kubeedge/kubeedge/pull/3820), [@vincentgoat](https://github.com/vincentgoat))
+- Set deleteResource function parameter `allowsOptions` value to true. ([#3740](https://github.com/kubeedge/kubeedge/pull/3740), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
 
 # v1.9.2
 

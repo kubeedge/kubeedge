@@ -56,16 +56,6 @@ func (conn *WSConnection) ServeConn() {
 	}
 }
 
-// process control messages
-func (conn *WSConnection) processControlMessage(msg *model.Message) error {
-	switch msg.GetOperation() {
-	case comm.ControlTypeConfig:
-	case comm.ControlTypePing:
-	case comm.ControlTypePong:
-	}
-	return nil
-}
-
 func (conn *WSConnection) filterControlMessage(msg *model.Message) bool {
 	// check control message
 	operation := msg.GetOperation()
@@ -75,17 +65,10 @@ func (conn *WSConnection) filterControlMessage(msg *model.Message) bool {
 		return false
 	}
 
-	// process control message
-	result := comm.RespTypeAck
-	err := conn.processControlMessage(msg)
-	if err != nil {
-		result = comm.RespTypeNack
-	}
-
 	// feedback the response
-	resp := msg.NewRespByMessage(msg, result)
+	resp := msg.NewRespByMessage(msg, comm.RespTypeAck)
 	conn.locker.Lock()
-	err = lane.NewLane(api.ProtocolTypeWS, conn.wsConn).WriteMessage(resp)
+	err := lane.NewLane(api.ProtocolTypeWS, conn.wsConn).WriteMessage(resp)
 	conn.locker.Unlock()
 	if err != nil {
 		klog.Errorf("failed to send response back, error:%+v", err)

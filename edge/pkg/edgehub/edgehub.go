@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"k8s.io/client-go/util/flowcontrol"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core"
@@ -22,6 +23,7 @@ type EdgeHub struct {
 	certManager   certificate.CertManager
 	chClient      clients.Adapter
 	reconnectChan chan struct{}
+	rateLimiter   flowcontrol.RateLimiter
 	keeperLock    sync.RWMutex
 	enable        bool
 }
@@ -30,8 +32,11 @@ var _ core.Module = (*EdgeHub)(nil)
 
 func newEdgeHub(enable bool) *EdgeHub {
 	return &EdgeHub{
-		reconnectChan: make(chan struct{}),
 		enable:        enable,
+		reconnectChan: make(chan struct{}),
+		rateLimiter: flowcontrol.NewTokenBucketRateLimiter(
+			float32(config.Config.EdgeHub.MessageQPS),
+			int(config.Config.EdgeHub.MessageBurst)),
 	}
 }
 

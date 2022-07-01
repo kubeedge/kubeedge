@@ -1,0 +1,214 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.6.2
+  creationTimestamp: null
+  name: edgeapplications.apps.kubeedge.io
+spec:
+  group: apps.kubeedge.io
+  names:
+    kind: EdgeApplication
+    listKind: EdgeApplicationList
+    plural: edgeapplications
+    shortNames:
+    - eapp
+    singular: edgeapplication
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: EdgeApplication is the Schema for the edgeapplications API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: Spec represents the desired behavior of EdgeApplication.
+            properties:
+              workloadScope:
+                description: WorkloadScope represents which node groups the workload
+                  will be deployed in.
+                properties:
+                  targetNodeGroups:
+                    description: TargetNodeGroups represents the target node groups
+                      of workload to be deployed.
+                    items:
+                      description: TargetNodeGroup represents the target node group
+                        of workload to be deployed, including override rules to apply
+                        for this node group.
+                      properties:
+                        name:
+                          description: Name represents the name of target node group
+                          type: string
+                        overriders:
+                          description: Overriders represents the override rules that
+                            would apply on workload.
+                          properties:
+                            imageOverriders:
+                              description: ImageOverriders represents the rules dedicated
+                                to handling image overrides.
+                              items:
+                                description: ImageOverrider represents the rules dedicated
+                                  to handling image overrides.
+                                properties:
+                                  component:
+                                    description: 'Component is part of image name.
+                                      Basically we presume an image can be made of
+                                      ''[registry/]repository[:tag]''. The registry
+                                      could be: - k8s.gcr.io - fictional.registry.example:10443
+                                      The repository could be: - kube-apiserver -
+                                      fictional/nginx The tag cloud be: - latest -
+                                      v1.19.1 - @sha256:dbcc1c35ac38df41fd2f5e4130b32ffdb93ebae8b3dbe638c23575912276fc9c'
+                                    enum:
+                                    - Registry
+                                    - Repository
+                                    - Tag
+                                    type: string
+                                  operator:
+                                    description: Operator represents the operator
+                                      which will apply on the image.
+                                    enum:
+                                    - add
+                                    - remove
+                                    - replace
+                                    type: string
+                                  predicate:
+                                    description: "Predicate filters images before
+                                      applying the rule. \n Defaults to nil, in that
+                                      case, the system will automatically detect image
+                                      fields if the resource type is Pod, ReplicaSet,
+                                      Deployment or StatefulSet by following rule:
+                                      \  - Pod: spec/containers/<N>/image   - ReplicaSet:
+                                      spec/template/spec/containers/<N>/image   -
+                                      Deployment: spec/template/spec/containers/<N>/image
+                                      \  - StatefulSet: spec/template/spec/containers/<N>/image
+                                      In addition, all images will be processed if
+                                      the resource object has more than one containers.
+                                      \n If not nil, only images matches the filters
+                                      will be processed."
+                                    properties:
+                                      path:
+                                        description: Path indicates the path of target
+                                          field
+                                        type: string
+                                    required:
+                                    - path
+                                    type: object
+                                  value:
+                                    description: Value to be applied to image. Must
+                                      not be empty when operator is 'add' or 'replace'.
+                                      Defaults to empty and ignored when operator
+                                      is 'remove'.
+                                    type: string
+                                required:
+                                - component
+                                - operator
+                                type: object
+                              type: array
+                            replicas:
+                              description: Replicas will override the replicas field
+                                of deployment
+                              type: integer
+                          type: object
+                      required:
+                      - name
+                      type: object
+                    type: array
+                type: object
+              workloadTemplate:
+                description: WorkloadTemplate contains original templates of resources
+                  to be deployed as an EdgeApplication.
+                properties:
+                  manifests:
+                    description: Manifests represent a list of Kubernetes resources
+                      to be deployed on the managed node groups.
+                    items:
+                      description: Manifest represents a resource to be deployed on
+                        managed node groups.
+                      type: object
+                      x-kubernetes-preserve-unknown-fields: true
+                    type: array
+                type: object
+            required:
+            - workloadScope
+            type: object
+          status:
+            description: Status represents the status of PropagationStatus.
+            properties:
+              workloadStatus:
+                description: WorkloadStatus contains running statuses of generated
+                  resources.
+                items:
+                  description: ManifestStatus contains running status of a specific
+                    manifest in spec.
+                  properties:
+                    conditions:
+                      description: 'Conditions contain the different condition statuses
+                        for this manifest. Valid condition types are: 1. Processing:
+                        this workload is under processing and the current state of
+                        manifest does not match the desired. 2. Available: the current
+                        status of this workload matches the desired.'
+                      enum:
+                      - Processing
+                      - Available
+                      type: string
+                    identifier:
+                      description: Identifier represents the identity of a resource
+                        linking to manifests in spec.
+                      properties:
+                        group:
+                          description: Group is the group of the resource.
+                          type: string
+                        kind:
+                          description: Kind is the kind of the resource.
+                          type: string
+                        name:
+                          description: Name is the name of the resource
+                          type: string
+                        namespace:
+                          description: Namespace is the namespace of the resource
+                          type: string
+                        ordinal:
+                          description: Ordinal represents an index in manifests list,
+                            so the condition can still be linked to a manifest even
+                            though manifest cannot be parsed successfully.
+                          minimum: 0
+                          type: integer
+                        resource:
+                          description: Resource is the resource type of the resource
+                          type: string
+                        version:
+                          description: Version is the version of the resource.
+                          type: string
+                      required:
+                      - ordinal
+                      type: object
+                  required:
+                  - identifier
+                  type: object
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

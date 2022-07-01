@@ -76,9 +76,9 @@ function release() {
         ;;
       "kubeedge")
         if [ "${ARCH}" == "amd64" ]; then
-          hack/make-rules/build.sh cloudcore admission edgecore csidriver iptablesmanager
+          hack/make-rules/build.sh cloudcore admission edgecore csidriver iptablesmanager controllermanager
         else
-          hack/make-rules/crossbuild.sh cloudcore admission edgecore csidriver iptablesmanager ${arm_version}
+          hack/make-rules/crossbuild.sh cloudcore admission edgecore csidriver iptablesmanager controllermanager ${arm_version}
         fi
 
         build_kubeedge_release $VERSION $ARCH
@@ -109,6 +109,7 @@ function build_kubeedge_release() {
   mkdir -p _output/release/${VERSION}/kubeedge-${VERSION}-linux-${ARCH}/cloud/cloudcore
   mkdir -p _output/release/${VERSION}/kubeedge-${VERSION}-linux-${ARCH}/cloud/csidriver
   mkdir -p _output/release/${VERSION}/kubeedge-${VERSION}-linux-${ARCH}/cloud/iptablesmanager
+  mkdir -p _output/release/${VERSION}/kubeedge-${VERSION}-linux-${ARCH}/cloud/controllermanager
   mkdir -p _output/release/${VERSION}/kubeedge-${VERSION}-linux-${ARCH}/edge
 
   echo ${VERSION} > _output/release/${VERSION}/kubeedge-${VERSION}-linux-${ARCH}/version
@@ -116,6 +117,7 @@ function build_kubeedge_release() {
   cp _output/local/bin/cloudcore _output/release/${VERSION}/kubeedge-${VERSION}-linux-${ARCH}/cloud/cloudcore
   cp _output/local/bin/csidriver _output/release/${VERSION}/kubeedge-${VERSION}-linux-${ARCH}/cloud/csidriver
   cp _output/local/bin/iptablesmanager _output/release/${VERSION}/kubeedge-${VERSION}-linux-${ARCH}/cloud/iptablesmanager
+  cp _output/local/bin/controllermanager _output/release/${VERSION}/kubeedge-${VERSION}-linux-${ARCH}/cloud/controllermanager
 
   cp _output/local/bin/edgecore _output/release/${VERSION}/kubeedge-${VERSION}-linux-${ARCH}/edge
 

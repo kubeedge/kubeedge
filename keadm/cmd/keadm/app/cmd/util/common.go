@@ -149,24 +149,27 @@ func GetOSInterface() types.OSTypeInstaller {
 
 // RunningModuleV2 identifies cloudcore/edgecore running or not.
 // only used for cloudcore container install and edgecore binary install
-func RunningModuleV2(opt *types.ResetOptions) (types.ModuleRunning, error) {
+func RunningModuleV2(opt *types.ResetOptions) types.ModuleRunning {
 	osType := GetOSInterface()
 	cloudCoreRunning, err := IsCloudcoreContainerRunning(constants.SystemNamespace, opt.Kubeconfig)
 	if err != nil {
-		return types.NoneRunning, err
+		// just log the error, maybe we do not care
+		klog.Warningf("failed to check cloudcore is running: %v", err)
 	}
 	if cloudCoreRunning {
-		return types.KubeEdgeCloudRunning, nil
+		return types.KubeEdgeCloudRunning
 	}
 
 	edgeCoreRunning, err := osType.IsKubeEdgeProcessRunning(KubeEdgeBinaryName)
+	if err != nil {
+		// just log the error, maybe we do not care
+		klog.Warningf("failed to check edgecore is running: %v", err)
+	}
 	if edgeCoreRunning {
-		return types.KubeEdgeEdgeRunning, nil
-	} else if err != nil {
-		return types.NoneRunning, err
+		return types.KubeEdgeEdgeRunning
 	}
 
-	return types.NoneRunning, nil
+	return types.NoneRunning
 }
 
 // RunningModule identifies cloudcore/edgecore running or not.
@@ -448,7 +451,7 @@ func installKubeEdge(options types.InstallOptions, version semver.Version) error
 }
 
 // runEdgeCore starts edgecore with logs being captured
-func runEdgeCore(version semver.Version) error {
+func runEdgeCore() error {
 	// create the log dir for kubeedge
 	err := os.MkdirAll(KubeEdgeLogPath, os.ModePerm)
 	if err != nil {
@@ -569,7 +572,13 @@ func computeSHA512Checksum(filepath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer f.Close()
+
+	defer func() {
+		err := f.Close()
+		if err != nil {
+			fmt.Printf("failed to close file, path: %v, error: %v \n", filepath, err)
+		}
+	}()
 
 	h := sha512.New()
 	if _, err := io.Copy(h, f); err != nil {
@@ -646,13 +655,16 @@ func retryDownload(filename, checksumFilename string, version semver.Version, ta
 }
 
 // Compress compresses folders or files
-func Compress(tarName string, paths []string) (err error) {
+func Compress(tarName string, paths []string) error {
 	tarFile, err := os.Create(tarName)
 	if err != nil {
 		return err
 	}
 	defer func() {
-		err = tarFile.Close()
+		err := tarFile.Close()
+		if err != nil {
+			fmt.Printf("failed to close tar file, path: %v, error: %v \n", tarName, err)
+		}
 	}()
 
 	absTar, err := filepath.Abs(tarName)
@@ -721,7 +733,14 @@ func Compress(tarName string, paths []string) (err error) {
 			if err != nil {
 				return err
 			}
-			defer srcFile.Close()
+
+			defer func() {
+				err := srcFile.Close()
+				if err != nil {
+					fmt.Printf("failed to close file, path: %v, error: %v \n", file, err)
+				}
+			}()
+
 			_, err = io.Copy(tw, srcFile)
 			if err != nil {
 				return err
