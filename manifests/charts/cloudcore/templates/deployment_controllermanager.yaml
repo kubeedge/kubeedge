@@ -21,6 +21,9 @@ spec:
       labels: {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
+      {{- with .Values.controllerManager.image.pullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: controller-manager
           image: {{ .Values.controllerManager.image.repository }}:{{ .Values.controllerManager.image.tag }}
