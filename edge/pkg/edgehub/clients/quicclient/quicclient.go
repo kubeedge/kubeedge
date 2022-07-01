@@ -59,7 +59,7 @@ func (qcc *QuicClient) Init() error {
 	tlsConfig := &tls.Config{
 		RootCAs:            pool,
 		Certificates:       []tls.Certificate{cert},
-		InsecureSkipVerify: true,
+		InsecureSkipVerify: false,
 	}
 
 	option := qclient.Options{

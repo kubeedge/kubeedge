@@ -83,7 +83,7 @@ func HubClientInit(server, clientID, username, password string) *MQTT.ClientOpti
 			InsecureSkipVerify: false,
 		}
 	} else {
-		tlsConfig = &tls.Config{InsecureSkipVerify: true, ClientAuth: tls.NoClientCert}
+		tlsConfig = &tls.Config{InsecureSkipVerify: false, ClientAuth: tls.NoClientCert}
 	}
 	opts.SetTLSConfig(tlsConfig)
 	klog.V(4).Infof("set TLS configuration for MQTT client successfully")

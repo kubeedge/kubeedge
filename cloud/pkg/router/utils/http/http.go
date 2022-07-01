@@ -35,7 +35,7 @@ func NewHTTPClient() *http.Client {
 		}).DialContext,
 		MaxIdleConnsPerHost:   maxIdleConnectionsPerHost,
 		ResponseHeaderTimeout: responseReadTimeout,
-		TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
+		TLSClientConfig:       &tls.Config{InsecureSkipVerify: false},
 	}
 	klog.Infof("tlsConfig InsecureSkipVerify true")
 	return &http.Client{Transport: transport}
@@ -57,7 +57,7 @@ func NewHTTPSClient(certFile, keyFile string) (*http.Client, error) {
 			CipherSuites: []uint16{
 				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
 			},
-			InsecureSkipVerify: true}, /*Now we need set it true*/
+			InsecureSkipVerify: false}, /*Now we need set it true*/
 	}
 	client := &http.Client{Transport: tr, Timeout: connectTimeout}
 	return client, nil
