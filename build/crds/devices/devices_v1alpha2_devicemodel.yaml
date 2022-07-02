@@ -151,6 +151,9 @@ spec:
                       type: object
                   type: object
                 type: array
+              protocol:
+                description: 'Required for DMI: Protocol name used by the device.'
+                type: string
             type: object
         type: object
     served: true

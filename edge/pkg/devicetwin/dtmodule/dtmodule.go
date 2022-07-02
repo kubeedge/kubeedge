@@ -43,6 +43,16 @@ func (dm *DTModule) InitWorker(recv chan interface{}, confirm chan interface{}, 
 			Group:  dtcommon.CommModule,
 			Worker: worker,
 		}
+	case dtcommon.DMIModule:
+		dm.Worker = dtmanager.DMIWorker{
+			Group: dtcommon.DMIModule,
+			Worker: dtmanager.Worker{
+				ReceiverChan:  recv,
+				ConfirmChan:   confirm,
+				HeartBeatChan: heartBeat,
+				DTContexts:    dtContext,
+			},
+		}
 	}
 }
 
@@ -50,7 +60,7 @@ func (dm *DTModule) InitWorker(recv chan interface{}, confirm chan interface{}, 
 func (dm DTModule) Start() {
 	defer func() {
 		if err := recover(); err != nil {
-			klog.Infof("%s in twin panic", dm.Name)
+			klog.Errorf("%s in twin panic with err: %v", dm.Name, err)
 		}
 	}()
 	dm.Worker.Start()

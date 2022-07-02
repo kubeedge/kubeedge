@@ -91,6 +91,8 @@ const (
 	Confirm = "Confirm"
 	// Disconnected event
 	Disconnected = "disconnected"
+	// MetaDeviceOperation event
+	MetaDeviceOperation = "MetaDeviceOperation"
 
 	// CommModule communicate module
 	CommModule = "CommModule"
@@ -100,6 +102,8 @@ const (
 	MemModule = "MemModule"
 	// TwinModule twin module
 	TwinModule = "TwinModule"
+	// DMIModule DMI module
+	DMIModule = "DMIModule"
 	// HubModule the name of hub module
 	HubModule = "websocket"
 	// EventHubModule the name of event hub module

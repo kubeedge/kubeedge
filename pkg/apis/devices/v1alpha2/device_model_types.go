@@ -23,6 +23,8 @@ import (
 // DeviceModelSpec defines the model / template for a device.It is a blueprint which describes the device
 // capabilities and access mechanism via property visitors.
 type DeviceModelSpec struct {
+	// Required for DMI: Protocol name used by the device.
+	Protocol string `json:"protocol,omitempty"`
 	// Required: List of device properties.
 	Properties []DeviceProperty `json:"properties,omitempty"`
 }
