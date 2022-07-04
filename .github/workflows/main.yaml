@@ -136,6 +136,7 @@ jobs:
     needs: image-prepare
     env:
       GO111MODULE: on
+      LOG_LEVEL: 5
     steps:
       - name: Install Go
         uses: actions/setup-go@v2
