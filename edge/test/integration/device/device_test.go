@@ -70,7 +70,7 @@ func SubMessageReceived(client MQTT.Client, message MQTT.Message) {
 	var deviceState DeviceUpdates
 	topic := dtcommon.DeviceETPrefix + DeviceIDN + dtcommon.DeviceETStateUpdateResultSuffix
 	if message.Topic() == topic {
-		devicePayload := (message.Payload())
+		devicePayload := message.Payload()
 		err := json.Unmarshal(devicePayload, &deviceState)
 		if err != nil {
 			common.Fatalf("Unmarshall failed %s", err)
@@ -81,7 +81,7 @@ func SubMessageReceived(client MQTT.Client, message MQTT.Message) {
 func DeviceSubscribed(client MQTT.Client, message MQTT.Message) {
 	topic := dtcommon.MemETPrefix + ctx.Cfg.NodeID + dtcommon.MemETUpdateSuffix
 	if message.Topic() == topic {
-		devicePayload := (message.Payload())
+		devicePayload := message.Payload()
 		err := json.Unmarshal(devicePayload, MemDeviceUpdate)
 		if err != nil {
 			common.Fatalf("Unmarshall failed %s", err)

@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"time"
 
-	uuid "github.com/google/uuid"
+	"github.com/google/uuid"
 )
 
 // Constants for database operations and resource type settings
