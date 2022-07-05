@@ -40,7 +40,7 @@ type ContextMessageLayer struct {
 	SendRouterModuleName string
 	// ReceiveModuleName indicates which module will receive message from
 	ReceiveModuleName string
-	// ResponseModuleName indicates which module will response message to
+	// ResponseModuleName indicates which module will respond message to
 	ResponseModuleName string
 }
 

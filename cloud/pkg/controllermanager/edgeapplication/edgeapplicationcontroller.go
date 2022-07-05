@@ -229,7 +229,7 @@ func (c *Controller) updateStatus(ctx context.Context, edgeApp *appsv1alpha1.Edg
 	for _, tmplInfo := range tmplInfos {
 		resourceInfo := utils.GetResourceInfoOfTemplateInfo(tmplInfo)
 		if _, ok := statusExists[resourceInfo.String()]; !ok {
-			// this tmpl does not have relate status entry, add a new entry for it
+			// this tmpl does not have related status entry, add a new entry for it
 			newStatus = append(newStatus, appsv1alpha1.ManifestStatus{
 				Condition: appsv1alpha1.EdgeAppProcessing,
 				Identifier: appsv1alpha1.ResourceIdentifier{
@@ -555,7 +555,7 @@ func isSameAsLastApplied(objInEdgeApp *unstructured.Unstructured, curObj runtime
 	return false, fmt.Errorf("cannot find last applied template in annotation, %v, possibly it is not created by EdgeApplication Controller", err)
 }
 
-// needOverride determines if a obj needs override, according to its gvk.
+// needOverride determines if an obj needs override, according to its gvk.
 func needOverride(obj runtime.Object) bool {
 	gvk := obj.GetObjectKind().GroupVersionKind()
 	_, ok := constants.OverriderTargetGVK[gvk]

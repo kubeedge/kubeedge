@@ -280,7 +280,7 @@ func (c *Controller) nodeMapFunc(obj client.Object) []controllerruntime.Request 
 			},
 		}
 	}
-	// node do not have belonging label, either a new node will be add to a node group or an orphan node
+	// node do not have belonging label, either a new node will be added to a node group or an orphan node
 	nodegroupList := &appsv1alpha1.NodeGroupList{}
 	if err := c.Client.List(context.TODO(), nodegroupList); err != nil {
 		klog.Errorf("failed to list all nodegroups, %s", err)

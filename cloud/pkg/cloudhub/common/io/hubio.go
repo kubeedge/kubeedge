@@ -21,12 +21,12 @@ type JSONIO struct {
 	Connection conn.Connection
 }
 
-// SetReadDeadline set read operation dead line
+// SetReadDeadline set read operation deadline
 func (io *JSONIO) SetReadDeadline(time time.Time) error {
 	return io.Connection.SetReadDeadline(time)
 }
 
-// SetWriteDeadline set write operation dead line
+// SetWriteDeadline set write operation deadline
 func (io *JSONIO) SetWriteDeadline(time time.Time) error {
 	return io.Connection.SetWriteDeadline(time)
 }
