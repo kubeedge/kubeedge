@@ -42,7 +42,7 @@ func admitRule(review admissionv1beta1.AdmissionReview) *admissionv1beta1.Admiss
 		return &reviewResponse
 	default:
 		err := fmt.Errorf("unsupported webhook operation %v", review.Request.Operation)
-		klog.Errorf("unsupported webhook operation %v", review.Request.Operation)
+		klog.Errorf("Unsupported webhook operation %v", review.Request.Operation)
 		return toAdmissionResponse(err)
 	}
 }
