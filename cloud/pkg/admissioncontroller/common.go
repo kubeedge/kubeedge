@@ -3,6 +3,7 @@ package admissioncontroller
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -64,29 +65,30 @@ func registerMutatingWebhook(client admissionregistrationv1beta1client.MutatingW
 type hookFunc func(admissionv1beta1.AdmissionReview) *admissionv1beta1.AdmissionResponse
 
 func serve(w http.ResponseWriter, r *http.Request, hook hookFunc) {
-	var body []byte
-	if r.Body != nil {
-		if data, err := io.ReadAll(r.Body); err == nil {
-			body = data
-		}
-	}
-
 	// verify the content type is accurate
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {
-		klog.Exitf("contentType=%s, expect application/json", contentType)
+		errStr := fmt.Sprintf("Invalid Content-Type, actual %s, expect application/json", contentType)
+		http.Error(w, errStr, http.StatusUnsupportedMediaType)
 		return
 	}
 
-	// The AdmissionReview that was sent to the webhook
-	requestedAdmissionReview := admissionv1beta1.AdmissionReview{}
+	if r.Body == nil {
+		http.Error(w, "Parse body failed", http.StatusInternalServerError)
+		return
+	}
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		errStr := fmt.Sprintf("Read body failed: %v", err)
+		http.Error(w, errStr, http.StatusInternalServerError)
+		return
+	}
 
 	// The AdmissionReview that will be returned
-	responseAdmissionReview := admissionv1beta1.AdmissionReview{}
-
-	deserializer := codecs.UniversalDeserializer()
-	if _, _, err := deserializer.Decode(body, nil, &requestedAdmissionReview); err != nil {
-		klog.Exitf("decode failed with error: %v", err)
+	var responseAdmissionReview admissionv1beta1.AdmissionReview
+	// The AdmissionReview that was sent to the webhook
+	var requestedAdmissionReview admissionv1beta1.AdmissionReview
+	if _, _, err := codecs.UniversalDeserializer().Decode(body, nil, &requestedAdmissionReview); err != nil {
 		responseAdmissionReview.Response = toAdmissionResponse(err)
 	} else {
 		responseAdmissionReview.Response = hook(requestedAdmissionReview)
@@ -98,10 +100,13 @@ func serve(w http.ResponseWriter, r *http.Request, hook hookFunc) {
 
 	respBytes, err := json.Marshal(responseAdmissionReview)
 	if err != nil {
-		klog.Exitf("cannot marshal to a valid response %v", err)
+		errStr := fmt.Sprintf("Could not encode response: %v", err)
+		klog.Error(errStr)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	if _, err := w.Write(respBytes); err != nil {
-		klog.Exitf("cannot write response %v", err)
+		klog.Errorf("Cannot write response %v", err)
 	}
 }
 
