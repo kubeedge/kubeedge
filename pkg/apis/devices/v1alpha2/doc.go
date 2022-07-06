@@ -14,5 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// +k8s:deepcopy-gen=package
+// Package v1alpha2 contains API Schema definitions for the devices v1alpha2 API group
+// +k8s:openapi-gen=true
+// +k8s:deepcopy-gen=package,register
+// +k8s:conversion-gen=kubeedge/cloud/pkg/apis/devices
+// +k8s:defaulter-gen=TypeMeta
+// +groupName=devices.kubeedge.io
 package v1alpha2

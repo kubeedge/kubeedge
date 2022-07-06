@@ -30,7 +30,7 @@ type DevicesV1alpha2Interface interface {
 	DeviceModelsGetter
 }
 
-// DevicesV1alpha2Client is used to interact with features provided by the devices group.
+// DevicesV1alpha2Client is used to interact with features provided by the devices.kubeedge.io group.
 type DevicesV1alpha2Client struct {
 	restClient rest.Interface
 }

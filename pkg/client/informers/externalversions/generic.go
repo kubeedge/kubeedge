@@ -61,7 +61,7 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 	case v1alpha1.SchemeGroupVersion.WithResource("nodegroups"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Apps().V1alpha1().NodeGroups().Informer()}, nil
 
-		// Group=devices, Version=v1alpha2
+		// Group=devices.kubeedge.io, Version=v1alpha2
 	case v1alpha2.SchemeGroupVersion.WithResource("devices"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Devices().V1alpha2().Devices().Informer()}, nil
 	case v1alpha2.SchemeGroupVersion.WithResource("devicemodels"):

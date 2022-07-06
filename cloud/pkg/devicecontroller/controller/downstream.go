@@ -836,7 +836,7 @@ func deleteDeviceModelAndVisitors(deviceModel *v1alpha2.DeviceModel, deviceProfi
 func (dc *DownstreamController) sendDeviceMsg(device *v1alpha2.Device, operation string) {
 	device.SetGroupVersionKind(schema.GroupVersionKind{
 		Group:   v1alpha2.GroupName,
-		Version: v1alpha2.Version,
+		Version: v1alpha2.GroupVersion.Version,
 		Kind:    constants.KindTypeDevice,
 	})
 	modelMsg := model.NewMessage("").
@@ -890,7 +890,7 @@ func (dc *DownstreamController) sendDeviceModelMsg(device *v1alpha2.Device, oper
 
 	deviceModel.SetGroupVersionKind(schema.GroupVersionKind{
 		Group:   v1alpha2.GroupName,
-		Version: v1alpha2.Version,
+		Version: v1alpha2.GroupVersion.Version,
 		Kind:    constants.KindTypeDeviceModel,
 	})
 	modelMsg := model.NewMessage("").

@@ -54,7 +54,7 @@ func addToScheme(scheme *runtime.Scheme) {
 	utilruntime.Must(corev1.AddToScheme(scheme))
 	utilruntime.Must(admissionv1.AddToScheme(scheme))
 	utilruntime.Must(admissionregistrationv1.AddToScheme(scheme))
-	utilruntime.Must(v1alpha2.AddDeviceCrds(scheme))
+	utilruntime.Must(v1alpha2.AddToScheme(scheme))
 }
 
 // AdmissionController implements the admission webhook for validation of configuration.
