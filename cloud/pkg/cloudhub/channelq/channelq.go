@@ -68,14 +68,20 @@ func (q *ChannelMessageQueue) DispatchMessage() {
 			klog.Info("receive not Message format message")
 			continue
 		}
+
+		klog.Infof("++++++++++++ mid %s", msg.GetID())
+
 		nodeID, err := GetNodeID(&msg)
 		if nodeID == "" || err != nil {
 			klog.Warning("node id is not found in the message")
 			continue
 		}
+		klog.Infof("++++++++++++ mid %s", msg.GetID())
 		if isListResource(&msg) {
+			klog.Infof("++++++++++++ mid %s", msg.GetID())
 			q.addListMessageToQueue(nodeID, &msg)
 		} else {
+			klog.Infof("++++++++++++ mid %s", msg.GetID())
 			q.addMessageToQueue(nodeID, &msg)
 		}
 	}
@@ -99,6 +105,8 @@ func (q *ChannelMessageQueue) addMessageToQueue(nodeID string, msg *beehiveModel
 		return
 	}
 
+	klog.Infof("++++++++++++ mid %s", msg.GetID())
+
 	nodeQueue := q.GetNodeQueue(nodeID)
 	nodeStore := q.GetNodeStore(nodeID)
 
@@ -107,6 +115,8 @@ func (q *ChannelMessageQueue) addMessageToQueue(nodeID string, msg *beehiveModel
 		klog.Errorf("fail to get message key for message: %s", msg.Header.ID)
 		return
 	}
+
+	klog.Infof("++++++++++++ mid %s", msg.GetID())
 
 	//if the operation is delete, force to sync the resource message
 	//if the operation is response, force to sync the resource message, since the edgecore requests it
@@ -120,11 +130,13 @@ func (q *ChannelMessageQueue) addMessageToQueue(nodeID string, msg *beehiveModel
 			resourceUID, err := GetMessageUID(*msg)
 			objectSyncName := synccontroller.BuildObjectSyncName(nodeID, resourceUID)
 			if err != nil {
+				klog.Infof("++++++++++++ mid %s", msg.GetID())
 				klog.Errorf("fail to get message UID for message: %s", msg.Header.ID)
 				return
 			}
 			objectSync, err := q.objectSyncLister.ObjectSyncs(resourceNamespace).Get(objectSyncName)
 			if err == nil && objectSync.Status.ObjectResourceVersion != "" && synccontroller.CompareResourceVersion(msg.GetResourceVersion(), objectSync.Status.ObjectResourceVersion) <= 0 {
+				klog.Infof("++++++++++++ mid %s", msg.GetID())
 				return
 			} else if err != nil && apierrors.IsNotFound(err) {
 				objectSync := &v1alpha1.ObjectSync{
@@ -137,17 +149,22 @@ func (q *ChannelMessageQueue) addMessageToQueue(nodeID string, msg *beehiveModel
 						ObjectName:       resourceName,
 					},
 				}
+
+				klog.Infof("++++++++++++ mid %s", msg.GetID())
 				objectSyncStatus, err := q.crdClient.ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).Create(context.Background(), objectSync, metav1.CreateOptions{})
 				if err != nil {
+					klog.Infof("++++++++++++ mid %s", msg.GetID())
 					klog.Errorf("Failed to create objectSync: %s, err: %v", objectSyncName, err)
 					return
 				}
 				objectSyncStatus.Status.ObjectResourceVersion = "0"
+				klog.Infof("++++++++++++ mid %s", msg.GetID())
 				if _, err := q.crdClient.ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).UpdateStatus(context.Background(), objectSyncStatus, metav1.UpdateOptions{}); err != nil {
 					klog.Errorf("Failed to update objectSync: %s, err: %v", objectSyncName, err)
 				}
 			}
 		} else {
+			klog.Infof("++++++++++++ mid %s", msg.GetID())
 			// Check if message is older than already in store, if it is, discard it directly
 			msgInStore := item.(*beehiveModel.Message)
 			if isDeleteMessage(msgInStore) || synccontroller.CompareResourceVersion(msg.GetResourceVersion(), msgInStore.GetResourceVersion()) <= 0 {
@@ -156,10 +173,13 @@ func (q *ChannelMessageQueue) addMessageToQueue(nodeID string, msg *beehiveModel
 		}
 	}
 
+	klog.Infof("++++++++++++ mid %s", msg.GetID())
 	if err := nodeStore.Add(msg); err != nil {
 		klog.Errorf("fail to add message %v nodeStore, err: %v", msg, err)
 		return
 	}
+
+	klog.Infof("++++++++++++ mid %s", msg.GetID())
 	nodeQueue.Add(messageKey)
 }
 

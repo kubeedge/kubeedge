@@ -537,15 +537,17 @@ func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model
 			klog.Errorf("failed to get message UID %v, err: %v", msg, err)
 			return
 		}
-
+		klog.Infof("++++++++++++ mid %s", msg.GetID())
 		objectSyncName := synccontroller.BuildObjectSyncName(info.NodeID, resourceUID)
 
 		if msg.GetOperation() == beehiveModel.DeleteOperation {
 			if err := nodeStore.Delete(msg); err != nil {
+				klog.Infof("++++++++++++ mid %s", msg.GetID())
 				klog.Errorf("failed to delete message %v, err: %v", msg, err)
 				return
 			}
 			mh.deleteSuccessPoint(resourceNamespace, objectSyncName)
+			klog.Infof("++++++++++++ mid %s", msg.GetID())
 			return
 		}
 
