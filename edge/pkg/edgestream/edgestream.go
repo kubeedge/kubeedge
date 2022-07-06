@@ -18,8 +18,10 @@ package edgestream
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -79,13 +81,21 @@ func (e *edgestream) Start() {
 		klog.Exitf("Failed to find cert key pair")
 	}
 
+	var caCrt []byte
+	caCrt, err := os.ReadFile(config.Config.EdgeStream.TLSTunnelCAFile)
+	if err != nil {
+		klog.Exitf("failed to read ca: %v", err)
+	}
+	rootCAs := x509.NewCertPool()
+	rootCAs.AppendCertsFromPEM(caCrt)
+
 	cert, err := tls.LoadX509KeyPair(config.Config.TLSTunnelCertFile, config.Config.TLSTunnelPrivateKeyFile)
 	if err != nil {
 		klog.Exitf("Failed to load x509 key pair: %v", err)
 	}
 	tlsConfig := &tls.Config{
-		InsecureSkipVerify: true,
-		Certificates:       []tls.Certificate{cert},
+		RootCAs:      rootCAs,
+		Certificates: []tls.Certificate{cert},
 	}
 
 	ticker := time.NewTicker(time.Second * 2)

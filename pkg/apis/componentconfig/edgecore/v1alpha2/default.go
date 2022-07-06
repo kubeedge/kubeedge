@@ -161,7 +161,7 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				TLSTunnelPrivateKeyFile: constants.DefaultKeyFile,
 				HandshakeTimeout:        30,
 				ReadDeadline:            15,
-				TunnelServer:            net.JoinHostPort("127.0.0.1", strconv.Itoa(constants.DefaultTunnelPort)),
+				TunnelServer:            net.JoinHostPort(localIP, strconv.Itoa(constants.DefaultTunnelPort)),
 				WriteDeadline:           15,
 			},
 		},

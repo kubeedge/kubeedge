@@ -46,73 +46,6 @@ func TestNewHttpClient(t *testing.T) {
 	}
 }
 
-// TestNewHTTPSClient() tests the creation of a new HTTPS client with proper values
-func TestNewHTTPSClient(t *testing.T) {
-	err := util.GenerateTestCertificate(Path, BaseName, BaseName)
-	if err != nil {
-		t.Errorf("Error in generating fake certificates: %v", err)
-		return
-	}
-	certificate, err := tls.LoadX509KeyPair(CertFile, KeyFile)
-	if err != nil {
-		t.Errorf("Error in loading key pair: %v", err)
-		return
-	}
-	type args struct {
-		certFile string
-		keyFile  string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    *http.Client
-		wantErr bool
-	}{
-		{
-			name: "TestNewHTTPSClient: ",
-			args: args{
-				keyFile:  KeyFile,
-				certFile: CertFile,
-			},
-			want: &http.Client{
-				Transport: &http.Transport{
-					TLSClientConfig: &tls.Config{
-						RootCAs:      x509.NewCertPool(),
-						Certificates: []tls.Certificate{certificate},
-						MinVersion:   tls.VersionTLS12,
-						CipherSuites: []uint16{
-							tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-						},
-						InsecureSkipVerify: true},
-				},
-				Timeout: connectTimeout,
-			},
-			wantErr: false,
-		},
-		{
-			name: "Wrong path given while getting HTTPS client",
-			args: args{
-				keyFile:  "WrongKeyFilePath",
-				certFile: "WrongCertFilePath",
-			},
-			want:    nil,
-			wantErr: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewHTTPSClient(tt.args.certFile, tt.args.keyFile)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("NewHTTPSClient() error = %v, expectedError = %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewHTTPSClient() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 // TestNewHTTPClientWithCA() tests the creation of a new HTTP using filled capem
 func TestNewHTTPClientWithCA(t *testing.T) {
 	err := util.PrepareTestCerts()
@@ -152,9 +85,8 @@ func TestNewHTTPClientWithCA(t *testing.T) {
 			want: &http.Client{
 				Transport: &http.Transport{
 					TLSClientConfig: &tls.Config{
-						RootCAs:            testPool,
-						InsecureSkipVerify: false,
-						Certificates:       []tls.Certificate{certificate},
+						RootCAs:      testPool,
+						Certificates: []tls.Certificate{certificate},
 					},
 				},
 				Timeout: connectTimeout,

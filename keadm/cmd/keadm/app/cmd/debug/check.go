@@ -331,7 +331,7 @@ func CheckNetWork(IP string, timeout int, cloudhubServer string, edgecoreServer 
 }
 
 func CheckHTTP(url string) error {
-	cfg := &tls.Config{InsecureSkipVerify: false}
+	cfg := &tls.Config{}
 	httpTransport := &http.Transport{TLSClientConfig: cfg}
 	// setup a http client
 	httpClient := &http.Client{Transport: httpTransport, Timeout: time.Second * 3}

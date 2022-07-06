@@ -41,28 +41,6 @@ func NewHTTPClient() *http.Client {
 	return &http.Client{Transport: transport}
 }
 
-// NewHTTPSClient create https client
-func NewHTTPSClient(certFile, keyFile string) (*http.Client, error) {
-	pool := x509.NewCertPool()
-	cliCrt, err := tls.LoadX509KeyPair(certFile, keyFile)
-	if err != nil {
-		klog.Errorf("Cannot create https client , Load x509 key pair err: %v", err)
-		return nil, err
-	}
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{
-			RootCAs:      pool,
-			Certificates: []tls.Certificate{cliCrt},
-			MinVersion:   tls.VersionTLS12,
-			CipherSuites: []uint16{
-				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-			},
-			InsecureSkipVerify: true}, /*Now we need set it true*/
-	}
-	client := &http.Client{Transport: tr, Timeout: connectTimeout}
-	return client, nil
-}
-
 // NewHTTPClientWithCA create client without certificate
 func NewHTTPClientWithCA(capem []byte, certificate tls.Certificate) (*http.Client, error) {
 	pool := x509.NewCertPool()
@@ -71,9 +49,8 @@ func NewHTTPClientWithCA(capem []byte, certificate tls.Certificate) (*http.Clien
 	}
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{
-			RootCAs:            pool,
-			InsecureSkipVerify: false,
-			Certificates:       []tls.Certificate{certificate},
+			RootCAs:      pool,
+			Certificates: []tls.Certificate{certificate},
 		},
 	}
 	client := &http.Client{Transport: tr, Timeout: connectTimeout}

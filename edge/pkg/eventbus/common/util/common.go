@@ -78,9 +78,8 @@ func HubClientInit(server, clientID, username, password string) *MQTT.ClientOpti
 		}
 
 		tlsConfig = &tls.Config{
-			RootCAs:            pool,
-			Certificates:       []tls.Certificate{cert},
-			InsecureSkipVerify: false,
+			RootCAs:      pool,
+			Certificates: []tls.Certificate{cert},
 		}
 	} else {
 		tlsConfig = &tls.Config{InsecureSkipVerify: true, ClientAuth: tls.NoClientCert}

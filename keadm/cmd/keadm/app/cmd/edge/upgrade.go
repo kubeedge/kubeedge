@@ -342,9 +342,8 @@ func (up *Upgrade) reportUpgradeResult() error {
 		}).DialContext,
 		// use TLS configuration
 		TLSClientConfig: &tls.Config{
-			RootCAs:            rootCAs,
-			InsecureSkipVerify: false,
-			Certificates:       []tls.Certificate{cliCrt},
+			RootCAs:      rootCAs,
+			Certificates: []tls.Certificate{cliCrt},
 		},
 	}
 
