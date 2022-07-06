@@ -167,7 +167,13 @@ func (q *ChannelMessageQueue) addMessageToQueue(nodeID string, msg *beehiveModel
 			klog.Infof("++++++++++++ mid %s", msg.GetID())
 			// Check if message is older than already in store, if it is, discard it directly
 			msgInStore := item.(*beehiveModel.Message)
+
+			klog.Infof("======== msgInStore %s", msgInStore.GetResourceVersion())
+
+			klog.Infof("======== msg %s", msg.GetResourceVersion())
+
 			if isDeleteMessage(msgInStore) || synccontroller.CompareResourceVersion(msg.GetResourceVersion(), msgInStore.GetResourceVersion()) <= 0 {
+				klog.Infof("++++++++++++ mid %s", msg.GetID())
 				return
 			}
 		}
