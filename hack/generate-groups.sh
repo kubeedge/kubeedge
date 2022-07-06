@@ -48,7 +48,7 @@ shift 4
   # To support running this script from anywhere, we have to first cd into this directory
   # so we can install the tools.
   cd "$(dirname "${0}")"
-  GO111MODULE=on GOFLAGS=-mod=vendor go install k8s.io/code-generator/cmd/{defaulter-gen,client-gen,lister-gen,informer-gen,deepcopy-gen}
+  GO111MODULE=on GOFLAGS=-mod=vendor go install k8s.io/code-generator/cmd/{defaulter-gen,register-gen,client-gen,lister-gen,informer-gen,deepcopy-gen}
 )
 
 function codegen::join() { local IFS="$1"; shift; echo "$*"; }
@@ -67,6 +67,11 @@ done
 if [ "${GENS}" = "all" ] || grep -qw "deepcopy" <<<"${GENS}"; then
   echo "Generating deepcopy funcs"
   "${GOBIN}/deepcopy-gen" --input-dirs "$(codegen::join , "${FQ_APIS[@]}")" -O zz_generated.deepcopy --bounding-dirs "${APIS_PKG}" "$@"
+fi
+
+if [ "${GENS}" = "all" ] || grep -qw "register" <<<"${GENS}"; then
+  echo "Generating register funcs"
+  "${GOBIN}/register-gen" --input-dirs "$(codegen::join , "${FQ_APIS[@]}")" -O zz_generated.register "$@"
 fi
 
 if [ "${GENS}" = "all" ] || grep -qw "client" <<<"${GENS}"; then
