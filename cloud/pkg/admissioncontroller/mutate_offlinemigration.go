@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	admissionv1beta1 "k8s.io/api/admission/v1beta1"
+	admissionv1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
 )
@@ -15,8 +15,8 @@ type patchMapValue struct {
 	Value []interface{} `json:"value,omitempty"`
 }
 
-func mutateOfflineMigration(review admissionv1beta1.AdmissionReview) *admissionv1beta1.AdmissionResponse {
-	reviewResponse := admissionv1beta1.AdmissionResponse{
+func mutateOfflineMigration(review admissionv1.AdmissionReview) *admissionv1.AdmissionResponse {
+	reviewResponse := admissionv1.AdmissionResponse{
 		Allowed: true,
 	}
 
@@ -37,7 +37,7 @@ func mutateOfflineMigration(review admissionv1beta1.AdmissionReview) *admissionv
 	}
 
 	reviewResponse.Patch = patch
-	pt := admissionv1beta1.PatchTypeJSONPatch
+	pt := admissionv1.PatchTypeJSONPatch
 	reviewResponse.PatchType = &pt
 	return &reviewResponse
 }
