@@ -61,6 +61,10 @@ func NewQuicConn(options *ConnectionOptions) *QuicConnection {
 
 // process header message
 func (conn *QuicConnection) headerMessage(msg *model.Message) error {
+	if msg == nil {
+		klog.Errorf("nil message error")
+		return fmt.Errorf("nil message error")
+	}
 	headers := make(http.Header)
 	err := json.Unmarshal(msg.GetContent().([]byte), &headers)
 	if err != nil {
