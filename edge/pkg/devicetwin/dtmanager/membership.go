@@ -158,7 +158,9 @@ func dealMembershipGet(context *dtcontext.DTContext, resource string, msg interf
 		return errors.New("assertion failed")
 	}
 
-	dealMembershipGetInner(context, contentData)
+	if err := dealMembershipGetInner(context, contentData); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -345,11 +347,13 @@ func dealMembershipGetInner(context *dtcontext.DTContext, payload []byte) error 
 	topic := dtcommon.MemETPrefix + context.NodeName + dtcommon.MemETGetResultSuffix
 	klog.Infof("Deal getting membership successful and send the result")
 
-	context.Send("",
+	err = context.Send("",
 		dtcommon.SendToEdge,
 		dtcommon.CommModule,
 		context.BuildModelMessage(modules.BusGroup, "", topic, messagepkg.OperationPublish, result))
-
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

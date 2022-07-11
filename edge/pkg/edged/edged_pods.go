@@ -638,7 +638,7 @@ func (e *edged) GenerateRunContainerOptions(pod *v1.Pod, container *v1.Container
 	volumes := e.volumeManager.GetMountedVolumesForPod(podName)
 
 	blkutil := volumepathhandler.NewBlockVolumePathHandler()
-	blkVolumes, err := e.makeBlockVolumes(pod, container, volumes, blkutil)
+	blkVolumes, err := e.makeBlockVolumes(container, volumes, blkutil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -884,7 +884,7 @@ func (e *edged) podFieldSelectorRuntimeValue(fs *v1.ObjectFieldSelector, pod *v1
 
 // makeBlockVolumes maps the raw block devices specified in the path of the container
 // Experimental
-func (e *edged) makeBlockVolumes(pod *v1.Pod, container *v1.Container, podVolumes kubecontainer.VolumeMap, blkutil volumepathhandler.BlockVolumePathHandler) ([]kubecontainer.DeviceInfo, error) {
+func (e *edged) makeBlockVolumes(container *v1.Container, podVolumes kubecontainer.VolumeMap, blkutil volumepathhandler.BlockVolumePathHandler) ([]kubecontainer.DeviceInfo, error) {
 	var devices []kubecontainer.DeviceInfo
 	for _, device := range container.VolumeDevices {
 		// check path is absolute

@@ -301,8 +301,8 @@ func TestDealMembershipGetValid(t *testing.T) {
 		Content: content,
 	}
 	err := dealMembershipGet(dtc, "t", m)
-	if err != nil {
-		t.Errorf("expected nil, but got error: %v", err)
+	if !reflect.DeepEqual(err, errors.New("Not found chan to communicate")) {
+		t.Errorf("expected %v, but got error: %v", errors.New("Not found chan to communicate"), err)
 	}
 }
 
@@ -329,8 +329,8 @@ func TestDealMembershipGetInnerValid(t *testing.T) {
 	content, _ := json.Marshal(payload)
 
 	err := dealMembershipGetInner(dtc, content)
-	if err != nil {
-		t.Errorf("expected nil, but got error: %v", err)
+	if !reflect.DeepEqual(err, errors.New("Not found chan to communicate")) {
+		t.Errorf("expected %v, but got error: %v", errors.New("Not found chan to communicate"), err)
 	}
 }
 
@@ -343,8 +343,8 @@ func TestDealMembershipGetInnerInValid(t *testing.T) {
 	}
 
 	err := dealMembershipGetInner(dtc, []byte("invalid"))
-	if err != nil {
-		t.Errorf("expected nil, but got error: %v", err)
+	if !reflect.DeepEqual(err, errors.New("Not found chan to communicate")) {
+		t.Errorf("expected %v, but got error: %v", errors.New("Not found chan to communicate"), err)
 	}
 }
 
