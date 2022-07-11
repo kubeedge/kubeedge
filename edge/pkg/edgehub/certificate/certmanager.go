@@ -254,8 +254,7 @@ func GetCACert(url string) ([]byte, error) {
 		return nil, err
 	}
 	defer res.Body.Close()
-
-	caCert, err := io.ReadAll(res.Body)
+	caCert, err := io.ReadAll(io.LimitReader(res.Body, constants.MaxRespBodyLength))
 	if err != nil {
 		return nil, err
 	}
@@ -286,7 +285,7 @@ func (cm *CertManager) GetEdgeCert(url string, capem []byte, cert tls.Certificat
 	}
 	defer res.Body.Close()
 
-	content, err := io.ReadAll(res.Body)
+	content, err := io.ReadAll(io.LimitReader(res.Body, constants.MaxRespBodyLength))
 	if err != nil {
 		return nil, nil, err
 	}

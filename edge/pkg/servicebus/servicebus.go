@@ -180,8 +180,7 @@ func processMessage(msg *beehiveModel.Message) {
 			return
 		}
 		defer resp.Body.Close()
-		resp.Body = http.MaxBytesReader(nil, resp.Body, maxBodySize)
-		resBody, err := io.ReadAll(resp.Body)
+		resBody, err := io.ReadAll(io.LimitReader(resp.Body, maxBodySize))
 		if err != nil {
 			if err.Error() == "http: request body too large" {
 				err = fmt.Errorf("response body too large")
@@ -236,6 +235,7 @@ func buildBasicHandler(timeout time.Duration) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		sReq := &serverRequest{}
 		sResp := &serverResponse{}
+		req.Body = http.MaxBytesReader(w, req.Body, maxBodySize)
 		byteData, err := io.ReadAll(req.Body)
 		if err != nil {
 			sResp.Code = http.StatusBadRequest
