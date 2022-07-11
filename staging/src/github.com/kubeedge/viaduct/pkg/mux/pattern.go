@@ -39,10 +39,18 @@ func (pattern *MessagePattern) Op(operation string) *MessagePattern {
 }
 
 func (pattern *MessagePattern) matchOp(message *model.Message) bool {
+	if message == nil {
+		klog.Errorf("nil message can't be matched, operation: %s", pattern.operation)
+		return false
+	}
 	return strings.Compare(pattern.operation, message.GetOperation()) == 0 ||
 		strings.Compare(pattern.operation, "*") == 0
 }
 
 func (pattern *MessagePattern) Match(message *model.Message) bool {
+	if message == nil {
+		klog.Errorf("nil message can't be matched, resource: %s", pattern.resource)
+		return false
+	}
 	return pattern.resExpr.Matcher.Match([]byte(message.GetResource())) && pattern.matchOp(message)
 }
