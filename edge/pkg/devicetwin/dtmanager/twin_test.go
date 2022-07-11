@@ -786,7 +786,7 @@ func TestDealTwinDelete(t *testing.T) {
 		twin         *dttype.MsgTwin
 		msgTwin      *dttype.MsgTwin
 		dealType     int
-		err          error
+		want         *dttype.DealTwinResult
 	}{
 		{
 			name: "TestDealTwinDelete(): Case 1: msgTwin is not nil; isChange is false",
@@ -819,7 +819,11 @@ func TestDealTwinDelete(t *testing.T) {
 				ActualVersion:   &dttype.TwinVersion{},
 			},
 			dealType: SyncDealType,
-			err:      nil,
+			want: &dttype.DealTwinResult{
+				Document:   doc,
+				SyncResult: sync,
+				Result:     result,
+			},
 		},
 		{
 			name: "TestDealTwinDelete(): Case 2: hasTwinExpected is true; dealVersion() returns false",
@@ -856,7 +860,21 @@ func TestDealTwinDelete(t *testing.T) {
 				ActualVersion: &dttype.TwinVersion{},
 			},
 			dealType: SyncDealType,
-			err:      nil,
+			want: &dttype.DealTwinResult{
+				Document: make(map[string]*dttype.TwinDoc),
+				SyncResult: map[string]*dttype.MsgTwin{
+					key1: {
+						Optional: &optionTrue,
+						Metadata: &dttype.TypeMetadata{
+							Type: typeString,
+						},
+						ExpectedVersion: &dttype.TwinVersion{
+							CloudVersion: 1,
+						},
+					},
+				},
+				Result: result,
+			},
 		},
 		{
 			name: "TestDealTwinDelete(): Case 3: hasTwinActual is true; dealVersion() returns false",
@@ -893,7 +911,22 @@ func TestDealTwinDelete(t *testing.T) {
 				},
 			},
 			dealType: SyncDealType,
-			err:      nil,
+			want: &dttype.DealTwinResult{
+				Document: make(map[string]*dttype.TwinDoc),
+				SyncResult: map[string]*dttype.MsgTwin{
+					key1: {
+						Optional: &optionTrue,
+						Metadata: &dttype.TypeMetadata{
+							Type: typeString,
+						},
+						ActualVersion: &dttype.TwinVersion{
+							CloudVersion: 1,
+						},
+						ExpectedVersion: &dttype.TwinVersion{},
+					},
+				},
+				Result: result,
+			},
 		},
 		{
 			name:         "TestDealTwinDelete(): Case 4: hasTwinExpected is true; hasTwinActual is true",
@@ -909,7 +942,49 @@ func TestDealTwinDelete(t *testing.T) {
 				ActualVersion:   &dttype.TwinVersion{},
 			},
 			dealType: RestDealType,
-			err:      nil,
+			want: &dttype.DealTwinResult{
+				Document: doc,
+				SyncResult: map[string]*dttype.MsgTwin{
+					key1: {
+						Optional: &optionTrue,
+						Metadata: &dttype.TypeMetadata{
+							Type: dtcommon.TypeDeleted,
+						},
+						Expected: &dttype.TwinValue{
+							Value:    nil,
+							Metadata: nil,
+						},
+						ExpectedVersion: &dttype.TwinVersion{
+							CloudVersion: 0,
+							EdgeVersion:  1,
+						},
+						ActualVersion: &dttype.TwinVersion{
+							CloudVersion: 0,
+							EdgeVersion:  1,
+						},
+						Actual: &dttype.TwinValue{
+							Value:    nil,
+							Metadata: nil,
+						},
+					},
+				},
+				Result: map[string]*dttype.MsgTwin{
+					key1: nil,
+				},
+				Update: []dtclient.DeviceTwinUpdate{{
+					DeviceID: deviceA,
+					Name:     key1,
+					Cols: map[string]interface{}{
+						"attr_type":        dtcommon.TypeDeleted,
+						"expected_meta":    nil,
+						"expected":         nil,
+						"actual_meta":      nil,
+						"actual":           nil,
+						"actual_version":   "{\"cloud\": 0,\"edge\": 1}",
+						"expected_version": "{\"cloud\": 0,\"edge\": 1}",
+					},
+				}},
+			},
 		},
 		{
 			name: "TestDealTwinDelete(): Case 5: hasTwinExpected is true; hasTwinActual is false",
@@ -942,13 +1017,32 @@ func TestDealTwinDelete(t *testing.T) {
 				ActualVersion:   &dttype.TwinVersion{},
 			},
 			dealType: SyncDealType,
-			err:      nil,
+			want: &dttype.DealTwinResult{
+				Document: doc,
+				SyncResult: map[string]*dttype.MsgTwin{
+					key1: nil,
+				},
+				Update: []dtclient.DeviceTwinUpdate{{
+					DeviceID: deviceA,
+					Name:     key1,
+					Cols: map[string]interface{}{
+						"attr_type":        dtcommon.TypeDeleted,
+						"expected_meta":    nil,
+						"expected":         nil,
+						"expected_version": "{\"cloud\": 0,\"edge\": 0}",
+					},
+				}},
+				Result: map[string]*dttype.MsgTwin{
+					key1: nil,
+				},
+			},
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if err := dealTwinDelete(test.returnResult, test.deviceID, test.key, test.twin, test.msgTwin, test.dealType); !reflect.DeepEqual(err, test.err) {
-				t.Errorf("DTManager.TestDealTwinDelete() case failed: got = %+v, Want = %+v", err, test.err)
+			dealTwinDelete(test.returnResult, test.deviceID, test.key, test.twin, test.msgTwin, test.dealType)
+			if (test.returnResult.SyncResult[key1] != nil || test.want.SyncResult[key1] != nil) && !reflect.DeepEqual(*test.returnResult.SyncResult[key1].ExpectedVersion, *test.want.SyncResult[key1].ExpectedVersion) {
+				t.Errorf("DTManager.TestDealTwinDelete() case failed: SyncResult got = %+v, Want = %+v", *test.returnResult.SyncResult[key1].ExpectedVersion, *test.want.SyncResult[key1].ExpectedVersion)
 			}
 		})
 	}
