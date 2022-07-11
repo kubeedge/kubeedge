@@ -106,15 +106,10 @@ func (p *Proxy) run(o *options.ProxyRunOptions) error {
 		return fmt.Errorf("failed to run the agent server: %v", err)
 	}
 	klog.V(1).Infoln("Starting admin server for debug connections.")
-	err = p.runAdminServer(o, server)
-	if err != nil {
-		return fmt.Errorf("failed to run the admin server: %v", err)
-	}
+	p.runAdminServer(o)
+
 	klog.V(1).Infoln("Starting health server for healthchecks.")
-	err = p.runHealthServer(o, server)
-	if err != nil {
-		return fmt.Errorf("failed to run the health server: %v", err)
-	}
+	p.runHealthServer(o, server)
 
 	stopCh := SetupSignalHandler()
 	<-stopCh
@@ -327,7 +322,7 @@ func (p *Proxy) runAgentServer(o *options.ProxyRunOptions, server *server.ProxyS
 	return nil
 }
 
-func (p *Proxy) runAdminServer(o *options.ProxyRunOptions, server *server.ProxyServer) error {
+func (p *Proxy) runAdminServer(o *options.ProxyRunOptions) {
 	muxHandler := http.NewServeMux()
 	muxHandler.Handle("/metrics", promhttp.Handler())
 	if o.EnableProfiling {
@@ -350,11 +345,9 @@ func (p *Proxy) runAdminServer(o *options.ProxyRunOptions, server *server.ProxyS
 		}
 		klog.V(1).Infoln("Admin server stopped listening")
 	}()
-
-	return nil
 }
 
-func (p *Proxy) runHealthServer(o *options.ProxyRunOptions, server *server.ProxyServer) error {
+func (p *Proxy) runHealthServer(o *options.ProxyRunOptions, server *server.ProxyServer) {
 	livenessHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "ok")
 	})
@@ -385,6 +378,4 @@ func (p *Proxy) runHealthServer(o *options.ProxyRunOptions, server *server.Proxy
 		}
 		klog.V(1).Infoln("Health server stopped listening")
 	}()
-
-	return nil
 }

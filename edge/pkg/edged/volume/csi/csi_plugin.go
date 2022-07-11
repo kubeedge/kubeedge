@@ -38,9 +38,7 @@ import (
 	api "k8s.io/api/core/v1"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	utilversion "k8s.io/apimachinery/pkg/util/version"
-	"k8s.io/apimachinery/pkg/util/wait"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	clientset "k8s.io/client-go/kubernetes"
 	storagelisters "k8s.io/client-go/listers/storage/v1"
@@ -114,7 +112,7 @@ func (h *RegistrationHandler) ValidatePlugin(pluginName string, endpoint string,
 	klog.Infof(log("Trying to validate a new CSI Driver with name: %s endpoint: %s versions: %s",
 		pluginName, endpoint, strings.Join(versions, ",")))
 
-	_, err := h.validateVersions("ValidatePlugin", pluginName, endpoint, versions)
+	_, err := h.validateVersions("ValidatePlugin", pluginName, versions)
 	if err != nil {
 		return fmt.Errorf("validation failed for CSI Driver %s at endpoint %s: %v", pluginName, endpoint, err)
 	}
@@ -126,7 +124,7 @@ func (h *RegistrationHandler) ValidatePlugin(pluginName string, endpoint string,
 func (h *RegistrationHandler) RegisterPlugin(pluginName string, endpoint string, versions []string) error {
 	klog.Infof(log("Register new plugin with name: %s at endpoint: %s", pluginName, endpoint))
 
-	highestSupportedVersion, err := h.validateVersions("RegisterPlugin", pluginName, endpoint, versions)
+	highestSupportedVersion, err := h.validateVersions("RegisterPlugin", pluginName, versions)
 	if err != nil {
 		return err
 	}
@@ -166,7 +164,7 @@ func (h *RegistrationHandler) RegisterPlugin(pluginName string, endpoint string,
 	return nil
 }
 
-func (h *RegistrationHandler) validateVersions(callerName, pluginName string, endpoint string, versions []string) (*utilversion.Version, error) {
+func (h *RegistrationHandler) validateVersions(callerName, pluginName string, versions []string) (*utilversion.Version, error) {
 	if len(versions) == 0 {
 		err := fmt.Errorf("%s for CSI driver %q failed. Plugin returned an empty list for supported versions", callerName, pluginName)
 		klog.Error(err)
@@ -254,62 +252,11 @@ func (p *csiPlugin) Init(host volume.VolumeHost) error {
 	return nil
 }
 
-func initializeCSINode(host volume.VolumeHost) error {
-	kvh, ok := host.(volume.KubeletVolumeHost)
-	if !ok {
-		klog.V(4).Info("Cast from VolumeHost to KubeletVolumeHost failed. Skipping CSINodeInfo initialization, not running on kubelet")
-		return nil
-	}
-	kubeClient := host.GetKubeClient()
-	if kubeClient == nil {
-		// Kubelet running in standalone mode. Skip CSINodeInfo initialization
-		klog.Warning("Skipping CSINodeInfo initialization, kubelet running in standalone mode")
-		return nil
-	}
-
-	kvh.SetKubeletError(errors.New("CSINodeInfo is not yet initialized"))
-
-	go func() {
-		defer utilruntime.HandleCrash()
-
-		// Backoff parameters tuned to retry over 140 seconds. Will fail and restart the Kubelet
-		// after max retry steps.
-		initBackoff := wait.Backoff{
-			Steps:    6,
-			Duration: 15 * time.Millisecond,
-			Factor:   6.0,
-			Jitter:   0.1,
-		}
-		err := wait.ExponentialBackoff(initBackoff, func() (bool, error) {
-			klog.V(4).Infof("Initializing migrated drivers on CSINodeInfo")
-			err := nim.InitializeCSINodeWithAnnotation()
-			if err != nil {
-				kvh.SetKubeletError(fmt.Errorf("failed to initialize CSINodeInfo: %v", err))
-				klog.Errorf("Failed to initialize CSINodeInfo: %v", err)
-				return false, nil
-			}
-
-			// Successfully initialized drivers, allow Kubelet to post Ready
-			kvh.SetKubeletError(nil)
-			return true, nil
-		})
-		if err != nil {
-			// 2 releases after CSIMigration and all CSIMigrationX (where X is a volume plugin)
-			// are permanently enabled the apiserver/controllers can assume that the kubelet is
-			// using CSI for all Migrated volume plugins. Then all the CSINode initialization
-			// code can be dropped from Kubelet.
-			// Kill the Kubelet process and allow it to restart to retry initialization
-			klog.Fatalf("Failed to initialize CSINodeInfo after retrying")
-		}
-	}()
-	return nil
-}
-
 func (p *csiPlugin) GetPluginName() string {
 	return CSIPluginName
 }
 
-// GetvolumeName returns a concatenated string of CSIVolumeSource.Driver<volNameSe>CSIVolumeSource.VolumeHandle
+// GetVolumeName returns a concatenated string of CSIVolumeSource.Driver<volNameSe>CSIVolumeSource.VolumeHandle
 // That string value is used in Detach() to extract driver name and volumeName.
 func (p *csiPlugin) GetVolumeName(spec *volume.Spec) (string, error) {
 	csi, err := getPVSourceFromSpec(spec)

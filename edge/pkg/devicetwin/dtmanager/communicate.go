@@ -54,7 +54,7 @@ func (cw CommWorker) Start() {
 			}
 
 		case <-time.After(time.Duration(60) * time.Second):
-			cw.checkConfirm(cw.DTContexts, nil)
+			cw.checkConfirm(cw.DTContexts)
 		case v, ok := <-cw.HeartBeatChan:
 			if !ok {
 				return
@@ -106,7 +106,7 @@ func dealLifeCycle(context *dtcontext.DTContext, resource string, msg interface{
 	connectedInfo, _ := message.Content.(string)
 	if strings.Compare(connectedInfo, connect.CloudConnected) == 0 {
 		if strings.Compare(context.State, dtcommon.Disconnected) == 0 {
-			_, err := detailRequest(context, msg)
+			err := detailRequest(context)
 			if err != nil {
 				klog.Errorf("detail request: %v", err)
 				return err
@@ -132,7 +132,7 @@ func dealConfirm(context *dtcontext.DTContext, resource string, msg interface{})
 	return nil
 }
 
-func detailRequest(context *dtcontext.DTContext, msg interface{}) (interface{}, error) {
+func detailRequest(context *dtcontext.DTContext) error {
 	getDetail := dttype.GetDetailNode{
 		EventType: "group_membership_event",
 		EventID:   uuid.New().String(),
@@ -142,7 +142,7 @@ func detailRequest(context *dtcontext.DTContext, msg interface{}) (interface{}, 
 	getDetailJSON, marshalErr := json.Marshal(getDetail)
 	if marshalErr != nil {
 		klog.Errorf("Marshal request error while request detail, err: %#v", marshalErr)
-		return nil, marshalErr
+		return marshalErr
 	}
 
 	message := context.BuildModelMessage("resource", "", "membership/detail", "get", string(getDetailJSON))
@@ -150,10 +150,10 @@ func detailRequest(context *dtcontext.DTContext, msg interface{}) (interface{}, 
 	msgID := message.GetID()
 	context.ConfirmMap.Store(msgID, &dttype.DTMessage{Msg: message, Action: dtcommon.SendToCloud, Type: dtcommon.CommModule})
 	beehiveContext.Send(dtcommon.HubModule, *message)
-	return nil, nil
+	return nil
 }
 
-func (cw CommWorker) checkConfirm(context *dtcontext.DTContext, msg interface{}) (interface{}, error) {
+func (cw CommWorker) checkConfirm(context *dtcontext.DTContext) {
 	klog.V(2).Info("CheckConfirm")
 	context.ConfirmMap.Range(func(key interface{}, value interface{}) bool {
 		dtmsg, ok := value.(*dttype.DTMessage)
@@ -172,5 +172,4 @@ func (cw CommWorker) checkConfirm(context *dtcontext.DTContext, msg interface{})
 		}
 		return true
 	})
-	return nil, nil
 }

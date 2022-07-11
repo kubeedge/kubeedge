@@ -75,7 +75,7 @@ func (c *csiAttacher) Attach(spec *volume.Spec, nodeName types.NodeName) (string
 func (c *csiAttacher) WaitForAttach(spec *volume.Spec, _ string, pod *v1.Pod, timeout time.Duration) (string, error) {
 	source, err := getPVSourceFromSpec(spec)
 	if err != nil {
-		klog.Error(log("attacher.WaitForAttach failed to extract CSI volume source: %v", err))
+		klog.Error(log("attacher.WaitForAttach failed to extract CSI volume source of pod %v error: %v", pod.Name, err))
 		return "", err
 	}
 
@@ -87,14 +87,13 @@ func (c *csiAttacher) WaitForAttach(spec *volume.Spec, _ string, pod *v1.Pod, ti
 func (c *csiAttacher) waitForVolumeAttachment(volumeHandle, attachID string, timeout time.Duration) (string, error) {
 	klog.V(4).Info(log("probing for updates from CSI driver for [attachment.ID=%v]", attachID))
 
-	err := wait.PollImmediate(time.Second*5, time.Minute*5, func() (bool, error) {
+	err := wait.PollImmediate(time.Second*5, timeout, func() (bool, error) {
 		klog.V(4).Info(log("probing VolumeAttachment [id=%v]", attachID))
 		attach, err := c.k8s.StorageV1().VolumeAttachments().Get(context.Background(), attachID, meta.GetOptions{})
 		if err != nil {
 			return false, fmt.Errorf("volume %v has GET error for volume attachment %v: %v", volumeHandle, attachID, err)
 		}
-		successful, err := verifyAttachmentStatus(attach, volumeHandle)
-		return successful, err
+		return verifyAttachmentStatus(attach, volumeHandle)
 	})
 	if err != nil {
 		return "", err
