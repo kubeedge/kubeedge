@@ -3,7 +3,7 @@ package admissioncontroller
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
@@ -12,6 +12,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	admissionregistrationv1beta1client "k8s.io/client-go/kubernetes/typed/admissionregistration/v1beta1"
 	"k8s.io/klog/v2"
+
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 func registerValidateWebhook(client admissionregistrationv1beta1client.ValidatingWebhookConfigurationInterface,
@@ -66,7 +68,8 @@ type hookFunc func(admissionv1beta1.AdmissionReview) *admissionv1beta1.Admission
 func serve(w http.ResponseWriter, r *http.Request, hook hookFunc) {
 	var body []byte
 	if r.Body != nil {
-		if data, err := ioutil.ReadAll(r.Body); err == nil {
+		r.Body = http.MaxBytesReader(w, r.Body, constants.MaxRespBodyLength)
+		if data, err := io.ReadAll(r.Body); err == nil {
 			body = data
 		}
 	}

@@ -3,7 +3,7 @@ package servicebus
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"path"
 	"strings"
@@ -17,6 +17,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/listener"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/provider"
+	commonconstants "github.com/kubeedge/kubeedge/common/constants"
 	commonType "github.com/kubeedge/kubeedge/common/types"
 )
 
@@ -99,7 +100,7 @@ func (sb *ServiceBus) Forward(target provider.Target, data interface{}) (respons
 	klog.Infof("message is send to target successfully. msgID: %s, target: %s", message.GetID(), target.Name())
 	httpResp, ok := resp.(*http.Response)
 	if ok {
-		byteData, _ := ioutil.ReadAll(httpResp.Body)
+		byteData, _ := io.ReadAll(io.LimitReader(httpResp.Body, commonconstants.MaxRespBodyLength))
 		beehiveContext.SendToGroup(modules.CloudHubModuleGroup, *message.NewRespByMessage(message, string(byteData)))
 	}
 	return resp, nil

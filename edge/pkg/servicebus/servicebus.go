@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"sync/atomic"
@@ -180,8 +180,7 @@ func processMessage(msg *beehiveModel.Message) {
 			return
 		}
 		defer resp.Body.Close()
-		resp.Body = http.MaxBytesReader(nil, resp.Body, maxBodySize)
-		resBody, err := ioutil.ReadAll(resp.Body)
+		resBody, err := io.ReadAll(io.LimitReader(resp.Body, maxBodySize))
 		if err != nil {
 			if err.Error() == "http: request body too large" {
 				err = fmt.Errorf("response body too large")
@@ -236,7 +235,8 @@ func buildBasicHandler(timeout time.Duration) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		sReq := &serverRequest{}
 		sResp := &serverResponse{}
-		byteData, err := ioutil.ReadAll(req.Body)
+		req.Body = http.MaxBytesReader(w, req.Body, maxBodySize)
+		byteData, err := io.ReadAll(req.Body)
 		if err != nil {
 			sResp.Code = http.StatusBadRequest
 			sResp.Msg = "can't read data from body of the http's request"
