@@ -2,6 +2,7 @@ package listener
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -157,7 +158,7 @@ func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 			klog.Errorf("response convert error, msg id: %s, reason: %v", msgID, err)
 			return
 		}
-		body, err := ioutil.ReadAll(response.Body)
+		body, err := io.ReadAll(io.LimitReader(response.Body, MaxMessageBytes))
 		if err != nil {
 			klog.Errorf("response body read error, msg id: %s, reason: %v", msgID, err)
 			return
