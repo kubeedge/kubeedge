@@ -74,6 +74,9 @@ func Process(module string) {
 }
 
 func (mh *MessageHandler) HandleMessage(message *model.Message) error {
+	if message == nil {
+		return fmt.Errorf("nil message error")
+	}
 	if message.GetParentID() != "" {
 		mh.callback(message)
 		return nil
