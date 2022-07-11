@@ -1,4 +1,8 @@
 
+* [v1.11.1](#v1111)
+    * [Downloads for v1.11.1](#downloads-for-v1111)
+    * [KubeEdge v1.11.1 Release Notes](#kubeedge-v1111-release-notes)
+        * [Changelog since v1.11.0](#changelog-since-v1110)
 * [v1.11.0](#v1110)
     * [Downloads for v1.11.0](#downloads-for-v1110)
     * [KubeEdge v1.11 Release Notes](#kubeedge-v111-release-notes)
@@ -7,6 +11,23 @@
         * [Other Notable Changes](#other-notable-changes)
         * [Bug Fixes](#bug-fixes)
 
+
+# v1.11.1
+
+## Downloads for v1.11.1
+
+Download v1.11.1 in the [v1.11.1 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.11.1).
+
+## KubeEdge v1.11.1 Release Notes
+
+### Changelog since v1.11.0
+
+- Fix invalid request. ([#4038](https://github.com/kubeedge/kubeedge/pull/4038), [@vincentgoat](https://github.com/vincentgoat))
+- Fix complex parameters. ([#4027](https://github.com/kubeedge/kubeedge/pull/4027), [@vincentgoat](https://github.com/vincentgoat))
+- Fix possible nil pointer of message. ([#4026](https://github.com/kubeedge/kubeedge/pull/4026), [@vincentgoat](https://github.com/vincentgoat))
+- Missing error check for unsafe method. ([#4024](https://github.com/kubeedge/kubeedge/pull/4024), [@vincentgoat](https://github.com/vincentgoat))
+- Possible type confusions. ([#4025](https://github.com/kubeedge/kubeedge/pull/4025), [@vincentgoat](https://github.com/vincentgoat))
+- Update deprecate dependency. ([#4023](https://github.com/kubeedge/kubeedge/pull/4023), [@vincentgoat](https://github.com/vincentgoat))
 
     
 
