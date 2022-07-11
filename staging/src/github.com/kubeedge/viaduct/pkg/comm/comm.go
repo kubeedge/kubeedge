@@ -19,4 +19,7 @@ const (
 
 	// the max size of message fifo
 	MessageFiFoSizeMax = 100
+
+	// MaxReadLength is the max length of http response body
+	MaxReadLength = 1 << 20 // 1 MiB
 )

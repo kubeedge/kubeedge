@@ -8,6 +8,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/viaduct/pkg/api"
+	"github.com/kubeedge/viaduct/pkg/comm"
 	"github.com/kubeedge/viaduct/pkg/conn"
 	"github.com/kubeedge/viaduct/pkg/lane"
 )
@@ -66,7 +67,7 @@ func (c *WSClient) Connect() (conn.Connection, error) {
 	// something wrong!!
 	var respMsg string
 	if resp != nil {
-		body, errRead := io.ReadAll(resp.Body)
+		body, errRead := io.ReadAll(io.LimitReader(resp.Body, comm.MaxReadLength))
 		if errRead == nil {
 			respMsg = fmt.Sprintf("response code: %d, response body: %s", resp.StatusCode, string(body))
 		} else {
