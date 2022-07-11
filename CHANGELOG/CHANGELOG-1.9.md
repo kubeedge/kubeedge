@@ -1,4 +1,8 @@
 
+* [v1.9.4](#v194)
+    * [Downloads for v1.9.4](#downloads-for-v194)
+    * [KubeEdge v1.9.4 Release Notes](#kubeedge-v194-release-notes)
+        * [Changelog since v1.9.3](#changelog-since-v193)
 * [v1.9.3](#v193)
     * [Downloads for v1.9.3](#downloads-for-v193)
     * [KubeEdge v1.9.3 Release Notes](#kubeedge-v193-release-notes)
@@ -18,6 +22,23 @@
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
         * [Other Notable Changes](#other-notable-changes)
         * [Bug Fixes](#bug-fixes)
+
+
+# v1.9.4
+
+## Downloads for v1.9.4
+
+Download v1.9.4 in the [v1.9.4 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.9.4).
+
+## KubeEdge v1.9.4 Release Notes
+
+### Changelog since v1.9.3
+
+- Fix invalid request. ([#4042](https://github.com/kubeedge/kubeedge/pull/4042), [@vincentgoat](https://github.com/vincentgoat))
+- Fix complex parameters. ([#4037](https://github.com/kubeedge/kubeedge/pull/4037), [@vincentgoat](https://github.com/vincentgoat))
+- Fix possible nil pointer of message. ([#4036](https://github.com/kubeedge/kubeedge/pull/4036), [@vincentgoat](https://github.com/vincentgoat))
+- Missing error check for unsafe method. ([#4034](https://github.com/kubeedge/kubeedge/pull/4034), [@vincentgoat](https://github.com/vincentgoat))
+- Possible type confusions. ([#4035](https://github.com/kubeedge/kubeedge/pull/4035), [@vincentgoat](https://github.com/vincentgoat))
 
 # v1.9.3
 
