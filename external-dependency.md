@@ -49,7 +49,6 @@
 |gofuzz |Apache License 2.0 | https://github.com/google/gofuzz
 |uuid |Apache License 2.0 | https://github.com/google/uuid
 |gnostic |Apache License 2.0 | https://github.com/googleapis/gnostic
-|mux |BSD-3-Clause | https://github.com/gorilla/mux
 |websocket |BSD-3-Clause | https://github.com/gorilla/websocket
 |golang-lru |MLP-2.0 | https://github.com/hashicorp/golang-lru
 |gopass |ISC | https://github.com/howeyc/gopass
@@ -110,7 +109,6 @@
 |k8s.io/kube-openapi | Apache License 2.0  |https://github.com/kubernetes/kube-openapi
 |k8s.io/kubernetes | Apache License 2.0  |https://github.com/kubernetes/kubernetes
 |k8s.io/utils | Apache License 2.0  |https://github.com/kubernetes/utils
-|paypal/gatt |BSD-3-Clause |https://github.com/paypal/gatt
 |go-ansiterm |MIT |https://github.com/Azure/go-ansiterm
 |win_pdh | |https://github.com/JeffAshton/win_pdh
 |go-winio |MIT |https://github.com/Microsoft/go-winio
