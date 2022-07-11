@@ -146,4 +146,7 @@ const (
 
 	// MessageSuccessfulContent is the successful content value of Message struct
 	MessageSuccessfulContent string = "OK"
+
+	// MaxRespBodyLength is the max length of http response body
+	MaxRespBodyLength = 1 << 20 // 1 MiB
 )
