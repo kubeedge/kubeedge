@@ -3,6 +3,7 @@ package dtmanager
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -74,7 +75,12 @@ func initActionCallBack() {
 }
 
 func dealSendToEdge(context *dtcontext.DTContext, resource string, msg interface{}) error {
-	beehiveContext.Send(dtcommon.EventHubModule, *msg.(*model.Message))
+	message, ok := msg.(*model.Message)
+	if !ok {
+		return fmt.Errorf("msg type is %T and not Message type", msg)
+	}
+
+	beehiveContext.Send(dtcommon.EventHubModule, *message)
 	return nil
 }
 func dealSendToCloud(context *dtcontext.DTContext, resource string, msg interface{}) error {

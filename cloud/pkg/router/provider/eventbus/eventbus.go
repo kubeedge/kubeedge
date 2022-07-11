@@ -95,7 +95,11 @@ func (eb *EventBus) Name() string {
 }
 
 func (*EventBus) Forward(target provider.Target, data interface{}) (response interface{}, err error) {
-	message := data.(*model.Message)
+	message, ok := data.(*model.Message)
+	if !ok {
+		klog.Errorf("message type %T error", data)
+		return nil, fmt.Errorf("message type %T error", data)
+	}
 	res := make(map[string]interface{})
 	v, ok := message.Content.(string)
 	if !ok {
