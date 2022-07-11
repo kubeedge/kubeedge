@@ -29,8 +29,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/emicklei/go-restful"
 	"github.com/golang-jwt/jwt"
-	"github.com/gorilla/mux"
 	certutil "k8s.io/client-go/util/cert"
 	"k8s.io/klog/v2"
 
@@ -40,9 +40,12 @@ import (
 
 // StartHTTPServer starts the http service
 func StartHTTPServer() {
-	router := mux.NewRouter()
-	router.HandleFunc(constants.DefaultCertURL, edgeCoreClientCert).Methods(http.MethodGet)
-	router.HandleFunc(constants.DefaultCAURL, getCA).Methods(http.MethodGet)
+	serverContainer := restful.NewContainer()
+	ws := new(restful.WebService)
+	ws.Path("/")
+	ws.Route(ws.GET(constants.DefaultCertURL).To(edgeCoreClientCert))
+	ws.Route(ws.GET(constants.DefaultCAURL).To(getCA))
+	serverContainer.Add(ws)
 
 	addr := fmt.Sprintf("%s:%d", hubconfig.Config.HTTPS.Address, hubconfig.Config.HTTPS.Port)
 
@@ -54,7 +57,7 @@ func StartHTTPServer() {
 
 	server := &http.Server{
 		Addr:    addr,
-		Handler: router,
+		Handler: serverContainer,
 		TLSConfig: &tls.Config{
 			Certificates: []tls.Certificate{cert},
 			ClientAuth:   tls.RequestClientCert,
@@ -64,9 +67,9 @@ func StartHTTPServer() {
 }
 
 // getCA returns the caCertDER
-func getCA(w http.ResponseWriter, r *http.Request) {
+func getCA(request *restful.Request, response *restful.Response) {
 	caCertDER := hubconfig.Config.Ca
-	if _, err := w.Write(caCertDER); err != nil {
+	if _, err := response.Write(caCertDER); err != nil {
 		klog.Errorf("failed to write caCertDER, err: %v", err)
 	}
 }
@@ -81,23 +84,23 @@ func EncodeCertPEM(cert *x509.Certificate) []byte {
 }
 
 // edgeCoreClientCert will verify the certificate of EdgeCore or token then create EdgeCoreCert and return it
-func edgeCoreClientCert(w http.ResponseWriter, r *http.Request) {
-	if cert := r.TLS.PeerCertificates; len(cert) > 0 {
+func edgeCoreClientCert(request *restful.Request, response *restful.Response) {
+	if cert := request.Request.TLS.PeerCertificates; len(cert) > 0 {
 		if err := verifyCert(cert[0]); err != nil {
-			klog.Errorf("failed to sign the certificate for edgenode: %s, failed to verify the certificate", r.Header.Get(constants.NodeName))
-			w.WriteHeader(http.StatusUnauthorized)
-			if _, err := w.Write([]byte(err.Error())); err != nil {
+			klog.Errorf("failed to sign the certificate for edgenode: %s, failed to verify the certificate", request.Request.Header.Get(constants.NodeName))
+			response.WriteHeader(http.StatusUnauthorized)
+			if _, err := response.Write([]byte(err.Error())); err != nil {
 				klog.Errorf("failed to write response, err: %v", err)
 			}
 		} else {
-			signEdgeCert(w, r)
+			signEdgeCert(response, request.Request)
 		}
 		return
 	}
-	if verifyAuthorization(w, r) {
-		signEdgeCert(w, r)
+	if verifyAuthorization(response, request.Request) {
+		signEdgeCert(response, request.Request)
 	} else {
-		klog.Errorf("failed to sign the certificate for edgenode: %s, invalid token", r.Header.Get(constants.NodeName))
+		klog.Errorf("failed to sign the certificate for edgenode: %s, invalid token", request.Request.Header.Get(constants.NodeName))
 	}
 }
 
