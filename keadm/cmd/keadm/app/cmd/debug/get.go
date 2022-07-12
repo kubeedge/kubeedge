@@ -679,11 +679,7 @@ func JSONYamlPrint(results []dao.Meta, printer printers.ResourcePrinter) error {
 	} else {
 		obj = objectList[0]
 	}
-	if err := PrintGeneric(printer, obj); err != nil {
-		return err
-	}
-
-	return nil
+	return PrintGeneric(printer, obj)
 }
 
 // ParseMetaToV1List Convert the data to the corresponding list type

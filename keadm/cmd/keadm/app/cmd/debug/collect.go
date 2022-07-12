@@ -213,11 +213,7 @@ func collectSystemData(tmpPath string) error {
 		return err
 	}
 	// network info
-	if err = ExecuteShell(common.CmdNetworkInfo, tmpPath); err != nil {
-		return err
-	}
-
-	return nil
+	return ExecuteShell(common.CmdNetworkInfo, tmpPath)
 }
 
 // collect edgecore data
@@ -279,10 +275,7 @@ func collectEdgecoreData(tmpPath string, config *v1alpha1.EdgeCoreConfig, ops *c
 		}
 	}
 
-	if err = ExecuteShell(common.CmdEdgecoreVersion, tmpPath); err != nil {
-		return err
-	}
-	return nil
+	return ExecuteShell(common.CmdEdgecoreVersion, tmpPath)
 }
 
 // collect runtime/docker data
@@ -309,20 +302,12 @@ func collectRuntimeData(tmpPath string) error {
 
 func CopyFile(pathSrc, tmpPath string) error {
 	cmd := util.NewCommand(fmt.Sprintf(common.CmdCopyFile, pathSrc, tmpPath))
-	if err := cmd.Exec(); err != nil {
-		return err
-	}
-
-	return nil
+	return cmd.Exec()
 }
 
 func ExecuteShell(cmdStr string, tmpPath string) error {
 	cmd := util.NewCommand(fmt.Sprintf(cmdStr, tmpPath))
-	if err := cmd.Exec(); err != nil {
-		return err
-	}
-
-	return nil
+	return cmd.Exec()
 }
 
 func printDetail(msg string) {

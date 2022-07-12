@@ -66,10 +66,7 @@ func (s *store) Get(ctx context.Context, key string, opts storage.GetOptions, ob
 		return err
 	}
 	unstrObj := objPtr.(*unstructured.Unstructured)
-	if err := runtime.DecodeInto(s.codec, []byte((*resp.Kvs)[0].Value), unstrObj); err != nil {
-		return err
-	}
-	return nil
+	return runtime.DecodeInto(s.codec, []byte((*resp.Kvs)[0].Value), unstrObj)
 }
 
 func (s *store) GetToList(ctx context.Context, key string, opts storage.ListOptions, listObj runtime.Object) error {

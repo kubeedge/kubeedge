@@ -59,11 +59,7 @@ func NewGenericRenderer(files fs.FS, dir, componentName, namespace string, profi
 
 // LoadChart would load the given charts.
 func (h *Renderer) LoadChart() error {
-	if err := h.loadChart(); err != nil {
-		return err
-	}
-
-	return nil
+	return h.loadChart()
 }
 
 // RenderManifest renders the current helm templates with the current values and returns the resulting YAML manifest string.
