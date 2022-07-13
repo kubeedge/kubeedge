@@ -166,11 +166,7 @@ func (cu *KubeCloudHelmInstTool) RunHelmManifest(baseHelmRoot string) error {
 		return fmt.Errorf("cannot build renderer: %s", err.Error())
 	}
 
-	if err := cu.runHelmManifest(renderer, os.Stdout); err != nil {
-		return err
-	}
-
-	return nil
+	return cu.runHelmManifest(renderer, os.Stdout)
 }
 
 // beforeRenderer handles the value of the profile.
@@ -213,11 +209,7 @@ func (cu *KubeCloudHelmInstTool) beforeRenderer(baseHelmRoot string) error {
 	}
 
 	// rebuild flag values
-	if err := cu.rebuildFlagVals(); err != nil {
-		return err
-	}
-
-	return nil
+	return cu.rebuildFlagVals()
 }
 
 // buildRenderer returns a renderer instance
