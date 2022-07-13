@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	v1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
@@ -19,7 +19,7 @@ const (
 
 var _ = Describe("Rule Management test in E2E scenario", func() {
 	var testTimer *utils.TestTimer
-	var testDescription GinkgoTestDescription
+	var testSpecReport SpecReport
 	msg := "Hello World!"
 	Context("Test rule and ruleendpoint Creation and deletion", func() {
 		BeforeEach(func() {
@@ -41,10 +41,10 @@ var _ = Describe("Rule Management test in E2E scenario", func() {
 				Expect(IsReDeleted).Should(BeTrue())
 				Expect(statusCode).Should(Equal(http.StatusOK))
 			}
-			// Get current test description
-			testDescription = CurrentGinkgoTestDescription()
+			// Get current test SpecReport
+			testSpecReport = CurrentSpecReport()
 			// Start test timer
-			testTimer = CRDTestTimerGroup.NewTestTimer(testDescription.TestText)
+			testTimer = CRDTestTimerGroup.NewTestTimer(testSpecReport.LeafNodeText)
 		})
 		AfterEach(func() {
 			// End test timer
