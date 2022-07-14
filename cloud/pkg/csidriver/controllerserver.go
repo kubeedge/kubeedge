@@ -108,7 +108,6 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		return nil, err
 	}
 
-	klog.V(4).Infof("create volume result: %v", result)
 	data, ok := result.GetContent().(string)
 	if !ok {
 		klog.Errorf("content is not string type: %v", result.GetContent())
@@ -196,7 +195,6 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 		return nil, err
 	}
 
-	klog.V(4).Infof("delete volume result: %v", result)
 	data, ok := result.GetContent().(string)
 	if !ok {
 		klog.Errorf("content is not string type: %v", result.GetContent())
@@ -279,7 +277,6 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 		return nil, err
 	}
 
-	klog.V(4).Infof("controller publish volume result: %v", result)
 	data, ok := result.GetContent().(string)
 	if !ok {
 		klog.Errorf("content is not string type: %v", result.GetContent())
@@ -362,7 +359,6 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 		return nil, err
 	}
 
-	klog.V(4).Infof("controller Unpublish Volume result: %v", result)
 	data, ok := result.GetContent().(string)
 	if !ok {
 		klog.Errorf("content is not string type: %v", result.GetContent())

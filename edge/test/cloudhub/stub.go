@@ -53,7 +53,6 @@ func (tm *stubCloudHub) eventReadLoop(conn *websocket.Conn, stop chan bool) {
 			stop <- true
 			return
 		}
-		klog.Infof("cloud hub receive message %+v", event)
 	}
 }
 
@@ -82,7 +81,6 @@ func (tm *stubCloudHub) podHandler(w http.ResponseWriter, req *http.Request) {
 			w.Write([]byte("read request body error"))
 			return
 		}
-		klog.Infof("request body is %s\n", string(body))
 
 		var pod v1.Pod
 		if err = json.Unmarshal(body, &pod); err != nil {

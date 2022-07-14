@@ -65,7 +65,7 @@ func (c *ContainerExecConnection) SendConnection() (stream.EdgedConnection, erro
 		return nil, err
 	}
 	if err := c.WriteToTunnel(m); err != nil {
-		klog.Errorf("%s failed to create exec connection: %s, err: %v", c.String(), connector.String(), err)
+		klog.Errorf("%s failed to create exec connection: %s, err: %v", c.String(), connector.MessID, err)
 		return nil, err
 	}
 	return connector, nil

@@ -22,6 +22,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"html"
 	"io"
 	"net/http"
 	"os/exec"
@@ -958,12 +959,14 @@ func StartEchoServer() (string, error) {
 		}
 	}
 	url := func(response http.ResponseWriter, request *http.Request) {
+		// use html.EscapeString to prevent possible cross-site scripting vulnerability due to user-provided value
 		b, _ := io.ReadAll(request.Body)
+		escapedB := html.EscapeString(string(b))
 		var buff bytes.Buffer
 		buff.WriteString("Reply from server: ")
-		buff.Write(b)
-		buff.WriteString(" Header of the message: [user]: " + request.Header.Get("user") +
-			", [passwd]: " + request.Header.Get("passwd"))
+		buff.Write([]byte(escapedB))
+		buff.WriteString(" Header of the message: [user]: " + html.EscapeString(request.Header.Get("user")) +
+			", [passwd]: " + html.EscapeString(request.Header.Get("passwd")))
 		if _, err := response.Write(buff.Bytes()); err != nil {
 			Errorf("Echo server write failed. reason: %s", err.Error())
 		}

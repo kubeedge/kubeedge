@@ -82,7 +82,7 @@ func (ms *ContainerMetricsConnection) SendConnection() (stream.EdgedConnection, 
 		return nil, err
 	}
 	if err := ms.WriteToTunnel(m); err != nil {
-		klog.Errorf("%s write %s error %v", ms.String(), connector.String(), err)
+		klog.Errorf("%s write %s error %v", ms.String(), connector.MessID, err)
 		return nil, err
 	}
 	return connector, nil

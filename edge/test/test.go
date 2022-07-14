@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"time"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
@@ -52,7 +51,6 @@ func GetPodListFromEdged(w http.ResponseWriter) error {
 	var pods v1.PodList
 	var bytes io.Reader
 	client := &http.Client{}
-	t := time.Now()
 	req, err := http.NewRequest(http.MethodGet, edgedEndPoint+EdgedPodHandler, bytes)
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	if err != nil {
@@ -64,7 +62,6 @@ func GetPodListFromEdged(w http.ResponseWriter) error {
 		klog.Errorf("Sending HTTP request failed: %v", err)
 		return err
 	}
-	klog.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	defer resp.Body.Close()
 	contents, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -102,7 +99,6 @@ func (tm *testManager) podHandler(w http.ResponseWriter, req *http.Request) {
 			klog.Errorf("read body error %v", err)
 			w.Write([]byte("read request body error"))
 		}
-		klog.Infof("request body is %s\n", string(body))
 		if err = json.Unmarshal(body, &p); err != nil {
 			klog.Errorf("unmarshal request body error %v", err)
 			w.Write([]byte("unmarshal request body error"))
@@ -138,7 +134,7 @@ func (tm *testManager) deviceHandler(w http.ResponseWriter, req *http.Request) {
 			klog.Errorf("read body error %v", err)
 			w.Write([]byte("read request body error"))
 		}
-		klog.Infof("request body is %s\n", string(body))
+
 		err = json.Unmarshal(body, &Content)
 		if err != nil {
 			klog.Errorf("unmarshal request body error %v", err)
@@ -167,7 +163,6 @@ func (tm *testManager) secretHandler(w http.ResponseWriter, req *http.Request) {
 			klog.Errorf("read body error %v", err)
 			w.Write([]byte("read request body error"))
 		}
-		klog.Infof("request body is %s\n", string(body))
 		if err = json.Unmarshal(body, &p); err != nil {
 			klog.Errorf("unmarshal request body error %v", err)
 			w.Write([]byte("unmarshal request body error"))
@@ -197,7 +192,6 @@ func (tm *testManager) configmapHandler(w http.ResponseWriter, req *http.Request
 			klog.Errorf("read body error %v", err)
 			w.Write([]byte("read request body error"))
 		}
-		klog.Infof("request body is %s\n", string(body))
 		if err = json.Unmarshal(body, &p); err != nil {
 			klog.Errorf("unmarshal request body error %v", err)
 			w.Write([]byte("unmarshal request body error"))

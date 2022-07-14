@@ -18,6 +18,7 @@ package cloudstream
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -110,7 +111,10 @@ func (s *Session) ProxyTunnelMessageToApiserver(message *stream.Message) error {
 }
 
 func (s *Session) String() string {
-	return fmt.Sprintf("Tunnel session [%v]", s.sessionID)
+	// ensure no line endings are present in the user input
+	escapedSessionID := strings.Replace(s.sessionID, "\n", "", -1)
+	escapedSessionID = strings.Replace(escapedSessionID, "\r", "", -1)
+	return fmt.Sprintf("Tunnel session [%v]", escapedSessionID)
 }
 
 func (s *Session) AddAPIServerConnection(ss *StreamServer, connection APIServerConnection) (APIServerConnection, error) {

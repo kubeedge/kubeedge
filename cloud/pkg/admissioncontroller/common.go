@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 	admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1beta1"
@@ -77,7 +78,9 @@ func serve(w http.ResponseWriter, r *http.Request, hook hookFunc) {
 	// verify the content type is accurate
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {
-		klog.Exitf("contentType=%s, expect application/json", contentType)
+		escapedContentType := strings.Replace(contentType, "\n", "", -1)
+		escapedContentType = strings.Replace(escapedContentType, "\r", "", -1)
+		klog.Exitf("contentType=%s, expect application/json", escapedContentType)
 		return
 	}
 

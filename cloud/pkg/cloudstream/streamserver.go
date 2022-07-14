@@ -105,7 +105,9 @@ func (s *StreamServer) getContainerLogs(r *restful.Request, w *restful.Response)
 	defer func() {
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			klog.Errorf("Failed to get container logs, err: %v", err)
+			escapedErr := strings.Replace(fmt.Sprintf("%s", err), "\n", "", -1)
+			escapedErr = strings.Replace(escapedErr, "\r", "", -1)
+			klog.Errorf("Failed to get container logs, err: %v", escapedErr)
 		}
 	}()
 
@@ -161,7 +163,9 @@ func (s *StreamServer) getMetrics(r *restful.Request, w *restful.Response) {
 	defer func() {
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			klog.Errorf("Failed to get metrics, err: %v", err)
+			escapedErr := strings.Replace(fmt.Sprintf("%s", err), "\n", "", -1)
+			escapedErr = strings.Replace(escapedErr, "\r", "", -1)
+			klog.Errorf("Failed to get metrics, err: %v", escapedErr)
 		}
 	}()
 
@@ -213,7 +217,9 @@ func (s *StreamServer) getExec(request *restful.Request, response *restful.Respo
 	defer func() {
 		if err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
-			klog.Errorf("Failed to get exec, err: %v", err)
+			escapedErr := strings.Replace(fmt.Sprintf("%s", err), "\n", "", -1)
+			escapedErr = strings.Replace(escapedErr, "\r", "", -1)
+			klog.Errorf("Failed to get exec, err: %v", escapedErr)
 		}
 	}()
 

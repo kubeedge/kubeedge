@@ -118,7 +118,11 @@ func (s *TunnelServer) connect(r *restful.Request, w *restful.Response) {
 		klog.Error("Failed to upgrade the HTTP server connection to the WebSocket protocol: %v", err)
 		return
 	}
-	klog.Infof("get a new tunnel agent hostname %v, internalIP %v", hostNameOverride, internalIP)
+	escapedHostNameOverride := strings.Replace(hostNameOverride, "\n", "", -1)
+	escapedHostNameOverride = strings.Replace(escapedHostNameOverride, "\r", "", -1)
+	escapedInternalIP := strings.Replace(internalIP, "\n", "", -1)
+	escapedInternalIP = strings.Replace(escapedInternalIP, "\r", "", -1)
+	klog.Infof("get a new tunnel agent hostname %v, internalIP %v", escapedHostNameOverride, escapedInternalIP)
 
 	session := &Session{
 		tunnel:        stream.NewDefaultTunnel(con),
@@ -196,24 +200,26 @@ func (s *TunnelServer) Start() {
 }
 
 func (s *TunnelServer) updateNodeKubeletEndpoint(nodeName string) error {
+	escapedNodeName := strings.Replace(nodeName, "\n", "", -1)
+	escapedNodeName = strings.Replace(escapedNodeName, "\r", "", -1)
 	if err := wait.PollImmediate(retrySleepTime, nodeStatusUpdateTimeout, func() (bool, error) {
 		getNode, err := client.GetKubeClient().CoreV1().Nodes().Get(context.Background(), nodeName, metav1.GetOptions{})
 		if err != nil {
-			klog.Errorf("Failed while getting a Node to retry updating node KubeletEndpoint Port, node: %s, error: %v", nodeName, err)
+			klog.Errorf("Failed while getting a Node to retry updating node KubeletEndpoint Port, node: %s, error: %v", escapedNodeName, err)
 			return false, nil
 		}
 
 		getNode.Status.DaemonEndpoints.KubeletEndpoint.Port = int32(s.tunnelPort)
 		_, err = client.GetKubeClient().CoreV1().Nodes().UpdateStatus(context.Background(), getNode, metav1.UpdateOptions{})
 		if err != nil {
-			klog.Errorf("Failed to update node KubeletEndpoint Port, node: %s, tunnelPort: %s, err: %v", nodeName, s.tunnelPort, err)
+			klog.Errorf("Failed to update node KubeletEndpoint Port, node: %s, tunnelPort: %s, err: %v", escapedNodeName, s.tunnelPort, err)
 			return false, nil
 		}
 		return true, nil
 	}); err != nil {
-		klog.Errorf("Update KubeletEndpoint Port of Node '%v' error: %v. ", nodeName, err)
+		klog.Errorf("Update KubeletEndpoint Port of Node '%v' error: %v. ", escapedNodeName, err)
 		return fmt.Errorf("failed to Update KubeletEndpoint Port")
 	}
-	klog.V(4).Infof("Update node KubeletEndpoint Port successfully, node: %s, tunnelPort: %s", nodeName, s.tunnelPort)
+	klog.V(4).Infof("Update node KubeletEndpoint Port successfully, node: %s, tunnelPort: %s", escapedNodeName, s.tunnelPort)
 	return nil
 }

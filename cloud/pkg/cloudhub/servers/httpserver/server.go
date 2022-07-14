@@ -87,7 +87,9 @@ func EncodeCertPEM(cert *x509.Certificate) []byte {
 func edgeCoreClientCert(request *restful.Request, response *restful.Response) {
 	if cert := request.Request.TLS.PeerCertificates; len(cert) > 0 {
 		if err := verifyCert(cert[0]); err != nil {
-			klog.Errorf("failed to sign the certificate for edgenode: %s, failed to verify the certificate", request.Request.Header.Get(constants.NodeName))
+			escapedNodeName := strings.Replace(request.Request.Header.Get(constants.NodeName), "\n", "", -1)
+			escapedNodeName = strings.Replace(escapedNodeName, "\r", "", -1)
+			klog.Errorf("failed to sign the certificate for edgenode: %s, failed to verify the certificate", escapedNodeName)
 			response.WriteHeader(http.StatusUnauthorized)
 			if _, err := response.Write([]byte(err.Error())); err != nil {
 				klog.Errorf("failed to write response, err: %v", err)
@@ -100,7 +102,9 @@ func edgeCoreClientCert(request *restful.Request, response *restful.Response) {
 	if verifyAuthorization(response, request.Request) {
 		signEdgeCert(response, request.Request)
 	} else {
-		klog.Errorf("failed to sign the certificate for edgenode: %s, invalid token", request.Request.Header.Get(constants.NodeName))
+		escapedNodeName := strings.Replace(request.Request.Header.Get(constants.NodeName), "\n", "", -1)
+		escapedNodeName = strings.Replace(escapedNodeName, "\r", "", -1)
+		klog.Errorf("failed to sign the certificate for edgenode: %s, invalid token", escapedNodeName)
 	}
 }
 
@@ -174,14 +178,17 @@ func verifyAuthorization(w http.ResponseWriter, r *http.Request) bool {
 // signEdgeCert signs the CSR from EdgeCore
 func signEdgeCert(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, constants.MaxRespBodyLength)
+	escapedNodeName := strings.Replace(r.Header.Get(constants.NodeName), "\n", "", -1)
+	escapedNodeName = strings.Replace(escapedNodeName, "\r", "", -1)
+
 	csrContent, err := io.ReadAll(r.Body)
 	if err != nil {
-		klog.Errorf("fail to read file when signing the cert for edgenode:%s! error:%v", r.Header.Get(constants.NodeName), err)
+		klog.Errorf("fail to read file when signing the cert for edgenode:%s! error:%v", escapedNodeName, err)
 		return
 	}
 	csr, err := x509.ParseCertificateRequest(csrContent)
 	if err != nil {
-		klog.Errorf("fail to ParseCertificateRequest of edgenode: %s! error:%v", r.Header.Get(constants.NodeName), err)
+		klog.Errorf("fail to ParseCertificateRequest of edgenode: %s! error:%v", escapedNodeName, err)
 		return
 	}
 	usagesStr := r.Header.Get("ExtKeyUsages")
@@ -195,10 +202,10 @@ func signEdgeCert(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	klog.V(4).Infof("receive sign crt request, ExtKeyUsages: %v", usages)
+
 	clientCertDER, err := signCerts(csr.Subject, csr.PublicKey, usages)
 	if err != nil {
-		klog.Errorf("fail to signCerts for edgenode:%s! error:%v", r.Header.Get(constants.NodeName), err)
+		klog.Errorf("fail to signCerts for edgenode:%s! error:%v", escapedNodeName, err)
 		return
 	}
 

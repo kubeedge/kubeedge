@@ -101,7 +101,9 @@ func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 	uriSections := strings.Split(r.RequestURI, "/")
 	if len(uriSections) < 2 {
 		// URL format incorrect
-		klog.Warningf("url format incorrect: %s", r.URL.String())
+		escapedURL := strings.Replace(r.URL.String(), "\n", "", -1)
+		escapedURL = strings.Replace(escapedURL, "\r", "", -1)
+		klog.Warningf("url format incorrect: %s", escapedURL)
 		w.WriteHeader(http.StatusNotFound)
 		if _, err := w.Write([]byte("Request error")); err != nil {
 			klog.Errorf("Response write error: %s, %s", r.RequestURI, err.Error())
