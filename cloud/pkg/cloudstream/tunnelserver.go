@@ -128,10 +128,10 @@ func (s *TunnelServer) connect(r *restful.Request, w *restful.Response) {
 		tunnel:        stream.NewDefaultTunnel(con),
 		apiServerConn: make(map[uint64]APIServerConnection),
 		apiConnlock:   &sync.RWMutex{},
-		sessionID:     hostNameOverride,
+		sessionID:     escapedHostNameOverride,
 	}
 
-	err = s.updateNodeKubeletEndpoint(hostNameOverride)
+	err = s.updateNodeKubeletEndpoint(escapedHostNameOverride)
 	if err != nil {
 		msg := stream.NewMessage(0, stream.MessageTypeCloseConnect, []byte(err.Error()))
 		if err := session.tunnel.WriteMessage(msg); err == nil {
@@ -141,9 +141,9 @@ func (s *TunnelServer) connect(r *restful.Request, w *restful.Response) {
 		}
 		return
 	}
-	s.addSession(hostNameOverride, session)
-	s.addSession(internalIP, session)
-	s.addNodeIP(hostNameOverride, internalIP)
+	s.addSession(escapedHostNameOverride, session)
+	s.addSession(escapedInternalIP, session)
+	s.addNodeIP(escapedHostNameOverride, internalIP)
 	session.Serve()
 }
 
@@ -200,26 +200,26 @@ func (s *TunnelServer) Start() {
 }
 
 func (s *TunnelServer) updateNodeKubeletEndpoint(nodeName string) error {
-	escapedNodeName := strings.Replace(nodeName, "\n", "", -1)
-	escapedNodeName = strings.Replace(escapedNodeName, "\r", "", -1)
+	//escapedNodeName := strings.Replace(nodeName, "\n", "", -1)
+	//escapedNodeName = strings.Replace(escapedNodeName, "\r", "", -1)
 	if err := wait.PollImmediate(retrySleepTime, nodeStatusUpdateTimeout, func() (bool, error) {
 		getNode, err := client.GetKubeClient().CoreV1().Nodes().Get(context.Background(), nodeName, metav1.GetOptions{})
 		if err != nil {
-			klog.Errorf("Failed while getting a Node to retry updating node KubeletEndpoint Port, node: %s, error: %v", escapedNodeName, err)
+			klog.Errorf("Failed while getting a Node to retry updating node KubeletEndpoint Port, node: %s, error: %v", nodeName, err)
 			return false, nil
 		}
 
 		getNode.Status.DaemonEndpoints.KubeletEndpoint.Port = int32(s.tunnelPort)
 		_, err = client.GetKubeClient().CoreV1().Nodes().UpdateStatus(context.Background(), getNode, metav1.UpdateOptions{})
 		if err != nil {
-			klog.Errorf("Failed to update node KubeletEndpoint Port, node: %s, tunnelPort: %s, err: %v", escapedNodeName, s.tunnelPort, err)
+			klog.Errorf("Failed to update node KubeletEndpoint Port, node: %s, tunnelPort: %s, err: %v", nodeName, s.tunnelPort, err)
 			return false, nil
 		}
 		return true, nil
 	}); err != nil {
-		klog.Errorf("Update KubeletEndpoint Port of Node '%v' error: %v. ", escapedNodeName, err)
+		klog.Errorf("Update KubeletEndpoint Port of Node '%v' error: %v. ", nodeName, err)
 		return fmt.Errorf("failed to Update KubeletEndpoint Port")
 	}
-	klog.V(4).Infof("Update node KubeletEndpoint Port successfully, node: %s, tunnelPort: %s", escapedNodeName, s.tunnelPort)
+	klog.V(4).Infof("Update node KubeletEndpoint Port successfully, node: %s, tunnelPort: %s", nodeName, s.tunnelPort)
 	return nil
 }
