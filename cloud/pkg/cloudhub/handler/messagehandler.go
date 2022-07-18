@@ -47,7 +47,7 @@ const (
 	nodeDisconnect
 )
 
-// constants for error message
+// VolumePattern constants for error message
 const (
 	VolumePattern = `^\w[-\w.+]*/` + constants.CSIResourceTypeVolume + `/\w[-\w.+]*`
 )
@@ -344,7 +344,10 @@ func (mh *MessageHandle) RegisterNode(info *model.HubInfo) error {
 func (mh *MessageHandle) UnregisterNode(info *model.HubInfo, code ExitCode) {
 	if hi, err := mh.getNodeConnection(info.NodeID); err == nil {
 		notifyEventQueueError(hi, code, info.NodeID)
-		hi.Close()
+		err := hi.Close()
+		if err != nil {
+			return
+		}
 	}
 
 	mh.nodeCond.Delete(info.NodeID)
