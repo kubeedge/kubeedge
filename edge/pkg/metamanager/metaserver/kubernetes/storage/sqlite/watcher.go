@@ -28,7 +28,6 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/klog/v2"
@@ -165,7 +164,12 @@ func (wc *watchChan) sync() error {
 			return err
 		}
 		for _, kv := range *resp.Kvs {
-			wc.sendEvent(wc.parseMeta(&kv))
+			event, err := wc.parseMeta(&kv)
+			if err != nil {
+				klog.Errorf("parse meta failed, %v", err)
+				continue
+			}
+			wc.sendEvent(event)
 		}
 		wc.initialRev = int64(resp.Revision)
 	case false: /*get*/
@@ -177,7 +181,12 @@ func (wc *watchChan) sync() error {
 			klog.Warningf("get %v obj in key %v", len(*resp.Kvs), wc.key)
 		}
 		for _, kv := range *resp.Kvs {
-			wc.sendEvent(wc.parseMeta(&kv))
+			event, err := wc.parseMeta(&kv)
+			if err != nil {
+				klog.Errorf("parse meta failed, %v", err)
+				continue
+			}
+			wc.sendEvent(event)
 		}
 		wc.initialRev = int64(resp.Revision)
 	}
@@ -187,13 +196,15 @@ func (wc *watchChan) sync() error {
 
 // parseMeta converts meta data to watch.Event
 // and is only called in sync()
-func (wc *watchChan) parseMeta(kv *v2.MetaV2) *watch.Event {
+func (wc *watchChan) parseMeta(kv *v2.MetaV2) (*watch.Event, error) {
 	obj, err := runtime.Decode(wc.watcher.codec, []byte(kv.Value))
-	utilruntime.Must(err)
+	if err != nil {
+		return nil, err
+	}
 	return &watch.Event{
 		Type:   watch.Added,
 		Object: obj,
-	}
+	}, nil
 }
 
 // logWatchChannelErr checks whether the error is about mvcc revision compaction which is regarded as warning
