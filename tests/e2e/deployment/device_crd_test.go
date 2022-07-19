@@ -37,7 +37,7 @@ const (
 	off = "OFF"
 )
 
-var CRDTestTimerGroup *utils.TestTimerGroup = utils.NewTestTimerGroup()
+var CRDTestTimerGroup = utils.NewTestTimerGroup()
 
 //Run Test cases
 var _ = Describe("Device Management test in E2E scenario", func() {
