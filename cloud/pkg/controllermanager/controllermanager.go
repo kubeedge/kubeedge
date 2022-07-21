@@ -48,7 +48,11 @@ func NewAppsControllerManager(ctx context.Context) (manager.Manager, error) {
 }
 
 func setupControllers(ctx context.Context, mgr manager.Manager) error {
-	Serializer := json.NewYAMLSerializer(json.DefaultMetaFactory, appsScheme, appsScheme)
+	Serializer := json.NewSerializerWithOptions(json.DefaultMetaFactory, appsScheme, appsScheme, json.SerializerOptions{
+		Yaml:   true,
+		Pretty: false,
+		Strict: false,
+	})
 	// TODO: add cacheReader for unstructured
 	// This returned cli will directly acquire the unstructured objects from API Server which
 	// have not be registered in the appsScheme. Currently, we only support deployment in
@@ -59,7 +63,7 @@ func setupControllers(ctx context.Context, mgr manager.Manager) error {
 		Client: cli,
 	}
 
-	edgeApplicationControllere := &edgeapplication.Controller{
+	edgeApplicationController := &edgeapplication.Controller{
 		Client:        cli,
 		Serializer:    Serializer,
 		StatusManager: statusmanager.NewStatusManager(ctx, mgr, cli, Serializer),
@@ -77,7 +81,7 @@ func setupControllers(ctx context.Context, mgr manager.Manager) error {
 	if err := nodeGroupController.SetupWithManager(ctx, mgr); err != nil {
 		return fmt.Errorf("failed to setup nodegroup controller, %v", err)
 	}
-	if err := edgeApplicationControllere.SetupWithManager(mgr); err != nil {
+	if err := edgeApplicationController.SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("failed to setup edgeapplication controller, %v", err)
 	}
 	return nil

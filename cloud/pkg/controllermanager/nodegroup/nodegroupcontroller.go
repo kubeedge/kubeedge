@@ -38,7 +38,7 @@ var (
 		corev1.ConditionTrue:    appsv1alpha1.NodeReady,
 		corev1.ConditionFalse:   appsv1alpha1.NodeNotReady,
 		corev1.ConditionUnknown: appsv1alpha1.Unknown,
-		// for the convinence of processing the situation that node has no ready condition
+		// for the convenience of processing the situation that node has no ready condition
 		"": appsv1alpha1.Unknown,
 	}
 )

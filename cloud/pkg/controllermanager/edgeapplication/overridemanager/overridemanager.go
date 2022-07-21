@@ -18,7 +18,7 @@ type overrideOption struct {
 	Value interface{} `json:"value,omitempty"`
 }
 
-// OverrideManager manages override operation
+// Overrider manages override operation
 type Overrider interface {
 	ApplyOverrides(rawObjs *unstructured.Unstructured, overrideInfo OverriderInfo) error
 }
