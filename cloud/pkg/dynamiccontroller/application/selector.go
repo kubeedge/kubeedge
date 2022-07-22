@@ -45,7 +45,7 @@ func (lf *LabelFieldSelector) String() string {
 }
 
 func (lf *LabelFieldSelector) Match(set labels.Set, set2 fields.Set) bool {
-	return lf.Labels().Matches(set) && lf.Labels().Matches(set2)
+	return lf.Labels().Matches(set) && lf.Fields().Matches(set2)
 }
 
 func (lf *LabelFieldSelector) MatchObj(obj runtime.Object) bool {

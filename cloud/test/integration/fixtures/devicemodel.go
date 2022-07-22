@@ -100,7 +100,7 @@ func newDeviceModel(name string, namespace string) *v1alpha2.DeviceModel {
 func DeviceModelWithPropertyNoName(name string, namespace string) *v1alpha2.DeviceModel {
 	deviceModel := newDeviceModel(name, namespace)
 	devicePropertyOp := newDevicePropertyOp(withDescription(devicePropertyTemperatureDesc),
-		withStringType(v1alpha2.PropertyAccessMode(v1alpha2.ReadOnly), ""))
+		withStringType(v1alpha2.ReadOnly, ""))
 	deviceModel.Spec.Properties = append(deviceModel.Spec.Properties, devicePropertyOp.deviceProperty)
 	return deviceModel
 }
@@ -124,7 +124,7 @@ func DeviceModelWithPropertyBadAccessMode(name string, namespace string) *v1alph
 func NewDeviceModelBluetooth(name string, namespace string) *v1alpha2.DeviceModel {
 	deviceModel := newDeviceModel(name, namespace)
 	devicePropertyOp := newDevicePropertyOp(withName(devicePropertyTemperature), withDescription(devicePropertyTemperatureDesc),
-		withIntType(v1alpha2.PropertyAccessMode(v1alpha2.ReadOnly), 0, minimum, maximum, devicePropertyUnit))
+		withIntType(v1alpha2.ReadOnly, 0, minimum, maximum, devicePropertyUnit))
 	deviceModel.Spec.Properties = append(deviceModel.Spec.Properties, devicePropertyOp.deviceProperty)
 
 	return deviceModel
@@ -133,7 +133,7 @@ func NewDeviceModelBluetooth(name string, namespace string) *v1alpha2.DeviceMode
 func NewDeviceModelModbus(name string, namespace string) *v1alpha2.DeviceModel {
 	deviceModel := newDeviceModel(name, namespace)
 	devicePropertyOp := newDevicePropertyOp(withName(devicePropertyTemperature), withDescription(devicePropertyTemperatureDesc),
-		withIntType(v1alpha2.PropertyAccessMode(v1alpha2.ReadOnly), 0, minimum, maximum, devicePropertyUnit))
+		withIntType(v1alpha2.ReadOnly, 0, minimum, maximum, devicePropertyUnit))
 	deviceModel.Spec.Properties = append(deviceModel.Spec.Properties, devicePropertyOp.deviceProperty)
 
 	return deviceModel
@@ -142,7 +142,7 @@ func NewDeviceModelModbus(name string, namespace string) *v1alpha2.DeviceModel {
 func NewDeviceModelOpcUA(name string, namespace string) *v1alpha2.DeviceModel {
 	deviceModel := newDeviceModel(name, namespace)
 	devicePropertyOp := newDevicePropertyOp(withName(devicePropertyTemperature), withDescription(devicePropertyTemperatureDesc),
-		withIntType(v1alpha2.PropertyAccessMode(v1alpha2.ReadOnly), 0, minimum, maximum, devicePropertyUnit))
+		withIntType(v1alpha2.ReadOnly, 0, minimum, maximum, devicePropertyUnit))
 	deviceModel.Spec.Properties = append(deviceModel.Spec.Properties, devicePropertyOp.deviceProperty)
 
 	return deviceModel
@@ -151,7 +151,7 @@ func NewDeviceModelOpcUA(name string, namespace string) *v1alpha2.DeviceModel {
 func NewDeviceModelCustomized(name string, namespace string) *v1alpha2.DeviceModel {
 	deviceModel := newDeviceModel(name, namespace)
 	devicePropertyOp := newDevicePropertyOp(withName(devicePropertyTemperature), withDescription(devicePropertyTemperatureDesc),
-		withIntType(v1alpha2.PropertyAccessMode(v1alpha2.ReadOnly), 0, minimum, maximum, devicePropertyUnit))
+		withIntType(v1alpha2.ReadOnly, 0, minimum, maximum, devicePropertyUnit))
 	deviceModel.Spec.Properties = append(deviceModel.Spec.Properties, devicePropertyOp.deviceProperty)
 
 	return deviceModel

@@ -17,10 +17,13 @@ limitations under the License.
 package keadm
 
 import (
+	"flag"
+	"os"
 	"testing"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/spf13/pflag"
 
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 )
@@ -32,7 +35,15 @@ var (
 	ctx *utils.TestContext
 )
 
-//Function to run the Ginkgo Test
+func TestMain(m *testing.M) {
+	utils.CopyFlags(utils.Flags, flag.CommandLine)
+	utils.RegisterFlags(flag.CommandLine)
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	pflag.Parse()
+	os.Exit(m.Run())
+}
+
+// Function to run the Ginkgo Test
 func TestKeadmAppDeployment(t *testing.T) {
 	RegisterFailHandler(Fail)
 	var _ = BeforeSuite(func() {

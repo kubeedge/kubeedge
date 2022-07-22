@@ -21,7 +21,7 @@ import (
 	"net/http"
 	"time"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 
@@ -42,7 +42,7 @@ var CRDTestTimerGroup *utils.TestTimerGroup = utils.NewTestTimerGroup()
 //Run Test cases
 var _ = Describe("Device Management test in E2E scenario", func() {
 	var testTimer *utils.TestTimer
-	var testDescription GinkgoTestDescription
+	var testSpecReport SpecReport
 	Context("Test Device Model Creation, Updation and deletion", func() {
 		BeforeEach(func() {
 			// Delete any pre-existing device models
@@ -54,10 +54,10 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 				Expect(IsDeviceModelDeleted).Should(BeTrue())
 				Expect(statusCode).Should(Equal(http.StatusOK))
 			}
-			// Get current test description
-			testDescription = CurrentGinkgoTestDescription()
+			// Get current test SpecReport
+			testSpecReport = CurrentSpecReport()
 			// Start test timer
-			testTimer = CRDTestTimerGroup.NewTestTimer(testDescription.TestText)
+			testTimer = CRDTestTimerGroup.NewTestTimer(testSpecReport.LeafNodeText)
 		})
 		AfterEach(func() {
 			// End test timer
@@ -177,10 +177,10 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 				Expect(statusCode).Should(Equal(http.StatusOK))
 			}
 			utils.TwinResult = utils.DeviceTwinResult{}
-			// Get current test description
-			testDescription = CurrentGinkgoTestDescription()
+			// Get current test SpecReport
+			testSpecReport = CurrentSpecReport()
 			// Start test timer
-			testTimer = CRDTestTimerGroup.NewTestTimer(testDescription.TestText)
+			testTimer = CRDTestTimerGroup.NewTestTimer(testSpecReport.LeafNodeText)
 		})
 		AfterEach(func() {
 			// End test timer
@@ -594,10 +594,10 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 				Expect(statusCode).Should(Equal(http.StatusOK))
 			}
 			utils.TwinResult = utils.DeviceTwinResult{}
-			// Get current test description
-			testDescription = CurrentGinkgoTestDescription()
+			// Get current test SpecReport
+			testSpecReport = CurrentSpecReport()
 			// Start test timer
-			testTimer = CRDTestTimerGroup.NewTestTimer(testDescription.TestText)
+			testTimer = CRDTestTimerGroup.NewTestTimer(testSpecReport.LeafNodeText)
 		})
 		AfterEach(func() {
 			// End test timer

@@ -98,7 +98,7 @@ func (r *RpmOS) InstallKubeEdge(options types.InstallOptions) error {
 
 // RunEdgeCore starts edgecore with logs being captured
 func (r *RpmOS) RunEdgeCore() error {
-	return runEdgeCore(r.KubeEdgeVersion)
+	return runEdgeCore()
 }
 
 // KillKubeEdgeBinary will search for KubeEdge process and forcefully kill it
@@ -108,11 +108,6 @@ func (r *RpmOS) KillKubeEdgeBinary(proc string) error {
 
 // IsKubeEdgeProcessRunning checks if the given process is running or not
 func (r *RpmOS) IsKubeEdgeProcessRunning(proc string) (bool, error) {
-	return IsKubeEdgeProcessRunning(proc)
-}
-
-// IsProcessRunning checks if the given process is running or not
-func (r *RpmOS) IsProcessRunning(proc string) (bool, error) {
 	return IsKubeEdgeProcessRunning(proc)
 }
 

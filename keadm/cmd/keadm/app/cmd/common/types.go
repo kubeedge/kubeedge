@@ -20,8 +20,8 @@ import (
 	"github.com/blang/semver"
 )
 
-//InitOptions has the kubeedge cloud init information filled by CLI
-type InitOptions struct {
+//InitBaseOptions has the kubeedge cloud deprecated init base information filled by CLI
+type InitBaseOptions struct {
 	KubeEdgeVersion  string
 	KubeConfig       string
 	Master           string
@@ -30,8 +30,8 @@ type InitOptions struct {
 	TarballPath      string
 }
 
-//InitBetaOptions has the kubeedge cloud init-beta information filled by CLI
-type InitBetaOptions struct {
+//InitOptions has the kubeedge cloud init information filled by CLI
+type InitOptions struct {
 	KubeConfig       string
 	KubeEdgeVersion  string
 	AdvertiseAddress string
@@ -47,7 +47,7 @@ type InitBetaOptions struct {
 
 //JoinOptions has the kubeedge cloud init information filled by CLI
 type JoinOptions struct {
-	InitOptions
+	InitBaseOptions
 	CertPath              string
 	CloudCoreIPPort       string
 	EdgeNodeName          string
@@ -148,7 +148,6 @@ type OSTypeInstaller interface {
 	RunEdgeCore() error
 	KillKubeEdgeBinary(string) error
 	IsKubeEdgeProcessRunning(string) (bool, error)
-	IsProcessRunning(string) (bool, error)
 }
 
 //FlagData stores value and default value of the flags used in this command

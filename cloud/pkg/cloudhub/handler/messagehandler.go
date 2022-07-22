@@ -47,7 +47,7 @@ const (
 	nodeDisconnect
 )
 
-// constants for error message
+// VolumePattern constants for error message
 const (
 	VolumePattern = `^\w[-\w.+]*/` + constants.CSIResourceTypeVolume + `/\w[-\w.+]*`
 )
@@ -116,7 +116,10 @@ func (mh *MessageHandle) HandleServer(container *mux.MessageContainer, writer mu
 		klog.Errorf("Fail to serve node %s, reach node limit", nodeID)
 		return
 	}
-
+	if container.Message == nil {
+		klog.Errorf("Handle a nil message error, node : %s", nodeID)
+		return
+	}
 	klog.V(4).Infof("[cloudhub/HandlerServer] get msg from edge(%v): %+v", nodeID, container.Message)
 	if container.Message.GetOperation() == model.OpKeepalive {
 		klog.V(4).Infof("Keepalive message received from node: %s", nodeID)
@@ -341,7 +344,10 @@ func (mh *MessageHandle) RegisterNode(info *model.HubInfo) error {
 func (mh *MessageHandle) UnregisterNode(info *model.HubInfo, code ExitCode) {
 	if hi, err := mh.getNodeConnection(info.NodeID); err == nil {
 		notifyEventQueueError(hi, code, info.NodeID)
-		hi.Close()
+		err := hi.Close()
+		if err != nil {
+			return
+		}
 	}
 
 	mh.nodeCond.Delete(info.NodeID)
@@ -388,8 +394,15 @@ func (mh *MessageHandle) ListMessageWriteLoop(info *model.HubInfo, stopServe cha
 			klog.Errorf("nodeListStore for node %s doesn't exist", info.NodeID)
 			continue
 		}
-		msg := obj.(*beehiveModel.Message)
-
+		msg, ok := obj.(*beehiveModel.Message)
+		if !ok {
+			klog.Errorf("list message type %T is invalid for node: %s", obj, info.NodeID)
+			continue
+		}
+		if msg == nil {
+			klog.Errorf("list message is nil for node: %s", info.NodeID)
+			continue
+		}
 		if model.IsNodeStopped(msg) {
 			klog.Warningf("node %s is deleted, data for node will be cleaned up", info.NodeID)
 			nodeQueue.ShutDown()

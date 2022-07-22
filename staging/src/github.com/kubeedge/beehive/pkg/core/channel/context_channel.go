@@ -1,7 +1,6 @@
 package channel
 
 import (
-	"errors"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -48,10 +47,6 @@ func NewChannelContext() *Context {
 			anonChannels: anonChannels,
 		}
 	})
-	return channelContext
-}
-
-func GetChannelContext() *Context {
 	return channelContext
 }
 
@@ -137,14 +132,14 @@ func (ctx *Context) SendSync(module string, message model.Message, timeout time.
 	select {
 	case reqChannel <- message:
 	case <-time.After(timeout):
-		return model.Message{}, errors.New("timeout to send message")
+		return model.Message{}, fmt.Errorf("timeout to send message %s", message.GetID())
 	}
 
 	var resp model.Message
 	select {
 	case resp = <-anonChan:
 	case <-time.After(time.Until(deadline)):
-		return model.Message{}, errors.New("timeout to get response")
+		return model.Message{}, fmt.Errorf("timeout to get response for message %s", message.GetID())
 	}
 
 	return resp, nil
@@ -161,7 +156,7 @@ func (ctx *Context) SendResp(message model.Message) {
 		return
 	}
 
-	klog.V(4).Infof("Get bad anonName:%s when sendresp message, do nothing", anonName)
+	klog.Warningf("Get bad anonName:%s when sendresp message, do nothing", anonName)
 }
 
 // SendToGroup send msg to modules. Todo: do not stuck
@@ -203,7 +198,7 @@ func (ctx *Context) SendToGroupSync(moduleType string, message model.Message, ti
 		return fmt.Errorf("failed to get module type(%s) channel list", moduleType)
 	}
 
-	// echo module must sync a response,
+	// each module must sync a response,
 	// let anonchan size be module number
 	channelNumber := len(channelList)
 	anonChan := make(chan model.Message, channelNumber)
@@ -296,7 +291,7 @@ func (ctx *Context) getChannel(module string) chan model.Message {
 		return ctx.channels[module]
 	}
 
-	klog.Warningf("Failed to get channel, type:%s", module)
+	klog.Warningf("Failed to get channel for module:%s", module)
 	return nil
 }
 

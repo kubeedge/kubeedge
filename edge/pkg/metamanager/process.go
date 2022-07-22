@@ -1,7 +1,6 @@
 package metamanager
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -15,7 +14,6 @@ import (
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
 	metaManagerConfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
@@ -25,8 +23,7 @@ import (
 const (
 	OK = "OK"
 
-	GroupResource     = "resource"
-	OperationMetaSync = "meta-internal-sync"
+	GroupResource = "resource"
 
 	OperationFunctionAction = "action"
 
@@ -172,8 +169,12 @@ func (m *metaManager) processUpdate(message model.Message) {
 	switch msgSource {
 	case modules.EdgedModuleName:
 		sendToCloud(&message)
-		resp := message.NewRespByMessage(&message, OK)
-		sendToEdged(resp, message.IsSync())
+		// For pod status update message, we need to wait for the response message
+		// to ensure that the pod status is correctly reported to the kube-apiserver
+		if resType != model.ResourceTypePodStatus {
+			resp := message.NewRespByMessage(&message, OK)
+			sendToEdged(resp, message.IsSync())
+		}
 	case cloudmodules.EdgeControllerModuleName, cloudmodules.DynamicControllerModuleName:
 		sendToEdged(&message, message.IsSync())
 		resp := message.NewRespByMessage(&message, OK)
@@ -226,6 +227,19 @@ func (m *metaManager) processDelete(message model.Message) {
 	}
 
 	_, resType, _ := parseResource(message.GetResource())
+
+	if resType == model.ResourceTypePod {
+		podStatusKey := strings.Replace(message.GetResource(),
+			constants.ResourceSep+model.ResourceTypePod+constants.ResourceSep,
+			constants.ResourceSep+model.ResourceTypePodStatus+constants.ResourceSep, 1)
+
+		err := dao.DeleteMetaByKey(podStatusKey)
+		if err != nil {
+			klog.Errorf("delete meta failed, %s", msgDebugInfo(&message))
+			feedbackError(err, "Error to delete meta to DB", message)
+			return
+		}
+	}
 
 	if resType == model.ResourceTypePod && message.GetSource() == modules.EdgedModuleName {
 		sendToCloud(&message)
@@ -321,53 +335,6 @@ func (m *metaManager) processNodeConnection(message model.Message) {
 	}
 }
 
-func (m *metaManager) processSync() {
-	m.syncPodStatus()
-}
-
-func (m *metaManager) syncPodStatus() {
-	klog.Infof("start to sync pod status in edge-store to cloud")
-	podStatusRecords, err := dao.QueryAllMeta("type", model.ResourceTypePodStatus)
-	if err != nil {
-		klog.Errorf("list pod status failed: %v", err)
-		return
-	}
-	if len(*podStatusRecords) <= 0 {
-		klog.Infof("list pod status, no record, skip sync")
-		return
-	}
-	contents := make(map[string][]interface{})
-	for _, v := range *podStatusRecords {
-		namespaceParsed, _, _, _ := util.ParseResourceEdge(v.Key, model.QueryOperation)
-		podKey := strings.Replace(v.Key, constants.ResourceSep+model.ResourceTypePodStatus+constants.ResourceSep, constants.ResourceSep+model.ResourceTypePod+constants.ResourceSep, 1)
-		podRecord, err := dao.QueryMeta("key", podKey)
-		if err != nil {
-			klog.Errorf("query pod[%s] failed: %v", podKey, err)
-			return
-		}
-
-		if len(*podRecord) <= 0 {
-			// pod already deleted, clear the corresponding podstatus record
-			err = dao.DeleteMetaByKey(v.Key)
-			klog.Infof("pod[%s] already deleted, clear podstatus record, result:%v", podKey, err)
-			continue
-		}
-
-		var podStatus interface{}
-		err = json.Unmarshal([]byte(v.Value), &podStatus)
-		if err != nil {
-			klog.Errorf("unmarshal podstatus[%s] failed, content[%s]: %v", v.Key, v.Value, err)
-			continue
-		}
-		contents[namespaceParsed] = append(contents[namespaceParsed], podStatus)
-	}
-	for namespace, content := range contents {
-		msg := model.NewMessage("").BuildRouter(MetaManagerModuleName, GroupResource, namespace+constants.ResourceSep+model.ResourceTypePodStatus, model.UpdateOperation).FillBody(content)
-		sendToCloud(msg)
-		klog.V(3).Infof("sync pod status successfully for namespaces %s, %s", namespace, msgDebugInfo(msg))
-	}
-}
-
 func (m *metaManager) processFunctionAction(message model.Message) {
 	content, err := message.GetContentData()
 	if err != nil {
@@ -442,8 +409,6 @@ func (m *metaManager) process(message model.Message) {
 		m.processResponse(message)
 	case messagepkg.OperationNodeConnection:
 		m.processNodeConnection(message)
-	case OperationMetaSync:
-		m.processSync()
 	case OperationFunctionAction:
 		m.processFunctionAction(message)
 	case OperationFunctionActionResult:

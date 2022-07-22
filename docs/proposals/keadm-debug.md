@@ -168,7 +168,7 @@ keadm debug collect --path .
 keadm debug collect --output-path .
 
 Flags:
-  -c, --config string        Specify configuration file, defalut is /etc/kubeedge/config/edgecore.yaml (default "/etc/kubeedge/config/edgecore.yaml")
+  -c, --config string        Specify configuration file, default is /etc/kubeedge/config/edgecore.yaml (default "/etc/kubeedge/config/edgecore.yaml")
   -d, --detail               Whether to print internal log output
   -h, --help                 help for collect
   -l, --log-path string      Specify log file (default "/var/log/kubeedge/")

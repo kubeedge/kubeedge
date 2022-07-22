@@ -78,7 +78,11 @@ func (rh *RestHandler) RemoveListener(key interface{}) {
 func (rh *RestHandler) matchedPath(uri string) (string, bool) {
 	var candidateRes string
 	rh.handlers.Range(func(key, value interface{}) bool {
-		pathReg := key.(string)
+		pathReg, ok := key.(string)
+		if !ok {
+			klog.Errorf("key type %T error", key)
+			return true
+		}
 		if match := utils.IsMatch(pathReg, uri); match {
 			if candidateRes != "" && utils.RuleContains(pathReg, candidateRes) {
 				return true
@@ -153,7 +157,7 @@ func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 			klog.Errorf("response convert error, msg id: %s", msgID)
 			return
 		}
-		body, err := io.ReadAll(response.Body)
+		body, err := io.ReadAll(io.LimitReader(response.Body, MaxMessageBytes))
 		if err != nil {
 			klog.Errorf("response body read error, msg id: %s, reason: %v", msgID, err)
 			return

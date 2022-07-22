@@ -92,19 +92,19 @@ func handleVolumeAttachmentFromMetaDB(content []byte) (*api.VolumeAttachment, er
 		return nil, fmt.Errorf("volumeattachment length from meta db is %d", len(lists))
 	}
 
-	var va *api.VolumeAttachment
+	var va api.VolumeAttachment
 	err = json.Unmarshal([]byte(lists[0]), &va)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal message to volumeattachment from db failed, err: %v", err)
 	}
-	return va, nil
+	return &va, nil
 }
 
 func handleVolumeAttachmentFromMetaManager(content []byte) (*api.VolumeAttachment, error) {
-	var va *api.VolumeAttachment
+	var va api.VolumeAttachment
 	err := json.Unmarshal(content, &va)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal message to volumeattachment failed, err: %v", err)
 	}
-	return va, nil
+	return &va, nil
 }

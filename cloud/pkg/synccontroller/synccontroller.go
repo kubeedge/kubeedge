@@ -143,6 +143,7 @@ func (sctl *SyncController) deleteObjectSyncs() {
 		isGarbage, err := sctl.checkObjectSync(sync)
 		if err != nil {
 			klog.Errorf("failed to check ObjectSync outdated, %s", err)
+			continue
 		}
 		if isGarbage {
 			klog.Infof("ObjectSync %s will be deleted since node %s has been deleted", sync.Name, nodeName)

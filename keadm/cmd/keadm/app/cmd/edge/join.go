@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The KubeEdge Authors.
+Copyright 2022 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,23 +14,32 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package cmd
+package edge
 
 import (
+	"errors"
 	"fmt"
+	"net"
+	"os"
+	"path/filepath"
+	"strconv"
 	"strings"
 
-	"github.com/blang/semver"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
+	"k8s.io/klog/v2"
+	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
+	"sigs.k8s.io/yaml"
 
 	"github.com/kubeedge/kubeedge/common/constants"
-	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1/validation"
+	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
 )
 
 var (
-	edgeJoinLongDescription = `
+	edgeJoinDescription = `
 "keadm join" command bootstraps KubeEdge's worker node (at the edge) component.
 It will also connect with cloud component to receive
 further instructions and forward telemetry data from
@@ -42,155 +51,270 @@ keadm join --cloudcore-ipport=<ip:port address> --edgenode-name=<unique string a
   - For this command --cloudcore-ipport flag is a required option
   - This command will download and install the default version of pre-requisites and KubeEdge
 
-keadm join --cloudcore-ipport=10.20.30.40:10000 --edgenode-name=testing123 --kubeedge-version=%s
+keadm join --cloudcore-ipport=10.20.30.40:10000 --edgenode-name=testing123 --kubeedge-version=v` + common.DefaultKubeEdgeVersion + `
 `
 )
 
-// NewEdgeJoin returns KubeEdge edge join command.
 func NewEdgeJoin() *cobra.Command {
-	joinOptions := newJoinOptions()
-
-	tools := make(map[string]types.ToolsInstaller)
-	flagVals := make(map[string]types.FlagData)
-
+	joinOptions := newOption()
+	step := common.NewStep()
 	cmd := &cobra.Command{
-		Use:     "join",
-		Short:   "Bootstraps edge component. Checks and install (if required) the pre-requisites. Execute it on any edge node machine you wish to join",
-		Long:    edgeJoinLongDescription,
-		Example: fmt.Sprintf(edgeJoinExample, types.DefaultKubeEdgeVersion),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			//Visit all the flags and store their values and default values.
-			checkFlags := func(f *pflag.Flag) {
-				util.AddToolVals(f, flagVals)
-			}
-			cmd.Flags().VisitAll(checkFlags)
-
-			err := Add2ToolsList(tools, flagVals, joinOptions)
+		Use:          "join",
+		Short:        "Bootstraps edge component. Checks and install (if required) the pre-requisites. Execute it on any edge node machine you wish to join",
+		Long:         edgeJoinDescription,
+		Example:      edgeJoinExample,
+		SilenceUsage: true,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			step.Printf("Check KubeEdge edgecore process status")
+			running, err := util.IsKubeEdgeProcessRunning(util.KubeEdgeBinaryName)
 			if err != nil {
-				return err
+				return fmt.Errorf("check KubeEdge edgecore process status failed: %v", err)
 			}
-			return Execute(tools)
+			if running {
+				return fmt.Errorf("EdgeCore is already running on this node, please run reset to clean up first")
+			}
+
+			step.Printf("Check if the management directory is clean")
+			if _, err := os.Stat(util.KubeEdgePath); err != nil {
+				if os.IsNotExist(err) {
+					return nil
+				}
+				return fmt.Errorf("Stat management directory %s failed: %v", util.KubeEdgePath, err)
+			}
+			entries, err := os.ReadDir(util.KubeEdgePath)
+			if err != nil {
+				return fmt.Errorf("read management directory %s failed: %v", util.KubeEdgePath, err)
+			}
+			if len(entries) > 0 {
+				return fmt.Errorf("the management directory %s is not clean, please remove it first", util.KubeEdgePath)
+			}
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ver, err := util.GetCurrentVersion(joinOptions.KubeEdgeVersion)
+			if err != nil {
+				return fmt.Errorf("edge node join failed: %v", err)
+			}
+			joinOptions.KubeEdgeVersion = ver
+
+			if err := join(joinOptions, step); err != nil {
+				return fmt.Errorf("edge node join failed: %v", err)
+			}
+
+			return nil
 		},
 	}
 
-	addJoinOtherFlags(cmd, joinOptions)
+	AddJoinOtherFlags(cmd, joinOptions)
 	return cmd
 }
 
-func addJoinOtherFlags(cmd *cobra.Command, joinOptions *types.JoinOptions) {
-	cmd.Flags().StringVar(&joinOptions.KubeEdgeVersion, types.KubeEdgeVersion, joinOptions.KubeEdgeVersion,
+func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
+	cmd.Flags().StringVar(&joinOptions.KubeEdgeVersion, common.KubeEdgeVersion, joinOptions.KubeEdgeVersion,
 		"Use this key to download and use the required KubeEdge version")
-	cmd.Flags().Lookup(types.KubeEdgeVersion).NoOptDefVal = joinOptions.KubeEdgeVersion
+	cmd.Flags().Lookup(common.KubeEdgeVersion).NoOptDefVal = joinOptions.KubeEdgeVersion
 
-	cmd.Flags().StringVar(&joinOptions.CGroupDriver, types.CGroupDriver, joinOptions.CGroupDriver,
+	cmd.Flags().StringVar(&joinOptions.CGroupDriver, common.CGroupDriver, joinOptions.CGroupDriver,
 		"CGroupDriver that uses to manipulate cgroups on the host (cgroupfs or systemd), the default value is cgroupfs")
 
-	cmd.Flags().StringVar(&joinOptions.CertPath, types.CertPath, joinOptions.CertPath,
-		fmt.Sprintf("The certPath used by edgecore, the default value is %s", types.DefaultCertPath))
+	cmd.Flags().StringVar(&joinOptions.CertPath, common.CertPath, joinOptions.CertPath,
+		fmt.Sprintf("The certPath used by edgecore, the default value is %s", common.DefaultCertPath))
 
-	cmd.Flags().StringVarP(&joinOptions.CloudCoreIPPort, types.CloudCoreIPPort, "e", joinOptions.CloudCoreIPPort,
+	cmd.Flags().StringVarP(&joinOptions.CloudCoreIPPort, common.CloudCoreIPPort, "e", joinOptions.CloudCoreIPPort,
 		"IP:Port address of KubeEdge CloudCore")
 
-	if err := cmd.MarkFlagRequired(types.CloudCoreIPPort); err != nil {
+	if err := cmd.MarkFlagRequired(common.CloudCoreIPPort); err != nil {
 		fmt.Printf("mark flag required failed with error: %v\n", err)
 	}
 
-	cmd.Flags().StringVarP(&joinOptions.RuntimeType, types.RuntimeType, "r", joinOptions.RuntimeType,
+	cmd.Flags().StringVarP(&joinOptions.RuntimeType, common.RuntimeType, "r", joinOptions.RuntimeType,
 		"Container runtime type")
 
-	cmd.Flags().StringVarP(&joinOptions.EdgeNodeName, types.EdgeNodeName, "i", joinOptions.EdgeNodeName,
+	cmd.Flags().StringVarP(&joinOptions.EdgeNodeName, common.EdgeNodeName, "i", joinOptions.EdgeNodeName,
 		"KubeEdge Node unique identification string, If flag not used then the command will generate a unique id on its own")
 
-	cmd.Flags().StringVarP(&joinOptions.RemoteRuntimeEndpoint, types.RemoteRuntimeEndpoint, "p", joinOptions.RemoteRuntimeEndpoint,
+	cmd.Flags().StringVarP(&joinOptions.RemoteRuntimeEndpoint, common.RemoteRuntimeEndpoint, "p", joinOptions.RemoteRuntimeEndpoint,
 		"KubeEdge Edge Node RemoteRuntimeEndpoint string, If flag not set, it will use unix:///var/run/dockershim.sock")
 
-	cmd.Flags().StringVarP(&joinOptions.Token, types.Token, "t", joinOptions.Token,
+	cmd.Flags().StringVarP(&joinOptions.Token, common.Token, "t", joinOptions.Token,
 		"Used for edge to apply for the certificate")
 
-	cmd.Flags().StringVarP(&joinOptions.CertPort, types.CertPort, "s", joinOptions.CertPort,
+	cmd.Flags().StringVarP(&joinOptions.CertPort, common.CertPort, "s", joinOptions.CertPort,
 		"The port where to apply for the edge certificate")
 
-	cmd.Flags().StringVar(&joinOptions.TarballPath, types.TarballPath, joinOptions.TarballPath,
+	cmd.Flags().StringVar(&joinOptions.TarballPath, common.TarballPath, joinOptions.TarballPath,
 		"Use this key to set the temp directory path for KubeEdge tarball, if not exist, download it")
 
-	cmd.Flags().StringSliceVarP(&joinOptions.Labels, types.Labels, "l", joinOptions.Labels,
+	cmd.Flags().StringSliceVarP(&joinOptions.Labels, common.Labels, "l", joinOptions.Labels,
 		`use this key to set the customized labels for node. you can input customized labels like key1=value1,key2=value2`)
 
 	cmd.Flags().BoolVar(&joinOptions.WithMQTT, "with-mqtt", joinOptions.WithMQTT,
 		`use this key to set whether to install and start MQTT Broker by default`)
 
-	cmd.Flags().StringVar(&joinOptions.ImageRepository, types.ImageRepository, joinOptions.ImageRepository,
+	cmd.Flags().StringVar(&joinOptions.ImageRepository, common.ImageRepository, joinOptions.ImageRepository,
 		`Use this key to decide which image repository to pull images from.`,
 	)
 }
 
-// newJoinOptions returns a struct ready for being used for creating cmd join flags.
-func newJoinOptions() *types.JoinOptions {
-	opts := &types.JoinOptions{}
-	opts.CertPath = types.DefaultCertPath
-
-	return opts
+func newOption() *common.JoinOptions {
+	joinOptions := &common.JoinOptions{}
+	joinOptions.WithMQTT = true
+	joinOptions.CGroupDriver = v1alpha1.CGroupDriverCGroupFS
+	joinOptions.CertPath = common.DefaultCertPath
+	joinOptions.RuntimeType = kubetypes.DockerContainerRuntime
+	return joinOptions
 }
 
-//Add2ToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
-func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string]types.FlagData, joinOptions *types.JoinOptions) error {
-	var kubeVer string
-
-	flgData, ok := flagData[types.KubeEdgeVersion]
-	if ok {
-		kubeVer = util.CheckIfAvailable(flgData.Val.(string), flgData.DefVal.(string))
-	}
-	if kubeVer == "" {
-		var latestVersion string
-		for i := 0; i < util.RetryTimes; i++ {
-			version, err := util.GetLatestVersion()
-			if err != nil {
-				fmt.Println("Failed to get the latest KubeEdge release version")
-				continue
-			}
-			if len(version) > 0 {
-				kubeVer = strings.TrimPrefix(version, "v")
-				latestVersion = version
-				break
-			}
-		}
-		if len(latestVersion) == 0 {
-			fmt.Println("Failed to get the latest KubeEdge release version, will use default version")
-			kubeVer = types.DefaultKubeEdgeVersion
-		}
-	}
-	toolList[constants.ProjectName] = &util.KubeEdgeInstTool{
-		Common: util.Common{
-			ToolVersion: semver.MustParse(kubeVer),
-		},
-		CloudCoreIP:           joinOptions.CloudCoreIPPort,
-		EdgeNodeName:          joinOptions.EdgeNodeName,
-		RuntimeType:           joinOptions.RuntimeType,
-		CertPath:              joinOptions.CertPath,
-		RemoteRuntimeEndpoint: joinOptions.RemoteRuntimeEndpoint,
-		Token:                 joinOptions.Token,
-		CertPort:              joinOptions.CertPort,
-		CGroupDriver:          joinOptions.CGroupDriver,
-		TarballPath:           joinOptions.TarballPath,
-		Labels:                joinOptions.Labels,
+func join(opt *common.JoinOptions, step *common.Step) error {
+	step.Printf("Create the necessary directories")
+	if err := createDirs(); err != nil {
+		return err
 	}
 
-	toolList["MQTT"] = &util.MQTTInstTool{}
+	// Do not create any files in the management directory,
+	// you need to mount the contents of the mirror first.
+	if err := request(opt, step); err != nil {
+		return err
+	}
+
+	step.Printf("Generate systemd service file")
+	if err := common.GenerateServiceFile(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName); err != nil {
+		return fmt.Errorf("create systemd service file failed: %v", err)
+	}
+
+	step.Printf("Generate EdgeCore default configuration")
+	if err := createEdgeConfigFiles(opt); err != nil {
+		return fmt.Errorf("create edge config file failed: %v", err)
+	}
+
+	step.Printf("Run EdgeCore daemon")
+	return runEdgeCore()
+}
+
+func createDirs() error {
+	// Create management directory
+	if err := os.MkdirAll(util.KubeEdgePath, os.ModePerm); err != nil {
+		return fmt.Errorf("create %s folder path failed: %v", util.KubeEdgePath, err)
+	}
+	// Create config directory
+	if err := os.MkdirAll(util.KubeEdgeConfigDir, os.ModePerm); err != nil {
+		return fmt.Errorf("create %s folder path failed: %v", util.KubeEdgeConfigDir, err)
+	}
+	// Create log directory
+	if err := os.MkdirAll(util.KubeEdgeLogPath, os.ModePerm); err != nil {
+		return fmt.Errorf("create %s folder path failed: %v", util.KubeEdgeLogPath, err)
+	}
+	// Create resource directory
+	if err := os.MkdirAll(util.KubeEdgeSocketPath, os.ModePerm); err != nil {
+		return fmt.Errorf("create %s folder path failed: %v", util.KubeEdgeSocketPath, err)
+	}
 	return nil
 }
 
-//Execute the installation for each tool and start edgecore
-func Execute(toolList map[string]types.ToolsInstaller) error {
-	//Install all the required pre-requisite tools
-	for name, tool := range toolList {
-		if name != constants.ProjectName {
-			err := tool.InstallTools()
-			if err != nil {
-				return err
-			}
+func createEdgeConfigFiles(opt *common.JoinOptions) error {
+	var edgeCoreConfig *v1alpha1.EdgeCoreConfig
+
+	configFilePath := filepath.Join(util.KubeEdgePath, "config/edgecore.yaml")
+	_, err := os.Stat(configFilePath)
+	if err == nil || os.IsExist(err) {
+		klog.Infoln("Read existing configuration file")
+		b, err := os.ReadFile(configFilePath)
+		if err != nil {
+			return err
+		}
+		if err := yaml.Unmarshal(b, &edgeCoreConfig); err != nil {
+			return err
 		}
 	}
+	if edgeCoreConfig == nil {
+		klog.Infoln("The configuration does not exist or the parsing fails, and the default configuration is generated")
+		edgeCoreConfig = v1alpha1.NewDefaultEdgeCoreConfig()
+	}
 
-	//Install and Start KubeEdge Node
-	return toolList[constants.ProjectName].InstallTools()
+	edgeCoreConfig.Modules.EdgeHub.WebSocket.Server = opt.CloudCoreIPPort
+	if opt.Token != "" {
+		edgeCoreConfig.Modules.EdgeHub.Token = opt.Token
+	}
+	if opt.EdgeNodeName != "" {
+		edgeCoreConfig.Modules.Edged.HostnameOverride = opt.EdgeNodeName
+	}
+	if opt.RuntimeType != "" {
+		edgeCoreConfig.Modules.Edged.RuntimeType = opt.RuntimeType
+	}
+
+	switch opt.CGroupDriver {
+	case v1alpha1.CGroupDriverSystemd:
+		edgeCoreConfig.Modules.Edged.CGroupDriver = v1alpha1.CGroupDriverSystemd
+	case v1alpha1.CGroupDriverCGroupFS:
+		edgeCoreConfig.Modules.Edged.CGroupDriver = v1alpha1.CGroupDriverCGroupFS
+	default:
+		return fmt.Errorf("unsupported CGroupDriver: %s", opt.CGroupDriver)
+	}
+	edgeCoreConfig.Modules.Edged.CGroupDriver = opt.CGroupDriver
+
+	if opt.RemoteRuntimeEndpoint != "" {
+		edgeCoreConfig.Modules.Edged.RemoteRuntimeEndpoint = opt.RemoteRuntimeEndpoint
+		edgeCoreConfig.Modules.Edged.RemoteImageEndpoint = opt.RemoteRuntimeEndpoint
+	}
+
+	host, _, err := net.SplitHostPort(opt.CloudCoreIPPort)
+	if err != nil {
+		return fmt.Errorf("get current host and port failed: %v", err)
+	}
+	if opt.CertPort != "" {
+		edgeCoreConfig.Modules.EdgeHub.HTTPServer = "https://" + net.JoinHostPort(host, opt.CertPort)
+	} else {
+		edgeCoreConfig.Modules.EdgeHub.HTTPServer = "https://" + net.JoinHostPort(host, "10002")
+	}
+	edgeCoreConfig.Modules.EdgeStream.TunnelServer = net.JoinHostPort(host, strconv.Itoa(constants.DefaultTunnelPort))
+
+	if len(opt.Labels) > 0 {
+		labelsMap := make(map[string]string)
+		for _, label := range opt.Labels {
+			arr := strings.SplitN(label, "=", 2)
+			if arr[0] == "" {
+				continue
+			}
+
+			if len(arr) > 1 {
+				labelsMap[arr[0]] = arr[1]
+			} else {
+				labelsMap[arr[0]] = ""
+			}
+		}
+		edgeCoreConfig.Modules.Edged.Labels = labelsMap
+	}
+
+	if errs := validation.ValidateEdgeCoreConfiguration(edgeCoreConfig); len(errs) > 0 {
+		return errors.New(pkgutil.SpliceErrors(errs.ToAggregate().Errors()))
+	}
+	return common.Write2File(configFilePath, edgeCoreConfig)
+}
+
+func runEdgeCore() error {
+	systemdExist := util.HasSystemd()
+
+	var binExec, tip string
+	if systemdExist {
+		tip = fmt.Sprintf("KubeEdge edgecore is running, For logs visit: journalctl -u %s.service -xe", common.EdgeCore)
+		binExec = fmt.Sprintf(
+			"sudo systemctl daemon-reload && sudo systemctl enable %s && sudo systemctl start %s",
+			common.EdgeCore, common.EdgeCore)
+	} else {
+		tip = fmt.Sprintf("KubeEdge edgecore is running, For logs visit: %s%s.log", util.KubeEdgeLogPath, util.KubeEdgeBinaryName)
+		binExec = fmt.Sprintf(
+			"%s > %skubeedge/edge/%s.log 2>&1 &",
+			filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName),
+			util.KubeEdgePath,
+			util.KubeEdgeBinaryName,
+		)
+	}
+
+	cmd := util.NewCommand(binExec)
+	if err := cmd.Exec(); err != nil {
+		return err
+	}
+	klog.Infoln(cmd.GetStdOut())
+	klog.Infoln(tip)
+	return nil
 }

@@ -67,13 +67,11 @@ const (
 	CurrentSupportK8sVersion = "v1.22.6"
 
 	// MetaManager
-	DefaultPodStatusSyncInterval = 60
-	DefaultRemoteQueryTimeout    = 60
-	DefaultMetaServerAddr        = "127.0.0.1:10550"
+	DefaultRemoteQueryTimeout = 60
+	DefaultMetaServerAddr     = "127.0.0.1:10550"
 
 	// Config
 	DefaultKubeContentType         = "application/vnd.kubernetes.protobuf"
-	DefaultKubeConfig              = "/root/.kube/config"
 	DefaultKubeNamespace           = v1.NamespaceAll
 	DefaultKubeQPS                 = 100.0
 	DefaultKubeBurst               = 200
@@ -146,4 +144,8 @@ const (
 
 	// MessageSuccessfulContent is the successful content value of Message struct
 	MessageSuccessfulContent string = "OK"
+	DefaultQPS                      = 30
+	DefaultBurst                    = 60
+	// MaxRespBodyLength is the max length of http response body
+	MaxRespBodyLength = 1 << 20 // 1 MiB
 )

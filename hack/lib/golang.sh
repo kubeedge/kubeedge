@@ -148,7 +148,7 @@ kubeedge::golang::binaries_from_targets() {
 
 kubeedge::check::env() {
   errors=()
-  if [ -z $GOPATH ]; then
+  if [ -z $(go env GOPATH) ]; then
     errors+="GOPATH environment value not set"
   fi
 
@@ -174,6 +174,7 @@ ALL_BINARIES_AND_TARGETS=(
   csidriver:cloud/cmd/csidriver
   iptablesmanager:cloud/cmd/iptablesmanager
   edgemark:edge/cmd/edgemark
+  controllermanager:cloud/cmd/controllermanager
 )
 
 kubeedge::golang::get_target_by_binary() {

@@ -37,7 +37,7 @@ const (
 	OpKeepalive  = "keepalive"
 )
 
-// constants for message group
+// GpResource constants for message group
 const (
 	GpResource = "resource"
 )

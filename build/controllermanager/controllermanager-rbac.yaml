@@ -1,0 +1,54 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: controller-manager
+  namespace: kubeedge
+  labels:
+    k8s-app: kubeedge
+    kubeedge: controller-manager
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: controller-manager
+  labels:
+    k8s-app: kubeedge
+    kubeedge: controller-manager
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: controller-manager
+subjects:
+- kind: ServiceAccount
+  name: controller-manager
+  namespace: kubeedge
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: controller-manager
+  labels:
+    k8s-app: kubeedge
+    kubeedge: controller-manager
+rules:
+- apiGroups: ["apps.kubeedge.io"]
+  resources: ["nodegroups", "nodegroups/status"]
+  verbs: ["*"]
+- apiGroups: [""]
+  resources: ["nodes"]
+  verbs: ["list", "watch", "patch", "get"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["list", "watch", "get", "delete"]
+- apiGroups: ["apps.kubeedge.io"]
+  resources: ["edgeapplications", "edgeapplications/status"]
+  verbs: ["*"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["list", "watch", "create", "update", "patch", "delete", "get"]
+- apiGroups: [""]
+  resources: ["services"]
+  verbs: ["list", "watch", "create", "update", "patch", "delete", "get"]

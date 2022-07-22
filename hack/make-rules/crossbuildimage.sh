@@ -23,7 +23,7 @@ set -o pipefail
 KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 IMAGE_TAG=$(git describe --tags)
 GO_LDFLAGS="$(${KUBEEDGE_ROOT}/hack/make-rules/version.sh)"
-IMAGE_REPO_NAME="kubeedge"
+IMAGE_REPO_NAME="${IMAGE_REPO_NAME:-kubeedge}"
 
 ALL_IMAGES_AND_TARGETS=(
   #{target}:{IMAGE_NAME}:{DOCKERFILE_PATH}
@@ -36,6 +36,7 @@ ALL_IMAGES_AND_TARGETS=(
   iptablesmanager:iptables-manager:build/iptablesmanager/Dockerfile
   edgemark:edgemark:build/edgemark/Dockerfile
   installation-package:installation-package:build/docker/installation-package/installation-package.dockerfile
+  controllermanager:controller-manager:build/controllermanager/Dockerfile
 )
 
 function get_imagename_by_target() {

@@ -24,7 +24,7 @@ helm upgrade --install cloudcore ./cloudcore --namespace kubeedge --create-names
 - `cloudCore.image.pullPolicy`, default `IfNotPresent`, defines the policies to pull images.
 - `cloudCore.image.pullSecrets`, defines the secrets to pull images.
 - `cloudCore.labels`, defines the labels.
-- `cloudCore.annotions`, defines the annotions.
+- `cloudCore.annotations`, defines the annotations.
 - `cloudCore.affinity`, `cloudCore.nodeSelector`, `cloudCore.tolerations`, defines the node scheduling policies.
 - `cloudCore.resources`, defines the resources limits and requests.
 - `cloudCore.modules.cloudHub.nodeLimit`, defines the edge nodes limits.
@@ -40,6 +40,7 @@ helm upgrade --install cloudcore ./cloudcore --namespace kubeedge --create-names
 - `cloudCore.service.cloudhubHttpsNodePort`,  default `30002`, which defines the exposed node port for cloudhub https protocol.
 - `cloudCore.service.cloudstreamNodePort`,  default `30003`, which defines the exposed node port for cloud stream service.
 - `cloudCore.service.tunnelNodePort`,  default `30004`, which defines the exposed node port for cloud tunnel service.
+- `cloudCore.service.annotations`, defines the annotations for service.
 
 ### iptables-manager
 - `iptablesManager.enable`,  default `true`
@@ -49,7 +50,7 @@ helm upgrade --install cloudcore ./cloudcore --namespace kubeedge --create-names
 - `iptablesManager.image.pullPolicy`, default `IfNotPresent`, defines the policies to pull images.
 - `iptablesManager.image.pullSecrets`, defines the secrets to pull images.
 - `iptablesManager.labels`, defines the labels.
-- `iptablesManager.annotions`, defines the annotions.
+- `iptablesManager.annotations`, defines the annotations.
 - `iptablesManager.affinity`, `iptablesManager.nodeSelector`, `iptablesManager.tolerations`, defines the node scheduling policies.
 - `iptablesManager.resources`, defines the resources limits and requests.
 

@@ -16,86 +16,50 @@ limitations under the License.
 package utils
 
 import (
-	"encoding/json"
+	"flag"
 	"math/rand"
 	"os"
-	"path/filepath"
 	"time"
-)
 
-type vmSpec struct {
-	IP       string `json:"ip"`
-	Username string `json:"username"`
-	Passwd   string `json:"password"`
-}
+	"k8s.io/client-go/tools/clientcmd"
+	cliflag "k8s.io/component-base/cli/flag"
+)
 
 //config.json decode struct
 type Config struct {
-	AppImageURL                    []string          `json:"image_url"`
-	K8SMasterForKubeEdge           string            `json:"k8smasterforkubeedge"`
-	Nodes                          map[string]vmSpec `json:"k8snodes"`
-	NumOfNodes                     int               `json:"node_num"`
-	ImageRepo                      string            `json:"imagerepo"`
-	K8SMasterForProvisionEdgeNodes string            `json:"k8smasterforprovisionedgenodes"`
-	CloudImageURL                  string            `json:"cloudimageurl"`
-	EdgeImageURL                   string            `json:"edgeimageurl"`
-	Namespace                      string            `json:"namespace"`
-	ControllerStubPort             int               `json:"controllerstubport"`
-	Protocol                       string            `json:"protocol"`
-	DockerHubUserName              string            `json:"dockerhubusername"`
-	DockerHubPassword              string            `json:"dockerhubpassword"`
-	MqttEndpoint                   string            `json:"mqttendpoint"`
-	KubeConfigPath                 string            `json:"kubeconfigpath"`
-	Token                          string            `json:"token"`
+	AppImageURL                    []string `json:"image_url"`
+	K8SMasterForKubeEdge           string   `json:"k8smasterforkubeedge"`
+	NumOfNodes                     int      `json:"node_num"`
+	K8SMasterForProvisionEdgeNodes string   `json:"k8smasterforprovisionedgenodes"`
+	CloudImageURL                  string   `json:"cloudimageurl"`
+	EdgeImageURL                   string   `json:"edgeimageurl"`
+	ControllerStubPort             int      `json:"controllerstubport"`
+	Protocol                       string   `json:"protocol"`
+	KubeConfigPath                 string   `json:"kubeconfigpath"`
 }
 
-//config struct
-var config *Config
+// config struct
+var config Config
+var Flags = flag.NewFlagSet("", flag.ContinueOnError)
 
-//get config.json path
+func RegisterFlags(flags *flag.FlagSet) {
+	flags.StringVar(&config.KubeConfigPath, "kubeconfig", os.Getenv(clientcmd.RecommendedConfigPathEnvVar), "Path to kubeconfig containing embedded authinfo.")
+	flags.Var(cliflag.NewStringSlice(&config.AppImageURL), "image-url", "image url list for e2e")
+	flags.StringVar(&config.K8SMasterForKubeEdge, "kube-master", "", "the kubernetes master address")
+}
+
+func CopyFlags(source *flag.FlagSet, target *flag.FlagSet) {
+	source.VisitAll(func(flag *flag.Flag) {
+		target.Var(flag.Value, flag.Name, flag.Usage)
+	})
+}
+
+// get config.json path
 func LoadConfig() Config {
-	if config == nil {
-		config = loadConfigJSOMFromPath()
-	}
-	return *config
-}
-
-//loadConfigJSOMFromPath reads the test configuration and builds a Config object.
-func loadConfigJSOMFromPath() *Config {
-	path := getConfigPath()
-	_, err := filepath.Abs(filepath.Dir(path))
-	if err != nil {
-		Infof("Failed to get Abs path: %v", err)
-		panic(err)
-	}
-	var config = &Config{}
-	configFile, err := os.Open(path)
-	if err != nil {
-		panic(err)
-	}
-	decoder := json.NewDecoder(configFile)
-	err = decoder.Decode(config)
-	if err != nil {
-		panic(err)
-	}
 	return config
 }
 
-//getConfigPath returns the configuration path provided in the env var name. In case the env var is not
-//set, the default configuration path is returned
-func getConfigPath() string {
-	path := os.Getenv("TESTCONFIG")
-	if path == "" {
-		path = "config.json"
-	}
-	return path
-}
-
-func RandomInt(min, max int) int {
-	return min + rand.Intn(max-min)
-}
-
-//function to Generate Random string
+// function to Generate Random string
 func GetRandomString(length int) string {
 	str := "0123456789abcdefghijklmnopqrstuvwxyz"
 	bytes := []byte(str)

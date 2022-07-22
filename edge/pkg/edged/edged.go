@@ -149,17 +149,17 @@ const (
 	DockerShimEndpoint = "unix:///var/run/dockershim.sock"
 	//DockerShimEndpointDeprecated this is the deprecated dockershim endpoint
 	DockerShimEndpointDeprecated = "/var/run/dockershim.sock"
-	//DockershimRootDir givesthe default path to the dockershim root directory
+	//DockershimRootDir gives-the default path to the dockershim root directory
 	DockershimRootDir = "/var/lib/dockershim"
-	//HairpinMode only use forkubenetNetworkPlugin.Currently not working
+	//HairpinMode only use forkubenetNetworkPlugin.Currently, not working
 	HairpinMode = kubeletinternalconfig.HairpinVeth
-	//NonMasqueradeCIDR only use forkubenetNetworkPlugin.Currently not working
+	//NonMasqueradeCIDR only use forkubenetNetworkPlugin.Currently, not working
 	NonMasqueradeCIDR = "10.0.0.1/8"
 	//cgroupName used for check if the cgroup is mounted.(default "")
 	cgroupName = ""
 	// redirectContainerStream decide whether to redirect the container stream
 	redirectContainerStream = false
-	// ResolvConfDefault gives the default dns resolv configration file
+	// ResolvConfDefault gives the default dns resolve configuration file
 	ResolvConfDefault = "/etc/resolv.conf"
 )
 
@@ -1071,10 +1071,8 @@ func (e *edged) consumePodAddition(namespacedName *types.NamespacedName) error {
 		return fmt.Errorf("unable to mount volumes for pod %q: %v; skipping pod", format.Pod(pod), err)
 	}
 
-	secrets, err := e.getSecretsFromMetaManager(pod)
-	if err != nil {
-		return fmt.Errorf("unable to get secret for pod %q: %v", format.Pod(pod), err)
-	}
+	// Fetch the pull secrets for the pod
+	secrets := e.getImagePullSecretsForPod(pod)
 
 	podUID := pod.GetUID()
 	t, ok := e.podLastSyncTime.Load(podUID)
@@ -1092,7 +1090,7 @@ func (e *edged) consumePodAddition(namespacedName *types.NamespacedName) error {
 		for _, r := range result.SyncResults {
 			if r.Error != kubecontainer.ErrCrashLoopBackOff && r.Error != images.ErrImagePullBackOff {
 				// Do not record an event here, as we keep all event logging for sync pod failures
-				// local to container runtime so we get better errors
+				// local to container runtime, so we get better errors
 				return fmt.Errorf("sync pod failed: %v", err)
 			}
 		}
@@ -1162,7 +1160,7 @@ func (e *edged) syncPod() {
 			klog.Errorf("get message content data failed: %v", err)
 			continue
 		}
-		klog.Infof("result content is %s", result.Content)
+		klog.V(4).Infof("result content is %s", result.Content)
 		switch resType {
 		case model.ResourceTypePod:
 			if op == model.ResponseOperation && resID == "" && result.GetSource() == metamanager.MetaManagerModuleName {
@@ -1409,17 +1407,18 @@ func (e *edged) deletePod(obj interface{}) {
 	klog.Infof("success remove pod [%s]", pod.Name)
 }
 
-func (e *edged) getSecretsFromMetaManager(pod *v1.Pod) ([]v1.Secret, error) {
+func (e *edged) getImagePullSecretsForPod(pod *v1.Pod) []v1.Secret {
 	var secrets []v1.Secret
 	for _, imagePullSecret := range pod.Spec.ImagePullSecrets {
 		secret, err := e.metaClient.Secrets(pod.Namespace).Get(imagePullSecret.Name)
 		if err != nil {
-			return nil, err
+			klog.Warningf("Unable to retrieve pull secret %s/%s for %s/%s due to %v.  The image pull may not succeed.", pod.Namespace, imagePullSecret.Name, pod.Namespace, pod.Name, err)
+			continue
 		}
 		secrets = append(secrets, *secret)
 	}
 
-	return secrets, nil
+	return secrets
 }
 
 // Get pods which should be resynchronized. Currently, the following pod should be resynchronized:
@@ -1492,7 +1491,7 @@ func (e *edged) handleSecret(op string, content []byte) (err error) {
 	return
 }
 
-// ProbeVolumePlugins collects all volume plugins into an easy to use list.
+// ProbeVolumePlugins collects all volume plugins into an easy-to-use list.
 // PluginDir specifies the directory to search for additional third party
 // volume plugins.
 func ProbeVolumePlugins(pluginDir string) []volume.VolumePlugin {

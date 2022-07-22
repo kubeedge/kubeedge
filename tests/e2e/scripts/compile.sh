@@ -24,15 +24,9 @@ echo $PWD
 compilemodule=$1
 #compile all test if user doesn't specify the test else compile only specified tests.
 if [ $# -eq 0 ]
-  then
+then
     echo "compiling all tests !!"
     ginkgo build -r
 else
-if [ $compilemodule = 'bluetooth' ]
-    then
-        ginkgo build -r mapper/$compilemodule
-else
    ginkgo build -r $compilemodule
-fi
-
 fi

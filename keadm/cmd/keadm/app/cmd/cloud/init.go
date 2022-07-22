@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The KubeEdge Authors.
+Copyright 2022 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package cmd
+package cloud
 
 import (
 	"fmt"
@@ -24,30 +24,31 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
+	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	helm "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/helm"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
 
 var (
 	cloudInitLongDescription = `
-"keadm init" command install KubeEdge's master node (on the cloud) component.
+"keadm init" command install KubeEdge's master node (on the cloud) component by using a list of set flags like helm.
 It checks if the Kubernetes Master are installed already,
 If not installed, please install the Kubernetes first.
 `
 	cloudInitExample = `
 keadm init
+- This command will render and install the Charts for Kubeedge cloud component
 
-- This command will download and install the default version of KubeEdge cloud component
-
-keadm init --kubeedge-version=%s  --kube-config=/root/.kube/config
-
+keadm init --advertise-address=127.0.0.1 --profile version=v1.9.0 --kube-config=/root/.kube/config
   - kube-config is the absolute path of kubeconfig which used to secure connectivity between cloudcore and kube-apiserver
+	- a list of helm style set flags like "--set key=value" can be implemented, ref: https://github.com/kubeedge/kubeedge/tree/master/manifests/charts/cloudcore/README.md
 `
 )
 
 // NewCloudInit represents the keadm init command for cloud component
 func NewCloudInit() *cobra.Command {
-	init := newInitOptions()
+	opts := newInitOptions()
 
 	tools := make(map[string]types.ToolsInstaller)
 	flagVals := make(map[string]types.FlagData)
@@ -56,21 +57,23 @@ func NewCloudInit() *cobra.Command {
 		Use:     "init",
 		Short:   "Bootstraps cloud component. Checks and install (if required) the pre-requisites.",
 		Long:    cloudInitLongDescription,
-		Example: fmt.Sprintf(cloudInitExample, types.DefaultKubeEdgeVersion),
+		Example: cloudInitExample,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			checkFlags := func(f *pflag.Flag) {
 				util.AddToolVals(f, flagVals)
 			}
 			cmd.Flags().VisitAll(checkFlags)
-			err := Add2ToolsList(tools, flagVals, init)
+			err := AddInit2ToolsList(tools, opts)
 			if err != nil {
 				return err
 			}
-			return Execute(tools)
+			return ExecuteInit(tools)
 		},
 	}
 
-	addJoinOtherFlags(cmd, init)
+	addInitOtherFlags(cmd, opts)
+	addHelmValueOptionsFlags(cmd, opts)
+	addForceOptionsFlags(cmd, opts)
 	return cmd
 }
 
@@ -78,83 +81,85 @@ func NewCloudInit() *cobra.Command {
 func newInitOptions() *types.InitOptions {
 	opts := &types.InitOptions{}
 	opts.KubeConfig = types.DefaultKubeConfig
+
 	return opts
 }
 
-func addJoinOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
+func addInitOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 	cmd.Flags().StringVar(&initOpts.KubeEdgeVersion, types.KubeEdgeVersion, initOpts.KubeEdgeVersion,
-		"Use this key to download and use the required KubeEdge version")
-	cmd.Flags().Lookup(types.KubeEdgeVersion).NoOptDefVal = initOpts.KubeEdgeVersion
-
-	cmd.Flags().StringVar(&initOpts.KubeConfig, types.KubeConfig, initOpts.KubeConfig,
-		"Use this key to set kube-config path, eg: $HOME/.kube/config")
-
-	cmd.Flags().StringVar(&initOpts.Master, types.Master, initOpts.Master,
-		"Use this key to set K8s master address, eg: http://127.0.0.1:8080")
+		"Use this key to set the default image tag")
 
 	cmd.Flags().StringVar(&initOpts.AdvertiseAddress, types.AdvertiseAddress, initOpts.AdvertiseAddress,
 		"Use this key to set IPs in cloudcore's certificate SubAltNames field. eg: 10.10.102.78,10.10.102.79")
 
-	cmd.Flags().StringVar(&initOpts.DNS, types.DomainName, initOpts.DNS,
-		"Use this key to set domain names in cloudcore's certificate SubAltNames field. eg: www.cloudcore.cn,www.kubeedge.cn")
+	cmd.Flags().StringVar(&initOpts.KubeConfig, types.KubeConfig, initOpts.KubeConfig,
+		"Use this key to set kube-config path, eg: $HOME/.kube/config")
 
-	cmd.Flags().StringVar(&initOpts.TarballPath, types.TarballPath, initOpts.TarballPath,
-		"Use this key to set the temp directory path for KubeEdge tarball, if not exist, download it")
+	cmd.Flags().StringVar(&initOpts.Manifests, types.Manifests, initOpts.Manifests,
+		"Allow appending file directories of k8s resources to keadm, separated by commas")
+
+	cmd.Flags().StringVarP(&initOpts.Manifests, types.Files, "f", initOpts.Manifests,
+		"Allow appending file directories of k8s resources to keadm, separated by commas")
+
+	cmd.Flags().BoolVarP(&initOpts.DryRun, types.DryRun, "d", initOpts.DryRun,
+		"Print the generated k8s resources on the stdout, not actual excute. Always use in debug mode")
+
+	cmd.Flags().StringVar(&initOpts.ExternalHelmRoot, types.ExternalHelmRoot, initOpts.ExternalHelmRoot,
+		"Add external helm root path to keadm.")
 }
 
-//Add2ToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
-func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string]types.FlagData, initOptions *types.InitOptions) error {
-	var kubeVer string
-	flgData, ok := flagData[types.KubeEdgeVersion]
-	if ok {
-		kubeVer = util.CheckIfAvailable(flgData.Val.(string), flgData.DefVal.(string))
-	}
-	if kubeVer == "" {
-		var latestVersion string
-		for i := 0; i < util.RetryTimes; i++ {
-			version, err := util.GetLatestVersion()
-			if err != nil {
-				fmt.Println("Failed to get the latest KubeEdge release version, error: ", err)
-				continue
-			}
-			if len(version) > 0 {
-				kubeVer = strings.TrimPrefix(version, "v")
-				latestVersion = version
-				break
-			}
+func addHelmValueOptionsFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
+	cmd.Flags().StringArrayVar(&initOpts.Sets, "set", []string{}, "Set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
+	cmd.Flags().StringVar(&initOpts.Profile, "profile", initOpts.Profile, "Set profile on the command line (iptablesMgrMode=external or version=v1.9.1)")
+}
+
+func addForceOptionsFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
+	cmd.Flags().BoolVar(&initOpts.Force, types.Force, initOpts.Force,
+		"Forced installing the cloud components without waiting.")
+}
+
+//AddInit2ToolsList reads the flagData (containing val and default val) and join options to fill the list of tools.
+func AddInit2ToolsList(toolList map[string]types.ToolsInstaller, initOpts *types.InitOptions) error {
+	var latestVersion string
+	var kubeedgeVersion string
+	for i := 0; i < util.RetryTimes; i++ {
+		version, err := util.GetLatestVersion()
+		if err != nil {
+			fmt.Println("Failed to get the latest KubeEdge release version, error: ", err)
+			continue
 		}
-		if len(latestVersion) == 0 {
-			kubeVer = types.DefaultKubeEdgeVersion
-			fmt.Println("Failed to get the latest KubeEdge release version, will use default version: ", kubeVer)
+		if len(version) > 0 {
+			kubeedgeVersion = strings.TrimPrefix(version, "v")
+			latestVersion = version
+			break
 		}
 	}
+	if len(latestVersion) == 0 {
+		kubeedgeVersion = types.DefaultKubeEdgeVersion
+		fmt.Println("Failed to get the latest KubeEdge release version, will use default version: ", kubeedgeVersion)
+	}
+
 	common := util.Common{
-		ToolVersion: semver.MustParse(kubeVer),
-		KubeConfig:  initOptions.KubeConfig,
-		Master:      initOptions.Master,
+		ToolVersion: semver.MustParse(kubeedgeVersion),
+		KubeConfig:  initOpts.KubeConfig,
 	}
-	toolList["Cloud"] = &util.KubeCloudInstTool{
+	toolList["helm"] = &helm.KubeCloudHelmInstTool{
 		Common:           common,
-		AdvertiseAddress: initOptions.AdvertiseAddress,
-		DNSName:          initOptions.DNS,
-		TarballPath:      initOptions.TarballPath,
-	}
-	toolList["Kubernetes"] = &util.K8SInstTool{
-		Common: common,
+		AdvertiseAddress: initOpts.AdvertiseAddress,
+		KubeEdgeVersion:  initOpts.KubeEdgeVersion,
+		Manifests:        initOpts.Manifests,
+		Namespace:        constants.SystemNamespace,
+		DryRun:           initOpts.DryRun,
+		Sets:             initOpts.Sets,
+		Profile:          initOpts.Profile,
+		ExternalHelmRoot: initOpts.ExternalHelmRoot,
+		Force:            initOpts.Force,
+		Action:           types.HelmInstallAction,
 	}
 	return nil
 }
 
-//Execute the installation for each tool and start cloudcore
-func Execute(toolList map[string]types.ToolsInstaller) error {
-	for name, tool := range toolList {
-		if name != "Cloud" {
-			err := tool.InstallTools()
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return toolList["Cloud"].InstallTools()
+//ExecuteInit the installation for each tool and start cloudcore
+func ExecuteInit(toolList map[string]types.ToolsInstaller) error {
+	return toolList["helm"].InstallTools()
 }

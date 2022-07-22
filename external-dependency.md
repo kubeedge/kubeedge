@@ -49,7 +49,6 @@
 |gofuzz |Apache License 2.0 | https://github.com/google/gofuzz
 |uuid |Apache License 2.0 | https://github.com/google/uuid
 |gnostic |Apache License 2.0 | https://github.com/googleapis/gnostic
-|mux |BSD-3-Clause | https://github.com/gorilla/mux
 |websocket |BSD-3-Clause | https://github.com/gorilla/websocket
 |golang-lru |MLP-2.0 | https://github.com/hashicorp/golang-lru
 |gopass |ISC | https://github.com/howeyc/gopass
@@ -110,20 +109,19 @@
 |k8s.io/kube-openapi | Apache License 2.0  |https://github.com/kubernetes/kube-openapi
 |k8s.io/kubernetes | Apache License 2.0  |https://github.com/kubernetes/kubernetes
 |k8s.io/utils | Apache License 2.0  |https://github.com/kubernetes/utils
-|paypal/gatt |BSD-3-Clause |https://github.com/paypal/gatt
 |go-ansiterm |MIT |https://github.com/Azure/go-ansiterm
-|win_pdh | |github.com/JeffAshton/win_pdh
-|go-winio |MIT |github.com/Microsoft/go-winio
-|chacha20 |MIT |github.com/aead/chacha20
-|mint |MIT |github.com/bifurcation/mint
-|genny |MIT |github.com/cheekybits/genny
+|win_pdh | |https://github.com/JeffAshton/win_pdh
+|go-winio |MIT |https://github.com/Microsoft/go-winio
+|chacha20 |MIT |https://github.com/aead/chacha20
+|mint |MIT |https://github.com/bifurcation/mint
+|genny |MIT |https://github.com/cheekybits/genny
 |context |BSD-3-Clause |https://github.com/gorilla/context
-|go-windows-terminal-sequences |MIT |github.com/konsorten/go-windows-terminal-sequences
+|go-windows-terminal-sequences |MIT |https://github.com/konsorten/go-windows-terminal-sequences
 |viaduct |Apache License 2.0 |https://github.com/kubeedge/viaduct
-|aes12 |MIT |github.com/lucas-clemente/aes12
-|quic-go |MIT |github.com/lucas-clemente/quic-go
-|quic-go-certificates |MIT |github.com/lucas-clemente/quic-go-certificates
+|aes12 |MIT |https://github.com/lucas-clemente/aes12
+|quic-go |MIT |https://github.com/lucas-clemente/quic-go
+|quic-go-certificates |MIT |https://github.com/lucas-clemente/quic-go-certificates
 |libseccomp-golang |BSD 2-Clause |https://github.com/seccomp/libseccomp-golang
 |cobra |Apache License 2.0 |https://github.com/spf13/cobra
 |pflag |BSD 3-Clause "New" or "Revised" License |https://github.com/spf13/pflag
-|rkt |Apache License 2.0 |github.com/rkt/rkt
+|rkt |Apache License 2.0 |https://github.com/rkt/rkt

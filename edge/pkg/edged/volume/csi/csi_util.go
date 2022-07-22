@@ -60,7 +60,12 @@ func saveVolumeData(dir string, fileName string, data map[string]string) error {
 		klog.Error(log("failed to save volume data file %s: %v", dataFilePath, err))
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		err := file.Close()
+		if err != nil {
+			klog.Errorf("failed to close file, path: %v, error: %v", dataFilePath, err)
+		}
+	}()
 	if err := json.NewEncoder(file).Encode(data); err != nil {
 		klog.Error(log("failed to save volume data file %s: %v", dataFilePath, err))
 		return err
@@ -80,7 +85,12 @@ func loadVolumeData(dir string, fileName string) (map[string]string, error) {
 		klog.Error(log("failed to open volume data file [%s]: %v", dataFileName, err))
 		return nil, err
 	}
-	defer file.Close()
+	defer func() {
+		err := file.Close()
+		if err != nil {
+			klog.Errorf("failed to close file, path: %v, error: %v", dataFileName, err)
+		}
+	}()
 	data := map[string]string{}
 	if err := json.NewDecoder(file).Decode(&data); err != nil {
 		klog.Error(log("failed to parse volume data file [%s]: %v", dataFileName, err))

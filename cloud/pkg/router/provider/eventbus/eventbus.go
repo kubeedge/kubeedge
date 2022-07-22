@@ -64,7 +64,7 @@ func (eb *EventBus) RegisterListener(handle listener.Handle) error {
 	listener.MessageHandlerInstance.AddListener(path.Join("bus/node", eb.nodeName, eb.namespace, eb.subTopic), handle)
 	msg := model.NewMessage("")
 	msg.SetResourceOperation(path.Join("node", eb.nodeName, eb.namespace, eb.subTopic), "subscribe")
-	msg.SetRoute("router_eventbus", modules.UserGroup)
+	msg.SetRoute(modules.RouterSourceEventBus, modules.UserGroup)
 	beehiveContext.Send(modules.CloudHubModuleName, *msg)
 	return nil
 }
@@ -72,7 +72,7 @@ func (eb *EventBus) RegisterListener(handle listener.Handle) error {
 func (eb *EventBus) UnregisterListener() {
 	msg := model.NewMessage("")
 	msg.SetResourceOperation(path.Join("node", eb.nodeName, eb.namespace, eb.subTopic), "unsubscribe")
-	msg.SetRoute("router_eventbus", modules.UserGroup)
+	msg.SetRoute(modules.RouterSourceEventBus, modules.UserGroup)
 	beehiveContext.Send(modules.CloudHubModuleName, *msg)
 	listener.MessageHandlerInstance.RemoveListener(path.Join("bus/node", eb.nodeName, eb.namespace, eb.subTopic))
 }
@@ -95,7 +95,11 @@ func (eb *EventBus) Name() string {
 }
 
 func (*EventBus) Forward(target provider.Target, data interface{}) (response interface{}, err error) {
-	message := data.(*model.Message)
+	message, ok := data.(*model.Message)
+	if !ok {
+		klog.Errorf("message type %T error", data)
+		return nil, fmt.Errorf("message type %T error", data)
+	}
 	res := make(map[string]interface{})
 	v, ok := message.Content.(string)
 	if !ok {
@@ -137,7 +141,7 @@ func (eb *EventBus) GoToTarget(data map[string]interface{}, stop chan struct{}) 
 	}
 	msg.SetResourceOperation(resource, publishOperation)
 	msg.FillBody(string(body))
-	msg.SetRoute("router_eventbus", modules.UserGroup)
+	msg.SetRoute(modules.RouterSourceEventBus, modules.UserGroup)
 	beehiveContext.Send(modules.CloudHubModuleName, *msg)
 	return nil, nil
 }
