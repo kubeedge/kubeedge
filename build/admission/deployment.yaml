@@ -44,6 +44,16 @@ spec:
             - mountPath: /admission.local.config/certificates
               name: admission-certs
               readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 443
+              scheme: HTTPS
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 443
+              scheme: HTTPS
       volumes:
         - name: admission-certs
           secret:

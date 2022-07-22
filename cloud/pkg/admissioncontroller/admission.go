@@ -19,6 +19,7 @@ import (
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
 
 	"github.com/kubeedge/kubeedge/cloud/cmd/admission/app/options"
 	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
@@ -98,6 +99,8 @@ func Run(opt *options.AdmissionOptions) error {
 	http.HandleFunc("/rules", serveRule)
 	http.HandleFunc("/ruleendpoints", serveRuleEndpoint)
 	http.HandleFunc("/offlinemigration", serveOfflineMigration)
+	http.Handle("/readyz/", http.StripPrefix("/readyz/", &healthz.Handler{}))
+	http.Handle("/healthz/", http.StripPrefix("/healthz/", &healthz.Handler{}))
 
 	tlsConfig, err := configTLS(opt, restConfig)
 	if err != nil {
