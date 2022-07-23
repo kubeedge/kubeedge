@@ -5,12 +5,16 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
+	"path/filepath"
+	"time"
 
 	admissionv1 "k8s.io/api/admission/v1"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -18,6 +22,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	certutil "k8s.io/client-go/util/cert"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/cloud/cmd/admission/app/options"
@@ -37,6 +42,11 @@ const (
 	OfflineMigrationWebhookName = "mutateofflinemigration.kubeedge.io"
 
 	AutonomyLabel = "app-offline.kubeedge.io=autonomy"
+
+	caPkiPath        = "/etc/kubeedge/ca/"
+	caPkiName        = "rootCA"
+	admissionPkiPath = "/etc/kubeedge/certs/"
+	admissionPkiName = "admission"
 )
 
 var scheme = runtime.NewScheme()
@@ -66,6 +76,12 @@ type AdmissionController struct {
 
 func strPtr(s string) *string { return &s }
 
+type CertificatePath struct {
+	CaCertFile string
+	CertFile   string
+	KeyFile    string
+}
+
 // Run starts the webhook service
 func Run(opt *options.AdmissionOptions) error {
 	klog.V(4).Infof("AdmissionOptions: %+v", *opt)
@@ -86,7 +102,12 @@ func Run(opt *options.AdmissionOptions) error {
 	controller.Client = cli
 	controller.CrdClient = vcli
 
-	caBundle, err := os.ReadFile(opt.CaCertFile)
+	cert, err := certificates(opt)
+	if err != nil {
+		return err
+	}
+
+	caBundle, err := os.ReadFile(cert.CaCertFile)
 	if err != nil {
 		return fmt.Errorf("unable to read cacert file: %v", err)
 	}
@@ -102,7 +123,7 @@ func Run(opt *options.AdmissionOptions) error {
 	http.HandleFunc("/offlinemigration", serveOfflineMigration)
 	http.HandleFunc("/nodeupgradejobs", serveNodeUpgradeJob)
 
-	tlsConfig, err := configTLS(opt, restConfig)
+	tlsConfig, err := configTLS(cert, restConfig)
 	if err != nil {
 		return err
 	}
@@ -117,10 +138,120 @@ func Run(opt *options.AdmissionOptions) error {
 	return nil
 }
 
+// get certificate path
+func certificates(opt *options.AdmissionOptions) (*CertificatePath, error) {
+	// if user specify the ca and certs in command line, we will use the user defined certificates
+	if opt.CaCertFile != "" && opt.CertFile != "" && opt.KeyFile != "" {
+		return &CertificatePath{
+			CaCertFile: opt.CaCertFile,
+			CertFile:   opt.CertFile,
+			KeyFile:    opt.KeyFile,
+		}, nil
+	}
+
+	// or use the default ca/certs stored in kubeedge-admission-secret
+	// check whether kubeedge-admission-secret exist or not
+	// if NOT, generate it and store it in secret
+	// if exist, read certificate from it and store it to local
+	_, err := controller.Client.CoreV1().Secrets(opt.AdmissionServiceNamespace).Get(context.TODO(), "kubeedge-admission-secret", metav1.GetOptions{})
+	if err != nil && !apierrors.IsNotFound(err) {
+		return nil, fmt.Errorf("failed to get secret(%s/kubeedge-admission-secret): %v", opt.AdmissionServiceNamespace, err)
+	}
+
+	// If secret not found, generate certificate and store in secret
+	if apierrors.IsNotFound(err) {
+		// generate certificate
+		klog.Infof("Generate ca and certs...")
+		if err := genCerts(opt); err != nil {
+			return nil, fmt.Errorf("failed to generate certs: %v", err)
+		}
+
+		keyData, err := os.ReadFile(filepath.Join(admissionPkiPath, fmt.Sprintf("%s.key", admissionPkiName)))
+		if err != nil {
+			return nil, fmt.Errorf("failed to read key file: %v", err)
+		}
+		certData, err := os.ReadFile(filepath.Join(admissionPkiPath, fmt.Sprintf("%s.crt", admissionPkiName)))
+		if err != nil {
+			return nil, fmt.Errorf("failed to read cert file: %v", err)
+		}
+		caData, err := os.ReadFile(filepath.Join(caPkiPath, fmt.Sprintf("%s.crt", caPkiName)))
+		if err != nil {
+			return nil, fmt.Errorf("failed to read ca cert file: %v", err)
+		}
+
+		// store certificate data in secret
+		newSecret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "kubeedge-admission-secret",
+				Namespace: opt.AdmissionServiceNamespace,
+			},
+			Data: map[string][]byte{
+				"tls.key": keyData,
+				"tls.crt": certData,
+				"ca.crt":  caData,
+			},
+		}
+		_, err = controller.Client.CoreV1().Secrets(opt.AdmissionServiceNamespace).Create(context.TODO(), newSecret, metav1.CreateOptions{})
+		if err != nil && !apierrors.IsAlreadyExists(err) {
+			return nil, fmt.Errorf("failed to create secret: %v", err)
+		}
+
+		// If secret already exists, it means other replicas already generate certificates
+		// we need to read certificates from secret again
+		if apierrors.IsAlreadyExists(err) {
+			klog.Infof("Use existed ca and cert in admission secret")
+			return LoadCertificateFromSecret(opt.AdmissionServiceNamespace)
+		}
+
+		return &CertificatePath{
+			CaCertFile: filepath.Join(caPkiPath, fmt.Sprintf("%s.crt", caPkiName)),
+			CertFile:   filepath.Join(admissionPkiPath, fmt.Sprintf("%s.crt", admissionPkiName)),
+			KeyFile:    filepath.Join(admissionPkiPath, fmt.Sprintf("%s.key", admissionPkiName)),
+		}, nil
+	}
+
+	// If secret exist, read certificate from it and write to local file
+	klog.Infof("Use existed ca and cert in admission secret")
+	return LoadCertificateFromSecret(opt.AdmissionServiceNamespace)
+}
+
+// LoadCertificateFromSecret read certificates from secret and store them in local filesystem
+// Attention: must ensure the secret already exist before calling this function
+func LoadCertificateFromSecret(namespace string) (*CertificatePath, error) {
+	secret, err := controller.Client.CoreV1().Secrets(namespace).Get(context.TODO(), "kubeedge-admission-secret", metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get secret(%s/kubeedge-admission-secret): %v", namespace, err)
+	}
+
+	// prepare certs directory
+	if err := os.MkdirAll(filepath.Dir(caPkiPath), os.FileMode(0755)); err != nil {
+		return nil, err
+	}
+	if err := os.MkdirAll(filepath.Dir(admissionPkiPath), os.FileMode(0755)); err != nil {
+		return nil, err
+	}
+	// write certs to local filesystem
+	if err := os.WriteFile(filepath.Join(admissionPkiPath, fmt.Sprintf("%s.key", admissionPkiName)), secret.Data["tls.key"], os.FileMode(0644)); err != nil {
+		return nil, err
+	}
+	if err := os.WriteFile(filepath.Join(admissionPkiPath, fmt.Sprintf("%s.crt", admissionPkiName)), secret.Data["tls.crt"], os.FileMode(0644)); err != nil {
+		return nil, err
+	}
+	if err := os.WriteFile(filepath.Join(caPkiPath, fmt.Sprintf("%s.crt", caPkiName)), secret.Data["ca.crt"], os.FileMode(0644)); err != nil {
+		return nil, err
+	}
+
+	return &CertificatePath{
+		CaCertFile: filepath.Join(caPkiPath, fmt.Sprintf("%s.crt", caPkiName)),
+		CertFile:   filepath.Join(admissionPkiPath, fmt.Sprintf("%s.crt", admissionPkiName)),
+		KeyFile:    filepath.Join(admissionPkiPath, fmt.Sprintf("%s.key", admissionPkiName)),
+	}, nil
+}
+
 // configTLS is a helper function that generate tls certificates from directly defined tls config or kubeconfig
 // These are passed in as command line for cluster certification. If tls config is passed in, we use the directly
 // defined tls config, else use that defined in kubeconfig
-func configTLS(opt *options.AdmissionOptions, restConfig *restclient.Config) (*tls.Config, error) {
+func configTLS(opt *CertificatePath, restConfig *restclient.Config) (*tls.Config, error) {
 	if len(opt.CertFile) != 0 && len(opt.KeyFile) != 0 {
 		sCert, err := tls.LoadX509KeyPair(opt.CertFile, opt.KeyFile)
 		if err != nil {
@@ -143,6 +274,31 @@ func configTLS(opt *options.AdmissionOptions, restConfig *restclient.Config) (*t
 		}, nil
 	}
 	return nil, errors.New("tls: failed to find any tls config data")
+}
+
+func genCerts(opt *options.AdmissionOptions) error {
+	notAfter := time.Now().Add(time.Hour * 24 * 365 * 10).UTC()
+
+	var kubeedgeDNS = []string{
+		"localhost",
+		opt.AdmissionServiceName,
+		fmt.Sprintf("%s.%s", opt.AdmissionServiceName, opt.AdmissionServiceNamespace),
+		fmt.Sprintf("%s.%s.svc", opt.AdmissionServiceName, opt.AdmissionServiceNamespace),
+		fmt.Sprintf("%s.%s.svc.cluster.local", opt.AdmissionServiceName, opt.AdmissionServiceNamespace),
+	}
+
+	kubeedgeIPs := []net.IP{
+		net.ParseIP("127.0.0.1"),
+	}
+
+	kubeedgeAltNames := certutil.AltNames{
+		DNSNames: kubeedgeDNS,
+		IPs:      kubeedgeIPs,
+	}
+
+	kubeedgeCertCfg := NewCertConfig("system:admin", []string{"system:masters"}, kubeedgeAltNames, &notAfter)
+
+	return GenCerts(kubeedgeCertCfg)
 }
 
 // registerWebhooks registers the admission webhook.

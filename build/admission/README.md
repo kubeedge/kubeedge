@@ -12,15 +12,7 @@ image not exist. We can make one, and push to your registry.
 
 ```bash
 cd $GOPATH/src/github.com/kubeedge/kubeedge
-make admissionimage
-```
-
-Then, we need to generate the tls certs. It then will create a secret
- if succeeded.
-
-```bash
-cd build/admission
-./gen-admission-secret.sh
+make image WHAT=admission
 ```
 
 Second, we create k8s resources from the manifests in name order. Before
