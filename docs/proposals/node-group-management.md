@@ -1,11 +1,11 @@
 ---
 title: Node Group Management
-authors: 
+authors:
   - "@Congrool"
   - "@lonelyCZ"
   - "@vincentgoat"
 approvers:
-  
+
 creation-date: 2021-11-03
 last-updated: 2022-03-07
 status: implementable
@@ -31,7 +31,7 @@ status: implementable
 		- [Develop Plan](#develop-plan)
 
 ## Summary
-In some scenarios, we may want to deploy an application among several locations. In this case, the typical practice is to write a deployment for each location, which means we have to manage several deployments for one application. With the number of applications and their required locations continuously increasing, it will be more and more complicated to manage.  
+In some scenarios, we may want to deploy an application among several locations. In this case, the typical practice is to write a deployment for each location, which means we have to manage several deployments for one application. With the number of applications and their required locations continuously increasing, it will be more and more complicated to manage.
 The node group management feature will help users to manage nodes in groups, and also provide a way to control how to spread pods among node groups and how to run different editions of pod instances in different node groups.
 
 ## Motivation
@@ -41,7 +41,7 @@ Taking Deployment as an example, the traditional practice is to set the same lab
 
 ![image](../images/node-group-management/current-group-usage.png)
 
-However, with the number of locations increasing, operation and maintenance of applications become more and more complex. 
+However, with the number of locations increasing, operation and maintenance of applications become more and more complex.
 
 ### Goals
 * Use a single resource to manage an application deployed at different locations.
@@ -63,7 +63,7 @@ NodeGroup will organize nodes according to their labels which should be set base
 
 The EdgeApplication resource contains the template of the application to deploy.Through EdgeApplication API, users can apply the different editions of the application template for each node group, such as specifying the image registry for each node group. After applying the EdgeApplication resource, the EdgeApplication controller will take the application template and override it generating serval different editions according to the specification. And then these applications will run in their nodegroups respectively.
 
-### GroupManagementControllerManager 
+### GroupManagementControllerManager
 `GroupManagementControllerManager` contains two controllers, called `NodeGroupController`, and `EdgeApplicationController`, which take over the lifetime mangement of EdgeApplication and NodeGroup respectively.
 
 #### NodeGroupController
@@ -73,7 +73,7 @@ The EdgeApplication resource contains the template of the application to deploy.
 `EdgeApplicationController` is responsible for creating, updating and deleting the subresources manifested in the EdgeApplication.
 1. When EdgeApplication has been created, it will create and override the subresource for each specified node group.
 2. When EdgeApplication has been updated, it will update relative fields of subresources.
-3. When EdgeApplication has been deleted, it will delete all manifested subresources.  
+3. When EdgeApplication has been deleted, it will delete all manifested subresources.
 
 ### EndpointSlice Filter in CloudCore
 The endpointslice filter in cloudcore takes the responsibility of filtering out endpoints in the endpointslice before sending them to the edge. Clients, possibly kube-proxy, at edge which ask for the endpointslice from the cloudcore will only get endpointslice containing endpoints in their node groups. Thus, the pod, for example running in the node group A, can only reach endpoints in node group A.
@@ -258,7 +258,7 @@ type ManifestStatus struct {
 
 	// Conditions contain the different condition statuses for this manifest.
 	// Valid condition types are:
-	// 1. Processing: this workload is under processing and the current state of manifest does not match the desired. 
+	// 1. Processing: this workload is under processing and the current state of manifest does not match the desired.
 	// 2. Available: the current status of this workload matches the desired.
 	// +optional
 	Conditions metav1.Condition `json:"conditions,omitempty"`
@@ -303,10 +303,10 @@ const (
 * Create NodeGroup CRs to specify some node groups and nodes belonging to them.
 * Fill the `EdgeAppSpec.WorkloadTemplate` field of EdgeApplication with the application you want to deploy.
 * Fill the `EdgeAppSpec.WorkloadScope` field of EdgeApplication to specify the instance numbers or other differences for each node group where you want to deploy the application.
-* Apply the EdgeApplication resource and check its status. 
+* Apply the EdgeApplication resource and check its status.
 
 ### Example
-We give an example of how to use NodeGroup and PropagationPolicy APIs. 
+We give an example of how to use NodeGroup and PropagationPolicy APIs.
 
 Assuming that we have 5 nodes at edge, 2 in Hangzhou and 3 in Beijing, called NodeA, NodeB, NodeC, NodeD and NodeE respectively. NodeA and NodeB, which are located in Hangzhou, have the label `location: hangzhou`. NodeC, NodeD and NodeE, which are located in Beijing, have the label `location: beijing`. We want to apply a deployment called nginx, having 2 instances in Hangzhou and 3 instances in Beijing. And we want to use the service scope feature making them can only be reached when clients are in the same node group as the pod instance.
 
@@ -324,7 +324,7 @@ spec:
 apiVersion: groupmanagement.kubeedge.io/v1alpha1
 kind: NodeGroup
 metadata:
-  name: beijing 
+  name: beijing
 spec:
   matchLabels:
     location: beijing
@@ -336,7 +336,7 @@ Second, create the EdgeApplication resource. In this case, we want 2 pods to run
 apiVersion: groupmanagement.kubeedge.io/v1alpha1
 kind: EdgeApplication
 metadata:
-  name: nginx-app 
+  name: nginx-app
 spec:
   workloadTemplate:
     manifests:
@@ -388,7 +388,7 @@ spec:
               operator: "replace"
               value: "beijing.registry.io"
 ```
-Then two deployments called `nginx-hangzhou` and `nginx-beijing` will be created for hangzhou nodegroup and beijing nodegroup with `replicas: 2` and `replicas: 3` respectively. Pods running in hangzhou nodegroup will use the image `hangzhou.registry.io/nginx:latest` and pods running in beijing nodegroup will use the image `beijing.resistry.io/nginx.latest`. 
+Then two deployments called `nginx-hangzhou` and `nginx-beijing` will be created for hangzhou nodegroup and beijing nodegroup with `replicas: 2` and `replicas: 3` respectively. Pods running in hangzhou nodegroup will use the image `hangzhou.registry.io/nginx:latest` and pods running in beijing nodegroup will use the image `beijing.resistry.io/nginx.latest`.
 
 The service in the EdgeApplication will also be created and injected with label `groupmanagement.kubeedge.io/edgeapplication-name: nginx-app`. The endpointslice filter in the cloudcore will check the relative EdgeApplication when sending the endpointslice to the edgecore in some nodegroup. It will filter out endpoints not in that nodegroup. Then, clients running in hangzhou node group can only reach the 2 pod instances that are also running in hangzhou node group. The situation of beijing node group is the same.
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright 2021 The KubeEdge Authors 
+# Copyright 2021 The KubeEdge Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -85,9 +85,9 @@ function :copy:to:destination {
       CRD_NAME=$(echo ${entry} | cut -d'.' -f3 | cut -d'_' -f2)
 
       if [ "$CRD_NAME" == "devices" ] || [ "$CRD_NAME" == "devicemodels" ]; then
-          CRD_NAME=$(remove_suffix_s "$CRD_NAME") 
+          CRD_NAME=$(remove_suffix_s "$CRD_NAME")
           cp -v ${entry} ${CRD_OUTPUTS}/devices/devices_${DEVICES_VERSION}_${CRD_NAME}.yaml
-          cp -v ${entry} ${HELM_CRDS_DIR}/devices_${DEVICES_VERSION}_${CRD_NAME}.yaml 
+          cp -v ${entry} ${HELM_CRDS_DIR}/devices_${DEVICES_VERSION}_${CRD_NAME}.yaml
       elif [ "$CRD_NAME" == "edgeapplications" ] || [ "$CRD_NAME" == "nodegroups" ]; then
           CRD_NAME=$(remove_suffix_s "$CRD_NAME")
           cp -v ${entry} ${CRD_OUTPUTS}/apps/apps_${APPS_VERSION}_${CRD_NAME}.yaml
@@ -105,7 +105,7 @@ function :copy:to:destination {
   done
 
   for r_entry in `ls ${ROUTER_DIR}/*.yaml`; do
-    # cp router CRDs  
+    # cp router CRDs
     cp -v ${r_entry} ${HELM_CRDS_DIR}/
   done
 }

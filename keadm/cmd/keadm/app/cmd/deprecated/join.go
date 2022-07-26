@@ -32,7 +32,7 @@ import (
 
 var (
 	edgeJoinLongDescription = `
-Deprecated: 
+Deprecated:
 "keadm deprecated join" command bootstraps KubeEdge's worker node (at the edge) component.
 It will also connect with cloud component to receive
 further instructions and forward telemetry data from

@@ -30,11 +30,11 @@ check_ginkgo_v2() {
         sudo cp $GOPATH/bin/ginkgo /usr/local/bin/
         return
     )
-    
+
     # check if the ginkgo version is v2
     local -a ginkgo_version_output
     read -ra ginkgo_version_output <<< $(ginkgo version)
-    # Assuming ginkgo version output format is: 
+    # Assuming ginkgo version output format is:
     # Ginkgo Version 2.1.4
     if [[ "${ginkgo_version_output[2]}" != "2.1.4" ]]; then
         echo "ginkgo version is not v2.1.4, reinstall ginkgo v2.1.4"

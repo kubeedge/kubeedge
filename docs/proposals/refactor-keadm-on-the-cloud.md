@@ -36,7 +36,7 @@ spec:
       tag: "v1.8.2"
       pullPolicy: "IfNotPresent"
       pullSecrets: []
-    securityContext: 
+    securityContext:
       privileged: true
     labels:
       k8s-app: kubeedge
@@ -60,8 +60,8 @@ spec:
         memory: 512Mi
     modules:
       cloudHub:
-        advertiseAddress:   # Causion!: Leave this entry to empty will cause CloudCore to exit abnormally once KubeEdge is enabled. 
-          - ""              # At least a public IP Address or an IP which can be accessed by edge nodes must be provided!           
+        advertiseAddress:   # Causion!: Leave this entry to empty will cause CloudCore to exit abnormally once KubeEdge is enabled.
+          - ""              # At least a public IP Address or an IP which can be accessed by edge nodes must be provided!
         nodeLimit: "1000"
         websocket:
           enable: "true"
@@ -94,7 +94,7 @@ spec:
       tag: "v1.8.2"
       pullPolicy: "IfNotPresent"
       pullSecrets: []
-    securityContext: 
+    securityContext:
       capabilities:
       add:
         - NET_ADMIN
@@ -135,19 +135,19 @@ spec:
 
 For profile style, which aims to kubeedge quickstart, core section defines the Indispensable values or values that need to be overridden, the profiles section defines the optional profiles that need to enable. An example CR can be described as follows, very simple:
 
-``` 
+```
 apiVersion: profile.keadm.kubeedge.io/v1alpha1
 kind: KeadmOperator
 spec:
   core:
-    cloudCoreAdvertiseAddress: 
-      - "10.10.102.242" 
+    cloudCoreAdvertiseAddress:
+      - "10.10.102.242"
     haModeKeepAlivedIpPorts:
       - "10.10.102.242:10000"
     edgemesh:
       server:
         nodeName: "worker-1"
-        serverAdvertiseAddress: "10.10.102.242" 
+        serverAdvertiseAddress: "10.10.102.242"
       gateway:
         enable: false
         nodeName: "worker-2"
@@ -194,7 +194,7 @@ start->render->apply
 
 > The former keadm init cmd will keep several versions, later, the init-beta cmd can be replaced by init.
 
-This cmd is used for installing the core components, such as cloudcore, external iptableMgr, edgemesh, cloudcore hamode, etc. 
+This cmd is used for installing the core components, such as cloudcore, external iptableMgr, edgemesh, cloudcore hamode, etc.
 
 
 #### --profile
@@ -247,7 +247,7 @@ Generate the k8s resources.
 ```
 keadm manifest generate <your original installation options> | kubectl delete -f -
 ```
-<!-- 
+<!--
 ##### --kustomize
 will generate all the files to one file, by default will be separated. -->
 
@@ -263,7 +263,7 @@ Allow appending file directories of charts to keadm, separated by commas
 
 #### --delete-namespace, -D
 
-> This flag will forced-delete all resources and the namespace. 
+> This flag will forced-delete all resources and the namespace.
 
 #### --grace-period
 
@@ -292,7 +292,7 @@ keadm profile list
 
 [istio/helm](https://github.com/istio/istio/tree/master/operator/pkg/helm)
 
-[istio/helmreconcile](https://github.com/istio/istio/blob/master/operator/pkg/helmreconciler/reconciler.go) 
+[istio/helmreconcile](https://github.com/istio/istio/blob/master/operator/pkg/helmreconciler/reconciler.go)
 
 [istioctl-completion](https://istio.io/latest/docs/reference/commands/istioctl/#istioctl-completion)
 

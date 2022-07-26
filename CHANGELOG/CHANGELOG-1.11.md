@@ -29,7 +29,7 @@ Download v1.11.1 in the [v1.11.1 release page](https://github.com/kubeedge/kubee
 - Possible type confusions. ([#4025](https://github.com/kubeedge/kubeedge/pull/4025), [@vincentgoat](https://github.com/vincentgoat))
 - Update deprecate dependency. ([#4023](https://github.com/kubeedge/kubeedge/pull/4023), [@vincentgoat](https://github.com/vincentgoat))
 
-    
+
 
 # v1.11.0
 
@@ -46,7 +46,7 @@ Download v1.11.0 in the [v1.11.0 release page](https://github.com/kubeedge/kubee
 Users can deploy applications to several node groups without writing deployment for every group. Node group management helps users to:
 
 - Manage nodes in groups
-- Spread apps among node groups 
+- Spread apps among node groups
 - Run different version of app instances in different node groups
 - Limit service endpoints in the same location as the client
 
@@ -62,8 +62,8 @@ Refer to the links for more details.
 ### Mapper SDK
 
 Mapper-sdk is a basic framework written in go. Based on this framework, developers can more easily implement a new mapper.
-Mapper-sdk has realized the connection to kubeedge, provides data conversion, and manages the basic properties and status of devices, etc. 
-Basic capabilities and abstract definition of the driver interface. Developers only need to implement the 
+Mapper-sdk has realized the connection to kubeedge, provides data conversion, and manages the basic properties and status of devices, etc.
+Basic capabilities and abstract definition of the driver interface. Developers only need to implement the
 customized protocol driver interface of the corresponding device to realize the function of mapper.
 
 Refer to the links for more details.
