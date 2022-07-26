@@ -7,7 +7,7 @@ const (
 	LastContainedResourcesAnnotationKey = "apps.kubeedge.io/last-contained-resources"
 )
 
-var OverriderTargetGVK map[schema.GroupVersionKind]struct{} = map[schema.GroupVersionKind]struct{}{
+var OverriderTargetGVK = map[schema.GroupVersionKind]struct{}{
 	DeploymentGVK: {},
 }
 

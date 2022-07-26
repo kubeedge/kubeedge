@@ -29,7 +29,7 @@ import (
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 )
 
-var DeploymentTestTimerGroup *utils.TestTimerGroup = utils.NewTestTimerGroup()
+var DeploymentTestTimerGroup = utils.NewTestTimerGroup()
 
 //Run Test cases
 var _ = Describe("Application deployment test in keadm E2E scenario", func() {
