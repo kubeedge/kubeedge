@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"regexp"
 	"strings"
 	"sync"
@@ -485,8 +486,11 @@ func (mh *MessageHandle) MessageWriteLoop(info *model.HubInfo, stopServe chan Ex
 				info.NodeID, dumpMessageMetadata(copyMsg), err.Error())
 			nodeQueue.Add(key.(string))
 			if strings.Contains(err.Error(), "use of closed network connection") {
-				mh.nodeConns.Delete(info.NodeID)
-				continue
+				if newConn, ok := mh.nodeConns.Load(info.NodeID); ok {
+					if reflect.DeepEqual(conn, newConn) {
+						mh.nodeConns.Delete(info.NodeID)
+					}
+				}
 			}
 			time.Sleep(time.Second * 2)
 		}
