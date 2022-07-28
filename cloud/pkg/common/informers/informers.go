@@ -98,13 +98,14 @@ func (ifs *informers) EdgeNode() cache.SharedIndexInformer {
 	})
 }
 
-//please WaitForCache after getting a informer from factory, example:
+//Note: please WaitForCache after getting an informer from factory, example:
 //	informer := informerFactory.ForResource(gvr)
 //	for gvr, cacheSync := range informerFactory.WaitForCacheSync(beehiveContext.Done()) {
 //		if !cacheSync {
 //			klog.Fatalf("unable to sync caches for: %s", gvr.String())
 //		}
 //	}
+
 func (ifs *informers) Start(stopCh <-chan struct{}) {
 	ifs.lock.Lock()
 	defer ifs.lock.Unlock()
@@ -118,7 +119,7 @@ func (ifs *informers) Start(stopCh <-chan struct{}) {
 	ifs.dynamicSharedInformerFactory.Start(stopCh)
 }
 
-// getInformer get a informer named "name" or store a informer got by "newFunc" as key "name"
+// getInformer get an informer named "name" or store an informer got by "newFunc" as key "name"
 func (ifs *informers) getInformer(name string, newFunc newInformer) cache.SharedIndexInformer {
 	ifs.lock.Lock()
 	defer ifs.lock.Unlock()

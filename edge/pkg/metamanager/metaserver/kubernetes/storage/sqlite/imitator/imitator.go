@@ -67,7 +67,7 @@ func (s *imitator) InsertOrUpdateObj(ctx context.Context, obj runtime.Object) er
 	gvr, ns, name := metaserver.ParseKey(key)
 	unstr, isUnstr := obj.(*unstructured.Unstructured)
 	if !isUnstr {
-		return fmt.Errorf("obj is not unstructrued type")
+		return fmt.Errorf("obj is not unstructured type")
 	}
 	buf := bytes.NewBuffer(nil)
 	err = s.codec.Encode(unstr, buf)
