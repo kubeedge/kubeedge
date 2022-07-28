@@ -8,11 +8,13 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/dispatcher"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/handler"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/httpserver"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/udsserver"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/session"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
@@ -24,7 +26,9 @@ var DoneTLSTunnelCerts = make(chan bool, 1)
 type cloudHub struct {
 	enable               bool
 	informersSyncedFuncs []cache.InformerSynced
-	messageq             *channelq.ChannelMessageQueue
+
+	messageHandler handler.Handler
+	dispatcher     dispatcher.MessageDispatcher
 }
 
 var _ core.Module = (*cloudHub)(nil)
@@ -34,13 +38,26 @@ func newCloudHub(enable bool) *cloudHub {
 	// declare used informer
 	clusterObjectSyncInformer := crdFactory.Reliablesyncs().V1alpha1().ClusterObjectSyncs()
 	objectSyncInformer := crdFactory.Reliablesyncs().V1alpha1().ObjectSyncs()
-	messageq := channelq.NewChannelMessageQueue(objectSyncInformer.Lister(), clusterObjectSyncInformer.Lister(), client.GetCRDClient())
+
+	sessionManager := session.NewSessionManager(hubconfig.Config.NodeLimit)
+
+	messageDispatcher := dispatcher.NewMessageDispatcher(
+		sessionManager, objectSyncInformer.Lister(),
+		clusterObjectSyncInformer.Lister(), client.GetCRDClient())
+
+	messageHandler := handler.NewMessageHandler(
+		int(hubconfig.Config.KeepaliveInterval),
+		sessionManager, client.GetCRDClient(), messageDispatcher)
+
 	ch := &cloudHub{
-		enable:   enable,
-		messageq: messageq,
+		enable:         enable,
+		dispatcher:     messageDispatcher,
+		messageHandler: messageHandler,
 	}
+
 	ch.informersSyncedFuncs = append(ch.informersSyncedFuncs, clusterObjectSyncInformer.Informer().HasSynced)
 	ch.informersSyncedFuncs = append(ch.informersSyncedFuncs, objectSyncInformer.Informer().HasSynced)
+
 	return ch
 }
 
@@ -49,27 +66,27 @@ func Register(hub *v1alpha1.CloudHub) {
 	core.Register(newCloudHub(hub.Enable))
 }
 
-func (a *cloudHub) Name() string {
+func (ch *cloudHub) Name() string {
 	return modules.CloudHubModuleName
 }
 
-func (a *cloudHub) Group() string {
+func (ch *cloudHub) Group() string {
 	return modules.CloudHubModuleGroup
 }
 
 // Enable indicates whether enable this module
-func (a *cloudHub) Enable() bool {
-	return a.enable
+func (ch *cloudHub) Enable() bool {
+	return ch.enable
 }
 
-func (a *cloudHub) Start() {
-	if !cache.WaitForCacheSync(beehiveContext.Done(), a.informersSyncedFuncs...) {
+func (ch *cloudHub) Start() {
+	if !cache.WaitForCacheSync(beehiveContext.Done(), ch.informersSyncedFuncs...) {
 		klog.Errorf("unable to sync caches for objectSyncController")
 		os.Exit(1)
 	}
 
 	// start dispatch message from the cloud to edge node
-	go a.messageq.DispatchMessage()
+	go ch.dispatcher.DispatchDownstream()
 
 	// check whether the certificates exist in the local directory,
 	// and then check whether certificates exist in the secret, generate if they don't exist
@@ -88,7 +105,7 @@ func (a *cloudHub) Start() {
 	// HttpServer mainly used to issue certificates for the edge
 	go httpserver.StartHTTPServer()
 
-	servers.StartCloudHub(a.messageq)
+	servers.StartCloudHub(ch.messageHandler)
 
 	if hubconfig.Config.UnixSocket.Enable {
 		// The uds server is only used to communicate with csi driver from kubeedge on cloud.

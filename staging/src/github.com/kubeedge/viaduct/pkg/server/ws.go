@@ -90,7 +90,8 @@ func (srv *WSServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			State:   api.StatConnected,
 			Headers: req.Header.Clone(),
 		},
-		AutoRoute: srv.options.AutoRoute,
+		AutoRoute:          srv.options.AutoRoute,
+		OnReadTransportErr: srv.options.OnReadTransportErr,
 	})
 
 	// connection callback

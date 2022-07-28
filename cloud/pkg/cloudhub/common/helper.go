@@ -18,6 +18,7 @@ package common
 
 import (
 	"encoding/json"
+	"fmt"
 	"regexp"
 	"strings"
 	"time"
@@ -26,9 +27,11 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/beehive/pkg/core/model"
-	hubmodel "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
+	beehivemodel "github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
+	edgecon "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/common/constants"
+	"github.com/kubeedge/viaduct/pkg/conn"
 )
 
 // VolumePattern constants for error message
@@ -44,7 +47,7 @@ func IsVolumeResource(resource string) bool {
 }
 
 // GetMessageUID returns the UID of the object in message
-func GetMessageUID(msg model.Message) (string, error) {
+func GetMessageUID(msg beehivemodel.Message) (string, error) {
 	accessor, err := meta.Accessor(msg.Content)
 	if err != nil {
 		return "", err
@@ -54,7 +57,7 @@ func GetMessageUID(msg model.Message) (string, error) {
 }
 
 // GetMessageDeletionTimestamp returns the deletionTimestamp of the object in message
-func GetMessageDeletionTimestamp(msg *model.Message) (*v1.Time, error) {
+func GetMessageDeletionTimestamp(msg *beehivemodel.Message) (*v1.Time, error) {
 	accessor, err := meta.Accessor(msg.Content)
 	if err != nil {
 		return nil, err
@@ -63,9 +66,12 @@ func GetMessageDeletionTimestamp(msg *model.Message) (*v1.Time, error) {
 	return accessor.GetDeletionTimestamp(), nil
 }
 
-func TrimMessage(msg *model.Message) {
+// TrimMessage trims resource field in message
+// before: node/{nodename}/{namespace}/pod/{podname}
+// after: {namespace}/pod/{podname}
+func TrimMessage(msg *beehivemodel.Message) {
 	resource := msg.GetResource()
-	if strings.HasPrefix(resource, hubmodel.ResNode) {
+	if strings.HasPrefix(resource, model.ResNode) {
 		tokens := strings.Split(resource, "/")
 		if len(tokens) < 3 {
 			klog.Warningf("event resource %s starts with node but length less than 3", resource)
@@ -75,19 +81,63 @@ func TrimMessage(msg *model.Message) {
 	}
 }
 
-func ConstructConnectMessage(info *hubmodel.HubInfo, isConnected bool) *model.Message {
-	connected := hubmodel.OpConnect
+func ConstructConnectMessage(info *model.HubInfo, isConnected bool) *beehivemodel.Message {
+	connected := model.OpConnect
 	if !isConnected {
-		connected = hubmodel.OpDisConnect
+		connected = model.OpDisConnect
 	}
 	body := map[string]interface{}{
 		"event_type": connected,
 		"timestamp":  time.Now().Unix(),
-		"client_id":  info.NodeID}
+		"client_id":  info.NodeID,
+	}
 	content, _ := json.Marshal(body)
 
-	msg := model.NewMessage("")
-	msg.BuildRouter(hubmodel.SrcCloudHub, hubmodel.GpResource, hubmodel.NewResource(hubmodel.ResNode, info.NodeID, nil), connected)
+	msg := beehivemodel.NewMessage("")
+	msg.BuildRouter(model.SrcCloudHub, model.GpResource, model.NewResource(model.ResNode, info.NodeID, nil), connected)
 	msg.FillBody(content)
 	return msg
+}
+
+func DeepCopy(msg *beehivemodel.Message) *beehivemodel.Message {
+	if msg == nil {
+		return nil
+	}
+	out := new(beehivemodel.Message)
+	out.Header = msg.Header
+	out.Router = msg.Router
+	out.Content = msg.Content
+	return out
+}
+
+func NotifyEventQueueError(conn conn.Connection, nodeID string) {
+	msg := beehivemodel.NewMessage("").BuildRouter(model.GpResource, model.SrcCloudHub,
+		model.NewResource(model.ResNode, nodeID, nil), model.OpDisConnect)
+
+	err := conn.WriteMessageAsync(msg)
+	if err != nil {
+		klog.Errorf("fail to notify node %s event queue disconnected, reason: %s", nodeID, err.Error())
+	}
+}
+
+func AckMessageKeyFunc(obj interface{}) (string, error) {
+	msg, ok := obj.(*beehivemodel.Message)
+	if !ok {
+		return "", fmt.Errorf("object type %T is not message type", msg)
+	}
+
+	if msg.GetGroup() == edgecon.GroupResource {
+		return GetMessageUID(*msg)
+	}
+
+	return "", fmt.Errorf("failed to get message key")
+}
+
+func NoAckMessageKeyFunc(obj interface{}) (string, error) {
+	msg, ok := obj.(*beehivemodel.Message)
+	if !ok {
+		return "", fmt.Errorf("object is not message type")
+	}
+
+	return msg.Header.ID, nil
 }

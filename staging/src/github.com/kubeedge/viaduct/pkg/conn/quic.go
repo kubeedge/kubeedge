@@ -29,35 +29,37 @@ var (
 
 // QuicConnection the connection based on quic protocol
 type QuicConnection struct {
-	writeDeadline time.Time
-	readDeadline  time.Time
-	session       smgr.Session
-	handler       mux.Handler
-	ctrlLan       lane.Lane
-	state         *ConnectionState
-	streamManager *smgr.StreamManager
-	consumer      io.Writer
-	connUse       api.UseType
-	syncKeeper    *keeper.SyncKeeper
-	messageFifo   *fifo.MessageFifo
-	autoRoute     bool
-	locker        sync.Mutex
+	writeDeadline      time.Time
+	readDeadline       time.Time
+	session            smgr.Session
+	handler            mux.Handler
+	ctrlLan            lane.Lane
+	state              *ConnectionState
+	streamManager      *smgr.StreamManager
+	consumer           io.Writer
+	connUse            api.UseType
+	syncKeeper         *keeper.SyncKeeper
+	messageFifo        *fifo.MessageFifo
+	autoRoute          bool
+	OnReadTransportErr func(nodeID, projectID string)
+	locker             sync.Mutex
 }
 
 // NewQuicConn new quic connection
 func NewQuicConn(options *ConnectionOptions) *QuicConnection {
 	quicSession := options.Base.(quic.Session)
 	return &QuicConnection{
-		session:       smgr.Session{Sess: quicSession},
-		handler:       options.Handler,
-		ctrlLan:       options.CtrlLane.(lane.Lane),
-		state:         options.State,
-		connUse:       options.ConnUse,
-		syncKeeper:    keeper.NewSyncKeeper(),
-		consumer:      options.Consumer,
-		autoRoute:     options.AutoRoute,
-		messageFifo:   fifo.NewMessageFifo(),
-		streamManager: smgr.NewStreamManager(smgr.NumStreamsMax, autoFree, quicSession),
+		session:            smgr.Session{Sess: quicSession},
+		handler:            options.Handler,
+		ctrlLan:            options.CtrlLane.(lane.Lane),
+		state:              options.State,
+		connUse:            options.ConnUse,
+		syncKeeper:         keeper.NewSyncKeeper(),
+		consumer:           options.Consumer,
+		autoRoute:          options.AutoRoute,
+		messageFifo:        fifo.NewMessageFifo(),
+		OnReadTransportErr: options.OnReadTransportErr,
+		streamManager:      smgr.NewStreamManager(smgr.NumStreamsMax, autoFree, quicSession),
 	}
 }
 
@@ -108,7 +110,13 @@ func (conn *QuicConnection) serveSession() {
 			klog.Warningf("accept stream error(%+v) or the session has been closed",
 				err)
 			// close local session
-			conn.Close()
+			_ = conn.Close()
+
+			if conn.OnReadTransportErr != nil {
+				conn.OnReadTransportErr(conn.state.Headers.Get("node_id"),
+					conn.state.Headers.Get("project_id"))
+			}
+
 			return
 		}
 		conn.streamManager.AddStream(stream)
@@ -176,6 +184,9 @@ func (conn *QuicConnection) acceptStream(streamUse api.UseType, autoDispatch boo
 
 // Write write raw data into stream
 func (conn *QuicConnection) Write(raw []byte) (int, error) {
+	conn.locker.Lock()
+	defer conn.locker.Unlock()
+
 	stream, err := conn.streamManager.GetStream(api.UseTypeStream, false, conn.openStreamSync)
 	if err != nil {
 		klog.Errorf("failed to acquire stream sync, error:%+v", err)

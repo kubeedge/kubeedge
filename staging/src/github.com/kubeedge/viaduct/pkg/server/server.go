@@ -23,15 +23,16 @@ type ProtocolServer interface {
 
 // server options
 type Options struct {
-	Addr             string
-	TLS              *tls.Config
-	ConnNotify       ConnNotify
-	ConnMgr          *cmgr.ConnectionManager
-	ConnNumMax       int
-	AutoRoute        bool
-	HandshakeTimeout time.Duration
-	Handler          mux.Handler
-	Consumer         io.Writer
+	Addr               string
+	TLS                *tls.Config
+	ConnNotify         ConnNotify
+	OnReadTransportErr func(nodeID, projectID string)
+	ConnMgr            *cmgr.ConnectionManager
+	ConnNumMax         int
+	AutoRoute          bool
+	HandshakeTimeout   time.Duration
+	Handler            mux.Handler
+	Consumer           io.Writer
 }
 
 type Server struct {
@@ -43,9 +44,10 @@ type Server struct {
 	TLSConfig *tls.Config
 	// ConnNotify will be called when a new connection coming
 	ConnNotify ConnNotify
+	// OnReadTransportErr is invoked when the connection read message err
+	OnReadTransportErr func(nodeID, projectID string)
 	// the local connection store
 	ConnMgr *cmgr.ConnectionManager
-
 	//auto route
 	AutoRoute bool
 	// handshake timeout
@@ -109,14 +111,15 @@ func (s *Server) ListenAndServeTLS(certFile, keyFile string) error {
 	}
 
 	err = s.getProtoServer(Options{
-		Addr:             s.Addr,
-		TLS:              tlsConfig,
-		ConnNotify:       s.ConnNotify,
-		ConnMgr:          s.ConnMgr,
-		HandshakeTimeout: s.HandshakeTimeout,
-		AutoRoute:        s.AutoRoute,
-		Handler:          s.Handler,
-		Consumer:         s.Consumer,
+		Addr:               s.Addr,
+		TLS:                tlsConfig,
+		ConnNotify:         s.ConnNotify,
+		ConnMgr:            s.ConnMgr,
+		HandshakeTimeout:   s.HandshakeTimeout,
+		AutoRoute:          s.AutoRoute,
+		Handler:            s.Handler,
+		Consumer:           s.Consumer,
+		OnReadTransportErr: s.OnReadTransportErr,
 	})
 	if err != nil {
 		return err

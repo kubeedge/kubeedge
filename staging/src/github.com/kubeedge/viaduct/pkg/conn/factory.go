@@ -28,6 +28,8 @@ type ConnectionOptions struct {
 	Consumer io.Writer
 	// auto route into entries
 	AutoRoute bool
+	// OnReadTransportErr
+	OnReadTransportErr func(nodeID, projectID string)
 }
 
 // get connection interface by ConnTye

@@ -19,28 +19,30 @@ import (
 )
 
 type WSConnection struct {
-	WriteDeadline time.Time
-	ReadDeadline  time.Time
-	handler       mux.Handler
-	wsConn        *websocket.Conn
-	state         *ConnectionState
-	syncKeeper    *keeper.SyncKeeper
-	connUse       api.UseType
-	consumer      io.Writer
-	autoRoute     bool
-	messageFifo   *fifo.MessageFifo
-	locker        sync.Mutex
+	WriteDeadline      time.Time
+	ReadDeadline       time.Time
+	handler            mux.Handler
+	wsConn             *websocket.Conn
+	state              *ConnectionState
+	syncKeeper         *keeper.SyncKeeper
+	connUse            api.UseType
+	consumer           io.Writer
+	autoRoute          bool
+	messageFifo        *fifo.MessageFifo
+	locker             sync.Mutex
+	OnReadTransportErr func(nodeID, projectID string)
 }
 
 func NewWSConn(options *ConnectionOptions) *WSConnection {
 	return &WSConnection{
-		wsConn:      options.Base.(*websocket.Conn),
-		handler:     options.Handler,
-		syncKeeper:  keeper.NewSyncKeeper(),
-		state:       options.State,
-		connUse:     options.ConnUse,
-		autoRoute:   options.AutoRoute,
-		messageFifo: fifo.NewMessageFifo(),
+		wsConn:             options.Base.(*websocket.Conn),
+		handler:            options.Handler,
+		syncKeeper:         keeper.NewSyncKeeper(),
+		state:              options.State,
+		connUse:            options.ConnUse,
+		autoRoute:          options.AutoRoute,
+		messageFifo:        fifo.NewMessageFifo(),
+		OnReadTransportErr: options.OnReadTransportErr,
 	}
 }
 
@@ -105,7 +107,13 @@ func (conn *WSConnection) handleMessage() {
 				klog.Errorf("failed to read message, error: %+v", err)
 			}
 			conn.state.State = api.StatDisconnected
-			conn.wsConn.Close()
+			_ = conn.wsConn.Close()
+
+			if conn.OnReadTransportErr != nil {
+				conn.OnReadTransportErr(conn.state.Headers.Get("node_id"),
+					conn.state.Headers.Get("project_id"))
+			}
+
 			return
 		}
 
