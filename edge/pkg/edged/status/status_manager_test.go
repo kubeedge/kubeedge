@@ -38,11 +38,11 @@ func init() {
 	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 
 	metaManager := &common.ModuleInfo{
-		ModuleName: "metaManager",
+		ModuleName: modules.MetaManagerModuleName,
 		ModuleType: common.MsgCtxTypeChannel,
 	}
 	beehiveContext.AddModule(metaManager)
-	beehiveContext.AddModuleGroup("metaManager", "meta")
+	beehiveContext.AddModuleGroup(modules.MetaManagerModuleName, "meta")
 
 	edgeHub := &common.ModuleInfo{
 		ModuleName: "websocket",
@@ -95,7 +95,7 @@ func TestUpdatePodStatusSucceed(t *testing.T) {
 	newReason := "test reason"
 	manager.SetPodStatus(testPod, getPodStatus(newReason))
 
-	msg, err := beehiveContext.Receive("metaManager")
+	msg, err := beehiveContext.Receive(modules.MetaManagerModuleName)
 	if err != nil {
 		t.Fatalf("receive message error: %v", err)
 	}
@@ -126,7 +126,7 @@ func TestUpdatePodStatusFailure(t *testing.T) {
 	oldReason := "test reason"
 	manager.SetPodStatus(testPod, getPodStatus(oldReason))
 
-	msg, err := beehiveContext.Receive("metaManager")
+	msg, err := beehiveContext.Receive(modules.MetaManagerModuleName)
 	if err != nil {
 		t.Fatalf("receive message error: %v", err)
 	}

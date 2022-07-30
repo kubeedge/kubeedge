@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 
+	commontypes "github.com/kubeedge/kubeedge/common/types"
 	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
 )
 
@@ -32,8 +33,9 @@ func TestApplicationGC(t *testing.T) {
 				Resource:          "nodes",
 			}
 			ctx := apirequest.WithRequestInfo(context.Background(), requestInfo)
+			ctx = context.WithValue(ctx, commontypes.AuthorizationKey, "Bearer xxxx")
 
-			app := a.Generate(ctx, "get", metav1.GetOptions{}, nil)
+			app, _ := a.Generate(ctx, "get", metav1.GetOptions{}, nil)
 			app.countLock.Lock()
 			app.count = 0
 			app.countLock.Unlock()

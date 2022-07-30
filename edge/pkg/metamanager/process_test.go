@@ -61,7 +61,7 @@ func init() {
 
 	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 	add := &common.ModuleInfo{
-		ModuleName: MetaManagerModuleName,
+		ModuleName: modules.MetaManagerModuleName,
 		ModuleType: common.MsgCtxTypeChannel,
 	}
 	beehiveContext.AddModule(add)
@@ -96,7 +96,7 @@ func TestProcessInsert(t *testing.T) {
 
 	//SaveMeta Failed, feedbackError SendToCloud
 	ormerMock.EXPECT().Insert(gomock.Any()).Return(int64(1), errFailedDBOperation).Times(1)
-	msg := model.NewMessage("").BuildRouter(MetaManagerModuleName, GroupResource, model.ResourceTypePodStatus, model.InsertOperation)
+	msg := model.NewMessage("").BuildRouter(modules.MetaManagerModuleName, GroupResource, model.ResourceTypePodStatus, model.InsertOperation)
 	meta.processInsert(*msg)
 	//beehiveContext.Send(MetaManagerModuleName, *msg)
 	message, err := beehiveContext.Receive(ModuleNameEdgeHub)
@@ -337,7 +337,7 @@ func TestProcessResponse(t *testing.T) {
 
 	//jsonMarshall fail
 	msg := model.NewMessage("").BuildRouter(ModuleNameEdged, GroupResource, model.ResourceTypePodStatus, model.ResponseOperation).FillBody(make(chan int))
-	beehiveContext.Send(MetaManagerModuleName, *msg)
+	beehiveContext.Send(modules.MetaManagerModuleName, *msg)
 	meta.processResponse(*msg)
 	message, _ := beehiveContext.Receive(ModuleNameEdged)
 	t.Run("MarshallFail", func(t *testing.T) {

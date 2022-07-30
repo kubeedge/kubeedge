@@ -17,8 +17,6 @@ type HTTPResponse struct {
 	Body       []byte      `json:"body"`
 }
 
-type AuthorizationHeader string
-
 const (
-	AuthorizationKey AuthorizationHeader = "Authorization"
+	AuthorizationKey = "Authorization"
 )
