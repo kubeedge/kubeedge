@@ -1,8 +1,10 @@
 package manager
 
 import (
+	"fmt"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
@@ -19,6 +21,10 @@ func (sm *ServiceManager) Events() chan watch.Event {
 
 // NewServiceManager create ServiceManager by kube clientset and namespace
 func NewServiceManager(config *v1alpha1.EdgeController, si cache.SharedIndexInformer) (*ServiceManager, error) {
+	if config == nil {
+		klog.Errorf("nil config error")
+		return nil, fmt.Errorf("nil config error")
+	}
 	events := make(chan watch.Event, config.Buffer.ServiceEvent)
 	rh := NewCommonResourceEventHandler(events)
 	si.AddEventHandler(rh)
