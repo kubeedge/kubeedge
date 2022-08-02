@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"errors"
 	"reflect"
 	"sync"
 
@@ -79,6 +80,10 @@ func (pm *PodManager) Events() chan watch.Event {
 
 // NewPodManager create PodManager from config
 func NewPodManager(config *v1alpha1.EdgeController, si cache.SharedIndexInformer) (*PodManager, error) {
+	if config == nil {
+		klog.Error("can not create podManager with nil config")
+		return nil, errors.New("nil config error")
+	}
 	realEvents := make(chan watch.Event, config.Buffer.PodEvent)
 	mergedEvents := make(chan watch.Event, config.Buffer.PodEvent)
 	rh := NewCommonResourceEventHandler(realEvents)

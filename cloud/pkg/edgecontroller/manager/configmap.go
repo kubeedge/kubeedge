@@ -1,8 +1,11 @@
 package manager
 
 import (
+	"errors"
+
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
@@ -19,6 +22,10 @@ func (cmm *ConfigMapManager) Events() chan watch.Event {
 
 // NewConfigMapManager create ConfigMapManager by kube clientset and namespace
 func NewConfigMapManager(config *v1alpha1.EdgeController, si cache.SharedIndexInformer) (*ConfigMapManager, error) {
+	if config == nil {
+		klog.Error("can not create configMapManager with nil config")
+		return nil, errors.New("nil config error")
+	}
 	events := make(chan watch.Event, config.Buffer.ConfigMapEvent)
 	rh := NewCommonResourceEventHandler(events)
 	si.AddEventHandler(rh)
