@@ -48,7 +48,7 @@ func InitDTContext() (*DTContext, error) {
 	}, nil
 }
 
-//CommTo communicate
+//CommTo communicate with deviceTwin module by channel
 func (dtc *DTContext) CommTo(dtmName string, content interface{}) error {
 	if v, exist := dtc.CommChan[dtmName]; exist {
 		v <- content
@@ -57,7 +57,9 @@ func (dtc *DTContext) CommTo(dtmName string, content interface{}) error {
 	return errors.New("Not found chan to communicate")
 }
 
-//HeartBeat heartbeat to dtcontroller
+//HeartBeat update heartbeat timestamp
+// 1. modules receive heartbeat from deviceTwinController(process)
+// 2. modules call HeartBeat to update heartbeat timestamp or stop
 func (dtc *DTContext) HeartBeat(dtmName string, content interface{}) error {
 	if strings.Compare(content.(string), "ping") == 0 {
 		dtc.ModulesHealth.Store(dtmName, time.Now().Unix())
@@ -83,7 +85,7 @@ func (dtc *DTContext) GetMutex(deviceID string) (*sync.Mutex, bool) {
 	return nil, false
 }
 
-//Lock get the lock of the device
+//Lock try to get the lock of the device
 func (dtc *DTContext) Lock(deviceID string) bool {
 	deviceMutex, ok := dtc.GetMutex(deviceID)
 	if ok {
@@ -115,7 +117,7 @@ func (dtc *DTContext) UnlockAll() {
 	dtc.Mutex.Unlock()
 }
 
-//IsDeviceExist judge device is exist
+//IsDeviceExist return whether the device exists
 func (dtc *DTContext) IsDeviceExist(deviceID string) bool {
 	_, ok := dtc.DeviceList.Load(deviceID)
 	return ok
@@ -133,7 +135,7 @@ func (dtc *DTContext) GetDevice(deviceID string) (*dttype.Device, bool) {
 	return nil, false
 }
 
-//Send send result
+//Send  result to other module
 func (dtc *DTContext) Send(identity string, action string, module string, msg *model.Message) error {
 	dtMsg := &dttype.DTMessage{
 		Action:   action,
