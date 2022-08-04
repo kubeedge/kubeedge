@@ -99,19 +99,31 @@ func UpdateDeviceTwinMulti(updates []DeviceTwinUpdate) error {
 func DeviceTwinTrans(adds []DeviceTwin, deletes []DeviceDelete, updates []DeviceTwinUpdate) error {
 	var err error
 	obm := dbm.DBAccess
-	obm.Begin()
+	err = obm.Begin()
+	if err != nil {
+		klog.Errorf("begin transaction failed: %v", err)
+		return err
+	}
 	for _, add := range adds {
 		err = SaveDeviceTwin(&add)
 		if err != nil {
-			obm.Rollback()
+			errRollback := obm.Rollback()
+			if errRollback != nil {
+				klog.Errorf("transaction rollback failed: %v", err)
+				return errRollback
+			}
 			return err
 		}
 	}
 
-	for _, delete := range deletes {
-		err = DeleteDeviceTwin(delete.DeviceID, delete.Name)
+	for _, device := range deletes {
+		err = DeleteDeviceTwin(device.DeviceID, device.Name)
 		if err != nil {
-			obm.Rollback()
+			errRollback := obm.Rollback()
+			if errRollback != nil {
+				klog.Errorf("transaction rollback failed: %v", err)
+				return errRollback
+			}
 			return err
 		}
 	}
@@ -119,10 +131,18 @@ func DeviceTwinTrans(adds []DeviceTwin, deletes []DeviceDelete, updates []Device
 	for _, update := range updates {
 		err = UpdateDeviceTwinFields(update.DeviceID, update.Name, update.Cols)
 		if err != nil {
-			obm.Rollback()
+			errRollback := obm.Rollback()
+			if errRollback != nil {
+				klog.Errorf("transaction rollback failed: %v", err)
+				return errRollback
+			}
 			return err
 		}
 	}
-	obm.Commit()
+	err = obm.Commit()
+	if err != nil {
+		klog.Errorf("transaction commit failed: %v", err)
+		return err
+	}
 	return nil
 }

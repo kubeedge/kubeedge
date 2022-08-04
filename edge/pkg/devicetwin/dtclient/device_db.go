@@ -89,13 +89,21 @@ func UpdateDeviceMulti(updates []DeviceUpdate) error {
 func AddDeviceTrans(adds []Device, addAttrs []DeviceAttr, addTwins []DeviceTwin) error {
 	var err error
 	obm := dbm.DBAccess
-	obm.Begin()
+	err = obm.Begin()
+	if err != nil {
+		klog.Errorf("begin transaction failed: %v", err)
+		return err
+	}
 	for _, add := range adds {
 		err = SaveDevice(&add)
 
 		if err != nil {
 			klog.Errorf("save device failed: %v", err)
-			obm.Rollback()
+			errRollback := obm.Rollback()
+			if errRollback != nil {
+				klog.Errorf("transaction rollback failed: %v", err)
+				return errRollback
+			}
 			return err
 		}
 	}
@@ -103,7 +111,11 @@ func AddDeviceTrans(adds []Device, addAttrs []DeviceAttr, addTwins []DeviceTwin)
 	for _, attr := range addAttrs {
 		err = SaveDeviceAttr(&attr)
 		if err != nil {
-			obm.Rollback()
+			errRollback := obm.Rollback()
+			if errRollback != nil {
+				klog.Errorf("transaction rollback failed: %v", err)
+				return errRollback
+			}
 			return err
 		}
 	}
@@ -111,11 +123,19 @@ func AddDeviceTrans(adds []Device, addAttrs []DeviceAttr, addTwins []DeviceTwin)
 	for _, twin := range addTwins {
 		err = SaveDeviceTwin(&twin)
 		if err != nil {
-			obm.Rollback()
+			errRollback := obm.Rollback()
+			if errRollback != nil {
+				klog.Errorf("transaction rollback failed: %v", err)
+				return errRollback
+			}
 			return err
 		}
 	}
-	obm.Commit()
+	err = obm.Commit()
+	if err != nil {
+		klog.Errorf("transaction commit failed: %v", err)
+		return err
+	}
 	return nil
 }
 
@@ -123,24 +143,44 @@ func AddDeviceTrans(adds []Device, addAttrs []DeviceAttr, addTwins []DeviceTwin)
 func DeleteDeviceTrans(deletes []string) error {
 	var err error
 	obm := dbm.DBAccess
-	obm.Begin()
-	for _, delete := range deletes {
-		err = DeleteDeviceByID(delete)
+	err = obm.Begin()
+	if err != nil {
+		klog.Errorf("begin transaction failed: %v", err)
+		return err
+	}
+	for _, deleteID := range deletes {
+		err = DeleteDeviceByID(deleteID)
 		if err != nil {
-			obm.Rollback()
+			errRollback := obm.Rollback()
+			if errRollback != nil {
+				klog.Errorf("transaction rollback failed: %v", err)
+				return errRollback
+			}
 			return err
 		}
-		err = DeleteDeviceAttrByDeviceID(delete)
+		err = DeleteDeviceAttrByDeviceID(deleteID)
 		if err != nil {
-			obm.Rollback()
+			errRollback := obm.Rollback()
+			if errRollback != nil {
+				klog.Errorf("transaction rollback failed: %v", err)
+				return errRollback
+			}
 			return err
 		}
-		err = DeleteDeviceTwinByDeviceID(delete)
+		err = DeleteDeviceTwinByDeviceID(deleteID)
 		if err != nil {
-			obm.Rollback()
+			errRollback := obm.Rollback()
+			if errRollback != nil {
+				klog.Errorf("transaction rollback failed: %v", err)
+				return errRollback
+			}
 			return err
 		}
 	}
-	obm.Commit()
+	err = obm.Commit()
+	if err != nil {
+		klog.Errorf("transaction commit failed: %v", err)
+		return err
+	}
 	return nil
 }
