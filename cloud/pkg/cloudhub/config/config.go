@@ -5,13 +5,9 @@ import (
 	"os"
 	"sync"
 
-	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
-	"github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
-	syncinformer "github.com/kubeedge/kubeedge/pkg/client/informers/externalversions/reliablesyncs/v1alpha1"
-	synclister "github.com/kubeedge/kubeedge/pkg/client/listers/reliablesyncs/v1alpha1"
 )
 
 var Config Configure
@@ -77,21 +73,4 @@ func InitConfigure(hub *v1alpha1.CloudHub) {
 			klog.Exit("Both of cert and key should be specified!")
 		}
 	})
-}
-
-// ObjectSyncController use beehive context message layer
-type ObjectSyncController struct {
-	CrdClient versioned.Interface
-
-	// informer
-	ClusterObjectSyncInformer syncinformer.ClusterObjectSyncInformer
-	ObjectSyncInformer        syncinformer.ObjectSyncInformer
-
-	// synced
-	ClusterObjectSyncSynced cache.InformerSynced
-	ObjectSyncSynced        cache.InformerSynced
-
-	// lister
-	ClusterObjectSyncLister synclister.ClusterObjectSyncLister
-	ObjectSyncLister        synclister.ObjectSyncLister
 }
