@@ -61,7 +61,6 @@ type MessageHandle struct {
 	WriteTimeout      int
 	nodeCond          sync.Map
 	nodeConns         sync.Map
-	nodeLocks         sync.Map
 	nodeRegistered    sync.Map
 	MessageQueue      *channelq.ChannelMessageQueue
 	Handlers          []HandleFunc
@@ -283,18 +282,6 @@ func (mh *MessageHandle) PubToController(info *model.HubInfo, msg *beehiveModel.
 	return nil
 }
 
-func (mh *MessageHandle) hubIoWrite(hi hubio.CloudHubIO, nodeID string, msg *beehiveModel.Message) error {
-	value, ok := mh.nodeLocks.Load(nodeID)
-	if !ok {
-		return fmt.Errorf("node disconnected")
-	}
-	mutex := value.(*sync.Mutex)
-	mutex.Lock()
-	defer mutex.Unlock()
-
-	return hi.WriteData(msg)
-}
-
 // ServeConn starts serving the incoming connection
 func (mh *MessageHandle) ServeConn(info *model.HubInfo) {
 	err := mh.RegisterNode(info)
@@ -332,7 +319,6 @@ func (mh *MessageHandle) RegisterNode(info *model.HubInfo) error {
 		return err
 	}
 
-	mh.nodeLocks.Store(info.NodeID, &sync.Mutex{})
 	mh.nodeRegistered.Store(info.NodeID, true)
 	atomic.AddInt32(&mh.NodeNumber, 1)
 	return nil
@@ -349,7 +335,6 @@ func (mh *MessageHandle) UnregisterNode(info *model.HubInfo, code ExitCode) {
 	}
 
 	mh.nodeCond.Delete(info.NodeID)
-	mh.nodeLocks.Delete(info.NodeID)
 	mh.nodeConns.Delete(info.NodeID)
 	mh.nodeRegistered.Delete(info.NodeID)
 	nodeKeepalive, ok := mh.KeepaliveChannel.Load(info.NodeID)
@@ -420,7 +405,7 @@ func (mh *MessageHandle) ListMessageWriteLoop(info *model.HubInfo, stopServe cha
 			continue
 		}
 
-		if err := mh.send(conn.(hubio.CloudHubIO), info, msg); err != nil {
+		if err := mh.send(conn.(hubio.CloudHubIO), msg); err != nil {
 			klog.Errorf("failed to send to cloudhub, err: %v", err)
 		}
 
@@ -503,7 +488,7 @@ func (mh *MessageHandle) sendMsg(hi hubio.CloudHubIO, info *model.HubInfo, copyM
 		retryInterval time.Duration = 5
 	)
 	ticker := time.NewTimer(retryInterval * time.Second)
-	err := mh.send(hi, info, copyMsg)
+	err := mh.send(hi, copyMsg)
 	if err != nil {
 		return err
 	}
@@ -518,7 +503,7 @@ LOOP:
 			if retry == 4 {
 				return errors.New("failed to send message in five times")
 			}
-			err := mh.send(hi, info, copyMsg)
+			err := mh.send(hi, copyMsg)
 			if err != nil {
 				return err
 			}
@@ -529,12 +514,8 @@ LOOP:
 	return nil
 }
 
-func (mh *MessageHandle) send(hi hubio.CloudHubIO, info *model.HubInfo, msg *beehiveModel.Message) error {
-	err := mh.hubIoWrite(hi, info.NodeID, msg)
-	if err != nil {
-		return err
-	}
-	return nil
+func (mh *MessageHandle) send(hi hubio.CloudHubIO, msg *beehiveModel.Message) error {
+	return hi.WriteData(msg)
 }
 
 func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model.HubInfo, nodeStore cache.Store) {
