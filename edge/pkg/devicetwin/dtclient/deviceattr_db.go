@@ -100,19 +100,31 @@ func UpdateDeviceAttrMulti(updates []DeviceAttrUpdate) error {
 func DeviceAttrTrans(adds []DeviceAttr, deletes []DeviceDelete, updates []DeviceAttrUpdate) error {
 	var err error
 	obm := dbm.DBAccess
-	obm.Begin()
+	err = obm.Begin()
+	if err != nil {
+		klog.Errorf("begin transaction failed: %v", err)
+		return err
+	}
 	for _, add := range adds {
 		err = SaveDeviceAttr(&add)
 		if err != nil {
-			obm.Rollback()
+			errRollback := obm.Rollback()
+			if errRollback != nil {
+				klog.Errorf("transaction rollback failed: %v", errRollback)
+				return errRollback
+			}
 			return err
 		}
 	}
 
-	for _, delete := range deletes {
-		err = DeleteDeviceAttr(delete.DeviceID, delete.Name)
+	for _, device := range deletes {
+		err = DeleteDeviceAttr(device.DeviceID, device.Name)
 		if err != nil {
-			obm.Rollback()
+			errRollback := obm.Rollback()
+			if errRollback != nil {
+				klog.Errorf("transaction rollback failed: %v", errRollback)
+				return errRollback
+			}
 			return err
 		}
 	}
@@ -120,10 +132,18 @@ func DeviceAttrTrans(adds []DeviceAttr, deletes []DeviceDelete, updates []Device
 	for _, update := range updates {
 		err = UpdateDeviceAttrFields(update.DeviceID, update.Name, update.Cols)
 		if err != nil {
-			obm.Rollback()
+			errRollback := obm.Rollback()
+			if errRollback != nil {
+				klog.Errorf("transaction rollback failed: %v", errRollback)
+				return errRollback
+			}
 			return err
 		}
 	}
-	obm.Commit()
+	err = obm.Commit()
+	if err != nil {
+		klog.Errorf("transaction commit failed: %v", err)
+		return err
+	}
 	return nil
 }
