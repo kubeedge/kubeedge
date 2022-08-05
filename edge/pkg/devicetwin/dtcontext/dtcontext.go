@@ -16,7 +16,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
 )
 
-//DTContext context for devicetwin
+// DTContext context for devicetwin
 type DTContext struct {
 	GroupID        string
 	NodeName       string
@@ -32,7 +32,7 @@ type DTContext struct {
 	State string
 }
 
-//InitDTContext init dtcontext
+// InitDTContext init dtcontext
 func InitDTContext() (*DTContext, error) {
 	return &DTContext{
 		GroupID:       "",
@@ -48,7 +48,7 @@ func InitDTContext() (*DTContext, error) {
 	}, nil
 }
 
-//CommTo communicate with deviceTwin module by channel
+// CommTo communicate with deviceTwin module by channel
 func (dtc *DTContext) CommTo(dtmName string, content interface{}) error {
 	if v, exist := dtc.CommChan[dtmName]; exist {
 		v <- content
@@ -57,7 +57,7 @@ func (dtc *DTContext) CommTo(dtmName string, content interface{}) error {
 	return errors.New("Not found chan to communicate")
 }
 
-//HeartBeat update heartbeat timestamp
+// HeartBeat update heartbeat timestamp
 // 1. modules receive heartbeat from deviceTwinController(process)
 // 2. modules call HeartBeat to update heartbeat timestamp or stop
 func (dtc *DTContext) HeartBeat(dtmName string, content interface{}) error {
@@ -71,7 +71,7 @@ func (dtc *DTContext) HeartBeat(dtmName string, content interface{}) error {
 	return nil
 }
 
-//GetMutex get mutex
+// GetMutex get mutex
 func (dtc *DTContext) GetMutex(deviceID string) (*sync.Mutex, bool) {
 	v, mutexExist := dtc.DeviceMutex.Load(deviceID)
 	if !mutexExist {
@@ -85,7 +85,7 @@ func (dtc *DTContext) GetMutex(deviceID string) (*sync.Mutex, bool) {
 	return nil, false
 }
 
-//Lock try to get the lock of the device
+// Lock try to get the lock of the device
 func (dtc *DTContext) Lock(deviceID string) bool {
 	deviceMutex, ok := dtc.GetMutex(deviceID)
 	if ok {
@@ -96,7 +96,7 @@ func (dtc *DTContext) Lock(deviceID string) bool {
 	return false
 }
 
-//Unlock remove the lock of the device
+// Unlock remove the lock of the device
 func (dtc *DTContext) Unlock(deviceID string) bool {
 	deviceMutex, ok := dtc.GetMutex(deviceID)
 	if ok {
@@ -117,13 +117,13 @@ func (dtc *DTContext) UnlockAll() {
 	dtc.Mutex.Unlock()
 }
 
-//IsDeviceExist return whether the device exists
+// IsDeviceExist return whether the device exists
 func (dtc *DTContext) IsDeviceExist(deviceID string) bool {
 	_, ok := dtc.DeviceList.Load(deviceID)
 	return ok
 }
 
-//GetDevice get device
+// GetDevice get device
 func (dtc *DTContext) GetDevice(deviceID string) (*dttype.Device, bool) {
 	d, ok := dtc.DeviceList.Load(deviceID)
 	if ok {
@@ -135,7 +135,7 @@ func (dtc *DTContext) GetDevice(deviceID string) (*dttype.Device, bool) {
 	return nil, false
 }
 
-//Send  result to other module
+// Send  result to other module
 func (dtc *DTContext) Send(identity string, action string, module string, msg *model.Message) error {
 	dtMsg := &dttype.DTMessage{
 		Action:   action,
@@ -145,7 +145,7 @@ func (dtc *DTContext) Send(identity string, action string, module string, msg *m
 	return dtc.CommTo(module, dtMsg)
 }
 
-//BuildModelMessage build mode messages
+// BuildModelMessage build mode messages
 func (dtc *DTContext) BuildModelMessage(group string, parentID string, resource string, operation string, content interface{}) *model.Message {
 	msg := model.NewMessage(parentID)
 	msg.BuildRouter(modules.TwinGroup, group, resource, operation)
