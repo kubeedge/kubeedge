@@ -112,7 +112,7 @@ func (dtc *DTContext) LockAll() {
 	dtc.Mutex.Lock()
 }
 
-// UnlockAll get all lock
+// UnlockAll release all lock
 func (dtc *DTContext) UnlockAll() {
 	dtc.Mutex.Unlock()
 }
