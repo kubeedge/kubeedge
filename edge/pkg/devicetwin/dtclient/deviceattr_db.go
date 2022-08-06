@@ -6,7 +6,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 )
 
-//DeviceAttr the struct of device attributes
+// DeviceAttr the struct of device attributes
 type DeviceAttr struct {
 	ID          int64  `orm:"column(id);size(64);auto;pk"`
 	DeviceID    string `orm:"column(deviceid); null; type(text)"`
@@ -18,14 +18,14 @@ type DeviceAttr struct {
 	Metadata    string `orm:"column(metadata);null;type(text)"`
 }
 
-//SaveDeviceAttr save device attributes
+// SaveDeviceAttr save device attributes
 func SaveDeviceAttr(doc *DeviceAttr) error {
 	num, err := dbm.DBAccess.Insert(doc)
 	klog.V(4).Infof("Insert affected Num: %d, %s", num, err)
 	return err
 }
 
-//DeleteDeviceAttrByDeviceID delete device attr
+// DeleteDeviceAttrByDeviceID delete device attr
 func DeleteDeviceAttrByDeviceID(deviceID string) error {
 	num, err := dbm.DBAccess.QueryTable(DeviceAttrTableName).Filter("deviceid", deviceID).Delete()
 	if err != nil {
@@ -36,7 +36,7 @@ func DeleteDeviceAttrByDeviceID(deviceID string) error {
 	return nil
 }
 
-//DeleteDeviceAttr delete device attr
+// DeleteDeviceAttr delete device attr
 func DeleteDeviceAttr(deviceID string, name string) error {
 	num, err := dbm.DBAccess.QueryTable(DeviceAttrTableName).Filter("deviceid", deviceID).Filter("name", name).Delete()
 	if err != nil {
@@ -84,7 +84,7 @@ type DeviceAttrUpdate struct {
 	Cols     map[string]interface{}
 }
 
-//UpdateDeviceAttrMulti update device attr multi
+// UpdateDeviceAttrMulti update device attr multi
 func UpdateDeviceAttrMulti(updates []DeviceAttrUpdate) error {
 	var err error
 	for _, update := range updates {
@@ -96,7 +96,7 @@ func UpdateDeviceAttrMulti(updates []DeviceAttrUpdate) error {
 	return nil
 }
 
-//DeviceAttrTrans transaction of device attr
+// DeviceAttrTrans modify(add delete update) device attr with transaction
 func DeviceAttrTrans(adds []DeviceAttr, deletes []DeviceDelete, updates []DeviceAttrUpdate) error {
 	var err error
 	obm := dbm.DBAccess
@@ -108,11 +108,7 @@ func DeviceAttrTrans(adds []DeviceAttr, deletes []DeviceDelete, updates []Device
 	for _, add := range adds {
 		err = SaveDeviceAttr(&add)
 		if err != nil {
-			errRollback := obm.Rollback()
-			if errRollback != nil {
-				klog.Errorf("transaction rollback failed: %v", errRollback)
-				return errRollback
-			}
+			obm.Rollback()
 			return err
 		}
 	}
@@ -120,11 +116,7 @@ func DeviceAttrTrans(adds []DeviceAttr, deletes []DeviceDelete, updates []Device
 	for _, device := range deletes {
 		err = DeleteDeviceAttr(device.DeviceID, device.Name)
 		if err != nil {
-			errRollback := obm.Rollback()
-			if errRollback != nil {
-				klog.Errorf("transaction rollback failed: %v", errRollback)
-				return errRollback
-			}
+			obm.Rollback()
 			return err
 		}
 	}
@@ -132,18 +124,9 @@ func DeviceAttrTrans(adds []DeviceAttr, deletes []DeviceDelete, updates []Device
 	for _, update := range updates {
 		err = UpdateDeviceAttrFields(update.DeviceID, update.Name, update.Cols)
 		if err != nil {
-			errRollback := obm.Rollback()
-			if errRollback != nil {
-				klog.Errorf("transaction rollback failed: %v", errRollback)
-				return errRollback
-			}
+			obm.Rollback()
 			return err
 		}
 	}
-	err = obm.Commit()
-	if err != nil {
-		klog.Errorf("transaction commit failed: %v", err)
-		return err
-	}
-	return nil
+	return obm.Commit()
 }

@@ -6,7 +6,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 )
 
-//DeviceTwin the struct of device twin
+// DeviceTwin the struct of device twin
 type DeviceTwin struct {
 	ID              int64  `orm:"column(id);size(64);auto;pk"`
 	DeviceID        string `orm:"column(deviceid); null; type(text)"`
@@ -23,14 +23,14 @@ type DeviceTwin struct {
 	Metadata        string `orm:"column(metadata);null;type(text)"`
 }
 
-//SaveDeviceTwin save device twin
+// SaveDeviceTwin save device twin
 func SaveDeviceTwin(doc *DeviceTwin) error {
 	num, err := dbm.DBAccess.Insert(doc)
 	klog.V(4).Infof("Insert affected Num: %d, %s", num, err)
 	return err
 }
 
-//DeleteDeviceTwinByDeviceID delete device twin
+// DeleteDeviceTwinByDeviceID delete device twin
 func DeleteDeviceTwinByDeviceID(deviceID string) error {
 	num, err := dbm.DBAccess.QueryTable(DeviceTwinTableName).Filter("deviceid", deviceID).Delete()
 	if err != nil {
@@ -41,7 +41,7 @@ func DeleteDeviceTwinByDeviceID(deviceID string) error {
 	return nil
 }
 
-//DeleteDeviceTwin delete device twin
+// DeleteDeviceTwin delete device twin
 func DeleteDeviceTwin(deviceID string, name string) error {
 	num, err := dbm.DBAccess.QueryTable(DeviceTwinTableName).Filter("deviceid", deviceID).Filter("name", name).Delete()
 	if err != nil {
@@ -76,14 +76,14 @@ func QueryDeviceTwin(key string, condition string) (*[]DeviceTwin, error) {
 	return twin, nil
 }
 
-//DeviceTwinUpdate the struct for updating device twin
+// DeviceTwinUpdate the struct for updating device twin
 type DeviceTwinUpdate struct {
 	DeviceID string
 	Name     string
 	Cols     map[string]interface{}
 }
 
-//UpdateDeviceTwinMulti update device twin multi
+// UpdateDeviceTwinMulti update device twin multi
 func UpdateDeviceTwinMulti(updates []DeviceTwinUpdate) error {
 	var err error
 	for _, update := range updates {
@@ -95,7 +95,7 @@ func UpdateDeviceTwinMulti(updates []DeviceTwinUpdate) error {
 	return nil
 }
 
-//DeviceTwinTrans transaction of device twin
+// DeviceTwinTrans modify(add delete update) device twin with transaction
 func DeviceTwinTrans(adds []DeviceTwin, deletes []DeviceDelete, updates []DeviceTwinUpdate) error {
 	var err error
 	obm := dbm.DBAccess
@@ -107,11 +107,7 @@ func DeviceTwinTrans(adds []DeviceTwin, deletes []DeviceDelete, updates []Device
 	for _, add := range adds {
 		err = SaveDeviceTwin(&add)
 		if err != nil {
-			errRollback := obm.Rollback()
-			if errRollback != nil {
-				klog.Errorf("transaction rollback failed: %v", errRollback)
-				return errRollback
-			}
+			obm.Rollback()
 			return err
 		}
 	}
@@ -119,11 +115,7 @@ func DeviceTwinTrans(adds []DeviceTwin, deletes []DeviceDelete, updates []Device
 	for _, device := range deletes {
 		err = DeleteDeviceTwin(device.DeviceID, device.Name)
 		if err != nil {
-			errRollback := obm.Rollback()
-			if errRollback != nil {
-				klog.Errorf("transaction rollback failed: %v", errRollback)
-				return errRollback
-			}
+			obm.Rollback()
 			return err
 		}
 	}
@@ -131,18 +123,9 @@ func DeviceTwinTrans(adds []DeviceTwin, deletes []DeviceDelete, updates []Device
 	for _, update := range updates {
 		err = UpdateDeviceTwinFields(update.DeviceID, update.Name, update.Cols)
 		if err != nil {
-			errRollback := obm.Rollback()
-			if errRollback != nil {
-				klog.Errorf("transaction rollback failed: %v", errRollback)
-				return errRollback
-			}
+			obm.Rollback()
 			return err
 		}
 	}
-	err = obm.Commit()
-	if err != nil {
-		klog.Errorf("transaction commit failed: %v", err)
-		return err
-	}
-	return nil
+	return obm.Commit()
 }
