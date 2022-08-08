@@ -72,21 +72,21 @@ func (clcm *containerLifecycleManagerImpl) InternalContainerLifecycle() Internal
 	return &internalContainerLifecycleImpl{clcm.cpuManager}
 }
 
+// StartCPUManager start the cpuManager
 func (clcm *containerLifecycleManagerImpl) StartCPUManager(activePods cpumanager.ActivePodsFunc,
 	sourcesReady config.SourcesReady,
 	podStatusProvider status.PodStatusProvider,
 	runtimeService internalapi.RuntimeService) error {
-	containerMap, err := buildContainerMapFromRuntime(runtimeService)
+	containerMap := buildContainerMapFromRuntime(runtimeService)
+	err := clcm.cpuManager.Start(activePods, sourcesReady, podStatusProvider, runtimeService, containerMap)
 	if err != nil {
-		klog.Errorf("Error when starting the CPU manager in Container Lifecycle Manager: [%v]", err)
-		return err
+		return fmt.Errorf("start cpu manager error: %v", err)
 	}
-	clcm.cpuManager.Start(activePods, sourcesReady, podStatusProvider, runtimeService, containerMap)
 	return nil
 }
 
 // This is introduced from Kubernetes 1.18 container_manager_linux.go
-func buildContainerMapFromRuntime(runtimeService internalapi.RuntimeService) (containermap.ContainerMap, error) {
+func buildContainerMapFromRuntime(runtimeService internalapi.RuntimeService) containermap.ContainerMap {
 	podSandboxMap := make(map[string]string)
 	podSandboxList, _ := runtimeService.ListPodSandbox(nil)
 	for _, p := range podSandboxList {
@@ -97,10 +97,11 @@ func buildContainerMapFromRuntime(runtimeService internalapi.RuntimeService) (co
 	containerList, _ := runtimeService.ListContainers(nil)
 	for _, c := range containerList {
 		if _, exists := podSandboxMap[c.PodSandboxId]; !exists {
-			return nil, fmt.Errorf("no PodsandBox found with Id '%s'", c.PodSandboxId)
+			klog.InfoS("no PodSandbox found for the container", "podSandboxId", c.PodSandboxId, "containerName", c.Metadata.Name, "containerId", c.Id)
+			continue
 		}
 		containerMap.Add(podSandboxMap[c.PodSandboxId], c.Metadata.Name, c.Id)
 	}
 
-	return containerMap, nil
+	return containerMap
 }
