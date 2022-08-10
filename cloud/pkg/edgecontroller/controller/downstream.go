@@ -39,17 +39,11 @@ type DownstreamController struct {
 
 	nodeManager *manager.NodesManager
 
-	serviceManager *manager.ServiceManager
-
-	endpointsManager *manager.EndpointsManager
-
 	rulesManager *manager.RuleManager
 
 	ruleEndpointsManager *manager.RuleEndpointManager
 
 	lc *manager.LocationCache
-
-	svcLister clientgov1.ServiceLister
 
 	podLister clientgov1.PodLister
 }
@@ -415,20 +409,6 @@ func NewDownstreamController(config *v1alpha1.EdgeController, k8sInformerFactory
 		return nil, err
 	}
 
-	svcInformer := k8sInformerFactory.Core().V1().Services()
-	serviceManager, err := manager.NewServiceManager(config, svcInformer.Informer())
-	if err != nil {
-		klog.Warningf("Create service manager failed with error: %s", err)
-		return nil, err
-	}
-
-	endpointsInformer := k8sInformerFactory.Core().V1().Endpoints()
-	endpointsManager, err := manager.NewEndpointsManager(config, endpointsInformer.Informer())
-	if err != nil {
-		klog.Warningf("Create endpoints manager failed with error: %s", err)
-		return nil, err
-	}
-
 	rulesInformer := crdInformerFactory.Rules().V1().Rules().Informer()
 	rulesManager, err := manager.NewRuleManager(config, rulesInformer)
 	if err != nil {
@@ -449,11 +429,8 @@ func NewDownstreamController(config *v1alpha1.EdgeController, k8sInformerFactory
 		configmapManager:     configMapManager,
 		secretManager:        secretManager,
 		nodeManager:          nodesManager,
-		serviceManager:       serviceManager,
-		endpointsManager:     endpointsManager,
 		messageLayer:         messagelayer.EdgeControllerMessageLayer(),
 		lc:                   lc,
-		svcLister:            svcInformer.Lister(),
 		podLister:            podInformer.Lister(),
 		rulesManager:         rulesManager,
 		ruleEndpointsManager: ruleEndpointsManager,
