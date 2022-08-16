@@ -64,7 +64,7 @@ func TestSaveDevice(t *testing.T) {
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
 			ormerMock.EXPECT().Insert(gomock.Any()).Return(test.returnInt, test.returnErr).Times(1)
-			err := SaveDevice(&Device{})
+			err := SaveDevice(dbm.DBAccess, &Device{})
 			if test.returnErr != err {
 				t.Errorf("SaveDevice case failed: wanted error %v and got error %v", test.returnErr, err)
 			}
@@ -119,7 +119,7 @@ func TestDeleteDeviceByID(t *testing.T) {
 			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
 			querySeterMock.EXPECT().Delete().Return(test.deleteReturnInt, test.deleteReturnErr).Times(1)
 			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-			err := DeleteDeviceByID("test")
+			err := DeleteDeviceByID(ormerMock, "test")
 			if test.deleteReturnErr != err {
 				t.Errorf("DeleteDeviceByID case failed: wanted %v and got %v", test.deleteReturnErr, err)
 			}
@@ -440,6 +440,9 @@ func TestAddDeviceTrans(t *testing.T) {
 	defer mockCtrl.Finish()
 	ormerMock = beego.NewMockOrmer(mockCtrl)
 	dbm.DBAccess = ormerMock
+	dbm.DefaultOrmFunc = func() orm.Ormer {
+		return ormerMock
+	}
 
 	cases := []struct {
 		// name is name of the testcase
@@ -664,6 +667,9 @@ func TestDeleteDeviceTrans(t *testing.T) {
 
 	// deletes is argument to DeleteDeviceTrans function
 	deletes := []string{"test"}
+	dbm.DefaultOrmFunc = func() orm.Ormer {
+		return ormerMock
+	}
 
 	// run the test cases
 	for _, test := range cases {
@@ -677,6 +683,7 @@ func TestDeleteDeviceTrans(t *testing.T) {
 			querySeterMock.EXPECT().Delete().Return(test.successDeleteReturnInt, test.successDeleteReturnErr).Times(test.successDeleteTimes)
 			// fail delete
 			querySeterMock.EXPECT().Delete().Return(test.failDeleteReturnInt, test.failDeleteReturnErr).Times(test.failDeleteTimes)
+
 			err := DeleteDeviceTrans(deletes)
 			if test.wantErr != err {
 				t.Errorf("DeleteDeviceTrans Case failed : wanted %v and got %v", test.wantErr, err)

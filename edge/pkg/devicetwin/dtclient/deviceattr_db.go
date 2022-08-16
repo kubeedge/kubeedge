@@ -1,6 +1,7 @@
 package dtclient
 
 import (
+	"github.com/astaxie/beego/orm"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
@@ -19,15 +20,15 @@ type DeviceAttr struct {
 }
 
 //SaveDeviceAttr save device attributes
-func SaveDeviceAttr(doc *DeviceAttr) error {
-	num, err := dbm.DBAccess.Insert(doc)
+func SaveDeviceAttr(obm orm.Ormer, doc *DeviceAttr) error {
+	num, err := obm.Insert(doc)
 	klog.V(4).Infof("Insert affected Num: %d, %s", num, err)
 	return err
 }
 
 //DeleteDeviceAttrByDeviceID delete device attr
-func DeleteDeviceAttrByDeviceID(deviceID string) error {
-	num, err := dbm.DBAccess.QueryTable(DeviceAttrTableName).Filter("deviceid", deviceID).Delete()
+func DeleteDeviceAttrByDeviceID(obm orm.Ormer, deviceID string) error {
+	num, err := obm.QueryTable(DeviceAttrTableName).Filter("deviceid", deviceID).Delete()
 	if err != nil {
 		klog.Errorf("Something wrong when deleting data: %v", err)
 		return err
@@ -37,8 +38,8 @@ func DeleteDeviceAttrByDeviceID(deviceID string) error {
 }
 
 //DeleteDeviceAttr delete device attr
-func DeleteDeviceAttr(deviceID string, name string) error {
-	num, err := dbm.DBAccess.QueryTable(DeviceAttrTableName).Filter("deviceid", deviceID).Filter("name", name).Delete()
+func DeleteDeviceAttr(obm orm.Ormer, deviceID string, name string) error {
+	num, err := obm.QueryTable(DeviceAttrTableName).Filter("deviceid", deviceID).Filter("name", name).Delete()
 	if err != nil {
 		klog.Errorf("Something wrong when deleting data: %v", err)
 		return err
@@ -55,8 +56,8 @@ func UpdateDeviceAttrField(deviceID string, name string, col string, value inter
 }
 
 // UpdateDeviceAttrFields update special fields
-func UpdateDeviceAttrFields(deviceID string, name string, cols map[string]interface{}) error {
-	num, err := dbm.DBAccess.QueryTable(DeviceAttrTableName).Filter("deviceid", deviceID).Filter("name", name).Update(cols)
+func UpdateDeviceAttrFields(obm orm.Ormer, deviceID string, name string, cols map[string]interface{}) error {
+	num, err := obm.QueryTable(DeviceAttrTableName).Filter("deviceid", deviceID).Filter("name", name).Update(cols)
 	klog.V(4).Infof("Update affected Num: %d, %s", num, err)
 	return err
 }
@@ -88,7 +89,7 @@ type DeviceAttrUpdate struct {
 func UpdateDeviceAttrMulti(updates []DeviceAttrUpdate) error {
 	var err error
 	for _, update := range updates {
-		err = UpdateDeviceAttrFields(update.DeviceID, update.Name, update.Cols)
+		err = UpdateDeviceAttrFields(dbm.DBAccess, update.DeviceID, update.Name, update.Cols)
 		if err != nil {
 			return err
 		}
@@ -98,32 +99,44 @@ func UpdateDeviceAttrMulti(updates []DeviceAttrUpdate) error {
 
 //DeviceAttrTrans transaction of device attr
 func DeviceAttrTrans(adds []DeviceAttr, deletes []DeviceDelete, updates []DeviceAttrUpdate) error {
-	var err error
-	obm := dbm.DBAccess
-	obm.Begin()
-	for _, add := range adds {
-		err = SaveDeviceAttr(&add)
+	obm := dbm.DefaultOrmFunc()
+	err := obm.Begin()
+	if err != nil {
+		klog.Errorf("failed to begin transaction: %v", err)
+		return err
+	}
+
+	defer func() {
 		if err != nil {
-			obm.Rollback()
+			dbm.RollbackTransaction(obm)
+		} else {
+			err = obm.Commit()
+			if err != nil {
+				klog.Errorf("failed to commit transaction: %v", err)
+			}
+		}
+	}()
+
+	for _, add := range adds {
+		err = SaveDeviceAttr(obm, &add)
+		if err != nil {
 			return err
 		}
 	}
 
 	for _, delete := range deletes {
-		err = DeleteDeviceAttr(delete.DeviceID, delete.Name)
+		err = DeleteDeviceAttr(obm, delete.DeviceID, delete.Name)
 		if err != nil {
-			obm.Rollback()
 			return err
 		}
 	}
 
 	for _, update := range updates {
-		err = UpdateDeviceAttrFields(update.DeviceID, update.Name, update.Cols)
+		err = UpdateDeviceAttrFields(obm, update.DeviceID, update.Name, update.Cols)
 		if err != nil {
-			obm.Rollback()
 			return err
 		}
 	}
-	obm.Commit()
-	return nil
+
+	return err
 }

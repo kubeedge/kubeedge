@@ -23,6 +23,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/astaxie/beego/orm"
 	"github.com/golang/mock/gomock"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -185,6 +186,9 @@ func TestDealMembershipUpdateValidAddedDevice(t *testing.T) {
 	defer mockCtrl.Finish()
 	ormerMock = beego.NewMockOrmer(mockCtrl)
 	dbm.DBAccess = ormerMock
+	dbm.DefaultOrmFunc = func() orm.Ormer {
+		return ormerMock
+	}
 
 	ormerMock.EXPECT().Begin().Return(nil)
 	ormerMock.EXPECT().Insert(gomock.Any()).Return(int64(1), nil).Times(1)

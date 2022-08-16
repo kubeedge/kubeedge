@@ -306,6 +306,9 @@ func TestUpdateDeviceAttr(t *testing.T) {
 	ormerMock = beego.NewMockOrmer(mockCtrl)
 	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
 	dbm.DBAccess = ormerMock
+	dbm.DefaultOrmFunc = func() orm.Ormer {
+		return ormerMock
+	}
 
 	dtContexts, _ := dtcontext.InitDTContext()
 	dtContexts.DeviceList.Store("EmptyDevice", "Device")

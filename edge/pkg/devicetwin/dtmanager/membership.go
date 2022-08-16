@@ -261,6 +261,7 @@ func removeDevice(context *dtcontext.DTContext, toRemove []dttype.Device, baseMe
 	if !delta {
 		baseMessage.EventID = ""
 	}
+
 	for _, device := range toRemove {
 		//update sqlite
 		_, deviceExist := context.GetDevice(device.ID)
