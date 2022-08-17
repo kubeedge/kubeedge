@@ -330,9 +330,9 @@ func (uc *UpstreamController) updateRuleStatus() {
 	}
 }
 
-func (uc *UpstreamController) podStatusResponse(msg model.Message) {
+func (uc *UpstreamController) podStatusResponse(msg model.Message, content interface{}) {
 	resMsg := model.NewMessage(msg.GetID()).
-		FillBody(common.MessageSuccessfulContent).
+		FillBody(content).
 		BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, msg.Router.Resource, model.ResponseOperation)
 
 	if err := uc.messageLayer.Send(*resMsg); err != nil {
@@ -359,6 +359,9 @@ func (uc *UpstreamController) updatePodStatus() {
 					if (err == nil && getPod.UID != podStatus.UID) || errors.IsNotFound(err) {
 						klog.Warningf("message: %s, pod not found, namespace: %s, name: %s", msg.GetID(), namespace, podStatus.Name)
 
+						// send response message to edged
+						uc.podStatusResponse(msg, common.MessageSuccessfulContent)
+
 						// Send request to delete this pod on edge side
 						delMsg := model.NewMessage("")
 						nodeID, err := messagelayer.GetNodeID(msg)
@@ -384,6 +387,7 @@ func (uc *UpstreamController) updatePodStatus() {
 						continue
 					}
 					if err != nil {
+						uc.podStatusResponse(msg, err)
 						klog.Warningf("message: %s, pod is nil, namespace: %s, name: %s, error: %s", msg.GetID(), namespace, podStatus.Name, err)
 						continue
 					}
@@ -424,12 +428,13 @@ func (uc *UpstreamController) updatePodStatus() {
 					getPod.Status = status
 
 					if updatedPod, err := uc.kubeClient.CoreV1().Pods(getPod.Namespace).UpdateStatus(context.Background(), getPod, metaV1.UpdateOptions{}); err != nil {
+						uc.podStatusResponse(msg, err)
 						klog.Warningf("message: %s, update pod status failed with error: %s, namespace: %s, name: %s", msg.GetID(), err, getPod.Namespace, getPod.Name)
 					} else {
 						klog.V(5).Infof("message: %s, update pod status successfully, namespace: %s, name: %s", msg.GetID(), updatedPod.Namespace, updatedPod.Name)
 
 						// send response message to edged
-						uc.podStatusResponse(msg)
+						uc.podStatusResponse(msg, common.MessageSuccessfulContent)
 
 						if updatedPod.DeletionTimestamp != nil && (status.Phase == v1.PodSucceeded || status.Phase == v1.PodFailed) {
 							if uc.isPodNotRunning(status.ContainerStatuses) {
