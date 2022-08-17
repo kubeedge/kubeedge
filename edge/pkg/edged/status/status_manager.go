@@ -35,6 +35,7 @@ import (
 	kubepod "k8s.io/kubernetes/pkg/kubelet/pod"
 	kubestatus "k8s.io/kubernetes/pkg/kubelet/status"
 	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
+	"k8s.io/kubernetes/pkg/kubelet/util/format"
 
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
@@ -547,10 +548,22 @@ func (m *manager) syncBatch() {
 			}
 		}
 
-		for uid, status := range m.podStatuses {
-			syncedUID := kubetypes.MirrorPodUID(uid)
-			if m.needsUpdate(types.UID(syncedUID), status) {
-				updatedStatuses = append(updatedStatuses, podStatusSyncRequest{uid, status})
+		for _, pod := range m.podManager.GetPods() {
+			podStatus, ok := m.podStatuses[pod.UID]
+			if !ok {
+				if m.canBeDeleted(pod, podStatus.status) {
+					err := m.metaClient.Pods(pod.Namespace).Delete(pod.Name, string(pod.UID))
+					if err != nil {
+						klog.Errorf("Failed to delete the pod %q: %v", format.Pod(pod), err)
+					} else {
+						klog.V(2).Infof("Successfully sent delete event to cloud for pod: %s", format.Pod(pod))
+					}
+				}
+				continue
+			}
+
+			if m.needsUpdate(pod.UID, podStatus) {
+				updatedStatuses = append(updatedStatuses, podStatusSyncRequest{pod.UID, podStatus})
 			}
 		}
 	}()
