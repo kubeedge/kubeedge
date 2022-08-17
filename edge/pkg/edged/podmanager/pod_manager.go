@@ -122,7 +122,3 @@ func (pm *podManager) GetUIDTranslations() (podToMirror map[kubetypes.ResolvedPo
 func (pm *podManager) TranslatePodUID(uid types.UID) kubetypes.ResolvedPodUID {
 	return kubetypes.ResolvedPodUID(uid)
 }
-
-func (pm *podManager) GetMirrorPodByPod(*v1.Pod) (*v1.Pod, bool) {
-	return nil, false
-}

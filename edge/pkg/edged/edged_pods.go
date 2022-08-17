@@ -1334,9 +1334,7 @@ func (e *edged) GetKubeletContainerLogs(ctx context.Context, podFullName, contai
 	}
 
 	podUID := pod.UID
-	if mirrorPod, ok := e.podManager.GetMirrorPodByPod(pod); ok {
-		podUID = mirrorPod.UID
-	}
+
 	podStatus, found := e.statusManager.GetPodStatus(podUID)
 	if !found {
 		// If there is no cached status, use the status from the
