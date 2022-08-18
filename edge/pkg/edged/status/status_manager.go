@@ -396,8 +396,6 @@ func (m *manager) updateStatusInternal(pod *v1.Pod, status v1.PodStatus, forceUp
 	cachedStatus, isCached := m.podStatuses[pod.UID]
 	if isCached {
 		oldStatus = cachedStatus.status
-	} else if mirrorPod, ok := m.podManager.GetMirrorPodByPod(pod); ok {
-		oldStatus = mirrorPod.Status
 	} else {
 		oldStatus = pod.Status
 	}
