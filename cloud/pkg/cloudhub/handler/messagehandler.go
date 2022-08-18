@@ -59,7 +59,6 @@ var VolumeRegExp = regexp.MustCompile(VolumePattern)
 type MessageHandle struct {
 	KeepaliveInterval int
 	WriteTimeout      int
-	Nodes             sync.Map
 	nodeCond          sync.Map
 	nodeConns         sync.Map
 	nodeLocks         sync.Map
@@ -334,7 +333,6 @@ func (mh *MessageHandle) RegisterNode(info *model.HubInfo) error {
 	}
 
 	mh.nodeLocks.Store(info.NodeID, &sync.Mutex{})
-	mh.Nodes.Store(info.NodeID, true)
 	mh.nodeRegistered.Store(info.NodeID, true)
 	atomic.AddInt32(&mh.NodeNumber, 1)
 	return nil
@@ -367,7 +365,6 @@ func (mh *MessageHandle) UnregisterNode(info *model.HubInfo, code ExitCode) {
 		klog.Errorf("fail to publish node disconnect event for node %s, reason %s", info.NodeID, err.Error())
 	}
 
-	mh.Nodes.Delete(info.NodeID)
 	atomic.AddInt32(&mh.NodeNumber, -1)
 
 	// delete the nodeQueue and nodeStore when node stopped
