@@ -223,6 +223,28 @@ generate:
 	chmod a+x hack/generate-crds.sh && ./hack/generate-crds.sh  $(foreach p, $(listCRDParams),--$(p)=$($(p)) )
 endif
 
+DMI_VERSION=v1alpha1
+listDMIParams := DMI_VERSION
+define GENERATE_DMI_HELP_INFO
+# generate dmi api.pb.go from api.proto.
+#
+# Args:
+#     DMI_VERSIONS, default: v1alpha1
+#
+# Example:
+#     make dmi-proto
+#     make dmi-proto -e DMI_VERSION=v1alpha1
+#
+endef
+.PHONY: dmi-proto
+ifeq ($(HELP),y)
+dmi-proto:
+	@echo "$$GENERATE_DMI_HELP_INFO"
+else
+dmi-proto:
+	chmod a+x hack/generate-dmi-proto.sh && ./hack/generate-dmi-proto.sh $(foreach p, $(listDMIParams),--$(p)=$($(p)) )
+endif
+
 SMALLBUILD_COMPONENTS=edgecore
 define SMALLBUILD_HELP_INFO
 # small build components.
