@@ -178,7 +178,7 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 	}
 
 	step.Printf("Generate systemd service file")
-	if err := common.GenerateServiceFile(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName); err != nil {
+	if err := common.GenerateServiceFile(util.KubeEdgeBinaryName, filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName)); err != nil {
 		return fmt.Errorf("create systemd service file failed: %v", err)
 	}
 

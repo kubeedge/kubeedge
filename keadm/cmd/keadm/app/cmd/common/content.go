@@ -19,7 +19,6 @@ package common
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 )
 
 // TODO (@zc2638) Need to migrate util's constants to common
@@ -37,9 +36,9 @@ RestartSec=10
 WantedBy=multi-user.target
 `
 
-func GenerateServiceFile(processPath string, process string) error {
+func GenerateServiceFile(process string, execStartCmd string) error {
 	filename := fmt.Sprintf("%s.service", process)
-	content := fmt.Sprintf(serviceFileTemplate, process, filepath.Join(processPath, process))
+	content := fmt.Sprintf(serviceFileTemplate, process, execStartCmd)
 	serviceFilePath := fmt.Sprintf("/etc/systemd/system/%s", filename)
 	return os.WriteFile(serviceFilePath, []byte(content), os.ModePerm)
 }
