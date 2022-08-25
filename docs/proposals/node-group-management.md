@@ -313,7 +313,7 @@ Assuming that we have 5 nodes at edge, 2 in Hangzhou and 3 in Beijing, called No
 First, we create nodegroups called beijing and hangzhou. The yaml is as follows:
 
 ```yaml
-apiVersion: groupmanagement.kubeedge.io/v1alpha1
+apiVersion: apps.kubeedge.io/v1alpha1
 kind: NodeGroup
 metadata:
   name: hangzhou
@@ -321,7 +321,7 @@ spec:
   matchLabels:
     location: hangzhou
 ---
-apiVersion: groupmanagement.kubeedge.io/v1alpha1
+apiVersion: apps.kubeedge.io/v1alpha1
 kind: NodeGroup
 metadata:
   name: beijing 
@@ -333,7 +333,7 @@ spec:
 Second, create the EdgeApplication resource. In this case, we want 2 pods to run in Hangzhou and 3 pods to run in Beijing. Also, we want these pods to use their local image registry and enable the service scope feature. Thus, we can apply the EdgeApplication like this:
 
 ```yaml
-apiVersion: groupmanagement.kubeedge.io/v1alpha1
+apiVersion: apps.kubeedge.io/v1alpha1
 kind: EdgeApplication
 metadata:
   name: nginx-app 
