@@ -93,6 +93,9 @@ verify-vendor-licenses:
 .PHONY: verify-crds
 verify-crds:
 	hack/verify-crds.sh
+.PHONY: verify-spelling
+verify-spelling:
+	hack/verify-spelling.sh
 
 define TEST_HELP_INFO
 # run golang test case.
