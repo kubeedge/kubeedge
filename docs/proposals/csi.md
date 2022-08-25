@@ -59,7 +59,7 @@ and graduated to stable (GA) since v1.13, and continuously be improved util now.
 
 * [CSI Spec](https://github.com/container-storage-interface/spec/blob/master/spec.md)
 * [CSI Drivers](https://kubernetes-csi.github.io/docs/drivers.html)
-* [CSI Volume Plugin in Kubernetes](https://github.com/kubernetes/community/blob/master/contributors/design-proposals/storage/container-storage-interface.md)
+* [CSI Volume Plugin in Kubernetes](https://github.com/kubernetes/design-proposals-archive/blob/main/storage/container-storage-interface.md)
 
 We can support Container Storage Interface (CSI) in KubeEdge,
 and give a standardized solution to the users who want to use persistent storage at edge.

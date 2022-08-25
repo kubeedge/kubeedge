@@ -46,7 +46,7 @@ The cloud native and microservice architecture is becoming more and more popular
 * Application access service with the same mechanism no matter it located on cloud or edge
 
 ### Service discovery on edge
-* Use iptables to redirect inbound and outbound traffic to the EdgeHub/ServiceBus. Then do service discovery in EdgeHub/ServiceBus by pick up the right POD from the service definition. The idea is similar with what istio is doing in the init_container: https://github.com/istio/istio/blob/master/tools/packaging/common/istio-iptables.sh
+* Use iptables to redirect inbound and outbound traffic to the EdgeHub/ServiceBus. Then do service discovery in EdgeHub/ServiceBus by pick up the right POD from the service definition. The idea is similar with what istio is doing in the init_container: https://github.com/istio/istio/blob/032be5b1ecfd5b087f623d76dca2879f8cd130be/tools/packaging/common/istio-iptables.sh
 
 ### Service communication from cloud to edge
 * ESD1: Application on cloud visit service with clusterIP and request goes to EC(refer to step CS2, CS3)

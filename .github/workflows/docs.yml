@@ -1,0 +1,24 @@
+name: Docs
+
+on:
+  push:
+  pull_request:
+
+env:
+  DISABLE_TELEMETRY: 1
+
+jobs:
+  markdown-link-check:
+    name: Broken Links
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Run link check
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'no'
+          use-verbose-mode: 'yes'
+          check-modified-files-only: 'no'
+          config-file: '.mlc_config.json'
+          folder-path: '.github/, build/, cloud/, common/, docs/, edge/, edgemesh/, edgesite/, hack/, keadm/, manifests/, mappers/, pkg/, staging/, tests/'
