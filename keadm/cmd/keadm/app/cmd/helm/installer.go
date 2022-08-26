@@ -150,6 +150,9 @@ func (cu *KubeCloudHelmInstTool) RunHelmInstall(baseHelmRoot string) error {
 	fmt.Printf("NAMESPACE: %s\n", release.Namespace)
 	fmt.Printf("STATUS: %s\n", release.Info.Status.String())
 	fmt.Printf("REVISION: %d\n", release.Version)
+	if cu.DryRun {
+		fmt.Printf("MANIFEST:\n%s\n", release.Manifest)
+	}
 
 	return nil
 }
