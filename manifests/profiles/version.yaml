@@ -24,7 +24,7 @@ cloudCore:
         - matchExpressions:
           - key: node-role.kubernetes.io/edge
             operator: DoesNotExist
-  tolerations: {}
+  tolerations: []
   nodeSelector: {}
   resources:
     limits:
@@ -85,7 +85,7 @@ iptablesManager:
         - matchExpressions:
           - key: node-role.kubernetes.io/edge
             operator: DoesNotExist
-  tolerations: {}
+  tolerations: []
   nodeSelector: {}
   resources:
     limits:

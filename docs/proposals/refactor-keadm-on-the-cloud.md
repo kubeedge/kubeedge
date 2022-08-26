@@ -49,7 +49,7 @@ spec:
           - matchExpressions:
           - key: node-role.kubernetes.io/edge
               operator: DoesNotExist
-    tolerations: {}
+    tolerations: []
     nodeSelector: {}
     resources:
       limits:
@@ -110,7 +110,7 @@ spec:
             - matchExpressions:
               - key: node-role.kubernetes.io/edge
                   operator: DoesNotExist
-    tolerations: {}
+    tolerations: []
     nodeSelector: {}
     resources:
       limits:
