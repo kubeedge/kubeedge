@@ -170,7 +170,7 @@ end=>end: deployed
 start->edit->init->end
 ```
 
-> Every profile-sytle CR could convert to the helm-style CR. And the two CRDs are in the cluster level.
+> Every profile-style CR could convert to the helm-style CR. And the two CRDs are in the cluster level.
 
 ## Plan B: using helm-style cmd
 
@@ -259,7 +259,7 @@ Allow appending file directories of charts to keadm, separated by commas
 
 ### reset-beta
 
-> Uninstall the exsited helm charts or manifests on the cloud.
+> Uninstall the existing helm charts or manifests on the cloud.
 
 #### --delete-namespace, -D
 
