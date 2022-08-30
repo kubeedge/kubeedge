@@ -17,11 +17,10 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
 )
 
-var groupMap = map[string]string{
-	"resource": modules.MetaGroup,
-	"twin":     modules.TwinGroup,
-	"func":     modules.MetaGroup,
-	"user":     modules.BusGroup,
+var groupList = []string{
+	modules.MetaGroup,
+	modules.TwinGroup,
+	modules.BusGroup,
 }
 
 var (
@@ -196,7 +195,7 @@ func (eh *EdgeHub) pubConnectInfo(isConnected bool) {
 		content = connect.CloudDisconnected
 	}
 
-	for _, group := range groupMap {
+	for _, group := range groupList {
 		message := model.NewMessage("").BuildRouter(messagepkg.SourceNodeConnection, group,
 			messagepkg.ResourceTypeNodeConnection, messagepkg.OperationNodeConnection).FillBody(content)
 		beehiveContext.SendToGroup(group, *message)
