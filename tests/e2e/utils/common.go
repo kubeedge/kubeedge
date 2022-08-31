@@ -34,9 +34,13 @@ import (
 	"github.com/onsi/gomega"
 	apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/apimachinery/pkg/util/wait"
+	clientset "k8s.io/client-go/kubernetes"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
@@ -1029,4 +1033,71 @@ func CallServicebus() (response string, err error) {
 	err = json.Unmarshal(body, &servicebusResponse)
 	response = servicebusResponse.Body
 	return
+}
+
+func GetStatefulSet(c clientset.Interface, ns, name string) (*apps.StatefulSet, error) {
+	return c.AppsV1().StatefulSets(ns).Get(context.TODO(), name, metav1.GetOptions{})
+}
+
+func CreateStatefulSet(c clientset.Interface, statefulSet *apps.StatefulSet) (*apps.StatefulSet, error) {
+	return c.AppsV1().StatefulSets(statefulSet.Namespace).Create(context.TODO(), statefulSet, metav1.CreateOptions{})
+}
+
+// DeleteStatefulSet to delete statefulSet
+func DeleteStatefulSet(c clientset.Interface, ns, name string) error {
+	err := c.AppsV1().StatefulSets(ns).Delete(context.TODO(), name, metav1.DeleteOptions{})
+	if err != nil && apierrors.IsNotFound(err) {
+		return nil
+	}
+
+	return err
+}
+
+// NewTestStatefulSet create statefulSet for test
+func NewTestStatefulSet(name, imgURL string, replicas int32) *apps.StatefulSet {
+	return &apps.StatefulSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   name,
+			Labels: map[string]string{"app": name},
+		},
+		Spec: apps.StatefulSetSpec{
+			Replicas: &replicas,
+			Template: v1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: nil,
+				},
+				Spec: v1.PodSpec{
+					Containers: []v1.Container{
+						{
+							Name:  "nginx",
+							Image: imgURL,
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+// WaitForStatusReplicas waits for the ss.Status.Replicas to be equal to expectedReplicas
+func WaitForStatusReplicas(c clientset.Interface, ss *apps.StatefulSet, expectedReplicas int32) {
+	ns, name := ss.Namespace, ss.Name
+	pollErr := wait.PollImmediate(5*time.Second, 240*time.Second,
+		func() (bool, error) {
+			ssGet, err := c.AppsV1().StatefulSets(ns).Get(context.TODO(), name, metav1.GetOptions{})
+			if err != nil {
+				return false, err
+			}
+			if ssGet.Status.ObservedGeneration < ss.Generation {
+				return false, nil
+			}
+			if ssGet.Status.Replicas != expectedReplicas {
+				klog.Infof("Waiting for stateful set status.replicas to become %d, currently %d", expectedReplicas, ssGet.Status.Replicas)
+				return false, nil
+			}
+			return true, nil
+		})
+	if pollErr != nil {
+		Fatalf("Failed waiting for stateful set status.replicas updated to %d: %v", expectedReplicas, pollErr)
+	}
 }

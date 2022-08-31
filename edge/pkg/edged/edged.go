@@ -1317,7 +1317,7 @@ func (e *edged) handlePod(op string, content []byte) (err error) {
 		case model.UpdateOperation:
 			e.updatePod(&pod)
 		case model.DeleteOperation:
-			if delPod, ok := e.podManager.GetPodByName(pod.Namespace, pod.Name); ok {
+			if delPod, ok := e.podManager.GetPodByUID(pod.UID); ok {
 				e.deletePod(delPod)
 			}
 		}

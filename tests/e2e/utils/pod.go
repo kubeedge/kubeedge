@@ -17,6 +17,7 @@ limitations under the License.
 package utils
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -25,8 +26,11 @@ import (
 
 	"github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/client-go/kubernetes"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/util/wait"
+	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -34,6 +38,42 @@ import (
 const (
 	podLabelSelector = "?fieldSelector=spec.nodeName="
 )
+
+func ListPods(c clientset.Interface, ns string, labelSelector labels.Selector, fieldSelector fields.Selector) (*v1.PodList, error) {
+	options := metav1.ListOptions{}
+
+	if fieldSelector != nil {
+		options.FieldSelector = fieldSelector.String()
+	}
+
+	if labelSelector != nil {
+		options.LabelSelector = labelSelector.String()
+	}
+
+	return c.CoreV1().Pods(ns).List(context.TODO(), options)
+}
+
+func WaitForPodsToDisappear(c clientset.Interface, ns string, label labels.Selector, interval, timeout time.Duration) error {
+	return wait.PollImmediate(interval, timeout, func() (bool, error) {
+		Infof("Waiting for pod with label %s to disappear", label.String())
+		options := metav1.ListOptions{LabelSelector: label.String()}
+		pods, err := c.CoreV1().Pods(ns).List(context.TODO(), options)
+		if err != nil {
+			return false, err
+		}
+
+		if pods != nil && len(pods.Items) == 0 {
+			Infof("Pod with label %s no longer exists", label.String())
+			return true, nil
+		}
+
+		return false, nil
+	})
+}
+
+func DeletePod(c clientset.Interface, name, ns string) error {
+	return c.CoreV1().Pods(ns).Delete(context.TODO(), name, metav1.DeleteOptions{})
+}
 
 //GetPods function to get the pods from Edged
 func GetPods(apiserver, label string) (v1.PodList, error) {
@@ -175,7 +215,7 @@ func CheckDeploymentPodDeleteState(apiserver string, podlist v1.PodList) {
 }
 
 // NewKubeClient creates kube client from config
-func NewKubeClient(kubeConfigPath string) *kubernetes.Clientset {
+func NewKubeClient(kubeConfigPath string) *clientset.Clientset {
 	kubeConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
 	if err != nil {
 		Fatalf("Get kube config failed with error: %v", err)
@@ -184,7 +224,7 @@ func NewKubeClient(kubeConfigPath string) *kubernetes.Clientset {
 	kubeConfig.QPS = 5
 	kubeConfig.Burst = 10
 	kubeConfig.ContentType = "application/vnd.kubernetes.protobuf"
-	kubeClient, err := kubernetes.NewForConfig(kubeConfig)
+	kubeClient, err := clientset.NewForConfig(kubeConfig)
 	if err != nil {
 		Fatalf("Get kube client failed with error: %v", err)
 		return nil
