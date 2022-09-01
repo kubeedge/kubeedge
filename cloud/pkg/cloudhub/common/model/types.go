@@ -44,10 +44,8 @@ const (
 
 // constants for message source
 const (
-	SrcCloudHub         = "cloudhub"
-	SrcEdgeController   = "edgecontroller"
-	SrcDeviceController = "devicecontroller"
-	SrcManager          = "edgemgr"
+	SrcCloudHub = "cloudhub"
+	SrcManager  = "edgemgr"
 )
 
 // constants for identifier information for edge hub

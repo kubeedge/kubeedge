@@ -313,9 +313,9 @@ func (q *ChannelMessageQueue) Publish(msg *beehiveModel.Message) error {
 	case application.MetaServerSource:
 		beehiveContext.Send(modules.DynamicControllerModuleName, *msg)
 	case model.ResTwin:
-		beehiveContext.SendToGroup(model.SrcDeviceController, *msg)
+		beehiveContext.SendToGroup(modules.DeviceControllerModuleGroup, *msg)
 	default:
-		beehiveContext.SendToGroup(model.SrcEdgeController, *msg)
+		beehiveContext.SendToGroup(modules.EdgeControllerGroupName, *msg)
 	}
 	return nil
 }
