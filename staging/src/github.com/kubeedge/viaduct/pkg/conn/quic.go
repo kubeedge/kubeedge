@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/lucas-clemente/quic-go"
@@ -40,6 +41,7 @@ type QuicConnection struct {
 	syncKeeper    *keeper.SyncKeeper
 	messageFifo   *fifo.MessageFifo
 	autoRoute     bool
+	locker        sync.Mutex
 }
 
 // NewQuicConn new quic connection
@@ -265,7 +267,9 @@ func (conn *QuicConnection) WriteMessageSync(msg *model.Message) (*model.Message
 	lane := lane.NewLane(api.ProtocolTypeQuic, stream)
 	_ = lane.SetWriteDeadline(conn.writeDeadline)
 	msg.Header.Sync = true
+	conn.locker.Lock()
 	err = lane.WriteMessage(msg)
+	conn.locker.Unlock()
 	if err != nil {
 		return nil, err
 	}
@@ -292,6 +296,9 @@ func (conn *QuicConnection) WriteMessageAsync(msg *model.Message) error {
 	lane := lane.NewLane(api.ProtocolTypeQuic, stream)
 	_ = lane.SetWriteDeadline(conn.writeDeadline)
 	msg.Header.Sync = false
+
+	conn.locker.Lock()
+	defer conn.locker.Unlock()
 	return lane.WriteMessage(msg)
 }
 
