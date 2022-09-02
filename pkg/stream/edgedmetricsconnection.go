@@ -116,7 +116,7 @@ func (ms *EdgedMetricsConnection) Serve(tunnel SafeWriteTunneler) error {
 	}()
 
 	<-stop
-	klog.Infof("receive stop single, so stop metrics scan ...")
+	klog.Infof("receive stop signal, so stop metrics scan ...")
 	return nil
 }
 
