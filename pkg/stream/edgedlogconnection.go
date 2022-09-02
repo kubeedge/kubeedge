@@ -119,7 +119,7 @@ func (l *EdgedLogsConnection) Serve(tunnel SafeWriteTunneler) error {
 	}()
 
 	<-stop
-	klog.Infof("receive stop single, so stop logs scan ...")
+	klog.Infof("receive stop signal, so stop logs scan ...")
 	return nil
 }
 

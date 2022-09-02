@@ -116,7 +116,7 @@ func (e *EdgedExecConnection) Serve(tunnel SafeWriteTunneler) error {
 	}()
 
 	<-stop
-	klog.V(6).Infof("receive stop single, so stop exec scan ...")
+	klog.V(6).Infof("receive stop signal, so stop exec scan ...")
 	return nil
 }
 
