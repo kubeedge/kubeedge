@@ -46,11 +46,12 @@ const (
 	ExternalIptablesMgrMode = "external"
 	InternalIptablesMgrMode = "internal"
 	EdgemeshProfileKey      = "edgemesh"
+	AdmissionProfileKey     = "admission"
 )
 
 var (
 	ErrListProfiles = errors.New("can not list profiles")
-	ValidProfiles   = map[string]bool{VersionProfileKey: true, IptablesMgrProfileKey: true}
+	ValidProfiles   = map[string]bool{VersionProfileKey: true, IptablesMgrProfileKey: true, AdmissionProfileKey: true}
 )
 
 // KubeCloudHelmInstTool embeds Common struct
@@ -223,7 +224,7 @@ func (cu *KubeCloudHelmInstTool) buildRenderer(baseHelmRoot string) (*Renderer, 
 	var subDir string
 	if cu.existsProfile && cu.isInnerProfile() {
 		switch cu.ProfileKey {
-		case VersionProfileKey, IptablesMgrProfileKey:
+		case VersionProfileKey, IptablesMgrProfileKey, AdmissionProfileKey:
 			componentName = CloudCoreHelmComponent
 			subDir = fmt.Sprintf("%s/%s", ChartsSubDir, CloudCoreHelmComponent)
 		// we can implement edgemesh here later.
@@ -348,6 +349,7 @@ func (cu *KubeCloudHelmInstTool) checkProfile(baseHelmRoot string) error {
 
 	// iptalesmgr is also an valid profile key.
 	validProfiles[IptablesMgrProfileKey] = true
+	validProfiles[AdmissionProfileKey] = true
 	if ok := validProfiles[cu.ProfileKey]; !ok {
 		validKeys := make([]string, len(validProfiles))
 		for k := range validProfiles {
@@ -373,6 +375,7 @@ func (cu *KubeCloudHelmInstTool) handleProfile(profileValue string) error {
 			profileValue = "v" + profileValue
 		}
 
+		// TODO: add admission flag
 		cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "cloudCore.image.tag", profileValue))
 		cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "iptablesManager.image.tag", profileValue))
 
@@ -389,6 +392,9 @@ func (cu *KubeCloudHelmInstTool) handleProfile(profileValue string) error {
 		}
 
 		return fmt.Errorf("the given mode of iptablesmgr %s is not supported, only support internal or external", profileValue)
+	case AdmissionProfileKey:
+		cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "admission.image.tag", currentVersion))
+
 	default:
 	}
 
@@ -417,7 +423,8 @@ func (cu *KubeCloudHelmInstTool) rebuildFlagVals() error {
 }
 
 func (cu *KubeCloudHelmInstTool) isInnerProfile() bool {
-	return cu.ProfileKey == "" || cu.ProfileKey == DefaultProfileString || cu.ProfileKey == IptablesMgrProfileKey
+	return cu.ProfileKey == "" || cu.ProfileKey == DefaultProfileString || cu.ProfileKey == IptablesMgrProfileKey ||
+		cu.ProfileKey == AdmissionProfileKey
 }
 
 // combineProfVals combines the values of the given manifests and flags into a map.
