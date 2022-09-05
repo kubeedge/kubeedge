@@ -543,6 +543,17 @@ func newEdged(enable bool) (*edged, error) {
 	if ed.machineInfo, err = ed.newMachineInfo(); err != nil {
 		return nil, err
 	}
+	// Avoid adding timestamp to machine metrics when they're cached
+	// Please refer to the following K8s PRs for more details:
+	//    link: https://github.com/kubernetes/kubernetes/pull/95210#issuecomment-726143798
+	//    link: https://github.com/kubernetes/kubernetes/pull/97006
+	// Analysis of causes :
+	//   1. The cadvisor collects machine metrics when it launches and then caches them for later scrape.
+	//      It is assumed that as long as the machine is not restarted, the hardware will not change and so do the machine metrics.
+	//   2. This timestamp of the machine metrics should be set when they're scraped, not when they're cached.
+	//   3. If using the timestamp when the machine metrics are cached, the timestamp when these metrics are scraped will be outdated
+	//      which may cause issues like 'out of order sample' when sending these metrics to prometheus.
+	ed.machineInfo.Timestamp = time.Time{}
 
 	if ed.containerRuntimeName == kubetypes.RemoteContainerRuntime {
 		// create a log manager
