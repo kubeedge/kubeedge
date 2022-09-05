@@ -293,13 +293,13 @@ func (m *metaManager) processRemoteQuery(message model.Message) {
 			string(metaManagerConfig.Config.ContextSendModule),
 			message,
 			time.Duration(metaManagerConfig.Config.RemoteQueryTimeout)*time.Second)
-		klog.Infof("########## process get: req[%+v], resp[%+v], err[%+v]", message, resp, err)
 		if err != nil {
-			klog.Errorf("remote query failed: %v", err)
+			klog.Errorf("remote query failed, req[%s], err: %v", msgDebugInfo(&message), err)
 			feedbackError(err, "Error to query meta in DB", message)
 			return
 		}
 
+		klog.V(4).Infof("process remote query: req[%s], resp[%s]", msgDebugInfo(&message), msgDebugInfo(&resp))
 		content, err := resp.GetContentData()
 		if err != nil {
 			klog.Errorf("get remote query response content data failed, %s", msgDebugInfo(&resp))
