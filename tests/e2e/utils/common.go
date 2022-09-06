@@ -1057,14 +1057,18 @@ func DeleteStatefulSet(c clientset.Interface, ns, name string) error {
 func NewTestStatefulSet(name, imgURL string, replicas int32) *apps.StatefulSet {
 	return &apps.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   name,
-			Labels: map[string]string{"app": name},
+			Name:      name,
+			Namespace: Namespace,
+			Labels:    map[string]string{"app": name},
 		},
 		Spec: apps.StatefulSetSpec{
 			Replicas: &replicas,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{"app": name},
+			},
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: nil,
+					Labels: map[string]string{"app": name},
 				},
 				Spec: v1.PodSpec{
 					Containers: []v1.Container{
