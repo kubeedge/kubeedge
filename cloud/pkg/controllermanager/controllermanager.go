@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -26,11 +27,7 @@ func init() {
 	utilruntime.Must(appsv1alpha1.AddToScheme(appsScheme))
 }
 
-func NewAppsControllerManager(ctx context.Context) (manager.Manager, error) {
-	kubeCfg, err := controllerruntime.GetConfig()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get kubeconfig, %v", err)
-	}
+func NewAppsControllerManager(ctx context.Context, kubeCfg *rest.Config) (manager.Manager, error) {
 	controllerManager, err := controllerruntime.NewManager(kubeCfg, controllerruntime.Options{
 		Scheme: appsScheme,
 		// TODO: leader election

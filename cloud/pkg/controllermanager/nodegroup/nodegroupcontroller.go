@@ -227,6 +227,7 @@ func (c *Controller) evictPodsShouldNotRunOnNode(ctx context.Context, node *core
 		if v, ok := nodeSelector[LabelBelongingTo]; ok && v == nodegroup {
 			// TODO: in an async way?
 			// Delete pod seems to block until the pod has actually stopped
+			klog.V(4).Infof("try to evict pod %s/%s running on node %s", pod.Namespace, pod.Name, node.Name)
 			if err := c.Client.Delete(ctx, pod); err != nil {
 				errs = append(errs, fmt.Errorf("failed to delete pod %s/%s, %v", pod.Namespace, pod.Name, err))
 			}
