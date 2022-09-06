@@ -95,33 +95,7 @@ END
 function run_test() {
   :> /tmp/testcase.log
   cd $E2E_DIR
-  ./keadm/keadm.test $debugflag 2>&1 | tee -a /tmp/testcase.log
-
-  #stop the edgecore after the test completion
-  grep  -e "Running Suite" -e "SUCCESS\!" -e "FAIL\!" /tmp/testcase.log | sed -r 's/\x1B\[([0-9];)?([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g' | sed -r 's/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g'
-  echo "Integration Test Final Summary Report"
-  echo "======================================================="
-  echo "Total Number of Test cases = `grep "Ran " /tmp/testcase.log | awk '{sum+=$2} END {print sum}'`"
-  passed=`grep -e "SUCCESS\!" -e "FAIL\!" /tmp/testcase.log | awk '{print $3}' | sed -r "s/\x1B\[([0-9];)?([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" | awk '{sum+=$1} END {print sum}'`
-  echo "Number of Test cases PASSED = $passed"
-  fail=`grep -e "SUCCESS\!" -e "FAIL\!" /tmp/testcase.log | awk '{print $6}' | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" | awk '{sum+=$1} END {print sum}'`
-  echo "Number of Test cases FAILED = $fail"
-  echo "==================Result Summary======================="
-
-  if [ "$fail" != "0" ];then
-      echo "Integration suite has failures, Please check !!"
-      exit 1
-  else
-      echo "Integration suite successfully passed all the tests !!"
-
-  export ACK_GINKGO_RC=true
-
-  ginkgo -v ./keadm/keadm.test -- \
-  --image-url=nginx \
-  --image-url=nginx \
-  --kube-master="https://$MASTER_IP:6443" \
-  --kubeconfig=$KUBECONFIG \
-  --test.v
+  ./keadm/keadm.test $debugflag
   GINKGO_TESTING_RESULT=$?
 
   if [[ $GINKGO_TESTING_RESULT != 0 ]]; then
@@ -140,7 +114,6 @@ function run_test() {
     exit 1
   else
     echo "Integration suite successfully passed all the tests !!"
-    exit 0
   fi
 }
 
