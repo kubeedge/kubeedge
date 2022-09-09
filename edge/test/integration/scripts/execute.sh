@@ -47,23 +47,6 @@ function run_test() {
 
   local module=$1
   MQTT_SERVER=127.0.0.1 bash -x ${TEST_DIR}/scripts/fast_test.sh $module
-
-  grep  -e "Running Suite" -e "SUCCESS\!" -e "FAIL\!" /tmp/testcase.log | sed -r 's/\x1B\[([0-9];)?([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g' | sed -r 's/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g'
-  echo "Integration Test Final Summary Report"
-  echo "==============================================="
-  echo "Total Number of Test cases = `grep "Ran " /tmp/testcase.log | awk '{sum+=$2} END {print sum}'`"
-  passed=`grep -e "SUCCESS\!" -e "FAIL\!" /tmp/testcase.log | awk '{print $3}' | sed -r "s/\x1B\[([0-9];)?([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" | awk '{sum+=$1} END {print sum}'`
-  echo "Number of Test cases PASSED = $passed"
-  fail=`grep -e "SUCCESS\!" -e "FAIL\!" /tmp/testcase.log | awk '{print $6}' | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" | awk '{sum+=$1} END {print sum}'`
-  echo "Number of Test cases FAILED = $fail"
-  echo "==================Result Summary======================="
-  if [ "$fail" != "0" ];then
-      echo "Integration suite has failures, Please check !!"
-      exit 1
-  else
-      echo "Integration suite successfully passed all the tests !!"
-      exit 0
-  fi
 }
 
 set -eE

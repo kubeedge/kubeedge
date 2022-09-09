@@ -34,13 +34,33 @@ cat >config.json<<END
 }
 END
 
+GINKGO_EXIT_CODE=0
 if [[ $# -eq 0 ]]; then
     #run testcase
     export KUBEEDGE_ROOT=$KUBEEDGE_ROOT
-    ./appdeployment/appdeployment.test $debugflag 2>&1 | tee -a /tmp/testcase.log
-    ./device/device.test  $debugflag  2>&1 | tee -a /tmp/testcase.log
-    ./metaserver/metaserver.test $debugflag  2>&1 | tee -a /tmp/testcase.log
+    ./appdeployment/appdeployment.test $debugflag
+    if [[ $? != 0 ]]; then
+      GINKGO_EXIT_CODE=1
+    fi
+    ./device/device.test  $debugflag
+    if [[ $? != 0 ]]; then
+      GINKGO_EXIT_CODE=1
+    fi
+    ./metaserver/metaserver.test $debugflag
+    if [[ $? != 0 ]]; then
+      GINKGO_EXIT_CODE=1
+    fi
 else
-    ./$compilemodule/$compilemodule.test $debugflag $runtest 2>&1 | tee -a /tmp/testcase.log
+    ./$compilemodule/$compilemodule.test $debugflag $runtest
+    if [[ $? != 0 ]]; then
+      GINKGO_EXIT_CODE=1
+    fi
 fi
 
+if [[ $GINKGO_EXIT_CODE != 0 ]]; then
+    echo "Integration suite has failures, Please check !!"
+    exit 1
+else
+    echo "Integration suite successfully passed all the tests !!"
+    exit 0
+fi

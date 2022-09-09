@@ -36,14 +36,22 @@ then
     --image-url=nginx \
     --kube-master="https://$MASTER_IP:6443" \
     --kubeconfig=$KUBECONFIG \
-    --test.v \
-    2>&1 | tee -a /tmp/testcase.log
+    --test.v
+    GINKGO_TESTING_RESULT=$?
 else
    ginkgo -v ./$compilemodule/$compilemodule.test -- \
     --image-url=nginx \
     --image-url=nginx \
     --kube-master="https://$MASTER_IP:6443" \
     --kubeconfig=$KUBECONFIG \
-    --test.v \
-   2>&1 | tee -a  /tmp/testcase.log
+    --test.v
+   GINKGO_TESTING_RESULT=$?
+fi
+
+if [[ $GINKGO_TESTING_RESULT != 0 ]]; then
+    echo "Integration suite has failures, Please check !!"
+    exit 1
+else
+    echo "Integration suite successfully passed all the tests !!"
+    exit 0
 fi
