@@ -97,17 +97,6 @@ func msgDebugInfo(message *model.Message) string {
 	return fmt.Sprintf("msgID[%s] resource[%s]", message.GetID(), message.GetResource())
 }
 
-func resourceUnchanged(resType string, resKey string, content []byte) bool {
-	if resType == model.ResourceTypePodStatus {
-		dbRecord, err := dao.QueryMeta("key", resKey)
-		if err == nil && len(*dbRecord) > 0 && string(content) == (*dbRecord)[0] {
-			return true
-		}
-	}
-
-	return false
-}
-
 func (m *metaManager) processInsert(message model.Message) {
 	content, err := message.GetContentData()
 	if err != nil {
@@ -159,13 +148,6 @@ func (m *metaManager) processUpdate(message model.Message) {
 	imitator.DefaultV2Client.Inject(message)
 
 	resKey, resType, _ := parseResource(message.GetResource())
-
-	if resourceUnchanged(resType, resKey, content) {
-		resp := message.NewRespByMessage(&message, OK)
-		sendToEdged(resp, message.IsSync())
-		klog.V(4).Infof("resource[%s] unchanged, no notice", resKey)
-		return
-	}
 
 	meta := &dao.Meta{
 		Key:   resKey,

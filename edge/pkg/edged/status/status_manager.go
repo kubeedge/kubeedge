@@ -27,6 +27,7 @@ import (
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/diff"
 	"k8s.io/apimachinery/pkg/util/wait"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/klog/v2"
@@ -564,6 +565,13 @@ func (m *manager) syncBatch() {
 
 			if m.needsUpdate(pod.UID, podStatus) {
 				updatedStatuses = append(updatedStatuses, podStatusSyncRequest{pod.UID, podStatus})
+			} else if m.needsReconcile(pod.UID, podStatus.status) {
+				// Delete the apiStatusVersions here to force an update on the pod status
+				// In most cases the deleted apiStatusVersions here should be filled
+				// soon after the following syncPod() [If the syncPod() sync an update
+				// successfully].
+				delete(m.apiStatusVersions, kubetypes.MirrorPodUID(pod.UID))
+				updatedStatuses = append(updatedStatuses, podStatusSyncRequest{pod.UID, podStatus})
 			}
 		}
 	}()
@@ -637,6 +645,38 @@ func (m *manager) canBeDeleted(pod *v1.Pod, status v1.PodStatus) bool {
 		return false
 	}
 	return m.podDeletionSafety.PodResourcesAreReclaimed(pod, status)
+}
+
+// needsReconcile compares the given status with the status in the pod manager (which
+// in fact comes from apiserver), returns whether the status needs to be reconciled with
+// the apiserver. Now when pod status is inconsistent between apiserver and kubelet,
+// kubelet should forcibly send an update to reconcile the inconsistence, because kubelet
+// should be the source of truth of pod status.
+// NOTE(random-liu): It's simpler to pass in mirror pod uid and get mirror pod by uid, but
+// now the pod manager only supports getting mirror pod by static pod, so we have to pass
+// static pod uid here.
+// TODO(random-liu): Simplify the logic when mirror pod manager is added.
+func (m *manager) needsReconcile(uid types.UID, status v1.PodStatus) bool {
+	// The pod could be a static pod, so we should translate first.
+	pod, ok := m.podManager.GetPodByUID(uid)
+	if !ok {
+		klog.V(4).InfoS("Pod has been deleted, no need to reconcile", "podUID", string(uid))
+		return false
+	}
+
+	podStatus := pod.Status.DeepCopy()
+	normalizeStatus(pod, podStatus)
+
+	if isPodStatusByKubeletEqual(podStatus, &status) {
+		// If the status from the source is the same with the cached status,
+		// reconcile is not needed. Just return.
+		return false
+	}
+	klog.V(3).InfoS("Pod status is inconsistent with cached status for pod, a reconciliation should be triggered",
+		"pod", klog.KObj(pod),
+		"statusDiff", diff.ObjectDiff(podStatus, &status))
+
+	return true
 }
 
 // normalizeStatus normalizes nanosecond precision timestamps in podStatus
