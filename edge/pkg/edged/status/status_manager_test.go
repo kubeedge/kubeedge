@@ -167,7 +167,7 @@ func TestUpdatePodStatusFailure(t *testing.T) {
 	oldReason := "update fail"
 	manager.SetPodStatus(testPod, getPodStatus(oldReason))
 
-	msg, err := beehiveContext.Receive(modules.MetaManagerModuleName)
+	msg, err := beehiveContext.Receive("metaManager")
 	if err != nil {
 		t.Fatalf("receive message error: %v", err)
 	}
