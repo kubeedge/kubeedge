@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
@@ -15,6 +14,7 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
@@ -117,7 +117,7 @@ func (q *ChannelMessageQueue) addMessageToQueue(nodeID string, msg *beehiveModel
 		if !exist {
 			resourceNamespace, _ := messagelayer.GetNamespace(*msg)
 			resourceName, _ := messagelayer.GetResourceName(*msg)
-			resourceUID, err := GetMessageUID(*msg)
+			resourceUID, err := common.GetMessageUID(*msg)
 			objectSyncName := synccontroller.BuildObjectSyncName(nodeID, resourceUID)
 			if err != nil {
 				klog.Errorf("fail to get message UID for message: %s", msg.Header.ID)
@@ -167,7 +167,7 @@ func getMsgKey(obj interface{}) (string, error) {
 	msg := obj.(*beehiveModel.Message)
 
 	if msg.GetGroup() == edgeconst.GroupResource {
-		return GetMessageUID(*msg)
+		return common.GetMessageUID(*msg)
 	}
 
 	return "", fmt.Errorf("failed to get message key")
@@ -224,7 +224,7 @@ func isDeleteMessage(msg *beehiveModel.Message) bool {
 	if msg.GetOperation() == beehiveModel.DeleteOperation {
 		return true
 	}
-	deletionTimestamp, err := GetMessageDeletionTimestamp(msg)
+	deletionTimestamp, err := common.GetMessageDeletionTimestamp(msg)
 	if err != nil {
 		klog.Errorf("fail to get message DeletionTimestamp for message: %s", msg.Header.ID)
 		return false
@@ -374,24 +374,4 @@ func (q *ChannelMessageQueue) GetNodeListStore(nodeID string) cache.Store {
 
 	nodeListStore := store.(cache.Store)
 	return nodeListStore
-}
-
-// GetMessageUID returns the UID of the object in message
-func GetMessageUID(msg beehiveModel.Message) (string, error) {
-	accessor, err := meta.Accessor(msg.Content)
-	if err != nil {
-		return "", err
-	}
-
-	return string(accessor.GetUID()), nil
-}
-
-// GetMessageDeletionTimestamp returns the deletionTimestamp of the object in message
-func GetMessageDeletionTimestamp(msg *beehiveModel.Message) (*metav1.Time, error) {
-	accessor, err := meta.Accessor(msg.Content)
-	if err != nil {
-		return nil, err
-	}
-
-	return accessor.GetDeletionTimestamp(), nil
 }
