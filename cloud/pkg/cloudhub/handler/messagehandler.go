@@ -2,10 +2,8 @@ package handler
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"regexp"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -19,6 +17,7 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common"
 	hubio "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/io"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
@@ -28,7 +27,6 @@ import (
 	deviceconst "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	edgeconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
-	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1"
 	crdClientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
@@ -46,14 +44,6 @@ const (
 	nodeStop
 	nodeDisconnect
 )
-
-// VolumePattern constants for error message
-const (
-	VolumePattern = `^\w[-\w.+]*/` + constants.CSIResourceTypeVolume + `/\w[-\w.+]*`
-)
-
-// VolumeRegExp is used to validate the volume resource
-var VolumeRegExp = regexp.MustCompile(VolumePattern)
 
 // MessageHandle processes messages between cloud and edge
 type MessageHandle struct {
@@ -132,7 +122,7 @@ func (mh *MessageHandle) HandleServer(container *mux.MessageContainer, writer mu
 	}
 
 	// handle the response from edge
-	if VolumeRegExp.MatchString(container.Message.GetResource()) {
+	if common.IsVolumeResource(container.Message.GetResource()) {
 		beehiveContext.SendResp(*container.Message)
 		return
 	}
@@ -229,18 +219,6 @@ func dumpMessageMetadata(msg *beehiveModel.Message) string {
 		msg.Header.ID, msg.Header.ParentID, msg.Router.Group, msg.Router.Source, msg.Router.Resource, msg.Router.Operation)
 }
 
-func trimMessage(msg *beehiveModel.Message) {
-	resource := msg.GetResource()
-	if strings.HasPrefix(resource, model.ResNode) {
-		tokens := strings.Split(resource, "/")
-		if len(tokens) < 3 {
-			klog.Warningf("event resource %s starts with node but length less than 3", resource)
-		} else {
-			msg.SetResourceOperation(strings.Join(tokens[2:], "/"), msg.GetOperation())
-		}
-	}
-}
-
 func notifyEventQueueError(hi hubio.CloudHubIO, code ExitCode, nodeID string) {
 	if code == messageQueueDisconnect {
 		msg := beehiveModel.NewMessage("").BuildRouter(model.GpResource, model.SrcCloudHub, model.NewResource(model.ResNode, nodeID, nil), model.OpDisConnect)
@@ -249,23 +227,6 @@ func notifyEventQueueError(hi hubio.CloudHubIO, code ExitCode, nodeID string) {
 			klog.Errorf("fail to notify node %s event queue disconnected, reason: %s", nodeID, err.Error())
 		}
 	}
-}
-
-func constructConnectMessage(info *model.HubInfo, isConnected bool) *beehiveModel.Message {
-	connected := model.OpConnect
-	if !isConnected {
-		connected = model.OpDisConnect
-	}
-	body := map[string]interface{}{
-		"event_type": connected,
-		"timestamp":  time.Now().Unix(),
-		"client_id":  info.NodeID}
-	content, _ := json.Marshal(body)
-
-	msg := beehiveModel.NewMessage("")
-	msg.BuildRouter(model.SrcCloudHub, model.GpResource, model.NewResource(model.ResNode, info.NodeID, nil), connected)
-	msg.FillBody(content)
-	return msg
 }
 
 func (mh *MessageHandle) PubToController(info *model.HubInfo, msg *beehiveModel.Message) error {
@@ -309,7 +270,7 @@ func (mh *MessageHandle) RegisterNode(info *model.HubInfo) error {
 	}
 	mh.MessageQueue.Connect(info)
 
-	err = mh.MessageQueue.Publish(constructConnectMessage(info, true))
+	err = mh.MessageQueue.Publish(common.ConstructConnectMessage(info, true))
 	if err != nil {
 		klog.Errorf("fail to publish node connect event for node %s, reason %s", info.NodeID, err.Error())
 		notifyEventQueueError(hi, messageQueueDisconnect, info.NodeID)
@@ -345,7 +306,7 @@ func (mh *MessageHandle) UnregisterNode(info *model.HubInfo, code ExitCode) {
 		mh.KeepaliveChannel.Delete(info.NodeID)
 	}
 
-	err := mh.MessageQueue.Publish(constructConnectMessage(info, false))
+	err := mh.MessageQueue.Publish(common.ConstructConnectMessage(info, false))
 	if err != nil {
 		klog.Errorf("fail to publish node disconnect event for node %s, reason %s", info.NodeID, err.Error())
 	}
@@ -398,7 +359,7 @@ func (mh *MessageHandle) ListMessageWriteLoop(info *model.HubInfo, stopServe cha
 		}
 		klog.V(4).Infof("event to send for node %s, %s, content %s", info.NodeID, dumpMessageMetadata(msg), msg.Content)
 
-		trimMessage(msg)
+		common.TrimMessage(msg)
 
 		conn, ok := mh.nodeConns.Load(info.NodeID)
 		if !ok {
@@ -459,7 +420,7 @@ func (mh *MessageHandle) MessageWriteLoop(info *model.HubInfo, stopServe chan Ex
 		klog.V(4).Infof("event to send for node %s, %s, content %s", info.NodeID, dumpMessageMetadata(msg), msg.Content)
 
 		copyMsg := deepcopy(msg)
-		trimMessage(copyMsg)
+		common.TrimMessage(copyMsg)
 
 		err := mh.sendMsg(conn.(hubio.CloudHubIO), info, copyMsg, msg, nodeStore)
 		if err != nil {
@@ -523,7 +484,7 @@ func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model
 		resourceNamespace, _ := messagelayer.GetNamespace(*msg)
 		resourceName, _ := messagelayer.GetResourceName(*msg)
 		resourceType, _ := messagelayer.GetResourceType(*msg)
-		resourceUID, err := channelq.GetMessageUID(*msg)
+		resourceUID, err := common.GetMessageUID(*msg)
 		if err != nil {
 			klog.Errorf("failed to get message UID %v, err: %v", msg, err)
 			return
