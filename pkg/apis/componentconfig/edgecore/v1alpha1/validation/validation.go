@@ -59,7 +59,7 @@ func ValidateDataBase(db v1alpha1.DataBase) field.ErrorList {
 
 // ValidateModuleEdged validates `e` and returns an errorList if it is invalid
 func ValidateModuleEdged(e v1alpha1.Edged) field.ErrorList {
-	if !e.Enable {
+	if !e.EnableServer {
 		return field.ErrorList{}
 	}
 	allErrs := field.ErrorList{}
@@ -70,10 +70,10 @@ func ValidateModuleEdged(e v1alpha1.Edged) field.ErrorList {
 	if e.NodeIP == "" {
 		klog.Warningf("NodeIP is empty , use default ip which can connect to cloud.")
 	}
-	switch e.CGroupDriver {
+	switch e.CgroupDriver {
 	case v1alpha1.CGroupDriverCGroupFS, v1alpha1.CGroupDriverSystemd:
 	default:
-		allErrs = append(allErrs, field.Invalid(field.NewPath("CGroupDriver"), e.CGroupDriver,
+		allErrs = append(allErrs, field.Invalid(field.NewPath("CGroupDriver"), e.CgroupDriver,
 			"CGroupDriver value error"))
 	}
 	return allErrs

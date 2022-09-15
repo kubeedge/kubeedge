@@ -48,9 +48,9 @@ const (
 	DefaultRemoteRuntimeEndpoint       = "unix:///var/run/dockershim.sock"
 	DefaultRemoteImageEndpoint         = "unix:///var/run/dockershim.sock"
 	DefaultPodSandboxImage             = "kubeedge/pause:3.1"
-	DefaultNodeStatusUpdateFrequency   = 10
-	DefaultImagePullProgressDeadline   = 60
-	DefaultRuntimeRequestTimeout       = 2
+	DefaultNodeStatusUpdateFrequency   = 10 * time.Second
+	DefaultImagePullProgressDeadline   = time.Minute
+	DefaultRuntimeRequestTimeout       = 2 * time.Second
 	DefaultImageGCHighThreshold        = 80
 	DefaultImageGCLowThreshold         = 40
 	DefaultMaximumDeadContainersPerPod = 1

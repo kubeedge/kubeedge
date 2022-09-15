@@ -19,11 +19,15 @@ package v1alpha1
 import (
 	"net"
 	"net/url"
+	"os"
 	"path"
 	"strconv"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/klog/v2"
+	kubeletoptions "k8s.io/kubernetes/cmd/kubelet/app/options"
+	kubeletconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
@@ -34,6 +38,29 @@ import (
 func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 	hostnameOverride := util.GetHostname()
 	localIP, _ := util.GetLocalIP(hostnameOverride)
+
+	kubeletFlags := kubeletoptions.NewKubeletFlags()
+	kubeletFlags.HostnameOverride = hostnameOverride
+	kubeletFlags.NodeIP = localIP
+	kubeletFlags.KubeConfig = constants.DefaultKubeletConfig
+
+	kubeletConfig, err := kubeletoptions.NewKubeletConfiguration()
+	// programmer error
+	if err != nil {
+		klog.ErrorS(err, "Failed to create a new kubelet configuration")
+		os.Exit(1)
+	}
+	kubeletConfig.Authorization.Mode = kubeletconfig.KubeletAuthorizationModeAlwaysAllow
+	kubeletConfig.ContentType = "application/json"
+	kubeletConfig.NodeStatusUpdateFrequency = metav1.Duration{constants.DefaultNodeStatusUpdateFrequency}
+	kubeletConfig.VolumeStatsAggPeriod = metav1.Duration{constants.DefaultVolumeStatsAggPeriod}
+	kubeletConfig.ImageGCLowThresholdPercent = constants.DefaultImageGCLowThreshold
+	kubeletConfig.ImageGCHighThresholdPercent = constants.DefaultImageGCHighThreshold
+
+	kubeletserver := kubeletoptions.KubeletServer{
+		KubeletFlags:         *kubeletFlags,
+		KubeletConfiguration: *kubeletConfig,
+	}
 
 	return &EdgeCoreConfig{
 		TypeMeta: metav1.TypeMeta{
@@ -47,42 +74,8 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 		},
 		Modules: &Modules{
 			Edged: &Edged{
-				Enable:                      true,
-				Labels:                      map[string]string{},
-				Annotations:                 map[string]string{},
-				Taints:                      []v1.Taint{},
-				NodeStatusUpdateFrequency:   constants.DefaultNodeStatusUpdateFrequency,
-				RuntimeType:                 constants.DefaultRuntimeType,
-				DockerAddress:               constants.DefaultDockerAddress,
-				RemoteRuntimeEndpoint:       constants.DefaultRemoteRuntimeEndpoint,
-				RemoteImageEndpoint:         constants.DefaultRemoteImageEndpoint,
-				NodeIP:                      localIP,
-				ClusterDNS:                  "",
-				ClusterDomain:               "",
-				ConcurrentConsumers:         constants.DefaultConcurrentConsumers,
-				EdgedMemoryCapacity:         constants.DefaultEdgedMemoryCapacity,
-				PodSandboxImage:             constants.DefaultPodSandboxImage,
-				ImagePullProgressDeadline:   constants.DefaultImagePullProgressDeadline,
-				RuntimeRequestTimeout:       constants.DefaultRuntimeRequestTimeout,
-				HostnameOverride:            hostnameOverride,
-				RegisterNodeNamespace:       constants.DefaultRegisterNodeNamespace,
+				KubeletServer:               kubeletserver,
 				CustomInterfaceName:         "",
-				RegisterNode:                true,
-				DevicePluginEnabled:         false,
-				GPUPluginEnabled:            false,
-				ImageGCHighThreshold:        constants.DefaultImageGCHighThreshold,
-				ImageGCLowThreshold:         constants.DefaultImageGCLowThreshold,
-				MaximumDeadContainersPerPod: constants.DefaultMaximumDeadContainersPerPod,
-				CGroupDriver:                CGroupDriverCGroupFS,
-				CgroupsPerQOS:               true,
-				CgroupRoot:                  constants.DefaultCgroupRoot,
-				NetworkPluginName:           "",
-				CNIConfDir:                  constants.DefaultCNIConfDir,
-				CNIBinDir:                   constants.DefaultCNIBinDir,
-				CNICacheDir:                 constants.DefaultCNICacheDir,
-				NetworkPluginMTU:            constants.DefaultNetworkPluginMTU,
-				VolumeStatsAggPeriod:        constants.DefaultVolumeStatsAggPeriod,
-				EnableMetrics:               true,
 			},
 			EdgeHub: &EdgeHub{
 				Enable:            true,
@@ -176,6 +169,22 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 	hostnameOverride := util.GetHostname()
 	localIP, _ := util.GetLocalIP(hostnameOverride)
+	kubeletFlags := kubeletoptions.NewKubeletFlags()
+	kubeletFlags.HostnameOverride = hostnameOverride
+	kubeletFlags.NodeIP = localIP
+	kubeletFlags.KubeConfig = constants.DefaultKubeletConfig
+	kubeletConfig, err := kubeletoptions.NewKubeletConfiguration()
+	// programmer error
+	if err != nil {
+		klog.ErrorS(err, "Failed to create a new kubelet configuration")
+		os.Exit(1)
+	}
+	kubeletConfig.ContentType = "application/json"
+	kubeletserver := kubeletoptions.KubeletServer{
+		KubeletFlags:         *kubeletFlags,
+		KubeletConfiguration: *kubeletConfig,
+	}
+
 	return &EdgeCoreConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       Kind,
@@ -186,20 +195,7 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 		},
 		Modules: &Modules{
 			Edged: &Edged{
-				RuntimeType:           constants.DefaultRuntimeType,
-				RemoteRuntimeEndpoint: constants.DefaultRemoteRuntimeEndpoint,
-				RemoteImageEndpoint:   constants.DefaultRemoteImageEndpoint,
-				DockerAddress:         constants.DefaultDockerAddress,
-				NodeIP:                localIP,
-				ClusterDNS:            "",
-				ClusterDomain:         "",
-				PodSandboxImage:       constants.DefaultPodSandboxImage,
-				HostnameOverride:      hostnameOverride,
-				DevicePluginEnabled:   false,
-				GPUPluginEnabled:      false,
-				CGroupDriver:          CGroupDriverCGroupFS,
-				CgroupsPerQOS:         true,
-				CgroupRoot:            constants.DefaultCgroupRoot,
+				KubeletServer: kubeletserver,
 			},
 			EdgeHub: &EdgeHub{
 				Heartbeat:         15,
