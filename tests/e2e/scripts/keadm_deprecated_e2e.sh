@@ -88,6 +88,11 @@ function run_test() {
   --kube-master="https://$MASTER_IP:6443" \
   --kubeconfig=$KUBECONFIG \
   --test.v
+    echo -e "edgecore logs"
+    journalctl -u edgecore.service > elog
+    cat elog
+    echo -e "cloudcore logs"
+    cat /var/log/kubeedge/cloudcore.log
   if [[ $? != 0 ]]; then
     echo "Integration suite has failures, Please check !!"
     echo "edgecore logs"
