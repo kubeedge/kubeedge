@@ -91,14 +91,15 @@ function run_test() {
   if [[ $? != 0 ]]; then
     echo "Integration suite has failures, Please check !!"
     echo "edgecore logs"
-    journalctl -u edgecore.service -xe
+    journalctl -u edgecore.service > elog
+    cat elog
     echo "================================================="
     echo "================================================="
     echo "================================================="
     echo "================================================="
     echo "================================================="
     echo "cloudcore logs"
-    journalctl -u cloudcore.service -xe
+    cat /var/log/kubeedge/cloudcore.log
     exit 1
   fi
 }
