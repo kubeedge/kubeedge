@@ -178,6 +178,7 @@ func CheckPodDeleteState(apiserver string, podlist v1.PodList) {
 		}
 	}
 	podCount := len(podlist.Items) - count
+	Infof("CheckPodDeleteState podCount is %v", podCount)
 	gomega.Eventually(func() int {
 		var count int
 		for _, pod := range podlist.Items {
@@ -185,6 +186,7 @@ func CheckPodDeleteState(apiserver string, podlist v1.PodList) {
 			Infof("PodName: %s status: %s StatusCode: %d", pod.Name, status, statusCode)
 			if statusCode == 404 {
 				count++
+				Infof("CheckPodDeleteState 404 count is %v", count)
 			}
 		}
 		return count
