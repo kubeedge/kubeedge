@@ -108,7 +108,7 @@ import (
 	edgecadvisor "github.com/kubeedge/kubeedge/edge/pkg/edged/cadvisor"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/clcm"
 	edgedconfig "github.com/kubeedge/kubeedge/edge/pkg/edged/config"
-	fakekube "github.com/kubeedge/kubeedge/edge/pkg/edged/fake"
+	clientbridge "github.com/kubeedge/kubeedge/edge/pkg/edged/kubeclientbridge"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/server"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/status"
@@ -465,7 +465,7 @@ func newEdged(enable bool) (*edged, error) {
 		podDeletionQueue:          workqueue.New(),
 		podDeletionBackoff:        backoff,
 		metaClient:                metaClient,
-		kubeClient:                fakekube.NewSimpleClientset(metaClient),
+		kubeClient:                clientbridge.NewSimpleClientset(metaClient),
 		nodeStatusUpdateFrequency: time.Duration(edgedconfig.Config.NodeStatusUpdateFrequency) * time.Second,
 		mounter:                   mount.New(""),
 		uid:                       types.UID("38796d14-1df3-11e8-8e5a-286ed488f209"),
