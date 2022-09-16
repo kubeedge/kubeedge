@@ -24,6 +24,8 @@ VERSION=${GIT_VERSION}
 
 function cleanup() {
   sudo pkill edgecore || true
+  sudo systemctl stop edgecore.service && systemctl disable edgecore.service && rm /etc/systemd/system/edgecore.service || true
+  sudo rm -rf /var/lib/kubeedge || true
   sudo pkill cloudcore || true
   kind delete cluster --name test
   sudo rm -rf /var/log/kubeedge /etc/kubeedge /etc/systemd/system/edgecore.service $E2E_DIR/keadm/keadm.test $E2E_DIR/config.json
@@ -106,10 +108,31 @@ function run_test() {
       exit 1
   else
       echo "Integration suite successfully passed all the tests !!"
+=======
+  --test.v
+  GINKGO_TESTING_RESULT=$?
+
+  if [[ $GINKGO_TESTING_RESULT != 0 ]]; then
+    echo "Integration suite has failures, Please check !!"
+    echo "edgecore logs are as below"
+    journalctl -u edgecore.service -xe > /var/log/kubeedge/edgecore.log
+    set -x
+    cat /var/log/kubeedge/edgecore.log
+    set +x
+    echo "================================================="
+    echo "================================================="
+    echo "cloudcore logs are as below"
+    set -x
+    cat /var/log/kubeedge/cloudcore.log
+    set +x
+    exit 1
+  else
+    echo "Integration suite successfully passed all the tests !!"
+    exit 0
+>>>>>>> fix keadm_deprecated_e2e error
   fi
 }
 
-set -Ee
 trap cleanup EXIT
 trap cleanup ERR
 
