@@ -284,6 +284,7 @@ func WaitforPodsRunning(kubeConfigPath string, podlist v1.PodList, timout time.D
 					if podlist.Items[i].Status.Phase == v1.PodRunning {
 						count++
 					}
+					Infof("Count: %s totalCount: %s", count, len(podlist.Items))
 				}
 				// send an end signal when all pods are in running status
 				if len(podlist.Items) == count {
