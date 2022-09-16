@@ -17,6 +17,7 @@ limitations under the License.
 package keadm
 
 import (
+	"time"
 	"net/http"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -65,6 +66,7 @@ var _ = Describe("Application deployment test in keadm E2E scenario", func() {
 			pod := NewPodObj(podName, ctx.Cfg.AppImageURL[0], nodeName)
 
 			CreatePodTest(nodeName, podName, ctx, pod)
+			time.Sleep(15*time.Minute)
 		})
 	})
 })

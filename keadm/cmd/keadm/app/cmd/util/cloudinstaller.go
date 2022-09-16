@@ -91,7 +91,7 @@ func (cu *KubeCloudInstTool) RunCloudCore() error {
 	}
 
 	// start cloudcore
-	command = fmt.Sprintf("%s/%s > %s/%s.log 2>&1 &", KubeEdgeUsrBinPath, KubeCloudBinaryName, KubeEdgeLogPath, KubeCloudBinaryName)
+	command = fmt.Sprintf("%s/%s--v=5 > %s/%s.log 2>&1 &", KubeEdgeUsrBinPath, KubeCloudBinaryName, KubeEdgeLogPath, KubeCloudBinaryName)
 
 	cmd = NewCommand(command)
 

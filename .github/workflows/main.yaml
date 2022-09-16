@@ -218,6 +218,9 @@ jobs:
         run: |
           docker load < /home/runner/build-tools/build-tools.tar
 
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v
+
       - run: make keadm_deprecated_e2e
 
   keadm_e2e_test:
