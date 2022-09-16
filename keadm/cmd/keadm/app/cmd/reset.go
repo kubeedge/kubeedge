@@ -130,7 +130,9 @@ func RemoveMqttContainer() error {
 		return fmt.Errorf("init docker dockerclient failed: %v", err)
 	}
 
-	options := dockertypes.ContainerListOptions{}
+	options := dockertypes.ContainerListOptions{
+		All: true,
+	}
 	options.Filters = dockerfilters.NewArgs()
 	options.Filters.Add("ancestor", "eclipse-mosquitto:1.6.15")
 
