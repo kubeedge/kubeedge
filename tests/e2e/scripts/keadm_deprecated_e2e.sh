@@ -90,6 +90,15 @@ function run_test() {
   --test.v
   if [[ $? != 0 ]]; then
     echo "Integration suite has failures, Please check !!"
+    echo "edgecore logs"
+    journalctl -u edgecore.service -xe
+    echo "================================================="
+    echo "================================================="
+    echo "================================================="
+    echo "================================================="
+    echo "================================================="
+    echo "cloudcore logs"
+    journalctl -u cloudcore.service -xe
     exit 1
   fi
 }
