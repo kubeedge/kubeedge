@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"k8s.io/apimachinery/pkg/api/meta"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/storage/etcd3"
 	"k8s.io/klog/v2"
@@ -73,7 +72,11 @@ func Trigger(e watch.Event) {
 			compRev = hook.GetResourceVersion() < rev
 		}
 		if compGVR && compNS && compName && compRev {
-			utilruntime.Must(hook.Do(e))
+			err = hook.Do(e)
+			if err != nil {
+				klog.Errorf("failed to operate event, %v", err)
+				return
+			}
 		}
 	}
 }

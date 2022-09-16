@@ -5,7 +5,6 @@ import (
 
 	"github.com/google/uuid"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/klog/v2"
 
@@ -22,7 +21,7 @@ type WatchHook struct {
 	lock sync.Mutex
 }
 
-func NewWatchHook(key string, rev uint64, receiver Receiver) *WatchHook {
+func NewWatchHook(key string, rev uint64, receiver Receiver) (*WatchHook, error) {
 	id := uuid.New().String()
 	gvr, ns, name := metaserver.ParseKey(key)
 	wh := &WatchHook{
@@ -33,15 +32,14 @@ func NewWatchHook(key string, rev uint64, receiver Receiver) *WatchHook {
 		ResourceVersion: rev,
 		Receiver:        receiver,
 	}
-	utilruntime.Must(AddHook(wh))
-	return wh
+	err := AddHook(wh)
+	return wh, err
 }
 
 func (h *WatchHook) Do(event watch.Event) error {
 	h.Lock()
 	defer h.UnLock()
-	utilruntime.Must(h.Receive(event))
-	return nil
+	return h.Receive(event)
 }
 
 func (h *WatchHook) GetGVR() schema.GroupVersionResource {
