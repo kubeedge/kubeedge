@@ -25,6 +25,10 @@ func TestEdgecoreMetaServer(t *testing.T) {
 		c.Modules.Edged.HostnameOverride = cfg.NodeID
 		c.Modules.MetaManager.Enable = true
 		c.Modules.MetaManager.MetaServer.Enable = true
+		c.Modules.MetaManager.MetaServer.AutonomyWithoutAuthorization = true
+		c.Modules.MetaManager.MetaServer.TLSCaFile = "/tmp/edgecore/rootCA.crt"
+		c.Modules.MetaManager.MetaServer.TLSCertFile = "/tmp/edgecore/kubeedge.crt"
+		c.Modules.MetaManager.MetaServer.TLSPrivateKeyFile = "/tmp/edgecore/kubeedge.key"
 
 		Expect(utils.CfgToFile(c)).Should(BeNil())
 		Expect(utils.StartEdgeCore()).Should(BeNil())

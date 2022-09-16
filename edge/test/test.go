@@ -122,7 +122,7 @@ func (tm *testManager) podHandler(w http.ResponseWriter, req *http.Request) {
 			ns = p.Namespace
 		}
 		msgReq := message.BuildMsg("resource", string(p.UID), "edgecontroller", ns+"/pod/"+p.Name, operation, p)
-		beehiveContext.Send("metaManager", *msgReq)
+		beehiveContext.Send(modules.MetaManagerModuleName, *msgReq)
 		klog.Infof("send message to metaManager is %+v\n", msgReq)
 	}
 }
@@ -183,7 +183,7 @@ func (tm *testManager) secretHandler(w http.ResponseWriter, req *http.Request) {
 		}
 
 		msgReq := message.BuildMsg("edgehub", string(p.UID), "test", "fakeNamespace/secret/"+string(p.UID), operation, p)
-		beehiveContext.Send("metaManager", *msgReq)
+		beehiveContext.Send(modules.MetaManagerModuleName, *msgReq)
 		klog.Infof("send message to metaManager is %+v\n", msgReq)
 	}
 }
@@ -213,7 +213,7 @@ func (tm *testManager) configmapHandler(w http.ResponseWriter, req *http.Request
 		}
 
 		msgReq := message.BuildMsg("edgehub", string(p.UID), "test", "fakeNamespace/configmap/"+string(p.UID), operation, p)
-		beehiveContext.Send("metaManager", *msgReq)
+		beehiveContext.Send(modules.MetaManagerModuleName, *msgReq)
 		klog.Infof("send message to metaManager is %+v\n", msgReq)
 	}
 }

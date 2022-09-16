@@ -75,7 +75,7 @@ func (e *edgestream) Start() {
 		Path:   "/v1/kubeedge/connect",
 	}
 	// TODO: Will improve in the future
-	if ok := <-edgehub.HasTLSTunnelCerts; !ok {
+	if ok := <-edgehub.GetCertSyncChannel()[e.Name()]; !ok {
 		klog.Exitf("Failed to find cert key pair")
 	}
 

@@ -9,7 +9,6 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 )
 
 //NodesGetter to get node interface
@@ -68,7 +67,7 @@ func (c *nodes) Get(name string) (*api.Node, error) {
 		return nil, fmt.Errorf("parse message to node failed, err: %v", err)
 	}
 
-	if msg.GetOperation() == model.ResponseOperation && msg.GetSource() == metamanager.MetaManagerModuleName {
+	if msg.GetOperation() == model.ResponseOperation && msg.GetSource() == modules.MetaManagerModuleName {
 		return handleNodeFromMetaDB(content)
 	}
 	return handleNodeFromMetaManager(content)

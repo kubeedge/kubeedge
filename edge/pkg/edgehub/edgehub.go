@@ -16,8 +16,6 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
 
-var HasTLSTunnelCerts = make(chan bool, 1)
-
 //EdgeHub defines edgehub object structure
 type EdgeHub struct {
 	certManager   certificate.CertManager
@@ -30,7 +28,21 @@ type EdgeHub struct {
 
 var _ core.Module = (*EdgeHub)(nil)
 
+var certSync map[string]chan bool
+
+func GetCertSyncChannel() map[string]chan bool {
+	return certSync
+}
+
+func NewCertSyncChannel() map[string]chan bool {
+	certSync = make(map[string]chan bool, 2)
+	certSync[modules.EdgeStreamModuleName] = make(chan bool, 1)
+	certSync[modules.MetaManagerModuleName] = make(chan bool, 1)
+	return certSync
+}
+
 func newEdgeHub(enable bool) *EdgeHub {
+	NewCertSyncChannel()
 	return &EdgeHub{
 		enable:        enable,
 		reconnectChan: make(chan struct{}),
@@ -65,9 +77,10 @@ func (eh *EdgeHub) Enable() bool {
 func (eh *EdgeHub) Start() {
 	eh.certManager = certificate.NewCertManager(config.Config.EdgeHub, config.Config.NodeName)
 	eh.certManager.Start()
-
-	HasTLSTunnelCerts <- true
-	close(HasTLSTunnelCerts)
+	for _, v := range GetCertSyncChannel() {
+		v <- true
+		close(v)
+	}
 
 	go eh.ifRotationDone()
 

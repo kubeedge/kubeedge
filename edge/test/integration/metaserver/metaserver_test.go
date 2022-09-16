@@ -1,6 +1,7 @@
 package metaserver
 
 import (
+	"crypto/tls"
 	"net/http"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -42,11 +43,17 @@ var _ = Describe("Test MetaServer", func() {
 				//"Watch with bad method":                         {"POST", "/" + prefix + "/" + testGroupVersion.Group + "/" + testGroupVersion.Version + "/watch/namespaces/ns/simples/", http.StatusMethodNotAllowed},
 				//"Watch param with bad method": {"POST", "/" + prefix + "/" + testGroupVersion.Group + "/" + testGroupVersion.Version + "/namespaces/ns-foo/simples?watch=true", http.StatusMethodNotAllowed},
 			}
-			client := http.Client{}
-			url := "http://127.0.0.1:10550"
+			client := http.Client{
+				Transport: &http.Transport{
+					TLSClientConfig: &tls.Config{
+						InsecureSkipVerify: true},
+				},
+			}
+			url := "https://127.0.0.1:10550"
 			for _, v := range cases {
 				request, err := http.NewRequest(v.Method, url+v.Path, nil)
 				Expect(err).Should(BeNil())
+				request.Header.Set("Authorization", "xxxxx")
 				response, err := client.Do(request)
 				Expect(err).Should(BeNil())
 				isEqual := v.Status == response.StatusCode

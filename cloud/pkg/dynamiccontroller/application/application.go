@@ -6,9 +6,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
+	authorizationv1 "k8s.io/api/authorization/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,6 +23,8 @@ import (
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
+	authorizationv1client "k8s.io/client-go/kubernetes/typed/authorization/v1"
+	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -29,6 +33,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/filter"
+	commontypes "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	edgemodule "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
@@ -96,16 +101,16 @@ type Application struct {
 	RespBody    []byte
 	Subresource string
 	Error       apierrors.StatusError
-
-	ctx    context.Context // to end app.Wait
-	cancel context.CancelFunc
+	Token       string
+	ctx         context.Context // to end app.Wait
+	cancel      context.CancelFunc
 
 	count     uint64 // count the number of current citations
 	countLock sync.Mutex
 	timestamp time.Time // record the last closing time of application, only make sense when count == 0
 }
 
-func newApplication(ctx context.Context, key string, verb applicationVerb, nodename, subresource string, option interface{}, reqBody interface{}) *Application {
+func newApplication(ctx context.Context, key string, verb applicationVerb, nodename, subresource string, option interface{}, reqBody interface{}) (*Application, error) {
 	var v1 metav1.ListOptions
 	if internal, ok := option.(metainternalversion.ListOptions); ok {
 		err := metainternalversion.Convert_internalversion_ListOptions_To_v1_ListOptions(&internal, &v1, nil)
@@ -114,6 +119,11 @@ func newApplication(ctx context.Context, key string, verb applicationVerb, noden
 			klog.Errorf("failed to transfer internalListOption to v1ListOption, force set to empty")
 		}
 		option = v1
+	}
+	token, ok := ctx.Value(commontypes.AuthorizationKey).(string)
+	if !ok {
+		klog.Errorf("unsupported Token type :%T", ctx.Value(commontypes.AuthorizationKey))
+		return nil, fmt.Errorf("unsupported Token type :%T", ctx.Value(commontypes.AuthorizationKey))
 	}
 	ctx2, cancel := context.WithCancel(ctx)
 	app := &Application{
@@ -124,6 +134,7 @@ func newApplication(ctx context.Context, key string, verb applicationVerb, noden
 		Status:      PreApplying,
 		Option:      toBytes(option),
 		ReqBody:     toBytes(reqBody),
+		Token:       token,
 		ctx:         ctx2,
 		cancel:      cancel,
 		count:       0,
@@ -131,7 +142,7 @@ func newApplication(ctx context.Context, key string, verb applicationVerb, noden
 		timestamp:   time.Time{},
 	}
 	app.add()
-	return app
+	return app, nil
 }
 
 func (a *Application) Identifier() string {
@@ -281,27 +292,29 @@ func NewApplicationAgent() *Agent {
 	return defaultAgent
 }
 
-func (a *Agent) Generate(ctx context.Context, verb applicationVerb, option interface{}, obj runtime.Object) *Application {
+func (a *Agent) Generate(ctx context.Context, verb applicationVerb, option interface{}, obj runtime.Object) (*Application, error) {
 	key, err := metaserver.KeyFuncReq(ctx, "")
 	if err != nil {
 		klog.Errorf("%v", err)
-		return &Application{}
+		return nil, err
 	}
 
 	info, ok := apirequest.RequestInfoFrom(ctx)
 	if !ok || !info.IsResourceRequest {
 		klog.Errorf("no request info in context")
-		return &Application{}
+		return nil, fmt.Errorf("no request info in context")
 	}
-
-	app := newApplication(ctx, key, verb, a.nodeName, info.Subresource, option, obj)
+	app, err := newApplication(ctx, key, verb, a.nodeName, info.Subresource, option, obj)
+	if err != nil {
+		return nil, err
+	}
 	store, ok := a.Applications.LoadOrStore(app.Identifier(), app)
 	if ok {
 		app = store.(*Application)
 		app.add()
-		return app
+		return app, nil
 	}
-	return app
+	return app, nil
 }
 
 func (a *Agent) Apply(app *Application) error {
@@ -337,7 +350,6 @@ func (a *Agent) Apply(app *Application) error {
 
 func (a *Agent) doApply(app *Application) {
 	defer app.Call()
-
 	// encapsulate as a message
 	app.Status = InApplying
 	msg := model.NewMessage("").SetRoute(MetaServerSource, modules.DynamicControllerModuleGroup).FillBody(app)
@@ -348,7 +360,6 @@ func (a *Agent) doApply(app *Application) {
 		app.Reason = fmt.Sprintf("failed to access cloud Application center: %v", err)
 		return
 	}
-
 	retApp, err := msgToApplication(resp)
 	if err != nil {
 		app.Status = Failed
@@ -378,13 +389,13 @@ type Center struct {
 	Applications sync.Map
 	HandlerCenter
 	messageLayer messagelayer.MessageLayer
-	kubeclient   dynamic.Interface
+	authConfig   *rest.Config
 }
 
 func NewApplicationCenter(dynamicSharedInformerFactory dynamicinformer.DynamicSharedInformerFactory) *Center {
 	a := &Center{
 		HandlerCenter: NewHandlerCenter(dynamicSharedInformerFactory),
-		kubeclient:    client.GetDynamicClient(),
+		authConfig:    client.GetAuthConfig(),
 		messageLayer:  messagelayer.DynamicControllerMessageLayer(),
 	}
 	return a
@@ -429,6 +440,7 @@ func (c *Center) Process(msg model.Message) {
 		klog.Errorf("failed to translate msg to Application: %v", err)
 		return
 	}
+
 	klog.Infof("[metaserver/ApplicationCenter] get a Application %v", app.String())
 
 	resp, err := c.ProcessApplication(app)
@@ -441,6 +453,66 @@ func (c *Center) Process(msg model.Message) {
 	klog.Infof("[metaserver/applicationCenter]successfully to process Application(%+v)", app)
 }
 
+func (c *Center) generateNewConfig(raw string) (*rest.Config, error) {
+	parts := strings.SplitN(raw, " ", 3)
+	if len(parts) < 2 || strings.ToLower(parts[0]) != "bearer" || len(parts[1]) <= 0 {
+		return nil, fmt.Errorf("invalid request token format or length: %v", len(parts))
+	}
+	authConfig := rest.CopyConfig(c.authConfig)
+	authConfig.BearerToken = parts[1]
+	return authConfig, nil
+}
+
+func (c *Center) createAuthClient(app *Application) (authorizationv1client.AuthorizationV1Interface, error) {
+	authConfig, err := c.generateNewConfig(app.Token)
+	if err != nil {
+		return nil, err
+	}
+	return authorizationv1client.NewForConfigOrDie(authConfig), nil
+}
+
+func (c *Center) createKubeClient(app *Application) (dynamic.Interface, error) {
+	authConfig, err := c.generateNewConfig(app.Token)
+	if err != nil {
+		return nil, err
+	}
+	return dynamic.NewForConfigOrDie(authConfig), nil
+}
+
+func (c *Center) authorizeApplication(app *Application, gvr schema.GroupVersionResource, namespace string, name string) error {
+	tmpAuthClient, err := c.createAuthClient(app)
+	if err != nil {
+		return err
+	}
+	sar := &authorizationv1.SelfSubjectAccessReview{
+		Spec: authorizationv1.SelfSubjectAccessReviewSpec{
+			ResourceAttributes: &authorizationv1.ResourceAttributes{
+				Namespace:   namespace,
+				Verb:        string(app.Verb),
+				Group:       gvr.Group,
+				Resource:    gvr.Resource,
+				Name:        name,
+				Subresource: app.Subresource,
+			},
+		},
+	}
+	response, err := tmpAuthClient.SelfSubjectAccessReviews().Create(context.TODO(), sar, metav1.CreateOptions{})
+	if err != nil {
+		return err
+	}
+	if response.Status.Allowed {
+		return nil
+	}
+	var errMsg = fmt.Sprintf("resource %v authorize failed.", gvr)
+	if len(response.Status.Reason) > 0 {
+		errMsg += fmt.Sprintf("reason: %v.", response.Status.Reason)
+	}
+	if len(response.Status.EvaluationError) > 0 {
+		errMsg += fmt.Sprintf("evaluation error: %v.", response.Status.EvaluationError)
+	}
+	return fmt.Errorf(errMsg)
+}
+
 // ProcessApplication processes application by re-translating it to kube-api request with kube client,
 // which will be processed and responded by apiserver eventually.
 // Specially if app.verb == watch, it transforms app to a listener and register it to HandlerCenter, rather
@@ -448,20 +520,33 @@ func (c *Center) Process(msg model.Message) {
 // push them to edge node.
 func (c *Center) ProcessApplication(app *Application) (interface{}, error) {
 	app.Status = InProcessing
-
 	gvr, ns, name := metaserver.ParseKey(app.Key)
+	var kubeClient dynamic.Interface
+	var err error
+	if app.Verb != Watch {
+		kubeClient, err = c.createKubeClient(app)
+		if err != nil {
+			klog.Errorf("create kube client error: %v", err)
+			return nil, err
+		}
+	}
 	switch app.Verb {
 	case List:
 		var option = new(metav1.ListOptions)
 		if err := app.OptionTo(option); err != nil {
 			return nil, err
 		}
-		list, err := c.kubeclient.Resource(app.GVR()).Namespace(app.Namespace()).List(context.TODO(), *option)
+		list, err := kubeClient.Resource(gvr).Namespace(ns).List(context.TODO(), *option)
 		if err != nil {
-			return nil, fmt.Errorf("successfully to add listener but failed to get current list, %v", err)
+			return nil, fmt.Errorf("get current list error: %v", err)
 		}
 		return list, nil
 	case Watch:
+		err := c.authorizeApplication(app, gvr, ns, name)
+		if err != nil {
+			klog.Errorf("authorize application error: %v", err)
+			return nil, err
+		}
 		var option = new(metav1.ListOptions)
 		if err := app.OptionTo(option); err != nil {
 			return nil, err
@@ -475,7 +560,7 @@ func (c *Center) ProcessApplication(app *Application) (interface{}, error) {
 		if err := app.OptionTo(option); err != nil {
 			return nil, err
 		}
-		retObj, err := c.kubeclient.Resource(gvr).Namespace(ns).Get(context.TODO(), name, *option)
+		retObj, err := kubeClient.Resource(gvr).Namespace(ns).Get(context.TODO(), name, *option)
 		if err != nil {
 			return nil, err
 		}
@@ -492,9 +577,9 @@ func (c *Center) ProcessApplication(app *Application) (interface{}, error) {
 		var retObj interface{}
 		var err error
 		if app.Subresource == "" {
-			retObj, err = c.kubeclient.Resource(gvr).Namespace(ns).Create(context.TODO(), obj, *option)
+			retObj, err = kubeClient.Resource(gvr).Namespace(ns).Create(context.TODO(), obj, *option)
 		} else {
-			retObj, err = c.kubeclient.Resource(gvr).Namespace(ns).Create(context.TODO(), obj, *option, app.Subresource)
+			retObj, err = kubeClient.Resource(gvr).Namespace(ns).Create(context.TODO(), obj, *option, app.Subresource)
 		}
 		if err != nil {
 			return nil, err
@@ -505,7 +590,7 @@ func (c *Center) ProcessApplication(app *Application) (interface{}, error) {
 		if err := app.OptionTo(&option); err != nil {
 			return nil, err
 		}
-		if err := c.kubeclient.Resource(gvr).Namespace(ns).Delete(context.TODO(), name, *option); err != nil {
+		if err := kubeClient.Resource(gvr).Namespace(ns).Delete(context.TODO(), name, *option); err != nil {
 			return nil, err
 		}
 		return nil, nil
@@ -521,9 +606,9 @@ func (c *Center) ProcessApplication(app *Application) (interface{}, error) {
 		var retObj interface{}
 		var err error
 		if app.Subresource == "" {
-			retObj, err = c.kubeclient.Resource(gvr).Namespace(ns).Update(context.TODO(), obj, *option)
+			retObj, err = kubeClient.Resource(gvr).Namespace(ns).Update(context.TODO(), obj, *option)
 		} else {
-			retObj, err = c.kubeclient.Resource(gvr).Namespace(ns).Update(context.TODO(), obj, *option, app.Subresource)
+			retObj, err = kubeClient.Resource(gvr).Namespace(ns).Update(context.TODO(), obj, *option, app.Subresource)
 		}
 		if err != nil {
 			return nil, err
@@ -538,7 +623,7 @@ func (c *Center) ProcessApplication(app *Application) (interface{}, error) {
 		if err := app.ReqBodyTo(obj); err != nil {
 			return nil, err
 		}
-		retObj, err := c.kubeclient.Resource(gvr).Namespace(ns).UpdateStatus(context.TODO(), obj, *option)
+		retObj, err := kubeClient.Resource(gvr).Namespace(ns).UpdateStatus(context.TODO(), obj, *option)
 		if err != nil {
 			return nil, err
 		}
@@ -548,7 +633,7 @@ func (c *Center) ProcessApplication(app *Application) (interface{}, error) {
 		if err := app.OptionTo(pi); err != nil {
 			return nil, err
 		}
-		retObj, err := c.kubeclient.Resource(gvr).Namespace(ns).Patch(context.TODO(), pi.Name, pi.PatchType, pi.Data, pi.Options, pi.Subresources...)
+		retObj, err := kubeClient.Resource(gvr).Namespace(ns).Patch(context.TODO(), pi.Name, pi.PatchType, pi.Data, pi.Options, pi.Subresources...)
 		if err != nil {
 			return nil, err
 		}

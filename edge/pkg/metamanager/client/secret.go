@@ -9,7 +9,6 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 )
 
 //SecretsGetter is interface to get client secrets
@@ -62,7 +61,7 @@ func (c *secrets) Get(name string) (*api.Secret, error) {
 		return nil, fmt.Errorf("parse message to secret failed, err: %v", err)
 	}
 
-	if msg.GetOperation() == model.ResponseOperation && msg.GetSource() == metamanager.MetaManagerModuleName {
+	if msg.GetOperation() == model.ResponseOperation && msg.GetSource() == modules.MetaManagerModuleName {
 		return handleSecretFromMetaDB(content)
 	}
 	//else

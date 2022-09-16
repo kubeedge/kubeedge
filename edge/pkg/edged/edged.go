@@ -115,7 +115,6 @@ import (
 	edgedutil "github.com/kubeedge/kubeedge/edge/pkg/edged/util"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/util/record"
 	csiplugin "github.com/kubeedge/kubeedge/edge/pkg/edged/volume/csi"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/version"
@@ -1149,7 +1148,7 @@ func (e *edged) syncPod() {
 	//when starting, send msg to metamanager once to get existing pods
 	info := model.NewMessage("").BuildRouter(e.Name(), e.Group(), e.namespace+"/"+model.ResourceTypePod,
 		model.QueryOperation)
-	beehiveContext.Send(metamanager.MetaManagerModuleName, *info)
+	beehiveContext.Send(modules.MetaManagerModuleName, *info)
 	for {
 		select {
 		case <-beehiveContext.Done():
@@ -1178,7 +1177,7 @@ func (e *edged) syncPod() {
 		klog.V(4).Infof("result content is %s", result.Content)
 		switch resType {
 		case model.ResourceTypePod:
-			if op == model.ResponseOperation && resID == "" && result.GetSource() == metamanager.MetaManagerModuleName {
+			if op == model.ResponseOperation && resID == "" && result.GetSource() == modules.MetaManagerModuleName {
 				err := e.handlePodListFromMetaManager(content)
 				if err != nil {
 					klog.Errorf("handle podList failed: %v", err)
