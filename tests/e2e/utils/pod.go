@@ -276,6 +276,7 @@ func WaitforPodsRunning(kubeConfigPath string, podlist v1.PodList, timout time.D
 				}
 				// calculate the pods in running status
 				count := 0
+				Infof("totalCount is : %v", len(podlist.Items))
 				for i := range podlist.Items {
 					// update pod status in podlist
 					if podlist.Items[i].Name == p.Name {
