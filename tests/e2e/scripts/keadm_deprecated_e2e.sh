@@ -27,7 +27,7 @@ function cleanup() {
   sudo pkill cloudcore || true
   kind delete cluster --name test
   sudo rm -rf /var/log/kubeedge /etc/kubeedge /etc/systemd/system/edgecore.service $E2E_DIR/keadm/keadm.test $E2E_DIR/config.json
-  #sudo rm -rf ${KUBEEDGE_ROOT}/_output/release/${VERSION}/
+  sudo rm -rf ${KUBEEDGE_ROOT}/_output/release/${VERSION}/
 }
 
 function build_keadm() {
@@ -91,7 +91,7 @@ function run_test() {
   if [[ $? != 0 ]]; then
     echo "Integration suite has failures, Please check !!"
     echo "edgecore logs"
-    journalctl -u edgecore.service -xe
+    journalctl -u edgecore.service -xe > /tmp/edgecore.log
     echo "================================================="
     echo "================================================="
     echo "================================================="
@@ -101,6 +101,10 @@ function run_test() {
     journalctl -u cloudcore.service -xe
     exit 1
   fi
+  echo "HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH"
+  echo "HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH"
+  echo "HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH"
+  echo "HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH"
 }
 
 set -Ee
@@ -140,13 +144,8 @@ build_keadm
 echo -e "\nPreparing cluster..."
 prepare_cluster
 
-sudo mkdir -p /etc/kubeedge
-
-sudo cp ${KUBEEDGE_ROOT}/_output/release/${VERSION}/kubeedge-${VERSION}-linux-amd64.tar.gz ${KUBEEDGE_ROOT}/_output/release/${VERSION}/checksum_kubeedge-${VERSION}-linux-amd64.tar.gz.txt /etc/kubeedge
-
-
 echo -e "\nStarting kubeedge..."
-start_kubeedge ${kubeedge_version}
+start_kubeedge ""
 
 echo -e "\nRunning test..."
 run_test
