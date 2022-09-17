@@ -46,7 +46,6 @@ func Trigger(e watch.Event) {
 		return
 	}
 	gvr, ns, name := metaserver.ParseKey(key)
-	//TODO why not lock hooks ?
 	for _, hook := range hooks {
 		compGVR, compNS, compName, compRev := true, true, true, true
 		if !hook.GetGVR().Empty() {

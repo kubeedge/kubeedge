@@ -10,6 +10,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 )
 
 // PersistentVolumesGetter is interface to get client PersistentVolumes
@@ -62,7 +63,7 @@ func (c *persistentvolumes) Get(name string, options metav1.GetOptions) (*api.Pe
 		return nil, fmt.Errorf("parse message to persistentvolume failed, err: %v", err)
 	}
 
-	if msg.GetOperation() == model.ResponseOperation && msg.GetSource() == modules.MetaManagerModuleName {
+	if msg.GetOperation() == model.ResponseOperation && msg.GetSource() == metamanager.MetaManagerModuleName {
 		return handlePersistentVolumeFromMetaDB(content)
 	}
 	return handlePersistentVolumeFromMetaManager(content)

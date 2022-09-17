@@ -17,10 +17,9 @@ type Configure struct {
 
 func InitConfigure(c *v1alpha1.MetaServer) {
 	once.Do(func() {
-		Config = Configure{
-			MetaServer: *c,
-			// so edgehub must register before metamanager
-			NodeName: edgehubconfig.Config.NodeName,
-		}
+		Config.Enable = c.Enable
+		Config.Server = c.Server
+		// so edgehub must register before metamanager
+		Config.NodeName = edgehubconfig.Config.NodeName
 	})
 }

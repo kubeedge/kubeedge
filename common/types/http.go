@@ -16,7 +16,3 @@ type HTTPResponse struct {
 	StatusCode int         `json:"status_code"`
 	Body       []byte      `json:"body"`
 }
-
-const (
-	AuthorizationKey = "Authorization"
-)

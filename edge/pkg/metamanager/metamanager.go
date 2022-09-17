@@ -16,6 +16,11 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
 
+//constant metamanager module name
+const (
+	MetaManagerModuleName = "metaManager"
+)
+
 type metaManager struct {
 	enable bool
 }
@@ -48,7 +53,7 @@ func initDBTable(module core.Module) {
 }
 
 func (*metaManager) Name() string {
-	return modules.MetaManagerModuleName
+	return MetaManagerModuleName
 }
 
 func (*metaManager) Group() string {

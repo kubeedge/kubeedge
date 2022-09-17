@@ -13,6 +13,4 @@ const (
 	DeviceTwinModuleName = "twin"
 	// EdgeHubModuleName name
 	EdgeHubModuleName = "websocket"
-	// MetaManagerModuleName metamanager module name
-	MetaManagerModuleName = "metamanager"
 )

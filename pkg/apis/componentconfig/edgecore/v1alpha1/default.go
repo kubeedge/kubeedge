@@ -139,12 +139,8 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				ContextSendModule:  metaconfig.ModuleNameEdgeHub,
 				RemoteQueryTimeout: constants.DefaultRemoteQueryTimeout,
 				MetaServer: &MetaServer{
-					Enable:                       false,
-					AutonomyWithoutAuthorization: false,
-					Server:                       constants.DefaultMetaServerAddr,
-					TLSCaFile:                    constants.DefaultCAFile,
-					TLSCertFile:                  constants.DefaultCertFile,
-					TLSPrivateKeyFile:            constants.DefaultKeyFile,
+					Enable: false,
+					Server: constants.DefaultMetaServerAddr,
 				},
 			},
 			ServiceBus: &ServiceBus{

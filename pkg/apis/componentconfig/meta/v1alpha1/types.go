@@ -25,7 +25,7 @@ const (
 	ModuleNameServiceBus ModuleName = "servicebus"
 	// TODO @kadisi change websocket to edgehub
 	ModuleNameEdgeHub     ModuleName = "websocket"
-	ModuleNameMetaManager ModuleName = "metamanager"
+	ModuleNameMetaManager ModuleName = "metaManager"
 	ModuleNameEdged       ModuleName = "edged"
 	ModuleNameTwin        ModuleName = "twin"
 	ModuleNameDBTest      ModuleName = "dbTest"
