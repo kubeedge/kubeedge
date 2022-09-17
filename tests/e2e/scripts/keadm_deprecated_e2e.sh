@@ -140,6 +140,11 @@ build_keadm
 echo -e "\nPreparing cluster..."
 prepare_cluster
 
+sudo mkdir -p /etc/kubeedge
+
+sudo cp ${KUBEEDGE_ROOT}/_output/release/${VERSION}/kubeedge-${VERSION}-linux-amd64.tar.gz ${KUBEEDGE_ROOT}/_output/release/${VERSION}/checksum_kubeedge-${VERSION}-linux-amd64.tar.gz.txt /etc/kubeedge
+
+
 echo -e "\nStarting kubeedge..."
 start_kubeedge ${kubeedge_version}
 
