@@ -141,7 +141,7 @@ echo -e "\nPreparing cluster..."
 prepare_cluster
 
 echo -e "\nStarting kubeedge..."
-start_kubeedge ""
+start_kubeedge ${kubeedge_version}
 
 echo -e "\nRunning test..."
 run_test
