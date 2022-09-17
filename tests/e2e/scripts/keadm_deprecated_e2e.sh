@@ -27,7 +27,7 @@ function cleanup() {
   sudo pkill cloudcore || true
   kind delete cluster --name test
   sudo rm -rf /var/log/kubeedge /etc/kubeedge /etc/systemd/system/edgecore.service $E2E_DIR/keadm/keadm.test $E2E_DIR/config.json
-  sudo rm -rf ${KUBEEDGE_ROOT}/_output/release/${VERSION}/
+  #sudo rm -rf ${KUBEEDGE_ROOT}/_output/release/${VERSION}/
 }
 
 function build_keadm() {
