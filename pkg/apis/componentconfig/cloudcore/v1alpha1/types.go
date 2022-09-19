@@ -266,6 +266,9 @@ type EdgeControllerBuffer struct {
 	// UpdateNode indicates the buffer of update node
 	// default 1024
 	UpdateNode int32 `json:"updateNode,omitempty"`
+	// PatchPod indicates the buffer of patch pod
+	// default 1024
+	PatchPod int32 `json:"patchPod,omitempty"`
 	// DeletePod indicates the buffer of delete pod message from edge
 	// default 1024
 	DeletePod int32 `json:"deletePod,omitempty"`
@@ -321,6 +324,9 @@ type EdgeControllerLoad struct {
 	// UpdateNodeWorkers indicates the load of update node workers
 	// default 4
 	UpdateNodeWorkers int32 `json:"updateNodeWorkers,omitempty"`
+	// PatchPodWorkers indicates the load of patch pod workers
+	// default 4
+	PatchPodWorkers int32 `json:"patchPodWorkers,omitempty"`
 	// DeletePodWorkers indicates the load of delete pod workers
 	// default 4
 	DeletePodWorkers int32 `json:"deletePodWorkers,omitempty"`
