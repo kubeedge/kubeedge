@@ -84,7 +84,8 @@ func requireRemoteQuery(resType string) bool {
 		resType == constants.ResourceTypePersistentVolumeClaim ||
 		resType == constants.ResourceTypeVolumeAttachment ||
 		resType == model.ResourceTypeNode ||
-		resType == model.ResourceTypeServiceAccountToken
+		resType == model.ResourceTypeServiceAccountToken ||
+		resType == model.ResourceTypeLease
 }
 
 func isConnected() bool {
@@ -125,6 +126,11 @@ func (m *metaManager) processInsert(message model.Message) {
 	if err != nil {
 		klog.Errorf("save meta failed, %s: %v", msgDebugInfo(&message), err)
 		feedbackError(err, "Error to save meta to DB", message)
+		return
+	}
+
+	if resType == model.ResourceTypeLease && message.GetSource() == modules.EdgedModuleName {
+		sendToCloud(&message)
 		return
 	}
 
@@ -171,7 +177,7 @@ func (m *metaManager) processUpdate(message model.Message) {
 		sendToCloud(&message)
 		// For pod status update message, we need to wait for the response message
 		// to ensure that the pod status is correctly reported to the kube-apiserver
-		if resType != model.ResourceTypePodStatus {
+		if resType != model.ResourceTypePodStatus && resType != model.ResourceTypeLease {
 			resp := message.NewRespByMessage(&message, OK)
 			sendToEdged(resp, message.IsSync())
 		}
@@ -258,7 +264,7 @@ func (m *metaManager) processQuery(message model.Message) {
 	var err error
 	if requireRemoteQuery(resType) && isConnected() {
 		metas, err = dao.QueryMeta("key", resKey)
-		if err != nil || len(*metas) == 0 || resType == model.ResourceTypeNode || resType == constants.ResourceTypeVolumeAttachment {
+		if err != nil || len(*metas) == 0 || resType == model.ResourceTypeNode || resType == constants.ResourceTypeVolumeAttachment || resType == model.ResourceTypeLease {
 			m.processRemoteQuery(message)
 		} else {
 			resp := message.NewRespByMessage(&message, *metas)

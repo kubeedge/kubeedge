@@ -100,6 +100,8 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					QueryNode:                  constants.DefaultQueryNodeBuffer,
 					UpdateNode:                 constants.DefaultUpdateNodeBuffer,
 					DeletePod:                  constants.DefaultDeletePodBuffer,
+					CreateLease:                constants.DefaultCreateLeaseBuffer,
+					QueryLease:                 constants.DefaultQueryLeaseBuffer,
 					ServiceAccountToken:        constants.DefaultServiceAccountTokenBuffer,
 				},
 				Load: &EdgeControllerLoad{
@@ -115,6 +117,8 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					QueryNodeWorkers:                  constants.DefaultQueryNodeWorkers,
 					UpdateNodeWorkers:                 constants.DefaultUpdateNodeWorkers,
 					DeletePodWorkers:                  constants.DefaultDeletePodWorkers,
+					CreateLeaseWorkers:                constants.DefaultCreateLeaseWorkers,
+					QueryLeaseWorkers:                 constants.DefaultQueryLeaseWorkers,
 					UpdateRuleStatusWorkers:           constants.DefaultUpdateRuleStatusWorkers,
 					ServiceAccountTokenWorkers:        constants.DefaultServiceAccountTokenWorkers,
 				},
