@@ -46,6 +46,7 @@ func (dt *DeviceTwin) distributeMsg(m interface{}) error {
 	if !ok {
 		return errors.New("distribute message, msg is nil")
 	}
+
 	message := dttype.DTMessage{Msg: &msg}
 	if message.Msg.GetParentID() != "" {
 		klog.Infof("Send msg to the %s module in twin", dtcommon.CommModule)
@@ -57,6 +58,7 @@ func (dt *DeviceTwin) distributeMsg(m interface{}) error {
 	if !classifyMsg(&message) {
 		return errors.New("not found action")
 	}
+
 	if ActionModuleMap == nil {
 		initActionModuleMap()
 	}
@@ -107,6 +109,7 @@ func initActionModuleMap() {
 	ActionModuleMap[dtcommon.Disconnected] = dtcommon.CommModule
 	ActionModuleMap[dtcommon.LifeCycle] = dtcommon.CommModule
 	ActionModuleMap[dtcommon.Confirm] = dtcommon.CommModule
+	ActionModuleMap[dtcommon.MetaDeviceOperation] = dtcommon.DMIModule
 }
 
 // SyncSqlite sync sqlite
@@ -261,12 +264,25 @@ func classifyMsg(message *dttype.DTMessage) bool {
 			return true
 		}
 		return false
+	} else if strings.Compare(msgSource, "meta") == 0 {
+		switch message.Msg.Content.(type) {
+		case []byte:
+			klog.Info("Message content type is []byte, no need to marshal again")
+		default:
+			content, err := json.Marshal(message.Msg.Content)
+			if err != nil {
+				return false
+			}
+			message.Msg.Content = content
+		}
+		message.Action = dtcommon.MetaDeviceOperation
+		return true
 	}
 	return false
 }
 
 func (dt *DeviceTwin) runDeviceTwin() {
-	moduleNames := []string{dtcommon.MemModule, dtcommon.TwinModule, dtcommon.DeviceModule, dtcommon.CommModule}
+	moduleNames := []string{dtcommon.MemModule, dtcommon.TwinModule, dtcommon.DeviceModule, dtcommon.CommModule, dtcommon.DMIModule}
 	for _, v := range moduleNames {
 		dt.RegisterDTModule(v)
 		go dt.DTModules[v].Start()

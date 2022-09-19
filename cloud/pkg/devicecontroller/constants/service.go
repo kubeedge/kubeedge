@@ -6,5 +6,6 @@ const (
 	ResourceTypeMembershipDetail = "membership/detail"
 
 	// Group
-	GroupTwin = "twin"
+	GroupTwin     = "twin"
+	GroupResource = "resource"
 )

@@ -116,8 +116,12 @@ func TestStart(t *testing.T) {
 	}
 	beehiveContext.AddModule(addDt)
 	beehiveContext.AddModuleGroup(dt.Name(), dt.Group())
-	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(1)
-	querySeterMock.EXPECT().All(gomock.Any()).Return(int64(1), nil).Times(1)
+	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).MinTimes(1)
+	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).MaxTimes(5)
+	querySeterMock.EXPECT().All(gomock.Any()).Return(int64(1), nil).MinTimes(1)
+	querySeterMock.EXPECT().All(gomock.Any()).Return(int64(1), nil).MaxTimes(5)
+	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).MinTimes(1)
+	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).MaxTimes(5)
 	go dt.Start()
 	time.Sleep(delay)
 	retry++

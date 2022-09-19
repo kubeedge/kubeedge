@@ -134,8 +134,14 @@ func (m *metaManager) processInsert(message model.Message) {
 		return
 	}
 
-	// Notify edged
-	sendToEdged(&message, false)
+	msgSource := message.GetSource()
+	if msgSource == cloudmodules.DeviceControllerModuleName {
+		message.SetRoute(modules.MetaGroup, modules.DeviceTwinModuleName)
+		beehiveContext.Send(modules.DeviceTwinModuleName, message)
+	} else {
+		// Notify edged
+		sendToEdged(&message, false)
+	}
 
 	resp := message.NewRespByMessage(&message, OK)
 	sendToCloud(resp)
@@ -189,6 +195,13 @@ func (m *metaManager) processUpdate(message model.Message) {
 		beehiveContext.Send(EdgeFunctionModel, message)
 	case EdgeFunctionModel:
 		sendToCloud(&message)
+	case cloudmodules.DeviceControllerModuleName:
+		resp := message.NewRespByMessage(&message, OK)
+		sendToCloud(resp)
+
+		message.SetRoute(modules.MetaGroup, modules.DeviceTwinModuleName)
+		beehiveContext.Send(modules.DeviceTwinModuleName, message)
+
 	default:
 		klog.Errorf("unsupport message source, %s", msgSource)
 	}
@@ -250,6 +263,12 @@ func (m *metaManager) processDelete(message model.Message) {
 	if resType == model.ResourceTypePod && message.GetSource() == modules.EdgedModuleName {
 		sendToCloud(&message)
 		return
+	}
+
+	msgSource := message.GetSource()
+	if msgSource == cloudmodules.DeviceControllerModuleName {
+		message.SetRoute(modules.MetaGroup, modules.DeviceTwinModuleName)
+		beehiveContext.Send(modules.DeviceTwinModuleName, message)
 	}
 
 	// Notify edged
@@ -402,6 +421,7 @@ func (m *metaManager) processVolume(message model.Message) {
 
 func (m *metaManager) process(message model.Message) {
 	operation := message.GetOperation()
+
 	switch operation {
 	case model.InsertOperation:
 		m.processInsert(message)
