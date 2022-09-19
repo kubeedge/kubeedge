@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -426,11 +425,8 @@ func (mh *MessageHandle) MessageWriteLoop(info *model.HubInfo, stopServe chan Ex
 		if err != nil {
 			klog.Errorf("Failed to send event to node: %s, affected event: %s, err: %s",
 				info.NodeID, dumpMessageMetadata(copyMsg), err.Error())
+			nodeQueue.Done(key)
 			nodeQueue.Add(key.(string))
-			if strings.Contains(err.Error(), "use of closed network connection") {
-				mh.nodeConns.Delete(info.NodeID)
-				continue
-			}
 			time.Sleep(time.Second * 2)
 		}
 
