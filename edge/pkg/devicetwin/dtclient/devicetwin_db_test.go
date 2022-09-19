@@ -60,7 +60,7 @@ func TestSaveDeviceTwin(t *testing.T) {
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
 			ormerMock.EXPECT().Insert(gomock.Any()).Return(test.returnInt, test.returnErr).Times(1)
-			err := SaveDeviceTwin(&DeviceTwin{})
+			err := SaveDeviceTwin(dbm.DBAccess, &DeviceTwin{})
 			if test.returnErr != err {
 				t.Errorf("Save Device Twin Case failed: wanted error %v and got error %v", test.returnErr, err)
 			}
@@ -115,7 +115,7 @@ func TestDeleteDeviceTwinByDeviceID(t *testing.T) {
 			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
 			querySeterMock.EXPECT().Delete().Return(test.deleteReturnInt, test.deleteReturnErr).Times(1)
 			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-			err := DeleteDeviceTwinByDeviceID("test")
+			err := DeleteDeviceTwinByDeviceID(dbm.DBAccess, "test")
 			if test.deleteReturnErr != err {
 				t.Errorf("DeleteDeviceTwinByDeviceID Case failed: wanted error %v and got error %v", test.deleteReturnErr, err)
 			}
@@ -170,7 +170,7 @@ func TestDeleteDeviceTwin(t *testing.T) {
 			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(2)
 			querySeterMock.EXPECT().Delete().Return(test.deleteReturnInt, test.deleteReturnErr).Times(1)
 			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-			err := DeleteDeviceTwin("test", "test")
+			err := DeleteDeviceTwin(dbm.DBAccess, "test", "test")
 			if test.deleteReturnErr != err {
 				t.Errorf("DeleteDeviceTwin Case failed: wanted error %v and got error %v", test.deleteReturnErr, err)
 			}
@@ -280,7 +280,7 @@ func TestUpdateDeviceTwinFields(t *testing.T) {
 			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(2)
 			querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(1)
 			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-			err := UpdateDeviceTwinFields("test", "test", make(map[string]interface{}))
+			err := UpdateDeviceTwinFields(dbm.DBAccess, "test", "test", make(map[string]interface{}))
 			if test.updateReturnErr != err {
 				t.Errorf("UpdateDeviceTwinFields Case failed: wanted error %v and got error %v", test.updateReturnErr, err)
 			}
@@ -556,6 +556,10 @@ func TestDeviceTwinTrans(t *testing.T) {
 	adds = append(adds, DeviceTwin{DeviceID: "Test"})
 	deletes = append(deletes, DeviceDelete{DeviceID: "test", Name: "test"})
 	updates = append(updates, DeviceTwinUpdate{DeviceID: "test", Name: "test", Cols: make(map[string]interface{})})
+
+	dbm.DefaultOrmFunc = func() orm.Ormer {
+		return ormerMock
+	}
 
 	// run the test cases
 	for _, test := range cases {

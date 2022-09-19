@@ -61,7 +61,7 @@ func TestSaveDeviceAttr(t *testing.T) {
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
 			ormerMock.EXPECT().Insert(gomock.Any()).Return(test.returnInt, test.returnErr).Times(1)
-			err := SaveDeviceAttr(&DeviceAttr{})
+			err := SaveDeviceAttr(dbm.DBAccess, &DeviceAttr{})
 			if test.returnErr != err {
 				t.Errorf("Save Device Attr Case failed: wanted error %v and got error %v", test.returnErr, err)
 			}
@@ -116,7 +116,7 @@ func TestDeleteDeviceAttrByDeviceID(t *testing.T) {
 			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
 			querySeterMock.EXPECT().Delete().Return(test.deleteReturnInt, test.deleteReturnErr).Times(1)
 			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-			err := DeleteDeviceAttrByDeviceID("test")
+			err := DeleteDeviceAttrByDeviceID(dbm.DBAccess, "test")
 			if test.deleteReturnErr != err {
 				t.Errorf("DeleteDeviceAttrByDeviceID Case failed: wanted error %v and got error %v", test.deleteReturnErr, err)
 			}
@@ -170,7 +170,7 @@ func TestDeleteDeviceAttr(t *testing.T) {
 		querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(2)
 		querySeterMock.EXPECT().Delete().Return(test.deleteReturnInt, test.deleteReturnErr).Times(1)
 		ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-		err := DeleteDeviceAttr("test", "test")
+		err := DeleteDeviceAttr(dbm.DBAccess, "test", "test")
 		t.Run(test.name, func(t *testing.T) {
 			if test.deleteReturnErr != err {
 				t.Errorf("DeleteDeviceAttr Case failed: wanted error %v and got error %v", test.deleteReturnErr, err)
@@ -281,7 +281,7 @@ func TestUpdateDeviceAttrFields(t *testing.T) {
 			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(2)
 			querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(1)
 			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-			err := UpdateDeviceAttrFields("test", "test", make(map[string]interface{}))
+			err := UpdateDeviceAttrFields(dbm.DBAccess, "test", "test", make(map[string]interface{}))
 			if test.updateReturnErr != err {
 				t.Errorf("UpdateDeviceAttrFields Case failed: wanted error %v and got error %v", test.updateReturnErr, err)
 			}
@@ -558,6 +558,9 @@ func TestDeviceAttrTrans(t *testing.T) {
 	deletes = append(deletes, DeviceDelete{DeviceID: "test", Name: "test"})
 	updates = append(updates, DeviceAttrUpdate{DeviceID: "test", Name: "test", Cols: make(map[string]interface{})})
 
+	dbm.DefaultOrmFunc = func() orm.Ormer {
+		return ormerMock
+	}
 	// run the test cases
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {

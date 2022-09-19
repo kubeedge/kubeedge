@@ -37,3 +37,19 @@ func InitDBConfig(driverName, dbName, dataSource string) {
 		}
 	})
 }
+
+type newOrmerFunc func() orm.Ormer
+
+var DefaultOrmFunc newOrmerFunc = newOrmer
+
+func newOrmer() orm.Ormer {
+	return orm.NewOrm()
+}
+
+// RollbackTransaction rollback transaction and log err if rollback fail
+func RollbackTransaction(orm orm.Ormer) {
+	err := orm.Rollback()
+	if err != nil {
+		klog.Errorf("failed to rollback transaction, err: %v", err)
+	}
+}

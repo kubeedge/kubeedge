@@ -1,6 +1,7 @@
 package dtclient
 
 import (
+	"github.com/astaxie/beego/orm"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
@@ -16,15 +17,15 @@ type Device struct {
 }
 
 //SaveDevice save device
-func SaveDevice(doc *Device) error {
-	num, err := dbm.DBAccess.Insert(doc)
+func SaveDevice(obm orm.Ormer, doc *Device) error {
+	num, err := obm.Insert(doc)
 	klog.V(4).Infof("Insert affected Num: %d, %v", num, err)
 	return err
 }
 
 //DeleteDeviceByID delete device by id
-func DeleteDeviceByID(id string) error {
-	num, err := dbm.DBAccess.QueryTable(DeviceTableName).Filter("id", id).Delete()
+func DeleteDeviceByID(obm orm.Ormer, id string) error {
+	num, err := obm.QueryTable(DeviceTableName).Filter("id", id).Delete()
 	if err != nil {
 		klog.Errorf("Something wrong when deleting data: %v", err)
 		return err
@@ -87,60 +88,84 @@ func UpdateDeviceMulti(updates []DeviceUpdate) error {
 
 //AddDeviceTrans the transaction of add device
 func AddDeviceTrans(adds []Device, addAttrs []DeviceAttr, addTwins []DeviceTwin) error {
-	var err error
-	obm := dbm.DBAccess
-	obm.Begin()
+	obm := dbm.DefaultOrmFunc()
+	err := obm.Begin()
+	if err != nil {
+		klog.Errorf("failed to begin transaction: %v", err)
+		return err
+	}
+
+	defer func() {
+		if err != nil {
+			dbm.RollbackTransaction(obm)
+		} else {
+			err = obm.Commit()
+			if err != nil {
+				klog.Errorf("failed to commit transaction: %v", err)
+			}
+		}
+	}()
+
 	for _, add := range adds {
-		err = SaveDevice(&add)
+		err = SaveDevice(obm, &add)
 
 		if err != nil {
 			klog.Errorf("save device failed: %v", err)
-			obm.Rollback()
 			return err
 		}
 	}
 
 	for _, attr := range addAttrs {
-		err = SaveDeviceAttr(&attr)
+		err = SaveDeviceAttr(obm, &attr)
 		if err != nil {
-			obm.Rollback()
 			return err
 		}
 	}
 
 	for _, twin := range addTwins {
-		err = SaveDeviceTwin(&twin)
+		err = SaveDeviceTwin(obm, &twin)
 		if err != nil {
-			obm.Rollback()
 			return err
 		}
 	}
-	obm.Commit()
-	return nil
+
+	return err
 }
 
 //DeleteDeviceTrans the transaction of delete device
 func DeleteDeviceTrans(deletes []string) error {
-	var err error
-	obm := dbm.DBAccess
-	obm.Begin()
+	obm := dbm.DefaultOrmFunc()
+	err := obm.Begin()
+	if err != nil {
+		klog.Errorf("failed to begin transaction: %v", err)
+		return err
+	}
+
+	defer func() {
+		if err != nil {
+			dbm.RollbackTransaction(obm)
+		} else {
+			err = obm.Commit()
+			if err != nil {
+				klog.Errorf("failed to commit transaction: %v", err)
+			}
+		}
+	}()
+
 	for _, delete := range deletes {
-		err = DeleteDeviceByID(delete)
+		err = DeleteDeviceByID(obm, delete)
 		if err != nil {
-			obm.Rollback()
 			return err
 		}
-		err = DeleteDeviceAttrByDeviceID(delete)
+		err = DeleteDeviceAttrByDeviceID(obm, delete)
 		if err != nil {
-			obm.Rollback()
 			return err
 		}
-		err = DeleteDeviceTwinByDeviceID(delete)
+		err = DeleteDeviceTwinByDeviceID(obm, delete)
 		if err != nil {
-			obm.Rollback()
 			return err
 		}
 	}
-	obm.Commit()
-	return nil
+
+	return err
 }

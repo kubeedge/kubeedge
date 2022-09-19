@@ -394,6 +394,9 @@ func TestDealDeviceTwin(t *testing.T) {
 	mockOrmer = beego.NewMockOrmer(mockCtrl)
 	mockQuerySeter = beego.NewMockQuerySeter(mockCtrl)
 	dbm.DBAccess = mockOrmer
+	dbm.DefaultOrmFunc = func() orm.Ormer {
+		return mockOrmer
+	}
 
 	str := typeString
 	optionTrue := true
@@ -520,6 +523,9 @@ func TestDealDeviceTwinResult(t *testing.T) {
 	mockOrmer = beego.NewMockOrmer(mockCtrl)
 	mockQuerySeter = beego.NewMockQuerySeter(mockCtrl)
 	dbm.DBAccess = mockOrmer
+	dbm.DefaultOrmFunc = func() orm.Ormer {
+		return mockOrmer
+	}
 
 	str := typeString
 	optionTrue := true
@@ -609,6 +615,9 @@ func TestDealDeviceTwinTrans(t *testing.T) {
 	mockOrmer = beego.NewMockOrmer(mockCtrl)
 	mockQuerySeter = beego.NewMockQuerySeter(mockCtrl)
 	dbm.DBAccess = mockOrmer
+	dbm.DefaultOrmFunc = func() orm.Ormer {
+		return mockOrmer
+	}
 
 	str := typeString
 	optionTrue := true
