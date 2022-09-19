@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	admissionv1beta1 "k8s.io/api/admission/v1beta1"
+	admissionv1 "k8s.io/api/admission/v1"
 	"k8s.io/klog/v2"
 
 	rulesv1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
@@ -18,11 +18,11 @@ var (
 	}
 )
 
-func admitRule(review admissionv1beta1.AdmissionReview) *admissionv1beta1.AdmissionResponse {
-	reviewResponse := admissionv1beta1.AdmissionResponse{}
+func admitRule(review admissionv1.AdmissionReview) *admissionv1.AdmissionResponse {
+	reviewResponse := admissionv1.AdmissionResponse{}
 
 	switch review.Request.Operation {
-	case admissionv1beta1.Create:
+	case admissionv1.Create:
 		raw := review.Request.Object.Raw
 		rule := rulesv1.Rule{}
 		deserializer := codecs.UniversalDeserializer()
@@ -36,7 +36,7 @@ func admitRule(review admissionv1beta1.AdmissionReview) *admissionv1beta1.Admiss
 		}
 		reviewResponse.Allowed = true
 		return &reviewResponse
-	case admissionv1beta1.Delete, admissionv1beta1.Connect:
+	case admissionv1.Delete, admissionv1.Connect:
 		//no rule defined for above operations, greenlight for all of above.
 		reviewResponse.Allowed = true
 		return &reviewResponse

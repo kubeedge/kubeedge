@@ -6,18 +6,18 @@ import (
 	"io"
 	"net/http"
 
-	admissionv1beta1 "k8s.io/api/admission/v1beta1"
-	admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1beta1"
+	admissionv1 "k8s.io/api/admission/v1"
+	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	admissionregistrationv1beta1client "k8s.io/client-go/kubernetes/typed/admissionregistration/v1beta1"
+	admissionregistrationv1client "k8s.io/client-go/kubernetes/typed/admissionregistration/v1"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 )
 
-func registerValidateWebhook(client admissionregistrationv1beta1client.ValidatingWebhookConfigurationInterface,
-	webhooks []admissionregistrationv1beta1.ValidatingWebhookConfiguration) error {
+func registerValidateWebhook(client admissionregistrationv1client.ValidatingWebhookConfigurationInterface,
+	webhooks []admissionregistrationv1.ValidatingWebhookConfiguration) error {
 	for _, hook := range webhooks {
 		existing, err := client.Get(context.Background(), hook.Name, metav1.GetOptions{})
 		if err != nil && !apierrors.IsNotFound(err) {
@@ -39,8 +39,8 @@ func registerValidateWebhook(client admissionregistrationv1beta1client.Validatin
 	return nil
 }
 
-func registerMutatingWebhook(client admissionregistrationv1beta1client.MutatingWebhookConfigurationInterface,
-	webhooks []admissionregistrationv1beta1.MutatingWebhookConfiguration) error {
+func registerMutatingWebhook(client admissionregistrationv1client.MutatingWebhookConfigurationInterface,
+	webhooks []admissionregistrationv1.MutatingWebhookConfiguration) error {
 	for _, hook := range webhooks {
 		existing, err := client.Get(context.Background(), hook.Name, metav1.GetOptions{})
 		if err != nil && !apierrors.IsNotFound(err) {
@@ -63,7 +63,7 @@ func registerMutatingWebhook(client admissionregistrationv1beta1client.MutatingW
 }
 
 // hookFunc is the type we use for all of our validators and mutators
-type hookFunc func(admissionv1beta1.AdmissionReview) *admissionv1beta1.AdmissionResponse
+type hookFunc func(admissionv1.AdmissionReview) *admissionv1.AdmissionResponse
 
 func serve(w http.ResponseWriter, r *http.Request, hook hookFunc) {
 	var body []byte
@@ -77,19 +77,20 @@ func serve(w http.ResponseWriter, r *http.Request, hook hookFunc) {
 	// verify the content type is accurate
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {
-		klog.Exitf("contentType=%s, expect application/json", contentType)
+		klog.Errorf("contentType=%s, expect application/json", contentType)
 		return
 	}
 
 	// The AdmissionReview that was sent to the webhook
-	requestedAdmissionReview := admissionv1beta1.AdmissionReview{}
+	requestedAdmissionReview := admissionv1.AdmissionReview{}
 
 	// The AdmissionReview that will be returned
-	responseAdmissionReview := admissionv1beta1.AdmissionReview{}
+	responseAdmissionReview := admissionv1.AdmissionReview{}
+	responseAdmissionReview.SetGroupVersionKind(admissionv1.SchemeGroupVersion.WithKind("AdmissionReview"))
 
 	deserializer := codecs.UniversalDeserializer()
 	if _, _, err := deserializer.Decode(body, nil, &requestedAdmissionReview); err != nil {
-		klog.Exitf("decode failed with error: %v", err)
+		klog.Errorf("decode failed with error: %v", err)
 		responseAdmissionReview.Response = toAdmissionResponse(err)
 	} else {
 		responseAdmissionReview.Response = hook(requestedAdmissionReview)
@@ -101,16 +102,18 @@ func serve(w http.ResponseWriter, r *http.Request, hook hookFunc) {
 
 	respBytes, err := json.Marshal(responseAdmissionReview)
 	if err != nil {
-		klog.Exitf("cannot marshal to a valid response %v", err)
+		klog.Errorf("cannot marshal to a valid response %v", err)
+		return
 	}
 	if _, err := w.Write(respBytes); err != nil {
-		klog.Exitf("cannot write response %v", err)
+		klog.Errorf("cannot write response %v", err)
+		return
 	}
 }
 
 // toAdmissionResponse is a helper function to create an AdmissionResponse
-func toAdmissionResponse(err error) *admissionv1beta1.AdmissionResponse {
-	return &admissionv1beta1.AdmissionResponse{
+func toAdmissionResponse(err error) *admissionv1.AdmissionResponse {
+	return &admissionv1.AdmissionResponse{
 		Result: &metav1.Status{
 			Message: err.Error(),
 		},
