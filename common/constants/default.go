@@ -91,6 +91,7 @@ const (
 	DefaultPatchNodeWorkers                  = 4
 	DefaultQueryNodeWorkers                  = 4
 	DefaultUpdateNodeWorkers                 = 4
+	DefaultPatchPodWorkers                   = 4
 	DefaultDeletePodWorkers                  = 4
 	DefaultUpdateRuleStatusWorkers           = 4
 	DefaultCreateLeaseWorkers                = 4
@@ -110,6 +111,7 @@ const (
 	DefaultPatchNodeBuffer                  = 1024
 	DefaultQueryNodeBuffer                  = 1024
 	DefaultUpdateNodeBuffer                 = 1024
+	DefaultPatchPodBuffer                   = 1024
 	DefaultDeletePodBuffer                  = 1024
 	DefaultCreateLeaseBuffer                = 1024
 	DefaultQueryLeaseBuffer                 = 1024
