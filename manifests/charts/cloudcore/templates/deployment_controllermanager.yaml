@@ -1,0 +1,39 @@
+{{- if (.Values.controllerManager.enable) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  {{- with .Values.controllerManager.labels }}
+  labels: {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.controllerManager.annotations }}
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
+  name: kubeedge-controller-manager
+  namespace: kubeedge
+spec:
+  selector:
+    {{- with .Values.controllerManager.labels }}
+    matchLabels: {{- toYaml . | nindent 6 }}
+    {{- end }}
+  template:
+    metadata:
+      {{- with .Values.controllerManager.labels }}
+      labels: {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with .Values.controllerManager.image.pullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: controller-manager
+          image: {{ .Values.controllerManager.image.repository }}:{{ .Values.controllerManager.image.tag }}
+          imagePullPolicy: {{ .Values.controllerManager.image.pullPolicy }}
+      restartPolicy: Always
+      serviceAccountName: controller-manager
+      {{- with .Values.controllerManager.affinity }}
+      affinity: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.controllerManager.tolerations }}
+      tolerations: {{ toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
