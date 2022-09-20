@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	authenticationv1 "k8s.io/api/authentication/v1"
 	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -301,11 +302,47 @@ func (m *metaManager) processDelete(message model.Message) {
 	sendToCloud(resp)
 }
 
+// KeyFunc keys should be nonconfidential and safe to log
+func KeyFunc(name, namespace string, tr *authenticationv1.TokenRequest) string {
+	var exp int64
+	if tr.Spec.ExpirationSeconds != nil {
+		exp = *tr.Spec.ExpirationSeconds
+	}
+
+	var ref authenticationv1.BoundObjectReference
+	if tr.Spec.BoundObjectRef != nil {
+		ref = *tr.Spec.BoundObjectRef
+	}
+
+	return fmt.Sprintf("%q/%q/%#v/%#v/%#v", name, namespace, tr.Spec.Audiences, exp, ref)
+}
+
+// getSpecialResourceKey get service account db key
+func getSpecialResourceKey(resType, resKey string, message model.Message) (string, error) {
+	if resType != model.ResourceTypeServiceAccountToken {
+		return resKey, nil
+	}
+	tokenReq, ok := message.GetContent().(*authenticationv1.TokenRequest)
+	if !ok {
+		return "", fmt.Errorf("failed to get resource %s name and namespace", resKey)
+	}
+	tokens := strings.Split(resKey, constants.ResourceSep)
+	if len(tokens) != 3 {
+		return "", fmt.Errorf("failed to get resource %s name and namespace", resKey)
+	}
+	return KeyFunc(tokens[2], tokens[0], tokenReq), nil
+}
+
 func (m *metaManager) processQuery(message model.Message) {
 	resKey, resType, resID := parseResource(message.GetResource())
 	var metas *[]string
 	var err error
 	if requireRemoteQuery(resType) && isConnected() {
+		resKey, err = getSpecialResourceKey(resType, resKey, message)
+		if err != nil {
+			klog.Errorf("failed to get special resource %s key", resKey)
+			return
+		}
 		metas, err = dao.QueryMeta("key", resKey)
 		if err != nil || len(*metas) == 0 || resType == model.ResourceTypeNode || resType == constants.ResourceTypeVolumeAttachment || resType == model.ResourceTypeLease {
 			m.processRemoteQuery(message)
@@ -357,6 +394,12 @@ func (m *metaManager) processRemoteQuery(message model.Message) {
 		}
 
 		resKey, resType, _ := parseResource(message.GetResource())
+		resKey, err = getSpecialResourceKey(resType, resKey, message)
+		if err != nil {
+			klog.Errorf("get remote query response content data failed, %s", msgDebugInfo(&resp))
+			feedbackError(err, "Error to get remote query response message content data", message)
+			return
+		}
 		meta := &dao.Meta{
 			Key:   resKey,
 			Type:  resType,
