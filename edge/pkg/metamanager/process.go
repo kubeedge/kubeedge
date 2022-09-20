@@ -129,7 +129,7 @@ func (m *metaManager) processInsert(message model.Message) {
 		return
 	}
 
-	if resType == model.ResourceTypeLease && message.GetSource() == modules.EdgedModuleName {
+	if (resType == model.ResourceTypeNode || resType == model.ResourceTypeLease) && message.GetSource() == modules.EdgedModuleName {
 		sendToCloud(&message)
 		return
 	}
@@ -205,6 +205,30 @@ func (m *metaManager) processUpdate(message model.Message) {
 	default:
 		klog.Errorf("unsupport message source, %s", msgSource)
 	}
+}
+
+func (m *metaManager) processPatch(message model.Message) {
+	content, err := message.GetContentData()
+	if err != nil {
+		klog.Errorf("get patch message content data failed, %s", msgDebugInfo(&message))
+		feedbackError(err, "Error to get update message content data", message)
+		return
+	}
+
+	resKey, resType, _ := parseResource(message.GetResource())
+
+	meta := &dao.Meta{
+		Key:   resKey,
+		Type:  resType,
+		Value: string(content)}
+	err = dao.InsertOrUpdate(meta)
+	if err != nil {
+		klog.Errorf("update meta failed, %s", msgDebugInfo(&message))
+		feedbackError(err, "Error to update meta to DB", message)
+		return
+	}
+
+	sendToCloud(&message)
 }
 
 func (m *metaManager) processResponse(message model.Message) {
@@ -427,6 +451,8 @@ func (m *metaManager) process(message model.Message) {
 		m.processInsert(message)
 	case model.UpdateOperation:
 		m.processUpdate(message)
+	case model.PatchOperation:
+		m.processPatch(message)
 	case model.DeleteOperation:
 		m.processDelete(message)
 	case model.QueryOperation:

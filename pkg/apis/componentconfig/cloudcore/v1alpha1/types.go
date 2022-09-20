@@ -254,6 +254,12 @@ type EdgeControllerBuffer struct {
 	// QueryVolumeAttachment indicates the buffer of query volume attachment
 	// default 1024
 	QueryVolumeAttachment int32 `json:"queryVolumeAttachment,omitempty"`
+	// CreateNode indicates the buffer of create node
+	// default 1024
+	CreateNode int32 `json:"createNode,omitempty"`
+	// PatchNode indicates the buffer of patch node
+	// default 1024
+	PatchNode int32 `json:"patchNode,omitempty"`
 	// QueryNode indicates the buffer of query node
 	// default 1024
 	QueryNode int32 `json:"queryNode,omitempty"`
@@ -303,6 +309,12 @@ type EdgeControllerLoad struct {
 	// QueryVolumeAttachmentWorkers indicates the load of query volume attachment workers
 	// default 4
 	QueryVolumeAttachmentWorkers int32 `json:"queryVolumeAttachmentWorkers,omitempty"`
+	// CreateNodeWorkers indicates the load of create node workers
+	// default 4
+	CreateNodeWorkers int32 `json:"createNodeWorkers,omitempty"`
+	// PatchNodeWorkers indicates the load of patch node workers
+	// default 4
+	PatchNodeWorkers int32 `json:"patchNodeWorkers,omitempty"`
 	// QueryNodeWorkers indicates the load of query node workers
 	// default 4
 	QueryNodeWorkers int32 `json:"queryNodeWorkers,omitempty"`
