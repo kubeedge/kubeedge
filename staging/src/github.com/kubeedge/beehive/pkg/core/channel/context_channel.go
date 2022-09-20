@@ -152,7 +152,12 @@ func (ctx *Context) SendResp(message model.Message) {
 	ctx.anonChsLock.RLock()
 	defer ctx.anonChsLock.RUnlock()
 	if channel, exist := ctx.anonChannels[anonName]; exist {
-		channel <- message
+		select {
+		case channel <- message:
+		default:
+			klog.Warningf("no goroutine is ready for receive the message from "+
+				"unbuffered response channel, discard this resp message for %s", message.GetParentID())
+		}
 		return
 	}
 
