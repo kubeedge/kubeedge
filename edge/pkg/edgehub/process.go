@@ -3,6 +3,8 @@ package edgehub
 import (
 	"context"
 	"fmt"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
+	relayConfig "github.com/kubeedge/kubeedge/edge/pkg/edgerelay/config"
 	"time"
 
 	"k8s.io/klog/v2"
@@ -14,7 +16,6 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/msghandler"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
 )
 
 var groupMap = map[string]string{
@@ -22,6 +23,7 @@ var groupMap = map[string]string{
 	"twin":     modules.TwinGroup,
 	"func":     modules.MetaGroup,
 	"user":     modules.BusGroup,
+	"relay":    modules.RelayGroup,
 }
 
 var (
@@ -57,11 +59,20 @@ type defaultHandler struct {
 func (*defaultHandler) Filter(message *model.Message) bool {
 	group := message.GetGroup()
 	return group == messagepkg.ResourceGroupName || group == messagepkg.TwinGroupName ||
-		group == messagepkg.FuncGroupName || group == messagepkg.UserGroupName
+		group == messagepkg.FuncGroupName || group == messagepkg.UserGroupName || group == messagepkg.RelayGroupName
 }
 
 func (*defaultHandler) Process(message *model.Message, clientHub clients.Adapter) error {
 	group := message.GetGroup()
+
+	// 判断是否为中继信息，如果为中继信息，直接将信息传输给relay模块处理
+	if relayConfig.Config.Enable {
+		if group == messagepkg.RelayGroupName {
+			beehiveContext.Send(modules.EdgeRelayModuleName, *message)
+		}
+		return nil
+	}
+
 	md := ""
 	switch group {
 	case messagepkg.ResourceGroupName:
@@ -107,6 +118,7 @@ func (eh *EdgeHub) routeToEdge() {
 			return
 		default:
 		}
+
 		message, err := eh.chClient.Receive()
 		if err != nil {
 			klog.Errorf("websocket read error: %v", err)
@@ -115,6 +127,7 @@ func (eh *EdgeHub) routeToEdge() {
 		}
 
 		klog.V(4).Infof("[edgehub/routeToEdge] receive msg from cloud, msg:% +v", message)
+
 		err = eh.dispatch(message)
 		if err != nil {
 			klog.Errorf("failed to dispatch message, discard: %v", err)
@@ -125,7 +138,13 @@ func (eh *EdgeHub) routeToEdge() {
 func (eh *EdgeHub) sendToCloud(message model.Message) error {
 	eh.keeperLock.Lock()
 	klog.V(4).Infof("[edgehub/sendToCloud] send msg to cloud, msg: %+v", message)
-	err := eh.chClient.Send(message)
+	var err error
+	// 如果是非中继节点，直接发给Relay模块
+	if relayConfig.Config.Enable && relayConfig.Config.RelayID != relayConfig.Config.NodeID {
+		beehiveContext.Send(modules.EdgeRelayModuleName, message)
+	} else {
+		err = eh.chClient.Send(message)
+	}
 	eh.keeperLock.Unlock()
 	if err != nil {
 		return fmt.Errorf("failed to send message, error: %v", err)

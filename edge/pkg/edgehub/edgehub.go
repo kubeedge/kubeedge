@@ -1,6 +1,7 @@
 package edgehub
 
 import (
+	relayConfig "github.com/kubeedge/kubeedge/edge/pkg/edgerelay/config"
 	"sync"
 	"time"
 
@@ -63,6 +64,7 @@ func (eh *EdgeHub) Enable() bool {
 
 //Start sets context and starts the controller
 func (eh *EdgeHub) Start() {
+
 	eh.certManager = certificate.NewCertManager(config.Config.EdgeHub, config.Config.NodeName)
 	eh.certManager.Start()
 
@@ -71,6 +73,9 @@ func (eh *EdgeHub) Start() {
 
 	go eh.ifRotationDone()
 
+	if relayConfig.Config.Enable {
+
+	}
 	for {
 		select {
 		case <-beehiveContext.Done():
@@ -92,7 +97,7 @@ func (eh *EdgeHub) Start() {
 			time.Sleep(waitTime)
 			continue
 		}
-		// execute hook func after connect
+
 		eh.pubConnectInfo(true)
 		go eh.routeToEdge()
 		go eh.routeToCloud()

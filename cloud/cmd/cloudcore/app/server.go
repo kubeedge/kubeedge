@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/kubeedge/kubeedge/cloud/pkg/relaycontroller"
 	"math/rand"
 	"time"
 
@@ -154,6 +155,7 @@ func registerModules(c *v1alpha1.CloudCoreConfig) {
 	cloudstream.Register(c.Modules.CloudStream, c.CommonConfig)
 	router.Register(c.Modules.Router)
 	dynamiccontroller.Register(c.Modules.DynamicController)
+	relaycontroller.Register(c.Modules.RelayController)
 }
 
 func NegotiateTunnelPort() (*int, error) {

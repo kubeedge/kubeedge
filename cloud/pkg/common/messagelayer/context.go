@@ -95,3 +95,11 @@ func DynamicControllerMessageLayer() MessageLayer {
 		ResponseModuleName: modules.CloudHubModuleName,
 	}
 }
+
+func RelayRCControllerMessageLayer() MessageLayer {
+	return &ContextMessageLayer{
+		SendModuleName:     modules.CloudHubModuleName,
+		ReceiveModuleName:  modules.RelayRModuleName,
+		ResponseModuleName: modules.CloudHubModuleName,
+	}
+}

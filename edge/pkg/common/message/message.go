@@ -21,6 +21,7 @@ const (
 	TwinGroupName     = "twin"
 	FuncGroupName     = "func"
 	UserGroupName     = "user"
+	RelayGroupName    = "relay"
 )
 
 //BuildMsg returns message object with router and content details

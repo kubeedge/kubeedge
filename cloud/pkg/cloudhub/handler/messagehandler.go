@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/cloudrelay"
 	"regexp"
 	"strings"
 	"sync"
@@ -19,6 +20,7 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
+	relayconstants "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/cloudrelay/constants"
 	hubio "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/io"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
@@ -119,7 +121,26 @@ func (mh *MessageHandle) HandleServer(container *mux.MessageContainer, writer mu
 		klog.Errorf("Handle a nil message error, node : %s", nodeID)
 		return
 	}
+
+	// hubconfig.Config.CloudRelay.Enable 防止云端开启中继模式，但是边缘端没有开启中继模式的情况
 	klog.V(4).Infof("[cloudhub/HandlerServer] get msg from edge(%v): %+v", nodeID, container.Message)
+	if container.Message.GetOperation() == relayconstants.OpMarkRelay && hubconfig.Config.CloudRelay.Enable {
+		klog.V(4).Infof("MarkRelay message received from node: %s", nodeID)
+		cloudrelay.RelayHandle.SaveRelayMark(container)
+	}
+
+	// 第一次注册的信息
+	if container.Message.GetOperation() == relayconstants.OpRelayConn && hubconfig.Config.CloudRelay.Enable {
+		klog.V(4).Infof("RelayConn message received from node: %s", nodeID)
+		mh.RelayRegister(container)
+	}
+
+	if container.Message.GetOperation() == relayconstants.OpUploadRelayMessage && hubconfig.Config.CloudRelay.Enable {
+		klog.V(4).Infof("Relay message received from node: %s", nodeID)
+		//msg := container.Message
+		mh.RelayHandleServer(container)
+	}
+
 	if container.Message.GetOperation() == model.OpKeepalive {
 		klog.V(4).Infof("Keepalive message received from node: %s", nodeID)
 
@@ -157,6 +178,51 @@ func (mh *MessageHandle) HandleServer(container *mux.MessageContainer, writer mu
 	}
 }
 
+// RelayHandleServer handle relay message from edge
+func (mh *MessageHandle) RelayHandleServer(container *mux.MessageContainer) {
+
+	rcontainer := cloudrelay.RelayHandle.UnsealMessage(container)
+
+	nodeID := rcontainer.Header.Get("node_id")
+	projectID := rcontainer.Header.Get("project_id")
+
+	if rcontainer.Message.GetOperation() == model.OpKeepalive {
+		klog.V(4).Infof("Keepalive message received from node: %s", nodeID)
+
+		nodeKeepalive, ok := mh.KeepaliveChannel.Load(nodeID)
+		if !ok {
+			klog.Errorf("Failed to load node : %s", nodeID)
+			return
+		}
+		nodeKeepalive.(chan struct{}) <- struct{}{}
+		return
+	}
+
+	// handle the response from edge
+	if VolumeRegExp.MatchString(rcontainer.Message.GetResource()) {
+		beehiveContext.SendResp(*rcontainer.Message)
+		return
+	}
+
+	// handle the ack message from edge
+	if rcontainer.Message.Router.Operation == beehiveModel.ResponseOperation {
+		if ackChan, ok := mh.MessageAcks.Load(rcontainer.Message.Header.ParentID); ok {
+			close(ackChan.(chan struct{}))
+			mh.MessageAcks.Delete(rcontainer.Message.Header.ParentID)
+		}
+		return
+	} else if rcontainer.Message.GetOperation() == beehiveModel.UploadOperation && rcontainer.Message.GetGroup() == modules.UserGroup {
+		rcontainer.Message.Router.Resource = fmt.Sprintf("node/%s/%s", nodeID, rcontainer.Message.Router.Resource)
+		beehiveContext.Send(modules.RouterModuleName, *rcontainer.Message)
+	} else {
+		err := mh.PubToController(&model.HubInfo{ProjectID: projectID, NodeID: nodeID}, rcontainer.Message)
+		if err != nil {
+			// if err, we should stop node, write data to edgehub, stop nodify
+			klog.Errorf("Failed to serve handle with error: %s", err.Error())
+		}
+	}
+}
+
 // OnRegister register node on first connection
 func (mh *MessageHandle) OnRegister(connection conn.Connection) {
 	nodeID := connection.ConnectionState().Headers.Get("node_id")
@@ -187,6 +253,17 @@ func (mh *MessageHandle) OnRegister(connection conn.Connection) {
 	go mh.ServeConn(&model.HubInfo{ProjectID: projectID, NodeID: nodeID})
 }
 
+func (mh *MessageHandle) RelayRegister(container *mux.MessageContainer) {
+	rcontainer := cloudrelay.RelayHandle.UnsealMessage(container)
+	nodeID := rcontainer.Header.Get("node_id")
+	projectID := rcontainer.Header.Get("project_id")
+	if _, ok := mh.KeepaliveChannel.Load(nodeID); !ok {
+		mh.KeepaliveChannel.Store(nodeID, make(chan struct{}, 1))
+	}
+	go mh.RelayServeConn(&model.HubInfo{ProjectID: projectID, NodeID: nodeID})
+
+}
+
 // KeepaliveCheckLoop checks whether the edge node is still alive
 func (mh *MessageHandle) KeepaliveCheckLoop(info *model.HubInfo, stopServe chan ExitCode) {
 	keepaliveTicker := time.NewTimer(time.Duration(mh.KeepaliveInterval) * time.Second)
@@ -214,6 +291,9 @@ func (mh *MessageHandle) KeepaliveCheckLoop(info *model.HubInfo, stopServe chan 
 			klog.V(4).Infof("Node %s is still alive", info.NodeID)
 			keepaliveTicker.Reset(time.Duration(mh.KeepaliveInterval) * time.Second)
 		case <-keepaliveTicker.C:
+			if hubconfig.Config.CloudRelay.Enable && !cloudrelay.RelayHandle.FindAndEqualID(info.NodeID) {
+				break
+			}
 			if conn, ok := mh.nodeConns.Load(info.NodeID); ok {
 				klog.Warningf("Timeout to receive heart beat from edge node %s for project %s", info.NodeID, info.ProjectID)
 				if err := conn.(hubio.CloudHubIO).Close(); err != nil {
@@ -312,6 +392,78 @@ func (mh *MessageHandle) ServeConn(info *model.HubInfo) {
 
 	code := <-exitServe
 	mh.UnregisterNode(info, code)
+}
+
+func (mh *MessageHandle) RelayServeConn(info *model.HubInfo) {
+	err := mh.RelayRegisterNode(info)
+	if err != nil {
+		klog.Errorf("fail to register node %s, reason %s", info.NodeID, err.Error())
+		return
+	}
+
+	klog.Infof("edge node %s for project %s connected", info.NodeID, info.ProjectID)
+	exitServe := make(chan ExitCode, len(mh.Handlers))
+
+	for _, handle := range mh.Handlers {
+		go handle(info, exitServe)
+	}
+
+	code := <-exitServe
+	mh.RelayUnregisterNode(info, code)
+}
+
+//
+func (mh *MessageHandle) RelayRegisterNode(info *model.HubInfo) error {
+	hi, err := mh.getNodeConnection(cloudrelay.RelayHandle.GetRelayID())
+	//if err != nil {
+	//	return err
+	//}
+	mh.MessageQueue.Connect(info)
+
+	err = mh.MessageQueue.Publish(constructConnectMessage(info, true))
+	if err != nil {
+		klog.Errorf("fail to publish node connect event for node %s, reason %s", info.NodeID, err.Error())
+		// 通知edge节点关闭通信
+		msg := beehiveModel.NewMessage("").BuildRouter(model.GpResource, model.SrcCloudHub, model.NewResource(model.ResNode, info.NodeID, nil), model.OpDisConnect)
+		oldID, rmsg := cloudrelay.RelayHandle.ChangeDesToRelay(msg)
+		err := hi.WriteData(rmsg)
+		if err != nil {
+			klog.Errorf("fail to notify node %s event queue disconnected, reason: %s", oldID, err.Error())
+		}
+	}
+
+	mh.nodeLocks.Store(info.NodeID, &sync.Mutex{})
+	mh.Nodes.Store(info.NodeID, true)
+	mh.nodeRegistered.Store(info.NodeID, true)
+	atomic.AddInt32(&mh.NodeNumber, 1)
+	return nil
+}
+
+//
+func (mh *MessageHandle) RelayUnregisterNode(info *model.HubInfo, code ExitCode) {
+
+	mh.nodeLocks.Delete(info.NodeID)
+	mh.nodeRegistered.Delete(info.NodeID)
+	nodeKeepalive, ok := mh.KeepaliveChannel.Load(info.NodeID)
+	if !ok {
+		klog.Errorf("fail to load node %s", info.NodeID)
+	} else {
+		close(nodeKeepalive.(chan struct{}))
+		mh.KeepaliveChannel.Delete(info.NodeID)
+	}
+
+	err := mh.MessageQueue.Publish(constructConnectMessage(info, false))
+	if err != nil {
+		klog.Errorf("fail to publish node disconnect event for node %s, reason %s", info.NodeID, err.Error())
+	}
+
+	mh.Nodes.Delete(info.NodeID)
+	atomic.AddInt32(&mh.NodeNumber, -1)
+
+	// delete the nodeQueue and nodeStore when node stopped
+	if code == nodeStop {
+		mh.MessageQueue.Close(info)
+	}
 }
 
 // RegisterNode register node in cloudhub for the incoming connection
@@ -415,13 +567,27 @@ func (mh *MessageHandle) ListMessageWriteLoop(info *model.HubInfo, stopServe cha
 
 		trimMessage(msg)
 
-		conn, ok := mh.nodeConns.Load(info.NodeID)
-		if !ok {
-			continue
-		}
+		//
+		if hubconfig.Config.CloudRelay.Enable && !cloudrelay.RelayHandle.FindAndEqualID(info.NodeID) {
+			info.NodeID = cloudrelay.RelayHandle.GetRelayID()
+			_, rmsg := cloudrelay.RelayHandle.ChangeDesToRelay(msg)
+			trimMessage(rmsg)
+			conn, ok := mh.nodeConns.Load(info.NodeID)
+			if !ok {
+				continue
+			}
+			if err := mh.send(conn.(hubio.CloudHubIO), info, rmsg); err != nil {
+				klog.Errorf("failed to send relay to cloudhub, err: %v", err)
+			}
+		} else {
+			conn, ok := mh.nodeConns.Load(info.NodeID)
+			if !ok {
+				continue
+			}
 
-		if err := mh.send(conn.(hubio.CloudHubIO), info, msg); err != nil {
-			klog.Errorf("failed to send to cloudhub, err: %v", err)
+			if err := mh.send(conn.(hubio.CloudHubIO), info, msg); err != nil {
+				klog.Errorf("failed to send to cloudhub, err: %v", err)
+			}
 		}
 
 		// delete successfully sent events from the queue/store
@@ -493,7 +659,7 @@ func (mh *MessageHandle) MessageWriteLoop(info *model.HubInfo, stopServe chan Ex
 	}
 }
 
-func (mh *MessageHandle) sendMsg(hi hubio.CloudHubIO, info *model.HubInfo, copyMsg, msg *beehiveModel.Message, nodeStore cache.Store) error {
+func (mh *MessageHandle) sendMsg(hi hubio.CloudHubIO, info *model.HubInfo, copyMsg, msg *beehiveModel.Message, nodeStore cache.Store, nodeID string) error {
 	ackChan := make(chan struct{})
 	mh.MessageAcks.Store(copyMsg.GetID(), ackChan)
 
@@ -512,7 +678,17 @@ LOOP:
 	for {
 		select {
 		case <-ackChan:
-			mh.saveSuccessPoint(msg, info, nodeStore)
+			if hubconfig.Config.CloudRelay.Enable && !cloudrelay.RelayHandle.FindAndEqualID(info.NodeID) {
+				var msg2 beehiveModel.Message
+				err := json.Unmarshal(msg.GetContent().([]byte), &msg2)
+				if err != nil {
+					klog.V(4).Infof("msg in ackChan Unmarshal failed", err)
+				}
+				info.NodeID = nodeID
+				mh.saveSuccessPoint(&msg2, info, nodeStore)
+			} else {
+				mh.saveSuccessPoint(msg, info, nodeStore)
+			}
 			break LOOP
 		case <-ticker.C:
 			if retry == 4 {

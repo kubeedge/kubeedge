@@ -73,6 +73,7 @@ func (q *ChannelMessageQueue) DispatchMessage() {
 			klog.Warning("node id is not found in the message")
 			continue
 		}
+
 		if isListResource(&msg) {
 			q.addListMessageToQueue(nodeID, &msg)
 		} else {
@@ -82,6 +83,7 @@ func (q *ChannelMessageQueue) DispatchMessage() {
 }
 
 func (q *ChannelMessageQueue) addListMessageToQueue(nodeID string, msg *beehiveModel.Message) {
+
 	nodeListQueue := q.GetNodeListQueue(nodeID)
 	nodeListStore := q.GetNodeListStore(nodeID)
 
@@ -91,6 +93,7 @@ func (q *ChannelMessageQueue) addListMessageToQueue(nodeID string, msg *beehiveM
 		klog.Errorf("failed to add msg: %s", err)
 		return
 	}
+
 	nodeListQueue.Add(messageKey)
 }
 

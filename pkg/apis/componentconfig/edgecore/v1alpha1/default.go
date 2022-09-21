@@ -114,6 +114,10 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				Token:              "",
 				RotateCertificates: true,
 			},
+			EdgeRelay: &EdgeCoreEdgeRelay{
+				Enable: false,
+				NodeID: hostnameOverride,
+			},
 			EventBus: &EventBus{
 				Enable:               true,
 				MqttQOS:              0,

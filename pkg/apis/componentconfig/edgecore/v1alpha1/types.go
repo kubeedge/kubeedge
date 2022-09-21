@@ -97,6 +97,8 @@ type Modules struct {
 	// EdgeStream indicates edgestream module config
 	// +Required
 	EdgeStream *EdgeStream `json:"edgeStream,omitempty"`
+
+	EdgeRelay *EdgeCoreEdgeRelay `json:"edgeRelay, omomitempty"`
 }
 
 // Edged indicates the config fo edged module
@@ -277,6 +279,12 @@ type EdgeHub struct {
 	// RotateCertificates indicates whether edge certificate can be rotated
 	// default true
 	RotateCertificates bool `json:"rotateCertificates,omitempty"`
+}
+
+type EdgeCoreEdgeRelay struct {
+	Enable  bool   `json:"enable"`
+	NodeID  string `json:"nodeID,omitempty"`
+	RelayID string `json:"relayID,omitempty"`
 }
 
 // EdgeHubQUIC indicates the quic client config

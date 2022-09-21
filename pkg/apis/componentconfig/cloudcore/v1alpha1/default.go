@@ -66,6 +66,9 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					Enable:  true,
 					Address: "unix:///var/lib/kubeedge/kubeedge.sock",
 				},
+				CloudRelay: &CloudCoreCloudRelay{
+					Enable: false,
+				},
 				WebSocket: &CloudHubWebSocket{
 					Enable:  true,
 					Port:    10000,
@@ -135,6 +138,9 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 			},
 			DynamicController: &DynamicController{
 				Enable: false,
+			},
+			RelayController: &RelayController{
+				Enable: true,
 			},
 			CloudStream: &CloudStream{
 				Enable:                  false,

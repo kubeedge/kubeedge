@@ -5,11 +5,11 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-
 	certutil "k8s.io/client-go/util/cert"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/cloudrelay"
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/handler"
 	"github.com/kubeedge/viaduct/pkg/api"
@@ -19,6 +19,11 @@ import (
 // StartCloudHub starts the cloud hub service
 func StartCloudHub(messageq *channelq.ChannelMessageQueue) {
 	handler.InitHandler(messageq)
+	if hubconfig.Config.CloudRelay.Enable {
+		cloudrelay.InitCloudRelay()
+		cloudrelay.RelayHandle.LoadRelayID()
+	}
+
 	// start websocket server
 	if hubconfig.Config.WebSocket.Enable {
 		go startWebsocketServer()
@@ -27,6 +32,7 @@ func StartCloudHub(messageq *channelq.ChannelMessageQueue) {
 	if hubconfig.Config.Quic.Enable {
 		go startQuicServer()
 	}
+
 }
 
 func createTLSConfig(ca, cert, key []byte) tls.Config {

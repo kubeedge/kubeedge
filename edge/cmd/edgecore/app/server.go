@@ -3,6 +3,7 @@ package app
 import (
 	"errors"
 	"fmt"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgerelay"
 	"net"
 	"os"
 
@@ -169,6 +170,7 @@ func registerModules(c *v1alpha1.EdgeCoreConfig) {
 	devicetwin.Register(c.Modules.DeviceTwin, c.Modules.Edged.HostnameOverride)
 	edged.Register(c.Modules.Edged)
 	edgehub.Register(c.Modules.EdgeHub, c.Modules.Edged.HostnameOverride)
+	edgerelay.Register(c.Modules.EdgeRelay, c.Modules.EdgeRelay.NodeID)
 	eventbus.Register(c.Modules.EventBus, c.Modules.Edged.HostnameOverride)
 	metamanager.Register(c.Modules.MetaManager)
 	servicebus.Register(c.Modules.ServiceBus)

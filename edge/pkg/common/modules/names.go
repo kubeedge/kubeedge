@@ -13,4 +13,6 @@ const (
 	DeviceTwinModuleName = "twin"
 	// EdgeHubModuleName name
 	EdgeHubModuleName = "websocket"
+
+	EdgeRelayModuleName = "edgerelay"
 )
