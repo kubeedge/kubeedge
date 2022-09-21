@@ -356,7 +356,7 @@ func (uc *UpstreamController) updatePodStatus() {
 			case model.UpdateOperation:
 				for _, podStatus := range podStatuses {
 					getPod, err := uc.kubeClient.CoreV1().Pods(namespace).Get(context.Background(), podStatus.Name, metaV1.GetOptions{})
-					if errors.IsNotFound(err) {
+					if (err == nil && getPod.UID != podStatus.UID) || errors.IsNotFound(err) {
 						klog.Warningf("message: %s, pod not found, namespace: %s, name: %s", msg.GetID(), namespace, podStatus.Name)
 
 						// Send request to delete this pod on edge side
