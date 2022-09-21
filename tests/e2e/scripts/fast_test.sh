@@ -46,14 +46,25 @@ END
 if [ $# -eq 0 ]
   then
     #run testcase
-    ./deployment/deployment.test $debugflag 2>&1 | tee -a /tmp/testcase.log
+    ./deployment/deployment.test $debugflag
+    GINKGO_TESTING_RESULT=$?
     # @kadisi
     #./edgesite/edgesite.test $debugflag 2>&1 | tee -a /tmp/testcase.log
 else
 if [[ $compilemodule = "bluetooth" ]]
 then
-    ./mapper/bluetooth/bluetooth.test  $debugflag $runtest 2>&1 | tee -a /tmp/testcase.log
+    ./mapper/bluetooth/bluetooth.test  $debugflag $runtest
+    GINKGO_TESTING_RESULT=$?
 else
-    ./$compilemodule/$compilemodule.test  $debugflag  $runtest 2>&1 | tee -a  /tmp/testcase.log
+    ./$compilemodule/$compilemodule.test  $debugflag  $runtest
+    GINKGO_TESTING_RESULT=$?
 fi
+fi
+
+if [[ $GINKGO_TESTING_RESULT != 0 ]]; then
+    echo "Integration suite has failures, Please check !!"
+    exit 1
+else
+    echo "Integration suite successfully passed all the tests !!"
+    exit 0
 fi
