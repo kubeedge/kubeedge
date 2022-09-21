@@ -128,6 +128,9 @@ func installCRDs(ks *K8SInstTool) error {
 			"router_v1_rule.yaml",
 			"router_v1_ruleEndpoint.yaml",
 		},
+		"relays": {
+			"relays_v1_relayrc.yaml",
+		},
 	}
 	version := fmt.Sprintf("%d.%d", ks.ToolVersion.Major, ks.ToolVersion.Minor)
 

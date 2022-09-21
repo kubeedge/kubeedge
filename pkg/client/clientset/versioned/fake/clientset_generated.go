@@ -19,6 +19,8 @@ limitations under the License.
 package fake
 
 import (
+	relaysv1 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/relays/v1"
+	fakerelaysv1 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/relays/v1/fake"
 	clientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 	appsv1alpha1 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/apps/v1alpha1"
 	fakeappsv1alpha1 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/apps/v1alpha1/fake"
@@ -103,4 +105,8 @@ func (c *Clientset) ReliablesyncsV1alpha1() reliablesyncsv1alpha1.ReliablesyncsV
 // RulesV1 retrieves the RulesV1Client
 func (c *Clientset) RulesV1() rulesv1.RulesV1Interface {
 	return &fakerulesv1.FakeRulesV1{Fake: &c.Fake}
+}
+// RelaysV1 retrieves the RelaysV1Client
+func (c *Clientset) RelaysV1() relaysv1.RelaysV1Interface {
+	return &fakerelaysv1.FakeRelaysV1{Fake: &c.Fake}
 }

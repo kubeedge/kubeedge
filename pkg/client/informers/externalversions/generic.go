@@ -79,6 +79,9 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 	case v1.SchemeGroupVersion.WithResource("ruleendpoints"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Rules().V1().RuleEndpoints().Informer()}, nil
 
+	case v1.SchemeGroupVersion.WithResource("relayrcs"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Relays().V1().Relayrcs().Informer()}, nil
+
 	}
 
 	return nil, fmt.Errorf("no informer found for %v", resource)

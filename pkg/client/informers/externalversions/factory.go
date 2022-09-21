@@ -19,6 +19,7 @@ limitations under the License.
 package externalversions
 
 import (
+	relays "github.com/kubeedge/kubeedge/pkg/client/informers/externalversions/relays"
 	reflect "reflect"
 	sync "sync"
 	time "time"
@@ -179,6 +180,7 @@ type SharedInformerFactory interface {
 	Devices() devices.Interface
 	Reliablesyncs() reliablesyncs.Interface
 	Rules() rules.Interface
+	Relays() relays.Interface
 }
 
 func (f *sharedInformerFactory) Apps() apps.Interface {
@@ -195,4 +197,8 @@ func (f *sharedInformerFactory) Reliablesyncs() reliablesyncs.Interface {
 
 func (f *sharedInformerFactory) Rules() rules.Interface {
 	return rules.New(f, f.namespace, f.tweakListOptions)
+}
+
+func (f *sharedInformerFactory) Relays() relays.Interface {
+	return relays.New(f, f.namespace, f.tweakListOptions)
 }

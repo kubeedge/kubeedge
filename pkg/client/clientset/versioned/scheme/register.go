@@ -21,6 +21,7 @@ package scheme
 import (
 	appsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1"
 	devicesv1alpha2 "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
+	relaysv1 "github.com/kubeedge/kubeedge/pkg/apis/relays/v1"
 	reliablesyncsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1"
 	rulesv1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,6 +39,7 @@ var localSchemeBuilder = runtime.SchemeBuilder{
 	devicesv1alpha2.AddToScheme,
 	reliablesyncsv1alpha1.AddToScheme,
 	rulesv1.AddToScheme,
+	relaysv1.AddToScheme,
 }
 
 // AddToScheme adds all types of this clientset into the given scheme. This allows composition

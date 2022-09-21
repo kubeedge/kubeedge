@@ -15,4 +15,6 @@ const (
 	UserGroup = "user"
 	// StreamGroup group
 	StreamGroup = "edgestream"
+
+	RelayGroup = "edgerelay"
 )

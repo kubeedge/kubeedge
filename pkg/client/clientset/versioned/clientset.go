@@ -20,7 +20,7 @@ package versioned
 
 import (
 	"fmt"
-
+	relaysv1 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/relays/v1"
 	appsv1alpha1 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/apps/v1alpha1"
 	devicesv1alpha2 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/devices/v1alpha2"
 	reliablesyncsv1alpha1 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/reliablesyncs/v1alpha1"
@@ -36,6 +36,7 @@ type Interface interface {
 	DevicesV1alpha2() devicesv1alpha2.DevicesV1alpha2Interface
 	ReliablesyncsV1alpha1() reliablesyncsv1alpha1.ReliablesyncsV1alpha1Interface
 	RulesV1() rulesv1.RulesV1Interface
+	RelaysV1() relaysv1.RelaysV1Interface
 }
 
 // Clientset contains the clients for groups. Each group has exactly one
@@ -46,6 +47,7 @@ type Clientset struct {
 	devicesV1alpha2       *devicesv1alpha2.DevicesV1alpha2Client
 	reliablesyncsV1alpha1 *reliablesyncsv1alpha1.ReliablesyncsV1alpha1Client
 	rulesV1               *rulesv1.RulesV1Client
+	relaysV1 *relaysv1.RelaysV1Client
 }
 
 // AppsV1alpha1 retrieves the AppsV1alpha1Client
@@ -66,6 +68,11 @@ func (c *Clientset) ReliablesyncsV1alpha1() reliablesyncsv1alpha1.ReliablesyncsV
 // RulesV1 retrieves the RulesV1Client
 func (c *Clientset) RulesV1() rulesv1.RulesV1Interface {
 	return c.rulesV1
+}
+
+// RelaysV1 retrieves the RelaysV1Client
+func (c *Clientset) RelaysV1() relaysv1.RelaysV1Interface {
+	return c.relaysV1
 }
 
 // Discovery retrieves the DiscoveryClient
@@ -105,6 +112,10 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	if err != nil {
 		return nil, err
 	}
+	cs.relaysV1, err = relaysv1.NewForConfig(&configShallowCopy)
+	if err != nil {
+		return nil, err
+	}
 
 	cs.DiscoveryClient, err = discovery.NewDiscoveryClientForConfig(&configShallowCopy)
 	if err != nil {
@@ -121,6 +132,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 	cs.devicesV1alpha2 = devicesv1alpha2.NewForConfigOrDie(c)
 	cs.reliablesyncsV1alpha1 = reliablesyncsv1alpha1.NewForConfigOrDie(c)
 	cs.rulesV1 = rulesv1.NewForConfigOrDie(c)
+	cs.relaysV1 = relaysv1.NewForConfigOrDie(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClientForConfigOrDie(c)
 	return &cs
@@ -133,6 +145,7 @@ func New(c rest.Interface) *Clientset {
 	cs.devicesV1alpha2 = devicesv1alpha2.New(c)
 	cs.reliablesyncsV1alpha1 = reliablesyncsv1alpha1.New(c)
 	cs.rulesV1 = rulesv1.New(c)
+	cs.relaysV1 = relaysv1.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)
 	return &cs

@@ -15,6 +15,8 @@ const (
 
 	DynamicControllerModuleName  = "dynamiccontroller"
 	DynamicControllerModuleGroup = "dynamiccontroller"
+	RelayControllerModuleName    = "relayrccontroller"
+	RelayControllerModuleGroup   = "relayrccontroller"
 
 	CloudStreamModuleName = "cloudStream"
 	CloudStreamGroupName  = "cloudStream"

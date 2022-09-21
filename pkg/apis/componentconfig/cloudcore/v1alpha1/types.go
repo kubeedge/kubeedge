@@ -78,6 +78,7 @@ type Modules struct {
 	SyncController *SyncController `json:"syncController,omitempty"`
 	// DynamicController indicates DynamicController module config
 	DynamicController *DynamicController `json:"dynamicController,omitempty"`
+	RelayController   *RelayController   `json:"relayController,omitempty"`
 	// CloudStream indicates cloudstream module config
 	CloudStream *CloudStream `json:"cloudStream,omitempty"`
 	// Router indicates router module config
@@ -135,6 +136,8 @@ type CloudHub struct {
 	// TokenRefreshDuration indicates the interval of cloudcore token refresh, unit is hour
 	// default 12h
 	TokenRefreshDuration time.Duration `json:"tokenRefreshDuration,omitempty"`
+	// CloudRelay server info
+	CloudRelay *CloudCoreCloudRelay `json:"cloudRelay,omitempty"`
 }
 
 // CloudHubQUIC indicates the quic server config
@@ -151,6 +154,11 @@ type CloudHubQUIC struct {
 	// MaxIncomingStreams set the max incoming stream for quic server
 	// default 10000
 	MaxIncomingStreams int32 `json:"maxIncomingStreams,omitempty"`
+}
+
+// CloudRelay indicates the cloudrelay server config
+type CloudCoreCloudRelay struct {
+	Enable bool `json:"enable"`
 }
 
 // CloudHubUnixSocket indicates the unix socket config
@@ -358,6 +366,14 @@ type SyncController struct {
 type DynamicController struct {
 	// Enable indicates whether dynamicController is enabled,
 	// if set to false (for debugging etc.), skip checking other dynamicController configs.
+	// default true
+	Enable bool `json:"enable"`
+}
+
+// RelayController indicates the config of RelayController module
+type RelayController struct {
+	// Enable indicates whether RelayController is enabled,
+	// if set to false (for debugging etc.), skip checking other EdgeController configs.
 	// default true
 	Enable bool `json:"enable"`
 }
