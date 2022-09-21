@@ -1,6 +1,7 @@
 package controllermanager
 
 import (
+	"fmt"
 	"reflect"
 	"time"
 
@@ -11,7 +12,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/controllermanager/nodegroup"
@@ -560,12 +564,13 @@ var _ = Describe("Test NodeGroup Controller", func() {
 var _ = Describe("Test EdgeApplication Controller", func() {
 	var randomize string
 	var deployTemplate *appsv1.Deployment
-	var service *corev1.Service
-	var configMap *corev1.ConfigMap
+	var serviceTemplate *corev1.Service
+	var configMapTemplate *corev1.ConfigMap
 	var node1, node2, node3, node4 *corev1.Node
 	var nodegroup1, nodegroup2 *appsv1alpha1.NodeGroup
+	var edgeapp *appsv1alpha1.EdgeApplication
 	BeforeEach(func() {
-		randomize := uuid.New().String()
+		randomize = uuid.New().String()
 		node1 = nodeTemplate.DeepCopy()
 		node1.Name = "node1-" + randomize
 		node1.Labels = map[string]string{locationLabel: "location1-" + randomize}
@@ -586,6 +591,11 @@ var _ = Describe("Test EdgeApplication Controller", func() {
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "location1-" + randomize,
 			},
+			Spec: appsv1alpha1.NodeGroupSpec{
+				MatchLabels: map[string]string{
+					locationLabel: "location1-" + randomize,
+				},
+			},
 		}
 		nodegroup2 = &appsv1alpha1.NodeGroup{
 			TypeMeta: metav1.TypeMeta{
@@ -595,7 +605,98 @@ var _ = Describe("Test EdgeApplication Controller", func() {
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "location2-" + randomize,
 			},
+			Spec: appsv1alpha1.NodeGroupSpec{
+				MatchLabels: map[string]string{
+					locationLabel: "location2-" + randomize,
+				},
+			},
 		}
+		serviceTemplate = &corev1.Service{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Service",
+				APIVersion: corev1.SchemeGroupVersion.String(),
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "apps-svc" + randomize,
+				Namespace: "default",
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: map[string]string{
+					"label": "app",
+				},
+				Ports: []corev1.ServicePort{
+					{
+						TargetPort: intstr.IntOrString{
+							IntVal: 8080,
+						},
+						Port: 8080,
+					},
+				},
+			},
+		}
+		configMapTemplate = &corev1.ConfigMap{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "ConfigMap",
+				APIVersion: corev1.SchemeGroupVersion.String(),
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "apps-cm" + randomize,
+				Namespace: "default",
+			},
+			Data: map[string]string{
+				"foo": "bar",
+			},
+		}
+		deployTemplate = &appsv1.Deployment{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Deployment",
+				APIVersion: appsv1.SchemeGroupVersion.String(),
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "app-deploy" + randomize,
+				Namespace: "default",
+			},
+			Spec: appsv1.DeploymentSpec{
+				Template: corev1.PodTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "app-pod",
+						Namespace: "default",
+						Labels: map[string]string{
+							"label": "app",
+						},
+					},
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{
+							{
+								Name:  "container1",
+								Image: "foo.fir.io/bar:latest",
+							},
+							{
+								Name:  "container2",
+								Image: "foo.sec.io/bar:v0.1.0",
+							},
+						},
+					},
+				},
+				Selector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"label": "app",
+					},
+				},
+				Replicas: pointer.Int32Ptr(1),
+			},
+		}
+		edgeapp = &appsv1alpha1.EdgeApplication{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "EdgeApplication",
+				APIVersion: appsv1alpha1.GroupVersion.String(),
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "edge-app" + randomize,
+				Namespace: "default",
+			},
+		}
+
 		Expect(k8sClient.Create(ctx, node1)).Should(Succeed())
 		Expect(k8sClient.Create(ctx, node2)).Should(Succeed())
 		Expect(k8sClient.Create(ctx, node3)).Should(Succeed())
@@ -611,7 +712,6 @@ var _ = Describe("Test EdgeApplication Controller", func() {
 			}
 			return true
 		}).Should(BeTrue())
-
 		Eventually(func() bool {
 			for _, nodeName := range []string{node3.Name, node4.Name} {
 				if !beInMembership(nodeName, nodegroup2.Name) {
@@ -623,46 +723,678 @@ var _ = Describe("Test EdgeApplication Controller", func() {
 	})
 
 	AfterEach(func() {
-
+		Expect(k8sClient.Delete(ctx, node1)).Should(Succeed())
+		Expect(k8sClient.Delete(ctx, node2)).Should(Succeed())
+		Expect(k8sClient.Delete(ctx, node3)).Should(Succeed())
+		Expect(k8sClient.Delete(ctx, node4)).Should(Succeed())
+		Expect(k8sClient.Delete(ctx, nodegroup1)).Should(Succeed())
+		Expect(k8sClient.Delete(ctx, nodegroup2)).Should(Succeed())
 	})
 
 	Context("Test Functionality", func() {
+		BeforeEach(func() {
+			edgeapp.Spec.WorkloadTemplate = appsv1alpha1.ResourceTemplate{
+				Manifests: []appsv1alpha1.Manifest{
+					{
+						RawExtension: runtime.RawExtension{
+							Object: deployTemplate,
+						},
+					},
+					{
+						RawExtension: runtime.RawExtension{
+							Object: serviceTemplate,
+						},
+					},
+					{
+						RawExtension: runtime.RawExtension{
+							Object: configMapTemplate,
+						},
+					},
+				},
+			}
+			edgeapp.Spec.WorkloadScope = appsv1alpha1.WorkloadScope{
+				TargetNodeGroups: []appsv1alpha1.TargetNodeGroup{
+					{
+						Name: nodegroup1.Name,
+					},
+					{
+						Name: nodegroup2.Name,
+					},
+				},
+			}
+		})
 
+		When("create edgeapplication", func() {
+			BeforeEach(func() {
+				Expect(k8sClient.Create(ctx, edgeapp)).Should(Succeed())
+			})
+			It("should create deployments for all nodegroups", func() {
+				Eventually(func() bool {
+					for _, ngName := range []string{nodegroup1.Name, nodegroup2.Name} {
+						deployName := fmt.Sprintf("%s-%s", deployTemplate.Name, ngName)
+						deploy := &appsv1.Deployment{}
+						if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployName}, deploy); err != nil {
+							return false
+						}
+						if *deploy.Spec.Replicas != *deployTemplate.Spec.Replicas {
+							return false
+						}
+					}
+					return true
+				}, waitTimeOut, pollInterval).Should(BeTrue())
+			})
+			It("should create service with topology annotation", func() {
+				Eventually(func() bool {
+					svc := &corev1.Service{}
+					if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: serviceTemplate.Name}, svc); err != nil {
+						return false
+					}
+					if svc.Annotations == nil {
+						return false
+					}
+					v, ok := svc.Annotations[nodegroup.ServiceTopologyAnnotation]
+					return ok && v == nodegroup.ServiceTopologyRangeNodegroup
+				}, waitTimeOut, pollInterval).Should(BeTrue())
+			})
+			It("should create the configmap as configmap template", func() {
+				Eventually(func() bool {
+					cm := &corev1.ConfigMap{}
+					if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: configMapTemplate.Name}, cm); err != nil {
+						return false
+					}
+
+					if !reflect.DeepEqual(cm.Data, configMapTemplate.Data) {
+						return false
+					}
+					return true
+				}, waitTimeOut, pollInterval).Should(BeTrue())
+			})
+		})
+
+		Context("Test Overrider", func() {
+			When("add overrider", func() {
+				BeforeEach(func() {
+					Expect(k8sClient.Create(ctx, edgeapp)).Should(Succeed())
+					Eventually(func() bool {
+						for _, ngName := range []string{nodegroup1.Name, nodegroup2.Name} {
+							deployName := fmt.Sprintf("%s-%s", deployTemplate.Name, ngName)
+							deploy := &appsv1.Deployment{}
+							if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployName}, deploy); err != nil {
+								return false
+							}
+							if *deploy.Spec.Replicas != *deployTemplate.Spec.Replicas {
+								return false
+							}
+						}
+						return true
+					}, waitTimeOut, pollInterval).Should(BeTrue())
+				})
+				It("should modify replicas of deployments for each nodegroup when adding replicas overrider", func() {
+					newEdgeapp := edgeapp.DeepCopy()
+					replicas := []int{10, 20}
+					newEdgeapp.Spec.WorkloadScope.TargetNodeGroups[0].Overriders = appsv1alpha1.Overriders{
+						Replicas: pointer.IntPtr(replicas[0]),
+					}
+					newEdgeapp.Spec.WorkloadScope.TargetNodeGroups[1].Overriders = appsv1alpha1.Overriders{
+						Replicas: pointer.IntPtr(replicas[1]),
+					}
+					Expect(k8sClient.Patch(ctx, newEdgeapp, client.MergeFrom(edgeapp))).Should(Succeed())
+					Eventually(func() bool {
+						for i, ngName := range []string{nodegroup1.Name, nodegroup2.Name} {
+							deployName := fmt.Sprintf("%s-%s", deployTemplate.Name, ngName)
+							deploy := &appsv1.Deployment{}
+							if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployName}, deploy); err != nil {
+								return false
+							}
+							if int(*deploy.Spec.Replicas) != replicas[i] {
+								return false
+							}
+						}
+						return true
+					}, waitTimeOut, pollInterval).Should(BeTrue())
+				})
+				It("should modify image of deployments for each nodegroup when adding image overrider", func() {
+					imageOverriders := []appsv1alpha1.ImageOverrider{
+						{
+							Component: appsv1alpha1.Tag,
+							Operator:  appsv1alpha1.OverriderOpReplace,
+							Predicate: &appsv1alpha1.ImagePredicate{
+								Path: "/spec/template/spec/containers/0/image",
+							},
+							Value: "new-value",
+						},
+						{
+							Component: appsv1alpha1.Registry,
+							Operator:  appsv1alpha1.OverriderOpRemove,
+							Predicate: &appsv1alpha1.ImagePredicate{
+								Path: "/spec/template/spec/containers/0/image",
+							},
+						},
+						{
+							Component: appsv1alpha1.Registry,
+							Operator:  appsv1alpha1.OverriderOpRemove,
+							Predicate: &appsv1alpha1.ImagePredicate{
+								Path: "/spec/template/spec/containers/1/image",
+							},
+						},
+					}
+
+					newEdgeapp := edgeapp.DeepCopy()
+					newEdgeapp.Spec.WorkloadScope.TargetNodeGroups[0].Overriders = appsv1alpha1.Overriders{
+						ImageOverriders: imageOverriders,
+					}
+					Expect(k8sClient.Patch(ctx, newEdgeapp, client.MergeFrom(edgeapp))).Should(Succeed())
+					Eventually(func() bool {
+						expectImages := []string{
+							"bar:new-value",
+							"bar:v0.1.0",
+						}
+						deployName := fmt.Sprintf("%s-%s", deployTemplate.Name, nodegroup1.Name)
+						deploy := &appsv1.Deployment{}
+						if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployName}, deploy); err != nil {
+							return false
+						}
+						for j, c := range deploy.Spec.Template.Spec.Containers {
+							if c.Image != expectImages[j] {
+								return false
+							}
+						}
+						return true
+					}, waitTimeOut, pollInterval).Should(BeTrue())
+				})
+			})
+			When("update overrider", func() {
+				var originReplicas []int
+				var originImages [][]string
+				BeforeEach(func() {
+					originReplicas = []int{20, 30}
+					originImages = [][]string{
+						{"replaced-registry/bar:latest", "replaced-registry/bar"},
+						{"foo.fir.io/bar-added:latest", "foo.sec.io/bar-added:v0.1.0"},
+					}
+					edgeapp.Spec.WorkloadScope.TargetNodeGroups[0].Overriders = appsv1alpha1.Overriders{
+						Replicas: pointer.IntPtr(originReplicas[0]),
+						ImageOverriders: []appsv1alpha1.ImageOverrider{
+							{
+								Component: appsv1alpha1.Registry,
+								Operator:  appsv1alpha1.OverriderOpReplace,
+								Value:     "replaced-registry",
+							},
+							{
+								Component: appsv1alpha1.Tag,
+								Operator:  appsv1alpha1.OverriderOpRemove,
+								Predicate: &appsv1alpha1.ImagePredicate{
+									Path: "/spec/template/spec/containers/1/image",
+								},
+							},
+						},
+					}
+					edgeapp.Spec.WorkloadScope.TargetNodeGroups[1].Overriders = appsv1alpha1.Overriders{
+						Replicas: pointer.IntPtr(originReplicas[1]),
+						ImageOverriders: []appsv1alpha1.ImageOverrider{
+							{
+								Component: appsv1alpha1.Repository,
+								Operator:  appsv1alpha1.OverriderOpAdd,
+								Value:     "-added",
+							},
+						},
+					}
+					Expect(k8sClient.Create(ctx, edgeapp)).Should(Succeed())
+					Eventually(func() bool {
+						for i, ngName := range []string{nodegroup1.Name, nodegroup2.Name} {
+							deployName := fmt.Sprintf("%s-%s", deployTemplate.Name, ngName)
+							deploy := &appsv1.Deployment{}
+							if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployName}, deploy); err != nil {
+								return false
+							}
+							for j, c := range deploy.Spec.Template.Spec.Containers {
+								if c.Image != originImages[i][j] {
+									return false
+								}
+							}
+						}
+						return true
+					}, waitTimeOut, pollInterval).Should(BeTrue())
+				})
+				It("should update replicas of deployments for each nodegroup when adding replicas overrider", func() {
+					newEdgeApp := edgeapp.DeepCopy()
+					newReplicas := []int{2, 3}
+					newEdgeApp.Spec.WorkloadScope.TargetNodeGroups[0].Overriders.Replicas = &newReplicas[0]
+					newEdgeApp.Spec.WorkloadScope.TargetNodeGroups[1].Overriders.Replicas = &newReplicas[1]
+					Expect(k8sClient.Patch(ctx, newEdgeApp, client.MergeFrom(edgeapp))).Should(Succeed())
+					Eventually(func() bool {
+						for i, ngName := range []string{nodegroup1.Name, nodegroup2.Name} {
+							deployName := fmt.Sprintf("%s-%s", deployTemplate.Name, ngName)
+							deploy := &appsv1.Deployment{}
+							if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployName}, deploy); err != nil {
+								return false
+							}
+							if int(*deploy.Spec.Replicas) != newReplicas[i] {
+								return false
+							}
+						}
+						return true
+					}, waitTimeOut, pollInterval).Should(BeTrue())
+				})
+				It("should update image of deployments for each nodegroup when adding image overrider", func() {
+					newEdgeApp := edgeapp.DeepCopy()
+					newImages := [][]string{
+						{"bar:latest", "bar:latest"},
+						{"foo.fir.io-added/bar:latest", "foo.sec.io-added/bar:v0.1.0"},
+					}
+					newEdgeApp.Spec.WorkloadScope.TargetNodeGroups[0].Overriders.ImageOverriders = []appsv1alpha1.ImageOverrider{
+						{
+							Component: appsv1alpha1.Registry,
+							Operator:  appsv1alpha1.OverriderOpRemove,
+						},
+						{
+							Component: appsv1alpha1.Tag,
+							Operator:  appsv1alpha1.OverriderOpReplace,
+							Predicate: &appsv1alpha1.ImagePredicate{
+								Path: "/spec/template/spec/containers/1/image",
+							},
+							Value: "latest",
+						},
+					}
+					newEdgeApp.Spec.WorkloadScope.TargetNodeGroups[1].Overriders.ImageOverriders = []appsv1alpha1.ImageOverrider{
+						{
+							Component: appsv1alpha1.Registry,
+							Operator:  appsv1alpha1.OverriderOpAdd,
+							Value:     "-added",
+						},
+					}
+					Expect(k8sClient.Patch(ctx, newEdgeApp, client.MergeFrom(edgeapp))).Should(Succeed())
+					Eventually(func() bool {
+						for i, ngName := range []string{nodegroup1.Name, nodegroup2.Name} {
+							deployName := fmt.Sprintf("%s-%s", deployTemplate.Name, ngName)
+							deploy := &appsv1.Deployment{}
+							if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployName}, deploy); err != nil {
+								return false
+							}
+							for j, c := range deploy.Spec.Template.Spec.Containers {
+								if c.Image != newImages[i][j] {
+									return false
+								}
+							}
+						}
+						return true
+					}, waitTimeOut, pollInterval).Should(BeTrue())
+				})
+			})
+			When("delete overrider", func() {
+				var originReplicas []int
+				var originImages [][]string
+				BeforeEach(func() {
+					originReplicas = []int{20, 30}
+					originImages = [][]string{
+						{"replaced-registry/bar:latest", "replaced-registry/bar"},
+						{"foo.fir.io/bar-added:latest", "foo.sec.io/bar-added:v0.1.0"},
+					}
+					edgeapp.Spec.WorkloadScope.TargetNodeGroups[0].Overriders = appsv1alpha1.Overriders{
+						Replicas: pointer.IntPtr(originReplicas[0]),
+						ImageOverriders: []appsv1alpha1.ImageOverrider{
+							{
+								Component: appsv1alpha1.Registry,
+								Operator:  appsv1alpha1.OverriderOpReplace,
+								Value:     "replaced-registry",
+							},
+							{
+								Component: appsv1alpha1.Tag,
+								Operator:  appsv1alpha1.OverriderOpRemove,
+								Predicate: &appsv1alpha1.ImagePredicate{
+									Path: "/spec/template/spec/containers/1/image",
+								},
+							},
+						},
+					}
+					edgeapp.Spec.WorkloadScope.TargetNodeGroups[1].Overriders = appsv1alpha1.Overriders{
+						Replicas: pointer.IntPtr(originReplicas[1]),
+						ImageOverriders: []appsv1alpha1.ImageOverrider{
+							{
+								Component: appsv1alpha1.Repository,
+								Operator:  appsv1alpha1.OverriderOpAdd,
+								Value:     "-added",
+							},
+						},
+					}
+					Expect(k8sClient.Create(ctx, edgeapp)).Should(Succeed())
+					Eventually(func() bool {
+						for i, ngName := range []string{nodegroup1.Name, nodegroup2.Name} {
+							deployName := fmt.Sprintf("%s-%s", deployTemplate.Name, ngName)
+							deploy := &appsv1.Deployment{}
+							if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployName}, deploy); err != nil {
+								return false
+							}
+							if int(*deploy.Spec.Replicas) != originReplicas[i] {
+								return false
+							}
+							for j, c := range deploy.Spec.Template.Spec.Containers {
+								if c.Image != originImages[i][j] {
+									return false
+								}
+							}
+						}
+						return true
+					}, waitTimeOut, pollInterval).Should(BeTrue())
+				})
+				It("should reset the replicas of deployments when removing replicas overrider", func() {
+					newEdgeApp := edgeapp.DeepCopy()
+					newEdgeApp.Spec.WorkloadScope.TargetNodeGroups[0].Overriders.Replicas = nil
+					newEdgeApp.Spec.WorkloadScope.TargetNodeGroups[1].Overriders.Replicas = nil
+					Expect(k8sClient.Patch(ctx, newEdgeApp, client.MergeFrom(edgeapp))).Should(Succeed())
+					Eventually(func() bool {
+						for _, ngName := range []string{nodegroup1.Name, nodegroup2.Name} {
+							deployName := fmt.Sprintf("%s-%s", deployTemplate.Name, ngName)
+							deploy := &appsv1.Deployment{}
+							if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployName}, deploy); err != nil {
+								return false
+							}
+							if *deployTemplate.Spec.Replicas != *deploy.Spec.Replicas {
+								return false
+							}
+						}
+						return true
+					}, waitTimeOut, pollInterval).Should(BeTrue())
+				})
+				It("should reset the image of deployments when removing image overrider", func() {
+					newEdgeApp := edgeapp.DeepCopy()
+					newImages := [][]string{
+						{"foo.fir.io/replaced-repo:latest", "foo.sec.io/replaced-repo:v0.1.0"},
+						{"foo.fir.io/bar:latest", "foo.sec.io/bar:v0.1.0"},
+					}
+					newEdgeApp.Spec.WorkloadScope.TargetNodeGroups[0].Overriders.ImageOverriders = []appsv1alpha1.ImageOverrider{
+						{
+							Component: appsv1alpha1.Repository,
+							Operator:  appsv1alpha1.OverriderOpReplace,
+							Value:     "replaced-repo",
+						},
+					}
+					newEdgeApp.Spec.WorkloadScope.TargetNodeGroups[1].Overriders.ImageOverriders = []appsv1alpha1.ImageOverrider{}
+					Expect(k8sClient.Patch(ctx, newEdgeApp, client.MergeFrom(edgeapp))).Should(Succeed())
+					Eventually(func() bool {
+						for i, ngName := range []string{nodegroup1.Name, nodegroup2.Name} {
+							deployName := fmt.Sprintf("%s-%s", deployTemplate.Name, ngName)
+							deploy := &appsv1.Deployment{}
+							if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployName}, deploy); err != nil {
+								return false
+							}
+							for j, c := range deploy.Spec.Template.Spec.Containers {
+								if c.Image != newImages[i][j] {
+									return false
+								}
+							}
+						}
+						return true
+					}, waitTimeOut, pollInterval).Should(BeTrue())
+				})
+			})
+		})
+
+		When("update edgeapplication", func() {
+			BeforeEach(func() {
+				Expect(k8sClient.Create(ctx, edgeapp)).Should(Succeed())
+				Eventually(func() bool {
+					for _, ng := range []string{nodegroup1.Name, nodegroup2.Name} {
+						deployName := fmt.Sprintf("%s-%s", deployTemplate.Name, ng)
+						deploy := &appsv1.Deployment{}
+						if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployName}, deploy); err != nil {
+							return false
+						}
+					}
+
+					cm := &corev1.ConfigMap{}
+					if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: configMapTemplate.Name}, cm); err != nil {
+						return false
+					}
+
+					svc := &corev1.Service{}
+					if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: serviceTemplate.Name}, svc); err != nil {
+						return false
+					}
+
+					return true
+				}, waitTimeOut, pollInterval).Should(BeTrue())
+			})
+			It("should update sub-resources when templates have been modified", func() {
+				newEdgeApp := edgeapp.DeepCopy()
+				newDeploy := deployTemplate.DeepCopy()
+				newDeploy.Labels = map[string]string{"new-added": "true"}
+				newService := serviceTemplate.DeepCopy()
+				newService.Spec.Selector["new-added"] = "true"
+				newConfigMap := configMapTemplate.DeepCopy()
+				newConfigMap.Name = "updated-cm" + randomize
+				newEdgeApp.Spec.WorkloadTemplate.Manifests = []appsv1alpha1.Manifest{
+					{
+						RawExtension: runtime.RawExtension{
+							Object: newDeploy,
+						},
+					},
+					{
+						RawExtension: runtime.RawExtension{
+							Object: newService,
+						},
+					},
+					{
+						RawExtension: runtime.RawExtension{
+							Object: newConfigMap,
+						},
+					},
+				}
+				Expect(k8sClient.Patch(ctx, newEdgeApp, client.MergeFrom(edgeapp))).Should(Succeed())
+				Eventually(func() bool {
+					for _, ngName := range []string{nodegroup1.Name, nodegroup2.Name} {
+						deployName := fmt.Sprintf("%s-%s", deployTemplate.Name, ngName)
+						deploy := &appsv1.Deployment{}
+						if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployName}, deploy); err != nil {
+							return false
+						}
+						if !reflect.DeepEqual(deploy.Labels, newDeploy.Labels) {
+							return false
+						}
+					}
+
+					svc := &corev1.Service{}
+					if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: serviceTemplate.Name}, svc); err != nil {
+						return false
+					}
+					if !reflect.DeepEqual(svc.Spec.Selector, newService.Spec.Selector) {
+						return false
+					}
+
+					cm := &corev1.ConfigMap{}
+					if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: newConfigMap.Name}, cm); err != nil {
+						return false
+					}
+					if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: configMapTemplate.Name}, cm); !apierrors.IsNotFound(err) {
+						return false
+					}
+					return true
+				}, waitTimeOut, pollInterval).Should(BeTrue())
+			})
+			It("should add/remove deployments for nodegroups when update names of targetNodeGroup", func() {
+				newEdgeApp := edgeapp.DeepCopy()
+				newNodeGroupName := []string{nodegroup1.Name, "newng1-" + randomize}
+				newEdgeApp.Spec.WorkloadScope.TargetNodeGroups = []appsv1alpha1.TargetNodeGroup{
+					{
+						Name: newNodeGroupName[0],
+					},
+					{
+						Name: newNodeGroupName[1],
+					},
+				}
+				Expect(k8sClient.Patch(ctx, newEdgeApp, client.MergeFrom(edgeapp))).Should(Succeed())
+				Eventually(func() bool {
+					for _, ng := range newNodeGroupName {
+						deployName := fmt.Sprintf("%s-%s", deployTemplate.Name, ng)
+						deploy := &appsv1.Deployment{}
+						if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployName}, deploy); err != nil {
+							return false
+						}
+					}
+					return true
+				}, waitTimeOut, pollInterval).Should(BeTrue())
+				Eventually(func() bool {
+					deployName := fmt.Sprintf("%s-%s", deployTemplate.Name, nodegroup2.Name)
+					deploy := &appsv1.Deployment{}
+					err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployName}, deploy)
+					return apierrors.IsNotFound(err) || !deploy.DeletionTimestamp.IsZero()
+				}, waitTimeOut, pollInterval).Should(BeTrue())
+			})
+		})
 	})
 
 	Context("Test Lifecycle Event", func() {
-		When("create edgeappliction", func() {
-			It("should be added with finalizer", func() {
-
-			})
+		BeforeEach(func() {
+			location1Replicas := 2
+			location2Replicas := 3
+			edgeapp.Spec.WorkloadTemplate = appsv1alpha1.ResourceTemplate{
+				Manifests: []appsv1alpha1.Manifest{
+					{
+						RawExtension: runtime.RawExtension{
+							Object: deployTemplate,
+						},
+					},
+					{
+						RawExtension: runtime.RawExtension{
+							Object: serviceTemplate,
+						},
+					},
+					{
+						RawExtension: runtime.RawExtension{
+							Object: configMapTemplate,
+						},
+					},
+				},
+			}
+			edgeapp.Spec.WorkloadScope = appsv1alpha1.WorkloadScope{
+				TargetNodeGroups: []appsv1alpha1.TargetNodeGroup{
+					{
+						Name: nodegroup1.Name,
+						Overriders: appsv1alpha1.Overriders{
+							Replicas: &location1Replicas,
+						},
+					},
+					{
+						Name: nodegroup2.Name,
+						Overriders: appsv1alpha1.Overriders{
+							Replicas: &location2Replicas,
+						},
+					},
+				},
+			}
+		})
+		When("create edgeapplication", func() {
 			It("all sub-resources are added with OwnerReference", func() {
-
+				Expect(k8sClient.Create(ctx, edgeapp)).Should(Succeed())
+				Eventually(func() bool {
+					for _, ngName := range []string{nodegroup1.Name, nodegroup2.Name} {
+						deployName := fmt.Sprintf("%s-%s", deployTemplate.Name, ngName)
+						deploy := &appsv1.Deployment{}
+						if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployName}, deploy); err != nil {
+							return false
+						}
+						if !isOwnedByEdgeApp(deploy.OwnerReferences, edgeapp) {
+							return false
+						}
+					}
+					return true
+				}, waitTimeOut, pollInterval).Should(BeTrue())
+				Eventually(func() bool {
+					svc := &corev1.Service{}
+					if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: serviceTemplate.Name}, svc); err != nil {
+						return false
+					}
+					if !isOwnedByEdgeApp(svc.OwnerReferences, edgeapp) {
+						return false
+					}
+					return true
+				}, waitTimeOut, pollInterval).Should(BeTrue())
+				Eventually(func() bool {
+					cm := &corev1.ConfigMap{}
+					if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: configMapTemplate.Name}, cm); err != nil {
+						return false
+					}
+					if !isOwnedByEdgeApp(cm.OwnerReferences, edgeapp) {
+						return false
+					}
+					return true
+				}, waitTimeOut, pollInterval).Should(BeTrue())
 			})
 		})
 		When("delete edgeapplication", func() {
 			It("should delete all sub-resources", func() {
-
-			})
-		})
-		When("modify sub-resources", func() {
-			It("should not update modified sub-resources", func() {
-
+				// TODO:
+				// Currently, testEnv seems cannot simulate the cascading deletion of owner reference.
+				// So this test cannot run correctly.
 			})
 		})
 		When("delete sub-resources", func() {
+			BeforeEach(func() {
+				Expect(k8sClient.Create(ctx, edgeapp)).Should(Succeed())
+				Eventually(func() bool {
+					for _, ng := range []string{nodegroup1.Name, nodegroup2.Name} {
+						deployName := fmt.Sprintf("%s-%s", deployTemplate.Name, ng)
+						deploy := &appsv1.Deployment{}
+						if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployName}, deploy); err != nil {
+							return false
+						}
+					}
+					return true
+				}, waitTimeOut, pollInterval).Should(BeTrue())
+				Eventually(func() bool {
+					svc := &corev1.Service{}
+					if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: serviceTemplate.Name}, svc); err != nil {
+						return false
+					}
+					return true
+				}, waitTimeOut, pollInterval).Should(BeTrue())
+				Eventually(func() bool {
+					cm := &corev1.ConfigMap{}
+					if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: configMapTemplate.Name}, cm); err != nil {
+						return false
+					}
+					return true
+				}, waitTimeOut, pollInterval).Should(BeTrue())
+			})
 			It("should recreated deployment automatically", func() {
-
+				deployNG1 := deployTemplate.DeepCopy()
+				deployNG2 := deployTemplate.DeepCopy()
+				deployNG1.Name = fmt.Sprintf("%s-%s", deployTemplate.Name, nodegroup1.Name)
+				deployNG2.Name = fmt.Sprintf("%s-%s", deployTemplate.Name, nodegroup2.Name)
+				Expect(k8sClient.Delete(ctx, deployNG1)).Should(Succeed())
+				Expect(k8sClient.Delete(ctx, deployNG2)).Should(Succeed())
+				Eventually(func() bool {
+					for _, ng := range []string{nodegroup1.Name, nodegroup2.Name} {
+						deployName := fmt.Sprintf("%s-%s", deployTemplate.Name, ng)
+						deploy := &appsv1.Deployment{}
+						if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployName}, deploy); err != nil {
+							return false
+						}
+					}
+					return true
+				}, waitTimeOut, pollInterval).Should(BeTrue())
 			})
 			It("should recreated configmap automatically", func() {
-
+				configmap := configMapTemplate.DeepCopy()
+				Expect(k8sClient.Delete(ctx, configmap)).Should(Succeed())
+				Eventually(func() bool {
+					cm := &corev1.ConfigMap{}
+					if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: configmap.Name}, cm); err != nil {
+						return false
+					}
+					return true
+				}, waitTimeOut, pollInterval).Should(BeTrue())
 			})
 			It("should recreated service automatically", func() {
-
-			})
-		})
-		When("node membership changed", func() {
-			It("node selector of deployments should be changed", func() {
-
+				service := serviceTemplate.DeepCopy()
+				Expect(k8sClient.Delete(ctx, service)).Should(Succeed())
+				Eventually(func() bool {
+					svc := &corev1.Service{}
+					if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: service.Name}, svc); err != nil {
+						return false
+					}
+					return true
+				}, waitTimeOut, pollInterval).Should(BeTrue())
 			})
 		})
 	})
@@ -695,6 +1427,20 @@ func havingStatusEntryAs(nodeGroupName string, nodeName string, ready appsv1alph
 	for _, s := range ng.Status.NodeStatuses {
 		if s.NodeName == nodeName {
 			return s.ReadyStatus == ready && s.SelectionStatus == selection
+		}
+	}
+	return false
+}
+
+func isOwnedByEdgeApp(ownerReferences []metav1.OwnerReference, edgeApp *appsv1alpha1.EdgeApplication) bool {
+	for _, o := range ownerReferences {
+		if o.APIVersion == appsv1alpha1.GroupVersion.String() &&
+			o.Kind == "EdgeApplication" &&
+			*o.BlockOwnerDeletion == true &&
+			*o.Controller == true &&
+			o.Name == edgeApp.Name &&
+			o.UID == edgeApp.UID {
+			return true
 		}
 	}
 	return false

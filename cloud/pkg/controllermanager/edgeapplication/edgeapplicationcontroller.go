@@ -129,7 +129,7 @@ func (c *Controller) syncEdgeApplication(ctx context.Context, edgeApp *appsv1alp
 		// one, and have no status about the failed one.
 		for _, info := range overriderInfos {
 			copy := tmpl.DeepCopy()
-			klog.V(4).Infof("override obj %s/%s of gvk %s", copy.GetNamespace(), copy.GetName(), copy.GroupVersionKind())
+			klog.V(4).Infof("override obj %s/%s of gvk %s, for nodegroup %s", copy.GetNamespace(), copy.GetName(), copy.GroupVersionKind(), info.TargetNodeGroup)
 			if err := c.Overrider.ApplyOverrides(copy, info); err != nil {
 				klog.Errorf("failed to apply override of nodegroup %s to obj %s/%s of gvk %s, %v",
 					info.TargetNodeGroup, copy.GetNamespace(), copy.GetName(), copy.GroupVersionKind(), err)
@@ -279,8 +279,9 @@ func (c *Controller) updateStatus(ctx context.Context, edgeApp *appsv1alpha1.Edg
 		return nil
 	}
 
-	edgeApp.Status.WorkloadStatus = newStatus
-	return c.Client.Status().Update(ctx, edgeApp)
+	newEdgeApp := edgeApp.DeepCopy()
+	newEdgeApp.Status.WorkloadStatus = newStatus
+	return c.Client.Status().Patch(ctx, newEdgeApp, client.MergeFrom(edgeApp))
 }
 
 func (c *Controller) ifObjExists(ctx context.Context, obj *unstructured.Unstructured) (bool, *unstructured.Unstructured, error) {
@@ -407,8 +408,9 @@ func (c *Controller) getLastContainedResourceInfos(edgeApp *appsv1alpha1.EdgeApp
 // addOrUpdateLastContainedResourcesAnnotation will add the ContainedResourcesAnnotation to the EdgeApplication,
 // if the annotation has already existed, it will be updated it according to resources in manifests.
 func (c *Controller) addOrUpdateLastContainedResourcesAnnotation(ctx context.Context, edgeApp *appsv1alpha1.EdgeApplication, tmplInfos []*utils.TemplateInfo) error {
-	if edgeApp.Annotations == nil {
-		edgeApp.Annotations = make(map[string]string)
+	newEdgeApp := edgeApp.DeepCopy()
+	if newEdgeApp.Annotations == nil {
+		newEdgeApp.Annotations = make(map[string]string)
 	}
 
 	resourceInfos := make([]*utils.ResourceInfo, len(tmplInfos))
@@ -422,13 +424,13 @@ func (c *Controller) addOrUpdateLastContainedResourcesAnnotation(ctx context.Con
 		return fmt.Errorf("failed to marshal infos %v, %v", resourceInfos, err)
 	}
 
-	oldAnno := edgeApp.Annotations[constants.LastContainedResourcesAnnotationKey]
+	oldAnno := newEdgeApp.Annotations[constants.LastContainedResourcesAnnotationKey]
 	if oldAnno == string(infosJSON) {
-		klog.V(4).Infof("skip update last-applied-resources annotation of edgeapp %s/%s for same value", edgeApp.Namespace, edgeApp.Name)
+		klog.V(4).Infof("skip update last-applied-resources annotation of edgeapp %s/%s for same value", newEdgeApp.Namespace, newEdgeApp.Name)
 		return nil
 	}
-	edgeApp.Annotations[constants.LastContainedResourcesAnnotationKey] = string(infosJSON)
-	return c.Client.Update(ctx, edgeApp)
+	newEdgeApp.Annotations[constants.LastContainedResourcesAnnotationKey] = string(infosJSON)
+	return c.Client.Patch(ctx, newEdgeApp, client.MergeFrom(edgeApp))
 }
 
 func (c *Controller) update(ctx context.Context, tmpl *unstructured.Unstructured, curObj *unstructured.Unstructured) error {

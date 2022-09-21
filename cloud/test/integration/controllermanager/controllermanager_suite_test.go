@@ -15,6 +15,11 @@ import (
 	appsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1"
 )
 
+// Values of the following two variables will be linked when
+// building the test binary.
+var appsCRDDirectoryPath string
+var envtestBinDir string
+
 var (
 	cfg       *rest.Config
 	ctx       context.Context
@@ -28,8 +33,8 @@ var _ = BeforeSuite(func() {
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
-		// TODO: revise path
-		CRDDirectoryPaths: []string{"/home/ys3/Github/kubeedge/build/crds/apps"},
+		CRDDirectoryPaths:     []string{appsCRDDirectoryPath},
+		BinaryAssetsDirectory: envtestBinDir,
 	}
 	var err error
 	cfg, err = testEnv.Start()
