@@ -158,7 +158,9 @@ func (evh *edgedVolumeHost) GetSecretFunc() func(namespace, name string) (*api.S
 func (evh *edgedVolumeHost) GetVolumeDevicePluginDir(pluginName string) string { return "" }
 
 func (evh *edgedVolumeHost) DeleteServiceAccountTokenFunc() func(podUID types.UID) {
-	return func(types.UID) {}
+	return func(podUID types.UID) {
+		evh.edge.metaClient.ServiceAccountToken().DeleteServiceAccountToken(podUID)
+	}
 }
 
 func (evh *edgedVolumeHost) GetEventRecorder() recordtools.EventRecorder {
