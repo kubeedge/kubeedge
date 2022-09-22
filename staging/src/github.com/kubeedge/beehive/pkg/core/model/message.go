@@ -261,6 +261,7 @@ func (msg *Message) String() string {
 	var buffer bytes.Buffer
 	buffer.WriteString("MessageID: " + msg.GetID())
 	buffer.WriteString(" ParentID: " + msg.GetParentID())
+	buffer.WriteString(" Group: " + msg.GetGroup())
 	buffer.WriteString(" Source: " + msg.GetSource())
 	buffer.WriteString(" Destination: " + msg.GetDestination())
 	buffer.WriteString(" Resource: " + msg.GetResource())

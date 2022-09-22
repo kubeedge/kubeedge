@@ -9,7 +9,6 @@ import (
 	certutil "k8s.io/client-go/util/cert"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/handler"
 	"github.com/kubeedge/viaduct/pkg/api"
@@ -17,15 +16,14 @@ import (
 )
 
 // StartCloudHub starts the cloud hub service
-func StartCloudHub(messageq *channelq.ChannelMessageQueue) {
-	handler.InitHandler(messageq)
+func StartCloudHub(messageHandler handler.Handler) {
 	// start websocket server
 	if hubconfig.Config.WebSocket.Enable {
-		go startWebsocketServer()
+		go startWebsocketServer(messageHandler)
 	}
 	// start quic server
 	if hubconfig.Config.Quic.Enable {
-		go startQuicServer()
+		go startQuicServer(messageHandler)
 	}
 }
 
@@ -51,29 +49,31 @@ func createTLSConfig(ca, cert, key []byte) tls.Config {
 	}
 }
 
-func startWebsocketServer() {
+func startWebsocketServer(messageHandler handler.Handler) {
 	tlsConfig := createTLSConfig(hubconfig.Config.Ca, hubconfig.Config.Cert, hubconfig.Config.Key)
 	svc := server.Server{
-		Type:       api.ProtocolTypeWS,
-		TLSConfig:  &tlsConfig,
-		AutoRoute:  true,
-		ConnNotify: handler.CloudhubHandler.OnRegister,
-		Addr:       fmt.Sprintf("%s:%d", hubconfig.Config.WebSocket.Address, hubconfig.Config.WebSocket.Port),
-		ExOpts:     api.WSServerOption{Path: "/"},
+		Type:               api.ProtocolTypeWS,
+		TLSConfig:          &tlsConfig,
+		AutoRoute:          true,
+		ConnNotify:         messageHandler.HandleConnection,
+		OnReadTransportErr: messageHandler.OnReadTransportErr,
+		Addr:               fmt.Sprintf("%s:%d", hubconfig.Config.WebSocket.Address, hubconfig.Config.WebSocket.Port),
+		ExOpts:             api.WSServerOption{Path: "/"},
 	}
 	klog.Infof("Starting cloudhub %s server", api.ProtocolTypeWS)
 	klog.Exit(svc.ListenAndServeTLS("", ""))
 }
 
-func startQuicServer() {
+func startQuicServer(messageHandler handler.Handler) {
 	tlsConfig := createTLSConfig(hubconfig.Config.Ca, hubconfig.Config.Cert, hubconfig.Config.Key)
 	svc := server.Server{
-		Type:       api.ProtocolTypeQuic,
-		TLSConfig:  &tlsConfig,
-		AutoRoute:  true,
-		ConnNotify: handler.CloudhubHandler.OnRegister,
-		Addr:       fmt.Sprintf("%s:%d", hubconfig.Config.Quic.Address, hubconfig.Config.Quic.Port),
-		ExOpts:     api.QuicServerOption{MaxIncomingStreams: int(hubconfig.Config.Quic.MaxIncomingStreams)},
+		Type:               api.ProtocolTypeQuic,
+		TLSConfig:          &tlsConfig,
+		AutoRoute:          true,
+		ConnNotify:         messageHandler.HandleConnection,
+		OnReadTransportErr: messageHandler.OnReadTransportErr,
+		Addr:               fmt.Sprintf("%s:%d", hubconfig.Config.Quic.Address, hubconfig.Config.Quic.Port),
+		ExOpts:             api.QuicServerOption{MaxIncomingStreams: int(hubconfig.Config.Quic.MaxIncomingStreams)},
 	}
 
 	klog.Infof("Starting cloudhub %s server", api.ProtocolTypeQuic)

@@ -128,7 +128,8 @@ func (srv *QuicServer) handleSession(session quic.Session) {
 			State:   api.StatConnected,
 			Headers: header,
 		},
-		AutoRoute: srv.options.AutoRoute,
+		AutoRoute:          srv.options.AutoRoute,
+		OnReadTransportErr: srv.options.OnReadTransportErr,
 	})
 
 	// connection callback

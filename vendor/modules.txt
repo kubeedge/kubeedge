@@ -453,6 +453,7 @@ github.com/kubeedge/viaduct/pkg/client
 github.com/kubeedge/viaduct/pkg/cmgr
 github.com/kubeedge/viaduct/pkg/comm
 github.com/kubeedge/viaduct/pkg/conn
+github.com/kubeedge/viaduct/pkg/conn/testing
 github.com/kubeedge/viaduct/pkg/fifo
 github.com/kubeedge/viaduct/pkg/filter
 github.com/kubeedge/viaduct/pkg/keeper
