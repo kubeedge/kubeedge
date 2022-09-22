@@ -56,9 +56,11 @@ const (
 	CloudServiceFile     = "cloudcore.service"
 	ServiceFileURLFormat = "https://raw.githubusercontent.com/kubeedge/kubeedge/release-%s/build/tools/%s"
 	KubeEdgePath         = "/etc/kubeedge/"
-	KubeEdgeTmpPath      = "/tmp/kubeedge"
+	KubeEdgeBackupPath   = "/etc/kubeedge/backup/"
+	KubeEdgeUpgradePath  = "/etc/kubeedge/upgrade/"
 	KubeEdgeUsrBinPath   = "/usr/local/bin"
 	KubeEdgeBinaryName   = "edgecore"
+	KeadmBinaryName      = "keadm"
 
 	KubeCloudBinaryName = "cloudcore"
 
@@ -481,8 +483,8 @@ func runEdgeCore() error {
 	return nil
 }
 
-// killKubeEdgeBinary will search for KubeEdge process and forcefully kill it
-func killKubeEdgeBinary(proc string) error {
+// KillKubeEdgeBinary will search for KubeEdge process and forcefully kill it
+func KillKubeEdgeBinary(proc string) error {
 	var binExec string
 	if proc == "cloudcore" {
 		binExec = fmt.Sprintf("pkill %s", proc)
@@ -513,7 +515,6 @@ func killKubeEdgeBinary(proc string) error {
 	if err := cmd.Exec(); err != nil {
 		return err
 	}
-
 	fmt.Println(proc, "is stopped")
 	return nil
 }

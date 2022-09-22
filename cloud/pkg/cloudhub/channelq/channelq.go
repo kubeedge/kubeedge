@@ -70,7 +70,7 @@ func (q *ChannelMessageQueue) DispatchMessage() {
 		}
 		nodeID, err := GetNodeID(&msg)
 		if nodeID == "" || err != nil {
-			klog.Warning("node id is not found in the message")
+			klog.Warning("node id is not found in the message, msg resource: %s", msg.GetResource())
 			continue
 		}
 		if isListResource(&msg) {
@@ -209,6 +209,12 @@ func isListResource(msg *beehiveModel.Message) bool {
 			return true
 		}
 	}
+
+	// Upgrade data
+	if msg.GetSource() == modules.NodeUpgradeJobControllerModuleName {
+		return true
+	}
+
 	// user data
 	if msg.GetGroup() == modules.UserGroup {
 		return true

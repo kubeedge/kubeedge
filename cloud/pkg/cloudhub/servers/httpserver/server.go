@@ -45,6 +45,7 @@ func StartHTTPServer() {
 	ws.Path("/")
 	ws.Route(ws.GET(constants.DefaultCertURL).To(edgeCoreClientCert))
 	ws.Route(ws.GET(constants.DefaultCAURL).To(getCA))
+	ws.Route(ws.POST(constants.DefaultNodeUpgradeURL).To(upgradeEdge))
 	serverContainer.Add(ws)
 
 	addr := fmt.Sprintf("%s:%d", hubconfig.Config.HTTPS.Address, hubconfig.Config.HTTPS.Port)

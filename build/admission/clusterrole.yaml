@@ -25,3 +25,6 @@ rules:
   - apiGroups: ["rules.kubeedge.io"]
     resources: ["rules", "ruleendpoints"]
     verbs: ["get", "list"]
+  - apiGroups: ["operations.kubeedge.io"]
+    resources: ["nodeupgradejobs"]
+    verbs: ["get", "list"]

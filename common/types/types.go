@@ -26,3 +26,23 @@ type NodeStatusRequest struct {
 	Status          v1.NodeStatus
 	ExtendResources map[v1.ResourceName][]ExtendResource
 }
+
+// NodeUpgradeJobRequest is upgrade msg coming from cloud to edge
+type NodeUpgradeJobRequest struct {
+	UpgradeID   string
+	HistoryID   string
+	Version     string
+	UpgradeTool string
+	Image       string
+}
+
+// NodeUpgradeJobResponse is used to report status msg to cloudhub https service
+type NodeUpgradeJobResponse struct {
+	UpgradeID   string
+	HistoryID   string
+	NodeName    string
+	FromVersion string
+	ToVersion   string
+	Status      string
+	Reason      string
+}

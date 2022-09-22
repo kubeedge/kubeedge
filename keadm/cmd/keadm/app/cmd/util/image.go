@@ -164,6 +164,7 @@ func (runtime *DockerRuntime) CopyResources(image string, files map[string]strin
 			copyCmd,
 		},
 	}
+
 	var binds []string
 	for _, hostPath := range files {
 		binds = append(binds, filepath.Dir(hostPath)+":"+filepath.Join("/tmp", filepath.Dir(hostPath)))
