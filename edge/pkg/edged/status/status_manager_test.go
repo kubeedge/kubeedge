@@ -17,6 +17,7 @@ limitations under the License.
 package status
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -29,9 +30,14 @@ import (
 	"github.com/kubeedge/beehive/pkg/common"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
+)
+
+var (
+	podStatusResource = "new/podstatus/foo"
 )
 
 func init() {
@@ -100,13 +106,15 @@ func TestUpdatePodStatusSucceed(t *testing.T) {
 		t.Fatalf("receive message error: %v", err)
 	}
 
-	if msg.GetResource() != "new/podstatus/foo" &&
+	if msg.GetResource() != podStatusResource &&
 		msg.GetOperation() != model.UpdateOperation {
 		t.Fatalf("unexpected message: %v", msg)
 	}
 
 	// send response
-	ackMessage := model.NewMessage(msg.GetID()).SetResourceOperation("new/podstatus/foo", "response")
+	ackMessage := model.NewMessage(msg.GetID()).
+		SetResourceOperation(podStatusResource, "response").
+		FillBody(constants.MessageSuccessfulContent)
 	beehiveContext.SendResp(*ackMessage)
 
 	time.Sleep(2 * time.Second)
@@ -117,13 +125,13 @@ func TestUpdatePodStatusSucceed(t *testing.T) {
 	}
 }
 
-func TestUpdatePodStatusFailure(t *testing.T) {
+func TestUpdatePodStatusTimeout(t *testing.T) {
 	manager := newTestManager()
 	manager.Start()
 
 	testPod := getTestPod()
 
-	oldReason := "test reason"
+	oldReason := "test timeout"
 	manager.SetPodStatus(testPod, getPodStatus(oldReason))
 
 	msg, err := beehiveContext.Receive(modules.MetaManagerModuleName)
@@ -131,7 +139,7 @@ func TestUpdatePodStatusFailure(t *testing.T) {
 		t.Fatalf("receive message error: %v", err)
 	}
 
-	if msg.GetResource() != "new/podstatus/foo" &&
+	if msg.GetResource() != podStatusResource &&
 		msg.GetOperation() != model.UpdateOperation {
 		t.Fatalf("unexpected message: %v", msg)
 	}
@@ -144,6 +152,36 @@ func TestUpdatePodStatusFailure(t *testing.T) {
 	waitTime := 20 * time.Second
 
 	<-time.After(waitTime)
+	_, exist := manager.apiStatusVersions[kubetypes.MirrorPodUID(testPod.GetUID())]
+	if exist {
+		t.Fatalf("pod %s status should not exist in apiStatusVersions", testPod.GetName())
+	}
+}
+
+func TestUpdatePodStatusFailure(t *testing.T) {
+	manager := newTestManager()
+	manager.Start()
+
+	testPod := getTestPod()
+
+	oldReason := "update fail"
+	manager.SetPodStatus(testPod, getPodStatus(oldReason))
+
+	msg, err := beehiveContext.Receive(modules.MetaManagerModuleName)
+	if err != nil {
+		t.Fatalf("receive message error: %v", err)
+	}
+
+	if msg.GetResource() != podStatusResource &&
+		msg.GetOperation() != model.UpdateOperation {
+		t.Fatalf("unexpected message: %v", msg)
+	}
+
+	// send response
+	err = errors.New("update failed")
+	ackMessage := model.NewMessage(msg.GetID()).SetResourceOperation(podStatusResource, "response").FillBody(err)
+	beehiveContext.SendResp(*ackMessage)
+
 	_, exist := manager.apiStatusVersions[kubetypes.MirrorPodUID(testPod.GetUID())]
 	if exist {
 		t.Fatalf("pod %s status should not exist in apiStatusVersions", testPod.GetName())

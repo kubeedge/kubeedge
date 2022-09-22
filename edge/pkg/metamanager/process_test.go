@@ -164,7 +164,6 @@ func TestProcessUpdate(t *testing.T) {
 	defer mockCtrl.Finish()
 	ormerMock := beego.NewMockOrmer(mockCtrl)
 	rawSetterMock := beego.NewMockRawSeter(mockCtrl)
-	querySetterMock := beego.NewMockQuerySeter(mockCtrl)
 	dbm.DBAccess = ormerMock
 	meta := newMetaManager(true)
 	core.Register(meta)
@@ -213,24 +212,6 @@ func TestProcessUpdate(t *testing.T) {
 		want := "Error to update meta to DB: " + FailedDBOperation
 		if message.GetContent() != want {
 			t.Errorf("Wrong Error message received : Wanted %v and Got %v", want, message.GetContent())
-		}
-	})
-
-	//resourceUnchanged true
-	fakeDao := new([]dao.Meta)
-	fakeDaoArray := make([]dao.Meta, 1)
-	fakeDaoArray[0] = dao.Meta{Key: "Test", Value: "\"test\""}
-	fakeDao = &fakeDaoArray
-	querySetterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDao).Return(int64(1), nil).Times(1)
-	querySetterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySetterMock).Times(1)
-	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySetterMock).Times(1)
-	msg = model.NewMessage("").BuildRouter(ModuleNameEdged, GroupResource, "test/"+model.ResourceTypePodStatus, model.UpdateOperation).FillBody("test")
-	meta.processUpdate(*msg)
-	message, _ = beehiveContext.Receive(ModuleNameEdged)
-	t.Run("ResourceUnchangedTrue", func(t *testing.T) {
-		want := OK
-		if message.GetContent() != want {
-			t.Errorf("Resource Unchanged Case Failed: Wanted %v and Got %v", want, message.GetContent())
 		}
 	})
 

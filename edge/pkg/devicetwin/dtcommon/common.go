@@ -6,7 +6,7 @@ const (
 	// RetryTimes for retry times
 	RetryTimes = 5
 	// RetryInterval for retry interval
-	RetryInterval = 10 * time.Second
+	RetryInterval = 1 * time.Second
 
 	// LifeCycleConnectETPrefix the topic prefix for connected event
 	LifeCycleConnectETPrefix = "$hw/events/connected/"
