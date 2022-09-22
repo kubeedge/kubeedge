@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/distribution/distribution/v3/reference"
 	metav1 "k8s.io/api/core/v1"
 
 	"github.com/kubeedge/kubeedge/common/constants"
@@ -135,4 +136,14 @@ func mergeAnnotationUpgradeHistory(origin, fromVersion, toVersion string) string
 
 	sets = append(sets, newHistory)
 	return strings.Join(sets, ";")
+}
+
+// GetImageRepo gets repo from a container image
+func GetImageRepo(image string) (string, error) {
+	named, err := reference.ParseNormalizedNamed(image)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse image name: %v", err)
+	}
+
+	return named.Name(), nil
 }

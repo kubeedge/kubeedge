@@ -147,6 +147,21 @@ func (dc *DownstreamController) nodeUpgradeJobAdded(upgrade *v1alpha1.NodeUpgrad
 
 	klog.Infof("Filtered finished, the below nodes are to upgrade\n%v\n", nodesToUpgrade)
 
+	// if users specify Image, we'll use upgrade Version as its image tag, even though Image contains tag.
+	// if not, we'll use default image: kubeedge/installation-package:${Version}
+	var repo string
+	var err error
+	repo = "kubeedge/installation-package"
+	if upgrade.Spec.Image != "" {
+		repo, err = GetImageRepo(upgrade.Spec.Image)
+		if err != nil {
+			klog.Errorf("Image format is not right: %v", err)
+			return
+		}
+	}
+	imageTag := upgrade.Spec.Version
+	image := fmt.Sprintf("%s:%s", repo, imageTag)
+
 	for _, node := range nodesToUpgrade {
 		// send upgrade msg to every edge node
 		msg := model.NewMessage("")
@@ -158,7 +173,7 @@ func (dc *DownstreamController) nodeUpgradeJobAdded(upgrade *v1alpha1.NodeUpgrad
 			HistoryID:   uuid.New().String(),
 			UpgradeTool: upgrade.Spec.UpgradeTool,
 			Version:     upgrade.Spec.Version,
-			Image:       upgrade.Spec.Image,
+			Image:       image,
 		}
 
 		msg.BuildRouter(modules.NodeUpgradeJobControllerModuleName, modules.NodeUpgradeJobControllerModuleGroup, resource, NodeUpgrade).

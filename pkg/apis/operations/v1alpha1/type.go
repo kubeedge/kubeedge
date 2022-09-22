@@ -81,8 +81,8 @@ type NodeUpgradeJobSpec struct {
 	LabelSelector *metav1.LabelSelector `json:"labelSelector,omitempty"`
 	// Image specifies a container image name, the image contains: keadm and edgecore.
 	// keadm is used as upgradetool, to install the new version of edgecore.
-	// The image name consists of registry hostname and repository name, but cannot includes the tag,
-	// Version above will be used as the tag.
+	// The image name consists of registry hostname and repository name,
+	// if it includes the tag or digest, the tag or digest will be overwritten by Version field above.
 	// If the registry hostname is empty, docker.io will be used as default.
 	// The default image name is: kubeedge/installation-package.
 	// +optional
