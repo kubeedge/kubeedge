@@ -167,10 +167,7 @@ func getMsgKey(obj interface{}) (string, error) {
 	msg := obj.(*beehiveModel.Message)
 
 	if msg.GetGroup() == edgeconst.GroupResource {
-		resourceType, _ := edgemessagelayer.GetResourceType(*msg)
-		resourceNamespace, _ := edgemessagelayer.GetNamespace(*msg)
-		resourceName, _ := edgemessagelayer.GetResourceName(*msg)
-		return strings.Join([]string{resourceType, resourceNamespace, resourceName}, "/"), nil
+		return GetMessageUID(*msg)
 	}
 
 	return "", fmt.Errorf("failed to get message key")
