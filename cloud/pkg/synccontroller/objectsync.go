@@ -44,6 +44,7 @@ func (sctl *SyncController) manageObject(sync *v1alpha1.ObjectSync) {
 		newObject.SetNamespace(sync.Namespace)
 		newObject.SetName(sync.Spec.ObjectName)
 		newObject.SetUID(types.UID(getObjectUID(sync.Name)))
+		newObject.SetKind(resourceType)
 		if msg := buildEdgeControllerMessage(nodeName, sync.Namespace, resourceType, sync.Spec.ObjectName, model.DeleteOperation, newObject); msg != nil {
 			beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
 		} else {
