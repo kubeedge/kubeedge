@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The KubeEdge Authors.
+Copyright 2022 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,13 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1alpha1
+package v1alpha2
 
 import (
-	"time"
-
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	tailoredkubeletconfigv1beta1 "k8s.io/kubelet/config/v1beta1"
+	"k8s.io/kubernetes/pkg/apis/core"
 
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
 )
@@ -102,139 +101,166 @@ type Modules struct {
 // Edged indicates the config fo edged module
 // edged is lighted-kubelet
 type Edged struct {
-	// Enable indicates whether edged is enabled,
-	// if set to false (for debugging etc.), skip checking other edged configs.
+	// Enable indicates whether EdgeHub is enabled,
+	// if set to false (for debugging etc.), skip checking other EdgeHub configs.
 	// default true
 	Enable bool `json:"enable"`
-	// Labels indicates current node labels
-	Labels map[string]string `json:"labels,omitempty"`
-	// Annotations indicates current node annotations
-	Annotations map[string]string `json:"annotations,omitempty"`
-	// Taints indicates current node taints
-	Taints []v1.Taint `json:"taints,omitempty"`
-	// NodeStatusUpdateFrequency indicates node status update frequency (second)
-	// default 10
-	NodeStatusUpdateFrequency int32 `json:"nodeStatusUpdateFrequency,omitempty"`
-	// RuntimeType indicates cri runtime ,support: docker, remote
-	// default "docker"
-	RuntimeType string `json:"runtimeType,omitempty"`
-	// DockerAddress indicates docker server address
-	// default "unix:///var/run/docker.sock"
-	DockerAddress string `json:"dockerAddress,omitempty"`
-	// RemoteRuntimeEndpoint indicates remote runtime endpoint
-	// default "unix:///var/run/dockershim.sock"
-	RemoteRuntimeEndpoint string `json:"remoteRuntimeEndpoint,omitempty"`
-	// RemoteImageEndpoint indicates remote image endpoint
-	// default "unix:///var/run/dockershim.sock"
-	RemoteImageEndpoint string `json:"remoteImageEndpoint,omitempty"`
-	// NodeIP indicates current node ip.
-	// Setting the value overwrites the automatically detected IP address
-	// default get local host ip
-	NodeIP string `json:"nodeIP"`
-	// ClusterDNS indicates cluster dns
-	// Note: Can not use "omitempty" option,  It will affect the output of the default configuration file
-	// +Required
-	ClusterDNS string `json:"clusterDNS"`
-	// ClusterDomain indicates cluster domain
-	// Note: Can not use "omitempty" option,  It will affect the output of the default configuration file
-	ClusterDomain string `json:"clusterDomain"`
-	// EdgedMemoryCapacity indicates memory capacity (byte)
-	// default 7852396000
-	EdgedMemoryCapacity int64 `json:"edgedMemoryCapacity,omitempty"`
-	// PodSandboxImage is the image whose network/ipc namespaces containers in each pod will use.
-	// +Required
-	// default kubeedge/pause:3.1
-	PodSandboxImage string `json:"podSandboxImage,omitempty"`
-	// ImagePullProgressDeadline indicates image pull progress dead line (second)
-	// default 60
-	ImagePullProgressDeadline int32 `json:"imagePullProgressDeadline,omitempty"`
-	// RuntimeRequestTimeout indicates runtime request timeout (second)
-	// default 2
-	RuntimeRequestTimeout int32 `json:"runtimeRequestTimeout,omitempty"`
-	// HostnameOverride indicates hostname
-	// default os.Hostname()
-	HostnameOverride string `json:"hostnameOverride,omitempty"`
-	// RegisterNode enables automatic registration
-	// default true
-	RegisterNode bool `json:"registerNode,omitempty"`
-	//RegisterNodeNamespace indicates register node namespace
-	// default "default"
-	RegisterNodeNamespace string `json:"registerNodeNamespace,omitempty"`
+	// TailoredKubeletConfig contains the configuration for the Kubelet, tailored by KubeEdge
+	TailoredKubeletConfig *tailoredkubeletconfigv1beta1.KubeletConfiguration `json:"tailoredKubeletConfig"`
+	// TailoredKubeletFlag
+	TailoredKubeletFlag
 	// CustomInterfaceName indicates the name of the network interface used for obtaining the IP address.
 	// Setting this will override the setting 'NodeIP' if provided.
 	// If this is not defined the IP address is obtained by the hostname.
 	// default ""
 	CustomInterfaceName string `json:"customInterfaceName,omitempty"`
-	// ConcurrentConsumers indicates concurrent consumers for pod add or remove operation
-	// default 5
-	ConcurrentConsumers int `json:"concurrentConsumers,omitempty"`
-	// DevicePluginEnabled indicates enable device plugin
-	// default false
-	// Note: Can not use "omitempty" option, it will affect the output of the default configuration file
-	DevicePluginEnabled bool `json:"devicePluginEnabled"`
-	// GPUPluginEnabled indicates enable gpu plugin
-	// default false,
-	// Note: Can not use "omitempty" option, it will affect the output of the default configuration file
-	GPUPluginEnabled bool `json:"gpuPluginEnabled"`
-	// ImageGCHighThreshold indicates image gc high threshold (percent)
-	// default 80
-	ImageGCHighThreshold int32 `json:"imageGCHighThreshold,omitempty"`
-	// ImageGCLowThreshold indicates image gc low threshold (percent)
-	// default 40
-	ImageGCLowThreshold int32 `json:"imageGCLowThreshold,omitempty"`
-	// MaximumDeadContainersPerPod indicates max num dead containers per pod
-	// default 1
-	MaximumDeadContainersPerPod int32 `json:"maximumDeadContainersPerPod,omitempty"`
-	// CGroupDriver indicates container cgroup driver, support: cgroupfs, systemd
-	// default "cgroupfs"
-	// +Required
-	CGroupDriver string `json:"cgroupDriver,omitempty"`
-	// NetworkPluginName indicates the name of the network plugin to be invoked,
-	// if an empty string is specified, use noop plugin
-	// default ""
+	//RegisterNodeNamespace indicates register node namespace
+	// default "default"
+	RegisterNodeNamespace string `json:"registerNodeNamespace,omitempty"`
+}
+
+type TailoredKubeletFlag struct {
+	KubeConfig string `json:"kubeConfig,omitempty"`
+	// HostnameOverride is the hostname used to identify the kubelet instead
+	// of the actual hostname.
+	HostnameOverride string `json:"hostnameOverride,omitempty"`
+	// NodeIP is IP address of the node.
+	// If set, edged will use this IP address for the node.
+	NodeIP string `json:"nodeIP,omitempty"`
+	// Container-runtime-specific options.
+	ContainerRuntimeOptions
+	// certDirectory is the directory where the TLS certs are located.
+	// If tlsCertFile and tlsPrivateKeyFile are provided, this flag will be ignored.
+	CertDirectory string `json:"certDirectory,omitempty"`
+	// rootDirectory is the directory path to place kubelet files (volume
+	// mounts,etc).
+	RootDirectory string `json:"rootDirectory,omitempty"`
+	// The Kubelet will load its initial configuration from this file.
+	// The path may be absolute or relative; relative paths are under the Kubelet's current working directory.
+	// Omit this flag to use the combination of built-in default configuration values and flags.
+	KubeletConfigFile string `json:"kubeletConfigFile,omitempty"`
+	// registerNode enables automatic registration with the apiserver.
+	RegisterNode bool `json:"registerNode,omitempty"`
+	// registerWithTaints are an array of taints to add to a node object when
+	// the kubelet registers itself. This only takes effect when registerNode
+	// is true and upon the initial registration of the node.
+	RegisterWithTaints []core.Taint `json:"registerWithTaints,omitempty"`
+	// WindowsService should be set to true if kubelet is running as a service on Windows.
+	// Its corresponding flag only gets registered in Windows builds.
+	WindowsService bool `json:"windowsService,omitempty"`
+	// WindowsPriorityClass sets the priority class associated with the Kubelet process
+	// Its corresponding flag only gets registered in Windows builds
+	// The default priority class associated with any process in Windows is NORMAL_PRIORITY_CLASS. Keeping it as is
+	// to maintain backwards compatibility.
+	// Source: https://docs.microsoft.com/en-us/windows/win32/procthread/scheduling-priorities
+	WindowsPriorityClass string `json:"windowsPriorityClass,omitempty"`
+	// remoteRuntimeEndpoint is the endpoint of remote runtime service
+	RemoteRuntimeEndpoint string `json:"remoteRuntimeEndpoint,omitempty"`
+	// remoteImageEndpoint is the endpoint of remote image service
+	RemoteImageEndpoint string `json:"remoteImageEndpoint,omitempty"`
+	// experimentalMounterPath is the path of mounter binary. Leave empty to use the default mount path
+	ExperimentalMounterPath string `json:"experimentalMounterPath,omitempty"`
+	// This flag, if set, enables a check prior to mount operations to verify that the required components
+	// (binaries, etc.) to mount the volume are available on the underlying node. If the check is enabled
+	// and fails the mount operation fails.
+	ExperimentalCheckNodeCapabilitiesBeforeMount bool `json:"experimentalCheckNodeCapabilitiesBeforeMount,omitempty"`
+	// This flag, if set, will avoid including `EvictionHard` limits while computing Node Allocatable.
+	// Refer to [Node Allocatable](https://git.k8s.io/community/contributors/design-proposals/node/node-allocatable.md) doc for more information.
+	ExperimentalNodeAllocatableIgnoreEvictionThreshold bool `json:"experimentalNodeAllocatableIgnoreEvictionThreshold,omitempty"`
+	// Node Labels are the node labels to add when registering the node in the cluster
+	NodeLabels map[string]string `json:"nodeLabels,omitempty"`
+	// lockFilePath is the path that kubelet will use to as a lock file.
+	// It uses this file as a lock to synchronize with other kubelet processes
+	// that may be running.
+	LockFilePath string `json:"lockFilePath,omitempty"`
+	// ExitOnLockContention is a flag that signifies to the kubelet that it is running
+	// in "bootstrap" mode. This requires that 'LockFilePath' has been set.
+	// This will cause the kubelet to listen to inotify events on the lock file,
+	// releasing it and exiting when another process tries to open that file.
+	ExitOnLockContention bool `json:"exitOnLockContention,omitempty"`
+	// seccompProfileRoot is the directory path for seccomp profiles.
+	SeccompProfileRoot string `json:"seccompProfileRoot,omitempty"`
+	// DEPRECATED FLAGS
+	// minimumGCAge is the minimum age for a finished container before it is
+	// garbage collected.
+	MinimumGCAge metav1.Duration `json:"minimumGCAge,omitempty"`
+	// maxPerPodContainerCount is the maximum number of old instances to
+	// retain per container. Each container takes up some disk space.
+	MaxPerPodContainerCount int32 `json:"maxPerPodContainerCount,omitempty"`
+	// maxContainerCount is the maximum number of old instances of containers
+	// to retain globally. Each container takes up some disk space.
+	MaxContainerCount int32 `json:"maxContainerCount,omitempty"`
+	// masterServiceNamespace is The namespace from which the kubernetes
+	// master services should be injected into pods.
+	MasterServiceNamespace string `json:"masterServiceNamespace,omitempty"`
+	// registerSchedulable tells the kubelet to register the node as
+	// schedulable. Won't have any effect if register-node is false.
+	// DEPRECATED: use registerWithTaints instead
+	RegisterSchedulable bool `json:"registerSchedulable,omitempty"`
+	// nonMasqueradeCIDR configures masquerading: traffic to IPs outside this range will use IP masquerade.
+	NonMasqueradeCIDR string `json:"nonMasqueradeCidr,omitempty"`
+	// This flag, if set, instructs the kubelet to keep volumes from terminated pods mounted to the node.
+	// This can be useful for debugging volume related issues.
+	KeepTerminatedPodVolumes bool `json:"keepTerminatedPodVolumes,omitempty"`
+	// SeccompDefault enables the use of `RuntimeDefault` as the default seccomp profile for all workloads on the node.
+	// To use this flag, the corresponding SeccompDefault feature gate must be enabled.
+	SeccompDefault bool `json:"seccompDefault,omitempty"`
+}
+
+// ContainerRuntimeOptions defines options for the container runtime.
+type ContainerRuntimeOptions struct {
+	// General Options.
+
+	// ContainerRuntime is the container runtime to use.
+	ContainerRuntime string `json:"containerRuntime,omitempty"`
+	// RuntimeCgroups that container runtime is expected to be isolated in.
+	RuntimeCgroups string `json:"runtimeCgroups,omitempty"`
+	// Docker-specific options.
+
+	// DockershimRootDirectory is the path to the dockershim root directory. Defaults to
+	// /var/lib/dockershim if unset. Exposed for integration testing (e.g. in OpenShift).
+	DockershimRootDirectory string `json:"dockershimRootDirectory,omitempty"`
+	// PodSandboxImage is the image whose network/ipc namespaces
+	// containers in each pod will use.
+	PodSandboxImage string `json:"podSandboxImage,omitempty"`
+	// DockerEndpoint is the path to the docker endpoint to communicate with.
+	DockerEndpoint string `json:"dockerEndpoint,omitempty"`
+	// If no pulling progress is made before the deadline imagePullProgressDeadline,
+	// the image pulling will be cancelled. Defaults to 1m0s.
+	// +optional
+	ImagePullProgressDeadline metav1.Duration `json:"imagePullProgressDeadline,omitempty"`
+	// Network plugin options.
+
+	// networkPluginName is the name of the network plugin to be invoked for
+	// various events in kubelet/pod lifecycle
 	NetworkPluginName string `json:"networkPluginName,omitempty"`
-	// CNIConfDir indicates the full path of the directory in which to search for CNI config files
-	// default "/etc/cni/net.d"
-	CNIConfDir string `json:"cniConfDir,omitempty"`
-	// CNIBinDir indicates a comma-separated list of full paths of directories
-	// in which to search for CNI plugin binaries
-	// default "/opt/cni/bin"
-	CNIBinDir string `json:"cniBinDir,omitempty"`
-	// CNICacheDir indicates the full path of the directory in which CNI should store cache files
-	// default "/var/lib/cni/cache"
-	CNICacheDir string `json:"cniCacheDirs,omitempty"`
-	// NetworkPluginMTU indicates the MTU to be passed to the network plugin
-	// default 1500
+	// NetworkPluginMTU is the MTU to be passed to the network plugin,
+	// and overrides the default MTU for cases where it cannot be automatically
+	// computed (such as IPSEC).
 	NetworkPluginMTU int32 `json:"networkPluginMTU,omitempty"`
-	// CgroupsPerQOS enables QoS based Cgroup hierarchy: top level cgroups for QoS Classes
-	// And all Burstable and BestEffort pods are brought up under their
-	// specific top level QoS cgroup.
-	// Default: true
-	CgroupsPerQOS bool `json:"cgroupsPerQOS"`
-	// CgroupRoot is the root cgroup to use for pods.
-	// If CgroupsPerQOS is enabled, this is the root of the QoS cgroup hierarchy.
-	// Default: ""
-	CgroupRoot string `json:"cgroupRoot"`
-	// EdgeCoreCgroups is the absolute name of cgroups to isolate the edgecore in
-	// Dynamic Kubelet Config (beta): This field should not be updated without a full node
-	// reboot. It is safest to keep this value the same as the local config.
-	// Default: ""
-	EdgeCoreCgroups string `json:"edgeCoreCgroups,omitempty"`
-	// systemCgroups is absolute name of cgroups in which to place
-	// all non-kernel processes that are not already in a container. Empty
-	// for no container. Rolling back the flag requires a reboot.
-	// Dynamic Kubelet Config (beta): This field should not be updated without a full node
-	// reboot. It is safest to keep this value the same as the local config.
-	// Default: ""
-	SystemCgroups string `json:"systemCgroups,omitempty"`
-	// How frequently to calculate and cache volume disk usage for all pods
-	// Dynamic Kubelet Config (beta): If dynamically updating this field, consider that
-	// shortening the period may carry a performance impact.
-	// Default: "1m"
-	VolumeStatsAggPeriod time.Duration `json:"volumeStatsAggPeriod,omitempty"`
-	// EnableMetrics indicates whether enable the metrics
-	// default true
-	EnableMetrics bool `json:"enableMetrics,omitempty"`
+	// CNIConfDir is the full path of the directory in which to search for
+	// CNI config files
+	CNIConfDir string `json:"cniConfDir,omitempty"`
+	// CNIBinDir is the full path of the directory in which to search for
+	// CNI plugin binaries
+	CNIBinDir string `json:"cniBinDir,omitempty"`
+	// CNICacheDir is the full path of the directory in which CNI should store
+	// cache files
+	CNICacheDir string `json:"cniCacheDir,omitempty"`
+
+	// Image credential provider plugin options
+
+	// ImageCredentialProviderConfigFile is the path to the credential provider plugin config file.
+	// This config file is a specification for what credential providers are enabled and invokved
+	// by the kubelet. The plugin config should contain information about what plugin binary
+	// to execute and what container images the plugin should be called for.
+	// +optional
+	ImageCredentialProviderConfigFile string `json:"imageCredentialProviderConfigFile,omitempty"`
+	// ImageCredentialProviderBinDir is the path to the directory where credential provider plugin
+	// binaries exist. The name of each plugin binary is expected to match the name of the plugin
+	// specified in imageCredentialProviderConfigFile.
+	// +optional
+	ImageCredentialProviderBinDir string `json:"imageCredentialProviderBinDir,omitempty"`
 }
 
 // EdgeHub indicates the EdgeHub module config
@@ -399,11 +425,15 @@ type MetaManager struct {
 }
 
 type MetaServer struct {
-	Enable            bool   `json:"enable"`
-	Server            string `json:"server"`
-	TLSCaFile         string `json:"tlsCaFile"`
-	TLSCertFile       string `json:"tlsCertFile"`
-	TLSPrivateKeyFile string `json:"tlsPrivateKeyFile"`
+	Enable bool `json:"enable"`
+	// AutonomyWithoutAuthorization is a switch to determine whether app can List/Watch
+	// meta data from local host db without authorization when the edge node is off-line.
+	// The default value is false, means won't be allowed.
+	AutonomyWithoutAuthorization bool   `json:"autonomyWithoutAuthorization"`
+	Server                       string `json:"server"`
+	TLSCaFile                    string `json:"tlsCaFile"`
+	TLSCertFile                  string `json:"tlsCertFile"`
+	TLSPrivateKeyFile            string `json:"tlsPrivateKeyFile"`
 }
 
 // ServiceBus indicates the ServiceBus module config

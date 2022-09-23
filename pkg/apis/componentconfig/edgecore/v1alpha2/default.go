@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The KubeEdge Authors.
+Copyright 2022 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,16 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1alpha1
+package v1alpha2
 
 import (
+	utilpointer "k8s.io/utils/pointer"
 	"net"
 	"net/url"
 	"path"
+	"path/filepath"
 	"strconv"
 
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	kubeletconfigv1beta1 "k8s.io/kubelet/config/v1beta1"
+	configv1beta1 "k8s.io/kubernetes/pkg/kubelet/apis/config/v1beta1"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
@@ -34,6 +37,19 @@ import (
 func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 	hostnameOverride := util.GetHostname()
 	localIP, _ := util.GetLocalIP(hostnameOverride)
+
+	in := kubeletconfigv1beta1.KubeletConfiguration{}
+	in.ContentType = "application/json"
+	in.Authorization.Mode = kubeletconfigv1beta1.KubeletAuthorizationModeAlwaysAllow
+	in.NodeStatusUpdateFrequency = metav1.Duration{Duration: constants.DefaultNodeStatusUpdateFrequency}
+	in.ImageGCLowThresholdPercent = utilpointer.Int32Ptr(constants.DefaultImageGCLowThreshold)
+	in.ImageGCHighThresholdPercent = utilpointer.Int32Ptr(constants.DefaultImageGCHighThreshold)
+	in.ConfigMapAndSecretChangeDetectionStrategy = kubeletconfigv1beta1.GetChangeDetectionStrategy
+	in.FailSwapOn = utilpointer.BoolPtr(false)
+	in.EnableServer = utilpointer.BoolPtr(false)
+	in.Address = constants.ServerAddress
+	in.ReadOnlyPort = constants.ServerPort
+	configv1beta1.SetDefaults_KubeletConfiguration(&in)
 
 	return &EdgeCoreConfig{
 		TypeMeta: metav1.TypeMeta{
@@ -47,42 +63,36 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 		},
 		Modules: &Modules{
 			Edged: &Edged{
-				Enable:                      true,
-				Labels:                      map[string]string{},
-				Annotations:                 map[string]string{},
-				Taints:                      []v1.Taint{},
-				NodeStatusUpdateFrequency:   10,
-				RuntimeType:                 constants.DefaultRuntimeType,
-				DockerAddress:               constants.DefaultDockerAddress,
-				RemoteRuntimeEndpoint:       constants.DefaultRemoteRuntimeEndpoint,
-				RemoteImageEndpoint:         constants.DefaultRemoteImageEndpoint,
-				NodeIP:                      localIP,
-				ClusterDNS:                  "",
-				ClusterDomain:               "",
-				ConcurrentConsumers:         constants.DefaultConcurrentConsumers,
-				EdgedMemoryCapacity:         constants.DefaultEdgedMemoryCapacity,
-				PodSandboxImage:             constants.DefaultPodSandboxImage,
-				ImagePullProgressDeadline:   60,
-				RuntimeRequestTimeout:       2,
-				HostnameOverride:            hostnameOverride,
-				RegisterNodeNamespace:       constants.DefaultRegisterNodeNamespace,
-				CustomInterfaceName:         "",
-				RegisterNode:                true,
-				DevicePluginEnabled:         false,
-				GPUPluginEnabled:            false,
-				ImageGCHighThreshold:        constants.DefaultImageGCHighThreshold,
-				ImageGCLowThreshold:         constants.DefaultImageGCLowThreshold,
-				MaximumDeadContainersPerPod: constants.DefaultMaximumDeadContainersPerPod,
-				CGroupDriver:                CGroupDriverCGroupFS,
-				CgroupsPerQOS:               true,
-				CgroupRoot:                  constants.DefaultCgroupRoot,
-				NetworkPluginName:           "",
-				CNIConfDir:                  constants.DefaultCNIConfDir,
-				CNIBinDir:                   constants.DefaultCNIBinDir,
-				CNICacheDir:                 constants.DefaultCNICacheDir,
-				NetworkPluginMTU:            constants.DefaultNetworkPluginMTU,
-				VolumeStatsAggPeriod:        constants.DefaultVolumeStatsAggPeriod,
-				EnableMetrics:               true,
+				Enable:                true,
+				TailoredKubeletConfig: &in,
+				TailoredKubeletFlag: TailoredKubeletFlag{
+					KubeConfig:       constants.DefaultKubeletConfig,
+					HostnameOverride: hostnameOverride,
+					NodeIP:           "",
+					ContainerRuntimeOptions: ContainerRuntimeOptions{
+						ContainerRuntime:          constants.DefaultRuntimeType,
+						DockerEndpoint:            constants.DefaultDockerAddress,
+						PodSandboxImage:           constants.DefaultPodSandboxImage,
+						ImagePullProgressDeadline: metav1.Duration{Duration: constants.DefaultImagePullProgressDeadline},
+						CNIConfDir:                constants.DefaultCNIConfDir,
+						CNIBinDir:                 constants.DefaultCNIBinDir,
+						CNICacheDir:               constants.DefaultCNICacheDir,
+						NetworkPluginMTU:          constants.DefaultNetworkPluginMTU,
+					},
+					RootDirectory:           "/var/lib/kubelet",
+					MasterServiceNamespace:  metav1.NamespaceDefault,
+					RemoteRuntimeEndpoint:   constants.DefaultRemoteRuntimeEndpoint,
+					RemoteImageEndpoint:     constants.DefaultRemoteImageEndpoint,
+					MaxPerPodContainerCount: 1,
+					MinimumGCAge:            metav1.Duration{Duration: 0},
+					NonMasqueradeCIDR:       "10.0.0.0/8",
+					NodeLabels:              make(map[string]string),
+					RegisterNode:            true,
+					RegisterSchedulable:     true,
+					SeccompProfileRoot:      filepath.Join("/var/lib/kubelet", "seccomp"),
+				},
+				CustomInterfaceName:   "",
+				RegisterNodeNamespace: constants.DefaultRegisterNodeNamespace,
 			},
 			EdgeHub: &EdgeHub{
 				Enable:            true,
@@ -139,11 +149,12 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				ContextSendModule:  metaconfig.ModuleNameEdgeHub,
 				RemoteQueryTimeout: constants.DefaultRemoteQueryTimeout,
 				MetaServer: &MetaServer{
-					Enable:            false,
-					Server:            constants.DefaultMetaServerAddr,
-					TLSCaFile:         constants.DefaultCAFile,
-					TLSCertFile:       constants.DefaultCertFile,
-					TLSPrivateKeyFile: constants.DefaultKeyFile,
+					Enable:                       false,
+					AutonomyWithoutAuthorization: false,
+					Server:                       constants.DefaultMetaServerAddr,
+					TLSCaFile:                    constants.DefaultCAFile,
+					TLSCertFile:                  constants.DefaultCertFile,
+					TLSPrivateKeyFile:            constants.DefaultKeyFile,
 				},
 			},
 			ServiceBus: &ServiceBus{
@@ -176,6 +187,19 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 	hostnameOverride := util.GetHostname()
 	localIP, _ := util.GetLocalIP(hostnameOverride)
+
+	in := kubeletconfigv1beta1.KubeletConfiguration{}
+	in.ContentType = "application/json"
+	in.NodeStatusUpdateFrequency = metav1.Duration{Duration: constants.DefaultNodeStatusUpdateFrequency}
+	in.ImageGCLowThresholdPercent = utilpointer.Int32Ptr(constants.DefaultImageGCLowThreshold)
+	in.ImageGCHighThresholdPercent = utilpointer.Int32Ptr(constants.DefaultImageGCHighThreshold)
+	in.ConfigMapAndSecretChangeDetectionStrategy = kubeletconfigv1beta1.GetChangeDetectionStrategy
+	in.FailSwapOn = utilpointer.BoolPtr(false)
+	in.EnableServer = utilpointer.BoolPtr(false)
+	in.Address = constants.ServerAddress
+	in.ReadOnlyPort = constants.ServerPort
+	configv1beta1.SetDefaults_KubeletConfiguration(&in)
+
 	return &EdgeCoreConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       Kind,
@@ -186,20 +210,36 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 		},
 		Modules: &Modules{
 			Edged: &Edged{
-				RuntimeType:           constants.DefaultRuntimeType,
-				RemoteRuntimeEndpoint: constants.DefaultRemoteRuntimeEndpoint,
-				RemoteImageEndpoint:   constants.DefaultRemoteImageEndpoint,
-				DockerAddress:         constants.DefaultDockerAddress,
-				NodeIP:                localIP,
-				ClusterDNS:            "",
-				ClusterDomain:         "",
-				PodSandboxImage:       constants.DefaultPodSandboxImage,
-				HostnameOverride:      hostnameOverride,
-				DevicePluginEnabled:   false,
-				GPUPluginEnabled:      false,
-				CGroupDriver:          CGroupDriverCGroupFS,
-				CgroupsPerQOS:         true,
-				CgroupRoot:            constants.DefaultCgroupRoot,
+				Enable:                true,
+				TailoredKubeletConfig: &in,
+				TailoredKubeletFlag: TailoredKubeletFlag{
+					KubeConfig:       constants.DefaultKubeletConfig,
+					HostnameOverride: hostnameOverride,
+					NodeIP:           "",
+					ContainerRuntimeOptions: ContainerRuntimeOptions{
+						ContainerRuntime:          constants.DefaultRuntimeType,
+						DockerEndpoint:            constants.DefaultDockerAddress,
+						PodSandboxImage:           constants.DefaultPodSandboxImage,
+						ImagePullProgressDeadline: metav1.Duration{Duration: constants.DefaultImagePullProgressDeadline},
+						CNIConfDir:                constants.DefaultCNIConfDir,
+						CNIBinDir:                 constants.DefaultCNIBinDir,
+						CNICacheDir:               constants.DefaultCNICacheDir,
+						NetworkPluginMTU:          constants.DefaultNetworkPluginMTU,
+					},
+					RootDirectory:           "/var/lib/kubelet",
+					MasterServiceNamespace:  metav1.NamespaceDefault,
+					RemoteRuntimeEndpoint:   constants.DefaultRemoteRuntimeEndpoint,
+					RemoteImageEndpoint:     constants.DefaultRemoteImageEndpoint,
+					MaxPerPodContainerCount: 1,
+					MinimumGCAge:            metav1.Duration{Duration: 0},
+					NonMasqueradeCIDR:       "10.0.0.0/8",
+					NodeLabels:              make(map[string]string),
+					RegisterNode:            true,
+					RegisterSchedulable:     true,
+					SeccompProfileRoot:      filepath.Join("/var/lib/kubelet", "seccomp"),
+				},
+				CustomInterfaceName:   "",
+				RegisterNodeNamespace: constants.DefaultRegisterNodeNamespace,
 			},
 			EdgeHub: &EdgeHub{
 				Heartbeat:         15,

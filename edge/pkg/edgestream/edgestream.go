@@ -30,7 +30,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgestream/config"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/pkg/stream"
 )
 
@@ -51,7 +51,7 @@ func newEdgeStream(enable bool, hostnameOverride, nodeIP string) *edgestream {
 }
 
 // Register register edgestream
-func Register(s *v1alpha1.EdgeStream, hostnameOverride, nodeIP string) {
+func Register(s *v1alpha2.EdgeStream, hostnameOverride, nodeIP string) {
 	config.InitConfigure(s)
 	core.Register(newEdgeStream(s.Enable, hostnameOverride, nodeIP))
 }

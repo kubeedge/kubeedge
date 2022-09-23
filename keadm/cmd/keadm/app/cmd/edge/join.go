@@ -33,8 +33,8 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1/validation"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2/validation"
 	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
 )
 
@@ -159,7 +159,7 @@ func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
 func newOption() *common.JoinOptions {
 	joinOptions := &common.JoinOptions{}
 	joinOptions.WithMQTT = true
-	joinOptions.CGroupDriver = v1alpha1.CGroupDriverCGroupFS
+	joinOptions.CGroupDriver = v1alpha2.CGroupDriverCGroupFS
 	joinOptions.CertPath = common.DefaultCertPath
 	joinOptions.RuntimeType = kubetypes.DockerContainerRuntime
 	return joinOptions
@@ -212,7 +212,7 @@ func createDirs() error {
 }
 
 func createEdgeConfigFiles(opt *common.JoinOptions) error {
-	var edgeCoreConfig *v1alpha1.EdgeCoreConfig
+	var edgeCoreConfig *v1alpha2.EdgeCoreConfig
 
 	configFilePath := filepath.Join(util.KubeEdgePath, "config/edgecore.yaml")
 	_, err := os.Stat(configFilePath)
@@ -228,7 +228,7 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 	}
 	if edgeCoreConfig == nil {
 		klog.Infoln("The configuration does not exist or the parsing fails, and the default configuration is generated")
-		edgeCoreConfig = v1alpha1.NewDefaultEdgeCoreConfig()
+		edgeCoreConfig = v1alpha2.NewDefaultEdgeCoreConfig()
 	}
 
 	edgeCoreConfig.Modules.EdgeHub.WebSocket.Server = opt.CloudCoreIPPort
@@ -243,14 +243,14 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 	}
 
 	switch opt.CGroupDriver {
-	case v1alpha1.CGroupDriverSystemd:
-		edgeCoreConfig.Modules.Edged.CgroupDriver = v1alpha1.CGroupDriverSystemd
-	case v1alpha1.CGroupDriverCGroupFS:
-		edgeCoreConfig.Modules.Edged.CgroupDriver = v1alpha1.CGroupDriverCGroupFS
+	case v1alpha2.CGroupDriverSystemd:
+		edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.CgroupDriver = v1alpha2.CGroupDriverSystemd
+	case v1alpha2.CGroupDriverCGroupFS:
+		edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.CgroupDriver = v1alpha2.CGroupDriverCGroupFS
 	default:
 		return fmt.Errorf("unsupported CGroupDriver: %s", opt.CGroupDriver)
 	}
-	edgeCoreConfig.Modules.Edged.CgroupDriver = opt.CGroupDriver
+	edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.CgroupDriver = opt.CGroupDriver
 
 	if opt.RemoteRuntimeEndpoint != "" {
 		edgeCoreConfig.Modules.Edged.RemoteRuntimeEndpoint = opt.RemoteRuntimeEndpoint

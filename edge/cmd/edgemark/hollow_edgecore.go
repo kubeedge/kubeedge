@@ -35,7 +35,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edged"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/pkg/version/verflag"
 )
 
@@ -107,8 +107,8 @@ func (c *hollowEdgeNodeConfig) addFlags(fs *pflag.FlagSet) {
 	fs.Var(&bindableNodeLabels, "node-labels", "Additional node labels")
 }
 
-func EdgeCoreConfig(config *hollowEdgeNodeConfig) *v1alpha1.EdgeCoreConfig {
-	edgeCoreConfig := v1alpha1.NewDefaultEdgeCoreConfig()
+func EdgeCoreConfig(config *hollowEdgeNodeConfig) *v1alpha2.EdgeCoreConfig {
+	edgeCoreConfig := v1alpha2.NewDefaultEdgeCoreConfig()
 
 	// overWrite config
 	edgeCoreConfig.DataBase.DataSource = "/edgecore.db"

@@ -1,5 +1,5 @@
 /*
-Copyright 2020 The KubeEdge Authors.
+Copyright 2022 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,25 +14,26 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package config
+package v1alpha2
 
 import (
-	"sync"
+	"os"
 
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
+	"k8s.io/klog/v2"
+	"sigs.k8s.io/yaml"
 )
 
-var Config Configure
-var once sync.Once
-
-type Configure struct {
-	v1alpha2.EdgeStream
+func (c *EdgeCoreConfig) Parse(filename string) error {
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		klog.Errorf("Failed to read configfile %s: %v", filename, err)
+		return err
+	}
+	err = yaml.Unmarshal(data, c)
+	if err != nil {
+		klog.Errorf("Failed to unmarshal configfile %s: %v", filename, err)
+		return err
+	}
+	return nil
 }
 
-func InitConfigure(stream *v1alpha2.EdgeStream) {
-	once.Do(func() {
-		Config = Configure{
-			EdgeStream: *stream,
-		}
-	})
-}

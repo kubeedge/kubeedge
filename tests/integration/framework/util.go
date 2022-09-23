@@ -4,7 +4,7 @@ import (
 	"k8s.io/klog/v2"
 
 	cloudconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
-	edgeconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
+	edgeconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 )
 
 func DisableAllModules(i interface{}) {
@@ -17,7 +17,7 @@ func DisableAllModules(i interface{}) {
 		config.Modules.CloudStream.Enable = false
 		config.Modules.SyncController.Enable = false
 	case *edgeconfig.EdgeCoreConfig:
-		config.Modules.Edged.EnableServer = false
+		config.Modules.Edged.Enable = false
 		config.Modules.DBTest.Enable = false
 		config.Modules.DeviceTwin.Enable = false
 		config.Modules.EdgeHub.Enable = false

@@ -41,7 +41,7 @@ import (
 
 	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 	pkgversion "github.com/kubeedge/kubeedge/pkg/version"
 )
 
@@ -793,8 +793,8 @@ func FileExists(path string) bool {
 	return true
 }
 
-func ParseEdgecoreConfig(edgecorePath string) (*v1alpha1.EdgeCoreConfig, error) {
-	edgeCoreConfig := v1alpha1.NewDefaultEdgeCoreConfig()
+func ParseEdgecoreConfig(edgecorePath string) (*v1alpha2.EdgeCoreConfig, error) {
+	edgeCoreConfig := v1alpha2.NewDefaultEdgeCoreConfig()
 	if err := edgeCoreConfig.Parse(edgecorePath); err != nil {
 		return nil, err
 	}

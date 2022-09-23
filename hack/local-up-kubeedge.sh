@@ -135,6 +135,8 @@ function start_edgecore {
       -e "s|mqttMode: .*|mqttMode: 0|g" \
       -e '/serviceBus:/{n;s/false/true/;}' ${EDGE_CONFIGFILE}
 
+  sed -i -e "s|/tmp/etc/resolv|/etc/resolv|g" ${EDGE_CONFIGFILE}
+
   EDGECORE_LOG=${LOG_DIR}/edgecore.log
 
   echo "start edgecore..."

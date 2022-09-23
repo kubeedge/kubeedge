@@ -40,6 +40,8 @@ import (
 	kubeletserver "k8s.io/kubernetes/cmd/kubelet/app"
 	kubeletoptions "k8s.io/kubernetes/cmd/kubelet/app/options"
 	"k8s.io/kubernetes/pkg/kubelet"
+	kubeletconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
+	kubeletconfigv1beta1 "k8s.io/kubernetes/pkg/kubelet/apis/config/v1beta1"
 	"k8s.io/kubernetes/pkg/kubelet/config"
 	"k8s.io/kubernetes/pkg/kubelet/nodestatus"
 	kubelettypes "k8s.io/kubernetes/pkg/kubelet/types"
@@ -55,7 +57,7 @@ import (
 	kubebridge "github.com/kubeedge/kubeedge/edge/pkg/edged/kubeclientbridge"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	metaclient "github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/pkg/version"
 )
 
@@ -73,9 +75,9 @@ type edged struct {
 var _ core.Module = (*edged)(nil)
 
 // Register register edged
-func Register(e *v1alpha1.Edged) {
+func Register(e *v1alpha2.Edged) {
 	edgedconfig.InitConfigure(e)
-	edged, err := newEdged(e.KubeletServer.EnableServer, e.HostnameOverride, e.RegisterNodeNamespace)
+	edged, err := newEdged(e.Enable, e.HostnameOverride, e.RegisterNodeNamespace)
 	if err != nil {
 		klog.Errorf("init new edged error, %v", err)
 		os.Exit(1)
@@ -93,7 +95,7 @@ func (e *edged) Group() string {
 
 //Enable indicates whether this module is enabled
 func (e *edged) Enable() bool {
-	return e.KuberServer.EnableServer
+	return edgedconfig.Config.Enable
 }
 
 func (e *edged) Start() {
@@ -121,7 +123,18 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 		}, nil
 	}
 
-	kubeletServer := edgedconfig.Config.KubeletServer
+	var kubeConfig kubeletconfig.KubeletConfiguration
+	var kubeFlags kubeletoptions.KubeletFlags
+	err = kubeletconfigv1beta1.Convert_v1beta1_KubeletConfiguration_To_config_KubeletConfiguration(edgedconfig.Config.TailoredKubeletConfig, &kubeConfig, nil)
+	if err != nil {
+		klog.ErrorS(err, "Failed to convert kueblet config")
+		return nil, fmt.Errorf("failed to construct kubelet dependencies")
+	}
+	edgedconfig.Convert_Config_EdgedFlag_To_config_KubeletFlag(&edgedconfig.Config.TailoredKubeletFlag, &kubeFlags)
+	kubeletServer := kubeletoptions.KubeletServer{
+		KubeletFlags:         kubeFlags,
+		KubeletConfiguration: kubeConfig,
+	}
 	nodestatus.KubeletVersion = fmt.Sprintf("%s-kubeedge-%s", constants.CurrentSupportK8sVersion, version.Get())
 	// use kubeletServer to construct the default KubeletDeps
 	kubeletDeps, err := kubeletserver.UnsecuredDependencies(&kubeletServer, utilfeature.DefaultFeatureGate)
@@ -135,6 +148,7 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 	kubeletDeps.PodConfig = config.NewPodConfig(config.PodConfigNotificationIncremental, kubeletDeps.Recorder)
 
 	ed = &edged{
+		enable:      true,
 		context:     context.Background(),
 		KuberServer: &kubeletServer,
 		KubeletDeps: kubeletDeps,

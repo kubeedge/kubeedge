@@ -25,8 +25,8 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/servicebus"
 	"github.com/kubeedge/kubeedge/edge/test"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1/validation"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2/validation"
 	"github.com/kubeedge/kubeedge/pkg/features"
 	"github.com/kubeedge/kubeedge/pkg/util"
 	"github.com/kubeedge/kubeedge/pkg/util/flag"
@@ -50,8 +50,8 @@ is the message processor between edged and edgehub. It is also responsible for s
 to/from a lightweight database (SQLite).ServiceBus is a HTTP client to interact with HTTP servers (REST),
 offering HTTP client capabilities to components of cloud to reach HTTP servers running at edge. `,
 		Run: func(cmd *cobra.Command, args []string) {
-			flag.PrintMinConfigAndExitIfRequested(v1alpha1.NewMinEdgeCoreConfig())
-			flag.PrintDefaultConfigAndExitIfRequested(v1alpha1.NewDefaultEdgeCoreConfig())
+			flag.PrintMinConfigAndExitIfRequested(v1alpha2.NewMinEdgeCoreConfig())
+			flag.PrintDefaultConfigAndExitIfRequested(v1alpha2.NewDefaultEdgeCoreConfig())
 			flag.PrintFlags(cmd.Flags())
 
 			if errs := opts.Validate(); len(errs) > 0 {
@@ -162,7 +162,7 @@ func environmentCheck() error {
 }
 
 // registerModules register all the modules started in edgecore
-func registerModules(c *v1alpha1.EdgeCoreConfig) {
+func registerModules(c *v1alpha2.EdgeCoreConfig) {
 	devicetwin.Register(c.Modules.DeviceTwin, c.Modules.Edged.HostnameOverride)
 	edged.Register(c.Modules.Edged)
 	edgehub.Register(c.Modules.EdgeHub, c.Modules.Edged.HostnameOverride)

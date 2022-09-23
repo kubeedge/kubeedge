@@ -26,8 +26,8 @@ import (
 
 	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1/validation"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2/validation"
 	"github.com/kubeedge/kubeedge/pkg/util"
 )
 
@@ -91,7 +91,7 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 		return fmt.Errorf("not able to create %s folder path", KubeEdgeConfigDir)
 	}
 
-	edgeCoreConfig := v1alpha1.NewDefaultEdgeCoreConfig()
+	edgeCoreConfig := v1alpha2.NewDefaultEdgeCoreConfig()
 	edgeCoreConfig.Modules.EdgeHub.WebSocket.Server = ku.CloudCoreIP
 
 	if ku.EdgeNodeName != "" {
@@ -102,10 +102,10 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 	}
 	if ku.CGroupDriver != "" {
 		switch ku.CGroupDriver {
-		case v1alpha1.CGroupDriverSystemd:
-			edgeCoreConfig.Modules.Edged.CgroupDriver = v1alpha1.CGroupDriverSystemd
-		case v1alpha1.CGroupDriverCGroupFS:
-			edgeCoreConfig.Modules.Edged.CgroupDriver = v1alpha1.CGroupDriverCGroupFS
+		case v1alpha2.CGroupDriverSystemd:
+			edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.CgroupDriver = v1alpha2.CGroupDriverSystemd
+		case v1alpha2.CGroupDriverCGroupFS:
+			edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.CgroupDriver = v1alpha2.CGroupDriverCGroupFS
 		default:
 			return fmt.Errorf("unsupported CGroupDriver: %s", ku.CGroupDriver)
 		}

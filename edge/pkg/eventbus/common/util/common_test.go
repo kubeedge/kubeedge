@@ -30,14 +30,14 @@ import (
 	"k8s.io/klog/v2"
 
 	eventconfig "github.com/kubeedge/kubeedge/edge/pkg/eventbus/config"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 )
 
 var clientOptions = MQTT.NewClientOptions()
 
 func init() {
 	nodeName := "testEdge"
-	cfg := v1alpha1.NewDefaultEdgeCoreConfig()
+	cfg := v1alpha2.NewDefaultEdgeCoreConfig()
 	eventconfig.InitConfigure(cfg.Modules.EventBus, nodeName)
 }
 

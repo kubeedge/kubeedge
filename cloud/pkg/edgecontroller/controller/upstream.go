@@ -32,6 +32,7 @@ import (
 	stderrors "errors"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	authenticationv1 "k8s.io/api/authentication/v1"
@@ -1099,7 +1100,7 @@ func (uc *UpstreamController) deletePod() {
 			}
 
 			err = uc.kubeClient.CoreV1().Pods(namespace).Delete(context.Background(), name, deleteOptions)
-			if err != nil && !errors.IsNotFound(err) {
+			if err != nil && !errors.IsNotFound(err) && !strings.Contains(err.Error(), "The object might have been deleted and then recreated") {
 				klog.Warningf("Failed to delete pod, namespace: %s, name: %s, err: %v", namespace, name, err)
 				continue
 			}

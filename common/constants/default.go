@@ -51,7 +51,6 @@ const (
 	DefaultPodSandboxImage             = "kubeedge/pause:3.1"
 	DefaultNodeStatusUpdateFrequency   = 10 * time.Second
 	DefaultImagePullProgressDeadline   = time.Minute
-	DefaultRuntimeRequestTimeout       = 2 * time.Second
 	DefaultImageGCHighThreshold        = 80
 	DefaultImageGCLowThreshold         = 40
 	DefaultMaximumDeadContainersPerPod = 1

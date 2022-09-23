@@ -1,5 +1,5 @@
 /*
-Copyright 2020 The KubeEdge Authors.
+Copyright 2022 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,25 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package config
+package v1alpha2
 
-import (
-	"sync"
-
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
+const (
+	GroupName  = "edgecore.config.kubeedge.io"
+	APIVersion = "v1alpha2"
+	Kind       = "EdgeCore"
 )
-
-var Config Configure
-var once sync.Once
-
-type Configure struct {
-	v1alpha2.EdgeStream
-}
-
-func InitConfigure(stream *v1alpha2.EdgeStream) {
-	once.Do(func() {
-		Config = Configure{
-			EdgeStream: *stream,
-		}
-	})
-}

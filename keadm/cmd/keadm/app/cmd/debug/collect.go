@@ -11,7 +11,7 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 )
 
 var (
@@ -217,7 +217,7 @@ func collectSystemData(tmpPath string) error {
 }
 
 // collect edgecore data
-func collectEdgecoreData(tmpPath string, config *v1alpha1.EdgeCoreConfig, ops *common.CollectOptions) error {
+func collectEdgecoreData(tmpPath string, config *v1alpha2.EdgeCoreConfig, ops *common.CollectOptions) error {
 	printDetail(fmt.Sprintf("create tmp file: %s", tmpPath))
 	err := os.Mkdir(tmpPath, os.ModePerm)
 	if err != nil {
@@ -229,7 +229,7 @@ func collectEdgecoreData(tmpPath string, config *v1alpha1.EdgeCoreConfig, ops *c
 			return err
 		}
 	} else {
-		if err = CopyFile(v1alpha1.DataBaseDataSource, tmpPath); err != nil {
+		if err = CopyFile(v1alpha2.DataBaseDataSource, tmpPath); err != nil {
 			return err
 		}
 	}

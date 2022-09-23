@@ -26,7 +26,7 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/certutil"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/http"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 )
 
 // jitteryDuration uses some jitter to set the rotation threshold so each node
@@ -60,7 +60,7 @@ type CertManager struct {
 }
 
 // NewCertManager creates a CertManager for edge certificate management according to EdgeHub config
-func NewCertManager(edgehub v1alpha1.EdgeHub, nodename string) CertManager {
+func NewCertManager(edgehub v1alpha2.EdgeHub, nodename string) CertManager {
 	certReq := &x509.CertificateRequest{
 		Subject: pkix.Name{
 			Country:      []string{"CN"},
