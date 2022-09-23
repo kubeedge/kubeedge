@@ -37,6 +37,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	edgemodule "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
+	kefeatures "github.com/kubeedge/kubeedge/pkg/features"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
 )
 
@@ -86,7 +87,7 @@ type PatchInfo struct {
 	Subresources []string
 }
 
-// record the resources that are in applying for requesting to be transferred down from the cloud, please:
+// Application record the resources that are in applying for requesting to be transferred down from the cloud, please:
 // 0.use Agent.Generate to generate application
 // 1.use Agent.Apply to apply application( generate msg and send it to cloud dynamiccontroller)
 type Application struct {
@@ -177,7 +178,7 @@ func (a *Application) ToListener(option metav1.ListOptions) *SelectorListener {
 	return l
 }
 
-// remember i must be a pointer to the initialized variable
+// OptionTo convert application option. Remember `i` must be a pointer to the initialized variable
 func (a *Application) OptionTo(i interface{}) error {
 	err := json.Unmarshal(a.Option, i)
 	if err != nil {
@@ -202,7 +203,6 @@ func (a *Application) RespBodyTo(i interface{}) error {
 	return nil
 }
 
-//
 func (a *Application) GVR() schema.GroupVersionResource {
 	gvr, _, _ := metaserver.ParseKey(a.Key)
 	return gvr
@@ -275,13 +275,13 @@ func (a *Application) LastCloseTime() time.Time {
 	return time.Time{}
 }
 
-// used for generating application and do apply
+// Agent used for generating application and do apply
 type Agent struct {
 	Applications sync.Map //store struct application
 	nodeName     string
 }
 
-// edged config.Config.HostnameOverride
+// NewApplicationAgent create edge agent for list/watch
 func NewApplicationAgent() *Agent {
 	defaultAgent := &Agent{nodeName: metaserverconfig.Config.NodeName}
 
@@ -472,6 +472,9 @@ func (c *Center) createAuthClient(app *Application) (authorizationv1client.Autho
 }
 
 func (c *Center) createKubeClient(app *Application) (dynamic.Interface, error) {
+	if !kefeatures.DefaultFeatureGate.Enabled(kefeatures.RequireAuthorization) {
+		return client.GetDynamicClient(), nil
+	}
 	authConfig, err := c.generateNewConfig(app.Token)
 	if err != nil {
 		return nil, err
@@ -480,6 +483,9 @@ func (c *Center) createKubeClient(app *Application) (dynamic.Interface, error) {
 }
 
 func (c *Center) authorizeApplication(app *Application, gvr schema.GroupVersionResource, namespace string, name string) error {
+	if !kefeatures.DefaultFeatureGate.Enabled(kefeatures.RequireAuthorization) {
+		return nil
+	}
 	tmpAuthClient, err := c.createAuthClient(app)
 	if err != nil {
 		return err
@@ -529,7 +535,14 @@ func (c *Center) ProcessApplication(app *Application) (interface{}, error) {
 			klog.Errorf("create kube client error: %v", err)
 			return nil, err
 		}
+	} else {
+		err := c.authorizeApplication(app, gvr, ns, name)
+		if err != nil {
+			klog.Errorf("authorize application error: %v", err)
+			return nil, err
+		}
 	}
+
 	switch app.Verb {
 	case List:
 		var option = new(metav1.ListOptions)
@@ -542,11 +555,6 @@ func (c *Center) ProcessApplication(app *Application) (interface{}, error) {
 		}
 		return list, nil
 	case Watch:
-		err := c.authorizeApplication(app, gvr, ns, name)
-		if err != nil {
-			klog.Errorf("authorize application error: %v", err)
-			return nil, err
-		}
 		var option = new(metav1.ListOptions)
 		if err := app.OptionTo(option); err != nil {
 			return nil, err
