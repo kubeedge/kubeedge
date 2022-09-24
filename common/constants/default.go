@@ -42,15 +42,15 @@ const (
 	DefaultMqttKeyFile  = "/etc/kubeedge/certs/server.key"
 
 	// Edged
+	DefaultKubeletConfig               = "/etc/kubeedge/config/kubeconfig"
 	DefaultDockerAddress               = "unix:///var/run/docker.sock"
 	DefaultRuntimeType                 = "docker"
 	DefaultEdgedMemoryCapacity         = 7852396000
 	DefaultRemoteRuntimeEndpoint       = "unix:///var/run/dockershim.sock"
 	DefaultRemoteImageEndpoint         = "unix:///var/run/dockershim.sock"
 	DefaultPodSandboxImage             = "kubeedge/pause:3.1"
-	DefaultNodeStatusUpdateFrequency   = 10
-	DefaultImagePullProgressDeadline   = 60
-	DefaultRuntimeRequestTimeout       = 2
+	DefaultNodeStatusUpdateFrequency   = 10 * time.Second
+	DefaultImagePullProgressDeadline   = time.Minute
 	DefaultImageGCHighThreshold        = 80
 	DefaultImageGCLowThreshold         = 40
 	DefaultMaximumDeadContainersPerPod = 1
@@ -156,7 +156,8 @@ const (
 
 	// ServerPort is the default port for the edgecore server on each host machine.
 	// May be overridden by a flag at startup in the future.
-	ServerPort = 10350
+	ServerAddress = "127.0.0.1"
+	ServerPort    = 10350
 
 	// MessageSuccessfulContent is the successful content value of Message struct
 	MessageSuccessfulContent string = "OK"

@@ -56,7 +56,6 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/util"
 	"github.com/kubeedge/kubeedge/pkg/util/flag"
 	"github.com/kubeedge/kubeedge/pkg/version"
-	"github.com/kubeedge/kubeedge/pkg/version/verflag"
 )
 
 func NewCloudCoreCommand() *cobra.Command {
@@ -69,7 +68,6 @@ caching and sending messages to EdgeHub. EdgeController is an extended kubernete
 edge nodes and pods metadata so that the data can be targeted to a specific edge node. DeviceController is an extended
 kubernetes controller which manages devices so that the device metadata/status date can be synced between edge and cloud.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			verflag.PrintAndExitIfRequested()
 			flag.PrintMinConfigAndExitIfRequested(v1alpha1.NewMinCloudCoreConfig())
 			flag.PrintDefaultConfigAndExitIfRequested(v1alpha1.NewDefaultCloudCoreConfig())
 			flag.PrintFlags(cmd.Flags())
@@ -124,7 +122,6 @@ kubernetes controller which manages devices so that the device metadata/status d
 	}
 	fs := cmd.Flags()
 	namedFs := opts.Flags()
-	verflag.AddFlags(namedFs.FlagSet("global"))
 	flag.AddFlags(namedFs.FlagSet("global"))
 	globalflag.AddGlobalFlags(namedFs.FlagSet("global"), cmd.Name())
 	for _, f := range namedFs.FlagSets {

@@ -14,7 +14,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 )
 
 const (
@@ -24,7 +24,7 @@ const (
 )
 
 // TODO move this files into /edge/pkg/dbtest @kadisi
-func Register(t *v1alpha1.DBTest) {
+func Register(t *v1alpha2.DBTest) {
 	core.Register(&testManager{enable: t.Enable})
 }
 

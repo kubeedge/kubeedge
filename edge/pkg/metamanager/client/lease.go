@@ -19,6 +19,7 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 
 	coordinationv1 "k8s.io/api/coordination/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -55,7 +56,7 @@ func newLeases(namespace string, s SendInterface) *leases {
 // LeaseResp represents lease response from the api-server
 type LeaseResp struct {
 	Object *coordinationv1.Lease
-	Err    *apierrors.StatusError
+	Err    apierrors.StatusError
 }
 
 func (c *leases) Create(lease *coordinationv1.Lease) (*coordinationv1.Lease, error) {
@@ -110,5 +111,8 @@ func handleLeaseResp(content []byte) (*coordinationv1.Lease, error) {
 		return nil, fmt.Errorf("unmarshal message to lease failed, err: %v", err)
 	}
 
-	return leaseResp.Object, leaseResp.Err
+	if reflect.DeepEqual(leaseResp.Err, apierrors.StatusError{}) {
+		return leaseResp.Object, nil
+	}
+	return leaseResp.Object, &leaseResp.Err
 }

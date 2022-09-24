@@ -11,7 +11,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 )
 
 var (
@@ -138,13 +138,13 @@ func DiagnoseNode(ops *common.DiagnoseOptions) error {
 		return fmt.Errorf("parse Edgecore config failed")
 	}
 
-	err = CheckRuntime(edgeconfig.Modules.Edged.RuntimeType)
+	err = CheckRuntime(edgeconfig.Modules.Edged.ContainerRuntime)
 	if err != nil {
 		return err
 	}
 
 	// check datebase
-	dataSource := v1alpha1.DataBaseDataSource
+	dataSource := v1alpha2.DataBaseDataSource
 	if edgeconfig.DataBase.DataSource != "" {
 		dataSource = edgeconfig.DataBase.DataSource
 	}
@@ -173,13 +173,13 @@ func DiagnoseNode(ops *common.DiagnoseOptions) error {
 func DiagnosePod(ops *common.DiagnoseOptions, podName string) error {
 	ready := false
 	if ops.DBPath == "" {
-		ops.DBPath = v1alpha1.DataBaseDataSource
+		ops.DBPath = v1alpha2.DataBaseDataSource
 	}
-	err := InitDB(v1alpha1.DataBaseDriverName, v1alpha1.DataBaseAliasName, ops.DBPath)
+	err := InitDB(v1alpha2.DataBaseDriverName, v1alpha2.DataBaseAliasName, ops.DBPath)
 	if err != nil {
 		return fmt.Errorf("failed to initialize database: %v ", err)
 	}
-	fmt.Printf("Database %s is exist \n", v1alpha1.DataBaseDataSource)
+	fmt.Printf("Database %s is exist \n", v1alpha2.DataBaseDataSource)
 	podStatus, err := QueryPodFromDatabase(ops.Namespace, podName)
 	if err != nil {
 		return err

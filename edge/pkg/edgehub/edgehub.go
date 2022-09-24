@@ -16,7 +16,7 @@ import (
 
 	// register Upgrade handler
 	_ "github.com/kubeedge/kubeedge/edge/pkg/edgehub/upgrade"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 )
 
 //EdgeHub defines edgehub object structure
@@ -56,7 +56,7 @@ func newEdgeHub(enable bool) *EdgeHub {
 }
 
 // Register register edgehub
-func Register(eh *v1alpha1.EdgeHub, nodeName string) {
+func Register(eh *v1alpha2.EdgeHub, nodeName string) {
 	config.InitConfigure(eh, nodeName)
 	core.Register(newEdgeHub(eh.Enable))
 }

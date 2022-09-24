@@ -4,7 +4,7 @@ import (
 	"sync"
 
 	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 )
 
 var Config Configure
@@ -15,10 +15,10 @@ var once sync.Once
 var Connected = false
 
 type Configure struct {
-	v1alpha1.MetaManager
+	v1alpha2.MetaManager
 }
 
-func InitConfigure(m *v1alpha1.MetaManager) {
+func InitConfigure(m *v1alpha2.MetaManager) {
 	once.Do(func() {
 		Config = Configure{
 			MetaManager: *m,

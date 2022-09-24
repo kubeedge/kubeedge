@@ -35,7 +35,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edged"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/pkg/version/verflag"
 )
 
@@ -87,9 +87,7 @@ func newHollowEdgeNodeCommand() *cobra.Command {
 func run(config *hollowEdgeNodeConfig) {
 	c := EdgeCoreConfig(config)
 
-	// use fake runtime service
-	edged.DefaultGetRuntimeService = GetFakeRuntimeAndImageServices
-
+	// TODO: fake runtime service
 	edged.Register(c.Modules.Edged)
 	edgehub.Register(c.Modules.EdgeHub, c.Modules.Edged.HostnameOverride)
 	metamanager.Register(c.Modules.MetaManager)
@@ -109,8 +107,8 @@ func (c *hollowEdgeNodeConfig) addFlags(fs *pflag.FlagSet) {
 	fs.Var(&bindableNodeLabels, "node-labels", "Additional node labels")
 }
 
-func EdgeCoreConfig(config *hollowEdgeNodeConfig) *v1alpha1.EdgeCoreConfig {
-	edgeCoreConfig := v1alpha1.NewDefaultEdgeCoreConfig()
+func EdgeCoreConfig(config *hollowEdgeNodeConfig) *v1alpha2.EdgeCoreConfig {
+	edgeCoreConfig := v1alpha2.NewDefaultEdgeCoreConfig()
 
 	// overWrite config
 	edgeCoreConfig.DataBase.DataSource = "/edgecore.db"
@@ -119,13 +117,12 @@ func EdgeCoreConfig(config *hollowEdgeNodeConfig) *v1alpha1.EdgeCoreConfig {
 	edgeCoreConfig.Modules.EdgeHub.WebSocket.Server = config.WebsocketServer
 
 	// use fake runtime for test
-	edgeCoreConfig.Modules.Edged.RuntimeType = "fake"
+	edgeCoreConfig.Modules.Edged.ContainerRuntime = "fake"
 	edgeCoreConfig.Modules.Edged.RemoteRuntimeEndpoint = "/run/fake/fake.sock"
 	edgeCoreConfig.Modules.Edged.RemoteImageEndpoint = "/run/fake/fake.sock"
-	edgeCoreConfig.Modules.Edged.EnableMetrics = false
 
 	edgeCoreConfig.Modules.Edged.HostnameOverride = config.NodeName
-	edgeCoreConfig.Modules.Edged.Labels = config.NodeLabels
+	edgeCoreConfig.Modules.Edged.NodeLabels = config.NodeLabels
 
 	return edgeCoreConfig
 }

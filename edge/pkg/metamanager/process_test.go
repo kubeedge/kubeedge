@@ -35,7 +35,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	metaManagerConfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 )
 
 const (
@@ -56,7 +56,7 @@ const (
 var errFailedDBOperation = errors.New(FailedDBOperation)
 
 func init() {
-	cfg := v1alpha1.NewDefaultEdgeCoreConfig()
+	cfg := v1alpha2.NewDefaultEdgeCoreConfig()
 	metaManagerConfig.InitConfigure(cfg.Modules.MetaManager)
 
 	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
@@ -432,9 +432,9 @@ func TestProcessDelete(t *testing.T) {
 	})
 
 	// Success Case
-	querySetterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySetterMock).Times(2)
-	querySetterMock.EXPECT().Delete().Return(int64(1), nil).Times(2)
-	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySetterMock).Times(2)
+	querySetterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySetterMock).Times(3)
+	querySetterMock.EXPECT().Delete().Return(int64(1), nil).Times(3)
+	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySetterMock).Times(3)
 	resource := fmt.Sprintf("test/%s/nginx", model.ResourceTypePod)
 	msg = model.NewMessage("").BuildRouter(ModuleNameEdged, modules.MetaGroup, resource, model.DeleteOperation)
 	meta.processDelete(*msg)

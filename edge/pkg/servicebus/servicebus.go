@@ -22,7 +22,7 @@ import (
 	servicebusConfig "github.com/kubeedge/kubeedge/edge/pkg/servicebus/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/servicebus/dao"
 	"github.com/kubeedge/kubeedge/edge/pkg/servicebus/util"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 )
 
 var (
@@ -69,7 +69,7 @@ func newServicebus(enable bool, server string, port, timeout int) *servicebus {
 }
 
 // Register register servicebus
-func Register(s *v1alpha1.ServiceBus) {
+func Register(s *v1alpha2.ServiceBus) {
 	servicebusConfig.InitConfigure(s)
 	core.Register(newServicebus(s.Enable, s.Server, s.Port, s.Timeout))
 	orm.RegisterModel(new(dao.TargetUrls))

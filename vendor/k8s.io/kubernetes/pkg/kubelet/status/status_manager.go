@@ -395,8 +395,6 @@ func (m *manager) updateStatusInternal(pod *v1.Pod, status v1.PodStatus, forceUp
 	cachedStatus, isCached := m.podStatuses[pod.UID]
 	if isCached {
 		oldStatus = cachedStatus.status
-	} else if mirrorPod, ok := m.podManager.GetMirrorPodByPod(pod); ok {
-		oldStatus = mirrorPod.Status
 	} else {
 		oldStatus = pod.Status
 	}
@@ -536,7 +534,6 @@ func (m *manager) RemoveOrphanedStatuses(podUIDs map[types.UID]bool) {
 // syncBatch syncs pods statuses with the apiserver.
 func (m *manager) syncBatch() {
 	var updatedStatuses []podStatusSyncRequest
-	podToMirror, mirrorToPod := m.podManager.GetUIDTranslations()
 	func() { // Critical section
 		m.podStatusesLock.RLock()
 		defer m.podStatusesLock.RUnlock()
@@ -544,23 +541,13 @@ func (m *manager) syncBatch() {
 		// Clean up orphaned versions.
 		for uid := range m.apiStatusVersions {
 			_, hasPod := m.podStatuses[types.UID(uid)]
-			_, hasMirror := mirrorToPod[uid]
-			if !hasPod && !hasMirror {
+			if !hasPod {
 				delete(m.apiStatusVersions, uid)
 			}
 		}
 
 		for uid, status := range m.podStatuses {
 			syncedUID := kubetypes.MirrorPodUID(uid)
-			if mirrorUID, ok := podToMirror[kubetypes.ResolvedPodUID(uid)]; ok {
-				if mirrorUID == "" {
-					klog.V(5).InfoS("Static pod does not have a corresponding mirror pod; skipping",
-						"podUID", uid,
-						"pod", klog.KRef(status.podNamespace, status.podName))
-					continue
-				}
-				syncedUID = mirrorUID
-			}
 			if m.needsUpdate(types.UID(syncedUID), status) {
 				updatedStatuses = append(updatedStatuses, podStatusSyncRequest{uid, status})
 			} else if m.needsReconcile(uid, status.status) {
@@ -666,7 +653,7 @@ func (m *manager) needsUpdate(uid types.UID, status versionedPodStatus) bool {
 }
 
 func (m *manager) canBeDeleted(pod *v1.Pod, status v1.PodStatus) bool {
-	if pod.DeletionTimestamp == nil || kubetypes.IsMirrorPod(pod) {
+	if pod.DeletionTimestamp == nil {
 		return false
 	}
 	return m.podDeletionSafety.PodResourcesAreReclaimed(pod, status)
@@ -687,15 +674,6 @@ func (m *manager) needsReconcile(uid types.UID, status v1.PodStatus) bool {
 	if !ok {
 		klog.V(4).InfoS("Pod has been deleted, no need to reconcile", "podUID", string(uid))
 		return false
-	}
-	// If the pod is a static pod, we should check its mirror pod, because only status in mirror pod is meaningful to us.
-	if kubetypes.IsStaticPod(pod) {
-		mirrorPod, ok := m.podManager.GetMirrorPodByPod(pod)
-		if !ok {
-			klog.V(4).InfoS("Static pod has no corresponding mirror pod, no need to reconcile", "pod", klog.KObj(pod))
-			return false
-		}
-		pod = mirrorPod
 	}
 
 	podStatus := pod.Status.DeepCopy()

@@ -4,19 +4,19 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 )
 
 var Config Configure
 var once sync.Once
 
 type Configure struct {
-	v1alpha1.EdgeHub
+	v1alpha2.EdgeHub
 	WebSocketURL string
 	NodeName     string
 }
 
-func InitConfigure(eh *v1alpha1.EdgeHub, nodeName string) {
+func InitConfigure(eh *v1alpha2.EdgeHub, nodeName string) {
 	once.Do(func() {
 		Config = Configure{
 			EdgeHub:      *eh,

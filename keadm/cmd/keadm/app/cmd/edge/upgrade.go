@@ -37,7 +37,7 @@ import (
 	commontypes "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 	upgradev1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1"
 )
 
@@ -82,7 +82,7 @@ func (up *UpgradeOptions) upgrade() error {
 		return fmt.Errorf("failed to read config file %s: %v", up.Config, err)
 	}
 
-	configure := &v1alpha1.EdgeCoreConfig{}
+	configure := &v1alpha2.EdgeCoreConfig{}
 	err = yaml.Unmarshal(data, configure)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal config file %s: %v", up.Config, err)
@@ -179,7 +179,7 @@ func (up *Upgrade) PreProcess() error {
 	// download the request version edgecore
 	klog.Infof("Begin to download version %s edgecore", up.ToVersion)
 	upgradePath := filepath.Join(util.KubeEdgeUpgradePath, up.ToVersion)
-	container, err := util.NewContainerRuntime(up.EdgeCoreConfig.Modules.Edged.RuntimeType, up.EdgeCoreConfig.Modules.Edged.RemoteRuntimeEndpoint)
+	container, err := util.NewContainerRuntime(up.EdgeCoreConfig.Modules.Edged.ContainerRuntime, up.EdgeCoreConfig.Modules.Edged.RemoteRuntimeEndpoint)
 	if err != nil {
 		return fmt.Errorf("failed to new container runtime: %v", err)
 	}
@@ -380,7 +380,7 @@ type Upgrade struct {
 	ToVersion      string
 	Image          string
 	ConfigFilePath string
-	EdgeCoreConfig *v1alpha1.EdgeCoreConfig
+	EdgeCoreConfig *v1alpha2.EdgeCoreConfig
 
 	Status string
 	Reason string

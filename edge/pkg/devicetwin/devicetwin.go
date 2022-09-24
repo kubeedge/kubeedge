@@ -9,7 +9,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtmodule"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 )
 
 //DeviceTwin the module
@@ -31,7 +31,7 @@ func newDeviceTwin(enable bool) *DeviceTwin {
 }
 
 // Register register devicetwin
-func Register(deviceTwin *v1alpha1.DeviceTwin, nodeName string) {
+func Register(deviceTwin *v1alpha2.DeviceTwin, nodeName string) {
 	deviceconfig.InitConfigure(deviceTwin, nodeName)
 	dt := newDeviceTwin(deviceTwin.Enable)
 	dtclient.InitDBTable(dt)

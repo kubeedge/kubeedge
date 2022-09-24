@@ -245,6 +245,8 @@ func (m *metaManager) processResponse(message model.Message) {
 
 func (m *metaManager) processDelete(message model.Message) {
 	imitator.DefaultV2Client.Inject(message)
+	_, resType, _ := parseResource(message.GetResource())
+
 	err := dao.DeleteMetaByKey(message.GetResource())
 	if err != nil {
 		klog.Errorf("delete meta failed, %s", msgDebugInfo(&message))
@@ -252,14 +254,21 @@ func (m *metaManager) processDelete(message model.Message) {
 		return
 	}
 
-	_, resType, _ := parseResource(message.GetResource())
-
 	if resType == model.ResourceTypePod {
 		podStatusKey := strings.Replace(message.GetResource(),
 			constants.ResourceSep+model.ResourceTypePod+constants.ResourceSep,
 			constants.ResourceSep+model.ResourceTypePodStatus+constants.ResourceSep, 1)
+		err = dao.DeleteMetaByKey(podStatusKey)
+		if err != nil {
+			klog.Errorf("delete meta failed, %s", msgDebugInfo(&message))
+			feedbackError(err, "Error to delete meta to DB", message)
+			return
+		}
 
-		err := dao.DeleteMetaByKey(podStatusKey)
+		podPatchKey := strings.Replace(message.GetResource(),
+			constants.ResourceSep+model.ResourceTypePod+constants.ResourceSep,
+			constants.ResourceSep+model.ResourceTypePodPatch+constants.ResourceSep, 1)
+		err := dao.DeleteMetaByKey(podPatchKey)
 		if err != nil {
 			klog.Errorf("delete meta failed, %s", msgDebugInfo(&message))
 			feedbackError(err, "Error to delete meta to DB", message)
