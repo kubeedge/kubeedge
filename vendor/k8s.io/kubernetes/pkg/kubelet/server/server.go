@@ -37,7 +37,6 @@ import (
 	cadvisorapi "github.com/google/cadvisor/info/v1"
 	cadvisorv2 "github.com/google/cadvisor/info/v2"
 	"github.com/google/cadvisor/metrics"
-	"google.golang.org/grpc"
 	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/kubelet/metrics/collectors"
 	"k8s.io/utils/clock"
@@ -61,14 +60,11 @@ import (
 	"k8s.io/component-base/logs"
 	compbasemetrics "k8s.io/component-base/metrics"
 	"k8s.io/component-base/metrics/legacyregistry"
-	podresourcesapi "k8s.io/kubelet/pkg/apis/podresources/v1"
-	podresourcesapiv1alpha1 "k8s.io/kubelet/pkg/apis/podresources/v1alpha1"
 	"k8s.io/kubernetes/pkg/api/legacyscheme"
 	api "k8s.io/kubernetes/pkg/apis/core"
 	"k8s.io/kubernetes/pkg/apis/core/v1/validation"
 	"k8s.io/kubernetes/pkg/features"
 	kubeletconfiginternal "k8s.io/kubernetes/pkg/kubelet/apis/config"
-	"k8s.io/kubernetes/pkg/kubelet/apis/podresources"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	"k8s.io/kubernetes/pkg/kubelet/cri/streaming"
 	"k8s.io/kubernetes/pkg/kubelet/cri/streaming/portforward"
@@ -77,7 +73,6 @@ import (
 	servermetrics "k8s.io/kubernetes/pkg/kubelet/server/metrics"
 	"k8s.io/kubernetes/pkg/kubelet/server/stats"
 	kubelettypes "k8s.io/kubernetes/pkg/kubelet/types"
-	"k8s.io/kubernetes/pkg/kubelet/util"
 )
 
 const (
@@ -187,23 +182,6 @@ func ListenAndServeKubeletReadOnlyServer(host HostInterface, resourceAnalyzer st
 
 	if err := server.ListenAndServe(); err != nil {
 		klog.ErrorS(err, "Failed to listen and serve")
-		os.Exit(1)
-	}
-}
-
-// ListenAndServePodResources initializes a gRPC server to serve the PodResources service
-func ListenAndServePodResources(socket string, podsProvider podresources.PodsProvider, devicesProvider podresources.DevicesProvider, cpusProvider podresources.CPUsProvider, memoryProvider podresources.MemoryProvider) {
-	server := grpc.NewServer()
-	podresourcesapiv1alpha1.RegisterPodResourcesListerServer(server, podresources.NewV1alpha1PodResourcesServer(podsProvider, devicesProvider))
-	podresourcesapi.RegisterPodResourcesListerServer(server, podresources.NewV1PodResourcesServer(podsProvider, devicesProvider, cpusProvider, memoryProvider))
-	l, err := util.CreateListener(socket)
-	if err != nil {
-		klog.ErrorS(err, "Failed to create listener for podResources endpoint")
-		os.Exit(1)
-	}
-
-	if err := server.Serve(l); err != nil {
-		klog.ErrorS(err, "Failed to serve")
 		os.Exit(1)
 	}
 }

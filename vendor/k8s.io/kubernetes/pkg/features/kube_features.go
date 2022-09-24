@@ -828,7 +828,7 @@ var defaultKubernetesFeatureGates = map[featuregate.Feature]featuregate.FeatureS
 	SupportNodePidsLimit:                           {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // remove in 1.23
 	BoundServiceAccountTokenVolume:                 {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // remove in 1.23
 	ServiceAccountIssuerDiscovery:                  {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // remove in 1.22
-	CSIMigration:                                   {Default: true, PreRelease: featuregate.Beta},
+	CSIMigration:                                   {Default: false, PreRelease: featuregate.Beta},
 	CSIMigrationGCE:                                {Default: false, PreRelease: featuregate.Beta}, // Off by default (requires GCE PD CSI Driver)
 	InTreePluginGCEUnregister:                      {Default: false, PreRelease: featuregate.Alpha},
 	CSIMigrationAWS:                                {Default: false, PreRelease: featuregate.Beta}, // Off by default (requires AWS EBS CSI driver)
