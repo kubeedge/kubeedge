@@ -1,4 +1,8 @@
 
+* [v1.11.2](#v1112)
+    * [Downloads for v1.11.2](#downloads-for-v1112)
+    * [KubeEdge v1.11.2 Release Notes](#kubeedge-v1112-release-notes)
+        * [Changelog since v1.11.1](#changelog-since-v1111)
 * [v1.11.1](#v1111)
     * [Downloads for v1.11.1](#downloads-for-v1111)
     * [KubeEdge v1.11.1 Release Notes](#kubeedge-v1111-release-notes)
@@ -10,6 +14,24 @@
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
         * [Other Notable Changes](#other-notable-changes)
         * [Bug Fixes](#bug-fixes)
+
+
+# v1.11.2
+
+## Downloads for v1.11.2
+
+Download v1.11.2 in the [v1.11.2 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.11.2).
+
+## KubeEdge v1.11.2 Release Notes
+
+### Changelog since v1.11.1
+
+- Fix pod running on edge node has invalid serviceaccount token. ([#4204](https://github.com/kubeedge/kubeedge/pull/4204), [@vincentgoat](https://github.com/vincentgoat))
+- Fix: Ignore the cache timestamp of the MachineInfo Metrics. ([#4178](https://github.com/kubeedge/kubeedge/pull/4222), [@tonyzaizai](https://github.com/tonyzaizai))
+- Fix residual terminating pods problem after edge node. ([#4194](https://github.com/kubeedge/kubeedge/pull/4194), [@vincentgoat](https://github.com/vincentgoat))
+- Fix failed to rotate log for container for docker runtime. ([#4217](https://github.com/kubeedge/kubeedge/pull/4217), [@wackxu](https://github.com/wackxu))
+- 1.fix delete pod terminating sometimes. 2.fix update pod status timeout. 3.fix pod condition remain ready false when node status changes from offline to online. ([#4215](https://github.com/kubeedge/kubeedge/pull/4215), [@wackxu](https://github.com/wackxu))
+- Fix delete and create same name pod failed occasionally. ([#4214](https://github.com/kubeedge/kubeedge/pull/4214), [@wackxu](https://github.com/wackxu))
 
 
 # v1.11.1

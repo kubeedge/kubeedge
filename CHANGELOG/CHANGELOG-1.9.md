@@ -1,4 +1,8 @@
 
+* [v1.9.5](#v195)
+    * [Downloads for v1.9.5](#downloads-for-v195)
+    * [KubeEdge v1.9.5 Release Notes](#kubeedge-v195-release-notes)
+        * [Changelog since v1.9.4](#changelog-since-v194)
 * [v1.9.4](#v194)
     * [Downloads for v1.9.4](#downloads-for-v194)
     * [KubeEdge v1.9.4 Release Notes](#kubeedge-v194-release-notes)
@@ -22,6 +26,19 @@
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
         * [Other Notable Changes](#other-notable-changes)
         * [Bug Fixes](#bug-fixes)
+
+# v1.9.5
+
+## Downloads for v1.9.5
+
+Download v1.9.5 in the [v1.9.5 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.9.5).
+
+## KubeEdge v1.9.5 Release Notes
+
+### Changelog since v1.9.4
+
+- Fix pod running on edge node has invalid serviceaccount token. ([#4206](https://github.com/kubeedge/kubeedge/pull/4206), [@vincentgoat](https://github.com/vincentgoat))
+- Fix: Ignore the cache timestamp of the MachineInfo Metrics. ([#4222](https://github.com/kubeedge/kubeedge/pull/4222), [@tonyzaizai](https://github.com/tonyzaizai))
 
 
 # v1.9.4
