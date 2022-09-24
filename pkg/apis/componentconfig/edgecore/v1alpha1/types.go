@@ -399,15 +399,11 @@ type MetaManager struct {
 }
 
 type MetaServer struct {
-	Enable bool `json:"enable"`
-	// AutonomyWithoutAuthorization is a switch to determine whether app can List/Watch
-	// meta data from local host db without authorization when the edge node is off-line.
-	// The default value is false, means won't be allowed.
-	AutonomyWithoutAuthorization bool   `json:"autonomyWithoutAuthorization"`
-	Server                       string `json:"server"`
-	TLSCaFile                    string `json:"tlsCaFile"`
-	TLSCertFile                  string `json:"tlsCertFile"`
-	TLSPrivateKeyFile            string `json:"tlsPrivateKeyFile"`
+	Enable            bool   `json:"enable"`
+	Server            string `json:"server"`
+	TLSCaFile         string `json:"tlsCaFile"`
+	TLSCertFile       string `json:"tlsCertFile"`
+	TLSPrivateKeyFile string `json:"tlsPrivateKeyFile"`
 }
 
 // ServiceBus indicates the ServiceBus module config

@@ -184,10 +184,6 @@ func BuildHandlerChain(handler http.Handler, ls *MetaServer) http.Handler {
 func CheckAuthorizationHeader(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		token := request.Header.Get(commontypes.AuthorizationKey)
-		if len(token) == 0 {
-			http.Error(writer, "header Authorization is missing", http.StatusNetworkAuthenticationRequired)
-			return
-		}
 		request = request.WithContext(context.WithValue(request.Context(), commontypes.AuthorizationKey, token))
 		handler.ServeHTTP(writer, request)
 	})

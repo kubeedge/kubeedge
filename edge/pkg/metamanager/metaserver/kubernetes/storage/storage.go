@@ -20,9 +20,9 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/application"
-	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
+	kefeatures "github.com/kubeedge/kubeedge/pkg/features"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
@@ -105,7 +105,7 @@ func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions)
 		return obj, nil
 	}()
 	// try local
-	if err != nil && metaserverconfig.Config.AutonomyWithoutAuthorization {
+	if err != nil && !kefeatures.DefaultFeatureGate.Enabled(kefeatures.RequireAuthorization) {
 		obj, err = r.Store.Get(ctx, "", options) // name is needless, we get all key information from ctx
 		if err != nil {
 			return nil, errors.NewNotFound(schema.GroupResource{Group: info.APIGroup, Resource: info.Resource}, info.Name)
@@ -141,7 +141,7 @@ func (r *REST) List(ctx context.Context, options *metainternalversion.ListOption
 
 	// try local if error occurs
 	if err != nil {
-		if !metaserverconfig.Config.AutonomyWithoutAuthorization {
+		if kefeatures.DefaultFeatureGate.Enabled(kefeatures.RequireAuthorization) {
 			return nil, err
 		}
 		list, err = r.Store.List(ctx, options)
