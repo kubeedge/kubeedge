@@ -86,9 +86,6 @@ func newInitOptions() *types.InitOptions {
 }
 
 func addInitOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
-	cmd.Flags().StringVar(&initOpts.KubeEdgeVersion, types.KubeEdgeVersion, initOpts.KubeEdgeVersion,
-		"Use this key to set the default image tag")
-
 	cmd.Flags().StringVar(&initOpts.AdvertiseAddress, types.AdvertiseAddress, initOpts.AdvertiseAddress,
 		"Use this key to set IPs in cloudcore's certificate SubAltNames field. eg: 10.10.102.78,10.10.102.79")
 
@@ -146,7 +143,6 @@ func AddInit2ToolsList(toolList map[string]types.ToolsInstaller, initOpts *types
 	toolList["helm"] = &helm.KubeCloudHelmInstTool{
 		Common:           common,
 		AdvertiseAddress: initOpts.AdvertiseAddress,
-		KubeEdgeVersion:  initOpts.KubeEdgeVersion,
 		Manifests:        initOpts.Manifests,
 		Namespace:        constants.SystemNamespace,
 		DryRun:           initOpts.DryRun,

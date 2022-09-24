@@ -33,7 +33,6 @@ type InitBaseOptions struct {
 //InitOptions has the kubeedge cloud init information filled by CLI
 type InitOptions struct {
 	KubeConfig       string
-	KubeEdgeVersion  string
 	AdvertiseAddress string
 	Manifests        string
 	Namespace        string
