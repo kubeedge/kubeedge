@@ -17,7 +17,7 @@ func DisableAllModules(i interface{}) {
 		config.Modules.CloudStream.Enable = false
 		config.Modules.SyncController.Enable = false
 	case *edgeconfig.EdgeCoreConfig:
-		config.Modules.Edged.Enable = false
+		config.Modules.Edged.EnableServer = false
 		config.Modules.DBTest.Enable = false
 		config.Modules.DeviceTwin.Enable = false
 		config.Modules.EdgeHub.Enable = false

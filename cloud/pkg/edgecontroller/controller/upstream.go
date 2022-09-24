@@ -1062,27 +1062,53 @@ func (uc *UpstreamController) deletePod() {
 
 			namespace, err := messagelayer.GetNamespace(msg)
 			if err != nil {
-				klog.Warningf("message: %s process failure, get namespace failed with error: %s", msg.GetID(), err)
+				klog.Warningf("message: %s process failure, get namespace failed with error: %v", msg.GetID(), err)
 				continue
 			}
 			name, err := messagelayer.GetResourceName(msg)
 			if err != nil {
-				klog.Warningf("message: %s process failure, get resource name failed with error: %s", msg.GetID(), err)
+				klog.Warningf("message: %s process failure, get resource name failed with error: %v", msg.GetID(), err)
 				continue
 			}
 
-			podUID, ok := msg.Content.(string)
+			deleteOptions := metaV1.DeleteOptions{}
+			deleteReq, ok := msg.Content.(string)
 			if !ok {
 				klog.Warningf("Failed to get podUID from msg, pod namesapce: %s, pod name: %s", namespace, name)
 				continue
 			}
 
-			deleteOptions := metaV1.NewDeleteOptions(0)
-			// Use the pod UID as the precondition for deletion to prevent deleting a newly created pod with the same name and namespace.
-			deleteOptions.Preconditions = metaV1.NewUIDPreconditions(podUID)
-			err = uc.kubeClient.CoreV1().Pods(namespace).Delete(context.Background(), name, *deleteOptions)
+			deleteByte, err := base64.URLEncoding.DecodeString(deleteReq)
 			if err != nil {
+				// in earlier version, deletion request content only contains pod UID.
+				klog.Warningf("message: %s process failure, decode content data failed with error: %v", msg.GetID(), err)
+				podUID, ok := msg.Content.(string)
+				if !ok {
+					continue
+				}
+				var period int64
+				deleteOptions.GracePeriodSeconds = &period
+				// Use the pod UID as the precondition for deletion to prevent deleting a newly created pod with the same name and namespace.
+				deleteOptions.Preconditions = metaV1.NewUIDPreconditions(podUID)
+			} else {
+				err = json.Unmarshal(deleteByte, &deleteOptions)
+				if err != nil {
+					klog.Warningf("Failed to unmarshal deletion options from msg, pod namesapce: %s, pod name: %s, err: %v", namespace, name, err)
+					continue
+				}
+			}
+
+			err = uc.kubeClient.CoreV1().Pods(namespace).Delete(context.Background(), name, deleteOptions)
+			if err != nil && !errors.IsNotFound(err) {
 				klog.Warningf("Failed to delete pod, namespace: %s, name: %s, err: %v", namespace, name, err)
+				continue
+			}
+
+			resMsg := model.NewMessage(msg.GetID()).
+				FillBody(common.MessageSuccessfulContent).
+				BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, msg.GetResource(), model.ResponseOperation)
+			if err = uc.messageLayer.Response(*resMsg); err != nil {
+				klog.Errorf("Message: %s process failure, response failed with error: %v", msg.GetID(), err)
 				continue
 			}
 			klog.V(4).Infof("Successfully terminate and remove pod from etcd, namespace: %s, name: %s", namespace, name)

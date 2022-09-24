@@ -239,18 +239,18 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 		edgeCoreConfig.Modules.Edged.HostnameOverride = opt.EdgeNodeName
 	}
 	if opt.RuntimeType != "" {
-		edgeCoreConfig.Modules.Edged.RuntimeType = opt.RuntimeType
+		edgeCoreConfig.Modules.Edged.ContainerRuntime = opt.RuntimeType
 	}
 
 	switch opt.CGroupDriver {
 	case v1alpha1.CGroupDriverSystemd:
-		edgeCoreConfig.Modules.Edged.CGroupDriver = v1alpha1.CGroupDriverSystemd
+		edgeCoreConfig.Modules.Edged.CgroupDriver = v1alpha1.CGroupDriverSystemd
 	case v1alpha1.CGroupDriverCGroupFS:
-		edgeCoreConfig.Modules.Edged.CGroupDriver = v1alpha1.CGroupDriverCGroupFS
+		edgeCoreConfig.Modules.Edged.CgroupDriver = v1alpha1.CGroupDriverCGroupFS
 	default:
 		return fmt.Errorf("unsupported CGroupDriver: %s", opt.CGroupDriver)
 	}
-	edgeCoreConfig.Modules.Edged.CGroupDriver = opt.CGroupDriver
+	edgeCoreConfig.Modules.Edged.CgroupDriver = opt.CGroupDriver
 
 	if opt.RemoteRuntimeEndpoint != "" {
 		edgeCoreConfig.Modules.Edged.RemoteRuntimeEndpoint = opt.RemoteRuntimeEndpoint
@@ -282,7 +282,7 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 				labelsMap[arr[0]] = ""
 			}
 		}
-		edgeCoreConfig.Modules.Edged.Labels = labelsMap
+		edgeCoreConfig.Modules.Edged.NodeLabels = labelsMap
 	}
 
 	if errs := validation.ValidateEdgeCoreConfiguration(edgeCoreConfig); len(errs) > 0 {

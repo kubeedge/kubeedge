@@ -98,14 +98,14 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 		edgeCoreConfig.Modules.Edged.HostnameOverride = ku.EdgeNodeName
 	}
 	if ku.RuntimeType != "" {
-		edgeCoreConfig.Modules.Edged.RuntimeType = ku.RuntimeType
+		edgeCoreConfig.Modules.Edged.ContainerRuntime = ku.RuntimeType
 	}
 	if ku.CGroupDriver != "" {
 		switch ku.CGroupDriver {
 		case v1alpha1.CGroupDriverSystemd:
-			edgeCoreConfig.Modules.Edged.CGroupDriver = v1alpha1.CGroupDriverSystemd
+			edgeCoreConfig.Modules.Edged.CgroupDriver = v1alpha1.CGroupDriverSystemd
 		case v1alpha1.CGroupDriverCGroupFS:
-			edgeCoreConfig.Modules.Edged.CGroupDriver = v1alpha1.CGroupDriverCGroupFS
+			edgeCoreConfig.Modules.Edged.CgroupDriver = v1alpha1.CGroupDriverCGroupFS
 		default:
 			return fmt.Errorf("unsupported CGroupDriver: %s", ku.CGroupDriver)
 		}
@@ -133,7 +133,7 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 			value := strings.Split(label, "=")[1]
 			labelsMap[key] = value
 		}
-		edgeCoreConfig.Modules.Edged.Labels = labelsMap
+		edgeCoreConfig.Modules.Edged.NodeLabels = labelsMap
 	}
 
 	if errs := validation.ValidateEdgeCoreConfiguration(edgeCoreConfig); len(errs) > 0 {

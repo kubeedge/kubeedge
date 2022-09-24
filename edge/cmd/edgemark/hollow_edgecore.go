@@ -87,9 +87,7 @@ func newHollowEdgeNodeCommand() *cobra.Command {
 func run(config *hollowEdgeNodeConfig) {
 	c := EdgeCoreConfig(config)
 
-	// use fake runtime service
-	edged.DefaultGetRuntimeService = GetFakeRuntimeAndImageServices
-
+	// TODO: fake runtime service
 	edged.Register(c.Modules.Edged)
 	edgehub.Register(c.Modules.EdgeHub, c.Modules.Edged.HostnameOverride)
 	metamanager.Register(c.Modules.MetaManager)
@@ -119,13 +117,12 @@ func EdgeCoreConfig(config *hollowEdgeNodeConfig) *v1alpha1.EdgeCoreConfig {
 	edgeCoreConfig.Modules.EdgeHub.WebSocket.Server = config.WebsocketServer
 
 	// use fake runtime for test
-	edgeCoreConfig.Modules.Edged.RuntimeType = "fake"
+	edgeCoreConfig.Modules.Edged.ContainerRuntime = "fake"
 	edgeCoreConfig.Modules.Edged.RemoteRuntimeEndpoint = "/run/fake/fake.sock"
 	edgeCoreConfig.Modules.Edged.RemoteImageEndpoint = "/run/fake/fake.sock"
-	edgeCoreConfig.Modules.Edged.EnableMetrics = false
 
 	edgeCoreConfig.Modules.Edged.HostnameOverride = config.NodeName
-	edgeCoreConfig.Modules.Edged.Labels = config.NodeLabels
+	edgeCoreConfig.Modules.Edged.NodeLabels = config.NodeLabels
 
 	return edgeCoreConfig
 }

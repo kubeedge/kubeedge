@@ -52,7 +52,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
 	edgedconfig "github.com/kubeedge/kubeedge/edge/pkg/edged/config"
-	kubebridge "github.com/kubeedge/kubeedge/edge/pkg/edged/fake"
+	kubebridge "github.com/kubeedge/kubeedge/edge/pkg/edged/kubeclientbridge"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	metaclient "github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
@@ -246,7 +246,7 @@ func (e *edged) handlePod(op string, content []byte, podCfg *config.PodConfig) (
 			updates := &kubelettypes.PodUpdate{Op: kubelettypes.UPDATE, Pods: pods, Source: kubelettypes.ApiserverSource}
 			podCfg.EdgedCh <- *updates
 		case model.DeleteOperation:
-			deletes := &kubelettypes.PodUpdate{Op: kubelettypes.DELETE, Pods: pods, Source: kubelettypes.ApiserverSource}
+			deletes := &kubelettypes.PodUpdate{Op: kubelettypes.REMOVE, Pods: pods, Source: kubelettypes.ApiserverSource}
 			podCfg.EdgedCh <- *deletes
 		}
 	}

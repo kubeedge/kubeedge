@@ -112,7 +112,7 @@ func (*keadmUpgrade) Upgrade(upgradeReq *commontypes.NodeUpgradeJobRequest) erro
 
 	// install the requested installer keadm from docker image
 	klog.Infof("Begin to download version %s keadm", upgradeReq.Version)
-	container, err := util.NewContainerRuntime(config.Modules.Edged.RuntimeType, config.Modules.Edged.RemoteRuntimeEndpoint)
+	container, err := util.NewContainerRuntime(config.Modules.Edged.ContainerRuntime, config.Modules.Edged.RemoteRuntimeEndpoint)
 	if err != nil {
 		return fmt.Errorf("failed to new container runtime: %v", err)
 	}
