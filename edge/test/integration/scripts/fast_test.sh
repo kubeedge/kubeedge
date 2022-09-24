@@ -42,10 +42,10 @@ if [[ $# -eq 0 ]]; then
     #if [[ $? != 0 ]]; then
     #  GINKGO_EXIT_CODE=1
     #fi
-    ./device/device.test  $debugflag
-    if [[ $? != 0 ]]; then
-      GINKGO_EXIT_CODE=1
-    fi
+    #./device/device.test  $debugflag
+    #if [[ $? != 0 ]]; then
+    #  GINKGO_EXIT_CODE=1
+    #fi
     ./metaserver/metaserver.test $debugflag
     if [[ $? != 0 ]]; then
       GINKGO_EXIT_CODE=1

@@ -17,7 +17,6 @@ limitations under the License.
 package v1alpha2
 
 import (
-	utilpointer "k8s.io/utils/pointer"
 	"net"
 	"net/url"
 	"path"
@@ -27,6 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubeletconfigv1beta1 "k8s.io/kubelet/config/v1beta1"
 	configv1beta1 "k8s.io/kubernetes/pkg/kubelet/apis/config/v1beta1"
+	utilpointer "k8s.io/utils/pointer"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
@@ -40,7 +40,6 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 
 	in := kubeletconfigv1beta1.KubeletConfiguration{}
 	in.ContentType = "application/json"
-	in.Authorization.Mode = kubeletconfigv1beta1.KubeletAuthorizationModeAlwaysAllow
 	in.NodeStatusUpdateFrequency = metav1.Duration{Duration: constants.DefaultNodeStatusUpdateFrequency}
 	in.ImageGCLowThresholdPercent = utilpointer.Int32Ptr(constants.DefaultImageGCLowThreshold)
 	in.ImageGCHighThresholdPercent = utilpointer.Int32Ptr(constants.DefaultImageGCHighThreshold)

@@ -1,7 +1,6 @@
 package edgehub
 
 import (
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 	"sync"
 	"time"
 
@@ -17,6 +16,7 @@ import (
 
 	// register Upgrade handler
 	_ "github.com/kubeedge/kubeedge/edge/pkg/edgehub/upgrade"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 )
 
 //EdgeHub defines edgehub object structure

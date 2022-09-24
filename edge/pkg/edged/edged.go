@@ -130,7 +130,7 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 		klog.ErrorS(err, "Failed to convert kueblet config")
 		return nil, fmt.Errorf("failed to construct kubelet dependencies")
 	}
-	edgedconfig.Convert_Config_EdgedFlag_To_config_KubeletFlag(&edgedconfig.Config.TailoredKubeletFlag, &kubeFlags)
+	edgedconfig.ConvertConfigEdgedFlagToConfigKubeletFlag(&edgedconfig.Config.TailoredKubeletFlag, &kubeFlags)
 	kubeletServer := kubeletoptions.KubeletServer{
 		KubeletFlags:         kubeFlags,
 		KubeletConfiguration: kubeConfig,

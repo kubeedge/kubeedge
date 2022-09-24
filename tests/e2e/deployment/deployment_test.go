@@ -263,46 +263,46 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 		})
 
 		/*
-		It("Delete statefulSet pod multi times", func() {
-			replica := int32(2)
-			// Generate the random string and assign as a UID
-			UID = "edge-statefulset-" + utils.GetRandomString(5)
+			It("Delete statefulSet pod multi times", func() {
+				replica := int32(2)
+				// Generate the random string and assign as a UID
+				UID = "edge-statefulset-" + utils.GetRandomString(5)
 
-			By(fmt.Sprintf("create StatefulSet %s", UID))
-			d := utils.NewTestStatefulSet(UID, ctx.Cfg.AppImageURL[1], replica)
-			ss, err := utils.CreateStatefulSet(clientSet, d)
-			Expect(err).To(BeNil())
-
-			utils.WaitForStatusReplicas(clientSet, ss, replica)
-
-			By(fmt.Sprintf("get pod for StatefulSet %s", UID))
-			labelSelector := labels.SelectorFromSet(map[string]string{"app": UID})
-			podList, err := utils.ListPods(clientSet, corev1.NamespaceDefault, labelSelector, nil)
-			Expect(err).To(BeNil())
-			Expect(len(podList.Items)).ShouldNot(Equal(0))
-
-			By(fmt.Sprintf("wait for pod of StatefulSet %s running", UID))
-			utils.WaitforPodsRunning(ctx.Cfg.KubeConfigPath, *podList, 240*time.Second)
-
-			deletePodName := fmt.Sprintf("%s-1", UID)
-			for i := 0; i < 5; i++ {
-				By(fmt.Sprintf("delete pod %s", deletePodName))
-				err = utils.DeletePod(clientSet, deletePodName, "default")
+				By(fmt.Sprintf("create StatefulSet %s", UID))
+				d := utils.NewTestStatefulSet(UID, ctx.Cfg.AppImageURL[1], replica)
+				ss, err := utils.CreateStatefulSet(clientSet, d)
 				Expect(err).To(BeNil())
 
-				By(fmt.Sprintf("wait for pod %s running again", fmt.Sprintf("%s-1", UID)))
-				err = wait.Poll(5*time.Second, 120*time.Second, func() (bool, error) {
-					pod, err := clientSet.CoreV1().Pods("default").Get(context.TODO(), deletePodName, metav1.GetOptions{})
-					if err != nil {
-						return false, err
-					}
-					if pod.Status.Phase == corev1.PodRunning {
-						return true, nil
-					}
-					return false, nil
-				})
+				utils.WaitForStatusReplicas(clientSet, ss, replica)
+
+				By(fmt.Sprintf("get pod for StatefulSet %s", UID))
+				labelSelector := labels.SelectorFromSet(map[string]string{"app": UID})
+				podList, err := utils.ListPods(clientSet, corev1.NamespaceDefault, labelSelector, nil)
 				Expect(err).To(BeNil())
-			}
-		}*/
+				Expect(len(podList.Items)).ShouldNot(Equal(0))
+
+				By(fmt.Sprintf("wait for pod of StatefulSet %s running", UID))
+				utils.WaitforPodsRunning(ctx.Cfg.KubeConfigPath, *podList, 240*time.Second)
+
+				deletePodName := fmt.Sprintf("%s-1", UID)
+				for i := 0; i < 5; i++ {
+					By(fmt.Sprintf("delete pod %s", deletePodName))
+					err = utils.DeletePod(clientSet, deletePodName, "default")
+					Expect(err).To(BeNil())
+
+					By(fmt.Sprintf("wait for pod %s running again", fmt.Sprintf("%s-1", UID)))
+					err = wait.Poll(5*time.Second, 120*time.Second, func() (bool, error) {
+						pod, err := clientSet.CoreV1().Pods("default").Get(context.TODO(), deletePodName, metav1.GetOptions{})
+						if err != nil {
+							return false, err
+						}
+						if pod.Status.Phase == corev1.PodRunning {
+							return true, nil
+						}
+						return false, nil
+					})
+					Expect(err).To(BeNil())
+				}
+			}*/
 	})
 })

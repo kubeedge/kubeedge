@@ -27,7 +27,7 @@ func InitConfigure(e *v1alpha2.Edged) {
 	})
 }
 
-func Convert_Config_EdgedFlag_To_config_KubeletFlag(in *v1alpha2.TailoredKubeletFlag, out *kubeletoptions.KubeletFlags) {
+func ConvertConfigEdgedFlagToConfigKubeletFlag(in *v1alpha2.TailoredKubeletFlag, out *kubeletoptions.KubeletFlags) {
 	out.KubeConfig = in.KubeConfig
 	out.HostnameOverride = in.HostnameOverride
 	out.NodeIP = in.NodeIP

@@ -36,4 +36,3 @@ func (c *EdgeCoreConfig) Parse(filename string) error {
 	}
 	return nil
 }
-
