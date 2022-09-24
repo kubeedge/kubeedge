@@ -38,10 +38,10 @@ GINKGO_EXIT_CODE=0
 if [[ $# -eq 0 ]]; then
     #run testcase
     export KUBEEDGE_ROOT=$KUBEEDGE_ROOT
-    ./appdeployment/appdeployment.test $debugflag
-    if [[ $? != 0 ]]; then
-      GINKGO_EXIT_CODE=1
-    fi
+    #./appdeployment/appdeployment.test $debugflag
+    #if [[ $? != 0 ]]; then
+    #  GINKGO_EXIT_CODE=1
+    #fi
     ./device/device.test  $debugflag
     if [[ $? != 0 ]]; then
       GINKGO_EXIT_CODE=1

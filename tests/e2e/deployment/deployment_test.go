@@ -17,7 +17,6 @@ limitations under the License.
 package deployment
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -28,7 +27,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/util/wait"
 	clientset "k8s.io/client-go/kubernetes"
 
 	"github.com/kubeedge/kubeedge/tests/e2e/constants"
@@ -264,6 +262,7 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			utils.WaitforPodsRunning(ctx.Cfg.KubeConfigPath, *podList, 240*time.Second)
 		})
 
+		/*
 		It("Delete statefulSet pod multi times", func() {
 			replica := int32(2)
 			// Generate the random string and assign as a UID
@@ -304,6 +303,6 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 				})
 				Expect(err).To(BeNil())
 			}
-		})
+		}*/
 	})
 })
