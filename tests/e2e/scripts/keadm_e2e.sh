@@ -75,7 +75,7 @@ function start_kubeedge() {
   # ensure edgenode is ready
   while true; do
       sleep 3
-      kubectl get node | grep edge-node | grep -q Ready && break
+      kubectl get node | grep edge-node | grep -q -w Ready && break
   done
 }
 
