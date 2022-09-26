@@ -2,7 +2,7 @@ package application
 
 import (
 	"context"
-	"crypto/md5"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -155,7 +155,9 @@ func (a *Application) Identifier() string {
 	b = append(b, []byte(a.Verb)...)
 	b = append(b, a.Option...)
 	b = append(b, a.ReqBody...)
-	a.ID = fmt.Sprintf("%x", md5.Sum(b))
+	b = append(b, []byte(a.Subresource)...)
+	b = append(b, []byte(a.Token)...)
+	a.ID = fmt.Sprintf("%x", sha256.Sum256(b))
 	return a.ID
 }
 func (a *Application) String() string {
