@@ -255,7 +255,7 @@ if [[ "${ENABLE_DAEMON}" = false ]]; then
 else
     while true; do
         sleep 3
-        kubectl get nodes | grep edge-node | grep -q Ready && break
+        kubectl get nodes | grep edge-node | grep -q -w Ready && break
     done
     kubectl label node edge-node disktype=test
 fi
