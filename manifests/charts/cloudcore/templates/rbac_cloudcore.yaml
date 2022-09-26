@@ -37,6 +37,9 @@ rules:
 - apiGroups: ["networking.istio.io"]
   resources: ["*"]
   verbs: ["get", "list", "watch"]
+- apiGroups: ["operations.kubeedge.io"]
+  resources: ["nodeupgradejobs", "nodeupgradejobs/status"]
+  verbs: ["get", "list", "watch", "update", "patch"]
 
 ---
 apiVersion: v1
