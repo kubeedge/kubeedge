@@ -17,7 +17,9 @@ limitations under the License.
 package testsuite
 
 import (
+	"fmt"
 	"net/http"
+	"os/exec"
 	"time"
 
 	"github.com/onsi/gomega"
@@ -57,7 +59,16 @@ func CreatePodTest(nodeName, podName string, ctx *utils.TestContext, pod *metav1
 	gomega.Expect(IsAppDeployed).Should(gomega.BeTrue())
 	label := nodeName
 
-	time.Sleep(time.Second * 1)
+	time.Sleep(time.Second * 10)
+
+	c, _ := exec.Command("sh", "-c", "kubectl get pod -owide").Output()
+	fmt.Printf("output is \n %v", string(c))
+	c, _ = exec.Command("sh", "-c", "kubectl get node -owide").Output()
+	fmt.Printf("output is \n %v", string(c))
+
+	s := fmt.Sprintf("kubectl describe pod %s", podlist.Items[0].Name)
+	c, _ = exec.Command("sh", "-c", s).Output()
+	fmt.Printf("output is \n %v", string(c))
 
 	podlist, err := utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+constants.AppHandler, label)
 	gomega.Expect(err).To(gomega.BeNil())
