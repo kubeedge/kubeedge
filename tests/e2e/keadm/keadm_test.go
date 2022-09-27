@@ -103,7 +103,7 @@ func NewPodObjWithLabelSelector(podName, imgURL, nodeName string) *corev1.Pod {
 					Image: imgURL,
 				},
 			},
-			NodeName: nodeName,
+			//NodeName: nodeName,
 		},
 	}
 	return &pod
