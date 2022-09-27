@@ -31,6 +31,7 @@ import (
 	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/handlerfactory"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/serializer"
+	kefeatures "github.com/kubeedge/kubeedge/pkg/features"
 )
 
 // MetaServer is simplification of server.GenericAPIServer
@@ -104,7 +105,31 @@ func (ls *MetaServer) getCurrent() (*tls.Certificate, error) {
 	return &cert, nil
 }
 
-func (ls *MetaServer) Start(stopChan <-chan struct{}) {
+func (ls *MetaServer) startHTTPServer(stopChan <-chan struct{}) {
+	h := ls.BuildBasicHandler()
+	h = BuildHandlerChain(h, ls)
+	s := http.Server{
+		Addr:    metaserverconfig.Config.Server,
+		Handler: h,
+	}
+
+	go func() {
+		<-stopChan
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := s.Shutdown(ctx); err != nil {
+			klog.Errorf("Server shutdown failed: %s", err)
+		}
+	}()
+
+	klog.Infof("[metaserver]start to listen and server at http://%v", s.Addr)
+	utilruntime.HandleError(s.ListenAndServe())
+	// When the MetaServer stops abnormally, other module services are stopped at the same time.
+	beehiveContext.Cancel()
+}
+
+func (ls *MetaServer) startHTTPSServer(stopChan <-chan struct{}) {
 	_, err := ls.getCurrent()
 	if err != nil {
 		// wait for cert created
@@ -131,10 +156,18 @@ func (ls *MetaServer) Start(stopChan <-chan struct{}) {
 		}
 	}()
 
-	klog.Infof("[metaserver]start to listen and server at %v", s.Addr)
+	klog.Infof("[metaserver]start to listen and server at https://%v", s.Addr)
 	utilruntime.HandleError(s.ListenAndServeTLS("", ""))
 	// When the MetaServer stops abnormally, other module services are stopped at the same time.
 	beehiveContext.Cancel()
+}
+
+func (ls *MetaServer) Start(stopChan <-chan struct{}) {
+	if kefeatures.DefaultFeatureGate.Enabled(kefeatures.RequireAuthorization) {
+		ls.startHTTPSServer(stopChan)
+	} else {
+		ls.startHTTPServer(stopChan)
+	}
 }
 
 func (ls *MetaServer) BuildBasicHandler() http.Handler {
@@ -177,11 +210,11 @@ func BuildHandlerChain(handler http.Handler, ls *MetaServer) http.Handler {
 	handler = genericfilters.WithWaitGroup(handler, ls.LongRunningFunc, ls.HandlerChainWaitGroup)
 	handler = genericapifilters.WithRequestInfo(handler, server.NewRequestInfoResolver(cfg))
 	handler = genericfilters.WithPanicRecovery(handler, &apirequest.RequestInfoFactory{})
-	handler = CheckAuthorizationHeader(handler)
+	handler = WithAuthorizationHeader(handler)
 	return handler
 }
 
-func CheckAuthorizationHeader(handler http.Handler) http.Handler {
+func WithAuthorizationHeader(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		token := request.Header.Get(commontypes.AuthorizationKey)
 		request = request.WithContext(context.WithValue(request.Context(), commontypes.AuthorizationKey, token))
