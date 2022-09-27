@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -238,6 +239,7 @@ func WaitforPodsRunning(kubeConfigPath string, podlist v1.PodList, timout time.D
 		Fatalf("podlist should not be empty")
 	}
 
+	Infof("DEBUG DEBUG podlist.Items is %v", podlist.Items)
 	podRunningCount := 0
 	for _, pod := range podlist.Items {
 		if pod.Status.Phase == v1.PodRunning {
@@ -246,6 +248,8 @@ func WaitforPodsRunning(kubeConfigPath string, podlist v1.PodList, timout time.D
 	}
 	if podRunningCount == len(podlist.Items) {
 		Infof("All pods come into running status")
+		c, _ := exec.Command("sh", "-c", "kubectl get pod -owide").Output()
+		Infof("output is \n %v", string(c))
 		return
 	}
 
@@ -301,6 +305,8 @@ func WaitforPodsRunning(kubeConfigPath string, podlist v1.PodList, timout time.D
 	// wait for a signal or timeout
 	select {
 	case <-signal:
+		c, _ := exec.Command("sh", "-c", "kubectl get pod -owide").Output()
+		Infof("output is \n %v", string(c))
 		Infof("All pods come into running status")
 	case <-time.After(timout):
 		Fatalf("Wait for pods come into running status timeout: %v", timout)
