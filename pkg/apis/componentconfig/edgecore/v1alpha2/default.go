@@ -40,7 +40,6 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 
 	in := kubeletconfigv1beta1.KubeletConfiguration{}
 	in.ContentType = "application/json"
-	in.NodeStatusUpdateFrequency = metav1.Duration{Duration: constants.DefaultNodeStatusUpdateFrequency}
 	in.ImageGCLowThresholdPercent = utilpointer.Int32Ptr(constants.DefaultImageGCLowThreshold)
 	in.ImageGCHighThresholdPercent = utilpointer.Int32Ptr(constants.DefaultImageGCHighThreshold)
 	in.ConfigMapAndSecretChangeDetectionStrategy = kubeletconfigv1beta1.GetChangeDetectionStrategy
@@ -188,7 +187,6 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 
 	in := kubeletconfigv1beta1.KubeletConfiguration{}
 	in.ContentType = "application/json"
-	in.NodeStatusUpdateFrequency = metav1.Duration{Duration: constants.DefaultNodeStatusUpdateFrequency}
 	in.ImageGCLowThresholdPercent = utilpointer.Int32Ptr(constants.DefaultImageGCLowThreshold)
 	in.ImageGCHighThresholdPercent = utilpointer.Int32Ptr(constants.DefaultImageGCHighThreshold)
 	in.ConfigMapAndSecretChangeDetectionStrategy = kubeletconfigv1beta1.GetChangeDetectionStrategy
