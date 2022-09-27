@@ -66,6 +66,10 @@ function start_kubeedge() {
       sleep 3
       kubectl get secret -nkubeedge 2>/dev/null | grep -q tokensecret && break
   done
+
+  set -x
+  kubectl get pod -nkubeedge -oyaml
+  set +x
   
   cd $KUBEEDGE_ROOT
   export TOKEN=$(sudo /usr/local/bin/keadm gettoken --kube-config=$KUBECONFIG)
@@ -77,6 +81,10 @@ function start_kubeedge() {
       sleep 3
       kubectl get node | grep edge-node | grep -q Ready && break
   done
+
+  set -x
+  kubectl get node -o wide
+  set +x
 }
 
 function run_test() {
