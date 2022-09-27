@@ -220,3 +220,35 @@ func TestMergeAnnotationUpgradeHistory(t *testing.T) {
 		})
 	}
 }
+
+func TestGetImageRepo(t *testing.T) {
+	tests := []struct {
+		Image      string
+		ExpectRepo string
+	}{
+		{Image: "name", ExpectRepo: "docker.io/library/name"},
+		{Image: "name:tag", ExpectRepo: "docker.io/library/name"},
+		{Image: "name@sha256:59329e44d499406bd2e620473b0ba0b531abb7e326cef0156f33e5957cdfe259", ExpectRepo: "docker.io/library/name"},
+		{Image: "org/name", ExpectRepo: "docker.io/org/name"},
+		{Image: "org/name:tag", ExpectRepo: "docker.io/org/name"},
+		{Image: "org/name@sha256:59329e44d499406bd2e620473b0ba0b531abb7e326cef0156f33e5957cdfe259", ExpectRepo: "docker.io/org/name"},
+		{Image: "registry:8080/name", ExpectRepo: "registry:8080/name"},
+		{Image: "registry:8080/name:tag", ExpectRepo: "registry:8080/name"},
+		{Image: "registry:8080/name@sha256:59329e44d499406bd2e620473b0ba0b531abb7e326cef0156f33e5957cdfe259", ExpectRepo: "registry:8080/name"},
+		{Image: "registry:8080/org/name", ExpectRepo: "registry:8080/org/name"},
+		{Image: "registry:8080/org/name:tag", ExpectRepo: "registry:8080/org/name"},
+		{Image: "registry:8080/org/name@sha256:59329e44d499406bd2e620473b0ba0b531abb7e326cef0156f33e5957cdfe259", ExpectRepo: "registry:8080/org/name"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Image, func(t *testing.T) {
+			repo, err := GetImageRepo(test.Image)
+			if err != nil {
+				t.Errorf("error: %v", err)
+			}
+			if repo != test.ExpectRepo {
+				t.Errorf("Got = %v, Want = %v", repo, test.ExpectRepo)
+			}
+		})
+	}
+}
