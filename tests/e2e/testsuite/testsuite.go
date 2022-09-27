@@ -66,7 +66,7 @@ func CreatePodTest(nodeName, podName string, ctx *utils.TestContext, pod *metav1
 	c, _ = exec.Command("sh", "-c", "kubectl get node -owide").Output()
 	fmt.Printf("output is \n %v", string(c))
 
-	s := fmt.Sprintf("kubectl describe pod %s", podlist.Items[0].Name)
+	s := fmt.Sprintf("kubectl describe pod %s", podName)
 	c, _ = exec.Command("sh", "-c", s).Output()
 	fmt.Printf("output is \n %v", string(c))
 
