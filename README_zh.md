@@ -112,6 +112,16 @@ KubeEdge 由云端和边缘端部分构成：
 
 ## 安全
 
+### 安全审计报告
+
+KubeEdge的第三方安全审计报告已于2022年7月完成。此外，KubeEdge社区对KubeEdge进行了系统的安全分析和威胁建模。详细报告如下。
+
+- [安全审计报告](https://github.com/kubeedge/community/blob/master/sig-security/sig-security-audit/KubeEdge-security-audit-2022.pdf)
+
+- [威胁建模及安全防护分析白皮书](https://github.com/kubeedge/community/blob/master/sig-security/sig-security-audit/KubeEdge-threat-model-and-security-protection-analysis.md)
+
+### 报告安全漏洞
+
 我们鼓励漏洞研究人员和行业组织主动将KubeEdge社区的疑似安全漏洞报告给KubeEdge社区安全团队(`cncf-kubeedge-security@lists.cncf.io`)。我们会快速的响应、分析和解决上报的安全问题或安全漏洞。
 详细漏洞处理流程及如何上报漏洞请查看 [Security Policy](https://github.com/kubeedge/community/blob/master/security-team/SECURITY.md)。
 

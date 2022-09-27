@@ -115,6 +115,16 @@ details on submitting patches and the contribution workflow.
 
 ## Security
 
+### Security Audit
+
+A third party security audit of KubeEdge has been completed in July 2022. Additionally, the KubeEdge community completed an overall system security analysis of KubeEdge. The detailed reports are as follows.
+
+- [Security audit](https://github.com/kubeedge/community/blob/master/sig-security/sig-security-audit/KubeEdge-security-audit-2022.pdf)
+
+- [Threat model and security protection analysis paper](https://github.com/kubeedge/community/blob/master/sig-security/sig-security-audit/KubeEdge-threat-model-and-security-protection-analysis.md)
+
+### Reporting security vulnerabilities
+
 We encourage security researchers, industry organizations and users to proactively report suspected vulnerabilities to our security team (`cncf-kubeedge-security@lists.cncf.io`), the team will help diagnose the severity of the issue and determine how to address the issue as soon as possible.
 
 For further details please see [Security Policy](https://github.com/kubeedge/community/blob/master/security-team/SECURITY.md) for our security process and how to report vulnerabilities.
