@@ -432,9 +432,6 @@ func TestProcessDelete(t *testing.T) {
 	})
 
 	// Success Case
-	querySetterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySetterMock).Times(3)
-	querySetterMock.EXPECT().Delete().Return(int64(1), nil).Times(3)
-	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySetterMock).Times(3)
 	resource := fmt.Sprintf("test/%s/nginx", model.ResourceTypePod)
 	msg = model.NewMessage("").BuildRouter(ModuleNameEdged, modules.MetaGroup, resource, model.DeleteOperation)
 	meta.processDelete(*msg)
