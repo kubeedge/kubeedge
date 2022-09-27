@@ -64,6 +64,21 @@ func (dc *DownstreamController) syncPod() {
 			if !dc.lc.IsEdgeNode(pod.Spec.NodeName) {
 				continue
 			}
+			temp, err := dc.kubeClient.CoreV1().Nodes().Get(context.TODO(), pod.Spec.NodeName, metav1.GetOptions{})
+			if err != nil {
+				klog.Infof("######################################## get node failed: %v", err)
+				continue
+			}
+			klog.Info("######################################## node status is %#v", temp.Status)
+			for _, v := range temp.Status.Conditions {
+				if v.Type == v1.NodeReady {
+					if v.Status != v1.ConditionTrue {
+						klog.Info("######################################## node status is NOT READY %#v", temp.Status.Conditions)
+						continue
+					}
+				}
+			}
+
 			resource, err := messagelayer.BuildResource(pod.Spec.NodeName, pod.Namespace, model.ResourceTypePod, pod.Name)
 			if err != nil {
 				klog.Warningf("built message resource failed with error: %s", err)

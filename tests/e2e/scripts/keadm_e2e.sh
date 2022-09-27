@@ -108,7 +108,7 @@ function run_test() {
   fi
 }
 
-set -Ee
+#set -Ee
 trap cleanup EXIT
 trap cleanup ERR
 
