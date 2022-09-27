@@ -62,7 +62,7 @@ var _ = Describe("Application deployment test in keadm E2E scenario", func() {
 		It("E2E_POD_DEPLOYMENT: Create a pod and check the pod is coming up correctly", func() {
 			//Generate the random string and assign as podName
 			podName := "pod-app-" + utils.GetRandomString(5)
-			pod := NewPodObj(podName, ctx.Cfg.AppImageURL[0], nodeName)
+			pod := NewPodObjWithLabelSelector(podName, ctx.Cfg.AppImageURL[0], nodeName)
 
 			CreatePodTest(nodeName, podName, ctx, pod)
 		})
@@ -77,6 +77,26 @@ func NewPodObj(podName, imgURL, nodeName string) *corev1.Pod {
 			Labels: map[string]string{"app": "nginx"},
 		},
 		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "nginx",
+					Image: imgURL,
+				},
+			},
+			NodeName: nodeName,
+		},
+	}
+	return &pod
+}
+func NewPodObjWithLabelSelector(podName, imgURL, nodeName string) *corev1.Pod {
+	pod := corev1.Pod{
+		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Pod"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   podName,
+			Labels: map[string]string{"app": "nginx"},
+		},
+		Spec: corev1.PodSpec{
+			NodeSelector: map[string]string{"node-role.kubernetes.io/edge": ""},
 			Containers: []corev1.Container{
 				{
 					Name:  "nginx",

@@ -19,6 +19,7 @@ package utils
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os/exec"
@@ -244,6 +245,9 @@ func WaitforPodsRunning(kubeConfigPath string, podlist v1.PodList, timout time.D
 	c, _ = exec.Command("sh", "-c", "kubectl get node -owide").Output()
 	Infof("output is \n %v", string(c))
 
+	c, _ = exec.Command("sh", "-c", fmt.Sprint("kubectl describe pod %s", podlist.Items[0].Name)).Output()
+	Infof("output is \n %v", string(c))
+
 	Infof("DEBUG DEBUG podlist.Items is %v", podlist.Items)
 	podRunningCount := 0
 	for _, pod := range podlist.Items {
@@ -316,6 +320,9 @@ func WaitforPodsRunning(kubeConfigPath string, podlist v1.PodList, timout time.D
 		Infof("output is \n %v", string(c))
 		c, _ = exec.Command("sh", "-c", "kubectl get node -owide").Output()
 		Infof("output is \n %v", string(c))
+		c, _ = exec.Command("sh", "-c", fmt.Sprint("kubectl describe pod %s", podlist.Items[0].Name)).Output()
+		Infof("output is \n %v", string(c))
+
 		Infof("All pods come into running status")
 	case <-time.After(timout):
 		Fatalf("Wait for pods come into running status timeout: %v", timout)
