@@ -761,11 +761,11 @@ IoT device lifecycle management comprises of several steps listed below
   - If a device is damaged , it needs to be retired. This is currently not in scope of this design.
 
 ### Device Actions
-- Currently the device model doesn't support [WOT style actions](https://iot.mozilla.org/wot/#actions-resource). The only way to perform some action on the device is by changing the desired state of the twin property in the status field. We need to see how WOT actions can be incorporated in this model and who will consume those actions ?
+- Currently the device model doesn't support [WOT style actions](https://webthings.io/api/#actions-resource). The only way to perform some action on the device is by changing the desired state of the twin property in the status field. We need to see how WOT actions can be incorporated in this model and who will consume those actions ?
 Will it be the responsibility of the mapper to expose HTTP APIs for the actions ? Can we generate server / client code to perform / consume these actions ? Can we handle firmware updates with such actions ?
 
 ### Device Events
-- Currently the device model doesn't support  [WOT style events](https://iot.mozilla.org/wot/#events-resource). Should telemetry data like sensor temperature readings etc emitted by devices be reported as events ? WOT events are some abnormal events reported by the device like overheated, or reboot etc.
+- Currently the device model doesn't support  [WOT style events](https://webthings.io/api/#events-resource). Should telemetry data like sensor temperature readings etc emitted by devices be reported as events ? WOT events are some abnormal events reported by the device like overheated, or reboot etc.
 
 ## Security
 Secure device provisioning is the first step in the device lifecycle management. This is not in scope of the current design proposal. Various provisioning techniques could be explored like Trusted Platform Modules(TPM), X.509 certificates etc. Depending on the device type (directly connect to the edge or LTE/wifi or something else), in case of LTE/wifi, further security guard would be needed.
