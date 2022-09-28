@@ -1,11 +1,13 @@
 package metamanager
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
 	authenticationv1 "k8s.io/api/authentication/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -247,38 +249,26 @@ func (m *metaManager) processDelete(message model.Message) {
 	imitator.DefaultV2Client.Inject(message)
 	_, resType, _ := parseResource(message.GetResource())
 
-	err := dao.DeleteMetaByKey(message.GetResource())
-	if err != nil {
-		klog.Errorf("delete meta failed, %s", msgDebugInfo(&message))
-		feedbackError(err, "Error to delete meta to DB", message)
-		return
-	}
-
-	if resType == model.ResourceTypePod {
-		podStatusKey := strings.Replace(message.GetResource(),
-			constants.ResourceSep+model.ResourceTypePod+constants.ResourceSep,
-			constants.ResourceSep+model.ResourceTypePodStatus+constants.ResourceSep, 1)
-		err = dao.DeleteMetaByKey(podStatusKey)
-		if err != nil {
-			klog.Errorf("delete meta failed, %s", msgDebugInfo(&message))
-			feedbackError(err, "Error to delete meta to DB", message)
-			return
-		}
-
-		podPatchKey := strings.Replace(message.GetResource(),
-			constants.ResourceSep+model.ResourceTypePod+constants.ResourceSep,
-			constants.ResourceSep+model.ResourceTypePodPatch+constants.ResourceSep, 1)
-		err := dao.DeleteMetaByKey(podPatchKey)
-		if err != nil {
-			klog.Errorf("delete meta failed, %s", msgDebugInfo(&message))
-			feedbackError(err, "Error to delete meta to DB", message)
-			return
-		}
-	}
-
 	if resType == model.ResourceTypePod && message.GetSource() == modules.EdgedModuleName {
 		sendToCloud(&message)
 		return
+	}
+
+	var err error
+	if resType == model.ResourceTypePod {
+		err = processDeletePodDB(message)
+		if err != nil {
+			klog.Errorf("delete pod meta failed, %s, err:%v", msgDebugInfo(&message), err)
+			feedbackError(err, "Error to delete pod meta to DB", message)
+			return
+		}
+	} else {
+		err = dao.DeleteMetaByKey(message.GetResource())
+		if err != nil {
+			klog.Errorf("delete meta failed, %s", msgDebugInfo(&message))
+			feedbackError(err, "Error to delete meta to DB", message)
+			return
+		}
 	}
 
 	msgSource := message.GetSource()
@@ -291,6 +281,64 @@ func (m *metaManager) processDelete(message model.Message) {
 	sendToEdged(&message, false)
 	resp := message.NewRespByMessage(&message, OK)
 	sendToCloud(resp)
+}
+
+func processDeletePodDB(message model.Message) error {
+	podDBList, err := dao.QueryMeta("key", message.GetResource())
+	if err != nil {
+		return err
+	}
+
+	podList := *podDBList
+	if len(podList) == 0 {
+		klog.Infof("no pod with key %s key in DB", message.GetResource())
+		return nil
+	}
+
+	var podDB corev1.Pod
+	err = json.Unmarshal([]byte(podList[0]), &podDB)
+	if err != nil {
+		return err
+	}
+
+	var msgPod corev1.Pod
+	msgContent, err := message.GetContentData()
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(msgContent, &msgPod)
+	if err != nil {
+		return err
+	}
+
+	if podDB.UID != msgPod.UID {
+		klog.Warning("pod UID is not equal to pod stored in DB, don't need to delete pod DB")
+		return nil
+	}
+
+	err = dao.DeleteMetaByKey(message.GetResource())
+	if err != nil {
+		return err
+	}
+
+	podStatusKey := strings.Replace(message.GetResource(),
+		constants.ResourceSep+model.ResourceTypePod+constants.ResourceSep,
+		constants.ResourceSep+model.ResourceTypePodStatus+constants.ResourceSep, 1)
+	err = dao.DeleteMetaByKey(podStatusKey)
+	if err != nil {
+		return err
+	}
+
+	podPatchKey := strings.Replace(message.GetResource(),
+		constants.ResourceSep+model.ResourceTypePod+constants.ResourceSep,
+		constants.ResourceSep+model.ResourceTypePodPatch+constants.ResourceSep, 1)
+	err = dao.DeleteMetaByKey(podPatchKey)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // KeyFunc keys should be nonconfidential and safe to log
