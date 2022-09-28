@@ -148,7 +148,9 @@ func detailRequest(context *dtcontext.DTContext) error {
 	message := context.BuildModelMessage("resource", "", "membership/detail", "get", string(getDetailJSON))
 	klog.V(2).Info("Request detail")
 	msgID := message.GetID()
-	context.ConfirmMap.Store(msgID, &dttype.DTMessage{Msg: message, Action: dtcommon.SendToCloud, Type: dtcommon.CommModule})
+	if message.GetParentID() != "" {
+		context.ConfirmMap.Store(msgID, &dttype.DTMessage{Msg: message, Action: dtcommon.SendToCloud, Type: dtcommon.CommModule})
+	}
 	beehiveContext.Send(dtcommon.HubModule, *message)
 	return nil
 }
