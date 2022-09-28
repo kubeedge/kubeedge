@@ -81,6 +81,7 @@ Refer to the links for more details.
 
 ## Important Steps before Upgrading
 
+- If you want to upgrade KubeEdge to v1.12, the configuration file in EdgeCore has upgraded to v1alpha2, you must modify your configuration file of edged in EdgeCore to adapt the new edged.  
 - If you want to use authorization for Edge Kube-API Endpoint, please enabled `RequireAuthorization` feature through feature gate both in CloudCore and EdgeCore. 
   If `RequireAuthorization` feature is enabled, metaServer will only serve for https request.
 - If you want to upgrade edgemesh to v1.12, you do not need to deploy the existing edgemesh-server, and you need to configure relayNodes.
