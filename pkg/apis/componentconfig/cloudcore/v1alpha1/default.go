@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	logConfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/klog"
 	"path"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -41,6 +42,18 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 			ContentType: constants.DefaultKubeContentType,
 			QPS:         constants.DefaultKubeQPS,
 			Burst:       constants.DefaultKubeBurst,
+		},
+		LogConfig: &logConfig.LogConfig{
+			//日志文件夹路径
+			LogDir: "/var/log/kubeedge",
+			//日志文件路径(优先级高于LogPath)
+			LogFile: "/var/log/kubeedge/cloudcore.log",
+			//日志文件最大大小，超过之后自动产生新的日志文件
+			LogFileMaxSize: 1800,
+			//日志文件数量大小，超过之后自动删除最新产生的日志文件
+			LogFileCount:    10,
+			LogToStderr:     false,
+			AlsoLogToStderr: false,
 		},
 		Modules: &Modules{
 			CloudHub: &CloudHub{

@@ -18,9 +18,11 @@ package flag
 
 import (
 	"fmt"
+	logConfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/klog"
 	"os"
 	"strconv"
 
+	goFlag "flag"
 	"github.com/spf13/pflag"
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/yaml"
@@ -126,4 +128,12 @@ func PrintFlags(flags *pflag.FlagSet) {
 	flags.VisitAll(func(flag *pflag.Flag) {
 		klog.V(1).Infof("FLAG: --%s=%q", flag.Name, flag.Value)
 	})
+}
+func SetKLogByLogConfig(logCfg *logConfig.LogConfig) {
+	goFlag.Set("logtostderr", strconv.FormatBool(logCfg.LogToStderr))
+	goFlag.Set("alsologtostderr", strconv.FormatBool(logCfg.AlsoLogToStderr))
+	goFlag.Set("log_dir", logCfg.LogDir)
+	goFlag.Set("log_file", logCfg.LogFile)
+	goFlag.Set("log_file_max_size", strconv.Itoa(logCfg.LogFileMaxSize))
+	goFlag.Set("log_file_max_count", strconv.Itoa(logCfg.LogFileCount))
 }

@@ -65,6 +65,7 @@ kubernetes controller which manages devices so that the device metadata/status d
 			if err != nil {
 				klog.Exit(err)
 			}
+			flag.SetKLogByLogConfig(config.LogConfig)
 			if errs := validation.ValidateCloudCoreConfiguration(config); len(errs) > 0 {
 				klog.Exit(util.SpliceErrors(errs.ToAggregate().Errors()))
 			}

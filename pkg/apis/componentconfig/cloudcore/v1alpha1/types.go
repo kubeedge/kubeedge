@@ -17,9 +17,9 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"time"
-
+	logConfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/klog"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"time"
 )
 
 // CloudCoreConfig indicates the config of cloudCore which get from cloudCore config file
@@ -31,6 +31,8 @@ type CloudCoreConfig struct {
 	// KubeAPIConfig indicates the kubernetes cluster info which cloudCore will connected
 	// +Required
 	KubeAPIConfig *KubeAPIConfig `json:"kubeAPIConfig,omitempty"`
+	// +Required
+	LogConfig *logConfig.LogConfig `json:"logConfig,omitempty"`
 	// Modules indicates cloudCore modules config
 	// +Required
 	Modules *Modules `json:"modules,omitempty"`

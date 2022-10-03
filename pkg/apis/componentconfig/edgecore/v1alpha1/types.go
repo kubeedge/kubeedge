@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	logConfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/klog"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
@@ -54,6 +55,8 @@ type EdgeCoreConfig struct {
 	// DataBase indicates database info
 	// +Required
 	DataBase *DataBase `json:"database,omitempty"`
+	// +Required
+	LogConfig *logConfig.LogConfig `json:"logConfig,omitempty"`
 	// Modules indicates EdgeCore modules config
 	// +Required
 	Modules *Modules `json:"modules,omitempty"`

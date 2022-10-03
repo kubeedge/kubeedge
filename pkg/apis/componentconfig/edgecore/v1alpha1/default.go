@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	logConfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/klog"
 	"net"
 	"net/url"
 	"path"
@@ -44,6 +45,18 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 			DriverName: DataBaseDriverName,
 			AliasName:  DataBaseAliasName,
 			DataSource: DataBaseDataSource,
+		},
+		LogConfig: &logConfig.LogConfig{
+			//日志文件夹路径
+			LogDir: "/var/log/kubeedge",
+			//日志文件路径(优先级高于LogPath)
+			LogFile: "/var/log/kubeedge/edgecore.log",
+			//日志文件最大大小，超过之后自动产生新的日志文件
+			LogFileMaxSize: 1800,
+			//日志文件数量大小，超过之后自动删除最新产生的日志文件
+			LogFileCount:    10,
+			LogToStderr:     false,
+			AlsoLogToStderr: false,
 		},
 		Modules: &Modules{
 			Edged: &Edged{

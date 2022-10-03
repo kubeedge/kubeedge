@@ -64,6 +64,7 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 			if err != nil {
 				klog.Exit(err)
 			}
+			flag.SetKLogByLogConfig(config.LogConfig)
 			if errs := validation.ValidateEdgeCoreConfiguration(config); len(errs) > 0 {
 				klog.Exit(util.SpliceErrors(errs.ToAggregate().Errors()))
 			}
