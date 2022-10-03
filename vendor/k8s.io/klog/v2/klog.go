@@ -409,6 +409,7 @@ func init() {
 	logging.logDir = ""
 	logging.logFile = ""
 	logging.logFileMaxSizeMB = 1800
+	logging.logFileMaxCount = 0
 	logging.toStderr = true
 	logging.alsoToStderr = false
 	logging.skipHeaders = false
@@ -439,6 +440,7 @@ func InitFlags(flagset *flag.FlagSet) {
 	flagset.Var(&logging.stderrThreshold, "stderrthreshold", "logs at or above this threshold go to stderr")
 	flagset.Var(&logging.vmodule, "vmodule", "comma-separated list of pattern=N settings for file-filtered logging")
 	flagset.Var(&logging.traceLocation, "log_backtrace_at", "when logging hits line file:N, emit a stack trace")
+	flagset.IntVar(&logging.logFileMaxCount, "log_file_max_count", logging.logFileMaxCount, "日志文件数量，0代表不限制，超过最大文件数量将会删除历史日志,并创建新日志文件")
 }
 
 // Flush flushes all pending log I/O.
@@ -496,6 +498,9 @@ type loggingT struct {
 	// When logFile is specified, this limiter makes sure the logFile won't exceeds a certain size. When exceeds, the
 	// logFile will be cleaned up. If this value is 0, no size limitation will be applied to logFile.
 	logFileMaxSizeMB uint64
+
+	//日志文件数量，0或负数代表不限制，超过最大文件数量将会删除历史日志,并创建新日志文件
+	logFileMaxCount int
 
 	// If true, do not add the prefix headers, useful when used with SetOutput
 	skipHeaders bool
@@ -1058,6 +1063,7 @@ type syncBuffer struct {
 	sev      severity
 	nbytes   uint64 // The number of bytes written to this file
 	maxbytes uint64 // The max number of bytes this syncBuffer.file can hold before cleaning up.
+	maxCount int    //日志文件保留数量
 }
 
 func (sb *syncBuffer) Sync() error {
@@ -1066,16 +1072,13 @@ func (sb *syncBuffer) Sync() error {
 
 // CalculateMaxSize returns the real max size in bytes after considering the default max size and the flag options.
 func CalculateMaxSize() uint64 {
-	if logging.logFile != "" {
-		if logging.logFileMaxSizeMB == 0 {
-			// If logFileMaxSizeMB is zero, we don't have limitations on the log size.
-			return math.MaxUint64
-		}
-		// Flag logFileMaxSizeMB is in MB for user convenience.
-		return logging.logFileMaxSizeMB * 1024 * 1024
+	if logging.logFileMaxSizeMB == 0 {
+		// If logFileMaxSizeMB is zero, we don't have limitations on the log size.
+		return math.MaxUint64
 	}
+	// Flag logFileMaxSizeMB is in MB for user convenience.
+	return logging.logFileMaxSizeMB * 1024 * 1024
 	// If "log_file" flag is not specified, the target file (sb.file) will be cleaned up when reaches a fixed size.
-	return MaxSize
 }
 
 func (sb *syncBuffer) Write(p []byte) (n int, err error) {
@@ -1148,6 +1151,7 @@ func (l *loggingT) createFiles(sev severity) error {
 			logger:   l,
 			sev:      s,
 			maxbytes: CalculateMaxSize(),
+			maxCount: l.logFileMaxCount,
 		}
 		if err := sb.rotateFile(now, true); err != nil {
 			return err

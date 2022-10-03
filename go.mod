@@ -100,7 +100,7 @@ replace (
 	k8s.io/csi-translation-lib v0.0.0 => k8s.io/csi-translation-lib v0.22.6
 	k8s.io/gengo v0.0.0 => k8s.io/gengo v0.22.6
 	k8s.io/heapster => k8s.io/heapster v1.2.0-beta.1 // indirect
-	k8s.io/klog/v2 => k8s.io/klog/v2 v2.8.0
+	k8s.io/klog/v2 => ./staging/src/k8s.io/klog
 	k8s.io/kube-aggregator v0.0.0 => k8s.io/kube-aggregator v0.22.6
 	k8s.io/kube-controller-manager v0.0.0 => k8s.io/kube-controller-manager v0.22.6
 	k8s.io/kube-proxy v0.0.0 => k8s.io/kube-proxy v0.22.6
