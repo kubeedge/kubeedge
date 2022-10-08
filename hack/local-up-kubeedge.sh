@@ -106,6 +106,10 @@ function start_cloudcore {
   sed -i '/cloudStream:/{n;s/false/true/;}' ${CLOUD_CONFIGFILE}
   sed -i -e "s|kubeConfig: .*|kubeConfig: ${KUBECONFIG}|g" \
     -e "s|/var/lib/kubeedge/|/tmp&|g" \
+    -e "s|tlsCAFile: .*|tlsCAFile: /etc/kubeedge/ca/cloudhub/rootCA.crt|g" \
+    -e "s|tlsCAKeyFile: .*|tlsCAKeyFile: /etc/kubeedge/ca/cloudhub/rootCA.key|g" \
+    -e "s|tlsCertFile: .*|tlsCertFile: /etc/kubeedge/certs/cloudhub/server.crt|g" \
+    -e "s|tlsPrivateKeyFile: .*|tlsPrivateKeyFile: /etc/kubeedge/certs/cloudhub/server.key|g" \
     -e "s|/etc/|/tmp/etc/|g" \
     -e '/router:/{n;N;N;N;N;s/false/true/}' ${CLOUD_CONFIGFILE}
   CLOUDCORE_LOG=${LOG_DIR}/cloudcore.log
