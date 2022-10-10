@@ -152,7 +152,7 @@ func SyncDeviceFromSqlite(context *dtcontext.DTContext, deviceID string) error {
 	}
 	if len(*devices) <= 0 {
 		klog.Errorf("not found device from db")
-		return err
+		return errors.New("not found device from db")
 	}
 	device := (*devices)[0]
 
