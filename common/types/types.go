@@ -6,21 +6,21 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-// PodStatusRequest is Message.Content which come from edge
+// PodStatusRequest is Message.Content which comes from edge
 type PodStatusRequest struct {
 	UID    types.UID
 	Name   string
 	Status v1.PodStatus
 }
 
-//ExtendResource is extended resource details that come from edge
+//ExtendResource is the extended resource detail that comes from edge
 type ExtendResource struct {
 	Name     string            `json:"name,omitempty"`
 	Type     string            `json:"type,omitempty"`
 	Capacity resource.Quantity `json:"capacity,omitempty"`
 }
 
-// NodeStatusRequest is Message.Content which come from edge
+// NodeStatusRequest is Message.Content which comes from edge
 type NodeStatusRequest struct {
 	UID             types.UID
 	Status          v1.NodeStatus
