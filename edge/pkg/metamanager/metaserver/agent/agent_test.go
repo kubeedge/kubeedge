@@ -1,4 +1,20 @@
-package application
+/*
+Copyright 2021 The KubeEdge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package agent
 
 import (
 	"context"
@@ -9,7 +25,6 @@ import (
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 
 	commontypes "github.com/kubeedge/kubeedge/common/types"
-	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
 )
 
 func TestApplicationGC(t *testing.T) {
@@ -22,7 +37,7 @@ func TestApplicationGC(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			a := Agent{nodeName: metaserverconfig.Config.NodeName}
+			a := Agent{nodeName: "test"}
 			requestInfo := &apirequest.RequestInfo{
 				IsResourceRequest: true,
 				Verb:              "GET",
@@ -36,11 +51,9 @@ func TestApplicationGC(t *testing.T) {
 			ctx = context.WithValue(ctx, commontypes.AuthorizationKey, "Bearer xxxx")
 
 			app, _ := a.Generate(ctx, "get", metav1.GetOptions{}, nil)
-			app.countLock.Lock()
-			app.count = 0
-			app.countLock.Unlock()
+			app.Close()
 			// make sure that the last closing time is more than 5 minutes from now
-			app.timestamp = time.Unix(1469579899, 0)
+			app.Timestamp = time.Unix(1469579899, 0)
 			a.GC()
 			_, ok := a.Applications.Load(app.Identifier())
 			if ok == true {
