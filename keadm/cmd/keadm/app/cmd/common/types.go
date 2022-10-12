@@ -89,8 +89,10 @@ type CollectOptions struct {
 }
 
 type ResetOptions struct {
-	Kubeconfig string
-	Force      bool
+	Kubeconfig  string
+	Force       bool
+	RuntimeType string
+	Endpoint    string
 }
 
 type GettokenOptions struct {
