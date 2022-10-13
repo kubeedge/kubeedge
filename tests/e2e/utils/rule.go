@@ -226,19 +226,19 @@ func GetRuleList(list *rulesv1.RuleList, getRuleAPI string, expectedRule *rulesv
 				if !reflect.DeepEqual(expectedRule.TypeMeta, rule.TypeMeta) ||
 					expectedRule.ObjectMeta.Namespace != rule.ObjectMeta.Namespace ||
 					!reflect.DeepEqual(expectedRule.Spec, rule.Spec) {
-					return nil, errors.New("The rule is not matching with what was expected")
+					return nil, errors.New("the rule is not matching with what was expected")
 				}
 			}
 		}
 		if !modelExists {
-			return nil, errors.New("The requested rule is not found")
+			return nil, errors.New("the requested rule is not found")
 		}
 	}
 	return list.Items, nil
 }
 
 // HandleRule to handle rule.
-func HandleRule(operation, apiserver, UID string, sourceType, targetType rulesv1.RuleEndpointTypeDef) (bool, int) {
+func HandleRule(operation, apiServer, UID string, sourceType, targetType rulesv1.RuleEndpointTypeDef) (bool, int) {
 	var req *http.Request
 	var err error
 	var body io.Reader
@@ -257,10 +257,10 @@ func HandleRule(operation, apiserver, UID string, sourceType, targetType rulesv1
 		if err != nil {
 			Fatalf("Marshalling body failed: %v", err)
 		}
-		req, err = http.NewRequest(http.MethodPost, apiserver, bytes.NewBuffer(respBytes))
+		req, err = http.NewRequest(http.MethodPost, apiServer, bytes.NewBuffer(respBytes))
 		req.Header.Set("Content-Type", "application/json")
 	case http.MethodDelete:
-		req, err = http.NewRequest(http.MethodDelete, apiserver+UID, body)
+		req, err = http.NewRequest(http.MethodDelete, apiServer+UID, body)
 		req.Header.Set("Content-Type", "application/json")
 	}
 	if err != nil {
@@ -282,7 +282,7 @@ func HandleRule(operation, apiserver, UID string, sourceType, targetType rulesv1
 }
 
 // HandleRuleEndpoint to handle ruleendpoint.
-func HandleRuleEndpoint(operation string, apiserver string, UID string, endpointType rulesv1.RuleEndpointTypeDef) (bool, int) {
+func HandleRuleEndpoint(operation string, apiServer string, UID string, endpointType rulesv1.RuleEndpointTypeDef) (bool, int) {
 	var req *http.Request
 	var err error
 	var body io.Reader
@@ -301,10 +301,10 @@ func HandleRuleEndpoint(operation string, apiserver string, UID string, endpoint
 		if err != nil {
 			Fatalf("Marshalling body failed: %v", err)
 		}
-		req, err = http.NewRequest(http.MethodPost, apiserver, bytes.NewBuffer(respBytes))
+		req, err = http.NewRequest(http.MethodPost, apiServer, bytes.NewBuffer(respBytes))
 		req.Header.Set("Content-Type", "application/json")
 	case http.MethodDelete:
-		req, err = http.NewRequest(http.MethodDelete, apiserver+UID, body)
+		req, err = http.NewRequest(http.MethodDelete, apiServer+UID, body)
 		req.Header.Set("Content-Type", "application/json")
 	}
 	if err != nil {
@@ -346,12 +346,12 @@ func GetRuleEndpointList(list *rulesv1.RuleEndpointList, getRuleEndpointAPI stri
 				if !reflect.DeepEqual(expectedRule.TypeMeta, ruleEndpoint.TypeMeta) ||
 					expectedRule.ObjectMeta.Namespace != ruleEndpoint.ObjectMeta.Namespace ||
 					!reflect.DeepEqual(expectedRule.Spec, ruleEndpoint.Spec) {
-					return nil, errors.New("The ruleendpoint is not matching with what was expected")
+					return nil, errors.New("the ruleendpoint is not matching with what was expected")
 				}
 			}
 		}
 		if !exists {
-			return nil, errors.New("The requested ruleendpoint is not found")
+			return nil, errors.New("the requested ruleendpoint is not found")
 		}
 	}
 	return list.Items, nil

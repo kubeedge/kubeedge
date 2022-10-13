@@ -743,12 +743,12 @@ func GetDeviceModel(list *v1alpha2.DeviceModelList, getDeviceModelAPI string, ex
 				if !reflect.DeepEqual(expectedDeviceModel.TypeMeta, deviceModel.TypeMeta) ||
 					expectedDeviceModel.ObjectMeta.Namespace != deviceModel.ObjectMeta.Namespace ||
 					!reflect.DeepEqual(expectedDeviceModel.Spec, deviceModel.Spec) {
-					return nil, fmt.Errorf("The device model is not matching with what was expected")
+					return nil, fmt.Errorf("the device model is not matching with what was expected")
 				}
 			}
 		}
 		if !modelExists {
-			return nil, fmt.Errorf("The requested device model is not found")
+			return nil, fmt.Errorf("the requested device model is not found")
 		}
 	}
 	return list.Items, nil
@@ -781,7 +781,7 @@ func GetDevice(list *v1alpha2.DeviceList, getDeviceAPI string, expectedDevice *v
 					expectedDevice.ObjectMeta.Namespace != device.ObjectMeta.Namespace ||
 					!reflect.DeepEqual(expectedDevice.ObjectMeta.Labels, device.ObjectMeta.Labels) ||
 					!reflect.DeepEqual(expectedDevice.Spec, device.Spec) {
-					return nil, fmt.Errorf("The device is not matching with what was expected")
+					return nil, fmt.Errorf("the device is not matching with what was expected")
 				}
 				twinExists := false
 				for _, expectedTwin := range expectedDevice.Status.Twins {
@@ -800,7 +800,7 @@ func GetDevice(list *v1alpha2.DeviceList, getDeviceAPI string, expectedDevice *v
 			}
 		}
 		if !deviceExists {
-			return nil, fmt.Errorf("The requested device is not found")
+			return nil, fmt.Errorf("the requested device is not found")
 		}
 	}
 	return list.Items, nil
@@ -1009,7 +1009,7 @@ func SubscribeMqtt(topic string) (string, error) {
 		return result, nil
 	case <-t.C:
 		close(r)
-		return "", fmt.Errorf("Wait for MQTT message time out. ")
+		return "", fmt.Errorf("wait for MQTT message time out. ")
 	}
 }
 
