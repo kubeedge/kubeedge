@@ -34,6 +34,7 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
@@ -100,15 +101,13 @@ func isDeviceModelUpdated(oldTwin *v1alpha2.DeviceModel, newTwin *v1alpha2.Devic
 // deviceModelUpdated is function to process updated deviceModel
 func (dc *DownstreamController) deviceModelUpdated(deviceModel *v1alpha2.DeviceModel) {
 	value, ok := dc.deviceModelManager.DeviceModel.Load(deviceModel.Name)
-	dc.deviceModelManager.DeviceModel.Store(deviceModel.Name, deviceModel)
 	if ok {
 		cachedDeviceModel := value.(*v1alpha2.DeviceModel)
 		if isDeviceModelUpdated(cachedDeviceModel, deviceModel) {
 			dc.updateAllConfigMaps(deviceModel)
 		}
-	} else {
-		dc.deviceModelAdded(deviceModel)
 	}
+	dc.deviceModelAdded(deviceModel)
 }
 
 // updateAllConfigMaps is function to update configMaps which refer to an updated deviceModel
