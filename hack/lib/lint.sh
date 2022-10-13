@@ -53,7 +53,7 @@ kubeedge::lint::check() {
     cd ${KUBEEDGE_ROOT}
     echo "start lint ..."
     set +o pipefail
-    echo "check any whitenoise ..."
+    echo "check any white noise ..."
     # skip deleted files
     if [[ "$OSTYPE" == "darwin"* ]]
     then
