@@ -17,6 +17,7 @@ limitations under the License.
 package edge
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -24,6 +25,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	"k8s.io/klog/v2"
@@ -36,6 +38,10 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2/validation"
 	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
+)
+
+const (
+	systemdServiceTimeout = time.Minute * 5
 )
 
 var (
@@ -297,9 +303,15 @@ func runEdgeCore() error {
 	var binExec, tip string
 	if systemdExist {
 		tip = fmt.Sprintf("KubeEdge edgecore is running, For logs visit: journalctl -u %s.service -xe", common.EdgeCore)
-		binExec = fmt.Sprintf(
-			"sudo systemctl daemon-reload && sudo systemctl enable %s && sudo systemctl start %s",
-			common.EdgeCore, common.EdgeCore)
+
+		ctx, cancel := context.WithTimeout(context.Background(), systemdServiceTimeout)
+		defer cancel()
+
+		unitName := fmt.Sprintf("%s.service", common.EdgeCore)
+		err := util.EnableAndRunSystemdUnit(ctx, unitName, true)
+		if err != nil {
+			return err
+		}
 	} else {
 		tip = fmt.Sprintf("KubeEdge edgecore is running, For logs visit: %s%s.log", util.KubeEdgeLogPath, util.KubeEdgeBinaryName)
 		binExec = fmt.Sprintf(

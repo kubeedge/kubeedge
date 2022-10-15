@@ -19,6 +19,7 @@ package util
 import (
 	"archive/tar"
 	"compress/gzip"
+	"context"
 	"crypto/sha512"
 	"fmt"
 	"io"
@@ -31,6 +32,7 @@ import (
 	"strings"
 
 	"github.com/blang/semver"
+	"github.com/coreos/go-systemd/v22/dbus"
 	"github.com/spf13/pflag"
 	versionutil "k8s.io/apimachinery/pkg/util/version"
 	"k8s.io/apimachinery/pkg/version"
@@ -873,5 +875,62 @@ func downloadServiceFile(componentType types.ComponentType, version semver.Versi
 			fmt.Printf("[Run as service] service file already exisits in %s, skip download\n", ServiceFilePath)
 		}
 	}
+	return nil
+}
+
+// NewSystemdDbus creates a new system dbus connection to systemd
+func NewSystemdDbus(ctx context.Context) (*dbus.Conn, error) {
+	return dbus.NewSystemConnectionContext(ctx)
+}
+
+// EnableAndRunSystemdUnit provides a wrapper around creating a new systemd system dbus connection, reloading
+// the systemd daemon if reload is true, and enabling and starting the systemd unit.
+func EnableAndRunSystemdUnit(ctx context.Context, unit string, reload bool) error {
+	d, err := NewSystemdDbus(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer d.Close()
+
+	if reload {
+		err = d.ReloadContext(ctx)
+		if err != nil {
+			return err
+		}
+	}
+
+	enabled, _, err := d.EnableUnitFilesContext(ctx, []string{unit}, false, true)
+	if err != nil {
+		return err
+	}
+
+	if !enabled {
+		return fmt.Errorf("enable %s failed: %s", unit, err)
+	}
+
+	err = StartSystemdUnit(ctx, d, unit)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
+// StartSystemddUnit starts systemd unit (systemctl start unit)
+func StartSystemdUnit(ctx context.Context, d *dbus.Conn, unit string) error {
+	doneChan := make(chan string)
+	defer close(doneChan)
+
+	_, err := d.StartUnitContext(ctx, unit, "replace", doneChan)
+	if err != nil {
+		return err
+	}
+
+	result := <-doneChan
+	if result != "done" {
+		return fmt.Errorf("failed to start %s: %s", unit, result)
+	}
+
 	return nil
 }
