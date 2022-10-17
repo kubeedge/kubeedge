@@ -33,12 +33,12 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/session"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/application"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1"
 	reliableclient "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 	synclisters "github.com/kubeedge/kubeedge/pkg/client/listers/reliablesyncs/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/metaserver"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
@@ -364,7 +364,7 @@ func noAckRequired(msg *beehivemodel.Message) bool {
 		return true
 	case isVolumeOperation(msg.GetOperation()):
 		return true
-	case msg.Router.Operation == application.ApplicationResp:
+	case msg.Router.Operation == metaserver.ApplicationResp:
 		return true
 	case msg.GetGroup() == modules.UserGroup:
 		return true
@@ -433,7 +433,7 @@ func (md *messageDispatcher) DeleteNodeMessagePool(nodeID string, pool *common.N
 
 func (md *messageDispatcher) Publish(msg *beehivemodel.Message) error {
 	switch msg.Router.Source {
-	case application.MetaServerSource:
+	case metaserver.MetaServerSource:
 		beehivecontext.Send(modules.DynamicControllerModuleName, *msg)
 	case model.ResTwin:
 		beehivecontext.SendToGroup(modules.DeviceControllerModuleGroup, *msg)

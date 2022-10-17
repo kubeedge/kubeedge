@@ -19,7 +19,8 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/application"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/agent"
+	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
 	kefeatures "github.com/kubeedge/kubeedge/pkg/features"
@@ -30,7 +31,7 @@ import (
 // REST implements a RESTStorage for all resource against imitator.
 type REST struct {
 	*genericregistry.Store
-	*application.Agent
+	*agent.Agent
 }
 
 // NewREST returns a RESTStorage object that will work against all resources
@@ -62,7 +63,7 @@ func NewREST() (*REST, error) {
 	store.Storage.Storage = sqlite.New()
 	store.Storage.Codec = unstructured.UnstructuredJSONScheme
 
-	return &REST{store, application.NewApplicationAgent()}, nil
+	return &REST{store, agent.NewApplicationAgent(metaserverconfig.Config.NodeName)}, nil
 }
 
 // decorateList set list's gvk if it's gvk is empty
@@ -83,7 +84,7 @@ func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions)
 	path := info.Path
 	// try remote cloud
 	obj, err := func() (runtime.Object, error) {
-		app, err := r.Agent.Generate(ctx, application.Get, *options, nil)
+		app, err := r.Agent.Generate(ctx, metaserver.Get, *options, nil)
 		if err != nil {
 			klog.Errorf("[metaserver/reststorage] failed to generate application: %v", err)
 			return nil, err
@@ -119,7 +120,7 @@ func (r *REST) List(ctx context.Context, options *metainternalversion.ListOption
 	path := info.Path
 	// try remote cloud
 	list, err := func() (runtime.Object, error) {
-		app, err := r.Agent.Generate(ctx, application.List, *options, nil)
+		app, err := r.Agent.Generate(ctx, metaserver.List, *options, nil)
 		if err != nil {
 			klog.Errorf("[metaserver/reststorage] failed to generate application: %v", err)
 			return nil, err
@@ -159,7 +160,7 @@ func (r *REST) Watch(ctx context.Context, options *metainternalversion.ListOptio
 	path := info.Path
 	// try remote cloud
 	_, err := func() (runtime.Object, error) {
-		app, err := r.Agent.Generate(ctx, application.Watch, *options, nil)
+		app, err := r.Agent.Generate(ctx, metaserver.Watch, *options, nil)
 		if err != nil {
 			klog.Errorf("[metaserver/reststorage] failed to generate application: %v", err)
 			return nil, err
@@ -183,7 +184,7 @@ func (r *REST) Watch(ctx context.Context, options *metainternalversion.ListOptio
 
 func (r *REST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	obj, err := func() (runtime.Object, error) {
-		app, err := r.Agent.Generate(ctx, application.Create, *options, obj)
+		app, err := r.Agent.Generate(ctx, metaserver.Create, *options, obj)
 		if err != nil {
 			klog.Errorf("[metaserver/reststorage] failed to generate application: %v", err)
 			return nil, err
@@ -211,7 +212,7 @@ func (r *REST) Create(ctx context.Context, obj runtime.Object, createValidation 
 
 func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	key, _ := metaserver.KeyFuncReq(ctx, "")
-	app, err := r.Agent.Generate(ctx, application.Delete, options, nil)
+	app, err := r.Agent.Generate(ctx, metaserver.Delete, options, nil)
 	if err != nil {
 		klog.Errorf("[metaserver/reststorage] failed to generate application: %v", err)
 		return nil, false, err
@@ -233,11 +234,11 @@ func (r *REST) Update(ctx context.Context, name string, objInfo rest.UpdatedObje
 	}
 
 	reqInfo, _ := apirequest.RequestInfoFrom(ctx)
-	var app *application.Application
+	var app *metaserver.Application
 	if reqInfo.Subresource == "status" {
-		app, err = r.Agent.Generate(ctx, application.UpdateStatus, options, obj)
+		app, err = r.Agent.Generate(ctx, metaserver.UpdateStatus, options, obj)
 	} else {
-		app, err = r.Agent.Generate(ctx, application.Update, options, obj)
+		app, err = r.Agent.Generate(ctx, metaserver.Update, options, obj)
 	}
 	if err != nil {
 		klog.Errorf("[metaserver/reststorage] failed to generate application: %v", err)
@@ -254,8 +255,8 @@ func (r *REST) Update(ctx context.Context, name string, objInfo rest.UpdatedObje
 	return retObj, false, nil
 }
 
-func (r *REST) Patch(ctx context.Context, pi application.PatchInfo) (runtime.Object, error) {
-	app, err := r.Agent.Generate(ctx, application.Patch, pi, nil)
+func (r *REST) Patch(ctx context.Context, pi metaserver.PatchInfo) (runtime.Object, error) {
+	app, err := r.Agent.Generate(ctx, metaserver.Patch, pi, nil)
 	if err != nil {
 		klog.Errorf("[metaserver/reststorage] failed to generate application: %v", err)
 		return nil, err

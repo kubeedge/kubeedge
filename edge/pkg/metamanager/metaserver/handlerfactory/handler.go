@@ -21,10 +21,10 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/application"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/fakers"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/scope"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage"
+	"github.com/kubeedge/kubeedge/pkg/metaserver"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
@@ -164,7 +164,7 @@ func (f *Factory) Patch(reqInfo *request.RequestInfo) http.Handler {
 		options.TypeMeta.SetGroupVersionKind(metav1.SchemeGroupVersion.WithKind("PatchOptions"))
 
 		reqInfo, _ := request.RequestInfoFrom(req.Context())
-		pi := application.PatchInfo{
+		pi := metaserver.PatchInfo{
 			Name:         name,
 			PatchType:    patchType,
 			Data:         patchBytes,
