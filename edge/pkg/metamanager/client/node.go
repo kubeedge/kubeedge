@@ -73,7 +73,7 @@ func (c *nodes) Update(cm *api.Node) error {
 
 func (c *nodes) Patch(name string, data []byte) (*api.Node, error) {
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypeNodePatch, name)
-	nodeMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.PatchOperation, data)
+	nodeMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.PatchOperation, string(data))
 	resp, err := c.send.SendSync(nodeMsg)
 	if err != nil {
 		return nil, fmt.Errorf("update node failed, err: %v", err)

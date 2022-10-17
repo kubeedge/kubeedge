@@ -179,6 +179,10 @@ func (msg *Message) GetContentData() ([]byte, error) {
 		return data, nil
 	}
 
+	if data, ok := msg.Content.(string); ok {
+		return []byte(data), nil
+	}
+
 	data, err := json.Marshal(msg.Content)
 	if err != nil {
 		return nil, fmt.Errorf("marshal message content failed: %s", err)
