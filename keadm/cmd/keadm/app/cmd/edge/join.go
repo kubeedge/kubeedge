@@ -25,7 +25,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 	"k8s.io/klog/v2"
@@ -38,10 +37,6 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2/validation"
 	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
-)
-
-const (
-	systemdServiceTimeout = time.Minute * 5
 )
 
 var (
@@ -304,7 +299,7 @@ func runEdgeCore() error {
 	if systemdExist {
 		tip = fmt.Sprintf("KubeEdge edgecore is running, For logs visit: journalctl -u %s.service -xe", common.EdgeCore)
 
-		ctx, cancel := context.WithTimeout(context.Background(), systemdServiceTimeout)
+		ctx, cancel := context.WithTimeout(context.Background(), util.SystemdServiceTimeout)
 		defer cancel()
 
 		unitName := fmt.Sprintf("%s.service", common.EdgeCore)
