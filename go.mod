@@ -15,6 +15,7 @@ require (
 	github.com/docker/docker v20.10.2+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/eclipse/paho.mqtt.golang v1.2.0
+	github.com/edgefarm/vault-integration v0.2.0-beta.8
 	github.com/emicklei/go-restful v2.9.6+incompatible
 	github.com/evanphx/json-patch v4.11.0+incompatible
 	github.com/golang-jwt/jwt v3.2.2+incompatible
@@ -22,7 +23,6 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/websocket v1.4.2
-	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/kubeedge/beehive v0.0.0
 	github.com/kubeedge/viaduct v0.0.0
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1
@@ -55,7 +55,7 @@ require (
 	k8s.io/component-base v0.22.6
 	k8s.io/cri-api v0.22.6
 	k8s.io/csi-translation-lib v0.22.6 // indirect
-	k8s.io/klog/v2 v2.9.0
+	k8s.io/klog/v2 v2.40.1
 	k8s.io/kube-openapi v0.0.0-20211115234752-e816edb12b65
 	k8s.io/kube-scheduler v0.22.6 // indirect
 	k8s.io/kubelet v0.22.6

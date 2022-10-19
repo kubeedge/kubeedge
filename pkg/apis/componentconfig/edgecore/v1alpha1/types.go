@@ -242,7 +242,7 @@ type EdgeHub struct {
 	// Enable indicates whether EdgeHub is enabled,
 	// if set to false (for debugging etc.), skip checking other EdgeHub configs.
 	// default true
-	Enable bool `json:"enable"`
+	Enable bool `json:"enable,omitempty"`
 	// Heartbeat indicates heart beat (second)
 	// default 15
 	Heartbeat int32 `json:"heartbeat,omitempty"`
@@ -271,12 +271,42 @@ type EdgeHub struct {
 	// Optional if quic is configured
 	WebSocket *EdgeHubWebSocket `json:"websocket,omitempty"`
 	// Token indicates the priority of joining the cluster for the edge
-	Token string `json:"token"`
+	Token string `json:"token,omitempty"`
 	// HTTPServer indicates the server for edge to apply for the certificate.
 	HTTPServer string `json:"httpServer,omitempty"`
 	// RotateCertificates indicates whether edge certificate can be rotated
 	// default true
 	RotateCertificates bool `json:"rotateCertificates,omitempty"`
+	// Configuration for using an external Vault server for certificate generation
+	Vault *EdgeHubVault `json:"vault,omitempty"`
+}
+
+// EdgeHubVault indicates the vault config for EdgeHub module
+type EdgeHubVault struct {
+	// Enable vault integration
+	// default false
+	Enable bool `json:"enable,omitempty"`
+	// The tokenfile for hashicorp vault. This has to be generated externally and
+	// authenticates the edge node to vault
+	TokenFile string `json:"tokenFile,omitempty"`
+	// The role to use when requesting a new certificate. The role defines
+	// certificate parameters, e.g. max TTL etc.
+	Role string `json:"role,omitempty"`
+	// The authrole to use when authenticating to vault using service account
+	AuthRole string `json:"authRole,omitempty"`
+	// The X.509 common name to use when requesting the certificate. The vault server
+	// may impose restrictions, which legal names may be used.
+	CommonName string `json:"commonName,omitempty"`
+	// The address of the vault server
+	Address string `json:"address,omitempty"`
+	// ServerCA is the CA certificate used to verify the vault server connection
+	ServerCA string `json:"serverCA,omitempty"`
+	// PKI defines the configuration for the PKI backend. Defaults to "pki"
+	PKI string `json:"pki,omitempty"`
+	// The TTL for the requested certificate. The vault server may impose
+	// restrictions on the maximum TTL. The format is a duration string.
+	// Example: "2m", "24h", see https://pkg.go.dev/time#ParseDuration for supported values.
+	TTL string `json:"ttl,omitempty"`
 }
 
 // EdgeHubQUIC indicates the quic client config

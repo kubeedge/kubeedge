@@ -1,0 +1,37 @@
+@startuml
+
+participant Kubernetes as k8s
+box "Cloudhub Pod"
+participant "Cloud Hub" as cloudhub <<container>>
+participant "Vault Auth Side Car" as sidecar <<container>>
+end box
+participant Vault as vault
+
+
+== Setup and initialization ==
+create cloudhub
+k8s -> cloudhub : create
+
+create sidecar
+k8s -> sidecar : create
+
+sidecar -> vault : authenticate(serviceAccount)
+return token
+
+note right 
+the token must 
+be used as bearer tokenin all 
+subsequent requests in the 
+HTTP authorization header
+end note
+
+== Periodic Renewal ==
+
+sidecar -> vault : request client certificate
+return (x.509 certificate, private key)
+sidecar -> sidecar : store to shared folder
+
+cloudhub -> cloudhub : read certificate
+cloudhub -> cloudhub : start server(s) with TLS configuration
+
+@enduml

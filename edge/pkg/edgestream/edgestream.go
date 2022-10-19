@@ -79,15 +79,6 @@ func (e *edgestream) Start() {
 		klog.Exitf("Failed to find cert key pair")
 	}
 
-	cert, err := tls.LoadX509KeyPair(config.Config.TLSTunnelCertFile, config.Config.TLSTunnelPrivateKeyFile)
-	if err != nil {
-		klog.Exitf("Failed to load x509 key pair: %v", err)
-	}
-	tlsConfig := &tls.Config{
-		InsecureSkipVerify: true,
-		Certificates:       []tls.Certificate{cert},
-	}
-
 	ticker := time.NewTicker(time.Second * 2)
 	defer ticker.Stop()
 
@@ -96,7 +87,16 @@ func (e *edgestream) Start() {
 		case <-beehiveContext.Done():
 			return
 		case <-ticker.C:
-			err := e.TLSClientConnect(serverURL, tlsConfig)
+			cert, err := tls.LoadX509KeyPair(config.Config.TLSTunnelCertFile, config.Config.TLSTunnelPrivateKeyFile)
+			if err != nil {
+				klog.Errorf("Failed to load x509 key pair: %v", err)
+				continue
+			}
+			tlsConfig := &tls.Config{
+				InsecureSkipVerify: true,
+				Certificates:       []tls.Certificate{cert},
+			}
+			err = e.TLSClientConnect(serverURL, tlsConfig)
 			if err != nil {
 				klog.Errorf("TLSClientConnect error %v", err)
 			}

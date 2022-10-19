@@ -113,6 +113,9 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				}).String(),
 				Token:              "",
 				RotateCertificates: true,
+				Vault: &EdgeHubVault{
+					Enable: false,
+				},
 			},
 			EventBus: &EventBus{
 				Enable:               true,
@@ -218,6 +221,9 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 					Host:   net.JoinHostPort(localIP, "10002"),
 				}).String(),
 				Token: "",
+				Vault: &EdgeHubVault{
+					Enable: false,
+				},
 			},
 			EventBus: &EventBus{
 				MqttQOS:            0,

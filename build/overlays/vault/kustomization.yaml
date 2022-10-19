@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+bases:
+  - ../../cloud
+
+resources:
+  - ca-configmap.yaml
+  - cloudhub-configmap.yaml
+
+patches:
+  - patch.yaml
+
+configMapGenerator:
+  - name: certretrieval.config
+    namespace: kubeedge
+    files:
+      - certretrieval.config
+
+patchesJson6902:
+  - path: patch-volumes.json
+    target:
+      kind: Deployment
+      name: cloudcore
+      version: v1
+      group: apps
+      namespace: kubeedge

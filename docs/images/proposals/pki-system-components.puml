@@ -1,0 +1,27 @@
+@startuml
+
+package CloudEnvironment {
+    [Vault]
+    database "private keys" as keys
+    database certificates as certs
+    Vault --> certs
+    Vault --> keys
+
+    package CloudCore {
+        [CloudHub] as ch
+        ch ..> Vault : issue
+        ch ..> Vault : revoke
+        ch ..> Vault : validate
+    }
+    
+}
+
+package EdgeCore {
+    [EdgeHub] as eh
+    eh ..> Vault : issue cert
+    eh ..> Vault : authenticate
+    eh --> ch : "HTTP/S"
+}
+
+
+@enduml

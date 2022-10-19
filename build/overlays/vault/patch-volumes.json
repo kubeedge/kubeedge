@@ -1,0 +1,18 @@
+[
+    {
+        "op": "replace",
+        "path": "/spec/template/spec/volumes/3",
+        "value": {
+            "name": "certs",
+            "emptyDir": {}
+        }
+    },
+    {
+        "op": "replace",
+        "path": "/spec/template/spec/containers/0/volumeMounts/1",
+        "value": {
+            "name": "certs",
+            "mountPath": "/etc/kubeedge/certs"
+        }
+    }
+]
