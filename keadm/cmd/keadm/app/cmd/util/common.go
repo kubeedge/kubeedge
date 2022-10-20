@@ -1019,7 +1019,7 @@ func StopSystemdUnit(ctx context.Context, d *dbus.Conn, unit string) error {
 }
 
 func CheckServiceSystemd(serviceName string) error {
-	status, err := checkServiceStatus("enabled", serviceName)
+	status, err := checkServiceStatus("Active", serviceName)
 	if err != nil {
 		return err
 	}
