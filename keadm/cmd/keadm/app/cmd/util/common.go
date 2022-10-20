@@ -559,6 +559,10 @@ func IsKubeEdgeProcessRunning(proc string) (bool, error) {
 }
 
 func isEdgeCoreServiceRunning(serviceName string) (bool, error) {
+	return checkServiceStatus("Active", serviceName)
+}
+
+func checkServiceStatus(status, serviceName string) (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), SystemdServiceTimeout)
 	defer cancel()
 
@@ -569,15 +573,18 @@ func isEdgeCoreServiceRunning(serviceName string) (bool, error) {
 
 	defer d.Close()
 
-	files, err := d.ListUnitFilesByPatternsContext(ctx, []string{"enabled"}, []string{serviceName})
+	results, err := d.ListUnitsByPatternsContext(ctx, []string{status}, []string{serviceName})
 
-	if len(files) > 0 {
-		return true, nil
-	} else if len(files) == 0 {
-		return false, nil
+	for result := range results {
+		if results[result].ActiveState == status && results[result].Name == serviceName {
+			fmt.Printf("%s is %s\n", serviceName, status)
+			return true, nil
+		} else if results[result].ActiveState != status && results[result].Name == serviceName {
+			return false, fmt.Errorf("%s is not %s: %s", serviceName, status, results[result].LoadState)
+		}
 	}
-
 	return false, err
+
 }
 
 // HasSystemd checks if systemd exist.
@@ -913,7 +920,7 @@ func NewSystemdDbus(ctx context.Context) (*dbus.Conn, error) {
 }
 
 // DisableAndStopSystemdUnit provides a wrapper around removing a systemd system dbus connection, reloading
-// the systemd daemon if reload is true, and disabling and stoping the systemd unit.
+// the systemd daemon if reload is true, and disabling and stopping the systemd unit.
 func DisableAndStopSystemdUnit(ctx context.Context, unit string, reload bool) error {
 	d, err := NewSystemdDbus(ctx)
 	if err != nil {
@@ -1008,5 +1015,16 @@ func StopSystemdUnit(ctx context.Context, d *dbus.Conn, unit string) error {
 		return fmt.Errorf("failed to stop %s: %s", unit, result)
 	}
 
+	return nil
+}
+
+func CheckServiceSystemd(serviceName string) error {
+	status, err := checkServiceStatus("enabled", serviceName)
+	if err != nil {
+		return err
+	}
+	if !status {
+		return fmt.Errorf("%s not present", serviceName)
+	}
 	return nil
 }

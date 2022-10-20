@@ -347,27 +347,7 @@ func CheckHTTP(url string) error {
 
 func CheckRuntime(runtime string) error {
 	if runtime == common.DefaultRuntime {
-		ctx, cancel := context.WithTimeout(context.Background(), util.SystemdServiceTimeout)
-		defer cancel()
-
-		d, err := util.NewSystemdDbus(ctx)
-		if err != nil {
-			return err
-		}
-
-		results, err := d.ListUnitsByPatternsContext(ctx, []string{"Active"}, []string{"docker"})
-		if err != nil {
-			return err
-		}
-
-		for result := range results {
-			if results[result].ActiveState == "Active" && results[result].Name == "docker" {
-				fmt.Printf("docker is running\n")
-				return nil
-			} else if results[result].ActiveState != "Active" && results[result].Name == "docker" {
-				return fmt.Errorf("docker is not running: %s", results[result].LoadState)
-			}
-		}
+		return util.CheckServiceSystemd(runtime)
 	}
 	return fmt.Errorf("now only support docker: %s", runtime)
 	// TODO
