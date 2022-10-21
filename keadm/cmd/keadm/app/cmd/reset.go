@@ -18,17 +18,14 @@ package cmd
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"os"
 	"strings"
 
-	dockertypes "github.com/docker/docker/api/types"
-	dockerfilters "github.com/docker/docker/api/types/filters"
-	dockerclient "github.com/docker/docker/client"
 	"github.com/spf13/cobra"
 	phases "k8s.io/kubernetes/cmd/kubeadm/app/cmd/phases/reset"
 	utilruntime "k8s.io/kubernetes/cmd/kubeadm/app/util/runtime"
+	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
 	utilsexec "k8s.io/utils/exec"
 
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
@@ -54,6 +51,7 @@ keadm reset
 func newResetOptions() *common.ResetOptions {
 	opts := &common.ResetOptions{}
 	opts.Kubeconfig = common.DefaultKubeConfig
+	opts.RuntimeType = kubetypes.DockerContainerRuntime
 	return opts
 }
 
@@ -109,7 +107,7 @@ func NewKubeEdgeReset() *cobra.Command {
 			}
 
 			// cleanup mqtt container
-			if err := RemoveMqttContainer(); err != nil {
+			if err := RemoveMqttContainer(reset.RuntimeType, reset.Endpoint); err != nil {
 				fmt.Printf("Failed to remove MQTT container: %v\n", err)
 			}
 			//4. TODO: clean status information
@@ -122,34 +120,13 @@ func NewKubeEdgeReset() *cobra.Command {
 	return cmd
 }
 
-func RemoveMqttContainer() error {
-	ctx := context.Background()
-
-	cli, err := dockerclient.NewClientWithOpts(dockerclient.FromEnv)
+func RemoveMqttContainer(runtimeType string, endpoint string) error {
+	runtime, err := util.NewContainerRuntime(runtimeType, endpoint)
 	if err != nil {
-		return fmt.Errorf("init docker dockerclient failed: %v", err)
+		return fmt.Errorf("failed to new container runtime: %v", err)
 	}
 
-	options := dockertypes.ContainerListOptions{
-		All: true,
-	}
-	options.Filters = dockerfilters.NewArgs()
-	options.Filters.Add("ancestor", "eclipse-mosquitto:1.6.15")
-
-	mqttContainers, err := cli.ContainerList(ctx, options)
-	if err != nil {
-		fmt.Printf("List MQTT containers failed: %v\n", err)
-		return err
-	}
-
-	for _, c := range mqttContainers {
-		err = cli.ContainerRemove(ctx, c.ID, dockertypes.ContainerRemoveOptions{RemoveVolumes: true, Force: true})
-		if err != nil {
-			fmt.Printf("failed to remove MQTT container: %v\n", err)
-		}
-	}
-
-	return nil
+	return runtime.RemoveMQTT()
 }
 
 // TearDownKubeEdge will bring down either cloud or edge components,
@@ -222,4 +199,8 @@ func addResetFlags(cmd *cobra.Command, resetOpts *common.ResetOptions) {
 		"Use this key to set kube-config path, eg: $HOME/.kube/config")
 	cmd.Flags().BoolVar(&resetOpts.Force, "force", resetOpts.Force,
 		"Reset the node without prompting for confirmation")
+	cmd.Flags().StringVar(&resetOpts.RuntimeType, common.RuntimeType, resetOpts.RuntimeType,
+		"Use this key to set container runtime")
+	cmd.Flags().StringVar(&resetOpts.Endpoint, common.RemoteRuntimeEndpoint, resetOpts.Endpoint,
+		"Use this key to set container runtime endpoint")
 }
