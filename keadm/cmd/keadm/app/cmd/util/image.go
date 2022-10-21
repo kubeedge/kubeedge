@@ -266,7 +266,6 @@ func (runtime *CRIRuntime) CopyResources(edgeImage string, dirs map[string]strin
 		}
 	}()
 
-	copyCmd := copyResourcesCmd(dirs, files)
 	var mounts []*runtimeapi.Mount
 	for origin, bind := range dirs {
 		mounts = append(mounts, &runtimeapi.Mount{
@@ -287,16 +286,19 @@ func (runtime *CRIRuntime) CopyResources(edgeImage string, dirs map[string]strin
 		Image: &runtimeapi.ImageSpec{
 			Image: edgeImage,
 		},
+		// Keep the container running by passing in a command that never ends.
+		// so that we can ExecSync in the following operations,
+		// to ensure that we can copy files from container to host totally and correctly
 		Command: []string{
 			"/bin/sh",
 			"-c",
-			copyCmd,
+			"sleep infinity",
 		},
 		Mounts: mounts,
 	}
 	containerID, err := runtime.RuntimeService.CreateContainer(sandbox, containerConfig, psc)
 	if err != nil {
-		return err
+		return fmt.Errorf("create container failed: %v", err)
 	}
 	defer func() {
 		if err := runtime.RuntimeService.RemoveContainer(containerID); err != nil {
@@ -304,7 +306,23 @@ func (runtime *CRIRuntime) CopyResources(edgeImage string, dirs map[string]strin
 		}
 	}()
 
-	return runtime.RuntimeService.StartContainer(containerID)
+	err = runtime.RuntimeService.StartContainer(containerID)
+	if err != nil {
+		return fmt.Errorf("start container failed: %v", err)
+	}
+
+	copyCmd := copyResourcesCmd(dirs, files)
+	cmd := []string{
+		"/bin/sh",
+		"-c",
+		copyCmd,
+	}
+	stdout, stderr, err := runtime.RuntimeService.ExecSync(containerID, cmd, 30*time.Second)
+	if err != nil {
+		return fmt.Errorf("failed to exec copy cmd, err: %v, stderr: %s, stdout: %s", err, string(stderr), string(stdout))
+	}
+
+	return nil
 }
 
 func (runtime *CRIRuntime) RunMQTT(mqttImage string) error {
