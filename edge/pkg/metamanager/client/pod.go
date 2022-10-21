@@ -58,8 +58,7 @@ func (c *pods) Update(cm *corev1.Pod) error {
 
 func (c *pods) Delete(name string, options metav1.DeleteOptions) error {
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypePod, name)
-	podOpt, _ := json.Marshal(options)
-	podDeleteMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.DeleteOperation, podOpt)
+	podDeleteMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.DeleteOperation, options)
 	msg, err := c.send.SendSync(podDeleteMsg)
 	if err != nil {
 		return err
@@ -91,7 +90,7 @@ func (c *pods) Get(name string) (*corev1.Pod, error) {
 
 func (c *pods) Patch(name string, patchBytes []byte) (*corev1.Pod, error) {
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypePodPatch, name)
-	podMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.PatchOperation, patchBytes)
+	podMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.PatchOperation, string(patchBytes))
 	resp, err := c.send.SendSync(podMsg)
 	if err != nil {
 		return nil, fmt.Errorf("update pod failed, err: %v", err)

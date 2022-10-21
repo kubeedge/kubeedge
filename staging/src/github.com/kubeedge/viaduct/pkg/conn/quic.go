@@ -268,6 +268,9 @@ func (conn *QuicConnection) WriteMessageSync(msg *model.Message) (*model.Message
 		return nil, fmt.Errorf("bad connection session")
 	}
 
+	conn.locker.Lock()
+	defer conn.locker.Unlock()
+
 	stream, err := conn.streamManager.GetStream(api.UseTypeMessage, true, conn.openStreamSync)
 	if err != nil {
 		klog.Errorf("failed to acquire stream sync, error:%+v", err)
@@ -278,9 +281,7 @@ func (conn *QuicConnection) WriteMessageSync(msg *model.Message) (*model.Message
 	lane := lane.NewLane(api.ProtocolTypeQuic, stream)
 	_ = lane.SetWriteDeadline(conn.writeDeadline)
 	msg.Header.Sync = true
-	conn.locker.Lock()
 	err = lane.WriteMessage(msg)
-	conn.locker.Unlock()
 	if err != nil {
 		return nil, err
 	}
@@ -297,6 +298,9 @@ func (conn *QuicConnection) WriteMessageAsync(msg *model.Message) error {
 		return fmt.Errorf("bad connection session")
 	}
 
+	conn.locker.Lock()
+	defer conn.locker.Unlock()
+
 	stream, err := conn.streamManager.GetStream(api.UseTypeMessage, true, conn.openStreamSync)
 	if err != nil {
 		klog.Errorf("failed to acquire stream sync, error:%+v", err)
@@ -308,8 +312,6 @@ func (conn *QuicConnection) WriteMessageAsync(msg *model.Message) error {
 	_ = lane.SetWriteDeadline(conn.writeDeadline)
 	msg.Header.Sync = false
 
-	conn.locker.Lock()
-	defer conn.locker.Unlock()
 	return lane.WriteMessage(msg)
 }
 
