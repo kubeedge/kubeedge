@@ -9,7 +9,7 @@ metadata:
   annotations: {{- toYaml . | nindent 4 }}
   {{- end }}
   name: kubeedge-controller-manager
-  namespace: kubeedge
+  namespace: {{ .Release.Namespace }}
 spec:
   selector:
     {{- with .Values.controllerManager.labels }}
