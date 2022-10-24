@@ -61,6 +61,24 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/version"
 )
 
+// GetKubeletDeps returns a Dependencies suitable for lite kubelet being run.
+type GetKubeletDeps func(
+	s *kubeletoptions.KubeletServer,
+	featureGate featuregate.FeatureGate) (*kubelet.Dependencies, error)
+
+// RunLiteKubelet runs the specified lite kubelet with the given Dependencies.
+type RunLiteKubelet func(
+	ctx context.Context,
+	s *kubeletoptions.KubeletServer,
+	kubeDeps *kubelet.Dependencies,
+	featureGate featuregate.FeatureGate) error
+
+// DefaultKubeletDeps will only be changed when EdgeMark is enabled
+var DefaultKubeletDeps GetKubeletDeps = kubeletserver.UnsecuredDependencies
+
+// DefaultRunLiteKubelet will only be changed when EdgeMark is enabled
+var DefaultRunLiteKubelet RunLiteKubelet = kubeletserver.Run
+
 // edged is the main edged implementation.
 type edged struct {
 	enable      bool
@@ -102,7 +120,7 @@ func (e *edged) Start() {
 	klog.Info("Starting edged...")
 
 	go func() {
-		err := kubeletserver.Run(e.context, e.KuberServer, e.KubeletDeps, e.FeatureGate)
+		err := DefaultRunLiteKubelet(e.context, e.KuberServer, e.KubeletDeps, e.FeatureGate)
 		if err != nil {
 			klog.Errorf("Start edged failed, err: %v", err)
 			os.Exit(1)
@@ -137,7 +155,7 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 	}
 	nodestatus.KubeletVersion = fmt.Sprintf("%s-kubeedge-%s", constants.CurrentSupportK8sVersion, version.Get())
 	// use kubeletServer to construct the default KubeletDeps
-	kubeletDeps, err := kubeletserver.UnsecuredDependencies(&kubeletServer, utilfeature.DefaultFeatureGate)
+	kubeletDeps, err := DefaultKubeletDeps(&kubeletServer, utilfeature.DefaultFeatureGate)
 	if err != nil {
 		klog.ErrorS(err, "Failed to construct kubelet dependencies")
 		return nil, fmt.Errorf("failed to construct kubelet dependencies")
