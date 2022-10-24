@@ -142,21 +142,21 @@ func (r *Rest) Forward(target provider.Target, data interface{}) (interface{}, e
 		} else {
 			msg, ok := resp.(*model.Message)
 			if !ok {
-				klog.Error("response can not convert to Message")
+				klog.Error("response is not message type")
 				httpResponse.StatusCode = http.StatusInternalServerError
 				httpResponse.Body = io.NopCloser(strings.NewReader("invalid response"))
 				return httpResponse, nil
 			}
-			content, err := json.Marshal(msg.GetContent())
+			content, err := msg.GetContentData()
 			if err != nil {
-				klog.Error("message content can not convert to json")
+				klog.Errorf("get message %s data err: %v", msg.GetID(), err)
 				httpResponse.StatusCode = http.StatusInternalServerError
 				httpResponse.Body = io.NopCloser(strings.NewReader("invalid response"))
 				return httpResponse, nil
 			}
 			var response commonType.HTTPResponse
 			if err := json.Unmarshal(content, &response); err != nil {
-				klog.Error("message content can not convert to HTTPResponse")
+				klog.Errorf("message %s content can not convert to HTTPResponse: %v", msg.GetID(), err)
 				httpResponse.StatusCode = http.StatusInternalServerError
 				httpResponse.Body = io.NopCloser(strings.NewReader("invalid response"))
 				return httpResponse, nil
