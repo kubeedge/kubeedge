@@ -44,4 +44,5 @@ func ConvertConfigEdgedFlagToConfigKubeletFlag(in *v1alpha2.TailoredKubeletFlag,
 	out.RegisterNode = in.RegisterNode
 	out.RegisterSchedulable = in.RegisterSchedulable
 	out.RootDirectory = in.RootDirectory
+	out.NodeLabels = in.NodeLabels
 }
