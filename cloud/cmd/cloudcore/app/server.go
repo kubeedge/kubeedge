@@ -43,6 +43,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/monitor"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller"
@@ -87,6 +88,9 @@ kubernetes controller which manages devices so that the device metadata/status d
 			if err := features.DefaultMutableFeatureGate.SetFromMap(config.FeatureGates); err != nil {
 				klog.Exit(err)
 			}
+
+			// start monitor server
+			go monitor.ServeMonitor(config.CommonConfig.MonitorServer)
 
 			// To help debugging, immediately log version
 			klog.Infof("Version: %+v", version.Get())

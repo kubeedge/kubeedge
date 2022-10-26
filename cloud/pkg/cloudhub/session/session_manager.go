@@ -22,6 +22,8 @@ import (
 	"sync/atomic"
 
 	"k8s.io/klog/v2"
+
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/monitor"
 )
 
 type Manager struct {
@@ -57,7 +59,7 @@ func (sm *Manager) AddSession(session *NodeSession) {
 	}
 
 	sm.NodeSessions.Store(nodeID, session)
-	atomic.AddInt32(&sm.NodeNumber, 1)
+	monitor.ConnectedNodes.Set(float64(atomic.AddInt32(&sm.NodeNumber, 1)))
 }
 
 // DeleteSession delete the node session from session manager
@@ -75,7 +77,7 @@ func (sm *Manager) DeleteSession(session *NodeSession) {
 	}
 
 	sm.NodeSessions.Delete(session.nodeID)
-	atomic.AddInt32(&sm.NodeNumber, -1)
+	monitor.ConnectedNodes.Set(float64(atomic.AddInt32(&sm.NodeNumber, -1)))
 }
 
 // GetSession get the node session for the node
