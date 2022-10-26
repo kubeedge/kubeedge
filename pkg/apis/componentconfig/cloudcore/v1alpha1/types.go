@@ -42,6 +42,17 @@ type CloudCoreConfig struct {
 type CommonConfig struct {
 	// TunnelPort indicates the port that the cloudcore tunnel listened
 	TunnelPort int `json:"tunnelPort,omitempty"`
+	// Host indicates the host that metric listen on
+	Host string `json:"host,omitempty"`
+	// MetricPort indicates the port that metric server listen on
+	// default 9090
+	MetricPort int `json:"metricPort,omitempty"`
+	// MetricPatten indicates the patten of metric
+	// default "/metrics"
+	MetricPatten string `json:"metricPatten,omitempty"`
+	// HealthPatten indicates the patten of health check
+	// default "/health"
+	HealthPatten string `json:"healthPatten,omitempty"`
 }
 
 // KubeAPIConfig indicates the configuration for interacting with k8s server

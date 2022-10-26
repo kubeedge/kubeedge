@@ -37,6 +37,7 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/cmd/cloudcore/app/options"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/metric"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/httpserver"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/iptables"
@@ -113,6 +114,11 @@ kubernetes controller which manages devices so that the device metadata/status d
 				streamPort := int(config.Modules.CloudStream.StreamPort)
 				go iptables.NewIptablesManager(config.KubeAPIConfig, streamPort).Run(ctx)
 			}
+
+			// Metric Server
+			metric.Register(metric.MasterMetric, nil)
+			defer metric.UnregisterAll()
+			go metric.StartMetricServer(config.CommonConfig)
 
 			// Start all modules
 			core.StartModules()

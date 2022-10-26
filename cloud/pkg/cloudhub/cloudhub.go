@@ -11,6 +11,7 @@ import (
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/dispatcher"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/handler"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/metric"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/httpserver"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/udsserver"
@@ -106,6 +107,8 @@ func (ch *cloudHub) Start() {
 	go httpserver.StartHTTPServer()
 
 	servers.StartCloudHub(ch.messageHandler)
+
+	metric.RegisterMetricHandler(ch.messageHandler)
 
 	if hubconfig.Config.UnixSocket.Enable {
 		// The uds server is only used to communicate with csi driver from kubeedge on cloud.

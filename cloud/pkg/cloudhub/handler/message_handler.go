@@ -45,6 +45,9 @@ type Handler interface {
 
 	// OnReadTransportErr is invoked when the connection read message err
 	OnReadTransportErr(nodeID, projectID string)
+
+	// GetNodeNumber get current node number
+	GetNodeNumber() int32
 }
 
 func NewMessageHandler(
@@ -172,4 +175,8 @@ func (mh *messageHandler) OnReadTransportErr(nodeID, projectID string) {
 	}
 
 	nodeSession.Terminating()
+}
+
+func (mh *messageHandler) GetNodeNumber() int32 {
+	return mh.SessionManager.NodeNumber
 }

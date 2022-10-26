@@ -35,7 +35,10 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 			APIVersion: path.Join(GroupName, APIVersion),
 		},
 		CommonConfig: &CommonConfig{
-			TunnelPort: constants.ServerPort,
+			TunnelPort:   constants.ServerPort,
+			MetricPort:   constants.DefaultMetricPort,
+			MetricPatten: constants.DefaultMetricPatten,
+			HealthPatten: constants.DefaultHealthPatten,
 		},
 		KubeAPIConfig: &KubeAPIConfig{
 			ContentType: constants.DefaultKubeContentType,

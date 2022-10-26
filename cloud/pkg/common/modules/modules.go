@@ -27,9 +27,9 @@ const (
 
 	UserGroup = "user"
 
-	TunnelPort string = "tunnelport"
+	TunnelPort = "tunnelport"
 
-	TunnelPortRecordAnnotationKey string = "tunnelportrecord.kubeedge.io"
+	TunnelPortRecordAnnotationKey = "tunnelportrecord.kubeedge.io"
 
 	RouterSourceEventBus   = "router_eventbus"
 	RouterSourceServiceBus = "router_servicebus"

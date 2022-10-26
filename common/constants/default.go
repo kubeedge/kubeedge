@@ -158,6 +158,10 @@ const (
 	ServerAddress = "127.0.0.1"
 	ServerPort    = 10350
 
+	DefaultMetricPort   = 9090
+	DefaultMetricPatten = "/metrics"
+	DefaultHealthPatten = "/health"
+
 	// MessageSuccessfulContent is the successful content value of Message struct
 	MessageSuccessfulContent string = "OK"
 	DefaultQPS                      = 30
