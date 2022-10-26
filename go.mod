@@ -7,7 +7,6 @@ require (
 	github.com/armon/circbuf v0.0.0-20190214190532-5111143e8da2 // indirect
 	github.com/astaxie/beego v1.12.0
 	github.com/blang/semver v3.5.1+incompatible
-	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/container-storage-interface/spec v1.5.0
 	github.com/containerd/containerd v1.5.13 // indirect
 	github.com/distribution/distribution/v3 v3.0.0-20210804104954-38ab4c606ee3
@@ -18,11 +17,10 @@ require (
 	github.com/emicklei/go-restful v2.9.6+incompatible
 	github.com/evanphx/json-patch v4.11.0+incompatible
 	github.com/golang-jwt/jwt v3.2.2+incompatible
-	github.com/golang/mock v1.5.0
+	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.5.2
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/websocket v1.4.2
-	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/kubeedge/beehive v0.0.0
 	github.com/kubeedge/viaduct v0.0.0
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1

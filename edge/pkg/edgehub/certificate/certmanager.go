@@ -64,10 +64,10 @@ func NewCertManager(edgehub v1alpha2.EdgeHub, nodename string) CertManager {
 	certReq := &x509.CertificateRequest{
 		Subject: pkix.Name{
 			Country:      []string{"CN"},
-			Organization: []string{"kubeEdge"},
+			Organization: []string{"kubeedge.io:nodes"},
 			Locality:     []string{"Hangzhou"},
 			Province:     []string{"Zhejiang"},
-			CommonName:   "kubeedge.io",
+			CommonName:   constants.NodeUserNamePrefix + nodename,
 		},
 	}
 	return CertManager{

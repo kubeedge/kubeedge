@@ -11,6 +11,7 @@ import (
 
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/handler"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/filter"
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/server"
 )
@@ -46,6 +47,7 @@ func createTLSConfig(ca, cert, key []byte) tls.Config {
 		MinVersion:   tls.VersionTLS12,
 		// has to match cipher used by NewPrivateKey method, currently is ECDSA
 		CipherSuites: []uint16{tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256},
+		NextProtos:   []string{"http/1.1", "h2"},
 	}
 }
 
@@ -58,7 +60,7 @@ func startWebsocketServer(messageHandler handler.Handler) {
 		ConnNotify:         messageHandler.HandleConnection,
 		OnReadTransportErr: messageHandler.OnReadTransportErr,
 		Addr:               fmt.Sprintf("%s:%d", hubconfig.Config.WebSocket.Address, hubconfig.Config.WebSocket.Port),
-		ExOpts:             api.WSServerOption{Path: "/"},
+		ExOpts:             api.WSServerOption{Path: "/", Filter: filter.WsFilter},
 	}
 	klog.Infof("Starting cloudhub %s server", api.ProtocolTypeWS)
 	klog.Exit(svc.ListenAndServeTLS("", ""))
@@ -73,7 +75,10 @@ func startQuicServer(messageHandler handler.Handler) {
 		ConnNotify:         messageHandler.HandleConnection,
 		OnReadTransportErr: messageHandler.OnReadTransportErr,
 		Addr:               fmt.Sprintf("%s:%d", hubconfig.Config.Quic.Address, hubconfig.Config.Quic.Port),
-		ExOpts:             api.QuicServerOption{MaxIncomingStreams: int(hubconfig.Config.Quic.MaxIncomingStreams)},
+		ExOpts: api.QuicServerOption{
+			MaxIncomingStreams: hubconfig.Config.Quic.MaxIncomingStreams,
+			Filter:             filter.QuicFilter,
+		},
 	}
 
 	klog.Infof("Starting cloudhub %s server", api.ProtocolTypeQuic)

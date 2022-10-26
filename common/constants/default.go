@@ -41,6 +41,8 @@ const (
 	DefaultMqttCertFile = "/etc/kubeedge/certs/server.crt"
 	DefaultMqttKeyFile  = "/etc/kubeedge/certs/server.key"
 
+	NodeUserNamePrefix = "kubeedge.io:node:"
+
 	// Edged
 	DefaultKubeletConfig               = "/etc/kubeedge/config/kubeconfig"
 	DefaultDockerAddress               = "unix:///var/run/docker.sock"

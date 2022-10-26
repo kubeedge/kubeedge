@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -50,7 +51,7 @@ func (srv *QuicServer) serveTLS(quicConfig *quic.Config) error {
 	srv.listenerLock.Unlock()
 
 	for {
-		session, err := listener.Accept()
+		session, err := listener.Accept(context.Background())
 		if err != nil {
 			return err
 		}
@@ -61,7 +62,7 @@ func (srv *QuicServer) serveTLS(quicConfig *quic.Config) error {
 
 // accept control stream
 func (srv *QuicServer) acceptControlStream(session quic.Session) quic.Stream {
-	stream, err := session.AcceptStream()
+	stream, err := session.AcceptStream(context.Background())
 	if err != nil {
 		klog.Errorf("failed to accept stream, error:%+v", err)
 		return nil
@@ -70,7 +71,7 @@ func (srv *QuicServer) acceptControlStream(session quic.Session) quic.Stream {
 }
 
 // receive header from control lane
-func (srv *QuicServer) receiveHeader(lane lane.Lane) (http.Header, error) {
+func (srv *QuicServer) verifyHeader(session quic.Session, lane lane.Lane) (http.Header, error) {
 	var msg model.Message
 	// read control message
 	err := lane.ReadMessage(&msg)
@@ -79,21 +80,30 @@ func (srv *QuicServer) receiveHeader(lane lane.Lane) (http.Header, error) {
 		return nil, err
 	}
 
-	// process control message
-	result := comm.RespTypeAck
 	headers := make(http.Header)
 	err = json.Unmarshal(msg.GetContent().([]byte), &headers)
 	if err != nil {
 		klog.Errorf("failed to unmarshal header, error: %+v", err)
-		result = comm.RespTypeNack
+		return nil, fmt.Errorf("failed to unmarshal header, error: %+v", err)
 	}
-
+	// process control message
+	result := comm.ResponseContent{Type: comm.RespTypeAck}
+	var filterErr error
+	if srv.exOpts.Filter != nil {
+		if filterErr = srv.exOpts.Filter(session.ConnectionState().TLS.PeerCertificates, &headers); filterErr != nil {
+			result.Type = comm.RespTypeNack
+			result.Content = filterErr.Error()
+		}
+	}
 	// feedback the response
 	resp := msg.NewRespByMessage(&msg, result)
 	err = lane.WriteMessage(resp)
 	if err != nil {
 		klog.Errorf("failed to send response back, error:%+v", err)
 		return nil, err
+	}
+	if filterErr != nil {
+		return nil, filterErr
 	}
 	return headers, nil
 }
@@ -109,11 +119,11 @@ func (srv *QuicServer) handleSession(session quic.Session) {
 		klog.Error("failed to accept control stream")
 		return
 	}
-
 	ctrlLane := lane.NewLane(api.ProtocolTypeQuic, ctrlStream)
-	header, err := srv.receiveHeader(ctrlLane)
+	header, err := srv.verifyHeader(session, ctrlLane)
 	if err != nil {
-		klog.Errorf("failed to complete get header, error: %+v", err)
+		klog.Error("verify header error: %v", err)
+		return
 	}
 
 	conn := conn.NewConnection(&conn.ConnectionOptions{
@@ -148,9 +158,9 @@ func (srv *QuicServer) handleSession(session quic.Session) {
 
 func (srv *QuicServer) getQuicConfig() *quic.Config {
 	return &quic.Config{
-		HandshakeTimeout:   srv.options.HandshakeTimeout,
-		KeepAlive:          true,
-		MaxIncomingStreams: srv.exOpts.MaxIncomingStreams,
+		HandshakeIdleTimeout: srv.options.HandshakeTimeout,
+		KeepAlive:            true,
+		MaxIncomingStreams:   srv.exOpts.MaxIncomingStreams,
 	}
 }
 

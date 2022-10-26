@@ -152,7 +152,7 @@ type CloudHubQUIC struct {
 	Port uint32 `json:"port,omitempty"`
 	// MaxIncomingStreams set the max incoming stream for quic server
 	// default 10000
-	MaxIncomingStreams int32 `json:"maxIncomingStreams,omitempty"`
+	MaxIncomingStreams int64 `json:"maxIncomingStreams,omitempty"`
 }
 
 // CloudHubUnixSocket indicates the unix socket config

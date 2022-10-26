@@ -14,14 +14,14 @@ import (
 	"github.com/kubeedge/viaduct/pkg/lane"
 )
 
-// websocket protocol server
+// WSServer websocket protocol server
 type WSServer struct {
 	options Options
 	exOpts  api.WSServerOption
 	server  *http.Server
 }
 
-// http server logger filter
+// LoggerFilter http server logger filter
 type LoggerFilter struct{}
 
 func (f *LoggerFilter) Write(p []byte) (n int, err error) {
@@ -68,8 +68,8 @@ func (srv *WSServer) upgrade(w http.ResponseWriter, r *http.Request) *websocket.
 
 func (srv *WSServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if srv.exOpts.Filter != nil {
-		if filtered := srv.exOpts.Filter(w, req); filtered {
-			klog.Warning("failed to filter req")
+		if err := srv.exOpts.Filter(w, req); err != nil {
+			http.Error(w, err.Error(), http.StatusForbidden)
 			return
 		}
 	}

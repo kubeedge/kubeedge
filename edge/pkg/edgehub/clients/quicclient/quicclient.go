@@ -59,7 +59,8 @@ func (qcc *QuicClient) Init() error {
 	tlsConfig := &tls.Config{
 		RootCAs:            pool,
 		Certificates:       []tls.Certificate{cert},
-		InsecureSkipVerify: true,
+		InsecureSkipVerify: false,
+		NextProtos:         []string{"http/1.1", "h2"},
 	}
 
 	option := qclient.Options{
@@ -74,7 +75,7 @@ func (qcc *QuicClient) Init() error {
 	client := qclient.NewQuicClient(option, exOpts)
 	connection, err := client.Connect()
 	if err != nil {
-		klog.Errorf("Init quic connection failed %s", err.Error())
+		klog.Errorf("Init quic connection error: %s", err.Error())
 		return err
 	}
 	qcc.client = connection

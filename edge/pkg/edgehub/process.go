@@ -109,7 +109,7 @@ func (eh *EdgeHub) routeToEdge() {
 		}
 		message, err := eh.chClient.Receive()
 		if err != nil {
-			klog.Errorf("websocket read error: %v", err)
+			klog.Errorf("edgehub client read error: %v", err)
 			eh.reconnectChan <- struct{}{}
 			return
 		}

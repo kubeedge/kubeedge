@@ -1,6 +1,8 @@
 package client
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"sync"
 
@@ -14,7 +16,7 @@ import (
 	"github.com/kubeedge/viaduct/pkg/lane"
 )
 
-// the client based on quic
+// QuicClient the client based on quic
 type QuicClient struct {
 	options  Options
 	exOpts   api.QuicClientOption
@@ -22,7 +24,7 @@ type QuicClient struct {
 	laneLock sync.Mutex
 }
 
-// new a quic client instance
+// NewQuicClient new a quic client instance
 func NewQuicClient(opts Options, exOpts interface{}) *QuicClient {
 	extendOptions, ok := exOpts.(api.QuicClientOption)
 	if !ok {
@@ -39,7 +41,7 @@ func NewQuicClient(opts Options, exOpts interface{}) *QuicClient {
 // TODO: add additional options
 func (c *QuicClient) getQuicConfig() *quic.Config {
 	return &quic.Config{
-		HandshakeTimeout: c.options.HandshakeTimeout,
+		HandshakeIdleTimeout: c.options.HandshakeTimeout,
 		// keep the session by default
 		KeepAlive: true,
 	}
@@ -55,7 +57,7 @@ func (c *QuicClient) getControlLane(s quic.Session) error {
 		return nil
 	}
 
-	stream, err := s.OpenStreamSync()
+	stream, err := s.OpenStreamSync(context.Background())
 	if err != nil {
 		klog.Errorf("open control stream error(%+v)", err)
 		return fmt.Errorf("open control stream")
@@ -78,19 +80,32 @@ func (c *QuicClient) sendHeader() error {
 	}
 
 	// receive the response
-	// ignore the response
-	// TODO: check the response content
 	var response model.Message
 	err = c.ctrlLane.ReadMessage(&response)
 	if err != nil {
 		klog.Errorf("failed to read message, error: %+v", err)
 		return err
 	}
+	result, ok := response.GetContent().([]byte)
+	if !ok {
+		klog.Errorf("invalid header response content: %T", response.GetContent())
+		return fmt.Errorf("invalid header response content: %T", response.GetContent())
+	}
+	var resultRsp comm.ResponseContent
+	err = json.Unmarshal(result, &resultRsp)
+	if err != nil {
+		klog.Errorf("send header response unmarshal error: %v", err)
+		return fmt.Errorf("send header response unmarshal error: %v", err)
+	}
+	if resultRsp.Type == comm.RespTypeNack {
+		klog.Errorf("send header response error: %v", resultRsp)
+		return fmt.Errorf("send header response error: %v", resultRsp)
+	}
 	klog.Infof("get response: %+v", response)
 	return nil
 }
 
-// try to dial server and get connection interface for operations
+// Connect try to dial server and get connection interface for operations
 func (c *QuicClient) Connect() (conn.Connection, error) {
 	quicConfig := c.getQuicConfig()
 	session, err := quic.DialAddr(c.options.Addr, c.options.TLSConfig, quicConfig)
@@ -102,14 +117,21 @@ func (c *QuicClient) Connect() (conn.Connection, error) {
 	// get control lan
 	err = c.getControlLane(session)
 	if err != nil {
-		session.Close()
+		closeErr := session.CloseWithError(quic.ApplicationErrorCode(comm.StatusCodeNoError), "")
+		if closeErr != nil {
+			klog.Errorf("failed to close session, error:%+v", closeErr)
+		}
 		return nil, err
 	}
 
 	// send headers
 	err = c.sendHeader()
 	if err != nil {
-		klog.Warningf("failed to send headers, error: %+v", err)
+		closeErr := session.CloseWithError(quic.ApplicationErrorCode(comm.StatusCodeNoError), "")
+		if closeErr != nil {
+			klog.Errorf("failed to close session, error:%+v", closeErr)
+		}
+		return nil, err
 	}
 
 	klog.Info("connect remote peer successfully")

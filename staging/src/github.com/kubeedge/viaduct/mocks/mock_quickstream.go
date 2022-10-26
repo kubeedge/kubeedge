@@ -36,11 +36,10 @@ func (m *MockStream) EXPECT() *MockStreamMockRecorder {
 }
 
 // CancelRead mocks base method
-func (m *MockStream) CancelRead(arg0 quic_go.ErrorCode) error {
+func (m *MockStream) CancelRead(arg0 quic_go.StreamErrorCode) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CancelRead", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
+	m.ctrl.Call(m, "CancelRead", arg0)
+	return
 }
 
 // CancelRead indicates an expected call of CancelRead
@@ -50,11 +49,10 @@ func (mr *MockStreamMockRecorder) CancelRead(arg0 interface{}) *gomock.Call {
 }
 
 // CancelWrite mocks base method
-func (m *MockStream) CancelWrite(arg0 quic_go.ErrorCode) error {
+func (m *MockStream) CancelWrite(arg0 quic_go.StreamErrorCode) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CancelWrite", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
+	m.ctrl.Call(m, "CancelWrite", arg0)
+	return
 }
 
 // CancelWrite indicates an expected call of CancelWrite

@@ -340,6 +340,6 @@ func (conn *QuicConnection) LocalAddr() net.Addr {
 }
 
 func (conn *QuicConnection) ConnectionState() ConnectionState {
-	conn.state.PeerCertificates = conn.session.Sess.ConnectionState().PeerCertificates
+	conn.state.PeerCertificates = conn.session.Sess.ConnectionState().TLS.PeerCertificates
 	return *conn.state
 }

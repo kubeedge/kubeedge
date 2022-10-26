@@ -26,6 +26,11 @@ const (
 	// alpha: v1.12
 	// owner: @vincentgoat
 	RequireAuthorization featuregate.Feature = "requireAuthorization"
+	// NodeAttestation supports attest edge node via  node certificate common name (format as: kubeedge.io:node:{node_name})
+	// while node registering
+	// alpha: v1.12
+	// owner: @vincentgoat
+	NodeAttestation featuregate.Feature = "nodeAttestation"
 )
 
 // defaultFeatureGates consists of all known Kubeedge-specific feature keys.
@@ -33,4 +38,5 @@ const (
 // available throughout Kubeedge binaries.
 var defaultFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
 	RequireAuthorization: {Default: false, PreRelease: featuregate.Alpha},
+	NodeAttestation:      {Default: false, PreRelease: featuregate.Alpha},
 }
