@@ -47,6 +47,7 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 	in.EnableServer = utilpointer.BoolPtr(false)
 	in.Address = constants.ServerAddress
 	in.ReadOnlyPort = constants.ServerPort
+	in.ClusterDomain = constants.DefaultClusterDomain
 	configv1beta1.SetDefaults_KubeletConfiguration(&in)
 
 	return &EdgeCoreConfig{
@@ -194,6 +195,7 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 	in.EnableServer = utilpointer.BoolPtr(false)
 	in.Address = constants.ServerAddress
 	in.ReadOnlyPort = constants.ServerPort
+	in.ClusterDomain = constants.DefaultClusterDomain
 	configv1beta1.SetDefaults_KubeletConfiguration(&in)
 
 	return &EdgeCoreConfig{
