@@ -263,19 +263,16 @@ To start using your kubeedge, you can run:
 if [[ "${ENABLE_DAEMON}" = false ]]; then
   while true; do sleep 1; healthcheck; done
 else
+    set -x
+    echo $(date "+%Y-%m-%d %H:%M:%S")
+    set +x
     while true; do
         sleep 3
-        kubectl get nodes | grep edge-node && break
+        kubectl get nodes | grep edge-node | grep -q -w Ready && break
     done
     set -x
-    kubectl get node -owide
-    set +x
-    set -x
     echo $(date "+%Y-%m-%d %H:%M:%S")
     set +x
-    kubectl wait --for=condition=Ready node/edge-node --timeout=30s
-    set -x
-    echo $(date "+%Y-%m-%d %H:%M:%S")
-    set +x
+    
     kubectl label node edge-node disktype=test
 fi
