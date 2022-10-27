@@ -20,7 +20,7 @@ helm upgrade --install cloudcore ./cloudcore --namespace kubeedge --create-names
 - `cloudCore.modules.cloudHub.dnsNames`, defines the domain names which can be accessed by edge nodes.
 - `cloudCore.hostNetWork`, default `true`, which shares the host network, used for setting the forward iptables rules on the host.
 - `cloudCore.image.repository`, default `kubeedge`, defines the image repo.
-- `cloudCore.image.tag`, default `v1.9.1`, defines the image tag.
+- `cloudCore.image.tag`, default `v1.12.0`, defines the image tag.
 - `cloudCore.image.pullPolicy`, default `IfNotPresent`, defines the policies to pull images.
 - `cloudCore.image.pullSecrets`, defines the secrets to pull images.
 - `cloudCore.labels`, defines the labels.
@@ -46,7 +46,7 @@ helm upgrade --install cloudcore ./cloudcore --namespace kubeedge --create-names
 - `iptablesManager.enable`,  default `true`
 - `iptablesManager.mode`,  default `internal`, can be modified to `external`, the external mode will set up a iptables manager component which shares the host network. That mode can be enabled on version > v1.8.2. See pr https://github.com/kubeedge/kubeedge/pull/3265.
 - `iptablesManager.image.repository`, default `kubeedge`, defines the image repo.
-- `iptablesManager.image.tag`, default `v1.9.1`, defines the image tag.
+- `iptablesManager.image.tag`, default `v1.12.0`, defines the image tag.
 - `iptablesManager.image.pullPolicy`, default `IfNotPresent`, defines the policies to pull images.
 - `iptablesManager.image.pullSecrets`, defines the secrets to pull images.
 - `iptablesManager.labels`, defines the labels.
