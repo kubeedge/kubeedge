@@ -264,13 +264,18 @@ func buildBasicHandler(timeout time.Duration) http.Handler {
 			w.Write(marshalResult(sResp))
 			return
 		}
-		resp, ok := responseMessage.GetContent().(string)
-		if ok {
-			sResp.Code = http.StatusOK
-			sResp.Msg = "receive response from cloud successfully"
-			sResp.Body = resp
+		resp, err := responseMessage.GetContentData()
+		if err != nil {
+			sResp.Code = http.StatusInternalServerError
+			sResp.Msg = err.Error()
 			w.Write(marshalResult(sResp))
+			return
 		}
+
+		sResp.Code = http.StatusOK
+		sResp.Msg = "receive response from cloud successfully"
+		sResp.Body = string(resp)
+		w.Write(marshalResult(sResp))
 	})
 }
 

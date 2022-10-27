@@ -19,6 +19,7 @@ ENABLE_DAEMON=${ENABLE_DAEMON:-false}
 LOG_DIR=${LOG_DIR:-"/tmp"}
 LOG_LEVEL=${LOG_LEVEL:-2}
 TIMEOUT=${TIMEOUT:-60}s
+PROTOCOL=${PROTOCOL:-"WebSocket"}
 
 if [[ "${CLUSTER_NAME}x" == "x" ]];then
     CLUSTER_NAME="test"
@@ -104,6 +105,9 @@ function start_cloudcore {
   CLOUD_BIN=${KUBEEDGE_ROOT}/_output/local/bin/cloudcore
   ${CLOUD_BIN} --defaultconfig >  ${CLOUD_CONFIGFILE}
   sed -i '/cloudStream:/{n;s/false/true/;}' ${CLOUD_CONFIGFILE}
+  if [[ "${PROTOCOL}" = "QUIC" ]]; then
+    sed -i '/quic:/{n;N;s/false/true/;}' ${CLOUD_CONFIGFILE}
+  fi
   sed -i -e "s|kubeConfig: .*|kubeConfig: ${KUBECONFIG}|g" \
     -e "s|/var/lib/kubeedge/|/tmp&|g" \
     -e "s|/etc/|/tmp/etc/|g" \
@@ -126,6 +130,12 @@ function start_edgecore {
   ${EDGE_BIN} --defaultconfig >  ${EDGE_CONFIGFILE}
 
   sed -i '/edgeStream:/{n;s/false/true/;}' ${EDGE_CONFIGFILE}
+
+  if [[ "${PROTOCOL}" = "QUIC" ]]; then
+    sed -i '/quic:/{n;s/false/true/;}' ${EDGE_CONFIGFILE}
+    sed -i '/websocket:/{n;s/true/false/;}' ${EDGE_CONFIGFILE}
+  fi
+
   token=`kubectl get secret -nkubeedge tokensecret -o=jsonpath='{.data.tokendata}' | base64 -d`
 
   sed -i -e "s|token: .*|token: ${token}|g" \
