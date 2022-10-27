@@ -263,10 +263,10 @@ To start using your kubeedge, you can run:
 if [[ "${ENABLE_DAEMON}" = false ]]; then
   while true; do sleep 1; healthcheck; done
 else
-    # while true; do
-    #     sleep 3
-    #     kubectl get nodes | grep edge-node | grep -q -w Ready && break
-    # done
+    while true; do
+        sleep 3
+        kubectl get nodes | grep edge-node && break
+    done
     set -x
     kubectl get node -owide
     set +x
