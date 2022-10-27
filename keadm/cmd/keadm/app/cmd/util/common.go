@@ -507,10 +507,10 @@ func KillKubeEdgeBinary(proc string) error {
 		systemdExist := HasSystemd()
 
 		var serviceName string
-		if running, err := isEdgeCoreServiceRunning("edge"); err == nil && running {
+		if running, err := isServiceRunning("edge"); err == nil && running {
 			serviceName = "edge"
 		}
-		if running, err := isEdgeCoreServiceRunning("edgecore"); err == nil && running {
+		if running, err := isServiceRunning("edgecore"); err == nil && running {
 			serviceName = "edgecore"
 		}
 
@@ -558,7 +558,7 @@ func IsKubeEdgeProcessRunning(proc string) (bool, error) {
 	return false, err
 }
 
-func isEdgeCoreServiceEnabled(serviceName string) (bool, error) {
+func isServiceEnabled(serviceName string) (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), SystemdServiceTimeout)
 	defer cancel()
 
@@ -582,7 +582,7 @@ func isEdgeCoreServiceEnabled(serviceName string) (bool, error) {
 	return false, err
 }
 
-func isEdgeCoreServiceRunning(serviceName string) (bool, error) {
+func isServiceRunning(serviceName string) (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), SystemdServiceTimeout)
 	defer cancel()
 
@@ -1038,7 +1038,7 @@ func StopSystemdUnit(ctx context.Context, d *dbus.Conn, unit string) error {
 }
 
 func CheckServiceSystemd(serviceName string) error {
-	status, err := isEdgeCoreServiceRunning(serviceName)
+	status, err := isServiceEnabled(serviceName)
 	if err != nil {
 		return err
 	}
