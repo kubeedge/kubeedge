@@ -558,11 +558,7 @@ func IsKubeEdgeProcessRunning(proc string) (bool, error) {
 	return false, err
 }
 
-func isEdgeCoreServiceRunning(serviceName string) (bool, error) {
-	return checkServiceStatus("Active", serviceName)
-}
-
-func checkServiceStatus(status, serviceName string) (bool, error) {
+func isEdgeCoreServiceEnabled(serviceName string) (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), SystemdServiceTimeout)
 	defer cancel()
 
@@ -573,18 +569,41 @@ func checkServiceStatus(status, serviceName string) (bool, error) {
 
 	defer d.Close()
 
-	results, err := d.ListUnitsByPatternsContext(ctx, []string{status}, []string{serviceName})
+	results, err := d.ListUnitsByPatternsContext(ctx, []string{}, []string{serviceName})
 
 	for result := range results {
-		if results[result].ActiveState == status && results[result].Name == serviceName {
-			fmt.Printf("%s is %s\n", serviceName, status)
+		if results[result].LoadState == "loaded" && results[result].Name == serviceName {
+			fmt.Printf("%s is enabled\n", serviceName)
 			return true, nil
-		} else if results[result].ActiveState != status && results[result].Name == serviceName {
-			return false, fmt.Errorf("%s is not %s: %s", serviceName, status, results[result].LoadState)
+		} else if results[result].LoadState != "loaded" && results[result].Name == serviceName {
+			return false, fmt.Errorf("%s is not enabled: %s", serviceName, results[result].LoadState)
 		}
 	}
 	return false, err
+}
 
+func isEdgeCoreServiceRunning(serviceName string) (bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), SystemdServiceTimeout)
+	defer cancel()
+
+	d, err := NewSystemdDbus(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	defer d.Close()
+
+	results, err := d.ListUnitsByPatternsContext(ctx, []string{}, []string{serviceName})
+
+	for result := range results {
+		if results[result].SubState == "running" && results[result].Name == serviceName {
+			fmt.Printf("%s is running\n", serviceName)
+			return true, nil
+		} else if results[result].SubState != "running" || results[result].ActiveState == "active" && results[result].Name == serviceName {
+			return false, fmt.Errorf("%s is not running: %s", serviceName, results[result].LoadState)
+		}
+	}
+	return false, err
 }
 
 // HasSystemd checks if systemd exist.
@@ -982,7 +1001,7 @@ func EnableAndRunSystemdUnit(ctx context.Context, unit string, reload bool) erro
 	return err
 }
 
-// StartSystemddUnit starts systemd unit (systemctl start unit)
+// StartSystemdUnit starts systemd unit (systemctl start unit)
 func StartSystemdUnit(ctx context.Context, d *dbus.Conn, unit string) error {
 	doneChan := make(chan string)
 	defer close(doneChan)
@@ -1000,7 +1019,7 @@ func StartSystemdUnit(ctx context.Context, d *dbus.Conn, unit string) error {
 	return nil
 }
 
-// StopSystemddUnit stops systemd unit (systemctl stop unit)
+// StopSystemdUnit stops systemd unit (systemctl stop unit)
 func StopSystemdUnit(ctx context.Context, d *dbus.Conn, unit string) error {
 	doneChan := make(chan string)
 	defer close(doneChan)
@@ -1019,7 +1038,7 @@ func StopSystemdUnit(ctx context.Context, d *dbus.Conn, unit string) error {
 }
 
 func CheckServiceSystemd(serviceName string) error {
-	status, err := checkServiceStatus("Active", serviceName)
+	status, err := isEdgeCoreServiceRunning(serviceName)
 	if err != nil {
 		return err
 	}
