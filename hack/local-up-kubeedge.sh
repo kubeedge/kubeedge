@@ -270,6 +270,12 @@ else
     set -x
     kubectl get node -owide
     set +x
+    set -x
+    echo $(date "+%Y-%m-%d %H:%M:%S")
+    set +x
     kubectl wait --for=condition=Ready node/edge-node --timeout=30s
+    set -x
+    echo $(date "+%Y-%m-%d %H:%M:%S")
+    set +x
     kubectl label node edge-node disktype=test
 fi
