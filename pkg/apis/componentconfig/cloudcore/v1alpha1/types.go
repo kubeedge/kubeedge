@@ -220,12 +220,6 @@ type EdgeControllerBuffer struct {
 	// QuerySecret indicates the buffer of query secret
 	// default 1024
 	QuerySecret int32 `json:"querySecret,omitempty"`
-	// QueryService indicates the buffer of query service
-	// default 1024
-	QueryService int32 `json:"queryService,omitempty"`
-	// QueryEndpoints indicates the buffer of query endpoint
-	// default 1024
-	QueryEndpoints int32 `json:"queryEndpoints,omitempty"`
 	// PodEvent indicates the buffer of pod event
 	// default 1
 	PodEvent int32 `json:"podEvent,omitempty"`
@@ -235,12 +229,6 @@ type EdgeControllerBuffer struct {
 	// SecretEvent indicates the buffer of secret event
 	// default 1
 	SecretEvent int32 `json:"secretEvent,omitempty"`
-	// ServiceEvent indicates the buffer of service event
-	// default 1
-	ServiceEvent int32 `json:"serviceEvent,omitempty"`
-	// EndpointsEvent indicates the buffer of endpoint event
-	// default 1
-	EndpointsEvent int32 `json:"endpointsEvent,omitempty"`
 	// RulesEvent indicates the buffer of rule event
 	// default 1
 	RulesEvent int32 `json:"rulesEvent,omitempty"`
@@ -299,12 +287,6 @@ type EdgeControllerLoad struct {
 	// QuerySecretWorkers indicates the load of query secret workers
 	// default 4
 	QuerySecretWorkers int32 `json:"querySecretWorkers,omitempty"`
-	// QueryServiceWorkers indicates the load of query service workers
-	// default 4
-	QueryServiceWorkers int32 `json:"queryServiceWorkers,omitempty"`
-	// QueryEndpointsWorkers indicates the load of query endpoint workers
-	// default 4
-	QueryEndpointsWorkers int32 `json:"queryEndpointsWorkers,omitempty"`
 	// QueryPersistentVolumeWorkers indicates the load of query persistent volume workers
 	// default 4
 	QueryPersistentVolumeWorkers int32 `json:"queryPersistentVolumeWorkers,omitempty"`

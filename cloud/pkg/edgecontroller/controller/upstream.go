@@ -110,8 +110,6 @@ type UpstreamController struct {
 	secretChan                chan model.Message
 	serviceAccountTokenChan   chan model.Message
 	configMapChan             chan model.Message
-	serviceChan               chan model.Message
-	endpointsChan             chan model.Message
 	persistentVolumeChan      chan model.Message
 	persistentVolumeClaimChan chan model.Message
 	volumeAttachmentChan      chan model.Message
@@ -129,8 +127,6 @@ type UpstreamController struct {
 	podLister       corelisters.PodLister
 	configMapLister corelisters.ConfigMapLister
 	secretLister    corelisters.SecretLister
-	serviceLister   corelisters.ServiceLister
-	endpointLister  corelisters.EndpointsLister
 	nodeLister      corelisters.NodeLister
 	leaseLister     coordinationlisters.LeaseLister
 }
@@ -1353,8 +1349,6 @@ func NewUpstreamController(config *v1alpha1.EdgeController, factory k8sinformer.
 		config:       *config,
 	}
 	uc.nodeLister = factory.Core().V1().Nodes().Lister()
-	uc.endpointLister = factory.Core().V1().Endpoints().Lister()
-	uc.serviceLister = factory.Core().V1().Services().Lister()
 	uc.podLister = factory.Core().V1().Pods().Lister()
 	uc.configMapLister = factory.Core().V1().ConfigMaps().Lister()
 	uc.secretLister = factory.Core().V1().Secrets().Lister()
@@ -1365,8 +1359,6 @@ func NewUpstreamController(config *v1alpha1.EdgeController, factory k8sinformer.
 	uc.configMapChan = make(chan model.Message, config.Buffer.QueryConfigMap)
 	uc.secretChan = make(chan model.Message, config.Buffer.QuerySecret)
 	uc.serviceAccountTokenChan = make(chan model.Message, config.Buffer.ServiceAccountToken)
-	uc.serviceChan = make(chan model.Message, config.Buffer.QueryService)
-	uc.endpointsChan = make(chan model.Message, config.Buffer.QueryEndpoints)
 	uc.persistentVolumeChan = make(chan model.Message, config.Buffer.QueryPersistentVolume)
 	uc.persistentVolumeClaimChan = make(chan model.Message, config.Buffer.QueryPersistentVolumeClaim)
 	uc.volumeAttachmentChan = make(chan model.Message, config.Buffer.QueryVolumeAttachment)
