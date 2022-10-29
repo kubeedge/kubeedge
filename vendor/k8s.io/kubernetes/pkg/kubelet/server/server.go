@@ -167,9 +167,11 @@ func ListenAndServeKubeletServer(
 }
 
 // ListenAndServeKubeletReadOnlyServer initializes a server to respond to HTTP network requests on the Kubelet.
-func ListenAndServeKubeletReadOnlyServer(host HostInterface, resourceAnalyzer stats.ResourceAnalyzer, address net.IP, port uint) {
+func ListenAndServeKubeletReadOnlyServer(host HostInterface, resourceAnalyzer stats.ResourceAnalyzer, kubeCfg *kubeletconfiginternal.KubeletConfiguration) {
+	address := net.ParseIP(kubeCfg.Address)
+	port := uint(kubeCfg.ReadOnlyPort)
 	klog.InfoS("Starting to listen read-only", "address", address, "port", port)
-	s := NewServer(host, resourceAnalyzer, nil, nil)
+	s := NewServer(host, resourceAnalyzer, nil, kubeCfg)
 
 	server := &http.Server{
 		Addr:           net.JoinHostPort(address.String(), strconv.FormatUint(uint64(port), 10)),
