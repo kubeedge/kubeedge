@@ -108,9 +108,6 @@ func ValidateKubeletConfiguration(kc *kubeletconfig.KubeletConfiguration) error 
 	if kc.PodsPerCore < 0 {
 		allErrors = append(allErrors, fmt.Errorf("invalid configuration: podsPerCore (--pods-per-core) %v must not be a negative number", kc.PodsPerCore))
 	}
-	if utilvalidation.IsValidPortNum(int(kc.Port)) != nil {
-		allErrors = append(allErrors, fmt.Errorf("invalid configuration: port (--port) %v must be between 1 and 65535, inclusive", kc.Port))
-	}
 	if kc.ReadOnlyPort != 0 && utilvalidation.IsValidPortNum(int(kc.ReadOnlyPort)) != nil {
 		allErrors = append(allErrors, fmt.Errorf("invalid configuration: readOnlyPort (--read-only-port) %v must be between 0 and 65535, inclusive", kc.ReadOnlyPort))
 	}
