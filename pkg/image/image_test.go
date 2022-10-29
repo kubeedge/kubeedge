@@ -182,8 +182,18 @@ func TestSet_List(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.s.List(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Set.List() = %v, want %v", got, tt.want)
+			got := tt.s.List()
+			// we don't care about array sequence, so convert slice to map and compare it
+			gotMap := make(map[string]string)
+			for _, v := range got {
+				gotMap[v] = ""
+			}
+			wantMap := make(map[string]string)
+			for _, v := range tt.want {
+				wantMap[v] = ""
+			}
+			if !reflect.DeepEqual(gotMap, wantMap) {
+				t.Errorf("Set.List() = %v, but want %v", got, tt.want)
 			}
 		})
 	}
