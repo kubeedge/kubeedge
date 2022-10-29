@@ -25,7 +25,6 @@ import (
 	kubeletconfigv1beta1 "k8s.io/kubelet/config/v1beta1"
 
 	// TODO: Cut references to k8s.io/kubernetes, eventually there should be none from this package
-	"k8s.io/kubernetes/pkg/cluster/ports"
 	"k8s.io/kubernetes/pkg/kubelet/qos"
 	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
 	utilpointer "k8s.io/utils/pointer"
@@ -53,9 +52,6 @@ func addDefaultingFuncs(scheme *kruntime.Scheme) error {
 }
 
 func SetDefaults_KubeletConfiguration(obj *kubeletconfigv1beta1.KubeletConfiguration) {
-	if obj.EnableServer == nil {
-		obj.EnableServer = utilpointer.BoolPtr(true)
-	}
 	if obj.SyncFrequency == zeroDuration {
 		obj.SyncFrequency = metav1.Duration{Duration: 1 * time.Minute}
 	}
@@ -67,9 +63,6 @@ func SetDefaults_KubeletConfiguration(obj *kubeletconfigv1beta1.KubeletConfigura
 	}
 	if obj.Address == "" {
 		obj.Address = "0.0.0.0"
-	}
-	if obj.Port == 0 {
-		obj.Port = ports.KubeletPort
 	}
 	if obj.RegistryPullQPS == nil {
 		obj.RegistryPullQPS = utilpointer.Int32Ptr(5)
