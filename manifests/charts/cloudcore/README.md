@@ -54,6 +54,18 @@ helm upgrade --install cloudcore ./cloudcore --namespace kubeedge --create-names
 - `iptablesManager.affinity`, `iptablesManager.nodeSelector`, `iptablesManager.tolerations`, defines the node scheduling policies.
 - `iptablesManager.resources`, defines the resources limits and requests.
 
+### controllermanager
+
+- `controllermanager.enable`, default `false`
+- `controllermanager.image.repository`, default `kubeedge`, defines the image repo.
+- `controllermanager.image.tag`, default `v1.12.0`, defines the image tag.
+- `controllermanager.image.pullPolicy`, default `IfNotPresent`, defines the policies to pull images.
+- `controllermanager.image.pullSecrets`, defines the secrets to pull images.
+- `controllermanager.labels`, defines the labels.
+- `controllermanager.annotations`, defines the annotations.
+- `controllermanager.affinity`, `controllermanager.nodeSelector`, `controllermanager.tolerations`, defines the node scheduling policies.
+- `controllermanager.resources`, defines the resources limits and requests.
+
 ## Uninstall
 
 ```
