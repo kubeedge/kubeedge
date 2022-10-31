@@ -39,7 +39,7 @@ spec:
       containers:
       - name: iptables-manager
         command: ['iptables-manager']
-        image: {{ .Values.iptablesManager.image.repository }}:{{ .Values.iptablesManager.image.tag }}
+        image: {{ include "iptablesManager.image" . }}
         imagePullPolicy: {{ .Values.iptablesManager.image.pullPolicy }}
         {{- with .Values.iptablesManager.securityContext }}
         securityContext: {{ toYaml . | nindent 10 }}

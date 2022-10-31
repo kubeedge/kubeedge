@@ -40,7 +40,7 @@ spec:
       {{- end }}  
       containers:
       - name: cloudcore
-        image: {{ .Values.cloudCore.image.repository }}:{{ .Values.cloudCore.image.tag }}
+        image: {{ include "cloudCore.image" . }}
         imagePullPolicy: {{ .Values.cloudCore.image.pullPolicy }}
         ports:
         - containerPort: 10000

@@ -26,7 +26,7 @@ spec:
       {{- end }}
       containers:
         - name: controller-manager
-          image: {{ .Values.controllerManager.image.repository }}:{{ .Values.controllerManager.image.tag }}
+          image: {{ include "controllerManager.image" . }}
           imagePullPolicy: {{ .Values.controllerManager.image.pullPolicy }}
       restartPolicy: Always
       serviceAccountName: controller-manager

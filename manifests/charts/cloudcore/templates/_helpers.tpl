@@ -34,3 +34,45 @@ streamCA.crt: {{ $ca.Cert | b64enc }}
 stream.crt: {{ $cert.Cert | b64enc }}
 stream.key: {{ $cert.Key | b64enc }}
 {{- end -}}
+
+{{/*
+Return the proper image name
+{{ include "common.images.image" ( dict "imageRoot" .Values.path.to.the.image "global" $) }}
+*/}}
+{{- define "common.images.image" -}}
+{{- $registryName := .imageRoot.registry -}}
+{{- $repositoryName := .imageRoot.repository -}}
+{{- $separator := ":" -}}
+{{- $termination := .imageRoot.tag | toString -}}
+{{- if .global }}
+    {{- if .global.imageRegistry }}
+     {{- $registryName = .global.imageRegistry -}}
+    {{- end -}}
+{{- end -}}
+{{- if .imageRoot.digest }}
+    {{- $separator = "@" -}}
+    {{- $termination = .imageRoot.digest | toString -}}
+{{- end -}}
+{{- printf "%s/%s%s%s" $registryName $repositoryName $separator $termination -}}
+{{- end -}}
+
+{{/*
+Return the proper CloudCore image name
+*/}}
+{{- define "cloudCore.image" -}}
+{{ include "common.images.image" (dict "imageRoot" .Values.cloudCore.image "global" .Values.global) }}
+{{- end -}}
+
+{{/*
+Return the proper IptablesManager image name
+*/}}
+{{- define "iptablesManager.image" -}}
+{{ include "common.images.image" (dict "imageRoot" .Values.iptablesManager.image "global" .Values.global) }}
+{{- end -}}
+
+{{/*
+Return the proper controllerManager image name
+*/}}
+{{- define "controllerManager.image" -}}
+{{ include "common.images.image" (dict "imageRoot" .Values.controllerManager.image "global" .Values.global) }}
+{{- end -}}
