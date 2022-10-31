@@ -6,91 +6,91 @@ import (
 	"io"
 
 	"github.com/lucas-clemente/quic-go/internal/protocol"
-	"github.com/lucas-clemente/quic-go/internal/utils"
-	"github.com/lucas-clemente/quic-go/qerr"
+	"github.com/lucas-clemente/quic-go/quicvarint"
 )
 
 // A StreamFrame of QUIC
 type StreamFrame struct {
 	StreamID       protocol.StreamID
-	FinBit         bool
-	DataLenPresent bool
 	Offset         protocol.ByteCount
 	Data           []byte
+	Fin            bool
+	DataLenPresent bool
+
+	fromPool bool
 }
 
-// parseStreamFrame reads a STREAM frame
-func parseStreamFrame(r *bytes.Reader, version protocol.VersionNumber) (*StreamFrame, error) {
-	if !version.UsesIETFFrameFormat() {
-		return parseLegacyStreamFrame(r, version)
-	}
-
-	frame := &StreamFrame{}
-
+func parseStreamFrame(r *bytes.Reader, _ protocol.VersionNumber) (*StreamFrame, error) {
 	typeByte, err := r.ReadByte()
 	if err != nil {
 		return nil, err
 	}
 
-	frame.FinBit = typeByte&0x1 > 0
-	frame.DataLenPresent = typeByte&0x2 > 0
 	hasOffset := typeByte&0x4 > 0
+	fin := typeByte&0x1 > 0
+	hasDataLen := typeByte&0x2 > 0
 
-	streamID, err := utils.ReadVarInt(r)
+	streamID, err := quicvarint.Read(r)
 	if err != nil {
 		return nil, err
 	}
-	frame.StreamID = protocol.StreamID(streamID)
+	var offset uint64
 	if hasOffset {
-		offset, err := utils.ReadVarInt(r)
+		offset, err = quicvarint.Read(r)
 		if err != nil {
 			return nil, err
 		}
-		frame.Offset = protocol.ByteCount(offset)
 	}
 
 	var dataLen uint64
-	if frame.DataLenPresent {
+	if hasDataLen {
 		var err error
-		dataLen, err = utils.ReadVarInt(r)
+		dataLen, err = quicvarint.Read(r)
 		if err != nil {
 			return nil, err
-		}
-		// shortcut to prevent the unnecessary allocation of dataLen bytes
-		// if the dataLen is larger than the remaining length of the packet
-		// reading the packet contents would result in EOF when attempting to READ
-		if dataLen > uint64(r.Len()) {
-			return nil, io.EOF
 		}
 	} else {
 		// The rest of the packet is data
 		dataLen = uint64(r.Len())
 	}
+
+	var frame *StreamFrame
+	if dataLen < protocol.MinStreamFrameBufferSize {
+		frame = &StreamFrame{Data: make([]byte, dataLen)}
+	} else {
+		frame = GetStreamFrame()
+		// The STREAM frame can't be larger than the StreamFrame we obtained from the buffer,
+		// since those StreamFrames have a buffer length of the maximum packet size.
+		if dataLen > uint64(cap(frame.Data)) {
+			return nil, io.EOF
+		}
+		frame.Data = frame.Data[:dataLen]
+	}
+
+	frame.StreamID = protocol.StreamID(streamID)
+	frame.Offset = protocol.ByteCount(offset)
+	frame.Fin = fin
+	frame.DataLenPresent = hasDataLen
+
 	if dataLen != 0 {
-		frame.Data = make([]byte, dataLen)
 		if _, err := io.ReadFull(r, frame.Data); err != nil {
-			// this should never happen, since we already checked the dataLen earlier
 			return nil, err
 		}
 	}
 	if frame.Offset+frame.DataLen() > protocol.MaxByteCount {
-		return nil, qerr.Error(qerr.InvalidStreamData, "data overflows maximum offset")
+		return nil, errors.New("stream data overflows maximum offset")
 	}
 	return frame, nil
 }
 
 // Write writes a STREAM frame
 func (f *StreamFrame) Write(b *bytes.Buffer, version protocol.VersionNumber) error {
-	if !version.UsesIETFFrameFormat() {
-		return f.writeLegacy(b, version)
-	}
-
-	if len(f.Data) == 0 && !f.FinBit {
+	if len(f.Data) == 0 && !f.Fin {
 		return errors.New("StreamFrame: attempting to write empty frame without FIN")
 	}
 
-	typeByte := byte(0x10)
-	if f.FinBit {
+	typeByte := byte(0x8)
+	if f.Fin {
 		typeByte ^= 0x1
 	}
 	hasOffset := f.Offset != 0
@@ -101,12 +101,12 @@ func (f *StreamFrame) Write(b *bytes.Buffer, version protocol.VersionNumber) err
 		typeByte ^= 0x4
 	}
 	b.WriteByte(typeByte)
-	utils.WriteVarInt(b, uint64(f.StreamID))
+	quicvarint.Write(b, uint64(f.StreamID))
 	if hasOffset {
-		utils.WriteVarInt(b, uint64(f.Offset))
+		quicvarint.Write(b, uint64(f.Offset))
 	}
 	if f.DataLenPresent {
-		utils.WriteVarInt(b, uint64(f.DataLen()))
+		quicvarint.Write(b, uint64(f.DataLen()))
 	}
 	b.Write(f.Data)
 	return nil
@@ -114,29 +114,27 @@ func (f *StreamFrame) Write(b *bytes.Buffer, version protocol.VersionNumber) err
 
 // Length returns the total length of the STREAM frame
 func (f *StreamFrame) Length(version protocol.VersionNumber) protocol.ByteCount {
-	if !version.UsesIETFFrameFormat() {
-		return f.lengthLegacy(version)
-	}
-	length := 1 + utils.VarIntLen(uint64(f.StreamID))
+	length := 1 + quicvarint.Len(uint64(f.StreamID))
 	if f.Offset != 0 {
-		length += utils.VarIntLen(uint64(f.Offset))
+		length += quicvarint.Len(uint64(f.Offset))
 	}
 	if f.DataLenPresent {
-		length += utils.VarIntLen(uint64(f.DataLen()))
+		length += quicvarint.Len(uint64(f.DataLen()))
 	}
 	return length + f.DataLen()
+}
+
+// DataLen gives the length of data in bytes
+func (f *StreamFrame) DataLen() protocol.ByteCount {
+	return protocol.ByteCount(len(f.Data))
 }
 
 // MaxDataLen returns the maximum data length
 // If 0 is returned, writing will fail (a STREAM frame must contain at least 1 byte of data).
 func (f *StreamFrame) MaxDataLen(maxSize protocol.ByteCount, version protocol.VersionNumber) protocol.ByteCount {
-	if !version.UsesIETFFrameFormat() {
-		return f.maxDataLenLegacy(maxSize, version)
-	}
-
-	headerLen := 1 + utils.VarIntLen(uint64(f.StreamID))
+	headerLen := 1 + quicvarint.Len(uint64(f.StreamID))
 	if f.Offset != 0 {
-		headerLen += utils.VarIntLen(uint64(f.Offset))
+		headerLen += quicvarint.Len(uint64(f.Offset))
 	}
 	if f.DataLenPresent {
 		// pretend that the data size will be 1 bytes
@@ -147,33 +145,45 @@ func (f *StreamFrame) MaxDataLen(maxSize protocol.ByteCount, version protocol.Ve
 		return 0
 	}
 	maxDataLen := maxSize - headerLen
-	if f.DataLenPresent && utils.VarIntLen(uint64(maxDataLen)) != 1 {
+	if f.DataLenPresent && quicvarint.Len(uint64(maxDataLen)) != 1 {
 		maxDataLen--
 	}
 	return maxDataLen
 }
 
 // MaybeSplitOffFrame splits a frame such that it is not bigger than n bytes.
-// If n >= len(frame), nil is returned and nothing is modified.
-func (f *StreamFrame) MaybeSplitOffFrame(maxSize protocol.ByteCount, version protocol.VersionNumber) (*StreamFrame, error) {
+// It returns if the frame was actually split.
+// The frame might not be split if:
+// * the size is large enough to fit the whole frame
+// * the size is too small to fit even a 1-byte frame. In that case, the frame returned is nil.
+func (f *StreamFrame) MaybeSplitOffFrame(maxSize protocol.ByteCount, version protocol.VersionNumber) (*StreamFrame, bool /* was splitting required */) {
 	if maxSize >= f.Length(version) {
-		return nil, nil
+		return nil, false
 	}
 
 	n := f.MaxDataLen(maxSize, version)
 	if n == 0 {
-		return nil, errors.New("too small")
-	}
-	newFrame := &StreamFrame{
-		FinBit:         false,
-		StreamID:       f.StreamID,
-		Offset:         f.Offset,
-		Data:           f.Data[:n],
-		DataLenPresent: f.DataLenPresent,
+		return nil, true
 	}
 
-	f.Data = f.Data[n:]
+	new := GetStreamFrame()
+	new.StreamID = f.StreamID
+	new.Offset = f.Offset
+	new.Fin = false
+	new.DataLenPresent = f.DataLenPresent
+
+	// swap the data slices
+	new.Data, f.Data = f.Data, new.Data
+	new.fromPool, f.fromPool = f.fromPool, new.fromPool
+
+	f.Data = f.Data[:protocol.ByteCount(len(new.Data))-n]
+	copy(f.Data, new.Data[n:])
+	new.Data = new.Data[:n]
 	f.Offset += n
 
-	return newFrame, nil
+	return new, true
+}
+
+func (f *StreamFrame) PutBack() {
+	putStreamFrame(f)
 }

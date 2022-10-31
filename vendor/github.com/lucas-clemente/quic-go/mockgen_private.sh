@@ -1,28 +1,51 @@
 #!/bin/bash
 
-# Mockgen refuses to generate mocks private types.
-# This script copies the quic package to a temporary directory, and adds an public alias for the private type.
-# It then creates a mock for this public (alias) type.
-
-TEMP_DIR=$(mktemp -d)
-mkdir -p $TEMP_DIR/src/github.com/lucas-clemente/quic-go/
-
+DEST=$2
+PACKAGE=$3
+TMPFILE="mockgen_tmp.go"
 # uppercase the name of the interface
-INTERFACE_NAME="$(tr '[:lower:]' '[:upper:]' <<< ${4:0:1})${4:1}"
+ORIG_INTERFACE_NAME=$4
+INTERFACE_NAME="$(tr '[:lower:]' '[:upper:]' <<< ${ORIG_INTERFACE_NAME:0:1})${ORIG_INTERFACE_NAME:1}"
 
-# copy all .go files to a temporary directory
-rsync -r --exclude 'vendor' --include='*.go' --include '*/' --exclude '*'   $GOPATH/src/github.com/lucas-clemente/quic-go/ $TEMP_DIR/src/github.com/lucas-clemente/quic-go/
+# Gather all files that contain interface definitions.
+# These interfaces might be used as embedded interfaces,
+# so we need to pass them to mockgen as aux_files.
+AUX=()
+for f in *.go; do
+  if [[ -z ${f##*_test.go} ]]; then
+    # skip test files
+    continue;
+  fi
+  if $(egrep -qe "type (.*) interface" $f); then
+    AUX+=("github.com/lucas-clemente/quic-go=$f")
+  fi
+done
 
-# create a public alias for the interface, so that mockgen can process it
-echo -e "package $1\n" > $TEMP_DIR/src/github.com/lucas-clemente/quic-go/mockgen_interface.go
-echo "type $INTERFACE_NAME = $4" >> $TEMP_DIR/src/github.com/lucas-clemente/quic-go/mockgen_interface.go
+# Find the file that defines the interface we're mocking.
+for f in *.go; do
+  if [[ -z ${f##*_test.go} ]]; then
+    # skip test files
+    continue;
+  fi
+  INTERFACE=$(sed -n "/^type $ORIG_INTERFACE_NAME interface/,/^}/p" $f)
+  if [[ -n "$INTERFACE" ]]; then
+    SRC=$f
+    break
+  fi
+done
 
-export GOPATH="$TEMP_DIR:$GOPATH"
+if [[ -z "$INTERFACE" ]]; then
+  echo "Interface $ORIG_INTERFACE_NAME not found."
+  exit 1
+fi
 
-mockgen -package $1 -self_package $1 -destination $2 $3 $INTERFACE_NAME
+AUX_FILES=$(IFS=, ; echo "${AUX[*]}")
 
-# mockgen imports quic-go as 'import quic_go github.com/lucas_clemente/quic-go'
-sed -i '' 's/quic_go.//g' $2
-goimports -w $2
-
-rm -r "$TEMP_DIR"
+## create a public alias for the interface, so that mockgen can process it
+echo -e "package $1\n" > $TMPFILE
+echo "$INTERFACE" | sed "s/$ORIG_INTERFACE_NAME/$INTERFACE_NAME/" >> $TMPFILE
+goimports -w $TMPFILE
+mockgen -package $1 -self_package $3 -destination $DEST -source=$TMPFILE -aux_files $AUX_FILES
+goimports -w $DEST
+sed "s/$TMPFILE/$SRC/" "$DEST" > "$DEST.new" && mv "$DEST.new" "$DEST"
+rm "$TMPFILE"

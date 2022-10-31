@@ -5,114 +5,210 @@
 package quic
 
 import (
-	"fmt"
+	"context"
 	"sync"
 
 	"github.com/lucas-clemente/quic-go/internal/protocol"
 	"github.com/lucas-clemente/quic-go/internal/wire"
-	"github.com/lucas-clemente/quic-go/qerr"
 )
 
 type outgoingBidiStreamsMap struct {
 	mutex sync.RWMutex
-	cond  sync.Cond
 
-	streams map[protocol.StreamID]streamI
+	streams map[protocol.StreamNum]streamI
 
-	nextStream     protocol.StreamID // stream ID of the stream returned by OpenStream(Sync)
-	maxStream      protocol.StreamID // the maximum stream ID we're allowed to open
-	highestBlocked protocol.StreamID // the highest stream ID that we queued a STREAM_ID_BLOCKED frame for
+	openQueue      map[uint64]chan struct{}
+	lowestInQueue  uint64
+	highestInQueue uint64
 
-	newStream            func(protocol.StreamID) streamI
-	queueStreamIDBlocked func(*wire.StreamIDBlockedFrame)
+	nextStream  protocol.StreamNum // stream ID of the stream returned by OpenStream(Sync)
+	maxStream   protocol.StreamNum // the maximum stream ID we're allowed to open
+	blockedSent bool               // was a STREAMS_BLOCKED sent for the current maxStream
+
+	newStream            func(protocol.StreamNum) streamI
+	queueStreamIDBlocked func(*wire.StreamsBlockedFrame)
 
 	closeErr error
 }
 
 func newOutgoingBidiStreamsMap(
-	nextStream protocol.StreamID,
-	newStream func(protocol.StreamID) streamI,
+	newStream func(protocol.StreamNum) streamI,
 	queueControlFrame func(wire.Frame),
 ) *outgoingBidiStreamsMap {
-	m := &outgoingBidiStreamsMap{
-		streams:              make(map[protocol.StreamID]streamI),
-		nextStream:           nextStream,
+	return &outgoingBidiStreamsMap{
+		streams:              make(map[protocol.StreamNum]streamI),
+		openQueue:            make(map[uint64]chan struct{}),
+		maxStream:            protocol.InvalidStreamNum,
+		nextStream:           1,
 		newStream:            newStream,
-		queueStreamIDBlocked: func(f *wire.StreamIDBlockedFrame) { queueControlFrame(f) },
+		queueStreamIDBlocked: func(f *wire.StreamsBlockedFrame) { queueControlFrame(f) },
 	}
-	m.cond.L = &m.mutex
-	return m
 }
 
 func (m *outgoingBidiStreamsMap) OpenStream() (streamI, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	return m.openStreamImpl()
-}
-
-func (m *outgoingBidiStreamsMap) OpenStreamSync() (streamI, error) {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
-
-	for {
-		str, err := m.openStreamImpl()
-		if err == nil {
-			return str, err
-		}
-		if err != nil && err != qerr.TooManyOpenStreams {
-			return nil, err
-		}
-		m.cond.Wait()
-	}
-}
-
-func (m *outgoingBidiStreamsMap) openStreamImpl() (streamI, error) {
 	if m.closeErr != nil {
 		return nil, m.closeErr
 	}
-	if m.nextStream > m.maxStream {
-		if m.maxStream == 0 || m.highestBlocked < m.maxStream {
-			m.queueStreamIDBlocked(&wire.StreamIDBlockedFrame{StreamID: m.maxStream})
-			m.highestBlocked = m.maxStream
-		}
-		return nil, qerr.TooManyOpenStreams
+
+	// if there are OpenStreamSync calls waiting, return an error here
+	if len(m.openQueue) > 0 || m.nextStream > m.maxStream {
+		m.maybeSendBlockedFrame()
+		return nil, streamOpenErr{errTooManyOpenStreams}
 	}
-	s := m.newStream(m.nextStream)
-	m.streams[m.nextStream] = s
-	m.nextStream += 4
-	return s, nil
+	return m.openStream(), nil
 }
 
-func (m *outgoingBidiStreamsMap) GetStream(id protocol.StreamID) (streamI, error) {
-	m.mutex.RLock()
-	if id >= m.nextStream {
-		m.mutex.RUnlock()
-		return nil, qerr.Error(qerr.InvalidStreamID, fmt.Sprintf("peer attempted to open stream %d", id))
+func (m *outgoingBidiStreamsMap) OpenStreamSync(ctx context.Context) (streamI, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	if m.closeErr != nil {
+		return nil, m.closeErr
 	}
-	s := m.streams[id]
+
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	if len(m.openQueue) == 0 && m.nextStream <= m.maxStream {
+		return m.openStream(), nil
+	}
+
+	waitChan := make(chan struct{}, 1)
+	queuePos := m.highestInQueue
+	m.highestInQueue++
+	if len(m.openQueue) == 0 {
+		m.lowestInQueue = queuePos
+	}
+	m.openQueue[queuePos] = waitChan
+	m.maybeSendBlockedFrame()
+
+	for {
+		m.mutex.Unlock()
+		select {
+		case <-ctx.Done():
+			m.mutex.Lock()
+			delete(m.openQueue, queuePos)
+			return nil, ctx.Err()
+		case <-waitChan:
+		}
+		m.mutex.Lock()
+
+		if m.closeErr != nil {
+			return nil, m.closeErr
+		}
+		if m.nextStream > m.maxStream {
+			// no stream available. Continue waiting
+			continue
+		}
+		str := m.openStream()
+		delete(m.openQueue, queuePos)
+		m.lowestInQueue = queuePos + 1
+		m.unblockOpenSync()
+		return str, nil
+	}
+}
+
+func (m *outgoingBidiStreamsMap) openStream() streamI {
+	s := m.newStream(m.nextStream)
+	m.streams[m.nextStream] = s
+	m.nextStream++
+	return s
+}
+
+// maybeSendBlockedFrame queues a STREAMS_BLOCKED frame for the current stream offset,
+// if we haven't sent one for this offset yet
+func (m *outgoingBidiStreamsMap) maybeSendBlockedFrame() {
+	if m.blockedSent {
+		return
+	}
+
+	var streamNum protocol.StreamNum
+	if m.maxStream != protocol.InvalidStreamNum {
+		streamNum = m.maxStream
+	}
+	m.queueStreamIDBlocked(&wire.StreamsBlockedFrame{
+		Type:        protocol.StreamTypeBidi,
+		StreamLimit: streamNum,
+	})
+	m.blockedSent = true
+}
+
+func (m *outgoingBidiStreamsMap) GetStream(num protocol.StreamNum) (streamI, error) {
+	m.mutex.RLock()
+	if num >= m.nextStream {
+		m.mutex.RUnlock()
+		return nil, streamError{
+			message: "peer attempted to open stream %d",
+			nums:    []protocol.StreamNum{num},
+		}
+	}
+	s := m.streams[num]
 	m.mutex.RUnlock()
 	return s, nil
 }
 
-func (m *outgoingBidiStreamsMap) DeleteStream(id protocol.StreamID) error {
+func (m *outgoingBidiStreamsMap) DeleteStream(num protocol.StreamNum) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	if _, ok := m.streams[id]; !ok {
-		return fmt.Errorf("Tried to delete unknown stream %d", id)
+	if _, ok := m.streams[num]; !ok {
+		return streamError{
+			message: "tried to delete unknown outgoing stream %d",
+			nums:    []protocol.StreamNum{num},
+		}
 	}
-	delete(m.streams, id)
+	delete(m.streams, num)
 	return nil
 }
 
-func (m *outgoingBidiStreamsMap) SetMaxStream(id protocol.StreamID) {
+func (m *outgoingBidiStreamsMap) SetMaxStream(num protocol.StreamNum) {
 	m.mutex.Lock()
-	if id > m.maxStream {
-		m.maxStream = id
-		m.cond.Broadcast()
+	defer m.mutex.Unlock()
+
+	if num <= m.maxStream {
+		return
+	}
+	m.maxStream = num
+	m.blockedSent = false
+	if m.maxStream < m.nextStream-1+protocol.StreamNum(len(m.openQueue)) {
+		m.maybeSendBlockedFrame()
+	}
+	m.unblockOpenSync()
+}
+
+// UpdateSendWindow is called when the peer's transport parameters are received.
+// Only in the case of a 0-RTT handshake will we have open streams at this point.
+// We might need to update the send window, in case the server increased it.
+func (m *outgoingBidiStreamsMap) UpdateSendWindow(limit protocol.ByteCount) {
+	m.mutex.Lock()
+	for _, str := range m.streams {
+		str.updateSendWindow(limit)
 	}
 	m.mutex.Unlock()
+}
+
+// unblockOpenSync unblocks the next OpenStreamSync go-routine to open a new stream
+func (m *outgoingBidiStreamsMap) unblockOpenSync() {
+	if len(m.openQueue) == 0 {
+		return
+	}
+	for qp := m.lowestInQueue; qp <= m.highestInQueue; qp++ {
+		c, ok := m.openQueue[qp]
+		if !ok { // entry was deleted because the context was canceled
+			continue
+		}
+		// unblockOpenSync is called both from OpenStreamSync and from SetMaxStream.
+		// It's sufficient to only unblock OpenStreamSync once.
+		select {
+		case c <- struct{}{}:
+		default:
+		}
+		return
+	}
 }
 
 func (m *outgoingBidiStreamsMap) CloseWithError(err error) {
@@ -121,6 +217,10 @@ func (m *outgoingBidiStreamsMap) CloseWithError(err error) {
 	for _, str := range m.streams {
 		str.closeForShutdown(err)
 	}
-	m.cond.Broadcast()
+	for _, c := range m.openQueue {
+		if c != nil {
+			close(c)
+		}
+	}
 	m.mutex.Unlock()
 }

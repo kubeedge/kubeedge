@@ -12,7 +12,7 @@ type PathResponseFrame struct {
 	Data [8]byte
 }
 
-func parsePathResponseFrame(r *bytes.Reader, version protocol.VersionNumber) (*PathResponseFrame, error) {
+func parsePathResponseFrame(r *bytes.Reader, _ protocol.VersionNumber) (*PathResponseFrame, error) {
 	if _, err := r.ReadByte(); err != nil {
 		return nil, err
 	}
@@ -27,8 +27,7 @@ func parsePathResponseFrame(r *bytes.Reader, version protocol.VersionNumber) (*P
 }
 
 func (f *PathResponseFrame) Write(b *bytes.Buffer, _ protocol.VersionNumber) error {
-	typeByte := uint8(0x0f)
-	b.WriteByte(typeByte)
+	b.WriteByte(0x1b)
 	b.Write(f.Data[:])
 	return nil
 }

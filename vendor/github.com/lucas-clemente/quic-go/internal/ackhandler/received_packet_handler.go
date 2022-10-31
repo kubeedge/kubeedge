@@ -1,215 +1,136 @@
 package ackhandler
 
 import (
+	"fmt"
 	"time"
 
-	"github.com/lucas-clemente/quic-go/internal/congestion"
 	"github.com/lucas-clemente/quic-go/internal/protocol"
 	"github.com/lucas-clemente/quic-go/internal/utils"
 	"github.com/lucas-clemente/quic-go/internal/wire"
 )
 
 type receivedPacketHandler struct {
-	largestObserved             protocol.PacketNumber
-	ignoreBelow                 protocol.PacketNumber
-	largestObservedReceivedTime time.Time
+	sentPackets sentPacketTracker
 
-	packetHistory *receivedPacketHistory
+	initialPackets   *receivedPacketTracker
+	handshakePackets *receivedPacketTracker
+	appDataPackets   *receivedPacketTracker
 
-	ackSendDelay time.Duration
-	rttStats     *congestion.RTTStats
-
-	packetsReceivedSinceLastAck                int
-	retransmittablePacketsReceivedSinceLastAck int
-	ackQueued                                  bool
-	ackAlarm                                   time.Time
-	lastAck                                    *wire.AckFrame
-
-	logger utils.Logger
-
-	version protocol.VersionNumber
+	lowest1RTTPacket protocol.PacketNumber
 }
 
-const (
-	// maximum delay that can be applied to an ACK for a retransmittable packet
-	ackSendDelay = 25 * time.Millisecond
-	// initial maximum number of retransmittable packets received before sending an ack.
-	initialRetransmittablePacketsBeforeAck = 2
-	// number of retransmittable that an ACK is sent for
-	retransmittablePacketsBeforeAck = 10
-	// 1/5 RTT delay when doing ack decimation
-	ackDecimationDelay = 1.0 / 4
-	// 1/8 RTT delay when doing ack decimation
-	shortAckDecimationDelay = 1.0 / 8
-	// Minimum number of packets received before ack decimation is enabled.
-	// This intends to avoid the beginning of slow start, when CWNDs may be
-	// rapidly increasing.
-	minReceivedBeforeAckDecimation = 100
-	// Maximum number of packets to ack immediately after a missing packet for
-	// fast retransmission to kick in at the sender.  This limit is created to
-	// reduce the number of acks sent that have no benefit for fast retransmission.
-	// Set to the number of nacks needed for fast retransmit plus one for protection
-	// against an ack loss
-	maxPacketsAfterNewMissing = 4
-)
+var _ ReceivedPacketHandler = &receivedPacketHandler{}
 
-// NewReceivedPacketHandler creates a new receivedPacketHandler
-func NewReceivedPacketHandler(
-	rttStats *congestion.RTTStats,
+func newReceivedPacketHandler(
+	sentPackets sentPacketTracker,
+	rttStats *utils.RTTStats,
 	logger utils.Logger,
 	version protocol.VersionNumber,
 ) ReceivedPacketHandler {
 	return &receivedPacketHandler{
-		packetHistory: newReceivedPacketHistory(),
-		ackSendDelay:  ackSendDelay,
-		rttStats:      rttStats,
-		logger:        logger,
-		version:       version,
+		sentPackets:      sentPackets,
+		initialPackets:   newReceivedPacketTracker(rttStats, logger, version),
+		handshakePackets: newReceivedPacketTracker(rttStats, logger, version),
+		appDataPackets:   newReceivedPacketTracker(rttStats, logger, version),
+		lowest1RTTPacket: protocol.InvalidPacketNumber,
 	}
 }
 
-func (h *receivedPacketHandler) ReceivedPacket(packetNumber protocol.PacketNumber, rcvTime time.Time, shouldInstigateAck bool) error {
-	if packetNumber < h.ignoreBelow {
-		return nil
+func (h *receivedPacketHandler) ReceivedPacket(
+	pn protocol.PacketNumber,
+	ecn protocol.ECN,
+	encLevel protocol.EncryptionLevel,
+	rcvTime time.Time,
+	shouldInstigateAck bool,
+) error {
+	h.sentPackets.ReceivedPacket(encLevel)
+	switch encLevel {
+	case protocol.EncryptionInitial:
+		h.initialPackets.ReceivedPacket(pn, ecn, rcvTime, shouldInstigateAck)
+	case protocol.EncryptionHandshake:
+		h.handshakePackets.ReceivedPacket(pn, ecn, rcvTime, shouldInstigateAck)
+	case protocol.Encryption0RTT:
+		if h.lowest1RTTPacket != protocol.InvalidPacketNumber && pn > h.lowest1RTTPacket {
+			return fmt.Errorf("received packet number %d on a 0-RTT packet after receiving %d on a 1-RTT packet", pn, h.lowest1RTTPacket)
+		}
+		h.appDataPackets.ReceivedPacket(pn, ecn, rcvTime, shouldInstigateAck)
+	case protocol.Encryption1RTT:
+		if h.lowest1RTTPacket == protocol.InvalidPacketNumber || pn < h.lowest1RTTPacket {
+			h.lowest1RTTPacket = pn
+		}
+		h.appDataPackets.IgnoreBelow(h.sentPackets.GetLowestPacketNotConfirmedAcked())
+		h.appDataPackets.ReceivedPacket(pn, ecn, rcvTime, shouldInstigateAck)
+	default:
+		panic(fmt.Sprintf("received packet with unknown encryption level: %s", encLevel))
 	}
-
-	isMissing := h.isMissing(packetNumber)
-	if packetNumber > h.largestObserved {
-		h.largestObserved = packetNumber
-		h.largestObservedReceivedTime = rcvTime
-	}
-
-	if err := h.packetHistory.ReceivedPacket(packetNumber); err != nil {
-		return err
-	}
-	h.maybeQueueAck(packetNumber, rcvTime, shouldInstigateAck, isMissing)
 	return nil
 }
 
-// IgnoreBelow sets a lower limit for acking packets.
-// Packets with packet numbers smaller than p will not be acked.
-func (h *receivedPacketHandler) IgnoreBelow(p protocol.PacketNumber) {
-	if p <= h.ignoreBelow {
-		return
-	}
-	h.ignoreBelow = p
-	h.packetHistory.DeleteBelow(p)
-	if h.logger.Debug() {
-		h.logger.Debugf("\tIgnoring all packets below %#x.", p)
+func (h *receivedPacketHandler) DropPackets(encLevel protocol.EncryptionLevel) {
+	//nolint:exhaustive // 1-RTT packet number space is never dropped.
+	switch encLevel {
+	case protocol.EncryptionInitial:
+		h.initialPackets = nil
+	case protocol.EncryptionHandshake:
+		h.handshakePackets = nil
+	case protocol.Encryption0RTT:
+		// Nothing to do here.
+		// If we are rejecting 0-RTT, no 0-RTT packets will have been decrypted.
+	default:
+		panic(fmt.Sprintf("Cannot drop keys for encryption level %s", encLevel))
 	}
 }
 
-// isMissing says if a packet was reported missing in the last ACK.
-func (h *receivedPacketHandler) isMissing(p protocol.PacketNumber) bool {
-	if h.lastAck == nil || p < h.ignoreBelow {
-		return false
+func (h *receivedPacketHandler) GetAlarmTimeout() time.Time {
+	var initialAlarm, handshakeAlarm time.Time
+	if h.initialPackets != nil {
+		initialAlarm = h.initialPackets.GetAlarmTimeout()
 	}
-	return p < h.lastAck.LargestAcked() && !h.lastAck.AcksPacket(p)
+	if h.handshakePackets != nil {
+		handshakeAlarm = h.handshakePackets.GetAlarmTimeout()
+	}
+	oneRTTAlarm := h.appDataPackets.GetAlarmTimeout()
+	return utils.MinNonZeroTime(utils.MinNonZeroTime(initialAlarm, handshakeAlarm), oneRTTAlarm)
 }
 
-func (h *receivedPacketHandler) hasNewMissingPackets() bool {
-	if h.lastAck == nil {
-		return false
-	}
-	highestRange := h.packetHistory.GetHighestAckRange()
-	return highestRange.Smallest >= h.lastAck.LargestAcked() && highestRange.Len() <= maxPacketsAfterNewMissing
-}
-
-// maybeQueueAck queues an ACK, if necessary.
-// It is implemented analogously to Chrome's QuicConnection::MaybeQueueAck()
-// in ACK_DECIMATION_WITH_REORDERING mode.
-func (h *receivedPacketHandler) maybeQueueAck(packetNumber protocol.PacketNumber, rcvTime time.Time, shouldInstigateAck, wasMissing bool) {
-	h.packetsReceivedSinceLastAck++
-
-	// always ack the first packet
-	if h.lastAck == nil {
-		h.logger.Debugf("\tQueueing ACK because the first packet should be acknowledged.")
-		h.ackQueued = true
-		return
-	}
-
-	// Send an ACK if this packet was reported missing in an ACK sent before.
-	// Ack decimation with reordering relies on the timer to send an ACK, but if
-	// missing packets we reported in the previous ack, send an ACK immediately.
-	if wasMissing {
-		if h.logger.Debug() {
-			h.logger.Debugf("\tQueueing ACK because packet %#x was missing before.", packetNumber)
+func (h *receivedPacketHandler) GetAckFrame(encLevel protocol.EncryptionLevel, onlyIfQueued bool) *wire.AckFrame {
+	var ack *wire.AckFrame
+	//nolint:exhaustive // 0-RTT packets can't contain ACK frames.
+	switch encLevel {
+	case protocol.EncryptionInitial:
+		if h.initialPackets != nil {
+			ack = h.initialPackets.GetAckFrame(onlyIfQueued)
 		}
-		h.ackQueued = true
-	}
-
-	if !h.ackQueued && shouldInstigateAck {
-		h.retransmittablePacketsReceivedSinceLastAck++
-
-		if packetNumber > minReceivedBeforeAckDecimation {
-			// ack up to 10 packets at once
-			if h.retransmittablePacketsReceivedSinceLastAck >= retransmittablePacketsBeforeAck {
-				h.ackQueued = true
-				if h.logger.Debug() {
-					h.logger.Debugf("\tQueueing ACK because packet %d packets were received after the last ACK (using threshold: %d).", h.retransmittablePacketsReceivedSinceLastAck, retransmittablePacketsBeforeAck)
-				}
-			} else if h.ackAlarm.IsZero() {
-				// wait for the minimum of the ack decimation delay or the delayed ack time before sending an ack
-				ackDelay := utils.MinDuration(ackSendDelay, time.Duration(float64(h.rttStats.MinRTT())*float64(ackDecimationDelay)))
-				h.ackAlarm = rcvTime.Add(ackDelay)
-				if h.logger.Debug() {
-					h.logger.Debugf("\tSetting ACK timer to min(1/4 min-RTT, max ack delay): %s (%s from now)", ackDelay, time.Until(h.ackAlarm))
-				}
-			}
-		} else {
-			// send an ACK every 2 retransmittable packets
-			if h.retransmittablePacketsReceivedSinceLastAck >= initialRetransmittablePacketsBeforeAck {
-				if h.logger.Debug() {
-					h.logger.Debugf("\tQueueing ACK because packet %d packets were received after the last ACK (using initial threshold: %d).", h.retransmittablePacketsReceivedSinceLastAck, initialRetransmittablePacketsBeforeAck)
-				}
-				h.ackQueued = true
-			} else if h.ackAlarm.IsZero() {
-				if h.logger.Debug() {
-					h.logger.Debugf("\tSetting ACK timer to max ack delay: %s", ackSendDelay)
-				}
-				h.ackAlarm = rcvTime.Add(ackSendDelay)
-			}
+	case protocol.EncryptionHandshake:
+		if h.handshakePackets != nil {
+			ack = h.handshakePackets.GetAckFrame(onlyIfQueued)
 		}
-		// If there are new missing packets to report, set a short timer to send an ACK.
-		if h.hasNewMissingPackets() {
-			// wait the minimum of 1/8 min RTT and the existing ack time
-			ackDelay := time.Duration(float64(h.rttStats.MinRTT()) * float64(shortAckDecimationDelay))
-			ackTime := rcvTime.Add(ackDelay)
-			if h.ackAlarm.IsZero() || h.ackAlarm.After(ackTime) {
-				h.ackAlarm = ackTime
-				if h.logger.Debug() {
-					h.logger.Debugf("\tSetting ACK timer to 1/8 min-RTT: %s (%s from now)", ackDelay, time.Until(h.ackAlarm))
-				}
-			}
-		}
-	}
-
-	if h.ackQueued {
-		// cancel the ack alarm
-		h.ackAlarm = time.Time{}
-	}
-}
-
-func (h *receivedPacketHandler) GetAckFrame() *wire.AckFrame {
-	now := time.Now()
-	if !h.ackQueued && (h.ackAlarm.IsZero() || h.ackAlarm.After(now)) {
+	case protocol.Encryption1RTT:
+		// 0-RTT packets can't contain ACK frames
+		return h.appDataPackets.GetAckFrame(onlyIfQueued)
+	default:
 		return nil
 	}
-	if h.logger.Debug() && !h.ackQueued && !h.ackAlarm.IsZero() {
-		h.logger.Debugf("Sending ACK because the ACK timer expired.")
+	// For Initial and Handshake ACKs, the delay time is ignored by the receiver.
+	// Set it to 0 in order to save bytes.
+	if ack != nil {
+		ack.DelayTime = 0
 	}
-
-	ack := &wire.AckFrame{
-		AckRanges: h.packetHistory.GetAckRanges(),
-		DelayTime: now.Sub(h.largestObservedReceivedTime),
-	}
-
-	h.lastAck = ack
-	h.ackAlarm = time.Time{}
-	h.ackQueued = false
-	h.packetsReceivedSinceLastAck = 0
-	h.retransmittablePacketsReceivedSinceLastAck = 0
 	return ack
 }
 
-func (h *receivedPacketHandler) GetAlarmTimeout() time.Time { return h.ackAlarm }
+func (h *receivedPacketHandler) IsPotentiallyDuplicate(pn protocol.PacketNumber, encLevel protocol.EncryptionLevel) bool {
+	switch encLevel {
+	case protocol.EncryptionInitial:
+		if h.initialPackets != nil {
+			return h.initialPackets.IsPotentiallyDuplicate(pn)
+		}
+	case protocol.EncryptionHandshake:
+		if h.handshakePackets != nil {
+			return h.handshakePackets.IsPotentiallyDuplicate(pn)
+		}
+	case protocol.Encryption0RTT, protocol.Encryption1RTT:
+		return h.appDataPackets.IsPotentiallyDuplicate(pn)
+	}
+	panic("unexpected encryption level")
+}

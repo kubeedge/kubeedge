@@ -10,12 +10,12 @@ const (
 	SendNone SendMode = iota
 	// SendAck means an ACK-only packet should be sent
 	SendAck
-	// SendRetransmission means that retransmissions should be sent
-	SendRetransmission
-	// SendRTO means that an RTO probe packet should be sent
-	SendRTO
-	// SendTLP means that a TLP probe packet should be sent
-	SendTLP
+	// SendPTOInitial means that an Initial probe packet should be sent
+	SendPTOInitial
+	// SendPTOHandshake means that a Handshake probe packet should be sent
+	SendPTOHandshake
+	// SendPTOAppData means that an Application data probe packet should be sent
+	SendPTOAppData
 	// SendAny means that any packet should be sent
 	SendAny
 )
@@ -26,12 +26,12 @@ func (s SendMode) String() string {
 		return "none"
 	case SendAck:
 		return "ack"
-	case SendRetransmission:
-		return "retransmission"
-	case SendRTO:
-		return "rto"
-	case SendTLP:
-		return "tlp"
+	case SendPTOInitial:
+		return "pto (Initial)"
+	case SendPTOHandshake:
+		return "pto (Handshake)"
+	case SendPTOAppData:
+		return "pto (Application Data)"
 	case SendAny:
 		return "any"
 	default:

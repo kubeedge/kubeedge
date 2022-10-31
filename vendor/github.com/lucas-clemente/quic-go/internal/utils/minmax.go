@@ -106,6 +106,17 @@ func MinDuration(a, b time.Duration) time.Duration {
 	return a
 }
 
+// MinNonZeroDuration return the minimum duration that's not zero.
+func MinNonZeroDuration(a, b time.Duration) time.Duration {
+	if a == 0 {
+		return b
+	}
+	if b == 0 {
+		return a
+	}
+	return MinDuration(a, b)
+}
+
 // AbsDuration returns the absolute value of a time duration
 func AbsDuration(d time.Duration) time.Duration {
 	if d >= 0 {
@@ -120,6 +131,18 @@ func MinTime(a, b time.Time) time.Time {
 		return b
 	}
 	return a
+}
+
+// MinNonZeroTime returns the earlist time that is not time.Time{}
+// If both a and b are time.Time{}, it returns time.Time{}
+func MinNonZeroTime(a, b time.Time) time.Time {
+	if a.IsZero() {
+		return b
+	}
+	if b.IsZero() {
+		return a
+	}
+	return MinTime(a, b)
 }
 
 // MaxTime returns the later time

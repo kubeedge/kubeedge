@@ -18,103 +18,44 @@ const (
 
 // The version numbers, making grepping easier
 const (
-	Version39       VersionNumber = gquicVersion0 + 3*0x100 + 0x9
-	Version43       VersionNumber = gquicVersion0 + 4*0x100 + 0x3
-	Version44       VersionNumber = gquicVersion0 + 4*0x100 + 0x4
-	VersionTLS      VersionNumber = 101
-	VersionWhatever VersionNumber = 0 // for when the version doesn't matter
+	VersionTLS      VersionNumber = 0x1
+	VersionWhatever VersionNumber = math.MaxUint32 - 1 // for when the version doesn't matter
 	VersionUnknown  VersionNumber = math.MaxUint32
+	VersionDraft29  VersionNumber = 0xff00001d
+	Version1        VersionNumber = 0x1
 )
 
 // SupportedVersions lists the versions that the server supports
 // must be in sorted descending order
-var SupportedVersions = []VersionNumber{
-	Version44,
-	Version43,
-	Version39,
-}
+var SupportedVersions = []VersionNumber{Version1, VersionDraft29}
 
 // IsValidVersion says if the version is known to quic-go
 func IsValidVersion(v VersionNumber) bool {
 	return v == VersionTLS || IsSupportedVersion(SupportedVersions, v)
 }
 
-// UsesTLS says if this QUIC version uses TLS 1.3 for the handshake
-func (vn VersionNumber) UsesTLS() bool {
-	return !vn.isGQUIC()
-}
-
 func (vn VersionNumber) String() string {
+	// For releases, VersionTLS will be set to a draft version.
+	// A switch statement can't contain duplicate cases.
+	if vn == VersionTLS && VersionTLS != VersionDraft29 && VersionTLS != Version1 {
+		return "TLS dev version (WIP)"
+	}
+	//nolint:exhaustive
 	switch vn {
 	case VersionWhatever:
 		return "whatever"
 	case VersionUnknown:
 		return "unknown"
-	case VersionTLS:
-		return "TLS dev version (WIP)"
+	case VersionDraft29:
+		return "draft-29"
+	case Version1:
+		return "v1"
 	default:
 		if vn.isGQUIC() {
 			return fmt.Sprintf("gQUIC %d", vn.toGQUICVersion())
 		}
 		return fmt.Sprintf("%#x", uint32(vn))
 	}
-}
-
-// ToAltSvc returns the representation of the version for the H2 Alt-Svc parameters
-func (vn VersionNumber) ToAltSvc() string {
-	if vn.isGQUIC() {
-		return fmt.Sprintf("%d", vn.toGQUICVersion())
-	}
-	return fmt.Sprintf("%d", vn)
-}
-
-// CryptoStreamID gets the Stream ID of the crypto stream
-func (vn VersionNumber) CryptoStreamID() StreamID {
-	if vn.isGQUIC() {
-		return 1
-	}
-	return 0
-}
-
-// UsesIETFFrameFormat tells if this version uses the IETF frame format
-func (vn VersionNumber) UsesIETFFrameFormat() bool {
-	return !vn.isGQUIC()
-}
-
-// UsesIETFHeaderFormat tells if this version uses the IETF header format
-func (vn VersionNumber) UsesIETFHeaderFormat() bool {
-	return !vn.isGQUIC() || vn >= Version44
-}
-
-// UsesLengthInHeader tells if this version uses the Length field in the IETF header
-func (vn VersionNumber) UsesLengthInHeader() bool {
-	return !vn.isGQUIC()
-}
-
-// UsesTokenInHeader tells if this version uses the Token field in the IETF header
-func (vn VersionNumber) UsesTokenInHeader() bool {
-	return !vn.isGQUIC()
-}
-
-// UsesStopWaitingFrames tells if this version uses STOP_WAITING frames
-func (vn VersionNumber) UsesStopWaitingFrames() bool {
-	return vn.isGQUIC() && vn <= Version43
-}
-
-// UsesVarintPacketNumbers tells if this version uses 7/14/30 bit packet numbers
-func (vn VersionNumber) UsesVarintPacketNumbers() bool {
-	return !vn.isGQUIC()
-}
-
-// StreamContributesToConnectionFlowControl says if a stream contributes to connection-level flow control
-func (vn VersionNumber) StreamContributesToConnectionFlowControl(id StreamID) bool {
-	if id == vn.CryptoStreamID() {
-		return false
-	}
-	if vn.isGQUIC() && id == 3 {
-		return false
-	}
-	return true
 }
 
 func (vn VersionNumber) isGQUIC() bool {
@@ -167,15 +108,4 @@ func GetGreasedVersions(supported []VersionNumber) []VersionNumber {
 	greased[randPos] = generateReservedVersion()
 	copy(greased[randPos+1:], supported[randPos:])
 	return greased
-}
-
-// StripGreasedVersions strips all greased versions from a slice of versions
-func StripGreasedVersions(versions []VersionNumber) []VersionNumber {
-	realVersions := make([]VersionNumber, 0, len(versions))
-	for _, v := range versions {
-		if v&0x0f0f0f0f != 0x0a0a0a0a {
-			realVersions = append(realVersions, v)
-		}
-	}
-	return realVersions
 }

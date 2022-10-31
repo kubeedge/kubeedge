@@ -2,18 +2,24 @@ package quic
 
 import (
 	"net"
+	"os"
 	"sync"
 	"time"
 
+	"github.com/lucas-clemente/quic-go/internal/ackhandler"
 	"github.com/lucas-clemente/quic-go/internal/flowcontrol"
 	"github.com/lucas-clemente/quic-go/internal/protocol"
 	"github.com/lucas-clemente/quic-go/internal/wire"
 )
 
-const (
-	errorCodeStopping      protocol.ApplicationErrorCode = 0
-	errorCodeStoppingGQUIC protocol.ApplicationErrorCode = 7
-)
+type deadlineError struct{}
+
+func (deadlineError) Error() string   { return "deadline exceeded" }
+func (deadlineError) Temporary() bool { return true }
+func (deadlineError) Timeout() bool   { return true }
+func (deadlineError) Unwrap() error   { return os.ErrDeadlineExceeded }
+
+var errDeadline net.Error = &deadlineError{}
 
 // The streamSender is notified by the stream about various events.
 type streamSender interface {
@@ -49,17 +55,19 @@ type streamI interface {
 	closeForShutdown(error)
 	// for receiving
 	handleStreamFrame(*wire.StreamFrame) error
-	handleRstStreamFrame(*wire.RstStreamFrame) error
+	handleResetStreamFrame(*wire.ResetStreamFrame) error
 	getWindowUpdate() protocol.ByteCount
 	// for sending
 	hasData() bool
 	handleStopSendingFrame(*wire.StopSendingFrame)
-	popStreamFrame(maxBytes protocol.ByteCount) (*wire.StreamFrame, bool)
-	handleMaxStreamDataFrame(*wire.MaxStreamDataFrame)
+	popStreamFrame(maxBytes protocol.ByteCount) (*ackhandler.Frame, bool)
+	updateSendWindow(protocol.ByteCount)
 }
 
-var _ receiveStreamI = (streamI)(nil)
-var _ sendStreamI = (streamI)(nil)
+var (
+	_ receiveStreamI = (streamI)(nil)
+	_ sendStreamI    = (streamI)(nil)
+)
 
 // A Stream assembles the data from StreamFrames and provides a super-convenient Read-Interface
 //
@@ -77,24 +85,6 @@ type stream struct {
 }
 
 var _ Stream = &stream{}
-
-type deadlineError struct{}
-
-func (deadlineError) Error() string   { return "deadline exceeded" }
-func (deadlineError) Temporary() bool { return true }
-func (deadlineError) Timeout() bool   { return true }
-
-var errDeadline net.Error = &deadlineError{}
-
-type streamCanceledError struct {
-	error
-	errorCode protocol.ApplicationErrorCode
-}
-
-func (streamCanceledError) Canceled() bool                             { return true }
-func (e streamCanceledError) ErrorCode() protocol.ApplicationErrorCode { return e.errorCode }
-
-var _ StreamError = &streamCanceledError{}
 
 // newStream creates a new Stream
 func newStream(streamID protocol.StreamID,
@@ -133,12 +123,7 @@ func (s *stream) StreamID() protocol.StreamID {
 }
 
 func (s *stream) Close() error {
-	if err := s.sendStream.Close(); err != nil {
-		return err
-	}
-	// in gQUIC, we need to send a RST_STREAM with the final offset if CancelRead() was called
-	s.receiveStream.onClose(s.sendStream.getWriteOffset())
-	return nil
+	return s.sendStream.Close()
 }
 
 func (s *stream) SetDeadline(t time.Time) error {
@@ -153,19 +138,6 @@ func (s *stream) SetDeadline(t time.Time) error {
 func (s *stream) closeForShutdown(err error) {
 	s.sendStream.closeForShutdown(err)
 	s.receiveStream.closeForShutdown(err)
-}
-
-func (s *stream) handleRstStreamFrame(frame *wire.RstStreamFrame) error {
-	if err := s.receiveStream.handleRstStreamFrame(frame); err != nil {
-		return err
-	}
-	if !s.version.UsesIETFFrameFormat() {
-		s.handleStopSendingFrame(&wire.StopSendingFrame{
-			StreamID:  s.StreamID(),
-			ErrorCode: frame.ErrorCode,
-		})
-	}
-	return nil
 }
 
 // checkIfCompleted is called from the uniStreamSender, when one of the stream halves is completed.
