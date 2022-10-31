@@ -1,8 +1,9 @@
-= vendor/github.com/lucas-clemente/aes12 licensed under: =
+= vendor/github.com/nxadm/tail licensed under: =
 
-MIT License
+# The MIT License (MIT)
 
-Copyright (c) 2016 Lucas Clemente
+# © Copyright 2015 Hewlett Packard Enterprise Development LP
+Copyright (c) 2014 ActiveState
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -10,7 +11,6 @@ in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
-
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
@@ -22,4 +22,4 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-= vendor/github.com/lucas-clemente/aes12/LICENSE d0c6f64d07e228f43e3bf693262e4bb8
+= vendor/github.com/nxadm/tail/LICENSE 0bdce43b16cd5c587124d6f274632c87
