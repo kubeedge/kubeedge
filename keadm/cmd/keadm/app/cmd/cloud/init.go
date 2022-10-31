@@ -101,6 +101,9 @@ func addInitOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 	cmd.Flags().StringVarP(&initOpts.Manifests, types.Files, "f", initOpts.Manifests,
 		"Allow appending file directories of k8s resources to keadm, separated by commas")
 
+	cmd.Flags().StringVarP(&initOpts.Namespace, types.Namespace, "n", constants.SystemNamespace,
+		"Use this key to set the namespace")
+
 	cmd.Flags().BoolVarP(&initOpts.DryRun, types.DryRun, "d", initOpts.DryRun,
 		"Print the generated k8s resources on the stdout, not actual excute. Always use in debug mode")
 
@@ -148,7 +151,7 @@ func AddInit2ToolsList(toolList map[string]types.ToolsInstaller, initOpts *types
 		AdvertiseAddress: initOpts.AdvertiseAddress,
 		KubeEdgeVersion:  initOpts.KubeEdgeVersion,
 		Manifests:        initOpts.Manifests,
-		Namespace:        constants.SystemNamespace,
+		Namespace:        initOpts.Namespace,
 		DryRun:           initOpts.DryRun,
 		Sets:             initOpts.Sets,
 		Profile:          initOpts.Profile,

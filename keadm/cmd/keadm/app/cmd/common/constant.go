@@ -90,6 +90,9 @@ const (
 	// Allow appending manifests paths of manifests to keadm, separated by commas, another supported flag
 	Files = "files"
 
+	// Namespace sets the namespace of kubeedge will be installed
+	Namespace = "namespace"
+
 	// Dry-run flag
 	DryRun = "dry-run"
 
