@@ -1,95 +1,101 @@
 package edgehub
 
-// TODO Re-optimize testcase @kadisi
-/*
-
 import (
 	"testing"
-	"time"
 
-	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/beehive/pkg/core/model"
-	commodule "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 )
 
-// coreContext is beehive context used for communication between modules
-var coreContext *context.Context
+func TestGetCertSyncChannel(t *testing.T) {
+	t.Run("GetCertSyncChannel()", func(t *testing.T) {
+		certSync := GetCertSyncChannel()
+		if certSync != nil {
+			t.Errorf("GetCertSyncChannel() returned unexpected result. got = %v, want = %v", certSync, nil)
+		}
+	})
+}
 
-// edgeHubModule is edgeHub implementation of Module interface
-var edgeHubModule core.Module
+func TestNewCertSyncChannel(t *testing.T) {
+	t.Run("NewCertSyncChannel()", func(t *testing.T) {
+		certSync := NewCertSyncChannel()
+		if len(certSync) != 2 {
+			t.Errorf("NewCertSyncChannel() returned  unexpected results. size got = %d, size want = 2", len(certSync))
+		}
+		if _, ok := certSync["edgestream"]; !ok {
+			t.Error("NewCertSyncChannel() returned  unexpected results. expected key edgestream to be present but it was not available.")
+		}
+		if _, ok := certSync["metamanager"]; !ok {
+			t.Error("NewCertSyncChannel() returned  unexpected results. expected key metamanager to be present but it was not available.")
+		}
+	})
+}
 
-//TestName is function that registers the module and tests whether the correct name of the module is returned
+func TestRegister(t *testing.T) {
+	tests := []struct {
+		eh           *v1alpha2.EdgeHub
+		nodeName     string
+		name         string
+		wantNodeName string
+	}{
+		{
+			name:         "",
+			nodeName:     "test1",
+			wantNodeName: "test1",
+			eh:           &v1alpha2.EdgeHub{WebSocket: &v1alpha2.EdgeHubWebSocket{Server: "localhost:8080"}, ProjectID: "test_id"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			Register(tt.eh, tt.nodeName)
+
+			if config.Config.NodeName != tt.wantNodeName {
+				t.Errorf("failed to Register(). Nodename : got = %s, want = %s", config.Config.NodeName, tt.wantNodeName)
+			}
+		})
+	}
+}
+
 func TestName(t *testing.T) {
-	modules := core.GetModules()
-	core.Register(&EdgeHub{controller: NewEdgeHubController()})
-	for name, module := range modules {
-		if name == ModuleNameEdgeHub {
-			edgeHubModule = module
-			break
-		}
-	}
-	t.Run("ModuleRegistration", func(t *testing.T) {
-		if edgeHubModule == nil {
-			t.Errorf("EdgeHub Module not Registered with beehive core")
-			return
-		}
-		if ModuleNameEdgeHub != edgeHubModule.Name() {
-			t.Errorf("Name of module is not correct wanted: %v and got: %v", ModuleNameEdgeHub, edgeHubModule.Name())
-			return
+	t.Run("EdgeHub.Name()", func(t *testing.T) {
+		if got := (&EdgeHub{}).Name(); got != "websocket" {
+			t.Errorf("EdgeHub.Name() returned unexpected result. got = %s, want = websocket", got)
 		}
 	})
 }
 
-//TestGroup is function that registers the module and tests whether the correct group name is returned
 func TestGroup(t *testing.T) {
-	modules := core.GetModules()
-	core.Register(&EdgeHub{controller: NewEdgeHubController()})
-	for name, module := range modules {
-		if name == ModuleNameEdgeHub {
-			edgeHubModule = module
-			break
-		}
-	}
-	t.Run("ModuleRegistration", func(t *testing.T) {
-		if edgeHubModule == nil {
-			t.Errorf("EdgeHub Module not Registered with beehive core")
-			return
-		}
-		if commodule.HubGroup != edgeHubModule.Group() {
-			t.Errorf("Group of module is not correct wanted: %v and got: %v", commodule.HubGroup, edgeHubModule.Group())
+	t.Run("EdgeHub.Group()", func(t *testing.T) {
+		if got := (&EdgeHub{}).Group(); got != "hub" {
+			t.Errorf("EdgeHub.Group() returned unexpected result. got = %s, want = hub", got)
 		}
 	})
 }
 
-//TestStart is a function to test the start of the edge hub module
-func TestStart(t *testing.T) {
-	// time to let config be synced again
-	time.Sleep(10 * time.Second)
-	coreContext = context.GetContext(context.MsgCtxTypeChannel)
-	modules := core.GetModules()
-	for name, module := range modules {
-		coreContext.AddModule(name)
-		coreContext.AddModuleGroup(name, module.Group())
+func TestEnable(t *testing.T) {
+	tests := []struct {
+		eh   *EdgeHub
+		want bool
+		name string
+	}{
+		{
+			name: "Enable true",
+			want: true,
+			eh:   &EdgeHub{enable: true},
+		},
+		{
+			name: "Enable false",
+			want: false,
+			eh:   &EdgeHub{enable: false},
+		},
 	}
-	go edgeHubModule.Start(coreContext)
-	time.Sleep(2 * time.Second)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.eh.Enable(); got != tt.want {
+				t.Errorf("EdgeHub.Enable() returned expected results. got = %v, want = %v", got, tt.want)
+			}
+		})
+	}
 }
-
-// TestCleanup is function to test cleanup
-func TestCleanup(t *testing.T) {
-	edgeHubModule.Cleanup()
-	var test model.Message
-
-	// Send message to avoid deadlock if channel deletion has failed after cleanup
-	go coreContext.Send(ModuleNameEdgeHub, test)
-
-	_, err := coreContext.Receive(ModuleNameEdgeHub)
-	t.Run("CheckCleanUp", func(t *testing.T) {
-		if err == nil {
-			t.Errorf("Edgehub Module still has channel after cleanup")
-		}
-	})
-}
-
-*/
