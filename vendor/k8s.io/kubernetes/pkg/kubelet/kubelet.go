@@ -201,7 +201,7 @@ type Bootstrap interface {
 	BirthCry()
 	StartGarbageCollection()
 	ListenAndServe(kubeCfg *kubeletconfiginternal.KubeletConfiguration, tlsOptions *server.TLSOptions, auth server.AuthInterface)
-	ListenAndServeReadOnly(address net.IP, port uint)
+	ListenAndServeReadOnly(kubeCfg *kubeletconfiginternal.KubeletConfiguration)
 	Run(<-chan kubetypes.PodUpdate)
 }
 
@@ -361,7 +361,7 @@ func NewMainKubelet(kubeCfg *kubeletconfiginternal.KubeletConfiguration,
 	}
 
 	daemonEndpoints := &v1.NodeDaemonEndpoints{
-		KubeletEndpoint: v1.DaemonEndpoint{Port: kubeCfg.Port},
+		KubeletEndpoint: v1.DaemonEndpoint{Port: kubeCfg.ReadOnlyPort},
 	}
 
 	imageGCPolicy := images.ImageGCPolicy{
@@ -2188,8 +2188,8 @@ func (kl *Kubelet) ListenAndServe(kubeCfg *kubeletconfiginternal.KubeletConfigur
 }
 
 // ListenAndServeReadOnly runs the kubelet HTTP server in read-only mode.
-func (kl *Kubelet) ListenAndServeReadOnly(address net.IP, port uint) {
-	server.ListenAndServeKubeletReadOnlyServer(kl, kl.resourceAnalyzer, address, port)
+func (kl *Kubelet) ListenAndServeReadOnly(kubeCfg *kubeletconfiginternal.KubeletConfiguration) {
+	server.ListenAndServeKubeletReadOnlyServer(kl, kl.resourceAnalyzer, kubeCfg)
 }
 
 // Delete the eligible dead container instances in a pod. Depending on the configuration, the latest dead containers may be kept around.
