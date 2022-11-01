@@ -110,7 +110,7 @@ func addInitOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 
 func addHelmValueOptionsFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 	cmd.Flags().StringArrayVar(&initOpts.Sets, "set", []string{}, "Set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
-	cmd.Flags().StringVar(&initOpts.Profile, "profile", initOpts.Profile, "Set profile on the command line (iptablesMgrMode=external or version=v1.9.1)")
+	cmd.Flags().StringVar(&initOpts.Profile, "profile", initOpts.Profile, fmt.Sprintf("Set profile on the command line (iptablesMgrMode=external or version=v%s)", types.DefaultKubeEdgeVersion))
 }
 
 func addForceOptionsFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
