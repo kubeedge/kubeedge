@@ -63,6 +63,7 @@ const (
 	DefaultCgroupRoot                  = ""
 	DefaultVolumeStatsAggPeriod        = time.Minute
 	DefaultTunnelPort                  = 10004
+	DefaultClusterDomain               = "cluster.local"
 
 	CurrentSupportK8sVersion = "v1.22.6"
 
