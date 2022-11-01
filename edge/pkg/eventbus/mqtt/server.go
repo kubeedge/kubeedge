@@ -94,7 +94,7 @@ func (m *Server) Run() error {
 
 // onSubscribe will be called if the topic is matched in topic tree.
 func (m *Server) onSubscribe(msg *packet.Message) {
-	klog.Infof("OnSubscribe recevie msg from topic: %s", msg.Topic)
+	klog.Infof("OnSubscribe receive msg from topic: %s", msg.Topic)
 	NewMessageMux().Dispatch(msg.Topic, msg.Payload)
 }
 

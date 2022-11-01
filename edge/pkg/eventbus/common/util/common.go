@@ -16,8 +16,8 @@ import (
 var (
 	// TokenWaitTime to wait
 	TokenWaitTime = 120 * time.Second
-	// Loop connect to wait
-	LoopConnectPeriord = 5 * time.Second
+	// LoopConnectPeriod Loop connect to wait
+	LoopConnectPeriod = 5 * time.Second
 )
 
 // CheckKeyExist check dis info format
@@ -96,12 +96,12 @@ func LoopConnect(clientID string, client MQTT.Client) {
 	for {
 		klog.Infof("start connect to mqtt server with client id: %s", clientID)
 		token := client.Connect()
-		klog.Infof("client %s isconnected: %v", clientID, client.IsConnected())
+		klog.Infof("client %s is connected: %v", clientID, client.IsConnected())
 		if rs, err := CheckClientToken(token); !rs {
 			klog.Errorf("connect error: %v", err)
 		} else {
 			return
 		}
-		time.Sleep(LoopConnectPeriord)
+		time.Sleep(LoopConnectPeriod)
 	}
 }
