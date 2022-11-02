@@ -447,7 +447,6 @@ kubeedge::golang::run_test() {
   local profile=${PROFILE:-""}
   if [[ $profile ]]; then
     go test "-coverprofile=${profile}" ${testdirs[@]}
-    go tool cover -func=${profile}
   else
     go test ${testdirs[@]}
   fi

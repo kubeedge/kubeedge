@@ -126,7 +126,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - run: make test
+      - run: make test PROFILE=y
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage.out
+          flags: unittests
+          fail_ci_if_error: true
 
       - run: make integrationtest
 
