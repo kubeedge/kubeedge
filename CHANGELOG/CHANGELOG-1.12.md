@@ -1,4 +1,8 @@
 
+* [v1.12.1](#v1121)
+    * [Downloads for v1.12.1](#downloads-for-v1121)
+    * [KubeEdge v1.12.1 Release Notes](#kubeedge-v1121-release-notes)
+        * [Changelog since v1.12.0](#changelog-since-v1120)
 * [v1.12.0](#v1120)
     * [Downloads for v1.12.0](#downloads-for-v1120)
     * [KubeEdge v1.12 Release Notes](#kubeedge-v112-release-notes)
@@ -7,6 +11,26 @@
         * [Other Notable Changes](#other-notable-changes)
         * [Bug Fixes](#bug-fixes)
     
+
+# v1.12.1
+
+## Downloads for v1.12.1
+
+Download v1.12.1 in the [v1.12.1 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.12.1).
+
+## KubeEdge v1.12.1 Release Notes
+
+### Changelog since v1.12.0
+
+- Fix binary edgecore incomplete during keadm join using remote-runtime ([#4320](https://github.com/kubeedge/kubeedge/pull/4320), [@gy95](https://github.com/gy95))
+- keadm reset supports remote runtime remove mqtt container. ([#4322](https://github.com/kubeedge/kubeedge/pull/4322), [@gy95](https://github.com/gy95))
+- bugfix patch operation in quic. ([#4340](https://github.com/kubeedge/kubeedge/pull/4340), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- cluster support quic and fix failed quic e2e. ([#4336](https://github.com/kubeedge/kubeedge/pull/4336), [@wackxu](https://github.com/wackxu))
+- fix edgeconfig nodeLabels converted to kubelet nodeLabels. ([#4350](https://github.com/kubeedge/kubeedge/pull/4350), [@hexiaodai](https://github.com/hexiaodai))
+- bugfix logs/exec. ([#4354](https://github.com/kubeedge/kubeedge/pull/4354), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- use objectsync to construct msg object when objectsync uid not equal ([#4370](https://github.com/kubeedge/kubeedge/pull/4370), [@neiba](https://github.com/neiba))
+
+
 
 # v1.12.0
 
