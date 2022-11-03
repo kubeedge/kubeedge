@@ -1,5 +1,20 @@
 name: CIFuzz
-on: [pull_request]
+on: 
+  push:
+    branches:
+      - master
+    tags:
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '**/OWNERS'
+      - '**/MAINTAINERS'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '**/OWNERS'
+      - '**/MAINTAINERS'
 jobs:
   Fuzzing:
     runs-on: ubuntu-latest
