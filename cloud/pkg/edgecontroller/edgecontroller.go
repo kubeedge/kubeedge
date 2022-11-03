@@ -25,12 +25,12 @@ func newEdgeController(config *v1alpha1.EdgeController) *EdgeController {
 		return ec
 	}
 	var err error
-	ec.upstream, err = controller.NewUpstreamController(config, informers.GetInformersManager().GetK8sInformerFactory())
+	ec.upstream, err = controller.NewUpstreamController(config, informers.GetInformersManager().GetKubeInformerFactory())
 	if err != nil {
 		klog.Exitf("new upstream controller failed with error: %s", err)
 	}
 
-	ec.downstream, err = controller.NewDownstreamController(config, informers.GetInformersManager().GetK8sInformerFactory(), informers.GetInformersManager(), informers.GetInformersManager().GetCRDInformerFactory())
+	ec.downstream, err = controller.NewDownstreamController(config, informers.GetInformersManager().GetKubeInformerFactory(), informers.GetInformersManager(), informers.GetInformersManager().GetKubeEdgeInformerFactory())
 	if err != nil {
 		klog.Exitf("new downstream controller failed with error: %s", err)
 	}

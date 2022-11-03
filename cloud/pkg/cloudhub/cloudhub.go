@@ -34,7 +34,7 @@ type cloudHub struct {
 var _ core.Module = (*cloudHub)(nil)
 
 func newCloudHub(enable bool) *cloudHub {
-	crdFactory := informers.GetInformersManager().GetCRDInformerFactory()
+	crdFactory := informers.GetInformersManager().GetKubeEdgeInformerFactory()
 	// declare used informer
 	clusterObjectSyncInformer := crdFactory.Reliablesyncs().V1alpha1().ClusterObjectSyncs()
 	objectSyncInformer := crdFactory.Reliablesyncs().V1alpha1().ObjectSyncs()

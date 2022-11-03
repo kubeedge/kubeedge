@@ -85,7 +85,7 @@ func newDynamicController(enable bool) *DynamicController {
 	var dctl = &DynamicController{
 		enable:                       enable,
 		messageLayer:                 messagelayer.DynamicControllerMessageLayer(),
-		dynamicSharedInformerFactory: informers.GetInformersManager().GetDynamicSharedInformerFactory(),
+		dynamicSharedInformerFactory: informers.GetInformersManager().GetDynamicInformerFactory(),
 	}
 	dctl.applicationCenter = application.NewApplicationCenter(dctl.dynamicSharedInformerFactory)
 	dctl.applicationCenter.ForResource(v1.SchemeGroupVersion.WithResource("nodes"))

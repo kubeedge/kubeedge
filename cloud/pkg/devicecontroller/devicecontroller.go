@@ -26,7 +26,7 @@ func newDeviceController(enable bool) *DeviceController {
 	if !enable {
 		return &DeviceController{enable: enable}
 	}
-	downstream, err := controller.NewDownstreamController(informers.GetInformersManager().GetCRDInformerFactory())
+	downstream, err := controller.NewDownstreamController(informers.GetInformersManager().GetKubeEdgeInformerFactory())
 	if err != nil {
 		klog.Exitf("New downstream controller failed with error: %s", err)
 	}

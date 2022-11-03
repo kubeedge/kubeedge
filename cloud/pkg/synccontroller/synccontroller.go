@@ -31,6 +31,7 @@ type SyncController struct {
 	enable bool
 	//client
 	crdclient crdClientset.Interface
+
 	// lister
 	nodeLister              corelisters.NodeLister
 	objectSyncLister        reliablesyncslisters.ObjectSyncLister
@@ -39,19 +40,22 @@ type SyncController struct {
 	kubeclient dynamic.Interface
 
 	informersSyncedFuncs []cache.InformerSynced
+
+	informerManager informers.Manager
 }
 
 var _ core.Module = (*SyncController)(nil)
 
 func newSyncController(enable bool) *SyncController {
 	var sctl = &SyncController{
-		enable:     enable,
-		crdclient:  keclient.GetCRDClient(),
-		kubeclient: keclient.GetDynamicClient(),
+		enable:          enable,
+		crdclient:       keclient.GetCRDClient(),
+		kubeclient:      keclient.GetDynamicClient(),
+		informerManager: informers.GetInformersManager(),
 	}
 	// informer factory
-	k8sInformerFactory := informers.GetInformersManager().GetK8sInformerFactory()
-	crdInformerFactory := informers.GetInformersManager().GetCRDInformerFactory()
+	k8sInformerFactory := informers.GetInformersManager().GetKubeInformerFactory()
+	crdInformerFactory := informers.GetInformersManager().GetKubeEdgeInformerFactory()
 
 	objectSyncsInformer := crdInformerFactory.Reliablesyncs().V1alpha1().ObjectSyncs()
 	clusterObjectSyncsInformer := crdInformerFactory.Reliablesyncs().V1alpha1().ClusterObjectSyncs()

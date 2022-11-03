@@ -21,6 +21,7 @@ import (
 	"reflect"
 	"testing"
 
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/tools/cache"
 
@@ -86,6 +87,8 @@ func TestNewRuleEndpointManager(t *testing.T) {
 		ContentType: "application/vnd.kubernetes.protobuf",
 	})
 
+	client.DefaultGetRestMapper = func() (mapper meta.RESTMapper, err error) { return nil, nil }
+
 	tests := []struct {
 		name string
 		args args
@@ -93,7 +96,7 @@ func TestNewRuleEndpointManager(t *testing.T) {
 		{
 			"TestNewRuleEndpointManager(): Case 1",
 			args{
-				informers.GetInformersManager().GetCRDInformerFactory().Rules().V1().RuleEndpoints().Informer(),
+				informers.GetInformersManager().GetKubeEdgeInformerFactory().Rules().V1().RuleEndpoints().Informer(),
 			},
 		},
 	}

@@ -20,12 +20,14 @@ import (
 	"os"
 	"sync"
 
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 
 	cloudcoreConfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 	crdClientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
@@ -39,6 +41,8 @@ var (
 	// authKubeConfig only contains master address and CA cert when init, it is used for
 	// generating a temporary kubeclient and validating user token once receive an application message.
 	authKubeConfig *rest.Config
+
+	KubeConfig *rest.Config
 )
 
 func InitKubeEdgeClient(config *cloudcoreConfig.KubeAPIConfig) {
@@ -50,6 +54,8 @@ func InitKubeEdgeClient(config *cloudcoreConfig.KubeAPIConfig) {
 		}
 		kubeConfig.QPS = float32(config.QPS)
 		kubeConfig.Burst = int(config.Burst)
+
+		KubeConfig = kubeConfig
 
 		dynamicClient = dynamic.NewForConfigOrDie(kubeConfig)
 
@@ -85,4 +91,12 @@ func GetDynamicClient() dynamic.Interface {
 
 func GetAuthConfig() *rest.Config {
 	return authKubeConfig
+}
+
+type RestMapperFunc func() (meta.RESTMapper, error)
+
+var DefaultGetRestMapper RestMapperFunc = GetRestMapper
+
+func GetRestMapper() (meta.RESTMapper, error) {
+	return apiutil.NewDynamicRESTMapper(KubeConfig)
 }

@@ -35,8 +35,14 @@ func (sctl *SyncController) manageObject(sync *v1alpha1.ObjectSync) {
 	gvr := gv.WithResource(resource)
 	nodeName := getNodeName(sync.Name)
 	resourceType := strings.ToLower(sync.Spec.ObjectKind)
-	//ret, err := informers.GetInformersManager().GetDynamicSharedInformerFactory().ForResource(gvr).Lister().ByNamespace(sync.Namespace).Get(sync.Spec.ObjectName)
-	ret, err := sctl.kubeclient.Resource(gvr).Namespace(sync.Namespace).Get(context.TODO(), sync.Spec.ObjectName, metav1.GetOptions{})
+
+	lister, err := sctl.informerManager.GetLister(gvr)
+	if err != nil {
+		return
+	}
+
+	ret, err := lister.ByNamespace(sync.Namespace).Get(sync.Spec.ObjectName)
+
 	if apierrors.IsNotFound(err) {
 		sctl.gcOrphanedObjectSync(sync)
 		return

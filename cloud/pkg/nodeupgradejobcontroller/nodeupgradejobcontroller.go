@@ -42,7 +42,7 @@ func newNodeUpgradeJobController(enable bool) *NodeUpgradeJobController {
 	if !enable {
 		return &NodeUpgradeJobController{enable: enable}
 	}
-	downstream, err := controller.NewDownstreamController(informers.GetInformersManager().GetCRDInformerFactory())
+	downstream, err := controller.NewDownstreamController(informers.GetInformersManager().GetKubeEdgeInformerFactory())
 	if err != nil {
 		klog.Exitf("New NodeUpgradeJob Controller downstream failed with error: %s", err)
 	}

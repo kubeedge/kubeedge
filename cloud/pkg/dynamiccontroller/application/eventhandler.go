@@ -24,11 +24,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic/dynamicinformer"
-	"k8s.io/client-go/informers"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
-	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
+	genericinformers "github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
@@ -70,7 +69,7 @@ func (c *handlerCenter) ForResource(gvr schema.GroupVersionResource) *CommonReso
 	}
 
 	klog.Infof("[metaserver/HandlerCenter] prepare a new resourceEventHandler(%v)", gvr)
-	handler := NewCommonResourceEventHandler(gvr, c.dynamicSharedInformerFactory, c.messageLayer)
+	handler := NewCommonResourceEventHandler(gvr, c.messageLayer)
 	c.handlers[gvr] = handler
 
 	return handler
@@ -95,10 +94,10 @@ type CommonResourceEventHandler struct {
 	listenersLock sync.RWMutex
 	messageLayer  messagelayer.MessageLayer
 	gvr           schema.GroupVersionResource
-	informer      informers.GenericInformer
+	informer      *genericinformers.InformerPair
 }
 
-func NewCommonResourceEventHandler(gvr schema.GroupVersionResource, informerFactory dynamicinformer.DynamicSharedInformerFactory, layer messagelayer.MessageLayer) *CommonResourceEventHandler {
+func NewCommonResourceEventHandler(gvr schema.GroupVersionResource, layer messagelayer.MessageLayer) *CommonResourceEventHandler {
 	handler := &CommonResourceEventHandler{
 		events:       make(chan watch.Event, 100),
 		listeners:    make(map[string]*SelectorListener),
@@ -107,8 +106,12 @@ func NewCommonResourceEventHandler(gvr schema.GroupVersionResource, informerFact
 	}
 
 	klog.Infof("[metaserver/resourceEventHandler] handler(%v) init, prepare informer...", gvr)
-	informer := informerFactory.ForResource(gvr)
-	informer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+	informerPair, err := genericinformers.GetInformersManager().GetInformerPair(gvr)
+	if err != nil {
+		klog.Exitf("get informer for %s err: %v", gvr.String(), err)
+	}
+
+	informerPair.Informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			handler.objToEvent(watch.Added, obj)
 		},
@@ -119,14 +122,8 @@ func NewCommonResourceEventHandler(gvr schema.GroupVersionResource, informerFact
 			handler.objToEvent(watch.Deleted, obj)
 		},
 	})
-	informerFactory.Start(beehiveContext.Done())
-	klog.Infof("[metaserver/resourceEventHandler] handler(%v) init, wait for informer starting...", gvr)
-	for gvr, cacheSync := range informerFactory.WaitForCacheSync(beehiveContext.Done()) {
-		if !cacheSync {
-			klog.Exitf("Unable to sync caches for: %s", gvr.String())
-		}
-	}
-	handler.informer = informer
+
+	handler.informer = informerPair
 	klog.Infof("[metaserver/resourceEventHandler] handler(%v) init successfully, start to dispatch events to it's listeners", gvr)
 	go handler.dispatchEvents()
 	return handler
@@ -149,7 +146,7 @@ func (c *CommonResourceEventHandler) objToEvent(t watch.EventType, obj interface
 
 func (c *CommonResourceEventHandler) AddListener(s *SelectorListener) error {
 	// filter s.selector.field when sendAllObjects
-	ret, err := c.informer.Lister().List(s.selector.Label)
+	ret, err := c.informer.Lister.List(s.selector.Label)
 	if err != nil {
 		return fmt.Errorf("Failed to list: %v", err)
 	}
