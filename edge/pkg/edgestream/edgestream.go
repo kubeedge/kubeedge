@@ -84,8 +84,7 @@ func (e *edgestream) Start() {
 		klog.Exitf("Failed to load x509 key pair: %v", err)
 	}
 	tlsConfig := &tls.Config{
-		InsecureSkipVerify: true,
-		Certificates:       []tls.Certificate{cert},
+		Certificates: []tls.Certificate{cert},
 	}
 
 	ticker := time.NewTicker(time.Second * 2)

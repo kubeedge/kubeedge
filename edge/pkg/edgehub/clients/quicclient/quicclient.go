@@ -57,9 +57,8 @@ func (qcc *QuicClient) Init() error {
 	pool.AppendCertsFromPEM(caCrt)
 
 	tlsConfig := &tls.Config{
-		RootCAs:            pool,
-		Certificates:       []tls.Certificate{cert},
-		InsecureSkipVerify: true,
+		RootCAs:      pool,
+		Certificates: []tls.Certificate{cert},
 	}
 
 	option := qclient.Options{

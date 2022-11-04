@@ -35,9 +35,9 @@ func NewHTTPClient() *http.Client {
 		}).DialContext,
 		MaxIdleConnsPerHost:   maxIdleConnectionsPerHost,
 		ResponseHeaderTimeout: responseReadTimeout,
-		TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
+		TLSClientConfig:       &tls.Config{},
 	}
-	klog.Infof("tlsConfig InsecureSkipVerify true")
+	klog.Infof("tlsConfig InsecureSkipVerify false")
 	return &http.Client{Transport: transport}
 }
 
