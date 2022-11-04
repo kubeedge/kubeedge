@@ -20,7 +20,7 @@ func (cmm *ConfigMapManager) Events() chan watch.Event {
 // NewConfigMapManager create ConfigMapManager by kube clientset and namespace
 func NewConfigMapManager(config *v1alpha1.EdgeController, si cache.SharedIndexInformer) (*ConfigMapManager, error) {
 	events := make(chan watch.Event, config.Buffer.ConfigMapEvent)
-	rh := NewCommonResourceEventHandler(events)
+	rh := NewCommonResourceEventHandler(events, nil)
 	si.AddEventHandler(rh)
 
 	return &ConfigMapManager{events: events}, nil

@@ -2,22 +2,14 @@ package manager
 
 import (
 	"reflect"
-	"sync"
 
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
-
-// CachePod is the struct save pod data for check pod is really changed
-type CachePod struct {
-	metav1.ObjectMeta
-	Spec v1.PodSpec
-}
 
 // PodManager is a manager watch pod change event
 type PodManager struct {
@@ -26,12 +18,9 @@ type PodManager struct {
 
 	// events merged
 	mergedEvents chan watch.Event
-
-	// pods, key is UID, value is *v1.Pod
-	pods sync.Map
 }
 
-func (pm *PodManager) isPodUpdated(old *CachePod, new *v1.Pod) bool {
+func isPodUpdated(old v1.Pod, new v1.Pod) bool {
 	// does not care fields
 	old.ObjectMeta.ResourceVersion = new.ObjectMeta.ResourceVersion
 	old.ObjectMeta.Generation = new.ObjectMeta.Generation
@@ -45,7 +34,6 @@ func (pm *PodManager) merge() {
 		pod := re.Object.(*v1.Pod)
 		switch re.Type {
 		case watch.Added:
-			pm.pods.Store(pod.UID, &CachePod{ObjectMeta: pod.ObjectMeta, Spec: pod.Spec})
 			if pod.DeletionTimestamp == nil {
 				pm.mergedEvents <- re
 			} else {
@@ -53,19 +41,9 @@ func (pm *PodManager) merge() {
 				pm.mergedEvents <- re
 			}
 		case watch.Deleted:
-			pm.pods.Delete(pod.UID)
 			pm.mergedEvents <- re
 		case watch.Modified:
-			value, ok := pm.pods.Load(pod.UID)
-			pm.pods.Store(pod.UID, &CachePod{ObjectMeta: pod.ObjectMeta, Spec: pod.Spec})
-			if ok {
-				cachedPod := value.(*CachePod)
-				if pm.isPodUpdated(cachedPod, pod) {
-					pm.mergedEvents <- re
-				}
-			} else {
-				pm.mergedEvents <- re
-			}
+			pm.mergedEvents <- re
 		default:
 			klog.Warningf("event type: %s unsupported", re.Type)
 		}
@@ -77,11 +55,30 @@ func (pm *PodManager) Events() chan watch.Event {
 	return pm.mergedEvents
 }
 
+var _ EventFilter = &podEventFilter{}
+
+type podEventFilter struct{}
+
+func (pef *podEventFilter) Create(obj interface{}) bool {
+	return true
+}
+
+func (pef *podEventFilter) Delete(obj interface{}) bool {
+	return true
+}
+
+func (pef *podEventFilter) Update(oldObj, newObj interface{}) bool {
+	curPod := newObj.(*v1.Pod)
+	oldPod := oldObj.(*v1.Pod)
+
+	return isPodUpdated(*oldPod, *curPod)
+}
+
 // NewPodManager create PodManager from config
 func NewPodManager(config *v1alpha1.EdgeController, si cache.SharedIndexInformer) (*PodManager, error) {
 	realEvents := make(chan watch.Event, config.Buffer.PodEvent)
 	mergedEvents := make(chan watch.Event, config.Buffer.PodEvent)
-	rh := NewCommonResourceEventHandler(realEvents)
+	rh := NewCommonResourceEventHandler(realEvents, &podEventFilter{})
 	si.AddEventHandler(rh)
 	pm := &PodManager{realEvents: realEvents, mergedEvents: mergedEvents}
 	go pm.merge()
