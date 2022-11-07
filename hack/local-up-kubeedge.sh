@@ -108,6 +108,10 @@ function start_cloudcore {
   if [[ "${PROTOCOL}" = "QUIC" ]]; then
     sed -i '/quic:/{n;N;s/false/true/;}' ${CLOUD_CONFIGFILE}
   fi
+
+  # enable dynamic controller
+  sed -i '/dynamicController:/{n;s/false/true/;}' ${CLOUD_CONFIGFILE}
+
   sed -i -e "s|kubeConfig: .*|kubeConfig: ${KUBECONFIG}|g" \
     -e "s|/var/lib/kubeedge/|/tmp&|g" \
     -e "s|/etc/|/tmp/etc/|g" \
@@ -130,6 +134,7 @@ function start_edgecore {
   ${EDGE_BIN} --defaultconfig >  ${EDGE_CONFIGFILE}
 
   sed -i '/edgeStream:/{n;s/false/true/;}' ${EDGE_CONFIGFILE}
+  sed -i '/metaServer:/{n;s/false/true/;}' ${EDGE_CONFIGFILE}
 
   if [[ "${PROTOCOL}" = "QUIC" ]]; then
     sed -i '/quic:/{n;s/false/true/;}' ${EDGE_CONFIGFILE}
