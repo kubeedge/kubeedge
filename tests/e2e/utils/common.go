@@ -24,27 +24,21 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os/exec"
 	"reflect"
 	"strings"
 	"time"
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"
-	"github.com/onsi/ginkgo/v2"
-	"github.com/onsi/gomega"
 	apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/wait"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
-	"github.com/kubeedge/viaduct/pkg/api"
+	"github.com/kubeedge/kubeedge/tests/e2e/constants"
 )
 
 const (
@@ -134,424 +128,86 @@ type ServicebusResponse struct {
 	Body string `json:"body"`
 }
 
-// Function to get nginx deployment spec
-func nginxDeploymentSpec(imgURL, selector string, replicas int) *apps.DeploymentSpec {
-	var nodeselector map[string]string
-	if selector == "" {
-		nodeselector = map[string]string{}
-	} else {
-		nodeselector = map[string]string{"disktype": selector}
-	}
-	deplObj := apps.DeploymentSpec{
-		Replicas: func() *int32 { i := int32(replicas); return &i }(),
-		Selector: &metav1.LabelSelector{MatchLabels: map[string]string{"app": "nginx"}},
-		Template: v1.PodTemplateSpec{
-			ObjectMeta: metav1.ObjectMeta{
-				Labels: map[string]string{"app": "nginx"},
-			},
-			Spec: v1.PodSpec{
-				Containers: []v1.Container{
-					{
-						Name:  "nginx",
-						Image: imgURL,
-					},
-				},
-				NodeSelector: nodeselector,
-			},
-		},
-	}
-
-	return &deplObj
-}
-
-// Function to get edgecore deploymentspec object
-func edgecoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.DeploymentSpec {
-	IsSecureCtx := true
-	deplObj := apps.DeploymentSpec{
-		Replicas: func() *int32 { i := int32(replicas); return &i }(),
-		Selector: &metav1.LabelSelector{MatchLabels: map[string]string{"app": "edgecore"}},
-		Template: v1.PodTemplateSpec{
-			ObjectMeta: metav1.ObjectMeta{
-				Labels: map[string]string{"app": "edgecore"},
-			},
-			Spec: v1.PodSpec{
-				Containers: []v1.Container{
-					{
-						Name:            "edgecore",
-						Image:           imgURL,
-						SecurityContext: &v1.SecurityContext{Privileged: &IsSecureCtx},
-						ImagePullPolicy: v1.PullPolicy("IfNotPresent"),
-						Resources: v1.ResourceRequirements{
-							Requests: v1.ResourceList{
-								v1.ResourceCPU:    resource.MustParse("200m"),
-								v1.ResourceMemory: resource.MustParse("100Mi"),
-							},
-							Limits: v1.ResourceList{
-								v1.ResourceCPU:    resource.MustParse("200m"),
-								v1.ResourceMemory: resource.MustParse("100Mi"),
-							},
-						},
-						Env:          []v1.EnvVar{{Name: "DOCKER_HOST", Value: "tcp://localhost:2375"}},
-						VolumeMounts: []v1.VolumeMount{{Name: "cert", MountPath: "/etc/kubeedge/certs"}, {Name: "conf", MountPath: "/etc/kubeedge/edge/conf"}},
-					}, {
-						Name:            "dind-daemon",
-						SecurityContext: &v1.SecurityContext{Privileged: &IsSecureCtx},
-						Image:           "docker:dind",
-						Resources: v1.ResourceRequirements{
-							Requests: v1.ResourceList{
-								v1.ResourceCPU:    resource.MustParse("20m"),
-								v1.ResourceMemory: resource.MustParse("256Mi"),
-							},
-						},
-						VolumeMounts: []v1.VolumeMount{{Name: "docker-graph-storage", MountPath: "/var/lib/docker"}},
-					},
-				},
-				NodeSelector: map[string]string{"k8snode": "kb-perf-node"},
-				Volumes: []v1.Volume{
-					{Name: "cert", VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/etc/kubeedge/certs"}}},
-					{Name: "conf", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{LocalObjectReference: v1.LocalObjectReference{Name: configmap}}}},
-					{Name: "docker-graph-storage", VolumeSource: v1.VolumeSource{EmptyDir: &v1.EmptyDirVolumeSource{}}},
-				},
-			},
-		},
-	}
-	return &deplObj
-}
-
-// Function to create cloudcore deploymentspec object
-func cloudcoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.DeploymentSpec {
-	portInfo := []v1.ContainerPort{{ContainerPort: 10000, Protocol: "TCP", Name: "websocket"}, {ContainerPort: 10001, Protocol: "UDP", Name: "quic"}}
-
-	deplObj := apps.DeploymentSpec{
-		Replicas: func() *int32 { i := int32(replicas); return &i }(),
-		Selector: &metav1.LabelSelector{MatchLabels: map[string]string{"app": "cloudcore"}},
-		Template: v1.PodTemplateSpec{
-			ObjectMeta: metav1.ObjectMeta{
-				Labels: map[string]string{"app": "cloudcore"},
-			},
-			Spec: v1.PodSpec{
-				HostNetwork:   true,
-				RestartPolicy: "Always",
-				Containers: []v1.Container{
-					{
-						Name:            "cloudcore",
-						Image:           imgURL,
-						ImagePullPolicy: v1.PullPolicy("IfNotPresent"),
-						Resources: v1.ResourceRequirements{
-							Requests: v1.ResourceList{
-								v1.ResourceCPU:    resource.MustParse("100m"),
-								v1.ResourceMemory: resource.MustParse("512Mi"),
-							},
-						},
-						Ports:        portInfo,
-						VolumeMounts: []v1.VolumeMount{{Name: "cert", MountPath: "/etc/kubeedge/certs"}, {Name: "conf", MountPath: "/etc/kubeedge/cloud/conf"}},
-					},
-				},
-				Volumes: []v1.Volume{
-					{Name: "cert", VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/etc/kubeedge/certs"}}},
-					{Name: "conf", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{LocalObjectReference: v1.LocalObjectReference{Name: configmap}}}},
-				},
-			},
-		},
-	}
-	return &deplObj
-}
-
-func newDeployment(cloudcore, edgecore bool, name, imgURL, nodeselector, configmap string, replicas int) *apps.Deployment {
-	var depObj *apps.DeploymentSpec
-	var namespace string
-
-	if edgecore {
-		depObj = edgecoreDeploymentSpec(imgURL, configmap, replicas)
-		namespace = Namespace
-	} else if cloudcore {
-		depObj = cloudcoreDeploymentSpec(imgURL, configmap, replicas)
-		namespace = Namespace
-	} else {
-		depObj = nginxDeploymentSpec(imgURL, nodeselector, replicas)
-		namespace = Namespace
-	}
-
+func NewDeployment(name, imgURL string, replicas int32) *apps.Deployment {
 	deployment := apps.Deployment{
-		TypeMeta: metav1.TypeMeta{APIVersion: "apps/v1", Kind: "Deployment"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Labels:    map[string]string{"app": constants.SystemName},
-			Namespace: namespace,
+			Labels:    map[string]string{"app": name},
+			Namespace: Namespace,
 		},
-		Spec: *depObj,
+		Spec: apps.DeploymentSpec{
+			Replicas: &replicas,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app":                 name,
+					constants.E2ELabelKey: constants.E2ELabelValue,
+				},
+			},
+			Template: v1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"app":                 name,
+						constants.E2ELabelKey: constants.E2ELabelValue,
+					},
+				},
+				Spec: v1.PodSpec{
+					Containers: []v1.Container{
+						{
+							Name:  name,
+							Image: imgURL,
+						},
+					},
+					NodeSelector: map[string]string{
+						"node-role.kubernetes.io/edge": "",
+					},
+				},
+			},
+		},
 	}
 	return &deployment
 }
 
-func NewPodObj(podName, imgURL, nodeselector string) *v1.Pod {
+func NewPod(podName, imgURL string) *v1.Pod {
 	pod := v1.Pod{
-		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Pod"},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   podName,
-			Labels: map[string]string{"app": "nginx"},
+			Name:      podName,
+			Namespace: v1.NamespaceDefault,
+			Labels: map[string]string{
+				"app":                 podName,
+				constants.E2ELabelKey: constants.E2ELabelValue,
+			},
 		},
 		Spec: v1.PodSpec{
 			Containers: []v1.Container{
 				{
-					Name:  "nginx",
+					Name:  podName,
 					Image: imgURL,
 				},
 			},
-			NodeSelector: map[string]string{"disktype": nodeselector},
+			NodeSelector: map[string]string{
+				"node-role.kubernetes.io/edge": "",
+			},
 		},
 	}
 	return &pod
 }
 
-// GetDeployments to get the deployments list
-func GetDeployments(list *apps.DeploymentList, getDeploymentAPI string) error {
-	resp, err := SendHTTPRequest(http.MethodGet, getDeploymentAPI)
-	if err != nil {
-		Fatalf("HTTP Response reading has failed: %v", err)
-		return err
-	}
-	defer resp.Body.Close()
-	contents, err := io.ReadAll(resp.Body)
-	if err != nil {
-		Fatalf("HTTP Response reading has failed: %v", err)
-		return err
-	}
-	err = json.Unmarshal(contents, &list)
-	if err != nil {
-		Fatalf("Unmarshal HTTP Response has failed: %v", err)
-		return err
-	}
-	return nil
-}
-func VerifyDeleteDeployment(getDeploymentAPI string) int {
-	resp, err := SendHTTPRequest(http.MethodGet, getDeploymentAPI)
-	if err != nil {
-		Fatalf("Send HTTP Request failed: %v", err)
-		return -1
-	}
-	defer resp.Body.Close()
-	return resp.StatusCode
+func GetDeployment(c clientset.Interface, ns, name string) (*apps.Deployment, error) {
+	return c.AppsV1().Deployments(ns).Get(context.TODO(), name, metav1.GetOptions{})
 }
 
-// HandlePod to handle app deployment/delete using pod spec.
-func HandlePod(operation string, apiserver string, UID string, pod *v1.Pod) bool {
-	var req *http.Request
-	var err error
-	var body io.Reader
-
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := &http.Client{
-		Transport: tr,
-	}
-	switch operation {
-	case http.MethodPost:
-		body := pod
-		respBytes, err := json.Marshal(body)
-		if err != nil {
-			Fatalf("Marshalling body failed: %v", err)
-		}
-		req, err = http.NewRequest(http.MethodPost, apiserver, bytes.NewBuffer(respBytes))
-	case http.MethodDelete:
-		req, err = http.NewRequest(http.MethodDelete, apiserver+UID, body)
-	}
-	if err != nil {
-		// handle error
-		Fatalf("Frame HTTP request failed: %v", err)
-		return false
-	}
-	req.Header.Set("Content-Type", "application/json")
-	t := time.Now()
-	resp, err := client.Do(req)
-	if err != nil {
-		// handle error
-		Fatalf("HTTP request is failed :%v", err)
-		return false
-	}
-	defer resp.Body.Close()
-	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
-	return true
-}
-
-// HandleDeployment to handle app deployment/delete deployment.
-func HandleDeployment(IsCloudCore, IsEdgeCore bool, operation, apiserver, UID, ImageURL, nodeselector, configmapname string, replica int) bool {
-	var req *http.Request
-	var err error
-	var body io.Reader
-
-	defer ginkgo.GinkgoRecover()
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := &http.Client{
-		Transport: tr,
-	}
-
-	switch operation {
-	case http.MethodPost:
-		depObj := newDeployment(IsCloudCore, IsEdgeCore, UID, ImageURL, nodeselector, configmapname, replica)
-		if err != nil {
-			Fatalf("GenerateDeploymentBody marshalling failed: %v", err)
-		}
-		respBytes, err := json.Marshal(depObj)
-		if err != nil {
-			Fatalf("Marshalling body failed: %v", err)
-		}
-		req, err = http.NewRequest(http.MethodPost, apiserver, bytes.NewBuffer(respBytes))
-	case http.MethodDelete:
-		req, err = http.NewRequest(http.MethodDelete, apiserver+UID, body)
-	}
-	if err != nil {
-		// handle error
-		Fatalf("Frame HTTP request failed: %v", err)
-		return false
-	}
-	req.Header.Set("Content-Type", "application/json")
-	t := time.Now()
-	resp, err := client.Do(req)
-	if err != nil {
-		// handle error
-		Fatalf("HTTP request is failed :%v", err)
-		return false
-	}
-	defer resp.Body.Close()
-	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
-	return true
+func CreateDeployment(c clientset.Interface, deployment *apps.Deployment) (*apps.Deployment, error) {
+	return c.AppsV1().Deployments(deployment.Namespace).Create(context.TODO(), deployment, metav1.CreateOptions{})
 }
 
 // DeleteDeployment to delete deployment
-func DeleteDeployment(DeploymentAPI, deploymentname string) int {
-	resp, err := SendHTTPRequest(http.MethodDelete, DeploymentAPI+"/"+deploymentname)
-	if err != nil {
-		// handle error
-		Fatalf("HTTP request is failed :%v", err)
-		return -1
+func DeleteDeployment(c clientset.Interface, ns, name string) error {
+	err := c.AppsV1().Deployments(ns).Delete(context.TODO(), name, metav1.DeleteOptions{})
+	if err != nil && apierrors.IsNotFound(err) {
+		return nil
 	}
 
-	defer resp.Body.Close()
-
-	return resp.StatusCode
-}
-
-// PrintCombinedOutput to show the os command injuction in combined format
-func PrintCombinedOutput(cmd *exec.Cmd) error {
-	Infof("===========> Executing: %s\n", strings.Join(cmd.Args, " "))
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		Infof("CombinedOutput failed %v", err)
-		return err
-	}
-	if len(output) > 0 {
-		Infof("=====> Output: %s\n", string(output))
-	}
-	return nil
-}
-
-// ExposeCloudService function to expose the service for cloud deployment
-func ExposeCloudService(name, serviceHandler string) error {
-	ServiceObj := CreateServiceObject(name)
-	respBytes, err := json.Marshal(ServiceObj)
-	if err != nil {
-		Fatalf("Marshalling body failed: %v", err)
-	}
-	req, err := http.NewRequest(http.MethodPost, serviceHandler, bytes.NewBuffer(respBytes))
-	if err != nil {
-		// handle error
-		Fatalf("Frame HTTP request failed: %v", err)
-		return err
-	}
-	client := &http.Client{}
-	req.Header.Set("Content-Type", "application/json")
-	t := time.Now()
-	resp, err := client.Do(req)
-	if err != nil {
-		// handle error
-		Fatalf("HTTP request is failed :%v", err)
-		return err
-	}
-	defer resp.Body.Close()
-	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
-	gomega.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusCreated))
-	return nil
-}
-
-// CreateServiceObject function to create a servcice object
-func CreateServiceObject(name string) *v1.Service {
-	portInfo := []v1.ServicePort{
-		{
-			Name: "websocket", Protocol: "TCP", Port: 10000, TargetPort: intstr.FromInt(10000),
-		}, {
-			Name: "quic", Protocol: "UDP", Port: 10001, TargetPort: intstr.FromInt(10001),
-		},
-	}
-
-	Service := v1.Service{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Service"},
-		ObjectMeta: metav1.ObjectMeta{Name: name, Labels: map[string]string{"app": constants.SystemName}},
-
-		Spec: v1.ServiceSpec{
-			Ports:    portInfo,
-			Selector: map[string]string{"app": "cloudcore"},
-			Type:     "NodePort",
-		},
-	}
-	return &Service
-}
-
-// GetServicePort function to get the service port created for deployment.
-func GetServicePort(cloudName, serviceHandler string) (int32, int32) {
-	var svc v1.ServiceList
-	var wssport, quicport int32
-	resp, err := SendHTTPRequest(http.MethodGet, serviceHandler)
-	if err != nil {
-		// handle error
-		Fatalf("HTTP request is failed :%v", err)
-		return -1, -1
-	}
-	defer resp.Body.Close()
-
-	contents, err := io.ReadAll(resp.Body)
-	if err != nil {
-		Fatalf("HTTP Response reading has failed: %v", err)
-		return -1, -1
-	}
-
-	err = json.Unmarshal(contents, &svc)
-	if err != nil {
-		Fatalf("Unmarshal HTTP Response has failed: %v", err)
-		return -1, -1
-	}
-
-	for _, svcs := range svc.Items {
-		if svcs.Name == cloudName {
-			for _, nodePort := range svcs.Spec.Ports {
-				if nodePort.Name == api.ProtocolTypeQuic {
-					quicport = nodePort.NodePort
-				}
-				if nodePort.Name == api.ProtocolTypeWS {
-					wssport = nodePort.NodePort
-				}
-			}
-			break
-		}
-	}
-	return wssport, quicport
-}
-
-// DeleteSvc function to delete service
-func DeleteSvc(svcname string) int {
-	resp, err := SendHTTPRequest(http.MethodDelete, svcname)
-	if err != nil {
-		// handle error
-		Fatalf("HTTP request is failed :%v", err)
-		return -1
-	}
-
-	defer resp.Body.Close()
-
-	return resp.StatusCode
+	return err
 }
 
 // HandleDeviceModel to handle app deployment/delete using pod spec.
@@ -1064,13 +720,22 @@ func NewTestStatefulSet(name, imgURL string, replicas int32) *apps.StatefulSet {
 		Spec: apps.StatefulSetSpec{
 			Replicas: &replicas,
 			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{"app": name},
+				MatchLabels: map[string]string{
+					"app":                 name,
+					constants.E2ELabelKey: constants.E2ELabelValue,
+				},
 			},
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{"app": name},
+					Labels: map[string]string{
+						"app":                 name,
+						constants.E2ELabelKey: constants.E2ELabelValue,
+					},
 				},
 				Spec: v1.PodSpec{
+					NodeSelector: map[string]string{
+						"node-role.kubernetes.io/edge": "",
+					},
 					Containers: []v1.Container{
 						{
 							Name:  "nginx",

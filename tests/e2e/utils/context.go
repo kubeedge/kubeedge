@@ -19,9 +19,6 @@ import (
 	"crypto/tls"
 	"io"
 	"net/http"
-	"net/url"
-	"sort"
-	"strings"
 	"time"
 )
 
@@ -64,14 +61,4 @@ func SendHTTPRequest(method, reqAPI string) (*http.Response, error) {
 	}
 	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	return resp, nil
-}
-
-//MapLabels function add label selector
-func MapLabels(ls map[string]string) string {
-	selector := make([]string, 0, len(ls))
-	for key, value := range ls {
-		selector = append(selector, key+"="+value)
-	}
-	sort.StringSlice(selector).Sort()
-	return url.QueryEscape(strings.Join(selector, ","))
 }

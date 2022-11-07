@@ -21,8 +21,6 @@ import (
 )
 
 var (
-	nodeName     string
-	nodeSelector string
 	//context to load config and access across the package
 	ctx *utils.TestContext
 )

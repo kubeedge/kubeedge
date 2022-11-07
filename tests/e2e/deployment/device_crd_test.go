@@ -24,6 +24,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	clientset "k8s.io/client-go/kubernetes"
 
 	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
@@ -43,6 +45,12 @@ var CRDTestTimerGroup = utils.NewTestTimerGroup()
 var _ = Describe("Device Management test in E2E scenario", func() {
 	var testTimer *utils.TestTimer
 	var testSpecReport SpecReport
+	var clientSet clientset.Interface
+
+	BeforeEach(func() {
+		clientSet = utils.NewKubeClient(ctx.Cfg.KubeConfigPath)
+	})
+
 	Context("Test Device Model Creation, Updation and deletion", func() {
 		BeforeEach(func() {
 			// Delete any pre-existing device models
@@ -319,8 +327,8 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			Expect(isEqual).Should(Equal(true))
 		})
 		It("E2E_CREATE_DEVICE_4: Create device instance for incorrect device instance", func() {
-			statusCode := utils.DeleteConfigmap(ctx.Cfg.K8SMasterForKubeEdge + ConfigmapHandler + "/" + "device-profile-config-" + nodeName)
-			Expect(statusCode == http.StatusOK || statusCode == http.StatusNotFound).Should(Equal(true))
+			err := utils.DeleteConfigMap(clientSet, metav1.NamespaceDefault, "device-profile-config-"+nodeName)
+			Expect(err).To(BeNil())
 			IsDeviceModelCreated, statusCode := utils.HandleDeviceModel(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeviceModelHandler, "", "led")
 			Expect(IsDeviceModelCreated).Should(BeTrue())
 			Expect(statusCode).Should(Equal(http.StatusCreated))

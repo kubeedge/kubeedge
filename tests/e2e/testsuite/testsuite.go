@@ -17,50 +17,57 @@ limitations under the License.
 package testsuite
 
 import (
-	"net/http"
+	"fmt"
 	"time"
 
+	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
-	v1 "k8s.io/api/apps/v1"
-	metav1 "k8s.io/api/core/v1"
+	"k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	clientset "k8s.io/client-go/kubernetes"
 
-	"github.com/kubeedge/kubeedge/tests/e2e/constants"
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 )
 
-func CreateDeploymentTest(replica int, deplName, nodeName, nodeSelector string, ctx *utils.TestContext) metav1.PodList {
-	var deploymentList v1.DeploymentList
-	var podlist metav1.PodList
-	IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+constants.DeploymentHandler, deplName, ctx.Cfg.AppImageURL[1], nodeSelector, "", replica)
-	gomega.Expect(IsAppDeployed).Should(gomega.BeTrue())
-	err := utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+constants.DeploymentHandler)
+func CreateDeploymentTest(c clientset.Interface, replica int32, deplName string, ctx *utils.TestContext) *v1.PodList {
+	ginkgo.By(fmt.Sprintf("create deployment %s", deplName))
+	d := utils.NewDeployment(deplName, ctx.Cfg.AppImageURL[1], replica)
+	_, err := utils.CreateDeployment(c, d)
+	gomega.Expect(err).To(gomega.BeNil())
+
+	ginkgo.By(fmt.Sprintf("get deployment %s", deplName))
+	_, err = utils.GetDeployment(c, v1.NamespaceDefault, deplName)
 	gomega.Expect(err).To(gomega.BeNil())
 
 	time.Sleep(time.Second * 1)
 
-	for _, deployment := range deploymentList.Items {
-		if deployment.Name == deplName {
-			label := nodeName
-			podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+constants.AppHandler, label)
-			gomega.Expect(err).To(gomega.BeNil())
-			break
-		}
-	}
-	utils.WaitforPodsRunning(ctx.Cfg.KubeConfigPath, podlist, 240*time.Second)
+	ginkgo.By(fmt.Sprintf("get pod for deployment %s", deplName))
+	labelSelector := labels.SelectorFromSet(map[string]string{"app": deplName})
+	podList, err := utils.GetPods(c, v1.NamespaceDefault, labelSelector, nil)
+	gomega.Expect(err).To(gomega.BeNil())
+	gomega.Expect(podList).NotTo(gomega.BeNil())
 
-	return podlist
+	ginkgo.By(fmt.Sprintf("wait for pod of deployment %s running", deplName))
+	utils.WaitForPodsRunning(c, podList, 240*time.Second)
+
+	return podList
 }
 
-func CreatePodTest(nodeName, podName string, ctx *utils.TestContext, pod *metav1.Pod) metav1.PodList {
-	var podlist metav1.PodList
-	IsAppDeployed := utils.HandlePod(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+constants.AppHandler, podName, pod)
-	gomega.Expect(IsAppDeployed).Should(gomega.BeTrue())
-	label := nodeName
+func CreatePodTest(c clientset.Interface, pod *v1.Pod) *v1.PodList {
+	ginkgo.By(fmt.Sprintf("create pod %s/%s", pod.Namespace, pod.Name))
+	_, err := utils.CreatePod(c, pod)
+	gomega.Expect(err).To(gomega.BeNil())
 
 	time.Sleep(time.Second * 1)
 
-	podlist, err := utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+constants.AppHandler, label)
+	ginkgo.By("get pods")
+	labelSelector := labels.SelectorFromSet(map[string]string{"app": pod.Name})
+	podList, err := utils.GetPods(c, v1.NamespaceDefault, labelSelector, nil)
 	gomega.Expect(err).To(gomega.BeNil())
-	utils.WaitforPodsRunning(ctx.Cfg.KubeConfigPath, podlist, 240*time.Second)
-	return podlist
+	gomega.Expect(podList).NotTo(gomega.BeNil())
+
+	ginkgo.By(fmt.Sprintf("wait pod %s/%s running", pod.Namespace, pod.Name))
+	utils.WaitForPodsRunning(c, podList, 240*time.Second)
+
+	return podList
 }

@@ -18,14 +18,11 @@ package utils
 
 import (
 	"context"
-	"encoding/json"
-	"io"
-	"net/http"
-	"strings"
 	"time"
 
 	"github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -33,13 +30,10 @@ import (
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/klog/v2"
 )
 
-const (
-	podLabelSelector = "?fieldSelector=spec.nodeName="
-)
-
-func ListPods(c clientset.Interface, ns string, labelSelector labels.Selector, fieldSelector fields.Selector) (*v1.PodList, error) {
+func GetPods(c clientset.Interface, ns string, labelSelector labels.Selector, fieldSelector fields.Selector) (*v1.PodList, error) {
 	options := metav1.ListOptions{}
 
 	if fieldSelector != nil {
@@ -51,6 +45,18 @@ func ListPods(c clientset.Interface, ns string, labelSelector labels.Selector, f
 	}
 
 	return c.CoreV1().Pods(ns).List(context.TODO(), options)
+}
+
+func GetPod(c clientset.Interface, ns, name string) (*v1.Pod, error) {
+	return c.CoreV1().Pods(ns).Get(context.TODO(), name, metav1.GetOptions{})
+}
+
+func DeletePod(c clientset.Interface, ns, name string) error {
+	return c.CoreV1().Pods(ns).Delete(context.TODO(), name, metav1.DeleteOptions{})
+}
+
+func CreatePod(c clientset.Interface, pod *v1.Pod) (*v1.Pod, error) {
+	return c.CoreV1().Pods(pod.Namespace).Create(context.TODO(), pod, metav1.CreateOptions{})
 }
 
 func WaitForPodsToDisappear(c clientset.Interface, ns string, label labels.Selector, interval, timeout time.Duration) error {
@@ -71,151 +77,35 @@ func WaitForPodsToDisappear(c clientset.Interface, ns string, label labels.Selec
 	})
 }
 
-func DeletePod(c clientset.Interface, name, ns string) error {
-	return c.CoreV1().Pods(ns).Delete(context.TODO(), name, metav1.DeleteOptions{})
-}
+// CheckPodDeleteState check whether the given pod list is deleted successfully
+func CheckPodDeleteState(c clientset.Interface, podList *v1.PodList) {
+	podCount := len(podList.Items)
 
-//GetPods function to get the pods from Edged
-func GetPods(apiserver, label string) (v1.PodList, error) {
-	var pods v1.PodList
-	var resp *http.Response
-	var err error
+	errInfo := "Pods of deploy are not deleted within the time"
 
-	if len(label) > 0 {
-		resp, err = SendHTTPRequest(http.MethodGet, apiserver+podLabelSelector+label)
-	} else {
-		resp, err = SendHTTPRequest(http.MethodGet, apiserver)
-	}
-	if err != nil {
-		Fatalf("Frame HTTP request failed: %v", err)
-		return pods, nil
-	}
-	defer resp.Body.Close()
-	contents, err := io.ReadAll(resp.Body)
-	if err != nil {
-		Fatalf("HTTP Response reading has failed: %v", err)
-		return pods, nil
-	}
-	err = json.Unmarshal(contents, &pods)
-	if err != nil {
-		Fatalf("Unmarshal HTTP Response has failed: %v", err)
-		return pods, nil
-	}
-	return pods, nil
-}
-
-//GetPodState function to get the pod status and response code
-func GetPodState(apiserver string) (string, int) {
-	var pod v1.Pod
-
-	resp, err := SendHTTPRequest(http.MethodGet, apiserver)
-	if err != nil {
-		Fatalf("GetPodState :SenHttpRequest failed: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusNotFound {
-		contents, err := io.ReadAll(resp.Body)
-		if err != nil {
-			Fatalf("HTTP Response reading has failed: %v", err)
-		}
-		err = json.Unmarshal(contents, &pod)
-		if err != nil {
-			Fatalf("Unmarshal HTTP Response has failed: %v", err)
-		}
-		return string(pod.Status.Phase), resp.StatusCode
-	}
-
-	return "", resp.StatusCode
-}
-
-//DeletePods function to get the pod status and response code
-func DeletePods(apiserver string) (string, int) {
-	var pod v1.Pod
-	resp, err := SendHTTPRequest(http.MethodDelete, apiserver)
-	if err != nil {
-		Fatalf("GetPodState :SenHttpRequest failed: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusNotFound {
-		contents, err := io.ReadAll(resp.Body)
-		if err != nil {
-			Fatalf("HTTP Response reading has failed: %v", err)
-		}
-		err = json.Unmarshal(contents, &pod)
-		if err != nil {
-			Fatalf("Unmarshal HTTP Response has failed: %v", err)
-		}
-		return string(pod.Status.Phase), resp.StatusCode
-	}
-
-	return "", resp.StatusCode
-}
-
-//CheckPodRunningState function to check the Pod state
-func CheckPodRunningState(apiserver string, podlist v1.PodList) {
 	gomega.Eventually(func() int {
 		var count int
-		for _, pod := range podlist.Items {
-			state, _ := GetPodState(apiserver + "/" + pod.Name)
-			Infof("PodName: %s PodStatus: %s", pod.Name, state)
-			if state == "Running" {
+		for _, pod := range podList.Items {
+			_, err := GetPod(c, pod.Namespace, pod.Name)
+			if err != nil && apierrors.IsNotFound(err) {
 				count++
+				continue
 			}
-		}
-		return count
-	}, "600s", "2s").Should(gomega.Equal(len(podlist.Items)), "Application deployment is Unsuccessful, Pod has not come to Running State")
-}
 
-//CheckPodDeleteState function to check the Pod state
-func CheckPodDeleteState(apiserver string, podlist v1.PodList) {
-	var count int
-	//skip the edgecore/cloudcore deployment pods and count only application pods deployed on KubeEdge edgen node
-	for _, pod := range podlist.Items {
-		if strings.Contains(pod.Name, "deployment-") {
-			count++
-		}
-	}
-	podCount := len(podlist.Items) - count
-	gomega.Eventually(func() int {
-		var count int
-		for _, pod := range podlist.Items {
-			status, statusCode := GetPodState(apiserver + "/" + pod.Name)
-			Infof("PodName: %s status: %s StatusCode: %d", pod.Name, status, statusCode)
-			if statusCode == 404 {
-				count++
+			if err != nil {
+				klog.Errorf("get pod %s/%s error", pod.Namespace, pod.Name)
+				continue
 			}
-		}
-		return count
-	}, "600s", "4s").Should(gomega.Equal(podCount), "Delete Application deployment is Unsuccessful, Pods are not deleted within the time")
-}
 
-//CheckDeploymentPodDeleteState function to check the Pod state
-func CheckDeploymentPodDeleteState(apiserver string, podlist v1.PodList) {
-	var count int
-	//count the edgecore/cloudcore deployment pods and count only application pods deployed on KubeEdge edgen node
-	for _, pod := range podlist.Items {
-		if strings.Contains(pod.Name, "deployment-") {
-			count++
+			Infof("Pod %s/%s still exist", pod.Namespace, pod.Name)
 		}
-	}
-	//podCount := len(podlist.Items) - count
-	gomega.Eventually(func() int {
-		var count int
-		for _, pod := range podlist.Items {
-			status, statusCode := GetPodState(apiserver + "/" + pod.Name)
-			Infof("PodName: %s status: %s StatusCode: %d", pod.Name, status, statusCode)
-			if statusCode == 404 {
-				count++
-			}
-		}
+
 		return count
-	}, "240s", "4s").Should(gomega.Equal(count), "Delete Application deployment is Unsuccessful, Pods are not deleted within the time")
+	}, "240s", "4s").Should(gomega.Equal(podCount), errInfo)
 }
 
 // NewKubeClient creates kube client from config
-func NewKubeClient(kubeConfigPath string) *clientset.Clientset {
+func NewKubeClient(kubeConfigPath string) clientset.Interface {
 	kubeConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
 	if err != nil {
 		Fatalf("Get kube config failed with error: %v", err)
@@ -232,38 +122,32 @@ func NewKubeClient(kubeConfigPath string) *clientset.Clientset {
 	return kubeClient
 }
 
-// WaitforPodsRunning waits util all pods are in running status or timeout
-func WaitforPodsRunning(kubeConfigPath string, podlist v1.PodList, timout time.Duration) {
-	if len(podlist.Items) == 0 {
-		Fatalf("podlist should not be empty")
+// WaitForPodsRunning waits util all pods are in running status or timeout
+func WaitForPodsRunning(c clientset.Interface, podList *v1.PodList, timeout time.Duration) {
+	if len(podList.Items) == 0 {
+		Fatalf("podList should not be empty")
 	}
 
 	podRunningCount := 0
-	for _, pod := range podlist.Items {
+	for _, pod := range podList.Items {
 		if pod.Status.Phase == v1.PodRunning {
 			podRunningCount++
 		}
 	}
-	if podRunningCount == len(podlist.Items) {
+
+	if podRunningCount == len(podList.Items) {
 		Infof("All pods come into running status")
 		return
 	}
 
-	// new kube client
-	kubeClient := NewKubeClient(kubeConfigPath)
 	// define signal
 	signal := make(chan struct{})
+
 	// define list watcher
-	listWatcher := cache.NewListWatchFromClient(
-		kubeClient.CoreV1().RESTClient(),
-		"pods",
-		v1.NamespaceAll,
-		fields.Everything())
+	listWatcher := cache.NewListWatchFromClient(c.CoreV1().RESTClient(), "pods", v1.NamespaceAll, fields.Everything())
+
 	// new controller
-	_, controller := cache.NewInformer(
-		listWatcher,
-		&v1.Pod{},
-		time.Second*0,
+	_, controller := cache.NewInformer(listWatcher, &v1.Pod{}, 0,
 		cache.ResourceEventHandlerFuncs{
 			// receive update events
 			UpdateFunc: func(oldObj, newObj interface{}) {
@@ -272,28 +156,30 @@ func WaitforPodsRunning(kubeConfigPath string, podlist v1.PodList, timout time.D
 				if !ok {
 					Fatalf("Failed to cast observed object to pod")
 				}
+
 				// calculate the pods in running status
 				count := 0
-				for i := range podlist.Items {
-					// update pod status in podlist
-					if podlist.Items[i].Name == p.Name {
+				for i := range podList.Items {
+					// update pod status in podList
+					if podList.Items[i].Name == p.Name {
 						Infof("PodName: %s PodStatus: %s", p.Name, p.Status.Phase)
-						podlist.Items[i].Status = p.Status
+						podList.Items[i].Status = p.Status
 					}
 					// check if the pod is in running status
-					if podlist.Items[i].Status.Phase == v1.PodRunning {
+					if podList.Items[i].Status.Phase == v1.PodRunning {
 						count++
 					}
 				}
+
 				// send an end signal when all pods are in running status
-				if len(podlist.Items) == count {
+				if len(podList.Items) == count {
 					signal <- struct{}{}
 				}
 			},
 		},
 	)
 
-	// run controoler
+	// run controller
 	podChan := make(chan struct{})
 	go controller.Run(podChan)
 	defer close(podChan)
@@ -302,7 +188,7 @@ func WaitforPodsRunning(kubeConfigPath string, podlist v1.PodList, timout time.D
 	select {
 	case <-signal:
 		Infof("All pods come into running status")
-	case <-time.After(timout):
-		Fatalf("Wait for pods come into running status timeout: %v", timout)
+	case <-time.After(timeout):
+		Fatalf("Wait for pods come into running status timeout: %v", timeout)
 	}
 }
