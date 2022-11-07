@@ -43,7 +43,7 @@ var (
 keadm manifest
 - This command will render Kubernetes resources
 
-keadm generate --advertise-address=127.0.0.1 --profile version=v1.9.0 --kube-config=/root/.kube/config
+keadm generate --advertise-address=127.0.0.1 --profile version=v%s --kube-config=/root/.kube/config
   - kube-config is the absolute path of kubeconfig which used to secure connectivity between cloudcore and kube-apiserver
 	- a list of helm style set flags like "--set key=value" can be implemented, ref: https://github.com/kubeedge/kubeedge/tree/master/manifests/charts/cloudcore/README.md
 `
@@ -52,7 +52,7 @@ keadm generate --advertise-address=127.0.0.1 --profile version=v1.9.0 --kube-con
 keadm manifest generate
 - This command will render and generate Kubernetes resources
 
-keadm manifest generate --advertise-address=127.0.0.1 --profile version=v1.9.0 --kube-config=/root/.kube/config
+keadm manifest generate --advertise-address=127.0.0.1 --profile version=v%s --kube-config=/root/.kube/config
   - kube-config is the absolute path of kubeconfig which used to secure connectivity between cloudcore and kube-apiserver
 	- a list of helm style set flags like "--set key=value" can be implemented, ref: https://github.com/kubeedge/kubeedge/tree/master/manifests/charts/cloudcore/README.md
 `
@@ -68,7 +68,7 @@ func NewManifestGenerate() *cobra.Command {
 		Use:     "generate",
 		Short:   "Checks and generate the manifests.",
 		Long:    cloudManifestGenerateLongDescription,
-		Example: cloudManifestGenerateExample,
+		Example: fmt.Sprintf(cloudManifestGenerateExample, types.DefaultKubeEdgeVersion),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			checkFlags := func(f *pflag.Flag) {
 				util.AddToolVals(f, flagVals)
@@ -87,7 +87,7 @@ func NewManifestGenerate() *cobra.Command {
 		Use:     "manifest",
 		Short:   "Render the manifests by using a list of set flags like helm.",
 		Long:    cloudManifestLongDescription,
-		Example: cloudManifestExample,
+		Example: fmt.Sprintf(cloudManifestExample, types.DefaultKubeEdgeVersion),
 	}
 	manifestCmd.AddCommand(generateCmd)
 	return manifestCmd
