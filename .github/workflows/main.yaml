@@ -5,7 +5,17 @@ on:
     branches:
       - master
     tags:
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '**/OWNERS'
+      - '**/MAINTAINERS'
   pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '**/OWNERS'
+      - '**/MAINTAINERS'
 
 env:
   CONTAINER_RUN_OPTIONS: " "
