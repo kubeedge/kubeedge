@@ -208,18 +208,6 @@ func HandleConfigmap(configName chan error, operation, confighandler string, IsE
 	}
 }
 
-//GetConfigmap function to get configmaps for respective edgenodes
-func GetConfigmap(apiConfigMap string) (int, []byte) {
-	resp, err := SendHTTPRequest(http.MethodGet, apiConfigMap)
-	if err != nil {
-		Fatalf("Sending SenHttpRequest failed: %v", err)
-		return -1, nil
-	}
-	body, _ := io.ReadAll(resp.Body)
-	defer resp.Body.Close()
-	return resp.StatusCode, body
-}
-
 func DeleteConfigMap(client clientset.Interface, ns, name string) error {
 	err := client.CoreV1().ConfigMaps(ns).Delete(context.TODO(), name, metav1.DeleteOptions{})
 	if err != nil && apierrors.IsNotFound(err) {
