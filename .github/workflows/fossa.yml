@@ -8,7 +8,6 @@ on:
       - '**/OWNERS'
       - '**/MAINTAINERS'
   pull_request:
-    branches: [master]
     paths-ignore:
       - '**.md'
       - 'docs/**'
