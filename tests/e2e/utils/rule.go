@@ -1,18 +1,16 @@
 package utils
 
 import (
-	"bytes"
-	"crypto/tls"
-	"encoding/json"
+	"context"
 	"errors"
-	"io"
 	"net/http"
 	"reflect"
-	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	rulesv1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
+	edgeclientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 )
 
 func NewRule(sourceType, targetType rulesv1.RuleEndpointTypeDef) *rulesv1.Rule {
@@ -204,155 +202,79 @@ func newServiceBusRuleEndpoint() *rulesv1.RuleEndpoint {
 	return &servicebusRuleEndpoint
 }
 
-// GetRuleList to get the rule list and verify whether the contents of the rule matches with what is expected
-func GetRuleList(list *rulesv1.RuleList, getRuleAPI string, expectedRule *rulesv1.Rule) ([]rulesv1.Rule, error) {
-	resp, err := SendHTTPRequest(http.MethodGet, getRuleAPI)
-	defer resp.Body.Close()
-	contents, err := io.ReadAll(resp.Body)
+func ListRule(c edgeclientset.Interface, ns string) ([]rulesv1.Rule, error) {
+	rules, err := c.RulesV1().Rules(ns).List(context.TODO(), v1.ListOptions{})
 	if err != nil {
-		Fatalf("HTTP Response reading has failed: %v", err)
 		return nil, err
 	}
-	err = json.Unmarshal(contents, &list)
-	if err != nil {
-		Fatalf("Unmarshal HTTP Response has failed: %v", err)
-		return nil, err
-	}
-	if expectedRule != nil {
-		modelExists := false
-		for _, rule := range list.Items {
-			if expectedRule.ObjectMeta.Name == rule.ObjectMeta.Name {
-				modelExists = true
-				if !reflect.DeepEqual(expectedRule.TypeMeta, rule.TypeMeta) ||
-					expectedRule.ObjectMeta.Namespace != rule.ObjectMeta.Namespace ||
-					!reflect.DeepEqual(expectedRule.Spec, rule.Spec) {
-					return nil, errors.New("the rule is not matching with what was expected")
-				}
-			}
+
+	return rules.Items, nil
+}
+
+func CheckRuleExists(rules []rulesv1.Rule, expectedRule *rulesv1.Rule) error {
+	modelExists := false
+	for _, rule := range rules {
+		if expectedRule.ObjectMeta.Name != rule.ObjectMeta.Name {
+			continue
 		}
-		if !modelExists {
-			return nil, errors.New("the requested rule is not found")
+
+		modelExists = true
+		if !reflect.DeepEqual(expectedRule.TypeMeta, rule.TypeMeta) ||
+			expectedRule.ObjectMeta.Namespace != rule.ObjectMeta.Namespace ||
+			!reflect.DeepEqual(expectedRule.Spec, rule.Spec) {
+			return errors.New("the rule is not matching with what was expected")
 		}
+		break
 	}
-	return list.Items, nil
+	if !modelExists {
+		return errors.New("the requested rule is not found")
+	}
+
+	return nil
 }
 
 // HandleRule to handle rule.
-func HandleRule(operation, apiServer, UID string, sourceType, targetType rulesv1.RuleEndpointTypeDef) (bool, int) {
-	var req *http.Request
-	var err error
-	var body io.Reader
-
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := &http.Client{
-		Transport: tr,
-	}
-
+func HandleRule(c edgeclientset.Interface, operation, UID string, sourceType, targetType rulesv1.RuleEndpointTypeDef) error {
 	switch operation {
 	case http.MethodPost:
 		body := NewRule(sourceType, targetType)
-		respBytes, err := json.Marshal(body)
-		if err != nil {
-			Fatalf("Marshalling body failed: %v", err)
-		}
-		req, err = http.NewRequest(http.MethodPost, apiServer, bytes.NewBuffer(respBytes))
-		req.Header.Set("Content-Type", "application/json")
+		_, err := c.RulesV1().Rules("default").Create(context.TODO(), body, v1.CreateOptions{})
+		return err
+
 	case http.MethodDelete:
-		req, err = http.NewRequest(http.MethodDelete, apiServer+UID, body)
-		req.Header.Set("Content-Type", "application/json")
+		err := c.RulesV1().Rules("default").Delete(context.TODO(), UID, v1.DeleteOptions{})
+		if err != nil && apierrors.IsNotFound(err) {
+			return nil
+		}
+		return err
 	}
-	if err != nil {
-		// handle error
-		Fatalf("Frame HTTP request failed: %v", err)
-		return false, 0
-	}
-	t := time.Now()
-	resp, err := client.Do(req)
-	if err != nil {
-		// handle error
-		Fatalf("HTTP request is failed :%v", err)
-		return false, 0
-	}
-	defer resp.Body.Close()
-	contents, err := io.ReadAll(resp.Body)
-	Infof("%s %s %v  %v in %v", req.Method, req.URL, resp.Status, string(contents), time.Since(t))
-	return true, resp.StatusCode
+
+	return nil
 }
 
 // HandleRuleEndpoint to handle ruleendpoint.
-func HandleRuleEndpoint(operation string, apiServer string, UID string, endpointType rulesv1.RuleEndpointTypeDef) (bool, int) {
-	var req *http.Request
-	var err error
-	var body io.Reader
-
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := &http.Client{
-		Transport: tr,
-	}
-
+func HandleRuleEndpoint(c edgeclientset.Interface, operation string, UID string, endpointType rulesv1.RuleEndpointTypeDef) error {
 	switch operation {
 	case http.MethodPost:
 		body := NewRuleEndpoint(endpointType)
-		respBytes, err := json.Marshal(body)
-		if err != nil {
-			Fatalf("Marshalling body failed: %v", err)
-		}
-		req, err = http.NewRequest(http.MethodPost, apiServer, bytes.NewBuffer(respBytes))
-		req.Header.Set("Content-Type", "application/json")
+		_, err := c.RulesV1().RuleEndpoints("default").Create(context.TODO(), body, v1.CreateOptions{})
+		return err
+
 	case http.MethodDelete:
-		req, err = http.NewRequest(http.MethodDelete, apiServer+UID, body)
-		req.Header.Set("Content-Type", "application/json")
+		err := c.RulesV1().RuleEndpoints("default").Delete(context.TODO(), UID, v1.DeleteOptions{})
+		if err != nil && apierrors.IsNotFound(err) {
+			return nil
+		}
+		return err
 	}
-	if err != nil {
-		// handle error
-		Fatalf("Frame HTTP request failed: %v", err)
-		return false, 0
-	}
-	t := time.Now()
-	resp, err := client.Do(req)
-	if err != nil {
-		// handle error
-		Fatalf("HTTP request is failed :%v", err)
-		return false, 0
-	}
-	defer resp.Body.Close()
-	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
-	return true, resp.StatusCode
+	return nil
 }
 
-// GetRuleEndpointList to get the rule endpoint list and verify whether the contents of the ruleendpoint matches with what is expected
-func GetRuleEndpointList(list *rulesv1.RuleEndpointList, getRuleEndpointAPI string, expectedRule *rulesv1.RuleEndpoint) ([]rulesv1.RuleEndpoint, error) {
-	resp, err := SendHTTPRequest(http.MethodGet, getRuleEndpointAPI)
-	defer resp.Body.Close()
-	contents, err := io.ReadAll(resp.Body)
+func ListRuleEndpoint(c edgeclientset.Interface, ns string) ([]rulesv1.RuleEndpoint, error) {
+	rules, err := c.RulesV1().RuleEndpoints(ns).List(context.TODO(), v1.ListOptions{})
 	if err != nil {
-		Fatalf("HTTP Response reading has failed: %v", err)
 		return nil, err
 	}
-	err = json.Unmarshal(contents, &list)
-	if err != nil {
-		Fatalf("Unmarshal HTTP Response has failed: %v", err)
-		return nil, err
-	}
-	if expectedRule != nil {
-		exists := false
-		for _, ruleEndpoint := range list.Items {
-			if expectedRule.ObjectMeta.Name == ruleEndpoint.ObjectMeta.Name {
-				exists = true
-				if !reflect.DeepEqual(expectedRule.TypeMeta, ruleEndpoint.TypeMeta) ||
-					expectedRule.ObjectMeta.Namespace != ruleEndpoint.ObjectMeta.Namespace ||
-					!reflect.DeepEqual(expectedRule.Spec, ruleEndpoint.Spec) {
-					return nil, errors.New("the ruleendpoint is not matching with what was expected")
-				}
-			}
-		}
-		if !exists {
-			return nil, errors.New("the requested ruleendpoint is not found")
-		}
-	}
-	return list.Items, nil
+
+	return rules.Items, nil
 }

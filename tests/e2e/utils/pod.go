@@ -124,8 +124,8 @@ func NewKubeClient(kubeConfigPath string) clientset.Interface {
 	return kubeClient
 }
 
-// NewKubeEdegClient creates kubeEdge CRD client from config
-func NewKubeEdegClient(kubeConfigPath string) edgeclientset.Interface {
+// NewKubeEdgeClient creates kubeEdge CRD client from config
+func NewKubeEdgeClient(kubeConfigPath string) edgeclientset.Interface {
 	kubeConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
 	if err != nil {
 		Fatalf("Get kube config failed with error: %v", err)
