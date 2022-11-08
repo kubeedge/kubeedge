@@ -194,7 +194,9 @@ func (cu *KubeCloudHelmInstTool) beforeRenderer(baseHelmRoot string) error {
 	// Only handle profiles when cu.ExternalHelmRoot is empty.
 	if cu.ExternalHelmRoot == "" {
 		var profileValue string
-		if len(p) >= 2 {
+		if cu.KubeEdgeVersion != "" {
+			profileValue = cu.KubeEdgeVersion
+		} else if len(p) >= 2 {
 			profileValue = p[1]
 		}
 		if err := cu.handleProfile(profileValue); err != nil {
