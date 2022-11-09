@@ -31,6 +31,8 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
+
+	edgeclientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 )
 
 func GetPods(c clientset.Interface, ns string, labelSelector labels.Selector, fieldSelector fields.Selector) (*v1.PodList, error) {
@@ -120,6 +122,23 @@ func NewKubeClient(kubeConfigPath string) clientset.Interface {
 		return nil
 	}
 	return kubeClient
+}
+
+// NewKubeEdegClient creates kubeEdge CRD client from config
+func NewKubeEdegClient(kubeConfigPath string) edgeclientset.Interface {
+	kubeConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
+	if err != nil {
+		Fatalf("Get kube config failed with error: %v", err)
+		return nil
+	}
+	kubeConfig.QPS = 5
+	kubeConfig.Burst = 10
+	edgeClientSet, err := edgeclientset.NewForConfig(kubeConfig)
+	if err != nil {
+		Fatalf("Get kubeEdge client failed with error: %v", err)
+		return nil
+	}
+	return edgeClientSet
 }
 
 // WaitForPodsRunning waits util all pods are in running status or timeout
