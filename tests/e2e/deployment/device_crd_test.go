@@ -46,7 +46,7 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 
 	BeforeEach(func() {
 		clientSet = utils.NewKubeClient(ctx.Cfg.KubeConfigPath)
-		edgeClientSet = utils.NewKubeEdegClient(ctx.Cfg.KubeConfigPath)
+		edgeClientSet = utils.NewKubeEdgeClient(ctx.Cfg.KubeConfigPath)
 	})
 
 	Context("Test Device Model Creation, Updation and deletion", func() {
