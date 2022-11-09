@@ -121,22 +121,24 @@ func addForceOptionsFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 //AddInit2ToolsList reads the flagData (containing val and default val) and join options to fill the list of tools.
 func AddInit2ToolsList(toolList map[string]types.ToolsInstaller, initOpts *types.InitOptions) error {
 	var latestVersion string
-	var kubeedgeVersion string
-	for i := 0; i < util.RetryTimes; i++ {
-		version, err := util.GetLatestVersion()
-		if err != nil {
-			fmt.Println("Failed to get the latest KubeEdge release version, error: ", err)
-			continue
+	kubeedgeVersion := initOpts.KubeEdgeVersion
+	if kubeedgeVersion == "" {
+		for i := 0; i < util.RetryTimes; i++ {
+			version, err := util.GetLatestVersion()
+			if err != nil {
+				fmt.Println("Failed to get the latest KubeEdge release version, error: ", err)
+				continue
+			}
+			if len(version) > 0 {
+				kubeedgeVersion = strings.TrimPrefix(version, "v")
+				latestVersion = version
+				break
+			}
 		}
-		if len(version) > 0 {
-			kubeedgeVersion = strings.TrimPrefix(version, "v")
-			latestVersion = version
-			break
+		if len(latestVersion) == 0 {
+			kubeedgeVersion = types.DefaultKubeEdgeVersion
+			fmt.Println("Failed to get the latest KubeEdge release version, will use default version: ", kubeedgeVersion)
 		}
-	}
-	if len(latestVersion) == 0 {
-		kubeedgeVersion = types.DefaultKubeEdgeVersion
-		fmt.Println("Failed to get the latest KubeEdge release version, will use default version: ", kubeedgeVersion)
 	}
 
 	common := util.Common{

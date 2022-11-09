@@ -365,6 +365,9 @@ func (cu *KubeCloudHelmInstTool) checkProfile(baseHelmRoot string) error {
 func (cu *KubeCloudHelmInstTool) handleProfile(profileValue string) error {
 	// the current version
 	currentVersion := cu.ToolVersion.String()
+	if !strings.HasPrefix(currentVersion, "v") {
+		currentVersion = "v" + currentVersion
+	}
 	switch cu.ProfileKey {
 	case VersionProfileKey:
 		if profileValue == "" {
