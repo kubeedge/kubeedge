@@ -19,6 +19,7 @@ package upgrade
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -44,6 +45,10 @@ func init() {
 	// if not specify it, also use default upgrade tool: keadm
 	RegisterUpgradeProvider("", &keadmUpgrade{})
 	RegisterUpgradeProvider("keadm", &keadmUpgrade{})
+	// register upgrade tool: dry-run, this is only for test use
+	RegisterUpgradeProvider("dry-run", &keadmUpgrade{
+		dryRun: true,
+	})
 }
 
 type upgradeHandler struct{}
@@ -103,9 +108,11 @@ func RegisterUpgradeProvider(upgradeToolType string, provider Provider) {
 	upgradeToolProviders[upgradeToolType] = provider
 }
 
-type keadmUpgrade struct{}
+type keadmUpgrade struct {
+	dryRun bool
+}
 
-func (*keadmUpgrade) Upgrade(upgradeReq *commontypes.NodeUpgradeJobRequest) error {
+func (upgrade *keadmUpgrade) Upgrade(upgradeReq *commontypes.NodeUpgradeJobRequest) error {
 	// get edgecore start options and config
 	opts := options.GetEdgeCoreOptions()
 	config := options.GetEdgeCoreConfig()
@@ -128,14 +135,27 @@ func (*keadmUpgrade) Upgrade(upgradeReq *commontypes.NodeUpgradeJobRequest) erro
 	files := map[string]string{
 		filepath.Join(util.KubeEdgeUsrBinPath, util.KeadmBinaryName): filepath.Join(util.KubeEdgeUsrBinPath, util.KeadmBinaryName),
 	}
-	err = container.CopyResources(image, files)
-	if err != nil {
-		return fmt.Errorf("failed to cp file from image to host: %v", err)
+
+	//  the path name for the executable that started the current edgecore process
+	binaryPath, _ := os.Executable()
+	// no need to copy keadm in e2e test, we should use the new compiled keadm
+	if !upgrade.dryRun {
+		err = container.CopyResources(image, files)
+		if err != nil {
+			return fmt.Errorf("failed to cp file from image to host: %v", err)
+		}
 	}
 
 	klog.Infof("Begin to run upgrade command")
-	upgradeCmd := fmt.Sprintf("keadm upgrade --upgradeID %s --historyID %s --fromVersion %s --toVersion %s --config %s --image %s > /tmp/keadm.log 2>&1",
-		upgradeReq.UpgradeID, upgradeReq.HistoryID, version.Get(), upgradeReq.Version, opts.ConfigFile, image)
+	upgradeCmd := fmt.Sprintf("keadm upgrade --upgradeID %s --historyID %s --fromVersion %s --toVersion %s --config %s --image %s --binaryPath %s > /tmp/keadm.log 2>&1",
+		upgradeReq.UpgradeID, upgradeReq.HistoryID, version.Get(), upgradeReq.Version, opts.ConfigFile, image, binaryPath)
+
+	// only used in test
+	if upgrade.dryRun {
+		// add a `--dry-run=true` flag to indicate that we'll not do actual Upgrade operations
+		upgradeCmd = fmt.Sprintf("keadm upgrade --dry-run=true --upgradeID %s --historyID %s --fromVersion %s --toVersion %s --config %s --image %s --binaryPath %s > /tmp/keadm.log 2>&1",
+			upgradeReq.UpgradeID, upgradeReq.HistoryID, version.Get(), upgradeReq.Version, opts.ConfigFile, image, binaryPath)
+	}
 
 	// run upgrade cmd to upgrade edge node
 	// use setsid command and nohup command to start a separate progress

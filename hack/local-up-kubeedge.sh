@@ -110,6 +110,13 @@ function build_edgecore {
   make -C "${KUBEEDGE_ROOT}" WHAT="edgecore"
 }
 
+function prepare_keadm {
+  echo "building the keadm..."
+  make -C "${KUBEEDGE_ROOT}" WHAT="keadm"
+  echo "cp keadm to /usr/local/bin dir"
+  cp ${KUBEEDGE_ROOT}/_output/local/bin/keadm /usr/local/bin/keadm
+}
+
 function start_cloudcore {
   CLOUD_CONFIGFILE=${KUBEEDGE_ROOT}/_output/local/bin/cloudcore.yaml
   CLOUD_BIN=${KUBEEDGE_ROOT}/_output/local/bin/cloudcore
@@ -121,6 +128,9 @@ function start_cloudcore {
 
   # enable dynamic controller
   sed -i '/dynamicController:/{n;s/false/true/;}' ${CLOUD_CONFIGFILE}
+
+  # enable NodeUpgradeJob controller
+  sed -i '/nodeUpgradeJobController:/{n;N;N;N;N;s/false/true/}' ${CLOUD_CONFIGFILE}
 
   sed -i -e "s|kubeConfig: .*|kubeConfig: ${KUBECONFIG}|g" \
     -e "s|/var/lib/kubeedge/|/tmp&|g" \
@@ -246,6 +256,7 @@ set -eE
 
 build_cloudcore
 build_edgecore
+prepare_keadm
 
 kind_up_cluster
 

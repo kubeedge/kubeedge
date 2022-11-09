@@ -89,12 +89,7 @@ func (up *UpgradeOptions) upgrade() error {
 	}
 
 	upgrade := Upgrade{
-		UpgradeID:      up.UpgradeID,
-		HistoryID:      up.HistoryID,
-		FromVersion:    up.FromVersion,
-		ToVersion:      up.ToVersion,
-		Image:          up.Image,
-		ConfigFilePath: up.Config,
+		UpgradeOptions: *up,
 		EdgeCoreConfig: configure,
 	}
 
@@ -168,11 +163,15 @@ func (up *Upgrade) PreProcess() error {
 		return fmt.Errorf("failed to backup db: %v", err)
 	}
 	// backup edgecore.yaml: copy from origin path to backup path
-	if err := copy(up.ConfigFilePath, filepath.Join(backupPath, "edgecore.yaml")); err != nil {
+	if err := copy(up.Config, filepath.Join(backupPath, "edgecore.yaml")); err != nil {
 		return fmt.Errorf("failed to back config: %v", err)
 	}
 	// backup edgecore: copy from origin path to backup path
-	if err := copy(filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), filepath.Join(backupPath, util.KubeEdgeBinaryName)); err != nil {
+	binaryPath := filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName)
+	if up.BinaryPath != "" {
+		binaryPath = up.BinaryPath
+	}
+	if err := copy(binaryPath, filepath.Join(backupPath, util.KubeEdgeBinaryName)); err != nil {
 		return fmt.Errorf("failed to backup edgecore: %v", err)
 	}
 
@@ -230,6 +229,11 @@ func copy(src, dst string) error {
 func (up *Upgrade) Process() error {
 	klog.Infof("upgrade process start")
 
+	// If is in DryRun mode, we'll not do the actual upgrade operation
+	if up.DryRun {
+		return nil
+	}
+
 	// stop origin edgecore
 	err := util.KillKubeEdgeBinary(util.KubeEdgeBinaryName)
 	if err != nil {
@@ -245,7 +249,7 @@ func (up *Upgrade) Process() error {
 
 	// generate edgecore.service
 	if util.HasSystemd() {
-		err = common.GenerateServiceFile(util.KubeEdgeBinaryName, fmt.Sprintf("%s --config %s", filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), up.ConfigFilePath))
+		err = common.GenerateServiceFile(util.KubeEdgeBinaryName, fmt.Sprintf("%s --config %s", filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), up.Config))
 		if err != nil {
 			return fmt.Errorf("failed to create edgecore.service file: %v", err)
 		}
@@ -277,7 +281,7 @@ func (up *Upgrade) Rollback() error {
 		return fmt.Errorf("failed to rollback db: %v", err)
 	}
 	// backup edgecore.yaml: copy from backup path to origin path
-	if err := copy(filepath.Join(backupPath, "edgecore.yaml"), up.ConfigFilePath); err != nil {
+	if err := copy(filepath.Join(backupPath, "edgecore.yaml"), up.Config); err != nil {
 		return fmt.Errorf("failed to back config: %v", err)
 	}
 	// backup edgecore: copy from backup path to origin path
@@ -287,7 +291,7 @@ func (up *Upgrade) Rollback() error {
 
 	// generate edgecore.service
 	if util.HasSystemd() {
-		err = common.GenerateServiceFile(util.KubeEdgeBinaryName, fmt.Sprintf("%s --config %s", filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), up.ConfigFilePath))
+		err = common.GenerateServiceFile(util.KubeEdgeBinaryName, fmt.Sprintf("%s --config %s", filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), up.Config))
 		if err != nil {
 			return fmt.Errorf("failed to create edgecore.service file: %v", err)
 		}
@@ -371,15 +375,13 @@ type UpgradeOptions struct {
 	ToVersion   string
 	Config      string
 	Image       string
+	BinaryPath  string
+	DryRun      bool
 }
 
 type Upgrade struct {
-	UpgradeID      string
-	HistoryID      string
-	FromVersion    string
-	ToVersion      string
-	Image          string
-	ConfigFilePath string
+	UpgradeOptions
+
 	EdgeCoreConfig *v1alpha2.EdgeCoreConfig
 
 	Status string
@@ -404,4 +406,10 @@ func addUpgradeFlags(cmd *cobra.Command, upgradeOptions *UpgradeOptions) {
 
 	cmd.Flags().StringVar(&upgradeOptions.Image, "image", upgradeOptions.Image,
 		"Use this key to specify installation image to download.")
+
+	cmd.Flags().BoolVar(&upgradeOptions.DryRun, "dry-run", false,
+		"Use this key to specify whether use dry-run upgrade, this is only for test.")
+
+	cmd.Flags().StringVar(&upgradeOptions.BinaryPath, "binaryPath", upgradeOptions.BinaryPath,
+		"Use this key to specify the origin edgecore path.")
 }
