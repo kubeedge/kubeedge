@@ -34,8 +34,7 @@ type ModuleResolver struct {
 	scannedRoots   map[gopathwalk.Root]bool
 
 	initialized   bool
-	mains         []*gocommand.ModuleJSON
-	mainByDir     map[string]*gocommand.ModuleJSON
+	main          *gocommand.ModuleJSON
 	modsByModPath []*gocommand.ModuleJSON // All modules, ordered by # of path components in module Path...
 	modsByDir     []*gocommand.ModuleJSON // ...or Dir.
 
@@ -70,21 +69,21 @@ func (r *ModuleResolver) init() error {
 		Logf:       r.env.Logf,
 		WorkingDir: r.env.WorkingDir,
 	}
-	vendorEnabled, mainModVendor, err := gocommand.VendorEnabled(context.TODO(), inv, r.env.GocmdRunner)
+	mainMod, vendorEnabled, err := gocommand.VendorEnabled(context.TODO(), inv, r.env.GocmdRunner)
 	if err != nil {
 		return err
 	}
 
-	if mainModVendor != nil && vendorEnabled {
+	if mainMod != nil && vendorEnabled {
 		// Vendor mode is on, so all the non-Main modules are irrelevant,
 		// and we need to search /vendor for everything.
-		r.mains = []*gocommand.ModuleJSON{mainModVendor}
+		r.main = mainMod
 		r.dummyVendorMod = &gocommand.ModuleJSON{
 			Path: "",
-			Dir:  filepath.Join(mainModVendor.Dir, "vendor"),
+			Dir:  filepath.Join(mainMod.Dir, "vendor"),
 		}
-		r.modsByModPath = []*gocommand.ModuleJSON{mainModVendor, r.dummyVendorMod}
-		r.modsByDir = []*gocommand.ModuleJSON{mainModVendor, r.dummyVendorMod}
+		r.modsByModPath = []*gocommand.ModuleJSON{mainMod, r.dummyVendorMod}
+		r.modsByDir = []*gocommand.ModuleJSON{mainMod, r.dummyVendorMod}
 	} else {
 		// Vendor mode is off, so run go list -m ... to find everything.
 		err := r.initAllMods()
@@ -123,10 +122,8 @@ func (r *ModuleResolver) init() error {
 	r.roots = []gopathwalk.Root{
 		{filepath.Join(goenv["GOROOT"], "/src"), gopathwalk.RootGOROOT},
 	}
-	r.mainByDir = make(map[string]*gocommand.ModuleJSON)
-	for _, main := range r.mains {
-		r.roots = append(r.roots, gopathwalk.Root{main.Dir, gopathwalk.RootCurrentModule})
-		r.mainByDir[main.Dir] = main
+	if r.main != nil {
+		r.roots = append(r.roots, gopathwalk.Root{r.main.Dir, gopathwalk.RootCurrentModule})
 	}
 	if vendorEnabled {
 		r.roots = append(r.roots, gopathwalk.Root{r.dummyVendorMod.Dir, gopathwalk.RootOther})
@@ -192,7 +189,7 @@ func (r *ModuleResolver) initAllMods() error {
 		r.modsByModPath = append(r.modsByModPath, mod)
 		r.modsByDir = append(r.modsByDir, mod)
 		if mod.Main {
-			r.mains = append(r.mains, mod)
+			r.main = mod
 		}
 	}
 	return nil
@@ -612,7 +609,7 @@ func (r *ModuleResolver) scanDirForPackage(root gopathwalk.Root, dir string) dir
 	}
 	switch root.Type {
 	case gopathwalk.RootCurrentModule:
-		importPath = path.Join(r.mainByDir[root.Path].Path, filepath.ToSlash(subdir))
+		importPath = path.Join(r.main.Path, filepath.ToSlash(subdir))
 	case gopathwalk.RootModuleCache:
 		matches := modCacheRegexp.FindStringSubmatch(subdir)
 		if len(matches) == 0 {
