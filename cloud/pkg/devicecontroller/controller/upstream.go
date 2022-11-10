@@ -123,16 +123,13 @@ func (uc *UpstreamController) updateDeviceStatus() {
 				klog.Warning("Failed to get device id")
 				continue
 			}
-			device, ok := uc.dc.deviceManager.Device.Load(deviceID)
-			if !ok {
+			// TODO: namespace
+			cacheDevice, err := uc.dc.informer.Devices().V1alpha2().Devices().Lister().Devices("default").Get(deviceID)
+			if err != nil {
 				klog.Warningf("Device %s does not exist in downstream controller", deviceID)
 				continue
 			}
-			cacheDevice, ok := device.(*v1alpha2.Device)
-			if !ok {
-				klog.Warning("Failed to assert to CacheDevice type")
-				continue
-			}
+
 			deviceStatus := &DeviceStatus{Status: cacheDevice.Status}
 			for twinName, twin := range msgTwin.Twin {
 				for i, cacheTwin := range deviceStatus.Status.Twins {
@@ -154,7 +151,6 @@ func (uc *UpstreamController) updateDeviceStatus() {
 
 			// Store the status in cache so that when update is received by informer, it is not processed by downstream controller
 			cacheDevice.Status = deviceStatus.Status
-			uc.dc.deviceManager.Device.Store(deviceID, cacheDevice)
 
 			body, err := json.Marshal(deviceStatus)
 			if err != nil {

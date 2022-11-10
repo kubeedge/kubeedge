@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"encoding/json"
+	"os"
 	"reflect"
 	"strconv"
 	"time"
@@ -30,6 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -49,9 +51,11 @@ type DownstreamController struct {
 	kubeClient   kubernetes.Interface
 	messageLayer messagelayer.MessageLayer
 
-	deviceManager      *manager.DeviceManager
-	deviceModelManager *manager.DeviceModelManager
-	configMapManager   *manager.ConfigMapManager
+	deviceManager        *manager.DeviceManager
+	deviceModelManager   *manager.DeviceModelManager
+	configMapManager     *manager.ConfigMapManager
+	informer             crdinformers.SharedInformerFactory
+	informersSyncedFuncs []cache.InformerSynced
 }
 
 // syncDeviceModel is used to get events from informer
@@ -62,12 +66,12 @@ func (dc *DownstreamController) syncDeviceModel() {
 			klog.Info("stop syncDeviceModel")
 			return
 		case e := <-dc.deviceModelManager.Events():
-			deviceModel, ok := e.Object.(*v1alpha2.DeviceModel)
+			deviceModel, ok := e.Event.Object.(*v1alpha2.DeviceModel)
 			if !ok {
-				klog.Warningf("object type: %T unsupported", e.Object)
+				klog.Warningf("object type: %T unsupported", e.Event.Object)
 				continue
 			}
-			switch e.Type {
+			switch e.Event.Type {
 			case watch.Added:
 				dc.deviceModelAdded(deviceModel)
 			case watch.Deleted:
@@ -75,7 +79,7 @@ func (dc *DownstreamController) syncDeviceModel() {
 			case watch.Modified:
 				dc.deviceModelUpdated(deviceModel)
 			default:
-				klog.Warningf("deviceModel event type: %s unsupported", e.Type)
+				klog.Warningf("deviceModel event type: %s unsupported", e.Event.Type)
 			}
 		}
 	}
@@ -83,30 +87,11 @@ func (dc *DownstreamController) syncDeviceModel() {
 
 // deviceModelAdded is function to process addition of new deviceModel in apiserver
 func (dc *DownstreamController) deviceModelAdded(deviceModel *v1alpha2.DeviceModel) {
-	// nothing to do when deviceModel added, only add in map
-	dc.deviceModelManager.DeviceModel.Store(deviceModel.Name, deviceModel)
-}
-
-// isDeviceModelUpdated is function to check if deviceModel is actually updated
-func isDeviceModelUpdated(oldTwin *v1alpha2.DeviceModel, newTwin *v1alpha2.DeviceModel) bool {
-	// does not care fields
-	oldTwin.ObjectMeta.ResourceVersion = newTwin.ObjectMeta.ResourceVersion
-	oldTwin.ObjectMeta.Generation = newTwin.ObjectMeta.Generation
-
-	// return true if ObjectMeta or Spec or Status changed, else false
-	return !reflect.DeepEqual(oldTwin.ObjectMeta, newTwin.ObjectMeta) || !reflect.DeepEqual(oldTwin.Spec, newTwin.Spec)
 }
 
 // deviceModelUpdated is function to process updated deviceModel
 func (dc *DownstreamController) deviceModelUpdated(deviceModel *v1alpha2.DeviceModel) {
-	value, ok := dc.deviceModelManager.DeviceModel.Load(deviceModel.Name)
-	if ok {
-		cachedDeviceModel := value.(*v1alpha2.DeviceModel)
-		if isDeviceModelUpdated(cachedDeviceModel, deviceModel) {
-			dc.updateAllConfigMaps(deviceModel)
-		}
-	}
-	dc.deviceModelAdded(deviceModel)
+	dc.updateAllConfigMaps(deviceModel)
 }
 
 // updateAllConfigMaps is function to update configMaps which refer to an updated deviceModel
@@ -117,7 +102,6 @@ func (dc *DownstreamController) updateAllConfigMaps(deviceModel *v1alpha2.Device
 // deviceModelDeleted is function to process deleted deviceModel
 func (dc *DownstreamController) deviceModelDeleted(deviceModel *v1alpha2.DeviceModel) {
 	// TODO: Need to use finalizer like method to delete all devices referring to this model. Need to come up with a design.
-	dc.deviceModelManager.DeviceModel.Delete(deviceModel.Name)
 }
 
 // syncDevice is used to get device events from informer
@@ -128,20 +112,21 @@ func (dc *DownstreamController) syncDevice() {
 			klog.Info("Stop syncDevice")
 			return
 		case e := <-dc.deviceManager.Events():
-			device, ok := e.Object.(*v1alpha2.Device)
+			device, ok := e.Event.Object.(*v1alpha2.Device)
 			if !ok {
-				klog.Warningf("Object type: %T unsupported", e.Object)
+				klog.Warningf("Object type: %T unsupported", e.Event.Object)
 				continue
 			}
-			switch e.Type {
+			switch e.Event.Type {
 			case watch.Added:
 				dc.deviceAdded(device)
 			case watch.Deleted:
 				dc.deviceDeleted(device)
 			case watch.Modified:
-				dc.deviceUpdated(device)
+				old, _ := e.OldObject.(*v1alpha2.Device)
+				dc.deviceUpdated(old, device)
 			default:
-				klog.Warningf("Device event type: %s unsupported", e.Type)
+				klog.Warningf("Device event type: %s unsupported", e.Event.Type)
 			}
 		}
 	}
@@ -205,12 +190,12 @@ func (dc *DownstreamController) addDeviceProfile(device *v1alpha2.Device, config
 	}
 
 	addDeviceInstanceAndProtocol(device, deviceProfile)
-	dm, ok := dc.deviceModelManager.DeviceModel.Load(device.Spec.DeviceModelRef.Name)
-	if !ok {
-		klog.Errorf("Failed to get device model %v", device.Spec.DeviceModelRef.Name)
+	deviceModel, err := dc.informer.Devices().V1alpha2().DeviceModels().Lister().DeviceModels(device.Namespace).Get(device.Spec.DeviceModelRef.Name)
+	if err != nil {
+		klog.Errorf("Failed to get device model %v: %v", device.Spec.DeviceModelRef.Name, err)
 		return
 	}
-	deviceModel := dm.(*v1alpha2.DeviceModel)
+
 	// if model already exists no need to add model and visitors
 	checkModelExists := false
 	for _, dm := range deviceProfile.DeviceModels {
@@ -366,7 +351,6 @@ func addDeviceInstanceAndProtocol(device *v1alpha2.Device, deviceProfile *types.
 
 // deviceAdded creates a device, adds in deviceManagers map, send a message to edge node if node selector is present.
 func (dc *DownstreamController) deviceAdded(device *v1alpha2.Device) {
-	dc.deviceManager.Device.Store(device.Name, device)
 	if len(device.Spec.NodeSelector.NodeSelectorTerms) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values) != 0 {
 		dc.addToConfigMap(device)
 		edgeDevice := createDevice(device)
@@ -441,15 +425,6 @@ func createDevice(device *v1alpha2.Device) types.Device {
 	}
 	edgeDevice.Twin = twin
 	return edgeDevice
-}
-
-// isDeviceUpdated checks if device is actually updated
-func isDeviceUpdated(oldTwin *v1alpha2.Device, newTwin *v1alpha2.Device) bool {
-	// does not care fields
-	oldTwin.ObjectMeta.ResourceVersion = newTwin.ObjectMeta.ResourceVersion
-	oldTwin.ObjectMeta.Generation = newTwin.ObjectMeta.Generation
-	// return true if ObjectMeta or Spec or Status changed, else false
-	return !reflect.DeepEqual(oldTwin.ObjectMeta, newTwin.ObjectMeta) || !reflect.DeepEqual(oldTwin.Spec, newTwin.Spec) || !reflect.DeepEqual(oldTwin.Status, newTwin.Status)
 }
 
 // isNodeSelectorUpdated checks if nodeSelector is updated
@@ -583,64 +558,60 @@ func buildDeviceProtocol(protocol, deviceName string, ProtocolConfig interface{}
 // deviceUpdated updates the map, check if device is actually updated.
 // If nodeSelector is updated, call add device for newNode, deleteDevice for old Node.
 // If twin is updated, send twin update message to edge
-func (dc *DownstreamController) deviceUpdated(device *v1alpha2.Device) {
-	value, ok := dc.deviceManager.Device.Load(device.Name)
-	dc.deviceManager.Device.Store(device.Name, device)
-	if ok {
-		cachedDevice := value.(*v1alpha2.Device)
-		if isDeviceUpdated(cachedDevice, device) {
-			// if node selector updated delete from old node and create in new node
-			if isNodeSelectorUpdated(cachedDevice.Spec.NodeSelector, device.Spec.NodeSelector) {
-				deletedDevice := &v1alpha2.Device{ObjectMeta: cachedDevice.ObjectMeta,
-					Spec:     cachedDevice.Spec,
-					Status:   cachedDevice.Status,
-					TypeMeta: device.TypeMeta,
-				}
-				dc.deviceDeleted(deletedDevice)
-				dc.deviceAdded(device)
-			} else {
-				// update config map if spec, data or twins changed
-				if isProtocolConfigUpdated(&cachedDevice.Spec.Protocol, &device.Spec.Protocol) ||
-					isDeviceStatusUpdated(&cachedDevice.Status, &device.Status) ||
-					isDeviceDataUpdated(&cachedDevice.Spec.Data, &device.Spec.Data) ||
-					isDevicePropertyVisitorsUpdated(&cachedDevice.Spec.PropertyVisitors, &device.Spec.PropertyVisitors) {
-					dc.updateConfigMap(device)
-				}
-				// update twin properties
-				if isDeviceStatusUpdated(&cachedDevice.Status, &device.Status) {
-					// TODO: add an else if condition to check if DeviceModelReference has changed, if yes whether deviceModelReference exists
-					twin := make(map[string]*types.MsgTwin)
-					addUpdatedTwins(device.Status.Twins, twin, device.ResourceVersion)
-					addDeletedTwins(cachedDevice.Status.Twins, device.Status.Twins, twin, device.ResourceVersion)
-					msg := model.NewMessage("")
+func (dc *DownstreamController) deviceUpdated(cachedDevice *v1alpha2.Device, device *v1alpha2.Device) {
+	if cachedDevice == nil {
+		// If device not present in cache means it is not modified and added.
+		dc.deviceAdded(device)
+		return
+	}
 
-					resource, err := messagelayer.BuildResourceForDevice(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], "device/"+device.Name+"/twin/cloud_updated", "")
-					if err != nil {
-						klog.Warningf("Built message resource failed with error: %s", err)
-						return
-					}
-					msg.BuildRouter(modules.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation)
-					content := types.DeviceTwinUpdate{Twin: twin}
-					content.EventID = uuid.New().String()
-					content.Timestamp = time.Now().UnixNano() / 1e6
-					msg.Content = content
+	// if node selector updated delete from old node and create in new node
+	if isNodeSelectorUpdated(cachedDevice.Spec.NodeSelector, device.Spec.NodeSelector) {
+		deletedDevice := &v1alpha2.Device{ObjectMeta: cachedDevice.ObjectMeta,
+			Spec:     cachedDevice.Spec,
+			Status:   cachedDevice.Status,
+			TypeMeta: device.TypeMeta,
+		}
+		dc.deviceDeleted(deletedDevice)
+		dc.deviceAdded(device)
+	} else {
+		// update config map if spec, data or twins changed
+		if isProtocolConfigUpdated(&cachedDevice.Spec.Protocol, &device.Spec.Protocol) ||
+			isDeviceStatusUpdated(&cachedDevice.Status, &device.Status) ||
+			isDeviceDataUpdated(&cachedDevice.Spec.Data, &device.Spec.Data) ||
+			isDevicePropertyVisitorsUpdated(&cachedDevice.Spec.PropertyVisitors, &device.Spec.PropertyVisitors) {
+			dc.updateConfigMap(device)
+		}
+		// update twin properties
+		if isDeviceStatusUpdated(&cachedDevice.Status, &device.Status) {
+			// TODO: add an else if condition to check if DeviceModelReference has changed, if yes whether deviceModelReference exists
+			twin := make(map[string]*types.MsgTwin)
+			addUpdatedTwins(device.Status.Twins, twin, device.ResourceVersion)
+			addDeletedTwins(cachedDevice.Status.Twins, device.Status.Twins, twin, device.ResourceVersion)
+			msg := model.NewMessage("")
 
-					err = dc.messageLayer.Send(*msg)
-					if err != nil {
-						klog.Errorf("Failed to send deviceTwin message %v due to error %v", msg, err)
-					}
-				}
-				// distribute device model
-				if isDeviceStatusUpdated(&cachedDevice.Status, &device.Status) ||
-					isDeviceDataUpdated(&cachedDevice.Spec.Data, &device.Spec.Data) {
-					dc.sendDeviceModelMsg(device, model.UpdateOperation)
-					dc.sendDeviceMsg(device, model.UpdateOperation)
-				}
+			resource, err := messagelayer.BuildResourceForDevice(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], "device/"+device.Name+"/twin/cloud_updated", "")
+			if err != nil {
+				klog.Warningf("Built message resource failed with error: %s", err)
+				return
+			}
+			msg.BuildRouter(modules.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation)
+			content := types.DeviceTwinUpdate{Twin: twin}
+			content.EventID = uuid.New().String()
+			content.Timestamp = time.Now().UnixNano() / 1e6
+			msg.Content = content
+
+			err = dc.messageLayer.Send(*msg)
+			if err != nil {
+				klog.Errorf("Failed to send deviceTwin message %v due to error %v", msg, err)
 			}
 		}
-	} else {
-		// If device not present in device map means it is not modified and added.
-		dc.deviceAdded(device)
+		// distribute device model
+		if isDeviceStatusUpdated(&cachedDevice.Status, &device.Status) ||
+			isDeviceDataUpdated(&cachedDevice.Spec.Data, &device.Spec.Data) {
+			dc.sendDeviceModelMsg(device, model.UpdateOperation)
+			dc.sendDeviceMsg(device, model.UpdateOperation)
+		}
 	}
 }
 
@@ -771,12 +742,12 @@ func (dc *DownstreamController) deleteFromDeviceProfile(device *v1alpha2.Device,
 	}
 	deleteDeviceInstanceAndProtocol(device, deviceProfile)
 
-	dm, ok := dc.deviceModelManager.DeviceModel.Load(device.Spec.DeviceModelRef.Name)
-	if !ok {
+	deviceModel, err := dc.informer.Devices().V1alpha2().DeviceModels().Lister().DeviceModels(device.Namespace).Get(device.Spec.DeviceModelRef.Name)
+	if err != nil {
 		klog.Errorf("Failed to get device model %v", device.Spec.DeviceModelRef.Name)
 		return
 	}
-	deviceModel := dm.(*v1alpha2.DeviceModel)
+
 	// if model referenced by other devices, no need to delete the model
 	checkModelReferenced := false
 	for _, dvc := range deviceProfile.DeviceInstances {
@@ -874,15 +845,9 @@ func (dc *DownstreamController) sendDeviceModelMsg(device *v1alpha2.Device, oper
 	if device == nil || device.Spec.DeviceModelRef == nil {
 		return
 	}
-	edgeDeviceModel, ok := dc.deviceModelManager.DeviceModel.Load(device.Spec.DeviceModelRef.Name)
-	if !ok {
+	deviceModel, err := dc.informer.Devices().V1alpha2().DeviceModels().Lister().DeviceModels(device.Namespace).Get(device.Spec.DeviceModelRef.Name)
+	if err != nil {
 		klog.Warningf("not found device model for device: %s, operation: %s", device.Name, operation)
-		return
-	}
-
-	deviceModel, ok := edgeDeviceModel.(*v1alpha2.DeviceModel)
-	if !ok {
-		klog.Warningf("edgeDeviceModel is not *v1alpha2.DeviceModel for device: %s, operation: %s", device.Name, operation)
 		return
 	}
 
@@ -924,7 +889,6 @@ func (dc *DownstreamController) sendDeviceModelMsg(device *v1alpha2.Device, oper
 
 // deviceDeleted send a deleted message to the edgeNode and deletes the device from the deviceManager.Device map
 func (dc *DownstreamController) deviceDeleted(device *v1alpha2.Device) {
-	dc.deviceManager.Device.Delete(device.Name)
 	dc.deleteFromConfigMap(device)
 	edgeDevice := createDevice(device)
 	msg := model.NewMessage("")
@@ -955,6 +919,10 @@ func (dc *DownstreamController) deviceDeleted(device *v1alpha2.Device) {
 // Start DownstreamController
 func (dc *DownstreamController) Start() error {
 	klog.Info("Start downstream devicecontroller")
+	if !cache.WaitForCacheSync(beehiveContext.Done(), dc.informersSyncedFuncs...) {
+		klog.Errorf("unable to sync caches for Device DownstreamController")
+		os.Exit(1)
+	}
 
 	go dc.syncDeviceModel()
 
@@ -986,6 +954,10 @@ func NewDownstreamController(crdInformerFactory crdinformers.SharedInformerFacto
 		deviceModelManager: deviceModelManager,
 		messageLayer:       messagelayer.DeviceControllerMessageLayer(),
 		configMapManager:   manager.NewConfigMapManager(),
+		informer:           crdInformerFactory,
 	}
+	dc.informersSyncedFuncs = append(dc.informersSyncedFuncs,
+		dc.informer.Devices().V1alpha2().DeviceModels().Informer().HasSynced,
+		dc.informer.Devices().V1alpha2().Devices().Informer().HasSynced)
 	return dc, nil
 }
