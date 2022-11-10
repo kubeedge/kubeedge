@@ -21,7 +21,7 @@ import (
 	"net/http"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,7 +40,7 @@ var CRDTestTimerGroup = utils.NewTestTimerGroup()
 // Run Test cases
 var _ = Describe("Device Management test in E2E scenario", func() {
 	var testTimer *utils.TestTimer
-	var testSpecReport SpecReport
+	var testSpecReport GinkgoTestDescription
 	var clientSet clientset.Interface
 	var edgeClientSet edgeclientset.Interface
 
@@ -59,9 +59,9 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 				Expect(err).To(BeNil())
 			}
 			// Get current test SpecReport
-			testSpecReport = CurrentSpecReport()
+			testSpecReport = CurrentGinkgoTestDescription()
 			// Start test timer
-			testTimer = CRDTestTimerGroup.NewTestTimer(testSpecReport.LeafNodeText)
+			testTimer = CRDTestTimerGroup.NewTestTimer(testSpecReport.TestText)
 		})
 		AfterEach(func() {
 			// End test timer
@@ -171,9 +171,9 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			}
 			utils.TwinResult = utils.DeviceTwinResult{}
 			// Get current test SpecReport
-			testSpecReport = CurrentSpecReport()
+			testSpecReport = CurrentGinkgoTestDescription()
 			// Start test timer
-			testTimer = CRDTestTimerGroup.NewTestTimer(testSpecReport.LeafNodeText)
+			testTimer = CRDTestTimerGroup.NewTestTimer(testSpecReport.TestText)
 		})
 		AfterEach(func() {
 			// End test timer
@@ -595,9 +595,9 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			}
 			utils.TwinResult = utils.DeviceTwinResult{}
 			// Get current test SpecReport
-			testSpecReport = CurrentSpecReport()
+			testSpecReport = CurrentGinkgoTestDescription()
 			// Start test timer
-			testTimer = CRDTestTimerGroup.NewTestTimer(testSpecReport.LeafNodeText)
+			testTimer = CRDTestTimerGroup.NewTestTimer(testSpecReport.TestText)
 		})
 		AfterEach(func() {
 			// End test timer
