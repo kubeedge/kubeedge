@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -41,7 +41,7 @@ var DeploymentTestTimerGroup = utils.NewTestTimerGroup()
 var _ = Describe("Application deployment test in E2E scenario", func() {
 	var UID string
 	var testTimer *utils.TestTimer
-	var testSpecReport SpecReport
+	var testSpecReport GinkgoTestDescription
 
 	var clientSet clientset.Interface
 
@@ -52,9 +52,9 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 	Context("Test application deployment and delete deployment using deployment spec", func() {
 		BeforeEach(func() {
 			// Get current test SpecReport
-			testSpecReport = CurrentSpecReport()
+			testSpecReport = CurrentGinkgoTestDescription()
 			// Start test timer
-			testTimer = DeploymentTestTimerGroup.NewTestTimer(testSpecReport.LeafNodeText)
+			testTimer = DeploymentTestTimerGroup.NewTestTimer(testSpecReport.TestText)
 		})
 
 		AfterEach(func() {
@@ -121,9 +121,9 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 	Context("Test application deployment using Pod spec", func() {
 		BeforeEach(func() {
 			// Get current test SpecReport
-			testSpecReport = CurrentSpecReport()
+			testSpecReport = CurrentGinkgoTestDescription()
 			// Start test timer
-			testTimer = DeploymentTestTimerGroup.NewTestTimer(testSpecReport.LeafNodeText)
+			testTimer = DeploymentTestTimerGroup.NewTestTimer(testSpecReport.TestText)
 		})
 		AfterEach(func() {
 			// End test timer
@@ -228,9 +228,9 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 	Context("StatefulSet lifecycle test in edge node", func() {
 		BeforeEach(func() {
 			// Get current test SpecReport
-			testSpecReport = CurrentSpecReport()
+			testSpecReport = CurrentGinkgoTestDescription()
 			// Start test timer
-			testTimer = DeploymentTestTimerGroup.NewTestTimer(testSpecReport.LeafNodeText)
+			testTimer = DeploymentTestTimerGroup.NewTestTimer(testSpecReport.TestText)
 		})
 
 		AfterEach(func() {

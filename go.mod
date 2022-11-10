@@ -24,8 +24,8 @@ require (
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1
 	github.com/mattn/go-sqlite3 v1.14.9
 	github.com/mitchellh/go-ps v0.0.0-20190716172923-621e5597135b
-	github.com/onsi/ginkgo/v2 v2.1.4
-	github.com/onsi/gomega v1.19.0
+	github.com/onsi/ginkgo v1.16.4
+	github.com/onsi/gomega v1.15.0
 	github.com/prometheus/client_golang v1.11.0
 	github.com/shirou/gopsutil v2.21.11+incompatible
 	github.com/spf13/cobra v1.2.1
