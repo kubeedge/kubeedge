@@ -8,6 +8,8 @@ const (
 
 	E2ELabelKey   = "kubeedge"
 	E2ELabelValue = "e2e-test"
+
+	NodeName = "edge-node"
 )
 
 var (

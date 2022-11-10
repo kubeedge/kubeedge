@@ -84,21 +84,21 @@ var _ = Describe("Application deployment test in E2E scenario using EdgeSite", f
 			replica := int32(1)
 			//Generate the random string and assign as a UID
 			UID = "edgecore-depl-app-" + utils.GetRandomString(5)
-			CreateDeploymentTest(clientSet, replica, UID, ctx)
+			CreateDeploymentTest(clientSet, replica, UID)
 		})
 
 		It("E2E_ES_APP_DEPLOYMENT_2: Create deployment with replicas and check the pods are coming up correctly", func() {
 			replica := int32(3)
 			//Generate the random string and assign as a UID
 			UID = "edgecore-depl-app-" + utils.GetRandomString(5)
-			CreateDeploymentTest(clientSet, replica, UID, ctx)
+			CreateDeploymentTest(clientSet, replica, UID)
 		})
 
 		It("E2E_ES_APP_DEPLOYMENT_3: Create deployment and check deployment ctrler re-creating pods when user deletes the pods manually", func() {
 			replica := int32(3)
 			//Generate the random string and assign as a UID
 			UID = "edgecore-depl-app-" + utils.GetRandomString(5)
-			podList := CreateDeploymentTest(clientSet, replica, UID, ctx)
+			podList := CreateDeploymentTest(clientSet, replica, UID)
 			for _, pod := range podList.Items {
 				err := utils.DeletePod(clientSet, pod.Namespace, pod.Name)
 				Expect(err).To(BeNil())

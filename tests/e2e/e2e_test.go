@@ -14,24 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package deployment
+package e2e
 
 import (
 	"flag"
 	"os"
 	"testing"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo"
+	"github.com/onsi/gomega"
 	"github.com/spf13/pflag"
 
+	_ "github.com/kubeedge/kubeedge/tests/e2e/apps"
+	_ "github.com/kubeedge/kubeedge/tests/e2e/device"
+	_ "github.com/kubeedge/kubeedge/tests/e2e/rule"
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
-)
-
-var (
-	nodeName string
-	// context to load config and access across the package
-	ctx *utils.TestContext
 )
 
 func TestMain(m *testing.M) {
@@ -44,18 +41,16 @@ func TestMain(m *testing.M) {
 
 // Function to run the Ginkgo Test
 func TestE2E(t *testing.T) {
-	RegisterFailHandler(Fail)
-	var _ = BeforeSuite(func() {
+	gomega.RegisterFailHandler(ginkgo.Fail)
+	var _ = ginkgo.BeforeSuite(func() {
 		utils.Infof("Before Suite Execution")
-		ctx = utils.NewTestContext(utils.LoadConfig())
-		nodeName = "edge-node"
 
 		err := utils.MqttConnect()
-		Expect(err).To(BeNil())
+		gomega.Expect(err).To(gomega.BeNil())
 	})
-	AfterSuite(func() {
-		By("After Suite Execution....!")
+	ginkgo.AfterSuite(func() {
+		ginkgo.By("After Suite Execution....!")
 	})
 
-	RunSpecs(t, "kubeedge App Deploymet Suite")
+	ginkgo.RunSpecs(t, "kubeedge e2e Suite")
 }
