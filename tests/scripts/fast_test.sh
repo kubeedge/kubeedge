@@ -31,7 +31,7 @@ export ACK_GINKGO_RC=true
 if [ $# -eq 0 ]
 then
     #run testcase
-    ginkgo -v ./deployment/deployment.test -- \
+    ginkgo -v ./e2e/e2e.test -- \
     --image-url=nginx \
     --image-url=nginx \
     --kube-master="https://$MASTER_IP:6443" \

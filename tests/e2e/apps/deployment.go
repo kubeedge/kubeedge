@@ -14,15 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package deployment
+package apps
 
 import (
 	"context"
 	"fmt"
 	"time"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo"
+	"github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,101 +31,101 @@ import (
 	clientset "k8s.io/client-go/kubernetes"
 
 	"github.com/kubeedge/kubeedge/tests/e2e/constants"
-	. "github.com/kubeedge/kubeedge/tests/e2e/testsuite"
+	"github.com/kubeedge/kubeedge/tests/e2e/testsuite"
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 )
 
 var DeploymentTestTimerGroup = utils.NewTestTimerGroup()
 
 // Run Test cases
-var _ = Describe("Application deployment test in E2E scenario", func() {
+var _ = GroupDescribe("Application deployment test in E2E scenario", func() {
 	var UID string
 	var testTimer *utils.TestTimer
-	var testSpecReport GinkgoTestDescription
+	var testSpecReport ginkgo.GinkgoTestDescription
 
 	var clientSet clientset.Interface
 
-	BeforeEach(func() {
-		clientSet = utils.NewKubeClient(ctx.Cfg.KubeConfigPath)
+	ginkgo.BeforeEach(func() {
+		clientSet = utils.NewKubeClient(utils.LoadConfig().KubeConfigPath)
 	})
 
-	Context("Test application deployment and delete deployment using deployment spec", func() {
-		BeforeEach(func() {
+	ginkgo.Context("Test application deployment and delete deployment using deployment spec", func() {
+		ginkgo.BeforeEach(func() {
 			// Get current test SpecReport
-			testSpecReport = CurrentGinkgoTestDescription()
+			testSpecReport = ginkgo.CurrentGinkgoTestDescription()
 			// Start test timer
 			testTimer = DeploymentTestTimerGroup.NewTestTimer(testSpecReport.TestText)
 		})
 
-		AfterEach(func() {
+		ginkgo.AfterEach(func() {
 			// End test timer
 			testTimer.End()
 			// Print result
 			testTimer.PrintResult()
 
-			By(fmt.Sprintf("get deployment %s", UID))
+			ginkgo.By(fmt.Sprintf("get deployment %s", UID))
 			deployment, err := utils.GetDeployment(clientSet, metav1.NamespaceDefault, UID)
-			Expect(err).To(BeNil())
+			gomega.Expect(err).To(gomega.BeNil())
 
-			By(fmt.Sprintf("list pod for deploy %s", UID))
+			ginkgo.By(fmt.Sprintf("list pod for deploy %s", UID))
 			labelSelector := labels.SelectorFromSet(map[string]string{"app": UID})
 			_, err = utils.GetPods(clientSet, metav1.NamespaceDefault, labelSelector, nil)
-			Expect(err).To(BeNil())
+			gomega.Expect(err).To(gomega.BeNil())
 
-			By(fmt.Sprintf("delete deploy %s", UID))
+			ginkgo.By(fmt.Sprintf("delete deploy %s", UID))
 			err = utils.DeleteDeployment(clientSet, deployment.Namespace, deployment.Name)
-			Expect(err).To(BeNil())
+			gomega.Expect(err).To(gomega.BeNil())
 
-			By(fmt.Sprintf("wait for pod of deploy %s to disappear", UID))
+			ginkgo.By(fmt.Sprintf("wait for pod of deploy %s to disappear", UID))
 			err = utils.WaitForPodsToDisappear(clientSet, metav1.NamespaceDefault, labelSelector, constants.Interval, constants.Timeout)
-			Expect(err).To(BeNil())
+			gomega.Expect(err).To(gomega.BeNil())
 
 			utils.PrintTestcaseNameandStatus()
 		})
 
-		It("E2E_APP_DEPLOYMENT_1: Create deployment and check the pods are coming up correctly", func() {
+		ginkgo.It("E2E_APP_DEPLOYMENT_1: Create deployment and check the pods are coming up correctly", func() {
 			replica := int32(1)
 			//Generate the random string and assign as a UID
 			UID = "edgecore-depl-app-" + utils.GetRandomString(5)
-			CreateDeploymentTest(clientSet, replica, UID, ctx)
+			testsuite.CreateDeploymentTest(clientSet, replica, UID)
 		})
 
-		It("E2E_APP_DEPLOYMENT_2: Create deployment with replicas and check the pods are coming up correctly", func() {
+		ginkgo.It("E2E_APP_DEPLOYMENT_2: Create deployment with replicas and check the pods are coming up correctly", func() {
 			replica := int32(3)
 			//Generate the random string and assign as a UID
 			UID = "edgecore-depl-app-" + utils.GetRandomString(5)
-			CreateDeploymentTest(clientSet, replica, UID, ctx)
+			testsuite.CreateDeploymentTest(clientSet, replica, UID)
 		})
 
-		It("E2E_APP_DEPLOYMENT_3: Create deployment and check deployment ctrler re-creating pods when user deletes the pods manually", func() {
+		ginkgo.It("E2E_APP_DEPLOYMENT_3: Create deployment and check deployment ctrler re-creating pods when user deletes the pods manually", func() {
 			replica := int32(3)
 			//Generate the random string and assign as a UID
 			UID = "edgecore-depl-app-" + utils.GetRandomString(5)
-			podList := CreateDeploymentTest(clientSet, replica, UID, ctx)
+			podList := testsuite.CreateDeploymentTest(clientSet, replica, UID)
 			for _, pod := range podList.Items {
 				err := utils.DeletePod(clientSet, pod.Namespace, pod.Name)
-				Expect(err).To(BeNil())
+				gomega.Expect(err).To(gomega.BeNil())
 			}
 			utils.CheckPodDeleteState(clientSet, podList)
 
 			labelSelector := labels.SelectorFromSet(map[string]string{"app": UID})
 			podList, err := utils.GetPods(clientSet, metav1.NamespaceDefault, labelSelector, nil)
-			Expect(err).To(BeNil())
-			Expect(len(podList.Items)).Should(Equal(int(replica)))
+			gomega.Expect(err).To(gomega.BeNil())
+			gomega.Expect(len(podList.Items)).Should(gomega.Equal(int(replica)))
 
 			utils.WaitForPodsRunning(clientSet, podList, 240*time.Second)
 		})
 
 	})
 
-	Context("Test application deployment using Pod spec", func() {
-		BeforeEach(func() {
+	ginkgo.Context("Test application deployment using Pod spec", func() {
+		ginkgo.BeforeEach(func() {
 			// Get current test SpecReport
-			testSpecReport = CurrentGinkgoTestDescription()
+			testSpecReport = ginkgo.CurrentGinkgoTestDescription()
 			// Start test timer
 			testTimer = DeploymentTestTimerGroup.NewTestTimer(testSpecReport.TestText)
 		})
-		AfterEach(func() {
+		ginkgo.AfterEach(func() {
 			// End test timer
 			testTimer.End()
 			// Print result
@@ -133,11 +133,11 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 
 			labelSelector := labels.SelectorFromSet(constants.KubeEdgeE2ELabel)
 			podList, err := utils.GetPods(clientSet, metav1.NamespaceDefault, labelSelector, nil)
-			Expect(err).To(BeNil())
+			gomega.Expect(err).To(gomega.BeNil())
 
 			for _, pod := range podList.Items {
 				err = utils.DeletePod(clientSet, pod.Namespace, pod.Name)
-				Expect(err).To(BeNil())
+				gomega.Expect(err).To(gomega.BeNil())
 			}
 
 			utils.CheckPodDeleteState(clientSet, podList)
@@ -145,65 +145,65 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			utils.PrintTestcaseNameandStatus()
 		})
 
-		It("E2E_POD_DEPLOYMENT_1: Create a pod and check the pod is coming up correctly", func() {
+		ginkgo.It("E2E_POD_DEPLOYMENT_1: Create a pod and check the pod is coming up correctly", func() {
 			//Generate the random string and assign as podName
 			podName := "pod-app-" + utils.GetRandomString(5)
-			pod := utils.NewPod(podName, ctx.Cfg.AppImageURL[0])
+			pod := utils.NewPod(podName, utils.LoadConfig().AppImageURL[0])
 
-			CreatePodTest(clientSet, pod)
+			testsuite.CreatePodTest(clientSet, pod)
 		})
 
-		It("E2E_POD_DEPLOYMENT_2: Create the pod and delete pod happening successfully", func() {
+		ginkgo.It("E2E_POD_DEPLOYMENT_2: Create the pod and delete pod happening successfully", func() {
 			//Generate the random string and assign as podName
 			podName := "pod-app-" + utils.GetRandomString(5)
-			pod := utils.NewPod(podName, ctx.Cfg.AppImageURL[0])
+			pod := utils.NewPod(podName, utils.LoadConfig().AppImageURL[0])
 
-			podList := CreatePodTest(clientSet, pod)
+			podList := testsuite.CreatePodTest(clientSet, pod)
 			for _, pod := range podList.Items {
 				err := utils.DeletePod(clientSet, pod.Namespace, pod.Name)
-				Expect(err).To(BeNil())
+				gomega.Expect(err).To(gomega.BeNil())
 			}
 
 			utils.CheckPodDeleteState(clientSet, podList)
 		})
 
-		It("E2E_POD_DEPLOYMENT_3: Create pod and delete the pod successfully, and delete already deleted pod and check the behaviour", func() {
+		ginkgo.It("E2E_POD_DEPLOYMENT_3: Create pod and delete the pod successfully, and delete already deleted pod and check the behaviour", func() {
 			//Generate the random string and assign as podName
 			podName := "pod-app-" + utils.GetRandomString(5)
-			pod := utils.NewPod(podName, ctx.Cfg.AppImageURL[0])
+			pod := utils.NewPod(podName, utils.LoadConfig().AppImageURL[0])
 
-			podList := CreatePodTest(clientSet, pod)
+			podList := testsuite.CreatePodTest(clientSet, pod)
 			for _, pod := range podList.Items {
 				err := utils.DeletePod(clientSet, pod.Namespace, pod.Name)
-				Expect(err).To(BeNil())
+				gomega.Expect(err).To(gomega.BeNil())
 			}
 
 			utils.CheckPodDeleteState(clientSet, podList)
 
 			err := utils.DeletePod(clientSet, pod.Namespace, pod.Name)
-			Expect(errors.IsNotFound(err)).To(BeTrue())
+			gomega.Expect(errors.IsNotFound(err)).To(gomega.BeTrue())
 		})
 
-		It("E2E_POD_DEPLOYMENT_4: Create and delete pod multiple times and check all the Pod created and deleted successfully", func() {
+		ginkgo.It("E2E_POD_DEPLOYMENT_4: Create and delete pod multiple times and check all the Pod created and deleted successfully", func() {
 			//Generate the random string and assign as a UID
 			for i := 0; i < 10; i++ {
 				//Generate the random string and assign as podName
 				podName := "pod-app-" + utils.GetRandomString(5)
-				pod := utils.NewPod(podName, ctx.Cfg.AppImageURL[0])
+				pod := utils.NewPod(podName, utils.LoadConfig().AppImageURL[0])
 
-				podList := CreatePodTest(clientSet, pod)
+				podList := testsuite.CreatePodTest(clientSet, pod)
 				for _, pod := range podList.Items {
 					err := utils.DeletePod(clientSet, pod.Namespace, pod.Name)
-					Expect(err).To(BeNil())
+					gomega.Expect(err).To(gomega.BeNil())
 				}
 				utils.CheckPodDeleteState(clientSet, podList)
 			}
 		})
 
-		It("E2E_POD_DEPLOYMENT_5: Create pod with hostpath volume successfully", func() {
+		ginkgo.It("E2E_POD_DEPLOYMENT_5: Create pod with hostpath volume successfully", func() {
 			//Generate the random string and assign as podName
 			podName := "pod-app-" + utils.GetRandomString(5)
-			pod := utils.NewPod(podName, ctx.Cfg.AppImageURL[0])
+			pod := utils.NewPod(podName, utils.LoadConfig().AppImageURL[0])
 
 			pod.Spec.Containers[0].VolumeMounts = []corev1.VolumeMount{{
 				Name:      "hp",
@@ -216,98 +216,98 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 				},
 			}}
 
-			podList := CreatePodTest(clientSet, pod)
+			podList := testsuite.CreatePodTest(clientSet, pod)
 			for _, pod := range podList.Items {
 				err := utils.DeletePod(clientSet, pod.Namespace, pod.Name)
-				Expect(err).To(BeNil())
+				gomega.Expect(err).To(gomega.BeNil())
 			}
 			utils.CheckPodDeleteState(clientSet, podList)
 		})
 	})
 
-	Context("StatefulSet lifecycle test in edge node", func() {
-		BeforeEach(func() {
+	ginkgo.Context("StatefulSet lifecycle test in edge node", func() {
+		ginkgo.BeforeEach(func() {
 			// Get current test SpecReport
-			testSpecReport = CurrentGinkgoTestDescription()
+			testSpecReport = ginkgo.CurrentGinkgoTestDescription()
 			// Start test timer
 			testTimer = DeploymentTestTimerGroup.NewTestTimer(testSpecReport.TestText)
 		})
 
-		AfterEach(func() {
+		ginkgo.AfterEach(func() {
 			// End test timer
 			testTimer.End()
 			// Print result
 			testTimer.PrintResult()
 
-			By(fmt.Sprintf("get StatefulSet %s", UID))
+			ginkgo.By(fmt.Sprintf("get StatefulSet %s", UID))
 			statefulSet, err := utils.GetStatefulSet(clientSet, metav1.NamespaceDefault, UID)
-			Expect(err).To(BeNil())
+			gomega.Expect(err).To(gomega.BeNil())
 
-			By(fmt.Sprintf("list pod for StatefulSet %s", UID))
+			ginkgo.By(fmt.Sprintf("list pod for StatefulSet %s", UID))
 			labelSelector := labels.SelectorFromSet(map[string]string{"app": UID})
 			_, err = utils.GetPods(clientSet, metav1.NamespaceDefault, labelSelector, nil)
-			Expect(err).To(BeNil())
+			gomega.Expect(err).To(gomega.BeNil())
 
-			By(fmt.Sprintf("delete StatefulSet %s", UID))
+			ginkgo.By(fmt.Sprintf("delete StatefulSet %s", UID))
 			err = utils.DeleteStatefulSet(clientSet, statefulSet.Namespace, statefulSet.Name)
-			Expect(err).To(BeNil())
+			gomega.Expect(err).To(gomega.BeNil())
 
-			By(fmt.Sprintf("wait for pod of StatefulSet %s disappear", UID))
+			ginkgo.By(fmt.Sprintf("wait for pod of StatefulSet %s disappear", UID))
 			err = utils.WaitForPodsToDisappear(clientSet, metav1.NamespaceDefault, labelSelector, constants.Interval, constants.Timeout)
-			Expect(err).To(BeNil())
+			gomega.Expect(err).To(gomega.BeNil())
 
 			utils.PrintTestcaseNameandStatus()
 		})
 
-		It("Basic StatefulSet test", func() {
+		ginkgo.It("Basic StatefulSet test", func() {
 			replica := int32(2)
 			// Generate the random string and assign as a UID
 			UID = "edge-statefulset-" + utils.GetRandomString(5)
 
-			By(fmt.Sprintf("create StatefulSet %s", UID))
-			d := utils.NewTestStatefulSet(UID, ctx.Cfg.AppImageURL[1], replica)
+			ginkgo.By(fmt.Sprintf("create StatefulSet %s", UID))
+			d := utils.NewTestStatefulSet(UID, utils.LoadConfig().AppImageURL[1], replica)
 			ss, err := utils.CreateStatefulSet(clientSet, d)
-			Expect(err).To(BeNil())
+			gomega.Expect(err).To(gomega.BeNil())
 
 			utils.WaitForStatusReplicas(clientSet, ss, replica)
 
-			By(fmt.Sprintf("get pod for StatefulSet %s", UID))
+			ginkgo.By(fmt.Sprintf("get pod for StatefulSet %s", UID))
 			labelSelector := labels.SelectorFromSet(map[string]string{"app": UID})
 			podList, err := utils.GetPods(clientSet, corev1.NamespaceDefault, labelSelector, nil)
-			Expect(err).To(BeNil())
-			Expect(len(podList.Items)).ShouldNot(Equal(0))
+			gomega.Expect(err).To(gomega.BeNil())
+			gomega.Expect(len(podList.Items)).ShouldNot(gomega.Equal(0))
 
-			By(fmt.Sprintf("wait for pod of StatefulSet %s running", UID))
+			ginkgo.By(fmt.Sprintf("wait for pod of StatefulSet %s running", UID))
 			utils.WaitForPodsRunning(clientSet, podList, 240*time.Second)
 		})
-		It("Delete statefulSet pod multi times", func() {
+		ginkgo.It("Delete statefulSet pod multi times", func() {
 			replica := int32(2)
 			// Generate the random string and assign as a UID
 			UID = "edge-statefulset-" + utils.GetRandomString(5)
 
-			By(fmt.Sprintf("create StatefulSet %s", UID))
-			d := utils.NewTestStatefulSet(UID, ctx.Cfg.AppImageURL[1], replica)
+			ginkgo.By(fmt.Sprintf("create StatefulSet %s", UID))
+			d := utils.NewTestStatefulSet(UID, utils.LoadConfig().AppImageURL[1], replica)
 			ss, err := utils.CreateStatefulSet(clientSet, d)
-			Expect(err).To(BeNil())
+			gomega.Expect(err).To(gomega.BeNil())
 
 			utils.WaitForStatusReplicas(clientSet, ss, replica)
 
-			By(fmt.Sprintf("get pod for StatefulSet %s", UID))
+			ginkgo.By(fmt.Sprintf("get pod for StatefulSet %s", UID))
 			labelSelector := labels.SelectorFromSet(map[string]string{"app": UID})
 			podList, err := utils.GetPods(clientSet, corev1.NamespaceDefault, labelSelector, nil)
-			Expect(err).To(BeNil())
-			Expect(len(podList.Items)).ShouldNot(Equal(0))
+			gomega.Expect(err).To(gomega.BeNil())
+			gomega.Expect(len(podList.Items)).ShouldNot(gomega.Equal(0))
 
-			By(fmt.Sprintf("wait for pod of StatefulSet %s running", UID))
+			ginkgo.By(fmt.Sprintf("wait for pod of StatefulSet %s running", UID))
 			utils.WaitForPodsRunning(clientSet, podList, 240*time.Second)
 
 			deletePodName := fmt.Sprintf("%s-1", UID)
 			for i := 0; i < 5; i++ {
-				By(fmt.Sprintf("delete pod %s", deletePodName))
+				ginkgo.By(fmt.Sprintf("delete pod %s", deletePodName))
 				err = utils.DeletePod(clientSet, "default", deletePodName)
-				Expect(err).To(BeNil())
+				gomega.Expect(err).To(gomega.BeNil())
 
-				By(fmt.Sprintf("wait for pod %s running again", fmt.Sprintf("%s-1", UID)))
+				ginkgo.By(fmt.Sprintf("wait for pod %s running again", fmt.Sprintf("%s-1", UID)))
 				err = wait.Poll(5*time.Second, 120*time.Second, func() (bool, error) {
 					pod, err := clientSet.CoreV1().Pods("default").Get(context.TODO(), deletePodName, metav1.GetOptions{})
 					if err != nil {
@@ -318,7 +318,7 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 					}
 					return false, nil
 				})
-				Expect(err).To(BeNil())
+				gomega.Expect(err).To(gomega.BeNil())
 			}
 		})
 	})

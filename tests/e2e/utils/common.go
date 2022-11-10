@@ -62,6 +62,8 @@ var ClientOpts *MQTT.ClientOptions
 var Client MQTT.Client
 var TwinResult DeviceTwinResult
 
+var CRDTestTimerGroup = NewTestTimerGroup()
+
 // Token interface to validate the MQTT connection.
 type Token interface {
 	Wait() bool

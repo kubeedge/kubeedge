@@ -26,7 +26,9 @@ compilemodule=$1
 if [ $# -eq 0 ]
 then
     echo "compiling all tests !!"
-    ginkgo build -r
+    ginkgo build e2e
+    ginkgo build e2e_keadm
+    ginkgo build e2e_edgesite
 else
    ginkgo build -r $compilemodule
 fi

@@ -291,7 +291,7 @@ else
 e2e:
 #	bash tests/e2e/scripts/execute.sh device_crd
 #	This has been commented temporarily since there is an issue of CI using same master for all PRs, which is causing failures when run parallelly
-	tests/e2e/scripts/execute.sh
+	tests/scripts/execute.sh
 endif
 
 define KEADM_DEPRECATED_E2E_HELP_INFO
@@ -309,7 +309,7 @@ keadm_deprecated_e2e:
 else
 keadm_deprecated_e2e:
 	$(RUN) hack/make-rules/release.sh kubeedge
-	tests/e2e/scripts/keadm_deprecated_e2e.sh
+	tests/scripts/keadm_deprecated_e2e.sh
 endif
 
 define KEADM_E2E_HELP_INFO
@@ -326,7 +326,7 @@ keadm_e2e:
 	@echo "KEADM_E2E_HELP_INFO"
 else
 keadm_e2e:
-	tests/e2e/scripts/keadm_e2e.sh
+	tests/scripts/keadm_e2e.sh
 endif
 
 define CLEAN_HELP_INFO

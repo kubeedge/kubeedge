@@ -26,12 +26,12 @@ function cleanup() {
   sudo pkill edgecore || true
   helm uninstall cloudcore -n kubeedge && kubectl delete ns kubeedge  || true
   kind delete cluster --name test
-  sudo rm -rf /var/log/kubeedge /etc/kubeedge /etc/systemd/system/edgecore.service $E2E_DIR/keadm/keadm.test $E2E_DIR/config.json
+  sudo rm -rf /var/log/kubeedge /etc/kubeedge /etc/systemd/system/edgecore.service $E2E_DIR/e2e_keadm/e2e_keadm.test $E2E_DIR/config.json
 }
 
 function build_ginkgo() {
   cd $E2E_DIR
-  ginkgo build -r keadm/
+  ginkgo build -r e2e_keadm/
 }
 
 function prepare_cluster() {
@@ -94,7 +94,7 @@ function run_test() {
 
   export ACK_GINKGO_RC=true
 
-  ginkgo -v ./keadm/keadm.test -- \
+  ginkgo -v ./e2e_keadm/e2e_keadm.test -- \
   --image-url=nginx \
   --image-url=nginx \
   --kube-master="https://$MASTER_IP:6443" \
