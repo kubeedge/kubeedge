@@ -19,12 +19,9 @@ package controller
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strings"
 
-	jsonpatch "github.com/evanphx/json-patch"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	apimachineryType "k8s.io/apimachinery/pkg/types"
 	k8sinformer "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog/v2"
@@ -35,19 +32,23 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/nodeupgradejobcontroller/config"
+	"github.com/kubeedge/kubeedge/cloud/pkg/nodeupgradejobcontroller/manager"
 	"github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1"
 	crdClientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
+	crdinformers "github.com/kubeedge/kubeedge/pkg/client/informers/externalversions"
 )
 
 // UpstreamController subscribe messages from edge and sync to k8s api server
 type UpstreamController struct {
-	// downstream controller to update NodeUpgradeJob status in cache
-	dc *DownstreamController
+	// client
+	kubeClient kubernetes.Interface
+	crdClient  crdClientset.Interface
 
-	kubeClient   kubernetes.Interface
-	informer     k8sinformer.SharedInformerFactory
-	crdClient    crdClientset.Interface
+	// informer
+	informer    k8sinformer.SharedInformerFactory
+	crdInformer crdinformers.SharedInformerFactory
+
 	messageLayer messagelayer.MessageLayer
 	// message channel
 	nodeUpgradeJobStatusChan chan model.Message
@@ -88,6 +89,7 @@ func (uc *UpstreamController) dispatchMessage() {
 	}
 }
 
+// TODO: update status related codes can be moved to manager
 // updateNodeUpgradeJobStatus update NodeUpgradeJob status field
 func (uc *UpstreamController) updateNodeUpgradeJobStatus() {
 	for {
@@ -102,15 +104,9 @@ func (uc *UpstreamController) updateNodeUpgradeJobStatus() {
 			nodeID := getNodeName(msg.GetResource())
 			upgradeID := getUpgradeID(msg.GetResource())
 
-			oldValue, ok := uc.dc.nodeUpgradeJobManager.UpgradeMap.Load(upgradeID)
-			if !ok {
-				klog.Errorf("NodeUpgradeJob %s not exist", upgradeID)
-				continue
-			}
-
-			upgrade, ok := oldValue.(*v1alpha1.NodeUpgradeJob)
-			if !ok {
-				klog.Errorf("NodeUpgradeJob info %T is not valid", oldValue)
+			upgrade, err := uc.crdInformer.Operations().V1alpha1().NodeUpgradeJobs().Lister().Get(upgradeID)
+			if err != nil {
+				klog.Errorf("NodeUpgradeJob %s not exist: %v", upgradeID, err)
 				continue
 			}
 
@@ -137,7 +133,7 @@ func (uc *UpstreamController) updateNodeUpgradeJobStatus() {
 					Reason:      resp.Reason,
 				},
 			}
-			err = patchNodeUpgradeJobStatus(uc.crdClient, upgrade, status)
+			err = manager.PatchNodeUpgradeJobStatus(uc.crdClient, upgrade, status)
 			if err != nil {
 				klog.Errorf("Failed to mark NodeUpgradeJob status to completed: %v", err)
 			}
@@ -154,10 +150,10 @@ func (uc *UpstreamController) updateNodeUpgradeJobStatus() {
 			// mark edge node schedulable
 			// the effect is like running cmd: kubectl uncordon <node-to-drain>
 			if nodeInfo.Labels != nil {
-				if value, ok := nodeInfo.Labels[NodeUpgradeJobStatusKey]; ok {
-					if value == NodeUpgradeJobStatusValue {
+				if value, ok := nodeInfo.Labels[manager.NodeUpgradeJobStatusKey]; ok {
+					if value == manager.NodeUpgradeJobStatusValue {
 						nodeInfo.Spec.Unschedulable = false
-						delete(nodeInfo.Labels, NodeUpgradeJobStatusKey)
+						delete(nodeInfo.Labels, manager.NodeUpgradeJobStatusKey)
 					}
 				}
 			}
@@ -166,7 +162,7 @@ func (uc *UpstreamController) updateNodeUpgradeJobStatus() {
 				if nodeInfo.Annotations == nil {
 					nodeInfo.Annotations = make(map[string]string)
 				}
-				nodeInfo.Annotations[NodeUpgradeHistoryKey] = mergeAnnotationUpgradeHistory(nodeInfo.Annotations[NodeUpgradeHistoryKey], resp.FromVersion, resp.ToVersion)
+				nodeInfo.Annotations[manager.NodeUpgradeHistoryKey] = manager.MergeAnnotationUpgradeHistory(nodeInfo.Annotations[manager.NodeUpgradeHistoryKey], resp.FromVersion, resp.ToVersion)
 			}
 			_, err = uc.kubeClient.CoreV1().Nodes().Update(context.Background(), nodeInfo, metav1.UpdateOptions{})
 			if err != nil {
@@ -175,49 +171,6 @@ func (uc *UpstreamController) updateNodeUpgradeJobStatus() {
 			}
 		}
 	}
-}
-
-// patchNodeUpgradeJobStatus call patch api to patch update NodeUpgradeJob status
-func patchNodeUpgradeJobStatus(crdClient crdClientset.Interface, upgrade *v1alpha1.NodeUpgradeJob, status *v1alpha1.UpgradeStatus) error {
-	oldValue := upgrade.DeepCopy()
-
-	newValue := UpdateNodeUpgradeJobStatus(oldValue, status)
-
-	// after mark each node upgrade state, we also need to judge whether all edge node upgrade is completed
-	// if all edge node is in completed state, we should set the total state to completed
-	var completed int
-	for _, v := range newValue.Status.Status {
-		if v.State == v1alpha1.Completed {
-			completed++
-		}
-	}
-	if completed == len(newValue.Status.Status) {
-		newValue.Status.State = v1alpha1.Completed
-	} else {
-		newValue.Status.State = v1alpha1.Upgrading
-	}
-
-	oldData, err := json.Marshal(oldValue)
-	if err != nil {
-		return fmt.Errorf("failed to marshal the old NodeUpgradeJob(%s): %v", oldValue.Name, err)
-	}
-
-	newData, err := json.Marshal(newValue)
-	if err != nil {
-		return fmt.Errorf("failed to marshal the new NodeUpgradeJob(%s): %v", newValue.Name, err)
-	}
-
-	patchBytes, err := jsonpatch.CreateMergePatch(oldData, newData)
-	if err != nil {
-		return fmt.Errorf("failed to create a merge patch: %v", err)
-	}
-
-	_, err = crdClient.OperationsV1alpha1().NodeUpgradeJobs().Patch(context.TODO(), newValue.Name, apimachineryType.MergePatchType, patchBytes, metav1.PatchOptions{}, "status")
-	if err != nil {
-		return fmt.Errorf("failed to patch update NodeUpgradeJob status: %v", err)
-	}
-
-	return nil
 }
 
 func getNodeName(resource string) string {
@@ -232,13 +185,12 @@ func getUpgradeID(resource string) string {
 }
 
 // NewUpstreamController create UpstreamController from config
-func NewUpstreamController(dc *DownstreamController) (*UpstreamController, error) {
+func NewUpstreamController() (*UpstreamController, error) {
 	uc := &UpstreamController{
 		kubeClient:   keclient.GetKubeClient(),
 		informer:     informers.GetInformersManager().GetKubeInformerFactory(),
 		crdClient:    keclient.GetCRDClient(),
 		messageLayer: messagelayer.NodeUpgradeJobControllerMessageLayer(),
-		dc:           dc,
 	}
 	return uc, nil
 }

@@ -22,7 +22,6 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/nodeupgradejobcontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/nodeupgradejobcontroller/controller"
@@ -42,11 +41,11 @@ func newNodeUpgradeJobController(enable bool) *NodeUpgradeJobController {
 	if !enable {
 		return &NodeUpgradeJobController{enable: enable}
 	}
-	downstream, err := controller.NewDownstreamController(informers.GetInformersManager().GetKubeEdgeInformerFactory())
+	downstream, err := controller.NewDownstreamController()
 	if err != nil {
 		klog.Exitf("New NodeUpgradeJob Controller downstream failed with error: %s", err)
 	}
-	upstream, err := controller.NewUpstreamController(downstream)
+	upstream, err := controller.NewUpstreamController()
 	if err != nil {
 		klog.Exitf("New NodeUpgradeJob Controller upstream failed with error: %s", err)
 	}

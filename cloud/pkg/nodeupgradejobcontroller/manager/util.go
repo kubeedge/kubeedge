@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controller
+package manager
 
 import (
 	"fmt"
@@ -121,9 +121,9 @@ func UpdateNodeUpgradeJobStatus(old *v1alpha1.NodeUpgradeJob, status *v1alpha1.U
 	return upgrade
 }
 
-// mergeAnnotationUpgradeHistory constructs the new history based on the origin history
+// MergeAnnotationUpgradeHistory constructs the new history based on the origin history
 // and we'll only keep 3 records
-func mergeAnnotationUpgradeHistory(origin, fromVersion, toVersion string) string {
+func MergeAnnotationUpgradeHistory(origin, fromVersion, toVersion string) string {
 	newHistory := fmt.Sprintf("%s->%s", fromVersion, toVersion)
 	if origin == "" {
 		return newHistory

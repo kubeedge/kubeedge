@@ -25,7 +25,7 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/cloud/pkg/nodeupgradejobcontroller/controller"
+	"github.com/kubeedge/kubeedge/cloud/pkg/nodeupgradejobcontroller/manager"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
 )
 
@@ -59,6 +59,6 @@ func upgradeEdge(request *restful.Request, response *restful.Response) {
 	}
 
 	msg := beehiveModel.NewMessage("").SetRoute(modules.CloudHubModuleName, modules.CloudHubModuleName).
-		SetResourceOperation(fmt.Sprintf("%s/%s/node/%s", controller.NodeUpgrade, resp.UpgradeID, resp.NodeName), controller.NodeUpgrade).FillBody(resp)
+		SetResourceOperation(fmt.Sprintf("%s/%s/node/%s", manager.NodeUpgrade, resp.UpgradeID, resp.NodeName), manager.NodeUpgrade).FillBody(resp)
 	beehiveContext.Send(modules.NodeUpgradeJobControllerModuleName, *msg)
 }

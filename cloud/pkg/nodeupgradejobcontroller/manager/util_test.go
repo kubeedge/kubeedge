@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controller
+package manager
 
 import (
 	"reflect"
@@ -213,7 +213,7 @@ func TestMergeAnnotationUpgradeHistory(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result := mergeAnnotationUpgradeHistory(test.origin, test.fromVersion, test.toVersion)
+			result := MergeAnnotationUpgradeHistory(test.origin, test.fromVersion, test.toVersion)
 			if result != test.expected {
 				t.Errorf("Got = %v, Want = %v", result, test.expected)
 			}

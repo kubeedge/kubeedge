@@ -17,46 +17,61 @@ limitations under the License.
 package manager
 
 import (
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/klog/v2"
+	"k8s.io/client-go/tools/cache"
 )
 
-// Manager define the interface of a Manager, NodeUpgradeJob Manager implement it
-type Manager interface {
-	Events() chan watch.Event
+type AddFunc func(obj interface{})
+type UpdateFunc func(oldObj, newObj interface{})
+type DeleteFunc func(obj interface{})
+type FilterFunc func(obj interface{}) bool
+
+// resourceEventHandler wraps a cache.ResourceEventHandlerFuncs
+// implement the interface cache.ResourceEventHandler
+type resourceEventHandler struct {
+	*cache.ResourceEventHandlerFuncs
 }
 
-// CommonResourceEventHandler can be used by NodeUpgradeJob Manager
-type CommonResourceEventHandler struct {
-	events chan watch.Event
+// filteringResourceEventHandler wraps a cache.FilteringResourceEventHandler
+// there's a provided filter to all events coming
+// implement the interface cache.ResourceEventHandler
+type filteringResourceEventHandler struct {
+	*cache.FilteringResourceEventHandler
 }
 
-func (c *CommonResourceEventHandler) obj2Event(t watch.EventType, obj interface{}) {
-	eventObj, ok := obj.(runtime.Object)
-	if !ok {
-		klog.Warningf("unknown type: %T, ignore", obj)
-		return
+func NewResourceEventHandler(filterFunc FilterFunc, addFunc AddFunc, updateFunc UpdateFunc, deleteFunc DeleteFunc) cache.ResourceEventHandler {
+	return &resourceEventHandler{
+		ResourceEventHandlerFuncs: &cache.ResourceEventHandlerFuncs{
+			AddFunc:    addFunc,
+			UpdateFunc: updateFunc,
+			DeleteFunc: deleteFunc,
+		},
 	}
-	c.events <- watch.Event{Type: t, Object: eventObj}
 }
 
-// OnAdd handle Add event
-func (c *CommonResourceEventHandler) OnAdd(obj interface{}) {
-	c.obj2Event(watch.Added, obj)
+func NewFilterResourceEventHandler(filterFunc FilterFunc, addFunc AddFunc, updateFunc UpdateFunc, deleteFunc DeleteFunc) cache.ResourceEventHandler {
+	return &filteringResourceEventHandler{
+		FilteringResourceEventHandler: &cache.FilteringResourceEventHandler{
+			FilterFunc: filterFunc,
+			Handler: &cache.ResourceEventHandlerFuncs{
+				AddFunc:    addFunc,
+				UpdateFunc: updateFunc,
+				DeleteFunc: deleteFunc,
+			},
+		},
+	}
 }
 
-// OnUpdate handle Update event
-func (c *CommonResourceEventHandler) OnUpdate(oldObj, newObj interface{}) {
-	c.obj2Event(watch.Modified, newObj)
-}
+// // OnAdd handle Add event
+// func (h *filteringResourceEventHandler) OnAdd(obj interface{}) {
+// 	h.OnAdd(obj)
+// }
 
-// OnDelete handle Delete event
-func (c *CommonResourceEventHandler) OnDelete(obj interface{}) {
-	c.obj2Event(watch.Deleted, obj)
-}
+// // OnUpdate handle Update event
+// func (h *filteringResourceEventHandler) OnUpdate(oldObj, newObj interface{}) {
+// 	h.OnUpdate(oldObj, newObj)
+// }
 
-// NewCommonResourceEventHandler create CommonResourceEventHandler used by NodeUpgradeJob Manager
-func NewCommonResourceEventHandler(events chan watch.Event) *CommonResourceEventHandler {
-	return &CommonResourceEventHandler{events: events}
-}
+// // OnDelete handle Delete event
+// func (h *filteringResourceEventHandler) OnDelete(obj interface{}) {
+// 	h.OnDelete(obj)
+// }
