@@ -30,7 +30,7 @@ func newDeviceController(enable bool) *DeviceController {
 	if err != nil {
 		klog.Exitf("New downstream controller failed with error: %s", err)
 	}
-	upstream, err := controller.NewUpstreamController(downstream)
+	upstream, err := controller.NewUpstreamController()
 	if err != nil {
 		klog.Exitf("New upstream controller failed with error: %s", err)
 	}

@@ -26,6 +26,7 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	keclient "github.com/kubeedge/kubeedge/cloud/pkg/common/client"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/config"
@@ -34,6 +35,7 @@ import (
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
 	crdClientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
+	crdinformers "github.com/kubeedge/kubeedge/pkg/client/informers/externalversions"
 )
 
 // DeviceStatus is structure to patch device status
@@ -50,13 +52,12 @@ const (
 
 // UpstreamController subscribe messages from edge and sync to k8s api server
 type UpstreamController struct {
-	crdClient    crdClientset.Interface
+	crdClient   crdClientset.Interface
+	crdInformer crdinformers.SharedInformerFactory
+
 	messageLayer messagelayer.MessageLayer
 	// message channel
 	deviceStatusChan chan model.Message
-
-	// downstream controller to update device status in cache
-	dc *DownstreamController
 }
 
 // Start UpstreamController
@@ -124,7 +125,7 @@ func (uc *UpstreamController) updateDeviceStatus() {
 				continue
 			}
 			// TODO: namespace
-			cacheDevice, err := uc.dc.informer.Devices().V1alpha2().Devices().Lister().Devices("default").Get(deviceID)
+			cacheDevice, err := uc.crdInformer.Devices().V1alpha2().Devices().Lister().Devices("default").Get(deviceID)
 			if err != nil {
 				klog.Warningf("Device %s does not exist in downstream controller", deviceID)
 				continue
@@ -200,11 +201,11 @@ func (uc *UpstreamController) unmarshalDeviceStatusMessage(msg model.Message) (*
 }
 
 // NewUpstreamController create UpstreamController from config
-func NewUpstreamController(dc *DownstreamController) (*UpstreamController, error) {
+func NewUpstreamController() (*UpstreamController, error) {
 	uc := &UpstreamController{
 		crdClient:    keclient.GetCRDClient(),
+		crdInformer:  informers.GetInformersManager().GetCRDInformerFactory(),
 		messageLayer: messagelayer.DeviceControllerMessageLayer(),
-		dc:           dc,
 	}
 	return uc, nil
 }
