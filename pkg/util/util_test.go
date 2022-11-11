@@ -4,9 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestValidateNodeIP(t *testing.T) {
@@ -55,10 +56,9 @@ func TestValidateNodeIP(t *testing.T) {
 		},
 	}
 	for _, c := range cases {
-		err := ValidateNodeIP(c.ip)
-		if !reflect.DeepEqual(err, c.expected) {
-			t.Errorf("%v: expected %v, but got %v", c.name, c.expected, err)
-		}
+		t.Run(c.name, func(t *testing.T) {
+			require.Equal(t, c.expected, ValidateNodeIP(c.ip))
+		})
 	}
 }
 
@@ -80,33 +80,24 @@ func TestCommand(t *testing.T) {
 		},
 	}
 	for _, c := range cases {
-		_, err := Command(c.command, nil)
-		isSuccess := err == nil
-		if isSuccess != c.expected {
-			t.Errorf("%v: expected %v, but got %v", c.name, c.expected, isSuccess)
-		}
+		t.Run(c.name, func(t *testing.T) {
+			_, err := Command(c.command, nil)
+			require.Equal(t, c.expected, err == nil)
+		})
 	}
 }
 
 func TestGetCurPath(t *testing.T) {
-	path := GetCurPath()
-	if path == "" {
-		t.Errorf("failed to get current path")
-	}
+	require.NotEqual(t, "", GetCurPath(), "failed to get current path")
 }
 
 func TestGetHostname(t *testing.T) {
-	name := GetHostname()
-	if name == "" {
-		t.Errorf("get host name failed")
-	}
+	require.NotEqual(t, "", GetHostname(), "get host name failed")
 }
 
 func TestGetLocalIP(t *testing.T) {
 	_, err := GetLocalIP(GetHostname())
-	if err != nil {
-		t.Errorf("get local ip failed")
-	}
+	require.NoError(t, err)
 }
 
 func TestSpliceErrors(t *testing.T) {
@@ -121,19 +112,15 @@ func TestSpliceErrors(t *testing.T) {
 	const tail = "]\n"
 
 	sliceOutput := SpliceErrors([]error{err1, err2, err3})
-	if strings.Index(sliceOutput, head) != 0 ||
-		strings.Index(sliceOutput, line1) != len(head) ||
-		strings.Index(sliceOutput, line2) != len(head+line1) ||
-		strings.Index(sliceOutput, line3) != len(head+line1+line2) ||
-		strings.Index(sliceOutput, tail) != len(head+line1+line2+line3) {
-		t.Error("the func format the multiple elements error slice unexpected")
-		return
-	}
 
-	if SpliceErrors([]error{}) != "" || SpliceErrors(nil) != "" {
-		t.Error("the func format the zero-length error slice unexpected")
-		return
-	}
+	require.Zero(t, strings.Index(sliceOutput, head))
+	require.Equal(t, len(head), strings.Index(sliceOutput, line1))
+	require.Equal(t, len(head+line1), strings.Index(sliceOutput, line2))
+	require.Equal(t, len(head+line1+line2), strings.Index(sliceOutput, line3))
+	require.Equal(t, len(head+line1+line2+line3), strings.Index(sliceOutput, tail))
+
+	require.Empty(t, SpliceErrors([]error{}))
+	require.Empty(t, SpliceErrors(nil))
 }
 
 func TestConcatStrings(t *testing.T) {
@@ -154,12 +141,10 @@ func TestConcatStrings(t *testing.T) {
 			expect: "ab",
 		},
 	}
-	var s string
-	for _, c := range cases {
-		s = ConcatStrings(c.args...)
-		if s != c.expect {
-			t.Errorf("the func return failed. expect: %s, actual: %s\n", c.expect, s)
-			return
-		}
+
+	for i, c := range cases {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			require.Equal(t, c.expect, ConcatStrings(c.args...))
+		})
 	}
 }
