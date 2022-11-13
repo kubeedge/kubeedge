@@ -3,6 +3,8 @@ package image
 import (
 	"reflect"
 	"testing"
+
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 func TestEdgeSet(t *testing.T) {
@@ -23,8 +25,8 @@ func TestEdgeSet(t *testing.T) {
 			},
 			want: Set{
 				EdgeCore:  "kubeedge/installation-package:v1.9.1",
-				EdgeMQTT:  "eclipse-mosquitto:1.6.15",
-				EdgePause: "kubeedge/pause:3.1",
+				EdgeMQTT:  constants.DefaultMosquittoImage,
+				EdgePause: constants.DefaultPodSandboxImage,
 			},
 		},
 		{
@@ -35,8 +37,8 @@ func TestEdgeSet(t *testing.T) {
 			},
 			want: Set{
 				EdgeCore:  "kubeedge/installation-package",
-				EdgeMQTT:  "eclipse-mosquitto:1.6.15",
-				EdgePause: "kubeedge/pause:3.1",
+				EdgeMQTT:  constants.DefaultMosquittoImage,
+				EdgePause: constants.DefaultPodSandboxImage,
 			},
 		},
 		{
@@ -47,7 +49,7 @@ func TestEdgeSet(t *testing.T) {
 			},
 			want: Set{
 				EdgeCore:  "kubeedge-test/installation-package:v1.9.1",
-				EdgeMQTT:  "kubeedge-test/eclipse-mosquitto:1.6.15",
+				EdgeMQTT:  "kubeedge-test/" + constants.DefaultMosquittoImage,
 				EdgePause: "kubeedge-test/pause:3.1",
 			},
 		},
@@ -59,7 +61,7 @@ func TestEdgeSet(t *testing.T) {
 			},
 			want: Set{
 				EdgeCore:  "kubeedge-test/installation-package",
-				EdgeMQTT:  "kubeedge-test/eclipse-mosquitto:1.6.15",
+				EdgeMQTT:  "kubeedge-test/" + constants.DefaultMosquittoImage,
 				EdgePause: "kubeedge-test/pause:3.1",
 			},
 		},
