@@ -59,7 +59,7 @@ func setupControllers(ctx context.Context, mgr manager.Manager) error {
 		Client: cli,
 	}
 
-	edgeApplicationControllere := &edgeapplication.Controller{
+	edgeApplicationController := &edgeapplication.Controller{
 		Client:        cli,
 		Serializer:    Serializer,
 		StatusManager: statusmanager.NewStatusManager(ctx, mgr, cli, Serializer),
@@ -77,7 +77,7 @@ func setupControllers(ctx context.Context, mgr manager.Manager) error {
 	if err := nodeGroupController.SetupWithManager(ctx, mgr); err != nil {
 		return fmt.Errorf("failed to setup nodegroup controller, %v", err)
 	}
-	if err := edgeApplicationControllere.SetupWithManager(mgr); err != nil {
+	if err := edgeApplicationController.SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("failed to setup edgeapplication controller, %v", err)
 	}
 	return nil

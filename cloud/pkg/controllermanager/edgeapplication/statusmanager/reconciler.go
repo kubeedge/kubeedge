@@ -68,7 +68,11 @@ func (r *statusReconciler) sync(ctx context.Context, edgeApp *appsv1alpha1.EdgeA
 		} else {
 			// Apply overriders to get the actual template that applied to
 			// each nodegroup. Currently, only NameOverrider is applied.
-			overrideInfos := utils.GetAllOverriders(edgeApp)
+			overrideInfos, err := utils.GetAllOverriders(ctx, edgeApp, r.Client)
+			if err != nil {
+				klog.Errorf("failed to get overriders for edgeApp %s/%s, %v", edgeApp.Namespace, edgeApp.Name, err)
+			}
+
 			for _, overrideInfo := range overrideInfos {
 				copy := tmpl.DeepCopy()
 				if err := r.Overrider.ApplyOverrides(copy, overrideInfo); err != nil {

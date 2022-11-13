@@ -23,6 +23,7 @@ require (
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
+	github.com/imdario/mergo v0.3.12
 	github.com/kubeedge/beehive v0.0.0
 	github.com/kubeedge/viaduct v0.0.0
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1

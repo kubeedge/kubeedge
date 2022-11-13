@@ -90,8 +90,67 @@ func (c *Controller) SetupWithManager(mgr controllerruntime.Manager) error {
 	}
 	return controllerruntime.NewControllerManagedBy(mgr).
 		For(&appsv1alpha1.EdgeApplication{}).
+		Watches(&source.Kind{Type: &appsv1alpha1.NodeGroup{}}, handler.EnqueueRequestsFromMapFunc(c.nodeGroupMapFunc)).
 		Watches(&source.Channel{Source: c.ReconcileTriggerChan}, &handler.EnqueueRequestForObject{}).
 		Complete(c)
+}
+
+// An EdgeApplication can be assigened to the NodeGroup by:
+// * by label selector
+// * by nodegroup name
+// Currently, only EdgeApplications which selecting nodegroups by label selector needs to be reconciled.
+func (c *Controller) nodeGroupMapFunc(obj client.Object) []controllerruntime.Request {
+
+	nodegroup := obj.(*appsv1alpha1.NodeGroup)
+	edgeappList := &appsv1alpha1.EdgeApplicationList{}
+
+	// list all edgeapplications
+	if err := c.Client.List(context.TODO(), edgeappList); err != nil {
+		klog.Errorf("failed to list all nodegroups, %s", err)
+		return nil
+	}
+
+	// filter edgeapplications which selecting the node group by label selector
+	matches := []controllerruntime.Request{}
+	for _, edgeapp := range edgeappList.Items {
+		if IfMatchEdgeAppSelector(nodegroup, &edgeapp) {
+			matches = append(matches, controllerruntime.Request{
+				NamespacedName: types.NamespacedName{
+					Namespace: edgeapp.Namespace,
+					Name:      edgeapp.Name,
+				},
+			})
+		}
+	}
+	// reconcile the edgeapplications which are assigned to the nodegroup
+	return matches
+}
+
+// IfMatchEdgeApp will check if the NodeGroup is selected by the EdgeApplication by label selector.
+func IfMatchEdgeAppSelector(nodegroup *appsv1alpha1.NodeGroup, edgeapp *appsv1alpha1.EdgeApplication) bool {
+	// check if target nodegroup is selected by label selector the edgeapplication
+	for _, selector := range edgeapp.Spec.WorkloadScope.TargetNodeGroupSelectors {
+		if selector.MatchLabels != nil {
+			selected := true
+			// if all labels in selector are matched, then the nodegroup is selected
+			for key, value := range selector.MatchLabels {
+				if _, ok := nodegroup.Labels[key]; !ok {
+					selected = false
+					break
+				}
+				if nodegroup.Labels[key] != value {
+					selected = false
+					break
+				}
+			}
+			// this nodegroup is selected by the edgeapplication
+			// no need to check other selectors
+			if selected {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (c *Controller) syncEdgeApplication(ctx context.Context, edgeApp *appsv1alpha1.EdgeApplication) (controllerruntime.Result, error) {
@@ -100,7 +159,11 @@ func (c *Controller) syncEdgeApplication(ctx context.Context, edgeApp *appsv1alp
 	// it will log the error and continue.
 	modifiedTmplInfos := []*utils.TemplateInfo{}
 	errs := []error{}
-	overriderInfos := utils.GetAllOverriders(edgeApp)
+	overriderInfos, err := utils.GetAllOverriders(ctx, edgeApp, c.Client)
+	if err != nil {
+		klog.Errorf("failed to get overriders for edgeApp %s/%s, %v", edgeApp.Namespace, edgeApp.Name, err)
+		errs = append(errs, err)
+	}
 	tmplInfos, err := utils.GetTemplatesInfosOfEdgeApp(edgeApp, c.Serializer)
 	if err != nil {
 		klog.Errorf("failed to get all templates from edgeapp %s/%s, %v, continue with what got", edgeApp.Namespace, edgeApp.Name, err)

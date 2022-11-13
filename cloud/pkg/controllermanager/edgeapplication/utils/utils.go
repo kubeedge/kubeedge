@@ -1,15 +1,19 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/klog/v2"
 
+	"github.com/imdario/mergo"
 	"github.com/kubeedge/kubeedge/cloud/pkg/controllermanager/edgeapplication/overridemanager"
 	appsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type ResourceInfo struct {
@@ -32,16 +36,62 @@ type TemplateInfo struct {
 	Template *unstructured.Unstructured
 }
 
-func GetAllOverriders(edgeApp *appsv1alpha1.EdgeApplication) []overridemanager.OverriderInfo {
-	infos := make([]overridemanager.OverriderInfo, 0, len(edgeApp.Spec.WorkloadScope.TargetNodeGroups))
-	for index := range edgeApp.Spec.WorkloadScope.TargetNodeGroups {
-		copied := edgeApp.Spec.WorkloadScope.TargetNodeGroups[index].Overriders.DeepCopy()
-		infos = append(infos, overridemanager.OverriderInfo{
-			TargetNodeGroup: edgeApp.Spec.WorkloadScope.TargetNodeGroups[index].Name,
-			Overriders:      copied,
-		})
+// GetNodeGroupsByLabels can get all node groups matching these labels.
+func GetNodesGroupsByLabels(ctx context.Context, c client.Client, matchLabels map[string]string) ([]appsv1alpha1.NodeGroup, error) {
+	if matchLabels == nil {
+		// Return empty when matchLabels is nil
+		// Otherwise, it will select all node groups, it's not what we want
+		return []appsv1alpha1.NodeGroup{}, nil
 	}
-	return infos
+	selector := labels.SelectorFromSet(labels.Set(matchLabels))
+	nodeGroupList := &appsv1alpha1.NodeGroupList{}
+	err := c.List(ctx, nodeGroupList, &client.ListOptions{LabelSelector: selector})
+	if err != nil {
+		return nil, err
+	}
+	return nodeGroupList.Items, nil
+}
+
+func GetAllOverriders(ctx context.Context, edgeApp *appsv1alpha1.EdgeApplication, c client.Client) ([]overridemanager.OverriderInfo, error) {
+	errs := []error{}
+	sorted := map[string]overridemanager.OverriderInfo{}
+	// get node group names by target node group labels
+	for _, target := range edgeApp.Spec.WorkloadScope.TargetNodeGroupSelectors {
+		groups, err := GetNodesGroupsByLabels(ctx, c, target.MatchLabels)
+		if err != nil {
+			klog.Errorf("failed to get node group by labels, %v", err)
+			errs = append(errs, err)
+			continue
+		}
+		for _, group := range groups {
+			sorted[group.Name] = overridemanager.OverriderInfo{
+				TargetNodeGroup: group.Name,
+				Overriders:      &appsv1alpha1.Overriders{},
+			}
+		}
+	}
+	// get node group names by target node groups
+	for index := range edgeApp.Spec.WorkloadScope.TargetNodeGroups {
+		name := edgeApp.Spec.WorkloadScope.TargetNodeGroups[index].Name
+		overriders := edgeApp.Spec.WorkloadScope.TargetNodeGroups[index].Overriders.DeepCopy()
+		if nodegroup, exist := sorted[name]; exist {
+			if err := mergo.Merge(&nodegroup.Overriders, overriders); err != nil {
+				klog.Errorf("failed to merge overriders of nodegroup %s, %v", name, err)
+				errs = append(errs, err)
+			}
+		} else {
+			sorted[name] = overridemanager.OverriderInfo{
+				TargetNodeGroup: edgeApp.Spec.WorkloadScope.TargetNodeGroups[index].Name,
+				Overriders:      overriders,
+			}
+		}
+	}
+	// convert sorted to array
+	infos := make([]overridemanager.OverriderInfo, 0, len(sorted))
+	for _, overrider := range sorted {
+		infos = append(infos, overrider)
+	}
+	return infos, errors.NewAggregate(errs)
 }
 
 func GetContainedResourceInfos(edgeApp *appsv1alpha1.EdgeApplication, yamlSerializer runtime.Serializer) ([]ResourceInfo, error) {

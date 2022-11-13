@@ -35,6 +35,21 @@ type WorkloadScope struct {
 	// TargetNodeGroups represents the target node groups of workload to be deployed.
 	// +optional
 	TargetNodeGroups []TargetNodeGroup `json:"targetNodeGroups,omitempty"`
+
+	// TargetNodeGroupSelectors are used to select target node groups that have these labels.
+	// +optional
+	TargetNodeGroupSelectors []TargetNodeGroupSelector `json:"targetNodeGroupSelectors,omitempty"`
+}
+
+// TargetNodeGroupSelector are used to select target node groups of workload to be deployed, including
+// override rules to apply for this node groups.
+type TargetNodeGroupSelector struct {
+
+	// MatchLabels are used to select target node groups that have these labels.
+	MatchLabels map[string]string `json:"matchLabels"`
+
+	// Overriders represents the override rules that would apply on workload.
+	Overriders Overriders `json:"overriders,omitempty"`
 }
 
 // TargetNodeGroup represents the target node group of workload to be deployed, including
