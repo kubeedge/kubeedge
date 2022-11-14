@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"sync"
 
 	authorizationv1 "k8s.io/api/authorization/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -29,7 +28,6 @@ import (
 )
 
 type Center struct {
-	Applications sync.Map
 	HandlerCenter
 	messageLayer messagelayer.MessageLayer
 	authConfig   *rest.Config
