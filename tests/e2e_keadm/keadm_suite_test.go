@@ -24,6 +24,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/spf13/pflag"
+	"k8s.io/kubernetes/test/e2e/framework"
 
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 )
@@ -36,8 +37,11 @@ var (
 func TestMain(m *testing.M) {
 	utils.CopyFlags(utils.Flags, flag.CommandLine)
 	utils.RegisterFlags(flag.CommandLine)
+	framework.RegisterCommonFlags(flag.CommandLine)
+	framework.RegisterClusterFlags(flag.CommandLine)
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
+	framework.AfterReadingAllFlags(&framework.TestContext)
 	os.Exit(m.Run())
 }
 

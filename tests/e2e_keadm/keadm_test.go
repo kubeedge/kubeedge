@@ -22,6 +22,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	clientset "k8s.io/client-go/kubernetes"
+	"k8s.io/kubernetes/test/e2e/framework"
 
 	"github.com/kubeedge/kubeedge/tests/e2e/constants"
 	. "github.com/kubeedge/kubeedge/tests/e2e/testsuite"
@@ -38,7 +39,7 @@ var _ = Describe("Application deployment test in keadm E2E scenario", func() {
 	var clientSet clientset.Interface
 
 	BeforeEach(func() {
-		clientSet = utils.NewKubeClient(ctx.Cfg.KubeConfigPath)
+		clientSet = utils.NewKubeClient(framework.TestContext.KubeConfig)
 	})
 
 	Context("Test application deployment using Pod spec", func() {

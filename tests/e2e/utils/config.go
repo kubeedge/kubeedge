@@ -18,10 +18,8 @@ package utils
 import (
 	"flag"
 	"math/rand"
-	"os"
 	"time"
 
-	"k8s.io/client-go/tools/clientcmd"
 	cliflag "k8s.io/component-base/cli/flag"
 )
 
@@ -35,16 +33,7 @@ type Config struct {
 	EdgeImageURL                   string   `json:"edgeimageurl"`
 	ControllerStubPort             int      `json:"controllerstubport"`
 	Protocol                       string   `json:"protocol"`
-	KubeConfigPath                 string   `json:"kubeconfigpath"`
-
-	ReportDir    string
-	ReportPrefix string
-	// SpecSummaryOutput is the file to write ginkgo.SpecSummary objects
-	// to as tests complete. Useful for debugging and test introspection.
-	SpecSummaryOutput string
-	// ProgressReportURL is the URL which progress updates will be posted
-	// to as tests complete. If empty, no updates are sent.
-	ProgressReportURL string
+	TestDevice                     bool
 }
 
 // config struct
@@ -52,14 +41,8 @@ var config Config
 var Flags = flag.NewFlagSet("", flag.ContinueOnError)
 
 func RegisterFlags(flags *flag.FlagSet) {
-	flags.StringVar(&config.KubeConfigPath, "kubeconfig", os.Getenv(clientcmd.RecommendedConfigPathEnvVar), "Path to kubeconfig containing embedded authinfo.")
 	flags.Var(cliflag.NewStringSlice(&config.AppImageURL), "image-url", "image url list for e2e")
-	flags.StringVar(&config.K8SMasterForKubeEdge, "kube-master", "", "the kubernetes master address")
-
-	flags.StringVar(&config.ReportPrefix, "report-prefix", "", "Optional prefix for JUnit XML reports. Default is empty, which doesn't prepend anything to the default name.")
-	flags.StringVar(&config.ReportDir, "report-dir", "", "Path to the directory where the JUnit XML reports should be saved. Default is empty, which doesn't generate these reports.")
-	flags.StringVar(&config.ProgressReportURL, "progress-report-url", "", "The URL to POST progress updates to as the suite runs to assist in aiding integrations. If empty, no messages sent.")
-	flags.StringVar(&config.SpecSummaryOutput, "spec-dump", "", "The file to dump all ginkgo.SpecSummary to after tests run. If empty, no objects are saved/printed.")
+	flags.BoolVar(&config.TestDevice, "test-device", true, "whether test edge device")
 }
 
 func CopyFlags(source *flag.FlagSet, target *flag.FlagSet) {

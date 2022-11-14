@@ -28,6 +28,7 @@ import (
 	"github.com/onsi/gomega"
 	"github.com/spf13/pflag"
 	"k8s.io/klog/v2"
+	"k8s.io/kubernetes/test/e2e/framework"
 	e2ereporters "k8s.io/kubernetes/test/e2e/reporters"
 
 	_ "github.com/kubeedge/kubeedge/tests/e2e/apps"
@@ -39,8 +40,11 @@ import (
 func TestMain(m *testing.M) {
 	utils.CopyFlags(utils.Flags, flag.CommandLine)
 	utils.RegisterFlags(flag.CommandLine)
+	framework.RegisterCommonFlags(flag.CommandLine)
+	framework.RegisterClusterFlags(flag.CommandLine)
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
+	framework.AfterReadingAllFlags(&framework.TestContext)
 	os.Exit(m.Run())
 }
 
@@ -50,8 +54,10 @@ func TestE2E(t *testing.T) {
 	var _ = ginkgo.BeforeSuite(func() {
 		utils.Infof("Before Suite Execution")
 
-		err := utils.MqttConnect()
-		gomega.Expect(err).To(gomega.BeNil())
+		if utils.LoadConfig().TestDevice {
+			err := utils.MqttConnect()
+			gomega.Expect(err).To(gomega.BeNil())
+		}
 	})
 
 	ginkgo.AfterSuite(func() {
@@ -60,21 +66,21 @@ func TestE2E(t *testing.T) {
 
 	// Run tests through the Ginkgo runner with output to console + JUnit for Jenkins
 	var r []ginkgo.Reporter
-	if utils.LoadConfig().ReportDir != "" {
-		if err := os.MkdirAll(utils.LoadConfig().ReportDir, 0755); err != nil {
+	if framework.TestContext.ReportDir != "" {
+		if err := os.MkdirAll(framework.TestContext.ReportDir, 0755); err != nil {
 			klog.Errorf("Failed creating report directory: %v", err)
 		} else {
-			r = append(r, reporters.NewJUnitReporter(path.Join(utils.LoadConfig().ReportDir, fmt.Sprintf("junit_%v.xml", utils.LoadConfig().ReportPrefix))))
+			r = append(r, reporters.NewJUnitReporter(path.Join(framework.TestContext.ReportDir, fmt.Sprintf("junit_%v.xml", framework.TestContext.ReportPrefix))))
 		}
 	}
 
 	// Stream the progress to stdout and optionally a URL accepting progress updates.
-	r = append(r, e2ereporters.NewProgressReporter(utils.LoadConfig().ProgressReportURL))
+	r = append(r, e2ereporters.NewProgressReporter(framework.TestContext.ProgressReportURL))
 
 	// The DetailsRepoerter will output details about every test (name, files, lines, etc) which helps
 	// when documenting our tests.
-	if len(utils.LoadConfig().SpecSummaryOutput) > 0 {
-		r = append(r, e2ereporters.NewDetailsReporterFile(utils.LoadConfig().SpecSummaryOutput))
+	if len(framework.TestContext.SpecSummaryOutput) > 0 {
+		r = append(r, e2ereporters.NewDetailsReporterFile(framework.TestContext.SpecSummaryOutput))
 	}
 
 	ginkgo.RunSpecsWithDefaultAndCustomReporters(t, "kubeedge e2e suite", r)

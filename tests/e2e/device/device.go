@@ -26,6 +26,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clientset "k8s.io/client-go/kubernetes"
+	"k8s.io/kubernetes/test/e2e/framework"
 
 	edgeclientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 	"github.com/kubeedge/kubeedge/tests/e2e/constants"
@@ -44,8 +45,8 @@ var _ = GroupDescribe("Device Management test in E2E scenario", func() {
 	var edgeClientSet edgeclientset.Interface
 
 	ginkgo.BeforeEach(func() {
-		clientSet = utils.NewKubeClient(utils.LoadConfig().KubeConfigPath)
-		edgeClientSet = utils.NewKubeEdgeClient(utils.LoadConfig().KubeConfigPath)
+		clientSet = utils.NewKubeClient(framework.TestContext.KubeConfig)
+		edgeClientSet = utils.NewKubeEdgeClient(framework.TestContext.KubeConfig)
 	})
 
 	ginkgo.Context("Test Device Model Creation, Updation and deletion", func() {
