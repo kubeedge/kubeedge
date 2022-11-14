@@ -48,6 +48,7 @@ const (
 	DefaultEdgedMemoryCapacity         = 7852396000
 	DefaultRemoteRuntimeEndpoint       = "unix:///var/run/dockershim.sock"
 	DefaultRemoteImageEndpoint         = "unix:///var/run/dockershim.sock"
+	DefaultMosquittoImage              = "eclipse-mosquitto:1.6.15"
 	DefaultPodSandboxImage             = "kubeedge/pause:3.1"
 	DefaultImagePullProgressDeadline   = time.Minute
 	DefaultImageGCHighThreshold        = 80

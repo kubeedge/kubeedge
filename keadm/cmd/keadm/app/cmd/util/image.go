@@ -34,6 +34,7 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
 	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
 
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/image"
 )
 
@@ -151,7 +152,7 @@ func (runtime *DockerRuntime) RemoveMQTT() error {
 		All: true,
 	}
 	options.Filters = filters.NewArgs()
-	options.Filters.Add("ancestor", "eclipse-mosquitto:1.6.15")
+	options.Filters.Add("ancestor", constants.DefaultMosquittoImage)
 
 	mqttContainers, err := runtime.Client.ContainerList(runtime.ctx, options)
 	if err != nil {

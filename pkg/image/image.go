@@ -18,6 +18,8 @@ package image
 
 import (
 	"strings"
+
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 const (
@@ -49,8 +51,8 @@ var edgeComponentSet = Set{
 }
 
 var edgeThirdPartySet = Set{
-	EdgeMQTT:  "eclipse-mosquitto:1.6.15",
-	EdgePause: "kubeedge/pause:3.1",
+	EdgeMQTT:  constants.DefaultMosquittoImage,
+	EdgePause: constants.DefaultPodSandboxImage,
 }
 
 func EdgeSet(imageRepository, version string) Set {
