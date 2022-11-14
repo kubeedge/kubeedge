@@ -14,7 +14,8 @@ BINARIES=cloudcore \
 	csidriver \
 	iptablesmanager \
 	edgemark \
-	controllermanager
+	controllermanager \
+	conformance
 
 COMPONENTS=cloud \
 	edge
