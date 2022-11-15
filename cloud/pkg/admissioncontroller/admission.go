@@ -36,6 +36,9 @@ const (
 	OfflineMigrationConfigName  = "mutate-offlinemigration"
 	OfflineMigrationWebhookName = "mutateofflinemigration.kubeedge.io"
 
+	MutatingAdmissionWebhookName   = "kubeedge-mutating-webhook"
+	MutatingNodeUpgradeWebhookName = "mutatingnodeupgradejob.kubeedge.io"
+
 	AutonomyLabel = "app-offline.kubeedge.io=autonomy"
 )
 
@@ -101,6 +104,7 @@ func Run(opt *options.AdmissionOptions) error {
 	http.HandleFunc("/ruleendpoints", serveRuleEndpoint)
 	http.HandleFunc("/offlinemigration", serveOfflineMigration)
 	http.HandleFunc("/nodeupgradejobs", serveNodeUpgradeJob)
+	http.HandleFunc("/mutating/nodeupgradejobs", serveMutatingNodeUpgradeJob)
 
 	tlsConfig, err := configTLS(opt, restConfig)
 	if err != nil {
@@ -317,8 +321,46 @@ func (ac *AdmissionController) registerWebhooks(opt *options.AdmissionOptions, c
 		},
 	}
 
+	// NodeUpgradeJob mutating webhook
+	nodeUpgradeJobWebhook := admissionregistrationv1.MutatingWebhook{
+		Name: MutatingNodeUpgradeWebhookName,
+		Rules: []admissionregistrationv1.RuleWithOperations{{
+			Operations: []admissionregistrationv1.OperationType{
+				admissionregistrationv1.Create,
+				admissionregistrationv1.Update,
+			},
+
+			Rule: admissionregistrationv1.Rule{
+				APIGroups:   []string{"operations.kubeedge.io"},
+				APIVersions: []string{"v1alpha1"},
+				Resources:   []string{"nodeupgradejobs"},
+			},
+		}},
+		ClientConfig: admissionregistrationv1.WebhookClientConfig{
+			Service: &admissionregistrationv1.ServiceReference{
+				Namespace: opt.AdmissionServiceNamespace,
+				Name:      opt.AdmissionServiceName,
+				Path:      strPtr("/mutating/nodeupgradejobs"),
+				Port:      &opt.Port,
+			},
+			CABundle: cabundle,
+		},
+		FailurePolicy:           &ignorePolicy,
+		SideEffects:             &noneSideEffect,
+		AdmissionReviewVersions: []string{"v1"},
+	}
+	// mutatingWebhook contains all the kubeedge related Mutating webhook
+	mutatingWebhook := admissionregistrationv1.MutatingWebhookConfiguration{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: MutatingAdmissionWebhookName,
+		},
+		Webhooks: []admissionregistrationv1.MutatingWebhook{
+			nodeUpgradeJobWebhook,
+		},
+	}
+
 	return registerMutatingWebhook(ac.Client.AdmissionregistrationV1().MutatingWebhookConfigurations(),
-		[]admissionregistrationv1.MutatingWebhookConfiguration{offlineMigrationWebhook})
+		[]admissionregistrationv1.MutatingWebhookConfiguration{offlineMigrationWebhook, mutatingWebhook})
 }
 
 func (ac *AdmissionController) getRuleEndpoint(namespace, name string) (*v1.RuleEndpoint, error) {

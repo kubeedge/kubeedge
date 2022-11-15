@@ -17,6 +17,7 @@ limitations under the License.
 package admissioncontroller
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -26,12 +27,17 @@ import (
 	"github.com/blang/semver"
 	admissionv1 "k8s.io/api/admission/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1"
 )
 
 func serveNodeUpgradeJob(w http.ResponseWriter, r *http.Request) {
 	serve(w, r, admitNodeUpgradeJob)
+}
+
+func serveMutatingNodeUpgradeJob(w http.ResponseWriter, r *http.Request) {
+	serve(w, r, mutatingNodeUpgradeJob)
 }
 
 func admitNodeUpgradeJob(review admissionv1.AdmissionReview) *admissionv1.AdmissionResponse {
@@ -110,4 +116,61 @@ func admissionResponse(err error) *admissionv1.AdmissionResponse {
 	return &admissionv1.AdmissionResponse{
 		Allowed: true,
 	}
+}
+
+func mutatingNodeUpgradeJob(review admissionv1.AdmissionReview) *admissionv1.AdmissionResponse {
+	reviewResponse := admissionv1.AdmissionResponse{
+		Allowed: true,
+	}
+
+	var upgrade v1alpha1.NodeUpgradeJob
+	if err := json.Unmarshal(review.Request.Object.Raw, &upgrade); err != nil {
+		klog.Errorf("Could not unmarshal raw object: %v", err)
+		return toAdmissionResponse(err)
+	}
+
+	payload := generateNodeUpgradeJobPatch(upgrade.Spec)
+	if len(payload) == 0 {
+		return &reviewResponse
+	}
+
+	patch, err := json.Marshal(payload)
+	if err != nil {
+		return toAdmissionResponse(err)
+	}
+
+	reviewResponse.Patch = patch
+	pt := admissionv1.PatchTypeJSONPatch
+	reviewResponse.PatchType = &pt
+	return &reviewResponse
+}
+
+func generateNodeUpgradeJobPatch(spec v1alpha1.NodeUpgradeJobSpec) []patchValue {
+	patch := make([]patchValue, 0)
+
+	// mutate .spec.concurrency to default value 1 if not specified
+	if spec.Concurrency == 0 {
+		patch = append(patch, patchValue{
+			Op:    "replace",
+			Path:  "/spec/concurrency",
+			Value: 1,
+		})
+	}
+	// mutate .spec.timeoutSeconds to default value 300 if not specified
+	if spec.TimeoutSeconds == nil {
+		var defaultTimeoutSeconds uint32 = 300
+		patch = append(patch, patchValue{
+			Op:    "replace",
+			Path:  "/spec/timeoutSeconds",
+			Value: &defaultTimeoutSeconds,
+		})
+	}
+
+	return patch
+}
+
+type patchValue struct {
+	Op    string      `json:"op"`
+	Path  string      `json:"path"`
+	Value interface{} `json:"value,omitempty"`
 }

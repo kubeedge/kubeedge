@@ -36,6 +36,12 @@ spec:
           spec:
             description: Specification of the desired behavior of NodeUpgradeJob.
             properties:
+              concurrency:
+                description: Concurrency specifies the max number of edge nodes that
+                  can be upgraded at the same time. The default Concurrency value
+                  is 1.
+                format: int32
+                type: integer
               image:
                 description: 'Image specifies a container image name, the image contains:
                   keadm and edgecore. keadm is used as upgradetool, to install the

@@ -87,6 +87,10 @@ type NodeUpgradeJobSpec struct {
 	// The default image name is: kubeedge/installation-package.
 	// +optional
 	Image string `json:"image,omitempty"`
+	// Concurrency specifies the max number of edge nodes that can be upgraded at the same time.
+	// The default Concurrency value is 1.
+	// +optional
+	Concurrency int32 `json:"concurrency,omitempty"`
 }
 
 // UpgradeResult describe the result status of upgrade operation on edge nodes.
