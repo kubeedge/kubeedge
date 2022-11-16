@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"strings"
 	"time"
@@ -261,7 +260,7 @@ func (cu *KubeCloudHelmInstTool) runHelmManifest(r *Renderer, stdout io.Writer) 
 	var buf bytes.Buffer
 	if cu.Manifests != "" {
 		for _, manifest := range strings.Split(cu.Manifests, ",") {
-			body, err := ioutil.ReadFile(manifest)
+			body, err := os.ReadFile(manifest)
 			if err != nil {
 				return fmt.Errorf("cannot open file %s, error: %s", manifest, err.Error())
 			}
