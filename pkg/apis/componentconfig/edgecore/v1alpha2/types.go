@@ -123,6 +123,7 @@ type TailoredKubeletFlag struct {
 	KubeConfig string `json:"kubeConfig,omitempty"`
 	// HostnameOverride is the hostname used to identify the kubelet instead
 	// of the actual hostname.
+	// default os.Hostname()
 	HostnameOverride string `json:"hostnameOverride,omitempty"`
 	// NodeIP is IP address of the node.
 	// If set, edged will use this IP address for the node.
@@ -134,15 +135,17 @@ type TailoredKubeletFlag struct {
 	CertDirectory string `json:"certDirectory,omitempty"`
 	// rootDirectory is the directory path to place kubelet files (volume
 	// mounts,etc).
+	// default "/var/lib/edged"
 	RootDirectory string `json:"rootDirectory,omitempty"`
 	// The Kubelet will load its initial configuration from this file.
 	// The path may be absolute or relative; relative paths are under the Kubelet's current working directory.
 	// Omit this flag to use the combination of built-in default configuration values and flags.
 	KubeletConfigFile string `json:"kubeletConfigFile,omitempty"`
 	// registerNode enables automatic registration with the apiserver.
+	// default true
 	RegisterNode bool `json:"registerNode,omitempty"`
 	// registerWithTaints are an array of taints to add to a node object when
-	// the kubelet registers itself. This only takes effect when registerNode
+	// the edgecore registers itself. This only takes effect when registerNode
 	// is true and upon the initial registration of the node.
 	RegisterWithTaints []core.Taint `json:"registerWithTaints,omitempty"`
 	// WindowsService should be set to true if kubelet is running as a service on Windows.
@@ -155,8 +158,10 @@ type TailoredKubeletFlag struct {
 	// Source: https://docs.microsoft.com/en-us/windows/win32/procthread/scheduling-priorities
 	WindowsPriorityClass string `json:"windowsPriorityClass,omitempty"`
 	// remoteRuntimeEndpoint is the endpoint of remote runtime service
+	// default "unix:///var/run/dockershim.sock"
 	RemoteRuntimeEndpoint string `json:"remoteRuntimeEndpoint,omitempty"`
 	// remoteImageEndpoint is the endpoint of remote image service
+	// default "unix:///var/run/dockershim.sock"
 	RemoteImageEndpoint string `json:"remoteImageEndpoint,omitempty"`
 	// experimentalMounterPath is the path of mounter binary. Leave empty to use the default mount path
 	ExperimentalMounterPath string `json:"experimentalMounterPath,omitempty"`
@@ -193,13 +198,13 @@ type TailoredKubeletFlag struct {
 	// masterServiceNamespace is The namespace from which the kubernetes
 	// master services should be injected into pods.
 	MasterServiceNamespace string `json:"masterServiceNamespace,omitempty"`
-	// registerSchedulable tells the kubelet to register the node as
+	// registerSchedulable tells the edgecore to register the node as
 	// schedulable. Won't have any effect if register-node is false.
 	// DEPRECATED: use registerWithTaints instead
 	RegisterSchedulable bool `json:"registerSchedulable,omitempty"`
 	// nonMasqueradeCIDR configures masquerading: traffic to IPs outside this range will use IP masquerade.
 	NonMasqueradeCIDR string `json:"nonMasqueradeCidr,omitempty"`
-	// This flag, if set, instructs the kubelet to keep volumes from terminated pods mounted to the node.
+	// This flag, if set, instructs the edged to keep volumes from terminated pods mounted to the node.
 	// This can be useful for debugging volume related issues.
 	KeepTerminatedPodVolumes bool `json:"keepTerminatedPodVolumes,omitempty"`
 	// SeccompDefault enables the use of `RuntimeDefault` as the default seccomp profile for all workloads on the node.
@@ -212,6 +217,7 @@ type ContainerRuntimeOptions struct {
 	// General Options.
 
 	// ContainerRuntime is the container runtime to use.
+	// default "docker"
 	ContainerRuntime string `json:"containerRuntime,omitempty"`
 	// RuntimeCgroups that container runtime is expected to be isolated in.
 	RuntimeCgroups string `json:"runtimeCgroups,omitempty"`
@@ -222,30 +228,37 @@ type ContainerRuntimeOptions struct {
 	DockershimRootDirectory string `json:"dockershimRootDirectory,omitempty"`
 	// PodSandboxImage is the image whose network/ipc namespaces
 	// containers in each pod will use.
+	// default kubeedge/pause:3.1
 	PodSandboxImage string `json:"podSandboxImage,omitempty"`
 	// DockerEndpoint is the path to the docker endpoint to communicate with.
 	DockerEndpoint string `json:"dockerEndpoint,omitempty"`
 	// If no pulling progress is made before the deadline imagePullProgressDeadline,
-	// the image pulling will be cancelled. Defaults to 1m0s.
+	// the image pulling will be cancelled.
+	// Defaults 1m0s.
 	// +optional
 	ImagePullProgressDeadline metav1.Duration `json:"imagePullProgressDeadline,omitempty"`
 	// Network plugin options.
 
 	// networkPluginName is the name of the network plugin to be invoked for
 	// various events in kubelet/pod lifecycle
+	// default ""
 	NetworkPluginName string `json:"networkPluginName,omitempty"`
 	// NetworkPluginMTU is the MTU to be passed to the network plugin,
 	// and overrides the default MTU for cases where it cannot be automatically
 	// computed (such as IPSEC).
+	// default 1500
 	NetworkPluginMTU int32 `json:"networkPluginMTU,omitempty"`
 	// CNIConfDir is the full path of the directory in which to search for
 	// CNI config files
+	// default "/etc/cni/net.d"
 	CNIConfDir string `json:"cniConfDir,omitempty"`
 	// CNIBinDir is the full path of the directory in which to search for
 	// CNI plugin binaries
+	// default "/opt/cni/bin"
 	CNIBinDir string `json:"cniBinDir,omitempty"`
 	// CNICacheDir is the full path of the directory in which CNI should store
 	// cache files
+	// default "/var/lib/cni/cache"
 	CNICacheDir string `json:"cniCacheDir,omitempty"`
 
 	// Image credential provider plugin options

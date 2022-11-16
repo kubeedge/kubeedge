@@ -43,8 +43,10 @@ const (
 
 	// Edged
 	DefaultKubeletConfig               = "/etc/kubeedge/config/kubeconfig"
+	DefaultRootDir                     = "/var/lib/edged"
 	DefaultDockerAddress               = "unix:///var/run/docker.sock"
 	DefaultRuntimeType                 = "docker"
+	DefaultDockershimRootDir           = "/var/lib/dockershim"
 	DefaultEdgedMemoryCapacity         = 7852396000
 	DefaultRemoteRuntimeEndpoint       = "unix:///var/run/dockershim.sock"
 	DefaultRemoteImageEndpoint         = "unix:///var/run/dockershim.sock"
