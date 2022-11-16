@@ -31,18 +31,35 @@ func ConvertConfigEdgedFlagToConfigKubeletFlag(in *v1alpha2.TailoredKubeletFlag,
 	out.KubeConfig = in.KubeConfig
 	out.HostnameOverride = in.HostnameOverride
 	out.NodeIP = in.NodeIP
+	out.RootDirectory = in.RootDirectory
+	out.RegisterNode = in.RegisterNode
+	out.RegisterWithTaints = in.RegisterWithTaints
+	out.RemoteRuntimeEndpoint = in.RemoteRuntimeEndpoint
+	out.RemoteImageEndpoint = in.RemoteImageEndpoint
+	out.ExperimentalMounterPath = in.ExperimentalMounterPath
+	out.ExperimentalCheckNodeCapabilitiesBeforeMount = in.ExperimentalCheckNodeCapabilitiesBeforeMount
+	out.ExperimentalNodeAllocatableIgnoreEvictionThreshold = in.ExperimentalNodeAllocatableIgnoreEvictionThreshold
+	out.NodeLabels = in.NodeLabels
+	out.SeccompProfileRoot = in.SeccompProfileRoot
+	out.MinimumGCAge = in.MinimumGCAge
+	out.MaxPerPodContainerCount = in.MaxPerPodContainerCount
+	out.MaxContainerCount = in.MaxContainerCount
+	out.MasterServiceNamespace = in.MasterServiceNamespace
+	out.RegisterSchedulable = in.RegisterSchedulable
+	out.NonMasqueradeCIDR = in.NonMasqueradeCIDR
+	out.KeepTerminatedPodVolumes = in.KeepTerminatedPodVolumes
+	out.SeccompDefault = in.SeccompDefault
+
+	// container-runtime-specific options
 	out.ContainerRuntime = in.ContainerRuntime
-	out.DockerEndpoint = in.DockerEndpoint
+	out.RuntimeCgroups = in.RuntimeCgroups
+	out.DockershimRootDirectory = in.DockershimRootDirectory
 	out.PodSandboxImage = in.PodSandboxImage
+	out.DockerEndpoint = in.DockerEndpoint
 	out.ImagePullProgressDeadline = in.ImagePullProgressDeadline
+	out.NetworkPluginName = in.NetworkPluginName
+	out.NetworkPluginMTU = in.NetworkPluginMTU
 	out.CNIConfDir = in.CNIConfDir
 	out.CNIBinDir = in.CNIBinDir
 	out.CNICacheDir = in.CNICacheDir
-	out.NetworkPluginMTU = in.NetworkPluginMTU
-	out.RemoteRuntimeEndpoint = in.RemoteRuntimeEndpoint
-	out.RemoteImageEndpoint = in.RemoteImageEndpoint
-	out.RegisterNode = in.RegisterNode
-	out.RegisterSchedulable = in.RegisterSchedulable
-	out.RootDirectory = in.RootDirectory
-	out.NodeLabels = in.NodeLabels
 }
