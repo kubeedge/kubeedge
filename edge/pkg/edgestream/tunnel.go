@@ -50,6 +50,7 @@ func NewTunnelSession(c *websocket.Conn) *TunnelSession {
 func (s *TunnelSession) serveLogsConnection(m *stream.Message) error {
 	logCon := &stream.EdgedLogsConnection{
 		ReadChan: make(chan *stream.Message, 128),
+		Stop:     make(chan struct{}, 2),
 	}
 	if err := json.Unmarshal(m.Data, logCon); err != nil {
 		klog.Errorf("unmarshal connector data error %v", err)
@@ -63,6 +64,7 @@ func (s *TunnelSession) serveLogsConnection(m *stream.Message) error {
 func (s *TunnelSession) serveContainerExecConnection(m *stream.Message) error {
 	execCon := &stream.EdgedExecConnection{
 		ReadChan: make(chan *stream.Message, 128),
+		Stop:     make(chan struct{}, 2),
 	}
 	if err := json.Unmarshal(m.Data, execCon); err != nil {
 		klog.Errorf("unmarshal connector data error %v", err)
@@ -77,6 +79,7 @@ func (s *TunnelSession) serveContainerExecConnection(m *stream.Message) error {
 func (s *TunnelSession) serveMetricsConnection(m *stream.Message) error {
 	metricsCon := &stream.EdgedMetricsConnection{
 		ReadChan: make(chan *stream.Message, 128),
+		Stop:     make(chan struct{}, 2),
 	}
 	if err := json.Unmarshal(m.Data, metricsCon); err != nil {
 		klog.Errorf("unmarshal connector data error %v", err)
@@ -192,5 +195,11 @@ func (s *TunnelSession) GetLocalConnection(id uint64) (stream.EdgedConnection, b
 func (s *TunnelSession) DeleteLocalConnection(id uint64) {
 	s.localConsLock.Lock()
 	defer s.localConsLock.Unlock()
+	con, ok := s.localCons[id]
+	if !ok {
+		return
+	}
+	con.CleanChannel()
+	con.CloseReadChannel()
 	delete(s.localCons, id)
 }

@@ -95,6 +95,7 @@ func (s *Session) ProxyTunnelMessageToApiserver(message *stream.Message) error {
 	}
 	switch message.MessageType {
 	case stream.MessageTypeRemoveConnect:
+		klog.V(6).Infof("delete connection %v from %v", message.ConnectID, s.String())
 		kubeCon.SetEdgePeerDone()
 	case stream.MessageTypeData:
 		for i := 0; i < len(message.Data); {
@@ -115,8 +116,10 @@ func (s *Session) String() string {
 
 func (s *Session) AddAPIServerConnection(ss *StreamServer, connection APIServerConnection) (APIServerConnection, error) {
 	id := atomic.AddUint64(&(ss.nextMessageID), 1)
+
 	s.apiConnlock.Lock()
 	defer s.apiConnlock.Unlock()
+
 	if s.tunnelClosed {
 		return nil, fmt.Errorf("the tunnel connection of %v has closed", s.String())
 	}
