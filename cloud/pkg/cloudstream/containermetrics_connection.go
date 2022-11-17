@@ -39,6 +39,7 @@ type ContainerMetricsConnection struct {
 	writer       io.Writer
 	session      *Session
 	edgePeerStop chan struct{}
+	closeChan    chan bool
 }
 
 func (ms *ContainerMetricsConnection) GetMessageID() uint64 {
@@ -46,10 +47,15 @@ func (ms *ContainerMetricsConnection) GetMessageID() uint64 {
 }
 
 func (ms *ContainerMetricsConnection) SetEdgePeerDone() {
-	close(ms.edgePeerStop)
+	select {
+	case <-ms.closeChan:
+		return
+	case ms.EdgePeerDone() <- struct{}{}:
+		klog.V(6).Infof("success send channel deleting connection with messageID %v", ms.MessageID)
+	}
 }
 
-func (ms *ContainerMetricsConnection) EdgePeerDone() <-chan struct{} {
+func (ms *ContainerMetricsConnection) EdgePeerDone() chan struct{} {
 	return ms.edgePeerStop
 }
 
@@ -90,6 +96,7 @@ func (ms *ContainerMetricsConnection) SendConnection() (stream.EdgedConnection, 
 
 func (ms *ContainerMetricsConnection) Serve() error {
 	defer func() {
+		close(ms.closeChan)
 		klog.Infof("%s end successful", ms.String())
 	}()
 
@@ -114,6 +121,7 @@ func (ms *ContainerMetricsConnection) Serve() error {
 			klog.Infof("%s send close message to edge successfully", ms.String())
 			return nil
 		case <-ms.EdgePeerDone():
+			klog.V(6).Infof("%s find edge peer done, so stop this connection", ms.String())
 			return fmt.Errorf("%s find edge peer done, so stop this connection", ms.String())
 		}
 	}
