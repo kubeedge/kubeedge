@@ -59,6 +59,7 @@ type JoinOptions struct {
 	Labels                []string
 	WithMQTT              bool
 	ImageRepository       string
+	CfgPath               string
 }
 
 type CheckOptions struct {

@@ -60,7 +60,7 @@ keadm join --cloudcore-ipport=10.20.30.40:10000 --edgenode-name=testing123 --kub
 `
 )
 
-var edgeCoreConfig *v1alpha2.EdgeCoreConfig
+var edgeCoreConfig v1alpha2.EdgeCoreConfig
 
 func NewEdgeJoin() *cobra.Command {
 	joinOptions := newOption()
@@ -161,6 +161,10 @@ func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
 	cmd.Flags().StringVar(&joinOptions.ImageRepository, common.ImageRepository, joinOptions.ImageRepository,
 		`Use this key to decide which image repository to pull images from.`,
 	)
+
+	cmd.Flags().StringVar(&joinOptions.CfgPath, common.CfgPath, joinOptions.CfgPath,
+		`Use this key to set the path to the base edgecore config file, this file will be loaded as edgecore configuration, overwritten by other command line flags, and then written back to /etc/kubeedge/config/edgecore.yaml`,
+	)
 }
 
 func newOption() *common.JoinOptions {
@@ -254,21 +258,21 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 		return createV1alpha1EdgeConfigFiles(opt)
 	}
 
-	configFilePath := filepath.Join(util.KubeEdgePath, "config/edgecore.yaml")
-	_, err = os.Stat(configFilePath)
-	if err == nil || os.IsExist(err) {
-		klog.Infoln("Read existing configuration file")
-		b, err := os.ReadFile(configFilePath)
+	// if we specify the config file in command line, we'll load config from it.
+	// or we'll use the default config
+	// And then overwrite it with other specified arguments in command line
+	// Then written back to /etc/kubeedge/config/edgecore.yaml
+	if opt.CfgPath != "" {
+		data, err := os.ReadFile(opt.CfgPath)
 		if err != nil {
-			return err
+			return fmt.Errorf("read config file %v failed: %v", opt.CfgPath, err)
 		}
-		if err := yaml.Unmarshal(b, &edgeCoreConfig); err != nil {
-			return err
+
+		if err := yaml.Unmarshal(data, &edgeCoreConfig); err != nil {
+			return fmt.Errorf("unmarshal config %v failed: %v", opt.CfgPath, err)
 		}
-	}
-	if edgeCoreConfig == nil {
-		klog.Infoln("The configuration does not exist or the parsing fails, and the default configuration is generated")
-		edgeCoreConfig = v1alpha2.NewDefaultEdgeCoreConfig()
+	} else {
+		edgeCoreConfig = *v1alpha2.NewDefaultEdgeCoreConfig()
 	}
 
 	edgeCoreConfig.Modules.EdgeHub.WebSocket.Server = opt.CloudCoreIPPort
@@ -315,10 +319,11 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 		edgeCoreConfig.Modules.Edged.NodeLabels = setEdgedNodeLabels(opt)
 	}
 
-	if errs := validation.ValidateEdgeCoreConfiguration(edgeCoreConfig); len(errs) > 0 {
+	if errs := validation.ValidateEdgeCoreConfiguration(&edgeCoreConfig); len(errs) > 0 {
 		return errors.New(pkgutil.SpliceErrors(errs.ToAggregate().Errors()))
 	}
-	return common.Write2File(configFilePath, edgeCoreConfig)
+	configFilePath := filepath.Join(util.KubeEdgePath, "config/edgecore.yaml")
+	return common.Write2File(configFilePath, &edgeCoreConfig)
 }
 
 func createV1alpha1EdgeConfigFiles(opt *common.JoinOptions) error {

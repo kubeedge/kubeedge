@@ -56,6 +56,9 @@ const (
 	// DefaultKubeEdgeVersion is the default KubeEdge version
 	DefaultKubeEdgeVersion = "1.12.0"
 
+	// CfgPath flag sets the path to cloudcore/edgecore config file.
+	CfgPath = "config"
+
 	// Token sets the token used when edge applying for the certificate
 	Token = "token"
 
