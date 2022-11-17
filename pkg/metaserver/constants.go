@@ -66,3 +66,5 @@ const (
 	ApplicationResp     = "applicationResponse"
 	Ignore              = "ignore"
 )
+
+const WatchAppSync = "watchapp/sync"

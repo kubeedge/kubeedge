@@ -33,8 +33,10 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/agent"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
+	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
 const (
@@ -146,6 +148,10 @@ func (wc *watchChan) run() {
 }
 
 func (wc *watchChan) Stop() {
+	applicationID := util.ApplicationIDValue(wc.ctx)
+	if len(applicationID) != 0 {
+		agent.DefaultAgent.CloseApplication(applicationID)
+	}
 	wc.cancel()
 }
 

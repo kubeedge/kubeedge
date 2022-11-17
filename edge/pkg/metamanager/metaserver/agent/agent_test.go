@@ -26,6 +26,7 @@ import (
 
 	commontypes "github.com/kubeedge/kubeedge/common/types"
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
+	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
 )
 
 func TestApplicationGC(t *testing.T) {
@@ -38,7 +39,8 @@ func TestApplicationGC(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			a := Agent{nodeName: "test"}
+			metaserverconfig.Config.NodeName = "test"
+			a := Agent{}
 			requestInfo := &apirequest.RequestInfo{
 				IsResourceRequest: true,
 				Verb:              "GET",

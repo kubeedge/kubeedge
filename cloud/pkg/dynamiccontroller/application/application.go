@@ -45,6 +45,13 @@ func NewApplicationCenter(dynamicSharedInformerFactory dynamicinformer.DynamicSh
 // Process translate msg to application , process and send resp to edge
 // TODO: upgrade to parallel process
 func (c *Center) Process(msg model.Message) {
+	if strings.HasSuffix(msg.GetResource(), metaserver.WatchAppSync) {
+		if err := c.ProcessWatchSync(msg); err != nil {
+			klog.Errorf("failed to ProcessWatchSync: %v", err)
+		}
+		return
+	}
+
 	app, err := metaserver.MsgToApplication(msg)
 	if err != nil {
 		klog.Errorf("failed to translate msg to Application: %v", err)
@@ -296,8 +303,97 @@ func (c *Center) Response(app *metaserver.Application, parentID string, status m
 	klog.V(4).Infof("send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
 }
 
-func (c *Center) GC() {
+// ProcessWatchSync process watch sync message
+func (c *Center) ProcessWatchSync(msg model.Message) error {
+	nodeID, err := messagelayer.GetNodeID(msg)
+	if err != nil {
+		return err
+	}
 
+	applications, err := metaserver.MsgToApplications(msg)
+	if err != nil {
+		return fmt.Errorf("failed translate msg to Applications: %v", err)
+	}
+
+	addedWatchApp, removedListeners := c.getWatchDiff(applications, nodeID)
+
+	// gc already removed listeners
+	for _, listener := range removedListeners {
+		c.HandlerCenter.DeleteListener(listener)
+	}
+
+	failedWatchApp := make(map[string]metaserver.Application)
+
+	// add listener for new added watch app
+	for _, watchApp := range addedWatchApp {
+		err := c.processWatchApp(&watchApp)
+		if err != nil {
+			watchApp.Status = metaserver.Rejected
+			apiErr, ok := err.(apierrors.APIStatus)
+			if ok {
+				watchApp.Error = apierrors.StatusError{ErrStatus: apiErr.Status()}
+			} else {
+				watchApp.Reason = err.Error()
+			}
+			failedWatchApp[watchApp.ID] = watchApp
+			klog.Errorf("processWatchApp %s err: %v", watchApp.String(), err)
+		}
+	}
+
+	respMsg := model.NewMessage(msg.GetID()).
+		BuildRouter(modules.DynamicControllerModuleName, message.ResourceGroupName, msg.GetResource(), metaserver.ApplicationResp).
+		FillBody(failedWatchApp)
+
+	if err := c.messageLayer.Response(*respMsg); err != nil {
+		klog.Warningf("send message failed error: %s, operation: %s, resource: %s", err, respMsg.GetOperation(), respMsg.GetResource())
+		return err
+	}
+
+	return nil
+}
+
+func (c *Center) getWatchDiff(allWatchAppInEdge map[string]metaserver.Application,
+	nodeID string) ([]metaserver.Application, []*SelectorListener) {
+	listenerInCloud := c.HandlerCenter.GetListenersForNode(nodeID)
+
+	addedWatchApp := make([]metaserver.Application, 0)
+	for ID, app := range allWatchAppInEdge {
+		if _, exist := listenerInCloud[ID]; !exist {
+			addedWatchApp = append(addedWatchApp, app)
+			klog.Infof("added watch app %s", app.String())
+		}
+	}
+
+	removedListeners := make([]*SelectorListener, 0)
+	for ID, listener := range listenerInCloud {
+		if _, exist := allWatchAppInEdge[ID]; !exist {
+			removedListeners = append(removedListeners, listener)
+			klog.Infof("need removed listener %s", listener.id)
+		}
+	}
+
+	return addedWatchApp, removedListeners
+}
+
+func (c *Center) processWatchApp(watchApp *metaserver.Application) error {
+	watchApp.Status = metaserver.InProcessing
+	gvr, ns, name := metaserver.ParseKey(watchApp.Key)
+
+	err := c.authorizeApplication(watchApp, gvr, ns, name)
+	if err != nil {
+		return fmt.Errorf("authorize application error: %v", err)
+	}
+
+	listener, err := applicationToListener(watchApp)
+	if err != nil {
+		return err
+	}
+
+	if err := c.HandlerCenter.AddListener(listener); err != nil {
+		return fmt.Errorf("failed to add listener, %v", err)
+	}
+
+	return nil
 }
 
 func applicationToListener(app *metaserver.Application) (*SelectorListener, error) {

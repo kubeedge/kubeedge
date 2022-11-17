@@ -63,7 +63,7 @@ type Application struct {
 
 	// count the number of current citations
 	count     uint64
-	countLock sync.Mutex
+	countLock *sync.Mutex
 	// Timestamp record the last closing time of application, only make sense when count == 0
 	Timestamp time.Time
 }
@@ -96,7 +96,7 @@ func NewApplication(ctx context.Context, key string, verb ApplicationVerb, noden
 		ctx:         ctx2,
 		cancel:      cancel,
 		count:       0,
-		countLock:   sync.Mutex{},
+		countLock:   &sync.Mutex{},
 		Timestamp:   time.Time{},
 	}
 	app.Add()
@@ -257,4 +257,20 @@ func MsgToApplication(msg model.Message) (*Application, error) {
 		return nil, err
 	}
 	return app, nil
+}
+
+// MsgToApplications extract applications in message's Content
+func MsgToApplications(msg model.Message) (map[string]Application, error) {
+	contentData, err := msg.GetContentData()
+	if err != nil {
+		return nil, err
+	}
+
+	applications := make(map[string]Application)
+
+	err = json.Unmarshal(contentData, &applications)
+	if err != nil {
+		return nil, err
+	}
+	return applications, nil
 }
