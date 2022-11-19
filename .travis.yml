@@ -11,7 +11,7 @@ services:
   - docker
 
 go:
-  - 1.16
+  - 1.17
 
 env:
   - HOME=/home/travis CONTAINER_RUN_OPTIONS=" "
