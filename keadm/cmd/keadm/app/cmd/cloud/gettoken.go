@@ -74,7 +74,7 @@ func queryToken(namespace string, name string, kubeConfigPath string) ([]byte, e
 
 // showToken prints the token
 func showToken(data []byte) error {
-	_, err := fmt.Printf(string(data))
+	_, err := fmt.Println(string(data))
 	if err != nil {
 		return err
 	}
