@@ -1,0 +1,32 @@
+name: build build-tools image, and push it to DockerHub
+on:
+  push:
+    # trigger CI only when build-tools dockerfile updated and merged to master branch
+    branches:
+      - master
+    paths:
+      - 'build/docker/build-tools/build-tools.dockerfile'
+
+jobs:
+  publish-image-to-dockerhub:
+    name: publish to DockerHub
+    runs-on: ubuntu-18.04
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v2
+        with:
+          # fetch-depth:
+          # 0 indicates all history for all branches and tags.
+          # for `git describe --tags` in Makefile.
+          fetch-depth: 0
+      - name: install QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: install Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USER_NAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: build and publish images
+        run: build/docker/build-tools/make-build-tools.sh push
