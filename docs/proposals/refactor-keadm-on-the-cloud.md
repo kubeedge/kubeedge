@@ -227,7 +227,7 @@ Allow appending file paths of manifests to keadm, separated by commas
 
 #### --dry-run
 
-> print the generated k8s resources on the stdout, not actual excute. Always use in debug mode.
+> print the generated k8s resources on the stdout, not actual execute. Always use in debug mode.
 
 ### config
 
