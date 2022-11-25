@@ -3,5 +3,6 @@ name: cloudcore
 version: 0.1.0
 appVersion: 1.12.0
 description: The KubeEdge cloudcore component.
+kubeVersion: ">= 1.16.0-0 < 1.23.0-0"
 sources:
 - https://github.com/kubeedge/kubeedge
