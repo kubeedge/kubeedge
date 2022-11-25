@@ -102,7 +102,7 @@ func addInitOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 		"Allow appending file directories of k8s resources to keadm, separated by commas")
 
 	cmd.Flags().BoolVarP(&initOpts.DryRun, types.DryRun, "d", initOpts.DryRun,
-		"Print the generated k8s resources on the stdout, not actual excute. Always use in debug mode")
+		"Print the generated k8s resources on the stdout, not actual execute. Always use in debug mode")
 
 	cmd.Flags().StringVar(&initOpts.ExternalHelmRoot, types.ExternalHelmRoot, initOpts.ExternalHelmRoot,
 		"Add external helm root path to keadm.")
