@@ -9,7 +9,7 @@ env:
 jobs:
   release-assests:
     name: release kubeedge components
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         target:
@@ -28,7 +28,7 @@ jobs:
           - ""
     steps:
       - name: checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           # fetch-depth:
           # 0 indicates all history for all branches and tags.
@@ -60,10 +60,10 @@ jobs:
           - edgemark
           - installation-package
           - controllermanager
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     steps:
       - name: checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           # fetch-depth:
           # 0 indicates all history for all branches and tags.
