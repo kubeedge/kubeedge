@@ -6,6 +6,12 @@ metadata:
   labels: {{- toYaml . | nindent 4 }}
   {{- end }}
 data:
+  {{- if (ne .Values.cloudCore.configFile "") }}
+  {{- $files := .Files }}
+  {{- $config := .Values.cloudCore.configFile -}}
+  cloudcore.yaml: |
+      {{ $files.Get "$config" }}
+  {{ else }}
   cloudcore.yaml: |
     apiVersion: cloudcore.config.kubeedge.io/v1alpha2
     kind: CloudCore
@@ -53,3 +59,4 @@ data:
       iptablesManager:
         enable: {{ .Values.iptablesManager.enable }}
         mode: {{ .Values.iptablesManager.mode }}
+  {{ end }}

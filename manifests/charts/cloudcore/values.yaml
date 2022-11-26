@@ -4,6 +4,9 @@
 appVersion: "1.12.0"
 
 cloudCore:
+  # configFile is used to set the path to cloudcore configuration file
+  # if specified, it will overwrite the data of configmap_cloudcore.yaml
+  configFile: ""
   replicaCount: 1
   hostNetWork: "true"
   image:
