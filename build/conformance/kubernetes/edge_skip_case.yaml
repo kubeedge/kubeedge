@@ -19,7 +19,7 @@
 - codename: Scaling should happen in predictable order and halt if any stateful pod is unhealthy
 - codename: validates lower priority pod preemption by critical pod
 - codename: should succeed in writing subpaths in container
-
+- codename: should rollback without unnecessary restarts
 - codename: should have session affinity work for NodePort service
 - codename: should be able to change the type from ExternalName to NodePort
 - codename: should proxy through a service and a pod
@@ -64,3 +64,7 @@
 - codename: should provide node allocatable \(cpu\) as default cpu limit if the limit is not set
 - codename: should support unsafe sysctls which are actually allowed
 - codename: should create and stop a replication controller
+  # skip conformance test cases in auth
+- codename: should support CSR API operations
+
+
