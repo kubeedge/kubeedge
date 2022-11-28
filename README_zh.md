@@ -123,7 +123,7 @@ KubeEdge的第三方安全审计报告已于2022年7月完成。此外，KubeEdg
 ### 报告安全漏洞
 
 我们鼓励漏洞研究人员和行业组织主动将KubeEdge社区的疑似安全漏洞报告给KubeEdge社区安全团队(`cncf-kubeedge-security@lists.cncf.io`)。我们会快速的响应、分析和解决上报的安全问题或安全漏洞。
-详细漏洞处理流程及如何上报漏洞请查看 [Security Policy](https://github.com/kubeedge/community/blob/master/security-team/SECURITY.md)。
+详细漏洞处理流程及如何上报漏洞请查看 [Security Policy](https://github.com/kubeedge/community/blob/master/team-security/SECURITY.md)。
 
 ## 许可证
 
