@@ -1,0 +1,21 @@
+name: FOSSA
+on:
+  push:
+    branches: [master]
+    paths:
+      - '**.md'
+      - 'docs/**'
+      - '**/OWNERS'
+      - '**/MAINTAINERS'
+  pull_request:
+    paths:
+      - '**.md'
+      - 'docs/**'
+      - '**/OWNERS'
+      - '**/MAINTAINERS'
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - run: 'echo "only docs modified, no need to trigger CI"' 

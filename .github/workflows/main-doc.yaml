@@ -1,0 +1,112 @@
+name: Main CI WorkFlow
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+    paths:
+      - '**.md'
+      - 'docs/**'
+      - '**/OWNERS'
+      - '**/MAINTAINERS'
+  pull_request:
+    paths:
+      - '**.md'
+      - 'docs/**'
+      - '**/OWNERS'
+      - '**/MAINTAINERS'
+
+jobs:
+  lint:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    name: Verify vendor, licenses, do lint
+    env:
+      GOPATH: /home/runner/work/${{ github.repository }}
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17.x
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          path: ./src/github.com/${{ github.repository }}
+
+      # For docs, we run `make lint` just for checking white noise.
+      - name: Run lint test
+        run: make lint
+        working-directory: ./src/github.com/${{ github.repository }}
+
+  image-prepare:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    name: Prepare kubeedge/build-tools image
+    steps:
+      - run: 'echo "only docs modified, no need to trigger CI"' 
+      
+
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    name: Multiple build
+    needs: image-prepare
+    steps:
+      - run: 'echo "only docs modified, no need to trigger CI"' 
+
+  basic_test:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    name: Unit test, integration test edge
+    env:
+      GO111MODULE: on
+    steps:
+      - run: 'echo "only docs modified, no need to trigger CI"' 
+
+  e2e_test:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        PROTOCOL:
+          - WebSocket
+          - QUIC
+    timeout-minutes: 30
+    name: E2e test
+    needs: image-prepare
+    env:
+      GO111MODULE: on
+    steps:
+      - run: 'echo "only docs modified, no need to trigger CI"' 
+      
+
+
+  keadm_deprecated_e2e_test:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    name: Keadm deprecated e2e test
+    needs: image-prepare
+    env:
+      GO111MODULE: on
+    steps:
+      - run: 'echo "only docs modified, no need to trigger CI"'
+
+  keadm_e2e_test:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    name: Keadm e2e test
+    env:
+      GO111MODULE: on
+    steps:
+      - run: 'echo "only docs modified, no need to trigger CI"'
+        
+
+  docker_build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    name: Multiple docker image build
+    steps:
+      - run: 'echo "only docs modified, no need to trigger CI"'
+        
