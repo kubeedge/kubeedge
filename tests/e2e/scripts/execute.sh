@@ -22,6 +22,8 @@ cd $workdir
 curpath=$PWD
 echo $PWD
 
+GOPATH=${GOPATH:-$(go env GOPATH)}
+
 check_ginkgo_v2() {
     # check if ginkgo is installed
     which ginkgo &> /dev/null || (
