@@ -1,1 +1,1 @@
-For further details please see [Security Policy](https://github.com/kubeedge/community/blob/master/security-team/SECURITY.md) for our security process and how to report vulnerabilities.
+For further details please see [Security Policy](https://github.com/kubeedge/community/blob/master/team-security/SECURITY.md) for our security process and how to report vulnerabilities.
