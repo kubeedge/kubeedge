@@ -1,0 +1,12 @@
+coverage:
+  status:
+    project: off
+    # https://docs.codecov.com/docs/commit-status#patch-status
+    patch:
+      default:
+        target: 80%
+        informational: false
+        if_ci_failed: error
+
+# https://docs.codecov.com/docs/pull-request-comments#disable-comment
+comment: false
