@@ -22,8 +22,6 @@ import (
 	"github.com/kubeedge/viaduct/pkg/server"
 )
 
-var serverStdWriter = bufio.NewWriter(os.Stdout)
-
 func handleServer(container *mux.MessageContainer, writer mux.ResponseWriter) {
 	fmt.Printf("receive message: %s", container.Message.GetContent())
 	if container.Message.IsSync() {
@@ -126,6 +124,4 @@ func StartServer(cfg *config.Config) error {
 			}
 		}
 	}
-
-	return nil
 }

@@ -17,8 +17,6 @@ import (
 	"github.com/kubeedge/viaduct/pkg/mux"
 )
 
-var clientStdWriter = bufio.NewWriter(os.Stdout)
-
 func handleClient(container *mux.MessageContainer, writer mux.ResponseWriter) {
 	fmt.Printf("receive message: %s", container.Message.GetContent())
 	if container.Message.IsSync() {
@@ -97,5 +95,4 @@ func SendStdin(conns []conn.Connection, source string) error {
 			}
 		}
 	}
-	return nil
 }
