@@ -109,7 +109,7 @@ func (a *Agent) Apply(app *metaserver.Application) error {
 }
 
 func (a *Agent) doApply(app *metaserver.Application) {
-	defer app.Call()
+	defer app.Cancel()
 	// encapsulate as a message
 	app.Status = metaserver.InApplying
 	msg := model.NewMessage("").SetRoute(metaserver.MetaServerSource, modules.DynamicControllerModuleGroup).FillBody(app)
