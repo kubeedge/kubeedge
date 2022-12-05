@@ -42,7 +42,7 @@ func (f WithoutConversionCodecFactory) SupportedMediaTypes() []runtime.Serialize
 			MediaTypeType:    "application",
 			MediaTypeSubType: "yaml",
 			EncodesAsText:    true,
-			Serializer:       json.NewYAMLSerializer(json.DefaultMetaFactory, f.creator, f.typer),
+			Serializer:       json.NewSerializerWithOptions(json.DefaultMetaFactory, f.creator, f.typer, json.SerializerOptions{Yaml: true}),
 		},
 	}
 }

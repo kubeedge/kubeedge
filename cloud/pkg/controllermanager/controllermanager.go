@@ -48,7 +48,7 @@ func NewAppsControllerManager(ctx context.Context) (manager.Manager, error) {
 }
 
 func setupControllers(ctx context.Context, mgr manager.Manager) error {
-	Serializer := json.NewYAMLSerializer(json.DefaultMetaFactory, appsScheme, appsScheme)
+	Serializer := json.NewSerializerWithOptions(json.DefaultMetaFactory, appsScheme, appsScheme, json.SerializerOptions{Yaml: true})
 	// TODO: add cacheReader for unstructured
 	// This returned cli will directly acquire the unstructured objects from API Server which
 	// have not be registered in the appsScheme. Currently, we only support deployment in
