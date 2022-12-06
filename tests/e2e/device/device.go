@@ -77,7 +77,7 @@ var _ = GroupDescribe("Device Management test in E2E scenario", func() {
 			}
 			utils.PrintTestcaseNameandStatus()
 		})
-		ginkgo.It("E2E_CREATE_DEVICE_MODEL_1: Create device model for LED device (No Protocol)", func() {
+		framework.ConformanceIt("E2E_CREATE_DEVICE_MODEL_1: Create device model for LED device (No Protocol)", func() {
 			err := utils.HandleDeviceModel(edgeClientSet, http.MethodPost, "", "led")
 			gomega.Expect(err).To(gomega.BeNil())
 			newLedDeviceModel := utils.NewLedDeviceModel()
@@ -87,7 +87,7 @@ var _ = GroupDescribe("Device Management test in E2E scenario", func() {
 
 			gomega.Expect(utils.CheckDeviceModelExists(deviceModelList, &newLedDeviceModel)).To(gomega.BeNil())
 		})
-		ginkgo.It("E2E_CREATE_DEVICE_MODEL_2: Create device model for bluetooth protocol", func() {
+		framework.ConformanceIt("E2E_CREATE_DEVICE_MODEL_2: Create device model for bluetooth protocol", func() {
 			err := utils.HandleDeviceModel(edgeClientSet, http.MethodPost, "", "bluetooth")
 			gomega.Expect(err).To(gomega.BeNil())
 			newBluetoothDeviceModel := utils.NewBluetoothDeviceModel()
@@ -97,7 +97,7 @@ var _ = GroupDescribe("Device Management test in E2E scenario", func() {
 
 			gomega.Expect(utils.CheckDeviceModelExists(deviceModelList, &newBluetoothDeviceModel)).To(gomega.BeNil())
 		})
-		ginkgo.It("E2E_CREATE_DEVICE_MODEL_3: Create device model for modbus protocol", func() {
+		framework.ConformanceIt("E2E_CREATE_DEVICE_MODEL_3: Create device model for modbus protocol", func() {
 			err := utils.HandleDeviceModel(edgeClientSet, http.MethodPost, "", "modbus")
 			gomega.Expect(err).To(gomega.BeNil())
 			newModbusDeviceMode := utils.NewModbusDeviceModel()
@@ -107,7 +107,7 @@ var _ = GroupDescribe("Device Management test in E2E scenario", func() {
 
 			gomega.Expect(utils.CheckDeviceModelExists(deviceModelList, &newModbusDeviceMode)).To(gomega.BeNil())
 		})
-		ginkgo.It("E2E_UPDATE_DEVICE_MODEL_1: Update device model for LED device (No Protocol)", func() {
+		framework.ConformanceIt("E2E_UPDATE_DEVICE_MODEL_1: Update device model for LED device (No Protocol)", func() {
 			err := utils.HandleDeviceModel(edgeClientSet, http.MethodPost, "", "led")
 			gomega.Expect(err).To(gomega.BeNil())
 			err = utils.HandleDeviceModel(edgeClientSet, http.MethodPatch, utils.UpdatedLedDeviceModel().Name, "led")
@@ -119,7 +119,7 @@ var _ = GroupDescribe("Device Management test in E2E scenario", func() {
 
 			gomega.Expect(utils.CheckDeviceModelExists(deviceModelList, &updatedLedDeviceModel)).To(gomega.BeNil())
 		})
-		ginkgo.It("E2E_UPDATE_DEVICE_MODEL_2: Update device model for bluetooth protocol", func() {
+		framework.ConformanceIt("E2E_UPDATE_DEVICE_MODEL_2: Update device model for bluetooth protocol", func() {
 			err := utils.HandleDeviceModel(edgeClientSet, http.MethodPost, "", "bluetooth")
 			gomega.Expect(err).To(gomega.BeNil())
 			err = utils.HandleDeviceModel(edgeClientSet, http.MethodPatch, utils.UpdatedBluetoothDeviceModel().Name, "bluetooth")
@@ -131,7 +131,7 @@ var _ = GroupDescribe("Device Management test in E2E scenario", func() {
 
 			gomega.Expect(utils.CheckDeviceModelExists(deviceModelList, &updatedBluetoothDeviceModel)).To(gomega.BeNil())
 		})
-		ginkgo.It("E2E_UPDATE_DEVICE_MODEL_3: Update device model for modbus protocol", func() {
+		framework.ConformanceIt("E2E_UPDATE_DEVICE_MODEL_3: Update device model for modbus protocol", func() {
 			err := utils.HandleDeviceModel(edgeClientSet, http.MethodPost, "", "modbus")
 			gomega.Expect(err).To(gomega.BeNil())
 			err = utils.HandleDeviceModel(edgeClientSet, http.MethodPatch, utils.UpdatedModbusDeviceModel().Name, "modbus")
@@ -142,13 +142,13 @@ var _ = GroupDescribe("Device Management test in E2E scenario", func() {
 
 			gomega.Expect(utils.CheckDeviceModelExists(deviceModelList, &updatedModbusDeviceModel)).To(gomega.BeNil())
 		})
-		ginkgo.It("E2E_UPDATE_DEVICE_MODEL_4: Update device model for incorrect device model", func() {
+		framework.ConformanceIt("E2E_UPDATE_DEVICE_MODEL_4: Update device model for incorrect device model", func() {
 			err := utils.HandleDeviceModel(edgeClientSet, http.MethodPost, "", "led")
 			gomega.Expect(err).To(gomega.BeNil())
 			err = utils.HandleDeviceModel(edgeClientSet, http.MethodPatch, utils.UpdatedLedDeviceModel().Name, "incorrect-model")
 			gomega.Expect(err).NotTo(gomega.BeNil())
 		})
-		ginkgo.It("E2E_DELETE_DEVICE_MODEL_1: Delete non existent device model(No Protocol)", func() {
+		framework.ConformanceIt("E2E_DELETE_DEVICE_MODEL_1: Delete non existent device model(No Protocol)", func() {
 			err := utils.HandleDeviceModel(edgeClientSet, http.MethodDelete, utils.NewLedDeviceModel().Name, "")
 			gomega.Expect(err).To(gomega.BeNil())
 		})

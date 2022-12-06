@@ -47,14 +47,19 @@ import (
 const (
 	dryRunEnvKey        = "E2E_DRYRUN"
 	skipEnvKey          = "E2E_SKIP"
+	focusEnvKey         = "E2E_FOCUS"
 	ginkgoEnvKey        = "GINKGO_BIN"
 	testBinEnvKey       = "TEST_BIN"
 	resultsDirEnvKey    = "RESULTS_DIR"
+	reportPrefixEnvKey  = "REPORT_PREFIX"
+	imageURL            = "IMAGE_URL"
+	testWithDevice      = "TEST_WITH_DEVICE"
 	kubeConfigEnvKey    = "KUBECONFIG"
 	logFileName         = "e2e.log"
 	defaultFocus        = "\\[Conformance\\]"
 	extraArgsEnvKey     = "E2E_EXTRA_ARGS"
 	defaultResultsDir   = "/tmp/results"
+	defaultReportPrefix = "conformance"
 	defaultGinkgoBinary = "/usr/local/bin/ginkgo"
 	defaultTestBinary   = "/usr/local/bin/e2e.test"
 
@@ -62,15 +67,14 @@ const (
 )
 
 func main() {
-	c := make(chan os.Signal)
+	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT, syscall.SIGHUP)
 	go func() {
-		select {
-		case _ = <-c:
-			err := afterRunConformance()
-			if err != nil {
-				log.Printf("failed to cleanup after conformance, err: %v\n", err)
-			}
+		sig := <-c
+		log.Printf("Received signal %v, exiting", sig)
+		err := afterRunConformance()
+		if err != nil {
+			log.Printf("failed to cleanup after conformance, err: %v\n", err)
 		}
 	}()
 
@@ -95,7 +99,7 @@ func RunE2E() error {
 	resultsDir := getEnvWithDefault(resultsDirEnvKey, defaultResultsDir)
 
 	// Print the output to stdout and a logfile which will be returned
-	// as part of the results tarball.
+	// as part of the results' tarball.
 	logFilePath := filepath.Join(resultsDir, logFileName)
 	logFile, err := os.Create(logFilePath)
 	if err != nil {
@@ -136,7 +140,8 @@ func makeCmd(w io.Writer) (*exec.Cmd, error) {
 		ginkgoArgs = append(ginkgoArgs, "--skip="+skipEnvValue)
 	}
 
-	ginkgoArgs = append(ginkgoArgs, "--focus="+defaultFocus)
+	focusEnvValue := getEnvWithDefault(focusEnvKey, defaultFocus)
+	ginkgoArgs = append(ginkgoArgs, "--focus="+focusEnvValue)
 	ginkgoArgs = append(ginkgoArgs, "--noColor=true")
 
 	if len(getEnvWithDefault(dryRunEnvKey, "")) > 0 {
@@ -144,11 +149,12 @@ func makeCmd(w io.Writer) (*exec.Cmd, error) {
 	}
 
 	extraArgs := []string{
-		"--report-dir=" + getEnvWithDefault(resultsDirEnvKey, ""),
+		"--report-dir=" + getEnvWithDefault(resultsDirEnvKey, defaultResultsDir),
+		"--report-prefix=" + getEnvWithDefault(reportPrefixEnvKey, defaultReportPrefix),
 		"--kubeconfig=" + getEnvWithDefault(kubeConfigEnvKey, ""),
-		"--image-url=nginx",
-		"--image-url=nginx",
-		"--test-device=false",
+		"--image-url=" + getEnvWithDefault(imageURL, "nginx"),
+		"--image-url=" + getEnvWithDefault(imageURL, "nginx"),
+		"--test-with-device=" + getEnvWithDefault(testWithDevice, "false"),
 	}
 
 	if len(getEnvWithDefault(extraArgsEnvKey, "")) > 0 {
@@ -190,7 +196,6 @@ func skipCommands() ([]string, error) {
 	}
 
 	var skipCommands []string
-	skipCommands = append(skipCommands, "\\[sig-api-machinery\\]")
 	for _, test := range tests {
 		skipCommands = append(skipCommands, test.CodeName)
 	}

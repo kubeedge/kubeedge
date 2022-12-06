@@ -42,7 +42,7 @@ var Flags = flag.NewFlagSet("", flag.ContinueOnError)
 
 func RegisterFlags(flags *flag.FlagSet) {
 	flags.Var(cliflag.NewStringSlice(&config.AppImageURL), "image-url", "image url list for e2e")
-	flags.BoolVar(&config.TestDevice, "test-device", true, "whether test edge device")
+	flags.BoolVar(&config.TestDevice, "test-with-device", true, "whether test edge device")
 }
 
 func CopyFlags(source *flag.FlagSet, target *flag.FlagSet) {
