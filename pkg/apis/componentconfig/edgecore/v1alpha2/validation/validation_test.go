@@ -24,7 +24,6 @@ import (
 	"testing"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	kubeletconfigv1beta1 "k8s.io/kubelet/config/v1beta1"
 
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 )
@@ -92,7 +91,7 @@ func TestValidateModuleEdged(t *testing.T) {
 				TailoredKubeletFlag: v1alpha2.TailoredKubeletFlag{
 					HostnameOverride: "example.com",
 				},
-				TailoredKubeletConfig: &kubeletconfigv1beta1.KubeletConfiguration{
+				TailoredKubeletConfig: &v1alpha2.TailoredKubeletConfiguration{
 					CgroupDriver: "fake",
 				},
 			},
@@ -106,7 +105,7 @@ func TestValidateModuleEdged(t *testing.T) {
 				TailoredKubeletFlag: v1alpha2.TailoredKubeletFlag{
 					HostnameOverride: "Example%$#com",
 				},
-				TailoredKubeletConfig: &kubeletconfigv1beta1.KubeletConfiguration{
+				TailoredKubeletConfig: &v1alpha2.TailoredKubeletConfiguration{
 					CgroupDriver: v1alpha2.CGroupDriverCGroupFS,
 				},
 			},
@@ -119,7 +118,7 @@ func TestValidateModuleEdged(t *testing.T) {
 				TailoredKubeletFlag: v1alpha2.TailoredKubeletFlag{
 					HostnameOverride: "example.com",
 				},
-				TailoredKubeletConfig: &kubeletconfigv1beta1.KubeletConfiguration{
+				TailoredKubeletConfig: &v1alpha2.TailoredKubeletConfiguration{
 					CgroupDriver: v1alpha2.CGroupDriverCGroupFS,
 				},
 			},

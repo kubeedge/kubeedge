@@ -23,10 +23,11 @@ import (
 	"path/filepath"
 	"strconv"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/kubeedge/kubeedge/common/constants"
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/util"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // NewDefaultEdgeCoreConfig returns a full EdgeCoreConfig object
@@ -35,7 +36,7 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 	localIP, _ := util.GetLocalIP(hostnameOverride)
 
 	defaultTailedKubeletConfig := TailoredKubeletConfiguration{}
-	SetDefaults_KubeletConfiguration(&defaultTailedKubeletConfig)
+	SetDefaultsKubeletConfiguration(&defaultTailedKubeletConfig)
 
 	return &EdgeCoreConfig{
 		TypeMeta: metav1.TypeMeta{
@@ -174,7 +175,7 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 	localIP, _ := util.GetLocalIP(hostnameOverride)
 
 	defaultTailedKubeletConfig := TailoredKubeletConfiguration{}
-	SetDefaults_KubeletConfiguration(&defaultTailedKubeletConfig)
+	SetDefaultsKubeletConfiguration(&defaultTailedKubeletConfig)
 
 	return &EdgeCoreConfig{
 		TypeMeta: metav1.TypeMeta{

@@ -41,7 +41,6 @@ import (
 	kubeletoptions "k8s.io/kubernetes/cmd/kubelet/app/options"
 	"k8s.io/kubernetes/pkg/kubelet"
 	kubeletconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
-	kubeletconfigv1beta1 "k8s.io/kubernetes/pkg/kubelet/apis/config/v1beta1"
 	"k8s.io/kubernetes/pkg/kubelet/config"
 	"k8s.io/kubernetes/pkg/kubelet/nodestatus"
 	kubelettypes "k8s.io/kubernetes/pkg/kubelet/types"
@@ -143,10 +142,10 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 
 	var kubeletConfig kubeletconfig.KubeletConfiguration
 	var kubeletFlags kubeletoptions.KubeletFlags
-	err = kubeletconfigv1beta1.Convert_v1beta1_KubeletConfiguration_To_config_KubeletConfiguration(edgedconfig.Config.TailoredKubeletConfig, &kubeletConfig, nil)
+	err = edgedconfig.ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(edgedconfig.Config.TailoredKubeletConfig, &kubeletConfig, nil)
 	if err != nil {
 		klog.ErrorS(err, "Failed to convert kubelet config")
-		return nil, fmt.Errorf("failed to construct kubelet dependencies")
+		return nil, fmt.Errorf("failed to construct kubelet configuration")
 	}
 	edgedconfig.ConvertConfigEdgedFlagToConfigKubeletFlag(&edgedconfig.Config.TailoredKubeletFlag, &kubeletFlags)
 	// Set Kubelet RegisterNode Parameter in KubeletConfiguration.

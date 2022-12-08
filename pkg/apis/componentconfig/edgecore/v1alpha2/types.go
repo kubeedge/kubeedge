@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha2
 
 import (
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	componentbaseconfigv1alpha1 "k8s.io/component-base/config/v1alpha1"
 	tailoredkubeletconfigv1beta1 "k8s.io/kubelet/config/v1beta1"
@@ -120,7 +121,8 @@ type Edged struct {
 	RegisterNodeNamespace string `json:"registerNodeNamespace,omitempty"`
 }
 
-// TailoredKubeletConfiguration indicates the tailored kubelet configuration
+// TailoredKubeletConfiguration indicates the tailored kubelet configuration.
+// It is derived from Kubernetes code `KubeletConfiguration` in package `k8s.io/kubelet/config/v1beta1` and made some variant.
 type TailoredKubeletConfiguration struct {
 	// syncFrequency is the max period between synchronizing running
 	// containers and config.
@@ -369,7 +371,7 @@ type TailoredKubeletConfiguration struct {
 	// for the container DNS resolution configuration.
 	// Default: "/etc/resolv.conf"
 	// +optional
-	ResolverConfig string `json:"resolvConf,omitempty"`
+	ResolverConfig *string `json:"resolvConf,omitempty"`
 	// cpuCFSQuota enables CPU CFS quota enforcement for containers that
 	// specify CPU limits.
 	// Default: true
@@ -491,6 +493,10 @@ type TailoredKubeletConfiguration struct {
 	// Default: false
 	// +optional
 	FailSwapOn *bool `json:"failSwapOn,omitempty"`
+	// memorySwap configures swap memory available to container workloads.
+	// +featureGate=NodeSwap
+	// +optional
+	MemorySwap tailoredkubeletconfigv1beta1.MemorySwapConfiguration `json:"memorySwap,omitempty"`
 	// containerLogMaxSize is a quantity defining the maximum size of the container log
 	// file before it is rotated. For example: "5Mi" or "256Ki".
 	// Default: "10Mi"
@@ -614,6 +620,35 @@ type TailoredKubeletConfiguration struct {
 	// +featureGate=GracefulNodeShutdown
 	// +optional
 	ShutdownGracePeriodCriticalPods metav1.Duration `json:"shutdownGracePeriodCriticalPods,omitempty"`
+	// shutdownGracePeriodByPodPriority specifies the shutdown grace period for Pods based
+	// on their associated priority class value.
+	// When a shutdown request is received, the Kubelet will initiate shutdown on all pods
+	// running on the node with a grace period that depends on the priority of the pod,
+	// and then wait for all pods to exit.
+	// Each entry in the array represents the graceful shutdown time a pod with a priority
+	// class value that lies in the range of that value and the next higher entry in the
+	// list when the node is shutting down.
+	// For example, to allow critical pods 10s to shutdown, priority>=10000 pods 20s to
+	// shutdown, and all remaining pods 30s to shutdown.
+	//
+	// shutdownGracePeriodByPodPriority:
+	//   - priority: 2000000000
+	//     shutdownGracePeriodSeconds: 10
+	//   - priority: 10000
+	//     shutdownGracePeriodSeconds: 20
+	//   - priority: 0
+	//     shutdownGracePeriodSeconds: 30
+	//
+	// The time the Kubelet will wait before exiting will at most be the maximum of all
+	// shutdownGracePeriodSeconds for each priority class range represented on the node.
+	// When all pods have exited or reached their grace periods, the Kubelet will release
+	// the shutdown inhibit lock.
+	// Requires the GracefulNodeShutdown feature gate to be enabled.
+	// This configuration must be empty if either ShutdownGracePeriod or ShutdownGracePeriodCriticalPods is set.
+	// Default: nil
+	// +featureGate=GracefulNodeShutdownBasedOnPodPriority
+	// +optional
+	ShutdownGracePeriodByPodPriority []tailoredkubeletconfigv1beta1.ShutdownGracePeriodByPodPriority `json:"shutdownGracePeriodByPodPriority,omitempty"`
 	// reservedMemory specifies a comma-separated list of memory reservations for NUMA nodes.
 	// The parameter makes sense only in the context of the memory manager feature.
 	// The memory manager will not allocate reserved memory for container workloads.
@@ -658,6 +693,16 @@ type TailoredKubeletConfiguration struct {
 	// +featureGate=MemoryQoS
 	// +optional
 	MemoryThrottlingFactor *float64 `json:"memoryThrottlingFactor,omitempty"`
+	// registerWithTaints are an array of taints to add to a node object when
+	// the kubelet registers itself. This only takes effect when registerNode
+	// is true and upon the initial registration of the node.
+	// Default: nil
+	// +optional
+	RegisterWithTaints []v1.Taint `json:"registerWithTaints,omitempty"`
+	// registerNode enables automatic registration with the apiserver.
+	// Default: true
+	// +optional
+	RegisterNode *bool `json:"registerNode,omitempty"`
 }
 
 // TailoredKubeletFlag indicates the tailored kubelet flag
