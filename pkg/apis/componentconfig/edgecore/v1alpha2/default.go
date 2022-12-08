@@ -23,14 +23,10 @@ import (
 	"path/filepath"
 	"strconv"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	kubeletconfigv1beta1 "k8s.io/kubelet/config/v1beta1"
-	configv1beta1 "k8s.io/kubernetes/pkg/kubelet/apis/config/v1beta1"
-	utilpointer "k8s.io/utils/pointer"
-
 	"github.com/kubeedge/kubeedge/common/constants"
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/util"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // NewDefaultEdgeCoreConfig returns a full EdgeCoreConfig object
@@ -38,18 +34,8 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 	hostnameOverride := util.GetHostname()
 	localIP, _ := util.GetLocalIP(hostnameOverride)
 
-	in := kubeletconfigv1beta1.KubeletConfiguration{}
-	in.ContentType = "application/json"
-	in.ImageGCLowThresholdPercent = utilpointer.Int32Ptr(constants.DefaultImageGCLowThreshold)
-	in.ImageGCHighThresholdPercent = utilpointer.Int32Ptr(constants.DefaultImageGCHighThreshold)
-	in.ConfigMapAndSecretChangeDetectionStrategy = kubeletconfigv1beta1.GetChangeDetectionStrategy
-	in.FailSwapOn = utilpointer.BoolPtr(false)
-	in.EnableServer = utilpointer.BoolPtr(false)
-	in.Address = constants.ServerAddress
-	in.ReadOnlyPort = constants.ServerPort
-	in.ClusterDomain = constants.DefaultClusterDomain
-	in.NodeStatusMaxImages = utilpointer.Int32Ptr(0)
-	configv1beta1.SetDefaults_KubeletConfiguration(&in)
+	defaultTailedKubeletConfig := TailoredKubeletConfiguration{}
+	SetDefaults_KubeletConfiguration(&defaultTailedKubeletConfig)
 
 	return &EdgeCoreConfig{
 		TypeMeta: metav1.TypeMeta{
@@ -64,7 +50,7 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 		Modules: &Modules{
 			Edged: &Edged{
 				Enable:                true,
-				TailoredKubeletConfig: &in,
+				TailoredKubeletConfig: &defaultTailedKubeletConfig,
 				TailoredKubeletFlag: TailoredKubeletFlag{
 					KubeConfig:       constants.DefaultKubeletConfig,
 					HostnameOverride: hostnameOverride,
@@ -187,18 +173,8 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 	hostnameOverride := util.GetHostname()
 	localIP, _ := util.GetLocalIP(hostnameOverride)
 
-	in := kubeletconfigv1beta1.KubeletConfiguration{}
-	in.ContentType = "application/json"
-	in.ImageGCLowThresholdPercent = utilpointer.Int32Ptr(constants.DefaultImageGCLowThreshold)
-	in.ImageGCHighThresholdPercent = utilpointer.Int32Ptr(constants.DefaultImageGCHighThreshold)
-	in.ConfigMapAndSecretChangeDetectionStrategy = kubeletconfigv1beta1.GetChangeDetectionStrategy
-	in.FailSwapOn = utilpointer.BoolPtr(false)
-	in.EnableServer = utilpointer.BoolPtr(false)
-	in.Address = constants.ServerAddress
-	in.ReadOnlyPort = constants.ServerPort
-	in.ClusterDomain = constants.DefaultClusterDomain
-	in.NodeStatusMaxImages = utilpointer.Int32Ptr(0)
-	configv1beta1.SetDefaults_KubeletConfiguration(&in)
+	defaultTailedKubeletConfig := TailoredKubeletConfiguration{}
+	SetDefaults_KubeletConfiguration(&defaultTailedKubeletConfig)
 
 	return &EdgeCoreConfig{
 		TypeMeta: metav1.TypeMeta{
@@ -211,7 +187,7 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 		Modules: &Modules{
 			Edged: &Edged{
 				Enable:                true,
-				TailoredKubeletConfig: &in,
+				TailoredKubeletConfig: &defaultTailedKubeletConfig,
 				TailoredKubeletFlag: TailoredKubeletFlag{
 					KubeConfig:       constants.DefaultKubeletConfig,
 					HostnameOverride: hostnameOverride,
