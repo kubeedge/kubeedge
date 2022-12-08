@@ -115,6 +115,12 @@ func Add2EdgeToolsList(toolList map[string]types.ToolsInstaller, flagData map[st
 			kubeVer = types.DefaultKubeEdgeVersion
 		}
 	}
+
+	// If users specified the kubeedge-version with prefix `v`, remove it
+	// So we support both format: 1.12.0 without prefix `v`, and v1.12.0 with prefix `v`
+	// remove prefix v
+	kubeVer = strings.TrimPrefix(kubeVer, "v")
+
 	toolList[constants.ProjectName] = &util.KubeEdgeInstTool{
 		Common: util.Common{
 			ToolVersion: semver.MustParse(kubeVer),

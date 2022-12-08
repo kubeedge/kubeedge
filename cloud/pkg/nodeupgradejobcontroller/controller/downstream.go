@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -159,8 +160,12 @@ func (dc *DownstreamController) nodeUpgradeJobAdded(upgrade *v1alpha1.NodeUpgrad
 			return
 		}
 	}
-	imageTag := upgrade.Spec.Version
-	image := fmt.Sprintf("%s:%s", repo, imageTag)
+	upgradeVersion := upgrade.Spec.Version
+	if !strings.HasPrefix(upgradeVersion, "v") {
+		upgradeVersion = "v" + upgradeVersion
+	}
+	// use upgradeVersion as image tag
+	image := fmt.Sprintf("%s:%s", repo, upgradeVersion)
 
 	for _, node := range nodesToUpgrade {
 		// send upgrade msg to every edge node
@@ -172,7 +177,7 @@ func (dc *DownstreamController) nodeUpgradeJobAdded(upgrade *v1alpha1.NodeUpgrad
 			UpgradeID:   upgrade.Name,
 			HistoryID:   uuid.New().String(),
 			UpgradeTool: upgrade.Spec.UpgradeTool,
-			Version:     upgrade.Spec.Version,
+			Version:     upgradeVersion,
 			Image:       image,
 		}
 

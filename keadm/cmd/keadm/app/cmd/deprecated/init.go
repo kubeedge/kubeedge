@@ -130,6 +130,12 @@ func Add2CloudToolsList(toolList map[string]types.ToolsInstaller, flagData map[s
 			fmt.Println("Failed to get the latest KubeEdge release version, will use default version: ", kubeVer)
 		}
 	}
+
+	// If users specified the kubeedge-version with prefix `v`, remove it
+	// So we support both format: 1.12.0 without prefix `v`, and v1.12.0 with prefix `v`
+	// remove prefix v
+	kubeVer = strings.TrimPrefix(kubeVer, "v")
+
 	common := util.Common{
 		ToolVersion: semver.MustParse(kubeVer),
 		KubeConfig:  initOptions.KubeConfig,
