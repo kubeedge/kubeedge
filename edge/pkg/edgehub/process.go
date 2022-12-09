@@ -190,6 +190,9 @@ func (eh *EdgeHub) keepalive() {
 }
 
 func (eh *EdgeHub) pubConnectInfo(isConnected bool) {
+	// update connected info
+	connect.SetConnected(isConnected)
+
 	// var info model.Message
 	content := connect.CloudConnected
 	if !isConnected {
