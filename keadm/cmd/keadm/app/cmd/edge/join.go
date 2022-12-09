@@ -24,9 +24,11 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/blang/semver"
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/klog/v2"
 	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
 	"sigs.k8s.io/yaml"
@@ -57,6 +59,8 @@ keadm join --cloudcore-ipport=<ip:port address> --edgenode-name=<unique string a
 keadm join --cloudcore-ipport=10.20.30.40:10000 --edgenode-name=testing123 --kubeedge-version=v` + common.DefaultKubeEdgeVersion + `
 `
 )
+
+var edgeCoreConfig *v1alpha2.EdgeCoreConfig
 
 func NewEdgeJoin() *cobra.Command {
 	joinOptions := newOption()
@@ -186,13 +190,37 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 		return fmt.Errorf("create systemd service file failed: %v", err)
 	}
 
+	// write token to bootstrap configure file
+	if err := createBootstrapFile(opt); err != nil {
+		return fmt.Errorf("create bootstrap file failed: %v", err)
+	}
+	// Delete the bootstrap file, so the credential used for TLS bootstrap is removed from disk
+	defer os.Remove(filepath.Join(util.KubeEdgePath, "bootstrap-edgecore.conf"))
+
 	step.Printf("Generate EdgeCore default configuration")
 	if err := createEdgeConfigFiles(opt); err != nil {
 		return fmt.Errorf("create edge config file failed: %v", err)
 	}
 
 	step.Printf("Run EdgeCore daemon")
-	return runEdgeCore()
+	err := runEdgeCore()
+	if err != nil {
+		return fmt.Errorf("start edgecore failed: %v", err)
+	}
+
+	// wait for edgecore start successfully using specified token
+	// if edgecore start, it will get ca/certs from cloud
+	// if ca/certs generated, we can remove bootstrap file
+	err = wait.Poll(10*time.Second, 300*time.Second, func() (bool, error) {
+		if util.FileExists(edgeCoreConfig.Modules.EdgeHub.TLSCAFile) &&
+			util.FileExists(edgeCoreConfig.Modules.EdgeHub.TLSCertFile) &&
+			util.FileExists(edgeCoreConfig.Modules.EdgeHub.TLSPrivateKeyFile) {
+			return true, nil
+		}
+		return false, nil
+	})
+
+	return err
 }
 
 func createDirs() error {
@@ -226,8 +254,6 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 		return createV1alpha1EdgeConfigFiles(opt)
 	}
 
-	var edgeCoreConfig *v1alpha2.EdgeCoreConfig
-
 	configFilePath := filepath.Join(util.KubeEdgePath, "config/edgecore.yaml")
 	_, err = os.Stat(configFilePath)
 	if err == nil || os.IsExist(err) {
@@ -246,6 +272,9 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 	}
 
 	edgeCoreConfig.Modules.EdgeHub.WebSocket.Server = opt.CloudCoreIPPort
+	// TODO: remove this after release 1.14
+	// this is for keeping backward compatibility
+	// don't save token in configuration edgecore.yaml
 	if opt.Token != "" {
 		edgeCoreConfig.Modules.EdgeHub.Token = opt.Token
 	}
@@ -402,4 +431,16 @@ func runEdgeCore() error {
 	klog.Infoln(cmd.GetStdOut())
 	klog.Infoln(tip)
 	return nil
+}
+
+func createBootstrapFile(opt *common.JoinOptions) error {
+	bootstrapFile := constants.BootstrapFile
+	_, err := os.Create(bootstrapFile)
+	if err != nil {
+		return err
+	}
+
+	// write token to bootstrap-edgecore.conf file
+	token := []byte(opt.Token)
+	return os.WriteFile(bootstrapFile, token, 0640)
 }

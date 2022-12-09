@@ -41,6 +41,8 @@ var jitteryDuration = func(totalDuration float64) time.Duration {
 	return wait.Jitter(time.Duration(totalDuration), 0.2) - time.Duration(totalDuration*0.3)
 }
 
+var CleanupTokenChan = make(chan struct{}, 1)
+
 type CertManager struct {
 	RotateCertificates bool
 	NodeName           string
@@ -93,6 +95,8 @@ func (cm *CertManager) Start() {
 		if err != nil {
 			klog.Exitf("Error: %v", err)
 		}
+		// inform to cleanup token in configuration edgecore.yaml
+		CleanupTokenChan <- struct{}{}
 	}
 	if cm.RotateCertificates {
 		cm.rotate()
