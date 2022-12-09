@@ -10,10 +10,6 @@ import (
 var Config Configure
 var once sync.Once
 
-// Connected stands for whether it is connected
-// TODO need consider to add lock @kadisi
-var Connected = false
-
 type Configure struct {
 	v1alpha2.MetaManager
 }

@@ -18,10 +18,9 @@ import (
 )
 
 var groupMap = map[string]string{
-	"resource": modules.MetaGroup,
-	"twin":     modules.TwinGroup,
-	"func":     modules.MetaGroup,
-	"user":     modules.BusGroup,
+	"twin": modules.TwinGroup,
+	"func": modules.MetaGroup,
+	"user": modules.BusGroup,
 }
 
 var (
