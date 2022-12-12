@@ -28,12 +28,6 @@ const (
 
 	GroupResource = "resource"
 
-	OperationFunctionAction = "action"
-
-	OperationFunctionActionResult = "action_result"
-
-	EdgeFunctionModel    = "edgefunction"
-	CloudFunctionModel   = "funcmgr"
 	CloudControllerModel = "edgecontroller"
 )
 
@@ -176,10 +170,6 @@ func (m *metaManager) processUpdate(message model.Message) {
 		sendToEdged(&message, message.IsSync())
 		resp := message.NewRespByMessage(&message, OK)
 		sendToCloud(resp)
-	case CloudFunctionModel:
-		beehiveContext.Send(EdgeFunctionModel, message)
-	case EdgeFunctionModel:
-		sendToCloud(&message)
 	case cloudmodules.DeviceControllerModuleName:
 		resp := message.NewRespByMessage(&message, OK)
 		sendToCloud(resp)
@@ -466,52 +456,6 @@ func (m *metaManager) processNodeConnection(message model.Message) {
 	}
 }
 
-func (m *metaManager) processFunctionAction(message model.Message) {
-	content, err := message.GetContentData()
-	if err != nil {
-		klog.Errorf("get action message content data failed, %s: %v", msgDebugInfo(&message), err)
-		feedbackError(err, "Error to get action message content data", message)
-		return
-	}
-
-	resKey, resType, _ := parseResource(message.GetResource())
-	meta := &dao.Meta{
-		Key:   resKey,
-		Type:  resType,
-		Value: string(content)}
-	err = dao.SaveMeta(meta)
-	if err != nil {
-		klog.Errorf("save meta failed, %s: %v", msgDebugInfo(&message), err)
-		feedbackError(err, "Error to save meta to DB", message)
-		return
-	}
-
-	beehiveContext.Send(EdgeFunctionModel, message)
-}
-
-func (m *metaManager) processFunctionActionResult(message model.Message) {
-	content, err := message.GetContentData()
-	if err != nil {
-		klog.Errorf("get action_result message content data failed, %s: %v", msgDebugInfo(&message), err)
-		feedbackError(err, "Error to get action_result message content data", message)
-		return
-	}
-
-	resKey, resType, _ := parseResource(message.GetResource())
-	meta := &dao.Meta{
-		Key:   resKey,
-		Type:  resType,
-		Value: string(content)}
-	err = dao.SaveMeta(meta)
-	if err != nil {
-		klog.Errorf("save meta failed, %s: %v", msgDebugInfo(&message), err)
-		feedbackError(err, "Error to save meta to DB", message)
-		return
-	}
-
-	sendToCloud(&message)
-}
-
 func (m *metaManager) processVolume(message model.Message) {
 	klog.Info("process volume started")
 	back, err := beehiveContext.SendSync(modules.EdgedModuleName, message, constants.CSISyncMsgRespTimeout)
@@ -543,10 +487,6 @@ func (m *metaManager) process(message model.Message) {
 		m.processResponse(message)
 	case messagepkg.OperationNodeConnection:
 		m.processNodeConnection(message)
-	case OperationFunctionAction:
-		m.processFunctionAction(message)
-	case OperationFunctionActionResult:
-		m.processFunctionActionResult(message)
 	case constants.CSIOperationTypeCreateVolume,
 		constants.CSIOperationTypeDeleteVolume,
 		constants.CSIOperationTypeControllerPublishVolume,
