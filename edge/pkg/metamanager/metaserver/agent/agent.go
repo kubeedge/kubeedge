@@ -26,11 +26,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
-	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
+	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	edgemodule "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
 )
@@ -53,15 +53,19 @@ func NewApplicationAgent(nodeName string) *Agent {
 }
 
 func (a *Agent) Generate(ctx context.Context, verb metaserver.ApplicationVerb, option interface{}, obj runtime.Object) (*metaserver.Application, error) {
+	// If the connection is lost between EdgeCore and CloudCore, we do not generate
+	// the application since we can not send the application to the CloudCore
+	if !connect.IsConnected() {
+		return nil, connect.ErrConnectionLost
+	}
+
 	key, err := metaserver.KeyFuncReq(ctx, "")
 	if err != nil {
-		klog.Errorf("%v", err)
 		return nil, err
 	}
 
 	info, ok := apirequest.RequestInfoFrom(ctx)
 	if !ok || !info.IsResourceRequest {
-		klog.Errorf("no request info in context")
 		return nil, fmt.Errorf("no request info in context")
 	}
 	app, err := metaserver.NewApplication(ctx, key, verb, a.nodeName, info.Subresource, option, obj)

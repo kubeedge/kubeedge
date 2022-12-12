@@ -16,7 +16,10 @@ limitations under the License.
 
 package cloudconnection
 
-import "sync"
+import (
+	"errors"
+	"sync"
+)
 
 // constants for cloud connection
 const (
@@ -30,6 +33,9 @@ var (
 	isCloudConnected = false
 
 	lock sync.RWMutex
+
+	// ErrConnectionLost is sentinel err to indicates connection is lost between EdgeCore and CloudCore
+	ErrConnectionLost = errors.New("connection lost between EdgeCore and CloudCore")
 )
 
 // SetConnected set isCloudConnected value

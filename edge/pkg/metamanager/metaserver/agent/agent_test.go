@@ -25,6 +25,7 @@ import (
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 
 	commontypes "github.com/kubeedge/kubeedge/common/types"
+	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 )
 
 func TestApplicationGC(t *testing.T) {
@@ -49,6 +50,8 @@ func TestApplicationGC(t *testing.T) {
 			}
 			ctx := apirequest.WithRequestInfo(context.Background(), requestInfo)
 			ctx = context.WithValue(ctx, commontypes.AuthorizationKey, "Bearer xxxx")
+
+			connect.SetConnected(true)
 
 			app, _ := a.Generate(ctx, "get", metav1.GetOptions{}, nil)
 			app.Close()
