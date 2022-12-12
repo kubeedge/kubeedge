@@ -336,8 +336,8 @@ func (ctx *Context) getTypeChannel(moduleType string) map[string]chan model.Mess
 	ctx.typeChsLock.RLock()
 	defer ctx.typeChsLock.RUnlock()
 
-	if _, exist := ctx.typeChannels[moduleType]; exist {
-		return ctx.typeChannels[moduleType]
+	if v, exist := ctx.typeChannels[moduleType]; exist {
+		return v
 	}
 
 	klog.Warningf("Failed to get type channel, type:%s", moduleType)
