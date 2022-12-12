@@ -1724,7 +1724,7 @@ k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1
 k8s.io/kubelet/pkg/apis/pluginregistration/v1
 k8s.io/kubelet/pkg/apis/podresources/v1
 k8s.io/kubelet/pkg/apis/stats/v1alpha1
-# k8s.io/kubernetes v1.22.6 => github.com/kubeedge/kubernetes v1.22.6-kubeedge3
+# k8s.io/kubernetes v1.22.6 => github.com/vincentgoat/ke-kubernetes v1.22.6-kubeedge-prober
 ## explicit
 k8s.io/kubernetes/cmd/kubeadm/app/apis/bootstraptoken/v1
 k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm
@@ -2252,7 +2252,7 @@ sigs.k8s.io/yaml
 # k8s.io/kube-scheduler => github.com/kubeedge/kubernetes/staging/src/k8s.io/kube-scheduler v1.22.6-kubeedge3
 # k8s.io/kubectl => github.com/kubeedge/kubernetes/staging/src/k8s.io/kubectl v1.22.6-kubeedge3
 # k8s.io/kubelet => github.com/kubeedge/kubernetes/staging/src/k8s.io/kubelet v1.22.6-kubeedge3
-# k8s.io/kubernetes => github.com/kubeedge/kubernetes v1.22.6-kubeedge3
+# k8s.io/kubernetes => github.com/vincentgoat/ke-kubernetes v1.22.6-kubeedge-prober
 # k8s.io/legacy-cloud-providers => github.com/kubeedge/kubernetes/staging/src/k8s.io/legacy-cloud-providers v1.22.6-kubeedge3
 # k8s.io/metrics => github.com/kubeedge/kubernetes/staging/src/k8s.io/metrics v1.22.6-kubeedge3
 # k8s.io/mount-utils => github.com/kubeedge/kubernetes/staging/src/k8s.io/mount-utils v1.22.6-kubeedge3
