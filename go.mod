@@ -17,6 +17,7 @@ require (
 	github.com/eclipse/paho.mqtt.golang v1.2.0
 	github.com/emicklei/go-restful v2.9.6+incompatible
 	github.com/evanphx/json-patch v4.11.0+incompatible
+	github.com/garyburd/redigo v1.6.4 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang/mock v1.5.0
 	github.com/golang/protobuf v1.5.2
@@ -38,7 +39,6 @@ require (
 	github.com/tklauser/go-sysconf v0.3.10 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
-	golang.org/x/sys v0.0.0-20220704084225-05e143d24a9e // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
 	google.golang.org/grpc v1.42.0
 	google.golang.org/protobuf v1.27.1
@@ -72,6 +72,7 @@ replace (
 	github.com/Sirupsen/logrus v1.0.5 => github.com/sirupsen/logrus v1.0.5
 	github.com/Sirupsen/logrus v1.3.0 => github.com/Sirupsen/logrus v1.0.6
 	github.com/Sirupsen/logrus v1.4.0 => github.com/sirupsen/logrus v1.0.6
+	github.com/containerd/containerd => github.com/containerd/containerd v1.5.16
 	github.com/gopherjs/gopherjs v0.0.0 => github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/kubeedge/beehive => ./staging/src/github.com/kubeedge/beehive
 	github.com/kubeedge/viaduct => ./staging/src/github.com/kubeedge/viaduct
