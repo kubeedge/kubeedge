@@ -38,6 +38,7 @@ func ConvertConfigEdgedFlagToConfigKubeletFlag(in *v1alpha2.TailoredKubeletFlag,
 	out.CNIConfDir = in.CNIConfDir
 	out.CNIBinDir = in.CNIBinDir
 	out.CNICacheDir = in.CNICacheDir
+	out.NetworkPluginName = in.NetworkPluginName
 	out.NetworkPluginMTU = in.NetworkPluginMTU
 	out.RemoteRuntimeEndpoint = in.RemoteRuntimeEndpoint
 	out.RemoteImageEndpoint = in.RemoteImageEndpoint
