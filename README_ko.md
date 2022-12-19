@@ -9,7 +9,7 @@
 
 <img src="./docs/images/kubeedge-logo-only.png">
 
-English | [简体中文](./README_zh.md)| [한국어](./README_ko.md)
+English | [简体中文](./README_zh.md) | [한국어](./README_ko.md)
 
 KubeEdge는 쿠버네티스 기반으로 되어 있습니다. 네이티브한 컨테이너화된 어플리케이션 오케스트레이션 기능을 엣지에 있는 확장합니다.
 기본적으로 클라우드 부분과 엣지 부분으로 구성되어있고, 클라우드와 엣지간 네트워킹, 어플리케이션 배포 및 메타데이터 동기화 기능들을 지원하기 위해 핵심적인 인프라를 제공합니다.
