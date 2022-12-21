@@ -32,7 +32,6 @@ func ConvertConfigEdgedFlagToConfigKubeletFlag(in *v1alpha2.TailoredKubeletFlag,
 	out.HostnameOverride = in.HostnameOverride
 	out.NodeIP = in.NodeIP
 	out.RootDirectory = in.RootDirectory
-	out.RegisterNode = in.RegisterNode
 	out.RegisterWithTaints = in.RegisterWithTaints
 	out.RemoteRuntimeEndpoint = in.RemoteRuntimeEndpoint
 	out.RemoteImageEndpoint = in.RemoteImageEndpoint
