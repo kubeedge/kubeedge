@@ -154,7 +154,8 @@ func environmentCheck() error {
 		case "kubelet": // if kubelet is running, return error
 			return errors.New("kubelet should not running on edge node when running edgecore")
 		case "kube-proxy": // if kube-proxy is running, return error
-			return errors.New("kube-proxy should not running on edge node when running edgecore")
+			klog.Warningf("kube-proxy is running on edge node, please make sure the kube-proxy is running in the right mode")
+			return nil
 		}
 	}
 
