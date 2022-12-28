@@ -77,7 +77,7 @@ NA
 
 ### Other Notable Changes
 
-- Eventbus add tls config when connect to mqtt ([#2109](https://github.com/kubeedge/kubeedge/pull/2109), [@lvchenggang](https://github.com/lvchenggang))
+- EventBus add tls config when connect to mqtt ([#2109](https://github.com/kubeedge/kubeedge/pull/2109), [@lvchenggang](https://github.com/lvchenggang))
 - Add zero judgment when pods is obtained from the cache ([#2115](https://github.com/kubeedge/kubeedge/pull/2115), [@XiaoJiangWang](https://github.com/XiaoJiangWang))
 - Add metrics api support in streamserver ([#2125](https://github.com/kubeedge/kubeedge/pull/2125), [@luogangyi](https://github.com/luogangyi))
 - Support config domain URL for cloudcore ([#2126](https://github.com/kubeedge/kubeedge/pull/2126), [@ls889](https://github.com/ls889))

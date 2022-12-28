@@ -16,18 +16,18 @@ import (
 func NewRule(sourceType, targetType rulesv1.RuleEndpointTypeDef) *rulesv1.Rule {
 	switch {
 	case sourceType == rulesv1.RuleEndpointTypeRest && targetType == rulesv1.RuleEndpointTypeEventBus:
-		return NewRest2EventbusRule()
+		return NewRest2EventBusRule()
 	case sourceType == rulesv1.RuleEndpointTypeEventBus && targetType == rulesv1.RuleEndpointTypeRest:
-		return NewEventbus2RestRule()
+		return NewEventBus2RestRule()
 	case sourceType == rulesv1.RuleEndpointTypeRest && targetType == rulesv1.RuleEndpointTypeServiceBus:
-		return NewRest2ServicebusRule()
+		return NewRest2ServiceBusRule()
 	case sourceType == rulesv1.RuleEndpointTypeServiceBus && targetType == rulesv1.RuleEndpointTypeRest:
-		return NewServicebus2Rest()
+		return NewServiceBus2Rest()
 	}
 	return nil
 }
 
-func NewEventbus2RestRule() *rulesv1.Rule {
+func NewEventBus2RestRule() *rulesv1.Rule {
 	rule := rulesv1.Rule{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "Rule",
@@ -55,7 +55,7 @@ func NewEventbus2RestRule() *rulesv1.Rule {
 	return &rule
 }
 
-func NewRest2EventbusRule() *rulesv1.Rule {
+func NewRest2EventBusRule() *rulesv1.Rule {
 	rule := rulesv1.Rule{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "Rule",
@@ -82,7 +82,7 @@ func NewRest2EventbusRule() *rulesv1.Rule {
 	return &rule
 }
 
-func NewRest2ServicebusRule() *rulesv1.Rule {
+func NewRest2ServiceBusRule() *rulesv1.Rule {
 	rule := rulesv1.Rule{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "Rule",
@@ -109,7 +109,7 @@ func NewRest2ServicebusRule() *rulesv1.Rule {
 	return &rule
 }
 
-func NewServicebus2Rest() *rulesv1.Rule {
+func NewServiceBus2Rest() *rulesv1.Rule {
 	rule := rulesv1.Rule{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "Rule",
@@ -167,7 +167,7 @@ func newRestRuleEndpoint() *rulesv1.RuleEndpoint {
 }
 
 func newEventBusRuleEndpoint() *rulesv1.RuleEndpoint {
-	eventbusRuleEndpoint := rulesv1.RuleEndpoint{
+	eventBusRuleEndpoint := rulesv1.RuleEndpoint{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "RuleEndpoint",
 			APIVersion: "rules.kubeedge.io/v1",
@@ -180,11 +180,11 @@ func newEventBusRuleEndpoint() *rulesv1.RuleEndpoint {
 			RuleEndpointType: rulesv1.RuleEndpointTypeEventBus,
 		},
 	}
-	return &eventbusRuleEndpoint
+	return &eventBusRuleEndpoint
 }
 
 func newServiceBusRuleEndpoint() *rulesv1.RuleEndpoint {
-	servicebusRuleEndpoint := rulesv1.RuleEndpoint{
+	serviceBusRuleEndpoint := rulesv1.RuleEndpoint{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "RuleEndpoint",
 			APIVersion: "rules.kubeedge.io/v1",
@@ -199,7 +199,7 @@ func newServiceBusRuleEndpoint() *rulesv1.RuleEndpoint {
 				"service_port": "9000"},
 		},
 	}
-	return &servicebusRuleEndpoint
+	return &serviceBusRuleEndpoint
 }
 
 func ListRule(c edgeclientset.Interface, ns string) ([]rulesv1.Rule, error) {
