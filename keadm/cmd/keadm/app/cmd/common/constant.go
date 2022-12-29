@@ -179,8 +179,6 @@ const (
 	ArgCheckNetwork = "network"
 	ArgCheckPID     = "pid"
 
-	DefaultRuntime = "docker"
-
 	KB = 1024
 	MB = KB * 1024
 	GB = MB * 1024

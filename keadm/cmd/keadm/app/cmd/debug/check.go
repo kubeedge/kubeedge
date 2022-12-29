@@ -16,6 +16,7 @@ import (
 	"github.com/shirou/gopsutil/mem"
 	"github.com/spf13/cobra"
 
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
@@ -105,7 +106,7 @@ func NewSubEdgeCheck(object CheckObject) *cobra.Command {
 // NewCheckOptions returns check options
 func NewCheckOptions() *common.CheckOptions {
 	co := &common.CheckOptions{}
-	co.Runtime = common.DefaultRuntime
+	co.Runtime = constants.DefaultRuntimeType
 	co.Domain = "www.github.com"
 	co.Timeout = 1
 	return co
@@ -346,7 +347,7 @@ func CheckHTTP(url string) error {
 }
 
 func CheckRuntime(runtime string) error {
-	if runtime == common.DefaultRuntime {
+	if runtime == constants.DefaultRuntimeType {
 		result, err := util.ExecShellFilter(common.CmdGetStatusDocker)
 		if err != nil {
 			return err
