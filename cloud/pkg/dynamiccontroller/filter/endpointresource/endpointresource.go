@@ -80,7 +80,7 @@ func filterEndpointSlice(targetNode string, obj runtime.Object) {
 		svcTopology = svcObj.GetAnnotations()[nodegroup.ServiceTopologyAnnotation]
 	}
 	if svcTopology != nodegroup.ServiceTopologyRangeNodegroup {
-		klog.V(4).Info("skip filter for endpointSlice %v", unstruct.GetName())
+		klog.V(4).Infof("skip filter for endpointSlice %v", unstruct.GetName())
 		return
 	}
 	var epsTmp []discovery.Endpoint
@@ -135,7 +135,7 @@ func filterEndpoints(targetNode string, obj runtime.Object) {
 	}
 
 	if svcObj.GetAnnotations()[nodegroup.ServiceTopologyAnnotation] != nodegroup.ServiceTopologyRangeNodegroup {
-		klog.V(4).Info("skip filter for endpointSlice %v", unstruct.GetName())
+		klog.V(4).Infof("skip filter for endpointSlice %v", unstruct.GetName())
 		return
 	}
 	for i := range ep.Subsets {
