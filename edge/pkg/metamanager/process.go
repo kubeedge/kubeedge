@@ -21,7 +21,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
 )
 
-//Constants to check metamanager processes
+// Constants to check metamanager processes
 const (
 	OK = "OK"
 
@@ -37,18 +37,25 @@ func feedbackError(err error, info string, request model.Message) {
 	}
 	errResponse := model.NewErrorMessage(&request, errInfo).SetRoute(modules.MetaManagerModuleName, request.GetGroup())
 	if request.GetSource() == modules.EdgedModuleName {
-		sendToEdged(errResponse, request.IsSync())
+		_, resType, _ := parseResource(request.GetResource())
+		sendToEdged(errResponse, request.IsSync(), resType)
 	} else {
 		sendToCloud(errResponse)
 	}
 }
 
-func sendToEdged(message *model.Message, sync bool) {
+func sendToEdged(message *model.Message, sync bool, resType string) {
 	if sync {
 		beehiveContext.SendResp(*message)
-	} else {
-		beehiveContext.Send(modules.EdgedModuleName, *message)
+		return
 	}
+
+	if resType == model.ResourceTypePod || resType == constants.CSIResourceTypeVolume {
+		beehiveContext.Send(modules.EdgedModuleName, *message)
+		return
+	}
+
+	klog.V(4).Infof("the resType is not pod or volume, do not send resType %s to edged", resType)
 }
 
 func sendToCloud(message *model.Message) {
@@ -121,7 +128,7 @@ func (m *metaManager) processInsert(message model.Message) {
 		beehiveContext.Send(modules.DeviceTwinModuleName, message)
 	} else {
 		// Notify edged
-		sendToEdged(&message, false)
+		sendToEdged(&message, false, resType)
 	}
 
 	resp := message.NewRespByMessage(&message, OK)
@@ -159,10 +166,10 @@ func (m *metaManager) processUpdate(message model.Message) {
 		// to ensure that the pod status is correctly reported to the kube-apiserver
 		if resType != model.ResourceTypePodStatus && resType != model.ResourceTypeLease {
 			resp := message.NewRespByMessage(&message, OK)
-			sendToEdged(resp, message.IsSync())
+			sendToEdged(resp, message.IsSync(), resType)
 		}
 	case cloudmodules.EdgeControllerModuleName, cloudmodules.DynamicControllerModuleName:
-		sendToEdged(&message, message.IsSync())
+		sendToEdged(&message, message.IsSync(), resType)
 		resp := message.NewRespByMessage(&message, OK)
 		sendToCloud(resp)
 	case cloudmodules.DeviceControllerModuleName:
@@ -223,7 +230,7 @@ func (m *metaManager) processResponse(message model.Message) {
 
 	// Notify edged if the data is coming from cloud
 	if message.GetSource() == CloudControllerModel {
-		sendToEdged(&message, message.IsSync())
+		sendToEdged(&message, message.IsSync(), resType)
 	} else {
 		// Send to cloud if the update request is coming from edged
 		sendToCloud(&message)
@@ -263,7 +270,7 @@ func (m *metaManager) processDelete(message model.Message) {
 	}
 
 	// Notify edged
-	sendToEdged(&message, false)
+	sendToEdged(&message, false, resType)
 	resp := message.NewRespByMessage(&message, OK)
 	sendToCloud(resp)
 }
@@ -373,7 +380,7 @@ func (m *metaManager) processQuery(message model.Message) {
 		} else {
 			resp := message.NewRespByMessage(&message, *metas)
 			resp.SetRoute(modules.MetaManagerModuleName, resp.GetGroup())
-			sendToEdged(resp, message.IsSync())
+			sendToEdged(resp, message.IsSync(), resType)
 		}
 		return
 	}
@@ -390,7 +397,7 @@ func (m *metaManager) processQuery(message model.Message) {
 	} else {
 		resp := message.NewRespByMessage(&message, *metas)
 		resp.SetRoute(modules.MetaManagerModuleName, resp.GetGroup())
-		sendToEdged(resp, message.IsSync())
+		sendToEdged(resp, message.IsSync(), resType)
 	}
 }
 
@@ -434,7 +441,7 @@ func (m *metaManager) processRemoteQuery(message model.Message) {
 		}
 		resp.BuildHeader(resp.GetID(), originalID, resp.GetTimestamp())
 
-		sendToEdged(&resp, message.IsSync())
+		sendToEdged(&resp, message.IsSync(), resType)
 
 		respToCloud := message.NewRespByMessage(&resp, OK)
 		sendToCloud(respToCloud)
