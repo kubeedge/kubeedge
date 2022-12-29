@@ -50,7 +50,7 @@ func TestEdgeSet(t *testing.T) {
 			want: Set{
 				EdgeCore:  "kubeedge-test/installation-package:v1.9.1",
 				EdgeMQTT:  "kubeedge-test/" + constants.DefaultMosquittoImage,
-				EdgePause: "kubeedge-test/pause:3.1",
+				EdgePause: "kubeedge-test/pause:3.6",
 			},
 		},
 		{
@@ -62,7 +62,7 @@ func TestEdgeSet(t *testing.T) {
 			want: Set{
 				EdgeCore:  "kubeedge-test/installation-package",
 				EdgeMQTT:  "kubeedge-test/" + constants.DefaultMosquittoImage,
-				EdgePause: "kubeedge-test/pause:3.1",
+				EdgePause: "kubeedge-test/pause:3.6",
 			},
 		},
 	}
