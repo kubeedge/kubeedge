@@ -454,6 +454,28 @@ func TestProcessQuery(t *testing.T) {
 		}
 	})
 
+	//process remote query response error content
+	querySetterMock.EXPECT().All(gomock.Any()).Return(int64(1), errFailedDBOperation).Times(1)
+	querySetterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySetterMock).Times(1)
+	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySetterMock).Times(1)
+	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, "test/"+model.ResourceTypeConfigmap, model.QueryOperation)
+	meta.processQuery(*msg)
+	message, _ = beehiveContext.Receive(ModuleNameEdgeHub)
+	msg = model.NewMessage(message.GetID()).BuildRouter(ModuleNameEdgeHub, GroupResource, "test/"+model.ResourceTypeConfigmap, model.QueryOperation).FillBody(fmt.Errorf("test"))
+	beehiveContext.SendResp(*msg)
+	message, _ = beehiveContext.Receive(ModuleNameEdgeHub)
+	msgEdged, _ := beehiveContext.Receive(ModuleNameEdged)
+	t.Run("ProcessRemoteQueryResponseErrorContent", func(t *testing.T) {
+		want := OK
+		if message.GetContent().(string) != want {
+			t.Errorf("Wrong Error message received : Wanted %v and Got %v", want, message.GetContent())
+		}
+		wantEdged := fmt.Errorf("test").Error()
+		if msgEdged.GetContent().(error).Error() != wantEdged {
+			t.Errorf("Wrong Error message received : Wanted %v and Got %v", wantEdged, msgEdged.GetContent().(error).Error())
+		}
+	})
+
 	//process remote query db fail
 	rawSetterMock.EXPECT().Exec().Return(nil, errFailedDBOperation).Times(1)
 	ormerMock.EXPECT().Raw(gomock.Any(), gomock.Any()).Return(rawSetterMock).Times(1)

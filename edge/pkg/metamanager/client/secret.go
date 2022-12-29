@@ -55,7 +55,10 @@ func (c *secrets) Get(name string) (*api.Secret, error) {
 	if err != nil {
 		return nil, fmt.Errorf("get secret from metaManager failed, err: %v", err)
 	}
-
+	errContent, ok := msg.GetContent().(error)
+	if ok {
+		return nil, errContent
+	}
 	content, err := msg.GetContentData()
 	if err != nil {
 		return nil, fmt.Errorf("parse message to secret failed, err: %v", err)
