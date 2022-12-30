@@ -24,6 +24,8 @@ spec:
             - matchExpressions:
               - key: node-role.kubernetes.io/master
                 operator: Exists
+              - key: node-role.kubernetes.io/control-plane
+                effect: Exists
       restartPolicy: Always
       containers:
         - name: iptables-manager
