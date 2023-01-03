@@ -45,7 +45,7 @@ func newDefaultConfiguration() *Configuration {
 	return &Configuration{
 		ImageRepository: "kubeedge",
 		Part:            "",
-		RuntimeType:     kubetypes.DockerContainerRuntime,
+		RuntimeType:     kubetypes.RemoteContainerRuntime,
 	}
 }
 
@@ -150,7 +150,7 @@ func AddImagesCommonConfigFlags(cmd *cobra.Command, cfg *Configuration) {
 		"Use this key to set which part keadm will install: cloud part or edge part. If not set, keadm will list/pull all images used by both cloud part and edge part.")
 
 	cmd.Flags().StringVar(&cfg.RuntimeType, cmdcommon.RuntimeType, cfg.RuntimeType,
-		"Container runtime type, default is docker")
+		"Container runtime type, default is remote")
 
 	cmd.Flags().StringVar(&cfg.RemoteRuntimeEndpoint, cmdcommon.RemoteRuntimeEndpoint, cfg.RemoteRuntimeEndpoint,
 		"The endpoint of remote runtime service in edge node")

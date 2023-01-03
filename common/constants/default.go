@@ -44,10 +44,10 @@ const (
 	// Edged
 	DefaultKubeletConfig         = "/etc/kubeedge/config/kubeconfig"
 	DefaultDockerAddress         = "unix:///var/run/docker.sock"
-	DefaultRuntimeType           = "docker"
+	DefaultRuntimeType           = "remote"
 	DefaultEdgedMemoryCapacity   = 7852396000
-	DefaultRemoteRuntimeEndpoint = "unix:///var/run/dockershim.sock"
-	DefaultRemoteImageEndpoint   = "unix:///var/run/dockershim.sock"
+	DefaultRemoteRuntimeEndpoint = "unix:///run/containerd/containerd.sock"
+	DefaultRemoteImageEndpoint   = "unix:///run/containerd/containerd.sock"
 	DefaultMosquittoImage        = "eclipse-mosquitto:1.6.15"
 	// update PodSandboxImage version when bumping k8s vendor version, consistent with vendor/k8s.io/kubernetes/cmd/kubelet/app/options/container_runtime.go defaultPodSandboxImageVersion
 	// When this value are updated, also update comments in pkg/apis/componentconfig/edgecore/v1alpha1/types.go

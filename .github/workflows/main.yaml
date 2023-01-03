@@ -193,8 +193,16 @@ jobs:
         run: |
           docker load < /home/runner/build-tools/build-tools.tar
 
+      # for QUIC protocol, we will use docker as edgecore container runtime
+      # for WebSocket protocol, we will use containerd as edgecore container runtime
+      # just for covering both docker and CRI runtime e2e cases
       - run: |
           export PROTOCOL=${{ matrix.PROTOCOL }}
+          if [[ ${{ matrix.PROTOCOL }} == "QUIC" ]]; then
+            export CONTAINER_RUNTIME="docker"
+          elif [[ ${{ matrix.PROTOCOL }} == "WebSocket" ]]; then
+            export CONTAINER_RUNTIME="remote"
+          fi
           make e2e
 
       - uses: actions/upload-artifact@v3

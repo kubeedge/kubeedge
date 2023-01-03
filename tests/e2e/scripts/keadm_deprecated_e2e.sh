@@ -19,6 +19,7 @@ WORKDIR=$(dirname $0)
 E2E_DIR=$(realpath $(dirname $0)/..)
 
 source "${KUBEEDGE_ROOT}/hack/lib/golang.sh"
+source "${KUBEEDGE_ROOT}/hack/lib/install.sh"
 kubeedge::version::get_version_info
 VERSION=${GIT_VERSION}
 
@@ -95,9 +96,8 @@ function run_test() {
   if [[ $GINKGO_TESTING_RESULT != 0 ]]; then
     echo "Integration suite has failures, Please check !!"
     echo "edgecore logs are as below"
-    journalctl -u edgecore.service -xe > /var/log/kubeedge/edgecore.log
     set -x
-    cat /var/log/kubeedge/edgecore.log
+    journalctl -u edgecore.service --no-pager
     set +x
     echo "================================================="
     echo "================================================="
@@ -124,6 +124,8 @@ export KUBECONFIG=$HOME/.kube/config
 
 echo -e "\nPreparing cluster..."
 prepare_cluster
+
+install_cni_plugins
 
 kubeedge_version=${VERSION: 1}
 #if we use the local release version compiled with the latest codes, we need to copy release file and checksum file.

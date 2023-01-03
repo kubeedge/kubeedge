@@ -51,7 +51,7 @@ keadm reset
 func newResetOptions() *common.ResetOptions {
 	opts := &common.ResetOptions{}
 	opts.Kubeconfig = common.DefaultKubeConfig
-	opts.RuntimeType = kubetypes.DockerContainerRuntime
+	opts.RuntimeType = kubetypes.RemoteContainerRuntime
 	return opts
 }
 

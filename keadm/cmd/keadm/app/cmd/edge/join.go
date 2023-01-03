@@ -134,7 +134,7 @@ func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
 		"KubeEdge Node unique identification string, If flag not used then the command will generate a unique id on its own")
 
 	cmd.Flags().StringVarP(&joinOptions.RemoteRuntimeEndpoint, common.RemoteRuntimeEndpoint, "p", joinOptions.RemoteRuntimeEndpoint,
-		"KubeEdge Edge Node RemoteRuntimeEndpoint string, If flag not set, it will use unix:///var/run/dockershim.sock")
+		"KubeEdge Edge Node RemoteRuntimeEndpoint string, If flag not set, it will use unix:///run/containerd/containerd.sock")
 
 	cmd.Flags().StringVarP(&joinOptions.Token, common.Token, "t", joinOptions.Token,
 		"Used for edge to apply for the certificate")
@@ -161,7 +161,8 @@ func newOption() *common.JoinOptions {
 	joinOptions.WithMQTT = true
 	joinOptions.CGroupDriver = v1alpha2.CGroupDriverCGroupFS
 	joinOptions.CertPath = common.DefaultCertPath
-	joinOptions.RuntimeType = kubetypes.DockerContainerRuntime
+	joinOptions.RuntimeType = kubetypes.RemoteContainerRuntime
+	joinOptions.RemoteRuntimeEndpoint = constants.DefaultRemoteRuntimeEndpoint
 	return joinOptions
 }
 
