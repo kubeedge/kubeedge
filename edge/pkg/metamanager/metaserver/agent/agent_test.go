@@ -56,7 +56,7 @@ func TestApplicationGC(t *testing.T) {
 			app.Timestamp = time.Unix(1469579899, 0)
 			a.GC()
 			_, ok := a.Applications.Load(app.Identifier())
-			if ok == true {
+			if ok {
 				t.Errorf("Application delete failed")
 			}
 		})

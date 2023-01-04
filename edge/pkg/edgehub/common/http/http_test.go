@@ -259,7 +259,7 @@ func TestBuildRequest(t *testing.T) {
 				return
 			}
 			//needed to handle failure testcase because can't deep compare field in nil
-			if got == tt.want && err != nil && tt.wantErr == true {
+			if got == tt.want && err != nil && tt.wantErr {
 				return
 			}
 			if !reflect.DeepEqual(got.Header, tt.want.Header) {

@@ -442,7 +442,7 @@ func TestProcessQuery(t *testing.T) {
 	//wait for message to be received by metaManager and get processed
 	time.Sleep(1 * time.Second)
 	t.Run("ConnectedTrue", func(t *testing.T) {
-		if metaManagerConfig.Connected != true {
+		if !metaManagerConfig.Connected {
 			t.Errorf("Connected was not set to true")
 		}
 	})
@@ -582,7 +582,7 @@ func TestProcessNodeConnection(t *testing.T) {
 	//wait for message to be received by metaManager and get processed
 	time.Sleep(1 * time.Second)
 	t.Run("ConnectedTrue", func(t *testing.T) {
-		if metaManagerConfig.Connected != true {
+		if !metaManagerConfig.Connected {
 			t.Errorf("Connected was not set to true")
 		}
 	})
@@ -593,7 +593,7 @@ func TestProcessNodeConnection(t *testing.T) {
 	//wait for message to be received by metaManager and get processed
 	time.Sleep(1 * time.Second)
 	t.Run("ConnectedFalse", func(t *testing.T) {
-		if metaManagerConfig.Connected != false {
+		if metaManagerConfig.Connected {
 			t.Errorf("Connected was not set to false")
 		}
 	})

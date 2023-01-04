@@ -65,7 +65,7 @@ func createFakeDeviceTwin() *[]dtclient.DeviceTwin {
 	return fakeDeviceTwin
 }
 
-//TestRegisterDTModule is function to test RegisterDTmodule().
+// TestRegisterDTModule is function to test RegisterDTmodule().
 func TestRegisterDTModule(t *testing.T) {
 	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 	dtContexts, _ := dtcontext.InitDTContext()
@@ -106,14 +106,14 @@ func TestRegisterDTModule(t *testing.T) {
 					break
 				}
 			}
-			if moduleRegistered == false {
+			if !moduleRegistered {
 				t.Errorf("RegisterDTModule failed to register the module %v", tt.moduleName)
 			}
 		})
 	}
 }
 
-//TestDTController_distributeMsg is function to test distributeMsg().
+// TestDTController_distributeMsg is function to test distributeMsg().
 func TestDTController_distributeMsg(t *testing.T) {
 	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 	dtContexts, _ := dtcontext.InitDTContext()
@@ -198,7 +198,7 @@ func TestDTController_distributeMsg(t *testing.T) {
 	})
 }
 
-//TestSyncSqlite is function to test SyncSqlite().
+// TestSyncSqlite is function to test SyncSqlite().
 func TestSyncSqlite(t *testing.T) {
 	// ormerMock is mocked Ormer implementation.
 	var ormerMock *beego.MockOrmer
@@ -289,7 +289,7 @@ func TestSyncSqlite(t *testing.T) {
 	}
 }
 
-//TestSyncDeviceFromSqlite is function to test SyncDeviceFromSqlite().
+// TestSyncDeviceFromSqlite is function to test SyncDeviceFromSqlite().
 func TestSyncDeviceFromSqlite(t *testing.T) {
 	// ormerMock is mocked Ormer implementation.
 	var ormerMock *beego.MockOrmer
@@ -424,7 +424,7 @@ func TestSyncDeviceFromSqlite(t *testing.T) {
 	}
 }
 
-//Test_classifyMsg is function to test classifyMsg().
+// Test_classifyMsg is function to test classifyMsg().
 func Test_classifyMsg(t *testing.T) {
 	//Encoded resource with LifeCycleConnectETPrefix
 	connectTopic := dtcommon.LifeCycleConnectETPrefix + "testtopic"

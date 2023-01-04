@@ -39,7 +39,7 @@ import (
 
 var called bool
 
-//testAction is a dummy function for testing Start
+// testAction is a dummy function for testing Start
 func testAction(context *dtcontext.DTContext, resource string, msg interface{}) error {
 	called = true
 	return errors.New("Called the dummy function for testing")
@@ -560,7 +560,7 @@ func TestDealMsgAttr(t *testing.T) {
 							break
 						}
 					}
-					if check == false {
+					if !check {
 						t.Errorf("Wrong Map")
 						return
 					}
