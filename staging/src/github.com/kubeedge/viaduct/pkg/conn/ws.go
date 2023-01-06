@@ -1,6 +1,7 @@
 package conn
 
 import (
+	"errors"
 	"io"
 	"net"
 	"sync"
@@ -103,7 +104,7 @@ func (conn *WSConnection) handleMessage() {
 		msg := &model.Message{}
 		err := lane.NewLane(api.ProtocolTypeWS, conn.wsConn).ReadMessage(msg)
 		if err != nil {
-			if err != io.EOF {
+			if !errors.Is(err, io.EOF) {
 				klog.Errorf("failed to read message, error: %+v", err)
 			}
 			conn.state.State = api.StatDisconnected
