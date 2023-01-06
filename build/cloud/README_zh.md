@@ -55,7 +55,7 @@ The command '/bin/sh -c apk --no-cache add coreutils' returned a non-zero code: 
 解决办法为在有网络环境的先制作一个init container image
 Dockerfile
 ```
-FROM alpine:3.9
+alpine:3.16
 RUN apk --no-cache add coreutils
 ```
 再替换老的init container的image,以及删除掉`apk --no-cache add coreutils &&`即可
