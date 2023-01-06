@@ -5,7 +5,7 @@ appVersion: "1.12.0"
 
 cloudCore:
   replicaCount: 1
-  hostNetWork: "true"
+  hostNetWork: false
   image:
     repository: "kubeedge/cloudcore"
     tag: "v1.12.0"
@@ -56,7 +56,7 @@ cloudCore:
     router:
       enable: "false"
   service:
-    enable: "true"
+    enable: true
     type: "NodePort"
     cloudhubNodePort: "30000"
     cloudhubQuicNodePort: "30001"
