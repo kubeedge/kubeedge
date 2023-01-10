@@ -213,7 +213,7 @@ func TestDeviceAttrToMsgAttr(t *testing.T) {
 						}
 					}
 				}
-				if keyPresent == false {
+				if !keyPresent {
 					t.Errorf("DeviceAttrToMsgAttr failed() due to wrong key %v", gotKey)
 				}
 			}
@@ -458,7 +458,7 @@ func TestMsgTwinToDeviceTwin(t *testing.T) {
 	}
 }
 
-//TestBuildDeviceState is function to test BuildDeviceState().
+// TestBuildDeviceState is function to test BuildDeviceState().
 func TestBuildDeviceState(t *testing.T) {
 	baseMessage := BaseMessage{EventID: uuid.New().String(), Timestamp: time.Now().UnixNano() / 1e6}
 	device := Device{
@@ -642,7 +642,7 @@ func TestBuildMembershipGetResult(t *testing.T) {
 	}
 }
 
-//createMessageTwin() is function to create a map of MessageTwin with MetaDataType updated and deleted.
+// createMessageTwin() is function to create a map of MessageTwin with MetaDataType updated and deleted.
 func createMessageTwin() map[string]*MsgTwin {
 	msgTwins := make(map[string]*MsgTwin)
 	twinMetadataDeleted := MsgTwin{
