@@ -75,7 +75,7 @@ const (
 	DefaultTunnelPort                  = 10004
 	DefaultClusterDomain               = "cluster.local"
 
-	CurrentSupportK8sVersion = "v1.22.6"
+	CurrentSupportK8sVersion = "v1.23.15"
 
 	// MetaManager
 	DefaultRemoteQueryTimeout = 60
