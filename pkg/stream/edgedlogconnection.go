@@ -19,6 +19,7 @@ package stream
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -101,7 +102,7 @@ func (l *EdgedLogsConnection) Serve(tunnel SafeWriteTunneler) error {
 		for {
 			n, err := reader.Read(data[:])
 			if err != nil {
-				if err != io.EOF {
+				if !errors.Is(err, io.EOF) {
 					klog.Errorf("%v failed to write log data, err:%v", l.String(), err)
 				}
 				return

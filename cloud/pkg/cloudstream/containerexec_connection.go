@@ -2,6 +2,7 @@ package cloudstream
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -109,7 +110,7 @@ func (c *ContainerExecConnection) Serve() error {
 		for {
 			n, err := c.Conn.Read(data[:])
 			if err != nil {
-				if err != io.EOF {
+				if !errors.Is(err, io.EOF) {
 					klog.Errorf("%s failed to read from client: %v", c.String(), err)
 					break
 				}

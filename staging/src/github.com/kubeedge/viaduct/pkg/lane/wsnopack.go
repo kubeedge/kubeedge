@@ -1,6 +1,7 @@
 package lane
 
 import (
+	"errors"
 	"io"
 	"time"
 
@@ -27,7 +28,7 @@ func NewWSLaneWithoutPack(van interface{}) *WSLaneWithoutPack {
 func (l *WSLaneWithoutPack) Read(p []byte) (int, error) {
 	_, msgData, err := l.conn.ReadMessage()
 	if err != nil {
-		if err != io.EOF {
+		if !errors.Is(err, io.EOF) {
 			klog.Errorf("read message error(%+v)", err)
 		}
 		return len(msgData), err

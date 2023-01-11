@@ -2,6 +2,7 @@ package conn
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -219,7 +220,7 @@ func (conn *QuicConnection) handleMessage(stream *smgr.Stream) {
 	for {
 		err := lane.NewLane(api.ProtocolTypeQuic, stream.Stream).ReadMessage(msg)
 		if err != nil {
-			if err != io.EOF {
+			if !errors.Is(err, io.EOF) {
 				klog.Errorf("failed to read message, error: %+v", err)
 			}
 			conn.streamManager.FreeStream(stream)

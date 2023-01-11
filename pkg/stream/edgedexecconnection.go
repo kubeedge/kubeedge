@@ -2,6 +2,7 @@ package stream
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -101,7 +102,7 @@ func (e *EdgedExecConnection) Serve(tunnel SafeWriteTunneler) error {
 		for {
 			n, err := con.Read(data[:])
 			if err != nil {
-				if err != io.EOF {
+				if !errors.Is(err, io.EOF) {
 					klog.Errorf("%v failed to write exec data, err:%v", e.String(), err)
 				}
 				return
