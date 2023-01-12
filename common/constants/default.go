@@ -42,14 +42,16 @@ const (
 	DefaultMqttKeyFile  = "/etc/kubeedge/certs/server.key"
 
 	// Edged
-	DefaultKubeletConfig               = "/etc/kubeedge/config/kubeconfig"
-	DefaultDockerAddress               = "unix:///var/run/docker.sock"
-	DefaultRuntimeType                 = "docker"
-	DefaultEdgedMemoryCapacity         = 7852396000
-	DefaultRemoteRuntimeEndpoint       = "unix:///var/run/dockershim.sock"
-	DefaultRemoteImageEndpoint         = "unix:///var/run/dockershim.sock"
-	DefaultMosquittoImage              = "eclipse-mosquitto:1.6.15"
-	DefaultPodSandboxImage             = "kubeedge/pause:3.1"
+	DefaultKubeletConfig         = "/etc/kubeedge/config/kubeconfig"
+	DefaultDockerAddress         = "unix:///var/run/docker.sock"
+	DefaultRuntimeType           = "docker"
+	DefaultEdgedMemoryCapacity   = 7852396000
+	DefaultRemoteRuntimeEndpoint = "unix:///var/run/dockershim.sock"
+	DefaultRemoteImageEndpoint   = "unix:///var/run/dockershim.sock"
+	DefaultMosquittoImage        = "eclipse-mosquitto:1.6.15"
+	// update PodSandboxImage version when bumping k8s vendor version, consistent with vendor/k8s.io/kubernetes/cmd/kubelet/app/options/container_runtime.go defaultPodSandboxImageVersion
+	// When this value are updated, also update comments in pkg/apis/componentconfig/edgecore/v1alpha1/types.go
+	DefaultPodSandboxImage             = "kubeedge/pause:3.6"
 	DefaultImagePullProgressDeadline   = time.Minute
 	DefaultImageGCHighThreshold        = 80
 	DefaultImageGCLowThreshold         = 40
