@@ -1,0 +1,51 @@
+name:  Scan Vulnerabilities
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        target:
+          - cloudcore
+          - admission
+          - edgesite-agent
+          - edgesite-server
+          - csidriver
+          - iptablesmanager
+          - edgemark
+          - installation-package
+          - controllermanager
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v3
+
+      - name: install QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: install Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Build docker images
+        run: make image WHAT=${{ matrix.target }}
+
+      - name: Download trivy
+        run: |
+          pushd $(mktemp -d)
+          wget https://github.com/aquasecurity/trivy/releases/download/v${{ env.TRIVY_VERSION }}/trivy_${{ env.TRIVY_VERSION }}_Linux-64bit.tar.gz
+          tar zxvf trivy_${{ env.TRIVY_VERSION }}_Linux-64bit.tar.gz
+          echo "$(pwd)" >> $GITHUB_PATH
+        env:
+          TRIVY_VERSION: "0.32.1"
+      - name: Run trivy on images
+        run: |
+            images=`docker images | grep ${{ matrix.target }} | awk '{print $1":"$2}'`
+            for vuln_type in "os" "library"; do
+              trivy image --ignore-unfixed --vuln-type="${vuln_type}" "${images}"
+            done
