@@ -22,7 +22,7 @@ set -o pipefail
 
 KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 MOUNTPATH="${MOUNTPATH:-/kubeedge}"
-KUBEEDGE_BUILD_IMAGE=${KUBEEDGE_BUILD_IMAGE:-"kubeedge/build-tools"}
+KUBEEDGE_BUILD_IMAGE=${KUBEEDGE_BUILD_IMAGE:-"kubeedge/build-tools:1.17.13-ke1"}
 DOCKER_GID="${DOCKER_GID:-$(grep '^docker:' /etc/group | cut -f3 -d:)}"
 CONTAINER_RUN_OPTIONS="${CONTAINER_RUN_OPTIONS:--it}"
 
