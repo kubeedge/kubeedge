@@ -474,7 +474,7 @@ func (ns *NodeSession) deleteSuccessPoint(resourceNamespace, objectSyncName stri
 		ReliablesyncsV1alpha1().
 		ObjectSyncs(resourceNamespace).
 		Delete(context.Background(), objectSyncName, *metav1.NewDeleteOptions(0))
-	if err != nil {
+	if err != nil && !apierrors.IsNotFound(err) {
 		klog.Errorf("Delete ObjectSync %s error: %v", objectSyncName, err)
 	}
 
