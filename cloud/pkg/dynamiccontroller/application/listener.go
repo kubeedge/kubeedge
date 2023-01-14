@@ -3,7 +3,6 @@ package application
 import (
 	"strings"
 
-	"github.com/google/uuid"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -27,8 +26,8 @@ type SelectorListener struct {
 	selector LabelFieldSelector
 }
 
-func NewSelectorListener(nodeName string, gvr schema.GroupVersionResource, selector LabelFieldSelector) *SelectorListener {
-	return &SelectorListener{id: uuid.New().String(), nodeName: nodeName, gvr: gvr, selector: selector}
+func NewSelectorListener(ID, nodeName string, gvr schema.GroupVersionResource, selector LabelFieldSelector) *SelectorListener {
+	return &SelectorListener{id: ID, nodeName: nodeName, gvr: gvr, selector: selector}
 }
 
 func (l *SelectorListener) sendAllObjects(rets []runtime.Object, handler *CommonResourceEventHandler) {

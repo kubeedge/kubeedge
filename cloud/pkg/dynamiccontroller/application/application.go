@@ -312,5 +312,5 @@ func applicationToListener(app *metaserver.Application) (*SelectorListener, erro
 		selector.Field = fields.AndSelectors(selector.Field, fields.OneTermEqualSelector("metadata.namespace", namespace))
 	}
 
-	return NewSelectorListener(app.Nodename, gvr, selector), nil
+	return NewSelectorListener(app.ID, app.Nodename, gvr, selector), nil
 }

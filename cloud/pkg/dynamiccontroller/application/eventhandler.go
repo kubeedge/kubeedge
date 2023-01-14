@@ -34,7 +34,8 @@ import (
 )
 
 // HandlerCenter is used to prepare corresponding CommonResourceEventHandler for listener
-// CommonResourceEventHandler then will send to the listener the objs it is interested in, including subsequent changes (watch event)
+// CommonResourceEventHandler then will send to the listener the objs it is interested in,
+// including subsequent changes (watch event)
 type HandlerCenter interface {
 	AddListener(s *SelectorListener) error
 	DeleteListener(s *SelectorListener)
@@ -42,6 +43,8 @@ type HandlerCenter interface {
 }
 
 type handlerCenter struct {
+	// handlerLock used to protect the handlers map
+	handlerLock                  sync.Mutex
 	handlers                     map[schema.GroupVersionResource]*CommonResourceEventHandler
 	dynamicSharedInformerFactory dynamicinformer.DynamicSharedInformerFactory
 	messageLayer                 messagelayer.MessageLayer
@@ -59,14 +62,17 @@ func NewHandlerCenter(informerFactory dynamicinformer.DynamicSharedInformerFacto
 }
 
 func (c *handlerCenter) ForResource(gvr schema.GroupVersionResource) *CommonResourceEventHandler {
-	var handler *CommonResourceEventHandler
-	if store, ok := c.handlers[gvr]; ok {
-		handler = store
-	} else {
-		klog.Infof("[metaserver/HandlerCenter] prepare a new resourceEventHandler(%v)", gvr)
-		handler = NewCommonResourceEventHandler(gvr, c.dynamicSharedInformerFactory, c.messageLayer)
-		c.handlers[gvr] = handler
+	c.handlerLock.Lock()
+	defer c.handlerLock.Unlock()
+
+	if handler, ok := c.handlers[gvr]; ok {
+		return handler
 	}
+
+	klog.Infof("[metaserver/HandlerCenter] prepare a new resourceEventHandler(%v)", gvr)
+	handler := NewCommonResourceEventHandler(gvr, c.dynamicSharedInformerFactory, c.messageLayer)
+	c.handlers[gvr] = handler
+
 	return handler
 }
 
@@ -76,7 +82,9 @@ func (c *handlerCenter) AddListener(s *SelectorListener) error {
 }
 
 func (c *handlerCenter) DeleteListener(s *SelectorListener) {
+	c.handlerLock.Lock()
 	c.handlers[s.gvr].DeleteListener(s)
+	c.handlerLock.Unlock()
 }
 
 // CommonResourceEventHandler can be used by configmapManager and podManager
