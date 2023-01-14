@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
 
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
@@ -83,7 +84,7 @@ func NewDiagnoseOptions() *common.DiagnoseOptions {
 	do.CheckOptions = &common.CheckOptions{
 		IP:      "",
 		Timeout: 3,
-		Runtime: common.DefaultRuntime,
+		Runtime: constants.DefaultRuntimeType,
 	}
 	return do
 }

@@ -103,7 +103,7 @@ func ExecuteCollect(collectOptions *common.CollectOptions) error {
 	}
 	printDetail("collect edgecore data finish")
 
-	if edgeconfig.Modules.Edged.ContainerRuntime == "docker" ||
+	if edgeconfig.Modules.Edged.ContainerRuntime == constants.DefaultRuntimeType ||
 		edgeconfig.Modules.Edged.ContainerRuntime == "" {
 		err = collectRuntimeData(fmt.Sprintf("%s/runtime", tmpName))
 		if err != nil {
