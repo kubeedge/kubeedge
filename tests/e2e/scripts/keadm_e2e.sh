@@ -20,6 +20,8 @@ E2E_DIR=$(realpath $(dirname $0)/..)
 IMAGE_TAG=$(git describe --tags)
 KUBEEDGE_VERSION=$IMAGE_TAG
 
+source "${KUBEEDGE_ROOT}/hack/lib/install.sh"
+
 function cleanup() {
   sudo pkill edgecore || true
   helm uninstall cloudcore -n kubeedge && kubectl delete ns kubeedge  || true
@@ -48,8 +50,15 @@ function build_image() {
   cd $KUBEEDGE_ROOT
   make image WHAT=cloudcore -f $KUBEEDGE_ROOT/Makefile
   make image WHAT=installation-package -f $KUBEEDGE_ROOT/Makefile
-  kind load docker-image kubeedge/cloudcore:$IMAGE_TAG --name test
-  kind load docker-image kubeedge/installation-package:$IMAGE_TAG --name test
+  # convert docker images to cri image, or cri runtime cannot identify the image that already existed on the local host
+  echo "save docker images to cri images"
+  docker save kubeedge/cloudcore:$IMAGE_TAG > cloudcore.tar
+  docker save kubeedge/installation-package:$IMAGE_TAG > installation-package.tar
+  sudo ctr -n=k8s.io image import cloudcore.tar
+  sudo ctr -n=k8s.io image import installation-package.tar
+  # load image to test cluster
+  kind load docker-image docker.io/kubeedge/cloudcore:$IMAGE_TAG --name test
+  kind load docker-image docker.io/kubeedge/installation-package:$IMAGE_TAG --name test
 }
 
 function start_kubeedge() {
@@ -114,6 +123,8 @@ prepare_cluster
 
 echo -e "\nBuilding cloud image..."
 build_image
+
+install_cni_plugins
 
 echo -e "\nStarting kubeedge..."
 start_kubeedge

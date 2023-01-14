@@ -78,6 +78,14 @@ function install_golangci-lint {
     export PATH=$PATH:$GOPATH/bin
 }
 
+verify_containerd_installed(){
+  # verify the containerd installed
+  command -v containerd >/dev/null || {
+    echo "must install the containerd first"
+    exit 1
+  }
+}
+
 verify_docker_installed(){
   # verify the docker installed
   command -v docker >/dev/null || {
@@ -86,3 +94,15 @@ verify_docker_installed(){
   }
 }
 
+# install CNI plugins
+function install_cni_plugins() {
+  # install CNI plugins if not exist
+  if [ ! -f "/opt/cni/bin/loopback" ]; then
+    echo -e "install CNI plugins..."
+    mkdir -p /opt/cni/bin
+    wget https://github.com/containernetworking/plugins/releases/download/v1.1.1/cni-plugins-linux-amd64-v1.1.1.tgz
+    tar Cxzvf /opt/cni/bin cni-plugins-linux-amd64-v1.1.1.tgz
+  else
+    echo "CNI plugins already installed and no need to install"
+  fi
+}
