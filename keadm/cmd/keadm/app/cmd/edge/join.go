@@ -25,6 +25,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/blang/semver"
 	"github.com/spf13/cobra"
 	"k8s.io/klog/v2"
 	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
@@ -33,6 +34,8 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
+	validationv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1/validation"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2/validation"
 	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
@@ -212,10 +215,20 @@ func createDirs() error {
 }
 
 func createEdgeConfigFiles(opt *common.JoinOptions) error {
+	// Determines whether the kubeEdgeVersion is earlier than v1.12.0
+	// If so, we need to create edgeconfig with v1alpha1 version
+	v, err := semver.ParseTolerant(opt.KubeEdgeVersion)
+	if err != nil {
+		return fmt.Errorf("parse kubeedge version failed, %v", err)
+	}
+	if v.Major <= 1 && v.Minor < 12 {
+		return createV1alpha1EdgeConfigFiles(opt)
+	}
+
 	var edgeCoreConfig *v1alpha2.EdgeCoreConfig
 
 	configFilePath := filepath.Join(util.KubeEdgePath, "config/edgecore.yaml")
-	_, err := os.Stat(configFilePath)
+	_, err = os.Stat(configFilePath)
 	if err == nil || os.IsExist(err) {
 		klog.Infoln("Read existing configuration file")
 		b, err := os.ReadFile(configFilePath)
@@ -269,26 +282,97 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 	edgeCoreConfig.Modules.EdgeStream.TunnelServer = net.JoinHostPort(host, strconv.Itoa(constants.DefaultTunnelPort))
 
 	if len(opt.Labels) > 0 {
-		labelsMap := make(map[string]string)
-		for _, label := range opt.Labels {
-			arr := strings.SplitN(label, "=", 2)
-			if arr[0] == "" {
-				continue
-			}
-
-			if len(arr) > 1 {
-				labelsMap[arr[0]] = arr[1]
-			} else {
-				labelsMap[arr[0]] = ""
-			}
-		}
-		edgeCoreConfig.Modules.Edged.NodeLabels = labelsMap
+		edgeCoreConfig.Modules.Edged.NodeLabels = setEdgedNodeLabels(opt)
 	}
 
 	if errs := validation.ValidateEdgeCoreConfiguration(edgeCoreConfig); len(errs) > 0 {
 		return errors.New(pkgutil.SpliceErrors(errs.ToAggregate().Errors()))
 	}
 	return common.Write2File(configFilePath, edgeCoreConfig)
+}
+
+func createV1alpha1EdgeConfigFiles(opt *common.JoinOptions) error {
+	var edgeCoreConfig *v1alpha1.EdgeCoreConfig
+
+	configFilePath := filepath.Join(util.KubeEdgePath, "config/edgecore.yaml")
+	_, err := os.Stat(configFilePath)
+	if err == nil || os.IsExist(err) {
+		klog.Infoln("Read existing configuration file")
+		b, err := os.ReadFile(configFilePath)
+		if err != nil {
+			return err
+		}
+		if err := yaml.Unmarshal(b, &edgeCoreConfig); err != nil {
+			return err
+		}
+	}
+	if edgeCoreConfig == nil {
+		klog.Infoln("The configuration does not exist or the parsing fails, and the default configuration is generated")
+		edgeCoreConfig = v1alpha1.NewDefaultEdgeCoreConfig()
+	}
+
+	edgeCoreConfig.Modules.EdgeHub.WebSocket.Server = opt.CloudCoreIPPort
+	if opt.Token != "" {
+		edgeCoreConfig.Modules.EdgeHub.Token = opt.Token
+	}
+	if opt.EdgeNodeName != "" {
+		edgeCoreConfig.Modules.Edged.HostnameOverride = opt.EdgeNodeName
+	}
+	if opt.RuntimeType != "" {
+		edgeCoreConfig.Modules.Edged.RuntimeType = opt.RuntimeType
+	}
+
+	switch opt.CGroupDriver {
+	case v1alpha1.CGroupDriverSystemd:
+		edgeCoreConfig.Modules.Edged.CGroupDriver = v1alpha1.CGroupDriverSystemd
+	case v1alpha1.CGroupDriverCGroupFS:
+		edgeCoreConfig.Modules.Edged.CGroupDriver = v1alpha1.CGroupDriverCGroupFS
+	default:
+		return fmt.Errorf("unsupported CGroupDriver: %s", opt.CGroupDriver)
+	}
+	edgeCoreConfig.Modules.Edged.CGroupDriver = opt.CGroupDriver
+
+	if opt.RemoteRuntimeEndpoint != "" {
+		edgeCoreConfig.Modules.Edged.RemoteRuntimeEndpoint = opt.RemoteRuntimeEndpoint
+		edgeCoreConfig.Modules.Edged.RemoteImageEndpoint = opt.RemoteRuntimeEndpoint
+	}
+
+	host, _, err := net.SplitHostPort(opt.CloudCoreIPPort)
+	if err != nil {
+		return fmt.Errorf("get current host and port failed: %v", err)
+	}
+	if opt.CertPort != "" {
+		edgeCoreConfig.Modules.EdgeHub.HTTPServer = "https://" + net.JoinHostPort(host, opt.CertPort)
+	} else {
+		edgeCoreConfig.Modules.EdgeHub.HTTPServer = "https://" + net.JoinHostPort(host, "10002")
+	}
+	edgeCoreConfig.Modules.EdgeStream.TunnelServer = net.JoinHostPort(host, strconv.Itoa(constants.DefaultTunnelPort))
+
+	if len(opt.Labels) > 0 {
+		edgeCoreConfig.Modules.Edged.Labels = setEdgedNodeLabels(opt)
+	}
+
+	if errs := validationv1alpha1.ValidateEdgeCoreConfiguration(edgeCoreConfig); len(errs) > 0 {
+		return errors.New(pkgutil.SpliceErrors(errs.ToAggregate().Errors()))
+	}
+	return common.Write2File(configFilePath, edgeCoreConfig)
+}
+
+func setEdgedNodeLabels(opt *common.JoinOptions) map[string]string {
+	labelsMap := make(map[string]string)
+	for _, label := range opt.Labels {
+		arr := strings.SplitN(label, "=", 2)
+		if arr[0] == "" {
+			continue
+		}
+
+		if len(arr) > 1 {
+			labelsMap[arr[0]] = arr[1]
+		} else {
+			labelsMap[arr[0]] = ""
+		}
+	}
+	return labelsMap
 }
 
 func runEdgeCore() error {
