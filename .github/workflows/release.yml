@@ -3,8 +3,10 @@ on:
   release:
     types:
       - published
+
 env:
   CONTAINER_RUN_OPTIONS: " "
+  IMAGE_REPOSITORY: kubeedge
 
 jobs:
   release-assests:
@@ -12,20 +14,19 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        target:
-          - kubeedge
-          - edgesite
-          - keadm
-        os:
-          - linux
-        arch:
-          - amd64
-          - arm64
-          - arm
-        ARM_VERSION:
-          - GOARM7
-          - GOARM8
-          - ""
+        target: [kubeedge, edgesite, keadm]
+        os: [linux]
+        ARM_VERSION: [GOARM7, GOARM8, ""]
+    outputs:
+      hash-kubeedge-amd64: ${{ steps.hash.outputs.hash-kubeedge-amd64 }}
+      hash-kubeedge-arm64: ${{ steps.hash.outputs.hash-kubeedge-arm64 }}
+      hash-kubeedge-arm:   ${{ steps.hash.outputs.hash-kubeedge-arm }}
+      hash-keadm-amd64:    ${{ steps.hash.outputs.hash-keadm-amd64 }}
+      hash-keadm-arm64:    ${{ steps.hash.outputs.hash-keadm-arm64 }}
+      hash-keadm-arm:      ${{ steps.hash.outputs.hash-keadm-arm }}
+      hash-edgesite-amd64: ${{ steps.hash.outputs.hash-edgesite-amd64 }}
+      hash-edgesite-arm64: ${{ steps.hash.outputs.hash-edgesite-arm64 }}
+      hash-edgesite-arm:   ${{ steps.hash.outputs.hash-edgesite-arm }}
     steps:
       - name: checkout code
         uses: actions/checkout@v3
@@ -37,29 +38,67 @@ jobs:
       - name: Making and packaging
         run: |
           docker pull kubeedge/build-tools
-          make release ARM_VERSION=${{ matrix.ARM_VERSION }}
+          make release WHAT=${{ matrix.target }} ARM_VERSION=${{ matrix.ARM_VERSION }}
+      - name: Generate arch
+        run: |
+          if [ "${{ matrix.ARM_VERSION }}" = "GOARM7" ]; then echo "output_arch=arm" >> $GITHUB_ENV; elif [ ${{ matrix.ARM_VERSION }} = "GOARM8" ]; then echo "output_arch=arm64" >> $GITHUB_ENV; else echo "output_arch=amd64" >> $GITHUB_ENV; fi
+      - name: Generate hashes
+        shell: bash
+        id: hash
+        run: |
+          cp _output/release/${{ github.ref_name }}/${{ matrix.target }}-${{ github.ref_name }}-${{ matrix.os }}-${{ env.output_arch }}.tar.gz .
+          echo "hash-${{ matrix.target }}-${{ env.output_arch }}=$( \
+                      sha256sum ${{ matrix.target }}-${{ github.ref_name }}-${{ matrix.os }}-${{ env.output_arch}}.tar.gz | base64 -w0 \
+                    )" >> "$GITHUB_OUTPUT"
       - name: Uploading assets...
         if: ${{ !env.ACT }}
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            _output/release/${{ github.ref_name }}/${{ matrix.target }}-${{ github.ref_name }}-${{ matrix.os }}-${{ matrix.arch }}.tar.gz
-            _output/release/${{ github.ref_name }}/checksum_${{ matrix.target }}-${{ github.ref_name }}-${{ matrix.os }}-${{ matrix.arch }}.tar.gz.txt
+            _output/release/${{ github.ref_name }}/${{ matrix.target }}-${{ github.ref_name }}-${{ matrix.os }}-${{ env.output_arch }}.tar.gz
+            _output/release/${{ github.ref_name }}/checksum_${{ matrix.target }}-${{ github.ref_name }}-${{ matrix.os }}-${{ env.output_arch }}.tar.gz.txt
+
+  combine_hashes:
+    needs: [release-assests]
+    runs-on: ubuntu-22.04
+    outputs:
+      hashes: ${{ steps.hashes.outputs.hashes }}
+    env:
+      HASHES: ${{ toJSON(needs.release-assests.outputs) }}
+    steps:
+      - id: hashes
+        run: |
+          echo "$HASHES" | jq -r '.[] | @base64d' | sed "/^$/d" > hashes.txt
+          echo "hashes=$(cat hashes.txt | base64 -w0)" >> "$GITHUB_OUTPUT"
+
+  # This step calls the generic workflow to generate provenance.
+  provenance:
+    needs: [combine_hashes]
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.2.2
+    with:
+      base64-subjects: "${{ needs.combine_hashes.outputs.hashes }}"
+      # Upload provenance to a new release
+      upload-assets: true
 
   publish-image-to-dockerhub:
     name: publish to DockerHub
     strategy:
       matrix:
-        target:
-          - cloudcore
-          - admission
-          - edgesite-agent
-          - edgesite-server
-          - csidriver
-          - iptablesmanager
-          - edgemark
-          - installation-package
-          - controllermanager
+        target: [cloudcore, admission, edgesite-agent, edgesite-server, csidriver, iptablesmanager, edgemark, installation-package, controllermanager]
+    outputs:
+      hash-digest-cloudcore: ${{ steps.hash.outputs.hash-digest-cloudcore }}
+      hash-digest-admission: ${{ steps.hash.outputs.hash-digest-admission }}
+      hash-digest-edgesite-agent: ${{ steps.hash.outputs.hash-digest-edgesite-agent }}
+      hash-digest-edgesite-server: ${{ steps.hash.outputs.hash-digest-edgesite-server }}
+      hash-digest-csidriver: ${{ steps.hash.outputs.hash-digest-csidriver }}
+      hash-digest-iptablesmanager: ${{ steps.hash.outputs.hash-digest-iptablesmanager }}
+      hash-digest-edgemark: ${{ steps.hash.outputs.hash-digest-edgemark }}
+      hash-digest-installation-package: ${{ steps.hash.outputs.hash-digest-installation-package }}
+      hash-digest-controllermanager: ${{ steps.hash.outputs.hash-digest-controllermanager }}
     runs-on: ubuntu-22.04
     steps:
       - name: checkout code
@@ -74,11 +113,44 @@ jobs:
       - name: install Buildx
         uses: docker/setup-buildx-action@v1
       - name: login to DockerHub
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USER_NAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: generate dockerfile path
+        run: |
+          echo "dockerfile_path=$(./hack/make-rules/imageprocess.sh dockerfile ${{ matrix.target }})" >> $GITHUB_ENV
       - name: build and publish images
-        env:
-          IMAGE_REPO_NAME: kubeedge
-        run: make crossbuildimage WHAT=${{ matrix.target }}
+        id: build
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ${{ env.dockerfile_path }}
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          push: true
+          tags: |
+            ${{ env.IMAGE_REPOSITORY }}/${{ matrix.target }}:${{ github.ref_name }}
+      - name: generate digest
+        id: hash
+        run: |
+          echo "hash-digest-${{ matrix.target }}=${{ steps.build.outputs.digest }}" >> $GITHUB_OUTPUT
+
+  # This step calls the container workflow to generate provenance and push it to
+  # the container registry.
+  image-provenance:
+    needs: [publish-image-to-dockerhub]
+    strategy:
+      matrix:
+        target: [cloudcore, admission, edgesite-agent, edgesite-server, csidriver, iptablesmanager, edgemark, installation-package, controllermanager]
+    permissions:
+      actions: read # for detecting the Github Actions environment.
+      id-token: write # for creating OIDC tokens for signing.
+      packages: write # for uploading attestations.
+    if: startsWith(github.ref, 'refs/tags/')
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v1.4.0
+    with:
+      image: kubeedge/${{ matrix.target }}
+      registry-username: ${{ vars.DOCKERHUB_USER_NAME }}
+      digest: ${{ needs.publish-image-to-dockerhub.outputs[format('hash-digest-{0}', matrix.target)] }}
+    secrets:
+      registry-password: ${{ secrets.DOCKERHUB_TOKEN }}
