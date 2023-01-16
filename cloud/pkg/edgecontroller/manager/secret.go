@@ -20,7 +20,7 @@ func (sm *SecretManager) Events() chan watch.Event {
 // NewSecretManager create SecretManager by kube clientset and namespace
 func NewSecretManager(config *v1alpha1.EdgeController, si cache.SharedIndexInformer) (*SecretManager, error) {
 	events := make(chan watch.Event, config.Buffer.SecretEvent)
-	rh := NewCommonResourceEventHandler(events)
+	rh := NewCommonResourceEventHandler(events, nil)
 	si.AddEventHandler(rh)
 
 	return &SecretManager{events: events}, nil

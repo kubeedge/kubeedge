@@ -20,7 +20,7 @@ func (rm *RuleManager) Events() chan watch.Event {
 // NewRuleManager create RuleManager by SharedIndexInformer
 func NewRuleManager(config *v1alpha1.EdgeController, si cache.SharedIndexInformer) (*RuleManager, error) {
 	events := make(chan watch.Event, config.Buffer.RulesEvent)
-	rh := NewCommonResourceEventHandler(events)
+	rh := NewCommonResourceEventHandler(events, nil)
 	si.AddEventHandler(rh)
 
 	return &RuleManager{events: events}, nil
