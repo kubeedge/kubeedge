@@ -18,10 +18,9 @@ import (
 )
 
 var groupMap = map[string]string{
-	"resource": modules.MetaGroup,
-	"twin":     modules.TwinGroup,
-	"func":     modules.MetaGroup,
-	"user":     modules.BusGroup,
+	"twin": modules.TwinGroup,
+	"func": modules.MetaGroup,
+	"user": modules.BusGroup,
 }
 
 var (
@@ -190,6 +189,9 @@ func (eh *EdgeHub) keepalive() {
 }
 
 func (eh *EdgeHub) pubConnectInfo(isConnected bool) {
+	// update connected info
+	connect.SetConnected(isConnected)
+
 	// var info model.Message
 	content := connect.CloudConnected
 	if !isConnected {

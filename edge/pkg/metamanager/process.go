@@ -15,7 +15,6 @@ import (
 	cloudmodules "github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/common/constants"
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
-	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	metaManagerConfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
@@ -83,10 +82,6 @@ func requireRemoteQuery(resType string) bool {
 		resType == model.ResourceTypeNode ||
 		resType == model.ResourceTypeServiceAccountToken ||
 		resType == model.ResourceTypeLease
-}
-
-func isConnected() bool {
-	return metaManagerConfig.Connected
 }
 
 func msgDebugInfo(message *model.Message) string {
@@ -366,7 +361,7 @@ func (m *metaManager) processQuery(message model.Message) {
 	resKey, resType, resID := parseResource(message.GetResource())
 	var metas *[]string
 	var err error
-	if requireRemoteQuery(resType) && isConnected() {
+	if requireRemoteQuery(resType) && connect.IsConnected() {
 		resKey, err = getSpecialResourceKey(resType, resKey, message)
 		if err != nil {
 			klog.Errorf("failed to get special resource %s key", resKey)
@@ -446,16 +441,6 @@ func (m *metaManager) processRemoteQuery(message model.Message) {
 	}()
 }
 
-func (m *metaManager) processNodeConnection(message model.Message) {
-	content, _ := message.GetContent().(string)
-	klog.Infof("node connection event occur: %s", content)
-	if content == connect.CloudConnected {
-		metaManagerConfig.Connected = true
-	} else if content == connect.CloudDisconnected {
-		metaManagerConfig.Connected = false
-	}
-}
-
 func (m *metaManager) processVolume(message model.Message) {
 	klog.Info("process volume started")
 	back, err := beehiveContext.SendSync(modules.EdgedModuleName, message, constants.CSISyncMsgRespTimeout)
@@ -485,8 +470,6 @@ func (m *metaManager) process(message model.Message) {
 		m.processQuery(message)
 	case model.ResponseOperation:
 		m.processResponse(message)
-	case messagepkg.OperationNodeConnection:
-		m.processNodeConnection(message)
 	case constants.CSIOperationTypeCreateVolume,
 		constants.CSIOperationTypeDeleteVolume,
 		constants.CSIOperationTypeControllerPublishVolume,
