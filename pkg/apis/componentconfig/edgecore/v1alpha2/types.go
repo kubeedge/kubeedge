@@ -136,10 +136,6 @@ type TailoredKubeletFlag struct {
 	// mounts,etc).
 	// default "/var/lib/edged"
 	RootDirectory string `json:"rootDirectory,omitempty"`
-	// The Kubelet will load its initial configuration from this file.
-	// The path may be absolute or relative; relative paths are under the Kubelet's current working directory.
-	// Omit this flag to use the combination of built-in default configuration values and flags.
-	KubeletConfigFile string `json:"kubeletConfigFile,omitempty"`
 	// registerNode enables automatic registration with the apiserver.
 	// default true
 	// DEPRECATED: This parameter should be set via the TailoredKubeletConfig
