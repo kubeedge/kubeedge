@@ -147,6 +147,22 @@ func (dc *DownstreamController) nodeUpgradeJobAdded(upgrade *v1alpha1.NodeUpgrad
 
 	klog.Infof("Filtered finished, the below nodes are to upgrade\n%v\n", nodesToUpgrade)
 
+	// upgrade most `UpgradeJob.Spec.Concurrency` nodes once a time
+	nodesChan := make(chan string, upgrade.Spec.Concurrency)
+
+	// select nodes to do upgrade operation
+	go dc.selectConcurrentNodes(nodesChan, nodesToUpgrade, upgrade)
+
+	go func() {
+		for node := range nodesChan {
+			dc.processUpgrade(node, upgrade)
+		}
+	}()
+}
+
+// processUpgrade do the upgrade operation on node
+func (dc *DownstreamController) processUpgrade(node string, upgrade *v1alpha1.NodeUpgradeJob) {
+	klog.V(4).Infof("begin to upgrade node %s", node)
 	// if users specify Image, we'll use upgrade Version as its image tag, even though Image contains tag.
 	// if not, we'll use default image: kubeedge/installation-package:${Version}
 	var repo string
@@ -162,65 +178,121 @@ func (dc *DownstreamController) nodeUpgradeJobAdded(upgrade *v1alpha1.NodeUpgrad
 	imageTag := upgrade.Spec.Version
 	image := fmt.Sprintf("%s:%s", repo, imageTag)
 
-	for _, node := range nodesToUpgrade {
-		// send upgrade msg to every edge node
-		msg := model.NewMessage("")
+	// send upgrade msg to edge node
+	msg := model.NewMessage("")
 
-		resource := buildUpgradeResource(upgrade.Name, node)
+	resource := buildUpgradeResource(upgrade.Name, node)
 
-		upgradeReq := commontypes.NodeUpgradeJobRequest{
-			UpgradeID:   upgrade.Name,
-			HistoryID:   uuid.New().String(),
-			UpgradeTool: upgrade.Spec.UpgradeTool,
-			Version:     upgrade.Spec.Version,
-			Image:       image,
-		}
+	upgradeReq := commontypes.NodeUpgradeJobRequest{
+		UpgradeID:   upgrade.Name,
+		HistoryID:   uuid.New().String(),
+		UpgradeTool: upgrade.Spec.UpgradeTool,
+		Version:     upgrade.Spec.Version,
+		Image:       image,
+	}
 
-		msg.BuildRouter(modules.NodeUpgradeJobControllerModuleName, modules.NodeUpgradeJobControllerModuleGroup, resource, NodeUpgrade).
-			FillBody(upgradeReq)
+	msg.BuildRouter(modules.NodeUpgradeJobControllerModuleName, modules.NodeUpgradeJobControllerModuleGroup, resource, NodeUpgrade).
+		FillBody(upgradeReq)
 
-		err := dc.messageLayer.Send(*msg)
+	err = dc.messageLayer.Send(*msg)
+	if err != nil {
+		klog.Errorf("Failed to send upgrade message %v due to error %v", msg.GetID(), err)
+		return
+	}
+
+	// process time out: cloud did not receive upgrade feedback from edge
+	// send upgrade timeout response message to upstream
+	go dc.handleNodeUpgradeJobTimeout(node, upgrade.Name, upgrade.Spec.Version, upgradeReq.HistoryID, upgrade.Spec.TimeoutSeconds)
+
+	// mark Upgrade state upgrading
+	status := &v1alpha1.UpgradeStatus{
+		NodeName: node,
+		State:    v1alpha1.Upgrading,
+		History: v1alpha1.History{
+			HistoryID:   upgradeReq.HistoryID,
+			UpgradeTime: time.Now().String(),
+		},
+	}
+	err = patchNodeUpgradeJobStatus(dc.crdClient, upgrade, status)
+	if err != nil {
+		// not return, continue to mark node unschedulable
+		klog.Errorf("Failed to mark Upgrade upgrading status: %v", err)
+	}
+
+	// mark edge node unschedulable
+	// the effect is like running cmd: kubectl drain <node-to-drain> --ignore-daemonsets
+	unscheduleNode := v1.Node{}
+	unscheduleNode.Spec.Unschedulable = true
+
+	// add a upgrade label
+	unscheduleNode.Labels = map[string]string{NodeUpgradeJobStatusKey: NodeUpgradeJobStatusValue}
+	byteNode, err := json.Marshal(unscheduleNode)
+	if err != nil {
+		klog.Warningf("marshal data failed: %v", err)
+		return
+	}
+
+	_, err = dc.kubeClient.CoreV1().Nodes().Patch(context.Background(), node, apimachineryType.StrategicMergePatchType, byteNode, metav1.PatchOptions{})
+	if err != nil {
+		klog.Errorf("failed to drain node %s: %v", node, err)
+		return
+	}
+}
+
+// selectConcurrentNodes select the nodes to do upgrade operation, and put it into channel nodesChan
+func (dc *DownstreamController) selectConcurrentNodes(nodesChan chan string, allNodes []string, upgrade *v1alpha1.NodeUpgradeJob) {
+	// the default concurrency is 1
+	// this means that we will upgrade nodes one by one
+	// only when the last one node upgrade finished, we'll continue to upgrade the next one node
+	concurrency := 1
+	if upgrade.Spec.Concurrency != 0 {
+		concurrency = int(upgrade.Spec.Concurrency)
+	}
+
+	timeout := int(*upgrade.Spec.TimeoutSeconds) * (len(allNodes) + 1) / concurrency
+
+	err := wait.Poll(10*time.Second, time.Duration(timeout)*time.Second, func() (bool, error) {
+		upgradeJob, err := dc.crdClient.OperationsV1alpha1().NodeUpgradeJobs().Get(context.TODO(), upgrade.Name, metav1.GetOptions{})
 		if err != nil {
-			klog.Errorf("Failed to send upgrade message %v due to error %v", msg.GetID(), err)
-			continue
+			return false, nil
 		}
 
-		// process time out: cloud did not receive upgrade feedback from edge
-		// send upgrade timeout response message to upstream
-		go dc.handleNodeUpgradeJobTimeout(node, upgrade.Name, upgrade.Spec.Version, upgradeReq.HistoryID, upgrade.Spec.TimeoutSeconds)
-
-		// mark Upgrade state upgrading
-		status := &v1alpha1.UpgradeStatus{
-			NodeName: node,
-			State:    v1alpha1.Upgrading,
-			History: v1alpha1.History{
-				HistoryID:   upgradeReq.HistoryID,
-				UpgradeTime: time.Now().String(),
-			},
-		}
-		err = patchNodeUpgradeJobStatus(dc.crdClient, upgrade, status)
-		if err != nil {
-			// not return, continue to mark node unschedulable
-			klog.Errorf("Failed to mark Upgrade upgrading status: %v", err)
+		// if all the nodes upgrade is completed, close channel to inform that the upgrade is finished
+		if upgradeJob.Status.State == v1alpha1.Completed {
+			klog.Infof("all the nodes upgrade status are completed")
+			close(nodesChan)
+			return true, nil
 		}
 
-		// mark edge node unschedulable
-		// the effect is like running cmd: kubectl drain <node-to-drain> --ignore-daemonsets
-		unscheduleNode := v1.Node{}
-		unscheduleNode.Spec.Unschedulable = true
-		// add a upgrade label
-		unscheduleNode.Labels = map[string]string{NodeUpgradeJobStatusKey: NodeUpgradeJobStatusValue}
-		byteNode, err := json.Marshal(unscheduleNode)
-		if err != nil {
-			klog.Warningf("marshal data failed: %v", err)
-			continue
+		// calculate the number of nodes in upgrading operation
+		upgradingNum := 0
+		for _, status := range upgradeJob.Status.Status {
+			if status.State == v1alpha1.Upgrading {
+				upgradingNum++
+			}
 		}
 
-		_, err = dc.kubeClient.CoreV1().Nodes().Patch(context.Background(), node, apimachineryType.StrategicMergePatchType, byteNode, metav1.PatchOptions{})
-		if err != nil {
-			klog.Errorf("failed to drain node %s: %v", node, err)
-			continue
+		// ensure the max number of upgrading nodes is Concurrency
+		if upgradingNum < concurrency {
+			for i := 0; i < concurrency-upgradingNum; i++ {
+				nodesChan <- allNodes[i]
+			}
+
+			allNodes = allNodes[:int(concurrency)-upgradingNum]
 		}
+
+		if len(allNodes) == 0 {
+			// all the nodes are to upgrade
+			klog.Infof("The number of nodes need to be upgraded reach 0")
+			close(nodesChan)
+			return true, nil
+		}
+		return false, nil
+	})
+
+	if err != nil {
+		klog.Errorf("failed to select all the related nodes to do upgrade operation: %v", err)
+		close(nodesChan)
 	}
 }
 
