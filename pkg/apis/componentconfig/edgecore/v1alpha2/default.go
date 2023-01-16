@@ -48,6 +48,7 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 	in.Address = constants.ServerAddress
 	in.ReadOnlyPort = constants.ServerPort
 	in.ClusterDomain = constants.DefaultClusterDomain
+	in.NodeStatusMaxImages = utilpointer.Int32Ptr(0)
 	configv1beta1.SetDefaults_KubeletConfiguration(&in)
 
 	return &EdgeCoreConfig{
@@ -196,6 +197,7 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 	in.Address = constants.ServerAddress
 	in.ReadOnlyPort = constants.ServerPort
 	in.ClusterDomain = constants.DefaultClusterDomain
+	in.NodeStatusMaxImages = utilpointer.Int32Ptr(0)
 	configv1beta1.SetDefaults_KubeletConfiguration(&in)
 
 	return &EdgeCoreConfig{
