@@ -130,9 +130,6 @@ type TailoredKubeletFlag struct {
 	NodeIP string `json:"nodeIP,omitempty"`
 	// Container-runtime-specific options.
 	ContainerRuntimeOptions
-	// certDirectory is the directory where the TLS certs are located.
-	// If tlsCertFile and tlsPrivateKeyFile are provided, this flag will be ignored.
-	CertDirectory string `json:"certDirectory,omitempty"`
 	// rootDirectory is the directory path to place kubelet files (volume
 	// mounts,etc).
 	// default "/var/lib/edged"
