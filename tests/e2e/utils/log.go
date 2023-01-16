@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/ginkgo"
 )
 
 //Function to get time in millisec
@@ -54,11 +54,11 @@ func Infof(format string, args ...interface{}) {
 //Function to print the test case name and status of execution
 func PrintTestcaseNameandStatus() {
 	var Status string
-	testSpecReport := ginkgo.CurrentSpecReport()
-	if testSpecReport.Failed() {
+	testSpecReport := ginkgo.CurrentGinkgoTestDescription()
+	if testSpecReport.Failed {
 		Status = "FAILED"
 	} else {
 		Status = "PASSED"
 	}
-	Infof("TestCase:%40s     Status=%s", testSpecReport.LeafNodeText, Status)
+	Infof("TestCase:%40s     Status=%s", testSpecReport.TestText, Status)
 }

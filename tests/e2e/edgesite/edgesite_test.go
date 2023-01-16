@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -38,7 +38,7 @@ var DeploymentTestTimerGroup = utils.NewTestTimerGroup()
 var _ = Describe("Application deployment test in E2E scenario using EdgeSite", func() {
 	var UID string
 	var testTimer *utils.TestTimer
-	var testSpecReport SpecReport
+	var testSpecReport GinkgoTestDescription
 
 	var clientSet clientset.Interface
 
@@ -49,9 +49,9 @@ var _ = Describe("Application deployment test in E2E scenario using EdgeSite", f
 	Context("Test application deployment and delete deployment using deployment spec", func() {
 		BeforeEach(func() {
 			// Get current test SpecReport
-			testSpecReport = CurrentSpecReport()
+			testSpecReport = CurrentGinkgoTestDescription()
 			// Start test timer
-			testTimer = DeploymentTestTimerGroup.NewTestTimer(testSpecReport.LeafNodeText)
+			testTimer = DeploymentTestTimerGroup.NewTestTimer(testSpecReport.TestText)
 		})
 
 		AfterEach(func() {
@@ -117,9 +117,9 @@ var _ = Describe("Application deployment test in E2E scenario using EdgeSite", f
 	Context("Test application deployment using Pod spec using EdgeSite", func() {
 		BeforeEach(func() {
 			// Get current test SpecReport
-			testSpecReport = CurrentSpecReport()
+			testSpecReport = CurrentGinkgoTestDescription()
 			// Start test timer
-			testTimer = DeploymentTestTimerGroup.NewTestTimer(testSpecReport.LeafNodeText)
+			testTimer = DeploymentTestTimerGroup.NewTestTimer(testSpecReport.TestText)
 		})
 
 		AfterEach(func() {
