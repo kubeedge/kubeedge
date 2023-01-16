@@ -73,7 +73,7 @@ func (c *handlerCenter) ForResource(gvr schema.GroupVersionResource) *CommonReso
 
 	klog.Infof("[metaserver/HandlerCenter] prepare a new resourceEventHandler(%v)", gvr)
 
-	handler := NewCommonResourceEventHandler(gvr, c.listenerManager, c.messageLayer)
+	handler := NewCommonResourceEventHandler(gvr, c.listenerManager)
 	c.handlers[gvr] = handler
 
 	return handler
@@ -107,12 +107,10 @@ type CommonResourceEventHandler struct {
 
 func NewCommonResourceEventHandler(
 	gvr schema.GroupVersionResource,
-	listenerManager *listenerManager,
-	layer messagelayer.MessageLayer) *CommonResourceEventHandler {
+	listenerManager *listenerManager) *CommonResourceEventHandler {
 	handler := &CommonResourceEventHandler{
 		listenerManager: listenerManager,
 		events:          make(chan watch.Event, 100),
-		messageLayer:    layer,
 		gvr:             gvr,
 	}
 
@@ -161,7 +159,7 @@ func (c *CommonResourceEventHandler) AddListener(s *SelectorListener) error {
 	if err != nil {
 		return fmt.Errorf("Failed to list: %v", err)
 	}
-	s.sendAllObjects(ret, c)
+	s.sendAllObjects(ret)
 
 	c.listenerManager.AddListener(s)
 
@@ -176,7 +174,7 @@ func (c *CommonResourceEventHandler) dispatchEvents() {
 	for event := range c.events {
 		klog.V(4).Infof("[metaserver/resourceEventHandler] handler(%v), send obj event{%v/%v} to listeners", c.gvr, event.Type, event.Object.GetObjectKind().GroupVersionKind().String())
 		for _, listener := range c.listenerManager.GetListenersForGVR(c.gvr) {
-			listener.sendObj(event, c.messageLayer)
+			listener.add(event)
 		}
 	}
 	klog.Warningf("[metaserver/resourceEventHandler] handler(%v) stopped!", c.gvr.String())

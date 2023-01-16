@@ -47,19 +47,19 @@ func (lm *listenerManager) AddListener(listener *SelectorListener) {
 	lm.lock.Lock()
 	defer lm.lock.Unlock()
 
-	klog.Infof("add listener %s node %s", listener.id, listener.nodeName)
+	klog.Infof("add listener %s node %s", listener.ID, listener.nodeName)
 
 	_, exists := lm.listenerByNodeID[listener.nodeName]
 	if !exists {
 		lm.listenerByNodeID[listener.nodeName] = map[string]*SelectorListener{}
 	}
-	lm.listenerByNodeID[listener.nodeName][listener.id] = listener
+	lm.listenerByNodeID[listener.nodeName][listener.ID] = listener
 
 	_, exists = lm.listenerByGVR[listener.gvr]
 	if !exists {
 		lm.listenerByGVR[listener.gvr] = map[string]*SelectorListener{}
 	}
-	lm.listenerByGVR[listener.gvr][listener.id] = listener
+	lm.listenerByGVR[listener.gvr][listener.ID] = listener
 }
 
 func (lm *listenerManager) DeleteListener(listener *SelectorListener) {
@@ -68,7 +68,7 @@ func (lm *listenerManager) DeleteListener(listener *SelectorListener) {
 
 	listeners, exists := lm.listenerByNodeID[listener.nodeName]
 	if exists {
-		delete(listeners, listener.id)
+		delete(listeners, listener.ID)
 		if len(lm.listenerByNodeID[listener.nodeName]) == 0 {
 			delete(lm.listenerByNodeID, listener.nodeName)
 		}
@@ -76,7 +76,7 @@ func (lm *listenerManager) DeleteListener(listener *SelectorListener) {
 
 	listeners, exists = lm.listenerByGVR[listener.gvr]
 	if exists {
-		delete(listeners, listener.id)
+		delete(listeners, listener.ID)
 		if len(lm.listenerByGVR[listener.gvr]) == 0 {
 			delete(lm.listenerByGVR, listener.gvr)
 		}

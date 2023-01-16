@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/klog/v2"
 
+	beehivecontext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
@@ -19,28 +20,62 @@ import (
 )
 
 type SelectorListener struct {
-	id       string
+	ID       string
 	nodeName string
 	gvr      schema.GroupVersionResource
 	// e.g. labels and fields(metadata.namespace metadata.name spec.nodename)
 	selector LabelFieldSelector
+
+	input chan watch.Event
+
+	messageLayer messagelayer.MessageLayer
 }
 
 func NewSelectorListener(ID, nodeName string, gvr schema.GroupVersionResource, selector LabelFieldSelector) *SelectorListener {
-	return &SelectorListener{id: ID, nodeName: nodeName, gvr: gvr, selector: selector}
+	listener := &SelectorListener{
+		ID:           ID,
+		nodeName:     nodeName,
+		gvr:          gvr,
+		selector:     selector,
+		messageLayer: messagelayer.DynamicControllerMessageLayer(),
+	}
+
+	go listener.process()
+
+	return listener
 }
 
-func (l *SelectorListener) sendAllObjects(rets []runtime.Object, handler *CommonResourceEventHandler) {
+func (l *SelectorListener) add(event watch.Event) {
+	l.input <- event
+}
+
+func (l *SelectorListener) process() {
+	for {
+		select {
+		case event, ok := <-l.input:
+			if !ok {
+				return
+			}
+
+			l.sendWatchEvent(event)
+
+		case <-beehivecontext.Done():
+			return
+		}
+	}
+}
+
+func (l *SelectorListener) sendAllObjects(rets []runtime.Object) {
 	for _, ret := range rets {
 		event := watch.Event{
 			Type:   watch.Added,
 			Object: ret,
 		}
-		l.sendObj(event, handler.messageLayer)
+		l.sendWatchEvent(event)
 	}
 }
 
-func (l *SelectorListener) sendObj(event watch.Event, messageLayer messagelayer.MessageLayer) {
+func (l *SelectorListener) sendWatchEvent(event watch.Event) {
 	accessor, err := meta.Accessor(event.Object)
 	if err != nil {
 		klog.Error(err)
@@ -85,7 +120,7 @@ func (l *SelectorListener) sendObj(event watch.Event, messageLayer messagelayer.
 		BuildRouter(modules.DynamicControllerModuleName, constants.GroupResource, resource, operation).
 		FillBody(filterEvent.Object)
 
-	if err := messageLayer.Send(*msg); err != nil {
+	if err := l.messageLayer.Send(*msg); err != nil {
 		klog.Warningf("send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
 	} else {
 		klog.V(4).Infof("send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())

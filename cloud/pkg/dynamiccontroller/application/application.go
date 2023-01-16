@@ -368,7 +368,7 @@ func (c *Center) getWatchDiff(allWatchAppInEdge map[string]metaserver.Applicatio
 	for ID, listener := range listenerInCloud {
 		if _, exist := allWatchAppInEdge[ID]; !exist {
 			removedListeners = append(removedListeners, listener)
-			klog.Infof("need removed listener %s", listener.id)
+			klog.Infof("need removed listener %s", listener.ID)
 		}
 	}
 

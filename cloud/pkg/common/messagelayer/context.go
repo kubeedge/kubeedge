@@ -18,6 +18,7 @@ package messagelayer
 
 import (
 	"strings"
+	"sync"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -71,35 +72,61 @@ func isRouterMsg(message model.Message) bool {
 	return len(resourceArray) == 2 && (resourceArray[0] == model.ResourceTypeRule || resourceArray[0] == model.ResourceTypeRuleEndpoint)
 }
 
+var (
+	edgeControllerOnce         sync.Once
+	edgeControllerMessageLayer MessageLayer
+
+	deviceControllerOnce         sync.Once
+	deviceControllerMessageLayer MessageLayer
+
+	dynamicControllerOnce         sync.Once
+	dynamicControllerMessageLayer MessageLayer
+
+	nodeUpgradeJobControllerOnce         sync.Once
+	nodeUpgradeJobControllerMessageLayer MessageLayer
+)
+
 func EdgeControllerMessageLayer() MessageLayer {
-	return &ContextMessageLayer{
-		SendModuleName:       modules.CloudHubModuleName,
-		SendRouterModuleName: modules.RouterModuleName,
-		ReceiveModuleName:    modules.EdgeControllerModuleName,
-		ResponseModuleName:   modules.CloudHubModuleName,
-	}
+	edgeControllerOnce.Do(func() {
+		edgeControllerMessageLayer = &ContextMessageLayer{
+			SendModuleName:       modules.CloudHubModuleName,
+			SendRouterModuleName: modules.RouterModuleName,
+			ReceiveModuleName:    modules.EdgeControllerModuleName,
+			ResponseModuleName:   modules.CloudHubModuleName,
+		}
+	})
+	return edgeControllerMessageLayer
 }
 
 func DeviceControllerMessageLayer() MessageLayer {
-	return &ContextMessageLayer{
-		SendModuleName:     modules.CloudHubModuleName,
-		ReceiveModuleName:  modules.DeviceControllerModuleName,
-		ResponseModuleName: modules.CloudHubModuleName,
-	}
+	deviceControllerOnce.Do(func() {
+		deviceControllerMessageLayer = &ContextMessageLayer{
+			SendModuleName:     modules.CloudHubModuleName,
+			ReceiveModuleName:  modules.DeviceControllerModuleName,
+			ResponseModuleName: modules.CloudHubModuleName,
+		}
+	})
+	return deviceControllerMessageLayer
 }
 
 func DynamicControllerMessageLayer() MessageLayer {
-	return &ContextMessageLayer{
-		SendModuleName:     modules.CloudHubModuleName,
-		ReceiveModuleName:  modules.DynamicControllerModuleName,
-		ResponseModuleName: modules.CloudHubModuleName,
-	}
+	dynamicControllerOnce.Do(func() {
+		dynamicControllerMessageLayer = &ContextMessageLayer{
+			SendModuleName:     modules.CloudHubModuleName,
+			ReceiveModuleName:  modules.DynamicControllerModuleName,
+			ResponseModuleName: modules.CloudHubModuleName,
+		}
+	})
+	return dynamicControllerMessageLayer
 }
 
 func NodeUpgradeJobControllerMessageLayer() MessageLayer {
-	return &ContextMessageLayer{
-		SendModuleName:     modules.CloudHubModuleName,
-		ReceiveModuleName:  modules.NodeUpgradeJobControllerModuleName,
-		ResponseModuleName: modules.CloudHubModuleName,
-	}
+	nodeUpgradeJobControllerOnce.Do(func() {
+		nodeUpgradeJobControllerMessageLayer = &ContextMessageLayer{
+			SendModuleName:     modules.CloudHubModuleName,
+			ReceiveModuleName:  modules.NodeUpgradeJobControllerModuleName,
+			ResponseModuleName: modules.CloudHubModuleName,
+		}
+	})
+	return nodeUpgradeJobControllerMessageLayer
 }

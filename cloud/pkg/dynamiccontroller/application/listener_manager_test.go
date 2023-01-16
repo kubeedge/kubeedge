@@ -58,8 +58,8 @@ func TestAddGetListener(t *testing.T) {
 	}
 
 	expected := map[string]*SelectorListener{
-		listener1.id: listener1,
-		listener2.id: listener2,
+		listener1.ID: listener1,
+		listener2.ID: listener2,
 	}
 
 	if !reflect.DeepEqual(expected, listenerByGVR) {
