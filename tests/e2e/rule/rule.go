@@ -7,6 +7,7 @@ import (
 
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
+	"k8s.io/kubernetes/test/e2e/framework"
 
 	v1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
 	edgeclientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
@@ -19,7 +20,7 @@ var _ = GroupDescribe("Rule Management test in E2E scenario", func() {
 	var edgeClientSet edgeclientset.Interface
 
 	ginkgo.BeforeEach(func() {
-		edgeClientSet = utils.NewKubeEdgeClient(utils.LoadConfig().KubeConfigPath)
+		edgeClientSet = utils.NewKubeEdgeClient(framework.TestContext.KubeConfig)
 	})
 
 	msg := "Hello World!"

@@ -1,0 +1,20 @@
+- codename: runs ReplicaSets to verify preemption running path
+- codename: should rollback without unnecessary restarts
+- codename: should be sent by kubelets and the scheduler about pods scheduling and running
+- codename: should contain environment variables for services
+- codename: should perform rolling updates and roll backs of template modifications with PVCs
+- codename: should perform rolling updates and roll backs of template modifications
+- codename: should support CSR API operations
+- codename: should function for intra-pod communication
+- codename: should function for node-pod communication
+- codename: Burst scaling should run to completion even with unhealthy pods
+- codename: should perform rolling updates and roll backs of template modifications
+- codename: should mount an API token into pods
+- codename: Scaling should happen in predictable order and halt if any stateful pod is unhealthy
+- codename: optional updates should be reflected in volume
+- codename: should serve a basic image on each replica with a public image
+- codename: ServiceAccountIssuerDiscovery should support OIDC discovery of service account issuer
+- codename: should be consumable in multiple volumes in a pod
+- codename: should call prestop when killing a pod
+- codename: should support sysctls
+- codename: Should recreate evicted statefulset

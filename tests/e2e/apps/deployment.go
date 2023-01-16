@@ -29,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/wait"
 	clientset "k8s.io/client-go/kubernetes"
+	"k8s.io/kubernetes/test/e2e/framework"
 
 	"github.com/kubeedge/kubeedge/tests/e2e/constants"
 	"github.com/kubeedge/kubeedge/tests/e2e/testsuite"
@@ -46,7 +47,7 @@ var _ = GroupDescribe("Application deployment test in E2E scenario", func() {
 	var clientSet clientset.Interface
 
 	ginkgo.BeforeEach(func() {
-		clientSet = utils.NewKubeClient(utils.LoadConfig().KubeConfigPath)
+		clientSet = utils.NewKubeClient(framework.TestContext.KubeConfig)
 	})
 
 	ginkgo.Context("Test application deployment and delete deployment using deployment spec", func() {

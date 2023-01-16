@@ -26,6 +26,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	clientset "k8s.io/client-go/kubernetes"
+	"k8s.io/kubernetes/test/e2e/framework"
 
 	"github.com/kubeedge/kubeedge/tests/e2e/constants"
 	. "github.com/kubeedge/kubeedge/tests/e2e/testsuite"
@@ -43,7 +44,7 @@ var _ = Describe("Application deployment test in E2E scenario using EdgeSite", f
 	var clientSet clientset.Interface
 
 	BeforeEach(func() {
-		clientSet = utils.NewKubeClient(ctx.Cfg.KubeConfigPath)
+		clientSet = utils.NewKubeClient(framework.TestContext.KubeConfig)
 	})
 
 	Context("Test application deployment and delete deployment using deployment spec", func() {

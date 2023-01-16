@@ -32,6 +32,7 @@ ALL_IMAGES_AND_TARGETS=(
   csidriver:csidriver:build/csidriver/Dockerfile
   iptablesmanager:iptables-manager:build/iptablesmanager/Dockerfile
   edgemark:edgemark:build/edgemark/Dockerfile
+  conformance:conformance:build/conformance/Dockerfile
   controllermanager:controller-manager:build/controllermanager/Dockerfile
   installation-package:installation-package:build/docker/installation-package/installation-package.dockerfile
 )

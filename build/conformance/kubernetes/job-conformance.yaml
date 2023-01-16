@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    k8s-app: kubeedge
+    kubeedge: conformance
+  name: conformance
+  namespace: kubeedge
+spec:
+  selector:
+    matchLabels:
+      k8s-app: kubeedge
+      kubeedge: conformance
+  template:
+    metadata:
+      labels:
+        k8s-app: kubeedge
+        kubeedge: conformance
+    spec:
+      hostNetwork: true
+      containers:
+        - name: conformance
+          image: kubeedge/conformance:v1.13.0
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              cpu: 200m
+              memory: 1Gi
+            requests:
+              cpu: 100m
+              memory: 512Mi
+          env:
+            - name: KUBECONFIG
+              value: /etc/kubernetes/admin.conf
+            - name: RESULTS_DIR
+              value: /tmp/results
+          volumeMounts:
+            - name: kubeconf
+              mountPath: /etc/kubernetes
+            - name: results
+              mountPath: /tmp/results
+          securityContext:
+            privileged: true
+      restartPolicy: Always
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/edge
+                    operator: DoesNotExist
+      tolerations:
+        - key: "node-role.kubernetes.io/master"
+          operator: "Exists"
+          effect: "NoSchedule"
+      volumes:
+        - name: kubeconf
+          hostPath:
+            path: /etc/kubernetes
+        - name: results
+          hostPath:
+            path: /tmp/results
+            type: DirectoryOrCreate
