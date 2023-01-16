@@ -707,7 +707,6 @@ type TailoredKubeletConfiguration struct {
 
 // TailoredKubeletFlag indicates the tailored kubelet flag
 type TailoredKubeletFlag struct {
-	KubeConfig string `json:"kubeConfig,omitempty"`
 	// HostnameOverride is the hostname used to identify the kubelet instead
 	// of the actual hostname.
 	// default os.Hostname()
@@ -721,10 +720,6 @@ type TailoredKubeletFlag struct {
 	// mounts,etc).
 	// default "/var/lib/edged"
 	RootDirectory string `json:"rootDirectory,omitempty"`
-	// The Kubelet will load its initial configuration from this file.
-	// The path may be absolute or relative; relative paths are under the Kubelet's current working directory.
-	// Omit this flag to use the combination of built-in default configuration values and flags.
-	KubeletConfigFile string `json:"kubeletConfigFile,omitempty"`
 	// registerNode enables automatic registration with the apiserver.
 	// default true
 	// DEPRECATED: This parameter should be set via the TailoredKubeletConfig
@@ -759,15 +754,6 @@ type TailoredKubeletFlag struct {
 	ExperimentalNodeAllocatableIgnoreEvictionThreshold bool `json:"experimentalNodeAllocatableIgnoreEvictionThreshold,omitempty"`
 	// Node Labels are the node labels to add when registering the node in the cluster
 	NodeLabels map[string]string `json:"nodeLabels,omitempty"`
-	// lockFilePath is the path that kubelet will use to as a lock file.
-	// It uses this file as a lock to synchronize with other kubelet processes
-	// that may be running.
-	LockFilePath string `json:"lockFilePath,omitempty"`
-	// ExitOnLockContention is a flag that signifies to the kubelet that it is running
-	// in "bootstrap" mode. This requires that 'LockFilePath' has been set.
-	// This will cause the kubelet to listen to inotify events on the lock file,
-	// releasing it and exiting when another process tries to open that file.
-	ExitOnLockContention bool `json:"exitOnLockContention,omitempty"`
 	// seccompProfileRoot is the directory path for seccomp profiles.
 	SeccompProfileRoot string `json:"seccompProfileRoot,omitempty"`
 	// DEPRECATED FLAGS
@@ -845,20 +831,6 @@ type ContainerRuntimeOptions struct {
 	// cache files
 	// default "/var/lib/cni/cache"
 	CNICacheDir string `json:"cniCacheDir,omitempty"`
-
-	// Image credential provider plugin options
-
-	// ImageCredentialProviderConfigFile is the path to the credential provider plugin config file.
-	// This config file is a specification for what credential providers are enabled and invokved
-	// by the kubelet. The plugin config should contain information about what plugin binary
-	// to execute and what container images the plugin should be called for.
-	// +optional
-	ImageCredentialProviderConfigFile string `json:"imageCredentialProviderConfigFile,omitempty"`
-	// ImageCredentialProviderBinDir is the path to the directory where credential provider plugin
-	// binaries exist. The name of each plugin binary is expected to match the name of the plugin
-	// specified in imageCredentialProviderConfigFile.
-	// +optional
-	ImageCredentialProviderBinDir string `json:"imageCredentialProviderBinDir,omitempty"`
 }
 
 // EdgeHub indicates the EdgeHub module config

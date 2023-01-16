@@ -53,7 +53,6 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				Enable:                true,
 				TailoredKubeletConfig: &defaultTailedKubeletConfig,
 				TailoredKubeletFlag: TailoredKubeletFlag{
-					KubeConfig:       constants.DefaultKubeletConfig,
 					HostnameOverride: hostnameOverride,
 					NodeIP:           localIP,
 					ContainerRuntimeOptions: ContainerRuntimeOptions{
@@ -190,7 +189,6 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 				Enable:                true,
 				TailoredKubeletConfig: &defaultTailedKubeletConfig,
 				TailoredKubeletFlag: TailoredKubeletFlag{
-					KubeConfig:       constants.DefaultKubeletConfig,
 					HostnameOverride: hostnameOverride,
 					NodeIP:           localIP,
 					ContainerRuntimeOptions: ContainerRuntimeOptions{

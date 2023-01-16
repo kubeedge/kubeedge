@@ -172,7 +172,6 @@ func ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(in *v1alpha2.T
 }
 
 func ConvertConfigEdgedFlagToConfigKubeletFlag(in *v1alpha2.TailoredKubeletFlag, out *kubeletoptions.KubeletFlags) {
-	out.KubeConfig = in.KubeConfig
 	out.HostnameOverride = in.HostnameOverride
 	out.NodeIP = in.NodeIP
 	out.RootDirectory = in.RootDirectory
