@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM golang:1.16-alpine3.13 AS builder
+FROM golang:1.17.13-alpine3.16 AS builder
 
 ARG GO_LDFLAGS
 
