@@ -21,6 +21,7 @@ import (
 	"reflect"
 	"testing"
 
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/tools/cache"
 
@@ -78,6 +79,8 @@ func TestNewNodesManager(t *testing.T) {
 		Burst:       200,
 		ContentType: "application/vnd.kubernetes.protobuf",
 	})
+
+	client.DefaultGetRestMapper = func() (mapper meta.RESTMapper, err error) { return nil, nil }
 
 	tests := []struct {
 		name string

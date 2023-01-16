@@ -43,5 +43,5 @@ func IsBelongToSameGroup(targetNodeName string, epNodeName string) bool {
 }
 
 func GetDynamicResourceInformer(gvr schema.GroupVersionResource) informers.GenericInformer {
-	return commoninformers.GetInformersManager().GetDynamicSharedInformerFactory().ForResource(gvr)
+	return commoninformers.GetInformersManager().GetDynamicInformerFactory().ForResource(gvr)
 }

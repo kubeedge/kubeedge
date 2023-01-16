@@ -17,10 +17,11 @@ limitations under the License.
 package synccontroller
 
 import (
-	"context"
 	"reflect"
 	"testing"
 
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -31,10 +32,11 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	tf "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/testing"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1"
-	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
 func TestCompareResourceVersion(t *testing.T) {
@@ -129,6 +131,8 @@ func TestGCOrphanedObjectSync(t *testing.T) {
 	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 	beehiveContext.AddModule(cloudHub)
 	beehiveContext.AddModuleGroup(modules.CloudHubModuleName, modules.CloudHubModuleGroup)
+	client.DefaultGetRestMapper = func() (mapper meta.RESTMapper, err error) { return nil, nil }
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			testController := newSyncController(true)
@@ -184,6 +188,8 @@ func newUnstructured(apiVersion, kind, namespace, name string) *unstructured.Uns
 	}
 }
 
+var podGVR = schema.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
+
 func TestManageObjectSync(t *testing.T) {
 	tests := []struct {
 		name              string
@@ -209,27 +215,30 @@ func TestManageObjectSync(t *testing.T) {
 	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 	beehiveContext.AddModule(cloudHub)
 	beehiveContext.AddModuleGroup(modules.CloudHubModuleName, modules.CloudHubModuleGroup)
+
+	client.DefaultGetRestMapper = func() (mapper meta.RESTMapper, err error) { return nil, nil }
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			testController := newSyncController(true)
+			testController.informerManager = informers.NewFakeInformerManager()
 			newDynamicClient := fake.NewSimpleDynamicClient(runtime.NewScheme())
 			testController.kubeclient = newDynamicClient
+
 			if tt.ExpectedOperation == model.UpdateOperation {
-				gv, err := schema.ParseGroupVersion("v1")
-				if err != nil {
-					t.Errorf("ParseGroupVersion failed: %v", err)
+				testPod := &corev1.Pod{
+					TypeMeta:   v1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
+					ObjectMeta: v1.ObjectMeta{Name: tf.TestPodName, Namespace: tf.TestNamespace, UID: tf.TestPodUID, ResourceVersion: "2"},
 				}
-				resource := util.UnsafeKindToResource("Pod")
-				gvr := gv.WithResource(resource)
-				testPod := newUnstructured("v1", "Pod", tf.TestNamespace, tf.TestPodName)
-				testPod.SetUID(tf.TestPodUID)
-				testPod.SetResourceVersion("2")
-				unstructObj, err := newDynamicClient.Resource(gvr).Namespace(tf.TestNamespace).Create(context.TODO(), testPod, v1.CreateOptions{})
+
+				podInformerPair, _ := testController.informerManager.GetInformerPair(podGVR)
+				err := podInformerPair.Informer.GetStore().Add(testPod)
 				if err != nil {
 					t.Errorf("create pod failed: %v", err)
 				}
-				t.Logf("create pod success: %v", unstructObj)
+				t.Logf("create pod success: %v", testPod)
 			}
+
 			go testController.manageObjectSync([]*v1alpha1.ObjectSync{tt.ObjectSyncs})
 			message, _ := beehiveContext.Receive(modules.CloudHubModuleName)
 			if !reflect.DeepEqual(message.GetOperation(), tt.ExpectedOperation) {

@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/tools/cache"
 
@@ -222,6 +223,8 @@ func TestNewPodManager(t *testing.T) {
 		ContentType: "application/vnd.kubernetes.protobuf",
 	})
 
+	client.DefaultGetRestMapper = func() (mapper meta.RESTMapper, err error) { return nil, nil }
+
 	tests := []struct {
 		name string
 		args args
@@ -229,7 +232,7 @@ func TestNewPodManager(t *testing.T) {
 		{
 			"TestNewPodManager(): Case 1: with nodename",
 			args{
-				informers.GetInformersManager().GetK8sInformerFactory().Core().V1().Pods().Informer(),
+				informers.GetInformersManager().GetKubeInformerFactory().Core().V1().Pods().Informer(),
 			},
 		},
 	}

@@ -235,7 +235,7 @@ func getUpgradeID(resource string) string {
 func NewUpstreamController(dc *DownstreamController) (*UpstreamController, error) {
 	uc := &UpstreamController{
 		kubeClient:   keclient.GetKubeClient(),
-		informer:     informers.GetInformersManager().GetK8sInformerFactory(),
+		informer:     informers.GetInformersManager().GetKubeInformerFactory(),
 		crdClient:    keclient.GetCRDClient(),
 		messageLayer: messagelayer.NodeUpgradeJobControllerMessageLayer(),
 		dc:           dc,

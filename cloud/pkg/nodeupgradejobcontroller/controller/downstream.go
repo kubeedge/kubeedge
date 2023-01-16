@@ -437,7 +437,7 @@ func NewDownstreamController(crdInformerFactory crdinformers.SharedInformerFacto
 
 	dc := &DownstreamController{
 		kubeClient:            client.GetKubeClient(),
-		informer:              informers.GetInformersManager().GetK8sInformerFactory(),
+		informer:              informers.GetInformersManager().GetKubeInformerFactory(),
 		crdClient:             client.GetCRDClient(),
 		nodeUpgradeJobManager: nodeUpgradeJobManager,
 		messageLayer:          messagelayer.NodeUpgradeJobControllerMessageLayer(),
