@@ -170,15 +170,6 @@ type TailoredKubeletFlag struct {
 	ExperimentalNodeAllocatableIgnoreEvictionThreshold bool `json:"experimentalNodeAllocatableIgnoreEvictionThreshold,omitempty"`
 	// Node Labels are the node labels to add when registering the node in the cluster
 	NodeLabels map[string]string `json:"nodeLabels,omitempty"`
-	// lockFilePath is the path that kubelet will use to as a lock file.
-	// It uses this file as a lock to synchronize with other kubelet processes
-	// that may be running.
-	LockFilePath string `json:"lockFilePath,omitempty"`
-	// ExitOnLockContention is a flag that signifies to the kubelet that it is running
-	// in "bootstrap" mode. This requires that 'LockFilePath' has been set.
-	// This will cause the kubelet to listen to inotify events on the lock file,
-	// releasing it and exiting when another process tries to open that file.
-	ExitOnLockContention bool `json:"exitOnLockContention,omitempty"`
 	// seccompProfileRoot is the directory path for seccomp profiles.
 	SeccompProfileRoot string `json:"seccompProfileRoot,omitempty"`
 	// DEPRECATED FLAGS
