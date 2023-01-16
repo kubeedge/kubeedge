@@ -13,13 +13,16 @@ import (
 	"k8s.io/component-base/cli/globalflag"
 	"k8s.io/component-base/term"
 	"k8s.io/klog/v2"
+	"sigs.k8s.io/yaml"
 
 	"github.com/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/certificate"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgestream"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
@@ -30,6 +33,7 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/features"
 	"github.com/kubeedge/kubeedge/pkg/util"
 	"github.com/kubeedge/kubeedge/pkg/util/flag"
+	utilvalidation "github.com/kubeedge/kubeedge/pkg/util/validation"
 	"github.com/kubeedge/kubeedge/pkg/version"
 )
 
@@ -62,6 +66,31 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 			if err != nil {
 				klog.Exit(err)
 			}
+
+			// should not save token in config file
+			if config.Modules.EdgeHub.Token != "" {
+				go func() {
+					// if receive data from CleanupTokenChan
+					// it means that edgecore apply for ca/certs successfully, then we can cleanup token
+					<-certificate.CleanupTokenChan
+
+					// cleanup token
+					if err := cleanupToken(*config, opts.ConfigFile); err != nil {
+						klog.Exit(err)
+					}
+				}()
+			}
+
+			bootstrapFile := constants.BootstrapFile
+			// get token from bootstrapFile if it exist
+			if utilvalidation.FileIsExist(bootstrapFile) {
+				token, err := os.ReadFile(bootstrapFile)
+				if err != nil {
+					klog.Exit(err)
+				}
+				config.Modules.EdgeHub.Token = string(token)
+			}
+
 			if errs := validation.ValidateEdgeCoreConfiguration(config); len(errs) > 0 {
 				klog.Exit(util.SpliceErrors(errs.ToAggregate().Errors()))
 			}
@@ -139,6 +168,17 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 	})
 
 	return cmd
+}
+
+// cleanupToken cleanup the token, and write back to config file disk
+func cleanupToken(config v1alpha2.EdgeCoreConfig, file string) error {
+	config.Modules.EdgeHub.Token = ""
+	d, err := yaml.Marshal(config)
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(file, d, 0640)
 }
 
 // environmentCheck check the environment before edgecore start

@@ -41,6 +41,9 @@ const (
 	DefaultMqttCertFile = "/etc/kubeedge/certs/server.crt"
 	DefaultMqttKeyFile  = "/etc/kubeedge/certs/server.key"
 
+	// Bootstrap file, contains token used by edgecore to apply for ca/cert
+	BootstrapFile = "/etc/kubeedge/bootstrap-edgecore.conf"
+
 	// Edged
 	DefaultKubeletConfig         = "/etc/kubeedge/config/kubeconfig"
 	DefaultDockerAddress         = "unix:///var/run/docker.sock"
