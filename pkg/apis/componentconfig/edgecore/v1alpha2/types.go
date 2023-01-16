@@ -247,20 +247,6 @@ type ContainerRuntimeOptions struct {
 	// cache files
 	// default "/var/lib/cni/cache"
 	CNICacheDir string `json:"cniCacheDir,omitempty"`
-
-	// Image credential provider plugin options
-
-	// ImageCredentialProviderConfigFile is the path to the credential provider plugin config file.
-	// This config file is a specification for what credential providers are enabled and invokved
-	// by the kubelet. The plugin config should contain information about what plugin binary
-	// to execute and what container images the plugin should be called for.
-	// +optional
-	ImageCredentialProviderConfigFile string `json:"imageCredentialProviderConfigFile,omitempty"`
-	// ImageCredentialProviderBinDir is the path to the directory where credential provider plugin
-	// binaries exist. The name of each plugin binary is expected to match the name of the plugin
-	// specified in imageCredentialProviderConfigFile.
-	// +optional
-	ImageCredentialProviderBinDir string `json:"imageCredentialProviderBinDir,omitempty"`
 }
 
 // EdgeHub indicates the EdgeHub module config
