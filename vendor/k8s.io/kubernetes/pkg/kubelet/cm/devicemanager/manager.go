@@ -51,6 +51,8 @@ import (
 	"k8s.io/kubernetes/pkg/util/selinux"
 )
 
+const nodeWithoutTopology = -1
+
 // ActivePodsFunc is a function that returns a list of pods to reconcile.
 type ActivePodsFunc func() []*v1.Pod
 
@@ -400,7 +402,6 @@ func (m *ManagerImpl) Allocate(pod *v1.Pod, container *v1.Container) error {
 	}
 	m.podDevices.removeContainerAllocatedResources(string(pod.UID), container.Name, m.devicesToReuse[string(pod.UID)])
 	return nil
-
 }
 
 // UpdatePluginResources updates node resources based on devices already allocated to pods.
@@ -809,7 +810,6 @@ func (m *ManagerImpl) filterByAffinity(podUID, contName, resource string, availa
 	// available device does not have any NUMA Nodes associated with it, add it
 	// to a list of NUMA Nodes for the fake NUMANode -1.
 	perNodeDevices := make(map[int]sets.String)
-	nodeWithoutTopology := -1
 	for d := range available {
 		if m.allDevices[resource][d].Topology == nil || len(m.allDevices[resource][d].Topology.Nodes) == 0 {
 			if _, ok := perNodeDevices[nodeWithoutTopology]; !ok {
@@ -978,7 +978,7 @@ func (m *ManagerImpl) allocateContainerResources(pod *v1.Pod, container *v1.Cont
 		m.mutex.Lock()
 		for dev := range allocDevices {
 			if m.allDevices[resource][dev].Topology == nil || len(m.allDevices[resource][dev].Topology.Nodes) == 0 {
-				allocDevicesWithNUMA[0] = append(allocDevicesWithNUMA[0], dev)
+				allocDevicesWithNUMA[nodeWithoutTopology] = append(allocDevicesWithNUMA[nodeWithoutTopology], dev)
 				continue
 			}
 			for idx := range m.allDevices[resource][dev].Topology.Nodes {
@@ -1132,12 +1132,12 @@ func (m *ManagerImpl) isDevicePluginResource(resource string) bool {
 	return false
 }
 
-// GetAllocatableDevices returns information about all the devices known to the manager
+// GetAllocatableDevices returns information about all the healthy devices known to the manager
 func (m *ManagerImpl) GetAllocatableDevices() ResourceDeviceInstances {
 	m.mutex.Lock()
-	resp := m.allDevices.Clone()
-	m.mutex.Unlock()
-	klog.V(4).InfoS("Known devices", "numDevices", len(resp))
+	defer m.mutex.Unlock()
+	resp := m.allDevices.Filter(m.healthyDevices)
+	klog.V(4).InfoS("GetAllocatableDevices", "known", len(m.allDevices), "allocatable", len(resp))
 	return resp
 }
 

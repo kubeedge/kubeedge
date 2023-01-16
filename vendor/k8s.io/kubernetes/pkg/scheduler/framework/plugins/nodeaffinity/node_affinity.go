@@ -78,7 +78,7 @@ func (s *preFilterState) Clone() framework.StateData {
 // failed by this plugin schedulable.
 func (pl *NodeAffinity) EventsToRegister() []framework.ClusterEvent {
 	return []framework.ClusterEvent{
-		{Resource: framework.Node, ActionType: framework.Add | framework.UpdateNodeLabel},
+		{Resource: framework.Node, ActionType: framework.Add | framework.Update},
 	}
 }
 
@@ -158,9 +158,6 @@ func (pl *NodeAffinity) Score(ctx context.Context, state *framework.CycleState, 
 	}
 
 	node := nodeInfo.Node()
-	if node == nil {
-		return 0, framework.AsStatus(fmt.Errorf("getting node %q from Snapshot: %w", nodeName, err))
-	}
 
 	var count int64
 	if pl.addedPrefSchedTerms != nil {

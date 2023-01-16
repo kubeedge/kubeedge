@@ -21,6 +21,7 @@ limitations under the License.
 package operationexecutor
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -212,6 +213,23 @@ type ActualStateOfWorldMounterUpdater interface {
 	// MarkForInUseExpansionError marks the volume to have in-use error during expansion.
 	// volume expansion must not be retried for this volume
 	MarkForInUseExpansionError(volumeName v1.UniqueVolumeName)
+
+	// CheckAndMarkVolumeAsUncertainViaReconstruction only adds volume to actual state of the world
+	// if volume was not already there. This avoid overwriting in any previously stored
+	// state. It returns error if there was an error adding the volume to ASOW.
+	// It returns true, if this operation resulted in volume being added to ASOW
+	// otherwise it returns false.
+	CheckAndMarkVolumeAsUncertainViaReconstruction(opts MarkVolumeOpts) (bool, error)
+
+	// CheckAndMarkDeviceUncertainViaReconstruction only adds device to actual state of the world
+	// if device was not already there. This avoids overwriting in any previously stored
+	// state. We only supply deviceMountPath because devicePath is already determined from
+	// VerifyControllerAttachedVolume function.
+	CheckAndMarkDeviceUncertainViaReconstruction(volumeName v1.UniqueVolumeName, deviceMountPath string) bool
+
+	// IsVolumeReconstructed returns true if volume currently added to actual state of the world
+	// was found during reconstruction.
+	IsVolumeReconstructed(volumeName v1.UniqueVolumeName, podName volumetypes.UniquePodName) bool
 }
 
 // ActualStateOfWorldAttacherUpdater defines a set of operations updating the
@@ -417,6 +435,23 @@ const (
 	// VolumeNotMounted means volume has not be mounted in pod's local path
 	VolumeNotMounted VolumeMountState = "VolumeNotMounted"
 )
+
+type MountPreConditionFailed struct {
+	msg string
+}
+
+func (err *MountPreConditionFailed) Error() string {
+	return err.msg
+}
+
+func NewMountPreConditionFailedError(msg string) *MountPreConditionFailed {
+	return &MountPreConditionFailed{msg: msg}
+}
+
+func IsMountFailedPreconditionError(err error) bool {
+	var failedPreconditionError *MountPreConditionFailed
+	return errors.As(err, &failedPreconditionError)
+}
 
 // GenerateMsgDetailed returns detailed msgs for volumes to mount
 func (volume *VolumeToMount) GenerateMsgDetailed(prefixMsg, suffixMsg string) (detailedMsg string) {
@@ -953,7 +988,7 @@ func (oe *operationExecutor) ReconstructVolumeOperation(
 	// Filesystem Volume case
 	if volumeMode == v1.PersistentVolumeFilesystem {
 		// Create volumeSpec from mount path
-		klog.V(5).Infof("Starting operationExecutor.ReconstructVolumepodName")
+		klog.V(5).Infof("Starting operationExecutor.ReconstructVolume for file volume on pod %q", podName)
 		volumeSpec, err := plugin.ConstructVolumeSpec(volumeSpecName, volumePath)
 		if err != nil {
 			return nil, err
@@ -963,7 +998,7 @@ func (oe *operationExecutor) ReconstructVolumeOperation(
 
 	// Block Volume case
 	// Create volumeSpec from mount path
-	klog.V(5).Infof("Starting operationExecutor.ReconstructVolume")
+	klog.V(5).Infof("Starting operationExecutor.ReconstructVolume for block volume on pod %q", podName)
 
 	// volumePath contains volumeName on the path. In the case of block volume, {volumeName} is symbolic link
 	// corresponding to raw block device.
@@ -999,7 +1034,7 @@ func (oe *operationExecutor) CheckVolumeExistenceOperation(
 			if mounter == nil {
 				return false, fmt.Errorf("mounter was not set for a filesystem volume")
 			}
-			if isNotMount, mountCheckErr = mounter.IsLikelyNotMountPoint(mountPath); mountCheckErr != nil {
+			if isNotMount, mountCheckErr = mount.IsNotMountPoint(mounter, mountPath); mountCheckErr != nil {
 				return false, fmt.Errorf("could not check whether the volume %q (spec.Name: %q) pod %q (UID: %q) is mounted with: %v",
 					uniqueVolumeName,
 					volumeName,

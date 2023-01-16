@@ -30,12 +30,14 @@ import (
 	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/cli-runtime/pkg/resource"
@@ -128,6 +130,20 @@ func CheckDiffErr(err error) {
 	})
 }
 
+// isInvalidReasonStatusError returns true if this is an API Status error with reason=Invalid.
+// This is distinct from generic 422 errors we want to fall back to generic error handling.
+func isInvalidReasonStatusError(err error) bool {
+	if !apierrors.IsInvalid(err) {
+		return false
+	}
+	statusError, isStatusError := err.(*apierrors.StatusError)
+	if !isStatusError {
+		return false
+	}
+	status := statusError.Status()
+	return status.Reason == metav1.StatusReasonInvalid
+}
+
 // checkErr formats a given error as a string and calls the passed handleErr
 // func with that string and an kubectl exit code.
 func checkErr(err error, handleErr func(string, int)) {
@@ -143,16 +159,26 @@ func checkErr(err error, handleErr func(string, int)) {
 	switch {
 	case err == ErrExit:
 		handleErr("", DefaultErrorExitCode)
-	case apierrors.IsInvalid(err):
-		details := err.(*apierrors.StatusError).Status().Details
+	case isInvalidReasonStatusError(err):
+		status := err.(*apierrors.StatusError).Status()
+		details := status.Details
 		s := "The request is invalid"
 		if details == nil {
+			// if we have no other details, include the message from the server if present
+			if len(status.Message) > 0 {
+				s += ": " + status.Message
+			}
 			handleErr(s, DefaultErrorExitCode)
 			return
 		}
 		if len(details.Kind) != 0 || len(details.Name) != 0 {
 			s = fmt.Sprintf("The %s %q is invalid", details.Kind, details.Name)
+		} else if len(status.Message) > 0 && len(details.Causes) == 0 {
+			// only append the message if we have no kind/name details and no causes,
+			// since default invalid error constructors duplicate that information in the message
+			s += ": " + status.Message
 		}
+
 		if len(details.Causes) > 0 {
 			errs := statusCausesToAggrError(details.Causes)
 			handleErr(MultilineError(s+": ", errs), DefaultErrorExitCode)
@@ -465,7 +491,8 @@ type ValidateOptions struct {
 	EnableValidation bool
 }
 
-// Merge requires JSON serialization
+// Merge converts the passed in object to JSON, merges the fragment into it using an RFC7396 JSON Merge Patch,
+// and returns the resulting object
 // TODO: merge assumes JSON serialization, and does not properly abstract API retrieval
 func Merge(codec runtime.Codec, dst runtime.Object, fragment string) (runtime.Object, error) {
 	// encode dst into versioned json and apply fragment directly too it
@@ -474,6 +501,46 @@ func Merge(codec runtime.Codec, dst runtime.Object, fragment string) (runtime.Ob
 		return nil, err
 	}
 	patched, err := jsonpatch.MergePatch(target, []byte(fragment))
+	if err != nil {
+		return nil, err
+	}
+	out, err := runtime.Decode(codec, patched)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// StrategicMerge converts the passed in object to JSON, merges the fragment into it using a Strategic Merge Patch,
+// and returns the resulting object
+func StrategicMerge(codec runtime.Codec, dst runtime.Object, fragment string, dataStruct runtime.Object) (runtime.Object, error) {
+	target, err := runtime.Encode(codec, dst)
+	if err != nil {
+		return nil, err
+	}
+	patched, err := strategicpatch.StrategicMergePatch(target, []byte(fragment), dataStruct)
+	if err != nil {
+		return nil, err
+	}
+	out, err := runtime.Decode(codec, patched)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// JSONPatch converts the passed in object to JSON, performs an RFC6902 JSON Patch using operations specified in the
+// fragment, and returns the resulting object
+func JSONPatch(codec runtime.Codec, dst runtime.Object, fragment string) (runtime.Object, error) {
+	target, err := runtime.Encode(codec, dst)
+	if err != nil {
+		return nil, err
+	}
+	patch, err := jsonpatch.DecodePatch([]byte(fragment))
+	if err != nil {
+		return nil, err
+	}
+	patched, err := patch.Apply(target)
 	if err != nil {
 		return nil, err
 	}
@@ -695,7 +762,9 @@ func ManualStrip(file []byte) []byte {
 	stripped := []byte{}
 	lines := bytes.Split(file, []byte("\n"))
 	for i, line := range lines {
-		if bytes.HasPrefix(bytes.TrimSpace(line), []byte("#")) {
+		trimline := bytes.TrimSpace(line)
+
+		if bytes.HasPrefix(trimline, []byte("#")) && !bytes.HasPrefix(trimline, []byte("#!")) {
 			continue
 		}
 		stripped = append(stripped, line...)
@@ -745,4 +814,19 @@ func Warning(cmdErr io.Writer, newGeneratorName, oldGeneratorName string) {
 		newGeneratorName,
 		oldGeneratorName,
 	)
+}
+
+// Difference removes any elements of subArray from fullArray and returns the result
+func Difference(fullArray []string, subArray []string) []string {
+	exclude := make(map[string]bool, len(subArray))
+	for _, elem := range subArray {
+		exclude[elem] = true
+	}
+	var result []string
+	for _, elem := range fullArray {
+		if _, found := exclude[elem]; !found {
+			result = append(result, elem)
+		}
+	}
+	return result
 }
