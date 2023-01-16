@@ -112,9 +112,10 @@ func (kl *Kubelet) runOnce(pods []*v1.Pod, retryDelay time.Duration) (results []
 
 // runPod runs a single pod and wait until all containers are running.
 func (kl *Kubelet) runPod(pod *v1.Pod, retryDelay time.Duration) error {
+	var isTerminal bool
 	delay := retryDelay
 	retry := 0
-	for {
+	for !isTerminal {
 		status, err := kl.containerRuntime.GetPodStatus(pod.UID, pod.Name, pod.Namespace)
 		if err != nil {
 			return fmt.Errorf("unable to get status for pod %q: %v", format.Pod(pod), err)
@@ -126,7 +127,7 @@ func (kl *Kubelet) runPod(pod *v1.Pod, retryDelay time.Duration) error {
 		}
 		klog.InfoS("Pod's containers not running: syncing", "pod", klog.KObj(pod))
 
-		if err = kl.syncPod(context.Background(), kubetypes.SyncPodUpdate, pod, status); err != nil {
+		if isTerminal, err = kl.syncPod(context.Background(), kubetypes.SyncPodUpdate, pod, status); err != nil {
 			return fmt.Errorf("error syncing pod %q: %v", format.Pod(pod), err)
 		}
 		if retry >= runOnceMaxRetries {
@@ -138,6 +139,7 @@ func (kl *Kubelet) runPod(pod *v1.Pod, retryDelay time.Duration) error {
 		retry++
 		delay *= runOnceRetryDelayBackoff
 	}
+	return nil
 }
 
 // isPodRunning returns true if all containers of a manifest are running.

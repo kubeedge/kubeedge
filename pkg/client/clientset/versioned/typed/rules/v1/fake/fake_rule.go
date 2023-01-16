@@ -117,7 +117,7 @@ func (c *FakeRules) UpdateStatus(ctx context.Context, rule *rulesv1.Rule, opts v
 // Delete takes name of the rule and deletes it. Returns an error if one occurs.
 func (c *FakeRules) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(rulesResource, c.ns, name), &rulesv1.Rule{})
+		Invokes(testing.NewDeleteActionWithOptions(rulesResource, c.ns, name, opts), &rulesv1.Rule{})
 
 	return err
 }

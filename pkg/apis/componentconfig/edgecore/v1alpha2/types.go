@@ -143,6 +143,7 @@ type TailoredKubeletFlag struct {
 	KubeletConfigFile string `json:"kubeletConfigFile,omitempty"`
 	// registerNode enables automatic registration with the apiserver.
 	// default true
+	// DEPRECATED: This parameter should be set via the TailoredKubeletConfig
 	RegisterNode bool `json:"registerNode,omitempty"`
 	// registerWithTaints are an array of taints to add to a node object when
 	// the edgecore registers itself. This only takes effect when registerNode

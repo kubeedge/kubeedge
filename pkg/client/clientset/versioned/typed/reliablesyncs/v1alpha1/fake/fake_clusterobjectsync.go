@@ -110,7 +110,7 @@ func (c *FakeClusterObjectSyncs) UpdateStatus(ctx context.Context, clusterObject
 // Delete takes name of the clusterObjectSync and deletes it. Returns an error if one occurs.
 func (c *FakeClusterObjectSyncs) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(clusterobjectsyncsResource, name), &v1alpha1.ClusterObjectSync{})
+		Invokes(testing.NewRootDeleteActionWithOptions(clusterobjectsyncsResource, name, opts), &v1alpha1.ClusterObjectSync{})
 	return err
 }
 

@@ -110,7 +110,7 @@ func (c *FakeNodeUpgradeJobs) UpdateStatus(ctx context.Context, nodeUpgradeJob *
 // Delete takes name of the nodeUpgradeJob and deletes it. Returns an error if one occurs.
 func (c *FakeNodeUpgradeJobs) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(nodeupgradejobsResource, name), &v1alpha1.NodeUpgradeJob{})
+		Invokes(testing.NewRootDeleteActionWithOptions(nodeupgradejobsResource, name, opts), &v1alpha1.NodeUpgradeJob{})
 	return err
 }
 

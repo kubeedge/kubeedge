@@ -20,12 +20,12 @@ import (
 	"net/url"
 	"time"
 
-	bootstraptokenv1 "k8s.io/kubernetes/cmd/kubeadm/app/apis/bootstraptoken/v1"
-	"k8s.io/kubernetes/cmd/kubeadm/app/constants"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	bootstraptokenv1 "k8s.io/kubernetes/cmd/kubeadm/app/apis/bootstraptoken/v1"
+	"k8s.io/kubernetes/cmd/kubeadm/app/constants"
 )
 
 const (
@@ -42,7 +42,8 @@ const (
 	// DefaultCertificatesDir defines default certificate directory
 	DefaultCertificatesDir = "/etc/kubernetes/pki"
 	// DefaultImageRepository defines default image registry
-	DefaultImageRepository = "k8s.gcr.io"
+	// (previously this defaulted to k8s.gcr.io)
+	DefaultImageRepository = "registry.k8s.io"
 	// DefaultManifestsDir defines default manifests directory
 	DefaultManifestsDir = "/etc/kubernetes/manifests"
 	// DefaultClusterName defines the default cluster name

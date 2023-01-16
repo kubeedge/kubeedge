@@ -48,4 +48,3 @@ func NewBasicMirrorClient(apiserverClient clientset.Interface, nodeName string, 
 		nodeGetter:      nodeGetter,
 	}
 }
-

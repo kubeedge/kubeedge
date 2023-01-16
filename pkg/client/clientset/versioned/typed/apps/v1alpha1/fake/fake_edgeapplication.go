@@ -117,7 +117,7 @@ func (c *FakeEdgeApplications) UpdateStatus(ctx context.Context, edgeApplication
 // Delete takes name of the edgeApplication and deletes it. Returns an error if one occurs.
 func (c *FakeEdgeApplications) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(edgeapplicationsResource, c.ns, name), &v1alpha1.EdgeApplication{})
+		Invokes(testing.NewDeleteActionWithOptions(edgeapplicationsResource, c.ns, name, opts), &v1alpha1.EdgeApplication{})
 
 	return err
 }

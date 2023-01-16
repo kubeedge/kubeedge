@@ -60,7 +60,7 @@ type CRDInstallOptions struct {
 	Paths []string
 
 	// CRDs is a list of CRDs to install
-	CRDs []apiextensionsv1.CustomResourceDefinition
+	CRDs []*apiextensionsv1.CustomResourceDefinition
 
 	// ErrorIfPathMissing will cause an error if a Path does not exist
 	ErrorIfPathMissing bool
@@ -88,7 +88,7 @@ const defaultPollInterval = 100 * time.Millisecond
 const defaultMaxWait = 10 * time.Second
 
 // InstallCRDs installs a collection of CRDs into a cluster by reading the crd yaml files from a directory.
-func InstallCRDs(config *rest.Config, options CRDInstallOptions) ([]apiextensionsv1.CustomResourceDefinition, error) {
+func InstallCRDs(config *rest.Config, options CRDInstallOptions) ([]*apiextensionsv1.CustomResourceDefinition, error) {
 	defaultCRDOptions(&options)
 
 	// Read the CRD yamls into options.CRDs
@@ -140,7 +140,7 @@ func defaultCRDOptions(o *CRDInstallOptions) {
 }
 
 // WaitForCRDs waits for the CRDs to appear in discovery.
-func WaitForCRDs(config *rest.Config, crds []apiextensionsv1.CustomResourceDefinition, options CRDInstallOptions) error {
+func WaitForCRDs(config *rest.Config, crds []*apiextensionsv1.CustomResourceDefinition, options CRDInstallOptions) error {
 	// Add each CRD to a map of GroupVersion to Resource
 	waitingFor := map[schema.GroupVersion]*sets.String{}
 	for _, crd := range crds {
@@ -229,7 +229,7 @@ func UninstallCRDs(config *rest.Config, options CRDInstallOptions) error {
 	for _, crd := range options.CRDs {
 		crd := crd
 		log.V(1).Info("uninstalling CRD", "crd", crd.GetName())
-		if err := cs.Delete(context.TODO(), &crd); err != nil {
+		if err := cs.Delete(context.TODO(), crd); err != nil {
 			// If CRD is not found, we can consider success
 			if !apierrors.IsNotFound(err) {
 				return err
@@ -241,7 +241,7 @@ func UninstallCRDs(config *rest.Config, options CRDInstallOptions) error {
 }
 
 // CreateCRDs creates the CRDs.
-func CreateCRDs(config *rest.Config, crds []apiextensionsv1.CustomResourceDefinition) error {
+func CreateCRDs(config *rest.Config, crds []*apiextensionsv1.CustomResourceDefinition) error {
 	cs, err := client.New(config, client.Options{})
 	if err != nil {
 		return fmt.Errorf("unable to create client: %w", err)
@@ -255,7 +255,7 @@ func CreateCRDs(config *rest.Config, crds []apiextensionsv1.CustomResourceDefini
 		err := cs.Get(context.TODO(), client.ObjectKey{Name: crd.GetName()}, existingCrd)
 		switch {
 		case apierrors.IsNotFound(err):
-			if err := cs.Create(context.TODO(), &crd); err != nil {
+			if err := cs.Create(context.TODO(), crd); err != nil {
 				return fmt.Errorf("unable to create CRD %q: %w", crd.GetName(), err)
 			}
 		case err != nil:
@@ -267,7 +267,7 @@ func CreateCRDs(config *rest.Config, crds []apiextensionsv1.CustomResourceDefini
 					return err
 				}
 				crd.SetResourceVersion(existingCrd.GetResourceVersion())
-				return cs.Update(context.TODO(), &crd)
+				return cs.Update(context.TODO(), crd)
 			}); err != nil {
 				return err
 			}
@@ -277,7 +277,7 @@ func CreateCRDs(config *rest.Config, crds []apiextensionsv1.CustomResourceDefini
 }
 
 // renderCRDs iterate through options.Paths and extract all CRD files.
-func renderCRDs(options *CRDInstallOptions) ([]apiextensionsv1.CustomResourceDefinition, error) {
+func renderCRDs(options *CRDInstallOptions) ([]*apiextensionsv1.CustomResourceDefinition, error) {
 	var (
 		err   error
 		info  os.FileInfo
@@ -289,7 +289,7 @@ func renderCRDs(options *CRDInstallOptions) ([]apiextensionsv1.CustomResourceDef
 		Name string
 	}
 
-	crds := map[GVKN]apiextensionsv1.CustomResourceDefinition{}
+	crds := map[GVKN]*apiextensionsv1.CustomResourceDefinition{}
 
 	for _, path := range options.Paths {
 		var filePath = path
@@ -326,7 +326,7 @@ func renderCRDs(options *CRDInstallOptions) ([]apiextensionsv1.CustomResourceDef
 	}
 
 	// Converting map to a list to return
-	res := []apiextensionsv1.CustomResourceDefinition{}
+	res := []*apiextensionsv1.CustomResourceDefinition{}
 	for _, obj := range crds {
 		res = append(res, obj)
 	}
@@ -335,7 +335,7 @@ func renderCRDs(options *CRDInstallOptions) ([]apiextensionsv1.CustomResourceDef
 
 // modifyConversionWebhooks takes all the registered CustomResourceDefinitions and applies modifications
 // to conditionally enable webhooks if the type is registered within the scheme.
-func modifyConversionWebhooks(crds []apiextensionsv1.CustomResourceDefinition, scheme *runtime.Scheme, webhookOptions WebhookInstallOptions) error {
+func modifyConversionWebhooks(crds []*apiextensionsv1.CustomResourceDefinition, scheme *runtime.Scheme, webhookOptions WebhookInstallOptions) error {
 	if len(webhookOptions.LocalServingCAData) == 0 {
 		return nil
 	}
@@ -389,8 +389,8 @@ func modifyConversionWebhooks(crds []apiextensionsv1.CustomResourceDefinition, s
 }
 
 // readCRDs reads the CRDs from files and Unmarshals them into structs.
-func readCRDs(basePath string, files []os.FileInfo) ([]apiextensionsv1.CustomResourceDefinition, error) {
-	var crds []apiextensionsv1.CustomResourceDefinition
+func readCRDs(basePath string, files []os.FileInfo) ([]*apiextensionsv1.CustomResourceDefinition, error) {
+	var crds []*apiextensionsv1.CustomResourceDefinition
 
 	// White list the file extensions that may contain CRDs
 	crdExts := sets.NewString(".json", ".yaml", ".yml")
@@ -416,7 +416,7 @@ func readCRDs(basePath string, files []os.FileInfo) ([]apiextensionsv1.CustomRes
 			if crd.Kind != "CustomResourceDefinition" || crd.Spec.Names.Kind == "" || crd.Spec.Group == "" {
 				continue
 			}
-			crds = append(crds, *crd)
+			crds = append(crds, crd)
 		}
 
 		log.V(1).Info("read CRDs from file", "file", file.Name())

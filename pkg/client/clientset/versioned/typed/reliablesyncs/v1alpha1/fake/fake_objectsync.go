@@ -117,7 +117,7 @@ func (c *FakeObjectSyncs) UpdateStatus(ctx context.Context, objectSync *v1alpha1
 // Delete takes name of the objectSync and deletes it. Returns an error if one occurs.
 func (c *FakeObjectSyncs) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(objectsyncsResource, c.ns, name), &v1alpha1.ObjectSync{})
+		Invokes(testing.NewDeleteActionWithOptions(objectsyncsResource, c.ns, name, opts), &v1alpha1.ObjectSync{})
 
 	return err
 }

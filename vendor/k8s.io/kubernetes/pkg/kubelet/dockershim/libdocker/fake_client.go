@@ -1,3 +1,4 @@
+//go:build !dockerless
 // +build !dockerless
 
 /*
@@ -34,8 +35,8 @@ import (
 	dockercontainer "github.com/docker/docker/api/types/container"
 	dockerimagetypes "github.com/docker/docker/api/types/image"
 
-	"k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/util/clock"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/utils/clock"
 )
 
 type CalledDetail struct {

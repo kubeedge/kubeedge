@@ -105,7 +105,7 @@ func (c *FakeRuleEndpoints) Update(ctx context.Context, ruleEndpoint *rulesv1.Ru
 // Delete takes name of the ruleEndpoint and deletes it. Returns an error if one occurs.
 func (c *FakeRuleEndpoints) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(ruleendpointsResource, c.ns, name), &rulesv1.RuleEndpoint{})
+		Invokes(testing.NewDeleteActionWithOptions(ruleendpointsResource, c.ns, name, opts), &rulesv1.RuleEndpoint{})
 
 	return err
 }

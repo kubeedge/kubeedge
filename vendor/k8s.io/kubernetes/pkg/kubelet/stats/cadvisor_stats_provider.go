@@ -91,12 +91,11 @@ func (p *cadvisorStatsProvider) ListPodStats() ([]statsapi.PodStats, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get container info from cadvisor: %v", err)
 	}
-	// removeTerminatedContainerInfo will also remove pod level cgroups, so save the infos into allInfos first
-	allInfos := infos
-	infos = removeTerminatedContainerInfo(infos)
+
+	filteredInfos, allInfos := filterTerminatedContainerInfoAndAssembleByPodCgroupKey(infos)
 	// Map each container to a pod and update the PodStats with container data.
 	podToStats := map[statsapi.PodReference]*statsapi.PodStats{}
-	for key, cinfo := range infos {
+	for key, cinfo := range filteredInfos {
 		// On systemd using devicemapper each mount into the container has an
 		// associated cgroup. We ignore them to ensure we do not get duplicate
 		// entries in our summary. For details on .mount units:
@@ -186,12 +185,10 @@ func (p *cadvisorStatsProvider) ListPodCPUAndMemoryStats() ([]statsapi.PodStats,
 	if err != nil {
 		return nil, fmt.Errorf("failed to get container info from cadvisor: %v", err)
 	}
-	// removeTerminatedContainerInfo will also remove pod level cgroups, so save the infos into allInfos first
-	allInfos := infos
-	infos = removeTerminatedContainerInfo(infos)
+	filteredInfos, allInfos := filterTerminatedContainerInfoAndAssembleByPodCgroupKey(infos)
 	// Map each container to a pod and update the PodStats with container data.
 	podToStats := map[statsapi.PodReference]*statsapi.PodStats{}
-	for key, cinfo := range infos {
+	for key, cinfo := range filteredInfos {
 		// On systemd using devicemapper each mount into the container has an
 		// associated cgroup. We ignore them to ensure we do not get duplicate
 		// entries in our summary. For details on .mount units:
@@ -303,30 +300,32 @@ func isPodManagedContainer(cinfo *cadvisorapiv2.ContainerInfo) bool {
 
 // getCadvisorPodInfoFromPodUID returns a pod cgroup information by matching the podUID with its CgroupName identifier base name
 func getCadvisorPodInfoFromPodUID(podUID types.UID, infos map[string]cadvisorapiv2.ContainerInfo) *cadvisorapiv2.ContainerInfo {
-	for key, info := range infos {
-		if cm.IsSystemdStyleName(key) {
-			// Convert to internal cgroup name and take the last component only.
-			internalCgroupName := cm.ParseSystemdToCgroupName(key)
-			key = internalCgroupName[len(internalCgroupName)-1]
-		} else {
-			// Take last component only.
-			key = path.Base(key)
-		}
-		if cm.GetPodCgroupNameSuffix(podUID) == key {
-			return &info
-		}
+	if info, found := infos[cm.GetPodCgroupNameSuffix(podUID)]; found {
+		return &info
 	}
 	return nil
 }
 
-// removeTerminatedContainerInfo returns the specified containerInfo but with
-// the stats of the terminated containers removed.
-//
+// filterTerminatedContainerInfoAndAssembleByPodCgroupKey returns the specified containerInfo but with
+// the stats of the terminated containers removed and all containerInfos assembled by pod cgroup key.
+// the first return map is container cgroup name <-> ContainerInfo and
+// the second return map is pod cgroup key <-> ContainerInfo.
 // A ContainerInfo is considered to be of a terminated container if it has an
 // older CreationTime and zero CPU instantaneous and memory RSS usage.
-func removeTerminatedContainerInfo(containerInfo map[string]cadvisorapiv2.ContainerInfo) map[string]cadvisorapiv2.ContainerInfo {
+func filterTerminatedContainerInfoAndAssembleByPodCgroupKey(containerInfo map[string]cadvisorapiv2.ContainerInfo) (map[string]cadvisorapiv2.ContainerInfo, map[string]cadvisorapiv2.ContainerInfo) {
 	cinfoMap := make(map[containerID][]containerInfoWithCgroup)
+	cinfosByPodCgroupKey := make(map[string]cadvisorapiv2.ContainerInfo)
 	for key, cinfo := range containerInfo {
+		var podCgroupKey string
+		if cm.IsSystemdStyleName(key) {
+			// Convert to internal cgroup name and take the last component only.
+			internalCgroupName := cm.ParseSystemdToCgroupName(key)
+			podCgroupKey = internalCgroupName[len(internalCgroupName)-1]
+		} else {
+			// Take last component only.
+			podCgroupKey = path.Base(key)
+		}
+		cinfosByPodCgroupKey[podCgroupKey] = cinfo
 		if !isPodManagedContainer(&cinfo) {
 			continue
 		}
@@ -342,7 +341,11 @@ func removeTerminatedContainerInfo(containerInfo map[string]cadvisorapiv2.Contai
 	result := make(map[string]cadvisorapiv2.ContainerInfo)
 	for _, refs := range cinfoMap {
 		if len(refs) == 1 {
-			result[refs[0].cgroup] = refs[0].cinfo
+			// ContainerInfo with no CPU/memory/network usage for uncleaned cgroups of
+			// already terminated containers, which should not be shown in the results.
+			if !isContainerTerminated(&refs[0].cinfo) {
+				result[refs[0].cgroup] = refs[0].cinfo
+			}
 			continue
 		}
 		sort.Sort(ByCreationTime(refs))
@@ -353,7 +356,7 @@ func removeTerminatedContainerInfo(containerInfo map[string]cadvisorapiv2.Contai
 			}
 		}
 	}
-	return result
+	return result, cinfosByPodCgroupKey
 }
 
 // ByCreationTime implements sort.Interface for []containerInfoWithCgroup based
@@ -400,6 +403,35 @@ func hasMemoryAndCPUInstUsage(info *cadvisorapiv2.ContainerInfo) bool {
 		return false
 	}
 	return cstat.CpuInst.Usage.Total != 0 && cstat.Memory.RSS != 0
+}
+
+// isContainerTerminated returns true if the specified container meet one of the following conditions
+// 1. info.spec both cpu memory and network are false conditions
+// 2. info.Stats both network and cpu or memory are nil
+// 3. both zero CPU instantaneous usage zero memory RSS usage and zero network usage,
+// and false otherwise.
+func isContainerTerminated(info *cadvisorapiv2.ContainerInfo) bool {
+	if !info.Spec.HasCpu && !info.Spec.HasMemory && !info.Spec.HasNetwork {
+		return true
+	}
+	cstat, found := latestContainerStats(info)
+	if !found {
+		return true
+	}
+	if cstat.Network != nil {
+		iStats := cadvisorInfoToNetworkStats(info)
+		if iStats != nil {
+			for _, iStat := range iStats.Interfaces {
+				if *iStat.RxErrors != 0 || *iStat.TxErrors != 0 || *iStat.RxBytes != 0 || *iStat.TxBytes != 0 {
+					return false
+				}
+			}
+		}
+	}
+	if cstat.CpuInst == nil || cstat.Memory == nil {
+		return true
+	}
+	return cstat.CpuInst.Usage.Total == 0 && cstat.Memory.RSS == 0
 }
 
 func getCadvisorContainerInfo(ca cadvisor.Interface) (map[string]cadvisorapiv2.ContainerInfo, error) {

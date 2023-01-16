@@ -30,11 +30,11 @@ import (
 	"k8s.io/klog/v2"
 
 	"k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/apimachinery/pkg/util/clock"
 	"k8s.io/apimachinery/pkg/util/wait"
 	internalapi "k8s.io/cri-api/pkg/apis"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
+	"k8s.io/utils/clock"
 )
 
 const (
@@ -386,11 +386,15 @@ func (c *containerLogManager) compressLog(log string) error {
 	if _, err := io.Copy(w, r); err != nil {
 		return fmt.Errorf("failed to compress %q to %q: %v", log, tmpLog, err)
 	}
+	// The archive needs to be closed before renaming, otherwise an error will occur on Windows.
+	w.Close()
+	f.Close()
 	compressedLog := log + compressSuffix
 	if err := c.osInterface.Rename(tmpLog, compressedLog); err != nil {
 		return fmt.Errorf("failed to rename %q to %q: %v", tmpLog, compressedLog, err)
 	}
 	// Remove old log file.
+	r.Close()
 	if err := c.osInterface.Remove(log); err != nil {
 		return fmt.Errorf("failed to remove log %q after compress: %v", log, err)
 	}

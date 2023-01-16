@@ -32,15 +32,12 @@ func ConvertConfigEdgedFlagToConfigKubeletFlag(in *v1alpha2.TailoredKubeletFlag,
 	out.HostnameOverride = in.HostnameOverride
 	out.NodeIP = in.NodeIP
 	out.RootDirectory = in.RootDirectory
-	out.RegisterNode = in.RegisterNode
-	out.RegisterWithTaints = in.RegisterWithTaints
 	out.RemoteRuntimeEndpoint = in.RemoteRuntimeEndpoint
 	out.RemoteImageEndpoint = in.RemoteImageEndpoint
 	out.ExperimentalMounterPath = in.ExperimentalMounterPath
 	out.ExperimentalCheckNodeCapabilitiesBeforeMount = in.ExperimentalCheckNodeCapabilitiesBeforeMount
 	out.ExperimentalNodeAllocatableIgnoreEvictionThreshold = in.ExperimentalNodeAllocatableIgnoreEvictionThreshold
 	out.NodeLabels = in.NodeLabels
-	out.SeccompProfileRoot = in.SeccompProfileRoot
 	out.MinimumGCAge = in.MinimumGCAge
 	out.MaxPerPodContainerCount = in.MaxPerPodContainerCount
 	out.MaxContainerCount = in.MaxContainerCount

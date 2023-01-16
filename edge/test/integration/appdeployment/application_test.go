@@ -149,8 +149,8 @@ var _ = Describe("Application deployment in edgecore Testing", func() {
 			//Generate the random string and assign as a UID
 			UID = "deployment-app-" + edge.GetRandomString(10)
 			httpact := v1.HTTPGetAction{Path: "/var/lib/edged", Scheme: "HTTP", Port: intstr.IntOrString{Type: intstr.Type(1), IntVal: 1884, StrVal: "1884"}}
-			handler := v1.Handler{HTTPGet: &httpact}
-			probe := v1.Probe{Handler: handler, TimeoutSeconds: 1, InitialDelaySeconds: 10, PeriodSeconds: 15}
+			handler := v1.ProbeHandler{HTTPGet: &httpact}
+			probe := v1.Probe{ProbeHandler: handler, TimeoutSeconds: 1, InitialDelaySeconds: 10, PeriodSeconds: 15}
 			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[0], LivenessProbe: &probe, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
 			Expect(IsAppDeployed).Should(BeTrue())
 			CheckPodRunningState(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
@@ -163,8 +163,8 @@ var _ = Describe("Application deployment in edgecore Testing", func() {
 			//Generate the random string and assign as a UID
 			UID = "deployment-app-" + edge.GetRandomString(10)
 			httpact := v1.HTTPGetAction{Path: "/var/lib/edged", Scheme: "HTTP", Port: intstr.IntOrString{Type: intstr.Type(1), IntVal: 10255, StrVal: "10255"}}
-			handler := v1.Handler{HTTPGet: &httpact}
-			probe := v1.Probe{Handler: handler, TimeoutSeconds: 1, InitialDelaySeconds: 10, PeriodSeconds: 15}
+			handler := v1.ProbeHandler{HTTPGet: &httpact}
+			probe := v1.Probe{ProbeHandler: handler, TimeoutSeconds: 1, InitialDelaySeconds: 10, PeriodSeconds: 15}
 			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[0], ReadinessProbe: &probe, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
 			Expect(IsAppDeployed).Should(BeTrue())
 			CheckPodRunningState(ctx.Cfg.EdgedEndpoint+AppHandler, UID)

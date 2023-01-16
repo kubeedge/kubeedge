@@ -19,12 +19,12 @@ package kubeadm
 import (
 	"crypto/x509"
 
-	"k8s.io/kubernetes/cmd/kubeadm/app/features"
-
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	bootstraptokenv1 "k8s.io/kubernetes/cmd/kubeadm/app/apis/bootstraptoken/v1"
+	"k8s.io/kubernetes/cmd/kubeadm/app/features"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -84,8 +84,14 @@ type ClusterConfiguration struct {
 
 	// Networking holds configuration for the networking topology of the cluster.
 	Networking Networking
+
 	// KubernetesVersion is the target version of the control plane.
 	KubernetesVersion string
+
+	// CIKubernetesVersion is the target CI version of the control plane.
+	// Useful for running kubeadm with CI Kubernetes version.
+	// +k8s:conversion-gen=false
+	CIKubernetesVersion string
 
 	// ControlPlaneEndpoint sets a stable IP address or DNS name for the control plane; it
 	// can be a valid IP address or a RFC-1123 DNS subdomain, both with optional TCP port.
@@ -116,8 +122,8 @@ type ClusterConfiguration struct {
 	CertificatesDir string
 
 	// ImageRepository sets the container registry to pull images from.
-	// If empty, `k8s.gcr.io` will be used by default; in case of kubernetes version is a CI build (kubernetes version starts with `ci/` or `ci-cross/`)
-	// `gcr.io/k8s-staging-ci-images` will be used as a default for control plane components and for kube-proxy, while `k8s.gcr.io`
+	// If empty, `registry.k8s.io` will be used by default; in case of kubernetes version is a CI build (kubernetes version starts with `ci/`)
+	// `gcr.io/k8s-staging-ci-images` will be used as a default for control plane components and for kube-proxy, while `registry.k8s.io`
 	// will be used for all the other images.
 	ImageRepository string
 
@@ -452,6 +458,9 @@ type ComponentConfig interface {
 
 	// SetUserSupplied sets the state of the component config "user supplied" flag to, either true, or false.
 	SetUserSupplied(userSupplied bool)
+
+	// Mutate allows applying pre-defined modifications to the config before it's marshaled.
+	Mutate() error
 
 	// Set can be used to set the internal configuration in the ComponentConfig
 	Set(interface{})

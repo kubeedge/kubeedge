@@ -35,17 +35,17 @@ import (
 	"path/filepath"
 	"time"
 
-	kubeadmapi "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"
-	kubeadmconstants "k8s.io/kubernetes/cmd/kubeadm/app/constants"
-	"k8s.io/kubernetes/cmd/kubeadm/app/features"
-	kubeadmutil "k8s.io/kubernetes/cmd/kubeadm/app/util"
+	"github.com/pkg/errors"
 
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
 	certutil "k8s.io/client-go/util/cert"
 	"k8s.io/client-go/util/keyutil"
+	netutils "k8s.io/utils/net"
 
-	"github.com/pkg/errors"
+	kubeadmapi "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"
+	kubeadmconstants "k8s.io/kubernetes/cmd/kubeadm/app/constants"
+	kubeadmutil "k8s.io/kubernetes/cmd/kubeadm/app/util"
 )
 
 const (
@@ -353,7 +353,7 @@ func TryLoadCSRAndKeyFromDisk(pkiPath, name string) (*x509.CertificateRequest, c
 }
 
 // TryLoadPrivatePublicKeyFromDisk tries to load the key from the disk and validates that it is valid
-func TryLoadPrivatePublicKeyFromDisk(pkiPath, name string) (*rsa.PrivateKey, *rsa.PublicKey, error) {
+func TryLoadPrivatePublicKeyFromDisk(pkiPath, name string) (crypto.PrivateKey, crypto.PublicKey, error) {
 	privateKeyPath := pathForKey(pkiPath, name)
 
 	// Parse the private key from a file
@@ -370,15 +370,15 @@ func TryLoadPrivatePublicKeyFromDisk(pkiPath, name string) (*rsa.PrivateKey, *rs
 		return nil, nil, errors.Wrapf(err, "couldn't load the public key file %s", publicKeyPath)
 	}
 
-	// Allow RSA format only
-	k, ok := privKey.(*rsa.PrivateKey)
-	if !ok {
-		return nil, nil, errors.Errorf("the private key file %s isn't in RSA format", privateKeyPath)
+	// Allow RSA and ECDSA formats only
+	switch k := privKey.(type) {
+	case *rsa.PrivateKey:
+		return k, pubKeys[0].(*rsa.PublicKey), nil
+	case *ecdsa.PrivateKey:
+		return k, pubKeys[0].(*ecdsa.PublicKey), nil
+	default:
+		return nil, nil, errors.Errorf("the private key file %s is neither in RSA nor ECDSA format", privateKeyPath)
 	}
-
-	p := pubKeys[0].(*rsa.PublicKey)
-
-	return k, p, nil
 }
 
 // TryLoadCSRFromDisk tries to load the CSR from the disk
@@ -417,13 +417,13 @@ func pathForCSR(pkiPath, name string) string {
 // GetAPIServerAltNames builds an AltNames object for to be used when generating apiserver certificate
 func GetAPIServerAltNames(cfg *kubeadmapi.InitConfiguration) (*certutil.AltNames, error) {
 	// advertise address
-	advertiseAddress := net.ParseIP(cfg.LocalAPIEndpoint.AdvertiseAddress)
+	advertiseAddress := netutils.ParseIPSloppy(cfg.LocalAPIEndpoint.AdvertiseAddress)
 	if advertiseAddress == nil {
 		return nil, errors.Errorf("error parsing LocalAPIEndpoint AdvertiseAddress %v: is not a valid textual representation of an IP address",
 			cfg.LocalAPIEndpoint.AdvertiseAddress)
 	}
 
-	internalAPIServerVirtualIP, err := kubeadmconstants.GetAPIServerVirtualIP(cfg.Networking.ServiceSubnet, features.Enabled(cfg.FeatureGates, features.IPv6DualStack))
+	internalAPIServerVirtualIP, err := kubeadmconstants.GetAPIServerVirtualIP(cfg.Networking.ServiceSubnet)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to get first IP address from the given CIDR: %v", cfg.Networking.ServiceSubnet)
 	}
@@ -446,7 +446,7 @@ func GetAPIServerAltNames(cfg *kubeadmapi.InitConfiguration) (*certutil.AltNames
 	// add cluster controlPlaneEndpoint if present (dns or ip)
 	if len(cfg.ControlPlaneEndpoint) > 0 {
 		if host, _, err := kubeadmutil.ParseHostPort(cfg.ControlPlaneEndpoint); err == nil {
-			if ip := net.ParseIP(host); ip != nil {
+			if ip := netutils.ParseIPSloppy(host); ip != nil {
 				altNames.IPs = append(altNames.IPs, ip)
 			} else {
 				altNames.DNSNames = append(altNames.DNSNames, host)
@@ -478,7 +478,7 @@ func GetEtcdPeerAltNames(cfg *kubeadmapi.InitConfiguration) (*certutil.AltNames,
 // getAltNames builds an AltNames object with the cfg and certName.
 func getAltNames(cfg *kubeadmapi.InitConfiguration, certName string) (*certutil.AltNames, error) {
 	// advertise address
-	advertiseAddress := net.ParseIP(cfg.LocalAPIEndpoint.AdvertiseAddress)
+	advertiseAddress := netutils.ParseIPSloppy(cfg.LocalAPIEndpoint.AdvertiseAddress)
 	if advertiseAddress == nil {
 		return nil, errors.Errorf("error parsing LocalAPIEndpoint AdvertiseAddress %v: is not a valid textual representation of an IP address",
 			cfg.LocalAPIEndpoint.AdvertiseAddress)
@@ -508,7 +508,7 @@ func getAltNames(cfg *kubeadmapi.InitConfiguration, certName string) (*certutil.
 // certNames is used to print user facing warnings and should be the name of the cert the altNames will be used for
 func appendSANsToAltNames(altNames *certutil.AltNames, SANs []string, certName string) {
 	for _, altname := range SANs {
-		if ip := net.ParseIP(altname); ip != nil {
+		if ip := netutils.ParseIPSloppy(altname); ip != nil {
 			altNames.IPs = append(altNames.IPs, ip)
 		} else if len(validation.IsDNS1123Subdomain(altname)) == 0 {
 			altNames.DNSNames = append(altNames.DNSNames, altname)

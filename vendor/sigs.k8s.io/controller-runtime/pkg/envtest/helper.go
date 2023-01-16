@@ -51,18 +51,18 @@ func mergePaths(s1, s2 []string) []string {
 
 // mergeCRDs merges two CRD slices using their names.
 // This function makes no guarantees about order of the merged slice.
-func mergeCRDs(s1, s2 []apiextensionsv1.CustomResourceDefinition) []apiextensionsv1.CustomResourceDefinition {
-	m := make(map[string]apiextensionsv1.CustomResourceDefinition)
+func mergeCRDs(s1, s2 []*apiextensionsv1.CustomResourceDefinition) []*apiextensionsv1.CustomResourceDefinition {
+	m := make(map[string]*apiextensionsv1.CustomResourceDefinition)
 	for _, obj := range s1 {
 		m[obj.GetName()] = obj
 	}
 	for _, obj := range s2 {
 		m[obj.GetName()] = obj
 	}
-	merged := make([]apiextensionsv1.CustomResourceDefinition, len(m))
+	merged := make([]*apiextensionsv1.CustomResourceDefinition, len(m))
 	i := 0
 	for _, obj := range m {
-		merged[i] = obj
+		merged[i] = obj.DeepCopy()
 		i++
 	}
 	return merged

@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 /*
@@ -47,6 +48,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	"k8s.io/client-go/tools/record"
+	utilsysctl "k8s.io/component-helpers/node/util/sysctl"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	podresourcesapi "k8s.io/kubelet/pkg/apis/podresources/v1"
 	kubefeatures "k8s.io/kubernetes/pkg/features"
@@ -69,7 +71,6 @@ import (
 	schedulerframework "k8s.io/kubernetes/pkg/scheduler/framework"
 	"k8s.io/kubernetes/pkg/util/oom"
 	"k8s.io/kubernetes/pkg/util/procfs"
-	utilsysctl "k8s.io/kubernetes/pkg/util/sysctl"
 )
 
 const (
@@ -612,11 +613,8 @@ func (cm *containerManagerImpl) Start(node *v1.Node,
 
 	// Initialize CPU manager
 	if utilfeature.DefaultFeatureGate.Enabled(kubefeatures.CPUManager) {
-		containerMap, err := buildContainerMapFromRuntime(runtimeService)
-		if err != nil {
-			return fmt.Errorf("failed to build map of initial containers from runtime: %v", err)
-		}
-		err = cm.cpuManager.Start(cpumanager.ActivePodsFunc(activePods), sourcesReady, podStatusProvider, runtimeService, containerMap)
+		containerMap := buildContainerMapFromRuntime(runtimeService)
+		err := cm.cpuManager.Start(cpumanager.ActivePodsFunc(activePods), sourcesReady, podStatusProvider, runtimeService, containerMap)
 		if err != nil {
 			return fmt.Errorf("start cpu manager error: %v", err)
 		}
@@ -624,11 +622,8 @@ func (cm *containerManagerImpl) Start(node *v1.Node,
 
 	// Initialize memory manager
 	if utilfeature.DefaultFeatureGate.Enabled(kubefeatures.MemoryManager) {
-		containerMap, err := buildContainerMapFromRuntime(runtimeService)
-		if err != nil {
-			return fmt.Errorf("failed to build map of initial containers from runtime: %v", err)
-		}
-		err = cm.memoryManager.Start(memorymanager.ActivePodsFunc(activePods), sourcesReady, podStatusProvider, runtimeService, containerMap)
+		containerMap := buildContainerMapFromRuntime(runtimeService)
+		err := cm.memoryManager.Start(memorymanager.ActivePodsFunc(activePods), sourcesReady, podStatusProvider, runtimeService, containerMap)
 		if err != nil {
 			return fmt.Errorf("start memory manager error: %v", err)
 		}
@@ -785,7 +780,7 @@ func (cm *containerManagerImpl) SystemCgroupsLimit() v1.ResourceList {
 	}
 }
 
-func buildContainerMapFromRuntime(runtimeService internalapi.RuntimeService) (containermap.ContainerMap, error) {
+func buildContainerMapFromRuntime(runtimeService internalapi.RuntimeService) containermap.ContainerMap {
 	podSandboxMap := make(map[string]string)
 	podSandboxList, _ := runtimeService.ListPodSandbox(nil)
 	for _, p := range podSandboxList {
@@ -796,12 +791,13 @@ func buildContainerMapFromRuntime(runtimeService internalapi.RuntimeService) (co
 	containerList, _ := runtimeService.ListContainers(nil)
 	for _, c := range containerList {
 		if _, exists := podSandboxMap[c.PodSandboxId]; !exists {
-			return nil, fmt.Errorf("no PodsandBox found with Id '%s'", c.PodSandboxId)
+			klog.InfoS("no PodSandBox found for the container", "podSandboxId", c.PodSandboxId, "containerName", c.Metadata.Name, "containerId", c.Id)
+			continue
 		}
 		containerMap.Add(podSandboxMap[c.PodSandboxId], c.Metadata.Name, c.Id)
 	}
 
-	return containerMap, nil
+	return containerMap
 }
 
 func isProcessRunningInHost(pid int) (bool, error) {
@@ -992,7 +988,6 @@ func getContainer(pid int) (string, error) {
 //
 // The reason of leaving kernel threads at root cgroup is that we don't want to tie the
 // execution of these threads with to-be defined /system quota and create priority inversions.
-//
 func ensureSystemCgroups(rootCgroupPath string, manager cgroups.Manager) error {
 	// Move non-kernel PIDs to the system container.
 	// Only keep errors on latest attempt.
@@ -1063,7 +1058,7 @@ func (cm *containerManagerImpl) GetAllocatableDevices() []*podresourcesapi.Conta
 
 func (cm *containerManagerImpl) GetCPUs(podUID, containerName string) []int64 {
 	if cm.cpuManager != nil {
-		return cm.cpuManager.GetCPUs(podUID, containerName).ToSliceNoSortInt64()
+		return cm.cpuManager.GetExclusiveCPUs(podUID, containerName).ToSliceNoSortInt64()
 	}
 	return []int64{}
 }

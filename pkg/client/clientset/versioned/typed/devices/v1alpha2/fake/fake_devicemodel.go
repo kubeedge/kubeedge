@@ -105,7 +105,7 @@ func (c *FakeDeviceModels) Update(ctx context.Context, deviceModel *v1alpha2.Dev
 // Delete takes name of the deviceModel and deletes it. Returns an error if one occurs.
 func (c *FakeDeviceModels) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(devicemodelsResource, c.ns, name), &v1alpha2.DeviceModel{})
+		Invokes(testing.NewDeleteActionWithOptions(devicemodelsResource, c.ns, name, opts), &v1alpha2.DeviceModel{})
 
 	return err
 }

@@ -135,6 +135,7 @@ func EdgeCoreConfig(config *hollowEdgeNodeConfig) *v1alpha2.EdgeCoreConfig {
 	edgeCoreConfig := v1alpha2.NewDefaultEdgeCoreConfig()
 
 	falseFlag := false
+	trueFlag := true
 
 	// overWrite config
 	edgeCoreConfig.DataBase.DataSource = "/edgecore.db"
@@ -144,7 +145,7 @@ func EdgeCoreConfig(config *hollowEdgeNodeConfig) *v1alpha2.EdgeCoreConfig {
 
 	edgeCoreConfig.Modules.Edged.HostnameOverride = config.NodeName
 	edgeCoreConfig.Modules.Edged.NodeLabels = config.NodeLabels
-	edgeCoreConfig.Modules.Edged.RegisterNode = true
+	edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.RegisterNode = &trueFlag
 	edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.CgroupsPerQOS = &falseFlag
 	edgeCoreConfig.Modules.Edged.ContainerRuntime = kubetypes.RemoteContainerRuntime
 	edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.EnableControllerAttachDetach = &falseFlag

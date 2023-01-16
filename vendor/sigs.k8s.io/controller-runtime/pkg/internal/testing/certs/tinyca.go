@@ -24,8 +24,9 @@ package certs
 
 import (
 	"crypto"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	crand "crypto/rand"
-	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
@@ -38,8 +39,8 @@ import (
 )
 
 var (
-	rsaKeySize = 2048 // a decent number, as of 2019
-	bigOne     = big.NewInt(1)
+	ellipticCurve = elliptic.P256()
+	bigOne        = big.NewInt(1)
 )
 
 // CertPair is a private key and certificate for use for client auth, as a CA, or serving.
@@ -86,7 +87,7 @@ type TinyCA struct {
 // newPrivateKey generates a new private key of a relatively sane size (see
 // rsaKeySize).
 func newPrivateKey() (crypto.Signer, error) {
-	return rsa.GenerateKey(crand.Reader, rsaKeySize)
+	return ecdsa.GenerateKey(ellipticCurve, crand.Reader)
 }
 
 // NewTinyCA creates a new a tiny CA utility for provisioning serving certs and client certs FOR TESTING ONLY.

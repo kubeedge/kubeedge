@@ -71,8 +71,6 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 					NodeIP:           localIP,
 					ContainerRuntimeOptions: ContainerRuntimeOptions{
 						ContainerRuntime:          constants.DefaultRuntimeType,
-						DockershimRootDirectory:   constants.DefaultDockershimRootDir,
-						DockerEndpoint:            constants.DefaultDockerAddress,
 						PodSandboxImage:           constants.DefaultPodSandboxImage,
 						ImagePullProgressDeadline: metav1.Duration{Duration: constants.DefaultImagePullProgressDeadline},
 						CNIConfDir:                constants.DefaultCNIConfDir,
@@ -220,8 +218,6 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 					NodeIP:           localIP,
 					ContainerRuntimeOptions: ContainerRuntimeOptions{
 						ContainerRuntime:          constants.DefaultRuntimeType,
-						DockershimRootDirectory:   constants.DefaultDockershimRootDir,
-						DockerEndpoint:            constants.DefaultDockerAddress,
 						PodSandboxImage:           constants.DefaultPodSandboxImage,
 						ImagePullProgressDeadline: metav1.Duration{Duration: constants.DefaultImagePullProgressDeadline},
 						CNIConfDir:                constants.DefaultCNIConfDir,

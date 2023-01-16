@@ -18,7 +18,6 @@ package kuberuntime
 
 import (
 	"fmt"
-	"net"
 	"net/url"
 	"runtime"
 	"sort"
@@ -26,13 +25,14 @@ import (
 	v1 "k8s.io/api/core/v1"
 	kubetypes "k8s.io/apimachinery/pkg/types"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/features"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	"k8s.io/kubernetes/pkg/kubelet/types"
 	"k8s.io/kubernetes/pkg/kubelet/util"
 	"k8s.io/kubernetes/pkg/kubelet/util/format"
+	netutils "k8s.io/utils/net"
 )
 
 // createPodSandbox creates a pod sandbox and returns (podSandBoxID, message, error).
@@ -148,6 +148,10 @@ func (m *kubeGenericRuntimeManager) generatePodSandboxConfig(pod *v1.Pod, attemp
 		podSandboxConfig.Windows = wc
 	}
 
+	// Update config to include overhead, sandbox level resources
+	if err := m.applySandboxResources(pod, podSandboxConfig); err != nil {
+		return nil, err
+	}
 	return podSandboxConfig, nil
 }
 
@@ -224,6 +228,29 @@ func (m *kubeGenericRuntimeManager) generatePodSandboxWindowsConfig(pod *v1.Pod)
 		SecurityContext: &runtimeapi.WindowsSandboxSecurityContext{},
 	}
 
+	// If all of the containers in a pod are HostProcess containers, set the pod's HostProcess field
+	// explicitly because the container runtime requires this information at sandbox creation time.
+	if kubecontainer.HasWindowsHostProcessContainer(pod) {
+		// Pods containing HostProcess containers should fail to schedule if feature is not
+		// enabled instead of trying to schedule containers as regular containers as stated in
+		// PRR review.
+		if !utilfeature.DefaultFeatureGate.Enabled(features.WindowsHostProcessContainers) {
+			return nil, fmt.Errorf("pod contains HostProcess containers but feature 'WindowsHostProcessContainers' is not enabled")
+		}
+
+		// At present Windows all containers in a Windows pod must be HostProcess containers
+		// and HostNetwork is required to be set.
+		if !kubecontainer.AllContainersAreWindowsHostProcess(pod) {
+			return nil, fmt.Errorf("pod must not contain both HostProcess and non-HostProcess containers")
+		}
+
+		if !kubecontainer.IsHostNetworkPod(pod) {
+			return nil, fmt.Errorf("hostNetwork is required if Pod contains HostProcess containers")
+		}
+
+		wc.SecurityContext.HostProcess = true
+	}
+
 	sc := pod.Spec.SecurityContext
 	if sc == nil || sc.WindowsOptions == nil {
 		return wc, nil
@@ -239,26 +266,10 @@ func (m *kubeGenericRuntimeManager) generatePodSandboxWindowsConfig(pod *v1.Pod)
 	}
 
 	if kubecontainer.HasWindowsHostProcessContainer(pod) {
-		// Pods containing HostProcess containers should fail to schedule if feature is not
-		// enabled instead of trying to schedule containers as regular containers as stated in
-		// PRR review.
-		if !utilfeature.DefaultFeatureGate.Enabled(features.WindowsHostProcessContainers) {
-			return nil, fmt.Errorf("pod contains HostProcess containers but feature 'WindowsHostProcessContainers' is not enabled")
-		}
 
 		if wo.HostProcess != nil && !*wo.HostProcess {
 			return nil, fmt.Errorf("pod must not contain any HostProcess containers if Pod's WindowsOptions.HostProcess is set to false")
 		}
-		// At present Windows all containers in a Windows pod must be HostProcess containers
-		// and HostNetwork is required to be set.
-		if !kubecontainer.AllContainersAreWindowsHostProcess(pod) {
-			return nil, fmt.Errorf("pod must not contain both HostProcess and non-HostProcess containers")
-		}
-		if !kubecontainer.IsHostNetworkPod(pod) {
-			return nil, fmt.Errorf("hostNetwork is required if Pod contains HostProcess containers")
-		}
-
-		wc.SecurityContext.HostProcess = true
 	}
 
 	return wc, nil
@@ -298,7 +309,7 @@ func (m *kubeGenericRuntimeManager) determinePodSandboxIPs(podNamespace, podName
 
 	// pick primary IP
 	if len(podSandbox.Network.Ip) != 0 {
-		if net.ParseIP(podSandbox.Network.Ip) == nil {
+		if netutils.ParseIPSloppy(podSandbox.Network.Ip) == nil {
 			klog.InfoS("Pod Sandbox reported an unparseable primary IP", "pod", klog.KRef(podNamespace, podName), "IP", podSandbox.Network.Ip)
 			return nil
 		}
@@ -307,7 +318,7 @@ func (m *kubeGenericRuntimeManager) determinePodSandboxIPs(podNamespace, podName
 
 	// pick additional ips, if cri reported them
 	for _, podIP := range podSandbox.Network.AdditionalIps {
-		if nil == net.ParseIP(podIP.Ip) {
+		if nil == netutils.ParseIPSloppy(podIP.Ip) {
 			klog.InfoS("Pod Sandbox reported an unparseable additional IP", "pod", klog.KRef(podNamespace, podName), "IP", podIP.Ip)
 			return nil
 		}

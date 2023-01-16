@@ -25,9 +25,9 @@ import (
 	cadvisorapi "github.com/google/cadvisor/info/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/klog/v2"
 
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"k8s.io/kubernetes/pkg/kubelet/cm/containermap"
 	"k8s.io/kubernetes/pkg/kubelet/cm/cpumanager/state"
 	"k8s.io/kubernetes/pkg/kubelet/cm/cpumanager/topology"
@@ -77,17 +77,21 @@ type Manager interface {
 	// and other resource controllers.
 	GetTopologyHints(*v1.Pod, *v1.Container) map[string][]topologymanager.TopologyHint
 
-	// GetCPUs implements the podresources.CPUsProvider interface to provide allocated
-	// cpus for the container
-	GetCPUs(podUID, containerName string) cpuset.CPUSet
+	// GetExclusiveCPUs implements the podresources.CPUsProvider interface to provide
+	// exclusively allocated cpus for the container
+	GetExclusiveCPUs(podUID, containerName string) cpuset.CPUSet
 
 	// GetPodTopologyHints implements the topologymanager.HintProvider Interface
 	// and is consulted to achieve NUMA aware resource alignment per Pod
 	// among this and other resource controllers.
 	GetPodTopologyHints(pod *v1.Pod) map[string][]topologymanager.TopologyHint
 
-	// GetAllocatableCPUs returns the assignable (not allocated) CPUs
+	// GetAllocatableCPUs returns the total set of CPUs available for allocation.
 	GetAllocatableCPUs() cpuset.CPUSet
+
+	// GetCPUAffinity returns cpuset which includes cpus from shared pools
+	// as well as exclusively allocated cpus
+	GetCPUAffinity(podUID, containerName string) cpuset.CPUSet
 }
 
 type manager struct {
@@ -384,6 +388,16 @@ func (m *manager) removeStaleState() {
 			}
 		}
 	}
+
+	m.containerMap.Visit(func(podUID, containerName, containerID string) {
+		if _, ok := activeContainers[podUID][containerName]; !ok {
+			klog.ErrorS(nil, "RemoveStaleState: removing container", "podUID", podUID, "containerName", containerName)
+			err := m.policyRemoveContainerByRef(podUID, containerName)
+			if err != nil {
+				klog.ErrorS(err, "RemoveStaleState: failed to remove container", "podUID", podUID, "containerName", containerName)
+			}
+		}
+	})
 }
 
 func (m *manager) reconcileState() (success []reconciledContainer, failure []reconciledContainer) {
@@ -506,7 +520,15 @@ func (m *manager) updateContainerCPUSet(containerID string, cpus cpuset.CPUSet) 
 		})
 }
 
-func (m *manager) GetCPUs(podUID, containerName string) cpuset.CPUSet {
+func (m *manager) GetExclusiveCPUs(podUID, containerName string) cpuset.CPUSet {
+	if result, ok := m.state.GetCPUSet(string(podUID), containerName); ok {
+		return result
+	}
+
+	return cpuset.CPUSet{}
+}
+
+func (m *manager) GetCPUAffinity(podUID, containerName string) cpuset.CPUSet {
 	return m.state.GetCPUSetOrDefault(podUID, containerName)
 }
 
