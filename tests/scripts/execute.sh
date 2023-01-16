@@ -30,24 +30,21 @@ which ginkgo &> /dev/null || (
 )
 
 cleanup() {
-    bash ${curpath}/tests/e2e/scripts/cleanup.sh
+    bash ${curpath}/tests/scripts/cleanup.sh
 }
 
 cleanup
 
-E2E_DIR=${curpath}/tests/e2e
-sudo rm -rf ${E2E_DIR}/deployment/deployment.test
-sudo rm -rf ${E2E_DIR}/device_crd/device_crd.test
+sudo rm -rf ${curpath}/tests/e2e/e2e.test
+sudo rm -rf ${curpath}/tests/e2e_keadm/e2e_keadm.test
 
 # Specify the module name to compile in below command
-bash -x ${E2E_DIR}/scripts/compile.sh $1
+bash -x ${curpath}/tests/scripts/compile.sh $1
 
 ENABLE_DAEMON=true bash -x ${curpath}/hack/local-up-kubeedge.sh || {
     echo "failed to start cluster !!!"
     exit 1
 }
-
-kubectl create clusterrolebinding system:anonymous --clusterrole=cluster-admin --user=system:anonymous
 
 :> /tmp/testcase.log
 
@@ -55,4 +52,4 @@ export GINKGO_TESTING_RESULT=0
 
 trap cleanup EXIT
 
-bash -x ${E2E_DIR}/scripts/fast_test.sh $1
+bash -x ${curpath}/tests/scripts/fast_test.sh $1
