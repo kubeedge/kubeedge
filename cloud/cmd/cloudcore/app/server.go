@@ -32,6 +32,7 @@ import (
 	"k8s.io/component-base/cli/globalflag"
 	"k8s.io/component-base/term"
 	"k8s.io/klog/v2"
+	"sigs.k8s.io/yaml"
 
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -105,6 +106,10 @@ kubernetes controller which manages devices so that the device metadata/status d
 			}
 
 			config.CommonConfig.TunnelPort = *tunnelport
+
+			if changed := v1alpha1.AdjustCloudCoreConfig(config); changed {
+				updateCloudCoreConfigMap(config)
+			}
 
 			gis := informers.GetInformersManager()
 
@@ -253,5 +258,28 @@ func negotiatePort(portRecord map[int]bool) int {
 		if _, found := portRecord[port]; !found {
 			return port
 		}
+	}
+}
+
+func updateCloudCoreConfigMap(c *v1alpha1.CloudCoreConfig) {
+	kubeClient := client.GetKubeClient()
+
+	cloudCoreCM, err := kubeClient.CoreV1().ConfigMaps(constants.SystemNamespace).Get(context.TODO(), constants.CloudConfigMapName, metav1.GetOptions{})
+	if err != nil {
+		klog.Warningf("failed to get CloudCore configMap %s/%s", constants.SystemNamespace, constants.CloudConfigMapName)
+		return
+	}
+
+	configBytes, err := yaml.Marshal(c)
+	if err != nil {
+		klog.Errorf("Failed to marshal cloudcore config: %v", err)
+		return
+	}
+
+	cloudCoreCM.Data["cloudcore.yaml"] = string(configBytes)
+
+	_, err = kubeClient.CoreV1().ConfigMaps(constants.SystemNamespace).Update(context.TODO(), cloudCoreCM, metav1.UpdateOptions{})
+	if err != nil {
+		klog.Errorf("Failed to marshal cloudcore config: %v", err)
 	}
 }

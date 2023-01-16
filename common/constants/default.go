@@ -18,6 +18,8 @@ const (
 
 	SystemName      = "kubeedge"
 	SystemNamespace = SystemName
+
+	CloudConfigMapName = "cloudcore"
 )
 
 // Resources
@@ -84,26 +86,24 @@ const (
 	DefaultKubeNamespace           = v1.NamespaceAll
 	DefaultKubeQPS                 = 100.0
 	DefaultKubeBurst               = 200
+	DefaultNodeLimit               = 500
 	DefaultKubeUpdateNodeFrequency = 20
 
 	// EdgeController
 	DefaultUpdatePodStatusWorkers            = 1
 	DefaultUpdateNodeStatusWorkers           = 1
-	DefaultQueryConfigMapWorkers             = 4
-	DefaultQuerySecretWorkers                = 4
+	DefaultQueryConfigMapWorkers             = 100
+	DefaultQuerySecretWorkers                = 100
 	DefaultQueryPersistentVolumeWorkers      = 4
 	DefaultQueryPersistentVolumeClaimWorkers = 4
 	DefaultQueryVolumeAttachmentWorkers      = 4
-	DefaultCreateNodeWorkers                 = 4
-	DefaultPatchNodeWorkers                  = 4
-	DefaultQueryNodeWorkers                  = 4
+	DefaultCreateNodeWorkers                 = 100
 	DefaultUpdateNodeWorkers                 = 4
-	DefaultPatchPodWorkers                   = 4
-	DefaultDeletePodWorkers                  = 4
+	DefaultPatchPodWorkers                   = 100
+	DefaultDeletePodWorkers                  = 100
 	DefaultUpdateRuleStatusWorkers           = 4
-	DefaultCreateLeaseWorkers                = 4
-	DefaultQueryLeaseWorkers                 = 4
-	DefaultServiceAccountTokenWorkers        = 4
+	DefaultQueryLeaseWorkers                 = 100
+	DefaultServiceAccountTokenWorkers        = 100
 
 	DefaultUpdatePodStatusBuffer            = 1024
 	DefaultUpdateNodeStatusBuffer           = 1024
@@ -113,12 +113,9 @@ const (
 	DefaultQueryPersistentVolumeClaimBuffer = 1024
 	DefaultQueryVolumeAttachmentBuffer      = 1024
 	DefaultCreateNodeBuffer                 = 1024
-	DefaultPatchNodeBuffer                  = 1024
-	DefaultQueryNodeBuffer                  = 1024
 	DefaultUpdateNodeBuffer                 = 1024
 	DefaultPatchPodBuffer                   = 1024
 	DefaultDeletePodBuffer                  = 1024
-	DefaultCreateLeaseBuffer                = 1024
 	DefaultQueryLeaseBuffer                 = 1024
 	DefaultServiceAccountTokenBuffer        = 1024
 
