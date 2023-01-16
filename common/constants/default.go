@@ -47,8 +47,6 @@ const (
 	BootstrapFile = "/etc/kubeedge/bootstrap-edgecore.conf"
 
 	// Edged
-	DefaultKubeletConfig         = "/etc/kubeedge/config/kubeconfig"
-	DefaultRootDir               = "/var/lib/edged"
 	DefaultDockerAddress         = "unix:///var/run/docker.sock"
 	DefaultRuntimeType           = "remote"
 	DefaultDockershimRootDir     = "/var/lib/dockershim"
