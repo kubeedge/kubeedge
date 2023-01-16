@@ -58,7 +58,7 @@ jobs:
       group: edge
       before_script:
         - command -v ginkgo || go install github.com/onsi/ginkgo/ginkgo@latest
-        - go install sigs.k8s.io/kind@v0.11.1
+        - go install sigs.k8s.io/kind@v0.12.0
         - curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.23.15/bin/linux/arm64/kubectl && sudo install kubectl /usr/local/bin/kubectl
       script:
         - make e2e
