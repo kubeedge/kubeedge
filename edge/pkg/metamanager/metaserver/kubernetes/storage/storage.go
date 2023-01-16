@@ -20,7 +20,6 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/agent"
-	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
 	kefeatures "github.com/kubeedge/kubeedge/pkg/features"
@@ -63,7 +62,7 @@ func NewREST() (*REST, error) {
 	store.Storage.Storage = sqlite.New()
 	store.Storage.Codec = unstructured.UnstructuredJSONScheme
 
-	return &REST{store, agent.NewApplicationAgent(metaserverconfig.Config.NodeName)}, nil
+	return &REST{store, agent.DefaultAgent}, nil
 }
 
 // decorateList set list's gvk if it's gvk is empty
@@ -167,11 +166,14 @@ func (r *REST) Watch(ctx context.Context, options *metainternalversion.ListOptio
 			return nil, err
 		}
 		err = r.Agent.Apply(app)
-		defer app.Close()
+		// For watch long connection request, we close the application when the watch is closed.
 		if err != nil {
 			klog.Errorf("[metaserver/reststorage] failed to apply for a watch listener from cloud: %v", err)
+			app.Close()
 			return nil, errors.NewInternalError(err)
 		}
+
+		ctx = util.WithApplicationID(ctx, app.ID)
 		klog.Infof("[metaserver/reststorage] successfully apply for a watch listener (%v) through cloud", info.Path)
 		return nil, nil
 	}()

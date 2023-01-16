@@ -20,6 +20,7 @@ import (
 	"sync"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/klog/v2"
 )
 
 type listenerManager struct {
@@ -45,6 +46,8 @@ func newListenerManager() *listenerManager {
 func (lm *listenerManager) AddListener(listener *SelectorListener) {
 	lm.lock.Lock()
 	defer lm.lock.Unlock()
+
+	klog.Infof("add listener %s node %s", listener.id, listener.nodeName)
 
 	_, exists := lm.listenerByNodeID[listener.nodeName]
 	if !exists {

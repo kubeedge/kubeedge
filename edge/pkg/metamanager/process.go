@@ -21,7 +21,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
 )
 
-//Constants to check metamanager processes
+// Constants to check metamanager processes
 const (
 	OK = "OK"
 
