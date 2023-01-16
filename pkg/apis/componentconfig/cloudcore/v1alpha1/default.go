@@ -36,6 +36,10 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 		},
 		CommonConfig: &CommonConfig{
 			TunnelPort: constants.ServerPort,
+			MonitorServer: MonitorServer{
+				BindAddress:     "127.0.0.1:9091",
+				EnableProfiling: false,
+			},
 		},
 		KubeAPIConfig: &KubeAPIConfig{
 			ContentType: constants.DefaultKubeContentType,

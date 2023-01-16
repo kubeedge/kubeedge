@@ -485,3 +485,51 @@ func TestValidateKubeAPIConfig(t *testing.T) {
 		}
 	}
 }
+
+func TestValidateCommonConfig(t *testing.T) {
+	tests := []struct {
+		name         string
+		commonConfig v1alpha1.CommonConfig
+		expectedErr  bool
+	}{
+		{
+			name: "invalid metric server addr",
+			commonConfig: v1alpha1.CommonConfig{
+				MonitorServer: v1alpha1.MonitorServer{
+					BindAddress: "xxx.xxx.xxx.xxx:9091",
+				},
+			},
+			expectedErr: true,
+		},
+		{
+			name: "invalid metric server port",
+			commonConfig: v1alpha1.CommonConfig{
+				MonitorServer: v1alpha1.MonitorServer{
+					BindAddress: "127.0.0.1:88888",
+				},
+			},
+			expectedErr: true,
+		},
+		{
+			name: "valid metric server config",
+			commonConfig: v1alpha1.CommonConfig{
+				MonitorServer: v1alpha1.MonitorServer{
+					BindAddress: "127.0.0.1:9091",
+				},
+			},
+			expectedErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			errList := ValidateCommonConfig(tt.commonConfig)
+			if len(errList) == 0 && tt.expectedErr {
+				t.Errorf("ValidateCommonConfig expected get err, but errList is nil")
+			}
+
+			if len(errList) != 0 && !tt.expectedErr {
+				t.Errorf("ValidateCommonConfig expected get no err, but errList is not nil")
+			}
+		})
+	}
+}
