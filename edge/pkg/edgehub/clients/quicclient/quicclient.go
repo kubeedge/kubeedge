@@ -83,24 +83,27 @@ func (qcc *QuicClient) Init() error {
 	return nil
 }
 
-//UnInit closes the quic connection
+// UnInit closes the quic connection
 func (qcc *QuicClient) UnInit() {
 	qcc.client.Close()
 }
 
-//Send sends the message as JSON object through the connection
+// Send sends the message as JSON object through the connection
 func (qcc *QuicClient) Send(message model.Message) error {
+	if qcc.client == nil {
+		return fmt.Errorf("quic connection is closed and message %v will not be sent", message.GetID())
+	}
 	return qcc.client.WriteMessageAsync(&message)
 }
 
-//Receive reads the binary message through the connection
+// Receive reads the binary message through the connection
 func (qcc *QuicClient) Receive() (model.Message, error) {
 	message := model.Message{}
 	err := qcc.client.ReadMessage(&message)
 	return message, err
 }
 
-//Notify logs info
+// Notify logs info
 func (qcc *QuicClient) Notify(authInfo map[string]string) {
 	klog.Infof("Don not care")
 }
