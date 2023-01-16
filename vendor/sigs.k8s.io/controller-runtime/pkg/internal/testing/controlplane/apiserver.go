@@ -414,10 +414,10 @@ func (s *APIServer) populateAPIServerCerts() error {
 // Stop stops this process gracefully, waits for its termination, and cleans up
 // the CertDir if necessary.
 func (s *APIServer) Stop() error {
-	if s.processState.DirNeedsCleaning {
-		s.CertDir = "" // reset the directory if it was randomly allocated, so that we can safely restart
-	}
 	if s.processState != nil {
+		if s.processState.DirNeedsCleaning {
+			s.CertDir = "" // reset the directory if it was randomly allocated, so that we can safely restart
+		}
 		if err := s.processState.Stop(); err != nil {
 			return err
 		}

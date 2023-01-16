@@ -136,7 +136,7 @@ type Environment struct {
 	// CRDs is a list of CRDs to install.
 	// If both this field and CRDs field in CRDInstallOptions are specified, the
 	// values are merged.
-	CRDs []apiextensionsv1.CustomResourceDefinition
+	CRDs []*apiextensionsv1.CustomResourceDefinition
 
 	// CRDDirectoryPaths is a list of paths containing CRD yaml or json configs.
 	// If both this field and Paths field in CRDInstallOptions are specified, the
