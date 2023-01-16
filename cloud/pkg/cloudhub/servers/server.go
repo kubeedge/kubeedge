@@ -45,7 +45,10 @@ func createTLSConfig(ca, cert, key []byte) tls.Config {
 		Certificates: []tls.Certificate{certificate},
 		MinVersion:   tls.VersionTLS12,
 		// has to match cipher used by NewPrivateKey method, currently is ECDSA
-		CipherSuites: []uint16{tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256},
+		CipherSuites: []uint16{
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,
+		},
 	}
 }
 
