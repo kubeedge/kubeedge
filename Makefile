@@ -158,6 +158,7 @@ else
 integrationtest:
 	hack/make-rules/build.sh edgecore
 	edge/test/integration/scripts/execute.sh
+	cloud/test/integration/scripts/execute.sh
 endif
 
 GOARM_VALUES=GOARM7 \

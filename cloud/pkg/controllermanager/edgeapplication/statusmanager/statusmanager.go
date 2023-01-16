@@ -205,7 +205,7 @@ func (s *statusManager) startToWatch(ctx context.Context, gvk schema.GroupVersio
 func (s *statusManager) watchControllersGC() {
 	edgeAppList := &appsv1alpha1.EdgeApplicationList{}
 	if err := s.client.List(s.ctx, edgeAppList); err != nil {
-		klog.Errorf("failed to list EdgeApplication")
+		klog.Errorf("failed to list EdgeApplication, %v", err)
 		return
 	}
 
