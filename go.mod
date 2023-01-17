@@ -282,6 +282,7 @@ replace (
 	go.etcd.io/etcd/pkg/v3 => go.etcd.io/etcd/pkg/v3 v3.5.0
 	go.etcd.io/etcd/raft/v3 => go.etcd.io/etcd/raft/v3 v3.5.0
 	go.etcd.io/etcd/server/v3 => go.etcd.io/etcd/server/v3 v3.5.0
+	gopkg.in/square/go-jose.v2 => gopkg.in/square/go-jose.v2 v2.2.2
 	k8s.io/api => github.com/kubeedge/kubernetes/staging/src/k8s.io/api v1.23.15-kubeedge1
 	k8s.io/apiextensions-apiserver => github.com/kubeedge/kubernetes/staging/src/k8s.io/apiextensions-apiserver v1.23.15-kubeedge1
 	k8s.io/apimachinery => github.com/kubeedge/kubernetes/staging/src/k8s.io/apimachinery v1.23.15-kubeedge1
