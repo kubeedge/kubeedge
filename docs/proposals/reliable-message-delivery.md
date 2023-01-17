@@ -35,7 +35,7 @@ This proposal addresses this problem thus improve the reliable message delivery.
 
 ## Proposal
 
-Currently all the messages from the controllers go via the channel queue (which uses beehive context for messaging)
+Currently, all the messages from the controllers go via the channel queue (which uses beehive context for messaging)
 to the cloudhub. The cloudhub then uses the configured protocol server (websocket/quic) to send the data to edge nodes.
 The proposal is to introduce the node level sending message queues in cloudhub, and use the ACK message
 returned from edge nodes to ensure the message delivery is in a reliable fashion.
@@ -60,7 +60,7 @@ There are three types of message delivery mechanisms:
 The existing implementation (without this proposal) in KubeEdge is
 the first approach “At-Most-Once”, which is unreliable.
 
-The second approach “Exactly-Once” is very expensive and exhibits worst performance
+The second approach “Exactly-Once” is very expensive and exhibits the worst performance, 
 although it provides guaranteed delivery with no message loss or duplication.
 Since KubeEdge follows Kubernetes’ eventual consistency design principles,
 it is not a problem for the edge to receive the same message repeatedly, as long as message is the latest one.

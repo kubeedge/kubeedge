@@ -16,7 +16,7 @@ This proposal addresses this problem for users to delivery their custom messages
 
 ## Proposal
 
-Currently There is no common solutions to deliver user's custom messages between cloud and edge.
+Currently, there is no common solutions to deliver user's custom messages between cloud and edge.
 The proposal is to introduce a solution for users to deliver their custom message between cloud and edge by rest api or mqtt broker.
 
 ### Usage scenarios

@@ -57,7 +57,7 @@ However, with the number of locations increasing, operation and maintenance of a
 ### Architecture
 ![image](../images/node-group-management/group-management-arch.png)
 
-The implementation consists of two components. a new `GroupManagementControllerManager` and the endpointslice filter in the `cloudcore`. The `GroupManagementControllerManager` contains controllers of new CRDs, including `NodeGroupController` and `EdgeApplicationController`. The endpointslice filter is used to filter endpoints in endpointslices before sending them to the edgecore so as to make edgecore only aware of the endpoints in the same node group.
+The implementation consists of two components. a new `GroupManagementControllerManager` and the endpointslice filter in the `cloudcore`. The `GroupManagementControllerManager` contains controllers of new CRDs, including `NodeGroupController` and `EdgeApplicationController`. The endpointslice filter is used to filter endpoints in endpointslices before sending them to the edgecore to make edgecore only aware of the endpoints in the same node group.
 
 NodeGroup will organize nodes according to their labels which should be set based on their locations in advance, `location: hangzhou` and `location: beijing` in this case. After applying the NodeGroup resource, nodes will be grouped in `hangzhou` and `beijing` logically.
 

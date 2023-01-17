@@ -26,7 +26,7 @@ One mapper is for one type of device and could control multiple devices simultan
 The first step to control a device is to configure the device model and device instance. After that, a configmap is generated([configmap example](https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/device-management-enhance.md)). Mapper will parse the configmap when starting.
 At run time, the configuration could be changed and the configmap will follow the change, device twin will also send out changing messages.
 
-About the device control/data, there're three types:
+About the device control/data, there are three types:
 
 1. Twin value. 
 ```json

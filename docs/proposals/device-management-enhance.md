@@ -38,7 +38,7 @@ We propose below modifications on current design.
 * Add customized protocol config in device CRD.
 * Add common part in protocol config section
 * Extract common part of Modbus protocol config into an independent common part.
-* Allow add any customized K-V in protocol config and property visitor section.
+* Allow to add any customized K-V in protocol config and property visitor section.
 * Support using boolean, float, double and bytes to describe type of property in device model.
 
 
@@ -47,14 +47,14 @@ We propose below modifications on current design.
 
 * Reuse device model.
   * Considering device properties are physical attributes, but property visitors are manually configured attributes. Combining device properties and property visitors in device model decrease the reusability of device model.
-  * Case 1: Same devices are connected to a central management server, eg. SCADA. In this case, devices have same properties but different property visitors.
+  * Case 1: Same devices are connected to a central management server, e.g. SCADA. In this case, devices have same properties but different property visitors.
   * Case 2: Same devices are using different industrial protocol. In this case, devices have same properties but different property visitors.
 * Customized data collect cycle and report cycle
    * Users can define collect cycle and report cycle to each property. For example, a temperature property may need be collected per second, while a throughput property may need be collected per hour.
 * Deal data of non-twin properties.
   * Currently, only twin properties will be sync between edge and cloud. Non-twin properties are not processed by edge-core. Time-Serial data are produced from devices and should have a way to allow user deal with these data.
 * Deal various industrial protocols
-  * Currently, only Modbus, OPC-UA and bluetooth are supported by KubeEdge. However there are thousands of industrial protocols. It is impossible to define all these protocols in KubeEdge. If users want to use these un-predefined protocols, we should provide a way to support.
+  * Currently, only Modbus, OPC-UA and bluetooth are supported by KubeEdge. However, there are thousands of industrial protocols. It is impossible to define all these protocols in KubeEdge. If users want to use these un-predefined protocols, we should provide a way to support.
 * Customized provided protocol
   * If users want to add some special control value, such as bulk related collection, in provided protocol like Modbus, he can use the customized K-V features.
 

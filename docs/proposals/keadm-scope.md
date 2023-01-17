@@ -14,14 +14,14 @@ last-updated: 2019-05-20
 
 # Motivation
 
-Many users shared their feedback that kubeEdge installation is too complicated and it may prevent people from trying kubeEdge. There should a simplified way to have **Getting Started with KubeEdge**, so that user can concentrate more on using it instantly, rather than
+Many users shared their feedback that kubeEdge installation is too complicated, and it may prevent people from trying kubeEdge. There should a simplified way to have **Getting Started with KubeEdge**, so that user can concentrate more on using it instantly, rather than
 getting entangled in the installation steps.
 
 # Proposal
 
 KubeEdge shall have simple commands and steps to bring up both cloud and edge components.
 The user experience in **Getting Started with KubeEdge** will be seamless.
-Hence proposing the following commands for KubeEdge installation process.
+Hence, proposing the following commands for KubeEdge installation process.
 
 ## Inscope
 
@@ -200,7 +200,7 @@ Flags:
      * This command will be responsible to bring up KubeEdge cloud components like edge-controller and K8S (using kubeadm)
 
   - What shall be its scope ?
-    1. Check version of OS and install subsequently the required pre-requisites using supported steps. Currently we will support **ONLY** (Ubuntu & CentOS)
+    1. Check version of OS and install subsequently the required pre-requisites using supported steps. Currently, we will support **ONLY** (Ubuntu & CentOS)
     2. Check and install all the pre-requisites before executing edge-controller, which are
         * docker (currently 18.06.0ce3-0~ubuntu) and check if service is up
         * kubelet, kubeadm & kubectl (latest version)
@@ -236,11 +236,11 @@ Flags:
 
   - What shall be its scope ?
 
-    1. Check version of OS and install subsequently the required pre-requisites using supported steps. Currently we will support **ONLY** (Ubuntu & CentOS)
+    1. Check version of OS and install subsequently the required pre-requisites using supported steps. Currently, we will support **ONLY** (Ubuntu & CentOS)
     2. Check and install all the pre-requisites before executing edge-controller, which are
         * Docker (currently 18.06.0ce3-0~ubuntu) and check if service is up.
         * mosquitto (latest available in OS repos) and check if running.
-    3. This command will take `--certPath` (string type) as mandatory option which shall be the certificates path; wherein the certs were transferred from cloud node and uncompressed. It will modify `$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml` file against `edgehub.websocket.certfile` and `edgehub.websocket.keyfile` fields.
+    3. This command will take `--certPath` (string type) as mandatory option which shall be the certificates' path; wherein the certs were transferred from cloud node and uncompressed. It will modify `$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml` file against `edgehub.websocket.certfile` and `edgehub.websocket.keyfile` fields.
     4. Create `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` and apply it using `curl` command to api-server
     5. This command will take mandatory `-e` or `--cloudcoreip` flag to specify the address of KubeEdge cloudcore
     6. Create `$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml`

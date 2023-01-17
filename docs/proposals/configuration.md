@@ -55,7 +55,7 @@ We recommend referring to the kubernetes component config api design to redesign
 
 ## Goals
 
-* KubeEdge components use one configuration file instead of the original 3 configuration files. It support json or yaml format, defaut is yaml.
+* KubeEdge components use one configuration file instead of the original 3 configuration files. It supports json or yaml format, defaut is yaml.
 
 * Start the KubeEdge component with the --config flag, this flag set to the path of the component's config file. The component will then load its config from this file, if --config flag not set, component will read a default configuration file.
 
@@ -1198,7 +1198,7 @@ In order to support the old configuration file , there are 2 options:
 
 We use the second option, because:
 
-* There are 3 old configuration files for each component, it is quite different from the new configuration definition and they are eventually discarded in the near future.
+* There are 3 old configuration files for each component, it is quite different from the new configuration definition, and they are eventually discarded in the near future.
 
 * If the component supports the old configuration file, it will add configuration-compatible logic inside the component. We might as well let keadm do this. such as:
 

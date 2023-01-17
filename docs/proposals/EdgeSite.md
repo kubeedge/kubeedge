@@ -27,7 +27,7 @@ There are scenarios users need to run a standalone Kubernetes cluster at edge to
 
   In some IOT scenarios, users need to deploy a full control edge environment and running offline.
 
-For these use cases, a standalone, full controlled, light weight Edge cluster is required.
+For these use cases, a standalone, full controlled, lightweight Edge cluster is required.
 By integrating KubeEdge and standard Kubernetes, this proposal enables customers to run an efficient kubernetes cluster for Edge/IOT computing. User can also leverage other smaller Kubernetes implementation such as K3S to make the footprint even smaller.
 
 ## Assumptions
@@ -46,7 +46,7 @@ The assumptions are
 With the integration, the following can be enabled
 
 1. Full control of Kubernetes cluster at edge
-2. Light weight control plane and agent
+2. Lightweight control plane and agent
 3. Edge worker node autonomy in case of network disconnection/reconnection
 4. All benefits of edge computing including latency, data locality, etc.
 

@@ -94,7 +94,7 @@ Webhooks: []admissionregistrationv1beta1.ValidatingWebhook{
 ```
 
 ## Resource validation
-The validation logic is registered as an http handler which responds to a specific HTTP request, each resource should have its own handler
+The validation logic is registered as a http handler which responds to a specific HTTP request, each resource should have its own handler
 pre-registered, and the validation is done by the handler.
 
 ```golang
