@@ -43,6 +43,13 @@ func feedbackError(err error, info string, request model.Message) {
 	}
 }
 
+func feedbackResponse(message *model.Message, parentID string, resp *model.Message) {
+	resp.BuildHeader(resp.GetID(), parentID, resp.GetTimestamp())
+	sendToEdged(resp, message.IsSync())
+	respToCloud := message.NewRespByMessage(resp, OK)
+	sendToCloud(respToCloud)
+}
+
 func sendToEdged(message *model.Message, sync bool) {
 	if sync {
 		beehiveContext.SendResp(*message)
@@ -408,7 +415,12 @@ func (m *metaManager) processRemoteQuery(message model.Message) {
 			feedbackError(err, "Error to query meta in DB", message)
 			return
 		}
-
+		errContent, ok := resp.GetContent().(error)
+		if ok {
+			klog.V(4).Infof("process remote query err: %v", errContent)
+			feedbackResponse(&message, originalID, &resp)
+			return
+		}
 		klog.V(4).Infof("process remote query: req[%s], resp[%s]", msgDebugInfo(&message), msgDebugInfo(&resp))
 		content, err := resp.GetContentData()
 		if err != nil {
@@ -432,12 +444,7 @@ func (m *metaManager) processRemoteQuery(message model.Message) {
 		if err != nil {
 			klog.Errorf("update meta failed, %s", msgDebugInfo(&resp))
 		}
-		resp.BuildHeader(resp.GetID(), originalID, resp.GetTimestamp())
-
-		sendToEdged(&resp, message.IsSync())
-
-		respToCloud := message.NewRespByMessage(&resp, OK)
-		sendToCloud(respToCloud)
+		feedbackResponse(&message, originalID, &resp)
 	}()
 }
 

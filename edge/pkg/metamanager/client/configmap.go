@@ -56,7 +56,10 @@ func (c *configMaps) Get(name string) (*api.ConfigMap, error) {
 	if err != nil {
 		return nil, fmt.Errorf("get configmap from metaManager failed, err: %v", err)
 	}
-
+	errContent, ok := msg.GetContent().(error)
+	if ok {
+		return nil, errContent
+	}
 	content, err := msg.GetContentData()
 	if err != nil {
 		return nil, fmt.Errorf("parse message to configmap failed, err: %v", err)

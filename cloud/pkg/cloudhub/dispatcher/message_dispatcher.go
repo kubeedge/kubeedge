@@ -375,6 +375,11 @@ func noAckRequired(msg *beehivemodel.Message) bool {
 		if ok && content == commonconst.MessageSuccessfulContent {
 			return true
 		}
+		// `error message` is not required to ack
+		_, ok = msg.Content.(error)
+		if ok {
+			return true
+		}
 		fallthrough
 	default:
 		if msg.GetSource() == modules.EdgeControllerModuleName {
