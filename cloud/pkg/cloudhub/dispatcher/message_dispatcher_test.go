@@ -17,6 +17,7 @@ limitations under the License.
 package dispatcher
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -72,11 +73,6 @@ func TestNoAckRequired(t *testing.T) {
 			want:    true,
 		},
 		{
-			name:    "applicationResponse message",
-			message: beehivemodel.NewMessage("").SetResourceOperation("/node/edge-test/ignore/Application/ignore", "applicationResponse"),
-			want:    true,
-		},
-		{
 			name:    "user data message",
 			message: beehivemodel.NewMessage("router").SetRoute("", "user"),
 			want:    true,
@@ -87,13 +83,13 @@ func TestNoAckRequired(t *testing.T) {
 			want:    true,
 		},
 		{
-			name:    "response ok message",
-			message: beehivemodel.NewMessage("").SetResourceOperation("node/edge-node/default/node/edge-node", "response").FillBody("OK"),
+			name:    "node message",
+			message: beehivemodel.NewMessage("").SetResourceOperation("node/edge-node/default/node/edge-node", "response").SetRoute("edgecontroller", "resource"),
 			want:    true,
 		},
 		{
-			name:    "node message",
-			message: beehivemodel.NewMessage("").SetResourceOperation("node/edge-node/default/node/edge-node", "response").SetRoute("edgecontroller", "resource"),
+			name:    "response error message",
+			message: beehivemodel.NewMessage("").SetResourceOperation("node/edge-node/default/node/edge-node", "response").FillBody(fmt.Errorf("error")),
 			want:    true,
 		},
 		{

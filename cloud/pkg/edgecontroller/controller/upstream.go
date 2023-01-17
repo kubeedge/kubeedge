@@ -651,20 +651,44 @@ func kubeClientGet(uc *UpstreamController, namespace string, name string, queryT
 
 func queryInner(uc *UpstreamController, msg model.Message, queryType string) {
 	klog.V(4).Infof("message: %s, operation is: %s, and resource is: %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
-	namespace, err := messagelayer.GetNamespace(msg)
+	var err error
+	var namespace, name, nodeID, resource string
+	namespace, err = messagelayer.GetNamespace(msg)
 	if err != nil {
 		klog.Warningf("message: %s process failure, get namespace failed with error: %s", msg.GetID(), err)
 		return
 	}
-	name, err := messagelayer.GetResourceName(msg)
+	name, err = messagelayer.GetResourceName(msg)
 	if err != nil {
 		klog.Warningf("message: %s process failure, get resource name failed with error: %s", msg.GetID(), err)
 		return
 	}
-
+	nodeID, err = messagelayer.GetNodeID(msg)
+	if err != nil {
+		klog.Warningf("message: %s process failure, get node id failed with error: %s", msg.GetID(), err)
+		return
+	}
+	resource, err = messagelayer.BuildResource(nodeID, namespace, queryType, name)
+	if err != nil {
+		klog.Warningf("message: %s process failure, build message resource failed with error: %s", msg.GetID(), err)
+		return
+	}
+	defer func() {
+		if err == nil {
+			return
+		}
+		resMsg := model.NewMessage(msg.GetID()).
+			FillBody(err).
+			BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.ResponseOperation)
+		err = uc.messageLayer.Response(*resMsg)
+		if err != nil {
+			klog.Warningf("message: %s process failure, response failed with error: %s", msg.GetID(), err)
+		}
+	}()
 	switch msg.GetOperation() {
 	case model.QueryOperation:
-		object, err := kubeClientGet(uc, namespace, name, queryType, msg)
+		var object metaV1.Object
+		object, err = kubeClientGet(uc, namespace, name, queryType, msg)
 		if errors.IsNotFound(err) {
 			klog.Warningf("message: %s process failure, resource not found, namespace: %s, name: %s", msg.GetID(), namespace, name)
 			return
@@ -674,24 +698,13 @@ func queryInner(uc *UpstreamController, msg model.Message, queryType string) {
 			return
 		}
 
-		nodeID, err := messagelayer.GetNodeID(msg)
-		if err != nil {
-			klog.Warningf("message: %s process failure, get node id failed with error: %s", msg.GetID(), err)
-			return
-		}
-		resource, err := messagelayer.BuildResource(nodeID, namespace, queryType, name)
-		if err != nil {
-			klog.Warningf("message: %s process failure, build message resource failed with error: %s", msg.GetID(), err)
-			return
-		}
-
 		resMsg := model.NewMessage(msg.GetID()).
 			SetResourceVersion(object.GetResourceVersion()).
 			FillBody(object).
 			BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.ResponseOperation)
-		err = uc.messageLayer.Response(*resMsg)
-		if err != nil {
-			klog.Warningf("message: %s process failure, response failed with error: %s", msg.GetID(), err)
+		rspErr := uc.messageLayer.Response(*resMsg)
+		if rspErr != nil {
+			klog.Warningf("message: %s process failure, response failed with error: %s", msg.GetID(), rspErr)
 			return
 		}
 		klog.V(4).Infof("message: %s process successfully", msg.GetID())
