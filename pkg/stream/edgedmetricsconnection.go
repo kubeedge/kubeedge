@@ -27,10 +27,11 @@ import (
 )
 
 type EdgedMetricsConnection struct {
+	ReadChan chan *Message `json:"-"`
+	Stop     chan struct{} `json:"-"`
 	MessID   uint64        // message id
 	URL      url.URL       `json:"url"`
 	Header   http.Header   `json:"header"`
-	ReadChan chan *Message `json:"-"`
 }
 
 func (ms *EdgedMetricsConnection) GetMessageID() uint64 {
@@ -39,6 +40,20 @@ func (ms *EdgedMetricsConnection) GetMessageID() uint64 {
 
 func (ms *EdgedMetricsConnection) CacheTunnelMessage(msg *Message) {
 	ms.ReadChan <- msg
+}
+
+func (ms *EdgedMetricsConnection) CloseReadChannel() {
+	close(ms.ReadChan)
+}
+
+func (ms *EdgedMetricsConnection) CleanChannel() {
+	for {
+		select {
+		case <-ms.Stop:
+		default:
+			return
+		}
+	}
 }
 
 func (ms *EdgedMetricsConnection) CreateConnectMessage() (*Message, error) {
@@ -51,6 +66,33 @@ func (ms *EdgedMetricsConnection) CreateConnectMessage() (*Message, error) {
 
 func (ms *EdgedMetricsConnection) String() string {
 	return fmt.Sprintf("EDGE_Metrics_CONNECTOR Message MessageID %v", ms.MessID)
+}
+
+func (ms *EdgedMetricsConnection) receiveFromCloudStream(stop chan struct{}) {
+	for mess := range ms.ReadChan {
+		if mess.MessageType == MessageTypeRemoveConnect {
+			klog.Infof("receive remove client id %v", mess.ConnectID)
+			stop <- struct{}{}
+		}
+	}
+	klog.V(6).Infof("%s read channel closed", ms.String())
+}
+
+func (ms *EdgedMetricsConnection) write2CloudStream(tunnel SafeWriteTunneler, resp *http.Response, stop chan struct{}) {
+	defer func() {
+		stop <- struct{}{}
+	}()
+	scan := bufio.NewScanner(resp.Body)
+	for scan.Scan() {
+		// 10 = \n
+		msg := NewMessage(ms.MessID, MessageTypeData, append(scan.Bytes(), 10))
+		err := tunnel.WriteMessage(msg)
+		if err != nil {
+			klog.Errorf("write tunnel message %v error", msg)
+			return
+		}
+		klog.V(4).Infof("%v write metrics data %v", ms.String(), string(scan.Bytes()))
+	}
 }
 
 func (ms *EdgedMetricsConnection) Serve(tunnel SafeWriteTunneler) error {
@@ -75,18 +117,7 @@ func (ms *EdgedMetricsConnection) Serve(tunnel SafeWriteTunneler) error {
 	}
 	defer resp.Body.Close()
 
-	stop := make(chan struct{})
-
-	go func() {
-		defer close(stop)
-
-		for mess := range ms.ReadChan {
-			if mess.MessageType == MessageTypeRemoveConnect {
-				klog.Infof("receive remove client id %v", mess.ConnectID)
-				return
-			}
-		}
-	}()
+	go ms.receiveFromCloudStream(ms.Stop)
 
 	defer func() {
 		for retry := 0; retry < 3; retry++ {
@@ -99,23 +130,9 @@ func (ms *EdgedMetricsConnection) Serve(tunnel SafeWriteTunneler) error {
 		}
 	}()
 
-	go func() {
-		defer close(ms.ReadChan)
+	go ms.write2CloudStream(tunnel, resp, ms.Stop)
 
-		scan := bufio.NewScanner(resp.Body)
-		for scan.Scan() {
-			// 10 = \n
-			msg := NewMessage(ms.MessID, MessageTypeData, append(scan.Bytes(), 10))
-			err := tunnel.WriteMessage(msg)
-			if err != nil {
-				klog.Errorf("write tunnel message %v error", msg)
-				return
-			}
-			klog.V(4).Infof("%v write metrics data %v", ms.String(), string(scan.Bytes()))
-		}
-	}()
-
-	<-stop
+	<-ms.Stop
 	klog.Infof("receive stop signal, so stop metrics scan ...")
 	return nil
 }

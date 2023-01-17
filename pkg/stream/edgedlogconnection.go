@@ -29,10 +29,11 @@ import (
 )
 
 type EdgedLogsConnection struct {
+	ReadChan chan *Message `json:"-"`
+	Stop     chan struct{} `json:"-"`
 	MessID   uint64        // message id
 	URL      url.URL       `json:"url"`
 	Header   http.Header   `json:"header"`
-	ReadChan chan *Message `json:"-"`
 }
 
 func (l *EdgedLogsConnection) GetMessageID() uint64 {
@@ -41,6 +42,20 @@ func (l *EdgedLogsConnection) GetMessageID() uint64 {
 
 func (l *EdgedLogsConnection) CacheTunnelMessage(msg *Message) {
 	l.ReadChan <- msg
+}
+
+func (l *EdgedLogsConnection) CloseReadChannel() {
+	close(l.ReadChan)
+}
+
+func (l *EdgedLogsConnection) CleanChannel() {
+	for {
+		select {
+		case <-l.Stop:
+		default:
+			return
+		}
+	}
 }
 
 func (l *EdgedLogsConnection) CreateConnectMessage() (*Message, error) {
@@ -53,6 +68,41 @@ func (l *EdgedLogsConnection) CreateConnectMessage() (*Message, error) {
 
 func (l *EdgedLogsConnection) String() string {
 	return fmt.Sprintf("EDGE_LOGS_CONNECTOR Message MessageID %v", l.MessID)
+}
+
+func (l *EdgedLogsConnection) receiveFromCloudStream(stop chan struct{}) {
+	for mess := range l.ReadChan {
+		if mess.MessageType == MessageTypeRemoveConnect {
+			klog.Infof("receive remove client id %v", mess.ConnectID)
+			stop <- struct{}{}
+		}
+	}
+	klog.V(6).Infof("%s read channel closed", l.String())
+}
+
+func (l *EdgedLogsConnection) write2CloudStream(tunnel SafeWriteTunneler, reader bufio.Reader, stop chan struct{}) {
+	defer func() {
+		stop <- struct{}{}
+	}()
+	var data [256]byte
+	for {
+		n, err := reader.Read(data[:])
+		if err != nil {
+			if !errors.Is(err, io.EOF) {
+				klog.Errorf("%v failed to write log data, err:%v", l.String(), err)
+			}
+			return
+		}
+
+		msg := NewMessage(l.MessID, MessageTypeData, data[:n])
+
+		err = tunnel.WriteMessage(msg)
+		if err != nil {
+			klog.Errorf("write tunnel message %v error", msg)
+			return
+		}
+		klog.V(4).Infof("%v write logs %v", l.String(), string(data[:n]))
+	}
 }
 
 func (l *EdgedLogsConnection) Serve(tunnel SafeWriteTunneler) error {
@@ -71,18 +121,8 @@ func (l *EdgedLogsConnection) Serve(tunnel SafeWriteTunneler) error {
 	}
 	defer resp.Body.Close()
 	reader := bufio.NewReader(resp.Body)
-	stop := make(chan struct{})
 
-	go func() {
-		defer close(stop)
-
-		for mess := range l.ReadChan {
-			if mess.MessageType == MessageTypeRemoveConnect {
-				klog.Infof("receive remove client id %v", mess.ConnectID)
-				return
-			}
-		}
-	}()
+	go l.receiveFromCloudStream(l.Stop)
 
 	defer func() {
 		for retry := 0; retry < 3; retry++ {
@@ -95,31 +135,9 @@ func (l *EdgedLogsConnection) Serve(tunnel SafeWriteTunneler) error {
 		}
 	}()
 
-	go func() {
-		defer close(l.ReadChan)
+	go l.write2CloudStream(tunnel, *reader, l.Stop)
 
-		var data [256]byte
-		for {
-			n, err := reader.Read(data[:])
-			if err != nil {
-				if !errors.Is(err, io.EOF) {
-					klog.Errorf("%v failed to write log data, err:%v", l.String(), err)
-				}
-				return
-			}
-
-			msg := NewMessage(l.MessID, MessageTypeData, data[:n])
-
-			err = tunnel.WriteMessage(msg)
-			if err != nil {
-				klog.Errorf("write tunnel message %v error", msg)
-				return
-			}
-			klog.V(4).Infof("%v write logs %v", l.String(), string(data[:n]))
-		}
-	}()
-
-	<-stop
+	<-l.Stop
 	klog.Infof("receive stop signal, so stop logs scan ...")
 	return nil
 }
