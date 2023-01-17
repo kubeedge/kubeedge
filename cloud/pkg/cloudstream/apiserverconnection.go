@@ -31,5 +31,5 @@ type APIServerConnection interface {
 	// SetEdgePeerDone indicates send specifical message to let edge peer exist
 	SetEdgePeerDone()
 	// EdgePeerDone indicates whether edge peer ends
-	EdgePeerDone() <-chan struct{}
+	EdgePeerDone() chan struct{}
 }

@@ -8,5 +8,7 @@ type EdgedConnection interface {
 	Serve(tunnel SafeWriteTunneler) error
 	CacheTunnelMessage(msg *Message)
 	GetMessageID() uint64
+	CloseReadChannel()
+	CleanChannel()
 	fmt.Stringer
 }
