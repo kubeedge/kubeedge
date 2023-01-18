@@ -66,7 +66,7 @@ KubeEdge has provided the runner of the conformance test, which contains the scr
 and related files of the conformance test. 
 Refer to the link for more details. ([#4411](https://github.com/kubeedge/kubeedge/pull/4411))
 
-### EdgeMesh —— Added configurable field TunnelLimitConfig to edge-tunnel module
+### EdgeMesh: Added configurable field TunnelLimitConfig to edge-tunnel module
 
 The tunnel stream of the edge-tunnel module is used to manage the data stream state of the tunnel. 
 Users can obtain a stable and configurable tunnel stream to ensure the reliability of user application traffic forwarding.
