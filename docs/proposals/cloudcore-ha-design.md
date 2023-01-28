@@ -67,7 +67,7 @@ At present, CloudCore is essentially an edge-resource distribution center, which
   1. LocationCache
   2. sync-CRD in etcd
 
-  For the former, CloudCore will trigger the initialization of LocationCache when restarts; For the latter, CloudCore crash does not affect information in etcd. Messages left out during crash will be re-sync when SyncController reruns.
+  For the former, CloudCore will trigger the initialization of LocationCache when restarts; For the latter, CloudCore crash does not affect information in etcd. Messages left out during crash will be re-synced when SyncController reruns.
 
 ### HA in hot standby mode
 #### The lifecycle of CloudCore

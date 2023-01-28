@@ -220,10 +220,10 @@ Flags:
        1. check system resources is enough
        2. check container runtime is running
        3. check all edgecore components are running
-       4. check all database is exist
+       4. check all database is existed
        5. confirm that the configuration file exists
        6. check cloudercore can be connected
-    3. Use command `pod` can troubleshooting specific container application instances on nodes
+    3. Use command `pod` can troubleshoot specific container application instances on nodes
        1. check node status
        2. check pod msg in database
        3. check pod status and containerStatus and print key messages
@@ -233,7 +233,7 @@ Flags:
 
 - What is it?
 
-  - This command will be check whether the system specific items meet the requirements of edgecore installation and operation.
+  - This command will be checked whether the system specific items meet the requirements of edgecore installation and operation.
 
 - What shall be its scope ?
   1. Check items include hardware resources or operating system resources (cpu, memory, disk, network, pid limit,etc.)

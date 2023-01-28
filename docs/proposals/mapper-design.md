@@ -32,12 +32,12 @@ Mapper is an application that is used to connect and control devices. Following 
 6) Schedule actions on the device.
 7) Check health of the device.
 
-Mapper can be specific to a protocol where standards are defined i.e Bluetooth, Zigbee, etc or specific to a device if it a custom protocol.
+Mapper can be specific to a protocol where standards are defined i.e. Bluetooth, Zigbee, etc. or specific to a device if it is a custom protocol.
 
 ## Motivation
 All devices can be connected and controlled by drivers provided by their vendor.
 But the message from the device need to be translated into a format understood by KubeEdge.
-Also there should be a way to control the devices from the platform. Mapper is the application that interfaces between KubeEdge and devices.
+Also, there should be a way to control the devices from the platform. Mapper is the application that interfaces between KubeEdge and devices.
 There should be a standard design for mappers supported by KubeEdge for keeping them generic and easy to use.
 
 ### Goals
@@ -110,7 +110,7 @@ c) To report the actual state of twin attributes.
 
 **4) Data-Converter**: Data received from the devices can be in complex formats. eg: HexDecimal with bytes shuffled. This data cannot be directly understood by KubeEdge.
 The responsibility of data-converter is the convert the readings into a format understood by KubeEdge.
-Many protocols have a standard defined for the reading returned by the device. Hence a common/configurable logic can be used.
+Many protocols have a standard defined for the reading returned by the device. Hence, a common/configurable logic can be used.
 
 **5) Health-Checker**: Health-Checker can be used to periodically report the state of the device to KubeEdge.
 This can be an optional component as not all devices support health-checking. In-future can be extended to report battery-state, malfunctioning when kubeedge supports these attributes.
