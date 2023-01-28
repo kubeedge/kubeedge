@@ -70,12 +70,12 @@ ServiceBus is in the same process with EdgeHub as a module
 ### Router
 Add two endpoints definition:
 
-|Endpoint|Type|Capability|
-|---|---|---|
-|ClusterIP|Target|Request Forward|
-|ServiceBus|Source|Request Forward, Service Discovery, Load Balance|
-|ServiceBus|Target|Request Forward|
-|Router|Source|Request Forward, Service Discovery, Load Balance|
+| Endpoint   | Type   | Capability                                       |
+|------------|--------|--------------------------------------------------|
+| ClusterIP  | Target | Request Forward                                  |
+| ServiceBus | Source | Request Forward, Service Discovery, Load Balance |
+| ServiceBus | Target | Request Forward                                  |
+| Router     | Source | Request Forward, Service Discovery, Load Balance |
 
 <img src="../images/proposals/router-design.png">
 

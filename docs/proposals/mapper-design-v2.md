@@ -108,17 +108,17 @@ The message interaction among event bus, mqtt broker, mapper, and 3-rd applicati
 <img src="../images/mapper/message.PNG">
 
 ### Topics
-| Topic  | Publisher  | Subscriber  | Description  | Requirement  |
-| ------------ | ------------ | ------------ | ------------ | ------------ |
-|$hw/events/device/+/twin/update/delta   |edgecore   |mapper   |Notify that the expected value changed   |Yes   |
-|$hw/events/device/+/twin/update   |mapper   |edgecore   |Update the expected value to cloud  |Yes   |
-|$hw/events/device/+/twin/update/result   |edgecore   |mapper   |If edgecore receive the update result   |Optional   |
-|$ke/events/device/+/data/update   |mapper   |3-rd application   |Update data required by 3-rd   |Yes   |
-|$hw/events/device/+/state/update  |mapper   |edgecore   |Update device status   |Yes   |
-|$hw/events/node/+/membership/updated   |edgecore   |mapper   |Notify  device add/remove   |Optional   |
-|$hw/events/node/+/membership/get   |mapper   |edgecore   |Query device list   |Optional   |
-|$hw/events/node/+/membership/get/result   |edgecore   |mapper   |Result of querying device list   |Optional   |
-|SYS/dis/upload_records   |mapper/applications   |cloud   |Upload records to the cloud   |Reserved   |
+| Topic                                   | Publisher           | Subscriber       | Description                            | Requirement |
+|-----------------------------------------|---------------------|------------------|----------------------------------------|-------------|
+| $hw/events/device/+/twin/update/delta   | edgecore            | mapper           | Notify that the expected value changed | Yes         |
+| $hw/events/device/+/twin/update         | mapper              | edgecore         | Update the expected value to cloud     | Yes         |
+| $hw/events/device/+/twin/update/result  | edgecore            | mapper           | If edgecore receive the update result  | Optional    |
+| $ke/events/device/+/data/update         | mapper              | 3-rd application | Update data required by 3-rd           | Yes         |
+| $hw/events/device/+/state/update        | mapper              | edgecore         | Update device status                   | Yes         |
+| $hw/events/node/+/membership/updated    | edgecore            | mapper           | Notify  device add/remove              | Optional    |
+| $hw/events/node/+/membership/get        | mapper              | edgecore         | Query device list                      | Optional    |
+| $hw/events/node/+/membership/get/result | edgecore            | mapper           | Result of querying device list         | Optional    |
+| SYS/dis/upload_records                  | mapper/applications | cloud            | Upload records to the cloud            | Reserved    |
 
 ### Security
 Mqtt connection supports both user/password and certification mode.
