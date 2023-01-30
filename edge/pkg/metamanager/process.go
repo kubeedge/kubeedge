@@ -15,9 +15,11 @@ import (
 	cloudmodules "github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/common/constants"
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
+	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	metaManagerConfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/agent"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
 )
 
@@ -461,6 +463,14 @@ func (m *metaManager) processVolume(message model.Message) {
 	klog.Infof("process volume send to cloud resp[%+v]", resp)
 }
 
+func (m *metaManager) processNodeConnection(message model.Message) {
+	content, _ := message.GetContent().(string)
+	klog.Infof("node connection event occur: %s", content)
+	if content == connect.CloudConnected {
+		agent.DefaultAgent.SyncWatchAppOnConnected()
+	}
+}
+
 func (m *metaManager) process(message model.Message) {
 	operation := message.GetOperation()
 
@@ -477,6 +487,8 @@ func (m *metaManager) process(message model.Message) {
 		m.processQuery(message)
 	case model.ResponseOperation:
 		m.processResponse(message)
+	case messagepkg.OperationNodeConnection:
+		m.processNodeConnection(message)
 	case constants.CSIOperationTypeCreateVolume,
 		constants.CSIOperationTypeDeleteVolume,
 		constants.CSIOperationTypeControllerPublishVolume,
