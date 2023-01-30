@@ -1066,7 +1066,7 @@ helm.sh/helm/v3/pkg/storage
 helm.sh/helm/v3/pkg/storage/driver
 helm.sh/helm/v3/pkg/strvals
 helm.sh/helm/v3/pkg/time
-# k8s.io/api v0.22.6 => github.com/kubeedge/kubernetes/staging/src/k8s.io/api v1.22.6-kubeedge3
+# k8s.io/api v0.22.6 => github.com/kubeedge/kubernetes/staging/src/k8s.io/api v1.22.6-kubeedge4
 ## explicit
 k8s.io/api/admission/v1
 k8s.io/api/admission/v1beta1
@@ -1114,13 +1114,13 @@ k8s.io/api/scheduling/v1beta1
 k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
-# k8s.io/apiextensions-apiserver v0.22.6 => github.com/kubeedge/kubernetes/staging/src/k8s.io/apiextensions-apiserver v1.22.6-kubeedge3
+# k8s.io/apiextensions-apiserver v0.22.6 => github.com/kubeedge/kubernetes/staging/src/k8s.io/apiextensions-apiserver v1.22.6-kubeedge4
 ## explicit
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1
 k8s.io/apiextensions-apiserver/pkg/crdserverscheme
-# k8s.io/apimachinery v0.22.6 => github.com/kubeedge/kubernetes/staging/src/k8s.io/apimachinery v1.22.6-kubeedge3
+# k8s.io/apimachinery v0.22.6 => github.com/kubeedge/kubernetes/staging/src/k8s.io/apimachinery v1.22.6-kubeedge4
 ## explicit
 k8s.io/apimachinery/pkg/api/equality
 k8s.io/apimachinery/pkg/api/errors
@@ -1184,7 +1184,7 @@ k8s.io/apimachinery/pkg/watch
 k8s.io/apimachinery/third_party/forked/golang/json
 k8s.io/apimachinery/third_party/forked/golang/netutil
 k8s.io/apimachinery/third_party/forked/golang/reflect
-# k8s.io/apiserver v0.22.6 => github.com/kubeedge/kubernetes/staging/src/k8s.io/apiserver v1.22.6-kubeedge3
+# k8s.io/apiserver v0.22.6 => github.com/kubeedge/kubernetes/staging/src/k8s.io/apiserver v1.22.6-kubeedge4
 ## explicit
 k8s.io/apiserver/pkg/admission
 k8s.io/apiserver/pkg/admission/configuration
@@ -1313,12 +1313,12 @@ k8s.io/apiserver/plugin/pkg/audit/truncate
 k8s.io/apiserver/plugin/pkg/audit/webhook
 k8s.io/apiserver/plugin/pkg/authenticator/token/webhook
 k8s.io/apiserver/plugin/pkg/authorizer/webhook
-# k8s.io/cli-runtime v0.22.6 => github.com/kubeedge/kubernetes/staging/src/k8s.io/cli-runtime v1.22.6-kubeedge3
+# k8s.io/cli-runtime v0.22.6 => github.com/kubeedge/kubernetes/staging/src/k8s.io/cli-runtime v1.22.6-kubeedge4
 ## explicit
 k8s.io/cli-runtime/pkg/genericclioptions
 k8s.io/cli-runtime/pkg/printers
 k8s.io/cli-runtime/pkg/resource
-# k8s.io/client-go v0.22.6 => github.com/kubeedge/kubernetes/staging/src/k8s.io/client-go v1.22.6-kubeedge3
+# k8s.io/client-go v0.22.6 => github.com/kubeedge/kubernetes/staging/src/k8s.io/client-go v1.22.6-kubeedge4
 ## explicit
 k8s.io/client-go/applyconfigurations/admissionregistration/v1
 k8s.io/client-go/applyconfigurations/admissionregistration/v1beta1
@@ -1603,16 +1603,16 @@ k8s.io/client-go/util/homedir
 k8s.io/client-go/util/jsonpath
 k8s.io/client-go/util/keyutil
 k8s.io/client-go/util/workqueue
-# k8s.io/cloud-provider v0.22.6 => github.com/kubeedge/kubernetes/staging/src/k8s.io/cloud-provider v1.22.6-kubeedge3
+# k8s.io/cloud-provider v0.22.6 => github.com/kubeedge/kubernetes/staging/src/k8s.io/cloud-provider v1.22.6-kubeedge4
 ## explicit
 k8s.io/cloud-provider/credentialconfig
 k8s.io/cloud-provider/volume/errors
-# k8s.io/cluster-bootstrap v0.22.6 => github.com/kubeedge/kubernetes/staging/src/k8s.io/cluster-bootstrap v1.22.6-kubeedge3
+# k8s.io/cluster-bootstrap v0.22.6 => github.com/kubeedge/kubernetes/staging/src/k8s.io/cluster-bootstrap v1.22.6-kubeedge4
 ## explicit
 k8s.io/cluster-bootstrap/token/api
 k8s.io/cluster-bootstrap/token/util
 k8s.io/cluster-bootstrap/util/secrets
-# k8s.io/code-generator v0.22.6 => github.com/kubeedge/kubernetes/staging/src/k8s.io/code-generator v1.22.6-kubeedge3
+# k8s.io/code-generator v0.22.6 => github.com/kubeedge/kubernetes/staging/src/k8s.io/code-generator v1.22.6-kubeedge4
 ## explicit
 k8s.io/code-generator/cmd/client-gen
 k8s.io/code-generator/cmd/client-gen/args
@@ -1634,7 +1634,7 @@ k8s.io/code-generator/cmd/lister-gen/args
 k8s.io/code-generator/cmd/lister-gen/generators
 k8s.io/code-generator/pkg/namer
 k8s.io/code-generator/pkg/util
-# k8s.io/component-base v0.22.6 => github.com/kubeedge/kubernetes/staging/src/k8s.io/component-base v1.22.6-kubeedge3
+# k8s.io/component-base v0.22.6 => github.com/kubeedge/kubernetes/staging/src/k8s.io/component-base v1.22.6-kubeedge4
 ## explicit
 k8s.io/component-base/cli/flag
 k8s.io/component-base/cli/globalflag
@@ -1656,17 +1656,17 @@ k8s.io/component-base/term
 k8s.io/component-base/traces
 k8s.io/component-base/version
 k8s.io/component-base/version/verflag
-# k8s.io/component-helpers v0.0.0 => github.com/kubeedge/kubernetes/staging/src/k8s.io/component-helpers v1.22.6-kubeedge3
+# k8s.io/component-helpers v0.0.0 => github.com/kubeedge/kubernetes/staging/src/k8s.io/component-helpers v1.22.6-kubeedge4
 k8s.io/component-helpers/apimachinery/lease
 k8s.io/component-helpers/scheduling/corev1
 k8s.io/component-helpers/scheduling/corev1/nodeaffinity
 k8s.io/component-helpers/storage/volume
-# k8s.io/cri-api v0.22.6 => github.com/kubeedge/kubernetes/staging/src/k8s.io/cri-api v1.22.6-kubeedge3
+# k8s.io/cri-api v0.22.6 => github.com/kubeedge/kubernetes/staging/src/k8s.io/cri-api v1.22.6-kubeedge4
 ## explicit
 k8s.io/cri-api/pkg/apis
 k8s.io/cri-api/pkg/apis/runtime/v1alpha2
 k8s.io/cri-api/pkg/apis/testing
-# k8s.io/csi-translation-lib v0.22.6 => github.com/kubeedge/kubernetes/staging/src/k8s.io/csi-translation-lib v1.22.6-kubeedge3
+# k8s.io/csi-translation-lib v0.22.6 => github.com/kubeedge/kubernetes/staging/src/k8s.io/csi-translation-lib v1.22.6-kubeedge4
 ## explicit
 k8s.io/csi-translation-lib
 k8s.io/csi-translation-lib/plugins
@@ -1697,13 +1697,13 @@ k8s.io/kube-openapi/pkg/util/proto
 k8s.io/kube-openapi/pkg/util/proto/validation
 k8s.io/kube-openapi/pkg/util/sets
 k8s.io/kube-openapi/pkg/validation/spec
-# k8s.io/kube-scheduler v0.22.6 => github.com/kubeedge/kubernetes/staging/src/k8s.io/kube-scheduler v1.22.6-kubeedge3
+# k8s.io/kube-scheduler v0.22.6 => github.com/kubeedge/kubernetes/staging/src/k8s.io/kube-scheduler v1.22.6-kubeedge4
 ## explicit
 k8s.io/kube-scheduler/config/v1
 k8s.io/kube-scheduler/config/v1beta1
 k8s.io/kube-scheduler/config/v1beta2
 k8s.io/kube-scheduler/extender/v1
-# k8s.io/kubectl v0.22.4 => github.com/kubeedge/kubernetes/staging/src/k8s.io/kubectl v1.22.6-kubeedge3
+# k8s.io/kubectl v0.22.4 => github.com/kubeedge/kubernetes/staging/src/k8s.io/kubectl v1.22.6-kubeedge4
 k8s.io/kubectl/pkg/cmd/util
 k8s.io/kubectl/pkg/scheme
 k8s.io/kubectl/pkg/util/interrupt
@@ -1712,7 +1712,7 @@ k8s.io/kubectl/pkg/util/openapi/validation
 k8s.io/kubectl/pkg/util/templates
 k8s.io/kubectl/pkg/util/term
 k8s.io/kubectl/pkg/validation
-# k8s.io/kubelet v0.22.6 => github.com/kubeedge/kubernetes/staging/src/k8s.io/kubelet v1.22.6-kubeedge3
+# k8s.io/kubelet v0.22.6 => github.com/kubeedge/kubernetes/staging/src/k8s.io/kubelet v1.22.6-kubeedge4
 ## explicit
 k8s.io/kubelet/config/v1alpha1
 k8s.io/kubelet/config/v1beta1
@@ -1724,7 +1724,7 @@ k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1
 k8s.io/kubelet/pkg/apis/pluginregistration/v1
 k8s.io/kubelet/pkg/apis/podresources/v1
 k8s.io/kubelet/pkg/apis/stats/v1alpha1
-# k8s.io/kubernetes v1.22.6 => github.com/kubeedge/kubernetes v1.22.6-kubeedge3
+# k8s.io/kubernetes v1.22.6 => github.com/kubeedge/kubernetes v1.22.6-kubeedge4
 ## explicit
 k8s.io/kubernetes/cmd/kubeadm/app/apis/bootstraptoken/v1
 k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm
@@ -2035,10 +2035,10 @@ k8s.io/kubernetes/pkg/volume/util/volumepathhandler
 k8s.io/kubernetes/pkg/volume/validation
 k8s.io/kubernetes/pkg/windows/service
 k8s.io/kubernetes/third_party/forked/golang/expansion
-# k8s.io/legacy-cloud-providers v0.0.0 => github.com/kubeedge/kubernetes/staging/src/k8s.io/legacy-cloud-providers v1.22.6-kubeedge3
+# k8s.io/legacy-cloud-providers v0.0.0 => github.com/kubeedge/kubernetes/staging/src/k8s.io/legacy-cloud-providers v1.22.6-kubeedge4
 k8s.io/legacy-cloud-providers/azure/auth
 k8s.io/legacy-cloud-providers/gce/gcpcredential
-# k8s.io/mount-utils v0.22.6 => github.com/kubeedge/kubernetes/staging/src/k8s.io/mount-utils v1.22.6-kubeedge3
+# k8s.io/mount-utils v0.22.6 => github.com/kubeedge/kubernetes/staging/src/k8s.io/mount-utils v1.22.6-kubeedge4
 ## explicit
 k8s.io/mount-utils
 # k8s.io/system-validators v1.5.0
@@ -2227,37 +2227,37 @@ sigs.k8s.io/yaml
 # go.etcd.io/etcd/pkg/v3 => go.etcd.io/etcd/pkg/v3 v3.5.0
 # go.etcd.io/etcd/raft/v3 => go.etcd.io/etcd/raft/v3 v3.5.0
 # go.etcd.io/etcd/server/v3 => go.etcd.io/etcd/server/v3 v3.5.0
-# k8s.io/api => github.com/kubeedge/kubernetes/staging/src/k8s.io/api v1.22.6-kubeedge3
-# k8s.io/apiextensions-apiserver => github.com/kubeedge/kubernetes/staging/src/k8s.io/apiextensions-apiserver v1.22.6-kubeedge3
-# k8s.io/apimachinery => github.com/kubeedge/kubernetes/staging/src/k8s.io/apimachinery v1.22.6-kubeedge3
-# k8s.io/apiserver => github.com/kubeedge/kubernetes/staging/src/k8s.io/apiserver v1.22.6-kubeedge3
-# k8s.io/cli-runtime => github.com/kubeedge/kubernetes/staging/src/k8s.io/cli-runtime v1.22.6-kubeedge3
-# k8s.io/client-go => github.com/kubeedge/kubernetes/staging/src/k8s.io/client-go v1.22.6-kubeedge3
-# k8s.io/cloud-provider => github.com/kubeedge/kubernetes/staging/src/k8s.io/cloud-provider v1.22.6-kubeedge3
-# k8s.io/cluster-bootstrap => github.com/kubeedge/kubernetes/staging/src/k8s.io/cluster-bootstrap v1.22.6-kubeedge3
-# k8s.io/code-generator => github.com/kubeedge/kubernetes/staging/src/k8s.io/code-generator v1.22.6-kubeedge3
-# k8s.io/component-base => github.com/kubeedge/kubernetes/staging/src/k8s.io/component-base v1.22.6-kubeedge3
-# k8s.io/component-helpers => github.com/kubeedge/kubernetes/staging/src/k8s.io/component-helpers v1.22.6-kubeedge3
-# k8s.io/controller-manager => github.com/kubeedge/kubernetes/staging/src/k8s.io/controller-manager v1.22.6-kubeedge3
-# k8s.io/cri-api => github.com/kubeedge/kubernetes/staging/src/k8s.io/cri-api v1.22.6-kubeedge3
-# k8s.io/csi-api => github.com/kubeedge/kubernetes/staging/src/k8s.io/csi-api v1.22.6-kubeedge3
-# k8s.io/csi-translation-lib => github.com/kubeedge/kubernetes/staging/src/k8s.io/csi-translation-lib v1.22.6-kubeedge3
+# k8s.io/api => github.com/kubeedge/kubernetes/staging/src/k8s.io/api v1.22.6-kubeedge4
+# k8s.io/apiextensions-apiserver => github.com/kubeedge/kubernetes/staging/src/k8s.io/apiextensions-apiserver v1.22.6-kubeedge4
+# k8s.io/apimachinery => github.com/kubeedge/kubernetes/staging/src/k8s.io/apimachinery v1.22.6-kubeedge4
+# k8s.io/apiserver => github.com/kubeedge/kubernetes/staging/src/k8s.io/apiserver v1.22.6-kubeedge4
+# k8s.io/cli-runtime => github.com/kubeedge/kubernetes/staging/src/k8s.io/cli-runtime v1.22.6-kubeedge4
+# k8s.io/client-go => github.com/kubeedge/kubernetes/staging/src/k8s.io/client-go v1.22.6-kubeedge4
+# k8s.io/cloud-provider => github.com/kubeedge/kubernetes/staging/src/k8s.io/cloud-provider v1.22.6-kubeedge4
+# k8s.io/cluster-bootstrap => github.com/kubeedge/kubernetes/staging/src/k8s.io/cluster-bootstrap v1.22.6-kubeedge4
+# k8s.io/code-generator => github.com/kubeedge/kubernetes/staging/src/k8s.io/code-generator v1.22.6-kubeedge4
+# k8s.io/component-base => github.com/kubeedge/kubernetes/staging/src/k8s.io/component-base v1.22.6-kubeedge4
+# k8s.io/component-helpers => github.com/kubeedge/kubernetes/staging/src/k8s.io/component-helpers v1.22.6-kubeedge4
+# k8s.io/controller-manager => github.com/kubeedge/kubernetes/staging/src/k8s.io/controller-manager v1.22.6-kubeedge4
+# k8s.io/cri-api => github.com/kubeedge/kubernetes/staging/src/k8s.io/cri-api v1.22.6-kubeedge4
+# k8s.io/csi-api => github.com/kubeedge/kubernetes/staging/src/k8s.io/csi-api v1.22.6-kubeedge4
+# k8s.io/csi-translation-lib => github.com/kubeedge/kubernetes/staging/src/k8s.io/csi-translation-lib v1.22.6-kubeedge4
 # k8s.io/gengo v0.0.0 => k8s.io/gengo v0.22.6
 # k8s.io/heapster => k8s.io/heapster v1.2.0-beta.1
 # k8s.io/klog/v2 => k8s.io/klog/v2 v2.8.0
-# k8s.io/kube-aggregator => github.com/kubeedge/kubernetes/staging/src/k8s.io/kube-aggregator v1.22.6-kubeedge3
-# k8s.io/kube-controller-manager => github.com/kubeedge/kubernetes/staging/src/k8s.io/kube-controller-manager v1.22.6-kubeedge3
-# k8s.io/kube-proxy => github.com/kubeedge/kubernetes/staging/src/k8s.io/kube-proxy v1.22.6-kubeedge3
-# k8s.io/kube-scheduler => github.com/kubeedge/kubernetes/staging/src/k8s.io/kube-scheduler v1.22.6-kubeedge3
-# k8s.io/kubectl => github.com/kubeedge/kubernetes/staging/src/k8s.io/kubectl v1.22.6-kubeedge3
-# k8s.io/kubelet => github.com/kubeedge/kubernetes/staging/src/k8s.io/kubelet v1.22.6-kubeedge3
-# k8s.io/kubernetes => github.com/kubeedge/kubernetes v1.22.6-kubeedge3
-# k8s.io/legacy-cloud-providers => github.com/kubeedge/kubernetes/staging/src/k8s.io/legacy-cloud-providers v1.22.6-kubeedge3
-# k8s.io/metrics => github.com/kubeedge/kubernetes/staging/src/k8s.io/metrics v1.22.6-kubeedge3
-# k8s.io/mount-utils => github.com/kubeedge/kubernetes/staging/src/k8s.io/mount-utils v1.22.6-kubeedge3
-# k8s.io/node-api => github.com/kubeedge/kubernetes/staging/src/k8s.io/node-api v1.22.6-kubeedge3
+# k8s.io/kube-aggregator => github.com/kubeedge/kubernetes/staging/src/k8s.io/kube-aggregator v1.22.6-kubeedge4
+# k8s.io/kube-controller-manager => github.com/kubeedge/kubernetes/staging/src/k8s.io/kube-controller-manager v1.22.6-kubeedge4
+# k8s.io/kube-proxy => github.com/kubeedge/kubernetes/staging/src/k8s.io/kube-proxy v1.22.6-kubeedge4
+# k8s.io/kube-scheduler => github.com/kubeedge/kubernetes/staging/src/k8s.io/kube-scheduler v1.22.6-kubeedge4
+# k8s.io/kubectl => github.com/kubeedge/kubernetes/staging/src/k8s.io/kubectl v1.22.6-kubeedge4
+# k8s.io/kubelet => github.com/kubeedge/kubernetes/staging/src/k8s.io/kubelet v1.22.6-kubeedge4
+# k8s.io/kubernetes => github.com/kubeedge/kubernetes v1.22.6-kubeedge4
+# k8s.io/legacy-cloud-providers => github.com/kubeedge/kubernetes/staging/src/k8s.io/legacy-cloud-providers v1.22.6-kubeedge4
+# k8s.io/metrics => github.com/kubeedge/kubernetes/staging/src/k8s.io/metrics v1.22.6-kubeedge4
+# k8s.io/mount-utils => github.com/kubeedge/kubernetes/staging/src/k8s.io/mount-utils v1.22.6-kubeedge4
+# k8s.io/node-api => github.com/kubeedge/kubernetes/staging/src/k8s.io/node-api v1.22.6-kubeedge4
 # k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.22.6
-# k8s.io/repo-infra => github.com/kubeedge/kubernetes/staging/src/k8s.io/repo-infra v1.22.6-kubeedge3
-# k8s.io/sample-apiserver => github.com/kubeedge/kubernetes/staging/src/k8s.io/sample-apiserver v1.22.6-kubeedge3
+# k8s.io/repo-infra => github.com/kubeedge/kubernetes/staging/src/k8s.io/repo-infra v1.22.6-kubeedge4
+# k8s.io/sample-apiserver => github.com/kubeedge/kubernetes/staging/src/k8s.io/sample-apiserver v1.22.6-kubeedge4
 # k8s.io/utils v0.0.0 => k8s.io/utils v0.22.6
 # sigs.k8s.io/apiserver-network-proxy/konnectivity-client => sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.27
