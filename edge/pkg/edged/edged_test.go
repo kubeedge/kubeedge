@@ -150,7 +150,7 @@ func TestSyncPod_HandlePodListFromMetaManager(t *testing.T) {
 	update := podConfig.Updates()
 	t.Run("HandlePodListFromMetaManager Succeed", func(t *testing.T) {
 		select {
-		case u, _ := <-update:
+		case u := <-update:
 			if u.Pods[0].Name != pod.Name {
 				t.Errorf("pod updates chan got unexpected result. got = %s, want = %s", u.Pods[0].Name, pod.Name)
 			}
@@ -192,7 +192,7 @@ func TestSyncPod_HandlePodListFromEdgeController(t *testing.T) {
 	update := podConfig.Updates()
 	t.Run("HandlePodListFromEdgeController Succeed", func(t *testing.T) {
 		select {
-		case u, _ := <-update:
+		case u := <-update:
 			if u.Pods[0].Name != pod.Name {
 				t.Errorf("pod updates chan got unexpected result. got = %s, want = %s", u.Pods[0].Name, pod.Name)
 			}
@@ -219,8 +219,7 @@ func TestSyncPod_HandlePod(t *testing.T) {
 		},
 	}
 
-	beehiveContext.Receive(modules.MetaManagerModuleName)
-	message := model.NewMessage("").SetRoute(modules.MetaManagerModuleName, modules.MetaGroup)
+	message, _ := beehiveContext.Receive(modules.MetaManagerModuleName)
 	messageWithUnmarshalErr := message.SetResourceOperation(e.namespace+"/"+model.ResourceTypePod+"/"+pod.Name, model.InsertOperation).FillBody([]string{"test"})
 	beehiveContext.Send(modules.EdgedModuleName, *messageWithUnmarshalErr)
 
@@ -238,7 +237,7 @@ func TestSyncPod_HandlePod(t *testing.T) {
 	update := podConfig.Updates()
 	t.Run("HandlePod Succeed", func(t *testing.T) {
 		select {
-		case u, _ := <-update:
+		case u := <-update:
 			if u.Pods[0].Name != pod.Name {
 				t.Errorf("pod updates chan got unexpected result. got = %s, want = %s", u.Pods[0].Name, pod.Name)
 			}
