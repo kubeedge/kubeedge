@@ -17,7 +17,6 @@ limitations under the License.
 package csidriver
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -109,25 +108,26 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	}
 
 	klog.V(4).Infof("create volume result: %v", result)
-	data, ok := result.GetContent().(string)
+	data, ok := result.GetContent().(map[string]interface{})
 	if !ok {
-		klog.Errorf("content is not string type: %v", result.GetContent())
-		return nil, fmt.Errorf("content type %T is not string", result.GetContent())
+		klog.Errorf("content is not map[string]interface {} type: %T", result.GetContent())
+		return nil, fmt.Errorf("content is not map[string]interface {} type: %T", result.GetContent())
 	}
 
 	if result.GetOperation() == model.ResponseErrorOperation {
-		klog.Errorf("create volume with error: %s", data)
-		return nil, errors.New(data)
+		err := fmt.Errorf("create volume failed, response data: %v", data)
+		klog.Errorf(err.Error())
+		return nil, errors.New(err.Error())
 	}
 
-	decodeBytes, err := base64.StdEncoding.DecodeString(data)
+	dataBytes, err := json.Marshal(data)
 	if err != nil {
-		klog.Errorf("create volume decode with error: %v", err)
+		klog.Errorf("create volume response marshal with error: %v", err)
 		return nil, err
 	}
 
 	response := &csi.CreateVolumeResponse{}
-	err = json.Unmarshal(decodeBytes, response)
+	err = json.Unmarshal(dataBytes, response)
 	if err != nil {
 		klog.Errorf("create volume unmarshal with error: %v", err)
 		return nil, err
@@ -197,25 +197,26 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 	}
 
 	klog.V(4).Infof("delete volume result: %v", result)
-	data, ok := result.GetContent().(string)
+	data, ok := result.GetContent().(map[string]interface{})
 	if !ok {
-		klog.Errorf("content is not string type: %v", result.GetContent())
-		return nil, fmt.Errorf("content type %T is not string", result.GetContent())
+		klog.Errorf("content is not map[string]interface{} type: %T", result.GetContent())
+		return nil, fmt.Errorf("content is not map[string]interface{} type: %T", result.GetContent())
 	}
 
 	if msg.GetOperation() == model.ResponseErrorOperation {
-		klog.Errorf("delete volume with error: %s", data)
-		return nil, errors.New(data)
+		err := fmt.Errorf("delete volume failed, response data: %v", data)
+		klog.Errorf(err.Error())
+		return nil, errors.New(err.Error())
 	}
 
-	decodeBytes, err := base64.StdEncoding.DecodeString(data)
+	dataBytes, err := json.Marshal(data)
 	if err != nil {
-		klog.Errorf("delete volume decode with error: %v", err)
+		klog.Errorf("delete volume response marshal with error: %v", err)
 		return nil, err
 	}
 
 	deleteVolumeResponse := &csi.DeleteVolumeResponse{}
-	err = json.Unmarshal(decodeBytes, deleteVolumeResponse)
+	err = json.Unmarshal(dataBytes, deleteVolumeResponse)
 	if err != nil {
 		klog.Errorf("delete volume unmarshal with error: %v", err)
 		return nil, err
@@ -280,25 +281,26 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 	}
 
 	klog.V(4).Infof("controller publish volume result: %v", result)
-	data, ok := result.GetContent().(string)
+	data, ok := result.GetContent().(map[string]interface{})
 	if !ok {
-		klog.Errorf("content is not string type: %v", result.GetContent())
-		return nil, fmt.Errorf("content type %T is not string", result.GetContent())
+		klog.Errorf("content is not map[string]interface{} type: %T", result.GetContent())
+		return nil, fmt.Errorf("content is not map[string]interface{} type: %T", result.GetContent())
 	}
 
 	if msg.GetOperation() == model.ResponseErrorOperation {
-		klog.Errorf("controller publish volume with error: %s", data)
-		return nil, errors.New(data)
+		err := fmt.Errorf("controller publish volume failed, response data: %v", data)
+		klog.Errorf(err.Error())
+		return nil, errors.New(err.Error())
 	}
 
-	decodeBytes, err := base64.StdEncoding.DecodeString(data)
+	dataBytes, err := json.Marshal(data)
 	if err != nil {
-		klog.Errorf("controller publish volume decode with error: %v", err)
+		klog.Errorf("controller publish volume response marshal with error: %v", err)
 		return nil, err
 	}
 
 	controllerPublishVolumeResponse := &csi.ControllerPublishVolumeResponse{}
-	err = json.Unmarshal(decodeBytes, controllerPublishVolumeResponse)
+	err = json.Unmarshal(dataBytes, controllerPublishVolumeResponse)
 	if err != nil {
 		klog.Errorf("controller publish volume unmarshal with error: %v", err)
 		return nil, err
@@ -336,7 +338,7 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 		klog.Errorf("failed to marshal to string with error: %s", err)
 		return nil, err
 	}
-	klog.V(4).Infof("controller Unpublish Volume marshal to string: %s", js)
+	klog.V(4).Infof("controller unpublish volume marshal to string: %s", js)
 	msg := model.NewMessage("").
 		BuildRouter(DefaultReceiveModuleName, GroupResource, resource, constants.CSIOperationTypeControllerUnpublishVolume).
 		FillBody(js)
@@ -362,31 +364,32 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 		return nil, err
 	}
 
-	klog.V(4).Infof("controller Unpublish Volume result: %v", result)
-	data, ok := result.GetContent().(string)
+	klog.V(4).Infof("controller unpublish volume result: %v", result)
+	data, ok := result.GetContent().(map[string]interface{})
 	if !ok {
-		klog.Errorf("content is not string type: %v", result.GetContent())
-		return nil, fmt.Errorf("content type %T is not string", result.GetContent())
+		klog.Errorf("content is not map[string]interface{} type: %T", result.GetContent())
+		return nil, fmt.Errorf("content is not map[string]interface{} type: %T", result.GetContent())
 	}
 
 	if msg.GetOperation() == model.ResponseErrorOperation {
-		klog.Errorf("controller Unpublish Volume with error: %s", data)
-		return nil, errors.New(data)
+		err := fmt.Errorf("controller unpublish volume failed, response data: %v", data)
+		klog.Errorf(err.Error())
+		return nil, errors.New(err.Error())
 	}
 
-	decodeBytes, err := base64.StdEncoding.DecodeString(data)
+	dataBytes, err := json.Marshal(data)
 	if err != nil {
-		klog.Errorf("controller Unpublish Volume decode with error: %v", err)
+		klog.Errorf("controller unpublish volume response marshal with error: %v", err)
 		return nil, err
 	}
 
 	controllerUnpublishVolumeResponse := &csi.ControllerUnpublishVolumeResponse{}
-	err = json.Unmarshal(decodeBytes, controllerUnpublishVolumeResponse)
+	err = json.Unmarshal(dataBytes, controllerUnpublishVolumeResponse)
 	if err != nil {
-		klog.Errorf("controller Unpublish Volume unmarshal with error: %v", err)
+		klog.Errorf("controller unpublish volume unmarshal with error: %v", err)
 		return nil, err
 	}
-	klog.V(4).Infof("controller Unpublish Volume response: %v", controllerUnpublishVolumeResponse)
+	klog.V(4).Infof("controller unpublish volume response: %v", controllerUnpublishVolumeResponse)
 	return controllerUnpublishVolumeResponse, nil
 }
 

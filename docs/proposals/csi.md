@@ -278,7 +278,7 @@ Here is a `DaemonSet` example for CSI HostPath Driver at edge.
 
 ```yaml
 kind: DaemonSet
-apiVersion: apps/v1beta2
+apiVersion: apps/v1
 metadata:
   name: csi-hostpath-edge
 spec:
