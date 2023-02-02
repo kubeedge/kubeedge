@@ -98,11 +98,56 @@ verify_docker_installed(){
 function install_cni_plugins() {
   # install CNI plugins if not exist
   if [ ! -f "/opt/cni/bin/loopback" ]; then
-    echo -e "install CNI plugins..."
+    echo -e "installing CNI plugins..."
     mkdir -p /opt/cni/bin
-    wget https://github.com/containernetworking/plugins/releases/download/v1.1.1/cni-plugins-linux-amd64-v1.1.1.tgz
-    tar Cxzvf /opt/cni/bin cni-plugins-linux-amd64-v1.1.1.tgz
+    wget $CNI_DOWNLOAD_ADDR
+    tar Cxzvf /opt/cni/bin ${CNI_DOWNLOAD_ADDR##*/}
+    # remove installation package after the installation is complete
+    rm -rf ${KUBEEDGE_ROOT}/${CNI_DOWNLOAD_ADDR##*/}
   else
     echo "CNI plugins already installed and no need to install"
+  fi
+
+  # create CNI netconf file if not exist
+  CNI_DIR="/etc/cni/net.d"
+  mkdir -p /etc/cni/net.d
+  if [ "`ls -A $CNI_DIR`" = "" ]; then
+    echo -e "creating CNI netconf file..."
+    cat > /etc/cni/net.d/10-containerd-net.conflist <<EOF
+    {
+     "cniVersion": "1.0.0",
+     "name": "containerd-net",
+     "plugins": [
+       {
+         "type": "bridge",
+         "bridge": "cni0",
+         "isGateway": true,
+         "ipMasq": true,
+         "promiscMode": true,
+         "ipam": {
+           "type": "host-local",
+           "ranges": [
+             [{
+               "subnet": "10.88.0.0/16"
+             }],
+             [{
+               "subnet": "2001:db8:4860::/64"
+             }]
+           ],
+           "routes": [
+             { "dst": "0.0.0.0/0" },
+             { "dst": "::/0" }
+           ]
+         }
+       },
+       {
+         "type": "portmap",
+         "capabilities": {"portMappings": true}
+       }
+     ]
+    }
+EOF
+  else
+    echo "CNI netconf file already exist and no need to create"
   fi
 }

@@ -21,6 +21,7 @@ LOG_LEVEL=${LOG_LEVEL:-2}
 TIMEOUT=${TIMEOUT:-60}s
 PROTOCOL=${PROTOCOL:-"WebSocket"}
 CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-"remote"}
+CNI_DOWNLOAD_ADDR="https://github.com/containernetworking/plugins/releases/download/v1.1.1/cni-plugins-linux-amd64-v1.1.1.tgz"
 
 if [[ "${CLUSTER_NAME}x" == "x" ]];then
     CLUSTER_NAME="test"
@@ -249,12 +250,6 @@ build_edgecore
 
 kind_up_cluster
 
-# install CNI plugins
-if [[ "${CONTAINER_RUNTIME}" = "remote" ]]; then
-  # we need to install CNI plugins only when we use remote(containerd) as edgecore container runtime
-  install_cni_plugins
-fi
-
 export KUBECONFIG=$HOME/.kube/config
 
 check_control_plane_ready
@@ -262,6 +257,12 @@ check_control_plane_ready
 # edge side don't support kind cni now, delete kind cni plugin for workaround
 kubectl delete daemonset kindnet -nkube-system
 kubectl create ns kubeedge
+
+# install CNI plugins
+if [[ "${CONTAINER_RUNTIME}" = "remote" ]]; then
+  # we need to install CNI plugins only when we use remote(containerd) as edgecore container runtime
+  install_cni_plugins
+fi
 
 create_device_crd
 create_objectsync_crd
