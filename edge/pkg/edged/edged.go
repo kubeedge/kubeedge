@@ -278,7 +278,6 @@ func (e *edged) handlePodListFromMetaManager(content []byte, updatesChan chan<- 
 	}
 
 	var pods []*v1.Pod
-	var podsUpdate []*v1.Pod
 
 	for _, list := range lists {
 		var pod v1.Pod
@@ -287,16 +286,11 @@ func (e *edged) handlePodListFromMetaManager(content []byte, updatesChan chan<- 
 			return err
 		}
 
-		// if edge-core stop or panic when pod is deleting, pod need add into podDeletionQueue after edge-core restart.
 		if filterPodByNodeName(&pod, e.nodeName) {
-			if pod.DeletionTimestamp == nil {
-				pods = append(pods, &pod)
-			} else {
-				podsUpdate = append(podsUpdate, &pod)
-			}
+			pods = append(pods, &pod)
 		}
 	}
-	updates := &kubelettypes.PodUpdate{Op: kubelettypes.SET, Pods: podsUpdate, Source: kubelettypes.ApiserverSource}
+	updates := &kubelettypes.PodUpdate{Op: kubelettypes.SET, Pods: pods, Source: kubelettypes.ApiserverSource}
 	updatesChan <- *updates
 
 	return nil
