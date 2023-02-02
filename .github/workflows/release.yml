@@ -37,7 +37,7 @@ jobs:
           fetch-depth: 0
       - name: Making and packaging
         run: |
-          docker pull kubeedge/build-tools
+          docker pull kubeedge/build-tools:1.17.13-ke1
           make release WHAT=${{ matrix.target }} ARM_VERSION=${{ matrix.ARM_VERSION }}
       - name: Generate arch
         run: |
