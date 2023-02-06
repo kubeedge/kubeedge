@@ -88,3 +88,20 @@ func TestDeleteListener(t *testing.T) {
 		t.Errorf("listenerByGVR expected length 0. but got %v", len(listenerByNodeID))
 	}
 }
+
+func TestDeleteListenerForNode(t *testing.T) {
+	listener1 := NewSelectorListener("testID1", "node1", testGVR, selector1)
+	listener2 := NewSelectorListener("testID2", "node1", testGVR, selector2)
+
+	lm := newListenerManager()
+
+	lm.AddListener(listener1)
+	lm.AddListener(listener2)
+
+	lm.DeleteListenerForNode("node1")
+
+	listenerByNodeID := lm.GetListenersForNode("node1")
+	if len(listenerByNodeID) != 0 {
+		t.Errorf("listenerByNodeID expected length 0. but got %v", len(listenerByNodeID))
+	}
+}

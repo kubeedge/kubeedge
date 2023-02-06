@@ -66,6 +66,50 @@ func (lm *listenerManager) DeleteListener(listener *SelectorListener) {
 	lm.lock.Lock()
 	defer lm.lock.Unlock()
 
+	lm.deleteListenerFunc(listener)
+}
+
+func (lm *listenerManager) GetListenersForNode(nodeName string) map[string]*SelectorListener {
+	lm.lock.RLock()
+	defer lm.lock.RUnlock()
+
+	listeners, exists := lm.listenerByNodeID[nodeName]
+	if !exists {
+		return nil
+	}
+
+	return listeners
+}
+
+func (lm *listenerManager) DeleteListenerForNode(nodeName string) {
+	lm.lock.Lock()
+	defer lm.lock.Unlock()
+
+	klog.Infof("delete listener for node %s", nodeName)
+
+	listeners, exists := lm.listenerByNodeID[nodeName]
+	if !exists {
+		return
+	}
+
+	for _, listener := range listeners {
+		lm.deleteListenerFunc(listener)
+	}
+}
+
+func (lm *listenerManager) GetListenersForGVR(gvr schema.GroupVersionResource) map[string]*SelectorListener {
+	lm.lock.RLock()
+	defer lm.lock.RUnlock()
+
+	listeners, exists := lm.listenerByGVR[gvr]
+	if !exists {
+		return nil
+	}
+
+	return listeners
+}
+
+func (lm *listenerManager) deleteListenerFunc(listener *SelectorListener) {
 	listeners, exists := lm.listenerByNodeID[listener.nodeName]
 	if exists {
 		delete(listeners, listener.id)
@@ -81,28 +125,4 @@ func (lm *listenerManager) DeleteListener(listener *SelectorListener) {
 			delete(lm.listenerByGVR, listener.gvr)
 		}
 	}
-}
-
-func (lm *listenerManager) GetListenersForNode(nodeName string) map[string]*SelectorListener {
-	lm.lock.RLock()
-	defer lm.lock.RUnlock()
-
-	listeners, exists := lm.listenerByNodeID[nodeName]
-	if !exists {
-		return nil
-	}
-
-	return listeners
-}
-
-func (lm *listenerManager) GetListenersForGVR(gvr schema.GroupVersionResource) map[string]*SelectorListener {
-	lm.lock.RLock()
-	defer lm.lock.RUnlock()
-
-	listeners, exists := lm.listenerByGVR[gvr]
-	if !exists {
-		return nil
-	}
-
-	return listeners
 }

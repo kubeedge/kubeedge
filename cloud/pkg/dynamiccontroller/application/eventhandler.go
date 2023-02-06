@@ -38,6 +38,7 @@ import (
 type HandlerCenter interface {
 	AddListener(s *SelectorListener) error
 	DeleteListener(s *SelectorListener)
+	DeleteListenersForNode(nodeName string)
 	ForResource(gvr schema.GroupVersionResource) *CommonResourceEventHandler
 	GetListenersForNode(nodeName string) map[string]*SelectorListener
 }
@@ -92,6 +93,10 @@ func (c *handlerCenter) DeleteListener(s *SelectorListener) {
 
 func (c *handlerCenter) GetListenersForNode(nodeName string) map[string]*SelectorListener {
 	return c.listenerManager.GetListenersForNode(nodeName)
+}
+
+func (c *handlerCenter) DeleteListenersForNode(nodeName string) {
+	c.listenerManager.DeleteListenerForNode(nodeName)
 }
 
 // CommonResourceEventHandler can be used by configmapManager and podManager

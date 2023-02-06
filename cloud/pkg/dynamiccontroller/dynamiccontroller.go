@@ -19,6 +19,7 @@ package dynamiccontroller
 import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/dynamic/dynamicinformer"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core"
@@ -39,6 +40,7 @@ type DynamicController struct {
 	messageLayer                 messagelayer.MessageLayer
 	dynamicSharedInformerFactory dynamicinformer.DynamicSharedInformerFactory
 	applicationCenter            *application.Center
+	informersSyncedFuncs         []cache.InformerSynced
 }
 
 var (
@@ -78,6 +80,11 @@ func (dctl *DynamicController) Start() {
 		}
 	}
 
+	if !cache.WaitForCacheSync(beehiveContext.Done(), dctl.informersSyncedFuncs...) {
+		klog.Errorf("unable to sync caches for dynamic controller")
+		return
+	}
+
 	go dctl.receiveMessage()
 }
 
@@ -87,9 +94,35 @@ func newDynamicController(enable bool) *DynamicController {
 		messageLayer:                 messagelayer.DynamicControllerMessageLayer(),
 		dynamicSharedInformerFactory: informers.GetInformersManager().GetDynamicInformerFactory(),
 	}
+
 	dctl.applicationCenter = application.NewApplicationCenter(dctl.dynamicSharedInformerFactory)
 	dctl.applicationCenter.ForResource(v1.SchemeGroupVersion.WithResource("nodes"))
 	dctl.applicationCenter.ForResource(v1.SchemeGroupVersion.WithResource("services"))
+
+	k8sInformerFactory := informers.GetInformersManager().GetKubeInformerFactory()
+	nodesInformer := k8sInformerFactory.Core().V1().Nodes()
+	nodesInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		DeleteFunc: func(obj interface{}) {
+			node, isNode := obj.(*v1.Node)
+			if !isNode {
+				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
+				if !ok {
+					klog.Errorf("Received unexpected object: %v", obj)
+					return
+				}
+				node, ok = deletedState.Obj.(*v1.Node)
+				if !ok {
+					klog.Errorf("DeletedFinalStateUnknown contained non-Node object: %v", deletedState.Obj)
+					return
+				}
+			}
+
+			dctl.applicationCenter.DeleteListenersForNode(node.Name)
+		},
+	})
+
+	dctl.informersSyncedFuncs = append(dctl.informersSyncedFuncs, nodesInformer.Informer().HasSynced)
+
 	return dctl
 }
 
