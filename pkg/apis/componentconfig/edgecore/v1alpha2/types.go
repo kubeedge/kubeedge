@@ -738,10 +738,10 @@ type TailoredKubeletFlag struct {
 	// Source: https://docs.microsoft.com/en-us/windows/win32/procthread/scheduling-priorities
 	WindowsPriorityClass string `json:"windowsPriorityClass,omitempty"`
 	// remoteRuntimeEndpoint is the endpoint of remote runtime service
-	// default "unix:///var/run/dockershim.sock"
+	// default "unix:///run/containerd/containerd.sock"
 	RemoteRuntimeEndpoint string `json:"remoteRuntimeEndpoint,omitempty"`
 	// remoteImageEndpoint is the endpoint of remote image service
-	// default "unix:///var/run/dockershim.sock"
+	// default "unix:///run/containerd/containerd.sock"
 	RemoteImageEndpoint string `json:"remoteImageEndpoint,omitempty"`
 	// experimentalMounterPath is the path of mounter binary. Leave empty to use the default mount path
 	ExperimentalMounterPath string `json:"experimentalMounterPath,omitempty"`
@@ -788,7 +788,7 @@ type ContainerRuntimeOptions struct {
 	// General Options.
 
 	// ContainerRuntime is the container runtime to use.
-	// default "docker"
+	// default "remote"
 	ContainerRuntime string `json:"containerRuntime,omitempty"`
 	// RuntimeCgroups that container runtime is expected to be isolated in.
 	RuntimeCgroups string `json:"runtimeCgroups,omitempty"`
@@ -799,7 +799,7 @@ type ContainerRuntimeOptions struct {
 	DockershimRootDirectory string `json:"dockershimRootDirectory,omitempty"`
 	// PodSandboxImage is the image whose network/ipc namespaces
 	// containers in each pod will use.
-	// default kubeedge/pause:3.1
+	// default kubeedge/pause:3.6
 	PodSandboxImage string `json:"podSandboxImage,omitempty"`
 	// DockerEndpoint is the path to the docker endpoint to communicate with.
 	DockerEndpoint string `json:"dockerEndpoint,omitempty"`

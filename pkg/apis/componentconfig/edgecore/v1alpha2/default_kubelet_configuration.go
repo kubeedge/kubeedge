@@ -79,7 +79,7 @@ func SetDefaultsKubeletConfiguration(obj *TailoredKubeletConfiguration) {
 	obj.ResolverConfig = utilpointer.String(kubetypes.ResolvConfDefault)
 	obj.CPUCFSQuota = utilpointer.BoolPtr(true)
 	obj.CPUCFSQuotaPeriod = &metav1.Duration{Duration: 100 * time.Millisecond}
-	obj.NodeStatusMaxImages = utilpointer.Int32Ptr(50)
+	obj.NodeStatusMaxImages = utilpointer.Int32Ptr(0)
 	obj.MaxOpenFiles = 1000000
 	obj.ContentType = "application/json"
 	obj.SerializeImagePulls = utilpointer.BoolPtr(true)
