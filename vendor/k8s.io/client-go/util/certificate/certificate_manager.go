@@ -447,6 +447,7 @@ func (m *manager) rotateCerts() (bool, error) {
 
 	template, csrPEM, keyPEM, privateKey, err := m.generateCSR()
 	if err != nil {
+		klog.Infof("errr 111 %v", err)
 		utilruntime.HandleError(fmt.Errorf("%s: Unable to generate a certificate signing request: %v", m.name, err))
 		if m.certificateRenewFailure != nil {
 			m.certificateRenewFailure.Inc()
@@ -454,9 +455,13 @@ func (m *manager) rotateCerts() (bool, error) {
 		return false, nil
 	}
 
+	klog.Infof("111111111")
+
 	// request the client each time
 	clientSet, err := m.getClientset()
 	if err != nil {
+		klog.Infof("errr 2222 %v", err)
+
 		utilruntime.HandleError(fmt.Errorf("%s: Unable to load a client to request certificates: %v", m.name, err))
 		if m.certificateRenewFailure != nil {
 			m.certificateRenewFailure.Inc()
@@ -464,10 +469,15 @@ func (m *manager) rotateCerts() (bool, error) {
 		return false, nil
 	}
 
+	klog.Infof("222222222")
+
+
 	// Call the Certificate Signing Request API to get a certificate for the
 	// new private key.
 	reqName, reqUID, err := csr.RequestCertificate(clientSet, csrPEM, "", m.signerName, m.requestedCertificateLifetime, m.usages, privateKey)
 	if err != nil {
+		klog.Infof("errr 333 %v", err)
+
 		utilruntime.HandleError(fmt.Errorf("%s: Failed while requesting a signed certificate from the control plane: %v", m.name, err))
 		if m.certificateRenewFailure != nil {
 			m.certificateRenewFailure.Inc()
@@ -478,19 +488,25 @@ func (m *manager) rotateCerts() (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), certificateWaitTimeout)
 	defer cancel()
 
+	klog.Infof("3333333")
+
 	// Once we've successfully submitted a CSR for this template, record that we did so
 	m.setLastRequest(cancel, template)
+
 
 	// Wait for the certificate to be signed. This interface and internal timout
 	// is a remainder after the old design using raw watch wrapped with backoff.
 	crtPEM, err := csr.WaitForCertificateForEdge(ctx, clientSet, reqName, reqUID)
 	if err != nil {
+		klog.Infof("errr 4444444 %v", err)
 		utilruntime.HandleError(fmt.Errorf("%s: certificate request was not signed: %v", m.name, err))
 		if m.certificateRenewFailure != nil {
 			m.certificateRenewFailure.Inc()
 		}
 		return false, nil
 	}
+
+	klog.Infof("444444")
 
 	cert, err := m.certStore.Update(crtPEM, keyPEM)
 	if err != nil {
@@ -501,6 +517,7 @@ func (m *manager) rotateCerts() (bool, error) {
 		return false, nil
 	}
 
+	klog.Infof("5555555555")
 	if old := m.updateCached(cert); old != nil && m.certificateRotation != nil {
 		m.certificateRotation.Observe(m.now().Sub(old.Leaf.NotBefore).Seconds())
 	}
