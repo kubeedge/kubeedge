@@ -32,5 +32,5 @@ const (
 // To add a new feature, define a key for it above and add it here. The features will be
 // available throughout Kubeedge binaries.
 var defaultFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
-	RequireAuthorization: {Default: false, PreRelease: featuregate.Alpha},
+	RequireAuthorization: {Default: true, PreRelease: featuregate.Alpha},
 }
