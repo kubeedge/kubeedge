@@ -33,8 +33,8 @@ import (
 )
 
 // NewSimpleClientset is new interface
-func NewSimpleClientset(metaClient client.CoreInterface) clientset.Interface {
-	return &Clientset{*fakekube.NewSimpleClientset(), metaClient}
+func NewSimpleClientset() clientset.Interface {
+	return &Clientset{*fakekube.NewSimpleClientset(), client.New()}
 }
 
 // Clientset extends Clientset
