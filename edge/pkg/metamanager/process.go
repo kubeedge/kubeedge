@@ -89,7 +89,8 @@ func requireRemoteQuery(resType string) bool {
 		resType == constants.ResourceTypeVolumeAttachment ||
 		resType == model.ResourceTypeNode ||
 		resType == model.ResourceTypeServiceAccountToken ||
-		resType == model.ResourceTypeLease
+		resType == model.ResourceTypeLease ||
+		resType == model.ResourceTypeCSR
 }
 
 func msgDebugInfo(message *model.Message) string {
@@ -118,7 +119,7 @@ func (m *metaManager) processInsert(message model.Message) {
 		return
 	}
 
-	if (resType == model.ResourceTypeNode || resType == model.ResourceTypeLease) && message.GetSource() == modules.EdgedModuleName {
+	if (resType == model.ResourceTypeNode || resType == model.ResourceTypeLease || resType == model.ResourceTypeCSR ) && message.GetSource() == modules.EdgedModuleName {
 		sendToCloud(&message)
 		return
 	}

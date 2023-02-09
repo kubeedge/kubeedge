@@ -36,6 +36,6 @@ type CertificatesV1Bridge struct {
 	MetaClient client.CoreInterface
 }
 
-func (c *CertificatesV1Bridge) CertificateSigningRequest() v1.CertificateSigningRequestInterface {
+func (c *CertificatesV1Bridge) CertificateSigningRequests() v1.CertificateSigningRequestInterface {
 	return &CertificateSigningRequestsBridge{fakev1.FakeCertificateSigningRequests{Fake: &c.FakeCertificatesV1}, c.MetaClient}
 }
