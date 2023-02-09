@@ -30,7 +30,7 @@ import (
 )
 
 const (
-	Path     = "/tmp/kubeedge/testData/"
+	Path     = "/tmp/"
 	BaseName = "edge"
 	CertFile = Path + BaseName + ".crt"
 	KeyFile  = Path + BaseName + ".key"
@@ -115,7 +115,7 @@ func TestNewHTTPSClient(t *testing.T) {
 
 // TestNewHTTPClientWithCA() tests the creation of a new HTTP using filled capem
 func TestNewHTTPClientWithCA(t *testing.T) {
-	err := util.GenerateTestCertificate(Path, BaseName, BaseName)
+	err := util.PrepareTestCerts()
 	if err != nil {
 		t.Errorf("Error in generating fake certificates: %v", err)
 		return

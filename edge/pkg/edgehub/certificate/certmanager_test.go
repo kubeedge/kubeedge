@@ -27,13 +27,10 @@ import (
 )
 
 func init() {
-	_, err := os.Stat("/tmp/edge.crt")
+	err := util.PrepareTestCerts()
 	if err != nil {
-		err := util.GenerateTestCertificate("/tmp/", "edge", "edge")
-
-		if err != nil {
-			fmt.Printf("Failed to create certificate: %v\n", err)
-		}
+		fmt.Printf("Failed to create certificate: %v\n", err)
+		os.Exit(1)
 	}
 }
 

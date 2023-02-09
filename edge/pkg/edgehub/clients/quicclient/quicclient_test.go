@@ -22,6 +22,7 @@ import (
 	"net"
 	"os"
 	"reflect"
+	"sync"
 	"testing"
 	"time"
 
@@ -37,13 +38,10 @@ import (
 )
 
 func init() {
-	_, err := os.Stat("/tmp/edge.crt")
+	err := util.PrepareTestCerts()
 	if err != nil {
-		err := util.GenerateTestCertificate("/tmp/", "edge", "edge")
-
-		if err != nil {
-			fmt.Printf("Failed to create certificate: %v\n", err)
-		}
+		fmt.Printf("Failed to create certificate: %v\n", err)
+		os.Exit(1)
 	}
 }
 
@@ -72,36 +70,42 @@ func handleServer(container *mux.MessageContainer, writer mux.ResponseWriter) {
 	writer.WriteResponse(&model.Message{}, container.Message.GetContent())
 }
 
+var once sync.Once
+
 func newTestServer(t *testing.T) {
-	exOpts := api.QuicServerOption{
-		MaxIncomingStreams: 100,
-	}
-
-	cert, err := tls.LoadX509KeyPair("/tmp/edge.crt", "/tmp/edge.key")
-	if err != nil {
-		t.Fatalf("failed to load certificate: %v", err)
-	}
-
-	tlsConfig := &tls.Config{
-		Certificates: []tls.Certificate{cert},
-	}
-
-	httpServer := server.Server{
-		Type:       "quic",
-		Addr:       net.JoinHostPort("127.0.0.1", "10001"),
-		TLSConfig:  tlsConfig,
-		AutoRoute:  true,
-		ConnNotify: connNotify,
-		ExOpts:     exOpts,
-	}
-
-	mux.Entry(mux.NewPattern("*").Op("*"), handleServer)
-	go func() {
-		err = httpServer.ListenAndServeTLS("/tmp/edge.crt", "/tmp/edge.key")
-		if err != nil {
-			klog.Errorf("listen and serve tls failed, error: %+v", err)
+	// new a QUIC server only once
+	once.Do(func() {
+		exOpts := api.QuicServerOption{
+			MaxIncomingStreams: 100,
 		}
-	}()
+
+		cert, err := tls.LoadX509KeyPair("/tmp/edge.crt", "/tmp/edge.key")
+		if err != nil {
+			t.Fatalf("failed to load certificate: %v", err)
+		}
+
+		tlsConfig := &tls.Config{
+			Certificates: []tls.Certificate{cert},
+		}
+
+		httpServer := server.Server{
+			Type:       "quic",
+			Addr:       net.JoinHostPort("127.0.0.1", "10001"),
+			TLSConfig:  tlsConfig,
+			AutoRoute:  true,
+			ConnNotify: connNotify,
+			ExOpts:     exOpts,
+		}
+
+		mux.Entry(mux.NewPattern("*").Op("*"), handleServer)
+		go func() {
+			err = httpServer.ListenAndServeTLS("", "")
+			if err != nil {
+				klog.Errorf("listen and serve tls failed, error: %+v", err)
+				os.Exit(1)
+			}
+		}()
+	})
 }
 func TestNewQuicClient(t *testing.T) {
 	tests := []struct {
@@ -162,14 +166,14 @@ func TestInit(t *testing.T) {
 		{
 			name:          "QuicClient with invalid cert and key",
 			client:        newTestQuicClient("fail", "/tmp/invalid/edge.crt", "/tmp/invalid/edge.key", "/tmp/invalid/edge.crt"),
-			expectedError: nil,
+			expectedError: fmt.Errorf("failed to load x509 key pair, error: open /tmp/invalid/edge.crt: no such file or directory"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.client.Init()
-			if tt.expectedError != nil && err != nil && err.Error() != tt.expectedError.Error() {
+			if !reflect.DeepEqual(tt.expectedError, err) {
 				t.Errorf("Init() failed. got = %v, want = %v", err, tt.expectedError)
 			}
 		})
@@ -205,11 +209,11 @@ func TestSend(t *testing.T) {
 			qc := tt.fields
 
 			if err := qc.Init(); err != nil {
-				t.Errorf("failed to init, err: %v", err)
+				t.Fatalf("failed to init, err: %v", err)
 			}
 
 			if err := qc.Send(tt.message); !reflect.DeepEqual(err, tt.expectedError) {
-				t.Errorf("QuicClient.Send() error = %v, expectedError = %v", err, tt.expectedError)
+				t.Fatalf("QuicClient.Send() error = %v, expectedError = %v", err, tt.expectedError)
 			}
 		})
 	}
@@ -245,20 +249,19 @@ func TestReceive(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			qc := tt.fields
 			if err := qc.Init(); err != nil {
-				t.Errorf("failed to init, err: %v", err)
+				t.Fatalf("failed to init, err: %v", err)
 			}
 
 			if err := qc.Send(tt.sent); err != nil {
-				t.Errorf("failed to send, err: %v", err)
+				t.Fatalf("failed to send, err: %v", err)
 			}
 
 			got, err := qc.Receive()
 			if !reflect.DeepEqual(err, tt.expectedError) {
-				t.Errorf("QuicClient.Receive() error = %v, expectedError = %v", err, tt.expectedError)
-				return
+				t.Fatalf("QuicClient.Receive() error = %v, expectedError = %v", err, tt.expectedError)
 			}
 			if !reflect.DeepEqual(fmt.Sprintf("%s", got.GetContent()), fmt.Sprintf("%s", tt.want.GetContent())) {
-				t.Errorf("QuicClient.Receive() message content: got = %s, want = %s", got.GetContent(), tt.want.GetContent())
+				t.Fatalf("QuicClient.Receive() message content: got = %s, want = %s", got.GetContent(), tt.want.GetContent())
 			}
 		})
 	}

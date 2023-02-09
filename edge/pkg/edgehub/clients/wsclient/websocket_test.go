@@ -46,7 +46,12 @@ func connNotify(conn conn.Connection) {
 
 // newTestServer() starts a fake server for testing
 func newTestServer() error {
-	if err := util.GenerateTestCertificate("/tmp/", "edge", "edge"); err != nil {
+	// modify ca certificate path to fix websocket Init() error:
+	// Init websocket connection failed x509: certificate signed by unknown authority
+	config.Config.TLSCAFile = "/tmp/rootCA.crt"
+
+	// prepare all required test ca and certs
+	if err := util.PrepareTestCerts(); err != nil {
 		return err
 	}
 
