@@ -48,7 +48,10 @@ func NewMetaServerCertificateManager(kubeClient clientset.Interface, nodeName ty
 		}
 	}
 
+	name := fmt.Sprintf("metaserver-csr-%s", nodeName)
+
 	m, err := certificate.NewManager(&certificate.Config{
+		Name:        name,
 		ClientsetFn: clientsetFn,
 		GetTemplate: getTemplate,
 		SignerName:  certificates.KubeletServingSignerName,

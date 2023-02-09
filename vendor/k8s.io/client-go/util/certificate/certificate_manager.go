@@ -474,7 +474,7 @@ func (m *manager) rotateCerts() (bool, error) {
 
 	// Call the Certificate Signing Request API to get a certificate for the
 	// new private key.
-	reqName, reqUID, err := csr.RequestCertificate(clientSet, csrPEM, "", m.signerName, m.requestedCertificateLifetime, m.usages, privateKey)
+	reqName, reqUID, err := csr.RequestCertificate(clientSet, csrPEM, m.name, m.signerName, m.requestedCertificateLifetime, m.usages, privateKey)
 	if err != nil {
 		klog.Infof("errr 333 %v", err)
 
