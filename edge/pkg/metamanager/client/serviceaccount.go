@@ -12,7 +12,6 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 )
 
@@ -86,7 +85,7 @@ func requiresRefresh(tr *authenticationv1.TokenRequest) bool {
 }
 
 func getTokenLocally(name, namespace string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
-	resKey := metamanager.KeyFunc(name, namespace, tr)
+	resKey := KeyFunc(name, namespace, tr)
 	metas, err := dao.QueryMeta("key", resKey)
 	if err != nil {
 		klog.Errorf("query meta %s failed: %v", resKey, err)
@@ -169,4 +168,19 @@ func handleServiceAccountTokenFromMetaManager(content []byte) (*authenticationv1
 		return nil, fmt.Errorf("unmarshal message to service account failed, err: %v", err)
 	}
 	return &serviceAccount, nil
+}
+
+// KeyFunc keys should be nonconfidential and safe to log
+func KeyFunc(name, namespace string, tr *authenticationv1.TokenRequest) string {
+	var exp int64
+	if tr.Spec.ExpirationSeconds != nil {
+		exp = *tr.Spec.ExpirationSeconds
+	}
+
+	var ref authenticationv1.BoundObjectReference
+	if tr.Spec.BoundObjectRef != nil {
+		ref = *tr.Spec.BoundObjectRef
+	}
+
+	return fmt.Sprintf("%q/%q/%#v/%#v/%#v", name, namespace, tr.Spec.Audiences, exp, ref)
 }
