@@ -337,6 +337,8 @@ func WaitForCertificateForEdge(ctx context.Context, client clientset.Interface, 
 			}
 			klog.V(2).Infof("certificate signing request %s is approved, waiting to be issued", csr.Name)
 		}
+
+		return false, nil
 	})
 
 	if err == wait.ErrWaitTimeout {
