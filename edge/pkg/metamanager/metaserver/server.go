@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	kubebridge "github.com/kubeedge/kubeedge/edge/pkg/edged/kubeclientbridge"
 	metaclient "github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/certificate"
 	"k8s.io/apimachinery/pkg/types"
@@ -183,7 +182,7 @@ func (ls *MetaServer) startHTTPSServer(stopChan <-chan struct{}) {
 
 func (ls *MetaServer) Start(stopChan <-chan struct{}) {
 	if kefeatures.DefaultFeatureGate.Enabled(kefeatures.RequireAuthorization) {
-		kubeClient := kubebridge.NewSimpleClientset(metaclient.New())
+		kubeClient := certificate.NewSimpleClientset(metaclient.New())
 		certIPs := []net.IP{net.ParseIP("127.0.0.1")}
 		certificateManager, err := certificate.NewMetaServerCertificateManager(
 			kubeClient,
