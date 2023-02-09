@@ -195,9 +195,9 @@ func (ls *MetaServer) Start(stopChan <-chan struct{}) {
 
 		ls.certificateManager = certificateManager
 
-		cert := ls.certificateManager.Current()
-		if cert == nil {
-			panic("get current err")
+		err = certificate.WaitForCertReady(certificateManager)
+		if err != nil {
+			panic(fmt.Errorf("get current err: %v", err))
 		}
 
 		ls.startHTTPSServer(stopChan)

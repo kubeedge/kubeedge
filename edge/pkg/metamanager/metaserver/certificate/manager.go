@@ -5,7 +5,9 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"fmt"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"net"
+	"time"
 
 	certificates "k8s.io/api/certificates/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -71,4 +73,21 @@ func NewMetaServerCertificateManager(kubeClient clientset.Interface, nodeName ty
 	}
 
 	return m, nil
+}
+
+func ready(manager certificate.Manager) bool {
+	if cert := manager.Current(); cert != nil {
+		return true
+	}
+	return false
+}
+
+func WaitForCertReady(manager certificate.Manager) error {
+	return wait.PollImmediate(5*time.Second, 4*time.Minute, func() (bool, error) {
+		isReady := ready(manager)
+		if isReady {
+			return true, nil
+		}
+		return false, nil
+	})
 }
