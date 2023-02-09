@@ -4,10 +4,13 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/pem"
 	"fmt"
+	kubebridge "github.com/kubeedge/kubeedge/edge/pkg/edged/kubeclientbridge"
+	metaclient "github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/certificate"
+	"k8s.io/apimachinery/pkg/types"
+	"net"
 	"net/http"
-	"os"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -21,7 +24,7 @@ import (
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/server"
 	genericfilters "k8s.io/apiserver/pkg/server/filters"
-	certutil "k8s.io/client-go/util/cert"
+	certificateutil "k8s.io/client-go/util/certificate"
 	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -42,6 +45,8 @@ type MetaServer struct {
 	Handler               http.Handler
 	NegotiatedSerializer  runtime.NegotiatedSerializer
 	Factory               *handlerfactory.Factory
+
+	certificateManager certificateutil.Manager
 }
 
 func NewMetaServer() *MetaServer {
@@ -54,42 +59,56 @@ func NewMetaServer() *MetaServer {
 	return &ls
 }
 
-func createTLSConfig() tls.Config {
-	ca, err := os.ReadFile(metaserverconfig.Config.TLSCaFile)
-	if err == nil {
-		block, _ := pem.Decode(ca)
-		ca = block.Bytes
-		klog.Info("Succeed in loading CA certificate from local directory")
-	}
-	pool := x509.NewCertPool()
-	ok := pool.AppendCertsFromPEM(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: ca}))
-	if !ok {
-		panic(fmt.Errorf("fail to load ca content"))
-	}
-	cert, err := os.ReadFile(metaserverconfig.Config.TLSCertFile)
-	if err == nil {
-		block, _ := pem.Decode(cert)
-		cert = block.Bytes
-		klog.Info("Succeed in loading certificate from local directory")
-	}
-	key, err := os.ReadFile(metaserverconfig.Config.TLSPrivateKeyFile)
-	if err == nil {
-		block, _ := pem.Decode(key)
-		key = block.Bytes
-		klog.Info("Succeed in loading private key from local directory")
-	}
-
-	certificate, err := tls.X509KeyPair(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: cert}), pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: key}))
-	if err != nil {
-		panic(err)
-	}
+func (ls *MetaServer) makeTLSConfig() tls.Config {
 	return tls.Config{
-		ClientCAs:    pool,
-		ClientAuth:   tls.VerifyClientCertIfGiven,
-		Certificates: []tls.Certificate{certificate},
-		MinVersion:   tls.VersionTLS12,
+		ClientAuth: tls.RequireAnyClientCert,
+		GetCertificate: func(info *tls.ClientHelloInfo) (c *tls.Certificate, err error) {
+			cert := ls.certificateManager.Current()
+			if cert == nil {
+				return nil, fmt.Errorf("no serving certificate available for the kubelet")
+			}
+			return cert, nil
+		},
+		MinVersion: tls.VersionTLS12,
 	}
 }
+
+//func createTLSConfig() tls.Config {
+//	ca, err := os.ReadFile(metaserverconfig.Config.TLSCaFile)
+//	if err == nil {
+//		block, _ := pem.Decode(ca)
+//		ca = block.Bytes
+//		klog.Info("Succeed in loading CA certificate from local directory")
+//	}
+//	pool := x509.NewCertPool()
+//	ok := pool.AppendCertsFromPEM(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: ca}))
+//	if !ok {
+//		panic(fmt.Errorf("fail to load ca content"))
+//	}
+//	cert, err := os.ReadFile(metaserverconfig.Config.TLSCertFile)
+//	if err == nil {
+//		block, _ := pem.Decode(cert)
+//		cert = block.Bytes
+//		klog.Info("Succeed in loading certificate from local directory")
+//	}
+//	key, err := os.ReadFile(metaserverconfig.Config.TLSPrivateKeyFile)
+//	if err == nil {
+//		block, _ := pem.Decode(key)
+//		key = block.Bytes
+//		klog.Info("Succeed in loading private key from local directory")
+//	}
+//
+//	certificate, err := tls.X509KeyPair(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: cert}), pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: key}))
+//	if err != nil {
+//		panic(err)
+//	}
+//	return tls.Config{
+//		ClientCAs:    pool,
+//		ClientAuth:   tls.VerifyClientCertIfGiven,
+//		Certificates: []tls.Certificate{certificate},
+//		MinVersion:   tls.VersionTLS12,
+//	}
+//}
 
 // getCurrent returns current meta server certificate
 func (ls *MetaServer) getCurrent() (*tls.Certificate, error) {
@@ -139,7 +158,7 @@ func (ls *MetaServer) startHTTPSServer(stopChan <-chan struct{}) {
 
 	h := ls.BuildBasicHandler()
 	h = BuildHandlerChain(h, ls)
-	tlsConfig := createTLSConfig()
+	tlsConfig := ls.makeTLSConfig()
 	s := http.Server{
 		Addr:      metaserverconfig.Config.Server,
 		Handler:   h,
@@ -164,6 +183,21 @@ func (ls *MetaServer) startHTTPSServer(stopChan <-chan struct{}) {
 
 func (ls *MetaServer) Start(stopChan <-chan struct{}) {
 	if kefeatures.DefaultFeatureGate.Enabled(kefeatures.RequireAuthorization) {
+		kubeClient := kubebridge.NewSimpleClientset(metaclient.New())
+		certIPs := []net.IP{net.ParseIP("127.0.0.1")}
+		certificateManager, err := certificate.NewMetaServerCertificateManager(
+			kubeClient,
+			types.NodeName(metaserverconfig.Config.NodeName),
+			certIPs,
+			"/var/lib/pki/metaserver")
+		if err != nil {
+			panic(fmt.Errorf("failed to initialize certificate manager: %v", err))
+		}
+
+		certificateManager.Start()
+
+		ls.certificateManager = certificateManager
+
 		ls.startHTTPSServer(stopChan)
 	} else {
 		ls.startHTTPServer(stopChan)

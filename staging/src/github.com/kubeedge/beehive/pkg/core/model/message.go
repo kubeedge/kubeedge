@@ -35,6 +35,7 @@ const (
 	ResourceTypeRuleEndpoint        = "ruleendpoint"
 	ResourceTypeRuleStatus          = "rulestatus"
 	ResourceTypeLease               = "lease"
+	ResourceTypeCSR                 = "certificatesigningrequests"
 )
 
 // Message struct
