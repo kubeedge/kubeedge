@@ -27,8 +27,6 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
 	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/handlerfactory"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/serializer"
@@ -147,12 +145,12 @@ func (ls *MetaServer) startHTTPServer(stopChan <-chan struct{}) {
 }
 
 func (ls *MetaServer) startHTTPSServer(stopChan <-chan struct{}) {
-	_, err := ls.getCurrent()
-	if err != nil {
-		// wait for cert created
-		klog.Infof("[metaserver]waiting for cert created")
-		<-edgehub.GetCertSyncChannel()[modules.MetaManagerModuleName]
-	}
+	//_, err := ls.getCurrent()
+	//if err != nil {
+	//	// wait for cert created
+	//	klog.Infof("[metaserver]waiting for cert created")
+	//	<-edgehub.GetCertSyncChannel()[modules.MetaManagerModuleName]
+	//}
 
 	h := ls.BuildBasicHandler()
 	h = BuildHandlerChain(h, ls)
@@ -181,6 +179,7 @@ func (ls *MetaServer) startHTTPSServer(stopChan <-chan struct{}) {
 
 func (ls *MetaServer) Start(stopChan <-chan struct{}) {
 	if kefeatures.DefaultFeatureGate.Enabled(kefeatures.RequireAuthorization) {
+		klog.Infof("MetaServer startHTTPSServer")
 		kubeClient := certificate.NewSimpleClientset()
 		certIPs := []net.IP{net.ParseIP("127.0.0.1")}
 		certificateManager, err := certificate.NewMetaServerCertificateManager(
