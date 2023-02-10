@@ -11,7 +11,7 @@ require (
 	github.com/docker/docker v20.10.7+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/eclipse/paho.mqtt.golang v1.2.0
-	github.com/emicklei/go-restful v2.9.6+incompatible
+	github.com/emicklei/go-restful v2.16.0+incompatible
 	github.com/evanphx/json-patch v4.12.0+incompatible
 	github.com/garyburd/redigo v1.6.4 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible
