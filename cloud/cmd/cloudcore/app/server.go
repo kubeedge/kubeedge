@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/kubeedge/kubeedge/cloud/pkg/certificates"
 	"math/rand"
 	"time"
 
@@ -111,11 +112,15 @@ kubernetes controller which manages devices so that the device metadata/status d
 				updateCloudCoreConfigMap(config)
 			}
 
+			ctx := beehiveContext.GetContext()
+
+			csrApprover := certificates.NewCSRApprovingController(client.GetKubeClient(), informers.GetInformersManager().GetKubeInformerFactory().Certificates().V1().CertificateSigningRequests())
+			go csrApprover.Run(5, ctx.Done())
+
 			gis := informers.GetInformersManager()
 
 			registerModules(config)
 
-			ctx := beehiveContext.GetContext()
 			if config.Modules.IptablesManager == nil || config.Modules.IptablesManager.Enable && config.Modules.IptablesManager.Mode == v1alpha1.InternalMode {
 				// By default, IptablesManager manages tunnel port related iptables rules
 				// The internal mode will share the host network, forward to the stream port.
@@ -129,6 +134,7 @@ kubernetes controller which manages devices so that the device metadata/status d
 			core.GracefulShutdown()
 		},
 	}
+
 	fs := cmd.Flags()
 	namedFs := opts.Flags()
 	flag.AddFlags(namedFs.FlagSet("global"))
