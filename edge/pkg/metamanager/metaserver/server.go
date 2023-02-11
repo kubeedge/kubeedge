@@ -174,6 +174,20 @@ func (ls *MetaServer) startHTTPSServer(stopChan <-chan struct{}) {
 	h := ls.BuildBasicHandler()
 	h = BuildHandlerChain(h, ls)
 	tlsConfig := ls.makeTLSConfig()
+
+	go func() {
+		dummyserver := http.Server{
+			Addr:      "169.254.3.1",
+			Handler:   h,
+			TLSConfig: &tlsConfig,
+		}
+
+		klog.Infof("[metaserver]start to listen and dummy server at https://169.254.3.1")
+		utilruntime.HandleError(dummyserver.ListenAndServeTLS("", ""))
+		// When the MetaServer stops abnormally, other module services are stopped at the same time.
+		beehiveContext.Cancel()
+	}()
+
 	s := http.Server{
 		Addr:      metaserverconfig.Config.Server,
 		Handler:   h,
@@ -282,7 +296,6 @@ func WithAuthorizationHeader(handler http.Handler) http.Handler {
 		handler.ServeHTTP(writer, request)
 	})
 }
-
 
 func setupDummyInterface() error {
 	manager := util.NewDummyDeviceManager()
