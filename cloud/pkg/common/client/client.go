@@ -93,6 +93,10 @@ func GetAuthConfig() *rest.Config {
 	return authKubeConfig
 }
 
+func GetK8sCA() []byte {
+	return KubeConfig.CAData
+}
+
 type RestMapperFunc func() (meta.RESTMapper, error)
 
 var DefaultGetRestMapper RestMapperFunc = GetRestMapper

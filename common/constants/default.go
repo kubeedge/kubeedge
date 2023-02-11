@@ -32,6 +32,7 @@ const (
 	DefaultKeyFile   = "/etc/kubeedge/certs/server.key"
 
 	DefaultCAURL          = "/ca.crt"
+	DefaultK8sCAURL          = "/k8s/ca.crt"
 	DefaultCertURL        = "/edge.crt"
 	DefaultNodeUpgradeURL = "/nodeupgrade"
 

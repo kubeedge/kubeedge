@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"io"
 	"net/http"
 	"strings"
@@ -45,6 +46,7 @@ func StartHTTPServer() {
 	ws.Path("/")
 	ws.Route(ws.GET(constants.DefaultCertURL).To(edgeCoreClientCert))
 	ws.Route(ws.GET(constants.DefaultCAURL).To(getCA))
+	ws.Route(ws.GET(constants.DefaultK8sCAURL).To(getKubernetesCA))
 	ws.Route(ws.POST(constants.DefaultNodeUpgradeURL).To(upgradeEdge))
 	serverContainer.Add(ws)
 
@@ -70,6 +72,14 @@ func StartHTTPServer() {
 // getCA returns the caCertDER
 func getCA(request *restful.Request, response *restful.Response) {
 	caCertDER := hubconfig.Config.Ca
+	if _, err := response.Write(caCertDER); err != nil {
+		klog.Errorf("failed to write caCertDER, err: %v", err)
+	}
+}
+
+// getKubernetesCA
+func getKubernetesCA(request *restful.Request, response *restful.Response) {
+	caCertDER := client.GetK8sCA()
 	if _, err := response.Write(caCertDER); err != nil {
 		klog.Errorf("failed to write caCertDER, err: %v", err)
 	}

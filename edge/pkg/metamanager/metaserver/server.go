@@ -4,11 +4,16 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/pem"
 	"fmt"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/certificate"
 	"k8s.io/apimachinery/pkg/types"
+	certutil "k8s.io/client-go/util/cert"
 	"net"
 	"net/http"
+	"os"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -56,8 +61,21 @@ func NewMetaServer() *MetaServer {
 }
 
 func (ls *MetaServer) makeTLSConfig() tls.Config {
+	ca, err := os.ReadFile("/var/lib/pki/metaserver/ca.crt")
+	if err == nil {
+		block, _ := pem.Decode(ca)
+		ca = block.Bytes
+		klog.Info("Succeed in loading k8s CA certificate from local directory")
+	}
+	pool := x509.NewCertPool()
+	ok := pool.AppendCertsFromPEM(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: ca}))
+	if !ok {
+		panic(fmt.Errorf("fail to load ca content"))
+	}
+
 	return tls.Config{
-		ClientAuth: tls.RequireAnyClientCert,
+		ClientCAs:  pool,
+		ClientAuth: tls.VerifyClientCertIfGiven,
 		GetCertificate: func(info *tls.ClientHelloInfo) (c *tls.Certificate, err error) {
 			cert := ls.certificateManager.Current()
 			if cert == nil {
@@ -145,12 +163,12 @@ func (ls *MetaServer) startHTTPServer(stopChan <-chan struct{}) {
 }
 
 func (ls *MetaServer) startHTTPSServer(stopChan <-chan struct{}) {
-	//_, err := ls.getCurrent()
-	//if err != nil {
-	//	// wait for cert created
-	//	klog.Infof("[metaserver]waiting for cert created")
-	//	<-edgehub.GetCertSyncChannel()[modules.MetaManagerModuleName]
-	//}
+	_, err := ls.getCurrent()
+	if err != nil {
+		// wait for cert created
+		klog.Infof("[metaserver]waiting for cert created")
+		<-edgehub.GetCertSyncChannel()[modules.MetaManagerModuleName]
+	}
 
 	h := ls.BuildBasicHandler()
 	h = BuildHandlerChain(h, ls)

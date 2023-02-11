@@ -56,9 +56,10 @@ type CertManager struct {
 	// Set to time.Now but can be stubbed out for testing
 	now func() time.Time
 
-	caURL   string
-	certURL string
-	Done    chan struct{}
+	caURL    string
+	k8scaURL string
+	certURL  string
+	Done     chan struct{}
 }
 
 // NewCertManager creates a CertManager for edge certificate management according to EdgeHub config
@@ -82,6 +83,7 @@ func NewCertManager(edgehub v1alpha2.EdgeHub, nodename string) CertManager {
 		keyFile:            edgehub.TLSPrivateKeyFile,
 		now:                time.Now,
 		caURL:              edgehub.HTTPServer + constants.DefaultCAURL,
+		k8scaURL:           edgehub.HTTPServer + constants.DefaultK8sCAURL,
 		certURL:            edgehub.HTTPServer + constants.DefaultCertURL,
 		Done:               make(chan struct{}),
 	}
@@ -142,6 +144,22 @@ func (cm *CertManager) applyCerts() error {
 
 	if err = certutil.WriteCert(cm.caFile, ca); err != nil {
 		return fmt.Errorf("failed to save the CA certificate to file: %s, error: %v", cm.caFile, err)
+	}
+
+	// get and save k8s ca cert
+	k8scacert, err := GetCACert(cm.k8scaURL)
+	if err != nil {
+		return fmt.Errorf("failed to get k8s CA certificate, err: %v", err)
+	}
+
+	// save the k8s ca.crt to file
+	k8sca, err := x509.ParseCertificate(k8scacert)
+	if err != nil {
+		return fmt.Errorf("failed to parse the k8s CA certificate, error: %v", err)
+	}
+
+	if err = certutil.WriteCert("/var/lib/pki/metaserver/ca.crt", k8sca); err != nil {
+		return fmt.Errorf("failed to save the k8s CA certificate to file: %s, error: %v", cm.caFile, err)
 	}
 
 	// get the edge.crt
