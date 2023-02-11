@@ -1,0 +1,54 @@
+name:  Trivy Scan Vulnerabilities
+on:
+  push:
+    branches:
+      - master
+    tags:
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '**/OWNERS'
+      - '**/MAINTAINERS'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '**/OWNERS'
+      - '**/MAINTAINERS'
+
+env:
+  IMAGE_REPOSITORY: kubeedge
+
+jobs:
+  build:
+    name: trivy scan
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        target: [cloudcore, admission, edgesite-agent, edgesite-server, csidriver, iptablesmanager, edgemark, installation-package, controllermanager]
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v3
+        with:
+          # fetch-depth:
+          # 0 indicates all history for all branches and tags.
+          fetch-depth: 0
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: generate dockerfile path
+        run: |
+          echo "dockerfile_path=$(./hack/make-rules/imageprocess.sh dockerfile ${{ matrix.target }})" >> $GITHUB_ENV
+          echo "git_tag=`echo $(git describe --tags)`" >> $GITHUB_ENV
+      - name: build images
+        run: |
+          docker build -t ${{ env.IMAGE_REPOSITORY }}/${{ matrix.target }}:${{ env.git_tag }} -f ${{ env.dockerfile_path }} .
+      - name: Run trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.9.1
+        with:
+          image-ref: '${{ env.IMAGE_REPOSITORY }}/${{ matrix.target }}:${{ env.git_tag }}'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL'
