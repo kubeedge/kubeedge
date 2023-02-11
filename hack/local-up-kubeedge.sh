@@ -59,6 +59,8 @@ function uninstall_kubeedge {
 
   # delete data
   rm -rf /tmp/etc/kubeedge /tmp/var/lib/kubeedge
+  # delete metaserver cert
+  rm -rf /var/lib/pki/metaserver
 }
 
 # clean up

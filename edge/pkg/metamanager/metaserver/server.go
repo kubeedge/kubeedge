@@ -9,6 +9,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/certificate"
+	"github.com/kubeedge/kubeedge/pkg/util"
 	"k8s.io/apimachinery/pkg/types"
 	certutil "k8s.io/client-go/util/cert"
 	"net"
@@ -198,8 +199,14 @@ func (ls *MetaServer) startHTTPSServer(stopChan <-chan struct{}) {
 func (ls *MetaServer) Start(stopChan <-chan struct{}) {
 	if kefeatures.DefaultFeatureGate.Enabled(kefeatures.RequireAuthorization) {
 		klog.Infof("MetaServer startHTTPSServer")
+
+		err := setupDummyInterface()
+		if err != nil {
+			panic(fmt.Errorf("setupDummyInterface err: %v", err))
+		}
+
 		kubeClient := certificate.NewSimpleClientset()
-		certIPs := []net.IP{net.ParseIP("127.0.0.1")}
+		certIPs := []net.IP{net.ParseIP("127.0.0.1"), net.ParseIP("169.254.3.1")}
 		certificateManager, err := certificate.NewMetaServerCertificateManager(
 			kubeClient,
 			types.NodeName(metaserverconfig.Config.NodeName),
@@ -274,4 +281,16 @@ func WithAuthorizationHeader(handler http.Handler) http.Handler {
 		request = request.WithContext(context.WithValue(request.Context(), commontypes.AuthorizationKey, token))
 		handler.ServeHTTP(writer, request)
 	})
+}
+
+
+func setupDummyInterface() error {
+	manager := util.NewDummyDeviceManager()
+	_, err := manager.EnsureDummyDevice("metaserver-dummy")
+	if err != nil {
+		return err
+	}
+
+	_, err = manager.EnsureAddressBind("169.254.3.1", "metaserver-dummy")
+	return err
 }
