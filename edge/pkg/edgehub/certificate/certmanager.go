@@ -152,13 +152,7 @@ func (cm *CertManager) applyCerts() error {
 		return fmt.Errorf("failed to get k8s CA certificate, err: %v", err)
 	}
 
-	// save the k8s ca.crt to file
-	k8sca, err := x509.ParseCertificate(k8scacert)
-	if err != nil {
-		return fmt.Errorf("failed to parse the k8s CA certificate, error: %v", err)
-	}
-
-	if err = certutil.WriteCert("/var/lib/pki/metaserver/ca.crt", k8sca); err != nil {
+	if err = cert.WriteCert("/var/lib/pki/metaserver/ca.crt", k8scacert); err != nil {
 		return fmt.Errorf("failed to save the k8s CA certificate to file: %s, error: %v", cm.caFile, err)
 	}
 

@@ -79,6 +79,7 @@ func getCA(request *restful.Request, response *restful.Response) {
 
 // getKubernetesCA
 func getKubernetesCA(request *restful.Request, response *restful.Response) {
+	klog.Infof("getKubernetesCA222222222")
 	caCertDER := client.GetK8sCA()
 	if _, err := response.Write(caCertDER); err != nil {
 		klog.Errorf("failed to write caCertDER, err: %v", err)

@@ -94,6 +94,7 @@ func GetAuthConfig() *rest.Config {
 }
 
 func GetK8sCA() []byte {
+	klog.Infof("11111111 k8s cadata %s", string(KubeConfig.CAData))
 	return KubeConfig.CAData
 }
 
