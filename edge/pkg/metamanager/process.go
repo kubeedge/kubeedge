@@ -119,7 +119,7 @@ func (m *metaManager) processInsert(message model.Message) {
 		return
 	}
 
-	if (resType == model.ResourceTypeNode || resType == model.ResourceTypeLease || resType == model.ResourceTypeCSR ) && message.GetSource() == modules.EdgedModuleName {
+	if (resType == model.ResourceTypeNode || resType == model.ResourceTypeLease || resType == model.ResourceTypeCSR) && message.GetSource() == modules.EdgedModuleName {
 		sendToCloud(&message)
 		return
 	}
@@ -362,7 +362,11 @@ func (m *metaManager) processQuery(message model.Message) {
 			return
 		}
 		metas, err = dao.QueryMeta("key", resKey)
-		if err != nil || len(*metas) == 0 || resType == model.ResourceTypeNode || resType == constants.ResourceTypeVolumeAttachment || resType == model.ResourceTypeLease {
+		if err != nil || len(*metas) == 0 ||
+			resType == model.ResourceTypeNode ||
+			resType == constants.ResourceTypeVolumeAttachment ||
+			resType == model.ResourceTypeLease ||
+			resType == model.ResourceTypeCSR {
 			m.processRemoteQuery(message)
 		} else {
 			resp := message.NewRespByMessage(&message, *metas)

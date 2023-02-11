@@ -313,6 +313,7 @@ func WaitForCertificateForEdge(ctx context.Context, client clientset.Interface, 
 			return false, err
 		}
 
+		klog.Infof("88888 %+v", csr)
 
 		klog.Infof("9999999999999 req %s get %s", reqUID, csr.UID)
 
