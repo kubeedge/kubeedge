@@ -313,6 +313,9 @@ func WaitForCertificateForEdge(ctx context.Context, client clientset.Interface, 
 			return false, err
 		}
 
+
+		klog.Infof("9999999999999 req %s get %s", reqUID, csr.UID)
+
 		if csr.UID != reqUID {
 			return false, fmt.Errorf("csr %q changed UIDs", csr.Name)
 		}
