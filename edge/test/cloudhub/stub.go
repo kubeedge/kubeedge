@@ -92,10 +92,10 @@ func (tm *stubCloudHub) podHandler(w http.ResponseWriter, req *http.Request) {
 		}
 		var msgReq *model.Message
 		switch req.Method {
-		case "POST":
+		case http.MethodPost:
 			msgReq = model.NewMessage("").BuildRouter("edgecontroller", "resource",
 				"node/fake_node_id/pod/"+string(pod.UID), model.InsertOperation).FillBody(pod)
-		case "DELETE":
+		case http.MethodDelete:
 			msgReq = model.NewMessage("").BuildRouter("edgecontroller", "resource",
 				"node/fake_node_id/pod/"+string(pod.UID), model.DeleteOperation).FillBody(pod)
 		}
