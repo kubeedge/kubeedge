@@ -171,25 +171,19 @@ func (ls *MetaServer) startHTTPSServer(stopChan <-chan struct{}) {
 		<-edgehub.GetCertSyncChannel()[modules.MetaManagerModuleName]
 	}
 
+	go ls.runHTTPSServer("169.254.20.10", stopChan)
+
+	go ls.runHTTPSServer(metaserverconfig.Config.Server, stopChan)
+}
+
+func (ls *MetaServer) runHTTPSServer(addr string, stopChan <-chan struct{}) {
+	klog.Infof("[metaserver]start https://%v", addr)
 	h := ls.BuildBasicHandler()
 	h = BuildHandlerChain(h, ls)
 	tlsConfig := ls.makeTLSConfig()
 
-	go func() {
-		dummyserver := http.Server{
-			Addr:      "169.254.3.1",
-			Handler:   h,
-			TLSConfig: &tlsConfig,
-		}
-
-		klog.Infof("[metaserver]start to listen and dummy server at https://169.254.3.1")
-		utilruntime.HandleError(dummyserver.ListenAndServeTLS("", ""))
-		// When the MetaServer stops abnormally, other module services are stopped at the same time.
-		beehiveContext.Cancel()
-	}()
-
 	s := http.Server{
-		Addr:      metaserverconfig.Config.Server,
+		Addr:      addr,
 		Handler:   h,
 		TLSConfig: &tlsConfig,
 	}
@@ -204,7 +198,7 @@ func (ls *MetaServer) startHTTPSServer(stopChan <-chan struct{}) {
 		}
 	}()
 
-	klog.Infof("[metaserver]start to listen and server at https://%v", s.Addr)
+	klog.Infof("[metaserver]start to listen and server at https://%v", addr)
 	utilruntime.HandleError(s.ListenAndServeTLS("", ""))
 	// When the MetaServer stops abnormally, other module services are stopped at the same time.
 	beehiveContext.Cancel()
@@ -220,7 +214,7 @@ func (ls *MetaServer) Start(stopChan <-chan struct{}) {
 		}
 
 		kubeClient := certificate.NewSimpleClientset()
-		certIPs := []net.IP{net.ParseIP("127.0.0.1"), net.ParseIP("169.254.3.1")}
+		certIPs := []net.IP{net.ParseIP("127.0.0.1"), net.ParseIP("169.254.20.10")}
 		certificateManager, err := certificate.NewMetaServerCertificateManager(
 			kubeClient,
 			types.NodeName(metaserverconfig.Config.NodeName),
@@ -299,11 +293,11 @@ func WithAuthorizationHeader(handler http.Handler) http.Handler {
 
 func setupDummyInterface() error {
 	manager := util.NewDummyDeviceManager()
-	_, err := manager.EnsureDummyDevice("metaserver-dummy")
+	_, err := manager.EnsureDummyDevice("edge-dummy0")
 	if err != nil {
 		return err
 	}
 
-	_, err = manager.EnsureAddressBind("169.254.3.1", "metaserver-dummy")
+	_, err = manager.EnsureAddressBind("169.254.20.10", "edge-dummy0")
 	return err
 }
