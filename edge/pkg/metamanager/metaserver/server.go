@@ -171,7 +171,7 @@ func (ls *MetaServer) startHTTPSServer(stopChan <-chan struct{}) {
 		<-edgehub.GetCertSyncChannel()[modules.MetaManagerModuleName]
 	}
 
-	go ls.runHTTPSServer("169.254.20.10", stopChan)
+	go ls.runHTTPSServer("169.254.20.10:10550", stopChan)
 
 	go ls.runHTTPSServer(metaserverconfig.Config.Server, stopChan)
 }
