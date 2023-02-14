@@ -28,7 +28,7 @@ func TestURLClient_HTTPDo(t *testing.T) {
 func getMockServer(t *testing.T) *httptest.Server {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
-		case "GET":
+		case http.MethodGet:
 			if r.URL.EscapedPath() != "/test" {
 				t.Errorf("path error: %s", r.URL.EscapedPath())
 				w.WriteHeader(http.StatusNotFound)

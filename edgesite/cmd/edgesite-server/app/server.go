@@ -353,11 +353,11 @@ func (p *Proxy) runHealthServer(o *options.ProxyRunOptions, server *server.Proxy
 	readinessHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ready, msg := server.Readiness.Ready()
 		if ready {
-			w.WriteHeader(200)
+			w.WriteHeader(http.StatusOK)
 			fmt.Fprintf(w, "ok")
 			return
 		}
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(w, msg)
 	})
 

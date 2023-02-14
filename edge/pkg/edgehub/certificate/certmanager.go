@@ -293,7 +293,7 @@ func (cm *CertManager) GetEdgeCert(url string, capem []byte, cert tls.Certificat
 	if err != nil {
 		return nil, nil, err
 	}
-	if res.StatusCode != 200 {
+	if res.StatusCode != nethttp.StatusOK {
 		return nil, nil, fmt.Errorf(string(content))
 	}
 
