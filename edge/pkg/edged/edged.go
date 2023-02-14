@@ -45,6 +45,7 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/config"
 	"k8s.io/kubernetes/pkg/kubelet/nodestatus"
 	kubelettypes "k8s.io/kubernetes/pkg/kubelet/types"
+	"k8s.io/kubernetes/pkg/kubelet/util/format"
 	csiplugin "k8s.io/kubernetes/pkg/volume/csi"
 
 	"github.com/kubeedge/beehive/pkg/core"
@@ -167,6 +168,8 @@ func (e *edged) syncPod(podCfg *config.PodConfig) {
 	info := model.NewMessage("").BuildRouter(e.Name(), e.Group(), e.namespace+"/"+model.ResourceTypePod,
 		model.QueryOperation)
 	beehiveContext.Send(modules.MetaManagerModuleName, *info)
+	// rawUpdateChan receives the update events from metamanager or edgecontroller
+	rawUpdateChan := podCfg.Channel(kubelettypes.ApiserverSource)
 	for {
 		select {
 		case <-beehiveContext.Done():
@@ -196,21 +199,21 @@ func (e *edged) syncPod(podCfg *config.PodConfig) {
 		switch resType {
 		case model.ResourceTypePod:
 			if op == model.ResponseOperation && resID == "" && result.GetSource() == modules.MetaManagerModuleName {
-				err := e.handlePodListFromMetaManager(content, podCfg)
+				err := e.handlePodListFromMetaManager(content, rawUpdateChan)
 				if err != nil {
 					klog.Errorf("handle podList failed: %v", err)
 					continue
 				}
 				podCfg.SetInitPodReady(true)
 			} else if op == model.ResponseOperation && resID == "" && result.GetSource() == metamanager.CloudControllerModel {
-				err := e.handlePodListFromEdgeController(content, podCfg)
+				err := e.handlePodListFromEdgeController(content, rawUpdateChan)
 				if err != nil {
 					klog.Errorf("handle podList failed: %v", err)
 					continue
 				}
 				podCfg.SetInitPodReady(true)
 			} else {
-				err = e.handlePod(op, content, podCfg)
+				err = e.handlePod(op, content, rawUpdateChan)
 				if err != nil {
 					klog.Errorf("handle pod failed: %v", err)
 					continue
@@ -241,7 +244,7 @@ func MakeKubeClientBridge(kubeletDeps *kubelet.Dependencies) {
 	kubeletDeps.HeartbeatClient = client
 }
 
-func (e *edged) handlePod(op string, content []byte, podCfg *config.PodConfig) (err error) {
+func (e *edged) handlePod(op string, content []byte, updatesChan chan<- interface{}) (err error) {
 	var pod v1.Pod
 	err = json.Unmarshal(content, &pod)
 	if err != nil {
@@ -254,21 +257,20 @@ func (e *edged) handlePod(op string, content []byte, podCfg *config.PodConfig) (
 	if filterPodByNodeName(&pod, e.nodeName) {
 		switch op {
 		case model.InsertOperation:
-			adds := &kubelettypes.PodUpdate{Op: kubelettypes.ADD, Pods: pods, Source: kubelettypes.ApiserverSource}
-			podCfg.EdgedCh <- *adds
+			klog.V(4).InfoS("Receive message of adding new pods", "pods", format.Pods(pods))
 		case model.UpdateOperation:
-			updates := &kubelettypes.PodUpdate{Op: kubelettypes.UPDATE, Pods: pods, Source: kubelettypes.ApiserverSource}
-			podCfg.EdgedCh <- *updates
+			klog.V(4).InfoS("Receive message of updating pods", "pods", format.Pods(pods))
 		case model.DeleteOperation:
-			deletes := &kubelettypes.PodUpdate{Op: kubelettypes.REMOVE, Pods: pods, Source: kubelettypes.ApiserverSource}
-			podCfg.EdgedCh <- *deletes
+			klog.V(4).InfoS("Receive message of deleting pods", "pods", format.Pods(pods))
 		}
+		updates := &kubelettypes.PodUpdate{Op: kubelettypes.UPDATE, Pods: pods, Source: kubelettypes.ApiserverSource}
+		updatesChan <- *updates
 	}
 
 	return nil
 }
 
-func (e *edged) handlePodListFromMetaManager(content []byte, podCfg *config.PodConfig) (err error) {
+func (e *edged) handlePodListFromMetaManager(content []byte, updatesChan chan<- interface{}) (err error) {
 	var lists []string
 	err = json.Unmarshal(content, &lists)
 	if err != nil {
@@ -276,7 +278,6 @@ func (e *edged) handlePodListFromMetaManager(content []byte, podCfg *config.PodC
 	}
 
 	var pods []*v1.Pod
-	var podsUpdate []*v1.Pod
 
 	for _, list := range lists {
 		var pod v1.Pod
@@ -285,26 +286,17 @@ func (e *edged) handlePodListFromMetaManager(content []byte, podCfg *config.PodC
 			return err
 		}
 
-		// if edge-core stop or panic when pod is deleting, pod need add into podDeletionQueue after edge-core restart.
 		if filterPodByNodeName(&pod, e.nodeName) {
-			if pod.DeletionTimestamp == nil {
-				pods = append(pods, &pod)
-			} else {
-				podsUpdate = append(podsUpdate, &pod)
-			}
+			pods = append(pods, &pod)
 		}
 	}
-
-	adds := &kubelettypes.PodUpdate{Op: kubelettypes.ADD, Pods: pods, Source: kubelettypes.ApiserverSource}
-	podCfg.EdgedCh <- *adds
-
-	updates := &kubelettypes.PodUpdate{Op: kubelettypes.UPDATE, Pods: podsUpdate, Source: kubelettypes.ApiserverSource}
-	podCfg.EdgedCh <- *updates
+	updates := &kubelettypes.PodUpdate{Op: kubelettypes.SET, Pods: pods, Source: kubelettypes.ApiserverSource}
+	updatesChan <- *updates
 
 	return nil
 }
 
-func (e *edged) handlePodListFromEdgeController(content []byte, podCfg *config.PodConfig) (err error) {
+func (e *edged) handlePodListFromEdgeController(content []byte, updatesChan chan<- interface{}) (err error) {
 	var podLists []v1.Pod
 	var pods []*v1.Pod
 	if err := json.Unmarshal(content, &podLists); err != nil {
@@ -314,10 +306,10 @@ func (e *edged) handlePodListFromEdgeController(content []byte, podCfg *config.P
 	for _, pod := range podLists {
 		if filterPodByNodeName(&pod, e.nodeName) {
 			pods = append(pods, &pod)
-			adds := &kubelettypes.PodUpdate{Op: kubelettypes.ADD, Pods: pods, Source: kubelettypes.ApiserverSource}
-			podCfg.EdgedCh <- *adds
 		}
 	}
+	updates := &kubelettypes.PodUpdate{Op: kubelettypes.SET, Pods: pods, Source: kubelettypes.ApiserverSource}
+	updatesChan <- *updates
 
 	return nil
 }
