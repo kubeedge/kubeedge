@@ -29,6 +29,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"reflect"
 	"time"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
@@ -271,6 +272,19 @@ func (e *edged) handlePod(op string, content []byte, updatesChan chan<- interfac
 	err = json.Unmarshal(content, &pod)
 	if err != nil {
 		return err
+	}
+
+	// When the edge node is offline and the pod in the node is deleted forcefully,
+	// and then we make the node online, We do not have the pod full information
+	// because the pod is deleted from the kube apiServer, then the syncController
+	// will send a message with the pod name, namespace and UID, so we can not filter
+	// pod according to the node name. So in this scenario, we query metadata from edge
+	// database and use func handlePodListFromMetaManager to sync with Kubelet.
+	if op == model.DeleteOperation && reflect.DeepEqual(pod.Spec, v1.PodSpec{}) {
+		info := model.NewMessage("").BuildRouter(e.Name(), e.Group(), e.namespace+"/"+model.ResourceTypePod,
+			model.QueryOperation)
+		beehiveContext.Send(modules.MetaManagerModuleName, *info)
+		return nil
 	}
 
 	var pods []*v1.Pod
