@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -219,7 +218,7 @@ func skipCases() ([]Tests, error) {
 }
 
 func Read(filePath string) ([]byte, error) {
-	data, err := ioutil.ReadFile(filePath)
+	data, err := os.ReadFile(filePath)
 	if os.IsNotExist(err) {
 		// Not an error (yet), some other provider may have the file.
 		return nil, nil
