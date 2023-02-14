@@ -1,4 +1,8 @@
 
+* [v1.12.2](#v1122)
+    * [Downloads for v1.12.2](#downloads-for-v1122)
+    * [KubeEdge v1.12.2 Release Notes](#kubeedge-v1122-release-notes)
+        * [Changelog since v1.12.1](#changelog-since-v1121)
 * [v1.12.1](#v1121)
     * [Downloads for v1.12.1](#downloads-for-v1121)
     * [KubeEdge v1.12.1 Release Notes](#kubeedge-v1121-release-notes)
@@ -11,6 +15,20 @@
         * [Other Notable Changes](#other-notable-changes)
         * [Bug Fixes](#bug-fixes)
     
+
+# v1.12.2
+
+## Downloads for v1.12.2
+
+Download v1.12.2 in the [v1.12.2 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.12.2).
+
+## KubeEdge v1.12.2 Release Notes
+
+### Changelog since v1.12.1
+
+- Fix prober not work in edgecore. ([#4572](https://github.com/kubeedge/kubeedge/pull/4572), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Optimize convert Kubelet flags, support more Kubelet flags. ([#4575](https://github.com/kubeedge/kubeedge/pull/4575), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Fix force delete pod when edgecore reconnect. ([#4596](https://github.com/kubeedge/kubeedge/pull/4596), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
 
 # v1.12.1
 
