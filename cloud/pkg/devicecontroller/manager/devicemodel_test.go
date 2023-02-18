@@ -12,12 +12,14 @@ import (
 )
 
 func TestDeviceModelManager_Events(t *testing.T) {
-	e := make(chan watch.Event, 1)
-	e <- watch.Event{Type: watch.Added}
+	e := make(chan EventWithOldObject, 1)
+	e <- EventWithOldObject{
+		Event: watch.Event{Type: watch.Added},
+	}
 	tests := []struct {
 		name   string
-		events chan watch.Event
-		want   chan watch.Event
+		events chan EventWithOldObject
+		want   chan EventWithOldObject
 	}{
 		{
 			name:   "base",
@@ -53,7 +55,7 @@ func TestNewDeviceModelManager(t *testing.T) {
 			},
 		},
 	}
-	e := make(chan watch.Event, dt)
+	e := make(chan EventWithOldObject, dt)
 	tests := []struct {
 		name    string
 		si      cache.SharedIndexInformer

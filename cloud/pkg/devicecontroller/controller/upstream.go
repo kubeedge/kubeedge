@@ -204,7 +204,7 @@ func (uc *UpstreamController) unmarshalDeviceStatusMessage(msg model.Message) (*
 func NewUpstreamController() (*UpstreamController, error) {
 	uc := &UpstreamController{
 		crdClient:    keclient.GetCRDClient(),
-		crdInformer:  informers.GetInformersManager().GetCRDInformerFactory(),
+		crdInformer:  informers.GetInformersManager().GetKubeEdgeInformerFactory(),
 		messageLayer: messagelayer.DeviceControllerMessageLayer(),
 	}
 	return uc, nil

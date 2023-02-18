@@ -15,7 +15,7 @@ type ConfigMapManager struct {
 // NewConfigMapManager is function to return new ConfigMapManager
 func NewConfigMapManager() *ConfigMapManager {
 	return &ConfigMapManager{
-		Informer: informers.GetInformersManager().GetK8sInformerFactory(),
+		Informer: informers.GetInformersManager().GetKubeInformerFactory(),
 	}
 }
 
