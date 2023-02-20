@@ -195,7 +195,7 @@ func (m *context) Cleanup(module string) {
 
 	conn := pipeInfo.Wrapper()
 	if conn != nil {
-		err = conn.Close()
+		_ = conn.Close()
 	}
 	m.store.Delete(module)
 }
@@ -211,7 +211,7 @@ func (m *context) Send(module string, message model.Message) {
 	message.SetDestination(module)
 	conn := pipeInfo.Wrapper()
 	if conn != nil {
-		err = m.broker.Send(conn, message)
+		_ = m.broker.Send(conn, message)
 		return
 	}
 	klog.Warningf("bad module name %s", module)
@@ -266,7 +266,7 @@ func (m *context) SendResp(message model.Message) {
 		return
 	}
 	message.SetDestination(message.GetSource())
-	err = m.broker.Send(conn, message)
+	_ = m.broker.Send(conn, message)
 }
 
 // SendToGroup send to group
@@ -370,7 +370,7 @@ func (m *context) Connect(module string, connect broker.ConnectFunc) wrapper.Con
 		klog.Errorf("error to connect with %+v", err)
 
 		// try to redial
-		err = conn.Close()
+		_ = conn.Close()
 		time.Sleep(connectPeriod)
 	}
 }

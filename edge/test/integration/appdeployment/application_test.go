@@ -222,8 +222,8 @@ var _ = Describe("Application deployment in edgecore Testing", func() {
 			if err != nil {
 				common.Infof("memory error")
 			}
-			cpuReq, err := resource.ParseQuantity("0.50")
-			memoReq, err := resource.ParseQuantity("512Mi")
+			cpuReq, _ := resource.ParseQuantity("0.50")
+			memoReq, _ := resource.ParseQuantity("512Mi")
 			limit := v1.ResourceList{v1.ResourceCPU: cpu, v1.ResourceMemory: memory}
 			request := v1.ResourceList{v1.ResourceCPU: cpuReq, v1.ResourceMemory: memoReq}
 			r := v1.ResourceRequirements{Limits: limit, Requests: request}
@@ -248,8 +248,8 @@ var _ = Describe("Application deployment in edgecore Testing", func() {
 			if err2 != nil {
 				common.Infof("memory error")
 			}
-			cpuReq, err := resource.ParseQuantity("0.25")
-			memoReq, err := resource.ParseQuantity("512Mi")
+			cpuReq, _ := resource.ParseQuantity("0.25")
+			memoReq, _ := resource.ParseQuantity("512Mi")
 			limit := v1.ResourceList{v1.ResourceCPU: cpu, v1.ResourceMemory: memory}
 			request := v1.ResourceList{v1.ResourceCPU: cpuReq, v1.ResourceMemory: memoReq}
 			r := v1.ResourceRequirements{Limits: limit, Requests: request}

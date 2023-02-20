@@ -52,13 +52,13 @@ func RunVersion(cmd *cobra.Command) error {
 		if err != nil {
 			return err
 		}
-		fmt.Printf(string(y))
+		fmt.Print(string(y))
 	case "json":
 		y, err := json.MarshalIndent(&v, "", "  ")
 		if err != nil {
 			return err
 		}
-		fmt.Printf(string(y))
+		fmt.Print(string(y))
 	default:
 		return fmt.Errorf("invalid output format: %s", of)
 	}

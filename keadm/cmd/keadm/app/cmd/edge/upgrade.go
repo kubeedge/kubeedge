@@ -334,6 +334,9 @@ func (up *Upgrade) reportUpgradeResult() error {
 	certFile := up.EdgeCoreConfig.Modules.EdgeHub.TLSCertFile
 	keyFile := up.EdgeCoreConfig.Modules.EdgeHub.TLSPrivateKeyFile
 	cliCrt, err := tls.LoadX509KeyPair(certFile, keyFile)
+	if err != nil {
+		return err
+	}
 
 	transport := &http.Transport{
 		DialContext: (&net.Dialer{

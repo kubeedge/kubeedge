@@ -22,8 +22,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/golang/protobuf/jsonpb"
+	"github.com/container-storage-interface/spec/lib/go/csi" //nolint
+	"github.com/golang/protobuf/jsonpb"                      //nolint
 	"github.com/google/uuid"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"

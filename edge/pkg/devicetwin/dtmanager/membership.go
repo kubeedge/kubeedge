@@ -179,7 +179,7 @@ func addDevice(context *dtcontext.DTContext, toAdd []dttype.Device, baseMessage 
 	}
 	for _, device := range toAdd {
 		//if device has existed, step out
-		deviceInstance, isDeviceExist := context.GetDevice(device.ID)
+		_, isDeviceExist := context.GetDevice(device.ID)
 		if isDeviceExist {
 			if delta {
 				klog.Errorf("Add device %s failed, has existed", device.ID)
@@ -198,7 +198,7 @@ func addDevice(context *dtcontext.DTContext, toAdd []dttype.Device, baseMessage 
 			context.Lock(device.ID)
 		}
 
-		deviceInstance = &dttype.Device{ID: device.ID, Name: device.Name, Description: device.Description, State: device.State}
+		deviceInstance := &dttype.Device{ID: device.ID, Name: device.Name, Description: device.Description, State: device.State}
 		context.DeviceList.Store(device.ID, deviceInstance)
 
 		//write to sqlite

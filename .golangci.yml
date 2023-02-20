@@ -43,18 +43,21 @@ linters-settings:
   misspell:
     ignore-words:
       - mosquitto
+  staticcheck:
+    go: "1.17"
 
 linters:
   disable-all: true
   enable:
+    - errcheck
     - gci
     - goconst
-    - errcheck
     - gofmt
-    - revive
     - gosimple
     - govet
     - misspell
+    - revive
+    - staticcheck
     - whitespace
 
 issues:

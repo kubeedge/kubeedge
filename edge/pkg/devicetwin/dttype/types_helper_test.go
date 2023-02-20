@@ -679,12 +679,9 @@ func createDeviceTwinResultDealTypeGet(baseMessage BaseMessage) DeviceTwinResult
 
 // createDeviceTwinResult() is function to create DeviceTwinResult with DealType of value other than 0(1-Update, 2-Sync).
 func createDeviceTwinResult(baseMessage BaseMessage) DeviceTwinResult {
-	resultDealTypeTwin := make(map[string]*MsgTwin)
-	msgTwins := createMessageTwin()
-	resultDealTypeTwin = msgTwins
 	devTwinResult := DeviceTwinResult{
 		BaseMessage: baseMessage,
-		Twin:        resultDealTypeTwin,
+		Twin:        createMessageTwin(),
 	}
 	return devTwinResult
 }
@@ -951,10 +948,8 @@ func createMessageTwinAndDeltaWithSameValues() (map[string]*MsgTwin, map[string]
 func TestBuildDeviceTwinDelta(t *testing.T) {
 	baseMessage := BaseMessage{EventID: "Event1", Timestamp: time.Now().UnixNano() / 1e6}
 	msgTwins := createMessageTwinWithDiffValues(baseMessage)
-	delta := make(map[string]string)
 	resultTwinDiffValues, delta := createMessageTwinAndDeltaWithDiffValues()
 	bytesResultTwinDiffValues, _ := json.Marshal(DeviceTwinDelta{BaseMessage: baseMessage, Twin: resultTwinDiffValues, Delta: delta})
-	msgTwin := createMessageTwinWithSameValues()
 	resultTwinSameValues, deltas := createMessageTwinAndDeltaWithSameValues()
 	bytesResultTwinSameValues, _ := json.Marshal(DeviceTwinDelta{BaseMessage: baseMessage, Twin: resultTwinSameValues, Delta: deltas})
 	tests := []struct {
@@ -974,7 +969,7 @@ func TestBuildDeviceTwinDelta(t *testing.T) {
 		{
 			name:        "BuildDeviceTwinTest",
 			baseMessage: baseMessage,
-			twins:       msgTwin,
+			twins:       createMessageTwinWithSameValues(),
 			want:        bytesResultTwinSameValues,
 			wantBool:    false,
 		},

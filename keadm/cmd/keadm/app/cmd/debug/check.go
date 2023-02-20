@@ -372,7 +372,13 @@ func CheckPid() error {
 		return err
 	}
 	vMax, err := strconv.ParseFloat(rMax, 32)
+	if err != nil {
+		return err
+	}
 	v, err := strconv.ParseFloat(r, 32)
+	if err != nil {
+		return err
+	}
 	rate := (1 - v/vMax)
 	if rate > common.AllowedValuePIDRate {
 		fmt.Printf("Maximum PIDs: %s; Running processes: %s\n", rMax, r)

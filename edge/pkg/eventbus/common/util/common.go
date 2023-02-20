@@ -57,7 +57,7 @@ func HubClientInit(server, clientID, username, password string) *MQTT.ClientOpti
 	}
 
 	klog.V(4).Infof("Start to set TLS configuration for MQTT client")
-	tlsConfig := &tls.Config{}
+	var tlsConfig *tls.Config
 	if eventconfig.Config.TLS.Enable {
 		cert, err := tls.LoadX509KeyPair(eventconfig.Config.TLS.TLSMqttCertFile, eventconfig.Config.TLS.TLSMqttPrivateKeyFile)
 		if err != nil {

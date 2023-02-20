@@ -32,8 +32,8 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/golang/protobuf/jsonpb"
+	"github.com/container-storage-interface/spec/lib/go/csi" //nolint
+	"github.com/golang/protobuf/jsonpb"                      //nolint
 	v1 "k8s.io/api/core/v1"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	"k8s.io/component-base/featuregate"
@@ -313,9 +313,7 @@ func (e *edged) handlePodListFromMetaManager(content []byte, updatesChan chan<- 
 		return err
 	}
 
-	var pods []*v1.Pod
 	var podsUpdate []*v1.Pod
-
 	for _, list := range lists {
 		var pod v1.Pod
 		err = json.Unmarshal([]byte(list), &pod)
@@ -325,9 +323,7 @@ func (e *edged) handlePodListFromMetaManager(content []byte, updatesChan chan<- 
 
 		// if edge-core stop or panic when pod is deleting, pod need add into podDeletionQueue after edge-core restart.
 		if filterPodByNodeName(&pod, e.nodeName) {
-			if pod.DeletionTimestamp == nil {
-				pods = append(pods, &pod)
-			} else {
+			if pod.DeletionTimestamp != nil {
 				podsUpdate = append(podsUpdate, &pod)
 			}
 		}

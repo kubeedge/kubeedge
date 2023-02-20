@@ -239,7 +239,7 @@ func dealUpdateResult(context *dtcontext.DTContext, deviceID string, eventID str
 		EventID: eventID,
 		Code:    code,
 		Reason:  reason}
-	result := []byte("")
+	var result []byte
 	var jsonErr error
 	if err == nil {
 		result = payload
@@ -293,7 +293,7 @@ func dealDocument(context *dtcontext.DTContext, deviceID string, baseMessage dtt
 // DealGetTwin deal get twin event
 func DealGetTwin(context *dtcontext.DTContext, deviceID string, payload []byte) error {
 	klog.Info("Deal the event of getting twin")
-	msg := []byte("")
+	var msg []byte
 	para := dttype.Parameter{}
 	edgeGet, err := dttype.UnmarshalBaseMessage(payload)
 	if err != nil {

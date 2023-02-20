@@ -40,29 +40,23 @@ import (
 
 // createFakeDevice() is function to create fake device.
 func createFakeDevice() *[]dtclient.Device {
-	fakeDevice := new([]dtclient.Device)
 	fakeDeviceArray := make([]dtclient.Device, 1)
 	fakeDeviceArray[0] = dtclient.Device{ID: "Test"}
-	fakeDevice = &fakeDeviceArray
-	return fakeDevice
+	return &fakeDeviceArray
 }
 
 // createFakeAttribute() is function to create fake device attribute.
 func createFakeDeviceAttribute() *[]dtclient.DeviceAttr {
-	fakeDeviceAttr := new([]dtclient.DeviceAttr)
 	fakeDeviceAttrArray := make([]dtclient.DeviceAttr, 1)
 	fakeDeviceAttrArray[0] = dtclient.DeviceAttr{DeviceID: "Test"}
-	fakeDeviceAttr = &fakeDeviceAttrArray
-	return fakeDeviceAttr
+	return &fakeDeviceAttrArray
 }
 
 // createFakeDeviceTwin() is function to create fake devicetwin.
 func createFakeDeviceTwin() *[]dtclient.DeviceTwin {
-	fakeDeviceTwin := new([]dtclient.DeviceTwin)
 	fakeDeviceTwinArray := make([]dtclient.DeviceTwin, 1)
 	fakeDeviceTwinArray[0] = dtclient.DeviceTwin{DeviceID: "Test"}
-	fakeDeviceTwin = &fakeDeviceTwinArray
-	return fakeDeviceTwin
+	return &fakeDeviceTwinArray
 }
 
 // TestRegisterDTModule is function to test RegisterDTmodule().

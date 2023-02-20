@@ -348,17 +348,17 @@ func (p *Proxy) runAdminServer(o *options.ProxyRunOptions) {
 
 func (p *Proxy) runHealthServer(o *options.ProxyRunOptions, server *server.ProxyServer) {
 	livenessHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "ok")
+		fmt.Fprint(w, "ok")
 	})
 	readinessHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ready, msg := server.Readiness.Ready()
 		if ready {
 			w.WriteHeader(http.StatusOK)
-			fmt.Fprintf(w, "ok")
+			fmt.Fprint(w, "ok")
 			return
 		}
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, msg)
+		fmt.Fprint(w, msg)
 	})
 
 	muxHandler := http.NewServeMux()

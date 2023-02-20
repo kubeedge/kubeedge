@@ -75,6 +75,9 @@ func (s *imitator) InsertOrUpdateObj(ctx context.Context, obj runtime.Object) er
 		return err
 	}
 	objRv, err := s.versioner.ObjectResourceVersion(obj)
+	if err != nil {
+		return err
+	}
 	m := v2.MetaV2{
 		Key:                  key,
 		GroupVersionResource: gvr.String(),

@@ -51,6 +51,8 @@ func TestApplicationGC(t *testing.T) {
 				Resource:          "nodes",
 			}
 			ctx := apirequest.WithRequestInfo(context.Background(), requestInfo)
+			//continue to use existing constants
+			//nolint:staticcheck
 			ctx = context.WithValue(ctx, commontypes.AuthorizationKey, "Bearer xxxx")
 
 			connect.SetConnected(true)

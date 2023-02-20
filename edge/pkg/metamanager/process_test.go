@@ -497,11 +497,9 @@ func TestProcessQuery(t *testing.T) {
 	})
 
 	//No error and connected true
-	fakeDao := new([]dao.Meta)
 	fakeDaoArray := make([]dao.Meta, 1)
 	fakeDaoArray[0] = dao.Meta{Key: "Test", Value: MessageTest}
-	fakeDao = &fakeDaoArray
-	querySetterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDao).Return(int64(1), nil).Times(1)
+	querySetterMock.EXPECT().All(gomock.Any()).SetArg(0, fakeDaoArray).Return(int64(1), nil).Times(1)
 	querySetterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySetterMock).Times(1)
 	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySetterMock).Times(1)
 	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, "test/"+model.ResourceTypeConfigmap, model.QueryOperation)
@@ -516,9 +514,6 @@ func TestProcessQuery(t *testing.T) {
 			t.Errorf("Wrong message receive : Wanted %v and Got %v", want, message.GetContent())
 		}
 	})
-
-	//ResId Nil database error
-	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, model.ResourceTypePodStatus, OperationNodeConnection).FillBody(connect.CloudDisconnected)
 
 	querySetterMock.EXPECT().All(gomock.Any()).Return(int64(1), errFailedDBOperation).Times(1)
 	querySetterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySetterMock).Times(1)
@@ -549,7 +544,7 @@ func TestProcessQuery(t *testing.T) {
 	})
 
 	//ResID not nil Success Case
-	querySetterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDao).Return(int64(1), nil).Times(1)
+	querySetterMock.EXPECT().All(gomock.Any()).SetArg(0, fakeDaoArray).Return(int64(1), nil).Times(1)
 	querySetterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySetterMock).Times(1)
 	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySetterMock).Times(1)
 	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, "test/test/"+model.ResourceTypeConfigmap, model.QueryOperation)

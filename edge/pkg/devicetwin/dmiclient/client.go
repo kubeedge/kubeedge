@@ -56,11 +56,11 @@ func init() {
 }
 
 func (dc *DMIClient) connect() error {
-	dialer := func(addr string, t time.Duration) (net.Conn, error) {
+	dialer := func(ctc context.Context, addr string) (net.Conn, error) {
 		return net.Dial(deviceconst.UnixNetworkType, addr)
 	}
 
-	conn, err := grpc.Dial(dc.socket, grpc.WithInsecure(), grpc.WithDialer(dialer))
+	conn, err := grpc.Dial(dc.socket, grpc.WithInsecure(), grpc.WithContextDialer(dialer))
 	if err != nil {
 		klog.Errorf("did not connect: %v\n", err)
 		return err

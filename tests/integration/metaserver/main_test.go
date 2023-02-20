@@ -1,6 +1,7 @@
 package metaserver
 
 import (
+	"os"
 	"testing"
 
 	cloudconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
@@ -12,6 +13,7 @@ func TestMain(m *testing.M) {
 	//framework.RunCloud(modifyCloudCoreConfig)
 	//framework.RunEdge(modifyEdgeCoreConfig)
 	m.Run()
+	os.Exit(0)
 }
 
 func modifyCloudCoreConfig(config *cloudconfig.CloudCoreConfig) {

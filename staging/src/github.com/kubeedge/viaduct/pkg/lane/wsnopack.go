@@ -25,6 +25,7 @@ func NewWSLaneWithoutPack(van interface{}) *WSLaneWithoutPack {
 	return nil
 }
 
+//nolint:staticcheck
 func (l *WSLaneWithoutPack) Read(p []byte) (int, error) {
 	_, msgData, err := l.conn.ReadMessage()
 	if err != nil {

@@ -157,8 +157,10 @@ func GetTwinAttributesFromDB(deviceID string, Name string) TwinAttribute {
 		common.Fatalf("Open Sqlite DB failed : %v", err)
 	}
 	defer db.Close()
-	row, err := db.Query("SELECT * FROM device_twin")
-	defer row.Close()
+	row, _ := db.Query("SELECT * FROM device_twin")
+	defer func() {
+		_ = row.Close()
+	}()
 
 	for row.Next() {
 		err = row.Scan(&twinAttribute.ID,
@@ -193,8 +195,10 @@ func GetDeviceAttributesFromDB(deviceID string, Name string) Attribute {
 		common.Fatalf("Open Sqlite DB failed : %v", err)
 	}
 	defer db.Close()
-	row, err := db.Query("SELECT * FROM device_attr")
-	defer row.Close()
+	row, _ := db.Query("SELECT * FROM device_attr")
+	defer func() {
+		_ = row.Close()
+	}()
 
 	for row.Next() {
 		err = row.Scan(&attribute.ID, &attribute.DeviceID, &attribute.Name, &attribute.Description, &attribute.Value, &attribute.Optional, &attribute.Type, &attribute.MetaData)

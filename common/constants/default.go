@@ -158,9 +158,9 @@ const (
 	ServerPort    = 10350
 
 	// MessageSuccessfulContent is the successful content value of Message struct
-	MessageSuccessfulContent string = "OK"
-	DefaultQPS                      = 30
-	DefaultBurst                    = 60
+	MessageSuccessfulContent = "OK"
+	DefaultQPS               = 30
+	DefaultBurst             = 60
 	// MaxRespBodyLength is the max length of http response body
 	MaxRespBodyLength = 1 << 20 // 1 MiB
 

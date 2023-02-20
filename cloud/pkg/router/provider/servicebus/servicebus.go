@@ -122,12 +122,13 @@ func (sf *servicebusFactory) GetTarget(ep *v1.RuleEndpoint, targetResource map[s
 
 func (sb *ServiceBus) GoToTarget(data map[string]interface{}, stop chan struct{}) (interface{}, error) {
 	var response *model.Message
-	messageID, ok := data["messageID"].(string)
-	param, ok := data["param"].(string)
-	nodeName, ok := data["nodeName"].(string)
+	var ok bool
+	messageID, _ := data["messageID"].(string)
+	param, _ := data["param"].(string)
+	nodeName, _ := data["nodeName"].(string)
 	request := commonType.HTTPRequest{}
-	request.Method, ok = data["method"].(string)
-	request.Header, ok = data["header"].(http.Header)
+	request.Method, _ = data["method"].(string)
+	request.Header, _ = data["header"].(http.Header)
 	request.Body, ok = data["data"].([]byte)
 	if !ok {
 		err := errors.New("data transform failed")

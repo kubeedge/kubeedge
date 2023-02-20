@@ -217,6 +217,8 @@ func BuildHandlerChain(handler http.Handler, ls *MetaServer) http.Handler {
 func WithAuthorizationHeader(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		token := request.Header.Get(commontypes.AuthorizationKey)
+		//continue to use existing constants
+		//nolint:staticcheck
 		request = request.WithContext(context.WithValue(request.Context(), commontypes.AuthorizationKey, token))
 		handler.ServeHTTP(writer, request)
 	})

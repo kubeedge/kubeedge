@@ -67,8 +67,9 @@ func (broker *RemoteBroker) Send(conn wrapper.Conn, message model.Message) error
 // Receive receive
 func (broker *RemoteBroker) Receive(conn wrapper.Conn) (model.Message, error) {
 	var message model.Message
+	var err error
 	for {
-		err := conn.SetReadDeadline(time.Time{})
+		_ = conn.SetReadDeadline(time.Time{})
 		err = conn.ReadJSON(&message)
 		if err != nil {
 			klog.Errorf("failed to read, error:%+v", err)
@@ -80,7 +81,7 @@ func (broker *RemoteBroker) Receive(conn wrapper.Conn) (model.Message, error) {
 			return message, nil
 		}
 
-		err = broker.keeper.SendToKeepChannel(message)
+		_ = broker.keeper.SendToKeepChannel(message)
 	}
 }
 
@@ -100,7 +101,7 @@ func (broker *RemoteBroker) SendSyncInternal(conn wrapper.Conn, message model.Me
 	}
 
 	deadline := time.Now().Add(timeout)
-	err = conn.SetReadDeadline(deadline)
+	_ = conn.SetReadDeadline(deadline)
 	var response model.Message
 	err = conn.ReadJSON(&response)
 	if err != nil {
