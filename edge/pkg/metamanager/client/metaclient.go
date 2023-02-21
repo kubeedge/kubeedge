@@ -16,7 +16,7 @@ var (
 	syncMsgRespTimeout = 1 * time.Minute
 )
 
-//CoreInterface is interface of metaclient
+// CoreInterface is interface of metaclient
 type CoreInterface interface {
 	PodsGetter
 	PodStatusGetter

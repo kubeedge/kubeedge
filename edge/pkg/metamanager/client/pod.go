@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-
+	
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -69,7 +69,11 @@ func (c *pods) Delete(name string, options metav1.DeleteOptions) error {
 		return nil
 	}
 
-	return err
+	err, ok = msg.Content.(error)
+	if ok {
+		return err
+	}
+	return fmt.Errorf("delete pod failed, err: parse resp content failed")
 }
 
 func (c *pods) Get(name string) (*corev1.Pod, error) {
