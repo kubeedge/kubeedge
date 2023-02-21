@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/256dpi/gomqtt v0.10.4
-	github.com/astaxie/beego v1.12.0
+	github.com/beego/beego v2.0.4+incompatible
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/container-storage-interface/spec v1.5.0
 	github.com/distribution/distribution/v3 v3.0.0-20210804104954-38ab4c606ee3
