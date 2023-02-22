@@ -1081,15 +1081,19 @@ func (uc *UpstreamController) deletePod() {
 				}
 			}
 
+			var resMsg *model.Message
 			err = uc.kubeClient.CoreV1().Pods(namespace).Delete(context.Background(), name, deleteOptions)
 			if err != nil && !errors.IsNotFound(err) && !strings.Contains(err.Error(), "The object might have been deleted and then recreated") {
 				klog.Warningf("Failed to delete pod, namespace: %s, name: %s, err: %v", namespace, name, err)
-				continue
+				resMsg = model.NewMessage(msg.GetID()).
+					FillBody(err).
+					BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, msg.GetResource(), model.ResponseOperation)
+			} else {
+				resMsg = model.NewMessage(msg.GetID()).
+					FillBody(common.MessageSuccessfulContent).
+					BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, msg.GetResource(), model.ResponseOperation)
 			}
 
-			resMsg := model.NewMessage(msg.GetID()).
-				FillBody(common.MessageSuccessfulContent).
-				BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, msg.GetResource(), model.ResponseOperation)
 			if err = uc.messageLayer.Response(*resMsg); err != nil {
 				klog.Errorf("Message: %s process failure, response failed with error: %v", msg.GetID(), err)
 				continue
