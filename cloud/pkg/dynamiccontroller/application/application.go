@@ -8,9 +8,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -18,21 +16,23 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/filter"
+	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/listwatchcacher"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
 )
 
 type Center struct {
-	HandlerCenter
-	messageLayer messagelayer.MessageLayer
-	kubeclient   dynamic.Interface
+	messageLayer        messagelayer.MessageLayer
+	kubeclient          dynamic.Interface
+	watchHandlerManager listwatchcacher.WatchHandlerManager
 }
 
-func NewApplicationCenter(dynamicSharedInformerFactory dynamicinformer.DynamicSharedInformerFactory) *Center {
+func NewApplicationCenter() *Center {
 	a := &Center{
-		HandlerCenter: NewHandlerCenter(dynamicSharedInformerFactory),
-		kubeclient:    client.GetDynamicClient(),
-		messageLayer:  messagelayer.DynamicControllerMessageLayer(),
+		kubeclient:   client.GetDynamicClient(),
+		messageLayer: messagelayer.DynamicControllerMessageLayer(),
+
+		watchHandlerManager: listwatchcacher.NewWatchHandlerManager(),
 	}
 	return a
 }
@@ -86,15 +86,8 @@ func (c *Center) ProcessApplication(app *metaserver.Application) (interface{}, e
 		}
 		return list, nil
 	case metaserver.Watch:
-		listener, err := applicationToListener(app)
-		if err != nil {
-			return nil, err
-		}
+		return nil, c.watchHandlerManager.ProcessWatch(app)
 
-		if err := c.HandlerCenter.AddListener(listener); err != nil {
-			return nil, fmt.Errorf("failed to add listener, %v", err)
-		}
-		return nil, nil
 	case metaserver.Get:
 		var option = new(metav1.GetOptions)
 		if err := app.OptionTo(option); err != nil {
@@ -229,91 +222,13 @@ func (c *Center) ProcessWatchSync(msg model.Message) error {
 		return fmt.Errorf("failed translate msg to Applications: %v", err)
 	}
 
-	addedWatchApp, removedListeners := c.getWatchDiff(applications, nodeID)
+	c.watchHandlerManager.FindAndRemoveTerminatedWatchersInEdge(applications, nodeID)
 
-	// gc already removed listeners
-	for _, listener := range removedListeners {
-		c.HandlerCenter.DeleteListener(listener)
-	}
-
-	failedWatchApp := make(map[string]metaserver.Application)
-
-	// add listener for new added watch app
-	for _, watchApp := range addedWatchApp {
-		err := c.processWatchApp(&watchApp)
-		if err != nil {
-			watchApp.Status = metaserver.Rejected
-			apiErr, ok := err.(apierrors.APIStatus)
-			if ok {
-				watchApp.Error = apierrors.StatusError{ErrStatus: apiErr.Status()}
-			} else {
-				watchApp.Reason = err.Error()
-			}
-			failedWatchApp[watchApp.ID] = watchApp
-			klog.Errorf("processWatchApp %s err: %v", watchApp.String(), err)
-		}
-	}
-
-	respMsg := model.NewMessage(msg.GetID()).
-		BuildRouter(modules.DynamicControllerModuleName, message.ResourceGroupName, msg.GetResource(), metaserver.ApplicationResp).
-		FillBody(failedWatchApp)
-
-	if err := c.messageLayer.Response(*respMsg); err != nil {
-		klog.Warningf("send message failed error: %s, operation: %s, resource: %s", err, respMsg.GetOperation(), respMsg.GetResource())
-		return err
-	}
-
-	return nil
-}
-
-func (c *Center) getWatchDiff(allWatchAppInEdge map[string]metaserver.Application,
-	nodeID string) ([]metaserver.Application, []*SelectorListener) {
-	listenerInCloud := c.HandlerCenter.GetListenersForNode(nodeID)
-
-	addedWatchApp := make([]metaserver.Application, 0)
-	for ID, app := range allWatchAppInEdge {
-		if _, exist := listenerInCloud[ID]; !exist {
-			addedWatchApp = append(addedWatchApp, app)
-			klog.Infof("added watch app %s", app.String())
-		}
-	}
-
-	removedListeners := make([]*SelectorListener, 0)
-	for ID, listener := range listenerInCloud {
-		if _, exist := allWatchAppInEdge[ID]; !exist {
-			removedListeners = append(removedListeners, listener)
-			klog.Infof("need removed listener %s", listener.id)
-		}
-	}
-
-	return addedWatchApp, removedListeners
+	return c.watchHandlerManager.FindAndAddNewWatchersNotExistInCloud(nodeID, msg, applications, c.processWatchApp)
 }
 
 func (c *Center) processWatchApp(watchApp *metaserver.Application) error {
 	watchApp.Status = metaserver.InProcessing
-	listener, err := applicationToListener(watchApp)
-	if err != nil {
-		return err
-	}
 
-	if err := c.HandlerCenter.AddListener(listener); err != nil {
-		return fmt.Errorf("failed to add listener, %v", err)
-	}
-
-	return nil
-}
-
-func applicationToListener(app *metaserver.Application) (*SelectorListener, error) {
-	var option = new(metav1.ListOptions)
-	if err := app.OptionTo(option); err != nil {
-		return nil, err
-	}
-
-	gvr, namespace, _ := metaserver.ParseKey(app.Key)
-	selector := NewSelector(option.LabelSelector, option.FieldSelector)
-	if namespace != "" {
-		selector.Field = fields.AndSelectors(selector.Field, fields.OneTermEqualSelector("metadata.namespace", namespace))
-	}
-
-	return NewSelectorListener(app.ID, app.Nodename, gvr, selector), nil
+	return c.watchHandlerManager.ProcessWatch(watchApp)
 }
