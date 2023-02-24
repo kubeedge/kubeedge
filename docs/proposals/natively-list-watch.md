@@ -89,9 +89,15 @@ The metaserver startup will add a dummy network interface to the edge node, and 
 
 
 
+
+
 ### CSRApprovingController
 
 
 
 ![csr](../images/list-watch-native/time-csr.png)
+
+
+
+
 

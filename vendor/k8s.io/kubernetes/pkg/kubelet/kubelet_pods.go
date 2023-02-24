@@ -517,6 +517,38 @@ func (kl *Kubelet) GenerateRunContainerOptions(pod *v1.Pod, container *v1.Contai
 	return opts, cleanupAction, nil
 }
 
+var masterService = v1.Service{
+	ObjectMeta: metav1.ObjectMeta{
+		Name: "kubernetes",
+	},
+	Spec: v1.ServiceSpec{
+		ClusterIP: "169.254.30.10",
+		Type:      v1.ServiceTypeClusterIP,
+
+		Ports: []v1.ServicePort{
+			{
+				Name:       "https",
+				Port:       443,
+				Protocol:   v1.ProtocolTCP,
+				TargetPort: 6443,
+			},
+		},
+	},
+}
+
+// getServiceEnvVarMap makes a map[string]string of env vars for services a
+// pod in namespace ns should see.
+func (kl *Kubelet) getServiceEnvVarMap(ns string, enableServiceLinks bool) (map[string]string, error) {
+	m := make(map[string]string)
+
+	mappedServices := []v1.Service{masterService}
+
+	for _, e := range envvars.FromServices(mappedServices) {
+		m[e.Name] = e.Value
+	}
+	return m, nil
+}
+
 // Make the environment variables for a pod in the given namespace.
 func (kl *Kubelet) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container, podIP string, podIPs []string) ([]kubecontainer.EnvVar, error) {
 	if pod.Spec.EnableServiceLinks == nil {
@@ -536,7 +568,19 @@ func (kl *Kubelet) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container
 	}
 
 	var result []kubecontainer.EnvVar
-	var err error
+	// Note:  These are added to the docker Config, but are not included in the checksum computed
+	// by kubecontainer.HashContainer(...).  That way, we can still determine whether an
+	// v1.Container is already running by its hash. (We don't want to restart a container just
+	// because some service changed.)
+	//
+	// Note that there is a race between Kubelet seeing the pod and kubelet seeing the service.
+	// To avoid this users can: (1) wait between starting a service and starting; or (2) detect
+	// missing service env var and exit and be restarted; or (3) use DNS instead of env vars
+	// and keep trying to resolve the DNS name of the service (recommended).
+	serviceEnv, err := kl.getServiceEnvVarMap(pod.Namespace, *pod.Spec.EnableServiceLinks)
+	if err != nil {
+		return result, err
+	}
 
 	var (
 		configMaps = make(map[string]*v1.ConfigMap)
@@ -631,7 +675,7 @@ func (kl *Kubelet) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container
 	// 2.  Create the container's environment in the order variables are declared
 	// 3.  Add remaining service environment vars
 	var (
-		mappingFunc = expansion.MappingFuncFor(tmpEnv)
+		mappingFunc = expansion.MappingFuncFor(tmpEnv, serviceEnv)
 	)
 	for _, envVar := range container.Env {
 		runtimeVal := envVar.Value
@@ -719,6 +763,18 @@ func (kl *Kubelet) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container
 	// Append the env vars
 	for k, v := range tmpEnv {
 		result = append(result, kubecontainer.EnvVar{Name: k, Value: v})
+	}
+
+	// Append remaining service env vars.
+	for k, v := range serviceEnv {
+		// Accesses apiserver+Pods.
+		// So, the master may set service env vars, or kubelet may.  In case both are doing
+		// it, we skip the key from the kubelet-generated ones so we don't have duplicate
+		// env vars.
+		// TODO: remove this next line once all platforms use apiserver+Pods.
+		if _, present := tmpEnv[k]; !present {
+			result = append(result, kubecontainer.EnvVar{Name: k, Value: v})
+		}
 	}
 
 	return result, nil
