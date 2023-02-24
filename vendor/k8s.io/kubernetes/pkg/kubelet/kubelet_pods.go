@@ -62,6 +62,7 @@ import (
 	volumevalidation "k8s.io/kubernetes/pkg/volume/validation"
 	"k8s.io/kubernetes/third_party/forked/golang/expansion"
 	utilnet "k8s.io/utils/net"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 const (
@@ -530,7 +531,7 @@ var masterService = v1.Service{
 				Name:       "https",
 				Port:       443,
 				Protocol:   v1.ProtocolTCP,
-				TargetPort: 6443,
+				TargetPort: intstr.FromInt(6443),
 			},
 		},
 	},
