@@ -65,7 +65,7 @@ At present, the certificates on the edge side are issued by the Cloudhub certifi
    }
    ```
 
- 
+
 
 3. EdgeHub forwarded the  CSR request message to CloudHub through the websocket connection.
 
@@ -87,17 +87,46 @@ The metaserver startup will add a dummy network interface to the edge node, and 
 
 - The default ip address of new dummy interface is: `169.254.30.10`
 
+### Master service env inject into edge pod
 
+When Edge pods use `InClusterConfig` to access Kube-APIServer , It will assemble the URL address through the environment variables `KUBERNETES_SERVICE_HOST` and `KUBERNETES_SERVICE_PORT`. When EdgeCore starts the edge pod, it will intercept and inject the address of the metaserver listening on the dummy interface, so the traffic of the edge pod accessing Kube-APIServer can be proxyed to the metaserver without perception.
 
+```
+func InClusterConfig() (*Config, error) {
+   const (
+      tokenFile  = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+      rootCAFile = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+   )
+   host, port := os.Getenv("KUBERNETES_SERVICE_HOST"), os.Getenv("KUBERNETES_SERVICE_PORT")
+   if len(host) == 0 || len(port) == 0 {
+      return nil, ErrNotInCluster
+   }
 
+   token, err := ioutil.ReadFile(tokenFile)
+   if err != nil {
+      return nil, err
+   }
+
+   tlsClientConfig := TLSClientConfig{}
+
+   if _, err := certutil.NewPool(rootCAFile); err != nil {
+      klog.Errorf("Expected to load root CA config from %s, but got err: %v", rootCAFile, err)
+   } else {
+      tlsClientConfig.CAFile = rootCAFile
+   }
+
+   return &Config{
+      // TODO: switch to using cluster DNS.
+      Host:            "https://" + net.JoinHostPort(host, port),
+      TLSClientConfig: tlsClientConfig,
+      BearerToken:     string(token),
+      BearerTokenFile: tokenFile,
+   }, nil
+}
+```
 
 ### CSRApprovingController
 
-
+The process of certificate request and issuance is as follows:
 
 ![csr](../images/list-watch-native/time-csr.png)
-
-
-
-
-
