@@ -543,7 +543,7 @@ var masterService = v1.Service{
 func (kl *Kubelet) getServiceEnvVarMap(ns string, enableServiceLinks bool) (map[string]string, error) {
 	m := make(map[string]string)
 
-	mappedServices := []v1.Service{masterService}
+	mappedServices := []*v1.Service{&masterService}
 
 	for _, e := range envvars.FromServices(mappedServices) {
 		m[e.Name] = e.Value
