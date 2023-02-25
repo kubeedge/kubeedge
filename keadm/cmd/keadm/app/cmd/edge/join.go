@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/blang/semver"
@@ -435,12 +436,25 @@ func runEdgeCore() error {
 
 func createBootstrapFile(opt *common.JoinOptions) error {
 	bootstrapFile := constants.BootstrapFile
-	_, err := os.Create(bootstrapFile)
+	// remove existing pipe
+	os.Remove(bootstrapFile)
+
+	// create pipe
+	err := syscall.Mkfifo(bootstrapFile, 0640)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to mkfifo: %v", bootstrapFile)
 	}
 
-	// write token to bootstrap-edgecore.conf file
-	token := []byte(opt.Token)
-	return os.WriteFile(bootstrapFile, token, 0640)
+	go func() {
+		f, err := os.OpenFile(bootstrapFile, os.O_WRONLY, 0600)
+		if err != nil {
+			klog.Exitf("failed to open fifo: %v", err)
+			return
+		}
+
+		_, err = f.WriteString(opt.Token)
+		f.Close()
+	}()
+
+	return nil
 }

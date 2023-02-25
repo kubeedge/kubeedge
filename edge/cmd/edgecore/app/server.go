@@ -1,10 +1,12 @@
 package app
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"net"
 	"os"
+	"strings"
 
 	"github.com/mitchellh/go-ps"
 	"github.com/spf13/cobra"
@@ -84,11 +86,18 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 			bootstrapFile := constants.BootstrapFile
 			// get token from bootstrapFile if it exist
 			if utilvalidation.FileIsExist(bootstrapFile) {
-				token, err := os.ReadFile(bootstrapFile)
+				pipe, err := os.OpenFile(bootstrapFile, os.O_RDONLY, 0640)
 				if err != nil {
-					klog.Exit(err)
+					klog.Exit("open pipe file failed: %v", err)
 				}
-				config.Modules.EdgeHub.Token = string(token)
+				defer pipe.Close()
+				reader := bufio.NewReader(pipe)
+				line, _, err := reader.ReadLine()
+				if err != nil {
+					klog.Exitf("failed to read token from pipe file: %v", err)
+				}
+				token := strings.TrimSuffix(string(line), "\n")
+				config.Modules.EdgeHub.Token = token
 			}
 
 			if errs := validation.ValidateEdgeCoreConfiguration(config); len(errs) > 0 {
