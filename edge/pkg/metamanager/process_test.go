@@ -23,6 +23,9 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/uuid"
 
 	"github.com/kubeedge/beehive/pkg/common"
 	"github.com/kubeedge/beehive/pkg/core"
@@ -71,6 +74,7 @@ func TestProcessInsert(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	ormerMock := beego.NewMockOrmer(mockCtrl)
+	rawSetterMock := beego.NewMockRawSeter(mockCtrl)
 	dbm.DBAccess = ormerMock
 	meta := newMetaManager(true)
 	core.Register(meta)
@@ -94,7 +98,8 @@ func TestProcessInsert(t *testing.T) {
 	beehiveContext.AddModule(edged)
 
 	//SaveMeta Failed, feedbackError SendToCloud
-	ormerMock.EXPECT().Insert(gomock.Any()).Return(int64(1), errFailedDBOperation).Times(1)
+	rawSetterMock.EXPECT().Exec().Return(nil, errFailedDBOperation).Times(1)
+	ormerMock.EXPECT().Raw(gomock.Any(), gomock.Any()).Return(rawSetterMock).Times(1)
 	msg := model.NewMessage("").BuildRouter(modules.MetaManagerModuleName, GroupResource, model.ResourceTypePodStatus, model.InsertOperation)
 	meta.processInsert(*msg)
 	//beehiveContext.Send(MetaManagerModuleName, *msg)
@@ -111,7 +116,8 @@ func TestProcessInsert(t *testing.T) {
 	})
 
 	//SaveMeta Failed, feedbackError SendToEdged and 2 resources
-	ormerMock.EXPECT().Insert(gomock.Any()).Return(int64(1), errFailedDBOperation).Times(1)
+	ormerMock.EXPECT().Raw(gomock.Any(), gomock.Any()).Return(rawSetterMock).Times(1)
+	rawSetterMock.EXPECT().Exec().Return(nil, errFailedDBOperation).Times(1)
 	msg = model.NewMessage("").BuildRouter(ModuleNameEdged, GroupResource, model.ResourceTypePodStatus+"/secondRes", model.InsertOperation)
 	meta.processInsert(*msg)
 	message, err = beehiveContext.Receive(ModuleNameEdged)
@@ -138,7 +144,9 @@ func TestProcessInsert(t *testing.T) {
 	})
 
 	//Successful Case and 3 resources
-	ormerMock.EXPECT().Insert(gomock.Any()).Return(int64(1), nil).Times(1)
+	ormerMock.EXPECT().Raw(gomock.Any(), gomock.Any()).Return(rawSetterMock).Times(1)
+	rawSetterMock.EXPECT().Exec().Return(nil, nil).Times(1)
+
 	msg = model.NewMessage("").BuildRouter(ModuleNameEdged, GroupResource, model.ResourceTypePodStatus+"/secondRes"+"/thirdRes", model.InsertOperation)
 	meta.processInsert(*msg)
 	message, _ = beehiveContext.Receive(ModuleNameEdged)
@@ -336,6 +344,8 @@ func TestProcessDelete(t *testing.T) {
 	defer mockCtrl.Finish()
 	ormerMock := beego.NewMockOrmer(mockCtrl)
 	querySetterMock := beego.NewMockQuerySeter(mockCtrl)
+	rawSetterMock := beego.NewMockRawSeter(mockCtrl)
+	deleteRes := beego.NewMockDriverRes(mockCtrl)
 	dbm.DBAccess = ormerMock
 	meta := newMetaManager(true)
 	core.Register(meta)
@@ -372,6 +382,23 @@ func TestProcessDelete(t *testing.T) {
 		}
 	})
 
+	// SuccessWhenUIDNotEqual
+	msgPod := v1.Pod{}
+	msgPod.Name = "testPod"
+	msgPod.UID = uuid.NewUUID()
+	deleteRes.EXPECT().RowsAffected().Return(int64(0), nil).Times(1)
+	rawSetterMock.EXPECT().Exec().Return(deleteRes, nil).Times(1)
+	ormerMock.EXPECT().Raw(gomock.Any(), gomock.Any()).Return(rawSetterMock).Times(1)
+	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, "test/"+model.ResourceTypePod, model.DeleteOperation).FillBody(msgPod)
+	meta.processDelete(*msg)
+	message, _ = beehiveContext.Receive(ModuleNameEdgeHub)
+	t.Run("SuccessWhenUIDNotEqual", func(t *testing.T) {
+		want := OK
+		if message.GetContent() != want {
+			t.Errorf("Wrong message received : Wanted %v and Got %v", want, message.GetContent())
+		}
+	})
+
 	//Success Case
 	querySetterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySetterMock).Times(1)
 	querySetterMock.EXPECT().Delete().Return(int64(1), nil).Times(1)
@@ -402,6 +429,81 @@ func TestProcessDelete(t *testing.T) {
 		want := ModuleNameEdged
 		if message.GetSource() != want {
 			t.Errorf("Wrong message received : Wanted from source %v and Got from source %v", want, message.GetSource())
+		}
+	})
+}
+
+func TestProcessDelete_SuccessDeletePodToEdged(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock := beego.NewMockOrmer(mockCtrl)
+	querySetterMock := beego.NewMockQuerySeter(mockCtrl)
+	rawSetterMock := beego.NewMockRawSeter(mockCtrl)
+	deleteRes := beego.NewMockDriverRes(mockCtrl)
+	dbm.DBAccess = ormerMock
+	meta := newMetaManager(true)
+	core.Register(meta)
+
+	add := &common.ModuleInfo{
+		ModuleName: meta.Name(),
+		ModuleType: common.MsgCtxTypeChannel,
+	}
+	beehiveContext.AddModule(add)
+	beehiveContext.AddModuleGroup(meta.Name(), meta.Group())
+	edgeHub := &common.ModuleInfo{
+		ModuleName: ModuleNameEdgeHub,
+		ModuleType: common.MsgCtxTypeChannel,
+	}
+	beehiveContext.AddModule(edgeHub)
+	beehiveContext.AddModuleGroup(ModuleNameEdgeHub, modules.HubGroup)
+	edged := &common.ModuleInfo{
+		ModuleName: ModuleNameEdged,
+		ModuleType: common.MsgCtxTypeChannel,
+	}
+	beehiveContext.AddModule(edged)
+
+	deleteRes.EXPECT().RowsAffected().Return(int64(1), nil).Times(1)
+	rawSetterMock.EXPECT().Exec().Return(deleteRes, nil).Times(1)
+	ormerMock.EXPECT().Raw(gomock.Any(), gomock.Any()).Return(rawSetterMock).Times(1)
+	querySetterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySetterMock).Times(1)
+	querySetterMock.EXPECT().Delete().Return(int64(1), nil).Times(1)
+	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySetterMock).Times(1)
+
+	pod := &v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "nginx",
+			Namespace: "test",
+			UID:       "1234567890",
+		},
+	}
+	podBytes, _ := json.Marshal(pod)
+	resource := fmt.Sprintf("test/%s/nginx", model.ResourceTypePod)
+	msg := model.NewMessage("").BuildRouter(ModuleNameController, modules.MetaGroup, resource, model.DeleteOperation).FillBody(podBytes)
+	meta.processDelete(*msg)
+	message, _ := beehiveContext.Receive(ModuleNameEdged)
+	t.Run("SuccessDeletePodToEdged", func(t *testing.T) {
+		want := ModuleNameController
+		if message.GetSource() != want {
+			t.Errorf("Wrong message received : Wanted from source %v and Got from source %v", want, message.GetSource())
+		}
+		if message.GetOperation() != model.DeleteOperation {
+			t.Errorf("Wrong message received : Wanted %v and Got %v", model.DeleteOperation, message.GetOperation())
+		}
+		if message.GetResource() != resource {
+			t.Errorf("Wrong message received resource: Wanted %v and Got %v", resource, message.GetResource())
+		}
+	})
+	message, _ = beehiveContext.Receive(ModuleNameEdgeHub)
+	t.Run("SuccessDeletePodResponse", func(t *testing.T) {
+		want := ModuleNameController
+		if message.GetSource() != want {
+			t.Errorf("Wrong message received : Wanted from source %v and Got from source %v", want, message.GetSource())
+		}
+		if message.GetOperation() != model.ResponseOperation {
+			t.Errorf("Wrong message received : Wanted %v and Got %v", model.ResponseOperation, message.GetOperation())
+		}
+		if message.GetContent() != OK {
+			t.Errorf("Wrong message received : Wanted %v and Got %v", "OK", message.GetContent())
 		}
 	})
 }
