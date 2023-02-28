@@ -129,6 +129,54 @@ func TestDeleteMetaByKey(t *testing.T) {
 	}
 }
 
+// TestDeleteMetaByKeyAndPodUID is function to test DeleteMetaByKeyAndPodUID
+func TestDeleteMetaByKeyAndPodUID(t *testing.T) {
+	//Initialize Global Variables (Mocks)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock := beego.NewMockOrmer(mockCtrl)
+	dbm.DBAccess = ormerMock
+	rawSeterMock := beego.NewMockRawSeter(mockCtrl)
+	deleteRes := beego.NewMockDriverRes(mockCtrl)
+	deleteRes.EXPECT().RowsAffected().Return(int64(1), nil).Times(1)
+
+	cases := []struct {
+		// name is name of the testcase
+		name string
+		// deleteReturnRes is first return of mock interface rawSeterMock's Exec function
+		deleteReturnRes sql.Result
+		// deleteReturnErr is second return of mock interface rawSeterMock's Exec function which is also expected error
+		deleteReturnErr error
+		// deleteReturnRaw is the return of mock interface ormerMock's Raw function
+		deleteReturnRaw orm.RawSeter
+	}{{
+		// Success Case
+		name:            "SuccessCase",
+		deleteReturnRes: deleteRes,
+		deleteReturnErr: nil,
+		deleteReturnRaw: rawSeterMock,
+	}, {
+		// Failure Case
+		name:            "FailureCase",
+		deleteReturnRes: nil,
+		deleteReturnErr: errFailedDBOperation,
+		deleteReturnRaw: rawSeterMock,
+	},
+	}
+
+	// run the test cases
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			rawSeterMock.EXPECT().Exec().Return(test.deleteReturnRes, test.deleteReturnErr).Times(1)
+			ormerMock.EXPECT().Raw(gomock.Any(), gomock.Any()).Return(test.deleteReturnRaw).Times(1)
+			_, err := DeleteMetaByKeyAndPodUID("test", "testUID")
+			if test.deleteReturnErr != err {
+				t.Errorf("Delete Meta By Key Case failed : wanted %v and got %v", test.deleteReturnErr, err)
+			}
+		})
+	}
+}
+
 // TestUpdateMeta is function to test UpdateMeta
 func TestUpdateMeta(t *testing.T) {
 	//Initialize Global Variables (Mocks)
