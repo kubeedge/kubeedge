@@ -1452,8 +1452,8 @@ func isOwnedByEdgeApp(ownerReferences []metav1.OwnerReference, edgeApp *appsv1al
 	for _, o := range ownerReferences {
 		if o.APIVersion == appsv1alpha1.GroupVersion.String() &&
 			o.Kind == "EdgeApplication" &&
-			*o.BlockOwnerDeletion == true &&
-			*o.Controller == true &&
+			*o.BlockOwnerDeletion &&
+			*o.Controller &&
 			o.Name == edgeApp.Name &&
 			o.UID == edgeApp.UID {
 			return true

@@ -162,7 +162,7 @@ func TestCheckObjectSync(t *testing.T) {
 			informers := informers.NewSharedInformerFactory(client, 0)
 			testController := newSyncController(true)
 			testController.nodeLister = informers.Core().V1().Nodes().Lister()
-			if tt.ExpectedResult == false {
+			if !tt.ExpectedResult {
 				err := informers.Core().V1().Nodes().Informer().GetIndexer().Add(&v1.Node{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: tf.TestNodeID,
