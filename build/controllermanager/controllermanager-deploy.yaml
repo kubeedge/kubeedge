@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: controller-manager
-          image: kubeedge/controller-manager:latest
+          image: kubeedge/controller-manager:v1.12.2
           imagePullPolicy: IfNotPresent
       restartPolicy: Always
       serviceAccountName: controller-manager
