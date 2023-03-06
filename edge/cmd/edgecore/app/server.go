@@ -3,7 +3,6 @@ package app
 import (
 	"errors"
 	"fmt"
-	"net"
 	"os"
 
 	"github.com/mitchellh/go-ps"
@@ -96,21 +95,6 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 				}
 				config.Modules.Edged.NodeIP = ip.String()
 				klog.Infof("Get IP address by custom interface successfully, %s: %s", config.Modules.Edged.CustomInterfaceName, config.Modules.Edged.NodeIP)
-			} else {
-				if net.ParseIP(config.Modules.Edged.NodeIP) != nil {
-					klog.Infof("Use node IP address from config: %s", config.Modules.Edged.NodeIP)
-				} else if config.Modules.Edged.NodeIP != "" {
-					klog.Errorf("invalid node IP address specified: %s", config.Modules.Edged.NodeIP)
-					os.Exit(1)
-				} else {
-					nodeIP, err := util.GetLocalIP(util.GetHostname())
-					if err != nil {
-						klog.Errorf("Failed to get Local IP address: %v", err)
-						os.Exit(1)
-					}
-					config.Modules.Edged.NodeIP = nodeIP
-					klog.Infof("Get node local IP address successfully: %s", nodeIP)
-				}
 			}
 
 			registerModules(config)
