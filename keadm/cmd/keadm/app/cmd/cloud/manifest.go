@@ -74,7 +74,7 @@ func NewManifestGenerate() *cobra.Command {
 				util.AddToolVals(f, flagVals)
 			}
 			cmd.Flags().VisitAll(checkFlags)
-			if err := AddManifestsGenerate2ToolsList(tools, flagVals, opts); err != nil {
+			if err := AddManifestsGenerate2ToolsList(tools, opts); err != nil {
 				return err
 			}
 			return ExecuteManifestsGenerate(tools)
@@ -101,8 +101,8 @@ func addManifestsGenerateJoinOtherFlags(cmd *cobra.Command, initOpts *types.Init
 		"Skip printing the contents of CRDs to stdout")
 }
 
-//AddManifestsGenerate2ToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
-func AddManifestsGenerate2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string]types.FlagData, initOpts *types.InitOptions) error {
+// AddManifestsGenerate2ToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
+func AddManifestsGenerate2ToolsList(toolList map[string]types.ToolsInstaller, initOpts *types.InitOptions) error {
 	var latestVersion string
 	var kubeedgeVersion string
 	for i := 0; i < util.RetryTimes; i++ {
@@ -141,7 +141,7 @@ func AddManifestsGenerate2ToolsList(toolList map[string]types.ToolsInstaller, fl
 	return nil
 }
 
-//ExecuteManifestsGenerate executes the installation for helm
+// ExecuteManifestsGenerate executes the installation for helm
 func ExecuteManifestsGenerate(toolList map[string]types.ToolsInstaller) error {
 	return toolList["helm"].InstallTools()
 }
