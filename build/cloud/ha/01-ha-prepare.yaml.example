@@ -32,7 +32,7 @@ rules:
     resources: ["namespaces"]
     verbs: ["get", "create", "list", "watch"]
   - apiGroups: [""]
-    resources: ["nodes", "pods/status"]
+    resources: ["nodes", "pods/status", "nodes/status"]
     verbs: ["patch"]
   - apiGroups: [""]
     resources: ["pods"]
