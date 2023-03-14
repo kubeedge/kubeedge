@@ -23,13 +23,13 @@ var (
 	deviceActionCallBack map[string]CallBack
 )
 
-//DeviceWorker deal device event
+// DeviceWorker deal device event
 type DeviceWorker struct {
 	Worker
 	Group string
 }
 
-//Start worker
+// Start worker
 func (dw DeviceWorker) Start() {
 	initDeviceActionCallBack()
 	for {
@@ -146,12 +146,12 @@ func dealDeviceAttrUpdate(context *dtcontext.DTContext, resource string, msg int
 	deviceID := resource
 
 	context.Lock(deviceID)
-	UpdateDeviceAttr(context, deviceID, updatedDevice.Attributes, dttype.BaseMessage{EventID: updatedDevice.EventID}, 0)
+	UpdateDeviceAttr(context, deviceID, updatedDevice.Attributes, dttype.BaseMessage{EventID: updatedDevice.EventID}, 1)
 	context.Unlock(deviceID)
 	return nil
 }
 
-//UpdateDeviceAttr update device attributes
+// UpdateDeviceAttr update device attributes
 func UpdateDeviceAttr(context *dtcontext.DTContext, deviceID string, attributes map[string]*dttype.MsgAttr, baseMessage dttype.BaseMessage, dealType int) (interface{}, error) {
 	klog.Infof("Begin to update attributes of the device %s", deviceID)
 	var err error
@@ -198,7 +198,7 @@ func UpdateDeviceAttr(context *dtcontext.DTContext, deviceID string, attributes 
 	return nil, nil
 }
 
-//DealMsgAttr get diff,0:update, 1:detail
+// DealMsgAttr get diff,0:update, 1:detail
 func DealMsgAttr(context *dtcontext.DTContext, deviceID string, msgAttrs map[string]*dttype.MsgAttr, dealType int) dttype.DealAttrResult {
 	device, ok := context.GetDevice(deviceID)
 	if !ok {
