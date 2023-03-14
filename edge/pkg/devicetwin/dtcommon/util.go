@@ -15,7 +15,14 @@ import (
 	pb "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1alpha1"
 )
 
-//ValidateValue validate value type
+const (
+	maxIntValue   = 4294967295
+	minIntValue   = 0
+	maxFloatValue = 65535
+	minFloatValue = 0
+)
+
+// ValidateValue validate value type
 func ValidateValue(valueType string, value string) error {
 	switch valueType {
 	case "":
@@ -24,15 +31,21 @@ func ValidateValue(valueType string, value string) error {
 	case constants.DataTypeString:
 		return nil
 	case constants.DataTypeInt, constants.DataTypeInteger:
-		_, err := strconv.ParseInt(value, 10, 64)
+		v, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
 			return errors.New("the value is not int or integer")
 		}
+		if v < minIntValue || v > maxIntValue {
+			return errors.New("the value is out of range")
+		}
 		return nil
 	case constants.DataTypeFloat:
-		_, err := strconv.ParseFloat(value, 64)
+		v, err := strconv.ParseFloat(value, 64)
 		if err != nil {
 			return errors.New("the value is not float")
+		}
+		if v < minFloatValue || v > maxFloatValue {
+			return errors.New("the value is out of range")
 		}
 		return nil
 	case constants.DataTypeBoolean:
@@ -47,16 +60,16 @@ func ValidateValue(valueType string, value string) error {
 	}
 }
 
-//ValidateTwinKey validate twin key
+// ValidateTwinKey validate twin key
 func ValidateTwinKey(key string) bool {
 	pattern := "^[a-zA-Z0-9-_.,:/@#]{1,128}$"
 	match, _ := regexp.MatchString(pattern, key)
 	return match
 }
 
-//ValidateTwinValue validate twin value
+// ValidateTwinValue validate twin value
 func ValidateTwinValue(value string) bool {
-	pattern := "^[a-zA-Z0-9-_.,:/@#]{1,512}$"
+	pattern := `^[a-zA-Z0-9/\-_.%+,=:/@#^~?&!*]{1,512}$`
 	match, _ := regexp.MatchString(pattern, value)
 	return match
 }
