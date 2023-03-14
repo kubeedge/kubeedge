@@ -464,7 +464,23 @@ func isProtocolConfigUpdated(oldTwin *v1alpha2.ProtocolConfig, newTwin *v1alpha2
 
 // isDeviceStatusUpdated checks if DeviceStatus is updated
 func isDeviceStatusUpdated(oldTwin *v1alpha2.DeviceStatus, newTwin *v1alpha2.DeviceStatus) bool {
-	return !reflect.DeepEqual(oldTwin, newTwin)
+	oldLen := len(oldTwin.Twins)
+	oldTwins := make(map[string]string)
+	for _, ot := range oldTwin.Twins {
+		oldTwins[ot.PropertyName] = ot.Desired.Value
+	}
+	for _, nt := range newTwin.Twins {
+		ot, exist := oldTwins[nt.PropertyName]
+		if exist {
+			oldLen--
+			if ot != nt.Desired.Value {
+				return true
+			}
+		} else {
+			return true
+		}
+	}
+	return oldLen != 0
 }
 
 // isDeviceDataUpdated checks if DeviceData is updated
