@@ -33,6 +33,7 @@ func NewWSClient(options Options, exOpts interface{}) *WSClient {
 		dialer: &websocket.Dialer{
 			TLSClientConfig:  options.TLSConfig,
 			HandshakeTimeout: options.HandshakeTimeout,
+			Proxy:            options.Proxy,
 		},
 	}
 }

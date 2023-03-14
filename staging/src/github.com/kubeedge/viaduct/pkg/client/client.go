@@ -4,6 +4,8 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
+	"net/http"
+	"net/url"
 	"sync"
 	"time"
 
@@ -38,6 +40,8 @@ type Options struct {
 	HandshakeTimeout time.Duration
 	// consumer for raw data
 	Consumer io.Writer
+	// Proxy specifies a function to return a proxy for a given request
+	Proxy func(*http.Request) (*url.URL, error)
 }
 
 // client including common options and extend options

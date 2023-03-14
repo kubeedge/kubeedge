@@ -78,6 +78,7 @@ func (wsc *WebSocketClient) Init() error {
 		Addr:             wsc.config.URL,
 		AutoRoute:        false,
 		ConnUse:          api.UseTypeMessage,
+		Proxy:            http.ProxyFromEnvironment,
 	}
 	exOpts := api.WSClientOption{Header: make(http.Header)}
 	exOpts.Header.Set("node_id", wsc.config.NodeID)
