@@ -2,7 +2,9 @@ package eventbus
 
 import (
 	"fmt"
+	"net/http"
 	"path"
+	"strconv"
 	"strings"
 
 	"k8s.io/klog/v2"
@@ -128,6 +130,16 @@ func (eb *EventBus) GoToTarget(data map[string]interface{}, stop chan struct{}) 
 	if !ok {
 		return nil, buildAndLogError("data body")
 	}
+	header, ok := data["header"].(http.Header)
+	if !ok {
+		return nil, buildAndLogError("header")
+	}
+	var needCallback bool
+	if callbackInHeader, err := strconv.ParseBool(header.Get("callback")); err != nil {
+		needCallback = false
+	} else {
+		needCallback = callbackInHeader
+	}
 	// use zero value if not found param
 	param, _ := data["param"].(string)
 
@@ -143,6 +155,16 @@ func (eb *EventBus) GoToTarget(data map[string]interface{}, stop chan struct{}) 
 	msg.FillBody(string(body))
 	msg.SetRoute(modules.RouterSourceEventBus, modules.UserGroup)
 	beehiveContext.Send(modules.CloudHubModuleName, *msg)
+	if stop != nil && needCallback {
+		var response *model.Message
+		listener.MessageHandlerInstance.SetCallback(messageID, func(message *model.Message) {
+			response = message
+			stop <- struct{}{}
+		})
+		<-stop
+		listener.MessageHandlerInstance.DelCallback(messageID)
+		return response, nil
+	}
 	return nil, nil
 }
 
