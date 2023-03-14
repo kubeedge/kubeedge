@@ -18,6 +18,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	metaManagerConfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
+	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
 )
 
@@ -103,7 +104,9 @@ func (m *metaManager) processInsert(message model.Message) {
 		return
 	}
 
-	imitator.DefaultV2Client.Inject(message)
+	if metaserverconfig.Config.Enable {
+		imitator.DefaultV2Client.Inject(message)
+	}
 	resKey, resType, _ := parseResource(message.GetResource())
 
 	meta := &dao.Meta{
@@ -143,7 +146,9 @@ func (m *metaManager) processUpdate(message model.Message) {
 		return
 	}
 
-	imitator.DefaultV2Client.Inject(message)
+	if metaserverconfig.Config.Enable {
+		imitator.DefaultV2Client.Inject(message)
+	}
 
 	resKey, resType, _ := parseResource(message.GetResource())
 
@@ -238,7 +243,9 @@ func (m *metaManager) processResponse(message model.Message) {
 }
 
 func (m *metaManager) processDelete(message model.Message) {
-	imitator.DefaultV2Client.Inject(message)
+	if metaserverconfig.Config.Enable {
+		imitator.DefaultV2Client.Inject(message)
+	}
 	_, resType, _ := parseResource(message.GetResource())
 
 	if resType == model.ResourceTypePod && message.GetSource() == modules.EdgedModuleName {

@@ -15,7 +15,7 @@ import (
 	pb "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1alpha1"
 )
 
-//ValidateValue validate value type
+// ValidateValue validate value type
 func ValidateValue(valueType string, value string) error {
 	switch valueType {
 	case "":
@@ -47,14 +47,14 @@ func ValidateValue(valueType string, value string) error {
 	}
 }
 
-//ValidateTwinKey validate twin key
+// ValidateTwinKey validate twin key
 func ValidateTwinKey(key string) bool {
 	pattern := "^[a-zA-Z0-9-_.,:/@#]{1,128}$"
 	match, _ := regexp.MatchString(pattern, key)
 	return match
 }
 
-//ValidateTwinValue validate twin value
+// ValidateTwinValue validate twin value
 func ValidateTwinValue(value string) bool {
 	pattern := "^[a-zA-Z0-9-_.,:/@#]{1,512}$"
 	match, _ := regexp.MatchString(pattern, value)
