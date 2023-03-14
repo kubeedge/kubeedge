@@ -17,6 +17,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/listener"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/provider"
+	"github.com/kubeedge/kubeedge/cloud/pkg/router/utils"
 	httpUtils "github.com/kubeedge/kubeedge/cloud/pkg/router/utils/http"
 	commonType "github.com/kubeedge/kubeedge/common/types"
 	v1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
@@ -49,7 +50,7 @@ func (*restFactory) GetSource(ep *v1.RuleEndpoint, sourceResource map[string]str
 		klog.Errorf("source resource attributes \"path\" does not exist")
 		return nil
 	}
-	cli := &Rest{Namespace: ep.Namespace, Path: normalizeResource(path)}
+	cli := &Rest{Namespace: ep.Namespace, Path: utils.NormalizeResource(path)}
 	if atomic.CompareAndSwapInt32(&inited, 0, 1) {
 		listener.InitHandler()
 		// guarantee that it will be executed only once
@@ -109,7 +110,7 @@ func (r *Rest) Forward(target provider.Target, data interface{}) (interface{}, e
 	res := make(map[string]interface{})
 	messageID := d["messageID"].(string)
 	res["messageID"] = messageID
-	res["param"] = strings.TrimPrefix(uri[3], r.Path)
+	res["param"] = utils.TrimPrefixByRegex(uri[3], r.Path)
 	res["data"] = d["data"]
 	res["nodeName"] = strings.Split(request.RequestURI, "/")[1]
 	res["header"] = request.Header
@@ -208,13 +209,4 @@ func (r *Rest) GoToTarget(data map[string]interface{}, stop chan struct{}) (inte
 
 	client := httpUtils.NewHTTPClient()
 	return httpUtils.SendRequest(req, client)
-}
-
-func normalizeResource(resource string) string {
-	finalResource := resource
-
-	finalResource = strings.TrimPrefix(finalResource, "/")
-	finalResource = strings.TrimSuffix(finalResource, "/")
-
-	return finalResource
 }

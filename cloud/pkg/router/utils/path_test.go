@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -81,5 +82,186 @@ func AssertTrue(t *testing.T, value bool, errMsg string) {
 func AssertStringEqual(t *testing.T, expect, actual, errMsg string) {
 	if expect != actual {
 		t.Errorf("%s, expect: \"%s\", actual: \"%s\"", errMsg, expect, actual)
+	}
+}
+
+func TestNormalizeResource(t *testing.T) {
+	tests := []struct {
+		resource string
+		want     string
+	}{
+		{
+			resource: "/a/b/",
+			want:     "a/b",
+		},
+	}
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			if got := NormalizeResource(tt.resource); got != tt.want {
+				t.Errorf("NormalizeResource() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestTrimPrefixByRegex(t *testing.T) {
+	tests := []struct {
+		reqPath  string
+		rulePath string
+		want     string
+	}{
+		{
+			reqPath:  "test/abc/123",
+			rulePath: "test/abc/123",
+			want:     "",
+		},
+		{
+			reqPath:  "test/abc/123/456",
+			rulePath: "test/abc/123",
+			want:     "456",
+		},
+		{
+			reqPath:  "test/abc/123",
+			rulePath: "test/{a}/123",
+			want:     "",
+		},
+		{
+			reqPath:  "test/abc/123/456",
+			rulePath: "test/{a}/123",
+			want:     "456",
+		},
+		{
+			reqPath:  "test/abc/123/456/789",
+			rulePath: "test/{a}/123",
+			want:     "456/789",
+		},
+	}
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			if got := TrimPrefixByRegex(tt.reqPath, tt.rulePath); got != tt.want {
+				t.Errorf("TrimPrefixByRegex() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestIsMqttTopicMatch(t *testing.T) {
+	testCases := []struct {
+		rule  string
+		topic string
+		want  bool
+	}{
+		{
+			rule:  "a",
+			topic: "a",
+			want:  true,
+		},
+		{
+			rule:  "a/b/c/d",
+			topic: "a/b/c/d",
+			want:  true,
+		},
+		{
+			rule:  "a",
+			topic: "a/b",
+			want:  false,
+		},
+		{
+			rule:  "a/b",
+			topic: "a",
+			want:  false,
+		},
+		{
+			rule:  "a/+",
+			topic: "a/b",
+			want:  true,
+		},
+		{
+			rule:  "a/+",
+			topic: "a/b/c",
+			want:  false,
+		},
+		{
+			rule:  "a/#",
+			topic: "a/b",
+			want:  true,
+		},
+		{
+			rule:  "a/#",
+			topic: "a/b/c",
+			want:  true,
+		},
+		{
+			rule:  "a/+/+",
+			topic: "a/b",
+			want:  false,
+		},
+		{
+			rule:  "a/+/+",
+			topic: "a/bb/cc",
+			want:  true,
+		},
+		{
+			rule:  "a/b/#",
+			topic: "a/b",
+			want:  true,
+		},
+		{
+			rule:  "a/b/#",
+			topic: "a/b/",
+			want:  true,
+		},
+		{
+			rule:  "a/b/#",
+			topic: "a/b/c",
+			want:  true,
+		},
+		{
+			rule:  "a/b/+",
+			topic: "a/b",
+			want:  false,
+		},
+		{
+			rule:  "a/b/+",
+			topic: "a/b/",
+			want:  true,
+		},
+		{
+			rule:  "a/b/+",
+			topic: "a/b/c",
+			want:  true,
+		},
+		{
+			rule:  "a/#",
+			topic: "a/+/c",
+			want:  true,
+		},
+		{
+			rule:  "a/+/+/c",
+			topic: "a/+/b/c",
+			want:  true,
+		},
+		{
+			rule:  "a/+/b/c",
+			topic: "a/+/+/c",
+			want:  false,
+		},
+		{
+			rule:  "a/+/c",
+			topic: "a/#",
+			want:  false,
+		},
+		{
+			rule:  "a/$b/c",
+			topic: "a/$b/c",
+			want:  true,
+		},
+	}
+	for i, tt := range testCases {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			if got := IsMqttTopicMatch(tt.rule, tt.topic); got != tt.want {
+				t.Errorf("IsMqttTopicMatch() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

@@ -10,4 +10,5 @@ const (
 	Topic              string = "topic"
 	Path               string = "path"
 	Resource           string = "resource"
+	EventBusResource   string = "bus"
 )

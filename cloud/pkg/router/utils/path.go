@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bytes"
 	"regexp"
 	"strings"
 
@@ -53,4 +54,46 @@ func RuleContains(rulePath, rule2Path string) bool {
 		}
 	}
 	return true
+}
+
+// NormalizeResource normalize resource, e.g. path /a/b/ return a/b
+func NormalizeResource(resource string) string {
+	return strings.Trim(resource, "/")
+}
+
+// TrimPrefixByRegex trim prefix reqPath by the rest rule, e.g. path /a/b/c and /a/{a} return /c
+func TrimPrefixByRegex(reqPath, rulePath string) string {
+	prefix := regexp.MustCompile(URLToURLRegex(rulePath)).FindString(reqPath)
+	return strings.TrimPrefix(reqPath, prefix)
+}
+
+// MqttToMqttRegex return mqtt regex and replace + and # in topic, e.g. a/+ return a/([^/]*?) and a/# return a[/]?(.*)
+func MqttToMqttRegex(topic string) string {
+	var buffer bytes.Buffer
+	fields := strings.Split(topic, "/")
+	for _, field := range fields {
+		switch field {
+		case "":
+			continue
+		case "+":
+			buffer.WriteString("([^/]*?)")
+		case "#":
+			buffer.Truncate(buffer.Len() - 1)
+			buffer.WriteString("[/]?(.*)")
+		default:
+			buffer.WriteString(regexp.QuoteMeta(field))
+		}
+		buffer.WriteString("/")
+	}
+	topicRegex := "^" + strings.TrimRight(buffer.String(), "/") + "$"
+	return topicRegex
+}
+
+// IsMqttTopicMatch return true if the topic match mqtt rule using regex
+func IsMqttTopicMatch(rule, topic string) bool {
+	match, err := regexp.MatchString(MqttToMqttRegex(rule), topic)
+	if err != nil {
+		klog.ErrorS(err, "fail to match mqtt topic", "rule", rule, "topic", topic)
+	}
+	return match
 }

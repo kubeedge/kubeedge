@@ -3,7 +3,6 @@ package eventbus
 import (
 	"fmt"
 	"path"
-	"strings"
 
 	"k8s.io/klog/v2"
 
@@ -137,7 +136,7 @@ func (eb *EventBus) GoToTarget(data map[string]interface{}, stop chan struct{}) 
 	if param == "" {
 		resource = resource + eb.pubTopic
 	} else {
-		resource = resource + strings.TrimSuffix(eb.pubTopic, "/") + "/" + strings.TrimPrefix(param, "/")
+		resource = path.Join(resource, eb.pubTopic, param)
 	}
 	msg.SetResourceOperation(resource, publishOperation)
 	msg.FillBody(string(body))
