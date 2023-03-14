@@ -469,6 +469,13 @@ spec:
             description: DeviceStatus reports the device state and the desired/reported
               values of twin attributes.
             properties:
+              lastOnline:
+                description: Last online time of the device
+                format: date-time
+                type: string
+              state:
+                description: State information of Device
+                type: string
               twins:
                 description: 'A list of device twins containing desired/reported desired/reported
                   values of twin properties.. Optional: A passive device won''t have

@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -15,7 +16,8 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
+	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
+	"github.com/kubeedge/kubeedge/pkg/common/dttype"
 )
 
 var (
@@ -210,7 +212,7 @@ func addDevice(context *dtcontext.DTContext, toAdd []dttype.Device, baseMessage 
 			ID:          device.ID,
 			Name:        device.Name,
 			Description: device.Description,
-			State:       device.State})
+			State:       string(device.State)})
 		for i := 1; i <= dtcommon.RetryTimes; i++ {
 			err = dtclient.AddDeviceTrans(adds, addAttr, addTwin)
 			if err == nil {
@@ -389,12 +391,14 @@ func SyncDeviceFromSqlite(context *dtcontext.DTContext, deviceID string) error {
 		return err
 	}
 
+	deviceLastOnlineTime := dttype.ConvertLastOnlineTime(dbDoc.LastOnline, deviceID)
+
 	context.DeviceList.Store(deviceID, &dttype.Device{
 		ID:          deviceID,
 		Name:        dbDoc.Name,
 		Description: dbDoc.Description,
-		State:       dbDoc.State,
-		LastOnline:  dbDoc.LastOnline,
+		State:       v1alpha2.DeviceConnectionStateType(dbDoc.State),
+		LastOnline:  metav1.Time{Time: deviceLastOnlineTime},
 		Attributes:  dttype.DeviceAttrToMsgAttr(*deviceAttr),
 		Twin:        dttype.DeviceTwinToMsgTwin(*deviceTwin)})
 

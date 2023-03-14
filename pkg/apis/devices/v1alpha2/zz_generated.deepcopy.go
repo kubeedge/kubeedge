@@ -336,6 +336,7 @@ func (in *DeviceStatus) DeepCopyInto(out *DeviceStatus) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	in.LastOnline.DeepCopyInto(&out.LastOnline)
 	return
 }
 

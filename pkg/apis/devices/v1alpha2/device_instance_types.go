@@ -172,7 +172,26 @@ type DeviceStatus struct {
 	// Optional: A passive device won't have twin properties and this list could be empty.
 	// +optional
 	Twins []Twin `json:"twins,omitempty"`
+	// State information of Device
+	// +optional
+	State DeviceConnectionStateType `json:"state,omitempty"`
+	// Last online time of the device
+	// +optional
+	LastOnline metav1.Time `json:"lastOnline,omitempty"`
 }
+
+// DeviceConnectionStateType is the Device Connection State type to tell if a device is connected to mapper.
+// +kubebuilder:validation:Enum:online;offline;ok;unknown;disconnected
+type DeviceConnectionStateType string
+
+// Device Connection State type
+const (
+	DeviceStateOnline       DeviceConnectionStateType = "online"
+	DeviceStateOffline      DeviceConnectionStateType = "offline"
+	DeviceStateOK           DeviceConnectionStateType = "ok"
+	DeviceStateUnknown      DeviceConnectionStateType = "unknown"
+	DeviceStateDisconnected DeviceConnectionStateType = "disconnected"
+)
 
 // Twin provides a logical representation of control properties (writable properties in the
 // device model). The properties can have a Desired state and a Reported state. The cloud configures

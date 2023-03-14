@@ -34,7 +34,8 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
+	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
+	"github.com/kubeedge/kubeedge/pkg/common/dttype"
 )
 
 var called bool
@@ -169,14 +170,19 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 	}
 
 	dtContexts.DeviceList.Store("DeviceC", "DeviceC")
-	deviceD := &dttype.Device{}
+	deviceD := &dttype.Device{
+		ID:    "DeviceD",
+		State: v1alpha2.DeviceConnectionStateType("online"),
+	}
 	dtContexts.DeviceList.Store("DeviceD", deviceD)
 	bytesEmptyDevUpdate, err := json.Marshal(emptyDevUpdate)
 	if err != nil {
 		t.Errorf("marshal error %v", err)
 		return
 	}
-	devUpdate := &dttype.DeviceUpdate{State: "online"}
+	devUpdate := &dttype.DeviceUpdate{
+		State: v1alpha2.DeviceConnectionStateType("online"),
+	}
 	bytesDevUpdate, err := json.Marshal(devUpdate)
 	if err != nil {
 		t.Errorf("marshal error %v", err)
@@ -221,11 +227,16 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 			wantErr:  nil,
 		},
 		{
-			name:     "dealDeviceStateUpdateTest-CorrectDeviceType",
-			context:  dtContexts,
-			resource: "DeviceD",
-			msg:      &model.Message{Content: bytesEmptyDevUpdate},
-			wantErr:  nil,
+			name:             "dealDeviceStateUpdateTest-CorrectDeviceType",
+			context:          dtContexts,
+			resource:         "DeviceD",
+			msg:              &model.Message{Content: bytesDevUpdate},
+			wantErr:          nil,
+			filterReturn:     querySeterMock,
+			updateReturnInt:  int64(1),
+			updateReturnErr:  nil,
+			queryTableReturn: querySeterMock,
+			times:            1,
 		},
 		{
 			name:             "dealDeviceStateUpdateTest-UpdatePresent",
