@@ -74,7 +74,7 @@ func (*defaultHandler) Process(message *model.Message, clientHub clients.Adapter
 	}
 
 	isResponse := isSyncResponse(message.GetParentID())
-	if isResponse {
+	if isResponse && message.GetOperation() != messagepkg.OperationDetailResult {
 		beehiveContext.SendResp(*message)
 		return nil
 	}

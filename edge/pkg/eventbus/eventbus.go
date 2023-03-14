@@ -169,6 +169,26 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 			topic := fmt.Sprintf("$hw/events/node/%s/authInfo/get/result", eventconfig.Config.NodeName)
 			payload, _ := json.Marshal(accessInfo.GetContent())
 			eb.publish(topic, payload)
+		case messagepkg.OperationDetailResult:
+			ackTopic, err := mqttBus.LoadAndDeleteCallbackTopic(accessInfo.GetID())
+			if err != nil {
+				klog.ErrorS(err, "fail to load callback topic", "message", accessInfo.GetID())
+				continue
+			}
+			var payload []byte
+			switch v := accessInfo.GetContent().(type) {
+			case []byte:
+				payload = v
+			case string:
+				payload = []byte(v)
+			default:
+				payload, err = json.Marshal(v)
+				if err != nil {
+					klog.ErrorS(err, "fail to marshal content", "message", accessInfo.String())
+					continue
+				}
+			}
+			eb.publish(ackTopic, payload)
 		default:
 			klog.Warningf("Action not found")
 		}

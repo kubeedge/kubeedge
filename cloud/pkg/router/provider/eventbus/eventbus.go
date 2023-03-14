@@ -11,6 +11,7 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/listener"
@@ -111,9 +112,11 @@ func (*EventBus) Forward(target provider.Target, data interface{}) (response int
 	resp, err := target.GoToTarget(res, nil)
 	if err != nil {
 		klog.Errorf("message is send to target failed. msgID: %s, target: %s, err:%v", message.GetID(), target.Name(), err)
+		sendAckMessageToEdge(message, err.Error())
 		return nil, err
 	}
 	klog.Infof("message is send to target successfully. msgID: %s, target: %s", message.GetID(), target.Name())
+	sendAckMessageToEdge(message, resp)
 	return resp, nil
 }
 
@@ -166,6 +169,24 @@ func (eb *EventBus) GoToTarget(data map[string]interface{}, stop chan struct{}) 
 		return response, nil
 	}
 	return nil, nil
+}
+
+func sendAckMessageToEdge(msg *model.Message, resp interface{}) {
+	if resp == nil {
+		resp = "message delivered to cloud"
+	}
+	// get node name from resource
+	nodeName, err := messagelayer.GetNodeID(*msg)
+	if err != nil {
+		resp = fmt.Sprintf("failed to get node name in message resource %s, error: %v", msg.GetResource(), err)
+	}
+	topic := "/"
+	if msgResourceList := strings.Split(msg.GetResource(), "user"); len(msgResourceList) >= 2 {
+		topic = msgResourceList[1]
+	}
+	resource := path.Join("node", nodeName, "user", topic)
+	ackMsg := model.NewMessage(msg.GetID()).BuildRouter(modules.RouterSourceEventBus, modules.UserGroup, resource, "detail_result").FillBody(resp)
+	beehiveContext.Send(modules.CloudHubModuleName, *ackMsg)
 }
 
 func buildAndLogError(key string) error {
