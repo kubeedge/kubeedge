@@ -28,6 +28,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/emicklei/go-restful"
 	"github.com/golang-jwt/jwt"
@@ -63,6 +64,8 @@ func StartHTTPServer() {
 			Certificates: []tls.Certificate{cert},
 			ClientAuth:   tls.RequestClientCert,
 		},
+		ReadTimeout:  hubconfig.Config.HTTPS.HTTPServerReadTimeout * time.Second,
+		WriteTimeout: hubconfig.Config.HTTPS.HTTPServerWriteTimeout * time.Second,
 	}
 	klog.Exit(server.ListenAndServeTLS("", ""))
 }

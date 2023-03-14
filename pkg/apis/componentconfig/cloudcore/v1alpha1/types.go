@@ -203,6 +203,10 @@ type CloudHubHTTPS struct {
 	// Port indicates the open port for HTTPS server
 	// default 10002
 	Port uint32 `json:"port,omitempty"`
+	// HTTPServerReadTimeout http server read timeout
+	HTTPServerReadTimeout time.Duration `json:"httpServerReadTimeout,omitempty"`
+	// HTTPServerWriteTimeout http server write timeout
+	HTTPServerWriteTimeout time.Duration `json:"httpServerWriteTimeout,omitempty"`
 }
 
 // EdgeController indicates the config of EdgeController module
@@ -458,6 +462,10 @@ type Router struct {
 	Address     string `json:"address,omitempty"`
 	Port        uint32 `json:"port,omitempty"`
 	RestTimeout uint32 `json:"restTimeout,omitempty"`
+	// HTTPServerReadTimeout http server read timeout
+	HTTPServerReadTimeout time.Duration `json:"httpServerReadTimeout,omitempty"`
+	// HTTPServerWriteTimeout http server write timeout
+	HTTPServerWriteTimeout time.Duration `json:"httpServerWriteTimeout,omitempty"`
 }
 
 // IptablesManager indicates the config of Iptables

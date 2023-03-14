@@ -17,6 +17,8 @@ limitations under the License.
 package v1alpha2
 
 import (
+	"time"
+
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	componentbaseconfigv1alpha1 "k8s.io/component-base/config/v1alpha1"
@@ -1001,6 +1003,10 @@ type MetaServer struct {
 	TLSCaFile         string `json:"tlsCaFile"`
 	TLSCertFile       string `json:"tlsCertFile"`
 	TLSPrivateKeyFile string `json:"tlsPrivateKeyFile"`
+	// HttpServerReadTimeout http server read timeout
+	HttpServerReadTimeout time.Duration `json:"httpServerReadTimeout,omitempty"`
+	// HttpServerWriteTimeout http server write timeout
+	HttpServerWriteTimeout time.Duration `json:"httpServerWriteTimeout,omitempty"`
 }
 
 // ServiceBus indicates the ServiceBus module config
@@ -1013,8 +1019,12 @@ type ServiceBus struct {
 	Server string `json:"server"`
 	// Port indicates port for http server
 	Port int `json:"port"`
-	// Timeout indicates timeout for servicebus receive mseeage
+	// Timeout indicates timeout for servicebus receive message
 	Timeout int `json:"timeout"`
+	// HTTPServerReadTimeout http server read timeout
+	HTTPServerReadTimeout time.Duration `json:"httpServerReadTimeout,omitempty"`
+	// HTTPServerWriteTimeout http server write timeout
+	HTTPServerWriteTimeout time.Duration `json:"httpServerWriteTimeout,omitempty"`
 }
 
 // DeviceTwin indicates the DeviceTwin module config

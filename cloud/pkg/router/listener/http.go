@@ -22,10 +22,12 @@ var (
 )
 
 type RestHandler struct {
-	restTimeout time.Duration
-	handlers    sync.Map
-	port        int
-	bindAddress string
+	restTimeout  time.Duration
+	handlers     sync.Map
+	port         int
+	bindAddress  string
+	readTimeout  time.Duration
+	writeTimeout time.Duration
 }
 
 func InitHandler() {
@@ -36,6 +38,8 @@ func InitHandler() {
 	RestHandlerInstance.restTimeout = time.Duration(timeout) * time.Second
 	RestHandlerInstance.bindAddress = routerConfig.Config.Address
 	RestHandlerInstance.port = int(routerConfig.Config.Port)
+	RestHandlerInstance.readTimeout = routerConfig.Config.HTTPServerReadTimeout * time.Second
+	RestHandlerInstance.writeTimeout = routerConfig.Config.HTTPServerWriteTimeout * time.Second
 	if RestHandlerInstance.port <= 0 {
 		RestHandlerInstance.port = 9443
 	}
@@ -47,8 +51,10 @@ func (rh *RestHandler) Serve() {
 	mux.HandleFunc("/", rh.httpHandler)
 
 	server := &http.Server{
-		Addr:    fmt.Sprintf("%s:%d", rh.bindAddress, rh.port),
-		Handler: mux,
+		Addr:         fmt.Sprintf("%s:%d", rh.bindAddress, rh.port),
+		Handler:      mux,
+		ReadTimeout:  rh.readTimeout,
+		WriteTimeout: rh.writeTimeout,
 		// TODO: add tls for router
 	}
 	klog.Infof("router server listening in %d...", rh.port)
