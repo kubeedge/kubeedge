@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	PropertyType = "propertyType"
+	PropertyType = "type"
 )
 
 // DeviceTwinUpdate the structure of device twin update.
