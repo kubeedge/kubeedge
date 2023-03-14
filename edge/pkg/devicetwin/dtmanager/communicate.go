@@ -23,17 +23,21 @@ var (
 	ActionCallBack map[string]CallBack
 )
 
+const (
+	syncMsgRespTimeout = time.Minute
+)
+
 func init() {
 	initActionCallBack()
 }
 
-//CommWorker deal app response event
+// CommWorker deal app response event
 type CommWorker struct {
 	Worker
 	Group string
 }
 
-//Start worker
+// Start worker
 func (cw CommWorker) Start() {
 	for {
 		select {
@@ -92,9 +96,11 @@ func dealSendToCloud(context *dtcontext.DTContext, resource string, msg interfac
 	if !ok {
 		return errors.New("msg not Message type")
 	}
-	beehiveContext.Send(dtcommon.HubModule, *message)
-	msgID := message.GetID()
-	context.ConfirmMap.Store(msgID, &dttype.DTMessage{Msg: message, Action: dtcommon.SendToCloud, Type: dtcommon.CommModule})
+	_, err := beehiveContext.SendSync(dtcommon.HubModule, *message, syncMsgRespTimeout)
+	if err != nil {
+		klog.ErrorS(err, "fail to send sync message to cloud", "message", message.String())
+	}
+	klog.V(2).InfoS("[CommModule] message send to cloud", "message", message.String())
 	return nil
 }
 func dealLifeCycle(context *dtcontext.DTContext, resource string, msg interface{}) error {
@@ -146,10 +152,11 @@ func detailRequest(context *dtcontext.DTContext) error {
 	}
 
 	message := context.BuildModelMessage("resource", "", "membership/detail", "get", string(getDetailJSON))
-	klog.V(2).Info("Request detail")
-	msgID := message.GetID()
-	context.ConfirmMap.Store(msgID, &dttype.DTMessage{Msg: message, Action: dtcommon.SendToCloud, Type: dtcommon.CommModule})
-	beehiveContext.Send(dtcommon.HubModule, *message)
+	_, err := beehiveContext.SendSync(dtcommon.HubModule, *message, syncMsgRespTimeout)
+	if err != nil {
+		klog.ErrorS(err, "fail to send requst detail message", "message", message.String())
+	}
+	klog.V(2).InfoS("[CommModule] request detail", "message", message.String())
 	return nil
 }
 
