@@ -58,7 +58,7 @@ NodeUpgradeJob Controller Downstream will do:
   filter out nodes that don't meet upgrade requirements(1. edge node already on the desired upgrade version. 2. not edge node,
   without label `"node-role.kubernetes.io/edge": ""` 3. edge node is in Upgrading or NotReady state 4. remove duplicated nodes)
 
-- For each compliant edge nodes, send upgrade beehive message to each edge node. Call k8s api to mark edge node unschedulable to avoid continuing to deploy applications on upgrading edge nodes. And start a Goroutine to process timeout if we don't receive edge node upgrade response, if not, will update NodeUpgradeJob status to timeout state. This operation is to deal with no responce circumstance.
+- For each compliant edge nodes, send upgrade beehive message to each edge node. Call k8s api to mark edge node unschedulable to avoid continuing to deploy applications on upgrading edge nodes. And start a Goroutine to process timeout if we don't receive edge node upgrade response, if not, will update NodeUpgradeJob status to timeout state. This operation is to deal with no response circumstance.
 
 CloudHub send upgrade request to EdgeHub of each edge node.
 
