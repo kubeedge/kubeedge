@@ -494,16 +494,18 @@ func isTwinValueDiff(twin *dttype.MsgTwin, msgTwin *dttype.MsgTwin, dealType int
 	twinValue := twin.Expected
 	msgTwinValue := msgTwin.Expected
 
+	if twinValue != nil {
+		hasTwin = true
+	}
 	if dealType == DealActual {
 		twinValue = twin.Actual
 		msgTwinValue = msgTwin.Actual
-	}
-	if twinValue != nil {
 		hasTwin = true
 	}
 	if msgTwinValue != nil {
 		hasMsgTwin = true
 	}
+
 	valueType := stringType
 	if strings.Compare(twin.Metadata.Type, dtcommon.TypeDeleted) == 0 {
 		if msgTwin.Metadata != nil {
