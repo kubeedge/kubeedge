@@ -138,10 +138,10 @@ func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
 		"Container runtime type")
 
 	cmd.Flags().StringVarP(&joinOptions.EdgeNodeName, common.EdgeNodeName, "i", joinOptions.EdgeNodeName,
-		"KubeEdge Node unique identification string, If flag not used then the command will generate a unique id on its own")
+		"KubeEdge Node unique identification string, if flag not used then the command will generate a unique id on its own")
 
 	cmd.Flags().StringVarP(&joinOptions.RemoteRuntimeEndpoint, common.RemoteRuntimeEndpoint, "p", joinOptions.RemoteRuntimeEndpoint,
-		"KubeEdge Edge Node RemoteRuntimeEndpoint string, If flag not set, it will use unix:///run/containerd/containerd.sock")
+		"KubeEdge Edge Node RemoteRuntimeEndpoint string, if flag not set, it will use unix:///run/containerd/containerd.sock")
 
 	cmd.Flags().StringVarP(&joinOptions.Token, common.Token, "t", joinOptions.Token,
 		"Used for edge to apply for the certificate")
@@ -153,13 +153,13 @@ func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
 		"Use this key to set the temp directory path for KubeEdge tarball, if not exist, download it")
 
 	cmd.Flags().StringSliceVarP(&joinOptions.Labels, common.Labels, "l", joinOptions.Labels,
-		`use this key to set the customized labels for node. you can input customized labels like key1=value1,key2=value2`)
+		`Use this key to set the customized labels for node, you can input customized labels like key1=value1,key2=value2`)
 
 	cmd.Flags().BoolVar(&joinOptions.WithMQTT, "with-mqtt", joinOptions.WithMQTT,
-		`use this key to set whether to install and start MQTT Broker by default`)
+		`Use this key to set whether to install and start MQTT Broker by default`)
 
 	cmd.Flags().StringVar(&joinOptions.ImageRepository, common.ImageRepository, joinOptions.ImageRepository,
-		`Use this key to decide which image repository to pull images from.`,
+		`Use this key to decide which image repository to pull images from`,
 	)
 }
 
