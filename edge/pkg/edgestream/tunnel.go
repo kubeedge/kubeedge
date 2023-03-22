@@ -76,6 +76,21 @@ func (s *TunnelSession) serveContainerExecConnection(m *stream.Message) error {
 	return execCon.Serve(s.Tunnel)
 }
 
+func (s *TunnelSession) serveContainerAttachConnection(m *stream.Message) error {
+	attachCon := &stream.EdgedAttachConnection{
+		ReadChan: make(chan *stream.Message, 128),
+		Stop:     make(chan struct{}, 2),
+	}
+	if err := json.Unmarshal(m.Data, attachCon); err != nil {
+		klog.Errorf("unmarshal connector data error %v", err)
+		return err
+	}
+
+	s.AddLocalConnection(m.ConnectID, attachCon)
+	klog.V(6).Infof("Get Attach Connection info: %+v", *attachCon)
+	return attachCon.Serve(s.Tunnel)
+}
+
 func (s *TunnelSession) serveMetricsConnection(m *stream.Message) error {
 	metricsCon := &stream.EdgedMetricsConnection{
 		ReadChan: make(chan *stream.Message, 128),
@@ -102,6 +117,10 @@ func (s *TunnelSession) ServeConnection(m *stream.Message) {
 		}
 	case stream.MessageTypeMetricConnect:
 		if err := s.serveMetricsConnection(m); err != nil {
+			klog.Errorf("Serve Metrics connection error %s", m.String())
+		}
+	case stream.MessageTypeAttachConnect:
+		if err := s.serveContainerAttachConnection(m); err != nil {
 			klog.Errorf("Serve Metrics connection error %s", m.String())
 		}
 	default:

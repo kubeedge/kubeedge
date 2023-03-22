@@ -8,6 +8,7 @@ const (
 const (
 	MessageTypeLogsConnect MessageType = iota
 	MessageTypeExecConnect
+	MessageTypeAttachConnect
 	MessageTypeMetricConnect
 	MessageTypeData
 	MessageTypeRemoveConnect
