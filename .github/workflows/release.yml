@@ -88,17 +88,17 @@ jobs:
     name: publish to DockerHub
     strategy:
       matrix:
-        target: [cloudcore, admission, edgesite-agent, edgesite-server, csidriver, iptablesmanager, edgemark, installation-package, controllermanager]
+        target: [cloudcore, admission, edgesite-agent, edgesite-server, csidriver, iptables-manager, edgemark, installation-package, controller-manager]
     outputs:
       hash-digest-cloudcore: ${{ steps.hash.outputs.hash-digest-cloudcore }}
       hash-digest-admission: ${{ steps.hash.outputs.hash-digest-admission }}
       hash-digest-edgesite-agent: ${{ steps.hash.outputs.hash-digest-edgesite-agent }}
       hash-digest-edgesite-server: ${{ steps.hash.outputs.hash-digest-edgesite-server }}
       hash-digest-csidriver: ${{ steps.hash.outputs.hash-digest-csidriver }}
-      hash-digest-iptablesmanager: ${{ steps.hash.outputs.hash-digest-iptablesmanager }}
+      hash-digest-iptables-manager: ${{ steps.hash.outputs.hash-digest-iptables-manager }}
       hash-digest-edgemark: ${{ steps.hash.outputs.hash-digest-edgemark }}
       hash-digest-installation-package: ${{ steps.hash.outputs.hash-digest-installation-package }}
-      hash-digest-controllermanager: ${{ steps.hash.outputs.hash-digest-controllermanager }}
+      hash-digest-controller-manager: ${{ steps.hash.outputs.hash-digest-controller-manager }}
     runs-on: ubuntu-22.04
     steps:
       - name: checkout code
@@ -141,7 +141,7 @@ jobs:
     needs: [publish-image-to-dockerhub]
     strategy:
       matrix:
-        target: [cloudcore, admission, edgesite-agent, edgesite-server, csidriver, iptablesmanager, edgemark, installation-package, controllermanager]
+        target: [cloudcore, admission, edgesite-agent, edgesite-server, csidriver, iptables-manager, edgemark, installation-package, controller-manager]
     permissions:
       actions: read # for detecting the Github Actions environment.
       id-token: write # for creating OIDC tokens for signing.

@@ -33,11 +33,11 @@ ALL_IMAGES_AND_TARGETS=(
   edgesite-agent:edgesite-agent:build/edgesite/agent-build.Dockerfile
   edgesite-server:edgesite-server:build/edgesite/server-build.Dockerfile
   csidriver:csidriver:build/csidriver/Dockerfile
-  iptablesmanager:iptables-manager:build/iptablesmanager/Dockerfile
+  iptables-manager:iptables-manager:build/iptablesmanager/Dockerfile
   edgemark:edgemark:build/edgemark/Dockerfile
   conformance:conformance:build/conformance/Dockerfile
   installation-package:installation-package:build/docker/installation-package/installation-package.dockerfile
-  controllermanager:controller-manager:build/controllermanager/Dockerfile
+  controller-manager:controller-manager:build/controllermanager/Dockerfile
 )
 
 function get_imagename_by_target() {
