@@ -60,7 +60,7 @@ spec:
         memory: 512Mi
     modules:
       cloudHub:
-        advertiseAddress:   # Causion!: Leave this entry to empty will cause CloudCore to exit abnormally once KubeEdge is enabled. 
+        advertiseAddress:   # Caution!: Leave this entry to empty will cause CloudCore to exit abnormally once KubeEdge is enabled. 
           - ""              # At least a public IP Address or an IP which can be accessed by edge nodes must be provided!           
         nodeLimit: "1000"
         websocket:

@@ -56,7 +56,7 @@ type NodeStatus struct {
 	SelectionStatusReason string `json:"selectionStatusReason,omitempty"`
 }
 
-// HealthyStatus represents the healthy status of node.
+// ReadyStatus represents the healthy status of node.
 type ReadyStatus string
 
 const (

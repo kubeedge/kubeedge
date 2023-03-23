@@ -25,7 +25,7 @@ CHECK_GIT_REMOTE=${CHECK_GIT_REMOTE:-true}
 # Useful Defaults
 ## Target github organization name
 TARGET_ORG=${TARGET_ORG:-"kubeedge"}
-## main repo uptream configs
+## main repo upstream configs
 UPSTREAM=${UPSTREAM:-"upstream"}
 UPSTREAM_HEAD=${UPSTREAM_HEAD:-"master"}
 UPSTREAM_REPO_NAME=${UPSTREAM_REPO_NAME:-"kubeedge"}
@@ -37,7 +37,6 @@ OOT_UPSTREAM_REPO_NAME=${OOT_UPSTREAM_REPO_NAME:-"beehive"}
 PATH_TO_SYNC=${PATH_TO_SYNC:-"staging/src/github.com/kubeedge/beehive"}
 # branch name for working changes
 WORKING_BRANCH_NAME=${WORKING_BRANCH_NAME:-"sync-beehive-code"}
-
 
 PROTO_HEAD="git@"
 SPLITER=":"
@@ -70,8 +69,7 @@ git remote update --prune ${UPSTREAM} ${OOT_UPSTREAM}
 printf "[INFO] creating branch %s based on %s.\n" ${WORKING_BRANCH_NAME} "${UPSTREAM}/${UPSTREAM_HEAD}"
 git checkout -b ${WORKING_BRANCH_NAME} --track "${UPSTREAM}/${UPSTREAM_HEAD}"
 
-
-function sync-code(){
+function sync-code() {
   local PTS=$1
   local target_head=$(git log -1 --pretty=format:"%H" ${OOT_UPSTREAM}/${OOT_UPSTREAM_HEAD})
 
@@ -93,7 +91,6 @@ function sync-code(){
 # Check in code with history from upstream repo
 sync-code "${PATH_TO_SYNC}"
 
-
 NEW_COMMIT=$(git write-tree)
 PARENT_A=$(git rev-parse ${WORKING_BRANCH_NAME})
 PARENT_B=$(git rev-parse ${OOT_UPSTREAM}/${OOT_UPSTREAM_HEAD})
@@ -102,10 +99,9 @@ printf "[INFO] generating merge commit %s with parents:\n" ${NEW_COMMIT}
 printf "\t%-20s\t%s\n" ${UPSTREAM} ${PARENT_A}
 printf "\t%-20s\t%s\n" ${OOT_UPSTREAM} ${PARENT_B}
 
-
 # commit subtree updates
-FINAL_COMMIT=$(echo "update in-tree ${OOT_UPSTREAM} code" |\
- git commit-tree ${NEW_COMMIT} -p ${PARENT_A} -p ${PARENT_B})
+FINAL_COMMIT=$(echo "update in-tree ${OOT_UPSTREAM} code" |
+  git commit-tree ${NEW_COMMIT} -p ${PARENT_A} -p ${PARENT_B})
 
 git reset ${FINAL_COMMIT}
 

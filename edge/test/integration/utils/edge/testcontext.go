@@ -16,12 +16,12 @@ limitations under the License.
 
 package edge
 
-// Test context struct
+// TestContext is test context struct
 type TestContext struct {
 	Cfg Config
 }
 
-// function to get the testcontext Object.
+// NewTestContext gets the TestContext Object.
 func NewTestContext(cfg Config) *TestContext {
 	return &TestContext{
 		Cfg: cfg,

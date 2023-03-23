@@ -193,7 +193,7 @@ type MembershipGetResult struct {
 	Devices []Device `json:"devices"`
 }
 
-// BuildMembershipGetResult build memebership
+// BuildMembershipGetResult build membership
 func BuildMembershipGetResult(baseMessage BaseMessage, devices []*Device) ([]byte, error) {
 	result := make([]Device, 0, len(devices))
 	for _, v := range devices {

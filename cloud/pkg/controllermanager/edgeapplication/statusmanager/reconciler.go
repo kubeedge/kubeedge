@@ -78,7 +78,7 @@ func (r *statusReconciler) sync(ctx context.Context, edgeApp *appsv1alpha1.EdgeA
 				}
 				// TODO:
 				// Currently, only deployment will be override. So, we just use the deploymentAvailable here.
-				// It a temporary strategy for convinence. When we need to support more GVK, a generic strategy
+				// It a temporary strategy for convenience. When we need to support more GVK, a generic strategy
 				// is needed.
 				newTmplInfo := &utils.TemplateInfo{Ordinal: tmplInfo.Ordinal, Template: copy}
 				if err := r.updateStatus(ctx, edgeApp, newTmplInfo, deploymentAvailable{}); err != nil {
