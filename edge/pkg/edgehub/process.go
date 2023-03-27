@@ -73,6 +73,14 @@ func (*defaultHandler) Process(message *model.Message, clientHub clients.Adapter
 		md = modules.BusGroup
 	}
 
+	// TODO: just for a temporary fix.
+	// The code related to device twin message transmission will be reconstructed
+	//  by using sendSync function instead of send function.
+	if group == messagepkg.TwinGroupName {
+		beehiveContext.SendToGroup(md, *message)
+		return nil
+	}
+
 	isResponse := isSyncResponse(message.GetParentID())
 	if isResponse {
 		beehiveContext.SendResp(*message)
