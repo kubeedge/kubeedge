@@ -121,7 +121,7 @@ func (s *TunnelSession) ServeConnection(m *stream.Message) {
 		}
 	case stream.MessageTypeAttachConnect:
 		if err := s.serveContainerAttachConnection(m); err != nil {
-			klog.Errorf("Serve Metrics connection error %s", m.String())
+			klog.Errorf("Serve Attach connection error %s", m.String())
 		}
 	default:
 		panic(fmt.Sprintf("Wrong message type %v", m.MessageType))
@@ -191,7 +191,7 @@ func (s *TunnelSession) Serve() error {
 			return fmt.Errorf("close tunnel stream connection, error:%s", string(mess.Data))
 		}
 
-		if mess.MessageType < stream.MessageTypeData {
+		if (mess.MessageType < stream.MessageTypeData) || (mess.MessageType >= stream.MessageTypeAttachConnect) {
 			go s.ServeConnection(mess)
 		}
 		s.WriteToLocalConnection(mess)

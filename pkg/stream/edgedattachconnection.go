@@ -18,10 +18,15 @@ package stream
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
+
+	"k8s.io/apimachinery/pkg/util/httpstream/spdy"
+	"k8s.io/klog/v2"
 )
 
 type EdgedAttachConnection struct {
@@ -38,7 +43,7 @@ func (ah *EdgedAttachConnection) CreateConnectMessage() (*Message, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewMessage(ah.MessID, MessageTypeExecConnect, data), nil
+	return NewMessage(ah.MessID, MessageTypeAttachConnect, data), nil
 }
 
 func (ah *EdgedAttachConnection) GetMessageID() uint64 {
@@ -68,15 +73,76 @@ func (ah *EdgedAttachConnection) CleanChannel() {
 }
 
 func (ah *EdgedAttachConnection) receiveFromCloudStream(con net.Conn, stop chan struct{}) {
-	// todo: read msg from cloudstream
+	for message := range ah.ReadChan {
+		switch message.MessageType {
+		case MessageTypeRemoveConnect:
+			klog.V(6).Infof("%s receive remove client id %v", ah.String(), message.ConnectID)
+			stop <- struct{}{}
+		case MessageTypeData:
+			_, err := con.Write(message.Data)
+			klog.V(6).Infof("%s receive attach %v data ", ah.String(), message.Data)
+			if err != nil {
+				klog.Errorf("failed to write, err: %v", err)
+			}
+		}
+	}
+	klog.V(6).Infof("%s read channel closed", ah.String())
 }
 
 func (ah *EdgedAttachConnection) write2CloudStream(tunnel SafeWriteTunneler, con net.Conn, stop chan struct{}) {
-	// todo: write response to tunnel
+	defer func() {
+		stop <- struct{}{}
+	}()
+
+	var data [256]byte
+	for {
+		n, err := con.Read(data[:])
+		if err != nil {
+			if !errors.Is(err, io.EOF) {
+				klog.Errorf("%v failed to read attach data, err:%v", ah.String(), err)
+			}
+			return
+		}
+		msg := NewMessage(ah.MessID, MessageTypeData, data[:n])
+		if err := tunnel.WriteMessage(msg); err != nil {
+			klog.Errorf("%v failed to write to tunnel, msg: %+v, err: %v", ah.String(), msg, err)
+			return
+		}
+		klog.V(6).Infof("%v write attach data %v", ah.String(), data[:n])
+	}
 }
 
 func (ah *EdgedAttachConnection) Serve(tunnel SafeWriteTunneler) error {
-	// todo: serve msg from clousstream, send req to edged and write response to tunnel
+	tripper := spdy.NewRoundTripper(nil, true, false)
+	req, err := http.NewRequest(ah.Method, ah.URL.String(), nil)
+	if err != nil {
+		return fmt.Errorf("failed to create attach request, err: %v", err)
+	}
+	req.Header = ah.Header
+	con, err := tripper.Dial(req)
+	if err != nil {
+		klog.Errorf("failed to dial, err: %v", err)
+		return err
+	}
+	defer con.Close()
+
+	go ah.receiveFromCloudStream(con, ah.Stop)
+
+	defer func() {
+		for retry := 0; retry < 3; retry++ {
+			msg := NewMessage(ah.MessID, MessageTypeRemoveConnect, nil)
+			if err := tunnel.WriteMessage(msg); err != nil {
+				klog.Errorf("%v send %s message error %v", ah, msg.MessageType, err)
+			} else {
+				break
+			}
+		}
+	}()
+
+	go ah.write2CloudStream(tunnel, con, ah.Stop)
+
+	<-ah.Stop
+	klog.V(6).Infof("receive stop signal, so stop attach scan ...")
 	return nil
 }
 

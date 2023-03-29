@@ -18,12 +18,15 @@ package cloudstream
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"net"
 
 	"github.com/emicklei/go-restful"
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/stream"
 )
 
@@ -72,13 +75,83 @@ func (ah *ContainerAttachConnection) WriteToTunnel(m *stream.Message) error {
 }
 
 func (ah *ContainerAttachConnection) SendConnection() (stream.EdgedConnection, error) {
-	// todo: new edged connection and create connect message
-	return nil, nil
+	connector := &stream.EdgedAttachConnection{
+		MessID: ah.MessageID,
+		Method: ah.r.Request.Method,
+		URL:    *ah.r.Request.URL,
+		Header: ah.r.Request.Header,
+	}
+	connector.URL.Scheme = httpScheme
+	connector.URL.Host = net.JoinHostPort(defaultServerHost, fmt.Sprintf("%v", constants.ServerPort))
+	m, err := connector.CreateConnectMessage()
+	if err != nil {
+		return nil, err
+	}
+	if err := ah.WriteToTunnel(m); err != nil {
+		klog.Errorf("%s failed to create attach connection: %s, err: %v", ah.String(), connector.String(), err)
+		return nil, err
+	}
+	return connector, nil
 }
 
 func (ah *ContainerAttachConnection) Serve() error {
-	// todo: send to connection, read response date and write to tunnel
-	return nil
+	defer func() {
+		close(ah.closeChan)
+		klog.V(6).Infof("%s stop successfully", ah.String())
+	}()
+
+	// first send connect message
+	connector, err := ah.SendConnection()
+	if err != nil {
+		klog.Errorf("%s send %s info error %v", ah.String(), stream.MessageTypeAttachConnect, err)
+		return err
+	}
+
+	sendCloseMessage := func() {
+		msg := stream.NewMessage(ah.MessageID, stream.MessageTypeRemoveConnect, nil)
+		for retry := 0; retry < 3; retry++ {
+			if err := ah.WriteToTunnel(msg); err == nil {
+				klog.V(6).Infof("%s send close message to edge successfully", ah.String())
+				return
+			}
+			klog.Warningf("%v failed send %s message to edge, err: %v", ah, msg.MessageType, err)
+		}
+		klog.Errorf("max retry count reached when send %s message to edge", msg.MessageType)
+	}
+
+	var data [256]byte
+	for {
+		select {
+		case <-ah.ctx.Done():
+			// if apiserver request end, send close message to edge
+			sendCloseMessage()
+			return nil
+		case <-ah.EdgePeerDone():
+			klog.V(6).Infof("%s find edge peer done, so stop this connection", ah.String())
+			return fmt.Errorf("%s find edge peer done, so stop this connection", ah.String())
+		default:
+		}
+		func() {
+			n, err := ah.Conn.Read(data[:])
+			if err != nil {
+				if !errors.Is(err, io.EOF) {
+					klog.Errorf("%s failed to read from client: %v", ah.String(), err)
+					return
+				}
+				klog.V(6).Infof("%s read EOF from client", ah.String())
+				sendCloseMessage()
+				return
+			}
+			if n <= 0 {
+				return
+			}
+			msg := stream.NewMessage(connector.GetMessageID(), stream.MessageTypeData, data[:n])
+			if err := ah.WriteToTunnel(msg); err != nil {
+				klog.Errorf("%s failed to write to tunnel server, err: %v", ah.String(), err)
+				return
+			}
+		}()
+	}
 }
 
 var _ APIServerConnection = &ContainerAttachConnection{}
