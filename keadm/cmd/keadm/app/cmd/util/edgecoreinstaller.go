@@ -85,7 +85,7 @@ func (ku *KubeEdgeInstTool) InstallTools() error {
 }
 
 func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
-	//This makes sure the path is created, if it already exists also it is fine
+	// This makes sure the path is created, if it already exists also it is fine
 	err := os.MkdirAll(KubeEdgeConfigDir, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("not able to create %s folder path", KubeEdgeConfigDir)
@@ -147,6 +147,6 @@ func (ku *KubeEdgeInstTool) TearDown() error {
 	ku.SetOSInterface(GetOSInterface())
 	ku.SetKubeEdgeVersion(ku.ToolVersion)
 
-	//Kill edge core process
+	// Kill edge core process
 	return ku.KillKubeEdgeBinary(KubeEdgeBinaryName)
 }

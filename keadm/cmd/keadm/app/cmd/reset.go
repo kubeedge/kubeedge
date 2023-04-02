@@ -90,7 +90,7 @@ func NewKubeEdgeReset() *cobra.Command {
 					return fmt.Errorf("aborted reset operation")
 				}
 			}
-			// 1. kill cloudcore/edgecore process.
+			// 1. Kill cloudcore/edgecore process.
 			// For edgecore, don't delete node from K8S
 			if err := TearDownKubeEdge(isEdgeNode, reset.Kubeconfig); err != nil {
 				return err
@@ -106,11 +106,11 @@ func NewKubeEdgeReset() *cobra.Command {
 				return err
 			}
 
-			// cleanup mqtt container
+			// 4. Cleanup mqtt container
 			if err := RemoveMqttContainer(reset.RuntimeType, reset.Endpoint); err != nil {
 				fmt.Printf("Failed to remove MQTT container: %v\n", err)
 			}
-			//4. TODO: clean status information
+			// 5. TODO: Clean status information
 
 			return nil
 		},

@@ -378,12 +378,12 @@ func installKubeEdge(options types.InstallOptions, version semver.Version) error
 		return fmt.Errorf("not able to create %s folder path", KubeEdgePath)
 	}
 
-	//Check if the same version exists, then skip the download and just checksum for it
-	//and if checksum failed, there will be a option to choose to continue to untar or quit.
-	//checksum available at download URL. So that both can be compared to see if
-	//proper download has happened and then only proceed further.
-	//Currently it is missing and once checksum is in place, checksum check required
-	//to be added here.
+	// Check if the same version exists, then skip the download and just checksum for it
+	// and if checksum failed, there will be a option to choose to continue to untar or quit.
+	// checksum available at download URL. So that both can be compared to see if
+	// proper download has happened and then only proceed further.
+	// Currently it is missing and once checksum is in place, checksum check required
+	// to be added here.
 	dirname := fmt.Sprintf("kubeedge-v%s-linux-%s", version, arch)
 	filename := fmt.Sprintf("kubeedge-v%s-linux-%s.tar.gz", version, arch)
 	checksumFilename := fmt.Sprintf("checksum_kubeedge-v%s-linux-%s.tar.gz.txt", version, arch)
@@ -589,7 +589,7 @@ func computeSHA512Checksum(filepath string) (string, error) {
 }
 
 func checkSum(filename, checksumFilename string, version semver.Version, tarballPath string) (bool, error) {
-	//Verify the tar with checksum
+	// Verify the tar with checksum
 	fmt.Printf("%s checksum: \n", filename)
 
 	filepath := fmt.Sprintf("%s/%s", tarballPath, filename)
@@ -630,14 +630,14 @@ func checkSum(filename, checksumFilename string, version semver.Version, tarball
 func retryDownload(filename, checksumFilename string, version semver.Version, tarballPath string) error {
 	filePath := filepath.Join(tarballPath, filename)
 	for try := 0; try < downloadRetryTimes; try++ {
-		//Download the tar from repo
+		// Download the tar from repo
 		dwnldURL := fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/v%s/%s",
 			tarballPath, KubeEdgeDownloadURL, version, filename)
 		if err := NewCommand(dwnldURL).Exec(); err != nil {
 			return err
 		}
 
-		//Verify the tar with checksum
+		// Verify the tar with checksum
 		success, err := checkSum(filename, checksumFilename, version, tarballPath)
 		if err != nil {
 			return err
@@ -646,7 +646,7 @@ func retryDownload(filename, checksumFilename string, version semver.Version, ta
 			return nil
 		}
 		fmt.Printf("Failed to verify the checksum of %s, try to download it again ... \n\n", filename)
-		//Cleanup the downloaded files
+		// Cleanup the downloaded files
 		if err = NewCommand(fmt.Sprintf("rm -f %s", filePath)).Exec(); err != nil {
 			return err
 		}
@@ -723,7 +723,7 @@ func Compress(tarName string, paths []string) error {
 			if err := tw.WriteHeader(hdr); err != nil {
 				return err
 			}
-			// if path is a dir, dont continue
+			// if path is a dir, don't continue
 			if finfo.Mode().IsDir() {
 				return nil
 			}

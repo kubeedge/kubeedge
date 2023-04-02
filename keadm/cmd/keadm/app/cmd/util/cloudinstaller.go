@@ -35,7 +35,7 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 		return err
 	}
 
-	//This makes sure the path is created, if it already exists also it is fine
+	// This makes sure the path is created, if it already exists also it is fine
 	err = os.MkdirAll(KubeEdgeConfigDir, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("not able to create %s folder path", KubeEdgeConfigDir)
