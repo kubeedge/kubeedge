@@ -13,6 +13,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	policyv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/policy/v1alpha1"
 )
@@ -102,7 +103,7 @@ func KeyFunc(name, namespace string, tr *authenticationv1.TokenRequest) string {
 }
 
 func getTokenLocally(name, namespace string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
-	resKey := KeyFunc(name, namespace, tr)
+	resKey := util.TokenRequestKeyFunc(name, namespace, tr)
 	metas, err := dao.QueryMeta("key", resKey)
 	if err != nil {
 		klog.Errorf("query meta %s failed: %v", resKey, err)

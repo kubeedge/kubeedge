@@ -16,7 +16,7 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
 	metaManagerConfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
@@ -315,6 +315,38 @@ func processDeletePodDB(message model.Message) error {
 	}
 
 	return nil
+}
+
+// KeyFunc keys should be nonconfidential and safe to log
+func KeyFunc(name, namespace string, tr *authenticationv1.TokenRequest) string {
+	var exp int64
+	if tr.Spec.ExpirationSeconds != nil {
+		exp = *tr.Spec.ExpirationSeconds
+	}
+
+	var ref authenticationv1.BoundObjectReference
+	if tr.Spec.BoundObjectRef != nil {
+		ref = *tr.Spec.BoundObjectRef
+	}
+
+	return fmt.Sprintf("%q/%q/%#v/%#v/%#v", name, namespace, tr.Spec.Audiences, exp, ref)
+}
+
+// getSpecialResourceKey get service account db key
+func getSpecialResourceKey(resType, resKey string, message model.Message) (string, error) {
+	if resType != model.ResourceTypeServiceAccountToken {
+		return resKey, nil
+	}
+	tokenReq, ok := message.GetContent().(*authenticationv1.TokenRequest)
+	if !ok {
+		return "", fmt.Errorf("failed to get resource %s name and namespace", resKey)
+	}
+	tokens := strings.Split(resKey, constants.ResourceSep)
+	if len(tokens) != 3 {
+		return "", fmt.Errorf("failed to get resource %s name and namespace", resKey)
+	}
+
+	return util.TokenRequestKeyFunc(tokens[2], tokens[0], tokenReq), nil
 }
 
 func (m *metaManager) processQuery(message model.Message) {

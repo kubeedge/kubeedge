@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	authenticationv1 "k8s.io/api/authentication/v1"
+
 	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
@@ -18,4 +20,19 @@ func ParseResourceEdge(resource string, operation string) (string, string, strin
 	} else {
 		return "", "", "", fmt.Errorf("resource: %s format incorrect, or Operation: %s is not query/response", resource, operation)
 	}
+}
+
+// TokenRequestKeyFunc keys should be nonconfidential and safe to log
+func TokenRequestKeyFunc(name, namespace string, tr *authenticationv1.TokenRequest) string {
+	var exp int64
+	if tr.Spec.ExpirationSeconds != nil {
+		exp = *tr.Spec.ExpirationSeconds
+	}
+
+	var ref authenticationv1.BoundObjectReference
+	if tr.Spec.BoundObjectRef != nil {
+		ref = *tr.Spec.BoundObjectRef
+	}
+
+	return fmt.Sprintf("%q/%q/%#v/%#v/%#v", name, namespace, tr.Spec.Audiences, exp, ref)
 }
