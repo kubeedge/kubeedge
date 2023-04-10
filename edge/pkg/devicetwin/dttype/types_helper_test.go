@@ -645,18 +645,9 @@ func TestBuildMembershipGetResult(t *testing.T) {
 // createMessageTwin() is function to create a map of MessageTwin with MetaDataType updated and deleted.
 func createMessageTwin() map[string]*MsgTwin {
 	msgTwins := make(map[string]*MsgTwin)
-	twinMetadataDeleted := MsgTwin{
-		Metadata: &TypeMetadata{
-			Type: dtcommon.TypeDeleted},
-	}
-	twinMetadataUpdated := MsgTwin{
-		Metadata: &TypeMetadata{
-			Type: "updated",
-		},
-	}
 	msgTwins["empty"] = nil
-	msgTwins[dtcommon.TypeDeleted] = &twinMetadataDeleted
-	msgTwins["updated"] = &twinMetadataUpdated
+	msgTwins[dtcommon.TypeDeleted] = generateTwinActualExpected(dtcommon.TypeDeleted, "", "")
+	msgTwins["updated"] = generateTwinActualExpected(dtcommon.TypeUpdated, "", "")
 	return msgTwins
 }
 
@@ -664,12 +655,7 @@ func createMessageTwin() map[string]*MsgTwin {
 func createDeviceTwinResultDealTypeGet(baseMessage BaseMessage) DeviceTwinResult {
 	resultDealType0Twin := make(map[string]*MsgTwin)
 	resultDealType0Twin["empty"] = nil
-	twinMetadataUpdated := MsgTwin{
-		Metadata: &TypeMetadata{
-			Type: "updated",
-		},
-	}
-	resultDealType0Twin["updated"] = &twinMetadataUpdated
+	resultDealType0Twin["updated"] = generateTwinActualExpected(dtcommon.TypeUpdated, "", "")
 	devTwinResult := DeviceTwinResult{
 		BaseMessage: baseMessage,
 		Twin:        resultDealType0Twin,
@@ -813,44 +799,12 @@ func TestUnmarshalDeviceUpdate(t *testing.T) {
 // createMessageTwinWithDiffValues() is function to create MessageTwin with actual and expected values.
 func createMessageTwinWithDiffValues(baseMessage BaseMessage) map[string]*MsgTwin {
 	msgTwins := make(map[string]*MsgTwin)
-	twinMetadataDeleted := MsgTwin{
-		Metadata: &TypeMetadata{
-			Type: dtcommon.TypeDeleted,
-		},
-	}
 	expected := "ON"
 	actual := "OFF"
-	twinActualExpected := MsgTwin{
-		Metadata: &TypeMetadata{
-			Type: "updated",
-		},
-		Expected: &TwinValue{
-			Value: &expected,
-		},
-		Actual: &TwinValue{
-			Value: &actual,
-		},
-	}
-	msgTwins[dtcommon.TypeDeleted] = &twinMetadataDeleted
-	msgTwins[dtcommon.DeviceTwinModule] = &twinActualExpected
-	twinExpected := MsgTwin{
-		Metadata: &TypeMetadata{
-			Type: "updated",
-		},
-		Expected: &TwinValue{
-			Value: &expected,
-		},
-	}
-	msgTwins["expected"] = &twinExpected
-	twinActual := MsgTwin{
-		Metadata: &TypeMetadata{
-			Type: "updated",
-		},
-		Actual: &TwinValue{
-			Value: &expected,
-		},
-	}
-	msgTwins["actual"] = &twinActual
+	msgTwins[dtcommon.TypeDeleted] = generateTwinActualExpected(dtcommon.TypeDeleted, "", "")
+	msgTwins[dtcommon.DeviceTwinModule] = generateTwinActualExpected(dtcommon.TypeUpdated, expected, actual)
+	msgTwins["expected"] = generateTwinActualExpected(dtcommon.TypeUpdated, expected, "")
+	msgTwins["actual"] = generateTwinActualExpected(dtcommon.TypeUpdated, "", expected)
 	return msgTwins
 }
 
@@ -858,18 +812,7 @@ func createMessageTwinWithDiffValues(baseMessage BaseMessage) map[string]*MsgTwi
 func createMessageTwinWithSameValues() map[string]*MsgTwin {
 	value := "ON"
 	msgTwin := make(map[string]*MsgTwin)
-	twins := MsgTwin{
-		Metadata: &TypeMetadata{
-			Type: "updated",
-		},
-		Actual: &TwinValue{
-			Value: &value,
-		},
-		Expected: &TwinValue{
-			Value: &value,
-		},
-	}
-	msgTwin["twins"] = &twins
+	msgTwin["twins"] = generateTwinActualExpected(dtcommon.TypeUpdated, value, value)
 	return msgTwin
 }
 
@@ -878,51 +821,11 @@ func createMessageTwinAndDeltaWithDiffValues() (map[string]*MsgTwin, map[string]
 	delta := make(map[string]string)
 	expected := "ON"
 	actual := "OFF"
-	twinActualExpected := MsgTwin{
-		Metadata: &TypeMetadata{
-			Type: "updated",
-		},
-		Expected: &TwinValue{
-			Value: &expected,
-		},
-		Actual: &TwinValue{
-			Value: &actual,
-		},
-	}
-	twinExpected := MsgTwin{
-		Metadata: &TypeMetadata{
-			Type: "updated",
-		},
-		Expected: &TwinValue{
-			Value: &expected,
-		},
-	}
-	delta["twin"] = *twinActualExpected.Expected.Value
-	delta["expected"] = *twinExpected.Expected.Value
+	delta["twin"] = expected
+	delta["expected"] = expected
 	resultTwin := make(map[string]*MsgTwin)
-	resultTwin["twin"] = &MsgTwin{
-		Metadata: &TypeMetadata{
-			Type: "updated",
-		},
-		Expected: &TwinValue{
-			Value: &expected,
-		},
-		Actual: &TwinValue{
-			Value: &actual,
-		},
-		ActualVersion:   nil,
-		ExpectedVersion: nil,
-	}
-	resultTwin["expected"] = &MsgTwin{
-		Metadata: &TypeMetadata{
-			Type: "updated",
-		},
-		Expected: &TwinValue{
-			Value: &expected,
-		},
-		ActualVersion:   nil,
-		ExpectedVersion: nil,
-	}
+	resultTwin["twin"] = generateTwinActualExpected(dtcommon.TypeUpdated, expected, actual)
+	resultTwin["expected"] = generateTwinActualExpected(dtcommon.TypeUpdated, expected, "")
 	return resultTwin, delta
 }
 
@@ -931,19 +834,7 @@ func createMessageTwinAndDeltaWithSameValues() (map[string]*MsgTwin, map[string]
 	value := "ON"
 	deltas := make(map[string]string)
 	resultTwins := make(map[string]*MsgTwin)
-	resultTwins["twins"] = &MsgTwin{
-		Metadata: &TypeMetadata{
-			Type: "updated",
-		},
-		Actual: &TwinValue{
-			Value: &value,
-		},
-		Expected: &TwinValue{
-			Value: &value,
-		},
-		ActualVersion:   nil,
-		ExpectedVersion: nil,
-	}
+	resultTwins["twins"] = generateTwinActualExpected(dtcommon.TypeUpdated, value, value)
 	return resultTwins, deltas
 }
 
@@ -996,16 +887,8 @@ func TestBuildDeviceTwinDelta(t *testing.T) {
 func TestBuildDeviceTwinDocument(t *testing.T) {
 	twinDoc := make(map[string]*TwinDoc)
 	doc := TwinDoc{
-		LastState: &MsgTwin{
-			Metadata: &TypeMetadata{
-				Type: "updated",
-			},
-		},
-		CurrentState: &MsgTwin{
-			Metadata: &TypeMetadata{
-				Type: dtcommon.TypeDeleted,
-			},
-		},
+		LastState:    generateTwinActualExpected(dtcommon.TypeUpdated, "", ""),
+		CurrentState: generateTwinActualExpected(dtcommon.TypeDeleted, "", ""),
 	}
 	twinDoc["SensorTag"] = &doc
 	timeStamp := time.Now().UnixNano() / 1e6
@@ -1042,5 +925,19 @@ func TestBuildDeviceTwinDocument(t *testing.T) {
 				t.Errorf("BuildDeviceTwinDocument() gotBool = %v, want %v", gotBool, test.wantBool)
 			}
 		})
+	}
+}
+
+func generateTwinActualExpected(t, expected, actual string) *MsgTwin {
+	return &MsgTwin{
+		Metadata: &TypeMetadata{
+			Type: t,
+		},
+		Expected: &TwinValue{
+			Value: &expected,
+		},
+		Actual: &TwinValue{
+			Value: &actual,
+		},
 	}
 }

@@ -29,12 +29,10 @@ import (
 	"github.com/kubeedge/beehive/pkg/common"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/mocks/beego"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
+	"github.com/kubeedge/kubeedge/pkg/testtools"
 )
 
 var called bool
@@ -48,38 +46,14 @@ func testAction(context *dtcontext.DTContext, resource string, msg interface{}) 
 // TestDeviceStartAction is function to test Start() when value is passed in ReceiverChan.
 func TestDeviceStartAction(t *testing.T) {
 	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
-	dtContextStateConnected, _ := dtcontext.InitDTContext()
-	dtContextStateConnected.State = dtcommon.Connected
 	content := dttype.DeviceUpdate{}
 	bytes, _ := json.Marshal(content)
 	msg := model.Message{Content: bytes}
 
-	receiveChanActionPresent := make(chan interface{}, 1)
-	receiveChanActionPresent <- &dttype.DTMessage{
-		Action:   "testAction",
-		Identity: "identity",
-		Msg:      &msg,
-	}
+	receiveChanActionNotPresent := GenerateReceiveChanAction(Action, Identity, Message, Msg)
 
-	receiveChanActionNotPresent := make(chan interface{}, 1)
-	receiveChanActionNotPresent <- &dttype.DTMessage{
-		Action:   "action",
-		Identity: "identity",
-		Msg: &model.Message{
-			Content: "msg",
-		},
-	}
-	tests := []struct {
-		name   string
-		Worker Worker
-	}{
-		{
-			name: "StartTest-ActionNotPresentInActionCallback",
-			Worker: Worker{
-				ReceiverChan: receiveChanActionNotPresent,
-				DTContexts:   dtContextStateConnected,
-			},
-		},
+	tests := []CaseWorkerStr{
+		GenerateStartActionCase(ActionNotPresent, receiveChanActionNotPresent),
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -89,10 +63,10 @@ func TestDeviceStartAction(t *testing.T) {
 			go dw.Start()
 			time.Sleep(1 * time.Millisecond)
 			//Adding a dummy function to callback to ensure Start is successful.
-			deviceActionCallBack["testAction"] = testAction
+			deviceActionCallBack[TestAction] = testAction
 			dw.ReceiverChan <- &dttype.DTMessage{
-				Action:   "testAction",
-				Identity: "identity",
+				Action:   TestAction,
+				Identity: Identity,
 				Msg:      &msg,
 			}
 			time.Sleep(1 * time.Millisecond)
@@ -105,33 +79,13 @@ func TestDeviceStartAction(t *testing.T) {
 
 // TestDeviceHeartBeat is function to test Start() when value is passed in HeartBeatChan.
 func TestDeviceHeartBeat(t *testing.T) {
-	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
-	dtContexts, _ := dtcontext.InitDTContext()
 	heartChanStop := make(chan interface{}, 1)
 	heartChanPing := make(chan interface{}, 1)
 	heartChanStop <- "stop"
 	heartChanPing <- "ping"
-	tests := []struct {
-		name   string
-		Worker Worker
-		Group  string
-	}{
-		{
-			name: "StartTest-PingInHeartBeatChannel",
-			Worker: Worker{
-				HeartBeatChan: heartChanPing,
-				DTContexts:    dtContexts,
-			},
-			Group: "group",
-		},
-		{
-			name: "StartTest-StopInHeartBeatChannel",
-			Worker: Worker{
-				HeartBeatChan: heartChanStop,
-				DTContexts:    dtContexts,
-			},
-			Group: "group",
-		},
+	tests := []CaseHeartBeatWorkerStr{
+		GenerateHeartBeatCase(PingHeartBeat, Group, heartChanPing),
+		GenerateHeartBeatCase(StopHeartBeat, Group, heartChanStop),
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -152,15 +106,9 @@ func TestDeviceHeartBeat(t *testing.T) {
 }
 
 func TestDealDeviceStateUpdate(t *testing.T) {
-	var ormerMock *beego.MockOrmer
-	var querySeterMock *beego.MockQuerySeter
+	ormerMock, querySeterMock := testtools.InitOrmerMock(t)
 	var emptyDevUpdate dttype.DeviceUpdate
 	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-	ormerMock = beego.NewMockOrmer(mockCtrl)
-	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
-	dbm.DBAccess = ormerMock
 
 	dtContexts, err := dtcontext.InitDTContext()
 	if err != nil {
@@ -298,17 +246,8 @@ func TestDealUpdateDeviceAttr(t *testing.T) {
 }
 
 func TestUpdateDeviceAttr(t *testing.T) {
-	var ormerMock *beego.MockOrmer
-	var querySeterMock *beego.MockQuerySeter
 	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-	ormerMock = beego.NewMockOrmer(mockCtrl)
-	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
-	dbm.DBAccess = ormerMock
-	dbm.DefaultOrmFunc = func() orm.Ormer {
-		return ormerMock
-	}
+	ormerMock, querySeterMock := testtools.InitOrmerMock(t)
 
 	dtContexts, _ := dtcontext.InitDTContext()
 	dtContexts.DeviceList.Store("EmptyDevice", "Device")
@@ -316,16 +255,7 @@ func TestUpdateDeviceAttr(t *testing.T) {
 	devA := &dttype.Device{ID: "DeviceA"}
 	dtContexts.DeviceList.Store("DeviceA", devA)
 
-	messageAttributes := make(map[string]*dttype.MsgAttr)
-	optional := true
-	msgattr := &dttype.MsgAttr{
-		Value:    "ON",
-		Optional: &optional,
-		Metadata: &dttype.TypeMetadata{
-			Type: "device",
-		},
-	}
-	messageAttributes["DeviceA"] = msgattr
+	messageAttributes := generateMessageAttributes()
 	baseMessage := dttype.BuildBaseMessage()
 
 	tests := []struct {

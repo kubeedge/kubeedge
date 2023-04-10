@@ -17,7 +17,6 @@ limitations under the License.
 package dtcontext
 
 import (
-	"encoding/json"
 	"errors"
 	"reflect"
 	"sync"
@@ -27,6 +26,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
+	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/testutil"
 )
 
 //TestCommTo is function to test CommTo().
@@ -327,19 +327,7 @@ func TestGetDevice(t *testing.T) {
 
 //Function TestSend is function to test Send().
 func TestSend(t *testing.T) {
-	payload := dttype.MembershipUpdate{
-		AddDevices: []dttype.Device{
-			{
-				ID:    "DeviceA",
-				Name:  "Router",
-				State: "unknown",
-			},
-		},
-	}
-	content, err := json.Marshal(payload)
-	if err != nil {
-		t.Errorf("Got error on marshalling: %v", err)
-	}
+	content := testutil.GenerateAddDevicePalyloadMsg(t)
 	commChan := make(map[string]chan interface{})
 	receiveCh := make(chan interface{}, 1)
 	commChan[dtcommon.TwinModule] = receiveCh
@@ -386,19 +374,7 @@ func TestSend(t *testing.T) {
 //TestBuildModelMessage is to test BuildModelMessage().
 func TestBuildModelMessage(t *testing.T) {
 	dtc := &DTContext{}
-	payload := dttype.MembershipUpdate{
-		AddDevices: []dttype.Device{
-			{
-				ID:    "DeviceA",
-				Name:  "Router",
-				State: "unknown",
-			},
-		},
-	}
-	content, err := json.Marshal(payload)
-	if err != nil {
-		t.Errorf("Error on Marshalling: %v", err)
-	}
+	content := testutil.GenerateAddDevicePalyloadMsg(t)
 	tests := []struct {
 		name      string
 		group     string

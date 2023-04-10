@@ -17,48 +17,18 @@ limitations under the License.
 package dtclient
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/astaxie/beego/orm"
 	"github.com/golang/mock/gomock"
 
-	"github.com/kubeedge/kubeedge/edge/mocks/beego"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
+	"github.com/kubeedge/kubeedge/pkg/testtools"
 )
-
-// errFailedDBOperation is common DB operation fail error
-var errFailedDBOperation = errors.New("Failed DB Operation")
 
 // TestSaveDevice is used to test SaveDevice
 func TestSaveDevice(t *testing.T) {
-	// ormerMock is mocked Ormer implementation
-	var ormerMock *beego.MockOrmer
-
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-	ormerMock = beego.NewMockOrmer(mockCtrl)
-	dbm.DBAccess = ormerMock
-
-	cases := []struct {
-		// name is name of the testcase
-		name string
-		// returnInt is first return of mock interface ormerMock
-		returnInt int64
-		// returnErr is second return of mock interface ormerMock which is also expected error
-		returnErr error
-	}{{
-		// Success Case
-		name:      "SuccessCase",
-		returnInt: int64(1),
-		returnErr: nil,
-	}, {
-		// Failure Case
-		name:      "FailureCase",
-		returnInt: int64(1),
-		returnErr: errFailedDBOperation,
-	},
-	}
+	ormerMock, cases := GetCasesSave(t)
 
 	// run the test cases
 	for _, test := range cases {
@@ -74,44 +44,7 @@ func TestSaveDevice(t *testing.T) {
 
 // TestDeleteDeviceByID is function to test DeleteDeviceByID
 func TestDeleteDeviceByID(t *testing.T) {
-	// ormerMock is mocked Ormer implementation
-	var ormerMock *beego.MockOrmer
-	// querySeterMock is mocked QuerySeter implementation
-	var querySeterMock *beego.MockQuerySeter
-
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-	ormerMock = beego.NewMockOrmer(mockCtrl)
-	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
-	dbm.DBAccess = ormerMock
-
-	cases := []struct {
-		// name is name of the testcase
-		name string
-		// filterReturn is the return of mock interface querySeterMock's filter function
-		filterReturn orm.QuerySeter
-		// deleteReturnInt is the first return of mock interface querySeterMock's delete function
-		deleteReturnInt int64
-		// deleteReturnErr is the second return of mock interface querySeterMocks's delete function also expected error
-		deleteReturnErr error
-		// queryTableReturn is the return of mock interface ormerMock's QueryTable function
-		queryTableReturn orm.QuerySeter
-	}{{
-		// Success Case
-		name:             "SuccessCase",
-		filterReturn:     querySeterMock,
-		deleteReturnInt:  int64(1),
-		deleteReturnErr:  nil,
-		queryTableReturn: querySeterMock,
-	}, {
-		// Failure Case
-		name:             "FailureCase",
-		filterReturn:     querySeterMock,
-		deleteReturnInt:  int64(0),
-		deleteReturnErr:  errFailedDBOperation,
-		queryTableReturn: querySeterMock,
-	},
-	}
+	ormerMock, querySeterMock, cases := GetCasesDelete(t)
 
 	// run the test cases
 	for _, test := range cases {
@@ -129,44 +62,7 @@ func TestDeleteDeviceByID(t *testing.T) {
 
 // TestUpdateDeviceField is function to test UpdateDeviceField
 func TestUpdateDeviceField(t *testing.T) {
-	// ormerMock is mocked Ormer implementation
-	var ormerMock *beego.MockOrmer
-	// querySeterMock is mocked QuerySeter implementation
-	var querySeterMock *beego.MockQuerySeter
-
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-	ormerMock = beego.NewMockOrmer(mockCtrl)
-	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
-	dbm.DBAccess = ormerMock
-
-	cases := []struct {
-		// name is name of the testcase
-		name string
-		// filterReturn is the return of mock interface querySeterMock's filter function
-		filterReturn orm.QuerySeter
-		// updateReturnInt is the first return of mock interface querySeterMock's update function
-		updateReturnInt int64
-		// updateReturnErr is the second return of mock interface querySeterMocks's update function also expected error
-		updateReturnErr error
-		// queryTableReturn is the return of mock interface ormerMock's QueryTable function
-		queryTableReturn orm.QuerySeter
-	}{{
-		// Success Case
-		name:             "SuccessCase",
-		filterReturn:     querySeterMock,
-		updateReturnInt:  int64(1),
-		updateReturnErr:  nil,
-		queryTableReturn: querySeterMock,
-	}, {
-		// Failure Case
-		name:             "FailureCase",
-		filterReturn:     querySeterMock,
-		updateReturnInt:  int64(0),
-		updateReturnErr:  errFailedDBOperation,
-		queryTableReturn: querySeterMock,
-	},
-	}
+	ormerMock, querySeterMock, cases := GetCasesUpdate(t)
 
 	// run the test cases
 	for _, test := range cases {
@@ -184,44 +80,7 @@ func TestUpdateDeviceField(t *testing.T) {
 
 // TestUpdateDeviceFields is function to test UpdateDeviceFields
 func TestUpdateDeviceFields(t *testing.T) {
-	// ormerMock is mocked Ormer implementation
-	var ormerMock *beego.MockOrmer
-	// querySeterMock is mocked QuerySeter implementation
-	var querySeterMock *beego.MockQuerySeter
-
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-	ormerMock = beego.NewMockOrmer(mockCtrl)
-	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
-	dbm.DBAccess = ormerMock
-
-	cases := []struct {
-		// name is name of the testcase
-		name string
-		// filterReturn is the return of mock interface querySeterMock's filter function
-		filterReturn orm.QuerySeter
-		// updateReturnInt is the first return of mock interface querySeterMock's update function
-		updateReturnInt int64
-		// updateReturnErr is the second return of mock interface querySeterMocks's update function also expected error
-		updateReturnErr error
-		// queryTableReturn is the return of mock interface ormerMock's QueryTable function
-		queryTableReturn orm.QuerySeter
-	}{{
-		// Success Case
-		name:             "SuccessCase",
-		filterReturn:     querySeterMock,
-		updateReturnInt:  int64(1),
-		updateReturnErr:  nil,
-		queryTableReturn: querySeterMock,
-	}, {
-		// Failure Case
-		name:             "FailureCase",
-		filterReturn:     querySeterMock,
-		updateReturnInt:  int64(0),
-		updateReturnErr:  errFailedDBOperation,
-		queryTableReturn: querySeterMock,
-	},
-	}
+	ormerMock, querySeterMock, cases := GetCasesUpdate(t)
 
 	// run the test cases
 	for _, test := range cases {
@@ -239,44 +98,7 @@ func TestUpdateDeviceFields(t *testing.T) {
 
 // TestQueryDevice is function to test QueryDevice
 func TestQueryDevice(t *testing.T) {
-	// ormerMock is mocked Ormer implementation
-	var ormerMock *beego.MockOrmer
-	// querySeterMock is mocked QuerySeter implementation
-	var querySeterMock *beego.MockQuerySeter
-
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-	ormerMock = beego.NewMockOrmer(mockCtrl)
-	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
-	dbm.DBAccess = ormerMock
-
-	cases := []struct {
-		// name is name of the testcase
-		name string
-		// filterReturn is the return of mock interface querySeterMock's filter function
-		filterReturn orm.QuerySeter
-		// allReturnInt is the first return of mock interface querySeterMock's all function
-		allReturnInt int64
-		// allReturnErr is the second return of mock interface querySeterMocks's all function also expected error
-		allReturnErr error
-		// queryTableReturn is the return of mock interface ormerMock's QueryTable function
-		queryTableReturn orm.QuerySeter
-	}{{
-		// Success Case
-		name:             "SuccessCase",
-		filterReturn:     querySeterMock,
-		allReturnInt:     int64(1),
-		allReturnErr:     nil,
-		queryTableReturn: querySeterMock,
-	}, {
-		// Failure Case
-		name:             "FailureCase",
-		filterReturn:     querySeterMock,
-		allReturnInt:     int64(0),
-		allReturnErr:     errFailedDBOperation,
-		queryTableReturn: querySeterMock,
-	},
-	}
+	ormerMock, querySeterMock, cases := GetCasesQuery(t)
 
 	// fakeDevice is used to set the argument of All function
 	fakeDevice := new([]Device)
@@ -307,44 +129,7 @@ func TestQueryDevice(t *testing.T) {
 
 // TestQueryDeviceAll is function to test QueryDeviceAll
 func TestQueryDeviceAll(t *testing.T) {
-	// ormerMock is mocked Ormer implementation
-	var ormerMock *beego.MockOrmer
-	// querySeterMock is mocked QuerySeter implementation
-	var querySeterMock *beego.MockQuerySeter
-
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-	ormerMock = beego.NewMockOrmer(mockCtrl)
-	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
-	dbm.DBAccess = ormerMock
-
-	cases := []struct {
-		// name is name of the testcase
-		name string
-		// filterReturn is the return of mock interface querySeterMock's filter function
-		filterReturn orm.QuerySeter
-		// allReturnInt is the first return of mock interface querySeterMock's all function
-		allReturnInt int64
-		// allReturnErr is the second return of mock interface querySeterMocks's all function also expected error
-		allReturnErr error
-		// queryTableReturn is the return of mock interface ormerMock's QueryTable function
-		queryTableReturn orm.QuerySeter
-	}{{
-		// Success Case
-		name:             "SuccessCase",
-		filterReturn:     querySeterMock,
-		allReturnInt:     int64(1),
-		allReturnErr:     nil,
-		queryTableReturn: querySeterMock,
-	}, {
-		// Failure Case
-		name:             "FailureCase",
-		filterReturn:     querySeterMock,
-		allReturnInt:     int64(0),
-		allReturnErr:     errFailedDBOperation,
-		queryTableReturn: querySeterMock,
-	},
-	}
+	ormerMock, querySeterMock, cases := GetCasesQuery(t)
 
 	// fakeDevice is used to set the argument of All function
 	fakeDevice := new([]Device)
@@ -374,44 +159,7 @@ func TestQueryDeviceAll(t *testing.T) {
 
 // TestUpdateDeviceMulti is function to test UpdateDeviceMulti
 func TestUpdateDeviceMulti(t *testing.T) {
-	// ormerMock is mocked Ormer implementation
-	var ormerMock *beego.MockOrmer
-	// querySeterMock is mocked QuerySeter implementation
-	var querySeterMock *beego.MockQuerySeter
-
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-	ormerMock = beego.NewMockOrmer(mockCtrl)
-	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
-	dbm.DBAccess = ormerMock
-
-	cases := []struct {
-		// name is name of the testcase
-		name string
-		// filterReturn is the return of mock interface querySeterMock's filter function
-		filterReturn orm.QuerySeter
-		// updateReturnInt is the first return of mock interface querySeterMock's update function
-		updateReturnInt int64
-		// updateReturnErr is the second return of mock interface querySeterMocks's update function also expected error
-		updateReturnErr error
-		// queryTableReturn is the return of mock interface ormerMock's QueryTable function
-		queryTableReturn orm.QuerySeter
-	}{{
-		// Success Case
-		name:             "SuccessCase",
-		filterReturn:     querySeterMock,
-		updateReturnInt:  int64(1),
-		updateReturnErr:  nil,
-		queryTableReturn: querySeterMock,
-	}, {
-		// Failure Case
-		name:             "FailureCase",
-		filterReturn:     querySeterMock,
-		updateReturnInt:  int64(0),
-		updateReturnErr:  errFailedDBOperation,
-		queryTableReturn: querySeterMock,
-	},
-	}
+	ormerMock, querySeterMock, cases := GetCasesUpdate(t)
 
 	// updateDevice is argument to UpdateDeviceMulti function
 	updateDevice := make([]DeviceUpdate, 0)
@@ -433,16 +181,7 @@ func TestUpdateDeviceMulti(t *testing.T) {
 
 // TestAddDeviceTrans is function to test AddDeviceTrans
 func TestAddDeviceTrans(t *testing.T) {
-	// ormerMock is mocked Ormer implementation
-	var ormerMock *beego.MockOrmer
-
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-	ormerMock = beego.NewMockOrmer(mockCtrl)
-	dbm.DBAccess = ormerMock
-	dbm.DefaultOrmFunc = func() orm.Ormer {
-		return ormerMock
-	}
+	ormerMock, _ := testtools.InitOrmerMock(t)
 
 	cases := []struct {
 		// name is name of the testcase
@@ -552,16 +291,7 @@ func TestAddDeviceTrans(t *testing.T) {
 
 // TestDeleteDeviceTrans is function to test DeleteDeviceTrans
 func TestDeleteDeviceTrans(t *testing.T) {
-	// ormerMock is mocked Ormer implementation
-	var ormerMock *beego.MockOrmer
-	// querySeterMock is mocked QuerySeter implementation
-	var querySeterMock *beego.MockQuerySeter
-
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-	ormerMock = beego.NewMockOrmer(mockCtrl)
-	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
-	dbm.DBAccess = ormerMock
+	ormerMock, querySeterMock := testtools.InitOrmerMock(t)
 
 	cases := []struct {
 		// name is name of the testcase
