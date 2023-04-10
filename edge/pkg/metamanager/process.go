@@ -104,7 +104,8 @@ func requireRemoteQuery(resType string) bool {
 		resType == constants.ResourceTypeVolumeAttachment ||
 		resType == model.ResourceTypeNode ||
 		resType == model.ResourceTypeServiceAccountToken ||
-		resType == model.ResourceTypeLease
+		resType == model.ResourceTypeLease ||
+		resType == model.ResourceTypeCSR
 }
 
 func msgDebugInfo(message *model.Message) string {
@@ -315,21 +316,6 @@ func processDeletePodDB(message model.Message) error {
 	}
 
 	return nil
-}
-
-// KeyFunc keys should be nonconfidential and safe to log
-func KeyFunc(name, namespace string, tr *authenticationv1.TokenRequest) string {
-	var exp int64
-	if tr.Spec.ExpirationSeconds != nil {
-		exp = *tr.Spec.ExpirationSeconds
-	}
-
-	var ref authenticationv1.BoundObjectReference
-	if tr.Spec.BoundObjectRef != nil {
-		ref = *tr.Spec.BoundObjectRef
-	}
-
-	return fmt.Sprintf("%q/%q/%#v/%#v/%#v", name, namespace, tr.Spec.Audiences, exp, ref)
 }
 
 // getSpecialResourceKey get service account db key

@@ -59,6 +59,9 @@ function uninstall_kubeedge {
 
   # delete data
   rm -rf /tmp/etc/kubeedge /tmp/var/lib/kubeedge
+
+  # delete metaserver cert
+  rm -rf /var/lib/pki/metaserver
 }
 
 # clean up
@@ -153,7 +156,7 @@ function start_edgecore {
   ${EDGE_BIN} --defaultconfig >  ${EDGE_CONFIGFILE}
 
   sed -i '/edgeStream:/{n;s/false/true/;}' ${EDGE_CONFIGFILE}
-  sed -i '/metaServer:/{n;s/false/true/;}' ${EDGE_CONFIGFILE}
+  sed -i '/metaServer:/{n;N;s/false/true/;}' ${EDGE_CONFIGFILE}
 
   if [[ "${PROTOCOL}" = "QUIC" ]]; then
     sed -i '/quic:/{n;s/false/true/;}' ${EDGE_CONFIGFILE}
