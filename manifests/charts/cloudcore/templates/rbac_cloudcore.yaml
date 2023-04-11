@@ -40,6 +40,16 @@ rules:
 - apiGroups: ["operations.kubeedge.io"]
   resources: ["nodeupgradejobs", "nodeupgradejobs/status"]
   verbs: ["get", "list", "watch", "update", "patch"]
+- apiGroups: ["certificates.k8s.io"]
+  resources: ["certificatesigningrequests"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["certificates.k8s.io"]
+  resources: ["certificatesigningrequests/approval"]
+  verbs: ["update"]
+- apiGroups: ["certificates.k8s.io"]
+  resources: ["signers"]
+  resourceNames: ["kubernetes.io/kubelet-serving"]
+  verbs: ["approve"]
 
 ---
 apiVersion: v1
