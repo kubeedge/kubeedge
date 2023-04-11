@@ -19,7 +19,7 @@ package dmiserver
 import (
 	"time"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/types"
+	"github.com/kubeedge/kubeedge/pkg/common/dttype"
 )
 
 const (
@@ -28,8 +28,8 @@ const (
 
 // DeviceTwinUpdate the structure of device twin update.
 type DeviceTwinUpdate struct {
-	types.BaseMessage
-	Twin map[string]*types.MsgTwin `json:"twin"`
+	dttype.BaseMessage
+	Twin map[string]*dttype.MsgTwin `json:"twin"`
 }
 
 // getTimestamp get current timestamp.

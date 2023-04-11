@@ -34,7 +34,6 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
 	deviceconst "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
-	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/types"
 	"github.com/kubeedge/kubeedge/common/constants"
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
@@ -43,6 +42,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
 	pb "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/common/dttype"
 )
 
 const (
@@ -170,10 +170,10 @@ func CreateMessageTwinUpdate(name, valueType, value string) ([]byte, error) {
 	var updateMsg DeviceTwinUpdate
 
 	updateMsg.BaseMessage.Timestamp = getTimestamp()
-	updateMsg.Twin = map[string]*types.MsgTwin{}
-	updateMsg.Twin[name] = &types.MsgTwin{}
-	updateMsg.Twin[name].Actual = &types.TwinValue{Value: &value}
-	updateMsg.Twin[name].Metadata = &types.TypeMetadata{Type: valueType}
+	updateMsg.Twin = map[string]*dttype.MsgTwin{}
+	updateMsg.Twin[name] = &dttype.MsgTwin{}
+	updateMsg.Twin[name].Actual = &dttype.TwinValue{Value: &value}
+	updateMsg.Twin[name].Metadata = &dttype.TypeMetadata{Type: valueType}
 
 	msg, err := json.Marshal(updateMsg)
 	return msg, err

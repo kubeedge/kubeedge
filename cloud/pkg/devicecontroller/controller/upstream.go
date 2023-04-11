@@ -30,10 +30,10 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
-	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/types"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
 	crdClientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
+	"github.com/kubeedge/kubeedge/pkg/common/dttype"
 )
 
 // DeviceStatus is structure to patch device status
@@ -190,13 +190,13 @@ func (uc *UpstreamController) updateDeviceStatus() {
 	}
 }
 
-func (uc *UpstreamController) unmarshalDeviceStatusMessage(msg model.Message) (*types.DeviceTwinUpdate, error) {
+func (uc *UpstreamController) unmarshalDeviceStatusMessage(msg model.Message) (*dttype.DeviceTwinUpdate, error) {
 	contentData, err := msg.GetContentData()
 	if err != nil {
 		return nil, err
 	}
 
-	twinUpdate := &types.DeviceTwinUpdate{}
+	twinUpdate := &dttype.DeviceTwinUpdate{}
 	if err := json.Unmarshal(contentData, twinUpdate); err != nil {
 		return nil, err
 	}

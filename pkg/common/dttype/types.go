@@ -152,7 +152,7 @@ func (tv *TwinVersion) UpdateEdgeVersion() {
 }
 
 //CompareWithCloud compare with cloud vershon while dealing cloud update req
-func (tv TwinVersion) CompareWithCloud(tvCloud TwinVersion) bool {
+func (tv *TwinVersion) CompareWithCloud(tvCloud TwinVersion) bool {
 	return tvCloud.EdgeVersion >= tv.EdgeVersion
 }
 
