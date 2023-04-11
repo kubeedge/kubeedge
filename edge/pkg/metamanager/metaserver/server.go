@@ -42,6 +42,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/handlerfactory"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/serializer"
 	kefeatures "github.com/kubeedge/kubeedge/pkg/features"
+	"github.com/kubeedge/kubeedge/pkg/util"
 )
 
 // MetaServer is simplification of server.GenericAPIServer
@@ -120,7 +121,7 @@ func (ls *MetaServer) startHTTPServer(stopChan <-chan struct{}) {
 	beehiveContext.Cancel()
 }
 
-func (ls *MetaServer) startHTTPSServer(stopChan <-chan struct{}) {
+func (ls *MetaServer) startHTTPSServer(addr string, stopChan <-chan struct{}) {
 	tlsConfig, err := ls.makeTLSConfig()
 	if err != nil {
 		panic(err)
@@ -129,7 +130,7 @@ func (ls *MetaServer) startHTTPSServer(stopChan <-chan struct{}) {
 	h := ls.BuildBasicHandler()
 	h = BuildHandlerChain(h, ls)
 	s := http.Server{
-		Addr:      metaserverconfig.Config.Server,
+		Addr:      addr,
 		Handler:   h,
 		TLSConfig: tlsConfig,
 	}
@@ -151,8 +152,9 @@ func (ls *MetaServer) startHTTPSServer(stopChan <-chan struct{}) {
 
 func (ls *MetaServer) Start(stopChan <-chan struct{}) {
 	if kefeatures.DefaultFeatureGate.Enabled(kefeatures.RequireAuthorization) {
-		ls.prepareCertForServer()
-		ls.startHTTPSServer(stopChan)
+		ls.prepareServer()
+		go ls.startHTTPSServer(metaserverconfig.Config.Server, stopChan)
+		go ls.startHTTPSServer(metaserverconfig.Config.DummyServer, stopChan)
 	} else {
 		ls.startHTTPServer(stopChan)
 	}
@@ -213,9 +215,18 @@ func WithAuthorizationHeader(handler http.Handler) http.Handler {
 	})
 }
 
-// prepareCertForServer prepare certificate for HTTPS server
-func (ls *MetaServer) prepareCertForServer() {
-	certIPs := []net.IP{net.ParseIP("127.0.0.1")}
+// prepareServer prepare certificate for HTTPS server
+func (ls *MetaServer) prepareServer() {
+	err := setupDummyInterface()
+	if err != nil {
+		panic(fmt.Errorf("setupDummyInterface err: %v", err))
+	}
+
+	certIPs, err := ls.getCertIPs()
+	if err != nil {
+		panic(fmt.Errorf("failed to get cert IP: %v", err))
+	}
+
 	certificateManager, err := certificate.NewServerCertificateManager(
 		certificate.NewSimpleClientset(),
 		types.NodeName(metaserverconfig.Config.NodeName),
@@ -266,4 +277,40 @@ func (ls *MetaServer) makeTLSConfig() (*tls.Config, error) {
 			return cert, nil
 		},
 	}, nil
+}
+
+func (ls *MetaServer) getCertIPs() ([]net.IP, error) {
+	ip, _, err := net.SplitHostPort(metaserverconfig.Config.Server)
+	if err != nil {
+		return nil, err
+	}
+	dummyIP, _, err := net.SplitHostPort(metaserverconfig.Config.DummyServer)
+	if err != nil {
+		return nil, err
+	}
+	return []net.IP{net.ParseIP(ip), net.ParseIP(dummyIP)}, nil
+}
+
+func setupDummyInterface() error {
+	dummyIP, dummyPort, err := net.SplitHostPort(metaserverconfig.Config.DummyServer)
+	if err != nil {
+		return err
+	}
+
+	if err := os.Setenv("METASERVER_DUMMY_IP", dummyIP); err != nil {
+		return err
+	}
+
+	if err := os.Setenv("METASERVER_DUMMY_PORT", dummyPort); err != nil {
+		return err
+	}
+
+	manager := util.NewDummyDeviceManager()
+	_, err = manager.EnsureDummyDevice("edge-dummy0")
+	if err != nil {
+		return err
+	}
+
+	_, err = manager.EnsureAddressBind(dummyIP, "edge-dummy0")
+	return err
 }
