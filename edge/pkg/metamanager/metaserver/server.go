@@ -16,17 +16,26 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
 	utilwaitgroup "k8s.io/apimachinery/pkg/util/waitgroup"
+	"k8s.io/apiserver/pkg/authentication/authenticator"
+	"k8s.io/apiserver/pkg/authentication/request/bearertoken"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	genericapifilters "k8s.io/apiserver/pkg/endpoints/filters"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/server"
 	genericfilters "k8s.io/apiserver/pkg/server/filters"
 	certutil "k8s.io/client-go/util/cert"
+	"k8s.io/client-go/util/keyutil"
 	"k8s.io/klog/v2"
+	"k8s.io/kubernetes/pkg/api/legacyscheme"
+	"k8s.io/kubernetes/plugin/pkg/auth/authorizer/rbac"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/kubeclientbridge"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/auth"
 	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/handlerfactory"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/serializer"
@@ -41,6 +50,35 @@ type MetaServer struct {
 	Handler               http.Handler
 	NegotiatedSerializer  runtime.NegotiatedSerializer
 	Factory               *handlerfactory.Factory
+	Auth                  *metaServerAuth
+}
+
+type metaServerAuth struct {
+	Authenticator authenticator.Request
+	Authorizer    authorizer.Authorizer
+}
+
+func buildAuth() *metaServerAuth {
+	newAuthorizer := rbac.New(
+		&client.RoleGetter{},
+		&client.RoleBindingLister{},
+		&client.ClusterRoleGetter{},
+		&client.ClusterRoleBindingLister{})
+
+	allPublicKeys := []interface{}{}
+	for _, keyfile := range metaserverconfig.Config.ServiceAccountKeyFiles {
+		publicKeys, err := keyutil.PublicKeysFromFile(keyfile)
+		if err != nil {
+			klog.Errorf("Failed to load public key file %s: %v", keyfile, err)
+			return nil
+		}
+		allPublicKeys = append(allPublicKeys, publicKeys...)
+	}
+	tokenAuthenticator := auth.JWTTokenAuthenticator(nil,
+		metaserverconfig.Config.ServiceAccountIssuers, allPublicKeys, metaserverconfig.Config.APIAudiences,
+		auth.NewValidator(client.NewGetterFromClient(kubeclientbridge.NewSimpleClientset(client.New()))))
+	newAuthenticator := bearertoken.New(tokenAuthenticator)
+	return &metaServerAuth{newAuthenticator, newAuthorizer}
 }
 
 func NewMetaServer() *MetaServer {
@@ -49,6 +87,7 @@ func NewMetaServer() *MetaServer {
 		LongRunningFunc:       genericfilters.BasicLongRunningRequestCheck(sets.NewString("watch"), sets.NewString()),
 		NegotiatedSerializer:  serializer.NewNegotiatedSerializer(),
 		Factory:               handlerfactory.NewFactory(),
+		Auth:                  buildAuth(),
 	}
 	return &ls
 }
@@ -205,7 +244,11 @@ func BuildHandlerChain(handler http.Handler, ls *MetaServer) http.Handler {
 	cfg := &server.Config{
 		LegacyAPIGroupPrefixes: sets.NewString(server.DefaultLegacyAPIPrefix),
 	}
-
+	if kefeatures.DefaultFeatureGate.Enabled(kefeatures.RequireAuthorization) {
+		handler = genericapifilters.WithAuthorization(handler, ls.Auth.Authorizer, legacyscheme.Codecs)
+		failedHandler := genericapifilters.Unauthorized(legacyscheme.Codecs)
+		handler = genericapifilters.WithAuthentication(handler, ls.Auth.Authenticator, failedHandler, metaserverconfig.Config.APIAudiences)
+	}
 	handler = genericfilters.WithWaitGroup(handler, ls.LongRunningFunc, ls.HandlerChainWaitGroup)
 	handler = genericapifilters.WithRequestInfo(handler, server.NewRequestInfoResolver(cfg))
 	handler = genericfilters.WithPanicRecovery(handler, &apirequest.RequestInfoFactory{})

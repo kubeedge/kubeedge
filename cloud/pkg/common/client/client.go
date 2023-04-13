@@ -43,6 +43,7 @@ var (
 	authKubeConfig *rest.Config
 
 	KubeConfig *rest.Config
+	CrdConfig  *rest.Config
 )
 
 func InitKubeEdgeClient(config *cloudcoreConfig.KubeAPIConfig) {
@@ -64,6 +65,7 @@ func InitKubeEdgeClient(config *cloudcoreConfig.KubeAPIConfig) {
 
 		crdKubeConfig := rest.CopyConfig(kubeConfig)
 		crdKubeConfig.ContentType = runtime.ContentTypeJSON
+		CrdConfig = crdKubeConfig
 		crdClient = crdClientset.NewForConfigOrDie(crdKubeConfig)
 
 		authKubeConfig, err = clientcmd.BuildConfigFromFlags(kubeConfig.Host, "")

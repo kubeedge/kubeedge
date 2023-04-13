@@ -11,12 +11,12 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
-//SecretsGetter is interface to get client secrets
+// SecretsGetter is interface to get client secrets
 type SecretsGetter interface {
 	Secrets(namespace string) SecretsInterface
 }
 
-//SecretsInterface is interface for client secret
+// SecretsInterface is interface for client secret
 type SecretsInterface interface {
 	Create(*api.Secret) (*api.Secret, error)
 	Update(*api.Secret) error

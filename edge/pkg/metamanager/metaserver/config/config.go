@@ -22,5 +22,8 @@ func InitConfigure(c *v1alpha2.MetaServer) {
 			// so edgehub must register before metamanager
 			NodeName: edgehubconfig.Config.NodeName,
 		}
+		if len(Config.APIAudiences) == 0 && len(Config.ServiceAccountIssuers) != 0 {
+			Config.APIAudiences = Config.ServiceAccountIssuers
+		}
 	})
 }

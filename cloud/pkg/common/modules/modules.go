@@ -7,6 +7,9 @@ const (
 	EdgeControllerModuleName = "edgecontroller"
 	EdgeControllerGroupName  = "edgecontroller"
 
+	PolicyControllerModuleName = "policycontroller"
+	PolicyControllerGroupName  = "policycontroller"
+
 	DeviceControllerModuleName  = "devicecontroller"
 	DeviceControllerModuleGroup = "devicecontroller"
 

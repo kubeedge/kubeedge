@@ -19,4 +19,3 @@ limitations under the License.
 // +k8s:deepcopy-gen=package,register
 // +groupName=policy.kubeedge.io
 package v1alpha1
-

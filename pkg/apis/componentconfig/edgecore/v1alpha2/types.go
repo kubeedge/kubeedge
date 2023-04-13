@@ -996,11 +996,14 @@ type MetaManager struct {
 }
 
 type MetaServer struct {
-	Enable            bool   `json:"enable"`
-	Server            string `json:"server"`
-	TLSCaFile         string `json:"tlsCaFile"`
-	TLSCertFile       string `json:"tlsCertFile"`
-	TLSPrivateKeyFile string `json:"tlsPrivateKeyFile"`
+	Enable                 bool     `json:"enable"`
+	Server                 string   `json:"server"`
+	TLSCaFile              string   `json:"tlsCaFile"`
+	TLSCertFile            string   `json:"tlsCertFile"`
+	TLSPrivateKeyFile      string   `json:"tlsPrivateKeyFile"`
+	ServiceAccountIssuers  []string `json:"serviceAccountIssuers"`
+	APIAudiences           []string `json:"apiAudiences"`
+	ServiceAccountKeyFiles []string `json:"serviceAccountKeyFiles"`
 }
 
 // ServiceBus indicates the ServiceBus module config

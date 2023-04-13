@@ -25,11 +25,12 @@ const (
 // Resources
 const (
 	// Certificates
-	DefaultConfigDir = "/etc/kubeedge/config/"
-	DefaultCAFile    = "/etc/kubeedge/ca/rootCA.crt"
-	DefaultCAKeyFile = "/etc/kubeedge/ca/rootCA.key"
-	DefaultCertFile  = "/etc/kubeedge/certs/server.crt"
-	DefaultKeyFile   = "/etc/kubeedge/certs/server.key"
+	DefaultConfigDir            = "/etc/kubeedge/config/"
+	DefaultCAFile               = "/etc/kubeedge/ca/rootCA.crt"
+	DefaultCAKeyFile            = "/etc/kubeedge/ca/rootCA.key"
+	DefaultCertFile             = "/etc/kubeedge/certs/server.crt"
+	DefaultKeyFile              = "/etc/kubeedge/certs/server.key"
+	DefaultServiceAccountIssuer = "https://kubernetes.default.svc.cluster.local"
 
 	DefaultCAURL          = "/ca.crt"
 	DefaultCertURL        = "/edge.crt"

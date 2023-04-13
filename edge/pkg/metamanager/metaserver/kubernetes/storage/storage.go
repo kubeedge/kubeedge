@@ -22,7 +22,6 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/agent"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
-	kefeatures "github.com/kubeedge/kubeedge/pkg/features"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
@@ -104,9 +103,8 @@ func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions)
 		return obj, nil
 	}()
 
-	// If we get object from cloud failed and RequireAuthorization FeatureGate
-	// is not enabled, try to get the object from the local metaManager
-	if err != nil && !kefeatures.DefaultFeatureGate.Enabled(kefeatures.RequireAuthorization) {
+	// If we get object from cloud failed, try to get the object from the local metaManager
+	if err != nil {
 		obj, err = r.Store.Get(ctx, "", options) // name is needless, we get all key information from ctx
 		if err != nil {
 			return nil, errors.NewNotFound(schema.GroupResource{Group: info.APIGroup, Resource: info.Resource}, info.Name)
@@ -141,9 +139,8 @@ func (r *REST) List(ctx context.Context, options *metainternalversion.ListOption
 		return list, nil
 	}()
 
-	// If we list object from cloud failed and RequireAuthorization FeatureGate
-	// is not enabled, try to list the object from the local metaManager
-	if err != nil && !kefeatures.DefaultFeatureGate.Enabled(kefeatures.RequireAuthorization) {
+	// If we list object from cloud failed, try to list the object from the local metaManager
+	if err != nil {
 		list, err = r.Store.List(ctx, options)
 		if err != nil {
 			return nil, err
@@ -178,11 +175,9 @@ func (r *REST) Watch(ctx context.Context, options *metainternalversion.ListOptio
 		return nil, nil
 	}()
 
-	// If we watch object from cloud failed and RequireAuthorization FeatureGate
-	// is enabled, just return the err
-	if err != nil && kefeatures.DefaultFeatureGate.Enabled(kefeatures.RequireAuthorization) {
+	// If we watch object from cloud failed, try to watch the object from the local metaManager
+	if err != nil {
 		klog.Errorf("[metaserver/reststorage] failed to get a approved application for watch(%v) from cloud application center, %v", info.Path, err)
-		return nil, err
 	}
 
 	return r.Store.Watch(ctx, options)
