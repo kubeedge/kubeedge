@@ -58,6 +58,8 @@ require (
 require (
 	github.com/pkg/errors v0.9.1
 	gopkg.in/square/go-jose.v2 v2.5.1
+	github.com/vishvananda/netlink v1.1.1-0.20201029203352-d40f9887b852
+	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -199,9 +201,14 @@ require (
 	github.com/spf13/cast v1.4.1 // indirect
 	github.com/stretchr/testify v1.8.2 // indirect
 	github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635 // indirect
+<<<<<<< HEAD
 	github.com/tklauser/go-sysconf v0.3.11 // indirect
 	github.com/tklauser/numcpus v0.6.0 // indirect
 	github.com/vishvananda/netlink v1.1.1-0.20201029203352-d40f9887b852 // indirect
+=======
+	github.com/tklauser/go-sysconf v0.3.10 // indirect
+	github.com/tklauser/numcpus v0.4.0 // indirect
+>>>>>>> 3109fe17a (vendor update)
 	github.com/vishvananda/netns v0.0.0-20200728191858-db3c7e526aae // indirect
 	github.com/vmware/govmomi v0.20.3 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f // indirect

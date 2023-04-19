@@ -304,6 +304,53 @@ func WaitForCertificate(ctx context.Context, client clientset.Interface, reqName
 	return issuedCertificate, nil
 }
 
+func WaitForCertificateForEdge(ctx context.Context, client clientset.Interface, reqName string, reqUID types.UID) (certData []byte, err error) {
+	var issuedCertificate []byte
+
+	err = wait.Poll(5*time.Second, 15*time.Minute, func() (done bool, err error) {
+		csr, err := client.CertificatesV1().CertificateSigningRequests().Get(ctx, reqName, metav1.GetOptions{})
+		if err != nil {
+			return false, err
+		}
+
+		if csr.UID != reqUID {
+			return false, fmt.Errorf("csr %q changed UIDs", csr.Name)
+		}
+
+		approved := false
+		for _, c := range csr.Status.Conditions {
+			if c.Type == certificatesv1.CertificateDenied {
+				return false, fmt.Errorf("certificate signing request is denied, reason: %v, message: %v", c.Reason, c.Message)
+			}
+			if c.Type == certificatesv1.CertificateFailed {
+				return false, fmt.Errorf("certificate signing request failed, reason: %v, message: %v", c.Reason, c.Message)
+			}
+			if c.Type == certificatesv1.CertificateApproved {
+				approved = true
+			}
+		}
+		if approved {
+			if len(csr.Status.Certificate) > 0 {
+				klog.V(2).Infof("certificate signing request %s is issued", csr.Name)
+				issuedCertificate = csr.Status.Certificate
+				return true, nil
+			}
+			klog.V(2).Infof("certificate signing request %s is approved, waiting to be issued", csr.Name)
+		}
+
+		return false, nil
+	})
+
+	if err == wait.ErrWaitTimeout {
+		return nil, wait.ErrWaitTimeout
+	}
+	if err != nil {
+		return nil, formatError("cannot watch on the certificate signing request: %v", err)
+	}
+
+	return issuedCertificate, nil
+}
+
 // ensureCompatible ensures that a CSR object is compatible with an original CSR
 func ensureCompatible(new, orig *certificatesv1.CertificateSigningRequest, privateKey interface{}) error {
 	newCSR, err := parseCSR(new.Spec.Request)
