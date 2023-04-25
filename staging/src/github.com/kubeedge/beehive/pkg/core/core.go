@@ -13,7 +13,7 @@ import (
 
 // StartModules starts modules that are registered
 func StartModules() {
-	// only register channel mode, if want to use socket mode, we should also pass in common.MsgCtxTypeUS parameter
+	// only register channel mode, if we want to use socket mode, we should also pass in common.MsgCtxTypeUS parameter
 	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 
 	modules := GetModules()

@@ -24,7 +24,7 @@ type DeviceInstance struct {
 	Protocol string `json:"protocol,omitempty"`
 	// Model is deviceInstance model name
 	Model string `json:"model,omitempty"`
-	// A list of device twins containing desired/reported desired/reported values of twin properties..
+	// A list of device twins containing desired/reported desired/reported values of twin properties.
 	// Optional: A passive device won't have twin properties and this list could be empty.
 	// +optional
 	Twins []v1alpha2.Twin `json:"twins,omitempty"`
