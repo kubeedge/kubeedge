@@ -38,7 +38,7 @@ var (
 		corev1.ConditionTrue:    appsv1alpha1.NodeReady,
 		corev1.ConditionFalse:   appsv1alpha1.NodeNotReady,
 		corev1.ConditionUnknown: appsv1alpha1.Unknown,
-		// for the convinence of processing the situation that node has no ready condition
+		// for the convenience of processing the situation that node has no ready condition
 		"": appsv1alpha1.Unknown,
 	}
 )
@@ -281,7 +281,7 @@ func (c *Controller) nodeMapFunc(obj client.Object) []controllerruntime.Request 
 			},
 		}
 	}
-	// node do not have belonging label, either a new node will be add to a node group or an orphan node
+	// node do not have belonging label, either a new node will be added to a node group or an orphan node
 	nodegroupList := &appsv1alpha1.NodeGroupList{}
 	if err := c.Client.List(context.TODO(), nodegroupList); err != nil {
 		klog.Errorf("failed to list all nodegroups, %s", err)
@@ -306,9 +306,7 @@ func (c *Controller) nodeMapFunc(obj client.Object) []controllerruntime.Request 
 }
 
 func (c *Controller) evictNodesInNodegroup(ctx context.Context, nodeGroupName string) error {
-	selector := labels.SelectorFromSet(labels.Set(
-		map[string]string{LabelBelongingTo: nodeGroupName},
-	))
+	selector := labels.SelectorFromSet(map[string]string{LabelBelongingTo: nodeGroupName})
 	nodeList := &corev1.NodeList{}
 	err := c.Client.List(ctx, nodeList, &client.ListOptions{LabelSelector: selector})
 	if err != nil {
@@ -324,7 +322,7 @@ func (c *Controller) getNodesByLabels(ctx context.Context, matchLabels map[strin
 		// Otherwise, it will select all nodes, it's not what we want
 		return []corev1.Node{}, nil
 	}
-	selector := labels.SelectorFromSet(labels.Set(matchLabels))
+	selector := labels.SelectorFromSet(matchLabels)
 	nodeList := &corev1.NodeList{}
 	err := c.Client.List(ctx, nodeList, &client.ListOptions{LabelSelector: selector})
 	if err != nil {
@@ -384,7 +382,7 @@ func IfMatchNodeGroup(node *corev1.Node, nodegroup *appsv1alpha1.NodeGroup) bool
 		}
 	}
 	// check if labels of this node selected by nodegroup.Spec.MatchLabels
-	selector := labels.SelectorFromSet(labels.Set(nodegroup.Spec.MatchLabels))
+	selector := labels.SelectorFromSet(nodegroup.Spec.MatchLabels)
 	return selector.Matches(labels.Set(node.Labels))
 }
 
