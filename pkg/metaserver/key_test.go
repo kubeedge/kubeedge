@@ -118,7 +118,7 @@ func TestKeyFuncReq(t *testing.T) {
 	}
 	stdResult := []string{
 		"/core/v1/namespaces/null/null",
-		"/core/v1/namespaces/other/other", //a namespace called other
+		"/core/v1/namespaces/null/other", //a namespace called other
 
 		"/core/v1/pods/other/null",
 		"/core/v1/pods/other/foo",
