@@ -224,6 +224,11 @@ func TestManageObjectSync(t *testing.T) {
 			testController.informerManager = informers.NewFakeInformerManager()
 			newDynamicClient := fake.NewSimpleDynamicClient(runtime.NewScheme())
 			testController.kubeclient = newDynamicClient
+			err := testController.informerManager.GetKubeEdgeInformerFactory().Reliablesyncs().V1alpha1().ObjectSyncs().Informer().GetIndexer().Add(tt.ObjectSyncs)
+			if err != nil {
+				t.Errorf("add objectSync failed: %v", err)
+			}
+			testController.objectSyncLister = testController.informerManager.GetKubeEdgeInformerFactory().Reliablesyncs().V1alpha1().ObjectSyncs().Lister()
 
 			if tt.ExpectedOperation == model.UpdateOperation {
 				testPod := &corev1.Pod{
@@ -239,7 +244,7 @@ func TestManageObjectSync(t *testing.T) {
 				t.Logf("create pod success: %v", testPod)
 			}
 
-			go testController.manageObjectSync([]*v1alpha1.ObjectSync{tt.ObjectSyncs})
+			go testController.reconcileObjectSyncs()
 			message, _ := beehiveContext.Receive(modules.CloudHubModuleName)
 			if !reflect.DeepEqual(message.GetOperation(), tt.ExpectedOperation) {
 				t.Errorf("manageObjectSyncs() = %v, want %v", message.GetOperation(), tt.ExpectedOperation)

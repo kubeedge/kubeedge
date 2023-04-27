@@ -93,7 +93,7 @@ func (sctl *SyncController) Group() string {
 	return modules.SyncControllerModuleGroup
 }
 
-// Group of controller
+// Enable of controller
 func (sctl *SyncController) Enable() bool {
 	return sctl.enable
 }
@@ -106,34 +106,38 @@ func (sctl *SyncController) Start() {
 	}
 
 	sctl.deleteObjectSyncs() //check outdate sync before start to reconcile
-	go wait.Until(sctl.reconcile, 5*time.Second, beehiveContext.Done())
+	sctl.deleteClusterObjectSyncs()
+
+	go wait.Until(sctl.reconcileObjectSyncs, 5*time.Second, beehiveContext.Done())
+
+	go wait.Until(sctl.reconcileClusterObjectSyncs, 5*time.Second, beehiveContext.Done())
 }
 
-func (sctl *SyncController) reconcile() {
-	allClusterObjectSyncs, err := sctl.clusterObjectSyncLister.List(labels.Everything())
-	if err != nil {
-		klog.Errorf("Failed to list all the ClusterObjectSyncs: %v", err)
-	}
-	sctl.manageClusterObjectSync(allClusterObjectSyncs)
-
+// reconcileObjectSyncs compare the version of the resource that has been sent to the
+// edge recorded in objectSync with the version of the resource in k8s and generate a
+// corresponding event to send to the edge according to the comparison result
+func (sctl *SyncController) reconcileObjectSyncs() {
 	allObjectSyncs, err := sctl.objectSyncLister.List(labels.Everything())
 	if err != nil {
 		klog.Errorf("Failed to list all the ObjectSyncs: %v", err)
 	}
-	sctl.manageObjectSync(allObjectSyncs)
+
+	for _, sync := range allObjectSyncs {
+		sctl.reconcileObjectSync(sync)
+	}
 }
 
-// Compare the cluster scope objects that have been persisted to the edge with the cluster scope objects in K8s,
-// and generate update and delete events to the edge
-func (sctl *SyncController) manageClusterObjectSync(syncs []*v1alpha1.ClusterObjectSync) {
-	// TODO: Handle cluster scope resource
-}
+// reconcileClusterObjectSyncs compare the version of the resource that has been sent
+// to the edge recorded in ClusterObjectSync with the version of the resource in k8s and
+// generate a corresponding event to send to the edge according to the comparison result
+func (sctl *SyncController) reconcileClusterObjectSyncs() {
+	allClusterObjectSyncs, err := sctl.clusterObjectSyncLister.List(labels.Everything())
+	if err != nil {
+		klog.Errorf("Failed to list all the ClusterObjectSyncs: %v", err)
+	}
 
-// Compare the namespace scope objects that have been persisted to the edge with the namespace scope objects in K8s,
-// and generate update and delete events to the edge
-func (sctl *SyncController) manageObjectSync(syncs []*v1alpha1.ObjectSync) {
-	for _, sync := range syncs {
-		sctl.manageObject(sync)
+	for _, sync := range allClusterObjectSyncs {
+		sctl.reconcileClusterObjectSync(sync)
 	}
 }
 
@@ -159,8 +163,40 @@ func (sctl *SyncController) deleteObjectSyncs() {
 	}
 }
 
+func (sctl *SyncController) deleteClusterObjectSyncs() {
+	syncs, err := sctl.clusterObjectSyncLister.List(labels.Everything())
+	if err != nil {
+		klog.Errorf("Failed to list all the clusterObjectSync: %v", err)
+	}
+	for _, sync := range syncs {
+		nodeName := getNodeName(sync.Name)
+		isGarbage, err := sctl.checkClusterObjectSync(sync)
+		if err != nil {
+			klog.Errorf("failed to check clusterObjectSync outdated, %s", err)
+			continue
+		}
+		if isGarbage {
+			klog.Infof("ObjectSync %s will be deleted since node %s has been deleted", sync.Name, nodeName)
+			err = sctl.crdclient.ReliablesyncsV1alpha1().ClusterObjectSyncs().Delete(context.Background(), sync.Name, *metav1.NewDeleteOptions(0))
+			if err != nil {
+				klog.Errorf("failed to delete clusterObjectSync %s for edgenode %s, err: %v", sync.Name, nodeName, err)
+			}
+		}
+	}
+}
+
 // checkObjectSync checks whether objectSync is outdated
 func (sctl *SyncController) checkObjectSync(sync *v1alpha1.ObjectSync) (bool, error) {
+	nodeName := getNodeName(sync.Name)
+	_, err := sctl.nodeLister.Get(nodeName)
+	if errors.IsNotFound(err) {
+		return true, nil
+	}
+	return false, err
+}
+
+// checkClusterObjectSync checks whether ClusterObjectSync is outdated
+func (sctl *SyncController) checkClusterObjectSync(sync *v1alpha1.ClusterObjectSync) (bool, error) {
 	nodeName := getNodeName(sync.Name)
 	_, err := sctl.nodeLister.Get(nodeName)
 	if errors.IsNotFound(err) {
