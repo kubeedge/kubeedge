@@ -201,7 +201,12 @@ func (r *Rest) GoToTarget(data map[string]interface{}, stop chan struct{}) (inte
 	if !ok || len(content) == 0 {
 		return nil, errors.New("invalid convert to []byte")
 	}
-	req, err := httpUtils.BuildRequest(http.MethodPost, r.Endpoint, bytes.NewReader(content), "", "")
+	nodeName, ok := data["nodeName"].(string)
+	if !ok {
+		err := fmt.Errorf("input data does not exist valid value \"nodeName\"")
+		klog.Warningf(err.Error())
+	}
+	req, err := httpUtils.BuildRequest(http.MethodPost, r.Endpoint, bytes.NewReader(content), "", nodeName)
 	if err != nil {
 		return nil, err
 	}
