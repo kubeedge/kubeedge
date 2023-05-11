@@ -8,7 +8,7 @@ cloudCore:
   hostNetWork: "true"
   image:
     repository: "kubeedge/cloudcore"
-    tag: "v1.12.0"
+    tag: "v1.12.1"
     pullPolicy: "IfNotPresent"
     pullSecrets: []
   securityContext:
