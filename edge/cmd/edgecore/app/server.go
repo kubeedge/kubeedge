@@ -6,7 +6,7 @@ import (
 	"net"
 	"os"
 
-	"github.com/mitchellh/go-ps"
+	ps "github.com/shirou/gopsutil/v3/process"
 	"github.com/spf13/cobra"
 	netutil "k8s.io/apimachinery/pkg/util/net"
 	cliflag "k8s.io/component-base/cli/flag"
@@ -190,7 +190,11 @@ func environmentCheck() error {
 	}
 
 	for _, process := range processes {
-		switch process.Executable() {
+		processName, err := process.Name()
+		if err != nil {
+			return err
+		}
+		switch processName {
 		case "kubelet": // if kubelet is running, return error
 			return errors.New("kubelet should not running on edge node when running edgecore")
 		case "kube-proxy": // if kube-proxy is running, return error
