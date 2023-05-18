@@ -60,9 +60,9 @@ func (sf *servicebusFactory) GetSource(ep *v1.RuleEndpoint, sourceResource map[s
 }
 
 func (sb *ServiceBus) RegisterListener(handle listener.Handle) error {
-	listener.MessageHandlerInstance.AddListener(fmt.Sprintf("servicebus/%v/%v", path.Join("node", sb.nodeName), sb.TargetURL), handle)
+	listener.MessageHandlerInstance.AddListener(path.Join("servicebus/node", sb.nodeName, sb.TargetURL), handle)
 	msg := model.NewMessage("")
-	msg.SetResourceOperation(fmt.Sprintf("%v/%v", path.Join("node", sb.nodeName), sb.TargetURL), "start")
+	msg.SetResourceOperation(path.Join("node", sb.nodeName, sb.TargetURL), "start")
 	msg.SetRoute(modules.RouterSourceServiceBus, modules.UserGroup)
 	beehiveContext.Send(modules.CloudHubModuleName, *msg)
 	return nil
