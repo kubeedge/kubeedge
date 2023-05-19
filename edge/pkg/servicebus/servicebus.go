@@ -124,8 +124,8 @@ func processMessage(msg *beehiveModel.Message) {
 	resource := msg.GetResource()
 	switch msg.GetOperation() {
 	case "start":
+		dao.InsertUrls(resource)
 		if atomic.CompareAndSwapInt32(&inited, 0, 1) {
-			dao.InsertUrls(resource)
 			go server(c)
 		}
 	case "stop":
