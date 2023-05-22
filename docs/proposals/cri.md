@@ -72,13 +72,13 @@ for docker runtime using dockershim is not considered in edged
 
 The following configuration parameters need to be added
 
-No | Parameter | Type | Values | Description
----|---|---|---|---
-1 | runtimeType | string | docker/remote | Runtime name
-2   | remoteRuntimeEndpoint | string | /var/run/*.sock | Endpoint of remote runtime service
-3   | remoteImageEndpoint | string | same as remoteRuntimeEndpoint if not specified | Endpoint of remote image service
-4   | RuntimeRequestTimeout | Duration | time value | timeout for all runtime request
-5   | PodSandboxImage | string | image name | Image used for pause container in sandbox
+| No  | Parameter             | Type     | Values                                         | Description                               |
+|-----|-----------------------|----------|------------------------------------------------|-------------------------------------------|
+| 1   | runtimeType           | string   | docker/remote                                  | Runtime name                              |
+| 2   | remoteRuntimeEndpoint | string   | /var/run/*.sock                                | Endpoint of remote runtime service        |
+| 3   | remoteImageEndpoint   | string   | same as remoteRuntimeEndpoint if not specified | Endpoint of remote image service          |
+| 4   | RuntimeRequestTimeout | Duration | time value                                     | timeout for all runtime request           |
+| 5   | PodSandboxImage       | string   | image name                                     | Image used for pause container in sandbox |
 
 ```go
 type Config struct {
