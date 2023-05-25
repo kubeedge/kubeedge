@@ -20,7 +20,6 @@ import (
 	"net"
 	"net/url"
 	"path"
-	"path/filepath"
 	"strconv"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -56,13 +55,8 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 					HostnameOverride: hostnameOverride,
 					NodeIP:           localIP,
 					ContainerRuntimeOptions: ContainerRuntimeOptions{
-						ContainerRuntime:          constants.DefaultRuntimeType,
-						PodSandboxImage:           constants.DefaultPodSandboxImage,
-						ImagePullProgressDeadline: metav1.Duration{Duration: constants.DefaultImagePullProgressDeadline},
-						CNIConfDir:                constants.DefaultCNIConfDir,
-						CNIBinDir:                 constants.DefaultCNIBinDir,
-						CNICacheDir:               constants.DefaultCNICacheDir,
-						NetworkPluginMTU:          constants.DefaultNetworkPluginMTU,
+						ContainerRuntime: constants.DefaultRuntimeType,
+						PodSandboxImage:  constants.DefaultPodSandboxImage,
 					},
 					RootDirectory:           constants.DefaultRootDir,
 					MasterServiceNamespace:  metav1.NamespaceDefault,
@@ -71,11 +65,9 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 					MaxContainerCount:       -1,
 					MaxPerPodContainerCount: 1,
 					MinimumGCAge:            metav1.Duration{Duration: 0},
-					NonMasqueradeCIDR:       "10.0.0.0/8",
 					NodeLabels:              make(map[string]string),
 					RegisterNode:            true,
 					RegisterSchedulable:     true,
-					SeccompProfileRoot:      filepath.Join(constants.DefaultRootDir, "seccomp"),
 				},
 				CustomInterfaceName:   "",
 				RegisterNodeNamespace: constants.DefaultRegisterNodeNamespace,
@@ -193,13 +185,8 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 					HostnameOverride: hostnameOverride,
 					NodeIP:           localIP,
 					ContainerRuntimeOptions: ContainerRuntimeOptions{
-						ContainerRuntime:          constants.DefaultRuntimeType,
-						PodSandboxImage:           constants.DefaultPodSandboxImage,
-						ImagePullProgressDeadline: metav1.Duration{Duration: constants.DefaultImagePullProgressDeadline},
-						CNIConfDir:                constants.DefaultCNIConfDir,
-						CNIBinDir:                 constants.DefaultCNIBinDir,
-						CNICacheDir:               constants.DefaultCNICacheDir,
-						NetworkPluginMTU:          constants.DefaultNetworkPluginMTU,
+						ContainerRuntime: constants.DefaultRuntimeType,
+						PodSandboxImage:  constants.DefaultPodSandboxImage,
 					},
 					RootDirectory:           constants.DefaultRootDir,
 					MasterServiceNamespace:  metav1.NamespaceDefault,
@@ -208,11 +195,9 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 					MaxContainerCount:       -1,
 					MaxPerPodContainerCount: 1,
 					MinimumGCAge:            metav1.Duration{Duration: 0},
-					NonMasqueradeCIDR:       "10.0.0.0/8",
 					NodeLabels:              make(map[string]string),
 					RegisterNode:            true,
 					RegisterSchedulable:     true,
-					SeccompProfileRoot:      filepath.Join(constants.DefaultRootDir, "seccomp"),
 				},
 				CustomInterfaceName:   "",
 				RegisterNodeNamespace: constants.DefaultRegisterNodeNamespace,

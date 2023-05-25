@@ -33,7 +33,6 @@ import (
 	core "k8s.io/kubernetes/pkg/apis/core"
 	apivalidation "k8s.io/kubernetes/pkg/apis/core/validation"
 	"k8s.io/kubernetes/pkg/apis/policy"
-	"k8s.io/kubernetes/pkg/security/apparmor"
 	"k8s.io/kubernetes/pkg/security/podsecuritypolicy/seccomp"
 	psputil "k8s.io/kubernetes/pkg/security/podsecuritypolicy/util"
 )
@@ -138,13 +137,13 @@ func ValidatePodSecurityPolicySpecificAnnotations(annotations map[string]string,
 	allErrs := field.ErrorList{}
 
 	if p := annotations[v1.AppArmorBetaDefaultProfileAnnotationKey]; p != "" {
-		if err := apparmor.ValidateProfileFormat(p); err != nil {
+		if err := apivalidation.ValidateAppArmorProfileFormat(p); err != nil {
 			allErrs = append(allErrs, field.Invalid(fldPath.Key(v1.AppArmorBetaDefaultProfileAnnotationKey), p, err.Error()))
 		}
 	}
 	if allowed := annotations[v1.AppArmorBetaAllowedProfilesAnnotationKey]; allowed != "" {
 		for _, p := range strings.Split(allowed, ",") {
-			if err := apparmor.ValidateProfileFormat(p); err != nil {
+			if err := apivalidation.ValidateAppArmorProfileFormat(p); err != nil {
 				allErrs = append(allErrs, field.Invalid(fldPath.Key(v1.AppArmorBetaAllowedProfilesAnnotationKey), allowed, err.Error()))
 			}
 		}
@@ -369,8 +368,9 @@ var sysctlContainSlashPatternRegexp = regexp.MustCompile("^" + SysctlContainSlas
 // IsValidSysctlPattern checks if name is a valid sysctl pattern.
 // i.e. matches sysctlPatternRegexp (or sysctlContainSlashPatternRegexp if canContainSlash is true).
 // More info:
-//   https://man7.org/linux/man-pages/man8/sysctl.8.html
-//   https://man7.org/linux/man-pages/man5/sysctl.d.5.html
+//
+//	https://man7.org/linux/man-pages/man8/sysctl.8.html
+//	https://man7.org/linux/man-pages/man5/sysctl.d.5.html
 func IsValidSysctlPattern(name string, canContainSlash bool) bool {
 	if len(name) > apivalidation.SysctlMaxLength {
 		return false

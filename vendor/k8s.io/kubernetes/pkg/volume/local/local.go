@@ -504,17 +504,10 @@ var _ volume.Mounter = &localVolumeMounter{}
 
 func (m *localVolumeMounter) GetAttributes() volume.Attributes {
 	return volume.Attributes{
-		ReadOnly:        m.readOnly,
-		Managed:         !m.readOnly,
-		SupportsSELinux: true,
+		ReadOnly:       m.readOnly,
+		Managed:        !m.readOnly,
+		SELinuxRelabel: true,
 	}
-}
-
-// CanMount checks prior to mount operations to verify that the required components (binaries, etc.)
-// to mount the volume are available on the underlying node.
-// If not, it returns an error
-func (m *localVolumeMounter) CanMount() error {
-	return nil
 }
 
 // SetUp bind mounts the directory to the volume path
@@ -616,7 +609,7 @@ func (m *localVolumeMounter) SetUpAt(dir string, mounterArgs volume.MounterArgs)
 	if !m.readOnly {
 		// Volume owner will be written only once on the first volume mount
 		if len(refs) == 0 {
-			return volume.SetVolumeOwnership(m, mounterArgs.FsGroup, mounterArgs.FSGroupChangePolicy, util.FSGroupCompleteHook(m.plugin, nil))
+			return volume.SetVolumeOwnership(m, dir, mounterArgs.FsGroup, mounterArgs.FSGroupChangePolicy, util.FSGroupCompleteHook(m.plugin, nil))
 		}
 	}
 	return nil

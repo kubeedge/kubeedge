@@ -16,10 +16,8 @@ import (
 func NewRequestScope() *handlers.RequestScope {
 	requestScope := handlers.RequestScope{
 		Namer: handlers.ContextBasedNaming{
-			SelfLinker:         meta.NewAccessor(),
-			ClusterScoped:      false,
-			SelfLinkPathPrefix: "",
-			SelfLinkPathSuffix: "",
+			Namer:         meta.NewAccessor(),
+			ClusterScoped: false,
 		},
 
 		Serializer:     serializer.NewNegotiatedSerializer(),

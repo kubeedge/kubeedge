@@ -135,13 +135,13 @@ func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
 	}
 
 	cmd.Flags().StringVarP(&joinOptions.RuntimeType, common.RuntimeType, "r", joinOptions.RuntimeType,
-		"Container runtime type")
+		"Container runtime type. Note it will be removed in 1.16 as the only valid value is 'remote'")
 
 	cmd.Flags().StringVarP(&joinOptions.EdgeNodeName, common.EdgeNodeName, "i", joinOptions.EdgeNodeName,
 		"KubeEdge Node unique identification string, if flag not used then the command will generate a unique id on its own")
 
 	cmd.Flags().StringVarP(&joinOptions.RemoteRuntimeEndpoint, common.RemoteRuntimeEndpoint, "p", joinOptions.RemoteRuntimeEndpoint,
-		"KubeEdge Edge Node RemoteRuntimeEndpoint string, if flag not set, it will use unix:///run/containerd/containerd.sock")
+		"KubeEdge Edge Node RemoteRuntimeEndpoint string.")
 
 	cmd.Flags().StringVarP(&joinOptions.Token, common.Token, "t", joinOptions.Token,
 		"Used for edge to apply for the certificate")

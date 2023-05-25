@@ -38,7 +38,8 @@ const (
 
 // New creates Prober that will skip TLS verification while probing.
 // followNonLocalRedirects configures whether the prober should follow redirects to a different hostname.
-//   If disabled, redirects to other hosts will trigger a warning result.
+//
+//	If disabled, redirects to other hosts will trigger a warning result.
 func New(followNonLocalRedirects bool) Prober {
 	tlsConfig := &tls.Config{InsecureSkipVerify: true}
 	return NewWithTLSConfig(tlsConfig, followNonLocalRedirects)
@@ -46,7 +47,8 @@ func New(followNonLocalRedirects bool) Prober {
 
 // NewWithTLSConfig takes tls config as parameter.
 // followNonLocalRedirects configures whether the prober should follow redirects to a different hostname.
-//   If disabled, redirects to other hosts will trigger a warning result.
+//
+//	If disabled, redirects to other hosts will trigger a warning result.
 func NewWithTLSConfig(config *tls.Config, followNonLocalRedirects bool) Prober {
 	// We do not want the probe use node's local proxy set.
 	transport := utilnet.SetTransportDefaults(
@@ -54,7 +56,9 @@ func NewWithTLSConfig(config *tls.Config, followNonLocalRedirects bool) Prober {
 			TLSClientConfig:   config,
 			DisableKeepAlives: true,
 			Proxy:             http.ProxyURL(nil),
+			DialContext:       probe.ProbeDialer().DialContext,
 		})
+
 	return httpProber{transport, followNonLocalRedirects}
 }
 
@@ -129,7 +133,7 @@ func DoHTTPProbe(url *url.URL, headers http.Header, client GetHTTPInterface) (pr
 	if res.StatusCode >= http.StatusOK && res.StatusCode < http.StatusBadRequest {
 		if res.StatusCode >= http.StatusMultipleChoices { // Redirect
 			klog.V(4).Infof("Probe terminated redirects for %s, Response: %v", url.String(), *res)
-			return probe.Warning, body, nil
+			return probe.Warning, fmt.Sprintf("Probe terminated redirects, Response body: %v", body), nil
 		}
 		klog.V(4).Infof("Probe succeeded for %s, Response: %v", url.String(), *res)
 		return probe.Success, body, nil

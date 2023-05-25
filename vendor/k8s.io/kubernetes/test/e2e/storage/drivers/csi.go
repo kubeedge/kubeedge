@@ -146,6 +146,7 @@ func InitHostPathCSIDriver() storageframework.TestDriver {
 		storageframework.CapBlock:               true,
 		storageframework.CapPVCDataSource:       true,
 		storageframework.CapControllerExpansion: true,
+		storageframework.CapOfflineExpansion:    true,
 		storageframework.CapOnlineExpansion:     true,
 		storageframework.CapSingleNodeVolume:    true,
 
@@ -609,10 +610,10 @@ func (m *mockCSIDriver) PrepareTest(f *framework.Framework) (*storageframework.P
 	} else {
 		// When using the mock driver inside the cluster it has to be reconfigured
 		// via command line parameters.
-		containerArgs = append(containerArgs, "--name=csi-mock-"+f.UniqueName)
+		containerArgs = append(containerArgs, "--drivername=csi-mock-"+f.UniqueName)
 
-		if !m.attachable {
-			containerArgs = append(containerArgs, "--disable-attach")
+		if m.attachable {
+			containerArgs = append(containerArgs, "--enable-attach")
 		}
 
 		if m.enableTopology {
@@ -801,6 +802,7 @@ func InitGcePDCSIDriver() storageframework.TestDriver {
 				storageframework.CapVolumeLimits:        false,
 				storageframework.CapTopology:            true,
 				storageframework.CapControllerExpansion: true,
+				storageframework.CapOfflineExpansion:    true,
 				storageframework.CapOnlineExpansion:     true,
 				storageframework.CapNodeExpansion:       true,
 				storageframework.CapSnapshotDataSource:  true,

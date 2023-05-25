@@ -192,7 +192,7 @@ func (e *edged) syncPod(podCfg *config.PodConfig) {
 		model.QueryOperation)
 	beehiveContext.Send(modules.MetaManagerModuleName, *info)
 	// rawUpdateChan receives the update events from metamanager or edgecontroller
-	rawUpdateChan := podCfg.Channel(kubelettypes.ApiserverSource)
+	rawUpdateChan := podCfg.Channel(beehiveContext.GetContext(), kubelettypes.ApiserverSource)
 	for {
 		select {
 		case <-beehiveContext.Done():

@@ -163,7 +163,7 @@ type TailoredKubeletConfiguration struct {
 	// allows event creations to burst to this number, while still not exceeding
 	// eventRecordQPS. This field canot be a negative number and it is only used
 	// when eventRecordQPS > 0.
-	// Default: 0
+	// Default: 10
 	// +optional
 	EventBurst int32 `json:"eventBurst,omitempty"`
 	// enableDebuggingHandlers enables server endpoints for log access
@@ -738,24 +738,18 @@ type TailoredKubeletFlag struct {
 	// Source: https://docs.microsoft.com/en-us/windows/win32/procthread/scheduling-priorities
 	WindowsPriorityClass string `json:"windowsPriorityClass,omitempty"`
 	// remoteRuntimeEndpoint is the endpoint of remote runtime service
-	// default "unix:///var/run/dockershim.sock"
+	// default "unix:///run/containerd/containerd.sock"
 	RemoteRuntimeEndpoint string `json:"remoteRuntimeEndpoint,omitempty"`
 	// remoteImageEndpoint is the endpoint of remote image service
-	// default "unix:///var/run/dockershim.sock"
+	// default "unix:///run/containerd/containerd.sock"
 	RemoteImageEndpoint string `json:"remoteImageEndpoint,omitempty"`
 	// experimentalMounterPath is the path of mounter binary. Leave empty to use the default mount path
 	ExperimentalMounterPath string `json:"experimentalMounterPath,omitempty"`
-	// This flag, if set, enables a check prior to mount operations to verify that the required components
-	// (binaries, etc.) to mount the volume are available on the underlying node. If the check is enabled
-	// and fails the mount operation fails.
-	ExperimentalCheckNodeCapabilitiesBeforeMount bool `json:"experimentalCheckNodeCapabilitiesBeforeMount,omitempty"`
 	// This flag, if set, will avoid including `EvictionHard` limits while computing Node Allocatable.
 	// Refer to [Node Allocatable](https://git.k8s.io/community/contributors/design-proposals/node/node-allocatable.md) doc for more information.
 	ExperimentalNodeAllocatableIgnoreEvictionThreshold bool `json:"experimentalNodeAllocatableIgnoreEvictionThreshold,omitempty"`
 	// Node Labels are the node labels to add when registering the node in the cluster
 	NodeLabels map[string]string `json:"nodeLabels,omitempty"`
-	// seccompProfileRoot is the directory path for seccomp profiles.
-	SeccompProfileRoot string `json:"seccompProfileRoot,omitempty"`
 	// DEPRECATED FLAGS
 	// minimumGCAge is the minimum age for a finished container before it is
 	// garbage collected.
@@ -773,8 +767,6 @@ type TailoredKubeletFlag struct {
 	// schedulable. Won't have any effect if register-node is false.
 	// DEPRECATED: use registerWithTaints instead
 	RegisterSchedulable bool `json:"registerSchedulable,omitempty"`
-	// nonMasqueradeCIDR configures masquerading: traffic to IPs outside this range will use IP masquerade.
-	NonMasqueradeCIDR string `json:"nonMasqueradeCidr,omitempty"`
 	// This flag, if set, instructs the edged to keep volumes from terminated pods mounted to the node.
 	// This can be useful for debugging volume related issues.
 	KeepTerminatedPodVolumes bool `json:"keepTerminatedPodVolumes,omitempty"`
@@ -788,49 +780,14 @@ type ContainerRuntimeOptions struct {
 	// General Options.
 
 	// ContainerRuntime is the container runtime to use.
-	// default "docker"
+	// only valid value "remote"
 	ContainerRuntime string `json:"containerRuntime,omitempty"`
 	// RuntimeCgroups that container runtime is expected to be isolated in.
 	RuntimeCgroups string `json:"runtimeCgroups,omitempty"`
-	// Docker-specific options.
-
-	// DockershimRootDirectory is the path to the dockershim root directory. Defaults to
-	// /var/lib/dockershim if unset. Exposed for integration testing (e.g. in OpenShift).
-	DockershimRootDirectory string `json:"dockershimRootDirectory,omitempty"`
 	// PodSandboxImage is the image whose network/ipc namespaces
 	// containers in each pod will use.
-	// default kubeedge/pause:3.1
+	// default kubeedge/pause:3.6
 	PodSandboxImage string `json:"podSandboxImage,omitempty"`
-	// DockerEndpoint is the path to the docker endpoint to communicate with.
-	DockerEndpoint string `json:"dockerEndpoint,omitempty"`
-	// If no pulling progress is made before the deadline imagePullProgressDeadline,
-	// the image pulling will be cancelled.
-	// Defaults 1m0s.
-	// +optional
-	ImagePullProgressDeadline metav1.Duration `json:"imagePullProgressDeadline,omitempty"`
-	// Network plugin options.
-
-	// networkPluginName is the name of the network plugin to be invoked for
-	// various events in kubelet/pod lifecycle
-	// default ""
-	NetworkPluginName string `json:"networkPluginName,omitempty"`
-	// NetworkPluginMTU is the MTU to be passed to the network plugin,
-	// and overrides the default MTU for cases where it cannot be automatically
-	// computed (such as IPSEC).
-	// default 1500
-	NetworkPluginMTU int32 `json:"networkPluginMTU,omitempty"`
-	// CNIConfDir is the full path of the directory in which to search for
-	// CNI config files
-	// default "/etc/cni/net.d"
-	CNIConfDir string `json:"cniConfDir,omitempty"`
-	// CNIBinDir is the full path of the directory in which to search for
-	// CNI plugin binaries
-	// default "/opt/cni/bin"
-	CNIBinDir string `json:"cniBinDir,omitempty"`
-	// CNICacheDir is the full path of the directory in which CNI should store
-	// cache files
-	// default "/var/lib/cni/cache"
-	CNICacheDir string `json:"cniCacheDir,omitempty"`
 }
 
 // EdgeHub indicates the EdgeHub module config

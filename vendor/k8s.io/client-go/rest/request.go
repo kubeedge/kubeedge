@@ -34,6 +34,7 @@ import (
 	"time"
 
 	"golang.org/x/net/http2"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -116,8 +117,11 @@ type Request struct {
 	subresource  string
 
 	// output
-	err  error
-	body io.Reader
+	err error
+
+	// only one of body / bodyBytes may be set. requests using body are not retriable.
+	body      io.Reader
+	bodyBytes []byte
 
 	retryFn requestRetryFunc
 }
@@ -443,12 +447,15 @@ func (r *Request) Body(obj interface{}) *Request {
 			return r
 		}
 		glogBody("Request Body", data)
-		r.body = bytes.NewReader(data)
+		r.body = nil
+		r.bodyBytes = data
 	case []byte:
 		glogBody("Request Body", t)
-		r.body = bytes.NewReader(t)
+		r.body = nil
+		r.bodyBytes = t
 	case io.Reader:
 		r.body = t
+		r.bodyBytes = nil
 	case runtime.Object:
 		// callers may pass typed interface pointers, therefore we must check nil with reflection
 		if reflect.ValueOf(t).IsNil() {
@@ -465,7 +472,8 @@ func (r *Request) Body(obj interface{}) *Request {
 			return r
 		}
 		glogBody("Request Body", data)
-		r.body = bytes.NewReader(data)
+		r.body = nil
+		r.bodyBytes = data
 		r.SetHeader("Content-Type", r.c.content.ContentType)
 	default:
 		r.err = fmt.Errorf("unknown type used for body: %+v", obj)
@@ -519,14 +527,17 @@ func (r Request) finalURLTemplate() url.URL {
 		newParams[k] = v
 	}
 	r.params = newParams
-	url := r.URL()
+	u := r.URL()
+	if u == nil {
+		return url.URL{}
+	}
 
-	segments := strings.Split(url.Path, "/")
+	segments := strings.Split(u.Path, "/")
 	groupIndex := 0
 	index := 0
 	trimmedBasePath := ""
-	if url != nil && r.c.base != nil && strings.Contains(url.Path, r.c.base.Path) {
-		p := strings.TrimPrefix(url.Path, r.c.base.Path)
+	if r.c.base != nil && strings.Contains(u.Path, r.c.base.Path) {
+		p := strings.TrimPrefix(u.Path, r.c.base.Path)
 		if !strings.HasPrefix(p, "/") {
 			p = "/" + p
 		}
@@ -537,7 +548,7 @@ func (r Request) finalURLTemplate() url.URL {
 		groupIndex = 1
 	}
 	if len(segments) <= 2 {
-		return *url
+		return *u
 	}
 
 	const CoreGroupPrefix = "api"
@@ -555,11 +566,11 @@ func (r Request) finalURLTemplate() url.URL {
 		// outlet here in case more API groups are added in future if ever possible:
 		// https://kubernetes.io/docs/concepts/overview/kubernetes-api/#api-groups
 		// if a wrong API groups name is encountered, return the {prefix} for url.Path
-		url.Path = "/{prefix}"
-		url.RawQuery = ""
-		return *url
+		u.Path = "/{prefix}"
+		u.RawQuery = ""
+		return *u
 	}
-	//switch segLength := len(segments) - index; segLength {
+	// switch segLength := len(segments) - index; segLength {
 	switch {
 	// case len(segments) - index == 1:
 	// resource (with no name) do nothing
@@ -582,8 +593,8 @@ func (r Request) finalURLTemplate() url.URL {
 			segments[index+3] = "{name}"
 		}
 	}
-	url.Path = path.Join(trimmedBasePath, path.Join(segments...))
-	return *url
+	u.Path = path.Join(trimmedBasePath, path.Join(segments...))
+	return *u
 }
 
 func (r *Request) tryThrottleWithInfo(ctx context.Context, retryInfo string) error {
@@ -594,7 +605,9 @@ func (r *Request) tryThrottleWithInfo(ctx context.Context, retryInfo string) err
 	now := time.Now()
 
 	err := r.rateLimiter.Wait(ctx)
-
+	if err != nil {
+		err = fmt.Errorf("client rate limiter Wait returned an error: %w", err)
+	}
 	latency := time.Since(now)
 
 	var message string
@@ -700,36 +713,21 @@ func (r *Request) Watch(ctx context.Context) (watch.Interface, error) {
 		}
 		return false
 	}
-
-	var retryAfter *RetryAfter
+	retry := r.retryFn(r.maxRetries)
 	url := r.URL().String()
-	withRetry := r.retryFn(r.maxRetries)
 	for {
+		if err := retry.Before(ctx, r); err != nil {
+			return nil, retry.WrapPreviousError(err)
+		}
+
 		req, err := r.newHTTPRequest(ctx)
 		if err != nil {
 			return nil, err
 		}
 
-		r.backoff.Sleep(r.backoff.CalculateBackoff(r.URL()))
-		if retryAfter != nil {
-			// We are retrying the request that we already send to apiserver
-			// at least once before.
-			// This request should also be throttled with the client-internal rate limiter.
-			if err := r.tryThrottleWithInfo(ctx, retryAfter.Reason); err != nil {
-				return nil, err
-			}
-			retryAfter = nil
-		}
-
 		resp, err := client.Do(req)
 		updateURLMetrics(ctx, r, resp, err)
-		if r.c.base != nil {
-			if err != nil {
-				r.backoff.UpdateBackoff(r.c.base, err, 0)
-			} else {
-				r.backoff.UpdateBackoff(r.c.base, err, resp.StatusCode)
-			}
-		}
+		retry.After(ctx, r, resp, err)
 		if err == nil && resp.StatusCode == http.StatusOK {
 			return r.newStreamWatcher(resp)
 		}
@@ -737,14 +735,8 @@ func (r *Request) Watch(ctx context.Context) (watch.Interface, error) {
 		done, transformErr := func() (bool, error) {
 			defer readAndCloseResponseBody(resp)
 
-			var retry bool
-			retryAfter, retry = withRetry.NextRetry(req, resp, err, isErrRetryableFunc)
-			if retry {
-				err := withRetry.BeforeNextRetry(ctx, r.backoff, retryAfter, url, r.body)
-				if err == nil {
-					return false, nil
-				}
-				klog.V(4).Infof("Could not retry request - %v", err)
+			if retry.IsNextRetry(ctx, r, req, resp, err, isErrRetryableFunc) {
+				return false, nil
 			}
 
 			if resp == nil {
@@ -765,7 +757,7 @@ func (r *Request) Watch(ctx context.Context) (watch.Interface, error) {
 				// we need to return the error object from that.
 				err = transformErr
 			}
-			return nil, err
+			return nil, retry.WrapPreviousError(err)
 		}
 	}
 }
@@ -830,38 +822,21 @@ func (r *Request) Stream(ctx context.Context) (io.ReadCloser, error) {
 		client = http.DefaultClient
 	}
 
-	var retryAfter *RetryAfter
-	withRetry := r.retryFn(r.maxRetries)
+	retry := r.retryFn(r.maxRetries)
 	url := r.URL().String()
 	for {
+		if err := retry.Before(ctx, r); err != nil {
+			return nil, err
+		}
+
 		req, err := r.newHTTPRequest(ctx)
 		if err != nil {
 			return nil, err
 		}
-		if r.body != nil {
-			req.Body = ioutil.NopCloser(r.body)
-		}
-
-		r.backoff.Sleep(r.backoff.CalculateBackoff(r.URL()))
-		if retryAfter != nil {
-			// We are retrying the request that we already send to apiserver
-			// at least once before.
-			// This request should also be throttled with the client-internal rate limiter.
-			if err := r.tryThrottleWithInfo(ctx, retryAfter.Reason); err != nil {
-				return nil, err
-			}
-			retryAfter = nil
-		}
 
 		resp, err := client.Do(req)
 		updateURLMetrics(ctx, r, resp, err)
-		if r.c.base != nil {
-			if err != nil {
-				r.backoff.UpdateBackoff(r.URL(), err, 0)
-			} else {
-				r.backoff.UpdateBackoff(r.URL(), err, resp.StatusCode)
-			}
-		}
+		retry.After(ctx, r, resp, err)
 		if err != nil {
 			// we only retry on an HTTP response with 'Retry-After' header
 			return nil, err
@@ -876,14 +851,8 @@ func (r *Request) Stream(ctx context.Context) (io.ReadCloser, error) {
 			done, transformErr := func() (bool, error) {
 				defer resp.Body.Close()
 
-				var retry bool
-				retryAfter, retry = withRetry.NextRetry(req, resp, err, neverRetryError)
-				if retry {
-					err := withRetry.BeforeNextRetry(ctx, r.backoff, retryAfter, url, r.body)
-					if err == nil {
-						return false, nil
-					}
-					klog.V(4).Infof("Could not retry request - %v", err)
+				if retry.IsNextRetry(ctx, r, req, resp, err, neverRetryError) {
+					return false, nil
 				}
 				result := r.transformResponse(resp, req)
 				if err := result.Error(); err != nil {
@@ -926,8 +895,20 @@ func (r *Request) requestPreflightCheck() error {
 }
 
 func (r *Request) newHTTPRequest(ctx context.Context) (*http.Request, error) {
+	var body io.Reader
+	switch {
+	case r.body != nil && r.bodyBytes != nil:
+		return nil, fmt.Errorf("cannot set both body and bodyBytes")
+	case r.body != nil:
+		body = r.body
+	case r.bodyBytes != nil:
+		// Create a new reader specifically for this request.
+		// Giving each request a dedicated reader allows retries to avoid races resetting the request body.
+		body = bytes.NewReader(r.bodyBytes)
+	}
+
 	url := r.URL().String()
-	req, err := http.NewRequest(r.verb, url, r.body)
+	req, err := http.NewRequest(r.verb, url, body)
 	if err != nil {
 		return nil, err
 	}
@@ -974,32 +955,38 @@ func (r *Request) request(ctx context.Context, fn func(*http.Request, *http.Resp
 		defer cancel()
 	}
 
+	isErrRetryableFunc := func(req *http.Request, err error) bool {
+		// "Connection reset by peer" or "apiserver is shutting down" are usually a transient errors.
+		// Thus in case of "GET" operations, we simply retry it.
+		// We are not automatically retrying "write" operations, as they are not idempotent.
+		if req.Method != "GET" {
+			return false
+		}
+		// For connection errors and apiserver shutdown errors retry.
+		if net.IsConnectionReset(err) || net.IsProbableEOF(err) {
+			return true
+		}
+		return false
+	}
+
 	// Right now we make about ten retry attempts if we get a Retry-After response.
-	var retryAfter *RetryAfter
-	withRetry := r.retryFn(r.maxRetries)
+	retry := r.retryFn(r.maxRetries)
 	for {
+		if err := retry.Before(ctx, r); err != nil {
+			return retry.WrapPreviousError(err)
+		}
 		req, err := r.newHTTPRequest(ctx)
 		if err != nil {
 			return err
 		}
-
-		r.backoff.Sleep(r.backoff.CalculateBackoff(r.URL()))
-		if retryAfter != nil {
-			// We are retrying the request that we already send to apiserver
-			// at least once before.
-			// This request should also be throttled with the client-internal rate limiter.
-			if err := r.tryThrottleWithInfo(ctx, retryAfter.Reason); err != nil {
-				return err
-			}
-			retryAfter = nil
-		}
 		resp, err := client.Do(req)
 		updateURLMetrics(ctx, r, resp, err)
-		if err != nil {
-			r.backoff.UpdateBackoff(r.URL(), err, 0)
-		} else {
-			r.backoff.UpdateBackoff(r.URL(), err, resp.StatusCode)
+		// The value -1 or a value of 0 with a non-nil Body indicates that the length is unknown.
+		// https://pkg.go.dev/net/http#Request
+		if req.ContentLength >= 0 && !(req.Body != nil && req.ContentLength == 0) {
+			metrics.RequestSize.Observe(ctx, r.verb, r.URL().Host, float64(req.ContentLength))
 		}
+		retry.After(ctx, r, resp, err)
 
 		done := func() bool {
 			defer readAndCloseResponseBody(resp)
@@ -1012,33 +999,15 @@ func (r *Request) request(ctx context.Context, fn func(*http.Request, *http.Resp
 				fn(req, resp)
 			}
 
-			var retry bool
-			retryAfter, retry = withRetry.NextRetry(req, resp, err, func(req *http.Request, err error) bool {
-				// "Connection reset by peer" or "apiserver is shutting down" are usually a transient errors.
-				// Thus in case of "GET" operations, we simply retry it.
-				// We are not automatically retrying "write" operations, as they are not idempotent.
-				if r.verb != "GET" {
-					return false
-				}
-				// For connection errors and apiserver shutdown errors retry.
-				if net.IsConnectionReset(err) || net.IsProbableEOF(err) {
-					return true
-				}
+			if retry.IsNextRetry(ctx, r, req, resp, err, isErrRetryableFunc) {
 				return false
-			})
-			if retry {
-				err := withRetry.BeforeNextRetry(ctx, r.backoff, retryAfter, req.URL.String(), r.body)
-				if err == nil {
-					return false
-				}
-				klog.V(4).Infof("Could not retry request - %v", err)
 			}
 
 			f(req, resp)
 			return true
 		}()
 		if done {
-			return err
+			return retry.WrapPreviousError(err)
 		}
 	}
 }
@@ -1047,8 +1016,8 @@ func (r *Request) request(ctx context.Context, fn func(*http.Request, *http.Resp
 // processing.
 //
 // Error type:
-//  * If the server responds with a status: *errors.StatusError or *errors.UnexpectedObjectError
-//  * http.Client.Do errors are returned directly.
+//   - If the server responds with a status: *errors.StatusError or *errors.UnexpectedObjectError
+//   - http.Client.Do errors are returned directly.
 func (r *Request) Do(ctx context.Context) Result {
 	var result Result
 	err := r.request(ctx, func(req *http.Request, resp *http.Response) {
@@ -1056,6 +1025,9 @@ func (r *Request) Do(ctx context.Context) Result {
 	})
 	if err != nil {
 		return Result{err: err}
+	}
+	if result.err == nil || len(result.body) > 0 {
+		metrics.ResponseSize.Observe(ctx, r.verb, r.URL().Host, float64(len(result.body)))
 	}
 	return result
 }
@@ -1072,6 +1044,9 @@ func (r *Request) DoRaw(ctx context.Context) ([]byte, error) {
 	})
 	if err != nil {
 		return nil, err
+	}
+	if result.err == nil || len(result.body) > 0 {
+		metrics.ResponseSize.Observe(ctx, r.verb, r.URL().Host, float64(len(result.body)))
 	}
 	return result.body, result.err
 }
@@ -1188,13 +1163,13 @@ func truncateBody(body string) string {
 // allocating a new string for the body output unless necessary. Uses a simple heuristic to determine
 // whether the body is printable.
 func glogBody(prefix string, body []byte) {
-	if klog.V(8).Enabled() {
+	if klogV := klog.V(8); klogV.Enabled() {
 		if bytes.IndexFunc(body, func(r rune) bool {
 			return r < 0x0a
 		}) != -1 {
-			klog.Infof("%s:\n%s", prefix, truncateBody(hex.Dump(body)))
+			klogV.Infof("%s:\n%s", prefix, truncateBody(hex.Dump(body)))
 		} else {
-			klog.Infof("%s: %s", prefix, truncateBody(string(body)))
+			klogV.Infof("%s: %s", prefix, truncateBody(string(body)))
 		}
 	}
 }
@@ -1209,15 +1184,15 @@ const maxUnstructuredResponseTextBytes = 2048
 // unexpected responses. The rough structure is:
 //
 // 1. Assume the server sends you something sane - JSON + well defined error objects + proper codes
-//    - this is the happy path
-//    - when you get this output, trust what the server sends
-// 2. Guard against empty fields / bodies in received JSON and attempt to cull sufficient info from them to
-//    generate a reasonable facsimile of the original failure.
-//    - Be sure to use a distinct error type or flag that allows a client to distinguish between this and error 1 above
-// 3. Handle true disconnect failures / completely malformed data by moving up to a more generic client error
-// 4. Distinguish between various connection failures like SSL certificates, timeouts, proxy errors, unexpected
-//    initial contact, the presence of mismatched body contents from posted content types
-//    - Give these a separate distinct error type and capture as much as possible of the original message
+//   - this is the happy path
+//   - when you get this output, trust what the server sends
+//     2. Guard against empty fields / bodies in received JSON and attempt to cull sufficient info from them to
+//     generate a reasonable facsimile of the original failure.
+//   - Be sure to use a distinct error type or flag that allows a client to distinguish between this and error 1 above
+//     3. Handle true disconnect failures / completely malformed data by moving up to a more generic client error
+//     4. Distinguish between various connection failures like SSL certificates, timeouts, proxy errors, unexpected
+//     initial contact, the presence of mismatched body contents from posted content types
+//   - Give these a separate distinct error type and capture as much as possible of the original message
 //
 // TODO: introduce transformation of generic http.Client.Do() errors that separates 4.
 func (r *Request) transformUnstructuredResponseError(resp *http.Response, req *http.Request, body []byte) error {

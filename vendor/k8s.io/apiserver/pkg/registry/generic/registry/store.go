@@ -343,16 +343,22 @@ func (e *Store) ListPredicate(ctx context.Context, p storage.SelectionPredicate,
 	p.Continue = options.Continue
 	list := e.NewListFunc()
 	qualifiedResource := e.qualifiedResourceFromContext(ctx)
-	storageOpts := storage.ListOptions{ResourceVersion: options.ResourceVersion, ResourceVersionMatch: options.ResourceVersionMatch, Predicate: p}
+	storageOpts := storage.ListOptions{
+		ResourceVersion:      options.ResourceVersion,
+		ResourceVersionMatch: options.ResourceVersionMatch,
+		Predicate:            p,
+		Recursive:            true,
+	}
 	if name, ok := p.MatchesSingle(); ok {
 		if key, err := e.KeyFunc(ctx, name); err == nil {
-			err := e.Storage.GetToList(ctx, key, storageOpts, list)
+			storageOpts.Recursive = false
+			err := e.Storage.GetList(ctx, key, storageOpts, list)
 			return list, storeerr.InterpretListError(err, qualifiedResource)
 		}
 		// if we cannot extract a key based on the current context, the optimization is skipped
 	}
 
-	err := e.Storage.List(ctx, e.KeyRootFunc(ctx), storageOpts, list)
+	err := e.Storage.GetList(ctx, e.KeyRootFunc(ctx), storageOpts, list)
 	return list, storeerr.InterpretListError(err, qualifiedResource)
 }
 
@@ -894,13 +900,13 @@ func markAsDeleting(obj runtime.Object, now time.Time) (err error) {
 // grace period seconds (graceful deletion) and updating the list of
 // finalizers (finalization); it returns:
 //
-// 1. an error
-// 2. a boolean indicating that the object was not found, but it should be
-//    ignored
-// 3. a boolean indicating that the object's grace period is exhausted and it
-//    should be deleted immediately
-// 4. a new output object with the state that was updated
-// 5. a copy of the last existing state of the object
+//  1. an error
+//  2. a boolean indicating that the object was not found, but it should be
+//     ignored
+//  3. a boolean indicating that the object's grace period is exhausted and it
+//     should be deleted immediately
+//  4. a new output object with the state that was updated
+//  5. a copy of the last existing state of the object
 func (e *Store) updateForGracefulDeletionAndFinalizers(ctx context.Context, name, key string, options *metav1.DeleteOptions, preconditions storage.Preconditions, deleteValidation rest.ValidateObjectFunc, in runtime.Object) (err error, ignoreNotFound, deleteImmediately bool, out, lastExisting runtime.Object) {
 	lastGraceful := int64(0)
 	var pendingFinalizers bool
@@ -1240,23 +1246,19 @@ func (e *Store) Watch(ctx context.Context, options *metainternalversion.ListOpti
 
 // WatchPredicate starts a watch for the items that matches.
 func (e *Store) WatchPredicate(ctx context.Context, p storage.SelectionPredicate, resourceVersion string) (watch.Interface, error) {
-	storageOpts := storage.ListOptions{ResourceVersion: resourceVersion, Predicate: p}
+	storageOpts := storage.ListOptions{ResourceVersion: resourceVersion, Predicate: p, Recursive: true}
+
+	key := e.KeyRootFunc(ctx)
 	if name, ok := p.MatchesSingle(); ok {
-		if key, err := e.KeyFunc(ctx, name); err == nil {
-			w, err := e.Storage.Watch(ctx, key, storageOpts)
-			if err != nil {
-				return nil, err
-			}
-			if e.Decorator != nil {
-				return newDecoratedWatcher(ctx, w, e.Decorator), nil
-			}
-			return w, nil
+		if k, err := e.KeyFunc(ctx, name); err == nil {
+			key = k
+			storageOpts.Recursive = false
 		}
 		// if we cannot extract a key based on the current context, the
 		// optimization is skipped
 	}
 
-	w, err := e.Storage.WatchList(ctx, e.KeyRootFunc(ctx), storageOpts)
+	w, err := e.Storage.Watch(ctx, key, storageOpts)
 	if err != nil {
 		return nil, err
 	}

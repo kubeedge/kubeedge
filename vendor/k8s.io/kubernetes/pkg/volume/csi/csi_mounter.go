@@ -41,7 +41,7 @@ import (
 	utilstrings "k8s.io/utils/strings"
 )
 
-//TODO (vladimirvivien) move this in a central loc later
+// TODO (vladimirvivien) move this in a central loc later
 var (
 	volDataKey = struct {
 		specVolID,
@@ -95,10 +95,6 @@ func getTargetPath(uid types.UID, specVolumeID string, host volume.VolumeHost) s
 
 // volume.Mounter methods
 var _ volume.Mounter = &csiMountMgr{}
-
-func (c *csiMountMgr) CanMount() error {
-	return nil
-}
 
 func (c *csiMountMgr) SetUp(mounterArgs volume.MounterArgs) error {
 	return c.SetUpAt(c.GetPath(), mounterArgs)
@@ -249,6 +245,35 @@ func (c *csiMountMgr) SetUpAt(dir string, mounterArgs volume.MounterArgs) error 
 		}
 	}
 
+	// Save volume info in pod dir
+	// persist volume info data for teardown
+	nodeName := string(c.plugin.host.GetNodeName())
+	volData := map[string]string{
+		volDataKey.specVolID:           c.spec.Name(),
+		volDataKey.volHandle:           volumeHandle,
+		volDataKey.driverName:          string(c.driverName),
+		volDataKey.nodeName:            nodeName,
+		volDataKey.volumeLifecycleMode: string(c.volumeLifecycleMode),
+		volDataKey.attachmentID:        getAttachmentName(volumeHandle, string(c.driverName), nodeName),
+	}
+
+	err = saveVolumeData(parentDir, volDataFileName, volData)
+	defer func() {
+		// Only if there was an error and volume operation was considered
+		// finished, we should remove the directory.
+		if err != nil && volumetypes.IsOperationFinishedError(err) {
+			// attempt to cleanup volume mount dir
+			if removeerr := removeMountDir(c.plugin, dir); removeerr != nil {
+				klog.Error(log("mounter.SetUpAt failed to remove mount dir after error [%s]: %v", dir, removeerr))
+			}
+		}
+	}()
+	if err != nil {
+		errorMsg := log("mounter.SetUpAt failed to save volume info data: %v", err)
+		klog.Error(errorMsg)
+		return volumetypes.NewTransientOperationFailure(errorMsg)
+	}
+
 	err = csi.NodePublishVolume(
 		ctx,
 		volumeHandle,
@@ -284,7 +309,7 @@ func (c *csiMountMgr) SetUpAt(dir string, mounterArgs volume.MounterArgs) error 
 		// Driver doesn't support applying FSGroup. Kubelet must apply it instead.
 
 		// fullPluginName helps to distinguish different driver from csi plugin
-		err := volume.SetVolumeOwnership(c, mounterArgs.FsGroup, mounterArgs.FSGroupChangePolicy, util.FSGroupCompleteHook(c.plugin, c.spec))
+		err := volume.SetVolumeOwnership(c, dir, mounterArgs.FsGroup, mounterArgs.FSGroupChangePolicy, util.FSGroupCompleteHook(c.plugin, c.spec))
 		if err != nil {
 			// At this point mount operation is successful:
 			//   1. Since volume can not be used by the pod because of invalid permissions, we must return error
@@ -352,9 +377,9 @@ func (c *csiMountMgr) podServiceAccountTokenAttrs() (map[string]string, error) {
 
 func (c *csiMountMgr) GetAttributes() volume.Attributes {
 	return volume.Attributes{
-		ReadOnly:        c.readOnly,
-		Managed:         !c.readOnly,
-		SupportsSELinux: c.supportsSELinux,
+		ReadOnly:       c.readOnly,
+		Managed:        !c.readOnly,
+		SELinuxRelabel: c.supportsSELinux,
 	}
 }
 
@@ -408,19 +433,27 @@ func (c *csiMountMgr) supportsFSGroup(fsType string, fsGroup *int64, driverPolic
 		return false
 	}
 
-	if c.spec.PersistentVolume == nil {
-		klog.V(4).Info(log("mounter.SetupAt Warning: skipping fsGroup permission change, no access mode available. The volume may only be accessible to root users."))
-		return false
+	if c.spec.PersistentVolume != nil {
+		if c.spec.PersistentVolume.Spec.AccessModes == nil {
+			klog.V(4).Info(log("mounter.SetupAt WARNING: skipping fsGroup, access modes not provided"))
+			return false
+		}
+		if !hasReadWriteOnce(c.spec.PersistentVolume.Spec.AccessModes) {
+			klog.V(4).Info(log("mounter.SetupAt WARNING: skipping fsGroup, only support ReadWriteOnce access mode"))
+			return false
+		}
+		return true
+	} else if c.spec.Volume != nil && c.spec.Volume.CSI != nil {
+		if !utilfeature.DefaultFeatureGate.Enabled(features.CSIInlineVolume) {
+			klog.V(4).Info(log("mounter.SetupAt WARNING: skipping fsGroup, CSIInlineVolume feature required"))
+			return false
+		}
+		// Inline CSI volumes are always mounted with RWO AccessMode by SetUpAt
+		return true
 	}
-	if c.spec.PersistentVolume.Spec.AccessModes == nil {
-		klog.V(4).Info(log("mounter.SetupAt WARNING: skipping fsGroup, access modes not provided"))
-		return false
-	}
-	if !hasReadWriteOnce(c.spec.PersistentVolume.Spec.AccessModes) {
-		klog.V(4).Info(log("mounter.SetupAt WARNING: skipping fsGroup, only support ReadWriteOnce access mode"))
-		return false
-	}
-	return true
+
+	klog.V(4).Info(log("mounter.SetupAt WARNING: skipping fsGroup, unsupported volume type"))
+	return false
 }
 
 // isDirMounted returns the !notMounted result from IsLikelyNotMountPoint check
