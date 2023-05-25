@@ -298,7 +298,7 @@ jobs:
 
   docker_build:
     runs-on: ubuntu-22.04
-    timeout-minutes: 30
+    timeout-minutes: 40
     name: Multiple docker image build
     steps:
       - uses: actions/cache@v3
