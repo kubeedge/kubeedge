@@ -25,7 +25,6 @@ import (
 	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
-	commontypes "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
 	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
@@ -210,14 +209,5 @@ func BuildHandlerChain(handler http.Handler, ls *MetaServer) http.Handler {
 	handler = genericfilters.WithWaitGroup(handler, ls.LongRunningFunc, ls.HandlerChainWaitGroup)
 	handler = genericapifilters.WithRequestInfo(handler, server.NewRequestInfoResolver(cfg))
 	handler = genericfilters.WithPanicRecovery(handler, &apirequest.RequestInfoFactory{})
-	handler = WithAuthorizationHeader(handler)
 	return handler
-}
-
-func WithAuthorizationHeader(handler http.Handler) http.Handler {
-	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		token := request.Header.Get(commontypes.AuthorizationKey)
-		request = request.WithContext(context.WithValue(request.Context(), commontypes.AuthorizationKey, token))
-		handler.ServeHTTP(writer, request)
-	})
 }
