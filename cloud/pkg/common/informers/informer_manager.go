@@ -240,7 +240,8 @@ func (ifs *informers) addInformerPair(gvr schema.GroupVersionResource) (*Informe
 
 	ifs.informersByGVR[gvr] = informerPair
 
-	if informerPair.Informer.HasSynced() {
+	if !informerPair.Informer.HasSynced() {
+		klog.V(4).Infof("waiting for %s Informer to sync", gvr.String())
 		// Wait for it to sync before returning the Informer so that folks don't read from a stale cache.
 		if !cache.WaitForCacheSync(ifs.stopCh, informerPair.Informer.HasSynced) {
 			return nil, fmt.Errorf("failed waiting for %s Informer to sync", gvr.String())
