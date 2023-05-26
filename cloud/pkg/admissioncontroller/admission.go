@@ -27,7 +27,7 @@ import (
 )
 
 const (
-	ValidateDeviceModelConfigName   = "validate-devicemodel"
+	ValidateCRDWebhookConfigName    = "kubeedge-crds-validate-webhook-configuration"
 	ValidateDeviceModelWebhookName  = "validatedevicemodel.kubeedge.io"
 	ValidateRuleWebhookName         = "validatedrule.kubeedge.io"
 	ValidateRuleEndpointWebhookName = "validatedruleendpoint.kubeedge.io"
@@ -158,9 +158,8 @@ func (ac *AdmissionController) registerWebhooks(opt *options.AdmissionOptions, c
 	// validating webhook configuration
 	validatingWebhookConfiguration := admissionregistrationv1.ValidatingWebhookConfiguration{
 		ObjectMeta: metav1.ObjectMeta{
-			// TODO: this config name is not precise, think a way to change it more common, like `validate-kubeedge-crd`
-			// but there'll be two ValidatingWebhookConfigurations, to keep compatible, we can only keep one webhook for one CRD
-			Name: ValidateDeviceModelConfigName,
+			// there'll be two ValidatingWebhookConfigurations, to keep compatible, we can only keep one webhook for one CRD
+			Name: ValidateCRDWebhookConfigName,
 		},
 		Webhooks: []admissionregistrationv1.ValidatingWebhook{
 			// Device Model Validating Webhook
