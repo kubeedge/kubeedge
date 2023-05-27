@@ -150,8 +150,9 @@ func (r *REST) List(ctx context.Context, options *metainternalversion.ListOption
 		}
 		klog.Infof("[metaserver/reststorage] successfully process list req (%v) at local", info.Path)
 	}
-
-	decorateList(ctx, list)
+	if err == nil {
+		decorateList(ctx, list)
+	}
 	return list, err
 }
 
