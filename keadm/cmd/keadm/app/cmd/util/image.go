@@ -20,7 +20,11 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"os"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"time"
 
 	dockertypes "github.com/docker/docker/api/types"
@@ -324,6 +328,9 @@ func (runtime *CRIRuntime) CopyResources(edgeImage string, files map[string]stri
 }
 
 func (runtime *CRIRuntime) RunMQTT(mqttImage string) error {
+	containerName := image.EdgeMQTT
+	sandboxPodLogDirectory := fmt.Sprintf("_%s_", image.EdgeMQTT)
+	logDirectory := filepath.Join("/var/log/pods", sandboxPodLogDirectory)
 	psc := &runtimeapi.PodSandboxConfig{
 		Metadata: &runtimeapi.PodSandboxMetadata{Name: image.EdgeMQTT},
 		PortMappings: []*runtimeapi.PortMapping{
@@ -336,13 +343,21 @@ func (runtime *CRIRuntime) RunMQTT(mqttImage string) error {
 				HostPort:      9001,
 			},
 		},
-		Labels: mqttLabel,
+		Labels:       mqttLabel,
+		LogDirectory: logDirectory,
+	}
+	if err := os.MkdirAll(logDirectory, 0755); err != nil {
+		return err
 	}
 	sandbox, err := runtime.RuntimeService.RunPodSandbox(psc, "")
 	if err != nil {
 		return err
 	}
-
+	restartCount, err := calcRestartCountByLogDir(filepath.Join(logDirectory, containerName))
+	if err != nil {
+		return nil
+	}
+	containerLogPath := filepath.Join(containerName, fmt.Sprintf("%d.log", restartCount))
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: &runtimeapi.ContainerMetadata{Name: image.EdgeMQTT},
 		Image: &runtimeapi.ImageSpec{
@@ -354,12 +369,50 @@ func (runtime *CRIRuntime) RunMQTT(mqttImage string) error {
 				HostPath:      filepath.Join(KubeEdgeSocketPath, image.EdgeMQTT),
 			},
 		},
+		LogPath: containerLogPath,
+	}
+	if err := os.MkdirAll(filepath.Join(logDirectory, containerName), 0755); err != nil {
+		return err
 	}
 	containerID, err := runtime.RuntimeService.CreateContainer(sandbox, containerConfig, psc)
 	if err != nil {
 		return err
 	}
 	return runtime.RuntimeService.StartContainer(containerID)
+}
+
+func calcRestartCountByLogDir(path string) (int, error) {
+	// if the path doesn't exist then it's not an error
+	if _, err := os.Stat(path); err != nil {
+		return 0, nil
+	}
+	restartCount := int(0)
+	files, err := ioutil.ReadDir(path)
+	if err != nil {
+		return 0, err
+	}
+	if len(files) == 0 {
+		return 0, err
+	}
+	restartCountLogFileRegex := regexp.MustCompile(`(\d+).log(\..*)?`)
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+		matches := restartCountLogFileRegex.FindStringSubmatch(file.Name())
+		if len(matches) == 0 {
+			continue
+		}
+		count, err := strconv.Atoi(matches[1])
+		if err != nil {
+			return restartCount, err
+		}
+		count++
+		if count > restartCount {
+			restartCount = count
+		}
+	}
+	return restartCount, nil
 }
 
 func (runtime *CRIRuntime) RemoveMQTT() error {
