@@ -223,7 +223,7 @@ func DiagnosePod(ops *common.DiagnoseOptions, podName string) error {
 	if ready {
 		fmt.Printf("Pod %s is Ready", podName)
 	} else {
-		return fmt.Errorf("Pod %s is not Ready", podName)
+		return fmt.Errorf("pod %s is not Ready", podName)
 	}
 
 	return nil
