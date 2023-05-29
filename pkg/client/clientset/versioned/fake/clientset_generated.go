@@ -26,6 +26,8 @@ import (
 	fakedevicesv1alpha2 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/devices/v1alpha2/fake"
 	operationsv1alpha1 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/operations/v1alpha1"
 	fakeoperationsv1alpha1 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/operations/v1alpha1/fake"
+	policyv1alpha1 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/policy/v1alpha1"
+	fakepolicyv1alpha1 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/policy/v1alpha1/fake"
 	reliablesyncsv1alpha1 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/reliablesyncs/v1alpha1"
 	fakereliablesyncsv1alpha1 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/reliablesyncs/v1alpha1/fake"
 	rulesv1 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/rules/v1"
@@ -100,6 +102,11 @@ func (c *Clientset) DevicesV1alpha2() devicesv1alpha2.DevicesV1alpha2Interface {
 // OperationsV1alpha1 retrieves the OperationsV1alpha1Client
 func (c *Clientset) OperationsV1alpha1() operationsv1alpha1.OperationsV1alpha1Interface {
 	return &fakeoperationsv1alpha1.FakeOperationsV1alpha1{Fake: &c.Fake}
+}
+
+// PolicyV1alpha1 retrieves the PolicyV1alpha1Client
+func (c *Clientset) PolicyV1alpha1() policyv1alpha1.PolicyV1alpha1Interface {
+	return &fakepolicyv1alpha1.FakePolicyV1alpha1{Fake: &c.Fake}
 }
 
 // ReliablesyncsV1alpha1 retrieves the ReliablesyncsV1alpha1Client

@@ -28,6 +28,7 @@ import (
 	devices "github.com/kubeedge/kubeedge/pkg/client/informers/externalversions/devices"
 	internalinterfaces "github.com/kubeedge/kubeedge/pkg/client/informers/externalversions/internalinterfaces"
 	operations "github.com/kubeedge/kubeedge/pkg/client/informers/externalversions/operations"
+	policy "github.com/kubeedge/kubeedge/pkg/client/informers/externalversions/policy"
 	reliablesyncs "github.com/kubeedge/kubeedge/pkg/client/informers/externalversions/reliablesyncs"
 	rules "github.com/kubeedge/kubeedge/pkg/client/informers/externalversions/rules"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -179,6 +180,7 @@ type SharedInformerFactory interface {
 	Apps() apps.Interface
 	Devices() devices.Interface
 	Operations() operations.Interface
+	Policy() policy.Interface
 	Reliablesyncs() reliablesyncs.Interface
 	Rules() rules.Interface
 }
@@ -193,6 +195,10 @@ func (f *sharedInformerFactory) Devices() devices.Interface {
 
 func (f *sharedInformerFactory) Operations() operations.Interface {
 	return operations.New(f, f.namespace, f.tweakListOptions)
+}
+
+func (f *sharedInformerFactory) Policy() policy.Interface {
+	return policy.New(f, f.namespace, f.tweakListOptions)
 }
 
 func (f *sharedInformerFactory) Reliablesyncs() reliablesyncs.Interface {
