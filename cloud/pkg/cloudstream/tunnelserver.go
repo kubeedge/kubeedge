@@ -130,7 +130,7 @@ func (s *TunnelServer) connect(r *restful.Request, w *restful.Response) {
 	err = s.updateNodeKubeletEndpoint(hostNameOverride)
 	if err != nil {
 		msg := stream.NewMessage(0, stream.MessageTypeCloseConnect, []byte(err.Error()))
-		if err := session.tunnel.WriteMessage(msg); err == nil {
+		if err := session.WriteMessageToTunnel(msg); err == nil {
 			klog.V(4).Infof("CloudStream send close connection message to edge successfully")
 		} else {
 			klog.Errorf("CloudStream failed to send close connection message to edge, error: %v", err)
