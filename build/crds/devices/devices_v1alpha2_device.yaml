@@ -75,6 +75,11 @@ spec:
                       TODO: Add other useful fields. apiVersion, kind, uid?'
                     type: string
                 type: object
+              nodeName:
+                description: NodeName is a request to schedule this device onto a
+                  specific node. If it is non-empty, the scheduler simply schedules
+                  this device onto that node, assuming that it fits resource requirements.
+                type: string
               nodeSelector:
                 description: NodeSelector indicates the binding preferences between
                   devices and nodes. Refer to k8s.io/kubernetes/pkg/apis/core NodeSelector

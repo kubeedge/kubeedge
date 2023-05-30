@@ -7,6 +7,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 
+	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/types"
 	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
 )
@@ -319,7 +320,7 @@ func UpdatedBluetoothDeviceModel() v1alpha2.DeviceModel {
 	return newDeviceModel
 }
 
-func NewLedDeviceInstance(nodeSelector string) v1alpha2.Device {
+func NewLedDeviceInstance(nodeName string) v1alpha2.Device {
 	deviceInstance := v1alpha2.Device{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "Device",
@@ -337,19 +338,7 @@ func NewLedDeviceInstance(nodeSelector string) v1alpha2.Device {
 			DeviceModelRef: &v12.LocalObjectReference{
 				Name: "led-light",
 			},
-			NodeSelector: &v12.NodeSelector{
-				NodeSelectorTerms: []v12.NodeSelectorTerm{
-					{
-						MatchExpressions: []v12.NodeSelectorRequirement{
-							{
-								Key:      "",
-								Operator: v12.NodeSelectorOpIn,
-								Values:   []string{nodeSelector},
-							},
-						},
-					},
-				},
-			},
+			NodeName: nodeName,
 		},
 		Status: v1alpha2.DeviceStatus{
 			Twins: []v1alpha2.Twin{
@@ -373,7 +362,7 @@ func NewLedDeviceInstance(nodeSelector string) v1alpha2.Device {
 }
 
 // NewMockInstance create an instance for mock bluetooth device.
-func NewMockInstance(nodeSelector string) v1alpha2.Device {
+func NewMockInstance(nodeName string) v1alpha2.Device {
 	deviceInstance := v1alpha2.Device{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "Device",
@@ -392,19 +381,7 @@ func NewMockInstance(nodeSelector string) v1alpha2.Device {
 			DeviceModelRef: &v12.LocalObjectReference{
 				Name: "mock-temp-sensor-model",
 			},
-			NodeSelector: &v12.NodeSelector{
-				NodeSelectorTerms: []v12.NodeSelectorTerm{
-					{
-						MatchExpressions: []v12.NodeSelectorRequirement{
-							{
-								Key:      "",
-								Operator: v12.NodeSelectorOpIn,
-								Values:   []string{nodeSelector},
-							},
-						},
-					},
-				},
-			},
+			NodeName: nodeName,
 		},
 		Status: v1alpha2.DeviceStatus{
 			Twins: []v1alpha2.Twin{
@@ -426,7 +403,7 @@ func NewMockInstance(nodeSelector string) v1alpha2.Device {
 	return deviceInstance
 }
 
-func NewModbusDeviceInstance(nodeSelector string) v1alpha2.Device {
+func NewModbusDeviceInstance(nodeName string) v1alpha2.Device {
 	devicePropertyVisitor1 := v1alpha2.DevicePropertyVisitor{
 		PropertyName: "temperature",
 		VisitorConfig: v1alpha2.VisitorConfig{
@@ -473,19 +450,7 @@ func NewModbusDeviceInstance(nodeSelector string) v1alpha2.Device {
 			DeviceModelRef: &v12.LocalObjectReference{
 				Name: "sensor-tag-model",
 			},
-			NodeSelector: &v12.NodeSelector{
-				NodeSelectorTerms: []v12.NodeSelectorTerm{
-					{
-						MatchExpressions: []v12.NodeSelectorRequirement{
-							{
-								Key:      "",
-								Operator: v12.NodeSelectorOpIn,
-								Values:   []string{nodeSelector},
-							},
-						},
-					},
-				},
-			},
+			NodeName:         nodeName,
 			PropertyVisitors: propertyVisitors,
 		},
 		Status: v1alpha2.DeviceStatus{
@@ -508,7 +473,7 @@ func NewModbusDeviceInstance(nodeSelector string) v1alpha2.Device {
 	return deviceInstance
 }
 
-func NewBluetoothDeviceInstance(nodeSelector string) v1alpha2.Device {
+func NewBluetoothDeviceInstance(nodeName string) v1alpha2.Device {
 	devicePropertyVisitor1 := v1alpha2.DevicePropertyVisitor{
 		PropertyName: "temperature",
 		VisitorConfig: v1alpha2.VisitorConfig{
@@ -621,19 +586,7 @@ func NewBluetoothDeviceInstance(nodeSelector string) v1alpha2.Device {
 			DeviceModelRef: &v12.LocalObjectReference{
 				Name: "cc2650-sensortag",
 			},
-			NodeSelector: &v12.NodeSelector{
-				NodeSelectorTerms: []v12.NodeSelectorTerm{
-					{
-						MatchExpressions: []v12.NodeSelectorRequirement{
-							{
-								Key:      "",
-								Operator: v12.NodeSelectorOpIn,
-								Values:   []string{nodeSelector},
-							},
-						},
-					},
-				},
-			},
+			NodeName: nodeName,
 			Protocol: v1alpha2.ProtocolConfig{
 				Bluetooth: &v1alpha2.ProtocolConfigBluetooth{
 					MACAddress: "BC:6A:29:AE:CC:96",
@@ -661,7 +614,7 @@ func NewBluetoothDeviceInstance(nodeSelector string) v1alpha2.Device {
 	return deviceInstance
 }
 
-func NewCustomizedDeviceInstance(nodeSelector string) v1alpha2.Device {
+func NewCustomizedDeviceInstance(nodeName string) v1alpha2.Device {
 	devicePropertyVisitor1 := v1alpha2.DevicePropertyVisitor{
 		PropertyName: "temperature",
 		VisitorConfig: v1alpha2.VisitorConfig{
@@ -709,19 +662,7 @@ func NewCustomizedDeviceInstance(nodeSelector string) v1alpha2.Device {
 			DeviceModelRef: &v12.LocalObjectReference{
 				Name: "sensor-tag-customized-model",
 			},
-			NodeSelector: &v12.NodeSelector{
-				NodeSelectorTerms: []v12.NodeSelectorTerm{
-					{
-						MatchExpressions: []v12.NodeSelectorRequirement{
-							{
-								Key:      "",
-								Operator: v12.NodeSelectorOpIn,
-								Values:   []string{nodeSelector},
-							},
-						},
-					},
-				},
-			},
+			NodeName: nodeName,
 			Protocol: v1alpha2.ProtocolConfig{
 				CustomizedProtocol: &v1alpha2.ProtocolConfigCustomized{
 					ProtocolName: "CustomizedProtocol1",
@@ -764,7 +705,7 @@ func NewCustomizedDeviceInstance(nodeSelector string) v1alpha2.Device {
 	return deviceInstance
 }
 
-func UpdatedLedDeviceInstance(nodeSelector string) v1alpha2.Device {
+func UpdatedLedDeviceInstance(nodeName string) v1alpha2.Device {
 	deviceInstance := v1alpha2.Device{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "Device",
@@ -782,19 +723,7 @@ func UpdatedLedDeviceInstance(nodeSelector string) v1alpha2.Device {
 			DeviceModelRef: &v12.LocalObjectReference{
 				Name: "led-light",
 			},
-			NodeSelector: &v12.NodeSelector{
-				NodeSelectorTerms: []v12.NodeSelectorTerm{
-					{
-						MatchExpressions: []v12.NodeSelectorRequirement{
-							{
-								Key:      "",
-								Operator: v12.NodeSelectorOpIn,
-								Values:   []string{nodeSelector},
-							},
-						},
-					},
-				},
-			},
+			NodeName: nodeName,
 		},
 		Status: v1alpha2.DeviceStatus{
 			Twins: []v1alpha2.Twin{
@@ -816,7 +745,7 @@ func UpdatedLedDeviceInstance(nodeSelector string) v1alpha2.Device {
 	return deviceInstance
 }
 
-func UpdatedModbusDeviceInstance(nodeSelector string) v1alpha2.Device {
+func UpdatedModbusDeviceInstance(nodeName string) v1alpha2.Device {
 	devicePropertyVisitor1 := v1alpha2.DevicePropertyVisitor{
 		PropertyName: "temperature",
 		VisitorConfig: v1alpha2.VisitorConfig{
@@ -862,19 +791,7 @@ func UpdatedModbusDeviceInstance(nodeSelector string) v1alpha2.Device {
 			DeviceModelRef: &v12.LocalObjectReference{
 				Name: "sensor-tag-model",
 			},
-			NodeSelector: &v12.NodeSelector{
-				NodeSelectorTerms: []v12.NodeSelectorTerm{
-					{
-						MatchExpressions: []v12.NodeSelectorRequirement{
-							{
-								Key:      "",
-								Operator: v12.NodeSelectorOpIn,
-								Values:   []string{nodeSelector},
-							},
-						},
-					},
-				},
-			},
+			NodeName: nodeName,
 			Protocol: v1alpha2.ProtocolConfig{
 				Modbus: &v1alpha2.ProtocolConfigModbus{
 					SlaveID: pointer.Int64Ptr(1),
@@ -922,7 +839,7 @@ func UpdatedModbusDeviceInstance(nodeSelector string) v1alpha2.Device {
 	return deviceInstance
 }
 
-func UpdatedBluetoothDeviceInstance(nodeSelector string) v1alpha2.Device {
+func UpdatedBluetoothDeviceInstance(nodeName string) v1alpha2.Device {
 	devicePropertyVisitor1 := v1alpha2.DevicePropertyVisitor{
 		PropertyName: "temperature",
 		VisitorConfig: v1alpha2.VisitorConfig{
@@ -1034,19 +951,7 @@ func UpdatedBluetoothDeviceInstance(nodeSelector string) v1alpha2.Device {
 			DeviceModelRef: &v12.LocalObjectReference{
 				Name: "cc2650-sensortag",
 			},
-			NodeSelector: &v12.NodeSelector{
-				NodeSelectorTerms: []v12.NodeSelectorTerm{
-					{
-						MatchExpressions: []v12.NodeSelectorRequirement{
-							{
-								Key:      "",
-								Operator: v12.NodeSelectorOpIn,
-								Values:   []string{nodeSelector},
-							},
-						},
-					},
-				},
-			},
+			NodeName: nodeName,
 			Protocol: v1alpha2.ProtocolConfig{
 				Bluetooth: &v1alpha2.ProtocolConfigBluetooth{
 					MACAddress: "BC:6A:29:AE:CC:69",
@@ -1106,14 +1011,14 @@ func IncorrectDeviceInstance() v1alpha2.Device {
 	return deviceInstance
 }
 
-func NewConfigMapLED(nodeSelector string) v12.ConfigMap {
+func NewConfigMapLED(nodeName string) v12.ConfigMap {
 	configMap := v12.ConfigMap{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "ConfigMap",
 			APIVersion: "v1",
 		},
 		ObjectMeta: v1.ObjectMeta{
-			Name:      "device-profile-config-" + nodeSelector,
+			Name:      constants.DeviceProfileConfigPrefix + nodeName,
 			Namespace: Namespace,
 		},
 	}
@@ -1179,14 +1084,14 @@ func NewConfigMapLED(nodeSelector string) v12.ConfigMap {
 	return configMap
 }
 
-func NewConfigMapBluetooth(nodeSelector string) v12.ConfigMap {
+func NewConfigMapBluetooth(nodeName string) v12.ConfigMap {
 	configMap := v12.ConfigMap{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "ConfigMap",
 			APIVersion: "v1",
 		},
 		ObjectMeta: v1.ObjectMeta{
-			Name:      "device-profile-config-" + nodeSelector,
+			Name:      constants.DeviceProfileConfigPrefix + nodeName,
 			Namespace: Namespace,
 		},
 	}
@@ -1394,14 +1299,14 @@ func NewConfigMapBluetooth(nodeSelector string) v12.ConfigMap {
 	return configMap
 }
 
-func NewConfigMapModbus(nodeSelector string) v12.ConfigMap {
+func NewConfigMapModbus(nodeName string) v12.ConfigMap {
 	configMap := v12.ConfigMap{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "ConfigMap",
 			APIVersion: "v1",
 		},
 		ObjectMeta: v1.ObjectMeta{
-			Name:      "device-profile-config-" + nodeSelector,
+			Name:      constants.DeviceProfileConfigPrefix + nodeName,
 			Namespace: Namespace,
 		},
 	}
@@ -1500,14 +1405,14 @@ func NewConfigMapModbus(nodeSelector string) v12.ConfigMap {
 	return configMap
 }
 
-func UpdatedConfigMapModbusForDataAndTwins(nodeSelector string) v12.ConfigMap {
+func UpdatedConfigMapModbusForDataAndTwins(nodeName string) v12.ConfigMap {
 	configMap := v12.ConfigMap{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "ConfigMap",
 			APIVersion: "v1",
 		},
 		ObjectMeta: v1.ObjectMeta{
-			Name:      "device-profile-config-" + nodeSelector,
+			Name:      constants.DeviceProfileConfigPrefix + nodeName,
 			Namespace: Namespace,
 		},
 	}
@@ -1631,14 +1536,14 @@ func UpdatedConfigMapModbusForDataAndTwins(nodeSelector string) v12.ConfigMap {
 	return configMap
 }
 
-func NewConfigMapCustomized(nodeSelector string) v12.ConfigMap {
+func NewConfigMapCustomized(nodeName string) v12.ConfigMap {
 	configMap := v12.ConfigMap{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "ConfigMap",
 			APIVersion: "v1",
 		},
 		ObjectMeta: v1.ObjectMeta{
-			Name:      "device-profile-config-" + nodeSelector,
+			Name:      constants.DeviceProfileConfigPrefix + nodeName,
 			Namespace: Namespace,
 		},
 	}

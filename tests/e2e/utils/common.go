@@ -238,16 +238,16 @@ func HandleDeviceModel(c edgeclientset.Interface, operation string, UID string, 
 	return nil
 }
 
-// HandleDeviceInstance to handle app deployment/delete using pod spec.
-func HandleDeviceInstance(c edgeclientset.Interface, operation string, nodeSelector string, UID string, protocolType string) error {
+// HandleDeviceInstance to handle Device operation to apiserver.
+func HandleDeviceInstance(c edgeclientset.Interface, operation string, nodeName string, UID string, protocolType string) error {
 	switch operation {
 	case http.MethodPost:
-		body := newDeviceInstanceObject(nodeSelector, protocolType, false)
+		body := newDeviceInstanceObject(nodeName, protocolType, false)
 		_, err := c.DevicesV1alpha2().Devices("default").Create(context.TODO(), body, metav1.CreateOptions{})
 		return err
 
 	case http.MethodPatch:
-		body := newDeviceInstanceObject(nodeSelector, protocolType, true)
+		body := newDeviceInstanceObject(nodeName, protocolType, true)
 		reqBytes, err := json.Marshal(body)
 		if err != nil {
 			Fatalf("Marshalling body failed: %v", err)
@@ -268,29 +268,29 @@ func HandleDeviceInstance(c edgeclientset.Interface, operation string, nodeSelec
 }
 
 // newDeviceInstanceObject creates a new device instance object
-func newDeviceInstanceObject(nodeSelector string, protocolType string, updated bool) *v1alpha2.Device {
+func newDeviceInstanceObject(nodeName string, protocolType string, updated bool) *v1alpha2.Device {
 	var deviceInstance v1alpha2.Device
 	if !updated {
 		switch protocolType {
 		case BlueTooth:
-			deviceInstance = NewBluetoothDeviceInstance(nodeSelector)
+			deviceInstance = NewBluetoothDeviceInstance(nodeName)
 		case ModBus:
-			deviceInstance = NewModbusDeviceInstance(nodeSelector)
+			deviceInstance = NewModbusDeviceInstance(nodeName)
 		case Led:
-			deviceInstance = NewLedDeviceInstance(nodeSelector)
+			deviceInstance = NewLedDeviceInstance(nodeName)
 		case Customized:
-			deviceInstance = NewCustomizedDeviceInstance(nodeSelector)
+			deviceInstance = NewCustomizedDeviceInstance(nodeName)
 		case IncorrectInstance:
 			deviceInstance = IncorrectDeviceInstance()
 		}
 	} else {
 		switch protocolType {
 		case BlueTooth:
-			deviceInstance = UpdatedBluetoothDeviceInstance(nodeSelector)
+			deviceInstance = UpdatedBluetoothDeviceInstance(nodeName)
 		case ModBus:
-			deviceInstance = UpdatedModbusDeviceInstance(nodeSelector)
+			deviceInstance = UpdatedModbusDeviceInstance(nodeName)
 		case Led:
-			deviceInstance = UpdatedLedDeviceInstance(nodeSelector)
+			deviceInstance = UpdatedLedDeviceInstance(nodeName)
 		case IncorrectInstance:
 			deviceInstance = IncorrectDeviceInstance()
 		}

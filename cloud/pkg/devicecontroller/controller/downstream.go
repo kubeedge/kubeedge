@@ -149,16 +149,16 @@ func (dc *DownstreamController) syncDevice() {
 
 // addToConfigMap adds device in the configmap
 func (dc *DownstreamController) addToConfigMap(device *v1alpha2.Device) {
-	configMap, ok := dc.configMapManager.ConfigMap.Load(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0])
+	configMap, ok := dc.configMapManager.ConfigMap.Load(getDeviceNode(device))
 	if !ok {
 		nodeConfigMap := &v1.ConfigMap{}
-		nodeConfigMap.Name = constants.DeviceProfileConfigPrefix + device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0]
+		nodeConfigMap.Name = constants.DeviceProfileConfigPrefix + getDeviceNode(device)
 		nodeConfigMap.Namespace = device.Namespace
 		nodeConfigMap.Data = make(map[string]string)
 		// TODO: how to handle 2 device of multiple namespaces bind to same node ?
 		dc.addDeviceProfile(device, nodeConfigMap)
 		// store new config map
-		dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
+		dc.configMapManager.ConfigMap.Store(getDeviceNode(device), nodeConfigMap)
 
 		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Get(context.Background(), nodeConfigMap.Name, metav1.GetOptions{}); err != nil {
 			if apierrors.IsNotFound(err) {
@@ -181,7 +181,7 @@ func (dc *DownstreamController) addToConfigMap(device *v1alpha2.Device) {
 	}
 	dc.addDeviceProfile(device, nodeConfigMap)
 	// store new config map
-	dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
+	dc.configMapManager.ConfigMap.Store(getDeviceNode(device), nodeConfigMap)
 	if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(context.Background(), nodeConfigMap, metav1.UpdateOptions{}); err != nil {
 		klog.Errorf("Failed to update config map %v in namespace %v", nodeConfigMap, device.Namespace)
 		return
@@ -367,12 +367,12 @@ func addDeviceInstanceAndProtocol(device *v1alpha2.Device, deviceProfile *types.
 // deviceAdded creates a device, adds in deviceManagers map, send a message to edge node if node selector is present.
 func (dc *DownstreamController) deviceAdded(device *v1alpha2.Device) {
 	dc.deviceManager.Device.Store(device.Name, device)
-	if len(device.Spec.NodeSelector.NodeSelectorTerms) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values) != 0 {
+	if nodeName := getDeviceNode(device); len(nodeName) != 0 {
 		dc.addToConfigMap(device)
 		edgeDevice := createDevice(device)
 		msg := model.NewMessage("")
 
-		resource, err := messagelayer.BuildResourceForDevice(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], "membership", "")
+		resource, err := messagelayer.BuildResourceForDevice(nodeName, "membership", "")
 		if err != nil {
 			klog.Warningf("Built message resource failed with error: %s", err)
 			return
@@ -479,8 +479,8 @@ func isDevicePropertyVisitorsUpdated(oldPropertyVisitors *[]v1alpha2.DevicePrope
 
 // updateConfigMap updates the protocol, twins and data in the deviceProfile in configmap
 func (dc *DownstreamController) updateConfigMap(device *v1alpha2.Device) {
-	if len(device.Spec.NodeSelector.NodeSelectorTerms) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values) != 0 {
-		configMap, ok := dc.configMapManager.ConfigMap.Load(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0])
+	if nodeName := getDeviceNode(device); len(nodeName) != 0 {
+		configMap, ok := dc.configMapManager.ConfigMap.Load(nodeName)
 		if !ok {
 			klog.Error("Failed to load configmap")
 			return
@@ -564,7 +564,7 @@ func (dc *DownstreamController) updateConfigMap(device *v1alpha2.Device) {
 		}
 		nodeConfigMap.Data[constants.DeviceProfileJSON] = string(bytes)
 		// store new config map
-		dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
+		dc.configMapManager.ConfigMap.Store(nodeName, nodeConfigMap)
 		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(context.Background(), nodeConfigMap, metav1.UpdateOptions{}); err != nil {
 			klog.Errorf("Failed to update config map %v in namespace %v, error: %v", nodeConfigMap, device.Namespace, err)
 			return
@@ -614,7 +614,7 @@ func (dc *DownstreamController) deviceUpdated(device *v1alpha2.Device) {
 					addDeletedTwins(cachedDevice.Status.Twins, device.Status.Twins, twin, device.ResourceVersion)
 					msg := model.NewMessage("")
 
-					resource, err := messagelayer.BuildResourceForDevice(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], "device/"+device.Name+"/twin/cloud_updated", "")
+					resource, err := messagelayer.BuildResourceForDevice(getDeviceNode(device), "device/"+device.Name+"/twin/cloud_updated", "")
 					if err != nil {
 						klog.Warningf("Built message resource failed with error: %s", err)
 						return
@@ -718,8 +718,8 @@ func addUpdatedTwins(newTwin []v1alpha2.Twin, twin map[string]*types.MsgTwin, ve
 
 // deleteFromConfigMap deletes a device from configMap
 func (dc *DownstreamController) deleteFromConfigMap(device *v1alpha2.Device) {
-	if len(device.Spec.NodeSelector.NodeSelectorTerms) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values) != 0 {
-		configMap, ok := dc.configMapManager.ConfigMap.Load(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0])
+	if nodeName := getDeviceNode(device); len(nodeName) != 0 {
+		configMap, ok := dc.configMapManager.ConfigMap.Load(nodeName)
 		if !ok {
 			return
 		}
@@ -742,12 +742,12 @@ func (dc *DownstreamController) deleteFromConfigMap(device *v1alpha2.Device) {
 				}
 			}
 			// remove from cache
-			dc.configMapManager.ConfigMap.Delete(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0])
+			dc.configMapManager.ConfigMap.Delete(nodeName)
 			return
 		}
 
 		// store new config map
-		dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
+		dc.configMapManager.ConfigMap.Store(nodeName, nodeConfigMap)
 		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(context.Background(), nodeConfigMap, metav1.UpdateOptions{}); err != nil {
 			klog.Errorf("Failed to update config map %v in namespace %v", nodeConfigMap, device.Namespace)
 			return
@@ -831,6 +831,22 @@ func deleteDeviceModelAndVisitors(deviceModel *v1alpha2.DeviceModel, deviceProfi
 	}
 }
 
+// getDeviceNode get the Node bound to this device
+func getDeviceNode(device *v1alpha2.Device) string {
+	nodeName := device.Spec.NodeName
+	if len(nodeName) == 0 {
+		// The usage of device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0] is an issue left over from history.
+		// It not really implement 'NodeSelector' feature just like k8s, this problem mentioned at https://github.com/kubeedge/kubeedge/issues/4763
+
+		// TODO: delete `NodeSelector` property in device instance crd. When complete, device.Spec.NodeName field means this device onto what node, and device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0] can be deleted at here.
+		if len(device.Spec.NodeSelector.NodeSelectorTerms) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values) != 0 {
+			nodeName = device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0]
+		}
+	}
+
+	return nodeName
+}
+
 func (dc *DownstreamController) sendDeviceMsg(device *v1alpha2.Device, operation string) {
 	device.SetGroupVersionKind(schema.GroupVersionKind{
 		Group:   v1alpha2.GroupName,
@@ -841,7 +857,7 @@ func (dc *DownstreamController) sendDeviceMsg(device *v1alpha2.Device, operation
 		SetResourceVersion(device.ResourceVersion).
 		FillBody(device)
 	modelResource, err := messagelayer.BuildResource(
-		device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0],
+		getDeviceNode(device),
 		device.Namespace,
 		constants.ResourceTypeDevice,
 		device.Name)
@@ -895,7 +911,7 @@ func (dc *DownstreamController) sendDeviceModelMsg(device *v1alpha2.Device, oper
 		SetResourceVersion(deviceModel.ResourceVersion).
 		FillBody(deviceModel)
 	modelResource, err := messagelayer.BuildResource(
-		device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0],
+		getDeviceNode(device),
 		deviceModel.Namespace,
 		constants.ResourceTypeDeviceModel,
 		deviceModel.Name)
@@ -929,8 +945,8 @@ func (dc *DownstreamController) deviceDeleted(device *v1alpha2.Device) {
 	edgeDevice := createDevice(device)
 	msg := model.NewMessage("")
 
-	if len(device.Spec.NodeSelector.NodeSelectorTerms) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values) != 0 {
-		resource, err := messagelayer.BuildResourceForDevice(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], "membership", "")
+	if nodeName := getDeviceNode(device); len(nodeName) != 0 {
+		resource, err := messagelayer.BuildResourceForDevice(nodeName, "membership", "")
 		msg.BuildRouter(modules.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation)
 
 		content := types.MembershipUpdate{RemoveDevices: []types.Device{

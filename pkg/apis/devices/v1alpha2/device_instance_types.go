@@ -42,6 +42,11 @@ type DeviceSpec struct {
 	// Refer to k8s.io/kubernetes/pkg/apis/core NodeSelector for more details
 	// +optional
 	NodeSelector *v1.NodeSelector `json:"nodeSelector,omitempty"`
+	// NodeName is a request to schedule this device onto a specific node. If it is non-empty,
+	// the scheduler simply schedules this device onto that node, assuming that it fits
+	// resource requirements.
+	// +optional
+	NodeName string `json:"nodeName,omitempty"`
 }
 
 // Only one of its members may be specified.

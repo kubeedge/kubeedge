@@ -111,6 +111,9 @@ spec:
             description: DeviceSpec represents a single device instance. It is an
               instantation of a device model.
             properties:
+              nodeName:
+                description: 'NodeName is a request to schedule this device onto a specific node. If it is non-empty, the scheduler simply schedules this device onto that node, assuming that it fits resource requirements.'
+                type: string
               data:
                 description: Data section describe a list of time-series properties
                   which should be processed on edge node.
