@@ -545,7 +545,7 @@ spec:
             properties:
               twins:
                 description: 'A list of device twins containing desired/reported desired/reported
-                  values of twin properties.. Optional: A passive device won''t have
+                  values of twin properties. Optional: A passive device won''t have
                   twin properties and this list could be empty.'
                 items:
                   description: Twin provides a logical representation of control properties

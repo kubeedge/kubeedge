@@ -168,7 +168,7 @@ type ProtocolConfigCustomized struct {
 
 // DeviceStatus reports the device state and the desired/reported values of twin attributes.
 type DeviceStatus struct {
-	// A list of device twins containing desired/reported desired/reported values of twin properties..
+	// A list of device twins containing desired/reported desired/reported values of twin properties.
 	// Optional: A passive device won't have twin properties and this list could be empty.
 	// +optional
 	Twins []Twin `json:"twins,omitempty"`
@@ -201,7 +201,7 @@ type TwinProperty struct {
 }
 
 // DeviceData reports the device's time-series data to edge MQTT broker.
-// These data should not be processed by edgecore. Instead, they can be process by
+// These data should not be processed by edgecore. Instead, they can be processed by
 // third-party data-processing apps like EMQX kuiper.
 type DeviceData struct {
 	// Required: A list of data properties, which are not required to be processed by edgecore

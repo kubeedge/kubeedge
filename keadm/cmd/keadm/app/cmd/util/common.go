@@ -46,7 +46,7 @@ import (
 )
 
 var (
-	kubeReleaseRegex = regexp.MustCompile(`^v?(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)([-0-9a-zA-Z_\.+]*)?$`)
+	kubeReleaseRegex = regexp.MustCompile(`^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)([-\w.+]*)?$`)
 )
 
 // Constants used by installers
@@ -379,7 +379,7 @@ func installKubeEdge(options types.InstallOptions, version semver.Version) error
 	}
 
 	//Check if the same version exists, then skip the download and just checksum for it
-	//and if checksum failed, there will be a option to choose to continue to untar or quit.
+	//and if checksum failed, there will be an option to choose to continue to untar or quit.
 	//checksum available at download URL. So that both can be compared to see if
 	//proper download has happened and then only proceed further.
 	//Currently it is missing and once checksum is in place, checksum check required
@@ -723,7 +723,7 @@ func Compress(tarName string, paths []string) error {
 			if err := tw.WriteHeader(hdr); err != nil {
 				return err
 			}
-			// if path is a dir, dont continue
+			// if path is a dir, don't continue
 			if finfo.Mode().IsDir() {
 				return nil
 			}
