@@ -137,7 +137,7 @@ func (sb *ServiceBus) GoToTarget(data map[string]interface{}, stop chan struct{}
 
 	msg := model.NewMessage("")
 	msg.BuildHeader(messageID, "", msg.GetTimestamp())
-	resource := "node/" + nodeName + "/" + sb.servicePort + ":"
+	resource := sb.servicePort + ":"
 	if !ok || param == "" {
 		resource = resource + sb.targetPath
 	} else {
