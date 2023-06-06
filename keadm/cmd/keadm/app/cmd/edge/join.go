@@ -318,6 +318,10 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 		edgeCoreConfig.Modules.Edged.NodeLabels = setEdgedNodeLabels(opt)
 	}
 
+	if !opt.WithMQTT {
+		edgeCoreConfig.Modules.EventBus.EnableMqttContainer = false
+	}
+
 	if errs := validation.ValidateEdgeCoreConfiguration(edgeCoreConfig); len(errs) > 0 {
 		return errors.New(pkgutil.SpliceErrors(errs.ToAggregate().Errors()))
 	}
