@@ -1,11 +1,16 @@
 package dao
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
+	coreV1 "k8s.io/api/core/v1"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 )
 
@@ -111,4 +116,72 @@ func QueryAllMeta(key string, condition string) (*[]Meta, error) {
 	}
 
 	return meta, nil
+}
+
+// SaveMQTTMeta saves mqtt container data in sqlites
+// When egdecore starts, edged will start mqtt container
+func SaveMQTTMeta(nodeName string) error {
+	flag := true
+	mqttData := coreV1.Pod{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "Pod",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      constants.DeafultMosquittoContianerName,
+			Namespace: "default",
+			UID:       uuid.NewUUID(),
+		},
+		Spec: coreV1.PodSpec{
+			Containers: []coreV1.Container{
+				{
+					Name:  "mqtt",
+					Image: constants.DefaultMosquittoImage,
+					Ports: []coreV1.ContainerPort{
+						{
+							ContainerPort: 1883,
+							HostPort:      1883,
+							Protocol:      coreV1.ProtocolTCP,
+						}, {
+							ContainerPort: 9001,
+							HostPort:      9001,
+							Protocol:      coreV1.ProtocolTCP,
+						},
+					},
+					VolumeMounts: []coreV1.VolumeMount{
+						{
+							MountPath: "/mosquitto",
+							Name:      "mqtt-path",
+						},
+					},
+				},
+			},
+			Volumes: []coreV1.Volume{
+				{
+					Name: "mqtt-path",
+					VolumeSource: coreV1.VolumeSource{
+						HostPath: &coreV1.HostPathVolumeSource{
+							Path: "/var/lib/kubeedge/mqtt",
+						},
+					},
+				},
+			},
+			NodeName:           nodeName,
+			RestartPolicy:      coreV1.RestartPolicyAlways,
+			DNSPolicy:          coreV1.DNSClusterFirst,
+			EnableServiceLinks: &flag,
+		},
+	}
+	mqttDataStr, _ := json.Marshal(mqttData)
+	mqttMeta := Meta{
+		Key:   fmt.Sprintf("default/pod/%s", constants.DeafultMosquittoContianerName),
+		Type:  "pod",
+		Value: string(mqttDataStr),
+	}
+	err := SaveMeta(&mqttMeta)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
