@@ -41,6 +41,7 @@ func CreateEdgeCoreConfigFile(nodeName string) error {
 	c.Modules.EdgeHub.TLSCertFile = "/tmp/edgecore/kubeedge.crt"
 	c.Modules.EdgeHub.TLSPrivateKeyFile = "/tmp/edgecore/kubeedge.key"
 	c.Modules.EventBus.Enable = true
+	c.Modules.EventBus.EnableMqttContainer = true
 	c.Modules.EventBus.MqttMode = edgecore.MqttModeInternal
 	c.Modules.DBTest.Enable = true
 	c.DataBase.DataSource = DBFile

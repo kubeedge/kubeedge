@@ -275,7 +275,6 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 			if arr[0] == "" {
 				continue
 			}
-
 			if len(arr) > 1 {
 				labelsMap[arr[0]] = arr[1]
 			} else {
