@@ -56,6 +56,7 @@ import (
 	kubebridge "github.com/kubeedge/kubeedge/edge/pkg/edged/kubeclientbridge"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	metaclient "github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/pkg/version"
 )
@@ -87,14 +88,15 @@ type edged struct {
 	context       context.Context
 	nodeName      string
 	namespace     string
+	withMqtt      bool
 }
 
 var _ core.Module = (*edged)(nil)
 
 // Register register edged
-func Register(e *v1alpha2.Edged) {
+func Register(e *v1alpha2.Edged, withMqtt bool) {
 	edgedconfig.InitConfigure(e)
-	edged, err := newEdged(e.Enable, e.HostnameOverride, e.RegisterNodeNamespace)
+	edged, err := newEdged(e.Enable, e.HostnameOverride, e.RegisterNodeNamespace, withMqtt)
 	if err != nil {
 		klog.Errorf("init new edged error, %v", err)
 		os.Exit(1)
@@ -118,6 +120,11 @@ func (e *edged) Enable() bool {
 func (e *edged) Start() {
 	klog.Info("Starting edged...")
 
+	err := dao.SaveMQTTMeta(e.nodeName)
+	if err != nil {
+		klog.ErrorS(err, "Start mqtt container failed")
+	}
+
 	go func() {
 		err := DefaultRunLiteKubelet(e.context, e.KubeletServer, e.KubeletDeps, e.FeatureGate)
 		if err != nil {
@@ -129,7 +136,7 @@ func (e *edged) Start() {
 }
 
 // newEdged creates new edged object and initialises it
-func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
+func newEdged(enable bool, nodeName, namespace string, withMqtt bool) (*edged, error) {
 	var ed *edged
 	var err error
 	if !enable {
@@ -137,6 +144,7 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 			enable:    enable,
 			nodeName:  nodeName,
 			namespace: namespace,
+			withMqtt:  withMqtt,
 		}, nil
 	}
 
@@ -178,6 +186,7 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 		FeatureGate:   utilfeature.DefaultFeatureGate,
 		nodeName:      nodeName,
 		namespace:     namespace,
+		withMqtt:      withMqtt,
 	}
 
 	return ed, nil
