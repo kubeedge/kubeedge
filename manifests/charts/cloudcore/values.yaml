@@ -1,14 +1,14 @@
 # Default values for kubeedge.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
-appVersion: "1.12.0"
+appVersion: "1.12.1"
 
 cloudCore:
   replicaCount: 1
   hostNetWork: "true"
   image:
     repository: "kubeedge/cloudcore"
-    tag: "v1.12.0"
+    tag: "v1.12.1"
     pullPolicy: "IfNotPresent"
     pullSecrets: []
   securityContext:
