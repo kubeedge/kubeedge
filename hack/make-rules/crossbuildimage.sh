@@ -36,6 +36,7 @@ ALL_IMAGES_AND_TARGETS=(
   iptables-manager:iptables-manager:build/iptablesmanager/Dockerfile
   edgemark:edgemark:build/edgemark/Dockerfile
   conformance:conformance:build/conformance/Dockerfile
+  nodeconformance:nodeconformance:build/conformance/nodeconformance.Dockerfile
   installation-package:installation-package:build/docker/installation-package/installation-package.dockerfile
   controller-manager:controller-manager:build/controllermanager/Dockerfile
 )

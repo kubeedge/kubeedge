@@ -44,7 +44,7 @@ const (
 	testWithDevice      = "TEST_WITH_DEVICE"
 	kubeConfigEnvKey    = "KUBECONFIG"
 	logFileName         = "e2e.log"
-	defaultFocus        = "\\[Conformance\\]"
+	defaultFocus        = "\\[NodeConformance\\]"
 	extraArgsEnvKey     = "E2E_EXTRA_ARGS"
 	defaultResultsDir   = "/tmp/results"
 	defaultReportPrefix = "conformance"
