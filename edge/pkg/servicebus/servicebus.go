@@ -214,8 +214,10 @@ func server(stopChan <-chan struct{}) {
 	h := buildBasicHandler(timeout)
 	// TODO we should add tls for servicebus http server later
 	s := http.Server{
-		Addr:    fmt.Sprintf("%s:%d", servicebusConfig.Config.Server, servicebusConfig.Config.Port),
-		Handler: h,
+		Addr:         fmt.Sprintf("%s:%d", servicebusConfig.Config.Server, servicebusConfig.Config.Port),
+		Handler:      h,
+		ReadTimeout:  servicebusConfig.Config.HTTPServerReadTimeout * time.Second,
+		WriteTimeout: servicebusConfig.Config.HTTPServerWriteTimeout * time.Second,
 	}
 	go func() {
 		<-stopChan

@@ -166,4 +166,7 @@ const (
 
 	EdgeNodeRoleKey   = "node-role.kubernetes.io/edge"
 	EdgeNodeRoleValue = ""
+
+	DefaultHTTPServerReadTimeout  = 30
+	DefaultHTTPServerWriteTimeout = 45
 )
