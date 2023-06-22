@@ -20,7 +20,6 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/hex"
-	"fmt"
 	"net"
 	"strings"
 	"time"
@@ -62,47 +61,23 @@ func getIps(advertiseAddress []string) (Ips []net.IP) {
 
 // GenerateToken will create a token consisting of caHash and jwt Token and save it to secret
 func GenerateToken() error {
-	// set double TokenRefreshDuration as expirationTime, which can guarantee that the validity period
-	// of the token obtained at anytime is greater than or equal to TokenRefreshDuration
-	expiresAt := time.Now().Add(time.Hour * hubconfig.Config.CloudHub.TokenRefreshDuration * 2).Unix()
-
-	token := jwt.New(jwt.SigningMethodHS256)
-
-	token.Claims = jwt.StandardClaims{
-		ExpiresAt: expiresAt,
-	}
-
-	keyPEM := getCaKey()
-	tokenString, err := token.SignedString(keyPEM)
-
-	if err != nil {
-		return fmt.Errorf("failed to generate the token for EdgeCore register, err: %v", err)
-	}
-
-	caHash := getCaHash()
-	// combine caHash and tokenString into caHashAndToken
-	caHashToken := strings.Join([]string{caHash, tokenString}, ".")
-	// save caHashAndToken to secret
-	err = CreateTokenSecret([]byte(caHashToken))
-	if err != nil {
-		return fmt.Errorf("failed to create tokenSecret, err: %v", err)
-	}
-
 	t := time.NewTicker(time.Hour * hubconfig.Config.CloudHub.TokenRefreshDuration)
 	go func() {
 		for {
-			<-t.C
 			refreshedCaHashToken := refreshToken()
 			if err := CreateTokenSecret([]byte(refreshedCaHashToken)); err != nil {
 				klog.Exitf("Failed to create the ca token for edgecore register, err: %v", err)
 			}
+			klog.Info("Succeed to creating token")
+			<-t.C
 		}
 	}()
-	klog.Info("Succeed to creating token")
 	return nil
 }
 
 func refreshToken() string {
+	// set double TokenRefreshDuration as expirationTime, which can guarantee that the validity period
+	// of the token obtained at anytime is greater than or equal to TokenRefreshDuration
 	claims := &jwt.StandardClaims{}
 	expirationTime := time.Now().Add(time.Hour * hubconfig.Config.CloudHub.TokenRefreshDuration * 2)
 	claims.ExpiresAt = expirationTime.Unix()
