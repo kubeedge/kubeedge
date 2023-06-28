@@ -372,6 +372,7 @@ func (m *metaManager) processQuery(message model.Message) {
 		resKey, err = getSpecialResourceKey(resType, resKey, message)
 		if err != nil {
 			klog.Errorf("failed to get special resource %s key", resKey)
+			feedbackError(err, "Error to get special resource key", message)
 			return
 		}
 		metas, err = dao.QueryMeta("key", resKey)
