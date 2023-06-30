@@ -39,6 +39,7 @@ func (c *podStatus) Create(ps *edgeapi.PodStatusRequest) (*edgeapi.PodStatusRequ
 	return nil, nil
 }
 
+// deprecated
 func (c *podStatus) Update(rsName string, ps edgeapi.PodStatusRequest) error {
 	podStatusMsg := message.BuildMsg(commodule.MetaGroup, "", commodule.EdgedModuleName, c.namespace+"/"+model.ResourceTypePodStatus+"/"+rsName, model.UpdateOperation, ps)
 	resp, err := c.send.SendSync(podStatusMsg)

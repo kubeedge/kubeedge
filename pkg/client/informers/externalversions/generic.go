@@ -24,6 +24,7 @@ import (
 	v1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1"
 	v1alpha2 "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
 	operationsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1"
+	policyv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/policy/v1alpha1"
 	reliablesyncsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1"
 	v1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -71,6 +72,10 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		// Group=operations, Version=v1alpha1
 	case operationsv1alpha1.SchemeGroupVersion.WithResource("nodeupgradejobs"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Operations().V1alpha1().NodeUpgradeJobs().Informer()}, nil
+
+		// Group=policy.kubeedge.io, Version=v1alpha1
+	case policyv1alpha1.SchemeGroupVersion.WithResource("serviceaccountaccesses"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Policy().V1alpha1().ServiceAccountAccesses().Informer()}, nil
 
 		// Group=reliablesyncs.kubeedge.io, Version=v1alpha1
 	case reliablesyncsv1alpha1.SchemeGroupVersion.WithResource("clusterobjectsyncs"):

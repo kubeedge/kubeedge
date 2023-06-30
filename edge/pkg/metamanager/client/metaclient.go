@@ -16,7 +16,7 @@ var (
 	syncMsgRespTimeout = 1 * time.Minute
 )
 
-//CoreInterface is interface of metaclient
+// CoreInterface is interface of metaclient
 type CoreInterface interface {
 	PodsGetter
 	PodStatusGetter
@@ -25,6 +25,7 @@ type CoreInterface interface {
 	NodeStatusGetter
 	SecretsGetter
 	ServiceAccountTokenGetter
+	ServiceAccountsGetter
 	PersistentVolumesGetter
 	PersistentVolumeClaimsGetter
 	VolumeAttachmentsGetter
@@ -59,6 +60,10 @@ func (m *metaClient) ServiceAccountToken() ServiceAccountTokenInterface {
 	return newServiceAccountToken(m.send)
 }
 
+func (m *metaClient) ServiceAccounts(namespace string) ServiceAccountInterface {
+	return newServiceAccount(namespace)
+}
+
 func (m *metaClient) PodStatus(namespace string) PodStatusInterface {
 	return newPodStatus(namespace, m.send)
 }
@@ -89,7 +94,7 @@ func New() CoreInterface {
 	}
 }
 
-//SendInterface is to sync interface
+// SendInterface is to sync interface
 type SendInterface interface {
 	SendSync(message *model.Message) (*model.Message, error)
 	Send(message *model.Message)
@@ -124,12 +129,4 @@ func (s *send) SendSync(message *model.Message) (*model.Message, error) {
 
 func (s *send) Send(message *model.Message) {
 	beehiveContext.Send(modules.MetaManagerModuleName, *message)
-}
-
-func SetSyncPeriod(time time.Duration) {
-	syncPeriod = time
-}
-
-func SetSyncMsgRespTimeout(time time.Duration) {
-	syncMsgRespTimeout = time
 }

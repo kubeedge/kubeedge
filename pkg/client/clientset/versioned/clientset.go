@@ -25,6 +25,7 @@ import (
 	appsv1alpha1 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/apps/v1alpha1"
 	devicesv1alpha2 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/devices/v1alpha2"
 	operationsv1alpha1 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/operations/v1alpha1"
+	policyv1alpha1 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/policy/v1alpha1"
 	reliablesyncsv1alpha1 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/reliablesyncs/v1alpha1"
 	rulesv1 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/rules/v1"
 	discovery "k8s.io/client-go/discovery"
@@ -37,6 +38,7 @@ type Interface interface {
 	AppsV1alpha1() appsv1alpha1.AppsV1alpha1Interface
 	DevicesV1alpha2() devicesv1alpha2.DevicesV1alpha2Interface
 	OperationsV1alpha1() operationsv1alpha1.OperationsV1alpha1Interface
+	PolicyV1alpha1() policyv1alpha1.PolicyV1alpha1Interface
 	ReliablesyncsV1alpha1() reliablesyncsv1alpha1.ReliablesyncsV1alpha1Interface
 	RulesV1() rulesv1.RulesV1Interface
 }
@@ -48,6 +50,7 @@ type Clientset struct {
 	appsV1alpha1          *appsv1alpha1.AppsV1alpha1Client
 	devicesV1alpha2       *devicesv1alpha2.DevicesV1alpha2Client
 	operationsV1alpha1    *operationsv1alpha1.OperationsV1alpha1Client
+	policyV1alpha1        *policyv1alpha1.PolicyV1alpha1Client
 	reliablesyncsV1alpha1 *reliablesyncsv1alpha1.ReliablesyncsV1alpha1Client
 	rulesV1               *rulesv1.RulesV1Client
 }
@@ -65,6 +68,11 @@ func (c *Clientset) DevicesV1alpha2() devicesv1alpha2.DevicesV1alpha2Interface {
 // OperationsV1alpha1 retrieves the OperationsV1alpha1Client
 func (c *Clientset) OperationsV1alpha1() operationsv1alpha1.OperationsV1alpha1Interface {
 	return c.operationsV1alpha1
+}
+
+// PolicyV1alpha1 retrieves the PolicyV1alpha1Client
+func (c *Clientset) PolicyV1alpha1() policyv1alpha1.PolicyV1alpha1Interface {
+	return c.policyV1alpha1
 }
 
 // ReliablesyncsV1alpha1 retrieves the ReliablesyncsV1alpha1Client
@@ -133,6 +141,10 @@ func NewForConfigAndClient(c *rest.Config, httpClient *http.Client) (*Clientset,
 	if err != nil {
 		return nil, err
 	}
+	cs.policyV1alpha1, err = policyv1alpha1.NewForConfigAndClient(&configShallowCopy, httpClient)
+	if err != nil {
+		return nil, err
+	}
 	cs.reliablesyncsV1alpha1, err = reliablesyncsv1alpha1.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
@@ -165,6 +177,7 @@ func New(c rest.Interface) *Clientset {
 	cs.appsV1alpha1 = appsv1alpha1.New(c)
 	cs.devicesV1alpha2 = devicesv1alpha2.New(c)
 	cs.operationsV1alpha1 = operationsv1alpha1.New(c)
+	cs.policyV1alpha1 = policyv1alpha1.New(c)
 	cs.reliablesyncsV1alpha1 = reliablesyncsv1alpha1.New(c)
 	cs.rulesV1 = rulesv1.New(c)
 

@@ -3,6 +3,7 @@ package types
 import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -45,4 +46,10 @@ type NodeUpgradeJobResponse struct {
 	ToVersion   string
 	Status      string
 	Reason      string
+}
+
+// ObjectResp is the object that api-server response
+type ObjectResp struct {
+	Object metaV1.Object
+	Err    error
 }

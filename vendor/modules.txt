@@ -1989,6 +1989,7 @@ k8s.io/component-base/version/verflag
 # k8s.io/component-helpers v0.0.0 => github.com/kubeedge/kubernetes/staging/src/k8s.io/component-helpers v1.23.15-kubeedge1
 ## explicit; go 1.16
 k8s.io/component-helpers/apimachinery/lease
+k8s.io/component-helpers/auth/rbac/validation
 k8s.io/component-helpers/node/util
 k8s.io/component-helpers/node/util/sysctl
 k8s.io/component-helpers/scheduling/corev1
@@ -2320,6 +2321,7 @@ k8s.io/kubernetes/pkg/proxy/metaproxier
 k8s.io/kubernetes/pkg/proxy/metrics
 k8s.io/kubernetes/pkg/proxy/util
 k8s.io/kubernetes/pkg/proxy/util/iptables
+k8s.io/kubernetes/pkg/registry/rbac/validation
 k8s.io/kubernetes/pkg/scheduler/apis/config
 k8s.io/kubernetes/pkg/scheduler/apis/config/v1beta2
 k8s.io/kubernetes/pkg/scheduler/apis/config/v1beta3
@@ -2389,6 +2391,7 @@ k8s.io/kubernetes/pkg/volume/util/volumepathhandler
 k8s.io/kubernetes/pkg/volume/validation
 k8s.io/kubernetes/pkg/windows/service
 k8s.io/kubernetes/plugin/pkg/admission/serviceaccount
+k8s.io/kubernetes/plugin/pkg/auth/authorizer/rbac
 k8s.io/kubernetes/test/e2e/apps
 k8s.io/kubernetes/test/e2e/auth
 k8s.io/kubernetes/test/e2e/common
@@ -2509,6 +2512,7 @@ sigs.k8s.io/controller-runtime/pkg/certwatcher
 sigs.k8s.io/controller-runtime/pkg/client
 sigs.k8s.io/controller-runtime/pkg/client/apiutil
 sigs.k8s.io/controller-runtime/pkg/client/config
+sigs.k8s.io/controller-runtime/pkg/client/fake
 sigs.k8s.io/controller-runtime/pkg/cluster
 sigs.k8s.io/controller-runtime/pkg/config
 sigs.k8s.io/controller-runtime/pkg/config/v1alpha1

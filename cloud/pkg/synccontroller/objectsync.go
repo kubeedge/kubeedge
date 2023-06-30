@@ -9,7 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2"
@@ -90,11 +89,6 @@ func (sctl *SyncController) gcOrphanedObjectSync(sync *v1alpha1.ObjectSync) {
 
 func sendEvents(nodeName string, sync *v1alpha1.ObjectSync, resourceType string,
 	objectResourceVersion string, obj interface{}) {
-	runtimeObj := obj.(runtime.Object)
-	if err := util.SetMetaType(runtimeObj); err != nil {
-		klog.Warningf("failed to set metatype :%v", err)
-	}
-
 	if sync.Status.ObjectResourceVersion == "" {
 		klog.Errorf("The ObjectResourceVersion is empty in status of objectsync: %s", sync.Name)
 		return

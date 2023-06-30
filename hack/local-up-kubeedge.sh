@@ -100,6 +100,11 @@ function create_operation_crd {
   kubectl apply -f ${KUBEEDGE_ROOT}/build/crds/operations/operations_v1alpha1_nodeupgradejob.yaml
 }
 
+function create_serviceaccountaccess_crd {
+  echo "creating the saaccess crd..."
+  kubectl apply -f ${KUBEEDGE_ROOT}/build/crds/policy/policy_v1alpha1_serviceaccountaccess.yaml
+}
+
 function build_cloudcore {
   echo "building the cloudcore..."
   make -C "${KUBEEDGE_ROOT}" WHAT="cloudcore"
@@ -267,6 +272,7 @@ create_device_crd
 create_objectsync_crd
 create_rule_crd
 create_operation_crd
+create_serviceaccountaccess_crd
 
 generate_streamserver_cert
 

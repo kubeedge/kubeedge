@@ -6,14 +6,15 @@ import (
 	"time"
 
 	authenticationv1 "k8s.io/api/authentication/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
+	policyv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/policy/v1alpha1"
 )
 
 // ServiceAccountTokenGetter is interface to get client service account token
@@ -85,8 +86,23 @@ func requiresRefresh(tr *authenticationv1.TokenRequest) bool {
 	return false
 }
 
+// KeyFunc keys should be nonconfidential and safe to log
+func KeyFunc(name, namespace string, tr *authenticationv1.TokenRequest) string {
+	var exp int64
+	if tr.Spec.ExpirationSeconds != nil {
+		exp = *tr.Spec.ExpirationSeconds
+	}
+
+	var ref authenticationv1.BoundObjectReference
+	if tr.Spec.BoundObjectRef != nil {
+		ref = *tr.Spec.BoundObjectRef
+	}
+
+	return fmt.Sprintf("%q/%q/%#v/%#v/%#v", name, namespace, tr.Spec.Audiences, exp, ref)
+}
+
 func getTokenLocally(name, namespace string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
-	resKey := metamanager.KeyFunc(name, namespace, tr)
+	resKey := KeyFunc(name, namespace, tr)
 	metas, err := dao.QueryMeta("key", resKey)
 	if err != nil {
 		klog.Errorf("query meta %s failed: %v", resKey, err)
@@ -169,4 +185,67 @@ func handleServiceAccountTokenFromMetaManager(content []byte) (*authenticationv1
 		return nil, fmt.Errorf("unmarshal message to service account failed, err: %v", err)
 	}
 	return &serviceAccount, nil
+}
+
+// ServiceAccountGetter is interface to get Client service account
+type ServiceAccountsGetter interface {
+	ServiceAccounts(namespace string) ServiceAccountInterface
+}
+
+// ServiceAccountInterface is interface for Client service account token
+type ServiceAccountInterface interface {
+	Get(name string) (*corev1.ServiceAccount, error)
+}
+
+type serviceAccount struct {
+	namespace string
+}
+
+func newServiceAccount(namespace string) *serviceAccount {
+	return &serviceAccount{namespace: namespace}
+}
+
+func (s *serviceAccount) Get(name string) (*corev1.ServiceAccount, error) {
+	rst, err := dao.QueryMeta("type", model.ResourceTypeSaAccess)
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range *rst {
+		var saAccess policyv1alpha1.ServiceAccountAccess
+		err = json.Unmarshal([]byte(v), &saAccess)
+		if err != nil {
+			klog.Errorf("failed to unmarshal saAccess %v", err)
+			return nil, err
+		}
+		if saAccess.Namespace == s.namespace && saAccess.Spec.ServiceAccount.Name == name {
+			rst := saAccess.Spec.ServiceAccount
+			rst.UID = saAccess.Spec.ServiceAccountUID
+			return &rst, nil
+		}
+	}
+	return nil, fmt.Errorf("serviceaccount %s/%s not found", s.namespace, name)
+}
+
+func CheckTokenExist(token string) bool {
+	if token == "" {
+		return false
+	}
+	metas, err := dao.QueryMeta("type", model.ResourceTypeServiceAccountToken)
+	if err != nil {
+		klog.Errorf("query meta %s failed: %v", model.ResourceTypeServiceAccountToken, err)
+		return false
+	}
+
+	for _, v := range *metas {
+		var tokenRequest authenticationv1.TokenRequest
+		err = json.Unmarshal([]byte(v), &tokenRequest)
+		if err != nil {
+			klog.Errorf("unmarshal resource %s token request failed: %v", model.ResourceTypeServiceAccountToken, err)
+			return false
+		}
+		if tokenRequest.Status.Token == token {
+			return true
+		}
+	}
+	return false
 }

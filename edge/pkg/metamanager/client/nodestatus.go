@@ -38,6 +38,7 @@ func (c *nodeStatus) Create(ns *edgeapi.NodeStatusRequest) (*edgeapi.NodeStatusR
 	return nil, nil
 }
 
+// deprecated
 func (c *nodeStatus) Update(rsName string, ns edgeapi.NodeStatusRequest) error {
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypeNodeStatus, rsName)
 	nodeStatusMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.UpdateOperation, ns)

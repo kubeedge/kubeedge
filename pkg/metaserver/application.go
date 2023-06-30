@@ -32,7 +32,6 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	commontypes "github.com/kubeedge/kubeedge/common/types"
 )
 
 // Application record the resources that are in applying for requesting to be transferred down from the cloud, please:
@@ -50,7 +49,6 @@ type Application struct {
 	Option      []byte
 	ReqBody     []byte
 	Subresource string
-	Token       string
 
 	// The following field defines the Application response result
 	RespBody []byte
@@ -78,11 +76,6 @@ func NewApplication(ctx context.Context, key string, verb ApplicationVerb, noden
 		}
 		option = v1
 	}
-	token, ok := ctx.Value(commontypes.AuthorizationKey).(string)
-	if !ok {
-		klog.Errorf("unsupported Token type :%T", ctx.Value(commontypes.AuthorizationKey))
-		return nil, fmt.Errorf("unsupported Token type :%T", ctx.Value(commontypes.AuthorizationKey))
-	}
 	ctx2, cancel := context.WithCancel(ctx)
 	app := &Application{
 		Key:         key,
@@ -92,7 +85,6 @@ func NewApplication(ctx context.Context, key string, verb ApplicationVerb, noden
 		Status:      PreApplying,
 		Option:      ToBytes(option),
 		ReqBody:     ToBytes(reqBody),
-		Token:       token,
 		ctx:         ctx2,
 		cancel:      cancel,
 		count:       0,
@@ -113,7 +105,6 @@ func (a *Application) Identifier() string {
 	b = append(b, a.Option...)
 	b = append(b, a.ReqBody...)
 	b = append(b, []byte(a.Subresource)...)
-	b = append(b, []byte(a.Token)...)
 	a.ID = fmt.Sprintf("%x", sha256.Sum256(b))
 	return a.ID
 }

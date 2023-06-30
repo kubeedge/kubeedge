@@ -103,3 +103,11 @@ func NodeUpgradeJobControllerMessageLayer() MessageLayer {
 		ResponseModuleName: modules.CloudHubModuleName,
 	}
 }
+
+func PolicyControllerMessageLayer() MessageLayer {
+	return &ContextMessageLayer{
+		SendModuleName:     modules.CloudHubModuleName,
+		ReceiveModuleName:  modules.PolicyControllerModuleName,
+		ResponseModuleName: modules.CloudHubModuleName,
+	}
+}

@@ -16,12 +16,12 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
-//PodsGetter is interface to get pods
+// PodsGetter is interface to get pods
 type PodsGetter interface {
 	Pods(namespace string) PodsInterface
 }
 
-//PodsInterface is pod interface
+// PodsInterface is pod interface
 type PodsInterface interface {
 	Create(*corev1.Pod) (*corev1.Pod, error)
 	Update(*corev1.Pod) error
