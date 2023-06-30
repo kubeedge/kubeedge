@@ -28,7 +28,7 @@ import (
 	cloudconn "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
+	"github.com/kubeedge/kubeedge/pkg/common/dttype"
 )
 
 // TestStartAction is function to test Start() when value is passed in ReceiverChan.

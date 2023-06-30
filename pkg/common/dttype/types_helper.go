@@ -5,8 +5,11 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/klog/v2"
+
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
+	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
 )
 
 //UnmarshalMembershipDetail Unmarshal membershipdetail
@@ -71,7 +74,11 @@ func DeviceTwinToMsgTwin(deviceTwins []dtclient.DeviceTwin) map[string]*MsgTwin 
 		if expected != "" {
 			expectedValue := &TwinValue{Value: &expected}
 			if twin.ExpectedMeta != "" {
-				json.Unmarshal([]byte(twin.ExpectedMeta), &expectedMeta)
+				err := json.Unmarshal([]byte(twin.ExpectedMeta), &expectedMeta)
+				if err != nil {
+					klog.Errorf("fail to unmarshal ExpectedMeta of twin %s", twin.Name)
+					return nil
+				}
 				expectedValue.Metadata = &expectedMeta
 			}
 			msgTwin.Expected = expectedValue
@@ -79,18 +86,30 @@ func DeviceTwinToMsgTwin(deviceTwins []dtclient.DeviceTwin) map[string]*MsgTwin 
 		if actual != "" {
 			actualValue := &TwinValue{Value: &actual}
 			if twin.ActualMeta != "" {
-				json.Unmarshal([]byte(twin.ActualMeta), &actualMeta)
+				err := json.Unmarshal([]byte(twin.ActualMeta), &actualMeta)
+				if err != nil {
+					klog.Errorf("fail to unmarshal ActualMeta of twin %s", twin.Name)
+					return nil
+				}
 				actualValue.Metadata = &actualMeta
 			}
 			msgTwin.Actual = actualValue
 		}
 
 		if twin.ExpectedVersion != "" {
-			json.Unmarshal([]byte(twin.ExpectedVersion), &expectedVersion)
+			err := json.Unmarshal([]byte(twin.ExpectedVersion), &expectedVersion)
+			if err != nil {
+				klog.Errorf("fail to unmarshal ExpectedVersion of twin %s", twin.Name)
+				return nil
+			}
 			msgTwin.ExpectedVersion = &expectedVersion
 		}
 		if twin.ActualVersion != "" {
-			json.Unmarshal([]byte(twin.ActualVersion), &actualVersion)
+			err := json.Unmarshal([]byte(twin.ActualVersion), &actualVersion)
+			if err != nil {
+				klog.Errorf("fail to unmarshal ActualVersion of twin %s", twin.Name)
+				return nil
+			}
 			msgTwin.ActualVersion = &actualVersion
 		}
 		msgTwins[twin.Name] = msgTwin
@@ -118,7 +137,11 @@ func MsgAttrToDeviceAttr(name string, msgAttr *MsgAttr) dtclient.DeviceAttr {
 func CopyMsgTwin(msgTwin *MsgTwin, noVersion bool) MsgTwin {
 	var result MsgTwin
 	payload, _ := json.Marshal(msgTwin)
-	json.Unmarshal(payload, &result)
+	err := json.Unmarshal(payload, &result)
+	if err != nil {
+		klog.Errorf("fail to unmarshal msgTwin")
+		return MsgTwin{}
+	}
 	if noVersion {
 		result.ActualVersion = nil
 		result.ExpectedVersion = nil
@@ -130,7 +153,11 @@ func CopyMsgTwin(msgTwin *MsgTwin, noVersion bool) MsgTwin {
 func CopyMsgAttr(msgAttr *MsgAttr) MsgAttr {
 	var result MsgAttr
 	payload, _ := json.Marshal(msgAttr)
-	json.Unmarshal(payload, &result)
+	err := json.Unmarshal(payload, &result)
+	if err != nil {
+		klog.Errorf("fail to unmarshal msgAttr")
+		return MsgAttr{}
+	}
 	return result
 }
 
@@ -150,20 +177,13 @@ func MsgTwinToDeviceTwin(name string, msgTwin *MsgTwin) dtclient.DeviceTwin {
 		Optional: optional}
 }
 
-//DeviceMsg the struct of device state msg
-type DeviceMsg struct {
-	BaseMessage
-	Device Device `json:"device"`
-}
-
 //BuildDeviceState build the msg
 func BuildDeviceState(baseMessage BaseMessage, device Device) ([]byte, error) {
-	result := DeviceMsg{
+	result := DeviceTwinUpdate{
 		BaseMessage: baseMessage,
-		Device: Device{
-			Name:       device.Name,
-			State:      device.State,
-			LastOnline: device.LastOnline}}
+		State:       device.State,
+		LastOnline:  device.LastOnline,
+	}
 	payload, err := json.Marshal(result)
 	if err != nil {
 		return []byte(""), err
@@ -263,8 +283,8 @@ func BuildErrorResult(para Parameter) ([]byte, error) {
 //DeviceUpdate device update
 type DeviceUpdate struct {
 	BaseMessage
-	State      string              `json:"state,omitempty"`
-	Attributes map[string]*MsgAttr `json:"attributes"`
+	State      v1alpha2.DeviceConnectionStateType `json:"state,omitempty"`
+	Attributes map[string]*MsgAttr                `json:"attributes"`
 }
 
 //UnmarshalDeviceUpdate unmarshal device update
@@ -330,4 +350,14 @@ func BuildDeviceTwinDocument(baseMessage BaseMessage, twins map[string]*TwinDoc)
 		return []byte(""), false
 	}
 	return payload, true
+}
+
+func ConvertLastOnlineTime(lastOnlineTime, deviceID string) time.Time {
+	deviceLastOnlineTime, err := time.ParseInLocation(TimeLayout, lastOnlineTime, time.Local)
+	if err != nil {
+		klog.Warningf("convert device %s last online time failed with err: %+v. set it to default", deviceID, err)
+		deviceLastOnlineTime = time.Unix(0, 0)
+	}
+
+	return deviceLastOnlineTime
 }

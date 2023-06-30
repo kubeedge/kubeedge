@@ -7,20 +7,26 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
+	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
+)
+
+const (
+	TimeLayout = "2006-01-02 15:04:05"
 )
 
 //Device the struct of device
 type Device struct {
-	ID          string              `json:"id,omitempty"`
-	Name        string              `json:"name,omitempty"`
-	Description string              `json:"description,omitempty"`
-	State       string              `json:"state,omitempty"`
-	LastOnline  string              `json:"last_online,omitempty"`
-	Attributes  map[string]*MsgAttr `json:"attributes,omitempty"`
-	Twin        map[string]*MsgTwin `json:"twin,omitempty"`
+	ID          string                             `json:"id,omitempty"`
+	Name        string                             `json:"name,omitempty"`
+	Description string                             `json:"description,omitempty"`
+	State       v1alpha2.DeviceConnectionStateType `json:"state,omitempty"`
+	LastOnline  metav1.Time                        `json:"lastOnline,omitempty"`
+	Attributes  map[string]*MsgAttr                `json:"attributes,omitempty"`
+	Twin        map[string]*MsgTwin                `json:"twin,omitempty"`
 }
 
 //BaseMessage the base struct of event message
@@ -232,7 +238,9 @@ type TwinDoc struct {
 //DeviceTwinUpdate the struct of device twin update
 type DeviceTwinUpdate struct {
 	BaseMessage
-	Twin map[string]*MsgTwin `json:"twin"`
+	Twin       map[string]*MsgTwin                `json:"twin"`
+	State      v1alpha2.DeviceConnectionStateType `json:"state,omitempty"`
+	LastOnline metav1.Time                        `json:"lastOnline,omitempty"`
 }
 
 // UnmarshalDeviceTwinDocument unmarshal device twin document

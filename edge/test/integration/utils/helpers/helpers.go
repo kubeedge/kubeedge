@@ -31,25 +31,26 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/edge"
+	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
+	"github.com/kubeedge/kubeedge/pkg/common/dttype"
 )
 
 //DeviceUpdate device update
 type DeviceUpdate struct {
-	State      string                     `json:"state,omitempty"`
-	Attributes map[string]*dttype.MsgAttr `json:"attributes"`
+	State      v1alpha2.DeviceConnectionStateType `json:"state,omitempty"`
+	Attributes map[string]*dttype.MsgAttr         `json:"attributes"`
 }
 
 //Device the struct of device
 type Device struct {
-	ID          string `json:"id,omitempty"`
-	Name        string `json:"name,omitempty"`
-	Description string `json:"description,omitempty"`
-	State       string `json:"state,omitempty"`
-	LastOnline  string `json:"last_online,omitempty"`
+	ID          string                             `json:"id,omitempty"`
+	Name        string                             `json:"name,omitempty"`
+	Description string                             `json:"description,omitempty"`
+	State       v1alpha2.DeviceConnectionStateType `json:"state,omitempty"`
+	LastOnline  string                             `json:"lastOnline,omitempty"`
 }
 
 //Attribute Structure to read data from DB (Should match with the DB-table 'device_attr' schema)
@@ -86,7 +87,7 @@ func GenerateDeviceID(deviceSuffix string) string {
 }
 
 //Function to Generate Device
-func CreateDevice(deviceID string, deviceName string, deviceState string) dttype.Device {
+func CreateDevice(deviceID string, deviceName string, deviceState v1alpha2.DeviceConnectionStateType) dttype.Device {
 	device := dttype.Device{
 		ID:          deviceID,
 		Name:        deviceName,
@@ -123,31 +124,6 @@ func AddTwinAttribute(device dttype.Device, attributeName string, attributeValue
 	}
 
 	device.Twin[attributeName] = &msgTwin
-}
-
-//Function to access the edgecore DB and return the device state.
-func GetDeviceStateFromDB(deviceID string) string {
-	var device Device
-	db, err := sql.Open("sqlite3", utils.DBFile)
-	if err != nil {
-		common.Fatalf("Open Sqlite DB failed : %v", err)
-	}
-	defer db.Close()
-	row, err := db.Query("SELECT * FROM device")
-	if err != nil {
-		common.Fatalf("Query Sqlite DB failed: %v", err)
-	}
-	defer row.Close()
-	for row.Next() {
-		err = row.Scan(&device.ID, &device.Name, &device.Description, &device.State, &device.LastOnline)
-		if err != nil {
-			common.Fatalf("Failed to scan DB rows: %v", err)
-		}
-		if string(device.ID) == deviceID {
-			break
-		}
-	}
-	return device.State
 }
 
 func GetTwinAttributesFromDB(deviceID string, Name string) TwinAttribute {

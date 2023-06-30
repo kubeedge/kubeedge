@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -17,7 +18,8 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtmodule"
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
+	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
+	"github.com/kubeedge/kubeedge/pkg/common/dttype"
 )
 
 var (
@@ -171,12 +173,14 @@ func SyncDeviceFromSqlite(context *dtcontext.DTContext, deviceID string) error {
 	twins := make([]dtclient.DeviceTwin, 0)
 	twins = append(twins, *deviceTwin...)
 
+	deviceLastOnlineTime := dttype.ConvertLastOnlineTime(device.LastOnline, device.ID)
+
 	context.DeviceList.Store(deviceID, &dttype.Device{
 		ID:          deviceID,
 		Name:        device.Name,
 		Description: device.Description,
-		State:       device.State,
-		LastOnline:  device.LastOnline,
+		State:       v1alpha2.DeviceConnectionStateType(device.State),
+		LastOnline:  metav1.Time{Time: deviceLastOnlineTime},
 		Attributes:  dttype.DeviceAttrToMsgAttr(attributes),
 		Twin:        dttype.DeviceTwinToMsgTwin(twins)})
 

@@ -6,7 +6,7 @@ type Device struct {
 	Name        string              `json:"name,omitempty"`
 	Description string              `json:"description,omitempty"`
 	State       string              `json:"state,omitempty"`
-	LastOnline  string              `json:"last_online,omitempty"`
+	LastOnline  string              `json:"lastOnline,omitempty"`
 	Attributes  map[string]*MsgAttr `json:"attributes,omitempty"`
 	Twin        map[string]*MsgTwin `json:"twin,omitempty"`
 }

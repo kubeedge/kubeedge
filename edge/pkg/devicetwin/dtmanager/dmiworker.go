@@ -31,10 +31,10 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dmiserver"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
 	pb "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/common/dttype"
 )
 
 //TwinWorker deal twin event

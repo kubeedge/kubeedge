@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -15,7 +16,8 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
+	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
+	"github.com/kubeedge/kubeedge/pkg/common/dttype"
 )
 
 var (
@@ -88,20 +90,17 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 		return nil
 	}
 
-	// state refers to definition in mappers-go/pkg/common/const.go
-	state := strings.ToLower(updatedDevice.State)
-	switch state {
-	case "online", "offline", "ok", "unknown", "disconnected":
-	default:
-		return nil
+	lastOnline := time.Now()
+	if updatedDevice.State != v1alpha2.DeviceStateOK && updatedDevice.State != v1alpha2.DeviceStateOnline {
+		lastOnline = device.LastOnline.Time
 	}
-	lastOnline := time.Now().Format("2006-01-02 15:04:05")
+
 	for i := 1; i <= dtcommon.RetryTimes; i++ {
 		err = dtclient.UpdateDeviceFields(
 			device.ID,
 			map[string]interface{}{
-				"last_online": lastOnline,
-				"state":       updatedDevice.State,
+				"lastOnline": lastOnline.Format(dttype.TimeLayout),
+				"state":      string(updatedDevice.State),
 			})
 		if err == nil {
 			break
@@ -112,7 +111,9 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 		return err
 	}
 	device.State = updatedDevice.State
-	device.LastOnline = lastOnline
+	device.LastOnline = metav1.Time{
+		Time: lastOnline,
+	}
 	payload, err := dttype.BuildDeviceState(dttype.BuildBaseMessage(), *device)
 	if err != nil {
 		return err

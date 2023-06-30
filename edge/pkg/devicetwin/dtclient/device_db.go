@@ -13,7 +13,7 @@ type Device struct {
 	Name        string `orm:"column(name); null; type(text)"`
 	Description string `orm:"column(description); null; type(text)"`
 	State       string `orm:"column(state); null; type(text)"`
-	LastOnline  string `orm:"column(last_online); null; type(text)"`
+	LastOnline  string `orm:"column(lastOnline); null; type(text)"`
 }
 
 //SaveDevice save device
@@ -37,15 +37,23 @@ func DeleteDeviceByID(obm orm.Ormer, id string) error {
 // UpdateDeviceField update special field
 func UpdateDeviceField(deviceID string, col string, value interface{}) error {
 	num, err := dbm.DBAccess.QueryTable(DeviceTableName).Filter("id", deviceID).Update(map[string]interface{}{col: value})
-	klog.V(4).Infof("Update affected Num: %d, %s", num, err)
-	return err
+	if err != nil {
+		klog.Errorf("fail to update table %s with err: %+v", DeviceTableName, err)
+		return err
+	}
+	klog.Infof("Update affected Num: %d", num)
+	return nil
 }
 
 // UpdateDeviceFields update special fields
 func UpdateDeviceFields(deviceID string, cols map[string]interface{}) error {
 	num, err := dbm.DBAccess.QueryTable(DeviceTableName).Filter("id", deviceID).Update(cols)
-	klog.V(4).Infof("Update affected Num: %d, %s", num, err)
-	return err
+	if err != nil {
+		klog.Errorf("fail to update table %s with err: %+v", DeviceTableName, err)
+		return err
+	}
+	klog.Infof("Update affected Num: %d", num)
+	return nil
 }
 
 // QueryDevice query Device

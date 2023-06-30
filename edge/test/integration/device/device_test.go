@@ -27,24 +27,19 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
 	. "github.com/kubeedge/kubeedge/edge/test/integration/utils/helpers"
+	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
+	"github.com/kubeedge/kubeedge/pkg/common/dttype"
 )
 
 //Devicestate from subscribed MQTT topic
 var DeviceState string
 
 type DeviceUpdates struct {
-	EventID     string `json:"event_id"`
-	Timestamp   int64  `json:"timestamp"`
-	DeviceField `json:"device"`
-}
-
-type DeviceField struct {
-	Name       string `json:"name"`
+	BaseMessage
 	State      string `json:"state"`
-	LastOnline string `json:"last_online"`
+	LastOnline string `json:"lastOnline"`
 }
 
 type MembershipUpdate struct {
@@ -189,7 +184,7 @@ var _ = Describe("Event Bus Testing", func() {
 			common.Infof("Adding Mock device to edgenode !!")
 
 			DeviceIDN = GenerateDeviceID("kubeedge-device-")
-			DeviceN = CreateDevice(DeviceIDN, "edgedevice", "unknown")
+			DeviceN = CreateDevice(DeviceIDN, "edgedevice", v1alpha2.DeviceStateUnknown)
 
 			ClientOpts = HubClientInit(ctx.Cfg.MqttEndpoint, ClientID, "", "")
 			Client = MQTT.NewClient(ClientOpts)

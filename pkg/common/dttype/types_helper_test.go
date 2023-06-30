@@ -24,6 +24,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
@@ -232,16 +234,32 @@ func createDeviceTwin(devTwin dtclient.DeviceTwin) []dtclient.DeviceTwin {
 func createMessageTwinFromDeviceTwin(devTwin dtclient.DeviceTwin) map[string]*MsgTwin {
 	var expectedMeta ValueMetadata
 	expectedValue := &TwinValue{Value: &devTwin.Expected}
-	json.Unmarshal([]byte(devTwin.ExpectedMeta), &expectedMeta)
+	err := json.Unmarshal([]byte(devTwin.ExpectedMeta), &expectedMeta)
+	if err != nil {
+		klog.Errorf("fail to unmarshal expectedMeta")
+		return nil
+	}
 	expectedValue.Metadata = &expectedMeta
 	var actualMeta ValueMetadata
 	actualValue := &TwinValue{Value: &devTwin.Actual}
-	json.Unmarshal([]byte(devTwin.ActualMeta), &actualMeta)
+	err = json.Unmarshal([]byte(devTwin.ActualMeta), &actualMeta)
+	if err != nil {
+		klog.Errorf("fail to unmarshal actualMeta")
+		return nil
+	}
 	actualValue.Metadata = &actualMeta
 	var expectedVersion TwinVersion
-	json.Unmarshal([]byte(devTwin.ExpectedVersion), &expectedVersion)
+	err = json.Unmarshal([]byte(devTwin.ExpectedVersion), &expectedVersion)
+	if err != nil {
+		klog.Errorf("fail to unmarshal expectedVersion")
+		return nil
+	}
 	var actualVersion TwinVersion
-	json.Unmarshal([]byte(devTwin.ActualVersion), &actualVersion)
+	err = json.Unmarshal([]byte(devTwin.ActualVersion), &actualVersion)
+	if err != nil {
+		klog.Errorf("fail to unmarshal actualVersion")
+		return nil
+	}
 	msgTwins := make(map[string]*MsgTwin)
 	msgTwin := &MsgTwin{
 		Optional: &devTwin.Optional,
@@ -464,11 +482,12 @@ func TestBuildDeviceState(t *testing.T) {
 	device := Device{
 		Name:       "SensorTag",
 		State:      "ON",
-		LastOnline: "Today",
+		LastOnline: metav1.Time{Time: time.Now()},
 	}
-	deviceMsg := DeviceMsg{
+	deviceMsg := DeviceTwinUpdate{
 		BaseMessage: baseMessage,
-		Device:      device,
+		State:       device.State,
+		LastOnline:  device.LastOnline,
 	}
 	want, _ := json.Marshal(deviceMsg)
 	tests := []struct {
@@ -582,7 +601,7 @@ func createDevice() []*Device {
 		Name:        "SensorTag",
 		Description: "Sensor",
 		State:       "ON",
-		LastOnline:  "TODAY",
+		LastOnline:  metav1.Time{Time: time.Now()},
 		Attributes:  attrs,
 	}
 	devices = append(devices, device)
@@ -598,7 +617,7 @@ func createMembershipGetResult(message BaseMessage) MembershipGetResult {
 		Name:        "SensorTag",
 		Description: "Sensor",
 		State:       "ON",
-		LastOnline:  "TODAY",
+		LastOnline:  metav1.Time{Time: time.Now()},
 		Attributes:  attrs,
 	}
 	devices = append(devices, device)
@@ -759,7 +778,11 @@ func TestBuildErrorResult(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			got, err := BuildErrorResult(test.para)
 			gotResult := Result{}
-			json.Unmarshal(got, &gotResult)
+			err = json.Unmarshal(got, &gotResult)
+			if err != nil {
+				t.Errorf("fail to unmarshal gotResult in test %s", test.name)
+				return
+			}
 			if !reflect.DeepEqual(err, test.wantErr) {
 				t.Errorf("BuildErrorResult() error = %v, wantErr %v", err, test.wantErr)
 				return
