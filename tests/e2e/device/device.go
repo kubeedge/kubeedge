@@ -49,7 +49,7 @@ var _ = GroupDescribe("Device Management test in E2E scenario", func() {
 		edgeClientSet = utils.NewKubeEdgeClient(framework.TestContext.KubeConfig)
 	})
 
-	ginkgo.Context("Test Device Model Creation, Updation and deletion", func() {
+	ginkgo.Context("Test Device Model Creation, Updation and Deletion", func() {
 		ginkgo.BeforeEach(func() {
 			// Delete any pre-existing device models
 			list, err := utils.ListDeviceModel(edgeClientSet, "default")
