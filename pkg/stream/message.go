@@ -35,6 +35,8 @@ func (m MessageType) String() string {
 		return "LOGS_CONNECT"
 	case MessageTypeExecConnect:
 		return "EXEC_CONNECT"
+	case MessageTypeAttachConnect:
+		return "ATTACH_CONNECT"
 	case MessageTypeMetricConnect:
 		return "METRIC_CONNECT"
 	case MessageTypeData:

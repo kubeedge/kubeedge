@@ -12,4 +12,5 @@ const (
 	MessageTypeData
 	MessageTypeRemoveConnect
 	MessageTypeCloseConnect
+	MessageTypeAttachConnect
 )

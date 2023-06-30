@@ -73,6 +73,18 @@ func (s *StreamServer) installDebugHandler() {
 	s.container.Add(ws)
 
 	ws = new(restful.WebService)
+	ws.Path("/attach")
+	ws.Route(ws.GET("/{podNamespace}/{podID}/{containerName}").
+		To(s.getAttach))
+	ws.Route(ws.POST("/{podNamespace}/{podID}/{containerName}").
+		To(s.getAttach))
+	ws.Route(ws.GET("/{podNamespace}/{podID}/{uid}/{containerName}").
+		To(s.getAttach))
+	ws.Route(ws.POST("/{podNamespace}/{podID}/{uid}/{containerName}").
+		To(s.getAttach))
+	s.container.Add(ws)
+
+	ws = new(restful.WebService)
 	ws.Path("/stats")
 	ws.Route(ws.GET("").
 		To(s.getMetrics))
@@ -276,6 +288,76 @@ func (s *StreamServer) getExec(request *restful.Request, response *restful.Respo
 	if err = execConnection.Serve(); err != nil {
 		err = fmt.Errorf("apiconnection Serve %s in %s error %v",
 			execConnection.String(), session.String(), err)
+		return
+	}
+}
+
+func (s *StreamServer) getAttach(request *restful.Request, response *restful.Response) {
+	var err error
+	defer func() {
+		if err != nil {
+			response.WriteHeader(http.StatusInternalServerError)
+			klog.Errorf("Failed to get attach, err: %v", err)
+		}
+	}()
+
+	sessionKey, err := s.getSessionKey(request.Request.URL.Path)
+	if err != nil {
+		err = fmt.Errorf("can not get session key: %v", err)
+		return
+	}
+	session, ok := s.tunnel.getSession(sessionKey)
+	if !ok {
+		err = fmt.Errorf("attach: can not find %v session ", sessionKey)
+		return
+	}
+
+	if !httpstream.IsUpgradeRequest(request.Request) {
+		err = fmt.Errorf("request was not an upgrade")
+		return
+	}
+
+	// Once the connection is hijacked, the ErrorResponder will no longer work, so
+	// hijacking should be the last step in the upgrade.
+	requestHijacker, ok := response.ResponseWriter.(http.Hijacker)
+	if !ok {
+		klog.V(6).Infof("Unable to hijack response writer: %T", response.ResponseWriter)
+		err = fmt.Errorf("request connection cannot be hijacked: %T", response.ResponseWriter)
+		return
+	}
+
+	requestHijackedConn, _, err := requestHijacker.Hijack()
+	if err != nil {
+		klog.V(6).Infof("Unable to hijack response: %v", err)
+		err = fmt.Errorf("error hijacking connection: %v", err)
+		return
+	}
+	defer requestHijackedConn.Close()
+
+	attachConnection, err := session.AddAPIServerConnection(s, &ContainerAttachConnection{
+		r:            request,
+		Conn:         requestHijackedConn,
+		session:      session,
+		ctx:          request.Request.Context(),
+		edgePeerStop: make(chan struct{}, 2),
+		closeChan:    make(chan bool),
+	})
+
+	if err != nil {
+		err = fmt.Errorf("add apiServer attach connection into %s error %v", session.String(), err)
+		return
+	}
+
+	defer func() {
+		if err != nil {
+			session.DeleteAPIServerConnection(attachConnection)
+			klog.Infof("Delete %s from %s", attachConnection.String(), session.String())
+		}
+	}()
+
+	if err = attachConnection.Serve(); err != nil {
+		err = fmt.Errorf("apiconnection Serve %s in %s error %v",
+			attachConnection.String(), session.String(), err)
 		return
 	}
 }
