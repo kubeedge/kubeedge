@@ -49,6 +49,7 @@ func UnsafeResourceToKind(r string) string {
 		"endpoints":                    "Endpoints",
 		"endpointslices":               "EndpointSlice",
 		"nodes":                        "Node",
+		"namespaces":                   "Namespace",
 		"services":                     "Service",
 		"podstatus":                    "PodStatus",
 		"nodestatus":                   "NodeStatus",

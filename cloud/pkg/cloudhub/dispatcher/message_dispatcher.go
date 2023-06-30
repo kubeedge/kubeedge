@@ -35,6 +35,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
+	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
 	"github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1"
 	reliableclient "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 	synclisters "github.com/kubeedge/kubeedge/pkg/client/listers/reliablesyncs/v1alpha1"
@@ -248,7 +249,6 @@ func (md *messageDispatcher) enqueueAckMessage(nodeID string, msg *beehivemodel.
 	item, exist, _ := nodeStore.GetByKey(messageKey)
 	if exist {
 		msgInStore := item.(*beehivemodel.Message)
-
 		if isDeleteMessage(msgInStore) ||
 			synccontroller.CompareResourceVersion(msg.GetResourceVersion(), msgInStore.GetResourceVersion()) <= 0 {
 			// If the message resource version is older than the message in store or the operation
@@ -259,13 +259,87 @@ func (md *messageDispatcher) enqueueAckMessage(nodeID string, msg *beehivemodel.
 		return
 	}
 
-	// If the message doesn't exist in the store, then compare it with the version stored in the objectSync.
+	// If the message doesn't exist in the store, then compare it with
+	// the version stored in the objectSync or clusterObjectSync.
+	resourceNamespace, _ := messagelayer.GetNamespace(*msg)
+	if resourceNamespace == v2.NullNamespace {
+		shouldEnqueue = md.enqueueNonNamespacedResource(nodeID, msg)
+	} else {
+		shouldEnqueue = md.enqueueNamespacedResource(nodeID, msg)
+	}
+}
+
+func (md *messageDispatcher) enqueueNonNamespacedResource(nodeID string, msg *beehivemodel.Message) bool {
+	resourceName, _ := messagelayer.GetResourceName(*msg)
+	resourceUID, err := common.GetMessageUID(*msg)
+	if err != nil {
+		klog.Errorf("fail to get message UID for message: %s", msg.Header.ID)
+		return false
+	}
+
+	clusterObjectSyncName := synccontroller.BuildObjectSyncName(nodeID, resourceUID)
+	clusterObjectSync, err := md.clusterObjectSyncLister.Get(clusterObjectSyncName)
+
+	switch {
+	case err == nil && clusterObjectSync.Status.ObjectResourceVersion != "":
+		if synccontroller.CompareResourceVersion(msg.GetResourceVersion(), clusterObjectSync.Status.ObjectResourceVersion) > 0 {
+			return true
+		}
+
+	case err != nil && apierrors.IsNotFound(err):
+		// If clusterObjectSync is not exist, this indicates that the message is coming
+		// for the first time, We create clusterObjectSync for the resource directly.
+
+		clusterObjectSync := &v1alpha1.ClusterObjectSync{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: clusterObjectSyncName,
+			},
+			Spec: v1alpha1.ObjectSyncSpec{
+				ObjectAPIVersion: util.GetMessageAPIVersion(msg),
+				ObjectKind:       util.GetMessageResourceType(msg),
+				ObjectName:       resourceName,
+			},
+		}
+
+		clusterObjectSync, err := md.reliableClient.
+			ReliablesyncsV1alpha1().
+			ClusterObjectSyncs().
+			Create(context.Background(), clusterObjectSync, metav1.CreateOptions{})
+		if err != nil {
+			klog.ErrorS(err, "Failed to create clusterObjectSync",
+				"clusterObjectSyncName", clusterObjectSyncName,
+				"resourceName", resourceName)
+			return false
+		}
+
+		clusterObjectSync.Status.ObjectResourceVersion = "0"
+		_, err = md.reliableClient.
+			ReliablesyncsV1alpha1().
+			ClusterObjectSyncs().
+			UpdateStatus(context.Background(), clusterObjectSync, metav1.UpdateOptions{})
+		if err != nil {
+			klog.ErrorS(err, "Failed to update clusterObjectSync",
+				"clusterObjectSyncName", clusterObjectSyncName,
+				"resourceName", resourceName)
+			return false
+		}
+
+		return true
+
+	case err != nil:
+		klog.Errorf("failed to get clusterObjectSync %s: %v", clusterObjectSyncName, err)
+	}
+
+	return false
+}
+
+func (md *messageDispatcher) enqueueNamespacedResource(nodeID string, msg *beehivemodel.Message) bool {
 	resourceNamespace, _ := messagelayer.GetNamespace(*msg)
 	resourceName, _ := messagelayer.GetResourceName(*msg)
 	resourceUID, err := common.GetMessageUID(*msg)
 	if err != nil {
 		klog.Errorf("fail to get message UID for message: %s", msg.Header.ID)
-		return
+		return false
 	}
 
 	objectSyncName := synccontroller.BuildObjectSyncName(nodeID, resourceUID)
@@ -274,13 +348,13 @@ func (md *messageDispatcher) enqueueAckMessage(nodeID string, msg *beehivemodel.
 	switch {
 	case err == nil && objectSync.Status.ObjectResourceVersion != "":
 		if synccontroller.CompareResourceVersion(msg.GetResourceVersion(), objectSync.Status.ObjectResourceVersion) > 0 {
-			shouldEnqueue = true
-			return
+			return true
 		}
 
 	case err != nil && apierrors.IsNotFound(err):
 		// If objectSync is not exist, this indicates that the message is coming
 		// for the first time, We create objectSync for the resource directly.
+
 		objectSync := &v1alpha1.ObjectSync{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      objectSyncName,
@@ -302,7 +376,7 @@ func (md *messageDispatcher) enqueueAckMessage(nodeID string, msg *beehivemodel.
 				"objectSyncName", objectSyncName,
 				"resourceNamespace", resourceNamespace,
 				"resourceName", resourceName)
-			return
+			return false
 		}
 
 		objectSyncStatus.Status.ObjectResourceVersion = "0"
@@ -315,14 +389,16 @@ func (md *messageDispatcher) enqueueAckMessage(nodeID string, msg *beehivemodel.
 				"objectSyncName", objectSyncName,
 				"resourceNamespace", resourceNamespace,
 				"resourceName", resourceName)
+			return false
 		}
 
-		// enqueue message that comes for the first time
-		shouldEnqueue = true
+		return true
 
 	case err != nil:
 		klog.Errorf("failed to get ObjectSync %s/%s: %v", resourceNamespace, objectSyncName, err)
 	}
+
+	return false
 }
 
 func isDeleteMessage(msg *beehivemodel.Message) bool {

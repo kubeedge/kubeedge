@@ -35,6 +35,7 @@ import (
 	deviceconst "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	edgeconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
+	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
 	"github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1"
 	reliableclient "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
@@ -377,105 +378,188 @@ func (ns *NodeSession) saveSuccessPoint(msg *beehivemodel.Message) {
 
 	case msg.GetGroup() == edgeconst.GroupResource:
 		resourceNamespace, _ := messagelayer.GetNamespace(*msg)
-		resourceName, _ := messagelayer.GetResourceName(*msg)
-		resourceType, _ := messagelayer.GetResourceType(*msg)
-
-		resourceUID, err := common.GetMessageUID(*msg)
-		if err != nil {
-			klog.Errorf("failed to get message UID %v, err: %v", msg, err)
-			return
-		}
-
-		objectSyncName := synccontroller.BuildObjectSyncName(ns.nodeID, resourceUID)
-
-		if msg.GetOperation() == beehivemodel.DeleteOperation {
-			ns.deleteSuccessPoint(resourceNamespace, objectSyncName, msg)
-			return
-		}
-
-		objectSync, err := ns.reliableClient.
-			ReliablesyncsV1alpha1().
-			ObjectSyncs(resourceNamespace).
-			Get(context.Background(), objectSyncName, metav1.GetOptions{})
-
-		switch {
-		case err == nil:
-			objectSync.Status.ObjectResourceVersion = msg.GetResourceVersion()
-
-			_, err := ns.reliableClient.
-				ReliablesyncsV1alpha1().
-				ObjectSyncs(resourceNamespace).
-				UpdateStatus(context.Background(), objectSync, metav1.UpdateOptions{})
-
-			if err != nil {
-				klog.ErrorS(err, "failed to update objectSync",
-					"objectSyncName", objectSyncName,
-					"resourceType", resourceType,
-					"resourceNamespace", resourceNamespace,
-					"resourceName", resourceName)
-				return
-			}
-
-		case apierrors.IsNotFound(err):
-			// create objectSync if not found
-			objectSync := &v1alpha1.ObjectSync{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      objectSyncName,
-					Namespace: resourceNamespace,
-				},
-				Spec: v1alpha1.ObjectSyncSpec{
-					ObjectAPIVersion: util.GetMessageAPIVersion(msg),
-					ObjectKind:       util.GetMessageResourceType(msg),
-					ObjectName:       resourceName,
-				},
-			}
-
-			if objectSync.Spec.ObjectKind == "" {
-				klog.ErrorS(nil, "failed to init objectSync, ObjectKind is empty",
-					"objectSyncName", objectSyncName,
-					"resourceType", resourceType,
-					"resourceNamespace", resourceNamespace,
-					"resourceName", resourceName,
-					"message", msg.GetContent())
-				return
-			}
-
-			objectSyncStatus, err := ns.reliableClient.
-				ReliablesyncsV1alpha1().
-				ObjectSyncs(resourceNamespace).
-				Create(context.Background(), objectSync, metav1.CreateOptions{})
-			if err != nil {
-				klog.Errorf("Failed to create objectSync: %s, err: %v", objectSyncName, err)
-				return
-			}
-
-			objectSyncStatus.Status.ObjectResourceVersion = msg.GetResourceVersion()
-			_, err = ns.reliableClient.
-				ReliablesyncsV1alpha1().
-				ObjectSyncs(resourceNamespace).
-				UpdateStatus(context.Background(), objectSyncStatus, metav1.UpdateOptions{})
-			if err != nil {
-				klog.Errorf("Failed to update objectSync: %s, err: %v", objectSyncName, err)
-				return
-			}
-
-		default:
-			// request objectSync from KubeAPIServer err
-			klog.Errorf("Failed to get objectSync: %s, err: %v", objectSyncName, err)
-			return
+		if resourceNamespace == v2.NullNamespace {
+			ns.saveNonNamespaceResourceSuccess(msg)
+		} else {
+			ns.saveNamespaceResourceSuccess(msg)
 		}
 	}
 
 	klog.V(4).Infof("saveSuccessPoint successfully for message: %s", msg.GetResource())
 }
 
-func (ns *NodeSession) deleteSuccessPoint(resourceNamespace, objectSyncName string, msg *beehivemodel.Message) {
-	err := ns.reliableClient.
+func (ns *NodeSession) saveNamespaceResourceSuccess(msg *beehivemodel.Message) {
+	resourceNamespace, _ := messagelayer.GetNamespace(*msg)
+	resourceName, _ := messagelayer.GetResourceName(*msg)
+	resourceType, _ := messagelayer.GetResourceType(*msg)
+
+	resourceUID, err := common.GetMessageUID(*msg)
+	if err != nil {
+		klog.Errorf("failed to get message UID %v, err: %v", msg, err)
+		return
+	}
+
+	objectSyncName := synccontroller.BuildObjectSyncName(ns.nodeID, resourceUID)
+
+	if msg.GetOperation() == beehivemodel.DeleteOperation {
+		ns.deleteSuccessPoint(resourceNamespace, objectSyncName, msg)
+		return
+	}
+
+	objectSync, err := ns.reliableClient.
 		ReliablesyncsV1alpha1().
 		ObjectSyncs(resourceNamespace).
-		Delete(context.Background(), objectSyncName, *metav1.NewDeleteOptions(0))
-	if err != nil && !apierrors.IsNotFound(err) {
-		klog.Errorf("Delete ObjectSync %s error: %v", objectSyncName, err)
+		Get(context.Background(), objectSyncName, metav1.GetOptions{})
+
+	switch {
+	case err == nil:
+
+	case apierrors.IsNotFound(err):
+		// create objectSync if not found
+		objectSync = &v1alpha1.ObjectSync{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      objectSyncName,
+				Namespace: resourceNamespace,
+			},
+			Spec: v1alpha1.ObjectSyncSpec{
+				ObjectAPIVersion: util.GetMessageAPIVersion(msg),
+				ObjectKind:       util.GetMessageResourceType(msg),
+				ObjectName:       resourceName,
+			},
+		}
+
+		if objectSync.Spec.ObjectKind == "" {
+			klog.ErrorS(nil, "failed to init objectSync, ObjectKind is empty",
+				"objectSyncName", objectSyncName,
+				"resourceType", resourceType,
+				"resourceNamespace", resourceNamespace,
+				"resourceName", resourceName,
+				"message", msg.GetContent())
+			return
+		}
+
+		objectSync, err = ns.reliableClient.
+			ReliablesyncsV1alpha1().
+			ObjectSyncs(resourceNamespace).
+			Create(context.Background(), objectSync, metav1.CreateOptions{})
+		if err != nil {
+			klog.Errorf("Failed to create objectSync: %s, err: %v", objectSyncName, err)
+			return
+		}
+
+	default:
+		// request objectSync from KubeAPIServer err
+		klog.Errorf("Failed to get objectSync: %s, err: %v", objectSyncName, err)
+		return
+	}
+
+	objectSync.Status.ObjectResourceVersion = msg.GetResourceVersion()
+	_, err = ns.reliableClient.
+		ReliablesyncsV1alpha1().
+		ObjectSyncs(resourceNamespace).
+		UpdateStatus(context.Background(), objectSync, metav1.UpdateOptions{})
+
+	if err != nil {
+		klog.ErrorS(err, "failed to update objectSync",
+			"objectSyncName", objectSyncName,
+			"resourceType", resourceType,
+			"resourceNamespace", resourceNamespace,
+			"resourceName", resourceName)
+		return
+	}
+}
+
+func (ns *NodeSession) saveNonNamespaceResourceSuccess(msg *beehivemodel.Message) {
+	resourceNamespace, _ := messagelayer.GetNamespace(*msg)
+	resourceName, _ := messagelayer.GetResourceName(*msg)
+	resourceType, _ := messagelayer.GetResourceType(*msg)
+
+	resourceUID, err := common.GetMessageUID(*msg)
+	if err != nil {
+		klog.Errorf("failed to get message UID %v, err: %v", msg, err)
+		return
+	}
+
+	clusterObjectSyncName := synccontroller.BuildObjectSyncName(ns.nodeID, resourceUID)
+
+	if msg.GetOperation() == beehivemodel.DeleteOperation {
+		ns.deleteSuccessPoint(resourceNamespace, clusterObjectSyncName, msg)
+		return
+	}
+
+	clusterObjectSync, err := ns.reliableClient.
+		ReliablesyncsV1alpha1().ClusterObjectSyncs().
+		Get(context.Background(), clusterObjectSyncName, metav1.GetOptions{})
+
+	switch {
+	case err == nil:
+
+	case apierrors.IsNotFound(err):
+		// create clusterObjectSync if not found
+		clusterObjectSync = &v1alpha1.ClusterObjectSync{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: clusterObjectSyncName,
+			},
+			Spec: v1alpha1.ObjectSyncSpec{
+				ObjectAPIVersion: util.GetMessageAPIVersion(msg),
+				ObjectKind:       util.GetMessageResourceType(msg),
+				ObjectName:       resourceName,
+			},
+		}
+
+		if clusterObjectSync.Spec.ObjectKind == "" {
+			klog.ErrorS(nil, "failed to init objectSync, ObjectKind is empty",
+				"objectSyncName", clusterObjectSyncName,
+				"resourceType", resourceType,
+				"resourceName", resourceName,
+				"message", msg.GetContent())
+			return
+		}
+
+		clusterObjectSync, err = ns.reliableClient.
+			ReliablesyncsV1alpha1().ClusterObjectSyncs().
+			Create(context.Background(), clusterObjectSync, metav1.CreateOptions{})
+		if err != nil {
+			klog.Errorf("Failed to create clusterObjectSync: %s, err: %v", clusterObjectSyncName, err)
+			return
+		}
+
+	default:
+		// request clusterObjectSync from KubeAPIServer err
+		klog.Errorf("Failed to get clusterObjectSync: %s, err: %v", clusterObjectSyncName, err)
+		return
+	}
+
+	clusterObjectSync.Status.ObjectResourceVersion = msg.GetResourceVersion()
+	_, err = ns.reliableClient.
+		ReliablesyncsV1alpha1().ClusterObjectSyncs().
+		UpdateStatus(context.Background(), clusterObjectSync, metav1.UpdateOptions{})
+
+	if err != nil {
+		klog.ErrorS(err, "failed to update clusterObjectSync",
+			"objectSyncName", clusterObjectSyncName,
+			"resourceType", resourceType,
+			"resourceName", resourceName)
+		return
+	}
+}
+
+func (ns *NodeSession) deleteSuccessPoint(resourceNamespace, objectSyncName string, msg *beehivemodel.Message) {
+	if resourceNamespace == v2.NullNamespace {
+		err := ns.reliableClient.
+			ReliablesyncsV1alpha1().ClusterObjectSyncs().
+			Delete(context.Background(), objectSyncName, *metav1.NewDeleteOptions(0))
+		if err != nil && !apierrors.IsNotFound(err) {
+			klog.Errorf("Delete ClusterObjectSync %s error: %v", objectSyncName, err)
+		}
+	} else {
+		err := ns.reliableClient.
+			ReliablesyncsV1alpha1().
+			ObjectSyncs(resourceNamespace).
+			Delete(context.Background(), objectSyncName, *metav1.NewDeleteOptions(0))
+		if err != nil && !apierrors.IsNotFound(err) {
+			klog.Errorf("Delete ObjectSync %s/%s error: %v", resourceNamespace, objectSyncName, err)
+		}
 	}
 
 	if err := ns.nodeMessagePool.AckMessageStore.Delete(msg); err != nil {

@@ -23,7 +23,7 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
-func (sctl *SyncController) manageObject(sync *v1alpha1.ObjectSync) {
+func (sctl *SyncController) reconcileObjectSync(sync *v1alpha1.ObjectSync) {
 	var object metav1.Object
 
 	gv, err := schema.ParseGroupVersion(sync.Spec.ObjectAPIVersion)

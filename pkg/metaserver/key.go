@@ -76,6 +76,11 @@ func KeyFuncReq(ctx context.Context, _ string) (string, error) {
 	resource := info.Resource
 	namespace := info.Namespace
 	name := info.Name
+
+	// if the request resource is namespaces, set the ns to null in the key
+	if resource == "namespaces" {
+		namespace = v2.NullNamespace
+	}
 	if namespace == "" {
 		namespace = v2.NullNamespace
 	}
