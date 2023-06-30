@@ -15,7 +15,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
+	"github.com/kubeedge/kubeedge/pkg/common/dttype"
 )
 
 var (
@@ -66,14 +66,8 @@ func initDeviceActionCallBack() {
 }
 
 func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg interface{}) error {
-	message, ok := msg.(*model.Message)
-	if !ok {
-		return errors.New("msg not Message type")
-	}
-
-	updatedDevice, err := dttype.UnmarshalDeviceUpdate(message.Content.([]byte))
+	updatedDevice, err := generateUpdatedDeviceFromMsg(msg)
 	if err != nil {
-		klog.Errorf("Unmarshal device info failed, err: %#v", err)
 		return err
 	}
 	deviceID := resource
@@ -132,19 +126,11 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 }
 
 func dealDeviceAttrUpdate(context *dtcontext.DTContext, resource string, msg interface{}) error {
-	message, ok := msg.(*model.Message)
-	if !ok {
-		return errors.New("msg not Message type")
-	}
-
-	updatedDevice, err := dttype.UnmarshalDeviceUpdate(message.Content.([]byte))
+	updatedDevice, err := generateUpdatedDeviceFromMsg(msg)
 	if err != nil {
-		klog.Errorf("Unmarshal device info failed, err: %#v", err)
 		return err
 	}
-
 	deviceID := resource
-
 	context.Lock(deviceID)
 	UpdateDeviceAttr(context, deviceID, updatedDevice.Attributes, dttype.BaseMessage{EventID: updatedDevice.EventID}, 0)
 	context.Unlock(deviceID)
@@ -299,4 +285,19 @@ func DealMsgAttr(context *dtcontext.DTContext, deviceID string, msgAttrs map[str
 		}
 	}
 	return dttype.DealAttrResult{Add: add, Delete: deletes, Update: update, Result: result, Err: nil}
+}
+
+func generateUpdatedDeviceFromMsg(msg interface{}) (*dttype.DeviceUpdate, error) {
+	message, ok := msg.(*model.Message)
+	if !ok {
+		klog.Errorf("msg not Message type: %+v", msg)
+		return nil, errors.New("msg not Message type")
+	}
+
+	updatedDevice, err := dttype.UnmarshalDeviceUpdate(message.Content.([]byte))
+	if err != nil {
+		klog.Errorf("Unmarshal device info failed, err: %+v", err)
+		return nil, err
+	}
+	return updatedDevice, nil
 }

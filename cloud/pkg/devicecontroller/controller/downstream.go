@@ -42,6 +42,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/types"
 	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
 	crdinformers "github.com/kubeedge/kubeedge/pkg/client/informers/externalversions"
+	"github.com/kubeedge/kubeedge/pkg/common/dttype"
 )
 
 // DownstreamController watch kubernetes api server and send change to edge
@@ -379,7 +380,7 @@ func (dc *DownstreamController) deviceAdded(device *v1alpha2.Device) {
 		}
 		msg.BuildRouter(modules.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation)
 
-		content := types.MembershipUpdate{AddDevices: []types.Device{
+		content := dttype.MembershipUpdate{AddDevices: []dttype.Device{
 			edgeDevice,
 		}}
 		content.EventID = uuid.New().String()
@@ -397,8 +398,8 @@ func (dc *DownstreamController) deviceAdded(device *v1alpha2.Device) {
 }
 
 // createDevice creates a device from CRD
-func createDevice(device *v1alpha2.Device) types.Device {
-	edgeDevice := types.Device{
+func createDevice(device *v1alpha2.Device) dttype.Device {
+	edgeDevice := dttype.Device{
 		// ID and name can be used as ID as we are using CRD and name(key in ETCD) will always be unique
 		ID:   device.Name,
 		Name: device.Name,
@@ -412,9 +413,9 @@ func createDevice(device *v1alpha2.Device) types.Device {
 	// TODO: optional is Always false, currently not present in CRD definition, need to add or remove from deviceTwin @ Edge
 	opt := false
 	optional := &opt
-	twin := make(map[string]*types.MsgTwin, len(device.Status.Twins))
+	twin := make(map[string]*dttype.MsgTwin, len(device.Status.Twins))
 	for i, dtwin := range device.Status.Twins {
-		expected := &types.TwinValue{}
+		expected := &dttype.TwinValue{}
 		expected.Value = &device.Status.Twins[i].Desired.Value
 		metadataType, ok := device.Status.Twins[i].Desired.Metadata["type"]
 		if !ok {
@@ -422,7 +423,7 @@ func createDevice(device *v1alpha2.Device) types.Device {
 		}
 		timestamp := time.Now().UnixNano() / 1e6
 
-		metadata := &types.ValueMetadata{Timestamp: timestamp}
+		metadata := &dttype.ValueMetadata{Timestamp: timestamp}
 		expected.Metadata = metadata
 
 		// TODO: how to manage versioning ??
@@ -430,11 +431,11 @@ func createDevice(device *v1alpha2.Device) types.Device {
 		if err != nil {
 			klog.Warningf("Failed to parse cloud version due to error %v", err)
 		}
-		twinVersion := &types.TwinVersion{CloudVersion: cloudVersion, EdgeVersion: 0}
-		msgTwin := &types.MsgTwin{
+		twinVersion := &dttype.TwinVersion{CloudVersion: cloudVersion, EdgeVersion: 0}
+		msgTwin := &dttype.MsgTwin{
 			Expected:        expected,
 			Optional:        optional,
-			Metadata:        &types.TypeMetadata{Type: metadataType},
+			Metadata:        &dttype.TypeMetadata{Type: metadataType},
 			ExpectedVersion: twinVersion,
 		}
 		twin[dtwin.PropertyName] = msgTwin
@@ -609,7 +610,7 @@ func (dc *DownstreamController) deviceUpdated(device *v1alpha2.Device) {
 				// update twin properties
 				if isDeviceStatusUpdated(&cachedDevice.Status, &device.Status) {
 					// TODO: add an else if condition to check if DeviceModelReference has changed, if yes whether deviceModelReference exists
-					twin := make(map[string]*types.MsgTwin)
+					twin := make(map[string]*dttype.MsgTwin)
 					addUpdatedTwins(device.Status.Twins, twin, device.ResourceVersion)
 					addDeletedTwins(cachedDevice.Status.Twins, device.Status.Twins, twin, device.ResourceVersion)
 					msg := model.NewMessage("")
@@ -620,7 +621,7 @@ func (dc *DownstreamController) deviceUpdated(device *v1alpha2.Device) {
 						return
 					}
 					msg.BuildRouter(modules.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation)
-					content := types.DeviceTwinUpdate{Twin: twin}
+					content := dttype.DeviceTwinUpdate{Twin: twin}
 					content.EventID = uuid.New().String()
 					content.Timestamp = time.Now().UnixNano() / 1e6
 					msg.Content = content
@@ -645,16 +646,16 @@ func (dc *DownstreamController) deviceUpdated(device *v1alpha2.Device) {
 }
 
 // addDeletedTwins add deleted twins in the message
-func addDeletedTwins(oldTwin []v1alpha2.Twin, newTwin []v1alpha2.Twin, twin map[string]*types.MsgTwin, version string) {
+func addDeletedTwins(oldTwin []v1alpha2.Twin, newTwin []v1alpha2.Twin, twin map[string]*dttype.MsgTwin, version string) {
 	opt := false
 	optional := &opt
 	for i, dtwin := range oldTwin {
 		if !ifTwinPresent(dtwin, newTwin) {
-			expected := &types.TwinValue{}
+			expected := &dttype.TwinValue{}
 			expected.Value = &oldTwin[i].Desired.Value
 			timestamp := time.Now().UnixNano() / 1e6
 
-			metadata := &types.ValueMetadata{Timestamp: timestamp}
+			metadata := &dttype.ValueMetadata{Timestamp: timestamp}
 			expected.Metadata = metadata
 
 			// TODO: how to manage versioning ??
@@ -662,11 +663,11 @@ func addDeletedTwins(oldTwin []v1alpha2.Twin, newTwin []v1alpha2.Twin, twin map[
 			if err != nil {
 				klog.Warningf("Failed to parse cloud version due to error %v", err)
 			}
-			twinVersion := &types.TwinVersion{CloudVersion: cloudVersion, EdgeVersion: 0}
-			msgTwin := &types.MsgTwin{
+			twinVersion := &dttype.TwinVersion{CloudVersion: cloudVersion, EdgeVersion: 0}
+			msgTwin := &dttype.MsgTwin{
 				Expected:        expected,
 				Optional:        optional,
-				Metadata:        &types.TypeMetadata{Type: "deleted"},
+				Metadata:        &dttype.TypeMetadata{Type: "deleted"},
 				ExpectedVersion: twinVersion,
 			}
 			twin[dtwin.PropertyName] = msgTwin
@@ -685,11 +686,11 @@ func ifTwinPresent(twin v1alpha2.Twin, newTwins []v1alpha2.Twin) bool {
 }
 
 // addUpdatedTwins is function of add updated twins to send to edge
-func addUpdatedTwins(newTwin []v1alpha2.Twin, twin map[string]*types.MsgTwin, version string) {
+func addUpdatedTwins(newTwin []v1alpha2.Twin, twin map[string]*dttype.MsgTwin, version string) {
 	opt := false
 	optional := &opt
 	for i, dtwin := range newTwin {
-		expected := &types.TwinValue{}
+		expected := &dttype.TwinValue{}
 		expected.Value = &newTwin[i].Desired.Value
 		metadataType, ok := newTwin[i].Desired.Metadata["type"]
 		if !ok {
@@ -697,7 +698,7 @@ func addUpdatedTwins(newTwin []v1alpha2.Twin, twin map[string]*types.MsgTwin, ve
 		}
 		timestamp := time.Now().UnixNano() / 1e6
 
-		metadata := &types.ValueMetadata{Timestamp: timestamp}
+		metadata := &dttype.ValueMetadata{Timestamp: timestamp}
 		expected.Metadata = metadata
 
 		// TODO: how to manage versioning ??
@@ -705,11 +706,11 @@ func addUpdatedTwins(newTwin []v1alpha2.Twin, twin map[string]*types.MsgTwin, ve
 		if err != nil {
 			klog.Warningf("Failed to parse cloud version due to error %v", err)
 		}
-		twinVersion := &types.TwinVersion{CloudVersion: cloudVersion, EdgeVersion: 0}
-		msgTwin := &types.MsgTwin{
+		twinVersion := &dttype.TwinVersion{CloudVersion: cloudVersion, EdgeVersion: 0}
+		msgTwin := &dttype.MsgTwin{
 			Expected:        expected,
 			Optional:        optional,
-			Metadata:        &types.TypeMetadata{Type: metadataType},
+			Metadata:        &dttype.TypeMetadata{Type: metadataType},
 			ExpectedVersion: twinVersion,
 		}
 		twin[dtwin.PropertyName] = msgTwin
@@ -933,7 +934,7 @@ func (dc *DownstreamController) deviceDeleted(device *v1alpha2.Device) {
 		resource, err := messagelayer.BuildResourceForDevice(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], "membership", "")
 		msg.BuildRouter(modules.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation)
 
-		content := types.MembershipUpdate{RemoveDevices: []types.Device{
+		content := dttype.MembershipUpdate{RemoveDevices: []dttype.Device{
 			edgeDevice,
 		}}
 		content.EventID = uuid.New().String()

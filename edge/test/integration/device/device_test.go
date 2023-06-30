@@ -27,9 +27,9 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
 	. "github.com/kubeedge/kubeedge/edge/test/integration/utils/helpers"
+	"github.com/kubeedge/kubeedge/pkg/common/dttype"
 )
 
 //Devicestate from subscribed MQTT topic
