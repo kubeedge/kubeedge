@@ -247,7 +247,7 @@ func BuildHandlerChain(handler http.Handler, ls *MetaServer) http.Handler {
 	if kefeatures.DefaultFeatureGate.Enabled(kefeatures.RequireAuthorization) {
 		handler = genericapifilters.WithAuthorization(handler, ls.Auth.Authorizer, legacyscheme.Codecs)
 		failedHandler := genericapifilters.Unauthorized(legacyscheme.Codecs)
-		handler = genericapifilters.WithAuthentication(handler, ls.Auth.Authenticator, failedHandler, metaserverconfig.Config.APIAudiences)
+		handler = genericapifilters.WithAuthentication(handler, ls.Auth.Authenticator, failedHandler, metaserverconfig.Config.APIAudiences, nil)
 	}
 	handler = genericfilters.WithWaitGroup(handler, ls.LongRunningFunc, ls.HandlerChainWaitGroup)
 	handler = genericapifilters.WithRequestInfo(handler, server.NewRequestInfoResolver(cfg))

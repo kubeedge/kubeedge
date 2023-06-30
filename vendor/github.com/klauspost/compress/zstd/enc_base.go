@@ -38,8 +38,8 @@ func (e *fastBase) AppendCRC(dst []byte) []byte {
 
 // WindowSize returns the window size of the encoder,
 // or a window size small enough to contain the input size, if > 0.
-func (e *fastBase) WindowSize(size int) int32 {
-	if size > 0 && size < int(e.maxMatchOff) {
+func (e *fastBase) WindowSize(size int64) int32 {
+	if size > 0 && size < int64(e.maxMatchOff) {
 		b := int32(1) << uint(bits.Len(uint(size)))
 		// Keep minimum window.
 		if b < 1024 {
@@ -150,14 +150,15 @@ func (e *fastBase) resetBase(d *dict, singleBlock bool) {
 	} else {
 		e.crc.Reset()
 	}
-	if (!singleBlock || d.DictContentSize() > 0) && cap(e.hist) < int(e.maxMatchOff*2)+d.DictContentSize() {
-		l := e.maxMatchOff*2 + int32(d.DictContentSize())
-		// Make it at least 1MB.
-		if l < 1<<20 {
-			l = 1 << 20
+	if d != nil {
+		low := e.lowMem
+		if singleBlock {
+			e.lowMem = true
 		}
-		e.hist = make([]byte, 0, l)
+		e.ensureHist(d.DictContentSize() + maxCompressedBlockSize)
+		e.lowMem = low
 	}
+
 	// We offset current position so everything will be out of reach.
 	// If above reset line, history will be purged.
 	if e.cur < bufferReset {

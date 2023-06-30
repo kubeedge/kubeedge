@@ -48,9 +48,6 @@ func (s *store) Watch(ctx context.Context, key string, opts storage.ListOptions)
 	return s.watch(ctx, key, opts, false)
 }
 
-func (s *store) WatchList(ctx context.Context, key string, opts storage.ListOptions) (watch.Interface, error) {
-	return s.watch(ctx, key, opts, true)
-}
 func (s *store) watch(ctx context.Context, key string, opts storage.ListOptions, recursive bool) (watch.Interface, error) {
 	rev, err := s.versioner.ParseResourceVersion(opts.ResourceVersion)
 	if err != nil {
@@ -69,11 +66,7 @@ func (s *store) Get(ctx context.Context, key string, opts storage.GetOptions, ob
 	return runtime.DecodeInto(s.codec, []byte((*resp.Kvs)[0].Value), unstrObj)
 }
 
-func (s *store) GetToList(ctx context.Context, key string, opts storage.ListOptions, listObj runtime.Object) error {
-	return s.List(ctx, key, opts, listObj)
-}
-
-func (s *store) List(ctx context.Context, key string, opts storage.ListOptions, listObj runtime.Object) error {
+func (s *store) GetList(ctx context.Context, key string, opts storage.ListOptions, listObj runtime.Object) error {
 	klog.Infof("get a list req, key=%v", key)
 	listPtr, err := meta.GetItemsPtr(listObj)
 	if err != nil {

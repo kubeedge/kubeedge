@@ -22,7 +22,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"os"
 	"sort"
@@ -53,24 +52,24 @@ const (
 // into the code which uses the settings.
 //
 // The recommendation for those settings is:
-// - They are stored in their own context structure or local
-//   variables.
-// - The standard `flag` package is used to register them.
-//   The flag name should follow the pattern <part1>.<part2>....<partn>
-//   where the prefix is unlikely to conflict with other tests or
-//   standard packages and each part is in lower camel case. For
-//   example, test/e2e/storage/csi/context.go could define
-//   storage.csi.numIterations.
-// - framework/config can be used to simplify the registration of
-//   multiple options with a single function call:
-//   var storageCSI {
-//       NumIterations `default:"1" usage:"number of iterations"`
-//   }
-//   _ config.AddOptions(&storageCSI, "storage.csi")
-// - The direct use Viper in tests is possible, but discouraged because
-//   it only works in test suites which use Viper (which is not
-//   required) and the supported options cannot be
-//   discovered by a test suite user.
+//   - They are stored in their own context structure or local
+//     variables.
+//   - The standard `flag` package is used to register them.
+//     The flag name should follow the pattern <part1>.<part2>....<partn>
+//     where the prefix is unlikely to conflict with other tests or
+//     standard packages and each part is in lower camel case. For
+//     example, test/e2e/storage/csi/context.go could define
+//     storage.csi.numIterations.
+//   - framework/config can be used to simplify the registration of
+//     multiple options with a single function call:
+//     var storageCSI {
+//     NumIterations `default:"1" usage:"number of iterations"`
+//     }
+//     _ config.AddOptions(&storageCSI, "storage.csi")
+//   - The direct use Viper in tests is possible, but discouraged because
+//     it only works in test suites which use Viper (which is not
+//     required) and the supported options cannot be
+//     discovered by a test suite user.
 //
 // Test suite authors can use framework/viper to make all command line
 // parameters also configurable via a configuration file.
@@ -78,13 +77,12 @@ type TestContextType struct {
 	KubeConfig         string
 	KubeContext        string
 	KubeAPIContentType string
-	KubeVolumeDir      string
+	KubeletRootDir     string
 	CertDir            string
 	Host               string
 	BearerToken        string `datapolicy:"token"`
 	// TODO: Deprecating this over time... instead just use gobindata_util.go , see #23987.
-	RepoRoot                string
-	DockershimCheckpointDir string
+	RepoRoot string
 	// ListImages will list off all images that are used then quit
 	ListImages bool
 
@@ -109,7 +107,6 @@ type TestContextType struct {
 	EtcdUpgradeStorage          string
 	EtcdUpgradeVersion          string
 	GCEUpgradeScript            string
-	ContainerRuntime            string
 	ContainerRuntimeEndpoint    string
 	ContainerRuntimeProcessName string
 	ContainerRuntimePidFile     string
@@ -308,15 +305,17 @@ func RegisterCommonFlags(flags *flag.FlagSet) {
 	flags.StringVar(&TestContext.ReportPrefix, "report-prefix", "", "Optional prefix for JUnit XML reports. Default is empty, which doesn't prepend anything to the default name.")
 	flags.StringVar(&TestContext.ReportDir, "report-dir", "", "Path to the directory where the JUnit XML reports should be saved. Default is empty, which doesn't generate these reports.")
 	flags.Var(cliflag.NewMapStringBool(&TestContext.FeatureGates), "feature-gates", "A set of key=value pairs that describe feature gates for alpha/experimental features.")
-	flags.StringVar(&TestContext.ContainerRuntime, "container-runtime", "docker", "The container runtime of cluster VM instances (docker/remote).")
-	flags.StringVar(&TestContext.ContainerRuntimeEndpoint, "container-runtime-endpoint", "unix:///var/run/dockershim.sock", "The container runtime endpoint of cluster VM instances.")
+	flags.StringVar(&TestContext.ContainerRuntimeEndpoint, "container-runtime-endpoint", "unix:///var/run/containerd/containerd.sock", "The container runtime endpoint of cluster VM instances.")
 	flags.StringVar(&TestContext.ContainerRuntimeProcessName, "container-runtime-process-name", "dockerd", "The name of the container runtime process.")
 	flags.StringVar(&TestContext.ContainerRuntimePidFile, "container-runtime-pid-file", "/var/run/docker.pid", "The pid file of the container runtime.")
 	flags.StringVar(&TestContext.SystemdServices, "systemd-services", "docker", "The comma separated list of systemd services the framework will dump logs for.")
 	flags.BoolVar(&TestContext.DumpSystemdJournal, "dump-systemd-journal", false, "Whether to dump the full systemd journal.")
 	flags.StringVar(&TestContext.ImageServiceEndpoint, "image-service-endpoint", "", "The image service endpoint of cluster VM instances.")
-	flags.StringVar(&TestContext.DockershimCheckpointDir, "dockershim-checkpoint-dir", "/var/lib/dockershim/sandbox", "The directory for dockershim to store sandbox checkpoints.")
-	// Expect the test suite to work with both the new and legacy non-blocking control plane taints by default
+	// TODO: remove the node-role.kubernetes.io/master taint in 1.25 or later.
+	// The change will likely require an action for some users that do not
+	// use k8s originated tools like kubeadm or kOps for creating clusters
+	// and taint their control plane nodes with "master", expecting the test
+	// suite to work with this legacy non-blocking taint.
 	flags.StringVar(&TestContext.NonblockingTaints, "non-blocking-taints", `node-role.kubernetes.io/control-plane,node-role.kubernetes.io/master`, "Nodes with taints in this comma-delimited list will not block the test framework from starting tests. The default taint 'node-role.kubernetes.io/master' is DEPRECATED and will be removed from the list in a future release.")
 
 	flags.BoolVar(&TestContext.ListImages, "list-images", false, "If true, will show list of images used for runnning tests.")
@@ -338,7 +337,8 @@ func RegisterClusterFlags(flags *flag.FlagSet) {
 	flags.StringVar(&TestContext.KubeContext, clientcmd.FlagContext, "", "kubeconfig context to use/override. If unset, will use value from 'current-context'")
 	flags.StringVar(&TestContext.KubeAPIContentType, "kube-api-content-type", "application/vnd.kubernetes.protobuf", "ContentType used to communicate with apiserver")
 
-	flags.StringVar(&TestContext.KubeVolumeDir, "volume-dir", "/var/lib/kubelet", "Path to the directory containing the kubelet volumes.")
+	flags.StringVar(&TestContext.KubeletRootDir, "kubelet-root-dir", "/var/lib/kubelet", "The data directory of kubelet. Some tests (for example, CSI storage tests) deploy DaemonSets which need to know this value and cannot query it. Such tests only work in clusters where the data directory is the same on all nodes.")
+	flags.StringVar(&TestContext.KubeletRootDir, "volume-dir", "/var/lib/kubelet", "An alias for --kubelet-root-dir, kept for backwards compatibility.")
 	flags.StringVar(&TestContext.CertDir, "cert-dir", "", "Path to the directory containing the certs. Default is empty, which doesn't use certs.")
 	flags.StringVar(&TestContext.RepoRoot, "repo-root", "../../", "Root directory of kubernetes repository, for finding test files.")
 	// NOTE: Node E2E tests have this flag defined as well, but true by default.
@@ -450,7 +450,7 @@ func AfterReadingAllFlags(t *TestContextType) {
 	if len(t.Host) == 0 && len(t.KubeConfig) == 0 {
 		// Check if we can use the in-cluster config
 		if clusterConfig, err := restclient.InClusterConfig(); err == nil {
-			if tempFile, err := ioutil.TempFile(os.TempDir(), "kubeconfig-"); err == nil {
+			if tempFile, err := os.CreateTemp(os.TempDir(), "kubeconfig-"); err == nil {
 				kubeConfig := createKubeConfig(clusterConfig)
 				clientcmd.WriteToFile(*kubeConfig, tempFile.Name())
 				t.KubeConfig = tempFile.Name()

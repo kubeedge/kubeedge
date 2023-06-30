@@ -20,6 +20,10 @@ const (
 	SystemNamespace = SystemName
 
 	CloudConfigMapName = "cloudcore"
+
+	// runtime
+	DockerContainerRuntime = "docker"
+	RemoteContainerRuntime = "remote"
 )
 
 // Resources
@@ -75,7 +79,7 @@ const (
 	DefaultTunnelPort                  = 10004
 	DefaultClusterDomain               = "cluster.local"
 
-	CurrentSupportK8sVersion = "v1.23.15"
+	CurrentSupportK8sVersion = "v1.24.14"
 
 	// MetaManager
 	DefaultRemoteQueryTimeout = 60

@@ -35,6 +35,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
+	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
 	"k8s.io/kubernetes/pkg/kubelet/types"
 	"k8s.io/kubernetes/pkg/util/tail"
 )
@@ -122,8 +123,9 @@ var parseFuncs = []parseFunc{
 }
 
 // parseCRILog parses logs in CRI log format. CRI Log format example:
-//   2016-10-06T00:17:09.669794202Z stdout P log content 1
-//   2016-10-06T00:17:09.669794203Z stderr F log content 2
+//
+//	2016-10-06T00:17:09.669794202Z stdout P log content 1
+//	2016-10-06T00:17:09.669794203Z stderr F log content 2
 func parseCRILog(log []byte, msg *logMessage) error {
 	var err error
 	// Parse timestamp
@@ -181,8 +183,9 @@ type jsonLog struct {
 
 // parseDockerJSONLog parses logs in Docker JSON log format. Docker JSON log format
 // example:
-//   {"log":"content 1","stream":"stdout","time":"2016-10-20T18:39:20.57606443Z"}
-//   {"log":"content 2","stream":"stderr","time":"2016-10-20T18:39:20.57606444Z"}
+//
+//	{"log":"content 1","stream":"stdout","time":"2016-10-20T18:39:20.57606443Z"}
+//	{"log":"content 2","stream":"stderr","time":"2016-10-20T18:39:20.57606444Z"}
 func parseDockerJSONLog(log []byte, msg *logMessage) error {
 	var l = &jsonLog{}
 
@@ -417,13 +420,17 @@ func ReadLogs(ctx context.Context, path, containerID string, opts *LogOptions, r
 }
 
 func isContainerRunning(id string, r internalapi.RuntimeService) (bool, error) {
-	s, err := r.ContainerStatus(id)
+	resp, err := r.ContainerStatus(id, false)
 	if err != nil {
 		return false, err
 	}
+	status := resp.GetStatus()
+	if status == nil {
+		return false, remote.ErrContainerStatusNil
+	}
 	// Only keep following container log when it is running.
-	if s.State != runtimeapi.ContainerState_CONTAINER_RUNNING {
-		klog.V(5).InfoS("Container is not running", "containerId", id, "state", s.State)
+	if status.State != runtimeapi.ContainerState_CONTAINER_RUNNING {
+		klog.V(5).InfoS("Container is not running", "containerId", id, "state", status.State)
 		// Do not return error because it's normal that the container stops
 		// during waiting.
 		return false, nil

@@ -178,7 +178,6 @@ func ConvertConfigEdgedFlagToConfigKubeletFlag(in *v1alpha2.TailoredKubeletFlag,
 	out.RemoteRuntimeEndpoint = in.RemoteRuntimeEndpoint
 	out.RemoteImageEndpoint = in.RemoteImageEndpoint
 	out.ExperimentalMounterPath = in.ExperimentalMounterPath
-	out.ExperimentalCheckNodeCapabilitiesBeforeMount = in.ExperimentalCheckNodeCapabilitiesBeforeMount
 	out.ExperimentalNodeAllocatableIgnoreEvictionThreshold = in.ExperimentalNodeAllocatableIgnoreEvictionThreshold
 	out.NodeLabels = in.NodeLabels
 	out.MinimumGCAge = in.MinimumGCAge
@@ -186,20 +185,11 @@ func ConvertConfigEdgedFlagToConfigKubeletFlag(in *v1alpha2.TailoredKubeletFlag,
 	out.MaxContainerCount = in.MaxContainerCount
 	out.MasterServiceNamespace = in.MasterServiceNamespace
 	out.RegisterSchedulable = in.RegisterSchedulable
-	out.NonMasqueradeCIDR = in.NonMasqueradeCIDR
 	out.KeepTerminatedPodVolumes = in.KeepTerminatedPodVolumes
 	out.SeccompDefault = in.SeccompDefault
 
 	// container-runtime-specific options
 	out.ContainerRuntime = in.ContainerRuntime
 	out.RuntimeCgroups = in.RuntimeCgroups
-	out.DockershimRootDirectory = in.DockershimRootDirectory
 	out.PodSandboxImage = in.PodSandboxImage
-	out.DockerEndpoint = in.DockerEndpoint
-	out.ImagePullProgressDeadline = in.ImagePullProgressDeadline
-	out.NetworkPluginName = in.NetworkPluginName
-	out.NetworkPluginMTU = in.NetworkPluginMTU
-	out.CNIConfDir = in.CNIConfDir
-	out.CNIBinDir = in.CNIBinDir
-	out.CNICacheDir = in.CNICacheDir
 }

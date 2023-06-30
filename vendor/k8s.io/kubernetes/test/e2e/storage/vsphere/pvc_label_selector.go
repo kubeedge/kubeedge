@@ -28,27 +28,28 @@ import (
 	e2epv "k8s.io/kubernetes/test/e2e/framework/pv"
 	e2eskipper "k8s.io/kubernetes/test/e2e/framework/skipper"
 	"k8s.io/kubernetes/test/e2e/storage/utils"
+	admissionapi "k8s.io/pod-security-admission/api"
 )
 
 /*
-   This is a function test for Selector-Label Volume Binding Feature
-   Test verifies volume with the matching label is bounded with the PVC.
+This is a function test for Selector-Label Volume Binding Feature
+Test verifies volume with the matching label is bounded with the PVC.
 
-   Test Steps
-   ----------
-   1. Create VMDK.
-   2. Create pv with label volume-type:ssd, volume path set to vmdk created in previous step, and PersistentVolumeReclaimPolicy is set to Delete.
-   3. Create PVC (pvcVvol) with label selector to match with volume-type:vvol
-   4. Create PVC (pvcSsd) with label selector to match with volume-type:ssd
-   5. Wait and verify pvSsd is bound with PV.
-   6. Verify Status of pvcVvol is still pending.
-   7. Delete pvcSsd.
-   8. verify associated pv is also deleted.
-   9. delete pvcVvol
-
+Test Steps
+----------
+1. Create VMDK.
+2. Create pv with label volume-type:ssd, volume path set to vmdk created in previous step, and PersistentVolumeReclaimPolicy is set to Delete.
+3. Create PVC (pvcVvol) with label selector to match with volume-type:vvol
+4. Create PVC (pvcSsd) with label selector to match with volume-type:ssd
+5. Wait and verify pvSsd is bound with PV.
+6. Verify Status of pvcVvol is still pending.
+7. Delete pvcSsd.
+8. verify associated pv is also deleted.
+9. delete pvcVvol
 */
 var _ = utils.SIGDescribe("PersistentVolumes [Feature:vsphere][Feature:LabelSelector]", func() {
 	f := framework.NewDefaultFramework("pvclabelselector")
+	f.NamespacePodSecurityEnforceLevel = admissionapi.LevelPrivileged
 	var (
 		c          clientset.Interface
 		ns         string
@@ -109,7 +110,6 @@ var _ = utils.SIGDescribe("PersistentVolumes [Feature:vsphere][Feature:LabelSele
 
 func testSetupVSpherePVClabelselector(c clientset.Interface, nodeInfo *NodeInfo, ns string, ssdlabels map[string]string, vvollabels map[string]string) (volumePath string, pvSsd *v1.PersistentVolume, pvcSsd *v1.PersistentVolumeClaim, pvcVvol *v1.PersistentVolumeClaim, err error) {
 	ginkgo.By("creating vmdk")
-	volumePath = ""
 	volumePath, err = nodeInfo.VSphere.CreateVolume(&VolumeOptions{}, nodeInfo.DataCenterRef)
 	if err != nil {
 		return

@@ -66,24 +66,24 @@ func (e SMTAlignmentError) Type() string {
 //
 // The static policy maintains the following sets of logical CPUs:
 //
-// - SHARED: Burstable, BestEffort, and non-integral Guaranteed containers
-//   run here. Initially this contains all CPU IDs on the system. As
-//   exclusive allocations are created and destroyed, this CPU set shrinks
-//   and grows, accordingly. This is stored in the state as the default
-//   CPU set.
+//   - SHARED: Burstable, BestEffort, and non-integral Guaranteed containers
+//     run here. Initially this contains all CPU IDs on the system. As
+//     exclusive allocations are created and destroyed, this CPU set shrinks
+//     and grows, accordingly. This is stored in the state as the default
+//     CPU set.
 //
-// - RESERVED: A subset of the shared pool which is not exclusively
-//   allocatable. The membership of this pool is static for the lifetime of
-//   the Kubelet. The size of the reserved pool is
-//   ceil(systemreserved.cpu + kubereserved.cpu).
-//   Reserved CPUs are taken topologically starting with lowest-indexed
-//   physical core, as reported by cAdvisor.
+//   - RESERVED: A subset of the shared pool which is not exclusively
+//     allocatable. The membership of this pool is static for the lifetime of
+//     the Kubelet. The size of the reserved pool is
+//     ceil(systemreserved.cpu + kubereserved.cpu).
+//     Reserved CPUs are taken topologically starting with lowest-indexed
+//     physical core, as reported by cAdvisor.
 //
-// - ASSIGNABLE: Equal to SHARED - RESERVED. Exclusive CPUs are allocated
-//   from this pool.
+//   - ASSIGNABLE: Equal to SHARED - RESERVED. Exclusive CPUs are allocated
+//     from this pool.
 //
-// - EXCLUSIVE ALLOCATIONS: CPU sets assigned exclusively to one container.
-//   These are stored as explicit assignments in the state.
+//   - EXCLUSIVE ALLOCATIONS: CPU sets assigned exclusively to one container.
+//     These are stored as explicit assignments in the state.
 //
 // When an exclusive allocation is made, the static policy also updates the
 // default cpuset in the state abstraction. The CPU manager's periodic
@@ -298,11 +298,26 @@ func (p *staticPolicy) Allocate(s state.State, pod *v1.Pod, container *v1.Contai
 	return nil
 }
 
+// getAssignedCPUsOfSiblings returns assigned cpus of given container's siblings(all containers other than the given container) in the given pod `podUID`.
+func getAssignedCPUsOfSiblings(s state.State, podUID string, containerName string) cpuset.CPUSet {
+	assignments := s.GetCPUAssignments()
+	cset := cpuset.NewCPUSet()
+	for name, cpus := range assignments[podUID] {
+		if containerName == name {
+			continue
+		}
+		cset = cset.Union(cpus)
+	}
+	return cset
+}
+
 func (p *staticPolicy) RemoveContainer(s state.State, podUID string, containerName string) error {
 	klog.InfoS("Static policy: RemoveContainer", "podUID", podUID, "containerName", containerName)
+	cpusInUse := getAssignedCPUsOfSiblings(s, podUID, containerName)
 	if toRelease, ok := s.GetCPUSet(podUID, containerName); ok {
 		s.Delete(podUID, containerName)
 		// Mutate the shared pool, adding released cpus.
+		toRelease = toRelease.Difference(cpusInUse)
 		s.SetDefaultCPUSet(s.GetDefaultCPUSet().Union(toRelease))
 	}
 	return nil

@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"strings"
 	"time"
 
 	dockertypes "github.com/docker/docker/api/types"
@@ -32,7 +33,6 @@ import (
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
-	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/image"
@@ -51,7 +51,7 @@ type ContainerRuntime interface {
 func NewContainerRuntime(runtimeType string, endpoint string) (ContainerRuntime, error) {
 	var runtime ContainerRuntime
 	switch runtimeType {
-	case kubetypes.DockerContainerRuntime:
+	case constants.DockerContainerRuntime:
 		cli, err := dockerclient.NewClientWithOpts(dockerclient.FromEnv)
 		if err != nil {
 			return runtime, fmt.Errorf("init docker client failed: %v", err)
@@ -64,7 +64,7 @@ func NewContainerRuntime(runtimeType string, endpoint string) (ContainerRuntime,
 			Client: cli,
 			ctx:    ctx,
 		}
-	case kubetypes.RemoteContainerRuntime:
+	case constants.RemoteContainerRuntime:
 		imageService, err := remote.NewRemoteImageService(endpoint, time.Second*10)
 		if err != nil {
 			return runtime, err
@@ -232,15 +232,26 @@ type CRIRuntime struct {
 	RuntimeService      internalapi.RuntimeService
 }
 
+func convertCRIImage(image string) string {
+	imageSeg := strings.Split(image, "/")
+	if len(imageSeg) == 1 {
+		return "docker.io/library/" + image
+	} else if len(imageSeg) == 2 {
+		return "docker.io/" + image
+	}
+	return image
+}
+
 func (runtime *CRIRuntime) PullImages(images []string) error {
 	for _, image := range images {
+		image = convertCRIImage(image)
 		fmt.Printf("Pulling %s ...\n", image)
 		imageSpec := &runtimeapi.ImageSpec{Image: image}
-		status, err := runtime.ImageManagerService.ImageStatus(imageSpec)
+		status, err := runtime.ImageManagerService.ImageStatus(imageSpec, true)
 		if err != nil {
 			return err
 		}
-		if status == nil || status.Id == "" {
+		if status == nil || status.Image == nil {
 			if _, err := runtime.ImageManagerService.PullImage(imageSpec, nil, nil); err != nil {
 				return err
 			}
@@ -258,6 +269,15 @@ func (runtime *CRIRuntime) CopyResources(edgeImage string, files map[string]stri
 		Metadata: &runtimeapi.PodSandboxMetadata{
 			Name:      KubeEdgeBinaryName,
 			Namespace: constants.SystemNamespace,
+		},
+		Linux: &runtimeapi.LinuxPodSandboxConfig{
+			SecurityContext: &runtimeapi.LinuxSandboxSecurityContext{
+				NamespaceOptions: &runtimeapi.NamespaceOption{
+					Network: runtimeapi.NamespaceMode_POD,
+					Pid:     runtimeapi.NamespaceMode_CONTAINER,
+					Ipc:     runtimeapi.NamespaceMode_POD,
+				},
+			},
 		},
 	}
 	sandbox, err := runtime.RuntimeService.RunPodSandbox(psc, "")
@@ -324,6 +344,7 @@ func (runtime *CRIRuntime) CopyResources(edgeImage string, files map[string]stri
 }
 
 func (runtime *CRIRuntime) RunMQTT(mqttImage string) error {
+	mqttImage = convertCRIImage(mqttImage)
 	psc := &runtimeapi.PodSandboxConfig{
 		Metadata: &runtimeapi.PodSandboxMetadata{Name: image.EdgeMQTT},
 		PortMappings: []*runtimeapi.PortMapping{
@@ -337,6 +358,15 @@ func (runtime *CRIRuntime) RunMQTT(mqttImage string) error {
 			},
 		},
 		Labels: mqttLabel,
+		Linux: &runtimeapi.LinuxPodSandboxConfig{
+			SecurityContext: &runtimeapi.LinuxSandboxSecurityContext{
+				NamespaceOptions: &runtimeapi.NamespaceOption{
+					Network: runtimeapi.NamespaceMode_POD,
+					Pid:     runtimeapi.NamespaceMode_CONTAINER,
+					Ipc:     runtimeapi.NamespaceMode_POD,
+				},
+			},
+		},
 	}
 	sandbox, err := runtime.RuntimeService.RunPodSandbox(psc, "")
 	if err != nil {

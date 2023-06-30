@@ -95,7 +95,7 @@ func (f *flexVolumeMounter) SetUpAt(dir string, mounterArgs volume.MounterArgs) 
 	if !f.readOnly {
 		if f.plugin.capabilities.FSGroup {
 			// fullPluginName helps to distinguish different driver from flex volume plugin
-			volume.SetVolumeOwnership(f, mounterArgs.FsGroup, mounterArgs.FSGroupChangePolicy, util.FSGroupCompleteHook(f.plugin, f.spec))
+			volume.SetVolumeOwnership(f, dir, mounterArgs.FsGroup, mounterArgs.FSGroupChangePolicy, util.FSGroupCompleteHook(f.plugin, f.spec))
 		}
 	}
 
@@ -106,8 +106,4 @@ func (f *flexVolumeMounter) SetUpAt(dir string, mounterArgs volume.MounterArgs) 
 // using plugin callout after we finalize the callout syntax.
 func (f *flexVolumeMounter) GetAttributes() volume.Attributes {
 	return (*mounterDefaults)(f).GetAttributes()
-}
-
-func (f *flexVolumeMounter) CanMount() error {
-	return nil
 }

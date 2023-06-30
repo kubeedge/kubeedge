@@ -38,7 +38,6 @@ import (
 )
 
 var (
-	zeroDuration = metav1.Duration{}
 	// TODO: Move these constants to k8s.io/kubelet/config/v1beta1 instead?
 	// Refer to [Node Allocatable](https://git.k8s.io/community/contributors/design-proposals/node/node-allocatable.md) doc for more information.
 	DefaultNodeAllocatableEnforcement = []string{"pods"}
@@ -79,7 +78,7 @@ func SetDefaultsKubeletConfiguration(obj *TailoredKubeletConfiguration) {
 	obj.ResolverConfig = utilpointer.String(kubetypes.ResolvConfDefault)
 	obj.CPUCFSQuota = utilpointer.BoolPtr(true)
 	obj.CPUCFSQuotaPeriod = &metav1.Duration{Duration: 100 * time.Millisecond}
-	obj.NodeStatusMaxImages = utilpointer.Int32Ptr(50)
+	obj.NodeStatusMaxImages = utilpointer.Int32Ptr(0)
 	obj.MaxOpenFiles = 1000000
 	obj.ContentType = "application/json"
 	obj.SerializeImagePulls = utilpointer.BoolPtr(true)

@@ -73,7 +73,7 @@ func WithEncoderCRC(b bool) EOption {
 }
 
 // WithEncoderConcurrency will set the concurrency,
-// meaning the maximum number of decoders to run concurrently.
+// meaning the maximum number of encoders to run concurrently.
 // The value supplied must be at least 1.
 // By default this will be set to GOMAXPROCS.
 func WithEncoderConcurrency(n int) EOption {
@@ -189,7 +189,7 @@ func EncoderLevelFromZstd(level int) EncoderLevel {
 	case level >= 6 && level < 10:
 		return SpeedBetterCompression
 	case level >= 10:
-		return SpeedBetterCompression
+		return SpeedBestCompression
 	}
 	return SpeedDefault
 }

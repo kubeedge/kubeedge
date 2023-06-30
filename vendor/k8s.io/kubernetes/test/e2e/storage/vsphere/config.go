@@ -85,6 +85,11 @@ type ConfigFile struct {
 		DefaultDatastore string `gcfg:"default-datastore"`
 		ResourcePoolPath string `gcfg:"resourcepool-path"`
 	}
+	// Tag categories and tags which correspond to "built-in node labels: zones and region"
+	Labels struct {
+		Zone   string `gcfg:"zone"`
+		Region string `gcfg:"region"`
+	}
 }
 
 // GetVSphereInstances parses vsphere.conf and returns VSphere instances
@@ -179,6 +184,6 @@ func populateInstanceMap(cfg *ConfigFile) (map[string]*VSphere, error) {
 		vsphereInstances[vcServer] = &vsphereIns
 	}
 
-	framework.Logf("ConfigFile %v \n vSphere instances %v", cfg, vsphereInstances)
+	framework.Logf("vSphere instances: %v", vsphereInstances)
 	return vsphereInstances, nil
 }
