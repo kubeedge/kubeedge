@@ -53,8 +53,8 @@ const (
 	// RuntimeType is default runtime type
 	RuntimeType = "runtimetype"
 
-	// DefaultKubeEdgeVersion is the default KubeEdge version
-	DefaultKubeEdgeVersion = "1.13.0"
+	// DefaultKubeEdgeVersion is the default KubeEdge version, it must have no prefix 'v'
+	DefaultKubeEdgeVersion = "1.14.0"
 
 	// Token sets the token used when edge applying for the certificate
 	Token = "token"

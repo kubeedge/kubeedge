@@ -310,6 +310,29 @@ func validateStableVersion(remoteVersion, clientVersion string) (string, error) 
 	return remoteVersion, nil
 }
 
+// GetHelmVersion returns the verified version of Helm. If the verification fails,
+// obtain the remote version first and then use the default value
+func GetHelmVersion(version string, retryTimes int) string {
+	if kubeReleaseRegex.MatchString(version) {
+		return strings.TrimPrefix(version, "v")
+	}
+
+	for i := 0; i < retryTimes; i++ {
+		v, err := GetLatestVersion()
+		if err != nil {
+			fmt.Println("Failed to get the latest KubeEdge release version, error: ", err)
+			continue
+		}
+		if v != "" {
+			// do not obtain remote version again
+			return GetHelmVersion(v, 0)
+		}
+	}
+	// returns default version
+	fmt.Println("Failed to get the latest KubeEdge release version, will use default version: ", types.DefaultKubeEdgeVersion)
+	return types.DefaultKubeEdgeVersion
+}
+
 // BuildConfig builds config from flags
 func BuildConfig(kubeConfig, master string) (conf *rest.Config, err error) {
 	config, err := clientcmd.BuildConfigFromFlags(master, kubeConfig)
