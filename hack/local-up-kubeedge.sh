@@ -68,6 +68,7 @@ function cleanup {
 
   echo "Running kind: [kind delete cluster ${CLUSTER_CONTEXT}]"
   kind delete cluster ${CLUSTER_CONTEXT}
+  docker system prune -f
 }
 
 if [[ "${ENABLE_DAEMON}" = false ]]; then

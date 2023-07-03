@@ -18,7 +18,6 @@ package cloud
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/blang/semver"
 	"github.com/spf13/cobra"
@@ -101,35 +100,15 @@ func addManifestsGenerateJoinOtherFlags(cmd *cobra.Command, initOpts *types.Init
 		"Skip printing the contents of CRDs to stdout")
 }
 
-//AddManifestsGenerate2ToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
+// AddManifestsGenerate2ToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
 func AddManifestsGenerate2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string]types.FlagData, initOpts *types.InitOptions) error {
-	var latestVersion string
-	var kubeedgeVersion string
-	for i := 0; i < util.RetryTimes; i++ {
-		version, err := util.GetLatestVersion()
-		if err != nil {
-			fmt.Println("Failed to get the latest KubeEdge release version, error: ", err)
-			continue
-		}
-		if len(version) > 0 {
-			kubeedgeVersion = strings.TrimPrefix(version, "v")
-			latestVersion = version
-			break
-		}
-	}
-	if len(latestVersion) == 0 {
-		kubeedgeVersion = types.DefaultKubeEdgeVersion
-		fmt.Println("Failed to get the latest KubeEdge release version, will use default version: ", kubeedgeVersion)
-	}
-
 	common := util.Common{
-		ToolVersion: semver.MustParse(kubeedgeVersion),
+		ToolVersion: semver.MustParse(util.GetHelmVersion(initOpts.KubeEdgeVersion, util.RetryTimes)),
 		KubeConfig:  initOpts.KubeConfig,
 	}
 	toolList["helm"] = &helm.KubeCloudHelmInstTool{
 		Common:           common,
 		AdvertiseAddress: initOpts.AdvertiseAddress,
-		KubeEdgeVersion:  initOpts.KubeEdgeVersion,
 		Manifests:        initOpts.Manifests,
 		Namespace:        constants.SystemNamespace,
 		DryRun:           initOpts.DryRun,
@@ -141,7 +120,7 @@ func AddManifestsGenerate2ToolsList(toolList map[string]types.ToolsInstaller, fl
 	return nil
 }
 
-//ExecuteManifestsGenerate executes the installation for helm
+// ExecuteManifestsGenerate executes the installation for helm
 func ExecuteManifestsGenerate(toolList map[string]types.ToolsInstaller) error {
 	return toolList["helm"].InstallTools()
 }
