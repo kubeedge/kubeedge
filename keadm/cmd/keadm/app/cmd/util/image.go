@@ -152,7 +152,7 @@ func (runtime *DockerRuntime) RemoveMQTT() error {
 		All: true,
 	}
 	options.Filters = filters.NewArgs()
-	options.Filters.Add("ancestor", constants.DefaultMosquittoImage)
+	options.Filters.Add("name", image.EdgeMQTT)
 
 	mqttContainers, err := runtime.Client.ContainerList(runtime.ctx, options)
 	if err != nil {
