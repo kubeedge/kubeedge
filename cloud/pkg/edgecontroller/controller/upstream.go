@@ -1271,7 +1271,7 @@ func (uc *UpstreamController) processCSR() {
 				}
 
 				resMsg := model.NewMessage(msg.GetID()).
-					FillBody(&ObjectResp{Object: csrResp, Err: err}).
+					FillBody(&edgeapi.ObjectResp{Object: csrResp, Err: err}).
 					BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, msg.GetResource(), model.ResponseOperation)
 				if err = uc.messageLayer.Response(*resMsg); err != nil {
 					klog.Warningf("Response message: %s failed, response failed with error: %v", msg.GetID(), err)

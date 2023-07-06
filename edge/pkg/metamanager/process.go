@@ -92,7 +92,7 @@ func parseResource(message *model.Message) (string, string, string) {
 		klog.Errorf("failed to get resource %s name and namespace", resource)
 		return "", "", ""
 	}
-	return client.KeyFunc(trTokens[2], trTokens[0], &tokenReq), resType, ""
+	return util.TokenRequestKeyFunc(trTokens[2], trTokens[0], &tokenReq), resType, ""
 }
 
 // is resource type require remote query

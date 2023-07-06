@@ -87,21 +87,6 @@ func requiresRefresh(tr *authenticationv1.TokenRequest) bool {
 	return false
 }
 
-// KeyFunc keys should be nonconfidential and safe to log
-func KeyFunc(name, namespace string, tr *authenticationv1.TokenRequest) string {
-	var exp int64
-	if tr.Spec.ExpirationSeconds != nil {
-		exp = *tr.Spec.ExpirationSeconds
-	}
-
-	var ref authenticationv1.BoundObjectReference
-	if tr.Spec.BoundObjectRef != nil {
-		ref = *tr.Spec.BoundObjectRef
-	}
-
-	return fmt.Sprintf("%q/%q/%#v/%#v/%#v", name, namespace, tr.Spec.Audiences, exp, ref)
-}
-
 func getTokenLocally(name, namespace string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
 	resKey := util.TokenRequestKeyFunc(name, namespace, tr)
 	metas, err := dao.QueryMeta("key", resKey)

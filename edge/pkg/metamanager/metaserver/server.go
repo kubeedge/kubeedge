@@ -33,8 +33,7 @@ import (
 	"k8s.io/kubernetes/plugin/pkg/auth/authorizer/rbac"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/kubeclientbridge"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/auth"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/certificate"
@@ -205,14 +204,6 @@ func BuildHandlerChain(handler http.Handler, ls *MetaServer) http.Handler {
 	handler = genericapifilters.WithRequestInfo(handler, server.NewRequestInfoResolver(cfg))
 	handler = genericfilters.WithPanicRecovery(handler, &apirequest.RequestInfoFactory{})
 	return handler
-}
-
-func WithAuthorizationHeader(handler http.Handler) http.Handler {
-	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		token := request.Header.Get(commontypes.AuthorizationKey)
-		request = request.WithContext(context.WithValue(request.Context(), commontypes.AuthorizationKey, token))
-		handler.ServeHTTP(writer, request)
-	})
 }
 
 // prepareServer prepare certificate for HTTPS server

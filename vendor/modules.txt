@@ -1357,14 +1357,9 @@ helm.sh/helm/v3/pkg/storage
 helm.sh/helm/v3/pkg/storage/driver
 helm.sh/helm/v3/pkg/strvals
 helm.sh/helm/v3/pkg/time
-<<<<<<< HEAD
 helm.sh/helm/v3/pkg/uploader
-# k8s.io/api v0.24.14 => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/api v1.24.14-kubeedge1-test1
+# k8s.io/api v0.24.14 => github.com/kubeedge/kubernetes/staging/src/k8s.io/api v1.24.14-kubeedge1
 ## explicit; go 1.19
-=======
-# k8s.io/api v0.23.15 => github.com/wackxu/kubernetes/staging/src/k8s.io/api v1.23.15-kubeedge1
-## explicit; go 1.16
->>>>>>> 3109fe17a (vendor update)
 k8s.io/api/admission/v1
 k8s.io/api/admission/v1beta1
 k8s.io/api/admissionregistration/v1
@@ -1413,13 +1408,8 @@ k8s.io/api/scheduling/v1beta1
 k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
-<<<<<<< HEAD
-# k8s.io/apiextensions-apiserver v0.24.14 => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/apiextensions-apiserver v1.24.14-kubeedge1-test1
+# k8s.io/apiextensions-apiserver v0.24.14 => github.com/kubeedge/kubernetes/staging/src/k8s.io/apiextensions-apiserver v1.24.14-kubeedge1
 ## explicit; go 1.19
-=======
-# k8s.io/apiextensions-apiserver v0.23.15 => github.com/wackxu/kubernetes/staging/src/k8s.io/apiextensions-apiserver v1.23.15-kubeedge1
-## explicit; go 1.16
->>>>>>> 3109fe17a (vendor update)
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1
@@ -1428,13 +1418,8 @@ k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme
 k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1
 k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1
 k8s.io/apiextensions-apiserver/pkg/crdserverscheme
-<<<<<<< HEAD
-# k8s.io/apimachinery v0.24.14 => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/apimachinery v1.24.14-kubeedge1-test1
+# k8s.io/apimachinery v0.24.14 => github.com/kubeedge/kubernetes/staging/src/k8s.io/apimachinery v1.24.14-kubeedge1
 ## explicit; go 1.19
-=======
-# k8s.io/apimachinery v0.23.15 => github.com/wackxu/kubernetes/staging/src/k8s.io/apimachinery v1.23.15-kubeedge1
-## explicit; go 1.16
->>>>>>> 3109fe17a (vendor update)
 k8s.io/apimachinery/pkg/api/equality
 k8s.io/apimachinery/pkg/api/errors
 k8s.io/apimachinery/pkg/api/meta
@@ -1496,13 +1481,8 @@ k8s.io/apimachinery/pkg/watch
 k8s.io/apimachinery/third_party/forked/golang/json
 k8s.io/apimachinery/third_party/forked/golang/netutil
 k8s.io/apimachinery/third_party/forked/golang/reflect
-<<<<<<< HEAD
-# k8s.io/apiserver v0.24.14 => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/apiserver v1.24.14-kubeedge1-test1
+# k8s.io/apiserver v0.24.14 => github.com/kubeedge/kubernetes/staging/src/k8s.io/apiserver v1.24.14-kubeedge1
 ## explicit; go 1.19
-=======
-# k8s.io/apiserver v0.23.15 => github.com/wackxu/kubernetes/staging/src/k8s.io/apiserver v1.23.15-kubeedge1
-## explicit; go 1.16
->>>>>>> 3109fe17a (vendor update)
 k8s.io/apiserver/pkg/admission
 k8s.io/apiserver/pkg/admission/configuration
 k8s.io/apiserver/pkg/admission/initializer
@@ -1629,23 +1609,13 @@ k8s.io/apiserver/plugin/pkg/audit/truncate
 k8s.io/apiserver/plugin/pkg/audit/webhook
 k8s.io/apiserver/plugin/pkg/authenticator/token/webhook
 k8s.io/apiserver/plugin/pkg/authorizer/webhook
-<<<<<<< HEAD
-# k8s.io/cli-runtime v0.24.14 => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/cli-runtime v1.24.14-kubeedge1-test1
+# k8s.io/cli-runtime v0.24.14 => github.com/kubeedge/kubernetes/staging/src/k8s.io/cli-runtime v1.24.14-kubeedge1
 ## explicit; go 1.19
 k8s.io/cli-runtime/pkg/genericclioptions
 k8s.io/cli-runtime/pkg/printers
 k8s.io/cli-runtime/pkg/resource
-# k8s.io/client-go v0.24.14 => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/client-go v1.24.14-kubeedge1-test1
+# k8s.io/client-go v0.24.14 => github.com/kubeedge/kubernetes/staging/src/k8s.io/client-go v1.24.14-kubeedge1
 ## explicit; go 1.19
-=======
-# k8s.io/cli-runtime v0.23.15 => github.com/wackxu/kubernetes/staging/src/k8s.io/cli-runtime v1.23.15-kubeedge1
-## explicit; go 1.16
-k8s.io/cli-runtime/pkg/genericclioptions
-k8s.io/cli-runtime/pkg/printers
-k8s.io/cli-runtime/pkg/resource
-# k8s.io/client-go v0.23.15 => github.com/wackxu/kubernetes/staging/src/k8s.io/client-go v1.23.15-kubeedge1
-## explicit; go 1.16
->>>>>>> 3109fe17a (vendor update)
 k8s.io/client-go/applyconfigurations/admissionregistration/v1
 k8s.io/client-go/applyconfigurations/admissionregistration/v1beta1
 k8s.io/client-go/applyconfigurations/apiserverinternal/v1alpha1
@@ -1945,36 +1915,21 @@ k8s.io/client-go/util/jsonpath
 k8s.io/client-go/util/keyutil
 k8s.io/client-go/util/retry
 k8s.io/client-go/util/workqueue
-<<<<<<< HEAD
-# k8s.io/cloud-provider v0.24.14 => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/cloud-provider v1.24.14-kubeedge1-test1
+# k8s.io/cloud-provider v0.24.14 => github.com/kubeedge/kubernetes/staging/src/k8s.io/cloud-provider v1.24.14-kubeedge1
 ## explicit; go 1.19
-=======
-# k8s.io/cloud-provider v0.23.15 => github.com/wackxu/kubernetes/staging/src/k8s.io/cloud-provider v1.23.15-kubeedge1
-## explicit; go 1.16
->>>>>>> 3109fe17a (vendor update)
 k8s.io/cloud-provider
 k8s.io/cloud-provider/credentialconfig
 k8s.io/cloud-provider/service/helpers
 k8s.io/cloud-provider/volume
 k8s.io/cloud-provider/volume/errors
 k8s.io/cloud-provider/volume/helpers
-<<<<<<< HEAD
-# k8s.io/cluster-bootstrap v0.24.14 => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/cluster-bootstrap v1.24.14-kubeedge1-test1
+# k8s.io/cluster-bootstrap v0.24.14 => github.com/kubeedge/kubernetes/staging/src/k8s.io/cluster-bootstrap v1.24.14-kubeedge1
 ## explicit; go 1.19
 k8s.io/cluster-bootstrap/token/api
 k8s.io/cluster-bootstrap/token/util
 k8s.io/cluster-bootstrap/util/secrets
-# k8s.io/code-generator v0.24.14 => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/code-generator v1.24.14-kubeedge1-test1
+# k8s.io/code-generator v0.24.14 => github.com/kubeedge/kubernetes/staging/src/k8s.io/code-generator v1.24.14-kubeedge1
 ## explicit; go 1.19
-=======
-# k8s.io/cluster-bootstrap v0.23.15 => github.com/wackxu/kubernetes/staging/src/k8s.io/cluster-bootstrap v1.23.15-kubeedge1
-## explicit; go 1.16
-k8s.io/cluster-bootstrap/token/api
-k8s.io/cluster-bootstrap/token/util
-k8s.io/cluster-bootstrap/util/secrets
-# k8s.io/code-generator v0.23.15 => github.com/wackxu/kubernetes/staging/src/k8s.io/code-generator v1.23.15-kubeedge1
-## explicit; go 1.16
->>>>>>> 3109fe17a (vendor update)
 k8s.io/code-generator/cmd/client-gen
 k8s.io/code-generator/cmd/client-gen/args
 k8s.io/code-generator/cmd/client-gen/generators
@@ -1995,13 +1950,8 @@ k8s.io/code-generator/cmd/lister-gen/args
 k8s.io/code-generator/cmd/lister-gen/generators
 k8s.io/code-generator/pkg/namer
 k8s.io/code-generator/pkg/util
-<<<<<<< HEAD
-# k8s.io/component-base v0.24.14 => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/component-base v1.24.14-kubeedge1-test1
+# k8s.io/component-base v0.24.14 => github.com/kubeedge/kubernetes/staging/src/k8s.io/component-base v1.24.14-kubeedge1
 ## explicit; go 1.19
-=======
-# k8s.io/component-base v0.23.15 => github.com/wackxu/kubernetes/staging/src/k8s.io/component-base v1.23.15-kubeedge1
-## explicit; go 1.16
->>>>>>> 3109fe17a (vendor update)
 k8s.io/component-base/cli/flag
 k8s.io/component-base/cli/globalflag
 k8s.io/component-base/codec
@@ -2022,13 +1972,8 @@ k8s.io/component-base/term
 k8s.io/component-base/traces
 k8s.io/component-base/version
 k8s.io/component-base/version/verflag
-<<<<<<< HEAD
-# k8s.io/component-helpers v0.0.0 => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/component-helpers v1.24.14-kubeedge1-test1
+# k8s.io/component-helpers v0.0.0 => github.com/kubeedge/kubernetes/staging/src/k8s.io/component-helpers v1.24.14-kubeedge1
 ## explicit; go 1.19
-=======
-# k8s.io/component-helpers v0.0.0 => github.com/wackxu/kubernetes/staging/src/k8s.io/component-helpers v1.23.15-kubeedge1
-## explicit; go 1.16
->>>>>>> 3109fe17a (vendor update)
 k8s.io/component-helpers/apimachinery/lease
 k8s.io/component-helpers/auth/rbac/validation
 k8s.io/component-helpers/node/topology
@@ -2038,25 +1983,15 @@ k8s.io/component-helpers/scheduling/corev1
 k8s.io/component-helpers/scheduling/corev1/nodeaffinity
 k8s.io/component-helpers/storage/ephemeral
 k8s.io/component-helpers/storage/volume
-<<<<<<< HEAD
-# k8s.io/cri-api v0.24.14 => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/cri-api v1.24.14-kubeedge1-test1
+# k8s.io/cri-api v0.24.14 => github.com/kubeedge/kubernetes/staging/src/k8s.io/cri-api v1.24.14-kubeedge1
 ## explicit; go 1.19
-=======
-# k8s.io/cri-api v0.23.15 => github.com/wackxu/kubernetes/staging/src/k8s.io/cri-api v1.23.15-kubeedge1
-## explicit; go 1.16
->>>>>>> 3109fe17a (vendor update)
 k8s.io/cri-api/pkg/apis
 k8s.io/cri-api/pkg/apis/runtime/v1
 k8s.io/cri-api/pkg/apis/runtime/v1alpha2
 k8s.io/cri-api/pkg/apis/testing
 k8s.io/cri-api/pkg/errors
-<<<<<<< HEAD
-# k8s.io/csi-translation-lib v0.24.14 => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/csi-translation-lib v1.24.14-kubeedge1-test1
+# k8s.io/csi-translation-lib v0.24.14 => github.com/kubeedge/kubernetes/staging/src/k8s.io/csi-translation-lib v1.24.14-kubeedge1
 ## explicit; go 1.19
-=======
-# k8s.io/csi-translation-lib v0.23.15 => github.com/wackxu/kubernetes/staging/src/k8s.io/csi-translation-lib v1.23.15-kubeedge1
-## explicit; go 1.16
->>>>>>> 3109fe17a (vendor update)
 k8s.io/csi-translation-lib
 k8s.io/csi-translation-lib/plugins
 # k8s.io/gengo v0.0.0-20211129171323-c02415ce4185
@@ -2099,23 +2034,13 @@ k8s.io/kube-openapi/pkg/util/proto
 k8s.io/kube-openapi/pkg/util/proto/validation
 k8s.io/kube-openapi/pkg/util/sets
 k8s.io/kube-openapi/pkg/validation/spec
-<<<<<<< HEAD
-# k8s.io/kube-scheduler v0.24.14 => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/kube-scheduler v1.24.14-kubeedge1-test1
+# k8s.io/kube-scheduler v0.24.14 => github.com/kubeedge/kubernetes/staging/src/k8s.io/kube-scheduler v1.24.14-kubeedge1
 ## explicit; go 1.19
 k8s.io/kube-scheduler/config/v1beta2
 k8s.io/kube-scheduler/config/v1beta3
 k8s.io/kube-scheduler/extender/v1
-# k8s.io/kubectl v0.24.2 => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/kubectl v1.24.14-kubeedge1-test1
+# k8s.io/kubectl v0.24.2 => github.com/kubeedge/kubernetes/staging/src/k8s.io/kubectl v1.24.14-kubeedge1
 ## explicit; go 1.19
-=======
-# k8s.io/kube-scheduler v0.23.15 => github.com/wackxu/kubernetes/staging/src/k8s.io/kube-scheduler v1.23.15-kubeedge1
-## explicit; go 1.16
-k8s.io/kube-scheduler/config/v1beta2
-k8s.io/kube-scheduler/config/v1beta3
-k8s.io/kube-scheduler/extender/v1
-# k8s.io/kubectl v0.22.4 => github.com/wackxu/kubernetes/staging/src/k8s.io/kubectl v1.23.15-kubeedge1
-## explicit; go 1.16
->>>>>>> 3109fe17a (vendor update)
 k8s.io/kubectl/pkg/cmd/util
 k8s.io/kubectl/pkg/scale
 k8s.io/kubectl/pkg/scheme
@@ -2127,26 +2052,16 @@ k8s.io/kubectl/pkg/util/podutils
 k8s.io/kubectl/pkg/util/templates
 k8s.io/kubectl/pkg/util/term
 k8s.io/kubectl/pkg/validation
-<<<<<<< HEAD
-# k8s.io/kubelet v0.24.14 => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/kubelet v1.24.14-kubeedge1-test1
+# k8s.io/kubelet v0.24.14 => github.com/kubeedge/kubernetes/staging/src/k8s.io/kubelet v1.24.14-kubeedge1
 ## explicit; go 1.19
-=======
-# k8s.io/kubelet v0.23.15 => github.com/wackxu/kubernetes/staging/src/k8s.io/kubelet v1.23.15-kubeedge1
-## explicit; go 1.16
->>>>>>> 3109fe17a (vendor update)
 k8s.io/kubelet/config/v1beta1
 k8s.io/kubelet/pkg/apis
 k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1
 k8s.io/kubelet/pkg/apis/pluginregistration/v1
 k8s.io/kubelet/pkg/apis/podresources/v1
 k8s.io/kubelet/pkg/apis/stats/v1alpha1
-<<<<<<< HEAD
-# k8s.io/kubernetes v1.24.14 => github.com/Shelley-BaoYue/kubernetes v1.24.14-kubeedge1-test1
+# k8s.io/kubernetes v1.24.14 => github.com/kubeedge/kubernetes v1.24.14-kubeedge1
 ## explicit; go 1.19
-=======
-# k8s.io/kubernetes v1.23.15 => github.com/wackxu/kubernetes v1.23.15-kubeedge1
-## explicit; go 1.16
->>>>>>> 3109fe17a (vendor update)
 k8s.io/kubernetes/cmd/kubeadm/app/apis/bootstraptoken/v1
 k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm
 k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta2
@@ -2524,23 +2439,13 @@ k8s.io/kubernetes/test/e2e/testing-manifests
 k8s.io/kubernetes/test/utils
 k8s.io/kubernetes/test/utils/image
 k8s.io/kubernetes/third_party/forked/golang/expansion
-<<<<<<< HEAD
-# k8s.io/legacy-cloud-providers v0.0.0 => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/legacy-cloud-providers v1.24.14-kubeedge1-test1
+# k8s.io/legacy-cloud-providers v0.0.0 => github.com/kubeedge/kubernetes/staging/src/k8s.io/legacy-cloud-providers v1.24.14-kubeedge1
 ## explicit; go 1.19
 k8s.io/legacy-cloud-providers/azure/auth
 k8s.io/legacy-cloud-providers/gce
 k8s.io/legacy-cloud-providers/gce/gcpcredential
-# k8s.io/mount-utils v0.24.14 => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/mount-utils v1.24.14-kubeedge1-test1
+# k8s.io/mount-utils v0.24.14 => github.com/kubeedge/kubernetes/staging/src/k8s.io/mount-utils v1.24.14-kubeedge1
 ## explicit; go 1.19
-=======
-# k8s.io/legacy-cloud-providers v0.0.0 => github.com/wackxu/kubernetes/staging/src/k8s.io/legacy-cloud-providers v1.23.15-kubeedge1
-## explicit; go 1.16
-k8s.io/legacy-cloud-providers/azure/auth
-k8s.io/legacy-cloud-providers/gce
-k8s.io/legacy-cloud-providers/gce/gcpcredential
-# k8s.io/mount-utils v0.23.15 => github.com/wackxu/kubernetes/staging/src/k8s.io/mount-utils v1.23.15-kubeedge1
-## explicit; go 1.16
->>>>>>> 3109fe17a (vendor update)
 k8s.io/mount-utils
 # k8s.io/pod-security-admission v0.0.0 => k8s.io/pod-security-admission v0.24.14
 ## explicit; go 1.19
@@ -2761,74 +2666,38 @@ sigs.k8s.io/yaml
 # go.etcd.io/etcd/server/v3 => go.etcd.io/etcd/server/v3 v3.5.0
 # golang.org/x/sys => golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f
 # gopkg.in/square/go-jose.v2 => gopkg.in/square/go-jose.v2 v2.2.2
-<<<<<<< HEAD
-# k8s.io/api => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/api v1.24.14-kubeedge1-test1
-# k8s.io/apiextensions-apiserver => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/apiextensions-apiserver v1.24.14-kubeedge1-test1
-# k8s.io/apimachinery => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/apimachinery v1.24.14-kubeedge1-test1
-# k8s.io/apiserver => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/apiserver v1.24.14-kubeedge1-test1
-# k8s.io/cli-runtime => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/cli-runtime v1.24.14-kubeedge1-test1
-# k8s.io/client-go => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/client-go v1.24.14-kubeedge1-test1
-# k8s.io/cloud-provider => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/cloud-provider v1.24.14-kubeedge1-test1
-# k8s.io/cluster-bootstrap => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/cluster-bootstrap v1.24.14-kubeedge1-test1
-# k8s.io/code-generator => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/code-generator v1.24.14-kubeedge1-test1
-# k8s.io/component-base => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/component-base v1.24.14-kubeedge1-test1
-# k8s.io/component-helpers => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/component-helpers v1.24.14-kubeedge1-test1
-# k8s.io/controller-manager => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/controller-manager v1.24.14-kubeedge1-test1
-# k8s.io/cri-api => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/cri-api v1.24.14-kubeedge1-test1
-# k8s.io/csi-api => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/csi-api v1.24.14-kubeedge1-test1
-# k8s.io/csi-translation-lib => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/csi-translation-lib v1.24.14-kubeedge1-test1
+# k8s.io/api => github.com/kubeedge/kubernetes/staging/src/k8s.io/api v1.24.14-kubeedge1
+# k8s.io/apiextensions-apiserver => github.com/kubeedge/kubernetes/staging/src/k8s.io/apiextensions-apiserver v1.24.14-kubeedge1
+# k8s.io/apimachinery => github.com/kubeedge/kubernetes/staging/src/k8s.io/apimachinery v1.24.14-kubeedge1
+# k8s.io/apiserver => github.com/kubeedge/kubernetes/staging/src/k8s.io/apiserver v1.24.14-kubeedge1
+# k8s.io/cli-runtime => github.com/kubeedge/kubernetes/staging/src/k8s.io/cli-runtime v1.24.14-kubeedge1
+# k8s.io/client-go => github.com/kubeedge/kubernetes/staging/src/k8s.io/client-go v1.24.14-kubeedge1
+# k8s.io/cloud-provider => github.com/kubeedge/kubernetes/staging/src/k8s.io/cloud-provider v1.24.14-kubeedge1
+# k8s.io/cluster-bootstrap => github.com/kubeedge/kubernetes/staging/src/k8s.io/cluster-bootstrap v1.24.14-kubeedge1
+# k8s.io/code-generator => github.com/kubeedge/kubernetes/staging/src/k8s.io/code-generator v1.24.14-kubeedge1
+# k8s.io/component-base => github.com/kubeedge/kubernetes/staging/src/k8s.io/component-base v1.24.14-kubeedge1
+# k8s.io/component-helpers => github.com/kubeedge/kubernetes/staging/src/k8s.io/component-helpers v1.24.14-kubeedge1
+# k8s.io/controller-manager => github.com/kubeedge/kubernetes/staging/src/k8s.io/controller-manager v1.24.14-kubeedge1
+# k8s.io/cri-api => github.com/kubeedge/kubernetes/staging/src/k8s.io/cri-api v1.24.14-kubeedge1
+# k8s.io/csi-api => github.com/kubeedge/kubernetes/staging/src/k8s.io/csi-api v1.24.14-kubeedge1
+# k8s.io/csi-translation-lib => github.com/kubeedge/kubernetes/staging/src/k8s.io/csi-translation-lib v1.24.14-kubeedge1
 # k8s.io/gengo v0.0.0 => k8s.io/gengo v0.24.14
 # k8s.io/heapster => k8s.io/heapster v1.2.0-beta.1
 # k8s.io/klog/v2 => k8s.io/klog/v2 v2.60.1
-# k8s.io/kube-aggregator => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/kube-aggregator v1.24.14-kubeedge1-test1
-# k8s.io/kube-controller-manager => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/kube-controller-manager v1.24.14-kubeedge1-test1
+# k8s.io/kube-aggregator => github.com/kubeedge/kubernetes/staging/src/k8s.io/kube-aggregator v1.24.14-kubeedge1
+# k8s.io/kube-controller-manager => github.com/kubeedge/kubernetes/staging/src/k8s.io/kube-controller-manager v1.24.14-kubeedge1
 # k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20220328201542-3ee0da9b0b42
-# k8s.io/kube-proxy => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/kube-proxy v1.24.14-kubeedge1-test1
-# k8s.io/kube-scheduler => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/kube-scheduler v1.24.14-kubeedge1-test1
-# k8s.io/kubectl => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/kubectl v1.24.14-kubeedge1-test1
-# k8s.io/kubelet => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/kubelet v1.24.14-kubeedge1-test1
-# k8s.io/kubernetes => github.com/Shelley-BaoYue/kubernetes v1.24.14-kubeedge1-test1
-# k8s.io/legacy-cloud-providers => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/legacy-cloud-providers v1.24.14-kubeedge1-test1
-# k8s.io/metrics => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/metrics v1.24.14-kubeedge1-test1
-# k8s.io/mount-utils => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/mount-utils v1.24.14-kubeedge1-test1
-# k8s.io/node-api => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/node-api v1.24.14-kubeedge1-test1
+# k8s.io/kube-proxy => github.com/kubeedge/kubernetes/staging/src/k8s.io/kube-proxy v1.24.14-kubeedge1
+# k8s.io/kube-scheduler => github.com/kubeedge/kubernetes/staging/src/k8s.io/kube-scheduler v1.24.14-kubeedge1
+# k8s.io/kubectl => github.com/kubeedge/kubernetes/staging/src/k8s.io/kubectl v1.24.14-kubeedge1
+# k8s.io/kubelet => github.com/kubeedge/kubernetes/staging/src/k8s.io/kubelet v1.24.14-kubeedge1
+# k8s.io/kubernetes => github.com/kubeedge/kubernetes v1.24.14-kubeedge1
+# k8s.io/legacy-cloud-providers => github.com/kubeedge/kubernetes/staging/src/k8s.io/legacy-cloud-providers v1.24.14-kubeedge1
+# k8s.io/metrics => github.com/kubeedge/kubernetes/staging/src/k8s.io/metrics v1.24.14-kubeedge1
+# k8s.io/mount-utils => github.com/kubeedge/kubernetes/staging/src/k8s.io/mount-utils v1.24.14-kubeedge1
+# k8s.io/node-api => github.com/kubeedge/kubernetes/staging/src/k8s.io/node-api v1.24.14-kubeedge1
 # k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.24.14
-# k8s.io/repo-infra => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/repo-infra v1.24.14-kubeedge1-test1
-# k8s.io/sample-apiserver => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/sample-apiserver v1.24.14-kubeedge1-test1
+# k8s.io/repo-infra => github.com/kubeedge/kubernetes/staging/src/k8s.io/repo-infra v1.24.14-kubeedge1
+# k8s.io/sample-apiserver => github.com/kubeedge/kubernetes/staging/src/k8s.io/sample-apiserver v1.24.14-kubeedge1
 # k8s.io/utils v0.0.0 => k8s.io/utils v0.24.14
-=======
-# k8s.io/api => github.com/wackxu/kubernetes/staging/src/k8s.io/api v1.23.15-kubeedge1
-# k8s.io/apiextensions-apiserver => github.com/wackxu/kubernetes/staging/src/k8s.io/apiextensions-apiserver v1.23.15-kubeedge1
-# k8s.io/apimachinery => github.com/wackxu/kubernetes/staging/src/k8s.io/apimachinery v1.23.15-kubeedge1
-# k8s.io/apiserver => github.com/wackxu/kubernetes/staging/src/k8s.io/apiserver v1.23.15-kubeedge1
-# k8s.io/cli-runtime => github.com/wackxu/kubernetes/staging/src/k8s.io/cli-runtime v1.23.15-kubeedge1
-# k8s.io/client-go => github.com/wackxu/kubernetes/staging/src/k8s.io/client-go v1.23.15-kubeedge1
-# k8s.io/cloud-provider => github.com/wackxu/kubernetes/staging/src/k8s.io/cloud-provider v1.23.15-kubeedge1
-# k8s.io/cluster-bootstrap => github.com/wackxu/kubernetes/staging/src/k8s.io/cluster-bootstrap v1.23.15-kubeedge1
-# k8s.io/code-generator => github.com/wackxu/kubernetes/staging/src/k8s.io/code-generator v1.23.15-kubeedge1
-# k8s.io/component-base => github.com/wackxu/kubernetes/staging/src/k8s.io/component-base v1.23.15-kubeedge1
-# k8s.io/component-helpers => github.com/wackxu/kubernetes/staging/src/k8s.io/component-helpers v1.23.15-kubeedge1
-# k8s.io/controller-manager => github.com/wackxu/kubernetes/staging/src/k8s.io/controller-manager v1.23.15-kubeedge1
-# k8s.io/cri-api => github.com/wackxu/kubernetes/staging/src/k8s.io/cri-api v1.23.15-kubeedge1
-# k8s.io/csi-api => github.com/wackxu/kubernetes/staging/src/k8s.io/csi-api v1.23.15-kubeedge1
-# k8s.io/csi-translation-lib => github.com/wackxu/kubernetes/staging/src/k8s.io/csi-translation-lib v1.23.15-kubeedge1
-# k8s.io/gengo v0.0.0 => k8s.io/gengo v0.23.15
-# k8s.io/heapster => k8s.io/heapster v1.2.0-beta.1
-# k8s.io/klog/v2 => k8s.io/klog/v2 v2.30.0
-# k8s.io/kube-aggregator => github.com/wackxu/kubernetes/staging/src/k8s.io/kube-aggregator v1.23.15-kubeedge1
-# k8s.io/kube-controller-manager => github.com/wackxu/kubernetes/staging/src/k8s.io/kube-controller-manager v1.23.15-kubeedge1
-# k8s.io/kube-proxy => github.com/wackxu/kubernetes/staging/src/k8s.io/kube-proxy v1.23.15-kubeedge1
-# k8s.io/kube-scheduler => github.com/wackxu/kubernetes/staging/src/k8s.io/kube-scheduler v1.23.15-kubeedge1
-# k8s.io/kubectl => github.com/wackxu/kubernetes/staging/src/k8s.io/kubectl v1.23.15-kubeedge1
-# k8s.io/kubelet => github.com/wackxu/kubernetes/staging/src/k8s.io/kubelet v1.23.15-kubeedge1
-# k8s.io/kubernetes => github.com/wackxu/kubernetes v1.23.15-kubeedge1
-# k8s.io/legacy-cloud-providers => github.com/wackxu/kubernetes/staging/src/k8s.io/legacy-cloud-providers v1.23.15-kubeedge1
-# k8s.io/metrics => github.com/wackxu/kubernetes/staging/src/k8s.io/metrics v1.23.15-kubeedge1
-# k8s.io/mount-utils => github.com/wackxu/kubernetes/staging/src/k8s.io/mount-utils v1.23.15-kubeedge1
-# k8s.io/node-api => github.com/wackxu/kubernetes/staging/src/k8s.io/node-api v1.23.15-kubeedge1
-# k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.23.15
-# k8s.io/repo-infra => github.com/wackxu/kubernetes/staging/src/k8s.io/repo-infra v1.23.15-kubeedge1
-# k8s.io/sample-apiserver => github.com/wackxu/kubernetes/staging/src/k8s.io/sample-apiserver v1.23.15-kubeedge1
-# k8s.io/utils v0.0.0 => k8s.io/utils v0.23.15
->>>>>>> 3109fe17a (vendor update)
 # sigs.k8s.io/apiserver-network-proxy/konnectivity-client => sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.27
