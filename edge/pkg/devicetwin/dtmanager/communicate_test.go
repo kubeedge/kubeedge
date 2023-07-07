@@ -35,51 +35,14 @@ import (
 func TestStartAction(t *testing.T) {
 	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 
-	dtContextStateConnected, _ := dtcontext.InitDTContext()
-	dtContextStateConnected.State = dtcommon.Connected
-	receiveChanActionPresent := make(chan interface{}, 1)
+	receiveChanActionPresent := GenerateReceiveChanAction(dtcommon.SendToCloud, Identity, Message, Msg)
+	receiveChanActionNotPresent := GenerateReceiveChanAction(Action, Identity, Message, Msg)
 
-	const delay = 10 * time.Millisecond
-	const maxRetries = 5
-
-	receiveChanActionPresent <- &dttype.DTMessage{
-		Action:   dtcommon.SendToCloud,
-		Identity: "identity",
-		Msg: &model.Message{
-			Header: model.MessageHeader{
-				ID: "message",
-			},
-			Content: "msg",
-		},
+	tests := []CaseWorkerStr{
+		GenerateStartActionCase(ActionPresent, receiveChanActionPresent),
+		GenerateStartActionCase(ActionNotPresent, receiveChanActionNotPresent),
 	}
 
-	receiveChanActionNotPresent := make(chan interface{}, 1)
-	receiveChanActionNotPresent <- &dttype.DTMessage{
-		Action:   "action",
-		Identity: "identity",
-		Msg: &model.Message{
-			Content: "msg",
-		},
-	}
-	tests := []struct {
-		name   string
-		Worker Worker
-	}{
-		{
-			name: "StartTest-ActionPresentInActionCallback",
-			Worker: Worker{
-				ReceiverChan: receiveChanActionPresent,
-				DTContexts:   dtContextStateConnected,
-			},
-		},
-		{
-			name: "StartTest-ActionNotPresentInActionCallback",
-			Worker: Worker{
-				ReceiverChan: receiveChanActionNotPresent,
-				DTContexts:   dtContextStateConnected,
-			},
-		},
-	}
 	for _, test := range tests {
 		retry := 0
 		t.Run(test.name, func(t *testing.T) {
@@ -88,15 +51,15 @@ func TestStartAction(t *testing.T) {
 			}
 			go cw.Start()
 			if test.Worker.ReceiverChan == receiveChanActionPresent {
-				for retry < maxRetries {
-					time.Sleep(delay)
+				for retry < MaxRetries {
+					time.Sleep(Delay)
 					retry++
 					_, exist := test.Worker.DTContexts.ConfirmMap.Load("message")
 					if exist {
 						break
 					}
 				}
-				if retry >= maxRetries {
+				if retry >= MaxRetries {
 					t.Errorf("Start Failed to store message in ConfirmMap")
 				}
 			}
@@ -106,38 +69,14 @@ func TestStartAction(t *testing.T) {
 
 // TestStartHeartBeat is function to test Start() when value is passed in HeartBeatChan.
 func TestStartHeartBeat(t *testing.T) {
-	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
-
-	dtContexts, _ := dtcontext.InitDTContext()
 	heartChanStop := make(chan interface{}, 1)
 	heartChanPing := make(chan interface{}, 1)
 	heartChanStop <- "stop"
 	heartChanPing <- "ping"
 
-	const delay = 10 * time.Millisecond
-	const maxRetries = 5
-
-	tests := []struct {
-		name   string
-		Worker Worker
-		Group  string
-	}{
-		{
-			name: "StartTest-PingInHeartBeatChannel",
-			Worker: Worker{
-				HeartBeatChan: heartChanPing,
-				DTContexts:    dtContexts,
-			},
-			Group: "group",
-		},
-		{
-			name: "StartTest-StopInHeartBeatChannel",
-			Worker: Worker{
-				HeartBeatChan: heartChanStop,
-				DTContexts:    dtContexts,
-			},
-			Group: "group",
-		},
+	tests := []CaseHeartBeatWorkerStr{
+		GenerateHeartBeatCase(PingHeartBeat, Group, heartChanPing),
+		GenerateHeartBeatCase(StopHeartBeat, Group, heartChanStop),
 	}
 	for _, test := range tests {
 		retry := 0
@@ -148,15 +87,15 @@ func TestStartHeartBeat(t *testing.T) {
 			}
 			go cw.Start()
 			if test.Worker.HeartBeatChan == heartChanPing {
-				for retry < maxRetries {
-					time.Sleep(delay)
+				for retry < MaxRetries {
+					time.Sleep(Delay)
 					retry++
 					_, exist := test.Worker.DTContexts.ModulesHealth.Load("group")
 					if exist {
 						break
 					}
 				}
-				if retry >= maxRetries {
+				if retry >= MaxRetries {
 					t.Errorf("Start Failed to add module in beehiveContext")
 				}
 			}
@@ -194,13 +133,7 @@ func TestDealSendToCloud(t *testing.T) {
 		Action: dtcommon.SendToCloud,
 		Type:   dtcommon.CommModule,
 	}
-	tests := []struct {
-		name     string
-		context  *dtcontext.DTContext
-		resource string
-		msg      interface{}
-		wantErr  error
-	}{
+	tests := CasesMsgWorkerStr{
 		{
 			name:    "dealSendToCloudTest-StateDisconnected",
 			context: dtContextStateDisconnected,
@@ -246,13 +179,7 @@ func TestDealSendToCloud(t *testing.T) {
 func TestDealLifeCycle(t *testing.T) {
 	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 	dtContext, _ := dtcontext.InitDTContext()
-	tests := []struct {
-		name     string
-		context  *dtcontext.DTContext
-		resource string
-		msg      interface{}
-		wantErr  error
-	}{
+	tests := CasesMsgWorkerStr{
 		{
 			name:    "dealLifeCycleTest-WrongMessageFormat",
 			context: dtContext,
@@ -286,13 +213,7 @@ func TestDealLifeCycle(t *testing.T) {
 func TestDealConfirm(t *testing.T) {
 	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 	dtContext, _ := dtcontext.InitDTContext()
-	tests := []struct {
-		name     string
-		context  *dtcontext.DTContext
-		resource string
-		msg      interface{}
-		wantErr  error
-	}{
+	tests := CasesMsgWorkerStr{
 		{
 			name:    "dealConfirmTest-WrongMsg",
 			context: dtContext,

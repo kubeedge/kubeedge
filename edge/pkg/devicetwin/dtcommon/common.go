@@ -121,4 +121,5 @@ const (
 	InternalErrorCode = 500
 
 	TypeDeleted = "deleted"
+	TypeUpdated = "updated"
 )

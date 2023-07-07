@@ -23,14 +23,12 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/astaxie/beego/orm"
 	"github.com/golang/mock/gomock"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/mocks/beego"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
+	"github.com/kubeedge/kubeedge/pkg/testtools"
 )
 
 func TestGetRemoveList(t *testing.T) {
@@ -180,16 +178,7 @@ func TestDealMembershipUpdateInvalidContent(t *testing.T) {
 }
 
 func TestDealMembershipUpdateValidAddedDevice(t *testing.T) {
-	var ormerMock *beego.MockOrmer
-
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-	ormerMock = beego.NewMockOrmer(mockCtrl)
-	dbm.DBAccess = ormerMock
-	dbm.DefaultOrmFunc = func() orm.Ormer {
-		return ormerMock
-	}
-
+	ormerMock, _ := testtools.InitOrmerMock(t)
 	ormerMock.EXPECT().Begin().Return(nil)
 	ormerMock.EXPECT().Insert(gomock.Any()).Return(int64(1), nil).Times(1)
 	ormerMock.EXPECT().Commit().Return(nil)

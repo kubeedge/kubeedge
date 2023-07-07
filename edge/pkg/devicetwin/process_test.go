@@ -18,7 +18,6 @@ package devicetwin
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"reflect"
 	"testing"
@@ -29,14 +28,34 @@ import (
 	"github.com/kubeedge/beehive/pkg/common"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/mocks/beego"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtmodule"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
+	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/testutil"
+	"github.com/kubeedge/kubeedge/pkg/testtools"
 )
+
+type CasesDevice []struct {
+	name                  string
+	context               *dtcontext.DTContext
+	deviceID              string
+	wantErr               error
+	filterReturn          orm.QuerySeter
+	queryTableReturn      orm.QuerySeter
+	allReturnIntDevice    int64
+	allReturnErrDevice    error
+	allReturnIntAttribute int64
+	allReturnErrAttribute error
+	allReturnIntTwin      int64
+	allReturnErrTwin      error
+	queryTableMockTimes   int
+	filterMockTimes       int
+	deviceMockTimes       int
+	attributeMockTimes    int
+	twinMockTimes         int
+}
 
 // createFakeDevice() is function to create fake device.
 func createFakeDevice() *[]dtclient.Device {
@@ -123,20 +142,13 @@ func TestDTController_distributeMsg(t *testing.T) {
 		DTContexts:        dtContexts,
 	}
 
-	payload := dttype.MembershipUpdate{
-		AddDevices: []dttype.Device{
-			{
-				ID:    "DeviceA",
-				Name:  "Router",
-				State: "unknown",
-			},
-		},
-	}
+	content := testutil.GenerateAddDevicePalyloadMsg(t)
+
 	var msg = &model.Message{
 		Header: model.MessageHeader{
 			ParentID: DeviceTwinModuleName,
 		},
-		Content: payload,
+		Content: string(content),
 		Router: model.MessageRoute{
 			Source:   "edgemgr",
 			Resource: "membership/detail",
@@ -200,16 +212,9 @@ func TestDTController_distributeMsg(t *testing.T) {
 
 // TestSyncSqlite is function to test SyncSqlite().
 func TestSyncSqlite(t *testing.T) {
-	// ormerMock is mocked Ormer implementation.
-	var ormerMock *beego.MockOrmer
-	// querySeterMock is mocked QuerySeter implementation.
-	var querySeterMock *beego.MockQuerySeter
 	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-	ormerMock = beego.NewMockOrmer(mockCtrl)
-	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
-	dbm.DBAccess = ormerMock
+
+	ormerMock, querySeterMock := testtools.InitOrmerMock(t)
 
 	dtContexts, _ := dtcontext.InitDTContext()
 	// fakeDevice is used to set the argument of All function
@@ -218,24 +223,7 @@ func TestSyncSqlite(t *testing.T) {
 	fakeDeviceAttr := createFakeDeviceAttribute()
 	// fakeDeviceTwin is used to set the argument of All function
 	fakeDeviceTwin := createFakeDeviceTwin()
-	tests := []struct {
-		name                  string
-		context               *dtcontext.DTContext
-		wantErr               error
-		filterReturn          orm.QuerySeter
-		queryTableReturn      orm.QuerySeter
-		allReturnIntDevice    int64
-		allReturnErrDevice    error
-		allReturnIntAttribute int64
-		allReturnErrAttribute error
-		allReturnIntTwin      int64
-		allReturnErrTwin      error
-		queryTableMockTimes   int
-		filterMockTimes       int
-		deviceMockTimes       int
-		attributeMockTimes    int
-		twinMockTimes         int
-	}{
+	tests := CasesDevice{
 		{
 			//Failure Case
 			name:                  "SyncSqliteTest-QuerySqliteFailed",
@@ -291,17 +279,8 @@ func TestSyncSqlite(t *testing.T) {
 
 // TestSyncDeviceFromSqlite is function to test SyncDeviceFromSqlite().
 func TestSyncDeviceFromSqlite(t *testing.T) {
-	// ormerMock is mocked Ormer implementation.
-	var ormerMock *beego.MockOrmer
-	// querySeterMock is mocked QuerySeter implementation.
-	var querySeterMock *beego.MockQuerySeter
-
 	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-	ormerMock = beego.NewMockOrmer(mockCtrl)
-	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
-	dbm.DBAccess = ormerMock
+	ormerMock, querySeterMock := testtools.InitOrmerMock(t)
 
 	dtContext, _ := dtcontext.InitDTContext()
 	// fakeDevice is used to set the argument of All function
@@ -310,25 +289,7 @@ func TestSyncDeviceFromSqlite(t *testing.T) {
 	fakeDeviceAttr := createFakeDeviceAttribute()
 	// fakeDeviceTwin is used to set the argument of All function
 	fakeDeviceTwin := createFakeDeviceTwin()
-	tests := []struct {
-		name                  string
-		context               *dtcontext.DTContext
-		deviceID              string
-		wantErr               error
-		filterReturn          orm.QuerySeter
-		queryTableReturn      orm.QuerySeter
-		allReturnIntDevice    int64
-		allReturnErrDevice    error
-		allReturnIntAttribute int64
-		allReturnErrAttribute error
-		allReturnIntTwin      int64
-		allReturnErrTwin      error
-		queryTableMockTimes   int
-		filterMockTimes       int
-		deviceMockTimes       int
-		attributeMockTimes    int
-		twinMockTimes         int
-	}{
+	tests := CasesDevice{
 		{
 			//Failure Case
 			name:                  "TestSyncDeviceFromSqlite-QueryDeviceFailure",
@@ -438,17 +399,8 @@ func Test_classifyMsg(t *testing.T) {
 	//Encoded eventbus resource
 	eventbusTopic := "$hw/events/device/+/state/update"
 	eventbusResource := base64.URLEncoding.EncodeToString([]byte(eventbusTopic))
-	//Creating content for model.message type
-	payload := dttype.MembershipUpdate{
-		AddDevices: []dttype.Device{
-			{
-				ID:    "DeviceA",
-				Name:  "Router",
-				State: "unknown",
-			},
-		},
-	}
-	content, _ := json.Marshal(payload)
+
+	content := testutil.GenerateAddDevicePalyloadMsg(t)
 	tests := []struct {
 		name     string
 		message  *dttype.DTMessage
