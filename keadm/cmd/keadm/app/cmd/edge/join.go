@@ -253,6 +253,9 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 	if v.Major <= 1 && v.Minor < 12 {
 		return createV1alpha1EdgeConfigFiles(opt)
 	}
+	if v.Major >= 1 && v.Minor >= 14 && opt.RuntimeType != constants.DefaultRuntimeType {
+		return fmt.Errorf("since KubeEdge v1.14, runtime type only supports `remote`")
+	}
 
 	configFilePath := filepath.Join(util.KubeEdgePath, "config/edgecore.yaml")
 	_, err = os.Stat(configFilePath)
