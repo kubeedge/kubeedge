@@ -718,6 +718,10 @@ func (kl *Kubelet) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container
 		result = append(result, kubecontainer.EnvVar{Name: k, Value: v})
 	}
 
+	// add env for master service
+	result = append(result, kubecontainer.EnvVar{Name: "KUBERNETES_SERVICE_HOST", Value: os.Getenv("METASERVER_DUMMY_IP")})
+	result = append(result, kubecontainer.EnvVar{Name: "KUBERNETES_SERVICE_PORT", Value: os.Getenv("METASERVER_DUMMY_PORT")})
+
 	return result, nil
 }
 
