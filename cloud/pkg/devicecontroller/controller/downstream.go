@@ -467,6 +467,20 @@ func isDeviceStatusUpdated(oldTwin *v1alpha2.DeviceStatus, newTwin *v1alpha2.Dev
 	return !reflect.DeepEqual(oldTwin, newTwin)
 }
 
+// isDesiredTwinUpdated checks if desired twin is updated
+func isDesiredTwinUpdated(oldTwinDesired *v1alpha2.DeviceStatus, newTwin *v1alpha2.DeviceStatus) bool {
+	index := 0
+	res := true
+	for index < len(oldTwinDesired.Twins) && index < len(newTwin.Twins) {
+		res = res && reflect.DeepEqual(oldTwinDesired.Twins[index].Desired, newTwin.Twins[index].Desired)
+		index++
+	}
+	if index != len(oldTwinDesired.Twins) || index != len(newTwin.Twins) {
+		return true
+	}
+	return !res
+}
+
 // isDeviceDataUpdated checks if DeviceData is updated
 func isDeviceDataUpdated(oldData *v1alpha2.DeviceData, newData *v1alpha2.DeviceData) bool {
 	return !reflect.DeepEqual(oldData, newData)
@@ -631,8 +645,7 @@ func (dc *DownstreamController) deviceUpdated(device *v1alpha2.Device) {
 					}
 				}
 				// distribute device model
-				if isDeviceStatusUpdated(&cachedDevice.Status, &device.Status) ||
-					isDeviceDataUpdated(&cachedDevice.Spec.Data, &device.Spec.Data) {
+				if isDesiredTwinUpdated(&cachedDevice.Status, &device.Status) {
 					dc.sendDeviceModelMsg(device, model.UpdateOperation)
 					dc.sendDeviceMsg(device, model.UpdateOperation)
 				}
