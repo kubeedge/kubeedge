@@ -181,9 +181,9 @@ func ConvertDeviceModel(model *v1alpha2.DeviceModel) (*pb.DeviceModel, error) {
 }
 
 func dataToAny(v interface{}) (*anypb.Any, error) {
-	switch v.(type) {
+	switch value := v.(type) {
 	case string:
-		strWrapper := wrapperspb.String(v.(string))
+		strWrapper := wrapperspb.String(value)
 		anyStr, err := anypb.New(strWrapper)
 		if err != nil {
 			klog.Errorf("anypb new error: %v", err)
@@ -191,7 +191,7 @@ func dataToAny(v interface{}) (*anypb.Any, error) {
 		}
 		return anyStr, nil
 	case int8:
-		intWrapper := wrapperspb.Int32(int32(v.(int8)))
+		intWrapper := wrapperspb.Int32(int32(value))
 		anyInt, err := anypb.New(intWrapper)
 		if err != nil {
 			klog.Errorf("anypb new error: %v", err)
@@ -199,7 +199,7 @@ func dataToAny(v interface{}) (*anypb.Any, error) {
 		}
 		return anyInt, nil
 	case int16:
-		intWrapper := wrapperspb.Int32(int32(v.(int16)))
+		intWrapper := wrapperspb.Int32(int32(value))
 		anyInt, err := anypb.New(intWrapper)
 		if err != nil {
 			klog.Errorf("anypb new error: %v", err)
@@ -207,7 +207,7 @@ func dataToAny(v interface{}) (*anypb.Any, error) {
 		}
 		return anyInt, nil
 	case int32:
-		intWrapper := wrapperspb.Int32(v.(int32))
+		intWrapper := wrapperspb.Int32(value)
 		anyInt, err := anypb.New(intWrapper)
 		if err != nil {
 			klog.Errorf("anypb new error: %v", err)
@@ -215,7 +215,7 @@ func dataToAny(v interface{}) (*anypb.Any, error) {
 		}
 		return anyInt, nil
 	case int64:
-		intWrapper := wrapperspb.Int64(v.(int64))
+		intWrapper := wrapperspb.Int64(value)
 		anyInt, err := anypb.New(intWrapper)
 		if err != nil {
 			klog.Errorf("anypb new error: %v", err)
@@ -223,7 +223,7 @@ func dataToAny(v interface{}) (*anypb.Any, error) {
 		}
 		return anyInt, nil
 	case int:
-		intWrapper := wrapperspb.Int32(int32(v.(int)))
+		intWrapper := wrapperspb.Int32(int32(value))
 		anyInt, err := anypb.New(intWrapper)
 		if err != nil {
 			klog.Errorf("anypb new error: %v", err)
@@ -231,7 +231,7 @@ func dataToAny(v interface{}) (*anypb.Any, error) {
 		}
 		return anyInt, nil
 	case float64:
-		floatWrapper := wrapperspb.Float(float32(v.(float64)))
+		floatWrapper := wrapperspb.Float(float32(value))
 		anyFloat, err := anypb.New(floatWrapper)
 		if err != nil {
 			klog.Errorf("anypb new error: %v", err)
@@ -239,7 +239,7 @@ func dataToAny(v interface{}) (*anypb.Any, error) {
 		}
 		return anyFloat, nil
 	case float32:
-		floatWrapper := wrapperspb.Float(float32(v.(float32)))
+		floatWrapper := wrapperspb.Float(value)
 		anyFloat, err := anypb.New(floatWrapper)
 		if err != nil {
 			klog.Errorf("anypb new error: %v", err)
@@ -247,7 +247,7 @@ func dataToAny(v interface{}) (*anypb.Any, error) {
 		}
 		return anyFloat, nil
 	case bool:
-		boolWrapper := wrapperspb.Bool(v.(bool))
+		boolWrapper := wrapperspb.Bool(value)
 		anyBool, err := anypb.New(boolWrapper)
 		if err != nil {
 			klog.Errorf("anypb new error: %v", err)
