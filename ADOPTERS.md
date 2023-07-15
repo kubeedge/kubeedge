@@ -3,6 +3,7 @@
 KubeEdge is used by many companies. If you are using KubeEdge in your organization, please feel free to add your company logo to the list!
 
 <a href="https://www.huaweicloud.com/en-us/product/ief.html" border="0" target="_blank"><img alt="HuaweiCloud" src="docs/adopters/huawei-cloud.png" height="70"></a>
+<a href="https://www.pitsdatenrettung.de/" border="0" target="_blank"><img alt="PITS Globale Datenrettungsdienste" src="docs/adopters/pits-logo.svg" height="70"></a> &nbsp; &nbsp;
 <a href="https://cucc.wocloud.cn/" border="0" target="_blank"><img alt="ChinaUnicom-WoCloud" src="docs/adopters/china-unicom-wocloud.png" height="70"></a> &nbsp; &nbsp;
 <a href="https://www.raisecom.com/" border="0" target="_blank"><img alt="Raisecom Technology" src="docs/adopters/raisecom-technology.png" height="70"></a> &nbsp; &nbsp; &nbsp;<br/><br/>
 <a href="https://kubesphere.io" border="0" target="_blank"><img alt="KubeSphere Container Platform" src="docs/adopters/kubesphere-logo.png" height="70"></a> &nbsp; &nbsp; &nbsp;
