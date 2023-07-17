@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"reflect"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -391,9 +392,34 @@ func (dc *DownstreamController) deviceAdded(device *v1alpha2.Device) {
 			klog.Errorf("Failed to send device addition message %v due to error %v", msg, err)
 		}
 
-		dc.sendDeviceModelMsg(device, model.InsertOperation)
+		if !isExistModel(&dc.deviceManager.Device, device) {
+			dc.sendDeviceModelMsg(device, model.InsertOperation)
+		}
 		dc.sendDeviceMsg(device, model.InsertOperation)
 	}
+}
+
+// isExistModel check if the target node already has the model.
+func isExistModel(deviceMap *sync.Map, device *v1alpha2.Device) bool {
+	var res bool
+	targetNode := device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0]
+	modelName := device.Spec.DeviceModelRef.Name
+	deviceMap.Range(func(k, v interface{}) bool {
+		if k == device.Name {
+			return true
+		}
+		if deviceItem, ok := v.(*v1alpha2.Device); !ok {
+			return true
+		} else {
+			if deviceItem.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0] == targetNode &&
+				deviceItem.Spec.DeviceModelRef.Name == modelName {
+				res = true
+				return false
+			}
+		}
+		return true
+	})
+	return res
 }
 
 // createDevice creates a device from CRD
@@ -960,7 +986,9 @@ func (dc *DownstreamController) deviceDeleted(device *v1alpha2.Device) {
 		if err != nil {
 			klog.Errorf("Failed to send device addition message %v due to error %v", msg, err)
 		}
-		dc.sendDeviceModelMsg(device, model.DeleteOperation)
+		if !isExistModel(&dc.deviceManager.Device, device) {
+			dc.sendDeviceModelMsg(device, model.DeleteOperation)
+		}
 		dc.sendDeviceMsg(device, model.DeleteOperation)
 	}
 }
