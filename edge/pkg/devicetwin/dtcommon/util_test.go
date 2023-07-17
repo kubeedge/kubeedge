@@ -19,6 +19,10 @@ package dtcommon
 import (
 	"errors"
 	"testing"
+
+	"k8s.io/api/core/v1"
+
+	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
 )
 
 // TestValidateValue is function to test ValidateValue
@@ -173,6 +177,227 @@ func TestValidateTwinValue(t *testing.T) {
 			bool := ValidateTwinValue(test.key)
 			if test.want != bool {
 				t.Errorf("ValidateTwinValue Case failed: wanted %v and got %v", test.want, bool)
+			}
+		})
+	}
+}
+
+// TestGetProtocolNameOfDevice is function to tst GetProtocolNameOfDevice
+func TestGetProtocolNameOfDevice(t *testing.T) {
+	cases := []struct {
+		// name is name of the testcase
+		name string
+		// device is device of the testcase
+		device *v1alpha2.Device
+	}{
+		{
+			name: "GetProtocolNameOfDeviceOpcUA",
+			device: &v1alpha2.Device{
+				Spec: v1alpha2.DeviceSpec{
+					Protocol: v1alpha2.ProtocolConfig{
+						OpcUA: new(v1alpha2.ProtocolConfigOpcUA),
+					},
+				},
+			},
+		},
+		{
+			name: "GetProtocolNameOfDeviceModBus",
+			device: &v1alpha2.Device{
+				Spec: v1alpha2.DeviceSpec{
+					Protocol: v1alpha2.ProtocolConfig{
+						Modbus: new(v1alpha2.ProtocolConfigModbus),
+					},
+				},
+			},
+		},
+		{
+			name: "GetProtocolNameOfDeviceBluetooth",
+			device: &v1alpha2.Device{
+				Spec: v1alpha2.DeviceSpec{
+					Protocol: v1alpha2.ProtocolConfig{
+						Bluetooth: new(v1alpha2.ProtocolConfigBluetooth),
+					},
+				},
+			},
+		},
+		{
+			name: "GetProtocolNameOfDeviceCustomizedProtocol",
+			device: &v1alpha2.Device{
+				Spec: v1alpha2.DeviceSpec{
+					Protocol: v1alpha2.ProtocolConfig{
+						CustomizedProtocol: new(v1alpha2.ProtocolConfigCustomized),
+					},
+				},
+			},
+		},
+		{
+			name: "GetProtocolNameOfDeviceFailureCase",
+			device: &v1alpha2.Device{
+				Spec: v1alpha2.DeviceSpec{
+					Protocol: v1alpha2.ProtocolConfig{},
+				},
+			},
+		},
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			_, err := GetProtocolNameOfDevice(test.device)
+			if err != nil {
+				t.Errorf("%v failed: %v", test.name, err)
+			}
+		})
+	}
+}
+
+// TestConvertDevice is function to test ConvertDevice
+func TestConvertDevice(t *testing.T) {
+	configTestMap := make(map[string]interface{})
+	configTestMap["key1"] = "value1"
+	configTestMap["key2"] = 2
+	configTestMap["key3"] = true
+
+	cases := []struct {
+		// name is name of the testcase
+		name string
+		// device is device of the testcase
+		device *v1alpha2.Device
+	}{
+		{
+			name: "ConvertDeviceModelSuccessCase",
+			device: &v1alpha2.Device{
+				Spec: v1alpha2.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{
+						Name: "test_model",
+					},
+					Protocol: v1alpha2.ProtocolConfig{
+						CustomizedProtocol: &v1alpha2.ProtocolConfigCustomized{
+							ProtocolName: "test_custiomized_protocol_name",
+							ConfigData: &v1alpha2.CustomizedValue{
+								Data: configTestMap,
+							},
+						},
+						Common: &v1alpha2.ProtocolConfigCommon{
+							CustomizedValues: &v1alpha2.CustomizedValue{
+								Data: configTestMap,
+							},
+						},
+					},
+					PropertyVisitors: []v1alpha2.DevicePropertyVisitor{
+						v1alpha2.DevicePropertyVisitor{
+							PropertyName: "test_visitor_name1",
+							CustomizedValues: &v1alpha2.CustomizedValue{
+								Data: configTestMap,
+							},
+						}, v1alpha2.DevicePropertyVisitor{
+							PropertyName: "test_visitor_name2",
+							CustomizedValues: &v1alpha2.CustomizedValue{
+								Data: configTestMap,
+							},
+						},
+					},
+				},
+				Status: v1alpha2.DeviceStatus{},
+			},
+		},
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			_, err := ConvertDevice(test.device)
+			if err != nil {
+				t.Errorf("%v failed: %v", test.name, err)
+			}
+		})
+	}
+
+}
+
+// TestConvertDeviceModel is function to test ConvertDeviceModel
+func TestConvertDeviceModel(t *testing.T) {
+	cases := []struct {
+		// name is name of the testcase
+		name string
+		// model is model of the testcase
+		model *v1alpha2.DeviceModel
+	}{
+		{
+			name: "ConvertDeviceModelSuccessCase",
+			model: &v1alpha2.DeviceModel{
+				Spec: v1alpha2.DeviceModelSpec{
+					Protocol: "test_model",
+				},
+			},
+		},
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			_, err := ConvertDeviceModel(test.model)
+			if err != nil {
+				t.Errorf("%v failed: %v", test.name, err)
+			}
+		})
+	}
+}
+
+// TestdataToAny is function to test DataToAny
+func TestDataToAny(t *testing.T) {
+	cases := []struct {
+		// name is name of the testcase
+		name string
+		// key is key to be converted, parameter to dataToAny function
+		key interface{}
+	}{{
+		// Success case
+		name: "DataToAnyStringCase",
+		key:  "test_string",
+	}, {
+		// Success case
+		name: "DataToAnyInt8Case",
+		key:  int8(1),
+	}, {
+		// Success case
+		name: "DataToAnyInt16Case",
+		key:  int16(1),
+	}, {
+		// Success case
+		name: "DataToAnyInt32Case",
+		key:  int32(1),
+	}, {
+		// Success case
+		name: "DataToAnyInt64Case",
+		key:  int64(1),
+	}, {
+		// Success case
+		name: "DataToAnyIntCase",
+		key:  int(1),
+	}, {
+		// Success case
+		name: "DataToAnyFloat64Case",
+		key:  1.23,
+	}, {
+		// Success case
+		name: "DataToAnyFloat32Case",
+		key:  float32(1.23),
+	}, {
+		// Success case
+		name: "DataToAnyIntCase",
+		key:  1,
+	}, {
+		// Success case
+		name: "DataToAnyBoolCase",
+		key:  true,
+	}, {
+		//  Failure case
+		name: "DataToAnyFailureCase",
+		key:  []byte{},
+	},
+	}
+
+	// run the test cases
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			_, err := DataToAny(test.key)
+			if err != nil {
+				t.Errorf("%v Case failed: %v", test.name, err)
 			}
 		})
 	}

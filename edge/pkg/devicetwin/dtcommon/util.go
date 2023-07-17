@@ -97,7 +97,7 @@ func ConvertDevice(device *v1alpha2.Device) (*pb.Device, error) {
 		// interface data to anypb.Any data
 		configAnyData := make(map[string]*anypb.Any)
 		for k, v := range device.Spec.Protocol.CustomizedProtocol.ConfigData.Data {
-			anyValue, err := dataToAny(v)
+			anyValue, err := DataToAny(v)
 			if err != nil {
 				return nil, err
 			}
@@ -109,7 +109,7 @@ func ConvertDevice(device *v1alpha2.Device) (*pb.Device, error) {
 		// interface data to anypb.Any data
 		configAnyData := make(map[string]*anypb.Any)
 		for k, v := range device.Spec.Protocol.Common.CustomizedValues.Data {
-			anyValue, err := dataToAny(v)
+			anyValue, err := DataToAny(v)
 			if err != nil {
 				return nil, err
 			}
@@ -133,7 +133,7 @@ func ConvertDevice(device *v1alpha2.Device) (*pb.Device, error) {
 		if device.Spec.PropertyVisitors[i].CustomizedValues != nil {
 			configAnyData := make(map[string]*anypb.Any)
 			for k, v := range device.Spec.PropertyVisitors[i].CustomizedValues.Data {
-				anyValue, err := dataToAny(v)
+				anyValue, err := DataToAny(v)
 				if err != nil {
 					return nil, err
 				}
@@ -144,7 +144,7 @@ func ConvertDevice(device *v1alpha2.Device) (*pb.Device, error) {
 		if device.Spec.PropertyVisitors[i].CustomizedProtocol != nil {
 			configAnyData := make(map[string]*anypb.Any)
 			for k, v := range device.Spec.PropertyVisitors[i].CustomizedProtocol.ConfigData.Data {
-				anyValue, err := dataToAny(v)
+				anyValue, err := DataToAny(v)
 				if err != nil {
 					return nil, err
 				}
@@ -180,80 +180,35 @@ func ConvertDeviceModel(model *v1alpha2.DeviceModel) (*pb.DeviceModel, error) {
 	return &edgeDeviceModel, nil
 }
 
-func dataToAny(v interface{}) (*anypb.Any, error) {
+func DataToAny(v interface{}) (*anypb.Any, error) {
 	switch value := v.(type) {
 	case string:
 		strWrapper := wrapperspb.String(value)
-		anyStr, err := anypb.New(strWrapper)
-		if err != nil {
-			klog.Errorf("anypb new error: %v", err)
-			return nil, err
-		}
-		return anyStr, nil
+		return anypb.New(strWrapper)
 	case int8:
 		intWrapper := wrapperspb.Int32(int32(value))
-		anyInt, err := anypb.New(intWrapper)
-		if err != nil {
-			klog.Errorf("anypb new error: %v", err)
-			return nil, err
-		}
-		return anyInt, nil
+		return anypb.New(intWrapper)
 	case int16:
 		intWrapper := wrapperspb.Int32(int32(value))
-		anyInt, err := anypb.New(intWrapper)
-		if err != nil {
-			klog.Errorf("anypb new error: %v", err)
-			return nil, err
-		}
-		return anyInt, nil
+		return anypb.New(intWrapper)
 	case int32:
 		intWrapper := wrapperspb.Int32(value)
-		anyInt, err := anypb.New(intWrapper)
-		if err != nil {
-			klog.Errorf("anypb new error: %v", err)
-			return nil, err
-		}
-		return anyInt, nil
+		return anypb.New(intWrapper)
 	case int64:
 		intWrapper := wrapperspb.Int64(value)
-		anyInt, err := anypb.New(intWrapper)
-		if err != nil {
-			klog.Errorf("anypb new error: %v", err)
-			return nil, err
-		}
-		return anyInt, nil
+		return anypb.New(intWrapper)
 	case int:
 		intWrapper := wrapperspb.Int32(int32(value))
-		anyInt, err := anypb.New(intWrapper)
-		if err != nil {
-			klog.Errorf("anypb new error: %v", err)
-			return nil, err
-		}
-		return anyInt, nil
+		return anypb.New(intWrapper)
 	case float64:
 		floatWrapper := wrapperspb.Float(float32(value))
-		anyFloat, err := anypb.New(floatWrapper)
-		if err != nil {
-			klog.Errorf("anypb new error: %v", err)
-			return nil, err
-		}
-		return anyFloat, nil
+		return anypb.New(floatWrapper)
 	case float32:
 		floatWrapper := wrapperspb.Float(value)
-		anyFloat, err := anypb.New(floatWrapper)
-		if err != nil {
-			klog.Errorf("anypb new error: %v", err)
-			return nil, err
-		}
-		return anyFloat, nil
+		return anypb.New(floatWrapper)
 	case bool:
 		boolWrapper := wrapperspb.Bool(value)
-		anyBool, err := anypb.New(boolWrapper)
-		if err != nil {
-			klog.Errorf("anypb new error: %v", err)
-			return nil, err
-		}
-		return anyBool, nil
+		return anypb.New(boolWrapper)
 	default:
 		return nil, fmt.Errorf("%v does not support converting to any", reflect.TypeOf(v))
 	}

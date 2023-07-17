@@ -411,6 +411,9 @@ func isExistModel(deviceMap *sync.Map, device *v1alpha2.Device) bool {
 		if deviceItem, ok := v.(*v1alpha2.Device); !ok {
 			return true
 		} else {
+			if len(deviceItem.Spec.NodeSelector.NodeSelectorTerms) == 0 || len(deviceItem.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions) == 0 || len(deviceItem.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values) == 0 {
+				return true
+			}
 			if deviceItem.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0] == targetNode &&
 				deviceItem.Spec.DeviceModelRef.Name == modelName {
 				res = true
