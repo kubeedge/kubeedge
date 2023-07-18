@@ -35,14 +35,11 @@ func TestGetCertSyncChannel(t *testing.T) {
 func TestNewCertSyncChannel(t *testing.T) {
 	t.Run("NewCertSyncChannel()", func(t *testing.T) {
 		certSync := NewCertSyncChannel()
-		if len(certSync) != 2 {
+		if len(certSync) != 1 {
 			t.Errorf("NewCertSyncChannel() returned  unexpected results. size got = %d, size want = 2", len(certSync))
 		}
 		if _, ok := certSync["edgestream"]; !ok {
 			t.Error("NewCertSyncChannel() returned  unexpected results. expected key edgestream to be present but it was not available.")
-		}
-		if _, ok := certSync["metamanager"]; !ok {
-			t.Error("NewCertSyncChannel() returned  unexpected results. expected key metamanager to be present but it was not available.")
 		}
 	})
 }

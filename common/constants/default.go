@@ -40,6 +40,8 @@ const (
 	DefaultCertURL        = "/edge.crt"
 	DefaultNodeUpgradeURL = "/nodeupgrade"
 
+	K8sCAResource = "k8s/ca.crt"
+
 	DefaultStreamCAFile   = "/etc/kubeedge/ca/streamCA.crt"
 	DefaultStreamCertFile = "/etc/kubeedge/certs/stream.crt"
 	DefaultStreamKeyFile  = "/etc/kubeedge/certs/stream.key"
@@ -82,8 +84,9 @@ const (
 	CurrentSupportK8sVersion = "v1.24.14"
 
 	// MetaManager
-	DefaultRemoteQueryTimeout = 60
-	DefaultMetaServerAddr     = "127.0.0.1:10550"
+	DefaultRemoteQueryTimeout  = 60
+	DefaultMetaServerAddr      = "127.0.0.1:10550"
+	DefaultDummyMetaServerAddr = "169.254.66.16:10550"
 
 	// Config
 	DefaultKubeContentType         = "application/vnd.kubernetes.protobuf"
@@ -108,6 +111,7 @@ const (
 	DefaultUpdateRuleStatusWorkers           = 4
 	DefaultQueryLeaseWorkers                 = 100
 	DefaultServiceAccountTokenWorkers        = 100
+	DefaultCertificateSigningRequestWorkers  = 100
 
 	DefaultUpdatePodStatusBuffer            = 1024
 	DefaultUpdateNodeStatusBuffer           = 1024
@@ -122,6 +126,7 @@ const (
 	DefaultDeletePodBuffer                  = 1024
 	DefaultQueryLeaseBuffer                 = 1024
 	DefaultServiceAccountTokenBuffer        = 1024
+	DefaultCertificateSigningRequestBuffer  = 1024
 
 	DefaultPodEventBuffer           = 1
 	DefaultConfigMapEventBuffer     = 1

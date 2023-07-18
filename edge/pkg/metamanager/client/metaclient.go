@@ -30,6 +30,7 @@ type CoreInterface interface {
 	PersistentVolumeClaimsGetter
 	VolumeAttachmentsGetter
 	LeasesGetter
+	CertificateSigningRequestsGetter
 }
 
 type metaClient struct {
@@ -85,6 +86,10 @@ func (m *metaClient) VolumeAttachments(namespace string) VolumeAttachmentsInterf
 
 func (m *metaClient) Leases(namespace string) LeasesInterface {
 	return newLeases(namespace, m.send)
+}
+
+func (m *metaClient) CertificateSigningRequests(namespace string) CertificateSigningRequestInterface {
+	return newCertificateSigningRequests(namespace, m.send)
 }
 
 // New creates new metaclient

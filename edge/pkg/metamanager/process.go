@@ -16,7 +16,7 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
 	metaManagerConfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
@@ -92,7 +92,7 @@ func parseResource(message *model.Message) (string, string, string) {
 		klog.Errorf("failed to get resource %s name and namespace", resource)
 		return "", "", ""
 	}
-	return client.KeyFunc(trTokens[2], trTokens[0], &tokenReq), resType, ""
+	return util.TokenRequestKeyFunc(trTokens[2], trTokens[0], &tokenReq), resType, ""
 }
 
 // is resource type require remote query
@@ -104,7 +104,8 @@ func requireRemoteQuery(resType string) bool {
 		resType == constants.ResourceTypeVolumeAttachment ||
 		resType == model.ResourceTypeNode ||
 		resType == model.ResourceTypeServiceAccountToken ||
-		resType == model.ResourceTypeLease
+		resType == model.ResourceTypeLease ||
+		resType == model.ResourceTypeCSR
 }
 
 func msgDebugInfo(message *model.Message) string {
@@ -315,6 +316,23 @@ func processDeletePodDB(message model.Message) error {
 	}
 
 	return nil
+}
+
+// getSpecialResourceKey get service account db key
+func getSpecialResourceKey(resType, resKey string, message model.Message) (string, error) {
+	if resType != model.ResourceTypeServiceAccountToken {
+		return resKey, nil
+	}
+	tokenReq, ok := message.GetContent().(*authenticationv1.TokenRequest)
+	if !ok {
+		return "", fmt.Errorf("failed to get resource %s name and namespace", resKey)
+	}
+	tokens := strings.Split(resKey, constants.ResourceSep)
+	if len(tokens) != 3 {
+		return "", fmt.Errorf("failed to get resource %s name and namespace", resKey)
+	}
+
+	return util.TokenRequestKeyFunc(tokens[2], tokens[0], tokenReq), nil
 }
 
 func (m *metaManager) processQuery(message model.Message) {

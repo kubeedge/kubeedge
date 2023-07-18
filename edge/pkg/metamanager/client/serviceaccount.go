@@ -13,6 +13,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	policyv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/policy/v1alpha1"
 )
@@ -86,23 +87,8 @@ func requiresRefresh(tr *authenticationv1.TokenRequest) bool {
 	return false
 }
 
-// KeyFunc keys should be nonconfidential and safe to log
-func KeyFunc(name, namespace string, tr *authenticationv1.TokenRequest) string {
-	var exp int64
-	if tr.Spec.ExpirationSeconds != nil {
-		exp = *tr.Spec.ExpirationSeconds
-	}
-
-	var ref authenticationv1.BoundObjectReference
-	if tr.Spec.BoundObjectRef != nil {
-		ref = *tr.Spec.BoundObjectRef
-	}
-
-	return fmt.Sprintf("%q/%q/%#v/%#v/%#v", name, namespace, tr.Spec.Audiences, exp, ref)
-}
-
 func getTokenLocally(name, namespace string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
-	resKey := KeyFunc(name, namespace, tr)
+	resKey := util.TokenRequestKeyFunc(name, namespace, tr)
 	metas, err := dao.QueryMeta("key", resKey)
 	if err != nil {
 		klog.Errorf("query meta %s failed: %v", resKey, err)
