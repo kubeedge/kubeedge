@@ -178,10 +178,10 @@ type ImageOverrider struct {
 	//
 	// Defaults to nil, in that case, the system will automatically detect image fields if the resource type is
 	// Pod, ReplicaSet, Deployment or StatefulSet by following rule:
-	//   - Pod: spec/containers/<N>/image
-	//   - ReplicaSet: spec/template/spec/containers/<N>/image
-	//   - Deployment: spec/template/spec/containers/<N>/image
-	//   - StatefulSet: spec/template/spec/containers/<N>/image
+	//   - Pod: /spec/containers/<N>/image
+	//   - ReplicaSet: /spec/template/spec/containers/<N>/image
+	//   - Deployment: /spec/template/spec/containers/<N>/image
+	//   - StatefulSet: /spec/template/spec/containers/<N>/image
 	// In addition, all images will be processed if the resource object has more than one containers.
 	//
 	// If not nil, only images matches the filters will be processed.
@@ -377,18 +377,18 @@ spec:
         overriders:
           replicas: 2
           imageOverriders:
-            - component: "registry"
+            - component: "Registry"
               operator: "replace"
               value: "hangzhou.registry.io"
       - name: beijing
         overriders:
           replicas: 3
           imageOverriders:
-            - component: "registry"
+            - component: "Registry"
               operator: "replace"
               value: "beijing.registry.io"
 ```
-Then two deployments called `nginx-hangzhou` and `nginx-beijing` will be created for hangzhou nodegroup and beijing nodegroup with `replicas: 2` and `replicas: 3` respectively. Pods running in hangzhou nodegroup will use the image `hangzhou.registry.io/nginx:latest` and pods running in beijing nodegroup will use the image `beijing.resistry.io/nginx.latest`. 
+Then two deployments called `nginx-hangzhou` and `nginx-beijing` will be created for hangzhou nodegroup and beijing nodegroup with `replicas: 2` and `replicas: 3` respectively. Pods running in hangzhou nodegroup will use the image `hangzhou.registry.io/nginx:latest` and pods running in beijing nodegroup will use the image `beijing.resistry.io/nginx:latest`. 
 
 The service in the EdgeApplication will also be created and injected with label `groupmanagement.kubeedge.io/edgeapplication-name: nginx-app`. The endpointslice filter in the cloudcore will check the relative EdgeApplication when sending the endpointslice to the edgecore in some nodegroup. It will filter out endpoints not in that nodegroup. Then, clients running in hangzhou node group can only reach the 2 pod instances that are also running in hangzhou node group. The situation of beijing node group is the same.
 
