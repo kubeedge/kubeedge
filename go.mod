@@ -83,7 +83,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.2 // indirect
 	github.com/Masterminds/squirrel v1.5.3 // indirect
 	github.com/Microsoft/go-winio v0.5.2 // indirect
-	github.com/Microsoft/hcsshim v0.8.24 // indirect
+	github.com/Microsoft/hcsshim v0.8.25 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
@@ -100,7 +100,7 @@ require (
 	github.com/cilium/ebpf v0.7.0 // indirect
 	github.com/containerd/cgroups v1.0.3 // indirect
 	github.com/containerd/console v1.0.3 // indirect
-	github.com/containerd/containerd v1.6.6 // indirect
+	github.com/containerd/containerd v1.6.15 // indirect
 	github.com/containerd/ttrpc v1.1.0 // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
@@ -268,7 +268,7 @@ replace (
 	github.com/Sirupsen/logrus v1.0.5 => github.com/sirupsen/logrus v1.0.5
 	github.com/Sirupsen/logrus v1.3.0 => github.com/Sirupsen/logrus v1.0.6
 	github.com/Sirupsen/logrus v1.4.0 => github.com/sirupsen/logrus v1.0.6
-	github.com/containerd/containerd => github.com/containerd/containerd v1.5.16
+	github.com/containerd/containerd => github.com/containerd/containerd v1.5.18
 	github.com/gopherjs/gopherjs v0.0.0 => github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/kubeedge/beehive => ./staging/src/github.com/kubeedge/beehive
 	github.com/kubeedge/viaduct => ./staging/src/github.com/kubeedge/viaduct
