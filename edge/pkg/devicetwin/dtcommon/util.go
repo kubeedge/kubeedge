@@ -93,7 +93,7 @@ func ConvertDevice(device *v1alpha2.Device) (*pb.Device, error) {
 		klog.Errorf("fail to unmarshal device %s with err: %v", device.Name, err)
 		return nil, err
 	}
-	if device.Spec.Protocol.CustomizedProtocol != nil {
+	if device.Spec.Protocol.CustomizedProtocol.ConfigData != nil {
 		// interface data to anypb.Any data
 		configAnyData := make(map[string]*anypb.Any)
 		for k, v := range device.Spec.Protocol.CustomizedProtocol.ConfigData.Data {
@@ -119,7 +119,7 @@ func ConvertDevice(device *v1alpha2.Device) (*pb.Device, error) {
 	}
 	var edgePropertyVisitors []*pb.DevicePropertyVisitor
 	for i := range device.Spec.PropertyVisitors {
-		var item *pb.DevicePropertyVisitor = new(pb.DevicePropertyVisitor)
+		item := new(pb.DevicePropertyVisitor)
 		propertyData, err := json.Marshal(device.Spec.PropertyVisitors[i])
 		if err != nil {
 			klog.Errorf("fail to marshal device %s with err: %v", device.Name, err)
@@ -141,7 +141,7 @@ func ConvertDevice(device *v1alpha2.Device) (*pb.Device, error) {
 			}
 			item.CustomizedValues.Data = configAnyData
 		}
-		if device.Spec.PropertyVisitors[i].CustomizedProtocol != nil {
+		if device.Spec.PropertyVisitors[i].CustomizedProtocol.ConfigData != nil {
 			configAnyData := make(map[string]*anypb.Any)
 			for k, v := range device.Spec.PropertyVisitors[i].CustomizedProtocol.ConfigData.Data {
 				anyValue, err := DataToAny(v)

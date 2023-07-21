@@ -404,6 +404,7 @@ func isExistModel(deviceMap *sync.Map, device *v1alpha2.Device) bool {
 	var res bool
 	targetNode := device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0]
 	modelName := device.Spec.DeviceModelRef.Name
+	// To find another device in deviceMap that uses the same deviceModel with exclude current device
 	deviceMap.Range(func(k, v interface{}) bool {
 		if k == device.Name {
 			return true
@@ -497,15 +498,15 @@ func isDeviceStatusUpdated(oldTwin *v1alpha2.DeviceStatus, newTwin *v1alpha2.Dev
 }
 
 // isDesiredTwinUpdated checks if desired twin is updated
-func isDesiredTwinUpdated(oldTwinDesired *v1alpha2.DeviceStatus, newTwin *v1alpha2.DeviceStatus) bool {
+func isDesiredTwinUpdated(oldTwin *v1alpha2.DeviceStatus, newTwin *v1alpha2.DeviceStatus) bool {
 	index := 0
 	res := true
-	for index < len(oldTwinDesired.Twins) && index < len(newTwin.Twins) {
-		res = res && reflect.DeepEqual(oldTwinDesired.Twins[index].Desired, newTwin.Twins[index].Desired)
-		index++
-	}
-	if index != len(oldTwinDesired.Twins) || index != len(newTwin.Twins) {
+	if len(oldTwin.Twins) != len(newTwin.Twins) {
 		return true
+	}
+	for index < len(oldTwin.Twins) && index < len(newTwin.Twins) {
+		res = res && reflect.DeepEqual(oldTwin.Twins[index].Desired, newTwin.Twins[index].Desired)
+		index++
 	}
 	return !res
 }
