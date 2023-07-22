@@ -40,6 +40,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/handlerfactory"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/serializer"
 	kefeatures "github.com/kubeedge/kubeedge/pkg/features"
+	"github.com/kubeedge/kubeedge/pkg/util/pass-through"
 )
 
 // MetaServer is simplification of server.GenericAPIServer
@@ -214,7 +215,13 @@ func (ls *MetaServer) BuildBasicHandler() http.Handler {
 		reqInfo, ok := apirequest.RequestInfoFrom(ctx)
 		//klog.Infof("[metaserver]get a req(%v)(%v)", reqInfo.Path, reqInfo.Verb)
 		//klog.Infof("[metaserver]get a req(\nPath:%v; \nVerb:%v; \nHeader:%+v)", reqInfo.Path, reqInfo.Verb, req.Header)
-		if ok && reqInfo.IsResourceRequest {
+		if !ok {
+			err := fmt.Errorf("invalid request")
+			responsewriters.ErrorNegotiated(errors.NewInternalError(err), ls.NegotiatedSerializer, schema.GroupVersion{}, w, req)
+			return
+		}
+
+		if reqInfo.IsResourceRequest {
 			switch {
 			case reqInfo.Verb == "get":
 				ls.Factory.Get().ServeHTTP(w, req)
@@ -235,7 +242,12 @@ func (ls *MetaServer) BuildBasicHandler() http.Handler {
 			return
 		}
 
-		err := fmt.Errorf("not a resource req")
+		if passthrough.IsPassThroughPath(reqInfo.Path, reqInfo.Verb) {
+			ls.Factory.PassThrough().ServeHTTP(w, req)
+			return
+		}
+
+		err := fmt.Errorf("request[%s::%s] isn't supported", reqInfo.Path, reqInfo.Verb)
 		responsewriters.ErrorNegotiated(errors.NewInternalError(err), ls.NegotiatedSerializer, schema.GroupVersion{}, w, req)
 	})
 }

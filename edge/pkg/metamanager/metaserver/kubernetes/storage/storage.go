@@ -114,6 +114,44 @@ func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions)
 	return obj, err
 }
 
+// PassThrough
+// The request is routed to the dynamic controller via the metaServer.
+// If the request is approved, the response will be saved to local storage.
+// It will be acquired from local data storage if it fails.
+func (r *REST) PassThrough(ctx context.Context, options *metav1.GetOptions) ([]byte, error) {
+	info, _ := apirequest.RequestInfoFrom(ctx)
+	resp, err := func() ([]byte, error) {
+		app, err := r.Agent.Generate(ctx, metaserver.ApplicationVerb(info.Verb), *options, nil)
+		if err != nil {
+			klog.Errorf("[metaserver/passThrough] failed to generate application: %v", err)
+			return nil, err
+		}
+		err = r.Agent.Apply(app)
+		defer app.Close()
+		if err != nil {
+			klog.Errorf("[metaserver/passThrough] failed to request from cloud: %v", err)
+			return nil, err
+		}
+
+		err = imitator.DefaultV2Client.InsertOrUpdatePassThroughObj(context.TODO(), app.RespBody, app.Key)
+		if err != nil {
+			klog.Warningf("[metaserver/passThrough] failed to insert version information into database: %v", err)
+		}
+		return app.RespBody, nil
+	}()
+	if err != nil {
+		resp, err = imitator.DefaultV2Client.GetPassThroughObj(ctx, info.Path)
+		if err != nil {
+			klog.Errorf("[metaserver/reststorage] failed to get req at local: %v", err)
+			return nil, errors.NewNotFound(schema.GroupResource{Group: info.APIGroup, Resource: info.Resource}, info.Name)
+		}
+		klog.Infof("[metaserver/reststorage] successfully process get req (%v) at local", info.Path)
+	}
+
+	klog.Infof("[metaserver/passThrough] successfully process request (%v)", info.Path)
+	return resp, nil
+}
+
 func (r *REST) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	info, _ := apirequest.RequestInfoFrom(ctx)
 	// First try to list the object from remote cloud

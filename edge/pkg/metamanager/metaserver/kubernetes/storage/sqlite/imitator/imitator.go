@@ -83,9 +83,13 @@ func (s *imitator) InsertOrUpdateObj(ctx context.Context, obj runtime.Object) er
 		ResourceVersion:      objRv,
 		Value:                buf.String(),
 	}
+	return s.insertOrReplaceMetaV2(m, objRv)
+}
+
+func (s *imitator) insertOrReplaceMetaV2(m v2.MetaV2, objRv uint64) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	_, err = dbm.DBAccess.Raw("INSERT OR REPLACE INTO meta_v2 (key, groupversionresource, namespace,name,resourceversion,value) VALUES (?,?,?,?,?,?)", m.Key, m.GroupVersionResource, m.Namespace, m.Name, m.ResourceVersion, m.Value).Exec()
+	_, err := dbm.DBAccess.Raw("INSERT OR REPLACE INTO meta_v2 (key, groupversionresource, namespace,name,resourceversion,value) VALUES (?,?,?,?,?,?)", m.Key, m.GroupVersionResource, m.Namespace, m.Name, m.ResourceVersion, m.Value).Exec()
 	var maxRetryTimes = 3
 	for i := 1; err != nil; i++ {
 		klog.Errorf("failed to access database:%v", err)
@@ -97,9 +101,36 @@ func (s *imitator) InsertOrUpdateObj(ctx context.Context, obj runtime.Object) er
 	if objRv > s.GetRevision() {
 		s.SetRevision(objRv)
 	}
-	klog.V(4).Infof("[metaserver]successfully insert or update obj:%v", key)
+	klog.V(4).Infof("[metaserver]successfully insert or update obj:%v", m.Key)
 	return nil
 }
+
+func (s *imitator) InsertOrUpdatePassThroughObj(ctx context.Context, obj []byte, key string) error {
+	m := v2.MetaV2{
+		Key:   key,
+		Value: string(obj),
+	}
+	return s.insertOrReplaceMetaV2(m, 0)
+}
+
+func (s *imitator) GetPassThroughObj(ctx context.Context, key string) ([]byte, error) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	results := new([]v2.MetaV2)
+	_, err := dbm.DBAccess.QueryTable(v2.NewMetaTableName).Filter(v2.KEY, key).All(results)
+	if err != nil {
+		return nil, err
+	}
+
+	switch {
+	case len(*results) == 1:
+		klog.V(4).Infof("[metaserver]successfully insert or update obj:%v", key)
+		return []byte((*results)[0].Value), nil
+	default:
+		return nil, fmt.Errorf("the server could not find the requested resource")
+	}
+}
+
 func (s *imitator) Delete(ctx context.Context, key string) error {
 	m := v2.MetaV2{
 		Key: key,
