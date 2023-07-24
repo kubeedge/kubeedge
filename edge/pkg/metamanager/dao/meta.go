@@ -117,7 +117,7 @@ func SaveMQTTMeta(nodeName string) error {
 			APIVersion: "v1",
 		},
 		ObjectMeta: metaV1.ObjectMeta{
-			Name:      constants.DeafultMosquittoContianerName,
+			Name:      constants.DeafultMosquittoContainerName,
 			Namespace: "default",
 			UID:       uuid.NewUUID(),
 		},
@@ -125,7 +125,7 @@ func SaveMQTTMeta(nodeName string) error {
 			Containers: []coreV1.Container{
 				{
 					Name:  "mqtt",
-					Image: constants.DefaultMosquittoImage,
+					Image: "eclipse-mosquitto:1.6.15",
 					Ports: []coreV1.ContainerPort{
 						{
 							ContainerPort: 1883,
@@ -163,7 +163,7 @@ func SaveMQTTMeta(nodeName string) error {
 	}
 	mqttDataStr, _ := json.Marshal(mqttData)
 	mqttMeta := Meta{
-		Key:   fmt.Sprintf("default/pod/%s", constants.DeafultMosquittoContianerName),
+		Key:   fmt.Sprintf("default/pod/%s", constants.DeafultMosquittoContainerName),
 		Type:  "pod",
 		Value: string(mqttDataStr),
 	}

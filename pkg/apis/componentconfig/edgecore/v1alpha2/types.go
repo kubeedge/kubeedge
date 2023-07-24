@@ -362,9 +362,6 @@ type EventBus struct {
 	// skip checking other EventBus configs.
 	// default true
 	Enable bool `json:"enable"`
-	// Enable indicates whether start mqtt container when edgecore start
-	// default true
-	EnableMqttContainer bool `json:"enableMqttContainer"`
 	// MqttQOS indicates mqtt qos
 	// 0: QOSAtMostOnce, 1: QOSAtLeastOnce, 2: QOSExactlyOnce
 	// default 0
