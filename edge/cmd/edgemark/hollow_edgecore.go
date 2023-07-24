@@ -112,7 +112,7 @@ func run(config *hollowEdgeNodeConfig) {
 		return kubeletapp.RunKubelet(s, kubeDeps, false)
 	}
 
-	edged.Register(c.Modules.Edged, c.Modules.EventBus.EnableMqttContainer)
+	edged.Register(c.Modules.Edged)
 	edgehub.Register(c.Modules.EdgeHub, c.Modules.Edged.HostnameOverride)
 	metamanager.Register(c.Modules.MetaManager)
 

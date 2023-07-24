@@ -167,5 +167,6 @@ const (
 	EdgeNodeRoleKey   = "node-role.kubernetes.io/edge"
 	EdgeNodeRoleValue = ""
 
-	DeafultMosquittoContianerName = "mqtt-kubeedge"
+	DeafultMosquittoContainerName = "mqtt-kubeedge"
+	DeployMqttContainerEnv        = "DEPLOY_MQTT_CONTAINER"
 )
