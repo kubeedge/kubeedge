@@ -243,16 +243,17 @@ func (up *Upgrade) Process() error {
 		return fmt.Errorf("failed to cp file: %v", err)
 	}
 
+	// set withMqtt to false during upgrading edgecore, it will not affect the MQTT container. This is a temporary workaround and will be modified in v1.15.
 	// generate edgecore.service
 	if util.HasSystemd() {
-		err = common.GenerateServiceFile(util.KubeEdgeBinaryName, fmt.Sprintf("%s --config %s", filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), up.ConfigFilePath))
+		err = common.GenerateServiceFile(util.KubeEdgeBinaryName, fmt.Sprintf("%s --config %s", filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), up.ConfigFilePath), false)
 		if err != nil {
 			return fmt.Errorf("failed to create edgecore.service file: %v", err)
 		}
 	}
 
 	// start new edgecore service
-	err = runEdgeCore()
+	err = runEdgeCore(false)
 	if err != nil {
 		return fmt.Errorf("failed to start edgecore: %v", err)
 	}
@@ -287,14 +288,14 @@ func (up *Upgrade) Rollback() error {
 
 	// generate edgecore.service
 	if util.HasSystemd() {
-		err = common.GenerateServiceFile(util.KubeEdgeBinaryName, fmt.Sprintf("%s --config %s", filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), up.ConfigFilePath))
+		err = common.GenerateServiceFile(util.KubeEdgeBinaryName, fmt.Sprintf("%s --config %s", filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), up.ConfigFilePath), false)
 		if err != nil {
 			return fmt.Errorf("failed to create edgecore.service file: %v", err)
 		}
 	}
 
 	// start edgecore
-	err = runEdgeCore()
+	err = runEdgeCore(false)
 	if err != nil {
 		return fmt.Errorf("failed to start origin edgecore: %v", err)
 	}
