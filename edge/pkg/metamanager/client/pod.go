@@ -98,7 +98,7 @@ func (c *pods) Get(name string) (*corev1.Pod, error) {
 
 func (c *pods) Patch(name string, patchBytes []byte) (*corev1.Pod, error) {
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypePodPatch, name)
-	if name == constants.DeafultMosquittoContianerName {
+	if name == constants.DeafultMosquittoContainerName {
 		return handleMqttMeta()
 	}
 	podMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.PatchOperation, string(patchBytes))
@@ -179,7 +179,7 @@ func updatePodDB(resource string, pod *corev1.Pod) error {
 
 func handleMqttMeta() (*corev1.Pod, error) {
 	var pod corev1.Pod
-	metas, err := dao.QueryMeta("key", fmt.Sprintf("default/pod/%s", constants.DeafultMosquittoContianerName))
+	metas, err := dao.QueryMeta("key", fmt.Sprintf("default/pod/%s", constants.DeafultMosquittoContainerName))
 	if err != nil || len(*metas) != 1 {
 		return nil, fmt.Errorf("get mqtt meta failed, err: %v", err)
 	}
