@@ -200,6 +200,11 @@ jobs:
         run: |
           docker load < /home/runner/build-tools/build-tools.tar
 
+      - name: Setup Debug Session
+        uses: mxschmitt/action-tmate@v3
+        with:
+          detached: true
+
       # for QUIC protocol, we will use docker as edgecore container runtime
       # for WebSocket protocol, we will use containerd as edgecore container runtime
       # just for covering both docker and CRI runtime e2e cases
@@ -207,9 +212,6 @@ jobs:
           export PROTOCOL=${{ matrix.PROTOCOL }}
           export CONTAINER_RUNTIME="remote"
           make e2e
-
-      - name: Setup Debug Session
-        uses: mxschmitt/action-tmate@v3
 
       - uses: actions/upload-artifact@v3
         if: always()
