@@ -197,7 +197,7 @@ jobs:
           path: /home/runner/build-tools
 
       - name: Setup Debug Session
-        uses: csexton/debugger-action@master
+        uses: mxschmitt/action-tmate@v3
 
       - name: docker load kubeedge/build-tools image
         run: |
