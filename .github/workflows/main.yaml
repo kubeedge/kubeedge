@@ -196,9 +196,6 @@ jobs:
           name: build-tools-docker-artifact
           path: /home/runner/build-tools
 
-      - name: Setup Debug Session
-        uses: mxschmitt/action-tmate@v3
-
       - name: docker load kubeedge/build-tools image
         run: |
           docker load < /home/runner/build-tools/build-tools.tar
@@ -210,6 +207,9 @@ jobs:
           export PROTOCOL=${{ matrix.PROTOCOL }}
           export CONTAINER_RUNTIME="remote"
           make e2e
+
+      - name: Setup Debug Session
+        uses: mxschmitt/action-tmate@v3
 
       - uses: actions/upload-artifact@v3
         if: always()

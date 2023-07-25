@@ -50,6 +50,6 @@ ENABLE_DAEMON=true bash -x ${curpath}/hack/local-up-kubeedge.sh || {
 
 export GINKGO_TESTING_RESULT=0
 
-trap cleanup EXIT
+# trap cleanup EXIT
 
 bash -x ${curpath}/tests/scripts/fast_test.sh $1
