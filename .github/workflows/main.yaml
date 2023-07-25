@@ -196,6 +196,9 @@ jobs:
           name: build-tools-docker-artifact
           path: /home/runner/build-tools
 
+      - name: Setup Debug Session
+        uses: csexton/debugger-action@master
+
       - name: docker load kubeedge/build-tools image
         run: |
           docker load < /home/runner/build-tools/build-tools.tar
