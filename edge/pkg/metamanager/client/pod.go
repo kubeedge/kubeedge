@@ -14,6 +14,7 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 )
 
 // PodsGetter is interface to get pods
@@ -90,6 +91,9 @@ func (c *pods) Get(name string) (*corev1.Pod, error) {
 
 func (c *pods) Patch(name string, patchBytes []byte) (*corev1.Pod, error) {
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypePodPatch, name)
+	if name == constants.DeafultMosquittoContainerName {
+		return handleMqttMeta()
+	}
 	podMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.PatchOperation, string(patchBytes))
 	resp, err := c.send.SendSync(podMsg)
 	if err != nil {
@@ -141,4 +145,18 @@ func handlePodResp(content []byte) (*corev1.Pod, error) {
 		return podResp.Object, nil
 	}
 	return podResp.Object, &podResp.Err
+}
+
+func handleMqttMeta() (*corev1.Pod, error) {
+	var pod corev1.Pod
+	metas, err := dao.QueryMeta("key", fmt.Sprintf("default/pod/%s", constants.DeafultMosquittoContainerName))
+	if err != nil || len(*metas) != 1 {
+		return nil, fmt.Errorf("get mqtt meta failed, err: %v", err)
+	}
+
+	err = json.Unmarshal([]byte((*metas)[0]), &pod)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshal mqtt meta failed, err: %v", err)
+	}
+	return &pod, nil
 }
