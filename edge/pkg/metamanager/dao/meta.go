@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"fmt"
 	"strings"
 
 	"k8s.io/klog/v2"
@@ -45,6 +46,17 @@ func DeleteMetaByKey(key string) error {
 	num, err := dbm.DBAccess.QueryTable(MetaTableName).Filter("key", key).Delete()
 	klog.V(4).Infof("Delete affected Num: %d, %v", num, err)
 	return err
+}
+
+// DeleteMetaByKeyAndPodUID delete meta by key and podUID
+func DeleteMetaByKeyAndPodUID(key, podUID string) (int64, error) {
+	sqlStr := fmt.Sprintf("DELETE FROM meta WHERE key = '%s' and value LIKE '%%%s%%'", key, podUID)
+	res, err := dbm.DBAccess.Raw(sqlStr).Exec()
+	if err != nil {
+		klog.Errorf("delete pod by key %s and podUID %s failed, err: %v", key, podUID, err)
+		return 0, err
+	}
+	return res.RowsAffected()
 }
 
 // UpdateMeta update meta
