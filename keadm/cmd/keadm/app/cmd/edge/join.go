@@ -178,7 +178,7 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 	}
 
 	step.Printf("Generate systemd service file")
-	if err := common.GenerateServiceFile(util.KubeEdgeBinaryName, filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName)); err != nil {
+	if err := common.GenerateServiceFile(util.KubeEdgeBinaryName, filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), opt.WithMQTT); err != nil {
 		return fmt.Errorf("create systemd service file failed: %v", err)
 	}
 
@@ -188,7 +188,7 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 	}
 
 	step.Printf("Run EdgeCore daemon")
-	return runEdgeCore()
+	return runEdgeCore(opt.WithMQTT)
 }
 
 func createDirs() error {
@@ -275,7 +275,6 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 			if arr[0] == "" {
 				continue
 			}
-
 			if len(arr) > 1 {
 				labelsMap[arr[0]] = arr[1]
 			} else {
@@ -291,7 +290,7 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 	return common.Write2File(configFilePath, edgeCoreConfig)
 }
 
-func runEdgeCore() error {
+func runEdgeCore(withMqtt bool) error {
 	systemdExist := util.HasSystemd()
 
 	var binExec, tip string
@@ -302,6 +301,10 @@ func runEdgeCore() error {
 			common.EdgeCore, common.EdgeCore)
 	} else {
 		tip = fmt.Sprintf("KubeEdge edgecore is running, For logs visit: %s%s.log", util.KubeEdgeLogPath, util.KubeEdgeBinaryName)
+		err := os.Setenv(constants.DeployMqttContainerEnv, strconv.FormatBool(withMqtt))
+		if err != nil {
+			klog.Errorf("Set Environment %s failed, err: %v", constants.DeployMqttContainerEnv, err)
+		}
 		binExec = fmt.Sprintf(
 			"%s > %skubeedge/edge/%s.log 2>&1 &",
 			filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName),

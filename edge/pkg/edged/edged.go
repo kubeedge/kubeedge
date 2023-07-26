@@ -30,6 +30,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
@@ -59,6 +60,7 @@ import (
 	kubebridge "github.com/kubeedge/kubeedge/edge/pkg/edged/kubeclientbridge"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	metaclient "github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/pkg/version"
 )
@@ -102,6 +104,15 @@ func (e *edged) Enable() bool {
 
 func (e *edged) Start() {
 	klog.Info("Starting edged...")
+
+	// edged saves the data of mqtt container in sqlite3 and starts it. This is a temporary workaround and will be modified in v1.15.
+	withMqtt, err := strconv.ParseBool(os.Getenv(constants.DeployMqttContainerEnv))
+	if err == nil && withMqtt {
+		err := dao.SaveMQTTMeta(e.nodeName)
+		if err != nil {
+			klog.ErrorS(err, "Start mqtt container failed")
+		}
+	}
 
 	go func() {
 		err := kubeletserver.Run(e.context, e.KuberServer, e.KubeletDeps, e.FeatureGate)
