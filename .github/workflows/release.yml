@@ -9,7 +9,7 @@ env:
 jobs:
   release-assests:
     name: release kubeedge components
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         target:
@@ -60,7 +60,7 @@ jobs:
           - edgemark
           - installation-package
           - controllermanager
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     steps:
       - name: checkout code
         uses: actions/checkout@v2
