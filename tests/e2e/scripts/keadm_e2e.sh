@@ -50,6 +50,10 @@ function build_image() {
   make image WHAT=installation-package -f $KUBEEDGE_ROOT/Makefile
   kind load docker-image kubeedge/cloudcore:$IMAGE_TAG --name test
   kind load docker-image kubeedge/installation-package:$IMAGE_TAG --name test
+
+  set +e
+  docker rmi $(docker images -f "dangling=true" -q)
+  set -Ee
 }
 
 function start_kubeedge() {
@@ -102,7 +106,7 @@ function run_test() {
 
 set -Ee
 trap cleanup EXIT
-trap cleanup ERR
+#trap cleanup ERR
 
 echo -e "\nBuilding ginkgo test cases..."
 build_ginkgo
