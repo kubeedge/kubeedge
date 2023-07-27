@@ -352,6 +352,7 @@ func (m *metaManager) processRemote(message model.Message) {
 			return
 		}
 		mapContent, ok := resp.GetContent().(map[string]interface{})
+		respDB := resp
 		if ok && isObjectResp(mapContent) {
 			if mapContent["Err"] != nil {
 				klog.V(4).Infof("process remote objResp err: %v", mapContent["Err"])
@@ -359,9 +360,9 @@ func (m *metaManager) processRemote(message model.Message) {
 				return
 			}
 			klog.V(4).Infof("process remote objResp: %+v", mapContent["Object"])
-			resp.Content = mapContent["Object"]
+			respDB.Content = mapContent["Object"]
 		}
-		if err := m.handleMessage(&resp); err != nil {
+		if err := m.handleMessage(&respDB); err != nil {
 			feedbackError(err, message)
 			return
 		}
