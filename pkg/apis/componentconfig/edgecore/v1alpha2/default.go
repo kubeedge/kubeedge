@@ -66,7 +66,6 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				TailoredKubeletFlag: TailoredKubeletFlag{
 					KubeConfig:       constants.DefaultKubeletConfig,
 					HostnameOverride: hostnameOverride,
-					NodeIP:           localIP,
 					ContainerRuntimeOptions: ContainerRuntimeOptions{
 						ContainerRuntime:          constants.DefaultRuntimeType,
 						DockershimRootDirectory:   constants.DefaultDockershimRootDir,
@@ -213,7 +212,6 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 				TailoredKubeletFlag: TailoredKubeletFlag{
 					KubeConfig:       constants.DefaultKubeletConfig,
 					HostnameOverride: hostnameOverride,
-					NodeIP:           localIP,
 					ContainerRuntimeOptions: ContainerRuntimeOptions{
 						ContainerRuntime:          constants.DefaultRuntimeType,
 						DockershimRootDirectory:   constants.DefaultDockershimRootDir,
