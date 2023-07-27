@@ -12,7 +12,7 @@ env:
 
 jobs:
   lint:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
     name: Verify vendor, licenses, do lint
     env:
@@ -47,7 +47,7 @@ jobs:
         working-directory: ./src/github.com/${{ github.repository }}
 
   image-prepare:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
     name: Prepare kubeedge/build-tools image
     steps:
@@ -64,7 +64,7 @@ jobs:
           path: /home/runner/build-tools
 
   build:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
     name: Multiple build
     needs: image-prepare
@@ -100,7 +100,7 @@ jobs:
       - run: make crossbuild WHAT=cloudcore ARM_VERSION=GOARM8
 
   basic_test:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
     name: Unit test, integration test edge
     env:
@@ -130,7 +130,7 @@ jobs:
       - run: make integrationtest
 
   e2e_test:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
     name: E2e test
     needs: image-prepare
@@ -178,7 +178,7 @@ jobs:
             /tmp/edgecore.log
 
   keadm_deprecated_e2e_test:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
     name: Keadm deprecated e2e test
     needs: image-prepare
@@ -219,7 +219,7 @@ jobs:
       - run: make keadm_deprecated_e2e
 
   keadm_e2e_test:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
     name: Keadm e2e test
     env:
@@ -254,7 +254,7 @@ jobs:
       - run: make keadm_e2e
 
   docker_build:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
     name: Multiple docker image build
     steps:
