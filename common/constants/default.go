@@ -148,4 +148,7 @@ const (
 	DefaultBurst                    = 60
 	// MaxRespBodyLength is the max length of http response body
 	MaxRespBodyLength = 1 << 20 // 1 MiB
+
+	DeafultMosquittoContainerName = "mqtt-kubeedge"
+	DeployMqttContainerEnv        = "DEPLOY_MQTT_CONTAINER"
 )
