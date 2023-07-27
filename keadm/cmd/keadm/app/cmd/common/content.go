@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 // TODO (@zc2638) Need to migrate util's constants to common
@@ -32,14 +34,15 @@ Type=simple
 ExecStart=%s
 Restart=always
 RestartSec=10
+Environment=%s
 
 [Install]
 WantedBy=multi-user.target
 `
 
-func GenerateServiceFile(processPath string, process string) error {
+func GenerateServiceFile(processPath string, process string, withMqtt bool) error {
 	filename := fmt.Sprintf("%s.service", process)
-	content := fmt.Sprintf(serviceFileTemplate, process, filepath.Join(processPath, process))
+	content := fmt.Sprintf(serviceFileTemplate, process, filepath.Join(processPath, process), fmt.Sprintf("%s=%t", constants.DeployMqttContainerEnv, withMqtt))
 	serviceFilePath := fmt.Sprintf("/etc/systemd/system/%s", filename)
 	return os.WriteFile(serviceFilePath, []byte(content), os.ModePerm)
 }
