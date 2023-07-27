@@ -20,6 +20,7 @@ import (
 	"crypto/tls"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -32,6 +33,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgestream/config"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/pkg/stream"
+	"github.com/kubeedge/kubeedge/pkg/util"
 )
 
 type edgestream struct {
@@ -42,18 +44,33 @@ type edgestream struct {
 
 var _ core.Module = (*edgestream)(nil)
 
-func newEdgeStream(enable bool, hostnameOverride, nodeIP string) *edgestream {
+func newEdgeStream(enable bool, hostnameOverride, nodeIP string) (*edgestream, error) {
+	var err error
+	if nodeIP == "" {
+		nodeIP, err = util.GetLocalIP(util.GetHostname())
+		if err != nil {
+			klog.Errorf("Failed to get Local IP address: %v", err)
+			return nil, err
+		}
+		klog.Infof("Get node local IP address successfully: %s", nodeIP)
+	}
+
 	return &edgestream{
 		enable:           enable,
 		hostnameOverride: hostnameOverride,
 		nodeIP:           nodeIP,
-	}
+	}, nil
 }
 
 // Register register edgestream
 func Register(s *v1alpha2.EdgeStream, hostnameOverride, nodeIP string) {
 	config.InitConfigure(s)
-	core.Register(newEdgeStream(s.Enable, hostnameOverride, nodeIP))
+	edgeStream, err := newEdgeStream(s.Enable, hostnameOverride, nodeIP)
+	if err != nil {
+		klog.Errorf("init new edged error, %v", err)
+		os.Exit(1)
+	}
+	core.Register(edgeStream)
 }
 
 func (e *edgestream) Name() string {

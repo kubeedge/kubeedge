@@ -54,7 +54,6 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				TailoredKubeletConfig: &defaultTailedKubeletConfig,
 				TailoredKubeletFlag: TailoredKubeletFlag{
 					HostnameOverride: hostnameOverride,
-					NodeIP:           localIP,
 					ContainerRuntimeOptions: ContainerRuntimeOptions{
 						ContainerRuntime:          constants.DefaultRuntimeType,
 						PodSandboxImage:           constants.DefaultPodSandboxImage,
@@ -190,7 +189,6 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 				TailoredKubeletConfig: &defaultTailedKubeletConfig,
 				TailoredKubeletFlag: TailoredKubeletFlag{
 					HostnameOverride: hostnameOverride,
-					NodeIP:           localIP,
 					ContainerRuntimeOptions: ContainerRuntimeOptions{
 						ContainerRuntime:          constants.DefaultRuntimeType,
 						PodSandboxImage:           constants.DefaultPodSandboxImage,
