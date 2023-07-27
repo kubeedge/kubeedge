@@ -69,7 +69,12 @@ func (c *pods) Delete(name string, options metav1.DeleteOptions) error {
 		return nil
 	}
 
-	return err
+	err, ok = msg.Content.(error)
+	if ok {
+		return err
+	}
+
+	return fmt.Errorf("delete pod failed, response content type unsupported")
 }
 
 func (c *pods) Get(name string) (*corev1.Pod, error) {
