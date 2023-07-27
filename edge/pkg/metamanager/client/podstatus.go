@@ -40,6 +40,10 @@ func (c *podStatus) Create(ps *edgeapi.PodStatusRequest) (*edgeapi.PodStatusRequ
 }
 
 func (c *podStatus) Update(rsName string, ps edgeapi.PodStatusRequest) error {
+	if ps.Name == constants.DeafultMosquittoContainerName {
+		return nil
+	}
+
 	podStatusMsg := message.BuildMsg(commodule.MetaGroup, "", commodule.EdgedModuleName, c.namespace+"/"+model.ResourceTypePodStatus+"/"+rsName, model.UpdateOperation, ps)
 	resp, err := c.send.SendSync(podStatusMsg)
 	if err != nil {

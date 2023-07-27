@@ -32,6 +32,7 @@ import (
 	"os"
 	"path"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -117,6 +118,7 @@ import (
 	csiplugin "github.com/kubeedge/kubeedge/edge/pkg/edged/volume/csi"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/version"
 )
@@ -302,6 +304,16 @@ func (e *edged) GetRequestedContainersInfo(containerName string, options cadviso
 
 func (e *edged) Start() {
 	klog.Info("Starting edged...")
+
+	// edged saves the data of mqtt container in sqlite3 and starts it. This is a temporary workaround and will be modified in v1.15.
+	withMqtt, err := strconv.ParseBool(os.Getenv(constants.DeployMqttContainerEnv))
+	if err == nil && withMqtt {
+		err := dao.SaveMQTTMeta(e.nodeName)
+		if err != nil {
+			klog.ErrorS(err, "Start mqtt container failed")
+		}
+	}
+
 	e.volumePluginMgr = NewInitializedVolumePluginMgr(e, ProbeVolumePlugins(""))
 
 	if err := e.initializeModules(); err != nil {
@@ -371,7 +383,7 @@ func (e *edged) Start() {
 	go e.pluginManager.Run(edgedutil.NewSourcesReady(e.isInitPodReady), utilwait.NeverStop)
 
 	// start the CPU manager in the clcm
-	err := e.clcm.StartCPUManager(e.GetActivePods, edgedutil.NewSourcesReady(e.isInitPodReady), e.statusManager, e.runtimeService)
+	err = e.clcm.StartCPUManager(e.GetActivePods, edgedutil.NewSourcesReady(e.isInitPodReady), e.statusManager, e.runtimeService)
 	if err != nil {
 		klog.Errorf("Failed to start container manager, err: %v", err)
 		return
