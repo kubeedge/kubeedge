@@ -4,16 +4,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 )
 
 //PodsGetter is interface to get pods
@@ -106,7 +109,7 @@ func (c *pods) Patch(name string, patchBytes []byte) (*corev1.Pod, error) {
 		return nil, fmt.Errorf("parse message to pod failed, err: %v", err)
 	}
 
-	return handlePodResp(content)
+	return handlePodResp(resource, content)
 }
 
 func handlePodFromMetaDB(name string, content []byte) (*corev1.Pod, error) {
@@ -135,7 +138,7 @@ func handlePodFromMetaDB(name string, content []byte) (*corev1.Pod, error) {
 	return pod, nil
 }
 
-func handlePodResp(content []byte) (*corev1.Pod, error) {
+func handlePodResp(resource string, content []byte) (*corev1.Pod, error) {
 	var podResp PodResp
 	err := json.Unmarshal(content, &podResp)
 	if err != nil {
@@ -143,7 +146,30 @@ func handlePodResp(content []byte) (*corev1.Pod, error) {
 	}
 
 	if reflect.DeepEqual(podResp.Err, apierrors.StatusError{}) {
+		if err = updatePodDB(resource, podResp.Object); err != nil {
+			return nil, fmt.Errorf("update pod meta failed, err: %v", err)
+		}
 		return podResp.Object, nil
 	}
 	return podResp.Object, &podResp.Err
+}
+
+// updatePodDB update pod meta when patch pod successful
+func updatePodDB(resource string, pod *corev1.Pod) error {
+	pod.APIVersion = "v1"
+	pod.Kind = "Pod"
+	podContent, err := json.Marshal(pod)
+	if err != nil {
+		klog.Errorf("unmarshal resp pod failed, err: %v", err)
+		return err
+	}
+
+	podKey := strings.Replace(resource,
+		constants.ResourceSep+model.ResourceTypePodPatch+constants.ResourceSep,
+		constants.ResourceSep+model.ResourceTypePod+constants.ResourceSep, 1)
+	meta := &dao.Meta{
+		Key:   podKey,
+		Type:  model.ResourceTypePod,
+		Value: string(podContent)}
+	return dao.InsertOrUpdate(meta)
 }
