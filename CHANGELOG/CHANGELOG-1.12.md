@@ -1,4 +1,9 @@
 
+* [v1.12.3](#v1123)
+    * [Downloads for v1.12.3](#downloads-for-v1123)
+    * [KubeEdge v1.12.3 Release Notes](#kubeedge-v1122-release-notes)
+        * [Changelog since v1.12.2](#changelog-since-v1122)
+        * [Important Steps before Upgrading](#important-steps-before-upgrading-for-1123)
 * [v1.12.2](#v1122)
     * [Downloads for v1.12.2](#downloads-for-v1122)
     * [KubeEdge v1.12.2 Release Notes](#kubeedge-v1122-release-notes)
@@ -15,6 +20,23 @@
         * [Other Notable Changes](#other-notable-changes)
         * [Bug Fixes](#bug-fixes)
     
+# v1.12.3
+
+## Downloads for v1.12.3
+
+Download v1.12.3 in the [v1.12.3 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.12.3).
+
+## KubeEdge v1.12.3 Release Notes
+
+### Changelog since v1.12.2
+
+- Fix MQTT container exited abnormally when edgecore using cri runtime. ([#4876](https://github.com/kubeedge/kubeedge/pull/4876), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Deal with error in delete pod upstream msg. ([#4879](https://github.com/kubeedge/kubeedge/pull/4879), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Update pod db when patch pod successfully. ([#4892](https://github.com/kubeedge/kubeedge/pull/4892), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Use nodeIP initialization in Kubelet, support reporting nodeIP dynamically . ([#4893](https://github.com/kubeedge/kubeedge/pull/4893), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+
+### Important Steps before Upgrading for 1.12.3
+- In previous versions, when edge node uses remote runtime (not docker runtime), using `keadm join` and specifying `--with-mqtt=true` to install edgecore will cause the Mosquitto container exits abnormally. In this release, this problem has been fixed. Users can specify `--with-mqtt=true` to start Mosquitto container when installing edgecore with `keadm join`.
 
 # v1.12.2
 
