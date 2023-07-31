@@ -1,4 +1,9 @@
 
+* [v1.13.1](#v1131)
+    * [Downloads for v1.13.1](#downloads-for-v1131)
+    * [KubeEdge v1.13.1 Release Notes](#kubeedge-v1131-release-notes)
+        * [Changelog since v1.13.0](#changelog-since-v1130)
+        * [Important Steps before Upgrading](#important-steps-before-upgrading-for-1131)
 * [v1.13.0](#v1130)
     * [Downloads for v1.13.0](#downloads-for-v1130)
     * [KubeEdge v1.13 Release Notes](#kubeedge-v113-release-notes)
@@ -7,6 +12,29 @@
         * [Other Notable Changes](#other-notable-changes)
         * [Bug Fixes](#bug-fixes)
 
+
+
+# v1.13.1
+
+## Downloads for v1.13.1
+
+Download v1.13.1 in the [v1.13.1 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.13.1).
+
+## KubeEdge v1.13.1 Release Notes
+
+### Changelog since v1.13.0
+
+- Fix MQTT container exited abnormally when edgecore using cri runtime. ([#4875](https://github.com/kubeedge/kubeedge/pull/4875), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Deal with error in delete pod upstream msg. ([#4878](https://github.com/kubeedge/kubeedge/pull/4878), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Update pod db when patch pod successfully. ([#4891](https://github.com/kubeedge/kubeedge/pull/4891), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Use nodeIP initialization in Kubelet, support reporting nodeIP dynamically . ([#4894](https://github.com/kubeedge/kubeedge/pull/4894), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Fix delete statefulset pod failed. ([#4873](https://github.com/kubeedge/kubeedge/pull/4873), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Fix container terminated when edgecore restart. ([#4870](https://github.com/kubeedge/kubeedge/pull/4870), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Fix iptables-manager and controller-manager image name. ([#4620](https://github.com/kubeedge/kubeedge/pull/4620), [@gy95](https://github.com/gy95))
+- Wait for cache sync when cloudcore reboot. ([#4620](https://github.com/kubeedge/kubeedge/pull/4786), [@vincentgoat](https://github.com/vincentgoat))
+
+### Important Steps before Upgrading for 1.13.1
+- In previous versions, when edge node uses remote runtime (not docker runtime), using `keadm join` and specifying `--with-mqtt=true` to install edgecore will cause the Mosquitto container exits abnormally. In this release, this problem has been fixed. Users can specify `--with-mqtt=true` to start Mosquitto container when installing edgecore with `keadm join`.
 
 
 # v1.13.0

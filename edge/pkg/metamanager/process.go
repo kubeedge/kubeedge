@@ -147,6 +147,38 @@ func (m *metaManager) handleMessage(message *model.Message) error {
 	return nil
 }
 
+func processDeletePodDB(message model.Message) error {
+	var msgPod corev1.Pod
+	msgContent, err := message.GetContentData()
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(msgContent, &msgPod)
+	if err != nil {
+		return err
+	}
+
+	num, err := dao.DeleteMetaByKeyAndPodUID(message.GetResource(), string(msgPod.UID))
+	if err != nil {
+		return err
+	}
+	if num == 0 {
+		klog.V(2).Infof("don't need to delete pod DB")
+		return nil
+	}
+
+	podPatchKey := strings.Replace(message.GetResource(),
+		constants.ResourceSep+model.ResourceTypePod+constants.ResourceSep,
+		constants.ResourceSep+model.ResourceTypePodPatch+constants.ResourceSep, 1)
+	err = dao.DeleteMetaByKey(podPatchKey)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (m *metaManager) processInsert(message model.Message) {
 	imitator.DefaultV2Client.Inject(message)
 
@@ -267,56 +299,6 @@ func (m *metaManager) processDelete(message model.Message) {
 	sendToCloud(resp)
 }
 
-func processDeletePodDB(message model.Message) error {
-	podDBList, err := dao.QueryMeta("key", message.GetResource())
-	if err != nil {
-		return err
-	}
-
-	podList := *podDBList
-	if len(podList) == 0 {
-		klog.Infof("no pod with key %s key in DB", message.GetResource())
-		return nil
-	}
-
-	var podDB corev1.Pod
-	err = json.Unmarshal([]byte(podList[0]), &podDB)
-	if err != nil {
-		return err
-	}
-
-	var msgPod corev1.Pod
-	msgContent, err := message.GetContentData()
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal(msgContent, &msgPod)
-	if err != nil {
-		return err
-	}
-
-	if podDB.UID != msgPod.UID {
-		klog.Warning("pod UID is not equal to pod stored in DB, don't need to delete pod DB")
-		return nil
-	}
-
-	err = dao.DeleteMetaByKey(message.GetResource())
-	if err != nil {
-		return err
-	}
-
-	podPatchKey := strings.Replace(message.GetResource(),
-		constants.ResourceSep+model.ResourceTypePod+constants.ResourceSep,
-		constants.ResourceSep+model.ResourceTypePodPatch+constants.ResourceSep, 1)
-	err = dao.DeleteMetaByKey(podPatchKey)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (m *metaManager) processQuery(message model.Message) {
 	resKey, resType, resID := parseResource(&message)
 	var metas *[]string
@@ -370,6 +352,7 @@ func (m *metaManager) processRemote(message model.Message) {
 			return
 		}
 		mapContent, ok := resp.GetContent().(map[string]interface{})
+		respDB := resp
 		if ok && isObjectResp(mapContent) {
 			if mapContent["Err"] != nil {
 				klog.V(4).Infof("process remote objResp err: %v", mapContent["Err"])
@@ -377,9 +360,9 @@ func (m *metaManager) processRemote(message model.Message) {
 				return
 			}
 			klog.V(4).Infof("process remote objResp: %+v", mapContent["Object"])
-			resp.Content = mapContent["Object"]
+			respDB.Content = mapContent["Object"]
 		}
-		if err := m.handleMessage(&resp); err != nil {
+		if err := m.handleMessage(&respDB); err != nil {
 			feedbackError(err, message)
 			return
 		}

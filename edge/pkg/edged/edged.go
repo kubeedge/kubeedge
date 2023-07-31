@@ -30,6 +30,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
@@ -57,6 +58,7 @@ import (
 	kubebridge "github.com/kubeedge/kubeedge/edge/pkg/edged/kubeclientbridge"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	metaclient "github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/pkg/version"
 )
@@ -118,6 +120,15 @@ func (e *edged) Enable() bool {
 
 func (e *edged) Start() {
 	klog.Info("Starting edged...")
+
+	// edged saves the data of mqtt container in sqlite3 and starts it. This is a temporary workaround and will be modified in v1.15.
+	withMqtt, err := strconv.ParseBool(os.Getenv(constants.DeployMqttContainerEnv))
+	if err == nil && withMqtt {
+		err := dao.SaveMQTTMeta(e.nodeName)
+		if err != nil {
+			klog.ErrorS(err, "Start mqtt container failed")
+		}
+	}
 
 	go func() {
 		err := DefaultRunLiteKubelet(e.context, e.KubeletServer, e.KubeletDeps, e.FeatureGate)
@@ -314,8 +325,6 @@ func (e *edged) handlePodListFromMetaManager(content []byte, updatesChan chan<- 
 	}
 
 	var pods []*v1.Pod
-	var podsUpdate []*v1.Pod
-
 	for _, list := range lists {
 		var pod v1.Pod
 		err = json.Unmarshal([]byte(list), &pod)
@@ -323,17 +332,12 @@ func (e *edged) handlePodListFromMetaManager(content []byte, updatesChan chan<- 
 			return err
 		}
 
-		// if edge-core stop or panic when pod is deleting, pod need add into podDeletionQueue after edge-core restart.
 		if filterPodByNodeName(&pod, e.nodeName) {
-			if pod.DeletionTimestamp == nil {
-				pods = append(pods, &pod)
-			} else {
-				podsUpdate = append(podsUpdate, &pod)
-			}
+			pods = append(pods, &pod)
 		}
 	}
 
-	updates := &kubelettypes.PodUpdate{Op: kubelettypes.SET, Pods: podsUpdate, Source: kubelettypes.ApiserverSource}
+	updates := &kubelettypes.PodUpdate{Op: kubelettypes.SET, Pods: pods, Source: kubelettypes.ApiserverSource}
 	updatesChan <- *updates
 
 	return nil

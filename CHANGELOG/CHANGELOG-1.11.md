@@ -1,4 +1,9 @@
 
+* [v1.11.3](#v1113)
+    * [Downloads for v1.11.3](#downloads-for-v1113)
+    * [KubeEdge v1.11.3 Release Notes](#kubeedge-v1113-release-notes)
+        * [Changelog since v1.11.2](#changelog-since-v1112)
+        * [Important Steps before Upgrading](#important-steps-before-upgrading-for-1113)
 * [v1.11.2](#v1112)
     * [Downloads for v1.11.2](#downloads-for-v1112)
     * [KubeEdge v1.11.2 Release Notes](#kubeedge-v1112-release-notes)
@@ -14,6 +19,22 @@
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
         * [Other Notable Changes](#other-notable-changes)
         * [Bug Fixes](#bug-fixes)
+
+
+# v1.11.3
+
+## Downloads for v1.11.3 
+
+Download v1.11.3 in the [v1.11.3 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.11.3).
+
+## KubeEdge v1.11.3 Release Notes
+
+### Changelog since v1.11.2
+
+- Fix MQTT container exited abnormally when edgecore using cri runtime. ([#4900](https://github.com/kubeedge/kubeedge/pull/4900), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+
+### Important Steps before Upgrading for 1.11.3
+- In previous versions, when edge node uses remote runtime (not docker runtime), using `keadm join` and specifying `--with-mqtt=true` to install edgecore will cause the Mosquitto container exits abnormally. In this release, this problem has been fixed. Users can specify `--with-mqtt=true` to start Mosquitto container when installing edgecore with `keadm join`.
 
 
 # v1.11.2
