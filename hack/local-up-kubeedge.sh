@@ -21,6 +21,7 @@ LOG_LEVEL=${LOG_LEVEL:-2}
 TIMEOUT=${TIMEOUT:-60}s
 PROTOCOL=${PROTOCOL:-"WebSocket"}
 CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-"remote"}
+echo -e "The installation of the cni plugin will overwrite the cni config file. Use export CNI_CONFIG_FILE=false to disable it."
 
 if [[ "${CLUSTER_NAME}x" == "x" ]];then
     CLUSTER_NAME="test"
@@ -254,12 +255,6 @@ build_edgecore
 
 kind_up_cluster
 
-# install CNI plugins
-if [[ "${CONTAINER_RUNTIME}" = "remote" ]]; then
-  # we need to install CNI plugins only when we use remote(containerd) as edgecore container runtime
-  install_cni_plugins
-fi
-
 export KUBECONFIG=$HOME/.kube/config
 
 check_control_plane_ready
@@ -277,6 +272,12 @@ create_serviceaccountaccess_crd
 generate_streamserver_cert
 
 start_cloudcore
+
+# install CNI plugins
+if [[ "${CONTAINER_RUNTIME}" = "remote" ]]; then
+# we need to install CNI plugins only when we use remote(containerd) as edgecore container runtime
+install_cni_plugins
+fi
 
 sleep 2
 
