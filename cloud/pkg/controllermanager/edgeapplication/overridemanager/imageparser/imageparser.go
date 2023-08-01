@@ -157,10 +157,11 @@ func Parse(image string) (*Components, error) {
 		comp.hostname, comp.repository = SplitHostname(named.Name())
 	}
 
-	if tagged, ok := ref.(reference.Tagged); ok {
-		comp.tag = tagged.Tag()
-	} else if digested, ok := ref.(reference.Digested); ok {
-		comp.digest = digested.Digest().String()
+	switch taggedOrDigested := ref.(type) {
+	case reference.Tagged:
+		comp.tag = taggedOrDigested.Tag()
+	case reference.Digested:
+		comp.digest = taggedOrDigested.Digest().String()
 	}
 
 	return comp, nil
