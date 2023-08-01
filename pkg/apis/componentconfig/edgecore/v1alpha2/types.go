@@ -727,6 +727,7 @@ type TailoredKubeletFlag struct {
 	// registerWithTaints are an array of taints to add to a node object when
 	// the edgecore registers itself. This only takes effect when registerNode
 	// is true and upon the initial registration of the node.
+	// DEPRECATED: This parameter should be set via the TailoredKubeletConfig
 	RegisterWithTaints []core.Taint `json:"registerWithTaints,omitempty"`
 	// WindowsService should be set to true if kubelet is running as a service on Windows.
 	// Its corresponding flag only gets registered in Windows builds.
