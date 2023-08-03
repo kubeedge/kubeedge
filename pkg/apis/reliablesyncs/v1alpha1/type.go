@@ -48,7 +48,7 @@ type ClusterObjectSyncList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	// List of ClusterObjectSync.
-	Items []ObjectSync `json:"items"`
+	Items []ClusterObjectSync `json:"items"`
 }
 
 // +genclient
