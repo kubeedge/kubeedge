@@ -259,7 +259,13 @@ jobs:
 
   keadm_e2e_test:
     runs-on: ubuntu-22.04
-    timeout-minutes: 30
+    strategy:
+      matrix:
+        VERSION:
+          - kindest/node:v1.24.0
+          - kindest/node:v1.23.0
+          - kindest/node:v1.22.0
+    timeout-minutes: 60
     name: Keadm e2e test
     env:
       GO111MODULE: on
@@ -290,7 +296,10 @@ jobs:
         with:
           version: v3.4.0
 
-      - run: make keadm_e2e
+      - name: Run keadm_e2e
+        run: |
+          export KIND_IMAGE=${{ matrix.VERSION }}
+          make keadm_e2e  
 
   docker_build:
     runs-on: ubuntu-22.04

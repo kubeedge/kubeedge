@@ -19,6 +19,7 @@ WORKDIR=$(dirname $0)
 E2E_DIR=$(realpath $(dirname $0)/..)
 IMAGE_TAG=$(git describe --tags)
 KUBEEDGE_VERSION=$IMAGE_TAG
+KIND_IMAGE=${1:-"kindest/node:v1.24.0"}
 
 source "${KUBEEDGE_ROOT}/hack/lib/install.sh"
 
@@ -27,6 +28,7 @@ function cleanup() {
   helm uninstall cloudcore -n kubeedge && kubectl delete ns kubeedge  || true
   kind delete cluster --name test
   sudo rm -rf /var/log/kubeedge /etc/kubeedge /etc/systemd/system/edgecore.service $E2E_DIR/e2e_keadm/e2e_keadm.test $E2E_DIR/config.json
+  docker system prune -f
 }
 
 function build_ginkgo() {
@@ -35,15 +37,17 @@ function build_ginkgo() {
 }
 
 function prepare_cluster() {
-  kind create cluster --name test
+    echo "The current run version is ${KIND_IMAGE}"
+    kind create cluster --name test --image ${KIND_IMAGE}
 
-  echo "wait the control-plane ready..."
-  kubectl wait --for=condition=Ready node/test-control-plane --timeout=60s
+    echo "wait the control-plane ready..."
+    kubectl wait --for=condition=Ready node/test-control-plane --timeout=60s
 
-  kubectl create clusterrolebinding system:anonymous --clusterrole=cluster-admin --user=system:anonymous
+    kubectl create clusterrolebinding system:anonymous --clusterrole=cluster-admin --user=system:anonymous
 
-  # edge side don't support kind cni now, delete kind cni plugin for workaround
-  kubectl delete daemonset kindnet -nkube-system
+    # edge side don't support kind cni now, delete kind cni plugin for workaround
+    kubectl delete daemonset kindnet -nkube-system
+    docker system prune -f
 }
 
 function build_image() {
@@ -79,7 +83,8 @@ function start_kubeedge() {
       sleep 3
       kubectl get secret -nkubeedge 2>/dev/null | grep -q tokensecret && break
   done
-  
+
+  docker system prune -f
   cd $KUBEEDGE_ROOT
   export TOKEN=$(sudo /usr/local/bin/keadm gettoken --kube-config=$KUBECONFIG)
   sudo systemctl set-environment CHECK_EDGECORE_ENVIRONMENT="false"

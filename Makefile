@@ -327,8 +327,9 @@ keadm_e2e:
 	@echo "KEADM_E2E_HELP_INFO"
 else
 keadm_e2e:
-	tests/scripts/keadm_e2e.sh
+	tests/scripts/keadm_e2e.sh ${KIND_IMAGE}
 endif
+
 
 define CLEAN_HELP_INFO
 # Clean up the output of make.
