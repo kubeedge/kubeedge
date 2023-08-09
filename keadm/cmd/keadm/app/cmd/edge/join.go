@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -212,9 +213,9 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 	// if edgecore start, it will get ca/certs from cloud
 	// if ca/certs generated, we can remove bootstrap file
 	err = wait.Poll(10*time.Second, 300*time.Second, func() (bool, error) {
-		if util.FileExists(edgeCoreConfig.Modules.EdgeHub.TLSCAFile) &&
-			util.FileExists(edgeCoreConfig.Modules.EdgeHub.TLSCertFile) &&
-			util.FileExists(edgeCoreConfig.Modules.EdgeHub.TLSPrivateKeyFile) {
+		if util.FileExists(path.Join(opt.CertPath, "ca/rootCA.crt")) &&
+			util.FileExists(path.Join(opt.CertPath, "certs/server.crt")) &&
+			util.FileExists(path.Join(opt.CertPath, "certs/server.key")) {
 			return true, nil
 		}
 		return false, nil
@@ -313,6 +314,11 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 		edgeCoreConfig.Modules.EdgeHub.HTTPServer = "https://" + net.JoinHostPort(host, "10002")
 	}
 	edgeCoreConfig.Modules.EdgeStream.TunnelServer = net.JoinHostPort(host, strconv.Itoa(constants.DefaultTunnelPort))
+	if opt.CertPath != "" {
+		edgeCoreConfig.Modules.EdgeHub.TLSCAFile = path.Join(opt.CertPath, "ca/rootCA.crt")
+		edgeCoreConfig.Modules.EdgeHub.TLSCertFile = path.Join(opt.CertPath, "certs/server.crt")
+		edgeCoreConfig.Modules.EdgeHub.TLSPrivateKeyFile = path.Join(opt.CertPath, "certs/server.key")
+	}
 
 	if len(opt.Labels) > 0 {
 		edgeCoreConfig.Modules.Edged.NodeLabels = setEdgedNodeLabels(opt)
@@ -380,6 +386,11 @@ func createV1alpha1EdgeConfigFiles(opt *common.JoinOptions) error {
 		edgeCoreConfig.Modules.EdgeHub.HTTPServer = "https://" + net.JoinHostPort(host, "10002")
 	}
 	edgeCoreConfig.Modules.EdgeStream.TunnelServer = net.JoinHostPort(host, strconv.Itoa(constants.DefaultTunnelPort))
+	if opt.CertPath != "" {
+		edgeCoreConfig.Modules.EdgeHub.TLSCAFile = path.Join(opt.CertPath, "ca/rootCA.crt")
+		edgeCoreConfig.Modules.EdgeHub.TLSCertFile = path.Join(opt.CertPath, "certs/server.crt")
+		edgeCoreConfig.Modules.EdgeHub.TLSPrivateKeyFile = path.Join(opt.CertPath, "certs/server.key")
+	}
 
 	if len(opt.Labels) > 0 {
 		edgeCoreConfig.Modules.Edged.Labels = setEdgedNodeLabels(opt)

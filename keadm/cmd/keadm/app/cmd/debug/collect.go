@@ -259,7 +259,7 @@ func collectEdgecoreData(tmpPath string, config *v1alpha2.EdgeCoreConfig, ops *c
 		}
 	} else {
 		printDetail(fmt.Sprintf("not found cert config, use default path: %s", tmpPath))
-		if err = CopyFile(common.DefaultCertPath+"/", tmpPath); err != nil {
+		if err = CopyFile(common.DefaultCertPath+"certs/", tmpPath); err != nil {
 			return err
 		}
 	}
