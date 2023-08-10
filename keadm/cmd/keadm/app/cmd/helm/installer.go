@@ -58,6 +58,7 @@ var (
 type KubeCloudHelmInstTool struct {
 	util.Common
 	AdvertiseAddress string
+	DNSNames         string
 	Manifests        string
 	Namespace        string
 	Sets             []string
@@ -203,6 +204,12 @@ func (cu *KubeCloudHelmInstTool) beforeRenderer(baseHelmRoot string) error {
 		if cu.AdvertiseAddress != "" {
 			for index, addr := range strings.Split(cu.AdvertiseAddress, ",") {
 				cu.Sets = append(cu.Sets, fmt.Sprintf("%s[%d]=%s", "cloudCore.modules.cloudHub.advertiseAddress", index, addr))
+			}
+		}
+
+		if cu.DNSNames != "" {
+			for index, addr := range strings.Split(cu.DNSNames, ",") {
+				cu.Sets = append(cu.Sets, fmt.Sprintf("%s[%d]=%s", "cloudCore.modules.cloudHub.dnsNames", index, addr))
 			}
 		}
 	}

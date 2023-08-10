@@ -35,6 +35,7 @@ type InitOptions struct {
 	KubeConfig       string
 	KubeEdgeVersion  string
 	AdvertiseAddress string
+	DNSNames         string
 	Manifests        string
 	Namespace        string
 	Sets             []string

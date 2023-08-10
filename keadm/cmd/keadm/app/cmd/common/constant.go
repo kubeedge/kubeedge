@@ -64,6 +64,8 @@ const (
 
 	AdvertiseAddress = "advertise-address"
 
+	DNSNames = "dns-names"
+
 	TokenSecretName = "tokensecret"
 
 	TokenDataName = "tokendata"
