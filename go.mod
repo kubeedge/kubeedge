@@ -207,9 +207,9 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	github.com/xlab/treeprint v1.1.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
-	go.etcd.io/etcd/api/v3 v3.5.1 // indirect
-	go.etcd.io/etcd/client/pkg/v3 v3.5.1 // indirect
-	go.etcd.io/etcd/client/v3 v3.5.1 // indirect
+	go.etcd.io/etcd/api/v3 v3.5.5 // indirect
+	go.etcd.io/etcd/client/pkg/v3 v3.5.5 // indirect
+	go.etcd.io/etcd/client/v3 v3.5.5 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	go.opentelemetry.io/contrib v0.20.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.20.0 // indirect
@@ -274,13 +274,13 @@ replace (
 	github.com/kubeedge/viaduct => ./staging/src/github.com/kubeedge/viaduct
 	github.com/spf13/viper => github.com/spf13/viper v1.8.1
 	go.etcd.io/bbolt => go.etcd.io/bbolt v1.3.6
-	go.etcd.io/etcd/api/v3 => go.etcd.io/etcd/api/v3 v3.5.0
-	go.etcd.io/etcd/client/pkg/v3 => go.etcd.io/etcd/client/pkg/v3 v3.5.0
+	go.etcd.io/etcd/api/v3 => go.etcd.io/etcd/api/v3 v3.5.5
+	go.etcd.io/etcd/client/pkg/v3 => go.etcd.io/etcd/client/pkg/v3 v3.5.5
 	go.etcd.io/etcd/client/v2 => go.etcd.io/etcd/client/v2 v2.305.0
-	go.etcd.io/etcd/client/v3 => go.etcd.io/etcd/client/v3 v3.5.0
-	go.etcd.io/etcd/pkg/v3 => go.etcd.io/etcd/pkg/v3 v3.5.0
-	go.etcd.io/etcd/raft/v3 => go.etcd.io/etcd/raft/v3 v3.5.0
-	go.etcd.io/etcd/server/v3 => go.etcd.io/etcd/server/v3 v3.5.0
+	go.etcd.io/etcd/client/v3 => go.etcd.io/etcd/client/v3 v3.5.5
+	go.etcd.io/etcd/pkg/v3 => go.etcd.io/etcd/pkg/v3 v3.5.5
+	go.etcd.io/etcd/raft/v3 => go.etcd.io/etcd/raft/v3 v3.5.5
+	go.etcd.io/etcd/server/v3 => go.etcd.io/etcd/server/v3 v3.5.5
 	golang.org/x/sys => golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f
 	gopkg.in/square/go-jose.v2 => gopkg.in/square/go-jose.v2 v2.2.2
 	k8s.io/api => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/api v1.26.7-kubeedge1-by
