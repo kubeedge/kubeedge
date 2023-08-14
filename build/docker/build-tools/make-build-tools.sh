@@ -15,7 +15,7 @@ for arch in "${ARCHS[@]}" ; do
   REPOSITORY_ARCH="$REPOSITORY"-"$arch"
   if [ "$arch" = "amd64" ]; then
     REPOSITORY_ARCH="$REPOSITORY"
-  fi  
+  fi
   docker buildx build --build-arg ARCH="$arch"  --platform "$arch" -t "$REPOSITORY_ARCH":"$IMAGE_TAG" -f "$WORK_DIR/build-tools.dockerfile" -o type=docker .
 done
 

@@ -540,7 +540,7 @@ github.com/klauspost/compress/internal/snapref
 github.com/klauspost/compress/zstd
 github.com/klauspost/compress/zstd/internal/xxhash
 # github.com/kubeedge/beehive v0.0.0 => ./staging/src/github.com/kubeedge/beehive
-## explicit; go 1.17
+## explicit; go 1.19
 github.com/kubeedge/beehive/pkg/common
 github.com/kubeedge/beehive/pkg/core
 github.com/kubeedge/beehive/pkg/core/channel
@@ -556,7 +556,7 @@ github.com/kubeedge/beehive/pkg/core/socket/wrapper/packer
 github.com/kubeedge/beehive/pkg/core/socket/wrapper/reader
 github.com/kubeedge/beehive/pkg/core/socket/wrapper/writer
 # github.com/kubeedge/viaduct v0.0.0 => ./staging/src/github.com/kubeedge/viaduct
-## explicit; go 1.17
+## explicit; go 1.19
 github.com/kubeedge/viaduct/pkg/api
 github.com/kubeedge/viaduct/pkg/client
 github.com/kubeedge/viaduct/pkg/cmgr
