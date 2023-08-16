@@ -59,7 +59,6 @@ var (
 type KubeCloudHelmInstTool struct {
 	util.Common
 	AdvertiseAddress string
-	KubeEdgeVersion  string
 	Manifests        string
 	Namespace        string
 	Sets             []string
