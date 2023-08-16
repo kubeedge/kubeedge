@@ -160,10 +160,20 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        PROTOCOL:
-          - WebSocket
-          - QUIC
-    timeout-minutes: 40
+        cases:
+          - protocol: WebSocket
+            version: v1.24.0
+          - protocol: WebSocket
+            version: v1.23.0
+          - protocol: WebSocket
+            version: v1.22.0
+          - protocol: QUIC
+            version: v1.24.0
+          - protocol: QUIC
+            version: v1.23.0
+          - protocol: QUIC
+            version: v1.22.0
+    timeout-minutes: 60
     name: E2e test
     needs: image-prepare
     env:
@@ -204,14 +214,15 @@ jobs:
       # for WebSocket protocol, we will use containerd as edgecore container runtime
       # just for covering both docker and CRI runtime e2e cases
       - run: |
-          export PROTOCOL=${{ matrix.PROTOCOL }}
+          export PROTOCOL=${{ matrix.cases.protocol }}
+          export KIND_IMAGE=kindest/node:${{ matrix.cases.version }}
           export CONTAINER_RUNTIME="remote"
           make e2e
 
       - uses: actions/upload-artifact@v3
         if: always()
         with:
-          name: ${{ matrix.PROTOCOL }}-e2e-test-logs
+          name: ${{ matrix.cases.version }}-${{ matrix.cases.protocol }}-e2e-test-logs
           path: |
             /tmp/cloudcore.log
             /tmp/edgecore.log
@@ -277,7 +288,7 @@ jobs:
       - name: Install dependences
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/ginkgo@${{ env.GINKGO_VERSION }}
-          go install sigs.k8s.io/kind@v0.14.0
+          go install sigs.k8s.io/kind@v0.17.0
           curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.24.14/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
