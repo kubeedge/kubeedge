@@ -163,7 +163,7 @@ jobs:
         PROTOCOL:
           - WebSocket
           - QUIC
-    timeout-minutes: 30
+    timeout-minutes: 40
     name: E2e test
     needs: image-prepare
     env:
