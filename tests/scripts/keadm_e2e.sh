@@ -62,6 +62,7 @@ function build_image() {
 
   set +e
   docker rmi $(docker images -f "dangling=true" -q)
+  docker system prune -f
   set -Ee
 }
 

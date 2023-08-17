@@ -60,7 +60,7 @@ func (in *ClusterObjectSyncList) DeepCopyInto(out *ClusterObjectSyncList) {
 	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
-		*out = make([]ObjectSync, len(*in))
+		*out = make([]ClusterObjectSync, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}

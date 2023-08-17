@@ -99,7 +99,7 @@ function install_cni_plugins() {
   CNI_DOWNLOAD_ADDR=${CNI_DOWNLOAD_ADDR:-"https://github.com/containernetworking/plugins/releases/download/v1.1.1/cni-plugins-linux-amd64-v1.1.1.tgz"}
   CNI_PKG=${CNI_DOWNLOAD_ADDR##*/}
   CNI_CONF_OVERWRITE=${CNI_CONF_OVERWRITE:-"true"}
-  echo -e "The installation of the cni plugin will overwrite the cni config file. Use export CNI_CONFIG_FILE=false to disable it."
+  echo -e "The installation of the cni plugin will overwrite the cni config file. Use export CNI_CONF_OVERWRITE=false to disable it."
 
   # install CNI plugins if not exist
   if [ ! -f "/opt/cni/bin/loopback" ]; then

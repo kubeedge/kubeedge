@@ -18,7 +18,6 @@ package cloud
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/blang/semver"
 	"github.com/spf13/cobra"
@@ -77,7 +76,7 @@ func NewCloudInit() *cobra.Command {
 	return cmd
 }
 
-//newInitOptions will initialise new instance of options everytime
+// newInitOptions will initialise new instance of options everytime
 func newInitOptions() *types.InitOptions {
 	opts := &types.InitOptions{}
 	opts.KubeConfig = types.DefaultKubeConfig
@@ -118,35 +117,15 @@ func addForceOptionsFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 		"Forced installing the cloud components without waiting.")
 }
 
-//AddInit2ToolsList reads the flagData (containing val and default val) and join options to fill the list of tools.
+// AddInit2ToolsList reads the flagData (containing val and default val) and join options to fill the list of tools.
 func AddInit2ToolsList(toolList map[string]types.ToolsInstaller, initOpts *types.InitOptions) error {
-	var latestVersion string
-	var kubeedgeVersion string
-	for i := 0; i < util.RetryTimes; i++ {
-		version, err := util.GetLatestVersion()
-		if err != nil {
-			fmt.Println("Failed to get the latest KubeEdge release version, error: ", err)
-			continue
-		}
-		if len(version) > 0 {
-			kubeedgeVersion = strings.TrimPrefix(version, "v")
-			latestVersion = version
-			break
-		}
-	}
-	if len(latestVersion) == 0 {
-		kubeedgeVersion = types.DefaultKubeEdgeVersion
-		fmt.Println("Failed to get the latest KubeEdge release version, will use default version: ", kubeedgeVersion)
-	}
-
 	common := util.Common{
-		ToolVersion: semver.MustParse(kubeedgeVersion),
+		ToolVersion: semver.MustParse(util.GetHelmVersion(initOpts.KubeEdgeVersion, util.RetryTimes)),
 		KubeConfig:  initOpts.KubeConfig,
 	}
 	toolList["helm"] = &helm.KubeCloudHelmInstTool{
 		Common:           common,
 		AdvertiseAddress: initOpts.AdvertiseAddress,
-		KubeEdgeVersion:  initOpts.KubeEdgeVersion,
 		Manifests:        initOpts.Manifests,
 		Namespace:        constants.SystemNamespace,
 		DryRun:           initOpts.DryRun,
@@ -159,7 +138,7 @@ func AddInit2ToolsList(toolList map[string]types.ToolsInstaller, initOpts *types
 	return nil
 }
 
-//ExecuteInit the installation for each tool and start cloudcore
+// ExecuteInit the installation for each tool and start cloudcore
 func ExecuteInit(toolList map[string]types.ToolsInstaller) error {
 	return toolList["helm"].InstallTools()
 }
