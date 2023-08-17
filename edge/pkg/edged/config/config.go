@@ -187,6 +187,8 @@ func ConvertConfigEdgedFlagToConfigKubeletFlag(in *v1alpha2.TailoredKubeletFlag,
 	out.RegisterSchedulable = in.RegisterSchedulable
 	out.KeepTerminatedPodVolumes = in.KeepTerminatedPodVolumes
 	out.SeccompDefault = in.SeccompDefault
+	out.WindowsPriorityClass = in.WindowsPriorityClass
+	//out.WindowsService = in.WindowsService
 
 	// container-runtime-specific options
 	out.ContainerRuntime = in.ContainerRuntime
