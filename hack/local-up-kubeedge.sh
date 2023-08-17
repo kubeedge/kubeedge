@@ -60,6 +60,7 @@ function uninstall_kubeedge {
 
   # delete data
   rm -rf /tmp/etc/kubeedge /tmp/var/lib/kubeedge
+
 }
 
 # clean up
@@ -69,6 +70,8 @@ function cleanup {
 
   echo "Running kind: [kind delete cluster ${CLUSTER_CONTEXT}]"
   kind delete cluster ${CLUSTER_CONTEXT}
+
+  docker system prune -f
 }
 
 if [[ "${ENABLE_DAEMON}" = false ]]; then
@@ -186,6 +189,8 @@ function start_edgecore {
   export CHECK_EDGECORE_ENVIRONMENT="false"
   nohup sudo -E ${EDGE_BIN} --config=${EDGE_CONFIGFILE} --v=${LOG_LEVEL} > "${EDGECORE_LOG}" 2>&1 &
   EDGECORE_PID=$!
+  docker system prune -f
+
 }
 
 function check_control_plane_ready {
