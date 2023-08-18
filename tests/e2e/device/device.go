@@ -209,7 +209,7 @@ var _ = GroupDescribe("Device Management test in E2E scenario", func() {
 			err = utils.CheckDeviceExists(deviceInstanceList, &newLedDevice)
 			gomega.Expect(err).To(gomega.BeNil())
 
-			time.Sleep(3 * time.Second)
+			time.Sleep(10 * time.Second)
 
 			configMap, err := clientSet.CoreV1().ConfigMaps("default").Get(context.TODO(), "device-profile-config-"+constants.NodeName, metav1.GetOptions{})
 			gomega.Expect(err).To(gomega.BeNil())
