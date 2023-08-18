@@ -9,7 +9,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 )
 
-//UnmarshalMembershipDetail Unmarshal membershipdetail
+// UnmarshalMembershipDetail Unmarshal membershipdetail
 func UnmarshalMembershipDetail(payload []byte) (*MembershipDetail, error) {
 	var membershipDetail MembershipDetail
 	err := json.Unmarshal(payload, &membershipDetail)
@@ -19,7 +19,7 @@ func UnmarshalMembershipDetail(payload []byte) (*MembershipDetail, error) {
 	return &membershipDetail, nil
 }
 
-//UnmarshalMembershipUpdate Unmarshal membershipupdate
+// UnmarshalMembershipUpdate Unmarshal membershipupdate
 func UnmarshalMembershipUpdate(payload []byte) (*MembershipUpdate, error) {
 	var membershipUpdate MembershipUpdate
 	err := json.Unmarshal(payload, &membershipUpdate)
@@ -29,7 +29,7 @@ func UnmarshalMembershipUpdate(payload []byte) (*MembershipUpdate, error) {
 	return &membershipUpdate, nil
 }
 
-//UnmarshalBaseMessage Unmarshal get
+// UnmarshalBaseMessage Unmarshal get
 func UnmarshalBaseMessage(payload []byte) (*BaseMessage, error) {
 	var get BaseMessage
 	err := json.Unmarshal(payload, &get)
@@ -39,7 +39,7 @@ func UnmarshalBaseMessage(payload []byte) (*BaseMessage, error) {
 	return &get, nil
 }
 
-//DeviceAttrToMsgAttr  deviceattr to msgattr
+// DeviceAttrToMsgAttr  deviceattr to msgattr
 func DeviceAttrToMsgAttr(deviceAttrs []dtclient.DeviceAttr) map[string]*MsgAttr {
 	msgAttrs := make(map[string]*MsgAttr, len(deviceAttrs))
 	for _, attr := range deviceAttrs {
@@ -52,7 +52,7 @@ func DeviceAttrToMsgAttr(deviceAttrs []dtclient.DeviceAttr) map[string]*MsgAttr 
 	return msgAttrs
 }
 
-//DeviceTwinToMsgTwin  devicetwin contains meta and version to msgtwin,
+// DeviceTwinToMsgTwin  devicetwin contains meta and version to msgtwin,
 func DeviceTwinToMsgTwin(deviceTwins []dtclient.DeviceTwin) map[string]*MsgTwin {
 	msgTwins := make(map[string]*MsgTwin, len(deviceTwins))
 	for _, twin := range deviceTwins {
@@ -98,7 +98,7 @@ func DeviceTwinToMsgTwin(deviceTwins []dtclient.DeviceTwin) map[string]*MsgTwin 
 	return msgTwins
 }
 
-//MsgAttrToDeviceAttr msgattr to deviceattr
+// MsgAttrToDeviceAttr msgattr to deviceattr
 func MsgAttrToDeviceAttr(name string, msgAttr *MsgAttr) dtclient.DeviceAttr {
 	attrType := "string"
 	if msgAttr.Metadata != nil {
@@ -114,7 +114,7 @@ func MsgAttrToDeviceAttr(name string, msgAttr *MsgAttr) dtclient.DeviceAttr {
 		Optional: optional}
 }
 
-//CopyMsgTwin copy msg twin
+// CopyMsgTwin copy msg twin
 func CopyMsgTwin(msgTwin *MsgTwin, noVersion bool) MsgTwin {
 	var result MsgTwin
 	payload, _ := json.Marshal(msgTwin)
@@ -126,7 +126,7 @@ func CopyMsgTwin(msgTwin *MsgTwin, noVersion bool) MsgTwin {
 	return result
 }
 
-//CopyMsgAttr copy msg attr
+// CopyMsgAttr copy msg attr
 func CopyMsgAttr(msgAttr *MsgAttr) MsgAttr {
 	var result MsgAttr
 	payload, _ := json.Marshal(msgAttr)
@@ -134,7 +134,7 @@ func CopyMsgAttr(msgAttr *MsgAttr) MsgAttr {
 	return result
 }
 
-//MsgTwinToDeviceTwin msgtwin convert to devicetwin
+// MsgTwinToDeviceTwin msgtwin convert to devicetwin
 func MsgTwinToDeviceTwin(name string, msgTwin *MsgTwin) dtclient.DeviceTwin {
 	optional := true
 	if msgTwin.Optional != nil {
@@ -150,13 +150,13 @@ func MsgTwinToDeviceTwin(name string, msgTwin *MsgTwin) dtclient.DeviceTwin {
 		Optional: optional}
 }
 
-//DeviceMsg the struct of device state msg
+// DeviceMsg the struct of device state msg
 type DeviceMsg struct {
 	BaseMessage
 	Device Device `json:"device"`
 }
 
-//BuildDeviceState build the msg
+// BuildDeviceState build the msg
 func BuildDeviceState(baseMessage BaseMessage, device Device) ([]byte, error) {
 	result := DeviceMsg{
 		BaseMessage: baseMessage,
@@ -171,13 +171,13 @@ func BuildDeviceState(baseMessage BaseMessage, device Device) ([]byte, error) {
 	return payload, nil
 }
 
-//DeviceAttrUpdate the struct of device attr update msg
+// DeviceAttrUpdate the struct of device attr update msg
 type DeviceAttrUpdate struct {
 	BaseMessage
 	Attributes map[string]*MsgAttr `json:"attributes"`
 }
 
-//BuildDeviceAttrUpdate build the DeviceAttrUpdate
+// BuildDeviceAttrUpdate build the DeviceAttrUpdate
 func BuildDeviceAttrUpdate(baseMessage BaseMessage, attrs map[string]*MsgAttr) ([]byte, error) {
 	result := DeviceAttrUpdate{BaseMessage: baseMessage, Attributes: attrs}
 	payload, err := json.Marshal(result)
@@ -187,13 +187,13 @@ func BuildDeviceAttrUpdate(baseMessage BaseMessage, attrs map[string]*MsgAttr) (
 	return payload, nil
 }
 
-//MembershipGetResult membership get result
+// MembershipGetResult membership get result
 type MembershipGetResult struct {
 	BaseMessage
 	Devices []Device `json:"devices"`
 }
 
-//BuildMembershipGetResult build memebership
+// BuildMembershipGetResult build memebership
 func BuildMembershipGetResult(baseMessage BaseMessage, devices []*Device) ([]byte, error) {
 	result := make([]Device, 0, len(devices))
 	for _, v := range devices {
@@ -212,13 +212,13 @@ func BuildMembershipGetResult(baseMessage BaseMessage, devices []*Device) ([]byt
 	return payload, nil
 }
 
-//DeviceTwinResult device get result
+// DeviceTwinResult device get result
 type DeviceTwinResult struct {
 	BaseMessage
 	Twin map[string]*MsgTwin `json:"twin"`
 }
 
-//BuildDeviceTwinResult build device twin result, 0:get,1:update,2:sync
+// BuildDeviceTwinResult build device twin result, 0:get,1:update,2:sync
 func BuildDeviceTwinResult(baseMessage BaseMessage, twins map[string]*MsgTwin, dealType int) ([]byte, error) {
 	result := make(map[string]*MsgTwin)
 	if dealType == 0 {
@@ -260,14 +260,14 @@ func BuildErrorResult(para Parameter) ([]byte, error) {
 	return errorResult, nil
 }
 
-//DeviceUpdate device update
+// DeviceUpdate device update
 type DeviceUpdate struct {
 	BaseMessage
 	State      string              `json:"state,omitempty"`
 	Attributes map[string]*MsgAttr `json:"attributes"`
 }
 
-//UnmarshalDeviceUpdate unmarshal device update
+// UnmarshalDeviceUpdate unmarshal device update
 func UnmarshalDeviceUpdate(payload []byte) (*DeviceUpdate, error) {
 	var get DeviceUpdate
 	err := json.Unmarshal(payload, &get)
@@ -277,14 +277,14 @@ func UnmarshalDeviceUpdate(payload []byte) (*DeviceUpdate, error) {
 	return &get, nil
 }
 
-//DeviceTwinDelta devicetwin
+// DeviceTwinDelta devicetwin
 type DeviceTwinDelta struct {
 	BaseMessage
 	Twin  map[string]*MsgTwin `json:"twin"`
 	Delta map[string]string   `json:"delta"`
 }
 
-//BuildDeviceTwinDelta  build device twin delta
+// BuildDeviceTwinDelta  build device twin delta
 func BuildDeviceTwinDelta(baseMessage BaseMessage, twins map[string]*MsgTwin) ([]byte, bool) {
 	result := make(map[string]*MsgTwin, len(twins))
 	delta := make(map[string]string)
@@ -323,7 +323,7 @@ func BuildDeviceTwinDelta(baseMessage BaseMessage, twins map[string]*MsgTwin) ([
 	return payload, false
 }
 
-//BuildDeviceTwinDocument  build device twin document
+// BuildDeviceTwinDocument  build device twin document
 func BuildDeviceTwinDocument(baseMessage BaseMessage, twins map[string]*TwinDoc) ([]byte, bool) {
 	payload, err := json.Marshal(DeviceTwinDocument{BaseMessage: baseMessage, Twin: twins})
 	if err != nil {

@@ -44,8 +44,8 @@ const (
 
 var scheme = runtime.NewScheme()
 
-//codecs is for retrieving serializers for the supported wire formats
-//and conversion wrappers to define preferred internal and external versions.
+// codecs is for retrieving serializers for the supported wire formats
+// and conversion wrappers to define preferred internal and external versions.
 var codecs = serializer.NewCodecFactory(scheme)
 
 var controller = &AdmissionController{}

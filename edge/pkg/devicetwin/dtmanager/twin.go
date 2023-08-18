@@ -42,13 +42,13 @@ var (
 	initTwinActionCallBackOnce sync.Once
 )
 
-//TwinWorker deal twin event
+// TwinWorker deal twin event
 type TwinWorker struct {
 	Worker
 	Group string
 }
 
-//Start worker
+// Start worker
 func (tw TwinWorker) Start() {
 	initTwinActionCallBack()
 	for {
@@ -164,7 +164,7 @@ func Updated(context *dtcontext.DTContext, deviceID string, payload []byte) {
 	DealDeviceTwin(context, deviceID, eventID, msg.Twin, RestDealType)
 }
 
-//DealDeviceTwin deal device twin
+// DealDeviceTwin deal device twin
 func DealDeviceTwin(context *dtcontext.DTContext, deviceID string, eventID string, msgTwin map[string]*dttype.MsgTwin, dealType int) error {
 	klog.Infof("Begin to deal device twin of the device %s", deviceID)
 	now := time.Now().UnixNano() / 1e6
@@ -229,7 +229,7 @@ func DealDeviceTwin(context *dtcontext.DTContext, deviceID string, eventID strin
 	return nil
 }
 
-//dealUpdateResult build update result and send result, if success send the current state
+// dealUpdateResult build update result and send result, if success send the current state
 func dealUpdateResult(context *dtcontext.DTContext, deviceID string, eventID string, code int, err error, payload []byte) error {
 	klog.Infof("Deal update result of device %s: Build and send result", deviceID)
 
@@ -278,7 +278,7 @@ func dealSyncResult(context *dtcontext.DTContext, deviceID string, baseMessage d
 		context.BuildModelMessage("resource", "", resource, model.UpdateOperation, dttype.DeviceTwinResult{BaseMessage: baseMessage, Twin: twin}))
 }
 
-//dealDocument build document and save current state as last state, update sqlite
+// dealDocument build document and save current state as last state, update sqlite
 func dealDocument(context *dtcontext.DTContext, deviceID string, baseMessage dttype.BaseMessage, twinDocument map[string]*dttype.TwinDoc) error {
 	klog.Infof("Deal document of device %s: build and send document", deviceID)
 	payload, _ := dttype.BuildDeviceTwinDocument(baseMessage, twinDocument)
@@ -344,7 +344,7 @@ func DealGetTwin(context *dtcontext.DTContext, deviceID string, payload []byte) 
 		context.BuildModelMessage(modules.BusGroup, "", topic, messagepkg.OperationPublish, msg))
 }
 
-//dealtype 0:update ,2:cloud_update,1:detail result,3:deleted
+// dealtype 0:update ,2:cloud_update,1:detail result,3:deleted
 func dealVersion(version *dttype.TwinVersion, reqVersion *dttype.TwinVersion, dealType int) (bool, error) {
 	if dealType == RestDealType {
 		version.EdgeVersion = version.EdgeVersion + 1
@@ -904,7 +904,7 @@ func dealTwinAdd(returnResult *dttype.DealTwinResult, deviceID string, key strin
 	return nil
 }
 
-//DealMsgTwin get diff while updating twin
+// DealMsgTwin get diff while updating twin
 func DealMsgTwin(context *dtcontext.DTContext, deviceID string, msgTwins map[string]*dttype.MsgTwin, dealType int) dttype.DealTwinResult {
 	add := make([]dtclient.DeviceTwin, 0)
 	deletes := make([]dtclient.DeviceDelete, 0)

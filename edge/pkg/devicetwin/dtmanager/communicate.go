@@ -27,13 +27,13 @@ func init() {
 	initActionCallBack()
 }
 
-//CommWorker deal app response event
+// CommWorker deal app response event
 type CommWorker struct {
 	Worker
 	Group string
 }
 
-//Start worker
+// Start worker
 func (cw CommWorker) Start() {
 	for {
 		select {

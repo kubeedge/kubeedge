@@ -7,7 +7,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 )
 
-//constant metatable name reference
+// constant metatable name reference
 const (
 	NewMetaTableName = "meta_v2"
 

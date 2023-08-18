@@ -31,7 +31,7 @@ import (
 
 var DeploymentTestTimerGroup = utils.NewTestTimerGroup()
 
-//Run Test cases
+// Run Test cases
 var _ = Describe("Application deployment test in keadm E2E scenario", func() {
 	var testTimer *utils.TestTimer
 	var testSpecReport GinkgoTestDescription

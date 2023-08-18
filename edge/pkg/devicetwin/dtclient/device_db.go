@@ -7,7 +7,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 )
 
-//Device the struct of device
+// Device the struct of device
 type Device struct {
 	ID          string `orm:"column(id); size(64); pk"`
 	Name        string `orm:"column(name); null; type(text)"`
@@ -16,14 +16,14 @@ type Device struct {
 	LastOnline  string `orm:"column(last_online); null; type(text)"`
 }
 
-//SaveDevice save device
+// SaveDevice save device
 func SaveDevice(obm orm.Ormer, doc *Device) error {
 	num, err := obm.Insert(doc)
 	klog.V(4).Infof("Insert affected Num: %d, %v", num, err)
 	return err
 }
 
-//DeleteDeviceByID delete device by id
+// DeleteDeviceByID delete device by id
 func DeleteDeviceByID(obm orm.Ormer, id string) error {
 	num, err := obm.QueryTable(DeviceTableName).Filter("id", id).Delete()
 	if err != nil {
@@ -68,13 +68,13 @@ func QueryDeviceAll() (*[]Device, error) {
 	return devices, nil
 }
 
-//DeviceUpdate the struct for updating device
+// DeviceUpdate the struct for updating device
 type DeviceUpdate struct {
 	DeviceID string
 	Cols     map[string]interface{}
 }
 
-//UpdateDeviceMulti update device  multi
+// UpdateDeviceMulti update device  multi
 func UpdateDeviceMulti(updates []DeviceUpdate) error {
 	var err error
 	for _, update := range updates {
@@ -86,7 +86,7 @@ func UpdateDeviceMulti(updates []DeviceUpdate) error {
 	return nil
 }
 
-//AddDeviceTrans the transaction of add device
+// AddDeviceTrans the transaction of add device
 func AddDeviceTrans(adds []Device, addAttrs []DeviceAttr, addTwins []DeviceTwin) error {
 	obm := dbm.DefaultOrmFunc()
 	err := obm.Begin()
@@ -132,7 +132,7 @@ func AddDeviceTrans(adds []Device, addAttrs []DeviceAttr, addTwins []DeviceTwin)
 	return err
 }
 
-//DeleteDeviceTrans the transaction of delete device
+// DeleteDeviceTrans the transaction of delete device
 func DeleteDeviceTrans(deletes []string) error {
 	obm := dbm.DefaultOrmFunc()
 	err := obm.Begin()

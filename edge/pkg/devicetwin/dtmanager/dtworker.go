@@ -2,12 +2,12 @@ package dtmanager
 
 import "github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 
-//DTWorker worker for devicetwin
+// DTWorker worker for devicetwin
 type DTWorker interface {
 	Start()
 }
 
-//Worker actual
+// Worker actual
 type Worker struct {
 	ReceiverChan  chan interface{}
 	ConfirmChan   chan interface{}
@@ -15,5 +15,5 @@ type Worker struct {
 	DTContexts    *dtcontext.DTContext
 }
 
-//CallBack for deal
+// CallBack for deal
 type CallBack func(*dtcontext.DTContext, string, interface{}) error

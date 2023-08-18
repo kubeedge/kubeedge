@@ -81,12 +81,12 @@ var ErrVersionConflict = errors.New("VersionError")
 
 // ObjectSyncReactor is a core.Reactor that simulates etcd and API server. It
 // stores:
-// - Latest version of objectSyncs saved by the session.
-// - Optionally, list of error that should be returned by reactor, simulating
-//   etcd / API server failures. These errors are evaluated in order and every
-//   error is returned only once. I.e. when the reactor finds matching
-//   ReactorError, it return appropriate error and removes the ReactorError from
-//   the list.
+//   - Latest version of objectSyncs saved by the session.
+//   - Optionally, list of error that should be returned by reactor, simulating
+//     etcd / API server failures. These errors are evaluated in order and every
+//     error is returned only once. I.e. when the reactor finds matching
+//     ReactorError, it return appropriate error and removes the ReactorError from
+//     the list.
 type ObjectSyncReactor struct {
 	objectSyncs map[string]*v1alpha1.ObjectSync
 	lock        sync.RWMutex

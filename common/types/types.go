@@ -14,7 +14,7 @@ type PodStatusRequest struct {
 	Status v1.PodStatus
 }
 
-//ExtendResource is the extended resource detail that comes from edge
+// ExtendResource is the extended resource detail that comes from edge
 type ExtendResource struct {
 	Name     string            `json:"name,omitempty"`
 	Type     string            `json:"type,omitempty"`

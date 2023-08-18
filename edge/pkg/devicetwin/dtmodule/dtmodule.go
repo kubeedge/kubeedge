@@ -8,7 +8,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtmanager"
 )
 
-//DTModule module for devicetwin
+// DTModule module for devicetwin
 type DTModule struct {
 	Name   string
 	Worker dtmanager.DTWorker
@@ -56,7 +56,7 @@ func (dm *DTModule) InitWorker(recv chan interface{}, confirm chan interface{}, 
 	}
 }
 
-//Start module, actual worker start
+// Start module, actual worker start
 func (dm DTModule) Start() {
 	defer func() {
 		if err := recover(); err != nil {

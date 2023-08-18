@@ -267,7 +267,7 @@ func TestCompareWithCloud(t *testing.T) {
 	}
 }
 
-//TestUpdateCloudVersion tests UpdateCloudVersion().
+// TestUpdateCloudVersion tests UpdateCloudVersion().
 func TestUpdateCloudVersion(t *testing.T) {
 	twinVersion := TwinVersion{CloudVersion: 1}
 	bytesTwinVersion, _ := json.Marshal(twinVersion)

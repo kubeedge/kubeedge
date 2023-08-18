@@ -26,7 +26,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/dao"
 )
 
-//Server serve as an internal mqtt broker.
+// Server serve as an internal mqtt broker.
 type Server struct {
 	// Internal mqtt url
 	url string

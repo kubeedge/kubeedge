@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package utils
 
 import (
@@ -22,36 +23,36 @@ import (
 	"github.com/onsi/ginkgo"
 )
 
-//Function to get time in millisec
+// nowStamp get time in millisec
 func nowStamp() string {
 	return time.Now().Format(time.StampMilli)
 }
 
-//functiont to log the Ginkgo framework logs
+// logf log the Ginkgo framework logs
 func logf(level string, format string, args ...interface{}) {
 	fmt.Fprintf(ginkgo.GinkgoWriter, nowStamp()+": "+level+": "+format+"\n", args...)
 }
 
-//Funciton to log Filure logs
+// Fatalf log Failure logs
 func Fatalf(format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	logf("Fatal", msg)
 	ginkgo.Fail(nowStamp()+": "+msg, 1)
 }
 
-//function for Error log
+// Errorf for Error log
 func Errorf(format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	logf("Error", msg)
 }
 
-//function for log level
+// Infof for log level
 func Infof(format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	logf("Info", msg)
 }
 
-//Function to print the test case name and status of execution
+// PrintTestcaseNameandStatus print the test case name and status of execution
 func PrintTestcaseNameandStatus() {
 	var Status string
 	testSpecReport := ginkgo.CurrentGinkgoTestDescription()

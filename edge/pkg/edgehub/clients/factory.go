@@ -9,7 +9,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
 )
 
-//GetClient returns an Adapter object with new web socket
+// GetClient returns an Adapter object with new web socket
 func GetClient() (Adapter, error) {
 	config := config.Config
 	switch {

@@ -46,7 +46,7 @@ func init() {
 	beehiveContext.AddModuleGroup(module.EdgeHubModuleName, module.EdgeHubModuleName)
 }
 
-//TestIsSyncResponse() tests whether there exists a channel with the given message_id in the syncKeeper
+// TestIsSyncResponse() tests whether there exists a channel with the given message_id in the syncKeeper
 func TestIsSyncResponse(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -76,7 +76,7 @@ func TestIsSyncResponse(t *testing.T) {
 	}
 }
 
-//TestDispatch() tests whether the messages are properly dispatched to their respective modules
+// TestDispatch() tests whether the messages are properly dispatched to their respective modules
 func TestDispatch(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -117,7 +117,7 @@ func TestDispatch(t *testing.T) {
 	}
 }
 
-//TestRouteToEdge() is used to test whether the message received from websocket is dispatched to the required modules
+// TestRouteToEdge() is used to test whether the message received from websocket is dispatched to the required modules
 func TestRouteToEdge(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -155,7 +155,7 @@ func TestRouteToEdge(t *testing.T) {
 	}
 }
 
-//TestSendToCloud() tests whether the send to cloud functionality works properly
+// TestSendToCloud() tests whether the send to cloud functionality works properly
 func TestSendToCloud(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -214,7 +214,7 @@ func TestSendToCloud(t *testing.T) {
 	}
 }
 
-//TestRouteToCloud() tests the reception of the message from the beehive framework and forwarding of that message to cloud
+// TestRouteToCloud() tests the reception of the message from the beehive framework and forwarding of that message to cloud
 func TestRouteToCloud(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -252,7 +252,7 @@ func TestRouteToCloud(t *testing.T) {
 	}
 }
 
-//TestKeepalive() tests whether ping message sent to the cloud at regular intervals happens properly
+// TestKeepalive() tests whether ping message sent to the cloud at regular intervals happens properly
 func TestKeepalive(t *testing.T) {
 	CertFile := "/tmp/kubeedge/certs/edge.crt"
 	KeyFile := "/tmp/kubeedge/certs/edge.key"

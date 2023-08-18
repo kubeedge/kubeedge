@@ -131,7 +131,7 @@ func (lc *LocationCache) SecretNodes(namespace, name string) (nodes []string) {
 	return
 }
 
-//IsEdgeNode checks weather node is edge node or not
+// IsEdgeNode checks weather node is edge node or not
 func (lc *LocationCache) IsEdgeNode(nodeName string) bool {
 	_, ok := lc.EdgeNodes.Load(nodeName)
 	return ok

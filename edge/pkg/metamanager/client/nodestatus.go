@@ -9,12 +9,12 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
-//NodeStatusGetter is interface to get node status
+// NodeStatusGetter is interface to get node status
 type NodeStatusGetter interface {
 	NodeStatus(namespace string) NodeStatusInterface
 }
 
-//NodeStatusInterface is node status interface
+// NodeStatusInterface is node status interface
 type NodeStatusInterface interface {
 	Create(*edgeapi.NodeStatusRequest) (*edgeapi.NodeStatusRequest, error)
 	Update(rsName string, ns edgeapi.NodeStatusRequest) error

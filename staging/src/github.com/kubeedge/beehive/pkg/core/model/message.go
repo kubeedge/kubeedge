@@ -210,7 +210,7 @@ func (msg *Message) BuildHeader(ID, parentID string, timestamp int64) *Message {
 	return msg
 }
 
-//FillBody fills message  content that you want to send
+// FillBody fills message  content that you want to send
 func (msg *Message) FillBody(content interface{}) *Message {
 	msg.Content = content
 	return msg

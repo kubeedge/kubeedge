@@ -22,7 +22,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-//Write2File writes data into a file in path
+// Write2File writes data into a file in path
 func Write2File(path string, data interface{}) error {
 	d, err := yaml.Marshal(data)
 	if err != nil {

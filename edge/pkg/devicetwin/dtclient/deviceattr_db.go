@@ -7,7 +7,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 )
 
-//DeviceAttr the struct of device attributes
+// DeviceAttr the struct of device attributes
 type DeviceAttr struct {
 	ID          int64  `orm:"column(id);size(64);auto;pk"`
 	DeviceID    string `orm:"column(deviceid); null; type(text)"`
@@ -19,14 +19,14 @@ type DeviceAttr struct {
 	Metadata    string `orm:"column(metadata);null;type(text)"`
 }
 
-//SaveDeviceAttr save device attributes
+// SaveDeviceAttr save device attributes
 func SaveDeviceAttr(obm orm.Ormer, doc *DeviceAttr) error {
 	num, err := obm.Insert(doc)
 	klog.V(4).Infof("Insert affected Num: %d, %s", num, err)
 	return err
 }
 
-//DeleteDeviceAttrByDeviceID delete device attr
+// DeleteDeviceAttrByDeviceID delete device attr
 func DeleteDeviceAttrByDeviceID(obm orm.Ormer, deviceID string) error {
 	num, err := obm.QueryTable(DeviceAttrTableName).Filter("deviceid", deviceID).Delete()
 	if err != nil {
@@ -37,7 +37,7 @@ func DeleteDeviceAttrByDeviceID(obm orm.Ormer, deviceID string) error {
 	return nil
 }
 
-//DeleteDeviceAttr delete device attr
+// DeleteDeviceAttr delete device attr
 func DeleteDeviceAttr(obm orm.Ormer, deviceID string, name string) error {
 	num, err := obm.QueryTable(DeviceAttrTableName).Filter("deviceid", deviceID).Filter("name", name).Delete()
 	if err != nil {
@@ -72,20 +72,20 @@ func QueryDeviceAttr(key string, condition string) (*[]DeviceAttr, error) {
 	return attrs, nil
 }
 
-//DeviceDelete the struct for deleting device
+// DeviceDelete the struct for deleting device
 type DeviceDelete struct {
 	DeviceID string
 	Name     string
 }
 
-//DeviceAttrUpdate the struct for updating device attr
+// DeviceAttrUpdate the struct for updating device attr
 type DeviceAttrUpdate struct {
 	DeviceID string
 	Name     string
 	Cols     map[string]interface{}
 }
 
-//UpdateDeviceAttrMulti update device attr multi
+// UpdateDeviceAttrMulti update device attr multi
 func UpdateDeviceAttrMulti(updates []DeviceAttrUpdate) error {
 	var err error
 	for _, update := range updates {
@@ -97,7 +97,7 @@ func UpdateDeviceAttrMulti(updates []DeviceAttrUpdate) error {
 	return nil
 }
 
-//DeviceAttrTrans transaction of device attr
+// DeviceAttrTrans transaction of device attr
 func DeviceAttrTrans(adds []DeviceAttr, deletes []DeviceDelete, updates []DeviceAttrUpdate) error {
 	obm := dbm.DefaultOrmFunc()
 	err := obm.Begin()

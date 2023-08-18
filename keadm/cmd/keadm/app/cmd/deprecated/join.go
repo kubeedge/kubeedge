@@ -32,7 +32,7 @@ import (
 
 var (
 	edgeJoinLongDescription = `
-Deprecated: 
+Deprecated:
 "keadm deprecated join" command bootstraps KubeEdge's worker node (at the edge) component.
 It will also connect with cloud component to receive
 further instructions and forward telemetry data from
@@ -88,7 +88,7 @@ func newJoinOptions() *types.JoinOptions {
 	return opts
 }
 
-//Add2EdgeToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
+// Add2EdgeToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
 func Add2EdgeToolsList(toolList map[string]types.ToolsInstaller, flagData map[string]types.FlagData, joinOptions *types.JoinOptions) error {
 	var kubeVer string
 

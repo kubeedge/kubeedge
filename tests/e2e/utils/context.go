@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package utils
 
 import (
@@ -22,19 +23,19 @@ import (
 	"time"
 )
 
-//Test context struct
+// TestContext struct
 type TestContext struct {
 	Cfg Config
 }
 
-//NewTestContext function to build testcontext with provided config.
+// NewTestContext function to build testcontext with provided config.
 func NewTestContext(cfg Config) *TestContext {
 	return &TestContext{
 		Cfg: cfg,
 	}
 }
 
-//SendHTTPRequest Function to prepare the http req and send
+// SendHTTPRequest Function to prepare the http req and send
 func SendHTTPRequest(method, reqAPI string) (*http.Response, error) {
 	var body io.Reader
 	var resp *http.Response

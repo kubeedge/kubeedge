@@ -24,7 +24,7 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd"
 )
 
-//Run executes the keadm command
+// Run executes the keadm command
 func Run() error {
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 

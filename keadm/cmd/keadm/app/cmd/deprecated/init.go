@@ -76,7 +76,7 @@ func NewDeprecatedCloudInit() *cobra.Command {
 	return cmd
 }
 
-//newInitOptions will initialise new instance of options everytime
+// newInitOptions will initialise new instance of options everytime
 func newInitOptions() *types.InitBaseOptions {
 	opts := &types.InitBaseOptions{}
 	opts.KubeConfig = types.DefaultKubeConfig
@@ -104,7 +104,7 @@ func addInitFlags(cmd *cobra.Command, initOpts *types.InitBaseOptions) {
 		"Use this key to set the temp directory path for KubeEdge tarball, if not exist, download it")
 }
 
-//Add2CloudToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
+// Add2CloudToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
 func Add2CloudToolsList(toolList map[string]types.ToolsInstaller, flagData map[string]types.FlagData, initOptions *types.InitBaseOptions) error {
 	var kubeVer string
 	flgData, ok := flagData[types.KubeEdgeVersion]

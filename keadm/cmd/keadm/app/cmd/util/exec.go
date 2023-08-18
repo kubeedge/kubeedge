@@ -9,7 +9,7 @@ import (
 	"syscall"
 )
 
-//Command defines commands to be executed and captures std out and std error
+// Command defines commands to be executed and captures std out and std error
 type Command struct {
 	Cmd      *exec.Cmd
 	StdOut   []byte

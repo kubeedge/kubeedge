@@ -47,7 +47,7 @@ func (tm *testManager) Enable() bool {
 	return tm.enable
 }
 
-//Function to get the pods from Edged
+// Function to get the pods from Edged
 func GetPodListFromEdged(w http.ResponseWriter) error {
 	var pods v1.PodList
 	var bytes io.Reader
@@ -87,7 +87,7 @@ func GetPodListFromEdged(w http.ResponseWriter) error {
 	return nil
 }
 
-//Function to handle Get/Add/Delete deployment list.
+// Function to handle Get/Add/Delete deployment list.
 func (tm *testManager) podHandler(w http.ResponseWriter, req *http.Request) {
 	var operation string
 	var p v1.Pod
@@ -127,7 +127,7 @@ func (tm *testManager) podHandler(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-//Function to handle device addition and removal from the edgenode
+// Function to handle device addition and removal from the edgenode
 func (tm *testManager) deviceHandler(w http.ResponseWriter, req *http.Request) {
 	var operation string
 	var Content interface{}
