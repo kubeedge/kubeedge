@@ -46,9 +46,8 @@ import (
 )
 
 const (
-	SockPath = "/etc/kubeedge/dmi.sock"
-	Limit    = 1000
-	Burst    = 100
+	Limit = 1000
+	Burst = 100
 )
 
 type server struct {
@@ -181,18 +180,15 @@ func CreateMessageTwinUpdate(name, valueType, value string) ([]byte, error) {
 
 func initSock(sockPath string) error {
 	klog.Infof("init uds socket: %s", sockPath)
-	_, err := os.Stat(sockPath)
-	if err == nil {
-		err = os.Remove(sockPath)
-		if err != nil {
-			return err
-		}
+	err := os.Remove(sockPath)
+
+	if os.IsNotExist(err) {
 		return nil
-	} else if os.IsNotExist(err) {
-		return nil
-	} else {
+	} else if err != nil {
+		klog.Error(err)
 		return fmt.Errorf("fail to stat uds socket path")
 	}
+	return nil
 }
 
 func StartDMIServer(cache *DMICache) {
