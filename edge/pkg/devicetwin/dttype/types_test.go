@@ -267,7 +267,7 @@ func TestCompareWithCloud(t *testing.T) {
 	}
 }
 
-//TestUpdateCloudVersion tests UpdateCloudVersion().
+// TestUpdateCloudVersion tests UpdateCloudVersion().
 func TestUpdateCloudVersion(t *testing.T) {
 	twinVersion := TwinVersion{CloudVersion: 1}
 	bytesTwinVersion, _ := json.Marshal(twinVersion)
@@ -552,7 +552,7 @@ func createTwinUpdateWrongActual() (DeviceTwinUpdate, []byte) {
 	var actualValueErrorExpected TwinValue
 	var actualValueErrorActual TwinValue
 	valueExpected := "value"
-	valueActual := "value~"
+	valueActual := "value("
 	valueMetaDataActualValueError := &ValueMetadata{
 		Timestamp: time.Now().UnixNano() / 1e6,
 	}
@@ -575,7 +575,7 @@ func createTwinUpdateWrongExpected() (DeviceTwinUpdate, []byte) {
 	twinKeyExpectedValueError := make(map[string]*MsgTwin)
 	var expectedValueErrorExpected TwinValue
 	var expectedValueErrorActual TwinValue
-	valueExpectedValueError := "value~"
+	valueExpectedValueError := "value("
 	valueMetaDataExpectedValueError := &ValueMetadata{
 		Timestamp: time.Now().UnixNano() / 1e6,
 	}

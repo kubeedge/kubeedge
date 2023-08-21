@@ -157,7 +157,7 @@ func TestValidateTwinValue(t *testing.T) {
 	}{{
 		// Failure case
 		name: "ValidateTwinValueFailCase",
-		key:  "test^",
+		key:  "test(",
 		want: false,
 	}, {
 		// Success case
