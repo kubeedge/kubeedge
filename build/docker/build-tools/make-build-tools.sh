@@ -6,7 +6,7 @@ REPOSITORY=${REPOSITORY:-"kubeedge/build-tools"}
 # image tag for build-tools image, including golang version and build-tools version
 # If there's some modifications for build-tools.dockerfile other than golang version, the build-tools version should be updated e.g. ke1, ke2.
 # If the golang version is updated in build-tools.dockerfile, the build-tools version should be started from ke1.
-IMAGE_TAG=${IMAGE_TAG:-"1.17.13-ke1"}
+IMAGE_TAG=${IMAGE_TAG:-"1.19.12-ke1"}
 WORK_DIR=$(cd "$(dirname "$0")";pwd)
 PUSH_TAG=${1}
 ARCHS=(amd64 arm64 arm)
