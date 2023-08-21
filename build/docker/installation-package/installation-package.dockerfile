@@ -1,4 +1,4 @@
-FROM kubeedge/build-tools:1.17.13-ke1 as builder
+FROM kubeedge/build-tools:1.19.12-ke1 as builder
 WORKDIR /work
 ADD . .
 RUN mkdir -p bin && \

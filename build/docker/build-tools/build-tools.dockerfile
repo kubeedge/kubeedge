@@ -2,10 +2,10 @@
 FROM ubuntu:22.04
 ARG ARCH=amd64
 RUN apt-get update && apt-get install -y wget \
-    vim git make gcc upx-ucl
+    vim git make gcc upx-ucl 
 
 RUN if [ "${ARCH}" = "amd64" ]; then apt-get install -y gcc-aarch64-linux-gnu libc6-dev-arm64-cross gcc-arm-linux-gnueabihf ; fi
-
+ 
 RUN apt-get autoremove -y &&\
     apt-get clean &&\
     rm -rf /var/lib/apt/lists/*
