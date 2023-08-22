@@ -35,15 +35,15 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 )
 
-//K8SInstTool embeds Common struct and contains the default K8S version and
-//a flag depicting if host is an edge or cloud node
-//It implements ToolsInstaller interface
+// K8SInstTool embeds Common struct and contains the default K8S version and
+// a flag depicting if host is an edge or cloud node
+// It implements ToolsInstaller interface
 type K8SInstTool struct {
 	Common
 }
 
-//InstallTools sets the OS interface, checks if K8S installation is required or not.
-//If required then install the said version.
+// InstallTools sets the OS interface, checks if K8S installation is required or not.
+// If required then install the said version.
 func (ks *K8SInstTool) InstallTools() error {
 	ks.SetOSInterface(GetOSInterface())
 
@@ -198,8 +198,8 @@ func createKubeEdgeV1CRD(dynamicClient dynamic.Interface, crdFile string) error 
 	return err
 }
 
-//TearDown should uninstall K8S, but it is not required either for cloud or edge node.
-//It is defined so that K8SInstTool implements ToolsInstaller interface
+// TearDown should uninstall K8S, but it is not required either for cloud or edge node.
+// It is defined so that K8SInstTool implements ToolsInstaller interface
 func (ks *K8SInstTool) TearDown() error {
 	return nil
 }

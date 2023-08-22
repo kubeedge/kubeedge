@@ -7,7 +7,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 )
 
-//DeviceTwin the struct of device twin
+// DeviceTwin the struct of device twin
 type DeviceTwin struct {
 	ID              int64  `orm:"column(id);size(64);auto;pk"`
 	DeviceID        string `orm:"column(deviceid); null; type(text)"`
@@ -24,14 +24,14 @@ type DeviceTwin struct {
 	Metadata        string `orm:"column(metadata);null;type(text)"`
 }
 
-//SaveDeviceTwin save device twin
+// SaveDeviceTwin save device twin
 func SaveDeviceTwin(obm orm.Ormer, doc *DeviceTwin) error {
 	num, err := obm.Insert(doc)
 	klog.V(4).Infof("Insert affected Num: %d, %s", num, err)
 	return err
 }
 
-//DeleteDeviceTwinByDeviceID delete device twin
+// DeleteDeviceTwinByDeviceID delete device twin
 func DeleteDeviceTwinByDeviceID(obm orm.Ormer, deviceID string) error {
 	num, err := obm.QueryTable(DeviceTwinTableName).Filter("deviceid", deviceID).Delete()
 	if err != nil {
@@ -42,7 +42,7 @@ func DeleteDeviceTwinByDeviceID(obm orm.Ormer, deviceID string) error {
 	return nil
 }
 
-//DeleteDeviceTwin delete device twin
+// DeleteDeviceTwin delete device twin
 func DeleteDeviceTwin(obm orm.Ormer, deviceID string, name string) error {
 	num, err := obm.QueryTable(DeviceTwinTableName).Filter("deviceid", deviceID).Filter("name", name).Delete()
 	if err != nil {
@@ -77,14 +77,14 @@ func QueryDeviceTwin(key string, condition string) (*[]DeviceTwin, error) {
 	return twin, nil
 }
 
-//DeviceTwinUpdate the struct for updating device twin
+// DeviceTwinUpdate the struct for updating device twin
 type DeviceTwinUpdate struct {
 	DeviceID string
 	Name     string
 	Cols     map[string]interface{}
 }
 
-//UpdateDeviceTwinMulti update device twin multi
+// UpdateDeviceTwinMulti update device twin multi
 func UpdateDeviceTwinMulti(updates []DeviceTwinUpdate) error {
 	var err error
 	for _, update := range updates {
@@ -96,7 +96,7 @@ func UpdateDeviceTwinMulti(updates []DeviceTwinUpdate) error {
 	return nil
 }
 
-//DeviceTwinTrans transaction of device twin
+// DeviceTwinTrans transaction of device twin
 func DeviceTwinTrans(adds []DeviceTwin, deletes []DeviceDelete, updates []DeviceTwinUpdate) error {
 	obm := dbm.DefaultOrmFunc()
 	err := obm.Begin()

@@ -4,7 +4,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
-//constant defining node connection types
+// constant defining node connection types
 const (
 	ResourceTypeNodeConnection = "node/connection"
 	SourceNodeConnection       = "edgehub"
@@ -23,7 +23,7 @@ const (
 	UserGroupName     = "user"
 )
 
-//BuildMsg returns message object with router and content details
+// BuildMsg returns message object with router and content details
 func BuildMsg(group, parentID, sourceName, resource, operation string, content interface{}) *model.Message {
 	msg := model.NewMessage(parentID).BuildRouter(sourceName, group, resource, operation).FillBody(content)
 	return msg

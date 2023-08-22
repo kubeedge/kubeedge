@@ -29,7 +29,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/testutil"
 )
 
-//TestCommTo is function to test CommTo().
+// TestCommTo is function to test CommTo().
 func TestCommTo(t *testing.T) {
 	commChan := make(map[string]chan interface{})
 	testInterface := make(chan interface{}, 1)
@@ -79,7 +79,7 @@ func TestCommTo(t *testing.T) {
 	}
 }
 
-//TestHeartBeat is function to test HeartBeat().
+// TestHeartBeat is function to test HeartBeat().
 func TestHeartBeat(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -121,7 +121,7 @@ func TestHeartBeat(t *testing.T) {
 	}
 }
 
-//TestGetMutex is function to test GetMutex().
+// TestGetMutex is function to test GetMutex().
 func TestGetMutex(t *testing.T) {
 	dtc := &DTContext{
 		DeviceMutex: &sync.Map{},
@@ -169,7 +169,7 @@ func TestGetMutex(t *testing.T) {
 	}
 }
 
-//TestLock is function to test Lock().
+// TestLock is function to test Lock().
 func TestLock(t *testing.T) {
 	dtc := &DTContext{
 		Mutex:       &sync.RWMutex{},
@@ -204,7 +204,7 @@ func TestLock(t *testing.T) {
 	}
 }
 
-//TestUnlock is function to test Unlock().
+// TestUnlock is function to test Unlock().
 func TestUnlock(t *testing.T) {
 	dtc := &DTContext{
 		Mutex:       &sync.RWMutex{},
@@ -241,7 +241,7 @@ func TestUnlock(t *testing.T) {
 	}
 }
 
-//TestIsDeviceExist is to test IsDeviceExist().
+// TestIsDeviceExist is to test IsDeviceExist().
 func TestIsDeviceExist(t *testing.T) {
 	dtc := &DTContext{
 		DeviceList: &sync.Map{},
@@ -274,7 +274,7 @@ func TestIsDeviceExist(t *testing.T) {
 	}
 }
 
-//Function TestGetDevice is to test GetDevice().
+// Function TestGetDevice is to test GetDevice().
 func TestGetDevice(t *testing.T) {
 	dtc := &DTContext{
 		DeviceList: &sync.Map{},
@@ -325,7 +325,7 @@ func TestGetDevice(t *testing.T) {
 	}
 }
 
-//Function TestSend is function to test Send().
+// Function TestSend is function to test Send().
 func TestSend(t *testing.T) {
 	content := testutil.GenerateAddDevicePalyloadMsg(t)
 	commChan := make(map[string]chan interface{})
@@ -371,7 +371,7 @@ func TestSend(t *testing.T) {
 	}
 }
 
-//TestBuildModelMessage is to test BuildModelMessage().
+// TestBuildModelMessage is to test BuildModelMessage().
 func TestBuildModelMessage(t *testing.T) {
 	dtc := &DTContext{}
 	content := testutil.GenerateAddDevicePalyloadMsg(t)

@@ -23,30 +23,30 @@ import (
 	"github.com/onsi/ginkgo"
 )
 
-//Function to get time in millisec
+// nowStamp get time in millisec
 func nowStamp() string {
 	return time.Now().Format(time.StampMilli)
 }
 
-//functiont to log the Ginkgo framework logs
+// logf log the Ginkgo framework logs
 func logf(level string, format string, args ...interface{}) {
 	fmt.Fprintf(ginkgo.GinkgoWriter, nowStamp()+": "+level+": "+format+"\n", args...)
 }
 
-//Funciton to log Filure logs
+// Fatalf log Failure logs
 func Fatalf(format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	logf("FAIL", msg)
 	ginkgo.Fail(nowStamp()+": "+msg, 1)
 }
 
-//function for log level
+// Infof for log level
 func Infof(format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	logf("INFO", msg)
 }
 
-//Function to print the test case name and status of execution
+// PrintTestcaseNameandStatus to print the test case name and status of execution
 func PrintTestcaseNameandStatus() {
 	var Status string
 	testSpecReport := ginkgo.CurrentGinkgoTestDescription()

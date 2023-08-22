@@ -4,14 +4,14 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
-//MsgSubPub the struct of message for subscribe or publish
+// MsgSubPub the struct of message for subscribe or publish
 type MsgSubPub struct {
 	Action  string `json:"action"`
 	Payload string `json:"payload"`
 	Qos     int    `json:"qos"`
 }
 
-//DTMessage the struct of message for communicating between cloud and edge
+// DTMessage the struct of message for communicating between cloud and edge
 type DTMessage struct {
 	Msg      *model.Message
 	Identity string
@@ -19,7 +19,7 @@ type DTMessage struct {
 	Type     string
 }
 
-//GetDetailNode the info existed in req body
+// GetDetailNode the info existed in req body
 type GetDetailNode struct {
 	EventType string `json:"event_type,omitempty"`
 	EventID   string `json:"event_id,omitempty"`

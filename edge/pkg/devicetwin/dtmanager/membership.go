@@ -23,13 +23,13 @@ var (
 	memActionCallBack map[string]CallBack
 )
 
-//MemWorker deal membership event
+// MemWorker deal membership event
 type MemWorker struct {
 	Worker
 	Group string
 }
 
-//Start worker
+// Start worker
 func (mw MemWorker) Start() {
 	initMemActionCallBack()
 	for {
@@ -358,7 +358,7 @@ func dealMembershipGetInner(context *dtcontext.DTContext, payload []byte) error 
 	return nil
 }
 
-//SyncDeviceFromSqlite sync device from sqlite
+// SyncDeviceFromSqlite sync device from sqlite
 func SyncDeviceFromSqlite(context *dtcontext.DTContext, deviceID string) error {
 	klog.Infof("Sync device detail info from DB of device %s", deviceID)
 	_, exist := context.GetDevice(deviceID)

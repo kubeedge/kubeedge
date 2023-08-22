@@ -6,20 +6,18 @@ import (
 	"github.com/kubeedge/viaduct/pkg/conn"
 )
 
-// the callback for getting connection key
+// ConnKey callback for getting connection key
 type ConnKey func(connection conn.Connection) string
 
-// connection instances management
+// ConnectionManager instances management
 type ConnectionManager struct {
 	connKey     ConnKey
 	connections sync.Map
 }
 
-// new connection manager instance
-// you the conn key like this:
-//func getConnKey(conn conn.Connection) string {
-//	return conn.ConnectionState().Headers.Get("node_id")
-//}
+// NewManager instance.
+// you the conn key like this: func getConnKey(conn conn.Connection) string {
+// return conn.ConnectionState().Headers.Get("node_id")}
 func NewManager(connKey ConnKey) *ConnectionManager {
 	keyFunc := getConnKeyDefault
 	if connKey != nil {
@@ -30,22 +28,22 @@ func NewManager(connKey ConnKey) *ConnectionManager {
 	}
 }
 
-// get conn key default
+// getConnKeyDefault get conn key default
 func getConnKeyDefault(conn conn.Connection) string {
 	return conn.RemoteAddr().String()
 }
 
-// add connection into store
+// AddConnection add connection into store
 func (mgr *ConnectionManager) AddConnection(conn conn.Connection) {
 	mgr.connections.Store(mgr.connKey(conn), conn)
 }
 
-// delete connection from store
+// DelConnection delete connection from store
 func (mgr *ConnectionManager) DelConnection(conn conn.Connection) {
 	mgr.connections.Delete(mgr.connKey(conn))
 }
 
-// get connection for store
+// GetConnection get connection for store
 func (mgr *ConnectionManager) GetConnection(key string) (conn.Connection, bool) {
 	obj, exist := mgr.connections.Load(key)
 	if exist {

@@ -20,7 +20,7 @@ import (
 	"github.com/blang/semver"
 )
 
-//InitBaseOptions has the kubeedge cloud deprecated init base information filled by CLI
+// InitBaseOptions has the kubeedge cloud deprecated init base information filled by CLI
 type InitBaseOptions struct {
 	KubeEdgeVersion  string
 	KubeConfig       string
@@ -30,7 +30,7 @@ type InitBaseOptions struct {
 	TarballPath      string
 }
 
-//InitOptions has the kubeedge cloud init information filled by CLI
+// InitOptions has the kubeedge cloud init information filled by CLI
 type InitOptions struct {
 	KubeConfig       string
 	KubeEdgeVersion  string
@@ -45,7 +45,7 @@ type InitOptions struct {
 	DryRun           bool
 }
 
-//JoinOptions has the kubeedge cloud init information filled by CLI
+// JoinOptions has the kubeedge cloud init information filled by CLI
 type JoinOptions struct {
 	InitBaseOptions
 	CertPath              string
@@ -110,10 +110,10 @@ type DiagnoseObject struct {
 	Use  string
 }
 
-//ModuleRunning is defined to know the running status of KubeEdge components
+// ModuleRunning is defined to know the running status of KubeEdge components
 type ModuleRunning uint8
 
-//Different possible values for ModuleRunning type
+// Different possible values for ModuleRunning type
 const (
 	NoneRunning ModuleRunning = iota
 	KubeEdgeCloudRunning
@@ -123,7 +123,7 @@ const (
 // ComponentType is the type of KubeEdge components, cloudcore or edgecore
 type ComponentType string
 
-//All Component type
+// All Component type
 const (
 	CloudCore ComponentType = "cloudcore"
 	EdgeCore  ComponentType = "edgecore"
@@ -135,13 +135,13 @@ type InstallOptions struct {
 	TarballPath   string
 }
 
-//ToolsInstaller interface for tools with install and teardown methods.
+// ToolsInstaller interface for tools with install and teardown methods.
 type ToolsInstaller interface {
 	InstallTools() error
 	TearDown() error
 }
 
-//OSTypeInstaller interface for methods to be executed over a specified OS distribution type
+// OSTypeInstaller interface for methods to be executed over a specified OS distribution type
 type OSTypeInstaller interface {
 	InstallMQTT() error
 	IsK8SComponentInstalled(string, string) error
@@ -152,7 +152,7 @@ type OSTypeInstaller interface {
 	IsKubeEdgeProcessRunning(string) (bool, error)
 }
 
-//FlagData stores value and default value of the flags used in this command
+// FlagData stores value and default value of the flags used in this command
 type FlagData struct {
 	Val    interface{}
 	DefVal interface{}

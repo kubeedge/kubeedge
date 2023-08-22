@@ -103,11 +103,17 @@ func KeyRootFunc(ctx context.Context) string {
 // ParseKey parse key to group/version/resource, namespace, name
 // Now key format is like below:
 // 0/1   /2 /3   /4     /5
-//  /core/v1/pods/{namespaces}/{name}
+//
+//	/core/v1/pods/{namespaces}/{name}
+//
 // 0/1  /2/3
-//  /app/v1/deployments
+//
+//	/app/v1/deployments
+//
 // 0/1   /2 /3
-//  /core/v1/endpoints
+//
+//	/core/v1/endpoints
+//
 // Remember that ParseKey is not responsible for verifying the validity of the content,
 // for example, gvr in key /app/v1111/endpoint will be parsed as {Group:"app", Version:"v1111", Resource:"endpoint"}
 func ParseKey(key string) (gvr schema.GroupVersionResource, namespace string, name string) {

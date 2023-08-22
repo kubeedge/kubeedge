@@ -142,7 +142,7 @@ process_content () {
 #############################################################################
 
 export GO111MODULE=on
-export GOFLAGS=-mod=mod
+export GOFLAGS=-mod=readonly
 
 # Check bash version
 if (( BASH_VERSINFO[0] < 4 )); then

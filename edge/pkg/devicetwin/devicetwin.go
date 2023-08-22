@@ -12,7 +12,7 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 )
 
-//DeviceTwin the module
+// DeviceTwin the module
 type DeviceTwin struct {
 	HeartBeatToModule map[string]chan interface{}
 	DTContexts        *dtcontext.DTContext

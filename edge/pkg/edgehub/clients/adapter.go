@@ -4,7 +4,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
-//Adapter is a web socket client interface
+// Adapter is a web socket client interface
 type Adapter interface {
 	Init() error
 	UnInit()

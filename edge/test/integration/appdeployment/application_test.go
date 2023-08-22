@@ -35,7 +35,7 @@ const (
 	AppHandler = "/pods"
 )
 
-//Run Test cases
+// Run Test cases
 var _ = Describe("Application deployment in edgecore Testing", func() {
 	var UID string
 	Context("Test application deployment and delete deployment", func() {

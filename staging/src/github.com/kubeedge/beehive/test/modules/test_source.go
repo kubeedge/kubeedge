@@ -9,7 +9,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
-//Constants for module source and group
+// Constants for module source and group
 const (
 	SourceModule = "sourcemodule"
 	SourceGroup  = "sourcegroup"

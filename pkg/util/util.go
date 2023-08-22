@@ -98,7 +98,7 @@ func ValidateNodeIP(nodeIP net.IP) error {
 	return fmt.Errorf("node IP: %q not found in the host's network interfaces", nodeIP.String())
 }
 
-//Command executes command and returns output
+// Command executes command and returns output
 func Command(name string, arg []string) (string, error) {
 	cmd := exec.Command(name, arg...)
 	ret, err := cmd.Output()
@@ -108,7 +108,7 @@ func Command(name string, arg []string) (string, error) {
 	return strings.Trim(string(ret), "\n"), nil
 }
 
-//GetCurPath returns filepath
+// GetCurPath returns filepath
 func GetCurPath() string {
 	file, _ := exec.LookPath(os.Args[0])
 	path, _ := filepath.Abs(file)

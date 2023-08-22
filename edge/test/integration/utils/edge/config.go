@@ -26,7 +26,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
 )
 
-//config.json decode struct
+// config.json decode struct
 type Config struct {
 	MqttEndpoint  string   `json:"mqttEndpoint"`
 	TestManager   string   `json:"testManager"`
@@ -35,10 +35,10 @@ type Config struct {
 	NodeID        string   `json:"nodeId"`
 }
 
-//config struct
+// config struct
 var config *Config
 
-//get config.json path
+// get config.json path
 func LoadConfig() Config {
 	if config == nil {
 		config = loadConfigJSONFromPath()
@@ -46,7 +46,7 @@ func LoadConfig() Config {
 	return *config
 }
 
-//Load Config.json from the PWD, and decode the config.
+// Load Config.json from the PWD, and decode the config.
 func loadConfigJSONFromPath() *Config {
 	path := getConfigPath()
 	_, err := filepath.Abs(filepath.Dir(path))
@@ -69,7 +69,7 @@ func loadConfigJSONFromPath() *Config {
 	return config
 }
 
-//Get config path from Env or hard code the file path
+// Get config path from Env or hard code the file path
 func getConfigPath() string {
 	path := os.Getenv("TESTCONFIG")
 	if path == "" {
@@ -78,7 +78,7 @@ func getConfigPath() string {
 	return path
 }
 
-//function to Generate Random string
+// function to Generate Random string
 func GetRandomString(length int) string {
 	str := "-0123456789abcdefghijklmnopqrstuvwxyz"
 	bytes := []byte(str)

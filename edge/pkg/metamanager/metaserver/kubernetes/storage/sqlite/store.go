@@ -22,7 +22,7 @@ import (
 )
 
 /*
-	This file is designed to encapsulate the Imitator as Store.Interface,
+This file is designed to encapsulate the Imitator as Store.Interface,
 */
 type store struct {
 	client    imitator.Client

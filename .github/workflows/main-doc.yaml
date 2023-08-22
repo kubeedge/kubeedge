@@ -28,7 +28,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.17.x
+          go-version: 1.19.x
 
       - name: Checkout code
         uses: actions/checkout@v2
@@ -46,8 +46,8 @@ jobs:
     timeout-minutes: 30
     name: Prepare kubeedge/build-tools image
     steps:
-      - run: 'echo "only docs modified, no need to trigger CI"' 
-      
+      - run: 'echo "only docs modified, no need to trigger CI"'
+
 
   build:
     runs-on: ubuntu-22.04
@@ -55,7 +55,7 @@ jobs:
     name: Multiple build
     needs: image-prepare
     steps:
-      - run: 'echo "only docs modified, no need to trigger CI"' 
+      - run: 'echo "only docs modified, no need to trigger CI"'
 
   basic_test:
     runs-on: ubuntu-22.04
@@ -64,7 +64,7 @@ jobs:
     env:
       GO111MODULE: on
     steps:
-      - run: 'echo "only docs modified, no need to trigger CI"' 
+      - run: 'echo "only docs modified, no need to trigger CI"'
 
   e2e_test:
     runs-on: ubuntu-22.04
@@ -79,8 +79,8 @@ jobs:
     env:
       GO111MODULE: on
     steps:
-      - run: 'echo "only docs modified, no need to trigger CI"' 
-      
+      - run: 'echo "only docs modified, no need to trigger CI"'
+
 
 
   keadm_deprecated_e2e_test:
@@ -101,7 +101,7 @@ jobs:
       GO111MODULE: on
     steps:
       - run: 'echo "only docs modified, no need to trigger CI"'
-        
+
 
   docker_build:
     runs-on: ubuntu-22.04
@@ -109,4 +109,4 @@ jobs:
     name: Multiple docker image build
     steps:
       - run: 'echo "only docs modified, no need to trigger CI"'
-        
+

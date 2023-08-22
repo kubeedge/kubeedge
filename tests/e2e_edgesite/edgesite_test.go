@@ -35,7 +35,7 @@ import (
 
 var DeploymentTestTimerGroup = utils.NewTestTimerGroup()
 
-//Run Test cases
+// Run Test cases
 var _ = Describe("Application deployment test in E2E scenario using EdgeSite", func() {
 	var UID string
 	var testTimer *utils.TestTimer

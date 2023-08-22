@@ -37,13 +37,13 @@ import (
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/edge"
 )
 
-//DeviceUpdate device update
+// DeviceUpdate device update
 type DeviceUpdate struct {
 	State      string                     `json:"state,omitempty"`
 	Attributes map[string]*dttype.MsgAttr `json:"attributes"`
 }
 
-//Device the struct of device
+// Device the struct of device
 type Device struct {
 	ID          string `json:"id,omitempty"`
 	Name        string `json:"name,omitempty"`
@@ -52,7 +52,7 @@ type Device struct {
 	LastOnline  string `json:"last_online,omitempty"`
 }
 
-//Attribute Structure to read data from DB (Should match with the DB-table 'device_attr' schema)
+// Attribute Structure to read data from DB (Should match with the DB-table 'device_attr' schema)
 type Attribute struct {
 	ID          string `json:"id,omitempty"`
 	DeviceID    string `json:"deviceid,omitempty"`
@@ -64,7 +64,7 @@ type Attribute struct {
 	MetaData    string `json:"metadata,omitempty"`
 }
 
-//Twin Structure to read data from DB (Should match with the DB-table 'device_twin' schema)
+// Twin Structure to read data from DB (Should match with the DB-table 'device_twin' schema)
 type TwinAttribute struct {
 	ID           string `json:"id,omitempty"`
 	DeviceID     string `json:"deviceid,omitempty"`
@@ -85,7 +85,7 @@ func GenerateDeviceID(deviceSuffix string) string {
 	return deviceSuffix + edge.GetRandomString(10)
 }
 
-//Function to Generate Device
+// Function to Generate Device
 func CreateDevice(deviceID string, deviceName string, deviceState string) dttype.Device {
 	device := dttype.Device{
 		ID:          deviceID,
@@ -98,7 +98,7 @@ func CreateDevice(deviceID string, deviceName string, deviceState string) dttype
 	return device
 }
 
-//Function to add Device attribute to existing device
+// Function to add Device attribute to existing device
 func AddDeviceAttribute(device dttype.Device, attributeName string, attributeValue string, attributeType string) {
 	var optional = true
 	var typeMeta = dttype.TypeMetadata{Type: attributeType}
@@ -106,7 +106,7 @@ func AddDeviceAttribute(device dttype.Device, attributeName string, attributeVal
 	device.Attributes[attributeName] = &attribute
 }
 
-//Function to add Twin attribute to existing device
+// Function to add Twin attribute to existing device
 func AddTwinAttribute(device dttype.Device, attributeName string, attributeValue string, attributeType string) {
 	value := attributeValue
 	optional := true
@@ -125,7 +125,7 @@ func AddTwinAttribute(device dttype.Device, attributeName string, attributeValue
 	device.Twin[attributeName] = &msgTwin
 }
 
-//Function to access the edgecore DB and return the device state.
+// Function to access the edgecore DB and return the device state.
 func GetDeviceStateFromDB(deviceID string) string {
 	var device Device
 	db, err := sql.Open("sqlite3", utils.DBFile)
@@ -222,7 +222,7 @@ func HubClientInit(server, clientID, username, password string) *MQTT.ClientOpti
 	return opts
 }
 
-//function to handle device addition and deletion.
+// function to handle device addition and deletion.
 func HandleAddAndDeleteDevice(operation, testMgrEndPoint string, device dttype.Device) bool {
 	var httpMethod string
 	var payload dttype.MembershipUpdate
@@ -270,7 +270,7 @@ func HandleAddAndDeleteDevice(operation, testMgrEndPoint string, device dttype.D
 	return true
 }
 
-//HandleAddAndDeletePods is function to handle app deployment/delete deployment.
+// HandleAddAndDeletePods is function to handle app deployment/delete deployment.
 func HandleAddAndDeletePods(operation string, edgedpoint string, UID string, container []v1.Container, restartPolicy v1.RestartPolicy) bool {
 	var httpMethod string
 	switch operation {
@@ -314,7 +314,7 @@ func HandleAddAndDeletePods(operation string, edgedpoint string, UID string, con
 	return true
 }
 
-//Function to get the pods from Edged
+// Function to get the pods from Edged
 func GetPods(EdgedEndpoint string) (v1.PodList, error) {
 	var pods v1.PodList
 	var bytes io.Reader
@@ -346,7 +346,7 @@ func GetPods(EdgedEndpoint string) (v1.PodList, error) {
 	return pods, nil
 }
 
-//CheckPodRunningState is function to check the Pod state
+// CheckPodRunningState is function to check the Pod state
 func CheckPodRunningState(EdgedEndPoint, podname string) {
 	gomega.Eventually(func() string {
 		var status string
@@ -362,7 +362,7 @@ func CheckPodRunningState(EdgedEndPoint, podname string) {
 	}, "240s", "2s").Should(gomega.Equal("Running"), "Application Deployment is Unsuccessful, Pod has not come to Running State")
 }
 
-//CheckPodDeletion is function to check pod deletion
+// CheckPodDeletion is function to check pod deletion
 func CheckPodDeletion(EdgedEndPoint, UID string) {
 	gomega.Eventually(func() bool {
 		var IsExist = false

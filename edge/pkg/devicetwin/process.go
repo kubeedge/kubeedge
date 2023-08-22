@@ -27,7 +27,7 @@ var (
 	ActionModuleMap map[string]string
 )
 
-//RegisterDTModule register dtmodule
+// RegisterDTModule register dtmodule
 func (dt *DeviceTwin) RegisterDTModule(name string) {
 	module := dtmodule.DTModule{
 		Name: name,
@@ -40,7 +40,7 @@ func (dt *DeviceTwin) RegisterDTModule(name string) {
 	dt.DTModules[name] = module
 }
 
-//distributeMsg distribute message to diff module
+// distributeMsg distribute message to diff module
 func (dt *DeviceTwin) distributeMsg(m interface{}) error {
 	msg, ok := m.(model.Message)
 	if !ok {
@@ -133,7 +133,7 @@ func SyncSqlite(context *dtcontext.DTContext) error {
 	return nil
 }
 
-//SyncDeviceFromSqlite sync device from sqlite
+// SyncDeviceFromSqlite sync device from sqlite
 func SyncDeviceFromSqlite(context *dtcontext.DTContext, deviceID string) error {
 	klog.Infof("Sync device detail info from DB of device %s", deviceID)
 	_, exist := context.GetDevice(deviceID)

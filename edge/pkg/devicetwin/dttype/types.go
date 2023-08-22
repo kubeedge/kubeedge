@@ -12,7 +12,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 )
 
-//Device the struct of device
+// Device the struct of device
 type Device struct {
 	ID          string              `json:"id,omitempty"`
 	Name        string              `json:"name,omitempty"`
@@ -23,7 +23,7 @@ type Device struct {
 	Twin        map[string]*MsgTwin `json:"twin,omitempty"`
 }
 
-//BaseMessage the base struct of event message
+// BaseMessage the base struct of event message
 type BaseMessage struct {
 	EventID   string `json:"event_id"`
 	Timestamp int64  `json:"timestamp"`
@@ -34,12 +34,12 @@ var ErrorUpdate = errors.New("Update twin error, key:twin does not exist")
 var ErrorKey = errors.New("The key of twin must only include upper or lowercase letters, number, english, and special letter - _ . , : / @ # and the length of key should be less than 128 bytes")
 var ErrorValue = errors.New("The value of twin must only include upper or lowercase letters, number, english, and special letter - _ . , : / @ # and the length of value should be less than 512 bytes")
 
-//SetEventID set event id
+// SetEventID set event id
 func (bs *BaseMessage) SetEventID(eventID string) {
 	bs.EventID = eventID
 }
 
-//BuildBaseMessage build base msg
+// BuildBaseMessage build base msg
 func BuildBaseMessage() BaseMessage {
 	now := time.Now().UnixNano() / 1e6
 	return BaseMessage{
@@ -47,7 +47,7 @@ func BuildBaseMessage() BaseMessage {
 		Timestamp: now}
 }
 
-//Parameter container para
+// Parameter container para
 type Parameter struct {
 	EventID string
 	Code    int
@@ -61,20 +61,20 @@ type Result struct {
 	Reason string `json:"reason,omitempty"`
 }
 
-//MembershipDetail the struct of membership detail
+// MembershipDetail the struct of membership detail
 type MembershipDetail struct {
 	BaseMessage
 	Devices []Device `json:"devices"`
 }
 
-//MembershipUpdate the struct of membership update
+// MembershipUpdate the struct of membership update
 type MembershipUpdate struct {
 	BaseMessage
 	AddDevices    []Device `json:"added_devices"`
 	RemoveDevices []Device `json:"removed_devices"`
 }
 
-//MarshalMembershipUpdate marshal membership update
+// MarshalMembershipUpdate marshal membership update
 func MarshalMembershipUpdate(result MembershipUpdate) ([]byte, error) {
 	for i := range result.AddDevices {
 		if result.AddDevices[i].Twin != nil {
@@ -102,14 +102,14 @@ func MarshalMembershipUpdate(result MembershipUpdate) ([]byte, error) {
 	return resultJSON, err
 }
 
-//MsgAttr the struct of device attr
+// MsgAttr the struct of device attr
 type MsgAttr struct {
 	Value    string        `json:"value"`
 	Optional *bool         `json:"optional,omitempty"`
 	Metadata *TypeMetadata `json:"metadata,omitempty"`
 }
 
-//MsgTwin the struct of device twin
+// MsgTwin the struct of device twin
 type MsgTwin struct {
 	Expected        *TwinValue    `json:"expected,omitempty"`
 	Actual          *TwinValue    `json:"actual,omitempty"`
@@ -119,44 +119,44 @@ type MsgTwin struct {
 	ActualVersion   *TwinVersion  `json:"actual_version,omitempty"`
 }
 
-//TwinValue the struct of twin value
+// TwinValue the struct of twin value
 type TwinValue struct {
 	Value    *string        `json:"value,omitempty"`
 	Metadata *ValueMetadata `json:"metadata,omitempty"`
 }
 
-//TwinVersion twin version
+// TwinVersion twin version
 type TwinVersion struct {
 	CloudVersion int64 `json:"cloud"`
 	EdgeVersion  int64 `json:"edge"`
 }
 
-//TypeMetadata the meta of value type
+// TypeMetadata the meta of value type
 type TypeMetadata struct {
 	Type string `json:"type,omitempty"`
 }
 
-//ValueMetadata the meta of value
+// ValueMetadata the meta of value
 type ValueMetadata struct {
 	Timestamp int64 `json:"timestamp,omitempty"`
 }
 
-//UpdateCloudVersion update cloud version
+// UpdateCloudVersion update cloud version
 func (tv *TwinVersion) UpdateCloudVersion() {
 	tv.CloudVersion = tv.CloudVersion + 1
 }
 
-//UpdateEdgeVersion update edge version while dealing edge update
+// UpdateEdgeVersion update edge version while dealing edge update
 func (tv *TwinVersion) UpdateEdgeVersion() {
 	tv.EdgeVersion = tv.EdgeVersion + 1
 }
 
-//CompareWithCloud compare with cloud vershon while dealing cloud update req
+// CompareWithCloud compare with cloud vershon while dealing cloud update req
 func (tv TwinVersion) CompareWithCloud(tvCloud TwinVersion) bool {
 	return tvCloud.EdgeVersion >= tv.EdgeVersion
 }
 
-//UpdateCloudVersion update cloud version
+// UpdateCloudVersion update cloud version
 func UpdateCloudVersion(version string) (string, error) {
 	var twinversion TwinVersion
 	err := json.Unmarshal([]byte(version), &twinversion)
@@ -171,7 +171,7 @@ func UpdateCloudVersion(version string) (string, error) {
 	return string(result), nil
 }
 
-//UpdateEdgeVersion update Edge version
+// UpdateEdgeVersion update Edge version
 func UpdateEdgeVersion(version string) (string, error) {
 	var twinversion TwinVersion
 	err := json.Unmarshal([]byte(version), &twinversion)
@@ -186,7 +186,7 @@ func UpdateEdgeVersion(version string) (string, error) {
 	return string(result), nil
 }
 
-//CompareVersion compare cloud version
+// CompareVersion compare cloud version
 func CompareVersion(cloudversion string, edgeversion string) bool {
 	var twincloudversion TwinVersion
 	err := json.Unmarshal([]byte(cloudversion), &twincloudversion)
@@ -217,19 +217,19 @@ func UnmarshalConnectedInfo(payload []byte) (ConnectedInfo, error) {
 	return connectedInfo, nil
 }
 
-//DeviceTwinDocument the struct of twin document
+// DeviceTwinDocument the struct of twin document
 type DeviceTwinDocument struct {
 	BaseMessage
 	Twin map[string]*TwinDoc `json:"twin"`
 }
 
-//TwinDoc the struct of twin document
+// TwinDoc the struct of twin document
 type TwinDoc struct {
 	LastState    *MsgTwin `json:"last"`
 	CurrentState *MsgTwin `json:"current"`
 }
 
-//DeviceTwinUpdate the struct of device twin update
+// DeviceTwinUpdate the struct of device twin update
 type DeviceTwinUpdate struct {
 	BaseMessage
 	Twin map[string]*MsgTwin `json:"twin"`
@@ -286,7 +286,7 @@ func UnmarshalDeviceTwinUpdate(payload []byte) (*DeviceTwinUpdate, error) {
 	return &deviceTwinUpdate, nil
 }
 
-//DealTwinResult the result of dealing twin
+// DealTwinResult the result of dealing twin
 type DealTwinResult struct {
 	Add        []dtclient.DeviceTwin
 	Delete     []dtclient.DeviceDelete
@@ -297,7 +297,7 @@ type DealTwinResult struct {
 	Err        error
 }
 
-//DealAttrResult the result of dealing attr
+// DealAttrResult the result of dealing attr
 type DealAttrResult struct {
 	Add    []dtclient.DeviceAttr
 	Delete []dtclient.DeviceDelete

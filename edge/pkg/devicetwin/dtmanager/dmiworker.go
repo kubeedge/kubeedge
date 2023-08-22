@@ -37,7 +37,7 @@ import (
 	pb "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1alpha1"
 )
 
-//TwinWorker deal twin event
+// TwinWorker deal twin event
 type DMIWorker struct {
 	Worker
 	Group    string
@@ -62,7 +62,7 @@ func (dw *DMIWorker) init() {
 	dw.initDeviceMapperInfoFromDB()
 }
 
-//Start worker
+// Start worker
 func (dw DMIWorker) Start() {
 	klog.Infoln("dmi worker start")
 	dw.init()

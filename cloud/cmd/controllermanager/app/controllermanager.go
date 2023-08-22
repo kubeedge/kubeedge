@@ -9,7 +9,6 @@ import (
 	"k8s.io/component-base/cli/globalflag"
 	"k8s.io/klog/v2"
 	controllerruntime "sigs.k8s.io/controller-runtime"
-
 	// set --kubeconfig option
 	_ "sigs.k8s.io/controller-runtime/pkg/client/config"
 

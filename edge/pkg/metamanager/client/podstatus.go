@@ -10,12 +10,12 @@ import (
 	commodule "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
-//PodStatusGetter is interface to get pod status
+// PodStatusGetter is interface to get pod status
 type PodStatusGetter interface {
 	PodStatus(namespace string) PodStatusInterface
 }
 
-//PodStatusInterface is interface of pod status
+// PodStatusInterface is interface of pod status
 type PodStatusInterface interface {
 	Create(*edgeapi.PodStatusRequest) (*edgeapi.PodStatusRequest, error)
 	Update(rsName string, ps edgeapi.PodStatusRequest) error
