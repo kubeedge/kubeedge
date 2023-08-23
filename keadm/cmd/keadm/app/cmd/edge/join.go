@@ -208,21 +208,21 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 			return fmt.Errorf("prepare windows nssm service fail: %v", err)
 		}
 
-		step.Printf("Check edge bin")
+		step.Printf("Check edge bin exist")
 		// check if the binary download successfully manual
-		if !util.FileExists(filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName)) {
-			return fmt.Errorf("cannot find edgecore binary at %s, you should download it manual from github release and put edgecore.exe under %s", filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), util.KubeEdgeUsrBinPath)
+		if !util.FileExists(filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName+".exe")) {
+			return fmt.Errorf("cannot find edgecore binary at %s, you should download it manual from github release and put edgecore.exe under %s", filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName+".exe"), util.KubeEdgeUsrBinPath)
 		}
 
-		step.Printf("Install service")
-		if err := util.InstallNSSMService(util.KubeEdgeBinaryName, filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), "--config", filepath.Join(util.KubeEdgePath, "config/edgecore.yaml")); err != nil {
+		step.Printf("Register edgecore as windows service")
+		if err := util.InstallNSSMService(util.KubeEdgeBinaryName, filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName+".exe"), "--config", filepath.Join(util.KubeEdgePath, "config/edgecore.yaml")); err != nil {
 			return fmt.Errorf("install edgecore useing nssm fail: %v", err)
 		}
 
 		if err := util.SetNSSMServiceStdout(util.KubeEdgeBinaryName, filepath.Join(util.KubeEdgeLogPath, "out.log")); err != nil {
 			return fmt.Errorf("setting edgecore stdout log using nssm fail: %v", err)
 		}
-		if err := util.SetNSSMServiceStdout(util.KubeEdgeBinaryName, filepath.Join(util.KubeEdgeLogPath, "err.log")); err != nil {
+		if err := util.SetNSSMServiceStderr(util.KubeEdgeBinaryName, filepath.Join(util.KubeEdgeLogPath, "err.log")); err != nil {
 			return fmt.Errorf("setting edgecore stderr log using nssm fail: %v", err)
 		}
 	}
@@ -232,7 +232,7 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 		return fmt.Errorf("create bootstrap file failed: %v", err)
 	}
 	// Delete the bootstrap file, so the credential used for TLS bootstrap is removed from disk
-	defer os.Remove(filepath.Join(util.KubeEdgePath, "bootstrap-edgecore.conf"))
+	defer os.Remove(constants.BootstrapFile)
 
 	step.Printf("Generate EdgeCore default configuration")
 	if err := createEdgeConfigFiles(opt); err != nil {
@@ -257,6 +257,10 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 		return false, nil
 	})
 
+	if err != nil {
+		return err
+	}
+	step.Printf("Install Complete!")
 	return err
 }
 
@@ -503,6 +507,6 @@ func prepareWindowsNssm(step *common.Step) error {
 		return nil
 	}
 
-	step.Printf("Nssm not find, start install under $env:ProgramFiles\\nssm")
+	step.Printf("Nssm not found, start install under $env:ProgramFiles\\nssm")
 	return util.InstallNSSM()
 }

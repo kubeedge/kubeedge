@@ -18,6 +18,8 @@ limitations under the License.
 
 package util
 
+import "fmt"
+
 // Constants used by installers
 const (
 	KubeEdgePath        = "C:/etc/kubeedge/"
@@ -33,3 +35,9 @@ const (
 
 	SystemdBootPath = "C:/run/systemd/system"
 )
+
+func IsServiceExist(service string) bool {
+	cmd := NewCommand(fmt.Sprintf("Get-Service '%s'", service))
+	_err := cmd.Exec()
+	return _err == nil
+}

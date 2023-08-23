@@ -534,7 +534,8 @@ func KillKubeEdgeBinary(proc string) error {
 // IsKubeEdgeProcessRunning checks if the given process is running or not
 func IsKubeEdgeProcessRunning(proc string) (bool, error) {
 	if runtime.GOOS == "windows" {
-		if IsNSSMServiceExit(proc) {
+		// dont use nssm, maybe haven't installed yet
+		if IsServiceExist(proc) {
 			return true, nil
 		}
 		return false, nil

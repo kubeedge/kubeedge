@@ -27,7 +27,7 @@ if ([Environment]::Is64BitOperatingSystem) {
 }
 
 mkdir -Force $global:NssmInstallDirectory
-DownloadFile nssm.zip https://k8stestinfrabinaries.blob.core.windows.net/nssm-mirror/nssm-2.24.zip
+DownloadFile nssm.zip https://nssm.cc/ci/nssm-2.24-101-g897c7ad.zip
 tar C $global:NssmInstallDirectory -xvf .\nssm.zip --strip-components 2 */$arch/*.exe
 Remove-Item -Force .\nssm.zip
 
@@ -47,18 +47,18 @@ func IsNSSMInstalled() bool {
 func InstallNSSM() error {
 	cmd := NewCommand(installNSSMScript)
 	err := cmd.Exec()
-	fmt.Println(cmd.GetStdOut())
 	return err
 }
 
 func InstallNSSMService(name, path string, args ...string) error {
-	cmd := NewCommand(fmt.Sprintf("nssm install '%s' %s %s", name, path, strings.Join(args, " ")))
+	cmd := NewCommand(fmt.Sprintf("nssm install %s %s %s", name, path, strings.Join(args, " ")))
 	return cmd.Exec()
 }
 
-func IsNSSMServiceExit(service string) bool {
+func IsNSSMServiceExist(service string) bool {
 	cmd := NewCommand("nssm status " + service)
-	return cmd.Exec() == nil
+	_err := cmd.Exec()
+	return _err == nil
 }
 
 func IsNSSMServiceRunning(service string) bool {

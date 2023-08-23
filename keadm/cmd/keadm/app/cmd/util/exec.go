@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"golang.org/x/text/encoding/simplifiedchinese"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -70,14 +71,28 @@ func (cmd Command) GetCommand() string {
 
 func (cmd Command) GetStdOut() string {
 	if len(cmd.StdOut) != 0 {
-		return strings.TrimSuffix(string(cmd.StdOut), "\n")
+		return strings.TrimSuffix(ConvertByte2String(cmd.StdOut, "GB18030"), "\n")
 	}
 	return ""
 }
 
 func (cmd Command) GetStdErr() string {
 	if len(cmd.StdErr) != 0 {
-		return strings.TrimSuffix(string(cmd.StdErr), "\n")
+		return strings.TrimSuffix(ConvertByte2String(cmd.StdErr, "GB18030"), "\n")
 	}
 	return ""
+}
+
+func ConvertByte2String(byte []byte, charset string) string {
+	var str string
+	switch charset {
+	case "GB18030":
+		var decodeBytes, _ = simplifiedchinese.GB18030.NewDecoder().Bytes(byte)
+		str = string(decodeBytes)
+	case "UTF8":
+		fallthrough
+	default:
+		str = string(byte)
+	}
+	return str
 }
