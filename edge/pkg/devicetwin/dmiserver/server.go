@@ -41,8 +41,8 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dmiclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
-	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
-	pb "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1"
+	pb "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1beta1"
 )
 
 const (
@@ -57,12 +57,10 @@ type server struct {
 }
 
 type DMICache struct {
-	MapperMu        *sync.Mutex
-	DeviceMu        *sync.Mutex
-	DeviceModelMu   *sync.Mutex
-	MapperList      map[string]*pb.MapperInfo
-	DeviceModelList map[string]*v1alpha2.DeviceModel
-	DeviceList      map[string]*v1alpha2.Device
+	MapperMu   *sync.Mutex
+	DeviceMu   *sync.Mutex
+	MapperList map[string]*pb.MapperInfo
+	DeviceList map[string]*v1beta1.Device
 }
 
 func (s *server) MapperRegister(ctx context.Context, in *pb.MapperRegisterRequest) (*pb.MapperRegisterResponse, error) {
@@ -90,7 +88,6 @@ func (s *server) MapperRegister(ctx context.Context, in *pb.MapperRegisterReques
 	}
 
 	var deviceList []*pb.Device
-	var deviceModelList []*pb.DeviceModel
 	s.dmiCache.DeviceMu.Lock()
 	defer s.dmiCache.DeviceMu.Unlock()
 	for _, device := range s.dmiCache.DeviceList {
@@ -107,27 +104,13 @@ func (s *server) MapperRegister(ctx context.Context, in *pb.MapperRegisterReques
 				continue
 			}
 
-			s.dmiCache.DeviceModelMu.Lock()
-			model, ok := s.dmiCache.DeviceModelList[device.Spec.DeviceModelRef.Name]
-			s.dmiCache.DeviceModelMu.Unlock()
-			if !ok {
-				klog.Errorf("fail to get device model %s in deviceModelList", device.Spec.DeviceModelRef.Name)
-				continue
-			}
-			dm, err := dtcommon.ConvertDeviceModel(model)
-			if err != nil {
-				klog.Errorf("fail to convert device model %s with err: %v", device.Spec.DeviceModelRef.Name, err)
-				continue
-			}
 			deviceList = append(deviceList, dev)
-			deviceModelList = append(deviceModelList, dm)
 		}
 	}
 	dmiclient.DMIClientsImp.CreateDMIClient(in.Mapper.Protocol, string(in.Mapper.Address))
 
 	return &pb.MapperRegisterResponse{
 		DeviceList: deviceList,
-		ModelList:  deviceModelList,
 	}, nil
 }
 

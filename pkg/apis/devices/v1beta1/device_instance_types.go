@@ -14,34 +14,31 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1alpha2
+package v1beta1
 
 import (
 	"encoding/json"
 
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// DeviceSpec represents a single device instance. It is an instantation of a device model.
+// DeviceSpec represents a single device instance.
 type DeviceSpec struct {
-	// Required: DeviceModelRef is reference to the device model used as a template
-	// to create the device instance.
-	DeviceModelRef *v1.LocalObjectReference `json:"deviceModelRef,omitempty"`
-	// Required: The protocol configuration used to connect to the device.
-	Protocol ProtocolConfig `json:"protocol,omitempty"`
-	// List of property visitors which describe how to access the device properties.
-	// PropertyVisitors must unique by propertyVisitor.propertyName.
-	// +optional
-	PropertyVisitors []DevicePropertyVisitor `json:"propertyVisitors,omitempty"`
 	// Data section describe a list of time-series properties which should be processed
 	// on edge node.
 	// +optional
 	Data DeviceData `json:"data,omitempty"`
-	// NodeSelector indicates the binding preferences between devices and nodes.
-	// Refer to k8s.io/kubernetes/pkg/apis/core NodeSelector for more details
+	// NodeName is a request to schedule this device onto a specific node. If it is non-empty,
+	// the scheduler simply schedules this device onto that node, assuming that it fits
+	// resource requirements.
 	// +optional
-	NodeSelector *v1.NodeSelector `json:"nodeSelector,omitempty"`
+	NodeName string `json:"nodeName,omitempty"`
+	// List of properties which describe the device properties.
+	// properties list item must be unique by properties.Name.
+	// +optional
+	Properties []DeviceProperties `json:"properties,omitempty"`
+	// Required: The protocol configuration used to connect to the device.
+	Protocol ProtocolConfig `json:"protocol,omitempty"`
 }
 
 // Only one of its members may be specified.
@@ -185,10 +182,10 @@ type Twin struct {
 	// Required: The property name for which the desired/reported values are specified.
 	// This property should be present in the device model.
 	PropertyName string `json:"propertyName,omitempty"`
-	// Required: the desired property value.
-	Desired TwinProperty `json:"desired,omitempty"`
 	// Required: the reported property value.
 	Reported TwinProperty `json:"reported,omitempty"`
+	// Required: the desired property value.
+	Desired TwinProperty `json:"desired,omitempty"`
 }
 
 // TwinProperty represents the device property for which an Expected/Actual state can be defined.
@@ -223,28 +220,25 @@ type DataProperty struct {
 	Metadata map[string]string `json:"metadata,omitempty"`
 }
 
-// DevicePropertyVisitor describes the specifics of accessing a particular device
-// property. Visitors are intended to be consumed by device mappers which connect to devices
-// and collect data / perform actions on the device.
-type DevicePropertyVisitor struct {
-	// Required: The device property name to be accessed. This should refer to one of the
-	// device properties defined in the device model.
-	PropertyName string `json:"propertyName,omitempty"`
+// DeviceProperties describes the specifics all the properties of the device.
+type DeviceProperties struct {
+	// Required: The device property name to be accessed. It must be unique.
+	Name string `json:"name,omitempty"`
+	// Required: PropertyType represents the type and data validation of the property.
+	Type PropertyType `json:"type,omitempty"`
+	// Visitors are intended to be consumed by device mappers which connect to devices
+	// and collect data / perform actions on the device.
+	// Required: Protocol relevant config details about the how to access the device property.
+	Visitors VisitorConfig `json:"visitors,omitempty"`
 	// Define how frequent mapper will report the value.
 	// +optional
 	ReportCycle int64 `json:"reportCycle,omitempty"`
 	// Define how frequent mapper will collect from device.
 	// +optional
 	CollectCycle int64 `json:"collectCycle,omitempty"`
-	// Customized values for visitor of provided protocols
-	// +optional
-	// +kubebuilder:validation:XPreserveUnknownFields
-	CustomizedValues *CustomizedValue `json:"customizedValues,omitempty"`
-	// Required: Protocol relevant config details about the how to access the device property.
-	VisitorConfig `json:",inline"`
 }
 
-// At least one of its members must be specified.
+// VisitorConfig At least one of its members must be specified.
 type VisitorConfig struct {
 	// Opcua represents a set of additional visitor config fields of opc-ua protocol.
 	// +optional
@@ -258,6 +252,10 @@ type VisitorConfig struct {
 	// CustomizedProtocol represents a set of visitor config fields of bluetooth protocol.
 	// +optional
 	CustomizedProtocol *VisitorConfigCustomized `json:"customizedProtocol,omitempty"`
+	// Customized values for visitor of provided protocols
+	// +optional
+	// +kubebuilder:validation:XPreserveUnknownFields
+	CustomizedValues *CustomizedValue `json:"customizedValues,omitempty"`
 }
 
 // Common visitor configurations for bluetooth protocol
@@ -346,7 +344,7 @@ type VisitorConfigModbus struct {
 // +kubebuilder:validation:Enum=CoilRegister;DiscreteInputRegister;InputRegister;HoldingRegister
 type ModbusRegisterType string
 
-// Modbus protocol register types
+// Modbus device protocol register types
 const (
 	ModbusRegisterTypeCoilRegister          ModbusRegisterType = "CoilRegister"
 	ModbusRegisterTypeDiscreteInputRegister ModbusRegisterType = "DiscreteInputRegister"
@@ -362,6 +360,94 @@ type VisitorConfigCustomized struct {
 	// +kubebuilder:validation:XPreserveUnknownFields
 	ConfigData *CustomizedValue `json:"configData,omitempty"`
 }
+
+// Represents the type and data validation of a property.
+// Only one of its members may be specified.
+type PropertyType struct {
+	// +optional
+	Int *PropertyTypeInt64 `json:"int,omitempty"`
+	// +optional
+	String *PropertyTypeString `json:"string,omitempty"`
+	// +optional
+	Double *PropertyTypeDouble `json:"double,omitempty"`
+	// +optional
+	Float *PropertyTypeFloat `json:"float,omitempty"`
+	// +optional
+	Boolean *PropertyTypeBoolean `json:"boolean,omitempty"`
+	// +optional
+	Bytes *PropertyTypeBytes `json:"bytes,omitempty"`
+}
+
+type PropertyTypeInt64 struct {
+	// Required: Access mode of property, ReadWrite or ReadOnly.
+	AccessMode PropertyAccessMode `json:"accessMode,omitempty"`
+	// +optional
+	DefaultValue int64 `json:"defaultValue,omitempty"`
+	// +optional
+	Minimum int64 `json:"minimum,omitempty"`
+	// +optional
+	Maximum int64 `json:"maximum,omitempty"`
+	// The unit of the property
+	// +optional
+	Unit string `json:"unit,omitempty"`
+}
+
+type PropertyTypeString struct {
+	// Required: Access mode of property, ReadWrite or ReadOnly.
+	AccessMode PropertyAccessMode `json:"accessMode,omitempty"`
+	// +optional
+	DefaultValue string `json:"defaultValue,omitempty"`
+}
+
+type PropertyTypeDouble struct {
+	// Required: Access mode of property, ReadWrite or ReadOnly.
+	AccessMode PropertyAccessMode `json:"accessMode,omitempty"`
+	// +optional
+	DefaultValue float64 `json:"defaultValue,omitempty"`
+	// +optional
+	Minimum float64 `json:"minimum,omitempty"`
+	// +optional
+	Maximum float64 `json:"maximum,omitempty"`
+	// The unit of the property
+	// +optional
+	Unit string `json:"unit,omitempty"`
+}
+
+type PropertyTypeFloat struct {
+	// Required: Access mode of property, ReadWrite or ReadOnly.
+	AccessMode PropertyAccessMode `json:"accessMode,omitempty"`
+	// +optional
+	DefaultValue float32 `json:"defaultValue,omitempty"`
+	// +optional
+	Minimum float32 `json:"minimum,omitempty"`
+	// +optional
+	Maximum float32 `json:"maximum,omitempty"`
+	// The unit of the property
+	// +optional
+	Unit string `json:"unit,omitempty"`
+}
+
+type PropertyTypeBoolean struct {
+	// Required: Access mode of property, ReadWrite or ReadOnly.
+	AccessMode PropertyAccessMode `json:"accessMode,omitempty"`
+	// +optional
+	DefaultValue bool `json:"defaultValue,omitempty"`
+}
+
+type PropertyTypeBytes struct {
+	// Required: Access mode of property, ReadWrite or ReadOnly.
+	AccessMode PropertyAccessMode `json:"accessMode,omitempty"`
+}
+
+// The access mode for  a device property.
+// +kubebuilder:validation:Enum=ReadWrite;ReadOnly
+type PropertyAccessMode string
+
+// Access mode constants for a device property.
+const (
+	ReadWrite PropertyAccessMode = "ReadWrite"
+	ReadOnly  PropertyAccessMode = "ReadOnly"
+)
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

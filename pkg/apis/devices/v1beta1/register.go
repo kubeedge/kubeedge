@@ -16,13 +16,13 @@ limitations under the License.
 
 // NOTE: Boilerplate only.  Ignore this file.
 
-// Package v1alpha2 contains API Schema definitions for the devices v1alpha2 API group
+// Package v1beta1 contains API Schema definitions for the devices v1beta1 API group
 // +k8s:openapi-gen=true
 // +k8s:deepcopy-gen=package,register
 // +k8s:conversion-gen=kubeedge/cloud/pkg/apis/devices
 // +k8s:defaulter-gen=TypeMeta
 // +groupName=devices.kubeedge.io
-package v1alpha2
+package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,7 +40,7 @@ const (
 	// GroupName is the group name use in this package.
 	GroupName = "devices.kubeedge.io"
 	// Version is the API version.
-	Version = "v1alpha2"
+	Version = "v1beta1"
 )
 
 var (
@@ -65,8 +65,6 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
 		&Device{},
 		&DeviceList{},
-		&DeviceModel{},
-		&DeviceModelList{},
 	)
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil
@@ -75,9 +73,6 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 func AddDeviceCrds(scheme *runtime.Scheme) error {
 	// Add Device
 	scheme.AddKnownTypes(SchemeGroupVersion, &Device{}, &DeviceList{})
-	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
-	// Add DeviceModel
-	scheme.AddKnownTypes(SchemeGroupVersion, &DeviceModel{}, &DeviceModelList{})
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 
 	return nil

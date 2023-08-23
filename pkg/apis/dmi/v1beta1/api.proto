@@ -18,8 +18,8 @@ limitations under the License.
 syntax = "proto3";
 
 //option go_package = "path;name";
-option go_package="./;v1alpha1";
-package v1alpha1;
+option go_package = "./;v1beta1";
+package v1beta1;
 
 import "google/protobuf/any.proto";
 
@@ -70,25 +70,6 @@ service DeviceMapperService {
     // through the interface of CreateDeviceModel.
     // When the mapper gets the request of creating with the information of device model,
     // it should create a new device model to the list of device models.
-    rpc CreateDeviceModel(CreateDeviceModelRequest) returns (CreateDeviceModelResponse) {}
-    // RemoveDeviceModel remove a device model to the device mapper.
-    // Device manager sends the name of device model to the mapper
-    // through the interface of RemoveDeviceModel.
-    // When the mapper gets the request of removing with the name of device model,
-    // it should remove the device model to the list of device models.
-    rpc RemoveDeviceModel(RemoveDeviceModelRequest) returns (RemoveDeviceModelResponse) {}
-    // UpdateDeviceModel update a device model to the device mapper.
-    // Device manager sends the information of device model to the mapper
-    // through the interface of UpdateDeviceModel.
-    // When the mapper gets the request of updating with the information of device model,
-    // it should update the device model to the list of device models.
-    rpc UpdateDeviceModel(UpdateDeviceModelRequest) returns (UpdateDeviceModelResponse) {}
-    // UpdateDeviceStatus update a device status to the device mapper
-    // Device manager sends the new device status to the mapper
-    // through the interface of UpdateDeviceStatus.
-    // The device status represents the properties of device twins.
-    // When the mapper gets the request of updating with the new device status,
-    // it should update the device status of the device list and the real device status of the physical device via the updated information.
     rpc UpdateDeviceStatus(UpdateDeviceStatusRequest) returns (UpdateDeviceStatusResponse) {}
     // GetDevice get the information of a device from the device mapper.
     // Device sends the request of querying device information with the device name to the mapper
@@ -99,46 +80,17 @@ service DeviceMapperService {
 }
 
 message MapperRegisterRequest {
-  // The flag to show how device manager returns.
-  // True means device manager should return the device list in the response.
-  // False means device manager should just return nothing.
-  bool withData = 1;
-  // Mapper information to be registered to the device manager.
-  MapperInfo mapper = 2;
+    // The flag to show how device manager returns.
+    // True means device manager should return the device list in the response.
+    // False means device manager should just return nothing.
+    bool withData = 1;
+    // Mapper information to be registered to the device manager.
+    MapperInfo mapper = 2;
 }
 
 message MapperRegisterResponse {
-    // List of device models which the mapper maintains.
-    repeated DeviceModel modelList = 1;
     // List of devices which the mapper maintains.
-    repeated Device deviceList = 2;
-}
-// DeviceModel specifies the information of a device model.
-message DeviceModel {
-    // Name of a device model.
-    string name = 1;
-    // Specification of a device model.
-    DeviceModelSpec spec = 2;
-}
-
-// DeviceModelSpec is the specification of a device model.
-message DeviceModelSpec {
-    // The properties provided by the device of this device model.
-    repeated DeviceProperty properties = 1;
-    // The commands executed by the device of this device model.
-    repeated DeviceCommand commands = 2;
-    // The protocol name used by the device of this device model.
-    string protocol = 3;
-}
-
-// DeviceProperty is the property of a device.
-message DeviceProperty {
-    // The name of this property.
-    string name = 1;
-    // The description of this property.
-    string description = 2;
-    // The specific type of this property.
-    PropertyType type = 3;
+    repeated Device deviceList = 1;
 }
 
 // PropertyType is the type of a property.
@@ -162,9 +114,9 @@ message PropertyTypeInt64 {
     // The access mode of this property, ReadOnly or ReadWrite.
     string accessMode = 1;
     // The default value of this property.
-    int64 defaultValue =2;
+    int64 defaultValue = 2;
     // The minimum value of this property.
-    int64 minimum =3;
+    int64 minimum = 3;
     // The maximum value of this property.
     int64 maximum = 4;
     // The unit of this property.
@@ -249,12 +201,25 @@ message Device {
 
 // DeviceSpec is the specification of the device.
 message DeviceSpec {
-    // The device model which the device references.
-    string deviceModelReference = 1;
     // The specific config of the protocol to access to the device.
-    ProtocolConfig protocol = 2;
-    // The visitor to collect the properties of the device.
-    repeated DevicePropertyVisitor propertyVisitors = 3;
+    ProtocolConfig protocol = 1;
+    // List of properties which describe the device properties.
+    repeated DeviceProperties properties = 2;
+}
+
+// DeviceProperties describes the specifics all the properties of the device.
+message DeviceProperties {
+    // The device property name to be accessed. It must be unique.
+    string name = 1;
+    // PropertyType represents the type and data validation of the property.
+    PropertyType type = 2;
+	// Define how frequent mapper will report the value.
+	int64 reportCycle = 3;
+	// Define how frequent mapper will collect from device.
+	int64 collectCycle = 4;
+    // Visitors are intended to be consumed by device mappers which connect to devices
+	// and collect data / perform actions on the device.
+    DevicePropertyVisitor visitors = 5;
 }
 
 // ProtocolConfig is the specific config of the protocol to access to the device.
@@ -330,7 +295,7 @@ message ProtocolConfigCOM {
     // baudRate is the rate of baud.
     int64 baudRate = 2;
     // dataBits is the bits of data.
-    int64 dataBits= 3;
+    int64 dataBits = 3;
     // parity is the bit of parity.
     string parity = 4;
     // stopBits is the bit of stop.
@@ -361,22 +326,16 @@ message ProtocolConfigCustomized {
 
 // The visitor to collect the properties of the device.
 message DevicePropertyVisitor {
-    // the name of the property.
-    string propertyName = 1;
-    // the cycle to report data.
-    int64 reportCycle = 2;
-    // the cycle to collect data.
-    int64 collectCycle = 3;
-    // CustomizedValue is the customized value for developers.
-    CustomizedValue customizedValues = 4;
     // the visitor to collect the properties of the device of OPC UA.
-    VisitorConfigOPCUA opcua = 5;
+    VisitorConfigOPCUA opcua = 1;
     // the visitor to collect the properties of the device of Modbus.
-    VisitorConfigModbus modbus = 6;
+    VisitorConfigModbus modbus = 2;
     // the visitor to collect the properties of the device of Bluetooth.
-    VisitorConfigBluetooth bluetooth = 7;
+    VisitorConfigBluetooth bluetooth = 3;
     // the visitor to collect the properties of the device of customized protocol.
-    VisitorConfigCustomized customizedProtocol = 8;
+    VisitorConfigCustomized customizedProtocol = 4;
+    // CustomizedValue is the customized value for developers.
+    CustomizedValue customizedValues = 5;
 }
 
 // the visitor to collect the properties of the device of OPC UA.
@@ -390,7 +349,7 @@ message VisitorConfigOPCUA {
 // the visitor to collect the properties of the device of Modbus.
 message VisitorConfigModbus {
     // register of Modbus
-    string register =1;
+    string register = 1;
     // offset of Modbus.
     int64 offset = 2;
     // limit of Modbus.
@@ -410,7 +369,7 @@ message VisitorConfigBluetooth {
     // dataWrite of Bluetooth.
     map<string, bytes> dataWrite = 2;
     // BluetoothReadConverter of Bluetooth.
-    BluetoothReadConverter dataConverter =3;
+    BluetoothReadConverter dataConverter = 3;
 }
 
 // BluetoothReadConverter of Bluetooth.
@@ -419,7 +378,7 @@ message BluetoothReadConverter {
     int64 endIndex = 2;
     uint64 shiftLeft = 3;
     uint64 shiftRight = 4;
-    repeated BluetoothOperations orderOfOperations =5;
+    repeated BluetoothOperations orderOfOperations = 5;
 }
 
 // BluetoothOperations of Bluetooth.
@@ -431,7 +390,7 @@ message BluetoothOperations {
 // the visitor to collect the properties of the device of customized protocol.
 message VisitorConfigCustomized {
     string protocolName = 1;
-    CustomizedValue configData =2;
+    CustomizedValue configData = 2;
 }
 
 // MapperInfo is the information of mapper.
@@ -478,50 +437,30 @@ message TwinProperty {
     // the value of the property.
     string value = 1;
     // the metadata to describe this property.
-    map<string,string> metadata = 2;
+    map<string, string> metadata = 2;
 }
 
 message ReportDeviceStatusResponse {}
 
 message RegisterDeviceRequest {
-  Device device = 1;
+    Device device = 1;
 }
 
 message RegisterDeviceResponse {
     string deviceName = 1;
 }
 
-message CreateDeviceModelRequest {
-  DeviceModel model = 1;
-}
-
-message CreateDeviceModelResponse {
-    string deviceModelName = 1;
-}
-
 message RemoveDeviceRequest {
-    string deviceName =1;
+    string deviceName = 1;
 }
 
 message RemoveDeviceResponse {}
-
-message RemoveDeviceModelRequest {
-    string modelName =1;
-}
-
-message RemoveDeviceModelResponse {}
 
 message UpdateDeviceRequest {
     Device device = 1;
 }
 
 message UpdateDeviceResponse {}
-
-message UpdateDeviceModelRequest {
-    DeviceModel model = 1;
-}
-
-message UpdateDeviceModelResponse {}
 
 message UpdateDeviceStatusRequest {
     string deviceName = 1;

@@ -21,7 +21,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/cloud/cmd/admission/app/options"
-	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
+	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1"
 	v1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
 	"github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 )
@@ -58,7 +58,7 @@ func addToScheme(scheme *runtime.Scheme) {
 	utilruntime.Must(corev1.AddToScheme(scheme))
 	utilruntime.Must(admissionv1.AddToScheme(scheme))
 	utilruntime.Must(admissionregistrationv1.AddToScheme(scheme))
-	utilruntime.Must(v1alpha2.AddDeviceCrds(scheme))
+	utilruntime.Must(v1beta1.AddDeviceCrds(scheme))
 }
 
 // AdmissionController implements the admission webhook for validation of configuration.
@@ -99,7 +99,7 @@ func Run(opt *options.AdmissionOptions) error {
 		return fmt.Errorf("failed to register the webhook with error: %v", err)
 	}
 
-	http.HandleFunc("/devicemodels", serveDeviceModel)
+	http.HandleFunc("/devices", serveDevice)
 	http.HandleFunc("/rules", serveRule)
 	http.HandleFunc("/ruleendpoints", serveRuleEndpoint)
 	http.HandleFunc("/offlinemigration", serveOfflineMigration)

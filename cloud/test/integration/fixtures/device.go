@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,15 +17,14 @@ limitations under the License.
 package fixtures
 
 import (
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 
-	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
+	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1"
 )
 
 type DeviceOp struct {
-	device v1alpha2.Device
+	device v1beta1.Device
 }
 
 type DeviceOption func(*DeviceOp)
@@ -38,8 +37,8 @@ func (op *DeviceOp) applyDeviceOpts(opts []DeviceOption) {
 
 func newDeviceOp(opts ...DeviceOption) *DeviceOp {
 	op := &DeviceOp{
-		device: v1alpha2.Device{
-			Spec:       v1alpha2.DeviceSpec{},
+		device: v1beta1.Device{
+			Spec:       v1beta1.DeviceSpec{},
 			ObjectMeta: metav1.ObjectMeta{},
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: apiVersion,
@@ -63,46 +62,38 @@ func withDeviceNamespace(namespace string) DeviceOption {
 	}
 }
 
-func withDeviceModelReference(deviceModelRef string) DeviceOption {
-	return func(op *DeviceOp) {
-		op.device.Spec.DeviceModelRef = &v1.LocalObjectReference{
-			Name: deviceModelRef,
-		}
-	}
-}
-
 func withProtocolConfig(protocol deviceProtocol) DeviceOption {
 	return func(op *DeviceOp) {
 		switch protocol {
 		case deviceProtocolModbusRTU:
-			op.device.Spec.Protocol = v1alpha2.ProtocolConfig{
-				Modbus: &v1alpha2.ProtocolConfigModbus{
+			op.device.Spec.Protocol = v1beta1.ProtocolConfig{
+				Modbus: &v1beta1.ProtocolConfigModbus{
 					SlaveID: pointer.Int64Ptr(1),
 				},
-				Common: &v1alpha2.ProtocolConfigCommon{
-					COM: &v1alpha2.ProtocolConfigCOM{},
+				Common: &v1beta1.ProtocolConfigCommon{
+					COM: &v1beta1.ProtocolConfigCOM{},
 				},
 			}
 		case deviceProtocolModbusTCP:
-			op.device.Spec.Protocol = v1alpha2.ProtocolConfig{
-				Modbus: &v1alpha2.ProtocolConfigModbus{
+			op.device.Spec.Protocol = v1beta1.ProtocolConfig{
+				Modbus: &v1beta1.ProtocolConfigModbus{
 					SlaveID: pointer.Int64Ptr(1),
 				},
-				Common: &v1alpha2.ProtocolConfigCommon{
-					TCP: &v1alpha2.ProtocolConfigTCP{},
+				Common: &v1beta1.ProtocolConfigCommon{
+					TCP: &v1beta1.ProtocolConfigTCP{},
 				},
 			}
 		case deviceProtocolBluetooth:
-			op.device.Spec.Protocol = v1alpha2.ProtocolConfig{
-				Bluetooth: &v1alpha2.ProtocolConfigBluetooth{},
+			op.device.Spec.Protocol = v1beta1.ProtocolConfig{
+				Bluetooth: &v1beta1.ProtocolConfigBluetooth{},
 			}
 		case deviceProtocolOPCUA:
-			op.device.Spec.Protocol = v1alpha2.ProtocolConfig{
-				OpcUA: &v1alpha2.ProtocolConfigOpcUA{},
+			op.device.Spec.Protocol = v1beta1.ProtocolConfig{
+				OpcUA: &v1beta1.ProtocolConfigOpcUA{},
 			}
 		case deviceProtocolCustomized:
-			op.device.Spec.Protocol = v1alpha2.ProtocolConfig{
-				CustomizedProtocol: &v1alpha2.ProtocolConfigCustomized{},
+			op.device.Spec.Protocol = v1beta1.ProtocolConfig{
+				CustomizedProtocol: &v1beta1.ProtocolConfigCustomized{},
 			}
 		default:
 		}
@@ -181,51 +172,55 @@ func withCustromizedProtocolName(name string) DeviceOption {
 	}
 }
 
-type DevicePropertyVisitorOp struct {
-	devicePropertyVisitor v1alpha2.DevicePropertyVisitor
+type DevicePropertiesOp struct {
+	deviceProperty v1beta1.DeviceProperties
+	//devicePropertyName string
+	//reportCycle        int64
+	//collectCycle       int64
+	//visitor            v1beta1.VisitorConfig
 }
 
-type DevicePropertyVisitorOption func(*DevicePropertyVisitorOp)
+type DevicePropertyVisitorOption func(*DevicePropertiesOp)
 
 func withVisitorName(name string) DevicePropertyVisitorOption {
-	return func(op *DevicePropertyVisitorOp) {
-		op.devicePropertyVisitor.PropertyName = name
+	return func(op *DevicePropertiesOp) {
+		op.deviceProperty.Name = name
 	}
 }
 
 func withVisitorReportCycle(reportCycle int64) DevicePropertyVisitorOption {
-	return func(op *DevicePropertyVisitorOp) {
-		op.devicePropertyVisitor.ReportCycle = reportCycle
+	return func(op *DevicePropertiesOp) {
+		op.deviceProperty.ReportCycle = reportCycle
 	}
 }
 
 func withVisitorCollectCycle(collectCycle int64) DevicePropertyVisitorOption {
-	return func(op *DevicePropertyVisitorOp) {
-		op.devicePropertyVisitor.CollectCycle = collectCycle
+	return func(op *DevicePropertiesOp) {
+		op.deviceProperty.CollectCycle = collectCycle
 	}
 }
 
 func withVisitorConfig(protocol deviceProtocol) DevicePropertyVisitorOption {
-	return func(op *DevicePropertyVisitorOp) {
+	return func(op *DevicePropertiesOp) {
 		switch protocol {
 		case deviceProtocolBluetooth:
-			op.devicePropertyVisitor.VisitorConfig = v1alpha2.VisitorConfig{
-				Bluetooth: &v1alpha2.VisitorConfigBluetooth{
+			op.deviceProperty.Visitors = v1beta1.VisitorConfig{
+				Bluetooth: &v1beta1.VisitorConfigBluetooth{
 					CharacteristicUUID:     "",
-					BluetoothDataConverter: v1alpha2.BluetoothReadConverter{},
+					BluetoothDataConverter: v1beta1.BluetoothReadConverter{},
 				},
 			}
 		case deviceProtocolModbus:
-			op.devicePropertyVisitor.VisitorConfig = v1alpha2.VisitorConfig{
-				Modbus: &v1alpha2.VisitorConfigModbus{},
+			op.deviceProperty.Visitors = v1beta1.VisitorConfig{
+				Modbus: &v1beta1.VisitorConfigModbus{},
 			}
 		case deviceProtocolOPCUA:
-			op.devicePropertyVisitor.VisitorConfig = v1alpha2.VisitorConfig{
-				OpcUA: &v1alpha2.VisitorConfigOPCUA{},
+			op.deviceProperty.Visitors = v1beta1.VisitorConfig{
+				OpcUA: &v1beta1.VisitorConfigOPCUA{},
 			}
 		case deviceProtocolCustomized:
-			op.devicePropertyVisitor.VisitorConfig = v1alpha2.VisitorConfig{
-				CustomizedProtocol: &v1alpha2.VisitorConfigCustomized{},
+			op.deviceProperty.Visitors = v1beta1.VisitorConfig{
+				CustomizedProtocol: &v1beta1.VisitorConfigCustomized{},
 			}
 		default:
 		}
@@ -233,368 +228,368 @@ func withVisitorConfig(protocol deviceProtocol) DevicePropertyVisitorOption {
 }
 
 func withCharacteristicUUID(characteristicUUID string) DevicePropertyVisitorOption {
-	return func(op *DevicePropertyVisitorOp) {
-		op.devicePropertyVisitor.VisitorConfig.Bluetooth.CharacteristicUUID = characteristicUUID
+	return func(op *DevicePropertiesOp) {
+		op.deviceProperty.Visitors.Bluetooth.CharacteristicUUID = characteristicUUID
 	}
 }
 
 func withStartIndex(startIndex int) DevicePropertyVisitorOption {
-	return func(op *DevicePropertyVisitorOp) {
-		op.devicePropertyVisitor.VisitorConfig.Bluetooth.BluetoothDataConverter.StartIndex = startIndex
+	return func(op *DevicePropertiesOp) {
+		op.deviceProperty.Visitors.Bluetooth.BluetoothDataConverter.StartIndex = startIndex
 	}
 }
 
 func withEndIndex(endIndex int) DevicePropertyVisitorOption {
-	return func(op *DevicePropertyVisitorOp) {
-		op.devicePropertyVisitor.VisitorConfig.Bluetooth.BluetoothDataConverter.EndIndex = endIndex
+	return func(op *DevicePropertiesOp) {
+		op.deviceProperty.Visitors.Bluetooth.BluetoothDataConverter.EndIndex = endIndex
 	}
 }
 
-func withOperation(operationType v1alpha2.BluetoothArithmeticOperationType, value float64) DevicePropertyVisitorOption {
-	return func(op *DevicePropertyVisitorOp) {
-		bluetoothOperation := v1alpha2.BluetoothOperations{
+func withOperation(operationType v1beta1.BluetoothArithmeticOperationType, value float64) DevicePropertyVisitorOption {
+	return func(op *DevicePropertiesOp) {
+		bluetoothOperation := v1beta1.BluetoothOperations{
 			BluetoothOperationType:  operationType,
 			BluetoothOperationValue: value,
 		}
-		op.devicePropertyVisitor.VisitorConfig.Bluetooth.BluetoothDataConverter.OrderOfOperations =
-			append(op.devicePropertyVisitor.VisitorConfig.Bluetooth.BluetoothDataConverter.OrderOfOperations, bluetoothOperation)
+		op.deviceProperty.Visitors.Bluetooth.BluetoothDataConverter.OrderOfOperations =
+			append(op.deviceProperty.Visitors.Bluetooth.BluetoothDataConverter.OrderOfOperations, bluetoothOperation)
 	}
 }
 
-func withRegister(register v1alpha2.ModbusRegisterType) DevicePropertyVisitorOption {
-	return func(op *DevicePropertyVisitorOp) {
-		op.devicePropertyVisitor.VisitorConfig.Modbus.Register = register
+func withRegister(register v1beta1.ModbusRegisterType) DevicePropertyVisitorOption {
+	return func(op *DevicePropertiesOp) {
+		op.deviceProperty.Visitors.Modbus.Register = register
 	}
 }
 
 func withOffset(offset int64) DevicePropertyVisitorOption {
-	return func(op *DevicePropertyVisitorOp) {
-		op.devicePropertyVisitor.VisitorConfig.Modbus.Offset = &offset
+	return func(op *DevicePropertiesOp) {
+		op.deviceProperty.Visitors.Modbus.Offset = &offset
 	}
 }
 
 func withLimit(limit int64) DevicePropertyVisitorOption {
-	return func(op *DevicePropertyVisitorOp) {
-		op.devicePropertyVisitor.VisitorConfig.Modbus.Limit = &limit
+	return func(op *DevicePropertiesOp) {
+		op.deviceProperty.Visitors.Modbus.Limit = &limit
 	}
 }
 
 func withNodeID(nodeID string) DevicePropertyVisitorOption {
-	return func(op *DevicePropertyVisitorOp) {
-		op.devicePropertyVisitor.VisitorConfig.OpcUA.NodeID = nodeID
+	return func(op *DevicePropertiesOp) {
+		op.deviceProperty.Visitors.OpcUA.NodeID = nodeID
 	}
 }
 
 func withBrowseName(browseName string) DevicePropertyVisitorOption {
-	return func(op *DevicePropertyVisitorOp) {
-		op.devicePropertyVisitor.VisitorConfig.OpcUA.BrowseName = browseName
+	return func(op *DevicePropertiesOp) {
+		op.deviceProperty.Visitors.OpcUA.BrowseName = browseName
 	}
 }
 
 func withProtocolName(protocolName string) DevicePropertyVisitorOption {
-	return func(op *DevicePropertyVisitorOp) {
-		op.devicePropertyVisitor.VisitorConfig.CustomizedProtocol.ProtocolName = protocolName
+	return func(op *DevicePropertiesOp) {
+		op.deviceProperty.Visitors.CustomizedProtocol.ProtocolName = protocolName
 	}
 }
 
-func withProtocolConfigData(configData *v1alpha2.CustomizedValue) DevicePropertyVisitorOption {
-	return func(op *DevicePropertyVisitorOp) {
-		op.devicePropertyVisitor.VisitorConfig.CustomizedProtocol.ConfigData = configData
+func withProtocolConfigData(configData *v1beta1.CustomizedValue) DevicePropertyVisitorOption {
+	return func(op *DevicePropertiesOp) {
+		op.deviceProperty.Visitors.CustomizedProtocol.ConfigData = configData
 	}
 }
 
-func (op *DevicePropertyVisitorOp) applyDevicePropVisitorOpts(opts []DevicePropertyVisitorOption) {
+func (op *DevicePropertiesOp) applyDevicePropertiesOpts(opts []DevicePropertyVisitorOption) {
 	for _, opt := range opts {
 		opt(op)
 	}
 }
 
-func newDevicePropVisitorOp(opts ...DevicePropertyVisitorOption) *DevicePropertyVisitorOp {
-	op := &DevicePropertyVisitorOp{
-		devicePropertyVisitor: v1alpha2.DevicePropertyVisitor{},
+func newDevicePropertiesOp(opts ...DevicePropertyVisitorOption) *DevicePropertiesOp {
+	op := &DevicePropertiesOp{
+		deviceProperty: v1beta1.DeviceProperties{},
 	}
-	op.applyDevicePropVisitorOpts(opts)
+	op.applyDevicePropertiesOpts(opts)
 	return op
 }
 
-func NewDeviceModbusRTU(name string, namespace string) v1alpha2.Device {
-	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+func NewDeviceModbusRTU(name string, namespace string) v1beta1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace),
 		withProtocolConfig(deviceProtocolModbusRTU), withBaudRate(baudRate), withDataBits(dataBits), withParity(parity), withSerialPort(serialPort),
 		withStopBits(stopBits), withSlaveID(slaveID))
 	return deviceInstanceOp.device
 }
 
-func NewDeviceModbusRTUNoBaudRate(name string, namespace string) v1alpha2.Device {
-	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+func NewDeviceModbusRTUNoBaudRate(name string, namespace string) v1beta1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace),
 		withProtocolConfig(deviceProtocolModbusRTU), withDataBits(dataBits), withParity(parity), withSerialPort(serialPort),
 		withStopBits(stopBits), withSlaveID(slaveID))
 	return deviceInstanceOp.device
 }
 
-func NewDeviceModbusRTUBadBaudRate(name string, namespace string) v1alpha2.Device {
-	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+func NewDeviceModbusRTUBadBaudRate(name string, namespace string) v1beta1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace),
 		withProtocolConfig(deviceProtocolModbusRTU), withBaudRate(100), withDataBits(dataBits), withParity(parity),
 		withSerialPort(serialPort), withStopBits(stopBits), withSlaveID(slaveID))
 	return deviceInstanceOp.device
 }
 
-func NewDeviceModbusRTUNoDataBits(name string, namespace string) v1alpha2.Device {
-	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+func NewDeviceModbusRTUNoDataBits(name string, namespace string) v1beta1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace),
 		withProtocolConfig(deviceProtocolModbusRTU), withBaudRate(baudRate), withParity(parity), withSerialPort(serialPort),
 		withStopBits(stopBits), withSlaveID(slaveID))
 	return deviceInstanceOp.device
 }
 
-func NewDeviceModbusRTUBadDataBits(name string, namespace string) v1alpha2.Device {
-	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+func NewDeviceModbusRTUBadDataBits(name string, namespace string) v1beta1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace),
 		withProtocolConfig(deviceProtocolModbusRTU), withBaudRate(baudRate), withDataBits(10), withParity(parity),
 		withSerialPort(serialPort), withStopBits(stopBits), withSlaveID(slaveID))
 	return deviceInstanceOp.device
 }
 
-func NewDeviceModbusRTUNoParity(name string, namespace string) v1alpha2.Device {
-	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+func NewDeviceModbusRTUNoParity(name string, namespace string) v1beta1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace),
 		withProtocolConfig(deviceProtocolModbusRTU), withBaudRate(baudRate), withDataBits(10), withSerialPort(serialPort),
 		withStopBits(stopBits), withSlaveID(slaveID))
 	return deviceInstanceOp.device
 }
 
-func NewDeviceModbusRTUBadParity(name string, namespace string) v1alpha2.Device {
-	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+func NewDeviceModbusRTUBadParity(name string, namespace string) v1beta1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace),
 		withProtocolConfig(deviceProtocolModbusRTU), withBaudRate(baudRate), withDataBits(dataBits), withParity("test"),
 		withSerialPort(serialPort), withStopBits(stopBits), withSlaveID(slaveID))
 	return deviceInstanceOp.device
 }
 
-func NewDeviceModbusRTUNoSerialPort(name string, namespace string) v1alpha2.Device {
-	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+func NewDeviceModbusRTUNoSerialPort(name string, namespace string) v1beta1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace),
 		withProtocolConfig(deviceProtocolModbusRTU), withBaudRate(baudRate), withDataBits(dataBits), withParity(parity),
 		withStopBits(stopBits), withSlaveID(slaveID))
 	return deviceInstanceOp.device
 }
 
-func NewDeviceModbusRTUNoSlaveID(name string, namespace string) v1alpha2.Device {
-	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+func NewDeviceModbusRTUNoSlaveID(name string, namespace string) v1beta1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace),
 		withProtocolConfig(deviceProtocolModbusRTU), withBaudRate(baudRate), withDataBits(dataBits), withParity(parity),
 		withSerialPort(serialPort), withStopBits(stopBits))
 	return deviceInstanceOp.device
 }
 
-func NewDeviceModbusRTUBadSlaveID(name string, namespace string) v1alpha2.Device {
-	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+func NewDeviceModbusRTUBadSlaveID(name string, namespace string) v1beta1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace),
 		withProtocolConfig(deviceProtocolModbusRTU), withBaudRate(baudRate), withDataBits(dataBits), withParity(parity),
 		withSerialPort(serialPort), withStopBits(stopBits), withSlaveID(300))
 	return deviceInstanceOp.device
 }
 
-func NewDeviceModbusRTUNoStopBits(name string, namespace string) v1alpha2.Device {
-	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+func NewDeviceModbusRTUNoStopBits(name string, namespace string) v1beta1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace),
 		withProtocolConfig(deviceProtocolModbusRTU), withBaudRate(baudRate), withDataBits(dataBits), withParity(parity),
 		withSerialPort(serialPort), withSlaveID(slaveID))
 	return deviceInstanceOp.device
 }
 
-func NewDeviceModbusRTUBadStopBits(name string, namespace string) v1alpha2.Device {
-	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+func NewDeviceModbusRTUBadStopBits(name string, namespace string) v1beta1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace),
 		withProtocolConfig(deviceProtocolModbusRTU), withBaudRate(baudRate), withDataBits(dataBits), withParity(parity),
 		withSerialPort(serialPort), withStopBits(3), withSlaveID(slaveID))
 	return deviceInstanceOp.device
 }
 
-func NewDeviceModbusTCP(name string, namespace string) v1alpha2.Device {
-	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+func NewDeviceModbusTCP(name string, namespace string) v1beta1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace),
 		withProtocolConfig(deviceProtocolModbusTCP), withTCPServerIP("127.0.0.1"), withTCPPort(8080), withTCPSlaveID(1))
 	return deviceInstanceOp.device
 }
 
-func NewDeviceModbusTCPNoIP(name string, namespace string) v1alpha2.Device {
-	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+func NewDeviceModbusTCPNoIP(name string, namespace string) v1beta1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace),
 		withProtocolConfig(deviceProtocolModbusTCP), withTCPPort(8080), withTCPSlaveID(1))
 	return deviceInstanceOp.device
 }
 
-func NewDeviceModbusTCPNoPort(name string, namespace string) v1alpha2.Device {
-	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+func NewDeviceModbusTCPNoPort(name string, namespace string) v1beta1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace),
 		withProtocolConfig(deviceProtocolModbusTCP), withTCPServerIP("127.0.0.1"), withTCPSlaveID(1))
 	return deviceInstanceOp.device
 }
 
-func NewDeviceModbusTCPNoSlaveID(name string, namespace string) v1alpha2.Device {
-	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+func NewDeviceModbusTCPNoSlaveID(name string, namespace string) v1beta1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace),
 		withProtocolConfig(deviceProtocolModbusTCP), withTCPPort(8080), withTCPServerIP("127.0.0.1"))
 	return deviceInstanceOp.device
 }
 
-func NewDeviceOpcUA(name string, namespace string) v1alpha2.Device {
-	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+func NewDeviceOpcUA(name string, namespace string) v1beta1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace),
 		withProtocolConfig(deviceProtocolOPCUA), withOPCUAServerURL("http://test-opcuaserver.com"))
 	return deviceInstanceOp.device
 }
 
-func NewDeviceOpcUANoURL(name string, namespace string) v1alpha2.Device {
-	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+func NewDeviceOpcUANoURL(name string, namespace string) v1beta1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace),
 		withProtocolConfig(deviceProtocolOPCUA))
 	return deviceInstanceOp.device
 }
 
-func NewDeviceCustomized(name string, namespace string) v1alpha2.Device {
-	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+func NewDeviceCustomized(name string, namespace string) v1beta1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace),
 		withProtocolConfig(deviceProtocolCustomized), withCustromizedProtocolName("test-customized-protocol"))
 	return deviceInstanceOp.device
 }
 
-func NewDeviceCustomizedNoName(name string, namespace string) v1alpha2.Device {
-	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+func NewDeviceCustomizedNoName(name string, namespace string) v1beta1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace),
 		withProtocolConfig(deviceProtocolCustomized))
 	return deviceInstanceOp.device
 }
 
-func NewDeviceNoModelReference(name string, namespace string) v1alpha2.Device {
+func NewDeviceNoModelReference(name string, namespace string) v1beta1.Device {
 	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withProtocolConfig(deviceProtocolOPCUA))
 	return deviceInstanceOp.device
 }
 
-func NewDeviceBluetoothBadOperationType(name string, namespace string) v1alpha2.Device {
-	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+func NewDeviceBluetoothBadOperationType(name string, namespace string) v1beta1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace),
 		withProtocolConfig(deviceProtocolBluetooth), withBluetoothMac("BC:6A:29:AE:CC:96"))
 
-	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature),
+	devicePropertiesOp := newDevicePropertiesOp(withVisitorName(devicePropertyTemperature),
 		withVisitorCollectCycle(collectCycle),
 		withVisitorReportCycle(reportCycle),
 		withVisitorConfig(deviceProtocolBluetooth),
 		withCharacteristicUUID(characteristicUUID), withStartIndex(startIndex), withEndIndex(endIndex),
 		withOperation("modulo", operationValue))
-	deviceInstanceOp.device.Spec.PropertyVisitors = append(deviceInstanceOp.device.Spec.PropertyVisitors, devicePropertyVisitorOp.devicePropertyVisitor)
+	deviceInstanceOp.device.Spec.Properties = append(deviceInstanceOp.device.Spec.Properties, devicePropertiesOp.deviceProperty)
 
 	return deviceInstanceOp.device
 }
 
-func NewDeviceBluetoothNoStartIndex(name string, namespace string) v1alpha2.Device {
-	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+func NewDeviceBluetoothNoStartIndex(name string, namespace string) v1beta1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace),
 		withProtocolConfig(deviceProtocolBluetooth), withBluetoothMac("BC:6A:29:AE:CC:96"))
 
-	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature),
+	devicePropertiesOp := newDevicePropertiesOp(withVisitorName(devicePropertyTemperature),
 		withVisitorCollectCycle(collectCycle),
 		withVisitorReportCycle(reportCycle),
 		withVisitorConfig(deviceProtocolBluetooth),
-		withCharacteristicUUID(characteristicUUID), withEndIndex(endIndex), withOperation(v1alpha2.BluetoothAdd, operationValue))
-	deviceInstanceOp.device.Spec.PropertyVisitors = append(deviceInstanceOp.device.Spec.PropertyVisitors, devicePropertyVisitorOp.devicePropertyVisitor)
+		withCharacteristicUUID(characteristicUUID), withEndIndex(endIndex), withOperation(v1beta1.BluetoothAdd, operationValue))
+	deviceInstanceOp.device.Spec.Properties = append(deviceInstanceOp.device.Spec.Properties, devicePropertiesOp.deviceProperty)
 
 	return deviceInstanceOp.device
 }
 
-func NewDeviceBluetoothNoEndIndex(name string, namespace string) v1alpha2.Device {
-	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+func NewDeviceBluetoothNoEndIndex(name string, namespace string) v1beta1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace),
 		withProtocolConfig(deviceProtocolBluetooth), withBluetoothMac("BC:6A:29:AE:CC:96"))
 
-	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature),
+	devicePropertiesOp := newDevicePropertiesOp(withVisitorName(devicePropertyTemperature),
 		withVisitorCollectCycle(collectCycle),
 		withVisitorReportCycle(reportCycle),
 		withVisitorConfig(deviceProtocolBluetooth),
-		withCharacteristicUUID(characteristicUUID), withStartIndex(startIndex), withOperation(v1alpha2.BluetoothMultiply, operationValue))
-	deviceInstanceOp.device.Spec.PropertyVisitors = append(deviceInstanceOp.device.Spec.PropertyVisitors, devicePropertyVisitorOp.devicePropertyVisitor)
+		withCharacteristicUUID(characteristicUUID), withStartIndex(startIndex), withOperation(v1beta1.BluetoothMultiply, operationValue))
+	deviceInstanceOp.device.Spec.Properties = append(deviceInstanceOp.device.Spec.Properties, devicePropertiesOp.deviceProperty)
 
 	return deviceInstanceOp.device
 }
 
-func NewDeviceBluetoothNoCharacteristicUUID(name string, namespace string) v1alpha2.Device {
-	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+func NewDeviceBluetoothNoCharacteristicUUID(name string, namespace string) v1beta1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace),
 		withProtocolConfig(deviceProtocolBluetooth), withBluetoothMac("BC:6A:29:AE:CC:96"))
 
-	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature),
+	devicePropertiesOp := newDevicePropertiesOp(withVisitorName(devicePropertyTemperature),
 		withVisitorCollectCycle(collectCycle),
 		withVisitorReportCycle(reportCycle),
 		withVisitorConfig(deviceProtocolBluetooth),
-		withStartIndex(startIndex), withEndIndex(endIndex), withOperation(v1alpha2.BluetoothAdd, operationValue))
-	deviceInstanceOp.device.Spec.PropertyVisitors = append(deviceInstanceOp.device.Spec.PropertyVisitors, devicePropertyVisitorOp.devicePropertyVisitor)
+		withStartIndex(startIndex), withEndIndex(endIndex), withOperation(v1beta1.BluetoothAdd, operationValue))
+	deviceInstanceOp.device.Spec.Properties = append(deviceInstanceOp.device.Spec.Properties, devicePropertiesOp.deviceProperty)
 
 	return deviceInstanceOp.device
 }
 
-func NewDeviceModbusBadRegister(name string, namespace string) v1alpha2.Device {
-	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+func NewDeviceModbusBadRegister(name string, namespace string) v1beta1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace),
 		withProtocolConfig(deviceProtocolModbusRTU), withBaudRate(baudRate), withDataBits(dataBits), withParity(parity), withSerialPort(serialPort),
 		withStopBits(stopBits), withSlaveID(slaveID))
 
-	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature),
+	devicePropertiesOp := newDevicePropertiesOp(withVisitorName(devicePropertyTemperature),
 		withVisitorCollectCycle(collectCycle),
 		withVisitorReportCycle(reportCycle),
 		withVisitorConfig(deviceProtocolModbus),
 		withRegister("test-register"), withLimit(limit), withOffset(offset))
-	deviceInstanceOp.device.Spec.PropertyVisitors = append(deviceInstanceOp.device.Spec.PropertyVisitors, devicePropertyVisitorOp.devicePropertyVisitor)
+	deviceInstanceOp.device.Spec.Properties = append(deviceInstanceOp.device.Spec.Properties, devicePropertiesOp.deviceProperty)
 
 	return deviceInstanceOp.device
 }
 
-func NewDeviceModbusNoLimit(name string, namespace string) v1alpha2.Device {
-	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+func NewDeviceModbusNoLimit(name string, namespace string) v1beta1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace),
 		withProtocolConfig(deviceProtocolModbusRTU), withBaudRate(baudRate), withDataBits(dataBits), withParity(parity), withSerialPort(serialPort),
 		withStopBits(stopBits), withSlaveID(slaveID))
 
-	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature),
+	devicePropertiesOp := newDevicePropertiesOp(withVisitorName(devicePropertyTemperature),
 		withVisitorCollectCycle(collectCycle),
 		withVisitorReportCycle(reportCycle),
 		withVisitorConfig(deviceProtocolModbus),
-		withRegister(v1alpha2.ModbusRegisterTypeCoilRegister), withOffset(offset))
-	deviceInstanceOp.device.Spec.PropertyVisitors = append(deviceInstanceOp.device.Spec.PropertyVisitors, devicePropertyVisitorOp.devicePropertyVisitor)
+		withRegister(v1beta1.ModbusRegisterTypeCoilRegister), withOffset(offset))
+	deviceInstanceOp.device.Spec.Properties = append(deviceInstanceOp.device.Spec.Properties, devicePropertiesOp.deviceProperty)
 
 	return deviceInstanceOp.device
 }
 
-func NewDeviceModbusNoOffset(name string, namespace string) v1alpha2.Device {
-	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+func NewDeviceModbusNoOffset(name string, namespace string) v1beta1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace),
 		withProtocolConfig(deviceProtocolModbusRTU), withBaudRate(baudRate), withDataBits(dataBits), withParity(parity), withSerialPort(serialPort),
 		withStopBits(stopBits), withSlaveID(slaveID))
 
-	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature),
+	devicePropertiesOp := newDevicePropertiesOp(withVisitorName(devicePropertyTemperature),
 		withVisitorCollectCycle(collectCycle),
 		withVisitorReportCycle(reportCycle),
 		withVisitorConfig(deviceProtocolModbus),
-		withRegister(v1alpha2.ModbusRegisterTypeCoilRegister), withLimit(limit))
-	deviceInstanceOp.device.Spec.PropertyVisitors = append(deviceInstanceOp.device.Spec.PropertyVisitors, devicePropertyVisitorOp.devicePropertyVisitor)
+		withRegister(v1beta1.ModbusRegisterTypeCoilRegister), withLimit(limit))
+	deviceInstanceOp.device.Spec.Properties = append(deviceInstanceOp.device.Spec.Properties, devicePropertiesOp.deviceProperty)
 
 	return deviceInstanceOp.device
 }
 
-func NewDeviceModbusNoRegister(name string, namespace string) v1alpha2.Device {
-	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+func NewDeviceModbusNoRegister(name string, namespace string) v1beta1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace),
 		withProtocolConfig(deviceProtocolModbusRTU), withBaudRate(baudRate), withDataBits(dataBits), withParity(parity), withSerialPort(serialPort),
 		withStopBits(stopBits), withSlaveID(slaveID))
 
-	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature),
+	devicePropertiesOp := newDevicePropertiesOp(withVisitorName(devicePropertyTemperature),
 		withVisitorCollectCycle(collectCycle),
 		withVisitorReportCycle(reportCycle),
 		withVisitorConfig(deviceProtocolModbus),
 		withLimit(limit), withOffset(offset))
-	deviceInstanceOp.device.Spec.PropertyVisitors = append(deviceInstanceOp.device.Spec.PropertyVisitors, devicePropertyVisitorOp.devicePropertyVisitor)
+	deviceInstanceOp.device.Spec.Properties = append(deviceInstanceOp.device.Spec.Properties, devicePropertiesOp.deviceProperty)
 
 	return deviceInstanceOp.device
 }
 
-func NewDeviceOpcUANoNodeID(name string, namespace string) v1alpha2.Device {
-	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+func NewDeviceOpcUANoNodeID(name string, namespace string) v1beta1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace),
 		withProtocolConfig(deviceProtocolOPCUA), withOPCUAServerURL("http://test-opcuaserver.com"))
 
-	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature),
+	devicePropertiesOp := newDevicePropertiesOp(withVisitorName(devicePropertyTemperature),
 		withVisitorCollectCycle(collectCycle),
 		withVisitorReportCycle(reportCycle),
 		withVisitorConfig(deviceProtocolOPCUA),
 		withBrowseName("test"))
-	deviceInstanceOp.device.Spec.PropertyVisitors = append(deviceInstanceOp.device.Spec.PropertyVisitors, devicePropertyVisitorOp.devicePropertyVisitor)
+	deviceInstanceOp.device.Spec.Properties = append(deviceInstanceOp.device.Spec.Properties, devicePropertiesOp.deviceProperty)
 
 	return deviceInstanceOp.device
 }
 
-func NewDeviceCustomizedNoConfigData(name string, namespace string) v1alpha2.Device {
-	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+func NewDeviceCustomizedNoConfigData(name string, namespace string) v1beta1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace),
 		withProtocolConfig(deviceProtocolCustomized), withCustromizedProtocolName("test-customized-protocol"))
 
-	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature),
+	devicePropertiesOp := newDevicePropertiesOp(withVisitorName(devicePropertyTemperature),
 		withVisitorCollectCycle(collectCycle),
 		withVisitorReportCycle(reportCycle),
 		withVisitorConfig(deviceProtocolCustomized),
 		withProtocolName("test"))
-	deviceInstanceOp.device.Spec.PropertyVisitors = append(deviceInstanceOp.device.Spec.PropertyVisitors, devicePropertyVisitorOp.devicePropertyVisitor)
+	deviceInstanceOp.device.Spec.Properties = append(deviceInstanceOp.device.Spec.Properties, devicePropertiesOp.deviceProperty)
 
 	return deviceInstanceOp.device
 }

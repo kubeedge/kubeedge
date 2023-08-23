@@ -17,7 +17,7 @@ limitations under the License.
 package dmi
 
 import (
-	dmiapi "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1alpha1"
+	dmiapi "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1beta1"
 )
 
 // DeviceManagerService defines the public APIS for remote device management.
@@ -75,23 +75,4 @@ type DeviceMapperService interface {
 	// When the mapper gets the request of querying with the device name,
 	// it should return the device information.
 	GetDevice(*dmiapi.GetDeviceRequest) (*dmiapi.GetDeviceResponse, error)
-
-	// CreateDeviceModel creates a device model to the device mapper.
-	// Device manager sends the information of device model to the mapper
-	// through the interface of CreateDeviceModel.
-	// When the mapper gets the request of creating with the information of device model,
-	// it should create a new device model to the list of device models.
-	CreateDeviceModel(request *dmiapi.CreateDeviceModelRequest) (*dmiapi.CreateDeviceModelResponse, error)
-	// RemoveDeviceModel remove a device model to the device mapper.
-	// Device manager sends the name of device model to the mapper
-	// through the interface of RemoveDeviceModel.
-	// When the mapper gets the request of removing with the name of device model,
-	// it should remove the device model to the list of device models.
-	RemoveDeviceModel(*dmiapi.RemoveDeviceModelRequest) (*dmiapi.RemoveDeviceModelResponse, error)
-	// UpdateDeviceModel update a device model to the device mapper.
-	// Device manager sends the information of device model to the mapper
-	// through the interface of UpdateDeviceModel.
-	// When the mapper gets the request of updating with the information of device model,
-	// it should update the device model to the list of device models.
-	UpdateDeviceModel(*dmiapi.UpdateDeviceModelRequest) (*dmiapi.UpdateDeviceModelResponse, error)
 }
