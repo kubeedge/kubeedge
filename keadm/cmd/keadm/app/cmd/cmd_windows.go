@@ -1,3 +1,5 @@
+//go:build windows
+
 /*
 Copyright 2019 The KubeEdge Authors.
 
@@ -19,10 +21,6 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/beta"
-	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/cloud"
-	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/debug"
-	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/deprecated"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/edge"
 )
 
@@ -43,17 +41,11 @@ var (
 
 `
 	keadmExample = `
-    +----------------------------------------------------------+
-    | On the cloud machine:                                    |
-    +----------------------------------------------------------+
-    | master node (on the cloud)# sudo keadm init              |
-    +----------------------------------------------------------+
-
-    +----------------------------------------------------------+
-    | On the edge machine:                                     |
-    +----------------------------------------------------------+
-    | worker node (at the edge)# sudo keadm join <flags>       |
-    +----------------------------------------------------------+
+    +-----------------------------------------------------------------+
+    | On the edge machine(current dont support cloudcore on windows): |                                    |
+    +-----------------------------------------------------------------+
+    | worker node (at the edge)# keadm join <flags>                   |
+    +-----------------------------------------------------------------+
 
     You can then repeat the second step on, as many other machines as you like.
 `
@@ -69,23 +61,15 @@ func NewKubeedgeCommand() *cobra.Command {
 	}
 
 	cmds.ResetFlags()
-	// deprecated init/join/reset cmds
-	cmds.AddCommand(deprecated.NewDeprecated())
 
 	cmds.AddCommand(NewCmdVersion())
-	cmds.AddCommand(cloud.NewGettoken())
-	cmds.AddCommand(debug.NewEdgeDebug())
 
 	// recommended cmds
 	cmds.AddCommand(edge.NewEdgeJoin())
-	cmds.AddCommand(cloud.NewCloudInit())
-	cmds.AddCommand(cloud.NewManifestGenerate())
-	cmds.AddCommand(newCmdConfig())
 	cmds.AddCommand(NewKubeEdgeReset())
 
 	// beta cmds
-	cmds.AddCommand(beta.NewBeta())
-	cmds.AddCommand(edge.NewEdgeUpgrade())
+	//cmds.AddCommand(edge.NewEdgeUpgrade())
 
 	return cmds
 }

@@ -55,10 +55,6 @@ const (
 	EdgeServiceFile      = "edgecore.service"
 	CloudServiceFile     = "cloudcore.service"
 	ServiceFileURLFormat = "https://raw.githubusercontent.com/kubeedge/kubeedge/release-%s/build/tools/%s"
-	KubeEdgePath         = "/etc/kubeedge/"
-	KubeEdgeBackupPath   = "/etc/kubeedge/backup/"
-	KubeEdgeUpgradePath  = "/etc/kubeedge/upgrade/"
-	KubeEdgeUsrBinPath   = "/usr/local/bin"
 	KubeEdgeBinaryName   = "edgecore"
 	KeadmBinaryName      = "keadm"
 
@@ -68,14 +64,7 @@ const (
 	KubeEdgeCloudCoreNewYaml = KubeEdgeConfigDir + "cloudcore.yaml"
 	KubeEdgeEdgeCoreNewYaml  = KubeEdgeConfigDir + "edgecore.yaml"
 
-	KubeEdgeLogPath = "/var/log/kubeedge/"
 	KubeEdgeCrdPath = KubeEdgePath + "crds"
-
-	KubeEdgeSocketPath = "/var/lib/kubeedge/"
-
-	EdgeRootDir = "/var/lib/edged"
-
-	SystemdBootPath = "/run/systemd/system"
 
 	KubeEdgeCRDDownloadURL = "https://raw.githubusercontent.com/kubeedge/kubeedge/release-%s/build/crds"
 
@@ -544,6 +533,12 @@ func KillKubeEdgeBinary(proc string) error {
 
 // IsKubeEdgeProcessRunning checks if the given process is running or not
 func IsKubeEdgeProcessRunning(proc string) (bool, error) {
+	if runtime.GOOS == "windows" {
+		if IsNSSMServiceExit(proc) {
+			return true, nil
+		}
+		return false, nil
+	}
 	procRunning := fmt.Sprintf("pidof %s 2>&1", proc)
 	cmd := NewCommand(procRunning)
 

@@ -22,6 +22,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -42,6 +43,8 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2/validation"
 	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
 )
+
+const isWindows = runtime.GOOS == "windows"
 
 var (
 	edgeJoinDescription = `
@@ -117,12 +120,15 @@ func NewEdgeJoin() *cobra.Command {
 }
 
 func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
+
 	cmd.Flags().StringVar(&joinOptions.KubeEdgeVersion, common.KubeEdgeVersion, joinOptions.KubeEdgeVersion,
 		"Use this key to download and use the required KubeEdge version")
 	cmd.Flags().Lookup(common.KubeEdgeVersion).NoOptDefVal = joinOptions.KubeEdgeVersion
 
-	cmd.Flags().StringVar(&joinOptions.CGroupDriver, common.CGroupDriver, joinOptions.CGroupDriver,
-		"CGroupDriver that uses to manipulate cgroups on the host (cgroupfs or systemd), the default value is cgroupfs")
+	if !isWindows {
+		cmd.Flags().StringVar(&joinOptions.CGroupDriver, common.CGroupDriver, joinOptions.CGroupDriver,
+			"CGroupDriver that uses to manipulate cgroups on the host (cgroupfs or systemd), the default value is cgroupfs")
+	}
 
 	cmd.Flags().StringVar(&joinOptions.CertPath, common.CertPath, joinOptions.CertPath,
 		fmt.Sprintf("The certPath used by edgecore, the default value is %s", common.DefaultCertPath))
@@ -149,18 +155,24 @@ func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
 	cmd.Flags().StringVarP(&joinOptions.CertPort, common.CertPort, "s", joinOptions.CertPort,
 		"The port where to apply for the edge certificate")
 
-	cmd.Flags().StringVar(&joinOptions.TarballPath, common.TarballPath, joinOptions.TarballPath,
-		"Use this key to set the temp directory path for KubeEdge tarball, if not exist, download it")
+	if !isWindows {
+		cmd.Flags().StringVar(&joinOptions.TarballPath, common.TarballPath, joinOptions.TarballPath,
+			"Use this key to set the temp directory path for KubeEdge tarball, if not exist, download it")
+	}
 
 	cmd.Flags().StringSliceVarP(&joinOptions.Labels, common.Labels, "l", joinOptions.Labels,
 		`Use this key to set the customized labels for node, you can input customized labels like key1=value1,key2=value2`)
 
-	cmd.Flags().BoolVar(&joinOptions.WithMQTT, "with-mqtt", joinOptions.WithMQTT,
-		`Use this key to set whether to install and start MQTT Broker by default`)
+	if !isWindows {
+		cmd.Flags().BoolVar(&joinOptions.WithMQTT, "with-mqtt", joinOptions.WithMQTT,
+			`Use this key to set whether to install and start MQTT Broker by default`)
+	}
 
-	cmd.Flags().StringVar(&joinOptions.ImageRepository, common.ImageRepository, joinOptions.ImageRepository,
-		`Use this key to decide which image repository to pull images from`,
-	)
+	if !isWindows {
+		cmd.Flags().StringVar(&joinOptions.ImageRepository, common.ImageRepository, joinOptions.ImageRepository,
+			`Use this key to decide which image repository to pull images from`,
+		)
+	}
 }
 
 func newOption() *common.JoinOptions {
@@ -179,15 +191,40 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 		return err
 	}
 
-	// Do not create any files in the management directory,
-	// you need to mount the contents of the mirror first.
-	if err := request(opt, step); err != nil {
-		return err
-	}
+	// current dont support install binary from windows container
+	// and we cant use systemd in windows
+	if !isWindows {
+		// Do not create any files in the management directory,
+		// you need to mount the contents of the mirror first.
+		if err := request(opt, step); err != nil {
+			return err
+		}
+		step.Printf("Generate systemd service file")
+		if err := common.GenerateServiceFile(util.KubeEdgeBinaryName, filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), opt.WithMQTT); err != nil {
+			return fmt.Errorf("create systemd service file failed: %v", err)
+		}
+	} else {
+		if err := prepareWindowsNssm(step); err != nil {
+			return fmt.Errorf("prepare windows nssm service fail: %v", err)
+		}
 
-	step.Printf("Generate systemd service file")
-	if err := common.GenerateServiceFile(util.KubeEdgeBinaryName, filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), opt.WithMQTT); err != nil {
-		return fmt.Errorf("create systemd service file failed: %v", err)
+		step.Printf("Check edge bin")
+		// check if the binary download successfully manual
+		if !util.FileExists(filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName)) {
+			return fmt.Errorf("cannot find edgecore binary at %s, you should download it manual from github release and put edgecore.exe under %s", filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), util.KubeEdgeUsrBinPath)
+		}
+
+		step.Printf("Install service")
+		if err := util.InstallNSSMService(util.KubeEdgeBinaryName, filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), "--config", filepath.Join(util.KubeEdgePath, "config/edgecore.yaml")); err != nil {
+			return fmt.Errorf("install edgecore useing nssm fail: %v", err)
+		}
+
+		if err := util.SetNSSMServiceStdout(util.KubeEdgeBinaryName, filepath.Join(util.KubeEdgeLogPath, "out.log")); err != nil {
+			return fmt.Errorf("setting edgecore stdout log using nssm fail: %v", err)
+		}
+		if err := util.SetNSSMServiceStdout(util.KubeEdgeBinaryName, filepath.Join(util.KubeEdgeLogPath, "err.log")); err != nil {
+			return fmt.Errorf("setting edgecore stderr log using nssm fail: %v", err)
+		}
 	}
 
 	// write token to bootstrap configure file
@@ -251,6 +288,9 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 		return fmt.Errorf("parse kubeedge version failed, %v", err)
 	}
 	if v.Major <= 1 && v.Minor < 12 {
+		if isWindows {
+			return errors.New("edgecore for windows dont support version earlier than v1.12.0")
+		}
 		return createV1alpha1EdgeConfigFiles(opt)
 	}
 	if v.Major >= 1 && v.Minor >= 14 && opt.RuntimeType != constants.DefaultRuntimeType {
@@ -288,15 +328,16 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 		edgeCoreConfig.Modules.Edged.ContainerRuntime = opt.RuntimeType
 	}
 
-	switch opt.CGroupDriver {
-	case v1alpha2.CGroupDriverSystemd:
-		edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.CgroupDriver = v1alpha2.CGroupDriverSystemd
-	case v1alpha2.CGroupDriverCGroupFS:
-		edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.CgroupDriver = v1alpha2.CGroupDriverCGroupFS
-	default:
-		return fmt.Errorf("unsupported CGroupDriver: %s", opt.CGroupDriver)
+	if !isWindows {
+		switch opt.CGroupDriver {
+		case v1alpha2.CGroupDriverSystemd:
+			edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.CgroupDriver = v1alpha2.CGroupDriverSystemd
+		case v1alpha2.CGroupDriverCGroupFS:
+			edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.CgroupDriver = v1alpha2.CGroupDriverCGroupFS
+		default:
+			return fmt.Errorf("unsupported CGroupDriver: %s", opt.CGroupDriver)
+		}
 	}
-	edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.CgroupDriver = opt.CGroupDriver
 
 	if opt.RemoteRuntimeEndpoint != "" {
 		edgeCoreConfig.Modules.Edged.RemoteRuntimeEndpoint = opt.RemoteRuntimeEndpoint
@@ -409,6 +450,10 @@ func setEdgedNodeLabels(opt *common.JoinOptions) map[string]string {
 }
 
 func runEdgeCore(withMqtt bool) error {
+	if runtime.GOOS == "windows" {
+		return util.StartNSSMService(util.KubeEdgeBinaryName)
+	}
+
 	systemdExist := util.HasSystemd()
 
 	var binExec, tip string
@@ -450,4 +495,14 @@ func createBootstrapFile(opt *common.JoinOptions) error {
 	// write token to bootstrap-edgecore.conf file
 	token := []byte(opt.Token)
 	return os.WriteFile(bootstrapFile, token, 0640)
+}
+
+func prepareWindowsNssm(step *common.Step) error {
+	step.Printf("Check if nssm installed")
+	if util.IsNSSMInstalled() {
+		return nil
+	}
+
+	step.Printf("Nssm not find, start install under $env:ProgramFiles\\nssm")
+	return util.InstallNSSM()
 }
