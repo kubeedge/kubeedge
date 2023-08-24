@@ -292,7 +292,7 @@ else
 e2e:
 #	bash tests/e2e/scripts/execute.sh device_crd
 #	This has been commented temporarily since there is an issue of CI using same master for all PRs, which is causing failures when run parallelly
-	tests/scripts/execute.sh
+	tests/scripts/execute.sh ${KIND_IMAGE}
 endif
 
 define KEADM_DEPRECATED_E2E_HELP_INFO

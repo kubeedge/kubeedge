@@ -23,6 +23,8 @@ curpath=$PWD
 echo $PWD
 
 GOPATH=${GOPATH:-$(go env GOPATH)}
+KIND_IMAGE=${1:-"kindest/node:v1.24.0"}
+compilemodule=$2
 
 which ginkgo &> /dev/null || (
     go install github.com/onsi/ginkgo/ginkgo@latest
@@ -39,9 +41,9 @@ sudo rm -rf ${curpath}/tests/e2e/e2e.test
 sudo rm -rf ${curpath}/tests/e2e_keadm/e2e_keadm.test
 
 # Specify the module name to compile in below command
-bash -x ${curpath}/tests/scripts/compile.sh $1
+bash -x ${curpath}/tests/scripts/compile.sh ${compilemodule}
 
-ENABLE_DAEMON=true bash -x ${curpath}/hack/local-up-kubeedge.sh || {
+ENABLE_DAEMON=true bash -x ${curpath}/hack/local-up-kubeedge.sh ${KIND_IMAGE}|| {
     echo "failed to start cluster !!!"
     exit 1
 }
@@ -52,4 +54,4 @@ export GINKGO_TESTING_RESULT=0
 
 trap cleanup EXIT
 
-bash -x ${curpath}/tests/scripts/fast_test.sh $1
+bash -x ${curpath}/tests/scripts/fast_test.sh ${compilemodule}
