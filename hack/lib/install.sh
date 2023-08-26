@@ -38,7 +38,7 @@ function check_kind {
       exit 1
     fi
 
-    # avoid modifing go.sum and go.mod when installing the kind
+    # avoid modifying go.sum and go.mod when installing the kind
     git checkout -- go.mod go.sum
 
     export PATH=$PATH:$GOPATH/bin
@@ -69,16 +69,16 @@ function check_golangci-lint {
 
 function install_golangci-lint {
   echo "installing golangci-lint ."
-    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin v1.51.1
-    if [[ $? -ne 0 ]]; then
-      echo "golangci-lint installed failed, exiting."
-      exit 1
-    fi
+  curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin v1.51.1
+  if [[ $? -ne 0 ]]; then
+    echo "golangci-lint installed failed, exiting."
+    exit 1
+  fi
 
-    export PATH=$PATH:$GOPATH/bin
+  export PATH=$PATH:$GOPATH/bin
 }
 
-verify_containerd_installed(){
+verify_containerd_installed() {
   # verify the containerd installed
   command -v containerd >/dev/null || {
     echo "must install the containerd first"
@@ -86,7 +86,7 @@ verify_containerd_installed(){
   }
 }
 
-verify_docker_installed(){
+verify_docker_installed() {
   # verify the docker installed
   command -v docker >/dev/null || {
     echo "must install the docker first"

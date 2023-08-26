@@ -103,7 +103,7 @@ func (*EventBus) Forward(target provider.Target, data interface{}) (response int
 	content, err := message.GetContentData()
 	if !ok {
 		klog.Errorf("get message %s content err: %v", message.GetID(), err)
-		return nil, fmt.Errorf("get message %s contant err: %v", message.GetID(), err)
+		return nil, fmt.Errorf("get message %s content err: %v", message.GetID(), err)
 	}
 	res["data"] = content
 	resp, err := target.GoToTarget(res, nil)

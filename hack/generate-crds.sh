@@ -59,7 +59,7 @@ while [ $# -gt 0 ]; do
 done
 
 function :pre:install: {
-  # install controller-gen tool if not exsit
+  # install controller-gen tool if not exist
   if [ "$(which controller-gen)" == "" ]; then
       echo "Start to install controller-gen tool"
       GO111MODULE=on go install -v sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.2

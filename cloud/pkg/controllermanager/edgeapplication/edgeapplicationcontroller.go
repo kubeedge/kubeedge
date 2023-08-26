@@ -532,7 +532,7 @@ func setOwnerReference(obj *unstructured.Unstructured, edgeApp *appsv1alpha1.Edg
 	obj.SetOwnerReferences(ownerReferences)
 }
 
-// isSameAsLastApplied will check if the curObj has the same specified fileds as objInEdgeApp.
+// isSameAsLastApplied will check if the curObj has the same specified fields as objInEdgeApp.
 // It assumes that fields of the obj in cluster are same as the value of last-applied-template annotation.
 func isSameAsLastApplied(objInEdgeApp *unstructured.Unstructured, curObj runtime.Object) (bool, error) {
 	accessor := meta.NewAccessor()

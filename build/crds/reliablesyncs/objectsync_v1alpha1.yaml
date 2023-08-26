@@ -53,7 +53,7 @@ spec:
                 type: string
             type: object
           status:
-            description: ObjectSyncSpec stores the resourceversion of objects that
+            description: ObjectSyncStatus stores the resourceversion of objects that
               persist to the edge.
             properties:
               objectResourceVersion:

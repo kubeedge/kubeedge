@@ -157,10 +157,10 @@ const (
 	CSIOperationTypeControllerUnpublishVolume = "controllerunpublishvolume"
 	CSISyncMsgRespTimeout                     = 1 * time.Minute
 
+	ServerAddress = "127.0.0.1"
 	// ServerPort is the default port for the edgecore server on each host machine.
 	// May be overridden by a flag at startup in the future.
-	ServerAddress = "127.0.0.1"
-	ServerPort    = 10350
+	ServerPort = 10350
 
 	// MessageSuccessfulContent is the successful content value of Message struct
 	MessageSuccessfulContent string = "OK"

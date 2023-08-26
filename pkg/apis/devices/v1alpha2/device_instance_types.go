@@ -266,10 +266,10 @@ type VisitorConfigBluetooth struct {
 	CharacteristicUUID string `json:"characteristicUUID,omitempty"`
 	// Responsible for converting the data coming from the platform into a form that is understood by the bluetooth device
 	// For example: "ON":[1], "OFF":[0]
-	//+optional
+	// +optional
 	DataWriteToBluetooth map[string][]byte `json:"dataWrite,omitempty"`
 	// Responsible for converting the data being read from the bluetooth device into a form that is understandable by the platform
-	//+optional
+	// +optional
 	BluetoothDataConverter BluetoothReadConverter `json:"dataConverter,omitempty"`
 }
 
@@ -288,7 +288,7 @@ type BluetoothReadConverter struct {
 	// +optional
 	ShiftRight uint `json:"shiftRight,omitempty"`
 	// Specifies in what order the operations(which are required to be performed to convert incoming data into understandable form) are performed
-	//+optional
+	// +optional
 	OrderOfOperations []BluetoothOperations `json:"orderOfOperations,omitempty"`
 }
 

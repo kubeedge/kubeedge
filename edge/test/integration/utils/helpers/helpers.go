@@ -208,7 +208,7 @@ func GetDeviceAttributesFromDB(deviceID string, Name string) Attribute {
 	return attribute
 }
 
-// HubclientInit create mqtt client config
+// HubClientInit create mqtt client config
 func HubClientInit(server, clientID, username, password string) *MQTT.ClientOptions {
 	opts := MQTT.NewClientOptions().AddBroker(server).SetClientID(clientID).SetCleanSession(true)
 	if username != "" {

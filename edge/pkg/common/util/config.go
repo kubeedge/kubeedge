@@ -76,15 +76,13 @@ func GenerateTestCertificate(path string, certFileName string, keyFileName strin
 	}
 	keyFilePEM := pem.Block{
 		Type:  "RSA PRIVATE KEY",
-		Bytes: pKey}
-	err = createPEMfile(path+keyFileName+".key", keyFilePEM)
-	if err != nil {
-		return err
+		Bytes: pKey,
 	}
-	return nil
+
+	return createPEMfile(path+keyFileName+".key", keyFilePEM)
 }
 
-// createPEMfile() creates an encoded file at the path given, with PEM Block specified
+// createPEMfile creates an encoded file at the path given, with PEM Block specified
 func createPEMfile(path string, pemBlock pem.Block) error {
 	// this will create plain text PEM file.
 	file, err := os.Create(path)
@@ -98,6 +96,6 @@ func createPEMfile(path string, pemBlock pem.Block) error {
 			klog.Errorf("failed to close file, path: %v, error: %v", path, err)
 		}
 	}()
-	err = pem.Encode(file, &pemBlock)
-	return err
+
+	return pem.Encode(file, &pemBlock)
 }

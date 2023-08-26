@@ -39,7 +39,7 @@ func (tm *testManager) Name() string {
 }
 
 func (tm *testManager) Group() string {
-	//return core.MetaGroup
+	// return core.MetaGroup
 	return modules.MetaGroup
 }
 
@@ -87,7 +87,7 @@ func GetPodListFromEdged(w http.ResponseWriter) error {
 	return nil
 }
 
-// Function to handle Get/Add/Delete deployment list.
+// podHandler handles Get/Add/Delete deployment list.
 func (tm *testManager) podHandler(w http.ResponseWriter, req *http.Request) {
 	var operation string
 	var p v1.Pod

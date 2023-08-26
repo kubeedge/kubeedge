@@ -472,7 +472,7 @@ func isDeviceDataUpdated(oldData *v1alpha2.DeviceData, newData *v1alpha2.DeviceD
 	return !reflect.DeepEqual(oldData, newData)
 }
 
-// isDevicePropertyVisitorsUpdated checks if DeviceProperyVisitors is updated
+// isDevicePropertyVisitorsUpdated checks if DevicePropertyVisitors is updated
 func isDevicePropertyVisitorsUpdated(oldPropertyVisitors *[]v1alpha2.DevicePropertyVisitor, newPropertyVisitors *[]v1alpha2.DevicePropertyVisitor) bool {
 	return !reflect.DeepEqual(oldPropertyVisitors, newPropertyVisitors)
 }

@@ -192,7 +192,7 @@ type CloudHubWebSocket struct {
 	Port uint32 `json:"port,omitempty"`
 }
 
-// CloudHubHttps indicates the http config of CloudHub
+// CloudHubHTTPS indicates the http config of CloudHub
 type CloudHubHTTPS struct {
 	// Enable indicates whether enable Https protocol
 	// default true
@@ -419,7 +419,7 @@ type DynamicController struct {
 	Enable bool `json:"enable"`
 }
 
-// CloudSream indicates the stream controller
+// CloudStream indicates the stream controller
 type CloudStream struct {
 	// Enable indicates whether cloudstream is enabled, if set to false (for debugging etc.), skip checking other configs.
 	// default true

@@ -22,7 +22,7 @@ Some Linux distributors provide package management software(yum for example) for
    ├── SPECS
    └── SRPMS
    ```
-2. Put sorce code tarball into `/root/rpmbuild/SOURCES`
+2. Put source code tarball into `/root/rpmbuild/SOURCES`
 3. Put `kubeedge.spec` file into `/root/rpmbuild/SPECS`
 4. Use `rpmbuild` to build RPM package
    `rpmbuild -ba /root/rpmbuild/SPECS/kubeedge.spec`
@@ -100,4 +100,3 @@ This package provides:
 ## Additional
 - When use `keamd` to deploy the cluster, user need to install `kubeedge-keadm` package only since it already contain everything that keadm need.
 - When use binary to deploy the cluster, user need to install `kubeedge-cloudcore` package on the cloud side and `kubeedge-edgecore` package on the edge side separately.
-

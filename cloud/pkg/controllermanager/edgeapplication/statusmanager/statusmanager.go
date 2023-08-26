@@ -64,7 +64,7 @@ func (s *statusManager) WatchStatus(info utils.ResourceInfo) error {
 	select {
 	case s.watchCh <- infoToGVK(info):
 	default:
-		return fmt.Errorf("the wathCh of status manager is full, drop the info %s", info.String())
+		return fmt.Errorf("the watchCh of status manager is full, drop the info %s", info.String())
 	}
 
 	return nil
@@ -86,7 +86,7 @@ func (s *statusManager) CancelWatch(info utils.ResourceInfo) error {
 
 func (s *statusManager) Start() error {
 	if s.reconcileTrigger == nil {
-		return fmt.Errorf("reoncileTriger cannot be nil")
+		return fmt.Errorf("reconcileTrigger cannot be nil")
 	}
 	s.started = true
 	go s.watchStatusWorker()

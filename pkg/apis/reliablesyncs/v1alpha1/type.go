@@ -95,7 +95,7 @@ type ObjectSyncSpec struct {
 	ObjectName string `json:"objectName,omitempty"`
 }
 
-// ObjectSyncSpec stores the resourceversion of objects that persist to the edge.
+// ObjectSyncStatus stores the resourceversion of objects that persist to the edge.
 type ObjectSyncStatus struct {
 	// ObjectResourceVersion is the resourceversion of the object
 	// that was successfully persist to the edge node.

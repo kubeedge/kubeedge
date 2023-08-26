@@ -9,7 +9,7 @@ const (
 	TwinGroup = "twin"
 	// MetaGroup group
 	MetaGroup = "meta"
-	//EdgedGroup group
+	// EdgedGroup group
 	EdgedGroup = "edged"
 	// UserGroup is ServiceBus group
 	UserGroup = "user"

@@ -157,7 +157,7 @@ type Edged struct {
 	// RegisterNode enables automatic registration
 	// default true
 	RegisterNode bool `json:"registerNode,omitempty"`
-	//RegisterNodeNamespace indicates register node namespace
+	// RegisterNodeNamespace indicates register node namespace
 	// default "default"
 	RegisterNodeNamespace string `json:"registerNodeNamespace,omitempty"`
 	// CustomInterfaceName indicates the name of the network interface used for obtaining the IP address.
@@ -284,16 +284,16 @@ type EdgeHubQUIC struct {
 	// Enable indicates whether enable this protocol
 	// default false
 	Enable bool `json:"enable"`
-	// HandshakeTimeout indicates hand shake timeout (second)
+	// HandshakeTimeout indicates handshake timeout (second)
 	// default 30
 	HandshakeTimeout int32 `json:"handshakeTimeout,omitempty"`
-	// ReadDeadline indicates read dead line (second)
+	// ReadDeadline indicates read deadline (second)
 	// default 15
 	ReadDeadline int32 `json:"readDeadline,omitempty"`
 	// Server indicates quic server address (ip:port)
 	// +Required
 	Server string `json:"server,omitempty"`
-	// WriteDeadline indicates write dead line (second)
+	// WriteDeadline indicates write deadline (second)
 	// default 15
 	WriteDeadline int32 `json:"writeDeadline,omitempty"`
 }
@@ -306,13 +306,13 @@ type EdgeHubWebSocket struct {
 	// HandshakeTimeout indicates handshake timeout (second)
 	// default  30
 	HandshakeTimeout int32 `json:"handshakeTimeout,omitempty"`
-	// ReadDeadline indicates read dead line (second)
+	// ReadDeadline indicates read deadline (second)
 	// default 15
 	ReadDeadline int32 `json:"readDeadline,omitempty"`
 	// Server indicates websocket server address (ip:port)
 	// +Required
 	Server string `json:"server,omitempty"`
-	// WriteDeadline indicates write dead line (second)
+	// WriteDeadline indicates write deadline (second)
 	// default 15
 	WriteDeadline int32 `json:"writeDeadline,omitempty"`
 }
@@ -354,7 +354,7 @@ type EventBus struct {
 	// MqttPassword indicates mqtt password
 	// default ""
 	MqttPassword string `json:"mqttPassword"`
-	// MqttMode indicates which broker type will be choose
+	// MqttMode indicates which broker type will be chosen
 	// 0: internal mqtt broker enable only.
 	// 1: internal and external mqtt broker enable.
 	// 2: external mqtt broker enable only
@@ -416,7 +416,7 @@ type ServiceBus struct {
 	Server string `json:"server"`
 	// Port indicates port for http server
 	Port int `json:"port"`
-	// Timeout indicates timeout for servicebus receive mseeage
+	// Timeout indicates timeout for servicebus receive message
 	Timeout int `json:"timeout"`
 }
 
@@ -456,13 +456,13 @@ type EdgeStream struct {
 	// HandshakeTimeout indicates handshake timeout (second)
 	// default  30
 	HandshakeTimeout int32 `json:"handshakeTimeout,omitempty"`
-	// ReadDeadline indicates read dead line (second)
+	// ReadDeadline indicates read deadline (second)
 	// default 15
 	ReadDeadline int32 `json:"readDeadline,omitempty"`
 	// TunnelServer indicates websocket server address (ip:port)
 	// +Required
 	TunnelServer string `json:"server,omitempty"`
-	// WriteDeadline indicates write dead line (second)
+	// WriteDeadline indicates write deadline (second)
 	// default 15
 	WriteDeadline int32 `json:"writeDeadline,omitempty"`
 }
