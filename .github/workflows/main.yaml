@@ -195,7 +195,7 @@ jobs:
       - name: Install dependences
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/ginkgo@${{ env.GINKGO_VERSION }}
-          go install sigs.k8s.io/kind@v0.14.0
+          go install sigs.k8s.io/kind@v0.17.0
           curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.24.14/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
@@ -255,7 +255,7 @@ jobs:
       - name: Install dependences
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/ginkgo@${{ env.GINKGO_VERSION }}
-          go install sigs.k8s.io/kind@v0.14.0
+          go install sigs.k8s.io/kind@v0.17.0
           curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.24.14/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
