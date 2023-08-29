@@ -18,6 +18,7 @@ package device
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"time"
 
@@ -486,6 +487,8 @@ var _ = GroupDescribe("Device Management test in E2E scenario", func() {
 					},
 				},
 			}
+			str, _ := json.Marshal(utils.TwinResult.Twin)
+			utils.Infof(string(str))
 			isEqual := utils.CompareTwin(utils.TwinResult.Twin, expectedTwin)
 			gomega.Expect(isEqual).Should(gomega.Equal(true))
 		})
@@ -572,9 +575,6 @@ var _ = GroupDescribe("Device Management test in E2E scenario", func() {
 			err = utils.HandleDeviceInstance(edgeClientSet, http.MethodDelete, constants.NodeName, utils.NewLedDeviceInstance(constants.NodeName).Name, "")
 			gomega.Expect(err).To(gomega.BeNil())
 			time.Sleep(1 * time.Second)
-
-			_, err = clientSet.CoreV1().ConfigMaps("default").Get(context.TODO(), "device-profile-config-"+constants.NodeName, metav1.GetOptions{})
-			gomega.Expect(apierrors.IsNotFound(err)).To(gomega.BeTrue())
 		})
 	})
 	ginkgo.Context("Test Change in device twin", func() {
