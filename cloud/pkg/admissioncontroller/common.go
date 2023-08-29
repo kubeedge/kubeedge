@@ -94,10 +94,10 @@ func serve(w http.ResponseWriter, r *http.Request, hook hookFunc) {
 		responseAdmissionReview.Response = toAdmissionResponse(err)
 	} else {
 		responseAdmissionReview.Response = hook(requestedAdmissionReview)
+		// Return the same UID
+		responseAdmissionReview.Response.UID = requestedAdmissionReview.Request.UID
 	}
 
-	// Return the same UID
-	responseAdmissionReview.Response.UID = requestedAdmissionReview.Request.UID
 	klog.V(4).Infof("sending response: %+v", responseAdmissionReview.Response)
 
 	respBytes, err := json.Marshal(responseAdmissionReview)
