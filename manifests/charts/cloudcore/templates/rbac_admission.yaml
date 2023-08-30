@@ -1,0 +1,53 @@
+{{- if .Values.admission.enable }}
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: kubeedge-admission
+rules:
+  - apiGroups: ["admissionregistration.k8s.io"]
+    resources: ["mutatingwebhookconfigurations", "validatingwebhookconfigurations"]
+    verbs: ["get", "list", "watch", "create", "update"]
+  - apiGroups: ["certificates.k8s.io"]
+    resources: ["certificatesigningrequests"]
+    verbs: ["get", "list", "create", "delete"]
+  - apiGroups: ["certificates.k8s.io"]
+    resources: ["certificatesigningrequests/approval"]
+    verbs: ["create", "update"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create", "get", "patch"]
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get"]
+  - apiGroups: ["devices.kubeedge.io"]
+    resources: ["devicemodels"]
+    verbs: ["get", "list"]
+  - apiGroups: ["rules.kubeedge.io"]
+    resources: ["rules", "ruleendpoints"]
+    verbs: ["get", "list"]
+  - apiGroups: ["operations.kubeedge.io"]
+    resources: ["nodeupgradejobs"]
+    verbs: ["get", "list"]
+
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: kubeedge-admission-role
+subjects:
+  - kind: ServiceAccount
+    name: kubeedge-admission
+    namespace: kubeedge
+roleRef:
+  kind: ClusterRole
+  name: kubeedge-admission
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubeedge-admission
+  namespace: kubeedge
+{{- end }}
