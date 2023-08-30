@@ -7,7 +7,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/conversion"
-	"k8s.io/component-base/config/v1alpha1"
 	"k8s.io/component-base/featuregate"
 	kubeletoptions "k8s.io/kubernetes/cmd/kubelet/app/options"
 	"k8s.io/kubernetes/pkg/kubelet"
@@ -144,9 +143,7 @@ func ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(in *v1alpha2.T
 	out.AllowedUnsafeSysctls = *(*[]string)(unsafe.Pointer(&in.AllowedUnsafeSysctls))
 	out.VolumePluginDir = in.VolumePluginDir
 	out.KernelMemcgNotification = in.KernelMemcgNotification
-	if err := v1alpha1.Convert_v1alpha1_LoggingConfiguration_To_config_LoggingConfiguration(&in.Logging, &out.Logging, s); err != nil {
-		return err
-	}
+	out.Logging = in.Logging
 	if err := v1.Convert_Pointer_bool_To_bool(&in.EnableSystemLogHandler, &out.EnableSystemLogHandler, s); err != nil {
 		return err
 	}

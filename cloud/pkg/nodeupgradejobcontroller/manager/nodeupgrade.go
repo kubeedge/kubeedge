@@ -43,7 +43,10 @@ func (dmm *NodeUpgradeJobManager) Events() chan watch.Event {
 func NewNodeUpgradeJobManager(si cache.SharedIndexInformer) (*NodeUpgradeJobManager, error) {
 	events := make(chan watch.Event, config.Config.Buffer.NodeUpgradeJobEvent)
 	rh := NewCommonResourceEventHandler(events)
-	si.AddEventHandler(rh)
+	_, err := si.AddEventHandler(rh)
+	if err != nil {
+		return nil, err
+	}
 
 	return &NodeUpgradeJobManager{events: events}, nil
 }

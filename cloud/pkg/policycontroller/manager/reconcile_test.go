@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"sort"
 	"sync"
@@ -1333,11 +1334,23 @@ func TestGetNodeListOfServiceAccountAccess(t *testing.T) {
 								},*/
 		},
 	}
+	pdStrategyTypeIndexer := func(obj client.Object) []string {
+		pd, ok := obj.(*v1.Pod)
+		if !ok {
+			panic(fmt.Errorf("indexer function for type %T's spec.strategy.type field received"+
+				" object of type %T, this should never happen", v1.Pod{}, obj))
+		}
+		serviceAccountName := ""
+		if pd != nil {
+			serviceAccountName = pd.Spec.ServiceAccountName
+		}
+		return []string{serviceAccountName}
+	}
 	var v1Scheme = runtime.NewScheme()
 	if err := v1.AddToScheme(v1Scheme); err != nil {
 		t.Errorf("Failed to add access scheme: %v", err)
 	}
-	withScheme := fake.NewClientBuilder().WithScheme(v1Scheme)
+	withScheme := fake.NewClientBuilder().WithScheme(v1Scheme).WithIndex(&v1.Pod{}, "spec.serviceAccountName", pdStrategyTypeIndexer)
 	fakeClient := withScheme.Build()
 	got, err := getNodeListOfServiceAccountAccess(context.Background(), fakeClient, saa)
 	if err != nil {
@@ -1725,7 +1738,19 @@ func TestSyncRules(t *testing.T) {
 			if err := rbacv1.AddToScheme(accessScheme); err != nil {
 				t.Errorf("Failed to add rbacv1 scheme: %v", err)
 			}
-			fakeClient := fake.NewClientBuilder().WithScheme(accessScheme).WithObjects(tt.obj...).WithLists(nodeList).Build()
+			pdStrategyTypeIndexer := func(obj client.Object) []string {
+				pd, ok := obj.(*v1.Pod)
+				if !ok {
+					panic(fmt.Errorf("indexer function for type %T's spec.strategy.type field received"+
+						" object of type %T, this should never happen", v1.Pod{}, obj))
+				}
+				serviceAccountName := ""
+				if pd != nil {
+					serviceAccountName = pd.Spec.ServiceAccountName
+				}
+				return []string{serviceAccountName}
+			}
+			fakeClient := fake.NewClientBuilder().WithScheme(accessScheme).WithObjects(tt.obj...).WithLists(nodeList).WithIndex(&v1.Pod{}, "spec.serviceAccountName", pdStrategyTypeIndexer).Build()
 			ctr := &Controller{
 				Client:       fakeClient,
 				MessageLayer: messagelayer.PolicyControllerMessageLayer(),

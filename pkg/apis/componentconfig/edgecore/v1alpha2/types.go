@@ -19,7 +19,7 @@ package v1alpha2
 import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	componentbaseconfigv1alpha1 "k8s.io/component-base/config/v1alpha1"
+	logsapi "k8s.io/component-base/logs/api/v1"
 	tailoredkubeletconfigv1beta1 "k8s.io/kubelet/config/v1beta1"
 	"k8s.io/kubernetes/pkg/apis/core"
 
@@ -599,7 +599,7 @@ type TailoredKubeletConfiguration struct {
 	// Default:
 	//   Format: text
 	// + optional
-	Logging componentbaseconfigv1alpha1.LoggingConfiguration `json:"logging,omitempty"`
+	Logging logsapi.LoggingConfiguration `json:"logging,omitempty"`
 	// enableSystemLogHandler enables system logs via web interface host:port/logs/
 	// Default: true
 	// +optional

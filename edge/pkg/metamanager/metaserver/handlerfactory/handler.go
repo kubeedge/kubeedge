@@ -178,7 +178,7 @@ func (f *Factory) Patch(reqInfo *request.RequestInfo) http.Handler {
 			return
 		}
 
-		responsewriters.WriteObjectNegotiated(scope.Serializer, scope, scope.Kind.GroupVersion(), w, req, 200, retObj)
+		responsewriters.WriteObjectNegotiated(scope.Serializer, scope, scope.Kind.GroupVersion(), w, req, 200, retObj, false)
 	}
 	return http.HandlerFunc(h)
 }

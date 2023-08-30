@@ -92,7 +92,7 @@ func (p *Proxy) run(o *options.ProxyRunOptions) error {
 	if err != nil {
 		return err
 	}
-	server := server.NewProxyServer(o.ServerID, ps, int(o.ServerCount), authOpt, true)
+	server := server.NewProxyServer(o.ServerID, ps, int(o.ServerCount), authOpt)
 
 	masterStop, err := p.runMasterServer(ctx, o, server)
 	if err != nil {

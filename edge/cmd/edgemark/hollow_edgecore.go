@@ -25,6 +25,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	oteltrace "go.opentelemetry.io/otel/trace"
 	cliflag "k8s.io/component-base/cli/flag"
 	"k8s.io/component-base/cli/globalflag"
 	"k8s.io/component-base/featuregate"
@@ -169,7 +170,7 @@ func GetFakeKubeletDeps(
 		return nil, fmt.Errorf("failed to start fake runtime %v", err)
 	}
 
-	runtimeService, err := remote.NewRemoteRuntimeService(endpoint, 15*time.Second)
+	runtimeService, err := remote.NewRemoteRuntimeService(endpoint, 15*time.Second, oteltrace.NewNoopTracerProvider())
 	if err != nil {
 		return nil, fmt.Errorf("failed to init runtime service %v", err)
 	}

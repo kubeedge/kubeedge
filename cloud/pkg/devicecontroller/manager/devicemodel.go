@@ -27,7 +27,10 @@ func (dmm *DeviceModelManager) Events() chan watch.Event {
 func NewDeviceModelManager(si cache.SharedIndexInformer) (*DeviceModelManager, error) {
 	events := make(chan watch.Event, config.Config.Buffer.DeviceModelEvent)
 	rh := NewCommonResourceEventHandler(events)
-	si.AddEventHandler(rh)
+	_, err := si.AddEventHandler(rh)
+	if err != nil {
+		return nil, err
+	}
 
 	return &DeviceModelManager{events: events}, nil
 }

@@ -6,7 +6,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/apiserver/pkg/storage/etcd3"
+	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
@@ -64,7 +64,7 @@ func Trigger(e watch.Event) {
 				klog.Errorf("failed to get accessor, %v", err)
 				return
 			}
-			rev, err := etcd3.Versioner.ParseResourceVersion(accessor.GetResourceVersion())
+			rev, err := storage.APIObjectVersioner{}.ParseResourceVersion(accessor.GetResourceVersion())
 			if err != nil {
 				klog.Errorf("failed to parse resource version, %v", err)
 				return

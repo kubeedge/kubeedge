@@ -41,7 +41,8 @@ type mockInformer struct {
 	cache.SharedIndexInformer
 }
 
-func (i *mockInformer) AddEventHandler(handler cache.ResourceEventHandler) {
+func (i *mockInformer) AddEventHandler(handler cache.ResourceEventHandler) (cache.ResourceEventHandlerRegistration, error) {
+	return nil, nil
 }
 
 func TestNewDeviceModelManager(t *testing.T) {

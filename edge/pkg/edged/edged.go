@@ -180,7 +180,7 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 	MakeKubeClientBridge(kubeletDeps)
 
 	// source of all configuration
-	kubeletDeps.PodConfig = config.NewPodConfig(config.PodConfigNotificationIncremental, kubeletDeps.Recorder)
+	kubeletDeps.PodConfig = config.NewPodConfig(config.PodConfigNotificationIncremental, kubeletDeps.Recorder, kubeletDeps.PodStartupLatencyTracker)
 
 	ed = &edged{
 		enable:        true,
