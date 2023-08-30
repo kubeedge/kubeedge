@@ -43,8 +43,7 @@ type Interface interface {
 	RulesV1() rulesv1.RulesV1Interface
 }
 
-// Clientset contains the clients for groups. Each group has exactly one
-// version included in a Clientset.
+// Clientset contains the clients for groups.
 type Clientset struct {
 	*discovery.DiscoveryClient
 	appsV1alpha1          *appsv1alpha1.AppsV1alpha1Client

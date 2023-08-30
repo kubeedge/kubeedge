@@ -25,7 +25,7 @@ import (
 
 	"strings"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -341,7 +341,9 @@ func invokeStaleDummyVMTestWithStoragePolicy(client clientset.Interface, control
 	nodeInfo := TestContext.NodeMapper.GetNodeInfo(controlPlaneNode)
 	isVMPresentFlag, err := nodeInfo.VSphere.IsVMPresent(dummyVMFullName, nodeInfo.DataCenterRef)
 	framework.ExpectNoError(err)
-	framework.ExpectEqual(isVMPresentFlag, false, errorMsg)
+	if isVMPresentFlag {
+		framework.Failf("VM with name %s is present, %s", dummyVMFullName, errorMsg)
+	}
 }
 
 func getControlPlaneNode(client clientset.Interface) (string, error) {

@@ -17,6 +17,7 @@ limitations under the License.
 package stats
 
 import (
+	"context"
 	"fmt"
 	"path"
 	"sort"
@@ -75,7 +76,7 @@ func newCadvisorStatsProvider(
 }
 
 // ListPodStats returns the stats of all the pod-managed containers.
-func (p *cadvisorStatsProvider) ListPodStats() ([]statsapi.PodStats, error) {
+func (p *cadvisorStatsProvider) ListPodStats(_ context.Context) ([]statsapi.PodStats, error) {
 	// Gets node root filesystem information and image filesystem stats, which
 	// will be used to populate the available and capacity bytes/inodes in
 	// container stats.
@@ -125,32 +126,26 @@ func (p *cadvisorStatsProvider) ListPodStats() ([]statsapi.PodStats, error) {
 			// the user and has network stats.
 			podStats.Network = cadvisorInfoToNetworkStats(&cinfo)
 		} else {
-			podStats.Containers = append(podStats.Containers, *cadvisorInfoToContainerStats(containerName, &cinfo, &rootFsInfo, &imageFsInfo))
+			containerStat := cadvisorInfoToContainerStats(containerName, &cinfo, &rootFsInfo, &imageFsInfo)
+			// NOTE: This doesn't support the old pod log path, `/var/log/pods/UID`. For containers
+			// using old log path, they will be populated by cadvisorInfoToContainerStats.
+			podUID := types.UID(podStats.PodRef.UID)
+			logs, err := p.hostStatsProvider.getPodContainerLogStats(podStats.PodRef.Namespace, podStats.PodRef.Name, podUID, containerName, &rootFsInfo)
+			if err != nil {
+				klog.ErrorS(err, "Unable to fetch container log stats", "containerName", containerName)
+			} else {
+				containerStat.Logs = logs
+			}
+			podStats.Containers = append(podStats.Containers, *containerStat)
 		}
 	}
 
 	// Add each PodStats to the result.
 	result := make([]statsapi.PodStats, 0, len(podToStats))
 	for _, podStats := range podToStats {
-		// Lookup the volume stats for each pod.
+		makePodStorageStats(podStats, &rootFsInfo, p.resourceAnalyzer, p.hostStatsProvider, false)
+
 		podUID := types.UID(podStats.PodRef.UID)
-		var ephemeralStats []statsapi.VolumeStats
-		if vstats, found := p.resourceAnalyzer.GetPodVolumeStats(podUID); found {
-			ephemeralStats = make([]statsapi.VolumeStats, len(vstats.EphemeralVolumes))
-			copy(ephemeralStats, vstats.EphemeralVolumes)
-			podStats.VolumeStats = append(append([]statsapi.VolumeStats{}, vstats.EphemeralVolumes...), vstats.PersistentVolumes...)
-		}
-
-		logStats, err := p.hostStatsProvider.getPodLogStats(podStats.PodRef.Namespace, podStats.PodRef.Name, podUID, &rootFsInfo)
-		if err != nil {
-			klog.ErrorS(err, "Unable to fetch pod log stats", "pod", klog.KRef(podStats.PodRef.Namespace, podStats.PodRef.Name))
-		}
-		etcHostsStats, err := p.hostStatsProvider.getPodEtcHostsStats(podUID, &rootFsInfo)
-		if err != nil {
-			klog.ErrorS(err, "Unable to fetch pod etc hosts stats", "pod", klog.KRef(podStats.PodRef.Namespace, podStats.PodRef.Name))
-		}
-
-		podStats.EphemeralStorage = calcEphemeralStorage(podStats.Containers, ephemeralStats, &rootFsInfo, logStats, etcHostsStats, false)
 		// Lookup the pod-level cgroup's CPU and memory stats
 		podInfo := getCadvisorPodInfoFromPodUID(podUID, allInfos)
 		if podInfo != nil {
@@ -175,12 +170,12 @@ func (p *cadvisorStatsProvider) ListPodStats() ([]statsapi.PodStats, error) {
 // the containers and returns the stats for all the pod-managed containers.
 // For cadvisor, cpu nano core usages are pre-computed and cached, so this
 // function simply calls ListPodStats.
-func (p *cadvisorStatsProvider) ListPodStatsAndUpdateCPUNanoCoreUsage() ([]statsapi.PodStats, error) {
-	return p.ListPodStats()
+func (p *cadvisorStatsProvider) ListPodStatsAndUpdateCPUNanoCoreUsage(ctx context.Context) ([]statsapi.PodStats, error) {
+	return p.ListPodStats(ctx)
 }
 
 // ListPodCPUAndMemoryStats returns the cpu and memory stats of all the pod-managed containers.
-func (p *cadvisorStatsProvider) ListPodCPUAndMemoryStats() ([]statsapi.PodStats, error) {
+func (p *cadvisorStatsProvider) ListPodCPUAndMemoryStats(_ context.Context) ([]statsapi.PodStats, error) {
 	infos, err := getCadvisorContainerInfo(p.cadvisor)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get container info from cadvisor: %v", err)
@@ -240,12 +235,12 @@ func (p *cadvisorStatsProvider) ListPodCPUAndMemoryStats() ([]statsapi.PodStats,
 }
 
 // ImageFsStats returns the stats of the filesystem for storing images.
-func (p *cadvisorStatsProvider) ImageFsStats() (*statsapi.FsStats, error) {
+func (p *cadvisorStatsProvider) ImageFsStats(ctx context.Context) (*statsapi.FsStats, error) {
 	imageFsInfo, err := p.cadvisor.ImagesFsInfo()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get imageFs info: %v", err)
 	}
-	imageStats, err := p.imageService.ImageStats()
+	imageStats, err := p.imageService.ImageStats(ctx)
 	if err != nil || imageStats == nil {
 		return nil, fmt.Errorf("failed to get image stats: %v", err)
 	}
@@ -269,7 +264,7 @@ func (p *cadvisorStatsProvider) ImageFsStats() (*statsapi.FsStats, error) {
 
 // ImageFsDevice returns name of the device where the image filesystem locates,
 // e.g. /dev/sda1.
-func (p *cadvisorStatsProvider) ImageFsDevice() (string, error) {
+func (p *cadvisorStatsProvider) ImageFsDevice(_ context.Context) (string, error) {
 	imageFsInfo, err := p.cadvisor.ImagesFsInfo()
 	if err != nil {
 		return "", err

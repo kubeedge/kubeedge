@@ -18,6 +18,7 @@ package manager
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"net"
@@ -135,12 +136,17 @@ type controllerManager struct {
 	// if not set, webhook server would look up the server key and certificate in
 	// {TempDir}/k8s-webhook-server/serving-certs
 	certDir string
+	// tlsOpts is used to allow configuring the TLS config used for the webhook server.
+	tlsOpts []func(*tls.Config)
 
 	webhookServer *webhook.Server
 	// webhookServerOnce will be called in GetWebhookServer() to optionally initialize
 	// webhookServer if unset, and Add() it to controllerManager.
 	webhookServerOnce sync.Once
 
+	// leaderElectionID is the name of the resource that leader election
+	// will use for holding the leader lock.
+	leaderElectionID string
 	// leaseDuration is the duration that non-leader candidates will
 	// wait to force acquire leadership.
 	leaseDuration time.Duration
@@ -305,6 +311,7 @@ func (cm *controllerManager) GetWebhookServer() *webhook.Server {
 				Port:    cm.port,
 				Host:    cm.host,
 				CertDir: cm.certDir,
+				TLSOpts: cm.tlsOpts,
 			}
 		}
 		if err := cm.Add(cm.webhookServer); err != nil {
@@ -402,6 +409,8 @@ func (cm *controllerManager) Start(ctx context.Context) (err error) {
 		cm.Unlock()
 		return errors.New("manager already started")
 	}
+	cm.started = true
+
 	var ready bool
 	defer func() {
 		// Only unlock the manager if we haven't reached
@@ -457,21 +466,21 @@ func (cm *controllerManager) Start(ctx context.Context) (err error) {
 	// between conversion webhooks and the cache sync (usually initial list) which causes the webhooks
 	// to never start because no cache can be populated.
 	if err := cm.runnables.Webhooks.Start(cm.internalCtx); err != nil {
-		if err != wait.ErrWaitTimeout {
+		if !errors.Is(err, wait.ErrWaitTimeout) {
 			return err
 		}
 	}
 
 	// Start and wait for caches.
 	if err := cm.runnables.Caches.Start(cm.internalCtx); err != nil {
-		if err != wait.ErrWaitTimeout {
+		if !errors.Is(err, wait.ErrWaitTimeout) {
 			return err
 		}
 	}
 
 	// Start the non-leaderelection Runnables after the cache has synced.
 	if err := cm.runnables.Others.Start(cm.internalCtx); err != nil {
-		if err != wait.ErrWaitTimeout {
+		if !errors.Is(err, wait.ErrWaitTimeout) {
 			return err
 		}
 	}
@@ -519,7 +528,12 @@ func (cm *controllerManager) engageStopProcedure(stopComplete <-chan struct{}) e
 	//
 	// The shutdown context immediately expires if the gracefulShutdownTimeout is not set.
 	var shutdownCancel context.CancelFunc
-	cm.shutdownCtx, shutdownCancel = context.WithTimeout(context.Background(), cm.gracefulShutdownTimeout)
+	if cm.gracefulShutdownTimeout < 0 {
+		// We want to wait forever for the runnables to stop.
+		cm.shutdownCtx, shutdownCancel = context.WithCancel(context.Background())
+	} else {
+		cm.shutdownCtx, shutdownCancel = context.WithTimeout(context.Background(), cm.gracefulShutdownTimeout)
+	}
 	defer shutdownCancel()
 
 	// Start draining the errors before acquiring the lock to make sure we don't deadlock
@@ -587,7 +601,7 @@ func (cm *controllerManager) engageStopProcedure(stopComplete <-chan struct{}) e
 	}()
 
 	<-cm.shutdownCtx.Done()
-	if err := cm.shutdownCtx.Err(); err != nil && err != context.Canceled {
+	if err := cm.shutdownCtx.Err(); err != nil && !errors.Is(err, context.Canceled) {
 		if errors.Is(err, context.DeadlineExceeded) {
 			if cm.gracefulShutdownTimeout > 0 {
 				return fmt.Errorf("failed waiting for all runnables to end within grace period of %s: %w", cm.gracefulShutdownTimeout, err)
@@ -597,6 +611,7 @@ func (cm *controllerManager) engageStopProcedure(stopComplete <-chan struct{}) e
 		// For any other error, return the error.
 		return err
 	}
+
 	return nil
 }
 
@@ -632,6 +647,7 @@ func (cm *controllerManager) startLeaderElection(ctx context.Context) (err error
 			},
 		},
 		ReleaseOnCancel: cm.leaderElectionReleaseOnCancel,
+		Name:            cm.leaderElectionID,
 	})
 	if err != nil {
 		return err

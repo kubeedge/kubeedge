@@ -1,3 +1,19 @@
+/*
+Copyright 2022 The Kubernetes Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package options
 
 import (
@@ -30,13 +46,21 @@ type ProxyRunOptions struct {
 	// If file UdsName already exists, delete the file before listen on that UDS file.
 	DeleteUDSFile bool
 	// Port we listen for server connections on.
-	ServerPort uint
+	ServerPort int
+	// Bind address for the server.
+	ServerBindAddress string
 	// Port we listen for agent connections on.
-	AgentPort uint
+	AgentPort int
+	// Bind address for the agent.
+	AgentBindAddress string
 	// Port we listen for admin connections on.
-	AdminPort uint
+	AdminPort int
+	// Bind address for the admin connections.
+	AdminBindAddress string
 	// Port we listen for health connections on.
-	HealthPort uint
+	HealthPort int
+	// Bind address for the health connections.
+	HealthBindAddress string
 	// After a duration of this time if the server doesn't see any activity it
 	// pings the client to see if the transport is still alive.
 	KeepaliveTime         time.Duration
@@ -72,13 +96,6 @@ type ProxyRunOptions struct {
 	// it will use the default backend manager to choose a random backend.
 	ProxyStrategies string
 
-	// This controls if we attempt to push onto a "full" transfer channel.
-	// However checking that the transfer channel is full is not safe.
-	// It violates our race condition checking. Adding locks around a potentially
-	// blocking call has its own problems, so it cannot easily be made race condition safe.
-	// The check is an "unlocked" read but is still use at your own peril.
-	WarnOnChannelLimit bool
-
 	// Cipher suites used by the server.
 	// If empty, the default suite will be used from tls.CipherSuites(),
 	// also checks if given comma separated list contains cipher from tls.InsecureCipherSuites().
@@ -98,15 +115,19 @@ func (o *ProxyRunOptions) Flags() *pflag.FlagSet {
 	flags.StringVar(&o.Mode, "mode", o.Mode, "mode can be either 'grpc' or 'http-connect'.")
 	flags.StringVar(&o.UdsName, "uds-name", o.UdsName, "uds-name should be empty for TCP traffic. For UDS set to its name.")
 	flags.BoolVar(&o.DeleteUDSFile, "delete-existing-uds-file", o.DeleteUDSFile, "If true and if file UdsName already exists, delete the file before listen on that UDS file")
-	flags.UintVar(&o.ServerPort, "server-port", o.ServerPort, "Port we listen for server connections on. Set to 0 for UDS.")
-	flags.UintVar(&o.AgentPort, "agent-port", o.AgentPort, "Port we listen for agent connections on.")
-	flags.UintVar(&o.AdminPort, "admin-port", o.AdminPort, "Port we listen for admin connections on.")
-	flags.UintVar(&o.HealthPort, "health-port", o.HealthPort, "Port we listen for health connections on.")
+	flags.IntVar(&o.ServerPort, "server-port", o.ServerPort, "Port we listen for server connections on. Set to 0 for UDS.")
+	flags.StringVar(&o.ServerBindAddress, "server-bind-address", o.ServerBindAddress, "Bind address for server connections. If empty, we will bind to all interfaces.")
+	flags.IntVar(&o.AgentPort, "agent-port", o.AgentPort, "Port we listen for agent connections on.")
+	flags.StringVar(&o.AgentBindAddress, "agent-bind-address", o.AgentBindAddress, "Bind address for agent connections. If empty, we will bind to all interfaces.")
+	flags.IntVar(&o.AdminPort, "admin-port", o.AdminPort, "Port we listen for admin connections on.")
+	flags.StringVar(&o.AdminBindAddress, "admin-bind-address", o.AdminBindAddress, "Bind address for admin connections. If empty, we will bind to all interfaces.")
+	flags.IntVar(&o.HealthPort, "health-port", o.HealthPort, "Port we listen for health connections on.")
+	flags.StringVar(&o.HealthBindAddress, "health-bind-address", o.HealthBindAddress, "Bind address for health connections. If empty, we will bind to all interfaces.")
 	flags.DurationVar(&o.KeepaliveTime, "keepalive-time", o.KeepaliveTime, "Time for gRPC agent server keepalive.")
 	flags.DurationVar(&o.FrontendKeepaliveTime, "frontend-keepalive-time", o.FrontendKeepaliveTime, "Time for gRPC frontend server keepalive.")
 	flags.BoolVar(&o.EnableProfiling, "enable-profiling", o.EnableProfiling, "enable pprof at host:admin-port/debug/pprof")
 	flags.BoolVar(&o.EnableContentionProfiling, "enable-contention-profiling", o.EnableContentionProfiling, "enable contention profiling at host:admin-port/debug/pprof/block. \"--enable-profiling\" must also be set.")
-	flags.StringVar(&o.ServerID, "server-id", o.ServerID, "The unique ID of this server.")
+	flags.StringVar(&o.ServerID, "server-id", o.ServerID, "The unique ID of this server. Can also be set by the 'PROXY_SERVER_ID' environment variable.")
 	flags.UintVar(&o.ServerCount, "server-count", o.ServerCount, "The number of proxy server instances, should be 1 unless it is an HA server.")
 	flags.StringVar(&o.AgentNamespace, "agent-namespace", o.AgentNamespace, "Expected agent's namespace during agent authentication (used with agent-service-account, authentication-audience, kubeconfig).")
 	flags.StringVar(&o.AgentServiceAccount, "agent-service-account", o.AgentServiceAccount, "Expected agent's service account during agent authentication (used with agent-namespace, authentication-audience, kubeconfig).")
@@ -115,8 +136,11 @@ func (o *ProxyRunOptions) Flags() *pflag.FlagSet {
 	flags.IntVar(&o.KubeconfigBurst, "kubeconfig-burst", o.KubeconfigBurst, "Maximum client burst (proxy server uses this client to authenticate agent tokens).")
 	flags.StringVar(&o.AuthenticationAudience, "authentication-audience", o.AuthenticationAudience, "Expected agent's token authentication audience (used with agent-namespace, agent-service-account, kubeconfig).")
 	flags.StringVar(&o.ProxyStrategies, "proxy-strategies", o.ProxyStrategies, "The list of proxy strategies used by the server to pick a backend/tunnel, available strategies are: default, destHost.")
-	flags.BoolVar(&o.WarnOnChannelLimit, "warn-on-channel-limit", o.WarnOnChannelLimit, "Turns on a warning if the system is going to push to a full channel. The check involves an unsafe read.")
 	flags.StringVar(&o.CipherSuites, "cipher-suites", o.CipherSuites, "The comma separated list of allowed cipher suites. Has no effect on TLS1.3. Empty means allow default list.")
+
+	flags.Bool("warn-on-channel-limit", true, "This behavior is now thread safe and always on. This flag will be removed in a future release.")
+	flags.MarkDeprecated("warn-on-channel-limit", "This behavior is now thread safe and always on. This flag will be removed in a future release.")
+
 	return flags
 }
 
@@ -131,9 +155,13 @@ func (o *ProxyRunOptions) Print() {
 	klog.V(1).Infof("UDSName set to %q.\n", o.UdsName)
 	klog.V(1).Infof("DeleteUDSFile set to %v.\n", o.DeleteUDSFile)
 	klog.V(1).Infof("Server port set to %d.\n", o.ServerPort)
+	klog.V(1).Infof("Server bind address set to %q.\n", o.ServerBindAddress)
 	klog.V(1).Infof("Agent port set to %d.\n", o.AgentPort)
+	klog.V(1).Infof("Agent bind address set to %q.\n", o.AgentBindAddress)
 	klog.V(1).Infof("Admin port set to %d.\n", o.AdminPort)
+	klog.V(1).Infof("Admin bind address set to %q.\n", o.AdminBindAddress)
 	klog.V(1).Infof("Health port set to %d.\n", o.HealthPort)
+	klog.V(1).Infof("Health bind address set to %q.\n", o.HealthBindAddress)
 	klog.V(1).Infof("Keepalive time set to %v.\n", o.KeepaliveTime)
 	klog.V(1).Infof("Frontend keepalive time set to %v.\n", o.FrontendKeepaliveTime)
 	klog.V(1).Infof("EnableProfiling set to %v.\n", o.EnableProfiling)
@@ -147,7 +175,6 @@ func (o *ProxyRunOptions) Print() {
 	klog.V(1).Infof("KubeconfigQPS set to %f.\n", o.KubeconfigQPS)
 	klog.V(1).Infof("KubeconfigBurst set to %d.\n", o.KubeconfigBurst)
 	klog.V(1).Infof("ProxyStrategies set to %q.\n", o.ProxyStrategies)
-	klog.V(1).Infof("WarnOnChannelLimit set to %t.\n", o.WarnOnChannelLimit)
 	klog.V(1).Infof("CipherSuites set to %q.\n", o.CipherSuites)
 }
 
@@ -305,14 +332,18 @@ func NewProxyRunOptions() *ProxyRunOptions {
 		UdsName:                   "",
 		DeleteUDSFile:             false,
 		ServerPort:                8090,
+		ServerBindAddress:         "",
 		AgentPort:                 8091,
+		AgentBindAddress:          "",
 		HealthPort:                8092,
+		HealthBindAddress:         "",
 		AdminPort:                 8095,
+		AdminBindAddress:          "127.0.0.1",
 		KeepaliveTime:             1 * time.Hour,
 		FrontendKeepaliveTime:     1 * time.Hour,
 		EnableProfiling:           false,
 		EnableContentionProfiling: false,
-		ServerID:                  uuid.New().String(),
+		ServerID:                  defaultServerID(),
 		ServerCount:               1,
 		AgentNamespace:            "",
 		AgentServiceAccount:       "",
@@ -321,8 +352,16 @@ func NewProxyRunOptions() *ProxyRunOptions {
 		KubeconfigBurst:           0,
 		AuthenticationAudience:    "",
 		ProxyStrategies:           "default",
-		WarnOnChannelLimit:        false,
 		CipherSuites:              "",
 	}
 	return &o
+}
+
+func defaultServerID() string {
+	// Default to the value set by the PROXY_SERVER_ID environment variable. If both the flag &
+	// environment variable are set, the flag always wins.
+	if id := os.Getenv("PROXY_SERVER_ID"); id != "" {
+		return id
+	}
+	return uuid.New().String()
 }

@@ -22,7 +22,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
@@ -70,7 +70,7 @@ var _ = utils.SIGDescribe("Volume Operations Storm [Feature:vsphere]", func() {
 		Bootstrap(f)
 		client = f.ClientSet
 		namespace = f.Namespace.Name
-		gomega.Expect(GetReadySchedulableNodeInfos()).NotTo(gomega.BeEmpty())
+		gomega.Expect(GetReadySchedulableNodeInfos(client)).NotTo(gomega.BeEmpty())
 		if scale := os.Getenv("VOLUME_OPS_SCALE"); scale != "" {
 			volumeOpsScale, err = strconv.Atoi(scale)
 			framework.ExpectNoError(err)

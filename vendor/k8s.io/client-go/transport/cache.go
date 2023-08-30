@@ -37,6 +37,11 @@ type tlsTransportCache struct {
 	transports map[tlsCacheKey]*http.Transport
 }
 
+// DialerStopCh is stop channel that is passed down to dynamic cert dialer.
+// It's exposed as variable for testing purposes to avoid testing for goroutine
+// leakages.
+var DialerStopCh = wait.NeverStop
+
 const idleConnsPerHost = 25
 
 var tlsCache = &tlsTransportCache{transports: make(map[tlsCacheKey]*http.Transport)}
@@ -88,13 +93,13 @@ func (c *tlsTransportCache) get(config *Config) (http.RoundTripper, error) {
 		return nil, err
 	}
 	// The options didn't require a custom TLS config
-	if tlsConfig == nil && config.Dial == nil && config.Proxy == nil {
+	if tlsConfig == nil && config.DialHolder == nil && config.Proxy == nil {
 		return http.DefaultTransport, nil
 	}
 
 	var dial func(ctx context.Context, network, address string) (net.Conn, error)
-	if config.Dial != nil {
-		dial = config.Dial
+	if config.DialHolder != nil {
+		dial = config.DialHolder.Dial
 	} else {
 		dial = (&net.Dialer{
 			Timeout:   30 * time.Second,
@@ -108,7 +113,7 @@ func (c *tlsTransportCache) get(config *Config) (http.RoundTripper, error) {
 		dynamicCertDialer := certRotatingDialer(tlsConfig.GetClientCertificate, dial)
 		tlsConfig.GetClientCertificate = dynamicCertDialer.GetClientCertificate
 		dial = dynamicCertDialer.connDialer.DialContext
-		go dynamicCertDialer.Run(wait.NeverStop)
+		go dynamicCertDialer.Run(DialerStopCh)
 	}
 
 	proxy := http.ProxyFromEnvironment
@@ -142,14 +147,6 @@ func tlsConfigKey(c *Config) (tlsCacheKey, bool, error) {
 
 	if c.Proxy != nil {
 		// cannot determine equality for functions
-		return tlsCacheKey{}, false, nil
-	}
-	if c.Dial != nil && c.DialHolder == nil {
-		// cannot determine equality for dial function that doesn't have non-nil DialHolder set as well
-		return tlsCacheKey{}, false, nil
-	}
-	if c.TLS.GetCert != nil && c.TLS.GetCertHolder == nil {
-		// cannot determine equality for getCert function that doesn't have non-nil GetCertHolder set as well
 		return tlsCacheKey{}, false, nil
 	}
 

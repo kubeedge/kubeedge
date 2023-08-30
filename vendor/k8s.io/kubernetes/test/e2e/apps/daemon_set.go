@@ -30,7 +30,7 @@ import (
 
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -39,6 +39,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -53,6 +54,7 @@ import (
 	"k8s.io/kubernetes/pkg/controller/daemon"
 	"k8s.io/kubernetes/test/e2e/framework"
 	e2edaemonset "k8s.io/kubernetes/test/e2e/framework/daemonset"
+	e2ekubectl "k8s.io/kubernetes/test/e2e/framework/kubectl"
 	e2enode "k8s.io/kubernetes/test/e2e/framework/node"
 	e2eresource "k8s.io/kubernetes/test/e2e/framework/resource"
 	admissionapi "k8s.io/pod-security-admission/api"
@@ -72,6 +74,16 @@ const (
 // NamespaceNodeSelectors the annotation key scheduler.alpha.kubernetes.io/node-selector is for assigning
 // node selectors labels to namespaces
 var NamespaceNodeSelectors = []string{"scheduler.alpha.kubernetes.io/node-selector"}
+
+var nonTerminalPhaseSelector = func() labels.Selector {
+	var reqs []labels.Requirement
+	for _, phase := range []v1.PodPhase{v1.PodFailed, v1.PodSucceeded} {
+		req, _ := labels.NewRequirement("status.phase", selection.NotEquals, []string{string(phase)})
+		reqs = append(reqs, *req)
+	}
+	selector := labels.NewSelector()
+	return selector.Add(reqs...)
+}()
 
 type updateDSFunc func(*appsv1.DaemonSet)
 
@@ -103,7 +115,7 @@ func updateDaemonSetWithRetries(c clientset.Interface, namespace, name string, a
 // always get scheduled.  If we run other tests in parallel, this may not
 // happen.  In the future, running in parallel may work if we have an eviction
 // model which lets the DS controller kick out other pods to make room.
-// See http://issues.k8s.io/21767 for more details
+// See https://issues.k8s.io/21767 for more details
 var _ = SIGDescribe("Daemon set [Serial]", func() {
 	var f *framework.Framework
 
@@ -770,7 +782,7 @@ var _ = SIGDescribe("Daemon set [Serial]", func() {
 							return pod.DeletionTimestamp == nil && oldVersion == pod.Spec.Containers[0].Env[0].Value
 						}); pod != nil {
 							// make the /tmp/ready file read only, which will cause readiness to fail
-							if _, err := framework.RunKubectl(pod.Namespace, "exec", "-c", pod.Spec.Containers[0].Name, pod.Name, "--", "/bin/sh", "-ec", "echo 0 > /var/tmp/ready"); err != nil {
+							if _, err := e2ekubectl.RunKubectl(pod.Namespace, "exec", "-c", pod.Spec.Containers[0].Name, pod.Name, "--", "/bin/sh", "-ec", "echo 0 > /var/tmp/ready"); err != nil {
 								framework.Logf("Failed to mark pod %s as unready via exec: %v", pod.Name, err)
 							} else {
 								framework.Logf("Marked old pod %s as unready", pod.Name)
@@ -1022,7 +1034,10 @@ func newDaemonSetWithLabel(dsName, image string, label map[string]string) *appsv
 
 func listDaemonPods(c clientset.Interface, ns string, label map[string]string) *v1.PodList {
 	selector := labels.Set(label).AsSelector()
-	options := metav1.ListOptions{LabelSelector: selector.String()}
+	options := metav1.ListOptions{
+		LabelSelector: selector.String(),
+		FieldSelector: nonTerminalPhaseSelector.String(),
+	}
 	podList, err := c.CoreV1().Pods(ns).List(context.TODO(), options)
 	framework.ExpectNoError(err)
 	gomega.Expect(len(podList.Items)).To(gomega.BeNumerically(">", 0))

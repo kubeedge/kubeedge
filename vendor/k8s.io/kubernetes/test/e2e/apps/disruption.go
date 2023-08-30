@@ -19,12 +19,13 @@ package apps
 import (
 	"context"
 	"fmt"
-	"github.com/onsi/gomega"
 	"strings"
 	"time"
 
+	"github.com/onsi/gomega"
+
 	jsonpatch "github.com/evanphx/json-patch"
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"

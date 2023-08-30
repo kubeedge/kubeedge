@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package framework
+package pv
 
 import (
 	"context"
@@ -26,7 +26,7 @@ import (
 
 	"k8s.io/kubernetes/test/e2e/storage/utils"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -34,6 +34,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	clientset "k8s.io/client-go/kubernetes"
+	"k8s.io/kubernetes/pkg/volume/util"
 	"k8s.io/kubernetes/test/e2e/framework"
 	e2eskipper "k8s.io/kubernetes/test/e2e/framework/skipper"
 )
@@ -44,14 +45,6 @@ const (
 
 	// VolumeSelectorKey is the key for volume selector.
 	VolumeSelectorKey = "e2e-pv-pool"
-
-	// isDefaultStorageClassAnnotation represents a StorageClass annotation that
-	// marks a class as the default StorageClass
-	isDefaultStorageClassAnnotation = "storageclass.kubernetes.io/is-default-class"
-
-	// betaIsDefaultStorageClassAnnotation is the beta version of IsDefaultStorageClassAnnotation.
-	// TODO: remove Beta when no longer used
-	betaIsDefaultStorageClassAnnotation = "storageclass.beta.kubernetes.io/is-default-class"
 
 	// volumeGidAnnotationKey is the of the annotation on the PersistentVolume
 	// object that specifies a supplemental GID.
@@ -826,7 +819,7 @@ func GetDefaultStorageClassName(c clientset.Interface) (string, error) {
 	}
 	var scName string
 	for _, sc := range list.Items {
-		if isDefaultAnnotation(sc.ObjectMeta) {
+		if util.IsDefaultAnnotation(sc.ObjectMeta) {
 			if len(scName) != 0 {
 				return "", fmt.Errorf("Multiple default storage classes found: %q and %q", scName, sc.Name)
 			}
@@ -838,20 +831,6 @@ func GetDefaultStorageClassName(c clientset.Interface) (string, error) {
 	}
 	framework.Logf("Default storage class: %q", scName)
 	return scName, nil
-}
-
-// isDefaultAnnotation returns a boolean if the default storage class
-// annotation is set
-// TODO: remove Beta when no longer needed
-func isDefaultAnnotation(obj metav1.ObjectMeta) bool {
-	if obj.Annotations[isDefaultStorageClassAnnotation] == "true" {
-		return true
-	}
-	if obj.Annotations[betaIsDefaultStorageClassAnnotation] == "true" {
-		return true
-	}
-
-	return false
 }
 
 // SkipIfNoDefaultStorageClass skips tests if no default SC can be found.

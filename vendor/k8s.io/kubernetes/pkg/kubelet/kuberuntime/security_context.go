@@ -19,6 +19,7 @@ package kuberuntime
 import (
 	v1 "k8s.io/api/core/v1"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
+	runtimeutil "k8s.io/kubernetes/pkg/kubelet/kuberuntime/util"
 	"k8s.io/kubernetes/pkg/security/apparmor"
 	"k8s.io/kubernetes/pkg/securitycontext"
 )
@@ -59,7 +60,11 @@ func (m *kubeGenericRuntimeManager) determineEffectiveSecurityContext(pod *v1.Po
 	}
 
 	// set namespace options and supplemental groups.
-	synthesized.NamespaceOptions = namespacesForPod(pod)
+	namespaceOptions, err := runtimeutil.NamespacesForPod(pod, m.runtimeHelper)
+	if err != nil {
+		return nil, err
+	}
+	synthesized.NamespaceOptions = namespaceOptions
 	podSc := pod.Spec.SecurityContext
 	if podSc != nil {
 		if podSc.FSGroup != nil {

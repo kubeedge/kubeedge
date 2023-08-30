@@ -3,22 +3,20 @@ linters:
   enable:
   - asciicheck
   - bodyclose
-  - deadcode
   - depguard
   - dogsled
   - errcheck
+  - errorlint
   - exportloopref
   - goconst
   - gocritic
   - gocyclo
-  - godot
   - gofmt
   - goimports
   - goprintffuncname
   - gosec
   - gosimple
   - govet
-  - ifshort
   - importas
   - ineffassign
   - misspell
@@ -29,18 +27,14 @@ linters:
   - revive
   - rowserrcheck
   - staticcheck
-  - structcheck
   - stylecheck
   - typecheck
   - unconvert
   - unparam
-  - varcheck
+  - unused
   - whitespace
 
 linters-settings:
-  ifshort:
-    # Maximum length of variable declaration measured in number of characters, after which linter won't suggest using short syntax.
-    max-decl-chars: 50
   importas:
     no-unaliased: true
     alias:
@@ -59,9 +53,13 @@ linters-settings:
       - pkg: sigs.k8s.io/controller-runtime
         alias: ctrl
   staticcheck:
-    go: "1.17"
+    go: "1.19"
   stylecheck:
-    go: "1.17"
+    go: "1.19"
+  depguard:
+    include-go-root: true
+    packages:
+      - io/ioutil # https://go.dev/doc/go1.16#ioutil
 
 issues:
   max-same-issues: 0
@@ -121,6 +119,14 @@ issues:
   - linters:
     - gocritic
     text: "singleCaseSwitch: should rewrite switch statement to if statement"
+  # It considers all file access to a filename that comes from a variable problematic,
+  # which is naiv at best.
+  - linters:
+    - gosec
+    text: "G304: Potential file inclusion via variable"
+  - linters:
+    - revive
+    text: "package-comments: should have a package comment"
 
 run:
   timeout: 10m
