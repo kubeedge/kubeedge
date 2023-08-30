@@ -98,4 +98,6 @@ func SetDefaultsKubeletConfiguration(obj *TailoredKubeletConfiguration) {
 	obj.CgroupsPerQOS = utilpointer.Bool(DefaultCgroupsPerQOS)
 	obj.ResolverConfig = utilpointer.String(DefaultResolverConfig)
 	obj.CPUCFSQuota = utilpointer.Bool(DefaultCPUCFSQuota)
+	// Add static pod default path
+	obj.StaticPodPath = constants.DefaultManifestsDir
 }

@@ -47,3 +47,7 @@ func (c *PodsBridge) Patch(ctx context.Context, name string, pt types.PatchType,
 func (c *PodsBridge) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
 	return c.MetaClient.Pods(c.ns).Delete(name, opts)
 }
+
+func (c *PodsBridge) Create(ctx context.Context, pod *corev1.Pod, opts metav1.CreateOptions) (result *corev1.Pod, err error) {
+	return c.MetaClient.Pods(c.ns).Create(pod)
+}

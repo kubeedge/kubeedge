@@ -170,6 +170,15 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 		KubeletFlags:         kubeletFlags,
 		KubeletConfiguration: kubeletConfig,
 	}
+
+	if kubeletConfig.StaticPodPath != "" {
+		if err := os.MkdirAll(kubeletConfig.StaticPodPath, os.ModePerm); err != nil {
+			return nil, fmt.Errorf("create %s static pod path failed: %v", kubeletConfig.StaticPodPath, err)
+		}
+	} else {
+		klog.ErrorS(err, "static pod path is nil!")
+	}
+
 	nodestatus.KubeletVersion = fmt.Sprintf("%s-kubeedge-%s", constants.CurrentSupportK8sVersion, version.Get())
 	// use kubeletServer to construct the default KubeletDeps
 	kubeletDeps, err := DefaultKubeletDeps(&kubeletServer, utilfeature.DefaultFeatureGate)

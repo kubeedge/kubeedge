@@ -36,6 +36,7 @@ const (
 	ResourceTypeRuleStatus          = "rulestatus"
 	ResourceTypeLease               = "lease"
 	ResourceTypeSaAccess            = "serviceaccountaccess"
+	ResourceTypeCreatePod           = "createpod"
 )
 
 // Message struct

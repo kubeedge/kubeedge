@@ -696,6 +696,11 @@ type TailoredKubeletConfiguration struct {
 	// Default: true
 	// +optional
 	RegisterNode *bool `json:"registerNode,omitempty"`
+	// staticPodPath is the path to the directory containing local (static) pods to
+	// run, or the path to a single static pod file.
+	// Default: "/etc/kubeedge/manifests"
+	// +optional
+	StaticPodPath string `json:"staticPodPath,omitempty"`
 }
 
 // TailoredKubeletFlag indicates the tailored kubelet flag

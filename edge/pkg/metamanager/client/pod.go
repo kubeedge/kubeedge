@@ -52,7 +52,19 @@ func newPods(namespace string, s SendInterface) *pods {
 }
 
 func (c *pods) Create(cm *corev1.Pod) (*corev1.Pod, error) {
-	return nil, nil
+	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypeCreatePod, cm.Name)
+	podMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.InsertOperation, *cm)
+	resp, err := c.send.SendSync(podMsg)
+	if err != nil {
+		return nil, fmt.Errorf("create pod failed, err: %v", err)
+	}
+
+	content, err := resp.GetContentData()
+	if err != nil {
+		return nil, fmt.Errorf("parse message to pod failed, err: %v", err)
+	}
+
+	return handlePodResp(resource, content)
 }
 
 func (c *pods) Update(cm *corev1.Pod) error {
@@ -149,8 +161,11 @@ func handlePodResp(resource string, content []byte) (*corev1.Pod, error) {
 	}
 
 	if reflect.DeepEqual(podResp.Err, apierrors.StatusError{}) {
-		if err = updatePodDB(resource, podResp.Object); err != nil {
-			return nil, fmt.Errorf("update pod meta failed, err: %v", err)
+		resourceArray := strings.Split(resource, constants.ResourceSep)
+		if !(len(resourceArray) >= 2 && resourceArray[1] == model.ResourceTypeCreatePod) {
+			if err = updatePodDB(resource, podResp.Object); err != nil {
+				return nil, fmt.Errorf("update pod meta failed, err: %v", err)
+			}
 		}
 		return podResp.Object, nil
 	}

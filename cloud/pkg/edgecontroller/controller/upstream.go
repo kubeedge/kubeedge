@@ -116,6 +116,7 @@ type UpstreamController struct {
 	ruleStatusChan            chan model.Message
 	createLeaseChan           chan model.Message
 	queryLeaseChan            chan model.Message
+	createPodChan             chan model.Message
 
 	// lister
 	podLister       corelisters.PodLister
@@ -181,6 +182,9 @@ func (uc *UpstreamController) Start() error {
 	}
 	for i := 0; i < int(uc.config.Load.UpdateRuleStatusWorkers); i++ {
 		go uc.updateRuleStatus()
+	}
+	for i := 0; i < int(uc.config.Load.CreatePodWorks); i++ {
+		go uc.createPod()
 	}
 	return nil
 }
@@ -257,6 +261,9 @@ func (uc *UpstreamController) dispatchMessage() {
 			case model.QueryOperation:
 				uc.queryLeaseChan <- msg
 			}
+		case model.ResourceTypeCreatePod:
+			uc.createPodChan <- msg
+
 		default:
 			klog.Errorf("message: %s, resource type: %s unsupported", msg.GetID(), resourceType)
 		}
@@ -1042,6 +1049,54 @@ func (uc *UpstreamController) patchPod() {
 	}
 }
 
+func (uc *UpstreamController) createPod() {
+	for {
+		select {
+		case <-beehiveContext.Done():
+			klog.Warning("stop createPod")
+			return
+		case msg := <-uc.createPodChan:
+			klog.V(5).Infof("message: %s, operation is: %s, and resource is %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
+			namespace, err := messagelayer.GetNamespace(msg)
+			if err != nil {
+				klog.Warningf("message: %s process failure, get namespace failed with error: %v", msg.GetID(), err)
+				continue
+			}
+			name, err := messagelayer.GetResourceName(msg)
+			if err != nil {
+				klog.Warningf("message: %s process failure, get resource name failed with error: %v", msg.GetID(), err)
+				continue
+			}
+
+			podBytes, err := msg.GetContentData()
+			if err != nil {
+				klog.Warningf("message: %s process failure, get data failed with error: %v", msg.GetID(), err)
+				continue
+			}
+			var pod v1.Pod
+			if err = json.Unmarshal(podBytes, &pod); err != nil {
+				klog.Errorf("unmarshal pod request failed with error: %v", err)
+				continue
+			}
+
+			createPod, err := uc.kubeClient.CoreV1().Pods(namespace).Create(context.TODO(), &pod, metaV1.CreateOptions{})
+			if err != nil {
+				klog.Errorf("message: %s process failure, create pod failed with error: %v, namespace: %s, name: %s", msg.GetID(), err, namespace, name)
+			}
+
+			resMsg := model.NewMessage(msg.GetID()).
+				SetResourceVersion(createPod.ResourceVersion).
+				FillBody(&edgeapi.ObjectResp{Object: createPod, Err: err}).
+				BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, msg.GetResource(), model.ResponseOperation)
+			if err = uc.messageLayer.Response(*resMsg); err != nil {
+				klog.Errorf("Message: %s process failure, response failed with error: %v", msg.GetID(), err)
+				continue
+			}
+			klog.V(4).Infof("message: %s, create pod successfully, namespace: %s, name: %s", msg.GetID(), namespace, name)
+		}
+	}
+}
+
 func (uc *UpstreamController) deletePod() {
 	for {
 		select {
@@ -1378,6 +1433,7 @@ func NewUpstreamController(config *v1alpha1.EdgeController, factory k8sinformer.
 	uc.queryNodeChan = make(chan model.Message, config.Buffer.QueryNode)
 	uc.updateNodeChan = make(chan model.Message, config.Buffer.UpdateNode)
 	uc.patchPodChan = make(chan model.Message, config.Buffer.PatchPod)
+	uc.createPodChan = make(chan model.Message, config.Buffer.CreatePod)
 	uc.podDeleteChan = make(chan model.Message, config.Buffer.DeletePod)
 	uc.createLeaseChan = make(chan model.Message, config.Buffer.CreateLease)
 	uc.queryLeaseChan = make(chan model.Message, config.Buffer.QueryLease)

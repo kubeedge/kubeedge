@@ -467,7 +467,8 @@ func noAckRequired(msg *beehivemodel.Message) bool {
 				resourceType == beehivemodel.ResourceTypeLease ||
 				resourceType == beehivemodel.ResourceTypeNodePatch ||
 				resourceType == beehivemodel.ResourceTypePodPatch ||
-				resourceType == beehivemodel.ResourceTypePodStatus {
+				resourceType == beehivemodel.ResourceTypePodStatus ||
+				resourceType == beehivemodel.ResourceTypeCreatePod {
 				return true
 			}
 		}
