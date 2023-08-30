@@ -1,0 +1,72 @@
+{{- if .Values.admission.enable }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  {{- with .Values.admission.annotations }}
+  anntations: {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.admission.labels }}
+  labels: {{- toYaml . | nindent 4 }}
+  {{- end }}
+  name: kubeedge-admission
+spec:
+  replicas: {{ .Values.admission.replicaCount }}
+  selector:
+    {{- with .Values.admission.labels }}
+    matchLabels: {{- toYaml . | nindent 6 }}
+    {{- end }}
+  template:
+    metadata:
+      {{- with .Values.admission.labels }}
+      labels: {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+    {{- with .Values.admission.nodeSelector }}
+      nodeSelector: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.admission.affinity }}
+      affinity: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.admission.tolerations }}
+      tolerations: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccount: kubeedge-admission
+      {{- with .Values.admission.image.pullSecrets }} 
+      imagePullSecrets: {{ toYaml . | nindent 8 }} 
+      {{- end }}
+      containers:
+        - args:
+            {{- if .Values.admission.certsSecretName }}
+            - --tls-cert-file=/admission.local.config/certificates/tls.crt
+            - --tls-private-key-file=/admission.local.config/certificates/tls.key
+            - --ca-cert-file=/admission.local.config/certificates/ca.crt
+            {{- end }}
+            - --webhook-namespace=kubeedge
+            - --webhook-service-name=kubeedge-admission-service
+            - --alsologtostderr
+            - --port=443
+            - -v=4
+            - 2>&1
+          image: {{ .Values.admission.image.repository }}:{{ .Values.admission.image.tag }}
+          imagePullPolicy:  {{ .Values.admission.image.pullPolicy }}
+          name: admission
+          {{- with .Values.admission.resources }}
+          resources: {{ toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+          - containerPort: 443
+            protocol: TCP
+          {{- if .Values.admission.certsSecretName }}
+          volumeMounts:
+            - mountPath: /admission.local.config/certificates
+              name: admission-certs
+              readOnly: true
+          {{- end }}
+      {{- if .Values.admission.certsSecretName }}
+      volumes:
+        - name: admission-certs
+          secret:
+            defaultMode: 420
+            secretName: {{ .Values.admission.certsSecretName }}
+      {{- end }}
+{{- end }}
