@@ -153,6 +153,9 @@ jobs:
           fail_ci_if_error: true
           verbose: true
 
+      - name: enable cri config in containerd service
+        run: |
+          containerd config default | sudo tee /etc/containerd/config.toml && sudo systemctl restart containerd.service
 
       - run: make integrationtest
 
@@ -199,6 +202,10 @@ jobs:
       - name: docker load kubeedge/build-tools image
         run: |
           docker load < /home/runner/build-tools/build-tools.tar
+
+      - name: enable cri config in containerd service
+        run: |
+          containerd config default | sudo tee /etc/containerd/config.toml && sudo systemctl restart containerd.service
 
       # for QUIC protocol, we will use docker as edgecore container runtime
       # for WebSocket protocol, we will use containerd as edgecore container runtime
@@ -255,6 +262,10 @@ jobs:
         run: |
           docker load < /home/runner/build-tools/build-tools.tar
 
+      - name: enable cri config in containerd service
+        run: |
+          containerd config default | sudo tee /etc/containerd/config.toml && sudo systemctl restart containerd.service         
+
       - run: make keadm_deprecated_e2e
 
   keadm_e2e_test:
@@ -289,6 +300,10 @@ jobs:
         uses: azure/setup-helm@v3
         with:
           version: v3.4.0
+
+      - name: enable cri config in containerd service
+        run: |
+          containerd config default | sudo tee /etc/containerd/config.toml && sudo systemctl restart containerd.service
 
       - run: make keadm_e2e
 
