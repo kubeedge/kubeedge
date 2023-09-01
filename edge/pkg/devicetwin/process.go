@@ -52,8 +52,10 @@ func (dt *DeviceTwin) distributeMsg(m interface{}) error {
 		klog.Infof("Send msg to the %s module in twin", dtcommon.CommModule)
 		confirmMsg := dttype.DTMessage{Msg: model.NewMessage(message.Msg.GetParentID()), Action: dtcommon.Confirm}
 		if err := dt.DTContexts.CommTo(dtcommon.CommModule, &confirmMsg); err != nil {
+			klog.Errorf("fail to send msg %s to CommModule with err: %+v", confirmMsg.Msg.Header.ID, err)
 			return err
 		}
+		return nil
 	}
 	if !classifyMsg(&message) {
 		return errors.New("not found action")
