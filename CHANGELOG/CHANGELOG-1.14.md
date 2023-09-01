@@ -1,4 +1,7 @@
-
+* [v1.14.2](#v1142)
+    * [Downloads for v1.14.2](#downloads-for-v1142)
+    * [KubeEdge v1.14.2 Release Notes](#kubeedge-v1142-release-notes)
+        * [Changelog since v1.14.1](#changelog-since-v1141)
 * [v1.14.1](#v1141)
     * [Downloads for v1.14.1](#downloads-for-v1141)
     * [KubeEdge v1.14.1 Release Notes](#kubeedge-v1141-release-notes)
@@ -11,6 +14,22 @@
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
         * [Other Notable Changes](#other-notable-changes)
         * [Bug Fixes](#bug-fixes)
+
+# v1.14.2
+
+## Downloads for v1.14.2
+
+Download v1.14.2 in the [v1.14.2 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.14.2).
+
+## KubeEdge v1.14.2 Release Notes
+
+### Changelog since v1.14.1
+
+- Fixed the cloudcore panic caused when using ClusterObjectSyncs resource. ([#4918](https://github.com/kubeedge/kubeedge/pull/4918), [@ZhengXinwei-F](https://github.com/ZhengXinwei-F))
+- Fixed the kubeedge-version flag does not take effect in init and manifest generate command. ([#4937](https://github.com/kubeedge/kubeedge/pull/4937), [@WillardHu](https://github.com/WillardHu))
+- Fix throws nil runtime error when decode AdmissionReview failed. ([#4972](https://github.com/kubeedge/kubeedge/pull/4972), [@WillardHu](https://github.com/WillardHu))
+- Fix repeatedly reporting history device message to cloud. ([#4977](https://github.com/kubeedge/kubeedge/pull/4977), [@RyanZhaoXB](https://github.com/RyanZhaoXB))
+
 
 # v1.14.1
 
