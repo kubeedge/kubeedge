@@ -1,7 +1,10 @@
-
+* [v1.12.4](#v1124)
+    * [Downloads for v1.12.4](#downloads-for-v1124)
+    * [KubeEdge v1.12.4 Release Notes](#kubeedge-v1124-release-notes)
+        * [Changelog since v1.12.3](#changelog-since-v1123)
 * [v1.12.3](#v1123)
     * [Downloads for v1.12.3](#downloads-for-v1123)
-    * [KubeEdge v1.12.3 Release Notes](#kubeedge-v1122-release-notes)
+    * [KubeEdge v1.12.3 Release Notes](#kubeedge-v1123-release-notes)
         * [Changelog since v1.12.2](#changelog-since-v1122)
         * [Important Steps before Upgrading](#important-steps-before-upgrading-for-1123)
 * [v1.12.2](#v1122)
@@ -19,7 +22,22 @@
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
         * [Other Notable Changes](#other-notable-changes)
         * [Bug Fixes](#bug-fixes)
-    
+
+# v1.12.4
+
+## Downloads for v1.12.4
+
+Download v1.12.4 in the [v1.12.4 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.12.4).
+
+## KubeEdge v1.12.4 Release Notes
+
+### Changelog since v1.12.3
+
+- Fixed the kubeedge-version flag does not take effect in init and manifest generate command. ([#4935](https://github.com/kubeedge/kubeedge/pull/4935), [@WillardHu](https://github.com/WillardHu))
+- Fix throws nil runtime error when decode AdmissionReview failed. ([#4970](https://github.com/kubeedge/kubeedge/pull/4970), [@WillardHu](https://github.com/WillardHu))
+- Fix repeatedly reporting history device message to cloud. ([#4979](https://github.com/kubeedge/kubeedge/pull/4979), [@RyanZhaoXB](https://github.com/RyanZhaoXB))
+
+   
 # v1.12.3
 
 ## Downloads for v1.12.3

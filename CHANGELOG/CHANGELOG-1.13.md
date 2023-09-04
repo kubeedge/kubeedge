@@ -1,4 +1,7 @@
-
+* [v1.13.2](#v1132)
+    * [Downloads for v1.13.2](#downloads-for-v1132)
+    * [KubeEdge v1.13.2 Release Notes](#kubeedge-v1132-release-notes)
+        * [Changelog since v1.13.1](#changelog-since-v1131)
 * [v1.13.1](#v1131)
     * [Downloads for v1.13.1](#downloads-for-v1131)
     * [KubeEdge v1.13.1 Release Notes](#kubeedge-v1131-release-notes)
@@ -12,7 +15,19 @@
         * [Other Notable Changes](#other-notable-changes)
         * [Bug Fixes](#bug-fixes)
 
+# v1.13.2
 
+## Downloads for v1.13.2
+
+Download v1.13.2 in the [v1.13.2 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.13.2).
+
+## KubeEdge v1.13.2 Release Notes
+
+### Changelog since v1.13.1
+
+- Fixed the kubeedge-version flag does not take effect in init and manifest generate command. ([#4936](https://github.com/kubeedge/kubeedge/pull/4936), [@WillardHu](https://github.com/WillardHu))
+- Fix throws nil runtime error when decode AdmissionReview failed. ([#4971](https://github.com/kubeedge/kubeedge/pull/4971), [@WillardHu](https://github.com/WillardHu))
+- Fix repeatedly reporting history device message to cloud. ([#4978](https://github.com/kubeedge/kubeedge/pull/4978), [@RyanZhaoXB](https://github.com/RyanZhaoXB))
 
 # v1.13.1
 
