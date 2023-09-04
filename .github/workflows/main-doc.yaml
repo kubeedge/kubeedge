@@ -70,9 +70,19 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        PROTOCOL:
-          - WebSocket
-          - QUIC
+        cases:
+          - protocol: WebSocket
+            version: v1.24.0
+          - protocol: WebSocket
+            version: v1.23.0
+          - protocol: WebSocket
+            version: v1.22.0
+          - protocol: QUIC
+            version: v1.24.0
+          - protocol: QUIC
+            version: v1.23.0
+          - protocol: QUIC
+            version: v1.22.0
     timeout-minutes: 30
     name: E2e test
     needs: image-prepare
