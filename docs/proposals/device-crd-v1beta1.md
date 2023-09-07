@@ -4,13 +4,10 @@
 
 In the `alpha` version, there are two CRDs, DeviceModel and Device, but they have the following issues:
 
-1. The same attributes are described in both Device and DeviceModel, but the descriptions are different. This blurs the
-   boundaries and makes it difficult for users to understand how to use them.
-2. The original purpose of DeviceModel was to address redundancy, but the current design does not effectively achieve
-   this goal.
+1. The same attributes are described in both Device and DeviceModel, but the descriptions are different. This blurs the boundaries and makes it difficult for users to understand how to use them.
+2. The original purpose of DeviceModel was to address redundancy, but the current design does not effectively achieve this goal.
 3. The existing code is complex, and there are issues with the order of updates for Device and DeviceModel.
-4. Whether DeviceModel is necessary or if it can be eliminated, with its content merged into Device, is a question that
-   needs consideration.
+4. Whether DeviceModel is necessary or if it can be eliminated, with its content merged into Device.
 
 ## Goals
 
@@ -59,11 +56,9 @@ The tables below summarize the group, kind and API version details for the CRDs.
 
 A `device` instance represents an actual device object.
 
-The device spec is static, including device properties list, it describes the details of each property, including its
-name, type, access method
+The device spec is static, including device properties list, it describes the details of each property, including its name, type, access method
 
-The device status contains dynamically changing data like the desired state of a device property and the state reported
-by the device.
+The device status contains dynamically changing data like the desired state of a device property and the state reported by the device.
 
 ### Device instance type definition
 
@@ -586,29 +581,24 @@ status:
 
 ### Validation
 
-[Open API v3 Schema based validation](https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#validation)
-can be used to guard against bad requests.
+[Open API v3 Schema based validation](https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#validation) can be used to guard against bad requests.
 Invalid values for fields ( example string value for a boolean field etc) can be validated using this.
 In some cases , we also need custom validations
-[Validation admission web hooks](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#validatingadmissionwebhook)
-can be used to implement such custom validation rules.
+[Validation admission web hooks](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#validatingadmissionwebhook) can be used to implement such custom validation rules.
 
 Here is a list of validations we need to support :
 
 #### Device Instance Validations
 
-- Don't allow device instance creation if any `Required` fields are missing ( like property name , twin property value,
-  twin property name etc.)
+- Don't allow device instance creation if any `Required` fields are missing ( like property name , twin property value, twin property name etc.)
 - Don't allow device instance creation if the names in the Properties list not be unique.
-- Don't allow device instance creation if a desired twin property's name cannot be matched to a device property in the
-  device model it refers to.
+- Don't allow device instance creation if a desired twin property's name cannot be matched to a device property in the device model it refers to.
 
 ### Downstream Controller
 
 The downstream controller watches for device updates against the K8S API server.
 
-In version `v1beta1`, the working logic of the downstream controller remains consistent with the `v1alpha` version, but
-the handling of DeviceModel and ConfigMap has been removed, significantly simplifying the code complexity.
+In version `v1beta1`, the working logic of the downstream controller remains consistent with the `v1alpha` version, but the handling of DeviceModel and ConfigMap has been removed, significantly simplifying the code complexity.
 
 Updates are categorized below along with the possible actions that the downstream controller can take:
 
