@@ -7,7 +7,7 @@
  [GOVERNANCE.md](https://github.com/kubeedge/community/blob/master/GOVERNANCE.md)
  describes governance guidelines and maintainer responsibilities.
 
-## Maintainers
+## Core Maintainers
 
 | Maintainer | GitHub ID | Affiliation | Email |
 | --------------- | --------- | ----------- | ----------- |
@@ -21,6 +21,20 @@
 | Yin Ding | @dingyin | Pure Storage | <dingyin@gmail.com> |
 | Zefeng (Kevin) Wang | @kevin-wangzefeng | Huawei | <wangzefeng@huawei.com> |
 | Zhe Gong | @GsssC | HarmonyCloud | <zhiyi375@gmail.com> |
+
+
+## SIG Maintainers
+
+| SIG         | Maintainers                                                                                 | 
+|-------------|---------------------------------------------------------------------------------------------|
+| Device-IoT  | Fei Xu (@fisherxu), Chenlin Liu (@cl2017)                                                   | 
+| Networking  | Jiezhang Wang (@Poorunga), Jiawei Liu (@JiaweiGithub)                                       | 
+| AI          | Xiaohou Shi (@xhken), Zimu Zheng (@MooreZheng), Jie Pu (@jaypume), Yutong Wang (@Ratuchetp) | 
+| Node        | Shelley Bao (@Shelley-BaoYue)                                                               | 
+| Robotics    | Tomoya Fujita (@fujitatomoya), Zhengguang Ou (@ugvddm), JoeyHwong (@JoeyHwong-gk)           |
+| Security    | Fei Xu (@fisherxu), Kevin Wang (@kevin-wangzefeng)                                          | 
+| Scalability | Shiwei Xu (@wackxu)                                                                         | 
+
 
 ## Emeritus Maintainers
 * Jun Du <dujun5@huawei.com> @m1093782566
