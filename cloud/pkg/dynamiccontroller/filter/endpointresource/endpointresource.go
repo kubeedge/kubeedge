@@ -9,14 +9,11 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/controllermanager/nodegroup"
-	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/application"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/filter"
 )
 
 // FilterImpl implement enpointslice filter
 type FilterImpl struct {
-	NodesInformer    *application.CommonResourceEventHandler
-	ServicesInformer *application.CommonResourceEventHandler
 }
 
 const (

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package application
+package listwatchcacher
 
 import (
 	"reflect"
@@ -33,17 +33,17 @@ var selector1 = NewSelector("key1=value1", "")
 var selector2 = NewSelector("key2=value2", "")
 
 func TestAddGetListener(t *testing.T) {
-	listener1 := NewSelectorListener("testID1", "node1", testGVR, selector1)
-	listener2 := NewSelectorListener("testID2", "node2", testGVR, selector2)
+	listener1 := NewCacheWatcher("testID1", "node1", testGVR, selector1)
+	listener2 := NewCacheWatcher("testID2", "node2", testGVR, selector2)
 
-	lm := newListenerManager()
+	lm := newWatcherManager()
 
-	lm.AddListener(listener1)
-	lm.AddListener(listener2)
+	lm.AddWatcher(listener1)
+	lm.AddWatcher(listener2)
 
-	listenerByNodeID := lm.GetListenersForNode("node1")
+	listenerByNodeID := lm.GetWatchersForNode("node1")
 	if len(listenerByNodeID) != 1 {
-		t.Errorf("listenerByNodeID expected length 1. but got %v", len(listenerByNodeID))
+		t.Errorf("watcherByNodeID expected length 1. but got %v", len(listenerByNodeID))
 	}
 
 	for _, v := range listenerByNodeID {
@@ -52,14 +52,14 @@ func TestAddGetListener(t *testing.T) {
 		}
 	}
 
-	listenerByGVR := lm.GetListenersForGVR(testGVR)
+	listenerByGVR := lm.GetWatchersForGVR(testGVR)
 	if len(listenerByGVR) != 2 {
-		t.Errorf("listenerByGVR expected length 2. but got %v", len(listenerByNodeID))
+		t.Errorf("watcherByGVR expected length 2. but got %v", len(listenerByNodeID))
 	}
 
-	expected := map[string]*SelectorListener{
-		listener1.id: listener1,
-		listener2.id: listener2,
+	expected := map[string]*CacheWatcher{
+		listener1.WatcherID: listener1,
+		listener2.WatcherID: listener2,
 	}
 
 	if !reflect.DeepEqual(expected, listenerByGVR) {
@@ -68,23 +68,23 @@ func TestAddGetListener(t *testing.T) {
 }
 
 func TestDeleteListener(t *testing.T) {
-	listener1 := NewSelectorListener("testID1", "node1", testGVR, selector1)
-	listener2 := NewSelectorListener("testID2", "node2", testGVR, selector2)
+	listener1 := NewCacheWatcher("testID1", "node1", testGVR, selector1)
+	listener2 := NewCacheWatcher("testID2", "node2", testGVR, selector2)
 
-	lm := newListenerManager()
+	lm := newWatcherManager()
 
-	lm.AddListener(listener1)
-	lm.AddListener(listener2)
+	lm.AddWatcher(listener1)
+	lm.AddWatcher(listener2)
 
-	lm.DeleteListener(listener1)
-	listenerByNodeID := lm.GetListenersForNode("node1")
+	lm.DeleteWatcher(listener1)
+	listenerByNodeID := lm.GetWatchersForNode("node1")
 	if len(listenerByNodeID) != 0 {
-		t.Errorf("listenerByNodeID expected length 0. but got %v", len(listenerByNodeID))
+		t.Errorf("watcherByNodeID expected length 0. but got %v", len(listenerByNodeID))
 	}
 
-	lm.DeleteListener(listener2)
-	listenerByGVR := lm.GetListenersForGVR(testGVR)
+	lm.DeleteWatcher(listener2)
+	listenerByGVR := lm.GetWatchersForGVR(testGVR)
 	if len(listenerByGVR) != 0 {
-		t.Errorf("listenerByGVR expected length 0. but got %v", len(listenerByNodeID))
+		t.Errorf("watcherByGVR expected length 0. but got %v", len(listenerByNodeID))
 	}
 }
