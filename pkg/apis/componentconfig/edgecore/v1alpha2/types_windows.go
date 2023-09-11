@@ -7,5 +7,6 @@ const (
 	CGroupDriverSystemd  = ""
 
 	// DataBaseDataSource is edge.db
-	DataBaseDataSource = "C:\\var\\lib\\kubeedge\\edgecore.db"
+	DataBaseDataSource         = "C:\\var\\lib\\kubeedge\\edgecore.db"
+	WindowsPriorityClassNormal = "NORMAL_PRIORITY_CLASS"
 )

@@ -161,7 +161,7 @@ func NewDefaultEdgeCoreConfig() (config *EdgeCoreConfig) {
 	}
 
 	if runtime.GOOS == "windows" {
-		config.Modules.Edged.WindowsPriorityClass = "NORMAL_PRIORITY_CLASS"
+		config.Modules.Edged.WindowsPriorityClass = WindowsPriorityClassNormal
 	}
 	return
 }
@@ -239,7 +239,7 @@ func NewMinEdgeCoreConfig() (config *EdgeCoreConfig) {
 	}
 
 	if runtime.GOOS == "windows" {
-		config.Modules.Edged.WindowsPriorityClass = "NORMAL_PRIORITY_CLASS"
+		config.Modules.Edged.WindowsPriorityClass = WindowsPriorityClassNormal
 	}
 	return
 }
