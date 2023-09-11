@@ -44,9 +44,6 @@ const (
 	// DefaultK8SMinimumVersion is the minimum version of K8S
 	DefaultK8SMinimumVersion = 11
 
-	// DefaultKubeConfig is the default path of kubeconfig
-	DefaultKubeConfig = "/root/.kube/config"
-
 	// RuntimeType is default runtime type
 	RuntimeType = "runtimetype"
 
@@ -243,4 +240,8 @@ var (
 			Desc: DescDiagnoseInstall,
 		},
 	}
+
+	// DefaultKubeConfig is the default path of kubeconfig
+	// make it an var so it can be changed to adapt to windows(In rare cases, user name is Administrator)
+	DefaultKubeConfig = "/root/.kube/config"
 )

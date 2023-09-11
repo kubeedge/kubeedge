@@ -18,7 +18,21 @@ limitations under the License.
 
 package common
 
+import (
+	"os"
+	"path/filepath"
+)
+
 const (
 	// DefaultCertPath is the default certificate path in edge node
 	DefaultCertPath = "c:/etc/kubeedge/certs"
 )
+
+func init() {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		DefaultKubeConfig = "C:\\Users\\Administrator\\.kube\\config"
+		return
+	}
+	DefaultKubeConfig = filepath.Join(home, ".kube", "config")
+}

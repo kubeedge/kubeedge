@@ -67,7 +67,7 @@ func IsNSSMServiceRunning(service string) bool {
 	if _err != nil || cmd.ExitCode > 0 {
 		return false
 	}
-	if cmd.GetStdOut() == "SERVICE_RUNNING" {
+	if strings.Contains(cmd.GetStdOut(), "SERVICE_RUNNING") {
 		return true
 	}
 	return false

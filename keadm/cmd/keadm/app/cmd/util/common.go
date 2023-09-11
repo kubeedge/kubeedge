@@ -141,6 +141,13 @@ func GetOSInterface() types.OSTypeInstaller {
 // RunningModuleV2 identifies cloudcore/edgecore running or not.
 // only used for cloudcore container install and edgecore binary install
 func RunningModuleV2(opt *types.ResetOptions) types.ModuleRunning {
+	if runtime.GOOS == "windows" {
+		if IsNSSMServiceExist(KubeEdgeBinaryName) {
+			return types.KubeEdgeEdgeRunning
+		}
+		return types.NoneRunning
+	}
+
 	osType := GetOSInterface()
 	cloudCoreRunning, err := IsCloudcoreContainerRunning(constants.SystemNamespace, opt.Kubeconfig)
 	if err != nil {
