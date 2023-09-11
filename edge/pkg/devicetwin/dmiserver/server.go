@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"runtime"
 	"sync"
 	"time"
 
@@ -180,15 +181,28 @@ func CreateMessageTwinUpdate(name, valueType, value string) ([]byte, error) {
 
 func initSock(sockPath string) error {
 	klog.Infof("init uds socket: %s", sockPath)
-	err := os.Remove(sockPath)
-
-	if os.IsNotExist(err) {
+	if runtime.GOOS == "windows" {
+		err := os.Remove(sockPath)
+		if os.IsNotExist(err) {
+			return nil
+		} else if err != nil {
+			klog.Error(err)
+			return fmt.Errorf("fail to stat uds socket path")
+		}
 		return nil
-	} else if err != nil {
-		klog.Error(err)
+	}
+	_, err := os.Stat(sockPath)
+	if err == nil {
+		err = os.Remove(sockPath)
+		if err != nil {
+			return err
+		}
+		return nil
+	} else if os.IsNotExist(err) {
+		return nil
+	} else {
 		return fmt.Errorf("fail to stat uds socket path")
 	}
-	return nil
 }
 
 func StartDMIServer(cache *DMICache) {
