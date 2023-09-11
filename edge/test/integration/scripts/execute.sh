@@ -30,7 +30,7 @@ function do_preparation() {
   sudo mkdir -p /var/lib/kubeedge
 
   which ginkgo &>/dev/null || {
-    go install github.com/onsi/ginkgo/ginkgo@latest
+    go install github.com/onsi/ginkgo/v2/ginkgo@latest
     sudo cp $GOPATH/bin/ginkgo /usr/bin/
   }
 

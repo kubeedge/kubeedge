@@ -19,7 +19,7 @@ on:
 
 env:
   CONTAINER_RUN_OPTIONS: " "
-  GINKGO_VERSION: "v1.16.4"
+  GINKGO_VERSION: "v2.6.0"
 
 jobs:
   lint:
@@ -129,7 +129,7 @@ jobs:
 
       - name: Install dependences
         run: |
-          command -v ginkgo || go install github.com/onsi/ginkgo/ginkgo@${{ env.GINKGO_VERSION }}
+          command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
 
       - name: Checkout code
         uses: actions/checkout@v3
@@ -194,7 +194,7 @@ jobs:
 
       - name: Install dependences
         run: |
-          command -v ginkgo || go install github.com/onsi/ginkgo/ginkgo@${{ env.GINKGO_VERSION }}
+          command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
           go install sigs.k8s.io/kind@v0.14.0
           curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.24.14/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
@@ -254,7 +254,7 @@ jobs:
 
       - name: Install dependences
         run: |
-          command -v ginkgo || go install github.com/onsi/ginkgo/ginkgo@${{ env.GINKGO_VERSION }}
+          command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
           go install sigs.k8s.io/kind@v0.14.0
           curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.24.14/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
@@ -298,7 +298,7 @@ jobs:
 
       - name: Install dependences
         run: |
-          command -v ginkgo || go install github.com/onsi/ginkgo/ginkgo@${{ env.GINKGO_VERSION }}
+          command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
           go install sigs.k8s.io/kind@v0.17.0
           curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.24.14/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 

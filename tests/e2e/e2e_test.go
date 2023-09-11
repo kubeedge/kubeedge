@@ -18,18 +18,14 @@ package e2e
 
 import (
 	"flag"
-	"fmt"
 	"os"
-	"path"
 	"testing"
 
-	"github.com/onsi/ginkgo"
-	"github.com/onsi/ginkgo/reporters"
+	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 	"github.com/spf13/pflag"
 	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/test/e2e/framework"
-	e2ereporters "k8s.io/kubernetes/test/e2e/reporters"
 
 	_ "github.com/kubeedge/kubeedge/tests/e2e/apps"
 	_ "github.com/kubeedge/kubeedge/tests/e2e/device"
@@ -65,23 +61,12 @@ func TestE2E(t *testing.T) {
 	})
 
 	// Run tests through the Ginkgo runner with output to console + JUnit for Jenkins
-	var r []ginkgo.Reporter
 	if framework.TestContext.ReportDir != "" {
 		if err := os.MkdirAll(framework.TestContext.ReportDir, 0755); err != nil {
 			klog.Errorf("Failed creating report directory: %v", err)
-		} else {
-			r = append(r, reporters.NewJUnitReporter(path.Join(framework.TestContext.ReportDir, fmt.Sprintf("junit_%v.xml", framework.TestContext.ReportPrefix))))
 		}
 	}
 
-	// Stream the progress to stdout and optionally a URL accepting progress updates.
-	r = append(r, e2ereporters.NewProgressReporter(framework.TestContext.ProgressReportURL))
-
-	// The DetailsRepoerter will output details about every test (name, files, lines, etc) which helps
-	// when documenting our tests.
-	if len(framework.TestContext.SpecSummaryOutput) > 0 {
-		r = append(r, e2ereporters.NewDetailsReporterFile(framework.TestContext.SpecSummaryOutput))
-	}
-
-	ginkgo.RunSpecsWithDefaultAndCustomReporters(t, "kubeedge e2e suite", r)
+	suiteConfig, reporterConfig := framework.CreateGinkgoConfig()
+	ginkgo.RunSpecs(t, "KubeEdge e2e suite", suiteConfig, reporterConfig)
 }

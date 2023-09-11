@@ -16,7 +16,7 @@ limitations under the License.
 
 package apps
 
-import "github.com/onsi/ginkgo"
+import "github.com/onsi/ginkgo/v2"
 
 // GroupDescribe annotates the test with the group label.
 func GroupDescribe(text string, body func()) bool {
