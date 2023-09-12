@@ -1,0 +1,151 @@
+name: SCHEDULED
+on:
+  workflow_dispatch:
+  schedule:
+    #  Exectues e2e compatibility test every Wednesday at 1:00 AM and if you need to convert to UTC+8 timezone, you need to -8 hours for cron expression
+    - cron: "0 17 * * 2"
+
+env:
+  CONTAINER_RUN_OPTIONS: " "
+  GINKGO_VERSION: "v2.6.0"
+
+jobs:
+  lint:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    name: lint
+    env:
+      GOPATH: /home/runner/work/${{ github.repository }}
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19.x
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          path: ./src/github.com/${{ github.repository }}
+
+      - uses: actions/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+
+      - name: Install dependences
+        run: |
+          sudo apt-get install -y jq
+
+  image-prepare:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    name: Prepare kubeedge/build-tools image
+    steps:
+      - name: Pull kubeedge/build-tools image
+        run: |
+          docker pull kubeedge/build-tools:1.19.12-ke2
+          mkdir -p /home/runner/build-tools/
+          docker save kubeedge/build-tools:1.19.12-ke2 > /home/runner/build-tools/build-tools.tar
+
+      - name: Temporarily save kubeedge/build-tools image
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-tools-docker-artifact
+          path: /home/runner/build-tools
+
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    name: Multiple build
+    needs: image-prepare
+    steps:
+      - uses: actions/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Retrieve saved kubeedge/build-tools image
+        uses: actions/download-artifact@v3
+        with:
+          name: build-tools-docker-artifact
+          path: /home/runner/build-tools
+
+      - name: docker load kubeedge/build-tools image
+        run: |
+          docker load < /home/runner/build-tools/build-tools.tar
+
+      - run: make
+
+      - run: make smallbuild
+
+      - run: make crossbuild
+
+      - run: make crossbuild ARM_VERSION=GOARM7
+
+      - run: make crossbuild WHAT=cloudcore ARM_VERSION=GOARM8
+
+  k8s_compatibility_schedule_test:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        protocol:
+          - WebSocket
+          - QUIC
+        version:
+          - v1.26.3
+          - v1.25.8
+          - v1.24.12
+          - v1.23.17
+          - v1.22.17
+    timeout-minutes: 90
+    name: E2e k8s compatibility test
+    needs: image-prepare
+    env:
+      GO111MODULE: on
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19.x
+
+      - uses: actions/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+
+      - name: Install dependences
+        run: |
+          command -v ginkgo || go install github.com/onsi/ginkgo/ginkgo@${{ env.GINKGO_VERSION }}
+          go install sigs.k8s.io/kind@v0.18.0
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.24.14/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Retrieve saved kubeedge/build-tools image
+        uses: actions/download-artifact@v3
+        with:
+          name: build-tools-docker-artifact
+          path: /home/runner/build-tools
+
+      - name: docker load kubeedge/build-tools image
+        run: |
+          docker load < /home/runner/build-tools/build-tools.tar
+
+      - name: enable cri config in containerd service
+        run: |
+          containerd config default | sudo tee /etc/containerd/config.toml && sudo systemctl restart containerd.service
+
+      - run: |
+          export PROTOCOL=${{ matrix.protocol }}
+          export KIND_IMAGE=kindest/node:${{ matrix.version }}
+          export CONTAINER_RUNTIME="remote"
+          make e2e
