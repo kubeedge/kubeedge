@@ -23,7 +23,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
-	"k8s.io/kubernetes/test/e2e/framework"
 	e2eframework "k8s.io/kubernetes/test/e2e/framework"
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 )
@@ -49,7 +48,7 @@ import (
 //
 // Driver deployments that are different will have to do the patching
 // without this function, or skip patching entirely.
-func PatchCSIDeployment(f *framework.Framework, o PatchCSIOptions, object interface{}) error {
+func PatchCSIDeployment(f *e2eframework.Framework, o PatchCSIOptions, object interface{}) error {
 	rename := o.OldDriverName != "" && o.NewDriverName != "" &&
 		o.OldDriverName != o.NewDriverName
 
@@ -153,6 +152,9 @@ func PatchCSIDeployment(f *framework.Framework, o PatchCSIOptions, object interf
 		if o.FSGroupPolicy != nil {
 			object.Spec.FSGroupPolicy = o.FSGroupPolicy
 		}
+		if o.SELinuxMount != nil {
+			object.Spec.SELinuxMount = o.SELinuxMount
+		}
 	}
 
 	return nil
@@ -212,4 +214,8 @@ type PatchCSIOptions struct {
 	// field *if* the driver deploys a CSIDriver object. Ignored
 	// otherwise.
 	FSGroupPolicy *storagev1.FSGroupPolicy
+	// If not nil, the value to use for the CSIDriver.Spec.SELinuxMount
+	// field *if* the driver deploys a CSIDriver object. Ignored
+	// otherwise.
+	SELinuxMount *bool
 }

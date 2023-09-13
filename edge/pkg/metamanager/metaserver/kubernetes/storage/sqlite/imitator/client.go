@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/apiserver/pkg/storage/etcd3"
+	"k8s.io/apiserver/pkg/storage"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
@@ -19,7 +19,7 @@ import (
 // maintainers the revision and message cache(todo), so we do not see
 // there are multi-clients.
 var DefaultV2Client = newV2Client()
-var Versioner = etcd3.Versioner
+var Versioner = storage.APIObjectVersioner{}
 
 type Client interface {
 	// This set of functions is for metamanager

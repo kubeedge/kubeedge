@@ -23,11 +23,11 @@ curpath=$PWD
 echo $PWD
 
 GOPATH=${GOPATH:-$(go env GOPATH)}
-KIND_IMAGE=${1:-"kindest/node:v1.24.0"}
+KIND_IMAGE=${1:-"kindest/node:v1.26.0"}
 compilemodule=$2
 
 which ginkgo &> /dev/null || (
-    go install github.com/onsi/ginkgo/ginkgo@latest
+    go install github.com/onsi/ginkgo/v2/ginkgo@latest
     sudo cp $GOPATH/bin/ginkgo /usr/local/bin/
 )
 

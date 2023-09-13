@@ -45,7 +45,7 @@ import (
 	imageutils "k8s.io/kubernetes/test/utils/image"
 	admissionapi "k8s.io/pod-security-admission/api"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/expfmt"
 )
@@ -55,9 +55,9 @@ var _ = SIGDescribe("Pods Extended", func() {
 	f.NamespacePodSecurityEnforceLevel = admissionapi.LevelBaseline
 
 	ginkgo.Describe("Delete Grace Period", func() {
-		var podClient *framework.PodClient
+		var podClient *e2epod.PodClient
 		ginkgo.BeforeEach(func() {
-			podClient = f.PodClient()
+			podClient = e2epod.NewPodClient(f)
 		})
 
 		/*
@@ -148,9 +148,9 @@ var _ = SIGDescribe("Pods Extended", func() {
 	})
 
 	ginkgo.Describe("Pods Set QOS Class", func() {
-		var podClient *framework.PodClient
+		var podClient *e2epod.PodClient
 		ginkgo.BeforeEach(func() {
-			podClient = f.PodClient()
+			podClient = e2epod.NewPodClient(f)
 		})
 
 		/*
@@ -200,9 +200,9 @@ var _ = SIGDescribe("Pods Extended", func() {
 	})
 
 	ginkgo.Describe("Pod Container Status", func() {
-		var podClient *framework.PodClient
+		var podClient *e2epod.PodClient
 		ginkgo.BeforeEach(func() {
-			podClient = f.PodClient()
+			podClient = e2epod.NewPodClient(f)
 		})
 
 		ginkgo.It("should never report success for a pending container", func() {
@@ -224,9 +224,9 @@ var _ = SIGDescribe("Pods Extended", func() {
 	})
 
 	ginkgo.Describe("Pod Container lifecycle", func() {
-		var podClient *framework.PodClient
+		var podClient *e2epod.PodClient
 		ginkgo.BeforeEach(func() {
-			podClient = f.PodClient()
+			podClient = e2epod.NewPodClient(f)
 		})
 
 		ginkgo.It("should not create extra sandbox if all containers are done", func() {
@@ -315,7 +315,7 @@ var _ = SIGDescribe("Pods Extended", func() {
 							Name:  "bar",
 							Image: image,
 							Command: []string{
-								"/bin/sh", "-c", "sleep 10; fallocate -l 10M file; sleep 10000",
+								"/bin/sh", "-c", "sleep 10; dd if=/dev/zero of=file bs=1M count=10; sleep 10000",
 							},
 							Resources: v1.ResourceRequirements{
 								Limits: v1.ResourceList{

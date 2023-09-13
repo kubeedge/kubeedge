@@ -27,9 +27,10 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	componentbaseconfigv1alpha1 "k8s.io/component-base/config/v1alpha1"
+	logsapi "k8s.io/component-base/logs/api/v1"
 	kubeletconfigv1beta1 "k8s.io/kubelet/config/v1beta1"
 	configv1beta1 "k8s.io/kubernetes/pkg/kubelet/apis/config/v1beta1"
+	"k8s.io/kubernetes/pkg/kubelet/eviction"
 	"k8s.io/kubernetes/pkg/kubelet/qos"
 	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
 	utilpointer "k8s.io/utils/pointer"
@@ -82,9 +83,9 @@ func SetDefaultsKubeletConfiguration(obj *TailoredKubeletConfiguration) {
 	obj.MaxOpenFiles = 1000000
 	obj.ContentType = "application/json"
 	obj.SerializeImagePulls = utilpointer.BoolPtr(true)
-	obj.EvictionHard = configv1beta1.DefaultEvictionHard
+	obj.EvictionHard = eviction.DefaultEvictionHard
 	obj.EvictionPressureTransitionPeriod = metav1.Duration{Duration: 5 * time.Minute}
-	obj.EnableControllerAttachDetach = utilpointer.BoolPtr(true)
+	obj.EnableControllerAttachDetach = utilpointer.Bool(true)
 	obj.MakeIPTablesUtilChains = utilpointer.BoolPtr(true)
 	obj.IPTablesMasqueradeBit = utilpointer.Int32Ptr(configv1beta1.DefaultIPTablesMasqueradeBit)
 	obj.IPTablesDropBit = utilpointer.Int32Ptr(configv1beta1.DefaultIPTablesDropBit)
@@ -95,7 +96,7 @@ func SetDefaultsKubeletConfiguration(obj *TailoredKubeletConfiguration) {
 	obj.EnforceNodeAllocatable = DefaultNodeAllocatableEnforcement
 	obj.VolumePluginDir = configv1beta1.DefaultVolumePluginDir
 	// Use the Default LoggingConfiguration option
-	componentbaseconfigv1alpha1.RecommendedLoggingConfiguration(&obj.Logging)
+	logsapi.SetRecommendedLoggingConfiguration(&obj.Logging)
 	obj.EnableSystemLogHandler = utilpointer.BoolPtr(true)
 	obj.EnableProfilingHandler = utilpointer.BoolPtr(true)
 	obj.EnableDebugFlagsHandler = utilpointer.BoolPtr(true)

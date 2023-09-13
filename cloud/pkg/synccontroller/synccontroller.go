@@ -60,11 +60,14 @@ func newSyncController(enable bool) *SyncController {
 	objectSyncsInformer := crdInformerFactory.Reliablesyncs().V1alpha1().ObjectSyncs()
 	clusterObjectSyncsInformer := crdInformerFactory.Reliablesyncs().V1alpha1().ClusterObjectSyncs()
 	nodesInformer := k8sInformerFactory.Core().V1().Nodes()
-	nodesInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+	_, err := nodesInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		DeleteFunc: func(obj interface{}) {
 			sctl.deleteObjectSyncs()
 		},
 	})
+	if err != nil {
+		klog.Fatalf("new synccontroller failed, add event handler err: %v", err)
+	}
 	// lister
 	sctl.nodeLister = nodesInformer.Lister()
 

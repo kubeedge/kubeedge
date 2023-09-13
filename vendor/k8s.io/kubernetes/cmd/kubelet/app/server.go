@@ -35,13 +35,17 @@ import (
 	"k8s.io/mount-utils"
 
 	cadvisorapi "github.com/google/cadvisor/info/v1"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	otelsdkresource "go.opentelemetry.io/otel/sdk/resource"
+	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
+	oteltrace "go.opentelemetry.io/otel/trace"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	v1core "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -52,7 +56,9 @@ import (
 	"k8s.io/component-base/configz"
 	"k8s.io/component-base/featuregate"
 	"k8s.io/component-base/logs"
+	logsapi "k8s.io/component-base/logs/api/v1"
 	"k8s.io/component-base/metrics"
+	tracing "k8s.io/component-base/tracing"
 	"k8s.io/component-base/version"
 	"k8s.io/component-base/version/verflag"
 	kubeletconfigv1beta1 "k8s.io/kubelet/config/v1beta1"
@@ -75,6 +81,7 @@ import (
 	evictionapi "k8s.io/kubernetes/pkg/kubelet/eviction/api"
 	"k8s.io/kubernetes/pkg/kubelet/kubeletconfig/configfiles"
 	"k8s.io/kubernetes/pkg/kubelet/stats/pidlimit"
+	kubeletutil "k8s.io/kubernetes/pkg/kubelet/util"
 	utilfs "k8s.io/kubernetes/pkg/util/filesystem"
 	nodeutil "k8s.io/kubernetes/pkg/util/node"
 	"k8s.io/kubernetes/pkg/util/oom"
@@ -86,7 +93,7 @@ import (
 )
 
 func init() {
-	utilruntime.Must(logs.AddFeatureGates(utilfeature.DefaultMutableFeatureGate))
+	utilruntime.Must(logsapi.AddFeatureGates(utilfeature.DefaultMutableFeatureGate))
 }
 
 const (
@@ -119,7 +126,7 @@ various mechanisms (primarily through the apiserver) and ensures that the contai
 described in those PodSpecs are running and healthy. The kubelet doesn't manage
 containers which were not created by Kubernetes.
 
-Other than from an PodSpec from the apiserver, there are three ways that a container
+Other than from an PodSpec from the apiserver, there are two ways that a container
 manifest can be provided to the Kubelet.
 
 File: Path passed as a flag on the command line. Files under this path will be monitored
@@ -127,15 +134,13 @@ periodically for updates. The monitoring period is 20s by default and is configu
 via a flag.
 
 HTTP endpoint: HTTP endpoint passed as a parameter on the command line. This endpoint
-is checked every 20 seconds (also configurable with a flag).
-
-HTTP server: The kubelet can also listen for HTTP and respond to a simple API
-(underspec'd currently) to submit a new manifest.`,
+is checked every 20 seconds (also configurable with a flag).`,
 		// The Kubelet has special flag parsing requirements to enforce flag precedence rules,
 		// so we do all our parsing manually in Run, below.
 		// DisableFlagParsing=true provides the full set of flags passed to the kubelet in the
 		// `args` arg to Run, without Cobra's interference.
 		DisableFlagParsing: true,
+		SilenceUsage:       true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// initial flag parse, since we disable cobra's flag parsing
 			if err := cleanFlagSet.Parse(args); err != nil {
@@ -174,24 +179,22 @@ HTTP server: The kubelet can also listen for HTTP and respond to a simple API
 				klog.InfoS("--pod-infra-container-image will not be pruned by the image garbage collector in kubelet and should also be set in the remote runtime")
 			}
 
+			// Config and flags parsed, now we can initialize logging.
+			logs.InitLogs()
+			if err := logsapi.ValidateAndApplyAsField(&kubeletConfig.Logging, utilfeature.DefaultFeatureGate, field.NewPath("logging")); err != nil {
+				return fmt.Errorf("initialize logging: %v", err)
+			}
+			cliflag.PrintFlags(cleanFlagSet)
+
 			// We always validate the local configuration (command line + config file).
 			// This is the default "last-known-good" config for dynamic config, and must always remain valid.
-			if err := kubeletconfigvalidation.ValidateKubeletConfiguration(kubeletConfig); err != nil {
+			if err := kubeletconfigvalidation.ValidateKubeletConfiguration(kubeletConfig, utilfeature.DefaultFeatureGate); err != nil {
 				return fmt.Errorf("failed to validate kubelet configuration, error: %w, path: %s", err, kubeletConfig)
 			}
 
 			if (kubeletConfig.KubeletCgroups != "" && kubeletConfig.KubeReservedCgroup != "") && (strings.Index(kubeletConfig.KubeletCgroups, kubeletConfig.KubeReservedCgroup) != 0) {
 				klog.InfoS("unsupported configuration:KubeletCgroups is not within KubeReservedCgroup")
 			}
-
-			// Config and flags parsed, now we can initialize logging.
-			logs.InitLogs()
-			logOption := &logs.Options{Config: kubeletConfig.Logging}
-			if err := logOption.ValidateAndApply(utilfeature.DefaultFeatureGate); err != nil {
-				klog.ErrorS(err, "Failed to initialize logging")
-				os.Exit(1)
-			}
-			cliflag.PrintFlags(cleanFlagSet)
 
 			// construct a KubeletServer from kubeletFlags and kubeletConfig
 			kubeletServer := &options.KubeletServer{
@@ -208,8 +211,6 @@ HTTP server: The kubelet can also listen for HTTP and respond to a simple API
 			if err := checkPermissions(); err != nil {
 				klog.ErrorS(err, "kubelet running with insufficient permissions")
 			}
-			// set up signal context here in order to be reused by kubelet and docker shim
-			ctx := genericapiserver.SetupSignalContext()
 
 			// make the kubelet's config safe for logging
 			config := kubeletServer.KubeletConfiguration.DeepCopy()
@@ -219,6 +220,10 @@ HTTP server: The kubelet can also listen for HTTP and respond to a simple API
 			// log the kubelet's config for inspection
 			klog.V(5).InfoS("KubeletConfiguration", "configuration", config)
 
+			// set up signal context for kubelet shutdown
+			ctx := genericapiserver.SetupSignalContext()
+
+			utilfeature.DefaultMutableFeatureGate.AddMetrics()
 			// run the kubelet
 			return Run(ctx, kubeletServer, kubeletDeps, utilfeature.DefaultFeatureGate)
 		},
@@ -307,6 +312,13 @@ func loadConfigFile(name string) (*kubeletconfiginternal.KubeletConfiguration, e
 	if err != nil {
 		return nil, fmt.Errorf(errFmt, name, err)
 	}
+
+	// EvictionHard may be nil if it was not set in kubelet's config file.
+	// EvictionHard can have OS-specific fields, which is why there's no default value for it.
+	// See: https://github.com/kubernetes/kubernetes/pull/110263
+	if kc.EvictionHard == nil {
+		kc.EvictionHard = eviction.DefaultEvictionHard
+	}
 	return kc, err
 }
 
@@ -322,6 +334,13 @@ func UnsecuredDependencies(s *options.KubeletServer, featureGate featuregate.Fea
 	if err != nil {
 		return nil, err
 	}
+	tp := oteltrace.NewNoopTracerProvider()
+	if utilfeature.DefaultFeatureGate.Enabled(features.KubeletTracing) {
+		tp, err = newTracerProvider(s)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return &kubelet.Dependencies{
 		Auth:                nil, // default does not enforce auth[nz]
 		CAdvisorInterface:   nil, // cadvisor.New launches background processes (bg http.ListenAndServe, and some bg cleaners), not set here
@@ -329,6 +348,7 @@ func UnsecuredDependencies(s *options.KubeletServer, featureGate featuregate.Fea
 		KubeClient:          nil,
 		HeartbeatClient:     nil,
 		EventClient:         nil,
+		TracerProvider:      tp,
 		HostUtil:            hu,
 		Mounter:             mounter,
 		Subpather:           subpather,
@@ -464,7 +484,7 @@ func run(ctx context.Context, s *options.KubeletServer, kubeDeps *kubelet.Depend
 	if err != nil {
 		return err
 	}
-
+	
 	var cgroupRoots []string
 	nodeAllocatableRoot := cm.NodeAllocatableRoot(s.CgroupRoot, s.CgroupsPerQOS, s.CgroupDriver)
 	cgroupRoots = append(cgroupRoots, nodeAllocatableRoot)
@@ -475,9 +495,7 @@ func run(ctx context.Context, s *options.KubeletServer, kubeDeps *kubelet.Depend
 		cgroupRoots = append(cgroupRoots, kubeletCgroup)
 	}
 
-	if err != nil {
-		klog.InfoS("Failed to get the container runtime's cgroup. Runtime system container metrics may be missing.", "err", err)
-	} else if s.RuntimeCgroups != "" {
+	if s.RuntimeCgroups != "" {
 		// RuntimeCgroups is optional, so ignore if it isn't specified
 		cgroupRoots = append(cgroupRoots, s.RuntimeCgroups)
 	}
@@ -489,7 +507,7 @@ func run(ctx context.Context, s *options.KubeletServer, kubeDeps *kubelet.Depend
 
 	if kubeDeps.CAdvisorInterface == nil {
 		imageFsInfoProvider := cadvisor.NewImageFsInfoProvider(s.RemoteRuntimeEndpoint)
-		kubeDeps.CAdvisorInterface, err = cadvisor.New(imageFsInfoProvider, s.RootDirectory, cgroupRoots, cadvisor.UsingLegacyCadvisorStats(s.RemoteRuntimeEndpoint))
+		kubeDeps.CAdvisorInterface, err = cadvisor.New(imageFsInfoProvider, s.RootDirectory, cgroupRoots, cadvisor.UsingLegacyCadvisorStats(s.RemoteRuntimeEndpoint), s.LocalStorageCapacityIsolation)
 		if err != nil {
 			return err
 		}
@@ -546,15 +564,21 @@ func run(ctx context.Context, s *options.KubeletServer, kubeDeps *kubelet.Depend
 			return err
 		}
 
-		devicePluginEnabled := utilfeature.DefaultFeatureGate.Enabled(features.DevicePlugins)
-
 		var cpuManagerPolicyOptions map[string]string
-		if utilfeature.DefaultFeatureGate.Enabled(features.CPUManager) {
-			if utilfeature.DefaultFeatureGate.Enabled(features.CPUManagerPolicyOptions) {
-				cpuManagerPolicyOptions = s.CPUManagerPolicyOptions
-			} else if s.CPUManagerPolicyOptions != nil {
-				return fmt.Errorf("CPU Manager policy options %v require feature gates %q, %q enabled",
-					s.CPUManagerPolicyOptions, features.CPUManager, features.CPUManagerPolicyOptions)
+		if utilfeature.DefaultFeatureGate.Enabled(features.CPUManagerPolicyOptions) {
+			cpuManagerPolicyOptions = s.CPUManagerPolicyOptions
+		} else if s.CPUManagerPolicyOptions != nil {
+			return fmt.Errorf("CPU Manager policy options %v require feature gates %q, %q enabled",
+				s.CPUManagerPolicyOptions, features.CPUManager, features.CPUManagerPolicyOptions)
+		}
+
+		var topologyManagerPolicyOptions map[string]string
+		if utilfeature.DefaultFeatureGate.Enabled(features.TopologyManager) {
+			if utilfeature.DefaultFeatureGate.Enabled(features.TopologyManagerPolicyOptions) {
+				topologyManagerPolicyOptions = s.TopologyManagerPolicyOptions
+			} else if s.TopologyManagerPolicyOptions != nil {
+				return fmt.Errorf("topology manager policy options %v require feature gates %q, %q enabled",
+					s.TopologyManagerPolicyOptions, features.TopologyManager, features.TopologyManagerPolicyOptions)
 			}
 		}
 
@@ -580,25 +604,31 @@ func run(ctx context.Context, s *options.KubeletServer, kubeDeps *kubelet.Depend
 					ReservedSystemCPUs:       reservedSystemCPUs,
 					HardEvictionThresholds:   hardEvictionThresholds,
 				},
-				QOSReserved:                             *experimentalQOSReserved,
-				ExperimentalCPUManagerPolicy:            s.CPUManagerPolicy,
-				ExperimentalCPUManagerPolicyOptions:     cpuManagerPolicyOptions,
-				ExperimentalCPUManagerReconcilePeriod:   s.CPUManagerReconcilePeriod.Duration,
-				ExperimentalMemoryManagerPolicy:         s.MemoryManagerPolicy,
-				ExperimentalMemoryManagerReservedMemory: s.ReservedMemory,
-				ExperimentalPodPidsLimit:                s.PodPidsLimit,
-				EnforceCPULimits:                        s.CPUCFSQuota,
-				CPUCFSQuotaPeriod:                       s.CPUCFSQuotaPeriod.Duration,
-				ExperimentalTopologyManagerPolicy:       s.TopologyManagerPolicy,
-				ExperimentalTopologyManagerScope:        s.TopologyManagerScope,
+				QOSReserved:                              *experimentalQOSReserved,
+				CPUManagerPolicy:                         s.CPUManagerPolicy,
+				CPUManagerPolicyOptions:                  cpuManagerPolicyOptions,
+				CPUManagerReconcilePeriod:                s.CPUManagerReconcilePeriod.Duration,
+				ExperimentalMemoryManagerPolicy:          s.MemoryManagerPolicy,
+				ExperimentalMemoryManagerReservedMemory:  s.ReservedMemory,
+				ExperimentalPodPidsLimit:                 s.PodPidsLimit,
+				EnforceCPULimits:                         s.CPUCFSQuota,
+				CPUCFSQuotaPeriod:                        s.CPUCFSQuotaPeriod.Duration,
+				ExperimentalTopologyManagerPolicy:        s.TopologyManagerPolicy,
+				ExperimentalTopologyManagerScope:         s.TopologyManagerScope,
+				ExperimentalTopologyManagerPolicyOptions: topologyManagerPolicyOptions,
 			},
 			s.FailSwapOn,
-			devicePluginEnabled,
-			kubeDeps.Recorder)
+			kubeDeps.Recorder,
+			kubeDeps.KubeClient,
+		)
 
 		if err != nil {
 			return err
 		}
+	}
+
+	if kubeDeps.PodStartupLatencyTracker == nil {
+		kubeDeps.PodStartupLatencyTracker = kubeletutil.NewPodStartupLatencyTracker()
 	}
 
 	// TODO(vmarmol): Do this through container config.
@@ -633,7 +663,7 @@ func run(ctx context.Context, s *options.KubeletServer, kubeDeps *kubelet.Depend
 
 // buildKubeletClientConfig constructs the appropriate client config for the kubelet depending on whether
 // bootstrapping is enabled or client certificate rotation is enabled.
-func buildKubeletClientConfig(ctx context.Context, s *options.KubeletServer, nodeName types.NodeName) (*restclient.Config, func(), error) {
+func buildKubeletClientConfig(ctx context.Context, s *options.KubeletServer, tp oteltrace.TracerProvider, nodeName types.NodeName) (*restclient.Config, func(), error) {
 	return nil, nil, nil
 }
 
@@ -729,33 +759,12 @@ func RunKubelet(kubeServer *options.KubeletServer, kubeDeps *kubelet.Dependencie
 		return fmt.Errorf("the SeccompDefault feature gate must be enabled in order to use the SeccompDefault configuration")
 	}
 
-	k, err := createAndInitKubelet(&kubeServer.KubeletConfiguration,
+	k, err := createAndInitKubelet(kubeServer,
 		kubeDeps,
-		&kubeServer.ContainerRuntimeOptions,
 		hostname,
 		hostnameOverridden,
 		nodeName,
-		nodeIPs,
-		kubeServer.CertDirectory,
-		kubeServer.RootDirectory,
-		kubeServer.ImageCredentialProviderConfigFile,
-		kubeServer.ImageCredentialProviderBinDir,
-		kubeServer.RegisterNode,
-		kubeServer.RegisterWithTaints,
-		kubeServer.AllowedUnsafeSysctls,
-		kubeServer.ExperimentalMounterPath,
-		kubeServer.KernelMemcgNotification,
-		kubeServer.ExperimentalNodeAllocatableIgnoreEvictionThreshold,
-		kubeServer.MinimumGCAge,
-		kubeServer.MaxPerPodContainerCount,
-		kubeServer.MaxContainerCount,
-		kubeServer.MasterServiceNamespace,
-		kubeServer.RegisterSchedulable,
-		kubeServer.KeepTerminatedPodVolumes,
-		kubeServer.NodeLabels,
-		kubeServer.NodeStatusMaxImages,
-		kubeServer.KubeletFlags.SeccompDefault || kubeServer.KubeletConfiguration.SeccompDefault,
-	)
+		nodeIPs)
 	if err != nil {
 		return fmt.Errorf("failed to create kubelet: %w", err)
 	}
@@ -786,63 +795,41 @@ func startKubelet(k kubelet.Bootstrap, podCfg *config.PodConfig, kubeCfg *kubele
 	}
 }
 
-func createAndInitKubelet(kubeCfg *kubeletconfiginternal.KubeletConfiguration,
+func createAndInitKubelet(kubeServer *options.KubeletServer,
 	kubeDeps *kubelet.Dependencies,
-	crOptions *config.ContainerRuntimeOptions,
 	hostname string,
 	hostnameOverridden bool,
 	nodeName types.NodeName,
-	nodeIPs []net.IP,
-	certDirectory string,
-	rootDirectory string,
-	imageCredentialProviderConfigFile string,
-	imageCredentialProviderBinDir string,
-	registerNode bool,
-	registerWithTaints []v1.Taint,
-	allowedUnsafeSysctls []string,
-	experimentalMounterPath string,
-	kernelMemcgNotification bool,
-	experimentalNodeAllocatableIgnoreEvictionThreshold bool,
-	minimumGCAge metav1.Duration,
-	maxPerPodContainerCount int32,
-	maxContainerCount int32,
-	masterServiceNamespace string,
-	registerSchedulable bool,
-	keepTerminatedPodVolumes bool,
-	nodeLabels map[string]string,
-	nodeStatusMaxImages int32,
-	seccompDefault bool,
-) (k kubelet.Bootstrap, err error) {
+	nodeIPs []net.IP) (k kubelet.Bootstrap, err error) {
 	// TODO: block until all sources have delivered at least one update to the channel, or break the sync loop
 	// up into "per source" synchronizations
 
-	k, err = kubelet.NewMainKubelet(kubeCfg,
+	k, err = kubelet.NewMainKubelet(&kubeServer.KubeletConfiguration,
 		kubeDeps,
-		crOptions,
+		&kubeServer.ContainerRuntimeOptions,
 		hostname,
 		hostnameOverridden,
 		nodeName,
 		nodeIPs,
-		certDirectory,
-		rootDirectory,
-		imageCredentialProviderConfigFile,
-		imageCredentialProviderBinDir,
-		registerNode,
-		registerWithTaints,
-		allowedUnsafeSysctls,
-		experimentalMounterPath,
-		kernelMemcgNotification,
-		experimentalNodeAllocatableIgnoreEvictionThreshold,
-		minimumGCAge,
-		maxPerPodContainerCount,
-		maxContainerCount,
-		masterServiceNamespace,
-		registerSchedulable,
-		keepTerminatedPodVolumes,
-		nodeLabels,
-		nodeStatusMaxImages,
-		seccompDefault,
-	)
+		kubeServer.CertDirectory,
+		kubeServer.RootDirectory,
+		kubeServer.ImageCredentialProviderConfigFile,
+		kubeServer.ImageCredentialProviderBinDir,
+		kubeServer.RegisterNode,
+		kubeServer.RegisterWithTaints,
+		kubeServer.AllowedUnsafeSysctls,
+		kubeServer.ExperimentalMounterPath,
+		kubeServer.KernelMemcgNotification,
+		kubeServer.ExperimentalNodeAllocatableIgnoreEvictionThreshold,
+		kubeServer.MinimumGCAge,
+		kubeServer.MaxPerPodContainerCount,
+		kubeServer.MaxContainerCount,
+		kubeServer.MasterServiceNamespace,
+		kubeServer.RegisterSchedulable,
+		kubeServer.KeepTerminatedPodVolumes,
+		kubeServer.NodeLabels,
+		kubeServer.NodeStatusMaxImages,
+		kubeServer.KubeletFlags.SeccompDefault || kubeServer.KubeletConfiguration.SeccompDefault)
 	if err != nil {
 		return nil, err
 	}
@@ -878,4 +865,25 @@ func parseResourceList(m map[string]string) (v1.ResourceList, error) {
 		}
 	}
 	return rl, nil
+}
+
+func newTracerProvider(s *options.KubeletServer) (oteltrace.TracerProvider, error) {
+	if s.KubeletConfiguration.Tracing == nil {
+		return oteltrace.NewNoopTracerProvider(), nil
+	}
+	hostname, err := nodeutil.GetHostname(s.HostnameOverride)
+	if err != nil {
+		return nil, fmt.Errorf("could not determine hostname for tracer provider: %v", err)
+	}
+	resourceOpts := []otelsdkresource.Option{
+		otelsdkresource.WithAttributes(
+			semconv.ServiceNameKey.String(componentKubelet),
+			semconv.HostNameKey.String(hostname),
+		),
+	}
+	tp, err := tracing.NewProvider(context.Background(), s.KubeletConfiguration.Tracing, []otlptracegrpc.Option{}, resourceOpts)
+	if err != nil {
+		return nil, fmt.Errorf("could not configure tracer provider: %v", err)
+	}
+	return tp, nil
 }

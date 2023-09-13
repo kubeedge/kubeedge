@@ -1,5 +1,5 @@
 [![Go Report Card](https://goreportcard.com/badge/sigs.k8s.io/controller-runtime)](https://goreportcard.com/report/sigs.k8s.io/controller-runtime)
-[![godoc](https://godoc.org/sigs.k8s.io/controller-runtime?status.svg)](https://godoc.org/sigs.k8s.io/controller-runtime)
+[![godoc](https://pkg.go.dev/badge/sigs.k8s.io/controller-runtime)](https://pkg.go.dev/sigs.k8s.io/controller-runtime)
 
 # Kubernetes controller-runtime Project
 
@@ -53,7 +53,7 @@ in sig apimachinery.
 
 You can reach the maintainers of this project at:
 
-- Slack channel: [#kubebuilder](http://slack.k8s.io/#kubebuilder)
+- Slack channel: [#controller-runtime](https://kubernetes.slack.com/archives/C02MRBMN00Z)
 - Google Group: [kubebuilder@googlegroups.com](https://groups.google.com/forum/#!forum/kubebuilder)
 
 ## Contributing

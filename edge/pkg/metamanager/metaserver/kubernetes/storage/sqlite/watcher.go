@@ -18,6 +18,7 @@ KubeEdge Authors:
 - This File is drive from kubernetes/staging/src/k8s.io/apiserver/pkg/storage/etcd3/store.go
 - Refactor to adapter imitator
 */
+
 package sqlite
 
 import (

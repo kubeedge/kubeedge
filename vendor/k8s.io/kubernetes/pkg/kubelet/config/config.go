@@ -21,8 +21,9 @@ import (
 	"fmt"
 	"reflect"
 	"sync"
+	"time"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/tools/record"
@@ -51,6 +52,10 @@ const (
 	PodConfigNotificationIncremental
 )
 
+type podStartupSLIObserver interface {
+	ObservedPodOnWatch(pod *v1.Pod, when time.Time)
+}
+
 // PodConfig is a configuration mux that merges many sources of pod configuration into a single
 // consistent structure, and then delivers incremental change notifications to listeners
 // in order.
@@ -78,9 +83,9 @@ type podReady struct {
 
 // NewPodConfig creates an object that can merge many configuration sources into a stream
 // of normalized updates to a pod configuration.
-func NewPodConfig(mode PodConfigNotificationMode, recorder record.EventRecorder) *PodConfig {
+func NewPodConfig(mode PodConfigNotificationMode, recorder record.EventRecorder, startupSLIObserver podStartupSLIObserver) *PodConfig {
 	updates := make(chan kubetypes.PodUpdate, 50)
-	storage := newPodStorage(updates, mode, recorder)
+	storage := newPodStorage(updates, mode, recorder, startupSLIObserver)
 	podConfig := &PodConfig{
 		pods:    storage,
 		mux:     config.NewMux(storage),
@@ -140,18 +145,21 @@ type podStorage struct {
 
 	// the EventRecorder to use
 	recorder record.EventRecorder
+
+	startupSLIObserver podStartupSLIObserver
 }
 
 // TODO: PodConfigNotificationMode could be handled by a listener to the updates channel
 // in the future, especially with multiple listeners.
 // TODO: allow initialization of the current state of the store with snapshotted version.
-func newPodStorage(updates chan<- kubetypes.PodUpdate, mode PodConfigNotificationMode, recorder record.EventRecorder) *podStorage {
+func newPodStorage(updates chan<- kubetypes.PodUpdate, mode PodConfigNotificationMode, recorder record.EventRecorder, startupSLIObserver podStartupSLIObserver) *podStorage {
 	return &podStorage{
-		pods:        make(map[string]map[types.UID]*v1.Pod),
-		mode:        mode,
-		updates:     updates,
-		sourcesSeen: sets.String{},
-		recorder:    recorder,
+		pods:               make(map[string]map[types.UID]*v1.Pod),
+		mode:               mode,
+		updates:            updates,
+		sourcesSeen:        sets.String{},
+		recorder:           recorder,
+		startupSLIObserver: startupSLIObserver,
 	}
 }
 
@@ -304,6 +312,7 @@ func (s *podStorage) markSourceSet(source string) {
 	defer s.sourcesSeenLock.Unlock()
 	s.sourcesSeen.Insert(source)
 }
+
 func filterInvalidPods(pods []*v1.Pod, source string, recorder record.EventRecorder) (filtered []*v1.Pod) {
 	names := sets.String{}
 	for i, pod := range pods {

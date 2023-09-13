@@ -150,7 +150,7 @@ type OperationExecutor interface {
 	// ExpandInUseVolume will resize volume's file system to expected size without unmounting the volume.
 	ExpandInUseVolume(volumeToMount VolumeToMount, actualStateOfWorld ActualStateOfWorldMounterUpdater, currentSize resource.Quantity) error
 	// ReconstructVolumeOperation construct a new volumeSpec and returns it created by plugin
-	ReconstructVolumeOperation(volumeMode v1.PersistentVolumeMode, plugin volume.VolumePlugin, mapperPlugin volume.BlockVolumePlugin, uid types.UID, podName volumetypes.UniquePodName, volumeSpecName string, volumePath string, pluginName string) (*volume.Spec, error)
+	ReconstructVolumeOperation(volumeMode v1.PersistentVolumeMode, plugin volume.VolumePlugin, mapperPlugin volume.BlockVolumePlugin, uid types.UID, podName volumetypes.UniquePodName, volumeSpecName string, volumePath string, pluginName string) (volume.ReconstructedVolume, error)
 	// CheckVolumeExistenceOperation checks volume existence
 	CheckVolumeExistenceOperation(volumeSpec *volume.Spec, mountPath, volumeName string, mounter mount.Interface, uniqueVolumeName v1.UniqueVolumeName, podName volumetypes.UniquePodName, podUID types.UID, attachable volume.AttachableVolumePlugin) (bool, error)
 }
@@ -166,7 +166,7 @@ func NewOperationExecutor(
 	}
 }
 
-// MarkVolumeOpts is an struct to pass arguments to MountVolume functions
+// MarkVolumeOpts is a struct to pass arguments to MountVolume functions
 type MarkVolumeOpts struct {
 	PodName             volumetypes.UniquePodName
 	PodUID              types.UID
@@ -177,6 +177,7 @@ type MarkVolumeOpts struct {
 	VolumeGidVolume     string
 	VolumeSpec          *volume.Spec
 	VolumeMountState    VolumeMountState
+	SELinuxMountContext string
 }
 
 // ActualStateOfWorldMounterUpdater defines a set of operations updating the actual
@@ -192,10 +193,10 @@ type ActualStateOfWorldMounterUpdater interface {
 	MarkVolumeMountAsUncertain(markVolumeOpts MarkVolumeOpts) error
 
 	// Marks the specified volume as having been globally mounted.
-	MarkDeviceAsMounted(volumeName v1.UniqueVolumeName, devicePath, deviceMountPath string) error
+	MarkDeviceAsMounted(volumeName v1.UniqueVolumeName, devicePath, deviceMountPath, seLinuxMountContext string) error
 
 	// MarkDeviceAsUncertain marks device state in global mount path as uncertain
-	MarkDeviceAsUncertain(volumeName v1.UniqueVolumeName, devicePath, deviceMountPath string) error
+	MarkDeviceAsUncertain(volumeName v1.UniqueVolumeName, devicePath, deviceMountPath, seLinuxMountContext string) error
 
 	// Marks the specified volume as having its global mount unmounted.
 	MarkDeviceAsUnmounted(volumeName v1.UniqueVolumeName) error
@@ -446,6 +447,9 @@ type VolumeToMount struct {
 	// PersistentVolumeSize stores desired size of the volume.
 	// usually this is the size if pv.Spec.Capacity
 	PersistentVolumeSize resource.Quantity
+
+	// SELinux label that should be used to mount.
+	SELinuxLabel string
 }
 
 // DeviceMountState represents device mount state in a global path.
@@ -552,6 +556,8 @@ type AttachedVolume struct {
 	// PluginName is the Unescaped Qualified name of the volume plugin used to
 	// attach and mount this volume.
 	PluginName string
+
+	SELinuxMountContext string
 }
 
 // GenerateMsgDetailed returns detailed msgs for attached volumes
@@ -646,7 +652,7 @@ type MountedVolume struct {
 	//     name: test-pd
 	//   spec:
 	//     containers:
-	//     - image: k8s.gcr.io/test-webserver
+	//     - image: registry.k8s.io/test-webserver
 	//     	 name: test-container
 	//     	 volumeMounts:
 	//     	 - mountPath: /test-pd
@@ -684,7 +690,7 @@ type MountedVolume struct {
 	//     name: test-pd
 	//   spec:
 	//     containers:
-	//     - image: k8s.gcr.io/test-webserver
+	//     - image: registry.k8s.io/test-webserver
 	//     	 name: test-container
 	//     	 volumeMounts:
 	//     	 - mountPath: /test-pd
@@ -728,6 +734,10 @@ type MountedVolume struct {
 	// DeviceMountPath contains the path on the node where the device should
 	// be mounted after it is attached.
 	DeviceMountPath string
+
+	// SELinuxMountContext is value of mount option 'mount -o context=XYZ'.
+	// If empty, no such mount option was used.
+	SELinuxMountContext string
 }
 
 // GenerateMsgDetailed returns detailed msgs for mounted volumes
@@ -1051,17 +1061,17 @@ func (oe *operationExecutor) ReconstructVolumeOperation(
 	podName volumetypes.UniquePodName,
 	volumeSpecName string,
 	volumePath string,
-	pluginName string) (*volume.Spec, error) {
+	pluginName string) (volume.ReconstructedVolume, error) {
 
 	// Filesystem Volume case
 	if volumeMode == v1.PersistentVolumeFilesystem {
 		// Create volumeSpec from mount path
 		klog.V(5).Infof("Starting operationExecutor.ReconstructVolume for file volume on pod %q", podName)
-		volumeSpec, err := plugin.ConstructVolumeSpec(volumeSpecName, volumePath)
+		reconstructed, err := plugin.ConstructVolumeSpec(volumeSpecName, volumePath)
 		if err != nil {
-			return nil, err
+			return volume.ReconstructedVolume{}, err
 		}
-		return volumeSpec, nil
+		return reconstructed, nil
 	}
 
 	// Block Volume case
@@ -1073,9 +1083,11 @@ func (oe *operationExecutor) ReconstructVolumeOperation(
 	// ex. volumePath: pods/{podUid}}/{DefaultKubeletVolumeDevicesDirName}/{escapeQualifiedPluginName}/{volumeName}
 	volumeSpec, err := mapperPlugin.ConstructBlockVolumeSpec(uid, volumeSpecName, volumePath)
 	if err != nil {
-		return nil, err
+		return volume.ReconstructedVolume{}, err
 	}
-	return volumeSpec, nil
+	return volume.ReconstructedVolume{
+		Spec: volumeSpec,
+	}, nil
 }
 
 // CheckVolumeExistenceOperation checks mount path directory if volume still exists

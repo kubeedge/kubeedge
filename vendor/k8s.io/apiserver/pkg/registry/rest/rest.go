@@ -56,6 +56,11 @@ type Storage interface {
 	// New returns an empty object that can be used with Create and Update after request data has been put into it.
 	// This object must be a pointer type for use with Codec.DecodeInto([]byte, runtime.Object)
 	New() runtime.Object
+
+	// Destroy cleans up its resources on shutdown.
+	// Destroy has to be implemented in thread-safe way and be prepared
+	// for being called more than once.
+	Destroy()
 }
 
 // Scoper indicates what scope the resource is at. It must be specified.
@@ -198,6 +203,13 @@ type NamedCreater interface {
 	Create(ctx context.Context, name string, obj runtime.Object, createValidation ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error)
 }
 
+// SubresourceObjectMetaPreserver adds configuration options to a Creater for subresources.
+type SubresourceObjectMetaPreserver interface {
+	// PreserveRequestObjectMetaSystemFieldsOnSubresourceCreate indicates that a
+	// handler should preserve fields of ObjectMeta that are managed by the system.
+	PreserveRequestObjectMetaSystemFieldsOnSubresourceCreate() bool
+}
+
 // UpdatedObjectInfo provides information about an updated object to an Updater.
 // It requires access to the old object in order to return the newly updated object.
 type UpdatedObjectInfo interface {
@@ -278,6 +290,11 @@ type StandardStorage interface {
 	GracefulDeleter
 	CollectionDeleter
 	Watcher
+
+	// Destroy cleans up its resources on shutdown.
+	// Destroy has to be implemented in thread-safe way and be prepared
+	// for being called more than once.
+	Destroy()
 }
 
 // Redirector know how to return a remote resource's location.

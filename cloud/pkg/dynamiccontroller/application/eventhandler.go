@@ -122,7 +122,7 @@ func NewCommonResourceEventHandler(
 		klog.Exitf("get informer for %s err: %v", gvr.String(), err)
 	}
 
-	informerPair.Informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	_, err = informerPair.Informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			handler.objToEvent(watch.Added, obj)
 		},
@@ -133,6 +133,9 @@ func NewCommonResourceEventHandler(
 			handler.objToEvent(watch.Deleted, obj)
 		},
 	})
+	if err != nil {
+		klog.Exitf("add evenet handler err: %v", err)
+	}
 
 	handler.informer = informerPair
 	klog.Infof("[metaserver/resourceEventHandler] handler(%v) init successfully, start to dispatch events to it's listeners", gvr)

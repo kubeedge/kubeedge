@@ -34,8 +34,10 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
+	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/component-helpers/storage/ephemeral"
+	"k8s.io/kubernetes/pkg/features"
 	"k8s.io/kubernetes/pkg/kubelet/config"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	"k8s.io/kubernetes/pkg/kubelet/pod"
@@ -153,7 +155,10 @@ func (dswp *desiredStateOfWorldPopulator) Run(sourcesReady config.SourcesReady, 
 		return done, nil
 	}, stopCh)
 	dswp.hasAddedPodsLock.Lock()
-	dswp.hasAddedPods = true
+	if !dswp.hasAddedPods {
+		klog.InfoS("Finished populating initial desired state of world")
+		dswp.hasAddedPods = true
+	}
 	dswp.hasAddedPodsLock.Unlock()
 	wait.Until(dswp.populatorLoop, dswp.loopSleepDuration, stopCh)
 }
@@ -291,7 +296,7 @@ func (dswp *desiredStateOfWorldPopulator) processPodVolumes(
 	}
 
 	allVolumesAdded := true
-	mounts, devices := util.GetPodVolumeNames(pod)
+	mounts, devices, seLinuxContainerContexts := util.GetPodVolumeNames(pod)
 
 	// Process volume spec for each volume defined in pod
 	for _, podVolume := range pod.Spec.Volumes {
@@ -312,7 +317,7 @@ func (dswp *desiredStateOfWorldPopulator) processPodVolumes(
 
 		// Add volume to desired state of world
 		uniqueVolumeName, err := dswp.desiredStateOfWorld.AddPodToVolume(
-			uniquePodName, pod, volumeSpec, podVolume.Name, volumeGidValue)
+			uniquePodName, pod, volumeSpec, podVolume.Name, volumeGidValue, seLinuxContainerContexts[podVolume.Name])
 		if err != nil {
 			klog.ErrorS(err, "Failed to add volume to desiredStateOfWorld", "pod", klog.KObj(pod), "volumeName", podVolume.Name, "volumeSpecName", volumeSpec.Name())
 			dswp.desiredStateOfWorld.AddErrorToPod(uniquePodName, err.Error())
@@ -320,8 +325,12 @@ func (dswp *desiredStateOfWorldPopulator) processPodVolumes(
 		} else {
 			klog.V(4).InfoS("Added volume to desired state", "pod", klog.KObj(pod), "volumeName", podVolume.Name, "volumeSpecName", volumeSpec.Name())
 		}
-		// sync reconstructed volume
-		dswp.actualStateOfWorld.SyncReconstructedVolume(uniqueVolumeName, uniquePodName, podVolume.Name)
+		if !utilfeature.DefaultFeatureGate.Enabled(features.SELinuxMountReadWriteOncePod) {
+			// sync reconstructed volume. This is necessary only when the old-style reconstruction is still used.
+			// With reconstruct_new.go, AWS.MarkVolumeAsMounted will update the outer spec name of previously
+			// uncertain volumes.
+			dswp.actualStateOfWorld.SyncReconstructedVolume(uniqueVolumeName, uniquePodName, podVolume.Name)
+		}
 
 		dswp.checkVolumeFSResize(pod, podVolume, pvc, volumeSpec, uniquePodName, mountedVolumesForPod)
 	}

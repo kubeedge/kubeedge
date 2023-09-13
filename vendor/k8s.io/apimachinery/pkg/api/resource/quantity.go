@@ -34,6 +34,7 @@ import (
 //
 // The serialization format is:
 //
+// ```
 // <quantity>        ::= <signedNumber><suffix>
 //
 //	(Note that <suffix> may be empty, from the "" case in <decimalSI>.)
@@ -53,6 +54,7 @@ import (
 //	(Note that 1024 = 1Ki but 1000 = 1k; I didn't choose the capitalization.)
 //
 // <decimalExponent> ::= "e" <signedNumber> | "E" <signedNumber>
+// ```
 //
 // No matter which of the three exponent forms is used, no quantity may represent
 // a number greater than 2^63-1 in magnitude, nor may it have more than 3 decimal
@@ -67,16 +69,16 @@ import (
 // This means that Exponent/suffix will be adjusted up or down (with a
 // corresponding increase or decrease in Mantissa) such that:
 //
-//	a. No precision is lost
-//	b. No fractional digits will be emitted
-//	c. The exponent (or suffix) is as large as possible.
+// - No precision is lost
+// - No fractional digits will be emitted
+// - The exponent (or suffix) is as large as possible.
 //
 // The sign will be omitted unless the number is negative.
 //
 // Examples:
 //
-//	1.5 will be serialized as "1500m"
-//	1.5Gi will be serialized as "1536Mi"
+// - 1.5 will be serialized as "1500m"
+// - 1.5Gi will be serialized as "1536Mi"
 //
 // Note that the quantity will NEVER be internally represented by a
 // floating point number. That is the whole point of this exercise.
@@ -652,7 +654,7 @@ func (q Quantity) MarshalJSON() ([]byte, error) {
 		copy(out[1:], q.s)
 		return out, nil
 	}
-	result := make([]byte, int64QuantityExpectedBytes, int64QuantityExpectedBytes)
+	result := make([]byte, int64QuantityExpectedBytes)
 	result[0] = '"'
 	number, suffix := q.CanonicalizeBytes(result[1:1])
 	// if the same slice was returned to us that we passed in, avoid another allocation by copying number into

@@ -20,20 +20,19 @@ package cache
 // order to consume plugins
 // The PluginHandler follows the simple following state machine:
 //
-//	                     +--------------------------------------+
-//	                     |            ReRegistration            |
-//	                     | Socket created with same plugin name |
-//	                     |                                      |
-//	                     |                                      |
-//	Socket Created       v                                      +        Socket Deleted
-//
-// +------------------> Validate +---------------------------> Register +------------------> DeRegister
-//   - +                              +
-//     |                                      |                              |
-//     | Error                                | Error                        |
-//     |                                      |                              |
-//     v                                      v                              v
-//     Out                                    Out                            Out
+//	                       +--------------------------------------+
+//	                       |            ReRegistration            |
+//	                       | Socket created with same plugin name |
+//	                       |                                      |
+//	                       |                                      |
+//	  Socket Created       v                                      +        Socket Deleted
+//	+------------------> Validate +---------------------------> Register +------------------> DeRegister
+//	                       +                                      +                              +
+//	                       |                                      |                              |
+//	                       | Error                                | Error                        |
+//	                       |                                      |                              |
+//	                       v                                      v                              v
+//	                      Out                                    Out                            Out
 //
 // The pluginwatcher module follows strictly and sequentially this state machine for each *plugin name*.
 // e.g: If you are Registering a plugin foo, you cannot get a DeRegister call for plugin foo

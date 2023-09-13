@@ -29,6 +29,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	dockerclient "github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
+	oteltrace "go.opentelemetry.io/otel/trace"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/klog/v2"
@@ -65,11 +66,11 @@ func NewContainerRuntime(runtimeType string, endpoint string) (ContainerRuntime,
 			ctx:    ctx,
 		}
 	case constants.RemoteContainerRuntime:
-		imageService, err := remote.NewRemoteImageService(endpoint, time.Second*10)
+		imageService, err := remote.NewRemoteImageService(endpoint, time.Second*10, oteltrace.NewNoopTracerProvider())
 		if err != nil {
 			return runtime, err
 		}
-		runtimeService, err := remote.NewRemoteRuntimeService(endpoint, time.Second*10)
+		runtimeService, err := remote.NewRemoteRuntimeService(endpoint, time.Second*10, oteltrace.NewNoopTracerProvider())
 		if err != nil {
 			return runtime, err
 		}
@@ -77,6 +78,7 @@ func NewContainerRuntime(runtimeType string, endpoint string) (ContainerRuntime,
 			endpoint:            endpoint,
 			ImageManagerService: imageService,
 			RuntimeService:      runtimeService,
+			ctx:                 context.Background(),
 		}
 	default:
 		return runtime, fmt.Errorf("unsupport CRI runtime: %s", runtimeType)
@@ -230,6 +232,7 @@ type CRIRuntime struct {
 	endpoint            string
 	ImageManagerService internalapi.ImageManagerService
 	RuntimeService      internalapi.RuntimeService
+	ctx                 context.Context
 }
 
 func convertCRIImage(image string) string {
@@ -247,12 +250,12 @@ func (runtime *CRIRuntime) PullImages(images []string) error {
 		image = convertCRIImage(image)
 		fmt.Printf("Pulling %s ...\n", image)
 		imageSpec := &runtimeapi.ImageSpec{Image: image}
-		status, err := runtime.ImageManagerService.ImageStatus(imageSpec, true)
+		status, err := runtime.ImageManagerService.ImageStatus(runtime.ctx, imageSpec, true)
 		if err != nil {
 			return err
 		}
 		if status == nil || status.Image == nil {
-			if _, err := runtime.ImageManagerService.PullImage(imageSpec, nil, nil); err != nil {
+			if _, err := runtime.ImageManagerService.PullImage(runtime.ctx, imageSpec, nil, nil); err != nil {
 				return err
 			}
 		}
@@ -280,12 +283,12 @@ func (runtime *CRIRuntime) CopyResources(edgeImage string, files map[string]stri
 			},
 		},
 	}
-	sandbox, err := runtime.RuntimeService.RunPodSandbox(psc, "")
+	sandbox, err := runtime.RuntimeService.RunPodSandbox(runtime.ctx, psc, "")
 	if err != nil {
 		return err
 	}
 	defer func() {
-		if err := runtime.RuntimeService.RemovePodSandbox(sandbox); err != nil {
+		if err := runtime.RuntimeService.RemovePodSandbox(runtime.ctx, sandbox); err != nil {
 			klog.V(3).ErrorS(err, "Remove pod sandbox failed", "containerID", sandbox)
 		}
 	}()
@@ -314,17 +317,17 @@ func (runtime *CRIRuntime) CopyResources(edgeImage string, files map[string]stri
 		},
 		Mounts: mounts,
 	}
-	containerID, err := runtime.RuntimeService.CreateContainer(sandbox, containerConfig, psc)
+	containerID, err := runtime.RuntimeService.CreateContainer(runtime.ctx, sandbox, containerConfig, psc)
 	if err != nil {
 		return fmt.Errorf("create container failed: %v", err)
 	}
 	defer func() {
-		if err := runtime.RuntimeService.RemoveContainer(containerID); err != nil {
+		if err := runtime.RuntimeService.RemoveContainer(runtime.ctx, containerID); err != nil {
 			klog.V(3).ErrorS(err, "Remove container failed", "containerID", containerID)
 		}
 	}()
 
-	err = runtime.RuntimeService.StartContainer(containerID)
+	err = runtime.RuntimeService.StartContainer(runtime.ctx, containerID)
 	if err != nil {
 		return fmt.Errorf("start container failed: %v", err)
 	}
@@ -335,7 +338,7 @@ func (runtime *CRIRuntime) CopyResources(edgeImage string, files map[string]stri
 		"-c",
 		copyCmd,
 	}
-	stdout, stderr, err := runtime.RuntimeService.ExecSync(containerID, cmd, 30*time.Second)
+	stdout, stderr, err := runtime.RuntimeService.ExecSync(runtime.ctx, containerID, cmd, 30*time.Second)
 	if err != nil {
 		return fmt.Errorf("failed to exec copy cmd, err: %v, stderr: %s, stdout: %s", err, string(stderr), string(stdout))
 	}
@@ -368,7 +371,7 @@ func (runtime *CRIRuntime) RunMQTT(mqttImage string) error {
 			},
 		},
 	}
-	sandbox, err := runtime.RuntimeService.RunPodSandbox(psc, "")
+	sandbox, err := runtime.RuntimeService.RunPodSandbox(runtime.ctx, psc, "")
 	if err != nil {
 		return err
 	}
@@ -385,11 +388,11 @@ func (runtime *CRIRuntime) RunMQTT(mqttImage string) error {
 			},
 		},
 	}
-	containerID, err := runtime.RuntimeService.CreateContainer(sandbox, containerConfig, psc)
+	containerID, err := runtime.RuntimeService.CreateContainer(runtime.ctx, sandbox, containerConfig, psc)
 	if err != nil {
 		return err
 	}
-	return runtime.RuntimeService.StartContainer(containerID)
+	return runtime.RuntimeService.StartContainer(runtime.ctx, containerID)
 }
 
 func (runtime *CRIRuntime) RemoveMQTT() error {
@@ -397,7 +400,7 @@ func (runtime *CRIRuntime) RemoveMQTT() error {
 		LabelSelector: mqttLabel,
 	}
 
-	sandbox, err := runtime.RuntimeService.ListPodSandbox(sandboxFilter)
+	sandbox, err := runtime.RuntimeService.ListPodSandbox(runtime.ctx, sandboxFilter)
 	if err != nil {
 		fmt.Printf("List MQTT containers failed: %v\n", err)
 		return err
@@ -408,7 +411,7 @@ func (runtime *CRIRuntime) RemoveMQTT() error {
 		// RemovePodSandbox removes the sandbox. If there are running containers in the
 		// sandbox, they should be forcibly removed.
 		// so we can remove mqtt containers totally.
-		err = runtime.RuntimeService.RemovePodSandbox(c.Id)
+		err = runtime.RuntimeService.RemovePodSandbox(runtime.ctx, c.Id)
 		if err != nil {
 			fmt.Printf("failed to remove MQTT container: %v\n", err)
 		}

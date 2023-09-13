@@ -74,8 +74,8 @@ type KubeCloudHelmInstTool struct {
 // InstallTools downloads KubeEdge for the specified version
 // and makes the required configuration changes and initiates cloudcore.
 func (cu *KubeCloudHelmInstTool) InstallTools() error {
-	cu.SetOSInterface(util.GetOSInterface())
-	cu.SetKubeEdgeVersion(cu.ToolVersion)
+	cu.Common.SetOSInterface(util.GetOSInterface())
+	cu.Common.OSTypeInstaller.SetKubeEdgeVersion(cu.ToolVersion)
 
 	baseHelmRoot := DefaultBaseHelmDir
 	if cu.ExternalHelmRoot != "" {
@@ -103,7 +103,7 @@ func (cu *KubeCloudHelmInstTool) RunHelmInstall(baseHelmRoot string) error {
 	// --force would not care about whether the cloud components exist or not
 	// Also, if gives a external helm root, no need to check and verify. Because it is always not a cloudcore.
 	if !cu.Force && cu.ExternalHelmRoot == "" {
-		cloudCoreRunning, err := cu.IsKubeEdgeProcessRunning(util.KubeCloudBinaryName)
+		cloudCoreRunning, err := cu.Common.OSTypeInstaller.IsKubeEdgeProcessRunning(util.KubeCloudBinaryName)
 		if err != nil {
 			return err
 		}
@@ -112,7 +112,7 @@ func (cu *KubeCloudHelmInstTool) RunHelmInstall(baseHelmRoot string) error {
 		}
 	}
 
-	err := cu.IsK8SComponentInstalled(cu.KubeConfig, cu.Master)
+	err := cu.Common.OSTypeInstaller.IsK8SComponentInstalled(cu.KubeConfig, cu.Master)
 	if err != nil {
 		return err
 	}
@@ -171,7 +171,7 @@ func (cu *KubeCloudHelmInstTool) RunHelmManifest(baseHelmRoot string) error {
 // beforeRenderer handles the value of the profile.
 func (cu *KubeCloudHelmInstTool) beforeRenderer(baseHelmRoot string) error {
 	if cu.Profile == "" {
-		cu.Profile = fmt.Sprintf("%s=v%s", VersionProfileKey, cu.ToolVersion.String())
+		cu.Profile = fmt.Sprintf("%s=v%s", VersionProfileKey, cu.Common.ToolVersion.String())
 	}
 	// profile must be invalid
 	p := strings.Split(cu.Profile, "=")
@@ -275,7 +275,7 @@ func (cu *KubeCloudHelmInstTool) runHelmManifest(r *Renderer, stdout io.Writer) 
 // runHelmInstall starts cloudcore deployment with the given flags
 func (cu *KubeCloudHelmInstTool) runHelmInstall(r *Renderer) (*release.Release, error) {
 	cf := genericclioptions.NewConfigFlags(true)
-	cf.KubeConfig = &cu.KubeConfig
+	cf.KubeConfig = &cu.Common.KubeConfig
 	cf.Namespace = &cu.Namespace
 
 	cfg := &action.Configuration{}
@@ -331,7 +331,7 @@ func (cu *KubeCloudHelmInstTool) runHelmInstall(r *Renderer) (*release.Release, 
 // TearDown method will remove the edge node from api-server and stop cloudcore process
 func (cu *KubeCloudHelmInstTool) TearDown() error {
 	// clean kubeedge namespace
-	err := cu.CleanNameSpace(constants.SystemNamespace, cu.KubeConfig)
+	err := cu.Common.CleanNameSpace(constants.SystemNamespace, cu.KubeConfig)
 	if err != nil {
 		return fmt.Errorf("fail to clean kubeedge namespace, err:%v", err)
 	}
@@ -362,7 +362,7 @@ func (cu *KubeCloudHelmInstTool) checkProfile(baseHelmRoot string) error {
 // handleProfile only handles inner profile
 func (cu *KubeCloudHelmInstTool) handleProfile(profileValue string) error {
 	// the current version
-	currentVersion := cu.ToolVersion.String()
+	currentVersion := cu.Common.ToolVersion.String()
 	switch cu.ProfileKey {
 	case VersionProfileKey:
 		if profileValue == "" {

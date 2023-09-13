@@ -367,7 +367,7 @@ func TestTokenGenerateAndValidate(t *testing.T) {
 		auds := authenticator.Audiences{"api"}
 		authn := JWTTokenAuthenticator(nil,
 			[]string{serviceaccount.LegacyIssuer, "bar"}, tc.Keys, auds,
-			serviceaccount.NewLegacyValidator(tc.Client != nil, client.NewGetterFromClient(tc.Client)))
+			serviceaccount.NewLegacyValidator(tc.Client != nil, client.NewGetterFromClient(tc.Client), nil))
 
 		// An invalid, non-JWT token should always fail
 		ctx := authenticator.WithAudiences(context.Background(), auds)

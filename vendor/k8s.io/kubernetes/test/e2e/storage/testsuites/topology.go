@@ -23,7 +23,7 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 
 	v1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
@@ -44,8 +44,7 @@ type topologyTestSuite struct {
 }
 
 type topologyTest struct {
-	config        *storageframework.PerTestConfig
-	driverCleanup func()
+	config *storageframework.PerTestConfig
 
 	migrationCheck *migrationOpCheck
 
@@ -112,7 +111,7 @@ func (t *topologyTestSuite) DefineTests(driver storageframework.TestDriver, patt
 		l := topologyTest{}
 
 		// Now do the more expensive test initialization.
-		l.config, l.driverCleanup = driver.PrepareTest(f)
+		l.config = driver.PrepareTest(f)
 
 		l.resource = storageframework.VolumeResource{
 			Config:  l.config,
@@ -156,8 +155,6 @@ func (t *topologyTestSuite) DefineTests(driver storageframework.TestDriver, patt
 
 	cleanup := func(l topologyTest) {
 		t.CleanupResources(cs, &l)
-		err := storageutils.TryFunc(l.driverCleanup)
-		l.driverCleanup = nil
 		framework.ExpectNoError(err, "while cleaning up driver")
 
 		l.migrationCheck.validateMigrationVolumeOpCounts()

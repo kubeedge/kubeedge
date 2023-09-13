@@ -31,20 +31,23 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	utilrand "k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/apimachinery/pkg/util/wait"
 	watch "k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/util/retry"
 	"k8s.io/kubernetes/plugin/pkg/admission/serviceaccount"
 	"k8s.io/kubernetes/test/e2e/framework"
 	e2ekubectl "k8s.io/kubernetes/test/e2e/framework/kubectl"
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
+	e2eoutput "k8s.io/kubernetes/test/e2e/framework/pod/output"
 	e2eskipper "k8s.io/kubernetes/test/e2e/framework/skipper"
 	imageutils "k8s.io/kubernetes/test/utils/image"
 	admissionapi "k8s.io/pod-security-admission/api"
 	utilptr "k8s.io/utils/pointer"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 )
 
 const rootCAConfigMapName = "kube-root-ca.crt"
@@ -113,13 +116,21 @@ var _ = SIGDescribe("ServiceAccounts", func() {
 		tokenReview := &authenticationv1.TokenReview{Spec: authenticationv1.TokenReviewSpec{Token: mountedToken}}
 		tokenReview, err = f.ClientSet.AuthenticationV1().TokenReviews().Create(context.TODO(), tokenReview, metav1.CreateOptions{})
 		framework.ExpectNoError(err)
-		framework.ExpectEqual(tokenReview.Status.Authenticated, true)
+		if !tokenReview.Status.Authenticated {
+			framework.Fail("tokenReview is not authenticated")
+		}
 		framework.ExpectEqual(tokenReview.Status.Error, "")
 		framework.ExpectEqual(tokenReview.Status.User.Username, "system:serviceaccount:"+f.Namespace.Name+":"+sa.Name)
 		groups := sets.NewString(tokenReview.Status.User.Groups...)
-		framework.ExpectEqual(groups.Has("system:authenticated"), true, fmt.Sprintf("expected system:authenticated group, had %v", groups.List()))
-		framework.ExpectEqual(groups.Has("system:serviceaccounts"), true, fmt.Sprintf("expected system:serviceaccounts group, had %v", groups.List()))
-		framework.ExpectEqual(groups.Has("system:serviceaccounts:"+f.Namespace.Name), true, fmt.Sprintf("expected system:serviceaccounts:"+f.Namespace.Name+" group, had %v", groups.List()))
+		if !groups.Has("system:authenticated") {
+			framework.Failf("expected system:authenticated group, had %v", groups.List())
+		}
+		if !groups.Has("system:serviceaccounts") {
+			framework.Failf("expected system:serviceaccounts group, had %v", groups.List())
+		}
+		if !groups.Has("system:serviceaccounts:" + f.Namespace.Name) {
+			framework.Failf("expected system:serviceaccounts:%s group, had %v", f.Namespace.Name, groups.List())
+		}
 	})
 
 	/*
@@ -306,7 +317,7 @@ var _ = SIGDescribe("ServiceAccounts", func() {
 			fmt.Sprintf("content of file \"%v\": %s", tokenVolumePath, `[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*`),
 		}
 
-		f.TestContainerOutputRegexp("service account token: ", pod, 0, output)
+		e2eoutput.TestContainerOutputRegexp(f, "service account token: ", pod, 0, output)
 	})
 
 	/*
@@ -414,7 +425,7 @@ var _ = SIGDescribe("ServiceAccounts", func() {
 				fmt.Sprintf("owner UID of \"%v\": %d", tokenVolumePath, tc.wantUID),
 				fmt.Sprintf("owner GID of \"%v\": %d", tokenVolumePath, tc.wantGID),
 			}
-			f.TestContainerOutputRegexp("service account token: ", pod, 0, output)
+			e2eoutput.TestContainerOutputRegexp(f, "service account token: ", pod, 0, output)
 		}
 	})
 
@@ -671,8 +682,9 @@ var _ = SIGDescribe("ServiceAccounts", func() {
 				break
 			}
 		}
-		framework.ExpectEqual(eventFound, true, "failed to find %v event", watch.Added)
-
+		if !eventFound {
+			framework.Failf("failed to find %v event", watch.Added)
+		}
 		ginkgo.By("patching the ServiceAccount")
 		boolFalse := false
 		testServiceAccountPatchData, err := json.Marshal(v1.ServiceAccount{
@@ -688,8 +700,9 @@ var _ = SIGDescribe("ServiceAccounts", func() {
 				break
 			}
 		}
-		framework.ExpectEqual(eventFound, true, "failed to find %v event", watch.Modified)
-
+		if !eventFound {
+			framework.Failf("failed to find %v event", watch.Modified)
+		}
 		ginkgo.By("finding ServiceAccount in list of all ServiceAccounts (by LabelSelector)")
 		serviceAccountList, err := f.ClientSet.CoreV1().ServiceAccounts("").List(context.TODO(), metav1.ListOptions{LabelSelector: testServiceAccountStaticLabelsFlat})
 		framework.ExpectNoError(err, "failed to list ServiceAccounts by LabelSelector")
@@ -700,8 +713,9 @@ var _ = SIGDescribe("ServiceAccounts", func() {
 				break
 			}
 		}
-		framework.ExpectEqual(foundServiceAccount, true, "failed to find the created ServiceAccount")
-
+		if !foundServiceAccount {
+			framework.Fail("failed to find the created ServiceAccount")
+		}
 		ginkgo.By("deleting the ServiceAccount")
 		err = f.ClientSet.CoreV1().ServiceAccounts(testNamespaceName).DeleteCollection(context.TODO(), metav1.DeleteOptions{}, metav1.ListOptions{})
 		framework.ExpectNoError(err, "failed to delete the ServiceAccount by Collection")
@@ -712,7 +726,9 @@ var _ = SIGDescribe("ServiceAccounts", func() {
 				break
 			}
 		}
-		framework.ExpectEqual(eventFound, true, "failed to find %v event", watch.Deleted)
+		if !eventFound {
+			framework.Failf("failed to find %v event", watch.Deleted)
+		}
 	})
 
 	/*
@@ -782,6 +798,45 @@ var _ = SIGDescribe("ServiceAccounts", func() {
 			return true, nil
 		}))
 		framework.Logf("Reconciled root ca configmap in namespace %q", f.Namespace.Name)
+	})
+
+	/*
+		Release: v1.26
+		Testname: ServiceAccount, update a ServiceAccount
+		Description: A ServiceAccount is created which MUST succeed. When
+		updating the ServiceAccount it MUST succeed and the field MUST equal
+		the new value.
+	*/
+	framework.ConformanceIt("should update a ServiceAccount", func() {
+		saClient := f.ClientSet.CoreV1().ServiceAccounts(f.Namespace.Name)
+		saName := "e2e-sa-" + utilrand.String(5)
+
+		initialServiceAccount := &v1.ServiceAccount{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: saName,
+			},
+			AutomountServiceAccountToken: utilptr.Bool(false),
+		}
+
+		ginkgo.By(fmt.Sprintf("Creating ServiceAccount %q ", saName))
+		createdServiceAccount, err := saClient.Create(context.TODO(), initialServiceAccount, metav1.CreateOptions{})
+		framework.ExpectNoError(err)
+		framework.ExpectEqual(createdServiceAccount.AutomountServiceAccountToken, utilptr.Bool(false), "Failed to set AutomountServiceAccountToken")
+		framework.Logf("AutomountServiceAccountToken: %v", *createdServiceAccount.AutomountServiceAccountToken)
+
+		ginkgo.By(fmt.Sprintf("Updating ServiceAccount %q ", saName))
+		var updatedServiceAccount *v1.ServiceAccount
+
+		err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+			updateServiceAccount, err := saClient.Get(context.TODO(), saName, metav1.GetOptions{})
+			framework.ExpectNoError(err, "Unable to get ServiceAccount %q", saName)
+			updateServiceAccount.AutomountServiceAccountToken = utilptr.Bool(true)
+			updatedServiceAccount, err = saClient.Update(context.TODO(), updateServiceAccount, metav1.UpdateOptions{})
+			return err
+		})
+		framework.ExpectNoError(err, "Failed to update ServiceAccount")
+		framework.ExpectEqual(updatedServiceAccount.AutomountServiceAccountToken, utilptr.Bool(true), "Failed to set AutomountServiceAccountToken")
+		framework.Logf("AutomountServiceAccountToken: %v", *updatedServiceAccount.AutomountServiceAccountToken)
 	})
 })
 

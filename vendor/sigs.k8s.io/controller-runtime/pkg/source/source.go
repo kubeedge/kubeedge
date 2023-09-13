@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -82,6 +83,10 @@ func (ks *kindWithCache) Start(ctx context.Context, handler handler.EventHandler
 	return ks.kind.Start(ctx, handler, queue, prct...)
 }
 
+func (ks *kindWithCache) String() string {
+	return ks.kind.String()
+}
+
 func (ks *kindWithCache) WaitForSync(ctx context.Context) error {
 	return ks.kind.WaitForSync(ctx)
 }
@@ -133,9 +138,14 @@ func (ks *Kind) Start(ctx context.Context, handler handler.EventHandler, queue w
 			i, lastErr = ks.cache.GetInformer(ctx, ks.Type)
 			if lastErr != nil {
 				kindMatchErr := &meta.NoKindMatchError{}
-				if errors.As(lastErr, &kindMatchErr) {
+				switch {
+				case errors.As(lastErr, &kindMatchErr):
 					log.Error(lastErr, "if kind is a CRD, it should be installed before calling Start",
 						"kind", kindMatchErr.GroupKind)
+				case runtime.IsNotRegisteredError(lastErr):
+					log.Error(lastErr, "kind must be registered to the Scheme")
+				default:
+					log.Error(lastErr, "failed to get informer from cache")
 				}
 				return false, nil // Retry.
 			}
@@ -149,7 +159,11 @@ func (ks *Kind) Start(ctx context.Context, handler handler.EventHandler, queue w
 			return
 		}
 
-		i.AddEventHandler(internal.EventHandler{Queue: queue, EventHandler: handler, Predicates: prct})
+		_, err := i.AddEventHandler(internal.EventHandler{Queue: queue, EventHandler: handler, Predicates: prct})
+		if err != nil {
+			ks.started <- err
+			return
+		}
 		if !ks.cache.WaitForCacheSync(ctx) {
 			// Would be great to return something more informative here
 			ks.started <- errors.New("cache did not sync")
@@ -175,6 +189,9 @@ func (ks *Kind) WaitForSync(ctx context.Context) error {
 		return err
 	case <-ctx.Done():
 		ks.startCancel()
+		if errors.Is(ctx.Err(), context.Canceled) {
+			return nil
+		}
 		return errors.New("timed out waiting for cache to be synced")
 	}
 }
@@ -342,7 +359,10 @@ func (is *Informer) Start(ctx context.Context, handler handler.EventHandler, que
 		return fmt.Errorf("must specify Informer.Informer")
 	}
 
-	is.Informer.AddEventHandler(internal.EventHandler{Queue: queue, EventHandler: handler, Predicates: prct})
+	_, err := is.Informer.AddEventHandler(internal.EventHandler{Queue: queue, EventHandler: handler, Predicates: prct})
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

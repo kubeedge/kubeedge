@@ -16,7 +16,7 @@ FROM golang:1.19.12-alpine3.17 AS builder
 
 ARG GO_LDFLAGS
 
-RUN go install github.com/onsi/ginkgo/ginkgo@v1.16.5
+RUN go install github.com/onsi/ginkgo/v2/ginkgo@v2.6.0
 
 COPY . /go/src/github.com/kubeedge/kubeedge
 

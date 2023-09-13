@@ -43,11 +43,17 @@ var (
 
 func init() {
 	baseDir, err := os.UserCacheDir()
-	if err != nil {
-		baseDir = os.TempDir()
+	if err == nil {
+		cacheDir = filepath.Join(baseDir, "kubebuilder-envtest")
+		err = os.MkdirAll(cacheDir, 0o750)
 	}
-	cacheDir = filepath.Join(baseDir, "kubebuilder-envtest")
-	if err := os.MkdirAll(cacheDir, 0750); err != nil {
+	if err != nil {
+		// Either we didn't get a cache directory, or we can't use it
+		baseDir = os.TempDir()
+		cacheDir = filepath.Join(baseDir, "kubebuilder-envtest")
+		err = os.MkdirAll(cacheDir, 0o750)
+	}
+	if err != nil {
 		panic(err)
 	}
 }
@@ -65,10 +71,20 @@ func (c *portCache) add(port int) (bool, error) {
 		}
 		info, err := d.Info()
 		if err != nil {
+			// No-op if file no longer exists; may have been deleted by another
+			// process/thread trying to allocate ports.
+			if errors.Is(err, fs.ErrNotExist) {
+				return nil
+			}
 			return err
 		}
 		if time.Since(info.ModTime()) > portReserveTime {
 			if err := os.Remove(filepath.Join(cacheDir, path)); err != nil {
+				// No-op if file no longer exists; may have been deleted by another
+				// process/thread trying to allocate ports.
+				if os.IsNotExist(err) {
+					return nil
+				}
 				return err
 			}
 		}
