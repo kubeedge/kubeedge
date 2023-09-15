@@ -72,6 +72,9 @@ type UpdatePodOptions struct {
 	StartTime time.Time
 	// Pod to update. Required.
 	Pod *v1.Pod
+	// MirrorPod is the mirror pod if Pod is a static pod. Optional when UpdateType
+	// is kill or terminated.
+	MirrorPod *v1.Pod
 	// RunningPod is a runtime pod that is no longer present in config. Required
 	// if Pod is nil, ignored if Pod is set.
 	RunningPod *kubecontainer.Pod
@@ -215,7 +218,7 @@ type PodWorkers interface {
 }
 
 // the function to invoke to perform a sync (reconcile the kubelet state to the desired shape of the pod)
-type syncPodFnType func(ctx context.Context, updateType kubetypes.SyncPodType, pod *v1.Pod, podStatus *kubecontainer.PodStatus) (bool, error)
+type syncPodFnType func(ctx context.Context, updateType kubetypes.SyncPodType, pod *v1.Pod, mirrorPod *v1.Pod, podStatus *kubecontainer.PodStatus) (bool, error)
 
 // the function to invoke to terminate a pod (ensure no running processes are present)
 type syncTerminatingPodFnType func(ctx context.Context, pod *v1.Pod, podStatus *kubecontainer.PodStatus, runningPod *kubecontainer.Pod, gracePeriod *int64, podStatusFn func(*v1.PodStatus)) error
@@ -944,7 +947,7 @@ func (p *podWorkers) managePodLoop(podUpdates <-chan podWork) {
 				err = p.syncTerminatingPodFn(ctx, pod, status, update.Options.RunningPod, gracePeriod, podStatusFn)
 
 			default:
-				isTerminal, err = p.syncPodFn(ctx, update.Options.UpdateType, pod, status)
+				isTerminal, err = p.syncPodFn(ctx, update.Options.UpdateType, pod, update.Options.MirrorPod, status)
 			}
 
 			lastSyncTime = time.Now()
