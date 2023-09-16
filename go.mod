@@ -6,6 +6,7 @@ require (
 	github.com/256dpi/gomqtt v0.10.4
 	github.com/astaxie/beego v1.12.0
 	github.com/blang/semver v3.5.1+incompatible
+	github.com/cilium/ebpf v0.9.1 // indirect
 	github.com/container-storage-interface/spec v1.7.0
 	github.com/distribution/distribution/v3 v3.0.0-20221208165359-362910506bc2
 	github.com/docker/docker v20.10.21+incompatible
@@ -98,7 +99,6 @@ require (
 	github.com/chai2010/gettext-go v1.0.2 // indirect
 	github.com/checkpoint-restore/go-criu/v5 v5.3.0 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
-	github.com/cilium/ebpf v0.7.0 // indirect
 	github.com/containerd/cgroups v1.0.3 // indirect
 	github.com/containerd/console v1.0.3 // indirect
 	github.com/containerd/containerd v1.6.15 // indirect
