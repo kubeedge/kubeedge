@@ -9,12 +9,14 @@ on:
       - 'docs/**'
       - '**/OWNERS'
       - '**/MAINTAINERS'
+      - 'vendor/**'
   pull_request:
     paths-ignore:
       - '**.md'
       - 'docs/**'
       - '**/OWNERS'
       - '**/MAINTAINERS'
+      - 'vendor/**'
 jobs:
   Fuzzing:
     runs-on: ubuntu-22.04
