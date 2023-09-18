@@ -1,7 +1,7 @@
 package v2
 
 import (
-	"github.com/astaxie/beego/orm"
+	"github.com/beego/beego/orm"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"

@@ -20,7 +20,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/astaxie/beego/orm"
+	"github.com/beego/beego/orm"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
