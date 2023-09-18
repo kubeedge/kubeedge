@@ -33,7 +33,7 @@ The goal of the community is to develop a cloud native edge computing platform b
 # Getting started
 
 - Fork the repository on GitHub
-- Read the [setup](https://kubeedge.io/en/docs/setup/keadm/) for deployment.
+- Read the [setup](https://kubeedge.io/docs/setup/install-with-keadm) for deployment.
 
 
 # Your First Contribution
