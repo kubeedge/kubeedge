@@ -17,6 +17,8 @@ limitations under the License.
 package dynamiccontroller
 
 import (
+	"fmt"
+
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/klog/v2"
@@ -74,7 +76,7 @@ func (dctl *DynamicController) Start() {
 	dctl.dynamicSharedInformerFactory.Start(beehiveContext.Done())
 	for gvr, cacheSync := range dctl.dynamicSharedInformerFactory.WaitForCacheSync(beehiveContext.Done()) {
 		if !cacheSync {
-			klog.Exitf("Unable to sync caches for: %s", gvr.String())
+			panic(fmt.Errorf("Unable to sync caches for: %s", gvr.String()))
 		}
 	}
 

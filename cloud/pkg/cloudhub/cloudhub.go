@@ -91,7 +91,7 @@ func (ch *cloudHub) Start() {
 	// check whether the certificates exist in the local directory,
 	// and then check whether certificates exist in the secret, generate if they don't exist
 	if err := httpserver.PrepareAllCerts(); err != nil {
-		klog.Exit(err)
+		panic(err)
 	}
 	// TODO: Will improve in the future
 	DoneTLSTunnelCerts <- true
@@ -99,7 +99,7 @@ func (ch *cloudHub) Start() {
 
 	// generate Token
 	if err := httpserver.GenerateToken(); err != nil {
-		klog.Exit(err)
+		panic(err)
 	}
 
 	// HttpServer mainly used to issue certificates for the edge

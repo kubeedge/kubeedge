@@ -25,7 +25,7 @@ type Configure struct {
 func InitConfigure(hub *v1alpha1.CloudHub) {
 	once.Do(func() {
 		if len(hub.AdvertiseAddress) == 0 {
-			klog.Exit("AdvertiseAddress must be specified!")
+			panic("AdvertiseAddress must be specified!")
 		}
 
 		Config = Configure{
@@ -50,7 +50,7 @@ func InitConfigure(hub *v1alpha1.CloudHub) {
 			Config.Ca = ca
 			Config.CaKey = caKey
 		} else if !(ca == nil && caKey == nil) {
-			klog.Exit("Both of ca and caKey should be specified!")
+			panic("Both of ca and caKey should be specified!")
 		}
 
 		cert, err := os.ReadFile(hub.TLSCertFile)
@@ -70,7 +70,7 @@ func InitConfigure(hub *v1alpha1.CloudHub) {
 			Config.Cert = cert
 			Config.Key = key
 		} else if !(cert == nil && key == nil) {
-			klog.Exit("Both of cert and key should be specified!")
+			panic("Both of cert and key should be specified!")
 		}
 	})
 }

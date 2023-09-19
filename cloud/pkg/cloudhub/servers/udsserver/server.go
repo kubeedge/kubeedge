@@ -43,8 +43,7 @@ func StartServer(address string) {
 
 	klog.Info("start unix domain socket server")
 	if err := uds.StartServer(); err != nil {
-		klog.Exitf("failed to start uds server: %v", err)
-		return
+		panic(fmt.Errorf("failed to start uds server: %v", err))
 	}
 }
 
