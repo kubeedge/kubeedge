@@ -6,6 +6,61 @@ The [milestones defined in GitHub](https://github.com/kubeedge/kubeedge/mileston
 
 The roadmap below outlines new features that will be added to KubeEdge.
 
+## 2023 H1 
+
+### SIG Node
+
+- Support WasmEdge integration on KubeEdge edgenode
+- Support Kubectl attach to container running on edgenode
+- Update Kubernetes dependency to v1.24.14, switch default container runtime at edge to containerd
+
+### SIG Device-IOT
+
+- Provide Modbus mapper based on DMI
+- DMI Data plane
+- Mapper framework support for DMI
+
+### SIG Security
+
+- Support authentication and authorization for Kube-API endpoint for applications on edge nodes
+- Enhancements for edge plaintext storage, ensure tokens are not persisted on disk
+
+### SIG Scalability
+
+- Support cluster scope resource reliable delivery to edge nodes
+- CloudCore memory usage is reduced by 40%, through unified generic informer and reduce unnecessary cache
+
+### SIG Networking
+
+- Add configurable field TunnelLimitConfig to edge-tunnel module
+- EdgeMesh container network supports CNI features
+
+### SIG AI
+
+- Sedna
+  - Support unstructured lifelong learning
+  - Support unseen task recognition
+  - Support displaying knowledge base
+
+- Ianvs
+  - Support lifelong learning throughout entire lifecycle
+  - Provide classic lifelong learning testing metrics and support for visualizing test results
+  - Provide real-world datasets and rich examples for lifelong learning testing
+
+### SIG Testing
+
+- Provide node conformance test suite
+- Improve unit test coverage
+
+### SIG Cluster-Lifecycle
+
+- Provide a tool keink for running local KubeEdge clusters using Docker container “nodes”
+
+### UI
+
+- Alpha version of KubeEdge Dashboard
+- Re-design KubeEdge website
+
 ## 2023 H2
 
 ### SIG Node
@@ -99,119 +154,3 @@ The roadmap below outlines new features that will be added to KubeEdge.
 
 - Example library enhancement
 - Go online to Killer-Coda
-
-
-## 2021 H1
-
-### Core framework
-
-#### Edge side list-watch
-
-- Support list-watch interface at edge
-
-#### Custom message transmission between cloud and edge
-
-- Support transmission of custom message between cloud and edge
-
-#### Support multi-instance cloudcore
-
-#### Integration and verification of third-party CNI
-
-- Flannel, Calico, etc.
-
-#### Integration and verification of third-party CSI
-
-- Rook, OpenEBS, etc.
-
-#### Support managing clusters at edge from cloud (aka. EdgeSite)
-
-#### Support ingress/gateway at edge.
-
-### Maintainability
-
-#### Deployment optimization
-
-- Easier deployment
-- Admission controller automated deployment
-
-#### Automatic configuration of edge application offline migration time
-
-- Modify Default tolerationSeconds Automatically
-
-### IOT Device management
-
-#### Device Mapper framework standard and framework generator
-
-- Formulate mapper framework standard
-
-#### Support mappers of more protocols
-
-- OPC-UA mapper
-- ONVIF mapper
-
-### Security
-
-#### Complete security vulnerability scanning
-
-
-### Test
-
-#### Improve the performance and e2e tests with more metrics and scenarios.
-
-
-### Edge-cloud synergy AI
-
-#### Supports KubeFlow/ONNX/Pytorch/Mindspore
-
-#### Edge-cloud synergy training and inference
-
-
-### MEC
-
-#### Cross-edge cloud service discovery
-
-#### 5G network capability exposure
-
-
-## 2021 H2
-
-### Core framework
-
-#### Custom message transmission between cloud and edge
-
-- Support CloudEvent protocol
-
-#### Cross subnet communication of Data plane 
-
-- Edge-edge cross subnet 
-- Edge-cloud cross subnet
-
-#### Unified Service Mesh support (Integrate with Istio/OSM etc.)
-
-#### Cloud-edge synergy monitoring
-
-- Provide support with prometheus push-gateway mode
-- Data management with support for ingestion of telemetry data and analytics at the edge.
-
-### IOT Device management
-
-#### Device Mapper framework standard and framework generator
-
-- Develop mapper framework generator
-
-#### Support mappers of more protocols
-
-- GB/T 28181 mapper
-
-### Edge-cloud synergy AI
-
-#### Intelligent edge benchmark
-
-
-### MEC
-
-#### Cloud-network convergence
-
-#### Service catalog
-
-#### Cross-edge cloud application roaming
