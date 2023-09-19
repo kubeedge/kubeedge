@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/256dpi/gomqtt v0.10.4
-	github.com/astaxie/beego v1.12.0
+	github.com/beego/beego v1.12.2
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/cilium/ebpf v0.9.1 // indirect
 	github.com/container-storage-interface/spec v1.7.0

@@ -10,7 +10,7 @@
 |paas-lager | Apache License 2.0 | https://github.com/ServiceComb/paas-lager
 |go-http-auth | Apache License 2.0 | https://github.com/abbot/go-http-auth
 |circbuf | MIT| https://github.com/armon/circbuf
-|beego | Apache License 2.0 | https://github.com/astaxie/beego
+|beego | Apache License 2.0 | https://github.com/beego/beego
 |aws-sdk-go | Apache License 2.0 | https://github.com/aws/aws-sdk-go
 |perks | MIT | https://github.com/beorn7/perks
 |semver | MIT | https://github.com/blang/semver
