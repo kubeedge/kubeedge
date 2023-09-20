@@ -27,7 +27,7 @@ import (
 )
 
 func request(opt *common.JoinOptions, step *common.Step) error {
-	imageSet := image.EdgeSet(opt.ImageRepository, opt.KubeEdgeVersion)
+	imageSet := image.EdgeSet(opt)
 	images := imageSet.List()
 
 	runtime, err := util.NewContainerRuntime(opt.RuntimeType, opt.RemoteRuntimeEndpoint)
