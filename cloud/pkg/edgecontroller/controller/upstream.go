@@ -247,9 +247,12 @@ func (uc *UpstreamController) dispatchMessage() {
 		case model.ResourceTypePodPatch:
 			uc.patchPodChan <- msg
 		case model.ResourceTypePod:
-			if msg.GetOperation() == model.DeleteOperation {
+			switch msg.GetOperation() {
+			case model.DeleteOperation:
 				uc.podDeleteChan <- msg
-			} else {
+			case model.InsertOperation:
+				uc.createPodChan <- msg
+			default:
 				klog.Errorf("message: %s, operation type: %s unsupported", msg.GetID(), msg.GetOperation())
 			}
 		case model.ResourceTypeRuleStatus:
@@ -261,9 +264,6 @@ func (uc *UpstreamController) dispatchMessage() {
 			case model.QueryOperation:
 				uc.queryLeaseChan <- msg
 			}
-		case model.ResourceTypeCreatePod:
-			uc.createPodChan <- msg
-
 		default:
 			klog.Errorf("message: %s, resource type: %s unsupported", msg.GetID(), resourceType)
 		}

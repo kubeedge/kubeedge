@@ -52,7 +52,7 @@ func newPods(namespace string, s SendInterface) *pods {
 }
 
 func (c *pods) Create(cm *corev1.Pod) (*corev1.Pod, error) {
-	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypeCreatePod, cm.Name)
+	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypePod, cm.Name)
 	podMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.InsertOperation, *cm)
 	resp, err := c.send.SendSync(podMsg)
 	if err != nil {
@@ -161,11 +161,8 @@ func handlePodResp(resource string, content []byte) (*corev1.Pod, error) {
 	}
 
 	if reflect.DeepEqual(podResp.Err, apierrors.StatusError{}) {
-		resourceArray := strings.Split(resource, constants.ResourceSep)
-		if !(len(resourceArray) >= 2 && resourceArray[1] == model.ResourceTypeCreatePod) {
-			if err = updatePodDB(resource, podResp.Object); err != nil {
-				return nil, fmt.Errorf("update pod meta failed, err: %v", err)
-			}
+		if err = updatePodDB(resource, podResp.Object); err != nil {
+			return nil, fmt.Errorf("update pod meta failed, err: %v", err)
 		}
 		return podResp.Object, nil
 	}
