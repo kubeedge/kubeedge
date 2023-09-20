@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/pem"
+	"errors"
 	"os"
 	"sync"
 
@@ -25,7 +26,7 @@ type Configure struct {
 func InitConfigure(hub *v1alpha1.CloudHub) {
 	once.Do(func() {
 		if len(hub.AdvertiseAddress) == 0 {
-			panic("AdvertiseAddress must be specified!")
+			panic(errors.New("advertiseAddress must be specified"))
 		}
 
 		Config = Configure{
@@ -50,7 +51,7 @@ func InitConfigure(hub *v1alpha1.CloudHub) {
 			Config.Ca = ca
 			Config.CaKey = caKey
 		} else if !(ca == nil && caKey == nil) {
-			panic("Both of ca and caKey should be specified!")
+			panic(errors.New("both of ca and caKey should be specified"))
 		}
 
 		cert, err := os.ReadFile(hub.TLSCertFile)
@@ -70,7 +71,7 @@ func InitConfigure(hub *v1alpha1.CloudHub) {
 			Config.Cert = cert
 			Config.Key = key
 		} else if !(cert == nil && key == nil) {
-			panic("Both of cert and key should be specified!")
+			panic(errors.New("both of cert and key should be specified"))
 		}
 	})
 }

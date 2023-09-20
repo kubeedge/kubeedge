@@ -18,6 +18,7 @@ package config
 
 import (
 	"encoding/pem"
+	"errors"
 	"os"
 	"sync"
 
@@ -65,7 +66,7 @@ func InitConfigure(stream *v1alpha1.CloudStream) {
 			Config.Cert = cert
 			Config.Key = key
 		} else if !(cert == nil && key == nil) {
-			panic("Both of tunnelCert and key should be specified!")
+			panic(errors.New("both of tunnelCert and key should be specified"))
 		}
 	})
 }
