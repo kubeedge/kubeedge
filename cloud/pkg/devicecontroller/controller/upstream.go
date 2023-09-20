@@ -32,13 +32,13 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/types"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
-	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
+	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1"
 	crdClientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 )
 
 // DeviceStatus is structure to patch device status
 type DeviceStatus struct {
-	Status v1alpha2.DeviceStatus `json:"status"`
+	Status v1beta1.DeviceStatus `json:"status"`
 }
 
 const (
@@ -128,7 +128,7 @@ func (uc *UpstreamController) updateDeviceStatus() {
 				klog.Warningf("Device %s does not exist in downstream controller", deviceID)
 				continue
 			}
-			cacheDevice, ok := device.(*v1alpha2.Device)
+			cacheDevice, ok := device.(*v1beta1.Device)
 			if !ok {
 				klog.Warning("Failed to assert to CacheDevice type")
 				continue
@@ -137,7 +137,7 @@ func (uc *UpstreamController) updateDeviceStatus() {
 			for twinName, twin := range msgTwin.Twin {
 				for i, cacheTwin := range deviceStatus.Status.Twins {
 					if twinName == cacheTwin.PropertyName && twin.Actual != nil && twin.Actual.Value != nil {
-						reported := v1alpha2.TwinProperty{}
+						reported := v1beta1.TwinProperty{}
 						reported.Value = *twin.Actual.Value
 						reported.Metadata = make(map[string]string)
 						if twin.Actual.Metadata != nil {
@@ -161,7 +161,7 @@ func (uc *UpstreamController) updateDeviceStatus() {
 				klog.Errorf("Failed to marshal device status %v", deviceStatus)
 				continue
 			}
-			err = uc.crdClient.DevicesV1alpha2().RESTClient().Patch(MergePatchType).Namespace(cacheDevice.Namespace).Resource(ResourceTypeDevices).Name(deviceID).Body(body).Do(context.Background()).Error()
+			err = uc.crdClient.DevicesV1beta1().RESTClient().Patch(MergePatchType).Namespace(cacheDevice.Namespace).Resource(ResourceTypeDevices).Name(deviceID).Body(body).Do(context.Background()).Error()
 			if err != nil {
 				klog.Errorf("Failed to patch device status %v of device %v in namespace %v, err: %v", deviceStatus, deviceID, cacheDevice.Namespace, err)
 				continue

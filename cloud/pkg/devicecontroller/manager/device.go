@@ -14,7 +14,7 @@ type DeviceManager struct {
 	// events from watch kubernetes api server
 	events chan watch.Event
 
-	// Device, key is device.Name, value is *v1alpha2.Device{}
+	// Device, key is device.Name, value is *v1beta1.Device{}
 	Device sync.Map
 }
 
