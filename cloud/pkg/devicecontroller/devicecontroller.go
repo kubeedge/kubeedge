@@ -27,11 +27,11 @@ func newDeviceController(enable bool) *DeviceController {
 	}
 	downstream, err := controller.NewDownstreamController(informers.GetInformersManager().GetKubeEdgeInformerFactory())
 	if err != nil {
-		panic(fmt.Errorf("New downstream controller failed with error: %s", err))
+		panic(fmt.Errorf("new downstream controller failed with error: %s", err))
 	}
 	upstream, err := controller.NewUpstreamController(downstream)
 	if err != nil {
-		panic(fmt.Errorf("New upstream controller failed with error: %s", err))
+		panic(fmt.Errorf("new upstream controller failed with error: %s", err))
 	}
 	return &DeviceController{
 		downstream: downstream,
