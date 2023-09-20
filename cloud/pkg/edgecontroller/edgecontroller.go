@@ -59,10 +59,10 @@ func (ec *EdgeController) Enable() bool {
 // Start controller
 func (ec *EdgeController) Start() {
 	if err := ec.upstream.Start(); err != nil {
-		fmt.Errorf("start upstream failed with error: %s", err)
+		panic(fmt.Errorf("start upstream failed with error: %s", err))
 	}
 
 	if err := ec.downstream.Start(); err != nil {
-		fmt.Errorf("start downstream failed with error: %s", err)
+		panic(fmt.Errorf("start downstream failed with error: %s", err))
 	}
 }

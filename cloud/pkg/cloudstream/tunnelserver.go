@@ -190,7 +190,7 @@ func (s *TunnelServer) Start() {
 	klog.Infof("Prepare to start tunnel server ...")
 	err = tunnelServer.ListenAndServeTLS("", "")
 	if err != nil {
-		panic(fmt.Errorf("Start tunnelServer error %v\n", err))
+		panic(fmt.Errorf("start tunnelServer error %v", err))
 	}
 }
 

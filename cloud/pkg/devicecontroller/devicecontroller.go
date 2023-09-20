@@ -63,12 +63,12 @@ func (dc *DeviceController) Enable() bool {
 // Start controller
 func (dc *DeviceController) Start() {
 	if err := dc.downstream.Start(); err != nil {
-		fmt.Errorf("Start downstream failed with error: %s", err)
+		panic(fmt.Errorf("start downstream failed with error: %s", err))
 	}
 	// wait for downstream controller to start and load deviceModels and devices
 	// TODO think about sync
 	time.Sleep(1 * time.Second)
 	if err := dc.upstream.Start(); err != nil {
-		fmt.Errorf("Start upstream failed with error: %s", err)
+		panic(fmt.Errorf("start upstream failed with error: %s", err))
 	}
 }

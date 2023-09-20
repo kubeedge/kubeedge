@@ -389,8 +389,7 @@ func (s *StreamServer) Start() {
 	pool := x509.NewCertPool()
 	data, err := os.ReadFile(config.Config.TLSStreamCAFile)
 	if err != nil {
-		panic(fmt.Errorf("Read tls stream ca file error %v", err))
-		return
+		panic(fmt.Errorf("read tls stream ca file error %v", err))
 	}
 	pool.AppendCertsFromPEM(data)
 
@@ -407,6 +406,6 @@ func (s *StreamServer) Start() {
 	klog.Infof("Prepare to start stream server ...")
 	err = streamServer.ListenAndServeTLS(config.Config.TLSStreamCertFile, config.Config.TLSStreamPrivateKeyFile)
 	if err != nil {
-		panic(fmt.Errorf("Start stream server error %v\n", err))
+		panic(fmt.Errorf("start stream server error %v", err))
 	}
 }
