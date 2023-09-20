@@ -21,9 +21,10 @@ import (
 	"os"
 	"path"
 
+	"k8s.io/apimachinery/pkg/util/validation/field"
+
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 	utilvalidation "github.com/kubeedge/kubeedge/pkg/util/validation"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 // ValidateEdgeCoreConfiguration validates `c` and returns an errorList if it is invalid
