@@ -8,12 +8,11 @@ const ()
 // Resources
 const (
 	// Certificates
-	DefaultConfigDir            = "c:\\etc\\kubeedge\\config\\"
-	DefaultCAFile               = "c:\\etc\\kubeedge\\ca\\rootCA.crt"
-	DefaultCAKeyFile            = "c:\\etc\\kubeedge\\ca\\rootCA.key"
-	DefaultCertFile             = "c:\\etc\\kubeedge\\certs\\server.crt"
-	DefaultKeyFile              = "c:\\etc\\kubeedge\\certs\\server.key"
-	DefaultServiceAccountIssuer = "https://kubernetes.default.svc.cluster.local"
+	DefaultConfigDir = "c:\\etc\\kubeedge\\config\\"
+	DefaultCAFile    = "c:\\etc\\kubeedge\\ca\\rootCA.crt"
+	DefaultCAKeyFile = "c:\\etc\\kubeedge\\ca\\rootCA.key"
+	DefaultCertFile  = "c:\\etc\\kubeedge\\certs\\server.crt"
+	DefaultKeyFile   = "c:\\etc\\kubeedge\\certs\\server.key"
 
 	DefaultStreamCAFile   = "c:\\etc\\kubeedge\\ca\\streamCA.crt"
 	DefaultStreamCertFile = "c:\\etc\\kubeedge\\certs\\stream.crt"

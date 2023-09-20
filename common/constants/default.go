@@ -28,9 +28,10 @@ const (
 
 // Resources
 const (
-	DefaultCAURL          = "/ca.crt"
-	DefaultCertURL        = "/edge.crt"
-	DefaultNodeUpgradeURL = "/nodeupgrade"
+	DefaultCAURL                = "/ca.crt"
+	DefaultCertURL              = "/edge.crt"
+	DefaultNodeUpgradeURL       = "/nodeupgrade"
+	DefaultServiceAccountIssuer = "https://kubernetes.default.svc.cluster.local"
 
 	// Edged
 	DefaultDockerAddress       = "unix:///var/run/docker.sock"
