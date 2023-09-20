@@ -32,15 +32,7 @@ import (
 	kubeletconfigv1beta1 "k8s.io/kubelet/config/v1beta1"
 	configv1beta1 "k8s.io/kubernetes/pkg/kubelet/apis/config/v1beta1"
 	"k8s.io/kubernetes/pkg/kubelet/qos"
-	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
 	utilpointer "k8s.io/utils/pointer"
-	"runtime"
-)
-
-var (
-	// TODO: Move these constants to k8s.io/kubelet/config/v1beta1 instead?
-	// Refer to [Node Allocatable](https://git.k8s.io/community/contributors/design-proposals/node/node-allocatable.md) doc for more information.
-	DefaultNodeAllocatableEnforcement = []string{"pods"}
 )
 
 // SetDefaultsKubeletConfiguration sets defaults for tailored kubelet configuration
@@ -99,18 +91,9 @@ func SetDefaultsKubeletConfiguration(obj *TailoredKubeletConfiguration) {
 	obj.MemoryThrottlingFactor = utilpointer.Float64Ptr(configv1beta1.DefaultMemoryThrottlingFactor)
 	obj.RegisterNode = utilpointer.BoolPtr(true)
 
-	if runtime.GOOS == "windows" {
-		obj.EnforceNodeAllocatable = []string{}
-		obj.CgroupDriver = ""
-		obj.CgroupsPerQOS = utilpointer.BoolPtr(false)
-		obj.ResolverConfig = utilpointer.String("")
-		obj.CPUCFSQuota = utilpointer.BoolPtr(false)
-	} else {
-		obj.EnforceNodeAllocatable = DefaultNodeAllocatableEnforcement
-		obj.CgroupDriver = "cgroupfs"
-		obj.CgroupsPerQOS = utilpointer.BoolPtr(true)
-		obj.ResolverConfig = utilpointer.String(kubetypes.ResolvConfDefault)
-		obj.CPUCFSQuota = utilpointer.BoolPtr(true)
-	}
-
+	obj.EnforceNodeAllocatable = DefaultNodeAllocatableEnforcement
+	obj.CgroupDriver = DefaultCgroupDriver
+	obj.CgroupsPerQOS = utilpointer.Bool(DefaultCgroupsPerQOS)
+	obj.ResolverConfig = utilpointer.String(DefaultResolverConfig)
+	obj.CPUCFSQuota = utilpointer.Bool(DefaultCPUCFSQuota)
 }

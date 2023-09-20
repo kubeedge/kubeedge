@@ -20,7 +20,6 @@ import (
 	"net"
 	"net/url"
 	"path"
-	"runtime"
 	"strconv"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -68,6 +67,7 @@ func NewDefaultEdgeCoreConfig() (config *EdgeCoreConfig) {
 					NodeLabels:              make(map[string]string),
 					RegisterNode:            true,
 					RegisterSchedulable:     true,
+					WindowsPriorityClass:    DefaultWindowsPriorityClass,
 				},
 				CustomInterfaceName:   "",
 				RegisterNodeNamespace: constants.DefaultRegisterNodeNamespace,
@@ -159,10 +159,6 @@ func NewDefaultEdgeCoreConfig() (config *EdgeCoreConfig) {
 			},
 		},
 	}
-
-	if runtime.GOOS == "windows" {
-		config.Modules.Edged.WindowsPriorityClass = WindowsPriorityClassNormal
-	}
 	return
 }
 
@@ -202,6 +198,7 @@ func NewMinEdgeCoreConfig() (config *EdgeCoreConfig) {
 					NodeLabels:              make(map[string]string),
 					RegisterNode:            true,
 					RegisterSchedulable:     true,
+					WindowsPriorityClass:    DefaultWindowsPriorityClass,
 				},
 				CustomInterfaceName:   "",
 				RegisterNodeNamespace: constants.DefaultRegisterNodeNamespace,
@@ -236,10 +233,6 @@ func NewMinEdgeCoreConfig() (config *EdgeCoreConfig) {
 				MqttMode:           MqttModeExternal,
 			},
 		},
-	}
-
-	if runtime.GOOS == "windows" {
-		config.Modules.Edged.WindowsPriorityClass = WindowsPriorityClassNormal
 	}
 	return
 }
