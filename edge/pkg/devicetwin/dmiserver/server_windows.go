@@ -4,8 +4,9 @@ package dmiserver
 
 import (
 	"fmt"
-	"k8s.io/klog/v2"
 	"os"
+
+	"k8s.io/klog/v2"
 )
 
 func initSock(sockPath string) error {

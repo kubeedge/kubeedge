@@ -2,6 +2,8 @@
 
 package v1alpha2
 
+import kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
+
 const (
 	CGroupDriverCGroupFS = "cgroupfs"
 	CGroupDriverSystemd  = "systemd"
