@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   schedule:
     #  Exectues e2e compatibility test every Wednesday at 1:00 AM and if you need to convert to UTC+8 timezone, you need to -8 hours for cron expression
-    - cron: "0 17 * * 2"
+    - cron: "*/30 * * * *"
 
 env:
   CONTAINER_RUN_OPTIONS: " "
