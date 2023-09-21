@@ -26,13 +26,14 @@ package v1alpha2
 import (
 	"time"
 
-	"github.com/kubeedge/kubeedge/common/constants"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	componentbaseconfigv1alpha1 "k8s.io/component-base/config/v1alpha1"
 	kubeletconfigv1beta1 "k8s.io/kubelet/config/v1beta1"
 	configv1beta1 "k8s.io/kubernetes/pkg/kubelet/apis/config/v1beta1"
 	"k8s.io/kubernetes/pkg/kubelet/qos"
 	utilpointer "k8s.io/utils/pointer"
+
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 // SetDefaultsKubeletConfiguration sets defaults for tailored kubelet configuration
