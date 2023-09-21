@@ -38,7 +38,7 @@ import (
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
+	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1"
 	edgeclientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 	"github.com/kubeedge/kubeedge/tests/e2e/constants"
 )
@@ -50,11 +50,9 @@ const (
 	TwinETGetSuffix       = "/twin/get"
 	TwinETGetResultSuffix = "/twin/get/result"
 
-	BlueTooth         = "bluetooth"
 	ModBus            = "modbus"
-	Led               = "led"
 	IncorrectInstance = "incorrect-instance"
-	Customized        = "customized"
+	IncorrectModel    = "incorrect-model"
 )
 
 var TokenClient Token
@@ -214,7 +212,7 @@ func HandleDeviceModel(c edgeclientset.Interface, operation string, UID string, 
 	switch operation {
 	case http.MethodPost:
 		body := newDeviceModelObject(protocolType, false)
-		_, err := c.DevicesV1alpha2().DeviceModels("default").Create(context.TODO(), body, metav1.CreateOptions{})
+		_, err := c.DevicesV1beta1().DeviceModels("default").Create(context.TODO(), body, metav1.CreateOptions{})
 		return err
 
 	case http.MethodPatch:
@@ -224,11 +222,11 @@ func HandleDeviceModel(c edgeclientset.Interface, operation string, UID string, 
 			Fatalf("Marshalling body failed: %v", err)
 		}
 
-		_, err = c.DevicesV1alpha2().DeviceModels("default").Patch(context.TODO(), UID, types.MergePatchType, reqBytes, metav1.PatchOptions{})
+		_, err = c.DevicesV1beta1().DeviceModels("default").Patch(context.TODO(), UID, types.MergePatchType, reqBytes, metav1.PatchOptions{})
 		return err
 
 	case http.MethodDelete:
-		err := c.DevicesV1alpha2().DeviceModels("default").Delete(context.TODO(), UID, metav1.DeleteOptions{})
+		err := c.DevicesV1beta1().DeviceModels("default").Delete(context.TODO(), UID, metav1.DeleteOptions{})
 		if err != nil && apierrors.IsNotFound(err) {
 			return nil
 		}
@@ -239,25 +237,25 @@ func HandleDeviceModel(c edgeclientset.Interface, operation string, UID string, 
 }
 
 // HandleDeviceInstance to handle app deployment/delete using pod spec.
-func HandleDeviceInstance(c edgeclientset.Interface, operation string, nodeSelector string, UID string, protocolType string) error {
+func HandleDeviceInstance(c edgeclientset.Interface, operation string, nodeName string, UID string, protocolType string) error {
 	switch operation {
 	case http.MethodPost:
-		body := newDeviceInstanceObject(nodeSelector, protocolType, false)
-		_, err := c.DevicesV1alpha2().Devices("default").Create(context.TODO(), body, metav1.CreateOptions{})
+		body := newDeviceInstanceObject(nodeName, protocolType, false)
+		_, err := c.DevicesV1beta1().Devices("default").Create(context.TODO(), body, metav1.CreateOptions{})
 		return err
 
 	case http.MethodPatch:
-		body := newDeviceInstanceObject(nodeSelector, protocolType, true)
+		body := newDeviceInstanceObject(nodeName, protocolType, true)
 		reqBytes, err := json.Marshal(body)
 		if err != nil {
 			Fatalf("Marshalling body failed: %v", err)
 		}
 
-		_, err = c.DevicesV1alpha2().Devices("default").Patch(context.TODO(), UID, types.MergePatchType, reqBytes, metav1.PatchOptions{})
+		_, err = c.DevicesV1beta1().Devices("default").Patch(context.TODO(), UID, types.MergePatchType, reqBytes, metav1.PatchOptions{})
 		return err
 
 	case http.MethodDelete:
-		err := c.DevicesV1alpha2().Devices("default").Delete(context.TODO(), UID, metav1.DeleteOptions{})
+		err := c.DevicesV1beta1().Devices("default").Delete(context.TODO(), UID, metav1.DeleteOptions{})
 		if err != nil && apierrors.IsNotFound(err) {
 			return nil
 		}
@@ -268,29 +266,19 @@ func HandleDeviceInstance(c edgeclientset.Interface, operation string, nodeSelec
 }
 
 // newDeviceInstanceObject creates a new device instance object
-func newDeviceInstanceObject(nodeSelector string, protocolType string, updated bool) *v1alpha2.Device {
-	var deviceInstance v1alpha2.Device
+func newDeviceInstanceObject(nodeName string, protocolType string, updated bool) *v1beta1.Device {
+	var deviceInstance v1beta1.Device
 	if !updated {
 		switch protocolType {
-		case BlueTooth:
-			deviceInstance = NewBluetoothDeviceInstance(nodeSelector)
 		case ModBus:
-			deviceInstance = NewModbusDeviceInstance(nodeSelector)
-		case Led:
-			deviceInstance = NewLedDeviceInstance(nodeSelector)
-		case Customized:
-			deviceInstance = NewCustomizedDeviceInstance(nodeSelector)
+			deviceInstance = NewModbusDeviceInstance(nodeName)
 		case IncorrectInstance:
 			deviceInstance = IncorrectDeviceInstance()
 		}
 	} else {
 		switch protocolType {
-		case BlueTooth:
-			deviceInstance = UpdatedBluetoothDeviceInstance(nodeSelector)
 		case ModBus:
-			deviceInstance = UpdatedModbusDeviceInstance(nodeSelector)
-		case Led:
-			deviceInstance = UpdatedLedDeviceInstance(nodeSelector)
+			deviceInstance = UpdatedModbusDeviceInstance(nodeName)
 		case IncorrectInstance:
 			deviceInstance = IncorrectDeviceInstance()
 		}
@@ -299,46 +287,36 @@ func newDeviceInstanceObject(nodeSelector string, protocolType string, updated b
 }
 
 // newDeviceModelObject creates a new device model object
-func newDeviceModelObject(protocolType string, updated bool) *v1alpha2.DeviceModel {
-	var deviceModel v1alpha2.DeviceModel
+func newDeviceModelObject(protocolType string, updated bool) *v1beta1.DeviceModel {
+	var deviceModel v1beta1.DeviceModel
 	if !updated {
 		switch protocolType {
-		case BlueTooth:
-			deviceModel = NewBluetoothDeviceModel()
 		case ModBus:
 			deviceModel = NewModbusDeviceModel()
-		case Led:
-			deviceModel = NewLedDeviceModel()
-		case Customized:
-			deviceModel = NewCustomizedDeviceModel()
-		case "incorrect-model":
+		case IncorrectModel:
 			deviceModel = IncorrectDeviceModel()
 		}
 	} else {
 		switch protocolType {
-		case BlueTooth:
-			deviceModel = UpdatedBluetoothDeviceModel()
 		case ModBus:
 			deviceModel = UpdatedModbusDeviceModel()
-		case Led:
-			deviceModel = UpdatedLedDeviceModel()
-		case "incorrect-model":
+		case IncorrectModel:
 			deviceModel = IncorrectDeviceModel()
 		}
 	}
 	return &deviceModel
 }
 
-func ListDeviceModel(c edgeclientset.Interface, ns string) ([]v1alpha2.DeviceModel, error) {
-	deviceModelList, err := c.DevicesV1alpha2().DeviceModels(ns).List(context.TODO(), metav1.ListOptions{})
+func ListDeviceModel(c edgeclientset.Interface, ns string) ([]v1beta1.DeviceModel, error) {
+	deviceModelList, err := c.DevicesV1beta1().DeviceModels(ns).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
 	return deviceModelList.Items, nil
 }
 
-func ListDevice(c edgeclientset.Interface, ns string) ([]v1alpha2.Device, error) {
-	deviceList, err := c.DevicesV1alpha2().Devices(ns).List(context.TODO(), metav1.ListOptions{})
+func ListDevice(c edgeclientset.Interface, ns string) ([]v1beta1.Device, error) {
+	deviceList, err := c.DevicesV1beta1().Devices(ns).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -346,7 +324,7 @@ func ListDevice(c edgeclientset.Interface, ns string) ([]v1alpha2.Device, error)
 }
 
 // CheckDeviceModelExists verify whether the contents of the device model matches with what is expected
-func CheckDeviceModelExists(deviceModels []v1alpha2.DeviceModel, expectedDeviceModel *v1alpha2.DeviceModel) error {
+func CheckDeviceModelExists(deviceModels []v1beta1.DeviceModel, expectedDeviceModel *v1beta1.DeviceModel) error {
 	modelExists := false
 	for _, deviceModel := range deviceModels {
 		if expectedDeviceModel.ObjectMeta.Name == deviceModel.ObjectMeta.Name {
@@ -366,7 +344,7 @@ func CheckDeviceModelExists(deviceModels []v1alpha2.DeviceModel, expectedDeviceM
 	return nil
 }
 
-func CheckDeviceExists(deviceList []v1alpha2.Device, expectedDevice *v1alpha2.Device) error {
+func CheckDeviceExists(deviceList []v1beta1.Device, expectedDevice *v1beta1.Device) error {
 	deviceExists := false
 	for _, device := range deviceList {
 		if expectedDevice.ObjectMeta.Name == device.ObjectMeta.Name {
@@ -376,21 +354,6 @@ func CheckDeviceExists(deviceList []v1alpha2.Device, expectedDevice *v1alpha2.De
 				!reflect.DeepEqual(expectedDevice.ObjectMeta.Labels, device.ObjectMeta.Labels) ||
 				!reflect.DeepEqual(expectedDevice.Spec, device.Spec) {
 				return fmt.Errorf("the device is not matching with what was expected")
-			}
-			twinExists := false
-			for _, expectedTwin := range expectedDevice.Status.Twins {
-				for _, twin := range device.Status.Twins {
-					if expectedTwin.PropertyName == twin.PropertyName {
-						twinExists = true
-						if !reflect.DeepEqual(expectedTwin.Desired, twin.Desired) {
-							return fmt.Errorf("Status twin " + twin.PropertyName + " not as expected")
-						}
-						break
-					}
-				}
-			}
-			if !twinExists {
-				return fmt.Errorf("status twin(s) not found")
 			}
 			break
 		}
@@ -482,27 +445,6 @@ func OnTwinMessageReceived(client MQTT.Client, message MQTT.Message) {
 	if err != nil {
 		Errorf("Error in unmarshalling: %v", err.Error())
 	}
-}
-
-// CompareConfigMaps is used to compare 2 config maps
-func CompareConfigMaps(configMap, expectedConfigMap v1.ConfigMap) bool {
-	Infof("expectedConfigMap.Data: %v", expectedConfigMap.Data)
-	Infof("configMap.Data %v", configMap.Data)
-
-	if expectedConfigMap.ObjectMeta.Namespace != configMap.ObjectMeta.Namespace || !reflect.DeepEqual(expectedConfigMap.Data, configMap.Data) {
-		return false
-	}
-	return true
-}
-
-// CompareDeviceProfileInConfigMaps is used to compare 2 device profile in config maps
-func CompareDeviceProfileInConfigMaps(configMap, expectedConfigMap v1.ConfigMap) bool {
-	deviceProfile := configMap.Data["deviceProfile.json"]
-	ExpectedDeviceProfile := expectedConfigMap.Data["deviceProfile.json"]
-	var deviceProfileMap, expectedDeviceProfileMap map[string]interface{}
-	_ = json.Unmarshal([]byte(deviceProfile), &deviceProfileMap)
-	_ = json.Unmarshal([]byte(ExpectedDeviceProfile), &expectedDeviceProfileMap)
-	return reflect.DeepEqual(expectedConfigMap.TypeMeta, configMap.TypeMeta)
 }
 
 // CompareTwin is used to compare 2 device Twins
