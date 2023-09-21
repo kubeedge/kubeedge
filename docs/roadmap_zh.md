@@ -6,127 +6,57 @@
 
 下面的路线图概述了KubeEdge将要添加的新功能。
 
-## 2021 H1
+## 2023 H1
 
-### 核心框架
+### SIG Node
 
-#### 边缘List-Watch
+- 支持在边缘节点使用WasmEdge
+- 支持使用Kubectl attach命令访问边缘容器
+- 升级Kubernetes依赖版本到v1.24.14, 将边缘默认容器运行时切换成containerd
 
-- 边缘端支持List-Watch接口，方便边缘组件接入。
+### SIG Device-IOT
 
-#### 云边自定义消息通道
+- 提供基于DMI的modbus mapper
+- DMI数据面
+- 提供支持DMI的mapper框架
 
-- 支持云端和边缘端之间的自定义消息传输
+### SIG Security
 
-#### 稳定支持CloudCore多活
+- 为边缘节点上的应用程序提供支持Kube-API端点的身份验证和授权
+- 增强边缘明文存储，确保token不落盘
 
-- 支持多个CloudCore实例同时稳定运行
+### SIG Scalability
 
-#### 第三方CNI集成支持
+- 支持集群scope资源可靠地分发到边缘节点
+- 通过统一通用informer和减少不必要的缓存，将CloudCore内存占用降低了40%
 
-- 提供flannel、calico等CNI插件的官方集成支持
+### SIG Networking
 
-#### 第三方CSI集成支持
+- 为edge-tunnel模块新增可配置的TunnelLimitConfig字段
+- EdgeMesh容器网络支持CNI特性
 
-- 提供Rook、OpenEBS等CSI插件的官方集成支持
+### SIG AI
 
-#### 支持云端管理边缘群集 (aka. EdgeSite)
+- Sedna
+    - 支持非结构化的终身学习
+    - 支持未知任务识别
+    - 支持展示知识库
 
-#### 在边缘端支持 ingress/网关
+- Ianvs
+    - 支持整个生命周期的终身学习
+    - 提供经典的终身学习测试指标和支持可视化测试结果
+    - 提供真实世界的数据集和丰富的终身学习测试示例
 
+### SIG Testing
 
-### 可维护性
+- 提供硬件兼容性测试套件Provide node conformance test suite
+- 提高单元测试覆盖率Improve unit test coverage
 
-#### 部署优化
+### SIG Cluster-Lifecycle
 
-- 更加简单、便捷的部署（最好一键部署，支持中国镜像）
-- Admission Controller自动部署
+- 提供工具keink，用于使用Docker容器运行本地KubeEdge集群
 
-#### 边缘应用离线迁移时间自动化配置
+### UI
 
-- 一键修改Default tolerationSeconds
-
-#### 体验良好的中文文档
-
-
-### IOT 设备管理
-
-#### 设备Mapper框架标准以及框架生成器
-
-- 制定边缘设备Mapper的实施标准
-
-#### 支持更多协议的mapper
-
-- OPC-UA mapper
-- ONVIF mapper
-
-
-### 安全
-
-#### 完成安全漏洞扫描
-
-
-### 测试
-
-#### 使用更多的度量和场景改进性能和e2e测试
-
-
-### 边云协同AI
-
-#### 支持 KubeFlow/ONNX/Pytorch/Mindspore等
-
-#### 边云协同训练与推理
-
-
-### MEC
-
-#### 跨边云服务发现
-
-#### 5G网络能力开放
-
-
-
-## 2021 H2
-
-### 核心框架
-
-#### 云边自定义消息通道
-
-- 云边支持CloudEvent消息协议
-
-#### 数据面跨网络通信
-
-- 边缘-边缘 跨网络通信
-- 边缘-中心云 跨网络通信
-
-#### 使用标准的istio进行服务治理控制
-
-#### 云边协同监控
-
-- 支持prometheus push gateway
-- 数据管理，支持接收遥测数据和边缘分析。
-
-
-### IOT 设备管理
-
-#### 设备Mapper框架标准以及框架生成器
-
-- 开发Mapper基本框架生成器
-
-#### 支持更多协议的mapper
-
-- GB/T 28181 mapper
-
-
-### 边云协同AI
-
-#### 边缘智能benchmark
-
-
-### MEC
-
-#### 云网融合
-
-#### service catalog
-
-#### 应用漫游
+- 提供KubeEdge Dashboard的Alpha版本
+- 重构KubeEdge官网

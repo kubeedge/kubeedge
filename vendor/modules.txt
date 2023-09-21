@@ -254,7 +254,7 @@ github.com/docker/cli/cli/config
 github.com/docker/cli/cli/config/configfile
 github.com/docker/cli/cli/config/credentials
 github.com/docker/cli/cli/config/types
-# github.com/docker/distribution v2.8.1+incompatible
+# github.com/docker/distribution v2.8.2-beta.1+incompatible
 ## explicit
 github.com/docker/distribution
 github.com/docker/distribution/digestset
@@ -268,7 +268,7 @@ github.com/docker/distribution/registry/client/auth/challenge
 github.com/docker/distribution/registry/client/transport
 github.com/docker/distribution/registry/storage/cache
 github.com/docker/distribution/registry/storage/cache/memory
-# github.com/docker/docker v20.10.21+incompatible
+# github.com/docker/docker v20.10.24+incompatible
 ## explicit
 github.com/docker/docker/api
 github.com/docker/docker/api/types
@@ -314,7 +314,7 @@ github.com/docker/go-units
 ## explicit
 github.com/eclipse/paho.mqtt.golang
 github.com/eclipse/paho.mqtt.golang/packets
-# github.com/emicklei/go-restful v2.9.6+incompatible
+# github.com/emicklei/go-restful v2.16.0+incompatible
 ## explicit
 github.com/emicklei/go-restful
 github.com/emicklei/go-restful/log
