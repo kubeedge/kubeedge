@@ -122,14 +122,14 @@ func (dw *DMIWorker) dealMetaDeviceOperation(context *dtcontext.DTContext, resou
 		}
 		switch message.GetOperation() {
 		case model.InsertOperation:
+			dw.dmiCache.DeviceMu.Lock()
+			dw.dmiCache.DeviceList[device.Name] = &device
+			dw.dmiCache.DeviceMu.Unlock()
 			err = dmiclient.DMIClientsImp.RegisterDevice(&device)
 			if err != nil {
 				klog.Errorf("add device %s failed with err: %v", device.Name, err)
 				return err
 			}
-			dw.dmiCache.DeviceMu.Lock()
-			dw.dmiCache.DeviceList[device.Name] = &device
-			dw.dmiCache.DeviceMu.Unlock()
 		case model.DeleteOperation:
 			err = dmiclient.DMIClientsImp.RemoveDevice(&device)
 			if err != nil {
@@ -140,14 +140,14 @@ func (dw *DMIWorker) dealMetaDeviceOperation(context *dtcontext.DTContext, resou
 			delete(dw.dmiCache.DeviceList, device.Name)
 			dw.dmiCache.DeviceMu.Unlock()
 		case model.UpdateOperation:
+			dw.dmiCache.DeviceMu.Lock()
+			dw.dmiCache.DeviceList[device.Name] = &device
+			dw.dmiCache.DeviceMu.Unlock()
 			err = dmiclient.DMIClientsImp.UpdateDevice(&device)
 			if err != nil {
 				klog.Errorf("udpate device %s failed with err: %v", device.Name, err)
 				return err
 			}
-			dw.dmiCache.DeviceMu.Lock()
-			dw.dmiCache.DeviceList[device.Name] = &device
-			dw.dmiCache.DeviceMu.Unlock()
 		default:
 			klog.Warningf("unsupported operation %s", message.GetOperation())
 		}
@@ -158,14 +158,14 @@ func (dw *DMIWorker) dealMetaDeviceOperation(context *dtcontext.DTContext, resou
 		}
 		switch message.GetOperation() {
 		case model.InsertOperation:
+			dw.dmiCache.DeviceModelMu.Lock()
+			dw.dmiCache.DeviceModelList[dm.Name] = &dm
+			dw.dmiCache.DeviceModelMu.Unlock()
 			err = dmiclient.DMIClientsImp.CreateDeviceModel(&dm)
 			if err != nil {
 				klog.Errorf("add device model %s failed with err: %v", dm.Name, err)
 				return err
 			}
-			dw.dmiCache.DeviceModelMu.Lock()
-			dw.dmiCache.DeviceModelList[dm.Name] = &dm
-			dw.dmiCache.DeviceModelMu.Unlock()
 		case model.DeleteOperation:
 			err = dmiclient.DMIClientsImp.RemoveDeviceModel(&dm)
 			if err != nil {
@@ -176,14 +176,14 @@ func (dw *DMIWorker) dealMetaDeviceOperation(context *dtcontext.DTContext, resou
 			delete(dw.dmiCache.DeviceModelList, dm.Name)
 			dw.dmiCache.DeviceModelMu.Unlock()
 		case model.UpdateOperation:
+			dw.dmiCache.DeviceModelMu.Lock()
+			dw.dmiCache.DeviceModelList[dm.Name] = &dm
+			dw.dmiCache.DeviceModelMu.Unlock()
 			err = dmiclient.DMIClientsImp.UpdateDeviceModel(&dm)
 			if err != nil {
 				klog.Errorf("update device model %s failed with err: %v", dm.Name, err)
 				return err
 			}
-			dw.dmiCache.DeviceModelMu.Lock()
-			dw.dmiCache.DeviceModelList[dm.Name] = &dm
-			dw.dmiCache.DeviceModelMu.Unlock()
 		default:
 			klog.Warningf("unsupported operation %s", message.GetOperation())
 		}
