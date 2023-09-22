@@ -280,15 +280,16 @@ func (e *edged) handlePod(op string, content []byte, updatesChan chan<- interfac
 	pods = append(pods, &pod)
 
 	if filterPodByNodeName(&pod, e.nodeName) {
+		var podOp kubelettypes.PodOperation
 		switch op {
-		case model.InsertOperation:
-			klog.V(4).InfoS("Receive message of adding new pods", "pods", format.Pods(pods))
-		case model.UpdateOperation:
-			klog.V(4).InfoS("Receive message of updating pods", "pods", format.Pods(pods))
+		case model.InsertOperation, model.UpdateOperation:
+			klog.V(4).InfoS("Receive message of add/update pods", "operation", op, "pods", format.Pods(pods))
+			podOp = kubelettypes.UPDATE
 		case model.DeleteOperation:
 			klog.V(4).InfoS("Receive message of deleting pods", "pods", format.Pods(pods))
+			podOp = kubelettypes.REMOVE
 		}
-		updates := &kubelettypes.PodUpdate{Op: kubelettypes.UPDATE, Pods: pods, Source: kubelettypes.ApiserverSource}
+		updates := &kubelettypes.PodUpdate{Op: podOp, Pods: pods, Source: kubelettypes.ApiserverSource}
 		updatesChan <- *updates
 	}
 
