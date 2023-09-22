@@ -30,14 +30,14 @@ import (
 )
 
 // NewDefaultEdgeCoreConfig returns a full EdgeCoreConfig object
-func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
+func NewDefaultEdgeCoreConfig() (config *EdgeCoreConfig) {
 	hostnameOverride := util.GetHostname()
 	localIP, _ := util.GetLocalIP(hostnameOverride)
 
 	defaultTailedKubeletConfig := TailoredKubeletConfiguration{}
 	SetDefaultsKubeletConfiguration(&defaultTailedKubeletConfig)
 
-	return &EdgeCoreConfig{
+	config = &EdgeCoreConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       Kind,
 			APIVersion: path.Join(GroupName, APIVersion),
@@ -67,6 +67,7 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 					NodeLabels:              make(map[string]string),
 					RegisterNode:            true,
 					RegisterSchedulable:     true,
+					WindowsPriorityClass:    DefaultWindowsPriorityClass,
 				},
 				CustomInterfaceName:   "",
 				RegisterNodeNamespace: constants.DefaultRegisterNodeNamespace,
@@ -158,17 +159,18 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 			},
 		},
 	}
+	return
 }
 
 // NewMinEdgeCoreConfig returns a common EdgeCoreConfig object
-func NewMinEdgeCoreConfig() *EdgeCoreConfig {
+func NewMinEdgeCoreConfig() (config *EdgeCoreConfig) {
 	hostnameOverride := util.GetHostname()
 	localIP, _ := util.GetLocalIP(hostnameOverride)
 
 	defaultTailedKubeletConfig := TailoredKubeletConfiguration{}
 	SetDefaultsKubeletConfiguration(&defaultTailedKubeletConfig)
 
-	return &EdgeCoreConfig{
+	config = &EdgeCoreConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       Kind,
 			APIVersion: path.Join(GroupName, APIVersion),
@@ -196,6 +198,7 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 					NodeLabels:              make(map[string]string),
 					RegisterNode:            true,
 					RegisterSchedulable:     true,
+					WindowsPriorityClass:    DefaultWindowsPriorityClass,
 				},
 				CustomInterfaceName:   "",
 				RegisterNodeNamespace: constants.DefaultRegisterNodeNamespace,
@@ -231,4 +234,5 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 			},
 		},
 	}
+	return
 }

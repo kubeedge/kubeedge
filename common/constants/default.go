@@ -28,38 +28,17 @@ const (
 
 // Resources
 const (
-	// Certificates
-	DefaultConfigDir            = "/etc/kubeedge/config/"
-	DefaultCAFile               = "/etc/kubeedge/ca/rootCA.crt"
-	DefaultCAKeyFile            = "/etc/kubeedge/ca/rootCA.key"
-	DefaultCertFile             = "/etc/kubeedge/certs/server.crt"
-	DefaultKeyFile              = "/etc/kubeedge/certs/server.key"
+	DefaultCAURL                = "/ca.crt"
+	DefaultCertURL              = "/edge.crt"
+	DefaultNodeUpgradeURL       = "/nodeupgrade"
 	DefaultServiceAccountIssuer = "https://kubernetes.default.svc.cluster.local"
 
-	DefaultCAURL          = "/ca.crt"
-	DefaultCertURL        = "/edge.crt"
-	DefaultNodeUpgradeURL = "/nodeupgrade"
-
-	DefaultStreamCAFile   = "/etc/kubeedge/ca/streamCA.crt"
-	DefaultStreamCertFile = "/etc/kubeedge/certs/stream.crt"
-	DefaultStreamKeyFile  = "/etc/kubeedge/certs/stream.key"
-
-	DefaultMqttCAFile   = "/etc/kubeedge/ca/rootCA.crt"
-	DefaultMqttCertFile = "/etc/kubeedge/certs/server.crt"
-	DefaultMqttKeyFile  = "/etc/kubeedge/certs/server.key"
-
-	// Bootstrap file, contains token used by edgecore to apply for ca/cert
-	BootstrapFile = "/etc/kubeedge/bootstrap-edgecore.conf"
-
 	// Edged
-	DefaultRootDir               = "/var/lib/edged"
-	DefaultDockerAddress         = "unix:///var/run/docker.sock"
-	DefaultRuntimeType           = "remote"
-	DefaultDockershimRootDir     = "/var/lib/dockershim"
-	DefaultEdgedMemoryCapacity   = 7852396000
-	DefaultRemoteRuntimeEndpoint = "unix:///run/containerd/containerd.sock"
-	DefaultRemoteImageEndpoint   = "unix:///run/containerd/containerd.sock"
-	DefaultMosquittoImage        = "eclipse-mosquitto:1.6.15"
+	DefaultDockerAddress       = "unix:///var/run/docker.sock"
+	DefaultDockershimRootDir   = "/var/lib/dockershim"
+	DefaultRuntimeType         = "remote"
+	DefaultEdgedMemoryCapacity = 7852396000
+	DefaultMosquittoImage      = "eclipse-mosquitto:1.6.15"
 	// update PodSandboxImage version when bumping k8s vendor version, consistent with vendor/k8s.io/kubernetes/cmd/kubelet/app/options/container_runtime.go defaultPodSandboxImageVersion
 	// When this value are updated, also update comments in pkg/apis/componentconfig/edgecore/v1alpha1/types.go
 	DefaultPodSandboxImage             = "kubeedge/pause:3.6"
@@ -69,9 +48,6 @@ const (
 	DefaultMaximumDeadContainersPerPod = 1
 	DefaultHostnameOverride            = "default-edge-node"
 	DefaultRegisterNodeNamespace       = "default"
-	DefaultCNIConfDir                  = "/etc/cni/net.d"
-	DefaultCNIBinDir                   = "/opt/cni/bin"
-	DefaultCNICacheDir                 = "/var/lib/cni/cache"
 	DefaultNetworkPluginMTU            = 1500
 	DefaultConcurrentConsumers         = 5
 	DefaultCgroupRoot                  = ""

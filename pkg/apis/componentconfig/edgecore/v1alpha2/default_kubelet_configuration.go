@@ -1,5 +1,5 @@
 /*
-Copyright 2022 The KubeEdge Authors.
+Copyright 2023 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,16 +32,9 @@ import (
 	configv1beta1 "k8s.io/kubernetes/pkg/kubelet/apis/config/v1beta1"
 	"k8s.io/kubernetes/pkg/kubelet/eviction"
 	"k8s.io/kubernetes/pkg/kubelet/qos"
-	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
 	utilpointer "k8s.io/utils/pointer"
 
 	"github.com/kubeedge/kubeedge/common/constants"
-)
-
-var (
-	// TODO: Move these constants to k8s.io/kubelet/config/v1beta1 instead?
-	// Refer to [Node Allocatable](https://git.k8s.io/community/contributors/design-proposals/node/node-allocatable.md) doc for more information.
-	DefaultNodeAllocatableEnforcement = []string{"pods"}
 )
 
 // SetDefaultsKubeletConfiguration sets defaults for tailored kubelet configuration
@@ -63,8 +56,6 @@ func SetDefaultsKubeletConfiguration(obj *TailoredKubeletConfiguration) {
 	obj.ImageGCHighThresholdPercent = utilpointer.Int32Ptr(constants.DefaultImageGCHighThreshold)
 	obj.ImageGCLowThresholdPercent = utilpointer.Int32Ptr(constants.DefaultImageGCLowThreshold)
 	obj.VolumeStatsAggPeriod = metav1.Duration{Duration: time.Minute}
-	obj.CgroupsPerQOS = utilpointer.BoolPtr(true)
-	obj.CgroupDriver = "cgroupfs"
 	obj.CPUManagerPolicy = "none"
 	// Keep the same as default NodeStatusUpdateFrequency
 	obj.CPUManagerReconcilePeriod = metav1.Duration{Duration: 10 * time.Second}
@@ -76,8 +67,6 @@ func SetDefaultsKubeletConfiguration(obj *TailoredKubeletConfiguration) {
 	obj.MaxPods = 110
 	// default nil or negative value to -1 (implies node allocatable pid limit)
 	obj.PodPidsLimit = utilpointer.Int64(-1)
-	obj.ResolverConfig = utilpointer.String(kubetypes.ResolvConfDefault)
-	obj.CPUCFSQuota = utilpointer.BoolPtr(true)
 	obj.CPUCFSQuotaPeriod = &metav1.Duration{Duration: 100 * time.Millisecond}
 	obj.NodeStatusMaxImages = utilpointer.Int32Ptr(0)
 	obj.MaxOpenFiles = 1000000
@@ -94,7 +83,7 @@ func SetDefaultsKubeletConfiguration(obj *TailoredKubeletConfiguration) {
 	obj.ContainerLogMaxFiles = utilpointer.Int32Ptr(5)
 	obj.ConfigMapAndSecretChangeDetectionStrategy = kubeletconfigv1beta1.GetChangeDetectionStrategy
 	obj.EnforceNodeAllocatable = DefaultNodeAllocatableEnforcement
-	obj.VolumePluginDir = configv1beta1.DefaultVolumePluginDir
+	obj.VolumePluginDir = constants.DefaultVolumePluginDir
 	// Use the Default LoggingConfiguration option
 	logsapi.SetRecommendedLoggingConfiguration(&obj.Logging)
 	obj.EnableSystemLogHandler = utilpointer.BoolPtr(true)
@@ -103,4 +92,10 @@ func SetDefaultsKubeletConfiguration(obj *TailoredKubeletConfiguration) {
 	obj.SeccompDefault = utilpointer.BoolPtr(false)
 	obj.MemoryThrottlingFactor = utilpointer.Float64Ptr(configv1beta1.DefaultMemoryThrottlingFactor)
 	obj.RegisterNode = utilpointer.BoolPtr(true)
+
+	obj.EnforceNodeAllocatable = DefaultNodeAllocatableEnforcement
+	obj.CgroupDriver = DefaultCgroupDriver
+	obj.CgroupsPerQOS = utilpointer.Bool(DefaultCgroupsPerQOS)
+	obj.ResolverConfig = utilpointer.String(DefaultResolverConfig)
+	obj.CPUCFSQuota = utilpointer.Bool(DefaultCPUCFSQuota)
 }

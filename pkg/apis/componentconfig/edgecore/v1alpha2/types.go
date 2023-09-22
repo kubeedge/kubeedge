@@ -33,17 +33,10 @@ const (
 )
 
 const (
-	CGroupDriverCGroupFS = "cgroupfs"
-	CGroupDriverSystemd  = "systemd"
-)
-
-const (
 	// DataBaseDriverName is sqlite3
 	DataBaseDriverName = "sqlite3"
 	// DataBaseAliasName is default
 	DataBaseAliasName = "default"
-	// DataBaseDataSource is edge.db
-	DataBaseDataSource = "/var/lib/kubeedge/edgecore.db"
 )
 
 type ProtocolName string

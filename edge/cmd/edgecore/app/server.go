@@ -176,7 +176,8 @@ func environmentCheck() error {
 	for _, process := range processes {
 		processName, err := process.Name()
 		if err != nil {
-			return err
+			// err usually cant be fixed by user, so just skip it instead of return error (we only check named process)
+			continue
 		}
 		switch processName {
 		case "kubelet": // if kubelet is running, return error
