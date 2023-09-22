@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"reflect"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -391,9 +392,38 @@ func (dc *DownstreamController) deviceAdded(device *v1alpha2.Device) {
 			klog.Errorf("Failed to send device addition message %v due to error %v", msg, err)
 		}
 
-		dc.sendDeviceModelMsg(device, model.InsertOperation)
+		if !isExistModel(&dc.deviceManager.Device, device) {
+			dc.sendDeviceModelMsg(device, model.InsertOperation)
+		}
 		dc.sendDeviceMsg(device, model.InsertOperation)
 	}
+}
+
+// isExistModel check if the target node already has the model.
+func isExistModel(deviceMap *sync.Map, device *v1alpha2.Device) bool {
+	var res bool
+	targetNode := device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0]
+	modelName := device.Spec.DeviceModelRef.Name
+	// To find another device in deviceMap that uses the same deviceModel with exclude current device
+	deviceMap.Range(func(k, v interface{}) bool {
+		if k == device.Name {
+			return true
+		}
+		if deviceItem, ok := v.(*v1alpha2.Device); !ok {
+			return true
+		} else {
+			if len(deviceItem.Spec.NodeSelector.NodeSelectorTerms) == 0 || len(deviceItem.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions) == 0 || len(deviceItem.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values) == 0 {
+				return true
+			}
+			if deviceItem.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0] == targetNode &&
+				deviceItem.Spec.DeviceModelRef.Name == modelName {
+				res = true
+				return false
+			}
+		}
+		return true
+	})
+	return res
 }
 
 // createDevice creates a device from CRD
@@ -465,6 +495,20 @@ func isProtocolConfigUpdated(oldTwin *v1alpha2.ProtocolConfig, newTwin *v1alpha2
 // isDeviceStatusUpdated checks if DeviceStatus is updated
 func isDeviceStatusUpdated(oldTwin *v1alpha2.DeviceStatus, newTwin *v1alpha2.DeviceStatus) bool {
 	return !reflect.DeepEqual(oldTwin, newTwin)
+}
+
+// isDesiredTwinUpdated checks if desired twin is updated
+func isDesiredTwinUpdated(oldTwin *v1alpha2.DeviceStatus, newTwin *v1alpha2.DeviceStatus) bool {
+	index := 0
+	res := true
+	if len(oldTwin.Twins) != len(newTwin.Twins) {
+		return true
+	}
+	for index < len(oldTwin.Twins) && index < len(newTwin.Twins) {
+		res = res && reflect.DeepEqual(oldTwin.Twins[index].Desired, newTwin.Twins[index].Desired)
+		index++
+	}
+	return !res
 }
 
 // isDeviceDataUpdated checks if DeviceData is updated
@@ -631,8 +675,7 @@ func (dc *DownstreamController) deviceUpdated(device *v1alpha2.Device) {
 					}
 				}
 				// distribute device model
-				if isDeviceStatusUpdated(&cachedDevice.Status, &device.Status) ||
-					isDeviceDataUpdated(&cachedDevice.Spec.Data, &device.Spec.Data) {
+				if isDesiredTwinUpdated(&cachedDevice.Status, &device.Status) {
 					dc.sendDeviceModelMsg(device, model.UpdateOperation)
 					dc.sendDeviceMsg(device, model.UpdateOperation)
 				}
@@ -947,7 +990,9 @@ func (dc *DownstreamController) deviceDeleted(device *v1alpha2.Device) {
 		if err != nil {
 			klog.Errorf("Failed to send device addition message %v due to error %v", msg, err)
 		}
-		dc.sendDeviceModelMsg(device, model.DeleteOperation)
+		if !isExistModel(&dc.deviceManager.Device, device) {
+			dc.sendDeviceModelMsg(device, model.DeleteOperation)
+		}
 		dc.sendDeviceMsg(device, model.DeleteOperation)
 	}
 }

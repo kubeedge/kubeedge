@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
 
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
@@ -90,6 +93,68 @@ func ConvertDevice(device *v1alpha2.Device) (*pb.Device, error) {
 		klog.Errorf("fail to unmarshal device %s with err: %v", device.Name, err)
 		return nil, err
 	}
+	if device.Spec.Protocol.CustomizedProtocol != nil && device.Spec.Protocol.CustomizedProtocol.ConfigData != nil {
+		// interface data to anypb.Any data
+		configAnyData := make(map[string]*anypb.Any)
+		for k, v := range device.Spec.Protocol.CustomizedProtocol.ConfigData.Data {
+			anyValue, err := DataToAny(v)
+			if err != nil {
+				return nil, err
+			}
+			configAnyData[k] = anyValue
+		}
+		edgeDevice.Spec.Protocol.CustomizedProtocol.ConfigData.Data = configAnyData
+	}
+	if device.Spec.Protocol.Common != nil && device.Spec.Protocol.Common.CustomizedValues != nil {
+		// interface data to anypb.Any data
+		configAnyData := make(map[string]*anypb.Any)
+		for k, v := range device.Spec.Protocol.Common.CustomizedValues.Data {
+			anyValue, err := DataToAny(v)
+			if err != nil {
+				return nil, err
+			}
+			configAnyData[k] = anyValue
+		}
+		edgeDevice.Spec.Protocol.Common.CustomizedValues.Data = configAnyData
+	}
+	var edgePropertyVisitors []*pb.DevicePropertyVisitor
+	for i := range device.Spec.PropertyVisitors {
+		item := new(pb.DevicePropertyVisitor)
+		propertyData, err := json.Marshal(device.Spec.PropertyVisitors[i])
+		if err != nil {
+			klog.Errorf("fail to marshal device %s with err: %v", device.Name, err)
+			return nil, err
+		}
+		err = json.Unmarshal(propertyData, item)
+		if err != nil {
+			klog.Errorf("fail to unmarshal device %s with err: %v", device.Name, err)
+			return nil, err
+		}
+		if device.Spec.PropertyVisitors[i].CustomizedValues != nil {
+			configAnyData := make(map[string]*anypb.Any)
+			for k, v := range device.Spec.PropertyVisitors[i].CustomizedValues.Data {
+				anyValue, err := DataToAny(v)
+				if err != nil {
+					return nil, err
+				}
+				configAnyData[k] = anyValue
+			}
+			item.CustomizedValues.Data = configAnyData
+		}
+		if device.Spec.PropertyVisitors[i].CustomizedProtocol != nil && device.Spec.PropertyVisitors[i].CustomizedProtocol.ConfigData != nil {
+			configAnyData := make(map[string]*anypb.Any)
+			for k, v := range device.Spec.PropertyVisitors[i].CustomizedProtocol.ConfigData.Data {
+				anyValue, err := DataToAny(v)
+				if err != nil {
+					return nil, err
+				}
+				configAnyData[k] = anyValue
+			}
+			item.CustomizedProtocol.ConfigData.Data = configAnyData
+		}
+		edgePropertyVisitors = append(edgePropertyVisitors, item)
+	}
+	edgeDevice.Spec.PropertyVisitors = edgePropertyVisitors
 
 	edgeDevice.Name = device.Name
 	edgeDevice.Spec.DeviceModelReference = device.Spec.DeviceModelRef.Name
@@ -113,4 +178,38 @@ func ConvertDeviceModel(model *v1alpha2.DeviceModel) (*pb.DeviceModel, error) {
 	edgeDeviceModel.Name = model.Name
 
 	return &edgeDeviceModel, nil
+}
+
+func DataToAny(v interface{}) (*anypb.Any, error) {
+	switch value := v.(type) {
+	case string:
+		strWrapper := wrapperspb.String(value)
+		return anypb.New(strWrapper)
+	case int8:
+		intWrapper := wrapperspb.Int32(int32(value))
+		return anypb.New(intWrapper)
+	case int16:
+		intWrapper := wrapperspb.Int32(int32(value))
+		return anypb.New(intWrapper)
+	case int32:
+		intWrapper := wrapperspb.Int32(value)
+		return anypb.New(intWrapper)
+	case int64:
+		intWrapper := wrapperspb.Int64(value)
+		return anypb.New(intWrapper)
+	case int:
+		intWrapper := wrapperspb.Int32(int32(value))
+		return anypb.New(intWrapper)
+	case float64:
+		floatWrapper := wrapperspb.Float(float32(value))
+		return anypb.New(floatWrapper)
+	case float32:
+		floatWrapper := wrapperspb.Float(value)
+		return anypb.New(floatWrapper)
+	case bool:
+		boolWrapper := wrapperspb.Bool(value)
+		return anypb.New(boolWrapper)
+	default:
+		return nil, fmt.Errorf("%v does not support converting to any", reflect.TypeOf(v))
+	}
 }
