@@ -68,7 +68,7 @@ The roadmap below outlines new features that will be added to KubeEdge.
 - Support edge nodes running on Windows.
 - Capabilities enhancements for edge nodes, such as support static pods, event reporting and configurable application migration policies.
 - Support edge nodes running on RTOS systems.
-- Enhancements to device plugin, such as support for multiple virtual GPUs.
+- Enhancements to device plugin on edge node, such as support for multiple virtual GPUs.
 - Support for serverless computing.
 - Feature of upgrading edge nodes from cloud move to GA.
 - Optimization of node group features, such as support for more differentiated configuration parameters.
@@ -115,7 +115,8 @@ The roadmap below outlines new features that will be added to KubeEdge.
   - When a node goes offline, other nodes receive the update and remove the corresponding backend from the endpoint.
 - Large-scale optimization
   - In large-scale deployments, there is a high load on the edge kube apiserver. Consider using IPVS (IP Virtual Server) technology to handle the requests efficiently.
-  - Having a large number of services significantly increases the number of iptables rules on the nodes. Container Network supports CNI features.
+  - Having a large number of services significantly increases the number of iptables rules on the nodes. 
+  - Container Network supports CNI features.
 - Performance optimization: Kernel-level traffic forwarding based on eBPF (extended Berkeley Packet Filter).
 - Distributed messaging system.
 
