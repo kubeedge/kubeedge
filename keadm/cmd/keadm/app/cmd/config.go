@@ -163,11 +163,23 @@ func GetKubeEdgeImages(cfg *Configuration) []string {
 	case "cloud":
 		images = image.CloudSet(cfg.ImageRepository, cfg.KubeEdgeVersion).List()
 	case "edge":
-		images = image.EdgeSet(cfg.ImageRepository, cfg.KubeEdgeVersion).List()
+		images = image.EdgeSet(&cmdcommon.JoinOptions{
+			WithMQTT: true,
+			InitBaseOptions: cmdcommon.InitBaseOptions{
+				KubeEdgeVersion: cfg.KubeEdgeVersion,
+			},
+			ImageRepository: cfg.ImageRepository,
+		}).List()
 	default:
 		// if not specified, will return all images used by both cloud part and edge part
 		cloudSet := image.CloudSet(cfg.ImageRepository, cfg.KubeEdgeVersion)
-		edgeSet := image.EdgeSet(cfg.ImageRepository, cfg.KubeEdgeVersion)
+		edgeSet := image.EdgeSet(&cmdcommon.JoinOptions{
+			WithMQTT: true,
+			InitBaseOptions: cmdcommon.InitBaseOptions{
+				KubeEdgeVersion: cfg.KubeEdgeVersion,
+			},
+			ImageRepository: cfg.ImageRepository,
+		})
 		images = cloudSet.Merge(edgeSet).List()
 	}
 	return images
