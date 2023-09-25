@@ -1,7 +1,7 @@
 //go:build windows
 
 /*
-Copyright 2022 The KubeEdge Authors.
+Copyright 2023 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -65,8 +65,8 @@ func NewKubeEdgeReset() *cobra.Command {
 				os.Exit(0)
 			}
 			whoRunning := util.RunningModuleV2(reset)
-			if whoRunning == common.NoneRunning {
-				fmt.Println("Edgecore service installed by nssm not found in this host, exit")
+			if whoRunning == common.NoneRunning && !reset.Force {
+				fmt.Println("Edgecore service installed by nssm not found in this host, exit. If you want to clean the related files, using flag --force")
 				os.Exit(0)
 			}
 			return nil
@@ -87,7 +87,17 @@ func NewKubeEdgeReset() *cobra.Command {
 			// 1. kill edgecore process.
 			// For edgecore, don't delete node from K8S
 			if err := TearDownKubeEdge(reset.Kubeconfig); err != nil {
-				return fmt.Errorf("err when stop and remove edgecore using nssm: %s", err.Error())
+				err = fmt.Errorf("err when stop and remove edgecore using nssm: %s", err.Error())
+				fmt.Print("[reset] No edgecore running now, do you want to clean all the related directories? [y/N]: ")
+				s := bufio.NewScanner(os.Stdin)
+				s.Scan()
+				if err := s.Err(); err != nil {
+					return err
+				}
+				if strings.ToLower(s.Text()) != "y" {
+					return fmt.Errorf("aborted reset operation")
+				}
+				return cleanDirectories()
 			}
 
 			// 2. Remove containers managed by KubeEdge.
@@ -165,6 +175,7 @@ func cleanDirectories() error {
 		util.KubeEdgeLogPath,
 		util.KubeEdgeSocketPath,
 		util.EdgeRootDir,
+		util.KubeEdgeUsrBinPath,
 	}
 
 	for _, dir := range dirToClean {
@@ -181,7 +192,7 @@ func addResetFlags(cmd *cobra.Command, resetOpts *common.ResetOptions) {
 	//cmd.Flags().StringVar(&resetOpts.Kubeconfig, common.KubeConfig, resetOpts.Kubeconfig,
 	//	"Use this key to set kube-config path, eg: $HOME/.kube/config")
 	cmd.Flags().BoolVar(&resetOpts.Force, "force", resetOpts.Force,
-		"Reset the node without prompting for confirmation")
+		"Reset the node without prompting for confirmation, and continue even if running edgecore not found")
 	cmd.Flags().StringVar(&resetOpts.Endpoint, common.RemoteRuntimeEndpoint, resetOpts.Endpoint,
 		"Use this key to set container runtime endpoint")
 }

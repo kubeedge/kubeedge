@@ -4,13 +4,14 @@ package util
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestInstallNSSM(t *testing.T) {
 	err := InstallNSSM()
-	assert.NoError(t, err)
+	if err != nil {
+		t.Error(err)
+	}
 }
 
 func TestIsServiceExist(t *testing.T) {

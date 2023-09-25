@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"golang.org/x/text/encoding/simplifiedchinese"
 	"os/exec"
 	"runtime"
 	"strings"
 	"syscall"
+
+	"golang.org/x/text/encoding/simplifiedchinese"
 )
 
 // Command defines commands to be executed and captures std out and std error

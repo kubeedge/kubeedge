@@ -1,7 +1,7 @@
 //go:build windows
 
 /*
-Copyright 2019 The KubeEdge Authors.
+Copyright 2023 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -90,6 +90,10 @@ func RunningModuleV2(opt *types.ResetOptions) types.ModuleRunning {
 	return types.NoneRunning
 }
 
+func DownloadEdgecoreBin(options types.InstallOptions, version semver.Version) error {
+	return installKubeEdge(options, version)
+}
+
 // installKubeEdge downloads the provided version of KubeEdge Edgecore For windows.
 // Untar's in the specified location c:/etc/kubeedge/ and then copies
 // the binary to excecutables' path (eg: c:/usr/local/bin)
@@ -158,13 +162,14 @@ func installKubeEdge(options types.InstallOptions, version semver.Version) error
 	}
 
 	// decompress the release pkg
-	if err = DecompressTarGz(filePath, filepath.Join(options.TarballPath, dirname)); err != nil {
+	if err = DecompressTarGz(filePath, options.TarballPath); err != nil {
 		return err
 	}
 	// check if the edgecore.exe exists
 	if !FileExists(filepath.Join(options.TarballPath, dirname, "edge", "edgecore.exe")) {
 		return fmt.Errorf("cannot find edgecore binary at %s", filepath.Join(options.TarballPath, dirname, "edge", "edgecore.exe"))
 	}
+	os.MkdirAll(KubeEdgeUsrBinPath, os.ModePerm)
 	// copy the binary to the executable path
 	if err = CopyFile(filepath.Join(options.TarballPath, dirname, "edge", "edgecore.exe"), filepath.Join(KubeEdgeUsrBinPath, KubeEdgeBinaryName+".exe")); err != nil {
 		return err

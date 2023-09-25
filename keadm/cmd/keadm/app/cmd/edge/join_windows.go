@@ -44,7 +44,6 @@ import (
 )
 
 func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
-
 	cmd.Flags().StringVar(&joinOptions.KubeEdgeVersion, common.KubeEdgeVersion, joinOptions.KubeEdgeVersion,
 		"Use this key to download and use the required KubeEdge version")
 	cmd.Flags().Lookup(common.KubeEdgeVersion).NoOptDefVal = joinOptions.KubeEdgeVersion
@@ -156,7 +155,14 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 	step.Printf("Check edge bin exist")
 	// check if the binary download successfully manual
 	if !util.FileExists(filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName+".exe")) {
-		return fmt.Errorf("cannot find edgecore binary at %s, you should download it manual from github release and put edgecore.exe under %s", filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName+".exe"), util.KubeEdgeUsrBinPath)
+		fmt.Println("Edge binary not found, start download now")
+		v, err := semver.ParseTolerant(opt.KubeEdgeVersion)
+		if err != nil {
+			return fmt.Errorf("parse kubeedge version failed, %v", err)
+		}
+		if err = util.DownloadEdgecoreBin(common.InstallOptions{}, v); err != nil {
+			return err
+		}
 	}
 
 	step.Printf("Register edgecore as windows service")
@@ -218,13 +224,13 @@ func prepareWindowsNssm(step *common.Step) error {
 		return nil
 	}
 
-	fmt.Print("[join] Nssm not found, auto install now? [Y/n]: ")
+	fmt.Print("[join] Nssm not found, auto install now? [y/N]: ")
 	s := bufio.NewScanner(os.Stdin)
 	s.Scan()
 	if err := s.Err(); err != nil {
 		return err
 	}
-	if strings.ToLower(s.Text()) != "y" && strings.ToLower(s.Text()) != "" {
+	if strings.ToLower(s.Text()) != "y" {
 		return fmt.Errorf("aborted join operation, please install nssm manually and retry")
 	}
 
