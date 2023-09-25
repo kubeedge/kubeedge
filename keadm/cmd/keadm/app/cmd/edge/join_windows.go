@@ -19,12 +19,14 @@ limitations under the License.
 package edge
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"net"
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/blang/semver"
@@ -214,6 +216,16 @@ func prepareWindowsNssm(step *common.Step) error {
 	step.Printf("Check if nssm installed")
 	if util.IsNSSMInstalled() {
 		return nil
+	}
+
+	fmt.Print("[join] Nssm not found, auto install now? [Y/n]: ")
+	s := bufio.NewScanner(os.Stdin)
+	s.Scan()
+	if err := s.Err(); err != nil {
+		return err
+	}
+	if strings.ToLower(s.Text()) != "y" && strings.ToLower(s.Text()) != "" {
+		return fmt.Errorf("aborted join operation, please install nssm manually and retry")
 	}
 
 	step.Printf("Nssm not found, start install under $env:ProgramFiles\\nssm")
