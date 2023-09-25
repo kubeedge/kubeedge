@@ -21,7 +21,7 @@ package fake
 import (
 	"context"
 
-	v1alpha2 "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
+	v1beta1 "github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -32,29 +32,29 @@ import (
 
 // FakeDeviceModels implements DeviceModelInterface
 type FakeDeviceModels struct {
-	Fake *FakeDevicesV1alpha2
+	Fake *FakeDevicesV1beta1
 	ns   string
 }
 
-var devicemodelsResource = schema.GroupVersionResource{Group: "devices", Version: "v1alpha2", Resource: "devicemodels"}
+var devicemodelsResource = schema.GroupVersionResource{Group: "devices", Version: "v1beta1", Resource: "devicemodels"}
 
-var devicemodelsKind = schema.GroupVersionKind{Group: "devices", Version: "v1alpha2", Kind: "DeviceModel"}
+var devicemodelsKind = schema.GroupVersionKind{Group: "devices", Version: "v1beta1", Kind: "DeviceModel"}
 
 // Get takes name of the deviceModel, and returns the corresponding deviceModel object, and an error if there is any.
-func (c *FakeDeviceModels) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha2.DeviceModel, err error) {
+func (c *FakeDeviceModels) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.DeviceModel, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(devicemodelsResource, c.ns, name), &v1alpha2.DeviceModel{})
+		Invokes(testing.NewGetAction(devicemodelsResource, c.ns, name), &v1beta1.DeviceModel{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha2.DeviceModel), err
+	return obj.(*v1beta1.DeviceModel), err
 }
 
 // List takes label and field selectors, and returns the list of DeviceModels that match those selectors.
-func (c *FakeDeviceModels) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha2.DeviceModelList, err error) {
+func (c *FakeDeviceModels) List(ctx context.Context, opts v1.ListOptions) (result *v1beta1.DeviceModelList, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(devicemodelsResource, devicemodelsKind, c.ns, opts), &v1alpha2.DeviceModelList{})
+		Invokes(testing.NewListAction(devicemodelsResource, devicemodelsKind, c.ns, opts), &v1beta1.DeviceModelList{})
 
 	if obj == nil {
 		return nil, err
@@ -64,8 +64,8 @@ func (c *FakeDeviceModels) List(ctx context.Context, opts v1.ListOptions) (resul
 	if label == nil {
 		label = labels.Everything()
 	}
-	list := &v1alpha2.DeviceModelList{ListMeta: obj.(*v1alpha2.DeviceModelList).ListMeta}
-	for _, item := range obj.(*v1alpha2.DeviceModelList).Items {
+	list := &v1beta1.DeviceModelList{ListMeta: obj.(*v1beta1.DeviceModelList).ListMeta}
+	for _, item := range obj.(*v1beta1.DeviceModelList).Items {
 		if label.Matches(labels.Set(item.Labels)) {
 			list.Items = append(list.Items, item)
 		}
@@ -81,31 +81,31 @@ func (c *FakeDeviceModels) Watch(ctx context.Context, opts v1.ListOptions) (watc
 }
 
 // Create takes the representation of a deviceModel and creates it.  Returns the server's representation of the deviceModel, and an error, if there is any.
-func (c *FakeDeviceModels) Create(ctx context.Context, deviceModel *v1alpha2.DeviceModel, opts v1.CreateOptions) (result *v1alpha2.DeviceModel, err error) {
+func (c *FakeDeviceModels) Create(ctx context.Context, deviceModel *v1beta1.DeviceModel, opts v1.CreateOptions) (result *v1beta1.DeviceModel, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(devicemodelsResource, c.ns, deviceModel), &v1alpha2.DeviceModel{})
+		Invokes(testing.NewCreateAction(devicemodelsResource, c.ns, deviceModel), &v1beta1.DeviceModel{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha2.DeviceModel), err
+	return obj.(*v1beta1.DeviceModel), err
 }
 
 // Update takes the representation of a deviceModel and updates it. Returns the server's representation of the deviceModel, and an error, if there is any.
-func (c *FakeDeviceModels) Update(ctx context.Context, deviceModel *v1alpha2.DeviceModel, opts v1.UpdateOptions) (result *v1alpha2.DeviceModel, err error) {
+func (c *FakeDeviceModels) Update(ctx context.Context, deviceModel *v1beta1.DeviceModel, opts v1.UpdateOptions) (result *v1beta1.DeviceModel, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(devicemodelsResource, c.ns, deviceModel), &v1alpha2.DeviceModel{})
+		Invokes(testing.NewUpdateAction(devicemodelsResource, c.ns, deviceModel), &v1beta1.DeviceModel{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha2.DeviceModel), err
+	return obj.(*v1beta1.DeviceModel), err
 }
 
 // Delete takes name of the deviceModel and deletes it. Returns an error if one occurs.
 func (c *FakeDeviceModels) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteActionWithOptions(devicemodelsResource, c.ns, name, opts), &v1alpha2.DeviceModel{})
+		Invokes(testing.NewDeleteActionWithOptions(devicemodelsResource, c.ns, name, opts), &v1beta1.DeviceModel{})
 
 	return err
 }
@@ -114,17 +114,17 @@ func (c *FakeDeviceModels) Delete(ctx context.Context, name string, opts v1.Dele
 func (c *FakeDeviceModels) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
 	action := testing.NewDeleteCollectionAction(devicemodelsResource, c.ns, listOpts)
 
-	_, err := c.Fake.Invokes(action, &v1alpha2.DeviceModelList{})
+	_, err := c.Fake.Invokes(action, &v1beta1.DeviceModelList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched deviceModel.
-func (c *FakeDeviceModels) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha2.DeviceModel, err error) {
+func (c *FakeDeviceModels) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.DeviceModel, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(devicemodelsResource, c.ns, name, pt, data, subresources...), &v1alpha2.DeviceModel{})
+		Invokes(testing.NewPatchSubresourceAction(devicemodelsResource, c.ns, name, pt, data, subresources...), &v1beta1.DeviceModel{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha2.DeviceModel), err
+	return obj.(*v1beta1.DeviceModel), err
 }

@@ -3,7 +3,6 @@ package dtcommon
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -11,8 +10,8 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
-	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
-	pb "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1"
+	pb "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1beta1"
 )
 
 // ValidateValue validate value type
@@ -61,23 +60,7 @@ func ValidateTwinValue(value string) bool {
 	return match
 }
 
-func GetProtocolNameOfDevice(device *v1alpha2.Device) (string, error) {
-	protocol := device.Spec.Protocol
-	if protocol.OpcUA != nil {
-		return constants.OPCUA, nil
-	}
-	if protocol.Modbus != nil {
-		return constants.Modbus, nil
-	}
-	if protocol.Bluetooth != nil {
-		return constants.Bluetooth, nil
-	}
-	if protocol.CustomizedProtocol != nil {
-		return protocol.CustomizedProtocol.ProtocolName, nil
-	}
-	return "", fmt.Errorf("cannot find protocol name for device %s", device.Name)
-}
-func ConvertDevice(device *v1alpha2.Device) (*pb.Device, error) {
+func ConvertDevice(device *v1beta1.Device) (*pb.Device, error) {
 	data, err := json.Marshal(device)
 	if err != nil {
 		klog.Errorf("fail to marshal device %s with err: %v", device.Name, err)
@@ -90,14 +73,13 @@ func ConvertDevice(device *v1alpha2.Device) (*pb.Device, error) {
 		klog.Errorf("fail to unmarshal device %s with err: %v", device.Name, err)
 		return nil, err
 	}
-
 	edgeDevice.Name = device.Name
 	edgeDevice.Spec.DeviceModelReference = device.Spec.DeviceModelRef.Name
 
 	return &edgeDevice, nil
 }
 
-func ConvertDeviceModel(model *v1alpha2.DeviceModel) (*pb.DeviceModel, error) {
+func ConvertDeviceModel(model *v1beta1.DeviceModel) (*pb.DeviceModel, error) {
 	data, err := json.Marshal(model)
 	if err != nil {
 		klog.Errorf("fail to marshal device model %s with err: %v", model.Name, err)

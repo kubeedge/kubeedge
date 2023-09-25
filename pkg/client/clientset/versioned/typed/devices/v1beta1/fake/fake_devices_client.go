@@ -19,26 +19,26 @@ limitations under the License.
 package fake
 
 import (
-	v1alpha2 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/devices/v1alpha2"
+	v1beta1 "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/typed/devices/v1beta1"
 	rest "k8s.io/client-go/rest"
 	testing "k8s.io/client-go/testing"
 )
 
-type FakeDevicesV1alpha2 struct {
+type FakeDevicesV1beta1 struct {
 	*testing.Fake
 }
 
-func (c *FakeDevicesV1alpha2) Devices(namespace string) v1alpha2.DeviceInterface {
+func (c *FakeDevicesV1beta1) Devices(namespace string) v1beta1.DeviceInterface {
 	return &FakeDevices{c, namespace}
 }
 
-func (c *FakeDevicesV1alpha2) DeviceModels(namespace string) v1alpha2.DeviceModelInterface {
+func (c *FakeDevicesV1beta1) DeviceModels(namespace string) v1beta1.DeviceModelInterface {
 	return &FakeDeviceModels{c, namespace}
 }
 
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
-func (c *FakeDevicesV1alpha2) RESTClient() rest.Interface {
+func (c *FakeDevicesV1beta1) RESTClient() rest.Interface {
 	var ret *rest.RESTClient
 	return ret
 }

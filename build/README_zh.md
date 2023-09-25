@@ -16,8 +16,8 @@ build/
 │   └── README_zh.md
 ├── crds
 │   └── devices
-│       ├── devices_v1alpha2_devicemodel.yaml
-│       └── devices_v1alpha2_device.yaml
+│       ├── devices_v1beta1_devicemodel.yaml
+│       └── devices_v1beta1_device.yaml
 ├── crd-samples
 │   └── devices
 │       ├── create-device-instance.yaml

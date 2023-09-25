@@ -22,7 +22,7 @@ import (
 	"fmt"
 
 	v1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1"
-	v1alpha2 "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
+	v1beta1 "github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1"
 	operationsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1"
 	policyv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/policy/v1alpha1"
 	reliablesyncsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1"
@@ -63,11 +63,11 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 	case v1alpha1.SchemeGroupVersion.WithResource("nodegroups"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Apps().V1alpha1().NodeGroups().Informer()}, nil
 
-		// Group=devices, Version=v1alpha2
-	case v1alpha2.SchemeGroupVersion.WithResource("devices"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Devices().V1alpha2().Devices().Informer()}, nil
-	case v1alpha2.SchemeGroupVersion.WithResource("devicemodels"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Devices().V1alpha2().DeviceModels().Informer()}, nil
+		// Group=devices, Version=v1beta1
+	case v1beta1.SchemeGroupVersion.WithResource("devices"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Devices().V1beta1().Devices().Informer()}, nil
+	case v1beta1.SchemeGroupVersion.WithResource("devicemodels"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Devices().V1beta1().DeviceModels().Informer()}, nil
 
 		// Group=operations, Version=v1alpha1
 	case operationsv1alpha1.SchemeGroupVersion.WithResource("nodeupgradejobs"):

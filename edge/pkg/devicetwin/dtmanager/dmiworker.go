@@ -33,8 +33,8 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
-	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
-	pb "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1"
+	pb "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1beta1"
 )
 
 // TwinWorker deal twin event
@@ -52,8 +52,8 @@ func (dw *DMIWorker) init() {
 		DeviceMu:        &sync.Mutex{},
 		DeviceModelMu:   &sync.Mutex{},
 		MapperList:      make(map[string]*pb.MapperInfo),
-		DeviceList:      make(map[string]*v1alpha2.Device),
-		DeviceModelList: make(map[string]*v1alpha2.DeviceModel),
+		DeviceList:      make(map[string]*v1beta1.Device),
+		DeviceModelList: make(map[string]*v1beta1.DeviceModel),
 	}
 
 	dw.initDMIActionCallBack()
@@ -112,8 +112,8 @@ func (dw *DMIWorker) dealMetaDeviceOperation(context *dtcontext.DTContext, resou
 	if len(resources) != 3 {
 		return fmt.Errorf("wrong resources %s", message.Router.Resource)
 	}
-	var device v1alpha2.Device
-	var dm v1alpha2.DeviceModel
+	var device v1beta1.Device
+	var dm v1beta1.DeviceModel
 	switch resources[1] {
 	case constants.ResourceTypeDevice:
 		err := json.Unmarshal(message.Content.([]byte), &device)
@@ -203,7 +203,7 @@ func (dw *DMIWorker) initDeviceModelInfoFromDB() {
 	}
 
 	for _, meta := range *metas {
-		deviceModel := v1alpha2.DeviceModel{}
+		deviceModel := v1beta1.DeviceModel{}
 		if err := json.Unmarshal([]byte(meta), &deviceModel); err != nil {
 			klog.Errorf("fail to unmarshal device model info from db with err: %v", err)
 			return
@@ -223,7 +223,7 @@ func (dw *DMIWorker) initDeviceInfoFromDB() {
 	}
 
 	for _, meta := range *metas {
-		device := v1alpha2.Device{}
+		device := v1beta1.Device{}
 		if err := json.Unmarshal([]byte(meta), &device); err != nil {
 			klog.Errorf("fail to unmarshal device info from db with err: %v", err)
 			return

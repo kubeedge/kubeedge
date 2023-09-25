@@ -17,7 +17,7 @@ limitations under the License.
 package dmi
 
 import (
-	dmiapi "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1alpha1"
+	dmiapi "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1beta1"
 )
 
 // DeviceManagerService defines the public APIS for remote device management.
@@ -62,13 +62,6 @@ type DeviceMapperService interface {
 	// When the mapper gets the request of updating with the information of a device,
 	// it should update the device of the device list and connect to the real physical device via the updated information.
 	UpdateDevice(*dmiapi.UpdateDeviceRequest) (*dmiapi.UpdateDeviceResponse, error)
-	// UpdateDeviceStatus update a device status to the device mapper
-	// Device manager sends the new device status to the mapper
-	// through the interface of UpdateDeviceStatus.
-	// The device status represents the properties of device twins.
-	// When the mapper gets the request of updating with the new device status,
-	// it should update the device status of the device list and the real device status of the physical device via the updated information.
-	UpdateDeviceStatus(*dmiapi.UpdateDeviceStatusRequest) (*dmiapi.UpdateDeviceStatusResponse, error)
 	// GetDevice get the information of a device from the device mapper.
 	// Device sends the request of querying device information with the device name to the mapper
 	// through the interface of GetDevice.

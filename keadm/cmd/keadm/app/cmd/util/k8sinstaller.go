@@ -117,8 +117,8 @@ func installCRDs(ks *K8SInstTool) error {
 
 	crds := map[string][]string{
 		"devices": {
-			"devices_v1alpha2_device.yaml",
-			"devices_v1alpha2_devicemodel.yaml",
+			"devices_v1beta1_device.yaml",
+			"devices_v1beta1_devicemodel.yaml",
 		},
 		"reliablesyncs": {
 			"cluster_objectsync_v1alpha1.yaml",
