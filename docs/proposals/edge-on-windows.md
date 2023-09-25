@@ -107,7 +107,10 @@ Task 4: Integration testing
 Task 5: Updating Keadm code to support Windows Server
 - Modify parts of the Keadm code to support one-click startup of edge nodes on Windows Server.
 
-Task 6: Further support
+Task 6: Updating Github Action to make release for windows(keadm, edgecore)
+- Modify release script.
+
+Task 7: Further support
 Experiment with using Windows Server 2022 to explore more possibilities of running Kubeedge in the Windows ecosystem.
 
 
