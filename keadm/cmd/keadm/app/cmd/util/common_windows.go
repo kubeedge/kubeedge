@@ -41,3 +41,12 @@ func IsServiceExist(service string) bool {
 	_err := cmd.Exec()
 	return _err == nil
 }
+
+// IsKubeEdgeProcessRunning checks if the given process is running or not
+func IsKubeEdgeProcessRunning(proc string) (bool, error) {
+	// dont use nssm, maybe haven't installed yet
+	if IsServiceExist(proc) {
+		return true, nil
+	}
+	return false, nil
+}

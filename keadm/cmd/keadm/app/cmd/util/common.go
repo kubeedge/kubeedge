@@ -538,29 +538,6 @@ func KillKubeEdgeBinary(proc string) error {
 	return nil
 }
 
-// IsKubeEdgeProcessRunning checks if the given process is running or not
-func IsKubeEdgeProcessRunning(proc string) (bool, error) {
-	if runtime.GOOS == "windows" {
-		// dont use nssm, maybe haven't installed yet
-		if IsServiceExist(proc) {
-			return true, nil
-		}
-		return false, nil
-	}
-	procRunning := fmt.Sprintf("pidof %s 2>&1", proc)
-	cmd := NewCommand(procRunning)
-
-	err := cmd.Exec()
-
-	if cmd.ExitCode == 0 {
-		return true, nil
-	} else if cmd.ExitCode == 1 {
-		return false, nil
-	}
-
-	return false, err
-}
-
 func isEdgeCoreServiceRunning(serviceName string) (bool, error) {
 	serviceRunning := fmt.Sprintf("systemctl list-unit-files | grep enabled | grep %s ", serviceName)
 	cmd := NewCommand(serviceRunning)

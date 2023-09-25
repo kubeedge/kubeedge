@@ -18,6 +18,10 @@ limitations under the License.
 
 package util
 
+import (
+	"fmt"
+)
+
 // Constants used by installers
 const (
 	KubeEdgePath        = "/etc/kubeedge/"
@@ -33,3 +37,19 @@ const (
 
 	SystemdBootPath = "/run/systemd/system"
 )
+
+// IsKubeEdgeProcessRunning checks if the given process is running or not
+func IsKubeEdgeProcessRunning(proc string) (bool, error) {
+	procRunning := fmt.Sprintf("pidof %s 2>&1", proc)
+	cmd := NewCommand(procRunning)
+
+	err := cmd.Exec()
+
+	if cmd.ExitCode == 0 {
+		return true, nil
+	} else if cmd.ExitCode == 1 {
+		return false, nil
+	}
+
+	return false, err
+}
