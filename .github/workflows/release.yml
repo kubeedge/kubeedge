@@ -17,16 +17,25 @@ jobs:
         target: [kubeedge, edgesite, keadm]
         os: [linux]
         ARM_VERSION: [GOARM7, GOARM8, ""]
+        include:
+          - target: kubeedge
+            os: windows
+            ARM_VERSION: ""
+          - target: keadm
+            os: windows
+            ARM_VERSION: ""
     outputs:
-      hash-kubeedge-amd64: ${{ steps.hash.outputs.hash-kubeedge-amd64 }}
-      hash-kubeedge-arm64: ${{ steps.hash.outputs.hash-kubeedge-arm64 }}
-      hash-kubeedge-arm:   ${{ steps.hash.outputs.hash-kubeedge-arm }}
-      hash-keadm-amd64:    ${{ steps.hash.outputs.hash-keadm-amd64 }}
-      hash-keadm-arm64:    ${{ steps.hash.outputs.hash-keadm-arm64 }}
-      hash-keadm-arm:      ${{ steps.hash.outputs.hash-keadm-arm }}
-      hash-edgesite-amd64: ${{ steps.hash.outputs.hash-edgesite-amd64 }}
-      hash-edgesite-arm64: ${{ steps.hash.outputs.hash-edgesite-arm64 }}
-      hash-edgesite-arm:   ${{ steps.hash.outputs.hash-edgesite-arm }}
+      hash-kubeedge-linux-amd64: ${{ steps.hash.outputs.hash-kubeedge-linux-amd64 }}
+      hash-kubeedge-windows-amd64: ${{ steps.hash.outputs.hash-kubeedge-windows-amd64 }}
+      hash-kubeedge-linux-arm64: ${{ steps.hash.outputs.hash-kubeedge-linux-arm64 }}
+      hash-kubeedge-linux-arm:   ${{ steps.hash.outputs.hash-kubeedge-linux-arm }}
+      hash-keadm-linux-amd64:    ${{ steps.hash.outputs.hash-keadm-linux-amd64 }}
+      hash-keadm-linux-arm64:    ${{ steps.hash.outputs.hash-keadm-linux-arm64 }}
+      hash-keadm-linux-arm:      ${{ steps.hash.outputs.hash-keadm-linux-arm }}
+      hash-keadm-windows-amd64:  ${{ steps.hash.outputs.hash-keadm-windows-amd64 }}
+      hash-edgesite-linux-amd64: ${{ steps.hash.outputs.hash-edgesite-linux-amd64 }}
+      hash-edgesite-linux-arm64: ${{ steps.hash.outputs.hash-edgesite-linux-arm64 }}
+      hash-edgesite-linux-arm:   ${{ steps.hash.outputs.hash-edgesite-linux-arm }}
     steps:
       - name: checkout code
         uses: actions/checkout@v3
@@ -35,10 +44,15 @@ jobs:
           # 0 indicates all history for all branches and tags.
           # for `git describe --tags` in Makefile.
           fetch-depth: 0
-      - name: Making and packaging
+      - name: Making and packaging(linux)
+        if: matrix.os == 'linux'
         run: |
-          docker pull kubeedge/build-tools:1.19.12-ke2
-          make release WHAT=${{ matrix.target }} ARM_VERSION=${{ matrix.ARM_VERSION }}
+          docker pull kubeedge/build-tools:1.17.13-ke1
+          make release WHAT=${{ matrix.target }} ARM_VERSION=${{ matrix.ARM_VERSION }} OS=${{ matrix.os }} BUILD_WITH_CONTAINER=true
+      - name: Making and packaging(windows)
+        if: matrix.os == 'windows'
+        run: |
+          make release WHAT=${{ matrix.target }} ARM_VERSION=${{ matrix.ARM_VERSION }} OS=${{ matrix.os }} BUILD_WITH_CONTAINER=false
       - name: Generate arch
         run: |
           if [ "${{ matrix.ARM_VERSION }}" = "GOARM7" ]; then echo "output_arch=arm" >> $GITHUB_ENV; elif [ ${{ matrix.ARM_VERSION }} = "GOARM8" ]; then echo "output_arch=arm64" >> $GITHUB_ENV; else echo "output_arch=amd64" >> $GITHUB_ENV; fi
@@ -47,7 +61,7 @@ jobs:
         id: hash
         run: |
           cp _output/release/${{ github.ref_name }}/${{ matrix.target }}-${{ github.ref_name }}-${{ matrix.os }}-${{ env.output_arch }}.tar.gz .
-          echo "hash-${{ matrix.target }}-${{ env.output_arch }}=$( \
+          echo "hash-${{ matrix.target }}-${{ matrix.os }}-${{ env.output_arch }}=$( \
                       sha256sum ${{ matrix.target }}-${{ github.ref_name }}-${{ matrix.os }}-${{ env.output_arch}}.tar.gz | base64 -w0 \
                     )" >> "$GITHUB_OUTPUT"
       - name: Uploading assets...
@@ -70,6 +84,7 @@ jobs:
         run: |
           echo "$HASHES" | jq -r '.[] | @base64d' | sed "/^$/d" > hashes.txt
           echo "hashes=$(cat hashes.txt | base64 -w0)" >> "$GITHUB_OUTPUT"
+          echo "hashes=$(cat hashes.txt | base64 -w0)"
 
   # This step calls the generic workflow to generate provenance.
   provenance:

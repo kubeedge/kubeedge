@@ -439,8 +439,9 @@ release:
 	@echo "$$RELEASE_HELP_INFO"
 else ifeq ($(BUILD_WITH_CONTAINER),true)
 release:
-	$(RUN) hack/make-rules/release.sh $(WHAT) $(ARM_VERSION)
+	$(RUN) hack/make-rules/release.sh $(WHAT) $(ARM_VERSION) $(OS)
 else
 release:
-	hack/make-rules/release.sh $(WHAT) $(ARM_VERSION)
+	sudo apt-get install -y mingw-w64
+	hack/make-rules/release.sh $(WHAT) $(ARM_VERSION) $(OS)
 endif
