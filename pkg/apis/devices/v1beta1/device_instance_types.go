@@ -111,6 +111,52 @@ type DeviceProperty struct {
 	// please ensure that the mapper can access the destination address.
 	// +optional
 	PushMethod *PushMethod `json:"pushMethod,omitempty"`
+	// DBProvider represents the protocol used to push data to database,
+	// please ensure that the mapper can access the destination address.
+	// +optional
+	DBProvider *DBProviderConfig `json:"dbProvider,omitempty"`
+}
+
+type DBProviderConfig struct {
+	// method configuration for database
+	// +optional
+	Influx *DBProviderInflux `json:"influx,omitempty"`
+}
+
+type DBProviderInflux struct {
+	// ConfigData of influx database
+	// +optional
+	ConfigData *ConfigData `json:"configData"`
+	// DataStandard of the data to influx database
+	// +optional
+	DataStandard *DataStandard `json:"dataStandard"`
+}
+
+type ConfigData struct {
+	// Url of influx database
+	// +optional
+	URL string `json:"url,omitempty"`
+	// Org of the user in influx database
+	// +optional
+	Org string `json:"org,omitempty"`
+	// Bucket of the user in influx database
+	// +optional
+	Bucket string `json:"bucket,omitempty"`
+}
+
+type DataStandard struct {
+	// Measurement of the user data
+	// +optional
+	Measurement string `json:"measurement,omitempty"`
+	// TagKey of the user data
+	// +optional
+	TagKey string `json:"tagKey,omitempty"`
+	// TagValue of the user data
+	// +optional
+	TagValue string `json:"tagValue,omitempty"`
+	// FieldKey of the user data
+	// +optional
+	FieldKey string `json:"fieldKey,omitempty"`
 }
 
 type PushMethod struct {

@@ -50,6 +50,7 @@ const (
 )
 
 type server struct {
+	pb.UnimplementedDeviceManagerServiceServer
 	limiter  *rate.Limiter
 	dmiCache *DMICache
 }
@@ -83,6 +84,7 @@ func (s *server) MapperRegister(ctx context.Context, in *pb.MapperRegisterReques
 	s.dmiCache.MapperList[in.Mapper.Name] = in.Mapper
 	s.dmiCache.MapperMu.Unlock()
 
+	dmiclient.DMIClientsImp.CreateDMIClient(in.Mapper.Protocol, string(in.Mapper.Address))
 	if !in.WithData {
 		return &pb.MapperRegisterResponse{}, nil
 	}

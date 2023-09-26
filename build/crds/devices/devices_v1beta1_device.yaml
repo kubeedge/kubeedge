@@ -571,6 +571,45 @@ spec:
                       description: Define how frequent mapper will collect from device.
                       format: int64
                       type: integer
+                    dbProvider:
+                      description: DBProvider represents the protocol used to push
+                        data to database, please ensure that the mapper can access
+                        the destination address.
+                      properties:
+                        influx:
+                          description: method configuration for database
+                          properties:
+                            configData:
+                              description: ConfigData of influx database
+                              properties:
+                                bucket:
+                                  description: Bucket of the user in influx database
+                                  type: string
+                                org:
+                                  description: Org of the user in influx database
+                                  type: string
+                                url:
+                                  description: Url of influx database
+                                  type: string
+                              type: object
+                            dataStandard:
+                              description: DataStandard of the data to influx database
+                              properties:
+                                fieldKey:
+                                  description: FieldKey of the user data
+                                  type: string
+                                measurement:
+                                  description: Measurement of the user data
+                                  type: string
+                                tagKey:
+                                  description: TagKey of the user data
+                                  type: string
+                                tagValue:
+                                  description: TagValue of the user data
+                                  type: string
+                              type: object
+                          type: object
+                      type: object
                     desired:
                       description: The desired property value.
                       properties:

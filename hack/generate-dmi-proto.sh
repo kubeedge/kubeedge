@@ -61,7 +61,8 @@ COPY_RIGHT_INFO_LINE_10='limitations under the License.\n*/\n'
 
 
 cd ${DMI_DIR}
-protoc -I "${DMI_VERSION}"/ --go_out=plugins=grpc:"${DMI_VERSION}" "${DMI_VERSION}/${DMI_API_FILE}"
+#protoc -I "${DMI_VERSION}"/ --go_out=plugins=grpc:"${DMI_VERSION}" "${DMI_VERSION}/${DMI_API_FILE}"
+protoc -I "${DMI_VERSION}/" --go_out="${DMI_VERSION}" --go-grpc_out="${DMI_VERSION}" "${DMI_VERSION}/${DMI_API_FILE}"
 
 sed -i '2,15d' "${DMI_VERSION}/${DMI_API_GO_FILE}"
 sed -i "1i\ $COPY_RIGHT_INFO_LINE_10"  "${DMI_VERSION}/${DMI_API_GO_FILE}"
