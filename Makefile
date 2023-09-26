@@ -434,12 +434,17 @@ define RELEASE_HELP_INFO
 #
 endef
 .PHONY: release
+
 ifeq ($(HELP),y)
 release:
 	@echo "$$RELEASE_HELP_INFO"
 else ifeq ($(BUILD_WITH_CONTAINER),true)
 release:
 	$(RUN) hack/make-rules/release.sh $(WHAT) $(ARM_VERSION) $(OS)
+else ifeq ($(OS),windows)
+release:
+	sudo apt-get install -y mingw-w64
+	hack/make-rules/release.sh $(WHAT) $(ARM_VERSION) $(OS)
 else
 release:
 	sudo apt-get install -y mingw-w64
