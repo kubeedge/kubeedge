@@ -1,5 +1,5 @@
 /*
-Copyright 2022 The KubeEdge Authors.
+Copyright 2023 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,16 +18,17 @@ package parse
 
 import (
 	"errors"
+
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/mapper-generator/pkg/common"
-	"github.com/kubeedge/mapper-generator/pkg/config"
-	"github.com/kubeedge/mapper-generator/pkg/util/grpcclient"
+	"github.com/kubeedge/mapper-generator/Template/pkg/common"
+	"github.com/kubeedge/mapper-generator/Template/pkg/config"
+	"github.com/kubeedge/mapper-generator/Template/pkg/util/grpcclient"
 )
 
 var ErrEmptyData error = errors.New("device or device model list is empty")
 
-// Parse the configmap.
+// Parse the configmap which will be removed
 //func Parse(path string,
 //	devices map[string]*common.DeviceInstance,
 //	dms map[string]common.DeviceModel,

@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/kubeedge/mapper-generator/pkg/common"
+	"github.com/kubeedge/mapper-generator/Template/pkg/common"
 )
 
 func (rs *RestServer) Ping(writer http.ResponseWriter, request *http.Request) {

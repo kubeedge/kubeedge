@@ -1,8 +1,8 @@
 package global
 
 import (
-	"github.com/kubeedge/mapper-generator/pkg/common"
-	"github.com/kubeedge/mapper-generator/pkg/config"
+	"github.com/kubeedge/mapper-generator/Template/pkg/common"
+	"github.com/kubeedge/mapper-generator/Template/pkg/config"
 )
 
 // DevPanel defined operations on devices, manage the lifecycle of devices

@@ -8,9 +8,9 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/kubeedge/mapper-generator/pkg/common"
-	"github.com/kubeedge/mapper-generator/pkg/config"
-	dmiapi "github.com/kubeedge/mapper-generator/pkg/temp"
+	"github.com/kubeedge/mapper-generator/Template/pkg/common"
+	"github.com/kubeedge/mapper-generator/Template/pkg/config"
+	dmiapi "github.com/kubeedge/mapper-generator/Template/pkg/temp"
 )
 
 // RegisterMapper if withData is true, edgecore will send device and model list.

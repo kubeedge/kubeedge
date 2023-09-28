@@ -3,10 +3,11 @@ package parse
 import (
 	"encoding/json"
 	"errors"
+
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/mapper-generator/pkg/common"
-	dmiapi "github.com/kubeedge/mapper-generator/pkg/temp"
+	"github.com/kubeedge/mapper-generator/Template/pkg/common"
+	dmiapi "github.com/kubeedge/mapper-generator/Template/pkg/temp"
 )
 
 type TwinResultResponse struct {
@@ -30,9 +31,9 @@ func getPushMethodFromGrpc(visitor *dmiapi.DeviceProperty) (string, error) {
 	return "", errors.New("can not parse publish method")
 }
 
-func getDbProviderFromGrpc(visitor *dmiapi.DeviceProperty) (string, error) {
+func getDBProviderFromGrpc(visitor *dmiapi.DeviceProperty) (string, error) {
 	// TODO add more dbProvider
-	if visitor.DbProvider.Influx != nil {
+	if visitor.DBProvider.Influx != nil {
 		return "influx", nil
 	}
 	return "", errors.New("can not parse dbProvider")
@@ -133,20 +134,20 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 		// get dbProvider filed by grpc device instance
 		var dbProviderName string
 		var dbProvider common.ProviderConfig
-		if pptv.DbProvider != nil {
-			dbProviderName, err = getDbProviderFromGrpc(pptv)
+		if pptv.DBProvider != nil {
+			dbProviderName, err = getDBProviderFromGrpc(pptv)
 			if err != nil {
 				klog.Errorf("err: %+v", err)
 				return nil
 			}
 			switch dbProviderName {
 			case "influx":
-				configdata, err := json.Marshal(pptv.DbProvider.Influx.ConfigData)
+				configdata, err := json.Marshal(pptv.DBProvider.Influx.ConfigData)
 				if err != nil {
 					klog.Errorf("err: %+v", err)
 					return nil
 				}
-				datastandard, err := json.Marshal(pptv.DbProvider.Influx.DataStandard)
+				datastandard, err := json.Marshal(pptv.DBProvider.Influx.DataStandard)
 				if err != nil {
 					klog.Errorf("err: %+v", err)
 					return nil
@@ -193,8 +194,8 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 				MethodName:   pushMethodName,
 				MethodConfig: pushMethod,
 			},
-			DbProvider: common.DbProviderConfig{
-				DbProviderName: dbProviderName,
+			DBProvider: common.DBProviderConfig{
+				DBProviderName: dbProviderName,
 				ProviderConfig: dbProvider,
 			},
 		}

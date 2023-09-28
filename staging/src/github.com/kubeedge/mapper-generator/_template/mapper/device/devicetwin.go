@@ -9,11 +9,11 @@ import (
 
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/mapper-generator/mappers/Template/driver"
-	"github.com/kubeedge/mapper-generator/pkg/common"
-	dmiapi "github.com/kubeedge/mapper-generator/pkg/temp"
-	"github.com/kubeedge/mapper-generator/pkg/util/grpcclient"
-	"github.com/kubeedge/mapper-generator/pkg/util/parse"
+	"github.com/kubeedge/mapper-generator/Template/driver"
+	"github.com/kubeedge/mapper-generator/Template/pkg/common"
+	dmiapi "github.com/kubeedge/mapper-generator/Template/pkg/temp"
+	"github.com/kubeedge/mapper-generator/Template/pkg/util/grpcclient"
+	"github.com/kubeedge/mapper-generator/Template/pkg/util/parse"
 )
 
 type TwinData struct {

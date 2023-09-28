@@ -2,17 +2,17 @@ package main
 
 import (
 	"errors"
-	"github.com/kubeedge/mapper-generator/pkg/httpserver"
 	"os"
 
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/mapper-generator/mappers/Template/device"
-	"github.com/kubeedge/mapper-generator/pkg/common"
-	"github.com/kubeedge/mapper-generator/pkg/config"
-	"github.com/kubeedge/mapper-generator/pkg/grpcserver"
-	"github.com/kubeedge/mapper-generator/pkg/util/grpcclient"
-	"github.com/kubeedge/mapper-generator/pkg/util/parse"
+	"github.com/kubeedge/mapper-generator/Template/device"
+	"github.com/kubeedge/mapper-generator/Template/pkg/common"
+	"github.com/kubeedge/mapper-generator/Template/pkg/config"
+	"github.com/kubeedge/mapper-generator/Template/pkg/grpcserver"
+	"github.com/kubeedge/mapper-generator/Template/pkg/httpserver"
+	"github.com/kubeedge/mapper-generator/Template/pkg/util/grpcclient"
+	"github.com/kubeedge/mapper-generator/Template/pkg/util/parse"
 )
 
 func main() {

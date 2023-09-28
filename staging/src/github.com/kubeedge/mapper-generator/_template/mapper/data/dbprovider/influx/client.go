@@ -3,11 +3,13 @@ package influx
 import (
 	"context"
 	"encoding/json"
-	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
-	"github.com/kubeedge/mapper-generator/pkg/common"
-	"k8s.io/klog/v2"
 	"os"
 	"time"
+
+	"k8s.io/klog/v2"
+
+	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
+	"github.com/kubeedge/mapper-generator/Template/pkg/common"
 )
 
 type DataBaseConfig struct {

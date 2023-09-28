@@ -1,5 +1,5 @@
 /*
-Copyright 2020 The KubeEdge Authors.
+Copyright 2023 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ type DeviceProperty struct {
 	CollectCycle  int64            `json:"collectCycle"`
 	ReportCycle   int64            `json:"reportCycle,omitempty"`
 	PushMethod    PushMethodConfig `json:"pushMethod,omitempty"`
-	DbProvider    DbProviderConfig `json:"dbProvider,omitempty"`
+	DBProvider    DBProviderConfig `json:"dbProvider,omitempty"`
 
 	PProperty ModelProperty
 }
@@ -91,8 +91,8 @@ type PushMethodConfig struct {
 	MethodConfig json.RawMessage `json:"MethodConfig"`
 }
 
-type DbProviderConfig struct {
-	DbProviderName string         `json:"dbProviderName"`
+type DBProviderConfig struct {
+	DBProviderName string         `json:"dbProviderName"`
 	ProviderConfig ProviderConfig `json:"providerConfig"`
 }
 

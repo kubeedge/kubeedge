@@ -9,8 +9,8 @@ import (
 	"google.golang.org/grpc/reflection"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/mapper-generator/pkg/global"
-	dmiapi "github.com/kubeedge/mapper-generator/pkg/temp"
+	"github.com/kubeedge/mapper-generator/Template/pkg/global"
+	dmiapi "github.com/kubeedge/mapper-generator/Template/pkg/temp"
 )
 
 type Config struct {

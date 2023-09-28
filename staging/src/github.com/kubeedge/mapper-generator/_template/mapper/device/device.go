@@ -5,21 +5,22 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"k8s.io/klog/v2"
 	"os"
 	"os/signal"
 	"strings"
 	"sync"
 	"time"
 
-	dbInflux "github.com/kubeedge/mapper-generator/mappers/Template/data/dbprovider/influx"
-	httpMethod "github.com/kubeedge/mapper-generator/mappers/Template/data/publish/http"
-	mqttMethod "github.com/kubeedge/mapper-generator/mappers/Template/data/publish/mqtt"
-	"github.com/kubeedge/mapper-generator/mappers/Template/driver"
-	"github.com/kubeedge/mapper-generator/pkg/common"
-	"github.com/kubeedge/mapper-generator/pkg/config"
-	"github.com/kubeedge/mapper-generator/pkg/global"
-	"github.com/kubeedge/mapper-generator/pkg/util/parse"
+	"k8s.io/klog/v2"
+
+	dbInflux "github.com/kubeedge/mapper-generator/Template/data/dbprovider/influx"
+	httpMethod "github.com/kubeedge/mapper-generator/Template/data/publish/http"
+	mqttMethod "github.com/kubeedge/mapper-generator/Template/data/publish/mqtt"
+	"github.com/kubeedge/mapper-generator/Template/driver"
+	"github.com/kubeedge/mapper-generator/Template/pkg/common"
+	"github.com/kubeedge/mapper-generator/Template/pkg/config"
+	"github.com/kubeedge/mapper-generator/Template/pkg/global"
+	"github.com/kubeedge/mapper-generator/Template/pkg/util/parse"
 )
 
 type DevPanel struct {
@@ -144,7 +145,7 @@ func dataHandler(ctx context.Context, dev *driver.CustomizedDev) {
 		}
 		// handle database
 
-		if twin.Property.DbProvider.DbProviderName != "" {
+		if twin.Property.DBProvider.DBProviderName != "" {
 			dataModel := common.NewDataModel(dev.Instance.Name, twin.Property.PropertyName, common.WithType(twin.ObservedDesired.Metadata.Type))
 			dbHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
 		}
@@ -203,9 +204,9 @@ func pushHandler(ctx context.Context, twin *common.Twin, client *driver.Customiz
 
 // dbHandler start db client to save data
 func dbHandler(ctx context.Context, twin *common.Twin, client *driver.CustomizedClient, visitorConfig *driver.VisitorConfig, dataModel *common.DataModel) {
-	switch twin.Property.DbProvider.DbProviderName {
+	switch twin.Property.DBProvider.DBProviderName {
 	case "influx":
-		dbConfig, err := dbInflux.NewDataBaseClient(twin.Property.DbProvider.ProviderConfig.ConfigData, twin.Property.DbProvider.ProviderConfig.DataStandard)
+		dbConfig, err := dbInflux.NewDataBaseClient(twin.Property.DBProvider.ProviderConfig.ConfigData, twin.Property.DBProvider.ProviderConfig.DataStandard)
 		if err != nil {
 			klog.Errorf("new database client error: %v", err)
 			return

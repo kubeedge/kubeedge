@@ -625,7 +625,7 @@ type DeviceProperty struct {
 	ReportToCloud bool `protobuf:"varint,6,opt,name=reportToCloud,proto3" json:"reportToCloud,omitempty"`
 	// PushMethod represents the protocol used to push data,
 	PushMethod *PushMethod `protobuf:"bytes,7,opt,name=pushMethod,proto3" json:"pushMethod,omitempty"`
-	DbProvider *DBProvider `protobuf:"bytes,8,opt,name=dbProvider,proto3" json:"dbProvider,omitempty"`
+	DBProvider *DBProvider `protobuf:"bytes,8,opt,name=dbProvider,proto3" json:"dbProvider,omitempty"`
 }
 
 func (x *DeviceProperty) Reset() {
@@ -709,9 +709,9 @@ func (x *DeviceProperty) GetPushMethod() *PushMethod {
 	return nil
 }
 
-func (x *DeviceProperty) GetDbProvider() *DBProvider {
+func (x *DeviceProperty) GetBvider() *DBProvider {
 	if x != nil {
-		return x.DbProvider
+		return x.DBProvider
 	}
 	return nil
 }

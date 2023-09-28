@@ -1,8 +1,8 @@
 package redis
 
 import (
-	"github.com/kubeedge/mapper-generator/pkg/common"
-	"github.com/kubeedge/mapper-generator/pkg/global"
+	"github.com/kubeedge/mapper-generator/Template/pkg/common"
+	"github.com/kubeedge/mapper-generator/Template/pkg/global"
 )
 
 type DataBaseConfig struct {

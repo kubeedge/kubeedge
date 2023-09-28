@@ -3,12 +3,14 @@ package mqtt
 import (
 	"encoding/json"
 	"fmt"
-	mqtt "github.com/eclipse/paho.mqtt.golang"
-	"github.com/kubeedge/mapper-generator/pkg/common"
-	"github.com/kubeedge/mapper-generator/pkg/global"
-	"k8s.io/klog/v2"
 	"os"
 	"time"
+
+	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"k8s.io/klog/v2"
+
+	"github.com/kubeedge/mapper-generator/Template/pkg/common"
+	"github.com/kubeedge/mapper-generator/Template/pkg/global"
 )
 
 type PushMethod struct {
