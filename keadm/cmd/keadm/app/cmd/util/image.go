@@ -49,7 +49,7 @@ type ContainerRuntime interface {
 	RemoveMQTT() error
 }
 
-func NewContainerRuntime(runtimeType string, endpoint string) (ContainerRuntime, error) {
+func NewContainerRuntime(runtimeType string, endpoint string, cgroupDriver string) (ContainerRuntime, error) {
 	var runtime ContainerRuntime
 	switch runtimeType {
 	case constants.DockerContainerRuntime:
@@ -78,6 +78,7 @@ func NewContainerRuntime(runtimeType string, endpoint string) (ContainerRuntime,
 			endpoint:            endpoint,
 			ImageManagerService: imageService,
 			RuntimeService:      runtimeService,
+			cgroupDriver:        cgroupDriver,
 			ctx:                 context.Background(),
 		}
 	default:
@@ -233,6 +234,7 @@ type CRIRuntime struct {
 	ImageManagerService internalapi.ImageManagerService
 	RuntimeService      internalapi.RuntimeService
 	ctx                 context.Context
+	cgroupDriver        string
 }
 
 func convertCRIImage(image string) string {
@@ -274,6 +276,7 @@ func (runtime *CRIRuntime) CopyResources(edgeImage string, files map[string]stri
 			Namespace: constants.SystemNamespace,
 		},
 		Linux: &runtimeapi.LinuxPodSandboxConfig{
+			CgroupParent: strings.ToUpper(runtime.cgroupDriver),
 			SecurityContext: &runtimeapi.LinuxSandboxSecurityContext{
 				NamespaceOptions: &runtimeapi.NamespaceOption{
 					Network: runtimeapi.NamespaceMode_POD,
