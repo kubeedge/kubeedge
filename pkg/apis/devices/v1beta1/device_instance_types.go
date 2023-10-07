@@ -111,19 +111,54 @@ type DeviceProperty struct {
 	// please ensure that the mapper can access the destination address.
 	// +optional
 	PushMethod *PushMethod `json:"pushMethod,omitempty"`
-	// DBProvider represents the protocol used to push data to database,
+}
+
+type PushMethod struct {
+	// HTTP Push method configuration for http
+	// +optional
+	HTTP *PushMethodHTTP `json:"http,omitempty"`
+	// MQTT Push method configuration for mqtt
+	// +optional
+	MQTT *PushMethodMQTT `json:"mqtt,omitempty"`
+	// DBMethod represents the method used to push data to database,
 	// please ensure that the mapper can access the destination address.
 	// +optional
-	DBProvider *DBProviderConfig `json:"dbProvider,omitempty"`
+	DBMethod *DBMethodConfig `json:"dbMethod,omitempty"`
 }
 
-type DBProviderConfig struct {
+type PushMethodHTTP struct {
+	// +optional
+	HostName string `json:"hostName,omitempty"`
+	// +optional
+	Port int64 `json:"port,omitempty"`
+	// +optional
+	RequestPath string `json:"requestPath,omitempty"`
+	// +optional
+	Timeout int64 `json:"timeout,omitempty"`
+}
+
+type PushMethodMQTT struct {
+	// broker address, like mqtt://127.0.0.1:1883
+	// +optional
+	Address string `json:"address,omitempty"`
+	// publish topic for mqtt
+	// +optional
+	Topic string `json:"topic,omitempty"`
+	// qos of mqtt publish param
+	// +optional
+	QoS int32 `json:"qos,omitempty"`
+	// Is the message retained
+	// +optional
+	Retained bool `json:"retained,omitempty"`
+}
+
+type DBMethodConfig struct {
 	// method configuration for database
 	// +optional
-	Influx *DBProviderInflux `json:"influx,omitempty"`
+	Influx *DBMethodInflux `json:"influx,omitempty"`
 }
 
-type DBProviderInflux struct {
+type DBMethodInflux struct {
 	// ConfigData of influx database
 	// +optional
 	ConfigData *ConfigData `json:"configData"`
@@ -157,41 +192,6 @@ type DataStandard struct {
 	// FieldKey of the user data
 	// +optional
 	FieldKey string `json:"fieldKey,omitempty"`
-}
-
-type PushMethod struct {
-	// HTTP Push method configuration for http
-	// +optional
-	HTTP *PushMethodHTTP `json:"http,omitempty"`
-	// MQTT Push method configuration for mqtt
-	// +optional
-	MQTT *PushMethodMQTT `json:"mqtt,omitempty"`
-}
-
-type PushMethodHTTP struct {
-	// +optional
-	HostName string `json:"hostName,omitempty"`
-	// +optional
-	Port int64 `json:"port,omitempty"`
-	// +optional
-	RequestPath string `json:"requestPath,omitempty"`
-	// +optional
-	Timeout int64 `json:"timeout,omitempty"`
-}
-
-type PushMethodMQTT struct {
-	// broker address, like mqtt://127.0.0.1:1883
-	// +optional
-	Address string `json:"address,omitempty"`
-	// publish topic for mqtt
-	// +optional
-	Topic string `json:"topic,omitempty"`
-	// qos of mqtt publish param
-	// +optional
-	QoS int32 `json:"qos,omitempty"`
-	// Is the message retained
-	// +optional
-	Retained bool `json:"retained,omitempty"`
 }
 
 type VisitorConfig struct {

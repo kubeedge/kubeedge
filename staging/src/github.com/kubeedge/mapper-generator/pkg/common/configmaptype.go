@@ -80,7 +80,7 @@ type DeviceProperty struct {
 	CollectCycle  int64            `json:"collectCycle"`
 	ReportCycle   int64            `json:"reportCycle,omitempty"`
 	PushMethod    PushMethodConfig `json:"pushMethod,omitempty"`
-	DBProvider    DBProviderConfig `json:"dbProvider,omitempty"`
+	//DBProvider    DBProviderConfig `json:"dbProvider,omitempty"`
 
 	PProperty ModelProperty
 }
@@ -89,17 +89,18 @@ type DeviceProperty struct {
 type PushMethodConfig struct {
 	MethodName   string          `json:"MethodName"`
 	MethodConfig json.RawMessage `json:"MethodConfig"`
+	DBMethod     DBMethodConfig  `json:"dbMethod,omitempty"`
 }
 
-type DBProviderConfig struct {
-	DBProviderName string         `json:"dbProviderName"`
-	ProviderConfig ProviderConfig `json:"providerConfig"`
+type DBMethodConfig struct {
+	DBMethodName string   `json:"dbMethodName"`
+	DBConfig     DBConfig `json:"dbConfig"`
 }
 
-type ProviderConfig struct {
+type DBConfig struct {
 	ConfigData      json.RawMessage `json:"configData"`
 	DataStandard    json.RawMessage `json:"dataStandard"`
-	RedisConfigData json.RawMessage `json:" redisConfigData"`
+	RedisConfigData json.RawMessage `json:"redisConfigData"`
 }
 
 // Metadata is the metadata for data.

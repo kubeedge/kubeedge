@@ -194,35 +194,6 @@ message DeviceProperty {
     bool reportToCloud = 6;
     // PushMethod represents the protocol used to push data,
     PushMethod pushMethod = 7;
-    DBProvider dbProvider = 8;
-}
-
-message DBProvider{
-    // the config of database .
-    DBProviderInflux influx = 1;
-}
-
-message DBProviderInflux{
-    // the config of influx database.
-    ConfigData configData = 1;
-    DataStandard dataStandard = 2;
-}
-
-message DataStandard{
-    // datastandard when push data to influx
-    string measurement = 1;
-    string tagKey = 2;
-    string tagValue = 3;
-    string fieldKey = 4;
-}
-
-message ConfigData{
-    // influx database url
-    string url = 1;
-    // usr org in influx database
-    string org = 2;
-    // usr bucket in influx database
-    string bucket = 3;
 }
 
 // ProtocolConfig is the specific config of the protocol to access to the device.
@@ -250,6 +221,7 @@ message CustomizedValue {
 message PushMethod {
     PushMethodHTTP http = 1;
     PushMethodMQTT mqtt = 2;
+    DBMethod dbMethod = 3;
 }
 
 message PushMethodHTTP {
@@ -268,6 +240,34 @@ message PushMethodMQTT {
     int32 qos = 3;
     // Is the message retained
     bool retained = 4;
+}
+
+message DBMethod{
+    // the config of database .
+    DBMethodInflux influx = 1;
+}
+
+message DBMethodInflux{
+    // the config of influx database.
+    ConfigData configData = 1;
+    DataStandard dataStandard = 2;
+}
+
+message DataStandard{
+    // datastandard when push data to influx
+    string measurement = 1;
+    string tagKey = 2;
+    string tagValue = 3;
+    string fieldKey = 4;
+}
+
+message ConfigData{
+    // influx database url
+    string url = 1;
+    // usr org in influx database
+    string org = 2;
+    // usr bucket in influx database
+    string bucket = 3;
 }
 
 // MapperInfo is the information of mapper.

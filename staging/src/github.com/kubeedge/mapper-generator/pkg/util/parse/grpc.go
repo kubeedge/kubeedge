@@ -31,12 +31,12 @@ func getPushMethodFromGrpc(visitor *dmiapi.DeviceProperty) (string, error) {
 	return "", errors.New("can not parse publish method")
 }
 
-func getDBProviderFromGrpc(visitor *dmiapi.DeviceProperty) (string, error) {
-	// TODO add more dbProvider
-	if visitor.DBProvider.Influx != nil {
+func getDBMethodFromGrpc(visitor *dmiapi.DeviceProperty) (string, error) {
+	// TODO add more dbMethod
+	if visitor.PushMethod.DBMethod.Influx != nil {
 		return "influx", nil
 	}
-	return "", errors.New("can not parse dbProvider")
+	return "", errors.New("can not parse dbMethod")
 }
 
 func BuildProtocolFromGrpc(device *dmiapi.Device) (common.ProtocolConfig, error) {
@@ -131,28 +131,28 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 			return nil
 		}
 
-		// get dbProvider filed by grpc device instance
-		var dbProviderName string
-		var dbProvider common.ProviderConfig
-		if pptv.DBProvider != nil {
-			dbProviderName, err = getDBProviderFromGrpc(pptv)
+		// get dbMethod filed by grpc device instance
+		var dbMethodName string
+		var dbconfig common.DBConfig
+		if pptv.PushMethod.DBMethod != nil {
+			dbMethodName, err = getDBMethodFromGrpc(pptv)
 			if err != nil {
 				klog.Errorf("err: %+v", err)
 				return nil
 			}
-			switch dbProviderName {
+			switch dbMethodName {
 			case "influx":
-				configdata, err := json.Marshal(pptv.DBProvider.Influx.ConfigData)
+				configdata, err := json.Marshal(pptv.PushMethod.DBMethod.Influx.ConfigData)
 				if err != nil {
 					klog.Errorf("err: %+v", err)
 					return nil
 				}
-				datastandard, err := json.Marshal(pptv.DBProvider.Influx.DataStandard)
+				datastandard, err := json.Marshal(pptv.PushMethod.DBMethod.Influx.DataStandard)
 				if err != nil {
 					klog.Errorf("err: %+v", err)
 					return nil
 				}
-				dbProvider = common.ProviderConfig{
+				dbconfig = common.DBConfig{
 					ConfigData:   configdata,
 					DataStandard: datastandard,
 				}
@@ -193,10 +193,10 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 			PushMethod: common.PushMethodConfig{
 				MethodName:   pushMethodName,
 				MethodConfig: pushMethod,
-			},
-			DBProvider: common.DBProviderConfig{
-				DBProviderName: dbProviderName,
-				ProviderConfig: dbProvider,
+				DBMethod: common.DBMethodConfig{
+					DBMethodName: dbMethodName,
+					DBConfig:     dbconfig,
+				},
 			},
 		}
 		res = append(res, cur)

@@ -13,7 +13,7 @@ import (
 
 	"k8s.io/klog/v2"
 
-	dbInflux "github.com/kubeedge/mapper-generator/Template/data/dbprovider/influx"
+	dbInflux "github.com/kubeedge/mapper-generator/Template/data/dbmethod/influx"
 	httpMethod "github.com/kubeedge/mapper-generator/Template/data/publish/http"
 	mqttMethod "github.com/kubeedge/mapper-generator/Template/data/publish/mqtt"
 	"github.com/kubeedge/mapper-generator/Template/driver"
@@ -145,7 +145,7 @@ func dataHandler(ctx context.Context, dev *driver.CustomizedDev) {
 		}
 		// handle database
 
-		if twin.Property.DBProvider.DBProviderName != "" {
+		if twin.Property.PushMethod.DBMethod.DBMethodName != "" {
 			dataModel := common.NewDataModel(dev.Instance.Name, twin.Property.PropertyName, common.WithType(twin.ObservedDesired.Metadata.Type))
 			dbHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
 		}
@@ -204,9 +204,9 @@ func pushHandler(ctx context.Context, twin *common.Twin, client *driver.Customiz
 
 // dbHandler start db client to save data
 func dbHandler(ctx context.Context, twin *common.Twin, client *driver.CustomizedClient, visitorConfig *driver.VisitorConfig, dataModel *common.DataModel) {
-	switch twin.Property.DBProvider.DBProviderName {
+	switch twin.Property.PushMethod.DBMethod.DBMethodName {
 	case "influx":
-		dbConfig, err := dbInflux.NewDataBaseClient(twin.Property.DBProvider.ProviderConfig.ConfigData, twin.Property.DBProvider.ProviderConfig.DataStandard)
+		dbConfig, err := dbInflux.NewDataBaseClient(twin.Property.PushMethod.DBMethod.DBConfig.ConfigData, twin.Property.PushMethod.DBMethod.DBConfig.DataStandard)
 		if err != nil {
 			klog.Errorf("new database client error: %v", err)
 			return

@@ -39,7 +39,7 @@ mapper
 │ └── main.go ------------------ Almost need not change.
 ├── config.yaml ---------------- Configuration file including DMI's grpc settting
 ├── data ----------------------- Publish data and database implementation layer, almost need not change
-│ ├── dbprovider --------------- Provider implement database interfaces to save data and provide REST API
+│ ├── dbmethod ----------------- Provider implement database interfaces to save data and provide REST API
 │ │ ├── influx ----------------- Implementation of Time Series Database(InfluxDB)
 │ │ │ └── client.go ------------ WIP
 │ │ └── redis  ----------------- Implementation of K/V Database(Redis)
