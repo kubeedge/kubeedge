@@ -6,8 +6,8 @@ import (
 
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/mapper-generator/Template/pkg/common"
-	dmiapi "github.com/kubeedge/mapper-generator/Template/pkg/temp"
+	"github.com/kubeedge/Template/pkg/common"
+	dmiapi "github.com/kubeedge/Template/pkg/dmi-api"
 )
 
 type TwinResultResponse struct {

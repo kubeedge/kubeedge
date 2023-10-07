@@ -13,14 +13,14 @@ import (
 
 	"k8s.io/klog/v2"
 
-	dbInflux "github.com/kubeedge/mapper-generator/Template/data/dbmethod/influx"
-	httpMethod "github.com/kubeedge/mapper-generator/Template/data/publish/http"
-	mqttMethod "github.com/kubeedge/mapper-generator/Template/data/publish/mqtt"
-	"github.com/kubeedge/mapper-generator/Template/driver"
-	"github.com/kubeedge/mapper-generator/Template/pkg/common"
-	"github.com/kubeedge/mapper-generator/Template/pkg/config"
-	"github.com/kubeedge/mapper-generator/Template/pkg/global"
-	"github.com/kubeedge/mapper-generator/Template/pkg/util/parse"
+	dbInflux "github.com/kubeedge/Template/data/dbmethod/influx"
+	httpMethod "github.com/kubeedge/Template/data/publish/http"
+	mqttMethod "github.com/kubeedge/Template/data/publish/mqtt"
+	"github.com/kubeedge/Template/driver"
+	"github.com/kubeedge/Template/pkg/common"
+	"github.com/kubeedge/Template/pkg/config"
+	"github.com/kubeedge/Template/pkg/global"
+	"github.com/kubeedge/Template/pkg/util/parse"
 )
 
 type DevPanel struct {

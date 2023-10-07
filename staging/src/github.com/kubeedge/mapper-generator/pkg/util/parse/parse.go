@@ -21,9 +21,9 @@ import (
 
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/mapper-generator/Template/pkg/common"
-	"github.com/kubeedge/mapper-generator/Template/pkg/config"
-	"github.com/kubeedge/mapper-generator/Template/pkg/util/grpcclient"
+	"github.com/kubeedge/Template/pkg/common"
+	"github.com/kubeedge/Template/pkg/config"
+	"github.com/kubeedge/Template/pkg/util/grpcclient"
 )
 
 var ErrEmptyData error = errors.New("device or device model list is empty")

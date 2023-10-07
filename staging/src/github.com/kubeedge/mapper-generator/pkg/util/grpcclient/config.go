@@ -1,7 +1,7 @@
 package grpcclient
 
 import (
-	"github.com/kubeedge/mapper-generator/Template/pkg/config"
+	"github.com/kubeedge/Template/pkg/config"
 )
 
 var cfg *config.Config

@@ -1,38 +1,18 @@
 # Mapper Generator
-Golang mapper-generators used to implement [mappers](https://github.com/kubeedge/mappers-go).
+Golang mapper-generator used to generate [mappers](https://github.com/kubeedge/mappers-go).
 
 # How to create your own mappers
 
 ## 1. Design the device model and device instance CRDs
-If you don't know how to define CRD, you can get more details in this [page](https://kubeedge.io/docs/developer/device_crd/).
-
-> <font color= red>**Warning**</font>  
-> After introducing DMI, the following points should be noted when defining CRD:
-> 1. `instance.yaml`: `spec.protocol` must contain `opcua/modbus/bluetooth/customizedProtocol`.   
-      If you don't want to introduce redundant information, you can define like this:
->```yaml
-> protocol:
->   customizedProtocol:
->     protocolName: foo
->```
-> 2. `model.yaml`:  `spec.protocol` is a required field. For example
-> ```yaml
->apiVersion: devices.kubeedge.io/v1alpha2
->kind: DeviceModel
->metadata:
->  name: foo-model
->  namespace: default
->spec:
->  protocol: foo
->```
+If you don't know how to use device model, device instance APIs, please get more details in the [page](https://kubeedge.io/docs/developer/device_crd/).
 
 ## 2. Generate the code template
 The mapper template is to generate a framework for the customized mapper. Run the command and input your mapper's name:
 ```shell
-make template
+make generate
 Please input the mapper name (like 'Bluetooth', 'BLE'): foo
 ```
-A floder named as you input will be generated. The file tree is as below:
+A project named as your input will be generated. The file tree is as below:
 ```
 mapper
 ├── cmd ------------------------ Main process.

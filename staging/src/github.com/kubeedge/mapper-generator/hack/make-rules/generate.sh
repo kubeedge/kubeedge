@@ -29,7 +29,7 @@ function entry() {
 
   mapperVar=$(echo "${mapperName}" | sed -e "s/\b\(.\)/\\u\1/g")
   sed -i "s/Template/${mapperVar}/g" `grep Template -rl ${mapperPath}`
-  sed -i "s/mapper-generator\/${mapperVar}/mapper-generator\/${mapperNameLowercase}/g" `grep "mapper-generator\/${mapperVar}" -rl $mapperPath`
+  sed -i "s/kubeedge\/${mapperVar}/kubeedge\/${mapperNameLowercase}/g" `grep "kubeedge\/${mapperVar}" -rl $mapperPath`
 
   empty_file_path="${MAPPER_DIR}/.empty"
   if [ -f "$empty_file_path" ]; then

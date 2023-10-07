@@ -8,7 +8,7 @@ $(eval $(rest_args):;@:)
 help:
 
 	# Usage:
-	#   make template :  create a mapper based on a template.
+	#   make generate :  generate a mapper based on a template.
 	#
 	@echo
 

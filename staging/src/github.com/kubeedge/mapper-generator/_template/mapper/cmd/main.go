@@ -6,13 +6,13 @@ import (
 
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/mapper-generator/Template/device"
-	"github.com/kubeedge/mapper-generator/Template/pkg/common"
-	"github.com/kubeedge/mapper-generator/Template/pkg/config"
-	"github.com/kubeedge/mapper-generator/Template/pkg/grpcserver"
-	"github.com/kubeedge/mapper-generator/Template/pkg/httpserver"
-	"github.com/kubeedge/mapper-generator/Template/pkg/util/grpcclient"
-	"github.com/kubeedge/mapper-generator/Template/pkg/util/parse"
+	"github.com/kubeedge/Template/device"
+	"github.com/kubeedge/Template/pkg/common"
+	"github.com/kubeedge/Template/pkg/config"
+	"github.com/kubeedge/Template/pkg/grpcserver"
+	"github.com/kubeedge/Template/pkg/httpserver"
+	"github.com/kubeedge/Template/pkg/util/grpcclient"
+	"github.com/kubeedge/Template/pkg/util/parse"
 )
 
 func main() {

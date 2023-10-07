@@ -26,7 +26,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/mapper-generator/Template/pkg/common"
+	"github.com/kubeedge/Template/pkg/common"
 )
 
 var defaultConfigFile = "./config.yaml"
