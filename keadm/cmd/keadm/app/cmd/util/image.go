@@ -31,9 +31,11 @@ import (
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"k8s.io/klog/v2"
+	"k8s.io/kubernetes/pkg/kubelet/cm"
 	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
 	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
 
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/pkg/image"
 )
 
@@ -47,7 +49,7 @@ type ContainerRuntime interface {
 	RemoveMQTT() error
 }
 
-func NewContainerRuntime(runtimeType string, endpoint string) (ContainerRuntime, error) {
+func NewContainerRuntime(runtimeType, endpoint, cgroupDriver string) (ContainerRuntime, error) {
 	var runtime ContainerRuntime
 	switch runtimeType {
 	case kubetypes.DockerContainerRuntime:
@@ -74,6 +76,7 @@ func NewContainerRuntime(runtimeType string, endpoint string) (ContainerRuntime,
 		}
 		runtime = &CRIRuntime{
 			endpoint:            endpoint,
+			cgroupDriver:        cgroupDriver,
 			ImageManagerService: imageService,
 			RuntimeService:      runtimeService,
 		}
@@ -227,6 +230,7 @@ func (runtime *DockerRuntime) CopyResources(image string, files map[string]strin
 
 type CRIRuntime struct {
 	endpoint            string
+	cgroupDriver        string
 	ImageManagerService internalapi.ImageManagerService
 	RuntimeService      internalapi.RuntimeService
 }
@@ -255,6 +259,10 @@ func (runtime *CRIRuntime) PullImages(images []string) error {
 func (runtime *CRIRuntime) CopyResources(edgeImage string, files map[string]string) error {
 	psc := &runtimeapi.PodSandboxConfig{
 		Metadata: &runtimeapi.PodSandboxMetadata{Name: KubeEdgeBinaryName},
+	}
+	if runtime.cgroupDriver == v1alpha2.CGroupDriverSystemd {
+		cgroupName := cm.NewCgroupName(cm.CgroupName{"kubeedge", "setup", "podcopyresource"})
+		psc.Linux.CgroupParent = cgroupName.ToSystemd()
 	}
 	sandbox, err := runtime.RuntimeService.RunPodSandbox(psc, "")
 	if err != nil {
