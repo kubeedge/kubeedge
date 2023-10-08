@@ -51,6 +51,8 @@ cloudCore:
       enable: false
     router:
       enable: false
+    nodeUpgradeJobController:
+      enable: false
   service:
     enable: false
     type: "NodePort"

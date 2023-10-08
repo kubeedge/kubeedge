@@ -53,3 +53,5 @@ data:
       iptablesManager:
         enable: {{ .Values.iptablesManager.enable }}
         mode: {{ .Values.iptablesManager.mode }}
+      nodeUpgradeJobController:
+        enable: {{ .Values.cloudCore.modules.nodeUpgradeJobController.enable }}
