@@ -38,20 +38,21 @@ func NewDataPanel(config json.RawMessage) (global.DataPanel, error) {
 }
 
 func (pm *PushMethod) InitPushMethod() error {
-	// TODO add init code
-	fmt.Println("Init Http")
+	klog.V(1).Info("Init HTTP")
 	return nil
 }
 
 func (pm *PushMethod) Push(data *common.DataModel) {
-	// TODO add push code
+	klog.V(2).Info("Publish device data by HTTP")
 
 	targetUrl := pm.HTTP.HostName + ":" + strconv.Itoa(pm.HTTP.Port) + pm.HTTP.RequestPath
-	klog.V(1).Infof("targetUrl = %s", targetUrl)
 	payload := data.PropertyName + "=" + data.Value
 	formatTimeStr := time.Unix(data.TimeStamp/1e3, 0).Format("2006-01-02 15:04:05")
 	currentTime := "&time" + "=" + formatTimeStr
 	payload += currentTime
+
+	klog.V(3).Infof("Publish %v to %s", payload, targetUrl)
+
 	resp, err := http.Post(targetUrl,
 		"application/x-www-form-urlencoded",
 		strings.NewReader(payload))
@@ -63,7 +64,10 @@ func (pm *PushMethod) Push(data *common.DataModel) {
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		// handle error
+		klog.Errorf("Publish device data by HTTP failed, err = %v", err)
+		return
 	}
-	klog.V(1).Info(string(body))
+	klog.V(1).Info("###############  Message published.  ###############")
+	klog.V(3).Infof("HTTP reviced %s", string(body))
 
 }

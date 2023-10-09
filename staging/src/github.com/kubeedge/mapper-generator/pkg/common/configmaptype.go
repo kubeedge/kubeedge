@@ -18,7 +18,7 @@ package common
 
 import "encoding/json"
 
-// DeviceProfile is structure to store in configMap.
+// DeviceProfile is structure to store in configMap. It will be removed later
 type DeviceProfile struct {
 	DeviceInstances []DeviceInstance `json:"deviceInstances,omitempty"`
 	DeviceModels    []DeviceModel    `json:"deviceModels,omitempty"`
@@ -49,10 +49,9 @@ type ModelProperty struct {
 	DataType    string `json:"dataType,omitempty"`
 	Description string `json:"description,omitempty"`
 	AccessMode  string `json:"accessMode,omitempty"`
-	//DefaultValue interface{} `json:"defaultValue,omitempty"`
-	Minimum string `json:"minimum,omitempty"` //todo todo why the type is int64
-	Maximum string `json:"maximum,omitempty"`
-	Unit    string `json:"unit,omitempty"`
+	Minimum     string `json:"minimum,omitempty"`
+	Maximum     string `json:"maximum,omitempty"`
+	Unit        string `json:"unit,omitempty"`
 }
 
 // Protocol is structure to store protocol in deviceProfile.json in configmap.
@@ -74,15 +73,12 @@ type DeviceProperty struct {
 	ModelName    string          `json:"modelName,omitempty"`
 	Protocol     string          `json:"protocol,omitempty"`
 	Visitors     json.RawMessage `json:"visitorConfig"`
-
 	// whether be reported to the cloud
 	ReportToCloud bool             `json:"reportToCloud,omitempty"`
 	CollectCycle  int64            `json:"collectCycle"`
 	ReportCycle   int64            `json:"reportCycle,omitempty"`
 	PushMethod    PushMethodConfig `json:"pushMethod,omitempty"`
-	//DBProvider    DBProviderConfig `json:"dbProvider,omitempty"`
-
-	PProperty ModelProperty
+	PProperty     ModelProperty
 }
 
 // PushMethodConfig is structure to store push config
@@ -98,9 +94,9 @@ type DBMethodConfig struct {
 }
 
 type DBConfig struct {
-	ConfigData      json.RawMessage `json:"configData"`
-	DataStandard    json.RawMessage `json:"dataStandard"`
-	RedisConfigData json.RawMessage `json:"redisConfigData"`
+	Influxdb2ClientConfig json.RawMessage `json:"influxdb2ClientConfig"`
+	Influxdb2DataConfig   json.RawMessage `json:"influxdb2DataConfig"`
+	RedisConfigData       json.RawMessage `json:"redisConfigData"`
 }
 
 // Metadata is the metadata for data.
@@ -116,18 +112,6 @@ type Twin struct {
 	ObservedDesired TwinProperty `json:"observedDesired,omitempty"`
 	Reported        TwinProperty `json:"reported,omitempty"`
 }
-
-//// DesiredData is the desired data.
-//type DesiredData struct {
-//	Value     string   `json:"value,omitempty"`
-//	Metadatas Metadata `json:"metadata,omitempty"`
-//}
-//
-//// ReportedData is the reported data.
-//type ReportedData struct {
-//	Value     string   `json:"value,omitempty"`
-//	Metadatas Metadata `json:"metadata,omitempty"`
-//}
 
 type TwinProperty struct {
 	// Required: The value for this property.

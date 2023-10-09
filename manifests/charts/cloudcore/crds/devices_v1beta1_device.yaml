@@ -600,11 +600,11 @@ spec:
                             data to database, please ensure that the mapper can access
                             the destination address.
                           properties:
-                            influx:
+                            influxdb2:
                               description: method configuration for database
                               properties:
-                                configData:
-                                  description: ConfigData of influx database
+                                influxdb2ClientConfig:
+                                  description: Config of influx database
                                   properties:
                                     bucket:
                                       description: Bucket of the user in influx database
@@ -616,9 +616,9 @@ spec:
                                       description: Url of influx database
                                       type: string
                                   type: object
-                                dataStandard:
-                                  description: DataStandard of the data to influx
-                                    database
+                                influxdb2DataConfig:
+                                  description: config of device data when push to
+                                    influx database
                                   properties:
                                     fieldKey:
                                       description: FieldKey of the user data
@@ -626,12 +626,11 @@ spec:
                                     measurement:
                                       description: Measurement of the user data
                                       type: string
-                                    tagKey:
-                                      description: TagKey of the user data
-                                      type: string
-                                    tagValue:
-                                      description: TagValue of the user data
-                                      type: string
+                                    tag:
+                                      additionalProperties:
+                                        type: string
+                                      description: the tag of device data
+                                      type: object
                                   type: object
                               type: object
                           type: object

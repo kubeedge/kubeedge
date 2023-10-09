@@ -18,13 +18,13 @@ type CustomizedClient struct {
 	ProtocolConfig
 }
 
-type ProtocolConfig struct { //customizedprotocol字段
+type ProtocolConfig struct {
 	ProtocolName string `json:"protocolName"`
 	ConfigData   `json:"configData"`
 }
 
 type ConfigData struct {
-	// TODO: add your config data according to configmap
+	// TODO: add your protocol config data
 }
 
 type VisitorConfig struct {
@@ -33,6 +33,6 @@ type VisitorConfig struct {
 }
 
 type VisitorConfigData struct {
-	// TODO: add your Visitor ConfigData according to configmap
+	// TODO: add your visitor config data
 	DataType string `json:"dataType"`
 }

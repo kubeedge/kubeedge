@@ -15,24 +15,24 @@ func NewClient(protocol ProtocolConfig) (*CustomizedClient, error) {
 
 func (c *CustomizedClient) InitDevice() error {
 	// TODO: add init operation
-	// you can use c.ProtocolConfig and c.ProtocolCommonConfig
+	// you can use c.ProtocolConfig
 	return nil
 }
 
 func (c *CustomizedClient) GetDeviceData(visitor *VisitorConfig) (interface{}, error) {
-	// TODO: get device's data
-	// you can use c.ProtocolConfig,c.ProtocolCommonConfig and visitor
+	// TODO: add the code to get device's data
+	// you can use c.ProtocolConfig and visitor
 	return nil, nil
 }
 
 func (c *CustomizedClient) SetDeviceData(data interface{}, visitor *VisitorConfig) error {
 	// TODO: set device's data
-	// you can use c.ProtocolConfig,c.ProtocolCommonConfig and visitor
+	// you can use c.ProtocolConfig and visitor
 	return nil
 }
 
 func (c *CustomizedClient) StopDevice() error {
 	// TODO: stop device
-	// you can use c.ProtocolConfig and c.ProtocolCommonConfig
+	// you can use c.ProtocolConfig
 	return nil
 }

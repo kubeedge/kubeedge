@@ -244,24 +244,23 @@ message PushMethodMQTT {
 
 message DBMethod{
     // the config of database .
-    DBMethodInflux influx = 1;
+    DBMethodInfluxdb2 influxdb2 = 1;
 }
 
-message DBMethodInflux{
+message DBMethodInfluxdb2{
     // the config of influx database.
-    ConfigData configData = 1;
-    DataStandard dataStandard = 2;
+    Influxdb2ClientConfig influxdb2ClientConfig = 1;
+    Influxdb2DataConfig influxdb2DataConfig = 2;
 }
 
-message DataStandard{
-    // datastandard when push data to influx
+message Influxdb2DataConfig{
+    // data config when push data to influx
     string measurement = 1;
-    string tagKey = 2;
-    string tagValue = 3;
-    string fieldKey = 4;
+    map<string, string> tag = 2;
+    string fieldKey = 3;
 }
 
-message ConfigData{
+message Influxdb2ClientConfig{
     // influx database url
     string url = 1;
     // usr org in influx database

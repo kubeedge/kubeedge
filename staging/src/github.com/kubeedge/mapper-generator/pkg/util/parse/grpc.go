@@ -33,7 +33,7 @@ func getPushMethodFromGrpc(visitor *dmiapi.DeviceProperty) (string, error) {
 
 func getDBMethodFromGrpc(visitor *dmiapi.DeviceProperty) (string, error) {
 	// TODO add more dbMethod
-	if visitor.PushMethod.DBMethod.Influx != nil {
+	if visitor.PushMethod.DBMethod.Influxdb2 != nil {
 		return "influx", nil
 	}
 	return "", errors.New("can not parse dbMethod")
@@ -109,7 +109,7 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 		return nil
 	}
 	res := make([]common.DeviceProperty, 0, len(device.Spec.Properties))
-	klog.V(1).Infof("In buildPropertiesFromGrpc, PropertyVisitors = %v", device.Spec.Properties)
+	klog.V(3).Infof("In buildPropertiesFromGrpc, PropertyVisitors = %v", device.Spec.Properties)
 	for _, pptv := range device.Spec.Properties {
 
 		// get visitorConfig filed by grpc device instance
@@ -142,19 +142,19 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 			}
 			switch dbMethodName {
 			case "influx":
-				configdata, err := json.Marshal(pptv.PushMethod.DBMethod.Influx.ConfigData)
+				clientconfig, err := json.Marshal(pptv.PushMethod.DBMethod.Influxdb2.Influxdb2ClientConfig)
 				if err != nil {
 					klog.Errorf("err: %+v", err)
 					return nil
 				}
-				datastandard, err := json.Marshal(pptv.PushMethod.DBMethod.Influx.DataStandard)
+				dataconfig, err := json.Marshal(pptv.PushMethod.DBMethod.Influxdb2.Influxdb2DataConfig)
 				if err != nil {
 					klog.Errorf("err: %+v", err)
 					return nil
 				}
 				dbconfig = common.DBConfig{
-					ConfigData:   configdata,
-					DataStandard: datastandard,
+					Influxdb2ClientConfig: clientconfig,
+					Influxdb2DataConfig:   dataconfig,
 				}
 			}
 		}
@@ -251,8 +251,7 @@ func ParseDeviceFromGrpc(device *dmiapi.Device, commonModel *common.DeviceModel)
 			continue
 		}
 
-		// ****这里是想把直接从model.yaml文件中解析出来的modelproperty解析到instance里，主要要看传入的commonModel是不是从yaml文件中
-		//解析得到的model数据
+		// parse the content of the modelproperty field into instance
 		for _, property := range commonModel.Properties {
 			if property.Name == instance.Properties[i].PropertyName {
 				instance.Properties[i].PProperty = property
@@ -266,6 +265,6 @@ func ParseDeviceFromGrpc(device *dmiapi.Device, commonModel *common.DeviceModel)
 			instance.Twins[i].Property = &v
 		}
 	}
-	klog.V(1).Infof("final instance data from grpc = %v", instance)
+	klog.V(2).Infof("final instance data from grpc = %v", instance)
 	return instance, nil
 }

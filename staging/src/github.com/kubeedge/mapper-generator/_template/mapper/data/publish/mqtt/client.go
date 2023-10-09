@@ -36,13 +36,11 @@ func NewDataPanel(config json.RawMessage) (global.DataPanel, error) {
 }
 
 func (pm *PushMethod) InitPushMethod() error {
-	// TODO add init code
-	fmt.Println("Init Mqtt")
+	klog.V(1).Info("Init MQTT")
 	return nil
 }
 
 func (pm *PushMethod) Push(data *common.DataModel) {
-	// TODO add push code
 	klog.V(1).Infof("Publish %v to %s on topic: %s, Qos: %d, Retained: %v",
 		data.Value, pm.MQTT.Address, pm.MQTT.Topic, pm.MQTT.QoS, pm.MQTT.Retained)
 
@@ -61,5 +59,5 @@ func (pm *PushMethod) Push(data *common.DataModel) {
 	token.Wait()
 
 	client.Disconnect(250)
-	klog.V(1).Info("###############  Message published.  ###############")
+	klog.V(2).Info("###############  Message published.  ###############")
 }

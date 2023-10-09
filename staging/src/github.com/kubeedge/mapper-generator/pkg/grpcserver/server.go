@@ -47,7 +47,7 @@ func (s *Server) Start() error {
 	grpcServer := grpc.NewServer()
 	dmiapi.RegisterDeviceMapperServiceServer(grpcServer, s)
 	reflection.Register(grpcServer)
-	klog.Info("start grpc server")
+	klog.V(2).Info("start grpc server")
 	return grpcServer.Serve(s.lis)
 }
 
@@ -63,7 +63,7 @@ func (s *Server) Stop() {
 }
 
 func initSock(sockPath string) error {
-	klog.Infof("init uds socket: %s", sockPath)
+	klog.V(2).Infof("init uds socket: %s", sockPath)
 	_, err := os.Stat(sockPath)
 	if err == nil {
 		err = os.Remove(sockPath)

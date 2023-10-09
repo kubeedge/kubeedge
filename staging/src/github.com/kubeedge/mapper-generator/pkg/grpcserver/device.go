@@ -15,10 +15,8 @@ import (
 )
 
 func (s *Server) RegisterDevice(ctx context.Context, request *dmiapi.RegisterDeviceRequest) (*dmiapi.RegisterDeviceResponse, error) {
-	//klog.V(2).Info("RegisterDevice")
+	klog.V(3).Info("RegisterDevice")
 	device := request.GetDevice()
-	//klog.V(1).Infof("In RegisterDevice, device = %v", device)
-
 	if device == nil {
 		return nil, errors.New("device is nil")
 	}
@@ -67,7 +65,7 @@ func (s *Server) RemoveDevice(ctx context.Context, request *dmiapi.RemoveDeviceR
 }
 
 func (s *Server) UpdateDevice(ctx context.Context, request *dmiapi.UpdateDeviceRequest) (*dmiapi.UpdateDeviceResponse, error) {
-	klog.V(2).Info("UpdateDevice")
+	klog.V(3).Info("UpdateDevice")
 	device := request.GetDevice()
 	if device == nil {
 		return nil, errors.New("device is nil")
@@ -82,7 +80,7 @@ func (s *Server) UpdateDevice(ctx context.Context, request *dmiapi.UpdateDeviceR
 		return nil, fmt.Errorf("parse device %s protocol failed, err: %s", device.Name, err)
 	}
 
-	klog.Infof("model: %+v", model)
+	klog.V(3).Infof("model: %+v", model)
 	deviceInstance, err := parse.ParseDeviceFromGrpc(device, &model)
 	if err != nil {
 		return nil, fmt.Errorf("parse device %s instance failed, err: %s", device.Name, err)

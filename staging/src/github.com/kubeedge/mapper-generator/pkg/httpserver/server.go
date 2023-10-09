@@ -55,7 +55,7 @@ func (rs *RestServer) StartServer() {
 	}
 	if rs.CaCertFilePath == "" && (rs.KeyFilePath == "" || rs.CertFilePath == "") {
 		// insecure
-		klog.Info("Insecure communication, skipping server verification")
+		klog.V(3).Info("Insecure communication, skipping server verification")
 		err := rs.server.ListenAndServe()
 		if err != nil {
 			klog.Errorf("insecure http server error: %v", err)
@@ -63,7 +63,7 @@ func (rs *RestServer) StartServer() {
 		}
 	} else if rs.CaCertFilePath == "" && rs.KeyFilePath != "" && rs.CertFilePath != "" {
 		// tls
-		klog.Info("tls communication, https server start")
+		klog.V(3).Info("tls communication, https server start")
 		err := rs.server.ListenAndServeTLS(rs.CertFilePath, rs.KeyFilePath)
 		if err != nil {
 			klog.Errorf("tls http server error: %v", err)
@@ -71,7 +71,7 @@ func (rs *RestServer) StartServer() {
 		}
 	} else if rs.CaCertFilePath != "" && rs.KeyFilePath != "" && rs.CertFilePath != "" {
 		// mtls
-		klog.Info("mtls communication, please provide client-key and client-cert to access service")
+		klog.V(3).Info("mtls communication, please provide client-key and client-cert to access service")
 		// Configure the server to trust TLS client cert issued by your CA.
 		certPool := x509.NewCertPool()
 		if caCertPEM, err := ioutil.ReadFile(rs.CaCertFilePath); err != nil {

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright 2022 The KubeEdge Authors.
+# Copyright 2023 The KubeEdge Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ func NewDeviceManageClient(cc grpc.ClientConnInterface) DeviceManagerServiceClie
 '
 
 # shellcheck disable=SC1004
-COPY_RIGHT_INFO_LINE_1='/*\nCopyright 2022 The KubeEdge Authors.\n'
+COPY_RIGHT_INFO_LINE_1='/*\nCopyright 2023 The KubeEdge Authors.\n'
 COPY_RIGHT_INFO_LINE_2='Licensed under the Apache License, Version 2.0 (the "License");'
 COPY_RIGHT_INFO_LINE_3='you may not use this file except in compliance with the License.'
 COPY_RIGHT_INFO_LINE_4='You may obtain a copy of the License at\n'

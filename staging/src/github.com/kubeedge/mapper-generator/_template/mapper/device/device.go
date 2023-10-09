@@ -13,7 +13,7 @@ import (
 
 	"k8s.io/klog/v2"
 
-	dbInflux "github.com/kubeedge/Template/data/dbmethod/influx"
+	dbInflux "github.com/kubeedge/Template/data/dbmethod/influxdb2"
 	httpMethod "github.com/kubeedge/Template/data/publish/http"
 	mqttMethod "github.com/kubeedge/Template/data/publish/mqtt"
 	"github.com/kubeedge/Template/driver"
@@ -132,19 +132,11 @@ func dataHandler(ctx context.Context, dev *driver.CustomizedDev) {
 		}
 		go twinData.Run(ctx)
 		// handle push method
-		testconfig := make(map[string]interface{})
-		err = json.Unmarshal(twin.Property.PushMethod.MethodConfig, &testconfig)
-		if err == nil {
-			klog.V(1).Infof("twin.Property.PushMethod.MethodConfig = %v", testconfig)
-		} else {
-			klog.Error(err)
-		}
 		if twin.Property.PushMethod.MethodConfig != nil && twin.Property.PushMethod.MethodName != "" {
 			dataModel := common.NewDataModel(dev.Instance.Name, twin.Property.PropertyName, common.WithType(twin.ObservedDesired.Metadata.Type))
 			pushHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
 		}
 		// handle database
-
 		if twin.Property.PushMethod.DBMethod.DBMethodName != "" {
 			dataModel := common.NewDataModel(dev.Instance.Name, twin.Property.PropertyName, common.WithType(twin.ObservedDesired.Metadata.Type))
 			dbHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
@@ -156,18 +148,20 @@ func dataHandler(ctx context.Context, dev *driver.CustomizedDev) {
 func pushHandler(ctx context.Context, twin *common.Twin, client *driver.CustomizedClient, visitorConfig *driver.VisitorConfig, dataModel *common.DataModel) {
 	var dataPanel global.DataPanel
 	var err error
+	// initialization dataPanel
 	switch twin.Property.PushMethod.MethodName {
 	case "http":
 		dataPanel, err = httpMethod.NewDataPanel(twin.Property.PushMethod.MethodConfig)
 	case "mqtt":
 		dataPanel, err = mqttMethod.NewDataPanel(twin.Property.PushMethod.MethodConfig)
 	default:
-		err = errors.New("Custom protocols are not currently supported")
+		err = errors.New("custom protocols are not currently supported when push data")
 	}
 	if err != nil {
 		klog.Errorf("new data panel error: %v", err)
 		return
 	}
+	// initialization PushMethod
 	err = dataPanel.InitPushMethod()
 	if err != nil {
 		klog.Errorf("init publish method err: %v", err)
@@ -205,8 +199,9 @@ func pushHandler(ctx context.Context, twin *common.Twin, client *driver.Customiz
 // dbHandler start db client to save data
 func dbHandler(ctx context.Context, twin *common.Twin, client *driver.CustomizedClient, visitorConfig *driver.VisitorConfig, dataModel *common.DataModel) {
 	switch twin.Property.PushMethod.DBMethod.DBMethodName {
+	// TODO add more database
 	case "influx":
-		dbConfig, err := dbInflux.NewDataBaseClient(twin.Property.PushMethod.DBMethod.DBConfig.ConfigData, twin.Property.PushMethod.DBMethod.DBConfig.DataStandard)
+		dbConfig, err := dbInflux.NewDataBaseClient(twin.Property.PushMethod.DBMethod.DBConfig.Influxdb2ClientConfig, twin.Property.PushMethod.DBMethod.DBConfig.Influxdb2DataConfig)
 		if err != nil {
 			klog.Errorf("new database client error: %v", err)
 			return
@@ -255,7 +250,7 @@ func dbHandler(ctx context.Context, twin *common.Twin, client *driver.Customized
 // setVisitor check if visitor property is readonly, if not then set it.
 func setVisitor(visitorConfig *driver.VisitorConfig, twin *common.Twin, dev *driver.CustomizedDev) error {
 	if twin.Property.PProperty.AccessMode == "ReadOnly" {
-		klog.V(1).Infof("%s twin readonly property: %s", dev.Instance.Name, twin.PropertyName)
+		klog.V(3).Infof("%s twin readonly property: %s", dev.Instance.Name, twin.PropertyName)
 		return nil
 	}
 	klog.V(2).Infof("Convert type: %s, value: %s ", twin.Property.PProperty.DataType, twin.ObservedDesired.Value)

@@ -155,19 +155,19 @@ type PushMethodMQTT struct {
 type DBMethodConfig struct {
 	// method configuration for database
 	// +optional
-	Influx *DBMethodInflux `json:"influx,omitempty"`
+	Influxdb2 *DBMethodInfluxdb2 `json:"influxdb2,omitempty"`
 }
 
-type DBMethodInflux struct {
-	// ConfigData of influx database
+type DBMethodInfluxdb2 struct {
+	// Config of influx database
 	// +optional
-	ConfigData *ConfigData `json:"configData"`
-	// DataStandard of the data to influx database
+	Influxdb2ClientConfig *Influxdb2ClientConfig `json:"influxdb2ClientConfig"`
+	// config of device data when push to influx database
 	// +optional
-	DataStandard *DataStandard `json:"dataStandard"`
+	Influxdb2DataConfig *Influxdb2DataConfig `json:"influxdb2DataConfig"`
 }
 
-type ConfigData struct {
+type Influxdb2ClientConfig struct {
 	// Url of influx database
 	// +optional
 	URL string `json:"url,omitempty"`
@@ -179,16 +179,13 @@ type ConfigData struct {
 	Bucket string `json:"bucket,omitempty"`
 }
 
-type DataStandard struct {
+type Influxdb2DataConfig struct {
 	// Measurement of the user data
 	// +optional
 	Measurement string `json:"measurement,omitempty"`
-	// TagKey of the user data
+	// the tag of device data
 	// +optional
-	TagKey string `json:"tagKey,omitempty"`
-	// TagValue of the user data
-	// +optional
-	TagValue string `json:"tagValue,omitempty"`
+	Tag map[string]string `json:"tag,omitempty"`
 	// FieldKey of the user data
 	// +optional
 	FieldKey string `json:"fieldKey,omitempty"`
