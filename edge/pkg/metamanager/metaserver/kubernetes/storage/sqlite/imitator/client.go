@@ -27,6 +27,8 @@ type Client interface {
 	Inject(msg model.Message)
 	InsertOrUpdateObj(ctx context.Context, obj runtime.Object) error
 	DeleteObj(ctx context.Context, obj runtime.Object) error
+	InsertOrUpdatePassThroughObj(ctx context.Context, obj []byte, key string) error
+	GetPassThroughObj(ctx context.Context, key string) ([]byte, error)
 
 	GetRevision() uint64
 	SetRevision(version interface{})

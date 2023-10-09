@@ -111,6 +111,23 @@ func (f *Factory) Update(req *request.RequestInfo) http.Handler {
 	return h
 }
 
+// PassThrough
+// handel with the pass through request
+func (f *Factory) PassThrough() http.Handler {
+	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		options := metav1.GetOptions{}
+		result, err := f.storage.PassThrough(req.Context(), &options)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(result)
+	})
+	return h
+}
+
 func (f *Factory) Patch(reqInfo *request.RequestInfo) http.Handler {
 	scope := wrapScope{RequestScope: scope.NewRequestScope()}
 	scope.Kind = schema.GroupVersionKind{

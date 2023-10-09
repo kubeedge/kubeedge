@@ -56,8 +56,11 @@ func KeyFuncObj(obj runtime.Object) (string, error) {
 // KeyFuncReq generate key from req context
 func KeyFuncReq(ctx context.Context, _ string) (string, error) {
 	info, ok := apirequest.RequestInfoFrom(ctx)
-	if !ok || !info.IsResourceRequest {
+	if !ok {
 		return "", fmt.Errorf("no request info in context")
+	}
+	if !info.IsResourceRequest {
+		return info.Path, nil
 	}
 
 	group := ""

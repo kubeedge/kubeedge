@@ -56,6 +56,7 @@ require (
 )
 
 require (
+	github.com/agiledragon/gomonkey v2.0.2+incompatible
 	github.com/onsi/ginkgo/v2 v2.6.0
 	github.com/pkg/errors v0.9.1
 	go.opentelemetry.io/otel/trace v1.10.0

@@ -115,6 +115,9 @@ func TestKeyFuncReq(t *testing.T) {
 
 		// api version identification
 		{"POST", "/apis/extensions/v1beta3/namespaces/other/pods", "create", "api", "extensions", "v1beta3", "other", "pods", "", "", []string{"pods"}},
+
+		// non-resource api pass through
+		{method: "GET", url: "/version"},
 	}
 	stdResult := []string{
 		"/core/v1/namespaces/null/null",
@@ -146,6 +149,8 @@ func TestKeyFuncReq(t *testing.T) {
 		"/extensions/v1/pods/other/null",
 
 		"/extensions/v1beta3/pods/other/null",
+
+		"/version",
 	}
 	resolver := newTestRequestInfoResolver()
 	for k, v := range Cases {

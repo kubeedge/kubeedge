@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -20,18 +21,21 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/filter"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
+	"github.com/kubeedge/kubeedge/pkg/util/pass-through"
 )
 
 type Center struct {
 	HandlerCenter
-	messageLayer messagelayer.MessageLayer
-	kubeclient   dynamic.Interface
+	messageLayer  messagelayer.MessageLayer
+	dynamicClient dynamic.Interface
+	kubeClient    kubernetes.Interface
 }
 
 func NewApplicationCenter(dynamicSharedInformerFactory dynamicinformer.DynamicSharedInformerFactory) *Center {
 	a := &Center{
 		HandlerCenter: NewHandlerCenter(dynamicSharedInformerFactory),
-		kubeclient:    client.GetDynamicClient(),
+		dynamicClient: client.GetDynamicClient(),
+		kubeClient:    client.GetKubeClient(),
 		messageLayer:  messagelayer.DynamicControllerMessageLayer(),
 	}
 	return a
@@ -54,6 +58,17 @@ func (c *Center) Process(msg model.Message) {
 	}
 
 	klog.Infof("[metaserver/ApplicationCenter] get a Application %v", app.String())
+
+	if passthrough.IsPassThroughPath(app.Key, string(app.Verb)) {
+		resp, err := c.passThroughRequest(app)
+		if err != nil {
+			c.Response(app, msg.GetID(), metaserver.Rejected, err, nil)
+			klog.Errorf("[metaserver/passThrough]failed to process Application(%+v), %v", app, err)
+			return
+		}
+		c.Response(app, msg.GetID(), metaserver.Approved, nil, resp)
+		return
+	}
 
 	resp, err := c.ProcessApplication(app)
 	if err != nil {
@@ -80,7 +95,7 @@ func (c *Center) ProcessApplication(app *metaserver.Application) (interface{}, e
 		if err := app.OptionTo(option); err != nil {
 			return nil, err
 		}
-		list, err := c.kubeclient.Resource(gvr).Namespace(ns).List(context.TODO(), *option)
+		list, err := c.dynamicClient.Resource(gvr).Namespace(ns).List(context.TODO(), *option)
 		if err != nil {
 			return nil, fmt.Errorf("get current list error: %v", err)
 		}
@@ -100,7 +115,7 @@ func (c *Center) ProcessApplication(app *metaserver.Application) (interface{}, e
 		if err := app.OptionTo(option); err != nil {
 			return nil, err
 		}
-		retObj, err := c.kubeclient.Resource(gvr).Namespace(ns).Get(context.TODO(), name, *option)
+		retObj, err := c.dynamicClient.Resource(gvr).Namespace(ns).Get(context.TODO(), name, *option)
 		if err != nil {
 			return nil, err
 		}
@@ -117,9 +132,9 @@ func (c *Center) ProcessApplication(app *metaserver.Application) (interface{}, e
 		var retObj interface{}
 		var err error
 		if app.Subresource == "" {
-			retObj, err = c.kubeclient.Resource(gvr).Namespace(ns).Create(context.TODO(), obj, *option)
+			retObj, err = c.dynamicClient.Resource(gvr).Namespace(ns).Create(context.TODO(), obj, *option)
 		} else {
-			retObj, err = c.kubeclient.Resource(gvr).Namespace(ns).Create(context.TODO(), obj, *option, app.Subresource)
+			retObj, err = c.dynamicClient.Resource(gvr).Namespace(ns).Create(context.TODO(), obj, *option, app.Subresource)
 		}
 		if err != nil {
 			return nil, err
@@ -130,7 +145,7 @@ func (c *Center) ProcessApplication(app *metaserver.Application) (interface{}, e
 		if err := app.OptionTo(&option); err != nil {
 			return nil, err
 		}
-		if err := c.kubeclient.Resource(gvr).Namespace(ns).Delete(context.TODO(), name, *option); err != nil {
+		if err := c.dynamicClient.Resource(gvr).Namespace(ns).Delete(context.TODO(), name, *option); err != nil {
 			return nil, err
 		}
 		return nil, nil
@@ -146,9 +161,9 @@ func (c *Center) ProcessApplication(app *metaserver.Application) (interface{}, e
 		var retObj interface{}
 		var err error
 		if app.Subresource == "" {
-			retObj, err = c.kubeclient.Resource(gvr).Namespace(ns).Update(context.TODO(), obj, *option)
+			retObj, err = c.dynamicClient.Resource(gvr).Namespace(ns).Update(context.TODO(), obj, *option)
 		} else {
-			retObj, err = c.kubeclient.Resource(gvr).Namespace(ns).Update(context.TODO(), obj, *option, app.Subresource)
+			retObj, err = c.dynamicClient.Resource(gvr).Namespace(ns).Update(context.TODO(), obj, *option, app.Subresource)
 		}
 		if err != nil {
 			return nil, err
@@ -163,7 +178,7 @@ func (c *Center) ProcessApplication(app *metaserver.Application) (interface{}, e
 		if err := app.ReqBodyTo(obj); err != nil {
 			return nil, err
 		}
-		retObj, err := c.kubeclient.Resource(gvr).Namespace(ns).UpdateStatus(context.TODO(), obj, *option)
+		retObj, err := c.dynamicClient.Resource(gvr).Namespace(ns).UpdateStatus(context.TODO(), obj, *option)
 		if err != nil {
 			return nil, err
 		}
@@ -173,7 +188,7 @@ func (c *Center) ProcessApplication(app *metaserver.Application) (interface{}, e
 		if err := app.OptionTo(pi); err != nil {
 			return nil, err
 		}
-		retObj, err := c.kubeclient.Resource(gvr).Namespace(ns).Patch(context.TODO(), pi.Name, pi.PatchType, pi.Data, pi.Options, pi.Subresources...)
+		retObj, err := c.dynamicClient.Resource(gvr).Namespace(ns).Patch(context.TODO(), pi.Name, pi.PatchType, pi.Data, pi.Options, pi.Subresources...)
 		if err != nil {
 			return nil, err
 		}
@@ -181,6 +196,15 @@ func (c *Center) ProcessApplication(app *metaserver.Application) (interface{}, e
 	default:
 		return nil, fmt.Errorf("unsupported Application Verb type :%v", app.Verb)
 	}
+}
+
+func (c *Center) passThroughRequest(app *metaserver.Application) (interface{}, error) {
+	kubeClient, ok := c.kubeClient.(*kubernetes.Clientset)
+	if !ok {
+		return nil, fmt.Errorf("converting kubeClient to *kubernetes.Clientset type failed")
+	}
+	verb := strings.ToUpper(string(app.Verb))
+	return kubeClient.RESTClient().Verb(verb).AbsPath(app.Key).Body(app.ReqBody).Do(context.TODO()).Raw()
 }
 
 // Response update application, generate and send resp message to edge
