@@ -276,7 +276,7 @@ func (runtime *CRIRuntime) CopyResources(edgeImage string, files map[string]stri
 			Namespace: constants.SystemNamespace,
 		},
 		Linux: &runtimeapi.LinuxPodSandboxConfig{
-			CgroupParent: strings.ToUpper(runtime.cgroupDriver),
+			CgroupParent: runtime.cgroupDriver,
 			SecurityContext: &runtimeapi.LinuxSandboxSecurityContext{
 				NamespaceOptions: &runtimeapi.NamespaceOption{
 					Network: runtimeapi.NamespaceMode_POD,
