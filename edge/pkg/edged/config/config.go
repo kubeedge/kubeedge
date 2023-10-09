@@ -33,6 +33,7 @@ func InitConfigure(e *v1alpha2.Edged) {
 }
 
 func ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(in *v1alpha2.TailoredKubeletConfiguration, out *kubeletconfig.KubeletConfiguration, s conversion.Scope) error {
+	out.StaticPodPath = in.StaticPodPath
 	out.SyncFrequency = in.SyncFrequency
 	out.Address = in.Address
 	out.ReadOnlyPort = in.ReadOnlyPort
