@@ -1,0 +1,163 @@
+package tdengine
+
+import (
+	"database/sql"
+	"encoding/json"
+	"fmt"
+	"github.com/kubeedge/mapper-generator/pkg/common"
+	_ "github.com/taosdata/driver-go/v3/taosRestful"
+	"k8s.io/klog/v2"
+	"os"
+	"strings"
+	"time"
+)
+
+var (
+	DB *sql.DB
+)
+
+type DataBaseConfig struct {
+	Config *ConfigData `json:"config,omitempty"`
+}
+type ConfigData struct {
+	Addr string `json:"addr,omitempty"`
+	DB   string `json:"DB,omitempty"`
+}
+
+func NewDataBaseClient(config json.RawMessage) (*DataBaseConfig, error) {
+	configdata := new(ConfigData)
+	err := json.Unmarshal(config, configdata)
+	if err != nil {
+		return nil, err
+	}
+	return &DataBaseConfig{
+		Config: configdata,
+	}, nil
+}
+func (d *DataBaseConfig) InitDbClient() error {
+	username := os.Getenv("USERNAME")
+	password := os.Getenv("PASSWORD")
+	dsn := fmt.Sprintf("%s:%s@http(%s)/%s", username, password, d.Config.Addr, d.Config.DB)
+	var err error
+	DB, err = sql.Open("taosRestful", dsn)
+	if err != nil {
+		klog.Errorf("init TDEngine db fail, err= %v:", err)
+		//fmt.Printf("failed connect to TDengine:%v", err)
+	} else {
+		klog.V(1).Infof("init TDEngine database successfully")
+	}
+	return nil
+	//TODO implement me
+	//panic("implement me")
+}
+func (d *DataBaseConfig) CloseSessio() {
+	err := DB.Close()
+	if err != nil {
+		klog.V(4).Info("close  TDEngine failed")
+	}
+	//TODO implement me
+	//panic("implement me")
+}
+func (d *DataBaseConfig) AddData(data *common.DataModel) error {
+
+	legal_table := strings.Replace(data.DeviceName, "-", "_", -1)
+	legal_tag := strings.Replace(data.PropertyName, "-", "_", -1)
+
+	stable_name := fmt.Sprintf("SHOW STABLES LIKE '%s'", legal_table)
+
+	stabel := fmt.Sprintf("CREATE STABLE %s (ts timestamp, devicename binary(64), propertyname binary(64), data binary(64),type binary(64)) TAGS (localtion binary(64));", legal_table)
+
+	datatime := time.Unix(data.TimeStamp/1e3, 0).Format("2006-01-02 15:04:05")
+	insertSQL := fmt.Sprintf("INSERT INTO %s USING %s TAGS ('%s') VALUES('%v','%s', '%s', '%s', '%s');",
+		legal_tag, legal_table, legal_tag, datatime, data.DeviceName, data.PropertyName, data.Value, data.Type)
+
+	rows, _ := DB.Query(stable_name)
+
+	if err := rows.Err(); err != nil {
+		fmt.Printf("query stable failed：%v", err)
+	}
+
+	switch rows.Next() {
+	case false:
+		_, err := DB.Exec(stabel)
+		if err != nil {
+			klog.V(4).Infof("create stable failed %v\n", err)
+		}
+		_, err = DB.Exec(insertSQL)
+		if err != nil {
+			klog.Infof("failed add data to TdEngine:%v", err)
+		}
+	case true:
+		_, err := DB.Exec(insertSQL)
+		if err != nil {
+			klog.Infof("failed add data to TdEngine:%v", err)
+		}
+	default:
+		klog.Infoln("failed add data to TdEngine")
+	}
+
+	return nil
+	//TODO implement me
+	//panic("implement me")
+}
+func (d *DataBaseConfig) GetDataByDeviceName(deviceName string) ([]*common.DataModel, error) {
+	querySql := fmt.Sprintf("SELECT ts, devicename, propertyname, data, type FROM %s", deviceName)
+	rows, err := DB.Query(querySql)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var dataModel []*common.DataModel
+	for rows.Next() {
+		var data common.DataModel
+		var ts time.Time
+		err := rows.Scan(&ts, &data.DeviceName, &data.PropertyName, &data.Value, &data.Type)
+		if err != nil {
+			klog.V(4).Infof(" data scan error: %v\n", err)
+			//fmt.Printf("scan error:\n", err)
+			return nil, err
+		}
+		data.TimeStamp = ts.Unix()
+		dataModel = append(dataModel, &data)
+	}
+	return dataModel, nil
+	//TODO implement me
+	//panic("implement me")
+}
+func (d *DataBaseConfig) GetPropertyDataByDeviceName(deviceName string, propertyData string) ([]*common.DataModel, error) {
+	//TODO implement me
+	panic("implement me")
+}
+func (d *DataBaseConfig) GetDataByTimeRange(deviceName string, start int64, end int64) ([]*common.DataModel, error) {
+
+	legal_table := strings.Replace(deviceName, "-", "_", -1)
+	startTime := time.Unix(start, 0).UTC().Format("2006-01-02 15:04:05")
+	endTime := time.Unix(end, 0).UTC().Format("2006-01-02 15:04:05")
+	//Query data within a specified time range
+	querySQL := fmt.Sprintf("SELECT ts, devicename, propertyname, data, type FROM %s WHERE ts >= '%s' AND ts <= '%s'", legal_table, startTime, endTime)
+	fmt.Println(querySQL)
+	rows, err := DB.Query(querySQL)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var dataModels []*common.DataModel
+	for rows.Next() {
+		var data common.DataModel
+		var ts time.Time
+		err := rows.Scan(&ts, &data.DeviceName, &data.PropertyName, &data.Value, &data.Type)
+		if err != nil {
+			klog.V(4).Infof("data scan failed：%v", err)
+			continue
+		}
+		dataModels = append(dataModels, &data)
+	}
+	return dataModels, nil
+	//TODO implement me
+	//panic("implement me")
+}
+func (d *DataBaseConfig) DeleteDataByTimeRange(start int64, end int64) ([]*common.DataModel, error) {
+	//TODO implement me
+	panic("implement me")
+}

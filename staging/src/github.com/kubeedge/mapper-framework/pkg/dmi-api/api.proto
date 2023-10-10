@@ -245,6 +245,8 @@ message PushMethodMQTT {
 message DBMethod{
     // the config of database .
     DBMethodInfluxdb2 influxdb2 = 1;
+    DBMethodRedis redis = 2;
+    DBMethodTDEngine tdengine = 3;
 }
 
 message DBMethodInfluxdb2{
@@ -267,6 +269,34 @@ message Influxdb2ClientConfig{
     string org = 2;
     // usr bucket in influx database
     string bucket = 3;
+}
+
+message DBMethodRedis{
+    // data config when push data to redis
+    RedisConfigData configData = 1;
+}
+
+message RedisConfigData{
+    // redis address
+    string addr = 1;
+    // number of redis db
+    string db = 2;
+    // number of redis poolsize
+    string poolsize  = 3;
+    // number of redis minidleconns
+    string minIdleConns =4;
+}
+
+message DBMethodTDEngine{
+    // data config when push data to tdengine
+    TDEngineConfigData configData = 1;
+}
+
+message TDEngineConfigData{
+    // tdengine address,like 127.0.0.1:6041
+    string addr = 1;
+    // tdengine database name
+    string db = 2;
 }
 
 // MapperInfo is the information of mapper.

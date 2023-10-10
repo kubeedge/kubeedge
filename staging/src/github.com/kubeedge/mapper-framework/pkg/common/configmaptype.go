@@ -97,6 +97,7 @@ type DBConfig struct {
 	Influxdb2ClientConfig json.RawMessage `json:"influxdb2ClientConfig"`
 	Influxdb2DataConfig   json.RawMessage `json:"influxdb2DataConfig"`
 	RedisConfigData       json.RawMessage `json:"redisConfigData"`
+	TDEngineConfigData    json.RawMessage `json:"TDEngineConfigData"`
 }
 
 // Metadata is the metadata for data.
