@@ -273,10 +273,10 @@ message Influxdb2ClientConfig{
 
 message DBMethodRedis{
     // data config when push data to redis
-    RedisConfigData configData = 1;
+    RedisClientConfig redisClientConfig = 1;
 }
 
-message RedisConfigData{
+message RedisClientConfig{
     // redis address
     string addr = 1;
     // number of redis db
@@ -289,14 +289,14 @@ message RedisConfigData{
 
 message DBMethodTDEngine{
     // data config when push data to tdengine
-    TDEngineConfigData configData = 1;
+    TDEngineClientConfig tdEngineClientConfig = 1;
 }
 
-message TDEngineConfigData{
+message TDEngineClientConfig{
     // tdengine address,like 127.0.0.1:6041
     string addr = 1;
     // tdengine database name
-    string db = 2;
+    string dbname = 2;
 }
 
 // MapperInfo is the information of mapper.
