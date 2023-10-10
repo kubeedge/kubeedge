@@ -3,8 +3,8 @@ package redis
 import (
 	"context"
 	"encoding/json"
-	"github.com/go-redis/redis"
-	"github.com/kubeedge/mapper-generator/pkg/common"
+	"github.com/go-redis/redis/v8"
+	"github.com/kubeedge/Template/pkg/common"
 	"k8s.io/klog/v2"
 	"os"
 	"strconv"
