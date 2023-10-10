@@ -18,6 +18,7 @@ package controller
 
 import (
 	"reflect"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -145,7 +146,9 @@ func (dc *DownstreamController) deviceAdded(device *v1beta1.Device) {
 			klog.Errorf("Failed to send device addition message %v due to error %v", msg, err)
 		}
 
-		dc.sendDeviceModelMsg(device, model.InsertOperation)
+		if !isExistModel(&dc.deviceManager.Device, device) {
+			dc.sendDeviceModelMsg(device, model.InsertOperation)
+		}
 		dc.sendDeviceMsg(device, model.InsertOperation)
 	}
 }
@@ -164,6 +167,32 @@ func createDevice(device *v1beta1.Device) types.Device {
 	}
 
 	return edgeDevice
+}
+
+// isExistModel check if the target node already has the model.
+func isExistModel(deviceMap *sync.Map, device *v1beta1.Device) bool {
+	var res bool
+	targetNode := device.Spec.NodeName
+	modelName := device.Spec.DeviceModelRef.Name
+	// To find another device in deviceMap that uses the same deviceModel with exclude current device
+	deviceMap.Range(func(k, v interface{}) bool {
+		if k == device.Name {
+			return true
+		}
+		deviceItem, ok := v.(*v1beta1.Device)
+		if !ok {
+			return true
+		}
+		if deviceItem.Spec.NodeName == "" {
+			return true
+		}
+		if deviceItem.Spec.NodeName == targetNode && deviceItem.Spec.DeviceModelRef.Name == modelName {
+			res = true
+			return false
+		}
+		return true
+	})
+	return res
 }
 
 // deviceUpdated updates the map, check if device is actually updated.
@@ -229,7 +258,9 @@ func (dc *DownstreamController) deviceDeleted(device *v1beta1.Device) {
 		if err != nil {
 			klog.Errorf("Failed to send device addition message %v due to error %v", msg, err)
 		}
-		dc.sendDeviceModelMsg(device, model.DeleteOperation)
+		if !isExistModel(&dc.deviceManager.Device, device) {
+			dc.sendDeviceModelMsg(device, model.DeleteOperation)
+		}
 		dc.sendDeviceMsg(device, model.DeleteOperation)
 	}
 }
