@@ -26,7 +26,8 @@ import (
 
 // Run executes the keadm command
 func Run() error {
-	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	flagSet := pflag.NewFlagSet("keadm", pflag.ExitOnError)
+	flagSet.AddGoFlagSet(flag.CommandLine)
 
 	cmd := cmd.NewKubeedgeCommand()
 	return cmd.Execute()
