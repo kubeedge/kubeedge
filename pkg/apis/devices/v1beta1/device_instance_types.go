@@ -120,6 +120,10 @@ type PushMethod struct {
 	// MQTT Push method configuration for mqtt
 	// +optional
 	MQTT *PushMethodMQTT `json:"mqtt,omitempty"`
+	// DBMethod represents the method used to push data to database,
+	// please ensure that the mapper can access the destination address.
+	// +optional
+	DBMethod *DBMethodConfig `json:"dbMethod,omitempty"`
 }
 
 type PushMethodHTTP struct {
@@ -146,6 +150,45 @@ type PushMethodMQTT struct {
 	// Is the message retained
 	// +optional
 	Retained bool `json:"retained,omitempty"`
+}
+
+type DBMethodConfig struct {
+	// method configuration for database
+	// +optional
+	Influxdb2 *DBMethodInfluxdb2 `json:"influxdb2,omitempty"`
+}
+
+type DBMethodInfluxdb2 struct {
+	// Config of influx database
+	// +optional
+	Influxdb2ClientConfig *Influxdb2ClientConfig `json:"influxdb2ClientConfig"`
+	// config of device data when push to influx database
+	// +optional
+	Influxdb2DataConfig *Influxdb2DataConfig `json:"influxdb2DataConfig"`
+}
+
+type Influxdb2ClientConfig struct {
+	// Url of influx database
+	// +optional
+	URL string `json:"url,omitempty"`
+	// Org of the user in influx database
+	// +optional
+	Org string `json:"org,omitempty"`
+	// Bucket of the user in influx database
+	// +optional
+	Bucket string `json:"bucket,omitempty"`
+}
+
+type Influxdb2DataConfig struct {
+	// Measurement of the user data
+	// +optional
+	Measurement string `json:"measurement,omitempty"`
+	// the tag of device data
+	// +optional
+	Tag map[string]string `json:"tag,omitempty"`
+	// FieldKey of the user data
+	// +optional
+	FieldKey string `json:"fieldKey,omitempty"`
 }
 
 type VisitorConfig struct {
