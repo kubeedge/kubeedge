@@ -603,13 +603,13 @@ spec:
                             TDEngine:
                               properties:
                                 TDEngineClientConfig:
-                                  description: ConfigData of tdengine database
+                                  description: tdengineClientConfig of tdengine database
                                   properties:
-                                    DbName:
+                                    addr:
                                       description: addr of tdEngine database
                                       type: string
-                                    dsn:
-                                      description: addr of tdEngine database
+                                    dbName:
+                                      description: dbname of tdEngine database
                                       type: string
                                   type: object
                               type: object
@@ -649,7 +649,7 @@ spec:
                             redis:
                               properties:
                                 redisClientConfig:
-                                  description: ConfigData of redis database
+                                  description: RedisClientConfig of redis database
                                   properties:
                                     addr:
                                       description: Addr of Redis database

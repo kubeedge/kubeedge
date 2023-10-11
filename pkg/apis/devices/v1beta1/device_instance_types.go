@@ -196,7 +196,7 @@ type Influxdb2DataConfig struct {
 }
 
 type DBMethodRedis struct {
-	// ConfigData of redis database
+	// RedisClientConfig of redis database
 	// +optional
 	RedisClientConfig *RedisClientConfig `json:"redisClientConfig,omitempty"`
 }
@@ -217,17 +217,17 @@ type RedisClientConfig struct {
 }
 
 type DBMethodTDEngine struct {
-	// ConfigData of tdengine database
+	// tdengineClientConfig of tdengine database
 	// +optional
 	TDEngineClientConfig *TDEngineClientConfig `json:"TDEngineClientConfig,omitempty"`
 }
 type TDEngineClientConfig struct {
 	// addr of tdEngine database
 	// +optional
-	Addr string `json:"dsn,omitempty"`
-	// addr of tdEngine database
+	Addr string `json:"addr,omitempty"`
+	// dbname of tdEngine database
 	// +optional
-	DBName string `json:"DbName,omitempty"`
+	DBName string `json:"dbName,omitempty"`
 }
 
 type VisitorConfig struct {
