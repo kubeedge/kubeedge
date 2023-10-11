@@ -65,7 +65,7 @@ func (d *DataBaseConfig) AddData(data *common.DataModel) error {
 
 	stabel := fmt.Sprintf("CREATE STABLE %s (ts timestamp, devicename binary(64), propertyname binary(64), data binary(64),type binary(64)) TAGS (localtion binary(64));", legal_table)
 
-	datatime := time.Unix(data.TimeStamp/1e3, 0).Format("2006-01-02 15:04:05")
+	datatime := time.Unix(data.TimeStamp, 0).Format("2006-01-02 15:04:05")
 	insertSQL := fmt.Sprintf("INSERT INTO %s USING %s TAGS ('%s') VALUES('%v','%s', '%s', '%s', '%s');",
 		legal_tag, legal_table, legal_tag, datatime, data.DeviceName, data.PropertyName, data.Value, data.Type)
 
