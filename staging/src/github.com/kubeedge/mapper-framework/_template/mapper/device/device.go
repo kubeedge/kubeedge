@@ -291,7 +291,7 @@ func dbHandler(ctx context.Context, twin *common.Twin, client *driver.Customized
 			}
 		}()
 	case "tdengine":
-		dbConfig, err := dbTdengine.NewDataBaseClient(twin.Property.PushMethod.DBMethod.DBConfig.RedisClientConfig)
+		dbConfig, err := dbTdengine.NewDataBaseClient(twin.Property.PushMethod.DBMethod.DBConfig.TDEngineClientConfig)
 		if err != nil {
 			klog.Errorf("new database client error: %v", err)
 			return
