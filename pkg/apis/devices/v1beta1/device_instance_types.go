@@ -207,13 +207,13 @@ type RedisClientConfig struct {
 	Addr string `json:"addr,omitempty"`
 	// Db of Redis database
 	// +optional
-	DB string `json:"db,omitempty"`
+	DB int `json:"db,omitempty"`
 	// Poolsize of Redis database
 	// +optional
-	Poolsize string `json:"poolsize,omitempty"`
+	Poolsize int `json:"poolsize,omitempty"`
 	// MinIdleConns of Redis database
 	// +optional
-	MinIdleConns string `json:"minIdleConns,omitempty"`
+	MinIdleConns int `json:"minIdleConns,omitempty"`
 }
 
 type DBMethodTDEngine struct {

@@ -280,11 +280,11 @@ message RedisClientConfig{
     // redis address
     string addr = 1;
     // number of redis db
-    string db = 2;
+    int32 db = 2;
     // number of redis poolsize
-    string poolsize  = 3;
+    int32 poolsize  = 3;
     // number of redis minidleconns
-    string minIdleConns =4;
+    int32 minIdleConns =4;
 }
 
 message DBMethodTDEngine{
