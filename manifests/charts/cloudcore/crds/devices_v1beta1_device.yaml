@@ -656,13 +656,13 @@ spec:
                                       type: string
                                     db:
                                       description: Db of Redis database
-                                      type: string
+                                      type: integer
                                     minIdleConns:
                                       description: MinIdleConns of Redis database
-                                      type: string
+                                      type: integer
                                     poolsize:
                                       description: Poolsize of Redis database
-                                      type: string
+                                      type: integer
                                   type: object
                               type: object
                           type: object
