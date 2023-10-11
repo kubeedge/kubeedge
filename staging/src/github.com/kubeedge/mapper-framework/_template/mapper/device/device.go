@@ -247,7 +247,7 @@ func dbHandler(ctx context.Context, twin *common.Twin, client *driver.Customized
 			}
 		}()
 	case "redis":
-		dbConfig, err := dbRedis.NewDataBaseClient(twin.Property.PushMethod.DBMethod.DBConfig.RedisConfigData)
+		dbConfig, err := dbRedis.NewDataBaseClient(twin.Property.PushMethod.DBMethod.DBConfig.RedisClientConfig)
 		if err != nil {
 			klog.Errorf("new database client error: %v", err)
 			return
@@ -291,7 +291,7 @@ func dbHandler(ctx context.Context, twin *common.Twin, client *driver.Customized
 			}
 		}()
 	case "tdengine":
-		dbConfig, err := dbTdengine.NewDataBaseClient(twin.Property.PushMethod.DBMethod.DBConfig.TDEngineConfigData)
+		dbConfig, err := dbTdengine.NewDataBaseClient(twin.Property.PushMethod.DBMethod.DBConfig.RedisClientConfig)
 		if err != nil {
 			klog.Errorf("new database client error: %v", err)
 			return

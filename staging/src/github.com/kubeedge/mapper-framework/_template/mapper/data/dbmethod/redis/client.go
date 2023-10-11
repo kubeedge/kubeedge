@@ -15,34 +15,34 @@ var (
 )
 
 type DataBaseConfig struct {
-	Config *ConfigData
+	RedisClientConfig *RedisClientConfig
 }
 
-type ConfigData struct {
+type RedisClientConfig struct {
 	Addr         string `json:"addr,omitempty"`
-	DB           int64  `json:"db,omitempty"`
-	PoolSize     int64  `json:"poolSize,omitempty"`
-	MinIdleConns int64  `json:"minIdleConns,omitempty"`
+	DB           int    `json:"db,omitempty"`
+	PoolSize     int    `json:"poolSize,omitempty"`
+	MinIdleConns int    `json:"minIdleConns,omitempty"`
 }
 
 func NewDataBaseClient(config json.RawMessage) (*DataBaseConfig, error) {
-	configdata := new(ConfigData)
+	configdata := new(RedisClientConfig)
 	err := json.Unmarshal(config, configdata)
 	if err != nil {
 		return nil, err
 	}
-	return &DataBaseConfig{Config: configdata}, nil
+	return &DataBaseConfig{RedisClientConfig: configdata}, nil
 }
 
 func (d *DataBaseConfig) InitDbClient() error {
 	var password string
 	password = os.Getenv("PASSWORD")
 	RedisCli = redis.NewClient(&redis.Options{
-		Addr:         d.Config.Addr,
+		Addr:         d.RedisClientConfig.Addr,
 		Password:     password,
-		DB:           int(d.Config.DB),
-		PoolSize:     int(d.Config.PoolSize),
-		MinIdleConns: int(d.Config.MinIdleConns),
+		DB:           d.RedisClientConfig.DB,
+		PoolSize:     d.RedisClientConfig.PoolSize,
+		MinIdleConns: d.RedisClientConfig.MinIdleConns,
 	})
 	pong, err := RedisCli.Ping(context.Background()).Result()
 	if err != nil {
@@ -116,9 +116,6 @@ func (d *DataBaseConfig) GetDataByDeviceName(deviceName string) ([]*common.DataM
 		dataModels = append(dataModels, &data)
 	}
 	return dataModels, nil
-
-	//TODO implement me
-	//panic("implement me")
 }
 
 func (d *DataBaseConfig) GetPropertyDataByDeviceName(deviceName string, propertyData string) ([]*common.DataModel, error) {
@@ -127,32 +124,8 @@ func (d *DataBaseConfig) GetPropertyDataByDeviceName(deviceName string, property
 }
 
 func (d *DataBaseConfig) GetDataByTimeRange(start int64, end int64) ([]*common.DataModel, error) {
-	ctx := context.Background()
-	dataJSON, err := RedisCli.ZRangeByScore(ctx, "device2", &redis.ZRangeBy{
-		Min: strconv.Itoa(int(start)),
-		Max: strconv.Itoa(int(end)),
-	}).Result()
-
-	if err != nil {
-		klog.V(4).Infof("fail query data: %v\n", err)
-		return nil, err
-	}
-
-	var dataModels []*common.DataModel
-
-	for _, jsonStr := range dataJSON {
-		var data common.DataModel
-		if err := json.Unmarshal([]byte(jsonStr), &data); err != nil {
-			klog.V(4).Infof("Error unMarshaling data: %v\n", err)
-			continue
-		}
-
-		dataModels = append(dataModels, &data)
-	}
-
-	return dataModels, nil
 	//TODO implement me
-	//panic("implement me")
+	panic("implement me")
 }
 
 func (d *DataBaseConfig) DeleteDataByTimeRange(start int64, end int64) ([]*common.DataModel, error) {

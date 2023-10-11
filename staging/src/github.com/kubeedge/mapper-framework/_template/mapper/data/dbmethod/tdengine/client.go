@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/kubeedge/mapper-generator/pkg/common"
+	"github.com/kubeedge/Template/pkg/common"
 	_ "github.com/taosdata/driver-go/v3/taosRestful"
 	"k8s.io/klog/v2"
 	"os"
@@ -17,27 +17,27 @@ var (
 )
 
 type DataBaseConfig struct {
-	Config *ConfigData `json:"config,omitempty"`
+	TDEngineClientConfig *TDEngineClientConfig `json:"config,omitempty"`
 }
-type ConfigData struct {
-	Addr string `json:"addr,omitempty"`
-	DB   string `json:"DB,omitempty"`
+type TDEngineClientConfig struct {
+	Addr   string `json:"addr,omitempty"`
+	DBName string `json:"DB,omitempty"`
 }
 
 func NewDataBaseClient(config json.RawMessage) (*DataBaseConfig, error) {
-	configdata := new(ConfigData)
+	configdata := new(TDEngineClientConfig)
 	err := json.Unmarshal(config, configdata)
 	if err != nil {
 		return nil, err
 	}
 	return &DataBaseConfig{
-		Config: configdata,
+		TDEngineClientConfig: configdata,
 	}, nil
 }
 func (d *DataBaseConfig) InitDbClient() error {
 	username := os.Getenv("USERNAME")
 	password := os.Getenv("PASSWORD")
-	dsn := fmt.Sprintf("%s:%s@http(%s)/%s", username, password, d.Config.Addr, d.Config.DB)
+	dsn := fmt.Sprintf("%s:%s@http(%s)/%s", username, password, d.TDEngineClientConfig.Addr, d.TDEngineClientConfig.DBName)
 	var err error
 	DB, err = sql.Open("taosRestful", dsn)
 	if err != nil {
@@ -47,17 +47,15 @@ func (d *DataBaseConfig) InitDbClient() error {
 		klog.V(1).Infof("init TDEngine database successfully")
 	}
 	return nil
-	//TODO implement me
-	//panic("implement me")
 }
+
 func (d *DataBaseConfig) CloseSessio() {
 	err := DB.Close()
 	if err != nil {
 		klog.V(4).Info("close  TDEngine failed")
 	}
-	//TODO implement me
-	//panic("implement me")
 }
+
 func (d *DataBaseConfig) AddData(data *common.DataModel) error {
 
 	legal_table := strings.Replace(data.DeviceName, "-", "_", -1)
@@ -97,8 +95,6 @@ func (d *DataBaseConfig) AddData(data *common.DataModel) error {
 	}
 
 	return nil
-	//TODO implement me
-	//panic("implement me")
 }
 func (d *DataBaseConfig) GetDataByDeviceName(deviceName string) ([]*common.DataModel, error) {
 	querySql := fmt.Sprintf("SELECT ts, devicename, propertyname, data, type FROM %s", deviceName)
@@ -121,8 +117,6 @@ func (d *DataBaseConfig) GetDataByDeviceName(deviceName string) ([]*common.DataM
 		dataModel = append(dataModel, &data)
 	}
 	return dataModel, nil
-	//TODO implement me
-	//panic("implement me")
 }
 func (d *DataBaseConfig) GetPropertyDataByDeviceName(deviceName string, propertyData string) ([]*common.DataModel, error) {
 	//TODO implement me
@@ -154,8 +148,6 @@ func (d *DataBaseConfig) GetDataByTimeRange(deviceName string, start int64, end 
 		dataModels = append(dataModels, &data)
 	}
 	return dataModels, nil
-	//TODO implement me
-	//panic("implement me")
 }
 func (d *DataBaseConfig) DeleteDataByTimeRange(start int64, end int64) ([]*common.DataModel, error) {
 	//TODO implement me

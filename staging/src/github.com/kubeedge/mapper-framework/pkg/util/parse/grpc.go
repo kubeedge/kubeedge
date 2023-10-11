@@ -161,22 +161,22 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 					Influxdb2DataConfig:   dataconfig,
 				}
 			case "redis":
-				configdata, err := json.Marshal(pptv.PushMethod.DBMethod.Redis.ConfigData)
+				configdata, err := json.Marshal(pptv.PushMethod.DBMethod.Redis.RedisClientConfig)
 				if err != nil {
 					klog.Errorf("err: %+v", err)
 					return nil
 				}
 				dbconfig = common.DBConfig{
-					RedisConfigData: configdata,
+					RedisClientConfig: configdata,
 				}
 			case "tdengine":
-				configdata, err := json.Marshal(pptv.PushMethod.DBMethod.Tdengine.ConfigData)
+				configdata, err := json.Marshal(pptv.PushMethod.DBMethod.Tdengine.TdEngineClientConfig)
 				if err != nil {
 					klog.Errorf("err: %+v", err)
 					return nil
 				}
 				dbconfig = common.DBConfig{
-					TDEngineConfigData: configdata,
+					TDEngineClientConfig: configdata,
 				}
 			}
 		}
