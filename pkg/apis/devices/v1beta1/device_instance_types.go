@@ -155,7 +155,8 @@ type PushMethodMQTT struct {
 type DBMethodConfig struct {
 	// method configuration for database
 	// +optional
-	Influxdb2 *DBMethodInfluxdb2 `json:"influxdb2,omitempty"`
+	Influxdb2  *DBMethodInfluxdb2  `json:"influxdb2,omitempty"`
+	OpenGemini *DBMethodOpenGemini `json:"openGemini,omitempty"`
 }
 
 type DBMethodInfluxdb2 struct {
@@ -186,6 +187,39 @@ type Influxdb2DataConfig struct {
 	// the tag of device data
 	// +optional
 	Tag map[string]string `json:"tag,omitempty"`
+	// FieldKey of the user data
+	// +optional
+	FieldKey string `json:"fieldKey,omitempty"`
+}
+
+type DBMethodOpenGemini struct {
+	// Config of OpenGemini database
+	// +optional
+	OpenGeminiClientConfig *OpenGeminiClientConfig `json:"openGeminiClientConfig"`
+	// config of device data when push to OpenGemini database
+	// +optional
+	OpenGeminiDataConfig *OpenGeminiDataConfig `json:"openGeminiDataConfig"`
+}
+
+type OpenGeminiClientConfig struct {
+	// Url of OpenGemini database
+	// +optional
+	URL string `json:"url,omitempty"`
+	// Database of the user in OpenGemini database
+	// +optional
+	Database string `json:"database,omitempty"`
+	// RetentionPolicy of data in OpenGemini database
+	// +optional
+	RetentionPolicy string `json:"retentionPolicy,omitempty"`
+}
+
+type OpenGeminiDataConfig struct {
+	// Measurement of the user data
+	// +optional
+	Measurement string `json:"measurement,omitempty"`
+	// tags of device data
+	// +optional
+	Tags map[string]string `json:"tags,omitempty"`
 	// FieldKey of the user data
 	// +optional
 	FieldKey string `json:"fieldKey,omitempty"`

@@ -633,6 +633,40 @@ spec:
                                       type: object
                                   type: object
                               type: object
+                            openGemini:
+                              properties:
+                                openGeminiClientConfig:
+                                  description: Config of OpenGemini database
+                                  properties:
+                                    database:
+                                      description: Database of the user in OpenGemini
+                                        database
+                                      type: string
+                                    retentionPolicy:
+                                      description: RetentionPolicy of data in OpenGemini
+                                        database
+                                      type: string
+                                    url:
+                                      description: Url of OpenGemini database
+                                      type: string
+                                  type: object
+                                openGeminiDataConfig:
+                                  description: config of device data when push to
+                                    OpenGemini database
+                                  properties:
+                                    fieldKey:
+                                      description: FieldKey of the user data
+                                      type: string
+                                    measurement:
+                                      description: Measurement of the user data
+                                      type: string
+                                    tags:
+                                      additionalProperties:
+                                        type: string
+                                      description: tags of device data
+                                      type: object
+                                  type: object
+                              type: object
                           type: object
                         http:
                           description: HTTP Push method configuration for http
