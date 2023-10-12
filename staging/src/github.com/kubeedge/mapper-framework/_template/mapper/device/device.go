@@ -248,12 +248,12 @@ func dbHandler(ctx context.Context, twin *common.Twin, client *driver.Customized
 	case "openGemini":
 		dbConfig, err := dbOpenGemini.NewDataBaseClient(twin.Property.PushMethod.DBMethod.DBConfig.OpenGeminiClientConfig, twin.Property.PushMethod.DBMethod.DBConfig.OpenGeminiDataConfig)
 		if err != nil {
-			klog.Errorf("new database client error: %v", err)
+			klog.Errorf("new openGemini database client error: %v", err)
 			return
 		}
 		dbClient, err := dbConfig.InitDbClient()
 		if err != nil {
-			klog.Errorf("init opengemini database client err: %v", err)
+			klog.Errorf("init openGemini database client err: %v", err)
 			return
 		}
 		reportCycle := time.Duration(twin.Property.ReportCycle)
@@ -280,7 +280,7 @@ func dbHandler(ctx context.Context, twin *common.Twin, client *driver.Customized
 
 					err = dbConfig.AddData(dataModel, dbClient)
 					if err != nil {
-						klog.Errorf("influx database add data error: %v", err)
+						klog.Errorf("openGemini database add data error: %v", err)
 						return
 					}
 				case <-ctx.Done():
