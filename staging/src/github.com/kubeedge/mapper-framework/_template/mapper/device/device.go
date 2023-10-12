@@ -276,7 +276,7 @@ func (d *DevPanel) DevInit(cfg *config.Config) error {
 	//		return err
 	//	}
 	case common.DevInitModeRegister:
-		if err := parse.ParseByUsingRegister(cfg, devs, d.models, d.protocols); err != nil {
+		if err := parse.ParseByUsingRegister(devs, d.models, d.protocols); err != nil {
 			return err
 		}
 	}

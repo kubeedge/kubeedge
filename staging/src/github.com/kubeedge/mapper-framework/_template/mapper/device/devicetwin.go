@@ -12,7 +12,7 @@ import (
 	"github.com/kubeedge/Template/driver"
 	"github.com/kubeedge/Template/pkg/common"
 	dmiapi "github.com/kubeedge/Template/pkg/dmi-api"
-	"github.com/kubeedge/Template/pkg/util/grpcclient"
+	"github.com/kubeedge/Template/pkg/grpcclient"
 	"github.com/kubeedge/Template/pkg/util/parse"
 )
 
