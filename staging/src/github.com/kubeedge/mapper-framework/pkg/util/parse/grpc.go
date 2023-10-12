@@ -35,6 +35,8 @@ func getDBMethodFromGrpc(visitor *dmiapi.DeviceProperty) (string, error) {
 	// TODO add more dbMethod
 	if visitor.PushMethod.DBMethod.Influxdb2 != nil {
 		return "influx", nil
+	} else if visitor.PushMethod.DBMethod.OpenGemini != nil {
+		return "openGemini", nil
 	}
 	return "", errors.New("can not parse dbMethod")
 }
@@ -155,6 +157,21 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 				dbconfig = common.DBConfig{
 					Influxdb2ClientConfig: clientconfig,
 					Influxdb2DataConfig:   dataconfig,
+				}
+			case "openGemini":
+				clientconfig, err := json.Marshal(pptv.PushMethod.DBMethod.OpenGemini.OpenGeminiClientConfig)
+				if err != nil {
+					klog.Errorf("err: %+v", err)
+					return nil
+				}
+				dataconfig, err := json.Marshal(pptv.PushMethod.DBMethod.OpenGemini.OpenGeminiDataConfig)
+				if err != nil {
+					klog.Errorf("err: %+v", err)
+					return nil
+				}
+				dbconfig = common.DBConfig{
+					OpenGeminiClientConfig: clientconfig,
+					OpenGeminiDataConfig:   dataconfig,
 				}
 			}
 		}

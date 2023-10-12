@@ -245,6 +245,7 @@ message PushMethodMQTT {
 message DBMethod{
     // the config of database .
     DBMethodInfluxdb2 influxdb2 = 1;
+    DBMethodOpenGemini openGemini = 2;
 }
 
 message DBMethodInfluxdb2{
@@ -267,6 +268,28 @@ message Influxdb2ClientConfig{
     string org = 2;
     // usr bucket in influx database
     string bucket = 3;
+}
+
+message DBMethodOpenGemini{
+    // the config of OpenGemini database.
+    OpenGeminiClientConfig openGeminiClientConfig = 1;
+    OpenGeminiDataConfig openGeminiDataConfig = 2;
+}
+
+message OpenGeminiDataConfig{
+    // data config when push data to OpenGemini
+    string measurement = 1;
+    map<string, string> tags = 2;
+    string fieldKey = 3;
+}
+
+message OpenGeminiClientConfig{
+    // OpenGemini database url
+    string url = 1;
+    // usr database in OpenGemini database
+    string database = 2;
+    // data retentionPolicy in OpenGemini database
+    string retentionPolicy = 3;
 }
 
 // MapperInfo is the information of mapper.

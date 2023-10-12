@@ -94,9 +94,11 @@ type DBMethodConfig struct {
 }
 
 type DBConfig struct {
-	Influxdb2ClientConfig json.RawMessage `json:"influxdb2ClientConfig"`
-	Influxdb2DataConfig   json.RawMessage `json:"influxdb2DataConfig"`
-	RedisConfigData       json.RawMessage `json:"redisConfigData"`
+	Influxdb2ClientConfig  json.RawMessage `json:"influxdb2ClientConfig"`
+	Influxdb2DataConfig    json.RawMessage `json:"influxdb2DataConfig"`
+	RedisConfigData        json.RawMessage `json:"redisConfigData"`
+	OpenGeminiClientConfig json.RawMessage `json:"openGeminiClientConfig"`
+	OpenGeminiDataConfig   json.RawMessage `json:"openGeminiDataConfig"`
 }
 
 // Metadata is the metadata for data.
