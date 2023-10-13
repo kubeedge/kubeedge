@@ -30,7 +30,7 @@ func request(opt *common.JoinOptions, step *common.Step) error {
 	imageSet := image.EdgeSet(opt)
 	images := imageSet.List()
 
-	runtime, err := util.NewContainerRuntime(opt.RuntimeType, opt.RemoteRuntimeEndpoint)
+	runtime, err := util.NewContainerRuntime(opt.RuntimeType, opt.RemoteRuntimeEndpoint, opt.CGroupDriver)
 	if err != nil {
 		return err
 	}

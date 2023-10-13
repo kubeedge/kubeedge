@@ -179,7 +179,8 @@ func (up *Upgrade) PreProcess() error {
 	// download the request version edgecore
 	klog.Infof("Begin to download version %s edgecore", up.ToVersion)
 	upgradePath := filepath.Join(util.KubeEdgeUpgradePath, up.ToVersion)
-	container, err := util.NewContainerRuntime(up.EdgeCoreConfig.Modules.Edged.ContainerRuntime, up.EdgeCoreConfig.Modules.Edged.RemoteRuntimeEndpoint)
+	container, err := util.NewContainerRuntime(up.EdgeCoreConfig.Modules.Edged.ContainerRuntime, up.EdgeCoreConfig.Modules.Edged.RemoteRuntimeEndpoint,
+		up.EdgeCoreConfig.Modules.Edged.TailoredKubeletConfig.CgroupDriver)
 	if err != nil {
 		return fmt.Errorf("failed to new container runtime: %v", err)
 	}
