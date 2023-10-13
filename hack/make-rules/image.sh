@@ -39,7 +39,7 @@ ALL_IMAGES_AND_TARGETS=(
 
 GO_LDFLAGS="$(${KUBEEDGE_ROOT}/hack/make-rules/version.sh)"
 IMAGE_TAG=$(git describe --tags)
-
+DOCKER_BUILD_AND_SYSTEM_PRUNE=${DOCKER_BUILD_AND_SYSTEM_PRUNE:-"false"}
 
 function get_imagename_by_target() {
   local key=$1
@@ -89,6 +89,11 @@ function build_images() {
     set -x
     docker build --build-arg GO_LDFLAGS="${GO_LDFLAGS}" -t kubeedge/${IMAGE_NAME}:${IMAGE_TAG} -f ${DOCKERFILE_PATH} .
     set +x
+
+    if [[ "${DOCKER_BUILD_AND_SYSTEM_PRUNE}" = "true" ]]; then
+      docker builder prune -f
+      docker system prune -f
+    fi
   done
 }
 
