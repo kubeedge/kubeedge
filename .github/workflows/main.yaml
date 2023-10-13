@@ -333,4 +333,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - run: make image
+      - name: make image
+        run: |
+          export DOCKER_BUILD_AND_SYSTEM_PRUNE="true"
+          make image 
