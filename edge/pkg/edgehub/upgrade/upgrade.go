@@ -27,6 +27,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
+
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
@@ -119,7 +120,7 @@ func (*keadmUpgrade) Upgrade(upgradeReq *commontypes.NodeUpgradeJobRequest) erro
 
 	image := upgradeReq.Image
 
-	// TODO: do some verification 1.sha256(pass in using CRD) 2.image signature verification
+	// TODO:setsid do some verification 1.sha256(pass in using CRD) 2.image signature verification
 	// TODO: release verification mechanism
 	err = container.PullImages([]string{image})
 	if err != nil {
@@ -138,8 +139,8 @@ func (*keadmUpgrade) Upgrade(upgradeReq *commontypes.NodeUpgradeJobRequest) erro
 		upgradeReq.UpgradeID, upgradeReq.HistoryID, version.Get(), upgradeReq.Version, opts.ConfigFile, image)
 
 	// run upgrade cmd to upgrade edge node
-	// use setsid command and nohup command to start a separate progress
-	command := fmt.Sprintf("setsid nohup %s &", upgradeCmd)
+	// Use hohup command to start the child process
+	command := fmt.Sprintf("nohup %s &", upgradeCmd)
 	cmd := exec.Command("bash", "-c", command)
 	s, err := cmd.CombinedOutput()
 	if err != nil {
