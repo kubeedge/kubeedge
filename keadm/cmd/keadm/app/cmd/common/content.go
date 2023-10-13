@@ -35,6 +35,7 @@ Restart=always
 RestartSec=10
 Environment=%s
 Environment=%s
+KillMode=process
 
 [Install]
 WantedBy=multi-user.target
