@@ -22,7 +22,7 @@ ENVTEST_BIN_DIR=""
 
 function do_preparation() {
     which setup-envtest &> /dev/null || {
-        go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+        go install sigs.k8s.io/controller-runtime/tools/setup-envtest@0.11.2
         sudo cp $GOPATH/bin/setup-envtest /usr/bin/
     }
 
