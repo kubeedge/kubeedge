@@ -1,7 +1,7 @@
 package metamanager
 
 import (
-	"github.com/astaxie/beego/orm"
+	"github.com/beego/beego/orm"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core"

@@ -4,7 +4,6 @@ go 1.19
 
 require (
 	github.com/256dpi/gomqtt v0.10.4
-	github.com/astaxie/beego v1.12.0
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/cilium/ebpf v0.9.1 // indirect
 	github.com/container-storage-interface/spec v1.7.0
@@ -22,7 +21,7 @@ require (
 	github.com/kubeedge/beehive v0.0.0
 	github.com/kubeedge/viaduct v0.0.0
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1
-	github.com/mattn/go-sqlite3 v1.14.14
+	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/onsi/gomega v1.24.1
 	github.com/prometheus/client_golang v1.14.0
 	github.com/shirou/gopsutil v2.21.11+incompatible
@@ -57,6 +56,7 @@ require (
 
 require (
 	github.com/agiledragon/gomonkey v2.0.2+incompatible
+	github.com/beego/beego v1.12.12
 	github.com/onsi/ginkgo/v2 v2.6.0
 	github.com/pkg/errors v0.9.1
 	go.opentelemetry.io/otel/trace v1.10.0
