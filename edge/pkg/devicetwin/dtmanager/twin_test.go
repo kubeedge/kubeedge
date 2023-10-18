@@ -24,7 +24,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/astaxie/beego/orm"
+	"github.com/beego/beego/orm"
 	"github.com/golang/mock/gomock"
 	"k8s.io/klog/v2"
 

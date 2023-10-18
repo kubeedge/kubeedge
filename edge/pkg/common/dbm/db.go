@@ -3,7 +3,7 @@ package dbm
 import (
 	"sync"
 
-	"github.com/astaxie/beego/orm"
+	"github.com/beego/beego/orm"
 	//Blank import to run only the init function
 	_ "github.com/mattn/go-sqlite3"
 	"k8s.io/klog/v2"
