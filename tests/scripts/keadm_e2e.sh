@@ -91,6 +91,10 @@ function start_kubeedge() {
       sleep 3
       kubectl get node | grep edge-node | grep -q -w Ready && break
   done
+
+  # cleanup unused images and packages
+  docker rmi kubeedge/cloudcore:$IMAGE_TAG kubeedge/installation-package:$IMAGE_TAG
+  rm cloudcore.tar installation-package.tar
 }
 
 function run_test() {
