@@ -26,18 +26,18 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/image"
 )
 
-func request(opt *common.JoinOptions, step *common.Step) error {
+func request(opt *common.JoinOptions, step *common.Step) (image.Set, error) {
 	imageSet := image.EdgeSet(opt.ImageRepository, opt.KubeEdgeVersion)
 	images := imageSet.List()
 
 	runtime, err := util.NewContainerRuntime(opt.RuntimeType, opt.RemoteRuntimeEndpoint)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	step.Printf("Pull Images")
 	if err := runtime.PullImages(images); err != nil {
-		return fmt.Errorf("pull Images failed: %v", err)
+		return nil, fmt.Errorf("pull Images failed: %v", err)
 	}
 
 	step.Printf("Copy resources from the image to the management directory")
@@ -45,16 +45,16 @@ func request(opt *common.JoinOptions, step *common.Step) error {
 		filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName): filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName),
 	}
 	if err := runtime.CopyResources(imageSet.Get(image.EdgeCore), files); err != nil {
-		return fmt.Errorf("copy resources failed: %v", err)
+		return nil, fmt.Errorf("copy resources failed: %v", err)
 	}
 
 	if opt.WithMQTT {
 		step.Printf("Start the default mqtt service")
 		if err := createMQTTConfigFile(); err != nil {
-			return fmt.Errorf("create MQTT config file failed: %v", err)
+			return nil, fmt.Errorf("create MQTT config file failed: %v", err)
 		}
 	}
-	return nil
+	return imageSet, nil
 }
 
 func createMQTTConfigFile() error {
