@@ -195,7 +195,7 @@ func (dc *DownstreamController) nodeUpgradeJobAdded(upgrade *v1alpha1.NodeUpgrad
 			State:    v1alpha1.Upgrading,
 			History: v1alpha1.History{
 				HistoryID:   upgradeReq.HistoryID,
-				UpgradeTime: time.Now().String(),
+				UpgradeTime: time.Now().Format(ISO8601UTC),
 			},
 		}
 		err = patchNodeUpgradeJobStatus(dc.crdClient, upgrade, status)
