@@ -34,15 +34,28 @@ ExecStart=%s
 Restart=always
 RestartSec=10
 Environment=%s
+Environment=%s
 
 [Install]
 WantedBy=multi-user.target
 `
 
-func GenerateServiceFile(process string, execStartCmd string, withMqtt bool) error {
-	filename := fmt.Sprintf("%s.service", process)
+type GenerateServiceFileOpts struct {
+	Process      string
+	ExecStartCmd string
+	WithMqtt     bool
+	MqttImage    string
+}
 
-	content := fmt.Sprintf(serviceFileTemplate, process, execStartCmd, fmt.Sprintf("%s=%t", constants.DeployMqttContainerEnv, withMqtt))
+func GenerateServiceFile(opts GenerateServiceFileOpts) error {
+	filename := fmt.Sprintf("%s.service", opts.Process)
+
+	content := fmt.Sprintf(serviceFileTemplate,
+		opts.Process,
+		opts.ExecStartCmd,
+		fmt.Sprintf("%s=%t", constants.DeployMqttContainerEnv, opts.WithMqtt),
+		fmt.Sprintf("%s=%s", constants.DeployMqttContainerImageEnv, opts.MqttImage),
+	)
 	serviceFilePath := fmt.Sprintf("/etc/systemd/system/%s", filename)
 	return os.WriteFile(serviceFilePath, []byte(content), os.ModePerm)
 }

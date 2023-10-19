@@ -164,15 +164,15 @@ func (up *Upgrade) PreProcess() error {
 	}
 
 	// backup edgecore.db: copy from origin path to backup path
-	if err := copy(up.EdgeCoreConfig.DataBase.DataSource, filepath.Join(backupPath, "edgecore.db")); err != nil {
+	if err := copyWithFilename(up.EdgeCoreConfig.DataBase.DataSource, filepath.Join(backupPath, "edgecore.db")); err != nil {
 		return fmt.Errorf("failed to backup db: %v", err)
 	}
 	// backup edgecore.yaml: copy from origin path to backup path
-	if err := copy(up.ConfigFilePath, filepath.Join(backupPath, "edgecore.yaml")); err != nil {
+	if err := copyWithFilename(up.ConfigFilePath, filepath.Join(backupPath, "edgecore.yaml")); err != nil {
 		return fmt.Errorf("failed to back config: %v", err)
 	}
 	// backup edgecore: copy from origin path to backup path
-	if err := copy(filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), filepath.Join(backupPath, util.KubeEdgeBinaryName)); err != nil {
+	if err := copyWithFilename(filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), filepath.Join(backupPath, util.KubeEdgeBinaryName)); err != nil {
 		return fmt.Errorf("failed to backup edgecore: %v", err)
 	}
 
@@ -202,7 +202,7 @@ func (up *Upgrade) PreProcess() error {
 	return nil
 }
 
-func copy(src, dst string) error {
+func copyWithFilename(src, dst string) error {
 	sourceFileStat, err := os.Stat(src)
 	if err != nil {
 		return err
@@ -239,7 +239,7 @@ func (up *Upgrade) Process() error {
 
 	// copy new edgecore from upgradePath to /usr/local/bin
 	upgradePath := filepath.Join(util.KubeEdgeUpgradePath, up.ToVersion)
-	err = copy(filepath.Join(upgradePath, util.KubeEdgeBinaryName), filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName))
+	err = copyWithFilename(filepath.Join(upgradePath, util.KubeEdgeBinaryName), filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName))
 	if err != nil {
 		return fmt.Errorf("failed to cp file: %v", err)
 	}
@@ -247,14 +247,16 @@ func (up *Upgrade) Process() error {
 	// set withMqtt to false during upgrading edgecore, it will not affect the MQTT container. This is a temporary workaround and will be modified in v1.15.
 	// generate edgecore.service
 	if util.HasSystemd() {
-		err = common.GenerateServiceFile(util.KubeEdgeBinaryName, fmt.Sprintf("%s --config %s", filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), up.ConfigFilePath), false)
-		if err != nil {
+		if err := common.GenerateServiceFile(common.GenerateServiceFileOpts{
+			Process:      util.KubeEdgeBinaryName,
+			ExecStartCmd: fmt.Sprintf("%s --config %s", filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), up.ConfigFilePath),
+		}); err != nil {
 			return fmt.Errorf("failed to create edgecore.service file: %v", err)
 		}
 	}
 
 	// start new edgecore service
-	err = runEdgeCore(false)
+	err = runEdgeCore(false, "")
 	if err != nil {
 		return fmt.Errorf("failed to start edgecore: %v", err)
 	}
@@ -275,28 +277,30 @@ func (up *Upgrade) Rollback() error {
 
 	// backup edgecore.db: copy from backup path to origin path
 	backupPath := filepath.Join(util.KubeEdgeBackupPath, up.FromVersion)
-	if err := copy(filepath.Join(backupPath, "edgecore.db"), up.EdgeCoreConfig.DataBase.DataSource); err != nil {
+	if err := copyWithFilename(filepath.Join(backupPath, "edgecore.db"), up.EdgeCoreConfig.DataBase.DataSource); err != nil {
 		return fmt.Errorf("failed to rollback db: %v", err)
 	}
 	// backup edgecore.yaml: copy from backup path to origin path
-	if err := copy(filepath.Join(backupPath, "edgecore.yaml"), up.ConfigFilePath); err != nil {
+	if err := copyWithFilename(filepath.Join(backupPath, "edgecore.yaml"), up.ConfigFilePath); err != nil {
 		return fmt.Errorf("failed to back config: %v", err)
 	}
 	// backup edgecore: copy from backup path to origin path
-	if err := copy(filepath.Join(backupPath, util.KubeEdgeBinaryName), filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName)); err != nil {
+	if err := copyWithFilename(filepath.Join(backupPath, util.KubeEdgeBinaryName), filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName)); err != nil {
 		return fmt.Errorf("failed to backup edgecore: %v", err)
 	}
 
 	// generate edgecore.service
 	if util.HasSystemd() {
-		err = common.GenerateServiceFile(util.KubeEdgeBinaryName, fmt.Sprintf("%s --config %s", filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), up.ConfigFilePath), false)
-		if err != nil {
+		if err := common.GenerateServiceFile(common.GenerateServiceFileOpts{
+			Process:      util.KubeEdgeBinaryName,
+			ExecStartCmd: fmt.Sprintf("%s --config %s", filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), up.ConfigFilePath),
+		}); err != nil {
 			return fmt.Errorf("failed to create edgecore.service file: %v", err)
 		}
 	}
 
 	// start edgecore
-	err = runEdgeCore(false)
+	err = runEdgeCore(false, "")
 	if err != nil {
 		return fmt.Errorf("failed to start origin edgecore: %v", err)
 	}

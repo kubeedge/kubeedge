@@ -151,7 +151,9 @@ const (
 	EdgeNodeRoleValue = ""
 
 	DeafultMosquittoContainerName = "mqtt-kubeedge"
-	DeployMqttContainerEnv        = "DEPLOY_MQTT_CONTAINER"
+
+	DeployMqttContainerEnv      = "DEPLOY_MQTT_CONTAINER"
+	DeployMqttContainerImageEnv = "DEPLOY_MQTT_CONTAINER_IMAGE"
 
 	// DefaultManifestsDir edge node default static pod path
 	DefaultManifestsDir = "/etc/kubeedge/manifests"

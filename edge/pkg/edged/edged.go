@@ -121,12 +121,20 @@ func (e *edged) Enable() bool {
 func (e *edged) Start() {
 	klog.Info("Starting edged...")
 
-	// edged saves the data of mqtt container in sqlite3 and starts it. This is a temporary workaround and will be modified in v1.15.
-	withMqtt, err := strconv.ParseBool(os.Getenv(constants.DeployMqttContainerEnv))
-	if err == nil && withMqtt {
-		err := dao.SaveMQTTMeta(e.nodeName)
-		if err != nil {
-			klog.ErrorS(err, "Start mqtt container failed")
+	// edged saves the data of mqtt container in sqlite3 and starts it.
+	// This is a temporary workaround and will be modified in v1.15.
+	if deployMqtt := os.Getenv(constants.DeployMqttContainerEnv); deployMqtt != "" {
+		if withMqtt, err := strconv.ParseBool(deployMqtt); err == nil && withMqtt {
+			image := constants.DefaultMosquittoImage
+			if customimg := os.Getenv(constants.DeployMqttContainerImageEnv); customimg != "" {
+				image = customimg
+			}
+			err := dao.SaveMQTTMeta(e.nodeName, image)
+			if err != nil {
+				klog.ErrorS(err, "Start mqtt container failed")
+			}
+		} else if err != nil {
+			klog.Errorf("parse Environment %s failed, err: %v", constants.DeployMqttContainerImageEnv, err)
 		}
 	}
 

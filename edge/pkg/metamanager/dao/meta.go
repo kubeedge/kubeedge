@@ -120,7 +120,7 @@ func QueryAllMeta(key string, condition string) (*[]Meta, error) {
 
 // SaveMQTTMeta saves mqtt container data in sqlites
 // When egdecore starts, edged will start mqtt container
-func SaveMQTTMeta(nodeName string) error {
+func SaveMQTTMeta(nodeName, image string) error {
 	flag := true
 	mqttData := coreV1.Pod{
 		TypeMeta: metaV1.TypeMeta{
@@ -135,8 +135,9 @@ func SaveMQTTMeta(nodeName string) error {
 		Spec: coreV1.PodSpec{
 			Containers: []coreV1.Container{
 				{
-					Name:  "mqtt",
-					Image: constants.DefaultMosquittoImage,
+					Name:            "mqtt",
+					Image:           image,
+					ImagePullPolicy: coreV1.PullIfNotPresent,
 					Ports: []coreV1.ContainerPort{
 						{
 							ContainerPort: 1883,
