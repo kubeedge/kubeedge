@@ -138,8 +138,8 @@ func (*keadmUpgrade) Upgrade(upgradeReq *commontypes.NodeUpgradeJobRequest) erro
 		upgradeReq.UpgradeID, upgradeReq.HistoryID, version.Get(), upgradeReq.Version, opts.ConfigFile, image)
 
 	// run upgrade cmd to upgrade edge node
-	// use setsid command and nohup command to start a separate progress
-	command := fmt.Sprintf("setsid nohup %s &", upgradeCmd)
+	// use nohup command to start a child progress
+	command := fmt.Sprintf("nohup %s &", upgradeCmd)
 	cmd := exec.Command("bash", "-c", command)
 	s, err := cmd.CombinedOutput()
 	if err != nil {
