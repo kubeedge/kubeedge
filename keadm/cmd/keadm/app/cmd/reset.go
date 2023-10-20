@@ -107,7 +107,7 @@ func NewKubeEdgeReset() *cobra.Command {
 			}
 
 			// cleanup mqtt container
-			if err := RemoveMqttContainer(reset.RuntimeType, reset.Endpoint); err != nil {
+			if err := RemoveMqttContainer(reset.RuntimeType, reset.Endpoint, ""); err != nil {
 				fmt.Printf("Failed to remove MQTT container: %v\n", err)
 			}
 			//4. TODO: clean status information
@@ -120,8 +120,8 @@ func NewKubeEdgeReset() *cobra.Command {
 	return cmd
 }
 
-func RemoveMqttContainer(runtimeType string, endpoint string) error {
-	runtime, err := util.NewContainerRuntime(runtimeType, endpoint)
+func RemoveMqttContainer(runtimeType, endpoint, cgroupDriver string) error {
+	runtime, err := util.NewContainerRuntime(runtimeType, endpoint, cgroupDriver)
 	if err != nil {
 		return fmt.Errorf("failed to new container runtime: %v", err)
 	}

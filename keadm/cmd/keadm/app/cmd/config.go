@@ -120,7 +120,7 @@ func newCmdConfigImagesPull() *cobra.Command {
 			cfg.KubeEdgeVersion = ver
 
 			images := GetKubeEdgeImages(cfg)
-			return pullImages(cfg.RuntimeType, cfg.RemoteRuntimeEndpoint, images)
+			return pullImages(cfg.RuntimeType, cfg.RemoteRuntimeEndpoint, "", images)
 		},
 		Args: cobra.NoArgs,
 	}
@@ -129,8 +129,8 @@ func newCmdConfigImagesPull() *cobra.Command {
 	return cmd
 }
 
-func pullImages(runtimeType string, endpoint string, images []string) error {
-	runtime, err := util.NewContainerRuntime(runtimeType, endpoint)
+func pullImages(runtimeType, endpoint, cgroupDriver string, images []string) error {
+	runtime, err := util.NewContainerRuntime(runtimeType, endpoint, cgroupDriver)
 	if err != nil {
 		return err
 	}
