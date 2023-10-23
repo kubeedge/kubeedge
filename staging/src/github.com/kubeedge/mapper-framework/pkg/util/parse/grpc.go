@@ -188,6 +188,7 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 			ModelName:    device.Spec.DeviceModelReference,
 			CollectCycle: pptv.GetCollectCycle(),
 			ReportCycle:  pptv.GetReportCycle(),
+			ReportToCloud: pptv.GetReportToCloud(),
 			Protocol:     protocolName,
 			Visitors:     visitorConfig,
 			PushMethod: common.PushMethodConfig{
