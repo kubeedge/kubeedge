@@ -35,6 +35,7 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2/validation"
+	"github.com/kubeedge/kubeedge/pkg/image"
 	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
 )
 
@@ -173,12 +174,18 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 
 	// Do not create any files in the management directory,
 	// you need to mount the contents of the mirror first.
-	if err := request(opt, step); err != nil {
+	imageSet, err := request(opt, step)
+	if err != nil {
 		return err
 	}
 
 	step.Printf("Generate systemd service file")
-	if err := common.GenerateServiceFile(util.KubeEdgeBinaryName, filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), opt.WithMQTT); err != nil {
+	if err := common.GenerateServiceFile(common.GenerateServiceFileOpts{
+		Process:      util.KubeEdgeBinaryName,
+		ExecStartCmd: filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName),
+		WithMqtt:     opt.WithMQTT,
+		MqttImage:    imageSet.Get(image.EdgeMQTT),
+	}); err != nil {
 		return fmt.Errorf("create systemd service file failed: %v", err)
 	}
 
@@ -188,7 +195,10 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 	}
 
 	step.Printf("Run EdgeCore daemon")
-	return runEdgeCore(opt.WithMQTT)
+	if err := runEdgeCore(opt.WithMQTT, imageSet.Get(image.EdgeMQTT)); err != nil {
+		return fmt.Errorf("start edgecore failed: %v", err)
+	}
+	return err
 }
 
 func createDirs() error {
@@ -290,7 +300,7 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 	return common.Write2File(configFilePath, edgeCoreConfig)
 }
 
-func runEdgeCore(withMqtt bool) error {
+func runEdgeCore(withMqtt bool, mqttImage string) error {
 	systemdExist := util.HasSystemd()
 
 	var binExec, tip string
@@ -301,9 +311,11 @@ func runEdgeCore(withMqtt bool) error {
 			common.EdgeCore, common.EdgeCore)
 	} else {
 		tip = fmt.Sprintf("KubeEdge edgecore is running, For logs visit: %s%s.log", util.KubeEdgeLogPath, util.KubeEdgeBinaryName)
-		err := os.Setenv(constants.DeployMqttContainerEnv, strconv.FormatBool(withMqtt))
-		if err != nil {
+		if err := os.Setenv(constants.DeployMqttContainerEnv, strconv.FormatBool(withMqtt)); err != nil {
 			klog.Errorf("Set Environment %s failed, err: %v", constants.DeployMqttContainerEnv, err)
+		}
+		if err := os.Setenv(constants.DeployMqttContainerImageEnv, mqttImage); err != nil {
+			klog.Errorf("Set Environment %s failed, err: %v", constants.DeployMqttContainerImageEnv, err)
 		}
 		binExec = fmt.Sprintf(
 			"%s > %skubeedge/edge/%s.log 2>&1 &",
