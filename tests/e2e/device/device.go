@@ -36,7 +36,7 @@ const (
 // Run Test cases
 var _ = GroupDescribe("Device Management test in E2E scenario", func() {
 	var testTimer *utils.TestTimer
-	var testSpecReport ginkgo.GinkgoTestDescription
+	var testSpecReport ginkgo.SpecReport
 	var edgeClientSet edgeclientset.Interface
 
 	ginkgo.BeforeEach(func() {
@@ -53,9 +53,9 @@ var _ = GroupDescribe("Device Management test in E2E scenario", func() {
 				gomega.Expect(err).To(gomega.BeNil())
 			}
 			// Get current test SpecReport
-			testSpecReport = ginkgo.CurrentGinkgoTestDescription()
+			testSpecReport = ginkgo.CurrentSpecReport()
 			// Start test timer
-			testTimer = utils.CRDTestTimerGroup.NewTestTimer(testSpecReport.TestText)
+			testTimer = utils.CRDTestTimerGroup.NewTestTimer(testSpecReport.LeafNodeText)
 		})
 		ginkgo.AfterEach(func() {
 			// End test timer
@@ -121,9 +121,9 @@ var _ = GroupDescribe("Device Management test in E2E scenario", func() {
 			}
 			utils.TwinResult = utils.DeviceTwinResult{}
 			// Get current test SpecReport
-			testSpecReport = ginkgo.CurrentGinkgoTestDescription()
+			testSpecReport = ginkgo.CurrentSpecReport()
 			// Start test timer
-			testTimer = utils.CRDTestTimerGroup.NewTestTimer(testSpecReport.TestText)
+			testTimer = utils.CRDTestTimerGroup.NewTestTimer(testSpecReport.LeafNodeText)
 		})
 		ginkgo.AfterEach(func() {
 			// End test timer

@@ -42,7 +42,7 @@ var DeploymentTestTimerGroup = utils.NewTestTimerGroup()
 var _ = GroupDescribe("Application deployment test in E2E scenario", func() {
 	var UID string
 	var testTimer *utils.TestTimer
-	var testSpecReport ginkgo.GinkgoTestDescription
+	var testSpecReport ginkgo.SpecReport
 
 	var clientSet clientset.Interface
 
@@ -53,9 +53,9 @@ var _ = GroupDescribe("Application deployment test in E2E scenario", func() {
 	ginkgo.Context("Test application deployment and delete deployment using deployment spec", func() {
 		ginkgo.BeforeEach(func() {
 			// Get current test SpecReport
-			testSpecReport = ginkgo.CurrentGinkgoTestDescription()
+			testSpecReport = ginkgo.CurrentSpecReport()
 			// Start test timer
-			testTimer = DeploymentTestTimerGroup.NewTestTimer(testSpecReport.TestText)
+			testTimer = DeploymentTestTimerGroup.NewTestTimer(testSpecReport.LeafNodeText)
 		})
 
 		ginkgo.AfterEach(func() {
@@ -122,9 +122,9 @@ var _ = GroupDescribe("Application deployment test in E2E scenario", func() {
 	ginkgo.Context("Test application deployment using Pod spec", func() {
 		ginkgo.BeforeEach(func() {
 			// Get current test SpecReport
-			testSpecReport = ginkgo.CurrentGinkgoTestDescription()
+			testSpecReport = ginkgo.CurrentSpecReport()
 			// Start test timer
-			testTimer = DeploymentTestTimerGroup.NewTestTimer(testSpecReport.TestText)
+			testTimer = DeploymentTestTimerGroup.NewTestTimer(testSpecReport.LeafNodeText)
 		})
 		ginkgo.AfterEach(func() {
 			// End test timer
@@ -229,9 +229,9 @@ var _ = GroupDescribe("Application deployment test in E2E scenario", func() {
 	ginkgo.Context("StatefulSet lifecycle test in edge node", func() {
 		ginkgo.BeforeEach(func() {
 			// Get current test SpecReport
-			testSpecReport = ginkgo.CurrentGinkgoTestDescription()
+			testSpecReport = ginkgo.CurrentSpecReport()
 			// Start test timer
-			testTimer = DeploymentTestTimerGroup.NewTestTimer(testSpecReport.TestText)
+			testTimer = DeploymentTestTimerGroup.NewTestTimer(testSpecReport.LeafNodeText)
 		})
 
 		ginkgo.AfterEach(func() {

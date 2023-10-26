@@ -34,7 +34,7 @@ var DeploymentTestTimerGroup = utils.NewTestTimerGroup()
 // Run Test cases
 var _ = Describe("Application deployment test in keadm E2E scenario", func() {
 	var testTimer *utils.TestTimer
-	var testSpecReport GinkgoTestDescription
+	var testSpecReport SpecReport
 
 	var clientSet clientset.Interface
 
@@ -45,9 +45,9 @@ var _ = Describe("Application deployment test in keadm E2E scenario", func() {
 	Context("Test application deployment using Pod spec", func() {
 		BeforeEach(func() {
 			// Get current test SpecReport
-			testSpecReport = CurrentGinkgoTestDescription()
+			testSpecReport = CurrentSpecReport()
 			// Start test timer
-			testTimer = DeploymentTestTimerGroup.NewTestTimer(testSpecReport.TestText)
+			testTimer = DeploymentTestTimerGroup.NewTestTimer(testSpecReport.LeafNodeText)
 		})
 		AfterEach(func() {
 			// End test timer
