@@ -203,6 +203,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: cleanup images
+        run: docker system prune -a -f
+
       - name: Retrieve saved kubeedge/build-tools image
         uses: actions/download-artifact@v3
         with:
@@ -263,6 +266,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: cleanup images
+        run: docker system prune -a -f
+
       - name: Retrieve saved kubeedge/build-tools image
         uses: actions/download-artifact@v3
         with:
@@ -316,6 +322,9 @@ jobs:
         run: |
           containerd config default | sudo tee /etc/containerd/config.toml && sudo systemctl restart containerd.service
 
+      - name: cleanup images
+        run: docker system prune -a -f
+
       - run: make keadm_e2e
 
   docker_build:
@@ -332,6 +341,9 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
+      - name: cleanup images
+        run: docker system prune -a -f
 
       - name: make image
         run: |
