@@ -47,7 +47,7 @@ jobs:
       - name: Making and packaging
         run: |
           if [ "${{ matrix.os }}" == "linux" ]; then
-            docker pull kubeedge/build-tools:1.17.13-ke1
+            docker pull kubeedge/build-tools:1.19.12-ke2
             BUILD_CONTAINER=true
           else
             BUILD_CONTAINER=false
@@ -84,7 +84,6 @@ jobs:
         run: |
           echo "$HASHES" | jq -r '.[] | @base64d' | sed "/^$/d" > hashes.txt
           echo "hashes=$(cat hashes.txt | base64 -w0)" >> "$GITHUB_OUTPUT"
-          echo "hashes=$(cat hashes.txt | base64 -w0)"
 
   # This step calls the generic workflow to generate provenance.
   provenance:
