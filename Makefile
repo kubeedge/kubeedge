@@ -447,6 +447,5 @@ release:
 	hack/make-rules/release.sh $(WHAT) $(ARM_VERSION) $(OS)
 else
 release:
-	sudo apt-get install -y mingw-w64
 	hack/make-rules/release.sh $(WHAT) $(ARM_VERSION) $(OS)
 endif
