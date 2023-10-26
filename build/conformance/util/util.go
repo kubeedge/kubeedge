@@ -121,7 +121,7 @@ var updateTaintBackoff = wait.Backoff{
 	Jitter:   1.0,
 }
 
-// beforeRunConformance do prepare work before run conformance
+// BeforeRunConformance do prepare work before run conformance
 func BeforeRunConformance() error {
 	kubeClient, err := getKubeClient()
 	if err != nil {
