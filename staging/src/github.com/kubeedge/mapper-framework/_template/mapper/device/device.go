@@ -129,6 +129,7 @@ func dataHandler(ctx context.Context, dev *driver.CustomizedDev) {
 			VisitorConfig:   &visitorConfig,
 			Topic:           fmt.Sprintf(common.TopicTwinUpdate, dev.Instance.ID),
 			CollectCycle:    time.Duration(twin.Property.CollectCycle),
+			ReportToCloud:   twin.Property.ReportToCloud,
 		}
 		go twinData.Run(ctx)
 		// handle push method
