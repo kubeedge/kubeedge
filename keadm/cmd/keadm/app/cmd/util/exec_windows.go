@@ -1,3 +1,5 @@
+//go:build windows
+
 package util
 
 import (
@@ -5,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
-	"runtime"
 	"strings"
 	"syscall"
 
@@ -21,13 +22,8 @@ type Command struct {
 }
 
 func NewCommand(command string) *Command {
-	if runtime.GOOS == "windows" {
-		return &Command{
-			Cmd: exec.Command("powershell", "-c", command),
-		}
-	}
 	return &Command{
-		Cmd: exec.Command("bash", "-c", command),
+		Cmd: exec.Command("powershell", "-c", command),
 	}
 }
 

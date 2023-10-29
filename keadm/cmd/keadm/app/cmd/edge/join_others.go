@@ -224,7 +224,6 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 }
 
 func runEdgeCore(withMqtt bool) error {
-
 	systemdExist := util.HasSystemd()
 
 	var binExec, tip string
