@@ -18,3 +18,5 @@
 - codename: should call prestop when killing a pod
 - codename: should support sysctls
 - codename: Should recreate evicted statefulset
+- codename: should execute poststart exec hook properly
+- codename: should execute prestop exec hook properly

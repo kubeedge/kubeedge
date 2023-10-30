@@ -36,7 +36,8 @@ const (
 	dryRunEnvKey        = "E2E_DRYRUN"
 	skipEnvKey          = "E2E_SKIP"
 	focusEnvKey         = "E2E_FOCUS"
-	ginkgoEnvKey        = "GINKGO_BIN"
+	ginkgoPathEnvKey    = "GINKGO_BIN"
+	ginkgoTimeoutEnvKey = "GINKGO_TIMEOUT"
 	testBinEnvKey       = "TEST_BIN"
 	resultsDirEnvKey    = "RESULTS_DIR"
 	reportPrefixEnvKey  = "REPORT_PREFIX"
@@ -45,6 +46,7 @@ const (
 	kubeConfigEnvKey    = "KUBECONFIG"
 	logFileName         = "e2e.log"
 	defaultFocus        = "\\[Conformance\\]"
+	defaultTimeout      = "2h"
 	extraArgsEnvKey     = "E2E_EXTRA_ARGS"
 	defaultResultsDir   = "/tmp/results"
 	defaultReportPrefix = "conformance"
@@ -128,7 +130,10 @@ func makeCmd(w io.Writer) (*exec.Cmd, error) {
 
 	focusEnvValue := util.GetEnvWithDefault(focusEnvKey, defaultFocus)
 	ginkgoArgs = append(ginkgoArgs, "--focus="+focusEnvValue)
-	ginkgoArgs = append(ginkgoArgs, "--noColor=true")
+	ginkgoArgs = append(ginkgoArgs, "--no-color=true")
+
+	timeoutEnvValue := util.GetEnvWithDefault(ginkgoTimeoutEnvKey, defaultTimeout)
+	ginkgoArgs = append(ginkgoArgs, "--timeout="+timeoutEnvValue)
 
 	if len(util.GetEnvWithDefault(dryRunEnvKey, "")) > 0 {
 		ginkgoArgs = append(ginkgoArgs, "--dryRun=true")
@@ -152,7 +157,7 @@ func makeCmd(w io.Writer) (*exec.Cmd, error) {
 	args = append(args, "--")
 	args = append(args, extraArgs...)
 
-	cmd := exec.Command(util.GetEnvWithDefault(ginkgoEnvKey, defaultGinkgoBinary), args...)
+	cmd := exec.Command(util.GetEnvWithDefault(ginkgoPathEnvKey, defaultGinkgoBinary), args...)
 	cmd.Stdout = w
 	cmd.Stderr = w
 	return cmd, nil
