@@ -91,11 +91,13 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 				Enable: true,
 				Buffer: &DeviceControllerBuffer{
 					UpdateDeviceStatus: constants.DefaultUpdateDeviceStatusBuffer,
+					UpdateMapperStatus: constants.DefaultUpdateMapperStatusBuffer,
 					DeviceEvent:        constants.DefaultDeviceEventBuffer,
 					DeviceModelEvent:   constants.DefaultDeviceModelEventBuffer,
 				},
 				Load: &DeviceControllerLoad{
 					UpdateDeviceStatusWorkers: constants.DefaultUpdateDeviceStatusWorkers,
+					UpdateMapperStatusWorkers: constants.DefaultUpdateMapperStatusWorkers,
 				},
 			},
 			NodeUpgradeJobController: &NodeUpgradeJobController{

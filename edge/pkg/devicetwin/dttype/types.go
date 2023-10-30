@@ -23,6 +23,14 @@ type Device struct {
 	Twin        map[string]*MsgTwin `json:"twin,omitempty"`
 }
 
+// Mapper the struct of mapper
+type Mapper struct {
+	ID       string `json:"id,omitempty"`
+	Name     string `json:"name,omitempty"`
+	Protocol string `json:"protocol,omitempty"`
+	Address  string `json:"address,omitempty"`
+}
+
 // BaseMessage the base struct of event message
 type BaseMessage struct {
 	EventID   string `json:"event_id"`
@@ -72,6 +80,8 @@ type MembershipUpdate struct {
 	BaseMessage
 	AddDevices    []Device `json:"added_devices"`
 	RemoveDevices []Device `json:"removed_devices"`
+	AddMappers    []Mapper `json:"added_mappers"`
+	RemoveMappers []Mapper `json:"removed_mappers"`
 }
 
 // MarshalMembershipUpdate marshal membership update

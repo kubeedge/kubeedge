@@ -498,12 +498,12 @@ spec:
                           description: 'Required: The value for this property.'
                           type: string
                       required:
-                      - value
+                        - value
                       type: object
                     propertyName:
                       description: 'Required: The property name for which the desired/reported
-                        values are specified. This property should be present in the
-                        device model.'
+                      values are specified. This property should be present in the
+                      device model.'
                       type: string
                     reported:
                       description: 'Required: the reported property value.'
@@ -518,7 +518,7 @@ spec:
                           description: 'Required: The value for this property.'
                           type: string
                       required:
-                      - value
+                        - value
                       type: object
                   type: object
                 type: array

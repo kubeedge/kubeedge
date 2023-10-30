@@ -13,6 +13,7 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
+	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
@@ -89,6 +90,7 @@ func dealSendToCloud(context *dtcontext.DTContext, resource string, msg interfac
 		return nil
 	}
 	message, ok := msg.(*model.Message)
+
 	if !ok {
 		return errors.New("msg not Message type")
 	}
@@ -115,6 +117,9 @@ func dealLifeCycle(context *dtcontext.DTContext, resource string, msg interface{
 		context.State = dtcommon.Connected
 	} else if strings.Compare(connectedInfo, connect.CloudDisconnected) == 0 {
 		context.State = dtcommon.Disconnected
+		message := model.NewMessage("").BuildRouter(messagepkg.SourceNodeConnection, dtcommon.TwinModule,
+			messagepkg.ResourceTypeDeviceMigrate, messagepkg.OperationMigrate).FillBody(dtcommon.Disconnected)
+		beehiveContext.SendToGroup(dtcommon.TwinModule, *message)
 	}
 	return nil
 }

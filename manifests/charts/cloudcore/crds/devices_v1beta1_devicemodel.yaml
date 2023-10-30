@@ -180,6 +180,9 @@ spec:
               which describes the device capabilities and access mechanism via property
               visitors.
             properties:
+              mapperRef:
+                description: 'Required: The device mapper name.'
+                type: string
               properties:
                 description: 'Required: List of device properties.'
                 items:

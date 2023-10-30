@@ -42,6 +42,9 @@ const (
 	ResourceDevice               = "device"
 	ResourceTypeTwinEdgeUpdated  = "twin/edge_updated"
 	ResourceTypeMembershipDetail = "membership/detail"
+	ResourceTypeDeviceMigrate    = "device/migrate"
+	ResourceTypeDeviceConnected  = "device/connect_successfully"
+	ResourceTypeMapperConnected  = "mapper/connect_successfully"
 )
 
 // BuildResource return a string as "beehive/pkg/core/model".Message.Router.Resource
@@ -137,12 +140,18 @@ func GetDeviceID(resource string) (string, error) {
 	return "", errors.New("failed to get device id")
 }
 
-// GetResourceType returns the resourceType of message received from edge
+// GetResourceTypeForDevice returns the resourceType of message received from edge
 func GetResourceTypeForDevice(resource string) (string, error) {
 	if strings.Contains(resource, ResourceTypeTwinEdgeUpdated) {
 		return ResourceTypeTwinEdgeUpdated, nil
 	} else if strings.Contains(resource, ResourceTypeMembershipDetail) {
 		return ResourceTypeMembershipDetail, nil
+	} else if strings.Contains(resource, ResourceTypeDeviceMigrate) {
+		return ResourceTypeDeviceMigrate, nil
+	} else if strings.Contains(resource, ResourceTypeMapperConnected) {
+		return ResourceTypeMapperConnected, nil
+	} else if strings.Contains(resource, ResourceTypeDeviceConnected) {
+		return ResourceTypeDeviceConnected, nil
 	}
 
 	return "", fmt.Errorf("unknown resource, found: %s", resource)

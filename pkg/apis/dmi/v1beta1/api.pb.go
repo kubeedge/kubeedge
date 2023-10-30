@@ -545,6 +545,10 @@ type DeviceSpec struct {
 
 	// The device model which the device references.
 	DeviceModelReference string `protobuf:"bytes,1,opt,name=deviceModelReference,proto3" json:"deviceModelReference,omitempty"`
+	// The mapper which the device references.
+	MapperReference string `protobuf:"bytes,4,opt,name=mapperReference,proto3" json:"mapperReference,omitempty"`
+	// The field which means whether the device should be migrated to another
+	MigrateOnOffline bool `protobuf:"bytes,5,opt,name=migrateOnOffline,proto3" json:"migrateOnOffline,omitempty"`
 	// The specific config of the protocol to access to the device.
 	Protocol *ProtocolConfig `protobuf:"bytes,2,opt,name=protocol,proto3" json:"protocol,omitempty"`
 	// List of properties which describe the device properties.
@@ -1471,6 +1475,8 @@ type DeviceStatus struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// the current node of the device.
+	CurrentNode string `protobuf:"bytes,3,opt,name=currentNode,proto3" json:"currentNode,omitempty"`
 	// the device twins of the device.
 	Twins []*Twin `protobuf:"bytes,1,rep,name=twins,proto3" json:"twins,omitempty"`
 }

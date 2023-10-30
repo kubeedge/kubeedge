@@ -141,6 +141,8 @@ func (mh *messageHandler) HandleConnection(connection conn.Connection) {
 		// clean node message pool and session
 		mh.MessageDispatcher.DeleteNodeMessagePool(nodeInfo.NodeID, nodeMessagePool)
 		mh.SessionManager.DeleteSession(nodeSession)
+		// when node becomes disconnected, notify device migration
+		mh.OnNotifyDeviceMigration(nodeInfo)
 		mh.OnEdgeNodeDisconnect(nodeInfo, connection)
 	}()
 }
@@ -172,4 +174,12 @@ func (mh *messageHandler) OnReadTransportErr(nodeID, projectID string) {
 	}
 
 	nodeSession.Terminating()
+}
+
+// OnNotifyDeviceMigration is invoked when node is disconnected to notify
+func (mh *messageHandler) OnNotifyDeviceMigration(info *model.HubInfo) {
+	err := mh.MessageDispatcher.Publish(common.ConstructDeviceMigrationMessage(info))
+	if err != nil {
+		klog.Errorf("fail to publish device migration event for node %s, reason %s", info.NodeID, err.Error())
+	}
 }

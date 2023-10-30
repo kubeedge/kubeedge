@@ -95,9 +95,9 @@ Download v1.13.0 in the [v1.13.0 release page](https://github.com/kubeedge/kubee
 
 ### Security Improvement
 
-- KubeEdge is proud to announce that we are digitally signing all release artifacts (including binary artifacts and container images). 
-  Signing artifacts provides end users a chance to verify the integrity of the downloaded resource. It allows to mitigate man-in-the-middle attacks 
-  directly on the client side and therefore ensures the trustfulness of the remote serving the artifacts. By doing this, we reached the 
+- KubeEdge is proud to announce that we are digitally signing all release artifacts (including binary artifacts and container images).
+  Signing artifacts provides end users a chance to verify the integrity of the downloaded resource. It allows to mitigate man-in-the-middle attacks
+  directly on the client side and therefore ensures the trustfulness of the remote serving the artifacts. By doing this, we reached the
   SLSA security assessment level L3 ([#4285](https://github.com/kubeedge/kubeedge/pull/4285))
 - Remove the token field in the edge node configuration file edgecore.yaml to eliminate the risk of edge information leakage ([#4488](https://github.com/kubeedge/kubeedge/pull/4488))
 
@@ -119,19 +119,19 @@ Refer to the link for more details. ([mappers-go#79](https://github.com/kubeedge
 
 ### Support Rolling Upgrade for Edge Nodes from Cloud
 
-Users now able to trigger rolling upgrade for edge nodes from cloud, and specify number of concurrent upgrade nodes with `nodeupgradejob.spec.concurrency`. 
+Users now able to trigger rolling upgrade for edge nodes from cloud, and specify number of concurrent upgrade nodes with `nodeupgradejob.spec.concurrency`.
 The default Concurrency value is 1, which means upgrade edge nodes one by one.
 Refer to the link for more details. ([#4476](https://github.com/kubeedge/kubeedge/pull/4476))
 
 ### Test Runner for conformance test
 
-KubeEdge has provided the runner of the conformance test, which contains the scripts 
-and related files of the conformance test. 
+KubeEdge has provided the runner of the conformance test, which contains the scripts
+and related files of the conformance test.
 Refer to the link for more details. ([#4411](https://github.com/kubeedge/kubeedge/pull/4411))
 
 ### EdgeMesh: Added configurable field TunnelLimitConfig to edge-tunnel module
 
-The tunnel stream of the edge-tunnel module is used to manage the data stream state of the tunnel. 
+The tunnel stream of the edge-tunnel module is used to manage the data stream state of the tunnel.
 Users can obtain a stable and configurable tunnel stream to ensure the reliability of user application traffic forwarding.
 
 Users can configure the cache size of tunnel stream according to `TunnelLimitConfig` to support larger application relay traffic.

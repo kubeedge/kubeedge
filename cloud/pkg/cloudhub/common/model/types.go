@@ -33,6 +33,7 @@ const (
 	OpConnect    = "connected"
 	OpDisConnect = "disconnected"
 	OpKeepalive  = "keepalive"
+	OpMigrate    = "migrate"
 )
 
 // GpResource constants for message group
@@ -44,6 +45,7 @@ const (
 const (
 	SrcCloudHub = "cloudhub"
 	SrcManager  = "edgemgr"
+	SrcTwin     = "twin"
 )
 
 // constants for identifier information for edge hub

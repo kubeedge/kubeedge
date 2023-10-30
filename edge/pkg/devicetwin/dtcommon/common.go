@@ -54,6 +54,11 @@ const (
 	// DeviceETStateGetSuffix the topic suffix for device state get event
 	DeviceETStateGetSuffix = "/state/get"
 
+	// MapperRegister the topic for mapper register
+	MapperRegister = "mapper/register"
+	//DeviceRegister the topic for device register successfully
+	DeviceRegister = "device/register"
+
 	// MemDetailResult membership detail result
 	MemDetailResult = "MemDetailResult"
 	// MemDetail membership detail
@@ -78,6 +83,8 @@ const (
 	DeviceStateGet = "DeviceStateGet"
 	// DeviceStateUpdate device state update
 	DeviceStateUpdate = "DeviceStateUpdate"
+	// DeviceMigrate device migrate
+	DeviceMigrate = "DeviceMigrate"
 
 	// SendToEdge send info to edge
 	SendToEdge = "SendToEdge"
@@ -93,6 +100,8 @@ const (
 	Disconnected = "disconnected"
 	// MetaDeviceOperation event
 	MetaDeviceOperation = "MetaDeviceOperation"
+	// MetaMapperOperation event
+	MetaMapperOperation = "MetaMapperOperation"
 
 	// CommModule communicate module
 	CommModule = "CommModule"

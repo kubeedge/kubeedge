@@ -27,6 +27,8 @@ type DTContext struct {
 	ModulesContext *context.Context
 	DeviceList     *sync.Map
 	DeviceMutex    *sync.Map
+	MapperList     *sync.Map
+	MapperMutex    *sync.Map
 	Mutex          *sync.RWMutex
 	// DBConn *dtclient.Conn
 	State string
@@ -43,6 +45,8 @@ func InitDTContext() (*DTContext, error) {
 		ModulesHealth: &sync.Map{},
 		DeviceList:    &sync.Map{},
 		DeviceMutex:   &sync.Map{},
+		MapperList:    &sync.Map{},
+		MapperMutex:   &sync.Map{},
 		Mutex:         &sync.RWMutex{},
 		State:         dtcommon.Disconnected,
 	}, nil

@@ -26,7 +26,10 @@ import (
 	"google.golang.org/grpc"
 	"k8s.io/klog/v2"
 
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
+	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
 	deviceconst "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1"
 	dmiapi "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1beta1"
@@ -34,6 +37,7 @@ import (
 
 type DMIClient struct {
 	protocol   string
+	mapperName string
 	socket     string
 	Client     dmiapi.DeviceMapperServiceClient
 	Ctx        context.Context
@@ -148,10 +152,22 @@ func (dcs *DMIClients) getDMIClientByProtocol(protocol string) (*DMIClient, erro
 	return dc, nil
 }
 
-func (dcs *DMIClients) CreateDMIClient(protocol, sockPath string) {
-	dc, err := dcs.getDMIClientByProtocol(protocol)
+func (dcs *DMIClients) getDMIClientByProtocolAndMapperName(protocol, mapperName string) (*DMIClient, error) {
+	dcs.mutex.Lock()
+	defer dcs.mutex.Unlock()
+	key := fmt.Sprintf("%s-%s", protocol, mapperName)
+	dc, ok := dcs.clients[key]
+	if !ok {
+		return nil, fmt.Errorf("fail to get dmi client of protocol %s", protocol)
+	}
+	return dc, nil
+}
+
+func (dcs *DMIClients) CreateDMIClient(protocol, mapperName, sockPath string) {
+	dc, err := dcs.getDMIClientByProtocolAndMapperName(protocol, mapperName)
 	if err == nil {
 		dcs.mutex.Lock()
+		dc.mapperName = mapperName
 		dc.protocol = protocol
 		dc.socket = sockPath
 		dcs.mutex.Unlock()
@@ -159,15 +175,17 @@ func (dcs *DMIClients) CreateDMIClient(protocol, sockPath string) {
 	}
 
 	dcs.mutex.Lock()
-	dcs.clients[protocol] = &DMIClient{
-		protocol: protocol,
-		socket:   sockPath,
+	key := fmt.Sprintf("%s-%s", protocol, mapperName)
+	dcs.clients[key] = &DMIClient{
+		mapperName: mapperName,
+		protocol:   protocol,
+		socket:     sockPath,
 	}
 	dcs.mutex.Unlock()
 }
 
-func (dcs *DMIClients) getDMIClientConn(protocol string) (*DMIClient, error) {
-	dc, err := dcs.getDMIClientByProtocol(protocol)
+func (dcs *DMIClients) getDMIClientConn(protocol, mapperName string) (*DMIClient, error) {
+	dc, err := dcs.getDMIClientByProtocolAndMapperName(protocol, mapperName)
 	if err != nil {
 		return nil, err
 	}
@@ -180,9 +198,10 @@ func (dcs *DMIClients) getDMIClientConn(protocol string) (*DMIClient, error) {
 }
 
 func (dcs *DMIClients) RegisterDevice(device *v1beta1.Device) error {
+	mapperName := device.Spec.MapperRef.Name
 	protocol := device.Spec.Protocol.ProtocolName
 
-	dc, err := dcs.getDMIClientConn(protocol)
+	dc, err := dcs.getDMIClientConn(protocol, mapperName)
 	if err != nil {
 		return err
 	}
@@ -193,17 +212,22 @@ func (dcs *DMIClients) RegisterDevice(device *v1beta1.Device) error {
 	if err != nil {
 		return fmt.Errorf("fail to create createDeviceRequest for device %s with err: %v", device.Name, err)
 	}
-	_, err = dc.Client.RegisterDevice(dc.Ctx, cdr)
+	response, err := dc.Client.RegisterDevice(dc.Ctx, cdr)
 	if err != nil {
 		return err
 	}
+	// msg for updating device.CurrentNode in cloud
+	message := beehiveModel.NewMessage("").BuildRouter(modules.MetaGroup, modules.UserGroup,
+		"device/connect_successfully", dtcommon.SendToCloud).FillBody(response.DeviceName)
+	beehiveContext.SendToGroup(modules.TwinGroup, *message)
 	return nil
 }
 
 func (dcs *DMIClients) RemoveDevice(device *v1beta1.Device) error {
+	mapperName := device.Spec.MapperRef.Name
 	protocol := device.Spec.Protocol.ProtocolName
 
-	dc, err := dcs.getDMIClientConn(protocol)
+	dc, err := dcs.getDMIClientConn(protocol, mapperName)
 	if err != nil {
 		return err
 	}
@@ -222,9 +246,10 @@ func (dcs *DMIClients) RemoveDevice(device *v1beta1.Device) error {
 }
 
 func (dcs *DMIClients) UpdateDevice(device *v1beta1.Device) error {
+	mapperName := device.Spec.MapperRef.Name
 	protocol := device.Spec.Protocol.ProtocolName
 
-	dc, err := dcs.getDMIClientConn(protocol)
+	dc, err := dcs.getDMIClientConn(protocol, mapperName)
 	if err != nil {
 		return err
 	}
@@ -244,7 +269,9 @@ func (dcs *DMIClients) UpdateDevice(device *v1beta1.Device) error {
 
 func (dcs *DMIClients) CreateDeviceModel(model *v1beta1.DeviceModel) error {
 	protocol := model.Spec.Protocol
-	dc, err := dcs.getDMIClientConn(protocol)
+	mapperName := model.Spec.MapperRef
+
+	dc, err := dcs.getDMIClientConn(protocol, mapperName)
 	if err != nil {
 		return err
 	}
@@ -264,7 +291,9 @@ func (dcs *DMIClients) CreateDeviceModel(model *v1beta1.DeviceModel) error {
 
 func (dcs *DMIClients) RemoveDeviceModel(model *v1beta1.DeviceModel) error {
 	protocol := model.Spec.Protocol
-	dc, err := dcs.getDMIClientConn(protocol)
+	mapperName := model.Spec.MapperRef
+
+	dc, err := dcs.getDMIClientConn(protocol, mapperName)
 	if err != nil {
 		return err
 	}
@@ -284,7 +313,9 @@ func (dcs *DMIClients) RemoveDeviceModel(model *v1beta1.DeviceModel) error {
 
 func (dcs *DMIClients) UpdateDeviceModel(model *v1beta1.DeviceModel) error {
 	protocol := model.Spec.Protocol
-	dc, err := dcs.getDMIClientConn(protocol)
+	mapperName := model.Spec.MapperRef
+
+	dc, err := dcs.getDMIClientConn(protocol, mapperName)
 	if err != nil {
 		return err
 	}

@@ -28,6 +28,13 @@ type DeviceSpec struct {
 	// Required: DeviceModelRef is reference to the device model used as a template
 	// to create the device instance.
 	DeviceModelRef *v1.LocalObjectReference `json:"deviceModelRef,omitempty"`
+	// Required: MapperRef is reference to the mapper used to process the device data.
+	MapperRef *v1.LocalObjectReference `json:"mapperRef,omitempty"`
+	// migrateOnOffline is a boolean value that indicates
+	// whether the user expects the device to be migrated when the node goes offline.
+	// If this field is not provided, the default behavior is to not perform any migration.
+	// +optional
+	MigrateOnOffline bool `json:"migrateOnOffline,omitempty"`
 	// NodeName is a request to schedule this device onto a specific node. If it is non-empty,
 	// the scheduler simply schedules this device onto that node, assuming that it fits
 	// resource requirements.
@@ -43,6 +50,8 @@ type DeviceSpec struct {
 
 // DeviceStatus reports the device state and the desired/reported values of twin attributes.
 type DeviceStatus struct {
+	// currentNode is a string value that represents the node where the device is currently located.
+	CurrentNode string `json:"currentNode,omitempty"`
 	// A list of device twins containing desired/reported desired/reported values of twin properties.
 	// Optional: A passive device won't have twin properties and this list could be empty.
 	// +optional

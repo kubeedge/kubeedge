@@ -7,8 +7,17 @@ type Device struct {
 	Description string              `json:"description,omitempty"`
 	State       string              `json:"state,omitempty"`
 	LastOnline  string              `json:"last_online,omitempty"`
+	CurrentNode string              `json:"currentNode,omitempty"`
 	Attributes  map[string]*MsgAttr `json:"attributes,omitempty"`
 	Twin        map[string]*MsgTwin `json:"twin,omitempty"`
+}
+
+// Mapper the struct of mapper
+type Mapper struct {
+	ID       string `json:"id,omitempty"`
+	Name     string `json:"name,omitempty"`
+	Protocol string `json:"protocol,omitempty"`
+	Address  string `json:"address,omitempty"`
 }
 
 // BaseMessage the base struct of event message
@@ -42,6 +51,8 @@ type MembershipUpdate struct {
 	BaseMessage
 	AddDevices    []Device `json:"added_devices"`
 	RemoveDevices []Device `json:"removed_devices"`
+	AddMappers    []Mapper `json:"added_mappers"`
+	RemoveMappers []Mapper `json:"removed_mappers"`
 }
 
 // MsgAttr the struct of device attr

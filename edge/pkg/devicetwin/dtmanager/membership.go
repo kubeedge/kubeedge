@@ -143,6 +143,16 @@ func dealMembershipUpdate(context *dtcontext.DTContext, resource string, msg int
 		// delete device
 		removeDevice(context, updateEdgeGroups.RemoveDevices, baseMessage, false)
 	}
+
+	if updateEdgeGroups.AddMappers != nil && len(updateEdgeGroups.AddMappers) > 0 {
+		// add mapper
+		addMapper(context, updateEdgeGroups.AddMappers, baseMessage, false)
+	}
+
+	if updateEdgeGroups.RemoveMappers != nil && len(updateEdgeGroups.RemoveMappers) > 0 {
+		// delete mapper
+		removeMapper(context, updateEdgeGroups.RemoveMappers, baseMessage, false)
+	}
 	return nil
 }
 
@@ -307,6 +317,16 @@ func removeDevice(context *dtcontext.DTContext, toRemove []dttype.Device, baseMe
 
 		klog.Infof("Remove device %s successful", device.ID)
 	}
+}
+
+// addMapper add mapper to the edge group
+func addMapper(context *dtcontext.DTContext, toAdd []dttype.Mapper, baseMessage dttype.BaseMessage, delta bool) {
+	//todo
+}
+
+// removeMapper remove mapper to the edge group
+func removeMapper(context *dtcontext.DTContext, toRemove []dttype.Mapper, baseMessage dttype.BaseMessage, delta bool) {
+	//todo
 }
 
 // dealMembershipGetInner deal get membership event

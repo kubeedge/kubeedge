@@ -63,6 +63,7 @@ func initDeviceActionCallBack() {
 	deviceActionCallBack = make(map[string]CallBack)
 	deviceActionCallBack[dtcommon.DeviceUpdated] = dealDeviceAttrUpdate
 	deviceActionCallBack[dtcommon.DeviceStateUpdate] = dealDeviceStateUpdate
+	deviceActionCallBack[dtcommon.DeviceMigrate] = dealDeviceMigrate
 }
 
 func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg interface{}) error {
@@ -299,4 +300,20 @@ func DealMsgAttr(context *dtcontext.DTContext, deviceID string, msgAttrs map[str
 		}
 	}
 	return dttype.DealAttrResult{Add: add, Delete: deletes, Update: update, Result: result, Err: nil}
+}
+
+func dealDeviceMigrate(context *dtcontext.DTContext, resource string, msg interface{}) error {
+	context.DeviceList.Range(func(key interface{}, value interface{}) bool {
+		device, ok := value.(*dttype.Device)
+		if !ok {
+			klog.Warningf("deviceList found invalid key-value pair, key: %s, value: %#v", key, value)
+		} else {
+			if device.Attributes["migrate_on_offline"].Value == "true" {
+				context.DeviceList.Delete(device.ID)
+				context.DeviceMutex.Delete(device.ID)
+			}
+		}
+		return true
+	})
+	return nil
 }

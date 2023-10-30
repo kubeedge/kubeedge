@@ -7,6 +7,7 @@ import (
 // constant defining node connection types
 const (
 	ResourceTypeNodeConnection = "node/connection"
+	ResourceTypeDeviceMigrate  = "device/migrate"
 	SourceNodeConnection       = "edgehub"
 	OperationNodeConnection    = "connect"
 	OperationSubscribe         = "subscribe"
@@ -16,6 +17,7 @@ const (
 	OperationGetResult         = "get_result"
 	OperationResponse          = "response"
 	OperationKeepalive         = "keepalive"
+	OperationMigrate           = "migrate"
 
 	ResourceGroupName = "resource"
 	TwinGroupName     = "twin"
