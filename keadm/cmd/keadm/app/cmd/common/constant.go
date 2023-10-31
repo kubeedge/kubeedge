@@ -42,7 +42,7 @@ const (
 	CertPath = "certPath"
 
 	// DefaultCertPath is the default certificate path in edge node
-	DefaultCertPath = "/etc/kubeedge/certs"
+	DefaultCertPath = "/etc/kubeedge/"
 
 	// DefaultK8SMinimumVersion is the minimum version of K8S
 	DefaultK8SMinimumVersion = 11
