@@ -13,6 +13,7 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
@@ -67,6 +68,7 @@ func (dt *DeviceTwin) distributeMsg(m interface{}) error {
 
 	if moduleName, exist := ActionModuleMap[message.Action]; exist {
 		//how to deal write channel error
+		klog.Infof(message.Action)
 		klog.Infof("Send msg to the %s module in twin", moduleName)
 		if err := dt.DTContexts.CommTo(moduleName, &message); err != nil {
 			return err
@@ -107,11 +109,14 @@ func initActionModuleMap() {
 	ActionModuleMap[dtcommon.DeviceUpdated] = dtcommon.DeviceModule
 	ActionModuleMap[dtcommon.DeviceStateGet] = dtcommon.DeviceModule
 	ActionModuleMap[dtcommon.DeviceStateUpdate] = dtcommon.DeviceModule
+	ActionModuleMap[dtcommon.DeviceMigrate] = dtcommon.DeviceModule
 	ActionModuleMap[dtcommon.Connected] = dtcommon.CommModule
 	ActionModuleMap[dtcommon.Disconnected] = dtcommon.CommModule
 	ActionModuleMap[dtcommon.LifeCycle] = dtcommon.CommModule
 	ActionModuleMap[dtcommon.Confirm] = dtcommon.CommModule
+	ActionModuleMap[dtcommon.SendToCloud] = dtcommon.CommModule
 	ActionModuleMap[dtcommon.MetaDeviceOperation] = dtcommon.DMIModule
+	ActionModuleMap[dtcommon.MetaMapperOperation] = dtcommon.DMIModule
 }
 
 // SyncSqlite sync sqlite
@@ -192,6 +197,7 @@ func classifyMsg(message *dttype.DTMessage) bool {
 	var identity string
 	var action string
 	msgSource := message.Msg.GetSource()
+
 	if strings.Compare(msgSource, "bus") == 0 {
 		idLoc := 3
 		topic := message.Msg.GetResource()
@@ -208,6 +214,17 @@ func classifyMsg(message *dttype.DTMessage) bool {
 				action = dtcommon.LifeCycle
 			} else if strings.HasPrefix(topic, dtcommon.LifeCycleDisconnectETPrefix) {
 				action = dtcommon.LifeCycle
+			} else {
+				return false
+			}
+		} else if len(splitString) == 2 {
+			if strings.Contains(message.Msg.Router.Resource, dtcommon.MapperRegister) {
+				action = dtcommon.MetaMapperOperation
+				identity = splitString[0]
+			} else if strings.Contains(message.Msg.Router.Resource, dtcommon.DeviceRegister) {
+				message.Msg.Router.Source = dtcommon.DeviceTwinModule
+				action = dtcommon.SendToCloud
+				identity = splitString[0]
 			} else {
 				return false
 			}
@@ -246,6 +263,15 @@ func classifyMsg(message *dttype.DTMessage) bool {
 		} else if strings.Contains(message.Msg.Router.Resource, "membership") {
 			message.Action = dtcommon.MemUpdated
 			return true
+		} else if strings.Contains(message.Msg.Router.Resource, "meta") {
+			if strings.Contains(message.Msg.Router.Resource, "device") {
+				message.Action = dtcommon.MetaDeviceOperation
+			} else if strings.Contains(message.Msg.Router.Resource, "mapper") {
+				message.Action = dtcommon.MetaMapperOperation
+			}
+			resources := strings.Split(message.Msg.Router.Resource, "/")
+			message.Identity = resources[1]
+			return true
 		} else if strings.Contains(message.Msg.Router.Resource, "twin/cloud_updated") {
 			message.Action = dtcommon.TwinCloudSync
 			resources := strings.Split(message.Msg.Router.Resource, "/")
@@ -264,21 +290,43 @@ func classifyMsg(message *dttype.DTMessage) bool {
 		if strings.Compare(message.Msg.Router.Resource, "node/connection") == 0 {
 			message.Action = dtcommon.LifeCycle
 			return true
+		} else if strings.Compare(message.Msg.Router.Resource, "device/migrate") == 0 {
+			message.Action = dtcommon.MetaDeviceOperation
 		}
 		return false
 	} else if strings.Compare(msgSource, "meta") == 0 {
-		switch message.Msg.Content.(type) {
-		case []byte:
-			klog.Info("Message content type is []byte, no need to marshal again")
-		default:
-			content, err := json.Marshal(message.Msg.Content)
-			if err != nil {
-				return false
+		if strings.Contains(message.Msg.Router.Resource, "device") {
+			if strings.Contains(message.Msg.Router.Resource, "device/connect_successfully") {
+				message.Msg.Router.Source = constants.GroupTwin
+				message.Action = dtcommon.SendToCloud
+				return true
 			}
-			message.Msg.Content = content
+			switch message.Msg.Content.(type) {
+			case []byte:
+				klog.Info("Message content type is []byte, no need to marshal again")
+			default:
+				content, err := json.Marshal(message.Msg.Content)
+				if err != nil {
+					return false
+				}
+				message.Msg.Content = content
+			}
+			action = dtcommon.MetaDeviceOperation
+		} else if strings.Contains(message.Msg.Router.Resource, "mapper") {
+			if strings.Contains(message.Msg.Router.Resource, "mapper/connect_successfully") {
+				message.Msg.Router.Source = constants.GroupTwin
+				message.Action = dtcommon.SendToCloud
+				return true
+			}
+			action = dtcommon.MetaMapperOperation
 		}
-		message.Action = dtcommon.MetaDeviceOperation
+		message.Action = action
 		return true
+	} else if strings.Compare(msgSource, "twin") == 0 {
+		if strings.Compare(message.Msg.Router.Resource, "device/migrate") == 0 {
+			message.Action = dtcommon.DeviceMigrate
+			return true
+		}
 	}
 	return false
 }

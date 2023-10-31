@@ -38,6 +38,7 @@ const (
 	ResourceTypeDeviceModel  = "devicemodel"
 	ResourceTypeDevice       = "device"
 	ResourceTypeDeviceMapper = "devicemapper"
+	ResourceTypeMapper       = "mapper"
 
 	KindTypeDevice      = "Device"
 	KindTypeDeviceModel = "DeviceModel"

@@ -99,6 +99,20 @@ func ConstructConnectMessage(info *model.HubInfo, isConnected bool) *beehivemode
 	return msg
 }
 
+func ConstructDeviceMigrationMessage(info *model.HubInfo) *beehivemodel.Message {
+	// Send the deviceMigrate msg to deviceController
+	content, err := json.Marshal(*info)
+	if err != nil {
+		klog.Errorf("fail to marshal device migration message, reason: %s", err.Error())
+		return nil
+	}
+	msg := beehivemodel.NewMessage("")
+	resource := fmt.Sprintf("%s/%s", model.ResNode, "device/migrate")
+	msg.BuildRouter(model.SrcTwin, model.GpResource, resource, model.OpMigrate)
+	msg.FillBody(content)
+	return msg
+}
+
 func DeepCopy(msg *beehivemodel.Message) *beehivemodel.Message {
 	if msg == nil {
 		return nil

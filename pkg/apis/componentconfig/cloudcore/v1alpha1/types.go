@@ -364,6 +364,9 @@ type DeviceControllerBuffer struct {
 	// UpdateDeviceStatus indicates the buffer of update device status
 	// default 1024
 	UpdateDeviceStatus int32 `json:"updateDeviceStatus,omitempty"`
+	// UpdateMapperStatus indicates the buffer of update mapper status
+	// default 1024
+	UpdateMapperStatus int32 `json:"updateMapperStatus,omitempty"`
 	// DeviceEvent indicates the buffer of device event
 	// default 1
 	DeviceEvent int32 `json:"deviceEvent,omitempty"`
@@ -377,6 +380,9 @@ type DeviceControllerLoad struct {
 	// UpdateDeviceStatusWorkers indicates the load of update device status workers
 	// default 1
 	UpdateDeviceStatusWorkers int32 `json:"updateDeviceStatusWorkers,omitempty"`
+	// UpdateMapperStatusWorkers indicates the load of update mapper status workers
+	// default 1
+	UpdateMapperStatusWorkers int32 `json:"updateMapperStatusWorkers,omitempty"`
 }
 
 // NodeUpgradeJobController indicates the operations controller

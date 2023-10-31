@@ -73,7 +73,6 @@ func (s *server) MapperRegister(ctx context.Context, in *pb.MapperRegisterReques
 		klog.Errorf("fail to register mapper %s because the protocol is nil", in.Mapper.Name)
 		return nil, fmt.Errorf("fail to register mapper %s because the protocol is nil", in.Mapper.Name)
 	}
-
 	klog.V(4).Infof("receive mapper register: %+v", in.Mapper)
 	err := saveMapper(in.Mapper)
 	if err != nil {
@@ -87,15 +86,25 @@ func (s *server) MapperRegister(ctx context.Context, in *pb.MapperRegisterReques
 	if !in.WithData {
 		return &pb.MapperRegisterResponse{}, nil
 	}
+	var mapper = types.Mapper{Name: in.Mapper.Name, Protocol: in.Mapper.Protocol, Address: string(in.Mapper.Address)}
+	content, err := json.Marshal(mapper)
+	if err != nil {
+		klog.Errorf("fail to marshal mapper %s with err: %v", in.Mapper.Name, err)
+		return nil, err
+	}
+	message := beehiveModel.NewMessage("").BuildRouter(modules.MetaGroup, modules.UserGroup,
+		"mapper/connect_successfully", beehiveModel.InsertOperation).FillBody(string(content))
+	beehiveContext.SendToGroup(modules.TwinGroup, *message)
 
 	var deviceList []*pb.Device
 	var deviceModelList []*pb.DeviceModel
 	s.dmiCache.DeviceMu.Lock()
 	defer s.dmiCache.DeviceMu.Unlock()
 	for _, device := range s.dmiCache.DeviceList {
+		mapperName := device.Spec.MapperRef.Name
 		protocol := device.Spec.Protocol.ProtocolName
 
-		if protocol == in.Mapper.Protocol {
+		if protocol == in.Mapper.Protocol && mapperName == in.Mapper.Name {
 			dev, err := dtcommon.ConvertDevice(device)
 			if err != nil {
 				klog.Errorf("fail to convert device %s with err: %v", device.Name, err)
@@ -118,8 +127,7 @@ func (s *server) MapperRegister(ctx context.Context, in *pb.MapperRegisterReques
 			deviceModelList = append(deviceModelList, dm)
 		}
 	}
-	dmiclient.DMIClientsImp.CreateDMIClient(in.Mapper.Protocol, string(in.Mapper.Address))
-
+	dmiclient.DMIClientsImp.CreateDMIClient(in.Mapper.Protocol, in.Mapper.Name, string(in.Mapper.Address))
 	return &pb.MapperRegisterResponse{
 		DeviceList: deviceList,
 		ModelList:  deviceModelList,

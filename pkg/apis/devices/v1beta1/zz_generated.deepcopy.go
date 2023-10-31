@@ -246,6 +246,11 @@ func (in *DeviceSpec) DeepCopyInto(out *DeviceSpec) {
 		*out = new(v1.LocalObjectReference)
 		**out = **in
 	}
+	if in.MapperRef != nil {
+		in, out := &in.MapperRef, &out.MapperRef
+		*out = new(v1.LocalObjectReference)
+		**out = **in
+	}
 	if in.Properties != nil {
 		in, out := &in.Properties, &out.Properties
 		*out = make([]DeviceProperty, len(*in))

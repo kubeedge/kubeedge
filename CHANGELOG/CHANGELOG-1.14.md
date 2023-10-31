@@ -84,18 +84,18 @@ Download v1.14.0 in the [v1.14.0 release page](https://github.com/kubeedge/kubee
 
 ### Support Authentication and Authorization for Kube-API Endpoint for Applications On Edge Nodes
 
-The Kube-API endpoint for edge applications is implemented through MetaServer in edegcore. However, in previous versions, 
-the authentication and authorization of Kube-API endpoint are performed in the cloud, which prevents authentication and authorization 
+The Kube-API endpoint for edge applications is implemented through MetaServer in edegcore. However, in previous versions,
+the authentication and authorization of Kube-API endpoint are performed in the cloud, which prevents authentication and authorization
 especially in offline scenarios on the edge node.
 
-In this release, the authentication and authorization functionalities are implemented within the MetaServer at edge, which allows for 
+In this release, the authentication and authorization functionalities are implemented within the MetaServer at edge, which allows for
 limiting the access permissions of edge applications when accessing Kube-API endpoint at edge.
 
 Refer to the link for more details. ([#4802](https://github.com/kubeedge/kubeedge/pull/4802))
 
 ### Support Cluster Scope Resource Reliable Delivery to Edge Node
 
-The cluster scope resource can guarantee deliver to the edge side reliably since this release, 
+The cluster scope resource can guarantee deliver to the edge side reliably since this release,
 especially include using list-watch global resources, the cluster scope resource can be delivered to the edge side reliably,
 and the edge applications can work normally.
 
@@ -121,7 +121,7 @@ Refer to the link for more details. ([#4734](https://github.com/kubeedge/kubeedg
 
 ### Alpha version of KubeEdge Dashboard
 
-KubeEdge dashboard provides a graphical user interface (GUI) for managing and monitoring your KubeEdge clusters. 
+KubeEdge dashboard provides a graphical user interface (GUI) for managing and monitoring your KubeEdge clusters.
 It allows users to manage edge applications running in the cluster and troubleshoot them.
 
 Refer to the link for more details. (https://github.com/kubeedge/dashboard)
@@ -131,6 +131,6 @@ Refer to the link for more details. (https://github.com/kubeedge/dashboard)
 ## Important Steps before Upgrading
 
 - On KubeEdge v1.14, EdgeCore has removed the dockeshim support, so users can only use `remote` type runtime, and uses `containerd` runtime by default. If you want to use `docker` runtime, you
-  must first set `edged.containerRuntime=remote` and corresponding docker configuration like `RemoteRuntimeEndpoint` and `RemoteImageEndpoint` in EdgeCore, then install the cri-dockerd tools as docs below: 
+  must first set `edged.containerRuntime=remote` and corresponding docker configuration like `RemoteRuntimeEndpoint` and `RemoteImageEndpoint` in EdgeCore, then install the cri-dockerd tools as docs below:
   https://github.com/kubeedge/kubeedge/issues/4843
-  
+

@@ -27,6 +27,8 @@ type DeviceModelSpec struct {
 	Properties []ModelProperty `json:"properties,omitempty"`
 	// Required: Protocol name used by the device.
 	Protocol string `json:"protocol,omitempty"`
+	// Required: The device mapper name.
+	MapperRef string `json:"mapperRef,omitempty"`
 }
 
 // ModelProperty describes an individual device property / attribute like temperature / humidity etc.

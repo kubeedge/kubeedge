@@ -15,7 +15,17 @@ type DeviceManager struct {
 	events chan watch.Event
 
 	// Device, key is device.Name, value is *v1beta1.Device{}
+	// to be deprecated
 	Device sync.Map
+
+	// DeployedDevice stores the deployed devices, key is device.Name, value is *v1beta1.Device{}
+	DeployedDevice sync.Map
+
+	// UndeployedDevice stores the undeployed devices, key is device.Name, value is *v1beta1.Device{}
+	UndeployedDevice sync.Map
+
+	// NodeDeviceList stores the device list deployed on the corresponding node, key is node.Name, value is []*v1beta1.Device{}
+	NodeDeviceList sync.Map
 }
 
 // Events return a channel, can receive all device event
