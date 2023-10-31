@@ -288,12 +288,7 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 		edgeCoreConfig.Modules.Edged.ContainerRuntime = opt.RuntimeType
 	}
 
-	switch opt.CGroupDriver {
-	case v1alpha2.CGroupDriverSystemd:
-		edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.CgroupDriver = v1alpha2.CGroupDriverSystemd
-	case v1alpha2.CGroupDriverCGroupFS:
-		edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.CgroupDriver = v1alpha2.CGroupDriverCGroupFS
-	default:
+	if opt.CGroupDriver != v1alpha2.CGroupDriverSystemd && opt.CGroupDriver != v1alpha2.CGroupDriverCGroupFS {
 		return fmt.Errorf("unsupported CGroupDriver: %s", opt.CGroupDriver)
 	}
 	edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.CgroupDriver = opt.CGroupDriver
@@ -355,12 +350,7 @@ func createV1alpha1EdgeConfigFiles(opt *common.JoinOptions) error {
 		edgeCoreConfig.Modules.Edged.RuntimeType = opt.RuntimeType
 	}
 
-	switch opt.CGroupDriver {
-	case v1alpha1.CGroupDriverSystemd:
-		edgeCoreConfig.Modules.Edged.CGroupDriver = v1alpha1.CGroupDriverSystemd
-	case v1alpha1.CGroupDriverCGroupFS:
-		edgeCoreConfig.Modules.Edged.CGroupDriver = v1alpha1.CGroupDriverCGroupFS
-	default:
+	if opt.CGroupDriver != v1alpha1.CGroupDriverSystemd && opt.CGroupDriver != v1alpha1.CGroupDriverCGroupFS {
 		return fmt.Errorf("unsupported CGroupDriver: %s", opt.CGroupDriver)
 	}
 	edgeCoreConfig.Modules.Edged.CGroupDriver = opt.CGroupDriver
