@@ -128,6 +128,7 @@ func dataHandler(ctx context.Context, dev *driver.CustomizedDev) {
 			VisitorConfig:   &visitorConfig,
 			Topic:           fmt.Sprintf(common.TopicTwinUpdate, dev.Instance.ID),
 			CollectCycle:    time.Duration(twin.Property.CollectCycle),
+			ReportToCloud:   twin.Property.ReportToCloud,
 		}
 		go twinData.Run(ctx)
 		// handle push method
@@ -252,7 +253,7 @@ func setVisitor(visitorConfig *driver.VisitorConfig, twin *common.Twin, dev *dri
 		klog.V(3).Infof("%s twin readonly property: %s", dev.Instance.Name, twin.PropertyName)
 		return nil
 	}
-	err := dev.CustomizedClient.SetDeviceData(twin, visitorConfig)
+	err = dev.CustomizedClient.SetDeviceData(twin, visitorConfig)
 	if err != nil {
 		return fmt.Errorf("%s set device data error: %v", twin.PropertyName, err)
 	}

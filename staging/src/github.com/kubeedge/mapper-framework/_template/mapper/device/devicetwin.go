@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-        "k8s.io/klog/v2"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/Template/driver"
 	"github.com/kubeedge/Template/pkg/common"
@@ -26,6 +26,7 @@ type TwinData struct {
 	Topic           string
 	Results         interface{}
 	CollectCycle    time.Duration
+	ReportToCloud   bool
 }
 
 func (td *TwinData) GetPayLoad() ([]byte, error) {
@@ -86,6 +87,9 @@ func (td *TwinData) PushToEdgeCore() {
 }
 
 func (td *TwinData) Run(ctx context.Context) {
+	if !td.ReportToCloud {
+		return
+	}
 	if td.CollectCycle == 0 {
 		td.CollectCycle = 1 * time.Second
 	}
