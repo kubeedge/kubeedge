@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/klog/v2"
+        "k8s.io/klog/v2"
 
 	"github.com/kubeedge/Template/driver"
 	"github.com/kubeedge/Template/pkg/common"
@@ -26,12 +26,10 @@ type TwinData struct {
 	Topic           string
 	Results         interface{}
 	CollectCycle    time.Duration
-	ReportToCloud   bool
 }
 
 func (td *TwinData) GetPayLoad() ([]byte, error) {
 	var err error
-	td.VisitorConfig.VisitorConfigData.DataType = strings.ToLower(td.VisitorConfig.VisitorConfigData.DataType)
 	td.Results, err = td.Client.GetDeviceData(td.VisitorConfig)
 	if err != nil {
 		return nil, fmt.Errorf("get device data failed: %v", err)
@@ -88,9 +86,6 @@ func (td *TwinData) PushToEdgeCore() {
 }
 
 func (td *TwinData) Run(ctx context.Context) {
-	if !td.ReportToCloud {
-		return
-	}
 	if td.CollectCycle == 0 {
 		td.CollectCycle = 1 * time.Second
 	}

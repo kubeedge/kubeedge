@@ -109,7 +109,6 @@ func dataHandler(ctx context.Context, dev *driver.CustomizedDev) {
 		var visitorConfig driver.VisitorConfig
 
 		err := json.Unmarshal(twin.Property.Visitors, &visitorConfig)
-		visitorConfig.VisitorConfigData.DataType = strings.ToLower(visitorConfig.VisitorConfigData.DataType)
 		if err != nil {
 			klog.Errorf("Unmarshal VisitorConfig error: %v", err)
 			continue
@@ -129,7 +128,6 @@ func dataHandler(ctx context.Context, dev *driver.CustomizedDev) {
 			VisitorConfig:   &visitorConfig,
 			Topic:           fmt.Sprintf(common.TopicTwinUpdate, dev.Instance.ID),
 			CollectCycle:    time.Duration(twin.Property.CollectCycle),
-			ReportToCloud:   twin.Property.ReportToCloud,
 		}
 		go twinData.Run(ctx)
 		// handle push method
@@ -254,13 +252,7 @@ func setVisitor(visitorConfig *driver.VisitorConfig, twin *common.Twin, dev *dri
 		klog.V(3).Infof("%s twin readonly property: %s", dev.Instance.Name, twin.PropertyName)
 		return nil
 	}
-	klog.V(2).Infof("Convert type: %s, value: %s ", twin.Property.PProperty.DataType, twin.ObservedDesired.Value)
-	value, err := common.Convert(twin.Property.PProperty.DataType, twin.ObservedDesired.Value)
-	if err != nil {
-		klog.Errorf("Failed to convert value as %s : %v", twin.Property.PProperty.DataType, err)
-		return err
-	}
-	err = dev.CustomizedClient.SetDeviceData(value, visitorConfig)
+	err := dev.CustomizedClient.SetDeviceData(twin, visitorConfig)
 	if err != nil {
 		return fmt.Errorf("%s set device data error: %v", twin.PropertyName, err)
 	}
