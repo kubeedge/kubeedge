@@ -150,7 +150,7 @@ const (
 	EdgeNodeRoleKey   = "node-role.kubernetes.io/edge"
 	EdgeNodeRoleValue = ""
 
-	DeafultMosquittoContainerName = "mqtt-kubeedge"
+	DefaultMosquittoContainerName = "mqtt-kubeedge"
 	DeployMqttContainerEnv        = "DEPLOY_MQTT_CONTAINER"
 
 	// DefaultManifestsDir edge node default static pod path
