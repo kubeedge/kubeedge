@@ -3,11 +3,17 @@ package passthrough
 type passRequest string
 
 const (
-	versionRequest passRequest = "/version::get"
+	versionRequest  passRequest = "/version::get"
+	healthRequest   passRequest = "/healthz::get"
+	liveRequest     passRequest = "/livez::get"
+	readyRequest    passRequest = "/readyz::get"
 )
 
 var passThroughMap = map[passRequest]bool{
 	versionRequest: true,
+	healthRequest:  true,
+	liveRequest:    true,
+	readyRequest:   true,
 }
 
 // IsPassThroughPath determining whether the uri can be passed through
