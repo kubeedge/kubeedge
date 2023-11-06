@@ -10,11 +10,6 @@ func TestIsPassThroughPath(t *testing.T) {
 		want bool
 	}{
 		{
-			name: "/healthz::get is not pass through path",
-			path: "/healthz",
-			verb: "get",
-			want: false,
-		}, {
 			name: "/version::post is not pass through path",
 			path: "/version",
 			verb: "post",
@@ -22,6 +17,36 @@ func TestIsPassThroughPath(t *testing.T) {
 		}, {
 			name: "/version::get is pass through path",
 			path: "/version",
+			verb: "get",
+			want: true,
+		}, {
+			name: "/healthz::update is not pass through path",
+			path: "/healthz",
+			verb: "update",
+			want: false,
+		}, {
+			name: "/healthz::get is pass through path",
+			path: "/healthz",
+			verb: "get",
+			want: true,
+		}, {
+			name: "/livez::create is not pass through path",
+			path: "/livez",
+			verb: "create",
+			want: false,
+		}, {
+			name: "/livez::get is pass through path",
+			path: "/livez",
+			verb: "get",
+			want: true,
+		}, {
+			name: "/readyz::delete is not pass through path",
+			path: "/readyz",
+			verb: "delete",
+			want: false,
+		}, {
+			name: "/readyz::get is pass through path",
+			path: "/readyz",
 			verb: "get",
 			want: true,
 		},
