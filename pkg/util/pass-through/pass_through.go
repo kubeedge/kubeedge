@@ -3,10 +3,10 @@ package passthrough
 type passRequest string
 
 const (
-	versionRequest  passRequest = "/version::get"
-	healthRequest   passRequest = "/healthz::get"
-	liveRequest     passRequest = "/livez::get"
-	readyRequest    passRequest = "/readyz::get"
+	versionRequest passRequest = "/version::get"
+	healthRequest  passRequest = "/healthz::get"
+	liveRequest    passRequest = "/livez::get"
+	readyRequest   passRequest = "/readyz::get"
 )
 
 var passThroughMap = map[passRequest]bool{
