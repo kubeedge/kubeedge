@@ -2,13 +2,16 @@ package eventbus
 
 import (
 	"fmt"
+	"net/http"
 	"path"
+	"strconv"
 	"strings"
 
 	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/listener"
@@ -109,9 +112,11 @@ func (*EventBus) Forward(target provider.Target, data interface{}) (response int
 	resp, err := target.GoToTarget(res, nil)
 	if err != nil {
 		klog.Errorf("message is send to target failed. msgID: %s, target: %s, err:%v", message.GetID(), target.Name(), err)
+		sendAckMessageToEdge(message, err.Error())
 		return nil, err
 	}
 	klog.Infof("message is send to target successfully. msgID: %s, target: %s", message.GetID(), target.Name())
+	sendAckMessageToEdge(message, resp)
 	return resp, nil
 }
 
@@ -128,6 +133,16 @@ func (eb *EventBus) GoToTarget(data map[string]interface{}, stop chan struct{}) 
 	if !ok {
 		return nil, buildAndLogError("data body")
 	}
+	header, ok := data["header"].(http.Header)
+	if !ok {
+		return nil, buildAndLogError("header")
+	}
+	var needCallback bool
+	if callbackInHeader, err := strconv.ParseBool(header.Get("callback")); err != nil {
+		needCallback = false
+	} else {
+		needCallback = callbackInHeader
+	}
 	// use zero value if not found param
 	param, _ := data["param"].(string)
 
@@ -143,7 +158,35 @@ func (eb *EventBus) GoToTarget(data map[string]interface{}, stop chan struct{}) 
 	msg.FillBody(string(body))
 	msg.SetRoute(modules.RouterSourceEventBus, modules.UserGroup)
 	beehiveContext.Send(modules.CloudHubModuleName, *msg)
+	if stop != nil && needCallback {
+		var response *model.Message
+		listener.MessageHandlerInstance.SetCallback(messageID, func(message *model.Message) {
+			response = message
+			stop <- struct{}{}
+		})
+		<-stop
+		listener.MessageHandlerInstance.DelCallback(messageID)
+		return response, nil
+	}
 	return nil, nil
+}
+
+func sendAckMessageToEdge(msg *model.Message, resp interface{}) {
+	if resp == nil {
+		resp = "message delivered to cloud"
+	}
+	// get node name from resource
+	nodeName, err := messagelayer.GetNodeID(*msg)
+	if err != nil {
+		resp = fmt.Sprintf("failed to get node name in message resource %s, error: %v", msg.GetResource(), err)
+	}
+	topic := "/"
+	if msgResourceList := strings.Split(msg.GetResource(), "user"); len(msgResourceList) >= 2 {
+		topic = msgResourceList[1]
+	}
+	resource := path.Join("node", nodeName, "user", topic)
+	ackMsg := model.NewMessage(msg.GetID()).BuildRouter(modules.RouterSourceEventBus, modules.UserGroup, resource, "detail_result").FillBody(resp)
+	beehiveContext.Send(modules.CloudHubModuleName, *ackMsg)
 }
 
 func buildAndLogError(key string) error {

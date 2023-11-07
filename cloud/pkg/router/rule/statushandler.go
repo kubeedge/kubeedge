@@ -20,8 +20,8 @@ type ExecResult struct {
 }
 
 type ErrorMsg struct {
-	Detail    string
-	Timestamp time.Time
+	Detail    string    `json:"detail"`
+	Timestamp time.Time `json:"timestamp"`
 }
 
 var ResultChannel chan ExecResult

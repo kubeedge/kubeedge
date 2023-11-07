@@ -283,7 +283,7 @@ func buildErrorResponse(parentID string, content string, statusCode int) (beehiv
 	h := http.Header{}
 	h.Add("Server", "kubeedge-edgecore")
 	c := commonType.HTTPResponse{Header: h, StatusCode: statusCode, Body: []byte(content)}
-	message := beehiveModel.NewMessage(parentID).
+	message := beehiveModel.NewMessage(parentID).SetResourceOperation("", beehiveModel.UploadOperation).
 		SetRoute(modules.ServiceBusModuleName, modules.UserGroup).FillBody(c)
 	return *message, nil
 }

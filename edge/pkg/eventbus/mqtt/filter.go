@@ -155,4 +155,5 @@ func RegisterMsgHandler() {
 	mux.Entry(NewPattern("$hw/events/device/"), handleDeviceTwin)
 	mux.Entry(NewPattern("$hw/events/node/"), handleDeviceTwin)
 	mux.Entry(NewPattern("SYS/dis/upload_records"), handleUploadTopic)
+	mux.Entry(NewPattern("{namespace}/nodes/{node_name}/user/{custom_topic}"), handleCustomTopic)
 }

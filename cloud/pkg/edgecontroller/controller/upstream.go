@@ -299,18 +299,24 @@ func (uc *UpstreamController) updateRuleStatus() {
 				klog.Warningf("message: %s process failure, get rule content with error: %s, namespaces: %s name: %s", msg.GetID(), err, namespace, ruleID)
 				continue
 			}
-			if content.Status == "SUCCESS" {
-				rule.Status.SuccessMessages++
-			}
 			if content.Status == "FAIL" {
-				rule.Status.FailMessages++
-				errSlice := make([]string, 0)
-				rule.Status.Errors = append(errSlice, content.Error.Detail)
+				errMsg, err := json.Marshal(content.Error)
+				if err != nil {
+					klog.ErrorS(err, "failed to marshal error message", "messageID", msg.GetID())
+					continue
+				}
+				rule.Status.Errors = append(rule.Status.Errors, string(errMsg))
 			}
-			newStatus := &rulesv1.RuleStatus{
-				SuccessMessages: rule.Status.SuccessMessages,
-				FailMessages:    rule.Status.FailMessages,
-				Errors:          rule.Status.Errors,
+			errorMessageCount := len(rule.Status.Errors)
+			if errorMessageCount > 50 {
+				rule.Status.Errors = rule.Status.Errors[errorMessageCount-50:]
+			}
+
+			newStatus := &rulesv1.Rule{
+				Status: rulesv1.RuleStatus{
+					FailMessages: int64(errorMessageCount),
+					Errors:       rule.Status.Errors,
+				},
 			}
 			body, err := json.Marshal(newStatus)
 			if err != nil {

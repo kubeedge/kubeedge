@@ -31,3 +31,13 @@ func handleUploadTopic(topic string, payload []byte) {
 	klog.Info(fmt.Sprintf("Received msg from mqttserver, deliver to %s with resource %s", target, message.GetResource()))
 	beehiveContext.SendToGroup(target, *message)
 }
+
+// handleCustomTopic for topic "{namespace}/nodes/{node_name}/user/{custom_topic}"
+func handleCustomTopic(topic string, payload []byte) {
+	target := modules.HubGroup
+	message := beehiveModel.NewMessage("").BuildRouter(modules.BusGroup, modules.UserGroup,
+		topic, beehiveModel.UploadOperation).FillBody(string(payload))
+	klog.Info(fmt.Sprintf("Received msg from mqttserver, deliver to %s with resource %s", target, message.GetResource()))
+	beehiveContext.SendToGroup(target, *message)
+	AddCallbackTopic(message.GetID(), topic)
+}

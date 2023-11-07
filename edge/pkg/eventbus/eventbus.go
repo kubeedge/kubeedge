@@ -3,6 +3,7 @@ package eventbus
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/beego/beego/orm"
@@ -10,6 +11,8 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
+	beehivemodel "github.com/kubeedge/beehive/pkg/core/model"
+	commontypes "github.com/kubeedge/kubeedge/common/types"
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/common/util"
@@ -151,11 +154,13 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 				content, ok := accessInfo.GetContent().(string)
 				if !ok {
 					klog.Errorf("Message is not []byte or string")
+					eb.sendResponseToCloud(accessInfo.GetID(), fmt.Errorf("invalid message content"))
 					continue
 				}
 				payload = []byte(content)
 			}
 			eb.publish(topic, payload)
+			eb.sendResponseToCloud(accessInfo.GetID(), nil)
 		case messagepkg.OperationGetResult:
 			if resource != "auth_info" {
 				klog.Info("Skip none auth_info get_result message")
@@ -164,6 +169,26 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 			topic := fmt.Sprintf("$hw/events/node/%s/authInfo/get/result", eventconfig.Config.NodeName)
 			payload, _ := json.Marshal(accessInfo.GetContent())
 			eb.publish(topic, payload)
+		case messagepkg.OperationDetailResult:
+			ackTopic, err := mqttBus.LoadAndDeleteCallbackTopic(accessInfo.GetID())
+			if err != nil {
+				klog.ErrorS(err, "fail to load callback topic", "message", accessInfo.GetID())
+				continue
+			}
+			var payload []byte
+			switch v := accessInfo.GetContent().(type) {
+			case []byte:
+				payload = v
+			case string:
+				payload = []byte(v)
+			default:
+				payload, err = json.Marshal(v)
+				if err != nil {
+					klog.ErrorS(err, "fail to marshal content", "message", accessInfo.String())
+					continue
+				}
+			}
+			eb.publish(ackTopic, payload)
 		default:
 			klog.Warningf("Action not found")
 		}
@@ -220,4 +245,17 @@ func (eb *eventbus) unsubscribe(topic string) {
 	if err != nil {
 		klog.Errorf("Delete topic %s failed, %v", topic, err)
 	}
+}
+
+func (eb *eventbus) sendResponseToCloud(parentID string, err error) {
+	h := http.Header{"Server": []string{"kubeedge-edgecore"}}
+	c := commontypes.HTTPResponse{}
+	if err == nil {
+		c = commontypes.HTTPResponse{Header: h, StatusCode: http.StatusOK, Body: []byte("message has published to mqtt broker on edgecore")}
+	} else {
+		c = commontypes.HTTPResponse{Header: h, StatusCode: http.StatusBadRequest, Body: []byte(err.Error())}
+	}
+	ackMsg := messagepkg.BuildMsg(modules.UserGroup, parentID, modules.EventBusModuleName, "", beehivemodel.UploadOperation, c)
+	beehiveContext.SendToGroup(modules.HubGroup, *ackMsg)
+	klog.V(2).InfoS("send response message to cloud from eventbus", "ackmsg", ackMsg.String(), "parentId", parentID)
 }
