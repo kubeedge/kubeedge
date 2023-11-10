@@ -1320,18 +1320,16 @@ func TestGetNodeListOfServiceAccountAccess(t *testing.T) {
 					ServiceAccountName: "test-sa",
 				},
 			},
-			// This test case is base on sigs.k8s.io/controller-runtime version >= v0.14.0 to filter obj by fieldSelector.
-			// But now sigs.k8s.io/controller-runtime v0.14.0 is base on go1.19, and can't be bumped up to v0.14.0
-			/*						{
-									ObjectMeta: metav1.ObjectMeta{
-										Name:      "pod-4",
-										Namespace: "test-ns",
-									},
-									Spec: v1.PodSpec{
-										NodeName:           "node-4",
-										ServiceAccountName: "test-sa2",
-									},
-								},*/
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "pod-4",
+					Namespace: "test-ns",
+				},
+				Spec: v1.PodSpec{
+					NodeName:           "node-4",
+					ServiceAccountName: "test-sa2",
+				},
+			},
 		},
 	}
 	pdStrategyTypeIndexer := func(obj client.Object) []string {
