@@ -20,9 +20,9 @@ func TestIsPassThroughPath(t *testing.T) {
 			verb: "get",
 			want: true,
 		}, {
-			name: "/healthz::update is not pass through path",
+			name: "/healthz::put is not pass through path",
 			path: "/healthz",
-			verb: "update",
+			verb: "put",
 			want: false,
 		}, {
 			name: "/healthz::get is pass through path",
@@ -30,9 +30,9 @@ func TestIsPassThroughPath(t *testing.T) {
 			verb: "get",
 			want: true,
 		}, {
-			name: "/livez::create is not pass through path",
+			name: "/livez::patch is not pass through path",
 			path: "/livez",
-			verb: "create",
+			verb: "patch",
 			want: false,
 		}, {
 			name: "/livez::get is pass through path",
