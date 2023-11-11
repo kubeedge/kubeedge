@@ -37,6 +37,8 @@ EOF
   exit 0
 fi
 
+KUBEEDGE_ROOT=$(unset CDPATH && cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)
+
 GENS="$1"
 OUTPUT_PKG="$2"
 APIS_PKG="$3"
@@ -93,5 +95,7 @@ fi
 if [ "${GENS}" = "all" ] || grep -qw "openapi" <<<"${GENS}"; then
   echo "Generating openapi for ${GROUPS_WITH_VERSIONS} at ${OUTPUT_PKG}/openapi"
   "${GOBIN}/openapi-gen" \
-  --input-dirs "$(codegen::join , "${FQ_APIS[@]}")" --output-package "${OUTPUT_PKG}/openapi" "$@" -O zz_generated.openapi
+  --input-dirs "$(codegen::join , "${FQ_APIS[@]}")" --output-package "${OUTPUT_PKG}/openapi" \
+  --go-header-file ${KUBEEDGE_ROOT}/hack/boilerplate/boilerplate.txt > ${KUBEEDGE_ROOT}/pkg/client/openapi/violation_exceptions.list  \
+  -O zz_generated.openapi
 fi
