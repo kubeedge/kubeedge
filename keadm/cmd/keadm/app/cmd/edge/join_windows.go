@@ -117,8 +117,8 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 	}
 
 	if opt.RemoteRuntimeEndpoint != "" {
-		edgeCoreConfig.Modules.Edged.RemoteRuntimeEndpoint = opt.RemoteRuntimeEndpoint
-		edgeCoreConfig.Modules.Edged.RemoteImageEndpoint = opt.RemoteRuntimeEndpoint
+		edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint = opt.RemoteRuntimeEndpoint
+		edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.ImageServiceEndpoint = opt.RemoteRuntimeEndpoint
 	}
 
 	host, _, err := net.SplitHostPort(opt.CloudCoreIPPort)

@@ -32,7 +32,7 @@ func InitConfigure(e *v1alpha2.Edged) {
 	})
 }
 
-func ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(in *v1alpha2.TailoredKubeletConfiguration, out *kubeletconfig.KubeletConfiguration, s conversion.Scope) error {
+func ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(in *v1alpha2.TailoredKubeletConfiguration, inFlag *v1alpha2.TailoredKubeletFlag, out *kubeletconfig.KubeletConfiguration, s conversion.Scope) error {
 	out.StaticPodPath = in.StaticPodPath
 	out.SyncFrequency = in.SyncFrequency
 	out.Address = in.Address
@@ -166,6 +166,11 @@ func ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(in *v1alpha2.T
 	if err := v1.Convert_Pointer_bool_To_bool(&in.RegisterNode, &out.RegisterNode, s); err != nil {
 		return err
 	}
+	if in.ContainerRuntimeEndpoint == "" {
+		out.ContainerRuntimeEndpoint = inFlag.RemoteRuntimeEndpoint
+	}
+	out.ContainerRuntimeEndpoint = in.ContainerRuntimeEndpoint
+	out.ImageServiceEndpoint = in.ImageServiceEndpoint
 	return nil
 }
 

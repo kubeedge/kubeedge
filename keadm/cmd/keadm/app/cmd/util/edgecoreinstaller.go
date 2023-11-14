@@ -112,8 +112,8 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 	}
 
 	if ku.RemoteRuntimeEndpoint != "" {
-		edgeCoreConfig.Modules.Edged.RemoteRuntimeEndpoint = ku.RemoteRuntimeEndpoint
-		edgeCoreConfig.Modules.Edged.RemoteImageEndpoint = ku.RemoteRuntimeEndpoint
+		edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint = ku.RemoteRuntimeEndpoint
+		edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.ImageServiceEndpoint = ku.RemoteRuntimeEndpoint
 	}
 	if ku.Token != "" {
 		edgeCoreConfig.Modules.EdgeHub.Token = ku.Token

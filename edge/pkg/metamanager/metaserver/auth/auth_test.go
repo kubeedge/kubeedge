@@ -365,7 +365,7 @@ func TestTokenGenerateAndValidate(t *testing.T) {
 			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(1)
 		}
 		auds := authenticator.Audiences{"api"}
-		serviceaccountValidator, err := serviceaccount.NewLegacyValidator(tc.Client != nil, client.NewGetterFromClient(tc.Client), tc.Client.CoreV1())
+		serviceaccountValidator, err := serviceaccount.NewLegacyValidator(tc.Client != nil, client.NewGetterFromClient(tc.Client), fake.NewSimpleClientset(rsaSecret).CoreV1())
 		if err != nil {
 			t.Errorf("%s: Expected err=nil, , got %v", k, err)
 		}

@@ -18,13 +18,14 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/kubeedge/kubeedge/common/constants"
 	"strings"
 
+	"github.com/spf13/cobra"
+
+	"github.com/kubeedge/kubeedge/common/constants"
 	cmdcommon "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/kubeedge/kubeedge/pkg/image"
-	"github.com/spf13/cobra"
 )
 
 // Configuration represent keadm config options

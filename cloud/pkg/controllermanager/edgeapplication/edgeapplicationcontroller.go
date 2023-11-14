@@ -90,7 +90,7 @@ func (c *Controller) SetupWithManager(mgr controllerruntime.Manager) error {
 	}
 	return controllerruntime.NewControllerManagedBy(mgr).
 		For(&appsv1alpha1.EdgeApplication{}).
-		Watches(&source.Channel{Source: c.ReconcileTriggerChan}, &handler.EnqueueRequestForObject{}).
+		WatchesRawSource(&source.Channel{Source: c.ReconcileTriggerChan}, &handler.EnqueueRequestForObject{}).
 		Complete(c)
 }
 

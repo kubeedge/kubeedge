@@ -154,7 +154,7 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 
 	var kubeletConfig kubeletconfig.KubeletConfiguration
 	var kubeletFlags kubeletoptions.KubeletFlags
-	err = edgedconfig.ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(edgedconfig.Config.TailoredKubeletConfig, &kubeletConfig, nil)
+	err = edgedconfig.ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(edgedconfig.Config.TailoredKubeletConfig, &edgedconfig.Config.TailoredKubeletFlag, &kubeletConfig, nil)
 	if err != nil {
 		klog.ErrorS(err, "Failed to convert kubelet config")
 		return nil, fmt.Errorf("failed to construct kubelet configuration")

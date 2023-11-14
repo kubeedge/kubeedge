@@ -21,7 +21,6 @@ package cmd
 import (
 	"bufio"
 	"fmt"
-	"github.com/kubeedge/kubeedge/common/constants"
 	"os"
 	"strings"
 	"time"
@@ -31,6 +30,7 @@ import (
 	utilruntime "k8s.io/kubernetes/cmd/kubeadm/app/util/runtime"
 	utilsexec "k8s.io/utils/exec"
 
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/helm"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
