@@ -22,7 +22,6 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
@@ -108,7 +107,7 @@ func newOption() *common.JoinOptions {
 	joinOptions.WithMQTT = true
 	joinOptions.CGroupDriver = v1alpha2.CGroupDriverCGroupFS
 	joinOptions.CertPath = common.DefaultCertPath
-	joinOptions.RuntimeType = kubetypes.RemoteContainerRuntime
+	joinOptions.RuntimeType = constants.DefaultRuntimeType
 	joinOptions.RemoteRuntimeEndpoint = constants.DefaultRemoteRuntimeEndpoint
 	return joinOptions
 }

@@ -173,15 +173,12 @@ func ConvertConfigEdgedFlagToConfigKubeletFlag(in *v1alpha2.TailoredKubeletFlag,
 	out.HostnameOverride = in.HostnameOverride
 	out.NodeIP = in.NodeIP
 	out.RootDirectory = in.RootDirectory
-	out.RemoteRuntimeEndpoint = in.RemoteRuntimeEndpoint
-	out.RemoteImageEndpoint = in.RemoteImageEndpoint
 	out.ExperimentalMounterPath = in.ExperimentalMounterPath
 	out.ExperimentalNodeAllocatableIgnoreEvictionThreshold = in.ExperimentalNodeAllocatableIgnoreEvictionThreshold
 	out.NodeLabels = in.NodeLabels
 	out.MinimumGCAge = in.MinimumGCAge
 	out.MaxPerPodContainerCount = in.MaxPerPodContainerCount
 	out.MaxContainerCount = in.MaxContainerCount
-	out.MasterServiceNamespace = in.MasterServiceNamespace
 	out.RegisterSchedulable = in.RegisterSchedulable
 	out.KeepTerminatedPodVolumes = in.KeepTerminatedPodVolumes
 	out.SeccompDefault = in.SeccompDefault
@@ -190,7 +187,6 @@ func ConvertConfigEdgedFlagToConfigKubeletFlag(in *v1alpha2.TailoredKubeletFlag,
 	// out.WindowsService = in.WindowsService
 
 	// container-runtime-specific options
-	out.ContainerRuntime = in.ContainerRuntime
 	out.RuntimeCgroups = in.RuntimeCgroups
 	out.PodSandboxImage = in.PodSandboxImage
 }

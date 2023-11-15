@@ -365,9 +365,13 @@ func TestTokenGenerateAndValidate(t *testing.T) {
 			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(1)
 		}
 		auds := authenticator.Audiences{"api"}
+		serviceaccountValidator, err := serviceaccount.NewLegacyValidator(tc.Client != nil, client.NewGetterFromClient(tc.Client), tc.Client.CoreV1())
+		if err != nil {
+			t.Errorf("%s: Expected err=nil, , got %v", k, err)
+		}
 		authn := JWTTokenAuthenticator(nil,
 			[]string{serviceaccount.LegacyIssuer, "bar"}, tc.Keys, auds,
-			serviceaccount.NewLegacyValidator(tc.Client != nil, client.NewGetterFromClient(tc.Client), nil))
+			serviceaccountValidator)
 
 		// An invalid, non-JWT token should always fail
 		ctx := authenticator.WithAudiences(context.Background(), auds)
