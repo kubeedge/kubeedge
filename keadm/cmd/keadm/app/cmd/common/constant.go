@@ -100,6 +100,8 @@ const (
 	HelmInstallAction  = "install"
 	HelmManifestAction = "manifest"
 
+	HubProtocol = "hub-protocol"
+
 	CmdGetDNSIP         = "cat /etc/resolv.conf | grep nameserver | grep -v -E ':|#' | awk '{print $2}' | head -n1"
 	CmdGetStatusDocker  = "systemctl status docker |grep Active | awk '{print $2}'"
 	CmdPing             = "ping %s -w %d |grep 'packets transmitted' |awk '{print $6}'"

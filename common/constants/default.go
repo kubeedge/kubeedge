@@ -155,4 +155,8 @@ const (
 
 	// DefaultManifestsDir edge node default static pod path
 	DefaultManifestsDir = "/etc/kubeedge/manifests"
+
+	// EdgeHub
+	DefaultWebSocketPort = 10000
+	DefaultQuicPort      = 10001
 )

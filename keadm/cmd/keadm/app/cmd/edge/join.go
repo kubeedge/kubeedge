@@ -28,6 +28,7 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
+	"github.com/kubeedge/viaduct/pkg/api"
 )
 
 var (
@@ -110,6 +111,7 @@ func newOption() *common.JoinOptions {
 	joinOptions.CertPath = common.DefaultCertPath
 	joinOptions.RuntimeType = kubetypes.RemoteContainerRuntime
 	joinOptions.RemoteRuntimeEndpoint = constants.DefaultRemoteRuntimeEndpoint
+	joinOptions.HubProtocol = api.ProtocolTypeWS
 	return joinOptions
 }
 

@@ -28,6 +28,7 @@ import (
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/edge"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
+	"github.com/kubeedge/viaduct/pkg/api"
 )
 
 var (
@@ -84,6 +85,7 @@ func NewDeprecatedEdgeJoin() *cobra.Command {
 func newJoinOptions() *types.JoinOptions {
 	opts := &types.JoinOptions{}
 	opts.CertPath = types.DefaultCertPath
+	opts.HubProtocol = api.ProtocolTypeWS
 
 	return opts
 }
@@ -129,6 +131,7 @@ func Add2EdgeToolsList(toolList map[string]types.ToolsInstaller, flagData map[st
 		CGroupDriver:          joinOptions.CGroupDriver,
 		TarballPath:           joinOptions.TarballPath,
 		Labels:                joinOptions.Labels,
+		HubProtocol:           joinOptions.HubProtocol,
 	}
 
 	toolList["MQTT"] = &util.MQTTInstTool{}
