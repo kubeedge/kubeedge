@@ -37,7 +37,7 @@ kubeedge::golang::verify_golang_version() {
 	  exit 1
   fi
 
-  if [ $Y -lt 16 ] ; then
+  if [ $Y -lt 20 ] ; then
 	  echo "go minor version must >= 20, now is $Y"
 	  exit 1
   fi
