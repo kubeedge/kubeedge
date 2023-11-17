@@ -101,17 +101,11 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 			// To help debugging, immediately log version
 			klog.Infof("Version: %+v", version.Get())
 
-			// Check the running environment by default
-			checkEnv := os.Getenv("CHECK_EDGECORE_ENVIRONMENT")
 			// Force skip check if enable metaserver
-			if config.Modules.MetaManager.MetaServer.Enable {
-				checkEnv = "false"
-			}
-			if checkEnv != "false" {
-				// Check running environment before run edge core
-				if err := environmentCheck(); err != nil {
-					klog.Exit(fmt.Errorf("failed to check the running environment: %v", err))
-				}
+			skipCheck := os.Getenv("CHECK_EDGECORE_ENVIRONMENT") == "false" || config.Modules.MetaManager.MetaServer.Enable
+			// Check running environment before run edge core
+			if err := environmentCheck(skipCheck); err != nil {
+				klog.Exit(fmt.Errorf("failed to check the running environment: %v", err))
 			}
 
 			// Get edge node local ip only when the customInterfaceName has been set.
@@ -167,7 +161,10 @@ func cleanupToken(config v1alpha2.EdgeCoreConfig, file string) error {
 
 // environmentCheck check the environment before edgecore start
 // if Check failed,  return errors
-func environmentCheck() error {
+func environmentCheck(skipCheck bool) error {
+	if skipCheck {
+		return nil
+	}
 	processes, err := ps.Processes()
 	if err != nil {
 		return err
