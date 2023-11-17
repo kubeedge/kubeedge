@@ -4,7 +4,7 @@ type passRequest string
 
 const (
 	versionRequest passRequest = "/version::get"
-	healthRequest  passRequest = "/healthz::get"
+	healthRequest  passRequest = "/healthz::get" // deprecated: TODO remove this once it is gone
 	liveRequest    passRequest = "/livez::get"
 	readyRequest   passRequest = "/readyz::get"
 )
