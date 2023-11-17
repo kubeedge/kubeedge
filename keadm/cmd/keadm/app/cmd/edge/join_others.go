@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -314,6 +315,10 @@ func createV1alpha1EdgeConfigFiles(opt *common.JoinOptions) error {
 
 	if len(opt.Labels) > 0 {
 		edgeCoreConfig.Modules.Edged.Labels = setEdgedNodeLabels(opt)
+	}
+
+	if opt.ImageRepository != "" {
+		edgeCoreConfig.Modules.Edged.PodSandboxImage = path.Join(opt.ImageRepository, constants.DefaultPodSandboxImage)
 	}
 
 	if errs := validationv1alpha1.ValidateEdgeCoreConfiguration(edgeCoreConfig); len(errs) > 0 {
