@@ -28,6 +28,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	apierror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	cliflag "k8s.io/component-base/cli/flag"
 	"k8s.io/component-base/cli/globalflag"
 	"k8s.io/component-base/term"
@@ -172,86 +173,88 @@ func NegotiateTunnelPort() (*int, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create system namespace: %v", err)
 	}
-
-	tunnelPort, err := kubeClient.CoreV1().ConfigMaps(constants.SystemNamespace).Get(context.TODO(), modules.TunnelPort, metav1.GetOptions{})
-
-	if err != nil && !apierror.IsNotFound(err) {
-		return nil, err
-	}
-
 	hostnameOverride := util.GetHostname()
 	localIP, _ := util.GetLocalIP(hostnameOverride)
 
-	var record iptables.TunnelPortRecord
+	tunnelPort, err := kubeClient.CoreV1().ConfigMaps(constants.SystemNamespace).Get(context.TODO(), modules.TunnelPort, metav1.GetOptions{})
 	if err == nil {
-		recordStr, found := tunnelPort.Annotations[modules.TunnelPortRecordAnnotationKey]
-		recordBytes := []byte(recordStr)
-		if !found {
-			return nil, errors.New("failed to get tunnel port record")
-		}
-
-		if err := json.Unmarshal(recordBytes, &record); err != nil {
-			return nil, err
-		}
-
-		port, found := record.IPTunnelPort[localIP]
-		if found {
-			return &port, nil
-		}
-
-		port = negotiatePort(record.Port)
-
-		record.IPTunnelPort[localIP] = port
-		record.Port[port] = true
-
-		recordBytes, err := json.Marshal(record)
-		if err != nil {
-			return nil, err
-		}
-
-		tunnelPort.Annotations[modules.TunnelPortRecordAnnotationKey] = string(recordBytes)
-
-		_, err = kubeClient.CoreV1().ConfigMaps(constants.SystemNamespace).Update(context.TODO(), tunnelPort, metav1.UpdateOptions{})
-		if err != nil {
-			return nil, err
-		}
-
-		return &port, nil
+		return updateTunnelPortConfig(tunnelPort, localIP, kubeClient)
 	}
 
 	if apierror.IsNotFound(err) {
-		port := negotiatePort(record.Port)
-		record := iptables.TunnelPortRecord{
-			IPTunnelPort: map[string]int{
-				localIP: port,
-			},
-			Port: map[int]bool{
-				port: true,
-			},
-		}
-		recordBytes, err := json.Marshal(record)
-		if err != nil {
-			return nil, err
-		}
+		return createTunnelPortConfig(kubeClient, localIP)
+	}
 
-		_, err = kubeClient.CoreV1().ConfigMaps(constants.SystemNamespace).Create(context.TODO(), &v1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      modules.TunnelPort,
-				Namespace: constants.SystemNamespace,
-				Annotations: map[string]string{
-					modules.TunnelPortRecordAnnotationKey: string(recordBytes),
-				},
+	return nil, err
+
+}
+
+func createTunnelPortConfig(kubeClient kubernetes.Interface, localIP string) (*int, error) {
+	port := negotiatePort(nil)
+	record := iptables.TunnelPortRecord{
+		IPTunnelPort: map[string]int{
+			localIP: port,
+		},
+		Port: map[int]bool{
+			port: true,
+		},
+	}
+	recordBytes, err := json.Marshal(record)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = kubeClient.CoreV1().ConfigMaps(constants.SystemNamespace).Create(context.TODO(), &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      modules.TunnelPort,
+			Namespace: constants.SystemNamespace,
+			Annotations: map[string]string{
+				modules.TunnelPortRecordAnnotationKey: string(recordBytes),
 			},
-		}, metav1.CreateOptions{})
+		},
+	}, metav1.CreateOptions{})
 
-		if err != nil {
-			return nil, err
-		}
+	if err != nil {
+		return nil, err
+	}
 
+	return &port, nil
+}
+
+func updateTunnelPortConfig(tunnelPort *v1.ConfigMap, localIP string, kubeClient kubernetes.Interface) (*int, error) {
+	var record iptables.TunnelPortRecord
+	recordStr, found := tunnelPort.Annotations[modules.TunnelPortRecordAnnotationKey]
+	recordBytes := []byte(recordStr)
+	if !found {
+		return nil, errors.New("failed to get tunnel port record")
+	}
+	if err := json.Unmarshal(recordBytes, &record); err != nil {
+		return nil, err
+	}
+
+	port, found := record.IPTunnelPort[localIP]
+	if found {
 		return &port, nil
 	}
 
-	return nil, errors.New("failed to negotiate the tunnel port")
+	port = negotiatePort(record.Port)
+
+	record.IPTunnelPort[localIP] = port
+	record.Port[port] = true
+
+	recordBytes, err := json.Marshal(record)
+	if err != nil {
+		return nil, err
+	}
+
+	tunnelPort.Annotations[modules.TunnelPortRecordAnnotationKey] = string(recordBytes)
+
+	_, err = kubeClient.CoreV1().ConfigMaps(constants.SystemNamespace).Update(context.TODO(), tunnelPort, metav1.UpdateOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return &port, nil
 }
 
 func negotiatePort(portRecord map[int]bool) int {
