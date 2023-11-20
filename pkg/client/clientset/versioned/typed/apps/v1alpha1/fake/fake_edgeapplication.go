@@ -24,7 +24,6 @@ import (
 	v1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -36,9 +35,9 @@ type FakeEdgeApplications struct {
 	ns   string
 }
 
-var edgeapplicationsResource = schema.GroupVersionResource{Group: "apps.kubeedge.io", Version: "v1alpha1", Resource: "edgeapplications"}
+var edgeapplicationsResource = v1alpha1.SchemeGroupVersion.WithResource("edgeapplications")
 
-var edgeapplicationsKind = schema.GroupVersionKind{Group: "apps.kubeedge.io", Version: "v1alpha1", Kind: "EdgeApplication"}
+var edgeapplicationsKind = v1alpha1.SchemeGroupVersion.WithKind("EdgeApplication")
 
 // Get takes name of the edgeApplication, and returns the corresponding edgeApplication object, and an error if there is any.
 func (c *FakeEdgeApplications) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.EdgeApplication, err error) {
