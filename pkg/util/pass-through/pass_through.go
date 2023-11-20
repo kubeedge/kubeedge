@@ -1,5 +1,9 @@
 package passthrough
 
+import (
+	"regexp"
+)
+
 type passRequest string
 
 const (
@@ -12,5 +16,14 @@ var passThroughMap = map[passRequest]bool{
 
 // IsPassThroughPath determining whether the uri can be passed through
 func IsPassThroughPath(path, verb string) bool {
-	return passThroughMap[passRequest(path+"::"+verb)]
+	for request, b := range passThroughMap {
+		reg := regexp.MustCompile(string(request))
+		if reg == nil {
+			continue
+		}
+		if reg.Match([]byte(path + "::" + verb)) {
+			return b
+		}
+	}
+	return false
 }
