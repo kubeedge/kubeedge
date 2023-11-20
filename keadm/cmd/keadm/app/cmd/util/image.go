@@ -263,6 +263,13 @@ func (runtime *CRIRuntime) CopyResources(edgeImage string, files map[string]stri
 			Name:      KubeEdgeBinaryName,
 			Namespace: constants.SystemNamespace,
 		},
+		Linux: &runtimeapi.LinuxPodSandboxConfig{
+			SecurityContext: &runtimeapi.LinuxSandboxSecurityContext{
+				NamespaceOptions: &runtimeapi.NamespaceOption{
+					Network: runtimeapi.NamespaceMode_POD,
+				},
+			},
+		},
 	}
 	if runtime.cgroupDriver == v1alpha2.CGroupDriverSystemd {
 		cgroupName := cm.NewCgroupName(cm.CgroupName{"kubeedge", "setup", "podcopyresource"})
