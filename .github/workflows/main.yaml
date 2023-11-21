@@ -158,6 +158,43 @@ jobs:
           containerd config default | sudo tee /etc/containerd/config.toml && sudo systemctl restart containerd.service
 
       - run: make integrationtest
+  
+      - name: Install cri-o
+        run: |
+          sudo apt update
+          sudo apt install -y cri-o cri-o-runc
+          sudo systemctl start crio
+          sudo systemctl enable crio
+
+      - name: Install docker        
+        run: |
+          sudo apt-get update
+          sudo apt-get install \
+              apt-transport-https \
+              ca-certificates \
+              curl \
+              gnupg \
+              lsb-release
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+          echo \
+            "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+            $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+          sudo apt-get update
+          sudo apt-get install docker-ce docker-ce-cli containerd.io
+
+      - name: Enable cri config in cri-o service
+        run: |
+          echo '[crio.runtime]' | sudo tee -a /etc/crio/crio.conf
+          echo 'runtime_endpoint = "/var/run/crio/crio.sock"' | sudo tee -a /etc/crio/crio.conf
+          sudo systemctl restart crio
+  
+      - name: Enable cri config in docker service
+        run: |
+          echo '[Service]' | sudo tee -a /etc/systemd/system/docker.service.d/override.conf
+          echo 'ExecStart=' | sudo tee -a /etc/systemd/system/docker.service.d/override.conf
+          echo 'ExecStart=/usr/bin/dockerd --containerd=/run/containerd/containerd.sock' | sudo tee -a /etc/systemd/system/docker.service.d/override.conf
+          sudo systemctl daemon-reload
+          sudo systemctl restart docker
 
   e2e_test:
     runs-on: ubuntu-22.04
