@@ -48,6 +48,14 @@ type NodeUpgradeJobResponse struct {
 	Reason      string
 }
 
+type TaskStatus struct {
+	Type   string
+	Status string
+	Event  string
+	Action string
+	Reason string
+}
+
 // ObjectResp is the object that api-server response
 type ObjectResp struct {
 	Object metaV1.Object
