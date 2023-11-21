@@ -35,6 +35,7 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
 	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
 
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/pkg/image"
 )
@@ -258,7 +259,17 @@ func (runtime *CRIRuntime) PullImages(images []string) error {
 // The same way as func (runtime *DockerRuntime) CopyResources
 func (runtime *CRIRuntime) CopyResources(edgeImage string, files map[string]string) error {
 	psc := &runtimeapi.PodSandboxConfig{
-		Metadata: &runtimeapi.PodSandboxMetadata{Name: KubeEdgeBinaryName},
+		Metadata: &runtimeapi.PodSandboxMetadata{
+			Name:      KubeEdgeBinaryName,
+			Namespace: constants.SystemNamespace,
+		},
+		Linux: &runtimeapi.LinuxPodSandboxConfig{
+			SecurityContext: &runtimeapi.LinuxSandboxSecurityContext{
+				NamespaceOptions: &runtimeapi.NamespaceOption{
+					Network: runtimeapi.NamespaceMode_POD,
+				},
+			},
+		},
 	}
 	if runtime.cgroupDriver == v1alpha2.CGroupDriverSystemd {
 		cgroupName := cm.NewCgroupName(cm.CgroupName{"kubeedge", "setup", "podcopyresource"})
