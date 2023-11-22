@@ -47,7 +47,7 @@ cloudCore:
         enable: true
       quic:
         port: 10001
-        enable: false
+        enable: true
         maxIncomingStreams: "10000"
       https:
         enable: true
