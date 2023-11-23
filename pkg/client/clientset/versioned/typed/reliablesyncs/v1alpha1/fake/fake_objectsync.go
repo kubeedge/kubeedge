@@ -24,7 +24,6 @@ import (
 	v1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -36,9 +35,9 @@ type FakeObjectSyncs struct {
 	ns   string
 }
 
-var objectsyncsResource = schema.GroupVersionResource{Group: "reliablesyncs.kubeedge.io", Version: "v1alpha1", Resource: "objectsyncs"}
+var objectsyncsResource = v1alpha1.SchemeGroupVersion.WithResource("objectsyncs")
 
-var objectsyncsKind = schema.GroupVersionKind{Group: "reliablesyncs.kubeedge.io", Version: "v1alpha1", Kind: "ObjectSync"}
+var objectsyncsKind = v1alpha1.SchemeGroupVersion.WithKind("ObjectSync")
 
 // Get takes name of the objectSync, and returns the corresponding objectSync object, and an error if there is any.
 func (c *FakeObjectSyncs) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.ObjectSync, err error) {

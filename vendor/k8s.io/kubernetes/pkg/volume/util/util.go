@@ -576,6 +576,44 @@ func IsLocalEphemeralVolume(volume v1.Volume) bool {
 		volume.ConfigMap != nil
 }
 
+// GetLocalPersistentVolumeNodeNames returns the node affinity node name(s) for
+// local PersistentVolumes. nil is returned if the PV does not have any
+// specific node affinity node selector terms and match expressions.
+// PersistentVolume with node affinity has select and match expressions
+// in the form of:
+//
+//	nodeAffinity:
+//	  required:
+//	    nodeSelectorTerms:
+//	    - matchExpressions:
+//	      - key: kubernetes.io/hostname
+//	        operator: In
+//	        values:
+//	        - <node1>
+//	        - <node2>
+func GetLocalPersistentVolumeNodeNames(pv *v1.PersistentVolume) []string {
+	if pv == nil || pv.Spec.NodeAffinity == nil || pv.Spec.NodeAffinity.Required == nil {
+		return nil
+	}
+
+	var result sets.Set[string]
+	for _, term := range pv.Spec.NodeAffinity.Required.NodeSelectorTerms {
+		var nodes sets.Set[string]
+		for _, matchExpr := range term.MatchExpressions {
+			if matchExpr.Key == v1.LabelHostname && matchExpr.Operator == v1.NodeSelectorOpIn {
+				if nodes == nil {
+					nodes = sets.New(matchExpr.Values...)
+				} else {
+					nodes = nodes.Intersection(sets.New(matchExpr.Values...))
+				}
+			}
+		}
+		result = result.Union(nodes)
+	}
+
+	return sets.List(result)
+}
+
 // GetPodVolumeNames returns names of volumes that are used in a pod,
 // either as filesystem mount or raw block device, together with list
 // of all SELinux contexts of all containers that use the volumes.
@@ -672,11 +710,15 @@ func HasMountRefs(mountPath string, mountRefs []string) bool {
 func WriteVolumeCache(deviceMountPath string, exec utilexec.Interface) error {
 	// If runtime os is windows, execute Write-VolumeCache powershell command on the disk
 	if runtime.GOOS == "windows" {
-		cmd := fmt.Sprintf("Get-Volume -FilePath %s | Write-Volumecache", deviceMountPath)
-		output, err := exec.Command("powershell", "/c", cmd).CombinedOutput()
-		klog.Infof("command (%q) execeuted: %v, output: %q", cmd, err, string(output))
+		cmdString := "Get-Volume -FilePath $env:mountpath | Write-Volumecache"
+		cmd := exec.Command("powershell", "/c", cmdString)
+		env := append(os.Environ(), fmt.Sprintf("mountpath=%s", deviceMountPath))
+		cmd.SetEnv(env)
+		klog.V(8).Infof("Executing command: %q", cmdString)
+		output, err := cmd.CombinedOutput()
+		klog.Infof("command (%q) execeuted: %v, output: %q", cmdString, err, string(output))
 		if err != nil {
-			return fmt.Errorf("command (%q) failed: %v, output: %q", cmd, err, string(output))
+			return fmt.Errorf("command (%q) failed: %v, output: %q", cmdString, err, string(output))
 		}
 	}
 	// For linux runtime, it skips because unmount will automatically flush disk data

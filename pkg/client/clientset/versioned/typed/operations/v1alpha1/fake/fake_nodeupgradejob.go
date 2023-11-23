@@ -24,7 +24,6 @@ import (
 	v1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -35,9 +34,9 @@ type FakeNodeUpgradeJobs struct {
 	Fake *FakeOperationsV1alpha1
 }
 
-var nodeupgradejobsResource = schema.GroupVersionResource{Group: "operations", Version: "v1alpha1", Resource: "nodeupgradejobs"}
+var nodeupgradejobsResource = v1alpha1.SchemeGroupVersion.WithResource("nodeupgradejobs")
 
-var nodeupgradejobsKind = schema.GroupVersionKind{Group: "operations", Version: "v1alpha1", Kind: "NodeUpgradeJob"}
+var nodeupgradejobsKind = v1alpha1.SchemeGroupVersion.WithKind("NodeUpgradeJob")
 
 // Get takes name of the nodeUpgradeJob, and returns the corresponding nodeUpgradeJob object, and an error if there is any.
 func (c *FakeNodeUpgradeJobs) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.NodeUpgradeJob, err error) {

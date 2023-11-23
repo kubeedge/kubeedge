@@ -7,7 +7,7 @@ on:
 
 env:
   CONTAINER_RUN_OPTIONS: " "
-  GINKGO_VERSION: "v2.6.0"
+  GINKGO_VERSION: "v2.9.5"
 
 jobs:
   lint:

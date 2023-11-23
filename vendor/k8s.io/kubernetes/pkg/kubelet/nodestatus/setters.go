@@ -57,10 +57,10 @@ var KubeletVersion string
 type Setter func(ctx context.Context, node *v1.Node) error
 
 // NodeAddress returns a Setter that updates address-related information on the node.
-func NodeAddress(nodeIPs []net.IP,                      // typically Kubelet.nodeIPs
-	validateNodeIPFunc func(net.IP) error,              // typically Kubelet.nodeIPValidator
-	hostname string,                                    // typically Kubelet.hostname
-	hostnameOverridden bool,                            // was the hostname force set?
+func NodeAddress(nodeIPs []net.IP, // typically Kubelet.nodeIPs
+	validateNodeIPFunc func(net.IP) error, // typically Kubelet.nodeIPValidator
+	hostname string, // typically Kubelet.hostname
+	hostnameOverridden bool, // was the hostname force set?
 	nodeAddressesFunc func() ([]v1.NodeAddress, error), // typically Kubelet.cloudResourceSyncManager.NodeAddresses
 ) Setter {
 	var nodeIP, secondaryNodeIP net.IP
@@ -158,11 +158,11 @@ func hasAddressValue(addresses []v1.NodeAddress, addressValue string) bool {
 func MachineInfo(nodeName string,
 	maxPods int,
 	podsPerCore int,
-	machineInfoFunc func() (*cadvisorapiv1.MachineInfo, error),                           // typically Kubelet.GetCachedMachineInfo
-	capacityFunc func(localStorageCapacityIsolation bool) v1.ResourceList,                // typically Kubelet.containerManager.GetCapacity
+	machineInfoFunc func() (*cadvisorapiv1.MachineInfo, error), // typically Kubelet.GetCachedMachineInfo
+	capacityFunc func(localStorageCapacityIsolation bool) v1.ResourceList, // typically Kubelet.containerManager.GetCapacity
 	devicePluginResourceCapacityFunc func() (v1.ResourceList, v1.ResourceList, []string), // typically Kubelet.containerManager.GetDevicePluginResourceCapacity
-	nodeAllocatableReservationFunc func() v1.ResourceList,                                // typically Kubelet.containerManager.GetNodeAllocatableReservation
-	recordEventFunc func(eventType, event, message string),                               // typically Kubelet.recordEvent
+	nodeAllocatableReservationFunc func() v1.ResourceList, // typically Kubelet.containerManager.GetNodeAllocatableReservation
+	recordEventFunc func(eventType, event, message string), // typically Kubelet.recordEvent
 	localStorageCapacityIsolation bool,
 ) Setter {
 	return func(ctx context.Context, node *v1.Node) error {
@@ -292,8 +292,8 @@ func MachineInfo(nodeName string,
 }
 
 // VersionInfo returns a Setter that updates version-related information on the node.
-func VersionInfo(versionInfoFunc func() (*cadvisorapiv1.VersionInfo, error),     // typically Kubelet.cadvisor.VersionInfo
-	runtimeTypeFunc func() string,                                               // typically Kubelet.containerRuntime.Type
+func VersionInfo(versionInfoFunc func() (*cadvisorapiv1.VersionInfo, error), // typically Kubelet.cadvisor.VersionInfo
+	runtimeTypeFunc func() string, // typically Kubelet.containerRuntime.Type
 	runtimeVersionFunc func(ctx context.Context) (kubecontainer.Version, error), // typically Kubelet.containerRuntime.Version
 ) Setter {
 	return func(ctx context.Context, node *v1.Node) error {
@@ -376,13 +376,13 @@ func GoRuntime() Setter {
 
 // ReadyCondition returns a Setter that updates the v1.NodeReady condition on the node.
 func ReadyCondition(
-	nowFunc func() time.Time,                      // typically Kubelet.clock.Now
-	runtimeErrorsFunc func() error,                // typically Kubelet.runtimeState.runtimeErrors
-	networkErrorsFunc func() error,                // typically Kubelet.runtimeState.networkErrors
-	storageErrorsFunc func() error,                // typically Kubelet.runtimeState.storageErrors
-	appArmorValidateHostFunc func() error,         // typically Kubelet.appArmorValidator.ValidateHost, might be nil depending on whether there was an appArmorValidator
-	cmStatusFunc func() cm.Status,                 // typically Kubelet.containerManager.Status
-	nodeShutdownManagerErrorsFunc func() error,    // typically kubelet.shutdownManager.errors.
+	nowFunc func() time.Time, // typically Kubelet.clock.Now
+	runtimeErrorsFunc func() error, // typically Kubelet.runtimeState.runtimeErrors
+	networkErrorsFunc func() error, // typically Kubelet.runtimeState.networkErrors
+	storageErrorsFunc func() error, // typically Kubelet.runtimeState.storageErrors
+	appArmorValidateHostFunc func() error, // typically Kubelet.appArmorValidator.ValidateHost, might be nil depending on whether there was an appArmorValidator
+	cmStatusFunc func() cm.Status, // typically Kubelet.containerManager.Status
+	nodeShutdownManagerErrorsFunc func() error, // typically kubelet.shutdownManager.errors.
 	recordEventFunc func(eventType, event string), // typically Kubelet.recordNodeStatusEvent
 	localStorageCapacityIsolation bool,
 ) Setter {
@@ -468,8 +468,8 @@ func ReadyCondition(
 
 // MemoryPressureCondition returns a Setter that updates the v1.NodeMemoryPressure condition on the node.
 func MemoryPressureCondition(nowFunc func() time.Time, // typically Kubelet.clock.Now
-	pressureFunc func() bool,                          // typically Kubelet.evictionManager.IsUnderMemoryPressure
-	recordEventFunc func(eventType, event string),     // typically Kubelet.recordNodeStatusEvent
+	pressureFunc func() bool, // typically Kubelet.evictionManager.IsUnderMemoryPressure
+	recordEventFunc func(eventType, event string), // typically Kubelet.recordNodeStatusEvent
 ) Setter {
 	return func(ctx context.Context, node *v1.Node) error {
 		currentTime := metav1.NewTime(nowFunc())
@@ -529,8 +529,8 @@ func MemoryPressureCondition(nowFunc func() time.Time, // typically Kubelet.cloc
 
 // PIDPressureCondition returns a Setter that updates the v1.NodePIDPressure condition on the node.
 func PIDPressureCondition(nowFunc func() time.Time, // typically Kubelet.clock.Now
-	pressureFunc func() bool,                       // typically Kubelet.evictionManager.IsUnderPIDPressure
-	recordEventFunc func(eventType, event string),  // typically Kubelet.recordNodeStatusEvent
+	pressureFunc func() bool, // typically Kubelet.evictionManager.IsUnderPIDPressure
+	recordEventFunc func(eventType, event string), // typically Kubelet.recordNodeStatusEvent
 ) Setter {
 	return func(ctx context.Context, node *v1.Node) error {
 		currentTime := metav1.NewTime(nowFunc())
@@ -590,8 +590,8 @@ func PIDPressureCondition(nowFunc func() time.Time, // typically Kubelet.clock.N
 
 // DiskPressureCondition returns a Setter that updates the v1.NodeDiskPressure condition on the node.
 func DiskPressureCondition(nowFunc func() time.Time, // typically Kubelet.clock.Now
-	pressureFunc func() bool,                        // typically Kubelet.evictionManager.IsUnderDiskPressure
-	recordEventFunc func(eventType, event string),   // typically Kubelet.recordNodeStatusEvent
+	pressureFunc func() bool, // typically Kubelet.evictionManager.IsUnderDiskPressure
+	recordEventFunc func(eventType, event string), // typically Kubelet.recordNodeStatusEvent
 ) Setter {
 	return func(ctx context.Context, node *v1.Node) error {
 		currentTime := metav1.NewTime(nowFunc())
@@ -650,7 +650,7 @@ func DiskPressureCondition(nowFunc func() time.Time, // typically Kubelet.clock.
 }
 
 // VolumesInUse returns a Setter that updates the volumes in use on the node.
-func VolumesInUse(syncedFunc func() bool,          // typically Kubelet.volumeManager.ReconcilerStatesHasBeenSynced
+func VolumesInUse(syncedFunc func() bool, // typically Kubelet.volumeManager.ReconcilerStatesHasBeenSynced
 	volumesInUseFunc func() []v1.UniqueVolumeName, // typically Kubelet.volumeManager.GetVolumesInUse
 ) Setter {
 	return func(ctx context.Context, node *v1.Node) error {

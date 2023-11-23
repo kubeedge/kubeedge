@@ -999,7 +999,7 @@ func TestFilterResource(t *testing.T) {
 			if !reflect.DeepEqual(got, tc.rbacResult) {
 				t.Errorf("case %q want=%v, got=%v", tc.name, tc.rbacResult, got)
 			}
-			got2 := ctr.mapRolesFunc(tc.rbacObj)
+			got2 := ctr.mapRolesFunc(context.Background(), tc.rbacObj)
 			if !equality.Semantic.DeepEqual(got2, tc.reconcileResult) {
 				t.Errorf("case %q want=%v, got=%v", tc.name, tc.reconcileResult, got2)
 			}
@@ -1225,7 +1225,7 @@ func TestMapObjectFunc(t *testing.T) {
 		ctr := &Controller{
 			Client: fakeClient,
 		}
-		got := ctr.mapObjectFunc(tc.obj)
+		got := ctr.mapObjectFunc(context.Background(), tc.obj)
 		if !equality.Semantic.DeepEqual(got, tc.reconcileResult) {
 			t.Errorf("mapObjectFunc() = %v, want %v", got, tc.reconcileResult)
 		}
@@ -1521,7 +1521,7 @@ func TestSyncRules(t *testing.T) {
 		Status: nodeStatus2,
 	}
 	var saaDeletion = policyv1alpha1.ServiceAccountAccess{
-		ObjectMeta: metav1.ObjectMeta{Name: "sa1", Namespace: "my-namespace", DeletionTimestamp: &metav1.Time{Time: time.Now()}},
+		ObjectMeta: metav1.ObjectMeta{Name: "sa1", Namespace: "my-namespace", DeletionTimestamp: &metav1.Time{Time: time.Now()}, Finalizers: []string{"test"}},
 		Spec: policyv1alpha1.AccessSpec{
 			ServiceAccount:           sa1,
 			AccessRoleBinding:        []policyv1alpha1.AccessRoleBinding{{RoleBinding: rb1, Rules: role1.Rules}},
@@ -1737,18 +1737,10 @@ func TestSyncRules(t *testing.T) {
 				t.Errorf("Failed to add rbacv1 scheme: %v", err)
 			}
 			pdStrategyTypeIndexer := func(obj client.Object) []string {
-				pd, ok := obj.(*v1.Pod)
-				if !ok {
-					panic(fmt.Errorf("indexer function for type %T's spec.strategy.type field received"+
-						" object of type %T, this should never happen", v1.Pod{}, obj))
-				}
-				serviceAccountName := ""
-				if pd != nil {
-					serviceAccountName = pd.Spec.ServiceAccountName
-				}
+				serviceAccountName := "sa1"
 				return []string{serviceAccountName}
 			}
-			fakeClient := fake.NewClientBuilder().WithScheme(accessScheme).WithObjects(tt.obj...).WithLists(nodeList).WithIndex(&v1.Pod{}, "spec.serviceAccountName", pdStrategyTypeIndexer).Build()
+			fakeClient := fake.NewClientBuilder().WithScheme(accessScheme).WithObjects(tt.obj...).WithLists(nodeList).WithIndex(&v1.Pod{}, "spec.serviceAccountName", pdStrategyTypeIndexer).WithStatusSubresource(tt.input).Build()
 			ctr := &Controller{
 				Client:       fakeClient,
 				MessageLayer: messagelayer.PolicyControllerMessageLayer(),

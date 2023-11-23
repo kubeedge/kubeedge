@@ -24,7 +24,6 @@ import (
 	v1beta1 "github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -36,9 +35,9 @@ type FakeDevices struct {
 	ns   string
 }
 
-var devicesResource = schema.GroupVersionResource{Group: "devices", Version: "v1beta1", Resource: "devices"}
+var devicesResource = v1beta1.SchemeGroupVersion.WithResource("devices")
 
-var devicesKind = schema.GroupVersionKind{Group: "devices", Version: "v1beta1", Kind: "Device"}
+var devicesKind = v1beta1.SchemeGroupVersion.WithKind("Device")
 
 // Get takes name of the device, and returns the corresponding device object, and an error if there is any.
 func (c *FakeDevices) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.Device, err error) {
