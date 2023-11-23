@@ -38,11 +38,11 @@ function check_prerequisites {
     # if we will use docker as edgecore container runtime, we need to verify whether docker already installed
     verify_docker_installed
   elif [[ "${CONTAINER_RUNTIME}" = "cri-o" ]]; then
-   # Add the command to verify if cri-o is installed
-   verify_crio_installed  
+   # function to verify if cri-o is installed
+    verify_crio_installed  
   elif [[ "${CONTAINER_RUNTIME}" = "containerd" ]]; then
-  # Add the command to verify if containerd is installed
-  verify_containerd_installed
+    # function to verify if containerd is installed
+    verify_containerd_installed
   elif [[ "${CONTAINER_RUNTIME}" = "remote" ]]; then
     # we will use containerd as cri runtime, so need to verify whether containerd already installed
     verify_containerd_installed
@@ -53,20 +53,18 @@ function check_prerequisites {
 }
 
 function verify_crio_installed {
-   # Add the command to check if cri-o is installed
-   if ! command -v crio &> /dev/null
-   then
-       echo "cri-o is not found"
-       exit 1
-   fi
+  # Commands to check if cri-o is installed
+  if ! command -v crio &> /dev/null; then
+    echo "cri-o is not found"
+    exit 1
+  fi
 }
 
 function verify_containerd_installed {
-  # Add the command to check if containerd is installed
-  if ! command -v containerd &> /dev/null
-  then
-      echo "containerd is not found"
-      exit 1
+  # Commands to check if containerd is installed
+  if ! command -v containerd &> /dev/null; then
+    echo "containerd is not found"
+    exit 1
   fi
 }
 
