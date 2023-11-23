@@ -37,12 +37,36 @@ function check_prerequisites {
   if [[ "${CONTAINER_RUNTIME}" = "docker" ]]; then
     # if we will use docker as edgecore container runtime, we need to verify whether docker already installed
     verify_docker_installed
+  elif [[ "${CONTAINER_RUNTIME}" = "cri-o" ]]; then
+   # Add the command to verify if cri-o is installed
+   verify_crio_installed  
+  elif [[ "${CONTAINER_RUNTIME}" = "containerd" ]]; then
+  # Add the command to verify if containerd is installed
+  verify_containerd_installed
   elif [[ "${CONTAINER_RUNTIME}" = "remote" ]]; then
     # we will use containerd as cri runtime, so need to verify whether containerd already installed
     verify_containerd_installed
   else
     echo "not supported container runtime ${CONTAINER_RUNTIME}"
     exit 1
+  fi
+}
+
+function verify_crio_installed {
+   # Add the command to check if cri-o is installed
+   if ! command -v crio &> /dev/null
+   then
+       echo "cri-o is not found"
+       exit 1
+   fi
+}
+
+function verify_containerd_installed {
+  # Add the command to check if containerd is installed
+  if ! command -v containerd &> /dev/null
+  then
+      echo "containerd is not found"
+      exit 1
   fi
 }
 
@@ -170,6 +194,18 @@ function start_edgecore {
     sed -i 's|containerRuntime: .*|containerRuntime: docker|' ${EDGE_CONFIGFILE}
     sed -i 's|remoteImageEndpoint: .*|remoteImageEndpoint: unix:///var/run/dockershim.sock|' ${EDGE_CONFIGFILE}
     sed -i 's|remoteRuntimeEndpoint: .*|remoteRuntimeEndpoint: unix:///var/run/dockershim.sock|' ${EDGE_CONFIGFILE}
+  fi
+
+  if [[ "${CONTAINER_RUNTIME}" = "cri-o" ]]; then
+    sed -i 's|containerRuntime: .*|containerRuntime: cri-o|' ${EDGE_CONFIGFILE}
+    sed -i 's|remoteImageEndpoint: .*|remoteImageEndpoint: unix:///var/run/crio/crio.sock|' ${EDGE_CONFIGFILE}
+    sed -i 's|remoteRuntimeEndpoint: .*|remoteRuntimeEndpoint: unix:///var/run/crio/crio.sock|' ${EDGE_CONFIGFILE}
+  fi
+
+  if [[ "${CONTAINER_RUNTIME}" = "containerd" ]]; then
+    sed -i 's|containerRuntime: .*|containerRuntime: containerd|' ${EDGE_CONFIGFILE}
+    sed -i 's|remoteImageEndpoint: .*|remoteImageEndpoint: unix:///run/containerd/containerd.sock|' ${EDGE_CONFIGFILE}
+    sed -i 's|remoteRuntimeEndpoint: .*|remoteRuntimeEndpoint: unix:///run/containerd/containerd.sock|' ${EDGE_CONFIGFILE}
   fi
 
   token=`kubectl get secret -nkubeedge tokensecret -o=jsonpath='{.data.tokendata}' | base64 -d`
