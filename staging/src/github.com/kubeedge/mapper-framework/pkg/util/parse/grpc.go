@@ -134,63 +134,65 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 		// get dbMethod filed by grpc device instance
 		var dbMethodName string
 		var dbconfig common.DBConfig
-		if pptv.PushMethod.DBMethod != nil {
-			dbMethodName, err = getDBMethodFromGrpc(pptv)
-			if err != nil {
-				klog.Errorf("err: %+v", err)
-				return nil
-			}
-			switch dbMethodName {
-			case "influx":
-				clientconfig, err := json.Marshal(pptv.PushMethod.DBMethod.Influxdb2.Influxdb2ClientConfig)
-				if err != nil {
-					klog.Errorf("err: %+v", err)
-					return nil
-				}
-				dataconfig, err := json.Marshal(pptv.PushMethod.DBMethod.Influxdb2.Influxdb2DataConfig)
-				if err != nil {
-					klog.Errorf("err: %+v", err)
-					return nil
-				}
-				dbconfig = common.DBConfig{
-					Influxdb2ClientConfig: clientconfig,
-					Influxdb2DataConfig:   dataconfig,
-				}
-			}
-		}
-
-		// get pushMethod filed by grpc device instance
-		pushMethodName, err := getPushMethodFromGrpc(pptv)
-		if err != nil {
-			klog.Errorf("err: %+v", err)
-			return nil
-		}
 		var pushMethod []byte
-		switch pushMethodName {
-		case "http":
-			pushMethod, err = json.Marshal(pptv.PushMethod.Http)
+		var pushMethodName string
+		if pptv.PushMethod != nil {
+			if pptv.PushMethod.DBMethod != nil {
+				dbMethodName, err = getDBMethodFromGrpc(pptv)
+				if err != nil {
+					klog.Errorf("err: %+v", err)
+					return nil
+				}
+				switch dbMethodName {
+				case "influx":
+					clientconfig, err := json.Marshal(pptv.PushMethod.DBMethod.Influxdb2.Influxdb2ClientConfig)
+					if err != nil {
+						klog.Errorf("err: %+v", err)
+						return nil
+					}
+					dataconfig, err := json.Marshal(pptv.PushMethod.DBMethod.Influxdb2.Influxdb2DataConfig)
+					if err != nil {
+						klog.Errorf("err: %+v", err)
+						return nil
+					}
+					dbconfig = common.DBConfig{
+						Influxdb2ClientConfig: clientconfig,
+						Influxdb2DataConfig:   dataconfig,
+					}
+				}
+			}
+			// get pushMethod filed by grpc device instance
+			pushMethodName, err = getPushMethodFromGrpc(pptv)
 			if err != nil {
 				klog.Errorf("err: %+v", err)
 				return nil
 			}
-		case "mqtt":
-			pushMethod, err = json.Marshal(pptv.PushMethod.Mqtt)
-			if err != nil {
-				klog.Errorf("err: %+v", err)
-				return nil
+			switch pushMethodName {
+			case "http":
+				pushMethod, err = json.Marshal(pptv.PushMethod.Http)
+				if err != nil {
+					klog.Errorf("err: %+v", err)
+					return nil
+				}
+			case "mqtt":
+				pushMethod, err = json.Marshal(pptv.PushMethod.Mqtt)
+				if err != nil {
+					klog.Errorf("err: %+v", err)
+					return nil
+				}
 			}
 		}
 
 		// get the final Properties
 		cur := common.DeviceProperty{
-			Name:         pptv.GetName(),
-			PropertyName: pptv.GetName(),
-			ModelName:    device.Spec.DeviceModelReference,
-			CollectCycle: pptv.GetCollectCycle(),
-			ReportCycle:  pptv.GetReportCycle(),
+			Name:          pptv.GetName(),
+			PropertyName:  pptv.GetName(),
+			ModelName:     device.Spec.DeviceModelReference,
+			CollectCycle:  pptv.GetCollectCycle(),
+			ReportCycle:   pptv.GetReportCycle(),
 			ReportToCloud: pptv.GetReportToCloud(),
-			Protocol:     protocolName,
-			Visitors:     visitorConfig,
+			Protocol:      protocolName,
+			Visitors:      visitorConfig,
 			PushMethod: common.PushMethodConfig{
 				MethodName:   pushMethodName,
 				MethodConfig: pushMethod,
