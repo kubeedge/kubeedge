@@ -41,6 +41,7 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2/validation"
 	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
+	"github.com/kubeedge/viaduct/pkg/api"
 )
 
 func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
@@ -72,6 +73,9 @@ func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
 
 	cmd.Flags().StringSliceVarP(&joinOptions.Labels, common.Labels, "l", joinOptions.Labels,
 		`Use this key to set the customized labels for node, you can input customized labels like key1=value1,key2=value2`)
+
+	cmd.Flags().StringVar(&joinOptions.HubProtocol, common.HubProtocol, joinOptions.HubProtocol,
+		`Use this key to decide which communication protocol the edge node adopts.`)
 }
 
 func createEdgeConfigFiles(opt *common.JoinOptions) error {
@@ -102,7 +106,6 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 		edgeCoreConfig = v1alpha2.NewDefaultEdgeCoreConfig()
 	}
 
-	edgeCoreConfig.Modules.EdgeHub.WebSocket.Server = opt.CloudCoreIPPort
 	// TODO: remove this after release 1.14
 	// this is for keeping backward compatibility
 	// don't save token in configuration edgecore.yaml
@@ -129,6 +132,21 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 		edgeCoreConfig.Modules.EdgeHub.HTTPServer = "https://" + net.JoinHostPort(host, opt.CertPort)
 	} else {
 		edgeCoreConfig.Modules.EdgeHub.HTTPServer = "https://" + net.JoinHostPort(host, "10002")
+	}
+
+	switch opt.HubProtocol {
+	case api.ProtocolTypeQuic:
+		edgeCoreConfig.Modules.EdgeHub.Quic.Enable = true
+		edgeCoreConfig.Modules.EdgeHub.WebSocket.Enable = false
+		edgeCoreConfig.Modules.EdgeHub.Quic.Server = opt.CloudCoreIPPort
+		edgeCoreConfig.Modules.EdgeHub.WebSocket.Server = net.JoinHostPort(host, strconv.Itoa(constants.DefaultWebSocketPort))
+	case api.ProtocolTypeWS:
+		edgeCoreConfig.Modules.EdgeHub.Quic.Enable = false
+		edgeCoreConfig.Modules.EdgeHub.WebSocket.Enable = true
+		edgeCoreConfig.Modules.EdgeHub.Quic.Server = net.JoinHostPort(host, strconv.Itoa(constants.DefaultQuicPort))
+		edgeCoreConfig.Modules.EdgeHub.WebSocket.Server = opt.CloudCoreIPPort
+	default:
+		return fmt.Errorf("unsupported hub of protocol: %s", opt.HubProtocol)
 	}
 	edgeCoreConfig.Modules.EdgeStream.TunnelServer = net.JoinHostPort(host, strconv.Itoa(constants.DefaultTunnelPort))
 
