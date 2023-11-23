@@ -52,22 +52,6 @@ function check_prerequisites {
   fi
 }
 
-function verify_crio_installed {
-  # Commands to check if cri-o is installed
-  if ! command -v crio &> /dev/null; then
-    echo "cri-o is not found"
-    exit 1
-  fi
-}
-
-function verify_containerd_installed {
-  # Commands to check if containerd is installed
-  if ! command -v containerd &> /dev/null; then
-    echo "containerd is not found"
-    exit 1
-  fi
-}
-
 # spin up cluster with kind command
 function kind_up_cluster {
   echo "Running kind: [kind create cluster ${CLUSTER_CONTEXT}]"

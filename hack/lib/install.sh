@@ -94,6 +94,14 @@ verify_docker_installed() {
   }
 }
 
+verify_crio_installed() {
+  # verify the cri-o installed
+  command -v crio > /dev/null || {
+    echo "must install the cri-o first"
+    exit 1
+  }
+}
+
 # install CNI plugins
 function install_cni_plugins() {
   CNI_DOWNLOAD_ADDR=${CNI_DOWNLOAD_ADDR:-"https://github.com/containernetworking/plugins/releases/download/v1.1.1/cni-plugins-linux-amd64-v1.1.1.tgz"}
