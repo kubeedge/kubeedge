@@ -158,7 +158,7 @@ func TestCommonResourceEventHandler_OnAdd(t *testing.T) {
 			c := &CommonResourceEventHandler{
 				events: tt.fields.events,
 			}
-			c.OnAdd(tt.args.obj)
+			c.OnAdd(tt.args.obj, false)
 			obj := <-c.events
 			if !reflect.DeepEqual(watch.Added, obj.Type) || !reflect.DeepEqual(obj.Object, tt.args.obj) {
 				t.Errorf("TestCommonResourceEventHandler_OnAdd() failed. got: %v/%v, want %v/%v", obj.Type, obj.Object, watch.Added, tt.args.obj)

@@ -701,6 +701,17 @@ type TailoredKubeletConfiguration struct {
 	// Default: "/etc/kubeedge/manifests"
 	// +optional
 	StaticPodPath string `json:"staticPodPath,omitempty"`
+	// ContainerRuntimeEndpoint is the endpoint of container runtime.
+	// Unix Domain Sockets are supported on Linux, while npipe and tcp endpoints are supported on Windows.
+	// Examples:'unix:///path/to/runtime.sock', 'npipe:////./pipe/runtime'
+	ContainerRuntimeEndpoint string `json:"containerRuntimeEndpoint"`
+
+	// ImageServiceEndpoint is the endpoint of container image service.
+	// Unix Domain Socket are supported on Linux, while npipe and tcp endpoints are supported on Windows.
+	// Examples:'unix:///path/to/runtime.sock', 'npipe:////./pipe/runtime'.
+	// If not specified, the value in containerRuntimeEndpoint is used.
+	// +optional
+	ImageServiceEndpoint string `json:"imageServiceEndpoint,omitempty"`
 }
 
 // TailoredKubeletFlag indicates the tailored kubelet flag
@@ -738,9 +749,11 @@ type TailoredKubeletFlag struct {
 	WindowsPriorityClass string `json:"windowsPriorityClass,omitempty"`
 	// remoteRuntimeEndpoint is the endpoint of remote runtime service
 	// default "unix:///run/containerd/containerd.sock"
+	// DEPRECATED and will be remove in KubeEdge v1.17
 	RemoteRuntimeEndpoint string `json:"remoteRuntimeEndpoint,omitempty"`
 	// remoteImageEndpoint is the endpoint of remote image service
 	// default "unix:///run/containerd/containerd.sock"
+	// DEPRECATED and will be remove in KubeEdge v1.17
 	RemoteImageEndpoint string `json:"remoteImageEndpoint,omitempty"`
 	// experimentalMounterPath is the path of mounter binary. Leave empty to use the default mount path
 	ExperimentalMounterPath string `json:"experimentalMounterPath,omitempty"`
@@ -780,6 +793,7 @@ type ContainerRuntimeOptions struct {
 
 	// ContainerRuntime is the container runtime to use.
 	// only valid value "remote"
+	// ContainerRuntime is deprecated and will be removed at v1.17
 	ContainerRuntime string `json:"containerRuntime,omitempty"`
 	// RuntimeCgroups that container runtime is expected to be isolated in.
 	RuntimeCgroups string `json:"runtimeCgroups,omitempty"`

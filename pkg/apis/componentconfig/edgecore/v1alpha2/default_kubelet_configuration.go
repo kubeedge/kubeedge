@@ -100,4 +100,6 @@ func SetDefaultsKubeletConfiguration(obj *TailoredKubeletConfiguration) {
 	obj.CPUCFSQuota = utilpointer.Bool(DefaultCPUCFSQuota)
 	// Add static pod default path
 	obj.StaticPodPath = constants.DefaultManifestsDir
+	obj.ContainerRuntimeEndpoint = constants.DefaultRemoteRuntimeEndpoint
+	obj.ImageServiceEndpoint = constants.DefaultRemoteImageEndpoint
 }

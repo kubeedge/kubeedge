@@ -83,14 +83,14 @@ func TestValidatePrivateClaims(t *testing.T) {
 			name:      "expired",
 			getter:    fakeGetter{serviceAccount, nil, nil},
 			private:   &privateClaims{Kubernetes: kubernetes{Svcacct: ref{Name: "saname", UID: "sauid"}, Namespace: "ns"}},
-			expiry:    jwt.NewNumericDate(now().Add(-1_000 * time.Hour)),
+			expiry:    *jwt.NewNumericDate(now().Add(-1_000 * time.Hour)),
 			expectErr: "service account token has expired",
 		},
 		{
 			name:      "not yet valid",
 			getter:    fakeGetter{serviceAccount, nil, nil},
 			private:   &privateClaims{Kubernetes: kubernetes{Svcacct: ref{Name: "saname", UID: "sauid"}, Namespace: "ns"}},
-			notBefore: jwt.NewNumericDate(now().Add(1_000 * time.Hour)),
+			notBefore: *jwt.NewNumericDate(now().Add(1_000 * time.Hour)),
 			expectErr: "service account token is not valid yet",
 		},
 		{
@@ -173,10 +173,11 @@ func TestValidatePrivateClaims(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			v := &validator{tc.getter}
 			expiry := jwt.NumericDate(nowUnix)
-			if tc.expiry != 0 {
-				expiry = tc.expiry
+			tcExpiry := tc.expiry
+			if tcExpiry != 0 {
+				expiry = tcExpiry
 			}
-			_, err := v.Validate(context.Background(), "", &jwt.Claims{Expiry: expiry, NotBefore: tc.notBefore}, tc.private)
+			_, err := v.Validate(context.Background(), "", &jwt.Claims{Expiry: &expiry, NotBefore: &tc.notBefore}, tc.private)
 			if len(tc.expectErr) > 0 {
 				if errStr := errString(err); tc.expectErr != errStr {
 					t.Fatalf("expected error %q but got %q", tc.expectErr, errStr)
