@@ -96,8 +96,16 @@ verify_docker_installed() {
 
 verify_crio_installed() {
   # verify the cri-o installed
-  command -v crio > /dev/null || {
+  command -v crio >/dev/null || {
     echo "must install the cri-o first"
+    exit 1
+  }
+}
+
+verify_cri_dockerd_installed() {
+  # verify cri-dockerd installed
+  command -v cri-dockerd >/dev/null || {
+    echo "must install the cri-dockerd first"
     exit 1
   }
 }

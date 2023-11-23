@@ -36,7 +36,7 @@ function check_prerequisites {
   check_kind
   if [[ "${CONTAINER_RUNTIME}" = "docker" ]]; then
     # if we will use docker as edgecore container runtime, we need to verify whether docker already installed
-    verify_docker_installed
+    verify_cri_dockerd_installed
   elif [[ "${CONTAINER_RUNTIME}" = "cri-o" ]]; then
    # function to verify if cri-o is installed
     verify_crio_installed  
@@ -174,8 +174,8 @@ function start_edgecore {
   # we need to change edgecore container runtime from default containerd to docker
   if [[ "${CONTAINER_RUNTIME}" = "docker" ]]; then
     sed -i 's|containerRuntime: .*|containerRuntime: docker|' ${EDGE_CONFIGFILE}
-    sed -i 's|remoteImageEndpoint: .*|remoteImageEndpoint: unix:///var/run/dockershim.sock|' ${EDGE_CONFIGFILE}
-    sed -i 's|remoteRuntimeEndpoint: .*|remoteRuntimeEndpoint: unix:///var/run/dockershim.sock|' ${EDGE_CONFIGFILE}
+    sed -i 's|remoteImageEndpoint: .*|remoteImageEndpoint: unix:///var/run/cri-dockerd.sock|' ${EDGE_CONFIGFILE}
+    sed -i 's|remoteRuntimeEndpoint: .*|remoteRuntimeEndpoint: unix:///var/run/cri-dockerd.sock|' ${EDGE_CONFIGFILE}
   fi
 
   if [[ "${CONTAINER_RUNTIME}" = "cri-o" ]]; then
