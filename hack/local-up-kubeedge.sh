@@ -178,13 +178,13 @@ function start_edgecore {
     sed -i 's|remoteRuntimeEndpoint: .*|remoteRuntimeEndpoint: unix:///var/run/cri-dockerd.sock|' ${EDGE_CONFIGFILE}
   fi
 
-  if [[ "${CONTAINER_RUNTIME}" = "cri-o" ]]; then
+  if [[ "${CONTAINER_RUNTIME}" = "remote" ]]; then
     sed -i 's|containerRuntime: .*|containerRuntime: cri-o|' ${EDGE_CONFIGFILE}
     sed -i 's|remoteImageEndpoint: .*|remoteImageEndpoint: unix:///var/run/crio/crio.sock|' ${EDGE_CONFIGFILE}
     sed -i 's|remoteRuntimeEndpoint: .*|remoteRuntimeEndpoint: unix:///var/run/crio/crio.sock|' ${EDGE_CONFIGFILE}
   fi
 
-  if [[ "${CONTAINER_RUNTIME}" = "containerd" ]]; then
+  if [[ "${CONTAINER_RUNTIME}" = "remote" ]]; then
     sed -i 's|containerRuntime: .*|containerRuntime: containerd|' ${EDGE_CONFIGFILE}
     sed -i 's|remoteImageEndpoint: .*|remoteImageEndpoint: unix:///run/containerd/containerd.sock|' ${EDGE_CONFIGFILE}
     sed -i 's|remoteRuntimeEndpoint: .*|remoteRuntimeEndpoint: unix:///run/containerd/containerd.sock|' ${EDGE_CONFIGFILE}
