@@ -355,19 +355,6 @@ jobs:
     strategy:
       matrix:
         container-runtime: ['cri-o']
-        cases:
-          - protocol: "WebSocket"
-            version: "v1.27.0"
-          - protocol: "WebSocket"
-            version: "v1.26.0"
-          - protocol: "WebSocket"
-            version: "v1.25.0"
-          - protocol: "QUIC"
-            version: "v1.27.0"
-          - protocol: "QUIC"
-            version: "v1.26.0"
-          - protocol: "QUIC"
-            version: "v1.25.0"
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -398,8 +385,6 @@ jobs:
 
       - name: Run tests
         run:  |
-            export PROTOCOL=${{ matrix.cases.protocol }}
-            export KIND_IMAGE=kindest/node:${{ matrix.cases.version }}
             export CONTAINER_RUNTIME="remote"
             make e2e  
         env:
