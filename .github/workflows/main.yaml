@@ -385,7 +385,7 @@ jobs:
 
       - name: Run tests
         run:  |
-            export CONTAINER_RUNTIME="remote"
+            export CONTAINER_RUNTIME=${{ matrix.container-runtime }}
             make e2e  
         env:
           CONTAINER_RUNTIME: ${{ matrix.container-runtime }}
