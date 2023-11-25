@@ -363,10 +363,19 @@ jobs:
 
       - name: Install and configure container runtime
         run: |
-            sudo apt update
-            sudo apt install -y cri-o cri-o-runc
-            sudo systemctl start crio
-            sudo systemctl enable crio
+          sudo apt update
+          sudo apt install apt-transport-https ca-certificates curl gnupg2 software-properties-common -y
+          export OS=xUbuntu_22.04
+          export CRIO_VERSION=1.24
+          echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/ /"| sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
+          echo "deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/$CRIO_VERSION/$OS/ /"|sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable:cri-o:$CRIO_VERSION.list
+          sudo apt install curl
+          curl -L https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:$CRIO_VERSION/$OS/Release.key | sudo apt-key add -
+          curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/Release.key | sudo apt-key add -
+          sudo apt update
+          sudo apt install cri-o cri-o-runc -y
+          sudo systemctl start crio
+          sudo systemctl enable crio
 
       - name: Install dependencies
         run: |
