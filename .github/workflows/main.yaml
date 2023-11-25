@@ -176,7 +176,6 @@ jobs:
             version: v1.26.0
           - protocol: QUIC
             version: v1.25.0
-        container-runtime: ['cri-o', 'docker']
     timeout-minutes: 60
     name: E2e test
     needs: image-prepare
@@ -227,7 +226,7 @@ jobs:
       - run: |
           export PROTOCOL=${{ matrix.cases.protocol }}
           export KIND_IMAGE=kindest/node:${{ matrix.cases.version }}
-          export CONTAINER_RUNTIME=${{ matrix.container-runtime }}
+          export CONTAINER_RUNTIME="containerd"
           make e2e
 
       - uses: actions/upload-artifact@v3
@@ -355,7 +354,20 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        container-runtime: ['cri-o', 'docker']
+        container-runtime: ['cri-o']
+        cases:
+          - protocol: "WebSocket"
+            version: "v1.27.0"
+          - protocol: "WebSocket"
+            version: "v1.26.0"
+          - protocol: "WebSocket"
+            version: "v1.25.0"
+          - protocol: "QUIC"
+            version: "v1.27.0"
+          - protocol: "QUIC"
+            version: "v1.26.0"
+          - protocol: "QUIC"
+            version: "v1.25.0"
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -364,28 +376,31 @@ jobs:
 
       - name: Install and configure container runtime
         run: |
-          if [ "${{ matrix.container-runtime }}" == "docker" ]; then
-            sudo apt-get update
-            sudo apt-get install \
-                apt-transport-https \
-                ca-certificates \
-                curl \
-                gnupg \
-                lsb-release
-            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-            echo \
-              "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
-              $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-            sudo apt-get update
-            sudo apt-get install docker-ce docker-ce-cli containerd.io cri-dockerd
-          elif [ "${{ matrix.container-runtime }}" == "cri-o" ]; then
             sudo apt update
             sudo apt install -y cri-o cri-o-runc
             sudo systemctl start crio
             sudo systemctl enable crio
-          fi
+
+      - name: Install dependencies
+        run: |
+            sudo apt-get update
+            sudo apt-get install -y ginkgo docker.io kind kubectl
+          
+      - name: Retrieve saved kubeedge/build-tools image
+        uses: actions/download-artifact@v3
+        with:
+          name: build-tools-docker-artifact
+          path: /home/runner/build-tools
+
+      - name: Load kubeedge/build-tools image
+        run: |
+          docker load < /home/runner/build-tools/build-tools.tar
 
       - name: Run tests
-        run: make e2e  
+        run:  |
+            export PROTOCOL=${{ matrix.cases.protocol }}
+            export KIND_IMAGE=kindest/node:${{ matrix.cases.version }}
+            export CONTAINER_RUNTIME="remote"
+            make e2e  
         env:
           CONTAINER_RUNTIME: ${{ matrix.container-runtime }}
