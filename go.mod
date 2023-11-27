@@ -61,9 +61,9 @@ require (
 	k8s.io/kubelet v0.22.17
 	k8s.io/kubernetes v1.22.17
 	k8s.io/mount-utils v0.22.17 // indirect
-	k8s.io/utils v0.0.0-20210819203725-bdf08cb9a70a
+	k8s.io/utils v0.0.0-20211116205334-6203023598ed
 	sigs.k8s.io/apiserver-network-proxy v0.0.27
-	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.27
+	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.30
 	sigs.k8s.io/controller-runtime v0.10.3
 	sigs.k8s.io/yaml v1.2.0
 )
