@@ -379,17 +379,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt update
-          sudo apt -y install ginkgo
-          sudo apt update
-          sudo apt install docker.io
-          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl.sha256"
-          echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
-          sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-          [ $(uname -m) = x86_64 ] && curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64
-          chmod +x ./kind
-          sudo mv ./kind /usr/local/bin/kind
+          command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
+          go install sigs.k8s.io/kind@v0.19.0
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.27.7/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
           
       - name: Retrieve saved kubeedge/build-tools image
         uses: actions/download-artifact@v3
