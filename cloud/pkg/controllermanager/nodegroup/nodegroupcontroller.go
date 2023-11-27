@@ -356,7 +356,7 @@ func (c *Controller) addOrUpdateNodeLabel(ctx context.Context, node *corev1.Node
 		return nil
 	}
 	if ok && v != nodeGroupName {
-		return fmt.Errorf("node %s has already belonged to NodeGroup %s", node.Name, nodeGroupName)
+		return fmt.Errorf("node %s has already belonged to NodeGroup %s", node.Name, v)
 	}
 
 	// !ok
