@@ -25,8 +25,6 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	phases "k8s.io/kubernetes/cmd/kubeadm/app/cmd/phases/reset"
-	utilruntime "k8s.io/kubernetes/cmd/kubeadm/app/util/runtime"
 	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
 	utilsexec "k8s.io/utils/exec"
 
@@ -54,6 +52,9 @@ func newResetOptions() *common.ResetOptions {
 func NewKubeEdgeReset() *cobra.Command {
 	reset := newResetOptions()
 
+	//currently keadm only supports edge node management
+	isEdgeNode := true
+
 	var cmd = &cobra.Command{
 		Use:     "reset",
 		Short:   "Teardowns KubeEdge edge component in windows server",
@@ -72,21 +73,14 @@ func NewKubeEdgeReset() *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if !reset.Force {
-				fmt.Println("[reset] WARNING: Changes made to this host by 'keadm join' will be reverted.")
-				fmt.Print("[reset] Are you sure you want to proceed? [y/N]: ")
-				s := bufio.NewScanner(os.Stdin)
-				s.Scan()
-				if err := s.Err(); err != nil {
-					return err
-				}
-				if strings.ToLower(s.Text()) != "y" {
-					return fmt.Errorf("aborted reset operation")
-				}
+			// when reset.Force is not true, user must confirm again
+			if err := util.UserConfirm(reset.Force); err != nil {
+				return err
 			}
+
 			// 1. kill edgecore process.
 			// For edgecore, don't delete node from K8S
-			if err := TearDownKubeEdge(reset.Kubeconfig); err != nil {
+			if err := util.TearDownKubeEdge(true, reset.Kubeconfig); err != nil {
 				err = fmt.Errorf("err when stop and remove edgecore using nssm: %s", err.Error())
 				fmt.Print("[reset] No edgecore running now, do you want to clean all the related directories? [y/N]: ")
 				s := bufio.NewScanner(os.Stdin)
@@ -97,16 +91,16 @@ func NewKubeEdgeReset() *cobra.Command {
 				if strings.ToLower(s.Text()) != "y" {
 					return fmt.Errorf("aborted reset operation")
 				}
-				return cleanDirectories()
+				return util.CleanDirectories(isEdgeNode)
 			}
 
-			// 2. Remove containers managed by KubeEdge.
-			if err := RemoveContainers(utilsexec.New()); err != nil {
+			// 2. Remove containers managed by KubeEdge
+			if err := util.RemoveContainers(isEdgeNode, utilsexec.New()); err != nil {
 				fmt.Printf("Failed to remove containers: %v\n", err)
 			}
 
 			// 3. Clean stateful directories
-			if err := cleanDirectories(); err != nil {
+			if err := util.CleanDirectories(isEdgeNode); err != nil {
 				return err
 			}
 
@@ -118,74 +112,6 @@ func NewKubeEdgeReset() *cobra.Command {
 
 	addResetFlags(cmd, reset)
 	return cmd
-}
-
-// TearDownKubeEdge will bring down edge components,
-// depending upon in which type of node it is executed
-func TearDownKubeEdge(_ string) error {
-	// 1.1 stop check if running now, stop it if running
-	if util.IsNSSMServiceRunning(util.KubeEdgeBinaryName) {
-		fmt.Println("Egdecore service is running, stop...")
-		if _err := util.StopNSSMService(util.KubeEdgeBinaryName); _err != nil {
-			return _err
-		}
-		fmt.Println("Egdecore service stop success.")
-	}
-
-	// 1.2 remove nssm service
-	fmt.Println("Start removing egdecore service using nssm")
-	_err := util.UninstallNSSMService(util.KubeEdgeBinaryName)
-	if _err != nil {
-		return _err
-	}
-	fmt.Println("Egdecore service remove complete")
-	return nil
-}
-
-// RemoveContainers removes all Kubernetes-managed containers
-func RemoveContainers(execer utilsexec.Interface) error {
-	fmt.Println("Start removing containers managed by KubeEdge")
-	criSocketPath, err := utilruntime.DetectCRISocket()
-	if err != nil {
-		return err
-	}
-
-	containerRuntime, err := utilruntime.NewContainerRuntime(execer, criSocketPath)
-	if err != nil {
-		return err
-	}
-
-	containers, err := containerRuntime.ListKubeContainers()
-	if err != nil {
-		return err
-	}
-
-	err = containerRuntime.RemoveContainers(containers)
-	if err != nil {
-		return err
-	}
-	fmt.Println("Rremoving containers success")
-	return nil
-}
-
-func cleanDirectories() error {
-	fmt.Println("Start cleaning directories...")
-	var dirToClean = []string{
-		util.KubeEdgePath,
-		util.KubeEdgeLogPath,
-		util.KubeEdgeSocketPath,
-		util.EdgeRootDir,
-		util.KubeEdgeUsrBinPath,
-	}
-
-	for _, dir := range dirToClean {
-		if err := phases.CleanDir(dir); err != nil {
-			fmt.Printf("Failed to delete directory %s: %v\n", dir, err)
-		}
-	}
-
-	fmt.Println("Cleaning directories complete")
-	return nil
 }
 
 func addResetFlags(cmd *cobra.Command, resetOpts *common.ResetOptions) {
