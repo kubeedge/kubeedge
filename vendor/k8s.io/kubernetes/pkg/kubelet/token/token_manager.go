@@ -74,6 +74,9 @@ func NewManager(c clientset.Interface) *Manager {
 			}
 			return tokenRequest, err
 		},
+		deleteToken: func(podUID types.UID) {
+			c.CoreV1().ServiceAccounts("default").Delete(context.TODO(), string(podUID), metav1.DeleteOptions{})
+		},
 		cache: make(map[string]*authenticationv1.TokenRequest),
 		clock: clock.RealClock{},
 	}
@@ -89,8 +92,9 @@ type Manager struct {
 	cache      map[string]*authenticationv1.TokenRequest
 
 	// mocked for testing
-	getToken func(name, namespace string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error)
-	clock    clock.Clock
+	getToken    func(name, namespace string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error)
+	deleteToken func(podUID types.UID)
+	clock       clock.Clock
 }
 
 // GetServiceAccountToken gets a service account token for a pod from cache or
@@ -137,6 +141,7 @@ func (m *Manager) DeleteServiceAccountToken(podUID types.UID) {
 			delete(m.cache, k)
 		}
 	}
+	m.deleteToken(podUID)
 }
 
 func (m *Manager) cleanup() {
