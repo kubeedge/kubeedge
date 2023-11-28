@@ -41,18 +41,22 @@ KubeEdge 由云端和边缘端部分构成：
 ![架构图](docs/images/kubeedge_arch.png)
 
 ### 云上部分
-- [CloudHub](https://kubeedge.io/en/docs/architecture/cloud/cloudhub): CloudHub 是一个 Web Socket 服务端，负责监听云端的变化，缓存并发送消息到 EdgeHub。
-- [EdgeController](https://kubeedge.io/en/docs/architecture/cloud/edge_controller): EdgeController 是一个扩展的 Kubernetes 控制器，管理边缘节点和 Pods 的元数据确保数据能够传递到指定的边缘节点。
-- [DeviceController](https://kubeedge.io/en/docs/architecture/cloud/device_controller): DeviceController 是一个扩展的 Kubernetes 控制器，管理边缘设备，确保设备信息、设备状态的云边同步。
-
+- [CloudHub](https://kubeedge.io/zh/docs/architecture/cloud/cloudhub): CloudHub 是一个 Web Socket 服务端，负责监听云端的变化，缓存并发送消息到 EdgeHub。
+- [EdgeController](https://kubeedge.io/zh/docs/architecture/cloud/edge_controller): EdgeController 是一个扩展的 Kubernetes 控制器，管理边缘节点和 Pods 的元数据确保数据能够传递到指定的边缘节点。
+- [DeviceController](https://kubeedge.io/zh/docs/architecture/cloud/device_controller): DeviceController 是一个扩展的 Kubernetes 控制器，管理边缘设备，确保设备信息、设备状态的云边同步。
+  [SyncController](https://kubeedge.io/zh/docs/architecture/cloud/synccontroller): SyncController是一个扩展的Kubernetes控制器，负责在云端和边缘之间可靠地传输数据。它周期性地检查边缘和云端的元数据，并在必要时触发reconcile。
+- [DynamicController](https://kubeedge.io/zh/docs/architecture/cloud/dynamiccontroller): DynamicController是一个基于Kubernetes动态客户端的扩展Kubernetes控制器，允许边缘节点上的客户端list/watch常见的Kubernetes资源和自定义资源。
+- [ControllerManager](https://kubeedge.io/zh/docs/architecture/cloud/controller_manager): ControllerManager管理两个扩展的Kubernetes控制器，分别是NodeGroupController和EdgeApplicationController，它们分别负责节点组（NodeGroup）和边缘应用（EdgeApplication）的生命周期管理。
+- [NodeUpgradeJobController](https://kubeedge.io/zh/docs/architecture/cloud/nodeupgradejob_controller): NodeUpgradeJobController是一个扩展的Kubernetes控制器，负责管理节点升级作业，并在云端和边缘之间同步边缘节点升级状态，使用户能够通过云端对边缘节点进行升级。
 
 ### 边缘部分
-- [EdgeHub](https://kubeedge.io/en/docs/architecture/edge/edgehub): EdgeHub 是一个 Web Socket 客户端，负责与边缘计算的云服务（例如 KubeEdge 架构图中的 Edge Controller）交互，包括同步云端资源更新、报告边缘主机和设备状态变化到云端等功能。
-- [Edged](https://kubeedge.io/en/docs/architecture/edge/edged): Edged 是运行在边缘节点的代理，用于管理容器化的应用程序。
-- [EventBus](https://kubeedge.io/en/docs/architecture/edge/eventbus): EventBus 是一个与 MQTT 服务器 (mosquitto) 交互的 MQTT 客户端，为其他组件提供订阅和发布功能。
-- [ServiceBus](https://kubeedge.io/en/docs/architecture/edge/servicebus): ServiceBus 是一个运行在边缘的 HTTP 客户端，接受来自云上服务的请求，与运行在边缘端的 HTTP 服务器交互，提供了云上服务通过 HTTP 协议访问边缘端 HTTP 服务器的能力。
-- [DeviceTwin](https://kubeedge.io/en/docs/architecture/edge/devicetwin): DeviceTwin 负责存储设备状态并将设备状态同步到云，它还为应用程序提供查询接口。
-- [MetaManager](https://kubeedge.io/en/docs/architecture/edge/metamanager): MetaManager 是消息处理器，位于 Edged 和 Edgehub 之间，它负责向轻量级数据库 (SQLite) 存储/检索元数据。
+- [EdgeHub](https://kubeedge.io/zh/docs/architecture/edge/edgehub): EdgeHub 是一个 Web Socket 客户端，负责与边缘计算的云服务（例如 KubeEdge 架构图中的 Edge Controller）交互，包括同步云端资源更新、报告边缘主机和设备状态变化到云端等功能。
+- [Edged](https://kubeedge.io/zh/docs/architecture/edge/edged): Edged 是运行在边缘节点的代理，用于管理容器化的应用程序。
+- [EventBus](https://kubeedge.io/zh/docs/architecture/edge/eventbus): EventBus 是一个与 MQTT 服务器 (mosquitto) 交互的 MQTT 客户端，为其他组件提供订阅和发布功能。
+- [ServiceBus](https://kubeedge.io/zh/docs/architecture/edge/servicebus): ServiceBus 是一个运行在边缘的 HTTP 客户端，接受来自云上服务的请求，与运行在边缘端的 HTTP 服务器交互，提供了云上服务通过 HTTP 协议访问边缘端 HTTP 服务器的能力。
+- [DeviceTwin](https://kubeedge.io/zh/docs/architecture/edge/devicetwin): DeviceTwin 负责存储设备状态并将设备状态同步到云，它还为应用程序提供查询接口。
+- [MetaManager](https://kubeedge.io/zh/docs/architecture/edge/metamanager): MetaManager 是消息处理器，位于 Edged 和 Edgehub 之间，它负责向轻量级数据库 (SQLite) 存储/检索元数据。
+- [MetaServer](https://kubeedge.io/en/docs/architecture/edge/metaserver): MetaServer负责启动一个HTTP服务器，为部署在边缘的Kubernetes Operators提供边缘api-server能力。它将Kubernetes资源请求代理到云端的动态控制器，并在节点离线时，MetaServer将向边缘本地存储发送请求以获取解决方案。
 
 ## 兼容性
 
