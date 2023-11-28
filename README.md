@@ -20,10 +20,6 @@ With data processed at the Edge, the responsiveness is increased dramatically an
 
 KubeEdge is an incubation-level hosted project by the [Cloud Native Computing Foundation](https://cncf.io) (CNCF). KubeEdge incubation [announcement](https://www.cncf.io/blog/2020/09/16/toc-approves-kubeedge-as-incubating-project/) by CNCF.
 
-**Note**:
-
-The versions before *1.8* have not been supported, please try upgrade.
-
 ## Advantages
 
 - **Kubernetes-native support**: Managing edge applications and edge devices in the cloud with fully compatible Kubernetes APIs.
@@ -59,12 +55,13 @@ KubeEdge consists of cloud part and edge part.
 
 ## Kubernetes compatibility
 
-|                        | Kubernetes 1.17 | Kubernetes 1.18 | Kubernetes 1.19 | Kubernetes 1.20 | Kubernetes 1.21 | Kubernetes 1.22 | Kubernetes 1.23 |
-|------------------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|
-| KubeEdge 1.11          | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               | -               |
-| KubeEdge 1.12          | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               | -               |
-| KubeEdge 1.13          | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               |
-| KubeEdge HEAD (master) | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               |
+|               | Kubernetes 1.20 | Kubernetes 1.21 | Kubernetes 1.22 | Kubernetes 1.23 | Kubernetes 1.24 | Kubernetes 1.25 | Kubernetes 1.26 |
+| ------------- | --------------- | --------------- | --------------- | --------------- | --------------- | --------------- | --------------- |
+| KubeEdge 1.12 | ✓               | ✓               | ✓               | -               | -               | -               | -               |
+| KubeEdge 1.13 | +               | ✓               | ✓               | ✓               | -               | -               | -               |
+| KubeEdge 1.14 | +               | +               | ✓               | ✓               | ✓               | -               | -               |
+| KubeEdge 1.15 | +               | +               | +               | +               | ✓               | ✓               | ✓               |
+| KubeEdge HEAD (master) | +               | +               | +               | +               | ✓               | ✓               | ✓               |
 
 Key:
 * `✓` KubeEdge and the Kubernetes version are exactly compatible.
@@ -81,7 +78,7 @@ To learn deeply about KubeEdge, try some examples on [examples](https://github.c
 
 ## Roadmap
 
-* [2023 Roadmap](./docs/roadmap.md#roadmap)
+* [2023 Roadmap](https://github.com/kubeedge/community/blob/master/roadmap.md)
 
 ## Meeting
 

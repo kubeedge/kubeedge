@@ -19,7 +19,7 @@ package dtclient
 import (
 	"testing"
 
-	"github.com/astaxie/beego/orm"
+	"github.com/beego/beego/orm"
 	"github.com/golang/mock/gomock"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"

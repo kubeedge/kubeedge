@@ -35,6 +35,8 @@ ALL_IMAGES_AND_TARGETS=(
   edgemark:edgemark:build/edgemark/Dockerfile
   installation-package:installation-package:build/docker/installation-package/installation-package.dockerfile
   controller-manager:controller-manager:build/controllermanager/Dockerfile
+  conformance:conformance:build/conformance/Dockerfile
+  nodeconformance:nodeconformance:build/conformance/nodeconformance.Dockerfile
 )
 
 function get_imagename_by_target() {

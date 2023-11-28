@@ -19,6 +19,7 @@ package controller
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/distribution/distribution/v3/reference"
 	metav1 "k8s.io/api/core/v1"
@@ -35,6 +36,8 @@ const (
 
 const (
 	NodeUpgrade = "upgrade"
+
+	ISO8601UTC = "2006-01-02T15:04:05Z"
 )
 
 // filterVersion returns true only if the edge node version already on the upgrade req
@@ -110,12 +113,18 @@ func UpdateNodeUpgradeJobStatus(old *v1alpha1.NodeUpgradeJob, status *v1alpha1.U
 	for index := range upgrade.Status.Status {
 		// If Node's Upgrade info exist, just overwrite
 		if upgrade.Status.Status[index].NodeName == status.NodeName {
+			// The input status no upgradeTime, we need set it with old value
+			status.History.UpgradeTime = upgrade.Status.Status[index].History.UpgradeTime
 			upgrade.Status.Status[index] = *status
 			return upgrade
 		}
 	}
 
 	// if Node's Upgrade info not exist, just append
+	if status.History.UpgradeTime == "" {
+		// If upgrade time is blank, set to the current time
+		status.History.UpgradeTime = time.Now().Format(ISO8601UTC)
+	}
 	upgrade.Status.Status = append(upgrade.Status.Status, *status)
 
 	return upgrade

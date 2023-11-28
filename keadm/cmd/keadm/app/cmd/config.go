@@ -21,8 +21,8 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
 
+	"github.com/kubeedge/kubeedge/common/constants"
 	cmdcommon "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/kubeedge/kubeedge/pkg/image"
@@ -45,7 +45,7 @@ func newDefaultConfiguration() *Configuration {
 	return &Configuration{
 		ImageRepository: "kubeedge",
 		Part:            "",
-		RuntimeType:     kubetypes.RemoteContainerRuntime,
+		RuntimeType:     constants.DefaultRuntimeType,
 	}
 }
 
@@ -120,7 +120,7 @@ func newCmdConfigImagesPull() *cobra.Command {
 			cfg.KubeEdgeVersion = ver
 
 			images := GetKubeEdgeImages(cfg)
-			return pullImages(cfg.RuntimeType, cfg.RemoteRuntimeEndpoint, images)
+			return pullImages(cfg.RuntimeType, cfg.RemoteRuntimeEndpoint, "", images)
 		},
 		Args: cobra.NoArgs,
 	}
@@ -129,8 +129,8 @@ func newCmdConfigImagesPull() *cobra.Command {
 	return cmd
 }
 
-func pullImages(runtimeType string, endpoint string, images []string) error {
-	runtime, err := util.NewContainerRuntime(runtimeType, endpoint)
+func pullImages(runtimeType, endpoint, cgroupDriver string, images []string) error {
+	runtime, err := util.NewContainerRuntime(runtimeType, endpoint, cgroupDriver)
 	if err != nil {
 		return err
 	}

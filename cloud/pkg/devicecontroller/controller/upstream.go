@@ -135,8 +135,9 @@ func (uc *UpstreamController) updateDeviceStatus() {
 			}
 			deviceStatus := &DeviceStatus{Status: cacheDevice.Status}
 			for twinName, twin := range msgTwin.Twin {
-				for i, cacheTwin := range deviceStatus.Status.Twins {
-					if twinName == cacheTwin.PropertyName && twin.Actual != nil && twin.Actual.Value != nil {
+				deviceTwin := findTwinByName(twinName, &deviceStatus.Status.Twins)
+				if deviceTwin != nil {
+					if twin.Actual != nil && twin.Actual.Value != nil {
 						reported := v1beta1.TwinProperty{}
 						reported.Value = *twin.Actual.Value
 						reported.Metadata = make(map[string]string)
@@ -146,8 +147,20 @@ func (uc *UpstreamController) updateDeviceStatus() {
 						if twin.Metadata != nil {
 							reported.Metadata["type"] = twin.Metadata.Type
 						}
-						deviceStatus.Status.Twins[i].Reported = reported
-						break
+						deviceTwin.Reported = reported
+					}
+
+					if twin.Expected != nil && twin.Expected.Value != nil {
+						observedDesired := v1beta1.TwinProperty{}
+						observedDesired.Value = *twin.Expected.Value
+						observedDesired.Metadata = make(map[string]string)
+						if twin.Expected.Metadata != nil {
+							observedDesired.Metadata["timestamp"] = strconv.FormatInt(twin.Expected.Metadata.Timestamp, 10)
+						}
+						if twin.Metadata != nil {
+							observedDesired.Metadata["type"] = twin.Metadata.Type
+						}
+						deviceTwin.ObservedDesired = observedDesired
 					}
 				}
 			}
@@ -211,4 +224,13 @@ func NewUpstreamController(dc *DownstreamController) (*UpstreamController, error
 		dc:           dc,
 	}
 	return uc, nil
+}
+
+func findTwinByName(twinName string, twins *[]v1beta1.Twin) *v1beta1.Twin {
+	for _, twin := range *twins {
+		if twinName == twin.PropertyName {
+			return &twin
+		}
+	}
+	return nil
 }

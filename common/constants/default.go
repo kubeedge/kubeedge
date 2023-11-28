@@ -55,7 +55,7 @@ const (
 	DefaultTunnelPort                  = 10004
 	DefaultClusterDomain               = "cluster.local"
 
-	CurrentSupportK8sVersion = "v1.26.7"
+	CurrentSupportK8sVersion = "v1.27.7"
 
 	// MetaManager
 	DefaultRemoteQueryTimeout = 60
@@ -150,9 +150,13 @@ const (
 	EdgeNodeRoleKey   = "node-role.kubernetes.io/edge"
 	EdgeNodeRoleValue = ""
 
-	DeafultMosquittoContainerName = "mqtt-kubeedge"
+	DefaultMosquittoContainerName = "mqtt-kubeedge"
 	DeployMqttContainerEnv        = "DEPLOY_MQTT_CONTAINER"
 
 	// DefaultManifestsDir edge node default static pod path
 	DefaultManifestsDir = "/etc/kubeedge/manifests"
+
+	// EdgeHub
+	DefaultWebSocketPort = 10000
+	DefaultQuicPort      = 10001
 )

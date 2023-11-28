@@ -128,7 +128,7 @@ func SaveMQTTMeta(nodeName string) error {
 			APIVersion: "v1",
 		},
 		ObjectMeta: metaV1.ObjectMeta{
-			Name:      constants.DeafultMosquittoContainerName,
+			Name:      constants.DefaultMosquittoContainerName,
 			Namespace: "default",
 			UID:       uuid.NewUUID(),
 		},
@@ -174,7 +174,7 @@ func SaveMQTTMeta(nodeName string) error {
 	}
 	mqttDataStr, _ := json.Marshal(mqttData)
 	mqttMeta := Meta{
-		Key:   fmt.Sprintf("default/pod/%s", constants.DeafultMosquittoContainerName),
+		Key:   fmt.Sprintf("default/pod/%s", constants.DefaultMosquittoContainerName),
 		Type:  "pod",
 		Value: string(mqttDataStr),
 	}

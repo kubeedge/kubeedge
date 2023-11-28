@@ -76,26 +76,18 @@ func BuildProtocolFromGrpc(device *dmiapi.Device) (common.ProtocolConfig, error)
 }
 
 func buildTwinsFromGrpc(device *dmiapi.Device) []common.Twin {
-	if len(device.Status.Twins) == 0 {
+	if len(device.Spec.Properties) == 0 {
 		return nil
 	}
-	res := make([]common.Twin, 0, len(device.Status.Twins))
-	for _, twin := range device.Status.Twins {
+	res := make([]common.Twin, 0, len(device.Spec.Properties))
+	for _, property := range device.Spec.Properties {
 		cur := common.Twin{
-			PropertyName: twin.PropertyName,
-
+			PropertyName: property.Name,
 			ObservedDesired: common.TwinProperty{
-				Value: twin.ObservedDesired.Value,
+				Value: property.Desired.Value,
 				Metadata: common.Metadata{
-					Timestamp: twin.ObservedDesired.Metadata["timestamp"],
-					Type:      twin.ObservedDesired.Metadata["type"],
-				},
-			},
-			Reported: common.TwinProperty{
-				Value: twin.Reported.Value,
-				Metadata: common.Metadata{
-					Timestamp: twin.ObservedDesired.Metadata["timestamp"],
-					Type:      twin.ObservedDesired.Metadata["type"],
+					Timestamp: property.Desired.Metadata["timestamp"],
+					Type:      property.Desired.Metadata["type"],
 				},
 			},
 		}
@@ -138,20 +130,48 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 		// get dbMethod filed by grpc device instance
 		var dbMethodName string
 		var dbconfig common.DBConfig
-		if pptv.PushMethod.DBMethod != nil {
-			dbMethodName, err = getDBMethodFromGrpc(pptv)
-			if err != nil {
-				klog.Errorf("err: %+v", err)
-				return nil
-			}
-			switch dbMethodName {
-			case "influx":
-				clientconfig, err := json.Marshal(pptv.PushMethod.DBMethod.Influxdb2.Influxdb2ClientConfig)
+		var pushMethod []byte
+		var pushMethodName string
+		if pptv.PushMethod != nil {
+			if pptv.PushMethod.DBMethod != nil {
+				dbMethodName, err = getDBMethodFromGrpc(pptv)
 				if err != nil {
 					klog.Errorf("err: %+v", err)
 					return nil
 				}
-				dataconfig, err := json.Marshal(pptv.PushMethod.DBMethod.Influxdb2.Influxdb2DataConfig)
+				switch dbMethodName {
+				case "influx":
+					clientconfig, err := json.Marshal(pptv.PushMethod.DBMethod.Influxdb2.Influxdb2ClientConfig)
+					if err != nil {
+						klog.Errorf("err: %+v", err)
+						return nil
+					}
+					dataconfig, err := json.Marshal(pptv.PushMethod.DBMethod.Influxdb2.Influxdb2DataConfig)
+					if err != nil {
+						klog.Errorf("err: %+v", err)
+						return nil
+					}
+					dbconfig = common.DBConfig{
+						Influxdb2ClientConfig: clientconfig,
+						Influxdb2DataConfig:   dataconfig,
+					}
+				}
+			}
+			// get pushMethod filed by grpc device instance
+			pushMethodName, err = getPushMethodFromGrpc(pptv)
+			if err != nil {
+				klog.Errorf("err: %+v", err)
+				return nil
+			}
+			switch pushMethodName {
+			case "http":
+				pushMethod, err = json.Marshal(pptv.PushMethod.Http)
+				if err != nil {
+					klog.Errorf("err: %+v", err)
+					return nil
+				}
+			case "mqtt":
+				pushMethod, err = json.Marshal(pptv.PushMethod.Mqtt)
 				if err != nil {
 					klog.Errorf("err: %+v", err)
 					return nil
@@ -205,13 +225,14 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 
 		// get the final Properties
 		cur := common.DeviceProperty{
-			Name:         pptv.GetName(),
-			PropertyName: pptv.GetName(),
-			ModelName:    device.Spec.DeviceModelReference,
-			CollectCycle: pptv.GetCollectCycle(),
-			ReportCycle:  pptv.GetReportCycle(),
-			Protocol:     protocolName,
-			Visitors:     visitorConfig,
+			Name:          pptv.GetName(),
+			PropertyName:  pptv.GetName(),
+			ModelName:     device.Spec.DeviceModelReference,
+			CollectCycle:  pptv.GetCollectCycle(),
+			ReportCycle:   pptv.GetReportCycle(),
+			ReportToCloud: pptv.GetReportToCloud(),
+			Protocol:      protocolName,
+			Visitors:      visitorConfig,
 			PushMethod: common.PushMethodConfig{
 				MethodName:   pushMethodName,
 				MethodConfig: pushMethod,
