@@ -72,26 +72,18 @@ func BuildProtocolFromGrpc(device *dmiapi.Device) (common.ProtocolConfig, error)
 }
 
 func buildTwinsFromGrpc(device *dmiapi.Device) []common.Twin {
-	if len(device.Status.Twins) == 0 {
+	if len(device.Spec.Properties) == 0 {
 		return nil
 	}
-	res := make([]common.Twin, 0, len(device.Status.Twins))
-	for _, twin := range device.Status.Twins {
+	res := make([]common.Twin, 0, len(device.Spec.Properties))
+	for _, property := range device.Spec.Properties {
 		cur := common.Twin{
-			PropertyName: twin.PropertyName,
-
+			PropertyName: property.Name,
 			ObservedDesired: common.TwinProperty{
-				Value: twin.ObservedDesired.Value,
+				Value: property.Desired.Value,
 				Metadata: common.Metadata{
-					Timestamp: twin.ObservedDesired.Metadata["timestamp"],
-					Type:      twin.ObservedDesired.Metadata["type"],
-				},
-			},
-			Reported: common.TwinProperty{
-				Value: twin.Reported.Value,
-				Metadata: common.Metadata{
-					Timestamp: twin.ObservedDesired.Metadata["timestamp"],
-					Type:      twin.ObservedDesired.Metadata["type"],
+					Timestamp: property.Desired.Metadata["timestamp"],
+					Type:      property.Desired.Metadata["type"],
 				},
 			},
 		}
