@@ -66,7 +66,7 @@ const (
 	DefaultVolumeStatsAggPeriod        = time.Minute
 	DefaultTunnelPort                  = 10004
 
-	CurrentSupportK8sVersion = "v1.22.6"
+	CurrentSupportK8sVersion = "v1.22.17"
 
 	// MetaManager
 	DefaultRemoteQueryTimeout = 60
