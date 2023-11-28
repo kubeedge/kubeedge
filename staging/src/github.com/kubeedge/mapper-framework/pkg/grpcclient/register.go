@@ -9,11 +9,14 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/kubeedge/Template/pkg/common"
+	"github.com/kubeedge/Template/pkg/config"
 	dmiapi "github.com/kubeedge/Template/pkg/dmi-api"
 )
 
 // RegisterMapper if withData is true, edgecore will send device and model list.
 func RegisterMapper(withData bool) ([]*dmiapi.Device, []*dmiapi.DeviceModel, error) {
+	cfg := config.Cfg()
+
 	// connect grpc server
 	conn, err := grpc.Dial(cfg.Common.EdgeCoreSock,
 		grpc.WithInsecure(),
