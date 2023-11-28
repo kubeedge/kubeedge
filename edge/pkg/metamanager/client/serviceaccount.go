@@ -48,7 +48,7 @@ func (c *serviceAccountToken) DeleteServiceAccountToken(podUID types.UID) {
 	for _, sa := range *svcAccounts {
 		var tr authenticationv1.TokenRequest
 		err = json.Unmarshal([]byte(sa.Value), &tr)
-		if err != nil {
+		if err != nil || tr.Spec.BoundObjectRef == nil {
 			klog.Errorf("unmarshal resource %s token request failed: %v", sa.Key, err)
 			continue
 		}
