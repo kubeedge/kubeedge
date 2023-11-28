@@ -48,11 +48,10 @@ func (c *ServiceAccountsBridge) CreateToken(ctx context.Context, serviceAccountN
 }
 
 func (c *ServiceAccountsBridge) Delete(ctx context.Context, podUID string, opts metav1.DeleteOptions) error {
-        c.MetaClient.ServiceAccountToken().DeleteServiceAccountToken(types.UID(podUID))
-        return nil
+	c.MetaClient.ServiceAccountToken().DeleteServiceAccountToken(types.UID(podUID))
+	return nil
 }
 
 func (c *ServiceAccountsBridge) Get(ctx context.Context, name string, options metav1.GetOptions) (result *corev1.ServiceAccount, err error) {
 	return c.MetaClient.ServiceAccounts(c.ns).Get(name)
 }
-
