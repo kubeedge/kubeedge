@@ -1,3 +1,7 @@
+* [v1.13.3](#v1133)
+    * [Downloads for v1.13.3](#downloads-for-v1133)
+    * [KubeEdge v1.13.3 Release Notes](#kubeedge-v1133-release-notes)
+        * [Changelog since v1.13.2](#changelog-since-v1132)
 * [v1.13.2](#v1132)
     * [Downloads for v1.13.2](#downloads-for-v1132)
     * [KubeEdge v1.13.2 Release Notes](#kubeedge-v1132-release-notes)
@@ -14,6 +18,22 @@
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
         * [Other Notable Changes](#other-notable-changes)
         * [Bug Fixes](#bug-fixes)
+
+# v1.13.3
+
+## Downloads for v1.13.3
+
+Download v1.13.3 in the [v1.13.3 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.13.3).
+
+## KubeEdge v1.13.3 Release Notes
+
+### Changelog since v1.13.2
+
+- Fix upgrade time layout and lost time value issue. ([#5073](https://github.com/kubeedge/kubeedge/pull/5073), [@WillardHu](https://github.com/WillardHu))
+- Fix start edgecore failed when using systemd cgroupdriver. ([#5102](https://github.com/kubeedge/kubeedge/pull/5102), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Fix remove pod cache failed. ([#5105](https://github.com/kubeedge/kubeedge/pull/5105), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Fix Keadm process stops abnormally when Keadm upgrade stops edgecore process. ([#5109](https://github.com/kubeedge/kubeedge/pull/5109), [@wlq1212](https://github.com/wlq1212))
+
 
 # v1.13.2
 

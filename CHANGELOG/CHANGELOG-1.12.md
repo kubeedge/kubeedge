@@ -1,3 +1,7 @@
+* [v1.12.5](#v1125)
+    * [Downloads for v1.12.5](#downloads-for-v1125)
+    * [KubeEdge v1.12.5 Release Notes](#kubeedge-v1125-release-notes)
+        * [Changelog since v1.12.4](#changelog-since-v1124)
 * [v1.12.4](#v1124)
     * [Downloads for v1.12.4](#downloads-for-v1124)
     * [KubeEdge v1.12.4 Release Notes](#kubeedge-v1124-release-notes)
@@ -22,6 +26,22 @@
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
         * [Other Notable Changes](#other-notable-changes)
         * [Bug Fixes](#bug-fixes)
+
+# v1.12.5
+
+## Downloads for v1.12.5
+
+Download v1.12.5 in the [v1.12.5 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.12.5).
+
+## KubeEdge v1.12.5 Release Notes
+
+### Changelog since v1.12.4
+
+- Fix upgrade time layout and lost time value issue. ([#5072](https://github.com/kubeedge/kubeedge/pull/5072), [@WillardHu](https://github.com/WillardHu))
+- Fix start edgecore failed when using systemd cgroupdriver. ([#5103](https://github.com/kubeedge/kubeedge/pull/5103), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Fix remove pod cache failed. ([#5106](https://github.com/kubeedge/kubeedge/pull/5106), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Fix Keadm process stops abnormally when Keadm upgrade stops edgecore process. ([#5108](https://github.com/kubeedge/kubeedge/pull/5108), [@wlq1212](https://github.com/wlq1212))
+- Fix mqtt container would not start when using custom registry. ([#5101](https://github.com/kubeedge/kubeedge/pull/5101), [@WillardHu](https://github.com/WillardHu))
 
 # v1.12.4
 

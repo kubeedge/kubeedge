@@ -130,6 +130,7 @@ func dataHandler(ctx context.Context, dev *driver.CustomizedDev) {
 			VisitorConfig:   &visitorConfig,
 			Topic:           fmt.Sprintf(common.TopicTwinUpdate, dev.Instance.ID),
 			CollectCycle:    time.Duration(twin.Property.CollectCycle),
+			ReportToCloud:   twin.Property.ReportToCloud,
 		}
 		go twinData.Run(ctx)
 		// handle push method
@@ -321,7 +322,7 @@ func (d *DevPanel) DevInit(cfg *config.Config) error {
 	//		return err
 	//	}
 	case common.DevInitModeRegister:
-		if err := parse.ParseByUsingRegister(cfg, devs, d.models, d.protocols); err != nil {
+		if err := parse.ParseByUsingRegister(devs, d.models, d.protocols); err != nil {
 			return err
 		}
 	}

@@ -16,6 +16,8 @@ const (
 	OperationGetResult         = "get_result"
 	OperationResponse          = "response"
 	OperationKeepalive         = "keepalive"
+	OperationStart             = "start"
+	OperationStop              = "stop"
 
 	ResourceGroupName = "resource"
 	TwinGroupName     = "twin"

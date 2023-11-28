@@ -107,23 +107,23 @@ func TestUpdateUpgradeStatus(t *testing.T) {
 					NodeName: "edge-node",
 					State:    v1alpha1.Completed,
 					History: v1alpha1.History{
-						Reason: "the first upgrade",
+						Reason:      "the first upgrade",
+						UpgradeTime: "2023-09-22T17:33:00Z",
 					},
 				},
 			},
 		},
 	}
 	upgrade2 := upgrade.DeepCopy()
-	upgrade2.Status.Status[0].History = v1alpha1.History{
-		Reason: "the second upgrade",
-	}
+	upgrade2.Status.Status[0].History.Reason = "the second upgrade"
 
 	upgrade3 := upgrade.DeepCopy()
 	upgrade3.Status.Status = append(upgrade3.Status.Status, v1alpha1.UpgradeStatus{
 		NodeName: "edge-node2",
 		State:    v1alpha1.Completed,
 		History: v1alpha1.History{
-			Reason: "the first upgrade",
+			Reason:      "the first upgrade",
+			UpgradeTime: "2023-09-22T17:35:00Z",
 		},
 	})
 
@@ -140,7 +140,8 @@ func TestUpdateUpgradeStatus(t *testing.T) {
 				NodeName: "edge-node",
 				State:    v1alpha1.Completed,
 				History: v1alpha1.History{
-					Reason: "the first upgrade",
+					Reason:      "the first upgrade",
+					UpgradeTime: "2023-09-22T17:33:00Z",
 				},
 			},
 			expected: upgrade.DeepCopy(),
@@ -152,7 +153,8 @@ func TestUpdateUpgradeStatus(t *testing.T) {
 				NodeName: "edge-node2",
 				State:    v1alpha1.Completed,
 				History: v1alpha1.History{
-					Reason: "the first upgrade",
+					Reason:      "the first upgrade",
+					UpgradeTime: "2023-09-22T17:35:00Z",
 				},
 			},
 			expected: upgrade3,

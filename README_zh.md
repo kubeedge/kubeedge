@@ -18,8 +18,6 @@ KubeEdge 是一个开源的系统，可将本机容器化应用编排和管理�
 
 KubeEdge 是一个由 [Cloud Native Computing Foundation](https://cncf.io) (CNCF) 托管的孵化级项目，CNCF 对 KubeEdge 的 [孵化公告](https://www.cncf.io/blog/2020/09/16/toc-approves-kubeedge-as-incubating-project/)
 
-注意：
-1.8 以前的版本不再支持，请尝试升级到支持版本。
 
 ## 优势
 
@@ -60,12 +58,13 @@ KubeEdge 由云端和边缘端部分构成：
 
 ### Kubernetes 版本兼容
 
-|                        | Kubernetes 1.17 | Kubernetes 1.18 | Kubernetes 1.19 | Kubernetes 1.20 | Kubernetes 1.21 | Kubernetes 1.22 | Kubernetes 1.23 |
-|------------------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|
-| KubeEdge 1.11          | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               | -               |
-| KubeEdge 1.12          | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               | -               |
-| KubeEdge 1.13          | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               |
-| KubeEdge HEAD (master) | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               | ✓               |
+|               | Kubernetes 1.20 | Kubernetes 1.21 | Kubernetes 1.22 | Kubernetes 1.23 | Kubernetes 1.24 | Kubernetes 1.25 | Kubernetes 1.26 |
+| ------------- | --------------- | --------------- | --------------- | --------------- | --------------- | --------------- | --------------- |
+| KubeEdge 1.12 | ✓               | ✓               | ✓               | -               | -               | -               | -               |
+| KubeEdge 1.13 | +               | ✓               | ✓               | ✓               | -               | -               | -               |
+| KubeEdge 1.14 | +               | +               | ✓               | ✓               | ✓               | -               | -               |
+| KubeEdge 1.15 | +               | +               | +               | +               | ✓               | ✓               | ✓               |
+| KubeEdge HEAD (master) | +               | +               | +               | +               | ✓               | ✓               | ✓               |
 
 说明：
 * `✓` KubeEdge 和 Kubernetes 的版本是完全兼容的
@@ -82,7 +81,7 @@ KubeEdge 由云端和边缘端部分构成：
 
 ## 路线图
 
-* [2023 Roadmap](./docs/roadmap.md#roadmap)
+* [2023 Roadmap](https://github.com/kubeedge/community/blob/master/roadmap_zh.md)
 
 ## 社区例会
 

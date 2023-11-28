@@ -39,7 +39,7 @@ var DeploymentTestTimerGroup = utils.NewTestTimerGroup()
 var _ = Describe("Application deployment test in E2E scenario using EdgeSite", func() {
 	var UID string
 	var testTimer *utils.TestTimer
-	var testSpecReport GinkgoTestDescription
+	var testSpecReport SpecReport
 
 	var clientSet clientset.Interface
 
@@ -50,9 +50,9 @@ var _ = Describe("Application deployment test in E2E scenario using EdgeSite", f
 	Context("Test application deployment and delete deployment using deployment spec", func() {
 		BeforeEach(func() {
 			// Get current test SpecReport
-			testSpecReport = CurrentGinkgoTestDescription()
+			testSpecReport = CurrentSpecReport()
 			// Start test timer
-			testTimer = DeploymentTestTimerGroup.NewTestTimer(testSpecReport.TestText)
+			testTimer = DeploymentTestTimerGroup.NewTestTimer(testSpecReport.LeafNodeText)
 		})
 
 		AfterEach(func() {
@@ -118,9 +118,9 @@ var _ = Describe("Application deployment test in E2E scenario using EdgeSite", f
 	Context("Test application deployment using Pod spec using EdgeSite", func() {
 		BeforeEach(func() {
 			// Get current test SpecReport
-			testSpecReport = CurrentGinkgoTestDescription()
+			testSpecReport = CurrentSpecReport()
 			// Start test timer
-			testTimer = DeploymentTestTimerGroup.NewTestTimer(testSpecReport.TestText)
+			testTimer = DeploymentTestTimerGroup.NewTestTimer(testSpecReport.LeafNodeText)
 		})
 
 		AfterEach(func() {

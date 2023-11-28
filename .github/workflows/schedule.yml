@@ -7,7 +7,7 @@ on:
 
 env:
   CONTAINER_RUN_OPTIONS: " "
-  GINKGO_VERSION: "v2.6.0"
+  GINKGO_VERSION: "v2.9.5"
 
 jobs:
   lint:
@@ -20,7 +20,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.19.x
+          go-version: 1.20.x
 
       - name: Checkout code
         uses: actions/checkout@v3
@@ -44,9 +44,9 @@ jobs:
     steps:
       - name: Pull kubeedge/build-tools image
         run: |
-          docker pull kubeedge/build-tools:1.19.12-ke2
+          docker pull kubeedge/build-tools:1.20.10-ke1
           mkdir -p /home/runner/build-tools/
-          docker save kubeedge/build-tools:1.19.12-ke2 > /home/runner/build-tools/build-tools.tar
+          docker save kubeedge/build-tools:1.20.10-ke1 > /home/runner/build-tools/build-tools.tar
 
       - name: Temporarily save kubeedge/build-tools image
         uses: actions/upload-artifact@v3
@@ -112,7 +112,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.19.x
+          go-version: 1.20.x
 
       - uses: actions/cache@v3
         with:
@@ -121,7 +121,7 @@ jobs:
 
       - name: Install dependences
         run: |
-          command -v ginkgo || go install github.com/onsi/ginkgo/ginkgo@${{ env.GINKGO_VERSION }}
+          command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
           go install sigs.k8s.io/kind@v0.18.0
           curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.24.14/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 

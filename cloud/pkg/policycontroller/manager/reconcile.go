@@ -22,7 +22,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
@@ -158,7 +157,7 @@ func matchTarget(ctx context.Context, cli client.Client, object client.Object, v
 	}
 }
 
-func (c *Controller) mapRolesFunc(object client.Object) []controllerruntime.Request {
+func (c *Controller) mapRolesFunc(ctx context.Context, object client.Object) []controllerruntime.Request {
 	var p = PolicyRequestVisitor{}
 	matchTarget(context.Background(), c.Client, object, p.matchRuntimeRequest)
 	klog.V(4).Infof("filter resource %s/%s, %v", object.GetNamespace(), object.GetName(), p.AuthPolicy)
@@ -177,7 +176,7 @@ func newSaAccessObject(sa corev1.ServiceAccount) *policyv1alpha1.ServiceAccountA
 	}
 }
 
-func (c *Controller) mapObjectFunc(object client.Object) []controllerruntime.Request {
+func (c *Controller) mapObjectFunc(ctx context.Context, object client.Object) []controllerruntime.Request {
 	accList := &policyv1alpha1.ServiceAccountAccessList{}
 	if err := c.Client.List(context.Background(), accList, &client.ListOptions{Namespace: object.GetNamespace()}); err != nil {
 		klog.Errorf("failed to list serviceaccountaccess, %v", err)
@@ -254,22 +253,22 @@ func (c *Controller) SetupWithManager(ctx context.Context, mgr controllerruntime
 	}
 	return controllerruntime.NewControllerManagedBy(mgr).
 		For(&policyv1alpha1.ServiceAccountAccess{}).
-		Watches(&source.Kind{Type: &rbacv1.ClusterRoleBinding{}}, handler.EnqueueRequestsFromMapFunc(c.mapRolesFunc), builder.WithPredicates(predicate.NewPredicateFuncs(func(object client.Object) bool {
+		Watches(&rbacv1.ClusterRoleBinding{}, handler.EnqueueRequestsFromMapFunc(c.mapRolesFunc), builder.WithPredicates(predicate.NewPredicateFuncs(func(object client.Object) bool {
 			return c.filterResource(ctx, object)
 		}))).
-		Watches(&source.Kind{Type: &rbacv1.RoleBinding{}}, handler.EnqueueRequestsFromMapFunc(c.mapRolesFunc), builder.WithPredicates(predicate.NewPredicateFuncs(func(object client.Object) bool {
+		Watches(&rbacv1.RoleBinding{}, handler.EnqueueRequestsFromMapFunc(c.mapRolesFunc), builder.WithPredicates(predicate.NewPredicateFuncs(func(object client.Object) bool {
 			return c.filterResource(ctx, object)
 		}))).
-		Watches(&source.Kind{Type: &rbacv1.ClusterRole{}}, handler.EnqueueRequestsFromMapFunc(c.mapRolesFunc), builder.WithPredicates(predicate.NewPredicateFuncs(func(object client.Object) bool {
+		Watches(&rbacv1.ClusterRole{}, handler.EnqueueRequestsFromMapFunc(c.mapRolesFunc), builder.WithPredicates(predicate.NewPredicateFuncs(func(object client.Object) bool {
 			return c.filterResource(ctx, object)
 		}))).
-		Watches(&source.Kind{Type: &rbacv1.Role{}}, handler.EnqueueRequestsFromMapFunc(c.mapRolesFunc), builder.WithPredicates(predicate.NewPredicateFuncs(func(object client.Object) bool {
+		Watches(&rbacv1.Role{}, handler.EnqueueRequestsFromMapFunc(c.mapRolesFunc), builder.WithPredicates(predicate.NewPredicateFuncs(func(object client.Object) bool {
 			return c.filterResource(ctx, object)
 		}))).
-		Watches(&source.Kind{Type: &corev1.ServiceAccount{}}, handler.EnqueueRequestsFromMapFunc(c.mapObjectFunc), builder.WithPredicates(predicate.NewPredicateFuncs(func(object client.Object) bool {
+		Watches(&corev1.ServiceAccount{}, handler.EnqueueRequestsFromMapFunc(c.mapObjectFunc), builder.WithPredicates(predicate.NewPredicateFuncs(func(object client.Object) bool {
 			return c.filterObject(ctx, object)
 		}))).
-		Watches(&source.Kind{Type: &corev1.Pod{}}, handler.EnqueueRequestsFromMapFunc(c.mapObjectFunc), builder.WithPredicates(predicate.NewPredicateFuncs(func(object client.Object) bool {
+		Watches(&corev1.Pod{}, handler.EnqueueRequestsFromMapFunc(c.mapObjectFunc), builder.WithPredicates(predicate.NewPredicateFuncs(func(object client.Object) bool {
 			return c.filterObject(ctx, object)
 		}))).
 		Complete(c)

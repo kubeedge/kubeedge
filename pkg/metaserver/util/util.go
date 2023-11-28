@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/fields"
@@ -59,7 +61,8 @@ func UnsafeResourceToKind(r string) string {
 	if v, isUnusual := unusualResourceToKind[r]; isUnusual {
 		return v
 	}
-	k := strings.Title(r)
+	caser := cases.Title(language.Und)
+	k := caser.String(r)
 	switch {
 	case strings.HasSuffix(k, "ies"):
 		return strings.TrimSuffix(k, "ies") + "y"

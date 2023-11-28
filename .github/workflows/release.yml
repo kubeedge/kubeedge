@@ -17,16 +17,25 @@ jobs:
         target: [kubeedge, edgesite, keadm]
         os: [linux]
         ARM_VERSION: [GOARM7, GOARM8, ""]
+        include:
+          - target: kubeedge
+            os: windows
+            ARM_VERSION: ""
+          - target: keadm
+            os: windows
+            ARM_VERSION: ""
     outputs:
-      hash-kubeedge-amd64: ${{ steps.hash.outputs.hash-kubeedge-amd64 }}
-      hash-kubeedge-arm64: ${{ steps.hash.outputs.hash-kubeedge-arm64 }}
-      hash-kubeedge-arm:   ${{ steps.hash.outputs.hash-kubeedge-arm }}
-      hash-keadm-amd64:    ${{ steps.hash.outputs.hash-keadm-amd64 }}
-      hash-keadm-arm64:    ${{ steps.hash.outputs.hash-keadm-arm64 }}
-      hash-keadm-arm:      ${{ steps.hash.outputs.hash-keadm-arm }}
-      hash-edgesite-amd64: ${{ steps.hash.outputs.hash-edgesite-amd64 }}
-      hash-edgesite-arm64: ${{ steps.hash.outputs.hash-edgesite-arm64 }}
-      hash-edgesite-arm:   ${{ steps.hash.outputs.hash-edgesite-arm }}
+      hash-kubeedge-linux-amd64: ${{ steps.hash.outputs.hash-kubeedge-linux-amd64 }}
+      hash-kubeedge-windows-amd64: ${{ steps.hash.outputs.hash-kubeedge-windows-amd64 }}
+      hash-kubeedge-linux-arm64: ${{ steps.hash.outputs.hash-kubeedge-linux-arm64 }}
+      hash-kubeedge-linux-arm:   ${{ steps.hash.outputs.hash-kubeedge-linux-arm }}
+      hash-keadm-linux-amd64:    ${{ steps.hash.outputs.hash-keadm-linux-amd64 }}
+      hash-keadm-linux-arm64:    ${{ steps.hash.outputs.hash-keadm-linux-arm64 }}
+      hash-keadm-linux-arm:      ${{ steps.hash.outputs.hash-keadm-linux-arm }}
+      hash-keadm-windows-amd64:  ${{ steps.hash.outputs.hash-keadm-windows-amd64 }}
+      hash-edgesite-linux-amd64: ${{ steps.hash.outputs.hash-edgesite-linux-amd64 }}
+      hash-edgesite-linux-arm64: ${{ steps.hash.outputs.hash-edgesite-linux-arm64 }}
+      hash-edgesite-linux-arm:   ${{ steps.hash.outputs.hash-edgesite-linux-arm }}
     steps:
       - name: checkout code
         uses: actions/checkout@v3
@@ -37,8 +46,13 @@ jobs:
           fetch-depth: 0
       - name: Making and packaging
         run: |
-          docker pull kubeedge/build-tools:1.19.12-ke2
-          make release WHAT=${{ matrix.target }} ARM_VERSION=${{ matrix.ARM_VERSION }}
+          if [ "${{ matrix.os }}" == "linux" ]; then
+            docker pull kubeedge/build-tools:1.20.10-ke1
+            BUILD_CONTAINER=true
+          else
+            BUILD_CONTAINER=false
+          fi
+          make release WHAT=${{ matrix.target }} ARM_VERSION=${{ matrix.ARM_VERSION }} OS=${{ matrix.os }} BUILD_WITH_CONTAINER=$BUILD_CONTAINER
       - name: Generate arch
         run: |
           if [ "${{ matrix.ARM_VERSION }}" = "GOARM7" ]; then echo "output_arch=arm" >> $GITHUB_ENV; elif [ ${{ matrix.ARM_VERSION }} = "GOARM8" ]; then echo "output_arch=arm64" >> $GITHUB_ENV; else echo "output_arch=amd64" >> $GITHUB_ENV; fi
@@ -47,7 +61,7 @@ jobs:
         id: hash
         run: |
           cp _output/release/${{ github.ref_name }}/${{ matrix.target }}-${{ github.ref_name }}-${{ matrix.os }}-${{ env.output_arch }}.tar.gz .
-          echo "hash-${{ matrix.target }}-${{ env.output_arch }}=$( \
+          echo "hash-${{ matrix.target }}-${{ matrix.os }}-${{ env.output_arch }}=$( \
                       sha256sum ${{ matrix.target }}-${{ github.ref_name }}-${{ matrix.os }}-${{ env.output_arch}}.tar.gz | base64 -w0 \
                     )" >> "$GITHUB_OUTPUT"
       - name: Uploading assets...
@@ -88,7 +102,7 @@ jobs:
     name: publish to DockerHub
     strategy:
       matrix:
-        target: [cloudcore, admission, edgesite-agent, edgesite-server, csidriver, iptables-manager, edgemark, installation-package, controller-manager]
+        target: [cloudcore, admission, edgesite-agent, edgesite-server, csidriver, iptables-manager, edgemark, installation-package, controller-manager, conformance, nodeconformance]
     outputs:
       hash-digest-cloudcore: ${{ steps.hash.outputs.hash-digest-cloudcore }}
       hash-digest-admission: ${{ steps.hash.outputs.hash-digest-admission }}
@@ -99,6 +113,8 @@ jobs:
       hash-digest-edgemark: ${{ steps.hash.outputs.hash-digest-edgemark }}
       hash-digest-installation-package: ${{ steps.hash.outputs.hash-digest-installation-package }}
       hash-digest-controller-manager: ${{ steps.hash.outputs.hash-digest-controller-manager }}
+      hash-digest-conformance: ${{ steps.hash.outputs.hash-digest-conformance }}
+      hash-digest-nodeconformance: ${{ steps.hash.outputs.hash-digest-nodeconformance }}
     runs-on: ubuntu-22.04
     steps:
       - name: checkout code
@@ -141,7 +157,7 @@ jobs:
     needs: [publish-image-to-dockerhub]
     strategy:
       matrix:
-        target: [cloudcore, admission, edgesite-agent, edgesite-server, csidriver, iptables-manager, edgemark, installation-package, controller-manager]
+        target: [cloudcore, admission, edgesite-agent, edgesite-server, csidriver, iptables-manager, edgemark, installation-package, controller-manager, conformance, nodeconformance]
     permissions:
       actions: read # for detecting the Github Actions environment.
       id-token: write # for creating OIDC tokens for signing.

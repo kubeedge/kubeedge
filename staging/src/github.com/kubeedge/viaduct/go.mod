@@ -1,6 +1,6 @@
 module github.com/kubeedge/viaduct
 
-go 1.19
+go 1.20
 
 require (
 	github.com/golang/mock v1.5.0

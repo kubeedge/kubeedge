@@ -31,6 +31,7 @@ func (f WithoutConversionCodecFactory) SupportedMediaTypes() []runtime.Serialize
 			EncodesAsText:    true,
 			Serializer:       json.NewSerializerWithOptions(json.DefaultMetaFactory, f.creator, f.typer, json.SerializerOptions{Pretty: false}),
 			PrettySerializer: json.NewSerializerWithOptions(json.DefaultMetaFactory, f.creator, f.typer, json.SerializerOptions{Pretty: true}),
+			StrictSerializer: json.NewSerializerWithOptions(json.DefaultMetaFactory, f.creator, f.typer, json.SerializerOptions{Strict: true}),
 			StreamSerializer: &runtime.StreamSerializerInfo{
 				EncodesAsText: true,
 				Serializer:    json.NewSerializerWithOptions(json.DefaultMetaFactory, f.creator, f.typer, json.SerializerOptions{Pretty: false}),

@@ -9,9 +9,9 @@ import (
 	"github.com/kubeedge/Template/device"
 	"github.com/kubeedge/Template/pkg/common"
 	"github.com/kubeedge/Template/pkg/config"
+	"github.com/kubeedge/Template/pkg/grpcclient"
 	"github.com/kubeedge/Template/pkg/grpcserver"
 	"github.com/kubeedge/Template/pkg/httpserver"
-	"github.com/kubeedge/Template/pkg/util/grpcclient"
 	"github.com/kubeedge/Template/pkg/util/parse"
 )
 
@@ -50,7 +50,7 @@ func main() {
 	// if dev init mode is register, mapper's dev will init when registry to edgecore
 	if c.DevInit.Mode != common.DevInitModeRegister {
 		klog.Infoln("======dev init mode is not register, will register to edgecore")
-		if _, _, err = grpcclient.RegisterMapper(&c, false); err != nil {
+		if _, _, err = grpcclient.RegisterMapper(false); err != nil {
 			klog.Fatal(err)
 		}
 		klog.Infoln("registerMapper finished")

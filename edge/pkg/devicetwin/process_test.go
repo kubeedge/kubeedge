@@ -22,7 +22,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/astaxie/beego/orm"
+	"github.com/beego/beego/orm"
 	"github.com/golang/mock/gomock"
 
 	"github.com/kubeedge/beehive/pkg/common"
