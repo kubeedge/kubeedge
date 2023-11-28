@@ -155,6 +155,24 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 						Influxdb2ClientConfig: clientconfig,
 						Influxdb2DataConfig:   dataconfig,
 					}
+				case "redis":
+					clientConfig, err := json.Marshal(pptv.PushMethod.DBMethod.Redis.RedisClientConfig)
+					if err != nil {
+						klog.Errorf("err: %+v", err)
+						return nil
+					}
+					dbconfig = common.DBConfig{
+						RedisClientConfig: clientConfig,
+					}
+				case "tdengine":
+					clientConfig, err := json.Marshal(pptv.PushMethod.DBMethod.Tdengine.TdEngineClientConfig)
+					if err != nil {
+						klog.Errorf("err: %+v", err)
+						return nil
+					}
+					dbconfig = common.DBConfig{
+						TDEngineClientConfig: clientConfig,
+					}
 				}
 			}
 			// get pushMethod filed by grpc device instance
@@ -176,50 +194,6 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 					klog.Errorf("err: %+v", err)
 					return nil
 				}
-				dbconfig = common.DBConfig{
-					Influxdb2ClientConfig: clientconfig,
-					Influxdb2DataConfig:   dataconfig,
-				}
-			case "redis":
-				clientConfig, err := json.Marshal(pptv.PushMethod.DBMethod.Redis.RedisClientConfig)
-				if err != nil {
-					klog.Errorf("err: %+v", err)
-					return nil
-				}
-				dbconfig = common.DBConfig{
-					RedisClientConfig: clientConfig,
-				}
-			case "tdengine":
-				clientConfig, err := json.Marshal(pptv.PushMethod.DBMethod.Tdengine.TdEngineClientConfig)
-				if err != nil {
-					klog.Errorf("err: %+v", err)
-					return nil
-				}
-				dbconfig = common.DBConfig{
-					TDEngineClientConfig: clientConfig,
-				}
-			}
-		}
-
-		// get pushMethod filed by grpc device instance
-		pushMethodName, err := getPushMethodFromGrpc(pptv)
-		if err != nil {
-			klog.Errorf("err: %+v", err)
-			return nil
-		}
-		var pushMethod []byte
-		switch pushMethodName {
-		case "http":
-			pushMethod, err = json.Marshal(pptv.PushMethod.Http)
-			if err != nil {
-				klog.Errorf("err: %+v", err)
-				return nil
-			}
-		case "mqtt":
-			pushMethod, err = json.Marshal(pptv.PushMethod.Mqtt)
-			if err != nil {
-				klog.Errorf("err: %+v", err)
-				return nil
 			}
 		}
 
