@@ -85,35 +85,35 @@ func newInitOptions() *types.InitOptions {
 }
 
 func addInitOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
-	cmd.Flags().StringVar(&initOpts.KubeEdgeVersion, types.KubeEdgeVersion, initOpts.KubeEdgeVersion,
+	cmd.Flags().StringVar(&initOpts.KubeEdgeVersion, types.FlagNameKubeEdgeVersion, initOpts.KubeEdgeVersion,
 		"Use this key to set the default image tag")
 
-	cmd.Flags().StringVar(&initOpts.AdvertiseAddress, types.AdvertiseAddress, initOpts.AdvertiseAddress,
+	cmd.Flags().StringVar(&initOpts.AdvertiseAddress, types.FlagNameAdvertiseAddress, initOpts.AdvertiseAddress,
 		"Use this key to set IPs in cloudcore's certificate SubAltNames field. eg: 10.10.102.78,10.10.102.79")
 
-	cmd.Flags().StringVar(&initOpts.KubeConfig, types.KubeConfig, initOpts.KubeConfig,
+	cmd.Flags().StringVar(&initOpts.KubeConfig, types.FlagNameKubeConfig, initOpts.KubeConfig,
 		"Use this key to set kube-config path, eg: $HOME/.kube/config")
 
-	cmd.Flags().StringVar(&initOpts.Manifests, types.Manifests, initOpts.Manifests,
+	cmd.Flags().StringVar(&initOpts.Manifests, types.FlagNameManifests, initOpts.Manifests,
 		"Allow appending file directories of k8s resources to keadm, separated by commas")
 
-	cmd.Flags().StringVarP(&initOpts.Manifests, types.Files, "f", initOpts.Manifests,
+	cmd.Flags().StringVarP(&initOpts.Manifests, types.FlagNameFiles, "f", initOpts.Manifests,
 		"Allow appending file directories of k8s resources to keadm, separated by commas")
 
-	cmd.Flags().BoolVarP(&initOpts.DryRun, types.DryRun, "d", initOpts.DryRun,
+	cmd.Flags().BoolVarP(&initOpts.DryRun, types.FlagNameDryRun, "d", initOpts.DryRun,
 		"Print the generated k8s resources on the stdout, not actual execute. Always use in debug mode")
 
-	cmd.Flags().StringVar(&initOpts.ExternalHelmRoot, types.ExternalHelmRoot, initOpts.ExternalHelmRoot,
+	cmd.Flags().StringVar(&initOpts.ExternalHelmRoot, types.FlagNameExternalHelmRoot, initOpts.ExternalHelmRoot,
 		"Add external helm root path to keadm.")
 }
 
 func addHelmValueOptionsFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
-	cmd.Flags().StringArrayVar(&initOpts.Sets, "set", []string{}, "Set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
-	cmd.Flags().StringVar(&initOpts.Profile, "profile", initOpts.Profile, fmt.Sprintf("Set profile on the command line (iptablesMgrMode=external or version=v%s)", types.DefaultKubeEdgeVersion))
+	cmd.Flags().StringArrayVar(&initOpts.Sets, types.FlagNameSet, []string{}, "Set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
+	cmd.Flags().StringVar(&initOpts.Profile, types.FlagNameProfile, initOpts.Profile, fmt.Sprintf("Set profile on the command line (iptablesMgrMode=external or version=v%s)", types.DefaultKubeEdgeVersion))
 }
 
 func addForceOptionsFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
-	cmd.Flags().BoolVar(&initOpts.Force, types.Force, initOpts.Force,
+	cmd.Flags().BoolVar(&initOpts.Force, types.FlagNameForce, initOpts.Force,
 		"Forced installing the cloud components without waiting.")
 }
 

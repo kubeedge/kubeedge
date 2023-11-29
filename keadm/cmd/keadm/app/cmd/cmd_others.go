@@ -87,7 +87,7 @@ func NewKubeedgeCommand() *cobra.Command {
 
 	// beta cmds
 	cmds.AddCommand(beta.NewBeta())
-	cmds.AddCommand(edge.NewEdgeUpgrade())
+	cmds.AddCommand(NewUpgradeCommand())
 
 	cmds.AddCommand(edge.NewEdgeRollback())
 

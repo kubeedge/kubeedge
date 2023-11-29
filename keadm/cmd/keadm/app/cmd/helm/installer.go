@@ -24,21 +24,13 @@ import (
 )
 
 const (
-	CloudCoreHelmComponent = "cloudcore"
-	ChartsSubDir           = "charts"
-
 	DefaultBaseHelmDir   = ""
 	DefaultAddonsHelmDir = "addons"
-	DefaultProfilesDir   = "profiles"
+
 	// DefaultProfileFilename is the name of the default profile yaml file.
 	DefaultProfileFilename = "version.yaml"
-	DefaultHelmValuesPath  = "values.yaml"
 
 	DefaultHelmTimeout = time.Duration(60 * time.Second)
-
-	DefaultHelmInstall  = true
-	DefaultHelmWait     = true
-	DefaultHelmCreateNs = true
 
 	VersionProfileKey           = "version"
 	IptablesMgrProfileKey       = "iptablesmgr"
@@ -223,8 +215,8 @@ func (cu *KubeCloudHelmInstTool) buildRenderer(baseHelmRoot string) (*Renderer, 
 	if cu.existsProfile && cu.isInnerProfile() {
 		switch cu.ProfileKey {
 		case VersionProfileKey, IptablesMgrProfileKey, ControllerManagerProfileKey:
-			componentName = CloudCoreHelmComponent
-			subDir = fmt.Sprintf("%s/%s", ChartsSubDir, CloudCoreHelmComponent)
+			componentName = cloudCoreHelmComponent
+			subDir = fmt.Sprintf("%s/%s", dirCharts, cloudCoreHelmComponent)
 		// we can implement edgemesh here later.
 		default:
 			// By default, will search charts in addons dir.
@@ -298,10 +290,10 @@ func (cu *KubeCloudHelmInstTool) runHelmInstall(r *Renderer) (*release.Release, 
 		helmInstall.Namespace = cu.Namespace
 		// --force would not wait.
 		if !cu.Force {
-			helmInstall.Wait = DefaultHelmWait
+			helmInstall.Wait = defaultHelmWait
 			helmInstall.Timeout = DefaultHelmTimeout
 		}
-		helmInstall.CreateNamespace = DefaultHelmCreateNs
+		helmInstall.CreateNamespace = defaultHelmCreateNs
 		helmInstall.ReleaseName = r.componentName
 
 		rel, err := helmInstall.Run(r.chart, r.profileValsMap)
@@ -317,7 +309,7 @@ func (cu *KubeCloudHelmInstTool) runHelmInstall(r *Renderer) (*release.Release, 
 	helmUpgrade.Namespace = cu.Namespace
 	// --force would not wait.
 	if !cu.Force {
-		helmUpgrade.Wait = DefaultHelmWait
+		helmUpgrade.Wait = defaultHelmWait
 		helmUpgrade.Timeout = DefaultHelmTimeout
 	}
 
@@ -340,7 +332,7 @@ func (cu *KubeCloudHelmInstTool) TearDown() error {
 
 func (cu *KubeCloudHelmInstTool) checkProfile(baseHelmRoot string) error {
 	// read external profiles
-	validProfiles, err := cu.readProfiles(baseHelmRoot, DefaultProfilesDir)
+	validProfiles, err := cu.readProfiles(baseHelmRoot, dirProfiles)
 	if err != nil {
 		return ErrListProfiles
 	}
@@ -499,9 +491,9 @@ func builtinProfileToFilename(name string) string {
 func loadValues(chartsDir string, profileKey string, existsProfile bool) (string, error) {
 	var path string
 	if existsProfile {
-		path = strings.Join([]string{DefaultProfilesDir, builtinProfileToFilename(profileKey)}, "/")
+		path = strings.Join([]string{dirProfiles, builtinProfileToFilename(profileKey)}, "/")
 	} else {
-		path = strings.Join([]string{profileKey, DefaultHelmValuesPath}, "/")
+		path = strings.Join([]string{profileKey, valuesFileName}, "/")
 	}
 	by, err := fs.ReadFile(kecharts.BuiltinOrDir(chartsDir), path)
 	if err != nil {

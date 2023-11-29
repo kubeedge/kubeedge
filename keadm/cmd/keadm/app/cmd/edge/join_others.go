@@ -43,39 +43,39 @@ import (
 )
 
 func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
-	cmd.Flags().StringVar(&joinOptions.KubeEdgeVersion, common.KubeEdgeVersion, joinOptions.KubeEdgeVersion,
+	cmd.Flags().StringVar(&joinOptions.KubeEdgeVersion, common.FlagNameKubeEdgeVersion, joinOptions.KubeEdgeVersion,
 		"Use this key to download and use the required KubeEdge version")
-	cmd.Flags().Lookup(common.KubeEdgeVersion).NoOptDefVal = joinOptions.KubeEdgeVersion
+	cmd.Flags().Lookup(common.FlagNameKubeEdgeVersion).NoOptDefVal = joinOptions.KubeEdgeVersion
 
-	cmd.Flags().StringVar(&joinOptions.CGroupDriver, common.CGroupDriver, joinOptions.CGroupDriver,
+	cmd.Flags().StringVar(&joinOptions.CGroupDriver, common.FlagNameCGroupDriver, joinOptions.CGroupDriver,
 		"CGroupDriver that uses to manipulate cgroups on the host (cgroupfs or systemd), the default value is cgroupfs")
 
-	cmd.Flags().StringVar(&joinOptions.CertPath, common.CertPath, joinOptions.CertPath,
+	cmd.Flags().StringVar(&joinOptions.CertPath, common.FlagNameCertPath, joinOptions.CertPath,
 		fmt.Sprintf("The certPath used by edgecore, the default value is %s", common.DefaultCertPath))
 
-	cmd.Flags().StringVarP(&joinOptions.CloudCoreIPPort, common.CloudCoreIPPort, "e", joinOptions.CloudCoreIPPort,
+	cmd.Flags().StringVarP(&joinOptions.CloudCoreIPPort, common.FlagNameCloudCoreIPPort, "e", joinOptions.CloudCoreIPPort,
 		"IP:Port address of KubeEdge CloudCore")
 
-	if err := cmd.MarkFlagRequired(common.CloudCoreIPPort); err != nil {
+	if err := cmd.MarkFlagRequired(common.FlagNameCloudCoreIPPort); err != nil {
 		fmt.Printf("mark flag required failed with error: %v\n", err)
 	}
 
-	cmd.Flags().StringVarP(&joinOptions.EdgeNodeName, common.EdgeNodeName, "i", joinOptions.EdgeNodeName,
+	cmd.Flags().StringVarP(&joinOptions.EdgeNodeName, common.FlagNameEdgeNodeName, "i", joinOptions.EdgeNodeName,
 		"KubeEdge Node unique identification string, if flag not used then the command will generate a unique id on its own")
 
-	cmd.Flags().StringVarP(&joinOptions.RemoteRuntimeEndpoint, common.RemoteRuntimeEndpoint, "p", joinOptions.RemoteRuntimeEndpoint,
+	cmd.Flags().StringVarP(&joinOptions.RemoteRuntimeEndpoint, common.FlagNameRemoteRuntimeEndpoint, "p", joinOptions.RemoteRuntimeEndpoint,
 		"KubeEdge Edge Node RemoteRuntimeEndpoint string.")
 
-	cmd.Flags().StringVarP(&joinOptions.Token, common.Token, "t", joinOptions.Token,
+	cmd.Flags().StringVarP(&joinOptions.Token, common.FlagNameToken, "t", joinOptions.Token,
 		"Used for edge to apply for the certificate")
 
-	cmd.Flags().StringVarP(&joinOptions.CertPort, common.CertPort, "s", joinOptions.CertPort,
+	cmd.Flags().StringVarP(&joinOptions.CertPort, common.FlagNameCertPort, "s", joinOptions.CertPort,
 		"The port where to apply for the edge certificate")
 
-	cmd.Flags().StringVar(&joinOptions.TarballPath, common.TarballPath, joinOptions.TarballPath,
+	cmd.Flags().StringVar(&joinOptions.TarballPath, common.FlagNameTarballPath, joinOptions.TarballPath,
 		"Use this key to set the temp directory path for KubeEdge tarball, if not exist, download it")
 
-	cmd.Flags().StringSliceVarP(&joinOptions.Labels, common.Labels, "l", joinOptions.Labels,
+	cmd.Flags().StringSliceVarP(&joinOptions.Labels, common.FlagNameLabels, "l", joinOptions.Labels,
 		`Use this key to set the customized labels for node, you can input customized labels like key1=value1,key2=value2`)
 
 	// FIXME: cleanup this code when the static pod mqtt broker no longer needs to be compatible
@@ -86,7 +86,7 @@ func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
 		klog.Warning("falied to mark the flag with-mqtt to deprecated, err: %v", err)
 	}
 
-	cmd.Flags().StringVar(&joinOptions.ImageRepository, common.ImageRepository, joinOptions.ImageRepository,
+	cmd.Flags().StringVar(&joinOptions.ImageRepository, common.FlagNameImageRepository, joinOptions.ImageRepository,
 		`Use this key to decide which image repository to pull images from`,
 	)
 

@@ -214,10 +214,10 @@ func cleanDirectories(isEdgeNode bool) error {
 }
 
 func addResetFlags(cmd *cobra.Command, resetOpts *common.ResetOptions) {
-	cmd.Flags().StringVar(&resetOpts.Kubeconfig, common.KubeConfig, resetOpts.Kubeconfig,
+	cmd.Flags().StringVar(&resetOpts.Kubeconfig, common.FlagNameCloudCoreIPPort, resetOpts.Kubeconfig,
 		"Use this key to set kube-config path, eg: $HOME/.kube/config")
 	cmd.Flags().BoolVar(&resetOpts.Force, "force", resetOpts.Force,
 		"Reset the node without prompting for confirmation")
-	cmd.Flags().StringVar(&resetOpts.Endpoint, common.RemoteRuntimeEndpoint, resetOpts.Endpoint,
+	cmd.Flags().StringVar(&resetOpts.Endpoint, common.FlagNameRemoteRuntimeEndpoint, resetOpts.Endpoint,
 		"Use this key to set container runtime endpoint")
 }

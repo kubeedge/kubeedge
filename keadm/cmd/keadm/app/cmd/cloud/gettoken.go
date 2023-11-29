@@ -48,7 +48,7 @@ func NewGettoken() *cobra.Command {
 }
 
 func addGettokenFlags(cmd *cobra.Command, gettokenOptions *common.GettokenOptions) {
-	cmd.Flags().StringVar(&gettokenOptions.Kubeconfig, common.KubeConfig, gettokenOptions.Kubeconfig,
+	cmd.Flags().StringVar(&gettokenOptions.Kubeconfig, common.FlagNameKubeConfig, gettokenOptions.Kubeconfig,
 		"Use this key to set kube-config path, eg: $HOME/.kube/config")
 }
 

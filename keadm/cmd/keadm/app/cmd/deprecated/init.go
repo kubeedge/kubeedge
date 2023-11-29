@@ -76,38 +76,48 @@ func NewDeprecatedCloudInit() *cobra.Command {
 	return cmd
 }
 
+// InitBaseOptions has the kubeedge cloud deprecated init base information filled by CLI
+type InitBaseOptions struct {
+	KubeEdgeVersion  string
+	KubeConfig       string
+	Master           string
+	AdvertiseAddress string
+	DNS              string
+	TarballPath      string
+}
+
 // newInitOptions will initialise new instance of options everytime
-func newInitOptions() *types.InitBaseOptions {
-	opts := &types.InitBaseOptions{}
+func newInitOptions() *InitBaseOptions {
+	opts := &InitBaseOptions{}
 	opts.KubeConfig = types.DefaultKubeConfig
 	return opts
 }
 
-func addInitFlags(cmd *cobra.Command, initOpts *types.InitBaseOptions) {
-	cmd.Flags().StringVar(&initOpts.KubeEdgeVersion, types.KubeEdgeVersion, initOpts.KubeEdgeVersion,
+func addInitFlags(cmd *cobra.Command, initOpts *InitBaseOptions) {
+	cmd.Flags().StringVar(&initOpts.KubeEdgeVersion, types.FlagNameKubeEdgeVersion, initOpts.KubeEdgeVersion,
 		"Use this key to download and use the required KubeEdge version")
-	cmd.Flags().Lookup(types.KubeEdgeVersion).NoOptDefVal = initOpts.KubeEdgeVersion
+	cmd.Flags().Lookup(types.FlagNameKubeEdgeVersion).NoOptDefVal = initOpts.KubeEdgeVersion
 
-	cmd.Flags().StringVar(&initOpts.KubeConfig, types.KubeConfig, initOpts.KubeConfig,
+	cmd.Flags().StringVar(&initOpts.KubeConfig, types.FlagNameKubeConfig, initOpts.KubeConfig,
 		"Use this key to set kube-config path, eg: $HOME/.kube/config")
 
-	cmd.Flags().StringVar(&initOpts.Master, types.Master, initOpts.Master,
+	cmd.Flags().StringVar(&initOpts.Master, types.FlagNameMaster, initOpts.Master,
 		"Use this key to set K8s master address, eg: http://127.0.0.1:8080")
 
-	cmd.Flags().StringVar(&initOpts.AdvertiseAddress, types.AdvertiseAddress, initOpts.AdvertiseAddress,
+	cmd.Flags().StringVar(&initOpts.AdvertiseAddress, types.FlagNameAdvertiseAddress, initOpts.AdvertiseAddress,
 		"Use this key to set IPs in cloudcore's certificate SubAltNames field. eg: 10.10.102.78,10.10.102.79")
 
-	cmd.Flags().StringVar(&initOpts.DNS, types.DomainName, initOpts.DNS,
+	cmd.Flags().StringVar(&initOpts.DNS, types.FlagNameDomainName, initOpts.DNS,
 		"Use this key to set domain names in cloudcore's certificate SubAltNames field. eg: www.cloudcore.cn,www.kubeedge.cn")
 
-	cmd.Flags().StringVar(&initOpts.TarballPath, types.TarballPath, initOpts.TarballPath,
+	cmd.Flags().StringVar(&initOpts.TarballPath, types.FlagNameTarballPath, initOpts.TarballPath,
 		"Use this key to set the temp directory path for KubeEdge tarball, if not exist, download it")
 }
 
 // Add2CloudToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
-func Add2CloudToolsList(toolList map[string]types.ToolsInstaller, flagData map[string]types.FlagData, initOptions *types.InitBaseOptions) error {
+func Add2CloudToolsList(toolList map[string]types.ToolsInstaller, flagData map[string]types.FlagData, initOptions *InitBaseOptions) error {
 	var kubeVer string
-	flgData, ok := flagData[types.KubeEdgeVersion]
+	flgData, ok := flagData[types.FlagNameKubeEdgeVersion]
 	if ok {
 		kubeVer = util.CheckIfAvailable(flgData.Val.(string), flgData.DefVal.(string))
 	}

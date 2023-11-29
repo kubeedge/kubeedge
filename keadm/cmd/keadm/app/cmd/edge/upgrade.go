@@ -46,9 +46,9 @@ func NewEdgeUpgrade() *cobra.Command {
 	upgradeOptions := newUpgradeOptions()
 
 	cmd := &cobra.Command{
-		Use:   "upgrade",
-		Short: "Upgrade edge component. Upgrade the edge node to the desired version.",
-		Long:  "Upgrade edge component. Upgrade the edge node to the desired version.",
+		Use:   "edge",
+		Short: "Upgrade edge components",
+		Long:  "Upgrade edge components. Upgrade the edge node to the desired version.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// upgrade edgecore
 			return upgradeOptions.upgrade()
