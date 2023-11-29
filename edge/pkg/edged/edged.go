@@ -117,6 +117,7 @@ func (e *edged) Enable() bool {
 	return edgedconfig.Config.Enable
 }
 
+// Start starts edged module
 func (e *edged) Start() {
 	klog.Info("Starting edged...")
 
