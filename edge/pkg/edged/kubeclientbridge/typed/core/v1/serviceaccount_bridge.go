@@ -50,4 +50,3 @@ func (c *ServiceAccountsBridge) Delete(ctx context.Context, podUID string, opts 
 	c.MetaClient.ServiceAccountToken().DeleteServiceAccountToken(types.UID(podUID))
 	return nil
 }
-
