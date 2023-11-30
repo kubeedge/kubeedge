@@ -7,6 +7,3 @@ common:
   protocol: # TODO add your protocol name
   address: 127.0.0.1
   edgecore_sock: /etc/kubeedge/dmi.sock
-dev_init:
-  mode: register
-

@@ -8,11 +8,14 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/kubeedge/Template/pkg/config"
 	dmiapi "github.com/kubeedge/Template/pkg/dmi-api"
 )
 
 // ReportDeviceStatus report device status to edgecore
 func ReportDeviceStatus(request *dmiapi.ReportDeviceStatusRequest) error {
+	cfg := config.Cfg()
+
 	conn, err := grpc.Dial(cfg.Common.EdgeCoreSock,
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
