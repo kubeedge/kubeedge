@@ -1,3 +1,7 @@
+* [v1.14.4](#v1144)
+    * [Downloads for v1.14.4](#downloads-for-v1144)
+    * [KubeEdge v1.14.4 Release Notes](#kubeedge-v1144-release-notes)
+        * [Changelog since v1.14.3](#changelog-since-v1143)
 * [v1.14.3](#v1143)
     * [Downloads for v1.14.3](#downloads-for-v1143)
     * [KubeEdge v1.14.3 Release Notes](#kubeedge-v1143-release-notes)
@@ -18,6 +22,24 @@
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
         * [Other Notable Changes](#other-notable-changes)
         * [Bug Fixes](#bug-fixes)
+
+# v1.14.4
+
+## Downloads for v1.14.4
+
+Download v1.14.4 in the [v1.14.4 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.14.4).
+
+## KubeEdge v1.14.4 Release Notes
+
+### Changelog since v1.14.3
+
+- Fix the bug in local-up mode that causes cni to not launch. ([#5125](https://github.com/kubeedge/kubeedge/pull/5125), [@ZhengXinwei-F](https://github.com/ZhengXinwei-F))
+- Resolve the deployment order dependency between mapper and device. ([#5148](https://github.com/kubeedge/kubeedge/pull/5148), [@luomengY](https://github.com/luomengY))
+- Fix MetaServer panic with set StrictSerializer when handling create and update. ([#5184](https://github.com/kubeedge/kubeedge/pull/5184), [@Windrow14](https://github.com/Windrow14))
+- Remove unnecessary pid namespace config in copy-resource. ([#5192](https://github.com/kubeedge/kubeedge/pull/5192), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Fix error logs when nodes repeatedly join different node groups. ([#5212](https://github.com/kubeedge/kubeedge/pull/5212), [@lishaokai1995](https://github.com/lishaokai1995), [@Onion-of-dreamed](https://github.com/Onion-of-dreamed))
+- Bump Kubernetes to the newest patch version 1.24.17. ([#5227](https://github.com/kubeedge/kubeedge/pull/5227), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Fix serviceaccount token not being deleted in edge DB. ([#5227](https://github.com/kubeedge/kubeedge/pull/5227), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
 
 # v1.14.3
 
