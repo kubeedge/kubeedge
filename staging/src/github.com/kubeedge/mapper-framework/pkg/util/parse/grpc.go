@@ -35,6 +35,8 @@ func getDBMethodFromGrpc(visitor *dmiapi.DeviceProperty) (string, error) {
 	// TODO add more dbMethod
 	if visitor.PushMethod.DBMethod.Influxdb2 != nil {
 		return "influx", nil
+	} else if visitor.PushMethod.DBMethod.OpenGemini != nil {
+		return "openGemini", nil
 	}
 	return "", errors.New("can not parse dbMethod")
 }
