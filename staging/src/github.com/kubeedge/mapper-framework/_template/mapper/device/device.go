@@ -19,8 +19,8 @@ import (
 	httpMethod "github.com/kubeedge/Template/data/publish/http"
 	mqttMethod "github.com/kubeedge/Template/data/publish/mqtt"
 	"github.com/kubeedge/Template/driver"
+	dmiapi "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1beta1"
 	"github.com/kubeedge/mapper-framework/pkg/common"
-	"github.com/kubeedge/mapper-framework/pkg/config"
 	"github.com/kubeedge/mapper-framework/pkg/global"
 	"github.com/kubeedge/mapper-framework/pkg/util/parse"
 )
@@ -38,6 +38,8 @@ var (
 	devPanel *DevPanel
 	once     sync.Once
 )
+
+var ErrEmptyData = errors.New("device or device model list is empty")
 
 // NewDevPanel init and return devPanel
 func NewDevPanel() *DevPanel {
@@ -356,25 +358,35 @@ func setVisitor(visitorConfig *driver.VisitorConfig, twin *common.Twin, dev *dri
 }
 
 // DevInit initialize the device
-func (d *DevPanel) DevInit(cfg *config.Config) error {
-	devs := make(map[string]*common.DeviceInstance)
+func (d *DevPanel) DevInit(deviceList []*dmiapi.Device, deviceModelList []*dmiapi.DeviceModel) error {
+	if len(deviceList) == 0 || len(deviceModelList) == 0 {
+		return ErrEmptyData
+	}
 
-	switch cfg.DevInit.Mode {
-	//case common.DevInitModeConfigmap:
-	//	if err := parse.Parse(cfg.DevInit.Configmap, devs, d.models, d.protocols); err != nil {
-	//		return err
-	//	}
-	case common.DevInitModeRegister:
-		if err := parse.ParseByUsingRegister(devs, d.models); err != nil {
+	for i := range deviceModelList {
+		model := deviceModelList[i]
+		cur := parse.ParseDeviceModelFromGrpc(model)
+		d.models[model.Name] = cur
+	}
+
+	for i := range deviceList {
+		device := deviceList[i]
+		commonModel := d.models[device.Spec.DeviceModelReference]
+		protocol, err := parse.BuildProtocolFromGrpc(device)
+		if err != nil {
 			return err
 		}
+		instance, err := parse.ParseDeviceFromGrpc(device, &commonModel)
+		if err != nil {
+			return err
+		}
+		instance.PProtocol = protocol
+
+		cur := new(driver.CustomizedDev)
+		cur.Instance = *instance
+		d.devices[instance.ID] = cur
 	}
 
-	for key, deviceInstance := range devs {
-		cur := new(driver.CustomizedDev)
-		cur.Instance = *deviceInstance
-		d.devices[key] = cur
-	}
 	return nil
 }
 
@@ -411,6 +423,7 @@ func (d *DevPanel) UpdateDevTwins(deviceID string, twins []common.Twin) error {
 	dev.Instance.Twins = twins
 	model := d.models[dev.Instance.Model]
 	d.UpdateDev(&model, &dev.Instance)
+
 	return nil
 }
 
