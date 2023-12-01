@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cm-mapper
+data:
+  configData: |
+    grpc_server:
+      socket_path: /etc/kubeedge/Template.sock
+    common:
+      name: Template-mapper
+      version: v1.13.0
+      api_version: v1.0.0
+      protocol: # TODO add your protocol name
+      address: 127.0.0.1
+      edgecore_sock: /etc/kubeedge/dmi.sock
