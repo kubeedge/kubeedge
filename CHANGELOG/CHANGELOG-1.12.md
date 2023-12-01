@@ -1,3 +1,7 @@
+* [v1.12.6](#v1126)
+    * [Downloads for v1.12.6](#downloads-for-v1126)
+    * [KubeEdge v1.12.6 Release Notes](#kubeedge-v1126-release-notes)
+        * [Changelog since v1.12.5](#changelog-since-v1125)
 * [v1.12.5](#v1125)
     * [Downloads for v1.12.5](#downloads-for-v1125)
     * [KubeEdge v1.12.5 Release Notes](#kubeedge-v1125-release-notes)
@@ -26,6 +30,22 @@
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
         * [Other Notable Changes](#other-notable-changes)
         * [Bug Fixes](#bug-fixes)
+
+# v1.12.6
+
+## Downloads for v1.12.6
+
+Download v1.12.6 in the [v1.12.6 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.12.6).
+
+## KubeEdge v1.12.6 Release Notes
+
+### Changelog since v1.12.5
+
+- Resolve the deployment order dependency between mapper and device. ([#5150](https://github.com/kubeedge/kubeedge/pull/5150), [@luomengY](https://github.com/luomengY))
+- Fix copy resources from the image throws nil runtimg error. ([#5179](https://github.com/kubeedge/kubeedge/pull/5179), [@WillardHu](https://github.com/WillardHu))
+- Fix error logs when nodes repeatedly join different node groups. ([#5210](https://github.com/kubeedge/kubeedge/pull/5210), [@lishaokai1995](https://github.com/lishaokai1995), [@Onion-of-dreamed](https://github.com/Onion-of-dreamed))
+- Bump Kubernetes to the newest patch version 1.22.17. ([#5214](https://github.com/kubeedge/kubeedge/pull/5214), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Fix serviceaccount token not being deleted in edge DB. ([#5214](https://github.com/kubeedge/kubeedge/pull/5214), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
 
 # v1.12.5
 
