@@ -153,9 +153,6 @@ const (
 	DefaultMosquittoContainerName = "mqtt-kubeedge"
 	DeployMqttContainerEnv        = "DEPLOY_MQTT_CONTAINER"
 
-	// DefaultManifestsDir edge node default static pod path
-	DefaultManifestsDir = "/etc/kubeedge/manifests"
-
 	// EdgeHub
 	DefaultWebSocketPort = 10000
 	DefaultQuicPort      = 10001
