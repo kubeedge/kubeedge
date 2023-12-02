@@ -11,9 +11,9 @@ import (
 
 	"github.com/kubeedge/Template/driver"
 	"github.com/kubeedge/Template/pkg/common"
-	dmiapi "github.com/kubeedge/Template/pkg/dmi-api"
 	"github.com/kubeedge/Template/pkg/grpcclient"
 	"github.com/kubeedge/Template/pkg/util/parse"
+	dmiapi "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1beta1"
 )
 
 type TwinData struct {
