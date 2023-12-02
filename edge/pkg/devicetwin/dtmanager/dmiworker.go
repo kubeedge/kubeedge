@@ -35,6 +35,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1"
 	pb "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1beta1"
+	"github.com/kubeedge/kubeedge/pkg/util"
 )
 
 // TwinWorker deal twin event
@@ -120,10 +121,11 @@ func (dw *DMIWorker) dealMetaDeviceOperation(context *dtcontext.DTContext, resou
 		if err != nil {
 			return fmt.Errorf("invalid message content with err: %+v", err)
 		}
+		deviceID := util.GetResourceID(device.Namespace, device.Name)
 		switch message.GetOperation() {
 		case model.InsertOperation:
 			dw.dmiCache.DeviceMu.Lock()
-			dw.dmiCache.DeviceList[device.Name] = &device
+			dw.dmiCache.DeviceList[deviceID] = &device
 			dw.dmiCache.DeviceMu.Unlock()
 			err = dmiclient.DMIClientsImp.RegisterDevice(&device)
 			if err != nil {
@@ -137,11 +139,11 @@ func (dw *DMIWorker) dealMetaDeviceOperation(context *dtcontext.DTContext, resou
 				return err
 			}
 			dw.dmiCache.DeviceMu.Lock()
-			delete(dw.dmiCache.DeviceList, device.Name)
+			delete(dw.dmiCache.DeviceList, deviceID)
 			dw.dmiCache.DeviceMu.Unlock()
 		case model.UpdateOperation:
 			dw.dmiCache.DeviceMu.Lock()
-			dw.dmiCache.DeviceList[device.Name] = &device
+			dw.dmiCache.DeviceList[deviceID] = &device
 			dw.dmiCache.DeviceMu.Unlock()
 			err = dmiclient.DMIClientsImp.UpdateDevice(&device)
 			if err != nil {
@@ -156,10 +158,11 @@ func (dw *DMIWorker) dealMetaDeviceOperation(context *dtcontext.DTContext, resou
 		if err != nil {
 			return fmt.Errorf("invalid message content with err: %+v", err)
 		}
+		dmID := util.GetResourceID(dm.Namespace, dm.Name)
 		switch message.GetOperation() {
 		case model.InsertOperation:
 			dw.dmiCache.DeviceModelMu.Lock()
-			dw.dmiCache.DeviceModelList[dm.Name] = &dm
+			dw.dmiCache.DeviceModelList[dmID] = &dm
 			dw.dmiCache.DeviceModelMu.Unlock()
 			err = dmiclient.DMIClientsImp.CreateDeviceModel(&dm)
 			if err != nil {
@@ -173,11 +176,11 @@ func (dw *DMIWorker) dealMetaDeviceOperation(context *dtcontext.DTContext, resou
 				return err
 			}
 			dw.dmiCache.DeviceModelMu.Lock()
-			delete(dw.dmiCache.DeviceModelList, dm.Name)
+			delete(dw.dmiCache.DeviceModelList, dmID)
 			dw.dmiCache.DeviceModelMu.Unlock()
 		case model.UpdateOperation:
 			dw.dmiCache.DeviceModelMu.Lock()
-			dw.dmiCache.DeviceModelList[dm.Name] = &dm
+			dw.dmiCache.DeviceModelList[dmID] = &dm
 			dw.dmiCache.DeviceModelMu.Unlock()
 			err = dmiclient.DMIClientsImp.UpdateDeviceModel(&dm)
 			if err != nil {
@@ -208,8 +211,9 @@ func (dw *DMIWorker) initDeviceModelInfoFromDB() {
 			klog.Errorf("fail to unmarshal device model info from db with err: %v", err)
 			return
 		}
+		deviceModelID := util.GetResourceID(deviceModel.Namespace, deviceModel.Name)
 		dw.dmiCache.DeviceModelMu.Lock()
-		dw.dmiCache.DeviceModelList[deviceModel.Name] = &deviceModel
+		dw.dmiCache.DeviceModelList[deviceModelID] = &deviceModel
 		dw.dmiCache.DeviceModelMu.Unlock()
 	}
 	klog.Infoln("success to init device model info from db")
@@ -228,8 +232,9 @@ func (dw *DMIWorker) initDeviceInfoFromDB() {
 			klog.Errorf("fail to unmarshal device info from db with err: %v", err)
 			return
 		}
+		deviceID := util.GetResourceID(device.Namespace, device.Name)
 		dw.dmiCache.DeviceMu.Lock()
-		dw.dmiCache.DeviceList[device.Name] = &device
+		dw.dmiCache.DeviceList[deviceID] = &device
 		dw.dmiCache.DeviceMu.Unlock()
 	}
 	klog.Infoln("success to init device info from db")

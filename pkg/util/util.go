@@ -150,3 +150,8 @@ func ConcatStrings(ss ...string) string {
 	}
 	return bff.String()
 }
+
+// GetResourceID return resource ID
+func GetResourceID(namespace, name string) string {
+	return namespace + "/" + name
+}
