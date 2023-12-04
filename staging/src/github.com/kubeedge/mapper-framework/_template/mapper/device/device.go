@@ -14,6 +14,8 @@ import (
 	"k8s.io/klog/v2"
 
 	dbInflux "github.com/kubeedge/Template/data/dbmethod/influxdb2"
+	dbRedis "github.com/kubeedge/Template/data/dbmethod/redis"
+	dbTdengine "github.com/kubeedge/Template/data/dbmethod/tdengine"
 	httpMethod "github.com/kubeedge/Template/data/publish/http"
 	mqttMethod "github.com/kubeedge/Template/data/publish/mqtt"
 	"github.com/kubeedge/Template/driver"
@@ -241,6 +243,94 @@ func dbHandler(ctx context.Context, twin *common.Twin, client *driver.Customized
 					}
 				case <-ctx.Done():
 					dbConfig.CloseSession(dbClient)
+					return
+				}
+			}
+		}()
+	case "redis":
+		dbConfig, err := dbRedis.NewDataBaseClient(twin.Property.PushMethod.DBMethod.DBConfig.RedisClientConfig)
+		if err != nil {
+			klog.Errorf("new database client error: %v", err)
+			return
+		}
+		err = dbConfig.InitDbClient()
+		if err != nil {
+			klog.Errorf("init redis database client err: %v", err)
+			return
+		}
+		reportCycle := time.Duration(twin.Property.ReportCycle)
+		if reportCycle == 0 {
+			reportCycle = 1 * time.Second
+		}
+		ticker := time.NewTicker(reportCycle)
+		go func() {
+			for {
+				select {
+				case <-ticker.C:
+					deviceData, err := client.GetDeviceData(visitorConfig)
+					if err != nil {
+						klog.Errorf("publish error: %v", err)
+						continue
+					}
+					sData, err := common.ConvertToString(deviceData)
+					if err != nil {
+						klog.Errorf("Failed to convert publish method data : %v", err)
+						continue
+					}
+					dataModel.SetValue(sData)
+					dataModel.SetTimeStamp()
+
+					err = dbConfig.AddData(dataModel)
+					if err != nil {
+						klog.Errorf("redis database add data error: %v", err)
+						return
+					}
+				case <-ctx.Done():
+					dbConfig.CloseSession()
+					return
+				}
+			}
+		}()
+	case "tdengine":
+		dbConfig, err := dbTdengine.NewDataBaseClient(twin.Property.PushMethod.DBMethod.DBConfig.TDEngineClientConfig)
+		if err != nil {
+			klog.Errorf("new database client error: %v", err)
+			return
+		}
+		err = dbConfig.InitDbClient()
+		if err != nil {
+			klog.Errorf("init database client err: %v", err)
+			return
+		}
+		reportCycle := time.Duration(twin.Property.ReportCycle)
+		if reportCycle == 0 {
+			reportCycle = 1 * time.Second
+		}
+		ticker := time.NewTicker(reportCycle)
+		go func() {
+			for {
+				select {
+				case <-ticker.C:
+					deviceData, err := client.GetDeviceData(visitorConfig)
+					if err != nil {
+						klog.Errorf("publish error: %v", err)
+						continue
+					}
+					sData, err := common.ConvertToString(deviceData)
+					if err != nil {
+						klog.Errorf("Failed to convert publish method data : %v", err)
+						continue
+					}
+					dataModel.SetValue(sData)
+					dataModel.SetTimeStamp()
+
+					err = dbConfig.AddData(dataModel)
+					if err != nil {
+						klog.Errorf("tdengine database add data error: %v", err)
+						return
+					}
+				case <-ctx.Done():
+					dbConfig.CloseSessio()
 					return
 				}
 			}

@@ -35,6 +35,10 @@ func getDBMethodFromGrpc(visitor *dmiapi.DeviceProperty) (string, error) {
 	// TODO add more dbMethod
 	if visitor.PushMethod.DBMethod.Influxdb2 != nil {
 		return "influx", nil
+	} else if visitor.PushMethod.DBMethod.Redis != nil {
+		return "redis", nil
+	} else if visitor.PushMethod.DBMethod.Tdengine != nil {
+		return "tdengine", nil
 	}
 	return "", errors.New("can not parse dbMethod")
 }
@@ -150,6 +154,24 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 					dbconfig = common.DBConfig{
 						Influxdb2ClientConfig: clientconfig,
 						Influxdb2DataConfig:   dataconfig,
+					}
+				case "redis":
+					clientConfig, err := json.Marshal(pptv.PushMethod.DBMethod.Redis.RedisClientConfig)
+					if err != nil {
+						klog.Errorf("err: %+v", err)
+						return nil
+					}
+					dbconfig = common.DBConfig{
+						RedisClientConfig: clientConfig,
+					}
+				case "tdengine":
+					clientConfig, err := json.Marshal(pptv.PushMethod.DBMethod.Tdengine.TdEngineClientConfig)
+					if err != nil {
+						klog.Errorf("err: %+v", err)
+						return nil
+					}
+					dbconfig = common.DBConfig{
+						TDEngineClientConfig: clientConfig,
 					}
 				}
 			}

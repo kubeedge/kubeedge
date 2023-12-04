@@ -600,6 +600,19 @@ spec:
                             data to database, please ensure that the mapper can access
                             the destination address.
                           properties:
+                            TDEngine:
+                              properties:
+                                TDEngineClientConfig:
+                                  description: tdengineClientConfig of tdengine database
+                                  properties:
+                                    addr:
+                                      description: addr of tdEngine database
+                                      type: string
+                                    dbName:
+                                      description: dbname of tdEngine database
+                                      type: string
+                                  type: object
+                              type: object
                             influxdb2:
                               description: method configuration for database
                               properties:
@@ -631,6 +644,25 @@ spec:
                                         type: string
                                       description: the tag of device data
                                       type: object
+                                  type: object
+                              type: object
+                            redis:
+                              properties:
+                                redisClientConfig:
+                                  description: RedisClientConfig of redis database
+                                  properties:
+                                    addr:
+                                      description: Addr of Redis database
+                                      type: string
+                                    db:
+                                      description: Db of Redis database
+                                      type: integer
+                                    minIdleConns:
+                                      description: MinIdleConns of Redis database
+                                      type: integer
+                                    poolsize:
+                                      description: Poolsize of Redis database
+                                      type: integer
                                   type: object
                               type: object
                           type: object

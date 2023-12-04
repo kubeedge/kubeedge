@@ -156,6 +156,10 @@ type DBMethodConfig struct {
 	// method configuration for database
 	// +optional
 	Influxdb2 *DBMethodInfluxdb2 `json:"influxdb2,omitempty"`
+	// +optional
+	Redis *DBMethodRedis `json:"redis,omitempty"`
+	// +optional
+	TDEngine *DBMethodTDEngine `json:"TDEngine,omitempty"`
 }
 
 type DBMethodInfluxdb2 struct {
@@ -189,6 +193,41 @@ type Influxdb2DataConfig struct {
 	// FieldKey of the user data
 	// +optional
 	FieldKey string `json:"fieldKey,omitempty"`
+}
+
+type DBMethodRedis struct {
+	// RedisClientConfig of redis database
+	// +optional
+	RedisClientConfig *RedisClientConfig `json:"redisClientConfig,omitempty"`
+}
+
+type RedisClientConfig struct {
+	// Addr of Redis database
+	// +optional
+	Addr string `json:"addr,omitempty"`
+	// Db of Redis database
+	// +optional
+	DB int `json:"db,omitempty"`
+	// Poolsize of Redis database
+	// +optional
+	Poolsize int `json:"poolsize,omitempty"`
+	// MinIdleConns of Redis database
+	// +optional
+	MinIdleConns int `json:"minIdleConns,omitempty"`
+}
+
+type DBMethodTDEngine struct {
+	// tdengineClientConfig of tdengine database
+	// +optional
+	TDEngineClientConfig *TDEngineClientConfig `json:"TDEngineClientConfig,omitempty"`
+}
+type TDEngineClientConfig struct {
+	// addr of tdEngine database
+	// +optional
+	Addr string `json:"addr,omitempty"`
+	// dbname of tdEngine database
+	// +optional
+	DBName string `json:"dbName,omitempty"`
 }
 
 type VisitorConfig struct {
