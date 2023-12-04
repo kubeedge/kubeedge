@@ -330,6 +330,23 @@ keadm_e2e:
 	tests/scripts/keadm_e2e.sh
 endif
 
+define CLOUD_EDGE_COMPATIBILITY_E2E_HELP_INFO
+# eadm e2e test.
+#
+# Example:
+#   make cloud_edge_compatibility_e2e
+#   make cloud_edge_compatibility_e2e HELP=y
+#
+endef
+.PHONY: cloud_edge_compatibility_e2e
+ifeq ($(HELP),y)
+cloud_edge_compatibility_e2e:
+	@echo "CLOUD_EDGE_COMPATIBILITY_E2E_HELP_INFO"
+else
+cloud_edge_compatibility_e2e:
+	tests/scripts/cloud_edge_compatibility_e2e.sh ${EDGECORE_VERSION}
+endif
+
 define CLEAN_HELP_INFO
 # Clean up the output of make.
 #
