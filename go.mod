@@ -20,7 +20,7 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/kubeedge/beehive v0.0.0
 	github.com/kubeedge/viaduct v0.0.0
-	github.com/kubernetes-csi/csi-lib-utils v0.6.1
+	github.com/kubernetes-csi/csi-lib-utils v0.11.0
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/onsi/gomega v1.27.7
 	github.com/prometheus/client_golang v1.15.1
