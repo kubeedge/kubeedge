@@ -31,8 +31,6 @@ type condValue struct {
 	isOr   bool
 	isNot  bool
 	isCond bool
-	isRaw  bool
-	sql    string
 }
 
 // Condition struct.
@@ -45,15 +43,6 @@ type Condition struct {
 func NewCondition() *Condition {
 	c := &Condition{}
 	return c
-}
-
-// Raw add raw sql to condition
-func (c Condition) Raw(expr string, sql string) *Condition {
-	if len(sql) == 0 {
-		panic(fmt.Errorf("<Condition.Raw> sql cannot empty"))
-	}
-	c.params = append(c.params, condValue{exprs: strings.Split(expr, ExprSep), sql: sql, isRaw: true})
-	return &c
 }
 
 // And add expression to condition

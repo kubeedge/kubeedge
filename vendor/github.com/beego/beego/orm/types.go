@@ -55,7 +55,7 @@ type Ormer interface {
 	// for example:
 	//  user := new(User)
 	//  id, err = Ormer.Insert(user)
-	//  user must be a pointer and Insert will set user's pk field
+	//  user must a pointer and Insert will set user's pk field
 	Insert(interface{}) (int64, error)
 	// mysql:InsertOrUpdate(model) or InsertOrUpdate(model,"colu=colu+value")
 	// if colu type is integer : can use(+-*/), string : convert(colu,"value")
@@ -128,7 +128,6 @@ type Ormer interface {
 	//	// update user testing's name to slene
 	Raw(query string, args ...interface{}) RawSeter
 	Driver() Driver
-	DBStats() *sql.DBStats
 }
 
 // Inserter insert prepared statement
@@ -148,11 +147,6 @@ type QuerySeter interface {
 	// 	 // time compare
 	//	qs.Filter("created", time.Now())
 	Filter(string, ...interface{}) QuerySeter
-	// add raw sql to querySeter.
-	// for example:
-	// qs.FilterRaw("user_id IN (SELECT id FROM profile WHERE age>=18)")
-	// //sql-> WHERE user_id IN (SELECT id FROM profile WHERE age>=18)
-	FilterRaw(string, string) QuerySeter
 	// add NOT condition to querySeter.
 	// have the same usage as Filter
 	Exclude(string, ...interface{}) QuerySeter
@@ -396,23 +390,16 @@ type RawSeter interface {
 type stmtQuerier interface {
 	Close() error
 	Exec(args ...interface{}) (sql.Result, error)
-	//ExecContext(ctx context.Context, args ...interface{}) (sql.Result, error)
 	Query(args ...interface{}) (*sql.Rows, error)
-	//QueryContext(args ...interface{}) (*sql.Rows, error)
 	QueryRow(args ...interface{}) *sql.Row
-	//QueryRowContext(ctx context.Context, args ...interface{}) *sql.Row
 }
 
 // db querier
 type dbQuerier interface {
 	Prepare(query string) (*sql.Stmt, error)
-	PrepareContext(ctx context.Context, query string) (*sql.Stmt, error)
 	Exec(query string, args ...interface{}) (sql.Result, error)
-	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 	Query(query string, args ...interface{}) (*sql.Rows, error)
-	QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
 	QueryRow(query string, args ...interface{}) *sql.Row
-	QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row
 }
 
 // type DB interface {

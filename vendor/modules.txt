@@ -115,8 +115,8 @@ github.com/armon/circbuf
 # github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
 ## explicit; go 1.12
 github.com/asaskevich/govalidator
-# github.com/beego/beego v1.12.12
-## explicit; go 1.13
+# github.com/beego/beego v1.10.1
+## explicit
 github.com/beego/beego/orm
 # github.com/beorn7/perks v1.0.1
 ## explicit; go 1.11
@@ -629,8 +629,8 @@ github.com/mattn/go-isatty
 # github.com/mattn/go-runewidth v0.0.9
 ## explicit; go 1.9
 github.com/mattn/go-runewidth
-# github.com/mattn/go-sqlite3 v2.0.3+incompatible
-## explicit
+# github.com/mattn/go-sqlite3 v1.14.18
+## explicit; go 1.16
 github.com/mattn/go-sqlite3
 # github.com/matttproud/golang_protobuf_extensions v1.0.4
 ## explicit; go 1.9
