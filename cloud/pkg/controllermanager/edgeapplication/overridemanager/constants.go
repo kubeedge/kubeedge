@@ -21,3 +21,16 @@ const (
 	// DaemonSetKind indicates the target resource is a daemonset
 	DaemonSetKind = "DaemonSet"
 )
+
+const (
+	pathSplit         = "/"
+	podSpecPrefix     = "/spec"
+	podTemplatePrefix = "/spec/template/spec"
+)
+
+const (
+	// CommandString command string
+	CommandString = "command"
+	// ArgsString args string
+	ArgsString = "args"
+)
