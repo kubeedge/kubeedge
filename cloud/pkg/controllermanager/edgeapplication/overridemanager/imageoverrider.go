@@ -19,12 +19,6 @@ import (
 	appsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1"
 )
 
-const (
-	pathSplit         = "/"
-	podSpecPrefix     = "/spec"
-	podTemplatePrefix = "/spec/template/spec"
-)
-
 type ImageOverrider struct{}
 
 var _ Overrider = &ImageOverrider{}
