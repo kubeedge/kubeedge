@@ -13,23 +13,25 @@ const (
 	// APIDeviceRoute to build device RESTful API
 	APIDeviceRoute = APIBase + "/device"
 	// APIDeviceReadRoute API that read device's property
-	APIDeviceReadRoute = APIDeviceRoute + "/" + DeviceID + "/" + PropertyName
+	APIDeviceReadRoute = APIDeviceRoute + "/" + DeviceNamespace + "/" + DeviceName + "/" + PropertyName
 
 	// APIMetaRoute to build meta RESTful API
 	APIMetaRoute = APIBase + "/meta"
 	// APIMetaGetModelRoute API that get device model by device id
-	APIMetaGetModelRoute = APIMetaRoute + "/model" + "/" + DeviceID
+	APIMetaGetModelRoute = APIMetaRoute + "/model" + "/" + DeviceNamespace + "/" + DeviceName
 
 	// APIDataBaseRoute to build database RESTful API
 	APIDataBaseRoute = APIBase + "/database"
 	// APIDataBaseGetDataByID API that get data by device id
-	APIDataBaseGetDataByID = APIDataBaseRoute + "/" + DeviceID
+	APIDataBaseGetDataByID = APIDataBaseRoute + "/" + DeviceNamespace + "/" + DeviceName
 )
 
 // API field pattern
 const (
-	// DeviceID pattern for deviceID
-	DeviceID = "{id}"
+	// DeviceName pattern for deviceName
+	DeviceName = "{name}"
+	// DeviceNamespace pattern for deviceNamespace
+	DeviceNamespace = "{namespace}"
 	// PropertyName pattern for property
 	PropertyName = "{property}"
 )

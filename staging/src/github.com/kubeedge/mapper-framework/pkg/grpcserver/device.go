@@ -21,16 +21,18 @@ func (s *Server) RegisterDevice(_ context.Context, request *dmiapi.RegisterDevic
 	if device == nil {
 		return nil, errors.New("device is nil")
 	}
-	if _, err := s.devPanel.GetDevice(device.Name); err == nil {
+	deviceID := parse.GetResourceID(device.Namespace, device.Name)
+	if _, err := s.devPanel.GetDevice(deviceID); err == nil {
 		// The device has been registered
 		return &dmiapi.RegisterDeviceResponse{DeviceName: device.Name}, nil
 	}
 
 	var model common.DeviceModel
 	var err error
+	modelID := parse.GetResourceID(device.Namespace, device.Spec.DeviceModelReference)
 	err = retry.Do(
 		func() error {
-			model, err = s.devPanel.GetModel(device.Spec.DeviceModelReference)
+			model, err = s.devPanel.GetModel(modelID)
 			return err
 		},
 		retry.Delay(1*time.Second),
@@ -38,11 +40,11 @@ func (s *Server) RegisterDevice(_ context.Context, request *dmiapi.RegisterDevic
 		retry.DelayType(retry.FixedDelay),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("deviceModel %s not found, err: %s", device.Spec.DeviceModelReference, err)
+		return nil, fmt.Errorf("deviceModel %s in %s namespace not found, err: %s", device.Spec.DeviceModelReference, device.Namespace, err)
 	}
 	protocol, err := parse.BuildProtocolFromGrpc(device)
 	if err != nil {
-		return nil, fmt.Errorf("parse device %s protocol failed, err: %s", device.Name, err)
+		return nil, fmt.Errorf("parse device %s protocol in %s namespace failed, err: %s", device.Name, device.Namespace, err)
 	}
 	klog.Infof("model: %+v", model)
 	deviceInstance, err := parse.GetDeviceFromGrpc(device, &model)
@@ -61,8 +63,9 @@ func (s *Server) RemoveDevice(_ context.Context, request *dmiapi.RemoveDeviceReq
 	if request.GetDeviceName() == "" {
 		return nil, errors.New("device name is nil")
 	}
+	deviceID := parse.GetResourceID(request.GetDeviceNamespace(), request.GetDeviceName())
 
-	return &dmiapi.RemoveDeviceResponse{}, s.devPanel.RemoveDevice(request.GetDeviceName())
+	return &dmiapi.RemoveDeviceResponse{}, s.devPanel.RemoveDevice(deviceID)
 }
 
 func (s *Server) UpdateDevice(_ context.Context, request *dmiapi.UpdateDeviceRequest) (*dmiapi.UpdateDeviceResponse, error) {
@@ -72,19 +75,19 @@ func (s *Server) UpdateDevice(_ context.Context, request *dmiapi.UpdateDeviceReq
 		return nil, errors.New("device is nil")
 	}
 
-	model, err := s.devPanel.GetModel(device.Spec.DeviceModelReference)
+	modelID := parse.GetResourceID(device.GetNamespace(), device.Spec.DeviceModelReference)
+	model, err := s.devPanel.GetModel(modelID)
 	if err != nil {
-		return nil, fmt.Errorf("deviceModel %s not found, err: %s", device.Spec.DeviceModelReference, err)
+		return nil, fmt.Errorf("deviceModel %s in %s namespace not found, err: %s", device.Spec.DeviceModelReference, device.GetNamespace(), err)
 	}
+	klog.V(3).Infof("model: %+v", model)
 	protocol, err := parse.BuildProtocolFromGrpc(device)
 	if err != nil {
 		return nil, fmt.Errorf("parse device %s protocol failed, err: %s", device.Name, err)
 	}
-
-	klog.V(3).Infof("model: %+v", model)
 	deviceInstance, err := parse.GetDeviceFromGrpc(device, &model)
 	if err != nil {
-		return nil, fmt.Errorf("parse device %s instance failed, err: %s", device.Name, err)
+		return nil, fmt.Errorf("parse device %s instance in %s namespace failed, err: %s", device.Name, device.Namespace, err)
 	}
 	deviceInstance.PProtocol = protocol
 
@@ -114,7 +117,8 @@ func (s *Server) UpdateDeviceModel(_ context.Context, request *dmiapi.UpdateDevi
 	if deviceModel == nil {
 		return nil, errors.New("deviceModel is nil")
 	}
-	if _, err := s.devPanel.GetModel(deviceModel.Name); err != nil {
+	modelID := parse.GetResourceID(deviceModel.Namespace, deviceModel.Name)
+	if _, err := s.devPanel.GetModel(modelID); err != nil {
 		return nil, fmt.Errorf("update deviceModel %s failed, not existed", deviceModel.Name)
 	}
 
@@ -126,8 +130,8 @@ func (s *Server) UpdateDeviceModel(_ context.Context, request *dmiapi.UpdateDevi
 }
 
 func (s *Server) RemoveDeviceModel(_ context.Context, request *dmiapi.RemoveDeviceModelRequest) (*dmiapi.RemoveDeviceModelResponse, error) {
-	s.devPanel.RemoveModel(request.ModelName)
-
+	modelID := parse.GetResourceID(request.ModelNamespace, request.ModelName)
+	s.devPanel.RemoveModel(modelID)
 	return &dmiapi.RemoveDeviceModelResponse{}, nil
 }
 
@@ -135,8 +139,8 @@ func (s *Server) GetDevice(_ context.Context, request *dmiapi.GetDeviceRequest) 
 	if request.GetDeviceName() == "" {
 		return nil, errors.New("device name is nil")
 	}
-
-	device, err := s.devPanel.GetDevice(request.GetDeviceName())
+	deviceID := parse.GetResourceID(request.GetDeviceNamespace(), request.GetDeviceName())
+	device, err := s.devPanel.GetDevice(deviceID)
 	if err != nil {
 		return nil, err
 	}

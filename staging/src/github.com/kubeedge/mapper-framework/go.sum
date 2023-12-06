@@ -16,8 +16,8 @@ github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORN
 github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
 github.com/kr/text v0.1.0 h1:45sCR5RtlFHMR4UwH9sdQ5TC8v0qDQCHnXt+kaKSTVE=
 github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
-github.com/kubeedge/kubeedge v1.15.0-beta.0.0.20240110111122-c44efa2389b9 h1:vVjy6eJGzKZyAdW2L2E8fi2DDz4w4Bn+1pwXgC/v2W8=
-github.com/kubeedge/kubeedge v1.15.0-beta.0.0.20240110111122-c44efa2389b9/go.mod h1:3f9VoRV6ar6yAOrjRYySlYBoSG3n4BEi/PitT2uoUm4=
+github.com/kubeedge/kubeedge v1.15.0-beta.0.0.20240118080528-4237f6f6805e h1:SQD/Z9/z75tQpnZKGs179ugFywJH2tj0bAKlDh0M9Gs=
+github.com/kubeedge/kubeedge v1.15.0-beta.0.0.20240118080528-4237f6f6805e/go.mod h1:NbL/UWB68wuY5itB/0jMtDyI04Q+Iw2CJshOQz/WJS4=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/spf13/pflag v1.0.6-0.20210604193023-d5e0c0615ace h1:9PNP1jnUjRhfmGMlkXHjYPishpcw4jpSt/V/xYY3FMA=
 github.com/spf13/pflag v1.0.6-0.20210604193023-d5e0c0615ace/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=

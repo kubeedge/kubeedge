@@ -29,6 +29,7 @@ type DeviceProfile struct {
 type DeviceInstance struct {
 	ID           string `json:"id,omitempty"`
 	Name         string `json:"name,omitempty"`
+	Namespace    string `json:"namespace,omitempty"`
 	ProtocolName string `json:"protocol,omitempty"`
 	PProtocol    ProtocolConfig
 	Model        string           `json:"model,omitempty"`
@@ -38,7 +39,9 @@ type DeviceInstance struct {
 
 // DeviceModel is structure to store deviceModel in deviceProfile.json in configmap.
 type DeviceModel struct {
+	ID          string          `json:"id,omitempty"`
 	Name        string          `json:"name,omitempty"`
+	Namespace   string          `json:"namespace,omitempty"`
 	Description string          `json:"description,omitempty"`
 	Properties  []ModelProperty `json:"properties,omitempty"`
 }

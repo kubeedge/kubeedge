@@ -18,6 +18,7 @@ import (
 
 type TwinData struct {
 	DeviceName      string
+	DeviceNamespace string
 	Client          *driver.CustomizedClient
 	Name            string
 	Type            string
@@ -75,7 +76,8 @@ func (td *TwinData) PushToEdgeCore() {
 	twins := parse.ConvMsgTwinToGrpc(msg.Twin)
 
 	var rdsr = &dmiapi.ReportDeviceStatusRequest{
-		DeviceName: td.DeviceName,
+		DeviceName:      td.DeviceName,
+		DeviceNamespace: td.DeviceNamespace,
 		ReportedDevice: &dmiapi.DeviceStatus{
 			Twins: twins,
 			//State: "OK",

@@ -6,7 +6,7 @@ require (
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/golang/protobuf v1.5.3
 	github.com/gorilla/mux v1.8.0
-	github.com/kubeedge/kubeedge v1.15.0-beta.0.0.20240110111122-c44efa2389b9
+	github.com/kubeedge/kubeedge v1.15.0-beta.0.0.20240118080528-4237f6f6805e
 	github.com/spf13/pflag v1.0.6-0.20210604193023-d5e0c0615ace
 	golang.org/x/net v0.17.0 // indirect
 	google.golang.org/grpc v1.53.0
