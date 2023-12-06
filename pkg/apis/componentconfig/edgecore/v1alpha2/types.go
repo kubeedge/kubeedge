@@ -117,6 +117,11 @@ type Edged struct {
 // TailoredKubeletConfiguration indicates the tailored kubelet configuration.
 // It is derived from Kubernetes code `KubeletConfiguration` in package `k8s.io/kubelet/config/v1beta1` and made some variant.
 type TailoredKubeletConfiguration struct {
+	// staticPodPath is the path to the directory containing local (static) pods to
+	// run, or the path to a single static pod file.
+	// Default: "/etc/kubeedge/manifests"
+	// +optional
+	StaticPodPath string `json:"staticPodPath,omitempty"`
 	// syncFrequency is the max period between synchronizing running
 	// containers and config.
 	// Default: "1m"
@@ -149,14 +154,14 @@ type TailoredKubeletConfiguration struct {
 	RegistryBurst int32 `json:"registryBurst,omitempty"`
 	// eventRecordQPS is the maximum event creations per second. If 0, there
 	// is no limit enforced. The value cannot be a negative number.
-	// Default: 0
+	// Default: 50
 	// +optional
 	EventRecordQPS *int32 `json:"eventRecordQPS,omitempty"`
 	// eventBurst is the maximum size of a burst of event creations, temporarily
 	// allows event creations to burst to this number, while still not exceeding
 	// eventRecordQPS. This field cannot be a negative number and it is only used
 	// when eventRecordQPS > 0.
-	// Default: 10
+	// Default: 100
 	// +optional
 	EventBurst int32 `json:"eventBurst,omitempty"`
 	// enableDebuggingHandlers enables server endpoints for log access
@@ -216,7 +221,6 @@ type TailoredKubeletConfiguration struct {
 	// The lease is currently renewed every 10s, per KEP-0009. In the future, the lease renewal interval
 	// may be set based on the lease duration.
 	// The field value must be greater than 0.
-	// Requires the NodeLease feature gate to be enabled.
 	// Default: 40
 	// +optional
 	NodeLeaseDurationSeconds int32 `json:"nodeLeaseDurationSeconds,omitempty"`
@@ -259,7 +263,6 @@ type TailoredKubeletConfiguration struct {
 	SystemCgroups string `json:"systemCgroups,omitempty"`
 	// cgroupRoot is the root cgroup to use for pods. This is handled by the
 	// container runtime on a best effort basis.
-	// Default: ""
 	// +optional
 	CgroupRoot string `json:"cgroupRoot,omitempty"`
 	// cgroupsPerQOS enable QoS based CGroup hierarchy: top level CGroups for QoS classes
@@ -319,6 +322,12 @@ type TailoredKubeletConfiguration struct {
 	// Default: "container"
 	// +optional
 	TopologyManagerScope string `json:"topologyManagerScope,omitempty"`
+	// TopologyManagerPolicyOptions is a set of key=value which allows to set extra options
+	// to fine tune the behaviour of the topology manager policies.
+	// Requires  both the "TopologyManager" and "TopologyManagerPolicyOptions" feature gates to be enabled.
+	// Default: nil
+	// +optional
+	TopologyManagerPolicyOptions map[string]string `json:"topologyManagerPolicyOptions,omitempty"`
 	// qosReserved is a set of resource name to percentage pairs that specify
 	// the minimum percentage of a resource reserved for exclusive use by the
 	// guaranteed QoS tier.
@@ -362,6 +371,7 @@ type TailoredKubeletConfiguration struct {
 	PodPidsLimit *int64 `json:"podPidsLimit,omitempty"`
 	// resolvConf is the resolver configuration file used as the basis
 	// for the container DNS resolution configuration.
+	// If set to the empty string, will override the default and effectively disable DNS lookups.
 	// Default: "/etc/resolv.conf"
 	// +optional
 	ResolverConfig *string `json:"resolvConf,omitempty"`
@@ -398,6 +408,12 @@ type TailoredKubeletConfiguration struct {
 	// Default: true
 	// +optional
 	SerializeImagePulls *bool `json:"serializeImagePulls,omitempty"`
+	// MaxParallelImagePulls sets the maximum number of image pulls in parallel.
+	// This field cannot be set if SerializeImagePulls is true.
+	// Setting it to nil means no limit.
+	// Default: nil
+	// +optional
+	MaxParallelImagePulls *int32 `json:"maxParallelImagePulls,omitempty"`
 	// evictionHard is a map of signal names to quantities that defines hard eviction
 	// thresholds. For example: `{"memory.available": "300Mi"}`.
 	// To explicitly disable, pass a 0% or 100% threshold on an arbitrary resource.
@@ -597,6 +613,12 @@ type TailoredKubeletConfiguration struct {
 	// Default: true
 	// +optional
 	EnableSystemLogHandler *bool `json:"enableSystemLogHandler,omitempty"`
+	// enableSystemLogQuery enables the node log query feature on the /logs endpoint.
+	// EnableSystemLogHandler has to be enabled in addition for this feature to work.
+	// Default: false
+	// +featureGate=NodeLogQuery
+	// +optional
+	EnableSystemLogQuery *bool `json:"enableSystemLogQuery,omitempty"`
 	// shutdownGracePeriod specifies the total duration that the node should delay the
 	// shutdown and total grace period for pod termination during a node shutdown.
 	// Default: "0s"
@@ -696,16 +718,20 @@ type TailoredKubeletConfiguration struct {
 	// Default: true
 	// +optional
 	RegisterNode *bool `json:"registerNode,omitempty"`
-	// staticPodPath is the path to the directory containing local (static) pods to
-	// run, or the path to a single static pod file.
-	// Default: "/etc/kubeedge/manifests"
+	// LocalStorageCapacityIsolation enables local ephemeral storage isolation feature. The default setting is true.
+	// This feature allows users to set request/limit for container's ephemeral storage and manage it in a similar way
+	// as cpu and memory. It also allows setting sizeLimit for emptyDir volume, which will trigger pod eviction if disk
+	// usage from the volume exceeds the limit.
+	// This feature depends on the capability of detecting correct root file system disk usage. For certain systems,
+	// such as kind rootless, if this capability cannot be supported, the feature LocalStorageCapacityIsolation should be
+	// disabled. Once disabled, user should not set request/limit for container's ephemeral storage, or sizeLimit for emptyDir.
+	// Default: true
 	// +optional
-	StaticPodPath string `json:"staticPodPath,omitempty"`
+	LocalStorageCapacityIsolation *bool `json:"localStorageCapacityIsolation,omitempty"`
 	// ContainerRuntimeEndpoint is the endpoint of container runtime.
 	// Unix Domain Sockets are supported on Linux, while npipe and tcp endpoints are supported on Windows.
 	// Examples:'unix:///path/to/runtime.sock', 'npipe:////./pipe/runtime'
 	ContainerRuntimeEndpoint string `json:"containerRuntimeEndpoint"`
-
 	// ImageServiceEndpoint is the endpoint of container image service.
 	// Unix Domain Socket are supported on Linux, while npipe and tcp endpoints are supported on Windows.
 	// Examples:'unix:///path/to/runtime.sock', 'npipe:////./pipe/runtime'.
@@ -731,12 +757,12 @@ type TailoredKubeletFlag struct {
 	RootDirectory string `json:"rootDirectory,omitempty"`
 	// registerNode enables automatic registration with the apiserver.
 	// default true
-	// DEPRECATED: This parameter should be set via the TailoredKubeletConfig
+	// DEPRECATED: This parameter will be removed at KubeEdge v1.17 and should be set via the TailoredKubeletConfig
 	RegisterNode bool `json:"registerNode,omitempty"`
 	// registerWithTaints are an array of taints to add to a node object when
 	// the edgecore registers itself. This only takes effect when registerNode
 	// is true and upon the initial registration of the node.
-	// DEPRECATED: This parameter should be set via the TailoredKubeletConfig
+	// DEPRECATED: This parameter will be removed at KubeEdge v1.17 and should be set via the TailoredKubeletConfig
 	RegisterWithTaints []core.Taint `json:"registerWithTaints,omitempty"`
 	// WindowsService should be set to true if kubelet is running as a service on Windows.
 	// Its corresponding flag only gets registered in Windows builds.
@@ -749,11 +775,11 @@ type TailoredKubeletFlag struct {
 	WindowsPriorityClass string `json:"windowsPriorityClass,omitempty"`
 	// remoteRuntimeEndpoint is the endpoint of remote runtime service
 	// default "unix:///run/containerd/containerd.sock"
-	// DEPRECATED and will be remove in KubeEdge v1.17
+	// DEPRECATED: This parameter will be removed in KubeEdge v1.17 and should be set via the ContainerRuntimeEndpoint on TailoredKubeletConfig
 	RemoteRuntimeEndpoint string `json:"remoteRuntimeEndpoint,omitempty"`
 	// remoteImageEndpoint is the endpoint of remote image service
 	// default "unix:///run/containerd/containerd.sock"
-	// DEPRECATED and will be remove in KubeEdge v1.17
+	// DEPRECATED: This parameter will be removed in KubeEdge v1.17 and should be set via the ImageServiceEndpoint on TailoredKubeletConfig
 	RemoteImageEndpoint string `json:"remoteImageEndpoint,omitempty"`
 	// experimentalMounterPath is the path of mounter binary. Leave empty to use the default mount path
 	ExperimentalMounterPath string `json:"experimentalMounterPath,omitempty"`
@@ -774,6 +800,7 @@ type TailoredKubeletFlag struct {
 	MaxContainerCount int32 `json:"maxContainerCount,omitempty"`
 	// masterServiceNamespace is The namespace from which the kubernetes
 	// master services should be injected into pods.
+	// DEPRECATED: will be removed in KubeEdge v1.17
 	MasterServiceNamespace string `json:"masterServiceNamespace,omitempty"`
 	// registerSchedulable tells the edgecore to register the node as
 	// schedulable. Won't have any effect if register-node is false.
@@ -793,7 +820,7 @@ type ContainerRuntimeOptions struct {
 
 	// ContainerRuntime is the container runtime to use.
 	// only valid value "remote"
-	// ContainerRuntime is deprecated and will be removed at v1.17
+	// ContainerRuntime is deprecated and will be removed at KubeEdge v1.17
 	ContainerRuntime string `json:"containerRuntime,omitempty"`
 	// RuntimeCgroups that container runtime is expected to be isolated in.
 	RuntimeCgroups string `json:"runtimeCgroups,omitempty"`
