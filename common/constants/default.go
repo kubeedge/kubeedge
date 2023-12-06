@@ -152,7 +152,4 @@ const (
 
 	DeafultMosquittoContainerName = "mqtt-kubeedge"
 	DeployMqttContainerEnv        = "DEPLOY_MQTT_CONTAINER"
-
-	// DefaultManifestsDir edge node default static pod path
-	DefaultManifestsDir = "/etc/kubeedge/manifests"
 )

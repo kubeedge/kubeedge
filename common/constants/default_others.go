@@ -30,4 +30,7 @@ const (
 	DefaultCNIBinDir             = "/opt/cni/bin"
 	DefaultCNICacheDir           = "/var/lib/cni/cache"
 	DefaultVolumePluginDir       = "/usr/libexec/kubernetes/kubelet-plugins/volume/exec/"
+
+	// DefaultManifestsDir edge node default static pod path
+	DefaultManifestsDir = "/etc/kubeedge/manifests"
 )
