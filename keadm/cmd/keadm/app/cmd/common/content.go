@@ -43,7 +43,9 @@ WantedBy=multi-user.target
 func GenerateServiceFile(process string, execStartCmd string, withMqtt bool) error {
 	filename := fmt.Sprintf("%s.service", process)
 
-	content := fmt.Sprintf(serviceFileTemplate, process, execStartCmd, fmt.Sprintf("%s=%t", constants.DeployMqttContainerEnv, withMqtt))
+	content := fmt.Sprintf(serviceFileTemplate, process, execStartCmd,
+		// FIXME: cleanup Environment when the static pod mqtt broker no longer needs to be compatible
+		fmt.Sprintf("%s=%t", constants.DeployMqttContainerEnv, withMqtt))
 	serviceFilePath := fmt.Sprintf("/etc/systemd/system/%s", filename)
 	return os.WriteFile(serviceFilePath, []byte(content), os.ModePerm)
 }
