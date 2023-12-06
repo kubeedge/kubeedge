@@ -3,11 +3,14 @@ package redis
 import (
 	"context"
 	"encoding/json"
-	"github.com/go-redis/redis/v8"
-	"github.com/kubeedge/Template/pkg/common"
-	"k8s.io/klog/v2"
+	"errors"
 	"os"
 	"strconv"
+
+	"k8s.io/klog/v2"
+	"github.com/go-redis/redis/v8"
+
+	"github.com/kubeedge/Template/pkg/common"
 )
 
 var (
@@ -120,15 +123,15 @@ func (d *DataBaseConfig) GetDataByDeviceName(deviceName string) ([]*common.DataM
 
 func (d *DataBaseConfig) GetPropertyDataByDeviceName(deviceName string, propertyData string) ([]*common.DataModel, error) {
 	//TODO implement me
-	panic("implement me")
+	return nil, errors.New("implement me")
 }
 
 func (d *DataBaseConfig) GetDataByTimeRange(start int64, end int64) ([]*common.DataModel, error) {
 	//TODO implement me
-	panic("implement me")
+	return nil, errors.New("implement me")
 }
 
 func (d *DataBaseConfig) DeleteDataByTimeRange(start int64, end int64) ([]*common.DataModel, error) {
 	//TODO implement me
-	panic("implement me")
+	return nil, errors.New("implement me")
 }
