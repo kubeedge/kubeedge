@@ -168,6 +168,11 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 		kubeletConfig.RegisterNode = false
 	}
 
+	// set feature gates from initial flags-based config
+	if err := utilfeature.DefaultMutableFeatureGate.SetFromMap(kubeletConfig.FeatureGates); err != nil {
+		return nil, fmt.Errorf("failed to set feature gates from initial flags-based config: %w", err)
+	}
+
 	// construct a KubeletServer from kubeletFlags and kubeletConfig
 	kubeletServer := kubeletoptions.KubeletServer{
 		KubeletFlags:         kubeletFlags,
