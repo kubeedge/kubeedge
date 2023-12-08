@@ -31,6 +31,8 @@ function entry() {
   sed -i "s/Template/${mapperVar}/g" `grep Template -rl ${mapperPath}`
   sed -i "s/kubeedge\/${mapperVar}/kubeedge\/${mapperNameLowercase}/g" `grep "kubeedge\/${mapperVar}" -rl $mapperPath`
 
+  cd ${mapperPath} && go mod tidy
+ 
   empty_file_path="${MAPPER_DIR}/.empty"
   if [ -f "$empty_file_path" ]; then
       rm "$empty_file_path"

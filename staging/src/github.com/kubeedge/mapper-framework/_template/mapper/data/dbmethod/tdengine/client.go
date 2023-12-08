@@ -4,12 +4,14 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/kubeedge/Template/pkg/common"
-	_ "github.com/taosdata/driver-go/v3/taosRestful"
-	"k8s.io/klog/v2"
 	"os"
 	"strings"
 	"time"
+
+	_ "github.com/taosdata/driver-go/v3/taosRestful"
+	"k8s.io/klog/v2"
+
+	"github.com/kubeedge/Template/pkg/common"
 )
 
 var (
