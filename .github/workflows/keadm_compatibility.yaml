@@ -1,0 +1,62 @@
+name: KEAMD COMPATIBILITY
+on:
+  workflow_dispatch:
+  schedule:
+    #  Exectues keamd compatibility test every Wednesday at 3:00 AM and if you need to convert to UTC+8 timezone, you need to -8 hours for cron expression
+    - cron: "0 17 * * 3"
+
+env:
+  CONTAINER_RUN_OPTIONS: " "
+  GINKGO_VERSION: "v2.9.5"
+
+jobs:
+
+  keadm_compatibility_e2e_test:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        version:
+          - v1.15.1
+          - v1.14.4
+    timeout-minutes: 90
+    name: Keadm compatibility e2e test
+    env:
+      GO111MODULE: on
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.20.x
+
+      - uses: actions/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+
+      - name: Install dependences
+        run: |
+          command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
+          go install sigs.k8s.io/kind@v0.19.0
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.27.7/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.4.0
+
+      - name: enable cri config in containerd service
+        run: |
+          containerd config default | sudo tee /etc/containerd/config.toml && sudo systemctl restart containerd.service
+
+      - name: cleanup images
+        run: docker system prune -a -f
+
+      - run: |
+          export CLOUD_EDGE_VERSION=${{ matrix.version }}
+          make keadm_compatibility_e2e
+
