@@ -102,7 +102,6 @@ func (rs *RestServer) sendResponse(
 	request *http.Request,
 	response interface{},
 	statusCode int) {
-
 	correlationID := request.Header.Get(CorrelationHeader)
 	if correlationID != "" {
 		writer.Header().Set(CorrelationHeader, correlationID)

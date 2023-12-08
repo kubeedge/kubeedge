@@ -104,7 +104,6 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 	res := make([]common.DeviceProperty, 0, len(device.Spec.Properties))
 	klog.V(3).Infof("In buildPropertiesFromGrpc, PropertyVisitors = %v", device.Spec.Properties)
 	for _, pptv := range device.Spec.Properties {
-
 		// get visitorConfig filed by grpc device instance
 		var visitorConfig []byte
 		recvAdapter := make(map[string]interface{})
@@ -213,12 +212,12 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 			},
 		}
 		res = append(res, cur)
-
 	}
+
 	return res
 }
 
-func ParseDeviceModelFromGrpc(model *dmiapi.DeviceModel) common.DeviceModel {
+func GetDeviceModelFromGrpc(model *dmiapi.DeviceModel) common.DeviceModel {
 	cur := common.DeviceModel{
 		Name: model.GetName(),
 	}
@@ -242,8 +241,7 @@ func ParseDeviceModelFromGrpc(model *dmiapi.DeviceModel) common.DeviceModel {
 	return cur
 }
 
-func ParseDeviceFromGrpc(device *dmiapi.Device, commonModel *common.DeviceModel) (*common.DeviceInstance, error) {
-
+func GetDeviceFromGrpc(device *dmiapi.Device, commonModel *common.DeviceModel) (*common.DeviceInstance, error) {
 	protocolName, err := getProtocolNameFromGrpc(device)
 	if err != nil {
 		return nil, err
