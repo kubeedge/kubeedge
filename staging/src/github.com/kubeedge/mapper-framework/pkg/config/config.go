@@ -17,7 +17,7 @@ limitations under the License.
 package config
 
 import (
-	"io/ioutil"
+	"os"
 
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
@@ -61,7 +61,7 @@ func Parse() (c *Config, err error) {
 	}
 
 	c = &Config{}
-	cf, err := ioutil.ReadFile(configFile)
+	cf, err := os.ReadFile(configFile)
 	if err != nil {
 		return nil, err
 	}

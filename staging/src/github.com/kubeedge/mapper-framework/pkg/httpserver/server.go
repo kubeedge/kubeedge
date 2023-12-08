@@ -4,8 +4,8 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -74,7 +74,7 @@ func (rs *RestServer) StartServer() {
 		klog.V(3).Info("mtls communication, please provide client-key and client-cert to access service")
 		// Configure the server to trust TLS client cert issued by your CA.
 		certPool := x509.NewCertPool()
-		if caCertPEM, err := ioutil.ReadFile(rs.CaCertFilePath); err != nil {
+		if caCertPEM, err := os.ReadFile(rs.CaCertFilePath); err != nil {
 			klog.Errorf("Error loading ca certificate file: %v", err)
 			return
 		} else if ok := certPool.AppendCertsFromPEM(caCertPEM); !ok {
