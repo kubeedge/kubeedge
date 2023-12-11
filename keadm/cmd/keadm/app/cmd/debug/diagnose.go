@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
 
-	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
@@ -71,7 +70,6 @@ func NewSubDiagnose(object Diagnose) *cobra.Command {
 		cmd.Flags().StringVarP(&do.CheckOptions.Domain, "domain", "d", do.CheckOptions.Domain, "specify test domain")
 		cmd.Flags().StringVarP(&do.CheckOptions.IP, "ip", "i", do.CheckOptions.IP, "specify test ip")
 		cmd.Flags().StringVarP(&do.CheckOptions.CloudHubServer, "cloud-hub-server", "s", do.CheckOptions.CloudHubServer, "specify cloudhub server")
-		cmd.Flags().StringVarP(&do.CheckOptions.Runtime, "runtime", "r", do.CheckOptions.Runtime, "specify the runtime")
 	}
 	return cmd
 }
@@ -84,7 +82,6 @@ func NewDiagnoseOptions() *common.DiagnoseOptions {
 	do.CheckOptions = &common.CheckOptions{
 		IP:      "",
 		Timeout: 3,
-		Runtime: constants.DefaultRuntimeType,
 	}
 	return do
 }
@@ -137,11 +134,6 @@ func DiagnoseNode(ops *common.DiagnoseOptions) error {
 	edgeconfig, err := util.ParseEdgecoreConfig(ops.Config)
 	if err != nil {
 		return fmt.Errorf("parse Edgecore config failed")
-	}
-
-	err = CheckRuntime(edgeconfig.Modules.Edged.ContainerRuntime)
-	if err != nil {
-		return err
 	}
 
 	// check datebase
@@ -299,11 +291,6 @@ func DiagnoseInstall(ob *common.CheckOptions) error {
 	}
 
 	err = CheckPid()
-	if err != nil {
-		return err
-	}
-
-	err = CheckRuntime(ob.Runtime)
 	if err != nil {
 		return err
 	}

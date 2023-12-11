@@ -108,7 +108,6 @@ func newOption() *common.JoinOptions {
 	joinOptions.WithMQTT = true
 	joinOptions.CGroupDriver = v1alpha2.CGroupDriverCGroupFS
 	joinOptions.CertPath = common.DefaultCertPath
-	joinOptions.RuntimeType = constants.DefaultRuntimeType
 	joinOptions.RemoteRuntimeEndpoint = constants.DefaultRemoteRuntimeEndpoint
 	joinOptions.HubProtocol = api.ProtocolTypeWS
 	return joinOptions

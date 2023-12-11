@@ -30,7 +30,6 @@ import (
 	utilruntime "k8s.io/kubernetes/cmd/kubeadm/app/util/runtime"
 	utilsexec "k8s.io/utils/exec"
 
-	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/helm"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
@@ -54,7 +53,6 @@ keadm reset
 func newResetOptions() *common.ResetOptions {
 	opts := &common.ResetOptions{}
 	opts.Kubeconfig = common.DefaultKubeConfig
-	opts.RuntimeType = constants.DefaultRuntimeType
 	return opts
 }
 
@@ -128,7 +126,7 @@ func NewKubeEdgeReset() *cobra.Command {
 			}
 
 			// cleanup mqtt container
-			if err := RemoveMqttContainer(reset.RuntimeType, reset.Endpoint, ""); err != nil {
+			if err := RemoveMqttContainer(reset.Endpoint, ""); err != nil {
 				fmt.Printf("Failed to remove MQTT container: %v\n", err)
 			}
 			//4. TODO: clean status information
@@ -141,8 +139,8 @@ func NewKubeEdgeReset() *cobra.Command {
 	return cmd
 }
 
-func RemoveMqttContainer(runtimeType, endpoint, cgroupDriver string) error {
-	runtime, err := util.NewContainerRuntime(runtimeType, endpoint, cgroupDriver)
+func RemoveMqttContainer(endpoint, cgroupDriver string) error {
+	runtime, err := util.NewContainerRuntime(endpoint, cgroupDriver)
 	if err != nil {
 		return fmt.Errorf("failed to new container runtime: %v", err)
 	}
@@ -220,8 +218,6 @@ func addResetFlags(cmd *cobra.Command, resetOpts *common.ResetOptions) {
 		"Use this key to set kube-config path, eg: $HOME/.kube/config")
 	cmd.Flags().BoolVar(&resetOpts.Force, "force", resetOpts.Force,
 		"Reset the node without prompting for confirmation")
-	cmd.Flags().StringVar(&resetOpts.RuntimeType, common.RuntimeType, resetOpts.RuntimeType,
-		"Use this key to set container runtime")
 	cmd.Flags().StringVar(&resetOpts.Endpoint, common.RemoteRuntimeEndpoint, resetOpts.Endpoint,
 		"Use this key to set container runtime endpoint")
 }

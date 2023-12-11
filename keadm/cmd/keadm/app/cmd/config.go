@@ -22,7 +22,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/kubeedge/kubeedge/common/constants"
 	cmdcommon "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/kubeedge/kubeedge/pkg/image"
@@ -37,7 +36,6 @@ type Configuration struct {
 	// eg. cloud/edge
 	Part string
 
-	RuntimeType           string
 	RemoteRuntimeEndpoint string
 }
 
@@ -45,7 +43,6 @@ func newDefaultConfiguration() *Configuration {
 	return &Configuration{
 		ImageRepository: "kubeedge",
 		Part:            "",
-		RuntimeType:     constants.DefaultRuntimeType,
 	}
 }
 
@@ -120,7 +117,7 @@ func newCmdConfigImagesPull() *cobra.Command {
 			cfg.KubeEdgeVersion = ver
 
 			images := GetKubeEdgeImages(cfg)
-			return pullImages(cfg.RuntimeType, cfg.RemoteRuntimeEndpoint, "", images)
+			return pullImages(cfg.RemoteRuntimeEndpoint, "", images)
 		},
 		Args: cobra.NoArgs,
 	}
@@ -129,8 +126,8 @@ func newCmdConfigImagesPull() *cobra.Command {
 	return cmd
 }
 
-func pullImages(runtimeType, endpoint, cgroupDriver string, images []string) error {
-	runtime, err := util.NewContainerRuntime(runtimeType, endpoint, cgroupDriver)
+func pullImages(endpoint, cgroupDriver string, images []string) error {
+	runtime, err := util.NewContainerRuntime(endpoint, cgroupDriver)
 	if err != nil {
 		return err
 	}
@@ -148,9 +145,6 @@ func AddImagesCommonConfigFlags(cmd *cobra.Command, cfg *Configuration) {
 	)
 	cmd.Flags().StringVar(&cfg.Part, "part", cfg.Part,
 		"Use this key to set which part keadm will install: cloud part or edge part. If not set, keadm will list/pull all images used by both cloud part and edge part.")
-
-	cmd.Flags().StringVar(&cfg.RuntimeType, cmdcommon.RuntimeType, cfg.RuntimeType,
-		"Container runtime type, default is remote")
 
 	cmd.Flags().StringVar(&cfg.RemoteRuntimeEndpoint, cmdcommon.RemoteRuntimeEndpoint, cfg.RemoteRuntimeEndpoint,
 		"The endpoint of remote runtime service in edge node")

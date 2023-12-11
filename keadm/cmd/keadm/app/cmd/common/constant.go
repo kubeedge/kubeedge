@@ -44,11 +44,8 @@ const (
 	// DefaultK8SMinimumVersion is the minimum version of K8S
 	DefaultK8SMinimumVersion = 11
 
-	// RuntimeType is default runtime type
-	RuntimeType = "runtimetype"
-
 	// DefaultKubeEdgeVersion is the default KubeEdge version, it must have no prefix 'v'
-	DefaultKubeEdgeVersion = "1.14.0"
+	DefaultKubeEdgeVersion = "1.15.1"
 
 	// Token sets the token used when edge applying for the certificate
 	Token = "token"

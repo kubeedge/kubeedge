@@ -51,7 +51,6 @@ type JoinOptions struct {
 	CertPath              string
 	CloudCoreIPPort       string
 	EdgeNodeName          string
-	RuntimeType           string
 	RemoteRuntimeEndpoint string
 	Token                 string
 	CertPort              string
@@ -66,7 +65,6 @@ type CheckOptions struct {
 	Domain         string
 	DNSIP          string
 	IP             string
-	Runtime        string
 	Timeout        int
 	CloudHubServer string
 	EdgecoreServer string
@@ -88,10 +86,9 @@ type CollectOptions struct {
 }
 
 type ResetOptions struct {
-	Kubeconfig  string
-	Force       bool
-	RuntimeType string
-	Endpoint    string
+	Kubeconfig string
+	Force      bool
+	Endpoint   string
 }
 
 type GettokenOptions struct {

@@ -24,7 +24,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/spf13/cobra"
 	phases "k8s.io/kubernetes/cmd/kubeadm/app/cmd/phases/reset"
 	utilruntime "k8s.io/kubernetes/cmd/kubeadm/app/util/runtime"
@@ -47,7 +46,6 @@ keadm reset
 func newResetOptions() *common.ResetOptions {
 	opts := &common.ResetOptions{}
 	opts.Kubeconfig = common.DefaultKubeConfig
-	opts.RuntimeType = constants.DefaultRuntimeType
 	return opts
 }
 
