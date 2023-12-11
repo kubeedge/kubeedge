@@ -27,10 +27,6 @@ const (
 	DEVSTUNKNOWN   = "UNKNOWN"
 )
 const (
-	ProtocolBlueTooth  = "bluetooth"
-	ProtocolModbus     = "modbus"
-	ProtocolOnvif      = "onvif"
-	ProtocolOpcua      = "opcua"
 	ProtocolCustomized = "customized-protocol"
 )
 

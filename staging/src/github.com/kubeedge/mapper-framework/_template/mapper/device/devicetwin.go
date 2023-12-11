@@ -92,7 +92,7 @@ func (td *TwinData) Run(ctx context.Context) {
 		return
 	}
 	if td.CollectCycle == 0 {
-		td.CollectCycle = 1 * time.Second
+		td.CollectCycle = common.DefaultCollectCycle
 	}
 	ticker := time.NewTicker(td.CollectCycle)
 	for {

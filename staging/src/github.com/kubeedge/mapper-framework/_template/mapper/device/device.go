@@ -172,7 +172,7 @@ func pushHandler(ctx context.Context, twin *common.Twin, client *driver.Customiz
 	}
 	reportCycle := time.Duration(twin.Property.ReportCycle)
 	if reportCycle == 0 {
-		reportCycle = 1 * time.Second
+		reportCycle = common.DefaultReportCycle
 	}
 	ticker := time.NewTicker(reportCycle)
 	go func() {
@@ -216,7 +216,7 @@ func dbHandler(ctx context.Context, twin *common.Twin, client *driver.Customized
 		}
 		reportCycle := time.Duration(twin.Property.ReportCycle)
 		if reportCycle == 0 {
-			reportCycle = 1 * time.Second
+			reportCycle = common.DefaultReportCycle
 		}
 		ticker := time.NewTicker(reportCycle)
 		go func() {
