@@ -29,7 +29,6 @@ type DevPanel struct {
 	deviceMuxs   map[string]context.CancelFunc
 	devices      map[string]*driver.CustomizedDev
 	models       map[string]common.DeviceModel
-	protocols    map[string]common.ProtocolConfig
 	wg           sync.WaitGroup
 	serviceMutex sync.Mutex
 	quitChan     chan os.Signal
@@ -47,7 +46,6 @@ func NewDevPanel() *DevPanel {
 			deviceMuxs:   make(map[string]context.CancelFunc),
 			devices:      make(map[string]*driver.CustomizedDev),
 			models:       make(map[string]common.DeviceModel),
-			protocols:    make(map[string]common.ProtocolConfig),
 			wg:           sync.WaitGroup{},
 			serviceMutex: sync.Mutex{},
 			quitChan:     make(chan os.Signal),
@@ -367,7 +365,7 @@ func (d *DevPanel) DevInit(cfg *config.Config) error {
 	//		return err
 	//	}
 	case common.DevInitModeRegister:
-		if err := parse.ParseByUsingRegister(devs, d.models, d.protocols); err != nil {
+		if err := parse.ParseByUsingRegister(devs, d.models); err != nil {
 			return err
 		}
 	}
@@ -381,7 +379,7 @@ func (d *DevPanel) DevInit(cfg *config.Config) error {
 }
 
 // UpdateDev stop old device, then update and start new device
-func (d *DevPanel) UpdateDev(model *common.DeviceModel, device *common.DeviceInstance, protocol *common.ProtocolConfig) {
+func (d *DevPanel) UpdateDev(model *common.DeviceModel, device *common.DeviceInstance) {
 	d.serviceMutex.Lock()
 	defer d.serviceMutex.Unlock()
 
@@ -395,7 +393,6 @@ func (d *DevPanel) UpdateDev(model *common.DeviceModel, device *common.DeviceIns
 	d.devices[device.ID] = new(driver.CustomizedDev)
 	d.devices[device.ID].Instance = *device
 	d.models[device.ID] = *model
-	d.protocols[device.ID] = *protocol
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	d.deviceMuxs[device.ID] = cancelFunc
@@ -413,8 +410,7 @@ func (d *DevPanel) UpdateDevTwins(deviceID string, twins []common.Twin) error {
 	}
 	dev.Instance.Twins = twins
 	model := d.models[dev.Instance.Model]
-	protocol := d.protocols[dev.Instance.ProtocolName]
-	d.UpdateDev(&model, &dev.Instance, &protocol)
+	d.UpdateDev(&model, &dev.Instance)
 	return nil
 }
 
