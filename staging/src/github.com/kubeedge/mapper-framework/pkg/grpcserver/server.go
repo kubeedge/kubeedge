@@ -9,8 +9,8 @@ import (
 	"google.golang.org/grpc/reflection"
 	"k8s.io/klog/v2"
 
-	dmiapi "github.com/kubeedge/Template/pkg/dmi-api"
 	"github.com/kubeedge/Template/pkg/global"
+	dmiapi "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1beta1"
 )
 
 type Config struct {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/kubeedge/Template/pkg/common"
-	dmiapi "github.com/kubeedge/Template/pkg/dmi-api"
+	dmiapi "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1beta1"
 )
 
 func ConvTwinsToGrpc(twins []common.Twin) ([]*dmiapi.Twin, error) {

@@ -10,8 +10,8 @@ import (
 	"reflect"
 
 	"github.com/kubeedge/Template/pkg/common"
-	dmiapi "github.com/kubeedge/Template/pkg/dmi-api"
 	"github.com/kubeedge/Template/pkg/util/parse"
+	dmiapi "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1beta1"
 )
 
 func (s *Server) RegisterDevice(ctx context.Context, request *dmiapi.RegisterDeviceRequest) (*dmiapi.RegisterDeviceResponse, error) {
