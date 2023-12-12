@@ -91,11 +91,8 @@ func (s *server) MapperRegister(ctx context.Context, in *pb.MapperRegisterReques
 	var deviceList []*pb.Device
 	var deviceModelList []*pb.DeviceModel
 	s.dmiCache.DeviceMu.Lock()
-	defer s.dmiCache.DeviceMu.Unlock()
 	for _, device := range s.dmiCache.DeviceList {
-		protocol := device.Spec.Protocol.ProtocolName
-
-		if protocol == in.Mapper.Protocol {
+		if device.Spec.Protocol.ProtocolName == in.Mapper.Protocol {
 			dev, err := dtcommon.ConvertDevice(device)
 			if err != nil {
 				klog.Errorf("fail to convert device %s with err: %v", device.Name, err)
@@ -118,6 +115,8 @@ func (s *server) MapperRegister(ctx context.Context, in *pb.MapperRegisterReques
 			deviceModelList = append(deviceModelList, dm)
 		}
 	}
+	s.dmiCache.DeviceMu.Unlock()
+
 	dmiclient.DMIClientsImp.CreateDMIClient(in.Mapper.Protocol, string(in.Mapper.Address))
 
 	return &pb.MapperRegisterResponse{
