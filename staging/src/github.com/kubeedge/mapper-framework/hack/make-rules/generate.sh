@@ -23,9 +23,6 @@ function entry() {
     exit 1
   fi
   cp -r "${ROOT_DIR}/_template/mapper" "${mapperPath}"
-  cp -r "${ROOT_DIR}/pkg" "${mapperPath}"
-  cp "${ROOT_DIR}/go.mod" "${mapperPath}"
-  cp "${ROOT_DIR}/go.sum" "${mapperPath}"
 
   mapperVar=$(echo "${mapperName}" | sed -e "s/\b\(.\)/\\u\1/g")
   sed -i "s/Template/${mapperVar}/g" `grep Template -rl ${mapperPath}`

@@ -3,7 +3,7 @@ package httpserver
 import (
 	"time"
 
-	"github.com/kubeedge/Template/pkg/common"
+	"github.com/kubeedge/mapper-framework/pkg/common"
 )
 
 // BaseResponse the base response struct of all response
