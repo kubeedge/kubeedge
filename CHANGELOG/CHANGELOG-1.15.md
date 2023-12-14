@@ -1,4 +1,7 @@
-
+* [v1.15.1](#v1151)
+    * [Downloads for v1.15.1](#downloads-for-v1151)
+    * [KubeEdge v1.15.1 Release Notes](#kubeedge-v1151-release-notes)
+        * [Changelog since v1.15.0](#changelog-since-v1150)
 * [v1.15.0](#v1150)
     * [Downloads for v1.15.0](#downloads-for-v1150)
     * [KubeEdge v1.15 Release Notes](#kubeedge-v115-release-notes)
@@ -6,6 +9,30 @@
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
 
 
+# v1.15.1
+
+## Downloads for v1.15.1
+
+Download v1.15.1 in the [v1.15.1 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.15.1).
+
+## KubeEdge v1.15.1 Release Notes
+
+### Changelog since v1.15.0
+
+- Bump Kubernetes to the newest patch version 1.26.10. ([#5154](https://github.com/kubeedge/kubeedge/pull/5154), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Fix serviceaccount token not being deleted in edge DB. ([#5154](https://github.com/kubeedge/kubeedge/pull/5154), [#5199](https://github.com/kubeedge/kubeedge/pull/5199), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Fix Keadm upgrade if EdgeCore is stopped, the Keadm process will stop. ([#5111](https://github.com/kubeedge/kubeedge/pull/5111), [@wlq1212](https://github.com/wlq1212))
+- Use ReportToCloud to determine whether to push device data from mapper to EdgeCore. ([#5116](https://github.com/kubeedge/kubeedge/pull/5116), [@luomengY](https://github.com/luomengY))
+- Delete the historical version of CRD in cloudcore/CRD. ([#5147](https://github.com/kubeedge/kubeedge/pull/5147), [@luomengY](https://github.com/luomengY))
+- Modify parameters for ginkgo v2. ([#5155](https://github.com/kubeedge/kubeedge/pull/5155), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Fix MetaServer panic with set StrictSerializer when handling create and update. ([#5183](https://github.com/kubeedge/kubeedge/pull/5183), [@Windrow14](https://github.com/Windrow14))
+- Support building Windows-amd64 release for EdgeCore and Keadm. ([#5187](https://github.com/kubeedge/kubeedge/pull/5187), [@wujunyi792](https://github.com/wujunyi792))
+- Remove unnecessary pid namespace config in copy-resource. ([#5191](https://github.com/kubeedge/kubeedge/pull/5191), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Fix null pointer error when PushMethod is not defined for device properties. ([#5204](https://github.com/kubeedge/kubeedge/pull/5204), [@luomengY](https://github.com/luomengY))
+- Move pkg/util/grpcclient to pkg/grpcclient; RegisterMapper function should use pkg/grpcclient/config. ([#5208](https://github.com/kubeedge/kubeedge/pull/5208), [@cl2017](https://github.com/cl2017), [@wbc6080](https://github.com/wbc6080))
+- Fix error logs when nodes repeatedly join different node groups. ([#5213](https://github.com/kubeedge/kubeedge/pull/5213), [@lishaokai1995](https://github.com/lishaokai1995), [@Onion-of-dreamed](https://github.com/Onion-of-dreamed))
+- Resolve that users do not need to define the status module in device yaml.([#5217](https://github.com/kubeedge/kubeedge/pull/5217), [@luomengY](https://github.com/luomengY), [@wbc6080](https://github.com/wbc6080))
+- Fix device model sync when add or delete devices. ([#5221](https://github.com/kubeedge/kubeedge/pull/5221), [@cl2017](https://github.com/cl2017), [@wbc6080](https://github.com/wbc6080))
 
 # v1.15.0
 

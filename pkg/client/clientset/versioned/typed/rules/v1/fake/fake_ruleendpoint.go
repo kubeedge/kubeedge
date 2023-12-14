@@ -21,10 +21,9 @@ package fake
 import (
 	"context"
 
-	rulesv1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -36,25 +35,25 @@ type FakeRuleEndpoints struct {
 	ns   string
 }
 
-var ruleendpointsResource = schema.GroupVersionResource{Group: "rules.kubeedge.io", Version: "v1", Resource: "ruleendpoints"}
+var ruleendpointsResource = v1.SchemeGroupVersion.WithResource("ruleendpoints")
 
-var ruleendpointsKind = schema.GroupVersionKind{Group: "rules.kubeedge.io", Version: "v1", Kind: "RuleEndpoint"}
+var ruleendpointsKind = v1.SchemeGroupVersion.WithKind("RuleEndpoint")
 
 // Get takes name of the ruleEndpoint, and returns the corresponding ruleEndpoint object, and an error if there is any.
-func (c *FakeRuleEndpoints) Get(ctx context.Context, name string, options v1.GetOptions) (result *rulesv1.RuleEndpoint, err error) {
+func (c *FakeRuleEndpoints) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.RuleEndpoint, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(ruleendpointsResource, c.ns, name), &rulesv1.RuleEndpoint{})
+		Invokes(testing.NewGetAction(ruleendpointsResource, c.ns, name), &v1.RuleEndpoint{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*rulesv1.RuleEndpoint), err
+	return obj.(*v1.RuleEndpoint), err
 }
 
 // List takes label and field selectors, and returns the list of RuleEndpoints that match those selectors.
-func (c *FakeRuleEndpoints) List(ctx context.Context, opts v1.ListOptions) (result *rulesv1.RuleEndpointList, err error) {
+func (c *FakeRuleEndpoints) List(ctx context.Context, opts metav1.ListOptions) (result *v1.RuleEndpointList, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(ruleendpointsResource, ruleendpointsKind, c.ns, opts), &rulesv1.RuleEndpointList{})
+		Invokes(testing.NewListAction(ruleendpointsResource, ruleendpointsKind, c.ns, opts), &v1.RuleEndpointList{})
 
 	if obj == nil {
 		return nil, err
@@ -64,8 +63,8 @@ func (c *FakeRuleEndpoints) List(ctx context.Context, opts v1.ListOptions) (resu
 	if label == nil {
 		label = labels.Everything()
 	}
-	list := &rulesv1.RuleEndpointList{ListMeta: obj.(*rulesv1.RuleEndpointList).ListMeta}
-	for _, item := range obj.(*rulesv1.RuleEndpointList).Items {
+	list := &v1.RuleEndpointList{ListMeta: obj.(*v1.RuleEndpointList).ListMeta}
+	for _, item := range obj.(*v1.RuleEndpointList).Items {
 		if label.Matches(labels.Set(item.Labels)) {
 			list.Items = append(list.Items, item)
 		}
@@ -74,57 +73,57 @@ func (c *FakeRuleEndpoints) List(ctx context.Context, opts v1.ListOptions) (resu
 }
 
 // Watch returns a watch.Interface that watches the requested ruleEndpoints.
-func (c *FakeRuleEndpoints) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeRuleEndpoints) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(ruleendpointsResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a ruleEndpoint and creates it.  Returns the server's representation of the ruleEndpoint, and an error, if there is any.
-func (c *FakeRuleEndpoints) Create(ctx context.Context, ruleEndpoint *rulesv1.RuleEndpoint, opts v1.CreateOptions) (result *rulesv1.RuleEndpoint, err error) {
+func (c *FakeRuleEndpoints) Create(ctx context.Context, ruleEndpoint *v1.RuleEndpoint, opts metav1.CreateOptions) (result *v1.RuleEndpoint, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(ruleendpointsResource, c.ns, ruleEndpoint), &rulesv1.RuleEndpoint{})
+		Invokes(testing.NewCreateAction(ruleendpointsResource, c.ns, ruleEndpoint), &v1.RuleEndpoint{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*rulesv1.RuleEndpoint), err
+	return obj.(*v1.RuleEndpoint), err
 }
 
 // Update takes the representation of a ruleEndpoint and updates it. Returns the server's representation of the ruleEndpoint, and an error, if there is any.
-func (c *FakeRuleEndpoints) Update(ctx context.Context, ruleEndpoint *rulesv1.RuleEndpoint, opts v1.UpdateOptions) (result *rulesv1.RuleEndpoint, err error) {
+func (c *FakeRuleEndpoints) Update(ctx context.Context, ruleEndpoint *v1.RuleEndpoint, opts metav1.UpdateOptions) (result *v1.RuleEndpoint, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(ruleendpointsResource, c.ns, ruleEndpoint), &rulesv1.RuleEndpoint{})
+		Invokes(testing.NewUpdateAction(ruleendpointsResource, c.ns, ruleEndpoint), &v1.RuleEndpoint{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*rulesv1.RuleEndpoint), err
+	return obj.(*v1.RuleEndpoint), err
 }
 
 // Delete takes name of the ruleEndpoint and deletes it. Returns an error if one occurs.
-func (c *FakeRuleEndpoints) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
+func (c *FakeRuleEndpoints) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteActionWithOptions(ruleendpointsResource, c.ns, name, opts), &rulesv1.RuleEndpoint{})
+		Invokes(testing.NewDeleteActionWithOptions(ruleendpointsResource, c.ns, name, opts), &v1.RuleEndpoint{})
 
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeRuleEndpoints) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+func (c *FakeRuleEndpoints) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
 	action := testing.NewDeleteCollectionAction(ruleendpointsResource, c.ns, listOpts)
 
-	_, err := c.Fake.Invokes(action, &rulesv1.RuleEndpointList{})
+	_, err := c.Fake.Invokes(action, &v1.RuleEndpointList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched ruleEndpoint.
-func (c *FakeRuleEndpoints) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *rulesv1.RuleEndpoint, err error) {
+func (c *FakeRuleEndpoints) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.RuleEndpoint, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(ruleendpointsResource, c.ns, name, pt, data, subresources...), &rulesv1.RuleEndpoint{})
+		Invokes(testing.NewPatchSubresourceAction(ruleendpointsResource, c.ns, name, pt, data, subresources...), &v1.RuleEndpoint{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*rulesv1.RuleEndpoint), err
+	return obj.(*v1.RuleEndpoint), err
 }

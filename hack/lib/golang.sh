@@ -37,8 +37,8 @@ kubeedge::golang::verify_golang_version() {
 	  exit 1
   fi
 
-  if [ $Y -lt 16 ] ; then
-	  echo "go minor version must >= 16, now is $Y"
+  if [ $Y -lt 20 ] ; then
+	  echo "go minor version must >= 20, now is $Y"
 	  exit 1
   fi
 }
@@ -459,8 +459,8 @@ kubeedge::golang::run_test() {
 
   local profile=${PROFILE:-""}
   if [[ $profile ]]; then
-    go test "-coverprofile=${profile}" ${testdirs[@]}
+    go test -gcflags "all=-N -l" "-coverprofile=${profile}" ${testdirs[@]}
   else
-    go test ${testdirs[@]}
+    go test -gcflags "all=-N -l" ${testdirs[@]}
   fi
 }

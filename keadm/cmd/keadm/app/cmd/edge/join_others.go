@@ -36,11 +36,10 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
-	validationv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1/validation"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2/validation"
 	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
+	"github.com/kubeedge/viaduct/pkg/api"
 )
 
 func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
@@ -88,6 +87,9 @@ func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
 	cmd.Flags().StringVar(&joinOptions.ImageRepository, common.ImageRepository, joinOptions.ImageRepository,
 		`Use this key to decide which image repository to pull images from`,
 	)
+
+	cmd.Flags().StringVar(&joinOptions.HubProtocol, common.HubProtocol, joinOptions.HubProtocol,
+		`Use this key to decide which communication protocol the edge node adopts.`)
 }
 
 func createEdgeConfigFiles(opt *common.JoinOptions) error {
@@ -96,9 +98,6 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 	v, err := semver.ParseTolerant(opt.KubeEdgeVersion)
 	if err != nil {
 		return fmt.Errorf("parse kubeedge version failed, %v", err)
-	}
-	if v.Major <= 1 && v.Minor < 12 {
-		return createV1alpha1EdgeConfigFiles(opt)
 	}
 	if v.Major >= 1 && v.Minor >= 14 && opt.RuntimeType != constants.DefaultRuntimeType {
 		return fmt.Errorf("since KubeEdge v1.14, runtime type only supports `remote`")
@@ -121,7 +120,6 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 		edgeCoreConfig = v1alpha2.NewDefaultEdgeCoreConfig()
 	}
 
-	edgeCoreConfig.Modules.EdgeHub.WebSocket.Server = opt.CloudCoreIPPort
 	// TODO: remove this after release 1.14
 	// this is for keeping backward compatibility
 	// don't save token in configuration edgecore.yaml
@@ -145,8 +143,8 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 	}
 
 	if opt.RemoteRuntimeEndpoint != "" {
-		edgeCoreConfig.Modules.Edged.RemoteRuntimeEndpoint = opt.RemoteRuntimeEndpoint
-		edgeCoreConfig.Modules.Edged.RemoteImageEndpoint = opt.RemoteRuntimeEndpoint
+		edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint = opt.RemoteRuntimeEndpoint
+		edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.ImageServiceEndpoint = opt.RemoteRuntimeEndpoint
 	}
 
 	host, _, err := net.SplitHostPort(opt.CloudCoreIPPort)
@@ -157,6 +155,21 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 		edgeCoreConfig.Modules.EdgeHub.HTTPServer = "https://" + net.JoinHostPort(host, opt.CertPort)
 	} else {
 		edgeCoreConfig.Modules.EdgeHub.HTTPServer = "https://" + net.JoinHostPort(host, "10002")
+	}
+
+	switch opt.HubProtocol {
+	case api.ProtocolTypeQuic:
+		edgeCoreConfig.Modules.EdgeHub.Quic.Enable = true
+		edgeCoreConfig.Modules.EdgeHub.WebSocket.Enable = false
+		edgeCoreConfig.Modules.EdgeHub.Quic.Server = opt.CloudCoreIPPort
+		edgeCoreConfig.Modules.EdgeHub.WebSocket.Server = net.JoinHostPort(host, strconv.Itoa(constants.DefaultWebSocketPort))
+	case api.ProtocolTypeWS:
+		edgeCoreConfig.Modules.EdgeHub.Quic.Enable = false
+		edgeCoreConfig.Modules.EdgeHub.WebSocket.Enable = true
+		edgeCoreConfig.Modules.EdgeHub.Quic.Server = net.JoinHostPort(host, strconv.Itoa(constants.DefaultQuicPort))
+		edgeCoreConfig.Modules.EdgeHub.WebSocket.Server = opt.CloudCoreIPPort
+	default:
+		return fmt.Errorf("unsupported hub of protocol: %s", opt.HubProtocol)
 	}
 	edgeCoreConfig.Modules.EdgeStream.TunnelServer = net.JoinHostPort(host, strconv.Itoa(constants.DefaultTunnelPort))
 
@@ -253,71 +266,4 @@ func runEdgeCore(withMqtt bool) error {
 	klog.Infoln(cmd.GetStdOut())
 	klog.Infoln(tip)
 	return nil
-}
-
-func createV1alpha1EdgeConfigFiles(opt *common.JoinOptions) error {
-	var edgeCoreConfig *v1alpha1.EdgeCoreConfig
-
-	configFilePath := filepath.Join(util.KubeEdgePath, "config/edgecore.yaml")
-	_, err := os.Stat(configFilePath)
-	if err == nil || os.IsExist(err) {
-		klog.Infoln("Read existing configuration file")
-		b, err := os.ReadFile(configFilePath)
-		if err != nil {
-			return err
-		}
-		if err := yaml.Unmarshal(b, &edgeCoreConfig); err != nil {
-			return err
-		}
-	}
-	if edgeCoreConfig == nil {
-		klog.Infoln("The configuration does not exist or the parsing fails, and the default configuration is generated")
-		edgeCoreConfig = v1alpha1.NewDefaultEdgeCoreConfig()
-	}
-
-	edgeCoreConfig.Modules.EdgeHub.WebSocket.Server = opt.CloudCoreIPPort
-	if opt.Token != "" {
-		edgeCoreConfig.Modules.EdgeHub.Token = opt.Token
-	}
-	if opt.EdgeNodeName != "" {
-		edgeCoreConfig.Modules.Edged.HostnameOverride = opt.EdgeNodeName
-	}
-	if opt.RuntimeType != "" {
-		edgeCoreConfig.Modules.Edged.RuntimeType = opt.RuntimeType
-	}
-
-	switch opt.CGroupDriver {
-	case v1alpha1.CGroupDriverSystemd:
-		edgeCoreConfig.Modules.Edged.CGroupDriver = v1alpha1.CGroupDriverSystemd
-	case v1alpha1.CGroupDriverCGroupFS:
-		edgeCoreConfig.Modules.Edged.CGroupDriver = v1alpha1.CGroupDriverCGroupFS
-	default:
-		return fmt.Errorf("unsupported CGroupDriver: %s", opt.CGroupDriver)
-	}
-	edgeCoreConfig.Modules.Edged.CGroupDriver = opt.CGroupDriver
-
-	if opt.RemoteRuntimeEndpoint != "" {
-		edgeCoreConfig.Modules.Edged.RemoteRuntimeEndpoint = opt.RemoteRuntimeEndpoint
-		edgeCoreConfig.Modules.Edged.RemoteImageEndpoint = opt.RemoteRuntimeEndpoint
-	}
-
-	host, _, err := net.SplitHostPort(opt.CloudCoreIPPort)
-	if err != nil {
-		return fmt.Errorf("get current host and port failed: %v", err)
-	}
-	if opt.CertPort != "" {
-		edgeCoreConfig.Modules.EdgeHub.HTTPServer = "https://" + net.JoinHostPort(host, opt.CertPort)
-	} else {
-		edgeCoreConfig.Modules.EdgeHub.HTTPServer = "https://" + net.JoinHostPort(host, "10002")
-	}
-	edgeCoreConfig.Modules.EdgeStream.TunnelServer = net.JoinHostPort(host, strconv.Itoa(constants.DefaultTunnelPort))
-
-	if len(opt.Labels) > 0 {
-		edgeCoreConfig.Modules.Edged.Labels = setEdgedNodeLabels(opt)
-	}
-
-	if errs := validationv1alpha1.ValidateEdgeCoreConfiguration(edgeCoreConfig); len(errs) > 0 {
-		return errors.New(pkgutil.SpliceErrors(errs.ToAggregate().Errors()))
-	}
-	return common.Write2File(configFilePath, edgeCoreConfig)
 }

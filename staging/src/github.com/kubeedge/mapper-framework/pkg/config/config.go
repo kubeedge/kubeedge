@@ -17,25 +17,20 @@ limitations under the License.
 package config
 
 import (
-	"errors"
-	"io/ioutil"
 	"os"
-	"strings"
 
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
 	"k8s.io/klog/v2"
-
-	"github.com/kubeedge/Template/pkg/common"
 )
 
 var defaultConfigFile = "./config.yaml"
+var config *Config
 
 // Config is the common mapper configuration.
 type Config struct {
 	GrpcServer GRPCServer `yaml:"grpc_server"`
 	Common     Common     `yaml:"common"`
-	DevInit    DevInit    `yaml:"dev_init"`
 }
 
 type GRPCServer struct {
@@ -51,13 +46,8 @@ type Common struct {
 	EdgeCoreSock string `yaml:"edgecore_sock"`
 }
 
-type DevInit struct {
-	Mode      string `yaml:"mode"`
-	Configmap string `yaml:"configmap"`
-}
-
 // Parse the configuration file. If failed, return error.
-func (c *Config) Parse() error {
+func Parse() (c *Config, err error) {
 	var level klog.Level
 	var loglevel string
 	var configFile string
@@ -65,35 +55,24 @@ func (c *Config) Parse() error {
 	pflag.StringVar(&loglevel, "v", "1", "log level")
 	pflag.StringVar(&configFile, "config-file", defaultConfigFile, "Config file name")
 	pflag.Parse()
-	cf, err := ioutil.ReadFile(configFile)
+
+	if err = level.Set(loglevel); err != nil {
+		return nil, err
+	}
+
+	c = &Config{}
+	cf, err := os.ReadFile(configFile)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if err = yaml.Unmarshal(cf, c); err != nil {
-		return err
-	}
-	if err = level.Set(loglevel); err != nil {
-		return err
+		return nil, err
 	}
 
-	switch c.DevInit.Mode {
-	case common.DevInitModeConfigmap:
-		if _, err := ioutil.ReadFile(c.DevInit.Configmap); err != nil {
-			if !os.IsNotExist(err) {
-				return err
-			}
-			c.DevInit.Configmap = strings.TrimSpace(os.Getenv("DEVICE_PROFILE"))
-		}
-		if strings.TrimSpace(c.DevInit.Configmap) == "" {
-			return errors.New("can not parse configmap")
-		}
-	case common.DevInitModeRegister:
-	case "": // if mode is nil, use meta server mode
-		c.DevInit.Mode = common.DevInitModeRegister
-		fallthrough
-	default:
-		return errors.New("unsupported dev init mode " + c.DevInit.Mode)
-	}
+	config = c
+	return c, nil
+}
 
-	return nil
+func Cfg() *Config {
+	return config
 }

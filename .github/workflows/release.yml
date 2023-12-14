@@ -47,7 +47,7 @@ jobs:
       - name: Making and packaging
         run: |
           if [ "${{ matrix.os }}" == "linux" ]; then
-            docker pull kubeedge/build-tools:1.19.12-ke2
+            docker pull kubeedge/build-tools:1.20.10-ke1
             BUILD_CONTAINER=true
           else
             BUILD_CONTAINER=false
@@ -92,7 +92,7 @@ jobs:
       actions: read
       id-token: write
       contents: write
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.2.2
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.9.0
     with:
       base64-subjects: "${{ needs.combine_hashes.outputs.hashes }}"
       # Upload provenance to a new release
@@ -102,7 +102,7 @@ jobs:
     name: publish to DockerHub
     strategy:
       matrix:
-        target: [cloudcore, admission, edgesite-agent, edgesite-server, csidriver, iptables-manager, edgemark, installation-package, controller-manager]
+        target: [cloudcore, admission, edgesite-agent, edgesite-server, csidriver, iptables-manager, edgemark, installation-package, controller-manager, conformance, nodeconformance]
     outputs:
       hash-digest-cloudcore: ${{ steps.hash.outputs.hash-digest-cloudcore }}
       hash-digest-admission: ${{ steps.hash.outputs.hash-digest-admission }}
@@ -113,6 +113,8 @@ jobs:
       hash-digest-edgemark: ${{ steps.hash.outputs.hash-digest-edgemark }}
       hash-digest-installation-package: ${{ steps.hash.outputs.hash-digest-installation-package }}
       hash-digest-controller-manager: ${{ steps.hash.outputs.hash-digest-controller-manager }}
+      hash-digest-conformance: ${{ steps.hash.outputs.hash-digest-conformance }}
+      hash-digest-nodeconformance: ${{ steps.hash.outputs.hash-digest-nodeconformance }}
     runs-on: ubuntu-22.04
     steps:
       - name: checkout code
@@ -155,13 +157,13 @@ jobs:
     needs: [publish-image-to-dockerhub]
     strategy:
       matrix:
-        target: [cloudcore, admission, edgesite-agent, edgesite-server, csidriver, iptables-manager, edgemark, installation-package, controller-manager]
+        target: [cloudcore, admission, edgesite-agent, edgesite-server, csidriver, iptables-manager, edgemark, installation-package, controller-manager, conformance, nodeconformance]
     permissions:
       actions: read # for detecting the Github Actions environment.
       id-token: write # for creating OIDC tokens for signing.
       packages: write # for uploading attestations.
     if: startsWith(github.ref, 'refs/tags/')
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v1.4.0
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v1.9.0
     with:
       image: kubeedge/${{ matrix.target }}
       registry-username: ${{ vars.DOCKERHUB_USER_NAME }}

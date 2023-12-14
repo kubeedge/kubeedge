@@ -32,12 +32,12 @@ data:
         websocket:
           address: 0.0.0.0
           enable: {{ .Values.cloudCore.modules.cloudHub.websocket.enable }}
-          port: 10000
+          port: {{ .Values.cloudCore.modules.cloudHub.websocket.port }}
         quic:
           address: 0.0.0.0
           enable: {{ .Values.cloudCore.modules.cloudHub.quic.enable }}
           maxIncomingStreams: {{ .Values.cloudCore.modules.cloudHub.quic.maxIncomingStreams }}
-          port: 10001
+          port: {{ .Values.cloudCore.modules.cloudHub.quic.port }}
         https:
           address: 0.0.0.0
           enable: {{ .Values.cloudCore.modules.cloudHub.https.enable }}

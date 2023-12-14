@@ -24,7 +24,6 @@ import (
 	v1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -35,9 +34,9 @@ type FakeNodeGroups struct {
 	Fake *FakeAppsV1alpha1
 }
 
-var nodegroupsResource = schema.GroupVersionResource{Group: "apps.kubeedge.io", Version: "v1alpha1", Resource: "nodegroups"}
+var nodegroupsResource = v1alpha1.SchemeGroupVersion.WithResource("nodegroups")
 
-var nodegroupsKind = schema.GroupVersionKind{Group: "apps.kubeedge.io", Version: "v1alpha1", Kind: "NodeGroup"}
+var nodegroupsKind = v1alpha1.SchemeGroupVersion.WithKind("NodeGroup")
 
 // Get takes name of the nodeGroup, and returns the corresponding nodeGroup object, and an error if there is any.
 func (c *FakeNodeGroups) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.NodeGroup, err error) {

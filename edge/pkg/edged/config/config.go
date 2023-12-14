@@ -32,7 +32,7 @@ func InitConfigure(e *v1alpha2.Edged) {
 	})
 }
 
-func ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(in *v1alpha2.TailoredKubeletConfiguration, out *kubeletconfig.KubeletConfiguration, s conversion.Scope) error {
+func ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(in *v1alpha2.TailoredKubeletConfiguration, inFlag *v1alpha2.TailoredKubeletFlag, out *kubeletconfig.KubeletConfiguration, s conversion.Scope) error {
 	out.StaticPodPath = in.StaticPodPath
 	out.SyncFrequency = in.SyncFrequency
 	out.Address = in.Address
@@ -79,6 +79,7 @@ func ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(in *v1alpha2.T
 	out.MemoryManagerPolicy = in.MemoryManagerPolicy
 	out.TopologyManagerPolicy = in.TopologyManagerPolicy
 	out.TopologyManagerScope = in.TopologyManagerScope
+	out.TopologyManagerPolicyOptions = *(*map[string]string)(unsafe.Pointer(&in.TopologyManagerPolicyOptions))
 	out.QOSReserved = *(*map[string]string)(unsafe.Pointer(&in.QOSReserved))
 	out.RuntimeRequestTimeout = in.RuntimeRequestTimeout
 	out.HairpinMode = in.HairpinMode
@@ -104,6 +105,7 @@ func ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(in *v1alpha2.T
 	if err := v1.Convert_Pointer_bool_To_bool(&in.SerializeImagePulls, &out.SerializeImagePulls, s); err != nil {
 		return err
 	}
+	out.MaxParallelImagePulls = (*int32)(unsafe.Pointer(in.MaxParallelImagePulls))
 	out.EvictionHard = *(*map[string]string)(unsafe.Pointer(&in.EvictionHard))
 	out.EvictionSoft = *(*map[string]string)(unsafe.Pointer(&in.EvictionSoft))
 	out.EvictionSoftGracePeriod = *(*map[string]string)(unsafe.Pointer(&in.EvictionSoftGracePeriod))
@@ -148,6 +150,9 @@ func ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(in *v1alpha2.T
 	if err := v1.Convert_Pointer_bool_To_bool(&in.EnableSystemLogHandler, &out.EnableSystemLogHandler, s); err != nil {
 		return err
 	}
+	if err := v1.Convert_Pointer_bool_To_bool(&in.EnableSystemLogQuery, &out.EnableSystemLogQuery, s); err != nil {
+		return err
+	}
 	out.ShutdownGracePeriod = in.ShutdownGracePeriod
 	out.ShutdownGracePeriodCriticalPods = in.ShutdownGracePeriodCriticalPods
 	out.ShutdownGracePeriodByPodPriority = *(*[]kubeletconfig.ShutdownGracePeriodByPodPriority)(unsafe.Pointer(&in.ShutdownGracePeriodByPodPriority))
@@ -166,6 +171,16 @@ func ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(in *v1alpha2.T
 	if err := v1.Convert_Pointer_bool_To_bool(&in.RegisterNode, &out.RegisterNode, s); err != nil {
 		return err
 	}
+	if err := v1.Convert_Pointer_bool_To_bool(&in.LocalStorageCapacityIsolation, &out.LocalStorageCapacityIsolation, s); err != nil {
+		return err
+	}
+	if in.ContainerRuntimeEndpoint == "" {
+		out.ContainerRuntimeEndpoint = inFlag.RemoteRuntimeEndpoint
+		out.ImageServiceEndpoint = inFlag.RemoteImageEndpoint
+	} else {
+		out.ContainerRuntimeEndpoint = in.ContainerRuntimeEndpoint
+		out.ImageServiceEndpoint = in.ImageServiceEndpoint
+	}
 	return nil
 }
 
@@ -173,15 +188,12 @@ func ConvertConfigEdgedFlagToConfigKubeletFlag(in *v1alpha2.TailoredKubeletFlag,
 	out.HostnameOverride = in.HostnameOverride
 	out.NodeIP = in.NodeIP
 	out.RootDirectory = in.RootDirectory
-	out.RemoteRuntimeEndpoint = in.RemoteRuntimeEndpoint
-	out.RemoteImageEndpoint = in.RemoteImageEndpoint
 	out.ExperimentalMounterPath = in.ExperimentalMounterPath
 	out.ExperimentalNodeAllocatableIgnoreEvictionThreshold = in.ExperimentalNodeAllocatableIgnoreEvictionThreshold
 	out.NodeLabels = in.NodeLabels
 	out.MinimumGCAge = in.MinimumGCAge
 	out.MaxPerPodContainerCount = in.MaxPerPodContainerCount
 	out.MaxContainerCount = in.MaxContainerCount
-	out.MasterServiceNamespace = in.MasterServiceNamespace
 	out.RegisterSchedulable = in.RegisterSchedulable
 	out.KeepTerminatedPodVolumes = in.KeepTerminatedPodVolumes
 	out.SeccompDefault = in.SeccompDefault
@@ -190,7 +202,6 @@ func ConvertConfigEdgedFlagToConfigKubeletFlag(in *v1alpha2.TailoredKubeletFlag,
 	// out.WindowsService = in.WindowsService
 
 	// container-runtime-specific options
-	out.ContainerRuntime = in.ContainerRuntime
 	out.RuntimeCgroups = in.RuntimeCgroups
 	out.PodSandboxImage = in.PodSandboxImage
 }

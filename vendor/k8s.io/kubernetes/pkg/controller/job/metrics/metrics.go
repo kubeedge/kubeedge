@@ -38,7 +38,7 @@ var (
 			Name:           "job_sync_duration_seconds",
 			Help:           "The time it took to sync a job",
 			StabilityLevel: metrics.STABLE,
-			Buckets:        metrics.ExponentialBuckets(0.001, 2, 15),
+			Buckets:        metrics.ExponentialBuckets(0.004, 2, 15),
 		},
 		[]string{"completion_mode", "result", "action"},
 	)
@@ -103,7 +103,7 @@ var (
 		},
 		[]string{"action"})
 
-	// TerminatedPodsWithTrackingFinalizer records the addition and removal of
+	// TerminatedPodsTrackingFinalizerTotal records the addition and removal of
 	// terminated pods that have the finalizer batch.kubernetes.io/job-tracking,
 	// regardless of whether they are owned by a Job.
 	TerminatedPodsTrackingFinalizerTotal = metrics.NewCounterVec(

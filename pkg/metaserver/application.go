@@ -125,7 +125,7 @@ func (a *Application) RespContent() interface{} {
 func (a *Application) OptionTo(i interface{}) error {
 	err := json.Unmarshal(a.Option, i)
 	if err != nil {
-		return fmt.Errorf("failed to prase Option bytes, %v", err)
+		return fmt.Errorf("failed to parse Option bytes, %v", err)
 	}
 	return nil
 }

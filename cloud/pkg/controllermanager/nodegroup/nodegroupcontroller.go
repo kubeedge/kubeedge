@@ -18,7 +18,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	appsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1"
 )
@@ -186,7 +185,7 @@ func (c *Controller) SetupWithManager(ctx context.Context, mgr controllerruntime
 	}
 	return controllerruntime.NewControllerManagedBy(mgr).
 		For(&appsv1alpha1.NodeGroup{}).
-		Watches(&source.Kind{Type: &corev1.Node{}}, handler.EnqueueRequestsFromMapFunc(c.nodeMapFunc)).
+		Watches(&corev1.Node{}, handler.EnqueueRequestsFromMapFunc(c.nodeMapFunc)).
 		Complete(c)
 }
 
@@ -270,7 +269,7 @@ func (c *Controller) getNodesSelectedBy(ctx context.Context, nodeGroup *appsv1al
 // We can assume that one node can only be in one of following conditions:
 // 1. This node is an orphan, do not and will not belong to any NodeGroup.
 // 2. This node is or will be a member of one NodeGroup.
-func (c *Controller) nodeMapFunc(obj client.Object) []controllerruntime.Request {
+func (c *Controller) nodeMapFunc(ctx context.Context, obj client.Object) []controllerruntime.Request {
 	node := obj.(*corev1.Node)
 	if nodeGroupName, ok := node.Labels[LabelBelongingTo]; ok {
 		return []controllerruntime.Request{

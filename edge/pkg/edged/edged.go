@@ -152,9 +152,10 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 		}, nil
 	}
 
+	// initial kubelet config and flag
 	var kubeletConfig kubeletconfig.KubeletConfiguration
 	var kubeletFlags kubeletoptions.KubeletFlags
-	err = edgedconfig.ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(edgedconfig.Config.TailoredKubeletConfig, &kubeletConfig, nil)
+	err = edgedconfig.ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(edgedconfig.Config.TailoredKubeletConfig, &edgedconfig.Config.TailoredKubeletFlag, &kubeletConfig, nil)
 	if err != nil {
 		klog.ErrorS(err, "Failed to convert kubelet config")
 		return nil, fmt.Errorf("failed to construct kubelet configuration")
@@ -166,11 +167,19 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 	if !edgedconfig.Config.RegisterNode {
 		kubeletConfig.RegisterNode = false
 	}
+
+	// set feature gates from initial flags-based config
+	if err := utilfeature.DefaultMutableFeatureGate.SetFromMap(kubeletConfig.FeatureGates); err != nil {
+		return nil, fmt.Errorf("failed to set feature gates from initial flags-based config: %w", err)
+	}
+
+	// construct a KubeletServer from kubeletFlags and kubeletConfig
 	kubeletServer := kubeletoptions.KubeletServer{
 		KubeletFlags:         kubeletFlags,
 		KubeletConfiguration: kubeletConfig,
 	}
 
+	// make directory for static pod
 	if kubeletConfig.StaticPodPath != "" {
 		if err := os.MkdirAll(kubeletConfig.StaticPodPath, os.ModePerm); err != nil {
 			return nil, fmt.Errorf("create %s static pod path failed: %v", kubeletConfig.StaticPodPath, err)
@@ -179,7 +188,9 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 		klog.ErrorS(err, "static pod path is nil!")
 	}
 
+	// set edged version
 	nodestatus.KubeletVersion = fmt.Sprintf("%s-kubeedge-%s", constants.CurrentSupportK8sVersion, version.Get())
+
 	// use kubeletServer to construct the default KubeletDeps
 	kubeletDeps, err := DefaultKubeletDeps(&kubeletServer, utilfeature.DefaultFeatureGate)
 	if err != nil {

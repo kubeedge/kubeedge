@@ -29,6 +29,7 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2/validation"
 	"github.com/kubeedge/kubeedge/pkg/util"
+	"github.com/kubeedge/viaduct/pkg/api"
 )
 
 // KubeEdgeInstTool embeds Common struct and contains cloud node ip:port information
@@ -45,6 +46,7 @@ type KubeEdgeInstTool struct {
 	CGroupDriver          string
 	TarballPath           string
 	Labels                []string
+	HubProtocol           string
 }
 
 // InstallTools downloads KubeEdge for the specified version
@@ -92,8 +94,6 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 	}
 
 	edgeCoreConfig := v1alpha2.NewDefaultEdgeCoreConfig()
-	edgeCoreConfig.Modules.EdgeHub.WebSocket.Server = ku.CloudCoreIP
-
 	if ku.EdgeNodeName != "" {
 		edgeCoreConfig.Modules.Edged.HostnameOverride = ku.EdgeNodeName
 	}
@@ -112,8 +112,8 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 	}
 
 	if ku.RemoteRuntimeEndpoint != "" {
-		edgeCoreConfig.Modules.Edged.RemoteRuntimeEndpoint = ku.RemoteRuntimeEndpoint
-		edgeCoreConfig.Modules.Edged.RemoteImageEndpoint = ku.RemoteRuntimeEndpoint
+		edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint = ku.RemoteRuntimeEndpoint
+		edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.ImageServiceEndpoint = ku.RemoteRuntimeEndpoint
 	}
 	if ku.Token != "" {
 		edgeCoreConfig.Modules.EdgeHub.Token = ku.Token
@@ -123,6 +123,21 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 		edgeCoreConfig.Modules.EdgeHub.HTTPServer = "https://" + cloudCoreIP + ":" + ku.CertPort
 	} else {
 		edgeCoreConfig.Modules.EdgeHub.HTTPServer = "https://" + cloudCoreIP + ":10002"
+	}
+
+	switch ku.HubProtocol {
+	case api.ProtocolTypeQuic:
+		edgeCoreConfig.Modules.EdgeHub.Quic.Enable = true
+		edgeCoreConfig.Modules.EdgeHub.WebSocket.Enable = false
+		edgeCoreConfig.Modules.EdgeHub.Quic.Server = ku.CloudCoreIP
+		edgeCoreConfig.Modules.EdgeHub.WebSocket.Server = net.JoinHostPort(cloudCoreIP, strconv.Itoa(constants.DefaultWebSocketPort))
+	case api.ProtocolTypeWS:
+		edgeCoreConfig.Modules.EdgeHub.Quic.Enable = false
+		edgeCoreConfig.Modules.EdgeHub.WebSocket.Enable = true
+		edgeCoreConfig.Modules.EdgeHub.Quic.Server = net.JoinHostPort(cloudCoreIP, strconv.Itoa(constants.DefaultQuicPort))
+		edgeCoreConfig.Modules.EdgeHub.WebSocket.Server = ku.CloudCoreIP
+	default:
+		return fmt.Errorf("unsupported hub of protocol: %s", ku.HubProtocol)
 	}
 	edgeCoreConfig.Modules.EdgeStream.TunnelServer = net.JoinHostPort(cloudCoreIP, strconv.Itoa(constants.DefaultTunnelPort))
 

@@ -18,6 +18,7 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
 	commonType "github.com/kubeedge/kubeedge/common/types"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	servicebusConfig "github.com/kubeedge/kubeedge/edge/pkg/servicebus/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/servicebus/dao"
@@ -123,12 +124,12 @@ func processMessage(msg *beehiveModel.Message) {
 	}
 	resource := msg.GetResource()
 	switch msg.GetOperation() {
-	case "start":
+	case message.OperationStart:
 		dao.InsertUrls(resource)
 		if atomic.CompareAndSwapInt32(&inited, 0, 1) {
 			go server(c)
 		}
-	case "stop":
+	case message.OperationStop:
 		dao.DeleteUrlsByKey(resource)
 		if dao.IsTableEmpty() {
 			c <- struct{}{}
