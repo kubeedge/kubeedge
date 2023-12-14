@@ -24,9 +24,8 @@ func TestEdgeSet(t *testing.T) {
 				},
 			},
 			want: Set{
-				EdgeCore:  "kubeedge/installation-package:v1.9.1",
-				EdgeMQTT:  constants.DefaultMosquittoImage,
-				EdgePause: constants.DefaultPodSandboxImage,
+				EdgeCore: "kubeedge/installation-package:v1.9.1",
+				EdgeMQTT: constants.DefaultMosquittoImage,
 			},
 		},
 		{
@@ -39,9 +38,8 @@ func TestEdgeSet(t *testing.T) {
 				},
 			},
 			want: Set{
-				EdgeCore:  "kubeedge/installation-package",
-				EdgeMQTT:  constants.DefaultMosquittoImage,
-				EdgePause: constants.DefaultPodSandboxImage,
+				EdgeCore: "kubeedge/installation-package",
+				EdgeMQTT: constants.DefaultMosquittoImage,
 			},
 		},
 		{
@@ -54,9 +52,8 @@ func TestEdgeSet(t *testing.T) {
 				},
 			},
 			want: Set{
-				EdgeCore:  "kubeedge-test/installation-package:v1.9.1",
-				EdgeMQTT:  "kubeedge-test/" + constants.DefaultMosquittoImage,
-				EdgePause: "kubeedge-test/pause:3.6",
+				EdgeCore: "kubeedge-test/installation-package:v1.9.1",
+				EdgeMQTT: "kubeedge-test/" + constants.DefaultMosquittoImage,
 			},
 		},
 		{
@@ -69,8 +66,7 @@ func TestEdgeSet(t *testing.T) {
 				},
 			},
 			want: Set{
-				EdgeCore:  "kubeedge-test/installation-package:v1.9.1",
-				EdgePause: "kubeedge-test/pause:3.6",
+				EdgeCore: "kubeedge-test/installation-package:v1.9.1",
 			},
 		},
 		{
@@ -83,9 +79,8 @@ func TestEdgeSet(t *testing.T) {
 				},
 			},
 			want: Set{
-				EdgeCore:  "kubeedge-test/installation-package",
-				EdgeMQTT:  "kubeedge-test/" + constants.DefaultMosquittoImage,
-				EdgePause: "kubeedge-test/pause:3.6",
+				EdgeCore: "kubeedge-test/installation-package",
+				EdgeMQTT: "kubeedge-test/" + constants.DefaultMosquittoImage,
 			},
 		},
 	}
