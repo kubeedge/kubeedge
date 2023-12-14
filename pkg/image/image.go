@@ -31,9 +31,8 @@ const (
 )
 
 const (
-	EdgePause = "pause"
-	EdgeCore  = "edgecore"
-	EdgeMQTT  = "mqtt"
+	EdgeCore = "edgecore"
+	EdgeMQTT = "mqtt"
 )
 
 type Set map[string]string
@@ -52,8 +51,7 @@ var edgeComponentSet = Set{
 }
 
 var edgeThirdPartySet = Set{
-	EdgeMQTT:  constants.DefaultMosquittoImage,
-	EdgePause: constants.DefaultPodSandboxImage,
+	EdgeMQTT: constants.DefaultMosquittoImage,
 }
 
 func EdgeSet(opt *common.JoinOptions) Set {
