@@ -147,5 +147,5 @@ jobs:
       - run: |
           export PROTOCOL=${{ matrix.protocol }}
           export KIND_IMAGE=kindest/node:${{ matrix.version }}
-          export CONTAINER_RUNTIME="remote"
+          export CONTAINER_RUNTIME="containerd"
           make e2e

@@ -14,21 +14,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-KUBEEDGE_ROOT=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/..
+KUBEEDGE_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/..
 ENABLE_DAEMON=${ENABLE_DAEMON:-false}
 LOG_DIR=${LOG_DIR:-"/tmp"}
 LOG_LEVEL=${LOG_LEVEL:-2}
 TIMEOUT=${TIMEOUT:-60}s
 PROTOCOL=${PROTOCOL:-"WebSocket"}
-CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-"remote"}
+CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-"containerd"}
 KIND_IMAGE=${1:-"kindest/node:v1.27.0"}
 echo -e "The installation of the cni plugin will overwrite the cni config file. Use export CNI_CONF_OVERWRITE=false to disable it."
 
-if [[ "${CLUSTER_NAME}x" == "x" ]];then
-    CLUSTER_NAME="test"
+if [[ "${CLUSTER_NAME}x" == "x" ]]; then
+  CLUSTER_NAME="test"
 fi
 
 export CLUSTER_CONTEXT="--name ${CLUSTER_NAME}"
+
+function install_cr() {
+  if [[ "${CONTAINER_RUNTIME}" = "docker" ]]; then
+    install_docker
+  elif [[ "${CONTAINER_RUNTIME}" = "cri-o" ]]; then
+    install_crio
+  elif [[ "${CONTAINER_RUNTIME}" = "isulad" ]]; then
+    install_isulad
+  fi
+}
 
 function check_prerequisites {
   kubeedge::golang::verify_golang_version
@@ -37,7 +47,14 @@ function check_prerequisites {
   if [[ "${CONTAINER_RUNTIME}" = "docker" ]]; then
     # if we will use docker as edgecore container runtime, we need to verify whether docker already installed
     verify_docker_installed
-  elif [[ "${CONTAINER_RUNTIME}" = "remote" ]]; then
+    verify_cridockerd_installed
+  elif [[ "${CONTAINER_RUNTIME}" = "cri-o" ]]; then
+    # function to verify if cri-o is installed
+    verify_crio_installed
+  elif [[ "${CONTAINER_RUNTIME}" = "isulad" ]]; then
+    # function to verify if isulad is installed
+    verify_isulad_installed
+  elif [[ "${CONTAINER_RUNTIME}" = "containerd" ]]; then
     # we will use containerd as cri runtime, so need to verify whether containerd already installed
     verify_containerd_installed
   else
@@ -60,7 +77,7 @@ function uninstall_kubeedge {
   [[ -n "${EDGECORE_PID-}" ]] && sudo kill "${EDGECORE_PID}" 2>/dev/null
 
   # delete data
-  rm -rf /tmp/etc/kubeedge /tmp/var/lib/kubeedge
+  sudo rm -rf /tmp/etc/kubeedge /tmp/var/lib/kubeedge
 
 }
 
@@ -122,7 +139,7 @@ function build_edgecore {
 function start_cloudcore {
   CLOUD_CONFIGFILE=${KUBEEDGE_ROOT}/_output/local/bin/cloudcore.yaml
   CLOUD_BIN=${KUBEEDGE_ROOT}/_output/local/bin/cloudcore
-  ${CLOUD_BIN} --defaultconfig >  ${CLOUD_CONFIGFILE}
+  ${CLOUD_BIN} --defaultconfig >${CLOUD_CONFIGFILE}
   sed -i '/cloudStream:/{n;s/false/true/;}' ${CLOUD_CONFIGFILE}
   if [[ "${PROTOCOL}" = "QUIC" ]]; then
     sed -i '/quic:/{n;N;s/false/true/;}' ${CLOUD_CONFIGFILE}
@@ -141,20 +158,20 @@ function start_cloudcore {
     -e '/router:/{n;N;N;N;N;s/false/true/}' ${CLOUD_CONFIGFILE}
   CLOUDCORE_LOG=${LOG_DIR}/cloudcore.log
   echo "start cloudcore..."
-  nohup sudo ${CLOUD_BIN} --config=${CLOUD_CONFIGFILE} --v=${LOG_LEVEL} > "${CLOUDCORE_LOG}" 2>&1 &
+  nohup sudo ${CLOUD_BIN} --config=${CLOUD_CONFIGFILE} --v=${LOG_LEVEL} >"${CLOUDCORE_LOG}" 2>&1 &
   CLOUDCORE_PID=$!
 
   # ensure tokensecret is generated
   while true; do
-      sleep 3
-      kubectl get secret -nkubeedge| grep -q tokensecret && break
+    sleep 3
+    kubectl get secret -nkubeedge | grep -q tokensecret && break
   done
 }
 
 function start_edgecore {
   EDGE_CONFIGFILE=${KUBEEDGE_ROOT}/_output/local/bin/edgecore.yaml
   EDGE_BIN=${KUBEEDGE_ROOT}/_output/local/bin/edgecore
-  ${EDGE_BIN} --defaultconfig >  ${EDGE_CONFIGFILE}
+  ${EDGE_BIN} --defaultconfig >${EDGE_CONFIGFILE}
 
   sed -i '/edgeStream:/{n;s/false/true/;}' ${EDGE_CONFIGFILE}
   sed -i '/metaServer:/{n;s/false/true/;}' ${EDGE_CONFIGFILE}
@@ -167,27 +184,36 @@ function start_edgecore {
   # if we will use docker as edgecore container runtime
   # we need to change edgecore container runtime from default containerd to docker
   if [[ "${CONTAINER_RUNTIME}" = "docker" ]]; then
-    sed -i 's|containerRuntime: .*|containerRuntime: docker|' ${EDGE_CONFIGFILE}
-    sed -i 's|remoteImageEndpoint: .*|remoteImageEndpoint: unix:///var/run/dockershim.sock|' ${EDGE_CONFIGFILE}
-    sed -i 's|remoteRuntimeEndpoint: .*|remoteRuntimeEndpoint: unix:///var/run/dockershim.sock|' ${EDGE_CONFIGFILE}
+    sed -i 's|imageServiceEndpoint: .*|imageServiceEndpoint: unix:///var/run/cri-dockerd.sock|' ${EDGE_CONFIGFILE}
+    sed -i 's|containerRuntimeEndpoint: .*|containerRuntimeEndpoint: unix:///var/run/cri-dockerd.sock|' ${EDGE_CONFIGFILE}
   fi
 
-  token=`kubectl get secret -nkubeedge tokensecret -o=jsonpath='{.data.tokendata}' | base64 -d`
+  if [[ "${CONTAINER_RUNTIME}" = "cri-o" ]]; then
+    sed -i 's|imageServiceEndpoint: .*|imageServiceEndpoint: unix:///var/run/crio/crio.sock|' ${EDGE_CONFIGFILE}
+    sed -i 's|containerRuntimeEndpoint: .*|containerRuntimeEndpoint: unix:///var/run/crio/crio.sock|' ${EDGE_CONFIGFILE}
+    sed -i 's|cgroupDriver: .*|cgroupDriver: systemd|' ${EDGE_CONFIGFILE}
+  fi
+
+  if [[ "${CONTAINER_RUNTIME}" = "isulad" ]]; then
+    sed -i 's|imageServiceEndpoint: .*|imageServiceEndpoint: unix:///var/run/isulad.sock|' ${EDGE_CONFIGFILE}
+    sed -i 's|containerRuntimeEndpoint: .*|containerRuntimeEndpoint: unix:///var/run/isulad.sock|' ${EDGE_CONFIGFILE}
+  fi
+
+  token=$(kubectl get secret -nkubeedge tokensecret -o=jsonpath='{.data.tokendata}' | base64 -d)
 
   sed -i -e "s|token: .*|token: ${token}|g" \
-      -e "s|hostnameOverride: .*|hostnameOverride: edge-node|g" \
-      -e "s|/etc/|/tmp/etc/|g" \
-      -e "s|/var/lib/kubeedge/|/tmp&|g" \
-      -e "s|mqttMode: .*|mqttMode: 0|g" \
-      -e '/serviceBus:/{n;s/false/true/;}' ${EDGE_CONFIGFILE}
+    -e "s|hostnameOverride: .*|hostnameOverride: edge-node|g" \
+    -e "s|/etc/|/tmp/etc/|g" \
+    -e "s|/var/lib/kubeedge/|/tmp&|g" \
+    -e "s|mqttMode: .*|mqttMode: 0|g" \
+    -e '/serviceBus:/{n;s/false/true/;}' ${EDGE_CONFIGFILE}
 
   sed -i -e "s|/tmp/etc/resolv|/etc/resolv|g" ${EDGE_CONFIGFILE}
-
   EDGECORE_LOG=${LOG_DIR}/edgecore.log
 
   echo "start edgecore..."
   export CHECK_EDGECORE_ENVIRONMENT="false"
-  nohup sudo -E ${EDGE_BIN} --config=${EDGE_CONFIGFILE} --v=${LOG_LEVEL} > "${EDGECORE_LOG}" 2>&1 &
+  nohup sudo -E ${EDGE_BIN} --config=${EDGE_CONFIGFILE} --v=${LOG_LEVEL} >"${EDGECORE_LOG}" 2>&1 &
   EDGECORE_PID=$!
 }
 
@@ -219,14 +245,14 @@ function generate_streamserver_cert {
   K8SCA_KEY_FILE=/tmp/etc/kubernetes/pki/ca.key
   streamsubject=${SUBJECT:-/C=CN/ST=Zhejiang/L=Hangzhou/O=KubeEdge}
 
-  if [[ ! -d /tmp/etc/kubernetes/pki ]] ; then
+  if [[ ! -d /tmp/etc/kubernetes/pki ]]; then
     mkdir -p /tmp/etc/kubernetes/pki
   fi
-  if [[ ! -d $CA_PATH ]] ; then
-	mkdir -p $CA_PATH
+  if [[ ! -d $CA_PATH ]]; then
+    mkdir -p $CA_PATH
   fi
-  if [[ ! -d $CERT_PATH ]] ; then
-	mkdir -p $CERT_PATH
+  if [[ ! -d $CERT_PATH ]]; then
+    mkdir -p $CERT_PATH
   fi
 
   docker cp ${CLUSTER_NAME}-control-plane:/etc/kubernetes/pki/ca.crt $K8SCA_FILE
@@ -234,11 +260,11 @@ function generate_streamserver_cert {
   cp /tmp/etc/kubernetes/pki/ca.crt /tmp/etc/kubeedge/ca/streamCA.crt
 
   SUBJECTALTNAME="subjectAltName = IP.1:127.0.0.1"
-  echo $SUBJECTALTNAME > /tmp/server-extfile.cnf
+  echo $SUBJECTALTNAME >/tmp/server-extfile.cnf
 
   touch ~/.rnd
 
-  openssl genrsa -out ${STREAM_KEY_FILE}  2048
+  openssl genrsa -out ${STREAM_KEY_FILE} 2048
   openssl req -new -key ${STREAM_KEY_FILE} -subj ${streamsubject} -out ${STREAM_CSR_FILE}
   openssl x509 -req -in ${STREAM_CSR_FILE} -CA ${K8SCA_FILE} -CAkey ${K8SCA_KEY_FILE} -CAcreateserial -out ${STREAM_CRT_FILE} -days 5000 -sha256 -extfile /tmp/server-extfile.cnf
 }
@@ -247,6 +273,8 @@ cleanup
 
 source "${KUBEEDGE_ROOT}/hack/lib/golang.sh"
 source "${KUBEEDGE_ROOT}/hack/lib/install.sh"
+
+install_cr
 
 check_prerequisites
 
@@ -277,9 +305,20 @@ generate_streamserver_cert
 start_cloudcore
 
 # install CNI plugins
-if [[ "${CONTAINER_RUNTIME}" = "remote" ]]; then
-# we need to install CNI plugins only when we use remote(containerd) as edgecore container runtime
-install_cni_plugins
+if [[ "${CONTAINER_RUNTIME}" = "containerd" || "${CONTAINER_RUNTIME}" = "docker" || "${CONTAINER_RUNTIME}" = "isulad" ]]; then
+  # we need to install CNI plugins only when we use remote(containerd) as edgecore container runtime
+  install_cni_plugins
+  if [[ "${CONTAINER_RUNTIME}" = "docker" ]]; then
+    sudo systemctl restart docker
+    sudo systemctl restart cri-docker
+    sleep 2
+  elif [[ "${CONTAINER_RUNTIME}" = "containerd" ]]; then
+    sudo systemctl restart containerd
+    sleep 2
+  elif [[ "${CONTAINER_RUNTIME}" = "isulad" ]]; then
+    sudo systemctl restart isulad
+    sleep 2
+  fi
 fi
 
 sleep 2
@@ -287,9 +326,9 @@ sleep 2
 start_edgecore
 
 if [[ "${ENABLE_DAEMON}" = false ]]; then
-    echo "Local KubeEdge cluster is running. Press Ctrl-C to shut it down."
+  echo "Local KubeEdge cluster is running. Press Ctrl-C to shut it down."
 else
-    echo "Local KubeEdge cluster is running. Use \"kill $BASHPID\" to shut it down."
+  echo "Local KubeEdge cluster is running. Use \"kill $BASHPID\" to shut it down."
 fi
 
 echo "Logs:
@@ -304,11 +343,14 @@ To start using your kubeedge, you can run:
 "
 
 if [[ "${ENABLE_DAEMON}" = false ]]; then
-  while true; do sleep 1; healthcheck; done
+  while true; do
+    sleep 1
+    healthcheck
+  done
 else
-    while true; do
-        sleep 3
-        kubectl get nodes | grep edge-node | grep -q -w Ready && break
-    done
-    kubectl label node edge-node disktype=test
+  while true; do
+    sleep 3
+    kubectl get nodes | grep edge-node | grep -q -w Ready && break
+  done
+  kubectl label node edge-node disktype=test
 fi
