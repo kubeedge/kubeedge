@@ -11,10 +11,14 @@ MAPPER_DIR="$(cd "$(dirname "$ROOT_DIR")" && pwd -P)"
 
 function entry() {
   # copy template
-  read -p "Please input the mapper name (like 'Bluetooth', 'BLE'): " -r mapperName
-  if [[ -z "${mapperName}" ]]; then
-    echo "the mapper name is required"
-    exit 1
+  if [ $# -eq 0 ] ;then
+      read -p "Please input the mapper name (like 'Bluetooth', 'BLE'): " -r mapperName
+      if [[ -z "${mapperName}" ]]; then
+        echo "the mapper name is required"
+        exit 1
+      fi
+  else
+    mapperName=$1
   fi
   mapperNameLowercase=$(echo -n "${mapperName}" | tr '[:upper:]' '[:lower:]')
   mapperPath="${MAPPER_DIR}/${mapperNameLowercase}"

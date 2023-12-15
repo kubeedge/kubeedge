@@ -1,4 +1,4 @@
-FROM golang:1.17-alpine AS builder
+FROM golang:1.20.10-alpine3.18 AS builder
 
 WORKDIR /build
 
@@ -7,10 +7,12 @@ ENV GO111MODULE=on \
 
 COPY . .
 
+RUN  go mod tidy
+
 RUN CGO_ENABLED=0 GOOS=linux go build -o main cmd/main.go
 
 
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 
 RUN mkdir -p kubeedge
 

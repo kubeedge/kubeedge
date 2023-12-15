@@ -18,6 +18,10 @@ package utils
 
 import (
 	"fmt"
+	log "k8s.io/klog/v2"
+	"os/exec"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/onsi/ginkgo/v2"
@@ -62,4 +66,29 @@ func PrintTestcaseNameandStatus() {
 		Status = "PASSED"
 	}
 	Infof("TestCase:%40s     Status=%s", testSpecReport.LeafNodeText, Status)
+}
+
+func PrintCmdOutput(cmd *exec.Cmd) error {
+	log.Info("Executing command: ", strings.Join(cmd.Args, " "))
+	stdOutStdErr, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Error("fail to executing command: ", err)
+		return err
+	}
+	log.Infof("executes command result: %s", stdOutStdErr)
+	return nil
+}
+
+// read n line container log
+func ReadDockerLog(getContainerID string, n int) (string, error) {
+	cmd := exec.Command("sh", "-c", getContainerID)
+	result, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", err
+	}
+	containerID := string(result[:12])
+	cmd = exec.Command("sh", "-c", "docker logs --tail="+strconv.Itoa(n)+" "+containerID)
+	result, err = cmd.CombinedOutput()
+
+	return string(result), nil
 }

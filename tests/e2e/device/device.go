@@ -17,6 +17,7 @@ limitations under the License.
 package device
 
 import (
+	log "k8s.io/klog/v2"
 	"net/http"
 	"time"
 
@@ -41,6 +42,53 @@ var _ = GroupDescribe("Device Management test in E2E scenario", func() {
 
 	ginkgo.BeforeEach(func() {
 		edgeClientSet = utils.NewKubeEdgeClient(framework.TestContext.KubeConfig)
+	})
+	ginkgo.Context("Test Mapper Creation and Deletion", func() {
+		ginkgo.BeforeEach(func() {
+			err := utils.MakeMapperImages(constants.MakeModbusMapperProject, constants.GetModbusExampleCode,
+				constants.BuildModbusMapperProject, constants.MakeModbusMapperImage)
+			if err != nil {
+				log.Error("Fail to run make mapper image")
+				gomega.Expect(err).To(gomega.BeNil())
+			}
+			err = utils.CheckMapperImage(constants.CheckModbusMapperImage)
+			if err != nil {
+				log.Error("Fail to find mapper image")
+				gomega.Expect(err).To(gomega.BeNil())
+			}
+		})
+		ginkgo.AfterEach(func() {
+			// End test timer
+			testTimer.End()
+			// Print result
+			testTimer.PrintResult()
+			// Delete the mapper image created
+
+			err := utils.RemoveMapperContainer(constants.DeleteMapperContainer)
+			if err != nil {
+				log.Error("Fail to stop and delete modbus mapper container")
+				gomega.Expect(err).To(gomega.BeNil())
+			}
+			err = utils.RemoveMapperImage(constants.DeleteModbusMapperImage)
+			if err != nil {
+				log.Error("Fail to delete modbus mapper image")
+				gomega.Expect(err).To(gomega.BeNil())
+			}
+			err = utils.RemoveMapperProject(constants.DeleteModbusMapperProject, constants.DeleteModbusExampleCode)
+			if err != nil {
+				log.Error("Fail to delete modbus mapper project")
+				gomega.Expect(err).To(gomega.BeNil())
+			}
+			utils.PrintTestcaseNameandStatus()
+		})
+		framework.ConformanceIt("E2E_CREATE_MAPPER_1: Create mapper for modbus protocol", func() {
+
+			err := utils.RunMapper(constants.MakeModbusMapperContainer, constants.GetModbusMapperContainer)
+			if err != nil {
+				log.Error("Fail to create modbus mapper")
+				gomega.Expect(err).To(gomega.BeNil())
+			}
+		})
 	})
 
 	ginkgo.Context("Test Device Model Creation, Updation and Deletion", func() {
