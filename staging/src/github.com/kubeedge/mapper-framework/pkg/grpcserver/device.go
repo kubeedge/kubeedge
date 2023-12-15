@@ -9,9 +9,9 @@ import (
 	"k8s.io/klog/v2"
 	"reflect"
 
-	"github.com/kubeedge/Template/pkg/common"
-	"github.com/kubeedge/Template/pkg/util/parse"
 	dmiapi "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1beta1"
+	"github.com/kubeedge/mapper-framework/pkg/common"
+	"github.com/kubeedge/mapper-framework/pkg/util/parse"
 )
 
 func (s *Server) RegisterDevice(ctx context.Context, request *dmiapi.RegisterDeviceRequest) (*dmiapi.RegisterDeviceResponse, error) {

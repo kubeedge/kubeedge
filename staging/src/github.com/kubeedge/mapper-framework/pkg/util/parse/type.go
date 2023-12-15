@@ -3,8 +3,8 @@ package parse
 import (
 	"fmt"
 
-	"github.com/kubeedge/Template/pkg/common"
 	dmiapi "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1beta1"
+	"github.com/kubeedge/mapper-framework/pkg/common"
 )
 
 func ConvTwinsToGrpc(twins []common.Twin) ([]*dmiapi.Twin, error) {

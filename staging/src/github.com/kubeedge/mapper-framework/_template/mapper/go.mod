@@ -1,4 +1,4 @@
-module github.com/kubeedge/mapper-framework
+module github.com/kubeedge/Template
 
 go 1.20
 
@@ -22,3 +22,4 @@ require (
 	google.golang.org/genproto v0.0.0-20220502173005-c8bf987b8c21 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 )
+
