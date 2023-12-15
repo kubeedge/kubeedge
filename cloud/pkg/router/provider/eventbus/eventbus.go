@@ -13,6 +13,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/listener"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/provider"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	v1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
 )
 
@@ -62,7 +63,7 @@ func (factory *eventbusFactory) GetSource(ep *v1.RuleEndpoint, sourceResource ma
 func (eb *EventBus) RegisterListener(handle listener.Handle) error {
 	listener.MessageHandlerInstance.AddListener(path.Join("bus/node", eb.nodeName, eb.namespace, eb.subTopic), handle)
 	msg := model.NewMessage("")
-	msg.SetResourceOperation(path.Join("node", eb.nodeName, eb.namespace, eb.subTopic), "subscribe")
+	msg.SetResourceOperation(path.Join("node", eb.nodeName, eb.namespace, eb.subTopic), message.OperationSubscribe)
 	msg.SetRoute(modules.RouterSourceEventBus, modules.UserGroup)
 	beehiveContext.Send(modules.CloudHubModuleName, *msg)
 	return nil
@@ -70,7 +71,7 @@ func (eb *EventBus) RegisterListener(handle listener.Handle) error {
 
 func (eb *EventBus) UnregisterListener() {
 	msg := model.NewMessage("")
-	msg.SetResourceOperation(path.Join("node", eb.nodeName, eb.namespace, eb.subTopic), "unsubscribe")
+	msg.SetResourceOperation(path.Join("node", eb.nodeName, eb.namespace, eb.subTopic), message.OperationUnsubscribe)
 	msg.SetRoute(modules.RouterSourceEventBus, modules.UserGroup)
 	beehiveContext.Send(modules.CloudHubModuleName, *msg)
 	listener.MessageHandlerInstance.RemoveListener(path.Join("bus/node", eb.nodeName, eb.namespace, eb.subTopic))
