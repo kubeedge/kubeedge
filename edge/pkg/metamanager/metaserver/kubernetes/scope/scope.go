@@ -1,6 +1,9 @@
 package scope
 
 import (
+	"fmt"
+	"os"
+
 	"k8s.io/apiextensions-apiserver/pkg/crdserverscheme"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,6 +22,7 @@ import (
 func NewRequestScope() *handlers.RequestScope {
 	fakeTypeConverter, err := managedfields.NewTypeConverter(make(map[string]*spec.Schema), false)
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to create TypeConverter: %v", err)
 		return nil
 	}
 	fakeFieldManager, err := managedfields.NewDefaultFieldManager(
@@ -32,6 +36,7 @@ func NewRequestScope() *handlers.RequestScope {
 		make(map[fieldpath.APIVersion]*fieldpath.Set),
 	)
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to create FieldManager: %v", err)
 		return nil
 	}
 
