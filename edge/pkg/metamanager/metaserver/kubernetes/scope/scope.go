@@ -17,8 +17,11 @@ import (
 )
 
 func NewRequestScope() *handlers.RequestScope {
-	fakeTypeConverter, _ := managedfields.NewTypeConverter(make(map[string]*spec.Schema), false)
-	fakeFieldManager, _ := managedfields.NewDefaultFieldManager(
+	fakeTypeConverter, err := managedfields.NewTypeConverter(make(map[string]*spec.Schema), false)
+	if err != nil {
+		return nil
+	}
+	fakeFieldManager, err := managedfields.NewDefaultFieldManager(
 		fakeTypeConverter,
 		nil,
 		fakers.NewFakeObjectDefaulter(),
@@ -28,6 +31,9 @@ func NewRequestScope() *handlers.RequestScope {
 		"",
 		make(map[fieldpath.APIVersion]*fieldpath.Set),
 	)
+	if err != nil {
+		return nil
+	}
 
 	requestScope := handlers.RequestScope{
 		Namer: handlers.ContextBasedNaming{
