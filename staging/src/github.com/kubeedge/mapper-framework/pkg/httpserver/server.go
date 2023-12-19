@@ -11,7 +11,7 @@ import (
 	"github.com/gorilla/mux"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/Template/pkg/global"
+	"github.com/kubeedge/mapper-framework/pkg/global"
 )
 
 type RestServer struct {
