@@ -79,8 +79,6 @@ func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
 }
 
 func createEdgeConfigFiles(opt *common.JoinOptions) error {
-	// Determines whether the kubeEdgeVersion is earlier than v1.12.0
-	// If so, we need to create edgeconfig with v1alpha1 version
 	v, err := semver.ParseTolerant(opt.KubeEdgeVersion)
 	if err != nil {
 		return fmt.Errorf("parse kubeedge version failed, %v", err)
@@ -114,9 +112,6 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 	}
 	if opt.EdgeNodeName != "" {
 		edgeCoreConfig.Modules.Edged.HostnameOverride = opt.EdgeNodeName
-	}
-	if opt.RuntimeType != "" {
-		edgeCoreConfig.Modules.Edged.ContainerRuntime = opt.RuntimeType
 	}
 
 	if opt.RemoteRuntimeEndpoint != "" {

@@ -27,7 +27,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/blang/semver"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/klog/v2"
@@ -60,9 +59,6 @@ func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
 		fmt.Printf("mark flag required failed with error: %v\n", err)
 	}
 
-	cmd.Flags().StringVarP(&joinOptions.RuntimeType, common.RuntimeType, "r", joinOptions.RuntimeType,
-		"Container runtime type. Note it will be removed in 1.16 as the only valid value is 'remote'")
-
 	cmd.Flags().StringVarP(&joinOptions.EdgeNodeName, common.EdgeNodeName, "i", joinOptions.EdgeNodeName,
 		"KubeEdge Node unique identification string, if flag not used then the command will generate a unique id on its own")
 
@@ -93,18 +89,8 @@ func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
 }
 
 func createEdgeConfigFiles(opt *common.JoinOptions) error {
-	// Determines whether the kubeEdgeVersion is earlier than v1.12.0
-	// If so, we need to create edgeconfig with v1alpha1 version
-	v, err := semver.ParseTolerant(opt.KubeEdgeVersion)
-	if err != nil {
-		return fmt.Errorf("parse kubeedge version failed, %v", err)
-	}
-	if v.Major >= 1 && v.Minor >= 14 && opt.RuntimeType != constants.DefaultRuntimeType {
-		return fmt.Errorf("since KubeEdge v1.14, runtime type only supports `remote`")
-	}
-
 	configFilePath := filepath.Join(util.KubeEdgePath, "config/edgecore.yaml")
-	_, err = os.Stat(configFilePath)
+	_, err := os.Stat(configFilePath)
 	if err == nil || os.IsExist(err) {
 		klog.Infoln("Read existing configuration file")
 		b, err := os.ReadFile(configFilePath)
@@ -128,9 +114,6 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 	}
 	if opt.EdgeNodeName != "" {
 		edgeCoreConfig.Modules.Edged.HostnameOverride = opt.EdgeNodeName
-	}
-	if opt.RuntimeType != "" {
-		edgeCoreConfig.Modules.Edged.ContainerRuntime = opt.RuntimeType
 	}
 
 	switch opt.CGroupDriver {

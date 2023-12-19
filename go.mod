@@ -8,8 +8,8 @@ require (
 	github.com/cilium/ebpf v0.9.1 // indirect
 	github.com/container-storage-interface/spec v1.7.0
 	github.com/distribution/distribution/v3 v3.0.0-20221208165359-362910506bc2
-	github.com/docker/docker v23.0.1+incompatible
-	github.com/docker/go-connections v0.4.0
+	github.com/docker/docker v23.0.1+incompatible // indirect
+	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/eclipse/paho.mqtt.golang v1.2.0
 	github.com/emicklei/go-restful v2.16.0+incompatible
 	github.com/evanphx/json-patch v5.6.0+incompatible

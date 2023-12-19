@@ -39,7 +39,6 @@ type KubeEdgeInstTool struct {
 	CertPath              string
 	CloudCoreIP           string
 	EdgeNodeName          string
-	RuntimeType           string
 	RemoteRuntimeEndpoint string
 	Token                 string
 	CertPort              string
@@ -96,9 +95,6 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 	edgeCoreConfig := v1alpha2.NewDefaultEdgeCoreConfig()
 	if ku.EdgeNodeName != "" {
 		edgeCoreConfig.Modules.Edged.HostnameOverride = ku.EdgeNodeName
-	}
-	if ku.RuntimeType != "" {
-		edgeCoreConfig.Modules.Edged.ContainerRuntime = ku.RuntimeType
 	}
 	if ku.CGroupDriver != "" {
 		switch ku.CGroupDriver {
