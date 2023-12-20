@@ -142,7 +142,8 @@ func NewDefaultEdgeCoreConfig() (config *EdgeCoreConfig) {
 				Timeout: 60,
 			},
 			DeviceTwin: &DeviceTwin{
-				Enable: true,
+				Enable:      true,
+				DMISockPath: constants.DefaultDMISockPath,
 			},
 			DBTest: &DBTest{
 				Enable: false,
@@ -179,6 +180,9 @@ func NewMinEdgeCoreConfig() (config *EdgeCoreConfig) {
 			DataSource: DataBaseDataSource,
 		},
 		Modules: &Modules{
+			DeviceTwin: &DeviceTwin{
+				DMISockPath: constants.DefaultDMISockPath,
+			},
 			Edged: &Edged{
 				Enable:                true,
 				TailoredKubeletConfig: &defaultTailedKubeletConfig,

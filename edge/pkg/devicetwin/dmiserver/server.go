@@ -37,6 +37,7 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	deviceconfig "github.com/kubeedge/kubeedge/edge/pkg/devicetwin/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dmiclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
@@ -168,13 +169,19 @@ func CreateMessageTwinUpdate(twin *pb.Twin) ([]byte, error) {
 }
 
 func StartDMIServer(cache *DMICache) {
-	err := initSock(SockPath)
+	var DMISockPath string
+	if deviceconfig.Get().DeviceTwin.DMISockPath != "" {
+		DMISockPath = deviceconfig.Get().DeviceTwin.DMISockPath
+	} else {
+		DMISockPath = SockPath
+	}
+	err := initSock(DMISockPath)
 	if err != nil {
 		klog.Fatalf("failed to remove uds socket with err: %v", err)
 		return
 	}
 
-	lis, err := net.Listen(deviceconst.UnixNetworkType, SockPath)
+	lis, err := net.Listen(deviceconst.UnixNetworkType, DMISockPath)
 	if err != nil {
 		klog.Errorf("failed to start DMI Server with err: %v", err)
 		return

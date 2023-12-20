@@ -156,4 +156,7 @@ const (
 	// EdgeHub
 	DefaultWebSocketPort = 10000
 	DefaultQuicPort      = 10001
+
+	// DeviceTwin
+	DefaultDMISockPath = "/etc/kubeedge/dmi.sock"
 )
