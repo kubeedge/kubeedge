@@ -1,9 +1,6 @@
 package scope
 
 import (
-	"fmt"
-	"os"
-
 	"k8s.io/apiextensions-apiserver/pkg/crdserverscheme"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/managedfields"
 	"k8s.io/apiserver/pkg/endpoints/handlers"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/klog/v2"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 	"sigs.k8s.io/structured-merge-diff/v4/fieldpath"
 
@@ -22,7 +20,7 @@ import (
 func NewRequestScope() *handlers.RequestScope {
 	fakeTypeConverter, err := managedfields.NewTypeConverter(make(map[string]*spec.Schema), false)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to create TypeConverter: %v", err)
+		klog.Errorf("Failed to create TypeConverter: %v\n", err)
 		return nil
 	}
 	fakeFieldManager, err := managedfields.NewDefaultFieldManager(
@@ -36,7 +34,7 @@ func NewRequestScope() *handlers.RequestScope {
 		make(map[fieldpath.APIVersion]*fieldpath.Set),
 	)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to create FieldManager: %v", err)
+		klog.Errorf("Failed to create FieldManager: %v\n", err)
 		return nil
 	}
 
