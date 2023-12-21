@@ -56,6 +56,7 @@ require (
 
 require (
 	github.com/agiledragon/gomonkey v2.0.2+incompatible
+	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/beego/beego v1.12.12
 	github.com/onsi/ginkgo/v2 v2.9.5
 	github.com/pkg/errors v0.9.1

@@ -17,10 +17,12 @@ limitations under the License.
 package controller
 
 import (
+	"fmt"
 	"reflect"
 	"sync"
 	"time"
 
+	"github.com/avast/retry-go"
 	"github.com/google/uuid"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
@@ -308,9 +310,22 @@ func (dc *DownstreamController) sendDeviceModelMsg(device *v1beta1.Device, opera
 	if device == nil || device.Spec.DeviceModelRef == nil {
 		return
 	}
-	edgeDeviceModel, ok := dc.deviceModelManager.DeviceModel.Load(device.Spec.DeviceModelRef.Name)
-	if !ok {
-		klog.Warningf("not found device model for device: %s, operation: %s", device.Name, operation)
+	var edgeDeviceModel any
+	var ok bool
+	err := retry.Do(
+		func() error {
+			edgeDeviceModel, ok = dc.deviceModelManager.DeviceModel.Load(device.Spec.DeviceModelRef.Name)
+			if !ok {
+				return fmt.Errorf("not found device model for device: %s, operation: %s", device.Name, operation)
+			}
+			return nil
+		},
+		retry.Delay(1*time.Second),
+		retry.Attempts(10),
+		retry.DelayType(retry.FixedDelay),
+	)
+	if err != nil {
+		klog.Warningf(err.Error())
 		return
 	}
 

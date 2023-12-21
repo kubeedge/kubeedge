@@ -115,6 +115,9 @@ github.com/armon/circbuf
 # github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
 ## explicit; go 1.12
 github.com/asaskevich/govalidator
+# github.com/avast/retry-go v3.0.0+incompatible
+## explicit
+github.com/avast/retry-go
 # github.com/beego/beego v1.12.12
 ## explicit; go 1.13
 github.com/beego/beego/orm
