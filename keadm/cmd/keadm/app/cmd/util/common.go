@@ -73,6 +73,8 @@ const (
 	APT    string = "apt"
 	YUM    string = "yum"
 	PACMAN string = "pacman"
+
+	EdgeCoreSELinuxLabel = "system_u:object_r:bin_t:s0"
 )
 
 // AddToolVals gets the value and default values of each flags and collects them in temporary cache

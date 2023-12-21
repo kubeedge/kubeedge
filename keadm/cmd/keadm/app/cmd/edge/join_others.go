@@ -27,6 +27,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/opencontainers/selinux/go-selinux"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/klog/v2"
@@ -220,6 +221,12 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 }
 
 func runEdgeCore(withMqtt bool) error {
+	//If selinux is enabled, it is necessary to modify the context of edgecore, as edgecore is copied from the container
+	//and will be marked as container_file_t by selinux in container, the marked file cannot be operated by the host process.
+	err := selinuxLabelRevision(selinux.GetEnabled())
+	if err != nil {
+		return err
+	}
 	systemdExist := util.HasSystemd()
 
 	var binExec, tip string
@@ -248,5 +255,23 @@ func runEdgeCore(withMqtt bool) error {
 	}
 	klog.Infoln(cmd.GetStdOut())
 	klog.Infoln(tip)
+	return nil
+}
+
+func selinuxLabelRevision(enable bool) error {
+	if !enable {
+		return nil
+	}
+
+	label, err := selinux.FileLabel(filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName))
+	if err != nil {
+		return fmt.Errorf("get selinux context of edgecore faild with error:%w", err)
+	}
+
+	if label != util.EdgeCoreSELinuxLabel {
+		if err = selinux.SetFileLabel(filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), util.EdgeCoreSELinuxLabel); err != nil {
+			return fmt.Errorf("reset selinux context on edgecore faild with error:%w", err)
+		}
+	}
 	return nil
 }

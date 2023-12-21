@@ -58,6 +58,7 @@ require (
 	github.com/agiledragon/gomonkey v2.0.2+incompatible
 	github.com/beego/beego v1.12.12
 	github.com/onsi/ginkgo/v2 v2.9.5
+	github.com/opencontainers/selinux v1.10.0
 	github.com/pkg/errors v0.9.1
 	go.opentelemetry.io/otel/trace v1.14.0
 	golang.org/x/text v0.13.0
@@ -195,7 +196,6 @@ require (
 	github.com/opencontainers/image-spec v1.1.0-rc2.0.20221005185240-3a7f492d3f1b // indirect
 	github.com/opencontainers/runc v1.1.6 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20220909204839-494a5a6aca78 // indirect
-	github.com/opencontainers/selinux v1.10.0 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
