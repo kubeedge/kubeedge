@@ -3,7 +3,7 @@ package driver
 import (
 	"sync"
 
-	"github.com/kubeedge/Template/pkg/common"
+	"github.com/kubeedge/mapper-framework/pkg/common"
 )
 
 // CustomizedDev is the customized device configuration and client information.

@@ -7,11 +7,11 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/Template/device"
-	"github.com/kubeedge/Template/pkg/common"
-	"github.com/kubeedge/Template/pkg/config"
-	"github.com/kubeedge/Template/pkg/grpcserver"
-	"github.com/kubeedge/Template/pkg/httpserver"
-	"github.com/kubeedge/Template/pkg/util/parse"
+	"github.com/kubeedge/mapper-framework/pkg/common"
+	"github.com/kubeedge/mapper-framework/pkg/config"
+	"github.com/kubeedge/mapper-framework/pkg/grpcserver"
+	"github.com/kubeedge/mapper-framework/pkg/httpserver"
+	"github.com/kubeedge/mapper-framework/pkg/util/parse"
 )
 
 func main() {

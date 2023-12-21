@@ -11,8 +11,8 @@ import (
 
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/Template/pkg/common"
-	"github.com/kubeedge/Template/pkg/global"
+	"github.com/kubeedge/mapper-framework/pkg/common"
+	"github.com/kubeedge/mapper-framework/pkg/global"
 )
 
 type PushMethod struct {

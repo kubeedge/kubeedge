@@ -1,4 +1,4 @@
-package tdengine
+﻿package tdengine
 
 import (
 	"database/sql"

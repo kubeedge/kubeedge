@@ -19,10 +19,10 @@ import (
 	httpMethod "github.com/kubeedge/Template/data/publish/http"
 	mqttMethod "github.com/kubeedge/Template/data/publish/mqtt"
 	"github.com/kubeedge/Template/driver"
-	"github.com/kubeedge/Template/pkg/common"
-	"github.com/kubeedge/Template/pkg/config"
-	"github.com/kubeedge/Template/pkg/global"
-	"github.com/kubeedge/Template/pkg/util/parse"
+	"github.com/kubeedge/mapper-framework/pkg/common"
+	"github.com/kubeedge/mapper-framework/pkg/config"
+	"github.com/kubeedge/mapper-framework/pkg/global"
+	"github.com/kubeedge/mapper-framework/pkg/util/parse"
 )
 
 type DevPanel struct {
