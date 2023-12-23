@@ -11,7 +11,7 @@ import (
 	_ "github.com/taosdata/driver-go/v3/taosRestful"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/Template/pkg/common"
+	"github.com/kubeedge/mapper-framework/pkg/common"
 )
 
 var (

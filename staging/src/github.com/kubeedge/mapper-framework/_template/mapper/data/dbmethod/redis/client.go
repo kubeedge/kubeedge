@@ -7,8 +7,8 @@ import (
 	"os"
 	"strconv"
 
-	"k8s.io/klog/v2"
 	"github.com/go-redis/redis/v8"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/mapper-framework/pkg/common"
 )
