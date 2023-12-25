@@ -16,23 +16,20 @@ type TwinResultResponse struct {
 }
 
 func getProtocolNameFromGrpc(device *dmiapi.Device) (string, error) {
-
 	return device.Spec.Protocol.ProtocolName, nil
 }
 
 func getPushMethodFromGrpc(visitor *dmiapi.DeviceProperty) (string, error) {
-	// TODO add more push method
-	if visitor.PushMethod.Http != nil {
-		return "http", nil
+	if visitor.PushMethod != nil && visitor.PushMethod.Http != nil {
+		return common.PushMethodHTTP, nil
 	}
-	if visitor.PushMethod.Mqtt != nil {
-		return "mqtt", nil
+	if visitor.PushMethod != nil && visitor.PushMethod.Mqtt != nil {
+		return common.PushMethodMQTT, nil
 	}
 	return "", errors.New("can not parse publish method")
 }
 
 func getDBMethodFromGrpc(visitor *dmiapi.DeviceProperty) (string, error) {
-	// TODO add more dbMethod
 	if visitor.PushMethod.DBMethod.Influxdb2 != nil {
 		return "influx", nil
 	} else if visitor.PushMethod.DBMethod.Redis != nil {
@@ -132,68 +129,67 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 		var dbconfig common.DBConfig
 		var pushMethod []byte
 		var pushMethodName string
-		if pptv.PushMethod != nil {
-			if pptv.PushMethod.DBMethod != nil {
-				dbMethodName, err = getDBMethodFromGrpc(pptv)
+		if pptv.PushMethod != nil && pptv.PushMethod.DBMethod != nil {
+			dbMethodName, err = getDBMethodFromGrpc(pptv)
+			if err != nil {
+				klog.Errorf("get DBMethod err: %+v", err)
+				return nil
+			}
+			switch dbMethodName {
+			case "influx":
+				clientconfig, err := json.Marshal(pptv.PushMethod.DBMethod.Influxdb2.Influxdb2ClientConfig)
 				if err != nil {
-					klog.Errorf("err: %+v", err)
+					klog.Errorf("influx client config err: %+v", err)
 					return nil
 				}
-				switch dbMethodName {
-				case "influx":
-					clientconfig, err := json.Marshal(pptv.PushMethod.DBMethod.Influxdb2.Influxdb2ClientConfig)
-					if err != nil {
-						klog.Errorf("err: %+v", err)
-						return nil
-					}
-					dataconfig, err := json.Marshal(pptv.PushMethod.DBMethod.Influxdb2.Influxdb2DataConfig)
-					if err != nil {
-						klog.Errorf("err: %+v", err)
-						return nil
-					}
-					dbconfig = common.DBConfig{
-						Influxdb2ClientConfig: clientconfig,
-						Influxdb2DataConfig:   dataconfig,
-					}
-				case "redis":
-					clientConfig, err := json.Marshal(pptv.PushMethod.DBMethod.Redis.RedisClientConfig)
-					if err != nil {
-						klog.Errorf("err: %+v", err)
-						return nil
-					}
-					dbconfig = common.DBConfig{
-						RedisClientConfig: clientConfig,
-					}
-				case "tdengine":
-					clientConfig, err := json.Marshal(pptv.PushMethod.DBMethod.Tdengine.TdEngineClientConfig)
-					if err != nil {
-						klog.Errorf("err: %+v", err)
-						return nil
-					}
-					dbconfig = common.DBConfig{
-						TDEngineClientConfig: clientConfig,
-					}
+				dataconfig, err := json.Marshal(pptv.PushMethod.DBMethod.Influxdb2.Influxdb2DataConfig)
+				if err != nil {
+					klog.Errorf("influx data config err: %+v", err)
+					return nil
+				}
+				dbconfig = common.DBConfig{
+					Influxdb2ClientConfig: clientconfig,
+					Influxdb2DataConfig:   dataconfig,
+				}
+			case "redis":
+				clientConfig, err := json.Marshal(pptv.PushMethod.DBMethod.Redis.RedisClientConfig)
+				if err != nil {
+					klog.Errorf("redis config err: %+v", err)
+					return nil
+				}
+				dbconfig = common.DBConfig{
+					RedisClientConfig: clientConfig,
+				}
+			case "tdengine":
+				clientConfig, err := json.Marshal(pptv.PushMethod.DBMethod.Tdengine.TdEngineClientConfig)
+				if err != nil {
+					klog.Errorf("tdengine config err: %+v", err)
+					return nil
+				}
+				dbconfig = common.DBConfig{
+					TDEngineClientConfig: clientConfig,
 				}
 			}
-			// get pushMethod filed by grpc device instance
-			pushMethodName, err = getPushMethodFromGrpc(pptv)
+		}
+
+		// get pushMethod filed by grpc device instance
+		pushMethodName, err = getPushMethodFromGrpc(pptv)
+		if err != nil {
+			klog.Errorf("err: %+v", err)
+			return nil
+		}
+		switch pushMethodName {
+		case common.PushMethodHTTP:
+			pushMethod, err = json.Marshal(pptv.PushMethod.Http)
 			if err != nil {
 				klog.Errorf("err: %+v", err)
 				return nil
 			}
-			switch pushMethodName {
-			case "http":
-				pushMethod, err = json.Marshal(pptv.PushMethod.Http)
-				if err != nil {
-					klog.Errorf("err: %+v", err)
-					return nil
-				}
-			case "mqtt":
-				pushMethod, err = json.Marshal(pptv.PushMethod.Mqtt)
-				if err != nil {
-					klog.Errorf("err: %+v", err)
-					return nil
-				}
+		case common.PushMethodMQTT:
+			pushMethod, err = json.Marshal(pptv.PushMethod.Mqtt)
+			if err != nil {
+				klog.Errorf("err: %+v", err)
+				return nil
 			}
 		}
 
@@ -234,11 +230,11 @@ func ParseDeviceModelFromGrpc(model *dmiapi.DeviceModel) common.DeviceModel {
 		p := common.ModelProperty{
 			Name:        property.GetName(),
 			Description: property.GetDescription(),
-			DataType:    property.Type,
-			AccessMode:  property.AccessMode,
-			Minimum:     property.Minimum,
-			Maximum:     property.Maximum,
-			Unit:        property.Unit,
+			DataType:    property.GetType(),
+			AccessMode:  property.GetAccessMode(),
+			Minimum:     property.GetMinimum(),
+			Maximum:     property.GetMaximum(),
+			Unit:        property.GetUnit(),
 		}
 		properties = append(properties, p)
 	}
@@ -256,13 +252,13 @@ func ParseDeviceFromGrpc(device *dmiapi.Device, commonModel *common.DeviceModel)
 		ID:           device.GetName(),
 		Name:         device.GetName(),
 		ProtocolName: protocolName + "-" + device.GetName(),
-		Model:        device.Spec.DeviceModelReference,
+		Model:        device.GetSpec().GetDeviceModelReference(),
 		Twins:        buildTwinsFromGrpc(device),
 		Properties:   buildPropertiesFromGrpc(device),
 	}
 	// copy Properties to twin
 	propertiesMap := make(map[string]common.DeviceProperty)
-	for i := 0; i < len(instance.Properties); i++ {
+	for i := range instance.Properties {
 		if commonModel == nil {
 			klog.Errorf("commonModel == nil")
 			continue
@@ -277,7 +273,7 @@ func ParseDeviceFromGrpc(device *dmiapi.Device, commonModel *common.DeviceModel)
 		}
 		propertiesMap[instance.Properties[i].PProperty.Name] = instance.Properties[i]
 	}
-	for i := 0; i < len(instance.Twins); i++ {
+	for i := range instance.Twins {
 		if v, ok := propertiesMap[instance.Twins[i].PropertyName]; ok {
 			instance.Twins[i].Property = &v
 		}

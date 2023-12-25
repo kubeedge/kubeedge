@@ -30,6 +30,11 @@ const (
 	ProtocolCustomized = "customized-protocol"
 )
 
+const (
+	PushMethodHTTP = "http"
+	PushMethodMQTT = "mqtt"
+)
+
 const DefaultCollectCycle = time.Second
 const DefaultReportCycle = time.Second
 
