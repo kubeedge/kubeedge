@@ -256,6 +256,15 @@ set -eE
 build_cloudcore
 build_edgecore
 
+directory="/etc/kubeedge"
+if [ ! -d "$directory" ]; then
+  sudo mkdir "$directory"
+  sudo chmod -R 777 "$directory"
+  echo "Directory created: $directory"
+else
+  echo "Directory already exists: $directory"
+fi
+
 kind_up_cluster
 
 export KUBECONFIG=$HOME/.kube/config

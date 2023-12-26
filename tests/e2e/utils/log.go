@@ -18,9 +18,7 @@ package utils
 
 import (
 	"fmt"
-	log "k8s.io/klog/v2"
 	"os/exec"
-	"strconv"
 	"strings"
 	"time"
 
@@ -69,26 +67,12 @@ func PrintTestcaseNameandStatus() {
 }
 
 func PrintCmdOutput(cmd *exec.Cmd) error {
-	log.Info("Executing command: ", strings.Join(cmd.Args, " "))
+	logf("Executing command: ", strings.Join(cmd.Args, " "))
 	stdOutStdErr, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Error("fail to executing command: ", err)
+		Errorf("fail to executing command: %s ", err)
 		return err
 	}
-	log.Infof("executes command result: %s", stdOutStdErr)
+	logf("executes command result: %s", string(stdOutStdErr))
 	return nil
-}
-
-// read n line container log
-func ReadDockerLog(getContainerID string, n int) (string, error) {
-	cmd := exec.Command("sh", "-c", getContainerID)
-	result, err := cmd.CombinedOutput()
-	if err != nil {
-		return "", err
-	}
-	containerID := string(result[:12])
-	cmd = exec.Command("sh", "-c", "docker logs --tail="+strconv.Itoa(n)+" "+containerID)
-	result, err = cmd.CombinedOutput()
-
-	return string(result), nil
 }

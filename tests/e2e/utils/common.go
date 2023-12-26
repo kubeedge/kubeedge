@@ -51,6 +51,7 @@ const (
 	TwinETGetResultSuffix = "/twin/get/result"
 
 	ModBus            = "modbus"
+	ModBusMapper      = "modbusMapper"
 	IncorrectInstance = "incorrect-instance"
 	IncorrectModel    = "incorrect-model"
 )
@@ -272,6 +273,8 @@ func newDeviceInstanceObject(nodeName string, protocolType string, updated bool)
 		switch protocolType {
 		case ModBus:
 			deviceInstance = NewModbusDeviceInstance(nodeName)
+		case ModBusMapper:
+			deviceInstance = DeviceInstanceForMapper(nodeName)
 		case IncorrectInstance:
 			deviceInstance = IncorrectDeviceInstance()
 		}
@@ -293,6 +296,8 @@ func newDeviceModelObject(protocolType string, updated bool) *v1beta1.DeviceMode
 		switch protocolType {
 		case ModBus:
 			deviceModel = NewModbusDeviceModel()
+		case ModBusMapper:
+			deviceModel = DeviceModelForMapper()
 		case IncorrectModel:
 			deviceModel = IncorrectDeviceModel()
 		}
@@ -321,6 +326,32 @@ func ListDevice(c edgeclientset.Interface, ns string) ([]v1beta1.Device, error) 
 		return nil, err
 	}
 	return deviceList.Items, nil
+}
+
+func GetDevice(c edgeclientset.Interface, name, ns string) (*v1beta1.Device, error) {
+	device, err := c.DevicesV1beta1().Devices(ns).Get(context.TODO(), name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return device, nil
+}
+
+func CheckDeviceStatus(device *v1beta1.Device, propertyname string) error {
+	if len(device.Status.Twins) == 0 {
+		return fmt.Errorf("the device twin is nil")
+	}
+	for _, twin := range device.Status.Twins {
+		if twin.PropertyName != propertyname {
+			continue
+		}
+
+		if twin.Reported.Value == "12" {
+			return nil
+		}
+		return fmt.Errorf("the value of twin is not as expected")
+
+	}
+	return fmt.Errorf("no matching twin found")
 }
 
 // CheckDeviceModelExists verify whether the contents of the device model matches with what is expected

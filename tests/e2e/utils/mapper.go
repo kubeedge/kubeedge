@@ -1,7 +1,6 @@
 package utils
 
 import (
-	log "k8s.io/klog/v2"
 	"os/exec"
 	"time"
 )
@@ -24,7 +23,7 @@ func MakeMapperImages(makeMapperProject, getModbusCode, buildModbusMapperProject
 	}
 
 	// check images exist
-	log.Info("begin build mapper images")
+	Infof("begin build mapper images")
 	cmd = exec.Command("sh", "-c", makeMapperImage)
 	if err := PrintCmdOutput(cmd); err != nil {
 		return err
@@ -42,7 +41,7 @@ func CheckMapperImage(checkMapperImage string) error {
 
 // run mapper
 func RunMapper(runMapper, checkMapperRun string) error {
-	log.Info("run mapper image on docker")
+	Infof("run mapper image on docker")
 	time.Sleep(1 * time.Second)
 	cmd := exec.Command("sh", "-c", runMapper)
 	if err := PrintCmdOutput(cmd); err != nil {
@@ -51,18 +50,40 @@ func RunMapper(runMapper, checkMapperRun string) error {
 
 	time.Sleep(5 * time.Second)
 
-	log.Info("check whether mapper container run successfully")
+	Infof("check whether mapper container run successfully")
 	cmd = exec.Command("sh", "-c", checkMapperRun)
 	if err := PrintCmdOutput(cmd); err != nil {
 		return err
 	}
-	time.Sleep(60 * time.Second)
+	return nil
+}
+
+// read mapper docker container log
+func ReadDockerLog(getContainerID string) (string, error) {
+	cmd := exec.Command("sh", "-c", getContainerID)
+	result, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", err
+	}
+	containerID := string(result[:12])
+	cmd = exec.Command("sh", "-c", "docker logs --tail=200 "+containerID)
+	result, err = cmd.CombinedOutput()
+
+	return string(result), nil
+}
+
+// read mapper docker container log
+func ReadSock(getsock string) error {
+	cmd := exec.Command("sh", "-c", getsock)
+	if err := PrintCmdOutput(cmd); err != nil {
+		return err
+	}
 	return nil
 }
 
 // stop mapper container
 func RemoveMapperContainer(deleteMapperContainer string) error {
-	log.Info("stop mapper container running")
+	Infof("stop mapper container running")
 	cmd := exec.Command("sh", "-c", deleteMapperContainer)
 	if err := PrintCmdOutput(cmd); err != nil {
 		return err
