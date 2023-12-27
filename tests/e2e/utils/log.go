@@ -18,6 +18,8 @@ package utils
 
 import (
 	"fmt"
+	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/onsi/ginkgo/v2"
@@ -62,4 +64,15 @@ func PrintTestcaseNameandStatus() {
 		Status = "PASSED"
 	}
 	Infof("TestCase:%40s     Status=%s", testSpecReport.LeafNodeText, Status)
+}
+
+func PrintCmdOutput(cmd *exec.Cmd) error {
+	logf("Executing command: ", strings.Join(cmd.Args, " "))
+	stdOutStdErr, err := cmd.CombinedOutput()
+	if err != nil {
+		Errorf("fail to executing command: %s ", err)
+		return err
+	}
+	logf("executes command result: %s", string(stdOutStdErr))
+	return nil
 }

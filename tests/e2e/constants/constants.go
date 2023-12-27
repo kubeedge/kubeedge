@@ -10,6 +10,19 @@ const (
 	E2ELabelValue = "e2e-test"
 
 	NodeName = "edge-node"
+
+	MakeModbusMapperProject   = "cd /home/runner/work/kubeedge/kubeedge/staging/src/github.com/kubeedge/mapper-framework;make generate modbus;"
+	GetModbusExampleCode      = "cd /home/runner/work/kubeedge;git clone https://github.com/wbc6080/modbus.git"
+	BuildModbusMapperProject  = "cp -r /home/runner/work/kubeedge/modbus/driver/*  /home/runner/work/kubeedge/kubeedge/staging/src/github.com/kubeedge/modbus/driver/ ;cp /home/runner/work/kubeedge/modbus/config.yaml  /home/runner/work/kubeedge/kubeedge/staging/src/github.com/kubeedge/modbus/"
+	MakeModbusMapperImage     = "cd /home/runner/work/kubeedge/kubeedge/staging/src/github.com/kubeedge/modbus; CGO_ENABLED=0 GOOS=linux go build -o main cmd/main.go; sed -i '/go build/d' Dockerfile; docker build -t modbus-e2e-mapper:v1.0.0 ."
+	CheckModbusMapperImage    = "docker images | grep modbus-e2e-mapper"
+	DeleteModbusMapperImage   = "docker rmi modbus-e2e-mapper:v1.0.0"
+	DeleteModbusMapperProject = "cd /home/runner/work/kubeedge/kubeedge/staging/src/github.com/kubeedge; rm -rf modbus/"
+	DeleteModbusExampleCode   = "cd /home/runner/work/kubeedge;rm -rf modbus/"
+
+	MakeModbusMapperContainer = "docker run -d -v /tmp/etc/kubeedge:/tmp/etc/kubeedge modbus-e2e-mapper:v1.0.0 ./main --v 4 --config-file config.yaml"
+	GetModbusMapperContainer  = "docker ps | grep modbus-e2e-mapper:v1.0.0"
+	DeleteMapperContainer     = "docker stop `docker ps |grep mapper |awk '{print $1}'`; docker rm `docker ps -a|grep mapper |awk '{print $1}'`"
 )
 
 var (
