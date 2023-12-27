@@ -370,7 +370,6 @@ func CheckDeviceStatus(device *v1beta1.Device, propertyname string) error {
 			return nil
 		}
 		return fmt.Errorf("the value of twin is not as expected")
-
 	}
 	return fmt.Errorf("no matching twin found")
 }
