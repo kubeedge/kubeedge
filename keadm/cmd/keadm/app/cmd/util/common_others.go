@@ -86,7 +86,7 @@ func HasSystemd() bool {
 func RunningModuleV2(opt *types.ResetOptions) types.ModuleRunning {
 	osType := GetOSInterface()
 	cloudCoreRunning, err := IsCloudcoreContainerRunning(constants.SystemNamespace, opt.Kubeconfig)
-	if err != nil {
+	if cloudCoreRunning && err != nil {
 		// just log the error, maybe we do not care
 		klog.Warningf("failed to check cloudcore is running: %v", err)
 	}
@@ -95,7 +95,7 @@ func RunningModuleV2(opt *types.ResetOptions) types.ModuleRunning {
 	}
 
 	edgeCoreRunning, err := osType.IsKubeEdgeProcessRunning(KubeEdgeBinaryName)
-	if err != nil {
+	if edgeCoreRunning && err != nil {
 		// just log the error, maybe we do not care
 		klog.Warningf("failed to check edgecore is running: %v", err)
 	}
