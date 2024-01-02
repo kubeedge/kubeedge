@@ -10,10 +10,10 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/Template/driver"
-	"github.com/kubeedge/Template/pkg/common"
-	"github.com/kubeedge/Template/pkg/grpcclient"
-	"github.com/kubeedge/Template/pkg/util/parse"
 	dmiapi "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1beta1"
+	"github.com/kubeedge/mapper-framework/pkg/common"
+	"github.com/kubeedge/mapper-framework/pkg/grpcclient"
+	"github.com/kubeedge/mapper-framework/pkg/util/parse"
 )
 
 type TwinData struct {

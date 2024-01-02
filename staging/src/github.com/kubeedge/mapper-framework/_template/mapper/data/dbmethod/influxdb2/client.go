@@ -9,7 +9,7 @@ import (
 	"k8s.io/klog/v2"
 
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
-	"github.com/kubeedge/Template/pkg/common"
+	"github.com/kubeedge/mapper-framework/pkg/common"
 )
 
 type DataBaseConfig struct {
