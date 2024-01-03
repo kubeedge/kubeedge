@@ -28,12 +28,17 @@ import (
 
 type OperationsV1alpha1Interface interface {
 	RESTClient() rest.Interface
+	ImagePrePullJobsGetter
 	NodeUpgradeJobsGetter
 }
 
 // OperationsV1alpha1Client is used to interact with features provided by the operations group.
 type OperationsV1alpha1Client struct {
 	restClient rest.Interface
+}
+
+func (c *OperationsV1alpha1Client) ImagePrePullJobs() ImagePrePullJobInterface {
+	return newImagePrePullJobs(c)
 }
 
 func (c *OperationsV1alpha1Client) NodeUpgradeJobs() NodeUpgradeJobInterface {

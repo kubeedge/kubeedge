@@ -18,6 +18,10 @@ limitations under the License.
 
 package v1alpha1
 
+// ImagePrePullJobListerExpansion allows custom methods to be added to
+// ImagePrePullJobLister.
+type ImagePrePullJobListerExpansion interface{}
+
 // NodeUpgradeJobListerExpansion allows custom methods to be added to
 // NodeUpgradeJobLister.
 type NodeUpgradeJobListerExpansion interface{}
