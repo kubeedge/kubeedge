@@ -18,18 +18,16 @@ package device_test
 
 import (
 	"encoding/json"
-	"net/http"
-	"strings"
-
 	MQTT "github.com/eclipse/paho.mqtt.golang"
-	_ "github.com/mattn/go-sqlite3"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
 	. "github.com/kubeedge/kubeedge/edge/test/integration/utils/helpers"
+	_ "github.com/mattn/go-sqlite3"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	"net/http"
+	"strings"
 )
 
 // Devicestate from subscribed MQTT topic
@@ -410,7 +408,7 @@ var _ = Describe("Event Bus Testing", func() {
 				common.Infof("DeviceID= %s, Value= %s", attributeDB.DeviceID, attributeDB.Expected)
 				return attributeDB.Expected
 			}, "60s", "2s").Should(Equal("100.100"), "Device Twin Attributes are not Added within specified time")
-
 		})
+
 	})
 })
