@@ -90,6 +90,8 @@ type Modules struct {
 	DeviceController *DeviceController `json:"deviceController,omitempty"`
 	// NodeUpgradeJobController indicates NodeUpgradeJobController module config
 	NodeUpgradeJobController *NodeUpgradeJobController `json:"nodeUpgradeJobController,omitempty"`
+	// ImagePrePullController indicates ImagePrePullController module config
+	ImagePrePullController *ImagePrePullController `json:"ImagePrePullController,omitempty"`
 	// SyncController indicates SyncController module config
 	SyncController *SyncController `json:"syncController,omitempty"`
 	// DynamicController indicates DynamicController module config
@@ -406,6 +408,35 @@ type NodeUpgradeJobControllerLoad struct {
 	// NodeUpgradeJobWorkers indicates the load of update NodeUpgradeJob workers
 	// default 1
 	NodeUpgradeJobWorkers int32 `json:"nodeUpgradeJobWorkers,omitempty"`
+}
+
+// ImagePrePullController indicates the operations controller
+type ImagePrePullController struct {
+	// Enable indicates whether ImagePrePullController is enabled,
+	// if set to false (for debugging etc.), skip checking other ImagePrePullController configs.
+	// default false
+	Enable bool `json:"enable"`
+	// Buffer indicates Operation Controller buffer
+	Buffer *ImagePrePullControllerBuffer `json:"buffer,omitempty"`
+	// Load indicates Operation Controller Load
+	Load *ImagePrePullControllerLoad `json:"load,omitempty"`
+}
+
+// ImagePrePullControllerBuffer indicates ImagePrePullController buffer
+type ImagePrePullControllerBuffer struct {
+	// ImagePrePullJobStatus indicates the buffer of update ImagePrePullJob status
+	// default 1024
+	ImagePrePullJobStatus int32 `json:"imagePrePullJobStatus,omitempty"`
+	// ImagePrePullJobEvent indicates the buffer of ImagePrePullJob event
+	// default 1
+	ImagePrePullJobEvent int32 `json:"imagePrePullJobEvent,omitempty"`
+}
+
+// ImagePrePullControllerLoad indicates the ImagePrePullController load
+type ImagePrePullControllerLoad struct {
+	// ImagePrePullJobWorkers indicates the load of update ImagePrePullJob workers
+	// default 1
+	ImagePrePullJobWorkers int32 `json:"imagePrePullJobWorkers,omitempty"`
 }
 
 // SyncController indicates the sync controller

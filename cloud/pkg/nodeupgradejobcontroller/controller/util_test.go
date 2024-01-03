@@ -66,39 +66,6 @@ func TestFilterVersion(t *testing.T) {
 	}
 }
 
-func TestRemoveDuplicateElement(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    []string
-		expected []string
-	}{
-		{
-			name:     "case 1",
-			input:    []string{"a", "b", "c"},
-			expected: []string{"a", "b", "c"},
-		},
-		{
-			name:     "case 2",
-			input:    []string{"a", "a", "b", "c", "b", "a", "a"},
-			expected: []string{"a", "b", "c"},
-		},
-		{
-			name:     "case 3",
-			input:    []string{},
-			expected: []string{},
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := RemoveDuplicateElement(test.input)
-			if !reflect.DeepEqual(result, test.expected) {
-				t.Errorf("Got = %v, Want = %v", result, test.expected)
-			}
-		})
-	}
-}
-
 func TestUpdateUpgradeStatus(t *testing.T) {
 	upgrade := v1alpha1.NodeUpgradeJob{
 		Status: v1alpha1.NodeUpgradeJobStatus{

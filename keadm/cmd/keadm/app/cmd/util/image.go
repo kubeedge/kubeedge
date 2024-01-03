@@ -40,6 +40,7 @@ var mqttLabel = map[string]string{"io.kubeedge.edgecore/mqtt": image.EdgeMQTT}
 
 type ContainerRuntime interface {
 	PullImages(images []string) error
+	PullImage(image string, authConfig *runtimeapi.AuthConfig, sandboxConfig *runtimeapi.PodSandboxConfig) error
 	CopyResources(edgeImage string, files map[string]string) error
 	RunMQTT(mqttImage string) error
 	RemoveMQTT() error
@@ -86,21 +87,28 @@ func convertCRIImage(image string) string {
 
 func (runtime *CRIRuntime) PullImages(images []string) error {
 	for _, image := range images {
-		image = convertCRIImage(image)
 		fmt.Printf("Pulling %s ...\n", image)
-		imageSpec := &runtimeapi.ImageSpec{Image: image}
-		status, err := runtime.ImageManagerService.ImageStatus(runtime.ctx, imageSpec, true)
+		err := runtime.PullImage(image, nil, nil)
 		if err != nil {
 			return err
 		}
-		if status == nil || status.Image == nil {
-			if _, err := runtime.ImageManagerService.PullImage(runtime.ctx, imageSpec, nil, nil); err != nil {
-				return err
-			}
-		}
 		fmt.Printf("Successfully pulled %s\n", image)
 	}
+	return nil
+}
 
+func (runtime *CRIRuntime) PullImage(image string, authConfig *runtimeapi.AuthConfig, sandboxConfig *runtimeapi.PodSandboxConfig) error {
+	image = convertCRIImage(image)
+	imageSpec := &runtimeapi.ImageSpec{Image: image}
+	status, err := runtime.ImageManagerService.ImageStatus(runtime.ctx, imageSpec, true)
+	if err != nil {
+		return err
+	}
+	if status == nil || status.Image == nil {
+		if _, err := runtime.ImageManagerService.PullImage(runtime.ctx, imageSpec, authConfig, sandboxConfig); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

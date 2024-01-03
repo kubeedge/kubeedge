@@ -5,6 +5,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1"
 )
 
 // PodStatusRequest is Message.Content which comes from edge
@@ -52,4 +54,21 @@ type NodeUpgradeJobResponse struct {
 type ObjectResp struct {
 	Object metaV1.Object
 	Err    error
+}
+
+// ImagePrePullJobRequest is image prepull msg from cloud to edge
+type ImagePrePullJobRequest struct {
+	Images     []string
+	NodeName   string
+	Secret     string
+	RetryTimes int32
+	CheckItems []string
+}
+
+// ImagePrePullJobResponse is used to report status msg to cloudhub https service from each node
+type ImagePrePullJobResponse struct {
+	NodeName    string
+	State       v1alpha1.PrePullState
+	Reason      string
+	ImageStatus []v1alpha1.ImageStatus
 }

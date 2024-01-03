@@ -16,6 +16,9 @@ const (
 	NodeUpgradeJobControllerModuleName  = "nodeupgradejobcontroller"
 	NodeUpgradeJobControllerModuleGroup = "nodeupgradejobcontroller"
 
+	ImagePrePullControllerModuleName  = "imageprepullcontroller"
+	ImagePrePullControllerModuleGroup = "imageprepullcontroller"
+
 	SyncControllerModuleName  = "synccontroller"
 	SyncControllerModuleGroup = "synccontroller"
 
