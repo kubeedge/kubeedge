@@ -1023,6 +1023,9 @@ type DeviceTwin struct {
 	// if set to false (for debugging etc.), skip checking other DeviceTwin configs.
 	// default true
 	Enable bool `json:"enable"`
+	// DMISockPath sets the path to dmi.sock
+	// default "/etc/kubeedge/dmi.sock"
+	DMISockPath string `json:"dmiSockPath,omitempty"`
 }
 
 // DBTest indicates the DBTest module config
