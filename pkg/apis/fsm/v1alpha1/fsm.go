@@ -20,6 +20,6 @@ const (
 )
 
 const (
-	ActionInit  Action = "Init"
-	ActionCheck Action = "Check"
+	ActionSuccess Action = "Success"
+	ActionFailure Action = "Failure"
 )

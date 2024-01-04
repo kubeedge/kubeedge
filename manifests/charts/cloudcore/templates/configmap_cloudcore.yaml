@@ -53,7 +53,7 @@ data:
       iptablesManager:
         enable: {{ .Values.iptablesManager.enable }}
         mode: {{ .Values.iptablesManager.mode }}
-      nodeUpgradeJobController:
-        enable: {{ .Values.cloudCore.modules.nodeUpgradeJobController.enable }}
       imagePrePullController:
         enable: {{ .Values.cloudCore.modules.imagePrePullController.enable }}
+      taskManager:
+        enable: {{ .Values.cloudCore.modules.taskManager.enable }}

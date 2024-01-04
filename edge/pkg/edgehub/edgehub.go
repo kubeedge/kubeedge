@@ -13,8 +13,8 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/certificate"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
-	// register Upgrade handler
-	_ "github.com/kubeedge/kubeedge/edge/pkg/edgehub/upgrade"
+	// register Task handler
+	_ "github.com/kubeedge/kubeedge/edge/pkg/edgehub/task"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 )
 

@@ -50,12 +50,16 @@ type NodeUpgradeJobResponse struct {
 	Reason      string
 }
 
-type TaskStatus struct {
+// NodePreCheckRequest is pre-check msg coming from cloud to edge
+type NodePreCheckRequest struct {
+	CheckItem []string
+}
+
+type NodeTaskRequest struct {
+	TaskID string
 	Type   string
-	Status string
-	Event  string
-	Action string
-	Reason string
+	State  string
+	Item   interface{}
 }
 
 // ObjectResp is the object that api-server response

@@ -51,7 +51,7 @@ cloudCore:
       enable: false
     router:
       enable: false
-    nodeUpgradeJobController:
+    taskManager:
       enable: false
     imagePrePullController:
       enable: false

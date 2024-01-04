@@ -453,6 +453,10 @@ func noAckRequired(msg *beehivemodel.Message) bool {
 		return true
 	case msg.GetSource() == modules.NodeUpgradeJobControllerModuleName || msg.GetSource() == modules.ImagePrePullControllerModuleName:
 		return true
+	case msg.GetSource() == modules.TaskManagerModuleName:
+		return true
+	case msg.GetSource() == modules.NodeUpgradeJobControllerModuleName:
+		return true
 	case msg.GetOperation() == beehivemodel.ResponseOperation:
 		content, ok := msg.Content.(string)
 		if ok && content == commonconst.MessageSuccessfulContent {

@@ -18,6 +18,8 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	api "github.com/kubeedge/kubeedge/pkg/apis/fsm/v1alpha1"
 )
 
 // +genclient
@@ -58,10 +60,6 @@ type NodeUpgradeJobList struct {
 type NodeUpgradeJobSpec struct {
 	// +Required: Version is the EdgeCore version to upgrade.
 	Version string `json:"version,omitempty"`
-	// UpgradeTool is a request to decide use which upgrade tool. If it is empty,
-	// the upgrade job simply use default upgrade tool keadm to do upgrade operation.
-	// +optional
-	UpgradeTool string `json:"upgradeTool,omitempty"`
 	// TimeoutSeconds limits the duration of the node upgrade job.
 	// Default to 300.
 	// If set to 0, we'll use the default value 300.
@@ -91,29 +89,14 @@ type NodeUpgradeJobSpec struct {
 	// The default Concurrency value is 1.
 	// +optional
 	Concurrency int32 `json:"concurrency,omitempty"`
+
+	// CheckItems specifies the items need to be checked before the task is executed.
+	// The default CheckItems value is nil.
+	// +optional
+	CheckItems []string `json:"checkItems,omitempty"`
+
+	FailureTolerate string `json:"failureTolerate,omitempty"`
 }
-
-// UpgradeResult describe the result status of upgrade operation on edge nodes.
-// +kubebuilder:validation:Enum=upgrade_success;upgrade_failed_rollback_success;upgrade_failed_rollback_failed
-type UpgradeResult string
-
-// upgrade operation status
-const (
-	UpgradeSuccess               UpgradeResult = "upgrade_success"
-	UpgradeFailedRollbackSuccess UpgradeResult = "upgrade_failed_rollback_success"
-	UpgradeFailedRollbackFailed  UpgradeResult = "upgrade_failed_rollback_failed"
-)
-
-// UpgradeState describe the UpgradeState of upgrade operation on edge nodes.
-// +kubebuilder:validation:Enum=upgrading;completed
-type UpgradeState string
-
-// Valid values of UpgradeState
-const (
-	InitialValue UpgradeState = ""
-	Upgrading    UpgradeState = "upgrading"
-	Completed    UpgradeState = "completed"
-)
 
 // NodeUpgradeJobStatus stores the status of NodeUpgradeJob.
 // contains multiple edge nodes upgrade status.
@@ -121,37 +104,27 @@ const (
 type NodeUpgradeJobStatus struct {
 	// State represents for the state phase of the NodeUpgradeJob.
 	// There are three possible state values: "", upgrading and completed.
-	State UpgradeState `json:"state,omitempty"`
+	State           api.State  `json:"state,omitempty"`
+	CurrentVersion  string     `json:"currentVersion,omitempty"`
+	HistoricVersion string     `json:"historicVersion,omitempty"`
+	Event           string     `json:"event,omitempty"`
+	Action          api.Action `json:"action,omitempty"`
+	Reason          string     `json:"reason,omitempty"`
+	Time            string     `json:"time,omitempty"`
 	// Status contains upgrade Status for each edge node.
-	Status []UpgradeStatus `json:"status,omitempty"`
+	Status []TaskStatus `json:"nodeStatus,omitempty"`
 }
 
-// UpgradeStatus stores the status of Upgrade for each edge node.
+// TaskStatus stores the status of Upgrade for each edge node.
 // +kubebuilder:validation:Type=object
-type UpgradeStatus struct {
+type TaskStatus struct {
 	// NodeName is the name of edge node.
 	NodeName string `json:"nodeName,omitempty"`
 	// State represents for the upgrade state phase of the edge node.
 	// There are three possible state values: "", upgrading and completed.
-	State UpgradeState `json:"state,omitempty"`
-	// History is the last upgrade result of the edge node.
-	History History `json:"history,omitempty"`
-}
-
-// History stores the information about upgrade history record.
-// +kubebuilder:validation:Type=object
-type History struct {
-	// HistoryID is to uniquely identify an Upgrade Operation.
-	HistoryID string `json:"historyID,omitempty"`
-	// FromVersion is the version which the edge node is upgraded from.
-	FromVersion string `json:"fromVersion,omitempty"`
-	// ToVersion is the version which the edge node is upgraded to.
-	ToVersion string `json:"toVersion,omitempty"`
-	// Result represents the result of upgrade.
-	Result UpgradeResult `json:"result,omitempty"`
-	// Reason is the error reason of Upgrade failure.
-	// If the upgrade is successful, this reason is an empty string.
-	Reason string `json:"reason,omitempty"`
-	// UpgradeTime is the time of this Upgrade.
-	UpgradeTime string `json:"upgradeTime,omitempty"`
+	State  api.State  `json:"state,omitempty"`
+	Event  string     `json:"event,omitempty"`
+	Action api.Action `json:"action,omitempty"`
+	Time   string     `json:"time,omitempty"`
+	Reason string     `json:"reason,omitempty"`
 }
