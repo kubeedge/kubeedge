@@ -1,5 +1,5 @@
 /*
-Copyright 2022 The KubeEdge Authors.
+Copyright 2023 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/util"
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/util/controller"
-	"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1"
+	"github.com/kubeedge/kubeedge/common/types"
 	crdClientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
 )
@@ -110,16 +110,17 @@ func (uc *UpstreamController) updateTaskStatus() {
 				continue
 			}
 
-			resp := v1alpha1.TaskStatus{}
+			resp := types.NodeTaskResponse{}
 			err = json.Unmarshal(data, &resp)
 			if err != nil {
 				klog.Errorf("Failed to unmarshal node upgrade response: %v", err)
 				continue
 			}
 			event := fsm.Event{
-				Type:     resp.Event,
-				Action:   resp.Action,
-				ErrorMsg: resp.Reason,
+				Type:            resp.Event,
+				Action:          resp.Action,
+				Msg:             resp.Reason,
+				ExternalMessage: resp.ExternalMessage,
 			}
 
 			_, err = c.ReportNodeStatus(taskID, nodeID, event)

@@ -16,9 +16,6 @@ const (
 	NodeUpgradeJobControllerModuleName  = "nodeupgradejobcontroller"
 	NodeUpgradeJobControllerModuleGroup = "nodeupgradejobcontroller"
 
-	ImagePrePullControllerModuleName  = "imageprepullcontroller"
-	ImagePrePullControllerModuleGroup = "imageprepullcontroller"
-
 	TaskManagerModuleName  = "taskmanager"
 	TaskManagerModuleGroup = "taskmanager"
 

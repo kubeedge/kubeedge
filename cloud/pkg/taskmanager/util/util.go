@@ -1,5 +1,5 @@
 /*
-Copyright 2022 The KubeEdge Authors.
+Copyright 2023 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,13 +18,13 @@ package util
 
 import (
 	"fmt"
-	"k8s.io/klog/v2"
 	"strings"
 
 	"github.com/distribution/distribution/v3/reference"
 	metav1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	versionutil "k8s.io/apimachinery/pkg/util/version"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1"
@@ -37,10 +37,10 @@ const (
 )
 
 const (
-	TaskUpgrade       = "upgrade"
-	TaskRollback      = "rollback"
-	TaskBackup        = "backup"
-	TaskDockerPrePull = "pre-pull"
+	TaskUpgrade  = "upgrade"
+	TaskRollback = "rollback"
+	TaskBackup   = "backup"
+	TaskPrePull  = "prepull"
 
 	ISO8601UTC = "2006-01-02T15:04:05Z"
 )
@@ -166,4 +166,16 @@ func VersionLess(version1, version2 string) (bool, error) {
 		less = true
 	}
 	return less, nil
+}
+
+func NodeUpdated(old, new v1alpha1.TaskStatus) bool {
+	if old.NodeName != new.NodeName {
+		klog.V(4).Infof("old node %s and new node %s is not same", old.NodeName, new.NodeName)
+		return false
+	}
+	if old.State == new.State || new.State == "" {
+		klog.V(4).Infof("node %s state is not change", old.NodeName)
+		return false
+	}
+	return true
 }

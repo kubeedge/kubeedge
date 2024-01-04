@@ -1,3 +1,19 @@
+/*
+Copyright 2023 The KubeEdge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package taskexecutor
 
 import (
@@ -22,22 +38,22 @@ const (
 
 func preCheck(taskReq types.NodeTaskRequest) fsm.Event {
 	event := fsm.Event{
-		Type:     "Check",
-		Action:   api.ActionSuccess,
-		ErrorMsg: "",
+		Type:   "Check",
+		Action: api.ActionSuccess,
+		Msg:    "",
 	}
 
 	data, err := json.Marshal(taskReq.Item)
 	if err != nil {
 		event.Action = api.ActionFailure
-		event.ErrorMsg = err.Error()
+		event.Msg = err.Error()
 		return event
 	}
 	var checkItems types.NodePreCheckRequest
 	err = json.Unmarshal(data, &checkItems)
 	if err != nil {
 		event.Action = api.ActionFailure
-		event.ErrorMsg = err.Error()
+		event.Msg = err.Error()
 		return event
 	}
 
@@ -68,10 +84,10 @@ func preCheck(taskReq types.NodeTaskRequest) fsm.Event {
 	event.Action = api.ActionFailure
 	result, err := json.Marshal(checkResult)
 	if err != nil {
-		event.ErrorMsg = err.Error()
+		event.Msg = err.Error()
 		return event
 	}
-	event.ErrorMsg = string(result)
+	event.Msg = string(result)
 	return event
 }
 
@@ -135,8 +151,8 @@ func checkDisk() error {
 
 func normalInit(types.NodeTaskRequest) fsm.Event {
 	return fsm.Event{
-		Type:     "Init",
-		Action:   api.ActionSuccess,
-		ErrorMsg: "",
+		Type:   "Init",
+		Action: api.ActionSuccess,
+		Msg:    "",
 	}
 }

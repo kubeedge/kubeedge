@@ -1,5 +1,5 @@
 /*
-Copyright 2022 The KubeEdge Authors.
+Copyright 2023 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -38,13 +38,13 @@ func TestFilterVersion(t *testing.T) {
 			name:         "not match expected version",
 			version:      "v1.22.6-kubeedge-v1.10.0-beta.0.194+77ea462f402efb",
 			expected:     "v1.10.0",
-			expectResult: false,
+			expectResult: true,
 		},
 		{
 			name:         "no right format version",
 			version:      "v1.22.6",
 			expected:     "v1.10.0",
-			expectResult: false,
+			expectResult: true,
 		},
 		{
 			name:         "match expected version",

@@ -88,8 +88,6 @@ type Modules struct {
 	EdgeController *EdgeController `json:"edgeController,omitempty"`
 	// DeviceController indicates DeviceController module config
 	DeviceController *DeviceController `json:"deviceController,omitempty"`
-	// ImagePrePullController indicates ImagePrePullController module config
-	ImagePrePullController *ImagePrePullController `json:"imagePrePullController,omitempty"`
 	// TaskManager indicates TaskManager module config
 	TaskManager *TaskManager `json:"taskManager,omitempty"`
 	// SyncController indicates SyncController module config

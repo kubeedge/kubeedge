@@ -1,5 +1,5 @@
 /*
-Copyright 2022 The KubeEdge Authors.
+Copyright 2023 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,40 +25,13 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/config"
+	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/imageprepullcontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/manager"
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/nodeupgradecontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/util"
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/util/controller"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
-
-//
-//// TaskManager is controller for processing upgrading edge node from cloud
-//type NodeUpgradeJobController struct {
-//}
-//
-//// Name of controller
-//func (uc *NodeUpgradeJobController) Name() string {
-//	return modules.NodeUpgradeJobControllerModuleName
-//}
-//
-//// Group of controller
-//func (uc *NodeUpgradeJobController) Group() string {
-//	return modules.NodeUpgradeJobControllerModuleGroup
-//}
-//
-//// Enable indicates whether enable this module
-//func (uc *NodeUpgradeJobController) Enable() bool {
-//	return true
-//}
-//
-//// Start controller
-//func (uc *NodeUpgradeJobController) Start() {
-//}
-//
-//func newNodeUpgradeJobController() *NodeUpgradeJobController {
-//	return &NodeUpgradeJobController{}
-//}
 
 type TaskManager struct {
 	downstream      *manager.DownstreamController
@@ -92,7 +65,13 @@ func newTaskManager(enable bool) *TaskManager {
 	if err != nil {
 		klog.Exitf("New upgrade node controller failed with error: %s", err)
 	}
+
+	imagePrePullController, err := imageprepullcontroller.NewImagePrePullController(taskMessage)
+	if err != nil {
+		klog.Exitf("New upgrade node controller failed with error: %s", err)
+	}
 	controller.Register(util.TaskUpgrade, upgradeNodeController)
+	controller.Register(util.TaskPrePull, imagePrePullController)
 
 	return &TaskManager{
 		downstream:      downstream,

@@ -95,6 +95,9 @@ type NodeUpgradeJobSpec struct {
 	// +optional
 	CheckItems []string `json:"checkItems,omitempty"`
 
+	// FailureTolerate specifies the task tolerance failure ratio.
+	// The default FailureTolerate value is 0.1.
+	// +optional
 	FailureTolerate string `json:"failureTolerate,omitempty"`
 }
 
@@ -103,14 +106,23 @@ type NodeUpgradeJobSpec struct {
 // +kubebuilder:validation:Type=object
 type NodeUpgradeJobStatus struct {
 	// State represents for the state phase of the NodeUpgradeJob.
-	// There are three possible state values: "", upgrading and completed.
-	State           api.State  `json:"state,omitempty"`
-	CurrentVersion  string     `json:"currentVersion,omitempty"`
-	HistoricVersion string     `json:"historicVersion,omitempty"`
-	Event           string     `json:"event,omitempty"`
-	Action          api.Action `json:"action,omitempty"`
-	Reason          string     `json:"reason,omitempty"`
-	Time            string     `json:"time,omitempty"`
+	// There are several possible state values: "", Upgrading, BackingUp, RollingBack and Checking.
+	State api.State `json:"state,omitempty"`
+
+	// CurrentVersion represents for the current status of the EdgeCore.
+	CurrentVersion string `json:"currentVersion,omitempty"`
+	// HistoricVersion represents for the historic status of the EdgeCore.
+	HistoricVersion string `json:"historicVersion,omitempty"`
+	// Event represents for the event of the ImagePrePullJob.
+	// There are six possible event values: Init, Check, BackUp, Upgrade, TimeOut, Rollback.
+	Event string `json:"event,omitempty"`
+	// Action represents for the action of the ImagePrePullJob.
+	// There are two possible action values: Success, Failure.
+	Action api.Action `json:"action,omitempty"`
+	// Reason represents for the reason of the ImagePrePullJob.
+	Reason string `json:"reason,omitempty"`
+	// Time represents for the running time of the ImagePrePullJob.
+	Time string `json:"time,omitempty"`
 	// Status contains upgrade Status for each edge node.
 	Status []TaskStatus `json:"nodeStatus,omitempty"`
 }
@@ -121,10 +133,16 @@ type TaskStatus struct {
 	// NodeName is the name of edge node.
 	NodeName string `json:"nodeName,omitempty"`
 	// State represents for the upgrade state phase of the edge node.
-	// There are three possible state values: "", upgrading and completed.
-	State  api.State  `json:"state,omitempty"`
-	Event  string     `json:"event,omitempty"`
+	// There are several possible state values: "", Upgrading, BackingUp, RollingBack and Checking.
+	State api.State `json:"state,omitempty"`
+	// Event represents for the event of the ImagePrePullJob.
+	// There are three possible event values: Init, Check, Pull.
+	Event string `json:"event,omitempty"`
+	// Action represents for the action of the ImagePrePullJob.
+	// There are three possible action values: Success, Failure, TimeOut.
 	Action api.Action `json:"action,omitempty"`
-	Time   string     `json:"time,omitempty"`
-	Reason string     `json:"reason,omitempty"`
+	// Reason represents for the reason of the ImagePrePullJob.
+	Reason string `json:"reason,omitempty"`
+	// Time represents for the running time of the ImagePrePullJob.
+	Time string `json:"time,omitempty"`
 }

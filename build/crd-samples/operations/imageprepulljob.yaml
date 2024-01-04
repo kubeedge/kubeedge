@@ -11,4 +11,4 @@ spec:
     nodes:
       - edgenode1 # Need to replaced with your own node name
     timeoutSecondsOnEachNode: 300
-    retryTimesOnEachNode: 1
+    retryTimes: 1

@@ -53,8 +53,6 @@ cloudCore:
       enable: false
     taskManager:
       enable: false
-    imagePrePullController:
-      enable: false
   service:
     enable: false
     type: "NodePort"

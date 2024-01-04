@@ -104,22 +104,6 @@ func TaskManagerMessageLayer() MessageLayer {
 	}
 }
 
-func NodeUpgradeJobControllerMessageLayer() MessageLayer {
-	return &ContextMessageLayer{
-		SendModuleName:     modules.CloudHubModuleName,
-		ReceiveModuleName:  modules.NodeUpgradeJobControllerModuleName,
-		ResponseModuleName: modules.CloudHubModuleName,
-	}
-}
-
-func ImagePrePullControllerMessageLayer() MessageLayer {
-	return &ContextMessageLayer{
-		SendModuleName:     modules.CloudHubModuleName,
-		ReceiveModuleName:  modules.ImagePrePullControllerModuleName,
-		ResponseModuleName: modules.CloudHubModuleName,
-	}
-}
-
 func PolicyControllerMessageLayer() MessageLayer {
 	return &ContextMessageLayer{
 		SendModuleName:     modules.CloudHubModuleName,

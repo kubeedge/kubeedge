@@ -17,6 +17,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 
 	"github.com/emicklei/go-restful"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -25,40 +26,73 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/cloud/pkg/nodeupgradejobcontroller/controller"
+	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/util"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
+	api "github.com/kubeedge/kubeedge/pkg/apis/fsm/v1alpha1"
+)
+
+const (
+	UpgradeSuccess               = "upgrade_success"
+	UpgradeFailedRollbackSuccess = "upgrade_failed_rollback_success"
+	UpgradeFailedRollbackFailed  = "upgrade_failed_rollback_failed"
 )
 
 // upgradeEdge upgrade the edgecore version
 func upgradeEdge(request *restful.Request, response *restful.Response) {
 	resp := commontypes.NodeUpgradeJobResponse{}
 
-	defer func() {
-		if _, err := response.Write([]byte("ok")); err != nil {
-			klog.Errorf("failed to send upgrade edge resp, err: %v", err)
-		}
-	}()
+	taskID := resp.UpgradeID
+	taskType := util.TaskUpgrade
+	nodeID := resp.NodeName
 
-	limit := int64(3 * 1024 * 1024)
 	lr := &io.LimitedReader{
 		R: request.Request.Body,
-		N: limit + 1,
+		N: millionByte + 1,
 	}
 	body, err := io.ReadAll(lr)
 	if err != nil {
-		klog.Errorf("failed to get req body: %v", err)
+		err = response.WriteError(http.StatusBadRequest, fmt.Errorf("failed to get req body: %v", err))
+		if err != nil {
+			klog.Warning(err.Error())
+		}
 		return
 	}
 	if lr.N <= 0 {
-		klog.Errorf("%v", errors.NewRequestEntityTooLargeError(fmt.Sprintf("limit is %d", limit)))
+		err = response.WriteError(http.StatusBadRequest, errors.NewRequestEntityTooLargeError("the request body can only be up to 1MB in size"))
+		if err != nil {
+			klog.Warning(err.Error())
+		}
 		return
 	}
-	if err := json.Unmarshal(body, &resp); err != nil {
-		klog.Errorf("failed to marshal upgrade info: %v", err)
+	if err = json.Unmarshal(body, &resp); err != nil {
+		err = response.WriteError(http.StatusBadRequest, fmt.Errorf("failed to marshal task info: %v", err))
+		if err != nil {
+			klog.Warning(err.Error())
+		}
 		return
+	}
+	newResp := commontypes.NodeTaskResponse{
+		NodeName: resp.NodeName,
+		Event:    "Upgrade",
+		Action:   api.ActionSuccess,
+		Reason:   resp.Reason,
 	}
 
-	msg := beehiveModel.NewMessage("").SetRoute(modules.CloudHubModuleName, modules.CloudHubModuleName).
-		SetResourceOperation(fmt.Sprintf("%s/%s/node/%s", controller.NodeUpgrade, resp.UpgradeID, resp.NodeName), controller.NodeUpgrade).FillBody(resp)
-	beehiveContext.Send(modules.NodeUpgradeJobControllerModuleName, *msg)
+	if resp.Status == UpgradeFailedRollbackSuccess {
+		newResp.Event = "Rollback"
+		newResp.Action = api.ActionFailure
+	}
+
+	if resp.Status == UpgradeFailedRollbackFailed {
+		newResp.Event = "Rollback"
+		newResp.Action = api.ActionSuccess
+	}
+
+	msg := beehiveModel.NewMessage("").SetRoute(modules.CloudHubModuleName, modules.CloudHubModuleGroup).
+		SetResourceOperation(fmt.Sprintf("task/%s/node/%s", taskID, nodeID), taskType).FillBody(newResp)
+	beehiveContext.Send(modules.TaskManagerModuleName, *msg)
+
+	if _, err = response.Write([]byte("ok")); err != nil {
+		klog.Errorf("failed to send the task resp to edge , err: %v", err)
+	}
 }

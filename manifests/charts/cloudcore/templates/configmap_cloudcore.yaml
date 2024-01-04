@@ -53,7 +53,5 @@ data:
       iptablesManager:
         enable: {{ .Values.iptablesManager.enable }}
         mode: {{ .Values.iptablesManager.mode }}
-      imagePrePullController:
-        enable: {{ .Values.cloudCore.modules.imagePrePullController.enable }}
       taskManager:
         enable: {{ .Values.cloudCore.modules.taskManager.enable }}

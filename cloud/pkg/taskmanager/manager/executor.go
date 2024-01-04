@@ -1,3 +1,19 @@
+/*
+Copyright 2023 The KubeEdge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package manager
 
 import (
@@ -26,11 +42,16 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
 )
 
+const TimeOutSecond = 300
+
 type Executor struct {
-	task       util.TaskMessage
-	statusChan chan *v1alpha1.TaskStatus
-	nodes      []v1alpha1.TaskStatus
-	controller controller.Controller
+	task           util.TaskMessage
+	statusChan     chan *v1alpha1.TaskStatus
+	nodes          []v1alpha1.TaskStatus
+	controller     controller.Controller
+	maxFailedNodes float64
+	failedNodes    map[string]bool
+	workers        workers
 }
 
 func NewExecutorMachine(messageChan chan util.TaskMessage, downStreamChan chan model.Message) (*ExecutorMachine, error) {
@@ -71,7 +92,7 @@ func (em *ExecutorMachine) syncTask() {
 			}
 			err := GetExecutor(msg).HandleMessage(msg.Status)
 			if err != nil {
-				klog.Errorf("Failed to handel upgrade message due to error %s", err.Error())
+				klog.Errorf("Failed to handel %s message due to error %s", msg.Type, err.Error())
 				break
 			}
 		}
@@ -97,7 +118,7 @@ func GetExecutor(msg util.TaskMessage) *Executor {
 	}
 	e, err := initExecutor(msg)
 	if err != nil {
-		klog.Error("executor init failed, error: %s", err.Error())
+		klog.Errorf("executor init failed, error: %s", err.Error())
 		return nil
 	}
 	return e
@@ -141,7 +162,7 @@ func (e *Executor) initMessage(node v1alpha1.TaskStatus) *model.Message {
 			CheckItem: e.task.CheckItem,
 		}
 	}
-	msg.BuildRouter(modules.TaskManagerModuleName, modules.TaskManagerModuleGroup, resource, util.TaskUpgrade).
+	msg.BuildRouter(modules.TaskManagerModuleName, modules.TaskManagerModuleGroup, resource, e.task.Type).
 		FillBody(taskReq)
 	return msg
 }
@@ -201,10 +222,18 @@ func initExecutor(message util.TaskMessage) (*Executor, error) {
 		}
 	}
 	e := &Executor{
-		task:       message,
-		statusChan: make(chan *v1alpha1.TaskStatus, 10),
-		controller: controller,
-		nodes:      nodeStatus,
+		task:           message,
+		statusChan:     make(chan *v1alpha1.TaskStatus, 10),
+		nodes:          nodeStatus,
+		controller:     controller,
+		maxFailedNodes: float64(len(nodeStatus)) * (message.FailureTolerate),
+		failedNodes:    map[string]bool{},
+		workers: workers{
+			number:       int(message.Concurrency),
+			jobs:         make(map[string]int),
+			shuttingDown: false,
+			Mutex:        sync.Mutex{},
+		},
 	}
 	go e.start()
 	executorMachine.executors[fmt.Sprintf("%s::%s", message.Type, message.Name)] = e
@@ -212,78 +241,43 @@ func initExecutor(message util.TaskMessage) (*Executor, error) {
 }
 
 func (e *Executor) start() {
-	maxFailedNodes := float64(len(e.nodes)) * (e.task.FailureTolerate)
-	failedNodes := map[string]bool{}
-	worker := workers{
-		number:       int(e.task.Concurrency),
-		jobs:         make(map[string]int),
-		shuttingDown: false,
-		Mutex:        sync.Mutex{},
-	}
-	index := 0
-	dealCompletedNode := func(node v1alpha1.TaskStatus) error {
-		if node.State == api.TaskFailed {
-			failedNodes[node.NodeName] = true
-		}
-		if float64(len(failedNodes)) < maxFailedNodes {
-			return nil
-		}
-		worker.shuttingDown = true
-		if len(worker.jobs) > 0 {
-			klog.Warningf("wait for all workers(%d/%d) for task %s to finish running ", len(worker.jobs), worker.number, e.task.Name)
-			return nil
-		}
-
-		errMsg := fmt.Sprintf("the number of failed nodes is %d/%d, which exceeds the failure tolerance threshold.", len(failedNodes), len(e.nodes))
-		_, err := e.controller.ReportTaskStatus(e.task.Name, fsm.Event{
-			Type:     node.Event,
-			Action:   node.Action,
-			ErrorMsg: errMsg,
-		})
-		if err != nil {
-			return fmt.Errorf("%s, report status failed, %s", errMsg, err.Error())
-		}
-		return fmt.Errorf(errMsg)
-	}
-
-	index, err := e.initWorker(dealCompletedNode, &worker)
+	index, err := e.initWorker(0)
 	if err != nil {
 		klog.Errorf(err.Error())
 		return
 	}
-
 	for {
 		select {
 		case <-beehiveContext.Done():
 			klog.Info("stop sync tasks")
 			return
 		case status := <-e.statusChan:
-			if status == nil || reflect.DeepEqual(*status, v1alpha1.TaskStatus{}) {
+			if reflect.DeepEqual(*status, v1alpha1.TaskStatus{}) {
 				break
 			}
 			if !e.controller.StageCompleted(e.task.Name, status.State) {
 				break
 			}
 			var endNode int
-			endNode, err = worker.endJob(status.NodeName)
+			endNode, err = e.workers.endJob(status.NodeName)
 			if err != nil {
 				klog.Errorf(err.Error())
 				break
 			}
 
 			e.nodes[endNode] = *status
-			err = dealCompletedNode(*status)
+			err = e.dealFailedNode(*status)
 			if err != nil {
 				klog.Warning(err.Error())
 				break
 			}
 
 			if index >= len(e.nodes) {
-				if len(worker.jobs) != 0 {
+				if len(e.workers.jobs) != 0 {
 					break
 				}
 				var state api.State
-				state, err = e.completedTaskStage(*status)
+				state, err = e.completedTaskStage()
 				if err != nil {
 					klog.Errorf(err.Error())
 					break
@@ -293,28 +287,54 @@ func (e *Executor) start() {
 					klog.Infof("task %s is finish", e.task.Name)
 					return
 				}
+
 				// next stage
-				index, err = e.initWorker(dealCompletedNode, &worker)
-				if err != nil {
-					klog.Errorf(err.Error())
-				}
-				break
+				index = 0
 			}
 
-			nextNode := e.nodes[index]
-			err = worker.addJob(nextNode, index, e)
+			index, err = e.initWorker(index)
 			if err != nil {
 				klog.Errorf(err.Error())
-				break
 			}
-			index++
 		}
 	}
 }
 
-func (e *Executor) completedTaskStage(node v1alpha1.TaskStatus) (api.State, error) {
-	state, err := e.controller.ReportTaskStatus(e.task.Name, fsm.Event{
+func (e *Executor) dealFailedNode(node v1alpha1.TaskStatus) error {
+	if node.State == api.TaskFailed {
+		e.failedNodes[node.NodeName] = true
+	}
+	if float64(len(e.failedNodes)) < e.maxFailedNodes {
+		return nil
+	}
+	e.workers.shuttingDown = true
+	if len(e.workers.jobs) > 0 {
+		klog.Warningf("wait for all workers(%d/%d) for task %s to finish running ", len(e.workers.jobs), e.workers.number, e.task.Name)
+		return nil
+	}
+
+	errMsg := fmt.Sprintf("the number of failed nodes is %d/%d, which exceeds the failure tolerance threshold.", len(e.failedNodes), len(e.nodes))
+	_, err := e.controller.ReportTaskStatus(e.task.Name, fsm.Event{
 		Type:   node.Event,
+		Action: api.ActionFailure,
+		Msg:    errMsg,
+	})
+	if err != nil {
+		return fmt.Errorf("%s, report status failed, %s", errMsg, err.Error())
+	}
+	return fmt.Errorf(errMsg)
+}
+
+func (e *Executor) completedTaskStage() (api.State, error) {
+	var event = e.nodes[0].Event
+	for _, node := range e.nodes {
+		if node.State != api.TaskFailed {
+			event = node.Event
+			break
+		}
+	}
+	state, err := e.controller.ReportTaskStatus(e.task.Name, fsm.Event{
+		Type:   event,
 		Action: api.ActionSuccess,
 	})
 	if err != nil {
@@ -323,27 +343,21 @@ func (e *Executor) completedTaskStage(node v1alpha1.TaskStatus) (api.State, erro
 	return state, nil
 }
 
-func (e *Executor) initWorker(dealCompletedNode func(node v1alpha1.TaskStatus) error, worker *workers) (int, error) {
-	var index int
-	var node v1alpha1.TaskStatus
-	isEndNode := true
-	for index, node = range e.nodes {
+func (e *Executor) initWorker(index int) (int, error) {
+	for ; index < len(e.nodes); index++ {
+		node := e.nodes[index]
 		if e.controller.StageCompleted(e.task.Name, node.State) {
-			err := dealCompletedNode(node)
+			err := e.dealFailedNode(node)
 			if err != nil {
 				return 0, err
 			}
 			continue
 		}
-		err := worker.addJob(node, index, e)
+		err := e.workers.addJob(node, index, e)
 		if err != nil {
-			klog.Info(err.Error())
-			isEndNode = false
+			klog.V(4).Info(err.Error())
 			break
 		}
-	}
-	if isEndNode {
-		index++
 	}
 	return index, nil
 }
@@ -374,7 +388,11 @@ func (w *workers) addJob(node v1alpha1.TaskStatus, index int, e *Executor) error
 
 func (e *Executor) handelTimeOutJob(index int) {
 	lastState := e.nodes[index].State
-	err := wait.Poll(1*time.Second, time.Duration(*e.task.TimeOutSeconds)*time.Second, func() (bool, error) {
+	timeoutSecond := *e.task.TimeOutSeconds
+	if timeoutSecond == 0 {
+		timeoutSecond = TimeOutSecond
+	}
+	err := wait.Poll(1*time.Second, time.Duration(timeoutSecond)*time.Second, func() (bool, error) {
 		if lastState != e.nodes[index].State || fsm.TaskFinish(e.nodes[index].State) {
 			return true, nil
 		}
@@ -383,9 +401,9 @@ func (e *Executor) handelTimeOutJob(index int) {
 	})
 	if err != nil {
 		_, err = e.controller.ReportNodeStatus(e.task.Name, e.nodes[index].NodeName, fsm.Event{
-			Type:     "TimeOut",
-			Action:   api.ActionFailure,
-			ErrorMsg: fmt.Sprintf("node task execution timeout, %s", err.Error()),
+			Type:   api.EventTimeOut,
+			Action: api.ActionFailure,
+			Msg:    fmt.Sprintf("node task %s execution timeout, %s", lastState, err.Error()),
 		})
 		if err != nil {
 			klog.Warningf(err.Error())

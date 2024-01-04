@@ -1,3 +1,19 @@
+/*
+Copyright 2023 The KubeEdge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package httpserver
 
 import (
@@ -13,7 +29,7 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1"
+	"github.com/kubeedge/kubeedge/common/types"
 )
 
 const (
@@ -22,7 +38,7 @@ const (
 
 // reportTaskStatus report the status of task
 func reportTaskStatus(request *restful.Request, response *restful.Response) {
-	resp := v1alpha1.TaskStatus{}
+	resp := types.NodeTaskResponse{}
 	taskID := request.PathParameter("taskID")
 	taskType := request.PathParameter("taskType")
 	nodeID := request.PathParameter("nodeID")
@@ -47,7 +63,7 @@ func reportTaskStatus(request *restful.Request, response *restful.Response) {
 		return
 	}
 	if err = json.Unmarshal(body, &resp); err != nil {
-		err = response.WriteError(http.StatusBadRequest, fmt.Errorf("failed to marshal task info: %v", err))
+		err = response.WriteError(http.StatusBadRequest, fmt.Errorf("failed to unmarshal task info: %v", err))
 		if err != nil {
 			klog.Warning(err.Error())
 		}
