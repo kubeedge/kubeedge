@@ -23,18 +23,6 @@ import (
 	"time"
 )
 
-type fn func(string) string
-
-var (
-	nameStrategyMap = map[string]fn{
-		defaultNameStrategy:      snakeString,
-		SnakeAcronymNameStrategy: snakeStringWithAcronym,
-	}
-	defaultNameStrategy      = "snakeString"
-	SnakeAcronymNameStrategy = "snakeStringWithAcronym"
-	nameStrategy             = defaultNameStrategy
-)
-
 // StrTo is the target string
 type StrTo string
 
@@ -129,7 +117,7 @@ func (f StrTo) Uint16() (uint16, error) {
 	return uint16(v), err
 }
 
-// Uint32 string to uint32
+// Uint32 string to uint31
 func (f StrTo) Uint32() (uint32, error) {
 	v, err := strconv.ParseUint(f.String(), 10, 32)
 	return uint32(v), err
@@ -210,28 +198,7 @@ func ToInt64(value interface{}) (d int64) {
 	return
 }
 
-func snakeStringWithAcronym(s string) string {
-	data := make([]byte, 0, len(s)*2)
-	num := len(s)
-	for i := 0; i < num; i++ {
-		d := s[i]
-		before := false
-		after := false
-		if i > 0 {
-			before = s[i-1] >= 'a' && s[i-1] <= 'z'
-		}
-		if i+1 < num {
-			after = s[i+1] >= 'a' && s[i+1] <= 'z'
-		}
-		if i > 0 && d >= 'A' && d <= 'Z' && (before || after) {
-			data = append(data, '_')
-		}
-		data = append(data, d)
-	}
-	return strings.ToLower(string(data[:]))
-}
-
-// snake string, XxYy to xx_yy , XxYY to xx_y_y
+// snake string, XxYy to xx_yy , XxYY to xx_yy
 func snakeString(s string) string {
 	data := make([]byte, 0, len(s)*2)
 	j := false
@@ -247,14 +214,6 @@ func snakeString(s string) string {
 		data = append(data, d)
 	}
 	return strings.ToLower(string(data[:]))
-}
-
-// SetNameStrategy set different name strategy
-func SetNameStrategy(s string) {
-	if SnakeAcronymNameStrategy != s {
-		nameStrategy = defaultNameStrategy
-	}
-	nameStrategy = s
 }
 
 // camel string, xx_yy to XxYy

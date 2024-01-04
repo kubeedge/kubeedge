@@ -193,7 +193,7 @@ checkType:
 		}
 		fieldType = f.FieldType()
 		if fieldType&IsRelField > 0 {
-			err = fmt.Errorf("unsupport type custom field, please refer to https://github.com/beego/beego/blob/master/orm/models_fields.go#L24-L42")
+			err = fmt.Errorf("unsupport type custom field, please refer to https://github.com/astaxie/beego/blob/master/orm/models_fields.go#L24-L42")
 			goto end
 		}
 	default:
@@ -301,7 +301,7 @@ checkType:
 	fi.sf = sf
 	fi.fullName = mi.fullName + mName + "." + sf.Name
 
-	fi.description = tags["description"]
+	fi.description = sf.Tag.Get("description")
 	fi.null = attrs["null"]
 	fi.index = attrs["index"]
 	fi.auto = attrs["auto"]

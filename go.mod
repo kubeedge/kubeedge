@@ -21,7 +21,7 @@ require (
 	github.com/kubeedge/beehive v0.0.0
 	github.com/kubeedge/viaduct v0.0.0
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1
-	github.com/mattn/go-sqlite3 v2.0.3+incompatible
+	github.com/mattn/go-sqlite3 v1.14.18
 	github.com/onsi/gomega v1.27.7
 	github.com/prometheus/client_golang v1.15.1
 	github.com/shirou/gopsutil v2.21.11+incompatible
@@ -56,7 +56,7 @@ require (
 
 require (
 	github.com/agiledragon/gomonkey v2.0.2+incompatible
-	github.com/beego/beego v1.12.12
+	github.com/beego/beego v1.10.1
 	github.com/onsi/ginkgo/v2 v2.9.5
 	github.com/pkg/errors v0.9.1
 	go.opentelemetry.io/otel/trace v1.14.0

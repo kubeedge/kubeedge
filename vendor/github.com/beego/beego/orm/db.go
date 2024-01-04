@@ -36,11 +36,10 @@ var (
 
 var (
 	operators = map[string]bool{
-		"exact":       true,
-		"iexact":      true,
-		"strictexact": true,
-		"contains":    true,
-		"icontains":   true,
+		"exact":     true,
+		"iexact":    true,
+		"contains":  true,
+		"icontains": true,
 		// "regex":       true,
 		// "iregex":      true,
 		"gt":          true,
@@ -471,7 +470,7 @@ func (d *dbBase) InsertValue(q dbQuerier, mi *modelInfo, isMulti bool, names []s
 
 	multi := len(values) / len(names)
 
-	if isMulti && multi > 1 {
+	if isMulti {
 		qmarks = strings.Repeat(qmarks+"), (", multi-1) + qmarks
 	}
 
@@ -622,31 +621,6 @@ func (d *dbBase) Update(q dbQuerier, mi *modelInfo, ind reflect.Value, tz *time.
 		return 0, err
 	}
 
-	var findAutoNowAdd, findAutoNow bool
-	var index int
-	for i, col := range setNames {
-		if mi.fields.GetByColumn(col).autoNowAdd {
-			index = i
-			findAutoNowAdd = true
-		}
-		if mi.fields.GetByColumn(col).autoNow {
-			findAutoNow = true
-		}
-	}
-	if findAutoNowAdd {
-		setNames = append(setNames[0:index], setNames[index+1:]...)
-		setValues = append(setValues[0:index], setValues[index+1:]...)
-	}
-
-	if !findAutoNow {
-		for col, info := range mi.fields.columns {
-			if info.autoNow {
-				setNames = append(setNames, col)
-				setValues = append(setValues, time.Now())
-			}
-		}
-	}
-
 	setValues = append(setValues, pkValue)
 
 	Q := d.ins.TableQuote()
@@ -771,16 +745,6 @@ func (d *dbBase) UpdateBatch(q dbQuerier, qs *querySet, mi *modelInfo, cond *Con
 				cols = append(cols, col+" = "+col+" * ?")
 			case ColExcept:
 				cols = append(cols, col+" = "+col+" / ?")
-			case ColBitAnd:
-				cols = append(cols, col+" = "+col+" & ?")
-			case ColBitRShift:
-				cols = append(cols, col+" = "+col+" >> ?")
-			case ColBitLShift:
-				cols = append(cols, col+" = "+col+" << ?")
-			case ColBitXOR:
-				cols = append(cols, col+" = "+col+" ^ ?")
-			case ColBitOr:
-				cols = append(cols, col+" = "+col+" | ?")
 			}
 			values[i] = c.value
 		} else {
@@ -798,13 +762,7 @@ func (d *dbBase) UpdateBatch(q dbQuerier, qs *querySet, mi *modelInfo, cond *Con
 	}
 
 	d.ins.ReplaceMarks(&query)
-	var err error
-	var res sql.Result
-	if qs != nil && qs.forContext {
-		res, err = q.ExecContext(qs.ctx, query, values...)
-	} else {
-		res, err = q.Exec(query, values...)
-	}
+	res, err := q.Exec(query, values...)
 	if err == nil {
 		return res.RowsAffected()
 	}
@@ -893,16 +851,11 @@ func (d *dbBase) DeleteBatch(q dbQuerier, qs *querySet, mi *modelInfo, cond *Con
 	for i := range marks {
 		marks[i] = "?"
 	}
-	sqlIn := fmt.Sprintf("IN (%s)", strings.Join(marks, ", "))
-	query = fmt.Sprintf("DELETE FROM %s%s%s WHERE %s%s%s %s", Q, mi.table, Q, Q, mi.fields.pk.column, Q, sqlIn)
+	sql := fmt.Sprintf("IN (%s)", strings.Join(marks, ", "))
+	query = fmt.Sprintf("DELETE FROM %s%s%s WHERE %s%s%s %s", Q, mi.table, Q, Q, mi.fields.pk.column, Q, sql)
 
 	d.ins.ReplaceMarks(&query)
-	var res sql.Result
-	if qs != nil && qs.forContext {
-		res, err = q.ExecContext(qs.ctx, query, args...)
-	} else {
-		res, err = q.Exec(query, args...)
-	}
+	res, err := q.Exec(query, args...)
 	if err == nil {
 		num, err := res.RowsAffected()
 		if err != nil {
@@ -975,7 +928,7 @@ func (d *dbBase) ReadBatch(q dbQuerier, qs *querySet, mi *modelInfo, cond *Condi
 					maps[fi.column] = true
 				}
 			} else {
-				return 0, fmt.Errorf("wrong field/column name `%s`", col)
+				panic(fmt.Errorf("wrong field/column name `%s`", col))
 			}
 		}
 		if hasRel {
@@ -1025,18 +978,11 @@ func (d *dbBase) ReadBatch(q dbQuerier, qs *querySet, mi *modelInfo, cond *Condi
 	d.ins.ReplaceMarks(&query)
 
 	var rs *sql.Rows
-	var err error
-	if qs != nil && qs.forContext {
-		rs, err = q.QueryContext(qs.ctx, query, args...)
-		if err != nil {
-			return 0, err
-		}
-	} else {
-		rs, err = q.Query(query, args...)
-		if err != nil {
-			return 0, err
-		}
+	r, err := q.Query(query, args...)
+	if err != nil {
+		return 0, err
 	}
+	rs = r
 
 	refs := make([]interface{}, colsNum)
 	for i := range refs {
@@ -1165,12 +1111,8 @@ func (d *dbBase) Count(q dbQuerier, qs *querySet, mi *modelInfo, cond *Condition
 
 	d.ins.ReplaceMarks(&query)
 
-	var row *sql.Row
-	if qs != nil && qs.forContext {
-		row = q.QueryRowContext(qs.ctx, query, args...)
-	} else {
-		row = q.QueryRow(query, args...)
-	}
+	row := q.QueryRow(query, args...)
+
 	err = row.Scan(&cnt)
 	return
 }
@@ -1203,7 +1145,7 @@ func (d *dbBase) GenerateOperatorSQL(mi *modelInfo, fi *fieldInfo, operator stri
 		}
 		sql = d.ins.OperatorSQL(operator)
 		switch operator {
-		case "exact", "strictexact":
+		case "exact":
 			if arg == nil {
 				params[0] = "IS NULL"
 			}

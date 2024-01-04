@@ -21,7 +21,7 @@
 //
 //	import (
 //		"fmt"
-//		"github.com/beego/beego/orm"
+//		"github.com/astaxie/beego/orm"
 //		_ "github.com/go-sql-driver/mysql" // import your used driver
 //	)
 //
@@ -60,7 +60,6 @@ import (
 	"fmt"
 	"os"
 	"reflect"
-	"sync"
 	"time"
 )
 
@@ -73,7 +72,7 @@ const (
 var (
 	Debug            = false
 	DebugLog         = NewLog(os.Stdout)
-	DefaultRowsLimit = -1
+	DefaultRowsLimit = 1000
 	DefaultRelsDepth = 2
 	DefaultTimeLoc   = time.Local
 	ErrTxHasBegan    = errors.New("<Ormer.Begin> transaction already begin")
@@ -426,7 +425,7 @@ func (o *orm) getRelQs(md interface{}, mi *modelInfo, fi *fieldInfo) *querySet {
 func (o *orm) QueryTable(ptrStructOrTableName interface{}) (qs QuerySeter) {
 	var name string
 	if table, ok := ptrStructOrTableName.(string); ok {
-		name = nameStrategyMap[defaultNameStrategy](table)
+		name = snakeString(table)
 		if mi, ok := modelCache.get(name); ok {
 			qs = newQuerySet(o, mi)
 		}
@@ -523,15 +522,6 @@ func (o *orm) Driver() Driver {
 	return driver(o.alias.Name)
 }
 
-// return sql.DBStats for current database
-func (o *orm) DBStats() *sql.DBStats {
-	if o.alias != nil && o.alias.DB != nil {
-		stats := o.alias.DB.DB.Stats()
-		return &stats
-	}
-	return nil
-}
-
 // NewOrm create new orm
 func NewOrm() Ormer {
 	BootStrap() // execute only once
@@ -558,13 +548,6 @@ func NewOrmWithDB(driverName, aliasName string, db *sql.DB) (Ormer, error) {
 
 	al.Name = aliasName
 	al.DriverName = driverName
-	al.DB = &DB{
-		RWMutex:        new(sync.RWMutex),
-		DB:             db,
-		stmtDecorators: newStmtDecoratorLruWithEvict(),
-	}
-
-	detectTZ(al)
 
 	o := new(orm)
 	o.alias = al

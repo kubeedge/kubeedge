@@ -15,7 +15,6 @@
 package orm
 
 import (
-	"context"
 	"fmt"
 )
 
@@ -32,11 +31,6 @@ const (
 	ColMinus
 	ColMultiply
 	ColExcept
-	ColBitAnd
-	ColBitRShift
-	ColBitLShift
-	ColBitXOR
-	ColBitOr
 )
 
 // ColValue do the field raw changes. e.g Nums = Nums + 10. usage:
@@ -45,8 +39,7 @@ const (
 // 	}
 func ColValue(opt operator, value interface{}) interface{} {
 	switch opt {
-	case ColAdd, ColMinus, ColMultiply, ColExcept, ColBitAnd, ColBitRShift,
-		ColBitLShift, ColBitXOR, ColBitOr:
+	case ColAdd, ColMinus, ColMultiply, ColExcept:
 	default:
 		panic(fmt.Errorf("orm.ColValue wrong operator"))
 	}
@@ -62,19 +55,17 @@ func ColValue(opt operator, value interface{}) interface{} {
 
 // real query struct
 type querySet struct {
-	mi         *modelInfo
-	cond       *Condition
-	related    []string
-	relDepth   int
-	limit      int64
-	offset     int64
-	groups     []string
-	orders     []string
-	distinct   bool
-	forupdate  bool
-	orm        *orm
-	ctx        context.Context
-	forContext bool
+	mi        *modelInfo
+	cond      *Condition
+	related   []string
+	relDepth  int
+	limit     int64
+	offset    int64
+	groups    []string
+	orders    []string
+	distinct  bool
+	forupdate bool
+	orm       *orm
 }
 
 var _ QuerySeter = new(querySet)
@@ -85,15 +76,6 @@ func (o querySet) Filter(expr string, args ...interface{}) QuerySeter {
 		o.cond = NewCondition()
 	}
 	o.cond = o.cond.And(expr, args...)
-	return &o
-}
-
-// add raw sql to querySeter.
-func (o querySet) FilterRaw(expr string, sql string) QuerySeter {
-	if o.cond == nil {
-		o.cond = NewCondition()
-	}
-	o.cond = o.cond.Raw(expr, sql)
 	return &o
 }
 
@@ -216,7 +198,11 @@ func (o *querySet) PrepareInsert() (Inserter, error) {
 // query all data and map to containers.
 // cols means the columns when querying.
 func (o *querySet) All(container interface{}, cols ...string) (int64, error) {
-	return o.orm.alias.DbBaser.ReadBatch(o.orm.db, o, o.mi, o.cond, container, o.orm.alias.TZ, cols)
+	num, err := o.orm.alias.DbBaser.ReadBatch(o.orm.db, o, o.mi, o.cond, container, o.orm.alias.TZ, cols)
+	if num == 0 {
+		return 0, ErrNoRows
+	}
+	return num, err
 }
 
 // query one row data and map to containers.
@@ -282,13 +268,6 @@ func (o *querySet) RowsToMap(result *Params, keyCol, valueCol string) (int64, er
 // }
 func (o *querySet) RowsToStruct(ptrStruct interface{}, keyCol, valueCol string) (int64, error) {
 	panic(ErrNotImplement)
-}
-
-// set context to QuerySeter.
-func (o querySet) WithContext(ctx context.Context) QuerySeter {
-	o.ctx = ctx
-	o.forContext = true
-	return &o
 }
 
 // create new QuerySeter.
