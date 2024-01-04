@@ -170,7 +170,7 @@ func (dc *DownstreamController) processPrePull(node string, imagePrePull *v1alph
 		Images:     imagePrePullTemplateInfo.Images,
 		NodeName:   node,
 		Secret:     imagePrePullTemplateInfo.ImageSecret,
-		RetryTimes: imagePrePullTemplateInfo.RetryTimesOnEachNode,
+		RetryTimes: imagePrePullTemplateInfo.RetryTimes,
 		CheckItems: imagePrePullTemplateInfo.CheckItems,
 	}
 

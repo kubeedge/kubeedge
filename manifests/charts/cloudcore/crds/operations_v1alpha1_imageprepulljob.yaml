@@ -114,15 +114,15 @@ spec:
                     items:
                       type: string
                     type: array
-                  retryTimesOnEachNode:
-                    description: RetryTimesOnEachNode specifies the retry times if
-                      image pull failed on each edgenode. Default to 0
+                  retryTimes:
+                    description: RetryTimes specifies the retry times if image pull
+                      failed on each edgenode. Default to 0
                     format: int32
                     type: integer
                   timeoutSecondsOnEachNode:
                     description: TimeoutSecondsOnEachNode limits the duration of the
                       image prepull job on each edgenode. Default to 360. If set to
-                      0, we'll use the default value 300.
+                      0, we'll use the default value 360.
                     format: int32
                     type: integer
                 type: object
@@ -174,7 +174,7 @@ spec:
                       description: NodeName is the name of edge node.
                       type: string
                     reason:
-                      description: Message represents the fail reason if images prepull
+                      description: Reason represents the fail reason if images prepull
                         failed on the edge node
                       type: string
                     state:

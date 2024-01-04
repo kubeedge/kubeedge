@@ -91,14 +91,14 @@ type ImagePrePullTemplate struct {
 
 	// TimeoutSecondsOnEachNode limits the duration of the image prepull job on each edgenode.
 	// Default to 360.
-	// If set to 0, we'll use the default value 300.
+	// If set to 0, we'll use the default value 360.
 	// +optional
 	TimeoutSecondsOnEachNode *uint32 `json:"timeoutSecondsOnEachNode,omitempty"`
 
-	// RetryTimesOnEachNode specifies the retry times if image pull failed on each edgenode.
+	// RetryTimes specifies the retry times if image pull failed on each edgenode.
 	// Default to 0
 	// +optional
-	RetryTimesOnEachNode int32 `json:"retryTimesOnEachNode,omitempty"`
+	RetryTimes int32 `json:"retryTimes,omitempty"`
 }
 
 // PrePullState describe the PrePullState of image prepull operation on edge nodes.
@@ -135,7 +135,7 @@ type ImagePrePullStatus struct {
 	// There are five possible state values: "", prepulling, successful, failed.
 	State PrePullState `json:"state,omitempty"`
 
-	// Message represents the fail reason if images prepull failed on the edge node
+	// Reason represents the fail reason if images prepull failed on the edge node
 	Reason string `json:"reason,omitempty"`
 
 	// ImageStatus represents the prepull status for each image
