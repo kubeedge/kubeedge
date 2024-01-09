@@ -449,3 +449,20 @@ else
 release:
 	hack/make-rules/release.sh $(WHAT) $(ARM_VERSION) $(OS)
 endif
+
+define KEADM_COMPATIBILITY_E2E_HELP_INFO
+# keadm compatibility e2e test
+#
+# Example:
+#   make keadm_compatibility_e2e
+#   make keadm_compatibility_e2e HELP=y
+#
+endef
+.PHONY: keadm_compatibility_e2e
+ifeq ($(HELP),y)
+keadm_compatibility_e2e:
+	@echo "KEADM_COMPATIBILITY_E2E_HELP_INFO"
+else
+keadm_compatibility_e2e:
+	tests/scripts/keadm_compatibility_e2e.sh ${CLOUD_EDGE_VERSION}
+endif
