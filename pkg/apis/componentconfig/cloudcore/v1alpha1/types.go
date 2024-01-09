@@ -91,7 +91,7 @@ type Modules struct {
 	// NodeUpgradeJobController indicates NodeUpgradeJobController module config
 	NodeUpgradeJobController *NodeUpgradeJobController `json:"nodeUpgradeJobController,omitempty"`
 	// ImagePrePullController indicates ImagePrePullController module config
-	ImagePrePullController *ImagePrePullController `json:"ImagePrePullController,omitempty"`
+	ImagePrePullController *ImagePrePullController `json:"imagePrePullController,omitempty"`
 	// SyncController indicates SyncController module config
 	SyncController *SyncController `json:"syncController,omitempty"`
 	// DynamicController indicates DynamicController module config
