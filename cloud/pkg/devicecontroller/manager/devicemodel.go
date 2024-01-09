@@ -7,7 +7,6 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/config"
-	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1"
 )
 
 // DeviceModelManager is a manager watch DeviceModel change event
@@ -34,9 +33,4 @@ func NewDeviceModelManager(si cache.SharedIndexInformer) (*DeviceModelManager, e
 	}
 
 	return &DeviceModelManager{events: events}, nil
-}
-
-// GetDeviceModelID return device model ID
-func GetDeviceModelID(deviceModel *v1beta1.DeviceModel) string {
-	return deviceModel.Namespace + "-" + deviceModel.Name
 }
