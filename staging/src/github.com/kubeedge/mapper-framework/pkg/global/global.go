@@ -1,8 +1,8 @@
 package global
 
 import (
+	dmiapi "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1beta1"
 	"github.com/kubeedge/mapper-framework/pkg/common"
-	"github.com/kubeedge/mapper-framework/pkg/config"
 )
 
 // DevPanel defined operations on devices, manage the lifecycle of devices
@@ -10,7 +10,7 @@ type DevPanel interface {
 	// DevStart start device to collect/push/save data to edgecore/app/database
 	DevStart()
 	// DevInit get device info by dmi interface
-	DevInit(cfg *config.Config) error
+	DevInit(deviceList []*dmiapi.Device, deviceModelList []*dmiapi.DeviceModel) error
 	// UpdateDev update device's config and restart the device
 	UpdateDev(model *common.DeviceModel, device *common.DeviceInstance)
 	// UpdateDevTwins update device twin's config and restart the device
