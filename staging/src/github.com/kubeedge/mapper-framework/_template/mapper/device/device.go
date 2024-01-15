@@ -143,6 +143,15 @@ func dataHandler(ctx context.Context, dev *driver.CustomizedDev) {
 		if twin.Property.PushMethod.DBMethod.DBMethodName != "" {
 			dataModel := common.NewDataModel(dev.Instance.Name, twin.Property.PropertyName, common.WithType(twin.ObservedDesired.Metadata.Type))
 			dbHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
+			switch twin.Property.PushMethod.DBMethod.DBMethodName {
+			// TODO add more database
+			case "influx":
+				dbInflux.DataHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
+			case "redis":
+				dbRedis.DataHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
+			case "tdengine":
+				dbTdengine.DataHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
+			}
 		}
 	}
 }
@@ -204,137 +213,13 @@ func dbHandler(ctx context.Context, twin *common.Twin, client *driver.Customized
 	switch twin.Property.PushMethod.DBMethod.DBMethodName {
 	// TODO add more database
 	case "influx":
-		dbConfig, err := dbInflux.NewDataBaseClient(twin.Property.PushMethod.DBMethod.DBConfig.Influxdb2ClientConfig, twin.Property.PushMethod.DBMethod.DBConfig.Influxdb2DataConfig)
-		if err != nil {
-			klog.Errorf("new database client error: %v", err)
-			return
-		}
-		dbClient := dbConfig.InitDbClient()
-		if err != nil {
-			klog.Errorf("init database client err: %v", err)
-			return
-		}
-		reportCycle := time.Duration(twin.Property.ReportCycle)
-		if reportCycle == 0 {
-			reportCycle = common.DefaultReportCycle
-		}
-		ticker := time.NewTicker(reportCycle)
-		go func() {
-			for {
-				select {
-				case <-ticker.C:
-					deviceData, err := client.GetDeviceData(visitorConfig)
-					if err != nil {
-						klog.Errorf("publish error: %v", err)
-						continue
-					}
-					sData, err := common.ConvertToString(deviceData)
-					if err != nil {
-						klog.Errorf("Failed to convert publish method data : %v", err)
-						continue
-					}
-					dataModel.SetValue(sData)
-					dataModel.SetTimeStamp()
+		dbInflux.DataHandler(ctx, twin, client, visitorConfig, dataModel)
 
-					err = dbConfig.AddData(dataModel, dbClient)
-					if err != nil {
-						klog.Errorf("influx database add data error: %v", err)
-						return
-					}
-				case <-ctx.Done():
-					dbConfig.CloseSession(dbClient)
-					return
-				}
-			}
-		}()
 	case "redis":
-		dbConfig, err := dbRedis.NewDataBaseClient(twin.Property.PushMethod.DBMethod.DBConfig.RedisClientConfig)
-		if err != nil {
-			klog.Errorf("new database client error: %v", err)
-			return
-		}
-		err = dbConfig.InitDbClient()
-		if err != nil {
-			klog.Errorf("init redis database client err: %v", err)
-			return
-		}
-		reportCycle := time.Duration(twin.Property.ReportCycle)
-		if reportCycle == 0 {
-			reportCycle = 1 * time.Second
-		}
-		ticker := time.NewTicker(reportCycle)
-		go func() {
-			for {
-				select {
-				case <-ticker.C:
-					deviceData, err := client.GetDeviceData(visitorConfig)
-					if err != nil {
-						klog.Errorf("publish error: %v", err)
-						continue
-					}
-					sData, err := common.ConvertToString(deviceData)
-					if err != nil {
-						klog.Errorf("Failed to convert publish method data : %v", err)
-						continue
-					}
-					dataModel.SetValue(sData)
-					dataModel.SetTimeStamp()
+		dbRedis.DataHandler(ctx, twin, client, visitorConfig, dataModel)
 
-					err = dbConfig.AddData(dataModel)
-					if err != nil {
-						klog.Errorf("redis database add data error: %v", err)
-						return
-					}
-				case <-ctx.Done():
-					dbConfig.CloseSession()
-					return
-				}
-			}
-		}()
 	case "tdengine":
-		dbConfig, err := dbTdengine.NewDataBaseClient(twin.Property.PushMethod.DBMethod.DBConfig.TDEngineClientConfig)
-		if err != nil {
-			klog.Errorf("new database client error: %v", err)
-			return
-		}
-		err = dbConfig.InitDbClient()
-		if err != nil {
-			klog.Errorf("init database client err: %v", err)
-			return
-		}
-		reportCycle := time.Duration(twin.Property.ReportCycle)
-		if reportCycle == 0 {
-			reportCycle = 1 * time.Second
-		}
-		ticker := time.NewTicker(reportCycle)
-		go func() {
-			for {
-				select {
-				case <-ticker.C:
-					deviceData, err := client.GetDeviceData(visitorConfig)
-					if err != nil {
-						klog.Errorf("publish error: %v", err)
-						continue
-					}
-					sData, err := common.ConvertToString(deviceData)
-					if err != nil {
-						klog.Errorf("Failed to convert publish method data : %v", err)
-						continue
-					}
-					dataModel.SetValue(sData)
-					dataModel.SetTimeStamp()
-
-					err = dbConfig.AddData(dataModel)
-					if err != nil {
-						klog.Errorf("tdengine database add data error: %v", err)
-						return
-					}
-				case <-ctx.Done():
-					dbConfig.CloseSessio()
-					return
-				}
-			}
-		}()
+		dbTdengine.DataHandler(ctx, twin, client, visitorConfig, dataModel)
 	}
 }
 
