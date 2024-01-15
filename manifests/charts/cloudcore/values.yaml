@@ -59,6 +59,8 @@ cloudCore:
       enable: false
     nodeUpgradeJobController:
       enable: false
+    imagePrePullController:
+      enable: false
   service:
     enable: true
     type: "NodePort"

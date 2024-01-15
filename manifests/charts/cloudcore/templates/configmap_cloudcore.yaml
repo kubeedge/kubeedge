@@ -55,3 +55,5 @@ data:
         mode: {{ .Values.iptablesManager.mode }}
       nodeUpgradeJobController:
         enable: {{ .Values.cloudCore.modules.nodeUpgradeJobController.enable }}
+      imagePrePullController:
+        enable: {{ .Values.cloudCore.modules.imagePrePullController.enable }}

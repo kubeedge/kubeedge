@@ -1,0 +1,14 @@
+apiVersion: operations.kubeedge.io/v1alpha1
+kind: ImagePrePullJob
+metadata:
+  name: imageprepull-example
+  labels:
+    description: ImagePrePullLabel
+spec:
+  imagePrePullTemplate:
+    images:
+      - busybox:latest
+    nodes:
+      - edgenode1 # Need to replaced with your own node name
+    timeoutSecondsOnEachNode: 300
+    retryTimesOnEachNode: 1

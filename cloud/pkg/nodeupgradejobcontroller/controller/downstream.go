@@ -38,6 +38,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/util"
 	"github.com/kubeedge/kubeedge/cloud/pkg/nodeupgradejobcontroller/manager"
 	"github.com/kubeedge/kubeedge/common/constants"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
@@ -143,7 +144,7 @@ func (dc *DownstreamController) nodeUpgradeJobAdded(upgrade *v1alpha1.NodeUpgrad
 	}
 
 	// deduplicate: remove duplicate nodes to avoid repeating upgrade to the same node
-	nodesToUpgrade = RemoveDuplicateElement(nodesToUpgrade)
+	nodesToUpgrade = util.RemoveDuplicateElement(nodesToUpgrade)
 
 	klog.Infof("Filtered finished, the below nodes are to upgrade\n%v\n", nodesToUpgrade)
 
@@ -200,7 +201,7 @@ func (dc *DownstreamController) processUpgrade(node string, upgrade *v1alpha1.No
 		return
 	}
 
-	// process time out: cloud did not receive upgrade feedback from edge
+	// process time out: could not receive upgrade feedback from edge
 	// send upgrade timeout response message to upstream
 	go dc.handleNodeUpgradeJobTimeout(node, upgrade.Name, upgrade.Spec.Version, upgradeReq.HistoryID, upgrade.Spec.TimeoutSeconds)
 
@@ -303,7 +304,7 @@ func needUpgrade(node *v1.Node, upgradeVersion string) bool {
 	}
 
 	// we only care about edge nodes, so just remove not edge nodes
-	if !isEdgeNode(node) {
+	if !util.IsEdgeNode(node) {
 		klog.Warningf("Node(%s) is not edge node", node.Name)
 		return false
 	}

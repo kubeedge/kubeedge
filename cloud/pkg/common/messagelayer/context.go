@@ -104,6 +104,14 @@ func NodeUpgradeJobControllerMessageLayer() MessageLayer {
 	}
 }
 
+func ImagePrePullControllerMessageLayer() MessageLayer {
+	return &ContextMessageLayer{
+		SendModuleName:     modules.CloudHubModuleName,
+		ReceiveModuleName:  modules.ImagePrePullControllerModuleName,
+		ResponseModuleName: modules.CloudHubModuleName,
+	}
+}
+
 func PolicyControllerMessageLayer() MessageLayer {
 	return &ContextMessageLayer{
 		SendModuleName:     modules.CloudHubModuleName,

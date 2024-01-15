@@ -118,6 +118,11 @@ const (
 	DefaultNodeUpgradeJobEventBuffer  = 1
 	DefaultNodeUpgradeJobWorkers      = 1
 
+	// ImagePrePullController
+	DefaultImagePrePullJobStatusBuffer = 1024
+	DefaultImagePrePullJobEventBuffer  = 1
+	DefaultImagePrePullJobWorkers      = 1
+
 	// Resource sep
 	ResourceSep = "/"
 

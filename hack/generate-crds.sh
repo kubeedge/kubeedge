@@ -86,6 +86,7 @@ function :copy:to:destination {
   mkdir -p ${CRD_OUTPUTS}/reliablesyncs
   mkdir -p ${CRD_OUTPUTS}/apps
   mkdir -p ${CRD_OUTPUTS}/policy
+  mkdir -p ${CRD_OUTPUTS}/operations
 
   for entry in `ls /tmp/crds/*.yaml`; do
       CRD_NAME=$(echo ${entry} | cut -d'.' -f3 | cut -d'_' -f2)
@@ -108,7 +109,7 @@ function :copy:to:destination {
       elif [ "$CRD_NAME" == "objectsyncs" ]; then
           cp -v ${entry} ${CRD_OUTPUTS}/reliablesyncs/objectsync_${RELIABLESYNCS_VERSION}.yaml
           cp -v ${entry} ${HELM_CRDS_DIR}/objectsync_${RELIABLESYNCS_VERSION}.yaml
-      elif [ "$CRD_NAME" == "nodeupgradejobs" ]; then
+      elif [ "$CRD_NAME" == "nodeupgradejobs" ] || [ "$CRD_NAME" == "imageprepulljobs" ]; then
           CRD_NAME=$(remove_suffix_s "$CRD_NAME")
           cp -v ${entry} ${CRD_OUTPUTS}/operations/operations_${OPERATIONS_VERSION}_${CRD_NAME}.yaml
           cp -v ${entry} ${HELM_CRDS_DIR}/operations_${OPERATIONS_VERSION}_${CRD_NAME}.yaml

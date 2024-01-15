@@ -108,6 +108,16 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					NodeUpgradeJobWorkers: constants.DefaultNodeUpgradeJobWorkers,
 				},
 			},
+			ImagePrePullController: &ImagePrePullController{
+				Enable: false,
+				Buffer: &ImagePrePullControllerBuffer{
+					ImagePrePullJobStatus: constants.DefaultImagePrePullJobStatusBuffer,
+					ImagePrePullJobEvent:  constants.DefaultImagePrePullJobEventBuffer,
+				},
+				Load: &ImagePrePullControllerLoad{
+					ImagePrePullJobWorkers: constants.DefaultImagePrePullJobWorkers,
+				},
+			},
 			SyncController: &SyncController{
 				Enable: true,
 			},

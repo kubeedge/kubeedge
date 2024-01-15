@@ -22,9 +22,7 @@ import (
 	"time"
 
 	"github.com/distribution/distribution/v3/reference"
-	metav1 "k8s.io/api/core/v1"
 
-	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1"
 )
 
@@ -55,23 +53,6 @@ func filterVersion(version string, expected string) bool {
 	return version[index+length:] == expected
 }
 
-// isEdgeNode checks whether a node is an Edge Node
-// only if label {"node-role.kubernetes.io/edge": ""} exists, it is an edge node
-func isEdgeNode(node *metav1.Node) bool {
-	if node.Labels == nil {
-		return false
-	}
-	if _, ok := node.Labels[constants.EdgeNodeRoleKey]; !ok {
-		return false
-	}
-
-	if node.Labels[constants.EdgeNodeRoleKey] != constants.EdgeNodeRoleValue {
-		return false
-	}
-
-	return true
-}
-
 // isCompleted returns true only if some/all edge upgrade is upgrading or completed
 func isCompleted(upgrade *v1alpha1.NodeUpgradeJob) bool {
 	// all edge node upgrade is upgrading or completed
@@ -87,21 +68,6 @@ func isCompleted(upgrade *v1alpha1.NodeUpgradeJob) bool {
 	}
 
 	return false
-}
-
-// RemoveDuplicateElement deduplicate
-func RemoveDuplicateElement(s []string) []string {
-	result := make([]string, 0, len(s))
-	temp := make(map[string]struct{}, len(s))
-
-	for _, item := range s {
-		if _, ok := temp[item]; !ok {
-			temp[item] = struct{}{}
-			result = append(result, item)
-		}
-	}
-
-	return result
 }
 
 // UpdateNodeUpgradeJobStatus updates the status
