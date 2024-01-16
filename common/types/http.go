@@ -19,4 +19,5 @@ type HTTPResponse struct {
 
 const (
 	AuthorizationKey = "Authorization"
+	NodeNameKey      = "NodeName"
 )
