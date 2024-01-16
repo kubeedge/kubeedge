@@ -3,6 +3,7 @@ module github.com/kubeedge/mapper-framework
 go 1.20
 
 require (
+	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/golang/protobuf v1.5.3
 	github.com/gorilla/mux v1.8.0
 	github.com/kubeedge/kubeedge v1.15.0-beta.0.0.20240110111122-c44efa2389b9
