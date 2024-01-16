@@ -47,5 +47,5 @@ func NewCommonResourceEventHandler(events chan watch.Event) *CommonResourceEvent
 
 // GetResourceID return resource ID
 func GetResourceID(namespace, name string) string {
-	return namespace + "-" + name
+	return namespace + "/" + name
 }
