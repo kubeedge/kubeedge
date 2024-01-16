@@ -28,6 +28,7 @@ import (
 
 const (
 	ValidateCRDWebhookConfigName    = "kubeedge-crds-validate-webhook-configuration"
+	ValidateDeviceWebhookName       = "validatedevice.kubeedge.io"
 	ValidateDeviceModelWebhookName  = "validatedevicemodel.kubeedge.io"
 	ValidateRuleWebhookName         = "validatedrule.kubeedge.io"
 	ValidateRuleEndpointWebhookName = "validatedruleendpoint.kubeedge.io"
@@ -99,6 +100,7 @@ func Run(opt *options.AdmissionOptions) error {
 		return fmt.Errorf("failed to register the webhook with error: %v", err)
 	}
 
+	http.HandleFunc("/devices", serveDevice)
 	http.HandleFunc("/devicemodels", serveDeviceModel)
 	http.HandleFunc("/rules", serveRule)
 	http.HandleFunc("/ruleendpoints", serveRuleEndpoint)
@@ -162,6 +164,33 @@ func (ac *AdmissionController) registerWebhooks(opt *options.AdmissionOptions, c
 			Name: ValidateCRDWebhookConfigName,
 		},
 		Webhooks: []admissionregistrationv1.ValidatingWebhook{
+			// Device Validating Webhook
+			{
+				Name: ValidateDeviceWebhookName,
+				Rules: []admissionregistrationv1.RuleWithOperations{{
+					Operations: []admissionregistrationv1.OperationType{
+						admissionregistrationv1.Create,
+						admissionregistrationv1.Update,
+					},
+					Rule: admissionregistrationv1.Rule{
+						APIGroups:   []string{"devices.kubeedge.io"},
+						APIVersions: []string{"v1beta1"},
+						Resources:   []string{"devices"},
+					},
+				}},
+				ClientConfig: admissionregistrationv1.WebhookClientConfig{
+					Service: &admissionregistrationv1.ServiceReference{
+						Namespace: opt.AdmissionServiceNamespace,
+						Name:      opt.AdmissionServiceName,
+						Path:      strPtr("/devices"),
+						Port:      &opt.Port,
+					},
+					CABundle: cabundle,
+				},
+				FailurePolicy:           &ignorePolicy,
+				SideEffects:             &noneSideEffect,
+				AdmissionReviewVersions: []string{"v1"},
+			},
 			// Device Model Validating Webhook
 			{
 				Name: ValidateDeviceModelWebhookName,
