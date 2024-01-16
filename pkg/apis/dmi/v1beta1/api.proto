@@ -113,6 +113,8 @@ message DeviceModel {
     string name = 1;
     // Specification of a device model.
     DeviceModelSpec spec = 2;
+    // Namespace of the device model.
+    string namespace = 3;
 }
 
 // DeviceModelSpec is the specification of a device model.
@@ -165,6 +167,8 @@ message Device {
     DeviceSpec spec = 2;
     // Status of the device.
     DeviceStatus status = 3;
+    // Namespace of the device.
+    string namespace = 4;
 }
 
 // DeviceSpec is the specification of the device.
@@ -318,6 +322,7 @@ message MapperInfo {
 message ReportDeviceStatusRequest {
     string deviceName = 1;
     DeviceStatus reportedDevice = 2;
+    string deviceNamespace = 3;
 }
 
 // DeviceStatus is the status of the device.
@@ -352,6 +357,7 @@ message RegisterDeviceRequest {
 
 message RegisterDeviceResponse {
     string deviceName = 1;
+    string deviceNamespace = 2;
 }
 
 message CreateDeviceModelRequest {
@@ -360,16 +366,19 @@ message CreateDeviceModelRequest {
 
 message CreateDeviceModelResponse {
     string deviceModelName = 1;
+    string deviceModelNamespace = 2;
 }
 
 message RemoveDeviceRequest {
     string deviceName = 1;
+    string deviceNamespace = 2;
 }
 
 message RemoveDeviceResponse {}
 
 message RemoveDeviceModelRequest {
     string modelName = 1;
+    string modelNamespace = 2;
 }
 
 message RemoveDeviceModelResponse {}
@@ -388,6 +397,7 @@ message UpdateDeviceModelResponse {}
 
 message GetDeviceRequest {
     string deviceName = 1;
+    string deviceNamespace = 2;
 }
 
 message GetDeviceResponse {
