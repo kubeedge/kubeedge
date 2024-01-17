@@ -93,7 +93,7 @@ func (cm *CertManager) Start() {
 	if err != nil {
 		err = cm.applyCerts()
 		if err != nil {
-			klog.Exitf("Error: %v", err)
+			panic(fmt.Errorf("Error: %v", err))
 		}
 		// inform to cleanup token in configuration edgecore.yaml
 		CleanupTokenChan <- struct{}{}

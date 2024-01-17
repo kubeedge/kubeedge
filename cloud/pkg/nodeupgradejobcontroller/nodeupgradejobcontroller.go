@@ -17,9 +17,8 @@ limitations under the License.
 package nodeupgradejobcontroller
 
 import (
+	"fmt"
 	"time"
-
-	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
@@ -44,11 +43,11 @@ func newNodeUpgradeJobController(enable bool) *NodeUpgradeJobController {
 	}
 	downstream, err := controller.NewDownstreamController(informers.GetInformersManager().GetKubeEdgeInformerFactory())
 	if err != nil {
-		klog.Exitf("New NodeUpgradeJob Controller downstream failed with error: %s", err)
+		panic(fmt.Errorf("new NodeUpgradeJob Controller downstream failed with error: %s", err))
 	}
 	upstream, err := controller.NewUpstreamController(downstream)
 	if err != nil {
-		klog.Exitf("New NodeUpgradeJob Controller upstream failed with error: %s", err)
+		panic(fmt.Errorf("new NodeUpgradeJob Controller upstream failed with error: %s", err))
 	}
 	return &NodeUpgradeJobController{
 		downstream: downstream,
@@ -80,12 +79,12 @@ func (uc *NodeUpgradeJobController) Enable() bool {
 // Start controller
 func (uc *NodeUpgradeJobController) Start() {
 	if err := uc.downstream.Start(); err != nil {
-		klog.Exitf("start NodeUpgradeJob controller downstream failed with error: %s", err)
+		panic(fmt.Errorf("start NodeUpgradeJob controller downstream failed with error: %s", err))
 	}
 	// wait for downstream controller to start and load NodeUpgradeJob
 	// TODO think about sync
 	time.Sleep(1 * time.Second)
 	if err := uc.upstream.Start(); err != nil {
-		klog.Exitf("start NodeUpgradeJob controller upstream failed with error: %s", err)
+		panic(fmt.Errorf("start NodeUpgradeJob controller upstream failed with error: %s", err))
 	}
 }

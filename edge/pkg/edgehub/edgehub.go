@@ -1,6 +1,7 @@
 package edgehub
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -13,8 +14,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/certificate"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
-	// register Upgrade handler
-	_ "github.com/kubeedge/kubeedge/edge/pkg/edgehub/upgrade"
+	_ "github.com/kubeedge/kubeedge/edge/pkg/edgehub/upgrade" // register Upgrade handler
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 )
 
@@ -95,8 +95,7 @@ func (eh *EdgeHub) Start() {
 		}
 		err := eh.initial()
 		if err != nil {
-			klog.Exitf("failed to init controller: %v", err)
-			return
+			panic(fmt.Errorf("failed to init controller: %v", err))
 		}
 
 		waitTime := time.Duration(config.Config.Heartbeat) * time.Second * 2

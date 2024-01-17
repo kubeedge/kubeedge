@@ -18,10 +18,9 @@ package config
 
 import (
 	"encoding/pem"
+	"errors"
 	"os"
 	"sync"
-
-	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
@@ -67,7 +66,7 @@ func InitConfigure(stream *v1alpha1.CloudStream) {
 			Config.Cert = cert
 			Config.Key = key
 		} else if !(cert == nil && key == nil) {
-			klog.Exit("Both of tunnelCert and key should be specified!")
+			panic(errors.New("both of tunnelCert and key should be specified"))
 		}
 	})
 }
