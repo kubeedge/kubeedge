@@ -80,19 +80,22 @@ func (dc *DownstreamController) syncDeviceModel() {
 // deviceModelAdded is function to process addition of new deviceModel in apiserver
 func (dc *DownstreamController) deviceModelAdded(deviceModel *v1beta1.DeviceModel) {
 	// nothing to do when deviceModel added, only add in map
-	dc.deviceModelManager.DeviceModel.Store(deviceModel.Name, deviceModel)
+	deviceModelID := manager.GetResourceID(deviceModel.Namespace, deviceModel.Name)
+	dc.deviceModelManager.DeviceModel.Store(deviceModelID, deviceModel)
 }
 
 // deviceModelUpdated is function to process updated deviceModel
 func (dc *DownstreamController) deviceModelUpdated(deviceModel *v1beta1.DeviceModel) {
 	// nothing to do when deviceModel updated, only add in map
-	dc.deviceModelManager.DeviceModel.Store(deviceModel.Name, deviceModel)
+	deviceModelID := manager.GetResourceID(deviceModel.Namespace, deviceModel.Name)
+	dc.deviceModelManager.DeviceModel.Store(deviceModelID, deviceModel)
 }
 
 // deviceModelDeleted is function to process deleted deviceModel
 func (dc *DownstreamController) deviceModelDeleted(deviceModel *v1beta1.DeviceModel) {
 	// TODO: Need to use finalizer like method to delete all devices referring to this model. Need to come up with a design.
-	dc.deviceModelManager.DeviceModel.Delete(deviceModel.Name)
+	deviceModelID := manager.GetResourceID(deviceModel.Namespace, deviceModel.Name)
+	dc.deviceModelManager.DeviceModel.Delete(deviceModelID)
 }
 
 // syncDevice is used to get device events from informer
@@ -124,7 +127,8 @@ func (dc *DownstreamController) syncDevice() {
 
 // deviceAdded creates a device, adds in deviceManagers map, send a message to edge node if node selector is present.
 func (dc *DownstreamController) deviceAdded(device *v1beta1.Device) {
-	dc.deviceManager.Device.Store(device.Name, device)
+	deviceID := manager.GetResourceID(device.Namespace, device.Name)
+	dc.deviceManager.Device.Store(deviceID, device)
 	if device.Spec.NodeName != "" {
 		edgeDevice := createDevice(device)
 		msg := model.NewMessage("")
@@ -159,7 +163,7 @@ func (dc *DownstreamController) deviceAdded(device *v1beta1.Device) {
 func createDevice(device *v1beta1.Device) types.Device {
 	edgeDevice := types.Device{
 		// ID and name can be used as ID as we are using CRD and name(key in ETCD) will always be unique
-		ID:   device.Name,
+		ID:   manager.GetResourceID(device.Namespace, device.Name),
 		Name: device.Name,
 	}
 
@@ -176,9 +180,10 @@ func isExistModel(deviceMap *sync.Map, device *v1beta1.Device) bool {
 	var res bool
 	targetNode := device.Spec.NodeName
 	modelName := device.Spec.DeviceModelRef.Name
+	deviceID := manager.GetResourceID(device.Namespace, device.Name)
 	// To find another device in deviceMap that uses the same deviceModel with exclude current device
 	deviceMap.Range(func(k, v interface{}) bool {
-		if k == device.Name {
+		if k == deviceID {
 			return true
 		}
 		deviceItem, ok := v.(*v1beta1.Device)
@@ -188,7 +193,8 @@ func isExistModel(deviceMap *sync.Map, device *v1beta1.Device) bool {
 		if deviceItem.Spec.NodeName == "" {
 			return true
 		}
-		if deviceItem.Spec.NodeName == targetNode && deviceItem.Spec.DeviceModelRef.Name == modelName {
+		if deviceItem.Spec.NodeName == targetNode && deviceItem.Namespace == device.Namespace &&
+			deviceItem.Spec.DeviceModelRef.Name == modelName {
 			res = true
 			return false
 		}
@@ -201,8 +207,9 @@ func isExistModel(deviceMap *sync.Map, device *v1beta1.Device) bool {
 // If NodeName is updated, call add device for newNode, deleteDevice for old Node.
 // If Spec is updated, send update message to edge
 func (dc *DownstreamController) deviceUpdated(device *v1beta1.Device) {
-	value, ok := dc.deviceManager.Device.Load(device.Name)
-	dc.deviceManager.Device.Store(device.Name, device)
+	deviceID := manager.GetResourceID(device.Namespace, device.Name)
+	value, ok := dc.deviceManager.Device.Load(deviceID)
+	dc.deviceManager.Device.Store(deviceID, device)
 	if ok {
 		cachedDevice := value.(*v1beta1.Device)
 		if isDeviceUpdated(cachedDevice, device) {
@@ -237,7 +244,8 @@ func isDeviceUpdated(oldTwin *v1beta1.Device, newTwin *v1beta1.Device) bool {
 
 // deviceDeleted send a deleted message to the edgeNode and deletes the device from the deviceManager.Device map
 func (dc *DownstreamController) deviceDeleted(device *v1beta1.Device) {
-	dc.deviceManager.Device.Delete(device.Name)
+	deviceID := manager.GetResourceID(device.Namespace, device.Name)
+	dc.deviceManager.Device.Delete(deviceID)
 
 	if device.Spec.NodeName != "" {
 		edgeDevice := createDevice(device)
@@ -310,11 +318,12 @@ func (dc *DownstreamController) sendDeviceModelMsg(device *v1beta1.Device, opera
 	if device == nil || device.Spec.DeviceModelRef == nil {
 		return
 	}
+	deviceModelID := manager.GetResourceID(device.Namespace, device.Spec.DeviceModelRef.Name)
 	var edgeDeviceModel any
 	var ok bool
 	err := retry.Do(
 		func() error {
-			edgeDeviceModel, ok = dc.deviceModelManager.DeviceModel.Load(device.Spec.DeviceModelRef.Name)
+			edgeDeviceModel, ok = dc.deviceModelManager.DeviceModel.Load(deviceModelID)
 			if !ok {
 				return fmt.Errorf("not found device model for device: %s, operation: %s", device.Name, operation)
 			}

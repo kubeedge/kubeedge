@@ -44,3 +44,8 @@ func (c *CommonResourceEventHandler) OnDelete(obj interface{}) {
 func NewCommonResourceEventHandler(events chan watch.Event) *CommonResourceEventHandler {
 	return &CommonResourceEventHandler{events: events}
 }
+
+// GetResourceID return resource ID
+func GetResourceID(namespace, name string) string {
+	return namespace + "/" + name
+}
