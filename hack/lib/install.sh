@@ -94,6 +94,30 @@ verify_docker_installed() {
   }
 }
 
+verify_cridockerd_installed() {
+  # verify the cri-dockerd installed
+  command -v cri-dockerd >/dev/null || {
+    echo "must install the cri-dockerd first"
+    exit 1
+  }
+}
+
+verify_crio_installed() {
+  # verify the cri-o installed
+  command -v crio >/dev/null || {
+    echo "must install the cri-o first"
+    exit 1
+  }
+}
+
+verify_isulad_installed() {
+  # verify the isulad installed
+  command -v isulad >/dev/null || {
+    echo "must install the isulad first"
+    exit 1
+  }
+}
+
 # install CNI plugins
 function install_cni_plugins() {
   CNI_DOWNLOAD_ADDR=${CNI_DOWNLOAD_ADDR:-"https://github.com/containernetworking/plugins/releases/download/v1.1.1/cni-plugins-linux-amd64-v1.1.1.tgz"}
@@ -111,7 +135,7 @@ function install_cni_plugins() {
       exit 1
     fi
     sudo tar Cxzvf /opt/cni/bin ${CNI_PKG}
-    rm -rf ${CNI_PKG}
+    sudo rm -rf ${CNI_PKG}
     if [ ! -f "/opt/cni/bin/loopback" ]; then
       echo -e "the ${CNI_PKG} package does not contain a loopback file."
       exit 1
@@ -162,9 +186,132 @@ function install_cni_plugins() {
   ]
 }
 EOF'
-    sudo systemctl restart containerd
-    sleep 2
   else
     echo "CNI plugins already installed and no need to install"
   fi
+}
+
+function install_docker() {
+  CRIDOCKERD_VERSION="v0.3.8"
+  sudo apt-get update
+  sudo apt-get install \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+  echo \
+    "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+                 $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
+  sudo apt-get update
+  sudo apt-get install docker-ce docker-ce-cli containerd.io
+  git clone https://github.com/Mirantis/cri-dockerd.git -b ${CRIDOCKERD_VERSION}
+  cd cri-dockerd
+  make cri-dockerd
+  sudo install -o root -g root -m 0755 cri-dockerd /usr/local/bin/cri-dockerd
+  sudo install packaging/systemd/* /etc/systemd/system
+  sudo sed -i -e 's,/usr/bin/cri-dockerd,/usr/local/bin/cri-dockerd,' /etc/systemd/system/cri-docker.service
+  sudo systemctl daemon-reload
+  sudo systemctl enable --now cri-docker.socket
+  sudo systemctl restart cri-docker
+  cd .. && sudo rm -rf cri-dockerd
+}
+
+function install_crio() {
+  CRIO_VERSION="1.28.2"
+  sudo rm -rf cri-o.amd64.v${CRIO_VERSION}.tar.gz && sudo rm -rf cri-o
+  sudo wget https://storage.googleapis.com/cri-o/artifacts/cri-o.amd64.v${CRIO_VERSION}.tar.gz
+  sudo tar -zxvf cri-o.amd64.v${CRIO_VERSION}.tar.gz
+  sudo sed -i 's/\/usr\/bin\/env sh/!\/bin\/bash/' cri-o/install
+  sudo sed -i 's/ExecStart=.*/ExecStart=\/usr\/local\/bin\/crio --selinux=false \\/' cri-o/contrib/crio.service
+  cd cri-o
+  sudo /bin/bash ./install
+  sudo systemctl daemon-reload
+  sudo systemctl enable --now crio
+  sudo systemctl restart crio
+  cd .. && sudo rm -rf cri-o.amd64.v${CRIO_VERSION}.tar.gz && sudo rm -rf cri-o
+}
+
+install_isulad() {
+  # export LDFLAGS
+  export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
+  export LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/lib/x86_64-linux-gnu/:$LD_LIBRARY_PATH
+  sudo sh -c "echo '/usr/local/lib' >>/etc/ld.so.conf"
+  CURRENT_PATH=$(
+    cd $(dirname $0)
+    pwd
+  )
+  sudo apt-get install -y g++ libprotobuf-dev protobuf-compiler protobuf-compiler-grpc libgrpc++-dev libgrpc-dev libtool automake autoconf cmake make pkg-config libyajl-dev zlib1g-dev libselinux1-dev libseccomp-dev libcap-dev libsystemd-dev git libarchive-dev libcurl4-gnutls-dev openssl libdevmapper-dev python3 libtar0 libtar-dev libhttp-parser-dev libwebsockets-dev
+  BUILD_DIR=/tmp/build_isulad
+
+  sudo rm -rf $BUILD_DIR
+  sudo mkdir -p $BUILD_DIR
+
+  sudo git config --global --add safe.directory /tmp/build_isulad/lxc/lxc-4.0.3
+  # build lxc
+  cd $BUILD_DIR
+  sudo git clone https://gitee.com/src-openeuler/lxc.git -b openEuler-22.03-LTS-Next
+  cd lxc
+  sudo ./apply-patches
+  cd lxc-4.0.3
+  sudo ./autogen.sh
+  sudo ./configure
+  sudo make CFLAGS="-Wno-error=strict-prototypes -Wno-error=old-style-definition" -j $(nproc)
+  sudo make install CFLAGS="-Wno-error=strict-prototypes -Wno-error=old-style-definition"
+
+  # build lcr
+  cd $BUILD_DIR
+  sudo git clone https://gitee.com/openeuler/lcr.git
+  cd lcr
+  sudo mkdir build
+  cd build
+  sudo cmake ..
+  sudo make -j $(nproc)
+  sudo make install
+
+  # build and install clibcni
+  cd $BUILD_DIR
+  sudo git clone https://gitee.com/openeuler/clibcni.git
+  cd clibcni
+  sudo mkdir build
+  cd build
+  sudo cmake ..
+  sudo make -j $(nproc)
+  sudo make install
+
+  # build and install iSulad
+  cd $BUILD_DIR
+  sudo git clone https://gitee.com/openeuler/iSulad.git
+  cd iSulad
+  sudo mkdir build
+  cd build
+  sudo cmake -DENABLE_CRI_API_V1=ON ..
+  sudo make -j $(nproc)
+  sudo make install
+
+  sudo apt-get install -y jq
+  sudo sed -i 's#/usr/bin/isulad#/usr/local/bin/isulad#g' ../src/contrib/init/isulad.service
+  sudo sed -i 's#-/etc/sysconfig/iSulad#/etc/isulad/daemon.json#g' ../src/contrib/init/isulad.service
+  TMP_FILE=/home/runner/tmp.json
+  ISULAD_CONF_FILE=/etc/isulad/daemon.json
+  sudo cat ${ISULAD_CONF_FILE} | sudo jq '.["websocket-server-listening-port"]=10355' >${TMP_FILE} && sudo mv -f ${TMP_FILE} ${ISULAD_CONF_FILE}
+  sudo cat ${ISULAD_CONF_FILE} | sudo jq '.["cni-bin-dir"]="/opt/cni/bin"' >${TMP_FILE} && sudo mv -f ${TMP_FILE} ${ISULAD_CONF_FILE}
+  sudo cat ${ISULAD_CONF_FILE} | sudo jq '.["cni-conf-dir"]="/etc/cni/net.d"' >${TMP_FILE} && sudo mv -f ${TMP_FILE} ${ISULAD_CONF_FILE}
+  sudo cat ${ISULAD_CONF_FILE} | sudo jq '.["network-plugin"]="cni"' >${TMP_FILE} && sudo mv -f ${TMP_FILE} ${ISULAD_CONF_FILE}
+  sudo cat ${ISULAD_CONF_FILE} | sudo jq '.["enable-cri-v1"]=true' >${TMP_FILE} && sudo mv -f ${TMP_FILE} ${ISULAD_CONF_FILE}
+  sudo cat ${ISULAD_CONF_FILE} | sudo jq '.["pod-sandbox-image"]="kubeedge/pause:3.6"' >${TMP_FILE} && sudo mv -f ${TMP_FILE} ${ISULAD_CONF_FILE}
+  sudo cat ${ISULAD_CONF_FILE} | sudo jq '.["registry-mirrors"]=["docker.io"]' >${TMP_FILE} && sudo mv -f ${TMP_FILE} ${ISULAD_CONF_FILE}
+  sudo cat ${ISULAD_CONF_FILE} | sudo jq '.["insecure-registries"]=["k8s.gcr.io"]' >${TMP_FILE} && sudo mv -f ${TMP_FILE} ${ISULAD_CONF_FILE}
+  sudo cat /etc/isulad/daemon.json
+
+  sudo cp ../src/contrib/init/isulad.service /usr/lib/systemd/system/
+  sudo ldconfig
+  sudo systemctl daemon-reload
+  sudo systemctl enable isulad
+  sudo systemctl restart isulad
+  cd $CURRENT_PATH
+  # clean
+  sudo rm -rf $BUILD_DIR
+  sudo apt autoremove
 }

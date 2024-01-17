@@ -16,7 +16,7 @@
 
 set -e
 
-workdir=`pwd`
+workdir=$(pwd)
 cd $workdir
 
 curpath=$PWD
@@ -26,13 +26,13 @@ GOPATH=${GOPATH:-$(go env GOPATH)}
 KIND_IMAGE=${1:-"kindest/node:v1.26.0"}
 compilemodule=$2
 
-which ginkgo &> /dev/null || (
-    go install github.com/onsi/ginkgo/v2/ginkgo@latest
-    sudo cp $GOPATH/bin/ginkgo /usr/local/bin/
+which ginkgo &>/dev/null || (
+  go install github.com/onsi/ginkgo/v2/ginkgo@latest
+  sudo cp $GOPATH/bin/ginkgo /usr/local/bin/
 )
 
 cleanup() {
-    bash ${curpath}/tests/scripts/cleanup.sh
+  bash ${curpath}/tests/scripts/cleanup.sh
 }
 
 cleanup
@@ -43,12 +43,12 @@ sudo rm -rf ${curpath}/tests/e2e_keadm/e2e_keadm.test
 # Specify the module name to compile in below command
 bash -x ${curpath}/tests/scripts/compile.sh ${compilemodule}
 
-ENABLE_DAEMON=true bash -x ${curpath}/hack/local-up-kubeedge.sh ${KIND_IMAGE}|| {
-    echo "failed to start cluster !!!"
-    exit 1
+ENABLE_DAEMON=true bash -x ${curpath}/hack/local-up-kubeedge.sh ${KIND_IMAGE} || {
+  echo "failed to start cluster !!!"
+  exit 1
 }
 
-:> /tmp/testcase.log
+: >/tmp/testcase.log
 
 export GINKGO_TESTING_RESULT=0
 
