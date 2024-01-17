@@ -125,6 +125,7 @@ func (runtime *CRIRuntime) CopyResources(edgeImage string, files map[string]stri
 				NamespaceOptions: &runtimeapi.NamespaceOption{
 					Network: runtimeapi.NamespaceMode_NODE,
 				},
+				Privileged: true,
 			},
 		},
 	}
@@ -165,6 +166,11 @@ func (runtime *CRIRuntime) CopyResources(edgeImage string, files map[string]stri
 			"sleep infinity",
 		},
 		Mounts: mounts,
+		Linux: &runtimeapi.LinuxContainerConfig{
+			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
+				Privileged: true,
+			},
+		},
 	}
 	containerID, err := runtime.RuntimeService.CreateContainer(runtime.ctx, sandbox, containerConfig, psc)
 	if err != nil {
