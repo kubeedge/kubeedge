@@ -28,6 +28,7 @@ const (
 	DefaultCAURL                = "/ca.crt"
 	DefaultCertURL              = "/edge.crt"
 	DefaultNodeUpgradeURL       = "/nodeupgrade"
+	DefaultTaskStateReportURL   = "/task/{taskType}/name/{taskID}/node/{nodeID}/status"
 	DefaultServiceAccountIssuer = "https://kubernetes.default.svc.cluster.local"
 
 	// Edged
@@ -112,7 +113,7 @@ const (
 	DefaultDeviceModelEventBuffer    = 1
 	DefaultUpdateDeviceStatusWorkers = 1
 
-	// NodeUpgradeJobController
+	// TaskManager
 	DefaultNodeUpgradeJobStatusBuffer = 1024
 	DefaultNodeUpgradeJobEventBuffer  = 1
 	DefaultNodeUpgradeJobWorkers      = 1

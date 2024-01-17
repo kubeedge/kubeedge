@@ -48,6 +48,16 @@ spec:
                     items:
                       type: string
                     type: array
+                  concurrency:
+                    description: Concurrency specifies the maximum number of edge
+                      nodes that can pull images at the same time. The default Concurrency
+                      value is 1.
+                    format: int32
+                    type: integer
+                  failureTolerate:
+                    description: FailureTolerate specifies the task tolerance failure
+                      ratio. The default FailureTolerate value is 0.1.
+                    type: string
                   imageSecrets:
                     description: ImageSecret specifies the secret for image pull if
                       private registry used. Use {namespace}/{secretName} in format.
@@ -119,10 +129,10 @@ spec:
                       failed on each edgenode. Default to 0
                     format: int32
                     type: integer
-                  timeoutSecondsOnEachNode:
-                    description: TimeoutSecondsOnEachNode limits the duration of the
-                      image prepull job on each edgenode. Default to 360. If set to
-                      0, we'll use the default value 360.
+                  timeoutSeconds:
+                    description: TimeoutSeconds limits the duration of the node prepull
+                      job on each edgenode. Default to 300. If set to 0, we'll use
+                      the default value 300.
                     format: int32
                     type: integer
                 type: object
@@ -130,14 +140,21 @@ spec:
           status:
             description: Status represents the status of ImagePrePullJob.
             properties:
+              action:
+                description: 'Action represents for the action of the ImagePrePullJob.
+                  There are two possible action values: Success, Failure.'
+                type: string
+              event:
+                description: 'Event represents for the event of the ImagePrePullJob.
+                  There are four possible event values: Init, Check, Pull, TimeOut.'
+                type: string
+              reason:
+                description: Reason represents for the reason of the ImagePrePullJob.
+                type: string
               state:
                 description: 'State represents for the state phase of the ImagePrePullJob.
-                  There are four possible state values: "", prechecking, prepulling,
-                  successful, failed.'
-                enum:
-                - prepulling
-                - successful
-                - failed
+                  There are five possible state values: "", checking, pulling, successful,
+                  failed.'
                 type: string
               status:
                 description: Status contains image prepull status for each edge node.
@@ -163,31 +180,42 @@ spec:
                             description: 'State represents for the state phase of
                               this image pull on the edge node There are two possible
                               state values: successful, failed.'
-                            enum:
-                            - prepulling
-                            - successful
-                            - failed
                             type: string
                         type: object
                       type: array
-                    nodeName:
-                      description: NodeName is the name of edge node.
-                      type: string
-                    reason:
-                      description: Reason represents the fail reason if images prepull
-                        failed on the edge node
-                      type: string
-                    state:
-                      description: 'State represents for the state phase of the ImagePrepullJob
-                        on the edge node. There are five possible state values: "",
-                        prepulling, successful, failed.'
-                      enum:
-                      - prepulling
-                      - successful
-                      - failed
-                      type: string
+                    nodeStatus:
+                      description: TaskStatus represents the status for each node
+                      properties:
+                        action:
+                          description: 'Action represents for the action of the ImagePrePullJob.
+                            There are three possible action values: Success, Failure,
+                            TimeOut.'
+                          type: string
+                        event:
+                          description: 'Event represents for the event of the ImagePrePullJob.
+                            There are three possible event values: Init, Check, Pull.'
+                          type: string
+                        nodeName:
+                          description: NodeName is the name of edge node.
+                          type: string
+                        reason:
+                          description: Reason represents for the reason of the ImagePrePullJob.
+                          type: string
+                        state:
+                          description: 'State represents for the upgrade state phase
+                            of the edge node. There are several possible state values:
+                            "", Upgrading, BackingUp, RollingBack and Checking.'
+                          type: string
+                        time:
+                          description: Time represents for the running time of the
+                            ImagePrePullJob.
+                          type: string
+                      type: object
                   type: object
                 type: array
+              time:
+                description: Time represents for the running time of the ImagePrePullJob.
+                type: string
             type: object
         required:
         - spec

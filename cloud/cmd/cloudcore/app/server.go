@@ -48,11 +48,10 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller"
-	"github.com/kubeedge/kubeedge/cloud/pkg/imageprepullcontroller"
-	"github.com/kubeedge/kubeedge/cloud/pkg/nodeupgradejobcontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/policycontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
+	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1/validation"
@@ -159,8 +158,7 @@ func registerModules(c *v1alpha1.CloudCoreConfig) {
 	cloudhub.Register(c.Modules.CloudHub)
 	edgecontroller.Register(c.Modules.EdgeController)
 	devicecontroller.Register(c.Modules.DeviceController)
-	imageprepullcontroller.Register(c.Modules.ImagePrePullController)
-	nodeupgradejobcontroller.Register(c.Modules.NodeUpgradeJobController)
+	taskmanager.Register(c.Modules.TaskManager)
 	synccontroller.Register(c.Modules.SyncController)
 	cloudstream.Register(c.Modules.CloudStream, c.CommonConfig)
 	router.Register(c.Modules.Router)

@@ -5,10 +5,15 @@ metadata:
   labels:
     description: upgrade-label
 spec:
-  version: "v1.10.0"
-  timeoutSeconds: 60
+  version: "v1.16.0"
+  checkItems:
+    - "cpu"
+    - "mem"
+    - "disk"
+  failureTolerate: "0.3"
+  concurrency: 2
+  timeoutSeconds: 180
   labelSelector:
     matchLabels:
       "node-role.kubernetes.io/edge": ""
       node-role.kubernetes.io/agent: ""
-

@@ -33,8 +33,8 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/session"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
-	imageprepullcontroller "github.com/kubeedge/kubeedge/cloud/pkg/imageprepullcontroller/controller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
+	taskutil "github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/util"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
 	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
 	"github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1"
@@ -184,8 +184,9 @@ func (md *messageDispatcher) DispatchUpstream(message *beehivemodel.Message, inf
 		message.Router.Resource = fmt.Sprintf("node/%s/%s", info.NodeID, message.Router.Resource)
 		beehivecontext.Send(modules.RouterModuleName, *message)
 
-	case message.GetOperation() == imageprepullcontroller.ImagePrePull:
-		beehivecontext.SendToGroup(modules.ImagePrePullControllerModuleGroup, *message)
+	case message.GetOperation() == taskutil.TaskPrePull ||
+		message.GetOperation() == taskutil.TaskUpgrade:
+		beehivecontext.SendToGroup(modules.TaskManagerModuleGroup, *message)
 
 	default:
 		err := md.PubToController(info, message)
@@ -451,7 +452,9 @@ func noAckRequired(msg *beehivemodel.Message) bool {
 		return true
 	case msg.GetGroup() == modules.UserGroup:
 		return true
-	case msg.GetSource() == modules.NodeUpgradeJobControllerModuleName || msg.GetSource() == modules.ImagePrePullControllerModuleName:
+	case msg.GetSource() == modules.TaskManagerModuleName:
+		return true
+	case msg.GetSource() == modules.NodeUpgradeJobControllerModuleName:
 		return true
 	case msg.GetOperation() == beehivemodel.ResponseOperation:
 		content, ok := msg.Content.(string)

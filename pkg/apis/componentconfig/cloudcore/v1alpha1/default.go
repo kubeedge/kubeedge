@@ -98,24 +98,14 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					UpdateDeviceStatusWorkers: constants.DefaultUpdateDeviceStatusWorkers,
 				},
 			},
-			NodeUpgradeJobController: &NodeUpgradeJobController{
+			TaskManager: &TaskManager{
 				Enable: false,
-				Buffer: &NodeUpgradeJobControllerBuffer{
-					UpdateNodeUpgradeJobStatus: constants.DefaultNodeUpgradeJobStatusBuffer,
-					NodeUpgradeJobEvent:        constants.DefaultNodeUpgradeJobEventBuffer,
+				Buffer: &TaskManagerBuffer{
+					TaskStatus: constants.DefaultNodeUpgradeJobStatusBuffer,
+					TaskEvent:  constants.DefaultNodeUpgradeJobEventBuffer,
 				},
-				Load: &NodeUpgradeJobControllerLoad{
-					NodeUpgradeJobWorkers: constants.DefaultNodeUpgradeJobWorkers,
-				},
-			},
-			ImagePrePullController: &ImagePrePullController{
-				Enable: false,
-				Buffer: &ImagePrePullControllerBuffer{
-					ImagePrePullJobStatus: constants.DefaultImagePrePullJobStatusBuffer,
-					ImagePrePullJobEvent:  constants.DefaultImagePrePullJobEventBuffer,
-				},
-				Load: &ImagePrePullControllerLoad{
-					ImagePrePullJobWorkers: constants.DefaultImagePrePullJobWorkers,
+				Load: &TaskManagerLoad{
+					TaskWorkers: constants.DefaultNodeUpgradeJobWorkers,
 				},
 			},
 			SyncController: &SyncController{
