@@ -120,6 +120,7 @@ func QueryAllMeta(key string, condition string) (*[]Meta, error) {
 
 // SaveMQTTMeta saves mqtt container data in sqlites
 // When egdecore starts, edged will start mqtt container
+// FIXME: cleanup this code when the static pod mqtt broker no longer needs to be compatible
 func SaveMQTTMeta(nodeName string) error {
 	flag := true
 	mqttData := coreV1.Pod{

@@ -78,8 +78,13 @@ func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
 	cmd.Flags().StringSliceVarP(&joinOptions.Labels, common.Labels, "l", joinOptions.Labels,
 		`Use this key to set the customized labels for node, you can input customized labels like key1=value1,key2=value2`)
 
+	// FIXME: cleanup this code when the static pod mqtt broker no longer needs to be compatible
 	cmd.Flags().BoolVar(&joinOptions.WithMQTT, "with-mqtt", joinOptions.WithMQTT,
 		`Use this key to set whether to install and start MQTT Broker by default`)
+	if err := cmd.Flags().MarkDeprecated("with-mqtt",
+		"The mqtt broker is alreay managed by the DaemonSet in the cloud"); err != nil {
+		klog.Warning("falied to mark the flag with-mqtt to deprecated, err: %v", err)
+	}
 
 	cmd.Flags().StringVar(&joinOptions.ImageRepository, common.ImageRepository, joinOptions.ImageRepository,
 		`Use this key to decide which image repository to pull images from`,
@@ -237,10 +242,13 @@ func runEdgeCore(withMqtt bool) error {
 			common.EdgeCore, common.EdgeCore)
 	} else {
 		tip = fmt.Sprintf("KubeEdge edgecore is running, For logs visit: %s%s.log", util.KubeEdgeLogPath, util.KubeEdgeBinaryName)
+
+		// FIXME: cleanup this code when the static pod mqtt broker no longer needs to be compatible
 		err := os.Setenv(constants.DeployMqttContainerEnv, strconv.FormatBool(withMqtt))
 		if err != nil {
 			klog.Errorf("Set Environment %s failed, err: %v", constants.DeployMqttContainerEnv, err)
 		}
+
 		binExec = fmt.Sprintf(
 			"%s > %skubeedge/edge/%s.log 2>&1 &",
 			filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName),

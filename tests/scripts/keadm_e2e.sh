@@ -24,7 +24,10 @@ source "${KUBEEDGE_ROOT}/hack/lib/install.sh"
 
 function cleanup() {
   sudo pkill edgecore || true
-  helm uninstall cloudcore -n kubeedge && kubectl delete ns kubeedge  || true
+  helm uninstall cloudcore -n kubeedge || true
+  # The namespace cleanup timeout may occur if pods is not clearned
+  kubectl get pods -n kubeedge | awk '{print $1}' | grep -v NAME | xargs kubectl delete pods -n kubeedge --force --grace-period=0 || true
+  kubectl delete ns kubeedge --force --grace-period=0  || true
   kind delete cluster --name test
   sudo rm -rf /var/log/kubeedge /etc/kubeedge /etc/systemd/system/edgecore.service $E2E_DIR/e2e_keadm/e2e_keadm.test $E2E_DIR/config.json
 }

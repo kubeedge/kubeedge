@@ -121,12 +121,17 @@ func (e *edged) Enable() bool {
 func (e *edged) Start() {
 	klog.Info("Starting edged...")
 
+	// FIXME: cleanup this code when the static pod mqtt broker no longer needs to be compatible
 	// edged saves the data of mqtt container in sqlite3 and starts it. This is a temporary workaround and will be modified in v1.15.
 	withMqtt, err := strconv.ParseBool(os.Getenv(constants.DeployMqttContainerEnv))
 	if err == nil && withMqtt {
-		err := dao.SaveMQTTMeta(e.nodeName)
-		if err != nil {
+		if err := dao.SaveMQTTMeta(e.nodeName); err != nil {
 			klog.ErrorS(err, "Start mqtt container failed")
+		}
+	} else {
+		// Delete a not exists key does not return an error
+		if err := dao.DeleteMetaByKey(fmt.Sprintf("default/pod/%s", constants.DefaultMosquittoContainerName)); err != nil {
+			klog.ErrorS(err, "delete mqtt container failed")
 		}
 	}
 
