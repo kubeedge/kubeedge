@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/avast/retry-go"
 	"k8s.io/klog/v2"
 
 	dmiapi "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1beta1"
@@ -27,15 +28,15 @@ func (s *Server) RegisterDevice(_ context.Context, request *dmiapi.RegisterDevic
 
 	var model common.DeviceModel
 	var err error
-	for i := 0; i < 3; i++ {
-		model, err = s.devPanel.GetModel(device.Spec.DeviceModelReference)
-		if err != nil {
-			klog.Errorf("deviceModel %s not found, err: %s", device.Spec.DeviceModelReference, err)
-			time.Sleep(1 * time.Second)
-		} else {
-			break
-		}
-	}
+	err = retry.Do(
+		func() error {
+			model, err = s.devPanel.GetModel(device.Spec.DeviceModelReference)
+			return err
+		},
+		retry.Delay(1*time.Second),
+		retry.Attempts(3),
+		retry.DelayType(retry.FixedDelay),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("deviceModel %s not found, err: %s", device.Spec.DeviceModelReference, err)
 	}
