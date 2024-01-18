@@ -124,6 +124,7 @@ func dataHandler(ctx context.Context, dev *driver.CustomizedDev) {
 		// handle twin
 		twinData := &TwinData{
 			DeviceName:      dev.Instance.Name,
+			DeviceNamespace: dev.Instance.Namespace,
 			Client:          dev.CustomizedClient,
 			Name:            twin.PropertyName,
 			Type:            twin.ObservedDesired.Metadata.Type,
@@ -289,7 +290,7 @@ func (d *DevPanel) UpdateDev(model *common.DeviceModel, device *common.DeviceIns
 	// start new device
 	d.devices[device.ID] = new(driver.CustomizedDev)
 	d.devices[device.ID].Instance = *device
-	d.models[device.ID] = *model
+	d.models[model.ID] = *model
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	d.deviceMuxs[device.ID] = cancelFunc
@@ -409,26 +410,26 @@ func (d *DevPanel) stopDev(dev *driver.CustomizedDev, id string) error {
 }
 
 // GetModel if the model exists, return device model
-func (d *DevPanel) GetModel(modelName string) (common.DeviceModel, error) {
+func (d *DevPanel) GetModel(modelID string) (common.DeviceModel, error) {
 	d.serviceMutex.Lock()
 	defer d.serviceMutex.Unlock()
-	if model, ok := d.models[modelName]; ok {
+	if model, ok := d.models[modelID]; ok {
 		return model, nil
 	}
-	return common.DeviceModel{}, fmt.Errorf("deviceModel %s not found", modelName)
+	return common.DeviceModel{}, fmt.Errorf("deviceModel %s not found", modelID)
 }
 
 // UpdateModel update device model
 func (d *DevPanel) UpdateModel(model *common.DeviceModel) {
 	d.serviceMutex.Lock()
-	d.models[model.Name] = *model
+	d.models[model.ID] = *model
 	d.serviceMutex.Unlock()
 }
 
 // RemoveModel remove device model
-func (d *DevPanel) RemoveModel(modelName string) {
+func (d *DevPanel) RemoveModel(modelID string) {
 	d.serviceMutex.Lock()
-	delete(d.models, modelName)
+	delete(d.models, modelID)
 	d.serviceMutex.Unlock()
 }
 

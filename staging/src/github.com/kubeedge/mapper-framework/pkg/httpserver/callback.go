@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/kubeedge/mapper-framework/pkg/common"
+	"github.com/kubeedge/mapper-framework/pkg/util/parse"
 )
 
 func (rs *RestServer) Ping(writer http.ResponseWriter, request *http.Request) {
@@ -19,9 +20,11 @@ func (rs *RestServer) Ping(writer http.ResponseWriter, request *http.Request) {
 
 func (rs *RestServer) DeviceRead(writer http.ResponseWriter, request *http.Request) {
 	urlItem := strings.Split(request.URL.Path, "/")
+	deviceNamespace := urlItem[len(urlItem)-3]
 	deviceName := urlItem[len(urlItem)-2]
 	propertyName := urlItem[len(urlItem)-1]
-	res, dataType, err := rs.devPanel.GetTwinResult(urlItem[len(urlItem)-2], urlItem[len(urlItem)-1])
+	deviceID := parse.GetResourceID(deviceNamespace, deviceName)
+	res, dataType, err := rs.devPanel.GetTwinResult(deviceID, propertyName)
 	if err != nil {
 		http.Error(writer, fmt.Sprintf("Get device data error: %v", err), http.StatusInternalServerError)
 	} else {
@@ -40,8 +43,10 @@ func (rs *RestServer) DeviceRead(writer http.ResponseWriter, request *http.Reque
 
 func (rs *RestServer) MetaGetModel(writer http.ResponseWriter, request *http.Request) {
 	urlItem := strings.Split(request.URL.Path, "/")
+	deviceNamespace := urlItem[len(urlItem)-2]
 	deviceName := urlItem[len(urlItem)-1]
-	device, err := rs.devPanel.GetDevice(deviceName)
+	deviceID := parse.GetResourceID(deviceNamespace, deviceName)
+	device, err := rs.devPanel.GetDevice(deviceID)
 	if err != nil {
 		http.Error(writer, fmt.Sprintf("Get device error: %v", err), http.StatusInternalServerError)
 		return
@@ -55,7 +60,8 @@ func (rs *RestServer) MetaGetModel(writer http.ResponseWriter, request *http.Req
 	if instance.IsValid() {
 		instance, ok := instance.Interface().(common.DeviceInstance)
 		if ok {
-			model, err := rs.devPanel.GetModel(instance.Model)
+			modelID := parse.GetResourceID(instance.Namespace, instance.Model)
+			model, err := rs.devPanel.GetModel(modelID)
 			if err != nil {
 				http.Error(writer, fmt.Sprintf("Get device model error: %v", err), http.StatusInternalServerError)
 			}

@@ -198,7 +198,9 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 
 func GetDeviceModelFromGrpc(model *dmiapi.DeviceModel) common.DeviceModel {
 	cur := common.DeviceModel{
-		Name: model.GetName(),
+		ID:        GetResourceID(model.GetNamespace(), model.GetName()),
+		Name:      model.GetName(),
+		Namespace: model.GetNamespace(),
 	}
 	if model.GetSpec() == nil || len(model.GetSpec().GetProperties()) == 0 {
 		return cur
@@ -226,8 +228,9 @@ func GetDeviceFromGrpc(device *dmiapi.Device, commonModel *common.DeviceModel) (
 		return nil, err
 	}
 	instance := &common.DeviceInstance{
-		ID:           device.GetName(),
+		ID:           GetResourceID(device.GetNamespace(), device.GetName()),
 		Name:         device.GetName(),
+		Namespace:    device.GetNamespace(),
 		ProtocolName: protocolName + "-" + device.GetName(),
 		Model:        device.GetSpec().GetDeviceModelReference(),
 		Twins:        buildTwinsFromGrpc(device),
@@ -257,4 +260,9 @@ func GetDeviceFromGrpc(device *dmiapi.Device, commonModel *common.DeviceModel) (
 	}
 	klog.V(2).Infof("final instance data from grpc = %v", instance)
 	return instance, nil
+}
+
+// GetResourceID return resource ID
+func GetResourceID(namespace, name string) string {
+	return namespace + "/" + name
 }

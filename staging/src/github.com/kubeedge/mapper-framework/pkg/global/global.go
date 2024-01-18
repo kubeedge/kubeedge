@@ -22,11 +22,11 @@ type DevPanel interface {
 	// RemoveDevice stop device and remove device
 	RemoveDevice(deviceID string) error
 	// GetModel get model's info
-	GetModel(modelName string) (common.DeviceModel, error)
+	GetModel(modelID string) (common.DeviceModel, error)
 	// UpdateModel update model in map only
 	UpdateModel(model *common.DeviceModel)
 	// RemoveModel remove model in map only
-	RemoveModel(modelName string)
+	RemoveModel(modelID string)
 	// GetTwinResult get device's property value and datatype
 	GetTwinResult(deviceID string, twinName string) (string, string, error)
 }
