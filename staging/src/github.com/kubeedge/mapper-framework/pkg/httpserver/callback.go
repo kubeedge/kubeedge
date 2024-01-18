@@ -70,7 +70,6 @@ func (rs *RestServer) MetaGetModel(writer http.ResponseWriter, request *http.Req
 	} else {
 		http.Error(writer, fmt.Sprintf("Get device instance error: %v", err), http.StatusInternalServerError)
 	}
-
 }
 
 func (rs *RestServer) DataBaseGetDataByID(writer http.ResponseWriter, request *http.Request) {

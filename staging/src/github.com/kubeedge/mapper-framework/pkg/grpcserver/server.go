@@ -73,7 +73,7 @@ func initSock(sockPath string) error {
 		return nil
 	} else if os.IsNotExist(err) {
 		return nil
-	} else {
-		return fmt.Errorf("fail to stat uds socket path")
 	}
+
+	return fmt.Errorf("fail to stat uds socket path")
 }

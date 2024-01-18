@@ -4,17 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 	"time"
 
 	"k8s.io/klog/v2"
-	"reflect"
 
 	dmiapi "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1beta1"
 	"github.com/kubeedge/mapper-framework/pkg/common"
 	"github.com/kubeedge/mapper-framework/pkg/util/parse"
 )
 
-func (s *Server) RegisterDevice(ctx context.Context, request *dmiapi.RegisterDeviceRequest) (*dmiapi.RegisterDeviceResponse, error) {
+func (s *Server) RegisterDevice(_ context.Context, request *dmiapi.RegisterDeviceRequest) (*dmiapi.RegisterDeviceResponse, error) {
 	klog.V(3).Info("RegisterDevice")
 	device := request.GetDevice()
 	if device == nil {
@@ -44,19 +44,19 @@ func (s *Server) RegisterDevice(ctx context.Context, request *dmiapi.RegisterDev
 		return nil, fmt.Errorf("parse device %s protocol failed, err: %s", device.Name, err)
 	}
 	klog.Infof("model: %+v", model)
-	deviceInstance, err := parse.ParseDeviceFromGrpc(device, &model)
+	deviceInstance, err := parse.GetDeviceFromGrpc(device, &model)
 
 	if err != nil {
 		return nil, fmt.Errorf("parse device %s instance failed, err: %s", device.Name, err)
 	}
 
 	deviceInstance.PProtocol = protocol
-	s.devPanel.UpdateDev(&model, deviceInstance, &protocol)
+	s.devPanel.UpdateDev(&model, deviceInstance)
 
 	return &dmiapi.RegisterDeviceResponse{DeviceName: device.Name}, nil
 }
 
-func (s *Server) RemoveDevice(ctx context.Context, request *dmiapi.RemoveDeviceRequest) (*dmiapi.RemoveDeviceResponse, error) {
+func (s *Server) RemoveDevice(_ context.Context, request *dmiapi.RemoveDeviceRequest) (*dmiapi.RemoveDeviceResponse, error) {
 	if request.GetDeviceName() == "" {
 		return nil, errors.New("device name is nil")
 	}
@@ -64,7 +64,7 @@ func (s *Server) RemoveDevice(ctx context.Context, request *dmiapi.RemoveDeviceR
 	return &dmiapi.RemoveDeviceResponse{}, s.devPanel.RemoveDevice(request.GetDeviceName())
 }
 
-func (s *Server) UpdateDevice(ctx context.Context, request *dmiapi.UpdateDeviceRequest) (*dmiapi.UpdateDeviceResponse, error) {
+func (s *Server) UpdateDevice(_ context.Context, request *dmiapi.UpdateDeviceRequest) (*dmiapi.UpdateDeviceResponse, error) {
 	klog.V(3).Info("UpdateDevice")
 	device := request.GetDevice()
 	if device == nil {
@@ -81,25 +81,25 @@ func (s *Server) UpdateDevice(ctx context.Context, request *dmiapi.UpdateDeviceR
 	}
 
 	klog.V(3).Infof("model: %+v", model)
-	deviceInstance, err := parse.ParseDeviceFromGrpc(device, &model)
+	deviceInstance, err := parse.GetDeviceFromGrpc(device, &model)
 	if err != nil {
 		return nil, fmt.Errorf("parse device %s instance failed, err: %s", device.Name, err)
 	}
 	deviceInstance.PProtocol = protocol
 
-	s.devPanel.UpdateDev(&model, deviceInstance, &protocol)
+	s.devPanel.UpdateDev(&model, deviceInstance)
 
 	return &dmiapi.UpdateDeviceResponse{}, nil
 }
 
-func (s *Server) CreateDeviceModel(ctx context.Context, request *dmiapi.CreateDeviceModelRequest) (*dmiapi.CreateDeviceModelResponse, error) {
+func (s *Server) CreateDeviceModel(_ context.Context, request *dmiapi.CreateDeviceModelRequest) (*dmiapi.CreateDeviceModelResponse, error) {
 	deviceModel := request.GetModel()
 	klog.Infof("start create deviceModel: %v", deviceModel.Name)
 	if deviceModel == nil {
 		return nil, errors.New("deviceModel is nil")
 	}
 
-	model := parse.ParseDeviceModelFromGrpc(deviceModel)
+	model := parse.GetDeviceModelFromGrpc(deviceModel)
 
 	s.devPanel.UpdateModel(&model)
 
@@ -108,7 +108,7 @@ func (s *Server) CreateDeviceModel(ctx context.Context, request *dmiapi.CreateDe
 	return &dmiapi.CreateDeviceModelResponse{DeviceModelName: deviceModel.Name}, nil
 }
 
-func (s *Server) UpdateDeviceModel(ctx context.Context, request *dmiapi.UpdateDeviceModelRequest) (*dmiapi.UpdateDeviceModelResponse, error) {
+func (s *Server) UpdateDeviceModel(_ context.Context, request *dmiapi.UpdateDeviceModelRequest) (*dmiapi.UpdateDeviceModelResponse, error) {
 	deviceModel := request.GetModel()
 	if deviceModel == nil {
 		return nil, errors.New("deviceModel is nil")
@@ -117,20 +117,20 @@ func (s *Server) UpdateDeviceModel(ctx context.Context, request *dmiapi.UpdateDe
 		return nil, fmt.Errorf("update deviceModel %s failed, not existed", deviceModel.Name)
 	}
 
-	model := parse.ParseDeviceModelFromGrpc(deviceModel)
+	model := parse.GetDeviceModelFromGrpc(deviceModel)
 
 	s.devPanel.UpdateModel(&model)
 
 	return &dmiapi.UpdateDeviceModelResponse{}, nil
 }
 
-func (s *Server) RemoveDeviceModel(ctx context.Context, request *dmiapi.RemoveDeviceModelRequest) (*dmiapi.RemoveDeviceModelResponse, error) {
+func (s *Server) RemoveDeviceModel(_ context.Context, request *dmiapi.RemoveDeviceModelRequest) (*dmiapi.RemoveDeviceModelResponse, error) {
 	s.devPanel.RemoveModel(request.ModelName)
 
 	return &dmiapi.RemoveDeviceModelResponse{}, nil
 }
 
-func (s *Server) GetDevice(ctx context.Context, request *dmiapi.GetDeviceRequest) (*dmiapi.GetDeviceResponse, error) {
+func (s *Server) GetDevice(_ context.Context, request *dmiapi.GetDeviceRequest) (*dmiapi.GetDeviceResponse, error) {
 	if request.GetDeviceName() == "" {
 		return nil, errors.New("device name is nil")
 	}
