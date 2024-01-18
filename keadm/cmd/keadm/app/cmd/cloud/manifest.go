@@ -109,6 +109,7 @@ func AddManifestsGenerate2ToolsList(toolList map[string]types.ToolsInstaller, fl
 	toolList["helm"] = &helm.KubeCloudHelmInstTool{
 		Common:           common,
 		AdvertiseAddress: initOpts.AdvertiseAddress,
+		DNSNames:         initOpts.DNSNames,
 		Manifests:        initOpts.Manifests,
 		Namespace:        constants.SystemNamespace,
 		DryRun:           initOpts.DryRun,
