@@ -94,7 +94,7 @@ func newJoinOptions() *types.JoinOptions {
 func Add2EdgeToolsList(toolList map[string]types.ToolsInstaller, flagData map[string]types.FlagData, joinOptions *types.JoinOptions) error {
 	var kubeVer string
 
-	flgData, ok := flagData[types.KubeEdgeVersion]
+	flgData, ok := flagData[types.FlagNameKubeEdgeVersion]
 	if ok {
 		kubeVer = util.CheckIfAvailable(flgData.Val.(string), flgData.DefVal.(string))
 	}

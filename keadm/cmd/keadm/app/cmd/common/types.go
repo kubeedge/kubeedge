@@ -17,37 +17,73 @@ limitations under the License.
 package common
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/blang/semver"
 )
 
-// InitBaseOptions has the kubeedge cloud deprecated init base information filled by CLI
-type InitBaseOptions struct {
-	KubeEdgeVersion  string
-	KubeConfig       string
-	Master           string
-	AdvertiseAddress string
-	DNS              string
-	TarballPath      string
-}
-
-// InitOptions has the kubeedge cloud init information filled by CLI
-type InitOptions struct {
+// CloudInitUpdateBase defines common flags for init and upgrade in the cloud.
+type CloudInitUpdateBase struct {
 	KubeConfig       string
 	KubeEdgeVersion  string
 	AdvertiseAddress string
-	Manifests        string
-	Namespace        string
-	Sets             []string
 	Profile          string
 	ExternalHelmRoot string
+	Sets             []string
+	ValueFiles       []string
 	Force            bool
-	SkipCRDs         bool
 	DryRun           bool
+	PrintFinalValues bool
 }
 
-// JoinOptions has the kubeedge cloud init information filled by CLI
+const requiredSetSplitLen = 2
+
+// GetValidSets returns a valid sets, if the item is an invalid key-value,
+// it is removed from the sets and print the error message.
+func (b CloudInitUpdateBase) GetValidSets() []string {
+	if b.Sets == nil {
+		return nil
+	}
+	res := make([]string, 0, len(b.Sets))
+	for _, s := range b.Sets {
+		p := strings.SplitN(s, "=", requiredSetSplitLen)
+		if len(p) != requiredSetSplitLen {
+			fmt.Println("Unsupported sets flag: ", s)
+			continue
+		}
+		res = append(res, s)
+	}
+	return res
+}
+
+// HasSets returns the key is in the sets
+func (b CloudInitUpdateBase) HasSets(key string) bool {
+	for _, kv := range b.Sets {
+		p := strings.SplitN(kv, "=", requiredSetSplitLen)
+		if len(p) == requiredSetSplitLen && p[0] == key {
+			return true
+		}
+	}
+	return false
+}
+
+// InitOptions defines cloud init flags
+type InitOptions struct {
+	Manifests string
+	SkipCRDs  bool
+	CloudInitUpdateBase
+}
+
+// CloudUpgradeOptions defines cloud upgrade flags
+type CloudUpgradeOptions struct {
+	ReuseValues bool
+	CloudInitUpdateBase
+}
+
+// JoinOptions defines edge join flags
 type JoinOptions struct {
-	InitBaseOptions
+	KubeEdgeVersion       string
 	CertPath              string
 	CloudCoreIPPort       string
 	EdgeNodeName          string
@@ -56,11 +92,14 @@ type JoinOptions struct {
 	CertPort              string
 	CGroupDriver          string
 	Labels                []string
+
 	// WithMQTT ...
 	// Deprecated: the mqtt broker is alreay managed by the DaemonSet in the cloud
-	WithMQTT        bool
+	WithMQTT bool
+
 	ImageRepository string
 	HubProtocol     string
+	TarballPath     string
 }
 
 type CheckOptions struct {

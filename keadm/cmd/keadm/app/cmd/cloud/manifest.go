@@ -96,7 +96,7 @@ func addManifestsGenerateJoinOtherFlags(cmd *cobra.Command, initOpts *types.Init
 	addInitOtherFlags(cmd, initOpts)
 	addHelmValueOptionsFlags(cmd, initOpts)
 
-	cmd.Flags().BoolVar(&initOpts.SkipCRDs, types.SkipCRDs, initOpts.SkipCRDs,
+	cmd.Flags().BoolVar(&initOpts.SkipCRDs, types.FlagNameSkipCRDs, initOpts.SkipCRDs,
 		"Skip printing the contents of CRDs to stdout")
 }
 

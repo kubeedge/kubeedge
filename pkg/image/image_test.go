@@ -19,9 +19,7 @@ func TestEdgeSet(t *testing.T) {
 			args: common.JoinOptions{
 				ImageRepository: "",
 				WithMQTT:        true,
-				InitBaseOptions: common.InitBaseOptions{
-					KubeEdgeVersion: "v1.9.1",
-				},
+				KubeEdgeVersion: "v1.9.1",
 			},
 			want: Set{
 				EdgeCore: "kubeedge/installation-package:v1.9.1",
@@ -33,9 +31,7 @@ func TestEdgeSet(t *testing.T) {
 			args: common.JoinOptions{
 				ImageRepository: "",
 				WithMQTT:        true,
-				InitBaseOptions: common.InitBaseOptions{
-					KubeEdgeVersion: "",
-				},
+				KubeEdgeVersion: "",
 			},
 			want: Set{
 				EdgeCore: "kubeedge/installation-package",
@@ -47,9 +43,7 @@ func TestEdgeSet(t *testing.T) {
 			args: common.JoinOptions{
 				ImageRepository: "kubeedge-test",
 				WithMQTT:        true,
-				InitBaseOptions: common.InitBaseOptions{
-					KubeEdgeVersion: "v1.9.1",
-				},
+				KubeEdgeVersion: "v1.9.1",
 			},
 			want: Set{
 				EdgeCore: "kubeedge-test/installation-package:v1.9.1",
@@ -61,9 +55,7 @@ func TestEdgeSet(t *testing.T) {
 			args: common.JoinOptions{
 				ImageRepository: "kubeedge-test",
 				WithMQTT:        false,
-				InitBaseOptions: common.InitBaseOptions{
-					KubeEdgeVersion: "v1.9.1",
-				},
+				KubeEdgeVersion: "v1.9.1",
 			},
 			want: Set{
 				EdgeCore: "kubeedge-test/installation-package:v1.9.1",
@@ -74,9 +66,7 @@ func TestEdgeSet(t *testing.T) {
 			args: common.JoinOptions{
 				ImageRepository: "kubeedge-test",
 				WithMQTT:        true,
-				InitBaseOptions: common.InitBaseOptions{
-					KubeEdgeVersion: "",
-				},
+				KubeEdgeVersion: "",
 			},
 			want: Set{
 				EdgeCore: "kubeedge-test/installation-package",
