@@ -166,11 +166,75 @@ type ResourceTemplate struct {
 type Overriders struct {
 	// Replicas will override the replicas field of deployment
 	// +optional
-	Replicas int `json:"replicas,omitempty"`
+	Replicas *int `json:"replicas,omitempty"`
 	// ImageOverriders represents the rules dedicated to handling image overrides.
 	// +optional
-	ImageOverrider []ImageOverrider `json:"imageOverriders,omitempty"`
+	ImageOverriders []ImageOverrider `json:"imageOverriders,omitempty"`
+	// EnvOverrides will override the env field of the container
+	// +optional
+	EnvOverrides []EnvOverrider `json:"envOverrides,omitempty"`
+	// CommandOverriders represents the rules dedicated to handling container command
+	// +optional
+	CommandOverriders []CommandArgsOverrider `json:"commandOverriders,omitempty"`
+	// ArgsOverriders represents the rules dedicated to handling container args
+	// +optional
+	ArgsOverriders []CommandArgsOverrider `json:"argsOverriders,omitempty"`
+	// ResourcesOverrides will override the resources field of the container
+	// +optional
+	ResourcesOverrides []ResourcesOverrider `json:"resourcesOverrides,omitempty"`
 }
+
+// CommandArgsOverrider represents the rules dedicated to handling command/args overrides.
+type CommandArgsOverrider struct {
+	// The name of container
+	// +required
+	ContainerName string `json:"containerName"`
+	
+	// Operator represents the operator which will apply on the command/args.
+	// +kubebuilder:validation:Enum=add;remove
+	// +required
+	Operator OverriderOperator `json:"operator"`
+	
+	// Value to be applied to command/args.
+	// Items in Value which will be appended after command/args when Operator is 'add'.
+	// Items in Value which match in command/args will be deleted when Operator is 'remove'.
+	// If Value is empty, then the command/args will remain the same.
+	// +optional
+	Value []string `json:"value,omitempty"`
+}
+
+// EnvOverrider represents the rules dedicated to handling env overrides.
+type EnvOverrider struct {
+	// The name of container
+	// +required
+	ContainerName string `json:"containerName"`
+	
+	// Operator represents the operator which will apply on the env.
+	// +kubebuilder:validation:Enum=add;remove;replace
+	// +required
+	Operator OverriderOperator `json:"operator"`
+	
+	// Value to be applied to env.
+	// Must not be empty when operator is 'add' or 'replace'.
+	// When the operator is 'remove', the matched value in env will be deleted
+	// and only the name of the value will be matched.
+	// If Value is empty, then the env will remain the same.
+	// +optional
+	Value []corev1.EnvVar `json:"value,omitempty"`
+}
+
+// ResourcesOverrider represents the rules dedicated to handling resources overrides.
+type ResourcesOverrider struct {
+	// The name of container
+	// +required
+	ContainerName string `json:"containerName"`
+	
+	// Value to be applied to resources.
+	// Must not be empty
+	// +required
+	Value corev1.ResourceRequirements `json:"value,omitempty"`
+}
+
 
 // ImageOverrider represents the rules dedicated to handling image overrides.
 type ImageOverrider struct {
@@ -380,6 +444,29 @@ spec:
             - component: "Registry"
               operator: "replace"
               value: "hangzhou.registry.io"
+          envOverrides:
+            - containerName: "nginx"
+              operator: "add"
+              value:
+              	- name: "env1"
+              	  value: "test1"
+          commandOverriders:
+            - containerName: "nginx"
+              operator: "add"
+              value: ["your-command-1"]
+          argsOverriders:
+            - containerName: "nginx"
+              operator: "add"
+              value: ["your-args-1"]
+          resourcesOverrides:
+            - containerName: "nginx"
+              value:
+                limits:
+              	  cpu: 250m
+              	  memory: 512Mi
+                requests:
+              	  cpu: 250m
+              	  memory: 512Mi
       - name: beijing
         overriders:
           replicas: 3
