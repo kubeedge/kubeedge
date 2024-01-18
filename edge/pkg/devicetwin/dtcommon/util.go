@@ -120,6 +120,7 @@ func ConvertDevice(device *v1beta1.Device) (*pb.Device, error) {
 	edgeDevice.Spec.Properties = edgePropertyVisitors
 	edgeDevice.Name = device.Name
 	edgeDevice.Spec.DeviceModelReference = device.Spec.DeviceModelRef.Name
+	edgeDevice.Namespace = device.Namespace
 
 	return &edgeDevice, nil
 }
@@ -138,6 +139,7 @@ func ConvertDeviceModel(model *v1beta1.DeviceModel) (*pb.DeviceModel, error) {
 		return nil, err
 	}
 	edgeDeviceModel.Name = model.Name
+	edgeDeviceModel.Namespace = model.Namespace
 
 	return &edgeDeviceModel, nil
 }

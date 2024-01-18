@@ -43,6 +43,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1"
 	pb "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1beta1"
+	"github.com/kubeedge/kubeedge/pkg/util"
 )
 
 const (
@@ -99,9 +100,10 @@ func (s *server) MapperRegister(ctx context.Context, in *pb.MapperRegisterReques
 				klog.Errorf("fail to convert device %s with err: %v", device.Name, err)
 				continue
 			}
+			modelID := util.GetResourceID(device.Namespace, device.Spec.DeviceModelRef.Name)
 
 			s.dmiCache.DeviceModelMu.Lock()
-			model, ok := s.dmiCache.DeviceModelList[device.Spec.DeviceModelRef.Name]
+			model, ok := s.dmiCache.DeviceModelList[modelID]
 			s.dmiCache.DeviceModelMu.Unlock()
 			if !ok {
 				klog.Errorf("fail to get device model %s in deviceModelList", device.Spec.DeviceModelRef.Name)
@@ -131,20 +133,25 @@ func (s *server) ReportDeviceStatus(ctx context.Context, in *pb.ReportDeviceStat
 		return nil, fmt.Errorf("fail to report device status because of too many request: %s", in.DeviceName)
 	}
 
-	for _, twin := range in.ReportedDevice.Twins {
-		msg, err := CreateMessageTwinUpdate(twin)
-		if err != nil {
-			klog.Errorf("fail to create message data for property %s of device %s with err: %v", twin.PropertyName, in.DeviceName, err)
-			return nil, err
+	if in != nil && in.ReportedDevice != nil && in.ReportedDevice.Twins != nil {
+		for _, twin := range in.ReportedDevice.Twins {
+			msg, err := CreateMessageTwinUpdate(twin)
+			if err != nil {
+				klog.Errorf("fail to create message data for property %s of device %s with err: %v", twin.PropertyName, in.DeviceName, err)
+				return nil, err
+			}
+			handleDeviceTwin(in, msg)
 		}
-		handleDeviceTwin(in.DeviceName, msg)
+	} else {
+		return &pb.ReportDeviceStatusResponse{}, fmt.Errorf("ReportDeviceStatusRequest does not have twin data")
 	}
 
 	return &pb.ReportDeviceStatusResponse{}, nil
 }
 
-func handleDeviceTwin(deviceName string, payload []byte) {
-	topic := dtcommon.DeviceETPrefix + deviceName + dtcommon.TwinETUpdateSuffix
+func handleDeviceTwin(in *pb.ReportDeviceStatusRequest, payload []byte) {
+	deviceID := util.GetResourceID(in.DeviceNamespace, in.DeviceName)
+	topic := dtcommon.DeviceETPrefix + deviceID + dtcommon.TwinETUpdateSuffix
 	target := modules.TwinGroup
 	resource := base64.URLEncoding.EncodeToString([]byte(topic))
 	// routing key will be $hw.<project_id>.events.user.bus.response.cluster.<cluster_id>.node.<node_id>.<base64_topic>

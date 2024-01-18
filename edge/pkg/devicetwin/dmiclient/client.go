@@ -93,9 +93,10 @@ func createDeviceRequest(device *v1beta1.Device) (*dmiapi.RegisterDeviceRequest,
 	}, nil
 }
 
-func removeDeviceRequest(deviceName string) (*dmiapi.RemoveDeviceRequest, error) {
+func removeDeviceRequest(device *v1beta1.Device) (*dmiapi.RemoveDeviceRequest, error) {
 	return &dmiapi.RemoveDeviceRequest{
-		DeviceName: deviceName,
+		DeviceName:      device.Name,
+		DeviceNamespace: device.Namespace,
 	}, nil
 }
 
@@ -132,9 +133,10 @@ func updateDeviceModelRequest(model *v1beta1.DeviceModel) (*dmiapi.UpdateDeviceM
 	}, nil
 }
 
-func removeDeviceModelRequest(deviceModelName string) (*dmiapi.RemoveDeviceModelRequest, error) {
+func removeDeviceModelRequest(deviceModel *v1beta1.DeviceModel) (*dmiapi.RemoveDeviceModelRequest, error) {
 	return &dmiapi.RemoveDeviceModelRequest{
-		ModelName: deviceModelName,
+		ModelName:      deviceModel.Name,
+		ModelNamespace: deviceModel.Namespace,
 	}, nil
 }
 
@@ -210,7 +212,7 @@ func (dcs *DMIClients) RemoveDevice(device *v1beta1.Device) error {
 
 	defer dc.close()
 
-	rdr, err := removeDeviceRequest(device.Name)
+	rdr, err := removeDeviceRequest(device)
 	if err != nil {
 		return fmt.Errorf("fail to generate RemoveDeviceRequest for device %s with err: %v", device.Name, err)
 	}
@@ -271,7 +273,7 @@ func (dcs *DMIClients) RemoveDeviceModel(model *v1beta1.DeviceModel) error {
 
 	defer dc.close()
 
-	rdmr, err := removeDeviceModelRequest(model.Name)
+	rdmr, err := removeDeviceModelRequest(model)
 	if err != nil {
 		return fmt.Errorf("fail to create RemoveDeviceModelRequest for device model %s with err: %v", model.Name, err)
 	}
