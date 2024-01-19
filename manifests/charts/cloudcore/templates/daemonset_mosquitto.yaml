@@ -28,15 +28,15 @@ spec:
           hostPath:
             path: /var/lib/kubeedge/mqtt/data
       containers:
-        - name: edge-eclipse-mosquitto
-          image: {{ .Values.mosquitto.image.repository }}:{{ .Values.mosquitto.image.tag }}
-          imagePullPolicy: {{ .Values.mosquitto.image.pullPolicy }}
-          {{- with .Values.mosquitto.resources }}
-          resources: {{ toYaml . | nindent 10 }}
-          {{- end }}
-          volumeMounts:
-            - name: mqtt-data-path
-              mountPath: /mosquitto/data
+      - name: edge-eclipse-mosquitto
+        image: {{ .Values.mosquitto.image.repository }}:{{ .Values.mosquitto.image.tag }}
+        imagePullPolicy: {{ .Values.mosquitto.image.pullPolicy }}
+        {{- with .Values.mosquitto.resources }}
+        resources: {{ toYaml . | nindent 10 }}
+        {{- end }}
+        volumeMounts:
+          - name: mqtt-data-path
+            mountPath: /mosquitto/data
       {{- with .Values.mosquitto.affinity }}
       affinity: {{ toYaml . | nindent 8 }}
       {{- end }}
