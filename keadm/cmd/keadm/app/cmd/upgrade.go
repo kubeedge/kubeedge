@@ -9,7 +9,8 @@ import (
 
 const (
 	upgradeLongDescription = `Upgrade components of the cloud or the edge.
-Specify whether to upgrade the cloud or the edge through three-level commands.`
+Specify whether to upgrade the cloud or the edge through three-level commands.
+If no three-level command, it upgrades edge components.`
 )
 
 func NewUpgradeCommand() *cobra.Command {
@@ -19,8 +20,15 @@ func NewUpgradeCommand() *cobra.Command {
 		Long:  upgradeLongDescription,
 	}
 
-	cmds.AddCommand(cloud.NewCloudUpgrade())
-	cmds.AddCommand(edge.NewEdgeUpgrade())
+	edgecmd := edge.NewEdgeUpgrade()
 
+	// Used for backward compatibility of the edgecore trigger the upgrade command
+	upgradeOptions := edge.NewUpgradeOptions()
+	edge.AddUpgradeFlags(cmds, upgradeOptions)
+	cmds.RunE = edgecmd.RunE
+
+	// Register three-level commands
+	cmds.AddCommand(edgecmd)
+	cmds.AddCommand(cloud.NewCloudUpgrade())
 	return cmds
 }
