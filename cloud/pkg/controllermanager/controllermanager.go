@@ -68,6 +68,8 @@ func setupControllers(ctx context.Context, mgr manager.Manager) error {
 				&overridemanager.NodeSelectorOverrider{},
 				&overridemanager.CommandOverrider{},
 				&overridemanager.ArgsOverrider{},
+				&overridemanager.EnvOverrider{},
+				&overridemanager.ResourcesOverrider{},
 			},
 		},
 	}
