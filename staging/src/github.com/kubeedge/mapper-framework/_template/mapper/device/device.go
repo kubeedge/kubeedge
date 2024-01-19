@@ -251,7 +251,7 @@ func (d *DevPanel) DevInit(deviceList []*dmiapi.Device, deviceModelList []*dmiap
 
 	for i := range deviceModelList {
 		model := deviceModelList[i]
-		cur := parse.ParseDeviceModelFromGrpc(model)
+		cur := parse.GetDeviceModelFromGrpc(model)
 		d.models[model.Name] = cur
 	}
 
@@ -262,7 +262,7 @@ func (d *DevPanel) DevInit(deviceList []*dmiapi.Device, deviceModelList []*dmiap
 		if err != nil {
 			return err
 		}
-		instance, err := parse.ParseDeviceFromGrpc(device, &commonModel)
+		instance, err := parse.GetDeviceFromGrpc(device, &commonModel)
 		if err != nil {
 			return err
 		}

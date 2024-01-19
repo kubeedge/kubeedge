@@ -166,6 +166,100 @@ func UpdatedModbusDeviceInstance(nodeName string) v1beta1.Device {
 	return deviceInstance
 }
 
+func DeviceModelForMapper() v1beta1.DeviceModel {
+	modelProperty1 := v1beta1.ModelProperty{
+		Name:        "temperature",
+		Description: "temperature in degree celsius",
+		Type:        v1beta1.INT,
+		AccessMode:  "ReadWrite",
+		Maximum:     "100",
+		Unit:        "degree celsius",
+	}
+
+	newDeviceModel := v1beta1.DeviceModel{
+		TypeMeta: v1.TypeMeta{
+			Kind:       "DeviceModel",
+			APIVersion: "devices.kubeedge.io/v1beta1",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "modbus-model",
+			Namespace: Namespace,
+		},
+		Spec: v1beta1.DeviceModelSpec{
+			Properties: []v1beta1.ModelProperty{modelProperty1},
+			Protocol:   ModBus,
+		},
+	}
+	return newDeviceModel
+}
+
+func DeviceInstanceForMapper(nodeName string) v1beta1.Device {
+	property := v1beta1.DeviceProperty{
+		Name: "temperature",
+		Desired: v1beta1.TwinProperty{
+			Value: "20",
+		},
+		CollectCycle:  1000000000,
+		ReportCycle:   1000000000,
+		ReportToCloud: true,
+		Visitors: v1beta1.VisitorConfig{
+			ProtocolName: ModBus,
+			ConfigData: &v1beta1.CustomizedValue{
+				Data: map[string]interface{}{
+					"dataType": "int",
+				},
+			},
+		},
+	}
+
+	twin := v1beta1.Twin{
+		PropertyName: "temperature",
+	}
+
+	deviceInstance := v1beta1.Device{
+		TypeMeta: v1.TypeMeta{
+			Kind:       "Device",
+			APIVersion: "devices.kubeedge.io/v1beta1",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "modbus-instance-02",
+			Namespace: Namespace,
+			Labels: map[string]string{
+				"description":  "TISimplelinkSensorTag",
+				"manufacturer": "TexasInstruments",
+				"model":        "CC2650",
+			},
+		},
+		Spec: v1beta1.DeviceSpec{
+			DeviceModelRef: &v12.LocalObjectReference{
+				Name: "modbus-model",
+			},
+			NodeName: nodeName,
+			Protocol: v1beta1.ProtocolConfig{
+				ProtocolName: ModBus,
+				ConfigData: &v1beta1.CustomizedValue{
+					Data: map[string]interface{}{
+						"deviceID":   2,
+						"serialPort": "/dev/ttyS0",
+						"baudRate":   9600,
+						"dataBits":   8,
+						"parity":     "even",
+						"stopBits":   1,
+						"protocolID": 1,
+					},
+				},
+			},
+			Properties: []v1beta1.DeviceProperty{property},
+		},
+		Status: v1beta1.DeviceStatus{
+			Twins: []v1beta1.Twin{
+				twin,
+			},
+		},
+	}
+	return deviceInstance
+}
+
 func IncorrectDeviceModel() v1beta1.DeviceModel {
 	newDeviceModel := v1beta1.DeviceModel{
 		TypeMeta: v1.TypeMeta{

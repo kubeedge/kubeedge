@@ -9,7 +9,7 @@ require (
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/influxdata/influxdb-client-go/v2 v2.13.0
 	github.com/kubeedge/kubeedge v1.15.0-beta.0.0.20240110111122-c44efa2389b9
-	github.com/kubeedge/mapper-framework v0.0.0-20240111132845-9ad4739bda66
+	github.com/kubeedge/mapper-framework v0.0.0-20240119021034-e7755b2f421c
 	github.com/spf13/pflag v1.0.6-0.20210604193023-d5e0c0615ace // indirect
 	github.com/taosdata/driver-go/v3 v3.5.1
 	golang.org/x/net v0.17.0 // indirect
