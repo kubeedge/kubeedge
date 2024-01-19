@@ -266,7 +266,7 @@ func (runtime *CRIRuntime) CopyResources(edgeImage string, files map[string]stri
 		Linux: &runtimeapi.LinuxPodSandboxConfig{
 			SecurityContext: &runtimeapi.LinuxSandboxSecurityContext{
 				NamespaceOptions: &runtimeapi.NamespaceOption{
-					Network: runtimeapi.NamespaceMode_POD,
+					Network: runtimeapi.NamespaceMode_NODE,
 				},
 			},
 		},
