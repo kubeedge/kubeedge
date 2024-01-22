@@ -43,7 +43,7 @@ var (
 
 // NewEdgeUpgrade returns KubeEdge edge upgrade command.
 func NewEdgeUpgrade() *cobra.Command {
-	upgradeOptions := newUpgradeOptions()
+	upgradeOptions := NewUpgradeOptions()
 
 	cmd := &cobra.Command{
 		Use:   "edge",
@@ -55,12 +55,12 @@ func NewEdgeUpgrade() *cobra.Command {
 		},
 	}
 
-	addUpgradeFlags(cmd, upgradeOptions)
+	AddUpgradeFlags(cmd, upgradeOptions)
 	return cmd
 }
 
-// newJoinOptions returns a struct ready for being used for creating cmd join flags.
-func newUpgradeOptions() *UpgradeOptions {
+// NewUpgradeOptions returns a struct ready for being used for creating cmd join flags.
+func NewUpgradeOptions() *UpgradeOptions {
 	opts := &UpgradeOptions{}
 	opts.ToVersion = "v" + common.DefaultKubeEdgeVersion
 	opts.Config = constants.DefaultConfigDir + "edgecore.yaml"
@@ -163,15 +163,15 @@ func (up *Upgrade) PreProcess() error {
 		}
 
 		// backup edgecore.db: copy from origin path to backup path
-		if err := copy(up.EdgeCoreConfig.DataBase.DataSource, filepath.Join(backupPath, "edgecore.db")); err != nil {
+		if err := copyFile(up.EdgeCoreConfig.DataBase.DataSource, filepath.Join(backupPath, "edgecore.db")); err != nil {
 			return fmt.Errorf("failed to backup db: %v", err)
 		}
 		// backup edgecore.yaml: copy from origin path to backup path
-		if err := copy(up.ConfigFilePath, filepath.Join(backupPath, "edgecore.yaml")); err != nil {
+		if err := copyFile(up.ConfigFilePath, filepath.Join(backupPath, "edgecore.yaml")); err != nil {
 			return fmt.Errorf("failed to back config: %v", err)
 		}
 		// backup edgecore: copy from origin path to backup path
-		if err := copy(filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), filepath.Join(backupPath, util.KubeEdgeBinaryName)); err != nil {
+		if err := copyFile(filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), filepath.Join(backupPath, util.KubeEdgeBinaryName)); err != nil {
 			return fmt.Errorf("failed to backup edgecore: %v", err)
 		}
 	}
@@ -203,7 +203,7 @@ func (up *Upgrade) PreProcess() error {
 	return nil
 }
 
-func copy(src, dst string) error {
+func copyFile(src, dst string) error {
 	sourceFileStat, err := os.Stat(src)
 	if err != nil {
 		return err
@@ -240,7 +240,7 @@ func (up *Upgrade) Process() error {
 
 	// copy new edgecore from upgradePath to /usr/local/bin
 	upgradePath := filepath.Join(util.KubeEdgeUpgradePath, up.ToVersion)
-	err = copy(filepath.Join(upgradePath, util.KubeEdgeBinaryName), filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName))
+	err = copyFile(filepath.Join(upgradePath, util.KubeEdgeBinaryName), filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName))
 	if err != nil {
 		return fmt.Errorf("failed to cp file: %v", err)
 	}
@@ -280,15 +280,15 @@ func rollback(HistoryVersion, dataSource, configFilePath string) error {
 
 	// backup edgecore.db: copy from backup path to origin path
 	backupPath := filepath.Join(util.KubeEdgeBackupPath, HistoryVersion)
-	if err := copy(filepath.Join(backupPath, "edgecore.db"), dataSource); err != nil {
+	if err := copyFile(filepath.Join(backupPath, "edgecore.db"), dataSource); err != nil {
 		return fmt.Errorf("failed to rollback db: %v", err)
 	}
 	// backup edgecore.yaml: copy from backup path to origin path
-	if err := copy(filepath.Join(backupPath, "edgecore.yaml"), configFilePath); err != nil {
+	if err := copyFile(filepath.Join(backupPath, "edgecore.yaml"), configFilePath); err != nil {
 		return fmt.Errorf("failed to back config: %v", err)
 	}
 	// backup edgecore: copy from backup path to origin path
-	if err := copy(filepath.Join(backupPath, util.KubeEdgeBinaryName), filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName)); err != nil {
+	if err := copyFile(filepath.Join(backupPath, util.KubeEdgeBinaryName), filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName)); err != nil {
 		return fmt.Errorf("failed to backup edgecore: %v", err)
 	}
 
@@ -342,7 +342,8 @@ type Upgrade struct {
 	Reason string
 }
 
-func addUpgradeFlags(cmd *cobra.Command, upgradeOptions *UpgradeOptions) {
+// AddUpgradeFlags adds some flags to the upgrade command, and use UpgradeOptions struct to map these flags.
+func AddUpgradeFlags(cmd *cobra.Command, upgradeOptions *UpgradeOptions) {
 	cmd.Flags().StringVar(&upgradeOptions.UpgradeID, "upgradeID", upgradeOptions.UpgradeID,
 		"Use this key to specify Upgrade CR ID")
 
