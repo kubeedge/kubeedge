@@ -1,3 +1,7 @@
+* [v1.13.5](#v1135)
+    * [Downloads for v1.13.5](#downloads-for-v1135)
+    * [KubeEdge v1.13.5 Release Notes](#kubeedge-v1135-release-notes)
+        * [Changelog since v1.13.4](#changelog-since-v1134)
 * [v1.13.4](#v1134)
     * [Downloads for v1.13.4](#downloads-for-v1134)
     * [KubeEdge v1.13.4 Release Notes](#kubeedge-v1134-release-notes)
@@ -22,6 +26,20 @@
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
         * [Other Notable Changes](#other-notable-changes)
         * [Bug Fixes](#bug-fixes)
+
+# v1.13.5
+
+## Downloads for v1.13.5
+
+Download v1.13.5 in the [v1.13.5 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.13.5).
+
+## KubeEdge v1.13.5 Release Notes
+
+### Changelog since v1.13.4
+
+- Fix featuregates didn't take effect in edged. ([#5297](https://github.com/kubeedge/kubeedge/pull/5297), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Supports installing edgecore without installing the CNI plugin. ([#5364](https://github.com/kubeedge/kubeedge/pull/5364), [@luomengY](https://github.com/luomengY))
+
 
 # v1.13.4
 
