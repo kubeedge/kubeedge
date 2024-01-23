@@ -187,8 +187,7 @@ var _ = Describe("Event Bus Testing", func() {
 	Context("Publish on eventbus topics throgh MQTT internal broker", func() {
 		BeforeEach(func() {
 			common.Infof("Adding Mock device to edgenode !!")
-
-			DeviceIDN = GenerateDeviceID("kubeedge-device-")
+			DeviceIDN = GenerateDeviceID("default/kubeedge-device-")
 			DeviceN = CreateDevice(DeviceIDN, "edgedevice", "unknown")
 
 			ClientOpts = HubClientInit(ctx.Cfg.MqttEndpoint, ClientID, "", "")
@@ -311,7 +310,7 @@ var _ = Describe("Event Bus Testing", func() {
 		})
 		It("TC_TEST_EBUS_9: Add a sample device with device attributes to kubeedge node", func() {
 			//Generating Device ID
-			DeviceIDWithAttr = GenerateDeviceID("kubeedge-device-WithDeviceAttributes")
+			DeviceIDWithAttr = GenerateDeviceID("default/kubeedge-device-WithDeviceAttributes")
 			//Generate a Device
 			DeviceATT = CreateDevice(DeviceIDWithAttr, "DeviceATT", "unknown")
 			//Add Attribute to device
@@ -330,7 +329,7 @@ var _ = Describe("Event Bus Testing", func() {
 
 		It("TC_TEST_EBUS_10: Add a sample device with Twin attributes to kubeedge node", func() {
 			//Generating Device ID
-			DeviceIDWithTwin = GenerateDeviceID("kubeedge-device-WithTwinAttributes")
+			DeviceIDWithTwin = GenerateDeviceID("default/kubeedge-device-WithTwinAttributes")
 			//Generate a Device
 			DeviceTW = CreateDevice(DeviceIDWithTwin, "DeviceTW", "unknown")
 			//Add twin attribute
