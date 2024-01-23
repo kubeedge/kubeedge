@@ -1,3 +1,7 @@
+* [v1.15.2](#v1152)
+    * [Downloads for v1.15.2](#downloads-for-v1152)
+    * [KubeEdge v1.15.2 Release Notes](#kubeedge-v1152-release-notes)
+        * [Changelog since v1.15.1](#changelog-since-v1151)
 * [v1.15.1](#v1151)
     * [Downloads for v1.15.1](#downloads-for-v1151)
     * [KubeEdge v1.15.1 Release Notes](#kubeedge-v1151-release-notes)
@@ -7,6 +11,22 @@
     * [KubeEdge v1.15 Release Notes](#kubeedge-v115-release-notes)
         * [1.15 What's New](#115-whats-new)
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
+
+
+# v1.15.2
+
+## Downloads for v1.15.2
+
+Download v1.15.2 in the [v1.15.2 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.15.2).
+
+## KubeEdge v1.15.2 Release Notes
+
+### Changelog since v1.15.1
+
+- Fix default staticPodPath in windows. ([#5271](https://github.com/kubeedge/kubeedge/pull/5271), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Fix featuregates didn't take effect in edged. ([#5295](https://github.com/kubeedge/kubeedge/pull/5295), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Fix device status problem. ([#5336](https://github.com/kubeedge/kubeedge/pull/5336), [@wbc6080](https://github.com/wbc6080))
+- Supports installing edgecore without installing the CNI plugin. ([#5367](https://github.com/kubeedge/kubeedge/pull/5367), [@luomengY](https://github.com/luomengY))
 
 
 # v1.15.1
