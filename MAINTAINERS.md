@@ -35,6 +35,7 @@ describes the mission, scope, and objectives of the KubeEdge Technical Steering 
 | Qi Zhang            | @qizha            | Huawei        | <zhangqi21@huawei.com> |
 | Wei Hu              | @willardhu        | DaoCloud      | <wei.hu@daocloud.io> |
 | Yin Ding            | @dingyin          | Google        | <dingyin@gmail.com> |
+| Yue Bao             | @Shelley-BaoYue   | Huawei        | <baoyue2@huawei.com> |
 | Zefeng (Kevin) Wang | @kevin-wangzefeng | Huawei        | <wangzefeng@huawei.com> |
 | Zhe Gong            | @GsssC            | HarmonyCloud  | <zhiyi375@gmail.com> |
 
