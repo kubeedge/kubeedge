@@ -191,6 +191,6 @@ func addResetFlags(cmd *cobra.Command, resetOpts *common.ResetOptions) {
 	//	"Use this key to set kube-config path, eg: $HOME/.kube/config")
 	cmd.Flags().BoolVar(&resetOpts.Force, "force", resetOpts.Force,
 		"Reset the node without prompting for confirmation, and continue even if running edgecore not found")
-	cmd.Flags().StringVar(&resetOpts.Endpoint, common.RemoteRuntimeEndpoint, resetOpts.Endpoint,
+	cmd.Flags().StringVar(&resetOpts.Endpoint, common.FlagNameRemoteRuntimeEndpoint, resetOpts.Endpoint,
 		"Use this key to set container runtime endpoint")
 }
