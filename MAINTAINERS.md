@@ -33,6 +33,7 @@ describes the mission, scope, and objectives of the KubeEdge Technical Steering 
 | Sanil Kumar         | @skdwriting       | Huawei        | <sanil.kumar@huawei.com> |
 | Siddharth Bhadri    | @sids-b           | Infoblox      | <sbhadri@infoblox.com> |
 | Qi Zhang            | @qizha            | Huawei        | <zhangqi21@huawei.com> |
+| Wei Hu              | @willardhu        | DaoCloud      | <wei.hu@daocloud.io> |
 | Yin Ding            | @dingyin          | Google        | <dingyin@gmail.com> |
 | Zefeng (Kevin) Wang | @kevin-wangzefeng | Huawei        | <wangzefeng@huawei.com> |
 | Zhe Gong            | @GsssC            | HarmonyCloud  | <zhiyi375@gmail.com> |
