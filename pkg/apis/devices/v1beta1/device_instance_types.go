@@ -160,6 +160,8 @@ type DBMethodConfig struct {
 	Redis *DBMethodRedis `json:"redis,omitempty"`
 	// +optional
 	TDEngine *DBMethodTDEngine `json:"TDEngine,omitempty"`
+	// +optional
+	Mysql *DBMethodMySQL `json:"mysql,omitempty"`
 }
 
 type DBMethodInfluxdb2 struct {
@@ -228,6 +230,19 @@ type TDEngineClientConfig struct {
 	// dbname of tdEngine database
 	// +optional
 	DBName string `json:"dbName,omitempty"`
+}
+
+type DBMethodMySQL struct {
+	MySQLClientConfig *MySQLClientConfig `json:"mysqlClientConfig,omitempty"`
+}
+
+type MySQLClientConfig struct {
+	// mysql address,like localhost:3306
+	Addr string `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
+	// database name
+	Database string `protobuf:"bytes,2,opt,name=database,proto3" json:"database,omitempty"`
+	// user name
+	UserName string `protobuf:"bytes,3,opt,name=userName,proto3" json:"userName,omitempty"`
 }
 
 type VisitorConfig struct {

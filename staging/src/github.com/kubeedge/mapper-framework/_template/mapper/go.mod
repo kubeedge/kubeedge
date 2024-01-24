@@ -5,11 +5,12 @@ go 1.20
 require (
 	github.com/eclipse/paho.mqtt.golang v1.2.0
 	github.com/go-redis/redis/v8 v8.11.5
+	github.com/go-sql-driver/mysql v1.7.1
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/influxdata/influxdb-client-go/v2 v2.13.0
-	github.com/kubeedge/kubeedge v1.16.0-beta.0
-	github.com/kubeedge/mapper-framework v0.0.0-20240119021034-e7755b2f421c
+	github.com/kubeedge/kubeedge v0.0.0
+	github.com/kubeedge/mapper-framework v0.0.0
 	github.com/spf13/pflag v1.0.6-0.20210604193023-d5e0c0615ace // indirect
 	github.com/taosdata/driver-go/v3 v3.5.1
 	golang.org/x/net v0.17.0 // indirect
@@ -36,4 +37,9 @@ require (
 	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	google.golang.org/genproto v0.0.0-20230306155012-7f2fa6fef1f4 // indirect
+)
+
+replace (
+	github.com/kubeedge/kubeedge => ../../../../../../kubeedge
+	github.com/kubeedge/mapper-framework => ../mapper-framework
 )

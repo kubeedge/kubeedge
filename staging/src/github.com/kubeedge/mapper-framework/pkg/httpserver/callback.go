@@ -33,6 +33,7 @@ func (rs *RestServer) DeviceRead(writer http.ResponseWriter, request *http.Reque
 			Data: common.NewDataModel(
 				deviceName,
 				propertyName,
+				deviceNamespace,
 				common.WithValue(res),
 				common.WithType(dataType),
 			),

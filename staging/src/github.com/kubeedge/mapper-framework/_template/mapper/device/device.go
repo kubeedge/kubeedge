@@ -14,6 +14,7 @@ import (
 	"k8s.io/klog/v2"
 
 	dbInflux "github.com/kubeedge/Template/data/dbmethod/influxdb2"
+	dbMysql "github.com/kubeedge/Template/data/dbmethod/mysql"
 	dbRedis "github.com/kubeedge/Template/data/dbmethod/redis"
 	dbTdengine "github.com/kubeedge/Template/data/dbmethod/tdengine"
 	httpMethod "github.com/kubeedge/Template/data/publish/http"
@@ -137,12 +138,12 @@ func dataHandler(ctx context.Context, dev *driver.CustomizedDev) {
 		go twinData.Run(ctx)
 		// handle push method
 		if twin.Property.PushMethod.MethodConfig != nil && twin.Property.PushMethod.MethodName != "" {
-			dataModel := common.NewDataModel(dev.Instance.Name, twin.Property.PropertyName, common.WithType(twin.ObservedDesired.Metadata.Type))
+			dataModel := common.NewDataModel(dev.Instance.Name, twin.Property.PropertyName, dev.Instance.Namespace, common.WithType(twin.ObservedDesired.Metadata.Type))
 			pushHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
 		}
 		// handle database
 		if twin.Property.PushMethod.DBMethod.DBMethodName != "" {
-			dataModel := common.NewDataModel(dev.Instance.Name, twin.Property.PropertyName, common.WithType(twin.ObservedDesired.Metadata.Type))
+			dataModel := common.NewDataModel(dev.Instance.Name, twin.Property.PropertyName, dev.Instance.Namespace, common.WithType(twin.ObservedDesired.Metadata.Type))
 			dbHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
 			switch twin.Property.PushMethod.DBMethod.DBMethodName {
 			// TODO add more database
@@ -152,6 +153,8 @@ func dataHandler(ctx context.Context, dev *driver.CustomizedDev) {
 				dbRedis.DataHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
 			case "tdengine":
 				dbTdengine.DataHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
+			case "mysql":
+				dbMysql.DataHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
 			}
 		}
 	}
@@ -221,6 +224,9 @@ func dbHandler(ctx context.Context, twin *common.Twin, client *driver.Customized
 
 	case "tdengine":
 		dbTdengine.DataHandler(ctx, twin, client, visitorConfig, dataModel)
+
+	case "mysql":
+		dbMysql.DataHandler(ctx, twin, client, visitorConfig, dataModel)
 	}
 }
 
