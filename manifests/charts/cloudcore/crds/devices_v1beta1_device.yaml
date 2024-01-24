@@ -646,6 +646,21 @@ spec:
                                       type: object
                                   type: object
                               type: object
+                            mysql:
+                              properties:
+                                mysqlClientConfig:
+                                  properties:
+                                    addr:
+                                      description: mysql address,like localhost:3306
+                                      type: string
+                                    database:
+                                      description: database name
+                                      type: string
+                                    userName:
+                                      description: user name
+                                      type: string
+                                  type: object
+                              type: object
                             redis:
                               properties:
                                 redisClientConfig:

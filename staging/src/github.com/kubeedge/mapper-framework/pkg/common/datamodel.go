@@ -5,6 +5,7 @@ type DataModel struct {
 	// TODO DataModel is standardized data, need add field
 	DeviceName   string
 	PropertyName string
+	Namespace    string
 
 	Value string
 	Type  string
@@ -44,10 +45,11 @@ func WithTimeStamp(timeStamp int64) Option {
 	}
 }
 
-func NewDataModel(deviceName string, propertyName string, options ...Option) *DataModel {
+func NewDataModel(deviceName string, propertyName string, namespace string, options ...Option) *DataModel {
 	dataModel := &DataModel{
 		DeviceName:   deviceName,
 		PropertyName: propertyName,
+		Namespace:    namespace,
 		TimeStamp:    getTimestamp(),
 	}
 	for _, option := range options {
