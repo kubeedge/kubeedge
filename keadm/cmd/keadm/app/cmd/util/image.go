@@ -115,6 +115,7 @@ func (runtime *CRIRuntime) PullImage(image string, authConfig *runtimeapi.AuthCo
 // CopyResources copies binary and configuration file from the image to the host.
 // The same way as func (runtime *DockerRuntime) CopyResources
 func (runtime *CRIRuntime) CopyResources(edgeImage string, files map[string]string) error {
+	edgeImage = convertCRIImage(edgeImage)
 	psc := &runtimeapi.PodSandboxConfig{
 		Metadata: &runtimeapi.PodSandboxMetadata{
 			Name:      KubeEdgeBinaryName,
