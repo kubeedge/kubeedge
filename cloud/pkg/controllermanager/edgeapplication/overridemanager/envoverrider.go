@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/klog/v2"
@@ -216,14 +217,95 @@ func convertToEnvVar(value interface{}) (*corev1.EnvVar, error) {
 
 func convertToEnvVarSource(value map[string]interface{}) (corev1.EnvVarSource, error) {
 	var envVarSource corev1.EnvVarSource
-	fieldRef, ok := value["fieldRef"].(map[string]interface{})
-	if !ok {
-		return envVarSource, fmt.Errorf("failed to convert env valueFrom fieldRef to map[string]interface{}")
+	var err error
+	if envVarSource.FieldRef, err = processFieldRef(value); err != nil {
+		return envVarSource, err
 	}
-	fieldPath, ok := fieldRef["fieldPath"].(string)
-	if !ok {
-		return envVarSource, fmt.Errorf("failed to convert env valueFrom fieldPath to string")
+	if envVarSource.ResourceFieldRef, err = processResourceFieldRef(value); err != nil {
+		return envVarSource, err
 	}
-	envVarSource.FieldRef = &corev1.ObjectFieldSelector{FieldPath: fieldPath}
+	if envVarSource.ConfigMapKeyRef, err = processConfigMapKeyRef(value); err != nil {
+		return envVarSource, err
+	}
+	if envVarSource.SecretKeyRef, err = processSecretKeyRef(value); err != nil {
+		return envVarSource, err
+	}
+
 	return envVarSource, nil
+}
+
+func processFieldRef(value map[string]interface{}) (*corev1.ObjectFieldSelector, error) {
+	fp, ffOK, err := unstructured.NestedString(value, "fieldRef", "fieldPath")
+	if err != nil {
+		return nil, err
+	}
+	av, faOK, err := unstructured.NestedString(value, "fieldRef", "apiVersion")
+	if err != nil {
+		return nil, err
+	}
+	if ffOK && faOK {
+		return &corev1.ObjectFieldSelector{FieldPath: fp, APIVersion: av}, nil
+	}
+	return nil, nil
+}
+
+func processResourceFieldRef(value map[string]interface{}) (*corev1.ResourceFieldSelector, error) {
+	r, rrOK, err := unstructured.NestedString(value, "resourceFieldRef", "resource")
+	if err != nil {
+		return nil, err
+	}
+	c, rcOK, err := unstructured.NestedString(value, "resourceFieldRef", "containerName")
+	if err != nil {
+		return nil, err
+	}
+	divisor, rdOK, err := unstructured.NestedString(value, "resourceFieldRef", "divisor")
+	if err != nil {
+		return nil, err
+	}
+
+	if rrOK && rcOK && rdOK {
+		return &corev1.ResourceFieldSelector{
+			ContainerName: c,
+			Resource:      r,
+			Divisor:       resource.MustParse(divisor),
+		}, nil
+	}
+	return nil, nil
+}
+
+func processConfigMapKeyRef(value map[string]interface{}) (*corev1.ConfigMapKeySelector, error) {
+	name, cnOK, err := unstructured.NestedString(value, "configMapKeyRef", "name")
+	if err != nil {
+		return nil, err
+	}
+	key, ckOK, err := unstructured.NestedString(value, "configMapKeyRef", "key")
+	if err != nil {
+		return nil, err
+	}
+	if cnOK && ckOK {
+		return &corev1.ConfigMapKeySelector{
+			LocalObjectReference: corev1.LocalObjectReference{Name: name},
+			Key:                  key,
+		}, nil
+	}
+	return nil, nil
+}
+
+func processSecretKeyRef(value map[string]interface{}) (*corev1.SecretKeySelector, error) {
+	name, snOK, err := unstructured.NestedString(value, "secretKeyRef", "name")
+	if err != nil {
+		return nil, err
+	}
+	key, skOK, err := unstructured.NestedString(value, "secretKeyRef", "key")
+	if err != nil {
+		return nil, err
+	}
+
+	if snOK && skOK {
+		return &corev1.SecretKeySelector{
+			LocalObjectReference: corev1.LocalObjectReference{Name: name},
+			Key:                  key,
+		}, nil
+	}
+	return nil, nil
 }
