@@ -214,7 +214,11 @@ func classifyMsg(message *dttype.DTMessage) bool {
 		} else {
 			identity = splitString[idLoc]
 			loc := strings.Index(topic, identity)
-			nextLoc := loc + len(identity)
+			var nextLoc int
+			if strings.Contains(topic, dtcommon.DeviceETPrefix) {
+				identity = identity + "/" + splitString[idLoc+1]
+			}
+			nextLoc = loc + len(identity)
 			prefix := topic[0:loc]
 			suffix := topic[nextLoc:]
 			klog.Infof("%s %s", prefix, suffix)
