@@ -91,15 +91,15 @@ func TestGetDeviceID(t *testing.T) {
 		{
 			name: "TestGetDeviceID(): Case 1: success",
 			args: args{
-				resource: fmt.Sprintf("node/%s/%s/%s", "nid", ResourceDevice, "did"),
+				resource: fmt.Sprintf("node/%s/%s/%s/%s", "nid", ResourceDevice, "ns", "did"),
 			},
-			want:    "did",
+			want:    "ns/did",
 			wantErr: nil,
 		},
 		{
-			name: "TestGetDeviceID(): Case 2: length less then 4",
+			name: "TestGetDeviceID(): Case 2: length less then 5",
 			args: args{
-				resource: fmt.Sprintf("node/%s/%s", "nid", ResourceDevice),
+				resource: fmt.Sprintf("node/%s/%s/%s", "nid", ResourceDevice, "ns"),
 			},
 			want:    "",
 			wantErr: fmt.Errorf("failed to get device id"),

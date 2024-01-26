@@ -397,7 +397,7 @@ func Test_classifyMsg(t *testing.T) {
 	otherTopic := "/membership/detail/result"
 	otherEncodedTopic := base64.URLEncoding.EncodeToString([]byte(otherTopic))
 	//Encoded eventbus resource
-	eventbusTopic := "$hw/events/device/+/state/update"
+	eventbusTopic := "$hw/events/device/+/+/state/update"
 	eventbusResource := base64.URLEncoding.EncodeToString([]byte(eventbusTopic))
 
 	content := testutil.GenerateAddDevicePalyloadMsg(t)
