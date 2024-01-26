@@ -82,7 +82,7 @@ type TwinAttribute struct {
 }
 
 func GenerateDeviceID(deviceSuffix string) string {
-	return deviceSuffix + edge.GetRandomString(10)
+	return "default/" + deviceSuffix + edge.GetRandomString(10)
 }
 
 // Function to Generate Device
