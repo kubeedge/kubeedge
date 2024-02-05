@@ -41,6 +41,7 @@ import (
 func SetDefaultsKubeletConfiguration(obj *TailoredKubeletConfiguration) {
 	obj.StaticPodPath = constants.DefaultManifestsDir
 	obj.SyncFrequency = metav1.Duration{Duration: 1 * time.Minute}
+	obj.FileCheckFrequency = metav1.Duration{Duration: 20 * time.Second}
 	obj.Address = constants.ServerAddress
 	obj.ReadOnlyPort = constants.ServerPort
 	obj.ClusterDomain = constants.DefaultClusterDomain
