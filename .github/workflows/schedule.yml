@@ -98,11 +98,11 @@ jobs:
           - WebSocket
           - QUIC
         version:
-          - v1.27.3
-          - v1.26.6
-          - v1.25.11
-          - v1.24.15
-          - v1.23.17
+          - v1.28.6
+          - v1.27.10
+          - v1.26.13
+          - v1.25.16
+          - v1.24.17
     timeout-minutes: 90
     name: E2e k8s compatibility test
     needs: image-prepare
@@ -122,8 +122,8 @@ jobs:
       - name: Install dependences
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
-          go install sigs.k8s.io/kind@v0.19.0
-          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.27.7/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          go install sigs.k8s.io/kind@v0.21.0
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.28.6/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v3
