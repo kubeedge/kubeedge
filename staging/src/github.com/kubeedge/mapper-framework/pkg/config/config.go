@@ -44,6 +44,7 @@ type Common struct {
 	Protocol     string `yaml:"protocol"`
 	Address      string `yaml:"address"`
 	EdgeCoreSock string `yaml:"edgecore_sock"`
+	HTTPPort     string `yaml:"http_port"`
 }
 
 // Parse the configuration file. If failed, return error.

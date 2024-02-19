@@ -30,10 +30,14 @@ type RestServer struct {
 
 type Option func(server *RestServer)
 
-func NewRestServer(devPanel global.DevPanel, options ...Option) *RestServer {
+func NewRestServer(devPanel global.DevPanel, httpPort string, options ...Option) *RestServer {
+	if httpPort == "" {
+		httpPort = "7777"
+	}
+
 	rest := &RestServer{
 		IP:           "0.0.0.0",
-		Port:         "7777",
+		Port:         httpPort,
 		Router:       mux.NewRouter(),
 		WriteTimeout: 10 * time.Second,
 		ReadTimeout:  10 * time.Second,

@@ -43,7 +43,7 @@ func main() {
 	go panel.DevStart()
 
 	// start http server
-	httpServer := httpserver.NewRestServer(panel)
+	httpServer := httpserver.NewRestServer(panel, c.Common.HTTPPort)
 	go httpServer.StartServer()
 
 	// start grpc server
