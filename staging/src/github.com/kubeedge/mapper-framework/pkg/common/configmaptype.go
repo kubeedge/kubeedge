@@ -18,14 +18,7 @@ package common
 
 import "encoding/json"
 
-// DeviceProfile is structure to store in configMap. It will be removed later
-type DeviceProfile struct {
-	DeviceInstances []DeviceInstance `json:"deviceInstances,omitempty"`
-	DeviceModels    []DeviceModel    `json:"deviceModels,omitempty"`
-	Protocols       []ProtocolConfig `json:"protocols,omitempty"`
-}
-
-// DeviceInstance is structure to store device in deviceProfile.json in configmap.
+// DeviceInstance is structure to store detailed information about the device in the mapper.
 type DeviceInstance struct {
 	ID           string `json:"id,omitempty"`
 	Name         string `json:"name,omitempty"`
@@ -37,7 +30,7 @@ type DeviceInstance struct {
 	Properties   []DeviceProperty `json:"properties,omitempty"`
 }
 
-// DeviceModel is structure to store deviceModel in deviceProfile.json in configmap.
+// DeviceModel is structure to store detailed information about the devicemodel in the mapper.
 type DeviceModel struct {
 	ID          string          `json:"id,omitempty"`
 	Name        string          `json:"name,omitempty"`
@@ -57,8 +50,7 @@ type ModelProperty struct {
 	Unit        string `json:"unit,omitempty"`
 }
 
-// Protocol is structure to store protocol in deviceProfile.json in configmap.
-
+// ProtocolConfig is structure to store protocol information in device.
 type ProtocolConfig struct {
 	// Unique protocol name
 	// Required.
@@ -69,7 +61,7 @@ type ProtocolConfig struct {
 	ConfigData json.RawMessage `json:"configData,omitempty"`
 }
 
-// DeviceProperty is structure to store propertyVisitor in deviceProfile.json in configmap.
+// DeviceProperty is structure to store propertyVisitor in device.
 type DeviceProperty struct {
 	Name         string          `json:"name,omitempty"`
 	PropertyName string          `json:"propertyName,omitempty"`
@@ -91,6 +83,7 @@ type PushMethodConfig struct {
 	DBMethod     DBMethodConfig  `json:"dbMethod,omitempty"`
 }
 
+// DBMethodConfig is structure to store database config
 type DBMethodConfig struct {
 	DBMethodName string   `json:"dbMethodName"`
 	DBConfig     DBConfig `json:"dbConfig"`
