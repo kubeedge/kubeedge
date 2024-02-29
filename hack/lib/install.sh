@@ -90,7 +90,7 @@ verify_docker_installed() {
   # verify the docker installed
   command -v docker >/dev/null || {
     echo "must install the docker first"
-    exit 1
+    return 1
   }
 }
 
@@ -98,7 +98,7 @@ verify_cridockerd_installed() {
   # verify the cri-dockerd installed
   command -v cri-dockerd >/dev/null || {
     echo "must install the cri-dockerd first"
-    exit 1
+    return 1
   }
 }
 
@@ -106,7 +106,7 @@ verify_crio_installed() {
   # verify the cri-o installed
   command -v crio >/dev/null || {
     echo "must install the cri-o first"
-    exit 1
+    return 1
   }
 }
 
@@ -114,7 +114,7 @@ verify_isulad_installed() {
   # verify the isulad installed
   command -v isulad >/dev/null || {
     echo "must install the isulad first"
-    exit 1
+    return 1
   }
 }
 
