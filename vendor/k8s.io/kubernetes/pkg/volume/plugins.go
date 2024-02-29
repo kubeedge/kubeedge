@@ -39,7 +39,6 @@ import (
 	storagelistersv1 "k8s.io/client-go/listers/storage/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
-	proxyutil "k8s.io/kubernetes/pkg/proxy/util"
 	"k8s.io/kubernetes/pkg/volume/util/hostutil"
 	"k8s.io/kubernetes/pkg/volume/util/recyclerclient"
 	"k8s.io/kubernetes/pkg/volume/util/subpath"
@@ -439,9 +438,6 @@ type VolumeHost interface {
 
 	// Returns an interface that should be used to execute subpath operations
 	GetSubpather() subpath.Interface
-
-	// Returns options to pass for proxyutil filtered dialers.
-	GetFilteredDialOptions() *proxyutil.FilteredDialOptions
 }
 
 // VolumePluginMgr tracks registered plugins.
@@ -690,13 +686,11 @@ func (pm *VolumePluginMgr) FindPluginBySpec(spec *Spec) (VolumePlugin, error) {
 	return match, nil
 }
 
-// FindPluginByName fetches a plugin by name or by legacy name.  If no plugin
-// is found, returns error.
+// FindPluginByName fetches a plugin by name. If no plugin is found, returns error.
 func (pm *VolumePluginMgr) FindPluginByName(name string) (VolumePlugin, error) {
 	pm.mutex.RLock()
 	defer pm.mutex.RUnlock()
 
-	// Once we can get rid of legacy names we can reduce this to a map lookup.
 	var match VolumePlugin
 	if v, found := pm.plugins[name]; found {
 		match = v
@@ -1061,7 +1055,7 @@ func NewPersistentVolumeRecyclerPodTemplate() *v1.Pod {
 					Name:    "pv-recycler",
 					Image:   "registry.k8s.io/debian-base:v2.0.0",
 					Command: []string{"/bin/sh"},
-					Args:    []string{"-c", "test -e /scrub && rm -rf /scrub/..?* /scrub/.[!.]* /scrub/*  && test -z \"$(ls -A /scrub)\" || exit 1"},
+					Args:    []string{"-c", "test -e /scrub && find /scrub -mindepth 1 -delete && test -z \"$(ls -A /scrub)\" || exit 1"},
 					VolumeMounts: []v1.VolumeMount{
 						{
 							Name:      "vol",

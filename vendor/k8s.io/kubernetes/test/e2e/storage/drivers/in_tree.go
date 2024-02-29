@@ -18,10 +18,10 @@ limitations under the License.
  * This file defines various in-tree volume test drivers for TestSuites.
  *
  * There are two ways, how to prepare test drivers:
- * 1) With containerized server (NFS, Ceph, Gluster, iSCSI, ...)
+ * 1) With containerized server (NFS, Ceph, iSCSI, ...)
  * It creates a server pod which defines one volume for the tests.
  * These tests work only when privileged containers are allowed, exporting
- * various filesystems (NFS, GlusterFS, ...) usually needs some mounting or
+ * various filesystems (like NFS) usually needs some mounting or
  * other privileged magic in the server pod.
  *
  * Note that the server containers are for testing purposes only and should not
@@ -347,6 +347,8 @@ func newISCSIServer(ctx context.Context, cs clientset.Interface, namespace strin
 			"/sys/kernel": "/sys/kernel",
 			// iSCSI source "block devices" must be available on the host
 			"/srv/iscsi": "/srv/iscsi",
+			// targetcli uses dbus
+			"/run/dbus": "/run/dbus",
 		},
 		ServerReadyMessage: "iscsi target started",
 		ServerHostNetwork:  true,
@@ -1281,6 +1283,7 @@ func (v *vSphereDriver) GetDynamicProvisionStorageClass(ctx context.Context, con
 }
 
 func (v *vSphereDriver) PrepareTest(ctx context.Context, f *framework.Framework) *storageframework.PerTestConfig {
+	vspheretest.Bootstrap(f)
 	ginkgo.DeferCleanup(func(ctx context.Context) {
 		// Driver Cleanup function
 		// Logout each vSphere client connection to prevent session leakage
@@ -1300,7 +1303,6 @@ func (v *vSphereDriver) PrepareTest(ctx context.Context, f *framework.Framework)
 
 func (v *vSphereDriver) CreateVolume(ctx context.Context, config *storageframework.PerTestConfig, volType storageframework.TestVolType) storageframework.TestVolume {
 	f := config.Framework
-	vspheretest.Bootstrap(f)
 	nodeInfo := vspheretest.GetReadySchedulableRandomNodeInfo(ctx, f.ClientSet)
 	volumePath, err := nodeInfo.VSphere.CreateVolume(&vspheretest.VolumeOptions{}, nodeInfo.DataCenterRef)
 	framework.ExpectNoError(err)
