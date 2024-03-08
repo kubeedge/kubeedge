@@ -382,8 +382,8 @@ func (in *Overriders) DeepCopyInto(out *Overriders) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	if in.EnvOverrides != nil {
-		in, out := &in.EnvOverrides, &out.EnvOverrides
+	if in.EnvOverriders != nil {
+		in, out := &in.EnvOverriders, &out.EnvOverriders
 		*out = make([]EnvOverrider, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
@@ -403,8 +403,8 @@ func (in *Overriders) DeepCopyInto(out *Overriders) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	if in.ResourcesOverrides != nil {
-		in, out := &in.ResourcesOverrides, &out.ResourcesOverrides
+	if in.ResourcesOverriders != nil {
+		in, out := &in.ResourcesOverriders, &out.ResourcesOverriders
 		*out = make([]ResourcesOverrider, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])

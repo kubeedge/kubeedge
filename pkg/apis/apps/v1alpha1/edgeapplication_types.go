@@ -63,18 +63,18 @@ type Overriders struct {
 	// ImageOverriders represents the rules dedicated to handling image overrides.
 	// +optional
 	ImageOverriders []ImageOverrider `json:"imageOverriders,omitempty"`
-	// EnvOverrides will override the env field of the container
+	// EnvOverriders will override the env field of the container
 	// +optional
-	EnvOverrides []EnvOverrider `json:"envOverrides,omitempty"`
+	EnvOverriders []EnvOverrider `json:"envOverriders,omitempty"`
 	// CommandOverriders represents the rules dedicated to handling container command
 	// +optional
 	CommandOverriders []CommandArgsOverrider `json:"commandOverriders,omitempty"`
 	// ArgsOverriders represents the rules dedicated to handling container args
 	// +optional
 	ArgsOverriders []CommandArgsOverrider `json:"argsOverriders,omitempty"`
-	// ResourcesOverrides will override the resources field of the container
+	// ResourcesOverriders will override the resources field of the container
 	// +optional
-	ResourcesOverrides []ResourcesOverrider `json:"resourcesOverrides,omitempty"`
+	ResourcesOverriders []ResourcesOverrider `json:"resourcesOverriders,omitempty"`
 }
 
 // CommandArgsOverrider represents the rules dedicated to handling command/args overrides.

@@ -32,7 +32,7 @@ import (
 type EnvOverrider struct{}
 
 func (o *EnvOverrider) ApplyOverrides(rawObj *unstructured.Unstructured, overriders OverriderInfo) error {
-	envOverriders := overriders.Overriders.EnvOverrides
+	envOverriders := overriders.Overriders.EnvOverriders
 	for index := range envOverriders {
 		patches, err := buildEnvPatches(rawObj, &envOverriders[index])
 		if err != nil {
