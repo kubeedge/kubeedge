@@ -21,11 +21,10 @@ import (
 
 	"github.com/blang/semver"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
-	helm "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/helm"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/helm"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
 
@@ -48,25 +47,19 @@ keadm init --advertise-address=127.0.0.1 --profile version=v%s --kube-config=/ro
 // NewCloudInit represents the keadm init command for cloud component
 func NewCloudInit() *cobra.Command {
 	opts := newInitOptions()
-
-	tools := make(map[string]types.ToolsInstaller)
-	flagVals := make(map[string]types.FlagData)
-
 	var cmd = &cobra.Command{
 		Use:     "init",
 		Short:   "Bootstraps cloud component. Checks and install (if required) the pre-requisites.",
 		Long:    cloudInitLongDescription,
 		Example: fmt.Sprintf(cloudInitExample, types.DefaultKubeEdgeVersion),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			checkFlags := func(f *pflag.Flag) {
-				util.AddToolVals(f, flagVals)
-			}
-			cmd.Flags().VisitAll(checkFlags)
-			err := AddInit2ToolsList(tools, opts)
+			ver, err := util.GetCurrentVersion(opts.KubeEdgeVersion)
 			if err != nil {
-				return err
+				return fmt.Errorf("keadm init failed: %v", err)
 			}
-			return ExecuteInit(tools)
+			opts.KubeEdgeVersion = ver
+			tool := helm.NewCloudCoreHelmTool(opts.KubeConfig, opts.KubeEdgeVersion)
+			return tool.Install(opts)
 		},
 	}
 
