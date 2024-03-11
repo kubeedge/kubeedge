@@ -104,9 +104,22 @@ func (c *CloudCoreHelmTool) Install(opts *types.InitOptions) error {
 
 	appendDefaultSets(opts.KubeEdgeVersion, opts.AdvertiseAddress, &opts.CloudInitUpdateBase)
 	// Load profile values, and merges the sets flag
-	vals, err := MergeProfileValues(getValuesFile(opts.Profile), opts.GetValidSets())
-	if err != nil {
-		return err
+	var vals map[string]interface{}
+	var err error
+	if opts.Profile != "" {
+		// Load profile values, and merges the sets flag
+		vals, err = MergeProfileValues(getValuesFile(opts.Profile), opts.GetValidSets())
+		if err != nil {
+			return err
+		}
+	} else {
+		valueOpts := &Options{
+			Values: opts.GetValidSets(),
+		}
+		vals, err = valueOpts.MergeValues()
+		if err != nil {
+			return err
+		}
 	}
 
 	// TODO: think about how to support addons, and should we support addons?
@@ -137,6 +150,7 @@ func (c *CloudCoreHelmTool) Install(opts *types.InitOptions) error {
 	client.DryRun = opts.DryRun
 	client.CreateNamespace = defaultHelmCreateNs
 	client.ReleaseName = renderer.componentName
+	client.Namespace = constants.SystemNamespace
 	// If the flag force is true, don't wait for the command result of helm install
 	if !opts.Force {
 		client.Wait = defaultHelmWait
