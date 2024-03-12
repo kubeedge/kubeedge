@@ -84,7 +84,14 @@ func HasSystemd() bool {
 // RunningModuleV2 identifies cloudcore/edgecore running or not.
 // only used for cloudcore container install and edgecore binary install
 func RunningModuleV2(opt *types.ResetOptions) types.ModuleRunning {
-	osType := GetOSInterface()
+	result := CloudCoreRunningModuleV2(opt)
+	if result == types.KubeEdgeCloudRunning {
+		return result
+	}
+	return EdgeCoreRunningModuleV2(opt)
+}
+
+func CloudCoreRunningModuleV2(opt *types.ResetOptions) types.ModuleRunning {
 	cloudCoreRunning, err := IsCloudcoreContainerRunning(constants.SystemNamespace, opt.Kubeconfig)
 	if err != nil {
 		// just log the error, maybe we do not care
@@ -93,7 +100,11 @@ func RunningModuleV2(opt *types.ResetOptions) types.ModuleRunning {
 	if cloudCoreRunning {
 		return types.KubeEdgeCloudRunning
 	}
+	return types.NoneRunning
+}
 
+func EdgeCoreRunningModuleV2(opt *types.ResetOptions) types.ModuleRunning {
+	osType := GetOSInterface()
 	edgeCoreRunning, err := osType.IsKubeEdgeProcessRunning(KubeEdgeBinaryName)
 	if err != nil {
 		// just log the error, maybe we do not care
