@@ -65,6 +65,7 @@ require (
 	golang.org/x/text v0.13.0
 	gopkg.in/square/go-jose.v2 v2.6.0
 	gopkg.in/yaml.v3 v3.0.1
+	k8s.io/component-helpers v0.0.0
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3
 )
 
@@ -259,7 +260,6 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/cloud-provider v0.27.7 // indirect
 	k8s.io/cluster-bootstrap v0.27.7 // indirect
-	k8s.io/component-helpers v0.0.0 // indirect
 	k8s.io/controller-manager v0.0.0 // indirect
 	k8s.io/csi-translation-lib v0.27.7 // indirect
 	k8s.io/dynamic-resource-allocation v0.0.0 // indirect
