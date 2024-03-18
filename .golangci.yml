@@ -43,6 +43,7 @@ linters-settings:
   misspell:
     ignore-words:
       - mosquitto
+      - creater
 
 linters:
   disable-all: true
