@@ -1,0 +1,39 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cloudcore
+  {{- with .Values.cloudCore.labels }}
+  labels: {{- toYaml . | nindent 4 }}
+  {{- end }}
+aggregationRule:
+  clusterRoleSelectors:
+  - matchLabels:
+      rbac/aggregate-to-cloudcore: "true"
+rules: []
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  {{- with .Values.cloudCore.labels }}
+  labels: {{- toYaml . | nindent 4 }}
+  {{- end }}
+  name: cloudcore
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cloudcore
+  {{- with .Values.cloudCore.labels }}
+  labels: {{- toYaml . | nindent 4 }}
+  {{- end }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cloudcore
+subjects:
+  - kind: ServiceAccount
+    name: cloudcore
+    namespace: {{ .Release.Namespace }}

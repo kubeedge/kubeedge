@@ -1,11 +1,9 @@
----
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: cloudcore
-  {{- with .Values.cloudCore.labels }}
-  labels: {{- toYaml . | nindent 4 }}
-  {{- end }}
+  name: cloudcore-common
+  labels:
+    rbac/aggregate-to-cloudcore: "true"
 rules:
 - apiGroups: [""]
   resources: ["nodes", "nodes/status", "serviceaccounts/token", "configmaps", "pods", "pods/status", "secrets", "endpoints", "services", "persistentvolumes", "persistentvolumeclaims"]
@@ -40,31 +38,3 @@ rules:
 - apiGroups: ["operations.kubeedge.io"]
   resources: ["nodeupgradejobs", "nodeupgradejobs/status", "imageprepulljobs", "imageprepulljobs/status"]
   verbs: ["get", "list", "watch", "update", "patch"]
-
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  {{- with .Values.cloudCore.labels }}
-  labels: {{- toYaml . | nindent 4 }}
-  {{- end }}
-  name: cloudcore
-
---- 
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: cloudcore
-  {{- with .Values.cloudCore.labels }}
-  labels: {{- toYaml . | nindent 4 }}
-  {{- end }}
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cloudcore
-subjects:
-- kind: ServiceAccount
-  name: cloudcore
-  namespace: {{ .Release.Namespace }}
-
-

@@ -9,6 +9,8 @@ data:
   cloudcore.yaml: |
     apiVersion: cloudcore.config.kubeedge.io/v1alpha2
     kind: CloudCore
+    featureGates:
+      requireAuthorization: {{ .Values.cloudCore.featureGates.requireAuthorization }}
     kubeAPIConfig:
       kubeConfig: ""
       master: ""

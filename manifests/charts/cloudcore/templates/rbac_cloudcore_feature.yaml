@@ -1,0 +1,18 @@
+{{- if .Values.cloudCore.featureGates.requireAuthorization }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cloudcore-feature
+  labels:
+    rbac/aggregate-to-cloudcore: "true"
+rules:
+- apiGroups: [""]
+  resources: ["serviceaccounts"]
+  verbs: ["list", "watch"]
+- apiGroups: ["policy.kubeedge.io"]
+  resources: ["serviceaccountaccesses"]
+  verbs: ["list", "watch"]
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources: ["roles", "clusterrolebindings", "rolebindings", "clusterroles"]
+  verbs: ["list", "watch"]
+{{- end }}

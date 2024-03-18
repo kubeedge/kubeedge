@@ -34,6 +34,8 @@ cloudCore:
       cpu: 100m
       memory: 512Mi
   strategy: {}
+  featureGates:
+    requireAuthorization: false
   modules:
     cloudHub:
       # Caution!: Leave this entry to empty will cause CloudCore to exit abnormally once KubeEdge is enabled.
