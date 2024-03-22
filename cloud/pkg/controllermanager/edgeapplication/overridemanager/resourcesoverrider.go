@@ -30,7 +30,7 @@ import (
 type ResourcesOverrider struct{}
 
 func (o *ResourcesOverrider) ApplyOverrides(rawObj *unstructured.Unstructured, overriders OverriderInfo) error {
-	resourcesOverriders := overriders.Overriders.ResourcesOverrides
+	resourcesOverriders := overriders.Overriders.ResourcesOverriders
 	for index := range resourcesOverriders {
 		patches, err := buildResourcesPatches(rawObj, &resourcesOverriders[index])
 		if err != nil {

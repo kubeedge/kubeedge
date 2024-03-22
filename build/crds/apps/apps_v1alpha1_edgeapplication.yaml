@@ -121,8 +121,8 @@ spec:
                                 - operator
                                 type: object
                               type: array
-                            envOverrides:
-                              description: EnvOverrides will override the env field
+                            envOverriders:
+                              description: EnvOverriders will override the env field
                                 of the container
                               items:
                                 description: EnvOverrider represents the rules dedicated
@@ -338,8 +338,8 @@ spec:
                               description: Replicas will override the replicas field
                                 of deployment
                               type: integer
-                            resourcesOverrides:
-                              description: ResourcesOverrides will override the resources
+                            resourcesOverriders:
+                              description: ResourcesOverriders will override the resources
                                 field of the container
                               items:
                                 description: ResourcesOverrider represents the rules
