@@ -137,7 +137,7 @@ func prePullImages(prePullReq commontypes.ImagePrePullJobRequest, container util
 		prePullStatus := v1alpha1.ImageStatus{
 			Image: image,
 		}
-		for i := 0; i < int(prePullReq.RetryTimes); i++ {
+		for i := 0; i <= int(prePullReq.RetryTimes); i++ {
 			err = container.PullImage(image, authConfig, nil)
 			if err == nil {
 				break
