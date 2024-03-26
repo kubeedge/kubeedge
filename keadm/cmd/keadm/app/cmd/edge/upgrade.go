@@ -51,7 +51,7 @@ func NewEdgeUpgrade() *cobra.Command {
 		Long:  "Upgrade edge components. Upgrade the edge node to the desired version.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// upgrade edgecore
-			return upgradeOptions.upgrade()
+			return upgradeOptions.Upgrade()
 		},
 	}
 
@@ -68,7 +68,8 @@ func NewUpgradeOptions() *UpgradeOptions {
 	return opts
 }
 
-func (up *UpgradeOptions) upgrade() error {
+// Upgrade handles upgrade command logic
+func (up *UpgradeOptions) Upgrade() error {
 	// get EdgeCore configuration from edgecore.yaml config file
 	data, err := os.ReadFile(up.Config)
 	if err != nil {

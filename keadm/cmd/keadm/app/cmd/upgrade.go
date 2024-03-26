@@ -13,6 +13,7 @@ Specify whether to upgrade the cloud or the edge through three-level commands.
 If no three-level command, it upgrades edge components.`
 )
 
+// NewUpgradeCommand creates a upgrade command instance and returns it.
 func NewUpgradeCommand() *cobra.Command {
 	cmds := &cobra.Command{
 		Use:   "upgrade",
@@ -20,15 +21,15 @@ func NewUpgradeCommand() *cobra.Command {
 		Long:  upgradeLongDescription,
 	}
 
-	edgecmd := edge.NewEdgeUpgrade()
-
 	// Used for backward compatibility of the edgecore trigger the upgrade command
 	upgradeOptions := edge.NewUpgradeOptions()
+	cmds.RunE = func(cmd *cobra.Command, args []string) error {
+		return upgradeOptions.Upgrade()
+	}
 	edge.AddUpgradeFlags(cmds, upgradeOptions)
-	cmds.RunE = edgecmd.RunE
 
 	// Register three-level commands
-	cmds.AddCommand(edgecmd)
+	cmds.AddCommand(edge.NewEdgeUpgrade())
 	cmds.AddCommand(cloud.NewCloudUpgrade())
 	return cmds
 }
