@@ -10,5 +10,5 @@ spec:
       - busybox:latest
     nodes:
       - edgenode1 # Need to replaced with your own node name
-    timeoutSecondsOnEachNode: 300
+    timeoutSeconds: 300
     retryTimes: 1
