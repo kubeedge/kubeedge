@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/avast/retry-go"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -204,12 +205,19 @@ func getKey(namespace, name string) string {
 }
 
 func addRuleWithRetry(rule *routerv1.Rule) {
-	retry, waitTime := 3, 5
-	for i := 0; i <= retry; i++ {
-		if err := addRule(rule); err == nil {
-			break
-		}
-		klog.Errorf("add rule fail, wait to retry. retry time: %d", i+1)
-		time.Sleep(time.Duration(waitTime*(i+1)) * time.Second)
+	err := retry.Do(
+		func() error {
+			if err := addRule(rule); err != nil {
+				klog.Error("add rule fail, wait to retry.")
+				return err
+			}
+			return nil
+		},
+		retry.Delay(5*time.Second),
+		retry.Attempts(3),
+		retry.DelayType(retry.BackOffDelay),
+	)
+	if err != nil {
+		klog.Errorf("Adding a rule failed and the number of retries has been reached, err: %s", err)
 	}
 }
