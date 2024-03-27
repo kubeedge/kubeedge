@@ -31,27 +31,14 @@ import (
 
 var (
 	cloudManifestLongDescription = `
-"keadm manifest" command renders charts by using a list of set flags like helm.
-`
-
-	cloudManifestGenerateLongDescription = `
-"keadm manifest generate" command renders charts by using a list of set flags like helm, and generates kubernetes resources.
-`
-
-	cloudManifestExample = `
-keadm manifest
-- This command will render Kubernetes resources
-
-keadm generate --advertise-address=127.0.0.1 --profile version=v%s --kube-config=/root/.kube/config
-  - kube-config is the absolute path of kubeconfig which used to secure connectivity between cloudcore and kube-apiserver
-	- a list of helm style set flags like "--set key=value" can be implemented, ref: https://github.com/kubeedge/kubeedge/tree/master/manifests/charts/cloudcore/README.md
+"keadm manifest" command renders charts by using a list of set flags like helm, and generates kubernetes resources.
 `
 
 	cloudManifestGenerateExample = `
-keadm manifest generate
+keadm manifest
 - This command will render and generate Kubernetes resources
 
-keadm manifest generate --advertise-address=127.0.0.1 --profile version=v%s --kube-config=/root/.kube/config
+keadm manifest --advertise-address=127.0.0.1 --profile version=v%s --kube-config=/root/.kube/config
   - kube-config is the absolute path of kubeconfig which used to secure connectivity between cloudcore and kube-apiserver
 	- a list of helm style set flags like "--set key=value" can be implemented, ref: https://github.com/kubeedge/kubeedge/tree/master/manifests/charts/cloudcore/README.md
 `
@@ -64,9 +51,9 @@ func NewManifestGenerate() *cobra.Command {
 	flagVals := make(map[string]types.FlagData)
 
 	var generateCmd = &cobra.Command{
-		Use:     "generate",
+		Use:     "manifest",
 		Short:   "Checks and generate the manifests.",
-		Long:    cloudManifestGenerateLongDescription,
+		Long:    cloudManifestLongDescription,
 		Example: fmt.Sprintf(cloudManifestGenerateExample, types.DefaultKubeEdgeVersion),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			checkFlags := func(f *pflag.Flag) {
@@ -81,15 +68,7 @@ func NewManifestGenerate() *cobra.Command {
 	}
 
 	addManifestsGenerateJoinOtherFlags(generateCmd, opts)
-
-	var manifestCmd = &cobra.Command{
-		Use:     "manifest",
-		Short:   "Render the manifests by using a list of set flags like helm.",
-		Long:    cloudManifestLongDescription,
-		Example: fmt.Sprintf(cloudManifestExample, types.DefaultKubeEdgeVersion),
-	}
-	manifestCmd.AddCommand(generateCmd)
-	return manifestCmd
+	return generateCmd
 }
 
 func addManifestsGenerateJoinOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
