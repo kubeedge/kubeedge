@@ -108,7 +108,7 @@ func (sb *ServiceBus) Forward(target provider.Target, data interface{}) (respons
 }
 
 func (sf *servicebusFactory) GetTarget(ep *v1.RuleEndpoint, targetResource map[string]string) provider.Target {
-	targetPath, exist := targetResource["path"]
+	targetPath, exist := targetResource[constants.Path]
 	if !exist {
 		klog.Errorf("target resource attributes \"targetPath\" does not exist")
 		return nil
