@@ -1,8 +1,28 @@
+* [v1.16.1](#v1161)
+  * [Downloads for v1.16.1](#downloads-for-v1161)
+  * [KubeEdge v1.16.1 Release Notes](#kubeedge-v1161-release-notes)
+    * [Changelog since v1.16.0](#changelog-since-v1160)
 * [v1.16.0](#v1160)
     * [Downloads for v1.16.0](#downloads-for-v1160)
     * [KubeEdge v1.16 Release Notes](#kubeedge-v116-release-notes)
         * [1.16 What's New](#116-whats-new)
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
+
+# v1.16.1
+
+## Downloads for v1.16.1
+
+Download v1.16.1 in the [v1.16.1 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.16.1).
+
+## KubeEdge v1.16.1 Release Notes
+
+### Changelog since v1.16.0
+
+- Fix edgeapplication differentiated configuration where env support was not comprehensive. ([#5455](https://github.com/kubeedge/kubeedge/pull/5455), [@tangming1996](https://github.com/tangming1996))
+- Fix character error in edgeapplication API. ([#5460](https://github.com/kubeedge/kubeedge/pull/5460), [@tangming1996](https://github.com/tangming1996))
+- Fix metaserver panic due to nil initializers in request scope. ([#5479](https://github.com/kubeedge/kubeedge/pull/5479), [@Windrow14](https://github.com/Windrow14))
+- Fix incorrect handling of retryTimes in imagePrePullJob. ([#5491](https://github.com/kubeedge/kubeedge/pull/5491), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Fix Keadm upgrade command. ([#5492](https://github.com/kubeedge/kubeedge/pull/5492), [@WillardHu](https://github.com/WillardHu))
 
 ## Downloads for v1.16.0
 
