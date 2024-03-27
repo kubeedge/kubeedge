@@ -54,4 +54,6 @@ export GINKGO_TESTING_RESULT=0
 
 trap cleanup EXIT
 
+sleep 10
+
 bash -x ${curpath}/tests/scripts/fast_test.sh ${compilemodule}
