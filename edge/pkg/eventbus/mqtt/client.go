@@ -42,8 +42,8 @@ var (
 	// SubTopics which edge-client should be sub
 	SubTopics = []string{
 		"$hw/events/upload/#",
-		"$hw/events/device/+/state/update",
-		"$hw/events/device/+/twin/+",
+		"$hw/events/device/+/+/state/update",
+		"$hw/events/device/+/+/twin/+",
 		"$hw/events/node/+/membership/get",
 		UploadTopic,
 		"+/user/#",

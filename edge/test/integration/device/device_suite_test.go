@@ -52,9 +52,9 @@ var (
 	//deviceupload topic
 	DeviceUpload = "$hw/events/upload/#"
 	//device status update topic "$hw/events/device/+/state/update"
-	DevicestatusUpdate = dtcommon.DeviceETPrefix + "+" + dtcommon.DeviceETStateUpdateSuffix
+	DevicestatusUpdate = dtcommon.DeviceETPrefix + "+/+" + dtcommon.DeviceETStateUpdateSuffix
 	//device twin update topic "$hw/events/device/+/twin/+"
-	DeviceTwinUpdate = dtcommon.DeviceETPrefix + "+" + dtcommon.DeviceTwinModule + "/+"
+	DeviceTwinUpdate = dtcommon.DeviceETPrefix + "+/+" + dtcommon.DeviceTwinModule + "/+"
 	//device membership update topic "$hw/events/node/+/membership/get"
 	DeviceMembershipUpdate = dtcommon.MemETPrefix + "+" + dtcommon.MemETGetSuffix
 	//upload record to cloud topic
