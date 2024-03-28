@@ -208,6 +208,9 @@ func isExistModel(deviceMap *sync.Map, device *v1beta1.Device) bool {
 // If NodeName is updated, call add device for newNode, deleteDevice for old Node.
 // If Spec is updated, send update message to edge
 func (dc *DownstreamController) deviceUpdated(device *v1beta1.Device) {
+	if len(device.Status.Twins) > 0 {
+		removeTwinWithNameChanged(device)
+	}
 	deviceID := util.GetResourceID(device.Namespace, device.Name)
 	value, ok := dc.deviceManager.Device.Load(deviceID)
 	dc.deviceManager.Device.Store(deviceID, device)
@@ -416,4 +419,21 @@ func NewDownstreamController(crdInformerFactory crdinformers.SharedInformerFacto
 		messageLayer:       messagelayer.DeviceControllerMessageLayer(),
 	}
 	return dc, nil
+}
+
+// Remove twin with changed attribute names.
+func removeTwinWithNameChanged(device *v1beta1.Device) {
+	properties := device.Spec.Properties
+	twins := device.Status.Twins
+	newTwins := make([]v1beta1.Twin, 0, len(properties))
+	for _, twin := range twins {
+		twinName := twin.PropertyName
+		for _, property := range properties {
+			if property.Name == twinName {
+				newTwins = append(newTwins, twin)
+				break
+			}
+		}
+	}
+	device.Status.Twins = newTwins
 }

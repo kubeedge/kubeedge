@@ -135,7 +135,7 @@ func (uc *UpstreamController) updateDeviceStatus() {
 			}
 			deviceStatus := &DeviceStatus{Status: cacheDevice.Status}
 			for twinName, twin := range msgTwin.Twin {
-				deviceTwin := findTwinByName(twinName, deviceStatus.Status.Twins)
+				deviceTwin := findOrCreateTwinByName(twinName, cacheDevice.Spec.Properties, deviceStatus)
 				if deviceTwin != nil {
 					if twin.Actual != nil && twin.Actual.Value != nil {
 						reported := v1beta1.TwinProperty{}
@@ -226,10 +226,27 @@ func NewUpstreamController(dc *DownstreamController) (*UpstreamController, error
 	return uc, nil
 }
 
-func findTwinByName(twinName string, twins []v1beta1.Twin) *v1beta1.Twin {
-	for i := range twins {
-		if twinName == twins[i].PropertyName {
-			return &twins[i]
+func findOrCreateTwinByName(twinName string, properties []v1beta1.DeviceProperty, deviceStatus *DeviceStatus) *v1beta1.Twin {
+	for i := range properties {
+		if twinName == properties[i].Name {
+			twin := findTwinByName(twinName, deviceStatus)
+			if twin != nil {
+				return twin
+			}
+			twin = &v1beta1.Twin{
+				PropertyName: twinName,
+			}
+			deviceStatus.Status.Twins = append(deviceStatus.Status.Twins, *twin)
+			return twin
+		}
+	}
+	return nil
+}
+
+func findTwinByName(twinName string, deviceStatus *DeviceStatus) *v1beta1.Twin {
+	for i := range deviceStatus.Status.Twins {
+		if twinName == deviceStatus.Status.Twins[i].PropertyName {
+			return &deviceStatus.Status.Twins[i]
 		}
 	}
 	return nil
