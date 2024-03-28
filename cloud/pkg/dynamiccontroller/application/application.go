@@ -99,6 +99,11 @@ func (c *Center) ProcessApplication(app *metaserver.Application) (interface{}, e
 		if err != nil {
 			return nil, fmt.Errorf("get current list error: %v", err)
 		}
+
+		if filterChain := filter.GetFilterChainFor(gvr); filterChain != nil {
+			filterChain.Process(list, app.Nodename)
+		}
+
 		return list, nil
 	case metaserver.Watch:
 		listener, err := applicationToListener(app)
@@ -119,6 +124,11 @@ func (c *Center) ProcessApplication(app *metaserver.Application) (interface{}, e
 		if err != nil {
 			return nil, err
 		}
+
+		if filterChain := filter.GetFilterChainFor(gvr); filterChain != nil {
+			filterChain.Process(retObj, app.Nodename)
+		}
+
 		return retObj, nil
 	case metaserver.Create:
 		var option = new(metav1.CreateOptions)
@@ -219,9 +229,6 @@ func (c *Center) Response(app *metaserver.Application, parentID string, status m
 		}
 	}
 	if respContent != nil {
-		if app.Verb == metaserver.List || app.Verb == metaserver.Get {
-			filter.MessageFilter(respContent, app.Nodename)
-		}
 		app.RespBody = metaserver.ToBytes(respContent)
 	}
 
