@@ -40,11 +40,12 @@ type edgestream struct {
 	enable           bool
 	hostnameOverride string
 	nodeIP           string
+	kubeletHost      string
 }
 
 var _ core.Module = (*edgestream)(nil)
 
-func newEdgeStream(enable bool, hostnameOverride, nodeIP string) (*edgestream, error) {
+func newEdgeStream(enable bool, hostnameOverride, nodeIP string, kubeletHost string) (*edgestream, error) {
 	var err error
 	if nodeIP == "" {
 		nodeIP, err = util.GetLocalIP(util.GetHostname())
@@ -59,13 +60,14 @@ func newEdgeStream(enable bool, hostnameOverride, nodeIP string) (*edgestream, e
 		enable:           enable,
 		hostnameOverride: hostnameOverride,
 		nodeIP:           nodeIP,
+		kubeletHost:      kubeletHost,
 	}, nil
 }
 
 // Register register edgestream
-func Register(s *v1alpha2.EdgeStream, hostnameOverride, nodeIP string) {
+func Register(s *v1alpha2.EdgeStream, hostnameOverride, nodeIP string, kubeletHost string) {
 	config.InitConfigure(s)
-	edgeStream, err := newEdgeStream(s.Enable, hostnameOverride, nodeIP)
+	edgeStream, err := newEdgeStream(s.Enable, hostnameOverride, nodeIP, kubeletHost)
 	if err != nil {
 		klog.Errorf("init new edged error, %v", err)
 		os.Exit(1)
@@ -137,6 +139,6 @@ func (e *edgestream) TLSClientConnect(url url.URL, tlsConfig *tls.Config) error 
 		klog.Errorf("dial %v error %v", url.String(), err)
 		return err
 	}
-	session := NewTunnelSession(con)
+	session := NewTunnelSession(con, e.kubeletHost)
 	return session.Serve()
 }

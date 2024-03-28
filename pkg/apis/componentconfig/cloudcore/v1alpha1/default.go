@@ -35,7 +35,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 			APIVersion: path.Join(GroupName, APIVersion),
 		},
 		CommonConfig: &CommonConfig{
-			TunnelPort: constants.ServerPort,
+			TunnelPort: constants.KubeletDefaultServerPort,
 			MonitorServer: MonitorServer{
 				BindAddress:     "127.0.0.1:9091",
 				EnableProfiling: false,

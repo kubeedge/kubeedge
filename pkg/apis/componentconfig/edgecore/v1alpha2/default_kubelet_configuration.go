@@ -41,8 +41,8 @@ import (
 func SetDefaultsKubeletConfiguration(obj *TailoredKubeletConfiguration) {
 	obj.StaticPodPath = constants.DefaultManifestsDir
 	obj.SyncFrequency = metav1.Duration{Duration: 1 * time.Minute}
-	obj.Address = constants.ServerAddress
-	obj.ReadOnlyPort = constants.ServerPort
+	obj.Address = constants.KubeletDefaultServerAddress
+	obj.ReadOnlyPort = constants.KubeletDefaultServerPort
 	obj.ClusterDomain = constants.DefaultClusterDomain
 	obj.RegistryPullQPS = utilpointer.Int32(5)
 	obj.RegistryBurst = 10
