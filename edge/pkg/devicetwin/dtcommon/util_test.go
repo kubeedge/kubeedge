@@ -19,6 +19,10 @@ package dtcommon
 import (
 	"errors"
 	"testing"
+
+	"k8s.io/api/core/v1"
+
+	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1"
 )
 
 // TestValidateValue is function to test ValidateValue
@@ -173,6 +177,177 @@ func TestValidateTwinValue(t *testing.T) {
 			bool := ValidateTwinValue(test.key)
 			if test.want != bool {
 				t.Errorf("ValidateTwinValue Case failed: wanted %v and got %v", test.want, bool)
+			}
+		})
+	}
+}
+
+// TestConvertDevice is function to test ConvertDevice
+func TestConvertDevice(t *testing.T) {
+	configTestMap := make(map[string]interface{})
+	configTestMap["key1"] = "value1"
+	configTestMap["key2"] = 2
+	configTestMap["key3"] = true
+
+	cases := []struct {
+		// name is name of the testcase
+		name string
+		// device is device of the testcase
+		device *v1beta1.Device
+		// wantErr is expected error in the test case, returned by ValidateValue function
+		wantErr error
+	}{
+		{
+			name: "ConvertDeviceModelSuccessCase",
+			device: &v1beta1.Device{
+				Spec: v1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{
+						Name: "test_model",
+					},
+					Protocol: v1beta1.ProtocolConfig{
+						ProtocolName: "test_custiomized_protocol_name",
+						ConfigData: &v1beta1.CustomizedValue{
+							Data: configTestMap,
+						},
+					},
+					Properties: []v1beta1.DeviceProperty{
+						{
+							Name: "test_visitor_name1",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "test_custiomized_protocol_name",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: configTestMap,
+								},
+							},
+						},
+						{
+							Name: "test_visitor_name2",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "test_custiomized_protocol_name",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: configTestMap,
+								},
+							},
+						},
+					},
+				},
+				Status: v1beta1.DeviceStatus{},
+			},
+			wantErr: nil,
+		},
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			_, err := ConvertDevice(test.device)
+			if (err == nil && err != test.wantErr) || (err != nil && err.Error() != test.wantErr.Error()) {
+				t.Errorf("%v failed: %v", test.name, err)
+			}
+		})
+	}
+}
+
+// TestConvertDeviceModel is function to test ConvertDeviceModel
+func TestConvertDeviceModel(t *testing.T) {
+	cases := []struct {
+		// name is name of the testcase
+		name string
+		// model is model of the testcase
+		model *v1beta1.DeviceModel
+		// wantErr is expected error in the test case, returned by ValidateValue function
+		wantErr error
+	}{
+		{
+			name: "ConvertDeviceModelSuccessCase",
+			model: &v1beta1.DeviceModel{
+				Spec: v1beta1.DeviceModelSpec{
+					Protocol: "test_model",
+				},
+			},
+		},
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			_, err := ConvertDeviceModel(test.model)
+			if (err == nil && err != test.wantErr) || (err != nil && err.Error() != test.wantErr.Error()) {
+				t.Errorf("%v failed: %v", test.name, err)
+			}
+		})
+	}
+}
+
+// TestdataToAny is function to test DataToAny
+func TestDataToAny(t *testing.T) {
+	cases := []struct {
+		// name is name of the testcase
+		name string
+		// key is key to be converted, parameter to dataToAny function
+		key interface{}
+		// wantErr is expected error in the test case, returned by ValidateValue function
+		wantErr error
+	}{{
+		// Success case
+		name:    "DataToAnyStringCase",
+		key:     "test_string",
+		wantErr: nil,
+	}, {
+		// Success case
+		name:    "DataToAnyInt8Case",
+		key:     int8(1),
+		wantErr: nil,
+	}, {
+		// Success case
+		name:    "DataToAnyInt16Case",
+		key:     int16(1),
+		wantErr: nil,
+	}, {
+		// Success case
+		name:    "DataToAnyInt32Case",
+		key:     int32(1),
+		wantErr: nil,
+	}, {
+		// Success case
+		name:    "DataToAnyInt64Case",
+		key:     int64(1),
+		wantErr: nil,
+	}, {
+		// Success case
+		name:    "DataToAnyIntCase",
+		key:     int(1),
+		wantErr: nil,
+	}, {
+		// Success case
+		name:    "DataToAnyFloat64Case",
+		key:     1.23,
+		wantErr: nil,
+	}, {
+		// Success case
+		name:    "DataToAnyFloat32Case",
+		key:     float32(1.23),
+		wantErr: nil,
+	}, {
+		// Success case
+		name:    "DataToAnyIntCase",
+		key:     1,
+		wantErr: nil,
+	}, {
+		// Success case
+		name:    "DataToAnyBoolCase",
+		key:     true,
+		wantErr: nil,
+	}, {
+		//  Failure case
+		name:    "DataToAnyFailureCase",
+		key:     []byte{},
+		wantErr: errors.New("[]uint8 does not support converting to any"),
+	},
+	}
+
+	// run the test cases
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			_, err := dataToAny(test.key)
+			if (err == nil && err != test.wantErr) || (err != nil && err.Error() != test.wantErr.Error()) {
+				t.Errorf("%v Case failed: %v", test.name, err)
 			}
 		})
 	}
