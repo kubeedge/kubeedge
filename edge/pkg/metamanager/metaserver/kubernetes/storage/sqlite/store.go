@@ -123,6 +123,10 @@ func (s *store) Count(key string) (int64, error) {
 	panic("implement me")
 }
 
+func (s *store) RequestWatchProgress(ctx context.Context) error {
+	panic("Do not call this function")
+}
+
 func New() storage.Interface {
 	return newStore()
 }
