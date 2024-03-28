@@ -99,13 +99,13 @@ type DeviceProperty struct {
 	// and collect data / perform actions on the device.
 	// Required: Protocol relevant config details about the how to access the device property.
 	Visitors VisitorConfig `json:"visitors,omitempty"`
-	// Define how frequent mapper will report the value.
+	// Define how frequent mapper will push the value to user database and application.
 	// +optional
 	ReportCycle int64 `json:"reportCycle,omitempty"`
-	// Define how frequent mapper will collect from device.
+	// Define how frequent mapper will report to the cloud.
 	// +optional
 	CollectCycle int64 `json:"collectCycle,omitempty"`
-	// whether be reported to the cloud
+	// Define whether the data will be reported to the cloud
 	ReportToCloud bool `json:"reportToCloud,omitempty"`
 	// PushMethod represents the protocol used to push data,
 	// please ensure that the mapper can access the destination address.
