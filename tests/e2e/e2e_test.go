@@ -27,8 +27,8 @@ import (
 	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/test/e2e/framework"
 
-	//_ "github.com/kubeedge/kubeedge/tests/e2e/apps"
-	//_ "github.com/kubeedge/kubeedge/tests/e2e/device"
+	_ "github.com/kubeedge/kubeedge/tests/e2e/apps"
+	_ "github.com/kubeedge/kubeedge/tests/e2e/device"
 	_ "github.com/kubeedge/kubeedge/tests/e2e/rule"
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 )
