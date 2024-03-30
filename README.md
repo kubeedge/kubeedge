@@ -59,6 +59,7 @@ KubeEdge consists of cloud part and edge part.
 | KubeEdge 1.13 | +               | ✓               | ✓               | ✓               | -               | -               | -               | -               |
 | KubeEdge 1.14 | +               | +               | ✓               | ✓               | ✓               | -               | -               | -               |
 | KubeEdge 1.15 | +               | +               | +               | +               | ✓               | ✓               | ✓               | -               |
+| KubeEdge 1.16 | +               | +               | +               | +               | +               | ✓               | ✓               | ✓               |
 | KubeEdge HEAD (master) | +               | +               | +               | +               | +               | ✓               | ✓               | ✓               |
 
 Key:
