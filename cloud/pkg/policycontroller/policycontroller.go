@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 	controllerruntime "sigs.k8s.io/controller-runtime"
+	ctrlruntimelog "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/kubeedge/beehive/pkg/core"
@@ -54,6 +56,7 @@ func NewAccessRoleControllerManager(ctx context.Context, kubeCfg *rest.Config) (
 }
 
 func setupControllers(ctx context.Context, mgr manager.Manager) error {
+	ctrlruntimelog.SetLogger(logr.New(ctrlruntimelog.NullLogSink{}))
 	// This returned cli will directly acquire the unstructured objects from API Server which
 	// have not be registered in the accessScheme.
 	cli := mgr.GetClient()
