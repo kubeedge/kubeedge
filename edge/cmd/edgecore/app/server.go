@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	ps "github.com/shirou/gopsutil/v3/process"
 	"github.com/spf13/cobra"
@@ -87,7 +88,7 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 				if err != nil {
 					klog.Exit(err)
 				}
-				config.Modules.EdgeHub.Token = string(token)
+				config.Modules.EdgeHub.Token = strings.TrimSpace(string(token))
 			}
 
 			if errs := validation.ValidateEdgeCoreConfiguration(config); len(errs) > 0 {

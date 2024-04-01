@@ -98,7 +98,7 @@ func (ch *cloudHub) Start() {
 	close(DoneTLSTunnelCerts)
 
 	// generate Token
-	if err := httpserver.GenerateToken(); err != nil {
+	if err := httpserver.GenerateAndRefresh(beehiveContext.GetContext()); err != nil {
 		klog.Exit(err)
 	}
 
