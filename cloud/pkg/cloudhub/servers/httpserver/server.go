@@ -37,6 +37,7 @@ import (
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/common/types"
+	"github.com/kubeedge/kubeedge/pkg/security/token"
 )
 
 // StartHTTPServer starts the http service
@@ -142,6 +143,7 @@ func verifyCertSubject(cert *x509.Certificate, nodeName string) error {
 func verifyAuthorization(w http.ResponseWriter, r *http.Request) bool {
 	authorizationHeader := r.Header.Get("authorization")
 	if authorizationHeader == "" {
+		klog.Warning("token validation failure, token is empty")
 		w.WriteHeader(http.StatusUnauthorized)
 		if _, err := w.Write([]byte("Invalid authorization token")); err != nil {
 			klog.Errorf("failed to write http response, err: %v", err)
@@ -150,20 +152,16 @@ func verifyAuthorization(w http.ResponseWriter, r *http.Request) bool {
 	}
 	bearerToken := strings.Split(authorizationHeader, " ")
 	if len(bearerToken) != 2 {
+		klog.Warning("token validation failure, token cannot be splited")
 		w.WriteHeader(http.StatusUnauthorized)
 		if _, err := w.Write([]byte("Invalid authorization token")); err != nil {
 			klog.Errorf("failed to write http response, err: %v", err)
 		}
 		return false
 	}
-	token, err := jwt.Parse(bearerToken[1], func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("there was an error")
-		}
-		caKey := hubconfig.Config.CaKey
-		return caKey, nil
-	})
+	valid, err := token.Verify(bearerToken[1], hubconfig.Config.CaKey)
 	if err != nil {
+		klog.Warning("token validation failure, ", err.Error())
 		if err == jwt.ErrSignatureInvalid {
 			w.WriteHeader(http.StatusUnauthorized)
 			if _, err := w.Write([]byte("Invalid authorization token")); err != nil {
@@ -175,10 +173,10 @@ func verifyAuthorization(w http.ResponseWriter, r *http.Request) bool {
 		if _, err := w.Write([]byte("Invalid authorization token")); err != nil {
 			klog.Errorf("Write body error %v", err)
 		}
-
 		return false
 	}
-	if !token.Valid {
+	if !valid {
+		klog.Warning("token validation failure, valid is false")
 		w.WriteHeader(http.StatusUnauthorized)
 		if _, err := w.Write([]byte("Invalid authorization token")); err != nil {
 			klog.Errorf("Write body error %v", err)
