@@ -127,6 +127,11 @@ type TailoredKubeletConfiguration struct {
 	// Default: "1m"
 	// +optional
 	SyncFrequency metav1.Duration `json:"syncFrequency,omitempty"`
+	// fileCheckFrequency is the duration between checking config files for
+	// new data.
+	// Default: "20s"
+	// +optional
+	FileCheckFrequency metav1.Duration `json:"fileCheckFrequency,omitempty"`
 	// address is the IP address for the Edged to serve on (set to 0.0.0.0
 	// for all interfaces).
 	// Default: "127.0.0.1"
@@ -473,22 +478,20 @@ type TailoredKubeletConfiguration struct {
 	// Default: false
 	// +optional
 	ProtectKernelDefaults bool `json:"protectKernelDefaults,omitempty"`
-	// makeIPTablesUtilChains, if true, causes the edged ensures a set of iptables rules
-	// are present on host.
-	// These rules will serve as utility rules for various components, e.g. kube-proxy.
-	// The rules will be created based on iptablesMasqueradeBit and iptablesDropBit.
+	// makeIPTablesUtilChains, if true, causes the Kubelet to create the
+	// KUBE-IPTABLES-HINT chain in iptables as a hint to other components about the
+	// configuration of iptables on the system.
 	// Default: true
 	// +optional
 	MakeIPTablesUtilChains *bool `json:"makeIPTablesUtilChains,omitempty"`
-	// iptablesMasqueradeBit is the bit of the iptables fwmark space to mark for SNAT.
-	// Values must be within the range [0, 31]. Must be different from other mark bits.
-	// Warning: Please match the value of the corresponding parameter in kube-proxy.
-	// TODO: clean up IPTablesMasqueradeBit in kube-proxy.
+	// iptablesMasqueradeBit formerly controlled the creation of the KUBE-MARK-MASQ
+	// chain.
+	// Deprecated: no longer has any effect.
 	// Default: 14
 	// +optional
 	IPTablesMasqueradeBit *int32 `json:"iptablesMasqueradeBit,omitempty"`
-	// iptablesDropBit is the bit of the iptables fwmark space to mark for dropping packets.
-	// Values must be within the range [0, 31]. Must be different from other mark bits.
+	// iptablesDropBit formerly controlled the creation of the KUBE-MARK-DROP chain.
+	// Deprecated: no longer has any effect.
 	// Default: 15
 	// +optional
 	IPTablesDropBit *int32 `json:"iptablesDropBit,omitempty"`

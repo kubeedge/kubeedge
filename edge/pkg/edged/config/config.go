@@ -35,6 +35,7 @@ func InitConfigure(e *v1alpha2.Edged) {
 func ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(in *v1alpha2.TailoredKubeletConfiguration, inFlag *v1alpha2.TailoredKubeletFlag, out *kubeletconfig.KubeletConfiguration, s conversion.Scope) error {
 	out.StaticPodPath = in.StaticPodPath
 	out.SyncFrequency = in.SyncFrequency
+	out.FileCheckFrequency = in.FileCheckFrequency
 	out.Address = in.Address
 	out.ReadOnlyPort = in.ReadOnlyPort
 	if err := v1.Convert_Pointer_int32_To_int32(&in.RegistryPullQPS, &out.RegistryPullQPS, s); err != nil {
