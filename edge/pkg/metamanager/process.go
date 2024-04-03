@@ -419,21 +419,19 @@ func (m *metaManager) process(message model.Message) {
 }
 
 func (m *metaManager) runMetaManager() {
-	go func() {
-		for {
-			select {
-			case <-beehiveContext.Done():
-				klog.Warning("MetaManager main loop stop")
-				return
-			default:
-			}
-			msg, err := beehiveContext.Receive(m.Name())
-			if err != nil {
-				klog.Errorf("get a message %+v: %v", msg, err)
-				continue
-			}
-			klog.V(2).Infof("get a message %+v", msg)
-			m.process(msg)
+	for {
+		select {
+		case <-beehiveContext.Done():
+			klog.Warning("MetaManager main loop stop")
+			return
+		default:
 		}
-	}()
+		msg, err := beehiveContext.Receive(m.Name())
+		if err != nil {
+			klog.Errorf("get a message %+v: %v", msg, err)
+			continue
+		}
+		klog.V(2).Infof("get a message %+v", msg)
+		m.process(msg)
+	}
 }
