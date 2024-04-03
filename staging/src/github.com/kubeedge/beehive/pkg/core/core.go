@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"k8s.io/klog/v2"
 
@@ -42,7 +43,12 @@ func StartModules() {
 		beehiveContext.AddModule(&m)
 		beehiveContext.AddModuleGroup(name, module.module.Group())
 
-		go moduleKeeper(name, module, m)
+		if module.remote {
+			go moduleKeeper(name, module, m)
+		} else {
+			go localModuleKeeper(module)
+		}
+
 		klog.Infof("starting module %s", name)
 	}
 }
@@ -82,5 +88,47 @@ func moduleKeeper(name string, moduleInfo *ModuleInfo, m common.ModuleInfo) {
 		// try to add module for remote modules
 		beehiveContext.AddModule(&m)
 		beehiveContext.AddModuleGroup(name, moduleInfo.module.Group())
+	}
+}
+
+// localModuleKeeper starts and tries to keep module running when module exited.
+// Call EnableModuleRestart() to enable auto-restarting feature.
+func localModuleKeeper(m *ModuleInfo) {
+	ctx := beehiveContext.GetContext()
+	backoffDuration := time.Second
+
+	afterFunc := func() {
+		if r := recover(); r != nil {
+			klog.Errorf("module %s panicking: %v", m.module.Name(), r)
+		}
+		m.active = false
+		klog.Errorf("module %s exited, will restart in %ds", m.module.Name(), int(backoffDuration))
+	}
+
+	for {
+		if moduleRestartEnabled {
+			func() {
+				defer afterFunc()
+				m.active = true
+				m.module.Start()
+			}()
+		} else {
+			m.module.Start()
+			return
+		}
+
+		select {
+		case <-ctx.Done():
+			klog.Infof("module %s shutdown", m.module.Name())
+			return
+		case <-time.After(backoffDuration):
+		}
+
+		if backoffDuration < 30*time.Second {
+			backoffDuration *= 2
+			if backoffDuration > 30*time.Second {
+				backoffDuration = 30 * time.Second
+			}
+		}
 	}
 }

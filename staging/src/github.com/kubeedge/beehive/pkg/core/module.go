@@ -19,6 +19,8 @@ var (
 	// Modules map
 	modules         map[string]*ModuleInfo
 	disabledModules map[string]*ModuleInfo
+	// feature gates
+	moduleRestartEnabled bool
 )
 
 func init() {
@@ -30,6 +32,7 @@ func init() {
 type ModuleInfo struct {
 	contextType string
 	remote      bool
+	active      bool
 	module      Module
 }
 
@@ -66,6 +69,10 @@ func (m *ModuleInfo) GetModule() Module {
 	return m.module
 }
 
+func (m *ModuleInfo) IsActive() bool {
+	return m.active
+}
+
 // GetModuleExchange return module exchange
 func GetModuleExchange() *socket.ModuleExchange {
 	exchange := socket.ModuleExchange{
@@ -77,4 +84,14 @@ func GetModuleExchange() *socket.ModuleExchange {
 		exchange.Groups[group] = append(exchange.Groups[group], name)
 	}
 	return &exchange
+}
+
+// EnableModuleRestart enable new feature for auto restarting modules
+func EnableModuleRestart() {
+	moduleRestartEnabled = true
+}
+
+// DisableModuleRestart enable new feature for auto restarting modules
+func DisableModuleRestart() {
+	moduleRestartEnabled = false
 }
