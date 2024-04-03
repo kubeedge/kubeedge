@@ -94,6 +94,11 @@ func moduleKeeper(name string, moduleInfo *ModuleInfo, m common.ModuleInfo) {
 // localModuleKeeper starts and tries to keep module running when module exited.
 // Call EnableModuleRestart() to enable auto-restarting feature.
 func localModuleKeeper(m *ModuleInfo) {
+	if !moduleRestartEnabled {
+		m.module.Start()
+		return
+	}
+
 	ctx := beehiveContext.GetContext()
 	backoffDuration := time.Second
 
@@ -106,16 +111,11 @@ func localModuleKeeper(m *ModuleInfo) {
 	}
 
 	for {
-		if moduleRestartEnabled {
-			func() {
-				defer afterFunc()
-				m.active = true
-				m.module.Start()
-			}()
-		} else {
+		func() {
+			defer afterFunc()
+			m.active = true
 			m.module.Start()
-			return
-		}
+		}()
 
 		select {
 		case <-ctx.Done():
