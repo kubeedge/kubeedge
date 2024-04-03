@@ -31,7 +31,6 @@ import (
 	"os"
 	"reflect"
 	"strconv"
-	"time"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/golang/protobuf/jsonpb"
@@ -135,14 +134,17 @@ func (e *edged) Start() {
 		}
 	}
 
+	klErrChan := make(chan error, 1)
 	go func() {
 		err := DefaultRunLiteKubelet(e.context, e.KubeletServer, e.KubeletDeps, e.FeatureGate)
 		if err != nil {
-			klog.Errorf("Start edged failed, err: %v", err)
-			os.Exit(1)
+			klErrChan <- err
+			// send empty message to wakeup syncPod loop
+			nilMsg := model.NewMessage("").BuildRouter(e.Name(), e.Group(), e.namespace+"/"+model.ResourceTypePod, "")
+			beehiveContext.Send(modules.EdgedModuleName, *nilMsg)
 		}
 	}()
-	e.syncPod(e.KubeletDeps.PodConfig)
+	e.syncPod(e.KubeletDeps.PodConfig, klErrChan)
 }
 
 // newEdged creates new edged object and initialises it
@@ -220,9 +222,7 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 	return ed, nil
 }
 
-func (e *edged) syncPod(podCfg *config.PodConfig) {
-	time.Sleep(10 * time.Second)
-
+func (e *edged) syncPod(podCfg *config.PodConfig, klErrchan <-chan error) {
 	//when starting, send msg to metamanager once to get existing pods
 	info := model.NewMessage("").BuildRouter(e.Name(), e.Group(), e.namespace+"/"+model.ResourceTypePod,
 		model.QueryOperation)
@@ -233,6 +233,9 @@ func (e *edged) syncPod(podCfg *config.PodConfig) {
 		select {
 		case <-beehiveContext.Done():
 			klog.Warning("Sync pod stop")
+			return
+		case err := <-klErrchan:
+			klog.Errorf("Start edged failed, err: %v", err)
 			return
 		default:
 		}
