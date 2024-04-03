@@ -95,3 +95,8 @@ func EnableModuleRestart() {
 func DisableModuleRestart() {
 	moduleRestartEnabled = false
 }
+
+// IsModuleRestartEnabled checks whether auto-restart feature is enabled.
+func IsModuleRestartEnabled() bool {
+	return moduleRestartEnabled
+}

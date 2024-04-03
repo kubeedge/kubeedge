@@ -31,6 +31,7 @@ import (
 	"os"
 	"reflect"
 	"strconv"
+	"time"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/golang/protobuf/jsonpb"
@@ -138,6 +139,10 @@ func (e *edged) Start() {
 	go func() {
 		err := DefaultRunLiteKubelet(e.context, e.KubeletServer, e.KubeletDeps, e.FeatureGate)
 		if err != nil {
+			if !core.IsModuleRestartEnabled() {
+				klog.Errorf("Start edged failed, err: %v", err)
+				os.Exit(1)
+			}
 			klErrChan <- err
 			// send empty message to wakeup syncPod loop
 			nilMsg := model.NewMessage("").BuildRouter(e.Name(), e.Group(), e.namespace+"/"+model.ResourceTypePod, "")
@@ -223,6 +228,9 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 }
 
 func (e *edged) syncPod(podCfg *config.PodConfig, klErrchan <-chan error) {
+	if !core.IsModuleRestartEnabled() {
+		time.Sleep(10 * time.Second)
+	}
 	//when starting, send msg to metamanager once to get existing pods
 	info := model.NewMessage("").BuildRouter(e.Name(), e.Group(), e.namespace+"/"+model.ResourceTypePod,
 		model.QueryOperation)
