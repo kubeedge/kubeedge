@@ -121,6 +121,12 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 			}
 
 			registerModules(config)
+
+			// enable module auto-restart feature
+			if config.FeatureGates[options.FeatureModuleAutoStart] {
+				core.EnableModuleRestart()
+			}
+
 			// start all modules
 			core.Run()
 		},

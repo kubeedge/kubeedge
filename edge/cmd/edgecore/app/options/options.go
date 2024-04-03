@@ -28,6 +28,8 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/util/validation"
 )
 
+var FeatureModuleAutoStart = "moduleAutoStart"
+
 type EdgeCoreOptions struct {
 	ConfigFile string
 }
