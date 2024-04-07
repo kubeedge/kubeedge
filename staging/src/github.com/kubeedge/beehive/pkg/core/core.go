@@ -92,7 +92,7 @@ func moduleKeeper(name string, moduleInfo *ModuleInfo, m common.ModuleInfo) {
 }
 
 // localModuleKeeper starts and tries to keep module running when module exited.
-// Call EnableModuleRestart() to enable auto-restarting feature.
+// Call EnableModuleRestart() to enable auto-restarting feature in alpha version.
 func localModuleKeeper(m *ModuleInfo) {
 	if !moduleRestartEnabled {
 		m.module.Start()
@@ -102,6 +102,7 @@ func localModuleKeeper(m *ModuleInfo) {
 	ctx := beehiveContext.GetContext()
 	backoffDuration := time.Second
 
+	// do if module exits
 	afterFunc := func() {
 		if r := recover(); r != nil {
 			klog.Errorf("module %s panicking: %v", m.module.Name(), r)
