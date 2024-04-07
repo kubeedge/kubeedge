@@ -86,7 +86,7 @@ func GetModuleExchange() *socket.ModuleExchange {
 	return &exchange
 }
 
-// EnableModuleRestart enable new feature for auto restarting modules
+// EnableModuleRestart enable feature for auto restarting modules
 func EnableModuleRestart() {
 	moduleRestartEnabled = true
 }

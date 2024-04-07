@@ -34,6 +34,7 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/util/flag"
 	utilvalidation "github.com/kubeedge/kubeedge/pkg/util/validation"
 	"github.com/kubeedge/kubeedge/pkg/version"
+	kefeatures "github.com/kubeedge/kubeedge/pkg/features"
 )
 
 // NewEdgeCoreCommand create edgecore cmd
@@ -123,7 +124,7 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 			registerModules(config)
 
 			// enable module auto-restart feature
-			if config.FeatureGates[options.FeatureModuleAutoStart] {
+			if kefeatures.DefaultFeatureGate.Enabled(kefeatures.ModuleRestart) {
 				core.EnableModuleRestart()
 			}
 

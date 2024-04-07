@@ -61,6 +61,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/pkg/version"
+	kefeatures "github.com/kubeedge/kubeedge/pkg/features"
 )
 
 // GetKubeletDeps returns a Dependencies suitable for lite kubelet being run.
@@ -139,13 +140,13 @@ func (e *edged) Start() {
 	go func() {
 		err := DefaultRunLiteKubelet(e.context, e.KubeletServer, e.KubeletDeps, e.FeatureGate)
 		if err != nil {
-			if !core.IsModuleRestartEnabled() {
+			if !kefeatures.DefaultFeatureGate.Enabled(kefeatures.ModuleRestart) {
 				klog.Errorf("Start edged failed, err: %v", err)
 				os.Exit(1)
 			}
 			klErrChan <- err
 			// send empty message to wakeup syncPod loop
-			nilMsg := model.NewMessage("").BuildRouter(e.Name(), e.Group(), e.namespace+"/"+model.ResourceTypePod, "")
+			nilMsg := model.NewMessage("").BuildRouter(e.Name(), e.Group(), "", "")
 			beehiveContext.Send(modules.EdgedModuleName, *nilMsg)
 		}
 	}()
