@@ -60,8 +60,8 @@ import (
 	metaclient "github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
-	"github.com/kubeedge/kubeedge/pkg/version"
 	kefeatures "github.com/kubeedge/kubeedge/pkg/features"
+	"github.com/kubeedge/kubeedge/pkg/version"
 )
 
 // GetKubeletDeps returns a Dependencies suitable for lite kubelet being run.
@@ -145,9 +145,6 @@ func (e *edged) Start() {
 				os.Exit(1)
 			}
 			klErrChan <- err
-			// send empty message to wakeup syncPod loop
-			nilMsg := model.NewMessage("").BuildRouter(e.Name(), e.Group(), "", "")
-			beehiveContext.Send(modules.EdgedModuleName, *nilMsg)
 		}
 	}()
 	e.syncPod(e.KubeletDeps.PodConfig, klErrChan)
@@ -254,9 +251,12 @@ func (e *edged) syncPod(podCfg *config.PodConfig, kubeletErrChan <-chan error) {
 		case err := <-kubeletErrChan:
 			klog.Errorf("Start edged failed, err: %v", err)
 			return
-		case <-kubeletWaiter.C:
-			kubeletInited = true
 		default:
+			select {
+			case <-kubeletWaiter.C:
+				kubeletInited = true
+			default:
+			}
 			if !kubeletInited {
 				time.Sleep(time.Second)
 				continue
