@@ -227,10 +227,18 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 	return ed, nil
 }
 
-func (e *edged) syncPod(podCfg *config.PodConfig, klErrchan <-chan error) {
-	if !core.IsModuleRestartEnabled() {
-		time.Sleep(10 * time.Second)
-	}
+func (e *edged) syncPod(podCfg *config.PodConfig, kubeletErrChan <-chan error) {
+	// wait for kubelet-container connection
+	kubeletInited := false
+	kubeletWaiter := time.NewTimer(10 * time.Second)
+	defer func() {
+		if !kubeletWaiter.Stop() {
+			go func() {
+				<-kubeletWaiter.C
+			}()
+		}
+	}()
+
 	//when starting, send msg to metamanager once to get existing pods
 	info := model.NewMessage("").BuildRouter(e.Name(), e.Group(), e.namespace+"/"+model.ResourceTypePod,
 		model.QueryOperation)
@@ -242,10 +250,16 @@ func (e *edged) syncPod(podCfg *config.PodConfig, klErrchan <-chan error) {
 		case <-beehiveContext.Done():
 			klog.Warning("Sync pod stop")
 			return
-		case err := <-klErrchan:
+		case err := <-kubeletErrChan:
 			klog.Errorf("Start edged failed, err: %v", err)
 			return
+		case <-kubeletWaiter.C:
+			kubeletInited = true
 		default:
+			if !kubeletInited {
+				time.Sleep(time.Second)
+				continue
+			}
 		}
 		result, err := beehiveContext.Receive(e.Name())
 		if err != nil {
