@@ -32,11 +32,12 @@ type DeviceModelSpec struct {
 // ModelProperty describes an individual device property / attribute like temperature / humidity etc.
 type ModelProperty struct {
 	// Required: The device property name.
+	// Note: If you need to use the built-in stream data processing function, you need to define Name as saveFrame or saveVideo
 	Name string `json:"name,omitempty"`
 	// The device property description.
 	// +optional
 	Description string `json:"description,omitempty"`
-	// Required: Type of device property, ENUM: INT,FLOAT,DOUBLE,STRING,BOOLEAN,BYTES
+	// Required: Type of device property, ENUM: INT,FLOAT,DOUBLE,STRING,BOOLEAN,BYTES,STREAM
 	Type PropertyType `json:"type,omitempty"`
 	// Required: Access mode of property, ReadWrite or ReadOnly.
 	AccessMode PropertyAccessMode `json:"accessMode,omitempty"`
@@ -50,7 +51,7 @@ type ModelProperty struct {
 }
 
 // The type of device property.
-// +kubebuilder:validation:Enum=INT;FLOAT;DOUBLE;STRING;BOOLEAN;BYTES
+// +kubebuilder:validation:Enum=INT;FLOAT;DOUBLE;STRING;BOOLEAN;BYTES;STREAM
 type PropertyType string
 
 const (
@@ -60,6 +61,7 @@ const (
 	STRING  PropertyType = "STRING"
 	BOOLEAN PropertyType = "BOOLEAN"
 	BYTES   PropertyType = "BYTES"
+	STREAM  PropertyType = "STREAM"
 )
 
 // The access mode for  a device property.

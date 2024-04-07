@@ -11,14 +11,20 @@ MAPPER_DIR="$(cd "$(dirname "$ROOT_DIR")" && pwd -P)"
 
 function entry() {
   # copy template
-  if [ $# -eq 0 ] ;then
+  if [ $# -ne 2 ] ;then
     read -p "Please input the mapper name (like 'Bluetooth', 'BLE'): " -r mapperName
     if [[ -z "${mapperName}" ]]; then
       echo "the mapper name is required"
       exit 1
     fi
+    read -p "Please input the build method (like 'stream', 'nostream'): " -r buildMethod
+    if [[ -z "${buildMethod}" ]]; then
+          echo "the build method is required"
+          exit 1
+    fi
   else
     mapperName=$1
+    buildMethod=$2
   fi
   mapperNameLowercase=$(echo -n "${mapperName}" | tr '[:upper:]' '[:lower:]')
   mapperPath="${MAPPER_DIR}/${mapperNameLowercase}"
@@ -27,6 +33,16 @@ function entry() {
     exit 1
   fi
   cp -r "${ROOT_DIR}/_template/mapper" "${mapperPath}"
+  if [ "${buildMethod}" = "stream" ]; then
+    rm "${mapperPath}/data/stream/handler_nostream.go"
+  fi
+
+  if [ "${buildMethod}" = "nostream" ]; then
+      cd "${mapperPath}/data/stream"
+      ls |grep -v handler_nostream.go |xargs rm -rf
+      mv handler_nostream.go handler.go
+      cd -
+  fi
 
   mapperVar=$(echo "${mapperName}" | sed -e "s/\b\(.\)/\\u\1/g")
   

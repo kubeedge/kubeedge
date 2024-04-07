@@ -588,7 +588,9 @@ spec:
                       type: object
                     name:
                       description: 'Required: The device property name to be accessed.
-                        It must be unique.'
+                        It must be unique. Note: If you need to use the built-in stream
+                        data processing function, you need to define Name as saveFrame
+                        or saveVideo'
                       type: string
                     pushMethod:
                       description: PushMethod represents the protocol used to push
