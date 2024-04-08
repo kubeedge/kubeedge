@@ -29,8 +29,14 @@ function entry() {
   cp -r "${ROOT_DIR}/_template/mapper" "${mapperPath}"
 
   mapperVar=$(echo "${mapperName}" | sed -e "s/\b\(.\)/\\u\1/g")
-  sed -i "s/Template/${mapperVar}/g" `grep Template -rl ${mapperPath}`
-  sed -i "s/kubeedge\/${mapperVar}/kubeedge\/${mapperNameLowercase}/g" `grep "kubeedge\/${mapperVar}" -rl $mapperPath`
+  
+  if [ $(uname) = "Darwin" ]; then
+      sed -i "" "s/Template/${mapperVar}/g" `grep Template -rl ${mapperPath}`
+      sed -i "" "s/kubeedge\/${mapperVar}/kubeedge\/${mapperNameLowercase}/g" `grep "kubeedge\/${mapperVar}" -rl $mapperPath`
+  else
+      sed -i "s/Template/${mapperVar}/g" `grep Template -rl ${mapperPath}`
+      sed -i "s/kubeedge\/${mapperVar}/kubeedge\/${mapperNameLowercase}/g" `grep "kubeedge\/${mapperVar}" -rl $mapperPath`
+  fi
 
   cd ${mapperPath} && go mod tidy
 
