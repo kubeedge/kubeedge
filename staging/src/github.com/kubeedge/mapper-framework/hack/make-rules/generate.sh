@@ -28,8 +28,14 @@ function entry() {
   cp "${ROOT_DIR}/go.sum" "${mapperPath}"
 
   mapperVar=$(echo "${mapperName}" | sed -e "s/\b\(.\)/\\u\1/g")
-  sed -i "s/Template/${mapperVar}/g" `grep Template -rl ${mapperPath}`
-  sed -i "s/kubeedge\/${mapperVar}/kubeedge\/${mapperNameLowercase}/g" `grep "kubeedge\/${mapperVar}" -rl $mapperPath`
+  
+  if [ $(uname) = "Darwin" ]; then
+      sed -i "" "s/Template/${mapperVar}/g" `grep Template -rl ${mapperPath}`
+      sed -i "" "s/kubeedge\/${mapperVar}/kubeedge\/${mapperNameLowercase}/g" `grep "kubeedge\/${mapperVar}" -rl $mapperPath`
+  else
+      sed -i "s/Template/${mapperVar}/g" `grep Template -rl ${mapperPath}`
+      sed -i "s/kubeedge\/${mapperVar}/kubeedge\/${mapperNameLowercase}/g" `grep "kubeedge\/${mapperVar}" -rl $mapperPath`
+  fi
 
   empty_file_path="${MAPPER_DIR}/.empty"
   if [ -f "$empty_file_path" ]; then
