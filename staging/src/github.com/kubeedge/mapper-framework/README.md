@@ -39,7 +39,6 @@ mapper
 ├── hack
 │ └── make-rules
 │     └── mapper.sh
-├── pkg ------------------------ Mapper register process, almost need not change
 └── Makefile
 ```
 
