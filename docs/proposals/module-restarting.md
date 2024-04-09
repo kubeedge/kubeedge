@@ -4,7 +4,7 @@ authors:
 - "@micplus"
   approvers:
   creation-date: 2024-04-04
-  last-updated: 2024-04-04
+  last-updated: 2024-04-09
 ---
 
 # Module Restarting
@@ -38,7 +38,7 @@ If a module is enabled in configuration files, neither users or developers want 
 
 Modules are started by BeeHive, so apparently BeeHive is responsible for modules' lifecycle. BeeHive is the communication framework of KubeEdge but works not only for communication. If a module fails, BeeHive should decide what to do next. Modules can tell BeeHive to keep module running or to exit the program, but modules should not exit the program directly to ruin other modules' normal procedure, causing potential data loss. 
 
-In `module.Start()`, errors are variant. Semantically, for some module `m`, it's `m`'s own job to handle errors occured in `m`'s main logic. If `m` doesn't have ability to handle the error, `m` should inform BeeHive that `m` failed in its main loop. After `m`'s failure infomation, BeeHive knows `m` has failed, and retry `m.Start()` to keep it working or exit.
+In `module.Start()`, errors are variant. Semantically, for some module `m`, it's `m`'s own job to handle errors occured in `m`'s main logic. If `m` doesn't have ability to handle the error, `m` should inform BeeHive that `m` failed in its main loop. After `m`'s failure infomation, BeeHive knows `m` has failed, and retries `m.Start()` to keep it working or exits.
 
 Activity diagram for module restarting: 
 
@@ -46,7 +46,7 @@ Activity diagram for module restarting:
 
 ## Plan
 
-In alpha implement, we will use `featureGate` to enable the feature manually.
+The alpha feature will be implemented in version 1.17. In alpha implement, we will use `featureGate` to enable the feature manually.
 
 With `moduleRestart` feature enabled, if some module's `Start()` returns, BeeHive will call `Start()` again to keep the module running.
 
@@ -55,21 +55,21 @@ The alpha implement will try keeping modules running forever with backoff time l
 Procedure for restarting modules(alpha ver.):
 
 ```text
-// procedure: start/restart a module(alpha)
-1. m := some module enabled
-2. backoffDuration := 1s->30s
-3. 
-4. begin loop:
-5.   start module m
-6.   wait until m exits
-7.   if global exit signal comes:
-8.     break loop
-9.   wait for backoffDuration
-10.  backoffDuration *= 2
-11.end loop;
+//  procedure: start/restart a module(alpha)
+1.  m := some module enabled
+2.  backoffDuration := 1s->30s
+3.
+4.  begin loop:
+5.    start module m
+6.    wait until m exits
+7.    if global exit signal comes:
+8.      break loop
+9.    wait for backoffDuration
+10.   backoffDuration *= 2
+11. end loop;
 ```
 
-In the future, we should consider further about:
+Here are some issues not completely considered in alpha version(==1.17). In the future(>1.17), we should discuss and consider further about:
 
 - When a started module is working properly.
 - What a recoverable error is in each module.
