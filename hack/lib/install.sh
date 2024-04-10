@@ -22,7 +22,7 @@ function check_kubectl {
     echo "kubectl not installed, exiting."
     exit 1
   else
-    echo -n "found kubectl, " && kubectl version --short --client
+    echo -n "found kubectl, " && kubectl version --client
   fi
 }
 
