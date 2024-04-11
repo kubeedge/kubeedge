@@ -226,7 +226,6 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 }
 
 func (e *edged) syncPod(podCfg *config.PodConfig, kubeletErrChan <-chan error) {
-	syncPodStarted := false
 	startWaiter := time.NewTimer(10 * time.Second)
 	defer func() {
 		// receive from timer channel manually to prevent memory leak
@@ -237,6 +236,22 @@ func (e *edged) syncPod(podCfg *config.PodConfig, kubeletErrChan <-chan error) {
 		}
 	}()
 
+	// block until ready to sync pods
+	select {
+	case <-beehiveContext.Done():
+		klog.Warning("Sync pod stop")
+		return
+	case err := <-kubeletErrChan:
+		klog.Errorf("Start edged failed, err: %v", err)
+		return
+	case <-startWaiter.C:
+		klog.Info("Sync pod started")
+	}
+
+	//when starting, send msg to metamanager once to get existing pods
+	info := model.NewMessage("").BuildRouter(e.Name(), e.Group(), e.namespace+"/"+model.ResourceTypePod,
+		model.QueryOperation)
+	beehiveContext.Send(modules.MetaManagerModuleName, *info)
 	// rawUpdateChan receives the update events from metamanager or edgecontroller
 	rawUpdateChan := podCfg.Channel(beehiveContext.GetContext(), kubelettypes.ApiserverSource)
 
@@ -246,24 +261,9 @@ func (e *edged) syncPod(podCfg *config.PodConfig, kubeletErrChan <-chan error) {
 			klog.Warning("Sync pod stop")
 			return
 		case err := <-kubeletErrChan:
-			klog.Errorf("Start edged failed, err: %v", err)
+			klog.Errorf("failed to run kubelet, err: %v", err)
 			return
-		default: // exit first
-			select {
-			case <-startWaiter.C:
-				syncPodStarted = true
-				klog.Info("Sync pod started")
-
-				//when starting, send msg to metamanager once to get existing pods
-				info := model.NewMessage("").BuildRouter(e.Name(), e.Group(), e.namespace+"/"+model.ResourceTypePod,
-					model.QueryOperation)
-				beehiveContext.Send(modules.MetaManagerModuleName, *info)
-			default:
-			}
-			if !syncPodStarted {
-				time.Sleep(time.Second)
-				continue
-			}
+		default:
 		}
 		result, err := beehiveContext.Receive(e.Name())
 		if err != nil {
