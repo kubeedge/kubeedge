@@ -227,14 +227,7 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 
 func (e *edged) syncPod(podCfg *config.PodConfig, kubeletErrChan <-chan error) {
 	startWaiter := time.NewTimer(10 * time.Second)
-	defer func() {
-		// receive from timer channel manually to prevent memory leak
-		if !startWaiter.Stop() {
-			go func() {
-				<-startWaiter.C
-			}()
-		}
-	}()
+	defer startWaiter.Stop() 
 
 	// block until ready to sync pods
 	select {
