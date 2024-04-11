@@ -30,7 +30,6 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2/validation"
 	"github.com/kubeedge/kubeedge/pkg/features"
-	kefeatures "github.com/kubeedge/kubeedge/pkg/features"
 	"github.com/kubeedge/kubeedge/pkg/util"
 	"github.com/kubeedge/kubeedge/pkg/util/flag"
 	utilvalidation "github.com/kubeedge/kubeedge/pkg/util/validation"
@@ -124,7 +123,7 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 			registerModules(config)
 
 			// enable module auto-restart feature
-			if kefeatures.DefaultFeatureGate.Enabled(kefeatures.ModuleRestart) {
+			if features.DefaultFeatureGate.Enabled(features.ModuleRestart) {
 				core.EnableModuleRestart()
 			}
 
