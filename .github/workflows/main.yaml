@@ -142,7 +142,7 @@ jobs:
         # Prevent running from the forked repository that doesn't need to upload coverage.
         # In addition, running on the forked repository would fail as missing the necessary secret.
         if: ${{ github.repository == 'kubeedge/kubeedge' }}
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           # Even though token upload token is not required for public repos,
           # but adding a token might increase successful uploads as per:
