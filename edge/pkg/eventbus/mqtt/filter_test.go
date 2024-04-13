@@ -25,7 +25,7 @@ func init() {
 
 func TestDispatch(t *testing.T) {
 	msg := packet.Message{
-		Topic:   "$hw/events/device/sampledevice/twin/test",
+		Topic:   "$hw/events/device/sampleNamespace/sampleDevice/twin/test",
 		Payload: []byte("device sample"),
 		QOS:     0,
 		Retain:  false,

@@ -91,9 +91,9 @@ func TestGetDeviceID(t *testing.T) {
 		{
 			name: "TestGetDeviceID(): Case 1: success",
 			args: args{
-				resource: fmt.Sprintf("node/%s/%s/%s", "nid", ResourceDevice, "did"),
+				resource: fmt.Sprintf("node/%s/%s/%s/%s", "nid", ResourceDevice, "dns", "dnm"),
 			},
-			want:    "did",
+			want:    "dns/dnm",
 			wantErr: nil,
 		},
 		{

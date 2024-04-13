@@ -212,7 +212,13 @@ func classifyMsg(message *dttype.DTMessage) bool {
 				return false
 			}
 		} else {
-			identity = splitString[idLoc]
+			// Because device id is device.namespace/device.name, we need to distinguish it
+			if strings.Compare(splitString[idLoc-1], "device") == 0 {
+				identity = splitString[idLoc] + "/" + splitString[idLoc+1]
+			} else {
+				identity = splitString[idLoc]
+			}
+
 			loc := strings.Index(topic, identity)
 			nextLoc := loc + len(identity)
 			prefix := topic[0:loc]
