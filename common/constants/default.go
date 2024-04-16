@@ -60,6 +60,7 @@ const (
 	// MetaManager
 	DefaultRemoteQueryTimeout = 60
 	DefaultMetaServerAddr     = "127.0.0.1:10550"
+	DefaultDummyServerAddr    = "169.254.30.10:10550"
 
 	// Config
 	DefaultKubeContentType         = "application/vnd.kubernetes.protobuf"

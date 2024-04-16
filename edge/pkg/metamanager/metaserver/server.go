@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"github.com/kubeedge/kubeedge/pkg/util"
 	"k8s.io/apimachinery/pkg/types"
 	"net"
 	"net/http"
@@ -154,6 +155,7 @@ func (ls *MetaServer) Start(stopChan <-chan struct{}) {
 	if kefeatures.DefaultFeatureGate.Enabled(kefeatures.RequireAuthorization) {
 		ls.prepareServer()
 		ls.startHTTPSServer(metaserverconfig.Config.Server, stopChan)
+		ls.startHTTPSServer(metaserverconfig.Config.DummyServer, stopChan)
 	} else {
 		ls.startHTTPServer(stopChan)
 	}
@@ -218,6 +220,10 @@ func BuildHandlerChain(handler http.Handler, ls *MetaServer) http.Handler {
 }
 
 func (ls *MetaServer) prepareServer() {
+	err := setupDummyInterface()
+	if err != nil {
+		panic(fmt.Errorf("setup dummy interface err: %v", err))
+	}
 	certIPs, err := ls.getCertIPs()
 	if err != nil {
 		panic(fmt.Errorf("failed to get cert IP: %v", err))
@@ -251,7 +257,11 @@ func (ls *MetaServer) getCertIPs() ([]net.IP, error) {
 	if err != nil {
 		return nil, err
 	}
-	return []net.IP{net.ParseIP(ip)}, nil
+	dummyIP, _, err := net.SplitHostPort(metaserverconfig.Config.DummyServer)
+	if err != nil {
+		return nil, err
+	}
+	return []net.IP{net.ParseIP(ip), net.ParseIP(dummyIP)}, nil
 }
 
 func (ls *MetaServer) makeTLSConfig() (*tls.Config, error) {
@@ -278,4 +288,27 @@ func (ls *MetaServer) makeTLSConfig() (*tls.Config, error) {
 			return cert, nil
 		},
 	}, nil
+}
+
+func setupDummyInterface() error {
+	dummyIP, dummyPort, err := net.SplitHostPort(metaserverconfig.Config.DummyServer)
+	if err != nil {
+		return err
+	}
+
+	if err := os.Setenv("METASERVER_DUMMY_IP", dummyIP); err != nil {
+		return err
+	}
+	if err := os.Setenv("METASERVER_DUMMY_PORT", dummyPort); err != nil {
+		return err
+	}
+
+	manager := util.NewDummyDeviceManager()
+	_, err = manager.EnsureDummyDevice("edge-dummy0")
+	if err != nil {
+		return err
+	}
+
+	_, err = manager.EnsureAddressBind(dummyIP, "edge-dummy0")
+	return err
 }
