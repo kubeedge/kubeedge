@@ -285,9 +285,12 @@ type EdgeControllerBuffer struct {
 	// ServiceAccount indicates the buffer of service account token
 	// default 1024
 	ServiceAccountToken int32 `json:"serviceAccountToken,omitempty"`
-	// CreatePod indicates the buffer of patch pod
+	// CreatePod indicates the buffer of create pod
 	// default 1024
 	CreatePod int32 `json:"createPod,omitempty"`
+	// CertificateSigningRequest indicates the buffer of certificatesSigningRequest
+	// default 1024
+	CertificateSigningRequest int32 `json:"certificateSigningRequest,omitempty"`
 }
 
 // EdgeControllerLoad indicates the EdgeController load
@@ -343,8 +346,12 @@ type EdgeControllerLoad struct {
 	// ServiceAccountTokenWorkers indicates the load of service account token
 	// default 4
 	ServiceAccountTokenWorkers int32 `json:"ServiceAccountTokenWorkers,omitempty"`
+	// CreatePodWorks indicates the load of create pod
 	// default 4
 	CreatePodWorks int32 `json:"CreatePodWorks,omitempty"`
+	// CertificateSigningRequestWorkers indicates the load of CertificateSigningRequest
+	// default 4
+	CertificateSigningRequestWorkers int32 `json:"certificateSigningRequestWorkers,omitempty"`
 }
 
 // DeviceController indicates the device controller

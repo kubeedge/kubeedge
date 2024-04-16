@@ -84,7 +84,8 @@ const (
 	DefaultUpdateRuleStatusWorkers           = 4
 	DefaultQueryLeaseWorkers                 = 100
 	DefaultServiceAccountTokenWorkers        = 100
-	CreatePodWorks                           = 4
+	DefaultCreatePodWorkers                  = 4
+	DefaultCertificateSigningRequestWorkers  = 4
 
 	DefaultUpdatePodStatusBuffer            = 1024
 	DefaultUpdateNodeStatusBuffer           = 1024
@@ -100,6 +101,7 @@ const (
 	DefaultQueryLeaseBuffer                 = 1024
 	DefaultServiceAccountTokenBuffer        = 1024
 	DefaultCreatePodBuffer                  = 1024
+	DefaultCertificateSigningRequestBuffer  = 1024
 
 	DefaultPodEventBuffer           = 1
 	DefaultConfigMapEventBuffer     = 1
