@@ -97,7 +97,12 @@ func GetAuthConfig() *rest.Config {
 }
 
 func GetK8sCA() []byte {
-	return KubeConfig.CAData
+	ca, err := os.ReadFile(KubeConfig.CAFile)
+	if err != nil {
+		klog.Errorf("read k8s CA failed, %v", err)
+		return nil
+	}
+	return ca
 }
 
 type RestMapperFunc func() (meta.RESTMapper, error)

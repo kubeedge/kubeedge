@@ -22,19 +22,22 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"fmt"
-	beehivecontext "github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"net"
+	"time"
+
 	certificates "k8s.io/api/certificates/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/cert"
 	"k8s.io/client-go/util/certificate"
-	"net"
-	"time"
+	"k8s.io/klog/v2"
+
+	beehivecontext "github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
 const (
@@ -119,10 +122,11 @@ func (scm *ServerCertificateManager) WaitForCAReady() error {
 			return false, nil
 		}
 		err := scm.getKubeAPIServerCA()
-		if err == nil {
-			return true, nil
+		if err != nil {
+			klog.Errorf("get k8s CA failed, %v", err)
+			return false, err
 		}
-		return false, nil
+		return true, nil
 	})
 }
 
@@ -134,7 +138,7 @@ func (scm *ServerCertificateManager) getKubeAPIServerCA() error {
 	}
 
 	content, err := resp.GetContentData()
-	if err != nil {
+	if err != nil || content == nil {
 		return fmt.Errorf("parse message %s failed, err: %v", msg.GetResource(), err)
 	}
 

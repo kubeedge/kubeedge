@@ -38,7 +38,7 @@ const (
 	ResourceTypeSaAccess            = "serviceaccountaccess"
 	ResourceTypeCSR                 = "certificatesigningrequest"
 
-	ResourceTypeK8sCA = "/k8s/ca.crt"
+	ResourceTypeK8sCA = "k8s/ca.crt"
 )
 
 // Message struct

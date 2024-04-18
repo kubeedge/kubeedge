@@ -19,7 +19,6 @@ package dispatcher
 import (
 	"context"
 	"fmt"
-	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"strings"
 	"sync"
 
@@ -32,6 +31,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/session"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
@@ -483,6 +483,7 @@ func noAckRequired(msg *beehivemodel.Message) bool {
 				resourceType == beehivemodel.ResourceTypeNodePatch ||
 				resourceType == beehivemodel.ResourceTypePodPatch ||
 				resourceType == beehivemodel.ResourceTypePodStatus ||
+				resourceType == beehivemodel.ResourceTypeCSR ||
 				(resourceType == beehivemodel.ResourceTypePod && msg.GetOperation() == beehivemodel.ResponseOperation) {
 				return true
 			}

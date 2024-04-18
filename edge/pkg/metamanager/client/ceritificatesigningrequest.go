@@ -37,7 +37,7 @@ type CertificateSigningRequestsGetter interface {
 // CertificateSigningRequestInterface is interface for client CertificateSigningRequests
 type CertificateSigningRequestInterface interface {
 	Create(*v1.CertificateSigningRequest) (*v1.CertificateSigningRequest, error)
-	Get(string) (*v1.CertificateSigningRequest, error)
+	Get(name string) (*v1.CertificateSigningRequest, error)
 }
 
 type certificateSigningRequests struct {

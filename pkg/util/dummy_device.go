@@ -22,6 +22,7 @@ import (
 
 	"github.com/vishvananda/netlink"
 	"golang.org/x/sys/unix"
+	"k8s.io/klog/v2"
 )
 
 type DummyDeviceManager struct {
@@ -36,12 +37,12 @@ func NewDummyDeviceManager() *DummyDeviceManager {
 func (d *DummyDeviceManager) EnsureDummyDevice(devName string) (bool, error) {
 	_, err := d.LinkByName(devName)
 	if err == nil {
+		// found dummy device
 		return true, nil
 	}
+	klog.Warningf("No dummy device %s, link it", devName)
 	dummy := &netlink.Dummy{
-		LinkAttrs: netlink.LinkAttrs{
-			Name: devName,
-		},
+		LinkAttrs: netlink.LinkAttrs{Name: devName},
 	}
 	return false, d.LinkAdd(dummy)
 }
@@ -54,7 +55,7 @@ func (d *DummyDeviceManager) DeleteDummyDevice(devName string) error {
 		if ok {
 			return nil
 		}
-		return fmt.Errorf("failed to delete dummy device %s: %v", devName, err)
+		return fmt.Errorf("failed to delete a non-exist dummy device %s: %v", devName, err)
 	}
 	dummy, ok := link.(*netlink.Dummy)
 	if !ok {
@@ -63,7 +64,7 @@ func (d *DummyDeviceManager) DeleteDummyDevice(devName string) error {
 	return d.LinkDel(dummy)
 }
 
-// ListBindAddress list all IP address which are bound in a given interface
+// ListBindAddress list all IP addresses which are bound in a given interface
 func (d *DummyDeviceManager) ListBindAddress(devName string) ([]string, error) {
 	dev, err := d.LinkByName(devName)
 	if err != nil {
@@ -80,7 +81,7 @@ func (d *DummyDeviceManager) ListBindAddress(devName string) ([]string, error) {
 	return ips, nil
 }
 
-// EnsureAddressBind checks if address is bound to interface. If not, binds it. If address is already bound, return true.
+// EnsureAddressBind checks if address is bound to the interface, if not, binds it. If the address is already bound, return true.
 func (d *DummyDeviceManager) EnsureAddressBind(address, devName string) (bool, error) {
 	dev, err := d.LinkByName(devName)
 	if err != nil {
@@ -88,9 +89,10 @@ func (d *DummyDeviceManager) EnsureAddressBind(address, devName string) (bool, e
 	}
 	addr := net.ParseIP(address)
 	if addr == nil {
-		return false, fmt.Errorf("failed to parse ip address %s", address)
+		return false, fmt.Errorf("failed to parse ip address: %s", address)
 	}
 	if err := d.AddrAdd(dev, &netlink.Addr{IPNet: netlink.NewIPNet(addr)}); err != nil {
+		// "EEXIST" will be returned if the address is already bound to device
 		if err == unix.EEXIST {
 			return true, nil
 		}

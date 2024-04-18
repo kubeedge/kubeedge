@@ -66,18 +66,21 @@ func NewCSRApprover(client clientset.Interface, csrInformer certificatesinformer
 		recognizers: recognizers(),
 	}
 
-	csrInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+	_, err := csrInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			csr := obj.(*certificatesv1.CertificateSigningRequest)
 			klog.V(4).Infof("Adding certificate request %s", csr.Name)
 			approver.enqueueCertificateRequest(obj)
 		},
 		UpdateFunc: func(old, new interface{}) {
-			oldCSR := old.(certificatesv1.CertificateSigningRequest)
+			oldCSR := old.(*certificatesv1.CertificateSigningRequest)
 			klog.V(4).Infof("Updating certificate request %s", oldCSR.Name)
 			approver.enqueueCertificateRequest(new)
 		},
 	})
+	if err != nil {
+		klog.Fatalf("new CSR approver failed, add event handler err: %v", err)
+	}
 
 	approver.csrLister = csrInformer.Lister()
 	approver.csrSynced = csrInformer.Informer().HasSynced

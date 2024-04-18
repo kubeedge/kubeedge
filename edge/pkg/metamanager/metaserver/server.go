@@ -5,17 +5,17 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
-	"github.com/kubeedge/kubeedge/pkg/util"
-	"k8s.io/apimachinery/pkg/types"
 	"net"
 	"net/http"
 	"os"
 	"time"
 
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
 	utilwaitgroup "k8s.io/apimachinery/pkg/util/waitgroup"
@@ -42,6 +42,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/handlerfactory"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/serializer"
 	kefeatures "github.com/kubeedge/kubeedge/pkg/features"
+	"github.com/kubeedge/kubeedge/pkg/util"
 	"github.com/kubeedge/kubeedge/pkg/util/pass-through"
 )
 
@@ -153,9 +154,12 @@ func (ls *MetaServer) startHTTPSServer(addr string, stopChan <-chan struct{}) {
 
 func (ls *MetaServer) Start(stopChan <-chan struct{}) {
 	if kefeatures.DefaultFeatureGate.Enabled(kefeatures.RequireAuthorization) {
-		ls.prepareServer()
-		ls.startHTTPSServer(metaserverconfig.Config.Server, stopChan)
-		ls.startHTTPSServer(metaserverconfig.Config.DummyServer, stopChan)
+		err := ls.prepareServer()
+		if err != nil {
+			panic(err)
+		}
+		go ls.startHTTPSServer(metaserverconfig.Config.Server, stopChan)
+		go ls.startHTTPSServer(metaserverconfig.Config.DummyServer, stopChan)
 	} else {
 		ls.startHTTPServer(stopChan)
 	}
@@ -169,7 +173,7 @@ func (ls *MetaServer) BuildBasicHandler() http.Handler {
 		//klog.Infof("[metaserver]get a req(\nPath:%v; \nVerb:%v; \nHeader:%+v)", reqInfo.Path, reqInfo.Verb, req.Header)
 		if !ok {
 			err := fmt.Errorf("invalid request")
-			responsewriters.ErrorNegotiated(errors.NewInternalError(err), ls.NegotiatedSerializer, schema.GroupVersion{}, w, req)
+			responsewriters.ErrorNegotiated(apierrors.NewInternalError(err), ls.NegotiatedSerializer, schema.GroupVersion{}, w, req)
 			return
 		}
 
@@ -189,7 +193,7 @@ func (ls *MetaServer) BuildBasicHandler() http.Handler {
 				ls.Factory.Patch(reqInfo).ServeHTTP(w, req)
 			default:
 				err := fmt.Errorf("unsupported req verb")
-				responsewriters.ErrorNegotiated(errors.NewInternalError(err), ls.NegotiatedSerializer, schema.GroupVersion{}, w, req)
+				responsewriters.ErrorNegotiated(apierrors.NewInternalError(err), ls.NegotiatedSerializer, schema.GroupVersion{}, w, req)
 			}
 			return
 		}
@@ -200,7 +204,7 @@ func (ls *MetaServer) BuildBasicHandler() http.Handler {
 		}
 
 		err := fmt.Errorf("request[%s::%s] isn't supported", reqInfo.Path, reqInfo.Verb)
-		responsewriters.ErrorNegotiated(errors.NewInternalError(err), ls.NegotiatedSerializer, schema.GroupVersion{}, w, req)
+		responsewriters.ErrorNegotiated(apierrors.NewInternalError(err), ls.NegotiatedSerializer, schema.GroupVersion{}, w, req)
 	})
 }
 
@@ -219,14 +223,14 @@ func BuildHandlerChain(handler http.Handler, ls *MetaServer) http.Handler {
 	return handler
 }
 
-func (ls *MetaServer) prepareServer() {
+func (ls *MetaServer) prepareServer() error {
 	err := setupDummyInterface()
 	if err != nil {
-		panic(fmt.Errorf("setup dummy interface err: %v", err))
+		return fmt.Errorf("setup dummy interface err: %v", err)
 	}
 	certIPs, err := ls.getCertIPs()
 	if err != nil {
-		panic(fmt.Errorf("failed to get cert IP: %v", err))
+		return fmt.Errorf("failed to get cert IP: %v", err)
 	}
 
 	certificateManager, err := certificate.NewServerCertificateManager(
@@ -235,21 +239,22 @@ func (ls *MetaServer) prepareServer() {
 		certIPs,
 		certificate.CertificatesDir)
 	if err != nil {
-		panic(fmt.Errorf("failed to initialize certificate manager: %v", err))
+		return fmt.Errorf("failed to initialize certificate manager: %v", err)
 	}
 
 	err = certificateManager.WaitForCAReady()
 	if err != nil {
-		panic(fmt.Errorf("wait for CA ready failed: %v", err))
+		return fmt.Errorf("wait for CA ready failed: %v", err)
 	}
 
 	certificateManager.Start()
 	err = certificateManager.WaitForCertReady()
 	if err != nil {
-		panic(fmt.Errorf("wait for cert ready failed: %v", err))
+		return fmt.Errorf("wait for cert ready failed: %v", err)
 	}
 
 	ls.serverCeriticateManager = certificateManager
+	return nil
 }
 
 func (ls *MetaServer) getCertIPs() ([]net.IP, error) {
@@ -272,8 +277,9 @@ func (ls *MetaServer) makeTLSConfig() (*tls.Config, error) {
 
 	block, _ := pem.Decode(ca)
 	pool := x509.NewCertPool()
-	if !pool.AppendCertsFromPEM(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: block.Bytes})) {
-		return nil, fmt.Errorf("failed to load ca content")
+	ok := pool.AppendCertsFromPEM(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: block.Bytes}))
+	if !ok {
+		return nil, errors.New("failed to load ca content")
 	}
 
 	return &tls.Config{
