@@ -36,6 +36,9 @@ const (
 	ResourceTypeRuleStatus          = "rulestatus"
 	ResourceTypeLease               = "lease"
 	ResourceTypeSaAccess            = "serviceaccountaccess"
+	ResourceTypeCSR                 = "certificatesigningrequest"
+
+	ResourceTypeK8sCA = "k8s/ca.crt"
 )
 
 // Message struct

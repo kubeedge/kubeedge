@@ -163,7 +163,8 @@ func getDefaultEdgeControllerLoad(nodeLimit int32) *EdgeControllerLoad {
 		QueryLeaseWorkers:                 constants.DefaultQueryLeaseWorkers,
 		UpdateRuleStatusWorkers:           constants.DefaultUpdateRuleStatusWorkers,
 		ServiceAccountTokenWorkers:        constants.DefaultServiceAccountTokenWorkers,
-		CreatePodWorks:                    constants.CreatePodWorks,
+		CreatePodWorks:                    constants.DefaultCreatePodWorkers,
+		CertificateSigningRequestWorkers:  constants.DefaultCertificateSigningRequestWorkers,
 	}
 }
 
@@ -192,6 +193,7 @@ func getDefaultEdgeControllerBuffer(nodeLimit int32) *EdgeControllerBuffer {
 		QueryLease:                 constants.DefaultQueryLeaseBuffer,
 		ServiceAccountToken:        constants.DefaultServiceAccountTokenBuffer,
 		CreatePod:                  constants.DefaultCreatePodBuffer,
+		CertificateSigningRequest:  constants.DefaultCertificateSigningRequestBuffer,
 	}
 }
 

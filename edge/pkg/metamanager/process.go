@@ -104,7 +104,9 @@ func requireRemoteQuery(resType string) bool {
 		resType == constants.ResourceTypeVolumeAttachment ||
 		resType == model.ResourceTypeNode ||
 		resType == model.ResourceTypeServiceAccountToken ||
-		resType == model.ResourceTypeLease
+		resType == model.ResourceTypeLease ||
+		resType == model.ResourceTypeCSR ||
+		resType == model.ResourceTypeK8sCA
 }
 
 func msgDebugInfo(message *model.Message) string {

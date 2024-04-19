@@ -5,14 +5,17 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"time"
 
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
 	utilwaitgroup "k8s.io/apimachinery/pkg/util/waitgroup"
@@ -31,15 +34,15 @@ import (
 	"k8s.io/kubernetes/plugin/pkg/auth/authorizer/rbac"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/kubeclientbridge"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/auth"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/certificate"
 	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/handlerfactory"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/serializer"
 	kefeatures "github.com/kubeedge/kubeedge/pkg/features"
+	"github.com/kubeedge/kubeedge/pkg/util"
 	"github.com/kubeedge/kubeedge/pkg/util/pass-through"
 )
 
@@ -52,6 +55,8 @@ type MetaServer struct {
 	NegotiatedSerializer  runtime.NegotiatedSerializer
 	Factory               *handlerfactory.Factory
 	Auth                  *metaServerAuth
+	// Handles Authentication Certificate
+	serverCeriticateManager *certificate.ServerCertificateManager
 }
 
 type metaServerAuth struct {
@@ -93,57 +98,6 @@ func NewMetaServer() *MetaServer {
 	return &ls
 }
 
-func createTLSConfig() tls.Config {
-	ca, err := os.ReadFile(metaserverconfig.Config.TLSCaFile)
-	if err == nil {
-		block, _ := pem.Decode(ca)
-		ca = block.Bytes
-		klog.Info("Succeed in loading CA certificate from local directory")
-	}
-	pool := x509.NewCertPool()
-	ok := pool.AppendCertsFromPEM(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: ca}))
-	if !ok {
-		panic(fmt.Errorf("fail to load ca content"))
-	}
-	cert, err := os.ReadFile(metaserverconfig.Config.TLSCertFile)
-	if err == nil {
-		block, _ := pem.Decode(cert)
-		cert = block.Bytes
-		klog.Info("Succeed in loading certificate from local directory")
-	}
-	key, err := os.ReadFile(metaserverconfig.Config.TLSPrivateKeyFile)
-	if err == nil {
-		block, _ := pem.Decode(key)
-		key = block.Bytes
-		klog.Info("Succeed in loading private key from local directory")
-	}
-
-	certificate, err := tls.X509KeyPair(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: cert}), pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: key}))
-	if err != nil {
-		panic(err)
-	}
-	return tls.Config{
-		ClientCAs:    pool,
-		ClientAuth:   tls.VerifyClientCertIfGiven,
-		Certificates: []tls.Certificate{certificate},
-		MinVersion:   tls.VersionTLS12,
-	}
-}
-
-// getCurrent returns current meta server certificate
-func (ls *MetaServer) getCurrent() (*tls.Certificate, error) {
-	cert, err := tls.LoadX509KeyPair(metaserverconfig.Config.TLSCertFile, metaserverconfig.Config.TLSPrivateKeyFile)
-	if err != nil {
-		return nil, err
-	}
-	certs, err := x509.ParseCertificates(cert.Certificate[0])
-	if err != nil {
-		return nil, fmt.Errorf("unable to parse certificate data: %v", err)
-	}
-	cert.Leaf = certs[0]
-	return &cert, nil
-}
-
 func (ls *MetaServer) startHTTPServer(stopChan <-chan struct{}) {
 	h := ls.BuildBasicHandler()
 	h = BuildHandlerChain(h, ls)
@@ -168,21 +122,18 @@ func (ls *MetaServer) startHTTPServer(stopChan <-chan struct{}) {
 	beehiveContext.Cancel()
 }
 
-func (ls *MetaServer) startHTTPSServer(stopChan <-chan struct{}) {
-	_, err := ls.getCurrent()
+func (ls *MetaServer) startHTTPSServer(addr string, stopChan <-chan struct{}) {
+	tlsConfig, err := ls.makeTLSConfig()
 	if err != nil {
-		// wait for cert created
-		klog.Infof("[metaserver]waiting for cert created")
-		<-edgehub.GetCertSyncChannel()[modules.MetaManagerModuleName]
+		panic(err)
 	}
 
 	h := ls.BuildBasicHandler()
 	h = BuildHandlerChain(h, ls)
-	tlsConfig := createTLSConfig()
 	s := http.Server{
-		Addr:      metaserverconfig.Config.Server,
+		Addr:      addr,
 		Handler:   h,
-		TLSConfig: &tlsConfig,
+		TLSConfig: tlsConfig,
 	}
 
 	go func() {
@@ -203,7 +154,12 @@ func (ls *MetaServer) startHTTPSServer(stopChan <-chan struct{}) {
 
 func (ls *MetaServer) Start(stopChan <-chan struct{}) {
 	if kefeatures.DefaultFeatureGate.Enabled(kefeatures.RequireAuthorization) {
-		ls.startHTTPSServer(stopChan)
+		err := ls.prepareServer()
+		if err != nil {
+			panic(err)
+		}
+		go ls.startHTTPSServer(metaserverconfig.Config.Server, stopChan)
+		go ls.startHTTPSServer(metaserverconfig.Config.DummyServer, stopChan)
 	} else {
 		ls.startHTTPServer(stopChan)
 	}
@@ -217,7 +173,7 @@ func (ls *MetaServer) BuildBasicHandler() http.Handler {
 		//klog.Infof("[metaserver]get a req(\nPath:%v; \nVerb:%v; \nHeader:%+v)", reqInfo.Path, reqInfo.Verb, req.Header)
 		if !ok {
 			err := fmt.Errorf("invalid request")
-			responsewriters.ErrorNegotiated(errors.NewInternalError(err), ls.NegotiatedSerializer, schema.GroupVersion{}, w, req)
+			responsewriters.ErrorNegotiated(apierrors.NewInternalError(err), ls.NegotiatedSerializer, schema.GroupVersion{}, w, req)
 			return
 		}
 
@@ -237,7 +193,7 @@ func (ls *MetaServer) BuildBasicHandler() http.Handler {
 				ls.Factory.Patch(reqInfo).ServeHTTP(w, req)
 			default:
 				err := fmt.Errorf("unsupported req verb")
-				responsewriters.ErrorNegotiated(errors.NewInternalError(err), ls.NegotiatedSerializer, schema.GroupVersion{}, w, req)
+				responsewriters.ErrorNegotiated(apierrors.NewInternalError(err), ls.NegotiatedSerializer, schema.GroupVersion{}, w, req)
 			}
 			return
 		}
@@ -248,7 +204,7 @@ func (ls *MetaServer) BuildBasicHandler() http.Handler {
 		}
 
 		err := fmt.Errorf("request[%s::%s] isn't supported", reqInfo.Path, reqInfo.Verb)
-		responsewriters.ErrorNegotiated(errors.NewInternalError(err), ls.NegotiatedSerializer, schema.GroupVersion{}, w, req)
+		responsewriters.ErrorNegotiated(apierrors.NewInternalError(err), ls.NegotiatedSerializer, schema.GroupVersion{}, w, req)
 	})
 }
 
@@ -265,4 +221,100 @@ func BuildHandlerChain(handler http.Handler, ls *MetaServer) http.Handler {
 	handler = genericapifilters.WithRequestInfo(handler, server.NewRequestInfoResolver(cfg))
 	handler = genericfilters.WithPanicRecovery(handler, &apirequest.RequestInfoFactory{})
 	return handler
+}
+
+func (ls *MetaServer) prepareServer() error {
+	err := setupDummyInterface()
+	if err != nil {
+		return fmt.Errorf("setup dummy interface err: %v", err)
+	}
+	certIPs, err := ls.getCertIPs()
+	if err != nil {
+		return fmt.Errorf("failed to get cert IP: %v", err)
+	}
+
+	certificateManager, err := certificate.NewServerCertificateManager(
+		certificate.NewSimpleClientset(),
+		types.NodeName(metaserverconfig.Config.NodeName),
+		certIPs,
+		certificate.CertificatesDir)
+	if err != nil {
+		return fmt.Errorf("failed to initialize certificate manager: %v", err)
+	}
+
+	err = certificateManager.WaitForCAReady()
+	if err != nil {
+		return fmt.Errorf("wait for CA ready failed: %v", err)
+	}
+
+	certificateManager.Start()
+	err = certificateManager.WaitForCertReady()
+	if err != nil {
+		return fmt.Errorf("wait for cert ready failed: %v", err)
+	}
+
+	ls.serverCeriticateManager = certificateManager
+	return nil
+}
+
+func (ls *MetaServer) getCertIPs() ([]net.IP, error) {
+	ip, _, err := net.SplitHostPort(metaserverconfig.Config.Server)
+	if err != nil {
+		return nil, err
+	}
+	dummyIP, _, err := net.SplitHostPort(metaserverconfig.Config.DummyServer)
+	if err != nil {
+		return nil, err
+	}
+	return []net.IP{net.ParseIP(ip), net.ParseIP(dummyIP)}, nil
+}
+
+func (ls *MetaServer) makeTLSConfig() (*tls.Config, error) {
+	ca, err := os.ReadFile(fmt.Sprintf("%s/ca.crt", certificate.CertificatesDir))
+	if err != nil {
+		return nil, fmt.Errorf("read CA failed: %v", err)
+	}
+
+	block, _ := pem.Decode(ca)
+	pool := x509.NewCertPool()
+	ok := pool.AppendCertsFromPEM(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: block.Bytes}))
+	if !ok {
+		return nil, errors.New("failed to load ca content")
+	}
+
+	return &tls.Config{
+		ClientCAs:  pool,
+		MinVersion: tls.VersionTLS12,
+		ClientAuth: tls.VerifyClientCertIfGiven,
+		GetCertificate: func(info *tls.ClientHelloInfo) (*tls.Certificate, error) {
+			cert := ls.serverCeriticateManager.Current()
+			if cert == nil {
+				return nil, fmt.Errorf("no serving certificate available for the kubelet")
+			}
+			return cert, nil
+		},
+	}, nil
+}
+
+func setupDummyInterface() error {
+	dummyIP, dummyPort, err := net.SplitHostPort(metaserverconfig.Config.DummyServer)
+	if err != nil {
+		return err
+	}
+
+	if err := os.Setenv("METASERVER_DUMMY_IP", dummyIP); err != nil {
+		return err
+	}
+	if err := os.Setenv("METASERVER_DUMMY_PORT", dummyPort); err != nil {
+		return err
+	}
+
+	manager := util.NewDummyDeviceManager()
+	_, err = manager.EnsureDummyDevice("edge-dummy0")
+	if err != nil {
+		return err
+	}
+
+	_, err = manager.EnsureAddressBind(dummyIP, "edge-dummy0")
+	return err
 }

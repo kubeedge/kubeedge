@@ -35,6 +35,7 @@ import (
 	"time"
 
 	authenticationv1 "k8s.io/api/authentication/v1"
+	certificatesv1 "k8s.io/api/certificates/v1"
 	coordinationv1 "k8s.io/api/coordination/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -99,24 +100,25 @@ type UpstreamController struct {
 	config v1alpha1.EdgeController
 
 	// message channel
-	nodeStatusChan            chan model.Message
-	podStatusChan             chan model.Message
-	secretChan                chan model.Message
-	serviceAccountTokenChan   chan model.Message
-	configMapChan             chan model.Message
-	persistentVolumeChan      chan model.Message
-	persistentVolumeClaimChan chan model.Message
-	volumeAttachmentChan      chan model.Message
-	queryNodeChan             chan model.Message
-	createNodeChan            chan model.Message
-	patchNodeChan             chan model.Message
-	updateNodeChan            chan model.Message
-	patchPodChan              chan model.Message
-	podDeleteChan             chan model.Message
-	ruleStatusChan            chan model.Message
-	createLeaseChan           chan model.Message
-	queryLeaseChan            chan model.Message
-	createPodChan             chan model.Message
+	nodeStatusChan                 chan model.Message
+	podStatusChan                  chan model.Message
+	secretChan                     chan model.Message
+	serviceAccountTokenChan        chan model.Message
+	configMapChan                  chan model.Message
+	persistentVolumeChan           chan model.Message
+	persistentVolumeClaimChan      chan model.Message
+	volumeAttachmentChan           chan model.Message
+	queryNodeChan                  chan model.Message
+	createNodeChan                 chan model.Message
+	patchNodeChan                  chan model.Message
+	updateNodeChan                 chan model.Message
+	patchPodChan                   chan model.Message
+	podDeleteChan                  chan model.Message
+	ruleStatusChan                 chan model.Message
+	createLeaseChan                chan model.Message
+	queryLeaseChan                 chan model.Message
+	createPodChan                  chan model.Message
+	certificasesSigningRequestChan chan model.Message
 
 	// lister
 	podLister       corelisters.PodLister
@@ -185,6 +187,9 @@ func (uc *UpstreamController) Start() error {
 	}
 	for i := 0; i < int(uc.config.Load.CreatePodWorks); i++ {
 		go uc.createPod()
+	}
+	for i := 0; i < int(uc.config.Load.CertificateSigningRequestWorkers); i++ {
+		go uc.processCSR()
 	}
 	return nil
 }
@@ -264,6 +269,8 @@ func (uc *UpstreamController) dispatchMessage() {
 			case model.QueryOperation:
 				uc.queryLeaseChan <- msg
 			}
+		case model.ResourceTypeCSR:
+			uc.certificasesSigningRequestChan <- msg
 		default:
 			klog.Errorf("message: %s, resource type: %s unsupported", msg.GetID(), resourceType)
 		}
@@ -638,6 +645,8 @@ func kubeClientGet(uc *UpstreamController, namespace string, name string, queryT
 		obj, err = uc.getServiceAccountToken(namespace, name, msg)
 	case model.ResourceTypeLease:
 		obj, err = uc.leaseLister.Leases(namespace).Get(name)
+	case model.ResourceTypeCSR:
+		obj, err = uc.kubeClient.CertificatesV1().CertificateSigningRequests().Get(context.Background(), name, metaV1.GetOptions{})
 	default:
 		err = stderrors.New("wrong query type")
 	}
@@ -1285,6 +1294,56 @@ func (uc *UpstreamController) queryLease() {
 	}
 }
 
+func (uc *UpstreamController) processCSR() {
+	for {
+		select {
+		case <-beehiveContext.Done():
+			klog.Warning("stop processCSR")
+			return
+		case msg := <-uc.certificasesSigningRequestChan:
+			klog.V(4).Infof("message: %s, operation is: %s, and resource is: %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
+			name, err := messagelayer.GetResourceName(msg)
+			if err != nil {
+				klog.Warningf("message: %s process failure, get resource name failed with error: %v", msg.GetID(), err)
+				continue
+			}
+
+			switch msg.GetOperation() {
+			case model.InsertOperation:
+				csr := &certificatesv1.CertificateSigningRequest{}
+				data, err := msg.GetContentData()
+				if err != nil {
+					klog.Warningf("message: %s process failure, get content data failed with error: %s", msg.GetID(), err)
+					continue
+				}
+
+				if err := json.Unmarshal(data, csr); err != nil {
+					klog.Warningf("message: %s process failure, unmarshal message content data with error: %s", msg.GetID(), err)
+					continue
+				}
+
+				csrResp, err := uc.kubeClient.CertificatesV1().CertificateSigningRequests().Create(context.Background(), csr, metaV1.CreateOptions{})
+				if err != nil {
+					klog.Errorf("create CertificateSigningRequests %s failed, error: %s", name, err)
+				}
+
+				resMsg := model.NewMessage(msg.GetID()).
+					FillBody(&edgeapi.ObjectResp{Object: csrResp, Err: err}).
+					BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, msg.GetResource(), model.ResponseOperation)
+				if err = uc.messageLayer.Response(*resMsg); err != nil {
+					klog.Warningf("Response message: %s failed, response failed with error: %v", msg.GetID(), err)
+					continue
+				}
+
+				klog.V(4).Infof("message: %s, create CertificateSigningRequests successfully, name: %s", msg.GetID(), name)
+
+			case model.QueryOperation:
+				queryInner(uc, msg, model.ResourceTypeCSR)
+			}
+		}
+	}
+}
+
 func (uc *UpstreamController) unmarshalPodStatusMessage(msg model.Message) (ns string, podStatuses []edgeapi.PodStatusRequest) {
 	ns, err := messagelayer.GetNamespace(msg)
 	if err != nil {
@@ -1438,5 +1497,6 @@ func NewUpstreamController(config *v1alpha1.EdgeController, factory k8sinformer.
 	uc.createLeaseChan = make(chan model.Message, config.Buffer.CreateLease)
 	uc.queryLeaseChan = make(chan model.Message, config.Buffer.QueryLease)
 	uc.ruleStatusChan = make(chan model.Message, config.Buffer.UpdateNodeStatus)
+	uc.certificasesSigningRequestChan = make(chan model.Message, config.Buffer.CertificateSigningRequest)
 	return uc, nil
 }
