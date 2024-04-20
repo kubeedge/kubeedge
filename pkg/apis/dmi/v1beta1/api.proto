@@ -251,6 +251,7 @@ message DBMethod{
     DBMethodInfluxdb2 influxdb2 = 1;
     DBMethodRedis redis = 2;
     DBMethodTDEngine tdengine = 3;
+    DBMethodMySQL mysql = 4;
 }
 
 message DBMethodInfluxdb2{
@@ -301,6 +302,20 @@ message TDEngineClientConfig{
     string addr = 1;
     // tdengine database name
     string dbname = 2;
+}
+
+
+message DBMethodMySQL{
+    MySQLClientConfig mysqlClientConfig = 1;
+}
+
+message MySQLClientConfig{
+    //mysql address,like localhost:3306
+    string addr = 1;
+    //database name
+    string database = 2;
+    //user name
+    string userName = 3;
 }
 
 // MapperInfo is the information of mapper.

@@ -145,6 +145,16 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 				dbconfig = common.DBConfig{
 					TDEngineClientConfig: clientConfig,
 				}
+			case pptv.PushMethod.DBMethod.Mysql != nil:
+				dbMethodName = "mysql"
+				clientConfig, err := json.Marshal(pptv.PushMethod.DBMethod.Mysql.MysqlClientConfig)
+				if err != nil {
+					klog.Errorf("mysql config err: %+v", err)
+					return nil
+				}
+				dbconfig = common.DBConfig{
+					MySQLClientConfig: clientConfig,
+				}
 			default:
 				klog.Errorf("get DBMethod err: Unsupported database type")
 			}
