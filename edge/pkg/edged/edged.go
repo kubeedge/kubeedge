@@ -253,9 +253,6 @@ func (e *edged) syncPod(podCfg *config.PodConfig, kubeletErrChan <-chan error) {
 		case <-beehiveContext.Done():
 			klog.Warning("Sync pod stop")
 			return
-		case err := <-kubeletErrChan:
-			klog.Errorf("failed to run kubelet, err: %v", err)
-			return
 		default:
 		}
 		result, err := beehiveContext.Receive(e.Name())
