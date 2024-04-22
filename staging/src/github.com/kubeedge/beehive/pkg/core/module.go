@@ -32,7 +32,6 @@ func init() {
 type ModuleInfo struct {
 	contextType string
 	remote      bool
-	active      bool
 	module      Module
 }
 
@@ -67,10 +66,6 @@ func GetModules() map[string]*ModuleInfo {
 // GetModule gets module
 func (m *ModuleInfo) GetModule() Module {
 	return m.module
-}
-
-func (m *ModuleInfo) IsActive() bool {
-	return m.active
 }
 
 // GetModuleExchange return module exchange

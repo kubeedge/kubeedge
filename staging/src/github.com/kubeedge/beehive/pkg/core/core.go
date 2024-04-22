@@ -107,14 +107,12 @@ func localModuleKeeper(m *ModuleInfo) {
 		if r := recover(); r != nil {
 			klog.Errorf("module %s panicking: %v", m.module.Name(), r)
 		}
-		m.active = false
 		klog.Errorf("module %s exited, will restart in %ds", m.module.Name(), int(backoffDuration.Seconds()))
 	}
 
 	for {
 		func() {
 			defer afterFunc()
-			m.active = true
 			m.module.Start()
 		}()
 
