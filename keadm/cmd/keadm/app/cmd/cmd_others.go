@@ -23,6 +23,7 @@ import (
 
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/beta"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/cloud"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/debug"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/deprecated"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/edge"
@@ -90,6 +91,8 @@ func NewKubeedgeCommand() *cobra.Command {
 	cmds.AddCommand(NewUpgradeCommand())
 
 	cmds.AddCommand(edge.NewEdgeRollback())
+
+	cmds.AddCommand(ctl.NewCtl())
 
 	return cmds
 }
