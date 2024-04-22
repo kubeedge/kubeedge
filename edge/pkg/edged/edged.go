@@ -136,7 +136,7 @@ func (e *edged) Start() {
 		}
 	}
 
-	klErrChan := make(chan error, 1)
+	kubeletErrChan := make(chan error, 1)
 	go func() {
 		err := DefaultRunLiteKubelet(e.context, e.KubeletServer, e.KubeletDeps, e.FeatureGate)
 		if err != nil {
@@ -144,10 +144,26 @@ func (e *edged) Start() {
 				klog.Errorf("Start edged failed, err: %v", err)
 				os.Exit(1)
 			}
-			klErrChan <- err
+			kubeletErrChan <- err
 		}
 	}()
-	e.syncPod(e.KubeletDeps.PodConfig, klErrChan)
+
+	// block until kubelet is ready to sync pods
+	startWaiter := time.NewTimer(10 * time.Second)
+	defer startWaiter.Stop()
+
+	select {
+	case <-beehiveContext.Done():
+		klog.Warning("Stop sync pod")
+		return
+	case err := <-kubeletErrChan:
+		klog.Errorf("Failed to start edged, err: %v", err)
+		return
+	case <-startWaiter.C:
+		klog.Info("Start sync pod")
+	}
+
+	e.syncPod(e.KubeletDeps.PodConfig)
 }
 
 // newEdged creates new edged object and initialises it
@@ -225,21 +241,7 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 	return ed, nil
 }
 
-func (e *edged) syncPod(podCfg *config.PodConfig, kubeletErrChan <-chan error) {
-	startWaiter := time.NewTimer(10 * time.Second)
-	defer startWaiter.Stop() 
-
-	// block until ready to sync pods
-	select {
-	case <-beehiveContext.Done():
-		klog.Warning("Sync pod stop")
-		return
-	case err := <-kubeletErrChan:
-		klog.Errorf("Start edged failed, err: %v", err)
-		return
-	case <-startWaiter.C:
-		klog.Info("Sync pod started")
-	}
+func (e *edged) syncPod(podCfg *config.PodConfig) {
 
 	//when starting, send msg to metamanager once to get existing pods
 	info := model.NewMessage("").BuildRouter(e.Name(), e.Group(), e.namespace+"/"+model.ResourceTypePod,
@@ -251,7 +253,7 @@ func (e *edged) syncPod(podCfg *config.PodConfig, kubeletErrChan <-chan error) {
 	for {
 		select {
 		case <-beehiveContext.Done():
-			klog.Warning("Sync pod stop")
+			klog.Warning("Stop sync pod")
 			return
 		default:
 		}
