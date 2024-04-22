@@ -68,6 +68,7 @@ require (
 	gopkg.in/square/go-jose.v2 v2.6.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/component-helpers v0.0.0
+	k8s.io/kubectl v0.28.6
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3
 )
 
@@ -127,6 +128,7 @@ require (
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
+	github.com/fvbommel/sortorder v1.1.0 // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
 	github.com/go-gorp/gorp/v3 v3.0.5 // indirect
 	github.com/go-logr/logr v1.2.4 // indirect
@@ -270,7 +272,6 @@ require (
 	k8s.io/gengo v0.0.0-20220902162205-c0856e24416d // indirect
 	k8s.io/kms v0.28.6 //indirect
 	k8s.io/kube-scheduler v0.28.6 // indirect
-	k8s.io/kubectl v0.28.6 // indirect
 	k8s.io/legacy-cloud-providers v0.0.0 // indirect
 	k8s.io/pod-security-admission v0.0.0 // indirect
 	k8s.io/system-validators v1.8.0 // indirect
