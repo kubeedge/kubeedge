@@ -80,7 +80,7 @@ KubeEdge 由云端和边缘端部分构成：
 
 ## 路线图
 
-* [2023 Roadmap](https://github.com/kubeedge/community/blob/master/roadmap_zh.md)
+* [2024 Roadmap](https://github.com/kubeedge/community/blob/master/roadmap_zh.md)
 
 ## 社区例会
 
