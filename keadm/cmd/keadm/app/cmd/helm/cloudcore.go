@@ -66,6 +66,7 @@ const (
 )
 
 var setsKeyImageTags = []string{"cloudCore.image.tag", "iptablesManager.image.tag", "controllerManager.image.tag"}
+var setsKeyImageRepositories = map[string]string{"cloudCore.image.repository": "cloudcore", "iptablesManager.image.repository": "iptables-manager", "controllerManager.image.repository": "controller-manager"}
 
 var helmSettings = helmcli.New()
 
@@ -304,6 +305,14 @@ func appendDefaultSets(version, advertiseAddress string, opts *types.CloudInitUp
 		for _, k := range setsKeyImageTags {
 			if !opts.HasSets(k) {
 				opts.Sets = append(opts.Sets, fmt.Sprintf("%s=%s", k, version))
+			}
+		}
+	}
+	if opts.ImageRepository != "" {
+		opts.ImageRepository = strings.TrimSuffix(opts.ImageRepository, "/")
+		for k, v := range setsKeyImageRepositories {
+			if !opts.HasSets(k) {
+				opts.Sets = append(opts.Sets, fmt.Sprintf("%s=%s", k, opts.ImageRepository+"/"+v))
 			}
 		}
 	}

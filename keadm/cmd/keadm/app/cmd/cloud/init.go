@@ -98,6 +98,9 @@ func addInitOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 
 	cmd.Flags().StringVar(&initOpts.ExternalHelmRoot, types.FlagNameExternalHelmRoot, initOpts.ExternalHelmRoot,
 		"Add external helm root path to keadm.")
+
+	cmd.Flags().StringVar(&initOpts.ImageRepository, types.FlagNameImageRepository, initOpts.ImageRepository,
+		"Choose a container image repository to pull the image of the kubedge component.")
 }
 
 func addHelmValueOptionsFlags(cmd *cobra.Command, initOpts *types.InitOptions) {

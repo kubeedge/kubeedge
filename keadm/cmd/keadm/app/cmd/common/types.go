@@ -35,6 +35,7 @@ type CloudInitUpdateBase struct {
 	Force            bool
 	DryRun           bool
 	PrintFinalValues bool
+	ImageRepository  string
 }
 
 const requiredSetSplitLen = 2
