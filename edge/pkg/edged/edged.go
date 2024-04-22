@@ -242,7 +242,6 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 }
 
 func (e *edged) syncPod(podCfg *config.PodConfig) {
-
 	//when starting, send msg to metamanager once to get existing pods
 	info := model.NewMessage("").BuildRouter(e.Name(), e.Group(), e.namespace+"/"+model.ResourceTypePod,
 		model.QueryOperation)
