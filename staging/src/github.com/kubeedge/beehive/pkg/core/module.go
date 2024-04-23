@@ -19,6 +19,8 @@ var (
 	// Modules map
 	modules         map[string]*ModuleInfo
 	disabledModules map[string]*ModuleInfo
+	// feature gates
+	moduleRestartEnabled bool
 )
 
 func init() {
@@ -77,4 +79,14 @@ func GetModuleExchange() *socket.ModuleExchange {
 		exchange.Groups[group] = append(exchange.Groups[group], name)
 	}
 	return &exchange
+}
+
+// EnableModuleRestart enable feature for auto restarting modules
+func EnableModuleRestart() {
+	moduleRestartEnabled = true
+}
+
+// IsModuleRestartEnabled checks whether auto-restart feature is enabled.
+func IsModuleRestartEnabled() bool {
+	return moduleRestartEnabled
 }
