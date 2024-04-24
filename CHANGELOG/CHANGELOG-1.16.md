@@ -1,3 +1,7 @@
+* [v1.16.2](#v1162)
+  * [Downloads for v1.16.2](#downloads-for-v1162)
+  * [KubeEdge v1.16.2 Release Notes](#kubeedge-v1162-release-notes)
+    * [Changelog since v1.16.1](#changelog-since-v1161)
 * [v1.16.1](#v1161)
   * [Downloads for v1.16.1](#downloads-for-v1161)
   * [KubeEdge v1.16.1 Release Notes](#kubeedge-v1161-release-notes)
@@ -7,6 +11,20 @@
     * [KubeEdge v1.16 Release Notes](#kubeedge-v116-release-notes)
         * [1.16 What's New](#116-whats-new)
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
+
+# v1.16.2
+
+## Downloads for v1.16.2
+
+Download v1.16.2 in the [v1.16.2 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.16.2).
+
+## KubeEdge v1.16.2 Release Notes
+
+### Changelog since v1.16.1
+
+- Fix device status problem with device's namespace. ([#5537](https://github.com/kubeedge/kubeedge/pull/5537), [@luomengY](https://github.com/luomengY))
+- Fix device mapper generate script error. ([#5539](https://github.com/kubeedge/kubeedge/pull/5539), [@Catherine-monk](https://github.com/Catherine-monk))
+- Fix the status reporting of device to avoid issues defined by twin. ([#5545](https://github.com/kubeedge/kubeedge/pull/5545), [@luomengY](https://github.com/luomengY))
 
 # v1.16.1
 
