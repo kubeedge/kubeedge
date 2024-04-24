@@ -4,7 +4,7 @@ authors:
 - "@micplus"
   approvers:
   creation-date: 2024-04-04
-  last-updated: 2024-04-09
+  last-updated: 2024-04-24
 ---
 
 # Module Restarting
@@ -57,16 +57,17 @@ Procedure for restarting modules(alpha ver.):
 ```text
 //  procedure: start/restart a module(alpha)
 1.  m := some module enabled
-2.  backoffDuration := 1s->30s
-3.
-4.  begin loop:
-5.    start module m
-6.    wait until m exits
-7.    if global exit signal comes:
-8.      break loop
-9.    wait for backoffDuration
-10.   backoffDuration *= 2
-11. end loop;
+2.  maxBackoffDuration := some specific time configured or embedded
+3.  backoffDuration := some specific time as initial
+4.
+5.  begin loop:
+6.    start module m
+7.    wait until m exits
+8.    wait for backoffDuration
+9.    backoffDuration *= 2
+10.   if backoffDuration > maxBackoffDuration:
+11.     backoffDuration = maxBackoffDuration
+12. end loop;
 ```
 
 Here are some issues not completely considered in alpha version(==1.17). In the future(>1.17), we should discuss and consider further about:
