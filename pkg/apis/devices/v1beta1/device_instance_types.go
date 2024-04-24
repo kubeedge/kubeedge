@@ -92,6 +92,7 @@ type ProtocolConfig struct {
 // DeviceProperty describes the specifics all the properties of the device.
 type DeviceProperty struct {
 	// Required: The device property name to be accessed. It must be unique.
+	// Note: If you need to use the built-in stream data processing function, you need to define Name as saveFrame or saveVideo
 	Name string `json:"name,omitempty"`
 	// The desired property value.
 	Desired TwinProperty `json:"desired,omitempty"`

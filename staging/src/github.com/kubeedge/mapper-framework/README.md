@@ -11,6 +11,7 @@ The command below will generate a framework for the customized mapper. Run the c
 ```shell
 make generate
 Please input the mapper name (like 'Bluetooth', 'BLE'): foo
+Please input the build method (like 'stream', 'nostream'): nostream
 ```
 A project named as your input will be generated. The file tree is as below:
 ```
@@ -42,5 +43,18 @@ mapper
 └── Makefile
 ```
 
+## 2. Generate the mapper project
+After generating the mapper project and filling driver folder, users can make their own mapper image 
+based on the Dockerfile file and deploy the mapper in the cluster through deployment and other methods.
+If your mapper is aimed to processing streaming data
+```shell
+  docker build -f Dockerfile_stream -t [YOUR MAPPER IMAGE NAME] .
+```
+If not, Use the following command:
+```shell
+  docker build -f Dockerfile_nostream -t [YOUR MAPPER IMAGE NAME] .
+```
+
 # Where does it come from?
-mapper-framework is synced from https://github.com/kubeedge/kubeedge/tree/master/staging/src/github.com/kubeedge/mapper-framework. Code changes are made in that location, merged into kubeedge and later synced here.
+mapper-framework is synced from https://github.com/kubeedge/kubeedge/tree/master/staging/src/github.com/kubeedge/mapper-framework.
+Code changes are made in that location, merged into kubeedge and later synced here.

@@ -201,10 +201,12 @@ spec:
                     minimum:
                       type: string
                     name:
-                      description: 'Required: The device property name.'
+                      description: 'Required: The device property name. Note: If you
+                        need to use the built-in stream data processing function,
+                        you need to define Name as saveFrame or saveVideo'
                       type: string
                     type:
-                      description: 'Required: Type of device property, ENUM: INT,FLOAT,DOUBLE,STRING,BOOLEAN,BYTES'
+                      description: 'Required: Type of device property, ENUM: INT,FLOAT,DOUBLE,STRING,BOOLEAN,BYTES,STREAM'
                       enum:
                       - INT
                       - FLOAT
@@ -212,6 +214,7 @@ spec:
                       - STRING
                       - BOOLEAN
                       - BYTES
+                      - STREAM
                       type: string
                     unit:
                       description: The unit of the property
