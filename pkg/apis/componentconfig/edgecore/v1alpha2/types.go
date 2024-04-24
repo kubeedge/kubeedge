@@ -1004,6 +1004,9 @@ type MetaServer struct {
 	ServiceAccountIssuers  []string `json:"serviceAccountIssuers"`
 	APIAudiences           []string `json:"apiAudiences"`
 	ServiceAccountKeyFiles []string `json:"serviceAccountKeyFiles"`
+	// DummyServer defines the IP address of dummy interface and port
+	// that MetaServer listen on for edge pods to connect, format: ip:port
+	DummyServer string `json:"dummyServer"`
 }
 
 // ServiceBus indicates the ServiceBus module config

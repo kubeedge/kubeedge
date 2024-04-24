@@ -60,6 +60,7 @@ import (
 	metaclient "github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
+	kefeatures "github.com/kubeedge/kubeedge/pkg/features"
 	"github.com/kubeedge/kubeedge/pkg/version"
 )
 
@@ -135,13 +136,33 @@ func (e *edged) Start() {
 		}
 	}
 
+	kubeletErrChan := make(chan error, 1)
 	go func() {
 		err := DefaultRunLiteKubelet(e.context, e.KubeletServer, e.KubeletDeps, e.FeatureGate)
 		if err != nil {
-			klog.Errorf("Start edged failed, err: %v", err)
-			os.Exit(1)
+			if !kefeatures.DefaultFeatureGate.Enabled(kefeatures.ModuleRestart) {
+				klog.Errorf("Start edged failed, err: %v", err)
+				os.Exit(1)
+			}
+			kubeletErrChan <- err
 		}
 	}()
+
+	// block until kubelet is ready to sync pods
+	startWaiter := time.NewTimer(10 * time.Second)
+	defer startWaiter.Stop()
+
+	select {
+	case <-beehiveContext.Done():
+		klog.Warning("Stop sync pod")
+		return
+	case err := <-kubeletErrChan:
+		klog.Errorf("Failed to start edged, err: %v", err)
+		return
+	case <-startWaiter.C:
+		klog.Info("Start sync pod")
+	}
+
 	e.syncPod(e.KubeletDeps.PodConfig)
 }
 
@@ -221,18 +242,17 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 }
 
 func (e *edged) syncPod(podCfg *config.PodConfig) {
-	time.Sleep(10 * time.Second)
-
 	//when starting, send msg to metamanager once to get existing pods
 	info := model.NewMessage("").BuildRouter(e.Name(), e.Group(), e.namespace+"/"+model.ResourceTypePod,
 		model.QueryOperation)
 	beehiveContext.Send(modules.MetaManagerModuleName, *info)
 	// rawUpdateChan receives the update events from metamanager or edgecontroller
 	rawUpdateChan := podCfg.Channel(beehiveContext.GetContext(), kubelettypes.ApiserverSource)
+
 	for {
 		select {
 		case <-beehiveContext.Done():
-			klog.Warning("Sync pod stop")
+			klog.Warning("Stop sync pod")
 			return
 		default:
 		}

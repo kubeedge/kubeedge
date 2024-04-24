@@ -31,6 +31,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/session"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
@@ -65,7 +66,7 @@ import (
 // ------------------------------------------------------------------
 
 // MessageDispatcher is responsible for the dispatch of upstream messages
-// (edge ​​to cloud) and downstream messages (cloud to edge)
+// (edge to cloud) and downstream messages (cloud to edge)
 type MessageDispatcher interface {
 	// DispatchDownstream continuously reads the messages from cloudHub module,
 	// and according to the content of the message, the message is dispatched
@@ -187,6 +188,11 @@ func (md *messageDispatcher) DispatchUpstream(message *beehivemodel.Message, inf
 	case message.GetOperation() == taskutil.TaskPrePull ||
 		message.GetOperation() == taskutil.TaskUpgrade:
 		beehivecontext.SendToGroup(modules.TaskManagerModuleGroup, *message)
+
+	case message.GetResource() == beehivemodel.ResourceTypeK8sCA:
+		respMsg := beehivemodel.NewMessage(message.GetID()).FillBody(string(client.GetK8sCA())).
+			BuildRouter(modules.CloudHubModuleName, "resource", fmt.Sprintf("node/%s/%s", info.NodeID, message.GetResource()), beehivemodel.ResponseOperation)
+		beehivecontext.Send(modules.CloudHubModuleName, *respMsg)
 
 	default:
 		err := md.PubToController(info, message)
@@ -446,6 +452,8 @@ func noAckRequired(msg *beehivemodel.Message) bool {
 		return true
 	case strings.Contains(msgResource, beehivemodel.ResourceTypeServiceAccountToken):
 		return true
+	case strings.Contains(msgResource, beehivemodel.ResourceTypeK8sCA):
+		return true
 	case isVolumeOperation(msg.GetOperation()):
 		return true
 	case msg.Router.Operation == metaserver.ApplicationResp:
@@ -475,6 +483,7 @@ func noAckRequired(msg *beehivemodel.Message) bool {
 				resourceType == beehivemodel.ResourceTypeNodePatch ||
 				resourceType == beehivemodel.ResourceTypePodPatch ||
 				resourceType == beehivemodel.ResourceTypePodStatus ||
+				resourceType == beehivemodel.ResourceTypeCSR ||
 				(resourceType == beehivemodel.ResourceTypePod && msg.GetOperation() == beehivemodel.ResponseOperation) {
 				return true
 			}

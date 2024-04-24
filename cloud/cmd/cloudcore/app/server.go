@@ -45,6 +45,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/monitor"
+	"github.com/kubeedge/kubeedge/cloud/pkg/csrapprovercontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller"
@@ -112,11 +113,16 @@ kubernetes controller which manages devices so that the device metadata/status d
 				updateCloudCoreConfigMap(config)
 			}
 
+			ctx := beehiveContext.GetContext()
+			if features.DefaultFeatureGate.Enabled(features.RequireAuthorization) {
+				go csrapprovercontroller.NewCSRApprover(client.GetKubeClient(), informers.GetInformersManager().GetKubeInformerFactory().Certificates().V1().CertificateSigningRequests()).
+					Run(5, ctx.Done())
+			}
+
 			gis := informers.GetInformersManager()
 
 			registerModules(config)
 
-			ctx := beehiveContext.GetContext()
 			if config.Modules.IptablesManager == nil || config.Modules.IptablesManager.Enable && config.Modules.IptablesManager.Mode == v1alpha1.InternalMode {
 				// By default, IptablesManager manages tunnel port related iptables rules
 				// The internal mode will share the host network, forward to the stream port.

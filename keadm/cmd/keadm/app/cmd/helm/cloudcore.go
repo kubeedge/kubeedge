@@ -66,6 +66,7 @@ const (
 )
 
 var setsKeyImageTags = []string{"cloudCore.image.tag", "iptablesManager.image.tag", "controllerManager.image.tag"}
+var setsKeyImageRepositories = map[string]string{"cloudCore.image.repository": "cloudcore", "iptablesManager.image.repository": "iptables-manager", "controllerManager.image.repository": "controller-manager"}
 
 var helmSettings = helmcli.New()
 
@@ -104,9 +105,22 @@ func (c *CloudCoreHelmTool) Install(opts *types.InitOptions) error {
 
 	appendDefaultSets(opts.KubeEdgeVersion, opts.AdvertiseAddress, &opts.CloudInitUpdateBase)
 	// Load profile values, and merges the sets flag
-	vals, err := MergeProfileValues(getValuesFile(opts.Profile), opts.GetValidSets())
-	if err != nil {
-		return err
+	var vals map[string]interface{}
+	var err error
+	if opts.Profile != "" {
+		// Load profile values, and merges the sets flag
+		vals, err = MergeProfileValues(getValuesFile(opts.Profile), opts.GetValidSets())
+		if err != nil {
+			return err
+		}
+	} else {
+		valueOpts := &Options{
+			Values: opts.GetValidSets(),
+		}
+		vals, err = valueOpts.MergeValues()
+		if err != nil {
+			return err
+		}
 	}
 
 	// TODO: think about how to support addons, and should we support addons?
@@ -137,6 +151,7 @@ func (c *CloudCoreHelmTool) Install(opts *types.InitOptions) error {
 	client.DryRun = opts.DryRun
 	client.CreateNamespace = defaultHelmCreateNs
 	client.ReleaseName = renderer.componentName
+	client.Namespace = constants.SystemNamespace
 	// If the flag force is true, don't wait for the command result of helm install
 	if !opts.Force {
 		client.Wait = defaultHelmWait
@@ -290,6 +305,14 @@ func appendDefaultSets(version, advertiseAddress string, opts *types.CloudInitUp
 		for _, k := range setsKeyImageTags {
 			if !opts.HasSets(k) {
 				opts.Sets = append(opts.Sets, fmt.Sprintf("%s=%s", k, version))
+			}
+		}
+	}
+	if opts.ImageRepository != "" {
+		opts.ImageRepository = strings.TrimSuffix(opts.ImageRepository, "/")
+		for k, v := range setsKeyImageRepositories {
+			if !opts.HasSets(k) {
+				opts.Sets = append(opts.Sets, fmt.Sprintf("%s=%s", k, opts.ImageRepository+"/"+v))
 			}
 		}
 	}

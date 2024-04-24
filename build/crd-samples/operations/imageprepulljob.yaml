@@ -8,7 +8,7 @@ spec:
   imagePrePullTemplate:
     images:
       - busybox:latest
-    nodes:
+    nodeNames:
       - edgenode1 # Need to replaced with your own node name
     timeoutSeconds: 300
     retryTimes: 1

@@ -37,9 +37,8 @@ func GetCertSyncChannel() map[string]chan bool {
 }
 
 func NewCertSyncChannel() map[string]chan bool {
-	certSync = make(map[string]chan bool, 2)
+	certSync = make(map[string]chan bool, 1)
 	certSync[modules.EdgeStreamModuleName] = make(chan bool, 1)
-	certSync[modules.MetaManagerModuleName] = make(chan bool, 1)
 	return certSync
 }
 

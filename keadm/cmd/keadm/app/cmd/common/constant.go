@@ -280,3 +280,10 @@ var (
 	// make it an var so it can be changed to adapt to windows(In rare cases, user name is Administrator)
 	DefaultKubeConfig = "/root/.kube/config"
 )
+
+const (
+	FlagNameNamespace     = "namespace"
+	FlagNameAllNamespaces = "all-namespaces"
+	FlagNameOutput        = "output"
+	FlagNameLabelSelector = "selector"
+)

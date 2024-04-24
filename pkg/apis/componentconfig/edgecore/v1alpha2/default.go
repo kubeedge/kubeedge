@@ -133,6 +133,7 @@ func NewDefaultEdgeCoreConfig() (config *EdgeCoreConfig) {
 					TLSCertFile:           constants.DefaultCertFile,
 					TLSPrivateKeyFile:     constants.DefaultKeyFile,
 					ServiceAccountIssuers: []string{constants.DefaultServiceAccountIssuer},
+					DummyServer:           constants.DefaultDummyServerAddr,
 				},
 			},
 			ServiceBus: &ServiceBus{

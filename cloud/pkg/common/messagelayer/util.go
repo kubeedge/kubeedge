@@ -36,8 +36,8 @@ const (
 	ResourceResourceTypeIndex = 3
 	ResourceResourceNameIndex = 4
 
-	ResourceDeviceIndex   = 2
-	ResourceDeviceIDIndex = 3
+	ResourceDeviceIndex          = 2
+	ResourceDeviceNamespaceIndex = 3
 
 	ResourceDevice               = "device"
 	ResourceTypeTwinEdgeUpdated  = "twin/edge_updated"
@@ -128,11 +128,11 @@ func BuildResourceForDevice(nodeID, resourceType, resourceID string) (resource s
 	return
 }
 
-// GetDeviceID returns the ID of the device
+// GetDeviceID returns the ID of the device,resource's format:$hw/events/device/{namespace}/{deviceName}
 func GetDeviceID(resource string) (string, error) {
 	res := strings.Split(resource, "/")
-	if len(res) >= ResourceDeviceIDIndex+1 && res[ResourceDeviceIndex] == ResourceDevice {
-		return res[ResourceDeviceIDIndex], nil
+	if len(res) >= ResourceDeviceNamespaceIndex+2 && res[ResourceDeviceIndex] == ResourceDevice {
+		return res[ResourceDeviceNamespaceIndex] + "/" + res[ResourceDeviceNamespaceIndex+1], nil
 	}
 	return "", errors.New("failed to get device id")
 }

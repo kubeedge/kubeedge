@@ -26,6 +26,13 @@ const (
 	// alpha: v1.12
 	// owner: @vincentgoat
 	RequireAuthorization featuregate.Feature = "requireAuthorization"
+	// ModuleRestart supports automatic restarting for modules.
+	// If a module exits when running because of uncaught or external errors, BeeHive will try to keep the module running by restarting it.
+	// If moduleRestart enabled, modules will be kept running forever. The interval between starting a module increases whenever it exits,
+	// with maximum of 30s.
+	// alpha: v1.17
+	// owner: @micplus
+	ModuleRestart featuregate.Feature = "moduleRestart"
 )
 
 // defaultFeatureGates consists of all known Kubeedge-specific feature keys.
@@ -33,4 +40,5 @@ const (
 // available throughout Kubeedge binaries.
 var defaultFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
 	RequireAuthorization: {Default: false, PreRelease: featuregate.Alpha},
+	ModuleRestart:        {Default: false, PreRelease: featuregate.Alpha},
 }
