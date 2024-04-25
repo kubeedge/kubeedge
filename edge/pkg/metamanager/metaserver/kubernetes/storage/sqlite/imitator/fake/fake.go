@@ -8,6 +8,7 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
+	"github.com/kubeedge/kubeedge/pkg/metaserver"
 )
 
 // Client fake
@@ -22,6 +23,7 @@ type Client struct {
 	ListF                         func(ctx context.Context, key string) (imitator.Resp, error)
 	GetF                          func(ctx context.Context, key string) (imitator.Resp, error)
 	WatchF                        func(ctx context.Context, key string, ResourceVersion uint64) <-chan watch.Event
+	PatchF                        func(ctx context.Context, pi metaserver.PatchInfo) (runtime.Object, error)
 }
 
 // Inject fake
@@ -72,4 +74,9 @@ func (c Client) Get(ctx context.Context, key string) (imitator.Resp, error) {
 // Watch fake
 func (c Client) Watch(ctx context.Context, key string, ResourceVersion uint64) <-chan watch.Event {
 	return c.WatchF(ctx, key, ResourceVersion)
+}
+
+// Patch fake
+func (c Client) Patch(ctx context.Context, pi metaserver.PatchInfo) (runtime.Object, error) {
+	return c.PatchF(ctx, pi)
 }

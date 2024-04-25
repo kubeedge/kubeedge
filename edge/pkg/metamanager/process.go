@@ -305,7 +305,15 @@ func (m *metaManager) processQuery(message model.Message) {
 	resKey, resType, resID := parseResource(&message)
 	var metas *[]string
 	var err error
-	if requireRemoteQuery(resType) && connect.IsConnected() {
+	isPrefCloudPod := resType == model.ResourceTypePod
+	if isPrefCloudPod {
+		if value, ok := message.Content.(string); ok {
+			isPrefCloudPod = value == constants.GetPodFromCloudFirst
+		} else {
+			isPrefCloudPod = false
+		}
+	}
+	if (isPrefCloudPod || requireRemoteQuery(resType)) && connect.IsConnected() {
 		m.processRemote(message)
 		return
 	}
@@ -364,9 +372,21 @@ func (m *metaManager) processRemote(message model.Message) {
 			klog.V(4).Infof("process remote objResp: %+v", mapContent["Object"])
 			respDB.Content = mapContent["Object"]
 		}
-		if err := m.handleMessage(&respDB); err != nil {
-			feedbackError(err, message)
-			return
+
+		_, resType, _ := parseResource(&message)
+		isPrefCloudPod := resType == model.ResourceTypePod
+		if isPrefCloudPod {
+			if value, ok := message.Content.(string); ok {
+				isPrefCloudPod = value == constants.GetPodFromCloudFirst
+			} else {
+				isPrefCloudPod = false
+			}
+		}
+		if !isPrefCloudPod {
+			if err := m.handleMessage(&respDB); err != nil {
+				feedbackError(err, message)
+				return
+			}
 		}
 		feedbackResponse(&message, originalID, &resp)
 	}()

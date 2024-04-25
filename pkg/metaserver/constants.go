@@ -52,6 +52,10 @@ const (
 )
 
 type PatchInfo struct {
+	Group        string
+	Version      string
+	Resource     string
+	Namespace    string
 	Name         string
 	PatchType    types.PatchType
 	Data         []byte

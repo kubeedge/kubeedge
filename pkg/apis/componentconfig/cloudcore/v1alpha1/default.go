@@ -165,6 +165,7 @@ func getDefaultEdgeControllerLoad(nodeLimit int32) *EdgeControllerLoad {
 		ServiceAccountTokenWorkers:        constants.DefaultServiceAccountTokenWorkers,
 		CreatePodWorks:                    constants.DefaultCreatePodWorkers,
 		CertificateSigningRequestWorkers:  constants.DefaultCertificateSigningRequestWorkers,
+		QueryPodWorkers:                   constants.DefaultQueryPodWorkers,
 	}
 }
 
@@ -194,6 +195,7 @@ func getDefaultEdgeControllerBuffer(nodeLimit int32) *EdgeControllerBuffer {
 		ServiceAccountToken:        constants.DefaultServiceAccountTokenBuffer,
 		CreatePod:                  constants.DefaultCreatePodBuffer,
 		CertificateSigningRequest:  constants.DefaultCertificateSigningRequestBuffer,
+		QueryPod:                   constants.DefaultQueryPodBuffer,
 	}
 }
 

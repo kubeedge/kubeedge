@@ -7,6 +7,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	metamanagerconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
@@ -33,6 +34,7 @@ func Register(metaManager *v1alpha2.MetaManager) {
 	metamanagerconfig.InitConfigure(metaManager)
 	meta := newMetaManager(metaManager.Enable)
 	initDBTable(meta)
+	client.InitKubeClient()
 	core.Register(meta)
 }
 
