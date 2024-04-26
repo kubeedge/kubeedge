@@ -77,7 +77,7 @@ To learn deeply about KubeEdge, try some examples on [examples](https://github.c
 
 ## Roadmap
 
-* [2023 Roadmap](https://github.com/kubeedge/community/blob/master/roadmap.md)
+* [2024 Roadmap](https://github.com/kubeedge/community/blob/master/roadmap.md)
 
 ## Meeting
 
