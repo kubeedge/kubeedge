@@ -33,7 +33,7 @@ import (
 	"k8s.io/kubernetes/pkg/printers/storage"
 
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
-	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/restful"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/client"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
 
@@ -72,18 +72,19 @@ func (o *PodGetOptions) getPods(args []string) error {
 	}
 	nodeName := config.Modules.Edged.HostnameOverride
 
+	ctx := context.Background()
 	var podListFilter *api.PodList
 	if len(args) > 0 {
 		podListFilter = &api.PodList{
 			Items: make([]api.Pod, 0, len(args)),
 		}
-		var podRequest *restful.PodRequest
+		var podRequest *client.PodRequest
 		for _, podName := range args {
-			podRequest = &restful.PodRequest{
+			podRequest = &client.PodRequest{
 				Namespace: o.Namespace,
 				PodName:   podName,
 			}
-			pod, err := podRequest.GetPod()
+			pod, err := podRequest.GetPod(ctx)
 			if err != nil {
 				fmt.Println(err.Error())
 				continue
@@ -101,12 +102,12 @@ func (o *PodGetOptions) getPods(args []string) error {
 			}
 		}
 	} else {
-		podRequest := &restful.PodRequest{
+		podRequest := &client.PodRequest{
 			Namespace:     o.Namespace,
 			AllNamespaces: o.AllNamespaces,
 			LabelSelector: o.LabelSelector,
 		}
-		podList, err := podRequest.GetPods()
+		podList, err := podRequest.GetPods(ctx)
 		if err != nil {
 			return err
 		}
@@ -130,7 +131,11 @@ func (o *PodGetOptions) getPods(args []string) error {
 		if len(args) > 0 {
 			return nil
 		}
-		fmt.Printf("No resources found in %s namespace.\n", o.Namespace)
+		if o.AllNamespaces {
+			fmt.Println("No resources found in all namespace.")
+		} else {
+			fmt.Printf("No resources found in %s namespace.\n", o.Namespace)
+		}
 		return nil
 	}
 
