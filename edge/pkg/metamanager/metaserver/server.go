@@ -42,8 +42,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/handlerfactory"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/serializer"
 	kefeatures "github.com/kubeedge/kubeedge/pkg/features"
-	"github.com/kubeedge/kubeedge/pkg/util"
-	"github.com/kubeedge/kubeedge/pkg/util/pass-through"
+	passthrough "github.com/kubeedge/kubeedge/pkg/util/pass-through"
 )
 
 // MetaServer is simplification of server.GenericAPIServer
@@ -294,27 +293,4 @@ func (ls *MetaServer) makeTLSConfig() (*tls.Config, error) {
 			return cert, nil
 		},
 	}, nil
-}
-
-func setupDummyInterface() error {
-	dummyIP, dummyPort, err := net.SplitHostPort(metaserverconfig.Config.DummyServer)
-	if err != nil {
-		return err
-	}
-
-	if err := os.Setenv("METASERVER_DUMMY_IP", dummyIP); err != nil {
-		return err
-	}
-	if err := os.Setenv("METASERVER_DUMMY_PORT", dummyPort); err != nil {
-		return err
-	}
-
-	manager := util.NewDummyDeviceManager()
-	_, err = manager.EnsureDummyDevice("edge-dummy0")
-	if err != nil {
-		return err
-	}
-
-	_, err = manager.EnsureAddressBind(dummyIP, "edge-dummy0")
-	return err
 }
