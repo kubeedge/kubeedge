@@ -344,6 +344,10 @@ message ReportDeviceStatusRequest {
 message DeviceStatus {
     // the device twins of the device.
     repeated Twin twins = 1;
+    // the state of the device.
+    string state = 2;
+    // the state message of the device.
+    string stateMessage = 3;
 }
 
 // Twin is the digital model of a device. It contains a series of properties.

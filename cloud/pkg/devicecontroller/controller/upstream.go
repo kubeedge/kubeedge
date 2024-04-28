@@ -169,6 +169,9 @@ func (uc *UpstreamController) updateDeviceStatus() {
 			cacheDevice.Status = deviceStatus.Status
 			uc.dc.deviceManager.Device.Store(deviceID, cacheDevice)
 
+			deviceStatus.Status.State = msgTwin.State
+			deviceStatus.Status.StateMessage = msgTwin.StateMessage
+
 			body, err := json.Marshal(deviceStatus)
 			if err != nil {
 				klog.Errorf("Failed to marshal device status %v", deviceStatus)

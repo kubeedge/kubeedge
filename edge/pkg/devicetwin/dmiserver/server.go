@@ -135,7 +135,7 @@ func (s *server) ReportDeviceStatus(ctx context.Context, in *pb.ReportDeviceStat
 
 	if in != nil && in.ReportedDevice != nil && in.ReportedDevice.Twins != nil {
 		for _, twin := range in.ReportedDevice.Twins {
-			msg, err := CreateMessageTwinUpdate(twin)
+			msg, err := CreateMessageTwinUpdate(twin, in)
 			if err != nil {
 				klog.Errorf("fail to create message data for property %s of device %s with err: %v", twin.PropertyName, in.DeviceName, err)
 				return nil, err
@@ -162,7 +162,7 @@ func handleDeviceTwin(in *pb.ReportDeviceStatusRequest, payload []byte) {
 }
 
 // CreateMessageTwinUpdate create twin update message.
-func CreateMessageTwinUpdate(twin *pb.Twin) ([]byte, error) {
+func CreateMessageTwinUpdate(twin *pb.Twin, in *pb.ReportDeviceStatusRequest) ([]byte, error) {
 	var updateMsg DeviceTwinUpdate
 
 	updateMsg.BaseMessage.Timestamp = getTimestamp()
@@ -170,7 +170,8 @@ func CreateMessageTwinUpdate(twin *pb.Twin) ([]byte, error) {
 	updateMsg.Twin[twin.PropertyName] = &types.MsgTwin{}
 	updateMsg.Twin[twin.PropertyName].Expected = &types.TwinValue{Value: &twin.ObservedDesired.Value}
 	updateMsg.Twin[twin.PropertyName].Actual = &types.TwinValue{Value: &twin.Reported.Value}
-
+	updateMsg.State = in.ReportedDevice.State
+	updateMsg.StateMessage = in.ReportedDevice.StateMessage
 	msg, err := json.Marshal(updateMsg)
 	return msg, err
 }

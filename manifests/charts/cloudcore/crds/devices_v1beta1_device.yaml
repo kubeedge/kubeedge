@@ -755,6 +755,12 @@ spec:
             description: DeviceStatus reports the device state and the desired/reported
               values of twin attributes.
             properties:
+              state:
+                description: State is the device state.
+                type: string
+              stateMessage:
+                description: StateMessage is the message of device state.
+                type: string
               twins:
                 description: 'A list of device twins containing desired/reported desired/reported
                   values of twin properties. Optional: A passive device won''t have

@@ -1864,6 +1864,10 @@ type DeviceStatus struct {
 
 	// the device twins of the device.
 	Twins []*Twin `protobuf:"bytes,1,rep,name=twins,proto3" json:"twins,omitempty"`
+	// the state of the device like Online or Offline.
+	State string `protobuf:"bytes,2,opt,name=state,proto3" json:"state,omitempty"`
+	// the state message of the device.
+	StateMessage string `protobuf:"bytes,3,opt,name=stateMessage,proto3" json:"stateMessage,omitempty"`
 }
 
 func (x *DeviceStatus) Reset() {

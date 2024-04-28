@@ -104,5 +104,7 @@ type TwinDoc struct {
 // DeviceTwinUpdate the struct of device twin update
 type DeviceTwinUpdate struct {
 	BaseMessage
-	Twin map[string]*MsgTwin `json:"twin"`
+	Twin         map[string]*MsgTwin `json:"twin"`
+	State        string
+	StateMessage string
 }

@@ -29,7 +29,9 @@ const (
 // DeviceTwinUpdate the structure of device twin update.
 type DeviceTwinUpdate struct {
 	types.BaseMessage
-	Twin map[string]*types.MsgTwin `json:"twin"`
+	Twin         map[string]*types.MsgTwin `json:"twin"`
+	State        string
+	StateMessage string
 }
 
 // getTimestamp get current timestamp.

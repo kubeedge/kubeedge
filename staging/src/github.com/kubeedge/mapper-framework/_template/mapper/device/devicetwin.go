@@ -79,8 +79,9 @@ func (td *TwinData) PushToEdgeCore() {
 		DeviceName:      td.DeviceName,
 		DeviceNamespace: td.DeviceNamespace,
 		ReportedDevice: &dmiapi.DeviceStatus{
-			Twins: twins,
-			//State: "OK",
+			Twins:        twins,
+			State:        common.DEVSTOK,
+			StateMessage: "",
 		},
 	}
 
