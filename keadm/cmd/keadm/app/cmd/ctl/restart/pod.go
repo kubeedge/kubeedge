@@ -18,18 +18,16 @@ package restart
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/spf13/cobra"
-	oteltrace "go.opentelemetry.io/otel/trace"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
+	"k8s.io/client-go/kubernetes"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
-	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
 
+	"github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
-	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/restful"
-	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/client"
 )
 
 type PodRestartOptions struct {
@@ -71,51 +69,57 @@ func AddRestartPodFlags(cmd *cobra.Command, RestartPodOptions *PodRestartOptions
 }
 
 func (o *PodRestartOptions) restartPod(podNames []string) error {
-	for _, podName := range podNames {
-		podRequest := &restful.PodRequest{
-			Namespace: o.Namespace,
-			PodName:   podName,
-		}
-		pod, err := podRequest.GetPod()
-		if err != nil {
-			fmt.Println(err.Error())
-			continue
-		}
-		config, err := util.ParseEdgecoreConfig(common.EdgecoreConfigPath)
-		if err != nil {
-			fmt.Printf("get edge config failed with err:%v\n", err)
-			continue
-		}
-		nodeName := config.Modules.Edged.HostnameOverride
-		if nodeName != pod.Spec.NodeName {
-			fmt.Printf("can't to restart pod: \"%s\" for node: \"%s\"\n", pod.Name, pod.Spec.NodeName)
-			continue
-		}
-		endpoint := config.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint
-		remoteRuntimeService, err := remote.NewRemoteRuntimeService(endpoint, time.Second*10, oteltrace.NewNoopTracerProvider())
+	kubeClient, err := client.KubeClient()
+	if err != nil {
+		return err
+	}
+	ctx := context.Background()
+	restartResponse, err := podRestart(ctx, kubeClient, o.Namespace, podNames)
+	if err != nil {
+		return err
+	}
 
-		var labelSelector = map[string]string{
-			"io.kubernetes.pod.name":      pod.Name,
-			"io.kubernetes.pod.namespace": pod.Namespace,
-		}
+	for _, logMsg := range restartResponse.LogMessages {
+		fmt.Println(logMsg)
+	}
 
-		filter := &runtimeapi.ContainerFilter{
-			LabelSelector: labelSelector,
-		}
-		containers, err := remoteRuntimeService.ListContainers(context.TODO(), filter)
-		if err != nil {
-			return err
-		}
-
-		for _, container := range containers {
-			containerID := container.Id
-			err := remoteRuntimeService.StopContainer(context.TODO(), containerID, 3)
-			if err != nil {
-				fmt.Printf("stop containerID:%s with err:%v\n", containerID, err)
-			} else {
-				fmt.Println(containerID)
-			}
-		}
+	for _, errMsg := range restartResponse.ErrMessages {
+		fmt.Println(errMsg)
 	}
 	return nil
+}
+
+func podRestart(ctx context.Context, clientSet *kubernetes.Clientset, namespace string, podNames []string) (*types.RestartResponse, error) {
+	bodyBytes, err := json.Marshal(podNames)
+	if err != nil {
+		return nil, err
+	}
+	result := clientSet.CoreV1().RESTClient().Post().
+		Namespace(namespace).
+		Resource("pods").
+		SubResource("restart").
+		Body(bodyBytes).
+		Do(ctx)
+
+	if result.Error() != nil {
+		return nil, result.Error()
+	}
+
+	statusCode := -1
+	result.StatusCode(&statusCode)
+	if statusCode != 200 {
+		return nil, fmt.Errorf("pod restart failed with status code: %d", statusCode)
+	}
+
+	body, err := result.Raw()
+	if err != nil {
+		return nil, err
+	}
+
+	var restartResponse types.RestartResponse
+	err = json.Unmarshal(body, &restartResponse)
+	if err != nil {
+		return nil, err
+	}
+	return &restartResponse, nil
 }

@@ -105,3 +105,8 @@ type ImagePrePullJobResponse struct {
 	Reason      string
 	ImageStatus []v1alpha1.ImageStatus
 }
+
+type RestartResponse struct {
+	ErrMessages []string `json:"errMessages,omitempty"`
+	LogMessages []string `json:"LogMessages,omitempty"`
+}
