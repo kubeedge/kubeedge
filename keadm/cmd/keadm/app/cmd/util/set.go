@@ -25,7 +25,7 @@ import (
 // ParseSetByCommma splits a set line according to the comma.
 //
 // A set line is of the form "hello, world" or {a, b, c}
-func ParseSetByComma(set string) []string {
+func parseSetByComma(set string) []string {
 	var vals []string
 	var buffer strings.Builder
 	var inQuotes, inBraces bool
@@ -41,7 +41,13 @@ func ParseSetByComma(set string) []string {
 		case char == '{' && !inQuotes:
 			inBraces = true
 			buffer.WriteRune(char)
+		case char == '<' && !inQuotes:
+			inBraces = true
+			buffer.WriteRune(char)
 		case char == '}' && !inQuotes:
+			inBraces = false
+			buffer.WriteRune(char)
+		case char == '>' && !inQuotes:
 			inBraces = false
 			buffer.WriteRune(char)
 		case char == '"':
@@ -61,7 +67,7 @@ func ParseSetByComma(set string) []string {
 // ParseSetByEqual splits a set line according to the equal.
 //
 // A set line is of the form ["name1=value1","name2=value2"]
-func ParseSetByEqual(set []string) ([]string, []string) {
+func parseSetByEqual(set []string) ([]string, []string) {
 	var names []string
 	var vals []string
 	if len(set) == 0{
@@ -80,20 +86,24 @@ func ParseSetByEqual(set []string) ([]string, []string) {
 
 // ParseSetValue parses the value in the splited set line.
 // The type of value must be interpreted by int, float64, string and array.
-func ParseSetValue(vals []string) []interface{} {
+func parseSetValue(vals []string) []interface{} {
 	parsedvals := make([]interface{}, len(vals))
 	for i, s := range vals {
-		parsedvals[i] = ParseValue(s)
+		parsedvals[i] = parseValue(s)
 	}
 	return parsedvals
 }
 
 // ParseValue parses the value and interprets it to int, float64, string and array.
 // The representation of {value} will be interpreted by array.
-func ParseValue(s string) interface{} {
+func parseValue(s string) interface{} {
 	if strings.HasPrefix(s, "{") && strings.HasSuffix(s, "}") {
-		return ParseArray(s)
+		if strings.Contains(s,":"){
+			return parseMap(s)
+		}
+		return parseArray(s)
 	}
+
 	if intValue, err := strconv.Atoi(s); err == nil {
 		return intValue
 	}
@@ -105,15 +115,45 @@ func ParseValue(s string) interface{} {
 	}
 	return s
 }
+// ParseMap parses the value of map.
+func parseMap(s string) interface{} {
+	if s == "{}"{
+		return make([]interface{}, 0)
+	}
+	s = s[1 : len(s)-1]
+	keyValuePairs := strings.Split(s, ",")
+	keyValue := strings.Split(keyValuePairs[0], ":")
+	myMap := makeMap(reflect.TypeOf(parseValue(keyValue[0])),reflect.TypeOf(parseValue(keyValue[1])))
+	for _ , pair := range keyValuePairs {
+		keyValue := strings.Split(pair, ":")
+		parseKey := parseValue(keyValue[0])
+		parseVal := parseValue(keyValue[1])
+		setValue(myMap,parseKey,parseVal)
+	}
+	return myMap
+}
+// use reflect build map
+func makeMap(keyType, valueType reflect.Type) interface{} {
+    mapType := reflect.MapOf(keyType, valueType)
+    return reflect.MakeMap(mapType).Interface()
+}
+
+// append <k,v> into map 
+func setValue(m interface{}, key interface{}, value interface{}) {
+    v := reflect.ValueOf(m)
+    k := reflect.ValueOf(key)
+    vv := reflect.ValueOf(value)
+    v.SetMapIndex(k, vv)
+}
 
 // ParseArray parses the value of array.
-func ParseArray(s string) interface{} {
+func parseArray(s string) interface{} {
 	if s == "{}" {
 		return make([]interface{}, 0)
 	}
 	s = s[1 : len(s)-1]
 	vals := strings.Split(s, ",")
-	switch ParseType(vals[0]) {
+	switch parseType(vals[0]) {
 	case "int":
 		intArray := make([]int, len(vals))
 		for i, v := range vals {
@@ -140,7 +180,7 @@ func ParseArray(s string) interface{} {
 }
 
 // ParseType parses the type of array and interprets it to int, float64, string.
-func ParseType(s string) string {
+func parseType(s string) string {
 	// Check if it's an integer
 	if _, err := strconv.Atoi(s); err == nil {
 		return "int"
@@ -163,32 +203,38 @@ func ParseType(s string) string {
 //	1)name1 = value1, return 0
 //	2)name1[0].variable1 = value1, return 1
 //	3)name1[0] = value1, return 2
-func GetNameFormStatus(s string) int {
-	if strings.Contains(s, "[") && strings.Contains(s, "]") {
-		if strings.Contains(s, ".") {
-			return 1 // name1[0].variable1 = value1
-		}
-		return 2 // name1[0] = value1
+func getNameFormStatus(s string) int {
+	if !strings.Contains(s,"[")&& !strings.Contains(s,"]"){
+		return 0
 	}
-	return 0 // name1 = value1
+	closeBracketIndex := strings.Index(s,"]")
+	if closeBracketIndex!= (len(s)-1){
+		return 1
+	}
+	if closeBracketIndex == (len(s)-1){
+		return 2
+	}
+	return -1
 }
 
 // SetCommonValue modifies the new value of the name in the config represented by struct.
 // The type of new value may be int, float, string, splic.
 // The name is represented by name1.name2.(...).nameM.
-func SetCommonValue(structPtr interface{}, fieldPath string, value interface{}) error {
+func setCommonValue(structPtr interface{}, fieldPath string, value interface{}) error {
 	structVal := reflect.ValueOf(structPtr).Elem()
 
 	path := strings.Split(fieldPath, ".")
-	var fieldVal reflect.Value = structVal
+	var fieldVal reflect.Value
+	fieldVal = structVal
 	for _, p := range path {
-		fieldVal = GetFieldValue(fieldVal, p)
+		fieldVal = getFieldValue(fieldVal, p)
 		if !fieldVal.IsValid() {
 			return fmt.Errorf("%s: No such field: %s in Config", fieldPath, p)
 		}
 	}
 
 	val := reflect.ValueOf(value)
+	
 	if fieldVal.Type() != val.Type() {
 		return fmt.Errorf("%s: Provided value type %s does not match field type %s", fieldPath, val.Type(), fieldVal.Type())
 	}
@@ -198,7 +244,7 @@ func SetCommonValue(structPtr interface{}, fieldPath string, value interface{}) 
 }
 
 // GetFieldValue gets the fieldname of the struct.
-func GetFieldValue(v reflect.Value, fieldName string) reflect.Value {
+func getFieldValue(v reflect.Value, fieldName string) reflect.Value {
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
@@ -211,49 +257,55 @@ func GetFieldValue(v reflect.Value, fieldName string) reflect.Value {
 }
 
 // ParseAndSetArrayValue combines the function of SetArrayValue and ParseFieldPath1.
-func ParseAndSetArrayValue(structPtr interface{}, fieldPath string, newValue interface{}) error {
-	path, index, _ := ParseFieldPath1(fieldPath)
-	// fmt.Println(path,index)
-	err :=SetArrayValue(structPtr, path, index, newValue)
-	// fmt.Println(structPtr)
+func parseAndSetArrayValue(structPtr interface{}, fieldPath string, newValue interface{}) error {
+	path, index, _ := parseFieldPath1(fieldPath)
+	err :=setArrayValue(structPtr, path, index, newValue)
+	// fmt.Println(newValue)
 	return err
 }
 
 // SetArrayValue modifies the new value of the name in the config represented by struct.
 // The type of new value may be int, float, string.
 // The name is represented by name1.name2.(...).nameM[N].
-func SetArrayValue(structPtr interface{}, fieldPath string, index int, newValue interface{}) error {
+func setArrayValue(structPtr interface{}, fieldPath string, index int, newValue interface{}) error {
 	v := reflect.ValueOf(structPtr).Elem()
 
 	pathParts := strings.Split(fieldPath, ".")
-	var fieldVal reflect.Value = v
+	var fieldVal reflect.Value
+	fieldVal = v
 	for _, part := range pathParts {
-		fieldVal = fieldVal.FieldByName(part)
+		fieldVal = getFieldValue(fieldVal,part)
+		// fieldVal = fieldVal.FieldByName(part)
 		if !fieldVal.IsValid() {
 			return fmt.Errorf("%s: No such field: %s in Config", fieldPath, part)
 		}
 	}
-
-	if fieldVal.Kind() != reflect.Array {
-		return fmt.Errorf("%s is not an array", pathParts[len(pathParts)-1])
+	if fieldVal.Kind() != reflect.Array && fieldVal.Kind() != reflect.Slice && fieldVal.Kind() !=reflect.Map{
+		return fmt.Errorf("%s is not an array,slice and map", pathParts[len(pathParts)-1])
 	}
-
+	// If it is an array or slice, you need to check whether the index is within the range
 	if index < 0 || index >= fieldVal.Len() {
 		return fmt.Errorf("index out of range for %s", pathParts[len(pathParts)-1])
 	}
 
+	//Extend array or slice length
+	if index >= fieldVal.Len() {
+        newSlice := reflect.MakeSlice(fieldVal.Type(), index+1, index+1)
+        reflect.Copy(newSlice, fieldVal)
+        fieldVal.Set(newSlice)
+    }
+	//Set new value
 	elem := reflect.ValueOf(newValue)
 	if elem.Type() != fieldVal.Type().Elem() {
 		return fmt.Errorf("type mismatch for field %s", pathParts[len(pathParts)-1])
 	}
-
 	fieldVal.Index(index).Set(elem)
 	return nil
 }
 
 // ParseFieldPath1 parses the names in form of "name1.name2.(...).nameM[N]".
 // path : name1.name2.(...).nameM, index : N
-func ParseFieldPath1(fieldPath string) (string, int, error) {
+func parseFieldPath1(fieldPath string) (string, int, error) {
 	parts := strings.Split(fieldPath, "[")
 	if len(parts) != 2 {
 		return "", -1, fmt.Errorf("invalid field path")
@@ -261,136 +313,185 @@ func ParseFieldPath1(fieldPath string) (string, int, error) {
 
 	path := parts[0]
 	indexStr := strings.TrimSuffix(parts[1], "]")
-
 	index, err := strconv.Atoi(indexStr)
 	if err != nil {
-		return "", -1, fmt.Errorf("invalid index")
+		return "", -1, fmt.Errorf("invalid index: %v", err)
 	}
 
 	return path, index, fmt.Errorf("")
 }
 
-
 // SetVariableValue modifies the new value of the name in the config represented by struct.
 // The type of new value may be int, float, string.
 // The name is represented by name1.name2.(...).nameM[N].variable1.
-// func SetVariableValue(structPtr interface{}, fieldPath string, index int, variable string, newValue interface{}) error {
-// 	pathParts := strings.Split(fieldPath, ".")
-// 	val := reflect.ValueOf(structPtr)
-// 	val = val.Elem()
-
-// 	for _, part := range pathParts {
-// 		if val.Kind() != reflect.Struct {
-// 			return fmt.Errorf("path %s does not point to a struct", fieldPath)
-// 		}
-// 		field := val.FieldByName(part)
-// 		if !field.IsValid() {
-// 			return fmt.Errorf("field %s not found", part)
-// 		}
-
-// 		if field.Kind() == reflect.Ptr {
-// 			if field.IsNil() {
-// 				field.Set(reflect.New(field.Type().Elem()))
-// 			}
-// 			field = field.Elem()
-// 		}
-
-// 		val = field
-// 		if val.Kind() != reflect.Struct {
-//             return fmt.Errorf("path %s does not point to a struct", fieldPath)
-//         }
-// 	}
-
-// 	if val.Kind() == reflect.Slice {
-// 		if index < 0 || index >= val.Len() {
-// 			return fmt.Errorf("index %d out of range for slice %s", index, fieldPath)
-// 		}
-// 		val = val.Index(index)
-// 	}
-
-// 	field := val.FieldByName(variable)
-// 	if !field.IsValid() {
-// 		return fmt.Errorf("field %s not found in struct", variable)
-// 	}
-
-// 	if !reflect.TypeOf(newValue).ConvertibleTo(field.Type()) {
-// 		return fmt.Errorf("type mismatch, expected %s but got %s", field.Type(), reflect.TypeOf(newValue))
-// 	}
-
-// 	newVal := reflect.ValueOf(newValue).Convert(field.Type())
-// 	field.Set(newVal)
-
-// 	return nil
-// }
-func SetVariableValue(config interface{},name string,newValue interface{}) error{
-	// Use reflection to get the value of config
-	val := reflect.ValueOf(config)
-	// Make sure config is a pointer type
-	if val.Kind() !=reflect.Ptr{
-		return fmt.Errorf("%s must be a pointer",config)
+func setVariableValue(obj interface{}, fieldPath string, value interface{}) error {
+	objValue := reflect.ValueOf(obj)
+	if objValue.Kind() != reflect.Ptr {
+		return fmt.Errorf("obj must be a pointer")
 	}
-	val = val.Elem()
-	nameParts :=strings.Split(name,".")
-	for i,part :=range(nameParts){
-		if val.Kind() != reflect.Struct{
-			return fmt.Errorf("path %s doen not point to a struct",name)
-		}
-		// Get the field corresponding to name
-		field := val.FieldByName(part)
-		fmt.Println(part)
-		if !field.IsValid(){
-			return fmt.Errorf("field %s not found",part)
-		}
+	objValue = objValue.Elem()
+	fieldNames := parseFieldPath(fieldPath)
 
-		if field.Kind() == reflect.Ptr && field.IsNil(){
-			field.Set(reflect.New(field.Type().Elem()))
-		}
-
-		if i==len(nameParts)-1 && field.Kind() ==reflect.Slice{
-			sliceLen := field.Len()
-			if sliceLen == 0{
-				return fmt.Errorf("slice %s is empty",part)
-			}
-			// Get index
-			indexStr :=strings.TrimSuffix(strings.TrimPrefix(part,"["),"]")
-			index,err := strconv.Atoi(indexStr)
+	for i, fieldName := range fieldNames[:len(fieldNames)-1] {
+		switch objValue.Kind(){
+		case reflect.Struct:
+			objValue = objValue.FieldByName(fieldName)
+			// if objValue.IsNil(){
+			// 	objValue,_ = getFieldByTag(fieldName,obj)
+			// }
+		case reflect.Slice:
+			index, err := getIndex(fieldName)
 			if err != nil {
-                return fmt.Errorf("invalid index for slice %s", part)
-            }
-			// Make sure the index is within range
-			if index < 0 || index >= sliceLen {
-                return fmt.Errorf("index %d out of range for slice %s", index, part)
-            }
-
-			sliceVal := field.Index(index)
-			if !reflect.TypeOf(newValue).ConvertibleTo(sliceVal.Type()){
-				return fmt.Errorf("type mismatch, expected %s but got %s", sliceVal.Type(), reflect.TypeOf(newValue))
+				return err
 			}
-			newVal := reflect.ValueOf(newValue).Convert(sliceVal.Type())
-			sliceVal.Set(newVal)
-			return nil
-		}
-		if field.Kind()==reflect.Slice{
-			if field.Len() ==0 {
-				return fmt.Errorf("slice %s is empty", part)
+			if index < 0 || index >= objValue.Len() {
+				return fmt.Errorf("index out of range for field %s", fieldName)
 			}
-			field = field.Index(0)
+			objValue = objValue.Index(index)
+		case reflect.Ptr:
+			if objValue.IsNil() {
+				objValue.Set(reflect.New(objValue.Type().Elem()))
+			}
+			objValue = objValue.Elem()
+		default:
+			return fmt.Errorf("field %s is neither a struct nor a slice nor a pointer", fieldName)
 		}
-		val = field
+		if objValue.Kind() == reflect.Ptr && objValue.Elem().Kind() == reflect.Struct {
+			objValue = objValue.Elem()
+		}
+		if i == len(fieldNames)-2 && objValue.Kind() != reflect.Struct {
+			return fmt.Errorf("field %s is not a struct", fieldNames[i])
+		}
 	}
 
-	if val.Kind() == reflect.Slice {
-        return fmt.Errorf("path %s cannot end with a slice", name)
-    }
-	if !reflect.TypeOf(newValue).ConvertibleTo(val.Type()) {
-        return fmt.Errorf("type mismatch, expected %s but got %s", val.Type(), reflect.TypeOf(newValue))
-    }
+	targetFieldName := fieldNames[len(fieldNames)-1]
+	if objValue.Kind() == reflect.Ptr {
+		if objValue.IsNil() {
+			objValue.Set(reflect.New(objValue.Type().Elem()))
+		}
+		objValue = objValue.Elem()
+	}
+	targetFieldValue := objValue.FieldByName(targetFieldName)
+	if !targetFieldValue.IsValid() {
+		return fmt.Errorf("field %s not found", targetFieldName)
+	}
+	if !targetFieldValue.CanSet() {
+		return fmt.Errorf("field %s cannot be set", targetFieldName)
+	}
+	
+	valueToSet := reflect.ValueOf(value)
+	if !valueToSet.Type().AssignableTo(targetFieldValue.Type()) {
+		return fmt.Errorf("value type %s is not assignable to field %s type %s", valueToSet.Type(), targetFieldName, targetFieldValue.Type())
+	}
+	
+	targetFieldValue.Set(valueToSet)
 
-	//Set new value
-	newVal := reflect.ValueOf(newValue).Convert(val.Type())
-    val.Set(newVal)
-
-    return nil
+	return nil
 }
 
+// Split fieldPath by "." and "[" to separate fields and indexes
+func parseFieldPath(fieldPath string) []string {
+	fields := strings.FieldsFunc(fieldPath, func(r rune) bool {
+		return r == '.' || r == '[' || r == ']'
+	})
 
+	// Remove empty fields and trim brackets from indexes
+	var cleanedFields []string
+	for _, f := range fields {
+		if f != "" {
+			cleanedFields = append(cleanedFields, strings.Trim(f, "[]"))
+		}
+	}
+
+	return cleanedFields
+}
+
+func getIndex(field string) (int, error) {
+	index, err := strconv.Atoi(field)
+	if err != nil {
+		return -1, fmt.Errorf("invalid index: %s", field)
+	}
+	return index, nil
+}
+
+func findFieldByTag(obj interface{}, k int, tagName []string, fieldNames []string) {
+	if k == len(tagName) {
+		return
+	}
+	v := reflect.ValueOf(obj)
+	t := v.Type()
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+		t = t.Elem()
+	}
+
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		tagValue := field.Tag.Get("json")
+		tagVals := strings.Split(tagValue, ",")
+		if tagVals[0] == tagName[k] {
+			fieldNames[k] = field.Name
+			findFieldByTag(v.Field(i).Interface(), k+1, tagName, fieldNames)
+		}
+	}
+}
+
+//Determine whether the first letter is capitalized
+func isFirstLetterUpper(s string) bool {
+    if s == "" {
+        return false
+    }
+    r := rune(s[0])
+    return unicode.IsUpper(r)
+}
+
+func parseTag(cfg interface{}, name string) string {
+	names := strings.Split(name, ".")
+	var parseName string
+	if isFirstLetterUpper(names[0]){
+		parseName = name
+	}else {
+		fieldNames := make([]string, len(names))
+		findFieldByTag(cfg, 0, names, fieldNames)
+		for i, fieldName := range fieldNames {
+			if i == len(fieldNames)-1 {
+				parseName = parseName + fieldName
+				} else {
+					parseName = parseName + fieldName + "."
+				}
+			}
+		}
+		return parseName
+}
+
+func ParseSet(cfg interface{},set string) error{
+	sets :=parseSetByComma(set)
+	names,vals :=parseSetByEqual(sets)
+	parseVals := parseSetValue(vals)
+	for i,name :=range names{
+		status :=getNameFormStatus(name)
+		parseTagName := parseTag(cfg,name)
+		//name1.nam2=val
+		if status == 0{
+			if err := setCommonValue(cfg,parseTagName,parseVals[i]);err !=nil{
+				return err
+			}
+		}
+		//name1.nam[1].var=val
+		if status == 1{
+			if err := setVariableValue(cfg,parseTagName,parseVals[i]);err != nil{
+				return err
+			}
+		}
+		//name[0]=val
+		if status == 2{
+			if err := parseAndSetArrayValue(cfg,parseTagName,parseVals[i]);err !=nil{
+				return err
+			}
+		}
+		if status == -1{
+			return fmt.Errorf("The field is not support")
+		}
+	}
+	return nil
+}
