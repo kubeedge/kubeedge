@@ -28,8 +28,9 @@ ensureFolder() {
 }
 
 ensureCommand() {
+    echo "checking if $1 command exists."
     if command -v "$1" >/dev/null 2>&1; then
-        #echo "$1 exists."
+        echo "$1 exists."
     else
         echo "Error: $1 not found, please install $1 command."
         exit 1
