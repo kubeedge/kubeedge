@@ -19,7 +19,7 @@
 | Tina Tsou           | @tinatsou         | Arm          | <tina.tsou@arm.com> |
 | Yin Ding            | @dingyin          | Google       | <dingyin@gmail.com> |
 
-[KubeEdge Technical Steering Committee Charter](https://github.com/kubeedge/community/blob/master/commitee-technical-steering/charter.md)
+[KubeEdge Technical Steering Committee Charter](https://github.com/kubeedge/community/blob/master/committee-technical-steering/charter.md)
 describes the mission, scope, and objectives of the KubeEdge Technical Steering Committee..
 
 ## Maintainers
