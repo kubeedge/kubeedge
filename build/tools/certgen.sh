@@ -3,7 +3,6 @@
 set -o errexit
 
 readonly caPath=${CA_PATH:-/etc/kubeedge/ca}
-readonly caSubject=${CA_SUBJECT:-/C=CN/ST=Zhejiang/L=Hangzhou/O=KubeEdge/CN=kubeedge.io}
 readonly certPath=${CERT_PATH:-/etc/kubeedge/certs}
 readonly subject=${SUBJECT:-/C=CN/ST=Zhejiang/L=Hangzhou/O=KubeEdge/CN=kubeedge.io}
 
@@ -25,6 +24,16 @@ ensureFolder() {
     fi
     if [ ! -d ${certPath} ]; then
         mkdir -p ${certPath}
+    fi
+}
+
+ensureCommand() {
+    echo "checking if $1 command exists."
+    if command -v "$1" >/dev/null 2>&1; then
+        echo "$1 exists."
+    else
+        echo "Error: $1 not found, please install $1 command."
+        exit 1
     fi
 }
 
@@ -63,6 +72,7 @@ genCertAndKey() {
 
 stream() {
     ensureFolder
+    ensureCommand openssl
     readonly streamsubject=${SUBJECT:-/C=CN/ST=Zhejiang/L=Hangzhou/O=KubeEdge}
     readonly STREAM_KEY_FILE=${certPath}/stream.key
     readonly STREAM_CSR_FILE=${certPath}/stream.csr
