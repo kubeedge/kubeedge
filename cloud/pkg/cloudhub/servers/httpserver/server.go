@@ -239,14 +239,9 @@ func signCerts(subInfo pkix.Name, pbKey crypto.PublicKey, usages []x509.ExtKeyUs
 		return nil, fmt.Errorf("unable to ParseCertificate: %v", err)
 	}
 
-	var caKey crypto.Signer
-	caKeyDER := hubconfig.Config.CaKey
-	caKey, err = x509.ParseECPrivateKey(caKeyDER)
+	caKey, err := ParseX509PrivateKey(hubconfig.Config.CaKey)
 	if err != nil {
-		caKey, err = x509.ParsePKCS1PrivateKey(caKeyDER)
-		if err != nil {
-			return nil, fmt.Errorf("unable to Parse PrivateKey: %v", err)
-		}
+		return nil, fmt.Errorf("unable to Parse PrivateKey: %v", err)
 	}
 
 	edgeCertSigningDuration := hubconfig.Config.CloudHub.EdgeCertSigningDuration
