@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	v1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sinformer "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -38,7 +39,7 @@ type Controller interface {
 	Start() error
 	ReportNodeStatus(string, string, fsm.Event) (api.State, error)
 	ReportTaskStatus(string, fsm.Event) (api.State, error)
-	ValidateNode(util.TaskMessage) []v1.Node
+	ValidateNode(util.TaskMessage) ([]*v1.Node, []*v1.Node)
 	GetNodeStatus(string) ([]v1alpha1.TaskStatus, error)
 	UpdateNodeStatus(string, []v1alpha1.TaskStatus) error
 	StageCompleted(taskID string, state api.State) bool
@@ -65,12 +66,12 @@ func (bc *BaseController) StageCompleted(taskID string, state api.State) bool {
 	return false
 }
 
-func (bc *BaseController) ValidateNode(taskMessage util.TaskMessage) []v1.Node {
-	var validateNodes []v1.Node
-	nodes, err := bc.getNodeList(taskMessage.NodeNames, taskMessage.LabelSelector)
+func (bc *BaseController) ValidateNode(taskMessage util.TaskMessage) ([]*v1.Node, []*v1.Node) {
+	var validateNodes []*v1.Node
+	nodes, nodesNonExist, err := bc.getNodeList(taskMessage.NodeNames, taskMessage.LabelSelector)
 	if err != nil {
 		klog.Warningf("get node list error: %s", err.Error())
-		return nil
+		return nil, nil
 	}
 	for _, node := range nodes {
 		if !util.IsEdgeNode(node) {
@@ -81,9 +82,9 @@ func (bc *BaseController) ValidateNode(taskMessage util.TaskMessage) []v1.Node {
 		if !ready {
 			continue
 		}
-		validateNodes = append(validateNodes, *node)
+		validateNodes = append(validateNodes, node)
 	}
-	return validateNodes
+	return validateNodes, nodesNonExist
 }
 
 func (bc *BaseController) GetNodeStatus(name string) ([]v1alpha1.TaskStatus, error) {
@@ -141,29 +142,33 @@ func GetController(name string) (Controller, error) {
 	return controller, nil
 }
 
-func (bc *BaseController) getNodeList(nodeNames []string, labelSelector *metav1.LabelSelector) ([]*v1.Node, error) {
+func (bc *BaseController) getNodeList(nodeNames []string, labelSelector *metav1.LabelSelector) ([]*v1.Node, []*v1.Node, error) {
 	var nodesToUpgrade []*v1.Node
-
+	var nodesNonExist []*v1.Node
 	if len(nodeNames) != 0 {
 		for _, name := range nodeNames {
 			node, err := bc.Informer.Core().V1().Nodes().Lister().Get(name)
+			if apierrors.IsNotFound(err) {
+				nodesNonExist = append(nodesNonExist, &v1.Node{ObjectMeta: metav1.ObjectMeta{Name: name}})
+				continue
+			}
 			if err != nil {
-				return nil, fmt.Errorf("failed to get node with name %s: %v", name, err)
+				return nil, nil, fmt.Errorf("failed to get node with name %s: %v", name, err)
 			}
 			nodesToUpgrade = append(nodesToUpgrade, node)
 		}
 	} else if labelSelector != nil {
 		selector, err := metav1.LabelSelectorAsSelector(labelSelector)
 		if err != nil {
-			return nil, fmt.Errorf("labelSelector(%s) is not valid: %v", labelSelector, err)
+			return nil, nil, fmt.Errorf("labelSelector(%s) is not valid: %v", labelSelector, err)
 		}
 
 		nodes, err := bc.Informer.Core().V1().Nodes().Lister().List(selector)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get nodes with label %s: %v", selector.String(), err)
+			return nil, nil, fmt.Errorf("failed to get nodes with label %s: %v", selector.String(), err)
 		}
 		nodesToUpgrade = nodes
 	}
 
-	return nodesToUpgrade, nil
+	return nodesToUpgrade, nodesNonExist, nil
 }

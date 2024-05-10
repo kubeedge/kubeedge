@@ -135,20 +135,20 @@ func (ndc *NodeUpgradeController) ReportTaskStatus(taskID string, event fsm.Even
 	return taskFSM.CurrentState()
 }
 
-func (ndc *NodeUpgradeController) ValidateNode(taskMessage util.TaskMessage) []v1.Node {
-	var validateNodes []v1.Node
-	nodes := ndc.BaseController.ValidateNode(taskMessage)
+func (ndc *NodeUpgradeController) ValidateNode(taskMessage util.TaskMessage) ([]*v1.Node, []*v1.Node) {
+	var validateNodes []*v1.Node
+	nodes, failNodes := ndc.BaseController.ValidateNode(taskMessage)
 	req, ok := taskMessage.Msg.(commontypes.NodeUpgradeJobRequest)
 	if !ok {
 		klog.Errorf("convert message to commontypes.NodeUpgradeJobRequest failed")
-		return nil
+		return nil, nil
 	}
 	for _, node := range nodes {
-		if needUpgrade(node, req.Version) {
+		if needUpgrade(*node, req.Version) {
 			validateNodes = append(validateNodes, node)
 		}
 	}
-	return validateNodes
+	return validateNodes, failNodes
 }
 
 func (ndc *NodeUpgradeController) StageCompleted(taskID string, state api.State) bool {

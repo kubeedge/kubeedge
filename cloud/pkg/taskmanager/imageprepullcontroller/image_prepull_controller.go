@@ -26,6 +26,7 @@ import (
 	"time"
 
 	jsonpatch "github.com/evanphx/json-patch"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apimachineryType "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -323,6 +324,19 @@ func (ndc *ImagePrePullController) imagePrePullJobUpdated(pullJob *v1alpha1.Imag
 	}
 }
 
+func (ndc *ImagePrePullController) ValidateNode(taskMessage util.TaskMessage) ([]*corev1.Node, []*corev1.Node) {
+	var validateNodes []*corev1.Node
+	nodes, failNodes := ndc.BaseController.ValidateNode(taskMessage)
+	_, ok := taskMessage.Msg.(commontypes.ImagePrePullJobRequest)
+	if !ok {
+		klog.Errorf("convert message to commontypes.ImagePrePullJobRequest failed")
+		return nil, nil
+	}
+
+	validateNodes = append(validateNodes, nodes...)
+
+	return validateNodes, failNodes
+}
 func checkUpdateNode(old, new *v1alpha1.ImagePrePullJob) *v1alpha1.TaskStatus {
 	if len(old.Status.Status) == 0 {
 		return nil

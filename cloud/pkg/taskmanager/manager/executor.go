@@ -208,17 +208,16 @@ func initExecutor(message util.TaskMessage) (*Executor, error) {
 		return nil, err
 	}
 	if len(nodeStatus) == 0 {
-		nodeList := controller.ValidateNode(message)
-		if len(nodeList) == 0 {
-			return nil, fmt.Errorf("no node need to be upgrade")
+		successNodes, failNodes := controller.ValidateNode(message)
+		nodeStatus = make([]v1alpha1.TaskStatus, 0, len(message.Name))
+		for _, node := range failNodes {
+			nodeStatus = append(nodeStatus, v1alpha1.TaskStatus{NodeName: node.Name, State: api.TaskFailed})
 		}
-		nodeStatus = make([]v1alpha1.TaskStatus, len(nodeList))
-		for i, node := range nodeList {
-			nodeStatus[i] = v1alpha1.TaskStatus{NodeName: node.Name}
+		for _, node := range successNodes {
+			nodeStatus = append(nodeStatus, v1alpha1.TaskStatus{NodeName: node.Name})
 		}
-		err = controller.UpdateNodeStatus(message.Name, nodeStatus)
-		if err != nil {
-			return nil, err
+		if err := controller.UpdateNodeStatus(message.Name, nodeStatus); err != nil {
+			return nil, fmt.Errorf("failed to update node status,err:%s", err.Error())
 		}
 	}
 	e := &Executor{
