@@ -126,6 +126,7 @@ func NewCertFromCa(cfg *certutil.Config, caCert *x509.Certificate, serverKey cry
 	return certDERBytes, nil
 }
 
+// ParseX509PrivateKey parse the private key from der format, support EC/PKCS1/PKCS8
 func ParseX509PrivateKey(der []byte) (crypto.Signer, error) {
 	caKeyEc, ecErr := x509.ParseECPrivateKey(der)
 	if ecErr == nil {
