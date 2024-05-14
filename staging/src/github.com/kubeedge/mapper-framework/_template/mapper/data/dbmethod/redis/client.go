@@ -69,32 +69,15 @@ func (d *DataBaseConfig) AddData(data *common.DataModel) error {
 	// The key to construct the ordered set, here DeviceName is used as the key
 	klog.V(1).Infof("deviceName:%s", data.DeviceName)
 	// Check if the current ordered set exists
-	exists, err := RedisCli.Exists(ctx, data.DeviceName).Result()
+	deviceData := "TimeStamp: " + strconv.FormatInt(data.TimeStamp, 10) + " PropertyName: " + data.PropertyName + " data: " + data.Value
+	// Add data to ordered set. If the ordered set does not exist, it will be created.
+	_, err = RedisCli.ZAdd(ctx, data.DeviceName, &redis.Z{
+		Score:  float64(data.TimeStamp),
+		Member: deviceData,
+	}).Result()
 	if err != nil {
 		klog.V(4).Info("Exit AddData")
 		return err
-	}
-	deviceData := "TimeStamp: " + strconv.FormatInt(data.TimeStamp, 10) + " PropertyName: " + data.PropertyName + " data: " + data.Value
-	if exists == 0 {
-		// The ordered set does not exist, create a new ordered set and add data
-		_, err = RedisCli.ZAdd(ctx, data.DeviceName, &redis.Z{
-			Score:  float64(data.TimeStamp),
-			Member: deviceData,
-		}).Result()
-		if err != nil {
-			klog.V(4).Info("Exit AddData")
-			return err
-		}
-	} else {
-		// The ordered set already exists, add data directly
-		_, err = RedisCli.ZAdd(ctx, data.DeviceName, &redis.Z{
-			Score:  float64(data.TimeStamp),
-			Member: deviceData,
-		}).Result()
-		if err != nil {
-			klog.V(4).Info("Exit AddData")
-			return err
-		}
 	}
 	return nil
 }
