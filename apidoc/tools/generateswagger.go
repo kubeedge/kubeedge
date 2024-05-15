@@ -18,10 +18,8 @@ package main
 
 import (
 	"fmt"
-	"os"
-
+	generatedopenapi "github.com/kubeedge/kubeedge/apidoc/generated/openapi"
 	"github.com/kubeedge/kubeedge/apidoc/tools/lib"
-
 	appsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1"
 	devicesv1alpha2 "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
 	devicesv1beta1 "github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1"
@@ -29,13 +27,9 @@ import (
 	policyv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/policy/v1alpha1"
 	reliablesyncsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1"
 	rulesv1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
-
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-
-	generatedopenapi "github.com/kubeedge/kubeedge/apidoc/generated/openapi"
-
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/klog/v2"
@@ -129,9 +123,4 @@ func main() {
 		klog.Fatal(err.Error())
 	}
 	fmt.Println(spec) // Print generated OpenAPI spec
-
-	err = os.WriteFile("./api/generated-spec/tools.json", []byte(spec), 0644)
-	if err != nil {
-		klog.Fatal(err.Error())
-	}
 }
