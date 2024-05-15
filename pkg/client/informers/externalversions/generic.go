@@ -63,13 +63,13 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 	case v1alpha1.SchemeGroupVersion.WithResource("nodegroups"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Apps().V1alpha1().NodeGroups().Informer()}, nil
 
-		// Group=devices, Version=v1beta1
+		// Group=devices.kubeedge.io, Version=v1beta1
 	case v1beta1.SchemeGroupVersion.WithResource("devices"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Devices().V1beta1().Devices().Informer()}, nil
 	case v1beta1.SchemeGroupVersion.WithResource("devicemodels"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Devices().V1beta1().DeviceModels().Informer()}, nil
 
-		// Group=operations, Version=v1alpha1
+		// Group=operations.kubeedge.io, Version=v1alpha1
 	case operationsv1alpha1.SchemeGroupVersion.WithResource("imageprepulljobs"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Operations().V1alpha1().ImagePrePullJobs().Informer()}, nil
 	case operationsv1alpha1.SchemeGroupVersion.WithResource("nodeupgradejobs"):
