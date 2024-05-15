@@ -48,4 +48,4 @@ ${OUTPUT_FILE}/openapi-gen\
     --output-package "openapi" \
     --go-header-file "${KUBEEDGE_ROOT}/hack/boilerplate/boilerplate.txt" \
     --output-file-base "zz_generated.openapi"\
-	  --v "9"
+    --v "9"
