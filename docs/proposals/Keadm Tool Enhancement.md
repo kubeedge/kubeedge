@@ -50,3 +50,30 @@ We would like to support specifying parameters using `--set` or directly using a
 2.Distributed in `edge/join_windows.go` and `edge/join_others.go` files, the `cmd.Flags.StringVar` function is called in the `AddJoinOtherFlags` function to add the command line parameter settings of keadm
 
 3.Distributed in `edge/join_windows.go` and `edge/join_others.go` files, the `createEdgeConfigFiles` function calls the `ParseSet `function in the `util/set.go` file, and sets the parameters set by the user to the `edgeCoreConfig` instance.
+
+### Some Example for `keadm join --set`
+
+1.Enable flow debugging capability
+
+```bash
+keadm join --set modules.edgeStream.enable=true,modules.edgeStream.server=<CLOUDCORE_IP>:<TUNNEL_PORT>
+```
+
+2.Start MetaServer
+
+```bash
+keadm join --set modules.metaManager.enable=true,modules.metaManager.metaServer.enable=true
+```
+
+3.Turn on ServiceBus
+
+```bash
+keadm join --set modules.serviceBus.enable=true
+```
+
+4.Set FeatureGates
+
+```bash
+keadm join --set featureGates=<"xxx":true>
+```
+
