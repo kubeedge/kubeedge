@@ -4,7 +4,7 @@ authors:
 - "@HT0403"
   approvers:
   creation-date: 2024-04-27
-  last-updated: 2024-05-16
+  last-updated: 2024-05-15
 
 ---
 
@@ -62,7 +62,7 @@ keadm join --set modules.edgeStream.enable=true,modules.edgeStream.server=<CLOUD
 2.Start MetaServer
 
 ```bash
-keadm join --set modules.metaManager.enable=true,modules.metaManager.metaServer.enable=true
+keadm join --set modules.metaManager.enable=true,modules.metaManager.metaServer.enable=true,modules.metaManager.metaServer.serviceAccountIssuers={xx,xx},modules.metaManager.remoteQueryTimeout=32
 ```
 
 3.Turn on ServiceBus
@@ -74,5 +74,5 @@ keadm join --set modules.serviceBus.enable=true
 4.Set FeatureGates
 
 ```bash
-keadm join --set featureGates=<"xxx":true>
+keadm join --set featureGates={"xxx":true,"xxx":false}
 ```
