@@ -4,7 +4,7 @@ authors:
 - "@HT0403"
   approvers:
   creation-date: 2024-04-27
-  last-updated: 2024-05-15
+  last-updated: 2024-05-16
 
 ---
 
@@ -76,4 +76,3 @@ keadm join --set modules.serviceBus.enable=true
 ```bash
 keadm join --set featureGates=<"xxx":true>
 ```
-
