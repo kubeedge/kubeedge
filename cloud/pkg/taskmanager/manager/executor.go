@@ -211,7 +211,13 @@ func initExecutor(message util.TaskMessage) (*Executor, error) {
 		successNodes, failNodes := controller.ValidateNode(message)
 		nodeStatus = make([]v1alpha1.TaskStatus, 0, len(message.Name))
 		for _, node := range failNodes {
-			nodeStatus = append(nodeStatus, v1alpha1.TaskStatus{NodeName: node.Name, State: api.TaskFailed})
+			nodeStatus = append(nodeStatus, v1alpha1.TaskStatus{
+				NodeName: node.Name,
+				State:    api.TaskFailed,
+				Event:    "Check",
+				Action:   api.ActionFailure,
+				Reason:   "Validate Nodes Failed",
+			})
 		}
 		for _, node := range successNodes {
 			nodeStatus = append(nodeStatus, v1alpha1.TaskStatus{NodeName: node.Name})
