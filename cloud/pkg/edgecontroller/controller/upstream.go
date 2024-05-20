@@ -59,12 +59,14 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/types"
 	routerrule "github.com/kubeedge/kubeedge/cloud/pkg/router/rule"
+	comconstants "github.com/kubeedge/kubeedge/common/constants"
 	common "github.com/kubeedge/kubeedge/common/constants"
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 	rulesv1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
 	crdClientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
+	kubeedgeutil "github.com/kubeedge/kubeedge/pkg/util"
 )
 
 // SortedContainerStatuses define A type to help sort container statuses based on container names.
@@ -491,7 +493,16 @@ func (uc *UpstreamController) createNode(nodeID, name string, node *v1.Node) (*v
 	}()
 
 	node.Name = name
-	node, err := uc.kubeClient.CoreV1().Nodes().Create(utilcontext.WithEdgeNode(context.Background(), nodeID), node, metaV1.CreateOptions{})
+	hostnameOverride := kubeedgeutil.GetHostname()
+	localIP, err := kubeedgeutil.GetLocalIP(hostnameOverride)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get cloudcore localIP with err:%v", err)
+	}
+	if node.Annotations == nil {
+		node.Annotations = make(map[string]string)
+	}
+	node.Annotations[common.EdgeMappingCloudKey] = localIP
+	node, err = uc.kubeClient.CoreV1().Nodes().Create(utilcontext.WithEdgeNode(context.Background(), nodeID), node, metaV1.CreateOptions{})
 	if err == nil && len(kubernetesReversedLabels) > 0 {
 		patchBytes, err := json.Marshal(map[string]interface{}{"metadata": map[string]interface{}{"labels": kubernetesReversedLabels}})
 		if err == nil {
@@ -1507,6 +1518,32 @@ func (uc *UpstreamController) nodeMsgResponse(nodeName, namespace, content strin
 		klog.Warningf("Response message: %s failed, response failed with error: %s", msg.GetID(), err)
 		return
 	}
+}
+
+func UpdateAnnotation(ctx context.Context, nodeName string) error {
+	node, err := client.GetKubeClient().CoreV1().Nodes().Get(ctx, nodeName, metaV1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to get node:%s,err:%v", nodeName, err)
+	}
+	hostnameOverride := kubeedgeutil.GetHostname()
+	localIP, err := kubeedgeutil.GetLocalIP(hostnameOverride)
+	if err != nil {
+		return fmt.Errorf("failed to get cloudcore localIP with err:%v", err)
+	}
+	if value, ok := node.Annotations[comconstants.EdgeMappingCloudKey]; ok {
+		if value == localIP {
+			return nil
+		}
+	}
+	if node.Annotations == nil {
+		node.Annotations = make(map[string]string)
+	}
+	node.Annotations[comconstants.EdgeMappingCloudKey] = localIP
+	_, err = client.GetKubeClient().CoreV1().Nodes().Update(ctx, node, metaV1.UpdateOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to update node:%s with err:%v", nodeName, err)
+	}
+	return nil
 }
 
 // NewUpstreamController create UpstreamController from config

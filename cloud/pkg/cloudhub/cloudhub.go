@@ -1,6 +1,7 @@
 package cloudhub
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -25,6 +26,7 @@ import (
 )
 
 var DoneTLSTunnelCerts = make(chan bool, 1)
+var sessionMgr *session.Manager
 
 type cloudHub struct {
 	enable               bool
@@ -58,6 +60,7 @@ func newCloudHub(enable bool) *cloudHub {
 		int(hubconfig.Config.KeepaliveInterval),
 		sessionManager, client.GetCRDClient(),
 		messageDispatcher, authorizer)
+	sessionMgr = sessionManager
 
 	ch := &cloudHub{
 		enable:         enable,
@@ -150,4 +153,11 @@ func getAuthConfig() authorization.Config {
 		AuthorizationModes:       authorizationModes,
 		VersionedInformerFactory: builtinInformerFactory,
 	}
+}
+
+func GetSessionManager() (*session.Manager, error) {
+	if sessionMgr != nil {
+		return sessionMgr, nil
+	}
+	return nil, errors.New("cloudhub not initialized")
 }

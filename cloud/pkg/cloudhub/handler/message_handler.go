@@ -17,8 +17,10 @@ limitations under the License.
 package handler
 
 import (
+	"context"
 	"time"
 
+	"github.com/avast/retry-go"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/authorization"
@@ -26,6 +28,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/dispatcher"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/session"
+	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/controller"
 	reliableclient "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 	"github.com/kubeedge/viaduct/pkg/conn"
 	"github.com/kubeedge/viaduct/pkg/mux"
@@ -149,6 +152,19 @@ func (mh *messageHandler) HandleConnection(connection conn.Connection) {
 			keepaliveInterval, nodeMessagePool, mh.reliableClient)
 		// add node session to the session manager
 		mh.SessionManager.AddSession(nodeSession)
+		go func() {
+			err := retry.Do(
+				func() error {
+					return controller.UpdateAnnotation(context.TODO(), nodeID)
+				},
+				retry.Delay(1*time.Second),
+				retry.Attempts(3),
+				retry.DelayType(retry.FixedDelay),
+			)
+			if err != nil {
+				klog.Errorf(err.Error())
+			}
+		}()
 
 		// start session for each edge node and it will keep running until
 		// it encounters some Transport Error from underlying connection.
