@@ -63,6 +63,7 @@ import (
 	rulesv1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
 	crdClientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
+	kubeedgeutil "github.com/kubeedge/kubeedge/pkg/util"
 )
 
 // SortedContainerStatuses define A type to help sort container statuses based on container names.
@@ -464,6 +465,15 @@ func (uc *UpstreamController) updatePodStatus() {
 // createNode create new edge node to kubernetes
 func (uc *UpstreamController) createNode(name string, node *v1.Node) (*v1.Node, error) {
 	node.Name = name
+	hostnameOverride := kubeedgeutil.GetHostname()
+	localIP, err := kubeedgeutil.GetLocalIP(hostnameOverride)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get cloudcore localIP with err:%v", err)
+	}
+	if node.Annotations == nil {
+		node.Annotations = make(map[string]string)
+	}
+	node.Annotations[common.EdgeMappingCloudKey] = localIP
 	return uc.kubeClient.CoreV1().Nodes().Create(context.Background(), node, metaV1.CreateOptions{})
 }
 

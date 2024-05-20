@@ -17,15 +17,21 @@ limitations under the License.
 package handler
 
 import (
+	"context"
+	"fmt"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/dispatcher"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/session"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
+	"github.com/kubeedge/kubeedge/common/constants"
 	reliableclient "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
+	"github.com/kubeedge/kubeedge/pkg/util"
 	"github.com/kubeedge/viaduct/pkg/conn"
 	"github.com/kubeedge/viaduct/pkg/mux"
 )
@@ -132,6 +138,10 @@ func (mh *messageHandler) HandleConnection(connection conn.Connection) {
 		// add node session to the session manager
 		mh.SessionManager.AddSession(nodeSession)
 
+		err := updateAnnotation(context.Background(), nodeID)
+		if err != nil {
+			klog.Errorf(err.Error())
+		}
 		// start session for each edge node and it will keep running until
 		// it encounters some Transport Error from underlying connection.
 		nodeSession.Start()
@@ -172,4 +182,30 @@ func (mh *messageHandler) OnReadTransportErr(nodeID, projectID string) {
 	}
 
 	nodeSession.Terminating()
+}
+
+func updateAnnotation(ctx context.Context, nodeName string) error {
+	node, err := client.GetKubeClient().CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to get node:%s,err:%v", nodeName, err)
+	}
+	hostnameOverride := util.GetHostname()
+	localIP, err := util.GetLocalIP(hostnameOverride)
+	if err != nil {
+		return fmt.Errorf("failed to get cloudcore localIP with err:%v", err)
+	}
+	if value, ok := node.Annotations[constants.EdgeMappingCloudKey]; ok {
+		if value == localIP {
+			return nil
+		}
+	}
+	if node.Annotations == nil {
+		node.Annotations = make(map[string]string)
+	}
+	node.Annotations[constants.EdgeMappingCloudKey] = localIP
+	_, err = client.GetKubeClient().CoreV1().Nodes().Update(ctx, node, metav1.UpdateOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to update node:%s with err:%v", nodeName, err)
+	}
+	return nil
 }
