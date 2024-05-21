@@ -61,6 +61,7 @@ type ImagePrePullJobList struct {
 type ImagePrePullJobSpec struct {
 	// ImagePrepullTemplate represents original templates of imagePrePull
 	ImagePrePullTemplate ImagePrePullTemplate `json:"imagePrePullTemplate,omitempty"`
+	ImagePrePullOverrides []ImagePrePullTemplate `json:"imagePrePullOverrides,omitempty"`
 }
 
 // ImagePrePullTemplate represents original templates of imagePrePull
