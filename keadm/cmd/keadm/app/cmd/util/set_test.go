@@ -457,12 +457,6 @@ func TestSetVariableValue_EmptySlice(t *testing.T) {
 
 func TestEdgeCoreConfig(t *testing.T) {
 	cfg := v1alpha2.NewDefaultEdgeCoreConfig()
-	// bff, err := yaml.Marshal(cfg)
-	// if err != nil {
-	//  t.Fatal(err)
-	// }
-	// t.Log(string(bff))
-	// fmt.Println(parseTag(cfg, `modules.edged`))
 	if err := ParseSet(cfg, `modules.dbTest.enable=true,Modules.Edged.TailoredKubeletFlag.HostnameOverride=hy,Modules.MetaManager.MetaServer.ServiceAccountIssuers={ht,jl},featureGates={"alpha":true,"ht":false}`); err != nil {
 		t.Fatal(err)
 	}

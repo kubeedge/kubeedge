@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,6 +22,7 @@ import (
 	"strings"
 	"unicode"
 )
+
 // ParseSetByCommma splits a set line according to the comma.
 //
 // A set line is of the form "hello, world" or {a, b, c}
@@ -34,8 +35,8 @@ func parseSetByComma(set string) []string {
 		switch {
 		case char == ',' && !inBraces && !inQuotes:
 			val := buffer.String()
-			if val != ""{
-				vals = append(vals,val)
+			if val != "" {
+				vals = append(vals, val)
 			}
 			buffer.Reset()
 		case char == '{' && !inQuotes:
@@ -70,7 +71,7 @@ func parseSetByComma(set string) []string {
 func parseSetByEqual(set []string) ([]string, []string) {
 	var names []string
 	var vals []string
-	if len(set) == 0{
+	if len(set) == 0 {
 		return names, vals
 	}
 	for _, s := range set {
@@ -98,7 +99,7 @@ func parseSetValue(vals []string) []interface{} {
 // The representation of {value} will be interpreted by array.
 func parseValue(s string) interface{} {
 	if strings.HasPrefix(s, "{") && strings.HasSuffix(s, "}") {
-		if strings.Contains(s,":"){
+		if strings.Contains(s, ":") {
 			return parseMap(s)
 		}
 		return parseArray(s)
@@ -110,40 +111,42 @@ func parseValue(s string) interface{} {
 	if floatValue, err := strconv.ParseFloat(s, 64); err == nil {
 		return floatValue
 	}
-	if boolvalue, err :=strconv.ParseBool(s);err == nil{
+	if boolvalue, err := strconv.ParseBool(s); err == nil {
 		return boolvalue
 	}
 	return s
 }
+
 // ParseMap parses the value of map.
 func parseMap(s string) interface{} {
-	if s == "{}"{
+	if s == "{}" {
 		return make([]interface{}, 0)
 	}
 	s = s[1 : len(s)-1]
 	keyValuePairs := strings.Split(s, ",")
 	keyValue := strings.Split(keyValuePairs[0], ":")
-	myMap := makeMap(reflect.TypeOf(parseValue(keyValue[0])),reflect.TypeOf(parseValue(keyValue[1])))
-	for _ , pair := range keyValuePairs {
+	myMap := makeMap(reflect.TypeOf(parseValue(keyValue[0])), reflect.TypeOf(parseValue(keyValue[1])))
+	for _, pair := range keyValuePairs {
 		keyValue := strings.Split(pair, ":")
 		parseKey := parseValue(keyValue[0])
 		parseVal := parseValue(keyValue[1])
-		setValue(myMap,parseKey,parseVal)
+		setValue(myMap, parseKey, parseVal)
 	}
 	return myMap
 }
+
 // use reflect build map
 func makeMap(keyType, valueType reflect.Type) interface{} {
-    mapType := reflect.MapOf(keyType, valueType)
-    return reflect.MakeMap(mapType).Interface()
+	mapType := reflect.MapOf(keyType, valueType)
+	return reflect.MakeMap(mapType).Interface()
 }
 
-// append <k,v> into map 
+// append <k,v> into map
 func setValue(m interface{}, key interface{}, value interface{}) {
-    v := reflect.ValueOf(m)
-    k := reflect.ValueOf(key)
-    vv := reflect.ValueOf(value)
-    v.SetMapIndex(k, vv)
+	v := reflect.ValueOf(m)
+	k := reflect.ValueOf(key)
+	vv := reflect.ValueOf(value)
+	v.SetMapIndex(k, vv)
 }
 
 // ParseArray parses the value of array.
@@ -204,14 +207,14 @@ func parseType(s string) string {
 //	2)name1[0].variable1 = value1, return 1
 //	3)name1[0] = value1, return 2
 func getNameFormStatus(s string) int {
-	if !strings.Contains(s,"[")&& !strings.Contains(s,"]"){
+	if !strings.Contains(s, "[") && !strings.Contains(s, "]") {
 		return 0
 	}
-	closeBracketIndex := strings.Index(s,"]")
-	if closeBracketIndex!= (len(s)-1){
+	closeBracketIndex := strings.Index(s, "]")
+	if closeBracketIndex != (len(s) - 1) {
 		return 1
 	}
-	if closeBracketIndex == (len(s)-1){
+	if closeBracketIndex == (len(s) - 1) {
 		return 2
 	}
 	return -1
@@ -234,7 +237,7 @@ func setCommonValue(structPtr interface{}, fieldPath string, value interface{}) 
 	}
 
 	val := reflect.ValueOf(value)
-	
+
 	if fieldVal.Type() != val.Type() {
 		return fmt.Errorf("%s: Provided value type %s does not match field type %s", fieldPath, val.Type(), fieldVal.Type())
 	}
@@ -259,7 +262,7 @@ func getFieldValue(v reflect.Value, fieldName string) reflect.Value {
 // ParseAndSetArrayValue combines the function of SetArrayValue and ParseFieldPath1.
 func parseAndSetArrayValue(structPtr interface{}, fieldPath string, newValue interface{}) error {
 	path, index, _ := parseFieldPath1(fieldPath)
-	err :=setArrayValue(structPtr, path, index, newValue)
+	err := setArrayValue(structPtr, path, index, newValue)
 	// fmt.Println(newValue)
 	return err
 }
@@ -274,13 +277,13 @@ func setArrayValue(structPtr interface{}, fieldPath string, index int, newValue 
 	var fieldVal reflect.Value
 	fieldVal = v
 	for _, part := range pathParts {
-		fieldVal = getFieldValue(fieldVal,part)
+		fieldVal = getFieldValue(fieldVal, part)
 		// fieldVal = fieldVal.FieldByName(part)
 		if !fieldVal.IsValid() {
 			return fmt.Errorf("%s: No such field: %s in Config", fieldPath, part)
 		}
 	}
-	if fieldVal.Kind() != reflect.Array && fieldVal.Kind() != reflect.Slice && fieldVal.Kind() !=reflect.Map{
+	if fieldVal.Kind() != reflect.Array && fieldVal.Kind() != reflect.Slice && fieldVal.Kind() != reflect.Map {
 		return fmt.Errorf("%s is not an array,slice and map", pathParts[len(pathParts)-1])
 	}
 	// If it is an array or slice, you need to check whether the index is within the range
@@ -290,10 +293,10 @@ func setArrayValue(structPtr interface{}, fieldPath string, index int, newValue 
 
 	//Extend array or slice length
 	if index >= fieldVal.Len() {
-        newSlice := reflect.MakeSlice(fieldVal.Type(), index+1, index+1)
-        reflect.Copy(newSlice, fieldVal)
-        fieldVal.Set(newSlice)
-    }
+		newSlice := reflect.MakeSlice(fieldVal.Type(), index+1, index+1)
+		reflect.Copy(newSlice, fieldVal)
+		fieldVal.Set(newSlice)
+	}
 	//Set new value
 	elem := reflect.ValueOf(newValue)
 	if elem.Type() != fieldVal.Type().Elem() {
@@ -333,7 +336,7 @@ func setVariableValue(obj interface{}, fieldPath string, value interface{}) erro
 	fieldNames := parseFieldPath(fieldPath)
 
 	for i, fieldName := range fieldNames[:len(fieldNames)-1] {
-		switch objValue.Kind(){
+		switch objValue.Kind() {
 		case reflect.Struct:
 			objValue = objValue.FieldByName(fieldName)
 			// if objValue.IsNil(){
@@ -378,12 +381,12 @@ func setVariableValue(obj interface{}, fieldPath string, value interface{}) erro
 	if !targetFieldValue.CanSet() {
 		return fmt.Errorf("field %s cannot be set", targetFieldName)
 	}
-	
+
 	valueToSet := reflect.ValueOf(value)
 	if !valueToSet.Type().AssignableTo(targetFieldValue.Type()) {
 		return fmt.Errorf("value type %s is not assignable to field %s type %s", valueToSet.Type(), targetFieldName, targetFieldValue.Type())
 	}
-	
+
 	targetFieldValue.Set(valueToSet)
 
 	return nil
@@ -436,60 +439,60 @@ func findFieldByTag(obj interface{}, k int, tagName []string, fieldNames []strin
 	}
 }
 
-//Determine whether the first letter is capitalized
+// Determine whether the first letter is capitalized
 func isFirstLetterUpper(s string) bool {
-    if s == "" {
-        return false
-    }
-    r := rune(s[0])
-    return unicode.IsUpper(r)
+	if s == "" {
+		return false
+	}
+	r := rune(s[0])
+	return unicode.IsUpper(r)
 }
 
 func parseTag(cfg interface{}, name string) string {
 	names := strings.Split(name, ".")
 	var parseName string
-	if isFirstLetterUpper(names[0]){
+	if isFirstLetterUpper(names[0]) {
 		parseName = name
-	}else {
+	} else {
 		fieldNames := make([]string, len(names))
 		findFieldByTag(cfg, 0, names, fieldNames)
 		for i, fieldName := range fieldNames {
 			if i == len(fieldNames)-1 {
 				parseName = parseName + fieldName
-				} else {
-					parseName = parseName + fieldName + "."
-				}
+			} else {
+				parseName = parseName + fieldName + "."
 			}
 		}
-		return parseName
+	}
+	return parseName
 }
 
-func ParseSet(cfg interface{},set string) error{
-	sets :=parseSetByComma(set)
-	names,vals :=parseSetByEqual(sets)
+func ParseSet(cfg interface{}, set string) error {
+	sets := parseSetByComma(set)
+	names, vals := parseSetByEqual(sets)
 	parseVals := parseSetValue(vals)
-	for i,name :=range names{
-		status :=getNameFormStatus(name)
-		parseTagName := parseTag(cfg,name)
+	for i, name := range names {
+		status := getNameFormStatus(name)
+		parseTagName := parseTag(cfg, name)
 		//name1.nam2=val
-		if status == 0{
-			if err := setCommonValue(cfg,parseTagName,parseVals[i]);err !=nil{
+		if status == 0 {
+			if err := setCommonValue(cfg, parseTagName, parseVals[i]); err != nil {
 				return err
 			}
 		}
 		//name1.nam[1].var=val
-		if status == 1{
-			if err := setVariableValue(cfg,parseTagName,parseVals[i]);err != nil{
+		if status == 1 {
+			if err := setVariableValue(cfg, parseTagName, parseVals[i]); err != nil {
 				return err
 			}
 		}
 		//name[0]=val
-		if status == 2{
-			if err := parseAndSetArrayValue(cfg,parseTagName,parseVals[i]);err !=nil{
+		if status == 2 {
+			if err := parseAndSetArrayValue(cfg, parseTagName, parseVals[i]); err != nil {
 				return err
 			}
 		}
-		if status == -1{
+		if status == -1 {
 			return fmt.Errorf("The field is not support")
 		}
 	}
