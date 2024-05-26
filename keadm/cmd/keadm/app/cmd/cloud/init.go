@@ -53,11 +53,6 @@ func NewCloudInit() *cobra.Command {
 		Long:    cloudInitLongDescription,
 		Example: fmt.Sprintf(cloudInitExample, types.DefaultKubeEdgeVersion),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ver, err := util.GetCurrentVersion(opts.KubeEdgeVersion)
-			if err != nil {
-				return fmt.Errorf("keadm init failed: %v", err)
-			}
-			opts.KubeEdgeVersion = ver
 			tool := helm.NewCloudCoreHelmTool(opts.KubeConfig, opts.KubeEdgeVersion)
 			return tool.Install(opts)
 		},
@@ -105,7 +100,7 @@ func addInitOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 
 func addHelmValueOptionsFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 	cmd.Flags().StringArrayVar(&initOpts.Sets, types.FlagNameSet, []string{}, "Set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
-	cmd.Flags().StringVar(&initOpts.Profile, types.FlagNameProfile, initOpts.Profile, fmt.Sprintf("Set profile on the command line (iptablesMgrMode=external or version=v%s)", types.DefaultKubeEdgeVersion))
+	cmd.Flags().StringVar(&initOpts.Profile, types.FlagNameProfile, initOpts.Profile, fmt.Sprintf("Set profile on the command line (/path/version.yaml or version=v%s)", types.DefaultKubeEdgeVersion))
 }
 
 func addForceOptionsFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
