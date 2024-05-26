@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"os"
 
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/release"
@@ -95,6 +96,26 @@ func (h *Helper) GetValues(releaseName string) (map[string]interface{}, error) {
 	vals, err := gv.Run(releaseName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get release %s values, err: %v", releaseName, err)
+	}
+	return vals, nil
+}
+
+// MergeExternValues merges values from specified extern value.yaml and directly via --set.
+func MergeExternValues(profile string, sets []string,
+) (map[string]interface{}, error) {
+	bff, err := os.ReadFile(profile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read build in profile '%s', err: %v", profile, err)
+	}
+	vals := make(map[string]interface{})
+	if err := yaml.Unmarshal(bff, &vals); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal values: %v", err)
+	}
+	klog.V(4).Infof("combine values: \n\tvalues:%v\n\tsets:%v", vals, sets)
+	for _, kv := range sets {
+		if err := strvals.ParseInto(kv, vals); err != nil {
+			return nil, fmt.Errorf("failed to parse --set data: %s, err: %v", kv, err)
+		}
 	}
 	return vals, nil
 }
