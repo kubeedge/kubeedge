@@ -77,7 +77,7 @@ function start_kubeedge() {
   export MASTER_IP=`kubectl get node test-control-plane -o jsonpath={.status.addresses[0].address}`
   export KUBECONFIG=$HOME/.kube/config
   docker run --rm kubeedge/installation-package:$IMAGE_TAG cat /usr/local/bin/keadm > /usr/local/bin/keadm && chmod +x /usr/local/bin/keadm
-  /usr/local/bin/keadm init --advertise-address=$MASTER_IP --profile version --set cloudCore.service.enable=false --kube-config=$KUBECONFIG --force
+  /usr/local/bin/keadm init --advertise-address=$MASTER_IP --kubeedge-version $CLOUD_EDGE_VERSION --set cloudCore.service.enable=false --kube-config=$KUBECONFIG --force
 
   # ensure tokensecret is generated
   while true; do
