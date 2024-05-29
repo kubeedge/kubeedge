@@ -19,6 +19,7 @@ import (
 	dbTdengine "github.com/kubeedge/Template/data/dbmethod/tdengine"
 	httpMethod "github.com/kubeedge/Template/data/publish/http"
 	mqttMethod "github.com/kubeedge/Template/data/publish/mqtt"
+	otelMethod "github.com/kubeedge/Template/data/publish/otel"
 	"github.com/kubeedge/Template/data/stream"
 	"github.com/kubeedge/Template/driver"
 	dmiapi "github.com/kubeedge/api/apis/dmi/v1beta1"
@@ -155,14 +156,18 @@ func dataHandler(ctx context.Context, dev *driver.CustomizedDev) {
 			DeviceNamespace: dev.Instance.Namespace}
 		go getStates.Run(ctx)
 
+		dataModel := common.NewDataModel(dev.Instance.Name, twin.Property.PropertyName, dev.Instance.Namespace, common.WithType(twin.ObservedDesired.Metadata.Type))
 		// handle push method
 		if twin.Property.PushMethod.MethodConfig != nil && twin.Property.PushMethod.MethodName != "" {
-			dataModel := common.NewDataModel(dev.Instance.Name, twin.Property.PropertyName, dev.Instance.Namespace, common.WithType(twin.ObservedDesired.Metadata.Type))
-			pushHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
+			switch twin.Property.PushMethod.MethodName {
+			case common.PushMethodOTEL:
+				otelMethod.DataHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
+			default:
+				pushHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
+			}
 		}
 		// handle database
 		if twin.Property.PushMethod.DBMethod.DBMethodName != "" {
-			dataModel := common.NewDataModel(dev.Instance.Name, twin.Property.PropertyName, dev.Instance.Namespace, common.WithType(twin.ObservedDesired.Metadata.Type))
 			dbHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
 			switch twin.Property.PushMethod.DBMethod.DBMethodName {
 			// TODO add more database
@@ -185,9 +190,9 @@ func pushHandler(ctx context.Context, twin *common.Twin, client *driver.Customiz
 	var err error
 	// initialization dataPanel
 	switch twin.Property.PushMethod.MethodName {
-	case "http":
+	case common.PushMethodHTTP:
 		dataPanel, err = httpMethod.NewDataPanel(twin.Property.PushMethod.MethodConfig)
-	case "mqtt":
+	case common.PushMethodMQTT:
 		dataPanel, err = mqttMethod.NewDataPanel(twin.Property.PushMethod.MethodConfig)
 	default:
 		err = errors.New("custom protocols are not currently supported when push data")
