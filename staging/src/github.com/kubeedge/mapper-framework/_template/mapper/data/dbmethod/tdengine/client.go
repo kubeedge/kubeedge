@@ -3,6 +3,7 @@
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -151,6 +152,6 @@ func (d *DataBaseConfig) GetDataByTimeRange(deviceName string, start int64, end 
 	return dataModels, nil
 }
 func (d *DataBaseConfig) DeleteDataByTimeRange(start int64, end int64) ([]*common.DataModel, error) {
-	//TODO implement me
-	panic("implement me")
+	//TODO complete feature
+	return nil, errors.New("still wait to complete feature")
 }

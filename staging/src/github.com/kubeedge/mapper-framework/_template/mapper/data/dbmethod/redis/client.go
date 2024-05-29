@@ -105,16 +105,16 @@ func (d *DataBaseConfig) GetDataByDeviceName(deviceName string) ([]*common.DataM
 }
 
 func (d *DataBaseConfig) GetPropertyDataByDeviceName(deviceName string, propertyData string) ([]*common.DataModel, error) {
-	//TODO implement me
-	return nil, errors.New("implement me")
+	//TODO complete feature
+	return nil, errors.New("still wait to complete feature")
 }
 
 func (d *DataBaseConfig) GetDataByTimeRange(start int64, end int64) ([]*common.DataModel, error) {
-	//TODO implement me
-	return nil, errors.New("implement me")
+	//TODO complete feature
+	return nil, errors.New("still wait to complete feature")
 }
 
 func (d *DataBaseConfig) DeleteDataByTimeRange(start int64, end int64) ([]*common.DataModel, error) {
-	//TODO implement me
-	return nil, errors.New("implement me")
+	//TODO complete feature
+	return nil, errors.New("still wait to complete feature")
 }
