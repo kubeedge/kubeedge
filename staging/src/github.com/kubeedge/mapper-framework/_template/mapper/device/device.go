@@ -66,6 +66,7 @@ func (d *DevPanel) DevStart() {
 		d.deviceMuxs[id] = cancel
 		d.wg.Add(1)
 		go d.start(ctx, dev)
+		go d.getDeviceStates(dev)
 	}
 	signal.Notify(d.quitChan, os.Interrupt)
 	go func() {
@@ -104,6 +105,19 @@ func (d *DevPanel) start(ctx context.Context, dev *driver.CustomizedDev) {
 	}
 	go dataHandler(ctx, dev)
 	<-ctx.Done()
+}
+
+// getDeviceStates start timer to get device states
+func (d *DevPanel) getDeviceStates(dev *driver.CustomizedDev) {
+	getStatus := DeviceStates{Client: dev.CustomizedClient, DeviceName: dev.Instance.Name,
+		DeviceNamespace: dev.Instance.Namespace}
+	timer := common.Timer{Function: getStatus.Run, Duration: 5 * time.Second, Times: 0}
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		timer.Start()
+	}()
 }
 
 // dataHandler initialize the timer to handle data plane and devicetwin.

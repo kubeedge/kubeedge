@@ -34,6 +34,8 @@ type DeviceManagerService interface {
 	// When the mapper collects some properties of a device, it can make them a map of device twins
 	// and report it to the device manager through the interface of ReportDeviceStatus.
 	ReportDeviceStatus(*dmiapi.ReportDeviceStatusRequest) (*dmiapi.ReportDeviceStatusResponse, error)
+	// ReportDeviceStates reports the state of devices to device manager.
+	ReportDeviceState(*dmiapi.ReportDeviceStatesRequest) (*dmiapi.ReportDeviceStatesResponse, error)
 }
 
 // DeviceMapperService defines the public APIS for remote device management.
