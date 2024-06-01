@@ -47,6 +47,12 @@ type DeviceStatus struct {
 	// Optional: A passive device won't have twin properties and this list could be empty.
 	// +optional
 	Twins []Twin `json:"twins,omitempty"`
+	// Optional: The state of the device.
+	// +optional
+	State string `json:"state,omitempty"`
+	// Optional: The last time the device was online.
+	// +optional
+	LastOnlineTime string `json:"lastOnlineTime,omitempty"`
 }
 
 // Twin provides a logical representation of control properties (writable properties in the
@@ -263,9 +269,8 @@ type VisitorConfig struct {
 type Device struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec   DeviceSpec   `json:"spec,omitempty"`
-	Status DeviceStatus `json:"status,omitempty"`
+	Spec              DeviceSpec   `json:"spec,omitempty"`
+	Status            DeviceStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
