@@ -371,6 +371,9 @@ type DeviceControllerBuffer struct {
 	// UpdateDeviceStatus indicates the buffer of update device status
 	// default 1024
 	UpdateDeviceStatus int32 `json:"updateDeviceStatus,omitempty"`
+	// UpdateDeviceStatue indicates the buffer of update device states
+	// default 1024
+	UpdateDeviceStates int32 `json:"updateDeviceStatus,omitempty"`
 	// DeviceEvent indicates the buffer of device event
 	// default 1
 	DeviceEvent int32 `json:"deviceEvent,omitempty"`

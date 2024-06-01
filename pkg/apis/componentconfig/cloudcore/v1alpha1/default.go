@@ -91,6 +91,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 				Enable: true,
 				Buffer: &DeviceControllerBuffer{
 					UpdateDeviceStatus: constants.DefaultUpdateDeviceStatusBuffer,
+					UpdateDeviceStates: constants.DefaultUpdateDeviceStatesBuffer,
 					DeviceEvent:        constants.DefaultDeviceEventBuffer,
 					DeviceModelEvent:   constants.DefaultDeviceModelEventBuffer,
 				},
