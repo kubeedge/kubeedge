@@ -27,7 +27,7 @@ OUTPUT_FILE="${KUBEEDGE_ROOT}/vendor/k8s.io/kube-openapi/cmd/openapi-gen"
 go build -o "${OUTPUT_FILE}" "${GOFILE}"
 
 echo "Generating with openapi-gen"
-${OUTPUT_FILE}/open_api-gen\
+${OUTPUT_FILE}/openapi-gen\
     --input-dirs "github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1" \
     --input-dirs "github.com/kubeedge/kubeedge/pkg/apis/policy/v1alpha1" \
     --input-dirs "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2" \

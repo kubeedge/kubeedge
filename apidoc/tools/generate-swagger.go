@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package tools
+package main
 
 import (
 	"fmt"
@@ -112,15 +112,15 @@ func main() {
 		},
 		Resources: []lib.ResourceWithNamespaceScoped{
 			// Define resources and their namespace scoped and resource mapping correspondingly
-			{GVR: appsv1alpha1.SchemeGroupVersion.WithResource("edgeapplications"), NamespaceScoped: false},
-			{GVR: appsv1alpha1.SchemeGroupVersion.WithResource("nodegroups"), NamespaceScoped: false},
-			{GVR: devicesv1alpha2.SchemeGroupVersion.WithResource("devices"), NamespaceScoped: false},
-			{GVR: devicesv1beta1.SchemeGroupVersion.WithResource("devices"), NamespaceScoped: false},
-			{GVR: operationsv1alpha1.SchemeGroupVersion.WithResource("imageprepulljobs"), NamespaceScoped: false},
-			{GVR: operationsv1alpha1.SchemeGroupVersion.WithResource("nodeupgradejobs"), NamespaceScoped: false},
-			{GVR: policyv1alpha1.SchemeGroupVersion.WithResource("serviceaccountaccesss"), NamespaceScoped: false},
-			{GVR: reliablesyncsv1alpha1.SchemeGroupVersion.WithResource("objectsyncs"), NamespaceScoped: false},
-			{GVR: rulesv1.SchemeGroupVersion.WithResource("rules"), NamespaceScoped: false},
+			{GVR: appsv1alpha1.SchemeGroupVersion.WithResource("edgeapplications"), NamespaceScoped: true},
+			{GVR: appsv1alpha1.SchemeGroupVersion.WithResource("nodegroups"), NamespaceScoped: true},
+			{GVR: devicesv1alpha2.SchemeGroupVersion.WithResource("devices"), NamespaceScoped: true},
+			{GVR: devicesv1beta1.SchemeGroupVersion.WithResource("devices"), NamespaceScoped: true},
+			{GVR: operationsv1alpha1.SchemeGroupVersion.WithResource("imageprepulljobs"), NamespaceScoped: true},
+			{GVR: operationsv1alpha1.SchemeGroupVersion.WithResource("nodeupgradejobs"), NamespaceScoped: true},
+			{GVR: policyv1alpha1.SchemeGroupVersion.WithResource("serviceaccountaccesss"), NamespaceScoped: true},
+			{GVR: reliablesyncsv1alpha1.SchemeGroupVersion.WithResource("objectsyncs"), NamespaceScoped: true},
+			{GVR: rulesv1.SchemeGroupVersion.WithResource("rules"), NamespaceScoped: true},
 		},
 		Mapper: mapper,
 	})

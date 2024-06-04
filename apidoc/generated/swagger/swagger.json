@@ -119,7 +119,78 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "listAppsKubeedgeIoV1alpha1EdgeApplication",
+        "operationId": "listAppsKubeedgeIoV1alpha1EdgeApplicationForAllNamespaces",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.apps.v1alpha1.EdgeApplicationList"
+            }
+          }
+        },
+        "x-kubernetes-action": "list",
+        "x-kubernetes-group-version-kind": {
+          "group": "apps.kubeedge.io",
+          "version": "v1alpha1",
+          "kind": "EdgeApplication"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
+    "/apis/apps.kubeedge.io/v1alpha1/namespaces/{namespace}/edgeapplications": {
+      "get": {
+        "description": "list or watch objects of kind EdgeApplication",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "appsKubeedgeIo_v1alpha1"
+        ],
+        "operationId": "listAppsKubeedgeIoV1alpha1NamespacedEdgeApplication",
         "parameters": [
           {
             "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
@@ -183,7 +254,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "createAppsKubeedgeIoV1alpha1EdgeApplication",
+        "operationId": "createAppsKubeedgeIoV1alpha1NamespacedEdgeApplication",
         "parameters": [
           {
             "name": "body",
@@ -254,7 +325,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "deleteAppsKubeedgeIoV1alpha1CollectionEdgeApplication",
+        "operationId": "deleteAppsKubeedgeIoV1alpha1CollectionNamespacedEdgeApplication",
         "parameters": [
           {
             "$ref": "#/parameters/body-2Y1dVQaQ"
@@ -317,11 +388,14 @@
       },
       "parameters": [
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
-    "/apis/apps.kubeedge.io/v1alpha1/edgeapplications/{name}": {
+    "/apis/apps.kubeedge.io/v1alpha1/namespaces/{namespace}/edgeapplications/{name}": {
       "get": {
         "description": "read the specified EdgeApplication",
         "consumes": [
@@ -338,7 +412,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "readAppsKubeedgeIoV1alpha1EdgeApplication",
+        "operationId": "readAppsKubeedgeIoV1alpha1NamespacedEdgeApplication",
         "responses": {
           "200": {
             "description": "OK",
@@ -370,7 +444,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "replaceAppsKubeedgeIoV1alpha1EdgeApplication",
+        "operationId": "replaceAppsKubeedgeIoV1alpha1NamespacedEdgeApplication",
         "parameters": [
           {
             "name": "body",
@@ -435,7 +509,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "deleteAppsKubeedgeIoV1alpha1EdgeApplication",
+        "operationId": "deleteAppsKubeedgeIoV1alpha1NamespacedEdgeApplication",
         "parameters": [
           {
             "$ref": "#/parameters/body-2Y1dVQaQ"
@@ -497,7 +571,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "patchAppsKubeedgeIoV1alpha1EdgeApplication",
+        "operationId": "patchAppsKubeedgeIoV1alpha1NamespacedEdgeApplication",
         "parameters": [
           {
             "$ref": "#/parameters/body-78PwaGsr"
@@ -554,11 +628,14 @@
           "required": true
         },
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
-    "/apis/apps.kubeedge.io/v1alpha1/edgeapplications/{name}/status": {
+    "/apis/apps.kubeedge.io/v1alpha1/namespaces/{namespace}/edgeapplications/{name}/status": {
       "get": {
         "description": "read status of the specified EdgeApplication",
         "consumes": [
@@ -575,7 +652,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "readAppsKubeedgeIoV1alpha1EdgeApplicationStatus",
+        "operationId": "readAppsKubeedgeIoV1alpha1NamespacedEdgeApplicationStatus",
         "responses": {
           "200": {
             "description": "OK",
@@ -607,7 +684,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "replaceAppsKubeedgeIoV1alpha1EdgeApplicationStatus",
+        "operationId": "replaceAppsKubeedgeIoV1alpha1NamespacedEdgeApplicationStatus",
         "parameters": [
           {
             "name": "body",
@@ -675,7 +752,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "patchAppsKubeedgeIoV1alpha1EdgeApplicationStatus",
+        "operationId": "patchAppsKubeedgeIoV1alpha1NamespacedEdgeApplicationStatus",
         "parameters": [
           {
             "$ref": "#/parameters/body-78PwaGsr"
@@ -732,11 +809,14 @@
           "required": true
         },
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
-    "/apis/apps.kubeedge.io/v1alpha1/nodegroups": {
+    "/apis/apps.kubeedge.io/v1alpha1/namespaces/{namespace}/nodegroups": {
       "get": {
         "description": "list or watch objects of kind NodeGroup",
         "consumes": [
@@ -755,7 +835,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "listAppsKubeedgeIoV1alpha1NodeGroup",
+        "operationId": "listAppsKubeedgeIoV1alpha1NamespacedNodeGroup",
         "parameters": [
           {
             "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
@@ -819,7 +899,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "createAppsKubeedgeIoV1alpha1NodeGroup",
+        "operationId": "createAppsKubeedgeIoV1alpha1NamespacedNodeGroup",
         "parameters": [
           {
             "name": "body",
@@ -890,7 +970,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "deleteAppsKubeedgeIoV1alpha1CollectionNodeGroup",
+        "operationId": "deleteAppsKubeedgeIoV1alpha1CollectionNamespacedNodeGroup",
         "parameters": [
           {
             "$ref": "#/parameters/body-2Y1dVQaQ"
@@ -953,11 +1033,14 @@
       },
       "parameters": [
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
-    "/apis/apps.kubeedge.io/v1alpha1/nodegroups/{name}": {
+    "/apis/apps.kubeedge.io/v1alpha1/namespaces/{namespace}/nodegroups/{name}": {
       "get": {
         "description": "read the specified NodeGroup",
         "consumes": [
@@ -974,7 +1057,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "readAppsKubeedgeIoV1alpha1NodeGroup",
+        "operationId": "readAppsKubeedgeIoV1alpha1NamespacedNodeGroup",
         "responses": {
           "200": {
             "description": "OK",
@@ -1006,7 +1089,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "replaceAppsKubeedgeIoV1alpha1NodeGroup",
+        "operationId": "replaceAppsKubeedgeIoV1alpha1NamespacedNodeGroup",
         "parameters": [
           {
             "name": "body",
@@ -1071,7 +1154,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "deleteAppsKubeedgeIoV1alpha1NodeGroup",
+        "operationId": "deleteAppsKubeedgeIoV1alpha1NamespacedNodeGroup",
         "parameters": [
           {
             "$ref": "#/parameters/body-2Y1dVQaQ"
@@ -1133,7 +1216,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "patchAppsKubeedgeIoV1alpha1NodeGroup",
+        "operationId": "patchAppsKubeedgeIoV1alpha1NamespacedNodeGroup",
         "parameters": [
           {
             "$ref": "#/parameters/body-78PwaGsr"
@@ -1190,11 +1273,14 @@
           "required": true
         },
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
-    "/apis/apps.kubeedge.io/v1alpha1/nodegroups/{name}/status": {
+    "/apis/apps.kubeedge.io/v1alpha1/namespaces/{namespace}/nodegroups/{name}/status": {
       "get": {
         "description": "read status of the specified NodeGroup",
         "consumes": [
@@ -1211,7 +1297,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "readAppsKubeedgeIoV1alpha1NodeGroupStatus",
+        "operationId": "readAppsKubeedgeIoV1alpha1NamespacedNodeGroupStatus",
         "responses": {
           "200": {
             "description": "OK",
@@ -1243,7 +1329,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "replaceAppsKubeedgeIoV1alpha1NodeGroupStatus",
+        "operationId": "replaceAppsKubeedgeIoV1alpha1NamespacedNodeGroupStatus",
         "parameters": [
           {
             "name": "body",
@@ -1311,7 +1397,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "patchAppsKubeedgeIoV1alpha1NodeGroupStatus",
+        "operationId": "patchAppsKubeedgeIoV1alpha1NamespacedNodeGroupStatus",
         "parameters": [
           {
             "$ref": "#/parameters/body-78PwaGsr"
@@ -1368,7 +1454,81 @@
           "required": true
         },
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
+        }
+      ]
+    },
+    "/apis/apps.kubeedge.io/v1alpha1/nodegroups": {
+      "get": {
+        "description": "list or watch objects of kind NodeGroup",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "appsKubeedgeIo_v1alpha1"
+        ],
+        "operationId": "listAppsKubeedgeIoV1alpha1NodeGroupForAllNamespaces",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.apps.v1alpha1.NodeGroupList"
+            }
+          }
+        },
+        "x-kubernetes-action": "list",
+        "x-kubernetes-group-version-kind": {
+          "group": "apps.kubeedge.io",
+          "version": "v1alpha1",
+          "kind": "NodeGroup"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
         }
       ]
     },
@@ -1391,7 +1551,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "watchAppsKubeedgeIoV1alpha1EdgeApplicationList",
+        "operationId": "watchAppsKubeedgeIoV1alpha1EdgeApplicationListForAllNamespaces",
         "responses": {
           "200": {
             "description": "OK",
@@ -1443,7 +1603,81 @@
         }
       ]
     },
-    "/apis/apps.kubeedge.io/v1alpha1/watch/edgeapplications/{name}": {
+    "/apis/apps.kubeedge.io/v1alpha1/watch/namespaces/{namespace}/edgeapplications": {
+      "get": {
+        "description": "watch individual changes to a list of EdgeApplication. deprecated: use the 'watch' parameter with a list operation instead.",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "appsKubeedgeIo_v1alpha1"
+        ],
+        "operationId": "watchAppsKubeedgeIoV1alpha1NamespacedEdgeApplicationList",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+            }
+          }
+        },
+        "x-kubernetes-action": "watchlist",
+        "x-kubernetes-group-version-kind": {
+          "group": "apps.kubeedge.io",
+          "version": "v1alpha1",
+          "kind": "EdgeApplication"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
+    "/apis/apps.kubeedge.io/v1alpha1/watch/namespaces/{namespace}/edgeapplications/{name}": {
       "get": {
         "description": "watch changes to an object of kind EdgeApplication. deprecated: use the 'watch' parameter with a list operation instead, filtered to a single item with the 'fieldSelector' parameter.",
         "consumes": [
@@ -1462,7 +1696,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "watchAppsKubeedgeIoV1alpha1EdgeApplication",
+        "operationId": "watchAppsKubeedgeIoV1alpha1NamespacedEdgeApplication",
         "responses": {
           "200": {
             "description": "OK",
@@ -1503,6 +1737,9 @@
           "required": true
         },
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         },
         {
@@ -1522,7 +1759,7 @@
         }
       ]
     },
-    "/apis/apps.kubeedge.io/v1alpha1/watch/nodegroups": {
+    "/apis/apps.kubeedge.io/v1alpha1/watch/namespaces/{namespace}/nodegroups": {
       "get": {
         "description": "watch individual changes to a list of NodeGroup. deprecated: use the 'watch' parameter with a list operation instead.",
         "consumes": [
@@ -1541,7 +1778,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "watchAppsKubeedgeIoV1alpha1NodeGroupList",
+        "operationId": "watchAppsKubeedgeIoV1alpha1NamespacedNodeGroupList",
         "responses": {
           "200": {
             "description": "OK",
@@ -1574,6 +1811,9 @@
           "$ref": "#/parameters/limit-1NfNmdNH"
         },
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         },
         {
@@ -1593,7 +1833,7 @@
         }
       ]
     },
-    "/apis/apps.kubeedge.io/v1alpha1/watch/nodegroups/{name}": {
+    "/apis/apps.kubeedge.io/v1alpha1/watch/namespaces/{namespace}/nodegroups/{name}": {
       "get": {
         "description": "watch changes to an object of kind NodeGroup. deprecated: use the 'watch' parameter with a list operation instead, filtered to a single item with the 'fieldSelector' parameter.",
         "consumes": [
@@ -1612,7 +1852,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "watchAppsKubeedgeIoV1alpha1NodeGroup",
+        "operationId": "watchAppsKubeedgeIoV1alpha1NamespacedNodeGroup",
         "responses": {
           "200": {
             "description": "OK",
@@ -1651,6 +1891,80 @@
           "name": "name",
           "in": "path",
           "required": true
+        },
+        {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
+    "/apis/apps.kubeedge.io/v1alpha1/watch/nodegroups": {
+      "get": {
+        "description": "watch individual changes to a list of NodeGroup. deprecated: use the 'watch' parameter with a list operation instead.",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "appsKubeedgeIo_v1alpha1"
+        ],
+        "operationId": "watchAppsKubeedgeIoV1alpha1NodeGroupListForAllNamespaces",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+            }
+          }
+        },
+        "x-kubernetes-action": "watchlist",
+        "x-kubernetes-group-version-kind": {
+          "group": "apps.kubeedge.io",
+          "version": "v1alpha1",
+          "kind": "NodeGroup"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
         },
         {
           "$ref": "#/parameters/pretty-nN7o5FEq"
@@ -1751,7 +2065,78 @@
         "tags": [
           "devicesKubeedgeIo_v1alpha2"
         ],
-        "operationId": "listDevicesKubeedgeIoV1alpha2Device",
+        "operationId": "listDevicesKubeedgeIoV1alpha2DeviceForAllNamespaces",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.DeviceList"
+            }
+          }
+        },
+        "x-kubernetes-action": "list",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "Device"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
+    "/apis/devices.kubeedge.io/v1alpha2/namespaces/{namespace}/devices": {
+      "get": {
+        "description": "list or watch objects of kind Device",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "listDevicesKubeedgeIoV1alpha2NamespacedDevice",
         "parameters": [
           {
             "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
@@ -1815,7 +2200,7 @@
         "tags": [
           "devicesKubeedgeIo_v1alpha2"
         ],
-        "operationId": "createDevicesKubeedgeIoV1alpha2Device",
+        "operationId": "createDevicesKubeedgeIoV1alpha2NamespacedDevice",
         "parameters": [
           {
             "name": "body",
@@ -1886,7 +2271,7 @@
         "tags": [
           "devicesKubeedgeIo_v1alpha2"
         ],
-        "operationId": "deleteDevicesKubeedgeIoV1alpha2CollectionDevice",
+        "operationId": "deleteDevicesKubeedgeIoV1alpha2CollectionNamespacedDevice",
         "parameters": [
           {
             "$ref": "#/parameters/body-2Y1dVQaQ"
@@ -1949,11 +2334,14 @@
       },
       "parameters": [
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
-    "/apis/devices.kubeedge.io/v1alpha2/devices/{name}": {
+    "/apis/devices.kubeedge.io/v1alpha2/namespaces/{namespace}/devices/{name}": {
       "get": {
         "description": "read the specified Device",
         "consumes": [
@@ -1970,7 +2358,7 @@
         "tags": [
           "devicesKubeedgeIo_v1alpha2"
         ],
-        "operationId": "readDevicesKubeedgeIoV1alpha2Device",
+        "operationId": "readDevicesKubeedgeIoV1alpha2NamespacedDevice",
         "responses": {
           "200": {
             "description": "OK",
@@ -2002,7 +2390,7 @@
         "tags": [
           "devicesKubeedgeIo_v1alpha2"
         ],
-        "operationId": "replaceDevicesKubeedgeIoV1alpha2Device",
+        "operationId": "replaceDevicesKubeedgeIoV1alpha2NamespacedDevice",
         "parameters": [
           {
             "name": "body",
@@ -2067,7 +2455,7 @@
         "tags": [
           "devicesKubeedgeIo_v1alpha2"
         ],
-        "operationId": "deleteDevicesKubeedgeIoV1alpha2Device",
+        "operationId": "deleteDevicesKubeedgeIoV1alpha2NamespacedDevice",
         "parameters": [
           {
             "$ref": "#/parameters/body-2Y1dVQaQ"
@@ -2129,7 +2517,7 @@
         "tags": [
           "devicesKubeedgeIo_v1alpha2"
         ],
-        "operationId": "patchDevicesKubeedgeIoV1alpha2Device",
+        "operationId": "patchDevicesKubeedgeIoV1alpha2NamespacedDevice",
         "parameters": [
           {
             "$ref": "#/parameters/body-78PwaGsr"
@@ -2186,11 +2574,14 @@
           "required": true
         },
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
-    "/apis/devices.kubeedge.io/v1alpha2/devices/{name}/status": {
+    "/apis/devices.kubeedge.io/v1alpha2/namespaces/{namespace}/devices/{name}/status": {
       "get": {
         "description": "read status of the specified Device",
         "consumes": [
@@ -2207,7 +2598,7 @@
         "tags": [
           "devicesKubeedgeIo_v1alpha2"
         ],
-        "operationId": "readDevicesKubeedgeIoV1alpha2DeviceStatus",
+        "operationId": "readDevicesKubeedgeIoV1alpha2NamespacedDeviceStatus",
         "responses": {
           "200": {
             "description": "OK",
@@ -2239,7 +2630,7 @@
         "tags": [
           "devicesKubeedgeIo_v1alpha2"
         ],
-        "operationId": "replaceDevicesKubeedgeIoV1alpha2DeviceStatus",
+        "operationId": "replaceDevicesKubeedgeIoV1alpha2NamespacedDeviceStatus",
         "parameters": [
           {
             "name": "body",
@@ -2307,7 +2698,7 @@
         "tags": [
           "devicesKubeedgeIo_v1alpha2"
         ],
-        "operationId": "patchDevicesKubeedgeIoV1alpha2DeviceStatus",
+        "operationId": "patchDevicesKubeedgeIoV1alpha2NamespacedDeviceStatus",
         "parameters": [
           {
             "$ref": "#/parameters/body-78PwaGsr"
@@ -2364,6 +2755,9 @@
           "required": true
         },
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
@@ -2387,7 +2781,7 @@
         "tags": [
           "devicesKubeedgeIo_v1alpha2"
         ],
-        "operationId": "watchDevicesKubeedgeIoV1alpha2DeviceList",
+        "operationId": "watchDevicesKubeedgeIoV1alpha2DeviceListForAllNamespaces",
         "responses": {
           "200": {
             "description": "OK",
@@ -2439,7 +2833,81 @@
         }
       ]
     },
-    "/apis/devices.kubeedge.io/v1alpha2/watch/devices/{name}": {
+    "/apis/devices.kubeedge.io/v1alpha2/watch/namespaces/{namespace}/devices": {
+      "get": {
+        "description": "watch individual changes to a list of Device. deprecated: use the 'watch' parameter with a list operation instead.",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "watchDevicesKubeedgeIoV1alpha2NamespacedDeviceList",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+            }
+          }
+        },
+        "x-kubernetes-action": "watchlist",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "Device"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
+    "/apis/devices.kubeedge.io/v1alpha2/watch/namespaces/{namespace}/devices/{name}": {
       "get": {
         "description": "watch changes to an object of kind Device. deprecated: use the 'watch' parameter with a list operation instead, filtered to a single item with the 'fieldSelector' parameter.",
         "consumes": [
@@ -2458,7 +2926,7 @@
         "tags": [
           "devicesKubeedgeIo_v1alpha2"
         ],
-        "operationId": "watchDevicesKubeedgeIoV1alpha2Device",
+        "operationId": "watchDevicesKubeedgeIoV1alpha2NamespacedDevice",
         "responses": {
           "200": {
             "description": "OK",
@@ -2497,6 +2965,9 @@
           "name": "name",
           "in": "path",
           "required": true
+        },
+        {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
           "$ref": "#/parameters/pretty-nN7o5FEq"
@@ -2567,7 +3038,78 @@
         "tags": [
           "devicesKubeedgeIo_v1beta1"
         ],
-        "operationId": "listDevicesKubeedgeIoV1beta1Device",
+        "operationId": "listDevicesKubeedgeIoV1beta1DeviceForAllNamespaces",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1beta1.DeviceList"
+            }
+          }
+        },
+        "x-kubernetes-action": "list",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1beta1",
+          "kind": "Device"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
+    "/apis/devices.kubeedge.io/v1beta1/namespaces/{namespace}/devices": {
+      "get": {
+        "description": "list or watch objects of kind Device",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1beta1"
+        ],
+        "operationId": "listDevicesKubeedgeIoV1beta1NamespacedDevice",
         "parameters": [
           {
             "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
@@ -2631,7 +3173,7 @@
         "tags": [
           "devicesKubeedgeIo_v1beta1"
         ],
-        "operationId": "createDevicesKubeedgeIoV1beta1Device",
+        "operationId": "createDevicesKubeedgeIoV1beta1NamespacedDevice",
         "parameters": [
           {
             "name": "body",
@@ -2702,7 +3244,7 @@
         "tags": [
           "devicesKubeedgeIo_v1beta1"
         ],
-        "operationId": "deleteDevicesKubeedgeIoV1beta1CollectionDevice",
+        "operationId": "deleteDevicesKubeedgeIoV1beta1CollectionNamespacedDevice",
         "parameters": [
           {
             "$ref": "#/parameters/body-2Y1dVQaQ"
@@ -2765,11 +3307,14 @@
       },
       "parameters": [
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
-    "/apis/devices.kubeedge.io/v1beta1/devices/{name}": {
+    "/apis/devices.kubeedge.io/v1beta1/namespaces/{namespace}/devices/{name}": {
       "get": {
         "description": "read the specified Device",
         "consumes": [
@@ -2786,7 +3331,7 @@
         "tags": [
           "devicesKubeedgeIo_v1beta1"
         ],
-        "operationId": "readDevicesKubeedgeIoV1beta1Device",
+        "operationId": "readDevicesKubeedgeIoV1beta1NamespacedDevice",
         "responses": {
           "200": {
             "description": "OK",
@@ -2818,7 +3363,7 @@
         "tags": [
           "devicesKubeedgeIo_v1beta1"
         ],
-        "operationId": "replaceDevicesKubeedgeIoV1beta1Device",
+        "operationId": "replaceDevicesKubeedgeIoV1beta1NamespacedDevice",
         "parameters": [
           {
             "name": "body",
@@ -2883,7 +3428,7 @@
         "tags": [
           "devicesKubeedgeIo_v1beta1"
         ],
-        "operationId": "deleteDevicesKubeedgeIoV1beta1Device",
+        "operationId": "deleteDevicesKubeedgeIoV1beta1NamespacedDevice",
         "parameters": [
           {
             "$ref": "#/parameters/body-2Y1dVQaQ"
@@ -2945,7 +3490,7 @@
         "tags": [
           "devicesKubeedgeIo_v1beta1"
         ],
-        "operationId": "patchDevicesKubeedgeIoV1beta1Device",
+        "operationId": "patchDevicesKubeedgeIoV1beta1NamespacedDevice",
         "parameters": [
           {
             "$ref": "#/parameters/body-78PwaGsr"
@@ -3002,11 +3547,14 @@
           "required": true
         },
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
-    "/apis/devices.kubeedge.io/v1beta1/devices/{name}/status": {
+    "/apis/devices.kubeedge.io/v1beta1/namespaces/{namespace}/devices/{name}/status": {
       "get": {
         "description": "read status of the specified Device",
         "consumes": [
@@ -3023,7 +3571,7 @@
         "tags": [
           "devicesKubeedgeIo_v1beta1"
         ],
-        "operationId": "readDevicesKubeedgeIoV1beta1DeviceStatus",
+        "operationId": "readDevicesKubeedgeIoV1beta1NamespacedDeviceStatus",
         "responses": {
           "200": {
             "description": "OK",
@@ -3055,7 +3603,7 @@
         "tags": [
           "devicesKubeedgeIo_v1beta1"
         ],
-        "operationId": "replaceDevicesKubeedgeIoV1beta1DeviceStatus",
+        "operationId": "replaceDevicesKubeedgeIoV1beta1NamespacedDeviceStatus",
         "parameters": [
           {
             "name": "body",
@@ -3123,7 +3671,7 @@
         "tags": [
           "devicesKubeedgeIo_v1beta1"
         ],
-        "operationId": "patchDevicesKubeedgeIoV1beta1DeviceStatus",
+        "operationId": "patchDevicesKubeedgeIoV1beta1NamespacedDeviceStatus",
         "parameters": [
           {
             "$ref": "#/parameters/body-78PwaGsr"
@@ -3180,6 +3728,9 @@
           "required": true
         },
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
@@ -3203,7 +3754,7 @@
         "tags": [
           "devicesKubeedgeIo_v1beta1"
         ],
-        "operationId": "watchDevicesKubeedgeIoV1beta1DeviceList",
+        "operationId": "watchDevicesKubeedgeIoV1beta1DeviceListForAllNamespaces",
         "responses": {
           "200": {
             "description": "OK",
@@ -3255,7 +3806,81 @@
         }
       ]
     },
-    "/apis/devices.kubeedge.io/v1beta1/watch/devices/{name}": {
+    "/apis/devices.kubeedge.io/v1beta1/watch/namespaces/{namespace}/devices": {
+      "get": {
+        "description": "watch individual changes to a list of Device. deprecated: use the 'watch' parameter with a list operation instead.",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1beta1"
+        ],
+        "operationId": "watchDevicesKubeedgeIoV1beta1NamespacedDeviceList",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+            }
+          }
+        },
+        "x-kubernetes-action": "watchlist",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1beta1",
+          "kind": "Device"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
+    "/apis/devices.kubeedge.io/v1beta1/watch/namespaces/{namespace}/devices/{name}": {
       "get": {
         "description": "watch changes to an object of kind Device. deprecated: use the 'watch' parameter with a list operation instead, filtered to a single item with the 'fieldSelector' parameter.",
         "consumes": [
@@ -3274,7 +3899,7 @@
         "tags": [
           "devicesKubeedgeIo_v1beta1"
         ],
-        "operationId": "watchDevicesKubeedgeIoV1beta1Device",
+        "operationId": "watchDevicesKubeedgeIoV1beta1NamespacedDevice",
         "responses": {
           "200": {
             "description": "OK",
@@ -3313,6 +3938,9 @@
           "name": "name",
           "in": "path",
           "required": true
+        },
+        {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
           "$ref": "#/parameters/pretty-nN7o5FEq"
@@ -3413,7 +4041,78 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "listOperationsKubeedgeIoV1alpha1ImagePrePullJob",
+        "operationId": "listOperationsKubeedgeIoV1alpha1ImagePrePullJobForAllNamespaces",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.operations.v1alpha1.ImagePrePullJobList"
+            }
+          }
+        },
+        "x-kubernetes-action": "list",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha1",
+          "kind": "ImagePrePullJob"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
+    "/apis/operations.kubeedge.io/v1alpha1/namespaces/{namespace}/imageprepulljobs": {
+      "get": {
+        "description": "list or watch objects of kind ImagePrePullJob",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha1"
+        ],
+        "operationId": "listOperationsKubeedgeIoV1alpha1NamespacedImagePrePullJob",
         "parameters": [
           {
             "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
@@ -3477,7 +4176,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "createOperationsKubeedgeIoV1alpha1ImagePrePullJob",
+        "operationId": "createOperationsKubeedgeIoV1alpha1NamespacedImagePrePullJob",
         "parameters": [
           {
             "name": "body",
@@ -3548,7 +4247,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "deleteOperationsKubeedgeIoV1alpha1CollectionImagePrePullJob",
+        "operationId": "deleteOperationsKubeedgeIoV1alpha1CollectionNamespacedImagePrePullJob",
         "parameters": [
           {
             "$ref": "#/parameters/body-2Y1dVQaQ"
@@ -3611,11 +4310,14 @@
       },
       "parameters": [
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
-    "/apis/operations.kubeedge.io/v1alpha1/imageprepulljobs/{name}": {
+    "/apis/operations.kubeedge.io/v1alpha1/namespaces/{namespace}/imageprepulljobs/{name}": {
       "get": {
         "description": "read the specified ImagePrePullJob",
         "consumes": [
@@ -3632,7 +4334,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "readOperationsKubeedgeIoV1alpha1ImagePrePullJob",
+        "operationId": "readOperationsKubeedgeIoV1alpha1NamespacedImagePrePullJob",
         "responses": {
           "200": {
             "description": "OK",
@@ -3664,7 +4366,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "replaceOperationsKubeedgeIoV1alpha1ImagePrePullJob",
+        "operationId": "replaceOperationsKubeedgeIoV1alpha1NamespacedImagePrePullJob",
         "parameters": [
           {
             "name": "body",
@@ -3729,7 +4431,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "deleteOperationsKubeedgeIoV1alpha1ImagePrePullJob",
+        "operationId": "deleteOperationsKubeedgeIoV1alpha1NamespacedImagePrePullJob",
         "parameters": [
           {
             "$ref": "#/parameters/body-2Y1dVQaQ"
@@ -3791,7 +4493,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "patchOperationsKubeedgeIoV1alpha1ImagePrePullJob",
+        "operationId": "patchOperationsKubeedgeIoV1alpha1NamespacedImagePrePullJob",
         "parameters": [
           {
             "$ref": "#/parameters/body-78PwaGsr"
@@ -3848,11 +4550,14 @@
           "required": true
         },
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
-    "/apis/operations.kubeedge.io/v1alpha1/imageprepulljobs/{name}/status": {
+    "/apis/operations.kubeedge.io/v1alpha1/namespaces/{namespace}/imageprepulljobs/{name}/status": {
       "get": {
         "description": "read status of the specified ImagePrePullJob",
         "consumes": [
@@ -3869,7 +4574,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "readOperationsKubeedgeIoV1alpha1ImagePrePullJobStatus",
+        "operationId": "readOperationsKubeedgeIoV1alpha1NamespacedImagePrePullJobStatus",
         "responses": {
           "200": {
             "description": "OK",
@@ -3901,7 +4606,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "replaceOperationsKubeedgeIoV1alpha1ImagePrePullJobStatus",
+        "operationId": "replaceOperationsKubeedgeIoV1alpha1NamespacedImagePrePullJobStatus",
         "parameters": [
           {
             "name": "body",
@@ -3969,7 +4674,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "patchOperationsKubeedgeIoV1alpha1ImagePrePullJobStatus",
+        "operationId": "patchOperationsKubeedgeIoV1alpha1NamespacedImagePrePullJobStatus",
         "parameters": [
           {
             "$ref": "#/parameters/body-78PwaGsr"
@@ -4026,11 +4731,14 @@
           "required": true
         },
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
-    "/apis/operations.kubeedge.io/v1alpha1/nodeupgradejobs": {
+    "/apis/operations.kubeedge.io/v1alpha1/namespaces/{namespace}/nodeupgradejobs": {
       "get": {
         "description": "list or watch objects of kind NodeUpgradeJob",
         "consumes": [
@@ -4049,7 +4757,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "listOperationsKubeedgeIoV1alpha1NodeUpgradeJob",
+        "operationId": "listOperationsKubeedgeIoV1alpha1NamespacedNodeUpgradeJob",
         "parameters": [
           {
             "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
@@ -4113,7 +4821,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "createOperationsKubeedgeIoV1alpha1NodeUpgradeJob",
+        "operationId": "createOperationsKubeedgeIoV1alpha1NamespacedNodeUpgradeJob",
         "parameters": [
           {
             "name": "body",
@@ -4184,7 +4892,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "deleteOperationsKubeedgeIoV1alpha1CollectionNodeUpgradeJob",
+        "operationId": "deleteOperationsKubeedgeIoV1alpha1CollectionNamespacedNodeUpgradeJob",
         "parameters": [
           {
             "$ref": "#/parameters/body-2Y1dVQaQ"
@@ -4247,11 +4955,14 @@
       },
       "parameters": [
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
-    "/apis/operations.kubeedge.io/v1alpha1/nodeupgradejobs/{name}": {
+    "/apis/operations.kubeedge.io/v1alpha1/namespaces/{namespace}/nodeupgradejobs/{name}": {
       "get": {
         "description": "read the specified NodeUpgradeJob",
         "consumes": [
@@ -4268,7 +4979,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "readOperationsKubeedgeIoV1alpha1NodeUpgradeJob",
+        "operationId": "readOperationsKubeedgeIoV1alpha1NamespacedNodeUpgradeJob",
         "responses": {
           "200": {
             "description": "OK",
@@ -4300,7 +5011,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "replaceOperationsKubeedgeIoV1alpha1NodeUpgradeJob",
+        "operationId": "replaceOperationsKubeedgeIoV1alpha1NamespacedNodeUpgradeJob",
         "parameters": [
           {
             "name": "body",
@@ -4365,7 +5076,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "deleteOperationsKubeedgeIoV1alpha1NodeUpgradeJob",
+        "operationId": "deleteOperationsKubeedgeIoV1alpha1NamespacedNodeUpgradeJob",
         "parameters": [
           {
             "$ref": "#/parameters/body-2Y1dVQaQ"
@@ -4427,7 +5138,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "patchOperationsKubeedgeIoV1alpha1NodeUpgradeJob",
+        "operationId": "patchOperationsKubeedgeIoV1alpha1NamespacedNodeUpgradeJob",
         "parameters": [
           {
             "$ref": "#/parameters/body-78PwaGsr"
@@ -4484,11 +5195,14 @@
           "required": true
         },
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
-    "/apis/operations.kubeedge.io/v1alpha1/nodeupgradejobs/{name}/status": {
+    "/apis/operations.kubeedge.io/v1alpha1/namespaces/{namespace}/nodeupgradejobs/{name}/status": {
       "get": {
         "description": "read status of the specified NodeUpgradeJob",
         "consumes": [
@@ -4505,7 +5219,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "readOperationsKubeedgeIoV1alpha1NodeUpgradeJobStatus",
+        "operationId": "readOperationsKubeedgeIoV1alpha1NamespacedNodeUpgradeJobStatus",
         "responses": {
           "200": {
             "description": "OK",
@@ -4537,7 +5251,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "replaceOperationsKubeedgeIoV1alpha1NodeUpgradeJobStatus",
+        "operationId": "replaceOperationsKubeedgeIoV1alpha1NamespacedNodeUpgradeJobStatus",
         "parameters": [
           {
             "name": "body",
@@ -4605,7 +5319,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "patchOperationsKubeedgeIoV1alpha1NodeUpgradeJobStatus",
+        "operationId": "patchOperationsKubeedgeIoV1alpha1NamespacedNodeUpgradeJobStatus",
         "parameters": [
           {
             "$ref": "#/parameters/body-78PwaGsr"
@@ -4662,7 +5376,81 @@
           "required": true
         },
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
+        }
+      ]
+    },
+    "/apis/operations.kubeedge.io/v1alpha1/nodeupgradejobs": {
+      "get": {
+        "description": "list or watch objects of kind NodeUpgradeJob",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha1"
+        ],
+        "operationId": "listOperationsKubeedgeIoV1alpha1NodeUpgradeJobForAllNamespaces",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.operations.v1alpha1.NodeUpgradeJobList"
+            }
+          }
+        },
+        "x-kubernetes-action": "list",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha1",
+          "kind": "NodeUpgradeJob"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
         }
       ]
     },
@@ -4685,7 +5473,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "watchOperationsKubeedgeIoV1alpha1ImagePrePullJobList",
+        "operationId": "watchOperationsKubeedgeIoV1alpha1ImagePrePullJobListForAllNamespaces",
         "responses": {
           "200": {
             "description": "OK",
@@ -4737,7 +5525,81 @@
         }
       ]
     },
-    "/apis/operations.kubeedge.io/v1alpha1/watch/imageprepulljobs/{name}": {
+    "/apis/operations.kubeedge.io/v1alpha1/watch/namespaces/{namespace}/imageprepulljobs": {
+      "get": {
+        "description": "watch individual changes to a list of ImagePrePullJob. deprecated: use the 'watch' parameter with a list operation instead.",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha1"
+        ],
+        "operationId": "watchOperationsKubeedgeIoV1alpha1NamespacedImagePrePullJobList",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+            }
+          }
+        },
+        "x-kubernetes-action": "watchlist",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha1",
+          "kind": "ImagePrePullJob"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
+    "/apis/operations.kubeedge.io/v1alpha1/watch/namespaces/{namespace}/imageprepulljobs/{name}": {
       "get": {
         "description": "watch changes to an object of kind ImagePrePullJob. deprecated: use the 'watch' parameter with a list operation instead, filtered to a single item with the 'fieldSelector' parameter.",
         "consumes": [
@@ -4756,7 +5618,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "watchOperationsKubeedgeIoV1alpha1ImagePrePullJob",
+        "operationId": "watchOperationsKubeedgeIoV1alpha1NamespacedImagePrePullJob",
         "responses": {
           "200": {
             "description": "OK",
@@ -4797,6 +5659,9 @@
           "required": true
         },
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         },
         {
@@ -4816,7 +5681,7 @@
         }
       ]
     },
-    "/apis/operations.kubeedge.io/v1alpha1/watch/nodeupgradejobs": {
+    "/apis/operations.kubeedge.io/v1alpha1/watch/namespaces/{namespace}/nodeupgradejobs": {
       "get": {
         "description": "watch individual changes to a list of NodeUpgradeJob. deprecated: use the 'watch' parameter with a list operation instead.",
         "consumes": [
@@ -4835,7 +5700,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "watchOperationsKubeedgeIoV1alpha1NodeUpgradeJobList",
+        "operationId": "watchOperationsKubeedgeIoV1alpha1NamespacedNodeUpgradeJobList",
         "responses": {
           "200": {
             "description": "OK",
@@ -4868,6 +5733,9 @@
           "$ref": "#/parameters/limit-1NfNmdNH"
         },
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         },
         {
@@ -4887,7 +5755,7 @@
         }
       ]
     },
-    "/apis/operations.kubeedge.io/v1alpha1/watch/nodeupgradejobs/{name}": {
+    "/apis/operations.kubeedge.io/v1alpha1/watch/namespaces/{namespace}/nodeupgradejobs/{name}": {
       "get": {
         "description": "watch changes to an object of kind NodeUpgradeJob. deprecated: use the 'watch' parameter with a list operation instead, filtered to a single item with the 'fieldSelector' parameter.",
         "consumes": [
@@ -4906,7 +5774,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "watchOperationsKubeedgeIoV1alpha1NodeUpgradeJob",
+        "operationId": "watchOperationsKubeedgeIoV1alpha1NamespacedNodeUpgradeJob",
         "responses": {
           "200": {
             "description": "OK",
@@ -4945,6 +5813,80 @@
           "name": "name",
           "in": "path",
           "required": true
+        },
+        {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
+    "/apis/operations.kubeedge.io/v1alpha1/watch/nodeupgradejobs": {
+      "get": {
+        "description": "watch individual changes to a list of NodeUpgradeJob. deprecated: use the 'watch' parameter with a list operation instead.",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha1"
+        ],
+        "operationId": "watchOperationsKubeedgeIoV1alpha1NodeUpgradeJobListForAllNamespaces",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+            }
+          }
+        },
+        "x-kubernetes-action": "watchlist",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha1",
+          "kind": "NodeUpgradeJob"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
         },
         {
           "$ref": "#/parameters/pretty-nN7o5FEq"
@@ -5026,7 +5968,7 @@
         }
       }
     },
-    "/apis/policy.kubeedge.io/v1alpha1/serviceaccountaccesss": {
+    "/apis/policy.kubeedge.io/v1alpha1/namespaces/{namespace}/serviceaccountaccesss": {
       "get": {
         "description": "list or watch objects of kind ServiceAccountAccess",
         "consumes": [
@@ -5045,7 +5987,7 @@
         "tags": [
           "policyKubeedgeIo_v1alpha1"
         ],
-        "operationId": "listPolicyKubeedgeIoV1alpha1ServiceAccountAccess",
+        "operationId": "listPolicyKubeedgeIoV1alpha1NamespacedServiceAccountAccess",
         "parameters": [
           {
             "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
@@ -5109,7 +6051,7 @@
         "tags": [
           "policyKubeedgeIo_v1alpha1"
         ],
-        "operationId": "createPolicyKubeedgeIoV1alpha1ServiceAccountAccess",
+        "operationId": "createPolicyKubeedgeIoV1alpha1NamespacedServiceAccountAccess",
         "parameters": [
           {
             "name": "body",
@@ -5180,7 +6122,7 @@
         "tags": [
           "policyKubeedgeIo_v1alpha1"
         ],
-        "operationId": "deletePolicyKubeedgeIoV1alpha1CollectionServiceAccountAccess",
+        "operationId": "deletePolicyKubeedgeIoV1alpha1CollectionNamespacedServiceAccountAccess",
         "parameters": [
           {
             "$ref": "#/parameters/body-2Y1dVQaQ"
@@ -5243,11 +6185,14 @@
       },
       "parameters": [
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
-    "/apis/policy.kubeedge.io/v1alpha1/serviceaccountaccesss/{name}": {
+    "/apis/policy.kubeedge.io/v1alpha1/namespaces/{namespace}/serviceaccountaccesss/{name}": {
       "get": {
         "description": "read the specified ServiceAccountAccess",
         "consumes": [
@@ -5264,7 +6209,7 @@
         "tags": [
           "policyKubeedgeIo_v1alpha1"
         ],
-        "operationId": "readPolicyKubeedgeIoV1alpha1ServiceAccountAccess",
+        "operationId": "readPolicyKubeedgeIoV1alpha1NamespacedServiceAccountAccess",
         "responses": {
           "200": {
             "description": "OK",
@@ -5296,7 +6241,7 @@
         "tags": [
           "policyKubeedgeIo_v1alpha1"
         ],
-        "operationId": "replacePolicyKubeedgeIoV1alpha1ServiceAccountAccess",
+        "operationId": "replacePolicyKubeedgeIoV1alpha1NamespacedServiceAccountAccess",
         "parameters": [
           {
             "name": "body",
@@ -5361,7 +6306,7 @@
         "tags": [
           "policyKubeedgeIo_v1alpha1"
         ],
-        "operationId": "deletePolicyKubeedgeIoV1alpha1ServiceAccountAccess",
+        "operationId": "deletePolicyKubeedgeIoV1alpha1NamespacedServiceAccountAccess",
         "parameters": [
           {
             "$ref": "#/parameters/body-2Y1dVQaQ"
@@ -5423,7 +6368,7 @@
         "tags": [
           "policyKubeedgeIo_v1alpha1"
         ],
-        "operationId": "patchPolicyKubeedgeIoV1alpha1ServiceAccountAccess",
+        "operationId": "patchPolicyKubeedgeIoV1alpha1NamespacedServiceAccountAccess",
         "parameters": [
           {
             "$ref": "#/parameters/body-78PwaGsr"
@@ -5480,11 +6425,14 @@
           "required": true
         },
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
-    "/apis/policy.kubeedge.io/v1alpha1/serviceaccountaccesss/{name}/status": {
+    "/apis/policy.kubeedge.io/v1alpha1/namespaces/{namespace}/serviceaccountaccesss/{name}/status": {
       "get": {
         "description": "read status of the specified ServiceAccountAccess",
         "consumes": [
@@ -5501,7 +6449,7 @@
         "tags": [
           "policyKubeedgeIo_v1alpha1"
         ],
-        "operationId": "readPolicyKubeedgeIoV1alpha1ServiceAccountAccessStatus",
+        "operationId": "readPolicyKubeedgeIoV1alpha1NamespacedServiceAccountAccessStatus",
         "responses": {
           "200": {
             "description": "OK",
@@ -5533,7 +6481,7 @@
         "tags": [
           "policyKubeedgeIo_v1alpha1"
         ],
-        "operationId": "replacePolicyKubeedgeIoV1alpha1ServiceAccountAccessStatus",
+        "operationId": "replacePolicyKubeedgeIoV1alpha1NamespacedServiceAccountAccessStatus",
         "parameters": [
           {
             "name": "body",
@@ -5601,7 +6549,7 @@
         "tags": [
           "policyKubeedgeIo_v1alpha1"
         ],
-        "operationId": "patchPolicyKubeedgeIoV1alpha1ServiceAccountAccessStatus",
+        "operationId": "patchPolicyKubeedgeIoV1alpha1NamespacedServiceAccountAccessStatus",
         "parameters": [
           {
             "$ref": "#/parameters/body-78PwaGsr"
@@ -5658,13 +6606,16 @@
           "required": true
         },
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
-    "/apis/policy.kubeedge.io/v1alpha1/watch/serviceaccountaccesss": {
+    "/apis/policy.kubeedge.io/v1alpha1/serviceaccountaccesss": {
       "get": {
-        "description": "watch individual changes to a list of ServiceAccountAccess. deprecated: use the 'watch' parameter with a list operation instead.",
+        "description": "list or watch objects of kind ServiceAccountAccess",
         "consumes": [
           "*/*"
         ],
@@ -5681,16 +6632,16 @@
         "tags": [
           "policyKubeedgeIo_v1alpha1"
         ],
-        "operationId": "watchPolicyKubeedgeIoV1alpha1ServiceAccountAccessList",
+        "operationId": "listPolicyKubeedgeIoV1alpha1ServiceAccountAccessForAllNamespaces",
         "responses": {
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.policy.v1alpha1.ServiceAccountAccessList"
             }
           }
         },
-        "x-kubernetes-action": "watchlist",
+        "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "policy.kubeedge.io",
           "version": "v1alpha1",
@@ -5733,7 +6684,81 @@
         }
       ]
     },
-    "/apis/policy.kubeedge.io/v1alpha1/watch/serviceaccountaccesss/{name}": {
+    "/apis/policy.kubeedge.io/v1alpha1/watch/namespaces/{namespace}/serviceaccountaccesss": {
+      "get": {
+        "description": "watch individual changes to a list of ServiceAccountAccess. deprecated: use the 'watch' parameter with a list operation instead.",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "policyKubeedgeIo_v1alpha1"
+        ],
+        "operationId": "watchPolicyKubeedgeIoV1alpha1NamespacedServiceAccountAccessList",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+            }
+          }
+        },
+        "x-kubernetes-action": "watchlist",
+        "x-kubernetes-group-version-kind": {
+          "group": "policy.kubeedge.io",
+          "version": "v1alpha1",
+          "kind": "ServiceAccountAccess"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
+    "/apis/policy.kubeedge.io/v1alpha1/watch/namespaces/{namespace}/serviceaccountaccesss/{name}": {
       "get": {
         "description": "watch changes to an object of kind ServiceAccountAccess. deprecated: use the 'watch' parameter with a list operation instead, filtered to a single item with the 'fieldSelector' parameter.",
         "consumes": [
@@ -5752,7 +6777,7 @@
         "tags": [
           "policyKubeedgeIo_v1alpha1"
         ],
-        "operationId": "watchPolicyKubeedgeIoV1alpha1ServiceAccountAccess",
+        "operationId": "watchPolicyKubeedgeIoV1alpha1NamespacedServiceAccountAccess",
         "responses": {
           "200": {
             "description": "OK",
@@ -5791,6 +6816,80 @@
           "name": "name",
           "in": "path",
           "required": true
+        },
+        {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
+    "/apis/policy.kubeedge.io/v1alpha1/watch/serviceaccountaccesss": {
+      "get": {
+        "description": "watch individual changes to a list of ServiceAccountAccess. deprecated: use the 'watch' parameter with a list operation instead.",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "policyKubeedgeIo_v1alpha1"
+        ],
+        "operationId": "watchPolicyKubeedgeIoV1alpha1ServiceAccountAccessListForAllNamespaces",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+            }
+          }
+        },
+        "x-kubernetes-action": "watchlist",
+        "x-kubernetes-group-version-kind": {
+          "group": "policy.kubeedge.io",
+          "version": "v1alpha1",
+          "kind": "ServiceAccountAccess"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
         },
         {
           "$ref": "#/parameters/pretty-nN7o5FEq"
@@ -5872,7 +6971,7 @@
         }
       }
     },
-    "/apis/reliablesyncs.kubeedge.io/v1alpha1/objectsyncs": {
+    "/apis/reliablesyncs.kubeedge.io/v1alpha1/namespaces/{namespace}/objectsyncs": {
       "get": {
         "description": "list or watch objects of kind ObjectSync",
         "consumes": [
@@ -5891,7 +6990,7 @@
         "tags": [
           "reliablesyncsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "listReliablesyncsKubeedgeIoV1alpha1ObjectSync",
+        "operationId": "listReliablesyncsKubeedgeIoV1alpha1NamespacedObjectSync",
         "parameters": [
           {
             "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
@@ -5955,7 +7054,7 @@
         "tags": [
           "reliablesyncsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "createReliablesyncsKubeedgeIoV1alpha1ObjectSync",
+        "operationId": "createReliablesyncsKubeedgeIoV1alpha1NamespacedObjectSync",
         "parameters": [
           {
             "name": "body",
@@ -6026,7 +7125,7 @@
         "tags": [
           "reliablesyncsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "deleteReliablesyncsKubeedgeIoV1alpha1CollectionObjectSync",
+        "operationId": "deleteReliablesyncsKubeedgeIoV1alpha1CollectionNamespacedObjectSync",
         "parameters": [
           {
             "$ref": "#/parameters/body-2Y1dVQaQ"
@@ -6089,11 +7188,14 @@
       },
       "parameters": [
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
-    "/apis/reliablesyncs.kubeedge.io/v1alpha1/objectsyncs/{name}": {
+    "/apis/reliablesyncs.kubeedge.io/v1alpha1/namespaces/{namespace}/objectsyncs/{name}": {
       "get": {
         "description": "read the specified ObjectSync",
         "consumes": [
@@ -6110,7 +7212,7 @@
         "tags": [
           "reliablesyncsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "readReliablesyncsKubeedgeIoV1alpha1ObjectSync",
+        "operationId": "readReliablesyncsKubeedgeIoV1alpha1NamespacedObjectSync",
         "responses": {
           "200": {
             "description": "OK",
@@ -6142,7 +7244,7 @@
         "tags": [
           "reliablesyncsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "replaceReliablesyncsKubeedgeIoV1alpha1ObjectSync",
+        "operationId": "replaceReliablesyncsKubeedgeIoV1alpha1NamespacedObjectSync",
         "parameters": [
           {
             "name": "body",
@@ -6207,7 +7309,7 @@
         "tags": [
           "reliablesyncsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "deleteReliablesyncsKubeedgeIoV1alpha1ObjectSync",
+        "operationId": "deleteReliablesyncsKubeedgeIoV1alpha1NamespacedObjectSync",
         "parameters": [
           {
             "$ref": "#/parameters/body-2Y1dVQaQ"
@@ -6269,7 +7371,7 @@
         "tags": [
           "reliablesyncsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "patchReliablesyncsKubeedgeIoV1alpha1ObjectSync",
+        "operationId": "patchReliablesyncsKubeedgeIoV1alpha1NamespacedObjectSync",
         "parameters": [
           {
             "$ref": "#/parameters/body-78PwaGsr"
@@ -6326,11 +7428,14 @@
           "required": true
         },
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
-    "/apis/reliablesyncs.kubeedge.io/v1alpha1/objectsyncs/{name}/status": {
+    "/apis/reliablesyncs.kubeedge.io/v1alpha1/namespaces/{namespace}/objectsyncs/{name}/status": {
       "get": {
         "description": "read status of the specified ObjectSync",
         "consumes": [
@@ -6347,7 +7452,7 @@
         "tags": [
           "reliablesyncsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "readReliablesyncsKubeedgeIoV1alpha1ObjectSyncStatus",
+        "operationId": "readReliablesyncsKubeedgeIoV1alpha1NamespacedObjectSyncStatus",
         "responses": {
           "200": {
             "description": "OK",
@@ -6379,7 +7484,7 @@
         "tags": [
           "reliablesyncsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "replaceReliablesyncsKubeedgeIoV1alpha1ObjectSyncStatus",
+        "operationId": "replaceReliablesyncsKubeedgeIoV1alpha1NamespacedObjectSyncStatus",
         "parameters": [
           {
             "name": "body",
@@ -6447,7 +7552,7 @@
         "tags": [
           "reliablesyncsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "patchReliablesyncsKubeedgeIoV1alpha1ObjectSyncStatus",
+        "operationId": "patchReliablesyncsKubeedgeIoV1alpha1NamespacedObjectSyncStatus",
         "parameters": [
           {
             "$ref": "#/parameters/body-78PwaGsr"
@@ -6504,13 +7609,16 @@
           "required": true
         },
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
-    "/apis/reliablesyncs.kubeedge.io/v1alpha1/watch/objectsyncs": {
+    "/apis/reliablesyncs.kubeedge.io/v1alpha1/objectsyncs": {
       "get": {
-        "description": "watch individual changes to a list of ObjectSync. deprecated: use the 'watch' parameter with a list operation instead.",
+        "description": "list or watch objects of kind ObjectSync",
         "consumes": [
           "*/*"
         ],
@@ -6527,16 +7635,16 @@
         "tags": [
           "reliablesyncsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "watchReliablesyncsKubeedgeIoV1alpha1ObjectSyncList",
+        "operationId": "listReliablesyncsKubeedgeIoV1alpha1ObjectSyncForAllNamespaces",
         "responses": {
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.reliablesyncs.v1alpha1.ObjectSyncList"
             }
           }
         },
-        "x-kubernetes-action": "watchlist",
+        "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "reliablesyncs.kubeedge.io",
           "version": "v1alpha1",
@@ -6579,7 +7687,81 @@
         }
       ]
     },
-    "/apis/reliablesyncs.kubeedge.io/v1alpha1/watch/objectsyncs/{name}": {
+    "/apis/reliablesyncs.kubeedge.io/v1alpha1/watch/namespaces/{namespace}/objectsyncs": {
+      "get": {
+        "description": "watch individual changes to a list of ObjectSync. deprecated: use the 'watch' parameter with a list operation instead.",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "reliablesyncsKubeedgeIo_v1alpha1"
+        ],
+        "operationId": "watchReliablesyncsKubeedgeIoV1alpha1NamespacedObjectSyncList",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+            }
+          }
+        },
+        "x-kubernetes-action": "watchlist",
+        "x-kubernetes-group-version-kind": {
+          "group": "reliablesyncs.kubeedge.io",
+          "version": "v1alpha1",
+          "kind": "ObjectSync"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
+    "/apis/reliablesyncs.kubeedge.io/v1alpha1/watch/namespaces/{namespace}/objectsyncs/{name}": {
       "get": {
         "description": "watch changes to an object of kind ObjectSync. deprecated: use the 'watch' parameter with a list operation instead, filtered to a single item with the 'fieldSelector' parameter.",
         "consumes": [
@@ -6598,7 +7780,7 @@
         "tags": [
           "reliablesyncsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "watchReliablesyncsKubeedgeIoV1alpha1ObjectSync",
+        "operationId": "watchReliablesyncsKubeedgeIoV1alpha1NamespacedObjectSync",
         "responses": {
           "200": {
             "description": "OK",
@@ -6637,6 +7819,80 @@
           "name": "name",
           "in": "path",
           "required": true
+        },
+        {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
+    "/apis/reliablesyncs.kubeedge.io/v1alpha1/watch/objectsyncs": {
+      "get": {
+        "description": "watch individual changes to a list of ObjectSync. deprecated: use the 'watch' parameter with a list operation instead.",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "reliablesyncsKubeedgeIo_v1alpha1"
+        ],
+        "operationId": "watchReliablesyncsKubeedgeIoV1alpha1ObjectSyncListForAllNamespaces",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+            }
+          }
+        },
+        "x-kubernetes-action": "watchlist",
+        "x-kubernetes-group-version-kind": {
+          "group": "reliablesyncs.kubeedge.io",
+          "version": "v1alpha1",
+          "kind": "ObjectSync"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
         },
         {
           "$ref": "#/parameters/pretty-nN7o5FEq"
@@ -6718,7 +7974,7 @@
         }
       }
     },
-    "/apis/rules.kubeedge.io/v1/rules": {
+    "/apis/rules.kubeedge.io/v1/namespaces/{namespace}/rules": {
       "get": {
         "description": "list or watch objects of kind Rule",
         "consumes": [
@@ -6737,7 +7993,7 @@
         "tags": [
           "rulesKubeedgeIo_v1"
         ],
-        "operationId": "listRulesKubeedgeIoV1Rule",
+        "operationId": "listRulesKubeedgeIoV1NamespacedRule",
         "parameters": [
           {
             "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
@@ -6801,7 +8057,7 @@
         "tags": [
           "rulesKubeedgeIo_v1"
         ],
-        "operationId": "createRulesKubeedgeIoV1Rule",
+        "operationId": "createRulesKubeedgeIoV1NamespacedRule",
         "parameters": [
           {
             "name": "body",
@@ -6872,7 +8128,7 @@
         "tags": [
           "rulesKubeedgeIo_v1"
         ],
-        "operationId": "deleteRulesKubeedgeIoV1CollectionRule",
+        "operationId": "deleteRulesKubeedgeIoV1CollectionNamespacedRule",
         "parameters": [
           {
             "$ref": "#/parameters/body-2Y1dVQaQ"
@@ -6935,11 +8191,14 @@
       },
       "parameters": [
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
-    "/apis/rules.kubeedge.io/v1/rules/{name}": {
+    "/apis/rules.kubeedge.io/v1/namespaces/{namespace}/rules/{name}": {
       "get": {
         "description": "read the specified Rule",
         "consumes": [
@@ -6956,7 +8215,7 @@
         "tags": [
           "rulesKubeedgeIo_v1"
         ],
-        "operationId": "readRulesKubeedgeIoV1Rule",
+        "operationId": "readRulesKubeedgeIoV1NamespacedRule",
         "responses": {
           "200": {
             "description": "OK",
@@ -6988,7 +8247,7 @@
         "tags": [
           "rulesKubeedgeIo_v1"
         ],
-        "operationId": "replaceRulesKubeedgeIoV1Rule",
+        "operationId": "replaceRulesKubeedgeIoV1NamespacedRule",
         "parameters": [
           {
             "name": "body",
@@ -7053,7 +8312,7 @@
         "tags": [
           "rulesKubeedgeIo_v1"
         ],
-        "operationId": "deleteRulesKubeedgeIoV1Rule",
+        "operationId": "deleteRulesKubeedgeIoV1NamespacedRule",
         "parameters": [
           {
             "$ref": "#/parameters/body-2Y1dVQaQ"
@@ -7115,7 +8374,7 @@
         "tags": [
           "rulesKubeedgeIo_v1"
         ],
-        "operationId": "patchRulesKubeedgeIoV1Rule",
+        "operationId": "patchRulesKubeedgeIoV1NamespacedRule",
         "parameters": [
           {
             "$ref": "#/parameters/body-78PwaGsr"
@@ -7172,11 +8431,14 @@
           "required": true
         },
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
-    "/apis/rules.kubeedge.io/v1/rules/{name}/status": {
+    "/apis/rules.kubeedge.io/v1/namespaces/{namespace}/rules/{name}/status": {
       "get": {
         "description": "read status of the specified Rule",
         "consumes": [
@@ -7193,7 +8455,7 @@
         "tags": [
           "rulesKubeedgeIo_v1"
         ],
-        "operationId": "readRulesKubeedgeIoV1RuleStatus",
+        "operationId": "readRulesKubeedgeIoV1NamespacedRuleStatus",
         "responses": {
           "200": {
             "description": "OK",
@@ -7225,7 +8487,7 @@
         "tags": [
           "rulesKubeedgeIo_v1"
         ],
-        "operationId": "replaceRulesKubeedgeIoV1RuleStatus",
+        "operationId": "replaceRulesKubeedgeIoV1NamespacedRuleStatus",
         "parameters": [
           {
             "name": "body",
@@ -7293,7 +8555,7 @@
         "tags": [
           "rulesKubeedgeIo_v1"
         ],
-        "operationId": "patchRulesKubeedgeIoV1RuleStatus",
+        "operationId": "patchRulesKubeedgeIoV1NamespacedRuleStatus",
         "parameters": [
           {
             "$ref": "#/parameters/body-78PwaGsr"
@@ -7350,13 +8612,16 @@
           "required": true
         },
         {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
-    "/apis/rules.kubeedge.io/v1/watch/rules": {
+    "/apis/rules.kubeedge.io/v1/rules": {
       "get": {
-        "description": "watch individual changes to a list of Rule. deprecated: use the 'watch' parameter with a list operation instead.",
+        "description": "list or watch objects of kind Rule",
         "consumes": [
           "*/*"
         ],
@@ -7373,16 +8638,16 @@
         "tags": [
           "rulesKubeedgeIo_v1"
         ],
-        "operationId": "watchRulesKubeedgeIoV1RuleList",
+        "operationId": "listRulesKubeedgeIoV1RuleForAllNamespaces",
         "responses": {
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.rules.v1.RuleList"
             }
           }
         },
-        "x-kubernetes-action": "watchlist",
+        "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "rules.kubeedge.io",
           "version": "v1",
@@ -7425,7 +8690,81 @@
         }
       ]
     },
-    "/apis/rules.kubeedge.io/v1/watch/rules/{name}": {
+    "/apis/rules.kubeedge.io/v1/watch/namespaces/{namespace}/rules": {
+      "get": {
+        "description": "watch individual changes to a list of Rule. deprecated: use the 'watch' parameter with a list operation instead.",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "rulesKubeedgeIo_v1"
+        ],
+        "operationId": "watchRulesKubeedgeIoV1NamespacedRuleList",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+            }
+          }
+        },
+        "x-kubernetes-action": "watchlist",
+        "x-kubernetes-group-version-kind": {
+          "group": "rules.kubeedge.io",
+          "version": "v1",
+          "kind": "Rule"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
+    "/apis/rules.kubeedge.io/v1/watch/namespaces/{namespace}/rules/{name}": {
       "get": {
         "description": "watch changes to an object of kind Rule. deprecated: use the 'watch' parameter with a list operation instead, filtered to a single item with the 'fieldSelector' parameter.",
         "consumes": [
@@ -7444,7 +8783,7 @@
         "tags": [
           "rulesKubeedgeIo_v1"
         ],
-        "operationId": "watchRulesKubeedgeIoV1Rule",
+        "operationId": "watchRulesKubeedgeIoV1NamespacedRule",
         "responses": {
           "200": {
             "description": "OK",
@@ -7483,6 +8822,80 @@
           "name": "name",
           "in": "path",
           "required": true
+        },
+        {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
+    "/apis/rules.kubeedge.io/v1/watch/rules": {
+      "get": {
+        "description": "watch individual changes to a list of Rule. deprecated: use the 'watch' parameter with a list operation instead.",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "rulesKubeedgeIo_v1"
+        ],
+        "operationId": "watchRulesKubeedgeIoV1RuleListForAllNamespaces",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+            }
+          }
+        },
+        "x-kubernetes-action": "watchlist",
+        "x-kubernetes-group-version-kind": {
+          "group": "rules.kubeedge.io",
+          "version": "v1",
+          "kind": "Rule"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
         },
         {
           "$ref": "#/parameters/pretty-nN7o5FEq"
@@ -11668,6 +13081,14 @@
       "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
       "name": "limit",
       "in": "query"
+    },
+    "namespace-vgWSWtn3": {
+      "uniqueItems": true,
+      "type": "string",
+      "description": "object name and auth scope, such as for teams and projects",
+      "name": "namespace",
+      "in": "path",
+      "required": true
     },
     "orphanDependents-uRB25kX5": {
       "uniqueItems": true,
