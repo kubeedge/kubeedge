@@ -1,4 +1,4 @@
-ARG BUILD_FROM=golang:1.20.10-alpine3.18
+ARG BUILD_FROM=golang:1.21.11-alpine3.19
 
 FROM ${BUILD_FROM} AS builder
 
@@ -12,7 +12,7 @@ apk --no-cache add build-base linux-headers sqlite-dev binutils-gold && \
 CGO_ENABLED=1 GO111MODULE=off go build -v -o /usr/local/bin/edgemark -ldflags="${GO_LDFLAGS} -w -s -extldflags -static" \
 github.com/kubeedge/kubeedge/edge/cmd/edgemark
 
-FROM alpine:3.18
+FROM alpine:3.19
 
 COPY --from=builder /usr/local/bin/edgemark /usr/local/bin/edgemark
 

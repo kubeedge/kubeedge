@@ -1,6 +1,6 @@
 module github.com/kubeedge/kubeedge
 
-go 1.20
+go 1.21
 
 require (
 	github.com/256dpi/gomqtt v0.10.4
