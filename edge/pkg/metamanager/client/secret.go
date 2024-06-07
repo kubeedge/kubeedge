@@ -36,15 +36,15 @@ func newSecrets(namespace string, s SendInterface) *secrets {
 	}
 }
 
-func (c *secrets) Create(cm *api.Secret) (*api.Secret, error) {
+func (c *secrets) Create(*api.Secret) (*api.Secret, error) {
 	return nil, nil
 }
 
-func (c *secrets) Update(cm *api.Secret) error {
+func (c *secrets) Update(*api.Secret) error {
 	return nil
 }
 
-func (c *secrets) Delete(name string) error {
+func (c *secrets) Delete(string) error {
 	return nil
 }
 

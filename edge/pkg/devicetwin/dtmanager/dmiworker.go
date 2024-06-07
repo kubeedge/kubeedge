@@ -38,7 +38,7 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/util"
 )
 
-// TwinWorker deal twin event
+// DMIWorker deal dmi event
 type DMIWorker struct {
 	Worker
 	Group    string
@@ -104,7 +104,7 @@ func (dw *DMIWorker) initDMIActionCallBack() {
 	dw.dmiActionCallBack[dtcommon.MetaDeviceOperation] = dw.dealMetaDeviceOperation
 }
 
-func (dw *DMIWorker) dealMetaDeviceOperation(context *dtcontext.DTContext, resource string, msg interface{}) error {
+func (dw *DMIWorker) dealMetaDeviceOperation(_ *dtcontext.DTContext, _ string, msg interface{}) error {
 	message, ok := msg.(*model.Message)
 	if !ok {
 		return errors.New("msg not Message type")

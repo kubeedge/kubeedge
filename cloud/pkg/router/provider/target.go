@@ -25,13 +25,13 @@ func init() {
 	targets = make(map[v1.RuleEndpointTypeDef]TargetFactory)
 }
 
-// RegisterSource register module
+// RegisterTarget register module
 func RegisterTarget(t TargetFactory) {
 	targets[t.Type()] = t
 	klog.V(4).Info("target " + t.Type() + " registered")
 }
 
-// get source map
+// GetTargetFactory get source map
 func GetTargetFactory(name v1.RuleEndpointTypeDef) (TargetFactory, bool) {
 	target, exist := targets[name]
 	return target, exist

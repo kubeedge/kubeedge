@@ -59,11 +59,11 @@ var _ EventFilter = &podEventFilter{}
 
 type podEventFilter struct{}
 
-func (pef *podEventFilter) Create(obj interface{}) bool {
+func (pef *podEventFilter) Create(interface{}) bool {
 	return true
 }
 
-func (pef *podEventFilter) Delete(obj interface{}) bool {
+func (pef *podEventFilter) Delete(interface{}) bool {
 	return true
 }
 

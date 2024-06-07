@@ -83,7 +83,7 @@ func getRemoveList(context *dtcontext.DTContext, devices []dttype.Device) []dtty
 	})
 	return toRemove
 }
-func dealMembershipDetail(context *dtcontext.DTContext, resource string, msg interface{}) error {
+func dealMembershipDetail(context *dtcontext.DTContext, _ string, msg interface{}) error {
 	klog.Info("Deal node detail info")
 	message, ok := msg.(*model.Message)
 	if !ok {
@@ -116,7 +116,7 @@ func dealMembershipDetail(context *dtcontext.DTContext, resource string, msg int
 	return nil
 }
 
-func dealMembershipUpdate(context *dtcontext.DTContext, resource string, msg interface{}) error {
+func dealMembershipUpdate(context *dtcontext.DTContext, _ string, msg interface{}) error {
 	klog.Infof("Membership event")
 	message, ok := msg.(*model.Message)
 	if !ok {
@@ -146,7 +146,7 @@ func dealMembershipUpdate(context *dtcontext.DTContext, resource string, msg int
 	return nil
 }
 
-func dealMembershipGet(context *dtcontext.DTContext, resource string, msg interface{}) error {
+func dealMembershipGet(context *dtcontext.DTContext, _ string, msg interface{}) error {
 	klog.Info("MEMBERSHIP EVENT")
 	message, ok := msg.(*model.Message)
 	if !ok {
@@ -158,10 +158,7 @@ func dealMembershipGet(context *dtcontext.DTContext, resource string, msg interf
 		return errors.New("assertion failed")
 	}
 
-	if err := dealMembershipGetInner(context, contentData); err != nil {
-		return err
-	}
-	return nil
+	return dealMembershipGetInner(context, contentData)
 }
 
 // addDevice add device to the edge group

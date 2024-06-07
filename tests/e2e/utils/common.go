@@ -440,7 +440,7 @@ func TwinSubscribe(deviceID string) {
 }
 
 // OnTwinMessageReceived callback function which is called when message is received
-func OnTwinMessageReceived(client MQTT.Client, message MQTT.Message) {
+func OnTwinMessageReceived(_ MQTT.Client, message MQTT.Message) {
 	err := json.Unmarshal(message.Payload(), &TwinResult)
 	if err != nil {
 		Errorf("Error in unmarshalling: %v", err.Error())

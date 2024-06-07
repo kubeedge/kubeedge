@@ -269,7 +269,7 @@ func (c *Controller) getNodesSelectedBy(ctx context.Context, nodeGroup *appsv1al
 // We can assume that one node can only be in one of following conditions:
 // 1. This node is an orphan, do not and will not belong to any NodeGroup.
 // 2. This node is or will be a member of one NodeGroup.
-func (c *Controller) nodeMapFunc(ctx context.Context, obj client.Object) []controllerruntime.Request {
+func (c *Controller) nodeMapFunc(_ context.Context, obj client.Object) []controllerruntime.Request {
 	node := obj.(*corev1.Node)
 	if nodeGroupName, ok := node.Labels[LabelBelongingTo]; ok {
 		return []controllerruntime.Request{

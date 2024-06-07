@@ -42,7 +42,7 @@ func (th *taskHandler) Filter(message *model.Message) bool {
 	return name == modules.TaskManagerModuleName
 }
 
-func (th *taskHandler) Process(message *model.Message, clientHub clients.Adapter) error {
+func (th *taskHandler) Process(message *model.Message, _ clients.Adapter) error {
 	taskReq := &commontypes.NodeTaskRequest{}
 	data, err := message.GetContentData()
 	if err != nil {

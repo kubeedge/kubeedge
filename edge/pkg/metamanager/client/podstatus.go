@@ -35,7 +35,7 @@ func newPodStatus(namespace string, s SendInterface) *podStatus {
 	}
 }
 
-func (c *podStatus) Create(ps *edgeapi.PodStatusRequest) (*edgeapi.PodStatusRequest, error) {
+func (c *podStatus) Create(*edgeapi.PodStatusRequest) (*edgeapi.PodStatusRequest, error) {
 	return nil, nil
 }
 
@@ -54,10 +54,10 @@ func (c *podStatus) Update(rsName string, ps edgeapi.PodStatusRequest) error {
 	return nil
 }
 
-func (c *podStatus) Delete(name string) error {
+func (c *podStatus) Delete(string) error {
 	return nil
 }
 
-func (c *podStatus) Get(name string) (*edgeapi.PodStatusRequest, error) {
+func (c *podStatus) Get(string) (*edgeapi.PodStatusRequest, error) {
 	return nil, nil
 }

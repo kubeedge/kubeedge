@@ -98,7 +98,7 @@ type WithKindGroupVersioner struct {
 	gvk schema.GroupVersionKind
 }
 
-func (s *WithKindGroupVersioner) KindForGroupVersionKinds(kinds []schema.GroupVersionKind) (target schema.GroupVersionKind, ok bool) {
+func (s *WithKindGroupVersioner) KindForGroupVersionKinds(_ []schema.GroupVersionKind) (target schema.GroupVersionKind, ok bool) {
 	return s.gvk, true
 }
 func (s *WithKindGroupVersioner) Identifier() string {

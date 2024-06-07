@@ -137,9 +137,9 @@ func TestValidateTwinKey(t *testing.T) {
 	// run the test cases
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			bool := ValidateTwinKey(test.key)
-			if test.want != bool {
-				t.Errorf("ValidateTwinKey Case failed: wanted %v and got %v", test.want, bool)
+			isValidate := ValidateTwinKey(test.key)
+			if test.want != isValidate {
+				t.Errorf("ValidateTwinKey Case failed: wanted %v and got %v", test.want, isValidate)
 			}
 		})
 	}
@@ -170,9 +170,9 @@ func TestValidateTwinValue(t *testing.T) {
 	// run the test cases
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			bool := ValidateTwinValue(test.key)
-			if test.want != bool {
-				t.Errorf("ValidateTwinValue Case failed: wanted %v and got %v", test.want, bool)
+			isValidate := ValidateTwinValue(test.key)
+			if test.want != isValidate {
+				t.Errorf("ValidateTwinValue Case failed: wanted %v and got %v", test.want, isValidate)
 			}
 		})
 	}

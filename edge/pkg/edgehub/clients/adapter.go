@@ -12,6 +12,6 @@ type Adapter interface {
 	Send(message model.Message) error
 	Receive() (model.Message, error)
 
-	// notify auth info
+	// Notify auth info
 	Notify(authInfo map[string]string)
 }

@@ -77,7 +77,7 @@ func decorateList(ctx context.Context, list runtime.Object) {
 	}
 }
 
-func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func (r *REST) Get(ctx context.Context, _ string, options *metav1.GetOptions) (runtime.Object, error) {
 	info, _ := apirequest.RequestInfoFrom(ctx)
 	// First try to get the object from remote cloud
 	obj, err := func() (runtime.Object, error) {
@@ -221,7 +221,7 @@ func (r *REST) Watch(ctx context.Context, options *metainternalversion.ListOptio
 	return r.Store.Watch(ctx, options)
 }
 
-func (r *REST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+func (r *REST) Create(ctx context.Context, obj runtime.Object, _ rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	obj, err := func() (runtime.Object, error) {
 		app, err := r.Agent.Generate(ctx, metaserver.Create, *options, obj)
 		if err != nil {
@@ -251,7 +251,7 @@ func (r *REST) Create(ctx context.Context, obj runtime.Object, createValidation 
 	return obj, nil
 }
 
-func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+func (r *REST) Delete(ctx context.Context, _ string, _ rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	key, _ := metaserver.KeyFuncReq(ctx, "")
 	app, err := r.Agent.Generate(ctx, metaserver.Delete, options, nil)
 	if err != nil {
@@ -268,7 +268,7 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 	return nil, true, nil
 }
 
-func (r *REST) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+func (r *REST) Update(ctx context.Context, _ string, objInfo rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, _ rest.ValidateObjectUpdateFunc, _ bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	obj, err := objInfo.UpdatedObject(ctx, nil)
 	if err != nil {
 		return nil, false, errors.NewInternalError(err)

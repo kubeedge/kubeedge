@@ -41,6 +41,6 @@ type ConfigMapBridge struct {
 }
 
 // Get takes name of the configmap, and returns the corresponding configmap object
-func (c *ConfigMapBridge) Get(ctx context.Context, name string, options metav1.GetOptions) (result *corev1.ConfigMap, err error) {
+func (c *ConfigMapBridge) Get(_ context.Context, name string, _ metav1.GetOptions) (result *corev1.ConfigMap, err error) {
 	return c.MetaClient.ConfigMaps(c.ns).Get(name)
 }

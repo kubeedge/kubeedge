@@ -116,7 +116,7 @@ func (*EventBus) Forward(target provider.Target, data interface{}) (response int
 	return resp, nil
 }
 
-func (eb *EventBus) GoToTarget(data map[string]interface{}, stop chan struct{}) (interface{}, error) {
+func (eb *EventBus) GoToTarget(data map[string]interface{}, _ chan struct{}) (interface{}, error) {
 	messageID, ok := data["messageID"].(string)
 	if !ok {
 		return nil, buildAndLogError("messageID")

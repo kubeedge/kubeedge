@@ -37,19 +37,19 @@ func newPersistentVolumes(n string, s SendInterface) *persistentvolumes {
 	}
 }
 
-func (c *persistentvolumes) Create(pv *api.PersistentVolume) (*api.PersistentVolume, error) {
+func (c *persistentvolumes) Create(*api.PersistentVolume) (*api.PersistentVolume, error) {
 	return nil, nil
 }
 
-func (c *persistentvolumes) Update(pv *api.PersistentVolume) error {
+func (c *persistentvolumes) Update(*api.PersistentVolume) error {
 	return nil
 }
 
-func (c *persistentvolumes) Delete(name string) error {
+func (c *persistentvolumes) Delete(string) error {
 	return nil
 }
 
-func (c *persistentvolumes) Get(name string, options metav1.GetOptions) (*api.PersistentVolume, error) {
+func (c *persistentvolumes) Get(name string, _ metav1.GetOptions) (*api.PersistentVolume, error) {
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, "persistentvolume", name)
 	pvMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, nil)
 	msg, err := c.send.SendSync(pvMsg)

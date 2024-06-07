@@ -128,15 +128,15 @@ func (c *Controller) syncEdgeApplication(ctx context.Context, edgeApp *appsv1alp
 		// If one succeeded and another failed, the status of edgeApp will only contain the successful
 		// one, and have no status about the failed one.
 		for _, info := range overriderInfos {
-			copy := tmpl.DeepCopy()
-			klog.V(4).Infof("override obj %s/%s of gvk %s, for nodegroup %s", copy.GetNamespace(), copy.GetName(), copy.GroupVersionKind(), info.TargetNodeGroup)
-			if err := c.Overrider.ApplyOverrides(copy, info); err != nil {
+			tmplCopy := tmpl.DeepCopy()
+			klog.V(4).Infof("override obj %s/%s of gvk %s, for nodegroup %s", tmplCopy.GetNamespace(), tmplCopy.GetName(), tmplCopy.GroupVersionKind(), info.TargetNodeGroup)
+			if err := c.Overrider.ApplyOverrides(tmplCopy, info); err != nil {
 				klog.Errorf("failed to apply override of nodegroup %s to obj %s/%s of gvk %s, %v",
-					info.TargetNodeGroup, copy.GetNamespace(), copy.GetName(), copy.GroupVersionKind(), err)
+					info.TargetNodeGroup, tmplCopy.GetNamespace(), tmplCopy.GetName(), tmplCopy.GroupVersionKind(), err)
 				errs = append(errs, err)
 				continue
 			}
-			modifiedTmplInfos = append(modifiedTmplInfos, &utils.TemplateInfo{Ordinal: tmplInfo.Ordinal, Template: copy})
+			modifiedTmplInfos = append(modifiedTmplInfos, &utils.TemplateInfo{Ordinal: tmplInfo.Ordinal, Template: tmplCopy})
 		}
 	}
 
@@ -246,7 +246,7 @@ func (c *Controller) updateStatus(ctx context.Context, edgeApp *appsv1alpha1.Edg
 
 	// ensure each template have its corresponding status
 	// Because of error, some entries in edgeApp.Spec.WorkloadTemplate.Manifests cannot
-	// be parsed as an template object or cannot applied override to it. These entries should
+	// be parsed as a template object or cannot apply override to it. These entries should
 	// also have its status, though they are not elements of passed-in argument tmplInfos.
 	for ordinal := 0; ordinal < len(edgeApp.Spec.WorkloadTemplate.Manifests); ordinal++ {
 		find := false

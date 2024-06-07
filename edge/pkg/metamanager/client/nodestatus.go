@@ -34,7 +34,7 @@ func newNodeStatus(namespace string, s SendInterface) *nodeStatus {
 	}
 }
 
-func (c *nodeStatus) Create(ns *edgeapi.NodeStatusRequest) (*edgeapi.NodeStatusRequest, error) {
+func (c *nodeStatus) Create(*edgeapi.NodeStatusRequest) (*edgeapi.NodeStatusRequest, error) {
 	return nil, nil
 }
 
@@ -50,10 +50,10 @@ func (c *nodeStatus) Update(rsName string, ns edgeapi.NodeStatusRequest) error {
 	return nil
 }
 
-func (c *nodeStatus) Delete(name string) error {
+func (c *nodeStatus) Delete(string) error {
 	return nil
 }
 
-func (c *nodeStatus) Get(name string) (*edgeapi.NodeStatusRequest, error) {
+func (c *nodeStatus) Get(string) (*edgeapi.NodeStatusRequest, error) {
 	return nil, nil
 }

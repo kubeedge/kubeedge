@@ -79,7 +79,7 @@ func (fm *fakeManager) GetDynamicInformerFactory() dynamicinformer.DynamicShared
 }
 
 // Start start all InformerFactory
-func (fm *fakeManager) Start(stopCh <-chan struct{}) {
+func (fm *fakeManager) Start(<-chan struct{}) {
 }
 
 // GetInformerPair return InformerPair for the given GVR

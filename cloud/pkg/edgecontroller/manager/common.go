@@ -36,7 +36,7 @@ func (c *CommonResourceEventHandler) obj2Event(t watch.EventType, obj interface{
 }
 
 // OnAdd handle Add event
-func (c *CommonResourceEventHandler) OnAdd(obj interface{}, isInInitialList bool) {
+func (c *CommonResourceEventHandler) OnAdd(obj interface{}, _ bool) {
 	if c.eventFilter != nil && !c.eventFilter.Create(obj) {
 		return
 	}

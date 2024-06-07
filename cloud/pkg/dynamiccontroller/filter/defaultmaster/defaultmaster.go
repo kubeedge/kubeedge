@@ -56,7 +56,7 @@ func (f *FilterImpl) NeedFilter(content interface{}) bool {
 	return false
 }
 
-func (f *FilterImpl) FilterResource(targetNode string, obj runtime.Object) {
+func (f *FilterImpl) FilterResource(_ string, obj runtime.Object) {
 	unstruct, ok := obj.(*unstructured.Unstructured)
 	if !ok {
 		return

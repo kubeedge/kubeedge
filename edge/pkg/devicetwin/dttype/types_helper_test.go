@@ -797,7 +797,7 @@ func TestUnmarshalDeviceUpdate(t *testing.T) {
 }
 
 // createMessageTwinWithDiffValues() is function to create MessageTwin with actual and expected values.
-func createMessageTwinWithDiffValues(baseMessage BaseMessage) map[string]*MsgTwin {
+func createMessageTwinWithDiffValues(BaseMessage) map[string]*MsgTwin {
 	msgTwins := make(map[string]*MsgTwin)
 	expected := "ON"
 	actual := "OFF"

@@ -67,7 +67,7 @@ type DMICache struct {
 	DeviceList      map[string]*v1beta1.Device
 }
 
-func (s *server) MapperRegister(ctx context.Context, in *pb.MapperRegisterRequest) (*pb.MapperRegisterResponse, error) {
+func (s *server) MapperRegister(_ context.Context, in *pb.MapperRegisterRequest) (*pb.MapperRegisterResponse, error) {
 	if !s.limiter.Allow() {
 		return nil, fmt.Errorf("fail to register mapper because of too many request: %s", in.Mapper.Name)
 	}
@@ -129,7 +129,7 @@ func (s *server) MapperRegister(ctx context.Context, in *pb.MapperRegisterReques
 	}, nil
 }
 
-func (s *server) ReportDeviceStatus(ctx context.Context, in *pb.ReportDeviceStatusRequest) (*pb.ReportDeviceStatusResponse, error) {
+func (s *server) ReportDeviceStatus(_ context.Context, in *pb.ReportDeviceStatusRequest) (*pb.ReportDeviceStatusResponse, error) {
 	if !s.limiter.Allow() {
 		return nil, fmt.Errorf("fail to report device status because of too many request: %s", in.DeviceName)
 	}

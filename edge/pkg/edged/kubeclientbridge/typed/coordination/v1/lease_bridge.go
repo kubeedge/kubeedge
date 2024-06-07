@@ -40,14 +40,14 @@ type LeaseBridge struct {
 	MetaClient client.CoreInterface
 }
 
-func (c *LeaseBridge) Create(ctx context.Context, lease *coordinationv1.Lease, opts metav1.CreateOptions) (result *coordinationv1.Lease, err error) {
+func (c *LeaseBridge) Create(_ context.Context, lease *coordinationv1.Lease, _ metav1.CreateOptions) (result *coordinationv1.Lease, err error) {
 	return c.MetaClient.Leases(c.ns).Create(lease)
 }
 
-func (c *LeaseBridge) Update(ctx context.Context, lease *coordinationv1.Lease, opts metav1.UpdateOptions) (result *coordinationv1.Lease, err error) {
+func (c *LeaseBridge) Update(_ context.Context, lease *coordinationv1.Lease, _ metav1.UpdateOptions) (result *coordinationv1.Lease, err error) {
 	return c.MetaClient.Leases(c.ns).Update(lease)
 }
 
-func (c *LeaseBridge) Get(ctx context.Context, name string, options metav1.GetOptions) (result *coordinationv1.Lease, err error) {
+func (c *LeaseBridge) Get(_ context.Context, name string, _ metav1.GetOptions) (result *coordinationv1.Lease, err error) {
 	return c.MetaClient.Leases(c.ns).Get(name)
 }
