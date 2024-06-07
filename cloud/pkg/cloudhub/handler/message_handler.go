@@ -84,7 +84,7 @@ func (mh *messageHandler) initServerEntries() {
 }
 
 // HandleMessage handle all the request from node
-func (mh *messageHandler) HandleMessage(container *mux.MessageContainer, writer mux.ResponseWriter) {
+func (mh *messageHandler) HandleMessage(container *mux.MessageContainer, _ mux.ResponseWriter) {
 	nodeID := container.Header.Get("node_id")
 	projectID := container.Header.Get("project_id")
 
@@ -155,7 +155,7 @@ func (mh *messageHandler) OnEdgeNodeConnect(info *model.HubInfo, connection conn
 	return nil
 }
 
-func (mh *messageHandler) OnEdgeNodeDisconnect(info *model.HubInfo, connection conn.Connection) {
+func (mh *messageHandler) OnEdgeNodeDisconnect(info *model.HubInfo, _ conn.Connection) {
 	err := mh.MessageDispatcher.Publish(common.ConstructConnectMessage(info, false))
 	if err != nil {
 		klog.Errorf("fail to publish node disconnect event for node %s, reason %s", info.NodeID, err.Error())

@@ -41,6 +41,6 @@ type PersistentVolumeClaimsBridge struct {
 }
 
 // Get takes name of the persistentVolumeClaim, and returns the corresponding persistentVolumeClaim object
-func (c *PersistentVolumeClaimsBridge) Get(ctx context.Context, name string, options metav1.GetOptions) (result *corev1.PersistentVolumeClaim, err error) {
+func (c *PersistentVolumeClaimsBridge) Get(_ context.Context, name string, options metav1.GetOptions) (result *corev1.PersistentVolumeClaim, err error) {
 	return c.MetaClient.PersistentVolumeClaims(c.ns).Get(name, options)
 }

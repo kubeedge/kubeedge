@@ -203,19 +203,19 @@ type fakeGetter struct {
 	pod            *v1.Pod
 }
 
-func (f fakeGetter) GetServiceAccount(namespace, name string) (*v1.ServiceAccount, error) {
+func (f fakeGetter) GetServiceAccount(_, name string) (*v1.ServiceAccount, error) {
 	if f.serviceAccount == nil {
 		return nil, apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: "serviceaccounts"}, name)
 	}
 	return f.serviceAccount, nil
 }
-func (f fakeGetter) GetPod(namespace, name string) (*v1.Pod, error) {
+func (f fakeGetter) GetPod(_, name string) (*v1.Pod, error) {
 	if f.pod == nil {
 		return nil, apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: "pods"}, name)
 	}
 	return f.pod, nil
 }
-func (f fakeGetter) GetSecret(namespace, name string) (*v1.Secret, error) {
+func (f fakeGetter) GetSecret(_, name string) (*v1.Secret, error) {
 	if f.secret == nil {
 		return nil, apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: "secrets"}, name)
 	}

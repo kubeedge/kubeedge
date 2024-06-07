@@ -69,12 +69,12 @@ type AccessInfo struct {
 	Content []byte `json:"content"`
 }
 
-func onPubConnectionLost(client MQTT.Client, err error) {
+func onPubConnectionLost(_ MQTT.Client, err error) {
 	klog.Errorf("onPubConnectionLost with error: %v", err)
 	go MQTTHub.InitPubClient()
 }
 
-func onSubConnectionLost(client MQTT.Client, err error) {
+func onSubConnectionLost(_ MQTT.Client, err error) {
 	klog.Errorf("onSubConnectionLost with error: %v", err)
 	go MQTTHub.InitSubClient()
 }
@@ -108,7 +108,7 @@ func onSubConnect(client MQTT.Client) {
 }
 
 // OnSubMessageReceived msg received callback
-func OnSubMessageReceived(client MQTT.Client, msg MQTT.Message) {
+func OnSubMessageReceived(_ MQTT.Client, msg MQTT.Message) {
 	klog.Infof("OnSubMessageReceived receive msg from topic: %s", msg.Topic())
 
 	NewMessageMux().Dispatch(msg.Topic(), msg.Payload())

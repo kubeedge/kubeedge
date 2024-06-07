@@ -44,7 +44,7 @@ type Clientset struct {
 	MetaClient client.CoreInterface
 }
 
-// CertificateV1 retrieves the CertificateV1Client
+// CertificatesV1 retrieves the CertificateV1Client
 func (c *Clientset) CertificatesV1() v1.CertificatesV1Interface {
 	return &kecertificates.CertificateV1Bridge{FakeCertificatesV1: fakecertificatesv1.FakeCertificatesV1{Fake: &c.Fake}, MetaClient: c.MetaClient}
 }

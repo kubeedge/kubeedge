@@ -170,10 +170,9 @@ func TestStart(t *testing.T) {
 				}
 				if moduleCheck {
 					break
-				} else {
-					time.Sleep(delay)
-					retry++
 				}
+				time.Sleep(delay)
+				retry++
 			}
 			if retry >= maxRetries {
 				t.Errorf("Registration of module %v failed", test.moduleName)

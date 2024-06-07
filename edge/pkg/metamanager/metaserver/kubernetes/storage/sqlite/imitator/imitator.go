@@ -59,7 +59,7 @@ func (s *imitator) Inject(msg model.Message) {
 }
 
 // TODO: filter out insert or update req that the obj's rev is smaller than the stored
-func (s *imitator) InsertOrUpdateObj(ctx context.Context, obj runtime.Object) error {
+func (s *imitator) InsertOrUpdateObj(_ context.Context, obj runtime.Object) error {
 	key, err := metaserver.KeyFuncObj(obj)
 	if err != nil {
 		return err
@@ -105,7 +105,7 @@ func (s *imitator) insertOrReplaceMetaV2(m v2.MetaV2, objRv uint64) error {
 	return nil
 }
 
-func (s *imitator) InsertOrUpdatePassThroughObj(ctx context.Context, obj []byte, key string) error {
+func (s *imitator) InsertOrUpdatePassThroughObj(_ context.Context, obj []byte, key string) error {
 	m := v2.MetaV2{
 		Key:   key,
 		Value: string(obj),
@@ -113,7 +113,7 @@ func (s *imitator) InsertOrUpdatePassThroughObj(ctx context.Context, obj []byte,
 	return s.insertOrReplaceMetaV2(m, 0)
 }
 
-func (s *imitator) GetPassThroughObj(ctx context.Context, key string) ([]byte, error) {
+func (s *imitator) GetPassThroughObj(_ context.Context, key string) ([]byte, error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	results := new([]v2.MetaV2)
@@ -131,7 +131,7 @@ func (s *imitator) GetPassThroughObj(ctx context.Context, key string) ([]byte, e
 	}
 }
 
-func (s *imitator) Delete(ctx context.Context, key string) error {
+func (s *imitator) Delete(_ context.Context, key string) error {
 	m := v2.MetaV2{
 		Key: key,
 	}
@@ -143,7 +143,7 @@ func (s *imitator) Delete(ctx context.Context, key string) error {
 	s.lock.Unlock()
 	return nil
 }
-func (s *imitator) DeleteObj(ctx context.Context, obj runtime.Object) error {
+func (s *imitator) DeleteObj(_ context.Context, obj runtime.Object) error {
 	key, err := metaserver.KeyFuncObj(obj)
 	if err != nil {
 		return err
@@ -151,7 +151,7 @@ func (s *imitator) DeleteObj(ctx context.Context, obj runtime.Object) error {
 	err = s.Delete(context.TODO(), key)
 	return err
 }
-func (s *imitator) Get(ctx context.Context, key string) (Resp, error) {
+func (s *imitator) Get(_ context.Context, key string) (Resp, error) {
 	var resp Resp
 	s.lock.RLock()
 	results, err := v2.RawMetaByGVRNN(metaserver.ParseKey(key))
@@ -168,7 +168,7 @@ func (s *imitator) Get(ctx context.Context, key string) (Resp, error) {
 		return Resp{}, fmt.Errorf("the server could not find the requested resource")
 	}
 }
-func (s *imitator) List(ctx context.Context, key string) (Resp, error) {
+func (s *imitator) List(_ context.Context, key string) (Resp, error) {
 	gvr, ns, name := metaserver.ParseKey(key)
 	//if name != NullName {
 	//	return Resp{}, fmt.Errorf("dao client list must not have resource name")

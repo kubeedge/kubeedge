@@ -45,7 +45,7 @@ func NewValidator(getter serviceaccount.ServiceAccountTokenGetter) serviceaccoun
 	}
 }
 
-func (v *validator) Validate(ctx context.Context, _ string, public *jwt.Claims, privateObj interface{}) (*apiserverserviceaccount.ServiceAccountInfo, error) {
+func (v *validator) Validate(_ context.Context, _ string, public *jwt.Claims, privateObj interface{}) (*apiserverserviceaccount.ServiceAccountInfo, error) {
 	private, ok := privateObj.(*privateClaims)
 	if !ok {
 		klog.Errorf("service account jwt validator expected private claim of type *privateClaims but got: %T", privateObj)

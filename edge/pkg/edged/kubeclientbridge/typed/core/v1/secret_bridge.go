@@ -41,6 +41,6 @@ type SecretBridge struct {
 }
 
 // Get takes name of the secret, and returns the corresponding secret object
-func (c *SecretBridge) Get(ctx context.Context, name string, options metav1.GetOptions) (result *corev1.Secret, err error) {
+func (c *SecretBridge) Get(_ context.Context, name string, _ metav1.GetOptions) (result *corev1.Secret, err error) {
 	return c.MetaClient.Secrets(c.ns).Get(name)
 }

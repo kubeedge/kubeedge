@@ -40,6 +40,6 @@ type VolumeAttachmentsBridge struct {
 }
 
 // Get takes name of the persistentVolume, and returns the corresponding persistentVolume object
-func (c *VolumeAttachmentsBridge) Get(ctx context.Context, name string, options metav1.GetOptions) (result *storagev1.VolumeAttachment, err error) {
+func (c *VolumeAttachmentsBridge) Get(_ context.Context, name string, options metav1.GetOptions) (result *storagev1.VolumeAttachment, err error) {
 	return c.MetaClient.VolumeAttachments(metav1.NamespaceDefault).Get(name, options)
 }

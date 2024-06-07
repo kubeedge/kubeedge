@@ -47,7 +47,7 @@ func init() {
 	}
 }
 
-func newTestQuicClient(api string, certPath string, keyPath string, cacertPath string) *QuicClient {
+func newTestQuicClient(_ string, certPath string, keyPath string, cacertPath string) *QuicClient {
 	return &QuicClient{
 		config: &QuicConfig{
 			Addr:             net.JoinHostPort("127.0.0.1", "10001"),
@@ -63,7 +63,7 @@ func newTestQuicClient(api string, certPath string, keyPath string, cacertPath s
 	}
 }
 
-func connNotify(conn conn.Connection) {
+func connNotify(conn.Connection) {
 	klog.Info("receive a connection")
 }
 

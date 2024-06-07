@@ -66,7 +66,7 @@ var TokenClient Token
 var ClientOpts *MQTT.ClientOptions
 var Client MQTT.Client
 
-func SubMessageReceived(client MQTT.Client, message MQTT.Message) {
+func SubMessageReceived(_ MQTT.Client, message MQTT.Message) {
 	var deviceState DeviceUpdates
 	topic := dtcommon.DeviceETPrefix + DeviceIDN + dtcommon.DeviceETStateUpdateResultSuffix
 	if message.Topic() == topic {
@@ -78,7 +78,7 @@ func SubMessageReceived(client MQTT.Client, message MQTT.Message) {
 	}
 	DeviceState = deviceState.State
 }
-func DeviceSubscribed(client MQTT.Client, message MQTT.Message) {
+func DeviceSubscribed(_ MQTT.Client, message MQTT.Message) {
 	topic := dtcommon.MemETPrefix + ctx.Cfg.NodeID + dtcommon.MemETUpdateSuffix
 	if message.Topic() == topic {
 		devicePayload := message.Payload()

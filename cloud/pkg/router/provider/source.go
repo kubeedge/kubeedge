@@ -34,7 +34,7 @@ func RegisterSource(s SourceFactory) {
 	klog.V(4).Info("source " + s.Type() + " registered")
 }
 
-// get source map
+// GetSourceFactory get source map
 func GetSourceFactory(name v1.RuleEndpointTypeDef) (SourceFactory, bool) {
 	source, exist := sources[name]
 	return source, exist
