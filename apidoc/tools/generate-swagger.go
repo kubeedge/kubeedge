@@ -28,8 +28,8 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/kubeedge/kubeedge/apidoc/tools/lib"
 	generatedopenapi "github.com/kubeedge/kubeedge/apidoc/generated/openapi"
+	"github.com/kubeedge/kubeedge/apidoc/tools/lib"
 	appsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1"
 	devicesv1alpha2 "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
 	devicesv1beta1 "github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1"
