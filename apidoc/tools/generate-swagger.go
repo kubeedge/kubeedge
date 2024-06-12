@@ -66,11 +66,18 @@ func main() {
 		devicesv1alpha2.SchemeGroupVersion.WithResource("devices"),
 		devicesv1alpha2.SchemeGroupVersion.WithResource("device"), meta.RESTScopeNamespace)
 
+	mapper.AddSpecific(devicesv1alpha2.SchemeGroupVersion.WithKind("DeviceModel"),
+		devicesv1alpha2.SchemeGroupVersion.WithResource("devicemodels"),
+		devicesv1alpha2.SchemeGroupVersion.WithResource("devicemodel"), meta.RESTScopeNamespace)
+
+	mapper.AddSpecific(devicesv1beta1.SchemeGroupVersion.WithKind("DeviceModel"),
+		devicesv1beta1.SchemeGroupVersion.WithResource("devicemodels"),
+		devicesv1beta1.SchemeGroupVersion.WithResource("devicemodel"), meta.RESTScopeNamespace)
+
 	mapper.AddSpecific(devicesv1beta1.SchemeGroupVersion.WithKind("Device"),
 		devicesv1beta1.SchemeGroupVersion.WithResource("devices"),
 		devicesv1beta1.SchemeGroupVersion.WithResource("device"), meta.RESTScopeNamespace)
 
-	// Add mapping for Operations v1alpha1 version resources
 	mapper.AddSpecific(operationsv1alpha1.SchemeGroupVersion.WithKind("ImagePrePullJob"),
 		operationsv1alpha1.SchemeGroupVersion.WithResource("imageprepulljobs"),
 		operationsv1alpha1.SchemeGroupVersion.WithResource("imageprepulljob"), meta.RESTScopeNamespace)
@@ -79,17 +86,18 @@ func main() {
 		operationsv1alpha1.SchemeGroupVersion.WithResource("nodeupgradejobs"),
 		operationsv1alpha1.SchemeGroupVersion.WithResource("nodeupgradejob"), meta.RESTScopeNamespace)
 
-	// Add mapping for Policy v1alpha1 version resources
 	mapper.AddSpecific(policyv1alpha1.SchemeGroupVersion.WithKind("ServiceAccountAccess"),
-		policyv1alpha1.SchemeGroupVersion.WithResource("serviceaccountaccesss"),
+		policyv1alpha1.SchemeGroupVersion.WithResource("serviceaccountaccesses"),
 		policyv1alpha1.SchemeGroupVersion.WithResource("serviceaccountaccess"), meta.RESTScopeNamespace)
 
-	// Add mapping for ReliableSyncs v1alpha1 version resources
+	mapper.AddSpecific(reliablesyncsv1alpha1.SchemeGroupVersion.WithKind("ClusterObjectSync"),
+		reliablesyncsv1alpha1.SchemeGroupVersion.WithResource("clusterobjectsyncs"),
+		reliablesyncsv1alpha1.SchemeGroupVersion.WithResource("clusterobjectsync"), meta.RESTScopeNamespace)
+
 	mapper.AddSpecific(reliablesyncsv1alpha1.SchemeGroupVersion.WithKind("ObjectSync"),
 		reliablesyncsv1alpha1.SchemeGroupVersion.WithResource("objectsyncs"),
 		reliablesyncsv1alpha1.SchemeGroupVersion.WithResource("objectsync"), meta.RESTScopeNamespace)
 
-	// Add mapping for Rules v1 version resources
 	mapper.AddSpecific(rulesv1.SchemeGroupVersion.WithKind("Rule"),
 		rulesv1.SchemeGroupVersion.WithResource("rules"),
 		rulesv1.SchemeGroupVersion.WithResource("rule"), meta.RESTScopeRoot)
@@ -113,12 +121,15 @@ func main() {
 		Resources: []lib.ResourceWithNamespaceScoped{
 			// Define resources and their namespace scoped and resource mapping correspondingly
 			{GVR: appsv1alpha1.SchemeGroupVersion.WithResource("edgeapplications"), NamespaceScoped: true},
-			{GVR: appsv1alpha1.SchemeGroupVersion.WithResource("nodegroups"), NamespaceScoped: true},
-			{GVR: devicesv1alpha2.SchemeGroupVersion.WithResource("devices"), NamespaceScoped: true},
+			{GVR: appsv1alpha1.SchemeGroupVersion.WithResource("nodegroups"), NamespaceScoped: false},
 			{GVR: devicesv1beta1.SchemeGroupVersion.WithResource("devices"), NamespaceScoped: true},
-			{GVR: operationsv1alpha1.SchemeGroupVersion.WithResource("imageprepulljobs"), NamespaceScoped: true},
-			{GVR: operationsv1alpha1.SchemeGroupVersion.WithResource("nodeupgradejobs"), NamespaceScoped: true},
-			{GVR: policyv1alpha1.SchemeGroupVersion.WithResource("serviceaccountaccesss"), NamespaceScoped: true},
+			{GVR: devicesv1beta1.SchemeGroupVersion.WithResource("devicemodels"), NamespaceScoped: true},
+			{GVR: devicesv1alpha2.SchemeGroupVersion.WithResource("devices"), NamespaceScoped: true},
+			{GVR: devicesv1alpha2.SchemeGroupVersion.WithResource("devicemodels"), NamespaceScoped: true},
+			{GVR: operationsv1alpha1.SchemeGroupVersion.WithResource("imageprepulljobs"), NamespaceScoped: false},
+			{GVR: operationsv1alpha1.SchemeGroupVersion.WithResource("nodeupgradejobs"), NamespaceScoped: false},
+			{GVR: policyv1alpha1.SchemeGroupVersion.WithResource("serviceaccountaccesses"), NamespaceScoped: true},
+			{GVR: reliablesyncsv1alpha1.SchemeGroupVersion.WithResource("clusterobjectsyncs"), NamespaceScoped: false},
 			{GVR: reliablesyncsv1alpha1.SchemeGroupVersion.WithResource("objectsyncs"), NamespaceScoped: true},
 			{GVR: rulesv1.SchemeGroupVersion.WithResource("rules"), NamespaceScoped: true},
 		},
