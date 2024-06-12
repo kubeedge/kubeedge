@@ -18,15 +18,7 @@ package main
 
 import (
 	"fmt"
-	generatedopenapi "github.com/kubeedge/kubeedge/apidoc/generated/openapi"
-	"github.com/kubeedge/kubeedge/apidoc/tools/lib"
-	appsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1"
-	devicesv1alpha2 "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
-	devicesv1beta1 "github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1"
-	operationsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1"
-	policyv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/policy/v1alpha1"
-	reliablesyncsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1"
-	rulesv1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
+
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -35,6 +27,16 @@ import (
 	"k8s.io/klog/v2"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/validation/spec"
+
+	"github.com/kubeedge/kubeedge/apidoc/tools/lib"
+	generatedopenapi "github.com/kubeedge/kubeedge/apidoc/generated/openapi"
+	appsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1"
+	devicesv1alpha2 "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
+	devicesv1beta1 "github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1"
+	operationsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1"
+	policyv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/policy/v1alpha1"
+	reliablesyncsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1"
+	rulesv1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
 )
 
 func main() {
