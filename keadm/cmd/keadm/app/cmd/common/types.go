@@ -93,6 +93,7 @@ type JoinOptions struct {
 	CertPort              string
 	CGroupDriver          string
 	Labels                []string
+	Sets                  string
 
 	// WithMQTT ...
 	// Deprecated: the mqtt broker is alreay managed by the DaemonSet in the cloud

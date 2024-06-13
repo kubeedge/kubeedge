@@ -51,9 +51,8 @@ func (d *DataBaseConfig) InitDbClient() error {
 	if err != nil {
 		klog.Errorf("init redis database failed, err = %v", err)
 		return err
-	} else {
-		klog.V(1).Infof("init redis database successfully, with return cmd %s", pong)
 	}
+	klog.V(1).Infof("init redis database successfully, with return cmd %s", pong)
 	return nil
 }
 
@@ -71,7 +70,7 @@ func (d *DataBaseConfig) AddData(data *common.DataModel) error {
 	// Check if the current ordered set exists
 	deviceData := "TimeStamp: " + strconv.FormatInt(data.TimeStamp, 10) + " PropertyName: " + data.PropertyName + " data: " + data.Value
 	// Add data to ordered set. If the ordered set does not exist, it will be created.
-	_, err = RedisCli.ZAdd(ctx, data.DeviceName, &redis.Z{
+	_, err := RedisCli.ZAdd(ctx, data.DeviceName, &redis.Z{
 		Score:  float64(data.TimeStamp),
 		Member: deviceData,
 	}).Result()

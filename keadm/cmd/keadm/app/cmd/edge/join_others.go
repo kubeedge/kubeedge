@@ -92,6 +92,9 @@ func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
 
 	cmd.Flags().StringVar(&joinOptions.HubProtocol, common.HubProtocol, joinOptions.HubProtocol,
 		`Use this key to decide which communication protocol the edge node adopts.`)
+
+	cmd.Flags().StringVar(&joinOptions.Sets, common.FlagNameSet, joinOptions.Sets,
+		`Set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)`)
 }
 
 func createEdgeConfigFiles(opt *common.JoinOptions) error {
@@ -164,6 +167,11 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 
 	if len(opt.Labels) > 0 {
 		edgeCoreConfig.Modules.Edged.NodeLabels = setEdgedNodeLabels(opt)
+	}
+	if len(opt.Sets) > 0 {
+		if err := util.ParseSet(edgeCoreConfig, opt.Sets); err != nil {
+			return err
+		}
 	}
 
 	if errs := validation.ValidateEdgeCoreConfiguration(edgeCoreConfig); len(errs) > 0 {
