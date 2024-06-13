@@ -34,7 +34,6 @@ if [[ ! -d "${OUTPUT_DIR}" ]]; then
     mkdir -p "${OUTPUT_DIR}"
 fi
 
-
 # Run openapi-gen to generate files
 echo "Generating with openapi-gen..."
 openapi-gen \
