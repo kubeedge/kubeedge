@@ -51,9 +51,8 @@ func (d *DataBaseConfig) InitDbClient() error {
 	if err != nil {
 		klog.Errorf("init redis database failed, err = %v", err)
 		return err
-	} else {
-		klog.V(1).Infof("init redis database successfully, with return cmd %s", pong)
 	}
+	klog.V(1).Infof("init redis database successfully, with return cmd %s", pong)
 	return nil
 }
 
