@@ -816,7 +816,7 @@
         }
       ]
     },
-    "/apis/apps.kubeedge.io/v1alpha1/namespaces/{namespace}/nodegroups": {
+    "/apis/apps.kubeedge.io/v1alpha1/nodegroups": {
       "get": {
         "description": "list or watch objects of kind NodeGroup",
         "consumes": [
@@ -835,7 +835,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "listAppsKubeedgeIoV1alpha1NamespacedNodeGroup",
+        "operationId": "listAppsKubeedgeIoV1alpha1NodeGroup",
         "parameters": [
           {
             "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
@@ -899,7 +899,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "createAppsKubeedgeIoV1alpha1NamespacedNodeGroup",
+        "operationId": "createAppsKubeedgeIoV1alpha1NodeGroup",
         "parameters": [
           {
             "name": "body",
@@ -970,7 +970,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "deleteAppsKubeedgeIoV1alpha1CollectionNamespacedNodeGroup",
+        "operationId": "deleteAppsKubeedgeIoV1alpha1CollectionNodeGroup",
         "parameters": [
           {
             "$ref": "#/parameters/body-2Y1dVQaQ"
@@ -1033,14 +1033,11 @@
       },
       "parameters": [
         {
-          "$ref": "#/parameters/namespace-vgWSWtn3"
-        },
-        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
-    "/apis/apps.kubeedge.io/v1alpha1/namespaces/{namespace}/nodegroups/{name}": {
+    "/apis/apps.kubeedge.io/v1alpha1/nodegroups/{name}": {
       "get": {
         "description": "read the specified NodeGroup",
         "consumes": [
@@ -1057,7 +1054,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "readAppsKubeedgeIoV1alpha1NamespacedNodeGroup",
+        "operationId": "readAppsKubeedgeIoV1alpha1NodeGroup",
         "responses": {
           "200": {
             "description": "OK",
@@ -1089,7 +1086,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "replaceAppsKubeedgeIoV1alpha1NamespacedNodeGroup",
+        "operationId": "replaceAppsKubeedgeIoV1alpha1NodeGroup",
         "parameters": [
           {
             "name": "body",
@@ -1154,7 +1151,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "deleteAppsKubeedgeIoV1alpha1NamespacedNodeGroup",
+        "operationId": "deleteAppsKubeedgeIoV1alpha1NodeGroup",
         "parameters": [
           {
             "$ref": "#/parameters/body-2Y1dVQaQ"
@@ -1216,7 +1213,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "patchAppsKubeedgeIoV1alpha1NamespacedNodeGroup",
+        "operationId": "patchAppsKubeedgeIoV1alpha1NodeGroup",
         "parameters": [
           {
             "$ref": "#/parameters/body-78PwaGsr"
@@ -1273,14 +1270,11 @@
           "required": true
         },
         {
-          "$ref": "#/parameters/namespace-vgWSWtn3"
-        },
-        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
-    "/apis/apps.kubeedge.io/v1alpha1/namespaces/{namespace}/nodegroups/{name}/status": {
+    "/apis/apps.kubeedge.io/v1alpha1/nodegroups/{name}/status": {
       "get": {
         "description": "read status of the specified NodeGroup",
         "consumes": [
@@ -1297,7 +1291,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "readAppsKubeedgeIoV1alpha1NamespacedNodeGroupStatus",
+        "operationId": "readAppsKubeedgeIoV1alpha1NodeGroupStatus",
         "responses": {
           "200": {
             "description": "OK",
@@ -1329,7 +1323,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "replaceAppsKubeedgeIoV1alpha1NamespacedNodeGroupStatus",
+        "operationId": "replaceAppsKubeedgeIoV1alpha1NodeGroupStatus",
         "parameters": [
           {
             "name": "body",
@@ -1397,7 +1391,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "patchAppsKubeedgeIoV1alpha1NamespacedNodeGroupStatus",
+        "operationId": "patchAppsKubeedgeIoV1alpha1NodeGroupStatus",
         "parameters": [
           {
             "$ref": "#/parameters/body-78PwaGsr"
@@ -1454,81 +1448,7 @@
           "required": true
         },
         {
-          "$ref": "#/parameters/namespace-vgWSWtn3"
-        },
-        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
-        }
-      ]
-    },
-    "/apis/apps.kubeedge.io/v1alpha1/nodegroups": {
-      "get": {
-        "description": "list or watch objects of kind NodeGroup",
-        "consumes": [
-          "*/*"
-        ],
-        "produces": [
-          "application/json",
-          "application/yaml",
-          "application/vnd.kubernetes.protobuf",
-          "application/json;stream=watch",
-          "application/vnd.kubernetes.protobuf;stream=watch"
-        ],
-        "schemes": [
-          "https"
-        ],
-        "tags": [
-          "appsKubeedgeIo_v1alpha1"
-        ],
-        "operationId": "listAppsKubeedgeIoV1alpha1NodeGroupForAllNamespaces",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.apps.v1alpha1.NodeGroupList"
-            }
-          }
-        },
-        "x-kubernetes-action": "list",
-        "x-kubernetes-group-version-kind": {
-          "group": "apps.kubeedge.io",
-          "version": "v1alpha1",
-          "kind": "NodeGroup"
-        }
-      },
-      "parameters": [
-        {
-          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
-        },
-        {
-          "$ref": "#/parameters/continue-QfD61s0i"
-        },
-        {
-          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
-        },
-        {
-          "$ref": "#/parameters/labelSelector-5Zw57w4C"
-        },
-        {
-          "$ref": "#/parameters/limit-1NfNmdNH"
-        },
-        {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
-        },
-        {
-          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
-        },
-        {
-          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
-        },
-        {
-          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
-        },
-        {
-          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
-        },
-        {
-          "$ref": "#/parameters/watch-XNNPZGbK"
         }
       ]
     },
@@ -1759,7 +1679,7 @@
         }
       ]
     },
-    "/apis/apps.kubeedge.io/v1alpha1/watch/namespaces/{namespace}/nodegroups": {
+    "/apis/apps.kubeedge.io/v1alpha1/watch/nodegroups": {
       "get": {
         "description": "watch individual changes to a list of NodeGroup. deprecated: use the 'watch' parameter with a list operation instead.",
         "consumes": [
@@ -1778,7 +1698,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "watchAppsKubeedgeIoV1alpha1NamespacedNodeGroupList",
+        "operationId": "watchAppsKubeedgeIoV1alpha1NodeGroupList",
         "responses": {
           "200": {
             "description": "OK",
@@ -1811,9 +1731,6 @@
           "$ref": "#/parameters/limit-1NfNmdNH"
         },
         {
-          "$ref": "#/parameters/namespace-vgWSWtn3"
-        },
-        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         },
         {
@@ -1833,7 +1750,7 @@
         }
       ]
     },
-    "/apis/apps.kubeedge.io/v1alpha1/watch/namespaces/{namespace}/nodegroups/{name}": {
+    "/apis/apps.kubeedge.io/v1alpha1/watch/nodegroups/{name}": {
       "get": {
         "description": "watch changes to an object of kind NodeGroup. deprecated: use the 'watch' parameter with a list operation instead, filtered to a single item with the 'fieldSelector' parameter.",
         "consumes": [
@@ -1852,7 +1769,7 @@
         "tags": [
           "appsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "watchAppsKubeedgeIoV1alpha1NamespacedNodeGroup",
+        "operationId": "watchAppsKubeedgeIoV1alpha1NodeGroup",
         "responses": {
           "200": {
             "description": "OK",
@@ -1891,80 +1808,6 @@
           "name": "name",
           "in": "path",
           "required": true
-        },
-        {
-          "$ref": "#/parameters/namespace-vgWSWtn3"
-        },
-        {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
-        },
-        {
-          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
-        },
-        {
-          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
-        },
-        {
-          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
-        },
-        {
-          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
-        },
-        {
-          "$ref": "#/parameters/watch-XNNPZGbK"
-        }
-      ]
-    },
-    "/apis/apps.kubeedge.io/v1alpha1/watch/nodegroups": {
-      "get": {
-        "description": "watch individual changes to a list of NodeGroup. deprecated: use the 'watch' parameter with a list operation instead.",
-        "consumes": [
-          "*/*"
-        ],
-        "produces": [
-          "application/json",
-          "application/yaml",
-          "application/vnd.kubernetes.protobuf",
-          "application/json;stream=watch",
-          "application/vnd.kubernetes.protobuf;stream=watch"
-        ],
-        "schemes": [
-          "https"
-        ],
-        "tags": [
-          "appsKubeedgeIo_v1alpha1"
-        ],
-        "operationId": "watchAppsKubeedgeIoV1alpha1NodeGroupListForAllNamespaces",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
-            }
-          }
-        },
-        "x-kubernetes-action": "watchlist",
-        "x-kubernetes-group-version-kind": {
-          "group": "apps.kubeedge.io",
-          "version": "v1alpha1",
-          "kind": "NodeGroup"
-        }
-      },
-      "parameters": [
-        {
-          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
-        },
-        {
-          "$ref": "#/parameters/continue-QfD61s0i"
-        },
-        {
-          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
-        },
-        {
-          "$ref": "#/parameters/labelSelector-5Zw57w4C"
-        },
-        {
-          "$ref": "#/parameters/limit-1NfNmdNH"
         },
         {
           "$ref": "#/parameters/pretty-nN7o5FEq"
@@ -2046,6 +1889,77 @@
         }
       }
     },
+    "/apis/devices.kubeedge.io/v1alpha2/devicemodels": {
+      "get": {
+        "description": "list or watch objects of kind DeviceModel",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "listDevicesKubeedgeIoV1alpha2DeviceModelForAllNamespaces",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.DeviceModelList"
+            }
+          }
+        },
+        "x-kubernetes-action": "list",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "DeviceModel"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
     "/apis/devices.kubeedge.io/v1alpha2/devices": {
       "get": {
         "description": "list or watch objects of kind Device",
@@ -2114,6 +2028,651 @@
         },
         {
           "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
+    "/apis/devices.kubeedge.io/v1alpha2/namespaces/{namespace}/devicemodels": {
+      "get": {
+        "description": "list or watch objects of kind DeviceModel",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "listDevicesKubeedgeIoV1alpha2NamespacedDeviceModel",
+        "parameters": [
+          {
+            "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+          },
+          {
+            "$ref": "#/parameters/continue-QfD61s0i"
+          },
+          {
+            "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+          },
+          {
+            "$ref": "#/parameters/labelSelector-5Zw57w4C"
+          },
+          {
+            "$ref": "#/parameters/limit-1NfNmdNH"
+          },
+          {
+            "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+          },
+          {
+            "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+          },
+          {
+            "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+          },
+          {
+            "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+          },
+          {
+            "$ref": "#/parameters/watch-XNNPZGbK"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.DeviceModelList"
+            }
+          }
+        },
+        "x-kubernetes-action": "list",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "DeviceModel"
+        }
+      },
+      "post": {
+        "description": "create a DeviceModel",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "createDevicesKubeedgeIoV1alpha2NamespacedDeviceModel",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.DeviceModel"
+            }
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldManager-Qy4HdaTW"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "name": "fieldValidation",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.DeviceModel"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.DeviceModel"
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.DeviceModel"
+            }
+          }
+        },
+        "x-kubernetes-action": "post",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "DeviceModel"
+        }
+      },
+      "delete": {
+        "description": "delete collection of DeviceModel",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "deleteDevicesKubeedgeIoV1alpha2CollectionNamespacedDeviceModel",
+        "parameters": [
+          {
+            "$ref": "#/parameters/body-2Y1dVQaQ"
+          },
+          {
+            "$ref": "#/parameters/continue-QfD61s0i"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+          },
+          {
+            "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
+          },
+          {
+            "$ref": "#/parameters/labelSelector-5Zw57w4C"
+          },
+          {
+            "$ref": "#/parameters/limit-1NfNmdNH"
+          },
+          {
+            "$ref": "#/parameters/orphanDependents-uRB25kX5"
+          },
+          {
+            "$ref": "#/parameters/propagationPolicy-6jk3prlO"
+          },
+          {
+            "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+          },
+          {
+            "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+          },
+          {
+            "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+          },
+          {
+            "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
+            }
+          }
+        },
+        "x-kubernetes-action": "deletecollection",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "DeviceModel"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        }
+      ]
+    },
+    "/apis/devices.kubeedge.io/v1alpha2/namespaces/{namespace}/devicemodels/{name}": {
+      "get": {
+        "description": "read the specified DeviceModel",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "readDevicesKubeedgeIoV1alpha2NamespacedDeviceModel",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.DeviceModel"
+            }
+          }
+        },
+        "x-kubernetes-action": "get",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "DeviceModel"
+        }
+      },
+      "put": {
+        "description": "replace the specified DeviceModel",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "replaceDevicesKubeedgeIoV1alpha2NamespacedDeviceModel",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.DeviceModel"
+            }
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldManager-Qy4HdaTW"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "name": "fieldValidation",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.DeviceModel"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.DeviceModel"
+            }
+          }
+        },
+        "x-kubernetes-action": "put",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "DeviceModel"
+        }
+      },
+      "delete": {
+        "description": "delete a DeviceModel",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "deleteDevicesKubeedgeIoV1alpha2NamespacedDeviceModel",
+        "parameters": [
+          {
+            "$ref": "#/parameters/body-2Y1dVQaQ"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
+          },
+          {
+            "$ref": "#/parameters/orphanDependents-uRB25kX5"
+          },
+          {
+            "$ref": "#/parameters/propagationPolicy-6jk3prlO"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
+            }
+          }
+        },
+        "x-kubernetes-action": "delete",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "DeviceModel"
+        }
+      },
+      "patch": {
+        "description": "partially update the specified DeviceModel",
+        "consumes": [
+          "application/json-patch+json",
+          "application/merge-patch+json",
+          "application/strategic-merge-patch+json",
+          "application/apply-patch+yaml"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "patchDevicesKubeedgeIoV1alpha2NamespacedDeviceModel",
+        "parameters": [
+          {
+            "$ref": "#/parameters/body-78PwaGsr"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldManager-7c6nTn1T"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "name": "fieldValidation",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/force-tOGGb0Yi"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.DeviceModel"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.DeviceModel"
+            }
+          }
+        },
+        "x-kubernetes-action": "patch",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "DeviceModel"
+        }
+      },
+      "parameters": [
+        {
+          "uniqueItems": true,
+          "type": "string",
+          "description": "name of the DeviceModel",
+          "name": "name",
+          "in": "path",
+          "required": true
+        },
+        {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        }
+      ]
+    },
+    "/apis/devices.kubeedge.io/v1alpha2/namespaces/{namespace}/devicemodels/{name}/status": {
+      "get": {
+        "description": "read status of the specified DeviceModel",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "readDevicesKubeedgeIoV1alpha2NamespacedDeviceModelStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.DeviceModel"
+            }
+          }
+        },
+        "x-kubernetes-action": "get",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "DeviceModel"
+        }
+      },
+      "put": {
+        "description": "replace status of the specified DeviceModel",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "replaceDevicesKubeedgeIoV1alpha2NamespacedDeviceModelStatus",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.DeviceModel"
+            }
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldManager-Qy4HdaTW"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "name": "fieldValidation",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.DeviceModel"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.DeviceModel"
+            }
+          }
+        },
+        "x-kubernetes-action": "put",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "DeviceModel"
+        }
+      },
+      "patch": {
+        "description": "partially update status of the specified DeviceModel",
+        "consumes": [
+          "application/json-patch+json",
+          "application/merge-patch+json",
+          "application/strategic-merge-patch+json",
+          "application/apply-patch+yaml"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "patchDevicesKubeedgeIoV1alpha2NamespacedDeviceModelStatus",
+        "parameters": [
+          {
+            "$ref": "#/parameters/body-78PwaGsr"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldManager-7c6nTn1T"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "name": "fieldValidation",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/force-tOGGb0Yi"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.DeviceModel"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.DeviceModel"
+            }
+          }
+        },
+        "x-kubernetes-action": "patch",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "DeviceModel"
+        }
+      },
+      "parameters": [
+        {
+          "uniqueItems": true,
+          "type": "string",
+          "description": "name of the DeviceModel",
+          "name": "name",
+          "in": "path",
+          "required": true
+        },
+        {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
@@ -2762,6 +3321,77 @@
         }
       ]
     },
+    "/apis/devices.kubeedge.io/v1alpha2/watch/devicemodels": {
+      "get": {
+        "description": "watch individual changes to a list of DeviceModel. deprecated: use the 'watch' parameter with a list operation instead.",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "watchDevicesKubeedgeIoV1alpha2DeviceModelListForAllNamespaces",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+            }
+          }
+        },
+        "x-kubernetes-action": "watchlist",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "DeviceModel"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
     "/apis/devices.kubeedge.io/v1alpha2/watch/devices": {
       "get": {
         "description": "watch individual changes to a list of Device. deprecated: use the 'watch' parameter with a list operation instead.",
@@ -2812,6 +3442,162 @@
         },
         {
           "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
+    "/apis/devices.kubeedge.io/v1alpha2/watch/namespaces/{namespace}/devicemodels": {
+      "get": {
+        "description": "watch individual changes to a list of DeviceModel. deprecated: use the 'watch' parameter with a list operation instead.",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "watchDevicesKubeedgeIoV1alpha2NamespacedDeviceModelList",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+            }
+          }
+        },
+        "x-kubernetes-action": "watchlist",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "DeviceModel"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
+    "/apis/devices.kubeedge.io/v1alpha2/watch/namespaces/{namespace}/devicemodels/{name}": {
+      "get": {
+        "description": "watch changes to an object of kind DeviceModel. deprecated: use the 'watch' parameter with a list operation instead, filtered to a single item with the 'fieldSelector' parameter.",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "watchDevicesKubeedgeIoV1alpha2NamespacedDeviceModel",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+            }
+          }
+        },
+        "x-kubernetes-action": "watch",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "DeviceModel"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "uniqueItems": true,
+          "type": "string",
+          "description": "name of the DeviceModel",
+          "name": "name",
+          "in": "path",
+          "required": true
+        },
+        {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
           "$ref": "#/parameters/pretty-nN7o5FEq"
@@ -3019,6 +3805,77 @@
         }
       }
     },
+    "/apis/devices.kubeedge.io/v1beta1/devicemodels": {
+      "get": {
+        "description": "list or watch objects of kind DeviceModel",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1beta1"
+        ],
+        "operationId": "listDevicesKubeedgeIoV1beta1DeviceModelForAllNamespaces",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1beta1.DeviceModelList"
+            }
+          }
+        },
+        "x-kubernetes-action": "list",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1beta1",
+          "kind": "DeviceModel"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
     "/apis/devices.kubeedge.io/v1beta1/devices": {
       "get": {
         "description": "list or watch objects of kind Device",
@@ -3087,6 +3944,651 @@
         },
         {
           "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
+    "/apis/devices.kubeedge.io/v1beta1/namespaces/{namespace}/devicemodels": {
+      "get": {
+        "description": "list or watch objects of kind DeviceModel",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1beta1"
+        ],
+        "operationId": "listDevicesKubeedgeIoV1beta1NamespacedDeviceModel",
+        "parameters": [
+          {
+            "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+          },
+          {
+            "$ref": "#/parameters/continue-QfD61s0i"
+          },
+          {
+            "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+          },
+          {
+            "$ref": "#/parameters/labelSelector-5Zw57w4C"
+          },
+          {
+            "$ref": "#/parameters/limit-1NfNmdNH"
+          },
+          {
+            "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+          },
+          {
+            "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+          },
+          {
+            "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+          },
+          {
+            "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+          },
+          {
+            "$ref": "#/parameters/watch-XNNPZGbK"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1beta1.DeviceModelList"
+            }
+          }
+        },
+        "x-kubernetes-action": "list",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1beta1",
+          "kind": "DeviceModel"
+        }
+      },
+      "post": {
+        "description": "create a DeviceModel",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1beta1"
+        ],
+        "operationId": "createDevicesKubeedgeIoV1beta1NamespacedDeviceModel",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1beta1.DeviceModel"
+            }
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldManager-Qy4HdaTW"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "name": "fieldValidation",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1beta1.DeviceModel"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1beta1.DeviceModel"
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1beta1.DeviceModel"
+            }
+          }
+        },
+        "x-kubernetes-action": "post",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1beta1",
+          "kind": "DeviceModel"
+        }
+      },
+      "delete": {
+        "description": "delete collection of DeviceModel",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1beta1"
+        ],
+        "operationId": "deleteDevicesKubeedgeIoV1beta1CollectionNamespacedDeviceModel",
+        "parameters": [
+          {
+            "$ref": "#/parameters/body-2Y1dVQaQ"
+          },
+          {
+            "$ref": "#/parameters/continue-QfD61s0i"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+          },
+          {
+            "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
+          },
+          {
+            "$ref": "#/parameters/labelSelector-5Zw57w4C"
+          },
+          {
+            "$ref": "#/parameters/limit-1NfNmdNH"
+          },
+          {
+            "$ref": "#/parameters/orphanDependents-uRB25kX5"
+          },
+          {
+            "$ref": "#/parameters/propagationPolicy-6jk3prlO"
+          },
+          {
+            "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+          },
+          {
+            "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+          },
+          {
+            "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+          },
+          {
+            "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
+            }
+          }
+        },
+        "x-kubernetes-action": "deletecollection",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1beta1",
+          "kind": "DeviceModel"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        }
+      ]
+    },
+    "/apis/devices.kubeedge.io/v1beta1/namespaces/{namespace}/devicemodels/{name}": {
+      "get": {
+        "description": "read the specified DeviceModel",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1beta1"
+        ],
+        "operationId": "readDevicesKubeedgeIoV1beta1NamespacedDeviceModel",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1beta1.DeviceModel"
+            }
+          }
+        },
+        "x-kubernetes-action": "get",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1beta1",
+          "kind": "DeviceModel"
+        }
+      },
+      "put": {
+        "description": "replace the specified DeviceModel",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1beta1"
+        ],
+        "operationId": "replaceDevicesKubeedgeIoV1beta1NamespacedDeviceModel",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1beta1.DeviceModel"
+            }
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldManager-Qy4HdaTW"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "name": "fieldValidation",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1beta1.DeviceModel"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1beta1.DeviceModel"
+            }
+          }
+        },
+        "x-kubernetes-action": "put",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1beta1",
+          "kind": "DeviceModel"
+        }
+      },
+      "delete": {
+        "description": "delete a DeviceModel",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1beta1"
+        ],
+        "operationId": "deleteDevicesKubeedgeIoV1beta1NamespacedDeviceModel",
+        "parameters": [
+          {
+            "$ref": "#/parameters/body-2Y1dVQaQ"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
+          },
+          {
+            "$ref": "#/parameters/orphanDependents-uRB25kX5"
+          },
+          {
+            "$ref": "#/parameters/propagationPolicy-6jk3prlO"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
+            }
+          }
+        },
+        "x-kubernetes-action": "delete",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1beta1",
+          "kind": "DeviceModel"
+        }
+      },
+      "patch": {
+        "description": "partially update the specified DeviceModel",
+        "consumes": [
+          "application/json-patch+json",
+          "application/merge-patch+json",
+          "application/strategic-merge-patch+json",
+          "application/apply-patch+yaml"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1beta1"
+        ],
+        "operationId": "patchDevicesKubeedgeIoV1beta1NamespacedDeviceModel",
+        "parameters": [
+          {
+            "$ref": "#/parameters/body-78PwaGsr"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldManager-7c6nTn1T"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "name": "fieldValidation",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/force-tOGGb0Yi"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1beta1.DeviceModel"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1beta1.DeviceModel"
+            }
+          }
+        },
+        "x-kubernetes-action": "patch",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1beta1",
+          "kind": "DeviceModel"
+        }
+      },
+      "parameters": [
+        {
+          "uniqueItems": true,
+          "type": "string",
+          "description": "name of the DeviceModel",
+          "name": "name",
+          "in": "path",
+          "required": true
+        },
+        {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        }
+      ]
+    },
+    "/apis/devices.kubeedge.io/v1beta1/namespaces/{namespace}/devicemodels/{name}/status": {
+      "get": {
+        "description": "read status of the specified DeviceModel",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1beta1"
+        ],
+        "operationId": "readDevicesKubeedgeIoV1beta1NamespacedDeviceModelStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1beta1.DeviceModel"
+            }
+          }
+        },
+        "x-kubernetes-action": "get",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1beta1",
+          "kind": "DeviceModel"
+        }
+      },
+      "put": {
+        "description": "replace status of the specified DeviceModel",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1beta1"
+        ],
+        "operationId": "replaceDevicesKubeedgeIoV1beta1NamespacedDeviceModelStatus",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1beta1.DeviceModel"
+            }
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldManager-Qy4HdaTW"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "name": "fieldValidation",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1beta1.DeviceModel"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1beta1.DeviceModel"
+            }
+          }
+        },
+        "x-kubernetes-action": "put",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1beta1",
+          "kind": "DeviceModel"
+        }
+      },
+      "patch": {
+        "description": "partially update status of the specified DeviceModel",
+        "consumes": [
+          "application/json-patch+json",
+          "application/merge-patch+json",
+          "application/strategic-merge-patch+json",
+          "application/apply-patch+yaml"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1beta1"
+        ],
+        "operationId": "patchDevicesKubeedgeIoV1beta1NamespacedDeviceModelStatus",
+        "parameters": [
+          {
+            "$ref": "#/parameters/body-78PwaGsr"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldManager-7c6nTn1T"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "name": "fieldValidation",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/force-tOGGb0Yi"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1beta1.DeviceModel"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1beta1.DeviceModel"
+            }
+          }
+        },
+        "x-kubernetes-action": "patch",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1beta1",
+          "kind": "DeviceModel"
+        }
+      },
+      "parameters": [
+        {
+          "uniqueItems": true,
+          "type": "string",
+          "description": "name of the DeviceModel",
+          "name": "name",
+          "in": "path",
+          "required": true
+        },
+        {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
@@ -3735,6 +5237,77 @@
         }
       ]
     },
+    "/apis/devices.kubeedge.io/v1beta1/watch/devicemodels": {
+      "get": {
+        "description": "watch individual changes to a list of DeviceModel. deprecated: use the 'watch' parameter with a list operation instead.",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1beta1"
+        ],
+        "operationId": "watchDevicesKubeedgeIoV1beta1DeviceModelListForAllNamespaces",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+            }
+          }
+        },
+        "x-kubernetes-action": "watchlist",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1beta1",
+          "kind": "DeviceModel"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
     "/apis/devices.kubeedge.io/v1beta1/watch/devices": {
       "get": {
         "description": "watch individual changes to a list of Device. deprecated: use the 'watch' parameter with a list operation instead.",
@@ -3785,6 +5358,162 @@
         },
         {
           "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
+    "/apis/devices.kubeedge.io/v1beta1/watch/namespaces/{namespace}/devicemodels": {
+      "get": {
+        "description": "watch individual changes to a list of DeviceModel. deprecated: use the 'watch' parameter with a list operation instead.",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1beta1"
+        ],
+        "operationId": "watchDevicesKubeedgeIoV1beta1NamespacedDeviceModelList",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+            }
+          }
+        },
+        "x-kubernetes-action": "watchlist",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1beta1",
+          "kind": "DeviceModel"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
+    "/apis/devices.kubeedge.io/v1beta1/watch/namespaces/{namespace}/devicemodels/{name}": {
+      "get": {
+        "description": "watch changes to an object of kind DeviceModel. deprecated: use the 'watch' parameter with a list operation instead, filtered to a single item with the 'fieldSelector' parameter.",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "devicesKubeedgeIo_v1beta1"
+        ],
+        "operationId": "watchDevicesKubeedgeIoV1beta1NamespacedDeviceModel",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+            }
+          }
+        },
+        "x-kubernetes-action": "watch",
+        "x-kubernetes-group-version-kind": {
+          "group": "devices.kubeedge.io",
+          "version": "v1beta1",
+          "kind": "DeviceModel"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "uniqueItems": true,
+          "type": "string",
+          "description": "name of the DeviceModel",
+          "name": "name",
+          "in": "path",
+          "required": true
+        },
+        {
+          "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
           "$ref": "#/parameters/pretty-nN7o5FEq"
@@ -4041,78 +5770,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "listOperationsKubeedgeIoV1alpha1ImagePrePullJobForAllNamespaces",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.operations.v1alpha1.ImagePrePullJobList"
-            }
-          }
-        },
-        "x-kubernetes-action": "list",
-        "x-kubernetes-group-version-kind": {
-          "group": "operations.kubeedge.io",
-          "version": "v1alpha1",
-          "kind": "ImagePrePullJob"
-        }
-      },
-      "parameters": [
-        {
-          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
-        },
-        {
-          "$ref": "#/parameters/continue-QfD61s0i"
-        },
-        {
-          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
-        },
-        {
-          "$ref": "#/parameters/labelSelector-5Zw57w4C"
-        },
-        {
-          "$ref": "#/parameters/limit-1NfNmdNH"
-        },
-        {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
-        },
-        {
-          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
-        },
-        {
-          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
-        },
-        {
-          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
-        },
-        {
-          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
-        },
-        {
-          "$ref": "#/parameters/watch-XNNPZGbK"
-        }
-      ]
-    },
-    "/apis/operations.kubeedge.io/v1alpha1/namespaces/{namespace}/imageprepulljobs": {
-      "get": {
-        "description": "list or watch objects of kind ImagePrePullJob",
-        "consumes": [
-          "*/*"
-        ],
-        "produces": [
-          "application/json",
-          "application/yaml",
-          "application/vnd.kubernetes.protobuf",
-          "application/json;stream=watch",
-          "application/vnd.kubernetes.protobuf;stream=watch"
-        ],
-        "schemes": [
-          "https"
-        ],
-        "tags": [
-          "operationsKubeedgeIo_v1alpha1"
-        ],
-        "operationId": "listOperationsKubeedgeIoV1alpha1NamespacedImagePrePullJob",
+        "operationId": "listOperationsKubeedgeIoV1alpha1ImagePrePullJob",
         "parameters": [
           {
             "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
@@ -4176,7 +5834,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "createOperationsKubeedgeIoV1alpha1NamespacedImagePrePullJob",
+        "operationId": "createOperationsKubeedgeIoV1alpha1ImagePrePullJob",
         "parameters": [
           {
             "name": "body",
@@ -4247,7 +5905,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "deleteOperationsKubeedgeIoV1alpha1CollectionNamespacedImagePrePullJob",
+        "operationId": "deleteOperationsKubeedgeIoV1alpha1CollectionImagePrePullJob",
         "parameters": [
           {
             "$ref": "#/parameters/body-2Y1dVQaQ"
@@ -4310,14 +5968,11 @@
       },
       "parameters": [
         {
-          "$ref": "#/parameters/namespace-vgWSWtn3"
-        },
-        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
-    "/apis/operations.kubeedge.io/v1alpha1/namespaces/{namespace}/imageprepulljobs/{name}": {
+    "/apis/operations.kubeedge.io/v1alpha1/imageprepulljobs/{name}": {
       "get": {
         "description": "read the specified ImagePrePullJob",
         "consumes": [
@@ -4334,7 +5989,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "readOperationsKubeedgeIoV1alpha1NamespacedImagePrePullJob",
+        "operationId": "readOperationsKubeedgeIoV1alpha1ImagePrePullJob",
         "responses": {
           "200": {
             "description": "OK",
@@ -4366,7 +6021,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "replaceOperationsKubeedgeIoV1alpha1NamespacedImagePrePullJob",
+        "operationId": "replaceOperationsKubeedgeIoV1alpha1ImagePrePullJob",
         "parameters": [
           {
             "name": "body",
@@ -4431,7 +6086,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "deleteOperationsKubeedgeIoV1alpha1NamespacedImagePrePullJob",
+        "operationId": "deleteOperationsKubeedgeIoV1alpha1ImagePrePullJob",
         "parameters": [
           {
             "$ref": "#/parameters/body-2Y1dVQaQ"
@@ -4493,7 +6148,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "patchOperationsKubeedgeIoV1alpha1NamespacedImagePrePullJob",
+        "operationId": "patchOperationsKubeedgeIoV1alpha1ImagePrePullJob",
         "parameters": [
           {
             "$ref": "#/parameters/body-78PwaGsr"
@@ -4550,14 +6205,11 @@
           "required": true
         },
         {
-          "$ref": "#/parameters/namespace-vgWSWtn3"
-        },
-        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
-    "/apis/operations.kubeedge.io/v1alpha1/namespaces/{namespace}/imageprepulljobs/{name}/status": {
+    "/apis/operations.kubeedge.io/v1alpha1/imageprepulljobs/{name}/status": {
       "get": {
         "description": "read status of the specified ImagePrePullJob",
         "consumes": [
@@ -4574,7 +6226,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "readOperationsKubeedgeIoV1alpha1NamespacedImagePrePullJobStatus",
+        "operationId": "readOperationsKubeedgeIoV1alpha1ImagePrePullJobStatus",
         "responses": {
           "200": {
             "description": "OK",
@@ -4606,7 +6258,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "replaceOperationsKubeedgeIoV1alpha1NamespacedImagePrePullJobStatus",
+        "operationId": "replaceOperationsKubeedgeIoV1alpha1ImagePrePullJobStatus",
         "parameters": [
           {
             "name": "body",
@@ -4674,7 +6326,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "patchOperationsKubeedgeIoV1alpha1NamespacedImagePrePullJobStatus",
+        "operationId": "patchOperationsKubeedgeIoV1alpha1ImagePrePullJobStatus",
         "parameters": [
           {
             "$ref": "#/parameters/body-78PwaGsr"
@@ -4731,14 +6383,11 @@
           "required": true
         },
         {
-          "$ref": "#/parameters/namespace-vgWSWtn3"
-        },
-        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
-    "/apis/operations.kubeedge.io/v1alpha1/namespaces/{namespace}/nodeupgradejobs": {
+    "/apis/operations.kubeedge.io/v1alpha1/nodeupgradejobs": {
       "get": {
         "description": "list or watch objects of kind NodeUpgradeJob",
         "consumes": [
@@ -4757,7 +6406,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "listOperationsKubeedgeIoV1alpha1NamespacedNodeUpgradeJob",
+        "operationId": "listOperationsKubeedgeIoV1alpha1NodeUpgradeJob",
         "parameters": [
           {
             "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
@@ -4821,7 +6470,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "createOperationsKubeedgeIoV1alpha1NamespacedNodeUpgradeJob",
+        "operationId": "createOperationsKubeedgeIoV1alpha1NodeUpgradeJob",
         "parameters": [
           {
             "name": "body",
@@ -4892,7 +6541,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "deleteOperationsKubeedgeIoV1alpha1CollectionNamespacedNodeUpgradeJob",
+        "operationId": "deleteOperationsKubeedgeIoV1alpha1CollectionNodeUpgradeJob",
         "parameters": [
           {
             "$ref": "#/parameters/body-2Y1dVQaQ"
@@ -4955,14 +6604,11 @@
       },
       "parameters": [
         {
-          "$ref": "#/parameters/namespace-vgWSWtn3"
-        },
-        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
-    "/apis/operations.kubeedge.io/v1alpha1/namespaces/{namespace}/nodeupgradejobs/{name}": {
+    "/apis/operations.kubeedge.io/v1alpha1/nodeupgradejobs/{name}": {
       "get": {
         "description": "read the specified NodeUpgradeJob",
         "consumes": [
@@ -4979,7 +6625,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "readOperationsKubeedgeIoV1alpha1NamespacedNodeUpgradeJob",
+        "operationId": "readOperationsKubeedgeIoV1alpha1NodeUpgradeJob",
         "responses": {
           "200": {
             "description": "OK",
@@ -5011,7 +6657,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "replaceOperationsKubeedgeIoV1alpha1NamespacedNodeUpgradeJob",
+        "operationId": "replaceOperationsKubeedgeIoV1alpha1NodeUpgradeJob",
         "parameters": [
           {
             "name": "body",
@@ -5076,7 +6722,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "deleteOperationsKubeedgeIoV1alpha1NamespacedNodeUpgradeJob",
+        "operationId": "deleteOperationsKubeedgeIoV1alpha1NodeUpgradeJob",
         "parameters": [
           {
             "$ref": "#/parameters/body-2Y1dVQaQ"
@@ -5138,7 +6784,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "patchOperationsKubeedgeIoV1alpha1NamespacedNodeUpgradeJob",
+        "operationId": "patchOperationsKubeedgeIoV1alpha1NodeUpgradeJob",
         "parameters": [
           {
             "$ref": "#/parameters/body-78PwaGsr"
@@ -5195,14 +6841,11 @@
           "required": true
         },
         {
-          "$ref": "#/parameters/namespace-vgWSWtn3"
-        },
-        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         }
       ]
     },
-    "/apis/operations.kubeedge.io/v1alpha1/namespaces/{namespace}/nodeupgradejobs/{name}/status": {
+    "/apis/operations.kubeedge.io/v1alpha1/nodeupgradejobs/{name}/status": {
       "get": {
         "description": "read status of the specified NodeUpgradeJob",
         "consumes": [
@@ -5219,7 +6862,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "readOperationsKubeedgeIoV1alpha1NamespacedNodeUpgradeJobStatus",
+        "operationId": "readOperationsKubeedgeIoV1alpha1NodeUpgradeJobStatus",
         "responses": {
           "200": {
             "description": "OK",
@@ -5251,7 +6894,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "replaceOperationsKubeedgeIoV1alpha1NamespacedNodeUpgradeJobStatus",
+        "operationId": "replaceOperationsKubeedgeIoV1alpha1NodeUpgradeJobStatus",
         "parameters": [
           {
             "name": "body",
@@ -5319,7 +6962,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "patchOperationsKubeedgeIoV1alpha1NamespacedNodeUpgradeJobStatus",
+        "operationId": "patchOperationsKubeedgeIoV1alpha1NodeUpgradeJobStatus",
         "parameters": [
           {
             "$ref": "#/parameters/body-78PwaGsr"
@@ -5376,81 +7019,7 @@
           "required": true
         },
         {
-          "$ref": "#/parameters/namespace-vgWSWtn3"
-        },
-        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
-        }
-      ]
-    },
-    "/apis/operations.kubeedge.io/v1alpha1/nodeupgradejobs": {
-      "get": {
-        "description": "list or watch objects of kind NodeUpgradeJob",
-        "consumes": [
-          "*/*"
-        ],
-        "produces": [
-          "application/json",
-          "application/yaml",
-          "application/vnd.kubernetes.protobuf",
-          "application/json;stream=watch",
-          "application/vnd.kubernetes.protobuf;stream=watch"
-        ],
-        "schemes": [
-          "https"
-        ],
-        "tags": [
-          "operationsKubeedgeIo_v1alpha1"
-        ],
-        "operationId": "listOperationsKubeedgeIoV1alpha1NodeUpgradeJobForAllNamespaces",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.operations.v1alpha1.NodeUpgradeJobList"
-            }
-          }
-        },
-        "x-kubernetes-action": "list",
-        "x-kubernetes-group-version-kind": {
-          "group": "operations.kubeedge.io",
-          "version": "v1alpha1",
-          "kind": "NodeUpgradeJob"
-        }
-      },
-      "parameters": [
-        {
-          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
-        },
-        {
-          "$ref": "#/parameters/continue-QfD61s0i"
-        },
-        {
-          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
-        },
-        {
-          "$ref": "#/parameters/labelSelector-5Zw57w4C"
-        },
-        {
-          "$ref": "#/parameters/limit-1NfNmdNH"
-        },
-        {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
-        },
-        {
-          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
-        },
-        {
-          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
-        },
-        {
-          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
-        },
-        {
-          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
-        },
-        {
-          "$ref": "#/parameters/watch-XNNPZGbK"
         }
       ]
     },
@@ -5473,7 +7042,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "watchOperationsKubeedgeIoV1alpha1ImagePrePullJobListForAllNamespaces",
+        "operationId": "watchOperationsKubeedgeIoV1alpha1ImagePrePullJobList",
         "responses": {
           "200": {
             "description": "OK",
@@ -5525,81 +7094,7 @@
         }
       ]
     },
-    "/apis/operations.kubeedge.io/v1alpha1/watch/namespaces/{namespace}/imageprepulljobs": {
-      "get": {
-        "description": "watch individual changes to a list of ImagePrePullJob. deprecated: use the 'watch' parameter with a list operation instead.",
-        "consumes": [
-          "*/*"
-        ],
-        "produces": [
-          "application/json",
-          "application/yaml",
-          "application/vnd.kubernetes.protobuf",
-          "application/json;stream=watch",
-          "application/vnd.kubernetes.protobuf;stream=watch"
-        ],
-        "schemes": [
-          "https"
-        ],
-        "tags": [
-          "operationsKubeedgeIo_v1alpha1"
-        ],
-        "operationId": "watchOperationsKubeedgeIoV1alpha1NamespacedImagePrePullJobList",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
-            }
-          }
-        },
-        "x-kubernetes-action": "watchlist",
-        "x-kubernetes-group-version-kind": {
-          "group": "operations.kubeedge.io",
-          "version": "v1alpha1",
-          "kind": "ImagePrePullJob"
-        }
-      },
-      "parameters": [
-        {
-          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
-        },
-        {
-          "$ref": "#/parameters/continue-QfD61s0i"
-        },
-        {
-          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
-        },
-        {
-          "$ref": "#/parameters/labelSelector-5Zw57w4C"
-        },
-        {
-          "$ref": "#/parameters/limit-1NfNmdNH"
-        },
-        {
-          "$ref": "#/parameters/namespace-vgWSWtn3"
-        },
-        {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
-        },
-        {
-          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
-        },
-        {
-          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
-        },
-        {
-          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
-        },
-        {
-          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
-        },
-        {
-          "$ref": "#/parameters/watch-XNNPZGbK"
-        }
-      ]
-    },
-    "/apis/operations.kubeedge.io/v1alpha1/watch/namespaces/{namespace}/imageprepulljobs/{name}": {
+    "/apis/operations.kubeedge.io/v1alpha1/watch/imageprepulljobs/{name}": {
       "get": {
         "description": "watch changes to an object of kind ImagePrePullJob. deprecated: use the 'watch' parameter with a list operation instead, filtered to a single item with the 'fieldSelector' parameter.",
         "consumes": [
@@ -5618,7 +7113,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "watchOperationsKubeedgeIoV1alpha1NamespacedImagePrePullJob",
+        "operationId": "watchOperationsKubeedgeIoV1alpha1ImagePrePullJob",
         "responses": {
           "200": {
             "description": "OK",
@@ -5659,165 +7154,6 @@
           "required": true
         },
         {
-          "$ref": "#/parameters/namespace-vgWSWtn3"
-        },
-        {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
-        },
-        {
-          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
-        },
-        {
-          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
-        },
-        {
-          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
-        },
-        {
-          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
-        },
-        {
-          "$ref": "#/parameters/watch-XNNPZGbK"
-        }
-      ]
-    },
-    "/apis/operations.kubeedge.io/v1alpha1/watch/namespaces/{namespace}/nodeupgradejobs": {
-      "get": {
-        "description": "watch individual changes to a list of NodeUpgradeJob. deprecated: use the 'watch' parameter with a list operation instead.",
-        "consumes": [
-          "*/*"
-        ],
-        "produces": [
-          "application/json",
-          "application/yaml",
-          "application/vnd.kubernetes.protobuf",
-          "application/json;stream=watch",
-          "application/vnd.kubernetes.protobuf;stream=watch"
-        ],
-        "schemes": [
-          "https"
-        ],
-        "tags": [
-          "operationsKubeedgeIo_v1alpha1"
-        ],
-        "operationId": "watchOperationsKubeedgeIoV1alpha1NamespacedNodeUpgradeJobList",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
-            }
-          }
-        },
-        "x-kubernetes-action": "watchlist",
-        "x-kubernetes-group-version-kind": {
-          "group": "operations.kubeedge.io",
-          "version": "v1alpha1",
-          "kind": "NodeUpgradeJob"
-        }
-      },
-      "parameters": [
-        {
-          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
-        },
-        {
-          "$ref": "#/parameters/continue-QfD61s0i"
-        },
-        {
-          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
-        },
-        {
-          "$ref": "#/parameters/labelSelector-5Zw57w4C"
-        },
-        {
-          "$ref": "#/parameters/limit-1NfNmdNH"
-        },
-        {
-          "$ref": "#/parameters/namespace-vgWSWtn3"
-        },
-        {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
-        },
-        {
-          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
-        },
-        {
-          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
-        },
-        {
-          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
-        },
-        {
-          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
-        },
-        {
-          "$ref": "#/parameters/watch-XNNPZGbK"
-        }
-      ]
-    },
-    "/apis/operations.kubeedge.io/v1alpha1/watch/namespaces/{namespace}/nodeupgradejobs/{name}": {
-      "get": {
-        "description": "watch changes to an object of kind NodeUpgradeJob. deprecated: use the 'watch' parameter with a list operation instead, filtered to a single item with the 'fieldSelector' parameter.",
-        "consumes": [
-          "*/*"
-        ],
-        "produces": [
-          "application/json",
-          "application/yaml",
-          "application/vnd.kubernetes.protobuf",
-          "application/json;stream=watch",
-          "application/vnd.kubernetes.protobuf;stream=watch"
-        ],
-        "schemes": [
-          "https"
-        ],
-        "tags": [
-          "operationsKubeedgeIo_v1alpha1"
-        ],
-        "operationId": "watchOperationsKubeedgeIoV1alpha1NamespacedNodeUpgradeJob",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
-            }
-          }
-        },
-        "x-kubernetes-action": "watch",
-        "x-kubernetes-group-version-kind": {
-          "group": "operations.kubeedge.io",
-          "version": "v1alpha1",
-          "kind": "NodeUpgradeJob"
-        }
-      },
-      "parameters": [
-        {
-          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
-        },
-        {
-          "$ref": "#/parameters/continue-QfD61s0i"
-        },
-        {
-          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
-        },
-        {
-          "$ref": "#/parameters/labelSelector-5Zw57w4C"
-        },
-        {
-          "$ref": "#/parameters/limit-1NfNmdNH"
-        },
-        {
-          "uniqueItems": true,
-          "type": "string",
-          "description": "name of the NodeUpgradeJob",
-          "name": "name",
-          "in": "path",
-          "required": true
-        },
-        {
-          "$ref": "#/parameters/namespace-vgWSWtn3"
-        },
-        {
           "$ref": "#/parameters/pretty-nN7o5FEq"
         },
         {
@@ -5856,7 +7192,7 @@
         "tags": [
           "operationsKubeedgeIo_v1alpha1"
         ],
-        "operationId": "watchOperationsKubeedgeIoV1alpha1NodeUpgradeJobListForAllNamespaces",
+        "operationId": "watchOperationsKubeedgeIoV1alpha1NodeUpgradeJobList",
         "responses": {
           "200": {
             "description": "OK",
@@ -5887,6 +7223,85 @@
         },
         {
           "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
+    "/apis/operations.kubeedge.io/v1alpha1/watch/nodeupgradejobs/{name}": {
+      "get": {
+        "description": "watch changes to an object of kind NodeUpgradeJob. deprecated: use the 'watch' parameter with a list operation instead, filtered to a single item with the 'fieldSelector' parameter.",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha1"
+        ],
+        "operationId": "watchOperationsKubeedgeIoV1alpha1NodeUpgradeJob",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+            }
+          }
+        },
+        "x-kubernetes-action": "watch",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha1",
+          "kind": "NodeUpgradeJob"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "uniqueItems": true,
+          "type": "string",
+          "description": "name of the NodeUpgradeJob",
+          "name": "name",
+          "in": "path",
+          "required": true
         },
         {
           "$ref": "#/parameters/pretty-nN7o5FEq"
@@ -5968,7 +7383,7 @@
         }
       }
     },
-    "/apis/policy.kubeedge.io/v1alpha1/namespaces/{namespace}/serviceaccountaccesss": {
+    "/apis/policy.kubeedge.io/v1alpha1/namespaces/{namespace}/serviceaccountaccesses": {
       "get": {
         "description": "list or watch objects of kind ServiceAccountAccess",
         "consumes": [
@@ -6192,7 +7607,7 @@
         }
       ]
     },
-    "/apis/policy.kubeedge.io/v1alpha1/namespaces/{namespace}/serviceaccountaccesss/{name}": {
+    "/apis/policy.kubeedge.io/v1alpha1/namespaces/{namespace}/serviceaccountaccesses/{name}": {
       "get": {
         "description": "read the specified ServiceAccountAccess",
         "consumes": [
@@ -6432,7 +7847,7 @@
         }
       ]
     },
-    "/apis/policy.kubeedge.io/v1alpha1/namespaces/{namespace}/serviceaccountaccesss/{name}/status": {
+    "/apis/policy.kubeedge.io/v1alpha1/namespaces/{namespace}/serviceaccountaccesses/{name}/status": {
       "get": {
         "description": "read status of the specified ServiceAccountAccess",
         "consumes": [
@@ -6613,7 +8028,7 @@
         }
       ]
     },
-    "/apis/policy.kubeedge.io/v1alpha1/serviceaccountaccesss": {
+    "/apis/policy.kubeedge.io/v1alpha1/serviceaccountaccesses": {
       "get": {
         "description": "list or watch objects of kind ServiceAccountAccess",
         "consumes": [
@@ -6684,7 +8099,7 @@
         }
       ]
     },
-    "/apis/policy.kubeedge.io/v1alpha1/watch/namespaces/{namespace}/serviceaccountaccesss": {
+    "/apis/policy.kubeedge.io/v1alpha1/watch/namespaces/{namespace}/serviceaccountaccesses": {
       "get": {
         "description": "watch individual changes to a list of ServiceAccountAccess. deprecated: use the 'watch' parameter with a list operation instead.",
         "consumes": [
@@ -6758,7 +8173,7 @@
         }
       ]
     },
-    "/apis/policy.kubeedge.io/v1alpha1/watch/namespaces/{namespace}/serviceaccountaccesss/{name}": {
+    "/apis/policy.kubeedge.io/v1alpha1/watch/namespaces/{namespace}/serviceaccountaccesses/{name}": {
       "get": {
         "description": "watch changes to an object of kind ServiceAccountAccess. deprecated: use the 'watch' parameter with a list operation instead, filtered to a single item with the 'fieldSelector' parameter.",
         "consumes": [
@@ -6840,7 +8255,7 @@
         }
       ]
     },
-    "/apis/policy.kubeedge.io/v1alpha1/watch/serviceaccountaccesss": {
+    "/apis/policy.kubeedge.io/v1alpha1/watch/serviceaccountaccesses": {
       "get": {
         "description": "watch individual changes to a list of ServiceAccountAccess. deprecated: use the 'watch' parameter with a list operation instead.",
         "consumes": [
@@ -6970,6 +8385,642 @@
           }
         }
       }
+    },
+    "/apis/reliablesyncs.kubeedge.io/v1alpha1/clusterobjectsyncs": {
+      "get": {
+        "description": "list or watch objects of kind ClusterObjectSync",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "reliablesyncsKubeedgeIo_v1alpha1"
+        ],
+        "operationId": "listReliablesyncsKubeedgeIoV1alpha1ClusterObjectSync",
+        "parameters": [
+          {
+            "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+          },
+          {
+            "$ref": "#/parameters/continue-QfD61s0i"
+          },
+          {
+            "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+          },
+          {
+            "$ref": "#/parameters/labelSelector-5Zw57w4C"
+          },
+          {
+            "$ref": "#/parameters/limit-1NfNmdNH"
+          },
+          {
+            "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+          },
+          {
+            "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+          },
+          {
+            "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+          },
+          {
+            "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+          },
+          {
+            "$ref": "#/parameters/watch-XNNPZGbK"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.reliablesyncs.v1alpha1.ClusterObjectSyncList"
+            }
+          }
+        },
+        "x-kubernetes-action": "list",
+        "x-kubernetes-group-version-kind": {
+          "group": "reliablesyncs.kubeedge.io",
+          "version": "v1alpha1",
+          "kind": "ClusterObjectSync"
+        }
+      },
+      "post": {
+        "description": "create a ClusterObjectSync",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "reliablesyncsKubeedgeIo_v1alpha1"
+        ],
+        "operationId": "createReliablesyncsKubeedgeIoV1alpha1ClusterObjectSync",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
+            }
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldManager-Qy4HdaTW"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "name": "fieldValidation",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
+            }
+          }
+        },
+        "x-kubernetes-action": "post",
+        "x-kubernetes-group-version-kind": {
+          "group": "reliablesyncs.kubeedge.io",
+          "version": "v1alpha1",
+          "kind": "ClusterObjectSync"
+        }
+      },
+      "delete": {
+        "description": "delete collection of ClusterObjectSync",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "reliablesyncsKubeedgeIo_v1alpha1"
+        ],
+        "operationId": "deleteReliablesyncsKubeedgeIoV1alpha1CollectionClusterObjectSync",
+        "parameters": [
+          {
+            "$ref": "#/parameters/body-2Y1dVQaQ"
+          },
+          {
+            "$ref": "#/parameters/continue-QfD61s0i"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+          },
+          {
+            "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
+          },
+          {
+            "$ref": "#/parameters/labelSelector-5Zw57w4C"
+          },
+          {
+            "$ref": "#/parameters/limit-1NfNmdNH"
+          },
+          {
+            "$ref": "#/parameters/orphanDependents-uRB25kX5"
+          },
+          {
+            "$ref": "#/parameters/propagationPolicy-6jk3prlO"
+          },
+          {
+            "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+          },
+          {
+            "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+          },
+          {
+            "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+          },
+          {
+            "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
+            }
+          }
+        },
+        "x-kubernetes-action": "deletecollection",
+        "x-kubernetes-group-version-kind": {
+          "group": "reliablesyncs.kubeedge.io",
+          "version": "v1alpha1",
+          "kind": "ClusterObjectSync"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        }
+      ]
+    },
+    "/apis/reliablesyncs.kubeedge.io/v1alpha1/clusterobjectsyncs/{name}": {
+      "get": {
+        "description": "read the specified ClusterObjectSync",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "reliablesyncsKubeedgeIo_v1alpha1"
+        ],
+        "operationId": "readReliablesyncsKubeedgeIoV1alpha1ClusterObjectSync",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
+            }
+          }
+        },
+        "x-kubernetes-action": "get",
+        "x-kubernetes-group-version-kind": {
+          "group": "reliablesyncs.kubeedge.io",
+          "version": "v1alpha1",
+          "kind": "ClusterObjectSync"
+        }
+      },
+      "put": {
+        "description": "replace the specified ClusterObjectSync",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "reliablesyncsKubeedgeIo_v1alpha1"
+        ],
+        "operationId": "replaceReliablesyncsKubeedgeIoV1alpha1ClusterObjectSync",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
+            }
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldManager-Qy4HdaTW"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "name": "fieldValidation",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
+            }
+          }
+        },
+        "x-kubernetes-action": "put",
+        "x-kubernetes-group-version-kind": {
+          "group": "reliablesyncs.kubeedge.io",
+          "version": "v1alpha1",
+          "kind": "ClusterObjectSync"
+        }
+      },
+      "delete": {
+        "description": "delete a ClusterObjectSync",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "reliablesyncsKubeedgeIo_v1alpha1"
+        ],
+        "operationId": "deleteReliablesyncsKubeedgeIoV1alpha1ClusterObjectSync",
+        "parameters": [
+          {
+            "$ref": "#/parameters/body-2Y1dVQaQ"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
+          },
+          {
+            "$ref": "#/parameters/orphanDependents-uRB25kX5"
+          },
+          {
+            "$ref": "#/parameters/propagationPolicy-6jk3prlO"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
+            }
+          }
+        },
+        "x-kubernetes-action": "delete",
+        "x-kubernetes-group-version-kind": {
+          "group": "reliablesyncs.kubeedge.io",
+          "version": "v1alpha1",
+          "kind": "ClusterObjectSync"
+        }
+      },
+      "patch": {
+        "description": "partially update the specified ClusterObjectSync",
+        "consumes": [
+          "application/json-patch+json",
+          "application/merge-patch+json",
+          "application/strategic-merge-patch+json",
+          "application/apply-patch+yaml"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "reliablesyncsKubeedgeIo_v1alpha1"
+        ],
+        "operationId": "patchReliablesyncsKubeedgeIoV1alpha1ClusterObjectSync",
+        "parameters": [
+          {
+            "$ref": "#/parameters/body-78PwaGsr"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldManager-7c6nTn1T"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "name": "fieldValidation",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/force-tOGGb0Yi"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
+            }
+          }
+        },
+        "x-kubernetes-action": "patch",
+        "x-kubernetes-group-version-kind": {
+          "group": "reliablesyncs.kubeedge.io",
+          "version": "v1alpha1",
+          "kind": "ClusterObjectSync"
+        }
+      },
+      "parameters": [
+        {
+          "uniqueItems": true,
+          "type": "string",
+          "description": "name of the ClusterObjectSync",
+          "name": "name",
+          "in": "path",
+          "required": true
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        }
+      ]
+    },
+    "/apis/reliablesyncs.kubeedge.io/v1alpha1/clusterobjectsyncs/{name}/status": {
+      "get": {
+        "description": "read status of the specified ClusterObjectSync",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "reliablesyncsKubeedgeIo_v1alpha1"
+        ],
+        "operationId": "readReliablesyncsKubeedgeIoV1alpha1ClusterObjectSyncStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
+            }
+          }
+        },
+        "x-kubernetes-action": "get",
+        "x-kubernetes-group-version-kind": {
+          "group": "reliablesyncs.kubeedge.io",
+          "version": "v1alpha1",
+          "kind": "ClusterObjectSync"
+        }
+      },
+      "put": {
+        "description": "replace status of the specified ClusterObjectSync",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "reliablesyncsKubeedgeIo_v1alpha1"
+        ],
+        "operationId": "replaceReliablesyncsKubeedgeIoV1alpha1ClusterObjectSyncStatus",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
+            }
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldManager-Qy4HdaTW"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "name": "fieldValidation",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
+            }
+          }
+        },
+        "x-kubernetes-action": "put",
+        "x-kubernetes-group-version-kind": {
+          "group": "reliablesyncs.kubeedge.io",
+          "version": "v1alpha1",
+          "kind": "ClusterObjectSync"
+        }
+      },
+      "patch": {
+        "description": "partially update status of the specified ClusterObjectSync",
+        "consumes": [
+          "application/json-patch+json",
+          "application/merge-patch+json",
+          "application/strategic-merge-patch+json",
+          "application/apply-patch+yaml"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "reliablesyncsKubeedgeIo_v1alpha1"
+        ],
+        "operationId": "patchReliablesyncsKubeedgeIoV1alpha1ClusterObjectSyncStatus",
+        "parameters": [
+          {
+            "$ref": "#/parameters/body-78PwaGsr"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldManager-7c6nTn1T"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "name": "fieldValidation",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/force-tOGGb0Yi"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
+            }
+          }
+        },
+        "x-kubernetes-action": "patch",
+        "x-kubernetes-group-version-kind": {
+          "group": "reliablesyncs.kubeedge.io",
+          "version": "v1alpha1",
+          "kind": "ClusterObjectSync"
+        }
+      },
+      "parameters": [
+        {
+          "uniqueItems": true,
+          "type": "string",
+          "description": "name of the ClusterObjectSync",
+          "name": "name",
+          "in": "path",
+          "required": true
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        }
+      ]
     },
     "/apis/reliablesyncs.kubeedge.io/v1alpha1/namespaces/{namespace}/objectsyncs": {
       "get": {
@@ -7666,6 +9717,156 @@
         },
         {
           "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
+    "/apis/reliablesyncs.kubeedge.io/v1alpha1/watch/clusterobjectsyncs": {
+      "get": {
+        "description": "watch individual changes to a list of ClusterObjectSync. deprecated: use the 'watch' parameter with a list operation instead.",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "reliablesyncsKubeedgeIo_v1alpha1"
+        ],
+        "operationId": "watchReliablesyncsKubeedgeIoV1alpha1ClusterObjectSyncList",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+            }
+          }
+        },
+        "x-kubernetes-action": "watchlist",
+        "x-kubernetes-group-version-kind": {
+          "group": "reliablesyncs.kubeedge.io",
+          "version": "v1alpha1",
+          "kind": "ClusterObjectSync"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "$ref": "#/parameters/pretty-nN7o5FEq"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
+    "/apis/reliablesyncs.kubeedge.io/v1alpha1/watch/clusterobjectsyncs/{name}": {
+      "get": {
+        "description": "watch changes to an object of kind ClusterObjectSync. deprecated: use the 'watch' parameter with a list operation instead, filtered to a single item with the 'fieldSelector' parameter.",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "reliablesyncsKubeedgeIo_v1alpha1"
+        ],
+        "operationId": "watchReliablesyncsKubeedgeIoV1alpha1ClusterObjectSync",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+            }
+          }
+        },
+        "x-kubernetes-action": "watch",
+        "x-kubernetes-group-version-kind": {
+          "group": "reliablesyncs.kubeedge.io",
+          "version": "v1alpha1",
+          "kind": "ClusterObjectSync"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "uniqueItems": true,
+          "type": "string",
+          "description": "name of the ClusterObjectSync",
+          "name": "name",
+          "in": "path",
+          "required": true
         },
         {
           "$ref": "#/parameters/pretty-nN7o5FEq"
@@ -9591,6 +11792,107 @@
         }
       ]
     },
+    "com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.DeviceModel": {
+      "description": "DeviceModel is the Schema for the device model API",
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+          "type": "string"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+          "type": "string"
+        },
+        "metadata": {
+          "default": {},
+          "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
+        },
+        "spec": {
+          "default": {},
+          "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.DeviceModelSpec"
+        }
+      },
+      "x-kubernetes-group-version-kind": [
+        {
+          "group": "devices.kubeedge.io",
+          "kind": "DeviceModel",
+          "version": "v1alpha2"
+        }
+      ]
+    },
+    "com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.DeviceModelList": {
+      "description": "DeviceModelList contains a list of DeviceModel",
+      "type": "object",
+      "required": [
+        "items"
+      ],
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "default": {},
+            "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.DeviceModel"
+          }
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+          "type": "string"
+        },
+        "metadata": {
+          "default": {},
+          "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+        }
+      },
+      "x-kubernetes-group-version-kind": [
+        {
+          "group": "devices.kubeedge.io",
+          "kind": "DeviceModelList",
+          "version": "v1alpha2"
+        }
+      ]
+    },
+    "com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.DeviceModelSpec": {
+      "description": "DeviceModelSpec defines the model / template for a device.It is a blueprint which describes the device capabilities and access mechanism via property visitors.",
+      "type": "object",
+      "properties": {
+        "properties": {
+          "description": "Required: List of device properties.",
+          "type": "array",
+          "items": {
+            "default": {},
+            "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.DeviceProperty"
+          }
+        },
+        "protocol": {
+          "description": "Required for DMI: Protocol name used by the device.",
+          "type": "string"
+        }
+      }
+    },
+    "com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.DeviceProperty": {
+      "description": "DeviceProperty describes an individual device property / attribute like temperature / humidity etc.",
+      "type": "object",
+      "properties": {
+        "description": {
+          "description": "The device property description.",
+          "type": "string"
+        },
+        "name": {
+          "description": "Required: The device property name.",
+          "type": "string"
+        },
+        "type": {
+          "description": "Required: PropertyType represents the type and data validation of the property.",
+          "default": {},
+          "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.PropertyType"
+        }
+      }
+    },
     "com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.DevicePropertyVisitor": {
       "description": "DevicePropertyVisitor describes the specifics of accessing a particular device property. Visitors are intended to be consumed by device mappers which connect to devices and collect data / perform actions on the device.",
       "type": "object",
@@ -9674,6 +11976,138 @@
             "default": {},
             "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.Twin"
           }
+        }
+      }
+    },
+    "com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.PropertyType": {
+      "description": "Represents the type and data validation of a property. Only one of its members may be specified.",
+      "type": "object",
+      "properties": {
+        "boolean": {
+          "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.PropertyTypeBoolean"
+        },
+        "bytes": {
+          "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.PropertyTypeBytes"
+        },
+        "double": {
+          "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.PropertyTypeDouble"
+        },
+        "float": {
+          "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.PropertyTypeFloat"
+        },
+        "int": {
+          "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.PropertyTypeInt64"
+        },
+        "string": {
+          "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.PropertyTypeString"
+        }
+      }
+    },
+    "com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.PropertyTypeBoolean": {
+      "type": "object",
+      "properties": {
+        "accessMode": {
+          "description": "Required: Access mode of property, ReadWrite or ReadOnly.",
+          "type": "string"
+        },
+        "defaultValue": {
+          "type": "boolean"
+        }
+      }
+    },
+    "com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.PropertyTypeBytes": {
+      "type": "object",
+      "properties": {
+        "accessMode": {
+          "description": "Required: Access mode of property, ReadWrite or ReadOnly.",
+          "type": "string"
+        }
+      }
+    },
+    "com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.PropertyTypeDouble": {
+      "type": "object",
+      "properties": {
+        "accessMode": {
+          "description": "Required: Access mode of property, ReadWrite or ReadOnly.",
+          "type": "string"
+        },
+        "defaultValue": {
+          "type": "number",
+          "format": "double"
+        },
+        "maximum": {
+          "type": "number",
+          "format": "double"
+        },
+        "minimum": {
+          "type": "number",
+          "format": "double"
+        },
+        "unit": {
+          "description": "The unit of the property",
+          "type": "string"
+        }
+      }
+    },
+    "com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.PropertyTypeFloat": {
+      "type": "object",
+      "properties": {
+        "accessMode": {
+          "description": "Required: Access mode of property, ReadWrite or ReadOnly.",
+          "type": "string"
+        },
+        "defaultValue": {
+          "type": "number",
+          "format": "float"
+        },
+        "maximum": {
+          "type": "number",
+          "format": "float"
+        },
+        "minimum": {
+          "type": "number",
+          "format": "float"
+        },
+        "unit": {
+          "description": "The unit of the property",
+          "type": "string"
+        }
+      }
+    },
+    "com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.PropertyTypeInt64": {
+      "type": "object",
+      "properties": {
+        "accessMode": {
+          "description": "Required: Access mode of property, ReadWrite or ReadOnly.",
+          "type": "string"
+        },
+        "defaultValue": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "maximum": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "minimum": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "unit": {
+          "description": "The unit of the property",
+          "type": "string"
+        }
+      }
+    },
+    "com.github.kubeedge.kubeedge.pkg.apis.devices.v1alpha2.PropertyTypeString": {
+      "type": "object",
+      "properties": {
+        "accessMode": {
+          "description": "Required: Access mode of property, ReadWrite or ReadOnly.",
+          "type": "string"
+        },
+        "defaultValue": {
+          "type": "string"
         }
       }
     },
@@ -10115,6 +12549,88 @@
         }
       ]
     },
+    "com.github.kubeedge.kubeedge.pkg.apis.devices.v1beta1.DeviceModel": {
+      "description": "DeviceModel is the Schema for the device model API",
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+          "type": "string"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+          "type": "string"
+        },
+        "metadata": {
+          "default": {},
+          "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
+        },
+        "spec": {
+          "default": {},
+          "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1beta1.DeviceModelSpec"
+        }
+      },
+      "x-kubernetes-group-version-kind": [
+        {
+          "group": "devices.kubeedge.io",
+          "kind": "DeviceModel",
+          "version": "v1beta1"
+        }
+      ]
+    },
+    "com.github.kubeedge.kubeedge.pkg.apis.devices.v1beta1.DeviceModelList": {
+      "description": "DeviceModelList contains a list of DeviceModel",
+      "type": "object",
+      "required": [
+        "items"
+      ],
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "default": {},
+            "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1beta1.DeviceModel"
+          }
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+          "type": "string"
+        },
+        "metadata": {
+          "default": {},
+          "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+        }
+      },
+      "x-kubernetes-group-version-kind": [
+        {
+          "group": "devices.kubeedge.io",
+          "kind": "DeviceModelList",
+          "version": "v1beta1"
+        }
+      ]
+    },
+    "com.github.kubeedge.kubeedge.pkg.apis.devices.v1beta1.DeviceModelSpec": {
+      "description": "DeviceModelSpec defines the model for a device.It is a blueprint which describes the device capabilities and access mechanism via property visitors.",
+      "type": "object",
+      "properties": {
+        "properties": {
+          "description": "Required: List of device properties.",
+          "type": "array",
+          "items": {
+            "default": {},
+            "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.devices.v1beta1.ModelProperty"
+          }
+        },
+        "protocol": {
+          "description": "Required: Protocol name used by the device.",
+          "type": "string"
+        }
+      }
+    },
     "com.github.kubeedge.kubeedge.pkg.apis.devices.v1beta1.DeviceProperty": {
       "description": "DeviceProperty describes the specifics all the properties of the device.",
       "type": "object",
@@ -10229,6 +12745,38 @@
             "type": "string",
             "default": ""
           }
+        }
+      }
+    },
+    "com.github.kubeedge.kubeedge.pkg.apis.devices.v1beta1.ModelProperty": {
+      "description": "ModelProperty describes an individual device property / attribute like temperature / humidity etc.",
+      "type": "object",
+      "properties": {
+        "accessMode": {
+          "description": "Required: Access mode of property, ReadWrite or ReadOnly.",
+          "type": "string"
+        },
+        "description": {
+          "description": "The device property description.",
+          "type": "string"
+        },
+        "maximum": {
+          "type": "string"
+        },
+        "minimum": {
+          "type": "string"
+        },
+        "name": {
+          "description": "Required: The device property name. Note: If you need to use the built-in stream data processing function, you need to define Name as saveFrame or saveVideo",
+          "type": "string"
+        },
+        "type": {
+          "description": "Required: Type of device property, ENUM: INT,FLOAT,DOUBLE,STRING,BOOLEAN,BYTES,STREAM",
+          "type": "string"
+        },
+        "unit": {
+          "description": "The unit of the property",
+          "type": "string"
         }
       }
     },
@@ -10965,6 +13513,76 @@
         {
           "group": "policy.kubeedge.io",
           "kind": "ServiceAccountAccessList",
+          "version": "v1alpha1"
+        }
+      ]
+    },
+    "com.github.kubeedge.kubeedge.pkg.apis.reliablesyncs.v1alpha1.ClusterObjectSync": {
+      "description": "ClusterObjectSync stores the state of the cluster level, nonNamespaced object that was successfully persisted to the edge node. ClusterObjectSync name is a concatenation of the node name which receiving the object and the object UUID.",
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+          "type": "string"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+          "type": "string"
+        },
+        "metadata": {
+          "default": {},
+          "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
+        },
+        "spec": {
+          "default": {},
+          "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.reliablesyncs.v1alpha1.ObjectSyncSpec"
+        },
+        "status": {
+          "default": {},
+          "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.reliablesyncs.v1alpha1.ObjectSyncStatus"
+        }
+      },
+      "x-kubernetes-group-version-kind": [
+        {
+          "group": "reliablesyncs.kubeedge.io",
+          "kind": "ClusterObjectSync",
+          "version": "v1alpha1"
+        }
+      ]
+    },
+    "com.github.kubeedge.kubeedge.pkg.apis.reliablesyncs.v1alpha1.ClusterObjectSyncList": {
+      "description": "ClusterObjectSyncList is a list of ObjectSync.",
+      "type": "object",
+      "required": [
+        "items"
+      ],
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+          "type": "string"
+        },
+        "items": {
+          "description": "List of ClusterObjectSync.",
+          "type": "array",
+          "items": {
+            "default": {},
+            "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
+          }
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+          "type": "string"
+        },
+        "metadata": {
+          "description": "Standard list metadata.",
+          "default": {},
+          "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+        }
+      },
+      "x-kubernetes-group-version-kind": [
+        {
+          "group": "reliablesyncs.kubeedge.io",
+          "kind": "ClusterObjectSyncList",
           "version": "v1alpha1"
         }
       ]
