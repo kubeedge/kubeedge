@@ -147,7 +147,7 @@ func dealMembershipUpdate(context *dtcontext.DTContext, resource string, msg int
 }
 
 func dealMembershipGet(context *dtcontext.DTContext, resource string, msg interface{}) error {
-	klog.Infof("MEMBERSHIP EVENT")
+	klog.Info("MEMBERSHIP EVENT")
 	message, ok := msg.(*model.Message)
 	if !ok {
 		return errors.New("msg not Message type")
@@ -166,7 +166,7 @@ func dealMembershipGet(context *dtcontext.DTContext, resource string, msg interf
 
 // addDevice add device to the edge group
 func addDevice(context *dtcontext.DTContext, toAdd []dttype.Device, baseMessage dttype.BaseMessage, delta bool) {
-	klog.Infof("Add devices to edge group")
+	klog.Info("Add devices to edge group")
 	if !delta {
 		baseMessage.EventID = ""
 	}
@@ -257,7 +257,7 @@ func addDevice(context *dtcontext.DTContext, toAdd []dttype.Device, baseMessage 
 
 // removeDevice remove device from the edge group
 func removeDevice(context *dtcontext.DTContext, toRemove []dttype.Device, baseMessage dttype.BaseMessage, delta bool) {
-	klog.Infof("Begin to remove devices")
+	klog.Info("Begin to remove devices")
 	if !delta {
 		baseMessage.EventID = ""
 	}
@@ -338,7 +338,7 @@ func dealMembershipGetInner(context *dtcontext.DTContext, payload []byte) error 
 			return true
 		})
 
-		payload, err := dttype.BuildMembershipGetResult(dttype.BaseMessage{EventID: edgeGet.EventID, Timestamp: now}, devices)
+		payload, err = dttype.BuildMembershipGetResult(dttype.BaseMessage{EventID: edgeGet.EventID, Timestamp: now}, devices)
 		if err != nil {
 			klog.Errorf("Marshal membership failed while deal get membership ,err: %#v", err)
 		} else {
@@ -346,7 +346,7 @@ func dealMembershipGetInner(context *dtcontext.DTContext, payload []byte) error 
 		}
 	}
 	topic := dtcommon.MemETPrefix + context.NodeName + dtcommon.MemETGetResultSuffix
-	klog.Infof("Deal getting membership successful and send the result")
+	klog.Info("Deal getting membership successful and send the result")
 
 	err = context.Send("",
 		dtcommon.SendToEdge,
