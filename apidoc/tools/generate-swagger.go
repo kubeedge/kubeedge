@@ -109,7 +109,7 @@ func main() {
 		Info: spec.InfoProps{
 			Title:       "Kubeedge OpenAPI",
 			Version:     "unversioned",
-			Description: "Kubeedge is Open, Multi-Cloud, Multi-Cluster Kubernetes Orchestration System. For more information, please see https://github.com/Kubeedge/Kubeedge.",
+			Description: "KubeEdge is an open source system for extending native containerized application orchestration capabilities to hosts at Edge. For more information, please see https://github.com/Kubeedge/Kubeedge.",
 			License: &spec.License{
 				Name: "Apache 2.0",                                       // License name
 				URL:  "https://www.apache.org/licenses/LICENSE-2.0.html", // License URL
