@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
 func TestNewApplication(t *testing.T) {
