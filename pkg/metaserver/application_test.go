@@ -118,7 +118,7 @@ func TestString(t *testing.T) {
 				Status:   "completed",
 				Reason:   "test reason one",
 			},
-			stdResult: fmt.Sprintf("(NodeName=test-node-one;Key=group/version/resource/namespaces/name;Verb=GET;Status=completed;Reason=test reason one)"),
+			stdResult: "(NodeName=test-node-one;Key=group/version/resource/namespaces/name;Verb=GET;Status=completed;Reason=test reason one)",
 		},
 		{
 			app: Application{
@@ -128,7 +128,7 @@ func TestString(t *testing.T) {
 				Status:   "pending",
 				Reason:   "test reason two",
 			},
-			stdResult: fmt.Sprintf("(NodeName=test-node-two;Key=group/version/resource/namespaces/name;Verb=POST;Status=pending;Reason=test reason two)"),
+			stdResult: "(NodeName=test-node-two;Key=group/version/resource/namespaces/name;Verb=POST;Status=pending;Reason=test reason two)",
 		},
 	}
 
@@ -298,13 +298,13 @@ func TestNamespace(t *testing.T) {
 			app: Application{
 				Key: "/group/version/resource/test-namespace-one/",
 			},
-			stdResult: fmt.Sprintf("test-namespace-one"),
+			stdResult: "test-namespace-one",
 		},
 		{
 			app: Application{
 				Key: "/group-two/v2/resource/test-namespace-two/",
 			},
-			stdResult: fmt.Sprintf("test-namespace-two"),
+			stdResult: "test-namespace-two",
 		},
 	}
 
