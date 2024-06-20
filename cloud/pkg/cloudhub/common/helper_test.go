@@ -18,17 +18,15 @@ package common
 
 import (
 	"testing"
-
-	"github.com/kubeedge/kubeedge/common/constants"
 	"encoding/json"
+
+	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	beehivemodel "github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
-	"github.com/stretchr/testify/assert"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	edgecon "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
-	// "k8s.io/apimachinery/pkg/runtime"
-	// "k8s.io/apimachinery/pkg/runtime/schema"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 func TestIsVolumeResource(t *testing.T){
