@@ -84,13 +84,14 @@ func (ch *cloudHub) Start() {
 		klog.Errorf("unable to sync caches for objectSyncController")
 		os.Exit(1)
 	}
+	ctx := beehiveContext.GetContext()
 
 	// start dispatch message from the cloud to edge node
 	go ch.dispatcher.DispatchDownstream()
 
 	// check whether the certificates exist in the local directory,
 	// and then check whether certificates exist in the secret, generate if they don't exist
-	if err := httpserver.PrepareAllCerts(); err != nil {
+	if err := httpserver.PrepareAllCerts(ctx); err != nil {
 		klog.Exit(err)
 	}
 	// TODO: Will improve in the future
@@ -98,12 +99,16 @@ func (ch *cloudHub) Start() {
 	close(DoneTLSTunnelCerts)
 
 	// generate Token
-	if err := httpserver.GenerateAndRefresh(beehiveContext.GetContext()); err != nil {
+	if err := httpserver.GenerateAndRefreshToken(ctx); err != nil {
 		klog.Exit(err)
 	}
 
 	// HttpServer mainly used to issue certificates for the edge
-	go httpserver.StartHTTPServer()
+	go func() {
+		if err := httpserver.StartHTTPServer(); err != nil {
+			klog.Exit(err)
+		}
+	}()
 
 	servers.StartCloudHub(ch.messageHandler)
 
