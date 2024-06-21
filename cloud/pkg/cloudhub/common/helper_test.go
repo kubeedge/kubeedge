@@ -1,5 +1,5 @@
 /*
-Copyright 2022 The KubeEdge Authors.
+Copyright 2024 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,15 +32,15 @@ import (
 func TestIsVolumeResource(t *testing.T){
 	assert := assert.New(t)
 
-	validVolumeResource := "test/" + constants.CSIResourceTypeVolume + "/resource"
-	invalidVolumeResource := "test/resourcePath/resource"
+	validResource := "test/" + constants.CSIResourceTypeVolume + "/resource"
+	invalidResource := "test/resourcePath/resource"
 
-	assert.True(IsVolumeResource(validVolumeResource))
-	assert.False(IsVolumeResource(invalidVolumeResource))
+	assert.True(IsVolumeResource(validResource))
+	assert.False(IsVolumeResource(invalidResource))
 }
 
 func TestGetMessageUID(t *testing.T) {
-	tests := []struct {
+	cases := []struct {
 		name     string
 		msg      beehivemodel.Message
 		stdResult string
@@ -50,10 +50,10 @@ func TestGetMessageUID(t *testing.T) {
 			name: "Valid UID",
 			msg: beehivemodel.Message{
 				Content: &v1.ObjectMeta{
-					UID: "test-one",
+					UID: "test-uid",
 				},
 			},
-			stdResult: "test-one",
+			stdResult: "test-uid",
 			hasError: false,
 		},
 		{
@@ -66,22 +66,22 @@ func TestGetMessageUID(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result, err := GetMessageUID(tt.msg)
-			if tt.hasError {
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			result, err := GetMessageUID(test.msg)
+			if test.hasError {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
 			}
-			assert.Equal(t, tt.stdResult, result)
+			assert.Equal(t, test.stdResult, result)
 		})
 	}
 }
 
 func TestGetMessageDeletionTimestamp(t *testing.T) {
 	now := v1.Now()
-	tests := []struct {
+	cases := []struct {
 		name     string
 		msg      beehivemodel.Message
 		stdResult *v1.Time
@@ -107,21 +107,21 @@ func TestGetMessageDeletionTimestamp(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result, err := GetMessageDeletionTimestamp(&tt.msg)
-			if tt.hasError {
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			result, err := GetMessageDeletionTimestamp(&test.msg)
+			if test.hasError {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
 			}
-			assert.Equal(t, tt.stdResult, result)
+			assert.Equal(t, test.stdResult, result)
 		})
 	}
 }
 
 func TestTrimMessage(t *testing.T) {
-	tests := []struct {
+	cases := []struct {
 		name     string
 		resource string
 		stdResult string
@@ -132,29 +132,29 @@ func TestTrimMessage(t *testing.T) {
 			stdResult: "namespace/pod/test-pod",
 		},
 		{
-			name:     "Invalid resource length",
+			name:     "Invalid length of resource",
 			resource: "node/nodeName",
 			stdResult: "node/nodeName",
 		},
 		{
-			name:     "Resource not starting with node",
+			name:     "Resource is not starting with node",
 			resource: "namespace/pod/test-pod-two",
 			stdResult: "namespace/pod/test-pod-two",
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
 			msg := beehivemodel.NewMessage("")
-			msg.SetResourceOperation(tt.resource, "operation")
+			msg.SetResourceOperation(test.resource, "operation")
 			TrimMessage(msg)
-			assert.Equal(t, tt.stdResult, msg.GetResource())
+			assert.Equal(t, test.stdResult, msg.GetResource())
 		})
 	}
 }
 
 func TestConstructConnectMessage(t *testing.T) {
-	nodeID := "node123"
+	nodeID := "test-node-id"
 	info := &model.HubInfo{NodeID: nodeID}
 
 	msg := ConstructConnectMessage(info, true)
@@ -171,20 +171,20 @@ func TestConstructConnectMessage(t *testing.T) {
 }
 
 func TestDeepCopy(t *testing.T) {
-	original := beehivemodel.NewMessage("test")
-	original.FillBody("content")
+	msg := beehivemodel.NewMessage("sample message")
+	msg.FillBody("sample content")
 
-	copy := DeepCopy(original)
+	copy := DeepCopy(msg)
 	assert.NotNil(t, copy)
-	assert.Equal(t, original.GetID(), copy.GetID())
-	assert.Equal(t, original.GetContent(), copy.GetContent())
+	assert.Equal(t, msg.GetID(), copy.GetID())
+	assert.Equal(t, msg.GetContent(), copy.GetContent())
 }
 
 func TestAckMessageKeyFunc(t *testing.T) {
-	tests := []struct {
+	cases := []struct {
 		name     string
 		obj      interface{}
-		expected string
+		stdResult string
 		hasError bool
 	}{
 		{
@@ -196,13 +196,13 @@ func TestAckMessageKeyFunc(t *testing.T) {
 					UID: "test-uid",
 				},
 			},
-			expected: "test-uid",
+			stdResult: "test-uid",
 			hasError: false,
 		},
 		{
 			name:     "Invalid object type",
 			obj:      "invalid",
-			expected: "",
+			stdResult: "",
 			hasError: true,
 		},
 		{
@@ -211,29 +211,29 @@ func TestAckMessageKeyFunc(t *testing.T) {
 				Header: beehivemodel.MessageHeader{ID: "test-id"},
 				Router: beehivemodel.MessageRoute{Group: "other-group"},
 			},
-			expected: "",
+			stdResult: "",
 			hasError: true,
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result, err := AckMessageKeyFunc(tt.obj)
-			if tt.hasError {
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			result, err := AckMessageKeyFunc(test.obj)
+			if test.hasError {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
 			}
-			assert.Equal(t, tt.expected, result)
+			assert.Equal(t, test.stdResult, result)
 		})
 	}
 }
 
 func TestNoAckMessageKeyFunc(t *testing.T) {
-	tests := []struct {
+	cases := []struct {
 		name     string
 		obj      interface{}
-		expected string
+		stdResult string
 		hasError bool
 	}{
 		{
@@ -241,26 +241,26 @@ func TestNoAckMessageKeyFunc(t *testing.T) {
 			obj: &beehivemodel.Message{
 				Header: beehivemodel.MessageHeader{ID: "test-id"},
 			},
-			expected: "test-id",
+			stdResult: "test-id",
 			hasError: false,
 		},
 		{
 			name:     "Invalid object type",
 			obj:      "invalid",
-			expected: "",
+			stdResult: "",
 			hasError: true,
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result, err := NoAckMessageKeyFunc(tt.obj)
-			if tt.hasError {
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			result, err := NoAckMessageKeyFunc(test.obj)
+			if test.hasError {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
 			}
-			assert.Equal(t, tt.expected, result)
+			assert.Equal(t, test.stdResult, result)
 		})
 	}
 }
