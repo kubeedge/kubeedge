@@ -181,18 +181,12 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 	// initial kubelet config and flag
 	var kubeletConfig kubeletconfig.KubeletConfiguration
 	var kubeletFlags kubeletoptions.KubeletFlags
-	err = edgedconfig.ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(edgedconfig.Config.TailoredKubeletConfig, &edgedconfig.Config.TailoredKubeletFlag, &kubeletConfig, nil)
+	err = edgedconfig.ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(edgedconfig.Config.TailoredKubeletConfig, &kubeletConfig, nil)
 	if err != nil {
 		klog.ErrorS(err, "Failed to convert kubelet config")
 		return nil, fmt.Errorf("failed to construct kubelet configuration")
 	}
 	edgedconfig.ConvertConfigEdgedFlagToConfigKubeletFlag(&edgedconfig.Config.TailoredKubeletFlag, &kubeletFlags)
-	// Set Kubelet RegisterNode Parameter in KubeletConfiguration.
-	// The parameter `registerNode` has been migrated to Kubelet Configuration.
-	// `registerNode` in KubeletFlag will be retained for next version(1.13), and removed in 1.14 and later.
-	if !edgedconfig.Config.RegisterNode {
-		kubeletConfig.RegisterNode = false
-	}
 
 	// set feature gates from initial flags-based config
 	if err := utilfeature.DefaultMutableFeatureGate.SetFromMap(kubeletConfig.FeatureGates); err != nil {

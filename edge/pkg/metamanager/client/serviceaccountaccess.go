@@ -187,3 +187,7 @@ func (c getter) GetPod(namespace, name string) (*corev1.Pod, error) {
 func (c getter) GetSecret(namespace, name string) (*corev1.Secret, error) {
 	return c.Client.CoreV1().Secrets(namespace).Get(context.Background(), name, metav1.GetOptions{})
 }
+
+func (c getter) GetNode(name string) (*corev1.Node, error) {
+	return c.Client.CoreV1().Nodes().Get(context.Background(), name, metav1.GetOptions{})
+}

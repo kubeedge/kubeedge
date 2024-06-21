@@ -51,7 +51,6 @@ import (
 	"k8s.io/mount-utils"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
@@ -150,7 +149,6 @@ func EdgeCoreConfig(config *hollowEdgeNodeConfig) *v1alpha2.EdgeCoreConfig {
 	edgeCoreConfig.Modules.Edged.NodeLabels = config.NodeLabels
 	edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.RegisterNode = &trueFlag
 	edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.CgroupsPerQOS = &falseFlag
-	edgeCoreConfig.Modules.Edged.ContainerRuntime = constants.DefaultRuntimeType
 	edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.EnableControllerAttachDetach = &falseFlag
 	edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.ProtectKernelDefaults = false
 

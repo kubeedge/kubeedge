@@ -129,7 +129,7 @@ func TaskFinish(state api.State) bool {
 func (F *FSM) TaskStagCompleted(state api.State) bool {
 	currentState, err := F.CurrentState()
 	if err != nil {
-		klog.Error("get %s current state failed: %s", F.id, err.Error())
+		klog.Errorf("get %s current state failed: %s", F.id, err.Error())
 		return false
 	}
 	if F.stageSequence[currentState] == state || TaskFinish(state) {

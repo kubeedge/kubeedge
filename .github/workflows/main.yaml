@@ -165,17 +165,17 @@ jobs:
       matrix:
         cases:
           - protocol: WebSocket
+            version: v1.29.0
+          - protocol: WebSocket
             version: v1.28.0
           - protocol: WebSocket
             version: v1.27.0
-          - protocol: WebSocket
-            version: v1.26.0
+          - protocol: QUIC
+            version: v1.29.0
           - protocol: QUIC
             version: v1.28.0
           - protocol: QUIC
             version: v1.27.0
-          - protocol: QUIC
-            version: v1.26.0
     timeout-minutes: 60
     name: E2e test
     needs: image-prepare
@@ -195,8 +195,8 @@ jobs:
       - name: Install dependences
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
-          go install sigs.k8s.io/kind@v0.21.0
-          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.28.6/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          go install sigs.k8s.io/kind@v0.22.0
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v3
@@ -258,8 +258,8 @@ jobs:
       - name: Install dependences
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
-          go install sigs.k8s.io/kind@v0.21.0
-          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.28.6/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          go install sigs.k8s.io/kind@v0.22.0
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v3
@@ -305,8 +305,8 @@ jobs:
       - name: Install dependences
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
-          go install sigs.k8s.io/kind@v0.21.0
-          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.28.6/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          go install sigs.k8s.io/kind@v0.22.0
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v3
@@ -372,8 +372,8 @@ jobs:
       - name: Install dependences
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
-          go install sigs.k8s.io/kind@v0.21.0
-          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.28.6/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          go install sigs.k8s.io/kind@v0.22.0
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v3

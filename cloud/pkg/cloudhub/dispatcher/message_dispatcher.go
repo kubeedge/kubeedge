@@ -145,7 +145,7 @@ func (md *messageDispatcher) DispatchDownstream() {
 			}
 
 			if !model.IsToEdge(&msg) {
-				klog.Warningf("skip message not to edge node %s: %+v, content %s", nodeID, msg)
+				klog.Warningf("skip message not to edge node %s: %+v", nodeID, msg)
 				continue
 			}
 

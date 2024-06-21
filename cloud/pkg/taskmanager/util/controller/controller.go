@@ -118,7 +118,7 @@ var (
 
 func Register(name string, controller Controller) {
 	if _, ok := controllers[name]; ok {
-		klog.Warning("controller %s exists ", name)
+		klog.Warningf("controller %s exists ", name)
 	}
 	controllers[name] = controller
 }

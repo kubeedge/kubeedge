@@ -21,7 +21,7 @@ LOG_LEVEL=${LOG_LEVEL:-2}
 TIMEOUT=${TIMEOUT:-60}s
 PROTOCOL=${PROTOCOL:-"WebSocket"}
 CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-"containerd"}
-KIND_IMAGE=${1:-"kindest/node:v1.28.0"}
+KIND_IMAGE=${1:-"kindest/node:v1.29.0"}
 echo -e "The installation of the cni plugin will overwrite the cni config file. Use export CNI_CONF_OVERWRITE=false to disable it."
 
 if [[ "${CLUSTER_NAME}x" == "x" ]]; then

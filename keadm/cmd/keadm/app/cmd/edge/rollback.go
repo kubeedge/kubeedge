@@ -78,7 +78,7 @@ func rollbackEdgeCore(ro *RollbackOptions) error {
 	defer func() {
 		// report upgrade result to cloudhub
 		if err = util.ReportTaskResult(configure, ro.TaskType, ro.TaskName, *event); err != nil {
-			klog.Warning("failed to report upgrade result to cloud: %v", err)
+			klog.Warningf("failed to report upgrade result to cloud: %v", err)
 		}
 	}()
 

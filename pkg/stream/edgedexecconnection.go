@@ -104,7 +104,10 @@ func (e *EdgedExecConnection) write2CloudStream(tunnel SafeWriteTunneler, con ne
 }
 
 func (e *EdgedExecConnection) Serve(tunnel SafeWriteTunneler) error {
-	tripper := spdy.NewRoundTripper(nil)
+	tripper, err := spdy.NewRoundTripper(nil)
+	if err != nil {
+		return fmt.Errorf("failed to creates a new tripper, err: %v", err)
+	}
 	req, err := http.NewRequest(e.Method, e.URL.String(), nil)
 	if err != nil {
 		return fmt.Errorf("failed to create exec request, err: %v", err)
