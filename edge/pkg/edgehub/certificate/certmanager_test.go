@@ -17,65 +17,87 @@ limitations under the License.
 package certificate
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
-	"fmt"
-	"os"
+	"crypto/tls"
+	"net/http"
 	"testing"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
+	"github.com/agiledragon/gomonkey"
+	"github.com/stretchr/testify/require"
+
+	"github.com/kubeedge/kubeedge/common/constants"
+	commhttp "github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/http"
+	httpfake "github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/http/fake"
 )
 
-func init() {
-	_, err := os.Stat("/tmp/edge.crt")
-	if err != nil {
-		err := util.GenerateTestCertificate("/tmp/", "edge", "edge")
+func TestGetCACert(t *testing.T) {
+	const fakehost = "http://localhost"
 
-		if err != nil {
-			fmt.Printf("Failed to create certificate: %v\n", err)
-		}
-	}
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	patches.ApplyFunc(commhttp.SendRequest,
+		func(_ *http.Request, _ *http.Client) (*http.Response, error) {
+			return &http.Response{Body: httpfake.NewFakeBodyReader([]byte{})}, nil
+		})
+
+	_, err := GetCACert(fakehost + "/ca.crt")
+	require.NoError(t, err)
 }
 
-func TestValidateCACerts(t *testing.T) {
-	cacert, err := os.ReadFile("/tmp/edge.crt")
-	if err != nil {
-		t.Fatalf("Failed to load certificate: %v", err)
-	}
-	digest := sha256.Sum256(cacert)
-	hash := hex.EncodeToString(digest[:])
+func TestGetEdgeCert(t *testing.T) {
+	const (
+		fakehost = "http://localhost"
 
-	tests := []struct {
-		cacert []byte
-		hash   string
-		want   bool
-		ttName string
-	}{
-		{
-			cacert: make([]byte, 0),
-			hash:   "",
-			want:   true,
-			ttName: "empty cacert and empty hash",
-		},
-		{
-			cacert: cacert,
-			hash:   hash,
-			want:   true,
-			ttName: "valid cacert and hash",
-		},
-		{
-			cacert: cacert,
-			hash:   "invalid",
-			want:   false,
-			ttName: "invalid hash",
-		},
-	}
-	for _, tt := range tests {
-		t.Run("", func(t *testing.T) {
-			got, _, _ := ValidateCACerts(tt.cacert, tt.hash)
-			if got != tt.want {
-				t.Errorf("ValidateCACerts = %v, want %v", got, tt.want)
-			}
-		})
-	}
+		capem = `-----BEGIN CERTIFICATE-----
+MIIBejCCAR+gAwIBAgICBAAwCgYIKoZIzj0EAwIwEzERMA8GA1UEAxMIS3ViZUVk
+Z2UwIBcNMjQwNTA5MDczNzU2WhgPMjEyNDAxMDYwNzM3NTZaMBMxETAPBgNVBAMT
+CEt1YmVFZGdlMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEq4Rd11aJ/FXEYBE2
+YCUMjRZVpqytxDBq2anuzokPculGaTrSDiRy1IKukPhlg34bq7J6wqkF0cmFUvcT
+jtReq6NhMF8wDgYDVR0PAQH/BAQDAgKkMB0GA1UdJQQWMBQGCCsGAQUFBwMBBggr
+BgEFBQcDAjAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTvK3f704DC7OOiVbmO
+PyKwJAUwQjAKBggqhkjOPQQDAgNJADBGAiEAkOgvZtFy+aYSqsfxIVMXxScsGilA
+P1Iiy/r5PerqODcCIQCH+qeEuxIgZzUAD/Wm6xameEmyn/mO4su/4UE6APNZFQ==
+-----END CERTIFICATE-----`
+	)
+
+	t.Run("request failed", func(t *testing.T) {
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		patches.ApplyFunc(commhttp.SendRequest,
+			func(_ *http.Request, _ *http.Client) (*http.Response, error) {
+				return &http.Response{
+					StatusCode: http.StatusInternalServerError,
+					Body:       httpfake.NewFakeBodyReader([]byte("test error")),
+				}, nil
+			})
+
+		cm := &CertManager{}
+		tls, err := tls.LoadX509KeyPair("testdata/server.crt", "testdata/server.key")
+		require.NoError(t, err)
+
+		_, _, err = cm.GetEdgeCert(fakehost+constants.DefaultCAURL, []byte(capem), tls, "")
+		require.Error(t, err)
+		require.ErrorContains(t, err, "failed to call http, code: 500, message: test error")
+	})
+
+	t.Run("request successful", func(t *testing.T) {
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		patches.ApplyFunc(commhttp.SendRequest,
+			func(_ *http.Request, _ *http.Client) (*http.Response, error) {
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Body:       httpfake.NewFakeBodyReader([]byte("test cert...")),
+				}, nil
+			})
+
+		cm := &CertManager{}
+		tls, err := tls.LoadX509KeyPair("testdata/server.crt", "testdata/server.key")
+		require.NoError(t, err)
+
+		_, _, err = cm.GetEdgeCert(fakehost+constants.DefaultCAURL, []byte(capem), tls, "")
+		require.NoError(t, err)
+	})
 }
