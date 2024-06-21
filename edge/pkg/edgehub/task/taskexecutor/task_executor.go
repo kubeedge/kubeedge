@@ -72,7 +72,7 @@ var (
 
 func Register(name string, executor Executor) {
 	if _, ok := executors[name]; ok {
-		klog.Warning("executor %s exists ", name)
+		klog.Warningf("executor %s exists", name)
 	}
 	executors[name] = executor
 }

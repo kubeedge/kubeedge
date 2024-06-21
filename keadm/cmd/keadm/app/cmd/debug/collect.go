@@ -103,19 +103,7 @@ func ExecuteCollect(collectOptions *common.CollectOptions) error {
 	}
 	printDetail("collect edgecore data finish")
 
-	if edgeconfig.Modules.Edged.ContainerRuntime == constants.DefaultRuntimeType ||
-		edgeconfig.Modules.Edged.ContainerRuntime == "" {
-		err = collectRuntimeData(fmt.Sprintf("%s/runtime", tmpName))
-		if err != nil {
-			fmt.Printf("collect runtime data failed")
-			return err
-		}
-		printDetail("collect runtime data finish")
-	} else {
-		fmt.Printf("now runtime only support: docker")
-		// TODO
-		// other runtime
-	}
+	// TODO: collectRuntimeData with containerd
 
 	OutputPath := collectOptions.OutputPath
 	zipName := fmt.Sprintf("%s/edge_%s.tar.gz", OutputPath, timenow)

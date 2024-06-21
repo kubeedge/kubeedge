@@ -32,7 +32,7 @@ func InitConfigure(e *v1alpha2.Edged) {
 	})
 }
 
-func ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(in *v1alpha2.TailoredKubeletConfiguration, inFlag *v1alpha2.TailoredKubeletFlag, out *kubeletconfig.KubeletConfiguration, s conversion.Scope) error {
+func ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(in *v1alpha2.TailoredKubeletConfiguration, out *kubeletconfig.KubeletConfiguration, s conversion.Scope) error {
 	out.StaticPodPath = in.StaticPodPath
 	out.SyncFrequency = in.SyncFrequency
 	out.FileCheckFrequency = in.FileCheckFrequency
@@ -60,6 +60,7 @@ func ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(in *v1alpha2.T
 	out.NodeStatusReportFrequency = in.NodeStatusReportFrequency
 	out.NodeLeaseDurationSeconds = in.NodeLeaseDurationSeconds
 	out.ImageMinimumGCAge = in.ImageMinimumGCAge
+	out.ImageMaximumGCAge = in.ImageMaximumGCAge
 	if err := v1.Convert_Pointer_int32_To_int32(&in.ImageGCHighThresholdPercent, &out.ImageGCHighThresholdPercent, s); err != nil {
 		return err
 	}
@@ -175,13 +176,8 @@ func ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(in *v1alpha2.T
 	if err := v1.Convert_Pointer_bool_To_bool(&in.LocalStorageCapacityIsolation, &out.LocalStorageCapacityIsolation, s); err != nil {
 		return err
 	}
-	if in.ContainerRuntimeEndpoint == "" {
-		out.ContainerRuntimeEndpoint = inFlag.RemoteRuntimeEndpoint
-		out.ImageServiceEndpoint = inFlag.RemoteImageEndpoint
-	} else {
-		out.ContainerRuntimeEndpoint = in.ContainerRuntimeEndpoint
-		out.ImageServiceEndpoint = in.ImageServiceEndpoint
-	}
+	out.ContainerRuntimeEndpoint = in.ContainerRuntimeEndpoint
+	out.ImageServiceEndpoint = in.ImageServiceEndpoint
 	return nil
 }
 

@@ -113,7 +113,10 @@ func (ah *EdgedAttachConnection) write2CloudStream(tunnel SafeWriteTunneler, con
 }
 
 func (ah *EdgedAttachConnection) Serve(tunnel SafeWriteTunneler) error {
-	tripper := spdy.NewRoundTripper(nil)
+	tripper, err := spdy.NewRoundTripper(nil)
+	if err != nil {
+		return fmt.Errorf("failed to creates a new tripper, err: %v", err)
+	}
 	req, err := http.NewRequest(ah.Method, ah.URL.String(), nil)
 	if err != nil {
 		return fmt.Errorf("failed to create attach request, err: %v", err)

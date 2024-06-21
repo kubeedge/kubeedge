@@ -83,7 +83,7 @@ func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
 		`Use this key to set whether to install and start MQTT Broker by default`)
 	if err := cmd.Flags().MarkDeprecated("with-mqtt",
 		"The mqtt broker is alreay managed by the DaemonSet in the cloud"); err != nil {
-		klog.Warning("falied to mark the flag with-mqtt to deprecated, err: %v", err)
+		klog.Warningf("falied to mark the flag with-mqtt to deprecated, err: %v", err)
 	}
 
 	cmd.Flags().StringVar(&joinOptions.ImageRepository, common.FlagNameImageRepository, joinOptions.ImageRepository,

@@ -149,9 +149,6 @@ func prepareKeadm(upgradeReq *commontypes.NodeUpgradeJobRequest) error {
 
 	// install the requested installer keadm from docker image
 	klog.Infof("Begin to download version %s keadm", upgradeReq.Version)
-	if config.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint == "" {
-		config.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint = config.Modules.Edged.RemoteRuntimeEndpoint
-	}
 	container, err := util.NewContainerRuntime(config.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint, config.Modules.Edged.TailoredKubeletConfig.CgroupDriver)
 	if err != nil {
 		return fmt.Errorf("failed to new container runtime: %v", err)
