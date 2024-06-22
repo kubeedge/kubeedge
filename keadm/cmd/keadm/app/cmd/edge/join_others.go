@@ -19,6 +19,7 @@ limitations under the License.
 package edge
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -240,30 +241,34 @@ func runEdgeCore(withMqtt bool) error {
 	if err != nil {
 		return err
 	}
-	systemdExist := util.HasSystemd()
 
-	var binExec, tip string
-	if systemdExist {
-		tip = fmt.Sprintf("KubeEdge edgecore is running, For logs visit: journalctl -u %s.service -xe", common.EdgeCore)
-		binExec = fmt.Sprintf(
-			"sudo systemctl daemon-reload && sudo systemctl enable %s && sudo systemctl start %s",
-			common.EdgeCore, common.EdgeCore)
-	} else {
-		tip = fmt.Sprintf("KubeEdge edgecore is running, For logs visit: %s%s.log", util.KubeEdgeLogPath, util.KubeEdgeBinaryName)
+	if util.HasSystemd() {
+		ctx, cancel := context.WithTimeout(context.Background(), util.SystemdServiceTimeout)
+		defer cancel()
 
-		// FIXME: cleanup this code when the static pod mqtt broker no longer needs to be compatible
-		err := os.Setenv(constants.DeployMqttContainerEnv, strconv.FormatBool(withMqtt))
+		err := util.EnableAndRunSystemdUnit(ctx, "edgecore.service", true)
 		if err != nil {
-			klog.Errorf("Set Environment %s failed, err: %v", constants.DeployMqttContainerEnv, err)
+			return err
 		}
 
-		binExec = fmt.Sprintf(
-			"%s > %skubeedge/edge/%s.log 2>&1 &",
-			filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName),
-			util.KubeEdgePath,
-			util.KubeEdgeBinaryName,
-		)
+		klog.Infof("KubeEdge edgecore is running, For logs visit: journalctl -u %s.service -xe", common.EdgeCore)
+		return nil
 	}
+
+	tip := fmt.Sprintf("KubeEdge edgecore is running, For logs visit: %s%s.log", util.KubeEdgeLogPath, util.KubeEdgeBinaryName)
+
+	// FIXME: cleanup this code when the static pod mqtt broker no longer needs to be compatible
+	err = os.Setenv(constants.DeployMqttContainerEnv, strconv.FormatBool(withMqtt))
+	if err != nil {
+		klog.Errorf("Set Environment %s failed, err: %v", constants.DeployMqttContainerEnv, err)
+	}
+
+	binExec := fmt.Sprintf(
+		"%s > %skubeedge/edge/%s.log 2>&1 &",
+		filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName),
+		util.KubeEdgePath,
+		util.KubeEdgeBinaryName,
+	)
 
 	cmd := util.NewCommand(binExec)
 	if err := cmd.Exec(); err != nil {
