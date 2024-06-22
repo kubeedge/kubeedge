@@ -17,8 +17,8 @@ limitations under the License.
 package common
 
 import (
-	"testing"
 	"encoding/json"
+	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,7 +29,7 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 )
 
-func TestIsVolumeResource(t *testing.T){
+func TestIsVolumeResource(t *testing.T) {
 	assert := assert.New(t)
 
 	validResource := "test/" + constants.CSIResourceTypeVolume + "/resource"
@@ -41,10 +41,10 @@ func TestIsVolumeResource(t *testing.T){
 
 func TestGetMessageUID(t *testing.T) {
 	cases := []struct {
-		name     string
-		msg      beehivemodel.Message
+		name      string
+		msg       beehivemodel.Message
 		stdResult string
-		hasError bool
+		hasError  bool
 	}{
 		{
 			name: "Valid UID",
@@ -54,7 +54,7 @@ func TestGetMessageUID(t *testing.T) {
 				},
 			},
 			stdResult: "test-uid",
-			hasError: false,
+			hasError:  false,
 		},
 		{
 			name: "Invalid content type",
@@ -62,7 +62,7 @@ func TestGetMessageUID(t *testing.T) {
 				Content: "",
 			},
 			stdResult: "",
-			hasError: true,
+			hasError:  true,
 		},
 	}
 
@@ -82,10 +82,10 @@ func TestGetMessageUID(t *testing.T) {
 func TestGetMessageDeletionTimestamp(t *testing.T) {
 	now := v1.Now()
 	cases := []struct {
-		name     string
-		msg      beehivemodel.Message
+		name      string
+		msg       beehivemodel.Message
 		stdResult *v1.Time
-		hasError bool
+		hasError  bool
 	}{
 		{
 			name: "Valid DeletionTimestamp",
@@ -95,7 +95,7 @@ func TestGetMessageDeletionTimestamp(t *testing.T) {
 				},
 			},
 			stdResult: &now,
-			hasError: false,
+			hasError:  false,
 		},
 		{
 			name: "Invalid content type",
@@ -103,7 +103,7 @@ func TestGetMessageDeletionTimestamp(t *testing.T) {
 				Content: "",
 			},
 			stdResult: nil,
-			hasError: true,
+			hasError:  true,
 		},
 	}
 
@@ -122,23 +122,23 @@ func TestGetMessageDeletionTimestamp(t *testing.T) {
 
 func TestTrimMessage(t *testing.T) {
 	cases := []struct {
-		name     string
-		resource string
+		name      string
+		resource  string
 		stdResult string
 	}{
 		{
-			name:     "Valid resource",
-			resource: "node/test-node/namespace/pod/test-pod",
+			name:      "Valid resource",
+			resource:  "node/test-node/namespace/pod/test-pod",
 			stdResult: "namespace/pod/test-pod",
 		},
 		{
-			name:     "Invalid length of resource",
-			resource: "node/nodeName",
+			name:      "Invalid length of resource",
+			resource:  "node/nodeName",
 			stdResult: "node/nodeName",
 		},
 		{
-			name:     "Resource is not starting with node",
-			resource: "namespace/pod/test-pod-two",
+			name:      "Resource is not starting with node",
+			resource:  "namespace/pod/test-pod-two",
 			stdResult: "namespace/pod/test-pod-two",
 		},
 	}
@@ -182,10 +182,10 @@ func TestDeepCopy(t *testing.T) {
 
 func TestAckMessageKeyFunc(t *testing.T) {
 	cases := []struct {
-		name     string
-		obj      interface{}
+		name      string
+		obj       interface{}
 		stdResult string
-		hasError bool
+		hasError  bool
 	}{
 		{
 			name: "Valid message with GroupResource",
@@ -197,13 +197,13 @@ func TestAckMessageKeyFunc(t *testing.T) {
 				},
 			},
 			stdResult: "test-uid",
-			hasError: false,
+			hasError:  false,
 		},
 		{
-			name:     "Invalid object type",
-			obj:      "invalid",
+			name:      "Invalid object type",
+			obj:       "invalid",
 			stdResult: "",
-			hasError: true,
+			hasError:  true,
 		},
 		{
 			name: "Message without GroupResource",
@@ -212,7 +212,7 @@ func TestAckMessageKeyFunc(t *testing.T) {
 				Router: beehivemodel.MessageRoute{Group: "other-group"},
 			},
 			stdResult: "",
-			hasError: true,
+			hasError:  true,
 		},
 	}
 
@@ -231,10 +231,10 @@ func TestAckMessageKeyFunc(t *testing.T) {
 
 func TestNoAckMessageKeyFunc(t *testing.T) {
 	cases := []struct {
-		name     string
-		obj      interface{}
+		name      string
+		obj       interface{}
 		stdResult string
-		hasError bool
+		hasError  bool
 	}{
 		{
 			name: "Valid message",
@@ -242,13 +242,13 @@ func TestNoAckMessageKeyFunc(t *testing.T) {
 				Header: beehivemodel.MessageHeader{ID: "test-id"},
 			},
 			stdResult: "test-id",
-			hasError: false,
+			hasError:  false,
 		},
 		{
-			name:     "Invalid object type",
-			obj:      "invalid",
+			name:      "Invalid object type",
+			obj:       "invalid",
 			stdResult: "",
-			hasError: true,
+			hasError:  true,
 		},
 	}
 
@@ -264,4 +264,3 @@ func TestNoAckMessageKeyFunc(t *testing.T) {
 		})
 	}
 }
-
