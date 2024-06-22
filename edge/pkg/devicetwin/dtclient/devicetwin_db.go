@@ -1,7 +1,7 @@
 package dtclient
 
 import (
-	"github.com/beego/beego/orm"
+	"github.com/beego/beego/v2/client/orm"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
@@ -25,15 +25,15 @@ type DeviceTwin struct {
 }
 
 // SaveDeviceTwin save device twin
-func SaveDeviceTwin(obm orm.Ormer, doc *DeviceTwin) error {
-	num, err := obm.Insert(doc)
+func SaveDeviceTwin(to orm.TxOrmer, doc *DeviceTwin) error {
+	num, err := to.Insert(doc)
 	klog.V(4).Infof("Insert affected Num: %d, %s", num, err)
 	return err
 }
 
 // DeleteDeviceTwinByDeviceID delete device twin
-func DeleteDeviceTwinByDeviceID(obm orm.Ormer, deviceID string) error {
-	num, err := obm.QueryTable(DeviceTwinTableName).Filter("deviceid", deviceID).Delete()
+func DeleteDeviceTwinByDeviceID(to orm.TxOrmer, deviceID string) error {
+	num, err := to.QueryTable(DeviceTwinTableName).Filter("deviceid", deviceID).Delete()
 	if err != nil {
 		klog.Errorf("Something wrong when deleting data: %v", err)
 		return err
@@ -43,8 +43,8 @@ func DeleteDeviceTwinByDeviceID(obm orm.Ormer, deviceID string) error {
 }
 
 // DeleteDeviceTwin delete device twin
-func DeleteDeviceTwin(obm orm.Ormer, deviceID string, name string) error {
-	num, err := obm.QueryTable(DeviceTwinTableName).Filter("deviceid", deviceID).Filter("name", name).Delete()
+func DeleteDeviceTwin(to orm.TxOrmer, deviceID string, name string) error {
+	num, err := to.QueryTable(DeviceTwinTableName).Filter("deviceid", deviceID).Filter("name", name).Delete()
 	if err != nil {
 		klog.Errorf("Something wrong when deleting data: %v", err)
 		return err
@@ -61,8 +61,8 @@ func UpdateDeviceTwinField(deviceID string, name string, col string, value inter
 }
 
 // UpdateDeviceTwinFields update special fields
-func UpdateDeviceTwinFields(obm orm.Ormer, deviceID string, name string, cols map[string]interface{}) error {
-	num, err := obm.QueryTable(DeviceTwinTableName).Filter("deviceid", deviceID).Filter("name", name).Update(cols)
+func UpdateDeviceTwinFields(to orm.TxOrmer, deviceID string, name string, cols map[string]interface{}) error {
+	num, err := to.QueryTable(DeviceTwinTableName).Filter("deviceid", deviceID).Filter("name", name).Update(cols)
 	klog.V(4).Infof("Update affected Num: %d, %v", num, err)
 	return err
 }
@@ -86,9 +86,12 @@ type DeviceTwinUpdate struct {
 
 // UpdateDeviceTwinMulti update device twin multi
 func UpdateDeviceTwinMulti(updates []DeviceTwinUpdate) error {
-	var err error
+	to, err := dbm.DBAccess.Begin()
+	if err != nil {
+		klog.Errorf("Begin DBAccess error %v", err)
+	}
 	for _, update := range updates {
-		err = UpdateDeviceTwinFields(dbm.DBAccess, update.DeviceID, update.Name, update.Cols)
+		err = UpdateDeviceTwinFields(to, update.DeviceID, update.Name, update.Cols)
 		if err != nil {
 			return err
 		}
@@ -99,7 +102,7 @@ func UpdateDeviceTwinMulti(updates []DeviceTwinUpdate) error {
 // DeviceTwinTrans transaction of device twin
 func DeviceTwinTrans(adds []DeviceTwin, deletes []DeviceDelete, updates []DeviceTwinUpdate) error {
 	obm := dbm.DefaultOrmFunc()
-	err := obm.Begin()
+	to, err := obm.Begin()
 	if err != nil {
 		klog.Errorf("failed to begin transaction: %v", err)
 		return err
@@ -107,9 +110,9 @@ func DeviceTwinTrans(adds []DeviceTwin, deletes []DeviceDelete, updates []Device
 
 	defer func() {
 		if err != nil {
-			dbm.RollbackTransaction(obm)
+			dbm.RollbackTransaction(to)
 		} else {
-			err = obm.Commit()
+			err = to.Commit()
 			if err != nil {
 				klog.Errorf("failed to commit transaction: %v", err)
 			}
@@ -117,21 +120,21 @@ func DeviceTwinTrans(adds []DeviceTwin, deletes []DeviceDelete, updates []Device
 	}()
 
 	for _, add := range adds {
-		err = SaveDeviceTwin(obm, &add)
+		err = SaveDeviceTwin(to, &add)
 		if err != nil {
 			return err
 		}
 	}
 
 	for _, delete := range deletes {
-		err = DeleteDeviceTwin(obm, delete.DeviceID, delete.Name)
+		err = DeleteDeviceTwin(to, delete.DeviceID, delete.Name)
 		if err != nil {
 			return err
 		}
 	}
 
 	for _, update := range updates {
-		err = UpdateDeviceTwinFields(obm, update.DeviceID, update.Name, update.Cols)
+		err = UpdateDeviceTwinFields(to, update.DeviceID, update.Name, update.Cols)
 		if err != nil {
 			return err
 		}

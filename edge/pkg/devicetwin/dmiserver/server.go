@@ -19,6 +19,7 @@ package dmiserver
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"sync"
@@ -143,7 +144,7 @@ func (s *server) ReportDeviceStatus(ctx context.Context, in *pb.ReportDeviceStat
 			handleDeviceTwin(in, msg)
 		}
 	} else {
-		return &pb.ReportDeviceStatusResponse{}, fmt.Errorf("ReportDeviceStatusRequest does not have twin data")
+		return &pb.ReportDeviceStatusResponse{}, errors.New("ReportDeviceStatusRequest does not have twin data")
 	}
 
 	return &pb.ReportDeviceStatusResponse{}, nil

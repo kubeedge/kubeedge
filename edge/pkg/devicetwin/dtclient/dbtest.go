@@ -20,7 +20,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/beego/beego/orm"
+	"github.com/beego/beego/v2/client/orm"
 
 	"github.com/kubeedge/kubeedge/edge/mocks/beego"
 	"github.com/kubeedge/kubeedge/pkg/testtools"
@@ -37,6 +37,8 @@ type CasesSaveStr []struct {
 	returnInt int64
 	// returnErr is second return of mock interface ormerMock which is also expected error
 	returnErr error
+	// beginReturn is the return of mock interface ormerMock's Begin function
+	beginReturn orm.TxOrmer
 }
 
 // CasesDeleteStr is a struct for cases of delete
@@ -51,6 +53,8 @@ type CasesDeleteStr []struct {
 	deleteReturnErr error
 	// queryTableReturn is the return of mock interface ormerMock's QueryTable function
 	queryTableReturn orm.QuerySeter
+	// beginReturn is the return of mock interface ormerMock's Begin function
+	beginReturn orm.TxOrmer
 }
 
 // CasesUpdateStr is a struct for cases of update
@@ -65,6 +69,8 @@ type CasesUpdateStr []struct {
 	updateReturnErr error
 	// queryTableReturn is the return of mock interface ormerMock's QueryTable function
 	queryTableReturn orm.QuerySeter
+	// beginReturn is the return of mock interface ormerMock's Begin function
+	beginReturn orm.TxOrmer
 }
 
 // CasesQueryStr is a struct for cases of query
@@ -79,6 +85,8 @@ type CasesQueryStr []struct {
 	allReturnErr error
 	// queryTableReturn is the return of mock interface ormerMock's QueryTable function
 	queryTableReturn orm.QuerySeter
+	// beginReturn is the return of mock interface ormerMock's Begin function
+	beginReturn orm.TxOrmer
 }
 
 // CasesTransStr is a struct for cases of trans
@@ -119,6 +127,8 @@ type CasesTransStr []struct {
 	queryTableTimes int
 	// wantErr is expected error
 	wantErr error
+	// beginReturn is the return of mock interface ormerMock's Begin function
+	beginReturn orm.TxOrmer
 }
 
 // GetCasesSave get cases for save

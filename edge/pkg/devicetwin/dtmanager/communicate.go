@@ -98,7 +98,7 @@ func dealSendToCloud(context *dtcontext.DTContext, resource string, msg interfac
 	return nil
 }
 func dealLifeCycle(context *dtcontext.DTContext, resource string, msg interface{}) error {
-	klog.V(2).Infof("CONNECTED EVENT")
+	klog.V(2).Info("CONNECTED EVENT")
 	message, ok := msg.(*model.Message)
 	if !ok {
 		return errors.New("msg not Message type")
@@ -119,7 +119,7 @@ func dealLifeCycle(context *dtcontext.DTContext, resource string, msg interface{
 	return nil
 }
 func dealConfirm(context *dtcontext.DTContext, resource string, msg interface{}) error {
-	klog.V(2).Infof("CONFIRM EVENT")
+	klog.V(2).Info("CONFIRM EVENT")
 	value, ok := msg.(*model.Message)
 
 	if ok {
