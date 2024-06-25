@@ -24,8 +24,11 @@ CLOUD_EDGE_VERSION=${1:-"v1.15.1"}
 source "${KUBEEDGE_ROOT}/hack/lib/install.sh"
 
 function cleanup() {
-  sudo pkill edgecore || true
-  helm uninstall cloudcore -n kubeedge && kubectl delete ns kubeedge  || true
+  sudo /usr/local/bin/keadm reset edge --force || true
+  helm uninstall cloudcore -n kubeedge || true
+  # The namespace cleanup timeout may occur if pods is not clearned
+  kubectl get pods -n kubeedge | awk '{print $1}' | grep -v NAME | xargs kubectl delete pods -n kubeedge --force --grace-period=0 || true
+  kubectl delete ns kubeedge --force --grace-period=0  || true
   kind delete cluster --name test
   sudo rm -rf /var/log/kubeedge /etc/kubeedge /etc/systemd/system/edgecore.service $E2E_DIR/e2e_keadm/e2e_keadm.test $E2E_DIR/config.json
 }
@@ -47,16 +50,9 @@ function prepare_cluster() {
   kubectl delete daemonset kindnet -nkube-system
 }
 
-function build_image() {
+function build_keadm() {
   cd $KUBEEDGE_ROOT
-  make image WHAT=installation-package -f $KUBEEDGE_ROOT/Makefile
-  docker save kubeedge/installation-package:$IMAGE_TAG > installation-package.tar
-  sudo ctr -n=k8s.io image import installation-package.tar
-  kind load docker-image docker.io/kubeedge/installation-package:$IMAGE_TAG --name test
-
-  set +e
-  docker rmi $(docker images -f "dangling=true" -q)
-  set -Ee
+  make all WHAT=keadm
 }
 
 function get_cloudcore_image() {
@@ -76,7 +72,8 @@ function start_kubeedge() {
   cd $KUBEEDGE_ROOT
   export MASTER_IP=`kubectl get node test-control-plane -o jsonpath={.status.addresses[0].address}`
   export KUBECONFIG=$HOME/.kube/config
-  docker run --rm kubeedge/installation-package:$IMAGE_TAG cat /usr/local/bin/keadm > /usr/local/bin/keadm && chmod +x /usr/local/bin/keadm
+
+  cp $KUBEEDGE_ROOT/_output/local/bin/keadm /usr/local/bin/keadm && chmod +x /usr/local/bin/keadm
   /usr/local/bin/keadm init --advertise-address=$MASTER_IP --kubeedge-version $CLOUD_EDGE_VERSION --set cloudCore.service.enable=false --kube-config=$KUBECONFIG --force
 
   # ensure tokensecret is generated
@@ -129,8 +126,8 @@ export KUBECONFIG=$HOME/.kube/config
 echo -e "\nPreparing cluster..."
 prepare_cluster
 
-echo -e "\nBuilding keadm image..."
-build_image
+echo -e "\nBuilding keadm..."
+build_keadm
 
 echo -e "\nGet cloudcore image..."
 get_cloudcore_image
