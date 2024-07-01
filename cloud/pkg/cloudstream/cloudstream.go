@@ -25,8 +25,7 @@ import (
 )
 
 type cloudStream struct {
-	enable bool
-
+	enable     bool
 	tunnelPort int
 }
 
@@ -34,8 +33,7 @@ var _ core.Module = (*cloudStream)(nil)
 
 func newCloudStream(enable bool, tunnelPort int) *cloudStream {
 	return &cloudStream{
-		enable: enable,
-
+		enable:     enable,
 		tunnelPort: tunnelPort,
 	}
 }
