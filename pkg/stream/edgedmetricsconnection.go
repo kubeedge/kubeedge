@@ -34,8 +34,20 @@ type EdgedMetricsConnection struct {
 	Header   http.Header   `json:"header"`
 }
 
+func (ms *EdgedMetricsConnection) CreateConnectMessage() (*Message, error) {
+	data, err := json.Marshal(ms)
+	if err != nil {
+		return nil, err
+	}
+	return NewMessage(ms.MessID, MessageTypeMetricConnect, data), nil
+}
+
 func (ms *EdgedMetricsConnection) GetMessageID() uint64 {
 	return ms.MessID
+}
+
+func (ms *EdgedMetricsConnection) String() string {
+	return fmt.Sprintf("EDGE_Metrics_CONNECTOR Message MessageID %v", ms.MessID)
 }
 
 func (ms *EdgedMetricsConnection) CacheTunnelMessage(msg *Message) {
@@ -54,18 +66,6 @@ func (ms *EdgedMetricsConnection) CleanChannel() {
 			return
 		}
 	}
-}
-
-func (ms *EdgedMetricsConnection) CreateConnectMessage() (*Message, error) {
-	data, err := json.Marshal(ms)
-	if err != nil {
-		return nil, err
-	}
-	return NewMessage(ms.MessID, MessageTypeMetricConnect, data), nil
-}
-
-func (ms *EdgedMetricsConnection) String() string {
-	return fmt.Sprintf("EDGE_Metrics_CONNECTOR Message MessageID %v", ms.MessID)
 }
 
 func (ms *EdgedMetricsConnection) receiveFromCloudStream(stop chan struct{}) {

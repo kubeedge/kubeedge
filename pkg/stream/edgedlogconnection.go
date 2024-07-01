@@ -36,8 +36,20 @@ type EdgedLogsConnection struct {
 	Header   http.Header   `json:"header"`
 }
 
+func (l *EdgedLogsConnection) CreateConnectMessage() (*Message, error) {
+	data, err := json.Marshal(l)
+	if err != nil {
+		return nil, err
+	}
+	return NewMessage(l.MessID, MessageTypeLogsConnect, data), nil
+}
+
 func (l *EdgedLogsConnection) GetMessageID() uint64 {
 	return l.MessID
+}
+
+func (l *EdgedLogsConnection) String() string {
+	return fmt.Sprintf("EDGE_LOGS_CONNECTOR Message MessageID %v", l.MessID)
 }
 
 func (l *EdgedLogsConnection) CacheTunnelMessage(msg *Message) {
@@ -56,18 +68,6 @@ func (l *EdgedLogsConnection) CleanChannel() {
 			return
 		}
 	}
-}
-
-func (l *EdgedLogsConnection) CreateConnectMessage() (*Message, error) {
-	data, err := json.Marshal(l)
-	if err != nil {
-		return nil, err
-	}
-	return NewMessage(l.MessID, MessageTypeLogsConnect, data), nil
-}
-
-func (l *EdgedLogsConnection) String() string {
-	return fmt.Sprintf("EDGE_LOGS_CONNECTOR Message MessageID %v", l.MessID)
 }
 
 func (l *EdgedLogsConnection) receiveFromCloudStream(stop chan struct{}) {
