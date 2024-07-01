@@ -17,7 +17,6 @@ limitations under the License.
 package dynamiccontroller
 
 import (
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/klog/v2"
 
@@ -28,8 +27,8 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/application"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/config"
-	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/filter/defaultmaster"
-	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/filter/endpointresource"
+	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/filter/endpoints"
+	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/filter/endpointslice"
 	configv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
@@ -50,6 +49,12 @@ func Register(dc *configv1alpha1.DynamicController) {
 	config.InitConfigure(dc)
 	dynamicController = newDynamicController(dc.Enable)
 	core.Register(dynamicController)
+	registerResourceFilter()
+}
+
+func registerResourceFilter() {
+	endpoints.Register()
+	endpointslice.Register()
 }
 
 // Name of controller
@@ -69,8 +74,6 @@ func (dctl *DynamicController) Enable() bool {
 
 // Start controller
 func (dctl *DynamicController) Start() {
-	endpointresource.Register()
-	defaultmaster.Register()
 	dctl.dynamicSharedInformerFactory.Start(beehiveContext.Done())
 	for gvr, cacheSync := range dctl.dynamicSharedInformerFactory.WaitForCacheSync(beehiveContext.Done()) {
 		if !cacheSync {
@@ -87,9 +90,9 @@ func newDynamicController(enable bool) *DynamicController {
 		messageLayer:                 messagelayer.DynamicControllerMessageLayer(),
 		dynamicSharedInformerFactory: informers.GetInformersManager().GetDynamicInformerFactory(),
 	}
+
 	dctl.applicationCenter = application.NewApplicationCenter(dctl.dynamicSharedInformerFactory)
-	dctl.applicationCenter.ForResource(v1.SchemeGroupVersion.WithResource("nodes"))
-	dctl.applicationCenter.ForResource(v1.SchemeGroupVersion.WithResource("services"))
+
 	return dctl
 }
 

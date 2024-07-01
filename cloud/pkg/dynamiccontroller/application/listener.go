@@ -23,11 +23,18 @@ type SelectorListener struct {
 	nodeName string
 	gvr      schema.GroupVersionResource
 	// e.g. labels and fields(metadata.namespace metadata.name spec.nodename)
-	selector LabelFieldSelector
+	selector    LabelFieldSelector
+	filterChain *filter.FiltersChain
 }
 
 func NewSelectorListener(ID, nodeName string, gvr schema.GroupVersionResource, selector LabelFieldSelector) *SelectorListener {
-	return &SelectorListener{id: ID, nodeName: nodeName, gvr: gvr, selector: selector}
+	return &SelectorListener{
+		id:          ID,
+		nodeName:    nodeName,
+		gvr:         gvr,
+		selector:    selector,
+		filterChain: filter.GetFilterChainFor(gvr),
+	}
 }
 
 func (l *SelectorListener) sendAllObjects(rets []runtime.Object, handler *CommonResourceEventHandler) {
@@ -51,9 +58,15 @@ func (l *SelectorListener) sendObj(event watch.Event, messageLayer messagelayer.
 	if !l.selector.MatchObj(event.Object) {
 		return
 	}
-	// filter message
-	filterEvent := *(event.DeepCopy())
-	filter.MessageFilter(filterEvent.Object, l.nodeName)
+
+	filterEvent := event
+
+	if l.filterChain != nil {
+		// filter message
+		filterEvent = *(event.DeepCopy())
+
+		l.filterChain.Process(filterEvent.Object, l.nodeName)
+	}
 
 	namespace := accessor.GetNamespace()
 	if namespace == "" {
