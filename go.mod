@@ -4,12 +4,13 @@ go 1.20
 
 require (
 	github.com/256dpi/gomqtt v0.10.4
+	github.com/agiledragon/gomonkey v2.0.2+incompatible
+	github.com/avast/retry-go v3.0.0+incompatible
+	github.com/beego/beego/v2 v2.1.6
 	github.com/blang/semver v3.5.1+incompatible
-	github.com/cilium/ebpf v0.9.1 // indirect
 	github.com/container-storage-interface/spec v1.8.0
+	github.com/coreos/go-systemd/v22 v22.5.0
 	github.com/distribution/distribution/v3 v3.0.0-20221208165359-362910506bc2
-	github.com/docker/docker v23.0.1+incompatible // indirect
-	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/eclipse/paho.mqtt.golang v1.2.0
 	github.com/emicklei/go-restful v2.16.0+incompatible
 	github.com/evanphx/json-patch v5.6.0+incompatible
@@ -22,16 +23,25 @@ require (
 	github.com/kubeedge/viaduct v0.0.0
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1
 	github.com/mattn/go-sqlite3 v1.14.22
+	github.com/onsi/ginkgo/v2 v2.9.5
 	github.com/onsi/gomega v1.27.7
+	github.com/opencontainers/selinux v1.10.0
+	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.16.0
 	github.com/shirou/gopsutil v2.21.11+incompatible
 	github.com/shirou/gopsutil/v3 v3.23.2
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
+	github.com/vishvananda/netlink v1.1.1-0.20201029203352-d40f9887b852
+	go.opentelemetry.io/otel/trace v1.22.0
 	golang.org/x/net v0.21.0
+	golang.org/x/sys v0.19.0
+	golang.org/x/text v0.14.0
 	golang.org/x/time v0.5.0
 	google.golang.org/grpc v1.63.0
 	google.golang.org/protobuf v1.33.0
+	gopkg.in/square/go-jose.v2 v2.6.0
+	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.12.3
 	k8s.io/api v0.28.6
 	k8s.io/apiextensions-apiserver v0.28.6
@@ -41,9 +51,11 @@ require (
 	k8s.io/client-go v0.28.6
 	k8s.io/code-generator v0.28.6
 	k8s.io/component-base v0.28.6
+	k8s.io/component-helpers v0.0.0
 	k8s.io/cri-api v0.28.6
 	k8s.io/klog/v2 v2.100.1
 	k8s.io/kube-openapi v0.0.0-20230717233707-2695361300d9
+	k8s.io/kubectl v0.28.6
 	k8s.io/kubelet v0.28.6
 	k8s.io/kubernetes v1.28.6
 	k8s.io/mount-utils v0.28.6
@@ -51,25 +63,8 @@ require (
 	sigs.k8s.io/apiserver-network-proxy v0.0.37
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.1.2
 	sigs.k8s.io/controller-runtime v0.15.3
-	sigs.k8s.io/yaml v1.3.0
-)
-
-require (
-	github.com/agiledragon/gomonkey v2.0.2+incompatible
-	github.com/avast/retry-go v3.0.0+incompatible
-	github.com/beego/beego/v2 v2.1.6
-	github.com/onsi/ginkgo/v2 v2.9.5
-	github.com/opencontainers/selinux v1.10.0
-	github.com/pkg/errors v0.9.1
-	github.com/vishvananda/netlink v1.1.1-0.20201029203352-d40f9887b852
-	go.opentelemetry.io/otel/trace v1.22.0
-	golang.org/x/sys v0.19.0
-	golang.org/x/text v0.14.0
-	gopkg.in/square/go-jose.v2 v2.6.0
-	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/component-helpers v0.0.0
-	k8s.io/kubectl v0.28.6
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3
+	sigs.k8s.io/yaml v1.3.0
 )
 
 require (
@@ -108,17 +103,19 @@ require (
 	github.com/chai2010/gettext-go v1.0.2 // indirect
 	github.com/checkpoint-restore/go-criu/v5 v5.3.0 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
+	github.com/cilium/ebpf v0.9.1 // indirect
 	github.com/containerd/cgroups v1.1.0 // indirect
 	github.com/containerd/console v1.0.3 // indirect
 	github.com/containerd/containerd v1.7.0 // indirect
 	github.com/containerd/ttrpc v1.2.2 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
-	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/cli v23.0.1+incompatible // indirect
 	github.com/docker/distribution v2.8.2+incompatible // indirect
+	github.com/docker/docker v23.0.1+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
+	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.10.1 // indirect
