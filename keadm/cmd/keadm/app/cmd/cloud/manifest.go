@@ -80,7 +80,7 @@ func addManifestsGenerateJoinOtherFlags(cmd *cobra.Command, initOpts *types.Init
 }
 
 // AddManifestsGenerate2ToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
-func AddManifestsGenerate2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string]types.FlagData, initOpts *types.InitOptions) error {
+func AddManifestsGenerate2ToolsList(toolList map[string]types.ToolsInstaller, _ map[string]types.FlagData, initOpts *types.InitOptions) error {
 	common := util.Common{
 		ToolVersion: semver.MustParse(util.GetHelmVersion(initOpts.KubeEdgeVersion, util.RetryTimes)),
 		KubeConfig:  initOpts.KubeConfig,

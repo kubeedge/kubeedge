@@ -43,15 +43,15 @@ type ServiceAccountsBridge struct {
 }
 
 // CreateToken takes the representation of a tokenRequest and creates it.  Returns the server's representation of the tokenRequest, and an error, if there is any.
-func (c *ServiceAccountsBridge) CreateToken(ctx context.Context, serviceAccountName string, tokenRequest *authenticationv1.TokenRequest, opts metav1.CreateOptions) (result *authenticationv1.TokenRequest, err error) {
+func (c *ServiceAccountsBridge) CreateToken(_ context.Context, serviceAccountName string, tokenRequest *authenticationv1.TokenRequest, _ metav1.CreateOptions) (result *authenticationv1.TokenRequest, err error) {
 	return c.MetaClient.ServiceAccountToken().GetServiceAccountToken(c.ns, serviceAccountName, tokenRequest)
 }
 
-func (c *ServiceAccountsBridge) Delete(ctx context.Context, podUID string, opts metav1.DeleteOptions) error {
+func (c *ServiceAccountsBridge) Delete(_ context.Context, podUID string, _ metav1.DeleteOptions) error {
 	c.MetaClient.ServiceAccountToken().DeleteServiceAccountToken(types.UID(podUID))
 	return nil
 }
 
-func (c *ServiceAccountsBridge) Get(ctx context.Context, name string, options metav1.GetOptions) (result *corev1.ServiceAccount, err error) {
+func (c *ServiceAccountsBridge) Get(_ context.Context, name string, _ metav1.GetOptions) (result *corev1.ServiceAccount, err error) {
 	return c.MetaClient.ServiceAccounts(c.ns).Get(name)
 }

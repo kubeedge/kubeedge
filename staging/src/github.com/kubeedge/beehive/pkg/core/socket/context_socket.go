@@ -290,7 +290,7 @@ func (m *context) SendToGroup(group string, message model.Message) {
 }
 
 // SendToGroupSync send to group sync
-func (*context) SendToGroupSync(moduleType string, message model.Message, timeout time.Duration) error {
+func (*context) SendToGroupSync(string, model.Message, time.Duration) error {
 	return fmt.Errorf("not supported now")
 }
 

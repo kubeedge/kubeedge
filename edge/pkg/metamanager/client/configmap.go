@@ -37,15 +37,15 @@ func newConfigMaps(namespace string, s SendInterface) *configMaps {
 	}
 }
 
-func (c *configMaps) Create(cm *api.ConfigMap) (*api.ConfigMap, error) {
+func (c *configMaps) Create(*api.ConfigMap) (*api.ConfigMap, error) {
 	return nil, nil
 }
 
-func (c *configMaps) Update(cm *api.ConfigMap) error {
+func (c *configMaps) Update(*api.ConfigMap) error {
 	return nil
 }
 
-func (c *configMaps) Delete(name string) error {
+func (c *configMaps) Delete(string) error {
 	return nil
 }
 

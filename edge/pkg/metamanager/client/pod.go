@@ -67,7 +67,7 @@ func (c *pods) Create(cm *corev1.Pod) (*corev1.Pod, error) {
 	return handlePodResp(resource, content)
 }
 
-func (c *pods) Update(cm *corev1.Pod) error {
+func (c *pods) Update(*corev1.Pod) error {
 	return nil
 }
 

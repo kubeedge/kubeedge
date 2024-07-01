@@ -61,7 +61,7 @@ func (bc *BaseController) Start() error {
 	return fmt.Errorf("controller not implemented")
 }
 
-func (bc *BaseController) StageCompleted(taskID string, state api.State) bool {
+func (bc *BaseController) StageCompleted(string, api.State) bool {
 	return false
 }
 
@@ -86,11 +86,11 @@ func (bc *BaseController) ValidateNode(taskMessage util.TaskMessage) []v1.Node {
 	return validateNodes
 }
 
-func (bc *BaseController) GetNodeStatus(name string) ([]v1alpha1.TaskStatus, error) {
+func (bc *BaseController) GetNodeStatus(string) ([]v1alpha1.TaskStatus, error) {
 	return nil, fmt.Errorf("function GetNodeStatus need to be init")
 }
 
-func (bc *BaseController) UpdateNodeStatus(name string, status []v1alpha1.TaskStatus) error {
+func (bc *BaseController) UpdateNodeStatus(string, []v1alpha1.TaskStatus) error {
 	return fmt.Errorf("function UpdateNodeStatus need to be init")
 }
 
@@ -104,11 +104,11 @@ func isNodeReady(node *v1.Node) bool {
 	return true
 }
 
-func (bc *BaseController) ReportNodeStatus(taskID string, nodeID string, event fsm.Event) (api.State, error) {
+func (bc *BaseController) ReportNodeStatus(string, string, fsm.Event) (api.State, error) {
 	return "", fmt.Errorf("function ReportNodeStatus need to be init")
 }
 
-func (bc *BaseController) ReportTaskStatus(taskID string, event fsm.Event) (api.State, error) {
+func (bc *BaseController) ReportTaskStatus(string, fsm.Event) (api.State, error) {
 	return "", fmt.Errorf("function ReportTaskStatus need to be init")
 }
 

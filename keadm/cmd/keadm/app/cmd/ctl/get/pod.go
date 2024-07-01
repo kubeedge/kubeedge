@@ -146,10 +146,7 @@ func (o *PodGetOptions) getPods(args []string) error {
 	}
 
 	printer, err := o.PrintFlags.ToPrinter()
-	if err := printer.PrintObj(table, os.Stdout); err != nil {
-		return err
-	}
-	return nil
+	return printer.PrintObj(table, os.Stdout)
 }
 
 func NewGetOpts() *PodGetOptions {

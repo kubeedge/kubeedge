@@ -158,7 +158,7 @@ func TestGetLatestVersion(t *testing.T) {
 	}
 }
 
-func TestHasSystemd(t *testing.T) {
+func TestHasSystemd(*testing.T) {
 	HasSystemd()
 }
 

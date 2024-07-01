@@ -40,7 +40,7 @@ func handleServer(container *mux.MessageContainer, writer mux.ResponseWriter) {
 	writer.WriteResponse(&model.Message{}, container.Message.GetContent())
 }
 
-func connNotify(conn conn.Connection) {
+func connNotify(conn.Connection) {
 	klog.Info("receive a connection")
 }
 
