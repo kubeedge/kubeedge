@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The KubeEdge Authors.
+Copyright 2024 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,9 +23,12 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/golang/mock/gomock"
+
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
+	"github.com/kubeedge/kubeedge/pkg/testtools"
 )
 
 func TestGetRemoveList(t *testing.T) {
@@ -174,70 +177,68 @@ func TestDealMembershipUpdateInvalidContent(t *testing.T) {
 	}
 }
 
-//func TestDealMembershipUpdateValidAddedDevice(t *testing.T) {
-//	ormerMock, _ := testtools.InitOrmerMock(t)
-//	var to orm.TxOrmer
-//	ormerMock.EXPECT().Begin().Return(to, nil)
-//	ormerMock.EXPECT().Insert(gomock.Any()).Return(int64(1), nil).Times(1)
-//
-//	dtc := &dtcontext.DTContext{
-//		DeviceList:  &sync.Map{},
-//		DeviceMutex: &sync.Map{},
-//		Mutex:       &sync.RWMutex{},
-//		GroupID:     "1",
-//	}
-//
-//	payload := dttype.MembershipUpdate{
-//		AddDevices: []dttype.Device{
-//			{
-//				ID:    "DeviceA",
-//				Name:  "Router",
-//				State: "unknown",
-//			},
-//		},
-//		BaseMessage: dttype.BaseMessage{
-//			EventID: "eventid",
-//		},
-//	}
-//	content, _ := json.Marshal(payload)
-//	var m = &model.Message{
-//		Content: content,
-//	}
-//	err := dealMembershipUpdate(dtc, "t", m)
-//	if err != nil {
-//		t.Errorf("expected nil, but got error: %v", err)
-//	}
-//}
+func TestDealMembershipUpdateValidAddedDevice(t *testing.T) {
+	ormerMock, _ := testtools.InitOrmerMock(t)
+	ormerMock.EXPECT().DoTx(gomock.Any()).Return(nil).Times(1)
 
-//func TestDealMembershipUpdateValidRemovedDevice(t *testing.T) {
-//	dtc := &dtcontext.DTContext{
-//		DeviceList:  &sync.Map{},
-//		DeviceMutex: &sync.Map{},
-//		Mutex:       &sync.RWMutex{},
-//		GroupID:     "1",
-//	}
-//
-//	payload := dttype.MembershipUpdate{
-//		RemoveDevices: []dttype.Device{
-//			{
-//				ID:    "DeviceA",
-//				Name:  "Router",
-//				State: "unknown",
-//			},
-//		},
-//		BaseMessage: dttype.BaseMessage{
-//			EventID: "eventid",
-//		},
-//	}
-//	content, _ := json.Marshal(payload)
-//	var m = &model.Message{
-//		Content: content,
-//	}
-//	err := dealMembershipUpdate(dtc, "t", m)
-//	if err != nil {
-//		t.Errorf("expected nil, but got error: %v", err)
-//	}
-//}
+	dtc := &dtcontext.DTContext{
+		DeviceList:  &sync.Map{},
+		DeviceMutex: &sync.Map{},
+		Mutex:       &sync.RWMutex{},
+		GroupID:     "1",
+	}
+
+	payload := dttype.MembershipUpdate{
+		AddDevices: []dttype.Device{
+			{
+				ID:    "DeviceA",
+				Name:  "Router",
+				State: "unknown",
+			},
+		},
+		BaseMessage: dttype.BaseMessage{
+			EventID: "eventid",
+		},
+	}
+	content, _ := json.Marshal(payload)
+	var m = &model.Message{
+		Content: content,
+	}
+	err := dealMembershipUpdate(dtc, "t", m)
+	if err != nil {
+		t.Errorf("expected nil, but got error: %v", err)
+	}
+}
+
+func TestDealMembershipUpdateValidRemovedDevice(t *testing.T) {
+	dtc := &dtcontext.DTContext{
+		DeviceList:  &sync.Map{},
+		DeviceMutex: &sync.Map{},
+		Mutex:       &sync.RWMutex{},
+		GroupID:     "1",
+	}
+
+	payload := dttype.MembershipUpdate{
+		RemoveDevices: []dttype.Device{
+			{
+				ID:    "DeviceA",
+				Name:  "Router",
+				State: "unknown",
+			},
+		},
+		BaseMessage: dttype.BaseMessage{
+			EventID: "eventid",
+		},
+	}
+	content, _ := json.Marshal(payload)
+	var m = &model.Message{
+		Content: content,
+	}
+	err := dealMembershipUpdate(dtc, "t", m)
+	if err != nil {
+		t.Errorf("expected nil, but got error: %v", err)
+	}
+}
 
 func TestDealMembershipGetEmptyMsg(t *testing.T) {
 	dtc := &dtcontext.DTContext{
@@ -266,63 +267,63 @@ func TestDealMembershipGetInvalidMsg(t *testing.T) {
 	}
 }
 
-//func TestDealMembershipGetValid(t *testing.T) {
-//	dtc := &dtcontext.DTContext{
-//		DeviceList:  &sync.Map{},
-//		DeviceMutex: &sync.Map{},
-//		Mutex:       &sync.RWMutex{},
-//		GroupID:     "1",
-//	}
-//
-//	payload := dttype.MembershipUpdate{
-//		AddDevices: []dttype.Device{
-//			{
-//				ID:    "DeviceA",
-//				Name:  "Router",
-//				State: "unknown",
-//			},
-//		},
-//		BaseMessage: dttype.BaseMessage{
-//			EventID: "eventid",
-//		},
-//	}
-//	content, _ := json.Marshal(payload)
-//	var m = &model.Message{
-//		Content: content,
-//	}
-//	err := dealMembershipGet(dtc, "t", m)
-//	if !reflect.DeepEqual(err, errors.New("Not found chan to communicate")) {
-//		t.Errorf("expected %v, but got error: %v", errors.New("Not found chan to communicate"), err)
-//	}
-//}
-//
-//func TestDealMembershipGetInnerValid(t *testing.T) {
-//	dtc := &dtcontext.DTContext{
-//		DeviceList:  &sync.Map{},
-//		DeviceMutex: &sync.Map{},
-//		Mutex:       &sync.RWMutex{},
-//		GroupID:     "1",
-//	}
-//
-//	payload := dttype.MembershipUpdate{
-//		AddDevices: []dttype.Device{
-//			{
-//				ID:    "DeviceA",
-//				Name:  "Router",
-//				State: "unknown",
-//			},
-//		},
-//		BaseMessage: dttype.BaseMessage{
-//			EventID: "eventid",
-//		},
-//	}
-//	content, _ := json.Marshal(payload)
-//
-//	err := dealMembershipGetInner(dtc, content)
-//	if !reflect.DeepEqual(err, errors.New("Not found chan to communicate")) {
-//		t.Errorf("expected %v, but got error: %v", errors.New("Not found chan to communicate"), err)
-//	}
-//}
+func TestDealMembershipGetValid(t *testing.T) {
+	dtc := &dtcontext.DTContext{
+		DeviceList:  &sync.Map{},
+		DeviceMutex: &sync.Map{},
+		Mutex:       &sync.RWMutex{},
+		GroupID:     "1",
+	}
+
+	payload := dttype.MembershipUpdate{
+		AddDevices: []dttype.Device{
+			{
+				ID:    "DeviceA",
+				Name:  "Router",
+				State: "unknown",
+			},
+		},
+		BaseMessage: dttype.BaseMessage{
+			EventID: "eventid",
+		},
+	}
+	content, _ := json.Marshal(payload)
+	var m = &model.Message{
+		Content: content,
+	}
+	err := dealMembershipGet(dtc, "t", m)
+	if !reflect.DeepEqual(err, errors.New("Not found chan to communicate")) {
+		t.Errorf("expected %v, but got error: %v", errors.New("Not found chan to communicate"), err)
+	}
+}
+
+func TestDealMembershipGetInnerValid(t *testing.T) {
+	dtc := &dtcontext.DTContext{
+		DeviceList:  &sync.Map{},
+		DeviceMutex: &sync.Map{},
+		Mutex:       &sync.RWMutex{},
+		GroupID:     "1",
+	}
+
+	payload := dttype.MembershipUpdate{
+		AddDevices: []dttype.Device{
+			{
+				ID:    "DeviceA",
+				Name:  "Router",
+				State: "unknown",
+			},
+		},
+		BaseMessage: dttype.BaseMessage{
+			EventID: "eventid",
+		},
+	}
+	content, _ := json.Marshal(payload)
+
+	err := dealMembershipGetInner(dtc, content)
+	if !reflect.DeepEqual(err, errors.New("Not found chan to communicate")) {
+		t.Errorf("expected %v, but got error: %v", errors.New("Not found chan to communicate"), err)
+	}
+}
 
 func TestDealMembershipGetInnerInValid(t *testing.T) {
 	dtc := &dtcontext.DTContext{

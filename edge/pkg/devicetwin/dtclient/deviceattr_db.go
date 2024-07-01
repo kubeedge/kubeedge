@@ -1,6 +1,8 @@
 package dtclient
 
 import (
+	"context"
+
 	"github.com/beego/beego/v2/client/orm"
 	"k8s.io/klog/v2"
 
@@ -20,31 +22,57 @@ type DeviceAttr struct {
 }
 
 // SaveDeviceAttr save device attributes
-func SaveDeviceAttr(to orm.TxOrmer, doc *DeviceAttr) error {
-	num, err := to.Insert(doc)
-	klog.V(4).Infof("Insert affected Num: %d, %s", num, err)
-	return err
+func SaveDeviceAttr(o orm.Ormer, doc *DeviceAttr) error {
+	err := o.DoTx(func(ctx context.Context, txOrm orm.TxOrmer) error {
+		// insert data
+		// Using txOrm to execute SQL
+		_, e := txOrm.Insert(doc)
+		// if e != nil the transaction will be rollback
+		// or it will be committed
+		return e
+	})
+	if err != nil {
+		klog.Errorf("Something wrong when insert DeviceAttr data: %v", err)
+		return err
+	}
+	klog.V(4).Info("insert DeviceAttr data successfully")
+	return nil
 }
 
 // DeleteDeviceAttrByDeviceID delete device attr
-func DeleteDeviceAttrByDeviceID(to orm.TxOrmer, deviceID string) error {
-	num, err := to.QueryTable(DeviceAttrTableName).Filter("deviceid", deviceID).Delete()
+func DeleteDeviceAttrByDeviceID(o orm.Ormer, deviceID string) error {
+	err := o.DoTx(func(ctx context.Context, txOrm orm.TxOrmer) error {
+		// insert data
+		// Using txOrm to execute SQL
+		_, e := txOrm.QueryTable(DeviceAttrTableName).Filter("deviceid", deviceID).Delete()
+		// if e != nil the transaction will be rollback
+		// or it will be committed
+		return e
+	})
+
 	if err != nil {
-		klog.Errorf("Something wrong when deleting data: %v", err)
+		klog.Errorf("Something wrong when deleting Device data: %v", err)
 		return err
 	}
-	klog.V(4).Infof("Delete affected Num: %d", num)
+	klog.V(4).Info("Delete Device data successfully")
 	return nil
 }
 
 // DeleteDeviceAttr delete device attr
-func DeleteDeviceAttr(to orm.TxOrmer, deviceID string, name string) error {
-	num, err := to.QueryTable(DeviceAttrTableName).Filter("deviceid", deviceID).Filter("name", name).Delete()
+func DeleteDeviceAttr(o orm.Ormer, deviceID string, name string) error {
+	err := o.DoTx(func(ctx context.Context, txOrm orm.TxOrmer) error {
+		// delete data
+		// Using txOrm to execute SQL
+		_, e := txOrm.QueryTable(DeviceAttrTableName).Filter("deviceid", deviceID).Filter("name", name).Delete()
+		// if e != nil the transaction will be rollback
+		// or it will be committed
+		return e
+	})
 	if err != nil {
 		klog.Errorf("Something wrong when deleting data: %v", err)
 		return err
 	}
-	klog.V(4).Infof("Delete affected Num: %d", num)
+	klog.V(4).Infof("Delete Device attr successfully")
 	return nil
 }
 
@@ -56,8 +84,8 @@ func UpdateDeviceAttrField(deviceID string, name string, col string, value inter
 }
 
 // UpdateDeviceAttrFields update special fields
-func UpdateDeviceAttrFields(to orm.TxOrmer, deviceID string, name string, cols map[string]interface{}) error {
-	num, err := to.QueryTable(DeviceAttrTableName).Filter("deviceid", deviceID).Filter("name", name).Update(cols)
+func UpdateDeviceAttrFields(o orm.Ormer, deviceID string, name string, cols map[string]interface{}) error {
+	num, err := o.QueryTable(DeviceAttrTableName).Filter("deviceid", deviceID).Filter("name", name).Update(cols)
 	klog.V(4).Infof("Update affected Num: %d, %s", num, err)
 	return err
 }
@@ -88,9 +116,8 @@ type DeviceAttrUpdate struct {
 // UpdateDeviceAttrMulti update device attr multi
 func UpdateDeviceAttrMulti(updates []DeviceAttrUpdate) error {
 	var err error
-	to, err := dbm.DBAccess.Begin()
 	for _, update := range updates {
-		err = UpdateDeviceAttrFields(to, update.DeviceID, update.Name, update.Cols)
+		err = UpdateDeviceAttrFields(dbm.DBAccess, update.DeviceID, update.Name, update.Cols)
 		if err != nil {
 			return err
 		}
@@ -101,39 +128,24 @@ func UpdateDeviceAttrMulti(updates []DeviceAttrUpdate) error {
 // DeviceAttrTrans transaction of device attr
 func DeviceAttrTrans(adds []DeviceAttr, deletes []DeviceDelete, updates []DeviceAttrUpdate) error {
 	obm := dbm.DefaultOrmFunc()
-	to, err := obm.Begin()
-	if err != nil {
-		klog.Errorf("failed to begin transaction: %v", err)
-		return err
-	}
-
-	defer func() {
-		if err != nil {
-			dbm.RollbackTransaction(to)
-		} else {
-			err = to.Commit()
-			if err != nil {
-				klog.Errorf("failed to commit transaction: %v", err)
-			}
-		}
-	}()
+	var err error
 
 	for _, add := range adds {
-		err = SaveDeviceAttr(to, &add)
+		err = SaveDeviceAttr(obm, &add)
 		if err != nil {
 			return err
 		}
 	}
 
 	for _, delete := range deletes {
-		err = DeleteDeviceAttr(to, delete.DeviceID, delete.Name)
+		err = DeleteDeviceAttr(obm, delete.DeviceID, delete.Name)
 		if err != nil {
 			return err
 		}
 	}
 
 	for _, update := range updates {
-		err = UpdateDeviceAttrFields(to, update.DeviceID, update.Name, update.Cols)
+		err = UpdateDeviceAttrFields(obm, update.DeviceID, update.Name, update.Cols)
 		if err != nil {
 			return err
 		}

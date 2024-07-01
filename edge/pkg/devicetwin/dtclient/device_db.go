@@ -1,6 +1,8 @@
 package dtclient
 
 import (
+	"context"
+
 	"github.com/beego/beego/v2/client/orm"
 	"k8s.io/klog/v2"
 
@@ -17,20 +19,41 @@ type Device struct {
 }
 
 // SaveDevice save device
-func SaveDevice(to orm.TxOrmer, doc *Device) error {
-	num, err := to.Insert(doc)
-	klog.V(4).Infof("Insert affected Num: %d, %v", num, err)
-	return err
+func SaveDevice(o orm.Ormer, doc *Device) error {
+	err := o.DoTx(func(ctx context.Context, txOrm orm.TxOrmer) error {
+		// insert data
+		// Using txOrm to execute SQL
+		_, e := txOrm.Insert(doc)
+		// if e != nil the transaction will be rollback
+		// or it will be committed
+		return e
+	})
+	if err != nil {
+		klog.Errorf("Something wrong when insert Device data: %v", err)
+		return err
+	}
+	klog.V(4).Info("insert Device data successfully")
+	return nil
 }
 
 // DeleteDeviceByID delete device by id
-func DeleteDeviceByID(to orm.TxOrmer, id string) error {
-	num, err := to.QueryTable(DeviceTableName).Filter("id", id).Delete()
+func DeleteDeviceByID(o orm.Ormer, id string) error {
+	//num, err := o.QueryTable(DeviceTableName).Filter("id", id).Delete()
+
+	err := o.DoTx(func(ctx context.Context, txOrm orm.TxOrmer) error {
+		// insert data
+		// Using txOrm to execute SQL
+		_, e := txOrm.QueryTable(DeviceTableName).Filter("id", id).Delete()
+		// if e != nil the transaction will be rollback
+		// or it will be committed
+		return e
+	})
+
 	if err != nil {
-		klog.Errorf("Something wrong when deleting data: %v", err)
+		klog.Errorf("Something wrong when deleting Device data: %v", err)
 		return err
 	}
-	klog.V(4).Infof("Delete affected Num: %d", num)
+	klog.V(4).Info("Delete Device data successfully")
 	return nil
 }
 
@@ -89,26 +112,9 @@ func UpdateDeviceMulti(updates []DeviceUpdate) error {
 // AddDeviceTrans the transaction of add device
 func AddDeviceTrans(adds []Device, addAttrs []DeviceAttr, addTwins []DeviceTwin) error {
 	obm := dbm.DefaultOrmFunc()
-	to, err := obm.Begin() // In v2 version of beego/beego, it is recommended to use specific transactions to perform database inserts instead of global inserts.
-	if err != nil {
-		klog.Errorf("failed to begin transaction: %v", err)
-		return err
-	}
-
-	defer func() {
-		if err != nil {
-			dbm.RollbackTransaction(to)
-		} else {
-			err = to.Commit()
-			if err != nil {
-				klog.Errorf("failed to commit transaction: %v", err)
-			}
-		}
-	}()
-
+	var err error
 	for _, add := range adds {
-		err = SaveDevice(to, &add)
-
+		err = SaveDevice(obm, &add)
 		if err != nil {
 			klog.Errorf("save device failed: %v", err)
 			return err
@@ -116,15 +122,17 @@ func AddDeviceTrans(adds []Device, addAttrs []DeviceAttr, addTwins []DeviceTwin)
 	}
 
 	for _, attr := range addAttrs {
-		err = SaveDeviceAttr(to, &attr)
+		err = SaveDeviceAttr(obm, &attr)
 		if err != nil {
+			klog.Errorf("save device attr failed: %v", err)
 			return err
 		}
 	}
 
 	for _, twin := range addTwins {
-		err = SaveDeviceTwin(to, &twin)
+		err = SaveDeviceTwin(obm, &twin)
 		if err != nil {
+			klog.Errorf("save device twin failed: %v", err)
 			return err
 		}
 	}
@@ -135,33 +143,18 @@ func AddDeviceTrans(adds []Device, addAttrs []DeviceAttr, addTwins []DeviceTwin)
 // DeleteDeviceTrans the transaction of delete device
 func DeleteDeviceTrans(deletes []string) error {
 	obm := dbm.DefaultOrmFunc()
-	to, err := obm.Begin() // In v2 version of beego/beego, it is recommended to use specific transactions to perform database delete instead of global delete.
-	if err != nil {
-		klog.Errorf("failed to begin transaction: %v", err)
-		return err
-	}
-
-	defer func() {
-		if err != nil {
-			dbm.RollbackTransaction(to)
-		} else {
-			err = to.Commit()
-			if err != nil {
-				klog.Errorf("failed to commit transaction: %v", err)
-			}
-		}
-	}()
+	var err error
 
 	for _, delete := range deletes {
-		err = DeleteDeviceByID(to, delete)
+		err = DeleteDeviceByID(obm, delete)
 		if err != nil {
 			return err
 		}
-		err = DeleteDeviceAttrByDeviceID(to, delete)
+		err = DeleteDeviceAttrByDeviceID(obm, delete)
 		if err != nil {
 			return err
 		}
-		err = DeleteDeviceTwinByDeviceID(to, delete)
+		err = DeleteDeviceTwinByDeviceID(obm, delete)
 		if err != nil {
 			return err
 		}

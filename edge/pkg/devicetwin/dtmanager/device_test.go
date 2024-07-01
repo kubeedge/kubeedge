@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The KubeEdge Authors.
+Copyright 2024 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -245,125 +245,119 @@ func TestDealUpdateDeviceAttr(t *testing.T) {
 	}
 }
 
-//func TestUpdateDeviceAttr(t *testing.T) {
-//	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
-//	ormerMock, querySeterMock := testtools.InitOrmerMock(t)
-//
-//	dtContexts, _ := dtcontext.InitDTContext()
-//	dtContexts.DeviceList.Store("EmptyDevice", "Device")
-//
-//	devA := &dttype.Device{ID: "DeviceA"}
-//	dtContexts.DeviceList.Store("DeviceA", devA)
-//
-//	messageAttributes := generateMessageAttributes()
-//	baseMessage := dttype.BuildBaseMessage()
-//
-//	tests := []struct {
-//		name        string
-//		context     *dtcontext.DTContext
-//		deviceID    string
-//		attributes  map[string]*dttype.MsgAttr
-//		baseMessage dttype.BaseMessage
-//		dealType    int
-//		want        interface{}
-//		wantErr     error
-//		// commitTimes is number of times commit is expected
-//		commitTimes int
-//		// beginTimes is number of times begin is expected
-//		beginTimes int
-//		// filterReturn is the return of mock interface querySeterMock's filter function
-//		filterReturn orm.QuerySeter
-//		// filterTimes is the number of times filter is called
-//		filterTimes int
-//		// insertReturnInt is the first return of mock interface ormerMock's Insert function
-//		insertReturnInt int64
-//		// insertReturnErr is the second return of mock interface ormerMock's Insert function
-//		insertReturnErr error
-//		// insertTimes is number of times Insert is expected
-//		insertTimes int
-//		// deleteReturnInt is the first return of mock interface ormerMock's Delete function
-//		deleteReturnInt int64
-//		// deleteReturnErr is the second return of mock interface ormerMock's Delete function
-//		deleteReturnErr error
-//		// deleteTimes is number of times Delete is expected
-//		deleteTimes int
-//		// updateReturnInt is the first return of mock interface ormerMock's Update function
-//		updateReturnInt int64
-//		// updateReturnErr is the second return of mock interface ormerMock's Update function
-//		updateReturnErr error
-//		// updateTimes is number of times Update is expected
-//		updateTimes int
-//		// queryTableReturn is the return of mock interface ormerMock's QueryTable function
-//		queryTableReturn orm.QuerySeter
-//		// queryTableTimes is the number of times queryTable is called
-//		queryTableTimes int
-//		// beginReturn is the return of mock interface ormerMock's Begin function
-//		beginReturn orm.TxOrmer
-//	}{
-//		{
-//			name:        "Test1",
-//			context:     dtContexts,
-//			deviceID:    "Device",
-//			attributes:  messageAttributes,
-//			baseMessage: baseMessage,
-//			want:        nil,
-//			wantErr:     nil,
-//		},
-//		{
-//			name:        "Test2",
-//			context:     dtContexts,
-//			deviceID:    "EmptyDevice",
-//			attributes:  messageAttributes,
-//			baseMessage: baseMessage,
-//			want:        nil,
-//			wantErr:     nil,
-//		},
-//		{
-//			name:             "Test3",
-//			context:          dtContexts,
-//			deviceID:         "DeviceA",
-//			attributes:       messageAttributes,
-//			baseMessage:      baseMessage,
-//			wantErr:          nil,
-//			want:             nil,
-//			commitTimes:      1,
-//			beginTimes:       1,
-//			filterReturn:     querySeterMock,
-//			filterTimes:      0,
-//			insertReturnInt:  int64(1),
-//			insertReturnErr:  nil,
-//			insertTimes:      1,
-//			deleteReturnInt:  int64(1),
-//			deleteReturnErr:  nil,
-//			deleteTimes:      0,
-//			updateReturnInt:  int64(1),
-//			updateReturnErr:  nil,
-//			updateTimes:      0,
-//			queryTableReturn: querySeterMock,
-//			queryTableTimes:  0,
-//		},
-//	}
-//	for _, test := range tests {
-//		t.Run(test.name, func(t *testing.T) {
-//			ormerMock.EXPECT().Begin().Return(test.beginReturn, nil).Times(test.beginTimes)
-//			ormerMock.EXPECT().Insert(gomock.Any()).Return(test.insertReturnInt, test.insertReturnErr).Times(test.insertTimes)
-//			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(test.queryTableTimes)
-//
-//			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(test.filterTimes)
-//			querySeterMock.EXPECT().Delete().Return(test.deleteReturnInt, test.deleteReturnErr).Times(test.deleteTimes)
-//			querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(test.updateTimes)
-//
-//			got, err := UpdateDeviceAttr(test.context, test.deviceID, test.attributes, test.baseMessage, test.dealType)
-//			if !reflect.DeepEqual(err, test.wantErr) {
-//				t.Errorf("UpdateDeviceAttr() error = %v, wantErr %v", err, test.wantErr)
-//				return
-//			}
-//			if !reflect.DeepEqual(got, test.want) {
-//				t.Errorf("UpdateDeviceAttr() failed Got = %v, want %v", got, test.want)
-//			}
-//		})
-//	}
-//}
+func TestUpdateDeviceAttr(t *testing.T) {
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
+	ormerMock, querySeterMock := testtools.InitOrmerMock(t)
+
+	dtContexts, _ := dtcontext.InitDTContext()
+	dtContexts.DeviceList.Store("EmptyDevice", "Device")
+
+	devA := &dttype.Device{ID: "DeviceA"}
+	dtContexts.DeviceList.Store("DeviceA", devA)
+
+	messageAttributes := generateMessageAttributes()
+	baseMessage := dttype.BuildBaseMessage()
+
+	tests := []struct {
+		name        string
+		context     *dtcontext.DTContext
+		deviceID    string
+		attributes  map[string]*dttype.MsgAttr
+		baseMessage dttype.BaseMessage
+		dealType    int
+		want        interface{}
+		wantErr     error
+		// commitTimes is number of times commit is expected
+		commitTimes int
+		// beginTimes is number of times begin is expected
+		beginTimes int
+		// filterReturn is the return of mock interface querySeterMock's filter function
+		filterReturn orm.QuerySeter
+		// filterTimes is the number of times filter is called
+		filterTimes int
+		// insertReturnInt is the first return of mock interface ormerMock's Insert function
+		insertReturnInt int64
+		// insertReturnErr is the second return of mock interface ormerMock's Insert function
+		insertReturnErr error
+		// insertTimes is number of times Insert is expected
+		insertTimes int
+		// deleteReturnInt is the first return of mock interface ormerMock's Delete function
+		deleteReturnInt int64
+		// deleteReturnErr is the second return of mock interface ormerMock's Delete function
+		deleteReturnErr error
+		// deleteTimes is number of times Delete is expected
+		deleteTimes int
+		// updateReturnInt is the first return of mock interface ormerMock's Update function
+		updateReturnInt int64
+		// updateReturnErr is the second return of mock interface ormerMock's Update function
+		updateReturnErr error
+		// updateTimes is number of times Update is expected
+		updateTimes int
+		// queryTableReturn is the return of mock interface ormerMock's QueryTable function
+		queryTableReturn orm.QuerySeter
+		// queryTableTimes is the number of times queryTable is called
+		queryTableTimes int
+	}{
+		{
+			name:        "Test1",
+			context:     dtContexts,
+			deviceID:    "Device",
+			attributes:  messageAttributes,
+			baseMessage: baseMessage,
+			want:        nil,
+			wantErr:     nil,
+		},
+		{
+			name:        "Test2",
+			context:     dtContexts,
+			deviceID:    "EmptyDevice",
+			attributes:  messageAttributes,
+			baseMessage: baseMessage,
+			want:        nil,
+			wantErr:     nil,
+		},
+		{
+			name:             "Test3",
+			context:          dtContexts,
+			deviceID:         "DeviceA",
+			attributes:       messageAttributes,
+			baseMessage:      baseMessage,
+			wantErr:          nil,
+			want:             nil,
+			commitTimes:      1,
+			beginTimes:       1,
+			filterReturn:     querySeterMock,
+			filterTimes:      0,
+			insertReturnInt:  int64(1),
+			insertReturnErr:  nil,
+			insertTimes:      1,
+			deleteReturnInt:  int64(1),
+			deleteReturnErr:  nil,
+			deleteTimes:      0,
+			updateReturnInt:  int64(1),
+			updateReturnErr:  nil,
+			updateTimes:      0,
+			queryTableReturn: querySeterMock,
+			queryTableTimes:  0,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ormerMock.EXPECT().DoTx(gomock.Any()).Return(test.insertReturnErr).Times(test.insertTimes)
+			ormerMock.EXPECT().DoTx(gomock.Any()).Return(test.deleteReturnErr).Times(test.deleteTimes)
+			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(test.queryTableTimes)
+
+			got, err := UpdateDeviceAttr(test.context, test.deviceID, test.attributes, test.baseMessage, test.dealType)
+			if !reflect.DeepEqual(err, test.wantErr) {
+				t.Errorf("UpdateDeviceAttr() error = %v, wantErr %v", err, test.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, test.want) {
+				t.Errorf("UpdateDeviceAttr() failed Got = %v, want %v", got, test.want)
+			}
+		})
+	}
+}
 
 func TestDealMsgAttr(t *testing.T) {
 	dtContextsEmptyAttributes, err := dtcontext.InitDTContext()
