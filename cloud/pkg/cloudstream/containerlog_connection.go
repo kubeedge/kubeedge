@@ -41,6 +41,18 @@ type ContainerLogsConnection struct {
 	closeChan    chan bool
 }
 
+func (l *ContainerLogsConnection) String() string {
+	return fmt.Sprintf("APIServer_LogsConnection MessageID %v", l.MessageID)
+}
+
+func (l *ContainerLogsConnection) WriteToAPIServer(p []byte) (n int, err error) {
+	return l.flush.Write(p)
+}
+
+func (l *ContainerLogsConnection) SetMessageID(id uint64) {
+	l.MessageID = id
+}
+
 func (l *ContainerLogsConnection) GetMessageID() uint64 {
 	return l.MessageID
 }
@@ -58,20 +70,8 @@ func (l *ContainerLogsConnection) EdgePeerDone() chan struct{} {
 	return l.edgePeerStop
 }
 
-func (l *ContainerLogsConnection) WriteToAPIServer(p []byte) (n int, err error) {
-	return l.flush.Write(p)
-}
-
 func (l *ContainerLogsConnection) WriteToTunnel(m *stream.Message) error {
 	return l.session.WriteMessageToTunnel(m)
-}
-
-func (l *ContainerLogsConnection) SetMessageID(id uint64) {
-	l.MessageID = id
-}
-
-func (l *ContainerLogsConnection) String() string {
-	return fmt.Sprintf("APIServer_LogsConnection MessageID %v", l.MessageID)
 }
 
 func (l *ContainerLogsConnection) SendConnection() (stream.EdgedConnection, error) {
