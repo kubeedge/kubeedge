@@ -133,7 +133,7 @@ func (ms *EdgedMetricsConnection) Serve(tunnel SafeWriteTunneler) error {
 	go ms.write2CloudStream(tunnel, resp, ms.Stop)
 
 	<-ms.Stop
-	klog.Infof("receive stop signal, so stop metrics scan ...")
+	klog.V(4).Info("receive stop signal, so stop metrics scan ...")
 	return nil
 }
 
