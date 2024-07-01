@@ -5,17 +5,14 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
-	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"encoding/hex"
 	"encoding/pem"
 	"fmt"
 	"io"
 	nethttp "net/http"
 	"os"
-	"strings"
 	"time"
 
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -27,6 +24,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/certutil"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/http"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
+	"github.com/kubeedge/kubeedge/pkg/security/token"
 )
 
 // jitteryDuration uses some jitter to set the rotation threshold so each node
@@ -125,13 +123,9 @@ func (cm *CertManager) applyCerts() error {
 	}
 
 	// validate the CA certificate by hashcode
-	tokenParts := strings.Split(cm.token, ".")
-	if len(tokenParts) != 4 {
-		return fmt.Errorf("token credentials are in the wrong format")
-	}
-	ok, hash, newHash := ValidateCACerts(cacert, tokenParts[0])
-	if !ok {
-		return fmt.Errorf("failed to validate CA certificate. tokenCAhash: %s, CAhash: %s", hash, newHash)
+	realToken, err := token.VerifyCAAndGetRealToken(cm.token, cacert)
+	if err != nil {
+		return err
 	}
 
 	// save the ca.crt to file
@@ -146,7 +140,7 @@ func (cm *CertManager) applyCerts() error {
 
 	// get the edge.crt
 	caPem := pem.EncodeToMemory(&pem.Block{Bytes: cacert, Type: cert.CertificateBlockType})
-	pk, edgeCert, err := cm.GetEdgeCert(cm.certURL, caPem, tls.Certificate{}, strings.Join(tokenParts[1:], "."))
+	pk, edgeCert, err := cm.GetEdgeCert(cm.certURL, caPem, tls.Certificate{}, realToken)
 	if err != nil {
 		return fmt.Errorf("failed to get edge certificate from the cloudcore, error: %v", err)
 	}
@@ -311,19 +305,4 @@ func (cm *CertManager) getCSR() (*ecdsa.PrivateKey, []byte, error) {
 	}
 
 	return pk, csr, nil
-}
-
-// ValidateCACerts validates the CA certificate by hash code
-func ValidateCACerts(cacerts []byte, hash string) (bool, string, string) {
-	if len(cacerts) == 0 && hash == "" {
-		return true, "", ""
-	}
-
-	newHash := hashCA(cacerts)
-	return hash == newHash, hash, newHash
-}
-
-func hashCA(cacerts []byte) string {
-	digest := sha256.Sum256(cacerts)
-	return hex.EncodeToString(digest[:])
 }
