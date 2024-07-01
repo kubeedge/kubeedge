@@ -95,7 +95,10 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 	default:
 		return nil
 	}
-	lastOnline := time.Now().Format("2006-01-02 15:04:05")
+	var lastOnline string
+	if state == "online" || state == "ok" {
+		lastOnline = time.Now().Format("2006-01-02 15:04:05")
+	}
 	for i := 1; i <= dtcommon.RetryTimes; i++ {
 		err = dtclient.UpdateDeviceFields(
 			device.ID,

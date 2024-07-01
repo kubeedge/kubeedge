@@ -28,6 +28,12 @@ type DeviceTwinUpdate struct {
 	Twin map[string]*types.MsgTwin `json:"twin"`
 }
 
+// DeviceStateUpdate the structure of device state update.
+type DeviceStateUpdate struct {
+	types.BaseMessage
+	State string
+}
+
 // getTimestamp get current timestamp.
 func getTimestamp() int64 {
 	return time.Now().UnixNano() / 1e6
