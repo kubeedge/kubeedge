@@ -13,6 +13,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	"github.com/kubeedge/kubeedge/pkg/metaserver"
 )
 
 // DefaultV2Client is the only one client. Because of v2Client
@@ -37,6 +38,7 @@ type Client interface {
 	List(ctx context.Context, key string) (Resp, error)
 	Get(ctx context.Context, key string) (Resp, error)
 	Watch(ctx context.Context, key string, ResourceVersion uint64) <-chan watch.Event
+	Patch(ctx context.Context, pi metaserver.PatchInfo) (runtime.Object, error)
 }
 
 type Resp struct {

@@ -183,6 +183,10 @@ func (f *Factory) Patch(reqInfo *request.RequestInfo) http.Handler {
 		reqInfo, _ := request.RequestInfoFrom(req.Context())
 		pi := metaserver.PatchInfo{
 			Name:         name,
+			Namespace:    namespace,
+			Group:        reqInfo.APIGroup,
+			Version:      reqInfo.APIVersion,
+			Resource:     reqInfo.Resource,
 			PatchType:    patchType,
 			Data:         patchBytes,
 			Options:      *options,

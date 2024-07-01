@@ -41,7 +41,7 @@ func (c *PodsBridge) Get(ctx context.Context, name string, options metav1.GetOpt
 }
 
 func (c *PodsBridge) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *corev1.Pod, err error) {
-	return c.MetaClient.Pods(c.ns).Patch(name, data)
+	return c.MetaClient.Pods(c.ns).Patch(name, pt, data)
 }
 
 func (c *PodsBridge) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {

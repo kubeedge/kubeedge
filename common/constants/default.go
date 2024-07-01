@@ -87,6 +87,7 @@ const (
 	DefaultServiceAccountTokenWorkers        = 100
 	DefaultCreatePodWorkers                  = 4
 	DefaultCertificateSigningRequestWorkers  = 4
+	DefaultQueryPodWorkers                   = 4
 
 	DefaultUpdatePodStatusBuffer            = 1024
 	DefaultUpdateNodeStatusBuffer           = 1024
@@ -103,6 +104,7 @@ const (
 	DefaultServiceAccountTokenBuffer        = 1024
 	DefaultCreatePodBuffer                  = 1024
 	DefaultCertificateSigningRequestBuffer  = 1024
+	DefaultQueryPodBuffer                   = 1024
 
 	DefaultPodEventBuffer           = 1
 	DefaultConfigMapEventBuffer     = 1
@@ -171,4 +173,7 @@ const (
 
 	// DeviceTwin
 	DefaultDMISockPath = "/etc/kubeedge/dmi.sock"
+
+	PatchResourceOnlyEdge = "patchResourceOnlyEdge"
+	GetPodFromCloudFirst  = "getPodFromCloudFirst"
 )

@@ -119,6 +119,7 @@ type UpstreamController struct {
 	queryLeaseChan                 chan model.Message
 	createPodChan                  chan model.Message
 	certificasesSigningRequestChan chan model.Message
+	queryPodChan                   chan model.Message
 
 	// lister
 	podLister       corelisters.PodLister
@@ -191,6 +192,9 @@ func (uc *UpstreamController) Start() error {
 	for i := 0; i < int(uc.config.Load.CertificateSigningRequestWorkers); i++ {
 		go uc.processCSR()
 	}
+	for i := 0; i < int(uc.config.Load.QueryPodWorkers); i++ {
+		go uc.queryPod()
+	}
 	return nil
 }
 
@@ -257,6 +261,8 @@ func (uc *UpstreamController) dispatchMessage() {
 				uc.podDeleteChan <- msg
 			case model.InsertOperation:
 				uc.createPodChan <- msg
+			case model.QueryOperation:
+				uc.queryPodChan <- msg
 			default:
 				klog.Errorf("message: %s, operation type: %s unsupported", msg.GetID(), msg.GetOperation())
 			}
@@ -647,6 +653,8 @@ func kubeClientGet(uc *UpstreamController, namespace string, name string, queryT
 		obj, err = uc.leaseLister.Leases(namespace).Get(name)
 	case model.ResourceTypeCSR:
 		obj, err = uc.kubeClient.CertificatesV1().CertificateSigningRequests().Get(context.Background(), name, metaV1.GetOptions{})
+	case model.ResourceTypePod:
+		obj, err = uc.podLister.Pods(namespace).Get(name)
 	default:
 		err = stderrors.New("wrong query type")
 	}
@@ -1182,6 +1190,18 @@ func (uc *UpstreamController) queryNode() {
 	}
 }
 
+func (uc *UpstreamController) queryPod() {
+	for {
+		select {
+		case <-beehiveContext.Done():
+			klog.Warning("stop queryPod")
+			return
+		case msg := <-uc.queryPodChan:
+			queryInner(uc, msg, model.ResourceTypePod)
+		}
+	}
+}
+
 func (uc *UpstreamController) createOrUpdateLease() {
 	for {
 		select {
@@ -1498,5 +1518,6 @@ func NewUpstreamController(config *v1alpha1.EdgeController, factory k8sinformer.
 	uc.queryLeaseChan = make(chan model.Message, config.Buffer.QueryLease)
 	uc.ruleStatusChan = make(chan model.Message, config.Buffer.UpdateNodeStatus)
 	uc.certificasesSigningRequestChan = make(chan model.Message, config.Buffer.CertificateSigningRequest)
+	uc.queryPodChan = make(chan model.Message, config.Buffer.QueryPod)
 	return uc, nil
 }

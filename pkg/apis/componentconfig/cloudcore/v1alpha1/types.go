@@ -291,6 +291,9 @@ type EdgeControllerBuffer struct {
 	// CertificateSigningRequest indicates the buffer of certificatesSigningRequest
 	// default 1024
 	CertificateSigningRequest int32 `json:"certificateSigningRequest,omitempty"`
+	// QueryPod indicates the buffer of query pod
+	// default 1024
+	QueryPod int32 `json:"queryPod,omitempty"`
 }
 
 // EdgeControllerLoad indicates the EdgeController load
@@ -352,6 +355,9 @@ type EdgeControllerLoad struct {
 	// CertificateSigningRequestWorkers indicates the load of CertificateSigningRequest
 	// default 4
 	CertificateSigningRequestWorkers int32 `json:"certificateSigningRequestWorkers,omitempty"`
+	// QueryPodWorkers indicates the load of query pod
+	// default 4
+	QueryPodWorkers int32 `json:"QueryPodWorkers,omitempty"`
 }
 
 // DeviceController indicates the device controller

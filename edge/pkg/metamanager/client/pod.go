@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -10,10 +11,12 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
+	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
@@ -28,7 +31,7 @@ type PodsGetter interface {
 type PodsInterface interface {
 	Create(*corev1.Pod) (*corev1.Pod, error)
 	Update(*corev1.Pod) error
-	Patch(name string, patchBytes []byte) (*corev1.Pod, error)
+	Patch(name string, pt types.PatchType, patchBytes []byte) (*corev1.Pod, error)
 	Delete(name string, options metav1.DeleteOptions) error
 	Get(name string) (*corev1.Pod, error)
 }
@@ -94,7 +97,7 @@ func (c *pods) Delete(name string, options metav1.DeleteOptions) error {
 
 func (c *pods) Get(name string) (*corev1.Pod, error) {
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypePod, name)
-	podMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, nil)
+	podMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, constants.GetPodFromCloudFirst)
 	msg, err := c.send.SendSync(podMsg)
 	if err != nil {
 		return nil, fmt.Errorf("get pod failed, err: %v", err)
@@ -105,21 +108,37 @@ func (c *pods) Get(name string) (*corev1.Pod, error) {
 		return nil, fmt.Errorf("parse message to pod failed, err: %v", err)
 	}
 
-	return handlePodFromMetaDB(name, content)
+	return handlePodFromMetaDBOrCloud(name, content)
 }
 
-func (c *pods) Patch(name string, patchBytes []byte) (*corev1.Pod, error) {
-	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypePodPatch, name)
-
+func (c *pods) Patch(name string, pt types.PatchType, patchBytes []byte) (*corev1.Pod, error) {
 	// FIXME: cleanup this code when the static pod mqtt broker no longer needs to be compatible
 	if name == constants.DefaultMosquittoContainerName {
 		return handleMqttMeta()
 	}
 
+	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypePodPatch, name)
 	podMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.PatchOperation, string(patchBytes))
-	resp, err := c.send.SendSync(podMsg)
+	var resp *model.Message
+	var err error
+	if connect.IsConnected() {
+		resp, err = c.send.SendSync(podMsg)
+	} else {
+		err = connect.ErrConnectionLost
+	}
 	if err != nil {
-		return nil, fmt.Errorf("update pod failed, err: %v", err)
+		reErr := fmt.Errorf("update pod failed, err: %v", err)
+		ctx := context.Background()
+		updatedPod, err := patchOnlyEdgePod(ctx, name, c.namespace, pt, patchBytes, constants.PatchResourceOnlyEdge)
+		if err != nil {
+			klog.Errorf("failed to patch pod:%s/%s to edge with err:%v", c.namespace, name, err)
+			return nil, reErr
+		}
+		err = updatePodDB(resource, updatedPod)
+		if err != nil {
+			klog.Errorf("failed to update pod to meta db with err:%v", err)
+		}
+		return nil, reErr
 	}
 
 	content, err := resp.GetContentData()
@@ -130,11 +149,16 @@ func (c *pods) Patch(name string, patchBytes []byte) (*corev1.Pod, error) {
 	return handlePodResp(resource, content)
 }
 
-func handlePodFromMetaDB(name string, content []byte) (*corev1.Pod, error) {
+func handlePodFromMetaDBOrCloud(name string, content []byte) (*corev1.Pod, error) {
 	var lists []string
+	var pod *corev1.Pod
 	err := json.Unmarshal(content, &lists)
 	if err != nil {
-		return nil, fmt.Errorf("unmarshal message to pod list from db failed, err: %v", err)
+		err1 := json.Unmarshal(content, &pod)
+		if err1 != nil {
+			return nil, fmt.Errorf("unmarshal message to pod list from db with err:%v,unmarshal message to pod from cloud with err:%v ", err, err1)
+		}
+		return pod, nil
 	}
 
 	if len(lists) == 0 {
@@ -148,7 +172,6 @@ func handlePodFromMetaDB(name string, content []byte) (*corev1.Pod, error) {
 		return nil, fmt.Errorf("pod length from meta db is %d", len(lists))
 	}
 
-	var pod *corev1.Pod
 	err = json.Unmarshal([]byte(lists[0]), &pod)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal message to pod failed, err: %v", err)
@@ -205,4 +228,18 @@ func handleMqttMeta() (*corev1.Pod, error) {
 		return nil, fmt.Errorf("unmarshal mqtt meta failed, err: %v", err)
 	}
 	return &pod, nil
+}
+
+func patchOnlyEdgePod(ctx context.Context, name, namespace string, pt types.PatchType, patchBytes []byte, subresources ...string) (*corev1.Pod, error) {
+	kubeClient, err := GetKubeClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to patch pod only edge with err: %v", err)
+	}
+
+	var updatedPod *corev1.Pod
+	updatedPod, err = kubeClient.CoreV1().Pods(namespace).Patch(ctx, name, pt, patchBytes, metav1.PatchOptions{}, subresources...)
+	if err != nil {
+		return nil, err
+	}
+	return updatedPod, nil
 }

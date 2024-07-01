@@ -5,14 +5,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 	"sync"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/storage"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -20,6 +24,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	patchutil "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator/util"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator/watchhook"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
 )
@@ -284,6 +289,54 @@ func (s *imitator) Event(msg *model.Message) []watch.Event {
 		ret = append(ret, watch.Event{Type: op, Object: obj})
 	}
 	return ret
+}
+
+func (s *imitator) Patch(ctx context.Context, pi metaserver.PatchInfo) (runtime.Object, error) {
+	gvr := schema.GroupVersionResource{
+		Group:    pi.Group,
+		Version:  pi.Version,
+		Resource: pi.Resource,
+	}
+	results, err := v2.RawMetaByGVRNN(gvr, pi.Namespace, pi.Name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query:%s/%s resource from meta_v2, err: %+v", pi.Namespace, pi.Name, err)
+	}
+	if len(*results) == 0 {
+		return nil, fmt.Errorf("not found resource:%s/%s from meta_v2", pi.Namespace, pi.Name)
+	}
+
+	originalResource := new(unstructured.Unstructured)
+	err = json.Unmarshal([]byte((*results)[0].Value), originalResource)
+	defaultScheme := scheme.Scheme
+	GV := schema.GroupVersion{Group: pi.Group, Version: pi.Version}
+	GroupVersionKind := GV.WithKind(originalResource.GetKind())
+	schemaReferenceObj, err := defaultScheme.New(GroupVersionKind)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build schema reference object, err: %+v", err)
+	}
+
+	copyOriginalRes := originalResource.DeepCopyObject()
+	defaulter := runtime.ObjectDefaulter(defaultScheme)
+	updatedResource := new(unstructured.Unstructured)
+	switch pi.PatchType {
+	case types.StrategicMergePatchType:
+		if err = patchutil.StrategicPatchObject(ctx, defaulter, originalResource, pi.Data, updatedResource, schemaReferenceObj, ""); err != nil {
+			return nil, fmt.Errorf("failed to patch resource:%s,%s/%s,with err:%v", GroupVersionKind.Kind, pi.Namespace, pi.Name, err)
+		}
+	default:
+		return nil, fmt.Errorf("not supoort patchType:%s", pi.PatchType)
+	}
+
+	if !reflect.DeepEqual(copyOriginalRes, updatedResource) {
+		if err = s.InsertOrUpdateObj(ctx, updatedResource); err != nil {
+			return nil, fmt.Errorf("failed to update resource:%s,%s/%s into meta_v2 db with err:%v", GroupVersionKind.Kind, pi.Namespace, pi.Name, err)
+		}
+	}
+
+	if err = runtime.DefaultUnstructuredConverter.FromUnstructured(updatedResource.UnstructuredContent(), schemaReferenceObj); err != nil {
+		return nil, fmt.Errorf("failed to translate unstructured resource into %s,%s/%s,with err:%v", GroupVersionKind.Kind, pi.Namespace, pi.Name, err)
+	}
+	return schemaReferenceObj, nil
 }
 
 // Resource format: <namespace>/<restype>[/resid]

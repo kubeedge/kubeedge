@@ -19,6 +19,7 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/agent"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
@@ -297,6 +298,13 @@ func (r *REST) Update(ctx context.Context, name string, objInfo rest.UpdatedObje
 }
 
 func (r *REST) Patch(ctx context.Context, pi metaserver.PatchInfo) (runtime.Object, error) {
+	if len(pi.Subresources) > 0 && pi.Subresources[0] == constants.PatchResourceOnlyEdge {
+		patch, err := imitator.DefaultV2Client.Patch(ctx, pi)
+		if err != nil {
+			return nil, err
+		}
+		return patch, nil
+	}
 	app, err := r.Agent.Generate(ctx, metaserver.Patch, pi, nil)
 	if err != nil {
 		klog.Errorf("[metaserver/reststorage] failed to generate application: %v", err)
