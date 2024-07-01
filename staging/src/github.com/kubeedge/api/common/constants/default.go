@@ -55,12 +55,11 @@ const (
 	DefaultTunnelPort                  = 10004
 	DefaultClusterDomain               = "cluster.local"
 
-	CurrentSupportK8sVersion = "v1.28.6"
+	CurrentSupportK8sVersion = "v1.27.7"
 
 	// MetaManager
 	DefaultRemoteQueryTimeout = 60
 	DefaultMetaServerAddr     = "127.0.0.1:10550"
-	DefaultDummyServerAddr    = "169.254.30.10:10550"
 
 	// Config
 	DefaultKubeContentType         = "application/vnd.kubernetes.protobuf"
@@ -85,8 +84,7 @@ const (
 	DefaultUpdateRuleStatusWorkers           = 4
 	DefaultQueryLeaseWorkers                 = 100
 	DefaultServiceAccountTokenWorkers        = 100
-	DefaultCreatePodWorkers                  = 4
-	DefaultCertificateSigningRequestWorkers  = 4
+	CreatePodWorks                           = 4
 
 	DefaultUpdatePodStatusBuffer            = 1024
 	DefaultUpdateNodeStatusBuffer           = 1024
@@ -102,7 +100,6 @@ const (
 	DefaultQueryLeaseBuffer                 = 1024
 	DefaultServiceAccountTokenBuffer        = 1024
 	DefaultCreatePodBuffer                  = 1024
-	DefaultCertificateSigningRequestBuffer  = 1024
 
 	DefaultPodEventBuffer           = 1
 	DefaultConfigMapEventBuffer     = 1
@@ -172,5 +169,3 @@ const (
 	// DeviceTwin
 	DefaultDMISockPath = "/etc/kubeedge/dmi.sock"
 )
-
-const ISO8601UTC = "2006-01-02T15:04:05Z"
