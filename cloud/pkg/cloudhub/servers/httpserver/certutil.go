@@ -81,10 +81,9 @@ func NewCloudCoreCertDERandKey(cfg *certutil.Config) ([]byte, []byte, error) {
 		return nil, nil, fmt.Errorf("failed to parse a caCert from the given ASN.1 DER data, err: %v", err)
 	}
 
-	caKeyDER := hubconfig.Config.CaKey
-	caKey, err := x509.ParseECPrivateKey(caKeyDER)
+	caKey, err := ParseX509PrivateKey(hubconfig.Config.CaKey)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to parse ECPrivateKey, err: %v", err)
+		return nil, nil, fmt.Errorf("failed to parse PrivateKey, err: %v", err)
 	}
 
 	certDER, err := NewCertFromCa(cfg, caCert, serverKey.Public(), caKey, validalityPeriod)
@@ -125,4 +124,24 @@ func NewCertFromCa(cfg *certutil.Config, caCert *x509.Certificate, serverKey cry
 		return nil, err
 	}
 	return certDERBytes, nil
+}
+
+// ParseX509PrivateKey parse the private key from der format, support EC/PKCS1/PKCS8
+func ParseX509PrivateKey(der []byte) (crypto.Signer, error) {
+	caKeyEc, ecErr := x509.ParseECPrivateKey(der)
+	if ecErr == nil {
+		return caKeyEc, nil
+	}
+
+	caKeyPKCS1, pkcs1Err := x509.ParsePKCS1PrivateKey(der)
+	if pkcs1Err == nil {
+		return caKeyPKCS1, nil
+	}
+
+	caKeyPKCS8, pkcs8Err := x509.ParsePKCS8PrivateKey(der)
+	if pkcs8Err == nil {
+		return caKeyPKCS8.(crypto.Signer), nil
+	}
+
+	return nil, fmt.Errorf("EC/PKCS1/PKCS8 parse failed. errors:%w", errors.Join(ecErr, pkcs1Err, pkcs8Err))
 }
