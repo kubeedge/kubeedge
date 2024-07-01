@@ -137,7 +137,7 @@ func GetDeviceID(resource string) (string, error) {
 	return "", errors.New("failed to get device id")
 }
 
-// GetResourceType returns the resourceType of message received from edge
+// GetResourceTypeForDevice returns the resourceType of message received from edge
 func GetResourceTypeForDevice(resource string) (string, error) {
 	if strings.Contains(resource, ResourceTypeTwinEdgeUpdated) {
 		return ResourceTypeTwinEdgeUpdated, nil

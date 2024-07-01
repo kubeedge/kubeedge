@@ -16,7 +16,7 @@ limitations under the License.
 
 package manager
 
-// Filter filter the event before enqueuing the key
+// EventFilter filter the event before enqueuing the key
 type EventFilter interface {
 	// Create returns true if the Create event should be processed
 	Create(obj interface{}) bool

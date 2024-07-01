@@ -193,6 +193,6 @@ func (rh *RestHandler) IsMatch(key interface{}, message interface{}) bool {
 }
 
 // TODO: check node name
-func isNodeName(str string) bool {
+func isNodeName(_ string) bool {
 	return true
 }

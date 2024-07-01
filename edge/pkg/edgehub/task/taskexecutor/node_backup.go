@@ -33,7 +33,7 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/version"
 )
 
-func backupNode(taskReq commontypes.NodeTaskRequest) (event fsm.Event) {
+func backupNode(commontypes.NodeTaskRequest) (event fsm.Event) {
 	event = fsm.Event{
 		Type:   "Backup",
 		Action: api.ActionSuccess,
@@ -65,21 +65,21 @@ func backup(backupPath string) error {
 	}
 
 	// backup edgecore.db: copy from origin path to backup path
-	if err := copy(config.DataBase.DataSource, filepath.Join(backupPath, "edgecore.db")); err != nil {
+	if err := filecopy(config.DataBase.DataSource, filepath.Join(backupPath, "edgecore.db")); err != nil {
 		return fmt.Errorf("failed to backup db: %v", err)
 	}
 	// backup edgecore.yaml: copy from origin path to backup path
-	if err := copy(constants.DefaultConfigDir+"edgecore.yaml", filepath.Join(backupPath, "edgecore.yaml")); err != nil {
+	if err := filecopy(constants.DefaultConfigDir+"edgecore.yaml", filepath.Join(backupPath, "edgecore.yaml")); err != nil {
 		return fmt.Errorf("failed to back config: %v", err)
 	}
 	// backup edgecore: copy from origin path to backup path
-	if err := copy(filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), filepath.Join(backupPath, util.KubeEdgeBinaryName)); err != nil {
+	if err := filecopy(filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), filepath.Join(backupPath, util.KubeEdgeBinaryName)); err != nil {
 		return fmt.Errorf("failed to backup edgecore: %v", err)
 	}
 	return nil
 }
 
-func copy(src, dst string) error {
+func filecopy(src, dst string) error {
 	sourceFileStat, err := os.Stat(src)
 	if err != nil {
 		return err

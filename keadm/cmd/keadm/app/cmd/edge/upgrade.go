@@ -178,10 +178,7 @@ func (up *Upgrade) PreProcess() error {
 	}
 
 	upgradePath := filepath.Join(util.KubeEdgeUpgradePath, up.ToVersion)
-	if up.EdgeCoreConfig.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint == "" {
-		up.EdgeCoreConfig.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint = up.EdgeCoreConfig.Modules.Edged.RemoteRuntimeEndpoint
-	}
-	container, err := util.NewContainerRuntime(up.EdgeCoreConfig.Modules.Edged.RemoteRuntimeEndpoint,
+	container, err := util.NewContainerRuntime(up.EdgeCoreConfig.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint,
 		up.EdgeCoreConfig.Modules.Edged.TailoredKubeletConfig.CgroupDriver)
 	if err != nil {
 		return fmt.Errorf("failed to new container runtime: %v", err)

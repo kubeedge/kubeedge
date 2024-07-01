@@ -40,7 +40,7 @@ func (sf *servicebusFactory) Type() v1.RuleEndpointTypeDef {
 	return v1.RuleEndpointTypeServiceBus
 }
 
-func (sf *servicebusFactory) GetSource(ep *v1.RuleEndpoint, sourceResource map[string]string) provider.Source {
+func (sf *servicebusFactory) GetSource(_ *v1.RuleEndpoint, sourceResource map[string]string) provider.Source {
 	targetURL, exist := sourceResource[constants.TargetURL]
 	if !exist {
 		klog.Errorf("source resource attributes \"target_url\" does not exist")

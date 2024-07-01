@@ -74,7 +74,7 @@ type PolicyMatcher struct {
 	match bool
 }
 
-func (pm *PolicyMatcher) isMatchServiceAccount(acc *policyv1alpha1.ServiceAccountAccess) bool {
+func (pm *PolicyMatcher) isMatchServiceAccount(*policyv1alpha1.ServiceAccountAccess) bool {
 	pm.match = true
 	return false
 }
@@ -157,7 +157,7 @@ func matchTarget(ctx context.Context, cli client.Client, object client.Object, v
 	}
 }
 
-func (c *Controller) mapRolesFunc(ctx context.Context, object client.Object) []controllerruntime.Request {
+func (c *Controller) mapRolesFunc(_ context.Context, object client.Object) []controllerruntime.Request {
 	var p = PolicyRequestVisitor{}
 	matchTarget(context.Background(), c.Client, object, p.matchRuntimeRequest)
 	klog.V(4).Infof("filter resource %s/%s, %v", object.GetNamespace(), object.GetName(), p.AuthPolicy)
@@ -176,7 +176,7 @@ func newSaAccessObject(sa corev1.ServiceAccount) *policyv1alpha1.ServiceAccountA
 	}
 }
 
-func (c *Controller) mapObjectFunc(ctx context.Context, object client.Object) []controllerruntime.Request {
+func (c *Controller) mapObjectFunc(_ context.Context, object client.Object) []controllerruntime.Request {
 	accList := &policyv1alpha1.ServiceAccountAccessList{}
 	if err := c.Client.List(context.Background(), accList, &client.ListOptions{Namespace: object.GetNamespace()}); err != nil {
 		klog.Errorf("failed to list serviceaccountaccess, %v", err)

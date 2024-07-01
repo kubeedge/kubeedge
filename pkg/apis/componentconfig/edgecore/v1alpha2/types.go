@@ -21,7 +21,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	logsapi "k8s.io/component-base/logs/api/v1"
 	tailoredkubeletconfigv1beta1 "k8s.io/kubelet/config/v1beta1"
-	"k8s.io/kubernetes/pkg/apis/core"
 
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
 )
@@ -234,6 +233,12 @@ type TailoredKubeletConfiguration struct {
 	// Default: "2m"
 	// +optional
 	ImageMinimumGCAge metav1.Duration `json:"imageMinimumGCAge,omitempty"`
+	// imageMaximumGCAge is the maximum age an image can be unused before it is garbage collected.
+	// The default of this field is "0s", which disables this field--meaning images won't be garbage
+	// collected based on being unused for too long.
+	// Default: "0s" (disabled)
+	// +optional
+	ImageMaximumGCAge metav1.Duration `json:"imageMaximumGCAge,omitempty"`
 	// imageGCHighThresholdPercent is the percent of disk usage after which
 	// image garbage collection is always run. The percent is calculated by
 	// dividing this field value by 100, so this field must be between 0 and
@@ -758,15 +763,6 @@ type TailoredKubeletFlag struct {
 	// mounts,etc).
 	// default "/var/lib/edged"
 	RootDirectory string `json:"rootDirectory,omitempty"`
-	// registerNode enables automatic registration with the apiserver.
-	// default true
-	// DEPRECATED: This parameter will be removed at KubeEdge v1.17 and should be set via the TailoredKubeletConfig
-	RegisterNode bool `json:"registerNode,omitempty"`
-	// registerWithTaints are an array of taints to add to a node object when
-	// the edgecore registers itself. This only takes effect when registerNode
-	// is true and upon the initial registration of the node.
-	// DEPRECATED: This parameter will be removed at KubeEdge v1.17 and should be set via the TailoredKubeletConfig
-	RegisterWithTaints []core.Taint `json:"registerWithTaints,omitempty"`
 	// WindowsService should be set to true if kubelet is running as a service on Windows.
 	// Its corresponding flag only gets registered in Windows builds.
 	WindowsService bool `json:"windowsService,omitempty"`
@@ -776,14 +772,6 @@ type TailoredKubeletFlag struct {
 	// to maintain backwards compatibility.
 	// Source: https://docs.microsoft.com/en-us/windows/win32/procthread/scheduling-priorities
 	WindowsPriorityClass string `json:"windowsPriorityClass,omitempty"`
-	// remoteRuntimeEndpoint is the endpoint of remote runtime service
-	// default "unix:///run/containerd/containerd.sock"
-	// DEPRECATED: This parameter will be removed in KubeEdge v1.17 and should be set via the ContainerRuntimeEndpoint on TailoredKubeletConfig
-	RemoteRuntimeEndpoint string `json:"remoteRuntimeEndpoint,omitempty"`
-	// remoteImageEndpoint is the endpoint of remote image service
-	// default "unix:///run/containerd/containerd.sock"
-	// DEPRECATED: This parameter will be removed in KubeEdge v1.17 and should be set via the ImageServiceEndpoint on TailoredKubeletConfig
-	RemoteImageEndpoint string `json:"remoteImageEndpoint,omitempty"`
 	// experimentalMounterPath is the path of mounter binary. Leave empty to use the default mount path
 	ExperimentalMounterPath string `json:"experimentalMounterPath,omitempty"`
 	// This flag, if set, will avoid including `EvictionHard` limits while computing Node Allocatable.
@@ -801,10 +789,6 @@ type TailoredKubeletFlag struct {
 	// maxContainerCount is the maximum number of old instances of containers
 	// to retain globally. Each container takes up some disk space.
 	MaxContainerCount int32 `json:"maxContainerCount,omitempty"`
-	// masterServiceNamespace is The namespace from which the kubernetes
-	// master services should be injected into pods.
-	// DEPRECATED: will be removed in KubeEdge v1.17
-	MasterServiceNamespace string `json:"masterServiceNamespace,omitempty"`
 	// registerSchedulable tells the edgecore to register the node as
 	// schedulable. Won't have any effect if register-node is false.
 	// DEPRECATED: use registerWithTaints instead
@@ -821,10 +805,6 @@ type TailoredKubeletFlag struct {
 type ContainerRuntimeOptions struct {
 	// General Options.
 
-	// ContainerRuntime is the container runtime to use.
-	// only valid value "remote"
-	// ContainerRuntime is deprecated and will be removed at KubeEdge v1.17
-	ContainerRuntime string `json:"containerRuntime,omitempty"`
 	// RuntimeCgroups that container runtime is expected to be isolated in.
 	RuntimeCgroups string `json:"runtimeCgroups,omitempty"`
 	// PodSandboxImage is the image whose network/ipc namespaces
