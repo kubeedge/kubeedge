@@ -41,8 +41,10 @@ type ModelProperty struct {
 	Type PropertyType `json:"type,omitempty"`
 	// Required: Access mode of property, ReadWrite or ReadOnly.
 	AccessMode PropertyAccessMode `json:"accessMode,omitempty"`
+	// Minimum value of device data
 	// +optional
 	Minimum string `json:"minimum,omitempty"`
+	// Maximum value of device data
 	// +optional
 	Maximum string `json:"maximum,omitempty"`
 	// The unit of the property
