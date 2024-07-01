@@ -3,7 +3,10 @@ package storage
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"time"
 
+	oteltrace "go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,9 +20,14 @@ import (
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/storage"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/klog/v2"
+	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
 
+	"github.com/kubeedge/kubeedge/common/types"
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/agent"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/common"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
@@ -311,4 +319,68 @@ func (r *REST) Patch(ctx context.Context, pi metaserver.PatchInfo) (runtime.Obje
 		return nil, errors.NewInternalError(err)
 	}
 	return retObj, nil
+}
+
+func (r *REST) Restart(ctx context.Context, restartInfo common.RestartInfo) *types.RestartResponse {
+	namespace := restartInfo.Namespace
+	podNames := restartInfo.PodNames
+	restartResponse := &types.RestartResponse{
+		ErrMessages: make([]string, 0),
+		LogMessages: make([]string, 0),
+	}
+
+	endpoint := config.Config.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint
+	remoteRuntimeService, err := remote.NewRemoteRuntimeService(endpoint, time.Second*10, oteltrace.NewNoopTracerProvider())
+	if err != nil {
+		errMessage := fmt.Sprintf("new remote runtimeservice with err: %v", err)
+		klog.Errorf("[metaserver/restart] %v", errMessage)
+		restartResponse.ErrMessages = append(restartResponse.ErrMessages, errMessage)
+		return restartResponse
+	}
+	for _, podName := range podNames {
+		var labelSelector = map[string]string{
+			"io.kubernetes.pod.name":      podName,
+			"io.kubernetes.pod.namespace": namespace,
+		}
+
+		filter := &runtimeapi.ContainerFilter{
+			LabelSelector: labelSelector,
+		}
+		containers, err := remoteRuntimeService.ListContainers(ctx, filter)
+		if err != nil {
+			errMessage := fmt.Sprintf("failed to list containers: %v", err)
+			klog.Warningf("[metaserver/restart] %v", errMessage)
+			restartResponse.ErrMessages = append(restartResponse.ErrMessages, errMessage)
+			continue
+		}
+
+		if len(containers) == 0 {
+			errMessage := fmt.Sprintf("not found pod:\"/%s/%s\"", namespace, podName)
+			klog.Warningf("[metaserver/restart] %v", errMessage)
+			restartResponse.ErrMessages = append(restartResponse.ErrMessages, errMessage)
+			continue
+		}
+
+		count := 0
+		var errMessage string
+		for _, container := range containers {
+			containerID := container.Id
+			err := remoteRuntimeService.StopContainer(ctx, containerID, 3)
+			if err != nil {
+				errMessage += fmt.Sprintf("failed to stop container %s for pod \"/%s/%s\" with err:%v\n", container.Metadata.Name, namespace, podName, err)
+			} else {
+				count++
+			}
+		}
+
+		if count == len(containers) {
+			message := fmt.Sprintf("the pod \"%s/%s\" restart successful", namespace, podName)
+			klog.V(4).Infof("[metaserver/restart] %v", message)
+			restartResponse.LogMessages = append(restartResponse.LogMessages, message)
+		} else {
+			klog.Warningf("[metaserver/restart] %v", errMessage)
+			restartResponse.ErrMessages = append(restartResponse.ErrMessages, errMessage)
+		}
+	}
+	return restartResponse
 }
