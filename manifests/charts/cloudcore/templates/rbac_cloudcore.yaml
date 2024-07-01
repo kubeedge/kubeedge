@@ -6,7 +6,7 @@ metadata:
     rbac/aggregate-to-cloudcore: "true"
 rules:
 - apiGroups: [""]
-  resources: ["nodes", "nodes/status", "serviceaccounts/token", "configmaps", "pods", "pods/status", "secrets", "endpoints", "services", "persistentvolumes", "persistentvolumeclaims"]
+  resources: ["nodes", "nodes/status", "serviceaccounts/token", "configmaps", "pods", "secrets", "endpoints", "services", "persistentvolumes", "persistentvolumeclaims"]
   verbs: ["get", "list", "watch", "create", "update"]
 - apiGroups: [""]
   resources: ["namespaces"]

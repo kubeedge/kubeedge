@@ -222,9 +222,6 @@ type EdgeController struct {
 
 // EdgeControllerBuffer indicates the EdgeController buffer
 type EdgeControllerBuffer struct {
-	// UpdatePodStatus indicates the buffer of pod status
-	// default 1024
-	UpdatePodStatus int32 `json:"updatePodStatus,omitempty"`
 	// UpdateNodeStatus indicates the buffer of update node status
 	// default 1024
 	UpdateNodeStatus int32 `json:"updateNodeStatus,omitempty"`
@@ -295,12 +292,6 @@ type EdgeControllerBuffer struct {
 
 // EdgeControllerLoad indicates the EdgeController load
 type EdgeControllerLoad struct {
-	// UpdatePodStatusWorkers indicates the load of update pod status workers
-	// default 1
-	UpdatePodStatusWorkers int32 `json:"updatePodStatusWorkers,omitempty"`
-	// UpdateNodeStatusWorkers indicates the load of update node status workers
-	// default 1
-	UpdateNodeStatusWorkers int32 `json:"updateNodeStatusWorkers,omitempty"`
 	// QueryConfigMapWorkers indicates the load of query config map workers
 	// default 4
 	QueryConfigMapWorkers int32 `json:"queryConfigMapWorkers,omitempty"`

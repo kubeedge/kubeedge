@@ -146,8 +146,6 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 // getDefaultEdgeControllerLoad return Default EdgeControllerLoad based on nodeLimit
 func getDefaultEdgeControllerLoad(nodeLimit int32) *EdgeControllerLoad {
 	return &EdgeControllerLoad{
-		UpdatePodStatusWorkers:            constants.DefaultUpdatePodStatusWorkers,
-		UpdateNodeStatusWorkers:           constants.DefaultUpdateNodeStatusWorkers,
 		QueryConfigMapWorkers:             constants.DefaultQueryConfigMapWorkers,
 		QuerySecretWorkers:                constants.DefaultQuerySecretWorkers,
 		QueryPersistentVolumeWorkers:      constants.DefaultQueryPersistentVolumeWorkers,
@@ -171,7 +169,6 @@ func getDefaultEdgeControllerLoad(nodeLimit int32) *EdgeControllerLoad {
 // getDefaultEdgeControllerBuffer return Default EdgeControllerBuffer based on nodeLimit
 func getDefaultEdgeControllerBuffer(nodeLimit int32) *EdgeControllerBuffer {
 	return &EdgeControllerBuffer{
-		UpdatePodStatus:            constants.DefaultUpdatePodStatusBuffer,
 		UpdateNodeStatus:           constants.DefaultUpdateNodeStatusBuffer,
 		QueryConfigMap:             constants.DefaultQueryConfigMapBuffer,
 		QuerySecret:                constants.DefaultQuerySecretBuffer,

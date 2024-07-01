@@ -19,10 +19,8 @@ var (
 // CoreInterface is interface of metaclient
 type CoreInterface interface {
 	PodsGetter
-	PodStatusGetter
 	ConfigMapsGetter
 	NodesGetter
-	NodeStatusGetter
 	SecretsGetter
 	ServiceAccountTokenGetter
 	ServiceAccountsGetter
@@ -49,10 +47,6 @@ func (m *metaClient) Nodes(namespace string) NodesInterface {
 	return newNodes(namespace, m.send)
 }
 
-func (m *metaClient) NodeStatus(namespace string) NodeStatusInterface {
-	return newNodeStatus(namespace, m.send)
-}
-
 func (m *metaClient) Secrets(namespace string) SecretsInterface {
 	return newSecrets(namespace, m.send)
 }
@@ -63,10 +57,6 @@ func (m *metaClient) ServiceAccountToken() ServiceAccountTokenInterface {
 
 func (m *metaClient) ServiceAccounts(namespace string) ServiceAccountInterface {
 	return newServiceAccount(namespace)
-}
-
-func (m *metaClient) PodStatus(namespace string) PodStatusInterface {
-	return newPodStatus(namespace, m.send)
 }
 
 // New PersistentVolumes metaClient
