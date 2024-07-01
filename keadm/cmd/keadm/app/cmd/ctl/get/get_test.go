@@ -14,21 +14,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package util
+package get
 
 import (
-	"encoding/json"
-	"errors"
-	"fmt"
+	"testing"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/stretchr/testify/assert"
 )
 
-func GetErrMessage(bodyBytes []byte) error {
-	var status metav1.Status
-	err := json.Unmarshal(bodyBytes, &status)
-	if err != nil {
-		return fmt.Errorf("parsing response's body failed with err: %v", err)
-	}
-	return errors.New(status.Message)
+func TestNewEdgeGet(t *testing.T) {
+	assert := assert.New(t)
+	cmd := NewEdgeGet()
+
+	assert.NotNil(cmd)
+
+	assert.Equal("get", cmd.Use)
+	assert.Equal(edgeGetShortDescription, cmd.Short)
+	assert.Equal(edgeGetShortDescription, cmd.Long)
+
+	assert.True(cmd.HasSubCommands())
 }

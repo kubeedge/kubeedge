@@ -163,6 +163,7 @@ func NewGetOpts() *PodGetOptions {
 func AddGetPodFlags(cmd *cobra.Command, getOptions *PodGetOptions) {
 	cmd.Flags().StringVarP(&getOptions.Namespace, common.FlagNameNamespace, "n", getOptions.Namespace,
 		"Specify a namespace")
+
 	cmd.Flags().StringVarP(&getOptions.LabelSelector, common.FlagNameLabelSelector, "l", getOptions.LabelSelector,
 		"Selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)")
 
