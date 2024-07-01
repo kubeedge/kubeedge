@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - bz/e2e/conformance
     tags:
     paths-ignore:
       - '**.md'
@@ -392,3 +393,62 @@ jobs:
           path: |
             /tmp/cloudcore.log
             /tmp/edgecore.log
+
+  conformance_e2e_test:
+      runs-on: ubuntu-22.04
+      timeout-minutes: 60
+      name: conformance e2e test
+      needs: image-prepare
+      env:
+        GO111MODULE: on
+      steps:
+        - name: Install Go
+          uses: actions/setup-go@v3
+          with:
+            go-version: 1.20.x
+
+        - uses: actions/cache@v3
+          with:
+            path: ~/go/pkg/mod
+            key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+
+        - name: Install dependences
+          run: |
+            command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
+            go install sigs.k8s.io/kind@v0.21.0
+            curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.28.6/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+
+        - name: Checkout code
+          uses: actions/checkout@v3
+          with:
+            fetch-depth: 0
+
+        - name: for test git fetch
+          run: |
+            git remote add upstream https://github.com/kubeedge/kubeedge.git
+            git fetch upstream --tags
+
+        - name: cleanup images
+          run: docker system prune -a -f
+
+        - name: Retrieve saved kubeedge/build-tools image
+          uses: actions/download-artifact@v3
+          with:
+            name: build-tools-docker-artifact
+            path: /home/runner/build-tools
+
+        - name: docker load kubeedge/build-tools image
+          run: |
+            docker load < /home/runner/build-tools/build-tools.tar
+
+        - name: enable cri config in containerd service
+          run: |
+            containerd config default | sudo tee /etc/containerd/config.toml && sudo systemctl restart containerd.service
+
+        - run: make conformance_e2e kindest/node:v1.28.0
+
+        - uses: actions/upload-artifact@v3
+          if: always()
+          with:
+            name: conformance-e2e-test-logs
+            path: /tmp/results/e2e.log

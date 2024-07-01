@@ -466,3 +466,20 @@ else
 keadm_compatibility_e2e:
 	tests/scripts/keadm_compatibility_e2e.sh ${CLOUD_EDGE_VERSION}
 endif
+
+define CONFORMANCE_E2E_HELP_INFO
+# conformance_e2e test.
+#
+# Example:
+#   make conformance_e2e
+#   make conformance_e2e HELP=y
+#
+endef
+.PHONY: conformance_e2e
+ifeq ($(HELP),y)
+conformance_e2e:
+	@echo "$$CONFORMANCE_E2E_HELP_INFO"
+else
+conformance_e2e:
+	tests/scripts/conformance_e2e.sh ${KIND_IMAGE}
+endif
