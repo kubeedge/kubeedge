@@ -12,6 +12,7 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/listener"
@@ -19,6 +20,7 @@ import (
 	commonconstants "github.com/kubeedge/kubeedge/common/constants"
 	commonType "github.com/kubeedge/kubeedge/common/types"
 	v1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
+	"github.com/kubeedge/kubeedge/pkg/util"
 )
 
 type servicebusFactory struct{}
@@ -146,6 +148,19 @@ func (sb *ServiceBus) GoToTarget(data map[string]interface{}, stop chan struct{}
 	msg.SetResourceOperation(resource, request.Method)
 	msg.FillBody(request)
 	msg.SetRoute(modules.RouterSourceServiceBus, modules.UserGroup)
+
+	sessionMgr, err := cloudhub.GetSessionManager()
+	if err != nil {
+		return nil, err
+	}
+	if _, exists := sessionMgr.GetSession(nodeName); !exists {
+		hostnameOverride := util.GetHostname()
+		localIP, err := util.GetLocalIP(hostnameOverride)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get cloudcore localIP with err:%v", err)
+		}
+		return nil, fmt.Errorf("cloudcore:%s is no session for node:%s", localIP, nodeName)
+	}
 	beehiveContext.Send(modules.CloudHubModuleName, *msg)
 	if stop != nil {
 		listener.MessageHandlerInstance.SetCallback(messageID, func(message *model.Message) {

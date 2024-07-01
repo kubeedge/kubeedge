@@ -16,7 +16,8 @@ const (
 	SystemName      = "kubeedge"
 	SystemNamespace = SystemName
 
-	CloudConfigMapName = "cloudcore"
+	CloudConfigMapName  = "cloudcore"
+	EdgeMappingCloudKey = "cloudcore"
 
 	// runtime
 	DockerContainerRuntime = "docker"

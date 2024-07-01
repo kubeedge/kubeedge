@@ -1,6 +1,7 @@
 package cloudhub
 
 import (
+	"errors"
 	"os"
 
 	"k8s.io/client-go/tools/cache"
@@ -22,6 +23,7 @@ import (
 )
 
 var DoneTLSTunnelCerts = make(chan bool, 1)
+var sessionMgr *session.Manager
 
 type cloudHub struct {
 	enable               bool
@@ -48,6 +50,7 @@ func newCloudHub(enable bool) *cloudHub {
 	messageHandler := handler.NewMessageHandler(
 		int(hubconfig.Config.KeepaliveInterval),
 		sessionManager, client.GetCRDClient(), messageDispatcher)
+	sessionMgr = sessionManager
 
 	ch := &cloudHub{
 		enable:         enable,
@@ -112,4 +115,11 @@ func (ch *cloudHub) Start() {
 		// It is not used to communicate between cloud and edge.
 		go udsserver.StartServer(hubconfig.Config.UnixSocket.Address)
 	}
+}
+
+func GetSessionManager() (*session.Manager, error) {
+	if sessionMgr != nil {
+		return sessionMgr, nil
+	}
+	return nil, errors.New("cloudhub not initialized")
 }
