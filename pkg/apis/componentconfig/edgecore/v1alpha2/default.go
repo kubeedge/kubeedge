@@ -69,8 +69,7 @@ func NewDefaultEdgeCoreConfig() (config *EdgeCoreConfig) {
 					RegisterSchedulable:     true,
 					WindowsPriorityClass:    DefaultWindowsPriorityClass,
 				},
-				CustomInterfaceName:   "",
-				RegisterNodeNamespace: constants.DefaultRegisterNodeNamespace,
+				CustomInterfaceName: "",
 			},
 			EdgeHub: &EdgeHub{
 				Enable:            true,
@@ -205,8 +204,7 @@ func NewMinEdgeCoreConfig() (config *EdgeCoreConfig) {
 					RegisterSchedulable:     true,
 					WindowsPriorityClass:    DefaultWindowsPriorityClass,
 				},
-				CustomInterfaceName:   "",
-				RegisterNodeNamespace: constants.DefaultRegisterNodeNamespace,
+				CustomInterfaceName: "",
 			},
 			EdgeHub: &EdgeHub{
 				Heartbeat:         15,

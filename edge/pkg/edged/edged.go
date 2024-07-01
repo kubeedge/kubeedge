@@ -98,7 +98,7 @@ var _ core.Module = (*edged)(nil)
 // Register register edged
 func Register(e *v1alpha2.Edged) {
 	edgedconfig.InitConfigure(e)
-	edged, err := newEdged(e.Enable, e.HostnameOverride, e.RegisterNodeNamespace)
+	edged, err := newEdged(e.Enable, e.HostnameOverride, constants.DefaultRegisterNodeNamespace)
 	if err != nil {
 		klog.Errorf("init new edged error, %v", err)
 		os.Exit(1)
