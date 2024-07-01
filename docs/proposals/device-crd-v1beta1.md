@@ -342,8 +342,8 @@ spec:
   nodeName: worker-node1
   properties:
     - name: temp
-      collectCycle: 2000
-      reportCycle: 2000
+      collectCycle: 2000      # 2000 stands for 2000 milliseconds (2 seconds)
+      reportCycle: 2000       # 2000 stands for 2000 milliseconds (2 seconds)
       desired:
         value: "30"
       reportToCloud: true

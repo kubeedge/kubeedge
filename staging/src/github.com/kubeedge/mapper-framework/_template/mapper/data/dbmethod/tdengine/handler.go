@@ -37,7 +37,7 @@ func DataHandler(ctx context.Context, twin *common.Twin, client *driver.Customiz
 		klog.Errorf("init database client err: %v", err)
 		return
 	}
-	reportCycle := time.Duration(twin.Property.ReportCycle)
+	reportCycle := time.Millisecond * time.Duration(twin.Property.ReportCycle)
 	if reportCycle == 0 {
 		reportCycle = common.DefaultReportCycle
 	}
