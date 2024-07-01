@@ -1,11 +1,12 @@
 package client
 
 import (
+	"crypto/x509"
 	"fmt"
 	"io"
 
 	"github.com/gorilla/websocket"
-	"k8s.io/klog/v2"
+	klog "k8s.io/klog/v2"
 
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/comm"
@@ -49,6 +50,10 @@ func (c *WSClient) Connect() (conn.Connection, error) {
 		if c.exOpts.Callback != nil {
 			c.exOpts.Callback(wsConn, resp)
 		}
+		var peerCerts []*x509.Certificate
+		if resp != nil && resp.TLS != nil {
+			peerCerts = resp.TLS.PeerCertificates
+		}
 		return conn.NewConnection(&conn.ConnectionOptions{
 			ConnType: api.ProtocolTypeWS,
 			ConnUse:  c.options.ConnUse,
@@ -57,8 +62,9 @@ func (c *WSClient) Connect() (conn.Connection, error) {
 			Handler:  c.options.Handler,
 			CtrlLane: lane.NewLane(api.ProtocolTypeWS, wsConn),
 			State: &conn.ConnectionState{
-				State:   api.StatConnected,
-				Headers: c.exOpts.Header.Clone(),
+				State:            api.StatConnected,
+				Headers:          c.exOpts.Header.Clone(),
+				PeerCertificates: peerCerts,
 			},
 			AutoRoute: c.options.AutoRoute,
 		}), nil

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/lucas-clemente/quic-go"
-	"k8s.io/klog/v2"
+	quic "github.com/lucas-clemente/quic-go"
+	klog "k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/viaduct/pkg/api"
@@ -121,8 +121,9 @@ func (c *QuicClient) Connect() (conn.Connection, error) {
 		Consumer: c.options.Consumer,
 		Handler:  c.options.Handler,
 		State: &conn.ConnectionState{
-			State:   api.StatConnected,
-			Headers: c.exOpts.Header,
+			State:            api.StatConnected,
+			Headers:          c.exOpts.Header,
+			PeerCertificates: session.ConnectionState().PeerCertificates,
 		},
 		AutoRoute: c.options.AutoRoute,
 	}), nil

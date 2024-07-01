@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/websocket"
-	"k8s.io/klog/v2"
+	klog "k8s.io/klog/v2"
 
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/conn"
@@ -87,8 +87,9 @@ func (srv *WSServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		Handler:  srv.options.Handler,
 		CtrlLane: lane.NewLane(api.ProtocolTypeWS, wsConn),
 		State: &conn.ConnectionState{
-			State:   api.StatConnected,
-			Headers: req.Header.Clone(),
+			State:            api.StatConnected,
+			Headers:          req.Header.Clone(),
+			PeerCertificates: req.TLS.PeerCertificates,
 		},
 		AutoRoute:          srv.options.AutoRoute,
 		OnReadTransportErr: srv.options.OnReadTransportErr,

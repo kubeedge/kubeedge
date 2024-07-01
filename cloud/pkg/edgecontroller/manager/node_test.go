@@ -78,7 +78,7 @@ func TestNewNodesManager(t *testing.T) {
 		QPS:         100,
 		Burst:       200,
 		ContentType: "application/vnd.kubernetes.protobuf",
-	})
+	}, false)
 
 	client.DefaultGetRestMapper = func() (mapper meta.RESTMapper, err error) { return nil, nil }
 

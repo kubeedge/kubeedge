@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"k8s.io/klog/v2"
+	klog "k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/viaduct/pkg/api"
@@ -139,8 +139,9 @@ func (conn *WSConnection) handleMessage() {
 			conn.handler = mux.MuxDefault
 		}
 		conn.handler.ServeConn(&mux.MessageRequest{
-			Header:  conn.state.Headers,
-			Message: msg,
+			Header:           conn.state.Headers,
+			PeerCertificates: conn.state.PeerCertificates,
+			Message:          msg,
 		}, &responseWriter{
 			Type: api.ProtocolTypeWS,
 			Van:  conn.wsConn,

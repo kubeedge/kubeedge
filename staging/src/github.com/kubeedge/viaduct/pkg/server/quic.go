@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/lucas-clemente/quic-go"
-	"k8s.io/klog/v2"
+	quic "github.com/lucas-clemente/quic-go"
+	klog "k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/viaduct/pkg/api"
@@ -125,8 +125,9 @@ func (srv *QuicServer) handleSession(session quic.Session) {
 		CtrlLane: lane.NewLane(api.ProtocolTypeQuic, ctrlStream),
 		Handler:  srv.options.Handler,
 		State: &conn.ConnectionState{
-			State:   api.StatConnected,
-			Headers: header,
+			State:            api.StatConnected,
+			Headers:          header,
+			PeerCertificates: session.ConnectionState().PeerCertificates,
 		},
 		AutoRoute:          srv.options.AutoRoute,
 		OnReadTransportErr: srv.options.OnReadTransportErr,

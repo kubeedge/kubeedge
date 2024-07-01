@@ -47,7 +47,7 @@ var (
 	CrdConfig  *rest.Config
 )
 
-func InitKubeEdgeClient(config *cloudcoreConfig.KubeAPIConfig) {
+func InitKubeEdgeClient(config *cloudcoreConfig.KubeAPIConfig, enableImpersonation bool) {
 	initOnce.Do(func() {
 		kubeConfig, err := clientcmd.BuildConfigFromFlags(config.Master, config.KubeConfig)
 		if err != nil {
@@ -59,15 +59,15 @@ func InitKubeEdgeClient(config *cloudcoreConfig.KubeAPIConfig) {
 
 		KubeConfig = kubeConfig
 
-		dynamicClient = dynamic.NewForConfigOrDie(kubeConfig)
+		dynamicClient = newForDynamicConfigOrDie(kubeConfig, enableImpersonation)
 
 		kubeConfig.ContentType = runtime.ContentTypeProtobuf
-		kubeClient = kubernetes.NewForConfigOrDie(kubeConfig)
+		kubeClient = newForK8sConfigOrDie(kubeConfig, enableImpersonation)
 
 		crdKubeConfig := rest.CopyConfig(kubeConfig)
 		crdKubeConfig.ContentType = runtime.ContentTypeJSON
 		CrdConfig = crdKubeConfig
-		crdClient = crdClientset.NewForConfigOrDie(crdKubeConfig)
+		crdClient = newForCrdConfigOrDie(crdKubeConfig, enableImpersonation)
 
 		authKubeConfig, err = clientcmd.BuildConfigFromFlags(kubeConfig.Host, "")
 		if err != nil {
