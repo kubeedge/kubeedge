@@ -176,6 +176,13 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 					klog.Errorf("err: %+v", err)
 					return nil
 				}
+			case pptv.PushMethod.Otel != nil:
+				dbMethodName = common.PushMethodOTEL
+				pushMethod, err = json.Marshal(pptv.PushMethod.Otel)
+				if err != nil {
+					klog.Errorf("err: %+v", err)
+					return nil
+				}
 			default:
 				klog.Errorf("get PushMethod err: Unsupported pushmethod type")
 			}
