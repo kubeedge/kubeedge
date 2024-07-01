@@ -865,6 +865,8 @@ modules:
       enable: true
       port: 10000
     writeTimeout: 30
+  dynamicController:
+	enable: true;
   devicecontroller:
     buffer:
       deviceEvent: 1
@@ -1020,6 +1022,8 @@ modules:
     contextSendModule: websocket
     enable: true
     podStatusSyncInterval: 60
+	metaServer:
+		enable: true
   servicebus:
     enable: false
 
