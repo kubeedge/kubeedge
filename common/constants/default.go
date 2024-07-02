@@ -71,8 +71,6 @@ const (
 	DefaultKubeUpdateNodeFrequency = 20
 
 	// EdgeController
-	DefaultUpdatePodStatusWorkers            = 1
-	DefaultUpdateNodeStatusWorkers           = 1
 	DefaultQueryConfigMapWorkers             = 100
 	DefaultQuerySecretWorkers                = 100
 	DefaultQueryPersistentVolumeWorkers      = 4
@@ -88,7 +86,6 @@ const (
 	DefaultCreatePodWorkers                  = 4
 	DefaultCertificateSigningRequestWorkers  = 4
 
-	DefaultUpdatePodStatusBuffer            = 1024
 	DefaultUpdateNodeStatusBuffer           = 1024
 	DefaultQueryConfigMapBuffer             = 1024
 	DefaultQuerySecretBuffer                = 1024
