@@ -1,5 +1,5 @@
 /*
-Copyright 2024 The KubeEdge Authors.
+Copyright 2023 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ var errFailedDBOperation = errors.New("Failed DB Operation")
 type CasesSaveStr []struct {
 	// name is name of the testcase
 	name string
-	// returnErr is return of mock interface ormerMock's DoTX function
+	// doTXReturnErr is return of mock interface ormerMock's DoTX function
 	doTXReturnErr error
 }
 
@@ -49,7 +49,7 @@ type CasesDeleteStr []struct {
 	deleteReturnErr error
 	// queryTableReturn is the return of mock interface ormerMock's QueryTable function
 	queryTableReturn orm.QuerySeter
-	// returnErr is return of mock interface ormerMock's DoTX function
+	// doTXReturnErr is return of mock interface ormerMock's DoTX function
 	doTXReturnErr error
 }
 

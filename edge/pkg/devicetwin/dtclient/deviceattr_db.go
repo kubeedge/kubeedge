@@ -42,7 +42,7 @@ func SaveDeviceAttr(o orm.Ormer, doc *DeviceAttr) error {
 // DeleteDeviceAttrByDeviceID delete device attr
 func DeleteDeviceAttrByDeviceID(o orm.Ormer, deviceID string) error {
 	err := o.DoTx(func(ctx context.Context, txOrm orm.TxOrmer) error {
-		// insert data
+		// delete data
 		// Using txOrm to execute SQL
 		_, e := txOrm.QueryTable(DeviceAttrTableName).Filter("deviceid", deviceID).Delete()
 		// if e != nil the transaction will be rollback

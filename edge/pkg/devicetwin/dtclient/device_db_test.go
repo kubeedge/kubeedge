@@ -1,5 +1,5 @@
 /*
-Copyright 2024 The KubeEdge Authors.
+Copyright 2018 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -356,10 +356,8 @@ func TestDeleteDeviceTrans(t *testing.T) {
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
 			// success delete
-			//querySeterMock.EXPECT().Delete().Return(test.successDeleteReturnInt, test.successDeleteReturnErr).Times(test.successDeleteTimes)
 			ormerMock.EXPECT().DoTx(gomock.Any()).Return(test.successDeleteReturnErr).Times(test.successDeleteTimes)
 			// fail delete
-			//querySeterMock.EXPECT().Delete().Return(test.failDeleteReturnInt, test.failDeleteReturnErr).Times(test.failDeleteTimes)
 			ormerMock.EXPECT().DoTx(gomock.Any()).Return(test.failDeleteReturnErr).Times(test.failDeleteTimes)
 
 			err := DeleteDeviceTrans(deletes)

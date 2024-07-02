@@ -38,10 +38,8 @@ func SaveDevice(o orm.Ormer, doc *Device) error {
 
 // DeleteDeviceByID delete device by id
 func DeleteDeviceByID(o orm.Ormer, id string) error {
-	//num, err := o.QueryTable(DeviceTableName).Filter("id", id).Delete()
-
 	err := o.DoTx(func(ctx context.Context, txOrm orm.TxOrmer) error {
-		// insert data
+		// delete data
 		// Using txOrm to execute SQL
 		_, e := txOrm.QueryTable(DeviceTableName).Filter("id", id).Delete()
 		// if e != nil the transaction will be rollback
