@@ -14,9 +14,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/storage"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
+	patchutil "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/util"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
@@ -63,7 +67,16 @@ func (s *store) Get(ctx context.Context, key string, opts storage.GetOptions, ob
 		return err
 	}
 	unstrObj := objPtr.(*unstructured.Unstructured)
-	return runtime.DecodeInto(s.codec, []byte((*resp.Kvs)[0].Value), unstrObj)
+	if err = runtime.DecodeInto(s.codec, []byte((*resp.Kvs)[0].Value), unstrObj); err != nil {
+		return err
+	}
+
+	if unstrObj.GetKind() == "Pod" {
+		if err = MergePatchedResource(ctx, unstrObj, model.ResourceTypePodPatch); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *store) GetList(ctx context.Context, key string, opts storage.ListOptions, listObj runtime.Object) error {
@@ -89,6 +102,12 @@ func (s *store) GetList(ctx context.Context, key string, opts storage.ListOption
 		err := runtime.DecodeInto(s.codec, []byte(v.Value), &unstrObj)
 		if err != nil {
 			return err
+		}
+
+		if unstrObj.GetKind() == "Pod" {
+			if err = MergePatchedResource(ctx, &unstrObj, model.ResourceTypePodPatch); err != nil {
+				return err
+			}
 		}
 
 		labelSet := labels.Set(unstrObj.GetLabels())
@@ -140,4 +159,28 @@ func newStore() *store {
 		codec:     codec,
 	}
 	return &s
+}
+
+func MergePatchedResource(ctx context.Context, originalObj *unstructured.Unstructured, resourceTypePatch string) error {
+	resKey := fmt.Sprintf("%s/%s/%s", originalObj.GetNamespace(), resourceTypePatch, originalObj.GetName())
+	var metas *[]string
+	metas, err := dao.QueryMeta("key", resKey)
+	if err != nil {
+		return err
+	}
+	if len(*metas) > 0 {
+		defaultScheme := scheme.Scheme
+		defaulter := runtime.ObjectDefaulter(defaultScheme)
+		updatedResource := new(unstructured.Unstructured)
+		GroupVersionKind := originalObj.GroupVersionKind()
+		schemaReferenceObj, err := defaultScheme.New(GroupVersionKind)
+		if err != nil {
+			return fmt.Errorf("failed to build schema reference object, err: %+v", err)
+		}
+		if err = patchutil.StrategicPatchObject(ctx, defaulter, originalObj, []byte((*metas)[0]), updatedResource, schemaReferenceObj, ""); err != nil {
+			return err
+		}
+		originalObj = updatedResource
+	}
+	return nil
 }
