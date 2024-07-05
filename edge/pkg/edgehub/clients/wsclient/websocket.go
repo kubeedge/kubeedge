@@ -123,6 +123,6 @@ func (wsc *WebSocketClient) Receive() (model.Message, error) {
 }
 
 // Notify logs info
-func (wsc *WebSocketClient) Notify(authInfo map[string]string) {
+func (wsc *WebSocketClient) Notify(map[string]string) {
 	klog.Infof("no op")
 }

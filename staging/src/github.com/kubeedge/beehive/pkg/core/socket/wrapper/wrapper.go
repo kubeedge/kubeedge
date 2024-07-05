@@ -31,7 +31,7 @@ type ConnWrapper struct {
 }
 
 // NewWrapper new wrapper
-func NewWrapper(connType string, conn interface{}, buffSize int) Conn {
+func NewWrapper(_ string, conn interface{}, buffSize int) Conn {
 	readerType := reader.ReaderTypeRaw
 	writerType := writer.WriterTypeRaw
 

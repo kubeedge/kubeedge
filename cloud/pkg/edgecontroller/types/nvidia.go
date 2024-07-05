@@ -1,6 +1,6 @@
 package types
 
-// Store physical is and health status of a single GPU
+// NvidiaGPUStatus Stores health status of a single GPU
 type NvidiaGPUStatus struct {
 	// Store the physical GPU id
 	ID string `json:"id" protobuf:"bytes,1,opt,name=id"`

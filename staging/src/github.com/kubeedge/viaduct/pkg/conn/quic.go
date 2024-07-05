@@ -170,7 +170,7 @@ func (conn *QuicConnection) openStreamSync(streamUse api.UseType, autoDispatch b
 }
 
 // accept stream and dispatch message for the new stream
-func (conn *QuicConnection) acceptStream(streamUse api.UseType, autoDispatch bool) (*smgr.Stream, error) {
+func (conn *QuicConnection) acceptStream(_ api.UseType, autoDispatch bool) (*smgr.Stream, error) {
 	stream, err := conn.session.AcceptStream()
 	if err != nil {
 		klog.Errorf("failed to accept stream, error: %+v", err)

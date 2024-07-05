@@ -59,7 +59,7 @@ func (*defaultHandler) Filter(message *model.Message) bool {
 		group == messagepkg.FuncGroupName || group == messagepkg.UserGroupName
 }
 
-func (*defaultHandler) Process(message *model.Message, clientHub clients.Adapter) error {
+func (*defaultHandler) Process(message *model.Message, _ clients.Adapter) error {
 	group := message.GetGroup()
 	md := ""
 	switch group {

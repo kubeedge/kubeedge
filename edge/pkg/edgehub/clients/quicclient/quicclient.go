@@ -104,6 +104,6 @@ func (qcc *QuicClient) Receive() (model.Message, error) {
 }
 
 // Notify logs info
-func (qcc *QuicClient) Notify(authInfo map[string]string) {
-	klog.Infof("Don not care")
+func (qcc *QuicClient) Notify(map[string]string) {
+	klog.Infof("Do not care")
 }

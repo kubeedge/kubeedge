@@ -159,7 +159,7 @@ func EdgeCoreConfig(config *hollowEdgeNodeConfig) *v1alpha2.EdgeCoreConfig {
 
 func GetFakeKubeletDeps(
 	s *kubeletoptions.KubeletServer,
-	featureGate featuregate.FeatureGate) (*kubelet.Dependencies, error) {
+	_ featuregate.FeatureGate) (*kubelet.Dependencies, error) {
 	endpoint, err := fakeremote.GenerateEndpoint()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate fake endpoint %v", err)

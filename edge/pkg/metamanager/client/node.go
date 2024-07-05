@@ -87,7 +87,7 @@ func (c *nodes) Patch(name string, data []byte) (*api.Node, error) {
 	return handleNodeResp(content)
 }
 
-func (c *nodes) Delete(name string) error {
+func (c *nodes) Delete(string) error {
 	return nil
 }
 

@@ -14,7 +14,7 @@ import (
 
 type ResourceInfo struct {
 	// Ordinal is the index of the template of this resource in
-	// the manifetsts of EdgeApplication.
+	// the manifests of EdgeApplication.
 	Ordinal   int    `json:"ordinal"`
 	Group     string `json:"group"`
 	Version   string `json:"version"`

@@ -191,7 +191,7 @@ func (r *Rest) Forward(target provider.Target, data interface{}) (interface{}, e
 	return httpResponse, nil
 }
 
-func (r *Rest) GoToTarget(data map[string]interface{}, stop chan struct{}) (interface{}, error) {
+func (r *Rest) GoToTarget(data map[string]interface{}, _ chan struct{}) (interface{}, error) {
 	//TODO: need to get ACK
 	v, exist := data["data"]
 	if !exist {

@@ -38,9 +38,9 @@ import (
 var called bool
 
 // testAction is a dummy function for testing Start
-func testAction(context *dtcontext.DTContext, resource string, msg interface{}) error {
+func testAction(*dtcontext.DTContext, string, interface{}) error {
 	called = true
-	return errors.New("Called the dummy function for testing")
+	return errors.New("called the dummy function for testing")
 }
 
 // TestDeviceStartAction is function to test Start() when value is passed in ReceiverChan.

@@ -70,7 +70,7 @@ func StartHTTPServer() {
 }
 
 // getCA returns the caCertDER
-func getCA(request *restful.Request, response *restful.Response) {
+func getCA(_ *restful.Request, response *restful.Response) {
 	caCertDER := hubconfig.Config.Ca
 	if _, err := response.Write(caCertDER); err != nil {
 		klog.Errorf("failed to write caCertDER, err: %v", err)

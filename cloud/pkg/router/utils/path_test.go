@@ -77,7 +77,7 @@ func AssertTrue(t *testing.T, value bool, errMsg string) {
 	}
 }
 
-// AssertStringEqual triggers testing error if the expect and actual string are not the same.
+// AssertStringEqual triggers testing error if expect and actual string are not the same.
 func AssertStringEqual(t *testing.T, expect, actual, errMsg string) {
 	if expect != actual {
 		t.Errorf("%s, expect: \"%s\", actual: \"%s\"", errMsg, expect, actual)

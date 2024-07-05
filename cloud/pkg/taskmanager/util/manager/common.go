@@ -42,12 +42,12 @@ func (c *CommonResourceEventHandler) obj2Event(t watch.EventType, obj interface{
 }
 
 // OnAdd handle Add event
-func (c *CommonResourceEventHandler) OnAdd(obj interface{}, isInInitialList bool) {
+func (c *CommonResourceEventHandler) OnAdd(obj interface{}, _ bool) {
 	c.obj2Event(watch.Added, obj)
 }
 
 // OnUpdate handle Update event
-func (c *CommonResourceEventHandler) OnUpdate(oldObj, newObj interface{}) {
+func (c *CommonResourceEventHandler) OnUpdate(_, newObj interface{}) {
 	c.obj2Event(watch.Modified, newObj)
 }
 

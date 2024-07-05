@@ -39,10 +39,10 @@ type CertificateSigningRequestsBridge struct {
 	MetaClient client.CoreInterface
 }
 
-func (c *CertificateSigningRequestsBridge) Create(ctx context.Context, certificateSigningRequest *v1.CertificateSigningRequest, opts metav1.CreateOptions) (result *v1.CertificateSigningRequest, err error) {
+func (c *CertificateSigningRequestsBridge) Create(_ context.Context, certificateSigningRequest *v1.CertificateSigningRequest, _ metav1.CreateOptions) (result *v1.CertificateSigningRequest, err error) {
 	return c.MetaClient.CertificateSigningRequests().Create(certificateSigningRequest)
 }
 
-func (c *CertificateSigningRequestsBridge) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.CertificateSigningRequest, err error) {
+func (c *CertificateSigningRequestsBridge) Get(_ context.Context, name string, _ metav1.GetOptions) (result *v1.CertificateSigningRequest, err error) {
 	return c.MetaClient.CertificateSigningRequests().Get(name)
 }

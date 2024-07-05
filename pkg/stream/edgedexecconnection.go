@@ -58,7 +58,7 @@ func (e *EdgedExecConnection) CleanChannel() {
 
 type responder struct{}
 
-func (r *responder) Error(w http.ResponseWriter, req *http.Request, err error) {
+func (r *responder) Error(w http.ResponseWriter, _ *http.Request, err error) {
 	klog.Errorf("failed to proxy request: %v", err)
 	http.Error(w, err.Error(), http.StatusInternalServerError)
 }
