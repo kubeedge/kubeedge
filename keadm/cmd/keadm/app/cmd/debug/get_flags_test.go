@@ -64,7 +64,7 @@ func TestToPrinter(t *testing.T) {
 	assert.NoError(err)
 	assert.NotNil(printer)
 
-	*printFlags.OutputFormat = "wide"
+	*printFlags.OutputFormat = FormatTypeWIDE
 	printer, err = printFlags.ToPrinter()
 	assert.NoError(err)
 	assert.NotNil(printer)
@@ -74,7 +74,7 @@ func TestToPrinter(t *testing.T) {
 	assert.Error(err)
 	assert.Nil(printer)
 
-	*printFlags.OutputFormat = "wide"
+	*printFlags.OutputFormat = FormatTypeWIDE
 	*printFlags.NoHeaders = true
 	printer, err = printFlags.ToPrinter()
 	assert.NoError(err)
@@ -119,7 +119,7 @@ func TestHumanPrintFlags_AllowedFormats(t *testing.T) {
 	humanPrintFlags := &HumanPrintFlags{}
 	formats := humanPrintFlags.AllowedFormats()
 
-	expectedFormats := []string{"wide"}
+	expectedFormats := []string{FormatTypeWIDE}
 	assert.Equal(expectedFormats, formats)
 }
 
@@ -151,7 +151,7 @@ func TestHumanPrintFlags_ToPrinter(t *testing.T) {
 		WithNamespace: false,
 	}
 
-	outputFormat := "wide"
+	outputFormat := FormatTypeWIDE
 	printer, err := humanPrintFlags.ToPrinter(outputFormat)
 	assert.NoError(err)
 	assert.NotNil(printer)
