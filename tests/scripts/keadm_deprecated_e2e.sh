@@ -13,13 +13,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 KUBEEDGE_ROOT=$PWD
-WORKDIR=$(dirname $0)
-E2E_DIR=$(realpath $(dirname $0)/..)
 
 source "${KUBEEDGE_ROOT}/hack/lib/golang.sh"
 source "${KUBEEDGE_ROOT}/hack/lib/install.sh"
+source "${KUBEEDGE_ROOT}/tests/scripts/keadm_common_e2e.sh"
+
 kubeedge::version::get_version_info
 VERSION=${GIT_VERSION}
 
@@ -38,18 +37,6 @@ function build_keadm() {
   make all WHAT=keadm
   cd $E2E_DIR
   ginkgo build -r e2e_keadm/
-}
-
-function prepare_cluster() {
-  kind create cluster --name test
-
-  echo "wait the control-plane ready..."
-  kubectl wait --for=condition=Ready node/test-control-plane --timeout=60s
-
-  kubectl create clusterrolebinding system:anonymous --clusterrole=cluster-admin --user=system:anonymous
-
-  # edge side don't support kind cni now, delete kind cni plugin for workaround
-  kubectl delete daemonset kindnet -nkube-system
 }
 
 function start_kubeedge() {
