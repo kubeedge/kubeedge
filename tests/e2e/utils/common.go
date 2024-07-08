@@ -654,3 +654,55 @@ func WaitForStatusReplicas(c clientset.Interface, ss *apps.StatefulSet, expected
 		Fatalf("Failed waiting for stateful set status.replicas updated to %d: %v", expectedReplicas, pollErr)
 	}
 }
+
+// WaitForDeploymentReady waits for the deployment to be ready
+func WaitForDeploymentReady(c clientset.Interface, namespace, name string, timeout time.Duration) error {
+    return wait.PollImmediate(5*time.Second, timeout, func() (bool, error) {
+        deployment, err := c.AppsV1().Deployments(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+        if err != nil {
+            return false, err
+        }
+
+        if deployment.Status.ReadyReplicas == *deployment.Spec.Replicas &&
+           deployment.Status.UpdatedReplicas == *deployment.Spec.Replicas &&
+           deployment.Status.AvailableReplicas == *deployment.Spec.Replicas {
+            return true, nil
+        }
+
+        return false, nil
+    })
+}
+
+// WaitForPodReady waits for the pod to be ready
+func WaitForPodReady(c clientset.Interface, namespace, name string, timeout time.Duration) error {
+    return wait.PollImmediate(5*time.Second, timeout, func() (bool, error) {
+        pod, err := c.CoreV1().Pods(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+        if err != nil {
+            if apierrors.IsNotFound(err) {
+                return false, nil
+            }
+            return false, err
+        }
+        return isPodReady(pod), nil
+    })
+}
+
+func isPodReady(pod *v1.Pod) bool {
+    return pod.Status.Phase == v1.PodRunning && isPodReadyConditionTrue(pod.Status)
+}
+
+// isPodReadyConditionTrue returns true if a pod is ready; false otherwise
+func isPodReadyConditionTrue(status v1.PodStatus) bool {
+    condition := getPodReadyCondition(status)
+    return condition != nil && condition.Status == v1.ConditionTrue
+}
+
+// getPodReadyCondition extracts the pod ready condition from the given status and returns that
+func getPodReadyCondition(status v1.PodStatus) *v1.PodCondition {
+    for i := range status.Conditions {
+        if status.Conditions[i].Type == v1.PodReady {
+            return &status.Conditions[i]
+        }
+    }
+    return nil
+}

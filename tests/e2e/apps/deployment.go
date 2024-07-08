@@ -27,6 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/wait"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/kubernetes/test/e2e/framework"
@@ -50,7 +51,7 @@ var _ = GroupDescribe("Application deployment test in E2E scenario", func() {
 		clientSet = utils.NewKubeClient(framework.TestContext.KubeConfig)
 	})
 
-	ginkgo.Context("Test application deployment and delete deployment using deployment spec", func() {
+	ginkgo.Context("Application Deployment and Deletion using Deployment Spec", func() {
 		ginkgo.BeforeEach(func() {
 			// Get current test SpecReport
 			testSpecReport = ginkgo.CurrentSpecReport()
@@ -84,21 +85,21 @@ var _ = GroupDescribe("Application deployment test in E2E scenario", func() {
 			utils.PrintTestcaseNameandStatus()
 		})
 
-		ginkgo.It("E2E_APP_DEPLOYMENT_1: Create deployment and check the pods are coming up correctly", func() {
+		ginkgo.It("E2E_APP_DEPLOYMENT_1: Create a deployment and verify that the pods are created successfully", func() {
 			replica := int32(1)
 			//Generate the random string and assign as a UID
 			UID = "edgecore-depl-app-" + utils.GetRandomString(5)
 			testsuite.CreateDeploymentTest(clientSet, replica, UID)
 		})
 
-		ginkgo.It("E2E_APP_DEPLOYMENT_2: Create deployment with replicas and check the pods are coming up correctly", func() {
+		ginkgo.It("E2E_APP_DEPLOYMENT_2: Create a deployment with multiple replicas and verify that all pods are created successfully", func() {
 			replica := int32(3)
 			//Generate the random string and assign as a UID
 			UID = "edgecore-depl-app-" + utils.GetRandomString(5)
 			testsuite.CreateDeploymentTest(clientSet, replica, UID)
 		})
 
-		ginkgo.It("E2E_APP_DEPLOYMENT_3: Create deployment and check deployment ctrler re-creating pods when user deletes the pods manually", func() {
+		ginkgo.It("E2E_APP_DEPLOYMENT_3: Create deployment and ensure that the deployment ctrler re-creates pods when user delete them manually", func() {
 			replica := int32(3)
 			//Generate the random string and assign as a UID
 			UID = "edgecore-depl-app-" + utils.GetRandomString(5)
@@ -115,6 +116,67 @@ var _ = GroupDescribe("Application deployment test in E2E scenario", func() {
 			gomega.Expect(len(podList.Items)).Should(gomega.Equal(int(replica)))
 
 			utils.WaitForPodsRunning(clientSet, podList, 240*time.Second)
+		})
+
+		ginkgo.It("E2E_APP_DEPLOYMENT_4: Create a deployment with probe configurations and verify that it works at the edge", func() {
+			replica := int32(1)
+			//Generate the random string and assign as a UID
+			UID := "edgecore-depl-app-" + utils.GetRandomString(5)
+
+			// cretae a deployment
+			ginkgo.By(fmt.Sprintf("Creating deployment %s with probe configurations", UID))
+
+			d := utils.NewDeployment(UID, utils.LoadConfig().AppImageURL[1], replica)
+
+			//add proeb config
+			d.Spec.Template.Spec.Containers[0].LivenessProbe = &corev1.Probe{
+				ProbeHandler: corev1.ProbeHandler{
+					TCPSocket: &corev1.TCPSocketAction{
+						Port: intstr.FromInt(8080),
+					},
+				},
+				InitialDelaySeconds: 15,
+				PeriodSeconds:       10,
+			}
+
+			//cretae deployment in the cluster
+			_, err := utils.CreateDeployment(clientSet, d)
+			gomega.Expect(err).To(gomega.BeNil())
+
+			//wait for delpoyment to be ready
+
+			time.Sleep(time.Second * 300)
+
+			ginkgo.By(fmt.Sprintf("get deployment %s", UID))
+			_, err = utils.GetDeployment(clientSet, corev1.NamespaceDefault, UID)
+			gomega.Expect(err).To(gomega.BeNil())
+
+			time.Sleep(time.Second * 20)
+
+
+			// check those probe config is added or not
+			// Verify if deployment pods are running with the probe configuration
+
+			ginkgo.By(fmt.Sprintf("get pod for deployment %s", UID))
+			labelSelector := labels.SelectorFromSet(map[string]string{"app": UID})
+			podList, err := utils.GetPods(clientSet, corev1.NamespaceDefault, labelSelector, nil)
+			gomega.Expect(err).To(gomega.BeNil())
+			gomega.Expect(podList).NotTo(gomega.BeNil())
+			// gomega.Expect(len(podList.Items)).To(gomega.Equal(int(replica)))
+
+
+			ginkgo.By(fmt.Sprintf("wait for pod of deployment %s running", UID))
+			utils.WaitForPodsRunning(clientSet, podList, 240*time.Second)
+
+			for _, pod := range podList.Items {
+				// Check if pod has the expected liveness probe
+				probe := pod.Spec.Containers[0].LivenessProbe
+				gomega.Expect(probe).NotTo(gomega.BeNil())
+				gomega.Expect(probe.ProbeHandler.TCPSocket.Port.IntVal).To(gomega.Equal(int32(8080)))
+				gomega.Expect(probe.InitialDelaySeconds).To(gomega.Equal(int32(15)))
+				gomega.Expect(probe.PeriodSeconds).To(gomega.Equal(int32(10)))
+			}
+			
 		})
 
 	})
