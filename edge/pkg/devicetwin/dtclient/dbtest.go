@@ -33,12 +33,8 @@ var errFailedDBOperation = errors.New("Failed DB Operation")
 type CasesSaveStr []struct {
 	// name is name of the testcase
 	name string
-	// returnInt is first return of mock interface ormerMock
-	returnInt int64
-	// returnErr is second return of mock interface ormerMock which is also expected error
-	returnErr error
-	// beginReturn is the return of mock interface ormerMock's Begin function
-	beginReturn orm.TxOrmer
+	// doTXReturnErr is return of mock interface ormerMock's DoTX function
+	doTXReturnErr error
 }
 
 // CasesDeleteStr is a struct for cases of delete
@@ -53,8 +49,8 @@ type CasesDeleteStr []struct {
 	deleteReturnErr error
 	// queryTableReturn is the return of mock interface ormerMock's QueryTable function
 	queryTableReturn orm.QuerySeter
-	// beginReturn is the return of mock interface ormerMock's Begin function
-	beginReturn orm.TxOrmer
+	// doTXReturnErr is return of mock interface ormerMock's DoTX function
+	doTXReturnErr error
 }
 
 // CasesUpdateStr is a struct for cases of update
@@ -69,8 +65,6 @@ type CasesUpdateStr []struct {
 	updateReturnErr error
 	// queryTableReturn is the return of mock interface ormerMock's QueryTable function
 	queryTableReturn orm.QuerySeter
-	// beginReturn is the return of mock interface ormerMock's Begin function
-	beginReturn orm.TxOrmer
 }
 
 // CasesQueryStr is a struct for cases of query
@@ -127,8 +121,6 @@ type CasesTransStr []struct {
 	queryTableTimes int
 	// wantErr is expected error
 	wantErr error
-	// beginReturn is the return of mock interface ormerMock's Begin function
-	beginReturn orm.TxOrmer
 }
 
 // GetCasesSave get cases for save
@@ -136,14 +128,12 @@ func GetCasesSave(t *testing.T) (*beego.MockOrmer, CasesSaveStr) {
 	ormerMock, _ := testtools.InitOrmerMock(t)
 	return ormerMock, CasesSaveStr{{
 		// Success Case
-		name:      "SuccessCase",
-		returnInt: int64(1),
-		returnErr: nil,
+		name:          "SuccessCase",
+		doTXReturnErr: nil,
 	}, {
 		// Failure Case
-		name:      "FailureCase",
-		returnInt: int64(1),
-		returnErr: errFailedDBOperation,
+		name:          "FailureCase",
+		doTXReturnErr: errFailedDBOperation,
 	},
 	}
 }
