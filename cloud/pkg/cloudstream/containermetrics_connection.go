@@ -42,6 +42,18 @@ type ContainerMetricsConnection struct {
 	closeChan    chan bool
 }
 
+func (ms *ContainerMetricsConnection) String() string {
+	return fmt.Sprintf("APIServer_MetricsConnection MessageID %v", ms.MessageID)
+}
+
+func (ms *ContainerMetricsConnection) WriteToAPIServer(p []byte) (n int, err error) {
+	return ms.writer.Write(p)
+}
+
+func (ms *ContainerMetricsConnection) SetMessageID(id uint64) {
+	ms.MessageID = id
+}
+
 func (ms *ContainerMetricsConnection) GetMessageID() uint64 {
 	return ms.MessageID
 }
@@ -59,20 +71,8 @@ func (ms *ContainerMetricsConnection) EdgePeerDone() chan struct{} {
 	return ms.edgePeerStop
 }
 
-func (ms *ContainerMetricsConnection) WriteToAPIServer(p []byte) (n int, err error) {
-	return ms.writer.Write(p)
-}
-
 func (ms *ContainerMetricsConnection) WriteToTunnel(m *stream.Message) error {
 	return ms.session.WriteMessageToTunnel(m)
-}
-
-func (ms *ContainerMetricsConnection) SetMessageID(id uint64) {
-	ms.MessageID = id
-}
-
-func (ms *ContainerMetricsConnection) String() string {
-	return fmt.Sprintf("APIServer_MetricsConnection MessageID %v", ms.MessageID)
 }
 
 func (ms *ContainerMetricsConnection) SendConnection() (stream.EdgedConnection, error) {
