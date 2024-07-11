@@ -103,7 +103,7 @@ func InitNFSDriver() storageframework.TestDriver {
 				"", // Default fsType
 			),
 			SupportedMountOption: sets.NewString("relatime"),
-			RequiredMountOption:  sets.NewString("vers=4.1"),
+			RequiredMountOption:  sets.NewString("vers=4.0"),
 			Capabilities: map[storageframework.Capability]bool{
 				storageframework.CapPersistence:       true,
 				storageframework.CapExec:              true,
@@ -152,7 +152,7 @@ func (n *nfsDriver) GetPersistentVolumeSource(readOnly bool, fsType string, e2ev
 
 func (n *nfsDriver) GetDynamicProvisionStorageClass(ctx context.Context, config *storageframework.PerTestConfig, fsType string) *storagev1.StorageClass {
 	provisioner := n.externalPluginName
-	parameters := map[string]string{"mountOptions": "vers=4.1"}
+	parameters := map[string]string{"mountOptions": "vers=4.0"}
 	ns := config.Framework.Namespace.Name
 
 	return storageframework.GetStorageClass(provisioner, parameters, nil, ns)
@@ -1281,6 +1281,7 @@ func (v *vSphereDriver) GetDynamicProvisionStorageClass(ctx context.Context, con
 }
 
 func (v *vSphereDriver) PrepareTest(ctx context.Context, f *framework.Framework) *storageframework.PerTestConfig {
+	vspheretest.Bootstrap(f)
 	ginkgo.DeferCleanup(func(ctx context.Context) {
 		// Driver Cleanup function
 		// Logout each vSphere client connection to prevent session leakage
@@ -1300,7 +1301,6 @@ func (v *vSphereDriver) PrepareTest(ctx context.Context, f *framework.Framework)
 
 func (v *vSphereDriver) CreateVolume(ctx context.Context, config *storageframework.PerTestConfig, volType storageframework.TestVolType) storageframework.TestVolume {
 	f := config.Framework
-	vspheretest.Bootstrap(f)
 	nodeInfo := vspheretest.GetReadySchedulableRandomNodeInfo(ctx, f.ClientSet)
 	volumePath, err := nodeInfo.VSphere.CreateVolume(&vspheretest.VolumeOptions{}, nodeInfo.DataCenterRef)
 	framework.ExpectNoError(err)
