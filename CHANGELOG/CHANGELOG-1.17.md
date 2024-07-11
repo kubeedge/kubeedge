@@ -1,9 +1,26 @@
+* [v1.17.1](#v1171)
+    * [Downloads for v1.17.1](#downloads-for-v1171)
+    * [KubeEdge v1.17.1 Release Notes](#kubeedge-v1171-release-notes)
+        * [Changelog since v1.17.0](#changelog-since-v1170)
 * [v1.17.0](#v1170)
     * [Downloads for v1.17.0](#downloads-for-v1170)
     * [KubeEdge v1.17 Release Notes](#kubeedge-v117-release-notes)
         * [1.17 What's New](#117-whats-new)
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
 
+# v1.17.1
+
+## Downloads for v1.17.1
+
+Download v1.17.1 in the [v1.17.1 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.17.1).
+
+## KubeEdge v1.17.1 Release Notes
+
+### Changelog since v1.17.0
+
+- Bump Kubernetes to the newest patch version v1.28.11. ([#5697](https://github.com/kubeedge/kubeedge/pull/5697), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Fix edgecore will not restart when the edge node cannot obtain the IP address. ([#5715](https://github.com/kubeedge/kubeedge/pull/5715), [@WillardHu](https://github.com/WillardHu))
+- Fix compatible issue with keadm init/upgrade --profile. ([#5718](https://github.com/kubeedge/kubeedge/pull/5718), [@luomengY](https://github.com/luomengY))
 
 ## Downloads for v1.17.0
 
