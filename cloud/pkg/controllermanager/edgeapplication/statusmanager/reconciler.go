@@ -50,7 +50,7 @@ func (r *statusReconciler) Reconcile(ctx context.Context, request controllerrunt
 func (r *statusReconciler) sync(ctx context.Context, edgeApp *appsv1alpha1.EdgeApplication) (controllerruntime.Result, error) {
 	tmplInfos, err := utils.GetTemplatesInfosOfEdgeApp(edgeApp, r.Serializer)
 	if err != nil {
-		klog.Errorf("failed to get infos of templates in edgeApp %s/%s, continue with what has been got", edgeApp.Namespace, edgeApp.Name, err)
+		klog.Errorf("failed to get infos of templates in edgeApp %s/%s, continue with what has been got, err: %v", edgeApp.Namespace, edgeApp.Name, err)
 	}
 
 	for _, tmplInfo := range tmplInfos {

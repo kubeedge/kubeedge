@@ -69,9 +69,6 @@ func pullImages(taskReq types.NodeTaskRequest) fsm.Event {
 
 	// get edgecore config
 	edgeCoreConfig := options.GetEdgeCoreConfig()
-	if edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint == "" {
-		edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint = edgeCoreConfig.Modules.Edged.RemoteRuntimeEndpoint
-	}
 
 	// parse message request
 	prePullReq, err := getImagePrePullJobRequest(taskReq)

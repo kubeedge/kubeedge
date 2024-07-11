@@ -115,7 +115,7 @@ func (s *TunnelServer) connect(r *restful.Request, w *restful.Response) {
 	}
 	con, err := s.upgrader.Upgrade(w, r.Request, nil)
 	if err != nil {
-		klog.Error("Failed to upgrade the HTTP server connection to the WebSocket protocol: %v", err)
+		klog.Errorf("Failed to upgrade the HTTP server connection to the WebSocket protocol: %v", err)
 		return
 	}
 	klog.Infof("get a new tunnel agent hostname %v, internalIP %v", hostNameOverride, internalIP)
@@ -206,7 +206,7 @@ func (s *TunnelServer) updateNodeKubeletEndpoint(nodeName string) error {
 		getNode.Status.DaemonEndpoints.KubeletEndpoint.Port = int32(s.tunnelPort)
 		_, err = client.GetKubeClient().CoreV1().Nodes().UpdateStatus(context.Background(), getNode, metav1.UpdateOptions{})
 		if err != nil {
-			klog.Errorf("Failed to update node KubeletEndpoint Port, node: %s, tunnelPort: %s, err: %v", nodeName, s.tunnelPort, err)
+			klog.Errorf("Failed to update node KubeletEndpoint Port, node: %s, tunnelPort: %d, err: %v", nodeName, s.tunnelPort, err)
 			return false, nil
 		}
 		return true, nil
@@ -214,6 +214,6 @@ func (s *TunnelServer) updateNodeKubeletEndpoint(nodeName string) error {
 		klog.Errorf("Update KubeletEndpoint Port of Node '%v' error: %v. ", nodeName, err)
 		return fmt.Errorf("failed to Update KubeletEndpoint Port")
 	}
-	klog.V(4).Infof("Update node KubeletEndpoint Port successfully, node: %s, tunnelPort: %s", nodeName, s.tunnelPort)
+	klog.V(4).Infof("Update node KubeletEndpoint Port successfully, node: %s, tunnelPort: %d", nodeName, s.tunnelPort)
 	return nil
 }
