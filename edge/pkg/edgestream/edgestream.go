@@ -18,9 +18,9 @@ package edgestream
 
 import (
 	"crypto/tls"
+	"fmt"
 	"net/http"
 	"net/url"
-	"os"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -44,33 +44,18 @@ type edgestream struct {
 
 var _ core.Module = (*edgestream)(nil)
 
-func newEdgeStream(enable bool, hostnameOverride, nodeIP string) (*edgestream, error) {
-	var err error
-	if nodeIP == "" {
-		nodeIP, err = util.GetLocalIP(util.GetHostname())
-		if err != nil {
-			klog.Errorf("Failed to get Local IP address: %v", err)
-			return nil, err
-		}
-		klog.Infof("Get node local IP address successfully: %s", nodeIP)
-	}
-
+func newEdgeStream(enable bool, hostnameOverride, nodeIP string) *edgestream {
 	return &edgestream{
 		enable:           enable,
 		hostnameOverride: hostnameOverride,
 		nodeIP:           nodeIP,
-	}, nil
+	}
 }
 
 // Register register edgestream
 func Register(s *v1alpha2.EdgeStream, hostnameOverride, nodeIP string) {
 	config.InitConfigure(s)
-	edgeStream, err := newEdgeStream(s.Enable, hostnameOverride, nodeIP)
-	if err != nil {
-		klog.Errorf("init new edged error, %v", err)
-		os.Exit(1)
-	}
-	core.Register(edgeStream)
+	core.Register(newEdgeStream(s.Enable, hostnameOverride, nodeIP))
 }
 
 func (e *edgestream) Name() string {
@@ -124,13 +109,27 @@ func (e *edgestream) Start() {
 func (e *edgestream) TLSClientConnect(url url.URL, tlsConfig *tls.Config) error {
 	klog.Info("Start a new tunnel stream connection ...")
 
+	// If the node IP address is not specified in the configuration file,
+	// the node IP address is reacquired each time the tunnel stream is reconnected
+	var nodeIP string
+	if e.nodeIP == "" {
+		ip, err := util.GetLocalIP(util.GetHostname())
+		if err != nil {
+			return fmt.Errorf("failed to get Local IP address: %v", err)
+		}
+		klog.Infof("get node local IP address successfully: %s", ip)
+		nodeIP = ip
+	} else {
+		nodeIP = e.nodeIP
+	}
+
 	dial := websocket.Dialer{
 		TLSClientConfig:  tlsConfig,
 		HandshakeTimeout: time.Duration(config.Config.HandshakeTimeout) * time.Second,
 	}
 	header := http.Header{}
 	header.Add(stream.SessionKeyHostNameOverride, e.hostnameOverride)
-	header.Add(stream.SessionKeyInternalIP, e.nodeIP)
+	header.Add(stream.SessionKeyInternalIP, nodeIP)
 
 	con, _, err := dial.Dial(url.String(), header)
 	if err != nil {
