@@ -90,6 +90,29 @@ func NewCloudCoreHelmTool(kubeConfig, kubeedgeVersion string) *CloudCoreHelmTool
 
 // Install uses helm client to install cloudcore release
 func (c *CloudCoreHelmTool) Install(opts *types.InitOptions) error {
+	externValueFile := ""
+	if opts.Profile != "" {
+		// TODO:the version specified through profile will be obsolete.
+		kvs := strings.Split(opts.Profile, "=")
+		if len(kvs) == 2 {
+			if opts.KubeEdgeVersion == "" {
+				if kvs[0] == VersionProfileKey {
+					opts.KubeEdgeVersion = kvs[1]
+				} else {
+					return fmt.Errorf("format error in using profile to specify version")
+				}
+			}
+		} else {
+			externValueFile = opts.Profile
+		}
+	}
+
+	ver, err := util.GetCurrentVersion(opts.KubeEdgeVersion)
+	if err != nil {
+		return fmt.Errorf("failed to get version with err:%v", err)
+	}
+	opts.KubeEdgeVersion = ver
+
 	// The flag --force would not care about whether the cloud components exist or not also.
 	// If gives a external helm root, no need to check and verify, because it is always not a cloudcore.
 	if !opts.Force && opts.ExternalHelmRoot == "" {
@@ -106,10 +129,9 @@ func (c *CloudCoreHelmTool) Install(opts *types.InitOptions) error {
 	appendDefaultSets(opts.KubeEdgeVersion, opts.AdvertiseAddress, &opts.CloudInitUpdateBase)
 	// Load profile values, and merges the sets flag
 	var vals map[string]interface{}
-	var err error
-	if opts.Profile != "" {
-		// Load profile values, and merges the sets flag
-		vals, err = MergeProfileValues(getValuesFile(opts.Profile), opts.GetValidSets())
+	if externValueFile != "" {
+		// Load extern values, and merges the sets flag
+		vals, err = MergeExternValues(externValueFile, opts.GetValidSets())
 		if err != nil {
 			return err
 		}
@@ -187,6 +209,29 @@ func (c *CloudCoreHelmTool) Install(opts *types.InitOptions) error {
 
 // Upgrade uses helm client to upgrade cloudcore release
 func (c *CloudCoreHelmTool) Upgrade(opts *types.CloudUpgradeOptions) error {
+	externValueFile := ""
+	if opts.Profile != "" {
+		// TODO:the version specified through profile will be obsolete.
+		kvs := strings.Split(opts.Profile, "=")
+		if len(kvs) == 2 {
+			if opts.KubeEdgeVersion == "" {
+				if kvs[0] == VersionProfileKey {
+					opts.KubeEdgeVersion = kvs[1]
+				} else {
+					return fmt.Errorf("format error in using profile to specify version")
+				}
+			}
+		} else {
+			externValueFile = opts.Profile
+		}
+	}
+
+	ver, err := util.GetCurrentVersion(opts.KubeEdgeVersion)
+	if err != nil {
+		return fmt.Errorf("failed to get version with err:%v", err)
+	}
+	opts.KubeEdgeVersion = ver
+
 	if err := c.Common.OSTypeInstaller.IsK8SComponentInstalled(c.Common.KubeConfig, c.Common.Master); err != nil {
 		return fmt.Errorf("failed to verify k8s component installed, err: %v", err)
 	}
@@ -215,9 +260,9 @@ func (c *CloudCoreHelmTool) Upgrade(opts *types.CloudUpgradeOptions) error {
 	appendDefaultSets(opts.KubeEdgeVersion, opts.AdvertiseAddress, &opts.CloudInitUpdateBase)
 
 	var vals map[string]interface{}
-	if len(opts.ValueFiles) == 0 && opts.Profile != "" {
+	if len(opts.ValueFiles) == 0 && externValueFile != "" {
 		// Load profile values, and merges the sets flag
-		vals, err = MergeProfileValues(getValuesFile(opts.Profile), opts.GetValidSets())
+		vals, err = MergeExternValues(externValueFile, opts.GetValidSets())
 		if err != nil {
 			return err
 		}
