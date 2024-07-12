@@ -70,15 +70,15 @@ func (m *MockConn) RemoteAddr() net.Addr {
 	return &net.IPAddr{}
 }
 
-func (m *MockConn) SetDeadline(t time.Time) error {
+func (m *MockConn) SetDeadline(time.Time) error {
 	return nil
 }
 
-func (m *MockConn) SetReadDeadline(t time.Time) error {
+func (m *MockConn) SetReadDeadline(time.Time) error {
 	return nil
 }
 
-func (m *MockConn) SetWriteDeadline(t time.Time) error {
+func (m *MockConn) SetWriteDeadline(time.Time) error {
 	return nil
 }
 
@@ -105,7 +105,7 @@ func (m *MockTunneler) Close() error {
 	return nil
 }
 
-func (m *MockTunneler) WriteControl(messageType int, data []byte, deadline time.Time) error {
+func (m *MockTunneler) WriteControl(int, []byte, time.Time) error {
 	return nil
 }
 

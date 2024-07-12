@@ -1,3 +1,7 @@
+* [v1.16.3](#v1163)
+  * [Downloads for v1.16.3](#downloads-for-v1163)
+  * [KubeEdge v1.16.3 Release Notes](#kubeedge-v1163-release-notes)
+    * [Changelog since v1.16.2](#changelog-since-v1162)
 * [v1.16.2](#v1162)
   * [Downloads for v1.16.2](#downloads-for-v1162)
   * [KubeEdge v1.16.2 Release Notes](#kubeedge-v1162-release-notes)
@@ -11,6 +15,20 @@
     * [KubeEdge v1.16 Release Notes](#kubeedge-v116-release-notes)
         * [1.16 What's New](#116-whats-new)
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
+
+# v1.16.3
+
+## Downloads for v1.16.3
+
+Download v1.16.3 in the [v1.16.3 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.16.3).
+
+## KubeEdge v1.16.3 Release Notes
+
+### Changelog since v1.16.2
+
+- Bump Kubernetes to the newest patch version v1.27.15. ([#5699](https://github.com/kubeedge/kubeedge/pull/5699), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+- Fix edgecore will not restart when the edge node cannot obtain the IP address. ([#5716](https://github.com/kubeedge/kubeedge/pull/5716), [@WillardHu](https://github.com/WillardHu))
+
 
 # v1.16.2
 
