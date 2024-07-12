@@ -251,7 +251,7 @@ func (msg *Message) NewRespByMessage(message *Message, content interface{}) *Mes
 
 // NewErrorMessage returns a new error message by a message received
 func NewErrorMessage(message *Message, errContent string) *Message {
-	return NewMessage(message.Header.ParentID).
+	return NewMessage(message.GetID()).
 		SetResourceOperation(message.Router.Resource, ResponseErrorOperation).
 		FillBody(errContent)
 }
