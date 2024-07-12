@@ -57,49 +57,32 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 			flag.PrintDefaultConfigAndExitIfRequested(v1alpha2.NewDefaultEdgeCoreConfig())
 			flag.PrintFlags(cmd.Flags())
 
+			// validate options
 			if errs := opts.Validate(); len(errs) > 0 {
 				klog.Exit(util.SpliceErrors(errs))
 			}
 
+			// read config from config file
 			config, err := opts.Config()
 			if err != nil {
 				klog.Exit(err)
 			}
 
-			// should not save token in config file
-			if config.Modules.EdgeHub.Token != "" {
-				go func() {
-					// if receive data from CleanupTokenChan
-					// it means that edgecore apply for ca/certs successfully, then we can cleanup token
-					<-certificate.CleanupTokenChan
+			// prepare token for edge hub
+			prepareToken(config, opts.ConfigFile)
 
-					// cleanup token
-					if err := cleanupToken(*config, opts.ConfigFile); err != nil {
-						klog.Exit(err)
-					}
-				}()
-			}
-
-			bootstrapFile := constants.BootstrapFile
-			// get token from bootstrapFile if it exist
-			if utilvalidation.FileIsExist(bootstrapFile) {
-				token, err := os.ReadFile(bootstrapFile)
-				if err != nil {
-					klog.Exit(err)
-				}
-				config.Modules.EdgeHub.Token = string(token)
-			}
-
+			// validate configuration
 			if errs := validation.ValidateEdgeCoreConfiguration(config); len(errs) > 0 {
 				klog.Exit(util.SpliceErrors(errs.ToAggregate().Errors()))
 			}
 
+			// set feature gate
 			if err := features.DefaultMutableFeatureGate.SetFromMap(config.FeatureGates); err != nil {
 				klog.Exit(err)
 			}
 
 			// To help debugging, immediately log version
-			klog.Infof("Version: %+v", version.Get())
+			klog.Infof("EdgeCore Current Version: %+v", version.Get())
 
 			// Force skip check if enable metaserver
 			skipCheck := os.Getenv("CHECK_EDGECORE_ENVIRONMENT") == "false" || config.Modules.MetaManager.MetaServer.Enable
@@ -108,16 +91,10 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 				klog.Exit(fmt.Errorf("failed to check the running environment: %v", err))
 			}
 
-			// Get edge node local ip only when the customInterfaceName has been set.
-			// Defaults to the local IP from the default interface by the default config
-			if config.Modules.Edged.CustomInterfaceName != "" {
-				ip, err := netutil.ChooseBindAddressForInterface(config.Modules.Edged.CustomInterfaceName)
-				if err != nil {
-					klog.Errorf("Failed to get IP address by custom interface %s, err: %v", config.Modules.Edged.CustomInterfaceName, err)
-					os.Exit(1)
-				}
-				config.Modules.Edged.NodeIP = ip.String()
-				klog.Infof("Get IP address by custom interface successfully, %s: %s", config.Modules.Edged.CustomInterfaceName, config.Modules.Edged.NodeIP)
+			// reset nodeIP by interface
+			localIP := getLocalIP(config.Modules.Edged.CustomInterfaceName)
+			if localIP != "" {
+				config.Modules.Edged.NodeIP = localIP
 			}
 
 			registerModules(config)
@@ -152,6 +129,49 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 	})
 
 	return cmd
+}
+
+func getLocalIP(customInterfaceName string) string {
+	// Get edge node local ip only when the customInterfaceName has been set.
+	// Defaults to the local IP from the default interface by the default config
+	if customInterfaceName == "" {
+		return ""
+	}
+	ip, err := netutil.ChooseBindAddressForInterface(customInterfaceName)
+	if err != nil {
+		klog.Errorf("Failed to get IP address by custom interface %s, err: %v", customInterfaceName, err)
+		os.Exit(1)
+	}
+
+	localIP := ip.String()
+	klog.Infof("Get IP address by custom interface successfully, %s: %s", customInterfaceName, localIP)
+	return localIP
+}
+
+func prepareToken(config *v1alpha2.EdgeCoreConfig, configFile string) {
+	// should not save token in config file
+	if config.Modules.EdgeHub.Token != "" {
+		go func() {
+			// if receive data from CleanupTokenChan
+			// it means that edgecore apply for ca/certs successfully, then we can cleanup token
+			<-certificate.CleanupTokenChan
+
+			// cleanup token
+			if err := cleanupToken(*config, configFile); err != nil {
+				klog.Exit(err)
+			}
+		}()
+	}
+
+	bootstrapFile := constants.BootstrapFile
+	// get token from bootstrapFile if it exists
+	if utilvalidation.FileIsExist(bootstrapFile) {
+		token, err := os.ReadFile(bootstrapFile)
+		if err != nil {
+			klog.Exit(err)
+		}
+		config.Modules.EdgeHub.Token = string(token)
+	}
 }
 
 // cleanupToken cleanup the token, and write back to config file disk
