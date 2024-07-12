@@ -55,11 +55,13 @@ if want to admission control some kubeedge resources.`)
 
 	usage := &bytes.Buffer{}
 	cmd.SetOut(usage)
-	cmd.Usage()
+	err := cmd.Usage()
+	assert.NoError(err)
 	assert.Contains(usage.String(), "Usage:\n  admission")
 
 	help := &bytes.Buffer{}
 	cmd.SetOut(help)
-	cmd.Help()
+	err = cmd.Help()
+	assert.NoError(err)
 	assert.Contains(help.String(), "Admission leverage the feature of Dynamic Admission Control from kubernetes")
 }
