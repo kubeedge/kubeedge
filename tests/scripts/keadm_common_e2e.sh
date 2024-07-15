@@ -15,9 +15,7 @@
 # limitations under the License.
 
 KUBEEDGE_ROOT=$PWD
-WORKDIR=$(dirname $0)
 E2E_DIR=$(realpath $(dirname $0)/..)
-IMAGE_TAG=$(git describe --tags)
 
 function build_ginkgo() {
   cd $E2E_DIR

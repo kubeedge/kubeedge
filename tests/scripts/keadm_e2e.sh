@@ -14,8 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-KUBEEDGE_VERSION=$IMAGE_TAG
 KUBEEDGE_ROOT=$PWD
+IMAGE_TAG=$(git describe --tags)
+KUBEEDGE_VERSION=$IMAGE_TAG
 
 source "${KUBEEDGE_ROOT}/hack/lib/install.sh"
 source "${KUBEEDGE_ROOT}/tests/scripts/keadm_common_e2e.sh"

@@ -14,8 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-CLOUD_EDGE_VERSION=${1:-"v1.15.1"}
 KUBEEDGE_ROOT=$PWD
+IMAGE_TAG=$(git describe --tags)
+CLOUD_EDGE_VERSION=${1:-"v1.15.1"}
 
 source "${KUBEEDGE_ROOT}/hack/lib/install.sh"
 source "${KUBEEDGE_ROOT}/tests/scripts/keadm_common_e2e.sh"
