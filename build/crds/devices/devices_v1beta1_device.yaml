@@ -714,11 +714,12 @@ spec:
                               description: publish topic for mqtt
                               type: string
                           type: object
-                        opentelemetry:
-                          description: OTEL PUSH method configuration for otel
+                        otel:
+                          description: OTEL Push Method configuration for otel
                           properties:
                             endpointURL:
-                              description: the target endpoint URL the Exporter will connect to, like https://localhost:4318/v1/metrics
+                              description: the target endpoint URL the Exporter will
+                                connect to, like https://localhost:4318/v1/metrics
                               type: string
                           type: object
                       type: object
