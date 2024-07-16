@@ -1,3 +1,12 @@
+---
+title: Implementing equipment fault detection scenarios based on deep learning
+authors:
+  - "@luchaoshi45"
+approvers:
+creation-date: 2024-07-14
+last-updated: 2024-07-16
+status: implementable
+---
 # Implementing equipment fault detection scenarios based on deep learning
 ## Application Scenario
 For the production and manufacturing process, sound detection of cutting tools, stamping equipment, etc., the years of listening experience of veteran engineers can be transferred to the algorithm model, equipment operation failures can be discovered in time, and the efficiency of equipment inspection and maintenance can be improved. <br>
