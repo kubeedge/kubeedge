@@ -101,13 +101,13 @@ type HumanPrintFlags struct {
 
 // AllowedFormats returns more customized formating options
 func (f *HumanPrintFlags) AllowedFormats() []string {
-	return []string{"wide"}
+	return []string{FormatTypeWIDE}
 }
 
 // ToPrinter receives an outputFormat and returns a printer capable of
 // handling human-readable output.
 func (f *HumanPrintFlags) ToPrinter(outputFormat string) (printers.ResourcePrinter, error) {
-	if len(outputFormat) > 0 && outputFormat != "wide" {
+	if len(outputFormat) > 0 && outputFormat != FormatTypeWIDE {
 		return nil, genericclioptions.NoCompatiblePrinterError{Options: f, AllowedFormats: f.AllowedFormats()}
 	}
 
@@ -130,7 +130,7 @@ func (f *HumanPrintFlags) ToPrinter(outputFormat string) (printers.ResourcePrint
 		Kind:          f.Kind,
 		WithKind:      showKind,
 		NoHeaders:     f.NoHeaders,
-		Wide:          outputFormat == "wide",
+		Wide:          outputFormat == FormatTypeWIDE,
 		WithNamespace: f.WithNamespace,
 		ColumnLabels:  columnLabels,
 		ShowLabels:    showLabels,
