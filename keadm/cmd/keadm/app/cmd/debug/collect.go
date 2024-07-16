@@ -46,14 +46,12 @@ func NewCollect() *cobra.Command {
 	return cmd
 }
 
-// dd flags
+// add flags
 func addCollectOtherFlags(cmd *cobra.Command, collectOptions *common.CollectOptions) {
 	cmd.Flags().StringVarP(&collectOptions.Config, common.EdgecoreConfig, "c", collectOptions.Config,
 		fmt.Sprintf("Specify configuration file, default is %s", common.EdgecoreConfigPath))
 	cmd.Flags().BoolVarP(&collectOptions.Detail, "detail", "d", false,
 		"Whether to print internal log output")
-	//cmd.Flags().StringVar(&collectOptions.OutputPath, "output-path", collectOptions.OutputPath,
-	//	"Cache data and store data compression packages in a directory that default to the current directory")
 	cmd.Flags().StringVarP(&collectOptions.OutputPath, "output-path", "o", collectOptions.OutputPath,
 		"Cache data and store data compression packages in a directory that default to the current directory")
 	cmd.Flags().StringVarP(&collectOptions.LogPath, "log-path", "l", util.KubeEdgeLogPath,
