@@ -78,7 +78,7 @@ func GenerateAndRefresh(ctx context.Context) error {
 				caHashToken, err = token.Create(hubconfig.Config.Ca, hubconfig.Config.CaKey,
 					hubconfig.Config.CloudHub.TokenRefreshDuration)
 				if err != nil {
-					klog.Error("failed to refresh the token for edgecore register, err: %v", err)
+					klog.Errorf("failed to refresh the token for edgecore register, err: %v", err)
 				}
 			case <-ctx.Done():
 				break
