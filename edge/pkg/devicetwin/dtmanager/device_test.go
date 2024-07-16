@@ -23,7 +23,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/beego/beego/orm"
+	"github.com/beego/beego/v2/client/orm"
 	"github.com/golang/mock/gomock"
 
 	"github.com/kubeedge/beehive/pkg/common"
@@ -38,9 +38,9 @@ import (
 var called bool
 
 // testAction is a dummy function for testing Start
-func testAction(context *dtcontext.DTContext, resource string, msg interface{}) error {
+func testAction(*dtcontext.DTContext, string, interface{}) error {
 	called = true
-	return errors.New("Called the dummy function for testing")
+	return errors.New("called the dummy function for testing")
 }
 
 // TestDeviceStartAction is function to test Start() when value is passed in ReceiverChan.
@@ -343,14 +343,9 @@ func TestUpdateDeviceAttr(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ormerMock.EXPECT().Commit().Return(nil).Times(test.commitTimes)
-			ormerMock.EXPECT().Begin().Return(nil).Times(test.beginTimes)
-			ormerMock.EXPECT().Insert(gomock.Any()).Return(test.insertReturnInt, test.insertReturnErr).Times(test.insertTimes)
+			ormerMock.EXPECT().DoTx(gomock.Any()).Return(test.insertReturnErr).Times(test.insertTimes)
+			ormerMock.EXPECT().DoTx(gomock.Any()).Return(test.deleteReturnErr).Times(test.deleteTimes)
 			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(test.queryTableTimes)
-
-			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(test.filterTimes)
-			querySeterMock.EXPECT().Delete().Return(test.deleteReturnInt, test.deleteReturnErr).Times(test.deleteTimes)
-			querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(test.updateTimes)
 
 			got, err := UpdateDeviceAttr(test.context, test.deviceID, test.attributes, test.baseMessage, test.dealType)
 			if !reflect.DeepEqual(err, test.wantErr) {

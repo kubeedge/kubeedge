@@ -19,7 +19,7 @@ package dtclient
 import (
 	"testing"
 
-	"github.com/beego/beego/orm"
+	"github.com/beego/beego/v2/client/orm"
 	"github.com/golang/mock/gomock"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
@@ -32,10 +32,10 @@ func TestSaveDeviceTwin(t *testing.T) {
 	// run the test cases
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			ormerMock.EXPECT().Insert(gomock.Any()).Return(test.returnInt, test.returnErr).Times(1)
+			ormerMock.EXPECT().DoTx(gomock.Any()).Return(test.doTXReturnErr).Times(1)
 			err := SaveDeviceTwin(dbm.DBAccess, &DeviceTwin{})
-			if test.returnErr != err {
-				t.Errorf("Save Device Twin Case failed: wanted error %v and got error %v", test.returnErr, err)
+			if test.doTXReturnErr != err {
+				t.Errorf("Save Device Twin Case failed: wanted error %v and got error %v", test.doTXReturnErr, err)
 			}
 		})
 	}
@@ -49,8 +49,7 @@ func TestDeleteDeviceTwinByDeviceID(t *testing.T) {
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
 			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
-			querySeterMock.EXPECT().Delete().Return(test.deleteReturnInt, test.deleteReturnErr).Times(1)
-			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
+			ormerMock.EXPECT().DoTx(gomock.Any()).Return(test.deleteReturnErr).Times(1)
 			err := DeleteDeviceTwinByDeviceID(dbm.DBAccess, "test")
 			if test.deleteReturnErr != err {
 				t.Errorf("DeleteDeviceTwinByDeviceID Case failed: wanted error %v and got error %v", test.deleteReturnErr, err)
@@ -67,8 +66,7 @@ func TestDeleteDeviceTwin(t *testing.T) {
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
 			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(2)
-			querySeterMock.EXPECT().Delete().Return(test.deleteReturnInt, test.deleteReturnErr).Times(1)
-			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
+			ormerMock.EXPECT().DoTx(gomock.Any()).Return(test.deleteReturnErr).Times(1)
 			err := DeleteDeviceTwin(dbm.DBAccess, "test", "test")
 			if test.deleteReturnErr != err {
 				t.Errorf("DeleteDeviceTwin Case failed: wanted error %v and got error %v", test.deleteReturnErr, err)
@@ -186,12 +184,9 @@ func TestDeviceTwinTrans(t *testing.T) {
 	// run the test cases
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			ormerMock.EXPECT().Rollback().Return(nil).Times(test.rollBackTimes)
-			ormerMock.EXPECT().Commit().Return(nil).Times(test.commitTimes)
-			ormerMock.EXPECT().Begin().Return(nil).Times(test.beginTimes)
+			ormerMock.EXPECT().DoTx(gomock.Any()).Return(test.insertReturnErr).Times(test.insertTimes)
+			ormerMock.EXPECT().DoTx(gomock.Any()).Return(test.deleteReturnErr).Times(test.deleteTimes)
 			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(test.filterTimes)
-			ormerMock.EXPECT().Insert(gomock.Any()).Return(test.insertReturnInt, test.insertReturnErr).Times(test.insertTimes)
-			querySeterMock.EXPECT().Delete().Return(test.deleteReturnInt, test.deleteReturnErr).Times(test.deleteTimes)
 			querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(test.updateTimes)
 			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(test.queryTableTimes)
 			err := DeviceTwinTrans(adds, deletes, updates)

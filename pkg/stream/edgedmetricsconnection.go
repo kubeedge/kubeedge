@@ -65,7 +65,7 @@ func (ms *EdgedMetricsConnection) CreateConnectMessage() (*Message, error) {
 }
 
 func (ms *EdgedMetricsConnection) String() string {
-	return fmt.Sprintf("EDGE_Metrics_CONNECTOR Message MessageID %v", ms.MessID)
+	return fmt.Sprintf("EDGE_METRICS_CONNECTOR Message MessageID %v", ms.MessID)
 }
 
 func (ms *EdgedMetricsConnection) receiveFromCloudStream(stop chan struct{}) {

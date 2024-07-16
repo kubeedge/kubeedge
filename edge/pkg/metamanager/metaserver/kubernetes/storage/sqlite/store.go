@@ -35,12 +35,12 @@ func (s *store) Versioner() storage.Versioner {
 	return s.versioner
 }
 
-func (s *store) Create(ctx context.Context, key string, obj, out runtime.Object, ttl uint64) error {
+func (s *store) Create(context.Context, string, runtime.Object, runtime.Object, uint64) error {
 	panic("Do not call this function")
 }
 
-func (s *store) Delete(ctx context.Context, key string, out runtime.Object, preconditions *storage.Preconditions,
-	validateDeletion storage.ValidateObjectFunc, cachedExistingObject runtime.Object) error {
+func (s *store) Delete(context.Context, string, runtime.Object, *storage.Preconditions,
+	storage.ValidateObjectFunc, runtime.Object) error {
 	panic("Do not call this function")
 }
 
@@ -56,7 +56,7 @@ func (s *store) watch(ctx context.Context, key string, opts storage.ListOptions,
 	return s.watcher.Watch(ctx, key, int64(rev), recursive, opts.Predicate)
 }
 
-func (s *store) Get(ctx context.Context, key string, opts storage.GetOptions, objPtr runtime.Object) error {
+func (s *store) Get(_ context.Context, key string, _ storage.GetOptions, objPtr runtime.Object) error {
 	resp, err := s.client.Get(context.TODO(), key)
 	if err != nil || len(*resp.Kvs) == 0 {
 		klog.Error(err)
@@ -66,7 +66,7 @@ func (s *store) Get(ctx context.Context, key string, opts storage.GetOptions, ob
 	return runtime.DecodeInto(s.codec, []byte((*resp.Kvs)[0].Value), unstrObj)
 }
 
-func (s *store) GetList(ctx context.Context, key string, opts storage.ListOptions, listObj runtime.Object) error {
+func (s *store) GetList(_ context.Context, key string, opts storage.ListOptions, listObj runtime.Object) error {
 	klog.Infof("get a list req, key=%v", key)
 	listPtr, err := meta.GetItemsPtr(listObj)
 	if err != nil {
@@ -115,15 +115,15 @@ func (s *store) GetList(ctx context.Context, key string, opts storage.ListOption
 	return nil
 }
 
-func (s *store) GuaranteedUpdate(ctx context.Context, key string, ptrToType runtime.Object, ignoreNotFound bool, precondtions *storage.Preconditions, tryUpdate storage.UpdateFunc, cachedExistingObject runtime.Object) error {
+func (s *store) GuaranteedUpdate(context.Context, string, runtime.Object, bool, *storage.Preconditions, storage.UpdateFunc, runtime.Object) error {
 	panic("Do not call this function")
 }
 
-func (s *store) Count(key string) (int64, error) {
+func (s *store) Count(string) (int64, error) {
 	panic("implement me")
 }
 
-func (s *store) RequestWatchProgress(ctx context.Context) error {
+func (s *store) RequestWatchProgress(context.Context) error {
 	panic("Do not call this function")
 }
 

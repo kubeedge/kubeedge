@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM golang:1.20.10-alpine3.18 AS builder
+FROM golang:1.21.11-alpine3.19 AS builder
 
 ARG GO_LDFLAGS
 
@@ -30,7 +30,7 @@ RUN CGO_ENABLED=0 GO111MODULE=off ginkgo build -ldflags "-w -s -extldflags -stat
 RUN CGO_ENABLED=0 GO111MODULE=off go build -v -o /usr/local/bin/e2e-runner -ldflags "$GO_LDFLAGS -w -s" \
    /go/src/github.com/kubeedge/kubeedge/build/conformance/e2e-runner
 
-FROM alpine:3.18
+FROM alpine:3.19
 
 COPY --from=builder /go/bin/ginkgo /usr/local/bin/ginkgo
 

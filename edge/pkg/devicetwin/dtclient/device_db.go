@@ -1,7 +1,9 @@
 package dtclient
 
 import (
-	"github.com/beego/beego/orm"
+	"context"
+
+	"github.com/beego/beego/v2/client/orm"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
@@ -17,20 +19,39 @@ type Device struct {
 }
 
 // SaveDevice save device
-func SaveDevice(obm orm.Ormer, doc *Device) error {
-	num, err := obm.Insert(doc)
-	klog.V(4).Infof("Insert affected Num: %d, %v", num, err)
-	return err
+func SaveDevice(o orm.Ormer, doc *Device) error {
+	err := o.DoTx(func(ctx context.Context, txOrm orm.TxOrmer) error {
+		// insert data
+		// Using txOrm to execute SQL
+		_, e := txOrm.Insert(doc)
+		// if e != nil the transaction will be rollback
+		// or it will be committed
+		return e
+	})
+	if err != nil {
+		klog.Errorf("Something wrong when insert Device data: %v", err)
+		return err
+	}
+	klog.V(4).Info("insert Device data successfully")
+	return nil
 }
 
 // DeleteDeviceByID delete device by id
-func DeleteDeviceByID(obm orm.Ormer, id string) error {
-	num, err := obm.QueryTable(DeviceTableName).Filter("id", id).Delete()
+func DeleteDeviceByID(o orm.Ormer, id string) error {
+	err := o.DoTx(func(ctx context.Context, txOrm orm.TxOrmer) error {
+		// delete data
+		// Using txOrm to execute SQL
+		_, e := txOrm.QueryTable(DeviceTableName).Filter("id", id).Delete()
+		// if e != nil the transaction will be rollback
+		// or it will be committed
+		return e
+	})
+
 	if err != nil {
-		klog.Errorf("Something wrong when deleting data: %v", err)
+		klog.Errorf("Something wrong when deleting Device data: %v", err)
 		return err
 	}
-	klog.V(4).Infof("Delete affected Num: %d", num)
+	klog.V(4).Info("Delete Device data successfully")
 	return nil
 }
 
@@ -89,26 +110,9 @@ func UpdateDeviceMulti(updates []DeviceUpdate) error {
 // AddDeviceTrans the transaction of add device
 func AddDeviceTrans(adds []Device, addAttrs []DeviceAttr, addTwins []DeviceTwin) error {
 	obm := dbm.DefaultOrmFunc()
-	err := obm.Begin()
-	if err != nil {
-		klog.Errorf("failed to begin transaction: %v", err)
-		return err
-	}
-
-	defer func() {
-		if err != nil {
-			dbm.RollbackTransaction(obm)
-		} else {
-			err = obm.Commit()
-			if err != nil {
-				klog.Errorf("failed to commit transaction: %v", err)
-			}
-		}
-	}()
-
+	var err error
 	for _, add := range adds {
 		err = SaveDevice(obm, &add)
-
 		if err != nil {
 			klog.Errorf("save device failed: %v", err)
 			return err
@@ -118,6 +122,7 @@ func AddDeviceTrans(adds []Device, addAttrs []DeviceAttr, addTwins []DeviceTwin)
 	for _, attr := range addAttrs {
 		err = SaveDeviceAttr(obm, &attr)
 		if err != nil {
+			klog.Errorf("save device attr failed: %v", err)
 			return err
 		}
 	}
@@ -125,6 +130,7 @@ func AddDeviceTrans(adds []Device, addAttrs []DeviceAttr, addTwins []DeviceTwin)
 	for _, twin := range addTwins {
 		err = SaveDeviceTwin(obm, &twin)
 		if err != nil {
+			klog.Errorf("save device twin failed: %v", err)
 			return err
 		}
 	}
@@ -135,22 +141,7 @@ func AddDeviceTrans(adds []Device, addAttrs []DeviceAttr, addTwins []DeviceTwin)
 // DeleteDeviceTrans the transaction of delete device
 func DeleteDeviceTrans(deletes []string) error {
 	obm := dbm.DefaultOrmFunc()
-	err := obm.Begin()
-	if err != nil {
-		klog.Errorf("failed to begin transaction: %v", err)
-		return err
-	}
-
-	defer func() {
-		if err != nil {
-			dbm.RollbackTransaction(obm)
-		} else {
-			err = obm.Commit()
-			if err != nil {
-				klog.Errorf("failed to commit transaction: %v", err)
-			}
-		}
-	}()
+	var err error
 
 	for _, delete := range deletes {
 		err = DeleteDeviceByID(obm, delete)

@@ -24,7 +24,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/beego/beego/orm"
+	"github.com/beego/beego/v2/client/orm"
 	"github.com/golang/mock/gomock"
 	"k8s.io/klog/v2"
 
@@ -417,6 +417,7 @@ func TestDealDeviceTwin(t *testing.T) {
 		allReturnInt     int64
 		allReturnErr     error
 		queryTableReturn orm.QuerySeter
+		beginReturn      orm.TxOrmer
 
 		rollbackNums int
 		beginNums    int
@@ -466,13 +467,8 @@ func TestDealDeviceTwin(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			mockOrmer.EXPECT().Rollback().Return(nil).Times(test.rollbackNums)
-			mockOrmer.EXPECT().Begin().Return(nil).MaxTimes(test.beginNums)
-			mockOrmer.EXPECT().Commit().Return(nil).MaxTimes(test.commitNums)
-			mockOrmer.EXPECT().Insert(gomock.Any()).Return(test.allReturnInt, test.allReturnErr).MaxTimes(test.insertNums)
-			mockQuerySeter.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(test.filterNums)
-			mockQuerySeter.EXPECT().Delete().Return(test.allReturnInt, test.allReturnErr).Times(test.deleteNums)
-			mockQuerySeter.EXPECT().Update(gomock.Any()).Return(test.allReturnInt, test.allReturnErr).Times(test.updateNums)
+			mockOrmer.EXPECT().DoTx(gomock.Any()).Return(test.allReturnErr).Times(test.insertNums)
+			mockOrmer.EXPECT().DoTx(gomock.Any()).Return(test.allReturnErr).Times(test.deleteNums)
 			mockOrmer.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(test.queryNums)
 			if err := DealDeviceTwin(test.context, test.deviceID, test.eventID, test.msgTwin, test.dealType); !reflect.DeepEqual(err, test.err) {
 				t.Errorf("DTManager.TestDealDeviceTwin() case failed: got = %v, Want = %v", err, test.err)
@@ -645,12 +641,9 @@ func TestDealDeviceTwinTrans(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			mockOrmer.EXPECT().Rollback().Return(nil).Times(5)
-			mockOrmer.EXPECT().Commit().Return(nil).Times(0)
-			mockOrmer.EXPECT().Begin().Return(nil).Times(5)
+			mockOrmer.EXPECT().DoTx(gomock.Any()).Return(test.insertReturnErr).Times(5)
+			mockOrmer.EXPECT().DoTx(gomock.Any()).Return(test.deleteReturnErr).Times(0)
 			mockQuerySeter.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(0)
-			mockOrmer.EXPECT().Insert(gomock.Any()).Return(test.insertReturnInt, test.insertReturnErr).Times(5)
-			mockQuerySeter.EXPECT().Delete().Return(test.deleteReturnInt, test.deleteReturnErr).Times(0)
 			mockQuerySeter.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(0)
 			mockQuerySeter.EXPECT().All(gomock.Any()).SetArg(0, *fakeDevice).Return(test.allReturnInt, test.allReturnErr).Times(1)
 			mockQuerySeter.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)

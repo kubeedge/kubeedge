@@ -4,6 +4,7 @@
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
+//go:build sqlite_preupdate_hook
 // +build sqlite_preupdate_hook
 
 package sqlite3
@@ -13,7 +14,7 @@ package sqlite3
 #cgo LDFLAGS: -lm
 
 #ifndef USE_LIBSQLITE3
-#include <sqlite3-binding.h>
+#include "sqlite3-binding.h"
 #else
 #include <sqlite3.h>
 #endif
@@ -33,7 +34,7 @@ import (
 // The callback is passed a SQLitePreUpdateData struct with the data for
 // the update, as well as methods for fetching copies of impacted data.
 //
-// If there is an existing update hook for this connection, it will be
+// If there is an existing preupdate hook for this connection, it will be
 // removed. If callback is nil the existing hook (if any) will be removed
 // without creating a new one.
 func (c *SQLiteConn) RegisterPreUpdateHook(callback func(SQLitePreUpdateData)) {
@@ -54,10 +55,10 @@ func (d *SQLitePreUpdateData) Count() int {
 	return int(C.sqlite3_preupdate_count(d.Conn.db))
 }
 
-func (d *SQLitePreUpdateData) row(dest []interface{}, new bool) error {
+func (d *SQLitePreUpdateData) row(dest []any, new bool) error {
 	for i := 0; i < d.Count() && i < len(dest); i++ {
 		var val *C.sqlite3_value
-		var src interface{}
+		var src any
 
 		// Initially I tried making this just a function pointer argument, but
 		// it's absurdly complicated to pass C function pointers.
@@ -95,7 +96,7 @@ func (d *SQLitePreUpdateData) row(dest []interface{}, new bool) error {
 
 // Old populates dest with the row data to be replaced. This works similar to
 // database/sql's Rows.Scan()
-func (d *SQLitePreUpdateData) Old(dest ...interface{}) error {
+func (d *SQLitePreUpdateData) Old(dest ...any) error {
 	if d.Op == SQLITE_INSERT {
 		return errors.New("There is no old row for INSERT operations")
 	}
@@ -104,7 +105,7 @@ func (d *SQLitePreUpdateData) Old(dest ...interface{}) error {
 
 // New populates dest with the replacement row data. This works similar to
 // database/sql's Rows.Scan()
-func (d *SQLitePreUpdateData) New(dest ...interface{}) error {
+func (d *SQLitePreUpdateData) New(dest ...any) error {
 	if d.Op == SQLITE_DELETE {
 		return errors.New("There is no new row for DELETE operations")
 	}

@@ -20,7 +20,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/beego/beego/orm"
+	"github.com/beego/beego/v2/client/orm"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -467,10 +467,13 @@ func InitDB(driverName, dbName, dataSource string) error {
 	orm.RegisterModel(new(dao.Meta))
 
 	// create orm
-	dbm.DBAccess = orm.NewOrm()
-	if err := dbm.DBAccess.Using(dbName); err != nil {
-		return fmt.Errorf("using db access error %v ", err)
-	}
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Printf("using db access error as %v", err)
+			return
+		}
+	}()
+	dbm.DBAccess = orm.NewOrmUsingDB(dbName)
 	return nil
 }
 

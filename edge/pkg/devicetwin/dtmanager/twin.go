@@ -89,7 +89,7 @@ func initTwinActionCallBack() {
 }
 
 func dealTwinSync(context *dtcontext.DTContext, resource string, msg interface{}) error {
-	klog.Infof("Twin Sync EVENT")
+	klog.Info("Twin Sync EVENT")
 	message, ok := msg.(*model.Message)
 	if !ok {
 		return errors.New("msg not Message type")
@@ -117,7 +117,7 @@ func dealTwinSync(context *dtcontext.DTContext, resource string, msg interface{}
 }
 
 func dealTwinGet(context *dtcontext.DTContext, resource string, msg interface{}) error {
-	klog.Infof("Twin Get EVENT")
+	klog.Info("Twin Get EVENT")
 	message, ok := msg.(*model.Message)
 	if !ok {
 		return errors.New("msg not Message type")
@@ -133,7 +133,7 @@ func dealTwinGet(context *dtcontext.DTContext, resource string, msg interface{})
 }
 
 func dealTwinUpdate(context *dtcontext.DTContext, resource string, msg interface{}) error {
-	klog.Infof("Twin Update EVENT")
+	klog.Info("Twin Update EVENT")
 	message, ok := msg.(*model.Message)
 	if !ok {
 		return errors.New("msg not Message type")
@@ -922,7 +922,7 @@ func DealMsgTwin(context *dtcontext.DTContext, deviceID string, msgTwins map[str
 
 	device, ok := context.GetDevice(deviceID)
 	if !ok {
-		klog.Errorf("invalid device id")
+		klog.Error("invalid device id")
 		return dttype.DealTwinResult{Add: add,
 			Delete:     deletes,
 			Update:     update,
@@ -942,7 +942,7 @@ func DealMsgTwin(context *dtcontext.DTContext, deviceID string, msgTwins map[str
 	for key, msgTwin := range msgTwins {
 		if twin, exist := twins[key]; exist {
 			if dealType >= 1 && msgTwin != nil && (msgTwin.Metadata == nil) {
-				klog.Infof("Not found metadata of twin")
+				klog.Info("Not found metadata of twin")
 			}
 			if msgTwin == nil && dealType == 0 || dealType >= 1 && strings.Compare(msgTwin.Metadata.Type, dtcommon.TypeDeleted) == 0 {
 				dealTwinDelete(&returnResult, deviceID, key, twin, msgTwin, dealType)

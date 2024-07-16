@@ -28,7 +28,7 @@ func GetErrMessage(bodyBytes []byte) error {
 	var status metav1.Status
 	err := json.Unmarshal(bodyBytes, &status)
 	if err != nil {
-		return fmt.Errorf("parsing response's body failed with err:%v", err)
+		return fmt.Errorf("parsing response's body failed with err: %v", err)
 	}
 	return errors.New(status.Message)
 }

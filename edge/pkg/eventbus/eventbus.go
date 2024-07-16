@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/beego/beego/orm"
+	"github.com/beego/beego/v2/client/orm"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core"

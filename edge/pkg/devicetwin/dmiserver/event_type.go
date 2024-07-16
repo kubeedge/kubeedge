@@ -22,10 +22,6 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/types"
 )
 
-const (
-	PropertyType = "type"
-)
-
 // DeviceTwinUpdate the structure of device twin update.
 type DeviceTwinUpdate struct {
 	types.BaseMessage

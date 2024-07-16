@@ -61,18 +61,23 @@ func (pl *NodeUnschedulable) Name() string {
 func (pl *NodeUnschedulable) Filter(ctx context.Context, _ *framework.CycleState, pod *v1.Pod, nodeInfo *framework.NodeInfo) *framework.Status {
 	node := nodeInfo.Node()
 
+	if !node.Spec.Unschedulable {
+		return nil
+	}
+
 	// If pod tolerate unschedulable taint, it's also tolerate `node.Spec.Unschedulable`.
 	podToleratesUnschedulable := v1helper.TolerationsTolerateTaint(pod.Spec.Tolerations, &v1.Taint{
 		Key:    v1.TaintNodeUnschedulable,
 		Effect: v1.TaintEffectNoSchedule,
 	})
-	if node.Spec.Unschedulable && !podToleratesUnschedulable {
+	if !podToleratesUnschedulable {
 		return framework.NewStatus(framework.UnschedulableAndUnresolvable, ErrReasonUnschedulable)
 	}
+
 	return nil
 }
 
 // New initializes a new plugin and returns it.
-func New(_ runtime.Object, _ framework.Handle) (framework.Plugin, error) {
+func New(_ context.Context, _ runtime.Object, _ framework.Handle) (framework.Plugin, error) {
 	return &NodeUnschedulable{}, nil
 }

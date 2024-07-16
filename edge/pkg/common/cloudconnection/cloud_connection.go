@@ -34,7 +34,7 @@ var (
 
 	lock sync.RWMutex
 
-	// ErrConnectionLost is sentinel err to indicates connection is lost between EdgeCore and CloudCore
+	// ErrConnectionLost is sentinel err to indicate connection is lost between EdgeCore and CloudCore
 	ErrConnectionLost = errors.New("connection lost between EdgeCore and CloudCore")
 )
 

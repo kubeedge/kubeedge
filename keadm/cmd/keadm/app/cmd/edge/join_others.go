@@ -83,7 +83,7 @@ func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
 		`Use this key to set whether to install and start MQTT Broker by default`)
 	if err := cmd.Flags().MarkDeprecated("with-mqtt",
 		"The mqtt broker is alreay managed by the DaemonSet in the cloud"); err != nil {
-		klog.Warning("falied to mark the flag with-mqtt to deprecated, err: %v", err)
+		klog.Warningf("falied to mark the flag with-mqtt to deprecated, err: %v", err)
 	}
 
 	cmd.Flags().StringVar(&joinOptions.ImageRepository, common.FlagNameImageRepository, joinOptions.ImageRepository,
@@ -92,6 +92,9 @@ func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
 
 	cmd.Flags().StringVar(&joinOptions.HubProtocol, common.HubProtocol, joinOptions.HubProtocol,
 		`Use this key to decide which communication protocol the edge node adopts.`)
+
+	cmd.Flags().StringVar(&joinOptions.Sets, common.FlagNameSet, joinOptions.Sets,
+		`Set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)`)
 }
 
 func createEdgeConfigFiles(opt *common.JoinOptions) error {
@@ -164,6 +167,11 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 
 	if len(opt.Labels) > 0 {
 		edgeCoreConfig.Modules.Edged.NodeLabels = setEdgedNodeLabels(opt)
+	}
+	if len(opt.Sets) > 0 {
+		if err := util.ParseSet(edgeCoreConfig, opt.Sets); err != nil {
+			return err
+		}
 	}
 
 	if errs := validation.ValidateEdgeCoreConfiguration(edgeCoreConfig); len(errs) > 0 {

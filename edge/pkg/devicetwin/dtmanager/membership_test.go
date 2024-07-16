@@ -179,9 +179,7 @@ func TestDealMembershipUpdateInvalidContent(t *testing.T) {
 
 func TestDealMembershipUpdateValidAddedDevice(t *testing.T) {
 	ormerMock, _ := testtools.InitOrmerMock(t)
-	ormerMock.EXPECT().Begin().Return(nil)
-	ormerMock.EXPECT().Insert(gomock.Any()).Return(int64(1), nil).Times(1)
-	ormerMock.EXPECT().Commit().Return(nil)
+	ormerMock.EXPECT().DoTx(gomock.Any()).Return(nil).Times(1)
 
 	dtc := &dtcontext.DTContext{
 		DeviceList:  &sync.Map{},

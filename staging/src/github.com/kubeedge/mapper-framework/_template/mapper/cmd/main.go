@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"os"
 
 	"k8s.io/klog/v2"
 
@@ -23,7 +22,6 @@ func main() {
 
 	if c, err = config.Parse(); err != nil {
 		klog.Fatal(err)
-		os.Exit(1)
 	}
 	klog.Infof("config: %+v", c)
 

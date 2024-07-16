@@ -3,6 +3,7 @@
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -44,9 +45,8 @@ func (d *DataBaseConfig) InitDbClient() error {
 	DB, err = sql.Open("taosRestful", dsn)
 	if err != nil {
 		klog.Errorf("init TDEngine db fail, err= %v:", err)
-	} else {
-		klog.V(1).Infof("init TDEngine database successfully")
 	}
+	klog.V(1).Infof("init TDEngine database successfully")
 	return nil
 }
 
@@ -152,5 +152,5 @@ func (d *DataBaseConfig) GetDataByTimeRange(deviceName string, start int64, end 
 }
 func (d *DataBaseConfig) DeleteDataByTimeRange(start int64, end int64) ([]*common.DataModel, error) {
 	//TODO implement me
-	panic("implement me")
+	return nil, errors.New("implement me")
 }

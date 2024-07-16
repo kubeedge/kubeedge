@@ -24,6 +24,7 @@ spec:
     name: cloudhub
   - port: 10001
     targetPort: 10001
+    protocol: UDP
     {{- if and (eq .Values.cloudCore.service.type "NodePort") ( not .Values.cloudCore.hostNetWork) }}
     nodePort: {{ .Values.cloudCore.service.cloudhubQuicNodePort }}
     {{- end }}

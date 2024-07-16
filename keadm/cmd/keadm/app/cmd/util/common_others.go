@@ -103,7 +103,7 @@ func CloudCoreRunningModuleV2(opt *types.ResetOptions) types.ModuleRunning {
 	return types.NoneRunning
 }
 
-func EdgeCoreRunningModuleV2(opt *types.ResetOptions) types.ModuleRunning {
+func EdgeCoreRunningModuleV2(*types.ResetOptions) types.ModuleRunning {
 	osType := GetOSInterface()
 	edgeCoreRunning, err := osType.IsKubeEdgeProcessRunning(KubeEdgeBinaryName)
 	if err != nil {

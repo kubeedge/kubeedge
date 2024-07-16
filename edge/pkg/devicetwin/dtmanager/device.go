@@ -167,10 +167,10 @@ func UpdateDeviceAttr(context *dtcontext.DTContext, deviceID string, attributes 
 	if dealAttrResult.Err != nil {
 		return nil, nil
 	}
-	add, delete, update, result := dealAttrResult.Add, dealAttrResult.Delete, dealAttrResult.Update, dealAttrResult.Result
-	if len(add) != 0 || len(delete) != 0 || len(update) != 0 {
+	add, deviceAttrDelete, update, result := dealAttrResult.Add, dealAttrResult.Delete, dealAttrResult.Update, dealAttrResult.Result
+	if len(add) != 0 || len(deviceAttrDelete) != 0 || len(update) != 0 {
 		for i := 1; i <= dtcommon.RetryTimes; i++ {
-			err = dtclient.DeviceAttrTrans(add, delete, update)
+			err = dtclient.DeviceAttrTrans(add, deviceAttrDelete, update)
 			if err == nil {
 				break
 			}

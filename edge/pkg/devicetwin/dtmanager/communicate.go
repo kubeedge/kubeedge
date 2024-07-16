@@ -74,7 +74,7 @@ func initActionCallBack() {
 	ActionCallBack[dtcommon.Confirm] = dealConfirm
 }
 
-func dealSendToEdge(context *dtcontext.DTContext, resource string, msg interface{}) error {
+func dealSendToEdge(_ *dtcontext.DTContext, _ string, msg interface{}) error {
 	message, ok := msg.(*model.Message)
 	if !ok {
 		return fmt.Errorf("msg type is %T and not Message type", msg)
@@ -83,7 +83,7 @@ func dealSendToEdge(context *dtcontext.DTContext, resource string, msg interface
 	beehiveContext.Send(dtcommon.EventHubModule, *message)
 	return nil
 }
-func dealSendToCloud(context *dtcontext.DTContext, resource string, msg interface{}) error {
+func dealSendToCloud(context *dtcontext.DTContext, _ string, msg interface{}) error {
 	if strings.Compare(context.State, dtcommon.Disconnected) == 0 {
 		klog.Infof("Disconnected with cloud, not send msg to cloud")
 		return nil
@@ -97,8 +97,8 @@ func dealSendToCloud(context *dtcontext.DTContext, resource string, msg interfac
 	context.ConfirmMap.Store(msgID, &dttype.DTMessage{Msg: message, Action: dtcommon.SendToCloud, Type: dtcommon.CommModule})
 	return nil
 }
-func dealLifeCycle(context *dtcontext.DTContext, resource string, msg interface{}) error {
-	klog.V(2).Infof("CONNECTED EVENT")
+func dealLifeCycle(context *dtcontext.DTContext, _ string, msg interface{}) error {
+	klog.V(2).Info("CONNECTED EVENT")
 	message, ok := msg.(*model.Message)
 	if !ok {
 		return errors.New("msg not Message type")
@@ -118,8 +118,8 @@ func dealLifeCycle(context *dtcontext.DTContext, resource string, msg interface{
 	}
 	return nil
 }
-func dealConfirm(context *dtcontext.DTContext, resource string, msg interface{}) error {
-	klog.V(2).Infof("CONFIRM EVENT")
+func dealConfirm(context *dtcontext.DTContext, _ string, msg interface{}) error {
+	klog.V(2).Info("CONFIRM EVENT")
 	value, ok := msg.(*model.Message)
 
 	if ok {

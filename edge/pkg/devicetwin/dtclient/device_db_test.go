@@ -19,7 +19,7 @@ package dtclient
 import (
 	"testing"
 
-	"github.com/beego/beego/orm"
+	"github.com/beego/beego/v2/client/orm"
 	"github.com/golang/mock/gomock"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
@@ -33,10 +33,10 @@ func TestSaveDevice(t *testing.T) {
 	// run the test cases
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			ormerMock.EXPECT().Insert(gomock.Any()).Return(test.returnInt, test.returnErr).Times(1)
-			err := SaveDevice(dbm.DBAccess, &Device{})
-			if test.returnErr != err {
-				t.Errorf("SaveDevice case failed: wanted error %v and got error %v", test.returnErr, err)
+			ormerMock.EXPECT().DoTx(gomock.Any()).Return(test.doTXReturnErr).Times(1)
+			err := SaveDevice(ormerMock, &Device{})
+			if test.doTXReturnErr != err {
+				t.Errorf("SaveDevice case failed: wanted error %v and got error %v", test.doTXReturnErr, err)
 			}
 		})
 	}
@@ -51,7 +51,7 @@ func TestDeleteDeviceByID(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
 			querySeterMock.EXPECT().Delete().Return(test.deleteReturnInt, test.deleteReturnErr).Times(1)
-			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
+			ormerMock.EXPECT().DoTx(gomock.Any()).Return(test.deleteReturnErr).Times(1)
 			err := DeleteDeviceByID(ormerMock, "test")
 			if test.deleteReturnErr != err {
 				t.Errorf("DeleteDeviceByID case failed: wanted %v and got %v", test.deleteReturnErr, err)
@@ -186,75 +186,47 @@ func TestAddDeviceTrans(t *testing.T) {
 	cases := []struct {
 		// name is name of the testcase
 		name string
-		// rollBackTimes is number of times rollback is expected
-		rollBackTimes int
-		// commitTimes is number of times commit is expected
-		commitTimes int
-		// beginTimes is number of times begin is expected
-		beginTimes int
-		// successInsertReturnInt is the first return of mock interface ormerMock's Insert function success case
-		successInsertReturnInt int64
 		// successInsertReturnErr is the second return of mock interface ormerMock's Insert function success case
 		successInsertReturnErr error
 		// successInsertTimes is number of times successful insert is expected
 		successInsertTimes int
-		// failInsertReturnInt is the first return of mock interface ormerMock's Insert function error case
-		failInsertReturnInt int64
 		// failInsertReturnErr is the second return of mock interface ormerMock's Insert function error case
 		failInsertReturnErr error
 		// failInsertTimes is number of times fail insert is expected
 		failInsertTimes int
 		// wantErr is expected error
 		wantErr error
+		// doTXReturnErr is return of mock interface ormerMock's DoTX function
+		doTXReturnErr error
 	}{{
 		// Failure Case SaveDevice
 		name:                   "FailureCaseSaveDevice",
-		rollBackTimes:          1,
-		commitTimes:            0,
-		beginTimes:             1,
-		successInsertReturnInt: int64(1),
 		successInsertReturnErr: nil,
 		successInsertTimes:     0,
-		failInsertReturnInt:    int64(1),
 		failInsertReturnErr:    errFailedDBOperation,
 		failInsertTimes:        1,
 		wantErr:                errFailedDBOperation,
 	}, {
 		// Failure Case SaveDeviceAttr
 		name:                   "FailureCaseSaveDeviceAttr",
-		rollBackTimes:          1,
-		commitTimes:            0,
-		beginTimes:             1,
-		successInsertReturnInt: int64(1),
 		successInsertReturnErr: nil,
 		successInsertTimes:     1,
-		failInsertReturnInt:    int64(1),
 		failInsertReturnErr:    errFailedDBOperation,
 		failInsertTimes:        1,
 		wantErr:                errFailedDBOperation,
 	}, {
 		// Failure Case SaveDeviceTwin
 		name:                   "FailureCaseSaveDeviceAttr",
-		rollBackTimes:          1,
-		commitTimes:            0,
-		beginTimes:             1,
-		successInsertReturnInt: int64(1),
 		successInsertReturnErr: nil,
 		successInsertTimes:     2,
-		failInsertReturnInt:    int64(1),
 		failInsertReturnErr:    errFailedDBOperation,
 		failInsertTimes:        1,
 		wantErr:                errFailedDBOperation,
 	}, {
 		// Success Case SaveDeviceTwin
 		name:                   "SuccessCaseSaveDeviceAttr",
-		rollBackTimes:          0,
-		commitTimes:            1,
-		beginTimes:             1,
-		successInsertReturnInt: int64(1),
 		successInsertReturnErr: nil,
 		successInsertTimes:     3,
-		failInsertReturnInt:    int64(1),
 		failInsertReturnErr:    errFailedDBOperation,
 		failInsertTimes:        0,
 		wantErr:                nil,
@@ -274,13 +246,10 @@ func TestAddDeviceTrans(t *testing.T) {
 	// run the test cases
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			ormerMock.EXPECT().Begin().Return(nil).Times(test.beginTimes)
-			// success insert
-			ormerMock.EXPECT().Insert(gomock.Any()).Return(test.successInsertReturnInt, test.successInsertReturnErr).Times(test.successInsertTimes)
-			// fail insert
-			ormerMock.EXPECT().Insert(gomock.Any()).Return(test.failInsertReturnInt, test.failInsertReturnErr).Times(test.failInsertTimes)
-			ormerMock.EXPECT().Commit().Return(nil).Times(test.commitTimes)
-			ormerMock.EXPECT().Rollback().Return(nil).Times(test.rollBackTimes)
+			// DoTx success insert
+			ormerMock.EXPECT().DoTx(gomock.Any()).Return(test.successInsertReturnErr).Times(test.successInsertTimes)
+			// DoTx fail insert
+			ormerMock.EXPECT().DoTx(gomock.Any()).Return(test.failInsertReturnErr).Times(test.failInsertTimes)
 			err := AddDeviceTrans(adds, addAttrs, addTwins)
 			if test.wantErr != err {
 				t.Errorf("AddDeviceTrans case failed: wanted error %v and got error %v", test.wantErr, err)
@@ -296,12 +265,6 @@ func TestDeleteDeviceTrans(t *testing.T) {
 	cases := []struct {
 		// name is name of the testcase
 		name string
-		// rollBackTimes is number of times rollback is expected
-		rollBackTimes int
-		// commitTimes is number of times commit is expected
-		commitTimes int
-		// beginTimes is number of times begin is expected
-		beginTimes int
 		// successDeleteReturnInt is the first return of mock interface ormerMock's delete function success case
 		successDeleteReturnInt int64
 		// successDeleteReturnErr is the second return of mock interface ormerMock's delete function success case
@@ -327,9 +290,6 @@ func TestDeleteDeviceTrans(t *testing.T) {
 	}{{
 		// Failure Case DeleteDeviceByID
 		name:                   "FailureCaseDeleteDeviceByID",
-		rollBackTimes:          1,
-		commitTimes:            0,
-		beginTimes:             1,
 		successDeleteReturnInt: int64(1),
 		successDeleteReturnErr: nil,
 		successDeleteTimes:     0,
@@ -344,9 +304,6 @@ func TestDeleteDeviceTrans(t *testing.T) {
 	}, {
 		// Failure Case DeleteDeviceAttrByDeviceID
 		name:                   "FailureCaseDeleteDeviceAttrByDeviceID",
-		rollBackTimes:          1,
-		commitTimes:            0,
-		beginTimes:             1,
 		successDeleteReturnInt: int64(1),
 		successDeleteReturnErr: nil,
 		successDeleteTimes:     1,
@@ -361,9 +318,6 @@ func TestDeleteDeviceTrans(t *testing.T) {
 	}, {
 		// Failure Case DeleteDeviceTwinByDeviceID
 		name:                   "FailureCaseDeleteDeviceTwinByDeviceID",
-		rollBackTimes:          1,
-		commitTimes:            0,
-		beginTimes:             1,
 		successDeleteReturnInt: int64(1),
 		successDeleteReturnErr: nil,
 		successDeleteTimes:     2,
@@ -378,9 +332,6 @@ func TestDeleteDeviceTrans(t *testing.T) {
 	}, {
 		// Success Case
 		name:                   "SuccessCase",
-		rollBackTimes:          0,
-		commitTimes:            1,
-		beginTimes:             1,
 		successDeleteReturnInt: int64(1),
 		successDeleteReturnErr: nil,
 		successDeleteTimes:     3,
@@ -404,15 +355,10 @@ func TestDeleteDeviceTrans(t *testing.T) {
 	// run the test cases
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			ormerMock.EXPECT().Begin().Return(nil).Times(test.beginTimes)
-			ormerMock.EXPECT().Rollback().Return(nil).Times(test.rollBackTimes)
-			ormerMock.EXPECT().Commit().Return(nil).Times(test.commitTimes)
-			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(test.filterTimes)
-			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(test.queryTableTimes)
 			// success delete
-			querySeterMock.EXPECT().Delete().Return(test.successDeleteReturnInt, test.successDeleteReturnErr).Times(test.successDeleteTimes)
+			ormerMock.EXPECT().DoTx(gomock.Any()).Return(test.successDeleteReturnErr).Times(test.successDeleteTimes)
 			// fail delete
-			querySeterMock.EXPECT().Delete().Return(test.failDeleteReturnInt, test.failDeleteReturnErr).Times(test.failDeleteTimes)
+			ormerMock.EXPECT().DoTx(gomock.Any()).Return(test.failDeleteReturnErr).Times(test.failDeleteTimes)
 
 			err := DeleteDeviceTrans(deletes)
 			if test.wantErr != err {
