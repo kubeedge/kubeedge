@@ -21,6 +21,7 @@ import (
 
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/authorization"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/dispatcher"
@@ -51,12 +52,14 @@ func NewMessageHandler(
 	KeepaliveInterval int,
 	manager *session.Manager,
 	reliableClient reliableclient.Interface,
-	dispatcher dispatcher.MessageDispatcher) Handler {
+	dispatcher dispatcher.MessageDispatcher,
+	authorizer authorization.Authorizer) Handler {
 	messageHandler := &messageHandler{
 		KeepaliveInterval: KeepaliveInterval,
 		SessionManager:    manager,
 		MessageDispatcher: dispatcher,
 		reliableClient:    reliableClient,
+		authorizer:        authorizer,
 	}
 
 	// init handler that process upstream message
@@ -76,6 +79,9 @@ type messageHandler struct {
 
 	// reliableClient
 	reliableClient reliableclient.Interface
+
+	// authorizer
+	authorizer authorization.Authorizer
 }
 
 // initServerEntries register handler func
@@ -96,14 +102,26 @@ func (mh *messageHandler) HandleMessage(container *mux.MessageContainer, _ mux.R
 
 	klog.V(4).Infof("[messageHandler]get msg from node(%s): %+v", nodeID, container.Message)
 
+	hubInfo := model.HubInfo{ProjectID: projectID, NodeID: nodeID}
+
+	if err := mh.authorizer.AdmitMessage(*container.Message, hubInfo); err != nil {
+		klog.Errorf("The message is rejected by CloudHub: node=%q, message=(%+v), error=%v", nodeID, container.Message.Router, err)
+		return
+	}
+
 	// dispatch upstream message
-	mh.MessageDispatcher.DispatchUpstream(container.Message, &model.HubInfo{ProjectID: projectID, NodeID: nodeID})
+	mh.MessageDispatcher.DispatchUpstream(container.Message, &hubInfo)
 }
 
 // HandleConnection is invoked when a new connection is established
 func (mh *messageHandler) HandleConnection(connection conn.Connection) {
 	nodeID := connection.ConnectionState().Headers.Get("node_id")
 	projectID := connection.ConnectionState().Headers.Get("project_id")
+
+	if err := mh.authorizer.AuthenticateConnection(connection); err != nil {
+		klog.Errorf("The connection is rejected by CloudHub: node=%q, error=%v", nodeID, err)
+		return
+	}
 
 	if mh.SessionManager.ReachLimit() {
 		klog.Errorf("Fail to serve node %s, reach node limit", nodeID)
