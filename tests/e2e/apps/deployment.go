@@ -118,6 +118,9 @@ var _ = GroupDescribe("Application deployment test in E2E scenario", func() {
 			utils.WaitForPodsRunning(clientSet, podList, 240*time.Second)
 		})
 
+
+		// this one
+		
 		ginkgo.It("E2E_APP_DEPLOYMENT_4: Create a deployment with probe configurations and verify that it works at the edge", func() {
 			replica := int32(1)
 			//Generate the random string and assign as a UID
@@ -129,16 +132,19 @@ var _ = GroupDescribe("Application deployment test in E2E scenario", func() {
 			// depl is created in "default" namespace 
 			d := utils.NewDeployment(UID, utils.LoadConfig().AppImageURL[1], replica)
 
+			// if I do not add any probe, then the test fails but at after each, and it says:
+			// deployments.apps "edge-statefulset-4sqeu" not found . while this is "edgecore-depl-app-..."
+			
 			//add proeb config
-			// d.Spec.Template.Spec.Containers[0].LivenessProbe = &corev1.Probe{
-			// 	ProbeHandler: corev1.ProbeHandler{
-			// 		TCPSocket: &corev1.TCPSocketAction{
-			// 			Port: intstr.FromInt(8080),
-			// 		},
-			// 	},
-			// 	InitialDelaySeconds: 15,
-			// 	PeriodSeconds:       10,
-			// }
+			d.Spec.Template.Spec.Containers[0].LivenessProbe = &corev1.Probe{
+				ProbeHandler: corev1.ProbeHandler{
+					TCPSocket: &corev1.TCPSocketAction{
+						Port: intstr.FromInt(8080),
+					},
+				},
+				InitialDelaySeconds: 15,
+				PeriodSeconds:       10,
+			}
 
 			//cretae deployment in the cluster
 			_, err := utils.CreateDeployment(clientSet, d)
@@ -168,14 +174,14 @@ var _ = GroupDescribe("Application deployment test in E2E scenario", func() {
 			ginkgo.By(fmt.Sprintf("wait for pod of deployment %s running", UID))
 			utils.WaitForPodsRunning(clientSet, podList, 240*time.Second)
 
-			// for _, pod := range podList.Items {
-			// 	// Check if pod has the expected liveness probe
-			// 	probe := pod.Spec.Containers[0].LivenessProbe
-			// 	gomega.Expect(probe).NotTo(gomega.BeNil())
-			// 	gomega.Expect(probe.ProbeHandler.TCPSocket.Port.IntVal).To(gomega.Equal(int32(8080)))
-			// 	gomega.Expect(probe.InitialDelaySeconds).To(gomega.Equal(int32(15)))
-			// 	gomega.Expect(probe.PeriodSeconds).To(gomega.Equal(int32(10)))
-			// }
+			for _, pod := range podList.Items {
+				// Check if pod has the expected liveness probe
+				probe := pod.Spec.Containers[0].LivenessProbe
+				gomega.Expect(probe).NotTo(gomega.BeNil())
+				gomega.Expect(probe.ProbeHandler.TCPSocket.Port.IntVal).To(gomega.Equal(int32(8080)))
+				gomega.Expect(probe.InitialDelaySeconds).To(gomega.Equal(int32(15)))
+				gomega.Expect(probe.PeriodSeconds).To(gomega.Equal(int32(10)))
+			}
 		})
 
 	})
