@@ -27,7 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	// "k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/wait"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/kubernetes/test/e2e/framework"
@@ -134,7 +134,7 @@ var _ = GroupDescribe("Application deployment test in E2E scenario", func() {
 
 			// if I do not add any probe, then the test fails but at after each, and it says:
 			// deployments.apps "edge-statefulset-4sqeu" not found . while this is "edgecore-depl-app-..."
-			
+
 			//add proeb config
 			d.Spec.Template.Spec.Containers[0].LivenessProbe = &corev1.Probe{
 				ProbeHandler: corev1.ProbeHandler{
