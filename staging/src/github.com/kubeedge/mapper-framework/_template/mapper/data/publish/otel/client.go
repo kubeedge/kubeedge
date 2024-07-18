@@ -19,15 +19,16 @@ package otel
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"net/url"
 	"time"
 
-	"github.com/kubeedge/mapper-framework/pkg/common"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
+
+	"github.com/kubeedge/mapper-framework/pkg/common"
 )
 
 type Config struct {
@@ -41,7 +42,7 @@ func NewConfig(clientConfig json.RawMessage) (*Config, error) {
 		return nil, err
 	}
 	if cfg.EndpointURL == "" {
-		return nil, fmt.Errorf("endpointURL is required")
+		return nil, errors.New("endpointURL is required")
 	}
 	return &cfg, nil
 }
