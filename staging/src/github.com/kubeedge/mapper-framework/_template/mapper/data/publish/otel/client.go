@@ -23,11 +23,12 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/kubeedge/mapper-framework/pkg/common"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
+
+	"github.com/kubeedge/mapper-framework/pkg/common"
 )
 
 type Config struct {
