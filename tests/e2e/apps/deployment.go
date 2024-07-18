@@ -118,22 +118,13 @@ var _ = GroupDescribe("Application deployment test in E2E scenario", func() {
 			utils.WaitForPodsRunning(clientSet, podList, 240*time.Second)
 		})
 
-
-		// this one
-		
-		ginkgo.It("E2E_APP_DEPLOYMENT_4:  Create a deployment with liveness probe and verify the pods are created and managed correctly", func() {
+		ginkgo.It("E2E_APP_DEPLOYMENT_4:  Create a deployment with liveness probe and verify that it works", func() {
 			replica := int32(1)
 			//Generate the random string and assign as a UID
 			UID = "edgecore-depl-app-" + utils.GetRandomString(5)
 
-			// cretae a deployment
 			ginkgo.By(fmt.Sprintf("Creating deployment %s with probe configurations", UID))
-
-			// depl is created in "default" namespace 
 			d := utils.NewDeployment(UID, utils.LoadConfig().AppImageURL[1], replica)
-
-			// if I do not add any probe, then the test fails but at after each, and it says:
-			// deployments.apps "edge-statefulset-4sqeu" not found . while this is "edgecore-depl-app-..."
 
 			httpact := corev1.HTTPGetAction{
 				Path:   "/var/lib/edged",
@@ -149,14 +140,10 @@ var _ = GroupDescribe("Application deployment test in E2E scenario", func() {
 			}
 
 			d.Spec.Template.Spec.Containers[0].LivenessProbe = livenessProbe
-    		d.Spec.Template.Spec.Containers[0].ImagePullPolicy = corev1.PullIfNotPresent
+			d.Spec.Template.Spec.Containers[0].ImagePullPolicy = corev1.PullIfNotPresent
 
-			//cretae deployment in the cluster
 			_, err := utils.CreateDeployment(clientSet, d)
 			gomega.Expect(err).To(gomega.BeNil())
-
-			//wait for delpoyment to be ready
-
 			time.Sleep(time.Second * 300)
 
 			ginkgo.By(fmt.Sprintf("get deployment %s", UID))
@@ -165,50 +152,31 @@ var _ = GroupDescribe("Application deployment test in E2E scenario", func() {
 
 			time.Sleep(time.Second * 200)
 
-
-			// check those probe config is added or not
 			// Verify if deployment pods are running with the probe configuration
-
 			ginkgo.By(fmt.Sprintf("get pod for deployment %s", UID))
 			labelSelector := labels.SelectorFromSet(map[string]string{"app": UID})
 			podList, err := utils.GetPods(clientSet, corev1.NamespaceDefault, labelSelector, nil)
 			gomega.Expect(err).To(gomega.BeNil())
 			gomega.Expect(podList).NotTo(gomega.BeNil())
-			// gomega.Expect(len(podList.Items)).To(gomega.Equal(int(replica)))
+			gomega.Expect(len(podList.Items)).To(gomega.Equal(int(replica)))
 
 			ginkgo.By(fmt.Sprintf("wait for pod of deployment %s running", UID))
 			utils.WaitForPodsRunning(clientSet, podList, 240*time.Second)
 
-			// for _, pod := range podList.Items {
-			// 	// Check if pod has the expected liveness probe
-			// 	probe := pod.Spec.Containers[0].LivenessProbe
-			// 	gomega.Expect(probe).NotTo(gomega.BeNil())
-			// 	gomega.Expect(probe.ProbeHandler.TCPSocket.Port.IntVal).To(gomega.Equal(int32(8080)))
-			// 	gomega.Expect(probe.InitialDelaySeconds).To(gomega.Equal(int32(15)))
-			// 	gomega.Expect(probe.PeriodSeconds).To(gomega.Equal(int32(10)))
-			// 	ginkgo.By(fmt.Sprintf("it worked for %s pod", pod))
-			// }
-
-
+			ginkgo.By("Verifying liveness probe configuration")
 			for _, pod := range podList.Items {
-				for _, container := range pod.Spec.Containers {
-					if container.Name == UID {
-						gomega.Expect(container.LivenessProbe).ToNot(gomega.BeNil())
-						gomega.Expect(container.LivenessProbe.HTTPGet).ToNot(gomega.BeNil())
-						gomega.Expect(container.LivenessProbe.HTTPGet.Path).To(gomega.Equal("/var/lib/edged"))
-						gomega.Expect(container.LivenessProbe.HTTPGet.Port.IntVal).To(gomega.Equal(int32(1884)))
-						gomega.Expect(container.LivenessProbe.HTTPGet.Scheme).To(gomega.Equal(corev1.URISchemeHTTP))
-						gomega.Expect(container.LivenessProbe.TimeoutSeconds).To(gomega.Equal(int32(1)))
-						gomega.Expect(container.LivenessProbe.InitialDelaySeconds).To(gomega.Equal(int32(10)))
-						gomega.Expect(container.LivenessProbe.PeriodSeconds).To(gomega.Equal(int32(15)))
-					}
-				}
+				// Check if pod has the expected liveness probe
+				probe := pod.Spec.Containers[0].LivenessProbe
+				gomega.Expect(probe).ToNot(gomega.BeNil())
+				gomega.Expect(probe.HTTPGet).ToNot(gomega.BeNil())
+				gomega.Expect(probe.HTTPGet.Path).To(gomega.Equal("/var/lib/edged"))
+				gomega.Expect(probe.HTTPGet.Port.IntVal).To(gomega.Equal(int32(1884)))
+				gomega.Expect(probe.HTTPGet.Scheme).To(gomega.Equal(corev1.URISchemeHTTP))
+				gomega.Expect(probe.TimeoutSeconds).To(gomega.Equal(int32(1)))
+				gomega.Expect(probe.InitialDelaySeconds).To(gomega.Equal(int32(10)))
+				gomega.Expect(probe.PeriodSeconds).To(gomega.Equal(int32(15)))
 			}
-
-
-			ginkgo.By(fmt.Sprintf("testcase is completed, now going to AfterEach"))
 		})
-
 	})
 
 	ginkgo.Context("Test application deployment using Pod spec", func() {
