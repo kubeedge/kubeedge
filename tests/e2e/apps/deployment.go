@@ -181,7 +181,7 @@ var _ = GroupDescribe("Application deployment test in E2E scenario", func() {
 				gomega.Expect(probe.ProbeHandler.TCPSocket.Port.IntVal).To(gomega.Equal(int32(8080)))
 				gomega.Expect(probe.InitialDelaySeconds).To(gomega.Equal(int32(15)))
 				gomega.Expect(probe.PeriodSeconds).To(gomega.Equal(int32(10)))
-				ginkgo.By(fmt.Sprintf("it worked for %s pod", pod)
+				ginkgo.By(fmt.Sprintf("it worked for %s pod", pod))
 			}
 			ginkgo.By(fmt.Sprintf("testcase is completed, now going to AfterEach")
 		})
