@@ -33,6 +33,7 @@ import (
 )
 
 const (
+	parallelEnvKey      = "E2E_PARALLEL"
 	dryRunEnvKey        = "E2E_DRYRUN"
 	skipEnvKey          = "E2E_SKIP"
 	focusEnvKey         = "E2E_FOCUS"
@@ -137,6 +138,10 @@ func makeCmd(w io.Writer) (*exec.Cmd, error) {
 
 	if len(util.GetEnvWithDefault(dryRunEnvKey, "")) > 0 {
 		ginkgoArgs = append(ginkgoArgs, "--dryRun=true")
+	}
+
+	if parallelEnvValue := util.GetEnvWithDefault(parallelEnvKey, ""); len(parallelEnvValue) > 0 {
+		ginkgoArgs = append(ginkgoArgs, parallelEnvValue)
 	}
 
 	extraArgs := []string{
