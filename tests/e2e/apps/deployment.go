@@ -124,7 +124,7 @@ var _ = GroupDescribe("Application deployment test in E2E scenario", func() {
 		ginkgo.It("E2E_APP_DEPLOYMENT_4:  Create a deployment with liveness probe and verify the pods are created and managed correctly", func() {
 			replica := int32(1)
 			//Generate the random string and assign as a UID
-			UID := "edgecore-depl-app-" + utils.GetRandomString(5)
+			UID = "edgecore-depl-app-" + utils.GetRandomString(5)
 
 			// cretae a deployment
 			ginkgo.By(fmt.Sprintf("Creating deployment %s with probe configurations", UID))
@@ -134,8 +134,6 @@ var _ = GroupDescribe("Application deployment test in E2E scenario", func() {
 
 			// if I do not add any probe, then the test fails but at after each, and it says:
 			// deployments.apps "edge-statefulset-4sqeu" not found . while this is "edgecore-depl-app-..."
-
-			//add probe config, the port might be wrong I don't know where to check. also I will add more probes but first want this to work.
 
 			httpact := corev1.HTTPGetAction{
 				Path:   "/var/lib/edged",
