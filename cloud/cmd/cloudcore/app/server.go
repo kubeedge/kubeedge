@@ -97,7 +97,10 @@ kubernetes controller which manages devices so that the device metadata/status d
 
 			// To help debugging, immediately log version
 			klog.Infof("Version: %+v", version.Get())
-			client.InitKubeEdgeClient(config.KubeAPIConfig)
+			enableImpersonation := config.Modules.CloudHub.Authorization != nil &&
+				config.Modules.CloudHub.Authorization.Enable &&
+				!config.Modules.CloudHub.Authorization.Debug
+			client.InitKubeEdgeClient(config.KubeAPIConfig, enableImpersonation)
 
 			// Negotiate TunnelPort for multi cloudcore instances
 			waitTime := rand.Int31n(10)
@@ -161,6 +164,10 @@ kubernetes controller which manages devices so that the device metadata/status d
 
 // registerModules register all the modules started in cloudcore
 func registerModules(c *v1alpha1.CloudCoreConfig) {
+	enableAuthorization := c.Modules.CloudHub.Authorization != nil &&
+		c.Modules.CloudHub.Authorization.Enable &&
+		!c.Modules.CloudHub.Authorization.Debug
+
 	cloudhub.Register(c.Modules.CloudHub)
 	edgecontroller.Register(c.Modules.EdgeController)
 	devicecontroller.Register(c.Modules.DeviceController)
@@ -168,7 +175,7 @@ func registerModules(c *v1alpha1.CloudCoreConfig) {
 	synccontroller.Register(c.Modules.SyncController)
 	cloudstream.Register(c.Modules.CloudStream, c.CommonConfig)
 	router.Register(c.Modules.Router)
-	dynamiccontroller.Register(c.Modules.DynamicController)
+	dynamiccontroller.Register(c.Modules.DynamicController, enableAuthorization)
 	policycontroller.Register(client.CrdConfig)
 }
 

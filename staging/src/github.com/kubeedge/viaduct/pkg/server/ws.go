@@ -87,8 +87,9 @@ func (srv *WSServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		Handler:  srv.options.Handler,
 		CtrlLane: lane.NewLane(api.ProtocolTypeWS, wsConn),
 		State: &conn.ConnectionState{
-			State:   api.StatConnected,
-			Headers: req.Header.Clone(),
+			State:            api.StatConnected,
+			Headers:          req.Header.Clone(),
+			PeerCertificates: req.TLS.PeerCertificates,
 		},
 		AutoRoute:          srv.options.AutoRoute,
 		OnReadTransportErr: srv.options.OnReadTransportErr,

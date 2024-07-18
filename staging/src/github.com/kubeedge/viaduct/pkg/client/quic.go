@@ -121,8 +121,9 @@ func (c *QuicClient) Connect() (conn.Connection, error) {
 		Consumer: c.options.Consumer,
 		Handler:  c.options.Handler,
 		State: &conn.ConnectionState{
-			State:   api.StatConnected,
-			Headers: c.exOpts.Header,
+			State:            api.StatConnected,
+			Headers:          c.exOpts.Header,
+			PeerCertificates: session.ConnectionState().PeerCertificates,
 		},
 		AutoRoute: c.options.AutoRoute,
 	}), nil

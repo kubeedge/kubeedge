@@ -46,8 +46,8 @@ var (
 	dynamicController *DynamicController
 )
 
-func Register(dc *configv1alpha1.DynamicController) {
-	config.InitConfigure(dc)
+func Register(dc *configv1alpha1.DynamicController, enableAuthorization bool) {
+	config.InitConfigure(dc, enableAuthorization)
 	dynamicController = newDynamicController(dc.Enable)
 	core.Register(dynamicController)
 }
