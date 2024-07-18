@@ -8,7 +8,7 @@ require (
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/influxdata/influxdb-client-go/v2 v2.13.0
 	github.com/kubeedge/kubeedge v0.0.0
-	github.com/kubeedge/mapper-framework v0.0.0-00010101000000-000000000000
+	github.com/kubeedge/mapper-framework v0.0.0
 	github.com/sailorvii/goav v0.1.4
 	github.com/taosdata/driver-go/v3 v3.5.1
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v0.32.1

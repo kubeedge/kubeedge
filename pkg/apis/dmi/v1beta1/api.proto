@@ -225,8 +225,8 @@ message CustomizedValue {
 message PushMethod {
     PushMethodHTTP http = 1;
     PushMethodMQTT mqtt = 2;
-    PushMethodOTEL otel = 4;
-    DBMethod dbMethod = 3;
+    PushMethodOTEL otel = 3;
+    DBMethod dbMethod = 4;
 }
 
 message PushMethodHTTP {

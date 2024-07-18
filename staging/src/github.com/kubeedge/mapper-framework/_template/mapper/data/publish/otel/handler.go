@@ -20,10 +20,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/kubeedge/Template/driver"
-	"github.com/kubeedge/mapper-framework/pkg/common"
 	"go.opentelemetry.io/otel/metric/instrument"
 	"k8s.io/klog/v2"
+
+	"github.com/kubeedge/Template/driver"
+	"github.com/kubeedge/mapper-framework/pkg/common"
 )
 
 const meterName = "github.com/kubeedge/Template/data/dbmethod/otel"
