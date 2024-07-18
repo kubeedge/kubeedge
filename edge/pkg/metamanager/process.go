@@ -257,7 +257,12 @@ func (m *metaManager) processPatch(message model.Message) {
 		feedbackError(err, message)
 		return
 	}
-	sendToCloud(&message)
+
+	if connect.IsConnected() {
+		sendToCloud(&message)
+	} else {
+		feedbackError(connect.ErrConnectionLost, message)
+	}
 }
 
 func (m *metaManager) processResponse(message model.Message) {

@@ -9,6 +9,7 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/listener"
@@ -143,6 +144,14 @@ func (eb *EventBus) GoToTarget(data map[string]interface{}, _ chan struct{}) (in
 	msg.SetResourceOperation(resource, publishOperation)
 	msg.FillBody(string(body))
 	msg.SetRoute(modules.RouterSourceEventBus, modules.UserGroup)
+
+	sessionMgr, err := cloudhub.GetSessionManager()
+	if err != nil {
+		return nil, err
+	}
+	if _, exists := sessionMgr.GetSession(nodeName); !exists {
+		return nil, fmt.Errorf("cloudcore doesn't have session for node:%s", nodeName)
+	}
 	beehiveContext.Send(modules.CloudHubModuleName, *msg)
 	return nil, nil
 }

@@ -32,6 +32,7 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 )
 
 // Application record the resources that are in applying for requesting to be transferred down from the cloud, please:
@@ -247,6 +248,12 @@ func MsgToApplication(msg model.Message) (*Application, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	nodeID, err := messagelayer.GetNodeID(msg)
+	if err != nil {
+		nodeID = app.Nodename
+	}
+	app.Nodename = nodeID
 	return app, nil
 }
 

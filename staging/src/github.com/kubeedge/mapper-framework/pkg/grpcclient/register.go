@@ -51,7 +51,7 @@ func RegisterMapper(withData bool) ([]*dmiapi.Device, []*dmiapi.DeviceModel, err
 			ApiVersion: cfg.Common.APIVersion,
 			Protocol:   cfg.Common.Protocol,
 			Address:    []byte(cfg.GrpcServer.SocketPath),
-			State:      common.DEVSTOK,
+			State:      common.DeviceStatusOK,
 		},
 	})
 	if err != nil {

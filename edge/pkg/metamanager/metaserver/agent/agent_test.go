@@ -51,7 +51,7 @@ func TestApplicationGC(t *testing.T) {
 				Resource:          "nodes",
 			}
 			ctx := apirequest.WithRequestInfo(context.Background(), requestInfo)
-			ctx = context.WithValue(ctx, commontypes.AuthorizationKey, "Bearer xxxx")
+			ctx = context.WithValue(ctx, commontypes.HeaderAuthorization, "Bearer xxxx")
 
 			connect.SetConnected(true)
 

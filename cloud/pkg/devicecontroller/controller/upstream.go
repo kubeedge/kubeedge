@@ -26,6 +26,7 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	keclient "github.com/kubeedge/kubeedge/cloud/pkg/common/client"
+	utilcontext "github.com/kubeedge/kubeedge/cloud/pkg/common/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/config"
@@ -174,7 +175,7 @@ func (uc *UpstreamController) updateDeviceStatus() {
 				klog.Errorf("Failed to marshal device status %v", deviceStatus)
 				continue
 			}
-			err = uc.crdClient.DevicesV1beta1().RESTClient().Patch(MergePatchType).Namespace(cacheDevice.Namespace).Resource(ResourceTypeDevices).Name(cacheDevice.Name).Body(body).Do(context.Background()).Error()
+			err = uc.crdClient.DevicesV1beta1().RESTClient().Patch(MergePatchType).Namespace(cacheDevice.Namespace).Resource(ResourceTypeDevices).Name(cacheDevice.Name).Body(body).Do(utilcontext.FromMessage(context.Background(), msg)).Error()
 			if err != nil {
 				klog.Errorf("Failed to patch device status %v of device %v in namespace %v, err: %v", deviceStatus, deviceID, cacheDevice.Namespace, err)
 				continue

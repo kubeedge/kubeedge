@@ -38,6 +38,7 @@ const _ = grpc.SupportPackageIsVersion7
 const (
 	DeviceManagerService_MapperRegister_FullMethodName     = "/v1beta1.DeviceManagerService/MapperRegister"
 	DeviceManagerService_ReportDeviceStatus_FullMethodName = "/v1beta1.DeviceManagerService/ReportDeviceStatus"
+	DeviceManagerService_ReportDeviceStates_FullMethodName = "/v1beta1.DeviceManagerService/ReportDeviceStates"
 )
 
 // DeviceManagerServiceClient is the client API for DeviceManagerService service.
@@ -52,6 +53,9 @@ type DeviceManagerServiceClient interface {
 	// When the mapper collects some properties of a device, it can make them a map of device twins
 	// and report it to the device manager through the interface of ReportDeviceStatus.
 	ReportDeviceStatus(ctx context.Context, in *ReportDeviceStatusRequest, opts ...grpc.CallOption) (*ReportDeviceStatusResponse, error)
+	// TODO Rename ReportDeviceStatus to ReportDeviceTwins
+	// ReportDeviceStates reports the state of devices to device manager.
+	ReportDeviceStates(ctx context.Context, in *ReportDeviceStatesRequest, opts ...grpc.CallOption) (*ReportDeviceStatesResponse, error)
 }
 
 type deviceManagerServiceClient struct {
@@ -80,6 +84,15 @@ func (c *deviceManagerServiceClient) ReportDeviceStatus(ctx context.Context, in 
 	return out, nil
 }
 
+func (c *deviceManagerServiceClient) ReportDeviceStates(ctx context.Context, in *ReportDeviceStatesRequest, opts ...grpc.CallOption) (*ReportDeviceStatesResponse, error) {
+	out := new(ReportDeviceStatesResponse)
+	err := c.cc.Invoke(ctx, DeviceManagerService_ReportDeviceStates_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DeviceManagerServiceServer is the server API for DeviceManagerService service.
 // All implementations must embed UnimplementedDeviceManagerServiceServer
 // for forward compatibility
@@ -92,6 +105,9 @@ type DeviceManagerServiceServer interface {
 	// When the mapper collects some properties of a device, it can make them a map of device twins
 	// and report it to the device manager through the interface of ReportDeviceStatus.
 	ReportDeviceStatus(context.Context, *ReportDeviceStatusRequest) (*ReportDeviceStatusResponse, error)
+	// TODO Rename ReportDeviceStatus to ReportDeviceTwins
+	// ReportDeviceStates reports the state of devices to device manager.
+	ReportDeviceStates(context.Context, *ReportDeviceStatesRequest) (*ReportDeviceStatesResponse, error)
 	mustEmbedUnimplementedDeviceManagerServiceServer()
 }
 
@@ -104,6 +120,9 @@ func (UnimplementedDeviceManagerServiceServer) MapperRegister(context.Context, *
 }
 func (UnimplementedDeviceManagerServiceServer) ReportDeviceStatus(context.Context, *ReportDeviceStatusRequest) (*ReportDeviceStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReportDeviceStatus not implemented")
+}
+func (UnimplementedDeviceManagerServiceServer) ReportDeviceStates(context.Context, *ReportDeviceStatesRequest) (*ReportDeviceStatesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReportDeviceStates not implemented")
 }
 func (UnimplementedDeviceManagerServiceServer) mustEmbedUnimplementedDeviceManagerServiceServer() {}
 
@@ -154,6 +173,24 @@ func _DeviceManagerService_ReportDeviceStatus_Handler(srv interface{}, ctx conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DeviceManagerService_ReportDeviceStates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReportDeviceStatesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DeviceManagerServiceServer).ReportDeviceStates(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DeviceManagerService_ReportDeviceStates_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DeviceManagerServiceServer).ReportDeviceStates(ctx, req.(*ReportDeviceStatesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // DeviceManagerService_ServiceDesc is the grpc.ServiceDesc for DeviceManagerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -168,6 +205,10 @@ var DeviceManagerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReportDeviceStatus",
 			Handler:    _DeviceManagerService_ReportDeviceStatus_Handler,
+		},
+		{
+			MethodName: "ReportDeviceStates",
+			Handler:    _DeviceManagerService_ReportDeviceStates_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

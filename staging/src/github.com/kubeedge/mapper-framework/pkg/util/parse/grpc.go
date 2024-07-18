@@ -106,17 +106,17 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 		var dbconfig common.DBConfig
 		var pushMethod []byte
 		var pushMethodName string
-		if pptv.PushMethod != nil && pptv.PushMethod.DBMethod != nil {
+		if pptv.PushMethod != nil && pptv.PushMethod.DbMethod != nil {
 			//parse dbmethod filed
 			switch {
-			case pptv.PushMethod.DBMethod.Influxdb2 != nil:
+			case pptv.PushMethod.DbMethod.Influxdb2 != nil:
 				dbMethodName = "influx"
-				clientconfig, err := json.Marshal(pptv.PushMethod.DBMethod.Influxdb2.Influxdb2ClientConfig)
+				clientconfig, err := json.Marshal(pptv.PushMethod.DbMethod.Influxdb2.Influxdb2ClientConfig)
 				if err != nil {
 					klog.Errorf("influx client config err: %+v", err)
 					return nil
 				}
-				dataconfig, err := json.Marshal(pptv.PushMethod.DBMethod.Influxdb2.Influxdb2DataConfig)
+				dataconfig, err := json.Marshal(pptv.PushMethod.DbMethod.Influxdb2.Influxdb2DataConfig)
 				if err != nil {
 					klog.Errorf("influx data config err: %+v", err)
 					return nil
@@ -125,9 +125,9 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 					Influxdb2ClientConfig: clientconfig,
 					Influxdb2DataConfig:   dataconfig,
 				}
-			case pptv.PushMethod.DBMethod.Redis != nil:
+			case pptv.PushMethod.DbMethod.Redis != nil:
 				dbMethodName = "redis"
-				clientConfig, err := json.Marshal(pptv.PushMethod.DBMethod.Redis.RedisClientConfig)
+				clientConfig, err := json.Marshal(pptv.PushMethod.DbMethod.Redis.RedisClientConfig)
 				if err != nil {
 					klog.Errorf("redis config err: %+v", err)
 					return nil
@@ -135,9 +135,9 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 				dbconfig = common.DBConfig{
 					RedisClientConfig: clientConfig,
 				}
-			case pptv.PushMethod.DBMethod.Tdengine != nil:
+			case pptv.PushMethod.DbMethod.Tdengine != nil:
 				dbMethodName = "tdengine"
-				clientConfig, err := json.Marshal(pptv.PushMethod.DBMethod.Tdengine.TdEngineClientConfig)
+				clientConfig, err := json.Marshal(pptv.PushMethod.DbMethod.Tdengine.TdEngineClientConfig)
 				if err != nil {
 					klog.Errorf("tdengine config err: %+v", err)
 					return nil
@@ -145,9 +145,9 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 				dbconfig = common.DBConfig{
 					TDEngineClientConfig: clientConfig,
 				}
-			case pptv.PushMethod.DBMethod.Mysql != nil:
+			case pptv.PushMethod.DbMethod.Mysql != nil:
 				dbMethodName = "mysql"
-				clientConfig, err := json.Marshal(pptv.PushMethod.DBMethod.Mysql.MysqlClientConfig)
+				clientConfig, err := json.Marshal(pptv.PushMethod.DbMethod.Mysql.MysqlClientConfig)
 				if err != nil {
 					klog.Errorf("mysql config err: %+v", err)
 					return nil

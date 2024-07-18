@@ -2,6 +2,7 @@ package client
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -125,6 +126,10 @@ func (c *pods) Patch(name string, patchBytes []byte) (*corev1.Pod, error) {
 	content, err := resp.GetContentData()
 	if err != nil {
 		return nil, fmt.Errorf("parse message to pod failed, err: %v", err)
+	}
+
+	if resp.Router.Operation == model.ResponseErrorOperation {
+		return nil, errors.New(string(content))
 	}
 
 	return handlePodResp(resource, content)

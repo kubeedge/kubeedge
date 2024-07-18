@@ -125,8 +125,9 @@ func (srv *QuicServer) handleSession(session quic.Session) {
 		CtrlLane: lane.NewLane(api.ProtocolTypeQuic, ctrlStream),
 		Handler:  srv.options.Handler,
 		State: &conn.ConnectionState{
-			State:   api.StatConnected,
-			Headers: header,
+			State:            api.StatConnected,
+			Headers:          header,
+			PeerCertificates: session.ConnectionState().PeerCertificates,
 		},
 		AutoRoute:          srv.options.AutoRoute,
 		OnReadTransportErr: srv.options.OnReadTransportErr,

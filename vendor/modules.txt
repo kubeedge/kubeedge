@@ -889,6 +889,7 @@ github.com/stoewer/go-strcase
 # github.com/stretchr/testify v1.9.0
 ## explicit; go 1.17
 github.com/stretchr/testify/assert
+github.com/stretchr/testify/require
 # github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635
 ## explicit
 github.com/syndtr/gocapability/capability
@@ -1200,6 +1201,7 @@ golang.org/x/time/rate
 # golang.org/x/tools v0.16.1
 ## explicit; go 1.18
 golang.org/x/tools/cmd/stringer
+golang.org/x/tools/container/intsets
 golang.org/x/tools/go/ast/astutil
 golang.org/x/tools/go/ast/inspector
 golang.org/x/tools/go/gcexportdata
@@ -2293,9 +2295,14 @@ k8s.io/kubernetes/pkg/api/node
 k8s.io/kubernetes/pkg/api/persistentvolumeclaim
 k8s.io/kubernetes/pkg/api/pod
 k8s.io/kubernetes/pkg/api/service
+k8s.io/kubernetes/pkg/api/v1/persistentvolume
 k8s.io/kubernetes/pkg/api/v1/pod
 k8s.io/kubernetes/pkg/api/v1/resource
 k8s.io/kubernetes/pkg/api/v1/service
+k8s.io/kubernetes/pkg/apis/abac
+k8s.io/kubernetes/pkg/apis/abac/latest
+k8s.io/kubernetes/pkg/apis/abac/v0
+k8s.io/kubernetes/pkg/apis/abac/v1beta1
 k8s.io/kubernetes/pkg/apis/admissionregistration
 k8s.io/kubernetes/pkg/apis/apiserverinternal
 k8s.io/kubernetes/pkg/apis/apps
@@ -2381,6 +2388,8 @@ k8s.io/kubernetes/pkg/apis/storage/util
 k8s.io/kubernetes/pkg/apis/storage/v1
 k8s.io/kubernetes/pkg/apis/storage/v1alpha1
 k8s.io/kubernetes/pkg/apis/storage/v1beta1
+k8s.io/kubernetes/pkg/auth/authorizer/abac
+k8s.io/kubernetes/pkg/auth/nodeidentifier
 k8s.io/kubernetes/pkg/capabilities
 k8s.io/kubernetes/pkg/client/conditions
 k8s.io/kubernetes/pkg/cluster/ports
@@ -2394,12 +2403,15 @@ k8s.io/kubernetes/pkg/controller/replicaset
 k8s.io/kubernetes/pkg/controller/replicaset/metrics
 k8s.io/kubernetes/pkg/controller/replication
 k8s.io/kubernetes/pkg/controller/volume/events
+k8s.io/kubernetes/pkg/controlplane/controller/legacytokentracking
 k8s.io/kubernetes/pkg/credentialprovider
 k8s.io/kubernetes/pkg/credentialprovider/azure
 k8s.io/kubernetes/pkg/credentialprovider/gcp
 k8s.io/kubernetes/pkg/credentialprovider/secrets
 k8s.io/kubernetes/pkg/features
 k8s.io/kubernetes/pkg/fieldpath
+k8s.io/kubernetes/pkg/kubeapiserver/authorizer
+k8s.io/kubernetes/pkg/kubeapiserver/authorizer/modes
 k8s.io/kubernetes/pkg/kubelet
 k8s.io/kubernetes/pkg/kubelet/apis/config
 k8s.io/kubernetes/pkg/kubelet/apis/config/scheme
@@ -2506,6 +2518,7 @@ k8s.io/kubernetes/pkg/probe/exec
 k8s.io/kubernetes/pkg/probe/grpc
 k8s.io/kubernetes/pkg/probe/http
 k8s.io/kubernetes/pkg/probe/tcp
+k8s.io/kubernetes/pkg/registry/authorization/util
 k8s.io/kubernetes/pkg/registry/core/service/allocator
 k8s.io/kubernetes/pkg/registry/rbac/validation
 k8s.io/kubernetes/pkg/scheduler
@@ -2595,7 +2608,9 @@ k8s.io/kubernetes/pkg/volume/util/volumepathhandler
 k8s.io/kubernetes/pkg/volume/validation
 k8s.io/kubernetes/pkg/windows/service
 k8s.io/kubernetes/plugin/pkg/admission/serviceaccount
+k8s.io/kubernetes/plugin/pkg/auth/authorizer/node
 k8s.io/kubernetes/plugin/pkg/auth/authorizer/rbac
+k8s.io/kubernetes/plugin/pkg/auth/authorizer/rbac/bootstrappolicy
 k8s.io/kubernetes/test/e2e/apps
 k8s.io/kubernetes/test/e2e/auth
 k8s.io/kubernetes/test/e2e/common
@@ -2658,6 +2673,10 @@ k8s.io/kubernetes/test/utils/format
 k8s.io/kubernetes/test/utils/image
 k8s.io/kubernetes/test/utils/kubeconfig
 k8s.io/kubernetes/third_party/forked/golang/expansion
+k8s.io/kubernetes/third_party/forked/gonum/graph
+k8s.io/kubernetes/third_party/forked/gonum/graph/internal/linear
+k8s.io/kubernetes/third_party/forked/gonum/graph/simple
+k8s.io/kubernetes/third_party/forked/gonum/graph/traverse
 # k8s.io/legacy-cloud-providers v0.0.0 => github.com/kubeedge/kubernetes/staging/src/k8s.io/legacy-cloud-providers v1.29.6-kubeedge1
 ## explicit; go 1.21
 k8s.io/legacy-cloud-providers/azure/auth

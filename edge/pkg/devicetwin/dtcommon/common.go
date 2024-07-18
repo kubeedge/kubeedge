@@ -122,4 +122,10 @@ const (
 
 	TypeDeleted = "deleted"
 	TypeUpdated = "updated"
+
+	DeviceStatusOK        = "ok"
+	DeviceStatusOnline    = "online"
+	DeviceStatusOffline   = "offline"
+	DeviceStatusUnhealthy = "unhealthy" /* Unhealthy status from device */
+	DeviceStatusUnknown   = "unknown"
 )

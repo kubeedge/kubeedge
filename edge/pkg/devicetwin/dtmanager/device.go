@@ -16,6 +16,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
+	"github.com/kubeedge/kubeedge/pkg/apis"
 )
 
 var (
@@ -91,11 +92,15 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 	// state refers to definition in mappers-go/pkg/common/const.go
 	state := strings.ToLower(updatedDevice.State)
 	switch state {
-	case "online", "offline", "ok", "unknown", "disconnected":
+	case dtcommon.DeviceStatusOnline, dtcommon.DeviceStatusOffline, dtcommon.DeviceStatusOK,
+		dtcommon.DeviceStatusUnknown, dtcommon.DeviceStatusUnhealthy:
 	default:
 		return nil
 	}
-	lastOnline := time.Now().Format("2006-01-02 15:04:05")
+	var lastOnline string
+	if state == dtcommon.DeviceStatusOnline || state == dtcommon.DeviceStatusOK {
+		lastOnline = time.Now().Format(apis.ISO8601UTC)
+	}
 	for i := 1; i <= dtcommon.RetryTimes; i++ {
 		err = dtclient.UpdateDeviceFields(
 			device.ID,

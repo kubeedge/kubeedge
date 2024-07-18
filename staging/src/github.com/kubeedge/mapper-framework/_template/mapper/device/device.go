@@ -146,10 +146,16 @@ func dataHandler(ctx context.Context, dev *driver.CustomizedDev) {
 			ObservedDesired: twin.ObservedDesired,
 			VisitorConfig:   &visitorConfig,
 			Topic:           fmt.Sprintf(common.TopicTwinUpdate, dev.Instance.ID),
-			CollectCycle:    time.Duration(twin.Property.CollectCycle),
+			CollectCycle:    time.Millisecond * time.Duration(twin.Property.CollectCycle),
 			ReportToCloud:   twin.Property.ReportToCloud,
 		}
 		go twinData.Run(ctx)
+
+		//handle status
+		getStates := &DeviceStates{Client: dev.CustomizedClient, DeviceName: dev.Instance.Name,
+			DeviceNamespace: dev.Instance.Namespace}
+		go getStates.Run(ctx)
+
 		dataModel := common.NewDataModel(dev.Instance.Name, twin.Property.PropertyName, dev.Instance.Namespace, common.WithType(twin.ObservedDesired.Metadata.Type))
 		// handle push method
 		if twin.Property.PushMethod.MethodConfig != nil && twin.Property.PushMethod.MethodName != "" {
@@ -201,7 +207,7 @@ func pushHandler(ctx context.Context, twin *common.Twin, client *driver.Customiz
 		klog.Errorf("init publish method err: %v", err)
 		return
 	}
-	reportCycle := time.Duration(twin.Property.ReportCycle)
+	reportCycle := time.Millisecond * time.Duration(twin.Property.ReportCycle)
 	if reportCycle == 0 {
 		reportCycle = common.DefaultReportCycle
 	}

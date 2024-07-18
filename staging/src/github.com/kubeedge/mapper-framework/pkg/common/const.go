@@ -20,11 +20,12 @@ import "time"
 
 // Device status definition.
 const (
-	DEVSTOK        = "OK"
-	DEVSTERR       = "ERROR"        /* Expected value is not equal as setting */
-	DEVSTDISCONN   = "DISCONNECTED" /* Disconnected */
-	DEVSTUNHEALTHY = "UNHEALTHY"    /* Unhealthy status from device */
-	DEVSTUNKNOWN   = "UNKNOWN"
+	DeviceStatusOK        = "ok"
+	DeviceStatusOnline    = "online"
+	DeviceStatusOffline   = "offline"
+	DeviceStatusDisCONN   = "disconnected" /* Disconnected */
+	DeviceStatusUnhealthy = "unhealthy"    /* Unhealthy status from device */
+	DeviceStatusUnknown   = "unknown"
 )
 const (
 	ProtocolCustomized = "customized-protocol"

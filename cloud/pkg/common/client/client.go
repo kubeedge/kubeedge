@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,7 +13,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
 package client
 
 import (
@@ -47,7 +46,7 @@ var (
 	CrdConfig  *rest.Config
 )
 
-func InitKubeEdgeClient(config *cloudcoreConfig.KubeAPIConfig) {
+func InitKubeEdgeClient(config *cloudcoreConfig.KubeAPIConfig, enableImpersonation bool) {
 	initOnce.Do(func() {
 		kubeConfig, err := clientcmd.BuildConfigFromFlags(config.Master, config.KubeConfig)
 		if err != nil {
@@ -59,15 +58,15 @@ func InitKubeEdgeClient(config *cloudcoreConfig.KubeAPIConfig) {
 
 		KubeConfig = kubeConfig
 
-		dynamicClient = dynamic.NewForConfigOrDie(kubeConfig)
+		dynamicClient = newForDynamicConfigOrDie(kubeConfig, enableImpersonation)
 
 		kubeConfig.ContentType = runtime.ContentTypeProtobuf
-		kubeClient = kubernetes.NewForConfigOrDie(kubeConfig)
+		kubeClient = newForK8sConfigOrDie(kubeConfig, enableImpersonation)
 
 		crdKubeConfig := rest.CopyConfig(kubeConfig)
 		crdKubeConfig.ContentType = runtime.ContentTypeJSON
 		CrdConfig = crdKubeConfig
-		crdClient = crdClientset.NewForConfigOrDie(crdKubeConfig)
+		crdClient = newForCrdConfigOrDie(crdKubeConfig, enableImpersonation)
 
 		authKubeConfig, err = clientcmd.BuildConfigFromFlags(kubeConfig.Host, "")
 		if err != nil {

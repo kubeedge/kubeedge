@@ -129,7 +129,8 @@ func (s *server) MapperRegister(_ context.Context, in *pb.MapperRegisterRequest)
 	}, nil
 }
 
-func (s *server) ReportDeviceStatus(_ context.Context, in *pb.ReportDeviceStatusRequest) (*pb.ReportDeviceStatusResponse, error) {
+func (s *server) ReportDeviceStatus(_ context.Context, in *pb.ReportDeviceStatusRequest) (*pb.
+	ReportDeviceStatusResponse, error) {
 	if !s.limiter.Allow() {
 		return nil, fmt.Errorf("fail to report device status because of too many request: %s", in.DeviceName)
 	}
@@ -150,9 +151,41 @@ func (s *server) ReportDeviceStatus(_ context.Context, in *pb.ReportDeviceStatus
 	return &pb.ReportDeviceStatusResponse{}, nil
 }
 
+func (s *server) ReportDeviceStates(_ context.Context, in *pb.ReportDeviceStatesRequest) (*pb.
+	ReportDeviceStatesResponse, error) {
+	if !s.limiter.Allow() {
+		return nil, fmt.Errorf("fail to report device states because of too many request: %s", in.DeviceName)
+	}
+
+	if in != nil && in.State != "" && in.DeviceName != "" {
+		msg, err := CreateMessageStateUpdate(in)
+		if err != nil {
+			klog.Errorf("fail to create state message data of device %s with err: %v", in.DeviceName, err)
+			return nil, err
+		}
+		handleDeviceState(in, msg)
+	} else {
+		return &pb.ReportDeviceStatesResponse{}, fmt.Errorf("ReportDeviceStatesRequest is invalid data")
+	}
+
+	return &pb.ReportDeviceStatesResponse{}, nil
+}
+
 func handleDeviceTwin(in *pb.ReportDeviceStatusRequest, payload []byte) {
 	deviceID := util.GetResourceID(in.DeviceNamespace, in.DeviceName)
 	topic := dtcommon.DeviceETPrefix + deviceID + dtcommon.TwinETUpdateSuffix
+	target := modules.TwinGroup
+	resource := base64.URLEncoding.EncodeToString([]byte(topic))
+	// routing key will be $hw.<project_id>.events.user.bus.response.cluster.<cluster_id>.node.<node_id>.<base64_topic>
+	message := beehiveModel.NewMessage("").BuildRouter(modules.BusGroup, modules.UserGroup,
+		resource, messagepkg.OperationResponse).FillBody(string(payload))
+
+	beehiveContext.SendToGroup(target, *message)
+}
+
+func handleDeviceState(in *pb.ReportDeviceStatesRequest, payload []byte) {
+	deviceID := util.GetResourceID(in.DeviceNamespace, in.DeviceName)
+	topic := dtcommon.DeviceETPrefix + deviceID + dtcommon.DeviceETStateUpdateSuffix
 	target := modules.TwinGroup
 	resource := base64.URLEncoding.EncodeToString([]byte(topic))
 	// routing key will be $hw.<project_id>.events.user.bus.response.cluster.<cluster_id>.node.<node_id>.<base64_topic>
@@ -173,6 +206,15 @@ func CreateMessageTwinUpdate(twin *pb.Twin) ([]byte, error) {
 	updateMsg.Twin[twin.PropertyName].Actual = &types.TwinValue{Value: &twin.Reported.Value}
 
 	msg, err := json.Marshal(updateMsg)
+	return msg, err
+}
+
+// CreateMessageStateUpdate create state update message.
+func CreateMessageStateUpdate(in *pb.ReportDeviceStatesRequest) ([]byte, error) {
+	var stateMsg DeviceStateUpdate
+	stateMsg.BaseMessage.Timestamp = getTimestamp()
+	stateMsg.State = in.State
+	msg, err := json.Marshal(stateMsg)
 	return msg, err
 }
 

@@ -244,8 +244,9 @@ func (conn *QuicConnection) handleMessage(stream *smgr.Stream) {
 			conn.handler = mux.MuxDefault
 		}
 		conn.handler.ServeConn(&mux.MessageRequest{
-			Header:  conn.state.Headers,
-			Message: msg,
+			Header:           conn.state.Headers,
+			PeerCertificates: conn.state.PeerCertificates,
+			Message:          msg,
 		}, &responseWriter{
 			Type: api.ProtocolTypeQuic,
 			Van:  stream.Stream,
@@ -341,6 +342,5 @@ func (conn *QuicConnection) LocalAddr() net.Addr {
 }
 
 func (conn *QuicConnection) ConnectionState() ConnectionState {
-	conn.state.PeerCertificates = conn.session.Sess.ConnectionState().PeerCertificates
 	return *conn.state
 }

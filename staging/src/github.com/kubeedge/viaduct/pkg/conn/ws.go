@@ -139,8 +139,9 @@ func (conn *WSConnection) handleMessage() {
 			conn.handler = mux.MuxDefault
 		}
 		conn.handler.ServeConn(&mux.MessageRequest{
-			Header:  conn.state.Headers,
-			Message: msg,
+			Header:           conn.state.Headers,
+			PeerCertificates: conn.state.PeerCertificates,
+			Message:          msg,
 		}, &responseWriter{
 			Type: api.ProtocolTypeWS,
 			Van:  conn.wsConn,
