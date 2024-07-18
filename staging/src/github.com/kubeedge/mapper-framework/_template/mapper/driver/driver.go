@@ -2,6 +2,8 @@ package driver
 
 import (
 	"sync"
+
+	"github.com/kubeedge/mapper-framework/pkg/common"
 )
 
 func NewClient(protocol ProtocolConfig) (*CustomizedClient, error) {
@@ -35,4 +37,9 @@ func (c *CustomizedClient) StopDevice() error {
 	// TODO: stop device
 	// you can use c.ProtocolConfig
 	return nil
+}
+
+func (c *CustomizedClient) GetDeviceStates() (string, error) {
+	// TODO: GetDeviceStates
+	return common.DeviceStatusOK, nil
 }
