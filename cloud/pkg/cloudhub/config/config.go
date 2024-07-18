@@ -1,13 +1,12 @@
 package config
 
 import (
-	"encoding/pem"
-	"os"
 	"sync"
 
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/security/certs"
 )
 
 var Config Configure
@@ -28,24 +27,26 @@ func InitConfigure(hub *v1alpha1.CloudHub) {
 			klog.Exit("AdvertiseAddress must be specified!")
 		}
 
-		Config = Configure{
-			CloudHub: *hub,
-		}
+		Config = Configure{CloudHub: *hub}
 
-		ca, err := os.ReadFile(hub.TLSCAFile)
-		if err == nil {
-			block, _ := pem.Decode(ca)
-			ca = block.Bytes
-			klog.Info("Succeed in loading CA certificate from local directory")
-		}
+		var ca, caKey, cert, key []byte
 
-		caKey, err := os.ReadFile(hub.TLSCAKeyFile)
-		if err == nil {
-			block, _ := pem.Decode(caKey)
-			caKey = block.Bytes
-			klog.Info("Succeed in loading CA key from local directory")
+		if hub.TLSCAFile != "" {
+			if block, err := certs.ReadPEMFile(hub.TLSCAFile); err == nil {
+				ca = block.Bytes
+				klog.Info("succeed in loading CA certificate from local directory")
+			} else {
+				klog.Warningf("failed to load the CA certificate file %s, err: %v", hub.TLSCAFile, err)
+			}
 		}
-
+		if hub.TLSCAKeyFile != "" {
+			if block, err := certs.ReadPEMFile(hub.TLSCAKeyFile); err == nil {
+				caKey = block.Bytes
+				klog.Info("succeed in loading CA key from local directory")
+			} else {
+				klog.Warningf("failed to load the CA key file %s, err: %v", hub.TLSCAKeyFile, err)
+			}
+		}
 		if ca != nil && caKey != nil {
 			Config.Ca = ca
 			Config.CaKey = caKey
@@ -53,19 +54,22 @@ func InitConfigure(hub *v1alpha1.CloudHub) {
 			klog.Exit("Both of ca and caKey should be specified!")
 		}
 
-		cert, err := os.ReadFile(hub.TLSCertFile)
-		if err == nil {
-			block, _ := pem.Decode(cert)
-			cert = block.Bytes
-			klog.Info("Succeed in loading certificate from local directory")
+		if hub.TLSCertFile != "" {
+			if block, err := certs.ReadPEMFile(hub.TLSCertFile); err == nil {
+				cert = block.Bytes
+				klog.Info("succeed in loading certificate from local directory")
+			} else {
+				klog.Warningf("failed to load the certificate file %s, err: %v", hub.TLSCertFile, err)
+			}
 		}
-		key, err := os.ReadFile(hub.TLSPrivateKeyFile)
-		if err == nil {
-			block, _ := pem.Decode(key)
-			key = block.Bytes
-			klog.Info("Succeed in loading private key from local directory")
+		if hub.TLSPrivateKeyFile != "" {
+			if block, err := certs.ReadPEMFile(hub.TLSPrivateKeyFile); err == nil {
+				key = block.Bytes
+				klog.Info("succeed in loading private key from local directory")
+			} else {
+				klog.Warningf("failed to load the private key file %s, err: %v", hub.TLSPrivateKeyFile, err)
+			}
 		}
-
 		if cert != nil && key != nil {
 			Config.Cert = cert
 			Config.Key = key
@@ -73,4 +77,22 @@ func InitConfigure(hub *v1alpha1.CloudHub) {
 			klog.Exit("Both of cert and key should be specified!")
 		}
 	})
+}
+
+func (c *Configure) UpdateCA(ca, caKey []byte) {
+	if ca != nil {
+		c.Ca = ca
+	}
+	if caKey != nil {
+		c.CaKey = caKey
+	}
+}
+
+func (c *Configure) UpdateCerts(cert, key []byte) {
+	if cert != nil {
+		c.Cert = cert
+	}
+	if key != nil {
+		c.Key = key
+	}
 }

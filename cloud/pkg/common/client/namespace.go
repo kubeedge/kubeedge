@@ -1,0 +1,42 @@
+/*
+Copyright 2024 The KubeEdge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+package client
+
+import (
+	"context"
+
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+func CreateNamespaceIfNeeded(ctx context.Context, ns string) error {
+	cli := GetKubeClient()
+	c := cli.CoreV1()
+	if _, err := c.Namespaces().Get(ctx, ns, metav1.GetOptions{}); err == nil {
+		return nil
+	}
+	newNs := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: ns,
+		},
+	}
+	_, err := c.Namespaces().Create(ctx, newNs, metav1.CreateOptions{})
+	if err != nil && errors.IsAlreadyExists(err) {
+		err = nil
+	}
+	return err
+}
