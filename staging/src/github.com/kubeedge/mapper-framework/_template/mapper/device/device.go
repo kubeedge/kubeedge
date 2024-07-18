@@ -159,12 +159,7 @@ func dataHandler(ctx context.Context, dev *driver.CustomizedDev) {
 		dataModel := common.NewDataModel(dev.Instance.Name, twin.Property.PropertyName, dev.Instance.Namespace, common.WithType(twin.ObservedDesired.Metadata.Type))
 		// handle push method
 		if twin.Property.PushMethod.MethodConfig != nil && twin.Property.PushMethod.MethodName != "" {
-			switch twin.Property.PushMethod.MethodName {
-			case common.PushMethodOTEL:
-				otelMethod.DataHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
-			default:
-				pushHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
-			}
+			pushHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
 		}
 		// handle database
 		if twin.Property.PushMethod.DBMethod.DBMethodName != "" {
@@ -186,6 +181,11 @@ func dataHandler(ctx context.Context, dev *driver.CustomizedDev) {
 
 // pushHandler start data panel work
 func pushHandler(ctx context.Context, twin *common.Twin, client *driver.CustomizedClient, visitorConfig *driver.VisitorConfig, dataModel *common.DataModel) {
+	if twin.Property.PushMethod.MethodName == common.PushMethodOTEL {
+		otelMethod.DataHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
+		return
+	}
+
 	var dataPanel global.DataPanel
 	var err error
 	// initialization dataPanel
