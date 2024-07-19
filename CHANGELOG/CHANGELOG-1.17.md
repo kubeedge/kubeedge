@@ -1,3 +1,7 @@
+* [v1.17.2](#v1172)
+    * [Downloads for v1.17.2](#downloads-for-v1172)
+    * [KubeEdge v1.17.2 Release Notes](#kubeedge-v1172-release-notes)
+        * [Changelog since v1.17.1](#changelog-since-v1171)
 * [v1.17.1](#v1171)
     * [Downloads for v1.17.1](#downloads-for-v1171)
     * [KubeEdge v1.17.1 Release Notes](#kubeedge-v1171-release-notes)
@@ -7,6 +11,21 @@
     * [KubeEdge v1.17 Release Notes](#kubeedge-v117-release-notes)
         * [1.17 What's New](#117-whats-new)
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
+
+# v1.17.2
+
+## Downloads for v1.17.2
+
+Download v1.17.2 in the [v1.17.2 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.17.2).
+
+## KubeEdge v1.17.2 Release Notes
+
+### Changelog since v1.17.1
+
+- Fix device mapper data collecting cycle calculation error. ([#5732](https://github.com/kubeedge/kubeedge/pull/5732), [@tangming1996](https://github.com/tangming1996))
+- Fix message parentID setting in func NewErrorMessage. ([#5733](https://github.com/kubeedge/kubeedge/pull/5733), [@luomengY](https://github.com/luomengY))
+- Fix pod status not to be updated when edge node offline. ([#5740](https://github.com/kubeedge/kubeedge/pull/5740), [@luomengY](https://github.com/luomengY))
+
 
 # v1.17.1
 
