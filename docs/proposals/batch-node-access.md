@@ -32,7 +32,7 @@ Batch access to edge nodes in the KubeEdge system:
 
 ## Design overview
 
-![](../../../../../边缘计算-批量节点接入项目/草稿4.0.png)
+![](images/batch-node-access/Design-overview.png)
 
 
 
