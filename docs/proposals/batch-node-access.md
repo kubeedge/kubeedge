@@ -32,7 +32,7 @@ Batch access to edge nodes in the KubeEdge system:
 
 ## Design overview
 
-![](/images/batch-node-access/Design-overview.png)
+<img src="../images/batch-node-access/Design-overview.png" alt="alt text"/>
 
 
 
