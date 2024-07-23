@@ -41,6 +41,10 @@ Download v1.17.1 in the [v1.17.1 release page](https://github.com/kubeedge/kubee
 - Fix edgecore will not restart when the edge node cannot obtain the IP address. ([#5715](https://github.com/kubeedge/kubeedge/pull/5715), [@WillardHu](https://github.com/WillardHu))
 - Fix compatible issue with keadm init/upgrade --profile. ([#5718](https://github.com/kubeedge/kubeedge/pull/5718), [@luomengY](https://github.com/luomengY))
 
+
+
+# v1.17.0
+
 ## Downloads for v1.17.0
 
 Download v1.17.0 in the [v1.17.0 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.17.0).
