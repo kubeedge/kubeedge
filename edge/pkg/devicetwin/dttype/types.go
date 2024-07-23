@@ -23,6 +23,17 @@ type Device struct {
 	Twin        map[string]*MsgTwin `json:"twin,omitempty"`
 }
 
+// DeviceCloudMsg used to synchronize device data to the cloud
+type DeviceCloudMsg struct {
+	ID             string              `json:"id,omitempty"`
+	Name           string              `json:"name,omitempty"`
+	Description    string              `json:"description,omitempty"`
+	State          string              `json:"state,omitempty"`
+	LastOnlineTime string              `json:"lastOnlineTime,omitempty"`
+	Attributes     map[string]*MsgAttr `json:"attributes,omitempty"`
+	Twin           map[string]*MsgTwin `json:"twin,omitempty"`
+}
+
 // BaseMessage the base struct of event message
 type BaseMessage struct {
 	EventID   string `json:"event_id"`
