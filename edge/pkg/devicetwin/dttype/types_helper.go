@@ -153,17 +153,17 @@ func MsgTwinToDeviceTwin(name string, msgTwin *MsgTwin) dtclient.DeviceTwin {
 // DeviceMsg the struct of device state msg
 type DeviceMsg struct {
 	BaseMessage
-	Device Device `json:"device"`
+	DeviceCloudMsg DeviceCloudMsg `json:"device"`
 }
 
-// BuildDeviceState build the msg
-func BuildDeviceState(baseMessage BaseMessage, device Device) ([]byte, error) {
+// BuildDeviceCloudMsgState build the msg
+func BuildDeviceCloudMsgState(baseMessage BaseMessage, device Device) ([]byte, error) {
 	result := DeviceMsg{
 		BaseMessage: baseMessage,
-		Device: Device{
-			Name:       device.Name,
-			State:      device.State,
-			LastOnline: device.LastOnline}}
+		DeviceCloudMsg: DeviceCloudMsg{
+			Name:           device.Name,
+			State:          device.State,
+			LastOnlineTime: device.LastOnline}}
 	payload, err := json.Marshal(result)
 	if err != nil {
 		return []byte(""), err
