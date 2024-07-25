@@ -17,9 +17,14 @@
 KUBEEDGE_ROOT=$PWD
 WORKDIR=$(dirname $0)
 E2E_DIR=$(realpath $(dirname $0)/..)
+KUBEEDGE_VERSION=${VERSION: 1}
 
 source "${KUBEEDGE_ROOT}/hack/lib/golang.sh"
 source "${KUBEEDGE_ROOT}/hack/lib/install.sh"
+source "${KUBEEDGE_ROOT}/hack/lib/util.sh"
+
+export KUBECONFIG=$HOME/.kube/config
+
 kubeedge::version::get_version_info
 VERSION=${GIT_VERSION}
 
@@ -40,24 +45,9 @@ function build_keadm() {
   ginkgo build -r e2e_keadm/
 }
 
-function prepare_cluster() {
-  kind create cluster --name test
-
-  echo "wait the control-plane ready..."
-  kubectl wait --for=condition=Ready node/test-control-plane --timeout=60s
-
-  kubectl create clusterrolebinding system:anonymous --clusterrole=cluster-admin --user=system:anonymous
-
-  # edge side don't support kind cni now, delete kind cni plugin for workaround
-  kubectl delete daemonset kindnet -nkube-system
-}
-
 function start_kubeedge() {
-  local KUBEEDGE_VERSION="$@"
-
   sudo mkdir -p /var/lib/kubeedge
   cd $KUBEEDGE_ROOT
-  export KUBECONFIG=$HOME/.kube/config
 
   sudo -E _output/local/bin/keadm deprecated init --kube-config=$KUBECONFIG --advertise-address=127.0.0.1 --kubeedge-version=${KUBEEDGE_VERSION}
   export MASTER_IP=`docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' test-control-plane`
@@ -70,46 +60,13 @@ function start_kubeedge() {
 
   export TOKEN=$(sudo _output/local/bin/keadm gettoken --kube-config=$KUBECONFIG)
   sudo systemctl set-environment CHECK_EDGECORE_ENVIRONMENT="false"
-  sudo -E CHECK_EDGECORE_ENVIRONMENT="false" _output/local/bin/keadm deprecated join --token=$TOKEN --cloudcore-ipport=127.0.0.1:10000 --edgenode-name=edge-node --kubeedge-version=${KUBEEDGE_VERSION}
+  sudo _output/local/bin/keadm deprecated join --token=$TOKEN --cloudcore-ipport=127.0.0.1:10000 --edgenode-name=edge-node --kubeedge-version=${KUBEEDGE_VERSION}
 
   # ensure edgenode is ready
   while true; do
       sleep 3
       kubectl get node | grep edge-node | grep -q -w Ready && break
   done
-}
-
-function run_test() {
-  :> /tmp/testcase.log
-  cd $E2E_DIR
-
-  export ACK_GINKGO_RC=true
-
-  ginkgo -v ./e2e_keadm/e2e_keadm.test -- \
-  --image-url=nginx \
-  --image-url=nginx \
-  --kube-master="https://$MASTER_IP:6443" \
-  --kubeconfig=$KUBECONFIG \
-  --test.v
-  GINKGO_TESTING_RESULT=$?
-
-  if [[ $GINKGO_TESTING_RESULT != 0 ]]; then
-    echo "Integration suite has failures, Please check !!"
-    echo "edgecore logs are as below"
-    set -x
-    journalctl -u edgecore.service --no-pager
-    set +x
-    echo "================================================="
-    echo "================================================="
-    echo "cloudcore logs are as below"
-    set -x
-    cat /var/log/kubeedge/cloudcore.log
-    set +x
-    exit 1
-  else
-    echo "Integration suite successfully passed all the tests !!"
-    exit 0
-  fi
 }
 
 trap cleanup EXIT
@@ -120,14 +77,11 @@ echo -e "\nUsing latest commit code to do keadm_deprecated_e2e test..."
 echo -e "\nBuilding keadm..."
 build_keadm
 
-export KUBECONFIG=$HOME/.kube/config
-
 echo -e "\nPreparing cluster..."
-prepare_cluster
+util::prepare_cluster
 
 install_cni_plugins
 
-kubeedge_version=${VERSION: 1}
 #if we use the local release version compiled with the latest codes, we need to copy release file and checksum file.
 sudo mkdir -p /etc/kubeedge
 
@@ -148,10 +102,10 @@ echo -e "\nBuilding keadm..."
 build_keadm
 
 echo -e "\nPreparing cluster..."
-prepare_cluster
+util::prepare_cluster
 
 echo -e "\nStarting kubeedge..."
 start_kubeedge ""
 
 echo -e "\nRunning test..."
-run_test
+util::run_keadm_test

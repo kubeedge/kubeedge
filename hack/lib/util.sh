@@ -89,3 +89,49 @@ function util:create_gopath_tree() {
     ln -snf "${repo_root}" "${go_pkg_dir}"
   fi
 }
+
+# util::prepare_cluster prepare the kind cluster for testing
+function util::prepare_cluster() {
+  kind create cluster --name test
+
+  echo "wait the control-plane ready..."
+  kubectl wait --for=condition=Ready node/test-control-plane --timeout=60s
+
+  kubectl create clusterrolebinding system:anonymous --clusterrole=cluster-admin --user=system:anonymous
+
+  # edge side don't support kind cni now, delete kind cni plugin for workaround
+  kubectl delete daemonset kindnet -nkube-system
+}
+
+# util::run_keadm_test run the keadm test
+function util::run_keadm_test() {
+  :> /tmp/testcase.log
+  cd $E2E_DIR
+
+  export ACK_GINKGO_RC=true
+
+  ginkgo -v ./e2e_keadm/e2e_keadm.test -- \
+  --image-url=nginx \
+  --image-url=nginx \
+  --kube-master="https://$MASTER_IP:6443" \
+  --kubeconfig=$KUBECONFIG \
+  --test.v
+
+  if [[ $? != 0 ]]; then
+    echo "Integration suite has failures, Please check !!"
+    echo "edgecore logs are as below"
+    set -x
+    journalctl -u edgecore.service --no-pager
+    set +x
+    echo "================================================="
+    echo "================================================="
+    echo "cloudcore logs are as below"
+    set -x
+    cat /var/log/kubeedge/cloudcore.log
+    set +x
+    exit 1
+  else
+    echo "Integration suite successfully passed all the tests !!"
+    exit 0
+  fi
+}
