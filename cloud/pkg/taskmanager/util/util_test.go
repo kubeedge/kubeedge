@@ -17,11 +17,16 @@ limitations under the License.
 package util
 
 import (
-	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1"
 )
 
 func TestFilterVersion(t *testing.T) {
+	assert := assert.New(t)
+
 	tests := []struct {
 		name         string
 		version      string
@@ -57,14 +62,14 @@ func TestFilterVersion(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			result := FilterVersion(test.version, test.expected)
-			if result != test.expectResult {
-				t.Errorf("Got = %v, Want = %v", result, test.expectResult)
-			}
+			assert.Equal(test.expectResult, result)
 		})
 	}
 }
 
 func TestRemoveDuplicateElement(t *testing.T) {
+	assert := assert.New(t)
+
 	tests := []struct {
 		name     string
 		input    []string
@@ -90,14 +95,14 @@ func TestRemoveDuplicateElement(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			result := RemoveDuplicateElement(test.input)
-			if !reflect.DeepEqual(result, test.expected) {
-				t.Errorf("Got = %v, Want = %v", result, test.expected)
-			}
+			assert.Equal(test.expected, result)
 		})
 	}
 }
 
 func TestMergeAnnotationUpgradeHistory(t *testing.T) {
+	assert := assert.New(t)
+
 	tests := []struct {
 		name        string
 		origin      string
@@ -131,14 +136,14 @@ func TestMergeAnnotationUpgradeHistory(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			result := MergeAnnotationUpgradeHistory(test.origin, test.fromVersion, test.toVersion)
-			if result != test.expected {
-				t.Errorf("Got = %v, Want = %v", result, test.expected)
-			}
+			assert.Equal(test.expected, result)
 		})
 	}
 }
 
 func TestGetImageRepo(t *testing.T) {
+	assert := assert.New(t)
+
 	tests := []struct {
 		Image      string
 		ExpectRepo string
@@ -160,12 +165,203 @@ func TestGetImageRepo(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Image, func(t *testing.T) {
 			repo, err := GetImageRepo(test.Image)
-			if err != nil {
-				t.Errorf("error: %v", err)
+			assert.NoError(err)
+			assert.Equal(test.ExpectRepo, repo)
+		})
+	}
+}
+
+func TestGetNodeName(t *testing.T) {
+	assert := assert.New(t)
+
+	tests := []struct {
+		name     string
+		resource string
+		expected string
+	}{
+		{
+			name:     "Valid resource string",
+			resource: "task/taskId/node/node123",
+			expected: "node123",
+		},
+		{
+			name:     "Resource string with extra segments",
+			resource: "task/taskId/node/node456/extra",
+			expected: "node456",
+		},
+		{
+			name:     "Resource string without NodeID",
+			resource: "task/taskId/node/",
+			expected: "",
+		},
+		{
+			name:     "Invalid resource",
+			resource: "///",
+			expected: "",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := GetNodeName(test.resource)
+			assert.Equal(test.expected, result)
+		})
+	}
+}
+
+func TestGetTaskID(t *testing.T) {
+	assert := assert.New(t)
+
+	tests := []struct {
+		name     string
+		resource string
+		expected string
+	}{
+		{
+			name:     "Valid resource string",
+			resource: "task/task123/node/nodeID",
+			expected: "task123",
+		},
+		{
+			name:     "Resource string with extra segments",
+			resource: "task/task456/node/nodeID/extra",
+			expected: "task456",
+		},
+		{
+			name:     "Resource string without TaskID",
+			resource: "task//nodeID/node123",
+			expected: "",
+		},
+		{
+			name:     "Invalid resource",
+			resource: "///",
+			expected: "",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := GetTaskID(test.resource)
+			assert.Equal(test.expected, result)
+		})
+	}
+}
+
+func TestVersionLess(t *testing.T) {
+	assert := assert.New(t)
+
+	tests := []struct {
+		name        string
+		version1    string
+		version2    string
+		stdResult   bool
+		expectError bool
+	}{
+		{
+			name:        "version1 less than version2",
+			version1:    "v1.9.0",
+			version2:    "v1.10.0",
+			stdResult:   true,
+			expectError: false,
+		},
+		{
+			name:        "version1 equal to version2",
+			version1:    "v1.10.0",
+			version2:    "v1.10.0",
+			stdResult:   false,
+			expectError: false,
+		},
+		{
+			name:        "version1 greater than version2",
+			version1:    "v1.11.0",
+			version2:    "v1.10.0",
+			stdResult:   false,
+			expectError: false,
+		},
+		{
+			name:        "version1 is less and has major version difference",
+			version1:    "v1.9.0",
+			version2:    "v2.0.0",
+			stdResult:   true,
+			expectError: false,
+		},
+		{
+			name:        "version1 is less and has patch version difference",
+			version1:    "v1.10.0",
+			version2:    "v1.10.1",
+			stdResult:   true,
+			expectError: false,
+		},
+		{
+			name:        "Invalid version1",
+			version1:    "invalid",
+			version2:    "v1.10.0",
+			stdResult:   false,
+			expectError: true,
+		},
+		{
+			name:        "Invalid version2",
+			version1:    "v1.10.0",
+			version2:    "invalid",
+			stdResult:   false,
+			expectError: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result, err := VersionLess(test.version1, test.version2)
+
+			if test.expectError {
+				assert.Error(err)
+			} else {
+				assert.NoError(err)
 			}
-			if repo != test.ExpectRepo {
-				t.Errorf("Got = %v, Want = %v", repo, test.ExpectRepo)
-			}
+
+			assert.Equal(test.stdResult, result)
+		})
+	}
+}
+
+func TestNodeUpdated(t *testing.T) {
+	assert := assert.New(t)
+
+	tests := []struct {
+		name      string
+		oldStatus v1alpha1.TaskStatus
+		newStatus v1alpha1.TaskStatus
+		stdResult bool
+	}{
+		{
+			name:      "Different node names",
+			oldStatus: v1alpha1.TaskStatus{NodeName: "node1", State: "Running"},
+			newStatus: v1alpha1.TaskStatus{NodeName: "node2", State: "Completed"},
+			stdResult: false,
+		},
+		{
+			name:      "Same node names",
+			oldStatus: v1alpha1.TaskStatus{NodeName: "node1", State: "Running"},
+			newStatus: v1alpha1.TaskStatus{NodeName: "node1", State: "Running"},
+			stdResult: false,
+		},
+		{
+			name:      "New state empty",
+			oldStatus: v1alpha1.TaskStatus{NodeName: "node1", State: "Running"},
+			newStatus: v1alpha1.TaskStatus{NodeName: "node1", State: ""},
+			stdResult: false,
+		},
+		{
+			name:      "State updated",
+			oldStatus: v1alpha1.TaskStatus{NodeName: "node1", State: "Running"},
+			newStatus: v1alpha1.TaskStatus{NodeName: "node1", State: "Completed"},
+			stdResult: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := NodeUpdated(test.oldStatus, test.newStatus)
+			assert.Equal(test.stdResult, result)
 		})
 	}
 }
