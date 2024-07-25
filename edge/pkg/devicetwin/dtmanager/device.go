@@ -118,7 +118,7 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 	}
 	device.State = updatedDevice.State
 	device.LastOnline = lastOnline
-	payload, err := dttype.BuildDeviceState(dttype.BuildBaseMessage(), *device)
+	payload, err := dttype.BuildDeviceCloudMsgState(dttype.BuildBaseMessage(), *device)
 	if err != nil {
 		return err
 	}

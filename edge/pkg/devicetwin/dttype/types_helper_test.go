@@ -458,7 +458,7 @@ func TestMsgTwinToDeviceTwin(t *testing.T) {
 	}
 }
 
-// TestBuildDeviceState is function to test BuildDeviceState().
+// TestBuildDeviceState is function to test BuildDeviceCloudMsgState().
 func TestBuildDeviceState(t *testing.T) {
 	baseMessage := BaseMessage{EventID: uuid.New().String(), Timestamp: time.Now().UnixNano() / 1e6}
 	device := Device{
@@ -466,9 +466,14 @@ func TestBuildDeviceState(t *testing.T) {
 		State:      "ON",
 		LastOnline: "Today",
 	}
+	deviceCloudMsg := DeviceCloudMsg{
+		Name:           "SensorTag",
+		State:          "ON",
+		LastOnlineTime: "Today",
+	}
 	deviceMsg := DeviceMsg{
-		BaseMessage: baseMessage,
-		Device:      device,
+		BaseMessage:    baseMessage,
+		DeviceCloudMsg: deviceCloudMsg,
 	}
 	want, _ := json.Marshal(deviceMsg)
 	tests := []struct {
@@ -488,13 +493,13 @@ func TestBuildDeviceState(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := BuildDeviceState(test.baseMessage, test.device)
+			got, err := BuildDeviceCloudMsgState(test.baseMessage, test.device)
 			if !reflect.DeepEqual(err, test.wantErr) {
 				t.Errorf("Error Got = %v,Want =%v", err, test.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, test.want) {
-				t.Errorf("BuildDeviceState() = %v, want %v", got, test.want)
+				t.Errorf("BuildDeviceCloudMsgState() = %v, want %v", got, test.want)
 			}
 		})
 	}
