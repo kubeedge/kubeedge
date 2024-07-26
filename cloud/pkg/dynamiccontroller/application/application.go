@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	authorizationv1 "k8s.io/api/authorization/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -13,11 +14,14 @@ import (
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog/v2"
+	"k8s.io/kubernetes/cmd/kubeadm/app/constants"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
+	utilcontext "github.com/kubeedge/kubeedge/cloud/pkg/common/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/filter"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
@@ -59,6 +63,14 @@ func (c *Center) Process(msg model.Message) {
 
 	klog.Infof("[metaserver/ApplicationCenter] get a Application %v", app.String())
 
+	if config.Config.EnableAuthorization {
+		nodeID, err := messagelayer.GetNodeID(msg)
+		if err != nil || nodeID != app.Nodename {
+			klog.Errorf("[metaserver/authorization]failed to process Application(%+v), %v", app, err)
+			return
+		}
+	}
+
 	if passthrough.IsPassThroughPath(app.Key, string(app.Verb)) {
 		resp, err := c.passThroughRequest(app)
 		if err != nil {
@@ -95,12 +107,15 @@ func (c *Center) ProcessApplication(app *metaserver.Application) (interface{}, e
 		if err := app.OptionTo(option); err != nil {
 			return nil, err
 		}
-		list, err := c.dynamicClient.Resource(gvr).Namespace(ns).List(context.TODO(), *option)
+		list, err := c.dynamicClient.Resource(gvr).Namespace(ns).List(utilcontext.WithEdgeNode(context.TODO(), app.Nodename), *option)
 		if err != nil {
 			return nil, fmt.Errorf("get current list error: %v", err)
 		}
 		return list, nil
 	case metaserver.Watch:
+		if err := c.checkNodePermission(app); err != nil {
+			return nil, err
+		}
 		listener, err := applicationToListener(app)
 		if err != nil {
 			return nil, err
@@ -115,7 +130,7 @@ func (c *Center) ProcessApplication(app *metaserver.Application) (interface{}, e
 		if err := app.OptionTo(option); err != nil {
 			return nil, err
 		}
-		retObj, err := c.dynamicClient.Resource(gvr).Namespace(ns).Get(context.TODO(), name, *option)
+		retObj, err := c.dynamicClient.Resource(gvr).Namespace(ns).Get(utilcontext.WithEdgeNode(context.TODO(), app.Nodename), name, *option)
 		if err != nil {
 			return nil, err
 		}
@@ -132,9 +147,9 @@ func (c *Center) ProcessApplication(app *metaserver.Application) (interface{}, e
 		var retObj interface{}
 		var err error
 		if app.Subresource == "" {
-			retObj, err = c.dynamicClient.Resource(gvr).Namespace(ns).Create(context.TODO(), obj, *option)
+			retObj, err = c.dynamicClient.Resource(gvr).Namespace(ns).Create(utilcontext.WithEdgeNode(context.TODO(), app.Nodename), obj, *option)
 		} else {
-			retObj, err = c.dynamicClient.Resource(gvr).Namespace(ns).Create(context.TODO(), obj, *option, app.Subresource)
+			retObj, err = c.dynamicClient.Resource(gvr).Namespace(ns).Create(utilcontext.WithEdgeNode(context.TODO(), app.Nodename), obj, *option, app.Subresource)
 		}
 		if err != nil {
 			return nil, err
@@ -145,7 +160,7 @@ func (c *Center) ProcessApplication(app *metaserver.Application) (interface{}, e
 		if err := app.OptionTo(&option); err != nil {
 			return nil, err
 		}
-		if err := c.dynamicClient.Resource(gvr).Namespace(ns).Delete(context.TODO(), name, *option); err != nil {
+		if err := c.dynamicClient.Resource(gvr).Namespace(ns).Delete(utilcontext.WithEdgeNode(context.TODO(), app.Nodename), name, *option); err != nil {
 			return nil, err
 		}
 		return nil, nil
@@ -161,9 +176,9 @@ func (c *Center) ProcessApplication(app *metaserver.Application) (interface{}, e
 		var retObj interface{}
 		var err error
 		if app.Subresource == "" {
-			retObj, err = c.dynamicClient.Resource(gvr).Namespace(ns).Update(context.TODO(), obj, *option)
+			retObj, err = c.dynamicClient.Resource(gvr).Namespace(ns).Update(utilcontext.WithEdgeNode(context.TODO(), app.Nodename), obj, *option)
 		} else {
-			retObj, err = c.dynamicClient.Resource(gvr).Namespace(ns).Update(context.TODO(), obj, *option, app.Subresource)
+			retObj, err = c.dynamicClient.Resource(gvr).Namespace(ns).Update(utilcontext.WithEdgeNode(context.TODO(), app.Nodename), obj, *option, app.Subresource)
 		}
 		if err != nil {
 			return nil, err
@@ -178,7 +193,7 @@ func (c *Center) ProcessApplication(app *metaserver.Application) (interface{}, e
 		if err := app.ReqBodyTo(obj); err != nil {
 			return nil, err
 		}
-		retObj, err := c.dynamicClient.Resource(gvr).Namespace(ns).UpdateStatus(context.TODO(), obj, *option)
+		retObj, err := c.dynamicClient.Resource(gvr).Namespace(ns).UpdateStatus(utilcontext.WithEdgeNode(context.TODO(), app.Nodename), obj, *option)
 		if err != nil {
 			return nil, err
 		}
@@ -188,7 +203,7 @@ func (c *Center) ProcessApplication(app *metaserver.Application) (interface{}, e
 		if err := app.OptionTo(pi); err != nil {
 			return nil, err
 		}
-		retObj, err := c.dynamicClient.Resource(gvr).Namespace(ns).Patch(context.TODO(), pi.Name, pi.PatchType, pi.Data, pi.Options, pi.Subresources...)
+		retObj, err := c.dynamicClient.Resource(gvr).Namespace(ns).Patch(utilcontext.WithEdgeNode(context.TODO(), app.Nodename), pi.Name, pi.PatchType, pi.Data, pi.Options, pi.Subresources...)
 		if err != nil {
 			return nil, err
 		}
@@ -204,7 +219,7 @@ func (c *Center) passThroughRequest(app *metaserver.Application) (interface{}, e
 		return nil, fmt.Errorf("converting kubeClient to *kubernetes.Clientset type failed")
 	}
 	verb := strings.ToUpper(string(app.Verb))
-	return kubeClient.RESTClient().Verb(verb).AbsPath(app.Key).Body(app.ReqBody).Do(context.TODO()).Raw()
+	return kubeClient.RESTClient().Verb(verb).AbsPath(app.Key).Body(app.ReqBody).Do(utilcontext.WithEdgeNode(context.TODO(), app.Nodename)).Raw()
 }
 
 // Response update application, generate and send resp message to edge
@@ -264,6 +279,9 @@ func (c *Center) ProcessWatchSync(msg model.Message) error {
 
 	// add listener for new added watch app
 	for _, watchApp := range addedWatchApp {
+		if config.Config.EnableAuthorization && nodeID != watchApp.Nodename {
+			return fmt.Errorf("node name %q is not allowed", watchApp.Nodename)
+		}
 		err := c.processWatchApp(&watchApp)
 		if err != nil {
 			watchApp.Status = metaserver.Rejected
@@ -314,6 +332,10 @@ func (c *Center) getWatchDiff(allWatchAppInEdge map[string]metaserver.Applicatio
 }
 
 func (c *Center) processWatchApp(watchApp *metaserver.Application) error {
+	if err := c.checkNodePermission(watchApp); err != nil {
+		return err
+	}
+
 	watchApp.Status = metaserver.InProcessing
 	listener, err := applicationToListener(watchApp)
 	if err != nil {
@@ -322,6 +344,38 @@ func (c *Center) processWatchApp(watchApp *metaserver.Application) error {
 
 	if err := c.HandlerCenter.AddListener(listener); err != nil {
 		return fmt.Errorf("failed to add listener, %v", err)
+	}
+
+	return nil
+}
+
+func (c *Center) checkNodePermission(app *metaserver.Application) error {
+	if !config.Config.EnableAuthorization {
+		return nil
+	}
+	gvr, ns, name := metaserver.ParseKey(app.Key)
+
+	subjectAccessReview := &authorizationv1.SubjectAccessReview{
+		Spec: authorizationv1.SubjectAccessReviewSpec{
+			ResourceAttributes: &authorizationv1.ResourceAttributes{
+				Namespace:   ns,
+				Verb:        string(app.Verb),
+				Group:       gvr.Group,
+				Version:     gvr.Version,
+				Resource:    gvr.Resource,
+				Subresource: app.Subresource,
+				Name:        name,
+			},
+			User:   constants.NodesUserPrefix + app.Nodename,
+			Groups: []string{constants.NodesGroup},
+		},
+	}
+	ret, err := c.kubeClient.AuthorizationV1().SubjectAccessReviews().Create(context.TODO(), subjectAccessReview, metav1.CreateOptions{})
+	if err != nil {
+		return fmt.Errorf("node %s permission check failed: %v", app.Nodename, err)
+	}
+	if !ret.Status.Allowed {
+		return fmt.Errorf("node %q is not allowed to access this resource", app.Nodename)
 	}
 
 	return nil

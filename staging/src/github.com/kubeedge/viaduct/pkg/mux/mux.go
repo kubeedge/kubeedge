@@ -1,6 +1,7 @@
 package mux
 
 import (
+	"crypto/x509"
 	"fmt"
 	"net/http"
 
@@ -18,14 +19,16 @@ type Handler interface {
 }
 
 type MessageRequest struct {
-	Header  http.Header
-	Message *model.Message
+	Header           http.Header
+	PeerCertificates []*x509.Certificate
+	Message          *model.Message
 }
 
 type MessageContainer struct {
-	Header     http.Header
-	Message    *model.Message
-	parameters map[string]string
+	Header           http.Header
+	PeerCertificates []*x509.Certificate
+	Message          *model.Message
+	parameters       map[string]string
 }
 
 type MessageMux struct {
@@ -62,11 +65,12 @@ func (mux *MessageMux) extractParameters(expression *MessageExpression, resource
 	return parameters
 }
 
-func (mux *MessageMux) wrapMessage(header http.Header, msg *model.Message, params map[string]string) *MessageContainer {
+func (mux *MessageMux) wrapMessage(req *MessageRequest, params map[string]string) *MessageContainer {
 	return &MessageContainer{
-		Message:    msg,
-		parameters: params,
-		Header:     header,
+		Message:          req.Message,
+		parameters:       params,
+		Header:           req.Header,
+		PeerCertificates: req.PeerCertificates,
 	}
 }
 
@@ -81,7 +85,7 @@ func (mux *MessageMux) dispatch(req *MessageRequest, writer ResponseWriter) erro
 		// extract parameters
 		parameters := mux.extractParameters(entry.pattern.resExpr, req.Message.GetResource())
 		// wrap message
-		container := mux.wrapMessage(req.Header, req.Message, parameters)
+		container := mux.wrapMessage(req, parameters)
 		// call user handle of entry
 		entry.handleFunc(container, writer)
 		return nil

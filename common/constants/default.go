@@ -16,7 +16,8 @@ const (
 	SystemName      = "kubeedge"
 	SystemNamespace = SystemName
 
-	CloudConfigMapName = "cloudcore"
+	CloudConfigMapName  = "cloudcore"
+	EdgeMappingCloudKey = "cloudcore"
 
 	// runtime
 	DockerContainerRuntime = "docker"
@@ -111,7 +112,8 @@ const (
 	DefaultRuleEndpointsEventBuffer = 1
 
 	// DeviceController
-	DefaultUpdateDeviceStatusBuffer  = 1024
+	DefaultUpdateDeviceTwinsBuffer   = 1024
+	DefaultUpdateDeviceStatesBuffer  = 1024
 	DefaultDeviceEventBuffer         = 1
 	DefaultDeviceModelEventBuffer    = 1
 	DefaultUpdateDeviceStatusWorkers = 1

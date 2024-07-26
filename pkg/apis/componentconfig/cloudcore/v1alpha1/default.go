@@ -80,6 +80,17 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					Port:    10002,
 					Address: "0.0.0.0",
 				},
+				Authorization: &CloudHubAuthorization{
+					Enable: false,
+					Debug:  true,
+					Modes: []AuthorizationMode{
+						{
+							Node: &NodeAuthorization{
+								Enable: true,
+							},
+						},
+					},
+				},
 			},
 			EdgeController: &EdgeController{
 				Enable:              true,
@@ -90,7 +101,8 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 			DeviceController: &DeviceController{
 				Enable: true,
 				Buffer: &DeviceControllerBuffer{
-					UpdateDeviceStatus: constants.DefaultUpdateDeviceStatusBuffer,
+					UpdateDeviceTwins:  constants.DefaultUpdateDeviceTwinsBuffer,
+					UpdateDeviceStates: constants.DefaultUpdateDeviceStatesBuffer,
 					DeviceEvent:        constants.DefaultDeviceEventBuffer,
 					DeviceModelEvent:   constants.DefaultDeviceModelEventBuffer,
 				},

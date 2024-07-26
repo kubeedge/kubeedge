@@ -37,6 +37,9 @@ service DeviceManagerService {
     // When the mapper collects some properties of a device, it can make them a map of device twins
     // and report it to the device manager through the interface of ReportDeviceStatus.
     rpc ReportDeviceStatus(ReportDeviceStatusRequest) returns (ReportDeviceStatusResponse) {}
+    // TODO Rename ReportDeviceStatus to ReportDeviceTwins
+    // ReportDeviceStates reports the state of devices to device manager.
+    rpc ReportDeviceStates(ReportDeviceStatesRequest) returns (ReportDeviceStatesResponse) {}
 }
 
 // DeviceMapperService defines the public APIS for remote device management.
@@ -340,6 +343,14 @@ message ReportDeviceStatusRequest {
     string deviceNamespace = 3;
 }
 
+
+message ReportDeviceStatesRequest {
+    string deviceName = 1;
+    string deviceNamespace = 2;
+    string state = 3;
+}
+
+
 // DeviceStatus is the status of the device.
 message DeviceStatus {
     // the device twins of the device.
@@ -365,6 +376,8 @@ message TwinProperty {
 }
 
 message ReportDeviceStatusResponse {}
+
+message ReportDeviceStatesResponse {}
 
 message RegisterDeviceRequest {
     Device device = 1;

@@ -125,7 +125,7 @@ var _ = Describe("Application deployment in edgecore Testing", func() {
 			CheckPodRunningState(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
 		})
 
-		It("TC_TEST_APP_DEPLOYMENT_7: Test application deployment with restrat policy : always", func() {
+		It("TC_TEST_APP_DEPLOYMENT_7: Test application deployment with restart policy : always", func() {
 			//Generate the random string and assign as a UID
 			UID = "deployment-app-" + edge.GetRandomString(10)
 			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[0], ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyAlways)

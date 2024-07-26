@@ -60,6 +60,10 @@ Download v1.16.1 in the [v1.16.1 release page](https://github.com/kubeedge/kubee
 - Fix incorrect handling of retryTimes in imagePrePullJob. ([#5491](https://github.com/kubeedge/kubeedge/pull/5491), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
 - Fix Keadm upgrade command. ([#5492](https://github.com/kubeedge/kubeedge/pull/5492), [@WillardHu](https://github.com/WillardHu))
 
+
+
+# v1.16.0
+
 ## Downloads for v1.16.0
 
 Download v1.16.0 in the [v1.16.0 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.16.0).

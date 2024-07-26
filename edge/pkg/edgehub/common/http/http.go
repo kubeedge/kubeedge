@@ -99,10 +99,10 @@ func BuildRequest(method string, urlStr string, body io.Reader, token string, no
 	}
 	if token != "" {
 		bearerToken := "Bearer " + token
-		req.Header.Add("Authorization", bearerToken)
+		req.Header.Add(types.HeaderAuthorization, bearerToken)
 	}
 	if nodeName != "" {
-		req.Header.Add(types.NodeNameKey, nodeName)
+		req.Header.Add(types.HeaderNodeName, nodeName)
 	}
 	return req, nil
 }

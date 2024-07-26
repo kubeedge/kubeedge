@@ -38,7 +38,6 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/cmd/cloudcore/app/options"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub"
-	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/httpserver"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/iptables"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
@@ -97,7 +96,10 @@ kubernetes controller which manages devices so that the device metadata/status d
 
 			// To help debugging, immediately log version
 			klog.Infof("Version: %+v", version.Get())
-			client.InitKubeEdgeClient(config.KubeAPIConfig)
+			enableImpersonation := config.Modules.CloudHub.Authorization != nil &&
+				config.Modules.CloudHub.Authorization.Enable &&
+				!config.Modules.CloudHub.Authorization.Debug
+			client.InitKubeEdgeClient(config.KubeAPIConfig, enableImpersonation)
 
 			// Negotiate TunnelPort for multi cloudcore instances
 			waitTime := rand.Int31n(10)
@@ -161,6 +163,10 @@ kubernetes controller which manages devices so that the device metadata/status d
 
 // registerModules register all the modules started in cloudcore
 func registerModules(c *v1alpha1.CloudCoreConfig) {
+	enableAuthorization := c.Modules.CloudHub.Authorization != nil &&
+		c.Modules.CloudHub.Authorization.Enable &&
+		!c.Modules.CloudHub.Authorization.Debug
+
 	cloudhub.Register(c.Modules.CloudHub)
 	edgecontroller.Register(c.Modules.EdgeController)
 	devicecontroller.Register(c.Modules.DeviceController)
@@ -168,18 +174,20 @@ func registerModules(c *v1alpha1.CloudCoreConfig) {
 	synccontroller.Register(c.Modules.SyncController)
 	cloudstream.Register(c.Modules.CloudStream, c.CommonConfig)
 	router.Register(c.Modules.Router)
-	dynamiccontroller.Register(c.Modules.DynamicController)
+	dynamiccontroller.Register(c.Modules.DynamicController, enableAuthorization)
 	policycontroller.Register(client.CrdConfig)
 }
 
 func NegotiateTunnelPort() (*int, error) {
+	ctx := context.Background()
 	kubeClient := client.GetKubeClient()
-	err := httpserver.CreateNamespaceIfNeeded(kubeClient, constants.SystemNamespace)
+	err := client.CreateNamespaceIfNeeded(ctx, constants.SystemNamespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create system namespace: %v", err)
 	}
 
-	tunnelPort, err := kubeClient.CoreV1().ConfigMaps(constants.SystemNamespace).Get(context.TODO(), modules.TunnelPort, metav1.GetOptions{})
+	tunnelPort, err := kubeClient.CoreV1().ConfigMaps(constants.SystemNamespace).
+		Get(ctx, modules.TunnelPort, metav1.GetOptions{})
 
 	if err != nil && !apierror.IsNotFound(err) {
 		return nil, err
@@ -217,8 +225,8 @@ func NegotiateTunnelPort() (*int, error) {
 
 		tunnelPort.Annotations[modules.TunnelPortRecordAnnotationKey] = string(recordBytes)
 
-		_, err = kubeClient.CoreV1().ConfigMaps(constants.SystemNamespace).Update(context.TODO(), tunnelPort, metav1.UpdateOptions{})
-		if err != nil {
+		if _, err := kubeClient.CoreV1().ConfigMaps(constants.SystemNamespace).
+			Update(ctx, tunnelPort, metav1.UpdateOptions{}); err != nil {
 			return nil, err
 		}
 
@@ -240,7 +248,7 @@ func NegotiateTunnelPort() (*int, error) {
 			return nil, err
 		}
 
-		_, err = kubeClient.CoreV1().ConfigMaps(constants.SystemNamespace).Create(context.TODO(), &v1.ConfigMap{
+		_, err = kubeClient.CoreV1().ConfigMaps(constants.SystemNamespace).Create(ctx, &v1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      modules.TunnelPort,
 				Namespace: constants.SystemNamespace,

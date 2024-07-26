@@ -20,3 +20,4 @@
 - codename: Should recreate evicted statefulset
 - codename: should execute poststart exec hook properly
 - codename: should execute prestop exec hook properly
+- codename: should not cause race condition when used for configmaps

@@ -183,7 +183,11 @@ func (ls *MetaServer) BuildBasicHandler() http.Handler {
 			case reqInfo.Verb == "list", reqInfo.Verb == "watch":
 				ls.Factory.List().ServeHTTP(w, req)
 			case reqInfo.Verb == "create":
-				ls.Factory.Create(reqInfo).ServeHTTP(w, req)
+				if reqInfo.Name == "restart" {
+					ls.Factory.Restart(reqInfo.Namespace).ServeHTTP(w, req)
+				} else {
+					ls.Factory.Create(reqInfo).ServeHTTP(w, req)
+				}
 			case reqInfo.Verb == "delete":
 				ls.Factory.Delete().ServeHTTP(w, req)
 			case reqInfo.Verb == "update":

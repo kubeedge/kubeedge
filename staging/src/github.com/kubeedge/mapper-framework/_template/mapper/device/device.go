@@ -149,6 +149,12 @@ func dataHandler(ctx context.Context, dev *driver.CustomizedDev) {
 			ReportToCloud:   twin.Property.ReportToCloud,
 		}
 		go twinData.Run(ctx)
+
+		//handle status
+		getStates := &DeviceStates{Client: dev.CustomizedClient, DeviceName: dev.Instance.Name,
+			DeviceNamespace: dev.Instance.Namespace}
+		go getStates.Run(ctx)
+
 		// handle push method
 		if twin.Property.PushMethod.MethodConfig != nil && twin.Property.PushMethod.MethodName != "" {
 			dataModel := common.NewDataModel(dev.Instance.Name, twin.Property.PropertyName, dev.Instance.Namespace, common.WithType(twin.ObservedDesired.Metadata.Type))

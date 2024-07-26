@@ -151,6 +151,8 @@ type CloudHub struct {
 	// TokenRefreshDuration indicates the interval of cloudcore token refresh, unit is hour
 	// default 12h
 	TokenRefreshDuration time.Duration `json:"tokenRefreshDuration,omitempty"`
+	// Authorization authz configurations
+	Authorization *CloudHubAuthorization `json:"authorization,omitempty"`
 }
 
 // CloudHubQUIC indicates the quic server config
@@ -203,6 +205,32 @@ type CloudHubHTTPS struct {
 	// Port indicates the open port for HTTPS server
 	// default 10002
 	Port uint32 `json:"port,omitempty"`
+}
+
+// CloudHubAuthorization CloudHub authz configurations
+type CloudHubAuthorization struct {
+	// Enable indicates whether enable CloudHub Authorization
+	// default false
+	Enable bool `json:"enable"`
+	// Debug only logs errors but always allow messages
+	// default false
+	Debug bool `json:"debug"`
+	// Modes a list of authorization modes will be used
+	// default node
+	Modes []AuthorizationMode `json:"modes"`
+}
+
+// AuthorizationMode indicates an authorization mdoe
+type AuthorizationMode struct {
+	// Node node authorization
+	Node *NodeAuthorization `json:"node,omitempty"`
+}
+
+// NodeAuthorization node authorization
+type NodeAuthorization struct {
+	// Enable enables node authorization
+	// default true
+	Enable bool `json:"enable"`
 }
 
 // EdgeController indicates the config of EdgeController module
@@ -368,9 +396,12 @@ type DeviceController struct {
 
 // DeviceControllerBuffer indicates deviceController buffer
 type DeviceControllerBuffer struct {
-	// UpdateDeviceStatus indicates the buffer of update device status
+	// UpdateDeviceTwins indicates the buffer of update device twins
 	// default 1024
-	UpdateDeviceStatus int32 `json:"updateDeviceStatus,omitempty"`
+	UpdateDeviceTwins int32 `json:"updateDeviceTwins,omitempty"`
+	// UpdateDeviceStates indicates the buffer of update device states
+	// default 1024
+	UpdateDeviceStates int32 `json:"updateDeviceStatus,omitempty"`
 	// DeviceEvent indicates the buffer of device event
 	// default 1
 	DeviceEvent int32 `json:"deviceEvent,omitempty"`
