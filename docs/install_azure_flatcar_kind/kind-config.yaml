@@ -1,0 +1,31 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: app-1-cluster
+nodes:
+- role: control-plane
+  image: kindest/node:v1.28.6@sha256:e9e59d321795595d0eed0de48ef9fbda50388dc8bd4a9b23fb9bd869f370ec7e
+  kubeadmConfigPatches:
+  - |
+    kind: InitConfiguration
+    nodeRegistration:
+      kubeletExtraArgs:
+        node-labels: "ingress-ready=true"
+  extraPortMappings:
+  - containerPort: 6443
+    hostPort: 6443
+    protocol: TCP
+  - containerPort: 30000 
+    hostPort: 30000 
+    protocol: TCP
+  - containerPort: 30001
+    hostPort: 30001 
+    protocol: TCP
+  - containerPort: 30002
+    hostPort: 30002 
+    protocol: TCP
+  - containerPort: 30003
+    hostPort: 30003 
+    protocol: TCP
+  - containerPort: 30004
+    hostPort: 30004
+    protocol: TCP

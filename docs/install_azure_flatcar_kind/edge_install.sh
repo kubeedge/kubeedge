@@ -1,0 +1,22 @@
+#!/bin/bash
+set -xe
+
+
+# Assert that the current working directory is /root
+if [ "$(pwd)" != "/root" ]; then
+    echo "Error: The script must be run from the /root directory."
+    exit 1
+fi
+
+# Check for --location argument
+if [[ "$#" -lt 2 || "$1" != "--token" ]]; then
+    echo "Usage: $0 --token <token>"
+    exit 1
+fi
+# Assign the location value
+TOKEN=$2
+keadm join --cloudcore-ipport=172.167.149.202:30000 --certport=30002 --kubeedge-version=v1.17.0 --remote-runtime-endpoint=unix:///run/containerd/containerd.sock --cgroupdriver=systemd --token=$TOKEN
+
+# https://kubeedge.io/docs/advanced/inclusterconfig/
+cp /home/core/edgecore.yaml /etc/kubeedge/config/
+systemctl restart edgecore.service
