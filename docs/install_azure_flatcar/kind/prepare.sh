@@ -2,7 +2,7 @@
 set -xe
 
 IP_FILE="ip_addresses.txt"
-RESOURCE_GROUP="KubeEdge"
+RESOURCE_GROUP="KubeEdge-kind-rg"
 
 write_ips_to_file() {
     # Delete the IP addresses file if it exists

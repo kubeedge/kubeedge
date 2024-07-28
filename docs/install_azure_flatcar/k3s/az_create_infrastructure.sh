@@ -16,7 +16,7 @@ VM_NAMES=(
    #  "kube-edge2"
 )
 
-RESOURCE_GROUP="KubeEdge1"
+RESOURCE_GROUP="KubeEdge-k3s-rg"
 
 
 create_rg() {

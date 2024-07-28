@@ -51,3 +51,4 @@ rm keadm-v1.18.0-linux-amd64.tar.gz*
 
 
 cp /home/core/traefik-config.yaml /var/lib/rancher/k3s/server/manifests/
+kubectl apply -f /var/lib/rancher/k3s/server/manifests/traefik-config.yaml

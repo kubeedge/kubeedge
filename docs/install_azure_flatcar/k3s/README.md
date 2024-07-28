@@ -481,3 +481,48 @@ Jul 28 06:59:06 kube-edge1 edgecore[3752]: E0728 06:59:06.871182    3752 imitato
 Jul 28 06:59:16 kube-edge1 edgecore[3752]: E0728 06:59:16.828778    3752 serviceaccount.go:112] query meta "default"/"kubeedge"/[]string(nil)/3607/v1.BoundObjectReference{Kind:"Pod", APIVersion:"v1", Name:"edge-eclipse-mosquitto-9hzqt", UID:"1b2f95a3-b3af-417c-931d-cf092de77f8f"} length error
 Jul 28 07:00:11 kube-edge1 edgecore[3752]: E0728 07:00:11.704121    3752 manager.go:126] get k8s CA failed, send sync message k8s/ca.crt failed: timeout to get response for message 8b25eb05-60a2-4ed3-afb5-a636155ff24f
 ```
+
+
+# test on edge deployment
+
+on the master VM: 
+run `kubectl apply -f /home/core/nginx-onlyedge.yaml`. Obtain the IP for the below use by running `kubectl get pods --all-namespaces -owide` and looking for pods running on `kube-edge1`.
+
+on the edge VM:
+`curl 10.88.0.2` or whatever the IP of the nginx service should result in:
+```bash
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+    body {
+        width: 35em;
+        margin: 0 auto;
+        font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+```
+
+`crictl --runtime-endpoint unix:///run/containerd/containerd.sock ps -a` 
+```bash
+CONTAINER           IMAGE               CREATED              STATE               NAME                     ATTEMPT             POD ID              POD
+2444aa701c90d       295c7be079025       About a minute ago   Running             nginx                    0                   5d94c63092e21       nginx
+89f5e1f6773bd       5dade4ce550b8       3 minutes ago        Running             edge-eclipse-mosquitto   0                   cdff367e66ec6       edge-eclipse-mosquitto-fr5tj
+```
+
+Nginx pod is alive and running !

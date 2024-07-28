@@ -357,7 +357,7 @@ kubeedge      edge-eclipse-mosquitto-9f5bp   1/1     Running   0              13
 
 # open issues
 
-the edge-node registers but is not ready. Main reason are crashing `kindnet-xxx` pods on both nodes.
+the edge-node registers and is ready. But `kindnet-xxx` pods are crashing on both nodes.
 
 ## debugging the issue
 

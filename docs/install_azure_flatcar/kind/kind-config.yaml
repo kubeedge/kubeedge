@@ -11,9 +11,6 @@ nodes:
       kubeletExtraArgs:
         node-labels: "ingress-ready=true"
   extraPortMappings:
-  - containerPort: 6443
-    hostPort: 6443
-    protocol: TCP
   - containerPort: 30000 
     hostPort: 30000 
     protocol: TCP

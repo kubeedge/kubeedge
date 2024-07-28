@@ -15,7 +15,7 @@ if [[ "$#" -lt 2 || "$1" != "--token" ]]; then
 fi
 # Assign the location value
 TOKEN=$2
-keadm join --cloudcore-ipport=IP:30000 --certport=30002 --kubeedge-version=v1.17.0 --remote-runtime-endpoint=unix:///run/containerd/containerd.sock --cgroupdriver=systemd --token=$TOKEN
+keadm join --cloudcore-ipport=IP:30000 --certport=30002 --kubeedge-version=v1.18.0 --remote-runtime-endpoint=unix:///run/containerd/containerd.sock --cgroupdriver=systemd --token=$TOKEN
 
 # https://kubeedge.io/docs/advanced/inclusterconfig/
 cp /home/core/edgecore.yaml /etc/kubeedge/config/

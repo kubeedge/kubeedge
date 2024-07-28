@@ -11,9 +11,9 @@ fi
 systemctl stop edgecore
 rm -rf /etc/kubeedge/
 # since not using docker, nor containerd but crio
-crictl stop $(crictl ps -q) # stop all containers
-crictl rm $(crictl ps -a -q) # remove all containers
-crictl rmi $(crictl images -q) # remove all images
+crictl --runtime-endpoint unix:///run/containerd/containerd.sock stop $(crictl --runtime-endpoint unix:///run/containerd/containerd.sock ps -q )  # stop all containers
+crictl --runtime-endpoint unix:///run/containerd/containerd.sock rm $(crictl --runtime-endpoint unix:///run/containerd/containerd.sock ps -a -q) # remove all containers
+crictl --runtime-endpoint unix:///run/containerd/containerd.sock rmi $(crictl --runtime-endpoint unix:///run/containerd/containerd.sock images -q) # remove all images
 
-crictl images
-crictl ps -a
+crictl --runtime-endpoint unix:///run/containerd/containerd.sock images
+crictl --runtime-endpoint unix:///run/containerd/containerd.sock ps -a
