@@ -53,7 +53,7 @@ create_fw_rules() {
     # # only for master ecs-cloud
     if [ "$VM_NAME" = "kube-master" ]; then
         az network nsg rule create --resource-group $RESOURCE_GROUP --nsg-name $NSG_NAME --name cloudcore --protocol Tcp --priority 1001 --destination-port-range 30000-30020 --access Allow --direction Inbound
-        # az network nsg rule create --resource-group $RESOURCE_GROUP --nsg-name $NSG_NAME --name kubernetes --protocol Tcp --priority 1002 --destination-port-range 6443 --access Allow --direction Inbound
+        az network nsg rule create --resource-group $RESOURCE_GROUP --nsg-name $NSG_NAME --name kubernetes --protocol Tcp --priority 1002 --destination-port-range 6443 --access Allow --direction Inbound
     fi
 }
 

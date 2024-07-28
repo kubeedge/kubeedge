@@ -50,5 +50,11 @@ cp keadm-v1.18.0-linux-amd64/keadm/keadm /opt/bin/
 rm keadm-v1.18.0-linux-amd64.tar.gz*
 
 
+# wait until traefik pod is running
+while [[ $(kubectl get pods -l "app.kubernetes.io/name=traefik" -n kube-system -o jsonpath="{.items[0].status.phase}") != "Running" ]]; do
+    echo "Waiting for traefik pod to be running..."
+    sleep 5
+done
+
 cp /home/core/traefik-config.yaml /var/lib/rancher/k3s/server/manifests/
 kubectl apply -f /var/lib/rancher/k3s/server/manifests/traefik-config.yaml

@@ -8,5 +8,5 @@ if [ "$(pwd)" != "/root" ]; then
     exit 1
 fi
 
-kubectl delete ns kubeedge # sufficient to delete cloudcore components
+# kubectl delete ns kubeedge --grace-period=0 --force # sufficient to delete cloudcore components
 /opt/bin/k3s-uninstall.sh
