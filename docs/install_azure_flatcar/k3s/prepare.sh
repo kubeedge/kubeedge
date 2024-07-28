@@ -1,8 +1,8 @@
 #!/bin/bash
 set -xe
 
-IP_FILE="ip_addresses.txt"
-RESOURCE_GROUP="KubeEdge"
+IP_FILE="ip_addresses1.txt"
+RESOURCE_GROUP="KubeEdge1"
 
 write_ips_to_file() {
     # Delete the IP addresses file if it exists
@@ -77,6 +77,6 @@ patch_template_files
 MASTER_IP=$(echo "$IP_ADDRESSES" | awk '{print $1}')
 EDGE_IP=$(echo "$IP_ADDRESSES" | awk '{print $2}')
 
-scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa master_prepare.sh master_install.sh master_uninstall.sh values.yaml 10-containerd-net.conflist cloudcore-chart-1.18.tar.gz kind-config.yaml core@${MASTER_IP}:~/
-scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa edge_prepare.sh edge_install.sh edge_uninstall.sh edgecore.yaml core@${EDGE_IP}:~/
+scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa master_prepare.sh master_install.sh master_uninstall.sh values.yaml 10-containerd-net.conflist cloudcore-chart-1.18.tar.gz traefik-config.yaml traefik-ingress-route-tcp0.yaml traefik-ingress-route-tcp1.yaml traefik-ingress-route-tcp2.yaml traefik-ingress-route-tcp3.yaml traefik-ingress-route-tcp4.yaml core@${MASTER_IP}:~/
+scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa edge_prepare.sh edge_install.sh edge_uninstall.sh 10-containerd-net.conflist edgecore.yaml core@${EDGE_IP}:~/
 

@@ -5,7 +5,7 @@ appVersion: "1.15.1"
 
 cloudCore:
   replicaCount: 1
-  hostNetWork: false 
+  hostNetWork: true 
   image:
     repository: "kubeedge/cloudcore"
     tag: "v1.15.1"
@@ -39,9 +39,9 @@ cloudCore:
   modules:
     cloudHub:
       # Caution!: Leave this entry to empty will cause CloudCore to exit abnormally once KubeEdge is enabled.
-      # At least a public 172.167.149.202 Address or an IP which can be accessed by edge nodes must be provided!
+      # At least a public IP Address or an IP which can be accessed by edge nodes must be provided!
       advertiseAddress:
-        - "172.167.149.202"
+        - "IP"
       dnsNames:
         - ""
       nodeLimit: "1000"
@@ -73,7 +73,7 @@ cloudCore:
     annotations: {}
 
 iptablesManager:
-  enable: false
+  enable: true
   mode: "internal"
   hostNetWork: true
   image:

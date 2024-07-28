@@ -27,11 +27,9 @@ mv config.toml /etc/containerd/
 
 systemctl restart containerd
 
+# install k3s
+curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.28.6+k3s2" INSTALL_K3S_BIN_DIR=/opt/bin sh -
 
-# install kind
-[ $(uname -m) = x86_64 ] && curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.22.0/kind-linux-amd64
-chmod +x ./kind
-mv ./kind /opt/bin/
 
 # install helm
 curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
@@ -46,7 +44,10 @@ tar xvzf cloudcore-chart-1.18.tar.gz && rm cloudcore-chart-1.18.tar.gz
 cp /home/core/values.yaml kubeedge-release-1.18/manifests/charts/cloudcore/
 
 
-wget https://github.com/kubeedge/kubeedge/releases/download/v1.17.0/keadm-v1.17.0-linux-amd64.tar.gz
-tar -zxvf keadm-v1.17.0-linux-amd64.tar.gz
-cp keadm-v1.17.0-linux-amd64/keadm/keadm /opt/bin/
-rm keadm-v1.17.0-linux-amd64.tar.gz
+wget https://github.com/kubeedge/kubeedge/releases/download/v1.18.0/keadm-v1.18.0-linux-amd64.tar.gz
+tar -zxvf keadm-v1.18.0-linux-amd64.tar.gz
+cp keadm-v1.18.0-linux-amd64/keadm/keadm /opt/bin/
+rm keadm-v1.18.0-linux-amd64.tar.gz*
+
+
+cp /home/core/traefik-config.yaml /var/lib/rancher/k3s/server/manifests/

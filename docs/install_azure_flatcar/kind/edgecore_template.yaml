@@ -15,7 +15,7 @@ modules:
   edgeHub:
     enable: true
     heartbeat: 15
-    httpServer: https://172.167.149.202:30002
+    httpServer: https://IP:30002
     messageBurst: 60
     messageQPS: 30
     projectID: e632aba927ea4ac2b575ec1603d56f10
@@ -23,7 +23,7 @@ modules:
       enable: false
       handshakeTimeout: 30
       readDeadline: 15
-      server: 172.167.149.202:30001
+      server: IP:30001
       writeDeadline: 15
     rotateCertificates: true
     tlsCaFile: /etc/kubeedge/ca/rootCA.crt
@@ -34,13 +34,13 @@ modules:
       enable: true
       handshakeTimeout: 30
       readDeadline: 15
-      server: 172.167.149.202:30000
+      server: IP:30000
       writeDeadline: 15
   edgeStream:
     enable: true 
     handshakeTimeout: 30
     readDeadline: 15
-    server: 172.167.149.202:30004
+    server: IP:30004
     tlsTunnelCAFile: /etc/kubeedge/ca/rootCA.crt
     tlsTunnelCertFile: /etc/kubeedge/certs/server.crt
     tlsTunnelPrivateKeyFile: /etc/kubeedge/certs/server.key
@@ -106,7 +106,7 @@ modules:
           json:
             infoBufferSize: "0"
         verbosity: 0
-      make172.167.149.202TablesUtilChains: true
+      makeIPTablesUtilChains: true
       maxOpenFiles: 1000000
       maxPods: 110
       memoryManagerPolicy: None
