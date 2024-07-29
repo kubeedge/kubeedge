@@ -10,13 +10,13 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
+	common "github.com/kubeedge/kubeedge/common/constants"
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
-	"github.com/kubeedge/kubeedge/pkg/apis"
 )
 
 var (
@@ -99,7 +99,7 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 	}
 	var lastOnline string
 	if state == dtcommon.DeviceStatusOnline || state == dtcommon.DeviceStatusOK {
-		lastOnline = time.Now().Format(apis.ISO8601UTC)
+		lastOnline = time.Now().Format(common.ISO8601UTC)
 	}
 	for i := 1; i <= dtcommon.RetryTimes; i++ {
 		err = dtclient.UpdateDeviceFields(
