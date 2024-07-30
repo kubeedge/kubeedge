@@ -15,36 +15,17 @@
 # limitations under the License.
 
 KUBEEDGE_ROOT=$PWD
-WORKDIR=$(dirname $0)
-E2E_DIR=$(realpath $(dirname $0)/..)
 IMAGE_TAG=$(git describe --tags)
 CLOUD_EDGE_VERSION=${1:-"v1.15.1"}
 
-
 source "${KUBEEDGE_ROOT}/hack/lib/install.sh"
+source "${KUBEEDGE_ROOT}/tests/scripts/keadm_common_e2e.sh"
 
 function cleanup() {
   sudo pkill edgecore || true
   helm uninstall cloudcore -n kubeedge && kubectl delete ns kubeedge  || true
   kind delete cluster --name test
   sudo rm -rf /var/log/kubeedge /etc/kubeedge /etc/systemd/system/edgecore.service $E2E_DIR/e2e_keadm/e2e_keadm.test $E2E_DIR/config.json
-}
-
-function build_ginkgo() {
-  cd $E2E_DIR
-  ginkgo build -r e2e_keadm/
-}
-
-function prepare_cluster() {
-  kind create cluster --name test
-
-  echo "wait the control-plane ready..."
-  kubectl wait --for=condition=Ready node/test-control-plane --timeout=60s
-
-  kubectl create clusterrolebinding system:anonymous --clusterrole=cluster-admin --user=system:anonymous
-
-  # edge side don't support kind cni now, delete kind cni plugin for workaround
-  kubectl delete daemonset kindnet -nkube-system
 }
 
 function build_image() {
@@ -95,27 +76,6 @@ function start_kubeedge() {
       sleep 3
       kubectl get node | grep edge-node | grep -q -w Ready && break
   done
-}
-
-function run_test() {
-  :> /tmp/testcase.log
-  cd $E2E_DIR
-
-  export ACK_GINKGO_RC=true
-
-  ginkgo -v ./e2e_keadm/e2e_keadm.test -- \
-  --image-url=nginx \
-  --image-url=nginx \
-  --kube-master="https://$MASTER_IP:6443" \
-  --kubeconfig=$KUBECONFIG \
-  --test.v
-  if [[ $? != 0 ]]; then
-      echo "Integration suite has failures, Please check !!"
-      exit 1
-  else
-      echo "Integration suite successfully passed all the tests !!"
-      exit 0
-  fi
 }
 
 set -Ee
