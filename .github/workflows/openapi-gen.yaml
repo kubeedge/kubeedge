@@ -1,4 +1,4 @@
-name: CI
+name: openapi-gen
 
 on:
   push:
