@@ -392,6 +392,24 @@ jobs:
           path: |
             /tmp/cloudcore.log
             /tmp/edgecore.log
+  check-api-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.16'
+
+      - name: Install dependencies
+        run: make
+
+      - name: Check API documentation
+        run: ./apidoc/tools/check-api-docs.sh
+
 
   conformance_e2e_test:
       runs-on: ubuntu-22.04
