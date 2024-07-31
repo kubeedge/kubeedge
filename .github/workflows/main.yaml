@@ -405,7 +405,7 @@ jobs:
           go-version: '1.21.11'
 
       - name: Check API documentation
-        run: ./apidoc/tools/check-api-docs.sh
+        run: ./tests/scripts/check-api-docs.sh
 
 
   conformance_e2e_test:
