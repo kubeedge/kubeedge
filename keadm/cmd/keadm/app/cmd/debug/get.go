@@ -34,12 +34,12 @@ import (
 	printersinternal "k8s.io/kubernetes/pkg/printers/internalversion"
 	"k8s.io/kubernetes/pkg/printers/storage"
 
+	edgecoreCfg "github.com/kubeedge/api/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
-	edgecoreCfg "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 )
 
 const (

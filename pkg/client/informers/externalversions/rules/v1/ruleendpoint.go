@@ -22,7 +22,7 @@ import (
 	"context"
 	time "time"
 
-	rulesv1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
+	rulesv1 "github.com/kubeedge/api/rules/v1"
 	versioned "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/kubeedge/kubeedge/pkg/client/informers/externalversions/internalinterfaces"
 	v1 "github.com/kubeedge/kubeedge/pkg/client/listers/rules/v1"

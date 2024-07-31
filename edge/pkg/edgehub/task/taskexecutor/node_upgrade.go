@@ -24,11 +24,11 @@ import (
 
 	"k8s.io/klog/v2"
 
+	api "github.com/kubeedge/api/fsm/v1alpha1"
 	"github.com/kubeedge/kubeedge/common/types"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
-	api "github.com/kubeedge/kubeedge/pkg/apis/fsm/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
 	"github.com/kubeedge/kubeedge/pkg/version"
 )

@@ -23,10 +23,10 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/kubeedge/api/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/viaduct/pkg/api"
 )
 

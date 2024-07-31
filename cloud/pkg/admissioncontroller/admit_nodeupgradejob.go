@@ -29,7 +29,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1"
+	"github.com/kubeedge/api/operations/v1alpha1"
 )
 
 func serveNodeUpgradeJob(w http.ResponseWriter, r *http.Request) {

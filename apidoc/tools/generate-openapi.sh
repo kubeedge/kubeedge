@@ -37,13 +37,13 @@ fi
 # Run openapi-gen to generate files
 echo "Generating with openapi-gen..."
 openapi-gen \
-    --input-dirs "github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1" \
-    --input-dirs "github.com/kubeedge/kubeedge/pkg/apis/policy/v1alpha1" \
-    --input-dirs "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2" \
-    --input-dirs "github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1" \
-    --input-dirs "github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1" \
-    --input-dirs "github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1" \
-    --input-dirs "github.com/kubeedge/kubeedge/pkg/apis/rules/v1" \
+    --input-dirs "github.com/kubeedge/api/apps/v1alpha1" \
+    --input-dirs "github.com/kubeedge/api/policy/v1alpha1" \
+    --input-dirs "github.com/kubeedge/api/devices/v1alpha2" \
+    --input-dirs "github.com/kubeedge/api/devices/v1beta1" \
+    --input-dirs "github.com/kubeedge/api/operations/v1alpha1" \
+    --input-dirs "github.com/kubeedge/api/reliablesyncs/v1alpha1" \
+    --input-dirs "github.com/kubeedge/api/rules/v1" \
     --input-dirs "k8s.io/api/rbac/v1" \
     --input-dirs "k8s.io/api/core/v1" \
     --input-dirs "k8s.io/apimachinery/pkg/apis/meta/v1" \

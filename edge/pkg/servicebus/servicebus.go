@@ -14,6 +14,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/api/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
@@ -23,7 +24,6 @@ import (
 	servicebusConfig "github.com/kubeedge/kubeedge/edge/pkg/servicebus/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/servicebus/dao"
 	"github.com/kubeedge/kubeedge/edge/pkg/servicebus/util"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 )
 
 var (

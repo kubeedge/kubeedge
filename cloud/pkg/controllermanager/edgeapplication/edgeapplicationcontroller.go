@@ -24,12 +24,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
+	appsv1alpha1 "github.com/kubeedge/api/apps/v1alpha1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/controllermanager/edgeapplication/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/controllermanager/edgeapplication/overridemanager"
 	"github.com/kubeedge/kubeedge/cloud/pkg/controllermanager/edgeapplication/statusmanager"
 	"github.com/kubeedge/kubeedge/cloud/pkg/controllermanager/edgeapplication/utils"
 	"github.com/kubeedge/kubeedge/cloud/pkg/controllermanager/nodegroup"
-	appsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1"
 )
 
 // Controller is to sync EdgeApplication.

@@ -12,6 +12,8 @@ import (
 	clientgov1 "k8s.io/client-go/listers/core/v1"
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/api/componentconfig/cloudcore/v1alpha1"
+	routerv1 "github.com/kubeedge/api/rules/v1"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
@@ -21,8 +23,6 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/manager"
 	commonconstants "github.com/kubeedge/kubeedge/common/constants"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
-	routerv1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
 	crdinformers "github.com/kubeedge/kubeedge/pkg/client/informers/externalversions"
 )
 

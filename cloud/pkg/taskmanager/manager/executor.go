@@ -28,6 +28,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog/v2"
 
+	api "github.com/kubeedge/api/fsm/v1alpha1"
+	"github.com/kubeedge/api/operations/v1alpha1"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
@@ -37,8 +39,6 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/util/controller"
 	"github.com/kubeedge/kubeedge/common/constants"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
-	api "github.com/kubeedge/kubeedge/pkg/apis/fsm/v1alpha1"
-	"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
 )
 

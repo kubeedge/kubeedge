@@ -3,6 +3,7 @@ package router
 import (
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/api/componentconfig/cloudcore/v1alpha1"
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	routerconfig "github.com/kubeedge/kubeedge/cloud/pkg/router/config"
@@ -15,7 +16,6 @@ import (
 	_ "github.com/kubeedge/kubeedge/cloud/pkg/router/provider/servicebus"
 	// init rule
 	_ "github.com/kubeedge/kubeedge/cloud/pkg/router/rule"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
 type router struct {

@@ -28,15 +28,15 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	appsv1alpha1 "github.com/kubeedge/api/apps/v1alpha1"
+	devicesv1alpha2 "github.com/kubeedge/api/devices/v1alpha2"
+	devicesv1beta1 "github.com/kubeedge/api/devices/v1beta1"
+	operationsv1alpha1 "github.com/kubeedge/api/operations/v1alpha1"
+	policyv1alpha1 "github.com/kubeedge/api/policy/v1alpha1"
+	reliablesyncsv1alpha1 "github.com/kubeedge/api/reliablesyncs/v1alpha1"
+	rulesv1 "github.com/kubeedge/api/rules/v1"
 	generatedopenapi "github.com/kubeedge/kubeedge/apidoc/generated/openapi"
 	"github.com/kubeedge/kubeedge/apidoc/tools/lib"
-	appsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1"
-	devicesv1alpha2 "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2"
-	devicesv1beta1 "github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1"
-	operationsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1"
-	policyv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/policy/v1alpha1"
-	reliablesyncsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1"
-	rulesv1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
 )
 
 func main() {

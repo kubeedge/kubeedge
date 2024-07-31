@@ -1,3 +1,4 @@
+
 /*
 Copyright The KubeEdge Authors.
 
@@ -29,408 +30,412 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.CommandArgsOverrider":           schema_pkg_apis_apps_v1alpha1_CommandArgsOverrider(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.EdgeApplication":                schema_pkg_apis_apps_v1alpha1_EdgeApplication(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.EdgeApplicationList":            schema_pkg_apis_apps_v1alpha1_EdgeApplicationList(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.EdgeApplicationSpec":            schema_pkg_apis_apps_v1alpha1_EdgeApplicationSpec(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.EdgeApplicationStatus":          schema_pkg_apis_apps_v1alpha1_EdgeApplicationStatus(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.EnvOverrider":                   schema_pkg_apis_apps_v1alpha1_EnvOverrider(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.ImageOverrider":                 schema_pkg_apis_apps_v1alpha1_ImageOverrider(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.ImagePredicate":                 schema_pkg_apis_apps_v1alpha1_ImagePredicate(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.Manifest":                       schema_pkg_apis_apps_v1alpha1_Manifest(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.ManifestStatus":                 schema_pkg_apis_apps_v1alpha1_ManifestStatus(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.NodeGroup":                      schema_pkg_apis_apps_v1alpha1_NodeGroup(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.NodeGroupList":                  schema_pkg_apis_apps_v1alpha1_NodeGroupList(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.NodeGroupSpec":                  schema_pkg_apis_apps_v1alpha1_NodeGroupSpec(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.NodeGroupStatus":                schema_pkg_apis_apps_v1alpha1_NodeGroupStatus(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.NodeStatus":                     schema_pkg_apis_apps_v1alpha1_NodeStatus(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.Overriders":                     schema_pkg_apis_apps_v1alpha1_Overriders(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.ResourceIdentifier":             schema_pkg_apis_apps_v1alpha1_ResourceIdentifier(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.ResourceTemplate":               schema_pkg_apis_apps_v1alpha1_ResourceTemplate(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.ResourcesOverrider":             schema_pkg_apis_apps_v1alpha1_ResourcesOverrider(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.TargetNodeGroup":                schema_pkg_apis_apps_v1alpha1_TargetNodeGroup(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.WorkloadScope":                  schema_pkg_apis_apps_v1alpha1_WorkloadScope(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.BluetoothOperations":         schema_pkg_apis_devices_v1alpha2_BluetoothOperations(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.BluetoothReadConverter":      schema_pkg_apis_devices_v1alpha2_BluetoothReadConverter(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.CustomizedValue":             schema_pkg_apis_devices_v1alpha2_CustomizedValue(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.DataProperty":                schema_pkg_apis_devices_v1alpha2_DataProperty(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.Device":                      schema_pkg_apis_devices_v1alpha2_Device(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.DeviceData":                  schema_pkg_apis_devices_v1alpha2_DeviceData(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.DeviceList":                  schema_pkg_apis_devices_v1alpha2_DeviceList(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.DeviceModel":                 schema_pkg_apis_devices_v1alpha2_DeviceModel(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.DeviceModelList":             schema_pkg_apis_devices_v1alpha2_DeviceModelList(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.DeviceModelSpec":             schema_pkg_apis_devices_v1alpha2_DeviceModelSpec(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.DeviceProperty":              schema_pkg_apis_devices_v1alpha2_DeviceProperty(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.DevicePropertyVisitor":       schema_pkg_apis_devices_v1alpha2_DevicePropertyVisitor(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.DeviceSpec":                  schema_pkg_apis_devices_v1alpha2_DeviceSpec(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.DeviceStatus":                schema_pkg_apis_devices_v1alpha2_DeviceStatus(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.PropertyType":                schema_pkg_apis_devices_v1alpha2_PropertyType(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.PropertyTypeBoolean":         schema_pkg_apis_devices_v1alpha2_PropertyTypeBoolean(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.PropertyTypeBytes":           schema_pkg_apis_devices_v1alpha2_PropertyTypeBytes(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.PropertyTypeDouble":          schema_pkg_apis_devices_v1alpha2_PropertyTypeDouble(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.PropertyTypeFloat":           schema_pkg_apis_devices_v1alpha2_PropertyTypeFloat(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.PropertyTypeInt64":           schema_pkg_apis_devices_v1alpha2_PropertyTypeInt64(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.PropertyTypeString":          schema_pkg_apis_devices_v1alpha2_PropertyTypeString(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.ProtocolConfig":              schema_pkg_apis_devices_v1alpha2_ProtocolConfig(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.ProtocolConfigBluetooth":     schema_pkg_apis_devices_v1alpha2_ProtocolConfigBluetooth(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.ProtocolConfigCOM":           schema_pkg_apis_devices_v1alpha2_ProtocolConfigCOM(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.ProtocolConfigCommon":        schema_pkg_apis_devices_v1alpha2_ProtocolConfigCommon(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.ProtocolConfigCustomized":    schema_pkg_apis_devices_v1alpha2_ProtocolConfigCustomized(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.ProtocolConfigModbus":        schema_pkg_apis_devices_v1alpha2_ProtocolConfigModbus(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.ProtocolConfigOpcUA":         schema_pkg_apis_devices_v1alpha2_ProtocolConfigOpcUA(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.ProtocolConfigTCP":           schema_pkg_apis_devices_v1alpha2_ProtocolConfigTCP(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.Twin":                        schema_pkg_apis_devices_v1alpha2_Twin(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.TwinProperty":                schema_pkg_apis_devices_v1alpha2_TwinProperty(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.VisitorConfig":               schema_pkg_apis_devices_v1alpha2_VisitorConfig(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.VisitorConfigBluetooth":      schema_pkg_apis_devices_v1alpha2_VisitorConfigBluetooth(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.VisitorConfigCustomized":     schema_pkg_apis_devices_v1alpha2_VisitorConfigCustomized(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.VisitorConfigModbus":         schema_pkg_apis_devices_v1alpha2_VisitorConfigModbus(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.VisitorConfigOPCUA":          schema_pkg_apis_devices_v1alpha2_VisitorConfigOPCUA(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.CustomizedValue":              schema_pkg_apis_devices_v1beta1_CustomizedValue(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DBMethodConfig":               schema_pkg_apis_devices_v1beta1_DBMethodConfig(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DBMethodInfluxdb2":            schema_pkg_apis_devices_v1beta1_DBMethodInfluxdb2(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DBMethodMySQL":                schema_pkg_apis_devices_v1beta1_DBMethodMySQL(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DBMethodRedis":                schema_pkg_apis_devices_v1beta1_DBMethodRedis(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DBMethodTDEngine":             schema_pkg_apis_devices_v1beta1_DBMethodTDEngine(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.Device":                       schema_pkg_apis_devices_v1beta1_Device(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DeviceList":                   schema_pkg_apis_devices_v1beta1_DeviceList(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DeviceModel":                  schema_pkg_apis_devices_v1beta1_DeviceModel(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DeviceModelList":              schema_pkg_apis_devices_v1beta1_DeviceModelList(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DeviceModelSpec":              schema_pkg_apis_devices_v1beta1_DeviceModelSpec(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DeviceProperty":               schema_pkg_apis_devices_v1beta1_DeviceProperty(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DeviceSpec":                   schema_pkg_apis_devices_v1beta1_DeviceSpec(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DeviceStatus":                 schema_pkg_apis_devices_v1beta1_DeviceStatus(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.Influxdb2ClientConfig":        schema_pkg_apis_devices_v1beta1_Influxdb2ClientConfig(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.Influxdb2DataConfig":          schema_pkg_apis_devices_v1beta1_Influxdb2DataConfig(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.ModelProperty":                schema_pkg_apis_devices_v1beta1_ModelProperty(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.MySQLClientConfig":            schema_pkg_apis_devices_v1beta1_MySQLClientConfig(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.ProtocolConfig":               schema_pkg_apis_devices_v1beta1_ProtocolConfig(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.PushMethod":                   schema_pkg_apis_devices_v1beta1_PushMethod(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.PushMethodHTTP":               schema_pkg_apis_devices_v1beta1_PushMethodHTTP(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.PushMethodMQTT":               schema_pkg_apis_devices_v1beta1_PushMethodMQTT(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.RedisClientConfig":            schema_pkg_apis_devices_v1beta1_RedisClientConfig(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.TDEngineClientConfig":         schema_pkg_apis_devices_v1beta1_TDEngineClientConfig(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.Twin":                         schema_pkg_apis_devices_v1beta1_Twin(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.TwinProperty":                 schema_pkg_apis_devices_v1beta1_TwinProperty(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.VisitorConfig":                schema_pkg_apis_devices_v1beta1_VisitorConfig(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.ImagePrePullJob":          schema_pkg_apis_operations_v1alpha1_ImagePrePullJob(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.ImagePrePullJobList":      schema_pkg_apis_operations_v1alpha1_ImagePrePullJobList(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.ImagePrePullJobSpec":      schema_pkg_apis_operations_v1alpha1_ImagePrePullJobSpec(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.ImagePrePullJobStatus":    schema_pkg_apis_operations_v1alpha1_ImagePrePullJobStatus(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.ImagePrePullStatus":       schema_pkg_apis_operations_v1alpha1_ImagePrePullStatus(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.ImagePrePullTemplate":     schema_pkg_apis_operations_v1alpha1_ImagePrePullTemplate(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.ImageStatus":              schema_pkg_apis_operations_v1alpha1_ImageStatus(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.NodeUpgradeJob":           schema_pkg_apis_operations_v1alpha1_NodeUpgradeJob(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.NodeUpgradeJobList":       schema_pkg_apis_operations_v1alpha1_NodeUpgradeJobList(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.NodeUpgradeJobSpec":       schema_pkg_apis_operations_v1alpha1_NodeUpgradeJobSpec(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.NodeUpgradeJobStatus":     schema_pkg_apis_operations_v1alpha1_NodeUpgradeJobStatus(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.TaskStatus":               schema_pkg_apis_operations_v1alpha1_TaskStatus(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/policy/v1alpha1.AccessClusterRoleBinding":     schema_pkg_apis_policy_v1alpha1_AccessClusterRoleBinding(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/policy/v1alpha1.AccessRoleBinding":            schema_pkg_apis_policy_v1alpha1_AccessRoleBinding(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/policy/v1alpha1.AccessSpec":                   schema_pkg_apis_policy_v1alpha1_AccessSpec(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/policy/v1alpha1.AccessStatus":                 schema_pkg_apis_policy_v1alpha1_AccessStatus(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/policy/v1alpha1.ServiceAccountAccess":         schema_pkg_apis_policy_v1alpha1_ServiceAccountAccess(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/policy/v1alpha1.ServiceAccountAccessList":     schema_pkg_apis_policy_v1alpha1_ServiceAccountAccessList(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1.ClusterObjectSync":     schema_pkg_apis_reliablesyncs_v1alpha1_ClusterObjectSync(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1.ClusterObjectSyncList": schema_pkg_apis_reliablesyncs_v1alpha1_ClusterObjectSyncList(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1.ObjectSync":            schema_pkg_apis_reliablesyncs_v1alpha1_ObjectSync(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1.ObjectSyncList":        schema_pkg_apis_reliablesyncs_v1alpha1_ObjectSyncList(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1.ObjectSyncSpec":        schema_pkg_apis_reliablesyncs_v1alpha1_ObjectSyncSpec(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1.ObjectSyncStatus":      schema_pkg_apis_reliablesyncs_v1alpha1_ObjectSyncStatus(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/rules/v1.Rule":                                schema_pkg_apis_rules_v1_Rule(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/rules/v1.RuleEndpoint":                        schema_pkg_apis_rules_v1_RuleEndpoint(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/rules/v1.RuleEndpointList":                    schema_pkg_apis_rules_v1_RuleEndpointList(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/rules/v1.RuleEndpointSpec":                    schema_pkg_apis_rules_v1_RuleEndpointSpec(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/rules/v1.RuleList":                            schema_pkg_apis_rules_v1_RuleList(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/rules/v1.RuleSpec":                            schema_pkg_apis_rules_v1_RuleSpec(ref),
-		"github.com/kubeedge/kubeedge/pkg/apis/rules/v1.RuleStatus":                          schema_pkg_apis_rules_v1_RuleStatus(ref),
-		"k8s.io/api/core/v1.AWSElasticBlockStoreVolumeSource":                                schema_k8sio_api_core_v1_AWSElasticBlockStoreVolumeSource(ref),
-		"k8s.io/api/core/v1.Affinity":                                                        schema_k8sio_api_core_v1_Affinity(ref),
-		"k8s.io/api/core/v1.AttachedVolume":                                                  schema_k8sio_api_core_v1_AttachedVolume(ref),
-		"k8s.io/api/core/v1.AvoidPods":                                                       schema_k8sio_api_core_v1_AvoidPods(ref),
-		"k8s.io/api/core/v1.AzureDiskVolumeSource":                                           schema_k8sio_api_core_v1_AzureDiskVolumeSource(ref),
-		"k8s.io/api/core/v1.AzureFilePersistentVolumeSource":                                 schema_k8sio_api_core_v1_AzureFilePersistentVolumeSource(ref),
-		"k8s.io/api/core/v1.AzureFileVolumeSource":                                           schema_k8sio_api_core_v1_AzureFileVolumeSource(ref),
-		"k8s.io/api/core/v1.Binding":                                                         schema_k8sio_api_core_v1_Binding(ref),
-		"k8s.io/api/core/v1.CSIPersistentVolumeSource":                                       schema_k8sio_api_core_v1_CSIPersistentVolumeSource(ref),
-		"k8s.io/api/core/v1.CSIVolumeSource":                                                 schema_k8sio_api_core_v1_CSIVolumeSource(ref),
-		"k8s.io/api/core/v1.Capabilities":                                                    schema_k8sio_api_core_v1_Capabilities(ref),
-		"k8s.io/api/core/v1.CephFSPersistentVolumeSource":                                    schema_k8sio_api_core_v1_CephFSPersistentVolumeSource(ref),
-		"k8s.io/api/core/v1.CephFSVolumeSource":                                              schema_k8sio_api_core_v1_CephFSVolumeSource(ref),
-		"k8s.io/api/core/v1.CinderPersistentVolumeSource":                                    schema_k8sio_api_core_v1_CinderPersistentVolumeSource(ref),
-		"k8s.io/api/core/v1.CinderVolumeSource":                                              schema_k8sio_api_core_v1_CinderVolumeSource(ref),
-		"k8s.io/api/core/v1.ClaimSource":                                                     schema_k8sio_api_core_v1_ClaimSource(ref),
-		"k8s.io/api/core/v1.ClientIPConfig":                                                  schema_k8sio_api_core_v1_ClientIPConfig(ref),
-		"k8s.io/api/core/v1.ComponentCondition":                                              schema_k8sio_api_core_v1_ComponentCondition(ref),
-		"k8s.io/api/core/v1.ComponentStatus":                                                 schema_k8sio_api_core_v1_ComponentStatus(ref),
-		"k8s.io/api/core/v1.ComponentStatusList":                                             schema_k8sio_api_core_v1_ComponentStatusList(ref),
-		"k8s.io/api/core/v1.ConfigMap":                                                       schema_k8sio_api_core_v1_ConfigMap(ref),
-		"k8s.io/api/core/v1.ConfigMapEnvSource":                                              schema_k8sio_api_core_v1_ConfigMapEnvSource(ref),
-		"k8s.io/api/core/v1.ConfigMapKeySelector":                                            schema_k8sio_api_core_v1_ConfigMapKeySelector(ref),
-		"k8s.io/api/core/v1.ConfigMapList":                                                   schema_k8sio_api_core_v1_ConfigMapList(ref),
-		"k8s.io/api/core/v1.ConfigMapNodeConfigSource":                                       schema_k8sio_api_core_v1_ConfigMapNodeConfigSource(ref),
-		"k8s.io/api/core/v1.ConfigMapProjection":                                             schema_k8sio_api_core_v1_ConfigMapProjection(ref),
-		"k8s.io/api/core/v1.ConfigMapVolumeSource":                                           schema_k8sio_api_core_v1_ConfigMapVolumeSource(ref),
-		"k8s.io/api/core/v1.Container":                                                       schema_k8sio_api_core_v1_Container(ref),
-		"k8s.io/api/core/v1.ContainerImage":                                                  schema_k8sio_api_core_v1_ContainerImage(ref),
-		"k8s.io/api/core/v1.ContainerPort":                                                   schema_k8sio_api_core_v1_ContainerPort(ref),
-		"k8s.io/api/core/v1.ContainerResizePolicy":                                           schema_k8sio_api_core_v1_ContainerResizePolicy(ref),
-		"k8s.io/api/core/v1.ContainerState":                                                  schema_k8sio_api_core_v1_ContainerState(ref),
-		"k8s.io/api/core/v1.ContainerStateRunning":                                           schema_k8sio_api_core_v1_ContainerStateRunning(ref),
-		"k8s.io/api/core/v1.ContainerStateTerminated":                                        schema_k8sio_api_core_v1_ContainerStateTerminated(ref),
-		"k8s.io/api/core/v1.ContainerStateWaiting":                                           schema_k8sio_api_core_v1_ContainerStateWaiting(ref),
-		"k8s.io/api/core/v1.ContainerStatus":                                                 schema_k8sio_api_core_v1_ContainerStatus(ref),
-		"k8s.io/api/core/v1.DaemonEndpoint":                                                  schema_k8sio_api_core_v1_DaemonEndpoint(ref),
-		"k8s.io/api/core/v1.DownwardAPIProjection":                                           schema_k8sio_api_core_v1_DownwardAPIProjection(ref),
-		"k8s.io/api/core/v1.DownwardAPIVolumeFile":                                           schema_k8sio_api_core_v1_DownwardAPIVolumeFile(ref),
-		"k8s.io/api/core/v1.DownwardAPIVolumeSource":                                         schema_k8sio_api_core_v1_DownwardAPIVolumeSource(ref),
-		"k8s.io/api/core/v1.EmptyDirVolumeSource":                                            schema_k8sio_api_core_v1_EmptyDirVolumeSource(ref),
-		"k8s.io/api/core/v1.EndpointAddress":                                                 schema_k8sio_api_core_v1_EndpointAddress(ref),
-		"k8s.io/api/core/v1.EndpointPort":                                                    schema_k8sio_api_core_v1_EndpointPort(ref),
-		"k8s.io/api/core/v1.EndpointSubset":                                                  schema_k8sio_api_core_v1_EndpointSubset(ref),
-		"k8s.io/api/core/v1.Endpoints":                                                       schema_k8sio_api_core_v1_Endpoints(ref),
-		"k8s.io/api/core/v1.EndpointsList":                                                   schema_k8sio_api_core_v1_EndpointsList(ref),
-		"k8s.io/api/core/v1.EnvFromSource":                                                   schema_k8sio_api_core_v1_EnvFromSource(ref),
-		"k8s.io/api/core/v1.EnvVar":                                                          schema_k8sio_api_core_v1_EnvVar(ref),
-		"k8s.io/api/core/v1.EnvVarSource":                                                    schema_k8sio_api_core_v1_EnvVarSource(ref),
-		"k8s.io/api/core/v1.EphemeralContainer":                                              schema_k8sio_api_core_v1_EphemeralContainer(ref),
-		"k8s.io/api/core/v1.EphemeralContainerCommon":                                        schema_k8sio_api_core_v1_EphemeralContainerCommon(ref),
-		"k8s.io/api/core/v1.EphemeralVolumeSource":                                           schema_k8sio_api_core_v1_EphemeralVolumeSource(ref),
-		"k8s.io/api/core/v1.Event":                                                           schema_k8sio_api_core_v1_Event(ref),
-		"k8s.io/api/core/v1.EventList":                                                       schema_k8sio_api_core_v1_EventList(ref),
-		"k8s.io/api/core/v1.EventSeries":                                                     schema_k8sio_api_core_v1_EventSeries(ref),
-		"k8s.io/api/core/v1.EventSource":                                                     schema_k8sio_api_core_v1_EventSource(ref),
-		"k8s.io/api/core/v1.ExecAction":                                                      schema_k8sio_api_core_v1_ExecAction(ref),
-		"k8s.io/api/core/v1.FCVolumeSource":                                                  schema_k8sio_api_core_v1_FCVolumeSource(ref),
-		"k8s.io/api/core/v1.FlexPersistentVolumeSource":                                      schema_k8sio_api_core_v1_FlexPersistentVolumeSource(ref),
-		"k8s.io/api/core/v1.FlexVolumeSource":                                                schema_k8sio_api_core_v1_FlexVolumeSource(ref),
-		"k8s.io/api/core/v1.FlockerVolumeSource":                                             schema_k8sio_api_core_v1_FlockerVolumeSource(ref),
-		"k8s.io/api/core/v1.GCEPersistentDiskVolumeSource":                                   schema_k8sio_api_core_v1_GCEPersistentDiskVolumeSource(ref),
-		"k8s.io/api/core/v1.GRPCAction":                                                      schema_k8sio_api_core_v1_GRPCAction(ref),
-		"k8s.io/api/core/v1.GitRepoVolumeSource":                                             schema_k8sio_api_core_v1_GitRepoVolumeSource(ref),
-		"k8s.io/api/core/v1.GlusterfsPersistentVolumeSource":                                 schema_k8sio_api_core_v1_GlusterfsPersistentVolumeSource(ref),
-		"k8s.io/api/core/v1.GlusterfsVolumeSource":                                           schema_k8sio_api_core_v1_GlusterfsVolumeSource(ref),
-		"k8s.io/api/core/v1.HTTPGetAction":                                                   schema_k8sio_api_core_v1_HTTPGetAction(ref),
-		"k8s.io/api/core/v1.HTTPHeader":                                                      schema_k8sio_api_core_v1_HTTPHeader(ref),
-		"k8s.io/api/core/v1.HostAlias":                                                       schema_k8sio_api_core_v1_HostAlias(ref),
-		"k8s.io/api/core/v1.HostIP":                                                          schema_k8sio_api_core_v1_HostIP(ref),
-		"k8s.io/api/core/v1.HostPathVolumeSource":                                            schema_k8sio_api_core_v1_HostPathVolumeSource(ref),
-		"k8s.io/api/core/v1.ISCSIPersistentVolumeSource":                                     schema_k8sio_api_core_v1_ISCSIPersistentVolumeSource(ref),
-		"k8s.io/api/core/v1.ISCSIVolumeSource":                                               schema_k8sio_api_core_v1_ISCSIVolumeSource(ref),
-		"k8s.io/api/core/v1.KeyToPath":                                                       schema_k8sio_api_core_v1_KeyToPath(ref),
-		"k8s.io/api/core/v1.Lifecycle":                                                       schema_k8sio_api_core_v1_Lifecycle(ref),
-		"k8s.io/api/core/v1.LifecycleHandler":                                                schema_k8sio_api_core_v1_LifecycleHandler(ref),
-		"k8s.io/api/core/v1.LimitRange":                                                      schema_k8sio_api_core_v1_LimitRange(ref),
-		"k8s.io/api/core/v1.LimitRangeItem":                                                  schema_k8sio_api_core_v1_LimitRangeItem(ref),
-		"k8s.io/api/core/v1.LimitRangeList":                                                  schema_k8sio_api_core_v1_LimitRangeList(ref),
-		"k8s.io/api/core/v1.LimitRangeSpec":                                                  schema_k8sio_api_core_v1_LimitRangeSpec(ref),
-		"k8s.io/api/core/v1.List":                                                            schema_k8sio_api_core_v1_List(ref),
-		"k8s.io/api/core/v1.LoadBalancerIngress":                                             schema_k8sio_api_core_v1_LoadBalancerIngress(ref),
-		"k8s.io/api/core/v1.LoadBalancerStatus":                                              schema_k8sio_api_core_v1_LoadBalancerStatus(ref),
-		"k8s.io/api/core/v1.LocalObjectReference":                                            schema_k8sio_api_core_v1_LocalObjectReference(ref),
-		"k8s.io/api/core/v1.LocalVolumeSource":                                               schema_k8sio_api_core_v1_LocalVolumeSource(ref),
-		"k8s.io/api/core/v1.NFSVolumeSource":                                                 schema_k8sio_api_core_v1_NFSVolumeSource(ref),
-		"k8s.io/api/core/v1.Namespace":                                                       schema_k8sio_api_core_v1_Namespace(ref),
-		"k8s.io/api/core/v1.NamespaceCondition":                                              schema_k8sio_api_core_v1_NamespaceCondition(ref),
-		"k8s.io/api/core/v1.NamespaceList":                                                   schema_k8sio_api_core_v1_NamespaceList(ref),
-		"k8s.io/api/core/v1.NamespaceSpec":                                                   schema_k8sio_api_core_v1_NamespaceSpec(ref),
-		"k8s.io/api/core/v1.NamespaceStatus":                                                 schema_k8sio_api_core_v1_NamespaceStatus(ref),
-		"k8s.io/api/core/v1.Node":                                                            schema_k8sio_api_core_v1_Node(ref),
-		"k8s.io/api/core/v1.NodeAddress":                                                     schema_k8sio_api_core_v1_NodeAddress(ref),
-		"k8s.io/api/core/v1.NodeAffinity":                                                    schema_k8sio_api_core_v1_NodeAffinity(ref),
-		"k8s.io/api/core/v1.NodeCondition":                                                   schema_k8sio_api_core_v1_NodeCondition(ref),
-		"k8s.io/api/core/v1.NodeConfigSource":                                                schema_k8sio_api_core_v1_NodeConfigSource(ref),
-		"k8s.io/api/core/v1.NodeConfigStatus":                                                schema_k8sio_api_core_v1_NodeConfigStatus(ref),
-		"k8s.io/api/core/v1.NodeDaemonEndpoints":                                             schema_k8sio_api_core_v1_NodeDaemonEndpoints(ref),
-		"k8s.io/api/core/v1.NodeList":                                                        schema_k8sio_api_core_v1_NodeList(ref),
-		"k8s.io/api/core/v1.NodeProxyOptions":                                                schema_k8sio_api_core_v1_NodeProxyOptions(ref),
-		"k8s.io/api/core/v1.NodeResources":                                                   schema_k8sio_api_core_v1_NodeResources(ref),
-		"k8s.io/api/core/v1.NodeSelector":                                                    schema_k8sio_api_core_v1_NodeSelector(ref),
-		"k8s.io/api/core/v1.NodeSelectorRequirement":                                         schema_k8sio_api_core_v1_NodeSelectorRequirement(ref),
-		"k8s.io/api/core/v1.NodeSelectorTerm":                                                schema_k8sio_api_core_v1_NodeSelectorTerm(ref),
-		"k8s.io/api/core/v1.NodeSpec":                                                        schema_k8sio_api_core_v1_NodeSpec(ref),
-		"k8s.io/api/core/v1.NodeStatus":                                                      schema_k8sio_api_core_v1_NodeStatus(ref),
-		"k8s.io/api/core/v1.NodeSystemInfo":                                                  schema_k8sio_api_core_v1_NodeSystemInfo(ref),
-		"k8s.io/api/core/v1.ObjectFieldSelector":                                             schema_k8sio_api_core_v1_ObjectFieldSelector(ref),
-		"k8s.io/api/core/v1.ObjectReference":                                                 schema_k8sio_api_core_v1_ObjectReference(ref),
-		"k8s.io/api/core/v1.PersistentVolume":                                                schema_k8sio_api_core_v1_PersistentVolume(ref),
-		"k8s.io/api/core/v1.PersistentVolumeClaim":                                           schema_k8sio_api_core_v1_PersistentVolumeClaim(ref),
-		"k8s.io/api/core/v1.PersistentVolumeClaimCondition":                                  schema_k8sio_api_core_v1_PersistentVolumeClaimCondition(ref),
-		"k8s.io/api/core/v1.PersistentVolumeClaimList":                                       schema_k8sio_api_core_v1_PersistentVolumeClaimList(ref),
-		"k8s.io/api/core/v1.PersistentVolumeClaimSpec":                                       schema_k8sio_api_core_v1_PersistentVolumeClaimSpec(ref),
-		"k8s.io/api/core/v1.PersistentVolumeClaimStatus":                                     schema_k8sio_api_core_v1_PersistentVolumeClaimStatus(ref),
-		"k8s.io/api/core/v1.PersistentVolumeClaimTemplate":                                   schema_k8sio_api_core_v1_PersistentVolumeClaimTemplate(ref),
-		"k8s.io/api/core/v1.PersistentVolumeClaimVolumeSource":                               schema_k8sio_api_core_v1_PersistentVolumeClaimVolumeSource(ref),
-		"k8s.io/api/core/v1.PersistentVolumeList":                                            schema_k8sio_api_core_v1_PersistentVolumeList(ref),
-		"k8s.io/api/core/v1.PersistentVolumeSource":                                          schema_k8sio_api_core_v1_PersistentVolumeSource(ref),
-		"k8s.io/api/core/v1.PersistentVolumeSpec":                                            schema_k8sio_api_core_v1_PersistentVolumeSpec(ref),
-		"k8s.io/api/core/v1.PersistentVolumeStatus":                                          schema_k8sio_api_core_v1_PersistentVolumeStatus(ref),
-		"k8s.io/api/core/v1.PhotonPersistentDiskVolumeSource":                                schema_k8sio_api_core_v1_PhotonPersistentDiskVolumeSource(ref),
-		"k8s.io/api/core/v1.Pod":                                                             schema_k8sio_api_core_v1_Pod(ref),
-		"k8s.io/api/core/v1.PodAffinity":                                                     schema_k8sio_api_core_v1_PodAffinity(ref),
-		"k8s.io/api/core/v1.PodAffinityTerm":                                                 schema_k8sio_api_core_v1_PodAffinityTerm(ref),
-		"k8s.io/api/core/v1.PodAntiAffinity":                                                 schema_k8sio_api_core_v1_PodAntiAffinity(ref),
-		"k8s.io/api/core/v1.PodAttachOptions":                                                schema_k8sio_api_core_v1_PodAttachOptions(ref),
-		"k8s.io/api/core/v1.PodCondition":                                                    schema_k8sio_api_core_v1_PodCondition(ref),
-		"k8s.io/api/core/v1.PodDNSConfig":                                                    schema_k8sio_api_core_v1_PodDNSConfig(ref),
-		"k8s.io/api/core/v1.PodDNSConfigOption":                                              schema_k8sio_api_core_v1_PodDNSConfigOption(ref),
-		"k8s.io/api/core/v1.PodExecOptions":                                                  schema_k8sio_api_core_v1_PodExecOptions(ref),
-		"k8s.io/api/core/v1.PodIP":                                                           schema_k8sio_api_core_v1_PodIP(ref),
-		"k8s.io/api/core/v1.PodList":                                                         schema_k8sio_api_core_v1_PodList(ref),
-		"k8s.io/api/core/v1.PodLogOptions":                                                   schema_k8sio_api_core_v1_PodLogOptions(ref),
-		"k8s.io/api/core/v1.PodOS":                                                           schema_k8sio_api_core_v1_PodOS(ref),
-		"k8s.io/api/core/v1.PodPortForwardOptions":                                           schema_k8sio_api_core_v1_PodPortForwardOptions(ref),
-		"k8s.io/api/core/v1.PodProxyOptions":                                                 schema_k8sio_api_core_v1_PodProxyOptions(ref),
-		"k8s.io/api/core/v1.PodReadinessGate":                                                schema_k8sio_api_core_v1_PodReadinessGate(ref),
-		"k8s.io/api/core/v1.PodResourceClaim":                                                schema_k8sio_api_core_v1_PodResourceClaim(ref),
-		"k8s.io/api/core/v1.PodResourceClaimStatus":                                          schema_k8sio_api_core_v1_PodResourceClaimStatus(ref),
-		"k8s.io/api/core/v1.PodSchedulingGate":                                               schema_k8sio_api_core_v1_PodSchedulingGate(ref),
-		"k8s.io/api/core/v1.PodSecurityContext":                                              schema_k8sio_api_core_v1_PodSecurityContext(ref),
-		"k8s.io/api/core/v1.PodSignature":                                                    schema_k8sio_api_core_v1_PodSignature(ref),
-		"k8s.io/api/core/v1.PodSpec":                                                         schema_k8sio_api_core_v1_PodSpec(ref),
-		"k8s.io/api/core/v1.PodStatus":                                                       schema_k8sio_api_core_v1_PodStatus(ref),
-		"k8s.io/api/core/v1.PodStatusResult":                                                 schema_k8sio_api_core_v1_PodStatusResult(ref),
-		"k8s.io/api/core/v1.PodTemplate":                                                     schema_k8sio_api_core_v1_PodTemplate(ref),
-		"k8s.io/api/core/v1.PodTemplateList":                                                 schema_k8sio_api_core_v1_PodTemplateList(ref),
-		"k8s.io/api/core/v1.PodTemplateSpec":                                                 schema_k8sio_api_core_v1_PodTemplateSpec(ref),
-		"k8s.io/api/core/v1.PortStatus":                                                      schema_k8sio_api_core_v1_PortStatus(ref),
-		"k8s.io/api/core/v1.PortworxVolumeSource":                                            schema_k8sio_api_core_v1_PortworxVolumeSource(ref),
-		"k8s.io/api/core/v1.PreferAvoidPodsEntry":                                            schema_k8sio_api_core_v1_PreferAvoidPodsEntry(ref),
-		"k8s.io/api/core/v1.PreferredSchedulingTerm":                                         schema_k8sio_api_core_v1_PreferredSchedulingTerm(ref),
-		"k8s.io/api/core/v1.Probe":                                                           schema_k8sio_api_core_v1_Probe(ref),
-		"k8s.io/api/core/v1.ProbeHandler":                                                    schema_k8sio_api_core_v1_ProbeHandler(ref),
-		"k8s.io/api/core/v1.ProjectedVolumeSource":                                           schema_k8sio_api_core_v1_ProjectedVolumeSource(ref),
-		"k8s.io/api/core/v1.QuobyteVolumeSource":                                             schema_k8sio_api_core_v1_QuobyteVolumeSource(ref),
-		"k8s.io/api/core/v1.RBDPersistentVolumeSource":                                       schema_k8sio_api_core_v1_RBDPersistentVolumeSource(ref),
-		"k8s.io/api/core/v1.RBDVolumeSource":                                                 schema_k8sio_api_core_v1_RBDVolumeSource(ref),
-		"k8s.io/api/core/v1.RangeAllocation":                                                 schema_k8sio_api_core_v1_RangeAllocation(ref),
-		"k8s.io/api/core/v1.ReplicationController":                                           schema_k8sio_api_core_v1_ReplicationController(ref),
-		"k8s.io/api/core/v1.ReplicationControllerCondition":                                  schema_k8sio_api_core_v1_ReplicationControllerCondition(ref),
-		"k8s.io/api/core/v1.ReplicationControllerList":                                       schema_k8sio_api_core_v1_ReplicationControllerList(ref),
-		"k8s.io/api/core/v1.ReplicationControllerSpec":                                       schema_k8sio_api_core_v1_ReplicationControllerSpec(ref),
-		"k8s.io/api/core/v1.ReplicationControllerStatus":                                     schema_k8sio_api_core_v1_ReplicationControllerStatus(ref),
-		"k8s.io/api/core/v1.ResourceClaim":                                                   schema_k8sio_api_core_v1_ResourceClaim(ref),
-		"k8s.io/api/core/v1.ResourceFieldSelector":                                           schema_k8sio_api_core_v1_ResourceFieldSelector(ref),
-		"k8s.io/api/core/v1.ResourceQuota":                                                   schema_k8sio_api_core_v1_ResourceQuota(ref),
-		"k8s.io/api/core/v1.ResourceQuotaList":                                               schema_k8sio_api_core_v1_ResourceQuotaList(ref),
-		"k8s.io/api/core/v1.ResourceQuotaSpec":                                               schema_k8sio_api_core_v1_ResourceQuotaSpec(ref),
-		"k8s.io/api/core/v1.ResourceQuotaStatus":                                             schema_k8sio_api_core_v1_ResourceQuotaStatus(ref),
-		"k8s.io/api/core/v1.ResourceRequirements":                                            schema_k8sio_api_core_v1_ResourceRequirements(ref),
-		"k8s.io/api/core/v1.SELinuxOptions":                                                  schema_k8sio_api_core_v1_SELinuxOptions(ref),
-		"k8s.io/api/core/v1.ScaleIOPersistentVolumeSource":                                   schema_k8sio_api_core_v1_ScaleIOPersistentVolumeSource(ref),
-		"k8s.io/api/core/v1.ScaleIOVolumeSource":                                             schema_k8sio_api_core_v1_ScaleIOVolumeSource(ref),
-		"k8s.io/api/core/v1.ScopeSelector":                                                   schema_k8sio_api_core_v1_ScopeSelector(ref),
-		"k8s.io/api/core/v1.ScopedResourceSelectorRequirement":                               schema_k8sio_api_core_v1_ScopedResourceSelectorRequirement(ref),
-		"k8s.io/api/core/v1.SeccompProfile":                                                  schema_k8sio_api_core_v1_SeccompProfile(ref),
-		"k8s.io/api/core/v1.Secret":                                                          schema_k8sio_api_core_v1_Secret(ref),
-		"k8s.io/api/core/v1.SecretEnvSource":                                                 schema_k8sio_api_core_v1_SecretEnvSource(ref),
-		"k8s.io/api/core/v1.SecretKeySelector":                                               schema_k8sio_api_core_v1_SecretKeySelector(ref),
-		"k8s.io/api/core/v1.SecretList":                                                      schema_k8sio_api_core_v1_SecretList(ref),
-		"k8s.io/api/core/v1.SecretProjection":                                                schema_k8sio_api_core_v1_SecretProjection(ref),
-		"k8s.io/api/core/v1.SecretReference":                                                 schema_k8sio_api_core_v1_SecretReference(ref),
-		"k8s.io/api/core/v1.SecretVolumeSource":                                              schema_k8sio_api_core_v1_SecretVolumeSource(ref),
-		"k8s.io/api/core/v1.SecurityContext":                                                 schema_k8sio_api_core_v1_SecurityContext(ref),
-		"k8s.io/api/core/v1.SerializedReference":                                             schema_k8sio_api_core_v1_SerializedReference(ref),
-		"k8s.io/api/core/v1.Service":                                                         schema_k8sio_api_core_v1_Service(ref),
-		"k8s.io/api/core/v1.ServiceAccount":                                                  schema_k8sio_api_core_v1_ServiceAccount(ref),
-		"k8s.io/api/core/v1.ServiceAccountList":                                              schema_k8sio_api_core_v1_ServiceAccountList(ref),
-		"k8s.io/api/core/v1.ServiceAccountTokenProjection":                                   schema_k8sio_api_core_v1_ServiceAccountTokenProjection(ref),
-		"k8s.io/api/core/v1.ServiceList":                                                     schema_k8sio_api_core_v1_ServiceList(ref),
-		"k8s.io/api/core/v1.ServicePort":                                                     schema_k8sio_api_core_v1_ServicePort(ref),
-		"k8s.io/api/core/v1.ServiceProxyOptions":                                             schema_k8sio_api_core_v1_ServiceProxyOptions(ref),
-		"k8s.io/api/core/v1.ServiceSpec":                                                     schema_k8sio_api_core_v1_ServiceSpec(ref),
-		"k8s.io/api/core/v1.ServiceStatus":                                                   schema_k8sio_api_core_v1_ServiceStatus(ref),
-		"k8s.io/api/core/v1.SessionAffinityConfig":                                           schema_k8sio_api_core_v1_SessionAffinityConfig(ref),
-		"k8s.io/api/core/v1.StorageOSPersistentVolumeSource":                                 schema_k8sio_api_core_v1_StorageOSPersistentVolumeSource(ref),
-		"k8s.io/api/core/v1.StorageOSVolumeSource":                                           schema_k8sio_api_core_v1_StorageOSVolumeSource(ref),
-		"k8s.io/api/core/v1.Sysctl":                                                          schema_k8sio_api_core_v1_Sysctl(ref),
-		"k8s.io/api/core/v1.TCPSocketAction":                                                 schema_k8sio_api_core_v1_TCPSocketAction(ref),
-		"k8s.io/api/core/v1.Taint":                                                           schema_k8sio_api_core_v1_Taint(ref),
-		"k8s.io/api/core/v1.Toleration":                                                      schema_k8sio_api_core_v1_Toleration(ref),
-		"k8s.io/api/core/v1.TopologySelectorLabelRequirement":                                schema_k8sio_api_core_v1_TopologySelectorLabelRequirement(ref),
-		"k8s.io/api/core/v1.TopologySelectorTerm":                                            schema_k8sio_api_core_v1_TopologySelectorTerm(ref),
-		"k8s.io/api/core/v1.TopologySpreadConstraint":                                        schema_k8sio_api_core_v1_TopologySpreadConstraint(ref),
-		"k8s.io/api/core/v1.TypedLocalObjectReference":                                       schema_k8sio_api_core_v1_TypedLocalObjectReference(ref),
-		"k8s.io/api/core/v1.TypedObjectReference":                                            schema_k8sio_api_core_v1_TypedObjectReference(ref),
-		"k8s.io/api/core/v1.Volume":                                                          schema_k8sio_api_core_v1_Volume(ref),
-		"k8s.io/api/core/v1.VolumeDevice":                                                    schema_k8sio_api_core_v1_VolumeDevice(ref),
-		"k8s.io/api/core/v1.VolumeMount":                                                     schema_k8sio_api_core_v1_VolumeMount(ref),
-		"k8s.io/api/core/v1.VolumeNodeAffinity":                                              schema_k8sio_api_core_v1_VolumeNodeAffinity(ref),
-		"k8s.io/api/core/v1.VolumeProjection":                                                schema_k8sio_api_core_v1_VolumeProjection(ref),
-		"k8s.io/api/core/v1.VolumeSource":                                                    schema_k8sio_api_core_v1_VolumeSource(ref),
-		"k8s.io/api/core/v1.VsphereVirtualDiskVolumeSource":                                  schema_k8sio_api_core_v1_VsphereVirtualDiskVolumeSource(ref),
-		"k8s.io/api/core/v1.WeightedPodAffinityTerm":                                         schema_k8sio_api_core_v1_WeightedPodAffinityTerm(ref),
-		"k8s.io/api/core/v1.WindowsSecurityContextOptions":                                   schema_k8sio_api_core_v1_WindowsSecurityContextOptions(ref),
-		"k8s.io/api/rbac/v1.AggregationRule":                                                 schema_k8sio_api_rbac_v1_AggregationRule(ref),
-		"k8s.io/api/rbac/v1.ClusterRole":                                                     schema_k8sio_api_rbac_v1_ClusterRole(ref),
-		"k8s.io/api/rbac/v1.ClusterRoleBinding":                                              schema_k8sio_api_rbac_v1_ClusterRoleBinding(ref),
-		"k8s.io/api/rbac/v1.ClusterRoleBindingList":                                          schema_k8sio_api_rbac_v1_ClusterRoleBindingList(ref),
-		"k8s.io/api/rbac/v1.ClusterRoleList":                                                 schema_k8sio_api_rbac_v1_ClusterRoleList(ref),
-		"k8s.io/api/rbac/v1.PolicyRule":                                                      schema_k8sio_api_rbac_v1_PolicyRule(ref),
-		"k8s.io/api/rbac/v1.Role":                                                            schema_k8sio_api_rbac_v1_Role(ref),
-		"k8s.io/api/rbac/v1.RoleBinding":                                                     schema_k8sio_api_rbac_v1_RoleBinding(ref),
-		"k8s.io/api/rbac/v1.RoleBindingList":                                                 schema_k8sio_api_rbac_v1_RoleBindingList(ref),
-		"k8s.io/api/rbac/v1.RoleList":                                                        schema_k8sio_api_rbac_v1_RoleList(ref),
-		"k8s.io/api/rbac/v1.RoleRef":                                                         schema_k8sio_api_rbac_v1_RoleRef(ref),
-		"k8s.io/api/rbac/v1.Subject":                                                         schema_k8sio_api_rbac_v1_Subject(ref),
-		"k8s.io/apimachinery/pkg/api/resource.Quantity":                                      schema_apimachinery_pkg_api_resource_Quantity(ref),
-		"k8s.io/apimachinery/pkg/api/resource.int64Amount":                                   schema_apimachinery_pkg_api_resource_int64Amount(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroup":                                      schema_pkg_apis_meta_v1_APIGroup(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroupList":                                  schema_pkg_apis_meta_v1_APIGroupList(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.APIResource":                                   schema_pkg_apis_meta_v1_APIResource(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.APIResourceList":                               schema_pkg_apis_meta_v1_APIResourceList(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.APIVersions":                                   schema_pkg_apis_meta_v1_APIVersions(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.ApplyOptions":                                  schema_pkg_apis_meta_v1_ApplyOptions(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.Condition":                                     schema_pkg_apis_meta_v1_Condition(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.CreateOptions":                                 schema_pkg_apis_meta_v1_CreateOptions(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.DeleteOptions":                                 schema_pkg_apis_meta_v1_DeleteOptions(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.Duration":                                      schema_pkg_apis_meta_v1_Duration(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.FieldsV1":                                      schema_pkg_apis_meta_v1_FieldsV1(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.GetOptions":                                    schema_pkg_apis_meta_v1_GetOptions(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupKind":                                     schema_pkg_apis_meta_v1_GroupKind(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupResource":                                 schema_pkg_apis_meta_v1_GroupResource(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupVersion":                                  schema_pkg_apis_meta_v1_GroupVersion(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupVersionForDiscovery":                      schema_pkg_apis_meta_v1_GroupVersionForDiscovery(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupVersionKind":                              schema_pkg_apis_meta_v1_GroupVersionKind(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupVersionResource":                          schema_pkg_apis_meta_v1_GroupVersionResource(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.InternalEvent":                                 schema_pkg_apis_meta_v1_InternalEvent(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelector":                                 schema_pkg_apis_meta_v1_LabelSelector(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelectorRequirement":                      schema_pkg_apis_meta_v1_LabelSelectorRequirement(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.List":                                          schema_pkg_apis_meta_v1_List(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta":                                      schema_pkg_apis_meta_v1_ListMeta(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.ListOptions":                                   schema_pkg_apis_meta_v1_ListOptions(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.ManagedFieldsEntry":                            schema_pkg_apis_meta_v1_ManagedFieldsEntry(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.MicroTime":                                     schema_pkg_apis_meta_v1_MicroTime(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta":                                    schema_pkg_apis_meta_v1_ObjectMeta(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.OwnerReference":                                schema_pkg_apis_meta_v1_OwnerReference(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.PartialObjectMetadata":                         schema_pkg_apis_meta_v1_PartialObjectMetadata(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.PartialObjectMetadataList":                     schema_pkg_apis_meta_v1_PartialObjectMetadataList(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.Patch":                                         schema_pkg_apis_meta_v1_Patch(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.PatchOptions":                                  schema_pkg_apis_meta_v1_PatchOptions(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.Preconditions":                                 schema_pkg_apis_meta_v1_Preconditions(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.RootPaths":                                     schema_pkg_apis_meta_v1_RootPaths(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.ServerAddressByClientCIDR":                     schema_pkg_apis_meta_v1_ServerAddressByClientCIDR(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.Status":                                        schema_pkg_apis_meta_v1_Status(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.StatusCause":                                   schema_pkg_apis_meta_v1_StatusCause(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.StatusDetails":                                 schema_pkg_apis_meta_v1_StatusDetails(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.Table":                                         schema_pkg_apis_meta_v1_Table(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.TableColumnDefinition":                         schema_pkg_apis_meta_v1_TableColumnDefinition(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.TableOptions":                                  schema_pkg_apis_meta_v1_TableOptions(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.TableRow":                                      schema_pkg_apis_meta_v1_TableRow(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.TableRowCondition":                             schema_pkg_apis_meta_v1_TableRowCondition(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.Time":                                          schema_pkg_apis_meta_v1_Time(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.Timestamp":                                     schema_pkg_apis_meta_v1_Timestamp(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.TypeMeta":                                      schema_pkg_apis_meta_v1_TypeMeta(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.UpdateOptions":                                 schema_pkg_apis_meta_v1_UpdateOptions(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.WatchEvent":                                    schema_pkg_apis_meta_v1_WatchEvent(ref),
-		"k8s.io/apimachinery/pkg/runtime.RawExtension":                                       schema_k8sio_apimachinery_pkg_runtime_RawExtension(ref),
-		"k8s.io/apimachinery/pkg/runtime.TypeMeta":                                           schema_k8sio_apimachinery_pkg_runtime_TypeMeta(ref),
-		"k8s.io/apimachinery/pkg/runtime.Unknown":                                            schema_k8sio_apimachinery_pkg_runtime_Unknown(ref),
-		"k8s.io/apimachinery/pkg/version.Info":                                               schema_k8sio_apimachinery_pkg_version_Info(ref),
+		"github.com/kubeedge/api/apps/v1alpha1.CommandArgsOverrider":           schema_kubeedge_api_apps_v1alpha1_CommandArgsOverrider(ref),
+		"github.com/kubeedge/api/apps/v1alpha1.EdgeApplication":                schema_kubeedge_api_apps_v1alpha1_EdgeApplication(ref),
+		"github.com/kubeedge/api/apps/v1alpha1.EdgeApplicationList":            schema_kubeedge_api_apps_v1alpha1_EdgeApplicationList(ref),
+		"github.com/kubeedge/api/apps/v1alpha1.EdgeApplicationSpec":            schema_kubeedge_api_apps_v1alpha1_EdgeApplicationSpec(ref),
+		"github.com/kubeedge/api/apps/v1alpha1.EdgeApplicationStatus":          schema_kubeedge_api_apps_v1alpha1_EdgeApplicationStatus(ref),
+		"github.com/kubeedge/api/apps/v1alpha1.EnvOverrider":                   schema_kubeedge_api_apps_v1alpha1_EnvOverrider(ref),
+		"github.com/kubeedge/api/apps/v1alpha1.ImageOverrider":                 schema_kubeedge_api_apps_v1alpha1_ImageOverrider(ref),
+		"github.com/kubeedge/api/apps/v1alpha1.ImagePredicate":                 schema_kubeedge_api_apps_v1alpha1_ImagePredicate(ref),
+		"github.com/kubeedge/api/apps/v1alpha1.Manifest":                       schema_kubeedge_api_apps_v1alpha1_Manifest(ref),
+		"github.com/kubeedge/api/apps/v1alpha1.ManifestStatus":                 schema_kubeedge_api_apps_v1alpha1_ManifestStatus(ref),
+		"github.com/kubeedge/api/apps/v1alpha1.NodeGroup":                      schema_kubeedge_api_apps_v1alpha1_NodeGroup(ref),
+		"github.com/kubeedge/api/apps/v1alpha1.NodeGroupList":                  schema_kubeedge_api_apps_v1alpha1_NodeGroupList(ref),
+		"github.com/kubeedge/api/apps/v1alpha1.NodeGroupSpec":                  schema_kubeedge_api_apps_v1alpha1_NodeGroupSpec(ref),
+		"github.com/kubeedge/api/apps/v1alpha1.NodeGroupStatus":                schema_kubeedge_api_apps_v1alpha1_NodeGroupStatus(ref),
+		"github.com/kubeedge/api/apps/v1alpha1.NodeStatus":                     schema_kubeedge_api_apps_v1alpha1_NodeStatus(ref),
+		"github.com/kubeedge/api/apps/v1alpha1.Overriders":                     schema_kubeedge_api_apps_v1alpha1_Overriders(ref),
+		"github.com/kubeedge/api/apps/v1alpha1.ResourceIdentifier":             schema_kubeedge_api_apps_v1alpha1_ResourceIdentifier(ref),
+		"github.com/kubeedge/api/apps/v1alpha1.ResourceTemplate":               schema_kubeedge_api_apps_v1alpha1_ResourceTemplate(ref),
+		"github.com/kubeedge/api/apps/v1alpha1.ResourcesOverrider":             schema_kubeedge_api_apps_v1alpha1_ResourcesOverrider(ref),
+		"github.com/kubeedge/api/apps/v1alpha1.TargetNodeGroup":                schema_kubeedge_api_apps_v1alpha1_TargetNodeGroup(ref),
+		"github.com/kubeedge/api/apps/v1alpha1.WorkloadScope":                  schema_kubeedge_api_apps_v1alpha1_WorkloadScope(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.BluetoothOperations":         schema_kubeedge_api_devices_v1alpha2_BluetoothOperations(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.BluetoothReadConverter":      schema_kubeedge_api_devices_v1alpha2_BluetoothReadConverter(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.CustomizedValue":             schema_kubeedge_api_devices_v1alpha2_CustomizedValue(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.DataProperty":                schema_kubeedge_api_devices_v1alpha2_DataProperty(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.Device":                      schema_kubeedge_api_devices_v1alpha2_Device(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.DeviceData":                  schema_kubeedge_api_devices_v1alpha2_DeviceData(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.DeviceList":                  schema_kubeedge_api_devices_v1alpha2_DeviceList(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.DeviceModel":                 schema_kubeedge_api_devices_v1alpha2_DeviceModel(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.DeviceModelList":             schema_kubeedge_api_devices_v1alpha2_DeviceModelList(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.DeviceModelSpec":             schema_kubeedge_api_devices_v1alpha2_DeviceModelSpec(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.DeviceProperty":              schema_kubeedge_api_devices_v1alpha2_DeviceProperty(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.DevicePropertyVisitor":       schema_kubeedge_api_devices_v1alpha2_DevicePropertyVisitor(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.DeviceSpec":                  schema_kubeedge_api_devices_v1alpha2_DeviceSpec(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.DeviceStatus":                schema_kubeedge_api_devices_v1alpha2_DeviceStatus(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.PropertyType":                schema_kubeedge_api_devices_v1alpha2_PropertyType(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.PropertyTypeBoolean":         schema_kubeedge_api_devices_v1alpha2_PropertyTypeBoolean(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.PropertyTypeBytes":           schema_kubeedge_api_devices_v1alpha2_PropertyTypeBytes(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.PropertyTypeDouble":          schema_kubeedge_api_devices_v1alpha2_PropertyTypeDouble(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.PropertyTypeFloat":           schema_kubeedge_api_devices_v1alpha2_PropertyTypeFloat(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.PropertyTypeInt64":           schema_kubeedge_api_devices_v1alpha2_PropertyTypeInt64(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.PropertyTypeString":          schema_kubeedge_api_devices_v1alpha2_PropertyTypeString(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.ProtocolConfig":              schema_kubeedge_api_devices_v1alpha2_ProtocolConfig(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.ProtocolConfigBluetooth":     schema_kubeedge_api_devices_v1alpha2_ProtocolConfigBluetooth(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.ProtocolConfigCOM":           schema_kubeedge_api_devices_v1alpha2_ProtocolConfigCOM(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.ProtocolConfigCommon":        schema_kubeedge_api_devices_v1alpha2_ProtocolConfigCommon(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.ProtocolConfigCustomized":    schema_kubeedge_api_devices_v1alpha2_ProtocolConfigCustomized(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.ProtocolConfigModbus":        schema_kubeedge_api_devices_v1alpha2_ProtocolConfigModbus(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.ProtocolConfigOpcUA":         schema_kubeedge_api_devices_v1alpha2_ProtocolConfigOpcUA(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.ProtocolConfigTCP":           schema_kubeedge_api_devices_v1alpha2_ProtocolConfigTCP(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.Twin":                        schema_kubeedge_api_devices_v1alpha2_Twin(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.TwinProperty":                schema_kubeedge_api_devices_v1alpha2_TwinProperty(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.VisitorConfig":               schema_kubeedge_api_devices_v1alpha2_VisitorConfig(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.VisitorConfigBluetooth":      schema_kubeedge_api_devices_v1alpha2_VisitorConfigBluetooth(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.VisitorConfigCustomized":     schema_kubeedge_api_devices_v1alpha2_VisitorConfigCustomized(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.VisitorConfigModbus":         schema_kubeedge_api_devices_v1alpha2_VisitorConfigModbus(ref),
+		"github.com/kubeedge/api/devices/v1alpha2.VisitorConfigOPCUA":          schema_kubeedge_api_devices_v1alpha2_VisitorConfigOPCUA(ref),
+		"github.com/kubeedge/api/devices/v1beta1.CustomizedValue":              schema_kubeedge_api_devices_v1beta1_CustomizedValue(ref),
+		"github.com/kubeedge/api/devices/v1beta1.DBMethodConfig":               schema_kubeedge_api_devices_v1beta1_DBMethodConfig(ref),
+		"github.com/kubeedge/api/devices/v1beta1.DBMethodInfluxdb2":            schema_kubeedge_api_devices_v1beta1_DBMethodInfluxdb2(ref),
+		"github.com/kubeedge/api/devices/v1beta1.DBMethodMySQL":                schema_kubeedge_api_devices_v1beta1_DBMethodMySQL(ref),
+		"github.com/kubeedge/api/devices/v1beta1.DBMethodRedis":                schema_kubeedge_api_devices_v1beta1_DBMethodRedis(ref),
+		"github.com/kubeedge/api/devices/v1beta1.DBMethodTDEngine":             schema_kubeedge_api_devices_v1beta1_DBMethodTDEngine(ref),
+		"github.com/kubeedge/api/devices/v1beta1.Device":                       schema_kubeedge_api_devices_v1beta1_Device(ref),
+		"github.com/kubeedge/api/devices/v1beta1.DeviceList":                   schema_kubeedge_api_devices_v1beta1_DeviceList(ref),
+		"github.com/kubeedge/api/devices/v1beta1.DeviceModel":                  schema_kubeedge_api_devices_v1beta1_DeviceModel(ref),
+		"github.com/kubeedge/api/devices/v1beta1.DeviceModelList":              schema_kubeedge_api_devices_v1beta1_DeviceModelList(ref),
+		"github.com/kubeedge/api/devices/v1beta1.DeviceModelSpec":              schema_kubeedge_api_devices_v1beta1_DeviceModelSpec(ref),
+		"github.com/kubeedge/api/devices/v1beta1.DeviceProperty":               schema_kubeedge_api_devices_v1beta1_DeviceProperty(ref),
+		"github.com/kubeedge/api/devices/v1beta1.DeviceSpec":                   schema_kubeedge_api_devices_v1beta1_DeviceSpec(ref),
+		"github.com/kubeedge/api/devices/v1beta1.DeviceStatus":                 schema_kubeedge_api_devices_v1beta1_DeviceStatus(ref),
+		"github.com/kubeedge/api/devices/v1beta1.Influxdb2ClientConfig":        schema_kubeedge_api_devices_v1beta1_Influxdb2ClientConfig(ref),
+		"github.com/kubeedge/api/devices/v1beta1.Influxdb2DataConfig":          schema_kubeedge_api_devices_v1beta1_Influxdb2DataConfig(ref),
+		"github.com/kubeedge/api/devices/v1beta1.ModelProperty":                schema_kubeedge_api_devices_v1beta1_ModelProperty(ref),
+		"github.com/kubeedge/api/devices/v1beta1.MySQLClientConfig":            schema_kubeedge_api_devices_v1beta1_MySQLClientConfig(ref),
+		"github.com/kubeedge/api/devices/v1beta1.ProtocolConfig":               schema_kubeedge_api_devices_v1beta1_ProtocolConfig(ref),
+		"github.com/kubeedge/api/devices/v1beta1.PushMethod":                   schema_kubeedge_api_devices_v1beta1_PushMethod(ref),
+		"github.com/kubeedge/api/devices/v1beta1.PushMethodHTTP":               schema_kubeedge_api_devices_v1beta1_PushMethodHTTP(ref),
+		"github.com/kubeedge/api/devices/v1beta1.PushMethodMQTT":               schema_kubeedge_api_devices_v1beta1_PushMethodMQTT(ref),
+		"github.com/kubeedge/api/devices/v1beta1.RedisClientConfig":            schema_kubeedge_api_devices_v1beta1_RedisClientConfig(ref),
+		"github.com/kubeedge/api/devices/v1beta1.TDEngineClientConfig":         schema_kubeedge_api_devices_v1beta1_TDEngineClientConfig(ref),
+		"github.com/kubeedge/api/devices/v1beta1.Twin":                         schema_kubeedge_api_devices_v1beta1_Twin(ref),
+		"github.com/kubeedge/api/devices/v1beta1.TwinProperty":                 schema_kubeedge_api_devices_v1beta1_TwinProperty(ref),
+		"github.com/kubeedge/api/devices/v1beta1.VisitorConfig":                schema_kubeedge_api_devices_v1beta1_VisitorConfig(ref),
+		"github.com/kubeedge/api/operations/v1alpha1.ImagePrePullJob":          schema_kubeedge_api_operations_v1alpha1_ImagePrePullJob(ref),
+		"github.com/kubeedge/api/operations/v1alpha1.ImagePrePullJobList":      schema_kubeedge_api_operations_v1alpha1_ImagePrePullJobList(ref),
+		"github.com/kubeedge/api/operations/v1alpha1.ImagePrePullJobSpec":      schema_kubeedge_api_operations_v1alpha1_ImagePrePullJobSpec(ref),
+		"github.com/kubeedge/api/operations/v1alpha1.ImagePrePullJobStatus":    schema_kubeedge_api_operations_v1alpha1_ImagePrePullJobStatus(ref),
+		"github.com/kubeedge/api/operations/v1alpha1.ImagePrePullStatus":       schema_kubeedge_api_operations_v1alpha1_ImagePrePullStatus(ref),
+		"github.com/kubeedge/api/operations/v1alpha1.ImagePrePullTemplate":     schema_kubeedge_api_operations_v1alpha1_ImagePrePullTemplate(ref),
+		"github.com/kubeedge/api/operations/v1alpha1.ImageStatus":              schema_kubeedge_api_operations_v1alpha1_ImageStatus(ref),
+		"github.com/kubeedge/api/operations/v1alpha1.NodeUpgradeJob":           schema_kubeedge_api_operations_v1alpha1_NodeUpgradeJob(ref),
+		"github.com/kubeedge/api/operations/v1alpha1.NodeUpgradeJobList":       schema_kubeedge_api_operations_v1alpha1_NodeUpgradeJobList(ref),
+		"github.com/kubeedge/api/operations/v1alpha1.NodeUpgradeJobSpec":       schema_kubeedge_api_operations_v1alpha1_NodeUpgradeJobSpec(ref),
+		"github.com/kubeedge/api/operations/v1alpha1.NodeUpgradeJobStatus":     schema_kubeedge_api_operations_v1alpha1_NodeUpgradeJobStatus(ref),
+		"github.com/kubeedge/api/operations/v1alpha1.TaskStatus":               schema_kubeedge_api_operations_v1alpha1_TaskStatus(ref),
+		"github.com/kubeedge/api/policy/v1alpha1.AccessClusterRoleBinding":     schema_kubeedge_api_policy_v1alpha1_AccessClusterRoleBinding(ref),
+		"github.com/kubeedge/api/policy/v1alpha1.AccessRoleBinding":            schema_kubeedge_api_policy_v1alpha1_AccessRoleBinding(ref),
+		"github.com/kubeedge/api/policy/v1alpha1.AccessSpec":                   schema_kubeedge_api_policy_v1alpha1_AccessSpec(ref),
+		"github.com/kubeedge/api/policy/v1alpha1.AccessStatus":                 schema_kubeedge_api_policy_v1alpha1_AccessStatus(ref),
+		"github.com/kubeedge/api/policy/v1alpha1.ServiceAccountAccess":         schema_kubeedge_api_policy_v1alpha1_ServiceAccountAccess(ref),
+		"github.com/kubeedge/api/policy/v1alpha1.ServiceAccountAccessList":     schema_kubeedge_api_policy_v1alpha1_ServiceAccountAccessList(ref),
+		"github.com/kubeedge/api/reliablesyncs/v1alpha1.ClusterObjectSync":     schema_kubeedge_api_reliablesyncs_v1alpha1_ClusterObjectSync(ref),
+		"github.com/kubeedge/api/reliablesyncs/v1alpha1.ClusterObjectSyncList": schema_kubeedge_api_reliablesyncs_v1alpha1_ClusterObjectSyncList(ref),
+		"github.com/kubeedge/api/reliablesyncs/v1alpha1.ObjectSync":            schema_kubeedge_api_reliablesyncs_v1alpha1_ObjectSync(ref),
+		"github.com/kubeedge/api/reliablesyncs/v1alpha1.ObjectSyncList":        schema_kubeedge_api_reliablesyncs_v1alpha1_ObjectSyncList(ref),
+		"github.com/kubeedge/api/reliablesyncs/v1alpha1.ObjectSyncSpec":        schema_kubeedge_api_reliablesyncs_v1alpha1_ObjectSyncSpec(ref),
+		"github.com/kubeedge/api/reliablesyncs/v1alpha1.ObjectSyncStatus":      schema_kubeedge_api_reliablesyncs_v1alpha1_ObjectSyncStatus(ref),
+		"github.com/kubeedge/api/rules/v1.Rule":                                schema_kubeedge_api_rules_v1_Rule(ref),
+		"github.com/kubeedge/api/rules/v1.RuleEndpoint":                        schema_kubeedge_api_rules_v1_RuleEndpoint(ref),
+		"github.com/kubeedge/api/rules/v1.RuleEndpointList":                    schema_kubeedge_api_rules_v1_RuleEndpointList(ref),
+		"github.com/kubeedge/api/rules/v1.RuleEndpointSpec":                    schema_kubeedge_api_rules_v1_RuleEndpointSpec(ref),
+		"github.com/kubeedge/api/rules/v1.RuleList":                            schema_kubeedge_api_rules_v1_RuleList(ref),
+		"github.com/kubeedge/api/rules/v1.RuleSpec":                            schema_kubeedge_api_rules_v1_RuleSpec(ref),
+		"github.com/kubeedge/api/rules/v1.RuleStatus":                          schema_kubeedge_api_rules_v1_RuleStatus(ref),
+		"k8s.io/api/core/v1.AWSElasticBlockStoreVolumeSource":                  schema_k8sio_api_core_v1_AWSElasticBlockStoreVolumeSource(ref),
+		"k8s.io/api/core/v1.Affinity":                                          schema_k8sio_api_core_v1_Affinity(ref),
+		"k8s.io/api/core/v1.AttachedVolume":                                    schema_k8sio_api_core_v1_AttachedVolume(ref),
+		"k8s.io/api/core/v1.AvoidPods":                                         schema_k8sio_api_core_v1_AvoidPods(ref),
+		"k8s.io/api/core/v1.AzureDiskVolumeSource":                             schema_k8sio_api_core_v1_AzureDiskVolumeSource(ref),
+		"k8s.io/api/core/v1.AzureFilePersistentVolumeSource":                   schema_k8sio_api_core_v1_AzureFilePersistentVolumeSource(ref),
+		"k8s.io/api/core/v1.AzureFileVolumeSource":                             schema_k8sio_api_core_v1_AzureFileVolumeSource(ref),
+		"k8s.io/api/core/v1.Binding":                                           schema_k8sio_api_core_v1_Binding(ref),
+		"k8s.io/api/core/v1.CSIPersistentVolumeSource":                         schema_k8sio_api_core_v1_CSIPersistentVolumeSource(ref),
+		"k8s.io/api/core/v1.CSIVolumeSource":                                   schema_k8sio_api_core_v1_CSIVolumeSource(ref),
+		"k8s.io/api/core/v1.Capabilities":                                      schema_k8sio_api_core_v1_Capabilities(ref),
+		"k8s.io/api/core/v1.CephFSPersistentVolumeSource":                      schema_k8sio_api_core_v1_CephFSPersistentVolumeSource(ref),
+		"k8s.io/api/core/v1.CephFSVolumeSource":                                schema_k8sio_api_core_v1_CephFSVolumeSource(ref),
+		"k8s.io/api/core/v1.CinderPersistentVolumeSource":                      schema_k8sio_api_core_v1_CinderPersistentVolumeSource(ref),
+		"k8s.io/api/core/v1.CinderVolumeSource":                                schema_k8sio_api_core_v1_CinderVolumeSource(ref),
+		"k8s.io/api/core/v1.ClaimSource":                                       schema_k8sio_api_core_v1_ClaimSource(ref),
+		"k8s.io/api/core/v1.ClientIPConfig":                                    schema_k8sio_api_core_v1_ClientIPConfig(ref),
+		"k8s.io/api/core/v1.ClusterTrustBundleProjection":                      schema_k8sio_api_core_v1_ClusterTrustBundleProjection(ref),
+		"k8s.io/api/core/v1.ComponentCondition":                                schema_k8sio_api_core_v1_ComponentCondition(ref),
+		"k8s.io/api/core/v1.ComponentStatus":                                   schema_k8sio_api_core_v1_ComponentStatus(ref),
+		"k8s.io/api/core/v1.ComponentStatusList":                               schema_k8sio_api_core_v1_ComponentStatusList(ref),
+		"k8s.io/api/core/v1.ConfigMap":                                         schema_k8sio_api_core_v1_ConfigMap(ref),
+		"k8s.io/api/core/v1.ConfigMapEnvSource":                                schema_k8sio_api_core_v1_ConfigMapEnvSource(ref),
+		"k8s.io/api/core/v1.ConfigMapKeySelector":                              schema_k8sio_api_core_v1_ConfigMapKeySelector(ref),
+		"k8s.io/api/core/v1.ConfigMapList":                                     schema_k8sio_api_core_v1_ConfigMapList(ref),
+		"k8s.io/api/core/v1.ConfigMapNodeConfigSource":                         schema_k8sio_api_core_v1_ConfigMapNodeConfigSource(ref),
+		"k8s.io/api/core/v1.ConfigMapProjection":                               schema_k8sio_api_core_v1_ConfigMapProjection(ref),
+		"k8s.io/api/core/v1.ConfigMapVolumeSource":                             schema_k8sio_api_core_v1_ConfigMapVolumeSource(ref),
+		"k8s.io/api/core/v1.Container":                                         schema_k8sio_api_core_v1_Container(ref),
+		"k8s.io/api/core/v1.ContainerImage":                                    schema_k8sio_api_core_v1_ContainerImage(ref),
+		"k8s.io/api/core/v1.ContainerPort":                                     schema_k8sio_api_core_v1_ContainerPort(ref),
+		"k8s.io/api/core/v1.ContainerResizePolicy":                             schema_k8sio_api_core_v1_ContainerResizePolicy(ref),
+		"k8s.io/api/core/v1.ContainerState":                                    schema_k8sio_api_core_v1_ContainerState(ref),
+		"k8s.io/api/core/v1.ContainerStateRunning":                             schema_k8sio_api_core_v1_ContainerStateRunning(ref),
+		"k8s.io/api/core/v1.ContainerStateTerminated":                          schema_k8sio_api_core_v1_ContainerStateTerminated(ref),
+		"k8s.io/api/core/v1.ContainerStateWaiting":                             schema_k8sio_api_core_v1_ContainerStateWaiting(ref),
+		"k8s.io/api/core/v1.ContainerStatus":                                   schema_k8sio_api_core_v1_ContainerStatus(ref),
+		"k8s.io/api/core/v1.DaemonEndpoint":                                    schema_k8sio_api_core_v1_DaemonEndpoint(ref),
+		"k8s.io/api/core/v1.DownwardAPIProjection":                             schema_k8sio_api_core_v1_DownwardAPIProjection(ref),
+		"k8s.io/api/core/v1.DownwardAPIVolumeFile":                             schema_k8sio_api_core_v1_DownwardAPIVolumeFile(ref),
+		"k8s.io/api/core/v1.DownwardAPIVolumeSource":                           schema_k8sio_api_core_v1_DownwardAPIVolumeSource(ref),
+		"k8s.io/api/core/v1.EmptyDirVolumeSource":                              schema_k8sio_api_core_v1_EmptyDirVolumeSource(ref),
+		"k8s.io/api/core/v1.EndpointAddress":                                   schema_k8sio_api_core_v1_EndpointAddress(ref),
+		"k8s.io/api/core/v1.EndpointPort":                                      schema_k8sio_api_core_v1_EndpointPort(ref),
+		"k8s.io/api/core/v1.EndpointSubset":                                    schema_k8sio_api_core_v1_EndpointSubset(ref),
+		"k8s.io/api/core/v1.Endpoints":                                         schema_k8sio_api_core_v1_Endpoints(ref),
+		"k8s.io/api/core/v1.EndpointsList":                                     schema_k8sio_api_core_v1_EndpointsList(ref),
+		"k8s.io/api/core/v1.EnvFromSource":                                     schema_k8sio_api_core_v1_EnvFromSource(ref),
+		"k8s.io/api/core/v1.EnvVar":                                            schema_k8sio_api_core_v1_EnvVar(ref),
+		"k8s.io/api/core/v1.EnvVarSource":                                      schema_k8sio_api_core_v1_EnvVarSource(ref),
+		"k8s.io/api/core/v1.EphemeralContainer":                                schema_k8sio_api_core_v1_EphemeralContainer(ref),
+		"k8s.io/api/core/v1.EphemeralContainerCommon":                          schema_k8sio_api_core_v1_EphemeralContainerCommon(ref),
+		"k8s.io/api/core/v1.EphemeralVolumeSource":                             schema_k8sio_api_core_v1_EphemeralVolumeSource(ref),
+		"k8s.io/api/core/v1.Event":                                             schema_k8sio_api_core_v1_Event(ref),
+		"k8s.io/api/core/v1.EventList":                                         schema_k8sio_api_core_v1_EventList(ref),
+		"k8s.io/api/core/v1.EventSeries":                                       schema_k8sio_api_core_v1_EventSeries(ref),
+		"k8s.io/api/core/v1.EventSource":                                       schema_k8sio_api_core_v1_EventSource(ref),
+		"k8s.io/api/core/v1.ExecAction":                                        schema_k8sio_api_core_v1_ExecAction(ref),
+		"k8s.io/api/core/v1.FCVolumeSource":                                    schema_k8sio_api_core_v1_FCVolumeSource(ref),
+		"k8s.io/api/core/v1.FlexPersistentVolumeSource":                        schema_k8sio_api_core_v1_FlexPersistentVolumeSource(ref),
+		"k8s.io/api/core/v1.FlexVolumeSource":                                  schema_k8sio_api_core_v1_FlexVolumeSource(ref),
+		"k8s.io/api/core/v1.FlockerVolumeSource":                               schema_k8sio_api_core_v1_FlockerVolumeSource(ref),
+		"k8s.io/api/core/v1.GCEPersistentDiskVolumeSource":                     schema_k8sio_api_core_v1_GCEPersistentDiskVolumeSource(ref),
+		"k8s.io/api/core/v1.GRPCAction":                                        schema_k8sio_api_core_v1_GRPCAction(ref),
+		"k8s.io/api/core/v1.GitRepoVolumeSource":                               schema_k8sio_api_core_v1_GitRepoVolumeSource(ref),
+		"k8s.io/api/core/v1.GlusterfsPersistentVolumeSource":                   schema_k8sio_api_core_v1_GlusterfsPersistentVolumeSource(ref),
+		"k8s.io/api/core/v1.GlusterfsVolumeSource":                             schema_k8sio_api_core_v1_GlusterfsVolumeSource(ref),
+		"k8s.io/api/core/v1.HTTPGetAction":                                     schema_k8sio_api_core_v1_HTTPGetAction(ref),
+		"k8s.io/api/core/v1.HTTPHeader":                                        schema_k8sio_api_core_v1_HTTPHeader(ref),
+		"k8s.io/api/core/v1.HostAlias":                                         schema_k8sio_api_core_v1_HostAlias(ref),
+		"k8s.io/api/core/v1.HostIP":                                            schema_k8sio_api_core_v1_HostIP(ref),
+		"k8s.io/api/core/v1.HostPathVolumeSource":                              schema_k8sio_api_core_v1_HostPathVolumeSource(ref),
+		"k8s.io/api/core/v1.ISCSIPersistentVolumeSource":                       schema_k8sio_api_core_v1_ISCSIPersistentVolumeSource(ref),
+		"k8s.io/api/core/v1.ISCSIVolumeSource":                                 schema_k8sio_api_core_v1_ISCSIVolumeSource(ref),
+		"k8s.io/api/core/v1.KeyToPath":                                         schema_k8sio_api_core_v1_KeyToPath(ref),
+		"k8s.io/api/core/v1.Lifecycle":                                         schema_k8sio_api_core_v1_Lifecycle(ref),
+		"k8s.io/api/core/v1.LifecycleHandler":                                  schema_k8sio_api_core_v1_LifecycleHandler(ref),
+		"k8s.io/api/core/v1.LimitRange":                                        schema_k8sio_api_core_v1_LimitRange(ref),
+		"k8s.io/api/core/v1.LimitRangeItem":                                    schema_k8sio_api_core_v1_LimitRangeItem(ref),
+		"k8s.io/api/core/v1.LimitRangeList":                                    schema_k8sio_api_core_v1_LimitRangeList(ref),
+		"k8s.io/api/core/v1.LimitRangeSpec":                                    schema_k8sio_api_core_v1_LimitRangeSpec(ref),
+		"k8s.io/api/core/v1.List":                                              schema_k8sio_api_core_v1_List(ref),
+		"k8s.io/api/core/v1.LoadBalancerIngress":                               schema_k8sio_api_core_v1_LoadBalancerIngress(ref),
+		"k8s.io/api/core/v1.LoadBalancerStatus":                                schema_k8sio_api_core_v1_LoadBalancerStatus(ref),
+		"k8s.io/api/core/v1.LocalObjectReference":                              schema_k8sio_api_core_v1_LocalObjectReference(ref),
+		"k8s.io/api/core/v1.LocalVolumeSource":                                 schema_k8sio_api_core_v1_LocalVolumeSource(ref),
+		"k8s.io/api/core/v1.ModifyVolumeStatus":                                schema_k8sio_api_core_v1_ModifyVolumeStatus(ref),
+		"k8s.io/api/core/v1.NFSVolumeSource":                                   schema_k8sio_api_core_v1_NFSVolumeSource(ref),
+		"k8s.io/api/core/v1.Namespace":                                         schema_k8sio_api_core_v1_Namespace(ref),
+		"k8s.io/api/core/v1.NamespaceCondition":                                schema_k8sio_api_core_v1_NamespaceCondition(ref),
+		"k8s.io/api/core/v1.NamespaceList":                                     schema_k8sio_api_core_v1_NamespaceList(ref),
+		"k8s.io/api/core/v1.NamespaceSpec":                                     schema_k8sio_api_core_v1_NamespaceSpec(ref),
+		"k8s.io/api/core/v1.NamespaceStatus":                                   schema_k8sio_api_core_v1_NamespaceStatus(ref),
+		"k8s.io/api/core/v1.Node":                                              schema_k8sio_api_core_v1_Node(ref),
+		"k8s.io/api/core/v1.NodeAddress":                                       schema_k8sio_api_core_v1_NodeAddress(ref),
+		"k8s.io/api/core/v1.NodeAffinity":                                      schema_k8sio_api_core_v1_NodeAffinity(ref),
+		"k8s.io/api/core/v1.NodeCondition":                                     schema_k8sio_api_core_v1_NodeCondition(ref),
+		"k8s.io/api/core/v1.NodeConfigSource":                                  schema_k8sio_api_core_v1_NodeConfigSource(ref),
+		"k8s.io/api/core/v1.NodeConfigStatus":                                  schema_k8sio_api_core_v1_NodeConfigStatus(ref),
+		"k8s.io/api/core/v1.NodeDaemonEndpoints":                               schema_k8sio_api_core_v1_NodeDaemonEndpoints(ref),
+		"k8s.io/api/core/v1.NodeList":                                          schema_k8sio_api_core_v1_NodeList(ref),
+		"k8s.io/api/core/v1.NodeProxyOptions":                                  schema_k8sio_api_core_v1_NodeProxyOptions(ref),
+		"k8s.io/api/core/v1.NodeResources":                                     schema_k8sio_api_core_v1_NodeResources(ref),
+		"k8s.io/api/core/v1.NodeSelector":                                      schema_k8sio_api_core_v1_NodeSelector(ref),
+		"k8s.io/api/core/v1.NodeSelectorRequirement":                           schema_k8sio_api_core_v1_NodeSelectorRequirement(ref),
+		"k8s.io/api/core/v1.NodeSelectorTerm":                                  schema_k8sio_api_core_v1_NodeSelectorTerm(ref),
+		"k8s.io/api/core/v1.NodeSpec":                                          schema_k8sio_api_core_v1_NodeSpec(ref),
+		"k8s.io/api/core/v1.NodeStatus":                                        schema_k8sio_api_core_v1_NodeStatus(ref),
+		"k8s.io/api/core/v1.NodeSystemInfo":                                    schema_k8sio_api_core_v1_NodeSystemInfo(ref),
+		"k8s.io/api/core/v1.ObjectFieldSelector":                               schema_k8sio_api_core_v1_ObjectFieldSelector(ref),
+		"k8s.io/api/core/v1.ObjectReference":                                   schema_k8sio_api_core_v1_ObjectReference(ref),
+		"k8s.io/api/core/v1.PersistentVolume":                                  schema_k8sio_api_core_v1_PersistentVolume(ref),
+		"k8s.io/api/core/v1.PersistentVolumeClaim":                             schema_k8sio_api_core_v1_PersistentVolumeClaim(ref),
+		"k8s.io/api/core/v1.PersistentVolumeClaimCondition":                    schema_k8sio_api_core_v1_PersistentVolumeClaimCondition(ref),
+		"k8s.io/api/core/v1.PersistentVolumeClaimList":                         schema_k8sio_api_core_v1_PersistentVolumeClaimList(ref),
+		"k8s.io/api/core/v1.PersistentVolumeClaimSpec":                         schema_k8sio_api_core_v1_PersistentVolumeClaimSpec(ref),
+		"k8s.io/api/core/v1.PersistentVolumeClaimStatus":                       schema_k8sio_api_core_v1_PersistentVolumeClaimStatus(ref),
+		"k8s.io/api/core/v1.PersistentVolumeClaimTemplate":                     schema_k8sio_api_core_v1_PersistentVolumeClaimTemplate(ref),
+		"k8s.io/api/core/v1.PersistentVolumeClaimVolumeSource":                 schema_k8sio_api_core_v1_PersistentVolumeClaimVolumeSource(ref),
+		"k8s.io/api/core/v1.PersistentVolumeList":                              schema_k8sio_api_core_v1_PersistentVolumeList(ref),
+		"k8s.io/api/core/v1.PersistentVolumeSource":                            schema_k8sio_api_core_v1_PersistentVolumeSource(ref),
+		"k8s.io/api/core/v1.PersistentVolumeSpec":                              schema_k8sio_api_core_v1_PersistentVolumeSpec(ref),
+		"k8s.io/api/core/v1.PersistentVolumeStatus":                            schema_k8sio_api_core_v1_PersistentVolumeStatus(ref),
+		"k8s.io/api/core/v1.PhotonPersistentDiskVolumeSource":                  schema_k8sio_api_core_v1_PhotonPersistentDiskVolumeSource(ref),
+		"k8s.io/api/core/v1.Pod":                                               schema_k8sio_api_core_v1_Pod(ref),
+		"k8s.io/api/core/v1.PodAffinity":                                       schema_k8sio_api_core_v1_PodAffinity(ref),
+		"k8s.io/api/core/v1.PodAffinityTerm":                                   schema_k8sio_api_core_v1_PodAffinityTerm(ref),
+		"k8s.io/api/core/v1.PodAntiAffinity":                                   schema_k8sio_api_core_v1_PodAntiAffinity(ref),
+		"k8s.io/api/core/v1.PodAttachOptions":                                  schema_k8sio_api_core_v1_PodAttachOptions(ref),
+		"k8s.io/api/core/v1.PodCondition":                                      schema_k8sio_api_core_v1_PodCondition(ref),
+		"k8s.io/api/core/v1.PodDNSConfig":                                      schema_k8sio_api_core_v1_PodDNSConfig(ref),
+		"k8s.io/api/core/v1.PodDNSConfigOption":                                schema_k8sio_api_core_v1_PodDNSConfigOption(ref),
+		"k8s.io/api/core/v1.PodExecOptions":                                    schema_k8sio_api_core_v1_PodExecOptions(ref),
+		"k8s.io/api/core/v1.PodIP":                                             schema_k8sio_api_core_v1_PodIP(ref),
+		"k8s.io/api/core/v1.PodList":                                           schema_k8sio_api_core_v1_PodList(ref),
+		"k8s.io/api/core/v1.PodLogOptions":                                     schema_k8sio_api_core_v1_PodLogOptions(ref),
+		"k8s.io/api/core/v1.PodOS":                                             schema_k8sio_api_core_v1_PodOS(ref),
+		"k8s.io/api/core/v1.PodPortForwardOptions":                             schema_k8sio_api_core_v1_PodPortForwardOptions(ref),
+		"k8s.io/api/core/v1.PodProxyOptions":                                   schema_k8sio_api_core_v1_PodProxyOptions(ref),
+		"k8s.io/api/core/v1.PodReadinessGate":                                  schema_k8sio_api_core_v1_PodReadinessGate(ref),
+		"k8s.io/api/core/v1.PodResourceClaim":                                  schema_k8sio_api_core_v1_PodResourceClaim(ref),
+		"k8s.io/api/core/v1.PodResourceClaimStatus":                            schema_k8sio_api_core_v1_PodResourceClaimStatus(ref),
+		"k8s.io/api/core/v1.PodSchedulingGate":                                 schema_k8sio_api_core_v1_PodSchedulingGate(ref),
+		"k8s.io/api/core/v1.PodSecurityContext":                                schema_k8sio_api_core_v1_PodSecurityContext(ref),
+		"k8s.io/api/core/v1.PodSignature":                                      schema_k8sio_api_core_v1_PodSignature(ref),
+		"k8s.io/api/core/v1.PodSpec":                                           schema_k8sio_api_core_v1_PodSpec(ref),
+		"k8s.io/api/core/v1.PodStatus":                                         schema_k8sio_api_core_v1_PodStatus(ref),
+		"k8s.io/api/core/v1.PodStatusResult":                                   schema_k8sio_api_core_v1_PodStatusResult(ref),
+		"k8s.io/api/core/v1.PodTemplate":                                       schema_k8sio_api_core_v1_PodTemplate(ref),
+		"k8s.io/api/core/v1.PodTemplateList":                                   schema_k8sio_api_core_v1_PodTemplateList(ref),
+		"k8s.io/api/core/v1.PodTemplateSpec":                                   schema_k8sio_api_core_v1_PodTemplateSpec(ref),
+		"k8s.io/api/core/v1.PortStatus":                                        schema_k8sio_api_core_v1_PortStatus(ref),
+		"k8s.io/api/core/v1.PortworxVolumeSource":                              schema_k8sio_api_core_v1_PortworxVolumeSource(ref),
+		"k8s.io/api/core/v1.PreferAvoidPodsEntry":                              schema_k8sio_api_core_v1_PreferAvoidPodsEntry(ref),
+		"k8s.io/api/core/v1.PreferredSchedulingTerm":                           schema_k8sio_api_core_v1_PreferredSchedulingTerm(ref),
+		"k8s.io/api/core/v1.Probe":                                             schema_k8sio_api_core_v1_Probe(ref),
+		"k8s.io/api/core/v1.ProbeHandler":                                      schema_k8sio_api_core_v1_ProbeHandler(ref),
+		"k8s.io/api/core/v1.ProjectedVolumeSource":                             schema_k8sio_api_core_v1_ProjectedVolumeSource(ref),
+		"k8s.io/api/core/v1.QuobyteVolumeSource":                               schema_k8sio_api_core_v1_QuobyteVolumeSource(ref),
+		"k8s.io/api/core/v1.RBDPersistentVolumeSource":                         schema_k8sio_api_core_v1_RBDPersistentVolumeSource(ref),
+		"k8s.io/api/core/v1.RBDVolumeSource":                                   schema_k8sio_api_core_v1_RBDVolumeSource(ref),
+		"k8s.io/api/core/v1.RangeAllocation":                                   schema_k8sio_api_core_v1_RangeAllocation(ref),
+		"k8s.io/api/core/v1.ReplicationController":                             schema_k8sio_api_core_v1_ReplicationController(ref),
+		"k8s.io/api/core/v1.ReplicationControllerCondition":                    schema_k8sio_api_core_v1_ReplicationControllerCondition(ref),
+		"k8s.io/api/core/v1.ReplicationControllerList":                         schema_k8sio_api_core_v1_ReplicationControllerList(ref),
+		"k8s.io/api/core/v1.ReplicationControllerSpec":                         schema_k8sio_api_core_v1_ReplicationControllerSpec(ref),
+		"k8s.io/api/core/v1.ReplicationControllerStatus":                       schema_k8sio_api_core_v1_ReplicationControllerStatus(ref),
+		"k8s.io/api/core/v1.ResourceClaim":                                     schema_k8sio_api_core_v1_ResourceClaim(ref),
+		"k8s.io/api/core/v1.ResourceFieldSelector":                             schema_k8sio_api_core_v1_ResourceFieldSelector(ref),
+		"k8s.io/api/core/v1.ResourceQuota":                                     schema_k8sio_api_core_v1_ResourceQuota(ref),
+		"k8s.io/api/core/v1.ResourceQuotaList":                                 schema_k8sio_api_core_v1_ResourceQuotaList(ref),
+		"k8s.io/api/core/v1.ResourceQuotaSpec":                                 schema_k8sio_api_core_v1_ResourceQuotaSpec(ref),
+		"k8s.io/api/core/v1.ResourceQuotaStatus":                               schema_k8sio_api_core_v1_ResourceQuotaStatus(ref),
+		"k8s.io/api/core/v1.ResourceRequirements":                              schema_k8sio_api_core_v1_ResourceRequirements(ref),
+		"k8s.io/api/core/v1.SELinuxOptions":                                    schema_k8sio_api_core_v1_SELinuxOptions(ref),
+		"k8s.io/api/core/v1.ScaleIOPersistentVolumeSource":                     schema_k8sio_api_core_v1_ScaleIOPersistentVolumeSource(ref),
+		"k8s.io/api/core/v1.ScaleIOVolumeSource":                               schema_k8sio_api_core_v1_ScaleIOVolumeSource(ref),
+		"k8s.io/api/core/v1.ScopeSelector":                                     schema_k8sio_api_core_v1_ScopeSelector(ref),
+		"k8s.io/api/core/v1.ScopedResourceSelectorRequirement":                 schema_k8sio_api_core_v1_ScopedResourceSelectorRequirement(ref),
+		"k8s.io/api/core/v1.SeccompProfile":                                    schema_k8sio_api_core_v1_SeccompProfile(ref),
+		"k8s.io/api/core/v1.Secret":                                            schema_k8sio_api_core_v1_Secret(ref),
+		"k8s.io/api/core/v1.SecretEnvSource":                                   schema_k8sio_api_core_v1_SecretEnvSource(ref),
+		"k8s.io/api/core/v1.SecretKeySelector":                                 schema_k8sio_api_core_v1_SecretKeySelector(ref),
+		"k8s.io/api/core/v1.SecretList":                                        schema_k8sio_api_core_v1_SecretList(ref),
+		"k8s.io/api/core/v1.SecretProjection":                                  schema_k8sio_api_core_v1_SecretProjection(ref),
+		"k8s.io/api/core/v1.SecretReference":                                   schema_k8sio_api_core_v1_SecretReference(ref),
+		"k8s.io/api/core/v1.SecretVolumeSource":                                schema_k8sio_api_core_v1_SecretVolumeSource(ref),
+		"k8s.io/api/core/v1.SecurityContext":                                   schema_k8sio_api_core_v1_SecurityContext(ref),
+		"k8s.io/api/core/v1.SerializedReference":                               schema_k8sio_api_core_v1_SerializedReference(ref),
+		"k8s.io/api/core/v1.Service":                                           schema_k8sio_api_core_v1_Service(ref),
+		"k8s.io/api/core/v1.ServiceAccount":                                    schema_k8sio_api_core_v1_ServiceAccount(ref),
+		"k8s.io/api/core/v1.ServiceAccountList":                                schema_k8sio_api_core_v1_ServiceAccountList(ref),
+		"k8s.io/api/core/v1.ServiceAccountTokenProjection":                     schema_k8sio_api_core_v1_ServiceAccountTokenProjection(ref),
+		"k8s.io/api/core/v1.ServiceList":                                       schema_k8sio_api_core_v1_ServiceList(ref),
+		"k8s.io/api/core/v1.ServicePort":                                       schema_k8sio_api_core_v1_ServicePort(ref),
+		"k8s.io/api/core/v1.ServiceProxyOptions":                               schema_k8sio_api_core_v1_ServiceProxyOptions(ref),
+		"k8s.io/api/core/v1.ServiceSpec":                                       schema_k8sio_api_core_v1_ServiceSpec(ref),
+		"k8s.io/api/core/v1.ServiceStatus":                                     schema_k8sio_api_core_v1_ServiceStatus(ref),
+		"k8s.io/api/core/v1.SessionAffinityConfig":                             schema_k8sio_api_core_v1_SessionAffinityConfig(ref),
+		"k8s.io/api/core/v1.SleepAction":                                       schema_k8sio_api_core_v1_SleepAction(ref),
+		"k8s.io/api/core/v1.StorageOSPersistentVolumeSource":                   schema_k8sio_api_core_v1_StorageOSPersistentVolumeSource(ref),
+		"k8s.io/api/core/v1.StorageOSVolumeSource":                             schema_k8sio_api_core_v1_StorageOSVolumeSource(ref),
+		"k8s.io/api/core/v1.Sysctl":                                            schema_k8sio_api_core_v1_Sysctl(ref),
+		"k8s.io/api/core/v1.TCPSocketAction":                                   schema_k8sio_api_core_v1_TCPSocketAction(ref),
+		"k8s.io/api/core/v1.Taint":                                             schema_k8sio_api_core_v1_Taint(ref),
+		"k8s.io/api/core/v1.Toleration":                                        schema_k8sio_api_core_v1_Toleration(ref),
+		"k8s.io/api/core/v1.TopologySelectorLabelRequirement":                  schema_k8sio_api_core_v1_TopologySelectorLabelRequirement(ref),
+		"k8s.io/api/core/v1.TopologySelectorTerm":                              schema_k8sio_api_core_v1_TopologySelectorTerm(ref),
+		"k8s.io/api/core/v1.TopologySpreadConstraint":                          schema_k8sio_api_core_v1_TopologySpreadConstraint(ref),
+		"k8s.io/api/core/v1.TypedLocalObjectReference":                         schema_k8sio_api_core_v1_TypedLocalObjectReference(ref),
+		"k8s.io/api/core/v1.TypedObjectReference":                              schema_k8sio_api_core_v1_TypedObjectReference(ref),
+		"k8s.io/api/core/v1.Volume":                                            schema_k8sio_api_core_v1_Volume(ref),
+		"k8s.io/api/core/v1.VolumeDevice":                                      schema_k8sio_api_core_v1_VolumeDevice(ref),
+		"k8s.io/api/core/v1.VolumeMount":                                       schema_k8sio_api_core_v1_VolumeMount(ref),
+		"k8s.io/api/core/v1.VolumeNodeAffinity":                                schema_k8sio_api_core_v1_VolumeNodeAffinity(ref),
+		"k8s.io/api/core/v1.VolumeProjection":                                  schema_k8sio_api_core_v1_VolumeProjection(ref),
+		"k8s.io/api/core/v1.VolumeResourceRequirements":                        schema_k8sio_api_core_v1_VolumeResourceRequirements(ref),
+		"k8s.io/api/core/v1.VolumeSource":                                      schema_k8sio_api_core_v1_VolumeSource(ref),
+		"k8s.io/api/core/v1.VsphereVirtualDiskVolumeSource":                    schema_k8sio_api_core_v1_VsphereVirtualDiskVolumeSource(ref),
+		"k8s.io/api/core/v1.WeightedPodAffinityTerm":                           schema_k8sio_api_core_v1_WeightedPodAffinityTerm(ref),
+		"k8s.io/api/core/v1.WindowsSecurityContextOptions":                     schema_k8sio_api_core_v1_WindowsSecurityContextOptions(ref),
+		"k8s.io/api/rbac/v1.AggregationRule":                                   schema_k8sio_api_rbac_v1_AggregationRule(ref),
+		"k8s.io/api/rbac/v1.ClusterRole":                                       schema_k8sio_api_rbac_v1_ClusterRole(ref),
+		"k8s.io/api/rbac/v1.ClusterRoleBinding":                                schema_k8sio_api_rbac_v1_ClusterRoleBinding(ref),
+		"k8s.io/api/rbac/v1.ClusterRoleBindingList":                            schema_k8sio_api_rbac_v1_ClusterRoleBindingList(ref),
+		"k8s.io/api/rbac/v1.ClusterRoleList":                                   schema_k8sio_api_rbac_v1_ClusterRoleList(ref),
+		"k8s.io/api/rbac/v1.PolicyRule":                                        schema_k8sio_api_rbac_v1_PolicyRule(ref),
+		"k8s.io/api/rbac/v1.Role":                                              schema_k8sio_api_rbac_v1_Role(ref),
+		"k8s.io/api/rbac/v1.RoleBinding":                                       schema_k8sio_api_rbac_v1_RoleBinding(ref),
+		"k8s.io/api/rbac/v1.RoleBindingList":                                   schema_k8sio_api_rbac_v1_RoleBindingList(ref),
+		"k8s.io/api/rbac/v1.RoleList":                                          schema_k8sio_api_rbac_v1_RoleList(ref),
+		"k8s.io/api/rbac/v1.RoleRef":                                           schema_k8sio_api_rbac_v1_RoleRef(ref),
+		"k8s.io/api/rbac/v1.Subject":                                           schema_k8sio_api_rbac_v1_Subject(ref),
+		"k8s.io/apimachinery/pkg/api/resource.Quantity":                        schema_apimachinery_pkg_api_resource_Quantity(ref),
+		"k8s.io/apimachinery/pkg/api/resource.int64Amount":                     schema_apimachinery_pkg_api_resource_int64Amount(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroup":                        schema_pkg_apis_meta_v1_APIGroup(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroupList":                    schema_pkg_apis_meta_v1_APIGroupList(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.APIResource":                     schema_pkg_apis_meta_v1_APIResource(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.APIResourceList":                 schema_pkg_apis_meta_v1_APIResourceList(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.APIVersions":                     schema_pkg_apis_meta_v1_APIVersions(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.ApplyOptions":                    schema_pkg_apis_meta_v1_ApplyOptions(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.Condition":                       schema_pkg_apis_meta_v1_Condition(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.CreateOptions":                   schema_pkg_apis_meta_v1_CreateOptions(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.DeleteOptions":                   schema_pkg_apis_meta_v1_DeleteOptions(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.Duration":                        schema_pkg_apis_meta_v1_Duration(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.FieldsV1":                        schema_pkg_apis_meta_v1_FieldsV1(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.GetOptions":                      schema_pkg_apis_meta_v1_GetOptions(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupKind":                       schema_pkg_apis_meta_v1_GroupKind(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupResource":                   schema_pkg_apis_meta_v1_GroupResource(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupVersion":                    schema_pkg_apis_meta_v1_GroupVersion(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupVersionForDiscovery":        schema_pkg_apis_meta_v1_GroupVersionForDiscovery(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupVersionKind":                schema_pkg_apis_meta_v1_GroupVersionKind(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupVersionResource":            schema_pkg_apis_meta_v1_GroupVersionResource(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.InternalEvent":                   schema_pkg_apis_meta_v1_InternalEvent(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelector":                   schema_pkg_apis_meta_v1_LabelSelector(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelectorRequirement":        schema_pkg_apis_meta_v1_LabelSelectorRequirement(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.List":                            schema_pkg_apis_meta_v1_List(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta":                        schema_pkg_apis_meta_v1_ListMeta(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.ListOptions":                     schema_pkg_apis_meta_v1_ListOptions(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.ManagedFieldsEntry":              schema_pkg_apis_meta_v1_ManagedFieldsEntry(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.MicroTime":                       schema_pkg_apis_meta_v1_MicroTime(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta":                      schema_pkg_apis_meta_v1_ObjectMeta(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.OwnerReference":                  schema_pkg_apis_meta_v1_OwnerReference(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.PartialObjectMetadata":           schema_pkg_apis_meta_v1_PartialObjectMetadata(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.PartialObjectMetadataList":       schema_pkg_apis_meta_v1_PartialObjectMetadataList(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.Patch":                           schema_pkg_apis_meta_v1_Patch(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.PatchOptions":                    schema_pkg_apis_meta_v1_PatchOptions(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.Preconditions":                   schema_pkg_apis_meta_v1_Preconditions(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.RootPaths":                       schema_pkg_apis_meta_v1_RootPaths(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.ServerAddressByClientCIDR":       schema_pkg_apis_meta_v1_ServerAddressByClientCIDR(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.Status":                          schema_pkg_apis_meta_v1_Status(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.StatusCause":                     schema_pkg_apis_meta_v1_StatusCause(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.StatusDetails":                   schema_pkg_apis_meta_v1_StatusDetails(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.Table":                           schema_pkg_apis_meta_v1_Table(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.TableColumnDefinition":           schema_pkg_apis_meta_v1_TableColumnDefinition(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.TableOptions":                    schema_pkg_apis_meta_v1_TableOptions(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.TableRow":                        schema_pkg_apis_meta_v1_TableRow(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.TableRowCondition":               schema_pkg_apis_meta_v1_TableRowCondition(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.Time":                            schema_pkg_apis_meta_v1_Time(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.Timestamp":                       schema_pkg_apis_meta_v1_Timestamp(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.TypeMeta":                        schema_pkg_apis_meta_v1_TypeMeta(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.UpdateOptions":                   schema_pkg_apis_meta_v1_UpdateOptions(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.WatchEvent":                      schema_pkg_apis_meta_v1_WatchEvent(ref),
+		"k8s.io/apimachinery/pkg/runtime.RawExtension":                         schema_k8sio_apimachinery_pkg_runtime_RawExtension(ref),
+		"k8s.io/apimachinery/pkg/runtime.TypeMeta":                             schema_k8sio_apimachinery_pkg_runtime_TypeMeta(ref),
+		"k8s.io/apimachinery/pkg/runtime.Unknown":                              schema_k8sio_apimachinery_pkg_runtime_Unknown(ref),
+		"k8s.io/apimachinery/pkg/version.Info":                                 schema_k8sio_apimachinery_pkg_version_Info(ref),
 	}
 }
 
-func schema_pkg_apis_apps_v1alpha1_CommandArgsOverrider(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_apps_v1alpha1_CommandArgsOverrider(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -475,7 +480,7 @@ func schema_pkg_apis_apps_v1alpha1_CommandArgsOverrider(ref common.ReferenceCall
 	}
 }
 
-func schema_pkg_apis_apps_v1alpha1_EdgeApplication(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_apps_v1alpha1_EdgeApplication(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -506,25 +511,25 @@ func schema_pkg_apis_apps_v1alpha1_EdgeApplication(ref common.ReferenceCallback)
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec represents the desired behavior of EdgeApplication.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.EdgeApplicationSpec"),
+							Ref:         ref("github.com/kubeedge/api/apps/v1alpha1.EdgeApplicationSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Status represents the status of PropagationStatus.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.EdgeApplicationStatus"),
+							Ref:         ref("github.com/kubeedge/api/apps/v1alpha1.EdgeApplicationStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.EdgeApplicationSpec", "github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.EdgeApplicationStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/kubeedge/api/apps/v1alpha1.EdgeApplicationSpec", "github.com/kubeedge/api/apps/v1alpha1.EdgeApplicationStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_apps_v1alpha1_EdgeApplicationList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_apps_v1alpha1_EdgeApplicationList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -558,7 +563,7 @@ func schema_pkg_apis_apps_v1alpha1_EdgeApplicationList(ref common.ReferenceCallb
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.EdgeApplication"),
+										Ref:     ref("github.com/kubeedge/api/apps/v1alpha1.EdgeApplication"),
 									},
 								},
 							},
@@ -569,11 +574,11 @@ func schema_pkg_apis_apps_v1alpha1_EdgeApplicationList(ref common.ReferenceCallb
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.EdgeApplication", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/kubeedge/api/apps/v1alpha1.EdgeApplication", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_apps_v1alpha1_EdgeApplicationSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_apps_v1alpha1_EdgeApplicationSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -584,14 +589,14 @@ func schema_pkg_apis_apps_v1alpha1_EdgeApplicationSpec(ref common.ReferenceCallb
 						SchemaProps: spec.SchemaProps{
 							Description: "WorkloadTemplate contains original templates of resources to be deployed as an EdgeApplication.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.ResourceTemplate"),
+							Ref:         ref("github.com/kubeedge/api/apps/v1alpha1.ResourceTemplate"),
 						},
 					},
 					"workloadScope": {
 						SchemaProps: spec.SchemaProps{
 							Description: "WorkloadScope represents which node groups the workload will be deployed in.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.WorkloadScope"),
+							Ref:         ref("github.com/kubeedge/api/apps/v1alpha1.WorkloadScope"),
 						},
 					},
 				},
@@ -599,11 +604,11 @@ func schema_pkg_apis_apps_v1alpha1_EdgeApplicationSpec(ref common.ReferenceCallb
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.ResourceTemplate", "github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.WorkloadScope"},
+			"github.com/kubeedge/api/apps/v1alpha1.ResourceTemplate", "github.com/kubeedge/api/apps/v1alpha1.WorkloadScope"},
 	}
 }
 
-func schema_pkg_apis_apps_v1alpha1_EdgeApplicationStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_apps_v1alpha1_EdgeApplicationStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -618,7 +623,7 @@ func schema_pkg_apis_apps_v1alpha1_EdgeApplicationStatus(ref common.ReferenceCal
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.ManifestStatus"),
+										Ref:     ref("github.com/kubeedge/api/apps/v1alpha1.ManifestStatus"),
 									},
 								},
 							},
@@ -628,11 +633,11 @@ func schema_pkg_apis_apps_v1alpha1_EdgeApplicationStatus(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.ManifestStatus"},
+			"github.com/kubeedge/api/apps/v1alpha1.ManifestStatus"},
 	}
 }
 
-func schema_pkg_apis_apps_v1alpha1_EnvOverrider(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_apps_v1alpha1_EnvOverrider(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -678,7 +683,7 @@ func schema_pkg_apis_apps_v1alpha1_EnvOverrider(ref common.ReferenceCallback) co
 	}
 }
 
-func schema_pkg_apis_apps_v1alpha1_ImageOverrider(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_apps_v1alpha1_ImageOverrider(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -688,7 +693,7 @@ func schema_pkg_apis_apps_v1alpha1_ImageOverrider(ref common.ReferenceCallback) 
 					"predicate": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Predicate filters images before applying the rule.\n\nDefaults to nil, in that case, the system will automatically detect image fields if the resource type is Pod, ReplicaSet, Deployment or StatefulSet by following rule:\n  - Pod: /spec/containers/<N>/image\n  - ReplicaSet: /spec/template/spec/containers/<N>/image\n  - Deployment: /spec/template/spec/containers/<N>/image\n  - StatefulSet: /spec/template/spec/containers/<N>/image\nIn addition, all images will be processed if the resource object has more than one containers.\n\nIf not nil, only images matches the filters will be processed.",
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.ImagePredicate"),
+							Ref:         ref("github.com/kubeedge/api/apps/v1alpha1.ImagePredicate"),
 						},
 					},
 					"component": {
@@ -719,11 +724,11 @@ func schema_pkg_apis_apps_v1alpha1_ImageOverrider(ref common.ReferenceCallback) 
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.ImagePredicate"},
+			"github.com/kubeedge/api/apps/v1alpha1.ImagePredicate"},
 	}
 }
 
-func schema_pkg_apis_apps_v1alpha1_ImagePredicate(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_apps_v1alpha1_ImagePredicate(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -745,7 +750,7 @@ func schema_pkg_apis_apps_v1alpha1_ImagePredicate(ref common.ReferenceCallback) 
 	}
 }
 
-func schema_pkg_apis_apps_v1alpha1_Manifest(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_apps_v1alpha1_Manifest(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -756,7 +761,7 @@ func schema_pkg_apis_apps_v1alpha1_Manifest(ref common.ReferenceCallback) common
 	}
 }
 
-func schema_pkg_apis_apps_v1alpha1_ManifestStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_apps_v1alpha1_ManifestStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -767,7 +772,7 @@ func schema_pkg_apis_apps_v1alpha1_ManifestStatus(ref common.ReferenceCallback) 
 						SchemaProps: spec.SchemaProps{
 							Description: "Identifier represents the identity of a resource linking to manifests in spec.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.ResourceIdentifier"),
+							Ref:         ref("github.com/kubeedge/api/apps/v1alpha1.ResourceIdentifier"),
 						},
 					},
 					"conditions": {
@@ -782,11 +787,11 @@ func schema_pkg_apis_apps_v1alpha1_ManifestStatus(ref common.ReferenceCallback) 
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.ResourceIdentifier"},
+			"github.com/kubeedge/api/apps/v1alpha1.ResourceIdentifier"},
 	}
 }
 
-func schema_pkg_apis_apps_v1alpha1_NodeGroup(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_apps_v1alpha1_NodeGroup(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -817,25 +822,25 @@ func schema_pkg_apis_apps_v1alpha1_NodeGroup(ref common.ReferenceCallback) commo
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec represents the specification of the desired behavior of member nodegroup.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.NodeGroupSpec"),
+							Ref:         ref("github.com/kubeedge/api/apps/v1alpha1.NodeGroupSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Status represents the status of member nodegroup.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.NodeGroupStatus"),
+							Ref:         ref("github.com/kubeedge/api/apps/v1alpha1.NodeGroupStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.NodeGroupSpec", "github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.NodeGroupStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/kubeedge/api/apps/v1alpha1.NodeGroupSpec", "github.com/kubeedge/api/apps/v1alpha1.NodeGroupStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_apps_v1alpha1_NodeGroupList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_apps_v1alpha1_NodeGroupList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -869,7 +874,7 @@ func schema_pkg_apis_apps_v1alpha1_NodeGroupList(ref common.ReferenceCallback) c
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.NodeGroup"),
+										Ref:     ref("github.com/kubeedge/api/apps/v1alpha1.NodeGroup"),
 									},
 								},
 							},
@@ -880,11 +885,11 @@ func schema_pkg_apis_apps_v1alpha1_NodeGroupList(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.NodeGroup", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/kubeedge/api/apps/v1alpha1.NodeGroup", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_apps_v1alpha1_NodeGroupSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_apps_v1alpha1_NodeGroupSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -928,7 +933,7 @@ func schema_pkg_apis_apps_v1alpha1_NodeGroupSpec(ref common.ReferenceCallback) c
 	}
 }
 
-func schema_pkg_apis_apps_v1alpha1_NodeGroupStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_apps_v1alpha1_NodeGroupStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -943,7 +948,7 @@ func schema_pkg_apis_apps_v1alpha1_NodeGroupStatus(ref common.ReferenceCallback)
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.NodeStatus"),
+										Ref:     ref("github.com/kubeedge/api/apps/v1alpha1.NodeStatus"),
 									},
 								},
 							},
@@ -953,11 +958,11 @@ func schema_pkg_apis_apps_v1alpha1_NodeGroupStatus(ref common.ReferenceCallback)
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.NodeStatus"},
+			"github.com/kubeedge/api/apps/v1alpha1.NodeStatus"},
 	}
 }
 
-func schema_pkg_apis_apps_v1alpha1_NodeStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_apps_v1alpha1_NodeStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1002,7 +1007,7 @@ func schema_pkg_apis_apps_v1alpha1_NodeStatus(ref common.ReferenceCallback) comm
 	}
 }
 
-func schema_pkg_apis_apps_v1alpha1_Overriders(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_apps_v1alpha1_Overriders(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1024,7 +1029,7 @@ func schema_pkg_apis_apps_v1alpha1_Overriders(ref common.ReferenceCallback) comm
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.ImageOverrider"),
+										Ref:     ref("github.com/kubeedge/api/apps/v1alpha1.ImageOverrider"),
 									},
 								},
 							},
@@ -1038,7 +1043,7 @@ func schema_pkg_apis_apps_v1alpha1_Overriders(ref common.ReferenceCallback) comm
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.EnvOverrider"),
+										Ref:     ref("github.com/kubeedge/api/apps/v1alpha1.EnvOverrider"),
 									},
 								},
 							},
@@ -1052,7 +1057,7 @@ func schema_pkg_apis_apps_v1alpha1_Overriders(ref common.ReferenceCallback) comm
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.CommandArgsOverrider"),
+										Ref:     ref("github.com/kubeedge/api/apps/v1alpha1.CommandArgsOverrider"),
 									},
 								},
 							},
@@ -1066,7 +1071,7 @@ func schema_pkg_apis_apps_v1alpha1_Overriders(ref common.ReferenceCallback) comm
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.CommandArgsOverrider"),
+										Ref:     ref("github.com/kubeedge/api/apps/v1alpha1.CommandArgsOverrider"),
 									},
 								},
 							},
@@ -1080,7 +1085,7 @@ func schema_pkg_apis_apps_v1alpha1_Overriders(ref common.ReferenceCallback) comm
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.ResourcesOverrider"),
+										Ref:     ref("github.com/kubeedge/api/apps/v1alpha1.ResourcesOverrider"),
 									},
 								},
 							},
@@ -1090,11 +1095,11 @@ func schema_pkg_apis_apps_v1alpha1_Overriders(ref common.ReferenceCallback) comm
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.CommandArgsOverrider", "github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.EnvOverrider", "github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.ImageOverrider", "github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.ResourcesOverrider"},
+			"github.com/kubeedge/api/apps/v1alpha1.CommandArgsOverrider", "github.com/kubeedge/api/apps/v1alpha1.EnvOverrider", "github.com/kubeedge/api/apps/v1alpha1.ImageOverrider", "github.com/kubeedge/api/apps/v1alpha1.ResourcesOverrider"},
 	}
 }
 
-func schema_pkg_apis_apps_v1alpha1_ResourceIdentifier(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_apps_v1alpha1_ResourceIdentifier(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1158,7 +1163,7 @@ func schema_pkg_apis_apps_v1alpha1_ResourceIdentifier(ref common.ReferenceCallba
 	}
 }
 
-func schema_pkg_apis_apps_v1alpha1_ResourceTemplate(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_apps_v1alpha1_ResourceTemplate(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1172,8 +1177,7 @@ func schema_pkg_apis_apps_v1alpha1_ResourceTemplate(ref common.ReferenceCallback
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.Manifest"),
+										Ref: ref("github.com/kubeedge/api/apps/v1alpha1.Manifest"),
 									},
 								},
 							},
@@ -1183,11 +1187,11 @@ func schema_pkg_apis_apps_v1alpha1_ResourceTemplate(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.Manifest"},
+			"github.com/kubeedge/api/apps/v1alpha1.Manifest"},
 	}
 }
 
-func schema_pkg_apis_apps_v1alpha1_ResourcesOverrider(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_apps_v1alpha1_ResourcesOverrider(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1218,7 +1222,7 @@ func schema_pkg_apis_apps_v1alpha1_ResourcesOverrider(ref common.ReferenceCallba
 	}
 }
 
-func schema_pkg_apis_apps_v1alpha1_TargetNodeGroup(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_apps_v1alpha1_TargetNodeGroup(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1237,7 +1241,7 @@ func schema_pkg_apis_apps_v1alpha1_TargetNodeGroup(ref common.ReferenceCallback)
 						SchemaProps: spec.SchemaProps{
 							Description: "Overriders represents the override rules that would apply on workload.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.Overriders"),
+							Ref:         ref("github.com/kubeedge/api/apps/v1alpha1.Overriders"),
 						},
 					},
 				},
@@ -1245,11 +1249,11 @@ func schema_pkg_apis_apps_v1alpha1_TargetNodeGroup(ref common.ReferenceCallback)
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.Overriders"},
+			"github.com/kubeedge/api/apps/v1alpha1.Overriders"},
 	}
 }
 
-func schema_pkg_apis_apps_v1alpha1_WorkloadScope(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_apps_v1alpha1_WorkloadScope(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1264,7 +1268,7 @@ func schema_pkg_apis_apps_v1alpha1_WorkloadScope(ref common.ReferenceCallback) c
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.TargetNodeGroup"),
+										Ref:     ref("github.com/kubeedge/api/apps/v1alpha1.TargetNodeGroup"),
 									},
 								},
 							},
@@ -1274,11 +1278,11 @@ func schema_pkg_apis_apps_v1alpha1_WorkloadScope(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1.TargetNodeGroup"},
+			"github.com/kubeedge/api/apps/v1alpha1.TargetNodeGroup"},
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_BluetoothOperations(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_BluetoothOperations(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1305,7 +1309,7 @@ func schema_pkg_apis_devices_v1alpha2_BluetoothOperations(ref common.ReferenceCa
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_BluetoothReadConverter(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_BluetoothReadConverter(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1348,7 +1352,7 @@ func schema_pkg_apis_devices_v1alpha2_BluetoothReadConverter(ref common.Referenc
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.BluetoothOperations"),
+										Ref:     ref("github.com/kubeedge/api/devices/v1alpha2.BluetoothOperations"),
 									},
 								},
 							},
@@ -1358,11 +1362,11 @@ func schema_pkg_apis_devices_v1alpha2_BluetoothReadConverter(ref common.Referenc
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.BluetoothOperations"},
+			"github.com/kubeedge/api/devices/v1alpha2.BluetoothOperations"},
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_CustomizedValue(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_CustomizedValue(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1373,7 +1377,7 @@ func schema_pkg_apis_devices_v1alpha2_CustomizedValue(ref common.ReferenceCallba
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_DataProperty(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_DataProperty(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1409,7 +1413,7 @@ func schema_pkg_apis_devices_v1alpha2_DataProperty(ref common.ReferenceCallback)
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_Device(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_Device(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1439,24 +1443,24 @@ func schema_pkg_apis_devices_v1alpha2_Device(ref common.ReferenceCallback) commo
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.DeviceSpec"),
+							Ref:     ref("github.com/kubeedge/api/devices/v1alpha2.DeviceSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.DeviceStatus"),
+							Ref:     ref("github.com/kubeedge/api/devices/v1alpha2.DeviceStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.DeviceSpec", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.DeviceStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/kubeedge/api/devices/v1alpha2.DeviceSpec", "github.com/kubeedge/api/devices/v1alpha2.DeviceStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_DeviceData(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_DeviceData(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1471,7 +1475,7 @@ func schema_pkg_apis_devices_v1alpha2_DeviceData(ref common.ReferenceCallback) c
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.DataProperty"),
+										Ref:     ref("github.com/kubeedge/api/devices/v1alpha2.DataProperty"),
 									},
 								},
 							},
@@ -1488,11 +1492,11 @@ func schema_pkg_apis_devices_v1alpha2_DeviceData(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.DataProperty"},
+			"github.com/kubeedge/api/devices/v1alpha2.DataProperty"},
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_DeviceList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_DeviceList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1526,7 +1530,7 @@ func schema_pkg_apis_devices_v1alpha2_DeviceList(ref common.ReferenceCallback) c
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.Device"),
+										Ref:     ref("github.com/kubeedge/api/devices/v1alpha2.Device"),
 									},
 								},
 							},
@@ -1537,11 +1541,11 @@ func schema_pkg_apis_devices_v1alpha2_DeviceList(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.Device", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/kubeedge/api/devices/v1alpha2.Device", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_DeviceModel(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_DeviceModel(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1571,18 +1575,18 @@ func schema_pkg_apis_devices_v1alpha2_DeviceModel(ref common.ReferenceCallback) 
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.DeviceModelSpec"),
+							Ref:     ref("github.com/kubeedge/api/devices/v1alpha2.DeviceModelSpec"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.DeviceModelSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/kubeedge/api/devices/v1alpha2.DeviceModelSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_DeviceModelList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_DeviceModelList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1616,7 +1620,7 @@ func schema_pkg_apis_devices_v1alpha2_DeviceModelList(ref common.ReferenceCallba
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.DeviceModel"),
+										Ref:     ref("github.com/kubeedge/api/devices/v1alpha2.DeviceModel"),
 									},
 								},
 							},
@@ -1627,11 +1631,11 @@ func schema_pkg_apis_devices_v1alpha2_DeviceModelList(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.DeviceModel", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/kubeedge/api/devices/v1alpha2.DeviceModel", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_DeviceModelSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_DeviceModelSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1653,7 +1657,7 @@ func schema_pkg_apis_devices_v1alpha2_DeviceModelSpec(ref common.ReferenceCallba
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.DeviceProperty"),
+										Ref:     ref("github.com/kubeedge/api/devices/v1alpha2.DeviceProperty"),
 									},
 								},
 							},
@@ -1663,11 +1667,11 @@ func schema_pkg_apis_devices_v1alpha2_DeviceModelSpec(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.DeviceProperty"},
+			"github.com/kubeedge/api/devices/v1alpha2.DeviceProperty"},
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_DeviceProperty(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_DeviceProperty(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1692,18 +1696,18 @@ func schema_pkg_apis_devices_v1alpha2_DeviceProperty(ref common.ReferenceCallbac
 						SchemaProps: spec.SchemaProps{
 							Description: "Required: PropertyType represents the type and data validation of the property.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.PropertyType"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1alpha2.PropertyType"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.PropertyType"},
+			"github.com/kubeedge/api/devices/v1alpha2.PropertyType"},
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_DevicePropertyVisitor(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_DevicePropertyVisitor(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1734,42 +1738,42 @@ func schema_pkg_apis_devices_v1alpha2_DevicePropertyVisitor(ref common.Reference
 					"customizedValues": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Customized values for visitor of provided protocols",
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.CustomizedValue"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1alpha2.CustomizedValue"),
 						},
 					},
 					"opcua": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Opcua represents a set of additional visitor config fields of opc-ua protocol.",
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.VisitorConfigOPCUA"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1alpha2.VisitorConfigOPCUA"),
 						},
 					},
 					"modbus": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Modbus represents a set of additional visitor config fields of modbus protocol.",
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.VisitorConfigModbus"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1alpha2.VisitorConfigModbus"),
 						},
 					},
 					"bluetooth": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Bluetooth represents a set of additional visitor config fields of bluetooth protocol.",
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.VisitorConfigBluetooth"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1alpha2.VisitorConfigBluetooth"),
 						},
 					},
 					"customizedProtocol": {
 						SchemaProps: spec.SchemaProps{
 							Description: "CustomizedProtocol represents a set of visitor config fields of bluetooth protocol.",
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.VisitorConfigCustomized"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1alpha2.VisitorConfigCustomized"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.CustomizedValue", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.VisitorConfigBluetooth", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.VisitorConfigCustomized", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.VisitorConfigModbus", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.VisitorConfigOPCUA"},
+			"github.com/kubeedge/api/devices/v1alpha2.CustomizedValue", "github.com/kubeedge/api/devices/v1alpha2.VisitorConfigBluetooth", "github.com/kubeedge/api/devices/v1alpha2.VisitorConfigCustomized", "github.com/kubeedge/api/devices/v1alpha2.VisitorConfigModbus", "github.com/kubeedge/api/devices/v1alpha2.VisitorConfigOPCUA"},
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_DeviceSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_DeviceSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1786,7 +1790,7 @@ func schema_pkg_apis_devices_v1alpha2_DeviceSpec(ref common.ReferenceCallback) c
 						SchemaProps: spec.SchemaProps{
 							Description: "Required: The protocol configuration used to connect to the device.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.ProtocolConfig"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1alpha2.ProtocolConfig"),
 						},
 					},
 					"propertyVisitors": {
@@ -1797,7 +1801,7 @@ func schema_pkg_apis_devices_v1alpha2_DeviceSpec(ref common.ReferenceCallback) c
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.DevicePropertyVisitor"),
+										Ref:     ref("github.com/kubeedge/api/devices/v1alpha2.DevicePropertyVisitor"),
 									},
 								},
 							},
@@ -1807,7 +1811,7 @@ func schema_pkg_apis_devices_v1alpha2_DeviceSpec(ref common.ReferenceCallback) c
 						SchemaProps: spec.SchemaProps{
 							Description: "Data section describe a list of time-series properties which should be processed on edge node.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.DeviceData"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1alpha2.DeviceData"),
 						},
 					},
 					"nodeSelector": {
@@ -1820,11 +1824,11 @@ func schema_pkg_apis_devices_v1alpha2_DeviceSpec(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.DeviceData", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.DevicePropertyVisitor", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.ProtocolConfig", "k8s.io/api/core/v1.LocalObjectReference", "k8s.io/api/core/v1.NodeSelector"},
+			"github.com/kubeedge/api/devices/v1alpha2.DeviceData", "github.com/kubeedge/api/devices/v1alpha2.DevicePropertyVisitor", "github.com/kubeedge/api/devices/v1alpha2.ProtocolConfig", "k8s.io/api/core/v1.LocalObjectReference", "k8s.io/api/core/v1.NodeSelector"},
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_DeviceStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_DeviceStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1839,7 +1843,7 @@ func schema_pkg_apis_devices_v1alpha2_DeviceStatus(ref common.ReferenceCallback)
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.Twin"),
+										Ref:     ref("github.com/kubeedge/api/devices/v1alpha2.Twin"),
 									},
 								},
 							},
@@ -1849,11 +1853,11 @@ func schema_pkg_apis_devices_v1alpha2_DeviceStatus(ref common.ReferenceCallback)
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.Twin"},
+			"github.com/kubeedge/api/devices/v1alpha2.Twin"},
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_PropertyType(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_PropertyType(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1862,43 +1866,43 @@ func schema_pkg_apis_devices_v1alpha2_PropertyType(ref common.ReferenceCallback)
 				Properties: map[string]spec.Schema{
 					"int": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.PropertyTypeInt64"),
+							Ref: ref("github.com/kubeedge/api/devices/v1alpha2.PropertyTypeInt64"),
 						},
 					},
 					"string": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.PropertyTypeString"),
+							Ref: ref("github.com/kubeedge/api/devices/v1alpha2.PropertyTypeString"),
 						},
 					},
 					"double": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.PropertyTypeDouble"),
+							Ref: ref("github.com/kubeedge/api/devices/v1alpha2.PropertyTypeDouble"),
 						},
 					},
 					"float": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.PropertyTypeFloat"),
+							Ref: ref("github.com/kubeedge/api/devices/v1alpha2.PropertyTypeFloat"),
 						},
 					},
 					"boolean": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.PropertyTypeBoolean"),
+							Ref: ref("github.com/kubeedge/api/devices/v1alpha2.PropertyTypeBoolean"),
 						},
 					},
 					"bytes": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.PropertyTypeBytes"),
+							Ref: ref("github.com/kubeedge/api/devices/v1alpha2.PropertyTypeBytes"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.PropertyTypeBoolean", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.PropertyTypeBytes", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.PropertyTypeDouble", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.PropertyTypeFloat", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.PropertyTypeInt64", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.PropertyTypeString"},
+			"github.com/kubeedge/api/devices/v1alpha2.PropertyTypeBoolean", "github.com/kubeedge/api/devices/v1alpha2.PropertyTypeBytes", "github.com/kubeedge/api/devices/v1alpha2.PropertyTypeDouble", "github.com/kubeedge/api/devices/v1alpha2.PropertyTypeFloat", "github.com/kubeedge/api/devices/v1alpha2.PropertyTypeInt64", "github.com/kubeedge/api/devices/v1alpha2.PropertyTypeString"},
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_PropertyTypeBoolean(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_PropertyTypeBoolean(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1923,7 +1927,7 @@ func schema_pkg_apis_devices_v1alpha2_PropertyTypeBoolean(ref common.ReferenceCa
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_PropertyTypeBytes(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_PropertyTypeBytes(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1942,7 +1946,7 @@ func schema_pkg_apis_devices_v1alpha2_PropertyTypeBytes(ref common.ReferenceCall
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_PropertyTypeDouble(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_PropertyTypeDouble(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1986,7 +1990,7 @@ func schema_pkg_apis_devices_v1alpha2_PropertyTypeDouble(ref common.ReferenceCal
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_PropertyTypeFloat(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_PropertyTypeFloat(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -2030,7 +2034,7 @@ func schema_pkg_apis_devices_v1alpha2_PropertyTypeFloat(ref common.ReferenceCall
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_PropertyTypeInt64(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_PropertyTypeInt64(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -2074,7 +2078,7 @@ func schema_pkg_apis_devices_v1alpha2_PropertyTypeInt64(ref common.ReferenceCall
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_PropertyTypeString(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_PropertyTypeString(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -2099,7 +2103,7 @@ func schema_pkg_apis_devices_v1alpha2_PropertyTypeString(ref common.ReferenceCal
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_ProtocolConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_ProtocolConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -2109,42 +2113,42 @@ func schema_pkg_apis_devices_v1alpha2_ProtocolConfig(ref common.ReferenceCallbac
 					"opcua": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Protocol configuration for opc-ua",
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.ProtocolConfigOpcUA"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1alpha2.ProtocolConfigOpcUA"),
 						},
 					},
 					"modbus": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Protocol configuration for modbus",
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.ProtocolConfigModbus"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1alpha2.ProtocolConfigModbus"),
 						},
 					},
 					"bluetooth": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Protocol configuration for bluetooth",
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.ProtocolConfigBluetooth"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1alpha2.ProtocolConfigBluetooth"),
 						},
 					},
 					"common": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Configuration for protocol common part",
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.ProtocolConfigCommon"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1alpha2.ProtocolConfigCommon"),
 						},
 					},
 					"customizedProtocol": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Configuration for customized protocol",
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.ProtocolConfigCustomized"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1alpha2.ProtocolConfigCustomized"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.ProtocolConfigBluetooth", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.ProtocolConfigCommon", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.ProtocolConfigCustomized", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.ProtocolConfigModbus", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.ProtocolConfigOpcUA"},
+			"github.com/kubeedge/api/devices/v1alpha2.ProtocolConfigBluetooth", "github.com/kubeedge/api/devices/v1alpha2.ProtocolConfigCommon", "github.com/kubeedge/api/devices/v1alpha2.ProtocolConfigCustomized", "github.com/kubeedge/api/devices/v1alpha2.ProtocolConfigModbus", "github.com/kubeedge/api/devices/v1alpha2.ProtocolConfigOpcUA"},
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_ProtocolConfigBluetooth(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_ProtocolConfigBluetooth(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -2163,7 +2167,7 @@ func schema_pkg_apis_devices_v1alpha2_ProtocolConfigBluetooth(ref common.Referen
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_ProtocolConfigCOM(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_ProtocolConfigCOM(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -2210,7 +2214,7 @@ func schema_pkg_apis_devices_v1alpha2_ProtocolConfigCOM(ref common.ReferenceCall
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_ProtocolConfigCommon(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_ProtocolConfigCommon(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -2219,12 +2223,12 @@ func schema_pkg_apis_devices_v1alpha2_ProtocolConfigCommon(ref common.ReferenceC
 				Properties: map[string]spec.Schema{
 					"com": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.ProtocolConfigCOM"),
+							Ref: ref("github.com/kubeedge/api/devices/v1alpha2.ProtocolConfigCOM"),
 						},
 					},
 					"tcp": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.ProtocolConfigTCP"),
+							Ref: ref("github.com/kubeedge/api/devices/v1alpha2.ProtocolConfigTCP"),
 						},
 					},
 					"commType": {
@@ -2272,18 +2276,18 @@ func schema_pkg_apis_devices_v1alpha2_ProtocolConfigCommon(ref common.ReferenceC
 					"customizedValues": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Customized values for provided protocol",
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.CustomizedValue"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1alpha2.CustomizedValue"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.CustomizedValue", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.ProtocolConfigCOM", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.ProtocolConfigTCP"},
+			"github.com/kubeedge/api/devices/v1alpha2.CustomizedValue", "github.com/kubeedge/api/devices/v1alpha2.ProtocolConfigCOM", "github.com/kubeedge/api/devices/v1alpha2.ProtocolConfigTCP"},
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_ProtocolConfigCustomized(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_ProtocolConfigCustomized(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -2299,18 +2303,18 @@ func schema_pkg_apis_devices_v1alpha2_ProtocolConfigCustomized(ref common.Refere
 					"configData": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Any config data",
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.CustomizedValue"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1alpha2.CustomizedValue"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.CustomizedValue"},
+			"github.com/kubeedge/api/devices/v1alpha2.CustomizedValue"},
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_ProtocolConfigModbus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_ProtocolConfigModbus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -2330,7 +2334,7 @@ func schema_pkg_apis_devices_v1alpha2_ProtocolConfigModbus(ref common.ReferenceC
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_ProtocolConfigOpcUA(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_ProtocolConfigOpcUA(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -2398,7 +2402,7 @@ func schema_pkg_apis_devices_v1alpha2_ProtocolConfigOpcUA(ref common.ReferenceCa
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_ProtocolConfigTCP(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_ProtocolConfigTCP(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -2424,7 +2428,7 @@ func schema_pkg_apis_devices_v1alpha2_ProtocolConfigTCP(ref common.ReferenceCall
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_Twin(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_Twin(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -2442,25 +2446,25 @@ func schema_pkg_apis_devices_v1alpha2_Twin(ref common.ReferenceCallback) common.
 						SchemaProps: spec.SchemaProps{
 							Description: "Required: the desired property value.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.TwinProperty"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1alpha2.TwinProperty"),
 						},
 					},
 					"reported": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Required: the reported property value.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.TwinProperty"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1alpha2.TwinProperty"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.TwinProperty"},
+			"github.com/kubeedge/api/devices/v1alpha2.TwinProperty"},
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_TwinProperty(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_TwinProperty(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -2498,7 +2502,7 @@ func schema_pkg_apis_devices_v1alpha2_TwinProperty(ref common.ReferenceCallback)
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_VisitorConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_VisitorConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -2508,36 +2512,36 @@ func schema_pkg_apis_devices_v1alpha2_VisitorConfig(ref common.ReferenceCallback
 					"opcua": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Opcua represents a set of additional visitor config fields of opc-ua protocol.",
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.VisitorConfigOPCUA"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1alpha2.VisitorConfigOPCUA"),
 						},
 					},
 					"modbus": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Modbus represents a set of additional visitor config fields of modbus protocol.",
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.VisitorConfigModbus"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1alpha2.VisitorConfigModbus"),
 						},
 					},
 					"bluetooth": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Bluetooth represents a set of additional visitor config fields of bluetooth protocol.",
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.VisitorConfigBluetooth"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1alpha2.VisitorConfigBluetooth"),
 						},
 					},
 					"customizedProtocol": {
 						SchemaProps: spec.SchemaProps{
 							Description: "CustomizedProtocol represents a set of visitor config fields of bluetooth protocol.",
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.VisitorConfigCustomized"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1alpha2.VisitorConfigCustomized"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.VisitorConfigBluetooth", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.VisitorConfigCustomized", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.VisitorConfigModbus", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.VisitorConfigOPCUA"},
+			"github.com/kubeedge/api/devices/v1alpha2.VisitorConfigBluetooth", "github.com/kubeedge/api/devices/v1alpha2.VisitorConfigCustomized", "github.com/kubeedge/api/devices/v1alpha2.VisitorConfigModbus", "github.com/kubeedge/api/devices/v1alpha2.VisitorConfigOPCUA"},
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_VisitorConfigBluetooth(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_VisitorConfigBluetooth(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -2570,18 +2574,18 @@ func schema_pkg_apis_devices_v1alpha2_VisitorConfigBluetooth(ref common.Referenc
 						SchemaProps: spec.SchemaProps{
 							Description: "Responsible for converting the data being read from the bluetooth device into a form that is understandable by the platform",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.BluetoothReadConverter"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1alpha2.BluetoothReadConverter"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.BluetoothReadConverter"},
+			"github.com/kubeedge/api/devices/v1alpha2.BluetoothReadConverter"},
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_VisitorConfigCustomized(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_VisitorConfigCustomized(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -2598,18 +2602,18 @@ func schema_pkg_apis_devices_v1alpha2_VisitorConfigCustomized(ref common.Referen
 					"configData": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Required: The configData of customized protocol",
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.CustomizedValue"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1alpha2.CustomizedValue"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1alpha2.CustomizedValue"},
+			"github.com/kubeedge/api/devices/v1alpha2.CustomizedValue"},
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_VisitorConfigModbus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_VisitorConfigModbus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -2664,7 +2668,7 @@ func schema_pkg_apis_devices_v1alpha2_VisitorConfigModbus(ref common.ReferenceCa
 	}
 }
 
-func schema_pkg_apis_devices_v1alpha2_VisitorConfigOPCUA(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1alpha2_VisitorConfigOPCUA(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -2691,7 +2695,7 @@ func schema_pkg_apis_devices_v1alpha2_VisitorConfigOPCUA(ref common.ReferenceCal
 	}
 }
 
-func schema_pkg_apis_devices_v1beta1_CustomizedValue(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1beta1_CustomizedValue(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -2702,7 +2706,7 @@ func schema_pkg_apis_devices_v1beta1_CustomizedValue(ref common.ReferenceCallbac
 	}
 }
 
-func schema_pkg_apis_devices_v1beta1_DBMethodConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1beta1_DBMethodConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -2711,33 +2715,33 @@ func schema_pkg_apis_devices_v1beta1_DBMethodConfig(ref common.ReferenceCallback
 					"influxdb2": {
 						SchemaProps: spec.SchemaProps{
 							Description: "method configuration for database",
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DBMethodInfluxdb2"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1beta1.DBMethodInfluxdb2"),
 						},
 					},
 					"redis": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DBMethodRedis"),
+							Ref: ref("github.com/kubeedge/api/devices/v1beta1.DBMethodRedis"),
 						},
 					},
 					"TDEngine": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DBMethodTDEngine"),
+							Ref: ref("github.com/kubeedge/api/devices/v1beta1.DBMethodTDEngine"),
 						},
 					},
 					"mysql": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DBMethodMySQL"),
+							Ref: ref("github.com/kubeedge/api/devices/v1beta1.DBMethodMySQL"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DBMethodInfluxdb2", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DBMethodMySQL", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DBMethodRedis", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DBMethodTDEngine"},
+			"github.com/kubeedge/api/devices/v1beta1.DBMethodInfluxdb2", "github.com/kubeedge/api/devices/v1beta1.DBMethodMySQL", "github.com/kubeedge/api/devices/v1beta1.DBMethodRedis", "github.com/kubeedge/api/devices/v1beta1.DBMethodTDEngine"},
 	}
 }
 
-func schema_pkg_apis_devices_v1beta1_DBMethodInfluxdb2(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1beta1_DBMethodInfluxdb2(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -2746,24 +2750,24 @@ func schema_pkg_apis_devices_v1beta1_DBMethodInfluxdb2(ref common.ReferenceCallb
 					"influxdb2ClientConfig": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Config of influx database",
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.Influxdb2ClientConfig"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1beta1.Influxdb2ClientConfig"),
 						},
 					},
 					"influxdb2DataConfig": {
 						SchemaProps: spec.SchemaProps{
 							Description: "config of device data when push to influx database",
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.Influxdb2DataConfig"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1beta1.Influxdb2DataConfig"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.Influxdb2ClientConfig", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.Influxdb2DataConfig"},
+			"github.com/kubeedge/api/devices/v1beta1.Influxdb2ClientConfig", "github.com/kubeedge/api/devices/v1beta1.Influxdb2DataConfig"},
 	}
 }
 
-func schema_pkg_apis_devices_v1beta1_DBMethodMySQL(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1beta1_DBMethodMySQL(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -2771,18 +2775,18 @@ func schema_pkg_apis_devices_v1beta1_DBMethodMySQL(ref common.ReferenceCallback)
 				Properties: map[string]spec.Schema{
 					"mysqlClientConfig": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.MySQLClientConfig"),
+							Ref: ref("github.com/kubeedge/api/devices/v1beta1.MySQLClientConfig"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.MySQLClientConfig"},
+			"github.com/kubeedge/api/devices/v1beta1.MySQLClientConfig"},
 	}
 }
 
-func schema_pkg_apis_devices_v1beta1_DBMethodRedis(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1beta1_DBMethodRedis(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -2791,18 +2795,18 @@ func schema_pkg_apis_devices_v1beta1_DBMethodRedis(ref common.ReferenceCallback)
 					"redisClientConfig": {
 						SchemaProps: spec.SchemaProps{
 							Description: "RedisClientConfig of redis database",
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.RedisClientConfig"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1beta1.RedisClientConfig"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.RedisClientConfig"},
+			"github.com/kubeedge/api/devices/v1beta1.RedisClientConfig"},
 	}
 }
 
-func schema_pkg_apis_devices_v1beta1_DBMethodTDEngine(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1beta1_DBMethodTDEngine(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -2811,18 +2815,18 @@ func schema_pkg_apis_devices_v1beta1_DBMethodTDEngine(ref common.ReferenceCallba
 					"TDEngineClientConfig": {
 						SchemaProps: spec.SchemaProps{
 							Description: "tdengineClientConfig of tdengine database",
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.TDEngineClientConfig"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1beta1.TDEngineClientConfig"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.TDEngineClientConfig"},
+			"github.com/kubeedge/api/devices/v1beta1.TDEngineClientConfig"},
 	}
 }
 
-func schema_pkg_apis_devices_v1beta1_Device(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1beta1_Device(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -2852,24 +2856,24 @@ func schema_pkg_apis_devices_v1beta1_Device(ref common.ReferenceCallback) common
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DeviceSpec"),
+							Ref:     ref("github.com/kubeedge/api/devices/v1beta1.DeviceSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DeviceStatus"),
+							Ref:     ref("github.com/kubeedge/api/devices/v1beta1.DeviceStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DeviceSpec", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DeviceStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/kubeedge/api/devices/v1beta1.DeviceSpec", "github.com/kubeedge/api/devices/v1beta1.DeviceStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_devices_v1beta1_DeviceList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1beta1_DeviceList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -2903,7 +2907,7 @@ func schema_pkg_apis_devices_v1beta1_DeviceList(ref common.ReferenceCallback) co
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.Device"),
+										Ref:     ref("github.com/kubeedge/api/devices/v1beta1.Device"),
 									},
 								},
 							},
@@ -2914,11 +2918,11 @@ func schema_pkg_apis_devices_v1beta1_DeviceList(ref common.ReferenceCallback) co
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.Device", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/kubeedge/api/devices/v1beta1.Device", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_devices_v1beta1_DeviceModel(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1beta1_DeviceModel(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -2948,18 +2952,18 @@ func schema_pkg_apis_devices_v1beta1_DeviceModel(ref common.ReferenceCallback) c
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DeviceModelSpec"),
+							Ref:     ref("github.com/kubeedge/api/devices/v1beta1.DeviceModelSpec"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DeviceModelSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/kubeedge/api/devices/v1beta1.DeviceModelSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_devices_v1beta1_DeviceModelList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1beta1_DeviceModelList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -2993,7 +2997,7 @@ func schema_pkg_apis_devices_v1beta1_DeviceModelList(ref common.ReferenceCallbac
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DeviceModel"),
+										Ref:     ref("github.com/kubeedge/api/devices/v1beta1.DeviceModel"),
 									},
 								},
 							},
@@ -3004,11 +3008,11 @@ func schema_pkg_apis_devices_v1beta1_DeviceModelList(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DeviceModel", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/kubeedge/api/devices/v1beta1.DeviceModel", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_devices_v1beta1_DeviceModelSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1beta1_DeviceModelSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -3023,7 +3027,7 @@ func schema_pkg_apis_devices_v1beta1_DeviceModelSpec(ref common.ReferenceCallbac
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.ModelProperty"),
+										Ref:     ref("github.com/kubeedge/api/devices/v1beta1.ModelProperty"),
 									},
 								},
 							},
@@ -3040,11 +3044,11 @@ func schema_pkg_apis_devices_v1beta1_DeviceModelSpec(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.ModelProperty"},
+			"github.com/kubeedge/api/devices/v1beta1.ModelProperty"},
 	}
 }
 
-func schema_pkg_apis_devices_v1beta1_DeviceProperty(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1beta1_DeviceProperty(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -3062,14 +3066,14 @@ func schema_pkg_apis_devices_v1beta1_DeviceProperty(ref common.ReferenceCallback
 						SchemaProps: spec.SchemaProps{
 							Description: "The desired property value.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.TwinProperty"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1beta1.TwinProperty"),
 						},
 					},
 					"visitors": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Visitors are intended to be consumed by device mappers which connect to devices and collect data / perform actions on the device. Required: Protocol relevant config details about the how to access the device property.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.VisitorConfig"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1beta1.VisitorConfig"),
 						},
 					},
 					"reportCycle": {
@@ -3096,18 +3100,18 @@ func schema_pkg_apis_devices_v1beta1_DeviceProperty(ref common.ReferenceCallback
 					"pushMethod": {
 						SchemaProps: spec.SchemaProps{
 							Description: "PushMethod represents the protocol used to push data, please ensure that the mapper can access the destination address.",
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.PushMethod"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1beta1.PushMethod"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.PushMethod", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.TwinProperty", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.VisitorConfig"},
+			"github.com/kubeedge/api/devices/v1beta1.PushMethod", "github.com/kubeedge/api/devices/v1beta1.TwinProperty", "github.com/kubeedge/api/devices/v1beta1.VisitorConfig"},
 	}
 }
 
-func schema_pkg_apis_devices_v1beta1_DeviceSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1beta1_DeviceSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -3135,7 +3139,7 @@ func schema_pkg_apis_devices_v1beta1_DeviceSpec(ref common.ReferenceCallback) co
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DeviceProperty"),
+										Ref:     ref("github.com/kubeedge/api/devices/v1beta1.DeviceProperty"),
 									},
 								},
 							},
@@ -3145,18 +3149,18 @@ func schema_pkg_apis_devices_v1beta1_DeviceSpec(ref common.ReferenceCallback) co
 						SchemaProps: spec.SchemaProps{
 							Description: "Required: The protocol configuration used to connect to the device.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.ProtocolConfig"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1beta1.ProtocolConfig"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DeviceProperty", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.ProtocolConfig", "k8s.io/api/core/v1.LocalObjectReference"},
+			"github.com/kubeedge/api/devices/v1beta1.DeviceProperty", "github.com/kubeedge/api/devices/v1beta1.ProtocolConfig", "k8s.io/api/core/v1.LocalObjectReference"},
 	}
 }
 
-func schema_pkg_apis_devices_v1beta1_DeviceStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1beta1_DeviceStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -3171,21 +3175,35 @@ func schema_pkg_apis_devices_v1beta1_DeviceStatus(ref common.ReferenceCallback) 
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.Twin"),
+										Ref:     ref("github.com/kubeedge/api/devices/v1beta1.Twin"),
 									},
 								},
 							},
+						},
+					},
+					"state": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Optional: The state of the device.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"lastOnlineTime": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Optional: The last time the device was online.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.Twin"},
+			"github.com/kubeedge/api/devices/v1beta1.Twin"},
 	}
 }
 
-func schema_pkg_apis_devices_v1beta1_Influxdb2ClientConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1beta1_Influxdb2ClientConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -3218,7 +3236,7 @@ func schema_pkg_apis_devices_v1beta1_Influxdb2ClientConfig(ref common.ReferenceC
 	}
 }
 
-func schema_pkg_apis_devices_v1beta1_Influxdb2DataConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1beta1_Influxdb2DataConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -3260,7 +3278,7 @@ func schema_pkg_apis_devices_v1beta1_Influxdb2DataConfig(ref common.ReferenceCal
 	}
 }
 
-func schema_pkg_apis_devices_v1beta1_ModelProperty(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1beta1_ModelProperty(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -3320,7 +3338,7 @@ func schema_pkg_apis_devices_v1beta1_ModelProperty(ref common.ReferenceCallback)
 	}
 }
 
-func schema_pkg_apis_devices_v1beta1_MySQLClientConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1beta1_MySQLClientConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -3353,7 +3371,7 @@ func schema_pkg_apis_devices_v1beta1_MySQLClientConfig(ref common.ReferenceCallb
 	}
 }
 
-func schema_pkg_apis_devices_v1beta1_ProtocolConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1beta1_ProtocolConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -3369,18 +3387,18 @@ func schema_pkg_apis_devices_v1beta1_ProtocolConfig(ref common.ReferenceCallback
 					"configData": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Any config data",
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.CustomizedValue"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1beta1.CustomizedValue"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.CustomizedValue"},
+			"github.com/kubeedge/api/devices/v1beta1.CustomizedValue"},
 	}
 }
 
-func schema_pkg_apis_devices_v1beta1_PushMethod(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1beta1_PushMethod(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -3389,30 +3407,30 @@ func schema_pkg_apis_devices_v1beta1_PushMethod(ref common.ReferenceCallback) co
 					"http": {
 						SchemaProps: spec.SchemaProps{
 							Description: "HTTP Push method configuration for http",
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.PushMethodHTTP"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1beta1.PushMethodHTTP"),
 						},
 					},
 					"mqtt": {
 						SchemaProps: spec.SchemaProps{
 							Description: "MQTT Push method configuration for mqtt",
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.PushMethodMQTT"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1beta1.PushMethodMQTT"),
 						},
 					},
 					"dbMethod": {
 						SchemaProps: spec.SchemaProps{
 							Description: "DBMethod represents the method used to push data to database, please ensure that the mapper can access the destination address.",
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DBMethodConfig"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1beta1.DBMethodConfig"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.DBMethodConfig", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.PushMethodHTTP", "github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.PushMethodMQTT"},
+			"github.com/kubeedge/api/devices/v1beta1.DBMethodConfig", "github.com/kubeedge/api/devices/v1beta1.PushMethodHTTP", "github.com/kubeedge/api/devices/v1beta1.PushMethodMQTT"},
 	}
 }
 
-func schema_pkg_apis_devices_v1beta1_PushMethodHTTP(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1beta1_PushMethodHTTP(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -3448,7 +3466,7 @@ func schema_pkg_apis_devices_v1beta1_PushMethodHTTP(ref common.ReferenceCallback
 	}
 }
 
-func schema_pkg_apis_devices_v1beta1_PushMethodMQTT(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1beta1_PushMethodMQTT(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -3488,7 +3506,7 @@ func schema_pkg_apis_devices_v1beta1_PushMethodMQTT(ref common.ReferenceCallback
 	}
 }
 
-func schema_pkg_apis_devices_v1beta1_RedisClientConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1beta1_RedisClientConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -3528,7 +3546,7 @@ func schema_pkg_apis_devices_v1beta1_RedisClientConfig(ref common.ReferenceCallb
 	}
 }
 
-func schema_pkg_apis_devices_v1beta1_TDEngineClientConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1beta1_TDEngineClientConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -3554,7 +3572,7 @@ func schema_pkg_apis_devices_v1beta1_TDEngineClientConfig(ref common.ReferenceCa
 	}
 }
 
-func schema_pkg_apis_devices_v1beta1_Twin(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1beta1_Twin(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -3572,25 +3590,25 @@ func schema_pkg_apis_devices_v1beta1_Twin(ref common.ReferenceCallback) common.O
 						SchemaProps: spec.SchemaProps{
 							Description: "Required: the reported property value.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.TwinProperty"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1beta1.TwinProperty"),
 						},
 					},
 					"observedDesired": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The meaning of here is to indicate desired value of `deviceProperty.Desired` that the mapper has received in current cycle. Useful in cases that people want to check whether the mapper is working appropriately and its internal status is up-to-date. This value should be only updated by devicecontroller upstream.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.TwinProperty"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1beta1.TwinProperty"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.TwinProperty"},
+			"github.com/kubeedge/api/devices/v1beta1.TwinProperty"},
 	}
 }
 
-func schema_pkg_apis_devices_v1beta1_TwinProperty(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1beta1_TwinProperty(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -3628,7 +3646,7 @@ func schema_pkg_apis_devices_v1beta1_TwinProperty(ref common.ReferenceCallback) 
 	}
 }
 
-func schema_pkg_apis_devices_v1beta1_VisitorConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_devices_v1beta1_VisitorConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -3644,18 +3662,18 @@ func schema_pkg_apis_devices_v1beta1_VisitorConfig(ref common.ReferenceCallback)
 					"configData": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Required: The configData of customized protocol",
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.CustomizedValue"),
+							Ref:         ref("github.com/kubeedge/api/devices/v1beta1.CustomizedValue"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1.CustomizedValue"},
+			"github.com/kubeedge/api/devices/v1beta1.CustomizedValue"},
 	}
 }
 
-func schema_pkg_apis_operations_v1alpha1_ImagePrePullJob(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_operations_v1alpha1_ImagePrePullJob(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -3686,14 +3704,14 @@ func schema_pkg_apis_operations_v1alpha1_ImagePrePullJob(ref common.ReferenceCal
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec represents the specification of the desired behavior of ImagePrePullJob.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.ImagePrePullJobSpec"),
+							Ref:         ref("github.com/kubeedge/api/operations/v1alpha1.ImagePrePullJobSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Status represents the status of ImagePrePullJob.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.ImagePrePullJobStatus"),
+							Ref:         ref("github.com/kubeedge/api/operations/v1alpha1.ImagePrePullJobStatus"),
 						},
 					},
 				},
@@ -3701,11 +3719,11 @@ func schema_pkg_apis_operations_v1alpha1_ImagePrePullJob(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.ImagePrePullJobSpec", "github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.ImagePrePullJobStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/kubeedge/api/operations/v1alpha1.ImagePrePullJobSpec", "github.com/kubeedge/api/operations/v1alpha1.ImagePrePullJobStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_operations_v1alpha1_ImagePrePullJobList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_operations_v1alpha1_ImagePrePullJobList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -3741,7 +3759,7 @@ func schema_pkg_apis_operations_v1alpha1_ImagePrePullJobList(ref common.Referenc
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.ImagePrePullJob"),
+										Ref:     ref("github.com/kubeedge/api/operations/v1alpha1.ImagePrePullJob"),
 									},
 								},
 							},
@@ -3752,11 +3770,11 @@ func schema_pkg_apis_operations_v1alpha1_ImagePrePullJobList(ref common.Referenc
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.ImagePrePullJob", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/kubeedge/api/operations/v1alpha1.ImagePrePullJob", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_operations_v1alpha1_ImagePrePullJobSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_operations_v1alpha1_ImagePrePullJobSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -3767,18 +3785,18 @@ func schema_pkg_apis_operations_v1alpha1_ImagePrePullJobSpec(ref common.Referenc
 						SchemaProps: spec.SchemaProps{
 							Description: "ImagePrepullTemplate represents original templates of imagePrePull",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.ImagePrePullTemplate"),
+							Ref:         ref("github.com/kubeedge/api/operations/v1alpha1.ImagePrePullTemplate"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.ImagePrePullTemplate"},
+			"github.com/kubeedge/api/operations/v1alpha1.ImagePrePullTemplate"},
 	}
 }
 
-func schema_pkg_apis_operations_v1alpha1_ImagePrePullJobStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_operations_v1alpha1_ImagePrePullJobStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -3828,7 +3846,7 @@ func schema_pkg_apis_operations_v1alpha1_ImagePrePullJobStatus(ref common.Refere
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.ImagePrePullStatus"),
+										Ref:     ref("github.com/kubeedge/api/operations/v1alpha1.ImagePrePullStatus"),
 									},
 								},
 							},
@@ -3838,11 +3856,11 @@ func schema_pkg_apis_operations_v1alpha1_ImagePrePullJobStatus(ref common.Refere
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.ImagePrePullStatus"},
+			"github.com/kubeedge/api/operations/v1alpha1.ImagePrePullStatus"},
 	}
 }
 
-func schema_pkg_apis_operations_v1alpha1_ImagePrePullStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_operations_v1alpha1_ImagePrePullStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -3852,7 +3870,7 @@ func schema_pkg_apis_operations_v1alpha1_ImagePrePullStatus(ref common.Reference
 					"nodeStatus": {
 						SchemaProps: spec.SchemaProps{
 							Description: "TaskStatus represents the status for each node",
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.TaskStatus"),
+							Ref:         ref("github.com/kubeedge/api/operations/v1alpha1.TaskStatus"),
 						},
 					},
 					"imageStatus": {
@@ -3863,7 +3881,7 @@ func schema_pkg_apis_operations_v1alpha1_ImagePrePullStatus(ref common.Reference
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.ImageStatus"),
+										Ref:     ref("github.com/kubeedge/api/operations/v1alpha1.ImageStatus"),
 									},
 								},
 							},
@@ -3873,11 +3891,11 @@ func schema_pkg_apis_operations_v1alpha1_ImagePrePullStatus(ref common.Reference
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.ImageStatus", "github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.TaskStatus"},
+			"github.com/kubeedge/api/operations/v1alpha1.ImageStatus", "github.com/kubeedge/api/operations/v1alpha1.TaskStatus"},
 	}
 }
 
-func schema_pkg_apis_operations_v1alpha1_ImagePrePullTemplate(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_operations_v1alpha1_ImagePrePullTemplate(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -3978,7 +3996,7 @@ func schema_pkg_apis_operations_v1alpha1_ImagePrePullTemplate(ref common.Referen
 	}
 }
 
-func schema_pkg_apis_operations_v1alpha1_ImageStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_operations_v1alpha1_ImageStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -4012,7 +4030,7 @@ func schema_pkg_apis_operations_v1alpha1_ImageStatus(ref common.ReferenceCallbac
 	}
 }
 
-func schema_pkg_apis_operations_v1alpha1_NodeUpgradeJob(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_operations_v1alpha1_NodeUpgradeJob(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -4043,25 +4061,25 @@ func schema_pkg_apis_operations_v1alpha1_NodeUpgradeJob(ref common.ReferenceCall
 						SchemaProps: spec.SchemaProps{
 							Description: "Specification of the desired behavior of NodeUpgradeJob.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.NodeUpgradeJobSpec"),
+							Ref:         ref("github.com/kubeedge/api/operations/v1alpha1.NodeUpgradeJobSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Most recently observed status of the NodeUpgradeJob.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.NodeUpgradeJobStatus"),
+							Ref:         ref("github.com/kubeedge/api/operations/v1alpha1.NodeUpgradeJobStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.NodeUpgradeJobSpec", "github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.NodeUpgradeJobStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/kubeedge/api/operations/v1alpha1.NodeUpgradeJobSpec", "github.com/kubeedge/api/operations/v1alpha1.NodeUpgradeJobStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_operations_v1alpha1_NodeUpgradeJobList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_operations_v1alpha1_NodeUpgradeJobList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -4097,7 +4115,7 @@ func schema_pkg_apis_operations_v1alpha1_NodeUpgradeJobList(ref common.Reference
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.NodeUpgradeJob"),
+										Ref:     ref("github.com/kubeedge/api/operations/v1alpha1.NodeUpgradeJob"),
 									},
 								},
 							},
@@ -4108,11 +4126,11 @@ func schema_pkg_apis_operations_v1alpha1_NodeUpgradeJobList(ref common.Reference
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.NodeUpgradeJob", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/kubeedge/api/operations/v1alpha1.NodeUpgradeJob", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_operations_v1alpha1_NodeUpgradeJobSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_operations_v1alpha1_NodeUpgradeJobSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -4197,7 +4215,7 @@ func schema_pkg_apis_operations_v1alpha1_NodeUpgradeJobSpec(ref common.Reference
 	}
 }
 
-func schema_pkg_apis_operations_v1alpha1_NodeUpgradeJobStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_operations_v1alpha1_NodeUpgradeJobStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -4261,7 +4279,7 @@ func schema_pkg_apis_operations_v1alpha1_NodeUpgradeJobStatus(ref common.Referen
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.TaskStatus"),
+										Ref:     ref("github.com/kubeedge/api/operations/v1alpha1.TaskStatus"),
 									},
 								},
 							},
@@ -4271,11 +4289,11 @@ func schema_pkg_apis_operations_v1alpha1_NodeUpgradeJobStatus(ref common.Referen
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1.TaskStatus"},
+			"github.com/kubeedge/api/operations/v1alpha1.TaskStatus"},
 	}
 }
 
-func schema_pkg_apis_operations_v1alpha1_TaskStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_operations_v1alpha1_TaskStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -4330,7 +4348,7 @@ func schema_pkg_apis_operations_v1alpha1_TaskStatus(ref common.ReferenceCallback
 	}
 }
 
-func schema_pkg_apis_policy_v1alpha1_AccessClusterRoleBinding(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_policy_v1alpha1_AccessClusterRoleBinding(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -4366,7 +4384,7 @@ func schema_pkg_apis_policy_v1alpha1_AccessClusterRoleBinding(ref common.Referen
 	}
 }
 
-func schema_pkg_apis_policy_v1alpha1_AccessRoleBinding(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_policy_v1alpha1_AccessRoleBinding(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -4402,7 +4420,7 @@ func schema_pkg_apis_policy_v1alpha1_AccessRoleBinding(ref common.ReferenceCallb
 	}
 }
 
-func schema_pkg_apis_policy_v1alpha1_AccessSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_policy_v1alpha1_AccessSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -4431,7 +4449,7 @@ func schema_pkg_apis_policy_v1alpha1_AccessSpec(ref common.ReferenceCallback) co
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/policy/v1alpha1.AccessRoleBinding"),
+										Ref:     ref("github.com/kubeedge/api/policy/v1alpha1.AccessRoleBinding"),
 									},
 								},
 							},
@@ -4445,7 +4463,7 @@ func schema_pkg_apis_policy_v1alpha1_AccessSpec(ref common.ReferenceCallback) co
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/policy/v1alpha1.AccessClusterRoleBinding"),
+										Ref:     ref("github.com/kubeedge/api/policy/v1alpha1.AccessClusterRoleBinding"),
 									},
 								},
 							},
@@ -4455,11 +4473,11 @@ func schema_pkg_apis_policy_v1alpha1_AccessSpec(ref common.ReferenceCallback) co
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/policy/v1alpha1.AccessClusterRoleBinding", "github.com/kubeedge/kubeedge/pkg/apis/policy/v1alpha1.AccessRoleBinding", "k8s.io/api/core/v1.ServiceAccount"},
+			"github.com/kubeedge/api/policy/v1alpha1.AccessClusterRoleBinding", "github.com/kubeedge/api/policy/v1alpha1.AccessRoleBinding", "k8s.io/api/core/v1.ServiceAccount"},
 	}
 }
 
-func schema_pkg_apis_policy_v1alpha1_AccessStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_policy_v1alpha1_AccessStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -4487,7 +4505,7 @@ func schema_pkg_apis_policy_v1alpha1_AccessStatus(ref common.ReferenceCallback) 
 	}
 }
 
-func schema_pkg_apis_policy_v1alpha1_ServiceAccountAccess(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_policy_v1alpha1_ServiceAccountAccess(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -4518,25 +4536,25 @@ func schema_pkg_apis_policy_v1alpha1_ServiceAccountAccess(ref common.ReferenceCa
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec represents the specification of rbac.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/policy/v1alpha1.AccessSpec"),
+							Ref:         ref("github.com/kubeedge/api/policy/v1alpha1.AccessSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Status represents the node list which store the rules.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/kubeedge/kubeedge/pkg/apis/policy/v1alpha1.AccessStatus"),
+							Ref:         ref("github.com/kubeedge/api/policy/v1alpha1.AccessStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/policy/v1alpha1.AccessSpec", "github.com/kubeedge/kubeedge/pkg/apis/policy/v1alpha1.AccessStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/kubeedge/api/policy/v1alpha1.AccessSpec", "github.com/kubeedge/api/policy/v1alpha1.AccessStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_policy_v1alpha1_ServiceAccountAccessList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_policy_v1alpha1_ServiceAccountAccessList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -4570,7 +4588,7 @@ func schema_pkg_apis_policy_v1alpha1_ServiceAccountAccessList(ref common.Referen
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/policy/v1alpha1.ServiceAccountAccess"),
+										Ref:     ref("github.com/kubeedge/api/policy/v1alpha1.ServiceAccountAccess"),
 									},
 								},
 							},
@@ -4581,11 +4599,11 @@ func schema_pkg_apis_policy_v1alpha1_ServiceAccountAccessList(ref common.Referen
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/policy/v1alpha1.ServiceAccountAccess", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/kubeedge/api/policy/v1alpha1.ServiceAccountAccess", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_reliablesyncs_v1alpha1_ClusterObjectSync(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_reliablesyncs_v1alpha1_ClusterObjectSync(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -4615,24 +4633,24 @@ func schema_pkg_apis_reliablesyncs_v1alpha1_ClusterObjectSync(ref common.Referen
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1.ObjectSyncSpec"),
+							Ref:     ref("github.com/kubeedge/api/reliablesyncs/v1alpha1.ObjectSyncSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1.ObjectSyncStatus"),
+							Ref:     ref("github.com/kubeedge/api/reliablesyncs/v1alpha1.ObjectSyncStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1.ObjectSyncSpec", "github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1.ObjectSyncStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/kubeedge/api/reliablesyncs/v1alpha1.ObjectSyncSpec", "github.com/kubeedge/api/reliablesyncs/v1alpha1.ObjectSyncStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_reliablesyncs_v1alpha1_ClusterObjectSyncList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_reliablesyncs_v1alpha1_ClusterObjectSyncList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -4668,7 +4686,7 @@ func schema_pkg_apis_reliablesyncs_v1alpha1_ClusterObjectSyncList(ref common.Ref
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1.ClusterObjectSync"),
+										Ref:     ref("github.com/kubeedge/api/reliablesyncs/v1alpha1.ClusterObjectSync"),
 									},
 								},
 							},
@@ -4679,11 +4697,11 @@ func schema_pkg_apis_reliablesyncs_v1alpha1_ClusterObjectSyncList(ref common.Ref
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1.ClusterObjectSync", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/kubeedge/api/reliablesyncs/v1alpha1.ClusterObjectSync", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_reliablesyncs_v1alpha1_ObjectSync(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_reliablesyncs_v1alpha1_ObjectSync(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -4714,24 +4732,24 @@ func schema_pkg_apis_reliablesyncs_v1alpha1_ObjectSync(ref common.ReferenceCallb
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1.ObjectSyncSpec"),
+							Ref:     ref("github.com/kubeedge/api/reliablesyncs/v1alpha1.ObjectSyncSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1.ObjectSyncStatus"),
+							Ref:     ref("github.com/kubeedge/api/reliablesyncs/v1alpha1.ObjectSyncStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1.ObjectSyncSpec", "github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1.ObjectSyncStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/kubeedge/api/reliablesyncs/v1alpha1.ObjectSyncSpec", "github.com/kubeedge/api/reliablesyncs/v1alpha1.ObjectSyncStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_reliablesyncs_v1alpha1_ObjectSyncList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_reliablesyncs_v1alpha1_ObjectSyncList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -4767,7 +4785,7 @@ func schema_pkg_apis_reliablesyncs_v1alpha1_ObjectSyncList(ref common.ReferenceC
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1.ObjectSync"),
+										Ref:     ref("github.com/kubeedge/api/reliablesyncs/v1alpha1.ObjectSync"),
 									},
 								},
 							},
@@ -4778,11 +4796,11 @@ func schema_pkg_apis_reliablesyncs_v1alpha1_ObjectSyncList(ref common.ReferenceC
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1.ObjectSync", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/kubeedge/api/reliablesyncs/v1alpha1.ObjectSync", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_reliablesyncs_v1alpha1_ObjectSyncSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_reliablesyncs_v1alpha1_ObjectSyncSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -4816,7 +4834,7 @@ func schema_pkg_apis_reliablesyncs_v1alpha1_ObjectSyncSpec(ref common.ReferenceC
 	}
 }
 
-func schema_pkg_apis_reliablesyncs_v1alpha1_ObjectSyncStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_reliablesyncs_v1alpha1_ObjectSyncStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -4836,7 +4854,7 @@ func schema_pkg_apis_reliablesyncs_v1alpha1_ObjectSyncStatus(ref common.Referenc
 	}
 }
 
-func schema_pkg_apis_rules_v1_Rule(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_rules_v1_Rule(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -4866,13 +4884,13 @@ func schema_pkg_apis_rules_v1_Rule(ref common.ReferenceCallback) common.OpenAPID
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/rules/v1.RuleSpec"),
+							Ref:     ref("github.com/kubeedge/api/rules/v1.RuleSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/rules/v1.RuleStatus"),
+							Ref:     ref("github.com/kubeedge/api/rules/v1.RuleStatus"),
 						},
 					},
 				},
@@ -4880,11 +4898,11 @@ func schema_pkg_apis_rules_v1_Rule(ref common.ReferenceCallback) common.OpenAPID
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/rules/v1.RuleSpec", "github.com/kubeedge/kubeedge/pkg/apis/rules/v1.RuleStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/kubeedge/api/rules/v1.RuleSpec", "github.com/kubeedge/api/rules/v1.RuleStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_rules_v1_RuleEndpoint(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_rules_v1_RuleEndpoint(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -4914,7 +4932,7 @@ func schema_pkg_apis_rules_v1_RuleEndpoint(ref common.ReferenceCallback) common.
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/rules/v1.RuleEndpointSpec"),
+							Ref:     ref("github.com/kubeedge/api/rules/v1.RuleEndpointSpec"),
 						},
 					},
 				},
@@ -4922,11 +4940,11 @@ func schema_pkg_apis_rules_v1_RuleEndpoint(ref common.ReferenceCallback) common.
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/rules/v1.RuleEndpointSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/kubeedge/api/rules/v1.RuleEndpointSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_rules_v1_RuleEndpointList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_rules_v1_RuleEndpointList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -4960,7 +4978,7 @@ func schema_pkg_apis_rules_v1_RuleEndpointList(ref common.ReferenceCallback) com
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/rules/v1.RuleEndpoint"),
+										Ref:     ref("github.com/kubeedge/api/rules/v1.RuleEndpoint"),
 									},
 								},
 							},
@@ -4971,11 +4989,11 @@ func schema_pkg_apis_rules_v1_RuleEndpointList(ref common.ReferenceCallback) com
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/rules/v1.RuleEndpoint", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/kubeedge/api/rules/v1.RuleEndpoint", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_rules_v1_RuleEndpointSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_rules_v1_RuleEndpointSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -5013,7 +5031,7 @@ func schema_pkg_apis_rules_v1_RuleEndpointSpec(ref common.ReferenceCallback) com
 	}
 }
 
-func schema_pkg_apis_rules_v1_RuleList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_rules_v1_RuleList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -5047,7 +5065,7 @@ func schema_pkg_apis_rules_v1_RuleList(ref common.ReferenceCallback) common.Open
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kubeedge/kubeedge/pkg/apis/rules/v1.Rule"),
+										Ref:     ref("github.com/kubeedge/api/rules/v1.Rule"),
 									},
 								},
 							},
@@ -5058,11 +5076,11 @@ func schema_pkg_apis_rules_v1_RuleList(ref common.ReferenceCallback) common.Open
 			},
 		},
 		Dependencies: []string{
-			"github.com/kubeedge/kubeedge/pkg/apis/rules/v1.Rule", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/kubeedge/api/rules/v1.Rule", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_rules_v1_RuleSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_rules_v1_RuleSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -5124,7 +5142,7 @@ func schema_pkg_apis_rules_v1_RuleSpec(ref common.ReferenceCallback) common.Open
 	}
 }
 
-func schema_pkg_apis_rules_v1_RuleStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_kubeedge_api_rules_v1_RuleStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -5568,7 +5586,7 @@ func schema_k8sio_api_core_v1_CSIPersistentVolumeSource(ref common.ReferenceCall
 					},
 					"nodeExpandSecretRef": {
 						SchemaProps: spec.SchemaProps{
-							Description: "nodeExpandSecretRef is a reference to the secret object containing sensitive information to pass to the CSI driver to complete the CSI NodeExpandVolume call. This is a beta field which is enabled default by CSINodeExpandSecret feature gate. This field is optional, may be omitted if no secret is required. If the secret object contains more than one secret, all secrets are passed.",
+							Description: "nodeExpandSecretRef is a reference to the secret object containing sensitive information to pass to the CSI driver to complete the CSI NodeExpandVolume call. This field is optional, may be omitted if no secret is required. If the secret object contains more than one secret, all secrets are passed.",
 							Ref:         ref("k8s.io/api/core/v1.SecretReference"),
 						},
 					},
@@ -5946,6 +5964,57 @@ func schema_k8sio_api_core_v1_ClientIPConfig(ref common.ReferenceCallback) commo
 				},
 			},
 		},
+	}
+}
+
+func schema_k8sio_api_core_v1_ClusterTrustBundleProjection(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ClusterTrustBundleProjection describes how to select a set of ClusterTrustBundle objects and project their contents into the pod filesystem.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Select a single ClusterTrustBundle by object name.  Mutually-exclusive with signerName and labelSelector.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"signerName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Select all ClusterTrustBundles that match this signer name. Mutually-exclusive with name.  The contents of all selected ClusterTrustBundles will be unified and deduplicated.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"labelSelector": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Select all ClusterTrustBundles that match this label selector.  Only has effect if signerName is set.  Mutually-exclusive with name.  If unset, interpreted as \"match nothing\".  If set but empty, interpreted as \"match everything\".",
+							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelector"),
+						},
+					},
+					"optional": {
+						SchemaProps: spec.SchemaProps{
+							Description: "If true, don't block pod startup if the referenced ClusterTrustBundle(s) aren't available.  If using name, then the named ClusterTrustBundle is allowed not to exist.  If using signerName, then the combination of signerName and labelSelector is allowed to match zero ClusterTrustBundles.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Relative path from the volume root to write the bundle.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"path"},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelector"},
 	}
 }
 
@@ -6872,7 +6941,6 @@ func schema_k8sio_api_core_v1_ContainerStateRunning(ref common.ReferenceCallback
 					"startedAt": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Time at which the container was last (re-)started",
-							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
 						},
 					},
@@ -6923,14 +6991,12 @@ func schema_k8sio_api_core_v1_ContainerStateTerminated(ref common.ReferenceCallb
 					"startedAt": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Time at which previous execution of the container started",
-							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
 						},
 					},
 					"finishedAt": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Time at which the container last terminated",
-							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
 						},
 					},
@@ -7060,8 +7126,7 @@ func schema_k8sio_api_core_v1_ContainerStatus(ref common.ReferenceCallback) comm
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
+										Ref: ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
 									},
 								},
 							},
@@ -7321,7 +7386,7 @@ func schema_k8sio_api_core_v1_EndpointPort(ref common.ReferenceCallback) common.
 					},
 					"appProtocol": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The application protocol for this port. This is used as a hint for implementations to offer richer behavior for protocols that they understand. This field follows standard Kubernetes label syntax. Valid values are either:\n\n* Un-prefixed protocol names - reserved for IANA standard service names (as per RFC-6335 and https://www.iana.org/assignments/service-names).\n\n* Kubernetes-defined prefixed names:\n  * 'kubernetes.io/h2c' - HTTP/2 over cleartext as described in https://www.rfc-editor.org/rfc/rfc7540\n  * 'kubernetes.io/ws'  - WebSocket over cleartext as described in https://www.rfc-editor.org/rfc/rfc6455\n  * 'kubernetes.io/wss' - WebSocket over TLS as described in https://www.rfc-editor.org/rfc/rfc6455\n\n* Other protocols should use implementation-defined prefixed names such as mycompany.com/my-custom-protocol.",
+							Description: "The application protocol for this port. This is used as a hint for implementations to offer richer behavior for protocols that they understand. This field follows standard Kubernetes label syntax. Valid values are either:\n\n* Un-prefixed protocol names - reserved for IANA standard service names (as per RFC-6335 and https://www.iana.org/assignments/service-names).\n\n* Kubernetes-defined prefixed names:\n  * 'kubernetes.io/h2c' - HTTP/2 prior knowledge over cleartext as described in https://www.rfc-editor.org/rfc/rfc9113.html#name-starting-http-2-with-prior-\n  * 'kubernetes.io/ws'  - WebSocket over cleartext as described in https://www.rfc-editor.org/rfc/rfc6455\n  * 'kubernetes.io/wss' - WebSocket over TLS as described in https://www.rfc-editor.org/rfc/rfc6455\n\n* Other protocols should use implementation-defined prefixed names such as mycompany.com/my-custom-protocol.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -8241,14 +8306,12 @@ func schema_k8sio_api_core_v1_Event(ref common.ReferenceCallback) common.OpenAPI
 					"firstTimestamp": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The time at which the event was first recorded. (Time of server receipt is in TypeMeta.)",
-							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
 						},
 					},
 					"lastTimestamp": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The time at which the most recent occurrence of this event was recorded.",
-							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
 						},
 					},
@@ -8269,7 +8332,6 @@ func schema_k8sio_api_core_v1_Event(ref common.ReferenceCallback) common.OpenAPI
 					"eventTime": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Time when this Event was first observed.",
-							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.MicroTime"),
 						},
 					},
@@ -8385,7 +8447,6 @@ func schema_k8sio_api_core_v1_EventSeries(ref common.ReferenceCallback) common.O
 					"lastObservedTime": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Time of the last occurrence observed",
-							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.MicroTime"),
 						},
 					},
@@ -8869,7 +8930,6 @@ func schema_k8sio_api_core_v1_HTTPGetAction(ref common.ReferenceCallback) common
 					"port": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Name or number of the port to access on the container. Number must be in the range 1 to 65535. Name must be an IANA_SVC_NAME.",
-							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/util/intstr.IntOrString"),
 						},
 					},
@@ -9321,11 +9381,17 @@ func schema_k8sio_api_core_v1_LifecycleHandler(ref common.ReferenceCallback) com
 							Ref:         ref("k8s.io/api/core/v1.TCPSocketAction"),
 						},
 					},
+					"sleep": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Sleep represents the duration that the container should sleep before being terminated.",
+							Ref:         ref("k8s.io/api/core/v1.SleepAction"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/api/core/v1.ExecAction", "k8s.io/api/core/v1.HTTPGetAction", "k8s.io/api/core/v1.TCPSocketAction"},
+			"k8s.io/api/core/v1.ExecAction", "k8s.io/api/core/v1.HTTPGetAction", "k8s.io/api/core/v1.SleepAction", "k8s.io/api/core/v1.TCPSocketAction"},
 	}
 }
 
@@ -9395,8 +9461,7 @@ func schema_k8sio_api_core_v1_LimitRangeItem(ref common.ReferenceCallback) commo
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
+										Ref: ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
 									},
 								},
 							},
@@ -9410,8 +9475,7 @@ func schema_k8sio_api_core_v1_LimitRangeItem(ref common.ReferenceCallback) commo
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
+										Ref: ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
 									},
 								},
 							},
@@ -9425,8 +9489,7 @@ func schema_k8sio_api_core_v1_LimitRangeItem(ref common.ReferenceCallback) commo
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
+										Ref: ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
 									},
 								},
 							},
@@ -9440,8 +9503,7 @@ func schema_k8sio_api_core_v1_LimitRangeItem(ref common.ReferenceCallback) commo
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
+										Ref: ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
 									},
 								},
 							},
@@ -9455,8 +9517,7 @@ func schema_k8sio_api_core_v1_LimitRangeItem(ref common.ReferenceCallback) commo
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
+										Ref: ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
 									},
 								},
 							},
@@ -9587,8 +9648,7 @@ func schema_k8sio_api_core_v1_List(ref common.ReferenceCallback) common.OpenAPID
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("k8s.io/apimachinery/pkg/runtime.RawExtension"),
+										Ref: ref("k8s.io/apimachinery/pkg/runtime.RawExtension"),
 									},
 								},
 							},
@@ -9620,6 +9680,13 @@ func schema_k8sio_api_core_v1_LoadBalancerIngress(ref common.ReferenceCallback) 
 					"hostname": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Hostname is set for load-balancer ingress points that are DNS based (typically AWS load-balancers)",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"ipMode": {
+						SchemaProps: spec.SchemaProps{
+							Description: "IPMode specifies how the load-balancer IP behaves, and may only be specified when the ip field is specified. Setting this to \"VIP\" indicates that traffic is delivered to the node with the destination set to the load-balancer's IP and port. Setting this to \"Proxy\" indicates that traffic is delivered to the node or pod with the destination set to the node's IP and node port or the pod's IP and port. Service implementations may use this information to adjust traffic routing.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -9729,6 +9796,36 @@ func schema_k8sio_api_core_v1_LocalVolumeSource(ref common.ReferenceCallback) co
 					},
 				},
 				Required: []string{"path"},
+			},
+		},
+	}
+}
+
+func schema_k8sio_api_core_v1_ModifyVolumeStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ModifyVolumeStatus represents the status object of ControllerModifyVolume operation",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"targetVolumeAttributesClassName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "targetVolumeAttributesClassName is the name of the VolumeAttributesClass the PVC currently being reconciled",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Description: "status is the status of the ControllerModifyVolume operation. It can be in any of following states:\n - Pending\n   Pending indicates that the PersistentVolumeClaim cannot be modified due to unmet requirements, such as\n   the specified VolumeAttributesClass not existing.\n - InProgress\n   InProgress indicates that the volume is being modified.\n - Infeasible\n  Infeasible indicates that the request has been rejected as invalid by the CSI driver. To\n\t  resolve the error, a valid VolumeAttributesClass needs to be specified.\nNote: New statuses can be added in the future. Consumers should check for unknown statuses and fail appropriately.\n\nPossible enum values:\n - `\"InProgress\"` InProgress indicates that the volume is being modified\n - `\"Infeasible\"` Infeasible indicates that the request has been rejected as invalid by the CSI driver. To resolve the error, a valid VolumeAttributesClass needs to be specified\n - `\"Pending\"` Pending indicates that the PersistentVolumeClaim cannot be modified due to unmet requirements, such as the specified VolumeAttributesClass not existing",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"InProgress", "Infeasible", "Pending"},
+						},
+					},
+				},
+				Required: []string{"status"},
 			},
 		},
 	}
@@ -9846,8 +9943,7 @@ func schema_k8sio_api_core_v1_NamespaceCondition(ref common.ReferenceCallback) c
 					},
 					"lastTransitionTime": {
 						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
 						},
 					},
 					"reason": {
@@ -10134,14 +10230,12 @@ func schema_k8sio_api_core_v1_NodeCondition(ref common.ReferenceCallback) common
 					"lastHeartbeatTime": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Last time we got an update on a given condition.",
-							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
 						},
 					},
 					"lastTransitionTime": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Last time the condition transit from one status to another.",
-							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
 						},
 					},
@@ -10351,8 +10445,7 @@ func schema_k8sio_api_core_v1_NodeResources(ref common.ReferenceCallback) common
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
+										Ref: ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
 									},
 								},
 							},
@@ -10594,8 +10687,7 @@ func schema_k8sio_api_core_v1_NodeStatus(ref common.ReferenceCallback) common.Op
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
+										Ref: ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
 									},
 								},
 							},
@@ -10609,8 +10701,7 @@ func schema_k8sio_api_core_v1_NodeStatus(ref common.ReferenceCallback) common.Op
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
+										Ref: ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
 									},
 								},
 							},
@@ -11054,14 +11145,12 @@ func schema_k8sio_api_core_v1_PersistentVolumeClaimCondition(ref common.Referenc
 					"lastProbeTime": {
 						SchemaProps: spec.SchemaProps{
 							Description: "lastProbeTime is the time we probed the condition.",
-							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
 						},
 					},
 					"lastTransitionTime": {
 						SchemaProps: spec.SchemaProps{
 							Description: "lastTransitionTime is the time the condition transitioned from one status to another.",
-							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
 						},
 					},
@@ -11171,7 +11260,7 @@ func schema_k8sio_api_core_v1_PersistentVolumeClaimSpec(ref common.ReferenceCall
 						SchemaProps: spec.SchemaProps{
 							Description: "resources represents the minimum resources the volume should have. If RecoverVolumeExpansionFailure feature is enabled users are allowed to specify resource requirements that are lower than previous value but must still be higher than capacity recorded in the status field of the claim. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#resources",
 							Default:     map[string]interface{}{},
-							Ref:         ref("k8s.io/api/core/v1.ResourceRequirements"),
+							Ref:         ref("k8s.io/api/core/v1.VolumeResourceRequirements"),
 						},
 					},
 					"volumeName": {
@@ -11208,11 +11297,18 @@ func schema_k8sio_api_core_v1_PersistentVolumeClaimSpec(ref common.ReferenceCall
 							Ref:         ref("k8s.io/api/core/v1.TypedObjectReference"),
 						},
 					},
+					"volumeAttributesClassName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "volumeAttributesClassName may be used to set the VolumeAttributesClass used by this claim. If specified, the CSI driver will create or update the volume with the attributes defined in the corresponding VolumeAttributesClass. This has a different purpose than storageClassName, it can be changed after the claim is created. An empty string value means that no VolumeAttributesClass will be applied to the claim but it's not allowed to reset this field to empty string once it is set. If unspecified and the PersistentVolumeClaim is unbound, the default VolumeAttributesClass will be set by the persistentvolume controller if it exists. If the resource referred to by volumeAttributesClass does not exist, this PersistentVolumeClaim will be set to a Pending state, as reflected by the modifyVolumeStatus field, until such as a resource exists. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#volumeattributesclass (Alpha) Using this field requires the VolumeAttributesClass feature gate to be enabled.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.TypedLocalObjectReference", "k8s.io/api/core/v1.TypedObjectReference", "k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelector"},
+			"k8s.io/api/core/v1.TypedLocalObjectReference", "k8s.io/api/core/v1.TypedObjectReference", "k8s.io/api/core/v1.VolumeResourceRequirements", "k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelector"},
 	}
 }
 
@@ -11254,8 +11350,7 @@ func schema_k8sio_api_core_v1_PersistentVolumeClaimStatus(ref common.ReferenceCa
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
+										Ref: ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
 									},
 								},
 							},
@@ -11289,8 +11384,7 @@ func schema_k8sio_api_core_v1_PersistentVolumeClaimStatus(ref common.ReferenceCa
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
+										Ref: ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
 									},
 								},
 							},
@@ -11317,11 +11411,24 @@ func schema_k8sio_api_core_v1_PersistentVolumeClaimStatus(ref common.ReferenceCa
 							},
 						},
 					},
+					"currentVolumeAttributesClassName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "currentVolumeAttributesClassName is the current name of the VolumeAttributesClass the PVC is using. When unset, there is no VolumeAttributeClass applied to this PersistentVolumeClaim This is an alpha field and requires enabling VolumeAttributesClass feature.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"modifyVolumeStatus": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ModifyVolumeStatus represents the status object of ControllerModifyVolume operation. When this is unset, there is no ModifyVolume operation being attempted. This is an alpha field and requires enabling VolumeAttributesClass feature.",
+							Ref:         ref("k8s.io/api/core/v1.ModifyVolumeStatus"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/api/core/v1.PersistentVolumeClaimCondition", "k8s.io/apimachinery/pkg/api/resource.Quantity"},
+			"k8s.io/api/core/v1.ModifyVolumeStatus", "k8s.io/api/core/v1.PersistentVolumeClaimCondition", "k8s.io/apimachinery/pkg/api/resource.Quantity"},
 	}
 }
 
@@ -11597,8 +11704,7 @@ func schema_k8sio_api_core_v1_PersistentVolumeSpec(ref common.ReferenceCallback)
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
+										Ref: ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
 									},
 								},
 							},
@@ -11806,6 +11912,13 @@ func schema_k8sio_api_core_v1_PersistentVolumeSpec(ref common.ReferenceCallback)
 							Ref:         ref("k8s.io/api/core/v1.VolumeNodeAffinity"),
 						},
 					},
+					"volumeAttributesClassName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name of VolumeAttributesClass to which this persistent volume belongs. Empty value is not allowed. When this field is not set, it indicates that this volume does not belong to any VolumeAttributesClass. This field is mutable and can be changed by the CSI driver after a volume has been updated successfully to a new class. For an unbound PersistentVolume, the volumeAttributesClassName will be matched with unbound PersistentVolumeClaims during the binding process. This is an alpha field and requires enabling VolumeAttributesClass feature.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},
@@ -11845,7 +11958,7 @@ func schema_k8sio_api_core_v1_PersistentVolumeStatus(ref common.ReferenceCallbac
 					},
 					"lastPhaseTransitionTime": {
 						SchemaProps: spec.SchemaProps{
-							Description: "lastPhaseTransitionTime is the time the phase transitioned from one to another and automatically resets to current time everytime a volume phase transitions. This is an alpha field and requires enabling PersistentVolumeLastPhaseTransitionTime feature.",
+							Description: "lastPhaseTransitionTime is the time the phase transitioned from one to another and automatically resets to current time everytime a volume phase transitions. This is a beta field and requires the PersistentVolumeLastPhaseTransitionTime feature to be enabled (enabled by default).",
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
 						},
 					},
@@ -11988,7 +12101,7 @@ func schema_k8sio_api_core_v1_PodAffinityTerm(ref common.ReferenceCallback) comm
 				Properties: map[string]spec.Schema{
 					"labelSelector": {
 						SchemaProps: spec.SchemaProps{
-							Description: "A label query over a set of resources, in this case pods.",
+							Description: "A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.",
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelector"),
 						},
 					},
@@ -12019,6 +12132,46 @@ func schema_k8sio_api_core_v1_PodAffinityTerm(ref common.ReferenceCallback) comm
 						SchemaProps: spec.SchemaProps{
 							Description: "A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field. null selector and null or empty namespaces list means \"this pod's namespace\". An empty selector ({}) matches all namespaces.",
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelector"),
+						},
+					},
+					"matchLabelKeys": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"mismatchLabelKeys": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
 						},
 					},
 				},
@@ -12161,14 +12314,12 @@ func schema_k8sio_api_core_v1_PodCondition(ref common.ReferenceCallback) common.
 					"lastProbeTime": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Last time we probed the condition.",
-							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
 						},
 					},
 					"lastTransitionTime": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Last time the condition transitioned from one status to another.",
-							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
 						},
 					},
@@ -13186,8 +13337,7 @@ func schema_k8sio_api_core_v1_PodSpec(ref common.ReferenceCallback) common.OpenA
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
+										Ref: ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
 									},
 								},
 							},
@@ -13757,7 +13907,6 @@ func schema_k8sio_api_core_v1_PreferAvoidPodsEntry(ref common.ReferenceCallback)
 					"evictionTime": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Time at which this entry was added to the list.",
-							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
 						},
 					},
@@ -14317,7 +14466,6 @@ func schema_k8sio_api_core_v1_ReplicationControllerCondition(ref common.Referenc
 					"lastTransitionTime": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The last time the condition transitioned from one status to another.",
-							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
 						},
 					},
@@ -14570,7 +14718,6 @@ func schema_k8sio_api_core_v1_ResourceFieldSelector(ref common.ReferenceCallback
 					"divisor": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Specifies the output format of the exposed resources, defaults to \"1\"",
-							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
 						},
 					},
@@ -14704,8 +14851,7 @@ func schema_k8sio_api_core_v1_ResourceQuotaSpec(ref common.ReferenceCallback) co
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
+										Ref: ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
 									},
 								},
 							},
@@ -14755,8 +14901,7 @@ func schema_k8sio_api_core_v1_ResourceQuotaStatus(ref common.ReferenceCallback) 
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
+										Ref: ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
 									},
 								},
 							},
@@ -14770,8 +14915,7 @@ func schema_k8sio_api_core_v1_ResourceQuotaStatus(ref common.ReferenceCallback) 
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
+										Ref: ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
 									},
 								},
 							},
@@ -14800,8 +14944,7 @@ func schema_k8sio_api_core_v1_ResourceRequirements(ref common.ReferenceCallback)
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
+										Ref: ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
 									},
 								},
 							},
@@ -14815,8 +14958,7 @@ func schema_k8sio_api_core_v1_ResourceRequirements(ref common.ReferenceCallback)
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
+										Ref: ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
 									},
 								},
 							},
@@ -15930,7 +16072,7 @@ func schema_k8sio_api_core_v1_ServicePort(ref common.ReferenceCallback) common.O
 					},
 					"appProtocol": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The application protocol for this port. This is used as a hint for implementations to offer richer behavior for protocols that they understand. This field follows standard Kubernetes label syntax. Valid values are either:\n\n* Un-prefixed protocol names - reserved for IANA standard service names (as per RFC-6335 and https://www.iana.org/assignments/service-names).\n\n* Kubernetes-defined prefixed names:\n  * 'kubernetes.io/h2c' - HTTP/2 over cleartext as described in https://www.rfc-editor.org/rfc/rfc7540\n  * 'kubernetes.io/ws'  - WebSocket over cleartext as described in https://www.rfc-editor.org/rfc/rfc6455\n  * 'kubernetes.io/wss' - WebSocket over TLS as described in https://www.rfc-editor.org/rfc/rfc6455\n\n* Other protocols should use implementation-defined prefixed names such as mycompany.com/my-custom-protocol.",
+							Description: "The application protocol for this port. This is used as a hint for implementations to offer richer behavior for protocols that they understand. This field follows standard Kubernetes label syntax. Valid values are either:\n\n* Un-prefixed protocol names - reserved for IANA standard service names (as per RFC-6335 and https://www.iana.org/assignments/service-names).\n\n* Kubernetes-defined prefixed names:\n  * 'kubernetes.io/h2c' - HTTP/2 prior knowledge over cleartext as described in https://www.rfc-editor.org/rfc/rfc9113.html#name-starting-http-2-with-prior-\n  * 'kubernetes.io/ws'  - WebSocket over cleartext as described in https://www.rfc-editor.org/rfc/rfc6455\n  * 'kubernetes.io/wss' - WebSocket over TLS as described in https://www.rfc-editor.org/rfc/rfc6455\n\n* Other protocols should use implementation-defined prefixed names such as mycompany.com/my-custom-protocol.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -15946,7 +16088,6 @@ func schema_k8sio_api_core_v1_ServicePort(ref common.ReferenceCallback) common.O
 					"targetPort": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Number or name of the port to access on the pods targeted by the service. Number must be in the range 1 to 65535. Name must be an IANA_SVC_NAME. If this is a string, it will be looked up as a named port in the target Pod's container ports. If this is not specified, the value of the 'port' field is used (an identity map). This field is ignored for services with clusterIP=None, and should be omitted or set equal to the 'port' field. More info: https://kubernetes.io/docs/concepts/services-networking/service/#defining-a-service",
-							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/util/intstr.IntOrString"),
 						},
 					},
@@ -16293,6 +16434,28 @@ func schema_k8sio_api_core_v1_SessionAffinityConfig(ref common.ReferenceCallback
 	}
 }
 
+func schema_k8sio_api_core_v1_SleepAction(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "SleepAction describes a \"sleep\" action.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"seconds": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Seconds is the number of seconds to sleep.",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+				},
+				Required: []string{"seconds"},
+			},
+		},
+	}
+}
+
 func schema_k8sio_api_core_v1_StorageOSPersistentVolumeSource(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -16431,7 +16594,6 @@ func schema_k8sio_api_core_v1_TCPSocketAction(ref common.ReferenceCallback) comm
 					"port": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Number or name of the port to access on the container. Number must be in the range 1 to 65535. Name must be an IANA_SVC_NAME.",
-							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/util/intstr.IntOrString"),
 						},
 					},
@@ -17132,11 +17294,60 @@ func schema_k8sio_api_core_v1_VolumeProjection(ref common.ReferenceCallback) com
 							Ref:         ref("k8s.io/api/core/v1.ServiceAccountTokenProjection"),
 						},
 					},
+					"clusterTrustBundle": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ClusterTrustBundle allows a pod to access the `.spec.trustBundle` field of ClusterTrustBundle objects in an auto-updating file.\n\nAlpha, gated by the ClusterTrustBundleProjection feature gate.\n\nClusterTrustBundle objects can either be selected by name, or by the combination of signer name and a label selector.\n\nKubelet performs aggressive normalization of the PEM contents written into the pod filesystem.  Esoteric PEM features such as inter-block comments and block headers are stripped.  Certificates are deduplicated. The ordering of certificates within the file is arbitrary, and Kubelet may change the order over time.",
+							Ref:         ref("k8s.io/api/core/v1.ClusterTrustBundleProjection"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/api/core/v1.ConfigMapProjection", "k8s.io/api/core/v1.DownwardAPIProjection", "k8s.io/api/core/v1.SecretProjection", "k8s.io/api/core/v1.ServiceAccountTokenProjection"},
+			"k8s.io/api/core/v1.ClusterTrustBundleProjection", "k8s.io/api/core/v1.ConfigMapProjection", "k8s.io/api/core/v1.DownwardAPIProjection", "k8s.io/api/core/v1.SecretProjection", "k8s.io/api/core/v1.ServiceAccountTokenProjection"},
+	}
+}
+
+func schema_k8sio_api_core_v1_VolumeResourceRequirements(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "VolumeResourceRequirements describes the storage resource requirements for a volume.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"limits": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
+									},
+								},
+							},
+						},
+					},
+					"requests": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/api/resource.Quantity"},
 	}
 }
 
@@ -18560,7 +18771,6 @@ func schema_pkg_apis_meta_v1_Condition(ref common.ReferenceCallback) common.Open
 					"lastTransitionTime": {
 						SchemaProps: spec.SchemaProps{
 							Description: "lastTransitionTime is the last time the condition transitioned from one status to another. This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.",
-							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
 						},
 					},
@@ -19116,8 +19326,7 @@ func schema_pkg_apis_meta_v1_List(ref common.ReferenceCallback) common.OpenAPIDe
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("k8s.io/apimachinery/pkg/runtime.RawExtension"),
+										Ref: ref("k8s.io/apimachinery/pkg/runtime.RawExtension"),
 									},
 								},
 							},
@@ -19403,7 +19612,6 @@ func schema_pkg_apis_meta_v1_ObjectMeta(ref common.ReferenceCallback) common.Ope
 					"creationTimestamp": {
 						SchemaProps: spec.SchemaProps{
 							Description: "CreationTimestamp is a timestamp representing the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations. Clients may not set this value. It is represented in RFC3339 form and is in UTC.\n\nPopulated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
-							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
 						},
 					},
@@ -20185,7 +20393,6 @@ func schema_pkg_apis_meta_v1_TableRow(ref common.ReferenceCallback) common.OpenA
 					"object": {
 						SchemaProps: spec.SchemaProps{
 							Description: "This field contains the requested additional information about each object based on the includeObject policy when requesting the Table. If \"None\", this field is empty, if \"Object\" this will be the default serialization of the object for the current API version, and if \"Metadata\" (the default) will contain the object metadata. Check the returned kind and apiVersion of the object before parsing. The media type of the object will always match the enclosing list - if this as a JSON table, these will be JSON encoded objects.",
-							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/runtime.RawExtension"),
 						},
 					},
@@ -20384,7 +20591,6 @@ func schema_pkg_apis_meta_v1_WatchEvent(ref common.ReferenceCallback) common.Ope
 					"object": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Object is:\n * If Type is Added or Modified: the new state of the object.\n * If Type is Deleted: the state of the object immediately before deletion.\n * If Type is Error: *Status is recommended; other types may make sense\n   depending on context.",
-							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/runtime.RawExtension"),
 						},
 					},

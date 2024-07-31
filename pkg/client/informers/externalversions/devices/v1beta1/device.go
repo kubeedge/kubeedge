@@ -22,7 +22,7 @@ import (
 	"context"
 	time "time"
 
-	devicesv1beta1 "github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1"
+	devicesv1beta1 "github.com/kubeedge/api/devices/v1beta1"
 	versioned "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/kubeedge/kubeedge/pkg/client/informers/externalversions/internalinterfaces"
 	v1beta1 "github.com/kubeedge/kubeedge/pkg/client/listers/devices/v1beta1"

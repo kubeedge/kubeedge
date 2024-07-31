@@ -25,6 +25,8 @@ import (
 
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/api/devices/v1beta1"
+	pb "github.com/kubeedge/api/dmi/v1beta1"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dmiclient"
@@ -33,8 +35,6 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
-	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1"
-	pb "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1beta1"
 	"github.com/kubeedge/kubeedge/pkg/util"
 )
 

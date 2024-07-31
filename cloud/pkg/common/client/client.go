@@ -29,7 +29,7 @@ import (
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 
-	cloudcoreConfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
+	cloudcoreConfig "github.com/kubeedge/api/componentconfig/cloudcore/v1alpha1"
 	crdClientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 )
 

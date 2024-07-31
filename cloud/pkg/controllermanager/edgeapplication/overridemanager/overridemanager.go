@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	errorutil "k8s.io/apimachinery/pkg/util/errors"
 
-	appsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1"
+	appsv1alpha1 "github.com/kubeedge/api/apps/v1alpha1"
 )
 
 // overrideOption defines the JSONPatch operator

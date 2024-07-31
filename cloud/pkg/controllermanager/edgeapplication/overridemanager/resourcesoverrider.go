@@ -24,7 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1"
+	"github.com/kubeedge/api/apps/v1alpha1"
 )
 
 type ResourcesOverrider struct{}

@@ -28,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic/fake"
 
+	"github.com/kubeedge/api/reliablesyncs/v1alpha1"
 	"github.com/kubeedge/beehive/pkg/common"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -36,7 +37,6 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1"
 )
 
 func TestCompareResourceVersion(t *testing.T) {

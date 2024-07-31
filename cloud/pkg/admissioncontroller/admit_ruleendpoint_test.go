@@ -8,7 +8,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	rulesv1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
+	rulesv1 "github.com/kubeedge/api/rules/v1"
 )
 
 func Test_admitRuleEndpoint(t *testing.T) {

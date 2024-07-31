@@ -19,12 +19,12 @@ limitations under the License.
 package fake
 
 import (
-	appsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1"
-	devicesv1beta1 "github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1"
-	operationsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1"
-	policyv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/policy/v1alpha1"
-	reliablesyncsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1"
-	rulesv1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
+	appsv1alpha1 "github.com/kubeedge/api/apps/v1alpha1"
+	devicesv1beta1 "github.com/kubeedge/api/devices/v1beta1"
+	operationsv1alpha1 "github.com/kubeedge/api/operations/v1alpha1"
+	policyv1alpha1 "github.com/kubeedge/api/policy/v1alpha1"
+	reliablesyncsv1alpha1 "github.com/kubeedge/api/reliablesyncs/v1alpha1"
+	rulesv1 "github.com/kubeedge/api/rules/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"

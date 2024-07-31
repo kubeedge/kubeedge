@@ -3,13 +3,13 @@ package devicetwin
 import (
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/api/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	deviceconfig "github.com/kubeedge/kubeedge/edge/pkg/devicetwin/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtmodule"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 )
 
 // DeviceTwin the module

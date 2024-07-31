@@ -13,9 +13,9 @@ import (
 	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/serviceaccount"
 
+	policyv1alpha1 "github.com/kubeedge/api/policy/v1alpha1"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
-	policyv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/policy/v1alpha1"
 )
 
 const (

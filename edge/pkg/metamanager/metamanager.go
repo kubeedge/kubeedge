@@ -4,6 +4,7 @@ import (
 	"github.com/beego/beego/v2/client/orm"
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/api/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
@@ -13,7 +14,6 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver"
 	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 )
 
 type metaManager struct {

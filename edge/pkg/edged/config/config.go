@@ -12,7 +12,7 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet"
 	kubeletconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
 
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
+	"github.com/kubeedge/api/componentconfig/edgecore/v1alpha2"
 )
 
 var Config Configure

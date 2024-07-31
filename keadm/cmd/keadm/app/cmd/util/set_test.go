@@ -21,7 +21,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
+	"github.com/kubeedge/api/componentconfig/edgecore/v1alpha2"
 )
 
 func TestParseSetByComma(t *testing.T) {

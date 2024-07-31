@@ -6,8 +6,8 @@ import (
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	api "github.com/kubeedge/kubeedge/pkg/apis/fsm/v1alpha1"
-	"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1"
+	api "github.com/kubeedge/api/fsm/v1alpha1"
+	"github.com/kubeedge/api/operations/v1alpha1"
 )
 
 // PodStatusRequest is Message.Content which comes from edge

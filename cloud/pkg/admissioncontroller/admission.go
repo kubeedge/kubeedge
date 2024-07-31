@@ -20,9 +20,9 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/api/devices/v1beta1"
+	v1 "github.com/kubeedge/api/rules/v1"
 	"github.com/kubeedge/kubeedge/cloud/cmd/admission/app/options"
-	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1"
-	v1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
 	"github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 )
 

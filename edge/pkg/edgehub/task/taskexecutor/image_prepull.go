@@ -25,6 +25,8 @@ import (
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/klog/v2"
 
+	api "github.com/kubeedge/api/fsm/v1alpha1"
+	"github.com/kubeedge/api/operations/v1alpha1"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/common/types"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
@@ -32,8 +34,6 @@ import (
 	edgeutil "github.com/kubeedge/kubeedge/edge/pkg/common/util"
 	metaclient "github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
-	api "github.com/kubeedge/kubeedge/pkg/apis/fsm/v1alpha1"
-	"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
 )
 

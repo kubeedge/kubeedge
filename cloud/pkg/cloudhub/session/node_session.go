@@ -28,6 +28,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/api/reliablesyncs/v1alpha1"
 	beehivemodel "github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
@@ -36,7 +37,6 @@ import (
 	edgeconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
 	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
-	"github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1"
 	reliableclient "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 	"github.com/kubeedge/viaduct/pkg/conn"

@@ -21,6 +21,7 @@ import (
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/klog/v2"
 
+	configv1alpha1 "github.com/kubeedge/api/componentconfig/cloudcore/v1alpha1"
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
@@ -30,7 +31,6 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/filter/defaultmaster"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/filter/endpointresource"
-	configv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
 // DynamicController use dynamicSharedInformer to dispatch messages

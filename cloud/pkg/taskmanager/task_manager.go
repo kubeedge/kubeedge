@@ -21,6 +21,7 @@ import (
 
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/api/componentconfig/cloudcore/v1alpha1"
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
@@ -30,7 +31,6 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/nodeupgradecontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/util"
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/util/controller"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
 type TaskManager struct {

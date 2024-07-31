@@ -8,7 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 
-	devicesv1beta1 "github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1"
+	devicesv1beta1 "github.com/kubeedge/api/devices/v1beta1"
 )
 
 func admitDeviceModel(review admissionv1.AdmissionReview) *admissionv1.AdmissionResponse {

@@ -49,6 +49,8 @@ import (
 	corelisters "k8s.io/client-go/listers/core/v1"
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/api/componentconfig/cloudcore/v1alpha1"
+	rulesv1 "github.com/kubeedge/api/rules/v1"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
@@ -62,8 +64,6 @@ import (
 	comconstants "github.com/kubeedge/kubeedge/common/constants"
 	common "github.com/kubeedge/kubeedge/common/constants"
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
-	rulesv1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
 	crdClientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 	kubeedgeutil "github.com/kubeedge/kubeedge/pkg/util"

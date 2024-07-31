@@ -22,7 +22,7 @@ import (
 	"context"
 	time "time"
 
-	reliablesyncsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1"
+	reliablesyncsv1alpha1 "github.com/kubeedge/api/reliablesyncs/v1alpha1"
 	versioned "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/kubeedge/kubeedge/pkg/client/informers/externalversions/internalinterfaces"
 	v1alpha1 "github.com/kubeedge/kubeedge/pkg/client/listers/reliablesyncs/v1alpha1"

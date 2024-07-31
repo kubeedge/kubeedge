@@ -26,6 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/api/reliablesyncs/v1alpha1"
 	beehivecontext "github.com/kubeedge/beehive/pkg/core/context"
 	beehivemodel "github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common"
@@ -38,7 +39,6 @@ import (
 	taskutil "github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/util"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
 	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
-	"github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1"
 	reliableclient "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 	synclisters "github.com/kubeedge/kubeedge/pkg/client/listers/reliablesyncs/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
