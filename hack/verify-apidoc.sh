@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright 2020 The KUBEEDGE_ROOT Authors.
+# Copyright 2020 The KubeEdge Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,35 +13,38 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 set -o errexit
 set -o nounset
 set -o pipefail
 
-
-# Determine the root directory of the project
 KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+DIFFROOT="${KUBEEDGE_ROOT}/apidoc"
+TMP_DIFFROOT="${KUBEEDGE_ROOT}/_tmp/apidoc"
+_tmp="${KUBEEDGE_ROOT}/_tmp"
 
-# Define paths using KUBEEDGE_ROOT
-DIFFROOT_OPENAPI="${KUBEEDGE_ROOT}/apidoc/generated/openapi"
-TMP_DIFFROOT_OPENAPI="${KUBEEDGE_ROOT}/_tmp/apidoc/generated/openapi"
-DIFFROOT_SWAGGER="${KUBEEDGE_ROOT}/apidoc/generated/swagger"
-TMP_DIFFROOT_SWAGGER="${KUBEEDGE_ROOT}/_tmp/apidoc/generated/swagger"
+cleanup() {
+  rm -rf "${_tmp}"
+}
 
-# Create temporary directories for comparison
-mkdir -p "${TMP_DIFFROOT_OPENAPI}"
-mkdir -p "${TMP_DIFFROOT_SWAGGER}"
+trap cleanup EXIT SIGINT
 
-# Copy existing files to temporary directories
-cp -a "${DIFFROOT_OPENAPI}"/* "${TMP_DIFFROOT_OPENAPI}"
-cp -a "${DIFFROOT_SWAGGER}"/* "${TMP_DIFFROOT_SWAGGER}"
+cleanup
 
-# Generate new OpenAPI and Swagger files
+mkdir -p "${TMP_DIFFROOT}"
+cp -a "${DIFFROOT}"/* "${TMP_DIFFROOT}"
+
 "${KUBEEDGE_ROOT}/apidoc/tools/generate-openapi.sh"
 "${KUBEEDGE_ROOT}/apidoc/tools/update-swagger-docs.sh"
 
-# Compare generated files to see if they are up-to-date
-diff -Naupr "${DIFFROOT_OPENAPI}" "${TMP_DIFFROOT_OPENAPI}" || { echo "OpenAPI files need updating. Run the generation scripts."; exit 1; }
-diff -Naupr "${DIFFROOT_SWAGGER}" "${TMP_DIFFROOT_SWAGGER}" || { echo "Swagger files need updating. Run the generation scripts."; exit 1; }
+echo "Diffing ${DIFFROOT} against freshly generated codegen"
+ret=0
+diff -Naupr "${DIFFROOT}" "${TMP_DIFFROOT}" || ret=$?
+cp -a "${TMP_DIFFROOT}"/* "${DIFFROOT}"
 
-# Clean up
-rm -rf "${KUBEEDGE_ROOT}/_tmp"
+if [[ $ret -eq 0 ]]; then
+  echo "${DIFFROOT} up to date."
+else
+  echo "${DIFFROOT} is out of date. Please run swagger.json"
+  exit 1
+fi
