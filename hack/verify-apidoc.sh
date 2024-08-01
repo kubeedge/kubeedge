@@ -45,6 +45,6 @@ cp -a "${TMP_DIFFROOT}"/* "${DIFFROOT}"
 if [[ $ret -eq 0 ]]; then
   echo "${DIFFROOT} up to date."
 else
-  echo "${DIFFROOT} is out of date. Please run swagger.json"
+  echo "${DIFFROOT} is out of date. Please re-generate swagger.json"
   exit 1
 fi
