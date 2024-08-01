@@ -25,7 +25,7 @@ import (
 	"k8s.io/kubernetes/test/e2e/framework"
 
 	"github.com/kubeedge/kubeedge/tests/e2e/constants"
-	. "github.com/kubeedge/kubeedge/tests/e2e/testsuite"
+	"github.com/kubeedge/kubeedge/tests/e2e/testsuite"
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 )
 
@@ -74,7 +74,7 @@ var _ = Describe("Application deployment test in keadm E2E scenario", func() {
 			podName := "pod-app-" + utils.GetRandomString(5)
 			pod := utils.NewPod(podName, ctx.Cfg.AppImageURL[0])
 
-			CreatePodTest(clientSet, pod)
+			testsuite.CreatePodTest(clientSet, pod)
 		})
 	})
 })
