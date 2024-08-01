@@ -204,7 +204,7 @@ func (r *Rest) GoToTarget(data map[string]interface{}, _ chan struct{}) (interfa
 	nodeName, ok := data["nodeName"].(string)
 	if !ok {
 		err := fmt.Errorf("input data does not exist valid value \"nodeName\"")
-		klog.Warningf(err.Error())
+		klog.Warning(err.Error())
 	}
 	req, err := httpUtils.BuildRequest(http.MethodPost, r.Endpoint, bytes.NewReader(content), "", nodeName)
 	if err != nil {

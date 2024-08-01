@@ -21,7 +21,9 @@ func (cmm *ConfigMapManager) Events() chan watch.Event {
 func NewConfigMapManager(config *v1alpha1.EdgeController, si cache.SharedIndexInformer) (*ConfigMapManager, error) {
 	events := make(chan watch.Event, config.Buffer.ConfigMapEvent)
 	rh := NewCommonResourceEventHandler(events, nil)
-	si.AddEventHandler(rh)
+	if _, err := si.AddEventHandler(rh); err != nil {
+		return nil, err
+	}
 
 	return &ConfigMapManager{events: events}, nil
 }

@@ -161,7 +161,10 @@ func (cm *CertManager) rotate() {
 		}
 		if err := wait.ExponentialBackoff(backoff, cm.rotateCert); err != nil {
 			utilruntime.HandleError(fmt.Errorf("reached backoff limit, still unable to rotate certs: %v", err))
-			wait.PollInfinite(32*time.Second, cm.rotateCert)
+			if err := wait.PollInfinite(32*time.Second, cm.rotateCert); err != nil {
+				// TODO: handle error
+				klog.Error(err)
+			}
 		}
 	}, time.Second)
 }

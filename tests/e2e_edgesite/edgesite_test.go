@@ -29,7 +29,7 @@ import (
 	"k8s.io/kubernetes/test/e2e/framework"
 
 	"github.com/kubeedge/kubeedge/tests/e2e/constants"
-	. "github.com/kubeedge/kubeedge/tests/e2e/testsuite"
+	"github.com/kubeedge/kubeedge/tests/e2e/testsuite"
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 )
 
@@ -85,21 +85,21 @@ var _ = Describe("Application deployment test in E2E scenario using EdgeSite", f
 			replica := int32(1)
 			//Generate the random string and assign as a UID
 			UID = "edgecore-depl-app-" + utils.GetRandomString(5)
-			CreateDeploymentTest(clientSet, replica, UID)
+			testsuite.CreateDeploymentTest(clientSet, replica, UID)
 		})
 
 		It("E2E_ES_APP_DEPLOYMENT_2: Create deployment with replicas and check the pods are coming up correctly", func() {
 			replica := int32(3)
 			//Generate the random string and assign as a UID
 			UID = "edgecore-depl-app-" + utils.GetRandomString(5)
-			CreateDeploymentTest(clientSet, replica, UID)
+			testsuite.CreateDeploymentTest(clientSet, replica, UID)
 		})
 
 		It("E2E_ES_APP_DEPLOYMENT_3: Create deployment and check deployment ctrler re-creating pods when user deletes the pods manually", func() {
 			replica := int32(3)
 			//Generate the random string and assign as a UID
 			UID = "edgecore-depl-app-" + utils.GetRandomString(5)
-			podList := CreateDeploymentTest(clientSet, replica, UID)
+			podList := testsuite.CreateDeploymentTest(clientSet, replica, UID)
 			for _, pod := range podList.Items {
 				err := utils.DeletePod(clientSet, pod.Namespace, pod.Name)
 				Expect(err).To(BeNil())
@@ -148,7 +148,7 @@ var _ = Describe("Application deployment test in E2E scenario using EdgeSite", f
 			podName := "pod-app-" + utils.GetRandomString(5)
 			pod := utils.NewPod(podName, ctx.Cfg.AppImageURL[0])
 
-			CreatePodTest(clientSet, pod)
+			testsuite.CreatePodTest(clientSet, pod)
 		})
 
 		It("E2E_ES_POD_DEPLOYMENT_2: Create the pod and delete pod happening successfully", func() {
@@ -156,7 +156,7 @@ var _ = Describe("Application deployment test in E2E scenario using EdgeSite", f
 			podName := "pod-app-" + utils.GetRandomString(5)
 			pod := utils.NewPod(podName, ctx.Cfg.AppImageURL[0])
 
-			podList := CreatePodTest(clientSet, pod)
+			podList := testsuite.CreatePodTest(clientSet, pod)
 			for _, pod := range podList.Items {
 				err := utils.DeletePod(clientSet, pod.Namespace, pod.Name)
 				Expect(err).To(BeNil())
@@ -169,7 +169,7 @@ var _ = Describe("Application deployment test in E2E scenario using EdgeSite", f
 			podName := "pod-app-" + utils.GetRandomString(5)
 			pod := utils.NewPod(podName, ctx.Cfg.AppImageURL[0])
 
-			podList := CreatePodTest(clientSet, pod)
+			podList := testsuite.CreatePodTest(clientSet, pod)
 			for _, pod := range podList.Items {
 				err := utils.DeletePod(clientSet, pod.Namespace, pod.Name)
 				Expect(err).To(BeNil())
@@ -187,7 +187,7 @@ var _ = Describe("Application deployment test in E2E scenario using EdgeSite", f
 				podName := "pod-app-" + utils.GetRandomString(5)
 				pod := utils.NewPod(podName, ctx.Cfg.AppImageURL[0])
 
-				podList := CreatePodTest(clientSet, pod)
+				podList := testsuite.CreatePodTest(clientSet, pod)
 				for _, pod := range podList.Items {
 					err := utils.DeletePod(clientSet, pod.Namespace, pod.Name)
 					Expect(err).To(BeNil())

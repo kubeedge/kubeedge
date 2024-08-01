@@ -345,7 +345,7 @@ func (cu *KubeCloudHelmInstTool) checkProfile(baseHelmRoot string) error {
 		for k := range validProfiles {
 			validKeys = append(validKeys, k)
 		}
-		return fmt.Errorf(fmt.Sprintf("profile %s not in %s", cu.ProfileKey, strings.Join(validKeys, ",")))
+		return fmt.Errorf("profile %s not in %s", cu.ProfileKey, strings.Join(validKeys, ","))
 	}
 
 	return nil

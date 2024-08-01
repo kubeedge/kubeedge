@@ -22,8 +22,8 @@ import (
 
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
-	. "github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtmanager"
-	. "github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtmodule"
+	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtmanager"
+	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtmodule"
 )
 
 func TestDTModule_InitWorker(t *testing.T) {
@@ -38,15 +38,15 @@ func TestDTModule_InitWorker(t *testing.T) {
 	tests := []struct {
 		name   string
 		fields fields
-		want   DTWorker
+		want   dtmanager.DTWorker
 	}{
 		{
 			name: dtcommon.MemModule,
 			fields: fields{
 				Name: dtcommon.MemModule,
 			},
-			want: MemWorker{
-				Worker: Worker{
+			want: dtmanager.MemWorker{
+				Worker: dtmanager.Worker{
 					ReceiverChan:  recvCh,
 					ConfirmChan:   confirmCh,
 					HeartBeatChan: heartBearCh,
@@ -60,8 +60,8 @@ func TestDTModule_InitWorker(t *testing.T) {
 			fields: fields{
 				Name: dtcommon.TwinModule,
 			},
-			want: TwinWorker{
-				Worker: Worker{
+			want: dtmanager.TwinWorker{
+				Worker: dtmanager.Worker{
 					ReceiverChan:  recvCh,
 					ConfirmChan:   confirmCh,
 					HeartBeatChan: heartBearCh,
@@ -75,8 +75,8 @@ func TestDTModule_InitWorker(t *testing.T) {
 			fields: fields{
 				Name: dtcommon.DeviceModule,
 			},
-			want: DeviceWorker{
-				Worker: Worker{
+			want: dtmanager.DeviceWorker{
+				Worker: dtmanager.Worker{
 					ReceiverChan:  recvCh,
 					ConfirmChan:   confirmCh,
 					HeartBeatChan: heartBearCh,
@@ -90,8 +90,8 @@ func TestDTModule_InitWorker(t *testing.T) {
 			fields: fields{
 				Name: dtcommon.CommModule,
 			},
-			want: CommWorker{
-				Worker: Worker{
+			want: dtmanager.CommWorker{
+				Worker: dtmanager.Worker{
 					ReceiverChan:  recvCh,
 					ConfirmChan:   confirmCh,
 					HeartBeatChan: heartBearCh,
@@ -103,7 +103,7 @@ func TestDTModule_InitWorker(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dm := &DTModule{
+			dm := &dtmodule.DTModule{
 				Name: tt.fields.Name,
 			}
 			dm.InitWorker(recvCh, confirmCh, heartBearCh, ctx)
@@ -143,7 +143,7 @@ func TestDTModule_Start(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dm := DTModule{
+			dm := dtmodule.DTModule{
 				Name: tt.fields.Name,
 			}
 			dm.InitWorker(tt.fields.RecvCh, tt.fields.ConfirmCh, tt.fields.HeartBeatCh, tt.fields.Ctx)

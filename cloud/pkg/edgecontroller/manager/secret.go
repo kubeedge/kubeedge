@@ -21,7 +21,9 @@ func (sm *SecretManager) Events() chan watch.Event {
 func NewSecretManager(config *v1alpha1.EdgeController, si cache.SharedIndexInformer) (*SecretManager, error) {
 	events := make(chan watch.Event, config.Buffer.SecretEvent)
 	rh := NewCommonResourceEventHandler(events, nil)
-	si.AddEventHandler(rh)
+	if _, err := si.AddEventHandler(rh); err != nil {
+		return nil, err
+	}
 
 	return &SecretManager{events: events}, nil
 }

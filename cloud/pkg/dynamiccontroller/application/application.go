@@ -25,7 +25,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/filter"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
-	"github.com/kubeedge/kubeedge/pkg/util/pass-through"
+	passthrough "github.com/kubeedge/kubeedge/pkg/util/pass-through"
 )
 
 type Center struct {
