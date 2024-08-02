@@ -34,8 +34,16 @@ cleanup
 mkdir -p "${TMP_DIFFROOT}"
 cp -a "${DIFFROOT}"/* "${TMP_DIFFROOT}"
 
+chmod +x "${KUBEEDGE_ROOT}/apidoc/tools/generate-openapi.sh"
+chmod +x "${KUBEEDGE_ROOT}/apidoc/tools/update-swagger-docs.sh"
+
+
 "${KUBEEDGE_ROOT}/apidoc/tools/generate-openapi.sh"
 "${KUBEEDGE_ROOT}/apidoc/tools/update-swagger-docs.sh"
+
+chmod -x "${KUBEEDGE_ROOT}/apidoc/tools/generate-openapi.sh"
+chmod -x "${KUBEEDGE_ROOT}/apidoc/tools/update-swagger-docs.sh"
+
 
 echo "Diffing ${DIFFROOT} against freshly generated definition"
 ret=0
