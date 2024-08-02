@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "description": "Kubeedge is Open, Multi-Cloud, Multi-Cluster Kubernetes Orchestration System. For more information, please see https://github.com/Kubeedge/Kubeedge.",
+    "description": "KubeEdge is an open source system for extending native containerized application orchestration capabilities to hosts at Edge. For more information, please see https://github.com/Kubeedge/Kubeedge.",
     "title": "Kubeedge OpenAPI",
     "license": {
       "name": "Apache 2.0",
@@ -152,7 +152,7 @@
           "$ref": "#/parameters/limit-1NfNmdNH"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -391,7 +391,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -631,7 +631,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -812,7 +812,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -1033,7 +1033,7 @@
       },
       "parameters": [
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -1270,7 +1270,7 @@
           "required": true
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -1448,7 +1448,7 @@
           "required": true
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -1504,7 +1504,7 @@
           "$ref": "#/parameters/limit-1NfNmdNH"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -1578,7 +1578,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -1660,7 +1660,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -1731,7 +1731,7 @@
           "$ref": "#/parameters/limit-1NfNmdNH"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -1810,7 +1810,7 @@
           "required": true
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -1941,7 +1941,7 @@
           "$ref": "#/parameters/limit-1NfNmdNH"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -2012,7 +2012,7 @@
           "$ref": "#/parameters/limit-1NfNmdNH"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -2251,7 +2251,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -2491,7 +2491,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -2672,7 +2672,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -2896,7 +2896,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -3136,7 +3136,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -3317,7 +3317,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -3373,7 +3373,7 @@
           "$ref": "#/parameters/limit-1NfNmdNH"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -3444,7 +3444,7 @@
           "$ref": "#/parameters/limit-1NfNmdNH"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -3518,7 +3518,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -3600,7 +3600,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -3674,7 +3674,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -3756,7 +3756,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -3857,7 +3857,7 @@
           "$ref": "#/parameters/limit-1NfNmdNH"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -3928,7 +3928,7 @@
           "$ref": "#/parameters/limit-1NfNmdNH"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -4167,7 +4167,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -4407,7 +4407,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -4588,7 +4588,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -4812,7 +4812,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -5052,7 +5052,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -5233,7 +5233,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -5289,7 +5289,7 @@
           "$ref": "#/parameters/limit-1NfNmdNH"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -5360,7 +5360,7 @@
           "$ref": "#/parameters/limit-1NfNmdNH"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -5434,7 +5434,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -5516,7 +5516,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -5590,7 +5590,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -5672,7 +5672,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -5968,7 +5968,7 @@
       },
       "parameters": [
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -6205,7 +6205,7 @@
           "required": true
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -6383,7 +6383,7 @@
           "required": true
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -6604,7 +6604,7 @@
       },
       "parameters": [
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -6841,7 +6841,7 @@
           "required": true
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -7019,7 +7019,7 @@
           "required": true
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -7075,7 +7075,7 @@
           "$ref": "#/parameters/limit-1NfNmdNH"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -7154,7 +7154,7 @@
           "required": true
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -7225,7 +7225,7 @@
           "$ref": "#/parameters/limit-1NfNmdNH"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -7304,7 +7304,7 @@
           "required": true
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -7603,7 +7603,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -7843,7 +7843,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -8024,7 +8024,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -8080,7 +8080,7 @@
           "$ref": "#/parameters/limit-1NfNmdNH"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -8154,7 +8154,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -8236,7 +8236,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -8307,7 +8307,7 @@
           "$ref": "#/parameters/limit-1NfNmdNH"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -8603,7 +8603,7 @@
       },
       "parameters": [
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -8840,7 +8840,7 @@
           "required": true
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -9018,7 +9018,7 @@
           "required": true
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -9242,7 +9242,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -9482,7 +9482,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -9663,7 +9663,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -9719,7 +9719,7 @@
           "$ref": "#/parameters/limit-1NfNmdNH"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -9790,7 +9790,7 @@
           "$ref": "#/parameters/limit-1NfNmdNH"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -9869,7 +9869,7 @@
           "required": true
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -9943,7 +9943,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -10025,7 +10025,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -10096,7 +10096,7 @@
           "$ref": "#/parameters/limit-1NfNmdNH"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -10395,7 +10395,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -10635,7 +10635,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -10816,7 +10816,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         }
       ]
     },
@@ -10872,7 +10872,7 @@
           "$ref": "#/parameters/limit-1NfNmdNH"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -10946,7 +10946,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -11028,7 +11028,7 @@
           "$ref": "#/parameters/namespace-vgWSWtn3"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -11099,7 +11099,7 @@
           "$ref": "#/parameters/limit-1NfNmdNH"
         },
         {
-          "$ref": "#/parameters/pretty-nN7o5FEq"
+          "$ref": "#/parameters/pretty-tJGM1-ng"
         },
         {
           "$ref": "#/parameters/resourceVersion-5WAnf1kx"
@@ -11577,7 +11577,6 @@
           "description": "Manifests represent a list of Kubernetes resources to be deployed on the managed node groups.",
           "type": "array",
           "items": {
-            "default": {},
             "$ref": "#/definitions/com.github.kubeedge.kubeedge.pkg.apis.apps.v1alpha1.Manifest"
           }
         }
@@ -12700,6 +12699,14 @@
       "description": "DeviceStatus reports the device state and the desired/reported values of twin attributes.",
       "type": "object",
       "properties": {
+        "lastOnlineTime": {
+          "description": "Optional: The last time the device was online.",
+          "type": "string"
+        },
+        "state": {
+          "description": "Optional: The state of the device.",
+          "type": "string"
+        },
         "twins": {
           "description": "A list of device twins containing desired/reported desired/reported values of twin properties. Optional: A passive device won't have twin properties and this list could be empty.",
           "type": "array",
@@ -14062,7 +14069,6 @@
         },
         "divisor": {
           "description": "Specifies the output format of the exposed resources, defaults to \"1\"",
-          "default": {},
           "$ref": "#/definitions/io.k8s.apimachinery.pkg.api.resource.Quantity"
         },
         "resource": {
@@ -14093,7 +14099,6 @@
           "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
           "type": "object",
           "additionalProperties": {
-            "default": {},
             "$ref": "#/definitions/io.k8s.apimachinery.pkg.api.resource.Quantity"
           }
         },
@@ -14101,7 +14106,6 @@
           "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
           "type": "object",
           "additionalProperties": {
-            "default": {},
             "$ref": "#/definitions/io.k8s.apimachinery.pkg.api.resource.Quantity"
           }
         }
@@ -14758,7 +14762,7 @@
         {
           "group": "flowcontrol.apiserver.k8s.io",
           "kind": "DeleteOptions",
-          "version": "v1alpha1"
+          "version": "v1"
         },
         {
           "group": "flowcontrol.apiserver.k8s.io",
@@ -15038,7 +15042,6 @@
         },
         "creationTimestamp": {
           "description": "CreationTimestamp is a timestamp representing the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations. Clients may not set this value. It is represented in RFC3339 form and is in UTC.\n\nPopulated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
-          "default": {},
           "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.Time"
         },
         "deletionGracePeriodSeconds": {
@@ -15315,7 +15318,6 @@
       "properties": {
         "object": {
           "description": "Object is:\n * If Type is Added or Modified: the new state of the object.\n * If Type is Deleted: the state of the object immediately before deletion.\n * If Type is Error: *Status is recommended; other types may make sense\n   depending on context.",
-          "default": {},
           "$ref": "#/definitions/io.k8s.apimachinery.pkg.runtime.RawExtension"
         },
         "type": {
@@ -15482,7 +15484,7 @@
         {
           "group": "flowcontrol.apiserver.k8s.io",
           "kind": "WatchEvent",
-          "version": "v1alpha1"
+          "version": "v1"
         },
         {
           "group": "flowcontrol.apiserver.k8s.io",
@@ -15715,10 +15717,10 @@
       "name": "orphanDependents",
       "in": "query"
     },
-    "pretty-nN7o5FEq": {
+    "pretty-tJGM1-ng": {
       "uniqueItems": true,
       "type": "string",
-      "description": "If 'true', then the output is pretty printed.",
+      "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
       "name": "pretty",
       "in": "query"
     },
