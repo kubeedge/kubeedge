@@ -18,3 +18,5 @@ keadm/keadm
 _output
 _tmp
 build/edge/tmp
+
+go.work.sum

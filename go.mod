@@ -18,7 +18,7 @@ require (
 	github.com/golang/protobuf v1.5.4
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.0
-	github.com/kubeedge/beehive v0.0.0
+	github.com/kubeedge/beehive v1.7.0
 	github.com/kubeedge/viaduct v0.0.0
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1
 	github.com/mattn/go-sqlite3 v1.14.22
@@ -27,7 +27,7 @@ require (
 	github.com/shirou/gopsutil v2.21.11+incompatible
 	github.com/shirou/gopsutil/v3 v3.23.2
 	github.com/spf13/cobra v1.7.0
-	github.com/spf13/pflag v1.0.5
+	github.com/spf13/pflag v1.0.6-0.20210604193023-d5e0c0615ace
 	golang.org/x/net v0.23.0
 	golang.org/x/time v0.5.0
 	google.golang.org/grpc v1.63.0

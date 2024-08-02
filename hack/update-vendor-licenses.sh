@@ -141,8 +141,12 @@ process_content () {
 # MAIN
 #############################################################################
 
+# Turn off workspaces until we are ready for them later
+export GOWORK=off
+# Explicitly opt into go modules
 export GO111MODULE=on
-export GOFLAGS=-mod=readonly
+# Explicitly set GOFLAGS to ignore vendor, since GOFLAGS=-mod=vendor breaks dependency resolution while rebuilding vendor
+export GOFLAGS=-mod=mod
 
 # Check bash version
 if (( BASH_VERSINFO[0] < 4 )); then
