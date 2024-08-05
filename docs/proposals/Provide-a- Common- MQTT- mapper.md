@@ -1,18 +1,18 @@
 ---
-title: Mapper Provide A Common MQTT Mapper
+title: Provide A Common MQTT Mapper
 authors: 
 
 - "@fuchendou"
   approvers:
 
 creation-date: 2024-7-15
-last-updated: 2024-7-29
+last-updated: 2024-8-15
 status: implementable
 ---
 
-# The proposal for Mapper Provide A Common MQTT Mapper in KubeEdge
+# The proposal about Provide A Common MQTT Mapper
 
-### Mapper Provide A Common MQTT Mapper
+### Provide A Common MQTT Mapper
 
         In the current hardware device market, the MQTT (Message Queuing Telemetry Transport) protocol has become a widely adopted standard. Known for its lightweight and efficient characteristics, it is particularly suitable for communication between IoT (Internet of Things) devices. However, as the types of devices and application scenarios diversify, developers face several challenges and pain points.
 
@@ -50,7 +50,7 @@ status: implementable
 
 ##### Architecture and Modules
 
-        The architecture for Mapper Provide a Common Mapper will be modular to ensure scalability and maintainability. The main components include:
+        The architecture for providing a common Mapper will be modular to ensure scalability and maintainability. The main components include:
 
 - Base Environment Setup: Utilizes the latest mapper-framework to create a MQTT mapper for standardized operatons and interactions.
 
@@ -58,7 +58,7 @@ status: implementable
 
         The architectures and related concepts are shown in the below figure. In the figure, we assume that in the cloud-side-end scenario, device state modifications can be initiated by the cloud.
 
-<img title="相对路径演示" src="../images/proposals/mapper-provide-a-common-MQTT-mapper-architecture.jpg" alt="本地路径" width="546" data-align="center">
+<img title="相对路径演示" src="../images/proposals/Provide-a-common-MQTT-mapper-architecture.jpg" alt="本地路径" width="546" data-align="center">
 
 ##### Base Environment Setup
 
@@ -68,33 +68,34 @@ status: implementable
    
    2)Execute a command: 
    
+   Here we use Kubeedge v1.17.0 as the base environment to generate the mapper, or you can clone the latest version of the mapper directly from the repository ( [<u>https://github.com/kubeedge/mapper-framework)</u>](https://github.com/kubeedge/mapper-framework).
+   
    ```go
    make generate
    ```
    
-   3)Enter the project name of the Mapper)
+   3)Enter the project name of the Mapper: mqtt
    
-   <img title="" src="../images/proposals/mapper-provide-a-common-MQTT-mapper-pic.jpg" alt="" data-align="center">
+   <img title="" src="../images/proposals/Provide-a-common-MQTT-mapper-pic.jpg" alt="" data-align="center">
 
-2. Determine the Device model and Device instance files for device
-   
-   1)Device model: A device model describes the device properties exposed by the device . A device model is a Physical model which constrains the properties and parameters of physical devices.
+2. 1)Device model: A device model describes the device properties exposed by the device . A device model is a Physical model which constrains the properties and parameters of physical devices.
    
    ```
    apiVersion: devices.kubeedge.io/v1beta1
    kind: DeviceModel
    metadata:
-     name: beta1-model
+     name: temperture-model
+     namespace: default
    spec:
      properties:
-       - name: temp
-         description: beta1-model
+       - name: temperture
+         description: Temperture sensor model
          type: INT
          accessMode: ReadWrite
          maximum: "100"
          minimum: "1"
          unit: "Celsius"
-     protocol: modbus
+     protocol: mqtt
    ```
    
    2)Device instance: A device instance represents an actual device object. The device spec is static, including device properties list, it describes the details of each property, including its name, type, access method. The device status contains dynamically changing data like the desired state of a device property and the state reported by the device.
@@ -106,10 +107,10 @@ status: implementable
      name: beta1-device
    spec:
      deviceModelRef:
-       name: beta1-model
-     nodeName: worker-node1
+       name: temperture-model
+     nodeName: k8s-worker1
      properties:
-       - name: temp
+       - name: temperature
          collectCycle: 10000000000  # The frequency of reporting data to the cloud, once every 10 seconds
          reportCycle: 10000000000   # The frequency of data push to user applications or databases, once every 10 seconds
          reportToCloud: true
@@ -118,7 +119,7 @@ status: implementable
          pushMethod:
            mqtt:
              address: tcp://101.133.150.110:1883
-             topic: temp
+             topic: temperture/update/json
              qos: 0
              retained: false
            dbMethod:
@@ -128,24 +129,27 @@ status: implementable
                  org: test-org
                  bucket: test-bucket
                influxdb2DataConfig:
-                 measurement: stat
+                 measurement: temperture_stats
                  tag:
                    unit: temperature
-                 fieldKey: beta1test
+                 fieldKey: temperture_value
          visitors:
-           protocolName: modbus
-           configData:
-             register: "HoldingRegister"
-             offset: 2
-             limit: 1
-             scale: 1
-             isSwap: true
-             isRegisterSwap: true
+           protocolName: mqtt
+           configData:
+             topic: "sensor/data"
+             qos: 1
+             retain: false
+             clientId: "client123"
+             username: "user"
+             password: "pass"
+             cleanSession: true
+             keepAlive: 60
+   
      protocol:
-       protocolName: modbus
+       protocolName: mqtt
        configData:
-         ip: 172.17.0.3
-         port: 1502
+         ip: 101.133.150.110
+         port: 1883
    ```
 
 3. Configure the generated Mapper file
@@ -172,106 +176,24 @@ go run cmd/main.go --v <log level,like 3> --config-file <path to config yaml>
 
 The main algorithm aims to parsing the attribute values from the message using common serialization methods(JSON, YAML, XML).
 
-Prerequisite：
+The flow of the parser algorithm is as follows:  Implement a parser, it can be wrapped by type abstract interface interface{}, internal according to each serialization type to perform parsing (in practice, the need for serialization type first judgment), parsing the use of JSONPath. In the JSONPath before the need to do a brief processing of the serialization format:
 
-1. Getting device instance and device model configurations with the mapper framework. This part of the code is mainly found at https://github.com/kubeedge/mapper-framework/blob/main/_template/mapper/device/device.go
+- For JSON types, directly convert the string to interface{};
 
-2. Device Model
+- For YAML types, use the package (github.com/ghodss/yaml) to convert to JSON and then just follow the JSON processing;
 
-3. Device Instance
+- For XML types, use the package (github.com/clbanning/mxj) to parse it to map[string]interface{}, then further convert it to JSON, and then follow the JSON processing.
 
-The flow of the parser algorithm is as follows:
+After performing parsing on the serialized data, you can query it using the JSONPath syntax.
 
-1. Read the content of the input file to determine whether it is JSON, YAML or XML format.
+![](../images/proposals/mapper-provide-a-common-MQTT-mapper-algo.jpg)
 
-2. According to the different formats, the legal judgment, if legal, then the implementation of 3, otherwise, exit.
+### Plan
 
-3. Parse:
+In version 1.18
 
-4. JSON
-   
-   1. The ParseJSON function parses a JSON string into the interface{} type.
-   
-   2. QueryJSONPath function uses the gjson library to query the path in a JSON object.
+- In drivertype.go, add the corresponding data fields for the MQTT protocol, such as topic, message, qos, etc;
 
-5. YAML
-   
-   1. The ParseYAML function parses a YAML string into the interface{} type.
-   
-   2. The QueryYAMLPath function accepts the parsed YAML object and path array and accesses the data in the object layer by layer.
+- In driver.go, improve the necessary functions, add the writing of functions for parsing different serialized messages for the MQTT protocol;
 
-6. XML
-   
-   1. Parses an XML string into a map using the encoding/xml library and the mxj.Map type.
-   
-   2. Use the ValueForPathString method in mxj.Map for path lookup.Configure the generated Mapper file
-   
-   1）In the devicetype.go file, the ProtocolConfig and VisitorConfig structure information needs to be filled in as defined in the device instance yaml file so that Mapper can parse the configuration information correctly.
-   
-   2）In the driver.go file, you need to customize the methods for initializing the device and obtaining device data, and standardize the data collected by Mapper.
-   
-   3）In config.yaml, the protocol name of the Mapper needs to be defined.
-   
-   4. Deploy Mapper
-   
-   After generating the Mapper project and populating the Driver folder, users can make their own Mapper image based on the Dockerfile file, and subsequently deploy the Mapper in the cluster via Deployment, etc.
-   
-   ```
-   docker build -t [YOUR MAPPER IMAGE NAME]
-   ### Deploying Mapper with Kubernetes natively
-   kubectl apply -f <path to mapper yaml>
-   ### For local debugging, you can also compile and run the Mapper code directly
-   go run cmd/main.go --v <log level,like 3> --config-file <path to config yaml>
-   ```
-   
-   ##### Main algorithm design
-   
-   The main algorithm aims to parsing the attribute values from the message using common serialization methods(JSON, YAML, XML).
-   
-   Prerequisite：
-   
-   1. Getting device instance and device model configurations with the mapper framework. This part of the code is mainly found at https://github.com/kubeedge/mapper-framework/blob/main/_template/mapper/device/device.go
-   
-   2. Device Model
-   
-   3. Device Instance
-   
-   The flow of the parser algorithm is as follows:
-   
-   1. Read the content of the input file to determine whether it is JSON, YAML or XML format.
-   
-   2. According to the different formats, the legal judgment, if legal, then the implementation of 3, otherwise, exit.
-   
-   3. Parse:
-   
-   4. JSON
-      
-      1. The ParseJSON function parses a JSON string into the interface{} type.
-      
-      2. QueryJSONPath function uses the gjson library to query the path in a JSON object.
-   
-   5. YAML
-      
-      1. The ParseYAML function parses a YAML string into the interface{} type.
-      
-      2. The QueryYAMLPath function accepts the parsed YAML object and path array and accesses the data in the object layer by layer.
-   
-   6. XML
-      
-      1. Parses an XML string into a map using the encoding/xml library and the mxj.Map type.
-      
-      2. Use the ValueForPathString method in mxj.Map for path lookup.
-
-### Road Map
-
-Cycle 1: Early July (July 1 - July 14): Set up the development environment and integrate the latest Mapper-Framework into the kubeedeg/mappers-go project.
-
-Cycle 2: Late July (July 15 - July 28): Design architecture and modules, then implement the MQTT Client Module.
-
-Cycle 3: Early August (July 29 - August 11): Develop and integrate the Message Parsing Module.
-
-Cycle 4: Late August (August 12 - August 25): Implement attribute extraction, develop Configuration Module, and conduct initial testing.
-
-Cycle 5: Early September (August 26 - September 8): Implement the Extensibility Module, perform system validation, and optimize performance.
-
-Cycle 6: Late September (September 9 - September 22): Finalize documentation, deploy the MQTT Mapper, monitor deployment, and gather feedback.
+- In the resource folder, add Device Model and Device Instance files for MQTT.
