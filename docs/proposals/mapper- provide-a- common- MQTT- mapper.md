@@ -6,7 +6,7 @@ authors:
   approvers:
 
 creation-date: 2024-7-15
-last-updated: 2024-7-29
+last-updated: 2024-8-3
 status: implementable
 ---
 
@@ -50,7 +50,7 @@ status: implementable
 
 ##### Architecture and Modules
 
-        The architecture for Mapper Provide a Common Mapper will be modular to ensure scalability and maintainability. The main components include:
+        The architecture for providing a common Mapper will be modular to ensure scalability and maintainability. The main components include:
 
 - Base Environment Setup: Utilizes the latest mapper-framework to create a MQTT mapper for standardized operatons and interactions.
 
@@ -94,7 +94,7 @@ status: implementable
          maximum: "100"
          minimum: "1"
          unit: "Celsius"
-     protocol: modbus
+     protocol: mqtt
    ```
    
    2)Device instance: A device instance represents an actual device object. The device spec is static, including device properties list, it describes the details of each property, including its name, type, access method. The device status contains dynamically changing data like the desired state of a device property and the state reported by the device.
@@ -133,19 +133,22 @@ status: implementable
                    unit: temperature
                  fieldKey: beta1test
          visitors:
-           protocolName: modbus
-           configData:
-             register: "HoldingRegister"
-             offset: 2
-             limit: 1
-             scale: 1
-             isSwap: true
-             isRegisterSwap: true
+           protocolName: mqtt
+           configData:
+             topic: "sensor/data"
+             qos: 1
+             retain: false
+             clientId: "client123"
+             username: "user"
+             password: "pass"
+             cleanSession: true
+             keepAlive: 60
+   
      protocol:
-       protocolName: modbus
+       protocolName: mqtt
        configData:
-         ip: 172.17.0.3
-         port: 1502
+         ip: 101.133.150.110
+         port: 1883
    ```
 
 3. Configure the generated Mapper file
@@ -172,95 +175,17 @@ go run cmd/main.go --v <log level,like 3> --config-file <path to config yaml>
 
 The main algorithm aims to parsing the attribute values from the message using common serialization methods(JSON, YAML, XML).
 
-Prerequisite：
+The flow of the parser algorithm is as follows:  Implement a parser, it can be wrapped by type abstract interface interface{}, internal according to each serialization type to perform parsing (in practice, the need for serialization type first judgment), parsing the use of JSONPath. In the JSONPath before the need to do a brief processing of the serialization format:
 
-1. Getting device instance and device model configurations with the mapper framework. This part of the code is mainly found at https://github.com/kubeedge/mapper-framework/blob/main/_template/mapper/device/device.go
+- For JSON types, directly convert the string to interface{};
 
-2. Device Model
+- For YAML types, use the package (github.com/ghodss/yaml) to convert to JSON and then just follow the JSON processing;
 
-3. Device Instance
+- For XML types, use the package (github.com/clbanning/mxj) to parse it to map[string]interface{}, then further convert it to JSON, and then follow the JSON processing.
 
-The flow of the parser algorithm is as follows:
+After performing parsing on the serialized data, you can query it using the JSONPath syntax.
 
-1. Read the content of the input file to determine whether it is JSON, YAML or XML format.
-
-2. According to the different formats, the legal judgment, if legal, then the implementation of 3, otherwise, exit.
-
-3. Parse:
-
-4. JSON
-   
-   1. The ParseJSON function parses a JSON string into the interface{} type.
-   
-   2. QueryJSONPath function uses the gjson library to query the path in a JSON object.
-
-5. YAML
-   
-   1. The ParseYAML function parses a YAML string into the interface{} type.
-   
-   2. The QueryYAMLPath function accepts the parsed YAML object and path array and accesses the data in the object layer by layer.
-
-6. XML
-   
-   1. Parses an XML string into a map using the encoding/xml library and the mxj.Map type.
-   
-   2. Use the ValueForPathString method in mxj.Map for path lookup.Configure the generated Mapper file
-   
-   1）In the devicetype.go file, the ProtocolConfig and VisitorConfig structure information needs to be filled in as defined in the device instance yaml file so that Mapper can parse the configuration information correctly.
-   
-   2）In the driver.go file, you need to customize the methods for initializing the device and obtaining device data, and standardize the data collected by Mapper.
-   
-   3）In config.yaml, the protocol name of the Mapper needs to be defined.
-   
-   4. Deploy Mapper
-   
-   After generating the Mapper project and populating the Driver folder, users can make their own Mapper image based on the Dockerfile file, and subsequently deploy the Mapper in the cluster via Deployment, etc.
-   
-   ```
-   docker build -t [YOUR MAPPER IMAGE NAME]
-   ### Deploying Mapper with Kubernetes natively
-   kubectl apply -f <path to mapper yaml>
-   ### For local debugging, you can also compile and run the Mapper code directly
-   go run cmd/main.go --v <log level,like 3> --config-file <path to config yaml>
-   ```
-   
-   ##### Main algorithm design
-   
-   The main algorithm aims to parsing the attribute values from the message using common serialization methods(JSON, YAML, XML).
-   
-   Prerequisite：
-   
-   1. Getting device instance and device model configurations with the mapper framework. This part of the code is mainly found at https://github.com/kubeedge/mapper-framework/blob/main/_template/mapper/device/device.go
-   
-   2. Device Model
-   
-   3. Device Instance
-   
-   The flow of the parser algorithm is as follows:
-   
-   1. Read the content of the input file to determine whether it is JSON, YAML or XML format.
-   
-   2. According to the different formats, the legal judgment, if legal, then the implementation of 3, otherwise, exit.
-   
-   3. Parse:
-   
-   4. JSON
-      
-      1. The ParseJSON function parses a JSON string into the interface{} type.
-      
-      2. QueryJSONPath function uses the gjson library to query the path in a JSON object.
-   
-   5. YAML
-      
-      1. The ParseYAML function parses a YAML string into the interface{} type.
-      
-      2. The QueryYAMLPath function accepts the parsed YAML object and path array and accesses the data in the object layer by layer.
-   
-   6. XML
-      
-      1. Parses an XML string into a map using the encoding/xml library and the mxj.Map type.
-      
-      2. Use the ValueForPathString method in mxj.Map for path lookup.
+![](../images/proposals/mapper-provide-a-common-MQTT-mapper-algo.jpg)
 
 ### Road Map
 
