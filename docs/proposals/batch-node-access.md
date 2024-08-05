@@ -48,148 +48,145 @@ Batch access to edge nodes in the KubeEdge system:
 
 #### Configuration file preparation
 
-- Create a YAML-formatted configuration file `config.yaml` to store all edge node information that needs to be accessed in batches.
+Create a YAML-formatted configuration file `config.yaml` to store all edge node information that needs to be accessed in batches.
 
-- **nodes**: Contains detailed information about each edge node.
-  - **ip**: The IP address of the edge node.
-  - **nodeName**: The name of each edge node, used to distinguish and identify each node in the cluster.
-  - **architecture**: The hardware architecture type of the edge node, such as `amd64`, `arm`, or `arm64`.
-  - **username**: The username required for SSH login to the edge node.
-  - **password**: The password required for SSH login to the edge node.
+**nodes**: contains details of each edge node.
 
-- **keadm_params**: Contains detailed information for configuring edge node access.
-  - **cloudcore-ipport**: Specifies the address and port of CloudCore for communication between edge nodes and CloudCore.
-  - **token**: The authentication token used to ensure that edge nodes can securely access CloudCore.
-  - **kubeedge_version**: Specifies the version of KubeEdge to be installed.
+- **ip**: The IP address of the edge node.
+  - **architecture**: The hardware architecture type of the edge node, such as `amd64`, 'arm', or `arm64`.
+
+  - **username**: the username required to log in to the SSH edge node.
+
+  - **password**: the password required for SSH logging in to the edge node.
+
+  - **EdgeNodeName** (optional): The name icon for each edge node, used to distinguish and identify each node in a cluster.
+
+
+-  **keadm_params**: Contains details to configure edge node access.
+  -  **KubeEdgeVersion**: Specifies the version of Kube Edge to download and use.
+  -  **CloudCoreIPPort**: The IP address and port of CloudCore.
+  -  **Token**: Token for authentication.
+  -  **CertPath**: Certificate path used by EdgeCore.
+  -  **RemoteRuntimeEndpoint**: The remote runtime terminal of the edge node.
+  -  **CertPort**: The port to apply for the edge node certificate.
+  -  **Labels**: Customized node tags.
+  -  **ImageRepository**: Mirror Storage.
+  -  **HubProtocol**: Communication protocol for edge nodes.
+  -  **Sets**: The key value pairs set in the command line.
+  -  **CGroupDriver**: The CGroup driver used.
+  -  **TarballPath**: The path of the KubeEdge tarball.
+  -  **WithMQTT**: Specifies whether to install and start MQTT Broker.
 
 #### Source code modification and new command addition
 
-- Download the keadm source code for the KubeEdge project and modify it to add the new command `keadm batchjoin`.
+- Add new command `keadm batchjoin`.
 
-- Find the command definition file in the source code and add the new command processing logic.
 
 ```go
-// batchjoinCmd represents the batchjoin command
-var batchjoinCmd = &cobra.Command{
-    Use:   "batchjoin",
-    Short: "Batch join multiple edge nodes to the KubeEdge cluster",
-    Long:  `batchjoin allows you to batch join multiple edge nodes to the KubeEdge cluster by providing a configuration file.`,
-    Run: func(cmd *cobra.Command, args []string) {
-        configFilePath, _ := cmd.Flags().GetString("config")
-        if err := batchJoinNodes(configFilePath); err != nil {
-            log.Fatalf("Failed to batch join nodes: %v", err)
-        }
-    },
+var (
+	batchJoinDescription = `
+"keadm batchjoin" command bootstraps multiple KubeEdge's worker nodes (at the edge) components.
+It will also connect with the cloud component to receive
+further instructions and forward telemetry data from
+devices to the cloud.
+`
+	batchJoinExample = `
+keadm batchjoin --config=<path to configuration file>
+
+  - For this command --config flag is a required option
+  - This command will download and install the specified version of pre-requisites and KubeEdge for all nodes listed in the configuration file
+`
+
+func NewBatchJoin() *cobra.Command {
+	joinOptions := newOption()
+	step := common.NewStep()
+	cmd := &cobra.Command{
+		Use:          "batchjoin",
+		Short:        "Batch join multiple edge nodes to the KubeEdge cluster",
+		Long:         batchJoinDescription,
+		Example:      batchJoinExample,
+		SilenceUsage: true,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			configFilePath, err := cmd.Flags().GetString("config")
+			if err != nil {
+				return err
+			}
+			if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
+				return fmt.Errorf("configuration file %s does not exist", configFilePath)
+			}
+			joinOptions.Config = configFilePath
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return batchJoinNodes(joinOptions, step)
+		},
+	}
+
+	AddJoinOtherFlags(cmd, joinOptions)
+	cmd.Flags().StringVarP(&joinOptions.Config, "config", "c", "", "Path to the configuration file")
+	cmd.MarkFlagRequired("config")
+
+	return cmd
 }
 
-func init() {
-    rootCmd.AddCommand(batchjoinCmd)
-    batchjoinCmd.Flags().StringP("config", "c", "", "Path to the configuration file")
-    batchjoinCmd.MarkFlagRequired("config")
+func newOption() *common.JoinOptions {
+	joinOptions := &common.JoinOptions{}
+	joinOptions.WithMQTT = false
+	joinOptions.CGroupDriver = v1alpha2.CGroupDriverCGroupFS
+	joinOptions.CertPath = common.DefaultCertPath
+	joinOptions.RemoteRuntimeEndpoint = constants.DefaultRemoteRuntimeEndpoint
+	joinOptions.HubProtocol = api.ProtocolTypeWS
+	return joinOptions
+}
+
+func createDirs() error {
+	...
+	return nil
+}
+
+func setEdgedNodeLabels(opt *common.JoinOptions) map[string]string {
+	labelsMap := make(map[string]string)
+	...
+	return labelsMap
+}
+
+func createBootstrapFile(opt *common.JoinOptions) error {
+	bootstrapFile := constants.BootstrapFile
+	...
+	return os.WriteFile(bootstrapFile, token, 0640)
 }
 ```
-
-- **`batchjoinCmd`**: Defines the structure of the `batchjoin` command, including the name of the command, a short description and a detailed description.
-- **`Run`**: Defines the execution logic of the command, which reads the configuration file path and calls the `batchJoinNodes` function to perform the batch join operation.
-- **`init`**: Adds the `batchjoin` command to the root command in the `init` function and defines the command line arguments.
 
 #### Logic for implementing batch access
 
-Implement the `batchJoinNodes` function, which is responsible for loading the configuration file, batch connecting to each edge node using SSH libraries (e.g. `github.com/melbahja/goph`), and executing the `keadm join` command.
+Load the profile file and use the SSH library (such as `github.com/melbahja/goph`) to mass-connect to each edge node and execute the `keadm join` command.
 
 ```go
-package main
-
-import (
-	"fmt"
-	"log"
-	"os"
-
-	"github.com/melbahja/goph"
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
-)
-
-type NodeConfig struct { 
-    IP            string `yaml:"ip"`
-    NodeName      string `yaml:"nodeName"`
-    Architecture  string `yaml:"architecture"`
-    Username      string `yaml:"username"`
-    Password      string `yaml:"password"`
-}
-
-type KeadmParams struct {
-    CloudCoreIPPort string `yaml:"cloudcore-ipport"`
-    Token           string `yaml:"token"`
-    KubeEdgeVersion string `yaml:"kubeedge_version"`
-}
-
-type Config struct {
-	KeadmParams KeadmParams `yaml:"keadm_params"`
-	Nodes       []NodeConfig `yaml:"nodes"`
-}
-
-func batchJoinNodes(configFile string) {
-	// Open log file for writing
+func batchJoinNodes(opt *common.JoinOptions, step *common.Step) error {
+	configFilePath := opt.Config
+	step.Printf("Reading configuration from %s\n", configFilePath)
 	...
-    
-	// Set log output to both stdout and log file
-	log.SetOutput(logFile)
-
-	// Load config file
-	config := loadConfig(configFile)
-
-	// Connect to each node and execute keadm join
-	for _, node := range config.Nodes {
-		client, err := connectToNode(node)
-		if err != nil {
-			log.Printf("Failed to connect to node %s: %v", node.IP, err)
-			continue
-		}
-
-		// Build keadm join command
-		command := buildKeadmJoinCommand(config.KeadmParams)
-
-		// Execute keadm join command
-		output, err := executeCommand(client, command)
-		if err != nil {
-			log.Printf("Failed to execute keadm join on node %s: %v", node.IP, err)
-			continue
-		}
-
-		log.Printf("Successfully joined %s to KubeEdge: %s", node.IP, output)
-	}
+	return nil
 }
 
-func loadConfig(filename string) Config {
-	var config Config
+func readBatchJoinConfig(configFilePath string) (*BatchJoinConfig, error) {
+	var config BatchJoinConfig
+	data, err := os.ReadFile(configFilePath)
 	...
-	return config
+	return &config, nil
 }
 
-func connectToNode(node NodeConfig) (*goph.Client, error) {
+func joinNode(node NodeConfig, params KeadmParams, step *common.Step) error {
+	step.Printf("Joining node %s with IP %s\n", node.EdgeNodeName, node.IP)
+
+	joinCommand := fmt.Sprintf(
+		"keadm join --cloudcore-ipport=%s --token=%s --kubeedge-version=%s",
+		params.CloudCoreIPPort, params.Token, params.KubeEdgeVersion,
+	)
 	...
-	return client, nil
-}
-
-func executeCommand(client *goph.Client, command string) (string, error) {
-	...
-	return string(out), nil
-}
-
-func buildKeadmJoinCommand(params KeadmParams) string {
-	return fmt.Sprintf("keadm join --cloudcore-ipport=%s --token=%s --kubeedge-version=%s", params.CloudCoreIPPort, params.Token, params.KubeEdgeVersion)
-}
-
-func main() {
-	configFile := "config.yaml"
-	batchJoinNodes(configFile)
+	return nil
 }
 ```
-
--  **Logging**: Use the `log` package to create a log file and set it to output to both standard output and the log file.
-- **Configuration file loading**: Load node configuration and command parameters from the specified YAML configuration file.
-- **Remote command execution**: Use the `github.com/melbahja/goph` package to establish an SSH connection to each node and execute the `keadm join` command to join the node to the KubeEdge cluster.
 
 #### Logging
 
