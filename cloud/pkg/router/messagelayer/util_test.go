@@ -18,11 +18,14 @@ package messagelayer
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBuildResourceForRouter(t *testing.T) {
+	assert := assert.New(t)
+
 	type args struct {
 		namespace    string
 		resourceType string
@@ -79,13 +82,8 @@ func TestBuildResourceForRouter(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gotResource, err := BuildResourceForRouter(tt.args.namespace, tt.args.resourceType, tt.args.resourceID)
-			if !reflect.DeepEqual(err, tt.wantErr) {
-				t.Errorf("%v: BuildResourceForRouter() error = %v, wantErr %v", tt.name, err, tt.wantErr)
-				return
-			}
-			if gotResource != tt.wantResource {
-				t.Errorf("%v: BuildResourceForRouter() = %v, want %v", tt.name, gotResource, tt.wantResource)
-			}
+			assert.Equal(tt.wantErr, err)
+			assert.Equal(tt.wantResource, gotResource)
 		})
 	}
 }
