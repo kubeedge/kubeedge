@@ -4,12 +4,15 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestValidateNodeIP(t *testing.T) {
+	assert := assert.New(t)
+
 	hostnameOverride := GetHostname()
 	localIP, _ := GetLocalIP(hostnameOverride)
 
@@ -56,13 +59,13 @@ func TestValidateNodeIP(t *testing.T) {
 	}
 	for _, c := range cases {
 		err := ValidateNodeIP(c.ip)
-		if !reflect.DeepEqual(err, c.expected) {
-			t.Errorf("%v: expected %v, but got %v", c.name, c.expected, err)
-		}
+		assert.Equal(c.expected, err, c.name)
 	}
 }
 
 func TestCommand(t *testing.T) {
+	assert := assert.New(t)
+
 	cases := []struct {
 		name     string
 		command  string
@@ -82,34 +85,34 @@ func TestCommand(t *testing.T) {
 	for _, c := range cases {
 		_, err := Command(c.command, nil)
 		isSuccess := err == nil
-		if isSuccess != c.expected {
-			t.Errorf("%v: expected %v, but got %v", c.name, c.expected, isSuccess)
-		}
+		assert.Equal(c.expected, isSuccess, c.name)
 	}
 }
 
 func TestGetCurPath(t *testing.T) {
+	assert := assert.New(t)
+
 	path := GetCurPath()
-	if path == "" {
-		t.Errorf("failed to get current path")
-	}
+	assert.NotEmpty(path)
 }
 
 func TestGetHostname(t *testing.T) {
+	assert := assert.New(t)
+
 	name := GetHostname()
-	if name == "" {
-		t.Errorf("get host name failed")
-	}
+	assert.NotEmpty(name)
 }
 
 func TestGetLocalIP(t *testing.T) {
+	assert := assert.New(t)
+
 	_, err := GetLocalIP(GetHostname())
-	if err != nil {
-		t.Errorf("get local ip failed")
-	}
+	assert.NoError(err)
 }
 
 func TestSpliceErrors(t *testing.T) {
+	assert := assert.New(t)
+
 	err1 := errors.New("this is error 1")
 	err2 := errors.New("this is error 2")
 	err3 := errors.New("this is error 3")
@@ -121,22 +124,19 @@ func TestSpliceErrors(t *testing.T) {
 	const tail = "]\n"
 
 	sliceOutput := SpliceErrors([]error{err1, err2, err3})
-	if strings.Index(sliceOutput, head) != 0 ||
-		strings.Index(sliceOutput, line1) != len(head) ||
-		strings.Index(sliceOutput, line2) != len(head+line1) ||
-		strings.Index(sliceOutput, line3) != len(head+line1+line2) ||
-		strings.Index(sliceOutput, tail) != len(head+line1+line2+line3) {
-		t.Error("the func format the multiple elements error slice unexpected")
-		return
-	}
+	assert.True(strings.HasPrefix(sliceOutput, head))
+	assert.True(strings.Contains(sliceOutput, line1))
+	assert.True(strings.Contains(sliceOutput, line2))
+	assert.True(strings.Contains(sliceOutput, line3))
+	assert.True(strings.HasSuffix(sliceOutput, tail))
 
-	if SpliceErrors([]error{}) != "" || SpliceErrors(nil) != "" {
-		t.Error("the func format the zero-length error slice unexpected")
-		return
-	}
+	assert.Equal("", SpliceErrors([]error{}))
+	assert.Equal("", SpliceErrors(nil))
 }
 
 func TestConcatStrings(t *testing.T) {
+	assert := assert.New(t)
+
 	cases := []struct {
 		args   []string
 		expect string
@@ -154,12 +154,8 @@ func TestConcatStrings(t *testing.T) {
 			expect: "ab",
 		},
 	}
-	var s string
-	for _, c := range cases {
-		s = ConcatStrings(c.args...)
-		if s != c.expect {
-			t.Errorf("the func return failed. expect: %s, actual: %s\n", c.expect, s)
-			return
-		}
+	for _, testcase := range cases {
+		s := ConcatStrings(testcase.args...)
+		assert.Equal(testcase.expect, s)
 	}
 }
