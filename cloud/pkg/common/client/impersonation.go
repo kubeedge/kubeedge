@@ -17,6 +17,7 @@ limitations under the License.
 package client
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -38,12 +39,12 @@ func newForK8sConfigOrDie(c *rest.Config, enableImpersonation bool) *kubernetes.
 
 	httpClient, err := httpClientFor(&configShallowCopy, enableImpersonation)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to create a httpclient for the clientset, err: %v", err))
 	}
 
 	cs, err := kubernetes.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to create a clientset, err: %v", err))
 	}
 	return cs
 }
@@ -52,12 +53,12 @@ func newForDynamicConfigOrDie(c *rest.Config, enableImpersonation bool) *dynamic
 	configShallowCopy := dynamic.ConfigFor(c)
 	httpClient, err := httpClientFor(configShallowCopy, enableImpersonation)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to create a httpclient for the dynamic-client, err: %v", err))
 	}
 
 	cs, err := dynamic.NewForConfigAndClient(configShallowCopy, httpClient)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to create a dynamic-client, err: %v", err))
 	}
 	return cs
 }
@@ -71,12 +72,12 @@ func newForCrdConfigOrDie(c *rest.Config, enableImpersonation bool) *crdClientse
 
 	httpClient, err := httpClientFor(&configShallowCopy, enableImpersonation)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to create a httpclient for the crd clientset, err: %v", err))
 	}
 
 	cs, err := crdClientset.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to create a crd clientset, err: %v", err))
 	}
 	return cs
 }
@@ -102,21 +103,18 @@ type impersonationRoundTripper struct {
 }
 
 func (r *impersonationRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	// extract user and group from context and set impersonation headers
-	var userStr, groupStr string
-	user := req.Context().Value(authenticationv1.ImpersonateUserHeader)
-	if user != nil && r.enable {
-		userStr = user.(string)
-		req.Header.Set(authenticationv1.ImpersonateUserHeader, userStr)
-	}
-	group := req.Context().Value(authenticationv1.ImpersonateGroupHeader)
-	if group != nil && r.enable {
-		groupStr = group.(string)
-		for _, g := range strings.Split(groupStr, "|") {
-			req.Header.Set(authenticationv1.ImpersonateGroupHeader, g)
+	var user, group string
+	if r.enable {
+		if v := req.Context().Value(authenticationv1.ImpersonateUserHeader); v != nil {
+			user = v.(string)
+			req.Header.Set(authenticationv1.ImpersonateUserHeader, user)
+		}
+		if v := req.Context().Value(authenticationv1.ImpersonateGroupHeader); v != nil {
+			group = v.(string)
+			req.Header[authenticationv1.ImpersonateGroupHeader] = strings.Split(group, "|")
 		}
 	}
-
-	klog.V(4).Infof("KubeClient: request.method=%s, request.path=%s, user=%q, group= %q", req.Method, req.URL.Path, userStr, groupStr)
+	klog.V(4).Infof("KubeClient: request.method=%s, request.path=%s, user=%q, group= %q",
+		req.Method, req.URL.Path, user, group)
 	return r.rt.RoundTrip(req)
 }
