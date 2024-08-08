@@ -127,6 +127,9 @@ type PushMethod struct {
 	// MQTT Push method configuration for mqtt
 	// +optional
 	MQTT *PushMethodMQTT `json:"mqtt,omitempty"`
+	// OTEL Push Method configuration for otel
+	// +optional
+	OTEL *PushMethodOTEL `json:"otel,omitempty"`
 	// DBMethod represents the method used to push data to database,
 	// please ensure that the mapper can access the destination address.
 	// +optional
@@ -157,6 +160,11 @@ type PushMethodMQTT struct {
 	// Is the message retained
 	// +optional
 	Retained bool `json:"retained,omitempty"`
+}
+
+type PushMethodOTEL struct {
+	// the target endpoint URL the Exporter will connect to, like https://localhost:4318/v1/metrics
+	EndpointURL string `protobuf:"bytes,1,opt,name=endpointURL,proto3" json:"endpointURL,omitempty"`
 }
 
 type DBMethodConfig struct {
