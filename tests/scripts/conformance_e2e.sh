@@ -22,6 +22,7 @@ TEST_DIR=$(realpath $(dirname $0)/..)
 
 GOPATH=${GOPATH:-$(go env GOPATH)}
 KIND_IMAGE=${1:-"kindest/node:v1.28.0"}
+CONFORMANCE_TYPE=${2:-"nodeconformance"}
 VERSION=$(git rev-parse --short=12 HEAD)
 
 function cleanup() {
@@ -68,10 +69,8 @@ fi
 rm -rf /tmp/results/*
 
 function run_conformance_test() {
-  local image_name=$1
-  local tag_name=$2
-
-  docker build -t "$image_name:$tag_name" -f ${KUBEEDGE_ROOT}/build/conformance/Dockerfile .
+  local image="kubeedge/conformance-test:${VERSION}"
+  docker build -t "$image" -f ${KUBEEDGE_ROOT}/build/conformance/Dockerfile .
 
   docker run --rm \
   --env E2E_SKIP="\[Serial\]" \
@@ -83,7 +82,36 @@ function run_conformance_test() {
   --env E2E_EXTRA_ARGS="--kube-master=https://${MASTER_IP}:6443" \
   -v ${KUBECONFIG}:/root/.kube/config \
   -v /tmp/results:/tmp/results \
-  --network host "$image_name:$tag_name"
+  --network host $image
 }
 
-run_conformance_test "kubeedge/conformance-test" ${VERSION} || { echo "Conformance test failed with exit code $?"; exit 1; }
+function run_nodeconformance_test() {
+  local image="kubeedge/nodeconformance-test:${VERSION}"
+  docker build -t "$image" -f ${KUBEEDGE_ROOT}/build/conformance/nodeconformance.Dockerfile .
+
+  docker run --rm \
+  --env E2E_PARALLEL="-p" \
+  --env CHECK_EDGECORE_ENVIRONMENT="false" \
+  --env ACK_GINKGO_RC="true" \
+  --env KUBECONFIG=/root/.kube/config \
+  --env RESULTS_DIR=/tmp/results \
+  --env E2E_EXTRA_ARGS="--kube-master=https://${MASTER_IP}:6443" \
+  -v ${KUBECONFIG}:/root/.kube/config \
+  -v /tmp/results:/tmp/results \
+  --network host $image
+}
+
+case $CONFORMANCE_TYPE in
+  "nodeconformance")
+    echo "Running nodeconformance test"
+    run_nodeconformance_test || { echo "Node conformance test failed with exit code $?"; exit 1; }
+    ;;
+  "conformance")
+    echo "Running conformance test"
+    run_conformance_test || { echo "Conformance test failed with exit code $?"; exit 1; }
+    ;;
+  *)
+    echo "Invalid conformance type: $CONFORMANCE_TYPE"
+    exit 1
+    ;;
+esac
