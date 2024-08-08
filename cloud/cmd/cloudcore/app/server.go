@@ -34,8 +34,8 @@ import (
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/yaml"
 
-	"github.com/kubeedge/api/componentconfig/cloudcore/v1alpha1"
-	"github.com/kubeedge/api/componentconfig/cloudcore/v1alpha1/validation"
+	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
+	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1/validation"
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/cmd/cloudcore/app/options"

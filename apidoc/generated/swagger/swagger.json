@@ -124,7 +124,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.EdgeApplicationList"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.EdgeApplicationList"
             }
           }
         },
@@ -227,7 +227,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.EdgeApplicationList"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.EdgeApplicationList"
             }
           }
         },
@@ -261,7 +261,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.EdgeApplication"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.EdgeApplication"
             }
           },
           {
@@ -286,19 +286,19 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.EdgeApplication"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.EdgeApplication"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.EdgeApplication"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.EdgeApplication"
             }
           },
           "202": {
             "description": "Accepted",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.EdgeApplication"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.EdgeApplication"
             }
           }
         },
@@ -417,7 +417,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.EdgeApplication"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.EdgeApplication"
             }
           }
         },
@@ -451,7 +451,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.EdgeApplication"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.EdgeApplication"
             }
           },
           {
@@ -476,13 +476,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.EdgeApplication"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.EdgeApplication"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.EdgeApplication"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.EdgeApplication"
             }
           }
         },
@@ -601,13 +601,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.EdgeApplication"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.EdgeApplication"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.EdgeApplication"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.EdgeApplication"
             }
           }
         },
@@ -657,7 +657,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.EdgeApplication"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.EdgeApplication"
             }
           }
         },
@@ -691,7 +691,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.EdgeApplication"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.EdgeApplication"
             }
           },
           {
@@ -716,13 +716,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.EdgeApplication"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.EdgeApplication"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.EdgeApplication"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.EdgeApplication"
             }
           }
         },
@@ -782,13 +782,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.EdgeApplication"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.EdgeApplication"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.EdgeApplication"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.EdgeApplication"
             }
           }
         },
@@ -872,7 +872,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.NodeGroupList"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.NodeGroupList"
             }
           }
         },
@@ -906,7 +906,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.NodeGroup"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.NodeGroup"
             }
           },
           {
@@ -931,19 +931,19 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.NodeGroup"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.NodeGroup"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.NodeGroup"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.NodeGroup"
             }
           },
           "202": {
             "description": "Accepted",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.NodeGroup"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.NodeGroup"
             }
           }
         },
@@ -1059,7 +1059,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.NodeGroup"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.NodeGroup"
             }
           }
         },
@@ -1093,7 +1093,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.NodeGroup"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.NodeGroup"
             }
           },
           {
@@ -1118,13 +1118,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.NodeGroup"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.NodeGroup"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.NodeGroup"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.NodeGroup"
             }
           }
         },
@@ -1243,13 +1243,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.NodeGroup"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.NodeGroup"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.NodeGroup"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.NodeGroup"
             }
           }
         },
@@ -1296,7 +1296,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.NodeGroup"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.NodeGroup"
             }
           }
         },
@@ -1330,7 +1330,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.NodeGroup"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.NodeGroup"
             }
           },
           {
@@ -1355,13 +1355,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.NodeGroup"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.NodeGroup"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.NodeGroup"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.NodeGroup"
             }
           }
         },
@@ -1421,13 +1421,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.NodeGroup"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.NodeGroup"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.NodeGroup"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.NodeGroup"
             }
           }
         },
@@ -1913,7 +1913,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.DeviceModelList"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.DeviceModelList"
             }
           }
         },
@@ -1984,7 +1984,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.DeviceList"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.DeviceList"
             }
           }
         },
@@ -2087,7 +2087,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.DeviceModelList"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.DeviceModelList"
             }
           }
         },
@@ -2121,7 +2121,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.DeviceModel"
             }
           },
           {
@@ -2146,19 +2146,19 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.DeviceModel"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.DeviceModel"
             }
           },
           "202": {
             "description": "Accepted",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.DeviceModel"
             }
           }
         },
@@ -2277,7 +2277,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.DeviceModel"
             }
           }
         },
@@ -2311,7 +2311,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.DeviceModel"
             }
           },
           {
@@ -2336,13 +2336,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.DeviceModel"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.DeviceModel"
             }
           }
         },
@@ -2461,13 +2461,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.DeviceModel"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.DeviceModel"
             }
           }
         },
@@ -2517,7 +2517,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.DeviceModel"
             }
           }
         },
@@ -2551,7 +2551,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.DeviceModel"
             }
           },
           {
@@ -2576,13 +2576,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.DeviceModel"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.DeviceModel"
             }
           }
         },
@@ -2642,13 +2642,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.DeviceModel"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.DeviceModel"
             }
           }
         },
@@ -2732,7 +2732,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.DeviceList"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.DeviceList"
             }
           }
         },
@@ -2766,7 +2766,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.Device"
             }
           },
           {
@@ -2791,19 +2791,19 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.Device"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.Device"
             }
           },
           "202": {
             "description": "Accepted",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.Device"
             }
           }
         },
@@ -2922,7 +2922,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.Device"
             }
           }
         },
@@ -2956,7 +2956,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.Device"
             }
           },
           {
@@ -2981,13 +2981,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.Device"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.Device"
             }
           }
         },
@@ -3106,13 +3106,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.Device"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.Device"
             }
           }
         },
@@ -3162,7 +3162,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.Device"
             }
           }
         },
@@ -3196,7 +3196,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.Device"
             }
           },
           {
@@ -3221,13 +3221,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.Device"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.Device"
             }
           }
         },
@@ -3287,13 +3287,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.Device"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.Device"
             }
           }
         },
@@ -3829,7 +3829,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.DeviceModelList"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DeviceModelList"
             }
           }
         },
@@ -3900,7 +3900,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.DeviceList"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DeviceList"
             }
           }
         },
@@ -4003,7 +4003,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.DeviceModelList"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DeviceModelList"
             }
           }
         },
@@ -4037,7 +4037,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DeviceModel"
             }
           },
           {
@@ -4062,19 +4062,19 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DeviceModel"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DeviceModel"
             }
           },
           "202": {
             "description": "Accepted",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DeviceModel"
             }
           }
         },
@@ -4193,7 +4193,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DeviceModel"
             }
           }
         },
@@ -4227,7 +4227,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DeviceModel"
             }
           },
           {
@@ -4252,13 +4252,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DeviceModel"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DeviceModel"
             }
           }
         },
@@ -4377,13 +4377,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DeviceModel"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DeviceModel"
             }
           }
         },
@@ -4433,7 +4433,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DeviceModel"
             }
           }
         },
@@ -4467,7 +4467,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DeviceModel"
             }
           },
           {
@@ -4492,13 +4492,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DeviceModel"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DeviceModel"
             }
           }
         },
@@ -4558,13 +4558,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DeviceModel"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.DeviceModel"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DeviceModel"
             }
           }
         },
@@ -4648,7 +4648,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.DeviceList"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DeviceList"
             }
           }
         },
@@ -4682,7 +4682,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.Device"
             }
           },
           {
@@ -4707,19 +4707,19 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.Device"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.Device"
             }
           },
           "202": {
             "description": "Accepted",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.Device"
             }
           }
         },
@@ -4838,7 +4838,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.Device"
             }
           }
         },
@@ -4872,7 +4872,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.Device"
             }
           },
           {
@@ -4897,13 +4897,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.Device"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.Device"
             }
           }
         },
@@ -5022,13 +5022,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.Device"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.Device"
             }
           }
         },
@@ -5078,7 +5078,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.Device"
             }
           }
         },
@@ -5112,7 +5112,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.Device"
             }
           },
           {
@@ -5137,13 +5137,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.Device"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.Device"
             }
           }
         },
@@ -5203,13 +5203,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.Device"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.Device"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.Device"
             }
           }
         },
@@ -5807,7 +5807,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.ImagePrePullJobList"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.ImagePrePullJobList"
             }
           }
         },
@@ -5841,7 +5841,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.ImagePrePullJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.ImagePrePullJob"
             }
           },
           {
@@ -5866,19 +5866,19 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.ImagePrePullJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.ImagePrePullJob"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.ImagePrePullJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.ImagePrePullJob"
             }
           },
           "202": {
             "description": "Accepted",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.ImagePrePullJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.ImagePrePullJob"
             }
           }
         },
@@ -5994,7 +5994,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.ImagePrePullJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.ImagePrePullJob"
             }
           }
         },
@@ -6028,7 +6028,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.ImagePrePullJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.ImagePrePullJob"
             }
           },
           {
@@ -6053,13 +6053,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.ImagePrePullJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.ImagePrePullJob"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.ImagePrePullJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.ImagePrePullJob"
             }
           }
         },
@@ -6178,13 +6178,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.ImagePrePullJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.ImagePrePullJob"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.ImagePrePullJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.ImagePrePullJob"
             }
           }
         },
@@ -6231,7 +6231,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.ImagePrePullJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.ImagePrePullJob"
             }
           }
         },
@@ -6265,7 +6265,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.ImagePrePullJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.ImagePrePullJob"
             }
           },
           {
@@ -6290,13 +6290,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.ImagePrePullJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.ImagePrePullJob"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.ImagePrePullJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.ImagePrePullJob"
             }
           }
         },
@@ -6356,13 +6356,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.ImagePrePullJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.ImagePrePullJob"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.ImagePrePullJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.ImagePrePullJob"
             }
           }
         },
@@ -6443,7 +6443,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.NodeUpgradeJobList"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.NodeUpgradeJobList"
             }
           }
         },
@@ -6477,7 +6477,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.NodeUpgradeJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.NodeUpgradeJob"
             }
           },
           {
@@ -6502,19 +6502,19 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.NodeUpgradeJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.NodeUpgradeJob"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.NodeUpgradeJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.NodeUpgradeJob"
             }
           },
           "202": {
             "description": "Accepted",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.NodeUpgradeJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.NodeUpgradeJob"
             }
           }
         },
@@ -6630,7 +6630,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.NodeUpgradeJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.NodeUpgradeJob"
             }
           }
         },
@@ -6664,7 +6664,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.NodeUpgradeJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.NodeUpgradeJob"
             }
           },
           {
@@ -6689,13 +6689,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.NodeUpgradeJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.NodeUpgradeJob"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.NodeUpgradeJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.NodeUpgradeJob"
             }
           }
         },
@@ -6814,13 +6814,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.NodeUpgradeJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.NodeUpgradeJob"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.NodeUpgradeJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.NodeUpgradeJob"
             }
           }
         },
@@ -6867,7 +6867,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.NodeUpgradeJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.NodeUpgradeJob"
             }
           }
         },
@@ -6901,7 +6901,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.NodeUpgradeJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.NodeUpgradeJob"
             }
           },
           {
@@ -6926,13 +6926,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.NodeUpgradeJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.NodeUpgradeJob"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.NodeUpgradeJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.NodeUpgradeJob"
             }
           }
         },
@@ -6992,13 +6992,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.NodeUpgradeJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.NodeUpgradeJob"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.NodeUpgradeJob"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.NodeUpgradeJob"
             }
           }
         },
@@ -7439,7 +7439,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.policy.v1alpha1.ServiceAccountAccessList"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.policy.v1alpha1.ServiceAccountAccessList"
             }
           }
         },
@@ -7473,7 +7473,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.policy.v1alpha1.ServiceAccountAccess"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.policy.v1alpha1.ServiceAccountAccess"
             }
           },
           {
@@ -7498,19 +7498,19 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.policy.v1alpha1.ServiceAccountAccess"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.policy.v1alpha1.ServiceAccountAccess"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.policy.v1alpha1.ServiceAccountAccess"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.policy.v1alpha1.ServiceAccountAccess"
             }
           },
           "202": {
             "description": "Accepted",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.policy.v1alpha1.ServiceAccountAccess"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.policy.v1alpha1.ServiceAccountAccess"
             }
           }
         },
@@ -7629,7 +7629,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.policy.v1alpha1.ServiceAccountAccess"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.policy.v1alpha1.ServiceAccountAccess"
             }
           }
         },
@@ -7663,7 +7663,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.policy.v1alpha1.ServiceAccountAccess"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.policy.v1alpha1.ServiceAccountAccess"
             }
           },
           {
@@ -7688,13 +7688,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.policy.v1alpha1.ServiceAccountAccess"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.policy.v1alpha1.ServiceAccountAccess"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.policy.v1alpha1.ServiceAccountAccess"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.policy.v1alpha1.ServiceAccountAccess"
             }
           }
         },
@@ -7813,13 +7813,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.policy.v1alpha1.ServiceAccountAccess"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.policy.v1alpha1.ServiceAccountAccess"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.policy.v1alpha1.ServiceAccountAccess"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.policy.v1alpha1.ServiceAccountAccess"
             }
           }
         },
@@ -7869,7 +7869,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.policy.v1alpha1.ServiceAccountAccess"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.policy.v1alpha1.ServiceAccountAccess"
             }
           }
         },
@@ -7903,7 +7903,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.policy.v1alpha1.ServiceAccountAccess"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.policy.v1alpha1.ServiceAccountAccess"
             }
           },
           {
@@ -7928,13 +7928,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.policy.v1alpha1.ServiceAccountAccess"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.policy.v1alpha1.ServiceAccountAccess"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.policy.v1alpha1.ServiceAccountAccess"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.policy.v1alpha1.ServiceAccountAccess"
             }
           }
         },
@@ -7994,13 +7994,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.policy.v1alpha1.ServiceAccountAccess"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.policy.v1alpha1.ServiceAccountAccess"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.policy.v1alpha1.ServiceAccountAccess"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.policy.v1alpha1.ServiceAccountAccess"
             }
           }
         },
@@ -8052,7 +8052,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.policy.v1alpha1.ServiceAccountAccessList"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.policy.v1alpha1.ServiceAccountAccessList"
             }
           }
         },
@@ -8442,7 +8442,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ClusterObjectSyncList"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ClusterObjectSyncList"
             }
           }
         },
@@ -8476,7 +8476,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ClusterObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
             }
           },
           {
@@ -8501,19 +8501,19 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ClusterObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ClusterObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
             }
           },
           "202": {
             "description": "Accepted",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ClusterObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
             }
           }
         },
@@ -8629,7 +8629,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ClusterObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
             }
           }
         },
@@ -8663,7 +8663,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ClusterObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
             }
           },
           {
@@ -8688,13 +8688,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ClusterObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ClusterObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
             }
           }
         },
@@ -8813,13 +8813,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ClusterObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ClusterObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
             }
           }
         },
@@ -8866,7 +8866,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ClusterObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
             }
           }
         },
@@ -8900,7 +8900,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ClusterObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
             }
           },
           {
@@ -8925,13 +8925,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ClusterObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ClusterObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
             }
           }
         },
@@ -8991,13 +8991,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ClusterObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ClusterObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
             }
           }
         },
@@ -9078,7 +9078,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ObjectSyncList"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ObjectSyncList"
             }
           }
         },
@@ -9112,7 +9112,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ObjectSync"
             }
           },
           {
@@ -9137,19 +9137,19 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ObjectSync"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ObjectSync"
             }
           },
           "202": {
             "description": "Accepted",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ObjectSync"
             }
           }
         },
@@ -9268,7 +9268,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ObjectSync"
             }
           }
         },
@@ -9302,7 +9302,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ObjectSync"
             }
           },
           {
@@ -9327,13 +9327,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ObjectSync"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ObjectSync"
             }
           }
         },
@@ -9452,13 +9452,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ObjectSync"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ObjectSync"
             }
           }
         },
@@ -9508,7 +9508,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ObjectSync"
             }
           }
         },
@@ -9542,7 +9542,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ObjectSync"
             }
           },
           {
@@ -9567,13 +9567,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ObjectSync"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ObjectSync"
             }
           }
         },
@@ -9633,13 +9633,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ObjectSync"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ObjectSync"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ObjectSync"
             }
           }
         },
@@ -9691,7 +9691,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ObjectSyncList"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ObjectSyncList"
             }
           }
         },
@@ -10231,7 +10231,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.rules.v1.RuleList"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.rules.v1.RuleList"
             }
           }
         },
@@ -10265,7 +10265,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.rules.v1.Rule"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.rules.v1.Rule"
             }
           },
           {
@@ -10290,19 +10290,19 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.rules.v1.Rule"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.rules.v1.Rule"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.rules.v1.Rule"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.rules.v1.Rule"
             }
           },
           "202": {
             "description": "Accepted",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.rules.v1.Rule"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.rules.v1.Rule"
             }
           }
         },
@@ -10421,7 +10421,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.rules.v1.Rule"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.rules.v1.Rule"
             }
           }
         },
@@ -10455,7 +10455,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.rules.v1.Rule"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.rules.v1.Rule"
             }
           },
           {
@@ -10480,13 +10480,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.rules.v1.Rule"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.rules.v1.Rule"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.rules.v1.Rule"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.rules.v1.Rule"
             }
           }
         },
@@ -10605,13 +10605,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.rules.v1.Rule"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.rules.v1.Rule"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.rules.v1.Rule"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.rules.v1.Rule"
             }
           }
         },
@@ -10661,7 +10661,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.rules.v1.Rule"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.rules.v1.Rule"
             }
           }
         },
@@ -10695,7 +10695,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.rules.v1.Rule"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.rules.v1.Rule"
             }
           },
           {
@@ -10720,13 +10720,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.rules.v1.Rule"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.rules.v1.Rule"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.rules.v1.Rule"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.rules.v1.Rule"
             }
           }
         },
@@ -10786,13 +10786,13 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.rules.v1.Rule"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.rules.v1.Rule"
             }
           },
           "201": {
             "description": "Created",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.rules.v1.Rule"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.rules.v1.Rule"
             }
           }
         },
@@ -10844,7 +10844,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/com.github.kubeedge.api.rules.v1.RuleList"
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.rules.v1.RuleList"
             }
           }
         },
@@ -11120,7 +11120,7 @@
     }
   },
   "definitions": {
-    "com.github.kubeedge.api.apps.v1alpha1.CommandArgsOverrider": {
+    "com.github.kubeedge.api.apis.apps.v1alpha1.CommandArgsOverrider": {
       "description": "CommandArgsOverrider represents the rules dedicated to handling command/args overrides.",
       "type": "object",
       "required": [
@@ -11148,7 +11148,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.apps.v1alpha1.EdgeApplication": {
+    "com.github.kubeedge.api.apis.apps.v1alpha1.EdgeApplication": {
       "description": "EdgeApplication is the Schema for the edgeapplications API",
       "type": "object",
       "properties": {
@@ -11167,12 +11167,12 @@
         "spec": {
           "description": "Spec represents the desired behavior of EdgeApplication.",
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.EdgeApplicationSpec"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.EdgeApplicationSpec"
         },
         "status": {
           "description": "Status represents the status of PropagationStatus.",
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.EdgeApplicationStatus"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.EdgeApplicationStatus"
         }
       },
       "x-kubernetes-group-version-kind": [
@@ -11183,7 +11183,7 @@
         }
       ]
     },
-    "com.github.kubeedge.api.apps.v1alpha1.EdgeApplicationList": {
+    "com.github.kubeedge.api.apis.apps.v1alpha1.EdgeApplicationList": {
       "description": "EdgeApplicationList contains a list of EdgeApplication",
       "type": "object",
       "required": [
@@ -11198,7 +11198,7 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.EdgeApplication"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.EdgeApplication"
           }
         },
         "kind": {
@@ -11218,7 +11218,7 @@
         }
       ]
     },
-    "com.github.kubeedge.api.apps.v1alpha1.EdgeApplicationSpec": {
+    "com.github.kubeedge.api.apis.apps.v1alpha1.EdgeApplicationSpec": {
       "description": "EdgeApplicationSpec defines the desired state of EdgeApplication",
       "type": "object",
       "required": [
@@ -11228,16 +11228,16 @@
         "workloadScope": {
           "description": "WorkloadScope represents which node groups the workload will be deployed in.",
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.WorkloadScope"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.WorkloadScope"
         },
         "workloadTemplate": {
           "description": "WorkloadTemplate contains original templates of resources to be deployed as an EdgeApplication.",
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.ResourceTemplate"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.ResourceTemplate"
         }
       }
     },
-    "com.github.kubeedge.api.apps.v1alpha1.EdgeApplicationStatus": {
+    "com.github.kubeedge.api.apis.apps.v1alpha1.EdgeApplicationStatus": {
       "description": "EdgeApplicationStatus defines the observed state of EdgeApplication",
       "type": "object",
       "properties": {
@@ -11246,12 +11246,12 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.ManifestStatus"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.ManifestStatus"
           }
         }
       }
     },
-    "com.github.kubeedge.api.apps.v1alpha1.EnvOverrider": {
+    "com.github.kubeedge.api.apis.apps.v1alpha1.EnvOverrider": {
       "description": "EnvOverrider represents the rules dedicated to handling env overrides.",
       "type": "object",
       "required": [
@@ -11279,7 +11279,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.apps.v1alpha1.ImageOverrider": {
+    "com.github.kubeedge.api.apis.apps.v1alpha1.ImageOverrider": {
       "description": "ImageOverrider represents the rules dedicated to handling image overrides.",
       "type": "object",
       "required": [
@@ -11299,7 +11299,7 @@
         },
         "predicate": {
           "description": "Predicate filters images before applying the rule.\n\nDefaults to nil, in that case, the system will automatically detect image fields if the resource type is Pod, ReplicaSet, Deployment or StatefulSet by following rule:\n  - Pod: /spec/containers/\u003cN\u003e/image\n  - ReplicaSet: /spec/template/spec/containers/\u003cN\u003e/image\n  - Deployment: /spec/template/spec/containers/\u003cN\u003e/image\n  - StatefulSet: /spec/template/spec/containers/\u003cN\u003e/image\nIn addition, all images will be processed if the resource object has more than one containers.\n\nIf not nil, only images matches the filters will be processed.",
-          "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.ImagePredicate"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.ImagePredicate"
         },
         "value": {
           "description": "Value to be applied to image. Must not be empty when operator is 'add' or 'replace'. Defaults to empty and ignored when operator is 'remove'.",
@@ -11307,7 +11307,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.apps.v1alpha1.ImagePredicate": {
+    "com.github.kubeedge.api.apis.apps.v1alpha1.ImagePredicate": {
       "description": "ImagePredicate describes images filter.",
       "type": "object",
       "required": [
@@ -11321,11 +11321,11 @@
         }
       }
     },
-    "com.github.kubeedge.api.apps.v1alpha1.Manifest": {
+    "com.github.kubeedge.api.apis.apps.v1alpha1.Manifest": {
       "description": "Manifest represents a resource to be deployed on managed node groups.",
       "type": "object"
     },
-    "com.github.kubeedge.api.apps.v1alpha1.ManifestStatus": {
+    "com.github.kubeedge.api.apis.apps.v1alpha1.ManifestStatus": {
       "description": "ManifestStatus contains running status of a specific manifest in spec.",
       "type": "object",
       "required": [
@@ -11339,11 +11339,11 @@
         "identifier": {
           "description": "Identifier represents the identity of a resource linking to manifests in spec.",
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.ResourceIdentifier"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.ResourceIdentifier"
         }
       }
     },
-    "com.github.kubeedge.api.apps.v1alpha1.NodeGroup": {
+    "com.github.kubeedge.api.apis.apps.v1alpha1.NodeGroup": {
       "description": "NodeGroup is the Schema for the nodegroups API",
       "type": "object",
       "properties": {
@@ -11362,12 +11362,12 @@
         "spec": {
           "description": "Spec represents the specification of the desired behavior of member nodegroup.",
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.NodeGroupSpec"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.NodeGroupSpec"
         },
         "status": {
           "description": "Status represents the status of member nodegroup.",
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.NodeGroupStatus"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.NodeGroupStatus"
         }
       },
       "x-kubernetes-group-version-kind": [
@@ -11378,7 +11378,7 @@
         }
       ]
     },
-    "com.github.kubeedge.api.apps.v1alpha1.NodeGroupList": {
+    "com.github.kubeedge.api.apis.apps.v1alpha1.NodeGroupList": {
       "description": "NodeGroupList contains a list of NodeGroup",
       "type": "object",
       "required": [
@@ -11393,7 +11393,7 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.NodeGroup"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.NodeGroup"
           }
         },
         "kind": {
@@ -11413,7 +11413,7 @@
         }
       ]
     },
-    "com.github.kubeedge.api.apps.v1alpha1.NodeGroupSpec": {
+    "com.github.kubeedge.api.apis.apps.v1alpha1.NodeGroupSpec": {
       "description": "NodeGroupSpec defines the desired state of NodeGroup",
       "type": "object",
       "properties": {
@@ -11435,7 +11435,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.apps.v1alpha1.NodeGroupStatus": {
+    "com.github.kubeedge.api.apis.apps.v1alpha1.NodeGroupStatus": {
       "description": "NodeGroupStatus contains the observed status of all selected nodes in this NodeGroup, including nodes that have been one of the members of this NodeGroup and those have not.",
       "type": "object",
       "properties": {
@@ -11444,12 +11444,12 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.NodeStatus"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.NodeStatus"
           }
         }
       }
     },
-    "com.github.kubeedge.api.apps.v1alpha1.NodeStatus": {
+    "com.github.kubeedge.api.apis.apps.v1alpha1.NodeStatus": {
       "description": "NodeStatus contains status of node that selected by this NodeGroup.",
       "type": "object",
       "required": [
@@ -11479,7 +11479,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.apps.v1alpha1.Overriders": {
+    "com.github.kubeedge.api.apis.apps.v1alpha1.Overriders": {
       "description": "Overriders represents the override rules that would apply on resources.",
       "type": "object",
       "properties": {
@@ -11488,7 +11488,7 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.CommandArgsOverrider"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.CommandArgsOverrider"
           }
         },
         "commandOverriders": {
@@ -11496,7 +11496,7 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.CommandArgsOverrider"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.CommandArgsOverrider"
           }
         },
         "envOverriders": {
@@ -11504,7 +11504,7 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.EnvOverrider"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.EnvOverrider"
           }
         },
         "imageOverriders": {
@@ -11512,7 +11512,7 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.ImageOverrider"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.ImageOverrider"
           }
         },
         "replicas": {
@@ -11525,12 +11525,12 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.ResourcesOverrider"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.ResourcesOverrider"
           }
         }
       }
     },
-    "com.github.kubeedge.api.apps.v1alpha1.ResourceIdentifier": {
+    "com.github.kubeedge.api.apis.apps.v1alpha1.ResourceIdentifier": {
       "description": "ResourceIdentifier provides the identifiers needed to interact with any arbitrary object.",
       "type": "object",
       "required": [
@@ -11569,7 +11569,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.apps.v1alpha1.ResourceTemplate": {
+    "com.github.kubeedge.api.apis.apps.v1alpha1.ResourceTemplate": {
       "description": "ResourceTemplate represents original templates of resources to be deployed as an EdgeApplication.",
       "type": "object",
       "properties": {
@@ -11577,12 +11577,12 @@
           "description": "Manifests represent a list of Kubernetes resources to be deployed on the managed node groups.",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.Manifest"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.Manifest"
           }
         }
       }
     },
-    "com.github.kubeedge.api.apps.v1alpha1.ResourcesOverrider": {
+    "com.github.kubeedge.api.apis.apps.v1alpha1.ResourcesOverrider": {
       "description": "ResourcesOverrider represents the rules dedicated to handling resources overrides.",
       "type": "object",
       "required": [
@@ -11601,7 +11601,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.apps.v1alpha1.TargetNodeGroup": {
+    "com.github.kubeedge.api.apis.apps.v1alpha1.TargetNodeGroup": {
       "description": "TargetNodeGroup represents the target node group of workload to be deployed, including override rules to apply for this node group.",
       "type": "object",
       "required": [
@@ -11616,11 +11616,11 @@
         "overriders": {
           "description": "Overriders represents the override rules that would apply on workload.",
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.Overriders"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.Overriders"
         }
       }
     },
-    "com.github.kubeedge.api.apps.v1alpha1.WorkloadScope": {
+    "com.github.kubeedge.api.apis.apps.v1alpha1.WorkloadScope": {
       "description": "WorkloadScope represents which node groups the workload should be deployed in.",
       "type": "object",
       "properties": {
@@ -11629,12 +11629,12 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.apps.v1alpha1.TargetNodeGroup"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.TargetNodeGroup"
           }
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1alpha2.BluetoothOperations": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.BluetoothOperations": {
       "description": "Specify the operation that should be performed to convert incoming data into understandable form",
       "type": "object",
       "properties": {
@@ -11649,7 +11649,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1alpha2.BluetoothReadConverter": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.BluetoothReadConverter": {
       "description": "Specifies the operations that may need to be performed to convert the data",
       "type": "object",
       "properties": {
@@ -11663,7 +11663,7 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.BluetoothOperations"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.BluetoothOperations"
           }
         },
         "shiftLeft": {
@@ -11683,11 +11683,11 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1alpha2.CustomizedValue": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.CustomizedValue": {
       "description": "CustomizedValue contains a map type data",
       "type": "object"
     },
-    "com.github.kubeedge.api.devices.v1alpha2.DataProperty": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.DataProperty": {
       "description": "DataProperty represents the device property for external use.",
       "type": "object",
       "properties": {
@@ -11705,7 +11705,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1alpha2.Device": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.Device": {
       "description": "Device is the Schema for the devices API",
       "type": "object",
       "properties": {
@@ -11723,11 +11723,11 @@
         },
         "spec": {
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.DeviceSpec"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.DeviceSpec"
         },
         "status": {
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.DeviceStatus"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.DeviceStatus"
         }
       },
       "x-kubernetes-group-version-kind": [
@@ -11738,7 +11738,7 @@
         }
       ]
     },
-    "com.github.kubeedge.api.devices.v1alpha2.DeviceData": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.DeviceData": {
       "description": "DeviceData reports the device's time-series data to edge MQTT broker. These data should not be processed by edgecore. Instead, they can be processed by third-party data-processing apps like EMQX kuiper.",
       "type": "object",
       "properties": {
@@ -11747,7 +11747,7 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.DataProperty"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.DataProperty"
           }
         },
         "dataTopic": {
@@ -11756,7 +11756,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1alpha2.DeviceList": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.DeviceList": {
       "description": "DeviceList contains a list of Device",
       "type": "object",
       "required": [
@@ -11771,7 +11771,7 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.Device"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.Device"
           }
         },
         "kind": {
@@ -11791,7 +11791,7 @@
         }
       ]
     },
-    "com.github.kubeedge.api.devices.v1alpha2.DeviceModel": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.DeviceModel": {
       "description": "DeviceModel is the Schema for the device model API",
       "type": "object",
       "properties": {
@@ -11809,7 +11809,7 @@
         },
         "spec": {
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.DeviceModelSpec"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.DeviceModelSpec"
         }
       },
       "x-kubernetes-group-version-kind": [
@@ -11820,7 +11820,7 @@
         }
       ]
     },
-    "com.github.kubeedge.api.devices.v1alpha2.DeviceModelList": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.DeviceModelList": {
       "description": "DeviceModelList contains a list of DeviceModel",
       "type": "object",
       "required": [
@@ -11835,7 +11835,7 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.DeviceModel"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.DeviceModel"
           }
         },
         "kind": {
@@ -11855,7 +11855,7 @@
         }
       ]
     },
-    "com.github.kubeedge.api.devices.v1alpha2.DeviceModelSpec": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.DeviceModelSpec": {
       "description": "DeviceModelSpec defines the model / template for a device.It is a blueprint which describes the device capabilities and access mechanism via property visitors.",
       "type": "object",
       "properties": {
@@ -11864,7 +11864,7 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.DeviceProperty"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.DeviceProperty"
           }
         },
         "protocol": {
@@ -11873,7 +11873,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1alpha2.DeviceProperty": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.DeviceProperty": {
       "description": "DeviceProperty describes an individual device property / attribute like temperature / humidity etc.",
       "type": "object",
       "properties": {
@@ -11888,17 +11888,17 @@
         "type": {
           "description": "Required: PropertyType represents the type and data validation of the property.",
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.PropertyType"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.PropertyType"
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1alpha2.DevicePropertyVisitor": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.DevicePropertyVisitor": {
       "description": "DevicePropertyVisitor describes the specifics of accessing a particular device property. Visitors are intended to be consumed by device mappers which connect to devices and collect data / perform actions on the device.",
       "type": "object",
       "properties": {
         "bluetooth": {
           "description": "Bluetooth represents a set of additional visitor config fields of bluetooth protocol.",
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.VisitorConfigBluetooth"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.VisitorConfigBluetooth"
         },
         "collectCycle": {
           "description": "Define how frequent mapper will collect from device.",
@@ -11907,19 +11907,19 @@
         },
         "customizedProtocol": {
           "description": "CustomizedProtocol represents a set of visitor config fields of bluetooth protocol.",
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.VisitorConfigCustomized"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.VisitorConfigCustomized"
         },
         "customizedValues": {
           "description": "Customized values for visitor of provided protocols",
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.CustomizedValue"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.CustomizedValue"
         },
         "modbus": {
           "description": "Modbus represents a set of additional visitor config fields of modbus protocol.",
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.VisitorConfigModbus"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.VisitorConfigModbus"
         },
         "opcua": {
           "description": "Opcua represents a set of additional visitor config fields of opc-ua protocol.",
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.VisitorConfigOPCUA"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.VisitorConfigOPCUA"
         },
         "propertyName": {
           "description": "Required: The device property name to be accessed. This should refer to one of the device properties defined in the device model.",
@@ -11932,14 +11932,14 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1alpha2.DeviceSpec": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.DeviceSpec": {
       "description": "DeviceSpec represents a single device instance. It is an instantation of a device model.",
       "type": "object",
       "properties": {
         "data": {
           "description": "Data section describe a list of time-series properties which should be processed on edge node.",
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.DeviceData"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.DeviceData"
         },
         "deviceModelRef": {
           "description": "Required: DeviceModelRef is reference to the device model used as a template to create the device instance.",
@@ -11954,17 +11954,17 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.DevicePropertyVisitor"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.DevicePropertyVisitor"
           }
         },
         "protocol": {
           "description": "Required: The protocol configuration used to connect to the device.",
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.ProtocolConfig"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.ProtocolConfig"
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1alpha2.DeviceStatus": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.DeviceStatus": {
       "description": "DeviceStatus reports the device state and the desired/reported values of twin attributes.",
       "type": "object",
       "properties": {
@@ -11973,36 +11973,36 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.Twin"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.Twin"
           }
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1alpha2.PropertyType": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.PropertyType": {
       "description": "Represents the type and data validation of a property. Only one of its members may be specified.",
       "type": "object",
       "properties": {
         "boolean": {
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.PropertyTypeBoolean"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.PropertyTypeBoolean"
         },
         "bytes": {
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.PropertyTypeBytes"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.PropertyTypeBytes"
         },
         "double": {
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.PropertyTypeDouble"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.PropertyTypeDouble"
         },
         "float": {
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.PropertyTypeFloat"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.PropertyTypeFloat"
         },
         "int": {
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.PropertyTypeInt64"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.PropertyTypeInt64"
         },
         "string": {
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.PropertyTypeString"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.PropertyTypeString"
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1alpha2.PropertyTypeBoolean": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.PropertyTypeBoolean": {
       "type": "object",
       "properties": {
         "accessMode": {
@@ -12014,7 +12014,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1alpha2.PropertyTypeBytes": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.PropertyTypeBytes": {
       "type": "object",
       "properties": {
         "accessMode": {
@@ -12023,7 +12023,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1alpha2.PropertyTypeDouble": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.PropertyTypeDouble": {
       "type": "object",
       "properties": {
         "accessMode": {
@@ -12048,7 +12048,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1alpha2.PropertyTypeFloat": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.PropertyTypeFloat": {
       "type": "object",
       "properties": {
         "accessMode": {
@@ -12073,7 +12073,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1alpha2.PropertyTypeInt64": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.PropertyTypeInt64": {
       "type": "object",
       "properties": {
         "accessMode": {
@@ -12098,7 +12098,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1alpha2.PropertyTypeString": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.PropertyTypeString": {
       "type": "object",
       "properties": {
         "accessMode": {
@@ -12110,33 +12110,33 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1alpha2.ProtocolConfig": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.ProtocolConfig": {
       "description": "Only one of its members may be specified.",
       "type": "object",
       "properties": {
         "bluetooth": {
           "description": "Protocol configuration for bluetooth",
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.ProtocolConfigBluetooth"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.ProtocolConfigBluetooth"
         },
         "common": {
           "description": "Configuration for protocol common part",
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.ProtocolConfigCommon"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.ProtocolConfigCommon"
         },
         "customizedProtocol": {
           "description": "Configuration for customized protocol",
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.ProtocolConfigCustomized"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.ProtocolConfigCustomized"
         },
         "modbus": {
           "description": "Protocol configuration for modbus",
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.ProtocolConfigModbus"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.ProtocolConfigModbus"
         },
         "opcua": {
           "description": "Protocol configuration for opc-ua",
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.ProtocolConfigOpcUA"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.ProtocolConfigOpcUA"
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1alpha2.ProtocolConfigBluetooth": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.ProtocolConfigBluetooth": {
       "type": "object",
       "properties": {
         "macAddress": {
@@ -12145,7 +12145,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1alpha2.ProtocolConfigCOM": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.ProtocolConfigCOM": {
       "type": "object",
       "properties": {
         "baudRate": {
@@ -12173,7 +12173,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1alpha2.ProtocolConfigCommon": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.ProtocolConfigCommon": {
       "description": "Only one of COM or TCP may be specified.",
       "type": "object",
       "properties": {
@@ -12192,7 +12192,7 @@
           "type": "string"
         },
         "com": {
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.ProtocolConfigCOM"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.ProtocolConfigCOM"
         },
         "commType": {
           "description": "Communication type, like tcp client, tcp server or COM",
@@ -12200,7 +12200,7 @@
         },
         "customizedValues": {
           "description": "Customized values for provided protocol",
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.CustomizedValue"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.CustomizedValue"
         },
         "reconnRetryTimes": {
           "description": "Reconnecting retry times",
@@ -12213,16 +12213,16 @@
           "format": "int64"
         },
         "tcp": {
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.ProtocolConfigTCP"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.ProtocolConfigTCP"
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1alpha2.ProtocolConfigCustomized": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.ProtocolConfigCustomized": {
       "type": "object",
       "properties": {
         "configData": {
           "description": "Any config data",
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.CustomizedValue"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.CustomizedValue"
         },
         "protocolName": {
           "description": "Unique protocol name Required.",
@@ -12230,7 +12230,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1alpha2.ProtocolConfigModbus": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.ProtocolConfigModbus": {
       "description": "Only one of its members may be specified.",
       "type": "object",
       "properties": {
@@ -12241,7 +12241,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1alpha2.ProtocolConfigOpcUA": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.ProtocolConfigOpcUA": {
       "type": "object",
       "properties": {
         "certificate": {
@@ -12279,7 +12279,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1alpha2.ProtocolConfigTCP": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.ProtocolConfigTCP": {
       "type": "object",
       "properties": {
         "ip": {
@@ -12293,14 +12293,14 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1alpha2.Twin": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.Twin": {
       "description": "Twin provides a logical representation of control properties (writable properties in the device model). The properties can have a Desired state and a Reported state. The cloud configures the `Desired`state of a device property and this configuration update is pushed to the edge node. The mapper sends a command to the device to change this property value as per the desired state . It receives the `Reported` state of the property once the previous operation is complete and sends the reported state to the cloud. Offline device interaction in the edge is possible via twin properties for control/command operations.",
       "type": "object",
       "properties": {
         "desired": {
           "description": "Required: the desired property value.",
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.TwinProperty"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.TwinProperty"
         },
         "propertyName": {
           "description": "Required: The property name for which the desired/reported values are specified. This property should be present in the device model.",
@@ -12309,11 +12309,11 @@
         "reported": {
           "description": "Required: the reported property value.",
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.TwinProperty"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.TwinProperty"
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1alpha2.TwinProperty": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.TwinProperty": {
       "description": "TwinProperty represents the device property for which an Expected/Actual state can be defined.",
       "type": "object",
       "required": [
@@ -12335,7 +12335,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1alpha2.VisitorConfigBluetooth": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.VisitorConfigBluetooth": {
       "description": "Common visitor configurations for bluetooth protocol",
       "type": "object",
       "properties": {
@@ -12346,7 +12346,7 @@
         "dataConverter": {
           "description": "Responsible for converting the data being read from the bluetooth device into a form that is understandable by the platform",
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.BluetoothReadConverter"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.BluetoothReadConverter"
         },
         "dataWrite": {
           "description": "Responsible for converting the data coming from the platform into a form that is understood by the bluetooth device For example: \"ON\":[1], \"OFF\":[0]",
@@ -12358,13 +12358,13 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1alpha2.VisitorConfigCustomized": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.VisitorConfigCustomized": {
       "description": "Common visitor configurations for customized protocol",
       "type": "object",
       "properties": {
         "configData": {
           "description": "Required: The configData of customized protocol",
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1alpha2.CustomizedValue"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1alpha2.CustomizedValue"
         },
         "protocolName": {
           "description": "Required: name of customized protocol",
@@ -12372,7 +12372,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1alpha2.VisitorConfigModbus": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.VisitorConfigModbus": {
       "description": "Common visitor configurations for modbus protocol",
       "type": "object",
       "properties": {
@@ -12405,7 +12405,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1alpha2.VisitorConfigOPCUA": {
+    "com.github.kubeedge.api.apis.devices.v1alpha2.VisitorConfigOPCUA": {
       "description": "Common visitor configurations for opc-ua protocol",
       "type": "object",
       "properties": {
@@ -12419,68 +12419,68 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1beta1.CustomizedValue": {
+    "com.github.kubeedge.api.apis.devices.v1beta1.CustomizedValue": {
       "description": "CustomizedValue contains a map type data",
       "type": "object"
     },
-    "com.github.kubeedge.api.devices.v1beta1.DBMethodConfig": {
+    "com.github.kubeedge.api.apis.devices.v1beta1.DBMethodConfig": {
       "type": "object",
       "properties": {
         "TDEngine": {
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.DBMethodTDEngine"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DBMethodTDEngine"
         },
         "influxdb2": {
           "description": "method configuration for database",
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.DBMethodInfluxdb2"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DBMethodInfluxdb2"
         },
         "mysql": {
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.DBMethodMySQL"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DBMethodMySQL"
         },
         "redis": {
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.DBMethodRedis"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DBMethodRedis"
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1beta1.DBMethodInfluxdb2": {
+    "com.github.kubeedge.api.apis.devices.v1beta1.DBMethodInfluxdb2": {
       "type": "object",
       "properties": {
         "influxdb2ClientConfig": {
           "description": "Config of influx database",
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.Influxdb2ClientConfig"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.Influxdb2ClientConfig"
         },
         "influxdb2DataConfig": {
           "description": "config of device data when push to influx database",
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.Influxdb2DataConfig"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.Influxdb2DataConfig"
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1beta1.DBMethodMySQL": {
+    "com.github.kubeedge.api.apis.devices.v1beta1.DBMethodMySQL": {
       "type": "object",
       "properties": {
         "mysqlClientConfig": {
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.MySQLClientConfig"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.MySQLClientConfig"
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1beta1.DBMethodRedis": {
+    "com.github.kubeedge.api.apis.devices.v1beta1.DBMethodRedis": {
       "type": "object",
       "properties": {
         "redisClientConfig": {
           "description": "RedisClientConfig of redis database",
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.RedisClientConfig"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.RedisClientConfig"
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1beta1.DBMethodTDEngine": {
+    "com.github.kubeedge.api.apis.devices.v1beta1.DBMethodTDEngine": {
       "type": "object",
       "properties": {
         "TDEngineClientConfig": {
           "description": "tdengineClientConfig of tdengine database",
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.TDEngineClientConfig"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.TDEngineClientConfig"
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1beta1.Device": {
+    "com.github.kubeedge.api.apis.devices.v1beta1.Device": {
       "description": "Device is the Schema for the devices API",
       "type": "object",
       "properties": {
@@ -12498,11 +12498,11 @@
         },
         "spec": {
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.DeviceSpec"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DeviceSpec"
         },
         "status": {
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.DeviceStatus"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DeviceStatus"
         }
       },
       "x-kubernetes-group-version-kind": [
@@ -12513,7 +12513,7 @@
         }
       ]
     },
-    "com.github.kubeedge.api.devices.v1beta1.DeviceList": {
+    "com.github.kubeedge.api.apis.devices.v1beta1.DeviceList": {
       "description": "DeviceList contains a list of Device",
       "type": "object",
       "required": [
@@ -12528,7 +12528,7 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.Device"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.Device"
           }
         },
         "kind": {
@@ -12548,7 +12548,7 @@
         }
       ]
     },
-    "com.github.kubeedge.api.devices.v1beta1.DeviceModel": {
+    "com.github.kubeedge.api.apis.devices.v1beta1.DeviceModel": {
       "description": "DeviceModel is the Schema for the device model API",
       "type": "object",
       "properties": {
@@ -12566,7 +12566,7 @@
         },
         "spec": {
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.DeviceModelSpec"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DeviceModelSpec"
         }
       },
       "x-kubernetes-group-version-kind": [
@@ -12577,7 +12577,7 @@
         }
       ]
     },
-    "com.github.kubeedge.api.devices.v1beta1.DeviceModelList": {
+    "com.github.kubeedge.api.apis.devices.v1beta1.DeviceModelList": {
       "description": "DeviceModelList contains a list of DeviceModel",
       "type": "object",
       "required": [
@@ -12592,7 +12592,7 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.DeviceModel"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DeviceModel"
           }
         },
         "kind": {
@@ -12612,7 +12612,7 @@
         }
       ]
     },
-    "com.github.kubeedge.api.devices.v1beta1.DeviceModelSpec": {
+    "com.github.kubeedge.api.apis.devices.v1beta1.DeviceModelSpec": {
       "description": "DeviceModelSpec defines the model for a device.It is a blueprint which describes the device capabilities and access mechanism via property visitors.",
       "type": "object",
       "properties": {
@@ -12621,7 +12621,7 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.ModelProperty"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.ModelProperty"
           }
         },
         "protocol": {
@@ -12630,7 +12630,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1beta1.DeviceProperty": {
+    "com.github.kubeedge.api.apis.devices.v1beta1.DeviceProperty": {
       "description": "DeviceProperty describes the specifics all the properties of the device.",
       "type": "object",
       "properties": {
@@ -12642,7 +12642,7 @@
         "desired": {
           "description": "The desired property value.",
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.TwinProperty"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.TwinProperty"
         },
         "name": {
           "description": "Required: The device property name to be accessed. It must be unique. Note: If you need to use the built-in stream data processing function, you need to define Name as saveFrame or saveVideo",
@@ -12650,7 +12650,7 @@
         },
         "pushMethod": {
           "description": "PushMethod represents the protocol used to push data, please ensure that the mapper can access the destination address.",
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.PushMethod"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.PushMethod"
         },
         "reportCycle": {
           "description": "Define how frequent mapper will report the value.",
@@ -12664,11 +12664,11 @@
         "visitors": {
           "description": "Visitors are intended to be consumed by device mappers which connect to devices and collect data / perform actions on the device. Required: Protocol relevant config details about the how to access the device property.",
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.VisitorConfig"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.VisitorConfig"
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1beta1.DeviceSpec": {
+    "com.github.kubeedge.api.apis.devices.v1beta1.DeviceSpec": {
       "description": "DeviceSpec represents a single device instance.",
       "type": "object",
       "properties": {
@@ -12685,17 +12685,17 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.DeviceProperty"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DeviceProperty"
           }
         },
         "protocol": {
           "description": "Required: The protocol configuration used to connect to the device.",
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.ProtocolConfig"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.ProtocolConfig"
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1beta1.DeviceStatus": {
+    "com.github.kubeedge.api.apis.devices.v1beta1.DeviceStatus": {
       "description": "DeviceStatus reports the device state and the desired/reported values of twin attributes.",
       "type": "object",
       "properties": {
@@ -12712,12 +12712,12 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.Twin"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.Twin"
           }
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1beta1.Influxdb2ClientConfig": {
+    "com.github.kubeedge.api.apis.devices.v1beta1.Influxdb2ClientConfig": {
       "type": "object",
       "properties": {
         "bucket": {
@@ -12734,7 +12734,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1beta1.Influxdb2DataConfig": {
+    "com.github.kubeedge.api.apis.devices.v1beta1.Influxdb2DataConfig": {
       "type": "object",
       "properties": {
         "fieldKey": {
@@ -12755,7 +12755,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1beta1.ModelProperty": {
+    "com.github.kubeedge.api.apis.devices.v1beta1.ModelProperty": {
       "description": "ModelProperty describes an individual device property / attribute like temperature / humidity etc.",
       "type": "object",
       "properties": {
@@ -12787,7 +12787,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1beta1.MySQLClientConfig": {
+    "com.github.kubeedge.api.apis.devices.v1beta1.MySQLClientConfig": {
       "type": "object",
       "properties": {
         "addr": {
@@ -12804,12 +12804,12 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1beta1.ProtocolConfig": {
+    "com.github.kubeedge.api.apis.devices.v1beta1.ProtocolConfig": {
       "type": "object",
       "properties": {
         "configData": {
           "description": "Any config data",
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.CustomizedValue"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.CustomizedValue"
         },
         "protocolName": {
           "description": "Unique protocol name Required.",
@@ -12817,24 +12817,24 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1beta1.PushMethod": {
+    "com.github.kubeedge.api.apis.devices.v1beta1.PushMethod": {
       "type": "object",
       "properties": {
         "dbMethod": {
           "description": "DBMethod represents the method used to push data to database, please ensure that the mapper can access the destination address.",
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.DBMethodConfig"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DBMethodConfig"
         },
         "http": {
           "description": "HTTP Push method configuration for http",
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.PushMethodHTTP"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.PushMethodHTTP"
         },
         "mqtt": {
           "description": "MQTT Push method configuration for mqtt",
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.PushMethodMQTT"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.PushMethodMQTT"
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1beta1.PushMethodHTTP": {
+    "com.github.kubeedge.api.apis.devices.v1beta1.PushMethodHTTP": {
       "type": "object",
       "properties": {
         "hostName": {
@@ -12853,7 +12853,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1beta1.PushMethodMQTT": {
+    "com.github.kubeedge.api.apis.devices.v1beta1.PushMethodMQTT": {
       "type": "object",
       "properties": {
         "address": {
@@ -12875,7 +12875,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1beta1.RedisClientConfig": {
+    "com.github.kubeedge.api.apis.devices.v1beta1.RedisClientConfig": {
       "type": "object",
       "properties": {
         "addr": {
@@ -12899,7 +12899,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1beta1.TDEngineClientConfig": {
+    "com.github.kubeedge.api.apis.devices.v1beta1.TDEngineClientConfig": {
       "type": "object",
       "properties": {
         "addr": {
@@ -12912,14 +12912,14 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1beta1.Twin": {
+    "com.github.kubeedge.api.apis.devices.v1beta1.Twin": {
       "description": "Twin provides a logical representation of control properties (writable properties in the device model). The properties can have a Desired state and a Reported state. The cloud configures the `Desired`state of a device property and this configuration update is pushed to the edge node. The mapper sends a command to the device to change this property value as per the desired state . It receives the `Reported` state of the property once the previous operation is complete and sends the reported state to the cloud. Offline device interaction in the edge is possible via twin properties for control/command operations.",
       "type": "object",
       "properties": {
         "observedDesired": {
           "description": "The meaning of here is to indicate desired value of `deviceProperty.Desired` that the mapper has received in current cycle. Useful in cases that people want to check whether the mapper is working appropriately and its internal status is up-to-date. This value should be only updated by devicecontroller upstream.",
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.TwinProperty"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.TwinProperty"
         },
         "propertyName": {
           "description": "Required: The property name for which the desired/reported values are specified. This property should be present in the device model.",
@@ -12928,11 +12928,11 @@
         "reported": {
           "description": "Required: the reported property value.",
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.TwinProperty"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.TwinProperty"
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1beta1.TwinProperty": {
+    "com.github.kubeedge.api.apis.devices.v1beta1.TwinProperty": {
       "description": "TwinProperty represents the device property for which an Expected/Actual state can be defined.",
       "type": "object",
       "required": [
@@ -12954,12 +12954,12 @@
         }
       }
     },
-    "com.github.kubeedge.api.devices.v1beta1.VisitorConfig": {
+    "com.github.kubeedge.api.apis.devices.v1beta1.VisitorConfig": {
       "type": "object",
       "properties": {
         "configData": {
           "description": "Required: The configData of customized protocol",
-          "$ref": "#/definitions/com.github.kubeedge.api.devices.v1beta1.CustomizedValue"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.CustomizedValue"
         },
         "protocolName": {
           "description": "Required: name of customized protocol",
@@ -12967,7 +12967,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.operations.v1alpha1.ImagePrePullJob": {
+    "com.github.kubeedge.api.apis.operations.v1alpha1.ImagePrePullJob": {
       "description": "ImagePrePullJob is used to prepull images on edge node.",
       "type": "object",
       "required": [
@@ -12989,12 +12989,12 @@
         "spec": {
           "description": "Spec represents the specification of the desired behavior of ImagePrePullJob.",
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.ImagePrePullJobSpec"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.ImagePrePullJobSpec"
         },
         "status": {
           "description": "Status represents the status of ImagePrePullJob.",
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.ImagePrePullJobStatus"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.ImagePrePullJobStatus"
         }
       },
       "x-kubernetes-group-version-kind": [
@@ -13005,7 +13005,7 @@
         }
       ]
     },
-    "com.github.kubeedge.api.operations.v1alpha1.ImagePrePullJobList": {
+    "com.github.kubeedge.api.apis.operations.v1alpha1.ImagePrePullJobList": {
       "description": "ImagePrePullJobList is a list of ImagePrePullJob.",
       "type": "object",
       "required": [
@@ -13021,7 +13021,7 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.ImagePrePullJob"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.ImagePrePullJob"
           }
         },
         "kind": {
@@ -13042,18 +13042,18 @@
         }
       ]
     },
-    "com.github.kubeedge.api.operations.v1alpha1.ImagePrePullJobSpec": {
+    "com.github.kubeedge.api.apis.operations.v1alpha1.ImagePrePullJobSpec": {
       "description": "ImagePrePullSpec represents the specification of the desired behavior of ImagePrePullJob.",
       "type": "object",
       "properties": {
         "imagePrePullTemplate": {
           "description": "ImagePrepullTemplate represents original templates of imagePrePull",
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.ImagePrePullTemplate"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.ImagePrePullTemplate"
         }
       }
     },
-    "com.github.kubeedge.api.operations.v1alpha1.ImagePrePullJobStatus": {
+    "com.github.kubeedge.api.apis.operations.v1alpha1.ImagePrePullJobStatus": {
       "description": "ImagePrePullJobStatus stores the status of ImagePrePullJob. contains images prepull status on multiple edge nodes.",
       "type": "object",
       "properties": {
@@ -13078,7 +13078,7 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.ImagePrePullStatus"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.ImagePrePullStatus"
           }
         },
         "time": {
@@ -13087,7 +13087,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.operations.v1alpha1.ImagePrePullStatus": {
+    "com.github.kubeedge.api.apis.operations.v1alpha1.ImagePrePullStatus": {
       "description": "ImagePrePullStatus stores image prepull status for each edge node.",
       "type": "object",
       "properties": {
@@ -13096,16 +13096,16 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.ImageStatus"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.ImageStatus"
           }
         },
         "nodeStatus": {
           "description": "TaskStatus represents the status for each node",
-          "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.TaskStatus"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.TaskStatus"
         }
       }
     },
-    "com.github.kubeedge.api.operations.v1alpha1.ImagePrePullTemplate": {
+    "com.github.kubeedge.api.apis.operations.v1alpha1.ImagePrePullTemplate": {
       "description": "ImagePrePullTemplate represents original templates of imagePrePull",
       "type": "object",
       "properties": {
@@ -13162,7 +13162,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.operations.v1alpha1.ImageStatus": {
+    "com.github.kubeedge.api.apis.operations.v1alpha1.ImageStatus": {
       "description": "ImageStatus stores the prepull status for each image.",
       "type": "object",
       "properties": {
@@ -13180,7 +13180,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.operations.v1alpha1.NodeUpgradeJob": {
+    "com.github.kubeedge.api.apis.operations.v1alpha1.NodeUpgradeJob": {
       "description": "NodeUpgradeJob is used to upgrade edge node from cloud side.",
       "type": "object",
       "properties": {
@@ -13199,12 +13199,12 @@
         "spec": {
           "description": "Specification of the desired behavior of NodeUpgradeJob.",
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.NodeUpgradeJobSpec"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.NodeUpgradeJobSpec"
         },
         "status": {
           "description": "Most recently observed status of the NodeUpgradeJob.",
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.NodeUpgradeJobStatus"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.NodeUpgradeJobStatus"
         }
       },
       "x-kubernetes-group-version-kind": [
@@ -13215,7 +13215,7 @@
         }
       ]
     },
-    "com.github.kubeedge.api.operations.v1alpha1.NodeUpgradeJobList": {
+    "com.github.kubeedge.api.apis.operations.v1alpha1.NodeUpgradeJobList": {
       "description": "NodeUpgradeJobList is a list of NodeUpgradeJob.",
       "type": "object",
       "required": [
@@ -13231,7 +13231,7 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.NodeUpgradeJob"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.NodeUpgradeJob"
           }
         },
         "kind": {
@@ -13252,7 +13252,7 @@
         }
       ]
     },
-    "com.github.kubeedge.api.operations.v1alpha1.NodeUpgradeJobSpec": {
+    "com.github.kubeedge.api.apis.operations.v1alpha1.NodeUpgradeJobSpec": {
       "description": "NodeUpgradeJobSpec is the specification of the desired behavior of the NodeUpgradeJob.",
       "type": "object",
       "properties": {
@@ -13299,7 +13299,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.operations.v1alpha1.NodeUpgradeJobStatus": {
+    "com.github.kubeedge.api.apis.operations.v1alpha1.NodeUpgradeJobStatus": {
       "description": "NodeUpgradeJobStatus stores the status of NodeUpgradeJob. contains multiple edge nodes upgrade status.",
       "type": "object",
       "properties": {
@@ -13324,7 +13324,7 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.operations.v1alpha1.TaskStatus"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.TaskStatus"
           }
         },
         "reason": {
@@ -13341,7 +13341,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.operations.v1alpha1.TaskStatus": {
+    "com.github.kubeedge.api.apis.operations.v1alpha1.TaskStatus": {
       "description": "TaskStatus stores the status of Upgrade for each edge node.",
       "type": "object",
       "properties": {
@@ -13371,7 +13371,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.policy.v1alpha1.AccessClusterRoleBinding": {
+    "com.github.kubeedge.api.apis.policy.v1alpha1.AccessClusterRoleBinding": {
       "description": "AccessClusterRoleBinding represents rbac ClusterRoleBinding plus detailed ClusterRole info.",
       "type": "object",
       "properties": {
@@ -13390,7 +13390,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.policy.v1alpha1.AccessRoleBinding": {
+    "com.github.kubeedge.api.apis.policy.v1alpha1.AccessRoleBinding": {
       "description": "AccessRoleBinding represents rbac rolebinding plus detailed role info.",
       "type": "object",
       "properties": {
@@ -13409,7 +13409,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.policy.v1alpha1.AccessSpec": {
+    "com.github.kubeedge.api.apis.policy.v1alpha1.AccessSpec": {
       "description": "AccessSpec defines the desired state of AccessSpec",
       "type": "object",
       "properties": {
@@ -13418,7 +13418,7 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.policy.v1alpha1.AccessClusterRoleBinding"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.policy.v1alpha1.AccessClusterRoleBinding"
           }
         },
         "accessRoleBinding": {
@@ -13426,7 +13426,7 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.policy.v1alpha1.AccessRoleBinding"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.policy.v1alpha1.AccessRoleBinding"
           }
         },
         "serviceAccount": {
@@ -13440,7 +13440,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.policy.v1alpha1.AccessStatus": {
+    "com.github.kubeedge.api.apis.policy.v1alpha1.AccessStatus": {
       "description": "AccessStatus defines the observed state of ServiceAccountAccess",
       "type": "object",
       "properties": {
@@ -13454,7 +13454,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.policy.v1alpha1.ServiceAccountAccess": {
+    "com.github.kubeedge.api.apis.policy.v1alpha1.ServiceAccountAccess": {
       "description": "ServiceAccountAccess is the Schema for the ServiceAccountAccess API",
       "type": "object",
       "properties": {
@@ -13473,12 +13473,12 @@
         "spec": {
           "description": "Spec represents the specification of rbac.",
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.policy.v1alpha1.AccessSpec"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.policy.v1alpha1.AccessSpec"
         },
         "status": {
           "description": "Status represents the node list which store the rules.",
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.policy.v1alpha1.AccessStatus"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.policy.v1alpha1.AccessStatus"
         }
       },
       "x-kubernetes-group-version-kind": [
@@ -13489,7 +13489,7 @@
         }
       ]
     },
-    "com.github.kubeedge.api.policy.v1alpha1.ServiceAccountAccessList": {
+    "com.github.kubeedge.api.apis.policy.v1alpha1.ServiceAccountAccessList": {
       "description": "ServiceAccountAccessList contains a list of ServiceAccountAccess",
       "type": "object",
       "required": [
@@ -13504,7 +13504,7 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.policy.v1alpha1.ServiceAccountAccess"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.policy.v1alpha1.ServiceAccountAccess"
           }
         },
         "kind": {
@@ -13524,7 +13524,7 @@
         }
       ]
     },
-    "com.github.kubeedge.api.reliablesyncs.v1alpha1.ClusterObjectSync": {
+    "com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ClusterObjectSync": {
       "description": "ClusterObjectSync stores the state of the cluster level, nonNamespaced object that was successfully persisted to the edge node. ClusterObjectSync name is a concatenation of the node name which receiving the object and the object UUID.",
       "type": "object",
       "properties": {
@@ -13542,11 +13542,11 @@
         },
         "spec": {
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ObjectSyncSpec"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ObjectSyncSpec"
         },
         "status": {
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ObjectSyncStatus"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ObjectSyncStatus"
         }
       },
       "x-kubernetes-group-version-kind": [
@@ -13557,7 +13557,7 @@
         }
       ]
     },
-    "com.github.kubeedge.api.reliablesyncs.v1alpha1.ClusterObjectSyncList": {
+    "com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ClusterObjectSyncList": {
       "description": "ClusterObjectSyncList is a list of ObjectSync.",
       "type": "object",
       "required": [
@@ -13573,7 +13573,7 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ClusterObjectSync"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ClusterObjectSync"
           }
         },
         "kind": {
@@ -13594,7 +13594,7 @@
         }
       ]
     },
-    "com.github.kubeedge.api.reliablesyncs.v1alpha1.ObjectSync": {
+    "com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ObjectSync": {
       "description": "ObjectSync stores the state of the namespaced object that was successfully persisted to the edge node. ObjectSync name is a concatenation of the node name which receiving the object and the object UUID.",
       "type": "object",
       "properties": {
@@ -13613,11 +13613,11 @@
         },
         "spec": {
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ObjectSyncSpec"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ObjectSyncSpec"
         },
         "status": {
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ObjectSyncStatus"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ObjectSyncStatus"
         }
       },
       "x-kubernetes-group-version-kind": [
@@ -13628,7 +13628,7 @@
         }
       ]
     },
-    "com.github.kubeedge.api.reliablesyncs.v1alpha1.ObjectSyncList": {
+    "com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ObjectSyncList": {
       "description": "ObjectSyncList is a list of ObjectSync.",
       "type": "object",
       "required": [
@@ -13644,7 +13644,7 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.reliablesyncs.v1alpha1.ObjectSync"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ObjectSync"
           }
         },
         "kind": {
@@ -13665,7 +13665,7 @@
         }
       ]
     },
-    "com.github.kubeedge.api.reliablesyncs.v1alpha1.ObjectSyncSpec": {
+    "com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ObjectSyncSpec": {
       "description": "ObjectSyncSpec stores the details of objects that persist to the edge.",
       "type": "object",
       "properties": {
@@ -13683,7 +13683,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.reliablesyncs.v1alpha1.ObjectSyncStatus": {
+    "com.github.kubeedge.api.apis.reliablesyncs.v1alpha1.ObjectSyncStatus": {
       "description": "ObjectSyncStatus stores the resourceversion of objects that persist to the edge.",
       "type": "object",
       "properties": {
@@ -13693,7 +13693,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.rules.v1.Rule": {
+    "com.github.kubeedge.api.apis.rules.v1.Rule": {
       "description": "Rule is the Schema for the rules API",
       "type": "object",
       "required": [
@@ -13714,11 +13714,11 @@
         },
         "spec": {
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.rules.v1.RuleSpec"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.rules.v1.RuleSpec"
         },
         "status": {
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.rules.v1.RuleStatus"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.rules.v1.RuleStatus"
         }
       },
       "x-kubernetes-group-version-kind": [
@@ -13729,7 +13729,7 @@
         }
       ]
     },
-    "com.github.kubeedge.api.rules.v1.RuleList": {
+    "com.github.kubeedge.api.apis.rules.v1.RuleList": {
       "description": "RuleList contains a list of Rule",
       "type": "object",
       "required": [
@@ -13744,7 +13744,7 @@
           "type": "array",
           "items": {
             "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.rules.v1.Rule"
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.rules.v1.Rule"
           }
         },
         "kind": {
@@ -13764,7 +13764,7 @@
         }
       ]
     },
-    "com.github.kubeedge.api.rules.v1.RuleSpec": {
+    "com.github.kubeedge.api.apis.rules.v1.RuleSpec": {
       "description": "RuleSpec defines rule of message delivery.",
       "type": "object",
       "required": [
@@ -13802,7 +13802,7 @@
         }
       }
     },
-    "com.github.kubeedge.api.rules.v1.RuleStatus": {
+    "com.github.kubeedge.api.apis.rules.v1.RuleStatus": {
       "description": "RuleStatus defines status of message delivery.",
       "type": "object",
       "required": [

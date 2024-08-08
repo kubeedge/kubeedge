@@ -25,8 +25,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog/v2"
 
-	api "github.com/kubeedge/api/fsm/v1alpha1"
-	"github.com/kubeedge/api/operations/v1alpha1"
+	api "github.com/kubeedge/api/apis/fsm/v1alpha1"
+	"github.com/kubeedge/api/apis/operations/v1alpha1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/util"
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/util/manager"
 	crdClientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"

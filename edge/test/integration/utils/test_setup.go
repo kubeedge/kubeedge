@@ -9,7 +9,7 @@ import (
 
 	"sigs.k8s.io/yaml"
 
-	edgecore "github.com/kubeedge/api/componentconfig/edgecore/v1alpha2"
+	edgecore "github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 )
 
 const (

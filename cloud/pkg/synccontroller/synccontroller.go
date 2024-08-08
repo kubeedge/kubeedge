@@ -14,8 +14,8 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
-	configv1alpha1 "github.com/kubeedge/api/componentconfig/cloudcore/v1alpha1"
-	"github.com/kubeedge/api/reliablesyncs/v1alpha1"
+	configv1alpha1 "github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
+	"github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	keclient "github.com/kubeedge/kubeedge/cloud/pkg/common/client"

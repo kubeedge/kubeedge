@@ -3,7 +3,7 @@ package provider
 import (
 	"k8s.io/klog/v2"
 
-	v1 "github.com/kubeedge/api/rules/v1"
+	v1 "github.com/kubeedge/api/apis/rules/v1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/listener"
 )
 

@@ -21,12 +21,12 @@ package externalversions
 import (
 	"fmt"
 
-	v1alpha1 "github.com/kubeedge/api/apps/v1alpha1"
-	v1beta1 "github.com/kubeedge/api/devices/v1beta1"
-	operationsv1alpha1 "github.com/kubeedge/api/operations/v1alpha1"
-	policyv1alpha1 "github.com/kubeedge/api/policy/v1alpha1"
-	reliablesyncsv1alpha1 "github.com/kubeedge/api/reliablesyncs/v1alpha1"
-	v1 "github.com/kubeedge/api/rules/v1"
+	v1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
+	v1beta1 "github.com/kubeedge/api/apis/devices/v1beta1"
+	operationsv1alpha1 "github.com/kubeedge/api/apis/operations/v1alpha1"
+	policyv1alpha1 "github.com/kubeedge/api/apis/policy/v1alpha1"
+	reliablesyncsv1alpha1 "github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
+	v1 "github.com/kubeedge/api/apis/rules/v1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )

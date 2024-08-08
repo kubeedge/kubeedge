@@ -20,8 +20,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/api/devices/v1beta1"
-	v1 "github.com/kubeedge/api/rules/v1"
+	"github.com/kubeedge/api/apis/devices/v1beta1"
+	v1 "github.com/kubeedge/api/apis/rules/v1"
 	"github.com/kubeedge/kubeedge/cloud/cmd/admission/app/options"
 	"github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 )
@@ -191,8 +191,8 @@ func (ac *AdmissionController) registerWebhooks(opt *options.AdmissionOptions, c
 				SideEffects:             &noneSideEffect,
 				AdmissionReviewVersions: []string{"v1"},
 			},
-			// Device Model Validating Webhook
-			{
+			{ // Device Model Validating Webhook
+
 				Name: ValidateDeviceModelWebhookName,
 				Rules: []admissionregistrationv1.RuleWithOperations{{
 					Operations: []admissionregistrationv1.OperationType{

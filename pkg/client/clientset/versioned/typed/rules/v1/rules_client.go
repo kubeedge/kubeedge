@@ -21,7 +21,7 @@ package v1
 import (
 	"net/http"
 
-	v1 "github.com/kubeedge/api/rules/v1"
+	v1 "github.com/kubeedge/api/apis/rules/v1"
 	"github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )

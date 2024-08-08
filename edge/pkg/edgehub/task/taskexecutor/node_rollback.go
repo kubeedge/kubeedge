@@ -22,7 +22,7 @@ import (
 
 	"k8s.io/klog/v2"
 
-	api "github.com/kubeedge/api/fsm/v1alpha1"
+	api "github.com/kubeedge/api/apis/fsm/v1alpha1"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
 	"github.com/kubeedge/kubeedge/pkg/version"

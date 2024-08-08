@@ -48,7 +48,7 @@ import (
 	kubelettypes "k8s.io/kubernetes/pkg/kubelet/types"
 	csiplugin "k8s.io/kubernetes/pkg/volume/csi"
 
-	"github.com/kubeedge/api/componentconfig/edgecore/v1alpha2"
+	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"

@@ -26,7 +26,7 @@ import (
 	versionutil "k8s.io/apimachinery/pkg/util/version"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/api/operations/v1alpha1"
+	"github.com/kubeedge/api/apis/operations/v1alpha1"
 	"github.com/kubeedge/kubeedge/common/constants"
 )
 

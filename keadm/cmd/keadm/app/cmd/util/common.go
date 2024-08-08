@@ -44,7 +44,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/api/componentconfig/edgecore/v1alpha2"
+	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/common/constants"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"

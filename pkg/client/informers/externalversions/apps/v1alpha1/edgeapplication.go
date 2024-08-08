@@ -22,7 +22,7 @@ import (
 	"context"
 	time "time"
 
-	appsv1alpha1 "github.com/kubeedge/api/apps/v1alpha1"
+	appsv1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
 	versioned "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/kubeedge/kubeedge/pkg/client/informers/externalversions/internalinterfaces"
 	v1alpha1 "github.com/kubeedge/kubeedge/pkg/client/listers/apps/v1alpha1"

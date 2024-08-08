@@ -49,8 +49,8 @@ import (
 	corelisters "k8s.io/client-go/listers/core/v1"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/api/componentconfig/cloudcore/v1alpha1"
-	rulesv1 "github.com/kubeedge/api/rules/v1"
+	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
+	rulesv1 "github.com/kubeedge/api/apis/rules/v1"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"

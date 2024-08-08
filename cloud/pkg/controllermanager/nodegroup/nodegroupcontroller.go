@@ -19,7 +19,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 
-	appsv1alpha1 "github.com/kubeedge/api/apps/v1alpha1"
+	appsv1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
 )
 
 const (

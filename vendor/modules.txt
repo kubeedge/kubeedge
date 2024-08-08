@@ -593,23 +593,23 @@ github.com/klauspost/compress/zstd
 github.com/klauspost/compress/zstd/internal/xxhash
 # github.com/kubeedge/api v0.0.0 => ./staging/src/github.com/kubeedge/api
 ## explicit; go 1.21
-github.com/kubeedge/api/apps/v1alpha1
-github.com/kubeedge/api/common/constants
-github.com/kubeedge/api/componentconfig/cloudcore/v1alpha1
-github.com/kubeedge/api/componentconfig/cloudcore/v1alpha1/validation
-github.com/kubeedge/api/componentconfig/edgecore/v1alpha2
-github.com/kubeedge/api/componentconfig/edgecore/v1alpha2/validation
-github.com/kubeedge/api/componentconfig/meta/v1alpha1
-github.com/kubeedge/api/devices/v1alpha2
-github.com/kubeedge/api/devices/v1beta1
-github.com/kubeedge/api/dmi/v1beta1
-github.com/kubeedge/api/fsm/v1alpha1
-github.com/kubeedge/api/operations/v1alpha1
-github.com/kubeedge/api/policy/v1alpha1
-github.com/kubeedge/api/reliablesyncs/v1alpha1
-github.com/kubeedge/api/rules/v1
-github.com/kubeedge/api/util
-github.com/kubeedge/api/util/validation
+github.com/kubeedge/api/apis/apps/v1alpha1
+github.com/kubeedge/api/apis/common/constants
+github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1
+github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1/validation
+github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2
+github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2/validation
+github.com/kubeedge/api/apis/componentconfig/meta/v1alpha1
+github.com/kubeedge/api/apis/devices/v1alpha2
+github.com/kubeedge/api/apis/devices/v1beta1
+github.com/kubeedge/api/apis/dmi/v1beta1
+github.com/kubeedge/api/apis/fsm/v1alpha1
+github.com/kubeedge/api/apis/operations/v1alpha1
+github.com/kubeedge/api/apis/policy/v1alpha1
+github.com/kubeedge/api/apis/reliablesyncs/v1alpha1
+github.com/kubeedge/api/apis/rules/v1
+github.com/kubeedge/api/apis/util
+github.com/kubeedge/api/apis/util/validation
 # github.com/kubeedge/beehive v0.0.0 => ./staging/src/github.com/kubeedge/beehive
 ## explicit; go 1.21
 github.com/kubeedge/beehive/pkg/common

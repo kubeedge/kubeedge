@@ -24,8 +24,8 @@ import (
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/yaml"
 
-	"github.com/kubeedge/api/componentconfig/edgecore/v1alpha2"
-	api "github.com/kubeedge/api/fsm/v1alpha1"
+	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
+	api "github.com/kubeedge/api/apis/fsm/v1alpha1"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"

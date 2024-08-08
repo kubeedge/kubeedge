@@ -20,7 +20,7 @@ import (
 	"reflect"
 	"testing"
 
-	configv1alpha1 "github.com/kubeedge/api/componentconfig/cloudcore/v1alpha1"
+	configv1alpha1 "github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 )
 
 // TestInitConfigure() tests configuration initialized only once

@@ -21,7 +21,7 @@ package v1alpha1
 import (
 	"net/http"
 
-	v1alpha1 "github.com/kubeedge/api/reliablesyncs/v1alpha1"
+	v1alpha1 "github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )

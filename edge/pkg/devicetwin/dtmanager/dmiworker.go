@@ -25,8 +25,8 @@ import (
 
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/api/devices/v1beta1"
-	pb "github.com/kubeedge/api/dmi/v1beta1"
+	"github.com/kubeedge/api/apis/devices/v1beta1"
+	pb "github.com/kubeedge/api/apis/dmi/v1beta1"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dmiclient"
