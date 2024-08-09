@@ -10,6 +10,7 @@ require (
 	google.golang.org/protobuf v1.33.0
 	k8s.io/api v0.29.6
 	k8s.io/apimachinery v0.29.6
+	k8s.io/client-go v0.0.0
 	k8s.io/component-base v0.29.6
 	k8s.io/component-helpers v0.0.0
 	k8s.io/klog/v2 v2.110.1
@@ -19,7 +20,10 @@ require (
 	sigs.k8s.io/yaml v1.3.0
 )
 
-require github.com/distribution/reference v0.5.0 // indirect
+require (
+	k8s.io/apiserver v0.0.0
+	k8s.io/kube-openapi v0.0.0-20231010175941-2dd684a91f00
+)
 
 require (
 	cloud.google.com/go/compute v1.24.0 // indirect
@@ -40,6 +44,7 @@ require (
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/distribution/reference v0.5.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
 	github.com/euank/go-kmsg-parser v2.0.0+incompatible // indirect
@@ -132,15 +137,12 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/apiextensions-apiserver v0.0.0 // indirect
-	k8s.io/apiserver v0.0.0 // indirect
-	k8s.io/client-go v0.0.0 // indirect
 	k8s.io/cloud-provider v0.29.6 // indirect
 	k8s.io/controller-manager v0.0.0 // indirect
 	k8s.io/cri-api v0.0.0 // indirect
 	k8s.io/csi-translation-lib v0.29.6 // indirect
 	k8s.io/dynamic-resource-allocation v0.0.0 // indirect
 	k8s.io/kms v0.29.6 //indirect
-	k8s.io/kube-openapi v0.0.0-20231010175941-2dd684a91f00 // indirect
 	k8s.io/kube-scheduler v0.29.6 // indirect
 	k8s.io/mount-utils v0.0.0 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.28.0 // indirect
