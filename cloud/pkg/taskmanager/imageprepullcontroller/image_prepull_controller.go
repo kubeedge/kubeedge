@@ -252,7 +252,30 @@ func (ndc *ImagePrePullController) imagePrePullJobAdded(imagePrePull *v1alpha1.I
 
 // processPrePull do the pre pull operation on node
 func (ndc *ImagePrePullController) processPrePull(imagePrePull *v1alpha1.ImagePrePullJob) {
-	imagePrePullTemplateInfo := imagePrePull.Spec.ImagePrePullTemplate
+	used := make(map[string]struct{})
+
+	for _, overrider := range imagePrePull.Spec.ImagePrePullOverrides {
+		for _, name := range overrider.NodeNames {
+			used[name] = struct{}{}
+		}
+		ndc.process(imagePrePull, overrider, overrider.NodeNames)
+	}
+
+	filtered := make([]string, 0, len(imagePrePull.Spec.ImagePrePullTemplate.NodeNames))
+	for _, node := range imagePrePull.Spec.ImagePrePullTemplate.NodeNames {
+		if _, ok := used[node]; !ok {
+			filtered = append(filtered, node)
+		}
+	}
+
+	ndc.process(imagePrePull, imagePrePull.Spec.ImagePrePullTemplate, filtered)
+}
+
+func (ndc *ImagePrePullController) process(
+	imagePrePull *v1alpha1.ImagePrePullJob,
+	imagePrePullTemplateInfo v1alpha1.ImagePrePullTemplate,
+	nodeNames []string,
+) {
 	imagePrePullRequest := commontypes.ImagePrePullJobRequest{
 		Images:     imagePrePullTemplateInfo.Images,
 		Secret:     imagePrePullTemplateInfo.ImageSecret,
@@ -277,7 +300,7 @@ func (ndc *ImagePrePullController) processPrePull(imagePrePull *v1alpha1.ImagePr
 		TimeOutSeconds:  imagePrePull.Spec.ImagePrePullTemplate.TimeoutSeconds,
 		Concurrency:     concurrency,
 		FailureTolerate: tolerate,
-		NodeNames:       imagePrePull.Spec.ImagePrePullTemplate.NodeNames,
+		NodeNames:       nodeNames,
 		LabelSelector:   imagePrePull.Spec.ImagePrePullTemplate.LabelSelector,
 		Status:          v1alpha1.TaskStatus{},
 		Msg:             imagePrePullRequest,
