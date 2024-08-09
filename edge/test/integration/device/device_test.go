@@ -29,7 +29,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
-	. "github.com/kubeedge/kubeedge/edge/test/integration/utils/helpers"
+	"github.com/kubeedge/kubeedge/edge/test/integration/utils/helpers"
 )
 
 // Devicestate from subscribed MQTT topic
@@ -49,8 +49,8 @@ type DeviceField struct {
 
 type MembershipUpdate struct {
 	BaseMessage
-	AddDevices    []Device `json:"added_devices"`
-	RemoveDevices []Device `json:"removed_devices"`
+	AddDevices    []helpers.Device `json:"added_devices"`
+	RemoveDevices []helpers.Device `json:"removed_devices"`
 }
 
 type BaseMessage struct {
@@ -101,7 +101,7 @@ var DeviceTW dttype.Device
 var _ = Describe("Event Bus Testing", func() {
 	Context("Publish on eventbus topics throgh MQTT internal broker", func() {
 		BeforeEach(func() {
-			ClientOpts = HubClientInit(ctx.Cfg.MqttEndpoint, ClientID, "", "")
+			ClientOpts = helpers.HubClientInit(ctx.Cfg.MqttEndpoint, ClientID, "", "")
 			Client = MQTT.NewClient(ClientOpts)
 			if TokenClient = Client.Connect(); TokenClient.Wait() && TokenClient.Error() != nil {
 				common.Fatalf("client.Connect() Error is %s", TokenClient.Error())
@@ -188,10 +188,10 @@ var _ = Describe("Event Bus Testing", func() {
 		BeforeEach(func() {
 			common.Infof("Adding Mock device to edgenode !!")
 
-			DeviceIDN = GenerateDeviceID("kubeedge-device-")
-			DeviceN = CreateDevice(DeviceIDN, "edgedevice", "unknown")
+			DeviceIDN = helpers.GenerateDeviceID("kubeedge-device-")
+			DeviceN = helpers.CreateDevice(DeviceIDN, "edgedevice", "unknown")
 
-			ClientOpts = HubClientInit(ctx.Cfg.MqttEndpoint, ClientID, "", "")
+			ClientOpts = helpers.HubClientInit(ctx.Cfg.MqttEndpoint, ClientID, "", "")
 			Client = MQTT.NewClient(ClientOpts)
 			if TokenClient = Client.Connect(); TokenClient.Wait() && TokenClient.Error() != nil {
 				common.Fatalf("client.Connect() Error is %s", TokenClient.Error())
@@ -208,7 +208,7 @@ var _ = Describe("Event Bus Testing", func() {
 			if Token.Wait() && TokenClient.Error() != nil {
 				common.Fatalf("Subscribe to Topic  Failed  %s, %s", TokenClient.Error(), devicetopic)
 			}
-			IsDeviceAdded := HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, DeviceN)
+			IsDeviceAdded := helpers.HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, DeviceN)
 			Expect(IsDeviceAdded).Should(BeTrue())
 		})
 		AfterEach(func() {
@@ -217,7 +217,7 @@ var _ = Describe("Event Bus Testing", func() {
 		})
 
 		It("TC_TEST_EBUS_6: change the device status to online from eventbus", func() {
-			var message DeviceUpdate
+			var message helpers.DeviceUpdate
 			message.State = "online"
 			topic := dtcommon.DeviceETPrefix + DeviceIDN + dtcommon.DeviceETStateUpdateResultSuffix
 			body, err := json.Marshal(message)
@@ -246,7 +246,7 @@ var _ = Describe("Event Bus Testing", func() {
 		})
 
 		It("TC_TEST_EBUS_7: change the device status to unknown from eventbus", func() {
-			var message DeviceUpdate
+			var message helpers.DeviceUpdate
 			message.State = "unknown"
 			topic := dtcommon.DeviceETPrefix + DeviceIDN + dtcommon.DeviceETStateUpdateResultSuffix
 			body, err := json.Marshal(message)
@@ -254,7 +254,7 @@ var _ = Describe("Event Bus Testing", func() {
 				common.Fatalf("Marshal failed %v", err)
 			}
 			Eventually(func() string {
-				var deviceEvent Device
+				var deviceEvent helpers.Device
 				for _, deviceEvent = range MemDeviceUpdate.AddDevices {
 					if strings.Compare(deviceEvent.ID, DeviceIDN) == 0 {
 						if TokenClient = Client.Publish(dtcommon.DeviceETPrefix+DeviceIDN+dtcommon.DeviceETStateUpdateSuffix, 0, false, body); TokenClient.Wait() && TokenClient.Error() != nil {
@@ -274,7 +274,7 @@ var _ = Describe("Event Bus Testing", func() {
 		})
 
 		It("TC_TEST_EBUS_8: change the device status to offline from eventbus", func() {
-			var message DeviceUpdate
+			var message helpers.DeviceUpdate
 			message.State = "offline"
 			topic := dtcommon.DeviceETPrefix + DeviceIDN + dtcommon.DeviceETStateUpdateResultSuffix
 			body, err := json.Marshal(message)
@@ -282,7 +282,7 @@ var _ = Describe("Event Bus Testing", func() {
 				common.Fatalf("Marshal failed %v", err)
 			}
 			Eventually(func() string {
-				var deviceEvent Device
+				var deviceEvent helpers.Device
 				for _, deviceEvent = range MemDeviceUpdate.AddDevices {
 					if strings.Compare(deviceEvent.ID, DeviceIDN) == 0 {
 						if TokenClient = Client.Publish(dtcommon.DeviceETPrefix+DeviceIDN+dtcommon.DeviceETStateUpdateSuffix, 0, false, body); TokenClient.Wait() && TokenClient.Error() != nil {
@@ -311,17 +311,17 @@ var _ = Describe("Event Bus Testing", func() {
 		})
 		It("TC_TEST_EBUS_9: Add a sample device with device attributes to kubeedge node", func() {
 			//Generating Device ID
-			DeviceIDWithAttr = GenerateDeviceID("kubeedge-device-WithDeviceAttributes")
+			DeviceIDWithAttr = helpers.GenerateDeviceID("kubeedge-device-WithDeviceAttributes")
 			//Generate a Device
-			DeviceATT = CreateDevice(DeviceIDWithAttr, "DeviceATT", "unknown")
+			DeviceATT = helpers.CreateDevice(DeviceIDWithAttr, "DeviceATT", "unknown")
 			//Add Attribute to device
-			AddDeviceAttribute(DeviceATT, "Temperature", "25.25", "float")
+			helpers.AddDeviceAttribute(DeviceATT, "Temperature", "25.25", "float")
 
-			IsDeviceAdded := HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, DeviceATT)
+			IsDeviceAdded := helpers.HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, DeviceATT)
 			Expect(IsDeviceAdded).Should(BeTrue())
 
 			Eventually(func() string {
-				attributeDB := GetDeviceAttributesFromDB(DeviceIDWithAttr, "Temperature")
+				attributeDB := helpers.GetDeviceAttributesFromDB(DeviceIDWithAttr, "Temperature")
 				common.Infof("DeviceID= %s, Value= %s", attributeDB.DeviceID, attributeDB.Value)
 				return attributeDB.Value
 			}, "60s", "2s").Should(Equal("25.25"), "Device is not added within specified time")
@@ -330,17 +330,17 @@ var _ = Describe("Event Bus Testing", func() {
 
 		It("TC_TEST_EBUS_10: Add a sample device with Twin attributes to kubeedge node", func() {
 			//Generating Device ID
-			DeviceIDWithTwin = GenerateDeviceID("kubeedge-device-WithTwinAttributes")
+			DeviceIDWithTwin = helpers.GenerateDeviceID("kubeedge-device-WithTwinAttributes")
 			//Generate a Device
-			DeviceTW = CreateDevice(DeviceIDWithTwin, "DeviceTW", "unknown")
+			DeviceTW = helpers.CreateDevice(DeviceIDWithTwin, "DeviceTW", "unknown")
 			//Add twin attribute
-			AddTwinAttribute(DeviceTW, "Temperature", "25.25", "float")
+			helpers.AddTwinAttribute(DeviceTW, "Temperature", "25.25", "float")
 
-			IsDeviceAdded := HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, DeviceTW)
+			IsDeviceAdded := helpers.HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, DeviceTW)
 			Expect(IsDeviceAdded).Should(BeTrue())
 
 			Eventually(func() string {
-				attributeDB := GetTwinAttributesFromDB(DeviceIDWithTwin, "Temperature")
+				attributeDB := helpers.GetTwinAttributesFromDB(DeviceIDWithTwin, "Temperature")
 				common.Infof("DeviceID= %s, Value= %s", attributeDB.DeviceID, attributeDB.Expected)
 				return attributeDB.Expected
 			}, "60s", "2s").Should(Equal("25.25"), "Device is not added within specified time")
@@ -350,15 +350,15 @@ var _ = Describe("Event Bus Testing", func() {
 		It("TC_TEST_EBUS_11: Update existing device with new attributes", func() {
 
 			//Generate a Device
-			device := CreateDevice(DeviceIDWithAttr, "DeviceATT", "unknown")
+			device := helpers.CreateDevice(DeviceIDWithAttr, "DeviceATT", "unknown")
 			//Add Attribute to device
-			AddDeviceAttribute(device, "Temperature", "50.50", "float")
+			helpers.AddDeviceAttribute(device, "Temperature", "50.50", "float")
 
-			IsDeviceAdded := HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, device)
+			IsDeviceAdded := helpers.HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, device)
 			Expect(IsDeviceAdded).Should(BeTrue())
 
 			Eventually(func() string {
-				attributeDB := GetDeviceAttributesFromDB(DeviceIDWithAttr, "Temperature")
+				attributeDB := helpers.GetDeviceAttributesFromDB(DeviceIDWithAttr, "Temperature")
 				common.Infof("DeviceID= %s, Value= %s", attributeDB.DeviceID, attributeDB.Value)
 				return attributeDB.Value
 			}, "60s", "2s").Should(Equal("50.50"), "Device Attributes are not updated within specified time")
@@ -368,15 +368,15 @@ var _ = Describe("Event Bus Testing", func() {
 		It("TC_TEST_EBUS_12: Update existing device with new Twin attributes", func() {
 
 			//Generate a Device
-			device := CreateDevice(DeviceIDWithTwin, "DeviceTW", "unknown")
+			device := helpers.CreateDevice(DeviceIDWithTwin, "DeviceTW", "unknown")
 			//Add twin attribute
-			AddTwinAttribute(device, "Temperature", "50.50", "float")
+			helpers.AddTwinAttribute(device, "Temperature", "50.50", "float")
 
-			IsDeviceAdded := HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, device)
+			IsDeviceAdded := helpers.HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, device)
 			Expect(IsDeviceAdded).Should(BeTrue())
 
 			Eventually(func() string {
-				attributeDB := GetTwinAttributesFromDB(DeviceIDWithTwin, "Temperature")
+				attributeDB := helpers.GetTwinAttributesFromDB(DeviceIDWithTwin, "Temperature")
 				common.Infof("DeviceID= %s, Value= %s", attributeDB.DeviceID, attributeDB.Expected)
 				return attributeDB.Expected
 			}, "60s", "2s").Should(Equal("50.50"), "Device Twin Attributes are not updated within specified time")
@@ -385,13 +385,13 @@ var _ = Describe("Event Bus Testing", func() {
 
 		It("TC_TEST_EBUS_13: Add a new Device attribute to existing device", func() {
 			//Adding a new attribute to a device
-			AddDeviceAttribute(DeviceATT, "Humidity", "30", "Int")
+			helpers.AddDeviceAttribute(DeviceATT, "Humidity", "30", "Int")
 
-			IsDeviceAdded := HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, DeviceATT)
+			IsDeviceAdded := helpers.HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, DeviceATT)
 			Expect(IsDeviceAdded).Should(BeTrue())
 
 			Eventually(func() string {
-				attributeDB := GetDeviceAttributesFromDB(DeviceIDWithAttr, "Humidity")
+				attributeDB := helpers.GetDeviceAttributesFromDB(DeviceIDWithAttr, "Humidity")
 				common.Infof("DeviceID= %s, Value= %s", attributeDB.DeviceID, attributeDB.Value)
 				return attributeDB.Value
 			}, "60s", "2s").Should(Equal("30"), "Device Attributes are not Added within specified time")
@@ -400,13 +400,13 @@ var _ = Describe("Event Bus Testing", func() {
 
 		It("TC_TEST_EBUS_14: Add a new Twin attribute to existing device", func() {
 			//Preparing temporary Twin Attributes
-			AddTwinAttribute(DeviceTW, "Humidity", "100.100", "float")
+			helpers.AddTwinAttribute(DeviceTW, "Humidity", "100.100", "float")
 
-			IsDeviceAdded := HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, DeviceTW)
+			IsDeviceAdded := helpers.HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, DeviceTW)
 			Expect(IsDeviceAdded).Should(BeTrue())
 
 			Eventually(func() string {
-				attributeDB := GetTwinAttributesFromDB(DeviceIDWithTwin, "Humidity")
+				attributeDB := helpers.GetTwinAttributesFromDB(DeviceIDWithTwin, "Humidity")
 				common.Infof("DeviceID= %s, Value= %s", attributeDB.DeviceID, attributeDB.Expected)
 				return attributeDB.Expected
 			}, "60s", "2s").Should(Equal("100.100"), "Device Twin Attributes are not Added within specified time")
