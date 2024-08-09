@@ -38,9 +38,6 @@ var (
 	kubeClient    kubernetes.Interface
 	crdClient     crdClientset.Interface
 	dynamicClient dynamic.Interface
-	// authKubeConfig only contains master address and CA cert when init, it is used for
-	// generating a temporary kubeclient and validating user token once receive an application message.
-	authKubeConfig *rest.Config
 
 	KubeConfig *rest.Config
 	CrdConfig  *rest.Config
@@ -50,8 +47,7 @@ func InitKubeEdgeClient(config *cloudcoreConfig.KubeAPIConfig, enableImpersonati
 	initOnce.Do(func() {
 		kubeConfig, err := clientcmd.BuildConfigFromFlags(config.Master, config.KubeConfig)
 		if err != nil {
-			klog.Errorf("Failed to build config, err: %v", err)
-			os.Exit(1)
+			panic(fmt.Errorf("failed to build kube config, err: %v", err))
 		}
 		kubeConfig.QPS = float32(config.QPS)
 		kubeConfig.Burst = int(config.Burst)
@@ -67,15 +63,6 @@ func InitKubeEdgeClient(config *cloudcoreConfig.KubeAPIConfig, enableImpersonati
 		crdKubeConfig.ContentType = runtime.ContentTypeJSON
 		CrdConfig = crdKubeConfig
 		crdClient = newForCrdConfigOrDie(crdKubeConfig, enableImpersonation)
-
-		authKubeConfig, err = clientcmd.BuildConfigFromFlags(kubeConfig.Host, "")
-		if err != nil {
-			klog.Errorf("Failed to build config, err: %v", err)
-			os.Exit(1)
-		}
-		authKubeConfig.CAData = kubeConfig.CAData
-		authKubeConfig.CAFile = kubeConfig.CAFile
-		authKubeConfig.ContentType = runtime.ContentTypeJSON
 	})
 }
 
@@ -89,10 +76,6 @@ func GetCRDClient() crdClientset.Interface {
 
 func GetDynamicClient() dynamic.Interface {
 	return dynamicClient
-}
-
-func GetAuthConfig() *rest.Config {
-	return authKubeConfig
 }
 
 func GetK8sCA() []byte {
