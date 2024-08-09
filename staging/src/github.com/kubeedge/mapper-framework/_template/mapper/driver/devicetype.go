@@ -34,5 +34,4 @@ type VisitorConfig struct {
 
 type VisitorConfigData struct {
 	// TODO: add your visitor config data
-	DataType string `json:"dataType"`
 }
