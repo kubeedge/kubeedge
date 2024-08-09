@@ -591,7 +591,7 @@ github.com/klauspost/compress/internal/cpuinfo
 github.com/klauspost/compress/internal/snapref
 github.com/klauspost/compress/zstd
 github.com/klauspost/compress/zstd/internal/xxhash
-# github.com/kubeedge/beehive v0.0.0 => ./staging/src/github.com/kubeedge/beehive
+# github.com/kubeedge/beehive v1.7.0 => ./staging/src/github.com/kubeedge/beehive
 ## explicit; go 1.21
 github.com/kubeedge/beehive/pkg/common
 github.com/kubeedge/beehive/pkg/core
@@ -880,7 +880,7 @@ github.com/spf13/cast
 # github.com/spf13/cobra v1.7.0
 ## explicit; go 1.15
 github.com/spf13/cobra
-# github.com/spf13/pflag v1.0.5
+# github.com/spf13/pflag v1.0.6-0.20210604193023-d5e0c0615ace
 ## explicit; go 1.12
 github.com/spf13/pflag
 # github.com/stoewer/go-strcase v1.2.0

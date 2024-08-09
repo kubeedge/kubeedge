@@ -48,6 +48,7 @@ shift 4
   # To support running this script from anywhere, we have to first cd into this directory
   # so we can install the tools.
   cd "$(dirname "${0}")"
+
   GO111MODULE=on GOFLAGS=-mod=vendor go install k8s.io/code-generator/cmd/{defaulter-gen,client-gen,lister-gen,informer-gen,deepcopy-gen}
 )
 

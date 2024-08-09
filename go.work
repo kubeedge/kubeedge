@@ -1,0 +1,8 @@
+go 1.21
+
+use (
+	.
+	./staging/src/github.com/kubeedge/beehive
+	./staging/src/github.com/kubeedge/mapper-framework
+	./staging/src/github.com/kubeedge/viaduct
+)

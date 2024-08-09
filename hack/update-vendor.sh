@@ -23,6 +23,13 @@ set -o pipefail
 # The root of the build/dist directory
 KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 
+# Turn off workspaces until we are ready for them later
+export GOWORK=off
+# Explicitly opt into go modules
+export GO111MODULE=on
+# Explicitly set GOFLAGS to ignore vendor, since GOFLAGS=-mod=vendor breaks dependency resolution while rebuilding vendor
+export GOFLAGS=-mod=mod
+
 # list_staging_repos outputs a sorted list of repos in staging/src/kubeedge
 # each entry will just be the $repo portion of staging/src/kubeedge/$repo/...
 # $KUBEEDGE_ROOT must be set.
