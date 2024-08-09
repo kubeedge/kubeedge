@@ -17,7 +17,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-DMI_DIR=pkg/apis/dmi
+DMI_DIR=staging/src/github.com/kubeedge/api/apis/dmi
 DMI_VERSION=v1beta1
 DMI_API_FILE=api.proto
 DMI_API_GO_FILE=api.pb.go

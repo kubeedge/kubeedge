@@ -7,7 +7,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/influxdata/influxdb-client-go/v2 v2.13.0
-	github.com/kubeedge/kubeedge v0.0.0
+	github.com/kubeedge/api v0.0.0
 	github.com/kubeedge/mapper-framework v0.0.0
 	github.com/sailorvii/goav v0.1.4
 	github.com/taosdata/driver-go/v3 v3.5.1
@@ -41,6 +41,6 @@ require (
 )
 
 replace (
-	github.com/kubeedge/kubeedge => ../../../../../../kubeedge
+	github.com/kubeedge/api => ../api
 	github.com/kubeedge/mapper-framework => ../mapper-framework
 )

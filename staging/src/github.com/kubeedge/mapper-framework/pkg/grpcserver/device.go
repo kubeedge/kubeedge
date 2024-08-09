@@ -10,7 +10,7 @@ import (
 	"github.com/avast/retry-go"
 	"k8s.io/klog/v2"
 
-	dmiapi "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1beta1"
+	dmiapi "github.com/kubeedge/api/apis/dmi/v1beta1"
 	"github.com/kubeedge/mapper-framework/pkg/common"
 	"github.com/kubeedge/mapper-framework/pkg/util/parse"
 )

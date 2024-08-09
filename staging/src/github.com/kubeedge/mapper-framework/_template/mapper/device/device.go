@@ -21,7 +21,7 @@ import (
 	mqttMethod "github.com/kubeedge/Template/data/publish/mqtt"
 	"github.com/kubeedge/Template/data/stream"
 	"github.com/kubeedge/Template/driver"
-	dmiapi "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1beta1"
+	dmiapi "github.com/kubeedge/api/apis/dmi/v1beta1"
 	"github.com/kubeedge/mapper-framework/pkg/common"
 	"github.com/kubeedge/mapper-framework/pkg/global"
 	"github.com/kubeedge/mapper-framework/pkg/util/parse"

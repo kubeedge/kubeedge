@@ -7,6 +7,7 @@ import (
 
 	"k8s.io/klog/v2"
 
+	v1 "github.com/kubeedge/api/apis/rules/v1"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub"
@@ -15,7 +16,6 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/listener"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/provider"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
-	v1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
 )
 
 const (

@@ -20,8 +20,8 @@ set -o pipefail
 
 KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 
-DIFFROOT="${KUBEEDGE_ROOT}/pkg"
-TMP_DIFFROOT="${KUBEEDGE_ROOT}/_tmp/pkg"
+DIFFROOT="${KUBEEDGE_ROOT}/staging/src/github.com/kubeedge/api"
+TMP_DIFFROOT="${KUBEEDGE_ROOT}/_tmp/api"
 _tmp="${KUBEEDGE_ROOT}/_tmp"
 
 cleanup() {

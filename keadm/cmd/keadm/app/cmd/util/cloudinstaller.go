@@ -5,9 +5,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
 // KubeCloudInstTool embeds Common struct

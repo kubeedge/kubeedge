@@ -7,11 +7,11 @@ import (
 
 	"k8s.io/klog/v2"
 
+	routerv1 "github.com/kubeedge/api/apis/rules/v1"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/listener"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/provider"
-	routerv1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
 )
 
 var (

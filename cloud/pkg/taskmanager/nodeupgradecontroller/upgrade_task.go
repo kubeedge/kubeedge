@@ -20,11 +20,11 @@ import (
 	"fmt"
 	"time"
 
+	fsmapi "github.com/kubeedge/api/apis/fsm/v1alpha1"
+	v1alpha12 "github.com/kubeedge/api/apis/fsm/v1alpha1"
+	"github.com/kubeedge/api/apis/operations/v1alpha1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/util"
-	fsmapi "github.com/kubeedge/kubeedge/pkg/apis/fsm/v1alpha1"
-	v1alpha12 "github.com/kubeedge/kubeedge/pkg/apis/fsm/v1alpha1"
-	"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
 )
 

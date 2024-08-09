@@ -19,9 +19,9 @@ import (
 	"k8s.io/client-go/util/keyutil"
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/http"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/pkg/security/certs"
 	"github.com/kubeedge/kubeedge/pkg/security/token"
 )

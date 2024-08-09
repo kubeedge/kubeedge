@@ -27,8 +27,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"k8s.io/klog/v2"
 
+	config "github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 	beehivecontext "github.com/kubeedge/beehive/pkg/core/context"
-	config "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
 const (

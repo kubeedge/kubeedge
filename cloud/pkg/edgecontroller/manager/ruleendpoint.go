@@ -4,7 +4,7 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
+	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 )
 
 // RuleEndpointManager manage all events of rule by SharedInformer

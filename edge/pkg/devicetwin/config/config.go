@@ -3,7 +3,7 @@ package config
 import (
 	"sync"
 
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
+	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 )
 
 var config Configure

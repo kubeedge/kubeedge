@@ -13,13 +13,13 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	edgectrconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
-	"github.com/kubeedge/kubeedge/pkg/apis/reliablesyncs/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 

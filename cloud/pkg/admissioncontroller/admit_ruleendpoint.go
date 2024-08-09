@@ -8,7 +8,7 @@ import (
 	admissionv1 "k8s.io/api/admission/v1"
 	"k8s.io/klog/v2"
 
-	rulesv1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
+	rulesv1 "github.com/kubeedge/api/apis/rules/v1"
 )
 
 func admitRuleEndpoint(review admissionv1.AdmissionReview) *admissionv1.AdmissionResponse {
