@@ -19,42 +19,36 @@ package validation
 import (
 	"os"
 	"path/filepath"
-	"reflect"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
 func TestValidateCloudCoreConfiguration(t *testing.T) {
-	dir := t.TempDir()
+	assert := assert.New(t)
 
+	dir := t.TempDir()
 	ef, err := os.CreateTemp(dir, "existFile")
-	if err != nil {
-		t.Errorf("create temp file failed: %v", err)
-		return
-	}
+	assert.NoError(err)
 
 	config := v1alpha1.NewDefaultCloudCoreConfig()
 	config.Modules.CloudHub.UnixSocket.Address = "unix://" + ef.Name()
 	config.KubeAPIConfig.KubeConfig = ef.Name()
 
 	errList := ValidateCloudCoreConfiguration(config)
-	if len(errList) > 0 {
-		t.Errorf("cloudcore configuration is not correct: %v", errList)
-	}
+	assert.Empty(errList)
 }
 
 func TestValidateModuleCloudHub(t *testing.T) {
+	assert := assert.New(t)
 	dir := t.TempDir()
 
 	ef, err := os.CreateTemp(dir, "existFile")
-	if err != nil {
-		t.Errorf("create temp file failed: %v", err)
-		return
-	}
+	assert.NoError(err)
 	unixAddr := "unix://" + ef.Name()
 
 	cases := []struct {
@@ -228,13 +222,14 @@ func TestValidateModuleCloudHub(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		if result := ValidateModuleCloudHub(c.input); !reflect.DeepEqual(result, c.expected) {
-			t.Errorf("%v: expected %v, but got %v", c.name, c.expected, result)
-		}
+		result := ValidateModuleCloudHub(c.input)
+		assert.Equal(c.expected, result, c.name)
 	}
 }
 
 func TestValidateModuleEdgeController(t *testing.T) {
+	assert := assert.New(t)
+
 	cases := []struct {
 		name     string
 		input    v1alpha1.EdgeController
@@ -268,13 +263,14 @@ func TestValidateModuleEdgeController(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		if result := ValidateModuleEdgeController(c.input); !reflect.DeepEqual(result, c.expected) {
-			t.Errorf("%v: expected %v, but got %v", c.name, c.expected, result)
-		}
+		result := ValidateModuleEdgeController(c.input)
+		assert.Equal(c.expected, result, c.name)
 	}
 }
 
 func TestValidateModuleDeviceController(t *testing.T) {
+	assert := assert.New(t)
+
 	cases := []struct {
 		name     string
 		input    v1alpha1.DeviceController
@@ -297,13 +293,14 @@ func TestValidateModuleDeviceController(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		if result := ValidateModuleDeviceController(c.input); !reflect.DeepEqual(result, c.expected) {
-			t.Errorf("%v: expected %v, but got %v", c.name, c.expected, result)
-		}
+		result := ValidateModuleDeviceController(c.input)
+		assert.Equal(c.expected, result, c.name)
 	}
 }
 
 func TestValidateModuleSyncController(t *testing.T) {
+	assert := assert.New(t)
+
 	cases := []struct {
 		name     string
 		input    v1alpha1.SyncController
@@ -326,13 +323,14 @@ func TestValidateModuleSyncController(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		if result := ValidateModuleSyncController(c.input); !reflect.DeepEqual(result, c.expected) {
-			t.Errorf("%v: expected %v, but got %v", c.name, c.expected, result)
-		}
+		result := ValidateModuleSyncController(c.input)
+		assert.Equal(c.expected, result, c.name)
 	}
 }
 
 func TestValidateModuleDynamicController(t *testing.T) {
+	assert := assert.New(t)
+
 	cases := []struct {
 		name     string
 		input    v1alpha1.DynamicController
@@ -355,20 +353,17 @@ func TestValidateModuleDynamicController(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		if result := ValidateModuleDynamicController(c.input); !reflect.DeepEqual(result, c.expected) {
-			t.Errorf("%v: expected %v, but got %v", c.name, c.expected, result)
-		}
+		result := ValidateModuleDynamicController(c.input)
+		assert.Equal(c.expected, result, c.name)
 	}
 }
 
 func TestValidateModuleCloudStream(t *testing.T) {
-	dir := t.TempDir()
+	assert := assert.New(t)
 
+	dir := t.TempDir()
 	ef, err := os.CreateTemp(dir, "existFile")
-	if err != nil {
-		t.Errorf("create temp file failed: %v", err)
-		return
-	}
+	assert.NoError(err)
 
 	nonexistentDir := filepath.Join(dir, "not_exist_dir")
 	notExistFile := filepath.Join(nonexistentDir, "not_exist_file")
@@ -431,20 +426,19 @@ func TestValidateModuleCloudStream(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		if result := ValidateModuleCloudStream(c.input); !reflect.DeepEqual(result, c.expected) {
-			t.Errorf("%v: expected %v, but got %v", c.name, c.expected, result)
-		}
+		result := ValidateModuleCloudStream(c.input)
+		assert.Equal(c.expected, result, c.name)
 	}
 }
 
 func TestValidateKubeAPIConfig(t *testing.T) {
+	assert := assert.New(t)
+
 	dir := t.TempDir()
 
 	ef, err := os.CreateTemp(dir, "existFile")
-	if err != nil {
-		t.Errorf("create temp file failed: %v", err)
-		return
-	}
+	assert.NoError(err)
+	defer ef.Close()
 
 	nonexistentDir := filepath.Join(dir, "not_exist_dir")
 	notExistFile := filepath.Join(nonexistentDir, "not_exist_file")
@@ -480,13 +474,14 @@ func TestValidateKubeAPIConfig(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		if result := ValidateKubeAPIConfig(c.input); !reflect.DeepEqual(result, c.expected) {
-			t.Errorf("%v: expected %v, but got %v", c.name, c.expected, result)
-		}
+		result := ValidateKubeAPIConfig(c.input)
+		assert.Equal(c.expected, result, c.name)
 	}
 }
 
 func TestValidateCommonConfig(t *testing.T) {
+	assert := assert.New(t)
+
 	tests := []struct {
 		name         string
 		commonConfig v1alpha1.CommonConfig
@@ -523,12 +518,10 @@ func TestValidateCommonConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			errList := ValidateCommonConfig(tt.commonConfig)
-			if len(errList) == 0 && tt.expectedErr {
-				t.Errorf("ValidateCommonConfig expected get err, but errList is nil")
-			}
-
-			if len(errList) != 0 && !tt.expectedErr {
-				t.Errorf("ValidateCommonConfig expected get no err, but errList is not nil")
+			if tt.expectedErr {
+				assert.NotEmpty(errList, "ValidateCommonConfig expected to get an error, but errList is empty")
+			} else {
+				assert.Empty(errList, "ValidateCommonConfig expected to get no error, but errList is not empty")
 			}
 		})
 	}

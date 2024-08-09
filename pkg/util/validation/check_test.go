@@ -1,25 +1,26 @@
 package validation
 
 import (
-	"os"
-	"path/filepath"
-	"testing"
+    "os"
+    "path/filepath"
+    "testing"
+
+    "github.com/stretchr/testify/assert"
 )
 
 func TestFileIsExist(t *testing.T) {
-	dir := t.TempDir()
+    assert := assert.New(t)
 
-	ef, err := os.CreateTemp(dir, "CheckFileIsExist")
-	if err == nil {
-		if !FileIsExist(ef.Name()) {
-			t.Fatalf("file %v should exist", ef.Name())
-		}
-	}
+    dir := t.TempDir()
 
-	nonexistentDir := filepath.Join(dir, "not_exist_dir")
-	notExistFile := filepath.Join(nonexistentDir, "not_exist_file")
+    ef, err := os.CreateTemp(dir, "CheckFileIsExist")
+    assert.NoError(err, "Error creating temporary file")
+    defer os.Remove(ef.Name())
 
-	if FileIsExist(notExistFile) {
-		t.Fatalf("file %v should not exist", notExistFile)
-	}
+    assert.True(FileIsExist(ef.Name()), "file %v should exist", ef.Name())
+
+    nonexistentDir := filepath.Join(dir, "not_exist_dir")
+    notExistFile := filepath.Join(nonexistentDir, "not_exist_file")
+
+    assert.False(FileIsExist(notExistFile), "file %v should not exist", notExistFile)
 }
