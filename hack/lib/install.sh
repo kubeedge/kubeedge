@@ -237,6 +237,8 @@ install_isulad() {
   # export LDFLAGS
   export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
   export LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/lib/x86_64-linux-gnu/:$LD_LIBRARY_PATH
+  sudo sed -i 's@//.*archive.ubuntu.com@//mirrors.ustc.edu.cn@g' /etc/apt/sources.list
+  sudo apt-get update
   sudo sh -c "echo '/usr/local/lib' >>/etc/ld.so.conf"
   CURRENT_PATH=$(
     cd $(dirname $0)
