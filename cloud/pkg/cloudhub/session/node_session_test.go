@@ -26,11 +26,11 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
+	reliableclient "github.com/kubeedge/api/client/clientset/versioned"
+	"github.com/kubeedge/api/client/clientset/versioned/fake"
 	beehivemodel "github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common"
 	tf "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/testing"
-	reliableclient "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
-	"github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/fake"
 	mockcon "github.com/kubeedge/viaduct/pkg/conn/testing"
 )
 

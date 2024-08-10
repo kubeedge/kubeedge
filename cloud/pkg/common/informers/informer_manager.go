@@ -33,11 +33,11 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
+	edgescheme "github.com/kubeedge/api/client/clientset/versioned/scheme"
+	edgeinformers "github.com/kubeedge/api/client/informers/externalversions"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/common/constants"
-	edgescheme "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/scheme"
-	edgeinformers "github.com/kubeedge/kubeedge/pkg/client/informers/externalversions"
 )
 
 var (

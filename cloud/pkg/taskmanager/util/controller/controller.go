@@ -27,9 +27,9 @@ import (
 
 	api "github.com/kubeedge/api/apis/fsm/v1alpha1"
 	"github.com/kubeedge/api/apis/operations/v1alpha1"
+	crdClientset "github.com/kubeedge/api/client/clientset/versioned"
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/util"
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/util/manager"
-	crdClientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
 )
 

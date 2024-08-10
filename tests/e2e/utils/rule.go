@@ -10,7 +10,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	rulesv1 "github.com/kubeedge/api/apis/rules/v1"
-	edgeclientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
+	edgeclientset "github.com/kubeedge/api/client/clientset/versioned"
 )
 
 func NewRule(sourceType, targetType rulesv1.RuleEndpointTypeDef) *rulesv1.Rule {

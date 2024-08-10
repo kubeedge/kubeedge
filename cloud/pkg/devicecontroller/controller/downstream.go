@@ -30,6 +30,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/api/apis/devices/v1beta1"
+	crdinformers "github.com/kubeedge/api/client/informers/externalversions"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
@@ -38,7 +39,6 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/manager"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/types"
-	crdinformers "github.com/kubeedge/kubeedge/pkg/client/informers/externalversions"
 	"github.com/kubeedge/kubeedge/pkg/util"
 )
 

@@ -22,8 +22,8 @@ import (
 
 	"github.com/kubeedge/api/apis/devices/v1beta1"
 	v1 "github.com/kubeedge/api/apis/rules/v1"
+	"github.com/kubeedge/api/client/clientset/versioned"
 	"github.com/kubeedge/kubeedge/cloud/cmd/admission/app/options"
-	"github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 )
 
 const (

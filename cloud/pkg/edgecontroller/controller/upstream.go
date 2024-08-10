@@ -51,6 +51,7 @@ import (
 
 	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 	rulesv1 "github.com/kubeedge/api/apis/rules/v1"
+	crdClientset "github.com/kubeedge/api/client/clientset/versioned"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
@@ -64,7 +65,6 @@ import (
 	comconstants "github.com/kubeedge/kubeedge/common/constants"
 	common "github.com/kubeedge/kubeedge/common/constants"
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
-	crdClientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 	kubeedgeutil "github.com/kubeedge/kubeedge/pkg/util"
 )
