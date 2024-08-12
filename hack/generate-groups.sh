@@ -37,6 +37,8 @@ EOF
   exit 0
 fi
 
+KUBEEDGE_ROOT=$(unset CDPATH && cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)
+
 GENS="$1"
 OUTPUT_PKG="$2"
 APIS_PKG="$3"
@@ -49,6 +51,7 @@ shift 4
   # so we can install the tools.
   cd "$(dirname "${0}")"
   GO111MODULE=on GOFLAGS=-mod=vendor go install k8s.io/code-generator/cmd/{defaulter-gen,client-gen,lister-gen,informer-gen,deepcopy-gen}
+  GO111MODULE=on GOFLAGS=-mod=vendor go install k8s.io/kube-openapi/cmd/openapi-gen
 )
 
 function codegen::join() { local IFS="$1"; shift; echo "$*"; }
@@ -87,4 +90,12 @@ if [ "${GENS}" = "all" ] || grep -qw "informer" <<<"${GENS}"; then
            --listers-package "${OUTPUT_PKG}/listers" \
            --output-package "${OUTPUT_PKG}/informers" \
            "$@"
+fi
+
+if [ "${GENS}" = "all" ] || grep -qw "openapi" <<<"${GENS}"; then
+  echo "Generating openapi for ${GROUPS_WITH_VERSIONS} at ${OUTPUT_PKG}/openapi"
+  "${GOBIN}/openapi-gen" \
+  --input-dirs "$(codegen::join , "${FQ_APIS[@]}")" --output-package "${OUTPUT_PKG}/openapi" \
+  --go-header-file ${KUBEEDGE_ROOT}/hack/boilerplate/boilerplate.txt > ${KUBEEDGE_ROOT}/pkg/client/openapi/violation_exceptions.list  \
+  -O zz_generated.openapi
 fi

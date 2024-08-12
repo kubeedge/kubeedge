@@ -34,7 +34,7 @@ source "${KUBEEDGE_ROOT}"/hack/lib/util.sh
 util:create_gopath_tree "${KUBEEDGE_ROOT}" "${go_path}"
 export GOPATH="${go_path}"
 
-${KUBEEDGE_ROOT}/hack/generate-groups.sh "deepcopy,client,informer,lister" \
+${KUBEEDGE_ROOT}/hack/generate-groups.sh "deepcopy,client,informer,lister,openapi" \
 github.com/kubeedge/kubeedge/pkg/client github.com/kubeedge/kubeedge/pkg/apis \
 "devices:v1beta1 reliablesyncs:v1alpha1 rules:v1 apps:v1alpha1 operations:v1alpha1 policy:v1alpha1" \
 --go-header-file ${KUBEEDGE_ROOT}/hack/boilerplate/boilerplate.txt
