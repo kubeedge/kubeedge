@@ -600,7 +600,6 @@ github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1/validation
 github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2
 github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2/validation
 github.com/kubeedge/api/apis/componentconfig/meta/v1alpha1
-github.com/kubeedge/api/apis/devices/v1alpha2
 github.com/kubeedge/api/apis/devices/v1beta1
 github.com/kubeedge/api/apis/dmi/v1beta1
 github.com/kubeedge/api/apis/fsm/v1alpha1

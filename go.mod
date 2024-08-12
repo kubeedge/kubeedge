@@ -45,7 +45,7 @@ require (
 	k8s.io/cri-api v0.29.6
 	k8s.io/klog/v2 v2.110.1
 	k8s.io/kube-openapi v0.0.0-20231010175941-2dd684a91f00
-	k8s.io/kubelet v0.29.6
+	k8s.io/kubelet v0.29.6 // indirect
 	k8s.io/kubernetes v1.29.6
 	k8s.io/mount-utils v0.29.6
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
