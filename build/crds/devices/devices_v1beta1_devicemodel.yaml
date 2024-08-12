@@ -197,8 +197,10 @@ spec:
                       description: The device property description.
                       type: string
                     maximum:
+                      description: Maximum value of device data
                       type: string
                     minimum:
+                      description: Minimum value of device data
                       type: string
                     name:
                       description: 'Required: The device property name. Note: If you

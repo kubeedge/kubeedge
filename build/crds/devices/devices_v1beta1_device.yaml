@@ -568,7 +568,7 @@ spec:
                     of the device.
                   properties:
                     collectCycle:
-                      description: Define how frequent mapper will collect from device.
+                      description: Define how frequent mapper will report to the cloud.
                       format: int64
                       type: integer
                     desired:
@@ -716,11 +716,13 @@ spec:
                           type: object
                       type: object
                     reportCycle:
-                      description: Define how frequent mapper will report the value.
+                      description: Define how frequent mapper will push the value
+                        to user database and application.
                       format: int64
                       type: integer
                     reportToCloud:
-                      description: whether be reported to the cloud
+                      description: Define whether the data will be reported to the
+                        cloud
                       type: boolean
                     visitors:
                       description: 'Visitors are intended to be consumed by device
