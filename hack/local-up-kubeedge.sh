@@ -31,12 +31,68 @@ fi
 export CLUSTER_CONTEXT="--name ${CLUSTER_NAME}"
 
 function install_cr() {
-  if [[ "${CONTAINER_RUNTIME}" = "docker" ]]; then
-    install_docker
-  elif [[ "${CONTAINER_RUNTIME}" = "cri-o" ]]; then
-    install_crio
-  elif [[ "${CONTAINER_RUNTIME}" = "isulad" ]]; then
-    install_isulad
+  attempt_num=0
+  max_attempts=5
+
+  while [ $attempt_num -lt $max_attempts ]
+  do
+    if  [ $attempt_num -eq 3 ]; then
+      echo "Download failed multiple times, try to change apt source ..."
+      sudo sed -i 's@//.*archive.ubuntu.com@//mirrors.ustc.edu.cn@g' /etc/apt/sources.list
+      sudo apt-get update
+    fi
+    if [[ "${CONTAINER_RUNTIME}" = "docker" ]]; then
+      install_docker
+      verify_docker_installed
+      if [ $? -ne 0 ]; then
+        # docker was not downloaded normally
+        attempt_num=$[$attempt_num+1]
+        echo "Install docker failed. Retrying..."
+        continue
+      fi
+      verify_cridockerd_installed
+      if [ $? -ne 0 ]; then
+        # cri-dockerd was not downloaded normally
+        attempt_num=$[$attempt_num+1]
+        echo "Install cri-dockerd failed. Retrying..."
+        continue
+      fi
+      echo "docker has been downloaded successfully"
+      break
+
+    elif [[ "${CONTAINER_RUNTIME}" = "cri-o" ]]; then
+      install_crio
+      verify_crio_installed
+      if [ $? -ne 0 ]; then
+        # crio was not downloaded normally
+        attempt_num=$[$attempt_num+1]
+        echo "Install cri-o failed. Retrying..."
+        continue
+      fi
+      echo "cri-o has been downloaded successfully"
+      break
+
+    elif [[ "${CONTAINER_RUNTIME}" = "isulad" ]]; then
+      install_isulad
+      verify_isulad_installed
+      if [ $? -ne 0 ]; then
+        # isulad was not downloaded normally
+        attempt_num=$[$attempt_num+1]
+        echo "Install isulad failed. Retrying..."
+        continue
+      fi
+      echo "isulad has been downloaded successfully"
+      break
+    else
+      echo "No need to download container runtime"
+      break
+    fi
+  done
+
+  if [ $attempt_num -eq $max_attempts ]; then
+    # all retries failed
+    echo "Task failed after $max_attempts attempts."
+    exit 1
   fi
 }
 
