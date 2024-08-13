@@ -26,7 +26,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 
-	crdClientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
+	crdClientset "github.com/kubeedge/api/client/clientset/versioned"
 )
 
 func newForK8sConfigOrDie(c *rest.Config, enableImpersonation bool) *kubernetes.Clientset {

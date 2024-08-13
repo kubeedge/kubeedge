@@ -29,8 +29,8 @@ import (
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 
-	cloudcoreConfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
-	crdClientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
+	cloudcoreConfig "github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
+	crdClientset "github.com/kubeedge/api/client/clientset/versioned"
 )
 
 var (
