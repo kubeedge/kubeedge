@@ -62,9 +62,19 @@ function :pre:install: {
   # install controller-gen tool if not exist
   if [ "$(which controller-gen)" == "" ]; then
       echo "Start to install controller-gen tool"
-      GO111MODULE=on go install -v sigs.k8s.io/controller-tools/cmd/controller-gen@v0.14.0
+      GO111MODULE=on go install -v sigs.k8s.io/controller-tools/cmd/controller-gen@v0.15.0
       GOPATH="${GOPATH:-$(go env GOPATH)}"
       export PATH=$PATH:$GOPATH/bin
+  fi
+
+  # TODO: When Kubernetes fixes this issue, we can remove this.
+  local install_osname=$(uname -s | tr '[:upper:]' '[:lower:]')
+  local yq_url="https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_${install_osname}_amd64"
+  command -v yq >/dev/null 2>&1
+  if [[ $? -ne 0 ]]; then
+    echo "not exists yq installing it..."
+    wget $yq_url -O "/usr/local/bin/yq"
+    chmod +x "/usr/local/bin/yq"
   fi
 }
 
@@ -72,6 +82,11 @@ function :gen:crds: {
   # generate crds
   cd staging/src/github.com/kubeedge/api/apis
   $(which controller-gen) paths="./..." ${_crdOptions} output:crd:artifacts:config=${_tmpdir}
+  # ServiceAccount.Secret.Name property is in x-kubernetes-list-map-keys, 
+  # but it is not have a default and not be a required property.
+  # So, we need to add it to required properties through yq.
+  # TODO: When Kubernetes fixes this issue, we can remove this.
+  yq -i '.spec.versions[0].schema.openAPIV3Schema.properties.spec.properties.serviceAccount.properties.secrets.items.required[0]="name"' ${_tmpdir}/policy.kubeedge.io_serviceaccountaccesses.yaml
   cd -
 }
 

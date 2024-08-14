@@ -89,3 +89,13 @@ function util:create_gopath_tree() {
     ln -snf "${repo_root}" "${go_pkg_dir}"
   fi
 }
+
+# list_staging_repos outputs a sorted list of repos in staging/src/kubeedge
+# each entry will just be the $repo portion of staging/src/kubeedge/$repo/...
+# $KUBEEDGE_ROOT must be set.
+function kubeedge::util::list_staging_repos() {
+  (
+    cd "${KUBEEDGE_ROOT}/staging/src/github.com/kubeedge/" && \
+    find . -mindepth 1 -maxdepth 1 -type d | cut -c 3- | sort
+  )
+}

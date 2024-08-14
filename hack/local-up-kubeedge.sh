@@ -341,8 +341,10 @@ function generate_streamserver_cert {
 
 cleanup
 
-source "${KUBEEDGE_ROOT}/hack/lib/golang.sh"
+source "${KUBEEDGE_ROOT}/hack/lib/init.sh"
 source "${KUBEEDGE_ROOT}/hack/lib/install.sh"
+
+kubeedge::golang::setup_env
 
 if [[ "${SKIP_CR_INSTALL}" = "false" ]]; then
   install_cr

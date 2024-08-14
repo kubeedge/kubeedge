@@ -19,6 +19,10 @@
 # KubeEdge Authors:
 # To Get Detail Version Info for KubeEdge Project
 
+
+readonly KUBEEDGE_GOPATH="${KUBEEDGE_GOPATH:-"${KUBEEDGE_OUTPUT}/_go"}"
+export KUBEEDGE_GOPATH
+
 YES="y"
 NO="n"
 
@@ -37,8 +41,8 @@ kubeedge::golang::verify_golang_version() {
 	  exit 1
   fi
 
-  if [ $Y -lt 20 ] ; then
-	  echo "go minor version must >= 20, now is $Y"
+  if [ $Y -lt 21 ] ; then
+	  echo "go minor version must >= 21, now is $Y"
 	  exit 1
   fi
 }
@@ -464,4 +468,49 @@ kubeedge::golang::run_test() {
   else
     go test -gcflags "all=-N -l" ${testdirs[@]}
   fi
+}
+
+# kubeedge::golang::setup_env will check that the `go` commands is available in
+# ${PATH}. It will also check that the Go version is good enough for the
+# kubeedge build.
+#
+# Outputs:
+#   env-var GOPATH points to our local output dir
+#   env-var GOBIN is unset (we want binaries in a predictable place)
+#   env-var PATH includes the local GOPATH
+kubeedge::golang::setup_env() {
+  # Even in module mode, we need to set GOPATH for `go build` and `go install`
+  # to work.  We build various tools (usually via `go install`) from a lot of
+  # scripts.
+  #   * We can't just set GOBIN because that does not work on cross-compiles.
+  #   * We could always use `go build -o <something>`, but it's subtle wrt
+  #     cross-compiles and whether the <something> is a file or a directory,
+  #     and EVERY caller has to get it *just* right.
+  #   * We could leave GOPATH alone and let `go install` write binaries
+  #     wherever the user's GOPATH says (or doesn't say).
+  #
+  # Instead we set it to a phony local path and process the results ourselves.
+  # In particular, GOPATH[0]/bin will be used for `go install`, with
+  # cross-compiles adding an extra directory under that.
+  export GOPATH="${KUBEEDGE_GOPATH}"
+
+  # If these are not set, set them now.  This ensures that any subsequent
+  # scripts we run (which may call this function again) use the same values.
+  export GOCACHE="${GOCACHE:-"${KUBEEDGE_GOPATH}/cache/build"}"
+  export GOMODCACHE="${GOMODCACHE:-"${KUBEEDGE_GOPATH}/cache/mod"}"
+
+  # Make sure our own Go binaries are in PATH.
+  export PATH="${KUBEEDGE_GOPATH}/bin:${PATH}"
+
+  # Unset GOBIN in case it already exists in the current session.
+  # Cross-compiles will not work with it set.
+  unset GOBIN
+
+  # Turn on modules and workspaces (both are default-on).
+  unset GO111MODULE
+  unset GOWORK
+
+  # This may try to download our specific Go version.  Do it last so it uses
+  # the above-configured environment.
+  kubeedge::golang::verify_golang_version
 }
