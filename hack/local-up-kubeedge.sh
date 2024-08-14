@@ -36,6 +36,11 @@ function install_cr() {
 
   while [ $attempt_num -lt $max_attempts ]
   do
+    if  [ $attempt_num -eq 3 ]; then
+      echo "Download failed multiple times, try to change apt source ..."
+      sudo sed -i 's@//.*archive.ubuntu.com@//mirrors.ustc.edu.cn@g' /etc/apt/sources.list
+      sudo apt-get update
+    fi
     if [[ "${CONTAINER_RUNTIME}" = "docker" ]]; then
       install_docker
       verify_docker_installed
