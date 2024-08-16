@@ -79,7 +79,7 @@ There is a need to ensure that traffic within a node group remains contained and
 
 ## 4. Expected Outcomes
 
-- **Enhanced Flexibility:**  
+- **Upgraded Flexibility:**  
   EdgeApplication will support deployment specification overrides based on node labels, providing more granular control over deployment management.
 
 - **Improved Traffic Control:**  
