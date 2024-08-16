@@ -54,6 +54,7 @@ func buildCommandArgsPatches(target string, rawObj *unstructured.Unstructured, c
 	}
 	return nil, nil
 }
+
 func buildCommandArgsPatchesWithPath(target string, specContainersPath string, rawObj *unstructured.Unstructured, commandRunOverrider *v1alpha1.CommandArgsOverrider) ([]overrideOption, error) {
 	patches := make([]overrideOption, 0)
 	containers, ok, err := unstructured.NestedSlice(rawObj.Object, strings.Split(specContainersPath, pathSplit)...)
