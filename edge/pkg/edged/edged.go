@@ -28,6 +28,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"reflect"
 	"strconv"
@@ -148,9 +149,8 @@ func (e *edged) Start() {
 		}
 	}()
 
-	// block until kubelet is ready to sync pods
-	startWaiter := time.NewTimer(10 * time.Second)
-	defer startWaiter.Stop()
+	kubeletReadyChan := make(chan struct{}, 1)
+	go kubeletHealthCheck(e.KubeletServer.ReadOnlyPort, kubeletReadyChan)
 
 	select {
 	case <-beehiveContext.Done():
@@ -159,7 +159,7 @@ func (e *edged) Start() {
 	case err := <-kubeletErrChan:
 		klog.Errorf("Failed to start edged, err: %v", err)
 		return
-	case <-startWaiter.C:
+	case <-kubeletReadyChan:
 		klog.Info("Start sync pod")
 	}
 
@@ -490,4 +490,30 @@ func (e *edged) controllerUnpublishVolume(content []byte) (interface{}, error) {
 
 func filterPodByNodeName(pod *v1.Pod, nodeName string) bool {
 	return pod.Spec.NodeName == nodeName
+}
+
+func kubeletHealthCheck(port int32, kubeletReadyChan chan struct{}) {
+	url := fmt.Sprintf("http://localhost:%d/healthz/syncloop", port)
+	for {
+		resp, err := http.Get(url)
+		if err != nil {
+			klog.Warningf("failed to get kubelet healthz syncloop, err: %v", err)
+			time.Sleep(50 * time.Millisecond)
+			continue
+		}
+
+		statusCode := resp.StatusCode
+		err = resp.Body.Close()
+		if err != nil {
+			klog.Errorf("failed to close response's body with err:%v", err)
+		}
+
+		if statusCode != http.StatusOK {
+			klog.Warningf("internal error and status code: %d", resp.StatusCode)
+		} else {
+			kubeletReadyChan <- struct{}{}
+			break
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
 }
