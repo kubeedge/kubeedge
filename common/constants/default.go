@@ -91,7 +91,7 @@ const (
 	DefaultCertificateSigningRequestWorkers  = 4
 
 	DefaultUpdatePodStatusBuffer            = 1024
-	DefaultProcessEventBuffer               = 64
+	DefaultProcessEventBuffer               = 1024
 	DefaultUpdateNodeStatusBuffer           = 1024
 	DefaultQueryConfigMapBuffer             = 1024
 	DefaultQuerySecretBuffer                = 1024
