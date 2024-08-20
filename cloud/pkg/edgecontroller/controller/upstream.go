@@ -105,6 +105,7 @@ type UpstreamController struct {
 	config v1alpha1.EdgeController
 
 	// message channel
+	eventChan                      chan model.Message
 	nodeStatusChan                 chan model.Message
 	podStatusChan                  chan model.Message
 	secretChan                     chan model.Message
@@ -141,6 +142,9 @@ func (uc *UpstreamController) Start() error {
 
 	for i := 0; i < int(uc.config.Load.UpdateNodeStatusWorkers); i++ {
 		go uc.updateNodeStatus()
+	}
+	for i := 0; i < int(uc.config.Load.HandleEventWorkers); i++ {
+		go uc.processEvent()
 	}
 	for i := 0; i < int(uc.config.Load.UpdatePodStatusWorkers); i++ {
 		go uc.updatePodStatus()
@@ -229,6 +233,8 @@ func (uc *UpstreamController) dispatchMessage() {
 			uc.nodeStatusChan <- msg
 		case model.ResourceTypePodStatus:
 			uc.podStatusChan <- msg
+		case model.ResourceTypeEvent:
+			uc.eventChan <- msg
 		case model.ResourceTypeConfigmap:
 			uc.configMapChan <- msg
 		case model.ResourceTypeSecret:
@@ -278,6 +284,65 @@ func (uc *UpstreamController) dispatchMessage() {
 			uc.certificasesSigningRequestChan <- msg
 		default:
 			klog.Errorf("message: %s, resource type: %s unsupported", msg.GetID(), resourceType)
+		}
+	}
+}
+
+type PatchInfo struct {
+	Event *v1.Event `json:"event"`
+	Data  string    `json:"patchData"`
+}
+
+func (uc *UpstreamController) processEvent() {
+	for {
+		select {
+		case <-beehiveContext.Done():
+			klog.Warning("stop processEvent")
+			return
+		case msg := <-uc.eventChan:
+			data, err := msg.GetContentData()
+			if err != nil {
+				klog.Errorf("Get event data err: %v", err)
+				continue
+			}
+			switch msg.GetOperation() {
+			case model.InsertOperation:
+				evt := &v1.Event{}
+				err = json.Unmarshal(data, evt)
+				if err != nil {
+					klog.Errorf("Error marshaling createEvent msg content %v", err)
+					continue
+				}
+				_, err = uc.kubeClient.CoreV1().Events(evt.Namespace).CreateWithEventNamespace(evt)
+				if err != nil {
+					klog.Errorf("CreateWithEventNamespace error, event: %v, err: %v", evt, err)
+					continue
+				}
+			case model.UpdateOperation:
+				evt := &v1.Event{}
+				err = json.Unmarshal(data, evt)
+				if err != nil {
+					klog.Errorf("Error marshaling updateEvent msg content %v", err)
+					continue
+				}
+				_, err = uc.kubeClient.CoreV1().Events(evt.Namespace).UpdateWithEventNamespace(evt)
+				if err != nil {
+					klog.Errorf("UpdateWithEventNamespace error, event: %v, err: %v", evt, err)
+					continue
+				}
+			case model.PatchOperation:
+				patchInfo := &PatchInfo{}
+				err = json.Unmarshal(data, patchInfo)
+				if err != nil {
+					klog.Errorf("Error marshaling patchEvent msg content: %v", err)
+					continue
+				}
+				_, err = uc.kubeClient.CoreV1().Events(patchInfo.Event.Namespace).PatchWithEventNamespace(patchInfo.Event, []byte(patchInfo.Data))
+				if err != nil {
+					klog.Errorf("PatchWithEventNamespace error, event: %v, err: %v", patchInfo.Event, err)
+					continue
+				}
+			}
 		}
 	}
 }
@@ -1562,6 +1627,7 @@ func NewUpstreamController(config *v1alpha1.EdgeController, factory k8sinformer.
 
 	uc.nodeStatusChan = make(chan model.Message, config.Buffer.UpdateNodeStatus)
 	uc.podStatusChan = make(chan model.Message, config.Buffer.UpdatePodStatus)
+	uc.eventChan = make(chan model.Message, config.Buffer.HandleEvent)
 	uc.configMapChan = make(chan model.Message, config.Buffer.QueryConfigMap)
 	uc.secretChan = make(chan model.Message, config.Buffer.QuerySecret)
 	uc.serviceAccountTokenChan = make(chan model.Message, config.Buffer.ServiceAccountToken)

@@ -74,6 +74,7 @@ const (
 	// EdgeController
 	DefaultUpdatePodStatusWorkers            = 1
 	DefaultUpdateNodeStatusWorkers           = 1
+	DefaultProcessEventWorkers               = 4
 	DefaultQueryConfigMapWorkers             = 100
 	DefaultQuerySecretWorkers                = 100
 	DefaultQueryPersistentVolumeWorkers      = 4
@@ -90,6 +91,7 @@ const (
 	DefaultCertificateSigningRequestWorkers  = 4
 
 	DefaultUpdatePodStatusBuffer            = 1024
+	DefaultProcessEventBuffer               = 64
 	DefaultUpdateNodeStatusBuffer           = 1024
 	DefaultQueryConfigMapBuffer             = 1024
 	DefaultQuerySecretBuffer                = 1024

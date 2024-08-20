@@ -22,6 +22,7 @@ const (
 	ResponseErrorOperation = "error"
 
 	ResourceTypePod                 = "pod"
+	ResourceTypeEvent               = "event"
 	ResourceTypeConfigmap           = "configmap"
 	ResourceTypeServiceAccountToken = "serviceaccounttoken"
 	ResourceTypeSecret              = "secret"
