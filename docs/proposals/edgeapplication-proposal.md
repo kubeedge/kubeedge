@@ -22,7 +22,7 @@ There is a need to ensure that traffic within a node group remains contained and
 
 **1. API Changes:**
 
-- Modify the EdgeApplication Custom Resource Definition (CRD) to include a new field for node label selectors.
+- Modify the EdgeApplication CRD to include a new field for node label selectors.
 - Define a new field `nodeLabelSelectors` in the EdgeApplication CRD schema.
 
     ```yaml
