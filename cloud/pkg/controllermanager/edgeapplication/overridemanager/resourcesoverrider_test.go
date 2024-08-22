@@ -19,11 +19,12 @@ package overridemanager
 import (
 	"testing"
 
-	"github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/kubeedge/api/apis/apps/v1alpha1"
 )
 
 func TestResourcesOverrider_ApplyOverrides(t *testing.T) {

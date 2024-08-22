@@ -3,8 +3,8 @@ package metaserver
 import (
 	"testing"
 
-	cloudconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
-	edgeconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
+	cloudconfig "github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
+	edgeconfig "github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/tests/integration/framework"
 )
 

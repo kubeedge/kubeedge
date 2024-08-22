@@ -19,9 +19,10 @@ package overridemanager
 import (
 	"testing"
 
-	apppsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	apppsv1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
 )
 
 func TestReplicasOverrider_ApplyOverrides(t *testing.T) {

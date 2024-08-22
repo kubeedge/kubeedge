@@ -31,10 +31,10 @@ trap "cleanup" EXIT SIGINT
 cleanup
 
 source "${KUBEEDGE_ROOT}"/hack/lib/util.sh
-util:create_gopath_tree "${KUBEEDGE_ROOT}" "${go_path}"
+util:create_gopath_tree "${KUBEEDGE_ROOT}/staging/src/github.com/kubeedge/api" "${go_path}"
 export GOPATH="${go_path}"
 
 ${KUBEEDGE_ROOT}/hack/generate-groups.sh "deepcopy,client,informer,lister" \
-github.com/kubeedge/kubeedge/pkg/client github.com/kubeedge/kubeedge/pkg/apis \
+github.com/kubeedge/api/client github.com/kubeedge/api/apis \
 "devices:v1beta1 reliablesyncs:v1alpha1 rules:v1 apps:v1alpha1 operations:v1alpha1 policy:v1alpha1" \
 --go-header-file ${KUBEEDGE_ROOT}/hack/boilerplate/boilerplate.txt

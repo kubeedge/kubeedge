@@ -31,9 +31,9 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
-	crdClientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
-	kubeedgefake "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned/fake"
-	crdinformers "github.com/kubeedge/kubeedge/pkg/client/informers/externalversions"
+	crdClientset "github.com/kubeedge/api/client/clientset/versioned"
+	kubeedgefake "github.com/kubeedge/api/client/clientset/versioned/fake"
+	crdinformers "github.com/kubeedge/api/client/informers/externalversions"
 )
 
 type fakeManager struct {
