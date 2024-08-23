@@ -70,7 +70,9 @@ function :pre:install: {
 
 function :gen:crds: {
   # generate crds
+  cd staging/src/github.com/kubeedge/api/apis
   $(which controller-gen) paths="./..." ${_crdOptions} output:crd:artifacts:config=${_tmpdir}
+  cd -
 }
 
 # remove the last element if it ends with "s", i.e: devicemodels -> devicemodel

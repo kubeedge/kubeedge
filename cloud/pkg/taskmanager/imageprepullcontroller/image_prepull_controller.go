@@ -32,6 +32,9 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/klog/v2"
 
+	api "github.com/kubeedge/api/apis/fsm/v1alpha1"
+	"github.com/kubeedge/api/apis/operations/v1alpha1"
+	crdClientset "github.com/kubeedge/api/client/clientset/versioned"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	keclient "github.com/kubeedge/kubeedge/cloud/pkg/common/client"
@@ -40,9 +43,6 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/util/controller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/util/manager"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
-	api "github.com/kubeedge/kubeedge/pkg/apis/fsm/v1alpha1"
-	"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1"
-	crdClientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
 )
 

@@ -44,11 +44,10 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/common/constants"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
-	"github.com/kubeedge/kubeedge/pkg/apis"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
 	pkgversion "github.com/kubeedge/kubeedge/pkg/version"
 )
@@ -654,7 +653,7 @@ func ReportTaskResult(config *v1alpha2.EdgeCoreConfig, taskType, taskID string, 
 		NodeName: config.Modules.Edged.HostnameOverride,
 		Event:    event.Type,
 		Action:   event.Action,
-		Time:     time.Now().Format(apis.ISO8601UTC),
+		Time:     time.Now().Format(constants.ISO8601UTC),
 		Reason:   event.Msg,
 	}
 	edgeHub := config.Modules.EdgeHub

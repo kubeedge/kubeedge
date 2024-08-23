@@ -22,7 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	appsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1"
+	appsv1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
 )
 
 func TestCommandOverrider_ApplyOverrides(t *testing.T) {
@@ -524,7 +524,7 @@ func TestBuildCommandArgsPatchesWithPath(t *testing.T) {
 			} else {
 				assert.NoError(err)
 			}
-			
+
 			assert.Equal(tc.expectedResult, result)
 		})
 	}
@@ -534,7 +534,7 @@ func TestAcquireAddOverrideOption(t *testing.T) {
 	assert := assert.New(t)
 
 	testCases := []struct {
-		name           string
+		name            string
 		commandArgsPath string
 		overrider       *appsv1alpha1.CommandArgsOverrider
 		expectedResult  overrideOption
@@ -601,16 +601,16 @@ func TestAcquireReplaceOverrideOption(t *testing.T) {
 	assert := assert.New(t)
 
 	testCases := []struct {
-		name            string
-		commandArgsPath string
+		name             string
+		commandArgsPath  string
 		commandArgsValue []string
 		overrider        *appsv1alpha1.CommandArgsOverrider
 		expectedResult   overrideOption
 		expectError      bool
 	}{
 		{
-			name:            "Valid path",
-			commandArgsPath: "/spec/containers/0/command",
+			name:             "Valid path",
+			commandArgsPath:  "/spec/containers/0/command",
 			commandArgsValue: []string{"one", "two"},
 			overrider: &appsv1alpha1.CommandArgsOverrider{
 				ContainerName: "test-container",
@@ -625,8 +625,8 @@ func TestAcquireReplaceOverrideOption(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:            "Remove operation with valid path",
-			commandArgsPath: "/spec/containers/0/command",
+			name:             "Remove operation with valid path",
+			commandArgsPath:  "/spec/containers/0/command",
 			commandArgsValue: []string{"one", "two", "three"},
 			overrider: &appsv1alpha1.CommandArgsOverrider{
 				ContainerName: "test-container",
@@ -641,8 +641,8 @@ func TestAcquireReplaceOverrideOption(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:            "Invalid path",
-			commandArgsPath: "invalid-path",
+			name:             "Invalid path",
+			commandArgsPath:  "invalid-path",
 			commandArgsValue: []string{"one", "two"},
 			overrider: &appsv1alpha1.CommandArgsOverrider{
 				ContainerName: "test-container",
