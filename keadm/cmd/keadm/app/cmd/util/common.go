@@ -653,7 +653,7 @@ func ReportTaskResult(config *v1alpha2.EdgeCoreConfig, taskType, taskID string, 
 		NodeName: config.Modules.Edged.HostnameOverride,
 		Event:    event.Type,
 		Action:   event.Action,
-		Time:     time.Now().Format(constants.ISO8601UTC),
+		Time:     time.Now().UTC().Format(time.RFC3339),
 		Reason:   event.Msg,
 	}
 	edgeHub := config.Modules.EdgeHub

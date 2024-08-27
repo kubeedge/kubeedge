@@ -27,7 +27,6 @@ import (
 	v1alpha12 "github.com/kubeedge/api/apis/fsm/v1alpha1"
 	"github.com/kubeedge/api/apis/operations/v1alpha1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
-	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/util"
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
 )
 
@@ -71,7 +70,7 @@ func updatePrePullNodeState(id, nodeName string, state v1alpha12.State, event fs
 					State:    state,
 					Event:    event.Type,
 					Action:   event.Action,
-					Time:     time.Now().Format(util.ISO8601UTC),
+					Time:     time.Now().UTC().Format(time.RFC3339),
 					Reason:   event.Msg,
 				},
 				ImageStatus: imagesStatus,
@@ -122,7 +121,7 @@ func updateUpgradeTaskState(id, _ string, state v1alpha12.State, event fsm.Event
 	status.Action = event.Action
 	status.Reason = event.Msg
 	status.State = state
-	status.Time = time.Now().Format(util.ISO8601UTC)
+	status.Time = time.Now().UTC().Format(time.RFC3339)
 
 	err := patchStatus(newTask, *status, client.GetCRDClient())
 
