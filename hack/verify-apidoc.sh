@@ -20,7 +20,7 @@ set -o pipefail
 
 KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 #!/usr/bin/env bash
-
+chmod +x "${KUBEEDGE_ROOT}/hack/verify-apidoc.sh"
 # Initialize _tmp variable
 _tmp=$(mktemp -d)
 
@@ -33,14 +33,14 @@ cleanup() {
 trap "cleanup" EXIT SIGINT
 
 cleanup
-chmod +x "${KUBEEDGE_ROOT}/hack/verify-apidoc.sh"
+
 
 DIFFROOT="${KUBEEDGE_ROOT}/staging/src/github.com/kubeedge/api"
 TMP_DIFFROOT="${KUBEEDGE_ROOT}/_tmp/api"
 mkdir -p "${TMP_DIFFROOT}"
 cp -a "${DIFFROOT}"/* "${TMP_DIFFROOT}"
 
-sudo bash "${KUBEEDGE_ROOT}/staging/api/github.com/kubeedge/api/apidoc/tools/generate-openapi.sh"
+sudo bash "${KUBEEDGE_ROOT}/staging/src/github.com/kubeedge/api/apidoc/tools/generate-openapi.sh"
 sudo bash "${KUBEEDGE_ROOT}/staging/src/github.com/kubeedge/api/apidoc/tools/update-swagger-docs.sh"
 echo "diffing ${DIFFROOT} against freshly generated swagger docs"
 ret=0
