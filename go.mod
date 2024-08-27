@@ -74,11 +74,7 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1
 )
 
-require (
-	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
-	github.com/distribution/reference v0.5.0 // indirect
-	github.com/urfave/cli v1.22.2 // indirect
-)
+require github.com/distribution/reference v0.5.0 // indirect
 
 require (
 	cloud.google.com/go/compute v1.24.0 // indirect
