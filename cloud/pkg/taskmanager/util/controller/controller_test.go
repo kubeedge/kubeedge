@@ -22,8 +22,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 
-	api "github.com/kubeedge/kubeedge/pkg/apis/fsm/v1alpha1"
-	"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1"
+	api "github.com/kubeedge/api/apis/fsm/v1alpha1"
+	"github.com/kubeedge/api/apis/operations/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
 )
 

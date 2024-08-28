@@ -21,7 +21,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1"
+	"github.com/kubeedge/api/apis/operations/v1alpha1"
 )
 
 func TestFilterVersion(t *testing.T) {
