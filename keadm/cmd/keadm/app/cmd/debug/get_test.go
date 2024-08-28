@@ -20,7 +20,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 
-	edgecoreCfg "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
+	edgecoreCfg "github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 )
 
 func TestNewCmdDebugGet(t *testing.T) {
