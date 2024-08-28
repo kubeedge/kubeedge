@@ -24,58 +24,75 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 	apps "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/kubernetes/test/e2e/framework"
 
-    "github.com/kubeedge/kubeedge/tests/e2e/constants"
+	"github.com/kubeedge/kubeedge/tests/e2e/constants"
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 )
 
 var DevicePluginTestTimerGroup = utils.NewTestTimerGroup()
 
 var _ = GroupDescribe("Device Plugin E2E Tests", func() {
-	var clientSet clientset.Interface
+	var UID string
 	var testTimer *utils.TestTimer
 	var testSpecReport ginkgo.SpecReport
+
+	var clientSet clientset.Interface
 
 	ginkgo.BeforeEach(func() {
 		clientSet = utils.NewKubeClient(framework.TestContext.KubeConfig)
 	})
 
 	ginkgo.Context("Test Device Plugin Registration and Basic Functionality", func() {
-		var deploymentName string
-
 		ginkgo.BeforeEach(func() {
 			// Get current test SpecReport
 			testSpecReport = ginkgo.CurrentSpecReport()
 			// Start test timer
 			testTimer = DevicePluginTestTimerGroup.NewTestTimer(testSpecReport.LeafNodeText)
-
-			deploymentName = "sample-device-plugin-" + utils.GetRandomString(5)
 		})
 
 		ginkgo.AfterEach(func() {
+			// End test timer
 			testTimer.End()
+			// Print result
 			testTimer.PrintResult()
 
-			ginkgo.By(fmt.Sprintf("Deleting deployment %s", deploymentName))
-			err := utils.DeleteDeployment(clientSet, metav1.NamespaceSystem, deploymentName)
+			ginkgo.By(fmt.Sprintf("get deployment %s", UID))
+			deployment, err := utils.GetDeployment(clientSet, metav1.NamespaceDefault, UID)
+			gomega.Expect(err).To(gomega.BeNil())
+
+			ginkgo.By(fmt.Sprintf("list pod for deploy %s", UID))
+			labelSelector := labels.SelectorFromSet(map[string]string{"app": UID})
+			_, err = utils.GetPods(clientSet, metav1.NamespaceDefault, labelSelector, nil)
+			gomega.Expect(err).To(gomega.BeNil())
+
+			ginkgo.By(fmt.Sprintf("Deleting deployment %s", UID))
+			err = utils.DeleteDeployment(clientSet, metav1.NamespaceSystem, deployment.Name)
+			gomega.Expect(err).To(gomega.BeNil())
+
+			ginkgo.By(fmt.Sprintf("wait for pod of deploy %s to disappear", UID))
+			err = utils.WaitForPodsToDisappear(clientSet, metav1.NamespaceDefault, labelSelector, constants.Interval, constants.Timeout)
 			gomega.Expect(err).To(gomega.BeNil())
 
 			utils.PrintTestcaseNameandStatus()
 		})
 
-		framework.ConformanceIt("E2E_DEVICE_PLUGIN_1: Verify device plugin registration", func() {
-			ginkgo.By(fmt.Sprintf("Creating device plugin deployment %s", deploymentName))
-			deployment := newDevicePluginDeployment(deploymentName, "nvidia/k8s-device-plugin:v0.13.0", 1)
+		ginkgo.It("E2E_DEVICE_PLUGIN_1: Verify device plugin registration", func() {
+			replica := int32(1)
+			//Generate the random string and assign as a UID
+			UID = "sample-device-plugin-" + utils.GetRandomString(5)
+
+			ginkgo.By(fmt.Sprintf("Creating device plugin deployment %s", UID))
+			deployment := newDevicePluginDeployment(UID, "nvidia/k8s-device-plugin:v0.13.0", replica)
 			_, err := utils.CreateDeployment(clientSet, deployment)
 			gomega.Expect(err).To(gomega.BeNil())
 
 			ginkgo.By("Waiting for device plugin pod to be running")
-			labelSelector := labels.SelectorFromSet(map[string]string{"app": deploymentName})
+			labelSelector := labels.SelectorFromSet(map[string]string{"app": UID})
 			podList, err := utils.GetPods(clientSet, metav1.NamespaceSystem, labelSelector, nil)
 			gomega.Expect(err).To(gomega.BeNil())
 			utils.WaitForPodsRunning(clientSet, podList, 240*time.Second)
@@ -116,22 +133,22 @@ func newDevicePluginDeployment(name, imageURL string, replicas int32) *apps.Depl
 					constants.E2ELabelKey: constants.E2ELabelValue,
 				},
 			},
-			Template: corev1.PodTemplateSpec{
+			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
 						"app":                 name,
 						constants.E2ELabelKey: constants.E2ELabelValue,
 					},
 				},
-				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{
+				Spec: v1.PodSpec{
+					Containers: []v1.Container{
 						{
 							Name:  name,
 							Image: imageURL,
-							SecurityContext: &corev1.SecurityContext{
+							SecurityContext: &v1.SecurityContext{
 								Privileged: &[]bool{true}[0],
 							},
-							VolumeMounts: []corev1.VolumeMount{
+							VolumeMounts: []v1.VolumeMount{
 								{
 									Name:      "device-plugin",
 									MountPath: "/var/lib/edged/device-plugins",
@@ -139,11 +156,11 @@ func newDevicePluginDeployment(name, imageURL string, replicas int32) *apps.Depl
 							},
 						},
 					},
-					Volumes: []corev1.Volume{
+					Volumes: []v1.Volume{
 						{
 							Name: "device-plugin",
-							VolumeSource: corev1.VolumeSource{
-								HostPath: &corev1.HostPathVolumeSource{
+							VolumeSource: v1.VolumeSource{
+								HostPath: &v1.HostPathVolumeSource{
 									Path: "/var/lib/edged/device-plugins",
 								},
 							},

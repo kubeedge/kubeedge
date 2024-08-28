@@ -24,7 +24,7 @@ import (
 	"github.com/onsi/gomega"
 	"k8s.io/kubernetes/test/e2e/framework"
 
-	edgeclientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
+	edgeclientset "github.com/kubeedge/api/client/clientset/versioned"
 	"github.com/kubeedge/kubeedge/tests/e2e/constants"
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 )

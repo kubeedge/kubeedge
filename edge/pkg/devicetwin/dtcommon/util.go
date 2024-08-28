@@ -13,9 +13,9 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/api/apis/devices/v1beta1"
+	pb "github.com/kubeedge/api/apis/dmi/v1beta1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
-	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1"
-	pb "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1beta1"
 )
 
 // ValidateValue validate value type
