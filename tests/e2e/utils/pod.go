@@ -32,7 +32,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
 
-	edgeclientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
+	edgeclientset "github.com/kubeedge/api/client/clientset/versioned"
 )
 
 func GetPods(c clientset.Interface, ns string, labelSelector labels.Selector, fieldSelector fields.Selector) (*v1.PodList, error) {

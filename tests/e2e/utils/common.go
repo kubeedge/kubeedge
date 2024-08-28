@@ -38,8 +38,8 @@ import (
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1"
-	edgeclientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
+	"github.com/kubeedge/api/apis/devices/v1beta1"
+	edgeclientset "github.com/kubeedge/api/client/clientset/versioned"
 	"github.com/kubeedge/kubeedge/tests/e2e/constants"
 )
 

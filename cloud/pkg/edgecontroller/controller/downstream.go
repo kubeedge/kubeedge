@@ -12,6 +12,9 @@ import (
 	clientgov1 "k8s.io/client-go/listers/core/v1"
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
+	routerv1 "github.com/kubeedge/api/apis/rules/v1"
+	crdinformers "github.com/kubeedge/api/client/informers/externalversions"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
@@ -21,9 +24,6 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/manager"
 	commonconstants "github.com/kubeedge/kubeedge/common/constants"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
-	routerv1 "github.com/kubeedge/kubeedge/pkg/apis/rules/v1"
-	crdinformers "github.com/kubeedge/kubeedge/pkg/client/informers/externalversions"
 )
 
 // DownstreamController watch kubernetes api server and send change to edge

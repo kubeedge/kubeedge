@@ -23,6 +23,8 @@ import (
 
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/api/apis/devices/v1beta1"
+	crdClientset "github.com/kubeedge/api/client/clientset/versioned"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	keclient "github.com/kubeedge/kubeedge/cloud/pkg/common/client"
@@ -33,8 +35,6 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/types"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
-	"github.com/kubeedge/kubeedge/pkg/apis/devices/v1beta1"
-	crdClientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 )
 
 // DeviceStatus is structure to patch device status

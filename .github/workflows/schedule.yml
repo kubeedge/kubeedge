@@ -2,7 +2,7 @@ name: SCHEDULED
 on:
   workflow_dispatch:
   schedule:
-    #  Exectues e2e compatibility test every Wednesday at 1:00 AM and if you need to convert to UTC+8 timezone, you need to -8 hours for cron expression
+    # Executes e2e compatibility test every Wednesday at 1:00 AM and if you need to convert to UTC+8 timezone, you need to -8 hours for cron expression
     - cron: "0 17 * * 2"
 
 env:
@@ -33,7 +33,7 @@ jobs:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
-      - name: Install dependences
+      - name: Install dependencies
         run: |
           sudo apt-get install -y jq
 
@@ -119,7 +119,7 @@ jobs:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
-      - name: Install dependences
+      - name: Install dependencies
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
           go install sigs.k8s.io/kind@v0.22.0

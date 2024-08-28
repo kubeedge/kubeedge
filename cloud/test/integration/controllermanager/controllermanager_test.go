@@ -34,8 +34,8 @@ import (
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	appsv1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/controllermanager/nodegroup"
-	appsv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/apps/v1alpha1"
 )
 
 const (

@@ -16,7 +16,6 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
-	"github.com/kubeedge/kubeedge/pkg/apis"
 )
 
 var (
@@ -99,7 +98,7 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 	}
 	var lastOnline string
 	if state == dtcommon.DeviceStatusOnline || state == dtcommon.DeviceStatusOK {
-		lastOnline = time.Now().Format(apis.ISO8601UTC)
+		lastOnline = time.Now().UTC().Format(time.RFC3339)
 	}
 	for i := 1; i <= dtcommon.RetryTimes; i++ {
 		err = dtclient.UpdateDeviceFields(
@@ -118,7 +117,7 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 	}
 	device.State = updatedDevice.State
 	device.LastOnline = lastOnline
-	payload, err := dttype.BuildDeviceState(dttype.BuildBaseMessage(), *device)
+	payload, err := dttype.BuildDeviceCloudMsgState(dttype.BuildBaseMessage(), *device)
 	if err != nil {
 		return err
 	}
