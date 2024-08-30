@@ -395,7 +395,7 @@ jobs:
 
   conformance_e2e_test:
       runs-on: ubuntu-22.04
-      timeout-minutes: 40
+      timeout-minutes: 60
       name: conformance e2e test
       needs: image-prepare
       env:
@@ -410,6 +410,12 @@ jobs:
           with:
             path: ~/go/pkg/mod
             key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+
+        - name: Install dependencies
+          run: |
+            command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
+            go install sigs.k8s.io/kind@v0.22.0
+            curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
         - name: Checkout code
           uses: actions/checkout@v3
@@ -435,7 +441,7 @@ jobs:
 
         - name: Run conformance e2e
           run: |
-            export KIND_IMAGE=kindest/node:v1.28.0
+            export KIND_IMAGE=kindest/node:v1.29.2
             make conformance_e2e
 
         - name: Upload conformance e2e test results
