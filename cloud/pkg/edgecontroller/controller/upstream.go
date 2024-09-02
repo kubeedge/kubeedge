@@ -288,7 +288,7 @@ func (uc *UpstreamController) dispatchMessage() {
 	}
 }
 
-type PatchInfo struct {
+type EventPatchInfo struct {
 	Event *v1.Event `json:"event"`
 	Data  string    `json:"patchData"`
 }
@@ -302,7 +302,7 @@ func (uc *UpstreamController) processEvent() {
 		case msg := <-uc.eventChan:
 			data, err := msg.GetContentData()
 			if err != nil {
-				klog.Errorf("Get event data err: %v", err)
+				klog.Errorf("message: %s process failure, get event data failed with error: %v", msg.GetID(), err)
 				continue
 			}
 			switch msg.GetOperation() {
@@ -310,36 +310,36 @@ func (uc *UpstreamController) processEvent() {
 				evt := &v1.Event{}
 				err = json.Unmarshal(data, evt)
 				if err != nil {
-					klog.Errorf("Error marshaling createEvent msg content %v", err)
+					klog.Errorf("message: %s process failure, unmarshal createEvent message content data failed with error: %v", msg.GetID(), err)
 					continue
 				}
 				_, err = uc.kubeClient.CoreV1().Events(evt.Namespace).CreateWithEventNamespace(evt)
 				if err != nil {
-					klog.Errorf("CreateWithEventNamespace error, event: %v, err: %v", evt, err)
+					klog.Errorf("message: %s process failure, CreateWithEventNamespace error: %v", msg.GetID(), err)
 					continue
 				}
 			case model.UpdateOperation:
 				evt := &v1.Event{}
 				err = json.Unmarshal(data, evt)
 				if err != nil {
-					klog.Errorf("Error marshaling updateEvent msg content %v", err)
+					klog.Errorf("message: %s process failure, unmarshal updateEvent message content data failed with error: %v", msg.GetID(), err)
 					continue
 				}
 				_, err = uc.kubeClient.CoreV1().Events(evt.Namespace).UpdateWithEventNamespace(evt)
 				if err != nil {
-					klog.Errorf("UpdateWithEventNamespace error, event: %v, err: %v", evt, err)
+					klog.Errorf("message: %s process failure, UpdateWithEventNamespace error: %v", msg.GetID(), err)
 					continue
 				}
 			case model.PatchOperation:
-				patchInfo := &PatchInfo{}
-				err = json.Unmarshal(data, patchInfo)
+				eventpatchInfo := &EventPatchInfo{}
+				err = json.Unmarshal(data, eventpatchInfo)
 				if err != nil {
-					klog.Errorf("Error marshaling patchEvent msg content: %v", err)
+					klog.Errorf("message: %s process failure, unmarshal patchEvent message content data failed with error: %v", msg.GetID(), err)
 					continue
 				}
-				_, err = uc.kubeClient.CoreV1().Events(patchInfo.Event.Namespace).PatchWithEventNamespace(patchInfo.Event, []byte(patchInfo.Data))
+				_, err = uc.kubeClient.CoreV1().Events(eventpatchInfo.Event.Namespace).PatchWithEventNamespace(eventpatchInfo.Event, []byte(eventpatchInfo.Data))
 				if err != nil {
-					klog.Errorf("PatchWithEventNamespace error, event: %v, err: %v", patchInfo.Event, err)
+					klog.Errorf("message: %s process failure, PatchWithEventNamespace error: %v", msg.GetID(), err)
 					continue
 				}
 			}

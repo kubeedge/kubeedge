@@ -18,6 +18,7 @@ package client
 
 import (
 	"fmt"
+	"k8s.io/klog/v2"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,7 +37,7 @@ type EventsGetter interface {
 type EventsInterface interface {
 	Create(*corev1.Event, metav1.CreateOptions) (*corev1.Event, error)
 	Update(*corev1.Event, metav1.UpdateOptions) (*corev1.Event, error)
-	Patch(string, types.PatchType, []byte, metav1.PatchOptions) (*corev1.Event, error)
+	Patch(string, types.PatchType, []byte, metav1.PatchOptions, ...string) (*corev1.Event, error)
 	Delete(string, metav1.DeleteOptions) error
 	Get(string, metav1.GetOptions) (*corev1.Event, error)
 	Apply(*appcorev1.EventApplyConfiguration, metav1.ApplyOptions) (result *corev1.Event, err error)
@@ -59,54 +60,60 @@ func newEvents(namespace string, s SendInterface) *events {
 }
 
 func (e *events) Create(event *corev1.Event, opts metav1.CreateOptions) (*corev1.Event, error) {
+	klog.Infof("create event %v with option %v", event, opts)
 	return event, nil
 }
 
 func (e *events) Update(event *corev1.Event, opts metav1.UpdateOptions) (*corev1.Event, error) {
+	klog.Infof("update event %v with option %v", event, opts)
 	return event, nil
 }
 
-func (e *events) Patch(name string, pt types.PatchType, data []byte, opts metav1.PatchOptions) (*corev1.Event, error) {
+func (e *events) Patch(name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (*corev1.Event, error) {
+	klog.Infof("patch event with eventName %v, type %v, patchData %v, option %v and subresources %v", name, pt, string(data), opts, subresources)
 	return &corev1.Event{}, nil
 }
 
 func (e *events) Delete(name string, opts metav1.DeleteOptions) error {
+	klog.Infof("delete event with eventName %v and option %v", name, opts)
 	return nil
 }
 
 func (e *events) Get(name string, opts metav1.GetOptions) (*corev1.Event, error) {
+	klog.Infof("get event with eventName %v and option %v", name, opts)
 	return &corev1.Event{}, nil
 }
 
 func (e *events) Apply(event *appcorev1.EventApplyConfiguration, opts metav1.ApplyOptions) (*corev1.Event, error) {
+	klog.Infof("apply event %v with option %v", event, opts)
 	return &corev1.Event{}, nil
 }
 
 func (e *events) CreateWithEventNamespace(event *corev1.Event) (*corev1.Event, error) {
-	resource := fmt.Sprintf("%s/%s/%s", e.namespace, model.ResourceTypeEvent, event.Name)
+	resource := fmt.Sprintf("%s/%s/%s", event.Namespace, model.ResourceTypeEvent, event.Name)
 	eventMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.InsertOperation, event)
 	e.send.Send(eventMsg)
 	return event, nil
 }
 
 func (e *events) UpdateWithEventNamespace(event *corev1.Event) (*corev1.Event, error) {
-	resource := fmt.Sprintf("%s/%s/%s", e.namespace, model.ResourceTypeEvent, event.Name)
+	resource := fmt.Sprintf("%s/%s/%s", event.Namespace, model.ResourceTypeEvent, event.Name)
 	eventMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.UpdateOperation, event)
 	e.send.Send(eventMsg)
 	return event, nil
 }
 
-type PatchInfo struct {
+type EventPatchInfo struct {
 	Event *corev1.Event `json:"event"`
 	Data  string        `json:"patchData"`
 }
 
 func (e *events) PatchWithEventNamespace(event *corev1.Event, data []byte) (*corev1.Event, error) {
-	msgData := PatchInfo{
+	msgData := EventPatchInfo{
 		Event: event,
 		Data:  string(data),
 	}
-	resource := fmt.Sprintf("%s/%s/%s", e.namespace, model.ResourceTypeEvent, event.Name)
+	resource := fmt.Sprintf("%s/%s/%s", event.Namespace, model.ResourceTypeEvent, event.Name)
 	eventMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.PatchOperation, msgData)
 	e.send.Send(eventMsg)
 	return event, nil

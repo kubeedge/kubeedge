@@ -36,42 +36,39 @@ type EventsBridge struct {
 	MetaClient client.CoreInterface
 }
 
-// Create logs the event creation request.
-func (e *EventsBridge) Create(ctx context.Context, event *corev1.Event, opts metav1.CreateOptions) (*corev1.Event, error) {
+// Only XXXWithNamespace methods are actually used, the remaining methods are placeholders.
+func (e *EventsBridge) Create(_ context.Context, event *corev1.Event, opts metav1.CreateOptions) (*corev1.Event, error) {
 	return e.MetaClient.Events(e.ns).Create(event, opts)
 }
 
-// Update logs the event update request.
-func (e *EventsBridge) Update(ctx context.Context, event *corev1.Event, opts metav1.UpdateOptions) (*corev1.Event, error) {
+func (e *EventsBridge) Update(_ context.Context, event *corev1.Event, opts metav1.UpdateOptions) (*corev1.Event, error) {
 	return e.MetaClient.Events(e.ns).Update(event, opts)
 }
 
-func (e *EventsBridge) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *corev1.Event, err error) {
-	return e.MetaClient.Events(e.ns).Patch(name, pt, data, opts)
+func (e *EventsBridge) Patch(_ context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *corev1.Event, err error) {
+	return e.MetaClient.Events(e.ns).Patch(name, pt, data, opts, subresources...)
 }
 
-// Delete logs the event deletion request.
-func (e *EventsBridge) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
+func (e *EventsBridge) Delete(_ context.Context, name string, opts metav1.DeleteOptions) error {
 	return e.MetaClient.Events(e.ns).Delete(name, opts)
 }
 
-// Get logs the event retrieval request.
-func (e *EventsBridge) Get(ctx context.Context, name string, opts metav1.GetOptions) (*corev1.Event, error) {
+func (e *EventsBridge) Get(_ context.Context, name string, opts metav1.GetOptions) (*corev1.Event, error) {
 	return e.MetaClient.Events(e.ns).Get(name, opts)
 }
 
-func (e *EventsBridge) Apply(ctx context.Context, event *appcorev1.EventApplyConfiguration, opts metav1.ApplyOptions) (result *corev1.Event, err error) {
+func (e *EventsBridge) Apply(_ context.Context, event *appcorev1.EventApplyConfiguration, opts metav1.ApplyOptions) (result *corev1.Event, err error) {
 	return e.MetaClient.Events(e.ns).Apply(event, opts)
 }
 
 func (e *EventsBridge) CreateWithEventNamespace(event *corev1.Event) (*corev1.Event, error) {
-	return e.MetaClient.Events(e.ns).CreateWithEventNamespace(event) // &corev1.Event{}, nil
+	return e.MetaClient.Events(event.Namespace).CreateWithEventNamespace(event)
 }
 
 func (e *EventsBridge) UpdateWithEventNamespace(event *corev1.Event) (*corev1.Event, error) {
-	return e.MetaClient.Events(e.ns).UpdateWithEventNamespace(event)
+	return e.MetaClient.Events(event.Namespace).UpdateWithEventNamespace(event)
 }
 
 func (e *EventsBridge) PatchWithEventNamespace(event *corev1.Event, data []byte) (*corev1.Event, error) {
-	return e.MetaClient.Events(e.ns).PatchWithEventNamespace(event, data)
+	return e.MetaClient.Events(event.Namespace).PatchWithEventNamespace(event, data)
 }
