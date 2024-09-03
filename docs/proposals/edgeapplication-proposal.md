@@ -46,4 +46,4 @@ Currently, EdgeApplication allows overrides based on node groups. This proposal 
 
 
 - **Bug-Free Implementation:**  
-  Comprehensive testing will ensure that both the new feature and closed-loop flow control function as expected without introducing bugs.
+  Ensure to update existing tests for EdgeApplicationController to validate overriding based on nodeLabelSelectors
