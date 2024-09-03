@@ -5,20 +5,14 @@
 **Deployment Specification Overrides:**  
 Currently, EdgeApplication allows overrides based on node groups. This proposal aims to extend this functionality to node labels/selectors.
 
-**Closed-Loop Flow Control:**  
-There is a need to ensure that traffic within a node group remains contained and does not spill over to other groups. This proposal outlines changes to achieve closed-loop flow control while decoupling the scope of application batch management.
-
 ## 2. Problem Statement
 
 1. **Deployment Specification Overrides:**  
    EdgeApplication currently supports deployment based on deployment specs like replicas, images, etc. This limitation restricts the flexibility in managing deployments based on granular node characteristics.
 
-2. **Closed-Loop Flow Control:**  
-   Deployment within a node group shares a service allowing traffic to cross node group boundaries. This problem is critical when traffic isolation is crucial.
-
 ## 3. Proposed Solution
 
-### a. Deployment Specification Overrides
+## Deployment Specification Overrides
 
 **1. API Changes:**
 
