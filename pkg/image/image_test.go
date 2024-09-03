@@ -1,14 +1,17 @@
 package image
 
 import (
-	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
 
 func TestEdgeSet(t *testing.T) {
+	assert := assert.New(t)
+
 	tests := []struct {
 		name string
 		args common.JoinOptions
@@ -76,14 +79,15 @@ func TestEdgeSet(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := EdgeSet(&tt.args); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("EdgeSet() = %v, want %v", got, tt.want)
-			}
+			got := EdgeSet(&tt.args)
+			assert.Equal(tt.want, got)
 		})
 	}
 }
 
 func TestCloudSet(t *testing.T) {
+	assert := assert.New(t)
+
 	type args struct {
 		imageRepository string
 		version         string
@@ -148,14 +152,15 @@ func TestCloudSet(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := CloudSet(tt.args.imageRepository, tt.args.version); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("CloudSet() = %v, want %v", got, tt.want)
-			}
+			got := CloudSet(tt.args.imageRepository, tt.args.version)
+			assert.Equal(tt.want, got)
 		})
 	}
 }
 
 func TestSet_Get(t *testing.T) {
+	assert := assert.New(t)
+
 	tests := []struct {
 		name string
 		s    Set
@@ -171,14 +176,15 @@ func TestSet_Get(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.s.Get(tt.args); got != tt.want {
-				t.Errorf("Set.Get() = %v, want %v", got, tt.want)
-			}
+			got := tt.s.Get(tt.args)
+			assert.Equal(tt.want, got)
 		})
 	}
 }
 
 func TestSet_List(t *testing.T) {
+	assert := assert.New(t)
+
 	tests := []struct {
 		name string
 		s    Set
@@ -202,14 +208,14 @@ func TestSet_List(t *testing.T) {
 			for _, v := range tt.want {
 				wantMap[v] = ""
 			}
-			if !reflect.DeepEqual(gotMap, wantMap) {
-				t.Errorf("Set.List() = %v, but want %v", got, tt.want)
-			}
+			assert.Equal(wantMap, gotMap)
 		})
 	}
 }
 
 func TestSet_Merge(t *testing.T) {
+	assert := assert.New(t)
+
 	tests := []struct {
 		name string
 		s    Set
@@ -237,14 +243,15 @@ func TestSet_Merge(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.s.Merge(tt.args); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Set.Merge() = %v, want %v", got, tt.want)
-			}
+			got := tt.s.Merge(tt.args)
+			assert.Equal(tt.want, got)
 		})
 	}
 }
 
 func TestSet_Remove(t *testing.T) {
+	assert := assert.New(t)
+
 	tests := []struct {
 		name string
 		s    Set
@@ -263,9 +270,8 @@ func TestSet_Remove(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.s.Remove(EdgeMQTT); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Set.Remove() = %v, want %v", got, tt.want)
-			}
+			got := tt.s.Remove(EdgeMQTT)
+			assert.Equal(tt.want, got)
 		})
 	}
 }
