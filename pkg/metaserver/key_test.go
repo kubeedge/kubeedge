@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -13,6 +14,8 @@ import (
 )
 
 func TestKeyFuncObj(t *testing.T) {
+	assert := assert.New(t)
+
 	cases := []struct {
 		// group version kind namespace name
 		attr      []string
@@ -56,17 +59,15 @@ func TestKeyFuncObj(t *testing.T) {
 			obj.SetName(test.attr[4])
 
 			key, err := KeyFuncObj(&obj)
-			if err != nil {
-				t.Errorf("Unexpected error %v", err)
-			}
-			if test.stdResult != key {
-				t.Errorf("KeyFuncObj Case failed,wanted result:%+v,acctual result:%+v", test.stdResult, key)
-			}
+			assert.NoError(err)
+			assert.Equal(test.stdResult, key)
 		})
 	}
 }
 
 func TestKeyFuncReq(t *testing.T) {
+	assert := assert.New(t)
+
 	namespaceAll := metav1.NamespaceAll
 	Cases := []struct { //copy by requestinfo_test.go
 		method              string
@@ -156,21 +157,15 @@ func TestKeyFuncReq(t *testing.T) {
 	for k, v := range Cases {
 		t.Run("parseKey", func(t *testing.T) {
 			req, err := http.NewRequest(v.method, v.url, nil)
-			if err != nil {
-				t.Errorf("Unexpected error %v", err)
-			}
+			assert.NoError(err)
+
 			apiRequestInfo, err := resolver.NewRequestInfo(req)
-			if err != nil {
-				t.Errorf("Unexpected error %v", err)
-			}
+			assert.NoError(err)
+
 			ctx := request.WithRequestInfo(context.TODO(), apiRequestInfo)
 			key, err := KeyFuncReq(ctx, "")
-			if err != nil {
-				t.Errorf("Unexpected error %v", err)
-			}
-			if key != stdResult[k] {
-				t.Errorf("failed to parse req context, wanted(%v),get(%v)", stdResult[k], key)
-			}
+			assert.NoError(err)
+			assert.Equal(stdResult[k], key)
 		})
 	}
 }
@@ -183,6 +178,8 @@ func newTestRequestInfoResolver() *request.RequestInfoFactory {
 
 // TestSaveMeta is function to initialize all global variable and test SaveMeta
 func TestParseKey(t *testing.T) {
+	assert := assert.New(t)
+
 	type result struct {
 		gvr       schema.GroupVersionResource
 		namespace string
@@ -292,9 +289,7 @@ func TestParseKey(t *testing.T) {
 		t.Run("parseKey", func(t *testing.T) {
 			gvr, ns, name := ParseKey(test.key)
 			parseResult := result{gvr, ns, name}
-			if test.stdResult != parseResult {
-				t.Errorf("ParseKey Case failed, key:%v,wanted result:%+v,acctual result:%+v", test.key, test.stdResult, parseResult)
-			}
+			assert.Equal(test.stdResult, parseResult)
 		})
 	}
 }
