@@ -23,6 +23,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog/v2"
 
+	crdClientset "github.com/kubeedge/api/client/clientset/versioned"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	keclient "github.com/kubeedge/kubeedge/cloud/pkg/common/client"
@@ -32,7 +33,6 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/util"
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/util/controller"
 	"github.com/kubeedge/kubeedge/common/types"
-	crdClientset "github.com/kubeedge/kubeedge/pkg/client/clientset/versioned"
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
 )
 

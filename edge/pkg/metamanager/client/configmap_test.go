@@ -29,10 +29,13 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
+const (
+	namespace = "test-namespace"
+)
+
 func TestNewConfigMaps(t *testing.T) {
 	assert := assert.New(t)
 
-	namespace := "test-namespace"
 	sender := newSend()
 
 	cm := newConfigMaps(namespace, sender)
@@ -49,7 +52,7 @@ func TestConfigMaps_Get(t *testing.T) {
 	expectedConfigMap := &api.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      configMapName,
-			Namespace: "test-namespace",
+			Namespace: namespace,
 		},
 		Data: map[string]string{
 			"key": "value",
@@ -108,7 +111,7 @@ func TestConfigMaps_Get(t *testing.T) {
 				return test.respFunc(message)
 			}
 
-			configMapsClient := newConfigMaps("test-namespace", mockSend)
+			configMapsClient := newConfigMaps(namespace, mockSend)
 
 			configMap, err := configMapsClient.Get(configMapName)
 

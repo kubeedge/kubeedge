@@ -23,7 +23,7 @@ import (
 
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
+	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 )
 
 var Config Configure

@@ -12,12 +12,12 @@ import (
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
+	policyv1alpha1 "github.com/kubeedge/api/apis/policy/v1alpha1"
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	pm "github.com/kubeedge/kubeedge/cloud/pkg/policycontroller/manager"
-	policyv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/policy/v1alpha1"
 	kefeatures "github.com/kubeedge/kubeedge/pkg/features"
 )
 

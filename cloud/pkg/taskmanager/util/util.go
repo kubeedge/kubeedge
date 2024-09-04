@@ -22,12 +22,12 @@ import (
 
 	"github.com/distribution/distribution/v3/reference"
 	metav1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	versionutil "k8s.io/apimachinery/pkg/util/version"
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/api/apis/operations/v1alpha1"
 	"github.com/kubeedge/kubeedge/common/constants"
-	"github.com/kubeedge/kubeedge/pkg/apis/operations/v1alpha1"
 )
 
 const (
@@ -41,8 +41,6 @@ const (
 	TaskRollback = "rollback"
 	TaskBackup   = "backup"
 	TaskPrePull  = "prepull"
-
-	ISO8601UTC = "2006-01-02T15:04:05Z"
 )
 
 type TaskMessage struct {

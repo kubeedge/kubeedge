@@ -30,7 +30,7 @@ describes the mission, scope, and objectives of the KubeEdge Technical Steering 
 | Dave Chen           | @chendave         | Arm           | <dave.chen@arm.com> |
 | Fei Xu              | @fisherxu         | Huawei        | <xufei40@huawei.com> |
 | Jie Zhang           | @kadisi           | Chinaunicom   | <zhangj1165@chinaunicom.cn> |
-| Sanil Kumar         | @skdwriting       | Huawei        | <sanil.kumar@huawei.com> |
+| Sanil Kumar D.      | @skdwriting       | Caze Labs     | <skdsanil@gmail.com> |
 | Siddharth Bhadri    | @sids-b           | Infoblox      | <sbhadri@infoblox.com> |
 | Qi Zhang            | @qizha            | Huawei        | <zhangqi21@huawei.com> |
 | Wei Hu              | @willardhu        | DaoCloud      | <wei.hu@daocloud.io> |

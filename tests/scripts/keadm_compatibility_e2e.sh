@@ -15,48 +15,25 @@
 # limitations under the License.
 
 KUBEEDGE_ROOT=$PWD
-WORKDIR=$(dirname $0)
-E2E_DIR=$(realpath $(dirname $0)/..)
 IMAGE_TAG=$(git describe --tags)
-CLOUD_EDGE_VERSION=${1:-"v1.15.1"}
-
+CLOUD_EDGE_VERSION=${1:-"v1.18.0"}
 
 source "${KUBEEDGE_ROOT}/hack/lib/install.sh"
+source "${KUBEEDGE_ROOT}/tests/scripts/keadm_common_e2e.sh"
 
 function cleanup() {
   sudo pkill edgecore || true
-  helm uninstall cloudcore -n kubeedge && kubectl delete ns kubeedge  || true
+  helm uninstall cloudcore -n kubeedge || true
+  # The namespace cleanup timeout may occur if pods is not clearned
+  kubectl get pods -n kubeedge | awk '{print $1}' | grep -v NAME | xargs kubectl delete pods -n kubeedge --force --grace-period=0 || true
+  kubectl delete ns kubeedge --force --grace-period=0  || true
   kind delete cluster --name test
   sudo rm -rf /var/log/kubeedge /etc/kubeedge /etc/systemd/system/edgecore.service $E2E_DIR/e2e_keadm/e2e_keadm.test $E2E_DIR/config.json
 }
 
-function build_ginkgo() {
-  cd $E2E_DIR
-  ginkgo build -r e2e_keadm/
-}
-
-function prepare_cluster() {
-  kind create cluster --name test
-
-  echo "wait the control-plane ready..."
-  kubectl wait --for=condition=Ready node/test-control-plane --timeout=60s
-
-  kubectl create clusterrolebinding system:anonymous --clusterrole=cluster-admin --user=system:anonymous
-
-  # edge side don't support kind cni now, delete kind cni plugin for workaround
-  kubectl delete daemonset kindnet -nkube-system
-}
-
-function build_image() {
+function build_keadm() {
   cd $KUBEEDGE_ROOT
-  make image WHAT=installation-package -f $KUBEEDGE_ROOT/Makefile
-  docker save kubeedge/installation-package:$IMAGE_TAG > installation-package.tar
-  sudo ctr -n=k8s.io image import installation-package.tar
-  kind load docker-image docker.io/kubeedge/installation-package:$IMAGE_TAG --name test
-
-  set +e
-  docker rmi $(docker images -f "dangling=true" -q)
-  set -Ee
+  make all WHAT=keadm
 }
 
 function get_cloudcore_image() {
@@ -76,7 +53,9 @@ function start_kubeedge() {
   cd $KUBEEDGE_ROOT
   export MASTER_IP=`kubectl get node test-control-plane -o jsonpath={.status.addresses[0].address}`
   export KUBECONFIG=$HOME/.kube/config
-  docker run --rm kubeedge/installation-package:$IMAGE_TAG cat /usr/local/bin/keadm > /usr/local/bin/keadm && chmod +x /usr/local/bin/keadm
+
+  make all WHAT=keadm
+  cd $KUBEEDGE_ROOT/_output/local/bin && mv keadm /usr/local/bin/ && chmod +x /usr/local/bin/keadm
   /usr/local/bin/keadm init --advertise-address=$MASTER_IP --kubeedge-version $CLOUD_EDGE_VERSION --set cloudCore.service.enable=false --kube-config=$KUBECONFIG --force
 
   # ensure tokensecret is generated
@@ -97,27 +76,6 @@ function start_kubeedge() {
   done
 }
 
-function run_test() {
-  :> /tmp/testcase.log
-  cd $E2E_DIR
-
-  export ACK_GINKGO_RC=true
-
-  ginkgo -v ./e2e_keadm/e2e_keadm.test -- \
-  --image-url=nginx \
-  --image-url=nginx \
-  --kube-master="https://$MASTER_IP:6443" \
-  --kubeconfig=$KUBECONFIG \
-  --test.v
-  if [[ $? != 0 ]]; then
-      echo "Integration suite has failures, Please check !!"
-      exit 1
-  else
-      echo "Integration suite successfully passed all the tests !!"
-      exit 0
-  fi
-}
-
 set -Ee
 trap cleanup EXIT
 
@@ -129,8 +87,8 @@ export KUBECONFIG=$HOME/.kube/config
 echo -e "\nPreparing cluster..."
 prepare_cluster
 
-echo -e "\nBuilding keadm image..."
-build_image
+echo -e "\nBuilding keadm..."
+build_keadm
 
 echo -e "\nGet cloudcore image..."
 get_cloudcore_image
