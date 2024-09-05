@@ -33,8 +33,8 @@ type EdgeApplicationSpec struct {
 
 // WorkloadScope represents which node groups the workload should be deployed in.
 type WorkloadScope struct {
-	// TargetNodeGroups represents the target node  of workload to be deployed.
-	// +optionalgroups
+	// TargetNodeGroups represents the target node groups of workload to be deployed.
+	// +optional
 	TargetNodeGroups []TargetNodeGroup `json:"targetNodeGroups,omitempty"`
 
 	TargetNodes []TargetNode `json:"targetNode,omitempty"`
