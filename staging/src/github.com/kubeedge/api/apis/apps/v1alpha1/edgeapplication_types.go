@@ -37,7 +37,7 @@ type WorkloadScope struct {
 	// +optionalgroups
 	TargetNodeGroups []TargetNodeGroup `json:"targetNodeGroups,omitempty"`
 
-	TargetNodes []TargetNode `json:"targetNode,omitempty`
+	TargetNodes []TargetNode `json:"targetNode,omitempty"`
 }
 
 type TargetNode struct {
