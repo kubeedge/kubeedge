@@ -1,11 +1,9 @@
-
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.2
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.14.0
   name: nodeupgradejobs.operations.kubeedge.io
 spec:
   group: operations.kubeedge.io
@@ -22,14 +20,19 @@ spec:
         description: NodeUpgradeJob is used to upgrade edge node from cloud side.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -37,34 +40,36 @@ spec:
             description: Specification of the desired behavior of NodeUpgradeJob.
             properties:
               checkItems:
-                description: CheckItems specifies the items need to be checked before
-                  the task is executed. The default CheckItems value is nil.
+                description: |-
+                  CheckItems specifies the items need to be checked before the task is executed.
+                  The default CheckItems value is nil.
                 items:
                   type: string
                 type: array
               concurrency:
-                description: Concurrency specifies the max number of edge nodes that
-                  can be upgraded at the same time. The default Concurrency value
-                  is 1.
+                description: |-
+                  Concurrency specifies the max number of edge nodes that can be upgraded at the same time.
+                  The default Concurrency value is 1.
                 format: int32
                 type: integer
               failureTolerate:
-                description: FailureTolerate specifies the task tolerance failure
-                  ratio. The default FailureTolerate value is 0.1.
+                description: |-
+                  FailureTolerate specifies the task tolerance failure ratio.
+                  The default FailureTolerate value is 0.1.
                 type: string
               image:
-                description: 'Image specifies a container image name, the image contains:
-                  keadm and edgecore. keadm is used as upgradetool, to install the
-                  new version of edgecore. The image name consists of registry hostname
-                  and repository name, if it includes the tag or digest, the tag or
-                  digest will be overwritten by Version field above. If the registry
-                  hostname is empty, docker.io will be used as default. The default
-                  image name is: kubeedge/installation-package.'
+                description: |-
+                  Image specifies a container image name, the image contains: keadm and edgecore.
+                  keadm is used as upgradetool, to install the new version of edgecore.
+                  The image name consists of registry hostname and repository name,
+                  if it includes the tag or digest, the tag or digest will be overwritten by Version field above.
+                  If the registry hostname is empty, docker.io will be used as default.
+                  The default image name is: kubeedge/installation-package.
                 type: string
               imageDigestGatter:
-                description: ImageDigestGatter define registry v2 interface access
-                  configuration. As a transition, it is not required at first, and
-                  the image digest is checked when this field is set.
+                description: |-
+                  ImageDigestGatter define registry v2 interface access configuration.
+                  As a transition, it is not required at first, and the image digest is checked when this field is set.
                 properties:
                   registryAPI:
                     description: RegistryAPI define registry v2 interface access configuration
@@ -82,33 +87,34 @@ spec:
                     type: string
                 type: object
               labelSelector:
-                description: LabelSelector is a filter to select member clusters by
-                  labels. It must match a node's labels for the NodeUpgradeJob to
-                  be operated on that node. Please note that sets of NodeNames and
-                  LabelSelector are ORed. Users must set one and can only set one.
+                description: |-
+                  LabelSelector is a filter to select member clusters by labels.
+                  It must match a node's labels for the NodeUpgradeJob to be operated on that node.
+                  Please note that sets of NodeNames and LabelSelector are ORed.
+                  Users must set one and can only set one.
                 properties:
                   matchExpressions:
                     description: matchExpressions is a list of label selector requirements.
                       The requirements are ANDed.
                     items:
-                      description: A label selector requirement is a selector that
-                        contains values, a key, and an operator that relates the key
-                        and values.
+                      description: |-
+                        A label selector requirement is a selector that contains values, a key, and an operator that
+                        relates the key and values.
                       properties:
                         key:
                           description: key is the label key that the selector applies
                             to.
                           type: string
                         operator:
-                          description: operator represents a key's relationship to
-                            a set of values. Valid operators are In, NotIn, Exists
-                            and DoesNotExist.
+                          description: |-
+                            operator represents a key's relationship to a set of values.
+                            Valid operators are In, NotIn, Exists and DoesNotExist.
                           type: string
                         values:
-                          description: values is an array of string values. If the
-                            operator is In or NotIn, the values array must be non-empty.
-                            If the operator is Exists or DoesNotExist, the values
-                            array must be empty. This array is replaced during a strategic
+                          description: |-
+                            values is an array of string values. If the operator is In or NotIn,
+                            the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                            the values array must be empty. This array is replaced during a strategic
                             merge patch.
                           items:
                             type: string
@@ -121,28 +127,32 @@ spec:
                   matchLabels:
                     additionalProperties:
                       type: string
-                    description: matchLabels is a map of {key,value} pairs. A single
-                      {key,value} in the matchLabels map is equivalent to an element
-                      of matchExpressions, whose key field is "key", the operator
-                      is "In", and the values array contains only "value". The requirements
-                      are ANDed.
+                    description: |-
+                      matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                      map is equivalent to an element of matchExpressions, whose key field is "key", the
+                      operator is "In", and the values array contains only "value". The requirements are ANDed.
                     type: object
                 type: object
+                x-kubernetes-map-type: atomic
               nodeNames:
-                description: NodeNames is a request to select some specific nodes.
-                  If it is non-empty, the upgrade job simply select these edge nodes
-                  to do upgrade operation. Please note that sets of NodeNames and
-                  LabelSelector are ORed. Users must set one and can only set one.
+                description: |-
+                  NodeNames is a request to select some specific nodes. If it is non-empty,
+                  the upgrade job simply select these edge nodes to do upgrade operation.
+                  Please note that sets of NodeNames and LabelSelector are ORed.
+                  Users must set one and can only set one.
                 items:
                   type: string
                 type: array
               requireConfirmation:
-                description: RequireConfirmation specifies whether you need to confirm
-                  the upgrade. The default RequireConfirmation value is false.
+                description: |-
+                  RequireConfirmation specifies whether you need to confirm the upgrade.
+                  The default RequireConfirmation value is false.
                 type: boolean
               timeoutSeconds:
-                description: TimeoutSeconds limits the duration of the node upgrade
-                  job. Default to 300. If set to 0, we'll use the default value 300.
+                description: |-
+                  TimeoutSeconds limits the duration of the node upgrade job.
+                  Default to 300.
+                  If set to 0, we'll use the default value 300.
                 format: int32
                 type: integer
               version:
@@ -152,17 +162,18 @@ spec:
             description: Most recently observed status of the NodeUpgradeJob.
             properties:
               action:
-                description: 'Action represents for the action of the ImagePrePullJob.
-                  There are two possible action values: Success, Failure.'
+                description: |-
+                  Action represents for the action of the ImagePrePullJob.
+                  There are two possible action values: Success, Failure.
                 type: string
               currentVersion:
                 description: CurrentVersion represents for the current status of the
                   EdgeCore.
                 type: string
               event:
-                description: 'Event represents for the event of the ImagePrePullJob.
-                  There are six possible event values: Init, Check, BackUp, Upgrade,
-                  TimeOut, Rollback.'
+                description: |-
+                  Event represents for the event of the ImagePrePullJob.
+                  There are six possible event values: Init, Check, BackUp, Upgrade, TimeOut, Rollback.
                 type: string
               historicVersion:
                 description: HistoricVersion represents for the historic status of
@@ -175,13 +186,14 @@ spec:
                     node.
                   properties:
                     action:
-                      description: 'Action represents for the action of the ImagePrePullJob.
-                        There are three possible action values: Success, Failure,
-                        TimeOut.'
+                      description: |-
+                        Action represents for the action of the ImagePrePullJob.
+                        There are three possible action values: Success, Failure, TimeOut.
                       type: string
                     event:
-                      description: 'Event represents for the event of the ImagePrePullJob.
-                        There are three possible event values: Init, Check, Pull.'
+                      description: |-
+                        Event represents for the event of the ImagePrePullJob.
+                        There are three possible event values: Init, Check, Pull.
                       type: string
                     nodeName:
                       description: NodeName is the name of edge node.
@@ -190,9 +202,9 @@ spec:
                       description: Reason represents for the reason of the ImagePrePullJob.
                       type: string
                     state:
-                      description: 'State represents for the upgrade state phase of
-                        the edge node. There are several possible state values: "",
-                        Upgrading, BackingUp, RollingBack and Checking.'
+                      description: |-
+                        State represents for the upgrade state phase of the edge node.
+                        There are several possible state values: "", Upgrading, BackingUp, RollingBack and Checking.
                       type: string
                     time:
                       description: Time represents for the running time of the ImagePrePullJob.
@@ -203,9 +215,9 @@ spec:
                 description: Reason represents for the reason of the ImagePrePullJob.
                 type: string
               state:
-                description: 'State represents for the state phase of the NodeUpgradeJob.
-                  There are several possible state values: "", Upgrading, BackingUp,
-                  RollingBack and Checking.'
+                description: |-
+                  State represents for the state phase of the NodeUpgradeJob.
+                  There are several possible state values: "", Upgrading, BackingUp, RollingBack and Checking.
                 type: string
               time:
                 description: Time represents for the running time of the ImagePrePullJob.
@@ -216,9 +228,3 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
