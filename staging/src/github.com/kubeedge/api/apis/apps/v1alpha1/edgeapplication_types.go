@@ -33,9 +33,17 @@ type EdgeApplicationSpec struct {
 
 // WorkloadScope represents which node groups the workload should be deployed in.
 type WorkloadScope struct {
-	// TargetNodeGroups represents the target node groups of workload to be deployed.
-	// +optional
+	// TargetNodeGroups represents the target node  of workload to be deployed.
+	// +optionalgroups
 	TargetNodeGroups []TargetNodeGroup `json:"targetNodeGroups,omitempty"`
+
+	TargetNodes []TargetNode `json:"targetNode,omitempty`
+}
+
+type TargetNode struct {
+	LabelSelector []metav1.LabelSelector `json:"labelselector,omitempty"`
+
+	Overriders Overriders `json:"overriders,omitempty"`
 }
 
 // TargetNodeGroup represents the target node group of workload to be deployed, including
