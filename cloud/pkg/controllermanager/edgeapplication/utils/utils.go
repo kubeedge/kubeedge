@@ -33,7 +33,9 @@ type TemplateInfo struct {
 }
 
 func GetAllOverriders(edgeApp *appsv1alpha1.EdgeApplication) []overridemanager.OverriderInfo {
-	infos := make([]overridemanager.OverriderInfo, 0, len(edgeApp.Spec.WorkloadScope.TargetNodeGroups))
+	infos := make([]overridemanager.OverriderInfo, 0)
+
+	// Handle overriders from TargetNodeGroups
 	for index := range edgeApp.Spec.WorkloadScope.TargetNodeGroups {
 		copied := edgeApp.Spec.WorkloadScope.TargetNodeGroups[index].Overriders.DeepCopy()
 		infos = append(infos, overridemanager.OverriderInfo{
@@ -41,6 +43,18 @@ func GetAllOverriders(edgeApp *appsv1alpha1.EdgeApplication) []overridemanager.O
 			Overriders:      copied,
 		})
 	}
+
+	// Handle overriders from TargetNodeLabels
+	for index := range edgeApp.Spec.WorkloadScope.TargetNodeLabels {
+		labelSelector := edgeApp.Spec.WorkloadScope.TargetNodeLabels[index].LabelSelector
+		copied := edgeApp.Spec.WorkloadScope.TargetNodeLabels[index].Overriders.DeepCopy()
+
+		infos = append(infos, overridemanager.OverriderInfo{
+			TargetNodeLabelSelector: labelSelector,
+			Overriders:              copied,
+		})
+	}
+
 	return infos
 }
 

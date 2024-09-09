@@ -37,10 +37,10 @@ type WorkloadScope struct {
 	// +optional
 	TargetNodeGroups []TargetNodeGroup `json:"targetNodeGroups,omitempty"`
 
-	TargetNodes []TargetNode `json:"targetNode,omitempty"`
+	TargetNodeLabels []TargetNodeLabel `json:"targetNode,omitempty"`
 }
 
-type TargetNode struct {
+type TargetNodeLabel struct {
 	LabelSelector []metav1.LabelSelector `json:"labelselector,omitempty"`
 
 	Overriders Overriders `json:"overriders,omitempty"`
