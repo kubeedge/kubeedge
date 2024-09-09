@@ -98,6 +98,9 @@ func NewKubeEdgeReset() *cobra.Command {
 				if err != nil {
 					return err
 				}
+				if reset.Endpoint == "" {
+					reset.Endpoint = config.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint
+				}
 				dir := config.Modules.Edged.TailoredKubeletConfig.StaticPodPath
 				if dir != "" {
 					if err := phases.CleanDir(dir); err != nil {
@@ -116,7 +119,7 @@ func NewKubeEdgeReset() *cobra.Command {
 			}
 
 			// 2. Remove containers managed by KubeEdge. Only for edge node.
-			if err := RemoveContainers(isEdgeNode, utilsexec.New()); err != nil {
+			if err := RemoveContainers(reset.Endpoint, isEdgeNode, utilsexec.New()); err != nil {
 				fmt.Printf("Failed to remove containers: %v\n", err)
 			}
 
@@ -169,14 +172,17 @@ func TearDownKubeEdge(isEdgeNode bool, kubeConfig string) error {
 }
 
 // RemoveContainers removes all Kubernetes-managed containers
-func RemoveContainers(isEdgeNode bool, execer utilsexec.Interface) error {
+func RemoveContainers(criSocketPath string, isEdgeNode bool, execer utilsexec.Interface) error {
 	if !isEdgeNode {
 		return nil
 	}
 
-	criSocketPath, err := utilruntime.DetectCRISocket()
-	if err != nil {
-		return err
+	if criSocketPath == "" {
+		var err error
+		criSocketPath, err = utilruntime.DetectCRISocket()
+		if err != nil {
+			return fmt.Errorf("failed to get crisocket with err:%v", err)
+		}
 	}
 
 	containerRuntime, err := utilruntime.NewContainerRuntime(execer, criSocketPath)
