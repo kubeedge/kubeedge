@@ -26,12 +26,12 @@ jobs:
       GOPATH: /home/runner/work/${{ github.repository }}
     steps:
       - name: Install Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v4
         with:
           go-version: 1.17.x
 
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           path: ./src/github.com/${{ github.repository }}
