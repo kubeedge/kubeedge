@@ -124,7 +124,7 @@ func (c *CloudCoreHelmTool) Install(opts *types.InitOptions) error {
 		return fmt.Errorf("failed to verify k8s component installed, err: %v", err)
 	}
 
-	fmt.Println("Kubernetes version verification passed, KubeEdge installation will start...")
+	fmt.Printf("Kubernetes version verification passed, KubeEdge %s installation will start...\n", opts.KubeEdgeVersion)
 
 	appendDefaultSets(opts.KubeEdgeVersion, opts.AdvertiseAddress, &opts.CloudInitUpdateBase)
 	// Load profile values, and merges the sets flag
