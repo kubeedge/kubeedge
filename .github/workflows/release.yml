@@ -38,7 +38,7 @@ jobs:
       hash-edgesite-linux-arm:   ${{ steps.hash.outputs.hash-edgesite-linux-arm }}
     steps:
       - name: checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           # fetch-depth:
           # 0 indicates all history for all branches and tags.
@@ -118,7 +118,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           # fetch-depth:
           # 0 indicates all history for all branches and tags.
