@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/kubeedge/beehive/pkg/common"
 	"github.com/kubeedge/beehive/pkg/core"
@@ -35,6 +36,8 @@ func init() {
 
 // TestName is function to test Name().
 func TestName(t *testing.T) {
+	assert := assert.New(t)
+
 	tests := []struct {
 		name string
 		want string
@@ -47,15 +50,15 @@ func TestName(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dt := &DeviceTwin{}
-			if got := dt.Name(); got != tt.want {
-				t.Errorf("DeviceTwin.Name() = %v, want %v", got, tt.want)
-			}
+			assert.Equal(tt.want, dt.Name(), "DeviceTwin.Name() = %v, want %v", dt.Name(), tt.want)
 		})
 	}
 }
 
 // TestGroup is function to test Group().
 func TestGroup(t *testing.T) {
+	assert := assert.New(t)
+
 	tests := []struct {
 		name string
 		want string
@@ -68,15 +71,15 @@ func TestGroup(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dt := &DeviceTwin{}
-			if got := dt.Group(); got != tt.want {
-				t.Errorf("DeviceTwin.Group() = %v, want %v", got, tt.want)
-			}
+			assert.Equal(tt.want, dt.Group(), "DeviceTwin.Group() = %v, want %v", dt.Group(), tt.want)
 		})
 	}
 }
 
 // TestStart is function to test Start().
 func TestStart(t *testing.T) {
+	assert := assert.New(t)
+
 	//test is for sending test messages from devicetwin module.
 	var test model.Message
 	// ormerMock is mocked Ormer implementation.
@@ -128,10 +131,7 @@ func TestStart(t *testing.T) {
 	// Sending a message from devicetwin module to the created fake module(TestModule) to check context is initialized properly.
 	beehiveContext.Send(TestModule, test)
 	_, err := beehiveContext.Receive(TestModule)
-	if err != nil {
-		t.Errorf("Error while receiving message: %v", err)
-		return
-	}
+	assert.NoError(err)
 	//Checking whether Mem,Twin,Device and Comm modules are registered and started successfully.
 	tests := []struct {
 		name       string
@@ -162,9 +162,7 @@ func TestStart(t *testing.T) {
 					if test.moduleName == module.Name {
 						moduleCheck = true
 						err := dt.DTContexts.HeartBeat(test.moduleName, "ping")
-						if err != nil {
-							t.Errorf("Heartbeat of module %v is expired and dtcontroller will start it again", test.moduleName)
-						}
+						assert.NoError(err, "Heartbeat of module %v is expired and dtcontroller will start it again", test.moduleName)
 						break
 					}
 				}
@@ -174,9 +172,7 @@ func TestStart(t *testing.T) {
 				time.Sleep(delay)
 				retry++
 			}
-			if retry >= maxRetries {
-				t.Errorf("Registration of module %v failed", test.moduleName)
-			}
+			assert.Less(retry, maxRetries, "Registration of module %v failed", test.moduleName)
 		})
 	}
 }

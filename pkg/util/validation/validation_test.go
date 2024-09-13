@@ -1,11 +1,14 @@
 package validation
 
 import (
-	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIsValidIP(t *testing.T) {
+	assert := assert.New(t)
+
 	cases := []struct {
 		Name   string
 		IP     string
@@ -42,14 +45,14 @@ func TestIsValidIP(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			v := IsValidIP(c.IP)
 			get := len(v) == 0
-			if get != c.Expect {
-				t.Errorf("Input %s Expect %v while get %v", c.IP, c.Expect, v)
-			}
+			assert.Equal(get, c.Expect)
 		})
 	}
 }
 
 func TestIsValidPortNum(t *testing.T) {
+	assert := assert.New(t)
+
 	cases := []struct {
 		Name   string
 		Port   int
@@ -80,17 +83,15 @@ func TestIsValidPortNum(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.Name, func(t *testing.T) {
 			v := IsValidPortNum(c.Port)
-			if !reflect.DeepEqual(v, c.Expect) {
-				t.Errorf("Input %d Expect %v while get %v", c.Port, c.Expect, v)
-			}
+			assert.Equal(v, c.Expect)
 		})
 	}
 }
 
 func TestInclusiveRangeError(t *testing.T) {
+	assert := assert.New(t)
+
 	result := InclusiveRangeError(1, 65535)
 	expect := "must be between 1 and 65535, inclusive"
-	if !reflect.DeepEqual(result, expect) {
-		t.Errorf("Expected %v while get %v", expect, result)
-	}
+	assert.Equal(result, expect)
 }

@@ -136,4 +136,6 @@ func TearDownEdgeCore() error {
 func addResetFlags(cmd *cobra.Command, resetOpts *common.ResetOptions) {
 	cmd.Flags().BoolVar(&resetOpts.Force, "force", resetOpts.Force,
 		"Reset the node without prompting for confirmation")
+	cmd.Flags().StringVar(&resetOpts.Endpoint, "remote-runtime-endpoint", resetOpts.Endpoint,
+		"Use this key to set container runtime endpoint")
 }
