@@ -414,9 +414,9 @@ spec:
                       type: object
                     type: array
                   targetNodeLabels:
-                    description:
+                    description: TargetNodeLabels targets all nodes with specified labels for overriding deployment specifications.
                     items:
-                      description:
+                      description: TargetNodeLabel targets all nodes with specific labels for overrides
                       properties:
                         labelSelector:
                           description: LabelSelector is a filter to select member clusters by
