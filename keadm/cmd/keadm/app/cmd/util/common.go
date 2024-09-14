@@ -194,6 +194,8 @@ func GetCurrentVersion(version string) (string, error) {
 			return version, nil
 		}
 		return "v" + version, nil
+	}else{
+		klog.Warningf("kubeedge-version %s is invalid version format, try to find alternative version\n", version)
 	}
 
 	// By default, the static version number set at build time is used.
