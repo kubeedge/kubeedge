@@ -22,6 +22,7 @@ TIMEOUT=${TIMEOUT:-60}s
 PROTOCOL=${PROTOCOL:-"WebSocket"}
 CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-"containerd"}
 KIND_IMAGE=${1:-"kindest/node:v1.29.0"}
+SKIP_CR_INSTALL=${SKIP_CR_INSTALL:-"false"}
 echo -e "The installation of the cni plugin will overwrite the cni config file. Use export CNI_CONF_OVERWRITE=false to disable it."
 
 if [[ "${CLUSTER_NAME}x" == "x" ]]; then
@@ -31,11 +32,23 @@ fi
 export CLUSTER_CONTEXT="--name ${CLUSTER_NAME}"
 
 function install_cr() {
+
+  if [[ "${CONTAINER_RUNTIME}" = "containerd" ]]; then
+      echo "No need to download container runtime for containerd"
+      return
+  fi
+
+  echo -e "The installation of the container runtime will try to install ${CONTAINER_RUNTIME}. Use export SKIP_CR_INSTALL=true to skip it."
   attempt_num=0
   max_attempts=5
 
   while [ $attempt_num -lt $max_attempts ]
   do
+    if  [ $attempt_num -eq 3 ]; then
+      echo "Download failed multiple times, try to change apt source ..."
+      sudo sed -i 's@//.*archive.ubuntu.com@//mirrors.ustc.edu.cn@g' /etc/apt/sources.list
+      sudo apt-get update
+    fi
     if [[ "${CONTAINER_RUNTIME}" = "docker" ]]; then
       install_docker
       verify_docker_installed
@@ -79,8 +92,8 @@ function install_cr() {
       echo "isulad has been downloaded successfully"
       break
     else
-      echo "No need to download container runtime"
-      break
+      echo "container runtime is ${CONTAINER_RUNTIME}. not support yet"
+      exit 1
     fi
   done
 
@@ -327,7 +340,11 @@ cleanup
 source "${KUBEEDGE_ROOT}/hack/lib/golang.sh"
 source "${KUBEEDGE_ROOT}/hack/lib/install.sh"
 
-install_cr
+if [[ "${SKIP_CR_INSTALL}" = "false" ]]; then
+  install_cr
+else
+  echo "Skip container runtime installation"
+fi
 
 check_prerequisites
 

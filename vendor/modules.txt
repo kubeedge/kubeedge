@@ -591,6 +591,59 @@ github.com/klauspost/compress/internal/cpuinfo
 github.com/klauspost/compress/internal/snapref
 github.com/klauspost/compress/zstd
 github.com/klauspost/compress/zstd/internal/xxhash
+# github.com/kubeedge/api v0.0.0 => ./staging/src/github.com/kubeedge/api
+## explicit; go 1.21
+github.com/kubeedge/api/apis/apps/v1alpha1
+github.com/kubeedge/api/apis/common/constants
+github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1
+github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1/validation
+github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2
+github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2/validation
+github.com/kubeedge/api/apis/componentconfig/meta/v1alpha1
+github.com/kubeedge/api/apis/devices/v1beta1
+github.com/kubeedge/api/apis/dmi/v1beta1
+github.com/kubeedge/api/apis/fsm/v1alpha1
+github.com/kubeedge/api/apis/operations/v1alpha1
+github.com/kubeedge/api/apis/policy/v1alpha1
+github.com/kubeedge/api/apis/reliablesyncs/v1alpha1
+github.com/kubeedge/api/apis/rules/v1
+github.com/kubeedge/api/apis/util
+github.com/kubeedge/api/apis/util/validation
+github.com/kubeedge/api/client/clientset/versioned
+github.com/kubeedge/api/client/clientset/versioned/fake
+github.com/kubeedge/api/client/clientset/versioned/scheme
+github.com/kubeedge/api/client/clientset/versioned/typed/apps/v1alpha1
+github.com/kubeedge/api/client/clientset/versioned/typed/apps/v1alpha1/fake
+github.com/kubeedge/api/client/clientset/versioned/typed/devices/v1beta1
+github.com/kubeedge/api/client/clientset/versioned/typed/devices/v1beta1/fake
+github.com/kubeedge/api/client/clientset/versioned/typed/operations/v1alpha1
+github.com/kubeedge/api/client/clientset/versioned/typed/operations/v1alpha1/fake
+github.com/kubeedge/api/client/clientset/versioned/typed/policy/v1alpha1
+github.com/kubeedge/api/client/clientset/versioned/typed/policy/v1alpha1/fake
+github.com/kubeedge/api/client/clientset/versioned/typed/reliablesyncs/v1alpha1
+github.com/kubeedge/api/client/clientset/versioned/typed/reliablesyncs/v1alpha1/fake
+github.com/kubeedge/api/client/clientset/versioned/typed/rules/v1
+github.com/kubeedge/api/client/clientset/versioned/typed/rules/v1/fake
+github.com/kubeedge/api/client/informers/externalversions
+github.com/kubeedge/api/client/informers/externalversions/apps
+github.com/kubeedge/api/client/informers/externalversions/apps/v1alpha1
+github.com/kubeedge/api/client/informers/externalversions/devices
+github.com/kubeedge/api/client/informers/externalversions/devices/v1beta1
+github.com/kubeedge/api/client/informers/externalversions/internalinterfaces
+github.com/kubeedge/api/client/informers/externalversions/operations
+github.com/kubeedge/api/client/informers/externalversions/operations/v1alpha1
+github.com/kubeedge/api/client/informers/externalversions/policy
+github.com/kubeedge/api/client/informers/externalversions/policy/v1alpha1
+github.com/kubeedge/api/client/informers/externalversions/reliablesyncs
+github.com/kubeedge/api/client/informers/externalversions/reliablesyncs/v1alpha1
+github.com/kubeedge/api/client/informers/externalversions/rules
+github.com/kubeedge/api/client/informers/externalversions/rules/v1
+github.com/kubeedge/api/client/listers/apps/v1alpha1
+github.com/kubeedge/api/client/listers/devices/v1beta1
+github.com/kubeedge/api/client/listers/operations/v1alpha1
+github.com/kubeedge/api/client/listers/policy/v1alpha1
+github.com/kubeedge/api/client/listers/reliablesyncs/v1alpha1
+github.com/kubeedge/api/client/listers/rules/v1
 # github.com/kubeedge/beehive v0.0.0 => ./staging/src/github.com/kubeedge/beehive
 ## explicit; go 1.21
 github.com/kubeedge/beehive/pkg/common
@@ -774,8 +827,8 @@ github.com/opencontainers/go-digest
 ## explicit; go 1.17
 github.com/opencontainers/image-spec/specs-go
 github.com/opencontainers/image-spec/specs-go/v1
-# github.com/opencontainers/runc v1.1.10
-## explicit; go 1.17
+# github.com/opencontainers/runc v1.1.13
+## explicit; go 1.18
 github.com/opencontainers/runc/libcontainer
 github.com/opencontainers/runc/libcontainer/apparmor
 github.com/opencontainers/runc/libcontainer/capabilities
@@ -1116,7 +1169,7 @@ golang.org/x/exp/slices
 golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.23.0
+# golang.org/x/net v0.24.0
 ## explicit; go 1.18
 golang.org/x/net/bpf
 golang.org/x/net/context
@@ -2900,6 +2953,7 @@ sigs.k8s.io/yaml
 # github.com/containerd/containerd => github.com/containerd/containerd v1.5.18
 # github.com/emicklei/go-restful/v3 => github.com/emicklei/go-restful/v3 v3.7.5-0.20220308211933-7c971ca4d0fd
 # github.com/gopherjs/gopherjs v0.0.0 => github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e
+# github.com/kubeedge/api => ./staging/src/github.com/kubeedge/api
 # github.com/kubeedge/beehive => ./staging/src/github.com/kubeedge/beehive
 # github.com/kubeedge/viaduct => ./staging/src/github.com/kubeedge/viaduct
 # github.com/spf13/viper => github.com/spf13/viper v1.8.1
