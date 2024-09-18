@@ -288,11 +288,6 @@ func (uc *UpstreamController) dispatchMessage() {
 	}
 }
 
-type EventPatchInfo struct {
-	Event *v1.Event `json:"event"`
-	Data  string    `json:"patchData"`
-}
-
 func (uc *UpstreamController) processEvent() {
 	for {
 		select {
@@ -331,7 +326,7 @@ func (uc *UpstreamController) processEvent() {
 					continue
 				}
 			case model.PatchOperation:
-				eventpatchInfo := &EventPatchInfo{}
+				eventpatchInfo := &edgeapi.EventPatchInfo{}
 				err = json.Unmarshal(data, eventpatchInfo)
 				if err != nil {
 					klog.Errorf("message: %s process failure, unmarshal patchEvent message content data failed with error: %v", msg.GetID(), err)

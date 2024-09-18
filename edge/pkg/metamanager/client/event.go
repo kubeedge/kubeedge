@@ -18,14 +18,15 @@ package client
 
 import (
 	"fmt"
-	"k8s.io/klog/v2"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	appcorev1 "k8s.io/client-go/applyconfigurations/core/v1"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
+	edgeapi "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
@@ -60,32 +61,32 @@ func newEvents(namespace string, s SendInterface) *events {
 }
 
 func (e *events) Create(event *corev1.Event, opts metav1.CreateOptions) (*corev1.Event, error) {
-	klog.Infof("create event %v with option %v", event, opts)
+	klog.Errorf("failed to create event %v with option %v", event, opts)
 	return event, nil
 }
 
 func (e *events) Update(event *corev1.Event, opts metav1.UpdateOptions) (*corev1.Event, error) {
-	klog.Infof("update event %v with option %v", event, opts)
+	klog.Errorf("failed to update event %v with option %v", event, opts)
 	return event, nil
 }
 
 func (e *events) Patch(name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (*corev1.Event, error) {
-	klog.Infof("patch event with eventName %v, type %v, patchData %v, option %v and subresources %v", name, pt, string(data), opts, subresources)
+	klog.Errorf("failed to patch event with eventName %v, type %v, patchData %v, option %v and subresources %v", name, pt, string(data), opts, subresources)
 	return &corev1.Event{}, nil
 }
 
 func (e *events) Delete(name string, opts metav1.DeleteOptions) error {
-	klog.Infof("delete event with eventName %v and option %v", name, opts)
+	klog.Errorf("failed to delete event with eventName %v and option %v", name, opts)
 	return nil
 }
 
 func (e *events) Get(name string, opts metav1.GetOptions) (*corev1.Event, error) {
-	klog.Infof("get event with eventName %v and option %v", name, opts)
+	klog.Errorf("failed to get event with eventName %v and option %v", name, opts)
 	return &corev1.Event{}, nil
 }
 
 func (e *events) Apply(event *appcorev1.EventApplyConfiguration, opts metav1.ApplyOptions) (*corev1.Event, error) {
-	klog.Infof("apply event %v with option %v", event, opts)
+	klog.Errorf("failed to apply event %v with option %v", event, opts)
 	return &corev1.Event{}, nil
 }
 
@@ -103,13 +104,8 @@ func (e *events) UpdateWithEventNamespace(event *corev1.Event) (*corev1.Event, e
 	return event, nil
 }
 
-type EventPatchInfo struct {
-	Event *corev1.Event `json:"event"`
-	Data  string        `json:"patchData"`
-}
-
 func (e *events) PatchWithEventNamespace(event *corev1.Event, data []byte) (*corev1.Event, error) {
-	msgData := EventPatchInfo{
+	msgData := edgeapi.EventPatchInfo{
 		Event: event,
 		Data:  string(data),
 	}

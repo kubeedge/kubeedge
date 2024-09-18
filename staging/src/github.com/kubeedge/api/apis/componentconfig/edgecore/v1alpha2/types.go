@@ -99,6 +99,10 @@ type Edged struct {
 	// if set to false (for debugging etc.), skip checking other EdgeHub configs.
 	// default true
 	Enable bool `json:"enable"`
+	// SendEvents indicates whether to send events to cloud,
+	// if set to false, events will not be sent to cloud.
+	// default true
+	SendEvent bool `json:"sendEvent"`
 	// TailoredKubeletConfig contains the configuration for the Kubelet, tailored by KubeEdge
 	TailoredKubeletConfig *TailoredKubeletConfiguration `json:"tailoredKubeletConfig"`
 	// TailoredKubeletFlag
