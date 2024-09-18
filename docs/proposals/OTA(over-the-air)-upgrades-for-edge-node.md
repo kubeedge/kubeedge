@@ -29,85 +29,45 @@ In order to make the edge node more convenient and rapid upgrade, we introduce a
 ### Validation of the Image Digest Before Edge Node Upgrade
 
 #### Objective
-Ensure that the image being used for the upgrade is authentic and has not been tampered with.
+Prevent a hacker from masquerading an image and introducing an untrusted binary by validating the image's digest before the upgrade process begins.
 #### Steps
-- Get image digest(**Ensure Docker Daemon is Running**):When creating an installation package image, obtain the cryptographic hash (digest) of the image through docker's API.Docker provides an API that allows you to interact with the Docker daemon programmatically.*For example*:Use `curl` to interact with the Docker registry API. Replace your_registry, your_image, and tag with your actual values
-```bash
-curl -X GET -H "Accept: application/vnd.docker.distribution.manifest.v2+json"
-\
-https://your_registry/v2/your_image/manifests/tag
-```
-Response:
-```json
-{
-  "schemaVersion": 2,
-  "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
-  "config": {
-    "mediaType": "application/vnd.docker.container.image.v1+json",
-    "size": 7023,
-    "digest": "sha256:abc123..."
-  },
-  "layers": [
-    {
-      "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
-      "size": 32654,
-      "digest": "sha256:def456..."
+- When the NodeUpgradeJob CRD is used to initiate the upgrade, implement a mechanism to fetch the image's digest from a trusted source (e.g., a secure image registry).
+**Example**:Docker API
+  ```go
+  //Create a Docker Client
+  func getDockerClient() (*client.Client, error) {
+      cli, err := client.NewClientWithOpts(client.FromEnv,client.WithAPIVersionNegotiation())
+      if err != nil {
+          return nil, err
+      }
+      return cli, nil
     }
-  ]
-}
-```
-- Release image digest:Pass the obtained image digest to the edge using Hub by calling this `commontypes.NodeUpgradeJobRequest` method.
-```go
-func (ndc *NodeUpgradeController) processUpgrade(upgrade *v1alpha1.NodeUpgradeJob) {
-	// if users specify Image, we'll use upgrade Version as its image tag, even though Image contains tag.
-	// if not, we'll use default image: kubeedge/installation-package:${Version}
-	var repo string
-	var err error
-	repo = "kubeedge/installation-package"
-	if upgrade.Spec.Image != "" {
-		repo, err = util.GetImageRepo(upgrade.Spec.Image)
-		if err != nil {
-			klog.Errorf("Image format is not right: %v", err)
-			return
-		}
-	}
-	imageTag := upgrade.Spec.Version
-  //Get image summary
-  imageDigest := upgrade.Spec.ImageDigest
-  image := fmt.Sprintf("%s:%s:%s", repo, imageTag,imageDigest)
+  //Inspect the Image to Retrieve the Digest
+  func getImageDigest(cli *client.Client, imageName string) (string, error) {
+      ctx := context.Background()
+      imageInspect, _, err := cli.ImageInspectWithRaw(ctx, imageName)
+      if err != nil {
+          return "", err
+      }
 
-	upgradeReq := commontypes.NodeUpgradeJobRequest{
-		UpgradeID: upgrade.Name,
-		HistoryID: uuid.New().String(),
-		Version:   upgrade.Spec.Version,
-    Image:     image,//String format：repo:version:imagedigest
-	}
-
-	tolerate, err := strconv.ParseFloat(upgrade.Spec.FailureTolerate, 64)
-	if err != nil {
-		klog.Errorf("convert FailureTolerate to float64 failed: %v", err)
-		tolerate = 0.1
-	}
-
-	concurrency := upgrade.Spec.Concurrency
-	if concurrency <= 0 {
-		concurrency = 1
-	}
-	klog.V(4).Infof("deal task message: %v", upgrade)
-	ndc.MessageChan <- util.TaskMessage{
-		Type:            util.TaskUpgrade,
-		CheckItem:       upgrade.Spec.CheckItems,
-		Name:            upgrade.Name,
-		TimeOutSeconds:  upgrade.Spec.TimeoutSeconds,
-		Concurrency:     concurrency,
-		FailureTolerate: tolerate,
-		NodeNames:       upgrade.Spec.NodeNames,
-		LabelSelector:   upgrade.Spec.LabelSelector,
-		Status:          v1alpha1.TaskStatus{},
-		Msg:             upgradeReq,
-	}
-}
-```
+      // RepoDigests contains the digest info
+      if len(imageInspect.RepoDigests) > 0 {
+          return imageInspect.RepoDigests[0], nil
+      }
+      return "", fmt.Errorf("no digest found for image %s", imageName)
+    }
+  ```
+- Release image digest:Pass the obtained image digest to the edge using Hub by calling this `nodetask.TransferImageToEdge` method.
+  ```go
+  type NodeUpgradeJobRequest struct {
+    UpgradeID   string
+    HistoryID   string
+    Version     string
+    UpgradeTool string
+    Image       string
+    ImageDigest string
+    }
+  ```
 - Fetch and Compare Digest:Before executing the keadm tool on the edge node, the edge node obtains the digest transmitted from the cloud through a `request` request. Calculate the digest of the locally available image and compare it with the obtained digest.
 - Decision Making:If the digests match, proceed with the upgrade. If they do not match, abort the upgrade process and possibly trigger an alert or a log entry for investigation.
 
