@@ -10,14 +10,11 @@ import (
 const (
 	// SyncController
 	DefaultContextSendModuleName = "cloudhub"
-
-	ProjectName = "KubeEdge"
-
-	SystemName      = "kubeedge"
-	SystemNamespace = SystemName
-
-	CloudConfigMapName  = "cloudcore"
-	EdgeMappingCloudKey = "cloudcore"
+	ProjectName                  = "KubeEdge"
+	SystemName                   = "kubeedge"
+	SystemNamespace              = SystemName
+	CloudConfigMapName           = "cloudcore"
+	EdgeMappingCloudKey          = "cloudcore"
 
 	// runtime
 	DockerContainerRuntime = "docker"
@@ -26,42 +23,23 @@ const (
 
 // Resources
 const (
-	DefaultCAURL                = "/ca.crt"
-	DefaultCertURL              = "/edge.crt"
-	DefaultNodeUpgradeURL       = "/nodeupgrade"
-	DefaultTaskStateReportURL   = "/task/{taskType}/name/{taskID}/node/{nodeID}/status"
-	DefaultServiceAccountIssuer = "https://kubernetes.default.svc.cluster.local"
+	DefaultCAURL              = "/ca.crt"
+	DefaultCertURL            = "/edge.crt"
+	DefaultNodeUpgradeURL     = "/nodeupgrade"
+	DefaultTaskStateReportURL = "/task/{taskType}/name/{taskID}/node/{nodeID}/status"
 
-	// Edged
-	DefaultDockerAddress       = "unix:///var/run/docker.sock"
-	DefaultDockershimRootDir   = "/var/lib/dockershim"
-	DefaultRuntimeType         = "remote"
-	DefaultEdgedMemoryCapacity = 7852396000
 	// DefaultMosquittoImage ...
 	// Deprecated: the mqtt broker is alreay managed by the DaemonSet in the cloud
 	DefaultMosquittoImage = "eclipse-mosquitto:1.6.15"
 	// update PodSandboxImage version when bumping k8s vendor version, consistent with vendor/k8s.io/kubernetes/cmd/kubelet/app/options/container_runtime.go defaultPodSandboxImageVersion
 	// When this value are updated, also update comments in pkg/apis/componentconfig/edgecore/v1alpha1/types.go
-	DefaultPodSandboxImage             = "kubeedge/pause:3.6"
-	DefaultImagePullProgressDeadline   = time.Minute
-	DefaultImageGCHighThreshold        = 80
-	DefaultImageGCLowThreshold         = 40
-	DefaultMaximumDeadContainersPerPod = 1
-	DefaultHostnameOverride            = "default-edge-node"
-	DefaultRegisterNodeNamespace       = "default"
-	DefaultNetworkPluginMTU            = 1500
-	DefaultConcurrentConsumers         = 5
-	DefaultCgroupRoot                  = ""
-	DefaultVolumeStatsAggPeriod        = time.Minute
-	DefaultTunnelPort                  = 10004
-	DefaultClusterDomain               = "cluster.local"
+	DefaultHostnameOverride = "default-edge-node"
+	DefaultTunnelPort       = 10004
 
 	CurrentSupportK8sVersion = "v1.29.5"
 
 	// MetaManager
-	DefaultRemoteQueryTimeout = 60
-	DefaultMetaServerAddr     = "127.0.0.1:10550"
-	DefaultDummyServerAddr    = "169.254.30.10:10550"
+	DefaultMetaServerAddr = "127.0.0.1:10550"
 
 	// Config
 	DefaultKubeContentType         = "application/vnd.kubernetes.protobuf"
@@ -154,8 +132,6 @@ const (
 
 	// MessageSuccessfulContent is the successful content value of Message struct
 	MessageSuccessfulContent string = "OK"
-	DefaultQPS                      = 30
-	DefaultBurst                    = 60
 	// MaxRespBodyLength is the max length of http response body
 	MaxRespBodyLength = 1 << 20 // 1 MiB
 
@@ -172,7 +148,4 @@ const (
 	// EdgeHub
 	DefaultWebSocketPort = 10000
 	DefaultQuicPort      = 10001
-
-	// DeviceTwin
-	DefaultDMISockPath = "/etc/kubeedge/dmi.sock"
 )

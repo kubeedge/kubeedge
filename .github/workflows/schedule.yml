@@ -1,4 +1,5 @@
 name: SCHEDULED
+
 on:
   workflow_dispatch:
   schedule:
@@ -18,17 +19,17 @@ jobs:
       GOPATH: /home/runner/work/${{ github.repository }}
     steps:
       - name: Install Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version: 1.21.x
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           path: ./src/github.com/${{ github.repository }}
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
@@ -49,7 +50,7 @@ jobs:
           docker save kubeedge/build-tools:1.21.11-ke1 > /home/runner/build-tools/build-tools.tar
 
       - name: Temporarily save kubeedge/build-tools image
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build-tools-docker-artifact
           path: /home/runner/build-tools
@@ -60,18 +61,18 @@ jobs:
     name: Multiple build
     needs: image-prepare
     steps:
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Retrieve saved kubeedge/build-tools image
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: build-tools-docker-artifact
           path: /home/runner/build-tools
@@ -110,11 +111,11 @@ jobs:
       GO111MODULE: on
     steps:
       - name: Install Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version: 1.21.x
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
@@ -126,12 +127,12 @@ jobs:
           curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Retrieve saved kubeedge/build-tools image
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: build-tools-docker-artifact
           path: /home/runner/build-tools
@@ -149,3 +150,52 @@ jobs:
           export KIND_IMAGE=kindest/node:${{ matrix.version }}
           export CONTAINER_RUNTIME="containerd"
           make e2e
+
+  keadm_compatibility_e2e_test:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        version:
+          - v1.18.0
+          - v1.17.2
+    timeout-minutes: 90
+    name: Keadm compatibility e2e test
+    env:
+      GO111MODULE: on
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.21.x
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+
+      - name: Install dependencies
+        run: |
+          command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
+          go install sigs.k8s.io/kind@v0.22.0
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.4.0
+
+      - name: enable cri config in containerd service
+        run: |
+          containerd config default | sudo tee /etc/containerd/config.toml && sudo systemctl restart containerd.service
+
+      - name: cleanup images
+        run: docker system prune -a -f
+
+      - run: |
+          export CLOUD_EDGE_VERSION=${{ matrix.version }}
+          make keadm_compatibility_e2e
