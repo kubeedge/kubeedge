@@ -4,7 +4,7 @@ authors:
   - "@HT0403"
 approvers:
 creation-date: 2024-07-28
-last-updated: 2024-07-28
+last-updated: 2024-09-30
 
 ---
 
@@ -29,86 +29,37 @@ In order to make the edge node more convenient and rapid upgrade, we introduce a
 ### Validation of the Image Digest Before Edge Node Upgrade
 
 #### Objective
-Ensure that the image being used for the upgrade is authentic and has not been tampered with.
+Prevent a hacker from masquerading an image and introducing an untrusted binary by validating the image's digest before the upgrade process begins.
 #### Steps
-- Get image digest(**Ensure Docker Daemon is Running**):When creating an installation package image, obtain the cryptographic hash (digest) of the image through docker's API.Docker provides an API that allows you to interact with the Docker daemon programmatically.*For example*:Use `curl` to interact with the Docker registry API. Replace your_registry, your_image, and tag with your actual values
-```bash
-curl -X GET -H "Accept: application/vnd.docker.distribution.manifest.v2+json"
-\
-https://your_registry/v2/your_image/manifests/tag
-```
-Response:
-```json
-{
-  "schemaVersion": 2,
-  "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
-  "config": {
-    "mediaType": "application/vnd.docker.container.image.v1+json",
-    "size": 7023,
-    "digest": "sha256:abc123..."
-  },
-  "layers": [
-    {
-      "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
-      "size": 32654,
-      "digest": "sha256:def456..."
+- When the NodeUpgradeJob CRD is used to initiate the upgrade, implement a mechanism to fetch the image's digest from a trusted source (e.g., a secure image registry),and we use `oras-go` tool.
+  - First parse the mirror URL by calling `ParseReference` function(e.g., "docker.io/library/ubuntu:latest")
+  - Then create a new remote repository instance,if a token is provided,set up the authentication client.
+  - Last,Set up the context for the request,and call `Resolve` method to resolve the image reference to get the manifest descriptor.And return the image digest.
+- Release image digest:Pass the obtained image digest to the edge using EdgeHub.
+  ```go
+  type NodeUpgradeJobRequest struct {
+      UpgradeID           string
+      HistoryID           string
+      Version             string
+      UpgradeTool         string
+      Image               string
+      ImageDigest         string
+      RequireConfirmation bool
     }
-  ]
-}
-```
-- Release image digest:Pass the obtained image digest to the edge using Hub by calling this `commontypes.NodeUpgradeJobRequest` method.
-```go
-func (ndc *NodeUpgradeController) processUpgrade(upgrade *v1alpha1.NodeUpgradeJob) {
-	// if users specify Image, we'll use upgrade Version as its image tag, even though Image contains tag.
-	// if not, we'll use default image: kubeedge/installation-package:${Version}
-	var repo string
-	var err error
-	repo = "kubeedge/installation-package"
-	if upgrade.Spec.Image != "" {
-		repo, err = util.GetImageRepo(upgrade.Spec.Image)
-		if err != nil {
-			klog.Errorf("Image format is not right: %v", err)
-			return
-		}
-	}
-	imageTag := upgrade.Spec.Version
-  //Get image summary
-  imageDigest := upgrade.Spec.ImageDigest
-  image := fmt.Sprintf("%s:%s:%s", repo, imageTag,imageDigest)
-
-	upgradeReq := commontypes.NodeUpgradeJobRequest{
-		UpgradeID: upgrade.Name,
-		HistoryID: uuid.New().String(),
-		Version:   upgrade.Spec.Version,
-    Image:     image,//String format：repo:version:imagedigest
-	}
-
-	tolerate, err := strconv.ParseFloat(upgrade.Spec.FailureTolerate, 64)
-	if err != nil {
-		klog.Errorf("convert FailureTolerate to float64 failed: %v", err)
-		tolerate = 0.1
-	}
-
-	concurrency := upgrade.Spec.Concurrency
-	if concurrency <= 0 {
-		concurrency = 1
-	}
-	klog.V(4).Infof("deal task message: %v", upgrade)
-	ndc.MessageChan <- util.TaskMessage{
-		Type:            util.TaskUpgrade,
-		CheckItem:       upgrade.Spec.CheckItems,
-		Name:            upgrade.Name,
-		TimeOutSeconds:  upgrade.Spec.TimeoutSeconds,
-		Concurrency:     concurrency,
-		FailureTolerate: tolerate,
-		NodeNames:       upgrade.Spec.NodeNames,
-		LabelSelector:   upgrade.Spec.LabelSelector,
-		Status:          v1alpha1.TaskStatus{},
-		Msg:             upgradeReq,
-	}
-}
-```
-- Fetch and Compare Digest:Before executing the keadm tool on the edge node, the edge node obtains the digest transmitted from the cloud through a `request` request. Calculate the digest of the locally available image and compare it with the obtained digest.
+  ```
+- Fetch and Compare Digest:Before executing the keadm tool on the edge node, the edge node obtains the digest transmitted from the cloud through a request. Calculate the digest of the locally available image and compare it with the obtained digest.
+  ```go
+    if upgradeReq.ImageDigest != "" {
+      var local string
+      local, err = container.GetImageDigest(image)
+      if err != nil {
+        return err
+      }
+      if upgradeReq.ImageDigest != local {
+        return fmt.Errorf("invalid installation-package image digest value: %s", local)
+      }
+    }
+  ```
 - Decision Making:If the digests match, proceed with the upgrade. If they do not match, abort the upgrade process and possibly trigger an alert or a log entry for investigation.
 
 ### Add a Field to Define Edge Node Upgrade Confirmation
@@ -137,18 +88,56 @@ Allow for manual confirmation before proceeding with the upgrade, especially in 
         RequireConfirmation bool `json:"requireConfirmation,omitempty"`
     }
     ```
-- Upgrade Logic Modification：Modify the upgrade logic to check the value of this new field before starting the upgrade. If requireConfirmation is set to true, the process should pause and wait for an external signal or API call to proceed.
+- Upgrade Logic Modification：Modify the upgrade logic to check the value of this new field before starting the upgrade.We add this new field in the `edge/pkg/edgehub/task/taskexecutor/node_upgrade.go` file,the follow is the example:
+  ```go
+  func initUpgrade(taskReq types.NodeTaskRequest) (event fsm.Event) {
+    ......
+    ......
+    if upgradeReq.RequireConfirmation {
+      return fsm.Event{
+        Type:   "Confirm",
+        Action: api.ActionConfirmation,
+        Msg:    "Wait for a confirm for upgrade request on the edge site.",
+      }
+    }
+    return event
+  }
+  ```
 
 ### API in MetaService for Confirming Edge Node Upgrade
 #### Objective
 Provide a mechanism for authorized personnel to confirm the upgrade manually.
 #### Steps
-- API Endpoint：Develop a new API endpoint in the MetaService that can receive a confirmation signal.
-- Integration with Upgrade Process：Integrate this API with the upgrade process so that upon receiving a valid confirmation, the upgrade process can resume.
+- Register the `confirm-upgrade` service in the `edge/pkg/metamanager/metaserver/server.go`file.
+  ```go
+    case reqInfo.Verb == "create":
+      if reqInfo.Name == "restart" {
+          ls.Factory.Restart(reqInfo.Namespace).ServeHTTP(w, req)
+        } else if reqInfo.Name == "confirm-upgrade" {
+          ls.Factory.ConfirmUpgrade(reqInfo.Name).ServeHTTP(w, req)
+        } else {
+          ls.Factory.Create(reqInfo).ServeHTTP(w, req)
+        }
+  ```
+- In the `edge/pkg/metamanager/metaserver/handlerfactory/ext_handler.go` file,create the `ConfirmUpgrade` function  which called when registering the service.
+  - First call the `limitedReadBody` function to get the `nodeName` parameter.
+  - Then store the structure `type.NodeTaskRequest` in the `upgradeJobName` table.
+  - Last, execute the command to update the image on the edge and delete the `upgradeJobName` table.
+
 ### Command in `keadm ctl` for Confirming Upgrade
 #### Objective
 Provide a command-line tool for administrators to confirm the upgrade
 #### Steps
 - Subcommand Development:Add a new subcommand to `keadm ctl` that sends a confirmation signal to the MetaService API. This command could be named something like `confirm`.
-- Usage Instructions:`keadm ctl confirm --node=<node_name>`
-
+  - First we create a new `cobra.Command` structure
+  ```go
+    cmd := &cobra.Command{
+      Use:   "confirm",
+      Short: edgeConfirmShortDescription,
+      Long:  edgeConfirmShortDescription,
+      RunE: func(cmd *cobra.Command, args []string) error {
+        // TODO:Call the confirm-upgrade service exposed by metaserver through the post method of kubernetes client。
+      },
+    }
+  ```
+- Command Example:`keadm ctl confirm --edgenode-name=<node_name>`
