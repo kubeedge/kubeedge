@@ -21,7 +21,8 @@ KUBEEDGE_ROOT=$PWD
 TEST_DIR=$(realpath $(dirname $0)/..)
 
 GOPATH=${GOPATH:-$(go env GOPATH)}
-KIND_IMAGE=${1:-"kindest/node:v1.28.0"}
+KIND_IMAGE=${1:-"kindest/node:v1.29.2"}
+CONFORMANCE_TYPE=${2:-"nodeconformance"}
 VERSION=$(git rev-parse --short=12 HEAD)
 
 function cleanup() {
@@ -68,10 +69,7 @@ fi
 rm -rf /tmp/results/*
 
 function run_conformance_test() {
-  local image_name=$1
-  local tag_name=$2
-
-  docker build -t "$image_name:$tag_name" -f ${KUBEEDGE_ROOT}/build/conformance/Dockerfile .
+  local image=$1
 
   docker run --rm \
   --env E2E_SKIP="\[Serial\]" \
@@ -83,7 +81,26 @@ function run_conformance_test() {
   --env E2E_EXTRA_ARGS="--kube-master=https://${MASTER_IP}:6443" \
   -v ${KUBECONFIG}:/root/.kube/config \
   -v /tmp/results:/tmp/results \
-  --network host "$image_name:$tag_name"
+  --network host $image
 }
 
-run_conformance_test "kubeedge/conformance-test" ${VERSION} || { echo "Conformance test failed with exit code $?"; exit 1; }
+case $CONFORMANCE_TYPE in
+  "nodeconformance")
+    echo "Running nodeconformance test"
+    image="kubeedge/nodeconformance-test:${VERSION}"
+    docker build -t "$image" -f ${KUBEEDGE_ROOT}/build/conformance/nodeconformance.Dockerfile .
+
+    run_conformance_test "$image" || { echo "Node conformance test failed with exit code $?"; exit 1; }
+    ;;
+  "conformance")
+    echo "Running conformance test"
+    image="kubeedge/conformance-test:${VERSION}"
+    docker build -t "$image" -f ${KUBEEDGE_ROOT}/build/conformance/Dockerfile .
+
+    run_conformance_test "$image" || { echo "Conformance test failed with exit code $?"; exit 1; }
+    ;;
+  *)
+    echo "Invalid conformance type: $CONFORMANCE_TYPE"
+    exit 1
+    ;;
+esac
