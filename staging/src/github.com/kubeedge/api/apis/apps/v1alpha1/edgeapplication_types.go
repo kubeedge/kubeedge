@@ -27,22 +27,30 @@ type EdgeApplicationSpec struct {
 	// WorkloadTemplate contains original templates of resources to be deployed
 	// as an EdgeApplication.
 	WorkloadTemplate ResourceTemplate `json:"workloadTemplate,omitempty"`
-	// WorkloadScope represents which node groups the workload will be deployed in.
+	// WorkloadScope represents which node groups the woforkload will be deployed in.
 	WorkloadScope WorkloadScope `json:"workloadScope"`
 }
 
 // WorkloadScope represents which node groups the workload should be deployed in.
 type WorkloadScope struct {
-	// TargetNodeGroups represents the target node groups of workload to be deployed.
+	// TargetNodeGroups represents the target node groups  workload to be deployed.
 	// +optional
 	TargetNodeGroups []TargetNodeGroup `json:"targetNodeGroups,omitempty"`
-
-	TargetNodeLabels []TargetNodeLabel `json:"targetNode,omitempty"`
+	// TargetNodeLabels represents the target nodes with specified labels of workload to be deployed
+	// +optional
+	TargetNodeLabels []TargetNodeLabel `json:"targetNodeLabels,omitempty"`
 }
 
+// TargetNodeLabels represents the target nodes with specified labels of workload to be deployed, including
+// override rules to apply for the node.
 type TargetNodeLabel struct {
-	LabelSelector []metav1.LabelSelector `json:"labelselector,omitempty"`
+	// LabelSelector represents the label selectors used to match nodes for workload deployment.
+	// It defines the criteria for selecting the target nodes based on their labels.
+	// +optional
+	LabelSelector metav1.LabelSelector `json:"labelSelector,omitempty"`
 
+	// Overriders represents the override rules that would apply to the workload for the nodes
+	// selected by the label selector.
 	Overriders Overriders `json:"overriders,omitempty"`
 }
 

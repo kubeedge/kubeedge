@@ -26,7 +26,7 @@ type Overrider interface {
 
 type OverriderInfo struct {
 	TargetNodeGroup          string
-	TargetNodeLabelSelector  []v1.LabelSelector
+	TargetNodeLabelSelector  v1.LabelSelector
 	Overriders               *appsv1alpha1.Overriders
 }
 
