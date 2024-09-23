@@ -10,11 +10,12 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
 )
 
 // PersistentVolumesGetter is interface to get client PersistentVolumes
 type PersistentVolumesGetter interface {
-	PersistentVolumes(namespace string) PersistentVolumesInterface
+	PersistentVolumes() PersistentVolumesInterface
 }
 
 // PersistentVolumesInterface is interface for client PersistentVolumes
@@ -26,14 +27,12 @@ type PersistentVolumesInterface interface {
 }
 
 type persistentvolumes struct {
-	namespace string
-	send      SendInterface
+	send SendInterface
 }
 
-func newPersistentVolumes(n string, s SendInterface) *persistentvolumes {
+func newPersistentVolumes(s SendInterface) *persistentvolumes {
 	return &persistentvolumes{
-		namespace: n,
-		send:      s,
+		send: s,
 	}
 }
 
@@ -50,7 +49,7 @@ func (c *persistentvolumes) Delete(string) error {
 }
 
 func (c *persistentvolumes) Get(name string, _ metav1.GetOptions) (*api.PersistentVolume, error) {
-	resource := fmt.Sprintf("%s/%s/%s", c.namespace, "persistentvolume", name)
+	resource := fmt.Sprintf("%s/%s/%s", v2.NullNamespace, "persistentvolume", name)
 	pvMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, nil)
 	msg, err := c.send.SendSync(pvMsg)
 	if err != nil {

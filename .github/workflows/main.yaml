@@ -400,6 +400,13 @@ jobs:
       needs: image-prepare
       env:
         GO111MODULE: on
+      strategy:
+        matrix:
+          cases:
+            - conformance-type: "conformance"
+              result-name: "conformance-test-results"
+            - conformance-type: "nodeconformance"
+              result-name: "nodeconformance-test-results"
       steps:
         - name: Install Go
           uses: actions/setup-go@v4
@@ -442,11 +449,12 @@ jobs:
         - name: Run conformance e2e
           run: |
             export KIND_IMAGE=kindest/node:v1.29.2
+            export CONFORMANCE_TYPE=${{ matrix.cases.conformance-type }}
             make conformance_e2e
 
         - name: Upload conformance e2e test results
           uses: actions/upload-artifact@v4
           if: always()
           with:
-            name: kube-conformance-e2e-results
+            name: ${{ matrix.cases.result-name }}
             path: /tmp/results/
