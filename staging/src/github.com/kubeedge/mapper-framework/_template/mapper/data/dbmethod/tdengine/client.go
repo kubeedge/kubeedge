@@ -60,17 +60,17 @@ func (d *DataBaseConfig) CloseSessio() {
 func (d *DataBaseConfig) AddData(data *common.DataModel) error {
 
 	tableName := data.Namespace + "/" + data.DeviceName
-	legal_table := strings.Replace(tableName, "-", "_", -1)
-	legal_tag := strings.Replace(data.PropertyName, "-", "_", -1)
+	legalTable := strings.Replace(tableName, "-", "_", -1)
+	legalTag := strings.Replace(data.PropertyName, "-", "_", -1)
 
-	stable_name := fmt.Sprintf("SHOW STABLES LIKE '%s'", legal_table)
-	stabel := fmt.Sprintf("CREATE STABLE %s (ts timestamp, deviceid binary(64), propertyname binary(64), data binary(64),type binary(64)) TAGS (localtion binary(64));", legal_table)
+	stableName := fmt.Sprintf("SHOW STABLES LIKE '%s'", legalTable)
+	stabel := fmt.Sprintf("CREATE STABLE %s (ts timestamp, deviceid binary(64), propertyname binary(64), data binary(64),type binary(64)) TAGS (localtion binary(64));", legalTable)
 
 	datatime := time.Unix(data.TimeStamp/1e3, 0).Format("2006-01-02 15:04:05")
 	insertSQL := fmt.Sprintf("INSERT INTO %s USING %s TAGS ('%s') VALUES('%v','%s', '%s', '%s', '%s');",
-		legal_tag, legal_table, legal_tag, datatime, tableName, data.PropertyName, data.Value, data.Type)
+		legalTag, legalTable, legalTag, datatime, tableName, data.PropertyName, data.Value, data.Type)
 
-	rows, _ := DB.Query(stable_name)
+	rows, _ := DB.Query(stableName)
 	defer rows.Close()
 
 	if err := rows.Err(); err != nil {
@@ -126,11 +126,11 @@ func (d *DataBaseConfig) GetPropertyDataByDeviceID(deviceID string, propertyData
 }
 func (d *DataBaseConfig) GetDataByTimeRange(deviceID string, start int64, end int64) ([]*common.DataModel, error) {
 
-	legal_table := strings.Replace(deviceID, "-", "_", -1)
+	legalTable := strings.Replace(deviceID, "-", "_", -1)
 	startTime := time.Unix(start, 0).UTC().Format("2006-01-02 15:04:05")
 	endTime := time.Unix(end, 0).UTC().Format("2006-01-02 15:04:05")
 	//Query data within a specified time range
-	querySQL := fmt.Sprintf("SELECT ts, deviceid, propertyname, data, type FROM %s WHERE ts >= '%s' AND ts <= '%s'", legal_table, startTime, endTime)
+	querySQL := fmt.Sprintf("SELECT ts, deviceid, propertyname, data, type FROM %s WHERE ts >= '%s' AND ts <= '%s'", legalTable, startTime, endTime)
 	fmt.Println(querySQL)
 	rows, err := DB.Query(querySQL)
 	if err != nil {
