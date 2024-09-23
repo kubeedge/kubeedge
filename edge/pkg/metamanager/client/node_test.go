@@ -18,25 +18,208 @@ package client
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
 func TestNewNodes(t *testing.T) {
 	assert := assert.New(t)
 
-	namespace := "test-namespace"
 	s := newSend()
-
 	nodesClient := newNodes(namespace, s)
 
 	assert.NotNil(nodesClient)
 	assert.Equal(namespace, nodesClient.namespace)
 	assert.IsType(&send{}, nodesClient.send)
+}
+
+func TestNode_Create(t *testing.T) {
+	assert := assert.New(t)
+
+	nodeName := "test-node"
+	inputNode := &api.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: nodeName,
+		},
+	}
+
+	testCases := []struct {
+		name         string
+		respFunc     func(*model.Message) (*model.Message, error)
+		expectedNode *api.Node
+		expectErr    bool
+	}{
+		{
+			name: "Successful Create",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				resp := model.NewMessage(message.GetID())
+				nodeResp := NodeResp{
+					Object: inputNode,
+					Err:    apierrors.StatusError{},
+				}
+				content, _ := json.Marshal(nodeResp)
+				resp.Content = content
+				return resp, nil
+			},
+			expectedNode: inputNode,
+			expectErr:    false,
+		},
+		{
+			name: "Error response",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				resp := model.NewMessage(message.GetID())
+				nodeResp := NodeResp{
+					Object: nil,
+					Err: apierrors.StatusError{
+						ErrStatus: metav1.Status{
+							Message: "Test error",
+							Reason:  metav1.StatusReasonInternalError,
+							Code:    500,
+						},
+					},
+				}
+				content, _ := json.Marshal(nodeResp)
+				resp.Content = content
+				return resp, nil
+			},
+			expectedNode: nil,
+			expectErr:    true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			mockSend := &mockSendInterface{}
+			mockSend.sendSyncFunc = func(message *model.Message) (*model.Message, error) {
+				assert.Equal(modules.MetaGroup, message.GetGroup())
+				assert.Equal(modules.EdgedModuleName, message.GetSource())
+				assert.NotEmpty(message.GetID())
+				assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypeNode, nodeName), message.GetResource())
+				assert.Equal(model.InsertOperation, message.GetOperation())
+
+				content, err := message.GetContentData()
+				assert.NoError(err)
+				var node api.Node
+				err = json.Unmarshal(content, &node)
+				assert.NoError(err)
+				assert.Equal(inputNode, &node)
+
+				return test.respFunc(message)
+			}
+
+			nodeClient := newNodes(namespace, mockSend)
+
+			createdNode, err := nodeClient.Create(inputNode)
+
+			if test.expectErr {
+				assert.Error(err)
+				assert.Nil(createdNode)
+			} else {
+				assert.NoError(err)
+				assert.Equal(test.expectedNode, createdNode)
+			}
+		})
+	}
+}
+
+func TestNode_Patch(t *testing.T) {
+	assert := assert.New(t)
+
+	nodeName := "test-node"
+	patchData := []byte(`{"metadata":{"labels":{"test":"label"}}}`)
+
+	expectedNode := &api.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: nodeName,
+			Labels: map[string]string{
+				"test": "label",
+			},
+		},
+	}
+
+	testCases := []struct {
+		name         string
+		respFunc     func(*model.Message) (*model.Message, error)
+		expectedNode *api.Node
+		expectErr    bool
+	}{
+		{
+			name: "Successful Patch",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				resp := model.NewMessage(message.GetID())
+				nodeResp := NodeResp{
+					Object: expectedNode,
+					Err:    apierrors.StatusError{},
+				}
+				content, _ := json.Marshal(nodeResp)
+				resp.Content = content
+				return resp, nil
+			},
+			expectedNode: expectedNode,
+			expectErr:    false,
+		},
+		{
+			name: "Error response",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				resp := model.NewMessage(message.GetID())
+				nodeResp := NodeResp{
+					Object: nil,
+					Err: apierrors.StatusError{
+						ErrStatus: metav1.Status{
+							Message: "Test error msg",
+							Reason:  metav1.StatusReasonInternalError,
+							Code:    500,
+						},
+					},
+				}
+				content, _ := json.Marshal(nodeResp)
+				resp.Content = content
+				return resp, nil
+			},
+			expectedNode: nil,
+			expectErr:    true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			mockSend := &mockSendInterface{}
+			mockSend.sendSyncFunc = func(message *model.Message) (*model.Message, error) {
+				assert.Equal(modules.MetaGroup, message.GetGroup())
+				assert.Equal(modules.EdgedModuleName, message.GetSource())
+				assert.NotEmpty(message.GetID())
+				assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypeNodePatch, nodeName), message.GetResource())
+				assert.Equal(model.PatchOperation, message.GetOperation())
+
+				content, err := message.GetContentData()
+				assert.NoError(err)
+				assert.Equal(string(patchData), string(content))
+
+				return test.respFunc(message)
+			}
+
+			nodeClient := newNodes(namespace, mockSend)
+
+			patchedNode, err := nodeClient.Patch(nodeName, patchData)
+
+			if test.expectErr {
+				assert.Error(err)
+				assert.Nil(patchedNode)
+			} else {
+				assert.NoError(err)
+				assert.Equal(test.expectedNode, patchedNode)
+			}
+		})
+	}
 }
 
 func TestHandleNodeFromMetaDB(t *testing.T) {
