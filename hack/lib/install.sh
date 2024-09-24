@@ -262,7 +262,7 @@ install_isulad() {
 
   # build lcr
   cd $BUILD_DIR
-  sudo git clone https://gitee.com/openeuler/lcr.git
+  sudo git clone https://gitee.com/openeuler/lcr.git -b v2.1.4
   cd lcr
   sudo mkdir build
   cd build
@@ -272,7 +272,7 @@ install_isulad() {
 
   # build and install clibcni
   cd $BUILD_DIR
-  sudo git clone https://gitee.com/openeuler/clibcni.git
+  sudo git clone https://gitee.com/openeuler/clibcni.git -b v2.1.0
   cd clibcni
   sudo mkdir build
   cd build
@@ -282,7 +282,7 @@ install_isulad() {
 
   # build and install iSulad
   cd $BUILD_DIR
-  sudo git clone https://gitee.com/openeuler/iSulad.git
+  sudo git clone https://gitee.com/openeuler/iSulad.git -b v2.1.5
   cd iSulad
   sudo mkdir build
   cd build
