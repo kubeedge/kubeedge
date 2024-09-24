@@ -56,6 +56,12 @@ func (deviceStates *DeviceStates) PushStatesToEdgeCore() {
 }
 
 func (deviceStates *DeviceStates) Run(ctx context.Context) {
+	// TODO Too many message reports will affect the debug of other feature.
+	// Default close, report to cloud flag and frequency control will be added later.
+	reportToCloud := false
+	if !reportToCloud {
+		return
+	}
 	// TODO setting states reportCycle
 	ticker := time.NewTicker(2 * time.Second)
 	for {
