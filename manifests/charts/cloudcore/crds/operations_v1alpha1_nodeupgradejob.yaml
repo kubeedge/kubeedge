@@ -61,6 +61,26 @@ spec:
                   hostname is empty, docker.io will be used as default. The default
                   image name is: kubeedge/installation-package.'
                 type: string
+              imageDigestGatter:
+                description: ImageDigestGatter define registry v2 interface access
+                  configuration. As a transition, it is not required at first, and
+                  the image digest is checked when this field is set.
+                properties:
+                  registryAPI:
+                    description: RegistryAPI define registry v2 interface access configuration
+                    properties:
+                      host:
+                        type: string
+                      token:
+                        type: string
+                    required:
+                    - host
+                    - token
+                    type: object
+                  value:
+                    description: Value used to directly set a value to check image
+                    type: string
+                type: object
               labelSelector:
                 description: LabelSelector is a filter to select member clusters by
                   labels. It must match a node's labels for the NodeUpgradeJob to
@@ -116,6 +136,10 @@ spec:
                 items:
                   type: string
                 type: array
+              requireConfirmation:
+                description: RequireConfirmation specifies whether you need to confirm
+                  the upgrade. The default RequireConfirmation value is false.
+                type: boolean
               timeoutSeconds:
                 description: TimeoutSeconds limits the duration of the node upgrade
                   job. Default to 300. If set to 0, we'll use the default value 300.
