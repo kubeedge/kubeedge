@@ -70,8 +70,8 @@ func (m *metaClient) PodStatus(namespace string) PodStatusInterface {
 }
 
 // New PersistentVolumes metaClient
-func (m *metaClient) PersistentVolumes(namespace string) PersistentVolumesInterface {
-	return newPersistentVolumes(namespace, m.send)
+func (m *metaClient) PersistentVolumes() PersistentVolumesInterface {
+	return newPersistentVolumes(m.send)
 }
 
 // New PersistentVolumeClaims metaClient
