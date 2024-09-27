@@ -49,7 +49,7 @@ func (f *Factory) Restart(namespace string) http.Handler {
 	return h
 }
 
-func (f *Factory) ConfirmUpgrade(namespace string) http.Handler {
+func (f *Factory) ConfirmUpgrade(_ /*edgeappName*/ string) http.Handler {
 	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		klog.Infof("Begin to run upgrade command")
 		// TODO: How to get options...

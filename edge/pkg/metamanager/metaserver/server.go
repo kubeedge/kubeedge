@@ -186,7 +186,7 @@ func (ls *MetaServer) BuildBasicHandler() http.Handler {
 				if reqInfo.Name == "restart" {
 					ls.Factory.Restart(reqInfo.Namespace).ServeHTTP(w, req)
 				} else if reqInfo.Name == "confirm-upgrade" {
-					ls.Factory.ConfirmUpgrade(reqInfo.Namespace).ServeHTTP(w, req)
+					ls.Factory.ConfirmUpgrade(reqInfo.Name).ServeHTTP(w, req)
 				} else {
 					ls.Factory.Create(reqInfo).ServeHTTP(w, req)
 				}
