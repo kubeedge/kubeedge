@@ -49,65 +49,6 @@ const (
 	DefaultNodeLimit               = 500
 	DefaultKubeUpdateNodeFrequency = 20
 
-	// EdgeController
-	DefaultUpdatePodStatusWorkers            = 1
-	DefaultUpdateNodeStatusWorkers           = 1
-	DefaultProcessEventWorkers               = 4
-	DefaultQueryConfigMapWorkers             = 100
-	DefaultQuerySecretWorkers                = 100
-	DefaultQueryPersistentVolumeWorkers      = 4
-	DefaultQueryPersistentVolumeClaimWorkers = 4
-	DefaultQueryVolumeAttachmentWorkers      = 4
-	DefaultCreateNodeWorkers                 = 100
-	DefaultUpdateNodeWorkers                 = 4
-	DefaultPatchPodWorkers                   = 100
-	DefaultDeletePodWorkers                  = 100
-	DefaultUpdateRuleStatusWorkers           = 4
-	DefaultQueryLeaseWorkers                 = 100
-	DefaultServiceAccountTokenWorkers        = 100
-	DefaultCreatePodWorkers                  = 4
-	DefaultCertificateSigningRequestWorkers  = 4
-
-	DefaultUpdatePodStatusBuffer            = 1024
-	DefaultProcessEventBuffer               = 1024
-	DefaultUpdateNodeStatusBuffer           = 1024
-	DefaultQueryConfigMapBuffer             = 1024
-	DefaultQuerySecretBuffer                = 1024
-	DefaultQueryPersistentVolumeBuffer      = 1024
-	DefaultQueryPersistentVolumeClaimBuffer = 1024
-	DefaultQueryVolumeAttachmentBuffer      = 1024
-	DefaultCreateNodeBuffer                 = 1024
-	DefaultUpdateNodeBuffer                 = 1024
-	DefaultPatchPodBuffer                   = 1024
-	DefaultDeletePodBuffer                  = 1024
-	DefaultQueryLeaseBuffer                 = 1024
-	DefaultServiceAccountTokenBuffer        = 1024
-	DefaultCreatePodBuffer                  = 1024
-	DefaultCertificateSigningRequestBuffer  = 1024
-
-	DefaultPodEventBuffer           = 1
-	DefaultConfigMapEventBuffer     = 1
-	DefaultSecretEventBuffer        = 1
-	DefaultRulesEventBuffer         = 1
-	DefaultRuleEndpointsEventBuffer = 1
-
-	// DeviceController
-	DefaultUpdateDeviceTwinsBuffer   = 1024
-	DefaultUpdateDeviceStatesBuffer  = 1024
-	DefaultDeviceEventBuffer         = 1
-	DefaultDeviceModelEventBuffer    = 1
-	DefaultUpdateDeviceStatusWorkers = 1
-
-	// TaskManager
-	DefaultNodeUpgradeJobStatusBuffer = 1024
-	DefaultNodeUpgradeJobEventBuffer  = 1
-	DefaultNodeUpgradeJobWorkers      = 1
-
-	// ImagePrePullController
-	DefaultImagePrePullJobStatusBuffer = 1024
-	DefaultImagePrePullJobEventBuffer  = 1
-	DefaultImagePrePullJobWorkers      = 1
-
 	// Resource sep
 	ResourceSep = "/"
 

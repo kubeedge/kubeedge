@@ -18,20 +18,22 @@ package client
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	coordinationv1 "k8s.io/api/coordination/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
 func TestNewLeases(t *testing.T) {
 	assert := assert.New(t)
 
-	namespace := "test-namespace"
 	s := newSend()
-
 	leases := newLeases(namespace, s)
 
 	assert.NotNil(leases)
@@ -39,53 +41,221 @@ func TestNewLeases(t *testing.T) {
 	assert.IsType(&send{}, leases.send)
 }
 
+func TestLeases_Create(t *testing.T) {
+	assert := assert.New(t)
+
+	leaseName := "test-lease"
+	inputLease := &coordinationv1.Lease{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: leaseName,
+		},
+	}
+
+	testCases := []struct {
+		name          string
+		respFunc      func(*model.Message) (*model.Message, error)
+		expectedLease *coordinationv1.Lease
+		expectErr     bool
+	}{
+		{
+			name: "Successful Create",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				resp := model.NewMessage(message.GetID())
+				leaseResp := LeaseResp{
+					Object: inputLease,
+					Err:    apierrors.StatusError{},
+				}
+				content, _ := json.Marshal(leaseResp)
+				resp.Content = content
+				return resp, nil
+			},
+			expectedLease: inputLease,
+			expectErr:     false,
+		},
+		{
+			name: "Error response",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				resp := model.NewMessage(message.GetID())
+				leaseResp := LeaseResp{
+					Object: nil,
+					Err: apierrors.StatusError{
+						ErrStatus: metav1.Status{
+							Message: "Test error",
+							Reason:  metav1.StatusReasonInternalError,
+							Code:    500,
+						},
+					},
+				}
+				content, _ := json.Marshal(leaseResp)
+				resp.Content = content
+				return resp, nil
+			},
+			expectedLease: nil,
+			expectErr:     true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			mockSend := &mockSendInterface{}
+			mockSend.sendSyncFunc = func(message *model.Message) (*model.Message, error) {
+				assert.Equal(modules.MetaGroup, message.GetGroup())
+				assert.Equal(modules.EdgedModuleName, message.GetSource())
+				assert.NotEmpty(message.GetID())
+				assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypeLease, leaseName), message.GetResource())
+				assert.Equal(model.InsertOperation, message.GetOperation())
+
+				content, err := message.GetContentData()
+				assert.NoError(err)
+				var lease coordinationv1.Lease
+				err = json.Unmarshal(content, &lease)
+				assert.NoError(err)
+				assert.Equal(inputLease, &lease)
+
+				return test.respFunc(message)
+			}
+
+			leaseClient := newLeases(namespace, mockSend)
+
+			createdLease, err := leaseClient.Create(inputLease)
+
+			if test.expectErr {
+				assert.Error(err)
+				assert.Nil(createdLease)
+			} else {
+				assert.NoError(err)
+				assert.Equal(test.expectedLease, createdLease)
+			}
+		})
+	}
+}
+
+func TestLeases_Get(t *testing.T) {
+	assert := assert.New(t)
+
+	leaseName := "test-lease"
+	expectedLease := &coordinationv1.Lease{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: leaseName,
+		},
+	}
+
+	testCases := []struct {
+		name          string
+		respFunc      func(*model.Message) (*model.Message, error)
+		expectedLease *coordinationv1.Lease
+		expectErr     bool
+	}{
+		{
+			name: "Successful Get",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				resp := model.NewMessage(message.GetID())
+				leaseResp := LeaseResp{
+					Object: expectedLease,
+					Err:    apierrors.StatusError{},
+				}
+				content, _ := json.Marshal(leaseResp)
+				resp.Content = content
+				return resp, nil
+			},
+			expectedLease: expectedLease,
+			expectErr:     false,
+		},
+		{
+			name: "Error response",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				resp := model.NewMessage(message.GetID())
+				leaseResp := LeaseResp{
+					Object: nil,
+					Err: apierrors.StatusError{
+						ErrStatus: metav1.Status{
+							Message: "Test error",
+							Reason:  metav1.StatusReasonInternalError,
+							Code:    500,
+						},
+					},
+				}
+				content, _ := json.Marshal(leaseResp)
+				resp.Content = content
+				return resp, nil
+			},
+			expectedLease: nil,
+			expectErr:     true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			mockSend := &mockSendInterface{}
+			mockSend.sendSyncFunc = func(message *model.Message) (*model.Message, error) {
+				assert.Equal(modules.MetaGroup, message.GetGroup())
+				assert.Equal(modules.EdgedModuleName, message.GetSource())
+				assert.NotEmpty(message.GetID())
+				assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypeLease, leaseName), message.GetResource())
+				assert.Equal(model.QueryOperation, message.GetOperation())
+
+				return test.respFunc(message)
+			}
+
+			leaseClient := newLeases(namespace, mockSend)
+
+			lease, err := leaseClient.Get(leaseName)
+
+			if test.expectErr {
+				assert.Error(err)
+				assert.Nil(lease)
+			} else {
+				assert.NoError(err)
+				assert.Equal(test.expectedLease, lease)
+			}
+		})
+	}
+}
+
 func TestHandleLeaseResp(t *testing.T) {
 	assert := assert.New(t)
 
-	t.Run("Valid lease response", func(t *testing.T) {
-		lease := &coordinationv1.Lease{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "test-lease",
-			},
-		}
-		leaseResp := LeaseResp{
-			Object: lease,
-		}
-		content, _ := json.Marshal(leaseResp)
+	// Test case 1: Successful response
+	expectedLease := &coordinationv1.Lease{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-lease",
+		},
+	}
 
-		result, err := handleLeaseResp(content)
+	successResp := LeaseResp{
+		Object: expectedLease,
+		Err:    apierrors.StatusError{},
+	}
 
-		assert.NoError(err)
-		assert.Equal(lease, result)
-	})
+	successContent, _ := json.Marshal(successResp)
 
-	t.Run("Response with error", func(t *testing.T) {
-		statusErr := apierrors.StatusError{
+	lease, err := handleLeaseResp(successContent)
+	assert.NoError(err)
+	assert.Equal(expectedLease, lease)
+
+	// Test case 2: Error response
+	errorResp := LeaseResp{
+		Object: nil,
+		Err: apierrors.StatusError{
 			ErrStatus: metav1.Status{
 				Message: "Test error",
-				Reason:  metav1.StatusReasonNotFound,
-				Code:    404,
+				Code:    400,
 			},
-		}
-		leaseResp := LeaseResp{
-			Err: statusErr,
-		}
-		content, _ := json.Marshal(leaseResp)
+		},
+	}
 
-		result, err := handleLeaseResp(content)
+	errorContent, _ := json.Marshal(errorResp)
 
-		assert.Error(err)
-		assert.Nil(result)
-		assert.Equal(&statusErr, err)
-	})
+	lease, err = handleLeaseResp(errorContent)
+	assert.Error(err)
+	assert.Nil(lease)
+	assert.Equal("Test error", err.Error())
 
-	t.Run("Invalid JSON", func(t *testing.T) {
-		content := []byte(`{"invalid": json}`)
+	// Test case 3: Invalid JSON
+	invalidContent := []byte("invalid json")
 
-		result, err := handleLeaseResp(content)
-
-		assert.Error(err)
-		assert.Nil(result)
-		assert.Contains(err.Error(), "unmarshal message to lease failed")
-	})
+	lease, err = handleLeaseResp(invalidContent)
+	assert.Error(err)
+	assert.Nil(lease)
+	assert.Contains(err.Error(), "unmarshal message to lease failed")
 }

@@ -143,7 +143,7 @@ func (uc *UpstreamController) Start() error {
 	for i := 0; i < int(uc.config.Load.UpdateNodeStatusWorkers); i++ {
 		go uc.updateNodeStatus()
 	}
-	for i := 0; i < int(uc.config.Load.HandleEventWorkers); i++ {
+	for i := 0; i < int(uc.config.Load.ProcessEventWorkers); i++ {
 		go uc.processEvent()
 	}
 	for i := 0; i < int(uc.config.Load.UpdatePodStatusWorkers); i++ {

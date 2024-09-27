@@ -1,9 +1,26 @@
+* [v1.18.1(#v1181)
+    * [Downloads for v1.18.1](#downloads-for-v1181)
+    * [KubeEdge v1.18.1 Release Notes](#kubeedge-v1181-release-notes)
+        * [Changelog since v1.18.0](#changelog-since-v1180)
 * [v1.18.0](#v1180)
     * [Downloads for v1.18.0](#downloads-for-v1180)
     * [KubeEdge v1.18 Release Notes](#kubeedge-v118-release-notes)
         * [1.18 What's New](#118-whats-new)
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
 
+# v1.18.1
+
+## Downloads for v1.18.1
+
+Download v1.18.1 in the [v1.18.1 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.18.1).
+
+## KubeEdge v1.18.1 Release Notes
+
+### Changelog since v1.18.0
+
+- Optimize time format to support international time. ([#5819](https://github.com/kubeedge/kubeedge/pull/5819), [@WillardHu](https://github.com/WillardHu))
+- Fix keadm reset lack of flag remote-runtime-endpoint. ([#5848](https://github.com/kubeedge/kubeedge/pull/5848), [@tangming1996](https://github.com/tangming1996))
+- Fix PersistentVolumes data stored at edge deleted abnormally.  ([#5867](https://github.com/kubeedge/kubeedge/pull/5867), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
 
 # v1.18.0
 

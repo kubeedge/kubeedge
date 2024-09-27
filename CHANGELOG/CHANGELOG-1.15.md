@@ -1,3 +1,7 @@
+* [v1.15.4](#v1154)
+    * [Downloads for v1.15.4](#downloads-for-v1154)
+    * [KubeEdge v1.15.4 Release Notes](#kubeedge-v1154-release-notes)
+        * [Changelog since v1.15.3](#changelog-since-v1153)
 * [v1.15.3](#v1153)
     * [Downloads for v1.15.3](#downloads-for-v1153)
     * [KubeEdge v1.15.3 Release Notes](#kubeedge-v1153-release-notes)
@@ -15,6 +19,19 @@
     * [KubeEdge v1.15 Release Notes](#kubeedge-v115-release-notes)
         * [1.15 What's New](#115-whats-new)
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
+
+# v1.15.4
+
+## Downloads for v1.15.4
+
+Download v1.15.4 in the [v1.15.4 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.15.4).
+
+## KubeEdge v1.15.4 Release Notes
+
+### Changelog since v1.15.3
+
+- Fix parentID setting in func NewErrorMessage. ([#5735](https://github.com/kubeedge/kubeedge/pull/5735), [@luomengY](https://github.com/luomengY))
+- Fix PersistentVolumes data stored at edge deleted abnormally.  ([#5888](https://github.com/kubeedge/kubeedge/pull/5888), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
 
 
 # v1.15.3
