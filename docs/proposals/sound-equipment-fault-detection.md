@@ -5,7 +5,7 @@ authors:
 approvers:
 creation-date: 2024-07-14
 last-updated: 2024-07-16
-status: implementable
+status: Implemented
 ---
 # Implementing equipment fault detection scenarios based on deep learning
 ## Application Scenario
