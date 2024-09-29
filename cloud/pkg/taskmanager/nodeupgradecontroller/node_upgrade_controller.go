@@ -296,9 +296,9 @@ func (ndc *NodeUpgradeController) processUpgrade(upgrade *v1alpha1.NodeUpgradeJo
 		case g.Value != nil && *g.Value != "":
 			imageDigest = *g.Value
 		case g.RegistryAPI != nil:
-			imageUrl := fmt.Sprintf("%s/%s", g.RegistryAPI.Host, image)
+			imageURL := fmt.Sprintf("%s/%s", g.RegistryAPI.Host, image)
 			// TODO: get image digest by registry v2 api (oras-project/oras-go)
-			imageDigest, _ = getImageDigest(imageUrl, g.RegistryAPI.Token)
+			imageDigest, _ = getImageDigest(imageURL, g.RegistryAPI.Token)
 		}
 	}
 
