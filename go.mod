@@ -74,7 +74,10 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1
 )
 
-require github.com/distribution/reference v0.5.0 // indirect
+require (
+	github.com/distribution/reference v0.5.0 // indirect
+	github.com/fatih/camelcase v1.0.0 // indirect
+)
 
 require (
 	cloud.google.com/go/compute v1.24.0 // indirect
@@ -194,7 +197,7 @@ require (
 	github.com/moby/locker v1.0.1 // indirect
 	github.com/moby/spdystream v0.2.0 // indirect
 	github.com/moby/sys/mountinfo v0.6.2 // indirect
-	github.com/moby/term v0.0.0-20221205130635-1aeaba878587 // indirect
+	github.com/moby/term v0.0.0-20221205130635-1aeaba878587
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00 // indirect
