@@ -1,3 +1,7 @@
+* [v1.17.3](#v1173)
+    * [Downloads for v1.17.3](#downloads-for-v1173)
+    * [KubeEdge v1.17.3 Release Notes](#kubeedge-v1173-release-notes)
+        * [Changelog since v1.17.2](#changelog-since-v1172)
 * [v1.17.2](#v1172)
     * [Downloads for v1.17.2](#downloads-for-v1172)
     * [KubeEdge v1.17.2 Release Notes](#kubeedge-v1172-release-notes)
@@ -11,6 +15,20 @@
     * [KubeEdge v1.17 Release Notes](#kubeedge-v117-release-notes)
         * [1.17 What's New](#117-whats-new)
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
+
+# v1.17.3
+
+## Downloads for v1.17.3
+
+Download v1.17.3 in the [v1.17.3 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.17.3).
+
+## KubeEdge v1.17.3 Release Notes
+
+### Changelog since v1.17.2
+
+- Optimize time format to support international time. ([#5820](https://github.com/kubeedge/kubeedge/pull/5820), [@WillardHu](https://github.com/WillardHu))
+- Fix keadm reset lack of flag remote-runtime-endpoint. ([#5849](https://github.com/kubeedge/kubeedge/pull/5849), [@tangming1996](https://github.com/tangming1996))
+- Fix PersistentVolumes data stored at edge deleted abnormally.  ([#5886](https://github.com/kubeedge/kubeedge/pull/5886), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
 
 # v1.17.2
 

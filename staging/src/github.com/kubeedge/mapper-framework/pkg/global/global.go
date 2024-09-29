@@ -50,8 +50,8 @@ type DataBaseClient interface {
 
 	AddData(data *common.DataModel)
 
-	GetDataByDeviceName(deviceName string) ([]*common.DataModel, error)
-	GetPropertyDataByDeviceName(deviceName string, propertyData string) ([]*common.DataModel, error)
+	GetDataByDeviceID(deviceID string) ([]*common.DataModel, error)
+	GetPropertyDataByDeviceID(deviceID string, propertyData string) ([]*common.DataModel, error)
 	GetDataByTimeRange(start int64, end int64) ([]*common.DataModel, error)
 
 	DeleteDataByTimeRange(start int64, end int64) ([]*common.DataModel, error)

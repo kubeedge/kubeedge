@@ -341,7 +341,7 @@ func (cu *KubeCloudHelmInstTool) checkProfile(baseHelmRoot string) error {
 	validProfiles[IptablesMgrProfileKey] = true
 	validProfiles[ControllerManagerProfileKey] = true
 	if ok := validProfiles[cu.ProfileKey]; !ok {
-		validKeys := make([]string, len(validProfiles))
+		validKeys := make([]string, 0, len(validProfiles))
 		for k := range validProfiles {
 			validKeys = append(validKeys, k)
 		}

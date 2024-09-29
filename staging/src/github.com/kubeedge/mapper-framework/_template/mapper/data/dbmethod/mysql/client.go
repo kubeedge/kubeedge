@@ -77,10 +77,7 @@ func (d *DataBaseConfig) CloseSession() {
 }
 
 func (d *DataBaseConfig) AddData(data *common.DataModel) error {
-	deviceName := data.DeviceName
-	propertyName := data.PropertyName
-	namespace := data.Namespace
-	tableName := namespace + "/" + deviceName + "/" + propertyName
+	tableName := data.Namespace + "/" + data.DeviceName + "/" + data.PropertyName
 	datatime := time.Unix(data.TimeStamp/1e3, 0).Format("2006-01-02 15:04:05")
 
 	createTable := fmt.Sprintf("CREATE TABLE IF NOT EXISTS `%s` (id INT AUTO_INCREMENT PRIMARY KEY, ts  DATETIME NOT NULL,field TEXT)", tableName)

@@ -41,5 +41,5 @@ type PersistentVolumesBridge struct {
 
 // Get takes name of the persistentVolume, and returns the corresponding persistentVolume object, and an error if there is any.
 func (c *PersistentVolumesBridge) Get(_ context.Context, name string, options metav1.GetOptions) (result *corev1.PersistentVolume, err error) {
-	return c.MetaClient.PersistentVolumes(metav1.NamespaceDefault).Get(name, options)
+	return c.MetaClient.PersistentVolumes().Get(name, options)
 }

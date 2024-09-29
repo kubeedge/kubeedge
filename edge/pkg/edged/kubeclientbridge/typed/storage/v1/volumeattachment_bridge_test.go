@@ -57,15 +57,15 @@ func (f *mockMetaClient) VolumeAttachments(_ string) client.VolumeAttachmentsInt
 	return f.volumeAttachments
 }
 
-func (f *mockMetaClient) Pods(string) client.PodsInterface                           { return nil }
-func (f *mockMetaClient) PodStatus(string) client.PodStatusInterface                 { return nil }
-func (f *mockMetaClient) ConfigMaps(string) client.ConfigMapsInterface               { return nil }
-func (f *mockMetaClient) Nodes(string) client.NodesInterface                         { return nil }
-func (f *mockMetaClient) NodeStatus(string) client.NodeStatusInterface               { return nil }
-func (f *mockMetaClient) Secrets(string) client.SecretsInterface                     { return nil }
-func (f *mockMetaClient) ServiceAccountToken() client.ServiceAccountTokenInterface   { return nil }
-func (f *mockMetaClient) ServiceAccounts(string) client.ServiceAccountInterface      { return nil }
-func (f *mockMetaClient) PersistentVolumes(string) client.PersistentVolumesInterface { return nil }
+func (f *mockMetaClient) Pods(string) client.PodsInterface                         { return nil }
+func (f *mockMetaClient) PodStatus(string) client.PodStatusInterface               { return nil }
+func (f *mockMetaClient) ConfigMaps(string) client.ConfigMapsInterface             { return nil }
+func (f *mockMetaClient) Nodes(string) client.NodesInterface                       { return nil }
+func (f *mockMetaClient) NodeStatus(string) client.NodeStatusInterface             { return nil }
+func (f *mockMetaClient) Secrets(string) client.SecretsInterface                   { return nil }
+func (f *mockMetaClient) ServiceAccountToken() client.ServiceAccountTokenInterface { return nil }
+func (f *mockMetaClient) ServiceAccounts(string) client.ServiceAccountInterface    { return nil }
+func (f *mockMetaClient) PersistentVolumes() client.PersistentVolumesInterface     { return nil }
 func (f *mockMetaClient) PersistentVolumeClaims(string) client.PersistentVolumeClaimsInterface {
 	return nil
 }
