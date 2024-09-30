@@ -63,6 +63,9 @@ func addUpgradeOptionFlags(cmd *cobra.Command, opts *types.CloudUpgradeOptions) 
 	fs.BoolVarP(&opts.DryRun, types.FlagNameDryRun, "d", opts.DryRun,
 		"Print the generated k8s resources on the stdout, not actual execute. Always use in debug mode")
 
+	fs.BoolVarP(&opts.RequireConfirmation, types.FlagNameRequireConfirmation, "r", opts.RequireConfirmation,
+		"specifies values whether you need to confirm the upgrade. The default RequireConfirmation value is false.")
+
 	fs.StringArrayVar(&opts.Sets, types.FlagNameSet, []string{},
 		"Sets values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
 

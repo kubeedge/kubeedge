@@ -48,6 +48,8 @@ const (
 	// FlagNameDryRun Dry-run flag
 	FlagNameDryRun = "dry-run"
 
+	FlagNameRequireConfirmation = "require-confirmation"
+
 	// FlagNamePrintFinalValues ...
 	FlagNamePrintFinalValues = "print-final-values"
 )
