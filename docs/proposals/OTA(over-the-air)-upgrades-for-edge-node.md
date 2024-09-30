@@ -4,7 +4,7 @@ authors:
   - "@HT0403"
 approvers:
 creation-date: 2024-07-28
-last-updated: 2024-07-28
+last-updated: 2024-09-30
 
 ---
 
@@ -31,41 +31,62 @@ In order to make the edge node more convenient and rapid upgrade, we introduce a
 #### Objective
 Prevent a hacker from masquerading an image and introducing an untrusted binary by validating the image's digest before the upgrade process begins.
 #### Steps
-- When the NodeUpgradeJob CRD is used to initiate the upgrade, implement a mechanism to fetch the image's digest from a trusted source (e.g., a secure image registry).
-**Example**:Docker API
+- When the NodeUpgradeJob CRD is used to initiate the upgrade, implement a mechanism to fetch the image's digest from a trusted source (e.g., a secure image registry),and we use `oras-go` tool.
+**Example**:Registry v2 API
   ```go
-  //Create a Docker Client
-  func getDockerClient() (*client.Client, error) {
-      cli, err := client.NewClientWithOpts(client.FromEnv,client.WithAPIVersionNegotiation())
-      if err != nil {
-          return nil, err
-      }
-      return cli, nil
+  // GetImageDigest retrieves the digest of a given image from a registry
+  func getImageDigest(imageURL string, token string) (string, error) {
+    // Parse the image reference (e.g., "docker.io/library/ubuntu:latest")
+    ref, err := registry.ParseReference(imageURL)
+    if err != nil {
+      return "", err
     }
-  //Inspect the Image to Retrieve the Digest
-  func getImageDigest(cli *client.Client, imageName string) (string, error) {
-      ctx := context.Background()
-      imageInspect, _, err := cli.ImageInspectWithRaw(ctx, imageName)
-      if err != nil {
-          return "", err
-      }
+    // Create a new remote repository instance
+    repository, err := remote.NewRepository(ref.Repository)
+    if err != nil {
+      return "", err
+    }
 
-      // RepoDigests contains the digest info
-      if len(imageInspect.RepoDigests) > 0 {
-          return imageInspect.RepoDigests[0], nil
+    // If a token is provided, set up the authentication client
+    if token != "" {
+      credential := &auth.Credential{
+        AccessToken: token,
       }
-      return "", fmt.Errorf("no digest found for image %s", imageName)
+      repository.Client = &auth.Client{
+        Client: retry.DefaultClient,
+        Header: http.Header{
+          "User-Agent": {"oras-go"},
+        },
+        Credential: func(ctx context.Context, host string) (auth.Credential, error) {
+          return *credential, nil
+        },
+        Cache:              nil,
+        ClientID:           "oras-client",
+        ForceAttemptOAuth2: false,
+      }
     }
+    // Set up the context for the request
+    ctx := context.Background()
+    // Resolve the image reference to get the manifest descriptor
+    descriptor, err := repository.Resolve(ctx, ref.Reference)
+    if err != nil {
+      return "", err
+    }
+
+    // Return the image digest
+    return descriptor.Digest.String(), nil
+  }
   ```
-- Release image digest:Pass the obtained image digest to the edge using Hub by calling this `nodetask.TransferImageToEdge` method.
+- Release image digest:Pass the obtained image digest to the edge using EdgeHub.
   ```go
   type NodeUpgradeJobRequest struct {
-    UpgradeID   string
-    HistoryID   string
-    Version     string
-    UpgradeTool string
-    Image       string
-    ImageDigest string
+      UpgradeID           string
+	  HistoryID           string
+	  Version             string
+	  UpgradeTool         string
+	  Image               string
+	  ImageDigest         string
+	  RequireConfirmation bool
     }
   ```
 - Fetch and Compare Digest:Before executing the keadm tool on the edge node, the edge node obtains the digest transmitted from the cloud through a `request` request. Calculate the digest of the locally available image and compare it with the obtained digest.
