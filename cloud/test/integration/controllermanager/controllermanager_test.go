@@ -19,6 +19,7 @@ package controllermanager
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -27,11 +28,13 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	appsv1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
@@ -799,6 +802,7 @@ var _ = Describe("Test EdgeApplication Controller", func() {
 					return true
 				}, waitTimeOut, pollInterval).Should(BeTrue())
 			})
+
 			It("should create service with topology annotation", func() {
 				Eventually(func() bool {
 					svc := &corev1.Service{}
@@ -971,6 +975,124 @@ var _ = Describe("Test EdgeApplication Controller", func() {
 						}
 						return true
 					}, waitTimeOut, pollInterval).Should(BeTrue())
+				})
+				It("should create deployments for nodes selected by TargetNodeLabelSelector and apply overriders", func() {
+					newEdgeApp := &appsv1alpha1.EdgeApplication{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "edge-app-" + randomize,
+							Namespace: "default",
+						},
+						Spec: appsv1alpha1.EdgeApplicationSpec{
+							WorkloadTemplate: appsv1alpha1.ResourceTemplate{
+								Manifests: []appsv1alpha1.Manifest{
+									{
+										RawExtension: runtime.RawExtension{
+											Object: deployTemplate,
+										},
+									},
+								},
+							},
+							WorkloadScope: appsv1alpha1.WorkloadScope{
+								TargetNodeLabels: []appsv1alpha1.TargetNodeLabel{
+									{
+										LabelSelector: metav1.LabelSelector{
+											MatchLabels: map[string]string{
+												locationLabel: "location1-" + randomize,
+											},
+										},
+										Overriders: appsv1alpha1.Overriders{
+											Replicas: ptr.To(3),
+											ImageOverriders: []appsv1alpha1.ImageOverrider{
+												{
+													Component: appsv1alpha1.Registry,
+													Operator:  appsv1alpha1.OverriderOpReplace,
+													Value:     "new-registry.io",
+												},
+											},
+											EnvOverriders: []appsv1alpha1.EnvOverrider{
+												{
+													ContainerName: "container1",
+													Operator:      appsv1alpha1.OverriderOpAdd,
+													Value: []corev1.EnvVar{
+														{Name: "NEW_ENV", Value: "new_value"},
+													},
+												},
+											},
+											ResourcesOverriders: []appsv1alpha1.ResourcesOverrider{
+												{
+													ContainerName: "container1",
+													Value: corev1.ResourceRequirements{
+														Limits: corev1.ResourceList{
+															corev1.ResourceCPU: resource.MustParse("500m"),
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					}
+					Expect(k8sClient.Create(ctx, newEdgeApp)).Should(Succeed())
+
+					Eventually(func() bool {
+						deploy := &appsv1.Deployment{}
+						deployName := fmt.Sprintf("%s-%s", deployTemplate.Name, "default")
+						if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployName}, deploy); err != nil {
+							return false
+						}
+
+						// Check node affinity
+						if deploy.Spec.Template.Spec.Affinity == nil ||
+							deploy.Spec.Template.Spec.Affinity.NodeAffinity == nil ||
+							deploy.Spec.Template.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution == nil {
+							return false
+						}
+
+						terms := deploy.Spec.Template.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms
+						if len(terms) != 1 || len(terms[0].MatchExpressions) != 1 {
+							return false
+						}
+
+						expr := terms[0].MatchExpressions[0]
+						if expr.Key != locationLabel || expr.Operator != corev1.NodeSelectorOpIn || len(expr.Values) != 1 || expr.Values[0] != "location1-"+randomize {
+							return false
+						}
+
+						// Check replicas
+						if *deploy.Spec.Replicas != 3 {
+							return false
+						}
+
+						// Check image overrider
+						if !strings.HasPrefix(deploy.Spec.Template.Spec.Containers[0].Image, "new-registry.io/") {
+							return false
+						}
+
+						// Check env overrider
+						envFound := false
+						for _, env := range deploy.Spec.Template.Spec.Containers[0].Env {
+							if env.Name == "NEW_ENV" && env.Value == "new_value" {
+								envFound = true
+								break
+							}
+						}
+						if !envFound {
+							return false
+						}
+
+						// Check resources overrider
+						cpu := deploy.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceCPU]
+						if cpu.String() != "500m" {
+							return false
+						}
+
+						return true
+					}, waitTimeOut, pollInterval).Should(BeTrue())
+
+					// Clean up
+					Expect(k8sClient.Delete(ctx, newEdgeApp)).Should(Succeed())
 				})
 				It("should update replicas of deployments for each nodegroup when adding replicas overrider", func() {
 					newEdgeApp := edgeapp.DeepCopy()
