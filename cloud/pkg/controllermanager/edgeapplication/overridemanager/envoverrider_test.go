@@ -21,6 +21,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/kubeedge/api/apis/apps/v1alpha1"
@@ -199,6 +200,276 @@ func TestEnvOverrider_ApplyOverrides(t *testing.T) {
 									map[string]interface{}{
 										"name":  "TEST_NAME",
 										"value": "test-value",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectError: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			overrider := &EnvOverrider{}
+			err := overrider.ApplyOverrides(tc.rawObj, tc.overriderInfo)
+
+			if tc.expectError {
+				assert.Error(err)
+			} else {
+				assert.NoError(err)
+				assert.Equal(tc.expectedResult, tc.rawObj)
+			}
+		})
+	}
+}
+func TestEnvOverriderWithTargetNodeLabelSelector(t *testing.T) {
+	assert := assert.New(t)
+
+	testCases := []struct {
+		name           string
+		rawObj         *unstructured.Unstructured
+		overriderInfo  OverriderInfo
+		expectedResult *unstructured.Unstructured
+		expectError    bool
+	}{
+		{
+			name: "Apply env overrides with single TargetNodeLabelSelector",
+			rawObj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind": "Deployment",
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"containers": []interface{}{
+									map[string]interface{}{
+										"name": "test-container",
+										"env": []interface{}{
+											map[string]interface{}{
+												"name":  "EXISTING_VAR",
+												"value": "existing-value",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			overriderInfo: OverriderInfo{
+				TargetNodeLabelSelector: metav1.LabelSelector{
+					MatchLabels: map[string]string{"node-type": "edge"},
+				},
+				Overriders: &v1alpha1.Overriders{
+					EnvOverriders: []v1alpha1.EnvOverrider{
+						{
+							ContainerName: "test-container",
+							Operator:      v1alpha1.OverriderOpAdd,
+							Value: []corev1.EnvVar{
+								{Name: "NEW_VAR", Value: "new-value"},
+							},
+						},
+					},
+				},
+			},
+			expectedResult: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind": "Deployment",
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"containers": []interface{}{
+									map[string]interface{}{
+										"name": "test-container",
+										"env": []interface{}{
+											map[string]interface{}{
+												"name":  "EXISTING_VAR",
+												"value": "existing-value",
+											},
+											map[string]interface{}{
+												"name":  "NEW_VAR",
+												"value": "new-value",
+											},
+										},
+									},
+								},
+								"affinity": map[string]interface{}{
+									"nodeAffinity": map[string]interface{}{
+										"requiredDuringSchedulingIgnoredDuringExecution": map[string]interface{}{
+											"nodeSelectorTerms": []interface{}{
+												map[string]interface{}{
+													"matchExpressions": []interface{}{
+														map[string]interface{}{
+															"key":      "node-type",
+															"operator": "In",
+															"values":   []interface{}{"edge"},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "Apply env overrides with multiple TargetNodeLabelSelectors",
+			rawObj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind": "Deployment",
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"containers": []interface{}{
+									map[string]interface{}{
+										"name": "test-container",
+										"env": []interface{}{
+											map[string]interface{}{
+												"name":  "EXISTING_VAR",
+												"value": "existing-value",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			overriderInfo: OverriderInfo{
+				TargetNodeLabelSelector: metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"node-type": "edge",
+						"zone":      "us-west",
+					},
+				},
+				Overriders: &v1alpha1.Overriders{
+					EnvOverriders: []v1alpha1.EnvOverrider{
+						{
+							ContainerName: "test-container",
+							Operator:      v1alpha1.OverriderOpAdd,
+							Value: []corev1.EnvVar{
+								{Name: "NEW_VAR", Value: "new-value"},
+							},
+						},
+					},
+				},
+			},
+			expectedResult: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind": "Deployment",
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"containers": []interface{}{
+									map[string]interface{}{
+										"name": "test-container",
+										"env": []interface{}{
+											map[string]interface{}{
+												"name":  "EXISTING_VAR",
+												"value": "existing-value",
+											},
+											map[string]interface{}{
+												"name":  "NEW_VAR",
+												"value": "new-value",
+											},
+										},
+									},
+								},
+								"affinity": map[string]interface{}{
+									"nodeAffinity": map[string]interface{}{
+										"requiredDuringSchedulingIgnoredDuringExecution": map[string]interface{}{
+											"nodeSelectorTerms": []interface{}{
+												map[string]interface{}{
+													"matchExpressions": []interface{}{
+														map[string]interface{}{
+															"key":      "node-type",
+															"operator": "In",
+															"values":   []interface{}{"edge"},
+														},
+														map[string]interface{}{
+															"key":      "zone",
+															"operator": "In",
+															"values":   []interface{}{"us-west"},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "No node affinity changes when TargetNodeLabelSelector is empty",
+			rawObj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind": "Deployment",
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"containers": []interface{}{
+									map[string]interface{}{
+										"name": "test-container",
+										"env": []interface{}{
+											map[string]interface{}{
+												"name":  "EXISTING_VAR",
+												"value": "existing-value",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			overriderInfo: OverriderInfo{
+				TargetNodeLabelSelector: metav1.LabelSelector{},
+				Overriders: &v1alpha1.Overriders{
+					EnvOverriders: []v1alpha1.EnvOverrider{
+						{
+							ContainerName: "test-container",
+							Operator:      v1alpha1.OverriderOpAdd,
+							Value: []corev1.EnvVar{
+								{Name: "NEW_VAR", Value: "new-value"},
+							},
+						},
+					},
+				},
+			},
+			expectedResult: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind": "Deployment",
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"containers": []interface{}{
+									map[string]interface{}{
+										"name": "test-container",
+										"env": []interface{}{
+											map[string]interface{}{
+												"name":  "EXISTING_VAR",
+												"value": "existing-value",
+											},
+											map[string]interface{}{
+												"name":  "NEW_VAR",
+												"value": "new-value",
+											},
+										},
 									},
 								},
 							},

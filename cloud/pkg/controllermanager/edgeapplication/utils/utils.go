@@ -1,12 +1,17 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 
+	core "k8s.io/api/core/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/klog/v2"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	appsv1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/controllermanager/edgeapplication/overridemanager"
@@ -30,6 +35,52 @@ func (c *ResourceInfo) String() string {
 type TemplateInfo struct {
 	Ordinal  int
 	Template *unstructured.Unstructured
+}
+
+func GetNodesByLabels(ctx context.Context, c client.Client, matchLabels map[string]string) ([]core.Node, error) {
+	// If matchLabels is nil, return an empty slice to avoid selecting all nodes
+	if matchLabels == nil {
+		return []core.Node{}, nil
+	}
+
+	// Create a label selector from the matchLabels map
+	selector := labels.SelectorFromSet(labels.Set(matchLabels))
+
+	// Create a NodeList to store the fetched nodes
+	nodeList := &core.NodeList{}
+
+	// Use the client to list nodes filtered by the label selector
+	err := c.List(ctx, nodeList, &client.ListOptions{LabelSelector: selector})
+	if err != nil {
+		return nil, err // Return error if the list operation fails
+	}
+
+	// Return the list of matching nodes
+	return nodeList.Items, nil
+}
+
+func IsNodeSelected(edgeapp appsv1alpha1.EdgeApplication, node core.Node) bool {
+	for _, selector := range edgeapp.Spec.WorkloadScope.TargetNodeLabels {
+		if selector.LabelSelector.MatchLabels != nil {
+			selected := true
+			// Check if all labels in the selector are matched by the node's labels
+			for key, value := range selector.LabelSelector.MatchLabels {
+				if _, ok := node.Labels[key]; !ok {
+					selected = false
+					break
+				}
+				if node.Labels[key] != value {
+					selected = false
+					break
+				}
+			}
+			// If this node is selected by the edgeapplication, no need to check other selectors
+			if selected {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func GetAllOverriders(edgeApp *appsv1alpha1.EdgeApplication) []overridemanager.OverriderInfo {
@@ -57,7 +108,6 @@ func GetAllOverriders(edgeApp *appsv1alpha1.EdgeApplication) []overridemanager.O
 
 	return infos
 }
-
 func GetContainedResourceInfos(edgeApp *appsv1alpha1.EdgeApplication, yamlSerializer runtime.Serializer) ([]ResourceInfo, error) {
 	tmplInfos, err := GetTemplatesInfosOfEdgeApp(edgeApp, yamlSerializer)
 	if err != nil {
@@ -82,6 +132,33 @@ func GetResourceInfoOfTemplateInfo(tmplInfo *TemplateInfo) ResourceInfo {
 		Name:      tmpl.GetName(),
 	}
 	return info
+}
+
+func ApplyNodeAffinity(obj *unstructured.Unstructured, selector v1.LabelSelector) error {
+	affinity := map[string]interface{}{
+		"nodeAffinity": map[string]interface{}{
+			"requiredDuringSchedulingIgnoredDuringExecution": map[string]interface{}{
+				"nodeSelectorTerms": []interface{}{
+					map[string]interface{}{
+						"matchExpressions": []interface{}{},
+					},
+				},
+			},
+		},
+	}
+
+	for key, value := range selector.MatchLabels {
+		affinity["nodeAffinity"].(map[string]interface{})["requiredDuringSchedulingIgnoredDuringExecution"].(map[string]interface{})["nodeSelectorTerms"].([]interface{})[0].(map[string]interface{})["matchExpressions"] = append(
+			affinity["nodeAffinity"].(map[string]interface{})["requiredDuringSchedulingIgnoredDuringExecution"].(map[string]interface{})["nodeSelectorTerms"].([]interface{})[0].(map[string]interface{})["matchExpressions"].([]interface{}),
+			map[string]interface{}{
+				"key":      key,
+				"operator": "In",
+				"values":   []string{value},
+			},
+		)
+	}
+
+	return unstructured.SetNestedField(obj.Object, affinity, "spec", "template", "spec", "affinity")
 }
 
 func GetTemplatesInfosOfEdgeApp(edgeApp *appsv1alpha1.EdgeApplication, yamlSerializer runtime.Serializer) ([]*TemplateInfo, error) {

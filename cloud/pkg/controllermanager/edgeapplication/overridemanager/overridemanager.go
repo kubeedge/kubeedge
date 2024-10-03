@@ -5,11 +5,10 @@ import (
 	"fmt"
 
 	jsonpatch "github.com/evanphx/json-patch"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	appsv1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	errorutil "k8s.io/apimachinery/pkg/util/errors"
-
-	appsv1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
 )
 
 // overrideOption defines the JSONPatch operator
@@ -25,9 +24,9 @@ type Overrider interface {
 }
 
 type OverriderInfo struct {
-	TargetNodeGroup          string
-	TargetNodeLabelSelector  v1.LabelSelector
-	Overriders               *appsv1alpha1.Overriders
+	TargetNodeGroup         string
+	TargetNodeLabelSelector v1.LabelSelector
+	Overriders              *appsv1alpha1.Overriders
 }
 
 type OverrideManager struct {

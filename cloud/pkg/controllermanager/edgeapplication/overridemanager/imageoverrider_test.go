@@ -21,6 +21,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	appsv1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
@@ -163,6 +164,308 @@ func TestImageOverrider_ApplyOverrides(t *testing.T) {
 							map[string]interface{}{
 								"name":  "test-container",
 								"image": "test-nginx:1.14.2",
+							},
+						},
+					},
+				},
+			},
+			expectError: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			overrider := &ImageOverrider{}
+			err := overrider.ApplyOverrides(tc.rawObj, tc.overriderInfo)
+
+			if tc.expectError {
+				assert.Error(err)
+			} else {
+				assert.NoError(err)
+				assert.Equal(tc.expectedResult, tc.rawObj)
+			}
+		})
+	}
+}
+func TestImageOverriderWithTargetNodeLabelSelector(t *testing.T) {
+	assert := assert.New(t)
+
+	testCases := []struct {
+		name           string
+		rawObj         *unstructured.Unstructured
+		overriderInfo  OverriderInfo
+		expectedResult *unstructured.Unstructured
+		expectError    bool
+	}{
+		{
+			name: "Apply image overrides with single TargetNodeLabelSelector",
+			rawObj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind": "Deployment",
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"containers": []interface{}{
+									map[string]interface{}{
+										"name":  "test-container",
+										"image": "nginx:1.14.2",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			overriderInfo: OverriderInfo{
+				TargetNodeLabelSelector: metav1.LabelSelector{
+					MatchLabels: map[string]string{"node-type": "edge"},
+				},
+				Overriders: &appsv1alpha1.Overriders{
+					ImageOverriders: []appsv1alpha1.ImageOverrider{
+						{
+							Component: appsv1alpha1.Tag,
+							Operator:  appsv1alpha1.OverriderOpReplace,
+							Value:     "1.15.0",
+						},
+					},
+				},
+			},
+			expectedResult: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind": "Deployment",
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"containers": []interface{}{
+									map[string]interface{}{
+										"name":  "test-container",
+										"image": "nginx:1.15.0",
+									},
+								},
+								"affinity": map[string]interface{}{
+									"nodeAffinity": map[string]interface{}{
+										"requiredDuringSchedulingIgnoredDuringExecution": map[string]interface{}{
+											"nodeSelectorTerms": []interface{}{
+												map[string]interface{}{
+													"matchExpressions": []interface{}{
+														map[string]interface{}{
+															"key":      "node-type",
+															"operator": "In",
+															"values":   []interface{}{"edge"},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "Apply image overrides with multiple TargetNodeLabelSelectors",
+			rawObj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind": "Deployment",
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"containers": []interface{}{
+									map[string]interface{}{
+										"name":  "test-container",
+										"image": "nginx:1.14.2",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			overriderInfo: OverriderInfo{
+				TargetNodeLabelSelector: metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"node-type": "edge",
+						"zone":      "us-west",
+					},
+				},
+				Overriders: &appsv1alpha1.Overriders{
+					ImageOverriders: []appsv1alpha1.ImageOverrider{
+						{
+							Component: appsv1alpha1.Registry,
+							Operator:  appsv1alpha1.OverriderOpReplace,
+							Value:     "test-registry.com",
+						},
+					},
+				},
+			},
+			expectedResult: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind": "Deployment",
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"containers": []interface{}{
+									map[string]interface{}{
+										"name":  "test-container",
+										"image": "test-registry.com/nginx:1.14.2",
+									},
+								},
+								"affinity": map[string]interface{}{
+									"nodeAffinity": map[string]interface{}{
+										"requiredDuringSchedulingIgnoredDuringExecution": map[string]interface{}{
+											"nodeSelectorTerms": []interface{}{
+												map[string]interface{}{
+													"matchExpressions": []interface{}{
+														map[string]interface{}{
+															"key":      "node-type",
+															"operator": "In",
+															"values":   []interface{}{"edge"},
+														},
+														map[string]interface{}{
+															"key":      "zone",
+															"operator": "In",
+															"values":   []interface{}{"us-west"},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "No node affinity changes when TargetNodeLabelSelector is empty",
+			rawObj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind": "Deployment",
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"containers": []interface{}{
+									map[string]interface{}{
+										"name":  "test-container",
+										"image": "nginx:1.14.2",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			overriderInfo: OverriderInfo{
+				TargetNodeLabelSelector: metav1.LabelSelector{},
+				Overriders: &appsv1alpha1.Overriders{
+					ImageOverriders: []appsv1alpha1.ImageOverrider{
+						{
+							Component: appsv1alpha1.Repository,
+							Operator:  appsv1alpha1.OverriderOpReplace,
+							Value:     "custom-nginx",
+						},
+					},
+				},
+			},
+			expectedResult: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind": "Deployment",
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"containers": []interface{}{
+									map[string]interface{}{
+										"name":  "test-container",
+										"image": "custom-nginx:1.14.2",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "Apply image override with predicate and TargetNodeLabelSelector",
+			rawObj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind": "Deployment",
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"containers": []interface{}{
+									map[string]interface{}{
+										"name":  "test-container",
+										"image": "nginx:1.14.2",
+									},
+									map[string]interface{}{
+										"name":  "sidecar-container",
+										"image": "sidecar:v1",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			overriderInfo: OverriderInfo{
+				TargetNodeLabelSelector: metav1.LabelSelector{
+					MatchLabels: map[string]string{"node-type": "edge"},
+				},
+				Overriders: &appsv1alpha1.Overriders{
+					ImageOverriders: []appsv1alpha1.ImageOverrider{
+						{
+							Component: appsv1alpha1.Tag,
+							Operator:  appsv1alpha1.OverriderOpReplace,
+							Value:     "1.15.0",
+							Predicate: &appsv1alpha1.ImagePredicate{
+								Path: "/spec/template/spec/containers/0/image",
+							},
+						},
+					},
+				},
+			},
+			expectedResult: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind": "Deployment",
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"containers": []interface{}{
+									map[string]interface{}{
+										"name":  "test-container",
+										"image": "nginx:1.15.0",
+									},
+									map[string]interface{}{
+										"name":  "sidecar-container",
+										"image": "sidecar:v1",
+									},
+								},
+								"affinity": map[string]interface{}{
+									"nodeAffinity": map[string]interface{}{
+										"requiredDuringSchedulingIgnoredDuringExecution": map[string]interface{}{
+											"nodeSelectorTerms": []interface{}{
+												map[string]interface{}{
+													"matchExpressions": []interface{}{
+														map[string]interface{}{
+															"key":      "node-type",
+															"operator": "In",
+															"values":   []interface{}{"edge"},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
 							},
 						},
 					},
