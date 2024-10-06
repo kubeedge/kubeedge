@@ -17,6 +17,7 @@ limitations under the License.
 package overridemanager
 
 import (
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -26,6 +27,39 @@ import (
 
 	"github.com/kubeedge/api/apis/apps/v1alpha1"
 )
+
+func sortMatchExpressions(obj map[string]interface{}) {
+	spec := obj["spec"].(map[string]interface{})
+	template := spec["template"].(map[string]interface{})
+	templateSpec := template["spec"].(map[string]interface{})
+	affinity, ok := templateSpec["affinity"].(map[string]interface{})
+	if !ok {
+		return // No affinity, nothing to sort
+	}
+	nodeAffinity, ok := affinity["nodeAffinity"].(map[string]interface{})
+	if !ok {
+		return // No nodeAffinity, nothing to sort
+	}
+	required, ok := nodeAffinity["requiredDuringSchedulingIgnoredDuringExecution"].(map[string]interface{})
+	if !ok {
+		return // No required section, nothing to sort
+	}
+	nodeSelectorTerms, ok := required["nodeSelectorTerms"].([]interface{})
+	if !ok {
+		return // No nodeSelectorTerms, nothing to sort
+	}
+
+	for _, term := range nodeSelectorTerms {
+		matchExpressions, ok := term.(map[string]interface{})["matchExpressions"].([]interface{})
+		if !ok {
+			continue // No matchExpressions in this term, skip
+		}
+		sort.Slice(matchExpressions, func(i, j int) bool {
+			return matchExpressions[i].(map[string]interface{})["key"].(string) <
+				matchExpressions[j].(map[string]interface{})["key"].(string)
+		})
+	}
+}
 
 func TestEnvOverrider_ApplyOverrides(t *testing.T) {
 	assert := assert.New(t)
@@ -490,6 +524,8 @@ func TestEnvOverriderWithTargetNodeLabelSelector(t *testing.T) {
 				assert.Error(err)
 			} else {
 				assert.NoError(err)
+				sortMatchExpressions(tc.expectedResult.Object)
+				sortMatchExpressions(tc.rawObj.Object)
 				assert.Equal(tc.expectedResult, tc.rawObj)
 			}
 		})
