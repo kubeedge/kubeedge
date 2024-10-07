@@ -5,10 +5,11 @@ import (
 	"fmt"
 
 	jsonpatch "github.com/evanphx/json-patch"
-	appsv1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	errorutil "k8s.io/apimachinery/pkg/util/errors"
+
+	appsv1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
 )
 
 // overrideOption defines the JSONPatch operator
