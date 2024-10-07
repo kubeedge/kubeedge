@@ -32,6 +32,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	appsv1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
@@ -1254,6 +1255,119 @@ var _ = Describe("Test EdgeApplication Controller", func() {
 					deploy := &appsv1.Deployment{}
 					err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployName}, deploy)
 					return apierrors.IsNotFound(err) || !deploy.DeletionTimestamp.IsZero()
+				}, waitTimeOut, pollInterval).Should(BeTrue())
+			})
+		})
+	})
+
+	Context("Test TargetNodeLabelSelector", func() {
+		BeforeEach(func() {
+			edgeapp.Spec.WorkloadTemplate = appsv1alpha1.ResourceTemplate{
+				Manifests: []appsv1alpha1.Manifest{
+					{
+						RawExtension: runtime.RawExtension{
+							Object: deployTemplate,
+						},
+					},
+				},
+			}
+			edgeapp.Spec.WorkloadScope = appsv1alpha1.WorkloadScope{
+				TargetNodeLabels: []appsv1alpha1.TargetNodeLabel{
+					{
+						LabelSelector: metav1.LabelSelector{
+							MatchLabels: map[string]string{
+								locationLabel: "location1-" + randomize,
+							},
+						},
+						Overriders: appsv1alpha1.Overriders{
+							Replicas: ptr.To(3),
+						},
+					},
+					{
+						LabelSelector: metav1.LabelSelector{
+							MatchLabels: map[string]string{
+								locationLabel: "location2-" + randomize,
+							},
+						},
+						Overriders: appsv1alpha1.Overriders{
+							Replicas: ptr.To(3),
+						},
+					},
+				},
+			}
+		})
+
+		When("create edgeapplication with TargetNodeLabelSelector", func() {
+			BeforeEach(func() {
+				Expect(k8sClient.Create(ctx, edgeapp)).Should(Succeed())
+			})
+
+			It("should create deployments for matched node labels", func() {
+				Eventually(func() bool {
+					deploy1 := &appsv1.Deployment{}
+					deploy2 := &appsv1.Deployment{}
+					err1 := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployTemplate.Name + "-location1-" + randomize}, deploy1)
+					err2 := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployTemplate.Name + "-location2-" + randomize}, deploy2)
+
+					if err1 != nil || err2 != nil {
+						return false
+					}
+
+					if *deploy1.Spec.Replicas != 3 || *deploy2.Spec.Replicas != 2 {
+						return false
+					}
+
+					// Check if node affinity is set correctly
+					nodeAffinity1 := deploy1.Spec.Template.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms[0].MatchExpressions[0]
+					nodeAffinity2 := deploy2.Spec.Template.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms[0].MatchExpressions[0]
+
+					if nodeAffinity1.Key != locationLabel || nodeAffinity1.Values[0] != "location1-"+randomize {
+						return false
+					}
+					if nodeAffinity2.Key != locationLabel || nodeAffinity2.Values[0] != "location2-"+randomize {
+						return false
+					}
+
+					return true
+				}, waitTimeOut, pollInterval).Should(BeTrue())
+			})
+		})
+
+		When("update node labels", func() {
+			BeforeEach(func() {
+				Expect(k8sClient.Create(ctx, edgeapp)).Should(Succeed())
+				// Wait for initial deployments to be created
+				Eventually(func() bool {
+					deploy1 := &appsv1.Deployment{}
+					deploy2 := &appsv1.Deployment{}
+					err1 := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployTemplate.Name + "-location1-" + randomize}, deploy1)
+					err2 := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployTemplate.Name + "-location2-" + randomize}, deploy2)
+					return err1 == nil && err2 == nil
+				}, waitTimeOut, pollInterval).Should(BeTrue())
+			})
+
+			It("should update deployments when node labels change", func() {
+				// Change label of node1 to match location2
+				updatedNode1 := node1.DeepCopy()
+				updatedNode1.Labels[locationLabel] = "location2-" + randomize
+				Expect(k8sClient.Update(ctx, updatedNode1)).Should(Succeed())
+
+				Eventually(func() bool {
+					deploy1 := &appsv1.Deployment{}
+					deploy2 := &appsv1.Deployment{}
+					err1 := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployTemplate.Name + "-location1-" + randomize}, deploy1)
+					err2 := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployTemplate.Name + "-location2-" + randomize}, deploy2)
+
+					if err1 != nil || err2 != nil {
+						return false
+					}
+
+					// Check if replicas are updated according to the new node label distribution
+					if *deploy1.Spec.Replicas != 2 || *deploy2.Spec.Replicas != 3 {
+						return false
+					}
+
+					return true
 				}, waitTimeOut, pollInterval).Should(BeTrue())
 			})
 		})
