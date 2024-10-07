@@ -147,16 +147,16 @@ func ApplyNodeAffinity(obj *unstructured.Unstructured, selector v1.LabelSelector
 		},
 	}
 
+	matchExpressions := []interface{}{}
 	for key, value := range selector.MatchLabels {
-		affinity["nodeAffinity"].(map[string]interface{})["requiredDuringSchedulingIgnoredDuringExecution"].(map[string]interface{})["nodeSelectorTerms"].([]interface{})[0].(map[string]interface{})["matchExpressions"] = append(
-			affinity["nodeAffinity"].(map[string]interface{})["requiredDuringSchedulingIgnoredDuringExecution"].(map[string]interface{})["nodeSelectorTerms"].([]interface{})[0].(map[string]interface{})["matchExpressions"].([]interface{}),
-			map[string]interface{}{
-				"key":      key,
-				"operator": "In",
-				"values":   []string{value},
-			},
-		)
+		matchExpressions = append(matchExpressions, map[string]interface{}{
+			"key":      key,
+			"operator": "In",
+			"values":   []interface{}{value},
+		})
 	}
+
+	affinity["nodeAffinity"].(map[string]interface{})["requiredDuringSchedulingIgnoredDuringExecution"].(map[string]interface{})["nodeSelectorTerms"].([]interface{})[0].(map[string]interface{})["matchExpressions"] = matchExpressions
 
 	return unstructured.SetNestedField(obj.Object, affinity, "spec", "template", "spec", "affinity")
 }
