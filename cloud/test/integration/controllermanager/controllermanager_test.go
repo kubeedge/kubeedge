@@ -1312,7 +1312,6 @@ var _ = Describe("Test EdgeApplication Controller", func() {
 				return apierrors.IsNotFound(err)
 			}, 5*time.Second, pollInterval).Should(BeTrue())
 		})
-
 		It("should apply overriders to deployments on matching nodes", func() {
 			Eventually(func() bool {
 				deploy := &appsv1.Deployment{}
