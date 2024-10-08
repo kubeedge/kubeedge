@@ -49,16 +49,16 @@ through a defined method, such as the device property that controls a "light swi
 
 ```go
 
-// DeviceMethod describes the control method of the device.
+// DeviceMethod describes the specifics all the methods of the device.
 type DeviceMethod struct {
     // Required: The device method name to be accessed. It must be unique.
     Name string `json:"name,omitempty"`
-    // Description of this method.
+    // Define the description of device method.
+    // +optional
     Description string `json:"description,omitempty"`
-    // The list of the deviceProperty controlled by deviceMethod.
-    PropertyList []string `json:"desired,omitempty"`
-    // Enter parameter name.
-    ParameterName string `json:"parameterName,omitempty"`
+    // PropertyNames are list of device properties that device methods can control.
+    // Required: A device method can control multiple device properties.
+    PropertyNames []string `json:"propertyNames,omitempty"`
 }
 
 ```
@@ -79,11 +79,27 @@ starting monitoring the device write command of the corresponding port.
 3.When users need to write to the device, users can access the ports exposed by the edge mapper through EdgeMesh 
 or other components in the cloud, or directly access the corresponding ports on the edge nodes and send control commands.
 
-4.Users can implement the function of writing data in the device driver by themselves
+4.Users can implement the function of writing data in the device driver by themselves. The device driver template in mapper-framework is as follows:
+
+```go
+
+func (c *CustomizedClient) GetDeviceData(visitor *VisitorConfig) (interface{}, error) {
+    // TODO: add the code to get device's data
+    // you can use c.ProtocolConfig and visitor
+    return nil, nil
+}
+
+func (c *CustomizedClient) DeviceDataWrite(visitor *VisitorConfig, deviceMethodName string, propertyName string, data interface{}) error {
+    // TODO: add the code to write device's data
+    // you can use c.ProtocolConfig and visitor
+    return nil
+}
+
+```
 
 ## Plan
 
-In version 1.18
+In version 1.19
 - Implement the feature development of mapper that supports device writing according to the above plan.
 - After completing feature development, add some mapper examples that support device writing to the mappers-go repository.
 
