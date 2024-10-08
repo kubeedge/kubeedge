@@ -65,7 +65,6 @@ func (rs *RestServer) GetDeviceMethod(writer http.ResponseWriter, request *http.
 }
 
 func (rs *RestServer) ParseMethodParameter(deviceMethodMap map[string][]string, propertyTypeMap map[string]string, deviceName string, deviceNamespace string) (*common.DataMethod, error) {
-
 	deviceMethod := common.DataMethod{
 		Methods: make([]common.Method, 0),
 	}
