@@ -27,9 +27,19 @@ type PingResponse struct {
 	Message string
 }
 
+type DeviceWriteResponse struct {
+	*BaseResponse
+	Message string
+}
+
 type DeviceReadResponse struct {
 	*BaseResponse
 	Data *common.DataModel
+}
+
+type DeviceMethodReadResponse struct {
+	*BaseResponse
+	Data *common.DataMethod
 }
 
 type MetaGetModelResponse struct {
