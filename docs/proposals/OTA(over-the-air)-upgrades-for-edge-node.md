@@ -118,7 +118,21 @@ Allow for manual confirmation before proceeding with the upgrade, especially in 
         RequireConfirmation bool `json:"requireConfirmation,omitempty"`
     }
     ```
-- Upgrade Logic Modification：Modify the upgrade logic to check the value of this new field before starting the upgrade. If requireConfirmation is set to true, the process should pause and wait for an external signal or API call to proceed.
+- Upgrade Logic Modification：Modify the upgrade logic to check the value of this new field before starting the upgrade.We add this new field in the `edge/pkg/edgehub/task/taskexecutor/node_upgrade.go` file,the follow is the example:
+  ```go
+  func initUpgrade(taskReq types.NodeTaskRequest) (event fsm.Event) {
+    ......
+    ......
+    if upgradeReq.RequireConfirmation {
+      return fsm.Event{
+        Type:   "Confirm",
+        Action: api.ActionConfirmation,
+        Msg:    "Wait for a confirm for upgrade request on the edge site.",
+      }
+    }
+    return event
+  }
+  ```
 
 ### API in MetaService for Confirming Edge Node Upgrade
 #### Objective
@@ -126,6 +140,37 @@ Provide a mechanism for authorized personnel to confirm the upgrade manually.
 #### Steps
 - API Endpoint：Develop a new API endpoint in the MetaService that can receive a confirmation signal.
 - Integration with Upgrade Process：Integrate this API with the upgrade process so that upon receiving a valid confirmation, the upgrade process can resume.
+
+  The example code in `edge/pkg/metamanager/metaserver/handlerfactory/ext_handler.go`:
+  ```go
+  func (f *Factory) ConfirmUpgrade(_ /*edgeappName*/ string) http.Handler {
+    h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+      klog.Infof("Begin to run upgrade command")
+      var upgradeReq commontypes.NodeUpgradeJobRequest
+      var configFile string
+      var nodeTaskReq types.NodeTaskRequest// Can we save parameter in the meta and delete it when upgrading ends?
+      upgradeCmd := fmt.Sprintf("keadm upgrade edge --upgradeID %s --historyID %s --fromVersion %s --toVersion %s --config %s --image %s > /tmp/keadm.log 2>&1",
+        upgradeReq.UpgradeID, upgradeReq.HistoryID, version.Get(), upgradeReq.Version, configFile, upgradeReq.Image)
+
+      executor, _ := taskexecutor.GetExecutor(taskexecutor.TaskUpgrade)
+      event, _ := executor.Do(nodeTaskReq)
+      klog.Info("Confirm Upgrade:" + event.Type + "," + event.Msg)
+      // run upgrade cmd to upgrade edge node
+      // use nohup command to start a child progress
+      command := fmt.Sprintf("nohup %s &", upgradeCmd)
+      cmd := exec.Command("bash", "-c", command)
+      s, err := cmd.CombinedOutput()
+      if err != nil {
+        http.Error(w, fmt.Sprintf("run upgrade command %s failed: %v, res: %s", command, err, s),
+          http.StatusInternalServerError)
+        return
+      }
+      klog.Infof("!!! Finish upgrade from Version %s to %s ...", version.Get(), upgradeReq.Version)
+      // TODO: How to proceed backup and rollback ...
+    })
+    return h
+  }
+  ```
 ### Command in `keadm ctl` for Confirming Upgrade
 #### Objective
 Provide a command-line tool for administrators to confirm the upgrade
