@@ -12,8 +12,14 @@ const (
 
 	// APIDeviceRoute to build device RESTful API
 	APIDeviceRoute = APIBase + "/device"
+	// APIDeviceMethodRoute to build deviceMethod RESTful API
+	APIDeviceMethodRoute = APIBase + "/devicemethod"
+	// APIGetDeviceMethodRoute to get all deviceMethod of the device
+	APIGetDeviceMethodRoute = APIDeviceMethodRoute + "/" + DeviceNamespace + "/" + DeviceName
 	// APIDeviceReadRoute API that read device's property
 	APIDeviceReadRoute = APIDeviceRoute + "/" + DeviceNamespace + "/" + DeviceName + "/" + PropertyName
+	// APIDeviceWriteRoute API that read device's property
+	APIDeviceWriteRoute = APIDeviceMethodRoute + "/" + DeviceNamespace + "/" + DeviceName + "/" + DeviceMethodName + "/" + PropertyName + "/" + Data
 
 	// APIMetaRoute to build meta RESTful API
 	APIMetaRoute = APIBase + "/meta"
@@ -30,6 +36,10 @@ const (
 const (
 	// DeviceName pattern for deviceName
 	DeviceName = "{name}"
+	// DeviceMethodName pattern for device method Name
+	DeviceMethodName = "{methodname}"
+	// Data pattern for device write data
+	Data = "{data}"
 	// DeviceNamespace pattern for deviceNamespace
 	DeviceNamespace = "{namespace}"
 	// PropertyName pattern for property
