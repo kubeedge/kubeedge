@@ -8,7 +8,9 @@ import (
 
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/kubeedge/common/types"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/task/taskexecutor"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/common"
 	"github.com/kubeedge/kubeedge/pkg/version"
 )
@@ -55,9 +57,13 @@ func (f *Factory) ConfirmUpgrade(_ /*edgeappName*/ string) http.Handler {
 		// TODO: How to get options...
 		var upgradeReq commontypes.NodeUpgradeJobRequest
 		var configFile string
+		var nodeTaskReq types.NodeTaskRequest
 		upgradeCmd := fmt.Sprintf("keadm upgrade edge --upgradeID %s --historyID %s --fromVersion %s --toVersion %s --config %s --image %s > /tmp/keadm.log 2>&1",
 			upgradeReq.UpgradeID, upgradeReq.HistoryID, version.Get(), upgradeReq.Version, configFile, upgradeReq.Image)
 
+		executor, _ := taskexecutor.GetExecutor(taskexecutor.TaskUpgrade)
+		event, _ := executor.Do(nodeTaskReq)
+		klog.Info("Confirm Upgrade:" + event.Type + "," + event.Msg)
 		// run upgrade cmd to upgrade edge node
 		// use nohup command to start a child progress
 		command := fmt.Sprintf("nohup %s &", upgradeCmd)
