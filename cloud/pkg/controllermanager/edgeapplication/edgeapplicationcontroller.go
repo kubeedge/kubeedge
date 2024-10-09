@@ -138,6 +138,14 @@ func (c *Controller) syncEdgeApplication(ctx context.Context, edgeApp *appsv1alp
 					continue
 				}
 			}
+			if info.TargetNodeLabelSelector.MatchLabels != nil {
+				if err := utils.ApplyNodeAffinity(tmplCopy, info.TargetNodeLabelSelector); err != nil {
+					klog.Errorf("failed to apply node affinity to obj %s/%s of gvk %s, %v",
+						tmplCopy.GetNamespace(), tmplCopy.GetName(), tmplCopy.GroupVersionKind(), err)
+				}
+				continue
+				errs = append(errs, err)
+			}
 
 			modifiedTmplInfos = append(modifiedTmplInfos, &utils.TemplateInfo{Ordinal: tmplInfo.Ordinal, Template: tmplCopy})
 		}
