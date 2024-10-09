@@ -185,10 +185,7 @@ func environmentCheck(skipCheck bool) error {
 		}
 		switch processName {
 		case "kubelet": // if kubelet is running, return error
-			return errors.New("kubelet should not running on edge node when running edgecore")
-		case "kube-proxy":
-			// kube-proxy pod does not conflict with edgecore, proceed to restart edgecore
-			klog.Infof("kube-proxy is running when restarting edgecore")
+			return errors.New("kubelet should not be running on edge node when starting edgecore")
 		}
 	}
 
