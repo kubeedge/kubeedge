@@ -10,6 +10,12 @@ import (
 	"github.com/kubeedge/api/apis/operations/v1alpha1"
 )
 
+// EventPatchInfo is used for sending patch event information from edge to cloud
+type EventPatchInfo struct {
+	Event *v1.Event `json:"event"`
+	Data  string    `json:"patchData"`
+}
+
 // PodStatusRequest is Message.Content which comes from edge
 type PodStatusRequest struct {
 	UID    types.UID

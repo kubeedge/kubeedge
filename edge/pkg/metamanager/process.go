@@ -182,6 +182,10 @@ func processDeletePodDB(message model.Message) error {
 }
 
 func (m *metaManager) processInsert(message model.Message) {
+	if _, resType, _ := parseResource(&message); resType == model.ResourceTypeEvent {
+		sendToCloud(&message)
+		return
+	}
 	imitator.DefaultV2Client.Inject(message)
 
 	msgSource := message.GetSource()
@@ -211,6 +215,10 @@ func (m *metaManager) processInsert(message model.Message) {
 }
 
 func (m *metaManager) processUpdate(message model.Message) {
+	if _, resType, _ := parseResource(&message); resType == model.ResourceTypeEvent {
+		sendToCloud(&message)
+		return
+	}
 	imitator.DefaultV2Client.Inject(message)
 
 	msgSource := message.GetSource()
@@ -253,6 +261,10 @@ func (m *metaManager) processUpdate(message model.Message) {
 }
 
 func (m *metaManager) processPatch(message model.Message) {
+	if _, resType, _ := parseResource(&message); resType == model.ResourceTypeEvent {
+		sendToCloud(&message)
+		return
+	}
 	if err := m.handleMessage(&message); err != nil {
 		feedbackError(err, message)
 		return
