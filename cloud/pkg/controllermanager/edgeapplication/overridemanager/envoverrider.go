@@ -44,6 +44,11 @@ func (o *EnvOverrider) ApplyOverrides(rawObj *unstructured.Unstructured, overrid
 			return err
 		}
 	}
+	if len(overriders.TargetNodeLabelSelector.MatchLabels) > 0 {
+		if err := ApplyNodeAffinity(rawObj, overriders.TargetNodeLabelSelector); err != nil {
+			return fmt.Errorf("failed to apply node affinity: %v", err)
+		}
+	}
 
 	return nil
 }

@@ -32,6 +32,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	appsv1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
@@ -1258,6 +1259,107 @@ var _ = Describe("Test EdgeApplication Controller", func() {
 			})
 		})
 	})
+	Context("Test TargetNodeLabels Functionality", func() {
+		var edgeApp *appsv1alpha1.EdgeApplication
+		var node1, node2, node3 *corev1.Node
+
+		BeforeEach(func() {
+			randomize = uuid.New().String()
+
+			// Create test nodes with different labels
+			node1 = createTestNode("node1-"+randomize, map[string]string{"env": "prod", "region": "east"})
+			node2 = createTestNode("node2-"+randomize, map[string]string{"env": "prod", "region": "west"})
+			node3 = createTestNode("node3-"+randomize, map[string]string{"env": "dev", "region": "east"})
+
+			Expect(k8sClient.Create(ctx, node1)).Should(Succeed())
+			Expect(k8sClient.Create(ctx, node2)).Should(Succeed())
+			Expect(k8sClient.Create(ctx, node3)).Should(Succeed())
+
+			// Create EdgeApplication with TargetNodeLabels
+			edgeApp = createEdgeApplicationWithTargetNodeLabels(deployTemplate)
+			Expect(k8sClient.Create(ctx, edgeApp)).Should(Succeed())
+		})
+
+		AfterEach(func() {
+			Expect(k8sClient.Delete(ctx, node1)).Should(Succeed())
+			Expect(k8sClient.Delete(ctx, node2)).Should(Succeed())
+			Expect(k8sClient.Delete(ctx, node3)).Should(Succeed())
+			Expect(k8sClient.Delete(ctx, edgeApp)).Should(Succeed())
+		})
+
+		It("should create deployments only on nodes matching the label selector", func() {
+			Eventually(func() bool {
+				deploy := &appsv1.Deployment{}
+				err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployTemplate.Name + "-" + node1.Name}, deploy)
+				if err != nil {
+					return false
+				}
+				return hasNodeAffinity(deploy, map[string]string{"env": "prod"})
+			}, waitTimeOut, pollInterval).Should(BeTrue())
+
+			Eventually(func() bool {
+				deploy := &appsv1.Deployment{}
+				err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployTemplate.Name + "-" + node2.Name}, deploy)
+				if err != nil {
+					return false
+				}
+				return hasNodeAffinity(deploy, map[string]string{"env": "prod"})
+			}, waitTimeOut, pollInterval).Should(BeTrue())
+
+			Consistently(func() bool {
+				deploy := &appsv1.Deployment{}
+				err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployTemplate.Name + "-" + node3.Name}, deploy)
+				return apierrors.IsNotFound(err)
+			}, 5*time.Second, pollInterval).Should(BeTrue())
+		})
+		It("should apply overriders to deployments on matching nodes", func() {
+			Eventually(func() bool {
+				deploy := &appsv1.Deployment{}
+				err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployTemplate.Name + "-" + node1.Name}, deploy)
+				if err != nil {
+					return false
+				}
+				return *deploy.Spec.Replicas == 3 // Assuming the overrider sets replicas to 3
+			}, waitTimeOut, pollInterval).Should(BeTrue())
+		})
+
+		It("should update deployments when node labels change", func() {
+			// Change node3 labels to match the selector
+			patchNode3 := node3.DeepCopy()
+			patchNode3.Labels["env"] = "prod"
+			Expect(k8sClient.Patch(ctx, patchNode3, client.MergeFrom(node3))).Should(Succeed())
+
+			Eventually(func() bool {
+				deploy := &appsv1.Deployment{}
+				err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployTemplate.Name + "-" + node3.Name}, deploy)
+				if err != nil {
+					return false
+				}
+				return hasNodeAffinity(deploy, map[string]string{"env": "prod"})
+			}, waitTimeOut, pollInterval).Should(BeTrue())
+		})
+
+		It("should reconcile when EdgeApplication TargetNodeLabels change", func() {
+			newEdgeApp := edgeApp.DeepCopy()
+			newEdgeApp.Spec.WorkloadScope.TargetNodeLabels[0].LabelSelector.MatchLabels["region"] = "east"
+			Expect(k8sClient.Patch(ctx, newEdgeApp, client.MergeFrom(edgeApp))).Should(Succeed())
+
+			Eventually(func() bool {
+				deploy := &appsv1.Deployment{}
+				err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployTemplate.Name + "-" + node1.Name}, deploy)
+				if err != nil {
+					return false
+				}
+				return hasNodeAffinity(deploy, map[string]string{"env": "prod", "region": "east"})
+			}, waitTimeOut, pollInterval).Should(BeTrue())
+
+			Consistently(func() bool {
+				deploy := &appsv1.Deployment{}
+				err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployTemplate.Name + "-" + node2.Name}, deploy)
+				return apierrors.IsNotFound(err)
+			}, 5*time.Second, pollInterval).Should(BeTrue())
+		})
+	})
 
 	Context("Test Lifecycle Event", func() {
 		BeforeEach(func() {
@@ -1460,4 +1562,70 @@ func isOwnedByEdgeApp(ownerReferences []metav1.OwnerReference, edgeApp *appsv1al
 		}
 	}
 	return false
+}
+func createTestNode(name string, labels map[string]string) *corev1.Node {
+	return &corev1.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   name,
+			Labels: labels,
+		},
+		Status: corev1.NodeStatus{
+			Conditions: []corev1.NodeCondition{
+				{
+					Type:   corev1.NodeReady,
+					Status: corev1.ConditionTrue,
+				},
+			},
+		},
+	}
+}
+
+func createEdgeApplicationWithTargetNodeLabels(deployTemplate *appsv1.Deployment) *appsv1alpha1.EdgeApplication {
+	randomize := uuid.New().String()
+	return &appsv1alpha1.EdgeApplication{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "edge-app-" + randomize,
+			Namespace: "default",
+		},
+		Spec: appsv1alpha1.EdgeApplicationSpec{
+			WorkloadTemplate: appsv1alpha1.ResourceTemplate{
+				Manifests: []appsv1alpha1.Manifest{
+					{
+						RawExtension: runtime.RawExtension{Object: deployTemplate},
+					},
+				},
+			},
+			WorkloadScope: appsv1alpha1.WorkloadScope{
+				TargetNodeLabels: []appsv1alpha1.TargetNodeLabel{
+					{
+						LabelSelector: metav1.LabelSelector{
+							MatchLabels: map[string]string{"env": "prod"},
+						},
+						Overriders: appsv1alpha1.Overriders{
+							Replicas: ptr.To(3),
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func hasNodeAffinity(deploy *appsv1.Deployment, expectedLabels map[string]string) bool {
+	affinity := deploy.Spec.Template.Spec.Affinity
+	if affinity == nil || affinity.NodeAffinity == nil {
+		return false
+	}
+	terms := affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution
+	if terms == nil {
+		return false
+	}
+	for _, term := range terms.NodeSelectorTerms {
+		for _, expr := range term.MatchExpressions {
+			if val, ok := expectedLabels[expr.Key]; ok && expr.Operator == corev1.NodeSelectorOpIn && len(expr.Values) == 1 && expr.Values[0] == val {
+				delete(expectedLabels, expr.Key)
+			}
+		}
+	}
+	return len(expectedLabels) == 0
 }

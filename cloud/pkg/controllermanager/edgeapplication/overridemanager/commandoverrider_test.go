@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	appsv1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
@@ -405,6 +406,239 @@ func TestBuildCommandArgsPatches(t *testing.T) {
 			} else {
 				assert.NoError(err)
 				assert.Equal(tc.expectedResult, result)
+			}
+		})
+	}
+}
+
+func TestApplyOverridesWithTargetNodeLabelSelector(t *testing.T) {
+	testCases := []struct {
+		name           string
+		rawObj         *unstructured.Unstructured
+		overriderInfo  OverriderInfo
+		expectedResult *unstructured.Unstructured
+		expectError    bool
+	}{
+		{
+			name: "Apply command overrides with single TargetNodeLabelSelector",
+			rawObj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "apps/v1",
+					"kind":       "Deployment",
+					"metadata":   map[string]interface{}{"name": "test-deployment"},
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"containers": []interface{}{
+									map[string]interface{}{
+										"name":    "test-container",
+										"command": []interface{}{"original", "command"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			overriderInfo: OverriderInfo{
+				TargetNodeLabelSelector: metav1.LabelSelector{
+					MatchLabels: map[string]string{"node-type": "edge"},
+				},
+				Overriders: &appsv1alpha1.Overriders{
+					CommandOverriders: []appsv1alpha1.CommandArgsOverrider{
+						{
+							ContainerName: "test-container",
+							Operator:      appsv1alpha1.OverriderOpAdd,
+							Value:         []string{"new", "command"},
+						},
+					},
+				},
+			},
+			expectedResult: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "apps/v1",
+					"kind":       "Deployment",
+					"metadata":   map[string]interface{}{"name": "test-deployment"},
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"containers": []interface{}{
+									map[string]interface{}{
+										"name":    "test-container",
+										"command": []interface{}{"original", "command", "new", "command"},
+									},
+								},
+								"affinity": map[string]interface{}{
+									"nodeAffinity": map[string]interface{}{
+										"requiredDuringSchedulingIgnoredDuringExecution": map[string]interface{}{
+											"nodeSelectorTerms": []interface{}{
+												map[string]interface{}{
+													"matchExpressions": []interface{}{
+														map[string]interface{}{
+															"key":      "node-type",
+															"operator": "In",
+															"values":   []interface{}{"edge"},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "Apply command overrides with multiple TargetNodeLabelSelectors",
+			rawObj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "apps/v1",
+					"kind":       "Deployment",
+					"metadata":   map[string]interface{}{"name": "test-deployment"},
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"containers": []interface{}{
+									map[string]interface{}{
+										"name":    "test-container",
+										"command": []interface{}{"original", "command"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			overriderInfo: OverriderInfo{
+				TargetNodeLabelSelector: metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"node-type": "edge",
+						"zone":      "us-west",
+					},
+				},
+				Overriders: &appsv1alpha1.Overriders{
+					CommandOverriders: []appsv1alpha1.CommandArgsOverrider{
+						{
+							ContainerName: "test-container",
+							Operator:      appsv1alpha1.OverriderOpAdd,
+							Value:         []string{"new", "command"},
+						},
+					},
+				},
+			},
+			expectedResult: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "apps/v1",
+					"kind":       "Deployment",
+					"metadata":   map[string]interface{}{"name": "test-deployment"},
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"containers": []interface{}{
+									map[string]interface{}{
+										"name":    "test-container",
+										"command": []interface{}{"original", "command", "new", "command"},
+									},
+								},
+								"affinity": map[string]interface{}{
+									"nodeAffinity": map[string]interface{}{
+										"requiredDuringSchedulingIgnoredDuringExecution": map[string]interface{}{
+											"nodeSelectorTerms": []interface{}{
+												map[string]interface{}{
+													"matchExpressions": []interface{}{
+														map[string]interface{}{
+															"key":      "node-type",
+															"operator": "In",
+															"values":   []interface{}{"edge"},
+														},
+														map[string]interface{}{
+															"key":      "zone",
+															"operator": "In",
+															"values":   []interface{}{"us-west"},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "No changes when TargetNodeLabelSelector is empty",
+			rawObj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "apps/v1",
+					"kind":       "Deployment",
+					"metadata":   map[string]interface{}{"name": "test-deployment"},
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"containers": []interface{}{
+									map[string]interface{}{
+										"name":    "test-container",
+										"command": []interface{}{"original", "command"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			overriderInfo: OverriderInfo{
+				TargetNodeLabelSelector: metav1.LabelSelector{},
+				Overriders: &appsv1alpha1.Overriders{
+					CommandOverriders: []appsv1alpha1.CommandArgsOverrider{
+						{
+							ContainerName: "test-container",
+							Operator:      appsv1alpha1.OverriderOpAdd,
+							Value:         []string{"new", "command"},
+						},
+					},
+				},
+			},
+			expectedResult: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "apps/v1",
+					"kind":       "Deployment",
+					"metadata":   map[string]interface{}{"name": "test-deployment"},
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"containers": []interface{}{
+									map[string]interface{}{
+										"name":    "test-container",
+										"command": []interface{}{"original", "command", "new", "command"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectError: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			overrider := &CommandOverrider{}
+			err := overrider.ApplyOverrides(tc.rawObj, tc.overriderInfo)
+
+			if tc.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedResult, tc.rawObj)
 			}
 		})
 	}

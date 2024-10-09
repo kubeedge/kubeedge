@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"strings"
 
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/klog/v2"
@@ -33,7 +34,42 @@ func (o *CommandOverrider) ApplyOverrides(rawObj *unstructured.Unstructured, ove
 		}
 	}
 
+	// Apply node affinity based on TargetNodeLabelSelector
+	if len(overriders.TargetNodeLabelSelector.MatchLabels) > 0 {
+		if err := ApplyNodeAffinity(rawObj, overriders.TargetNodeLabelSelector); err != nil {
+			return fmt.Errorf("failed to apply node affinity: %v", err)
+		}
+	}
+
 	return nil
+}
+
+// ApplyNodeAffinity applies node affinity to the object based on the label selector
+func ApplyNodeAffinity(obj *unstructured.Unstructured, selector v1.LabelSelector) error {
+	affinity := map[string]interface{}{
+		"nodeAffinity": map[string]interface{}{
+			"requiredDuringSchedulingIgnoredDuringExecution": map[string]interface{}{
+				"nodeSelectorTerms": []interface{}{
+					map[string]interface{}{
+						"matchExpressions": []interface{}{},
+					},
+				},
+			},
+		},
+	}
+
+	for key, value := range selector.MatchLabels {
+		affinity["nodeAffinity"].(map[string]interface{})["requiredDuringSchedulingIgnoredDuringExecution"].(map[string]interface{})["nodeSelectorTerms"].([]interface{})[0].(map[string]interface{})["matchExpressions"] = append(
+			affinity["nodeAffinity"].(map[string]interface{})["requiredDuringSchedulingIgnoredDuringExecution"].(map[string]interface{})["nodeSelectorTerms"].([]interface{})[0].(map[string]interface{})["matchExpressions"].([]interface{}),
+			map[string]interface{}{
+				"key":      key,
+				"operator": "In",
+				"values":   []interface{}{value},
+			},
+		)
+	}
+
+	return unstructured.SetNestedField(obj.Object, affinity, "spec", "template", "spec", "affinity")
 }
 
 // buildCommandArgsPatches build JSON patches for the resource object according to override declaration.

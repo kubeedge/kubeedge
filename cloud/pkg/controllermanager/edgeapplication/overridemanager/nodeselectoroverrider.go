@@ -18,6 +18,7 @@ func (o *NodeSelectorOverrider) ApplyOverrides(rawObj *unstructured.Unstructured
 		if err != nil {
 			return fmt.Errorf("failed to convert Deployment from unstructured object: %v", err)
 		}
+
 		nodeGroupLabel := map[string]string{
 			nodegroup.LabelBelongingTo: overriders.TargetNodeGroup,
 		}
@@ -27,6 +28,7 @@ func (o *NodeSelectorOverrider) ApplyOverrides(rawObj *unstructured.Unstructured
 			return fmt.Errorf("failed to convert Deployment to unstructured object: %v", err)
 		}
 		rawObj.Object = unstructured
+
 	default:
 		return fmt.Errorf("cannot override nodeselector for obj of gvk %s", rawObj.GroupVersionKind())
 	}

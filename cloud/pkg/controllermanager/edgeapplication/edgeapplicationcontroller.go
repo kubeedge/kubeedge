@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	jsonpatch "github.com/evanphx/json-patch"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -91,13 +92,13 @@ func (c *Controller) SetupWithManager(mgr controllerruntime.Manager) error {
 	return controllerruntime.NewControllerManagedBy(mgr).
 		For(&appsv1alpha1.EdgeApplication{}).
 		WatchesRawSource(&source.Channel{Source: c.ReconcileTriggerChan}, &handler.EnqueueRequestForObject{}).
+		Watches(&corev1.Node{}, handler.EnqueueRequestsFromMapFunc(c.nodeMapFunc)).
 		Complete(c)
 }
 
 func (c *Controller) syncEdgeApplication(ctx context.Context, edgeApp *appsv1alpha1.EdgeApplication) (controllerruntime.Result, error) {
-	// 1. get manifests, set ownerReference and apply overrides to all target resources
-	// It will traverse all templates in EdgeApplication. If error occurs during traverse,
-	// it will log the error and continue.
+	klog.Infof("Syncing EdgeApplication %s/%s", edgeApp.Namespace, edgeApp.Name)
+
 	modifiedTmplInfos := []*utils.TemplateInfo{}
 	errs := []error{}
 	overriderInfos := utils.GetAllOverriders(edgeApp)
@@ -106,9 +107,11 @@ func (c *Controller) syncEdgeApplication(ctx context.Context, edgeApp *appsv1alp
 		klog.Errorf("failed to get all templates from edgeapp %s/%s, %v, continue with what got", edgeApp.Namespace, edgeApp.Name, err)
 		errs = append(errs, err)
 	}
+
 	for _, tmplInfo := range tmplInfos {
 		tmpl := tmplInfo.Template
 		setOwnerReference(tmpl, edgeApp)
+
 		if tmpl.GroupVersionKind() == constants.ServiceGVK {
 			addRangeNodeGroupAnnotation(tmpl)
 			modifiedTmplInfos = append(modifiedTmplInfos, tmplInfo)
@@ -122,20 +125,28 @@ func (c *Controller) syncEdgeApplication(ctx context.Context, edgeApp *appsv1alp
 			continue
 		}
 
-		// apply overriders
-		//
-		// TODO: consider the situation that not all the overrides have been applied successfully
-		// If one succeeded and another failed, the status of edgeApp will only contain the successful
-		// one, and have no status about the failed one.
 		for _, info := range overriderInfos {
 			tmplCopy := tmpl.DeepCopy()
-			klog.V(4).Infof("override obj %s/%s of gvk %s, for nodegroup %s", tmplCopy.GetNamespace(), tmplCopy.GetName(), tmplCopy.GroupVersionKind(), info.TargetNodeGroup)
-			if err := c.Overrider.ApplyOverrides(tmplCopy, info); err != nil {
-				klog.Errorf("failed to apply override of nodegroup %s to obj %s/%s of gvk %s, %v",
-					info.TargetNodeGroup, tmplCopy.GetNamespace(), tmplCopy.GetName(), tmplCopy.GroupVersionKind(), err)
-				errs = append(errs, err)
+
+			// Handle node group overrides
+			if info.TargetNodeGroup != "" {
+				klog.V(4).Infof("override obj %s/%s of gvk %s, for nodegroup %s", tmplCopy.GetNamespace(), tmplCopy.GetName(), tmplCopy.GroupVersionKind(), info.TargetNodeGroup)
+				if err := c.Overrider.ApplyOverrides(tmplCopy, info); err != nil {
+					klog.Errorf("failed to apply override of nodegroup %s to obj %s/%s of gvk %s, %v",
+						info.TargetNodeGroup, tmplCopy.GetNamespace(), tmplCopy.GetName(), tmplCopy.GroupVersionKind(), err)
+					errs = append(errs, err)
+					continue
+				}
+			}
+			if info.TargetNodeLabelSelector.MatchLabels != nil {
+				if err := utils.ApplyNodeAffinity(tmplCopy, info.TargetNodeLabelSelector); err != nil {
+					klog.Errorf("failed to apply node affinity to obj %s/%s of gvk %s, %v",
+						tmplCopy.GetNamespace(), tmplCopy.GetName(), tmplCopy.GroupVersionKind(), err)
+				}
 				continue
 			}
+			errs = append(errs, err)
+
 			modifiedTmplInfos = append(modifiedTmplInfos, &utils.TemplateInfo{Ordinal: tmplInfo.Ordinal, Template: tmplCopy})
 		}
 	}
@@ -147,8 +158,6 @@ func (c *Controller) syncEdgeApplication(ctx context.Context, edgeApp *appsv1alp
 	}
 
 	// 3. apply all templates
-	// It will create/update the resource in the template and notify the status manager
-	// to monitor its status.
 	for _, tmplInfo := range modifiedTmplInfos {
 		tmpl := tmplInfo.Template
 		if err := c.applyTemplate(ctx, tmpl); err != nil {
@@ -590,4 +599,30 @@ func addRangeNodeGroupAnnotation(obj *unstructured.Unstructured) {
 	}
 	anno[nodegroup.ServiceTopologyAnnotation] = nodegroup.ServiceTopologyRangeNodegroup
 	obj.SetAnnotations(anno)
+}
+
+func (c *Controller) nodeMapFunc(_ context.Context, obj client.Object) []controllerruntime.Request {
+	node := obj.(*corev1.Node)
+	edgeappList := &appsv1alpha1.EdgeApplicationList{}
+
+	// list all EdgeApplications
+	if err := c.Client.List(context.TODO(), edgeappList); err != nil {
+		klog.Errorf("failed to list all edge applications, %s", err)
+		return nil
+	}
+
+	// filter EdgeApplications that select the node by label selector
+	matches := []controllerruntime.Request{}
+	for _, edgeapp := range edgeappList.Items {
+		if utils.IsNodeSelected(edgeapp, *node) { // Using the function for node label matching
+			matches = append(matches, controllerruntime.Request{
+				NamespacedName: types.NamespacedName{
+					Namespace: edgeapp.Namespace,
+					Name:      edgeapp.Name,
+				},
+			})
+		}
+	}
+	// reconcile the EdgeApplications that are assigned to the node
+	return matches
 }
