@@ -139,38 +139,6 @@ func (c *Controller) syncEdgeApplication(ctx context.Context, edgeApp *appsv1alp
 				}
 			}
 
-			// Handle node label overrides
-			if info.TargetNodeLabelSelector.MatchLabels != nil {
-				nodes, err := utils.GetNodesByLabels(ctx, c.Client, info.TargetNodeLabelSelector.MatchLabels)
-				if err != nil {
-					klog.Errorf("failed to get nodes by labels for obj %s/%s of gvk %s, %v",
-						tmplCopy.GetNamespace(), tmplCopy.GetName(), tmplCopy.GroupVersionKind(), err)
-					errs = append(errs, err)
-					continue
-				}
-
-				if len(nodes) > 0 {
-					klog.V(4).Infof("override obj %s/%s of gvk %s, for node labels", tmplCopy.GetNamespace(), tmplCopy.GetName(), tmplCopy.GroupVersionKind())
-					if err := c.Overrider.ApplyOverrides(tmplCopy, info); err != nil {
-						klog.Errorf("failed to apply override for node labels to obj %s/%s of gvk %s, %v",
-							tmplCopy.GetNamespace(), tmplCopy.GetName(), tmplCopy.GroupVersionKind(), err)
-						errs = append(errs, err)
-						continue
-					}
-
-					if err := utils.ApplyNodeAffinity(tmplCopy, info.TargetNodeLabelSelector); err != nil {
-						klog.Errorf("failed to apply node affinity to obj %s/%s of gvk %s, %v",
-							tmplCopy.GetNamespace(), tmplCopy.GetName(), tmplCopy.GroupVersionKind(), err)
-						errs = append(errs, err)
-						continue
-					}
-				} else {
-					klog.Warningf("No nodes found matching labels for obj %s/%s of gvk %s",
-						tmplCopy.GetNamespace(), tmplCopy.GetName(), tmplCopy.GroupVersionKind())
-					continue
-				}
-			}
-
 			modifiedTmplInfos = append(modifiedTmplInfos, &utils.TemplateInfo{Ordinal: tmplInfo.Ordinal, Template: tmplCopy})
 		}
 	}

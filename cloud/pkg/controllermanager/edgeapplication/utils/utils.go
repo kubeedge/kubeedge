@@ -1,17 +1,14 @@
 package utils
 
 import (
-	"context"
 	"fmt"
 
 	core "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/klog/v2"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	appsv1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/controllermanager/edgeapplication/overridemanager"
@@ -35,28 +32,6 @@ func (c *ResourceInfo) String() string {
 type TemplateInfo struct {
 	Ordinal  int
 	Template *unstructured.Unstructured
-}
-
-func GetNodesByLabels(ctx context.Context, c client.Client, matchLabels map[string]string) ([]core.Node, error) {
-	// If matchLabels is nil, return an empty slice to avoid selecting all nodes
-	if matchLabels == nil {
-		return []core.Node{}, nil
-	}
-
-	// Create a label selector from the matchLabels map
-	selector := labels.SelectorFromSet(labels.Set(matchLabels))
-
-	// Create a NodeList to store the fetched nodes
-	nodeList := &core.NodeList{}
-
-	// Use the client to list nodes filtered by the label selector
-	err := c.List(ctx, nodeList, &client.ListOptions{LabelSelector: selector})
-	if err != nil {
-		return nil, err // Return error if the list operation fails
-	}
-
-	// Return the list of matching nodes
-	return nodeList.Items, nil
 }
 
 func IsNodeSelected(edgeapp appsv1alpha1.EdgeApplication, node core.Node) bool {
