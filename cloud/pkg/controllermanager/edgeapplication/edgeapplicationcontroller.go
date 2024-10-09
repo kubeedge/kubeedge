@@ -144,8 +144,8 @@ func (c *Controller) syncEdgeApplication(ctx context.Context, edgeApp *appsv1alp
 						tmplCopy.GetNamespace(), tmplCopy.GetName(), tmplCopy.GroupVersionKind(), err)
 				}
 				continue
-				errs = append(errs, err)
 			}
+			errs = append(errs, err)
 
 			modifiedTmplInfos = append(modifiedTmplInfos, &utils.TemplateInfo{Ordinal: tmplInfo.Ordinal, Template: tmplCopy})
 		}
