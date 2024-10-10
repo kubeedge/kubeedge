@@ -4,7 +4,6 @@ import (
 	"context"
 	"strings"
 
-	pluralize "github.com/gertd/go-pluralize"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -62,11 +61,17 @@ func UnsafeResourceToKind(r string) string {
 	if v, isUnusual := unusualResourceToKind[r]; isUnusual {
 		return v
 	}
-	pluralizeClient := pluralize.NewClient()
 	caser := cases.Title(language.Und)
 	k := caser.String(r)
-	// Convert plural English words to singular form
-	return pluralizeClient.Singular(k)
+	switch {
+	case strings.HasSuffix(k, "ies"):
+		return strings.TrimSuffix(k, "ies") + "y"
+	case strings.HasSuffix(k, "ses"):
+		return strings.TrimSuffix(k, "es")
+	case strings.HasSuffix(k, "s"):
+		return strings.TrimSuffix(k, "s")
+	}
+	return k
 }
 
 func UnsafeKindToResource(k string) string {
@@ -84,9 +89,14 @@ func UnsafeKindToResource(k string) string {
 		return v
 	}
 	r := strings.ToLower(k)
-	pluralizeClient := pluralize.NewClient()
-	// Convert English words from singular to plural form
-	return pluralizeClient.Plural(r)
+	switch string(r[len(r)-1]) {
+	case "s":
+		return r + "es"
+	case "y":
+		return strings.TrimSuffix(r, "y") + "ies"
+	}
+
+	return r + "s"
 }
 
 func UnstructuredAttr(obj runtime.Object) (labels.Set, fields.Set, error) {
