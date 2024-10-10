@@ -304,9 +304,6 @@ github.com/fsnotify/fsnotify
 # github.com/fvbommel/sortorder v1.1.0
 ## explicit; go 1.13
 github.com/fvbommel/sortorder
-# github.com/gertd/go-pluralize v0.2.1
-## explicit; go 1.17
-github.com/gertd/go-pluralize
 # github.com/go-errors/errors v1.4.2
 ## explicit; go 1.14
 github.com/go-errors/errors
