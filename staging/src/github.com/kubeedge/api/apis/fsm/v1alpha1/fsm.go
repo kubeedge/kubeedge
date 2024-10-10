@@ -36,8 +36,9 @@ const (
 )
 
 const (
-	ActionSuccess Action = "Success"
-	ActionFailure Action = "Failure"
+	ActionSuccess      Action = "Success"
+	ActionFailure      Action = "Failure"
+	ActionConfirmation Action = "Confirmation"
 )
 
 const (
