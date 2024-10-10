@@ -9,6 +9,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 )
 
 // ConfigMapsGetter has a method to return a ConfigMapInterface.
@@ -51,24 +52,33 @@ func (c *configMaps) Delete(string) error {
 
 func (c *configMaps) Get(name string) (*api.ConfigMap, error) {
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypeConfigmap, name)
-	configMapMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, nil)
-	msg, err := c.send.SendSync(configMapMsg)
-	if err != nil {
-		return nil, fmt.Errorf("get configmap from metaManager failed, err: %v", err)
-	}
-	errContent, ok := msg.GetContent().(error)
-	if ok {
-		return nil, errContent
-	}
-	content, err := msg.GetContentData()
-	if err != nil {
-		return nil, fmt.Errorf("parse message to configmap failed, err: %v", err)
+	metas, err := dao.QueryMeta("key", resource)
+	if err != nil || len(*metas) == 0 {
+		configMapMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, nil)
+		msg, err := c.send.SendSync(configMapMsg)
+		if err != nil {
+			return nil, fmt.Errorf("get configmap from metaManager failed, err: %v", err)
+		}
+		errContent, ok := msg.GetContent().(error)
+		if ok {
+			return nil, errContent
+		}
+		content, err := msg.GetContentData()
+		if err != nil {
+			return nil, fmt.Errorf("parse message to configmap failed, err: %v", err)
+		}
+
+		if msg.GetOperation() == model.ResponseOperation && msg.GetSource() == modules.MetaManagerModuleName {
+			return handleConfigMapFromMetaDB(content)
+		}
+		return handleConfigMapFromMetaManager(content)
 	}
 
-	if msg.GetOperation() == model.ResponseOperation && msg.GetSource() == modules.MetaManagerModuleName {
-		return handleConfigMapFromMetaDB(content)
+	content, err := json.Marshal(*metas)
+	if err != nil {
+		return nil, err
 	}
-	return handleConfigMapFromMetaManager(content)
+	return handleConfigMapFromMetaDB(content)
 }
 
 func handleConfigMapFromMetaDB(content []byte) (*api.ConfigMap, error) {
