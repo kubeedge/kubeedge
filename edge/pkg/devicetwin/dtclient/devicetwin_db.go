@@ -28,7 +28,7 @@ type DeviceTwin struct {
 
 // SaveDeviceTwin save device twin
 func SaveDeviceTwin(o orm.Ormer, doc *DeviceTwin) error {
-	err := o.DoTx(func(ctx context.Context, txOrm orm.TxOrmer) error {
+	err := o.DoTx(func(_ context.Context, txOrm orm.TxOrmer) error {
 		// insert data
 		// Using txOrm to execute SQL
 		_, e := txOrm.Insert(doc)
@@ -46,7 +46,7 @@ func SaveDeviceTwin(o orm.Ormer, doc *DeviceTwin) error {
 
 // DeleteDeviceTwinByDeviceID delete device twin
 func DeleteDeviceTwinByDeviceID(o orm.Ormer, deviceID string) error {
-	err := o.DoTx(func(ctx context.Context, txOrm orm.TxOrmer) error {
+	err := o.DoTx(func(_ context.Context, txOrm orm.TxOrmer) error {
 		// Delete data
 		// Using txOrm to execute SQL
 		_, e := txOrm.QueryTable(DeviceTwinTableName).Filter("deviceid", deviceID).Delete()
@@ -65,7 +65,7 @@ func DeleteDeviceTwinByDeviceID(o orm.Ormer, deviceID string) error {
 
 // DeleteDeviceTwin delete device twin
 func DeleteDeviceTwin(o orm.Ormer, deviceID string, name string) error {
-	err := o.DoTx(func(ctx context.Context, txOrm orm.TxOrmer) error {
+	err := o.DoTx(func(_ context.Context, txOrm orm.TxOrmer) error {
 		// Delete data
 		// Using txOrm to execute SQL
 		_, e := txOrm.QueryTable(DeviceTwinTableName).Filter("deviceid", deviceID).Filter("name", name).Delete()
