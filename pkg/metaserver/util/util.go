@@ -66,7 +66,7 @@ func UnsafeResourceToKind(r string) string {
 	switch {
 	case strings.HasSuffix(k, "ies"):
 		return strings.TrimSuffix(k, "ies") + "y"
-	case strings.HasSuffix(k, "es"):
+	case strings.HasSuffix(k, "ses"):
 		return strings.TrimSuffix(k, "es")
 	case strings.HasSuffix(k, "s"):
 		return strings.TrimSuffix(k, "s")
