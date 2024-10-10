@@ -110,3 +110,14 @@ type RestartResponse struct {
 	ErrMessages []string `json:"errMessages,omitempty"`
 	LogMessages []string `json:"LogMessages,omitempty"`
 }
+
+type LogsResponse struct {
+	ErrMessages []string `json:"errMessages,omitempty"`
+	LogMessages []string `json:"logMessages,omitempty"`
+}
+
+type ExecResponse struct {
+	ErrMessages    []string `json:"errMessage,omitempty"`
+	RunOutMessages []string `json:"runOutMessage,omitempty"`
+	RunErrMessages []string `json:"runErrMessage,omitempty"`
+}
