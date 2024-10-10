@@ -42,6 +42,77 @@ func (rs *RestServer) DeviceRead(writer http.ResponseWriter, request *http.Reque
 	}
 }
 
+func (rs *RestServer) GetDeviceMethod(writer http.ResponseWriter, request *http.Request) {
+	urlItem := strings.Split(request.URL.Path, "/")
+	deviceNamespace := urlItem[len(urlItem)-2]
+	deviceName := urlItem[len(urlItem)-1]
+	deviceID := parse.GetResourceID(deviceNamespace, deviceName)
+	deviceMethodMap, propertyTypeMap, err := rs.devPanel.GetDeviceMethod(deviceID)
+	if err != nil {
+		http.Error(writer, fmt.Sprintf("Get device method error: %v", err), http.StatusInternalServerError)
+	} else {
+		deviceMethod, err := rs.ParseMethodParameter(deviceMethodMap, propertyTypeMap, deviceName, deviceNamespace)
+		if err != nil {
+			http.Error(writer, fmt.Sprintf("Get device method error: %v", err), http.StatusInternalServerError)
+			return
+		}
+		response := &DeviceMethodReadResponse{
+			BaseResponse: NewBaseResponse(http.StatusOK),
+			Data:         deviceMethod,
+		}
+		rs.sendResponse(writer, request, response, http.StatusOK)
+	}
+}
+
+func (rs *RestServer) ParseMethodParameter(deviceMethodMap map[string][]string, propertyTypeMap map[string]string, deviceName string, deviceNamespace string) (*common.DataMethod, error) {
+	deviceMethod := common.DataMethod{
+		Methods: make([]common.Method, 0),
+	}
+
+	for methodName, propertyList := range deviceMethodMap {
+		method := common.Method{}
+		method.Name = methodName
+		method.Path = APIDeviceMethodRoute + "/" + deviceNamespace + "/" + deviceName + "/" + methodName + "/{propertyName}/{data}"
+		parameter := make([]common.Parameter, 0)
+		// get datatype of device property
+		for _, propertyName := range propertyList {
+			valueType, ok := propertyTypeMap[propertyName]
+			if !ok {
+				return nil, fmt.Errorf("unable to find device property %s defined in device method", propertyName)
+			}
+			parameter = append(parameter, common.Parameter{
+				PropertyName: propertyName,
+				ValueType:    valueType,
+			})
+		}
+		method.Parameters = parameter
+		deviceMethod.Methods = append(deviceMethod.Methods, method)
+	}
+	return &deviceMethod, nil
+}
+
+func (rs *RestServer) DeviceWrite(writer http.ResponseWriter, request *http.Request) {
+	// devicemethod/default/onvif-device-01/setValue/propertyname/data
+	urlItem := strings.Split(request.URL.Path, "/")
+	deviceNamespace := urlItem[len(urlItem)-5]
+	deviceName := urlItem[len(urlItem)-4]
+	deviceMethodName := urlItem[len(urlItem)-3]
+	propertyName := urlItem[len(urlItem)-2]
+	data := urlItem[len(urlItem)-1]
+
+	deviceID := parse.GetResourceID(deviceNamespace, deviceName)
+	err := rs.devPanel.WriteDevice(deviceMethodName, deviceID, propertyName, data)
+	if err != nil {
+		http.Error(writer, fmt.Sprintf("Write device data error: %v", err), http.StatusInternalServerError)
+	} else {
+		response := &DeviceWriteResponse{
+			BaseResponse: NewBaseResponse(http.StatusOK),
+			Message:      fmt.Sprintf("Write data %s to device %s successfully.", data, deviceID),
+		}
+		rs.sendResponse(writer, request, response, http.StatusOK)
+	}
+}
+
 func (rs *RestServer) MetaGetModel(writer http.ResponseWriter, request *http.Request) {
 	urlItem := strings.Split(request.URL.Path, "/")
 	deviceNamespace := urlItem[len(urlItem)-2]

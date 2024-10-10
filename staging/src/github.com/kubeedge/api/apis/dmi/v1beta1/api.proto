@@ -182,6 +182,18 @@ message DeviceSpec {
     ProtocolConfig protocol = 2;
     // List of properties which describe the device properties.
     repeated DeviceProperty properties = 3;
+    // List of methods which describe the device methods.
+    repeated DeviceMethod methods = 4;
+}
+
+// DeviceMethod describes the specifics all the methods of the device.
+message DeviceMethod {
+    // The device method name to be accessed. It must be unique.
+    string name = 1;
+    // the description of the device method.
+    string description = 2;
+    // the list of device properties that device methods can control.
+    repeated string propertyNames = 3;
 }
 
 // DeviceProperty describes the specifics all the properties of the device.

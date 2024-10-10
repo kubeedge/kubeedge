@@ -555,6 +555,29 @@ spec:
                       TODO: Add other useful fields. apiVersion, kind, uid?'
                     type: string
                 type: object
+              methods:
+                description: List of methods of device. methods list item must be
+                  unique by method.Name.
+                items:
+                  description: DeviceMethod describes the specifics all the methods
+                    of the device.
+                  properties:
+                    description:
+                      description: Define the description of device method.
+                      type: string
+                    name:
+                      description: 'Required: The device method name to be accessed.
+                        It must be unique.'
+                      type: string
+                    propertyNames:
+                      description: 'PropertyNames are list of device properties that
+                        device methods can control. Required: A device method can
+                        control multiple device properties.'
+                      items:
+                        type: string
+                      type: array
+                  type: object
+                type: array
               nodeName:
                 description: NodeName is a request to schedule this device onto a
                   specific node. If it is non-empty, the scheduler simply schedules

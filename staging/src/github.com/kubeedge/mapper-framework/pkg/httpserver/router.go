@@ -6,8 +6,14 @@ func (rs *RestServer) InitRouter() {
 	// Common
 	rs.Router.HandleFunc(APIPing, rs.Ping).Methods(http.MethodGet)
 
-	// Device
+	// DeviceRead
 	rs.Router.HandleFunc(APIDeviceReadRoute, rs.DeviceRead).Methods(http.MethodGet)
+
+	// GetDeviceMethod
+	rs.Router.HandleFunc(APIGetDeviceMethodRoute, rs.GetDeviceMethod).Methods(http.MethodGet)
+
+	// DeviceWrite
+	rs.Router.HandleFunc(APIDeviceWriteRoute, rs.DeviceWrite).Methods(http.MethodGet)
 
 	// Meta
 	rs.Router.HandleFunc(APIMetaGetModelRoute, rs.MetaGetModel).Methods(http.MethodGet)
