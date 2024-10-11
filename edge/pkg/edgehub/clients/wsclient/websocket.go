@@ -5,6 +5,9 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	api2 "github.com/kubeedge/kubeedge/pkg/viaduct/pkg/api"
+	wsclient "github.com/kubeedge/kubeedge/pkg/viaduct/pkg/client"
+	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/conn"
 	"net/http"
 	"os"
 	"time"
@@ -13,9 +16,6 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
-	"github.com/kubeedge/viaduct/pkg/api"
-	wsclient "github.com/kubeedge/viaduct/pkg/client"
-	"github.com/kubeedge/viaduct/pkg/conn"
 )
 
 const (
@@ -74,12 +74,12 @@ func (wsc *WebSocketClient) Init() error {
 	option := wsclient.Options{
 		HandshakeTimeout: wsc.config.HandshakeTimeout,
 		TLSConfig:        tlsConfig,
-		Type:             api.ProtocolTypeWS,
+		Type:             api2.ProtocolTypeWS,
 		Addr:             wsc.config.URL,
 		AutoRoute:        false,
-		ConnUse:          api.UseTypeMessage,
+		ConnUse:          api2.UseTypeMessage,
 	}
-	exOpts := api.WSClientOption{Header: make(http.Header)}
+	exOpts := api2.WSClientOption{Header: make(http.Header)}
 	exOpts.Header.Set("node_id", wsc.config.NodeID)
 	exOpts.Header.Set("project_id", wsc.config.ProjectID)
 	client := &wsclient.Client{Options: option, ExOpts: exOpts}

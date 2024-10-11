@@ -30,8 +30,8 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/dispatcher"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/session"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/controller"
-	"github.com/kubeedge/viaduct/pkg/conn"
-	"github.com/kubeedge/viaduct/pkg/mux"
+	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/conn"
+	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/mux"
 )
 
 type Handler interface {

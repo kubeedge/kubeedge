@@ -21,6 +21,7 @@ package edge
 import (
 	"errors"
 	"fmt"
+	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/api"
 	"net"
 	"os"
 	"path/filepath"
@@ -39,7 +40,6 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
-	"github.com/kubeedge/viaduct/pkg/api"
 )
 
 func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {

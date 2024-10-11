@@ -18,6 +18,7 @@ package deprecated
 
 import (
 	"fmt"
+	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/api"
 	"strings"
 
 	"github.com/blang/semver"
@@ -28,7 +29,6 @@ import (
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/edge"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
-	"github.com/kubeedge/viaduct/pkg/api"
 )
 
 var (
