@@ -20,7 +20,6 @@ require (
 	github.com/gorilla/websocket v1.5.0
 	github.com/kubeedge/api v0.0.0
 	github.com/kubeedge/beehive v0.0.0
-	github.com/kubeedge/viaduct v0.0.0
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/onsi/gomega v1.29.0
@@ -179,7 +178,7 @@ require (
 	github.com/lib/pq v1.10.9 // indirect
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
 	github.com/lucas-clemente/aes12 v0.0.0-20171027163421-cd47fb39b79f // indirect
-	github.com/lucas-clemente/quic-go v0.10.1 // indirect
+	github.com/lucas-clemente/quic-go v0.10.1
 	github.com/lucas-clemente/quic-go-certificates v0.0.0-20160823095156-d2f86524cced // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
@@ -293,7 +292,6 @@ replace (
 	github.com/gopherjs/gopherjs v0.0.0 => github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/kubeedge/api => ./staging/src/github.com/kubeedge/api
 	github.com/kubeedge/beehive => ./staging/src/github.com/kubeedge/beehive
-	github.com/kubeedge/viaduct => ./staging/src/github.com/kubeedge/viaduct
 	github.com/spf13/viper => github.com/spf13/viper v1.8.1
 	go.etcd.io/bbolt => go.etcd.io/bbolt v1.3.6
 	go.etcd.io/etcd/api/v3 => go.etcd.io/etcd/api/v3 v3.5.5

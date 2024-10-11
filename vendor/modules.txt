@@ -660,24 +660,6 @@ github.com/kubeedge/beehive/pkg/core/socket/wrapper
 github.com/kubeedge/beehive/pkg/core/socket/wrapper/packer
 github.com/kubeedge/beehive/pkg/core/socket/wrapper/reader
 github.com/kubeedge/beehive/pkg/core/socket/wrapper/writer
-# github.com/kubeedge/viaduct v0.0.0 => ./staging/src/github.com/kubeedge/viaduct
-## explicit; go 1.21
-github.com/kubeedge/viaduct/pkg/api
-github.com/kubeedge/viaduct/pkg/client
-github.com/kubeedge/viaduct/pkg/cmgr
-github.com/kubeedge/viaduct/pkg/comm
-github.com/kubeedge/viaduct/pkg/conn
-github.com/kubeedge/viaduct/pkg/conn/testing
-github.com/kubeedge/viaduct/pkg/fifo
-github.com/kubeedge/viaduct/pkg/filter
-github.com/kubeedge/viaduct/pkg/keeper
-github.com/kubeedge/viaduct/pkg/lane
-github.com/kubeedge/viaduct/pkg/mux
-github.com/kubeedge/viaduct/pkg/packer
-github.com/kubeedge/viaduct/pkg/protos/message
-github.com/kubeedge/viaduct/pkg/server
-github.com/kubeedge/viaduct/pkg/smgr
-github.com/kubeedge/viaduct/pkg/translator
 # github.com/kubernetes-csi/csi-lib-utils v0.6.1
 ## explicit
 github.com/kubernetes-csi/csi-lib-utils/protosanitizer
@@ -2955,7 +2937,6 @@ sigs.k8s.io/yaml
 # github.com/gopherjs/gopherjs v0.0.0 => github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e
 # github.com/kubeedge/api => ./staging/src/github.com/kubeedge/api
 # github.com/kubeedge/beehive => ./staging/src/github.com/kubeedge/beehive
-# github.com/kubeedge/viaduct => ./staging/src/github.com/kubeedge/viaduct
 # github.com/spf13/viper => github.com/spf13/viper v1.8.1
 # go.etcd.io/bbolt => go.etcd.io/bbolt v1.3.6
 # go.etcd.io/etcd/api/v3 => go.etcd.io/etcd/api/v3 v3.5.5
