@@ -257,4 +257,6 @@ Items marked red are the information flow of events. Items marked orange are com
 5. ProcessEvent handler in metamanager sends this message to the cloud via edgehub. 
 6. The message is transmitted through cloud-edge connection (via websocket/quic). A handler in cloudhub receives the event message. 
 7. The message is put into the specific beehive channel, waiting for edgecontroller (through func `PubToController`). Edgecontroller grabs the message and put it into eventschan. 
-8. A handler picks the message and send it to Kube-apiserver through client-go API. 
+8. A handler picks the message and send it to Kube-apiserver through client-go API.
+
+Besides, considering users' adaptability to new functions and resource saving when network conditions are limited, it's necessary to add a switch for event reporting. Users can select whether to report events by changing the config field `reportEvent` in the edgecore configuration to `true` or `false`.
