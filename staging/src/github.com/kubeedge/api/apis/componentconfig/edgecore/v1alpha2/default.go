@@ -50,7 +50,7 @@ func NewDefaultEdgeCoreConfig() (config *EdgeCoreConfig) {
 		Modules: &Modules{
 			Edged: &Edged{
 				Enable:                true,
-				SendEvent:             false,
+				ReportEvent:           false,
 				TailoredKubeletConfig: &defaultTailedKubeletConfig,
 				TailoredKubeletFlag: TailoredKubeletFlag{
 					HostnameOverride: hostnameOverride,

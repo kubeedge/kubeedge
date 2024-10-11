@@ -250,9 +250,9 @@ type EdgeController struct {
 
 // EdgeControllerBuffer indicates the EdgeController buffer
 type EdgeControllerBuffer struct {
-	// HandleEvent indicates the buffer of handle event
+	// ProcessEvent indicates the buffer of process event
 	// default 1024
-	HandleEvent int32 `json:"handleEvent,omitempty"`
+	ProcessEvent int32 `json:"processEvent,omitempty"`
 	// UpdatePodStatus indicates the buffer of update pod status
 	// default 1024
 	UpdatePodStatus int32 `json:"updatePodStatus,omitempty"`

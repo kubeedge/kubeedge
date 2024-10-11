@@ -185,7 +185,7 @@ func getDefaultEdgeControllerLoad(nodeLimit int32) *EdgeControllerLoad {
 func getDefaultEdgeControllerBuffer(nodeLimit int32) *EdgeControllerBuffer {
 	return &EdgeControllerBuffer{
 		UpdatePodStatus:            constants.DefaultUpdatePodStatusBuffer,
-		HandleEvent:                constants.DefaultProcessEventBuffer,
+		ProcessEvent:               constants.DefaultProcessEventBuffer,
 		UpdateNodeStatus:           constants.DefaultUpdateNodeStatusBuffer,
 		QueryConfigMap:             constants.DefaultQueryConfigMapBuffer,
 		QuerySecret:                constants.DefaultQuerySecretBuffer,

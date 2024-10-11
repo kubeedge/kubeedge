@@ -1622,7 +1622,7 @@ func NewUpstreamController(config *v1alpha1.EdgeController, factory k8sinformer.
 
 	uc.nodeStatusChan = make(chan model.Message, config.Buffer.UpdateNodeStatus)
 	uc.podStatusChan = make(chan model.Message, config.Buffer.UpdatePodStatus)
-	uc.eventChan = make(chan model.Message, config.Buffer.HandleEvent)
+	uc.eventChan = make(chan model.Message, config.Buffer.ProcessEvent)
 	uc.configMapChan = make(chan model.Message, config.Buffer.QueryConfigMap)
 	uc.secretChan = make(chan model.Message, config.Buffer.QuerySecret)
 	uc.serviceAccountTokenChan = make(chan model.Message, config.Buffer.ServiceAccountToken)

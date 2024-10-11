@@ -314,7 +314,7 @@ func MakeKubeClientBridge(kubeletDeps *kubelet.Dependencies) {
 
 	kubeletDeps.KubeClient = client
 	kubeletDeps.HeartbeatClient = client
-	if edgedconfig.Config.SendEvent {
+	if edgedconfig.Config.ReportEvent {
 		kubeletDeps.EventClient = client.CoreV1()
 	} else {
 		kubeletDeps.EventClient = nil
