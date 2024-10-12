@@ -19,10 +19,6 @@ package wsclient
 import (
 	"crypto/tls"
 	"fmt"
-	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/api"
-	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/conn"
-	mux2 "github.com/kubeedge/kubeedge/pkg/viaduct/pkg/mux"
-	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/server"
 	"reflect"
 	"testing"
 	"time"
@@ -33,9 +29,13 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
+	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/api"
+	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/conn"
+	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/mux"
+	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/server"
 )
 
-func handleServer(container *mux2.MessageContainer, writer mux2.ResponseWriter) {
+func handleServer(container *mux.MessageContainer, writer mux.ResponseWriter) {
 	klog.Infof("receive message: %s", container.Message.GetContent())
 	writer.WriteResponse(&model.Message{}, container.Message.GetContent())
 }
@@ -72,7 +72,7 @@ func newTestServer() error {
 		ExOpts:     exOpts,
 	}
 
-	mux2.Entry(mux2.NewPattern("*").Op("*"), handleServer)
+	mux.Entry(mux.NewPattern("*").Op("*"), handleServer)
 
 	go func() {
 		err = httpServer.ListenAndServeTLS("", "")

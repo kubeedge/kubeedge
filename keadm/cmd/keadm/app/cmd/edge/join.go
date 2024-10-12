@@ -18,7 +18,6 @@ package edge
 
 import (
 	"fmt"
-	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/api"
 	"os"
 	"strings"
 
@@ -28,6 +27,7 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
+	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/api"
 )
 
 var (
