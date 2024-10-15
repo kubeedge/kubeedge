@@ -58,6 +58,18 @@ func sendToCloud(message *model.Message) {
 	beehiveContext.SendToGroup(string(metaManagerConfig.Config.ContextSendGroup), *message)
 }
 
+func sendToTwin(message *model.Message) {
+	beehiveContext.Send(modules.DeviceTwinModuleName, *message)
+}
+
+func sentToMetamanager(message *model.Message, sync bool) {
+	if sync {
+		beehiveContext.SendResp(*message)
+	} else {
+		beehiveContext.Send(modules.MetaManagerModuleName, *message)
+	}
+}
+
 // Resource format: <namespace>/<restype>[/resid]
 // return <reskey, restype, resid>
 func parseResource(message *model.Message) (string, string, string) {
@@ -247,6 +259,10 @@ func (m *metaManager) processUpdate(message model.Message) {
 	case cloudmodules.PolicyControllerModuleName:
 		resp := message.NewRespByMessage(&message, OK)
 		sendToCloud(resp)
+	case modules.MetaManagerModuleName:
+		sendToTwin(&message)
+		resp := message.NewRespByMessage(&message, OK)
+		sentToMetamanager(resp, message.IsSync())
 	default:
 		klog.Errorf("unsupport message source, %s", msgSource)
 	}
