@@ -31,7 +31,7 @@ import (
 	beehivemodel "github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common"
 	tf "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/testing"
-	mockcon "github.com/kubeedge/viaduct/pkg/conn/testing"
+	mockcon "github.com/kubeedge/kubeedge/pkg/viaduct/pkg/conn/testing"
 )
 
 func TestNodeSessionKeepAliveCheck(t *testing.T) {

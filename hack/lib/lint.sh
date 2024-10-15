@@ -78,6 +78,5 @@ kubeedge::lint::check() {
     # check codes under staging dir, this will also use .golangci.yaml in the {KUBEEDGE_ROOT} dir
     echo "check any issue by golangci-lint under staging dir ..."
     cd "${KUBEEDGE_ROOT}/staging/src/github.com/kubeedge/beehive" && GOOS="linux" golangci-lint run -v --timeout=1m
-    cd "${KUBEEDGE_ROOT}/staging/src/github.com/kubeedge/viaduct" && GOOS="linux" golangci-lint run -v --timeout=1m
     cd "${KUBEEDGE_ROOT}/staging/src/github.com/kubeedge/mapper-framework" && GOOS="linux" golangci-lint run -v --timeout=2m
 }

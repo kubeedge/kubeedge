@@ -24,7 +24,7 @@ import (
 	"github.com/kubeedge/api/client/clientset/versioned/fake"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common"
 	tf "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/testing"
-	mockcon "github.com/kubeedge/viaduct/pkg/conn/testing"
+	mockcon "github.com/kubeedge/kubeedge/pkg/viaduct/pkg/conn/testing"
 )
 
 func TestGetAddSession(t *testing.T) {
