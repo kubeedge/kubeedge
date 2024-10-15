@@ -1,20 +1,21 @@
 package client
 
 import (
-	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	appcorev1 "k8s.io/client-go/applyconfigurations/core/v1"
-	"testing"
+
+	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
 func TestNewEvents(t *testing.T) {
 	assert := assert.New(t)
 
-	namespace := "test-namespace"
 	s := newSend()
 
 	events := newEvents(namespace, s)
@@ -27,7 +28,6 @@ func TestNewEvents(t *testing.T) {
 func TestEventInterface(t *testing.T) {
 	assert := assert.New(t)
 
-	namespace := "test-namespace"
 	s := newSend()
 
 	e := newEvents(namespace, s)
@@ -83,7 +83,6 @@ func TestEventInterface(t *testing.T) {
 func TestEventExtensionInterface(t *testing.T) {
 	assert := assert.New(t)
 	mockSend := &mockSendInterface{}
-	namespace := "test-namespace"
 	mockEvent := newEvents(namespace, mockSend)
 	mockSend.sendFunc = func(message *model.Message) {
 		assert.Equal(modules.MetaGroup, message.GetGroup())

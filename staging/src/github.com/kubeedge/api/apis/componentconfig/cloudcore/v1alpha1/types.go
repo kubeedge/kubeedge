@@ -327,7 +327,7 @@ type EdgeControllerBuffer struct {
 // EdgeControllerLoad indicates the EdgeController load
 type EdgeControllerLoad struct {
 	// ProcessEventWorkers indicates the load of process event workers
-	// default 1
+	// default 4
 	ProcessEventWorkers int32 `json:"processEventWorkers,omitempty"`
 	// UpdatePodStatusWorkers indicates the load of update pod status workers
 	// default 1

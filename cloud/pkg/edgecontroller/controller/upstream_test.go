@@ -4,15 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
-	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/common/types"
+	"testing"
+	"time"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes/fake"
-	"testing"
-	"time"
+
+	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
+	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/common/types"
 )
 
 var defaultConf = v1alpha1.NewDefaultCloudCoreConfig()

@@ -56,7 +56,7 @@ type mockMetaClient struct {
 func (f *mockMetaClient) VolumeAttachments(_ string) client.VolumeAttachmentsInterface {
 	return f.volumeAttachments
 }
-
+func (f *mockMetaClient) Events(string) client.EventsInterface                     { return nil }
 func (f *mockMetaClient) Pods(string) client.PodsInterface                         { return nil }
 func (f *mockMetaClient) PodStatus(string) client.PodStatusInterface               { return nil }
 func (f *mockMetaClient) ConfigMaps(string) client.ConfigMapsInterface             { return nil }
