@@ -1,6 +1,7 @@
 package driver
 
 import (
+	"github.com/kubeedge/Template/pkg/common"
 	"sync"
 
 	"github.com/kubeedge/mapper-framework/pkg/common"
@@ -27,7 +28,7 @@ func (c *CustomizedClient) GetDeviceData(visitor *VisitorConfig) (interface{}, e
 	return nil, nil
 }
 
-func (c *CustomizedClient) SetDeviceData(data interface{}, visitor *VisitorConfig) error {
+func (c *CustomizedClient) SetDeviceData(twin *common.Twin, visitor *VisitorConfig) error {
 	// TODO: set device's data
 	// you can use c.ProtocolConfig and visitor
 	return nil
