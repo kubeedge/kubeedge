@@ -17,6 +17,8 @@ limitations under the License.
 package main
 
 import (
+	"github.com/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub"
 	"os"
 
 	"k8s.io/component-base/logs"
@@ -25,6 +27,15 @@ import (
 )
 
 func main() {
+	// 初始化 BeehiveContext
+	//core.Run()
+
+	// 注册 CloudHub 模块
+	cloudhub.RegisterCloudHub()
+
+	// 启动 Beehive 框架
+	core.Run()
+
 	command := app.NewCloudCoreCommand()
 	logs.InitLogs()
 	defer logs.FlushLogs()
@@ -32,4 +43,5 @@ func main() {
 	if err := command.Execute(); err != nil {
 		os.Exit(1)
 	}
+
 }

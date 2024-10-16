@@ -1,0 +1,25 @@
+cloud:
+  ip: "192.168.1.1"
+  signal_range: 500
+nodes:
+  - ip: "192.168.1.2"
+    distance_to_cloud: 300
+  - ip: "192.168.1.3"
+    distance_to_cloud: 550
+  - ip: "192.168.1.4"
+    distance_to_cloud: 600
+  - ip: "192.168.1.5"
+    distance_to_cloud: 700
+distances:
+  - node1: "192.168.1.2"
+    node2: "192.168.1.3"
+    distance: 450
+  - node1: "192.168.1.2"
+    node2: "192.168.1.4"
+    distance: 350
+  - node1: "192.168.1.3"
+    node2: "192.168.1.4"
+    distance: 400
+  - node1: "192.168.1.3"
+    node2: "192.168.1.5"
+    distance: 400
