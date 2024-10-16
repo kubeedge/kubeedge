@@ -63,23 +63,14 @@ type DeviceMethod struct {
 
 ```
 
+In the architecture diagram, we show a sample configuration file of a device instance after adding the deviceMethod field. Here we define a `setValue` device method, 
+which can be used to control and assign values to the device properties like temperature, name2.
+
 ### Mapper Device Writing Interface
 
 According to the architecture diagram, in the yaml file of the device instance, the user only needs to define the method framework 
-owned by the device, such as the name of the method and the parameterName that need to be input. There is no need to implement 
-specific code here. The specific functions of this part are implemented in mapper data plane. At the same time, mapper needs 
-to expose the corresponding **api port** according to the user-defined method, and can send device data writing commands through 
-the corresponding api port. The specific process is as follows:
-
-1.Define the device method parameters in the CRD file of the device instance, then submit the CRD file to the KubeEdge cluster.
-
-2.After receiving the device information, mapper can identify the method parameter in the device information and exposes the port, 
-starting monitoring the device write command of the corresponding port.
-
-3.When users need to write to the device, users can access the ports exposed by the edge mapper through EdgeMesh 
-or other components in the cloud, or directly access the corresponding ports on the edge nodes and send control commands.
-
-4.Users can implement the function of writing data in the device driver by themselves. The device driver template in mapper-framework is as follows:
+owned by the device, such as the name of the method and the parameterNames that controlled by device method. Subsequently, the user needs to implement the corresponding 
+device method in the mapper's device driver part according to the definition in the CRD. Most of these methods write values to certain registers of the device, thereby completing write control of the device.
 
 ```go
 
@@ -97,9 +88,61 @@ func (c *CustomizedClient) DeviceDataWrite(visitor *VisitorConfig, deviceMethodN
 
 ```
 
+At the same time, users can obtain all device methods of this device based on the mapper API port(as defined by the user in the device instance CRD). 
+The information returned by the API also includes the calling command of the device methods.
+
+1. Get all device methods of the device   
+   Url: https://{mapper-pod-ip}:{mapper-api-port}/api/v1/devicemethod/{deviceNamespace}/{deviceName}
+   Response:
+   ```json
+   {
+    "Data": {
+        "Methods": [
+            {
+                "Name": "setValue",
+                "Path": "/api/v1/devicemethod/default/random-instance-01/setValue/{propertyName}/{data}",
+                "Parameters": [
+                    {
+                        "PropertyName": "random-int",
+                        "ValueType": "int"
+                    }
+                ]
+            }
+        ]
+    }
+    }
+   ```
+
+After getting the calling command of the device method, user can create device write request like:
+
+2. Create device write request
+   Url: https://{mapper-pod-ip}:{mapper-api-port}/api/v1/devicemethod/{deviceNamespace}/{deviceName}/{deviceMethodName}/{propertyName}/{data}
+   Response:
+   ```json
+   {
+    "statusCode": 200,
+    "Message": "Write data ** to device ** successfully."
+    }
+   ```
+
+To sum up, the user-defined device method to implement device writing is mainly divided into the following steps:
+
+1.Define the device method parameters in the CRD file of the device instance, then submit the CRD file to the KubeEdge cluster.
+
+2.Users need to implement the function of writing data in the device driver by themselves according to device CRD.
+
+3.Users can access the mapper api port to obtain all device methods of the device and obtain the device method calling command.
+
+4.User calls the device method command that obtained in the third step, and directly create a device write request to the mapper at the edge node, 
+or forwards the device write request in the cloud through components such as edgemesh.
+
+
 ## Plan
 
 In version 1.19
 - Implement the feature development of mapper that supports device writing according to the above plan.
 - After completing feature development, add some mapper examples that support device writing to the mappers-go repository.
+
+In version 1.20
+- Enhance security of device write requests.
 
