@@ -44,7 +44,7 @@ cloudCore:
       websocket:
         enable: true
       quic:
-        enable: false
+        enable: true
         maxIncomingStreams: "10000"
       https:
         enable: true
