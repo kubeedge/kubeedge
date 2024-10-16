@@ -979,7 +979,7 @@ var _ = Describe("Test EdgeApplication Controller", func() {
 				It("should create deployments for nodes selected by TargetNodeLabelSelector and apply overriders", func() {
 					newEdgeApp := &appsv1alpha1.EdgeApplication{
 						ObjectMeta: metav1.ObjectMeta{
-							Name:      "edgeapp" + randomize,
+							Name:      "edgeapp" +randomize,
 							Namespace: "default",
 						},
 						Spec: appsv1alpha1.EdgeApplicationSpec{
