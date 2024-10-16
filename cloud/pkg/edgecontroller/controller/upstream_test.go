@@ -1,3 +1,19 @@
+/*
+Copyright 2024 The KubeEdge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package controller
 
 import (
@@ -35,25 +51,25 @@ func TestMain(m *testing.M) {
 }
 
 var Events = []*corev1.Event{
-	&corev1.Event{
+	{
 		TypeMeta:   metav1.TypeMeta{Kind: "Event", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: "InsertEvent", Namespace: ""},
 		Reason:     "insert",
 		Message:    "Insert from BIT-CCS group to Kubeedge team",
 	},
-	&corev1.Event{
+	{
 		TypeMeta:   metav1.TypeMeta{Kind: "Event", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: "UpdateEvent", Namespace: ""},
 		Reason:     "update",
 		Message:    "Update from BIT-CCS group to Kubeedge team",
 	},
-	&corev1.Event{
+	{
 		TypeMeta:   metav1.TypeMeta{Kind: "Event", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: "PatchEvent", Namespace: ""},
 		Reason:     "insert",
 		Message:    "Preparation: Insert from BIT-CCS group to Kubeedge team",
 	},
-	&corev1.Event{
+	{
 		TypeMeta:   metav1.TypeMeta{Kind: "Event", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: "PatchEvent", Namespace: ""},
 		Reason:     "patch",
@@ -62,7 +78,6 @@ var Events = []*corev1.Event{
 }
 
 func TestEventReport(t *testing.T) {
-
 	var evtInfo any
 	for _, evt := range Events {
 		if evt.Reason == "patch" {
@@ -94,5 +109,4 @@ func TestEventReport(t *testing.T) {
 			t.Errorf("Event name mismatch, expected %s, got %s", evt.Name, result.Name)
 		}
 	}
-
 }
