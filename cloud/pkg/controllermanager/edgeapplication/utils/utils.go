@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 
+	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/errors"
@@ -32,8 +33,34 @@ type TemplateInfo struct {
 	Template *unstructured.Unstructured
 }
 
+func IsNodeSelected(edgeapp appsv1alpha1.EdgeApplication, node core.Node) bool {
+	for _, selector := range edgeapp.Spec.WorkloadScope.TargetNodeLabels {
+		if selector.LabelSelector.MatchLabels != nil {
+			selected := true
+			// Check if all labels in the selector are matched by the node's labels
+			for key, value := range selector.LabelSelector.MatchLabels {
+				if _, ok := node.Labels[key]; !ok {
+					selected = false
+					break
+				}
+				if node.Labels[key] != value {
+					selected = false
+					break
+				}
+			}
+			// If this node is selected by the edgeapplication, no need to check other selectors
+			if selected {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func GetAllOverriders(edgeApp *appsv1alpha1.EdgeApplication) []overridemanager.OverriderInfo {
-	infos := make([]overridemanager.OverriderInfo, 0, len(edgeApp.Spec.WorkloadScope.TargetNodeGroups))
+	infos := make([]overridemanager.OverriderInfo, 0)
+
+	// Handle overriders from TargetNodeGroups
 	for index := range edgeApp.Spec.WorkloadScope.TargetNodeGroups {
 		copied := edgeApp.Spec.WorkloadScope.TargetNodeGroups[index].Overriders.DeepCopy()
 		infos = append(infos, overridemanager.OverriderInfo{
@@ -41,9 +68,20 @@ func GetAllOverriders(edgeApp *appsv1alpha1.EdgeApplication) []overridemanager.O
 			Overriders:      copied,
 		})
 	}
+
+	// Handle overriders from TargetNodeLabels
+	for index := range edgeApp.Spec.WorkloadScope.TargetNodeLabels {
+		labelSelector := edgeApp.Spec.WorkloadScope.TargetNodeLabels[index].LabelSelector
+		copied := edgeApp.Spec.WorkloadScope.TargetNodeLabels[index].Overriders.DeepCopy()
+
+		infos = append(infos, overridemanager.OverriderInfo{
+			TargetNodeLabelSelector: labelSelector,
+			Overriders:              copied,
+		})
+	}
+
 	return infos
 }
-
 func GetContainedResourceInfos(edgeApp *appsv1alpha1.EdgeApplication, yamlSerializer runtime.Serializer) ([]ResourceInfo, error) {
 	tmplInfos, err := GetTemplatesInfosOfEdgeApp(edgeApp, yamlSerializer)
 	if err != nil {
