@@ -16,7 +16,7 @@
 
 KUBEEDGE_ROOT=$PWD
 
-source "${KUBEEDGE_ROOT}/hack/lib/golang.sh"
+source "${KUBEEDGE_ROOT}/hack/lib/init.sh"
 source "${KUBEEDGE_ROOT}/hack/lib/install.sh"
 source "${KUBEEDGE_ROOT}/tests/scripts/keadm_common_e2e.sh"
 

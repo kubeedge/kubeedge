@@ -23,7 +23,7 @@ COPY . /go/src/github.com/kubeedge/kubeedge
 RUN cp /go/src/github.com/kubeedge/kubeedge/build/conformance/kubernetes/kube_node_conformance_test.go \
     /go/src/github.com/kubeedge/kubeedge/tests/e2e/
 
-RUN cd /go/src/github.com/kubeedge/kubeedge && go mod vendor
+RUN cd /go/src/github.com/kubeedge/kubeedge && GOWORK=off go mod vendor
 
 RUN CGO_ENABLED=0 GO111MODULE=off ginkgo build -ldflags "-w -s -extldflags -static" -r /go/src/github.com/kubeedge/kubeedge/tests/e2e
 

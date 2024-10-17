@@ -42,7 +42,7 @@ for repo in $(kubeedge::util::list_staging_repos); do
   # go mod tidy sometimes removes lines that build seems to need. See also https://github.com/golang/go/issues/31248.
   # We would have to always execute go mod vendor after go mod tidy to ensure correctness.
   echo "running 'go mod vendor' for ${repo}"
-  go mod vendor
+  GOWORK=off go mod vendor
 
   # vendor/ is not supposed to exist in staging repos, remove it.
   rm -rf vendor/
@@ -55,7 +55,7 @@ echo "running 'go mod tidy' for repo root"
 go mod tidy
 
 echo "running 'go mod vendor' for repo root"
-go mod vendor
+GOWORK=off go mod vendor
 
 # create a symlink in vendor directory pointing to the staging components.
 # This lets other packages and tools use the local staging components as if they were vendored.
