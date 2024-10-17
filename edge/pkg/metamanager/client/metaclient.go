@@ -21,6 +21,7 @@ type CoreInterface interface {
 	PodsGetter
 	PodStatusGetter
 	ConfigMapsGetter
+	EventsGetter
 	NodesGetter
 	NodeStatusGetter
 	SecretsGetter
@@ -43,6 +44,10 @@ func (m *metaClient) Pods(namespace string) PodsInterface {
 
 func (m *metaClient) ConfigMaps(namespace string) ConfigMapsInterface {
 	return newConfigMaps(namespace, m.send)
+}
+
+func (m *metaClient) Events(namespace string) EventsInterface {
+	return newEvents(namespace, m.send)
 }
 
 func (m *metaClient) Nodes(namespace string) NodesInterface {
