@@ -245,6 +245,10 @@ func GetDeviceFromGrpc(device *dmiapi.Device, commonModel *common.DeviceModel) (
 		Model:        device.GetSpec().GetDeviceModelReference(),
 		Twins:        buildTwinsFromGrpc(device),
 		Properties:   buildPropertiesFromGrpc(device),
+		Status: common.DeviceStatus{
+			ReportToCloud: device.Status.GetReportToCloud(),
+			ReportCycle:   device.Status.GetReportCycle(),
+		},
 	}
 	// copy Properties to twin
 	propertiesMap := make(map[string]common.DeviceProperty)

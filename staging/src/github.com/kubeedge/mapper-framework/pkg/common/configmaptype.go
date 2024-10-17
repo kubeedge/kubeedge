@@ -28,6 +28,7 @@ type DeviceInstance struct {
 	Model        string           `json:"model,omitempty"`
 	Twins        []Twin           `json:"twins,omitempty"`
 	Properties   []DeviceProperty `json:"properties,omitempty"`
+	Status       DeviceStatus     `json:"status,omitempty"`
 }
 
 // DeviceModel is structure to store detailed information about the devicemodel in the mapper.
@@ -59,6 +60,13 @@ type ProtocolConfig struct {
 	// +optional
 	// +kubebuilder:validation:XPreserveUnknownFields
 	ConfigData json.RawMessage `json:"configData,omitempty"`
+}
+
+// DeviceStatus is structure to store parameters for device status reporting.
+type DeviceStatus struct {
+	// whether be reported to the cloud
+	ReportToCloud bool  `json:"reportToCloud,omitempty"`
+	ReportCycle   int64 `json:"reportCycle,omitempty"`
 }
 
 // DeviceProperty is structure to store propertyVisitor in device.
