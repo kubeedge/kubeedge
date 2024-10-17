@@ -28,6 +28,7 @@ type DeviceInstance struct {
 	Model        string           `json:"model,omitempty"`
 	Twins        []Twin           `json:"twins,omitempty"`
 	Properties   []DeviceProperty `json:"properties,omitempty"`
+	Methods      []DeviceMethod   `json:"methods,omitempty"`
 }
 
 // DeviceModel is structure to store detailed information about the devicemodel in the mapper.
@@ -59,6 +60,18 @@ type ProtocolConfig struct {
 	// +optional
 	// +kubebuilder:validation:XPreserveUnknownFields
 	ConfigData json.RawMessage `json:"configData,omitempty"`
+}
+
+// DeviceMethod is structure to store method in device.
+type DeviceMethod struct {
+	// Required: The device method name to be accessed. It must be unique.
+	Name string `json:"name,omitempty"`
+	// Define the description of device method.
+	// +optional
+	Description string `json:"description,omitempty"`
+	// PropertyNames are list of device properties that device methods can control.
+	// Required: A device method can control multiple device properties.
+	PropertyNames []string `json:"propertyNames,omitempty"`
 }
 
 // DeviceProperty is structure to store propertyVisitor in device.

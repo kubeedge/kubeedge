@@ -39,6 +39,10 @@ type DeviceSpec struct {
 	Properties []DeviceProperty `json:"properties,omitempty"`
 	// Required: The protocol configuration used to connect to the device.
 	Protocol ProtocolConfig `json:"protocol,omitempty"`
+	// List of methods of device.
+	// methods list item must be unique by method.Name.
+	// +optional
+	Methods []DeviceMethod `json:"methods,omitempty"`
 }
 
 // DeviceStatus reports the device state and the desired/reported values of twin attributes.
@@ -93,6 +97,18 @@ type ProtocolConfig struct {
 	// +optional
 	// +kubebuilder:validation:XPreserveUnknownFields
 	ConfigData *CustomizedValue `json:"configData,omitempty"`
+}
+
+// DeviceMethod describes the specifics all the methods of the device.
+type DeviceMethod struct {
+	// Required: The device method name to be accessed. It must be unique.
+	Name string `json:"name,omitempty"`
+	// Define the description of device method.
+	// +optional
+	Description string `json:"description,omitempty"`
+	// PropertyNames are list of device properties that device methods can control.
+	// Required: A device method can control multiple device properties.
+	PropertyNames []string `json:"propertyNames,omitempty"`
 }
 
 // DeviceProperty describes the specifics all the properties of the device.
