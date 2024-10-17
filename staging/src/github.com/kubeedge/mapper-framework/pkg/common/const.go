@@ -34,6 +34,7 @@ const (
 const (
 	PushMethodHTTP = "http"
 	PushMethodMQTT = "mqtt"
+	PushMethodOTEL = "otel"
 )
 
 const DefaultCollectCycle = time.Second
