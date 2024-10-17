@@ -19,6 +19,7 @@ package ctl
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/confirm"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/get"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/restart"
 )
@@ -37,5 +38,6 @@ func NewCtl() *cobra.Command {
 
 	cmd.AddCommand(get.NewEdgeGet())
 	cmd.AddCommand(restart.NewEdgeRestart())
+	cmd.AddCommand(confirm.NewEdgeConfirm())
 	return cmd
 }
