@@ -120,7 +120,22 @@ func (dc *DownstreamController) syncConfigMap() {
 				continue // continue to next select
 			}
 
-			nodes := dc.lc.ConfigMapNodes(configMap.Namespace, configMap.Name)
+			var nodes []string
+			if configMap.Name == "kube-root-ca.crt" {
+				set := labels.Set{commonconstants.EdgeNodeRoleKey: commonconstants.EdgeNodeRoleValue}
+				selector := labels.SelectorFromSet(set)
+				edgeNodes, err := dc.kubeClient.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{LabelSelector: selector.String()})
+				if err != nil {
+					klog.Errorf("failed to get edge nodes with err:%v", err)
+					continue
+				}
+				nodes = make([]string, 0, len(edgeNodes.Items))
+				for _, node := range edgeNodes.Items {
+					nodes = append(nodes, node.Name)
+				}
+			} else {
+				nodes = dc.lc.ConfigMapNodes(configMap.Namespace, configMap.Name)
+			}
 			if e.Type == watch.Deleted {
 				dc.lc.DeleteConfigMap(configMap.Namespace, configMap.Name)
 			}
