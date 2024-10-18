@@ -57,6 +57,12 @@ type DeviceStatus struct {
 	// Optional: The last time the device was online.
 	// +optional
 	LastOnlineTime string `json:"lastOnlineTime,omitempty"`
+	// Optional: whether be reported to the cloud
+	// +optional
+	ReportToCloud bool `json:"reportToCloud,omitempty"`
+	// Optional: Define how frequent mapper will report the device status.
+	// +optional
+	ReportCycle int64 `json:"reportCycle,omitempty"`
 }
 
 // Twin provides a logical representation of control properties (writable properties in the

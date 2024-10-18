@@ -367,6 +367,11 @@ message ReportDeviceStatesRequest {
 message DeviceStatus {
     // the device twins of the device.
     repeated Twin twins = 1;
+    // whether be reported to the cloud
+    bool ReportToCloud = 2;
+    // Define how frequent mapper will report the value.
+    int64 reportCycle = 3;
+
 }
 
 // Twin is the digital model of a device. It contains a series of properties.
