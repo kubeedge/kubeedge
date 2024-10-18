@@ -179,19 +179,29 @@ func (ls *MetaServer) BuildBasicHandler() http.Handler {
 		if reqInfo.IsResourceRequest {
 			switch {
 			case reqInfo.Verb == "get":
-				ls.Factory.Get().ServeHTTP(w, req)
+				if reqInfo.Subresource == "log" {
+					ls.Factory.Logs(reqInfo).ServeHTTP(w, req)
+				} else {
+					ls.Factory.Get().ServeHTTP(w, req)
+				}
 			case reqInfo.Verb == "list", reqInfo.Verb == "watch":
 				ls.Factory.List().ServeHTTP(w, req)
 			case reqInfo.Verb == "create":
 				if reqInfo.Name == "restart" {
 					ls.Factory.Restart(reqInfo.Namespace).ServeHTTP(w, req)
+				} else if reqInfo.Subresource == "exec" {
+					ls.Factory.Exec(reqInfo).ServeHTTP(w, req)
 				} else {
 					ls.Factory.Create(reqInfo).ServeHTTP(w, req)
 				}
 			case reqInfo.Verb == "delete":
 				ls.Factory.Delete().ServeHTTP(w, req)
 			case reqInfo.Verb == "update":
-				ls.Factory.Update(reqInfo).ServeHTTP(w, req)
+				if reqInfo.Resource == "devices" {
+					ls.Factory.UpdateEdgeDevice(reqInfo).ServeHTTP(w, req)
+				} else {
+					ls.Factory.Update(reqInfo).ServeHTTP(w, req)
+				}
 			case reqInfo.Verb == "patch":
 				ls.Factory.Patch(reqInfo).ServeHTTP(w, req)
 			default:
