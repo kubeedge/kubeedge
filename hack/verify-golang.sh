@@ -22,6 +22,6 @@ set -o pipefail
 
 KUBEEDGE_ROOT=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/..
 
-source "${KUBEEDGE_ROOT}/hack/lib/golang.sh"
+source "${KUBEEDGE_ROOT}/hack/lib/init.sh"
 
 kubeedge::golang::verify_golang_version
