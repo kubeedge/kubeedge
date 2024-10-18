@@ -2,6 +2,7 @@ package test
 
 import (
 	"encoding/json"
+	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
 	"io"
 	"net/http"
 	"time"
@@ -219,12 +220,33 @@ func (tm *testManager) configmapHandler(w http.ResponseWriter, req *http.Request
 }
 
 func (tm *testManager) Start() {
-	http.HandleFunc("/pods", tm.podHandler)
-	http.HandleFunc("/configmap", tm.configmapHandler)
-	http.HandleFunc("/secret", tm.secretHandler)
-	http.HandleFunc("/devices", tm.deviceHandler)
-	err := http.ListenAndServe(":12345", nil)
+	//http.HandleFunc("/pods", tm.podHandler)
+	//http.HandleFunc("/configmap", tm.configmapHandler)
+	//http.HandleFunc("/secret", tm.secretHandler)
+	//http.HandleFunc("/devices", tm.deviceHandler)
+
+	handler := http.NewServeMux()
+	handler.HandleFunc("/pods", tm.podHandler)
+	handler.HandleFunc("/configmap", tm.configmapHandler)
+	handler.HandleFunc("/secret", tm.secretHandler)
+	handler.HandleFunc("/devices", tm.deviceHandler)
+
+	srv := &http.Server{
+		Addr:              ":12345",
+		Handler:           handler,
+		ReadHeaderTimeout: 100 * time.Millisecond,
+		WriteTimeout:      100 * time.Millisecond,
+	}
+
+	err := srv.ListenAndServe()
 	if err != nil {
 		klog.Errorf("ListenAndServe: %v", err)
 	}
+
+	common.Infof("!!!!!!!!!!!!!!!!!!! after listenandserver")
+
+	//err := http.ListenAndServe(":12345", nil)
+	//if err != nil {
+	//	klog.Errorf("ListenAndServe: %v", err)
+	//}
 }
