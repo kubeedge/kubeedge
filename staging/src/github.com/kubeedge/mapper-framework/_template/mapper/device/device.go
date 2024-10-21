@@ -424,6 +424,71 @@ func (d *DevPanel) RemoveDevice(deviceID string) error {
 	return nil
 }
 
+// WriteDevice write value to the device
+func (d *DevPanel) WriteDevice(deviceMethodName, deviceID, propertyName, data string) error {
+	var dataType string
+	var deviceproperty common.DeviceProperty
+	d.serviceMutex.Lock()
+	defer d.serviceMutex.Unlock()
+	dev, ok := d.devices[deviceID]
+	if !ok {
+		return fmt.Errorf("not found device %s", deviceID)
+	}
+
+	deviceMethodMap := make(map[string][]string)
+
+	// get all deviceMethod of the device
+	for _, method := range dev.Instance.Methods {
+		deviceMethodMap[method.Name] = append(deviceMethodMap[method.Name], method.PropertyNames...)
+	}
+	// Determine whether the called device method exists
+	propertyNames, ok := deviceMethodMap[deviceMethodName]
+	if !ok {
+		return fmt.Errorf("deviceMethod name %s does not exist in device instance", deviceMethodName)
+	}
+	// Determine whether the device property to be written is in the list defined by the device method
+	flag := false
+	for _, name := range propertyNames {
+		if name == propertyName {
+			flag = true
+			break
+		}
+	}
+	if !flag {
+		return fmt.Errorf("deviceProperty %s to be written is not in the list defined by devicemethod", propertyName)
+	}
+	// Determine whether the device property to be written is in the device instance
+	flag = false
+	for _, property := range dev.Instance.Properties {
+		if property.PropertyName != propertyName {
+			continue
+		}
+		dataType = property.PProperty.DataType
+		deviceproperty = property
+		flag = true
+		break
+	}
+	if !flag {
+		return fmt.Errorf("can't find device propertyName %s in device instance", propertyName)
+	}
+	klog.V(2).Infof("start writing values %v to device %s property %s", data, deviceID, propertyName)
+	writeData, err := common.Convert(strings.ToLower(dataType), data)
+	if err != nil {
+		return fmt.Errorf("conversion data format failed, datatype is %s, data is %s", strings.ToLower(dataType), data)
+	}
+	var visitorConfig driver.VisitorConfig
+	err = json.Unmarshal(deviceproperty.Visitors, &visitorConfig)
+	if err != nil {
+		return err
+	}
+
+	err = dev.CustomizedClient.DeviceDataWrite(&visitorConfig, deviceMethodName, propertyName, writeData)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // stopDev stop device and goroutine
 func (d *DevPanel) stopDev(dev *driver.CustomizedDev, id string) error {
 	cancelFunc, ok := d.deviceMuxs[id]
@@ -495,4 +560,29 @@ func (d *DevPanel) GetTwinResult(deviceID string, twinName string) (string, stri
 		dataType = twin.Property.PProperty.DataType
 	}
 	return res, dataType, nil
+}
+
+// GetDeviceMethod get method and property dataType of device
+func (d *DevPanel) GetDeviceMethod(deviceID string) (map[string][]string, map[string]string, error) {
+	klog.V(2).Infof("starting get method and property dataType of device %s", deviceID)
+	d.serviceMutex.Lock()
+	defer d.serviceMutex.Unlock()
+	found, ok := d.devices[deviceID]
+	if !ok || found == nil {
+		return nil, nil, fmt.Errorf("device %s not found", deviceID)
+	}
+
+	deviceMethodMap := make(map[string][]string)
+	propertyTypeMap := make(map[string]string)
+
+	// get all deviceMethod of the device
+	for _, method := range found.Instance.Methods {
+		deviceMethodMap[method.Name] = append(deviceMethodMap[method.Name], method.PropertyNames...)
+	}
+
+	// get all deviceProperty type of the device
+	for _, property := range found.Instance.Properties {
+		propertyTypeMap[property.Name] = strings.ToLower(property.PProperty.DataType) // The original data type is an uppercase form such as INT FLOAT and needs to be converted.
+	}
+	return deviceMethodMap, propertyTypeMap, nil
 }

@@ -250,7 +250,10 @@ type EdgeController struct {
 
 // EdgeControllerBuffer indicates the EdgeController buffer
 type EdgeControllerBuffer struct {
-	// UpdatePodStatus indicates the buffer of pod status
+	// ProcessEvent indicates the buffer of process event
+	// default 1024
+	ProcessEvent int32 `json:"processEvent,omitempty"`
+	// UpdatePodStatus indicates the buffer of update pod status
 	// default 1024
 	UpdatePodStatus int32 `json:"updatePodStatus,omitempty"`
 	// UpdateNodeStatus indicates the buffer of update node status
@@ -323,6 +326,9 @@ type EdgeControllerBuffer struct {
 
 // EdgeControllerLoad indicates the EdgeController load
 type EdgeControllerLoad struct {
+	// ProcessEventWorkers indicates the load of process event workers
+	// default 4
+	ProcessEventWorkers int32 `json:"processEventWorkers,omitempty"`
 	// UpdatePodStatusWorkers indicates the load of update pod status workers
 	// default 1
 	UpdatePodStatusWorkers int32 `json:"updatePodStatusWorkers,omitempty"`

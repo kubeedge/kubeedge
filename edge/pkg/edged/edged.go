@@ -313,8 +313,12 @@ func MakeKubeClientBridge(kubeletDeps *kubelet.Dependencies) {
 	client := kubebridge.NewSimpleClientset(metaclient.New())
 
 	kubeletDeps.KubeClient = client
-	kubeletDeps.EventClient = nil
 	kubeletDeps.HeartbeatClient = client
+	if edgedconfig.Config.ReportEvent {
+		kubeletDeps.EventClient = client.CoreV1()
+	} else {
+		kubeletDeps.EventClient = nil
+	}
 }
 
 func (e *edged) handlePod(op string, content []byte, updatesChan chan<- interface{}) (err error) {

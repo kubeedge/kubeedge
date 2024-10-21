@@ -209,6 +209,25 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 		}
 		res = append(res, cur)
 	}
+	return res
+}
+
+// buildMethodsFromGrpc parse device method from grpc
+func buildMethodsFromGrpc(device *dmiapi.Device) []common.DeviceMethod {
+	if len(device.Spec.Methods) == 0 {
+		return nil
+	}
+	res := make([]common.DeviceMethod, 0, len(device.Spec.Properties))
+	klog.V(3).Info("Start converting devicemethod information from grpc")
+	for _, method := range device.Spec.Methods {
+		// Convert device method field
+		cur := common.DeviceMethod{
+			Name:          method.GetName(),
+			Description:   method.GetDescription(),
+			PropertyNames: method.GetPropertyNames(),
+		}
+		res = append(res, cur)
+	}
 
 	return res
 }
@@ -252,6 +271,7 @@ func GetDeviceFromGrpc(device *dmiapi.Device, commonModel *common.DeviceModel) (
 		Model:        device.GetSpec().GetDeviceModelReference(),
 		Twins:        buildTwinsFromGrpc(device),
 		Properties:   buildPropertiesFromGrpc(device),
+		Methods:      buildMethodsFromGrpc(device),
 	}
 	// copy Properties to twin
 	propertiesMap := make(map[string]common.DeviceProperty)
