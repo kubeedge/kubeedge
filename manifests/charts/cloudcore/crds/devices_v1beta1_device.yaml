@@ -789,6 +789,14 @@ spec:
               lastOnlineTime:
                 description: 'Optional: The last time the device was online.'
                 type: string
+              reportCycle:
+                description: 'Optional: Define how frequent mapper will report the
+                  device status.'
+                format: int64
+                type: integer
+              reportToCloud:
+                description: 'Optional: whether be reported to the cloud'
+                type: boolean
               state:
                 description: 'Optional: The state of the device.'
                 type: string

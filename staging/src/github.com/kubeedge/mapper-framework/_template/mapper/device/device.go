@@ -109,6 +109,16 @@ func (d *DevPanel) start(ctx context.Context, dev *driver.CustomizedDev) {
 
 // dataHandler initialize the timer to handle data plane and devicetwin.
 func dataHandler(ctx context.Context, dev *driver.CustomizedDev) {
+	// handle device status report
+	getStates := &DeviceStates{
+		Client:          dev.CustomizedClient,
+		DeviceName:      dev.Instance.Name,
+		DeviceNamespace: dev.Instance.Namespace,
+		ReportToCloud:   dev.Instance.Status.ReportToCloud,
+		ReportCycle:     time.Millisecond * time.Duration(dev.Instance.Status.ReportCycle),
+	}
+	go getStates.Run(ctx)
+	// handle device twin report
 	for _, twin := range dev.Instance.Twins {
 		twin.Property.PProperty.DataType = strings.ToLower(twin.Property.PProperty.DataType)
 		var visitorConfig driver.VisitorConfig
@@ -150,11 +160,6 @@ func dataHandler(ctx context.Context, dev *driver.CustomizedDev) {
 			ReportToCloud:   twin.Property.ReportToCloud,
 		}
 		go twinData.Run(ctx)
-
-		//handle status
-		getStates := &DeviceStates{Client: dev.CustomizedClient, DeviceName: dev.Instance.Name,
-			DeviceNamespace: dev.Instance.Namespace}
-		go getStates.Run(ctx)
 
 		dataModel := common.NewDataModel(dev.Instance.Name, twin.Property.PropertyName, dev.Instance.Namespace, common.WithType(twin.ObservedDesired.Metadata.Type))
 		// handle push method
