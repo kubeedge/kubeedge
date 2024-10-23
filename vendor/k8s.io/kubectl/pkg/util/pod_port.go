@@ -1,5 +1,5 @@
 /*
-Copyright 2024 The KubeEdge Authors.
+Copyright 2018 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,23 +14,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package get
+package util
 
-import "github.com/spf13/cobra"
+import (
+	"fmt"
 
-var (
-	edgeGetShortDescription = `Get resources in edge node`
+	"k8s.io/api/core/v1"
 )
 
-// NewEdgeGet returns KubeEdge edge resources get command.
-func NewEdgeGet() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "get",
-		Short: edgeGetShortDescription,
-		Long:  edgeGetShortDescription,
+// LookupContainerPortNumberByName find containerPort number by its named port name
+func LookupContainerPortNumberByName(pod v1.Pod, name string) (int32, error) {
+	for _, ctr := range pod.Spec.Containers {
+		for _, ctrportspec := range ctr.Ports {
+			if ctrportspec.Name == name {
+				return ctrportspec.ContainerPort, nil
+			}
+		}
 	}
 
-	cmd.AddCommand(NewEdgePodGet())
-	cmd.AddCommand(NewEdgeDeviceGet())
-	return cmd
+	return int32(-1), fmt.Errorf("Pod '%s' does not have a named port '%s'", pod.Name, name)
 }
