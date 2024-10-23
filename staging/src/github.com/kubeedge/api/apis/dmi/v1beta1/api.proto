@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// To regenerate api.pb.go run hack/generate-dmi.sh
+// To regenerate api.pb.go run hack/generate-dmi-proto.sh
 syntax = "proto3";
 
 //option go_package = "path;name";
@@ -240,6 +240,7 @@ message CustomizedValue {
 message PushMethod {
     PushMethodHTTP http = 1;
     PushMethodMQTT mqtt = 2;
+    PushMethodOTEL otel = 4;
     DBMethod dbMethod = 3;
 }
 
@@ -259,6 +260,11 @@ message PushMethodMQTT {
     int32 qos = 3;
     // Is the message retained
     bool retained = 4;
+}
+
+message PushMethodOTEL {
+    // the target endpoint URL the Exporter will connect to, like https://localhost:4318/v1/metrics
+	string endpointURL = 1;
 }
 
 message DBMethod{
@@ -331,6 +337,15 @@ message MySQLClientConfig{
     string database = 2;
     //user name
     string userName = 3;
+}
+
+message DBMethodOTEL{
+    OTELExporterConfig otelExporterConfig = 1;
+}
+
+message OTELExporterConfig{
+    //the target endpoint URL the Exporter will connect to, like https://localhost:4318/v1/metrics
+    string endpointURL = 1;
 }
 
 // MapperInfo is the information of mapper.
