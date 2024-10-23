@@ -13,9 +13,9 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
-	"github.com/kubeedge/viaduct/pkg/api"
-	wsclient "github.com/kubeedge/viaduct/pkg/client"
-	"github.com/kubeedge/viaduct/pkg/conn"
+	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/api"
+	wsclient "github.com/kubeedge/kubeedge/pkg/viaduct/pkg/client"
+	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/conn"
 )
 
 const (

@@ -39,7 +39,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
 	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
-	"github.com/kubeedge/viaduct/pkg/conn"
+	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/conn"
 )
 
 var sendRetryInterval = 5 * time.Second

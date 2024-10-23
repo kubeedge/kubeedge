@@ -32,7 +32,7 @@ import (
 
 	beehivemodel "github.com/kubeedge/beehive/pkg/core/model"
 	cloudhubmodel "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
-	"github.com/kubeedge/viaduct/pkg/conn"
+	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/conn"
 )
 
 // Authorizer provides authorization enhancements for CloudHub
