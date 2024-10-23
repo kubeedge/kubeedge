@@ -18,11 +18,14 @@ package otel
 
 import (
 	"context"
+	"fmt"
 	"time"
+
+	"go.opentelemetry.io/otel/metric"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/Template/driver"
 	"github.com/kubeedge/mapper-framework/pkg/common"
-	"k8s.io/klog/v2"
 )
 
 const meterName = "github.com/kubeedge/Template/data/dbmethod/otel"
@@ -52,21 +55,22 @@ func DataHandler(ctx context.Context, twin *common.Twin, client *driver.Customiz
 
 	meter := provider.Meter(meterName)
 
-	// gauge, err := meter.Float64ObservableGauge() // otel metric api 1.0+
-	gauge, err := meter.AsyncFloat64().Gauge(dataModel.PropertyName) // otel metric api 0.32
+	gauge, err := meter.Float64ObservableGauge(dataModel.PropertyName)
 	if err != nil {
 		klog.Errorf("create metric fail: %v", err)
 		return
 	}
 
-	_, err = meter.RegisterCallback(func(_ context.Context, o api.Observer) error {
+	_, err = meter.RegisterCallback(func(_ context.Context, o metric.Observer) error {
 		data, err := client.GetDeviceData(visitorConfig)
 		if err != nil {
-			klog.Errorf("get device data fail: %v", err)
-			return err
+			return fmt.Errorf("get device data fail: %v", err)
 		}
 
 		o.ObserveFloat64(gauge, data.(float64))
 		return nil
 	}, gauge)
+	if err != nil {
+		klog.Errorf("register callback fail: %v", err)
+	}
 }
