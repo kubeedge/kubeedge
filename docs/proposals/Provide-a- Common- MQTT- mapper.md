@@ -194,6 +194,6 @@ In version 1.18
 
 - In drivertype.go, add the corresponding data fields for the MQTT protocol, such as topic, message, qos, etc;
 
-- In driver.go, improve the necessary functions, add the writing of functions for parsing different serialized messages for the MQTT protocol;
+- In driver.go, improve the necessary functions(InitDevice, GetDeviceData , etc), add the writing of functions for parsing different serialized messages for the MQTT protocol;
 
 - In the resource folder, add Device Model and Device Instance files for MQTT.
