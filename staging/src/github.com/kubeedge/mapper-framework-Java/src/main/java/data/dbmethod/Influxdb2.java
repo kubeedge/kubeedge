@@ -12,9 +12,9 @@ import driver.CustomizedClient;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import model.VisitorConfig;
-import model.common.DataModel;
-import model.common.DeviceInstance;
+import driver.VisitorConfig;
+import model.DataModel;
+import model.DeviceInstance;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -27,7 +27,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import static data.DataConverter.convertToString;
-import static model.common.Const.defaultReportCycle;
+import static model.Const.defaultReportCycle;
 
 @Slf4j
 public class Influxdb2 {
@@ -100,8 +100,6 @@ public class Influxdb2 {
         private Influxdb2DataConfig influxdb2DataConfig;
         public InfluxDBClient initDbClient(){
             String usrtoken = System.getenv("TOKEN");
-
-            // 创建 InfluxDB 客户端
             InfluxDBClient client = InfluxDBClientFactory.create(influxdb2ClientConfig.getUrl(), usrtoken.toCharArray());
             return client;
         }
@@ -115,7 +113,7 @@ public class Influxdb2 {
             Point point = Point.measurement(influxdb2DataConfig.getMeasurement())
                     .addTags(influxdb2DataConfig.getTag())
                     .addField(influxdb2DataConfig.getFieldKey(), data.getValue())
-                    .time(Instant.now(), WritePrecision.NS); // 使用纳秒精度
+                    .time(Instant.now(), WritePrecision.NS);
             // Write point immediately
             try {
                 writeApi.writePoint(influxdb2ClientConfig.getOrg(), influxdb2ClientConfig.getBucket(), point);

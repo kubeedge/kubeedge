@@ -1,6 +1,6 @@
 package service;
 
-import model.VisitorConfig;
+import driver.VisitorConfig;
 
 public interface CustomizedClient_I {
     void initDevice();

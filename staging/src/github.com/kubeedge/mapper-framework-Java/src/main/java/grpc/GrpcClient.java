@@ -12,11 +12,11 @@ import io.netty.channel.epoll.EpollDomainSocketChannel;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.unix.DomainSocketAddress;
 import lombok.extern.slf4j.Slf4j;
-import model.common.Config;
+import model.Config;
 
 import java.util.concurrent.TimeUnit;
 
-import static model.common.Const.devStOK;
+import static model.Const.devStOK;
 
 @Slf4j
 public class GrpcClient {

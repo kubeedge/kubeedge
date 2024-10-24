@@ -9,8 +9,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import model.CustomizedDev;
-import model.common.DataModel;
-import model.common.HttpResponse;
+import model.DataModel;
+import model.HttpResponse;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -21,7 +21,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static model.common.Const.apiVersion;
+import static model.Const.apiVersion;
 @Slf4j
 public class HTTPServer {
 
@@ -47,7 +47,7 @@ public class HTTPServer {
         }
     }
     public static class DeviceReadHandler implements HttpHandler{
-        // handle /api/v1/device/{nameSpace}/{name}/{property} response
+        // handle /api/v1/device/{nameSpace}/{name}/{property} request
         private DevPanel devPanel;
         public DeviceReadHandler(DevPanel devPanel){
             this.devPanel = devPanel;
@@ -93,7 +93,7 @@ public class HTTPServer {
         }
     }
     public static class MetaGetModelHandler implements HttpHandler{
-        // handle /api/v1/meta/model/{nameSpace}/{name} response
+        // handle /api/v1/meta/model/{nameSpace}/{name} request
         private DevPanel devPanel;
         public MetaGetModelHandler(DevPanel devPanel){
             this.devPanel = devPanel;

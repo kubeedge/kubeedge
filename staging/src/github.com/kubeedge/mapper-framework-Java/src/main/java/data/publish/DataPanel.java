@@ -1,6 +1,6 @@
 package data.publish;
 
-import model.common.DataModel;
+import model.DataModel;
 
 public class DataPanel {
     public void initPushMethod(){};

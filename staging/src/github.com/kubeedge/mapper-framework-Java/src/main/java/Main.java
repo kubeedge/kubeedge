@@ -8,8 +8,8 @@ import grpc.GrpcServer;
 import http.HTTPServer;
 import lombok.extern.slf4j.Slf4j;
 import model.CustomizedDev;
-import model.common.Config;
-import model.common.DeviceModel;
+import model.Config;
+import model.DeviceModel;
 
 import java.io.IOException;
 import java.util.List;
@@ -23,6 +23,7 @@ public class Main {
         Config cfg = ConfigParser.parse();
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new ProtobufModule());
+//        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
 
         log.info("Config: {}",objectMapper.writeValueAsString(cfg));
         log.info("Mapper will register to EdgeCore");
@@ -37,11 +38,11 @@ public class Main {
         // List Devices and models received from EdgeCore
         log.info("Api Devices are listed as follows:");
         for (Api.Device device: deviceList){
-            log.info("{}",device);
+            log.info("{}",objectMapper.writeValueAsString(device));
         }
         log.info("Api Models are listed as follows:");
         for (Api.DeviceModel model: deviceModelList){
-            log.info("{}",model);
+            log.info("{}",objectMapper.writeValueAsString(model));
         }
 
         // Init and start the devPanel
@@ -71,7 +72,7 @@ public class Main {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        }) ;
+        }).start();
 
         HTTPServer.RestServer httpServer = newRestServer(devPanel, cfg.getCommon().getHttpPort());
         new Thread(httpServer::startServer).start();

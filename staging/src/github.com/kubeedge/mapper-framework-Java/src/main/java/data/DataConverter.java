@@ -32,7 +32,6 @@ public class DataConverter {
                     return null;
             }
         }else{
-            // To Do 非google.prtobuf. 类型的转换还没写
             log.error("Can not get messageType: {}",messageTypeName);
         }
 

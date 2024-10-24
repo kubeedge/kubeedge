@@ -3,7 +3,6 @@ package model;
 import driver.CustomizedClient;
 import lombok.Getter;
 import lombok.Setter;
-import model.common.DeviceInstance;
 
 @Setter @Getter
 public class CustomizedDev {

@@ -11,8 +11,6 @@ import com.ghgande.j2mod.modbus.procimg.InputRegister;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import model.CustomizedProtocolConfig;
-import model.VisitorConfig;
 import service.CustomizedClient_I;
 
 import java.net.InetAddress;
@@ -21,11 +19,12 @@ import java.util.concurrent.locks.ReentrantLock;
 @Slf4j
 @Getter @Setter
 public class CustomizedClient implements CustomizedClient_I {
-    private ReentrantLock deviceMutex =new ReentrantLock();// ReentrantLock: 用于保护对共享资源的访问。
+    private ReentrantLock deviceMutex = new ReentrantLock();
     private CustomizedProtocolConfig protocolConfig;
     // TODO add some variables to help you better implement device drivers
     // Example: Modbus
     private ModbusTCPTransaction modbusTCPTransaction;
+
     public CustomizedClient(){}
 
     public CustomizedClient(CustomizedProtocolConfig protocolConfig){
@@ -38,7 +37,6 @@ public class CustomizedClient implements CustomizedClient_I {
         String port = address_port[1];
         InetAddress Address = null;
         try {
-//            log.info("Address is : {}",protocolConfig.getConfigData().getAddress());
             Address = InetAddress.getByName(addr);
         } catch (UnknownHostException e) {
             log.error("Unknown host: {}",protocolConfig.getConfigData().getAddress(),e);
@@ -107,6 +105,6 @@ public class CustomizedClient implements CustomizedClient_I {
 
     @Override
     public void stopDevice() {
-
+        // TODO: add stop operation
     }
 }

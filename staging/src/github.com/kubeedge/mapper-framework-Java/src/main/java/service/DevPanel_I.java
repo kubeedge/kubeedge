@@ -2,8 +2,8 @@ package service;
 
 import dmi.v1beta1.Api;
 import model.CustomizedDev;
-import model.common.DeviceInstance;
-import model.common.DeviceModel;
+import model.DeviceInstance;
+import model.DeviceModel;
 
 import java.io.IOException;
 import java.util.List;

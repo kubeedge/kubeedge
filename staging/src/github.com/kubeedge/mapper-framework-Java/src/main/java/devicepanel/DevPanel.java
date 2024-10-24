@@ -8,10 +8,9 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import model.CustomizedDev;
-import model.CustomizedProtocolConfig;
-import model.VisitorConfig;
-import model.common.DeviceInstance;
-import model.common.DeviceModel;
+import driver.CustomizedProtocolConfig;
+import model.DeviceInstance;
+import model.DeviceModel;
 import service.DevPanel_I;
 
 import java.io.IOException;
@@ -21,9 +20,7 @@ import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static data.DataConverter.convertToString;
 import static devicepanel.Device.*;
-import static model.common.Const.topicTwinUpdate;
 
 
 @Slf4j

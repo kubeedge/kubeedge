@@ -7,9 +7,9 @@ import driver.CustomizedClient;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import model.VisitorConfig;
-import model.common.DataModel;
-import model.common.DeviceInstance;
+import driver.VisitorConfig;
+import model.DataModel;
+import model.DeviceInstance;
 
 import java.io.IOException;
 import java.sql.*;
@@ -22,7 +22,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import static data.DataConverter.convertToString;
-import static model.common.Const.defaultReportCycle;
+import static model.Const.defaultReportCycle;
 @Slf4j
 public class Tdengine {
     public static void dataHandler(DeviceInstance.Twin twin, CustomizedClient client, VisitorConfig visitorConfig, DataModel dataModel, List<ScheduledFuture<?>> futures){

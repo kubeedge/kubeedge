@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import model.common.DataModel;
+import model.DataModel;
 
 import java.io.IOException;
 import java.net.URI;
@@ -40,7 +40,7 @@ public class Http {
         }
 
         public void push(DataModel data) {
-            log.info("Publish device data by HTTP");
+            log.info("Publish {} by HTTP", data.getNameSpace()+"/"+data.getDeviceName()+"/"+data.getPropertyName());
             String targetUrl = this.httpConfig.hostName + ":" + this.httpConfig.port + this.httpConfig.requestPath;
             String payload = data.getPropertyName() + "=" + data.getValue();
             Instant instant = Instant.ofEpochMilli(data.getTimeStamp());

@@ -1,7 +1,5 @@
 package dmi.v1beta1;
 
-import lombok.SneakyThrows;
-
 import java.io.IOException;
 
 import static io.grpc.MethodDescriptor.generateFullMethodName;
@@ -859,23 +857,30 @@ public final class DeviceMapperServiceGrpc {
       this.methodId = methodId;
     }
 
-    @SneakyThrows
     @java.lang.Override
     @java.lang.SuppressWarnings("unchecked")
     public void invoke(Req request, io.grpc.stub.StreamObserver<Resp> responseObserver) {
       switch (methodId) {
         case METHODID_REGISTER_DEVICE:
-          serviceImpl.registerDevice((dmi.v1beta1.Api.RegisterDeviceRequest) request,
-              (io.grpc.stub.StreamObserver<dmi.v1beta1.Api.RegisterDeviceResponse>) responseObserver);
-          break;
+            try {
+                serviceImpl.registerDevice((Api.RegisterDeviceRequest) request,
+                    (io.grpc.stub.StreamObserver<Api.RegisterDeviceResponse>) responseObserver);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            break;
         case METHODID_REMOVE_DEVICE:
           serviceImpl.removeDevice((dmi.v1beta1.Api.RemoveDeviceRequest) request,
               (io.grpc.stub.StreamObserver<dmi.v1beta1.Api.RemoveDeviceResponse>) responseObserver);
           break;
         case METHODID_UPDATE_DEVICE:
-          serviceImpl.updateDevice((dmi.v1beta1.Api.UpdateDeviceRequest) request,
-              (io.grpc.stub.StreamObserver<dmi.v1beta1.Api.UpdateDeviceResponse>) responseObserver);
-          break;
+            try {
+                serviceImpl.updateDevice((Api.UpdateDeviceRequest) request,
+                    (io.grpc.stub.StreamObserver<Api.UpdateDeviceResponse>) responseObserver);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            break;
         case METHODID_CREATE_DEVICE_MODEL:
           serviceImpl.createDeviceModel((dmi.v1beta1.Api.CreateDeviceModelRequest) request,
               (io.grpc.stub.StreamObserver<dmi.v1beta1.Api.CreateDeviceModelResponse>) responseObserver);
@@ -889,9 +894,13 @@ public final class DeviceMapperServiceGrpc {
               (io.grpc.stub.StreamObserver<dmi.v1beta1.Api.UpdateDeviceModelResponse>) responseObserver);
           break;
         case METHODID_GET_DEVICE:
-          serviceImpl.getDevice((dmi.v1beta1.Api.GetDeviceRequest) request,
-              (io.grpc.stub.StreamObserver<dmi.v1beta1.Api.GetDeviceResponse>) responseObserver);
-          break;
+            try {
+                serviceImpl.getDevice((Api.GetDeviceRequest) request,
+                    (io.grpc.stub.StreamObserver<Api.GetDeviceResponse>) responseObserver);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            break;
         default:
           throw new AssertionError();
       }

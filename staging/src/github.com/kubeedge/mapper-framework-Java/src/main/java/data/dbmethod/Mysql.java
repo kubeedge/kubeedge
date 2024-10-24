@@ -7,9 +7,9 @@ import driver.CustomizedClient;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import model.VisitorConfig;
-import model.common.DataModel;
-import model.common.DeviceInstance;
+import driver.VisitorConfig;
+import model.DataModel;
+import model.DeviceInstance;
 
 import java.io.IOException;
 import java.sql.*;
@@ -24,7 +24,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import static data.DataConverter.convertToString;
-import static model.common.Const.defaultReportCycle;
+import static model.Const.defaultReportCycle;
 
 
 @Slf4j
@@ -82,6 +82,13 @@ public class Mysql {
         private String database;
         @JsonProperty("userName")
         private String userName;
+
+        public MysqlClientConfig(String addr, String database, String userName) {
+            this.addr = addr;
+            this.database = database;
+            this.userName = userName;
+        }
+        public MysqlClientConfig(){}
     }
 
     @Getter @Setter
@@ -119,9 +126,9 @@ public class Mysql {
 
             String insertSQL = String.format("INSERT INTO `%s` (ts, field) VALUES (?, ?)", tableName);
             try (PreparedStatement pstmt = dbClient.prepareStatement(insertSQL)) {
-                pstmt.setString(1, dateTime);  // 设置日期时间参数
-                pstmt.setString(2, data.getValue());  // 设置字段值参数
-                pstmt.executeUpdate();  // 执行插入
+                pstmt.setString(1, dateTime);
+                pstmt.setString(2, data.getValue());
+                pstmt.executeUpdate();
             } catch (SQLException e) {
                 log.error("Insert data into MySQL failed: {}", e.getMessage(), e);
             }
