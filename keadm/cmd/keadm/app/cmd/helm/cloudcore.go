@@ -90,21 +90,9 @@ func NewCloudCoreHelmTool(kubeConfig, kubeedgeVersion string) *CloudCoreHelmTool
 
 // Install uses helm client to install cloudcore release
 func (c *CloudCoreHelmTool) Install(opts *types.InitOptions) error {
-	externValueFile := ""
+	var externValueFile string
 	if opts.Profile != "" {
-		// TODO:the version specified through profile will be obsolete.
-		kvs := strings.Split(opts.Profile, "=")
-		if len(kvs) == 2 {
-			if opts.KubeEdgeVersion == "" {
-				if kvs[0] == VersionProfileKey {
-					opts.KubeEdgeVersion = kvs[1]
-				} else {
-					return fmt.Errorf("format error in using profile to specify version")
-				}
-			}
-		} else {
-			externValueFile = opts.Profile
-		}
+		externValueFile = opts.Profile
 	}
 
 	ver, err := util.GetCurrentVersion(opts.KubeEdgeVersion)
@@ -209,21 +197,9 @@ func (c *CloudCoreHelmTool) Install(opts *types.InitOptions) error {
 
 // Upgrade uses helm client to upgrade cloudcore release
 func (c *CloudCoreHelmTool) Upgrade(opts *types.CloudUpgradeOptions) error {
-	externValueFile := ""
+	var externValueFile string
 	if opts.Profile != "" {
-		// TODO:the version specified through profile will be obsolete.
-		kvs := strings.Split(opts.Profile, "=")
-		if len(kvs) == 2 {
-			if opts.KubeEdgeVersion == "" {
-				if kvs[0] == VersionProfileKey {
-					opts.KubeEdgeVersion = kvs[1]
-				} else {
-					return fmt.Errorf("format error in using profile to specify version")
-				}
-			}
-		} else {
-			externValueFile = opts.Profile
-		}
+		externValueFile = opts.Profile
 	}
 
 	ver, err := util.GetCurrentVersion(opts.KubeEdgeVersion)
