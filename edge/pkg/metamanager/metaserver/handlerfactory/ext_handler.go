@@ -76,7 +76,7 @@ func (f *Factory) ConfirmUpgrade() http.Handler {
 				http.StatusInternalServerError)
 			return
 		}
-		klog.Infof("!!! Finish upgrade from Version %s to %s ...", version.Get(), upgradeReq.Version)
+		klog.Infof("Finish upgrade from Version %s to %s ...", version.Get(), upgradeReq.Version)
 		err = upgradedb.DeleteNodeTaskRequestFromMetaV2()
 		if err != nil {
 			klog.Errorf("Failed to delete NodeTaskRequest%s", err.Error())
