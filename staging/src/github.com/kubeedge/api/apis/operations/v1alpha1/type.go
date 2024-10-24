@@ -60,23 +60,27 @@ type NodeUpgradeJobList struct {
 type NodeUpgradeJobSpec struct {
 	// +Required: Version is the EdgeCore version to upgrade.
 	Version string `json:"version,omitempty"`
+
 	// TimeoutSeconds limits the duration of the node upgrade job.
 	// Default to 300.
 	// If set to 0, we'll use the default value 300.
 	// +optional
 	TimeoutSeconds *uint32 `json:"timeoutSeconds,omitempty"`
+
 	// NodeNames is a request to select some specific nodes. If it is non-empty,
 	// the upgrade job simply select these edge nodes to do upgrade operation.
 	// Please note that sets of NodeNames and LabelSelector are ORed.
 	// Users must set one and can only set one.
 	// +optional
 	NodeNames []string `json:"nodeNames,omitempty"`
+
 	// LabelSelector is a filter to select member clusters by labels.
 	// It must match a node's labels for the NodeUpgradeJob to be operated on that node.
 	// Please note that sets of NodeNames and LabelSelector are ORed.
 	// Users must set one and can only set one.
 	// +optional
 	LabelSelector *metav1.LabelSelector `json:"labelSelector,omitempty"`
+
 	// Image specifies a container image name, the image contains: keadm and edgecore.
 	// keadm is used as upgradetool, to install the new version of edgecore.
 	// The image name consists of registry hostname and repository name,
@@ -85,6 +89,12 @@ type NodeUpgradeJobSpec struct {
 	// The default image name is: kubeedge/installation-package.
 	// +optional
 	Image string `json:"image,omitempty"`
+
+	// ImageDigestGatter define registry v2 interface access configuration.
+	// As a transition, it is not required at first, and the image digest is checked when this field is set.
+	// +optional
+	ImageDigestGatter *ImageDigestGatter `json:"imageDigestGatter"`
+
 	// Concurrency specifies the max number of edge nodes that can be upgraded at the same time.
 	// The default Concurrency value is 1.
 	// +optional
@@ -99,6 +109,28 @@ type NodeUpgradeJobSpec struct {
 	// The default FailureTolerate value is 0.1.
 	// +optional
 	FailureTolerate string `json:"failureTolerate,omitempty"`
+
+	// RequireConfirmation specifies whether you need to confirm the upgrade.
+	// The default RequireConfirmation value is false.
+	// +optional
+	RequireConfirmation bool `json:"requireConfirmation,omitempty"`
+}
+
+// ImageDigestGatter used to define a method for getting the image digest
+type ImageDigestGatter struct {
+	// Value used to directly set a value to check image
+	// +optional
+	Value *string `json:"value,omitempty"`
+
+	// RegistryAPI define registry v2 interface access configuration
+	// +optional
+	RegistryAPI *RegistryAPI `json:"registryAPI,omitempty"`
+}
+
+// RegistryAPI used to define registry v2 interface access configuration
+type RegistryAPI struct {
+	Host  string `json:"host"`
+	Token string `json:"token"`
 }
 
 // NodeUpgradeJobStatus stores the status of NodeUpgradeJob.

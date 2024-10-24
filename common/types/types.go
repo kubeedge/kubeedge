@@ -39,11 +39,13 @@ type NodeStatusRequest struct {
 
 // NodeUpgradeJobRequest is upgrade msg coming from cloud to edge
 type NodeUpgradeJobRequest struct {
-	UpgradeID   string
-	HistoryID   string
-	Version     string
-	UpgradeTool string
-	Image       string
+	UpgradeID           string
+	HistoryID           string
+	Version             string
+	UpgradeTool         string
+	Image               string
+	ImageDigest         string
+	RequireConfirmation bool
 }
 
 // NodeUpgradeJobResponse is used to report status msg to cloudhub https service
@@ -115,4 +117,9 @@ type ImagePrePullJobResponse struct {
 type RestartResponse struct {
 	ErrMessages []string `json:"errMessages,omitempty"`
 	LogMessages []string `json:"LogMessages,omitempty"`
+}
+
+type NodeUpgradeConfirmResponse struct {
+	ErrMessages []string `json:"errMessages,omitempty"`
+	LogMessages []string `json:"logMessages,omitempty"`
 }
