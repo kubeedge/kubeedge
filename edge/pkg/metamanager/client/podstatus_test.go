@@ -31,7 +31,6 @@ import (
 func TestNewPodStatus(t *testing.T) {
 	assert := assert.New(t)
 
-	namespace := "test-namespace"
 	s := newSend()
 
 	ps := newPodStatus(namespace, s)
@@ -94,14 +93,14 @@ func TestPodStatus_Update(t *testing.T) {
 				sendSyncFunc: func(message *model.Message) (*model.Message, error) {
 					assert.Equal(modules.MetaGroup, message.GetGroup())
 					assert.Equal(modules.EdgedModuleName, message.GetSource())
-					assert.Equal(testNamespace+"/"+model.ResourceTypePodStatus+"/"+tc.rsName, message.GetResource())
+					assert.Equal(namespace+"/"+model.ResourceTypePodStatus+"/"+tc.rsName, message.GetResource())
 					assert.Equal(model.UpdateOperation, message.GetOperation())
 
 					return tc.sendSyncResult, tc.sendSyncError
 				},
 			}
 
-			ps := newPodStatus(testNamespace, mockSend)
+			ps := newPodStatus(namespace, mockSend)
 			err := ps.Update(tc.rsName, tc.podStatusReq)
 
 			if tc.expectedError != nil {
