@@ -44,6 +44,7 @@ type ContainerRuntime interface {
 	CopyResources(edgeImage string, files map[string]string) error
 	RunMQTT(mqttImage string) error
 	RemoveMQTT() error
+	GetImageDigest(image string) (string, error)
 }
 
 func NewContainerRuntime(endpoint, cgroupDriver string) (ContainerRuntime, error) {
@@ -95,6 +96,17 @@ func (runtime *CRIRuntime) PullImages(images []string) error {
 		fmt.Printf("Successfully pulled %s\n", image)
 	}
 	return nil
+}
+
+func (runtime *CRIRuntime) GetImageDigest(image string) (string, error) {
+	image = convertCRIImage(image)
+	imageSpec := &runtimeapi.ImageSpec{Image: image}
+	imageStatus, err := runtime.ImageManagerService.ImageStatus(runtime.ctx, imageSpec, true)
+	if err != nil {
+		return "", err
+	}
+	imageDigest := imageStatus.Image.Spec.Image
+	return imageDigest, nil
 }
 
 func (runtime *CRIRuntime) PullImage(image string, authConfig *runtimeapi.AuthConfig, sandboxConfig *runtimeapi.PodSandboxConfig) error {
