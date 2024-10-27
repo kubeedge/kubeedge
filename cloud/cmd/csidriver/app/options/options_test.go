@@ -46,7 +46,6 @@ func TestFlags(t *testing.T) {
 	assert.Equal("csidriver", opt.DriverName)
 	assert.Empty(opt.NodeID)
 	assert.Equal("unix:///kubeedge/kubeedge.sock", opt.KubeEdgeEndpoint)
-	assert.Equal("dev", opt.Version)
 
 	flagTests := []struct {
 		name         string
@@ -72,11 +71,6 @@ func TestFlags(t *testing.T) {
 			name:         "kubeedge-endpoint",
 			expectedType: "string",
 			usage:        "kubeedge endpoint",
-		},
-		{
-			name:         "version",
-			expectedType: "string",
-			usage:        "version",
 		},
 	}
 
