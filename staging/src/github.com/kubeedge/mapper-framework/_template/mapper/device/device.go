@@ -19,9 +19,10 @@ import (
 	dbTdengine "github.com/kubeedge/Template/data/dbmethod/tdengine"
 	httpMethod "github.com/kubeedge/Template/data/publish/http"
 	mqttMethod "github.com/kubeedge/Template/data/publish/mqtt"
+	otelMethod "github.com/kubeedge/Template/data/publish/otel"
 	"github.com/kubeedge/Template/data/stream"
 	"github.com/kubeedge/Template/driver"
-	dmiapi "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1beta1"
+	dmiapi "github.com/kubeedge/api/apis/dmi/v1beta1"
 	"github.com/kubeedge/mapper-framework/pkg/common"
 	"github.com/kubeedge/mapper-framework/pkg/global"
 	"github.com/kubeedge/mapper-framework/pkg/util/parse"
@@ -108,6 +109,16 @@ func (d *DevPanel) start(ctx context.Context, dev *driver.CustomizedDev) {
 
 // dataHandler initialize the timer to handle data plane and devicetwin.
 func dataHandler(ctx context.Context, dev *driver.CustomizedDev) {
+	// handle device status report
+	getStates := &DeviceStates{
+		Client:          dev.CustomizedClient,
+		DeviceName:      dev.Instance.Name,
+		DeviceNamespace: dev.Instance.Namespace,
+		ReportToCloud:   dev.Instance.Status.ReportToCloud,
+		ReportCycle:     time.Millisecond * time.Duration(dev.Instance.Status.ReportCycle),
+	}
+	go getStates.Run(ctx)
+	// handle device twin report
 	for _, twin := range dev.Instance.Twins {
 		twin.Property.PProperty.DataType = strings.ToLower(twin.Property.PProperty.DataType)
 		var visitorConfig driver.VisitorConfig
@@ -150,19 +161,13 @@ func dataHandler(ctx context.Context, dev *driver.CustomizedDev) {
 		}
 		go twinData.Run(ctx)
 
-		//handle status
-		getStates := &DeviceStates{Client: dev.CustomizedClient, DeviceName: dev.Instance.Name,
-			DeviceNamespace: dev.Instance.Namespace}
-		go getStates.Run(ctx)
-
+		dataModel := common.NewDataModel(dev.Instance.Name, twin.Property.PropertyName, dev.Instance.Namespace, common.WithType(twin.ObservedDesired.Metadata.Type))
 		// handle push method
 		if twin.Property.PushMethod.MethodConfig != nil && twin.Property.PushMethod.MethodName != "" {
-			dataModel := common.NewDataModel(dev.Instance.Name, twin.Property.PropertyName, dev.Instance.Namespace, common.WithType(twin.ObservedDesired.Metadata.Type))
 			pushHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
 		}
 		// handle database
 		if twin.Property.PushMethod.DBMethod.DBMethodName != "" {
-			dataModel := common.NewDataModel(dev.Instance.Name, twin.Property.PropertyName, dev.Instance.Namespace, common.WithType(twin.ObservedDesired.Metadata.Type))
 			dbHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
 			switch twin.Property.PushMethod.DBMethod.DBMethodName {
 			// TODO add more database
@@ -181,13 +186,18 @@ func dataHandler(ctx context.Context, dev *driver.CustomizedDev) {
 
 // pushHandler start data panel work
 func pushHandler(ctx context.Context, twin *common.Twin, client *driver.CustomizedClient, visitorConfig *driver.VisitorConfig, dataModel *common.DataModel) {
+	if twin.Property.PushMethod.MethodName == common.PushMethodOTEL {
+		otelMethod.DataHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
+		return
+	}
+
 	var dataPanel global.DataPanel
 	var err error
 	// initialization dataPanel
 	switch twin.Property.PushMethod.MethodName {
-	case "http":
+	case common.PushMethodHTTP:
 		dataPanel, err = httpMethod.NewDataPanel(twin.Property.PushMethod.MethodConfig)
-	case "mqtt":
+	case common.PushMethodMQTT:
 		dataPanel, err = mqttMethod.NewDataPanel(twin.Property.PushMethod.MethodConfig)
 	default:
 		err = errors.New("custom protocols are not currently supported when push data")
@@ -419,6 +429,71 @@ func (d *DevPanel) RemoveDevice(deviceID string) error {
 	return nil
 }
 
+// WriteDevice write value to the device
+func (d *DevPanel) WriteDevice(deviceMethodName, deviceID, propertyName, data string) error {
+	var dataType string
+	var deviceproperty common.DeviceProperty
+	d.serviceMutex.Lock()
+	defer d.serviceMutex.Unlock()
+	dev, ok := d.devices[deviceID]
+	if !ok {
+		return fmt.Errorf("not found device %s", deviceID)
+	}
+
+	deviceMethodMap := make(map[string][]string)
+
+	// get all deviceMethod of the device
+	for _, method := range dev.Instance.Methods {
+		deviceMethodMap[method.Name] = append(deviceMethodMap[method.Name], method.PropertyNames...)
+	}
+	// Determine whether the called device method exists
+	propertyNames, ok := deviceMethodMap[deviceMethodName]
+	if !ok {
+		return fmt.Errorf("deviceMethod name %s does not exist in device instance", deviceMethodName)
+	}
+	// Determine whether the device property to be written is in the list defined by the device method
+	flag := false
+	for _, name := range propertyNames {
+		if name == propertyName {
+			flag = true
+			break
+		}
+	}
+	if !flag {
+		return fmt.Errorf("deviceProperty %s to be written is not in the list defined by devicemethod", propertyName)
+	}
+	// Determine whether the device property to be written is in the device instance
+	flag = false
+	for _, property := range dev.Instance.Properties {
+		if property.PropertyName != propertyName {
+			continue
+		}
+		dataType = property.PProperty.DataType
+		deviceproperty = property
+		flag = true
+		break
+	}
+	if !flag {
+		return fmt.Errorf("can't find device propertyName %s in device instance", propertyName)
+	}
+	klog.V(2).Infof("start writing values %v to device %s property %s", data, deviceID, propertyName)
+	writeData, err := common.Convert(strings.ToLower(dataType), data)
+	if err != nil {
+		return fmt.Errorf("conversion data format failed, datatype is %s, data is %s", strings.ToLower(dataType), data)
+	}
+	var visitorConfig driver.VisitorConfig
+	err = json.Unmarshal(deviceproperty.Visitors, &visitorConfig)
+	if err != nil {
+		return err
+	}
+
+	err = dev.CustomizedClient.DeviceDataWrite(&visitorConfig, deviceMethodName, propertyName, writeData)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // stopDev stop device and goroutine
 func (d *DevPanel) stopDev(dev *driver.CustomizedDev, id string) error {
 	cancelFunc, ok := d.deviceMuxs[id]
@@ -490,4 +565,29 @@ func (d *DevPanel) GetTwinResult(deviceID string, twinName string) (string, stri
 		dataType = twin.Property.PProperty.DataType
 	}
 	return res, dataType, nil
+}
+
+// GetDeviceMethod get method and property dataType of device
+func (d *DevPanel) GetDeviceMethod(deviceID string) (map[string][]string, map[string]string, error) {
+	klog.V(2).Infof("starting get method and property dataType of device %s", deviceID)
+	d.serviceMutex.Lock()
+	defer d.serviceMutex.Unlock()
+	found, ok := d.devices[deviceID]
+	if !ok || found == nil {
+		return nil, nil, fmt.Errorf("device %s not found", deviceID)
+	}
+
+	deviceMethodMap := make(map[string][]string)
+	propertyTypeMap := make(map[string]string)
+
+	// get all deviceMethod of the device
+	for _, method := range found.Instance.Methods {
+		deviceMethodMap[method.Name] = append(deviceMethodMap[method.Name], method.PropertyNames...)
+	}
+
+	// get all deviceProperty type of the device
+	for _, property := range found.Instance.Properties {
+		propertyTypeMap[property.Name] = strings.ToLower(property.PProperty.DataType) // The original data type is an uppercase form such as INT FLOAT and needs to be converted.
+	}
+	return deviceMethodMap, propertyTypeMap, nil
 }

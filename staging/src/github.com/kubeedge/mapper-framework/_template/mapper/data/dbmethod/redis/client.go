@@ -65,8 +65,9 @@ func (d *DataBaseConfig) CloseSession() {
 
 func (d *DataBaseConfig) AddData(data *common.DataModel) error {
 	ctx := context.Background()
-	// The key to construct the ordered set, here DeviceName is used as the key
-	klog.V(1).Infof("deviceName:%s", data.DeviceName)
+	tableName := data.Namespace + "/" + data.DeviceName
+	// The key to construct the ordered set, here DeviceID is used as the key
+	klog.V(4).Infof("tableName:%s", tableName)
 	// Check if the current ordered set exists
 	deviceData := "TimeStamp: " + strconv.FormatInt(data.TimeStamp, 10) + " PropertyName: " + data.PropertyName + " data: " + data.Value
 	// Add data to ordered set. If the ordered set does not exist, it will be created.
@@ -81,10 +82,10 @@ func (d *DataBaseConfig) AddData(data *common.DataModel) error {
 	return nil
 }
 
-func (d *DataBaseConfig) GetDataByDeviceName(deviceName string) ([]*common.DataModel, error) {
+func (d *DataBaseConfig) GetDataByDeviceID(deviceID string) ([]*common.DataModel, error) {
 	ctx := context.Background()
 
-	dataJSON, err := RedisCli.ZRevRange(ctx, deviceName, 0, -1).Result()
+	dataJSON, err := RedisCli.ZRevRange(ctx, deviceID, 0, -1).Result()
 	if err != nil {
 		klog.V(4).Infof("fail query data for deviceName,err:%v", err)
 	}
@@ -103,7 +104,7 @@ func (d *DataBaseConfig) GetDataByDeviceName(deviceName string) ([]*common.DataM
 	return dataModels, nil
 }
 
-func (d *DataBaseConfig) GetPropertyDataByDeviceName(deviceName string, propertyData string) ([]*common.DataModel, error) {
+func (d *DataBaseConfig) GetPropertyDataByDeviceID(deviceID string, propertyData string) ([]*common.DataModel, error) {
 	//TODO implement me
 	return nil, errors.New("implement me")
 }

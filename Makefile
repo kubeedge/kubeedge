@@ -306,7 +306,7 @@ endef
 .PHONY: keadm_deprecated_e2e
 ifeq ($(HELP),y)
 keadm_deprecated_e2e:
-	@echo "KEADM_DEPRECATED_E2E_HELP_INFO"
+	@echo "$$KEADM_DEPRECATED_E2E_HELP_INFO"
 else
 keadm_deprecated_e2e:
 	$(RUN) hack/make-rules/release.sh kubeedge
@@ -324,7 +324,7 @@ endef
 .PHONY: keadm_e2e
 ifeq ($(HELP),y)
 keadm_e2e:
-	@echo "KEADM_E2E_HELP_INFO"
+	@echo "$$KEADM_E2E_HELP_INFO"
 else
 keadm_e2e:
 	tests/scripts/keadm_e2e.sh
@@ -362,7 +362,7 @@ endef
 .PHONY: image
 ifeq ($(HELP),y)
 image:
-	@echo "IMAGE_HELP_INFO"
+	@echo "$$IMAGE_HELP_INFO"
 else
 image:
 	hack/make-rules/image.sh $(WHAT)
@@ -383,7 +383,7 @@ endef
 .PHONY: crossbuildimage
 ifeq ($(HELP),y)
 crossbuildimage:
-	@echo "CROSS_IMAGE_HELP_INFO"
+	@echo "$$CROSS_IMAGE_HELP_INFO"
 else
 crossbuildimage:
 	hack/make-rules/crossbuildimage.sh $(WHAT)
@@ -461,7 +461,7 @@ endef
 .PHONY: keadm_compatibility_e2e
 ifeq ($(HELP),y)
 keadm_compatibility_e2e:
-	@echo "KEADM_COMPATIBILITY_E2E_HELP_INFO"
+	@echo "$$KEADM_COMPATIBILITY_E2E_HELP_INFO"
 else
 keadm_compatibility_e2e:
 	tests/scripts/keadm_compatibility_e2e.sh ${CLOUD_EDGE_VERSION}
@@ -481,5 +481,5 @@ conformance_e2e:
 	@echo "$$CONFORMANCE_E2E_HELP_INFO"
 else
 conformance_e2e:
-	tests/scripts/conformance_e2e.sh ${KIND_IMAGE}
+	tests/scripts/conformance_e2e.sh ${KIND_IMAGE} ${CONFORMANCE_TYPE}
 endif

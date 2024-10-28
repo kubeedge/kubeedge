@@ -8,7 +8,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
+	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 )
 
 // PodManager is a manager watch pod change event

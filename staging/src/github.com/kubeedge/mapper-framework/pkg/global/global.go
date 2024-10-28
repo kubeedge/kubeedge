@@ -1,7 +1,7 @@
 package global
 
 import (
-	dmiapi "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1beta1"
+	dmiapi "github.com/kubeedge/api/apis/dmi/v1beta1"
 	"github.com/kubeedge/mapper-framework/pkg/common"
 )
 
@@ -21,6 +21,8 @@ type DevPanel interface {
 	GetDevice(deviceID string) (interface{}, error)
 	// RemoveDevice stop device and remove device
 	RemoveDevice(deviceID string) error
+	// WriteDevice write value to the device
+	WriteDevice(deviceMethodName, deviceID, propertyName, data string) error
 	// GetModel get model's info
 	GetModel(modelID string) (common.DeviceModel, error)
 	// UpdateModel update model in map only
@@ -29,6 +31,8 @@ type DevPanel interface {
 	RemoveModel(modelID string)
 	// GetTwinResult get device's property value and datatype
 	GetTwinResult(deviceID string, twinName string) (string, string, error)
+	// GetDeviceMethod get device's instance info
+	GetDeviceMethod(deviceID string) (map[string][]string, map[string]string, error)
 }
 
 // DataPanel defined push method, parse the push operation in CRD and execute it
@@ -50,8 +54,8 @@ type DataBaseClient interface {
 
 	AddData(data *common.DataModel)
 
-	GetDataByDeviceName(deviceName string) ([]*common.DataModel, error)
-	GetPropertyDataByDeviceName(deviceName string, propertyData string) ([]*common.DataModel, error)
+	GetDataByDeviceID(deviceID string) ([]*common.DataModel, error)
+	GetPropertyDataByDeviceID(deviceID string, propertyData string) ([]*common.DataModel, error)
 	GetDataByTimeRange(start int64, end int64) ([]*common.DataModel, error)
 
 	DeleteDataByTimeRange(start int64, end int64) ([]*common.DataModel, error)

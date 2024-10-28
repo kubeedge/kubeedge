@@ -18,17 +18,19 @@ package taskexecutor
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os/exec"
 	"path/filepath"
 
 	"k8s.io/klog/v2"
 
+	api "github.com/kubeedge/api/apis/fsm/v1alpha1"
 	"github.com/kubeedge/kubeedge/common/types"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/upgradedb"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
-	api "github.com/kubeedge/kubeedge/pkg/apis/fsm/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
 	"github.com/kubeedge/kubeedge/pkg/version"
 )
@@ -79,8 +81,39 @@ func initUpgrade(taskReq types.NodeTaskRequest) (event fsm.Event) {
 	}
 
 	if upgradeReq.UpgradeID == "" {
-		err = fmt.Errorf("upgradeID cannot be empty")
+		err = errors.New("upgradeID cannot be empty")
 		return
+	}
+	if upgradeReq.RequireConfirmation {
+		var upgradeJobReqDB = commontypes.NodeUpgradeJobRequest{
+			UpgradeID:           upgradeReq.UpgradeID,
+			HistoryID:           upgradeReq.HistoryID,
+			Version:             upgradeReq.Version,
+			UpgradeTool:         upgradeReq.UpgradeTool,
+			Image:               upgradeReq.Image,
+			ImageDigest:         upgradeReq.ImageDigest,
+			RequireConfirmation: upgradeReq.RequireConfirmation,
+		}
+		if err = upgradedb.SaveNodeUpgradeJobRequestToMetaV2(upgradeJobReqDB); err != nil {
+			event.Action = api.ActionFailure
+			event.Msg = err.Error()
+		}
+		e, _ := GetExecutor(TaskUpgrade)
+		var taskReqDB = types.NodeTaskRequest{
+			TaskID: e.Name(),
+			Type:   "Confirm",
+			State:  string(api.NodeUpgrading),
+			Item:   "Wait for a confirm for upgrade request on the edge site.",
+		}
+		if err = upgradedb.SaveNodeTaskRequestToMetaV2(taskReqDB); err != nil {
+			event.Action = api.ActionFailure
+			event.Msg = err.Error()
+		}
+		return fsm.Event{
+			Type:   "Confirm",
+			Action: api.ActionConfirmation,
+			Msg:    "Wait for a confirm for upgrade request on the edge site.",
+		}
 	}
 	if upgradeReq.Version == version.Get().String() {
 		return fsm.Event{
@@ -88,6 +121,7 @@ func initUpgrade(taskReq types.NodeTaskRequest) (event fsm.Event) {
 			Action: api.ActionSuccess,
 		}
 	}
+
 	err = prepareKeadm(upgradeReq)
 	if err != nil {
 		return
@@ -160,6 +194,17 @@ func prepareKeadm(upgradeReq *commontypes.NodeUpgradeJobRequest) error {
 	err = container.PullImages([]string{image})
 	if err != nil {
 		return fmt.Errorf("pull image failed: %v", err)
+	}
+	// Check installation-package image digest
+	if upgradeReq.ImageDigest != "" {
+		var local string
+		local, err = container.GetImageDigest(image)
+		if err != nil {
+			return err
+		}
+		if upgradeReq.ImageDigest != local {
+			return fmt.Errorf("invalid installation-package image digest value: %s", local)
+		}
 	}
 	files := map[string]string{
 		filepath.Join(util.KubeEdgeUsrBinPath, util.KeadmBinaryName): filepath.Join(util.KubeEdgeUsrBinPath, util.KeadmBinaryName),

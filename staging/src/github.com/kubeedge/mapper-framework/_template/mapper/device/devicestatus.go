@@ -18,13 +18,13 @@ package device
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/Template/driver"
-	dmiapi "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1beta1"
+	dmiapi "github.com/kubeedge/api/apis/dmi/v1beta1"
+	"github.com/kubeedge/mapper-framework/pkg/common"
 	"github.com/kubeedge/mapper-framework/pkg/grpcclient"
 )
 
@@ -33,13 +33,15 @@ type DeviceStates struct {
 	Client          *driver.CustomizedClient
 	DeviceName      string
 	DeviceNamespace string
+	ReportToCloud   bool
+	ReportCycle     time.Duration
 }
 
 // Run timer function.
 func (deviceStates *DeviceStates) PushStatesToEdgeCore() {
-	states, error := deviceStates.Client.GetDeviceStates()
-	if error != nil {
-		klog.Errorf("GetDeviceStates failed: %v", error)
+	states, err := deviceStates.Client.GetDeviceStates()
+	if err != nil {
+		klog.Errorf("GetDeviceStates failed: %v", err)
 		return
 	}
 
@@ -49,15 +51,22 @@ func (deviceStates *DeviceStates) PushStatesToEdgeCore() {
 		DeviceNamespace: deviceStates.DeviceNamespace,
 	}
 
-	log.Printf("send statesRequest", statesRequest.DeviceName, statesRequest.State)
-	if err := grpcclient.ReportDeviceStates(statesRequest); err != nil {
+	klog.V(4).Infof("send device %s status %s request to cloud", statesRequest.DeviceName, statesRequest.State)
+	if err = grpcclient.ReportDeviceStates(statesRequest); err != nil {
 		klog.Errorf("fail to report device states of %s with err: %+v", deviceStates.DeviceName, err)
 	}
 }
 
 func (deviceStates *DeviceStates) Run(ctx context.Context) {
-	// TODO setting states reportCycle
-	ticker := time.NewTicker(2 * time.Second)
+	// No need to report device status to the cloud
+	if !deviceStates.ReportToCloud {
+		return
+	}
+	// Set device status report cycle
+	if deviceStates.ReportCycle == 0 {
+		deviceStates.ReportCycle = common.DefaultReportCycle
+	}
+	ticker := time.NewTicker(deviceStates.ReportCycle)
 	for {
 		select {
 		case <-ticker.C:

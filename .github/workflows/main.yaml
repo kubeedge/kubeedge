@@ -30,22 +30,22 @@ jobs:
       GOPATH: /home/runner/work/${{ github.repository }}
     steps:
       - name: Install Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version: 1.21.x
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           path: ./src/github.com/${{ github.repository }}
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
-      - name: Install dependences
+      - name: Install dependencies
         run: |
           sudo apt-get install -y jq
 
@@ -69,7 +69,7 @@ jobs:
           docker save kubeedge/build-tools:1.21.11-ke1 > /home/runner/build-tools/build-tools.tar
 
       - name: Temporarily save kubeedge/build-tools image
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build-tools-docker-artifact
           path: /home/runner/build-tools
@@ -80,18 +80,18 @@ jobs:
     name: Multiple build
     needs: image-prepare
     steps:
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Retrieve saved kubeedge/build-tools image
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: build-tools-docker-artifact
           path: /home/runner/build-tools
@@ -118,21 +118,21 @@ jobs:
       GO111MODULE: on
     steps:
       - name: Install Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version: 1.21.x
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
-      - name: Install dependences
+      - name: Install dependencies
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -183,23 +183,23 @@ jobs:
       GO111MODULE: on
     steps:
       - name: Install Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version: 1.21.x
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
-      - name: Install dependences
+      - name: Install dependencies
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
           go install sigs.k8s.io/kind@v0.22.0
           curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -207,7 +207,7 @@ jobs:
         run: docker system prune -a -f
 
       - name: Retrieve saved kubeedge/build-tools image
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: build-tools-docker-artifact
           path: /home/runner/build-tools
@@ -229,7 +229,7 @@ jobs:
           export CONTAINER_RUNTIME="containerd"
           make e2e
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: ${{ matrix.cases.version }}-${{ matrix.cases.protocol }}-e2e-test-logs
@@ -246,23 +246,23 @@ jobs:
       GO111MODULE: on
     steps:
       - name: Install Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version: 1.21.x
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
-      - name: Install dependences
+      - name: Install dependencies
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
           go install sigs.k8s.io/kind@v0.22.0
           curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -270,7 +270,7 @@ jobs:
         run: docker system prune -a -f
 
       - name: Retrieve saved kubeedge/build-tools image
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: build-tools-docker-artifact
           path: /home/runner/build-tools
@@ -293,23 +293,23 @@ jobs:
       GO111MODULE: on
     steps:
       - name: Install Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version: 1.21.x
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
-      - name: Install dependences
+      - name: Install dependencies
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
           go install sigs.k8s.io/kind@v0.22.0
           curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -332,13 +332,13 @@ jobs:
     timeout-minutes: 40
     name: Multiple docker image build
     steps:
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -360,23 +360,23 @@ jobs:
       GO111MODULE: on
     steps:
       - name: Install Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version: 1.21.x
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
-      - name: Install dependences
+      - name: Install dependencies
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
           go install sigs.k8s.io/kind@v0.22.0
           curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -385,7 +385,7 @@ jobs:
         env:
           CONTAINER_RUNTIME: ${{ matrix.container-runtime }}
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: ${{ matrix.container-runtime }}-e2e-test-logs
@@ -395,32 +395,41 @@ jobs:
 
   conformance_e2e_test:
       runs-on: ubuntu-22.04
-      timeout-minutes: 40
+      timeout-minutes: 60
       name: conformance e2e test
       needs: image-prepare
       env:
         GO111MODULE: on
+      strategy:
+        matrix:
+          cases:
+            - conformance-type: "conformance"
+              result-name: "conformance-test-results"
+            - conformance-type: "nodeconformance"
+              result-name: "nodeconformance-test-results"
       steps:
         - name: Install Go
-          uses: actions/setup-go@v3
+          uses: actions/setup-go@v4
           with:
             go-version: 1.21.x
 
-        - uses: actions/cache@v3
+        - uses: actions/cache@v4
           with:
             path: ~/go/pkg/mod
             key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
+        - name: Install dependencies
+          run: |
+            go install sigs.k8s.io/kind@v0.22.0
+            curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+
         - name: Checkout code
-          uses: actions/checkout@v3
+          uses: actions/checkout@v4
           with:
             fetch-depth: 0
 
-        - name: Cleanup images
-          run: docker system prune -a -f
-
         - name: Retrieve saved kubeedge/build-tools image
-          uses: actions/download-artifact@v3
+          uses: actions/download-artifact@v4
           with:
             name: build-tools-docker-artifact
             path: /home/runner/build-tools
@@ -428,19 +437,32 @@ jobs:
         - name: Docker load kubeedge/build-tools image
           run: |
             docker load < /home/runner/build-tools/build-tools.tar
+            rm -rf /home/runner/build-tools/build-tools.tar
 
         - name: Enable cri config in containerd service
           run: |
             containerd config default | sudo tee /etc/containerd/config.toml && sudo systemctl restart containerd.service
 
+        - name: Free Disk Space
+          uses: jlumbroso/free-disk-space@main
+          with:
+            tool-cache: false
+            android: true
+            dotnet: true
+            haskell: true
+            large-packages: true
+            docker-images: true
+            swap-storage: true
+
         - name: Run conformance e2e
           run: |
-            export KIND_IMAGE=kindest/node:v1.28.0
+            export KIND_IMAGE=kindest/node:v1.29.2
+            export CONFORMANCE_TYPE=${{ matrix.cases.conformance-type }}
             make conformance_e2e
 
         - name: Upload conformance e2e test results
-          uses: actions/upload-artifact@v3
+          uses: actions/upload-artifact@v4
           if: always()
           with:
-            name: kube-conformance-e2e-results
+            name: ${{ matrix.cases.result-name }}
             path: /tmp/results/

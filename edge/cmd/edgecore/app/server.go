@@ -15,6 +15,8 @@ import (
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/yaml"
 
+	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
+	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2/validation"
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
@@ -28,8 +30,6 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/servicebus"
 	"github.com/kubeedge/kubeedge/edge/test"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha2/validation"
 	"github.com/kubeedge/kubeedge/pkg/features"
 	"github.com/kubeedge/kubeedge/pkg/util"
 	"github.com/kubeedge/kubeedge/pkg/util/flag"
@@ -185,9 +185,7 @@ func environmentCheck(skipCheck bool) error {
 		}
 		switch processName {
 		case "kubelet": // if kubelet is running, return error
-			return errors.New("kubelet should not running on edge node when running edgecore")
-		case "kube-proxy": // if kube-proxy is running, return error
-			return errors.New("kube-proxy should not running on edge node when running edgecore")
+			return errors.New("kubelet should not be running on edge node when starting edgecore")
 		}
 	}
 

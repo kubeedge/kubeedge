@@ -63,3 +63,7 @@ func (c *CoreV1Bridge) ServiceAccounts(namespace string) corev1.ServiceAccountIn
 func (c *CoreV1Bridge) Pods(namespace string) corev1.PodInterface {
 	return &PodsBridge{fakecorev1.FakePods{Fake: &c.FakeCoreV1}, namespace, c.MetaClient}
 }
+
+func (c *CoreV1Bridge) Events(namespace string) corev1.EventInterface {
+	return &EventsBridge{fakecorev1.FakeEvents{Fake: &c.FakeCoreV1}, namespace, c.MetaClient}
+}

@@ -5,7 +5,7 @@ import (
 
 	"k8s.io/klog/v2"
 
-	dmiapi "github.com/kubeedge/kubeedge/pkg/apis/dmi/v1beta1"
+	dmiapi "github.com/kubeedge/api/apis/dmi/v1beta1"
 	"github.com/kubeedge/mapper-framework/pkg/common"
 )
 
@@ -176,6 +176,13 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 					klog.Errorf("err: %+v", err)
 					return nil
 				}
+			case pptv.PushMethod.Otel != nil:
+				dbMethodName = common.PushMethodOTEL
+				pushMethod, err = json.Marshal(pptv.PushMethod.Otel)
+				if err != nil {
+					klog.Errorf("err: %+v", err)
+					return nil
+				}
 			default:
 				klog.Errorf("get PushMethod err: Unsupported pushmethod type")
 			}
@@ -199,6 +206,25 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 					DBConfig:     dbconfig,
 				},
 			},
+		}
+		res = append(res, cur)
+	}
+	return res
+}
+
+// buildMethodsFromGrpc parse device method from grpc
+func buildMethodsFromGrpc(device *dmiapi.Device) []common.DeviceMethod {
+	if len(device.Spec.Methods) == 0 {
+		return nil
+	}
+	res := make([]common.DeviceMethod, 0, len(device.Spec.Properties))
+	klog.V(3).Info("Start converting devicemethod information from grpc")
+	for _, method := range device.Spec.Methods {
+		// Convert device method field
+		cur := common.DeviceMethod{
+			Name:          method.GetName(),
+			Description:   method.GetDescription(),
+			PropertyNames: method.GetPropertyNames(),
 		}
 		res = append(res, cur)
 	}
@@ -245,6 +271,11 @@ func GetDeviceFromGrpc(device *dmiapi.Device, commonModel *common.DeviceModel) (
 		Model:        device.GetSpec().GetDeviceModelReference(),
 		Twins:        buildTwinsFromGrpc(device),
 		Properties:   buildPropertiesFromGrpc(device),
+		Methods:      buildMethodsFromGrpc(device),
+		Status: common.DeviceStatus{
+			ReportToCloud: device.Status.GetReportToCloud(),
+			ReportCycle:   device.Status.GetReportCycle(),
+		},
 	}
 	// copy Properties to twin
 	propertiesMap := make(map[string]common.DeviceProperty)
