@@ -83,7 +83,6 @@ func tryDefaultCgroupRoot() string {
 	if err != nil {
 		return ""
 	}
-	defer dir.Close()
 	names, err := dir.Readdirnames(1)
 	if err != nil {
 		return ""
