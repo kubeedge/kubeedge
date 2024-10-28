@@ -197,6 +197,7 @@ func ParseGroupFilter(r io.Reader, filter func(Group) bool) ([]Group, error) {
 		for {
 			var line []byte
 			line, isPrefix, err = rd.ReadLine()
+
 			if err != nil {
 				// We should return no error if EOF is reached
 				// without a match.
