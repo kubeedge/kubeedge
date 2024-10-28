@@ -7,7 +7,7 @@ authors:
 approvers:
   - 
 creation-date: 2024-08-01
-last-updated: 
+last-updated: 2024-10-27
 ---
 # Multi-lingual Programming Mapper
 
@@ -40,7 +40,7 @@ allowing users to choose the language they are proficient in to develop their ow
 
 ## Proposal
 ### Routine
-<image src="../images/proposals/multi-lingual programming mapper.png">
+<img src="../images/proposals/multi-lingual programming mapper.png">
 
 The routine of the Mapper is as follows:
 
@@ -53,7 +53,7 @@ maintains the list of devices on the Mapper, and updates device expectations.
 6) Meanwhile, **Data** module processes data in streaming or non-streaming modes,
 7) and stores it in a database 
 8) or pushes it to third-party apps.
-9) The Mapper reports device status and data back to EdgeCore using **GrpcClient** module.
+9) or reports device status and data back to EdgeCore using **GrpcClient** module.
 
 ### Component
 1) **Driver** defines a CustomizedClient to manage device access (initialization, reading, writing, and stopping the device). 
@@ -62,16 +62,16 @@ Its interface is defined as follows:
 ```
 public interface CustomizedClient_I {
     void initDevice();
-    // initDevice initialize the device
-    
-    byte[] getDeviceData(VisitorConfig visitorConfig);
-    // getDeviceData get device data and Convert it to standard format through CustomizedClient
-    
-    <T> void setDeviceData(T data);
-    // setDeviceData set device data to expected value
-    
+    // initialize the device
+
+    Object getDeviceData(VisitorConfig visitorConfig);
+    // Get device data and Convert it to standard format through CustomizedClient
+
+    void setDeviceData(Object data, VisitorConfig visitorConfig);
+    // Set device data to expected value
+
     void stopDevice();
-    // stopDevice stop the device
+    // Stop the device
 }
 ```
 
@@ -88,22 +88,22 @@ This is primarily implemented through the DevPanel class, with the following int
 
 ```
 public interface DevPanel_I {
-    void devInit(List<Device_Info> deviceList, List<DeviceModel_Info> deviceModelList);
+    void devInit(List<Api.Device> deviceList, List<Api.DeviceModel> deviceModelList) throws Exception;
     // devInit get device info to DevPanel by dmi interface
     
     void devStart();
     // devStart start devices to collect/push/save data to edgecore/app/database
+
+    void start(String deviceID);
+    // start the device
     
-    void start(CustomizedDev dev);
-    // start start the device
-    
-    CustomizedDev GetDevcie(String deviceID);
+    CustomizedDev getDevice(String deviceID) throws IOException;
     // getDevice get device instance info
     
-    void updateDev(DeviceModel model, DeviceInstance device);
+    void updateDev(DeviceInstance device, DeviceModel model);
     // updateDev stop old device, then update and start new device
     
-    void stopDev(CustomizedDev dev, String id);
+    void stopDev(String deviceID);
     // stopDev stop device and the process
     
     void removeDevice(String deviceID);
@@ -112,16 +112,16 @@ public interface DevPanel_I {
     DeviceModel getModel(String modelID);
     // getModel if the model exists, return device model
     
-    DeviceModel updateModel(DeviceModel model);
+    void updateModel(DeviceModel model);
     // updateModel update device model
     
     void removeModel(String modelID);
     // removeModel remove device model
     
-    String[] getTwinResult(String deviceID, String twinName);
+    String[] getTwinResult(String deviceID, String twinName) throws IOException;
     // getTwinResult Get twin's value and data type
     
-    void updateDevTwins(String deviceID, List<Twin> twins);
+    void updateDevTwins(String deviceID, List<DeviceInstance.Twin> twins);
     // updateDevTwins update device's twins
     
     byte[] dealDeviceTwinGet(String deviceID, String twinName);
@@ -135,49 +135,65 @@ This module is primarily divided into two parts:
 
 ```
 public class GrpcClient {
-    public static Pair<List<Device_Info>, List<DeviceModel_Info>> registerMapper(){
-        // registerMapper register mapper to edgecore,then get device and model list from edgecore.
-        return null;
+     public static Api.MapperRegisterResponse registerMapper(Config cfg, boolean withData) throws Exception {
+        // registerMapper register mapper to EdgeCore,then get device and model list from edgecore.
+        // if withData is true, edgecore will send device and model list.
+        
+        return response;
     }
 
-    public static void reportDeviceStatus(ReportDeviceStatusRequest request){
-        // reportDeviceStatus report device status to edgecore
+    public static void reportDeviceStatus(Api.ReportDeviceStatusRequest request) throws InterruptedException {
+        // reportDeviceStatus report device status to EdgeCore
     }
 }
 ```
 
 * **GrpcServer** is responsible for managing devices and models on the Mapper (e.g., registration, updating, removal) and receiving device expectations. 
-The interface is defined as follows:
+According to the [api.proto](https://github.com/kubeedge/kubeedge/blob/master/pkg/apis/dmi/v1beta1/api.proto) file, the server should have the following functions:
 
 ```
-public interface GrpcServer_I {
-    public RegisterDeviceResponse registerDevice(RegisterDeviceRequest request);
-    // registerDevice registers a device to the device mapper
+public static abstract class DeviceMapperServiceImplBase implements io.grpc.BindableService {
+    public void registerDevice(dmi.v1beta1.Api.RegisterDeviceRequest request,
+        io.grpc.stub.StreamObserver<dmi.v1beta1.Api.RegisterDeviceResponse> responseObserver) throws Exception {
+      asyncUnimplementedUnaryCall(getRegisterDeviceMethod(), responseObserver);
+      // RegisterDevice registers a device to the mapper.
+    }
 
-    public GetDeviceResponse getDevice(GetDeviceRequest request);
-    // getDevice get the information of a device from the device mapper.
+    public void removeDevice(dmi.v1beta1.Api.RemoveDeviceRequest request,
+        io.grpc.stub.StreamObserver<dmi.v1beta1.Api.RemoveDeviceResponse> responseObserver) {
+      asyncUnimplementedUnaryCall(getRemoveDeviceMethod(), responseObserver);
+      // RemoveDevice unregisters a device to the device mapper.
+    }
 
-    public UpdateDeviceResponse updateDevice(UpdateDeviceRequest request);
-    // updateDevice updates a device to the device mapper
+    public void updateDevice(dmi.v1beta1.Api.UpdateDeviceRequest request,
+        io.grpc.stub.StreamObserver<dmi.v1beta1.Api.UpdateDeviceResponse> responseObserver) throws Exception {
+      asyncUnimplementedUnaryCall(getUpdateDeviceMethod(), responseObserver);
+      // CreateDeviceModel creates a device model to the device mapper.
+    }
 
-    public RemoveDeviceResponse removeDevice(RemoveDeviceRequest request);
-    // removeDevice unregisters a device to the device mapper
+    public void createDeviceModel(dmi.v1beta1.Api.CreateDeviceModelRequest request,
+        io.grpc.stub.StreamObserver<dmi.v1beta1.Api.CreateDeviceModelResponse> responseObserver) {
+      asyncUnimplementedUnaryCall(getCreateDeviceModelMethod(), responseObserver);
+      // CreateDeviceModel creates a device model to the device mapper.
+    }
 
-    public CreateDeviceModelResponse createDeviceModel(CreateDeviceModelRequest request);
-    // createDeviceModel creates a device model to the device mapper
+    public void removeDeviceModel(dmi.v1beta1.Api.RemoveDeviceModelRequest request,
+        io.grpc.stub.StreamObserver<dmi.v1beta1.Api.RemoveDeviceModelResponse> responseObserver) {
+      asyncUnimplementedUnaryCall(getRemoveDeviceModelMethod(), responseObserver);
+      // RemoveDeviceModel remove a device model to the device mapper.
+    }
 
-    public UpdateDeviceModelResponse updateDeviceModel(UpdateDeviceModelRequest request);
-    // updateDeviceModel update a device model to the device mapper
+    public void updateDeviceModel(dmi.v1beta1.Api.UpdateDeviceModelRequest request,
+        io.grpc.stub.StreamObserver<dmi.v1beta1.Api.UpdateDeviceModelResponse> responseObserver) {
+      asyncUnimplementedUnaryCall(getUpdateDeviceModelMethod(), responseObserver);
+      // UpdateDeviceModel update a device model to the device mapper.
+    }
 
-    public RemoveDeviceModelResponse removeDeviceModel(RemoveDeviceModelRequest request);
-    // removeDeviceModel remove a device model to the device mapper
-
-    public void start();
-    // start start the server
-    
-    public void stop();
-    // stop stop the server
-}
+    public void getDevice(dmi.v1beta1.Api.GetDeviceRequest request,
+        io.grpc.stub.StreamObserver<dmi.v1beta1.Api.GetDeviceResponse> responseObserver) throws IOException {
+      asyncUnimplementedUnaryCall(getGetDeviceMethod(), responseObserver);
+      // GetDevice get the information of a device from the device mapper.
+    }
 ```
 5) **DMI** is responsible for implementing a Java version of the device manage interface.
 As the interface is defined in [api.proto](https://github.com/kubeedge/kubeedge/blob/master/pkg/apis/dmi/v1beta1/api.proto),
@@ -196,27 +212,46 @@ After just adding a line, we can use the following command to generate the java 
 ```
 protoc -I ".\src\main\java\dmi\" --java_out=src/main/java --grpc-java_out=src/main/java src/main/java/dmi/v1beta1/api.proto
 ```
-6) **Http** is responsible for implementing the interface for pushing data to third-party applications.
+6) **Http** provide API services, supporting directly obtaining device data from the device.
+```
+public class HTTPServer {
+    public static class PingHandler implements HttpHandler {
+        // handle /api/v1/ping request
+    }
+    public static class DeviceReadHandler implements HttpHandler{
+        // handle /api/v1/device/{nameSpace}/{name}/{property} request
+    }
+    public static class MetaGetModelHandler implements HttpHandler{
+        // handle /api/v1/meta/model/{nameSpace}/{name} request
+    }
+}
+```
 7) **Model, Service** is responsible for defining complex struct variables and interfaces separately.
 
 ### Implementation
 
 ```
-mapper
+mapper_default
 ├── src
 │ └── main
-│  └── java
-│   ├── Launch.java ---------------- Main process
-│   ├── data ----------------------- Publish data and database implementation layer
-│   ├── devicepanel ---------------- Implementation devicepanel layer
-│   ├── driver --------------------- Device driver layer
-│   ├── grpc ----------------------- Message interaction between Edgecore and mapper through DMI
-│   ├── http ----------------------- Implementation of pushing data to 3-rd application
-│   ├── dmi ------------------------ Java version of device manage interface file.
-│   ├── model ---------------------- Definition of complex variables
-│   ├── service -------------------- Definition of interfaces
-│   └── resources ------------------ Resources such as configuration files
+│  ├── java
+│  │ ├── Main.java ------------------ Main process
+│  │ ├── config --------------------- Parse config files
+│  │ ├── data ----------------------- Push data to 3rd app, save to database implementation layer
+│  │ ├── devicepanel ---------------- Implementation of devicepanel layer, managing the device lifecycle
+│  │ ├── driver --------------------- Device driver layer, reading and writing device data, then converts it through the customized protocol
+│  │ ├── grpc ----------------------- Message interaction between Edgecore and mapper through DMI
+│  │ ├── http ----------------------- Create HTTP server to provide API services, supporting directly obtaining device data from the device
+│  │ ├── dmi ------------------------ Java version of device manage interface definition
+│  │ ├── model ---------------------- Definition of complex variables
+│  │ └── service -------------------- Definition of interfaces
+│  └── resources
+│    ├── logback.xml ---------------- Log configuration
+│    ├── config.yaml ---------------- Global Configuration
 ├── hack
+│ └── make-rules
+│     ├── generate.sh
+│     └── build.sh 
 ├── Dockerfile
 ├── Makefile
 └── pom.xml
@@ -249,11 +284,5 @@ protoc-gen-grpc-java v1.26.0
   <groupId>io.grpc</groupId>
   <artifactId>grpc-stub</artifactId>
   <version>1.65.0</version>
-</dependency>
-<dependency> <!-- necessary for Java 9+ -->
-  <groupId>org.apache.tomcat</groupId>
-  <artifactId>annotations-api</artifactId>
-  <version>6.0.53</version>
-  <scope>provided</scope>
 </dependency>
 ```
