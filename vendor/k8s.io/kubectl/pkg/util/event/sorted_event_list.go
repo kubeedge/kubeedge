@@ -1,5 +1,5 @@
 /*
-Copyright 2024 The KubeEdge Authors.
+Copyright 2014 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,23 +14,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package get
+package event
 
-import "github.com/spf13/cobra"
-
-var (
-	edgeGetShortDescription = `Get resources in edge node`
+import (
+	corev1 "k8s.io/api/core/v1"
 )
 
-// NewEdgeGet returns KubeEdge edge resources get command.
-func NewEdgeGet() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "get",
-		Short: edgeGetShortDescription,
-		Long:  edgeGetShortDescription,
-	}
+// SortableEvents implements sort.Interface for []api.Event based on the Timestamp field
+type SortableEvents []corev1.Event
 
-	cmd.AddCommand(NewEdgePodGet())
-	cmd.AddCommand(NewEdgeDeviceGet())
-	return cmd
+func (list SortableEvents) Len() int {
+	return len(list)
+}
+
+func (list SortableEvents) Swap(i, j int) {
+	list[i], list[j] = list[j], list[i]
+}
+
+func (list SortableEvents) Less(i, j int) bool {
+	return list[i].LastTimestamp.Time.Before(list[j].LastTimestamp.Time)
 }

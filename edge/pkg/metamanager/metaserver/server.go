@@ -168,8 +168,8 @@ func (ls *MetaServer) BuildBasicHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		reqInfo, ok := apirequest.RequestInfoFrom(ctx)
-		//klog.Infof("[metaserver]get a req(%v)(%v)", reqInfo.Path, reqInfo.Verb)
-		//klog.Infof("[metaserver]get a req(\nPath:%v; \nVerb:%v; \nHeader:%+v)", reqInfo.Path, reqInfo.Verb, req.Header)
+		// klog.Infof("[metaserver]get a req(%v)(%v)", reqInfo.Path, reqInfo.Verb)
+		// klog.Infof("[metaserver]get a req(\nPath:%v; \nVerb:%v; \nHeader:%+v)", reqInfo.Path, reqInfo.Verb, req.Header)
 		if !ok {
 			err := fmt.Errorf("invalid request")
 			responsewriters.ErrorNegotiated(apierrors.NewInternalError(err), ls.NegotiatedSerializer, schema.GroupVersion{}, w, req)
@@ -179,7 +179,11 @@ func (ls *MetaServer) BuildBasicHandler() http.Handler {
 		if reqInfo.IsResourceRequest {
 			switch {
 			case reqInfo.Verb == "get":
-				ls.Factory.Get().ServeHTTP(w, req)
+				if reqInfo.Subresource == "log" {
+					ls.Factory.Logs(reqInfo).ServeHTTP(w, req)
+				} else {
+					ls.Factory.Get().ServeHTTP(w, req)
+				}
 			case reqInfo.Verb == "list", reqInfo.Verb == "watch":
 				ls.Factory.List().ServeHTTP(w, req)
 			case reqInfo.Verb == "create":
@@ -187,6 +191,8 @@ func (ls *MetaServer) BuildBasicHandler() http.Handler {
 					ls.Factory.Restart(reqInfo.Namespace).ServeHTTP(w, req)
 				} else if reqInfo.Name == "confirm-upgrade" {
 					ls.Factory.ConfirmUpgrade().ServeHTTP(w, req)
+				} else if reqInfo.Subresource == "exec" {
+					ls.Factory.Exec(reqInfo).ServeHTTP(w, req)
 				} else {
 					ls.Factory.Create(reqInfo).ServeHTTP(w, req)
 				}

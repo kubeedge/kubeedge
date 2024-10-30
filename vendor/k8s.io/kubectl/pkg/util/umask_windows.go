@@ -1,5 +1,8 @@
+//go:build windows
+// +build windows
+
 /*
-Copyright 2024 The KubeEdge Authors.
+Copyright 2014 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,23 +17,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package get
+package util
 
-import "github.com/spf13/cobra"
-
-var (
-	edgeGetShortDescription = `Get resources in edge node`
+import (
+	"errors"
 )
 
-// NewEdgeGet returns KubeEdge edge resources get command.
-func NewEdgeGet() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "get",
-		Short: edgeGetShortDescription,
-		Long:  edgeGetShortDescription,
-	}
-
-	cmd.AddCommand(NewEdgePodGet())
-	cmd.AddCommand(NewEdgeDeviceGet())
-	return cmd
+// Umask returns an error on Windows
+func Umask(mask int) (int, error) {
+	return 0, errors.New("platform and architecture is not supported")
 }

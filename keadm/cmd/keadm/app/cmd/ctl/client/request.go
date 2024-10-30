@@ -24,12 +24,13 @@ import (
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/kubeedge/api/client/clientset/versioned"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	keadutil "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
 
 func KubeClient() (*kubernetes.Clientset, error) {
-	kubeConfig, err := getKubeConfig()
+	kubeConfig, err := GetKubeConfig()
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +41,7 @@ func KubeClient() (*kubernetes.Clientset, error) {
 	return kubeClient, nil
 }
 
-func getKubeConfig() (*restclient.Config, error) {
+func GetKubeConfig() (*restclient.Config, error) {
 	config, err := keadutil.ParseEdgecoreConfig(common.EdgecoreConfigPath)
 	if err != nil {
 		return nil, fmt.Errorf("get edge config failed with err:%v", err)
@@ -73,4 +74,16 @@ func getKubeConfig() (*restclient.Config, error) {
 	}
 	kubeConfig.Timeout = 1 * time.Minute
 	return kubeConfig, nil
+}
+
+func VersionedKubeClient() (*versioned.Clientset, error) {
+	kubeConfig, err := GetKubeConfig()
+	if err != nil {
+		return nil, err
+	}
+	versionedClient, err := versioned.NewForConfig(kubeConfig)
+	if err != nil {
+		return nil, err
+	}
+	return versionedClient, nil
 }

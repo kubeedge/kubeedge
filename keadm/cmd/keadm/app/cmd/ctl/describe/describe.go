@@ -14,23 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package get
+package describe
 
 import "github.com/spf13/cobra"
 
-var (
-	edgeGetShortDescription = `Get resources in edge node`
-)
+var edgeDescribeShortDescription = `Show details of a specific resource`
 
-// NewEdgeGet returns KubeEdge edge resources get command.
-func NewEdgeGet() *cobra.Command {
+// NewEdgeDescribe returns KubeEdge edge resources describe command.
+func NewEdgeDescribe() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get",
-		Short: edgeGetShortDescription,
-		Long:  edgeGetShortDescription,
+		Use:   "describe",
+		Short: edgeDescribeShortDescription,
+		Long:  edgeDescribeShortDescription,
 	}
 
-	cmd.AddCommand(NewEdgePodGet())
-	cmd.AddCommand(NewEdgeDeviceGet())
+	cmd.AddCommand(NewEdgeDescribePod())
+	cmd.AddCommand(NewEdgeDescribeDevice())
 	return cmd
 }
