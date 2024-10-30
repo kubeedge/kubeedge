@@ -182,6 +182,7 @@ define CROSSBUILD_HELP_INFO
 #   make crossbuild WHAT=edgecore
 #   make crossbuild WHAT=edgecore BUILD_WITH_CONTAINER=false
 #   make crossbuild WHAT=edgecore ARM_VERSION=GOARM7
+#   make crossbuild OS=GOOSwindows BUILD_WITH_CONTAINER=false
 #
 endef
 .PHONY: crossbuild
@@ -190,10 +191,10 @@ crossbuild:
 	@echo "$$CROSSBUILD_HELP_INFO"
 else ifeq ($(BUILD_WITH_CONTAINER),true)
 crossbuild:
-	$(RUN) hack/make-rules/crossbuild.sh $(WHAT) $(ARM_VERSION)
+	$(RUN) hack/make-rules/crossbuild.sh $(WHAT) $(ARM_VERSION) $(OS)
 else
 crossbuild:
-	hack/make-rules/crossbuild.sh $(WHAT) $(ARM_VERSION)
+	hack/make-rules/crossbuild.sh $(WHAT) $(ARM_VERSION) $(OS)
 endif
 
 CRD_VERSIONS=v1

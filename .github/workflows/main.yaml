@@ -110,6 +110,12 @@ jobs:
 
       - run: make crossbuild WHAT=cloudcore ARM_VERSION=GOARM8
 
+      - run: make crossbuild WHAT=cloudcore OS=GOOSwindows BUILD_WITH_CONTAINER=false
+
+      - run: make crossbuild WHAT=edgecore OS=GOOSwindows BUILD_WITH_CONTAINER=false
+
+      - run: make crossbuild WHAT=keadm OS=GOOSwindows BUILD_WITH_CONTAINER=false
+
   basic_test:
     runs-on: ubuntu-22.04
     timeout-minutes: 30

@@ -308,6 +308,7 @@ kubeedge::golang::cross_build_place_binaries() {
         set +x
       fi
     elif [ "${goos}" == "windows" ]; then
+      sudo apt-get install -y mingw-w64
       echo "cross building $bin ${goos} ${goarch}"
       set -x
       GOARCH=${goarch} GOOS=${goos} CGO_ENABLED=1 CC=x86_64-w64-mingw32-gcc go build -o ${KUBEEDGE_OUTPUT_BINPATH}/${name} -ldflags "$ldflags" $bin
