@@ -29,7 +29,7 @@ KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 function kubeedge::util::list_staging_repos() {
   (
     cd "${KUBEEDGE_ROOT}/staging/src/github.com/kubeedge/" && \
-    find . -mindepth 1 -maxdepth 1 -type d | cut -c 3- | sort
+    find . -mindepth 1 -maxdepth 1 -type d | grep -v 'mapper-framework-Java' | cut -c 3- | sort
   )
 }
 
