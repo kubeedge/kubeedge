@@ -256,6 +256,12 @@ func TestProcessUpdate(t *testing.T) {
 	}
 	beehiveContext.AddModule(edged)
 	connect.SetConnected(true)
+	deviceTwin := &common.ModuleInfo{
+		ModuleName: modules.DeviceTwinModuleName,
+		ModuleType: common.MsgCtxTypeChannel,
+	}
+	beehiveContext.AddModule(deviceTwin)
+	beehiveContext.AddModuleGroup(modules.DeviceTwinModuleName, modules.TwinGroup)
 
 	//jsonMarshall fail
 	msg := model.NewMessage("").BuildRouter(ModuleNameEdged, GroupResource, "namespace/"+model.ResourceTypeLease+"/id", model.UpdateOperation).FillBody(make(chan int))
@@ -280,6 +286,19 @@ func TestProcessUpdate(t *testing.T) {
 		want := "insert or update meta failed, " + FailedDBOperation
 		if message.GetContent() != want {
 			t.Errorf("Wrong Error message received : Wanted %v and Got %v", want, message.GetContent())
+		}
+	})
+
+	//Success Case Source Metamanager
+	ormerMock.EXPECT().Raw(gomock.Any(), gomock.Any()).Return(rawSetterMock).Times(1)
+	rawSetterMock.EXPECT().Exec().Return(nil, nil).Times(1)
+	msg = model.NewMessage("").BuildRouter(modules.MetaManagerModuleName, GroupResource, model.ResourceTypeLease, model.UpdateOperation)
+	meta.processUpdate(*msg)
+	message, _ = beehiveContext.Receive(modules.DeviceTwinModuleName)
+	t.Run("SuccessSourceMetaManager", func(t *testing.T) {
+		want := modules.MetaManagerModuleName
+		if message.GetSource() != want {
+			t.Errorf("Wrong message received : Wanted from source %v and Got from source %v", want, message.GetSource())
 		}
 	})
 

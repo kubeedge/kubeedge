@@ -123,3 +123,14 @@ type NodeUpgradeConfirmResponse struct {
 	ErrMessages []string `json:"errMessages,omitempty"`
 	LogMessages []string `json:"logMessages,omitempty"`
 }
+
+type LogsResponse struct {
+	ErrMessages []string `json:"errMessages,omitempty"`
+	LogMessages []string `json:"logMessages,omitempty"`
+}
+
+type ExecResponse struct {
+	ErrMessages    []string `json:"errMessages,omitempty"`
+	RunOutMessages []string `json:"runOutMessages,omitempty"`
+	RunErrMessages []string `json:"runErrMessages,omitempty"`
+}

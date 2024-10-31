@@ -20,13 +20,15 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/confirm"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/describe"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/edit"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/exec"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/get"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/logs"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/restart"
 )
 
-var (
-	ctlShortDescription = `Commands operating on the data plane at edge`
-)
+var ctlShortDescription = `Commands operating on the data plane at edge`
 
 // NewCtl returns KubeEdge edge pod command.
 func NewCtl() *cobra.Command {
@@ -39,5 +41,9 @@ func NewCtl() *cobra.Command {
 	cmd.AddCommand(get.NewEdgeGet())
 	cmd.AddCommand(restart.NewEdgeRestart())
 	cmd.AddCommand(confirm.NewEdgeConfirm())
+	cmd.AddCommand(logs.NewEdgePodLogs())
+	cmd.AddCommand(exec.NewEdgePodExec())
+	cmd.AddCommand(describe.NewEdgeDescribe())
+	cmd.AddCommand(edit.NewEdgeEdit())
 	return cmd
 }

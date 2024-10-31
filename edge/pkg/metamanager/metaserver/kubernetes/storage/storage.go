@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/url"
 	"time"
 
 	oteltrace "go.opentelemetry.io/otel/trace"
@@ -15,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/proxy"
 	"k8s.io/apimachinery/pkg/watch"
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
@@ -28,6 +31,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/agent"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/common"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/restful"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
@@ -38,6 +42,13 @@ import (
 type REST struct {
 	*genericregistry.Store
 	*agent.Agent
+}
+
+type responder struct{}
+
+func (r *responder) Error(w http.ResponseWriter, _ *http.Request, err error) {
+	klog.ErrorS(err, "Error while proxying request")
+	http.Error(w, err.Error(), http.StatusInternalServerError)
 }
 
 // NewREST returns a RESTStorage object that will work against all resources
@@ -338,7 +349,7 @@ func (r *REST) Restart(ctx context.Context, restartInfo common.RestartInfo) *typ
 		return restartResponse
 	}
 	for _, podName := range podNames {
-		var labelSelector = map[string]string{
+		labelSelector := map[string]string{
 			"io.kubernetes.pod.name":      podName,
 			"io.kubernetes.pod.namespace": namespace,
 		}
@@ -383,4 +394,218 @@ func (r *REST) Restart(ctx context.Context, restartInfo common.RestartInfo) *typ
 		}
 	}
 	return restartResponse
+}
+
+// Get logs from container through edged API.
+func (r *REST) Logs(ctx context.Context, logsInfo common.LogsInfo) (*types.LogsResponse, *http.Response) {
+	nameSpace := logsInfo.Namespace
+	podName := logsInfo.PodName
+
+	logsResponse := &types.LogsResponse{
+		ErrMessages: make([]string, 0),
+		LogMessages: make([]string, 0),
+	}
+
+	if !config.Config.Edged.Enable {
+		errMessage := "edged is not enabled"
+		klog.Errorf("[metaserver/logs] %v", errMessage)
+		logsResponse.ErrMessages = append(logsResponse.ErrMessages, errMessage)
+		return logsResponse, nil
+	}
+
+	endpoint := config.Config.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint
+	remoteRuntimeService, err := remote.NewRemoteRuntimeService(endpoint, time.Second*10, oteltrace.NewNoopTracerProvider())
+	if err != nil {
+		errMessage := fmt.Sprintf("new remote runtimeservice with err: %v", err)
+		klog.Errorf("[metaserver/logs] %v", errMessage)
+		logsResponse.ErrMessages = append(logsResponse.ErrMessages, errMessage)
+		return logsResponse, nil
+	}
+
+	labelSelector := map[string]string{
+		"io.kubernetes.pod.name":      podName,
+		"io.kubernetes.pod.namespace": nameSpace,
+	}
+
+	filter := &runtimeapi.ContainerFilter{
+		LabelSelector: labelSelector,
+	}
+
+	containers, err := remoteRuntimeService.ListContainers(ctx, filter)
+	if err != nil {
+		errMessage := fmt.Sprintf("failed to list containers: %v", err)
+		klog.Warningf("[metaserver/logs] %v", errMessage)
+		logsResponse.ErrMessages = append(logsResponse.ErrMessages, errMessage)
+		return logsResponse, nil
+	}
+
+	if len(containers) == 0 {
+		errMessage := fmt.Sprintf("not found pod:\"/%s/%s\"", nameSpace, podName)
+		klog.Warningf("[metaserver/logs] %v", errMessage)
+		logsResponse.ErrMessages = append(logsResponse.ErrMessages, errMessage)
+		return logsResponse, nil
+	}
+
+	var container string
+
+	if logsInfo.ContainerName != "" {
+		for _, c := range containers {
+			if c.Metadata.Name == logsInfo.ContainerName {
+				container = c.Metadata.Name
+				break
+			}
+		}
+	} else {
+		container = containers[0].Metadata.Name
+	}
+
+	req := restful.LogsRequest(nameSpace, podName, container, logsInfo)
+	res, err := req.RestfulRequest()
+	if err != nil {
+		errMessage := fmt.Sprintf("failed to get logs for container %s for pod \"/%s/%s\" with err:%v", container, nameSpace, podName, err)
+		klog.Warningf("[metaserver/logs] %v", errMessage)
+		logsResponse.ErrMessages = append(logsResponse.ErrMessages, errMessage)
+	}
+
+	return logsResponse, res
+}
+
+// Exec command in container through edged API.
+// Return http.Handler for exec when stdin is a tty.
+func (r *REST) Exec(ctx context.Context, execInfo common.ExecInfo) (*types.ExecResponse, http.Handler) {
+	nameSpace := execInfo.Namespace
+	podName := execInfo.PodName
+	container := execInfo.Container
+	commands := execInfo.Commands
+	stdin := execInfo.Stdin
+	stdout := execInfo.Stdout
+	stderr := execInfo.Stderr
+	tty := execInfo.TTY
+
+	execResponse := &types.ExecResponse{
+		ErrMessages:    make([]string, 0),
+		RunOutMessages: make([]string, 0),
+		RunErrMessages: make([]string, 0),
+	}
+
+	if !config.Config.Edged.Enable {
+		errMessage := "edged is not enabled"
+		klog.Errorf("[metaserver/exec] %v", errMessage)
+		execResponse.ErrMessages = append(execResponse.ErrMessages, errMessage)
+		return execResponse, nil
+	}
+
+	if commands == nil {
+		errMessage := "You must specify at least one command for the container"
+		klog.Errorf("[metaserver/exec] %v", errMessage)
+		execResponse.ErrMessages = append(execResponse.ErrMessages, errMessage)
+		return execResponse, nil
+	}
+
+	endpoint := config.Config.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint
+	remoteRuntimeService, err := remote.NewRemoteRuntimeService(endpoint, time.Second*10, oteltrace.NewNoopTracerProvider())
+	if err != nil {
+		errMessage := fmt.Sprintf("new remote runtimeservice with err: %v", err)
+		klog.Errorf("[metaserver/exec] %v", errMessage)
+		execResponse.ErrMessages = append(execResponse.ErrMessages, errMessage)
+		return execResponse, nil
+	}
+
+	labelSelector := map[string]string{
+		"io.kubernetes.pod.name":      podName,
+		"io.kubernetes.pod.namespace": nameSpace,
+	}
+
+	filter := &runtimeapi.ContainerFilter{
+		LabelSelector: labelSelector,
+	}
+
+	containers, err := remoteRuntimeService.ListContainers(ctx, filter)
+	if err != nil {
+		errMessage := fmt.Sprintf("failed to list containers: %v", err)
+		klog.Warningf("[metaserver/exec] %v", errMessage)
+		execResponse.ErrMessages = append(execResponse.ErrMessages, errMessage)
+		return execResponse, nil
+	}
+
+	if len(containers) == 0 {
+		errMessage := fmt.Sprintf("not found pod:\"/%s/%s\"", nameSpace, podName)
+		klog.Warningf("[metaserver/exec] %v", errMessage)
+		execResponse.ErrMessages = append(execResponse.ErrMessages, errMessage)
+		return execResponse, nil
+	}
+
+	var execContainer *runtimeapi.Container
+	var execContainerID string
+
+	if container == "" {
+		if len(containers) > 1 {
+			errMessage := fmt.Sprintf("more than one container in pod:\"/%s/%s\"", nameSpace, podName)
+			klog.Warningf("[metaserver/exec] %v", errMessage)
+			execResponse.ErrMessages = append(execResponse.ErrMessages, errMessage)
+			return execResponse, nil
+		}
+		execContainer = containers[0]
+		execContainerID = execContainer.Id
+	} else {
+		for _, c := range containers {
+			if c.Metadata.Name == container {
+				execContainer = c
+				execContainerID = execContainer.Id
+				break
+			}
+		}
+		if execContainer == nil {
+			errMessage := fmt.Sprintf("not found container %s in pod:\"/%s/%s\"", container, nameSpace, podName)
+			klog.Warningf("[metaserver/exec] %v", errMessage)
+			execResponse.ErrMessages = append(execResponse.ErrMessages, errMessage)
+			return execResponse, nil
+		}
+	}
+
+	if !tty {
+		stdout, stderr, err := remoteRuntimeService.ExecSync(ctx, execContainerID, commands, time.Second*10)
+		if err != nil {
+			errMessage := fmt.Sprintf("failed to exec command %s for container %s for pod \"/%s/%s\" with err:%v", commands, execContainer.Metadata.Name, nameSpace, podName, err)
+			klog.Warningf("[metaserver/exec] %v", errMessage)
+			execResponse.ErrMessages = append(execResponse.ErrMessages, errMessage)
+			return execResponse, nil
+		}
+
+		outString := string(stdout)
+		errString := string(stderr)
+
+		if outString != "" {
+			execResponse.RunOutMessages = append(execResponse.RunOutMessages, outString)
+			execResponse.RunErrMessages = append(execResponse.RunErrMessages, errString)
+			return execResponse, nil
+		}
+	} else {
+		res, err := remoteRuntimeService.Exec(ctx, &runtimeapi.ExecRequest{
+			ContainerId: execContainerID,
+			Cmd:         commands,
+			Stdin:       stdin,
+			Stdout:      stdout,
+			Stderr:      stderr,
+			Tty:         true,
+		})
+		if err != nil {
+			errMessage := fmt.Sprintf("failed to exec command %s for container %s for pod \"/%s/%s\" with err:%v", commands, execContainer.Metadata.Name, nameSpace, podName, err)
+			klog.Warningf("[metaserver/exec] %v", errMessage)
+			execResponse.ErrMessages = append(execResponse.ErrMessages, errMessage)
+			return execResponse, nil
+		}
+
+		execURL, err := url.Parse(res.Url)
+		if err != nil {
+			errMessage := fmt.Sprintf("failed to parse exec url with err:%v", err)
+			klog.Warningf("[metaserver/exec] %v", errMessage)
+			execResponse.ErrMessages = append(execResponse.ErrMessages, errMessage)
+			return execResponse, nil
+		}
+
+		handler := proxy.NewUpgradeAwareHandler(execURL, nil, false, true, &responder{})
+		return execResponse, handler
+	}
+	return execResponse, nil
 }

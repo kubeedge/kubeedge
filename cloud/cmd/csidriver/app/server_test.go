@@ -63,8 +63,8 @@ func TestNewCSIDriverCommand(t *testing.T) {
 
 	versionFlag := flags.Lookup("version")
 	assert.NotNil(versionFlag)
-	assert.Equal("version", versionFlag.Usage)
-	assert.Equal("dev", versionFlag.DefValue)
+	assert.Equal("Print version information and quit", versionFlag.Usage)
+	assert.Equal("false", versionFlag.DefValue)
 
 	buf := new(bytes.Buffer)
 	cmd.SetOut(buf)

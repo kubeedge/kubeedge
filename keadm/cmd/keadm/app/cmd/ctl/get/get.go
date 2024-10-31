@@ -31,5 +31,6 @@ func NewEdgeGet() *cobra.Command {
 	}
 
 	cmd.AddCommand(NewEdgePodGet())
+	cmd.AddCommand(NewEdgeDeviceGet())
 	return cmd
 }

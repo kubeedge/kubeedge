@@ -282,8 +282,21 @@ var (
 )
 
 const (
-	FlagNameNamespace     = "namespace"
-	FlagNameAllNamespaces = "all-namespaces"
-	FlagNameOutput        = "output"
-	FlagNameLabelSelector = "selector"
+	FlagNameNamespace                    = "namespace"
+	FlagNameAllNamespaces                = "all-namespaces"
+	FlagNameOutput                       = "output"
+	FlagNameLabelSelector                = "selector"
+	FlagNameContainer                    = "container"
+	FlagNameFollow                       = "follow"
+	FlagNamePrevious                     = "previous"
+	FlagNameSinceSecond                  = "since-second"
+	FlagNameSinceTime                    = "since-time"
+	FlagNameTimestamps                   = "timestamps"
+	FlagNameTailLines                    = "tail"
+	FlagNameLimitBytes                   = "limit-bytes"
+	FlagNameInsecureSkipTLSVerifyBackend = "insecure-skip-tls-verify-backend"
+	FlagNameStdin                        = "stdin"
+	FlagNameTTY                          = "tty"
+	FlagNameShowEvents                   = "show-events"
+	FlagNameChunkSize                    = "chunk-size"
 )
