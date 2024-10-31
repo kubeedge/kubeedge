@@ -19,7 +19,6 @@ package app
 import (
 	"flag"
 	"fmt"
-	"time"
 
 	"github.com/spf13/pflag"
 	cliflag "k8s.io/component-base/cli/flag"
@@ -39,21 +38,6 @@ func Run() error {
 	if err != nil {
 		return fmt.Errorf("error setting klog flags: %v", err)
 	}
-	// Get the current date and time, and format it as YYYYMMDD_HHMM
-	currentDateTime := time.Now().Format("20060102_1504")
-	logFileName := fmt.Sprintf("./keadm_%s.log", currentDateTime)
-	err = flagSet.Set("log_file", logFileName) 
-	if err != nil {
-		return fmt.Errorf("error setting log file: %v", err)
-	}
-	err = flagSet.Set("logtostderr", "false") 
-	if err != nil {
-		return fmt.Errorf("error setting logtostderr: %v", err)
-	}
-	err = flagSet.Set("stderrthreshold", "FATAL") 
-	if err != nil {
-		return fmt.Errorf("error setting stderrthreshold: %v", err)
-	}
 
 	flagSet.Visit(func(fl *flag.Flag) {
 		fl.Name = util.Normalize(fl.Name)
@@ -62,7 +46,5 @@ func Run() error {
 
 	pflag.CommandLine.SetNormalizeFunc(cliflag.WordSepNormalizeFunc)
 	pflag.CommandLine.AddFlagSet(flags)
-
-	defer klog.Flush()
 	return cmd.Execute()
 }

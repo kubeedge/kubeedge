@@ -14,57 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package app
+package main
 
 import (
-	"flag"
 	"fmt"
-	"time"
+	"os"
 
-	"github.com/spf13/pflag"
-	cliflag "k8s.io/component-base/cli/flag"
-	"k8s.io/klog/v2"
-	"sigs.k8s.io/apiserver-network-proxy/pkg/util"
-
-	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app"
 )
 
-// Run executes the keadm command
-func Run() error {
-	flagSet := flag.NewFlagSet("keadm", flag.ExitOnError)
-	cmd := cmd.NewKubeedgeCommand()
-	flags := cmd.Flags()
-	klog.InitFlags(flagSet)
-	err := flagSet.Set("v", "0")
-	if err != nil {
-		return fmt.Errorf("error setting klog flags: %v", err)
+func main() {
+	if err := app.Run(); err != nil {
+		fmt.Println("execute keadm command failed: ", err)
+		os.Exit(1)
 	}
-
-	currentDateTime := time.Now().Format("20060102_1504")
-	logFileName := fmt.Sprintf("./keadm_%s.log", currentDateTime)
-
-	err = flagSet.Set("log_file", logFileName)
-	if err != nil {
-		return fmt.Errorf("error setting log file: %v", err)
-	}
-	err = flagSet.Set("logtostderr", "false") 
-	if err != nil {
-		return fmt.Errorf("error setting logtostderr: %v", err)
-	}
-	err = flagSet.Set("stderrthreshold", "FATAL") 
-	if err != nil {
-		return fmt.Errorf("error setting stderrthreshold: %v", err)
-	}
-
-	flagSet.Visit(func(fl *flag.Flag) {
-		fl.Name = util.Normalize(fl.Name)
-		flags.AddGoFlag(fl)
-	})
-
-	pflag.CommandLine.SetNormalizeFunc(cliflag.WordSepNormalizeFunc)
-	pflag.CommandLine.AddFlagSet(flags)
-
-
-	defer klog.Flush()
-	return cmd.Execute()
 }
