@@ -38,8 +38,12 @@ cloudCore:
     requireAuthorization: false
   modules:
     cloudHub:
-      advertiseAddress:   # Caution!: Leave this entry to empty will cause CloudCore to exit abnormally once KubeEdge is enabled.
-        - ""              # At least a public IP Address or an IP which can be accessed by edge nodes must be provided!
+      # Caution!: Leave this entry to empty will cause CloudCore to exit abnormally once KubeEdge is enabled.
+      # At least a public IP Address or an IP which can be accessed by edge nodes must be provided!
+      advertiseAddress:
+        - ""
+      dnsNames:
+        - ""
       nodeLimit: "1000"
       websocket:
         enable: true
@@ -57,13 +61,14 @@ cloudCore:
     taskManager:
       enable: false
   service:
-    enable: false
+    enable: true
     type: "NodePort"
     cloudhubNodePort: "30000"
     cloudhubQuicNodePort: "30001"
     cloudhubHttpsNodePort: "30002"
     cloudstreamNodePort: "30003"
     tunnelNodePort: "30004"
+    annotations: {}
 
 iptablesManager:
   enable: true
@@ -133,6 +138,36 @@ controllerManager:
     requests:
       cpu: 100m
       memory: 25Mi
+
+admission:
+  enable: false
+  replicaCount: 1
+  certsSecretName: ""
+  image:
+    repository: "kubeedge/admission"
+    tag: "v1.19.0"
+    pullPolicy: "IfNotPresent"
+    pullSecrets: []
+  labels:
+    k8s-app: kubeedge-admission
+    kubeedge: kubeedge-admission
+  annoations: {}
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/edge
+                operator: DoesNotExist
+  tolerations: []
+  nodeSelector: {}
+  resources:
+    limits:
+      cpu: 200m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 64Mi
 
 mosquitto:
   enable: true
