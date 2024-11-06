@@ -95,6 +95,12 @@ func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
 
 	cmd.Flags().StringVar(&joinOptions.Sets, common.FlagNameSet, joinOptions.Sets,
 		`Set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)`)
+
+	cmd.Flags().StringVar(&joinOptions.PreRun, common.FlagNamePreRun, joinOptions.PreRun,
+		`Execute the prescript before joining the node. (for example: keadm join --pre-run=./test-script.sh ...)`)
+
+	cmd.Flags().StringVar(&joinOptions.PostRun, common.FlagNamePostRun, joinOptions.PostRun,
+		`Execute the postscript after joining the node. (for example: keadm join --post-run=./test-script.sh ...)`)
 }
 
 func createEdgeConfigFiles(opt *common.JoinOptions) error {

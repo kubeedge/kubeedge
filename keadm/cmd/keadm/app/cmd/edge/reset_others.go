@@ -51,6 +51,12 @@ func NewOtherEdgeReset() *cobra.Command {
 		Long:    resetLongDescription,
 		Example: resetExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if reset.PreRun != "" {
+				fmt.Printf("Executing pre-run script: %s\n", reset.PreRun)
+				if err := util.RunScript(reset.PreRun); err != nil {
+					return err
+				}
+			}
 			whoRunning := util.EdgeCoreRunningModuleV2(reset)
 			if whoRunning == common.NoneRunning {
 				fmt.Println("None of EdgeCore components are running in this host, exit")
@@ -117,6 +123,17 @@ func NewOtherEdgeReset() *cobra.Command {
 
 			return nil
 		},
+
+		PostRunE: func(cmd *cobra.Command, args []string) error {
+			// post-run script
+			if reset.PostRun != "" {
+				fmt.Printf("Executing post-run script: %s\n", reset.PostRun)
+				if err := util.RunScript(reset.PostRun); err != nil {
+					fmt.Printf("Execute post-run script: %s failed: %v\n", reset.PostRun, err)
+				}
+			}
+			return nil
+		},
 	}
 
 	addResetFlags(cmd, reset)
@@ -138,4 +155,8 @@ func addResetFlags(cmd *cobra.Command, resetOpts *common.ResetOptions) {
 		"Reset the node without prompting for confirmation")
 	cmd.Flags().StringVar(&resetOpts.Endpoint, "remote-runtime-endpoint", resetOpts.Endpoint,
 		"Use this key to set container runtime endpoint")
+	cmd.Flags().StringVar(&resetOpts.PreRun, common.FlagNamePreRun, resetOpts.PreRun,
+		"Execute the prescript before resetting the node. (for example: keadm reset edge --pre-run=./test-script.sh ...)")
+	cmd.Flags().StringVar(&resetOpts.PostRun, common.FlagNamePostRun, resetOpts.PostRun,
+		"Execute the postscript after resetting the node. (for example: keadm reset edge --post-run=./test-script.sh ...)")
 }

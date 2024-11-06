@@ -59,6 +59,12 @@ func NewEdgeJoin() *cobra.Command {
 		Example:      edgeJoinExample,
 		SilenceUsage: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if joinOptions.PreRun != "" {
+				step.Printf("Executing pre-run script: %s\n", joinOptions.PreRun)
+				if err := util.RunScript(joinOptions.PreRun); err != nil {
+					return err
+				}
+			}
 			step.Printf("Check KubeEdge edgecore process status")
 			running, err := util.IsKubeEdgeProcessRunning(util.KubeEdgeBinaryName)
 			if err != nil {
@@ -95,6 +101,15 @@ func NewEdgeJoin() *cobra.Command {
 				return fmt.Errorf("edge node join failed: %v", err)
 			}
 
+			return nil
+		},
+		PostRunE: func(cmd *cobra.Command, args []string) error {
+			if joinOptions.PostRun != "" {
+				fmt.Printf("Executing post-run script: %s\n", joinOptions.PostRun)
+				if err := util.RunScript(joinOptions.PostRun); err != nil {
+					fmt.Printf("Execute post-run script: %s failed: %v\n", joinOptions.PostRun, err)
+				}
+			}
 			return nil
 		},
 	}

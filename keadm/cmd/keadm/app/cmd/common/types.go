@@ -94,6 +94,8 @@ type JoinOptions struct {
 	CGroupDriver          string
 	Labels                []string
 	Sets                  string
+	PreRun                string
+	PostRun               string
 
 	// WithMQTT ...
 	// Deprecated: the mqtt broker is alreay managed by the DaemonSet in the cloud
@@ -132,6 +134,8 @@ type ResetOptions struct {
 	Kubeconfig string
 	Force      bool
 	Endpoint   string
+	PreRun     string
+	PostRun    string
 }
 
 type GettokenOptions struct {

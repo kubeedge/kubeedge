@@ -23,6 +23,12 @@ const (
 
 	// FlagNameKubeEdgeVersion sets the version of KubeEdge to be used
 	FlagNameKubeEdgeVersion = "kubeedge-version"
+
+	// FlagNamePreRun ...
+	FlagNamePreRun = "pre-run"
+
+	// FlagNamePostRun ...
+	FlagNamePostRun = "post-run"
 )
 
 // Cloud init and upgrade common flag names
