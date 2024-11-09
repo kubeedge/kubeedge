@@ -16,7 +16,7 @@
 
 KUBEEDGE_ROOT=$PWD
 IMAGE_TAG=$(git describe --tags)
-CLOUD_EDGE_VERSION=${1:-"v1.18.0"}
+CLOUD_EDGE_VERSION=${1:-"v1.19.0"}
 
 source "${KUBEEDGE_ROOT}/hack/lib/install.sh"
 source "${KUBEEDGE_ROOT}/tests/scripts/keadm_common_e2e.sh"

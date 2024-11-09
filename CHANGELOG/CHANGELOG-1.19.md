@@ -56,7 +56,7 @@ Refer to the link for more details.([#5628](https://github.com/kubeedge/kubeedge
 
 Based on previous Dashboard release, we have refactored the KubeEdge Dashboard using the more popular frameworks Next.js and MUI. In the new release, we rewrote and optimized around 60 pages and components, reducing about 70% of redundant code. We also upgraded the KubeEdge and native Kubernetes APIs to the latest version to maintain compatibility and added TypeScript definitions for the APIs.
 
-Refer to the link for more details.([#29](https://github.com/kubeedge/dashboard/pull/29)
+Refer to the link for more details.([#29](https://github.com/kubeedge/dashboard/pull/29))
 
 ## Important Steps before Upgrading
 
