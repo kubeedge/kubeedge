@@ -27,7 +27,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/agiledragon/gomonkey"
+	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apiserver/pkg/endpoints/request"
 

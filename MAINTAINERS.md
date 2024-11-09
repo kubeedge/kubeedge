@@ -38,6 +38,7 @@ describes the mission, scope, and objectives of the KubeEdge Technical Steering 
 | Yue Bao             | @Shelley-BaoYue   | Huawei        | <baoyue2@huawei.com> |
 | Zefeng (Kevin) Wang | @kevin-wangzefeng | Huawei        | <wangzefeng@huawei.com> |
 | Zhe Gong            | @GsssC            | HarmonyCloud  | <zhiyi375@gmail.com> |
+| Zhijia Yang            | @luomengY            | Southwest Automation Research Institute  | <2938893385@qq.com> |
 
 ## Emeritus Maintainers
 * Jun Du <dujun5@huawei.com> @m1093782566

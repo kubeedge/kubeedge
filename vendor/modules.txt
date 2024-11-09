@@ -107,9 +107,10 @@ github.com/Microsoft/hcsshim/osversion
 # github.com/NYTimes/gziphandler v1.1.1
 ## explicit; go 1.11
 github.com/NYTimes/gziphandler
-# github.com/agiledragon/gomonkey v2.0.2+incompatible
-## explicit
-github.com/agiledragon/gomonkey
+# github.com/agiledragon/gomonkey/v2 v2.12.0
+## explicit; go 1.14
+github.com/agiledragon/gomonkey/v2
+github.com/agiledragon/gomonkey/v2/creflect
 # github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20230305170008-8188dc5388df
 ## explicit; go 1.18
 github.com/antlr/antlr4/runtime/Go/antlr/v4
