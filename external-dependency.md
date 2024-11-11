@@ -117,7 +117,6 @@
 |genny |MIT |https://github.com/cheekybits/genny
 |context |BSD-3-Clause |https://github.com/gorilla/context
 |go-windows-terminal-sequences |MIT |https://github.com/konsorten/go-windows-terminal-sequences
-|viaduct |Apache License 2.0 |https://github.com/kubeedge/viaduct
 |aes12 |MIT |https://github.com/lucas-clemente/aes12
 |quic-go |MIT |https://github.com/lucas-clemente/quic-go
 |quic-go-certificates |MIT |https://github.com/lucas-clemente/quic-go-certificates

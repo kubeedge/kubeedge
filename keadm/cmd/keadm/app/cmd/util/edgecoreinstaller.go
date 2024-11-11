@@ -29,7 +29,7 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/pkg/util"
-	"github.com/kubeedge/viaduct/pkg/api"
+	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/api"
 )
 
 // KubeEdgeInstTool embeds Common struct and contains cloud node ip:port information
