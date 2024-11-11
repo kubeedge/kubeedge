@@ -156,8 +156,8 @@ jobs:
     strategy:
       matrix:
         version:
-          - v1.18.0
-          - v1.17.2
+          - v1.19.0
+          - v1.18.1
     timeout-minutes: 90
     name: Keadm compatibility e2e test
     env:
