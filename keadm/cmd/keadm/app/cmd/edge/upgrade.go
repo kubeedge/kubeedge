@@ -49,9 +49,28 @@ func NewEdgeUpgrade() *cobra.Command {
 		Use:   "edge",
 		Short: "Upgrade edge components",
 		Long:  "Upgrade edge components. Upgrade the edge node to the desired version.",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if upgradeOptions.PreRun != "" {
+				fmt.Printf("Executing pre-run script: %s\n", upgradeOptions.PreRun)
+				if err := util.RunScript(upgradeOptions.PreRun); err != nil {
+					return err
+				}
+			}
+			return nil
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// upgrade edgecore
 			return upgradeOptions.Upgrade()
+		},
+		PostRunE: func(cmd *cobra.Command, args []string) error {
+			// post-run script
+			if upgradeOptions.PostRun != "" {
+				fmt.Printf("Executing post-run script: %s\n", upgradeOptions.PostRun)
+				if err := util.RunScript(upgradeOptions.PostRun); err != nil {
+					fmt.Printf("Execute post-run script: %s failed: %v\n", upgradeOptions.PostRun, err)
+				}
+			}
+			return nil
 		},
 	}
 
@@ -323,6 +342,8 @@ type UpgradeOptions struct {
 	Image         string
 	DisableBackup bool
 	TaskType      string
+	PreRun        string
+	PostRun       string
 }
 
 type Upgrade struct {
@@ -365,4 +386,10 @@ func AddUpgradeFlags(cmd *cobra.Command, upgradeOptions *UpgradeOptions) {
 
 	cmd.Flags().BoolVar(&upgradeOptions.DisableBackup, "disable-backup", upgradeOptions.DisableBackup,
 		"Use this key to specify the backup enable for upgrade.")
+
+	cmd.Flags().StringVar(&upgradeOptions.PreRun, common.FlagNamePreRun, upgradeOptions.PreRun,
+		"Execute the prescript before upgrading the node. (for example: keadm upgrade edge --pre-run=./test-script.sh ...)")
+
+	cmd.Flags().StringVar(&upgradeOptions.PostRun, common.FlagNamePostRun, upgradeOptions.PostRun,
+		"Execute the postscript after upgrading the node. (for example: keadm upgrade edge --post-run=./test-script.sh ...)")
 }
