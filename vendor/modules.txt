@@ -563,6 +563,9 @@ github.com/klauspost/compress/internal/cpuinfo
 github.com/klauspost/compress/internal/snapref
 github.com/klauspost/compress/zstd
 github.com/klauspost/compress/zstd/internal/xxhash
+# github.com/kr/fs v0.1.0
+## explicit
+github.com/kr/fs
 # github.com/kubeedge/api v0.0.0 => ./staging/src/github.com/kubeedge/api
 ## explicit; go 1.22.0
 github.com/kubeedge/api/apis/apps/v1alpha1
@@ -822,6 +825,10 @@ github.com/peterbourgon/diskv
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
+# github.com/pkg/sftp v1.13.5
+## explicit; go 1.15
+github.com/pkg/sftp
+github.com/pkg/sftp/internal/encoding/ssh/filexfer
 # github.com/pmezard/go-difflib v1.0.0
 ## explicit
 github.com/pmezard/go-difflib/difflib
