@@ -4,6 +4,9 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"testing"
+	
+	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 )
 
 var fuzzActions = map[int]string{
