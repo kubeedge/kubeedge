@@ -52,6 +52,7 @@ func NewEdgePodRestart() *cobra.Command {
 			cmdutil.CheckErr(deleteOpts.restartPod(args))
 			return nil
 		},
+		Aliases: []string{"pods", "po"},
 	}
 	AddRestartPodFlags(cmd, deleteOpts)
 	return cmd
