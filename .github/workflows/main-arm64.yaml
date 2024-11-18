@@ -1,0 +1,69 @@
+name: ARM64 CI WorkFlow
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '**/OWNERS'
+      - '**/MAINTAINERS'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '**/OWNERS'
+      - '**/MAINTAINERS'
+
+env:
+  CONTAINER_RUN_OPTIONS: " "
+  GINKGO_VERSION: "v2.9.5"
+
+jobs:
+  image-prepare:
+    runs-on: openeuler-linux-arm64
+    timeout-minutes: 30
+    name: Prepare kubeedge/build-tools image
+    steps:
+      - name: Pull kubeedge/build-tools image
+        run: |
+          docker pull kubeedge/build-tools:1.21.11-ke1
+          mkdir -p /home/runner/build-tools/
+          docker save kubeedge/build-tools:1.21.11-ke1 > /home/runner/build-tools/build-tools.tar
+
+      - name: Temporarily save kubeedge/build-tools image
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-tools-docker-artifact-arm64
+          path: /home/runner/build-tools
+
+  docker_build:
+    runs-on: openeuler-linux-arm64
+    timeout-minutes: 40
+    name: Multiple build
+    needs: image-prepare
+    steps:
+      - uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Retrieve saved kubeedge/build-tools image
+        uses: actions/download-artifact@v4
+        with:
+          name: build-tools-docker-artifact-arm64
+          path: /home/runner/build-tools
+
+      - name: docker load kubeedge/build-tools image
+        run: docker load < /home/runner/build-tools/build-tools.tar
+
+      - run: make
+
+      - run: make smallbuild
