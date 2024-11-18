@@ -58,6 +58,7 @@ func NewEdgeDescribeDevice() *cobra.Command {
 			cmdutil.CheckErr(describeDeviceOptions.describeDevice(args))
 			return nil
 		},
+		Aliases: []string{"devices"},
 	}
 	AddDescribeDeviceFlags(cmd, describeDeviceOptions)
 	return cmd

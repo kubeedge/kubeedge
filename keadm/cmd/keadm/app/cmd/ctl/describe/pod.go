@@ -58,6 +58,7 @@ func NewEdgeDescribePod() *cobra.Command {
 			cmdutil.CheckErr(describePodOptions.describePod(args))
 			return nil
 		},
+		Aliases: []string{"pods", "po"},
 	}
 	AddDescribePodFlags(cmd, describePodOptions)
 	return cmd

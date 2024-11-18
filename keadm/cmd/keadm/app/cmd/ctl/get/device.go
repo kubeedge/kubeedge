@@ -57,6 +57,7 @@ func NewEdgeDeviceGet() *cobra.Command {
 			cmdutil.CheckErr(deviceGetOptions.getDevices(args))
 			return nil
 		},
+		Aliases: []string{"devices"},
 	}
 
 	AddGetDeviceFlags(cmd, deviceGetOptions)
