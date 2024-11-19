@@ -187,7 +187,7 @@ func dataHandler(ctx context.Context, dev *driver.CustomizedDev) {
 // pushHandler start data panel work
 func pushHandler(ctx context.Context, twin *common.Twin, client *driver.CustomizedClient, visitorConfig *driver.VisitorConfig, dataModel *common.DataModel) {
 	if twin.Property.PushMethod.MethodName == common.PushMethodOTEL {
-		otelMethod.DataHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
+		otelMethod.DataHandler(ctx, twin, client, visitorConfig, dataModel)
 		return
 	}
 
