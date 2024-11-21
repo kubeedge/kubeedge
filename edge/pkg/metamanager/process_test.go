@@ -40,6 +40,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	metaManagerConfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
+	"github.com/kubeedge/kubeedge/pkg/metaserver"
 )
 
 const (
@@ -289,14 +290,15 @@ func TestProcessUpdate(t *testing.T) {
 		}
 	})
 
-	//Success Case Source Metamanager
+	//Success Case Source MetaServer
 	ormerMock.EXPECT().Raw(gomock.Any(), gomock.Any()).Return(rawSetterMock).Times(1)
 	rawSetterMock.EXPECT().Exec().Return(nil, nil).Times(1)
-	msg = model.NewMessage("").BuildRouter(modules.MetaManagerModuleName, GroupResource, model.ResourceTypeLease, model.UpdateOperation)
+	resource := fmt.Sprintf("%s/%s/%s", "default", "device", "updated")
+	msg = model.NewMessage("").BuildRouter(metaserver.MetaServerSource, GroupResource, resource, model.UpdateOperation)
 	meta.processUpdate(*msg)
 	message, _ = beehiveContext.Receive(modules.DeviceTwinModuleName)
-	t.Run("SuccessSourceMetaManager", func(t *testing.T) {
-		want := modules.MetaManagerModuleName
+	t.Run("SuccessSourceMetaServer", func(t *testing.T) {
+		want := modules.MetaGroup
 		if message.GetSource() != want {
 			t.Errorf("Wrong message received : Wanted from source %v and Got from source %v", want, message.GetSource())
 		}
@@ -344,7 +346,7 @@ func TestProcessUpdate(t *testing.T) {
 
 	ormerMock.EXPECT().Raw(gomock.Any(), gomock.Any()).Return(rawSetterMock).Times(1)
 	rawSetterMock.EXPECT().Exec().Return(nil, errFailedDBOperation).Times(1)
-	resource := fmt.Sprintf("%s/%s/%s", "default", model.ResourceTypeLease, "leaseName2")
+	resource = fmt.Sprintf("%s/%s/%s", "default", model.ResourceTypeLease, "leaseName2")
 	msg = model.NewMessage("").BuildRouter(ModuleNameEdged, GroupResource, resource, model.UpdateOperation)
 	meta.processUpdate(*msg)
 	message, err := beehiveContext.Receive(ModuleNameEdgeHub)

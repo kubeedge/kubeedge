@@ -135,12 +135,7 @@ func updateEdgeDevice() http.Handler {
 			return
 		}
 
-		source := modules.MetaManagerModuleName
-		target := modules.DeviceTwinModuleName
-		resourece := device.Namespace + "/device/updated"
-
-		operation := model.UpdateOperation
-
+		resource := device.Namespace + "/device/updated"
 		device.SetGroupVersionKind(schema.GroupVersionKind{
 			Group:   v1beta1.GroupName,
 			Version: v1beta1.Version,
@@ -149,8 +144,8 @@ func updateEdgeDevice() http.Handler {
 		modelMsg := model.NewMessage("").
 			SetResourceVersion(device.ResourceVersion).
 			FillBody(device)
-		modelMsg.BuildRouter(source, target, resourece, operation)
-		resp, err := beehiveContext.SendSync(source, *modelMsg, 1*time.Minute)
+		modelMsg.BuildRouter(metaserver.MetaServerSource, modules.MetaGroup, resource, model.UpdateOperation)
+		resp, err := beehiveContext.SendSync(modules.MetaManagerModuleName, *modelMsg, 1*time.Minute)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
