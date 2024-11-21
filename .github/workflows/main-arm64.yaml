@@ -45,6 +45,10 @@ jobs:
     name: Multiple build
     needs: image-prepare
     steps:
+        # TODO: this step should be deleted once CNCF hosted/ephemeral runners are in use
+      - name: Clear previous content
+        run: sudo rm -rf /home/runner/actions-runner/_work/kubeedge/kubeedge/*
+
       - uses: actions/cache@v4
         with:
           path: ~/go/pkg/mod
