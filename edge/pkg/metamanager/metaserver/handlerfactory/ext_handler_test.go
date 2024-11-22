@@ -21,7 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -62,7 +62,7 @@ func TestLogs(t *testing.T) {
 		if cases.isUnexpectedStatusCode {
 			return &types.LogsResponse{}, &http.Response{
 				StatusCode: http.StatusInternalServerError,
-				Body:       ioutil.NopCloser(bytes.NewBufferString("")),
+				Body:       io.NopCloser(bytes.NewBufferString("")),
 			}
 		}
 
@@ -70,12 +70,12 @@ func TestLogs(t *testing.T) {
 			if cases.isStreamingErr {
 				return &types.LogsResponse{}, &http.Response{
 					StatusCode: http.StatusOK,
-					Body:       ioutil.NopCloser(bytes.NewBufferString("")),
+					Body:       io.NopCloser(bytes.NewBufferString("")),
 				}
 			}
 			return &types.LogsResponse{}, &http.Response{
 				StatusCode: http.StatusOK,
-				Body:       ioutil.NopCloser(bytes.NewBufferString("log line 1\nlog line 2\n")),
+				Body:       io.NopCloser(bytes.NewBufferString("log line 1\nlog line 2\n")),
 			}
 		}
 		return &types.LogsResponse{
@@ -83,7 +83,7 @@ func TestLogs(t *testing.T) {
 				ErrMessages: []string{},
 			}, &http.Response{
 				StatusCode: http.StatusOK,
-				Body:       ioutil.NopCloser(bytes.NewBufferString("log line 1\nlog line 2\n")),
+				Body:       io.NopCloser(bytes.NewBufferString("log line 1\nlog line 2\n")),
 			}
 	})
 
@@ -169,7 +169,7 @@ func TestLogs(t *testing.T) {
 			handler.ServeHTTP(w, req)
 
 			resp := w.Result()
-			body, _ := ioutil.ReadAll(resp.Body)
+			body, _ := io.ReadAll(resp.Body)
 
 			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
 			if tt.expectedStatus == http.StatusOK && tt.cases.queryParams == "follow=true" {
@@ -281,7 +281,7 @@ func TestExec(t *testing.T) {
 			handler.ServeHTTP(w, req)
 
 			resp := w.Result()
-			body, _ := ioutil.ReadAll(resp.Body)
+			body, _ := io.ReadAll(resp.Body)
 
 			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
 			if tt.expectedStatus == http.StatusOK && tt.cases.isHandlerExist {
