@@ -19,7 +19,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -75,7 +74,7 @@ func NewEdgeBatchJoin() *cobra.Command {
 	return cmd
 }
 func processBatchjoin(cfgFile string) error {
-	configData, err := ioutil.ReadFile(cfgFile)
+	configData, err := os.ReadFile(cfgFile)
 	if err != nil {
 		klog.Errorf("Error reading config file: %v", err)
 		return err
@@ -223,7 +222,7 @@ func CopyKeadmToNode(node *Node, arch string) error {
 	defer session.Close()
 
 	// Read local file content
-	fileContent, err := ioutil.ReadFile(localPath)
+	fileContent, err := os.ReadFile(localPath)
 	if err != nil {
 		klog.Errorf("Unable to read local file %s: %v", localPath, err)
 		return err
@@ -341,7 +340,7 @@ func executeCommand(client *ssh.Client, command string) (string, error) {
 
 // Load private key
 func loadPrivateKey(file string) (ssh.Signer, error) {
-	key, err := ioutil.ReadFile(file)
+	key, err := os.ReadFile(file)
 	if err != nil {
 		klog.Errorf("unable to read private key: %v", err)
 		return nil, err
