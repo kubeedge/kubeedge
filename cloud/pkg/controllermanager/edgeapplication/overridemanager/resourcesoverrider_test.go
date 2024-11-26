@@ -51,6 +51,10 @@ func TestResourcesOverrider_ApplyOverrides(t *testing.T) {
 										"cpu":    "100m",
 										"memory": "128Mi",
 									},
+									"requests": map[string]interface{}{
+										"cpu":    "100m",
+										"memory": "128Mi",
+									},
 								},
 							},
 						},
@@ -83,6 +87,10 @@ func TestResourcesOverrider_ApplyOverrides(t *testing.T) {
 									"cpu":    "200m",
 									"memory": "256Mi",
 								},
+								"requests": map[string]interface{}{
+									"cpu":    "100m",
+									"memory": "128Mi",
+								},
 							},
 						},
 					},
@@ -103,8 +111,12 @@ func TestResourcesOverrider_ApplyOverrides(t *testing.T) {
 										"name": "container1",
 										"resources": map[string]interface{}{
 											"limits": map[string]interface{}{
-												"cpu":    "100m",
-												"memory": "128Mi",
+												"cpu":    "800m",
+												"memory": "1024Mi",
+											},
+											"requests": map[string]interface{}{
+												"cpu":    "800m",
+												"memory": "512Mi",
 											},
 										},
 									},
@@ -121,8 +133,10 @@ func TestResourcesOverrider_ApplyOverrides(t *testing.T) {
 							ContainerName: "container1",
 							Value: corev1.ResourceRequirements{
 								Limits: corev1.ResourceList{
-									corev1.ResourceCPU:    resource.MustParse("200m"),
-									corev1.ResourceMemory: resource.MustParse("256Mi"),
+									corev1.ResourceCPU: resource.MustParse("200m"),
+								},
+								Requests: corev1.ResourceList{
+									corev1.ResourceCPU: resource.MustParse("100m"),
 								},
 							},
 						},
@@ -140,7 +154,11 @@ func TestResourcesOverrider_ApplyOverrides(t *testing.T) {
 									"resources": map[string]interface{}{
 										"limits": map[string]interface{}{
 											"cpu":    "200m",
-											"memory": "256Mi",
+											"memory": "1024Mi",
+										},
+										"requests": map[string]interface{}{
+											"cpu":    "100m",
+											"memory": "512Mi",
 										},
 									},
 								},
@@ -244,14 +262,14 @@ func TestBuildResourcesPatches(t *testing.T) {
 			},
 			expectedPatches: []overrideOption{
 				{
-					Op:   "replace",
-					Path: "/spec/containers/0/resources",
-					Value: corev1.ResourceRequirements{
-						Limits: corev1.ResourceList{
-							corev1.ResourceCPU:    resource.MustParse("200m"),
-							corev1.ResourceMemory: resource.MustParse("256Mi"),
-						},
-					},
+					Op:    "replace",
+					Path:  "/spec/containers/0/resources/limits/cpu",
+					Value: "200m",
+				},
+				{
+					Op:    "replace",
+					Path:  "/spec/containers/0/resources/limits/memory",
+					Value: "256Mi",
 				},
 			},
 			expectedError: false,
@@ -285,14 +303,14 @@ func TestBuildResourcesPatches(t *testing.T) {
 			},
 			expectedPatches: []overrideOption{
 				{
-					Op:   "replace",
-					Path: "/spec/template/spec/containers/0/resources",
-					Value: corev1.ResourceRequirements{
-						Limits: corev1.ResourceList{
-							corev1.ResourceCPU:    resource.MustParse("200m"),
-							corev1.ResourceMemory: resource.MustParse("256Mi"),
-						},
-					},
+					Op:    "replace",
+					Path:  "/spec/template/spec/containers/0/resources/limits/cpu",
+					Value: "200m",
+				},
+				{
+					Op:    "replace",
+					Path:  "/spec/template/spec/containers/0/resources/limits/memory",
+					Value: "256Mi",
 				},
 			},
 			expectedError: false,
@@ -333,7 +351,7 @@ func TestBuildResourcesPatches(t *testing.T) {
 				assert.Error(err)
 			} else {
 				assert.NoError(err)
-				assert.Equal(tt.expectedPatches, patches)
+				assert.ElementsMatch(tt.expectedPatches, patches)
 			}
 		})
 	}
@@ -378,14 +396,14 @@ func TestBuildResourcesPatchesWithPath(t *testing.T) {
 			},
 			expectedPatches: []overrideOption{
 				{
-					Op:   "replace",
-					Path: "/spec/containers/1/resources",
-					Value: corev1.ResourceRequirements{
-						Limits: corev1.ResourceList{
-							corev1.ResourceCPU:    resource.MustParse("200m"),
-							corev1.ResourceMemory: resource.MustParse("256Mi"),
-						},
-					},
+					Op:    "replace",
+					Path:  "/spec/containers/1/resources/limits/cpu",
+					Value: "200m",
+				},
+				{
+					Op:    "replace",
+					Path:  "/spec/containers/1/resources/limits/memory",
+					Value: "256Mi",
 				},
 			},
 			expectedError: false,
@@ -401,9 +419,6 @@ func TestBuildResourcesPatchesWithPath(t *testing.T) {
 								"containers": []interface{}{
 									map[string]interface{}{
 										"name": "container1",
-									},
-									map[string]interface{}{
-										"name": "container2",
 									},
 								},
 							},
@@ -422,14 +437,14 @@ func TestBuildResourcesPatchesWithPath(t *testing.T) {
 			},
 			expectedPatches: []overrideOption{
 				{
-					Op:   "replace",
-					Path: "/spec/template/spec/containers/0/resources",
-					Value: corev1.ResourceRequirements{
-						Limits: corev1.ResourceList{
-							corev1.ResourceCPU:    resource.MustParse("300m"),
-							corev1.ResourceMemory: resource.MustParse("512Mi"),
-						},
-					},
+					Op:    "replace",
+					Path:  "/spec/template/spec/containers/0/resources/limits/cpu",
+					Value: "300m",
+				},
+				{
+					Op:    "replace",
+					Path:  "/spec/template/spec/containers/0/resources/limits/memory",
+					Value: "512Mi",
 				},
 			},
 			expectedError: false,
@@ -470,81 +485,33 @@ func TestBuildResourcesPatchesWithPath(t *testing.T) {
 				assert.Error(err)
 			} else {
 				assert.NoError(err)
-				assert.Equal(tt.expectedPatches, patches)
+				assert.ElementsMatch(tt.expectedPatches, patches)
 			}
 		})
 	}
 }
 
 func TestAcquireOverride(t *testing.T) {
-	assert := assert.New(t)
-
-	tests := []struct {
-		name           string
-		resourcesPath  string
-		resourcesValue corev1.ResourceRequirements
-		expectedOption overrideOption
-		expectedError  bool
-	}{
-		{
-			name:          "Valid path and resources",
-			resourcesPath: "/spec/containers/0/resources",
-			resourcesValue: corev1.ResourceRequirements{
-				Limits: corev1.ResourceList{
-					corev1.ResourceCPU:    resource.MustParse("200m"),
-					corev1.ResourceMemory: resource.MustParse("256Mi"),
-				},
-			},
-			expectedOption: overrideOption{
-				Op:   string(v1alpha1.OverriderOpReplace),
-				Path: "/spec/containers/0/resources",
-				Value: corev1.ResourceRequirements{
-					Limits: corev1.ResourceList{
-						corev1.ResourceCPU:    resource.MustParse("200m"),
-						corev1.ResourceMemory: resource.MustParse("256Mi"),
-					},
-				},
-			},
-			expectedError: false,
+	resourcesPath := "/spec/containers/0/resources"
+	resourcesValue := corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			corev1.ResourceCPU:    resource.MustParse("500m"),
+			corev1.ResourceMemory: resource.MustParse("128Mi"),
 		},
-		{
-			name:          "Invalid path (no leading slash)",
-			resourcesPath: "spec/containers/0/resources",
-			resourcesValue: corev1.ResourceRequirements{
-				Limits: corev1.ResourceList{
-					corev1.ResourceCPU:    resource.MustParse("200m"),
-					corev1.ResourceMemory: resource.MustParse("256Mi"),
-				},
-			},
-			expectedOption: overrideOption{},
-			expectedError:  true,
-		},
-		{
-			name:          "Empty resources",
-			resourcesPath: "/spec/containers/0/resources",
-			resourcesValue: corev1.ResourceRequirements{
-				Limits: corev1.ResourceList{},
-			},
-			expectedOption: overrideOption{
-				Op:    string(v1alpha1.OverriderOpReplace),
-				Path:  "/spec/containers/0/resources",
-				Value: corev1.ResourceRequirements{Limits: corev1.ResourceList{}},
-			},
-			expectedError: false,
+		Limits: corev1.ResourceList{
+			corev1.ResourceCPU:    resource.MustParse("500m"),
+			corev1.ResourceMemory: resource.MustParse("128Mi"),
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			option, err := acquireOverride(tt.resourcesPath, tt.resourcesValue)
-
-			if tt.expectedError {
-				assert.Error(err)
-				assert.Equal(tt.expectedOption, option)
-			} else {
-				assert.NoError(err)
-				assert.Equal(tt.expectedOption, option)
-			}
-		})
+	expectedPatches := []overrideOption{
+		{Op: "replace", Path: "/spec/containers/0/resources/requests/cpu", Value: "500m"},
+		{Op: "replace", Path: "/spec/containers/0/resources/requests/memory", Value: "128Mi"},
+		{Op: "replace", Path: "/spec/containers/0/resources/limits/cpu", Value: "500m"},
+		{Op: "replace", Path: "/spec/containers/0/resources/limits/memory", Value: "128Mi"},
 	}
+
+	patches, err := acquireOverride(resourcesPath, resourcesValue)
+	assert.NoError(t, err)
+	assert.ElementsMatch(t, expectedPatches, patches)
 }
