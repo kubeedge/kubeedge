@@ -29,16 +29,12 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
-const (
-	testNamespace = "test-namespace"
-)
-
 func TestNewPods(t *testing.T) {
 	assert := assert.New(t)
 
 	send := newSend()
 
-	pods := newPods(testNamespace, send)
+	pods := newPods(namespace, send)
 	assert.NotNil(pods)
 	assert.Equal(namespace, pods.namespace)
 	assert.Equal(send, pods.send)
@@ -80,13 +76,13 @@ func TestPods_Delete(t *testing.T) {
 				assert.Equal(modules.MetaGroup, message.GetGroup())
 				assert.Equal(modules.EdgedModuleName, message.GetSource())
 				assert.NotEmpty(message.GetID())
-				assert.Equal(fmt.Sprintf("%s/%s/%s", testNamespace, model.ResourceTypePod, podName), message.GetResource())
+				assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypePod, podName), message.GetResource())
 				assert.Equal(model.DeleteOperation, message.GetOperation())
 
 				return test.respFunc(message)
 			}
 
-			podsClient := newPods(testNamespace, mockSend)
+			podsClient := newPods(namespace, mockSend)
 
 			err := podsClient.Delete(podName, deleteOptions)
 
@@ -106,7 +102,7 @@ func TestPods_Get(t *testing.T) {
 	expectedPod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      podName,
-			Namespace: testNamespace,
+			Namespace: namespace,
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
@@ -152,13 +148,13 @@ func TestPods_Get(t *testing.T) {
 				assert.Equal(modules.MetaGroup, message.GetGroup())
 				assert.Equal(modules.EdgedModuleName, message.GetSource())
 				assert.NotEmpty(message.GetID())
-				assert.Equal(fmt.Sprintf("%s/%s/%s", testNamespace, model.ResourceTypePod, podName), message.GetResource())
+				assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypePod, podName), message.GetResource())
 				assert.Equal(model.QueryOperation, message.GetOperation())
 
 				return test.respFunc(message)
 			}
 
-			podsClient := newPods(testNamespace, mockSend)
+			podsClient := newPods(namespace, mockSend)
 
 			pod, err := podsClient.Get(podName)
 
