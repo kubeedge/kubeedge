@@ -33,7 +33,7 @@ func TestSignX509Certs(t *testing.T) {
 	}, certpkw, nil)
 
 	opts := SignCertsOptionsWithCSR(csrblock.Bytes, cablock.Bytes, capkw.DER(),
-		[]x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth}, 24*time.Hour)
+		[]x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth}, 24*time.Hour, nil)
 	certblock, err := certh.SignCerts(opts)
 	if err != nil {
 		t.Fatal(err)
