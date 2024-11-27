@@ -14,7 +14,7 @@ KubeEdge 是一个开源的系统，可将本机容器化应用编排和管理�
 随着业务逻辑在边缘端上运行，可以在本地保护和处理大量数据。
 通过在边缘端处理数据，响应速度会显著提高，并且可以更好地保护数据隐私。
 
-KubeEdge 是一个由 [Cloud Native Computing Foundation](https://cncf.io) (CNCF) 托管的孵化级项目，CNCF 对 KubeEdge 的 [孵化公告](https://www.cncf.io/blog/2020/09/16/toc-approves-kubeedge-as-incubating-project/)
+KubeEdge 是一个由 [Cloud Native Computing Foundation](https://cncf.io) (CNCF) 托管的毕业级项目，CNCF 对 KubeEdge 的 [毕业公告](https://www.cncf.io/announcements/2024/10/15/cloud-native-computing-foundation-announces-kubeedge-graduation/)
 
 
 ## 优势

@@ -16,7 +16,7 @@ With KubeEdge it is easy to get and deploy existing complicated machine learning
 With business logic running at the Edge, much larger volumes of data can be secured & processed locally where the data is produced.
 With data processed at the Edge, the responsiveness is increased dramatically and data privacy is protected.
 
-KubeEdge is an incubation-level hosted project by the [Cloud Native Computing Foundation](https://cncf.io) (CNCF). KubeEdge incubation [announcement](https://www.cncf.io/blog/2020/09/16/toc-approves-kubeedge-as-incubating-project/) by CNCF.
+KubeEdge is a graduation-level hosted project by the [Cloud Native Computing Foundation](https://cncf.io) (CNCF). KubeEdge graduation [announcement](https://www.cncf.io/announcements/2024/10/15/cloud-native-computing-foundation-announces-kubeedge-graduation/) by CNCF.
 
 ## Advantages
 
