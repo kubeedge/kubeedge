@@ -38,7 +38,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
 	"go.opentelemetry.io/otel/trace"
-	"k8s.io/client-go/informers"
 	utilfs "k8s.io/kubernetes/pkg/util/filesystem"
 	"k8s.io/mount-utils"
 	"k8s.io/utils/integer"
