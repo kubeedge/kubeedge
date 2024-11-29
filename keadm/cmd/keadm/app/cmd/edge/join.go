@@ -17,13 +17,18 @@ limitations under the License.
 package edge
 
 import (
+	"crypto/tls"
 	"fmt"
+	"net"
+	"net/http"
 	"os"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
+	apiutil "github.com/kubeedge/api/apis/util"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
@@ -76,19 +81,21 @@ func NewEdgeJoin() *cobra.Command {
 
 			step.Printf("Check if the management directory is clean")
 			if _, err := os.Stat(util.KubeEdgePath); err != nil {
-				if os.IsNotExist(err) {
-					return nil
+				if !os.IsNotExist(err) {
+					return fmt.Errorf("Stat management directory %s failed: %v", util.KubeEdgePath, err)
 				}
-				return fmt.Errorf("Stat management directory %s failed: %v", util.KubeEdgePath, err)
+			} else {
+				entries, err := os.ReadDir(util.KubeEdgePath)
+				if err != nil {
+					return fmt.Errorf("read management directory %s failed: %v", util.KubeEdgePath, err)
+				}
+				if len(entries) > 0 {
+					return fmt.Errorf("the management directory %s is not clean, please remove it first", util.KubeEdgePath)
+				}
 			}
-			entries, err := os.ReadDir(util.KubeEdgePath)
-			if err != nil {
-				return fmt.Errorf("read management directory %s failed: %v", util.KubeEdgePath, err)
-			}
-			if len(entries) > 0 {
-				return fmt.Errorf("the management directory %s is not clean, please remove it first", util.KubeEdgePath)
-			}
-			return nil
+
+			step.Printf("Check if the node name is valid")
+			return isNodeExist(joinOptions)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ver, err := util.GetCurrentVersion(joinOptions.KubeEdgeVersion)
@@ -175,4 +182,44 @@ func createBootstrapFile(opt *common.JoinOptions) error {
 	// write token to bootstrap-edgecore.conf file
 	token := []byte(opt.Token)
 	return os.WriteFile(bootstrapFile, token, 0640)
+}
+
+func isNodeExist(opt *common.JoinOptions) error {
+	var nodeName string
+	if opt.EdgeNodeName != "" {
+		nodeName = opt.EdgeNodeName
+	} else {
+		nodeName = apiutil.GetHostname()
+	}
+
+	queryPara := fmt.Sprintf("/node/%s", nodeName)
+	host, _, err := net.SplitHostPort(opt.CloudCoreIPPort)
+	if err != nil {
+		return errors.Errorf("get current host and port failed: %v", err)
+	}
+
+	var url string
+	if opt.CertPort != "" {
+		url = "https://" + net.JoinHostPort(host, opt.CertPort) + queryPara
+	} else {
+		url = "https://" + net.JoinHostPort(host, "10002") + queryPara
+	}
+
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+	}
+
+	resp, err := client.Get(url)
+	if err != nil {
+		return errors.Errorf("error making request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil
+	}
+
+	return errors.New("node already exists or internal error occurred, cannot register again")
 }

@@ -25,6 +25,7 @@ const (
 const (
 	DefaultCAURL              = "/ca.crt"
 	DefaultCertURL            = "/edge.crt"
+	DefaultCheckNodeURL       = "/node/{nodename}"
 	DefaultNodeUpgradeURL     = "/nodeupgrade"
 	DefaultTaskStateReportURL = "/task/{taskType}/name/{taskID}/node/{nodeID}/status"
 
