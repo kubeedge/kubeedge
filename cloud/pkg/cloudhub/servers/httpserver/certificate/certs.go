@@ -154,6 +154,10 @@ func signEdgeCert(r io.ReadCloser, usagesStr string) (*pem.Block, error) {
 		hubconfig.Config.CaKey,
 		usages,
 		edgeCertSigningDuration,
+		&certutil.AltNames{
+			IPs:      hubconfig.Config.ConvAdvertiseAddressToIPs(),
+			DNSNames: hubconfig.Config.DNSNames,
+		},
 	))
 	if err != nil {
 		return nil, fmt.Errorf("fail to signCerts, err: %v", err)
