@@ -1,8 +1,26 @@
+* [v1.19.1(#v1191)
+    * [Downloads for v1.19.1](#downloads-for-v1191)
+    * [KubeEdge v1.19.1 Release Notes](#kubeedge-v1191-release-notes)
+        * [Changelog since v1.19.0](#changelog-since-v1190)
 * [v1.19.0](#v1190)
     * [Downloads for v1.19.0](#downloads-for-v1190)
     * [KubeEdge v1.19 Release Notes](#kubeedge-v119-release-notes)
         * [1.19 What's New](#119-whats-new)
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
+
+# v1.19.1
+
+## Downloads for v1.19.1
+
+Download v1.19.1 in the [v1.19.1 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.19.1).
+
+## KubeEdge v1.19.1 Release Notes
+
+### Changelog since v1.19.0
+
+- Fix token cannot be refreshed. ([#5984](https://github.com/kubeedge/kubeedge/pull/5984), [@WillardHu](https://github.com/WillardHu))
+- Fix device compile failed. ([#5986](https://github.com/kubeedge/kubeedge/pull/5986), [@JiaweiGithub](https://github.com/JiaweiGithub))
+- Fix install EdgeCore failed with CRI-O(>v1.29.2) for uid missing. ([#5990](https://github.com/kubeedge/kubeedge/pull/5990), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
 
 # v1.19.0
 

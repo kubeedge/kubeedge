@@ -1,3 +1,7 @@
+* [v1.17.4](#v1174)
+    * [Downloads for v1.17.4](#downloads-for-v1174)
+    * [KubeEdge v1.17.4 Release Notes](#kubeedge-v1174-release-notes)
+        * [Changelog since v1.17.3](#changelog-since-v1173)
 * [v1.17.3](#v1173)
     * [Downloads for v1.17.3](#downloads-for-v1173)
     * [KubeEdge v1.17.3 Release Notes](#kubeedge-v1173-release-notes)
@@ -15,6 +19,19 @@
     * [KubeEdge v1.17 Release Notes](#kubeedge-v117-release-notes)
         * [1.17 What's New](#117-whats-new)
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
+
+# v1.17.4
+
+## Downloads for v1.17.4
+
+Download v1.17.4 in the [v1.17.4 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.17.4).
+
+## KubeEdge v1.17.4 Release Notes
+
+### Changelog since v1.17.3
+
+- Fix errors due to singular and plural conversion in MetaServer. ([#5918](https://github.com/kubeedge/kubeedge/pull/5918), [@wbc6080](https://github.com/wbc6080))
+- Fix install EdgeCore failed with CRI-O(>v1.29.2) for uid missing. ([#6014](https://github.com/kubeedge/kubeedge/pull/6014), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
 
 # v1.17.3
 
