@@ -23,6 +23,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	oteltrace "go.opentelemetry.io/otel/trace"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -118,6 +119,7 @@ func (runtime *CRIRuntime) CopyResources(edgeImage string, files map[string]stri
 	psc := &runtimeapi.PodSandboxConfig{
 		Metadata: &runtimeapi.PodSandboxMetadata{
 			Name:      KubeEdgeBinaryName,
+			Uid:       uuid.New().String(),
 			Namespace: constants.SystemNamespace,
 		},
 		Linux: &runtimeapi.LinuxPodSandboxConfig{
