@@ -979,6 +979,49 @@ var _ = Describe("Test EdgeApplication Controller", func() {
 					}, waitTimeOut, pollInterval).Should(BeTrue())
 				})
 				It("should create deployments for nodes selected by TargetNodeLabelSelector and apply overriders", func() {
+					deployTemplate := &appsv1.Deployment{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "Deployment",
+							APIVersion: appsv1.SchemeGroupVersion.String(),
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "app-deploy" + randomize,
+							Namespace: "default",
+						},
+						Spec: appsv1.DeploymentSpec{
+							Template: corev1.PodTemplateSpec{
+								ObjectMeta: metav1.ObjectMeta{
+									Labels: map[string]string{
+										"label": "app",
+									},
+								},
+								Spec: corev1.PodSpec{
+									Containers: []corev1.Container{
+										{
+											Name:  "container1",
+											Image: "foo.fir.io/bar:latest",
+											Resources: corev1.ResourceRequirements{
+												Limits: corev1.ResourceList{
+													corev1.ResourceCPU: resource.MustParse("100m"),
+												},
+											},
+										},
+										{
+											Name:  "container2",
+											Image: "foo.sec.io/bar:v0.1.0",
+										},
+									},
+								},
+							},
+							Selector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{
+									"label": "app",
+								},
+							},
+							Replicas: pointer.Int32Ptr(1),
+						},
+					}
+
 					newEdgeApp := &appsv1alpha1.EdgeApplication{
 						ObjectMeta: metav1.ObjectMeta{
 							Name:      "edgeapp" + randomize,
@@ -1036,12 +1079,14 @@ var _ = Describe("Test EdgeApplication Controller", func() {
 							},
 						},
 					}
+
 					Expect(k8sClient.Create(ctx, newEdgeApp)).Should(Succeed())
 
 					Eventually(func() bool {
 						deploy := &appsv1.Deployment{}
 						expectedSuffix := CreateSuffixFromLabels(newEdgeApp.Spec.WorkloadScope.TargetNodeLabels[0].LabelSelector.MatchLabels)
 						deployName := fmt.Sprintf("%s-%s", deployTemplate.Name, expectedSuffix)
+
 						if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployName}, deploy); err != nil {
 							return false
 						}
