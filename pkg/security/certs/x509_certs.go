@@ -76,13 +76,9 @@ func (h x509CertsHandler) SignCerts(opts SignCertsOptions) (*pem.Block, error) {
 		}
 		opts.cfg.CommonName = csr.Subject.CommonName
 		opts.cfg.Organization = csr.Subject.Organization
+		opts.cfg.AltNames.DNSNames = csr.DNSNames
+		opts.cfg.AltNames.IPs = csr.IPAddresses
 		pubkey = csr.PublicKey
-		if len(csr.DNSNames) > 0 {
-			opts.cfg.AltNames.DNSNames = csr.DNSNames
-		}
-		if len(csr.IPAddresses) > 0 {
-			opts.cfg.AltNames.IPs = csr.IPAddresses
-		}
 	}
 	if len(opts.cfg.CommonName) == 0 {
 		return nil, errors.New("must specify a CommonName")

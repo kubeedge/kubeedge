@@ -19,6 +19,7 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
+	"net"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -107,7 +108,12 @@ func createCertsToSecret(ctx context.Context) error {
 		if err != nil {
 			klog.Info("CloudCoreCert and key don't exist in the secret, and will be signed by CA")
 
+			ips := make([]net.IP, 0, len(hubconfig.Config.AdvertiseAddress))
+			for _, addr := range hubconfig.Config.AdvertiseAddress {
+				ips = append(ips, net.ParseIP(addr))
+			}
 			h := certs.GetHandler(certs.HandlerTypeX509)
+
 			keywrap, err := h.GenPrivateKey()
 			if err != nil {
 				return fmt.Errorf("faield to generate the private key, err: %v", err)
@@ -123,7 +129,7 @@ func createCertsToSecret(ctx context.Context) error {
 				Usages:       []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 				AltNames: certutil.AltNames{
 					DNSNames: hubconfig.Config.DNSNames,
-					IPs:      hubconfig.Config.ConvAdvertiseAddressToIPs(),
+					IPs:      ips,
 				},
 			}, hubconfig.Config.Ca, hubconfig.Config.CaKey, key.Public(), year100)
 			certPEM, err := h.SignCerts(opts)
