@@ -59,12 +59,7 @@ type SignCertsOptions struct {
 	expiration time.Duration
 }
 
-func SignCertsOptionsWithCA(
-	cfg certutil.Config,
-	caDER, caKeyDER []byte,
-	publicKey any,
-	expiration time.Duration,
-) SignCertsOptions {
+func SignCertsOptionsWithCA(cfg certutil.Config, caDER, caKeyDER []byte, publicKey any, expiration time.Duration) SignCertsOptions {
 	return SignCertsOptions{
 		cfg:        cfg,
 		caDER:      caDER,
@@ -74,13 +69,8 @@ func SignCertsOptionsWithCA(
 	}
 }
 
-func SignCertsOptionsWithCSR(
-	csrDER, caDER, caKeyDER []byte,
-	usages []x509.ExtKeyUsage,
-	expiration time.Duration,
-	alt *certutil.AltNames,
-) SignCertsOptions {
-	opts := SignCertsOptions{
+func SignCertsOptionsWithCSR(csrDER, caDER, caKeyDER []byte, usages []x509.ExtKeyUsage, expiration time.Duration) SignCertsOptions {
+	return SignCertsOptions{
 		csrDER:   csrDER,
 		caDER:    caDER,
 		caKeyDER: caKeyDER,
@@ -89,17 +79,9 @@ func SignCertsOptionsWithCSR(
 		},
 		expiration: expiration,
 	}
-	if alt != nil {
-		opts.cfg.AltNames = *alt
-	}
-	return opts
 }
 
-func SignCertsOptionsWithK8sCSR(
-	csrDER []byte,
-	usages []x509.ExtKeyUsage,
-	expiration time.Duration,
-) SignCertsOptions {
+func SignCertsOptionsWithK8sCSR(csrDER []byte, usages []x509.ExtKeyUsage, expiration time.Duration) SignCertsOptions {
 	return SignCertsOptions{
 		csrDER: csrDER,
 		cfg: certutil.Config{

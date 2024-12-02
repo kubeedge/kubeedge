@@ -1,7 +1,6 @@
 package config
 
 import (
-	"net"
 	"sync"
 
 	"k8s.io/klog/v2"
@@ -96,12 +95,4 @@ func (c *Configure) UpdateCerts(cert, key []byte) {
 	if key != nil {
 		c.Key = key
 	}
-}
-
-func (c *Configure) ConvAdvertiseAddressToIPs() []net.IP {
-	ips := make([]net.IP, 0, len(c.AdvertiseAddress))
-	for _, addr := range c.AdvertiseAddress {
-		ips = append(ips, net.ParseIP(addr))
-	}
-	return ips
 }
