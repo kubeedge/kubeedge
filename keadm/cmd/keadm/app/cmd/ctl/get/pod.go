@@ -22,6 +22,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/kubectl/pkg/cmd/get"
@@ -34,6 +35,7 @@ import (
 
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/client"
+	ctlcommon "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
 
@@ -46,7 +48,7 @@ type PodGetOptions struct {
 	LabelSelector string
 	AllNamespaces bool
 	Output        string
-	PrintFlags    *get.PrintFlags
+	ctlcommon.ExtPrintFlags
 }
 
 // NewEdgePodGet returns KubeEdge edge pod command.
@@ -74,10 +76,10 @@ func (o *PodGetOptions) getPods(args []string) error {
 	nodeName := config.Modules.Edged.HostnameOverride
 
 	ctx := context.Background()
-	var podListFilter *api.PodList
+	var podList *v1.PodList
 	if len(args) > 0 {
-		podListFilter = &api.PodList{
-			Items: make([]api.Pod, 0, len(args)),
+		podList = &v1.PodList{
+			Items: make([]v1.Pod, 0, len(args)),
 		}
 		var podRequest *client.PodRequest
 		for _, podName := range args {
@@ -92,12 +94,7 @@ func (o *PodGetOptions) getPods(args []string) error {
 			}
 
 			if pod.Spec.NodeName == nodeName {
-				var apiPod api.Pod
-				if err := k8s_v1_api.Convert_v1_Pod_To_core_Pod(pod, &apiPod, nil); err != nil {
-					fmt.Printf("failed to covert pod with err:%v\n", err)
-					continue
-				}
-				podListFilter.Items = append(podListFilter.Items, apiPod)
+				podList.Items = append(podList.Items, *pod)
 			} else {
 				fmt.Printf("can't to query pod: \"%s\" for node: \"%s\"\n", pod.Name, pod.Spec.NodeName)
 			}
@@ -108,27 +105,13 @@ func (o *PodGetOptions) getPods(args []string) error {
 			AllNamespaces: o.AllNamespaces,
 			LabelSelector: o.LabelSelector,
 		}
-		podList, err := podRequest.GetPods(ctx)
+		podList, err = podRequest.GetPods(ctx)
 		if err != nil {
 			return err
 		}
-
-		podListFilter = &api.PodList{
-			Items: make([]api.Pod, 0, len(podList.Items)),
-		}
-
-		for _, pod := range podList.Items {
-			if pod.Spec.NodeName == nodeName {
-				var apiPod api.Pod
-				if err := k8s_v1_api.Convert_v1_Pod_To_core_Pod(&pod, &apiPod, nil); err != nil {
-					return err
-				}
-				podListFilter.Items = append(podListFilter.Items, apiPod)
-			}
-		}
 	}
 
-	if len(podListFilter.Items) == 0 {
+	if len(podList.Items) == 0 {
 		if len(args) > 0 {
 			return nil
 		}
@@ -140,19 +123,32 @@ func (o *PodGetOptions) getPods(args []string) error {
 		return nil
 	}
 
-	table, err := ConvertDataToTable(podListFilter)
-	if err != nil {
-		return err
-	}
-
-	if o.AllNamespaces {
-		if err := o.PrintFlags.EnsureWithNamespace(); err != nil {
+	if *o.PrintFlags.OutputFormat == "" || *o.PrintFlags.OutputFormat == "wide" {
+		podListFilter := &api.PodList{
+			Items: make([]api.Pod, 0, len(podList.Items)),
+		}
+		for _, pod := range podList.Items {
+			if pod.Spec.NodeName == nodeName {
+				var apiPod api.Pod
+				if err := k8s_v1_api.Convert_v1_Pod_To_core_Pod(&pod, &apiPod, nil); err != nil {
+					fmt.Printf("pod revert to apiPod with err:%v\n", err)
+					continue
+				}
+				podListFilter.Items = append(podListFilter.Items, apiPod)
+			}
+		}
+		table, err := ConvertDataToTable(podListFilter)
+		if err != nil {
 			return err
 		}
+		return o.PrintToTable(table, o.AllNamespaces, os.Stdout)
 	}
 
-	printer, err := o.PrintFlags.ToPrinter()
-	return printer.PrintObj(table, os.Stdout)
+	runtimeObjects := make([]runtime.Object, 0, len(podList.Items))
+	for _, pod := range podList.Items {
+		runtimeObjects = append(runtimeObjects, &pod)
+	}
+	return o.PrintToJSONYaml(runtimeObjects)
 }
 
 func NewGetOpts() *PodGetOptions {
@@ -171,7 +167,7 @@ func AddGetPodFlags(cmd *cobra.Command, getOptions *PodGetOptions) {
 		"Selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)")
 
 	cmd.Flags().StringVarP(&getOptions.Output, common.FlagNameOutput, "o", getOptions.Output,
-		"Output format. One of: (json, yaml, name, go-template, go-template-file, template, templatefile, jsonpath, jsonpath-as-json, jsonpath-file, custom-columns, custom-columns-file, wide)")
+		"Indicate the output format. Currently supports formats such as yaml|json|wide")
 
 	cmd.Flags().BoolVarP(&getOptions.AllNamespaces, common.FlagNameAllNamespaces, "A", getOptions.AllNamespaces,
 		"If present, list the requested object(s) across all namespaces. Namespace in current context is ignored even if specified with --namespace")
