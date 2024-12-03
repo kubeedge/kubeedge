@@ -1,3 +1,7 @@
+* [v1.18.2(#v1182)
+    * [Downloads for v1.18.2](#downloads-for-v1182)
+    * [KubeEdge v1.18.2 Release Notes](#kubeedge-v1182-release-notes)
+        * [Changelog since v1.18.1](#changelog-since-v1181)
 * [v1.18.1(#v1181)
     * [Downloads for v1.18.1](#downloads-for-v1181)
     * [KubeEdge v1.18.1 Release Notes](#kubeedge-v1181-release-notes)
@@ -7,6 +11,21 @@
     * [KubeEdge v1.18 Release Notes](#kubeedge-v118-release-notes)
         * [1.18 What's New](#118-whats-new)
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
+
+
+# v1.18.2
+
+## Downloads for v1.18.2
+
+Download v1.18.2 in the [v1.18.2 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.18.2).
+
+## KubeEdge v1.18.2 Release Notes
+
+### Changelog since v1.18.1
+
+- Fix errors due to singular and plural conversion in MetaServer. ([#5917](https://github.com/kubeedge/kubeedge/pull/5917), [@wbc6080](https://github.com/wbc6080))
+- Fix token cannot be refreshed. ([#5984](https://github.com/kubeedge/kubeedge/pull/5984), [@WillardHu](https://github.com/WillardHu))
+- Fix install EdgeCore failed with CRI-O(>v1.29.2) for uid missing. ([#5990](https://github.com/kubeedge/kubeedge/pull/5990), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
 
 # v1.18.1
 
