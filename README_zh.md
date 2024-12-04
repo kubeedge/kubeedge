@@ -87,7 +87,7 @@ KubeEdge 由云端和边缘端部分构成：
 
 例会时间：
 - 欧洲时间：**北京时间 周三 16:30-17:30**（每双周一次，从 2020 年 2 月 19 日开始）。[『查询本地时间』](https://www.thetimezoneconverter.com/?t=16%3A30&tz=GMT%2B8&)
-- 太平洋时间：**北京时间 周三 10:00-11:00**（每双周一次，从 2020 年 2 月 26 日开始）。[『查询本地时间』](https://www.thetimezoneconverter.com/?t=10%3A00&tz=GMT%2B8&)
+- 太平洋时间：**北京时间 周三 16:00-17:00**（每周一次，从 2020 年 2 月 26 日开始）。[『查询本地时间』](https://www.thetimezoneconverter.com/?t=10%3A00&tz=GMT%2B8&)
 
 会议资源：
 - [会议纪要和议程](https://docs.google.com/document/d/1Sr5QS_Z04uPfRbA7PrXr3aPwCRpx7EtsyHq7mp6CnHs/edit)
