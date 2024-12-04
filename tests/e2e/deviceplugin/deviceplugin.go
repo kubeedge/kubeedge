@@ -122,7 +122,7 @@ func newDevicePluginDeployment(name, imageURL string, replicas int32) *apps.Depl
 	return &apps.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: metav1.NamespaceSystem,
+			Namespace: "default",
 			Labels:    map[string]string{"app": name},
 		},
 		Spec: apps.DeploymentSpec{
