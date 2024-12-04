@@ -1,19 +1,3 @@
-/*
-Copyright 2024 The KubeEdge Authors.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-   http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
 package deviceplugin
 
 import (
@@ -49,16 +33,12 @@ var _ = GroupDescribe("Device Plugin E2E Tests", func() {
 
 	ginkgo.Context("Test Device Plugin Registration and Basic Functionality", func() {
 		ginkgo.BeforeEach(func() {
-			// Get current test SpecReport
 			testSpecReport = ginkgo.CurrentSpecReport()
-			// Start test timer
 			testTimer = DevicePluginTestTimerGroup.NewTestTimer(testSpecReport.LeafNodeText)
 		})
 
 		ginkgo.AfterEach(func() {
-			// End test timer
 			testTimer.End()
-			// Print result
 			testTimer.PrintResult()
 
 			if UID != "" {
@@ -81,13 +61,11 @@ var _ = GroupDescribe("Device Plugin E2E Tests", func() {
 
 		ginkgo.It("E2E_DEVICE_PLUGIN_1: Verify device plugin registration", func() {
 			replica := int32(1)
-			// Generate the random string and assign as a UID
 			UID = "sample-device-plugin-" + utils.GetRandomString(5)
 
 			ginkgo.By(fmt.Sprintf("Creating device plugin deployment %s", UID))
 			deployment := newDevicePluginDeployment(UID, "nvidia/k8s-device-plugin:v0.13.0", replica)
 			
-			// Print deployment details for debugging
 			framework.Logf("Deployment Namespace: %s", deployment.Namespace)
 			framework.Logf("Deployment Name: %s", deployment.Name)
 			framework.Logf("Deployment Labels: %v", deployment.Labels)
@@ -103,24 +81,26 @@ var _ = GroupDescribe("Device Plugin E2E Tests", func() {
 				constants.E2ELabelKey: constants.E2ELabelValue,
 			})
 
-			// Add more robust pod retrieval with additional logging
 			ginkgo.By("Retrieving pods with label selector")
-			podList, err := clientSet.CoreV1().Pods(metav1.NamespaceDefault).List(context.TODO(), metav1.ListOptions{
-				LabelSelector: labelSelector.String(),
-			})
-			framework.Logf("Pod retrieval error: %v", err)
-			gomega.Expect(err).To(gomega.BeNil())
+			var podList *v1.PodList
+			gomega.Eventually(func() bool {
+				var err error
+				podList, err = clientSet.CoreV1().Pods(metav1.NamespaceDefault).List(context.TODO(), metav1.ListOptions{
+					LabelSelector: labelSelector.String(),
+				})
+				if err != nil {
+					framework.Logf("Error listing pods: %v", err)
+					return false
+				}
+				return len(podList.Items) > 0
+			}, 5*time.Minute, 10*time.Second).Should(gomega.BeTrue(), "Pod list should not be empty")
 
-			// Additional debugging
 			framework.Logf("Found %d pods", len(podList.Items))
 			for _, pod := range podList.Items {
 				framework.Logf("Pod Name: %s, Status: %s, Labels: %v", 
 					pod.Name, pod.Status.Phase, pod.Labels)
 			}
-
-			gomega.Expect(podList.Items).NotTo(gomega.BeEmpty(), "Pod list should not be empty")
 			
-			// Wait for pods to be running with extended timeout
 			utils.WaitForPodsRunning(clientSet, podList, 5*time.Minute)
 
 			ginkgo.By("Verifying device plugin registration")
