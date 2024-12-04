@@ -29,8 +29,8 @@ import (
 
 	_ "github.com/kubeedge/kubeedge/tests/e2e/apps"
 	_ "github.com/kubeedge/kubeedge/tests/e2e/device"
-	_ "github.com/kubeedge/kubeedge/tests/e2e/rule"
 	_ "github.com/kubeedge/kubeedge/tests/e2e/deviceplugin"
+	_ "github.com/kubeedge/kubeedge/tests/e2e/rule"
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 )
 
