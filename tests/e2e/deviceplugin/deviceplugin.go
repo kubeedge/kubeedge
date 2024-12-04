@@ -36,12 +36,124 @@ import (
 
 var DevicePluginTestTimerGroup = utils.NewTestTimerGroup()
 
+var _ = GroupDescribe("Device Plugin E2E Tests", func() {
+	var UID string
+	var testTimer *utils.TestTimer
+	var testSpecReport ginkgo.SpecReport
+
+	var clientSet clientset.Interface
+
+	ginkgo.BeforeEach(func() {
+		clientSet = utils.NewKubeClient(framework.TestContext.KubeConfig)
+	})
+
+	ginkgo.Context("Test Device Plugin Registration and Basic Functionality", func() {
+		ginkgo.BeforeEach(func() {
+			// Get current test SpecReport
+			testSpecReport = ginkgo.CurrentSpecReport()
+			// Start test timer
+			testTimer = DevicePluginTestTimerGroup.NewTestTimer(testSpecReport.LeafNodeText)
+		})
+
+		ginkgo.AfterEach(func() {
+			// End test timer
+			testTimer.End()
+			// Print result
+			testTimer.PrintResult()
+
+			if UID != "" {
+				ginkgo.By(fmt.Sprintf("Deleting deployment %s", UID))
+				err := utils.DeleteDeployment(clientSet, metav1.NamespaceDefault, UID)
+				gomega.Expect(err).To(gomega.BeNil())
+
+				labelSelector := labels.SelectorFromSet(map[string]string{
+					"app":                 UID,
+					constants.E2ELabelKey: constants.E2ELabelValue,
+				})
+
+				ginkgo.By(fmt.Sprintf("wait for pod of deploy %s to disappear", UID))
+				err = utils.WaitForPodsToDisappear(clientSet, metav1.NamespaceDefault, labelSelector, constants.Interval, constants.Timeout)
+				gomega.Expect(err).To(gomega.BeNil())
+			}
+
+			utils.PrintTestcaseNameandStatus()
+		})
+
+		ginkgo.It("E2E_DEVICE_PLUGIN_1: Verify device plugin registration", func() {
+			replica := int32(1)
+			// Generate the random string and assign as a UID
+			UID = "sample-device-plugin-" + utils.GetRandomString(5)
+
+			ginkgo.By(fmt.Sprintf("Creating device plugin deployment %s", UID))
+			deployment := newDevicePluginDeployment(UID, "nvidia/k8s-device-plugin:v0.13.0", replica)
+			
+			// Print deployment details for debugging
+			framework.Logf("Deployment Namespace: %s", deployment.Namespace)
+			framework.Logf("Deployment Name: %s", deployment.Name)
+			framework.Logf("Deployment Labels: %v", deployment.Labels)
+			framework.Logf("Pod Template Labels: %v", deployment.Spec.Template.Labels)
+
+			createdDeployment, err := utils.CreateDeployment(clientSet, deployment)
+			gomega.Expect(err).To(gomega.BeNil())
+			gomega.Expect(createdDeployment).NotTo(gomega.BeNil())
+
+			ginkgo.By("Waiting for device plugin pod to be running")
+			labelSelector := labels.SelectorFromSet(map[string]string{
+				"app":                 UID,
+				constants.E2ELabelKey: constants.E2ELabelValue,
+			})
+
+			// Add more robust pod retrieval with additional logging
+			ginkgo.By("Retrieving pods with label selector")
+			podList, err := clientSet.CoreV1().Pods(metav1.NamespaceDefault).List(context.TODO(), metav1.ListOptions{
+				LabelSelector: labelSelector.String(),
+			})
+			framework.Logf("Pod retrieval error: %v", err)
+			gomega.Expect(err).To(gomega.BeNil())
+
+			// Additional debugging
+			framework.Logf("Found %d pods", len(podList.Items))
+			for _, pod := range podList.Items {
+				framework.Logf("Pod Name: %s, Status: %s, Labels: %v", 
+					pod.Name, pod.Status.Phase, pod.Labels)
+			}
+
+			gomega.Expect(podList.Items).NotTo(gomega.BeEmpty(), "Pod list should not be empty")
+			
+			// Wait for pods to be running with extended timeout
+			utils.WaitForPodsRunning(clientSet, podList, 5*time.Minute)
+
+			ginkgo.By("Verifying device plugin registration")
+			gomega.Eventually(func() bool {
+				nodeList, err := clientSet.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+				if err != nil {
+					framework.Logf("Error listing nodes: %v", err)
+					return false
+				}
+
+				for _, node := range nodeList.Items {
+					if _, ok := node.Status.Capacity["nvidia.com/gpu"]; ok {
+						return true
+					}
+				}
+				return false
+			}, 10*time.Minute, 10*time.Second).Should(gomega.BeTrue(), "Device plugin should be registered on at least one node")
+
+			framework.Logf("Device plugin successfully registered")
+		})
+	})
+})
+
 func newDevicePluginDeployment(name, imageURL string, replicas int32) *apps.Deployment {
+	privileged := true
 	depl := apps.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: metav1.NamespaceDefault, // Explicitly use default namespace
-			Labels:    map[string]string{"app": name},
+			Namespace: metav1.NamespaceDefault,
+			Labels: map[string]string{
+				"app":                 name,
+				constants.E2ELabelKey: constants.E2ELabelValue,
+			},
 		},
 		Spec: apps.DeploymentSpec{
 			Replicas: &replicas,
@@ -64,7 +176,7 @@ func newDevicePluginDeployment(name, imageURL string, replicas int32) *apps.Depl
 							Name:  name,
 							Image: imageURL,
 							SecurityContext: &v1.SecurityContext{
-								Privileged: &[]bool{true}[0],
+								Privileged: &privileged,
 							},
 							VolumeMounts: []v1.VolumeMount{
 								{
@@ -93,94 +205,3 @@ func newDevicePluginDeployment(name, imageURL string, replicas int32) *apps.Depl
 	}
 	return &depl
 }
-
-var _ = GroupDescribe("Device Plugin E2E Tests", func() {
-	var UID string
-	var testTimer *utils.TestTimer
-	var testSpecReport ginkgo.SpecReport
-
-	var clientSet clientset.Interface
-
-	ginkgo.BeforeEach(func() {
-		clientSet = utils.NewKubeClient(framework.TestContext.KubeConfig)
-	})
-
-	ginkgo.Context("Test Device Plugin Registration and Basic Functionality", func() {
-		ginkgo.BeforeEach(func() {
-			// Get current test SpecReport
-			testSpecReport = ginkgo.CurrentSpecReport()
-			// Start test timer
-			testTimer = DevicePluginTestTimerGroup.NewTestTimer(testSpecReport.LeafNodeText)
-		})
-
-		ginkgo.AfterEach(func() {
-			// End test timer
-			testTimer.End()
-			// Print result
-			testTimer.PrintResult()
-
-			ginkgo.By(fmt.Sprintf("get deployment %s", UID))
-			deployment, err := utils.GetDeployment(clientSet, metav1.NamespaceDefault, UID)
-			gomega.Expect(err).To(gomega.BeNil())
-
-			ginkgo.By(fmt.Sprintf("list pod for deploy %s", UID))
-			labelSelector := labels.SelectorFromSet(map[string]string{
-				"app":                 UID,
-				constants.E2ELabelKey: constants.E2ELabelValue,
-			})
-			podList, err := utils.GetPods(clientSet, metav1.NamespaceDefault, labelSelector, nil)
-			gomega.Expect(err).To(gomega.BeNil())
-			gomega.Expect(podList.Items).NotTo(gomega.BeEmpty(), "Pod list should not be empty")
-
-			ginkgo.By(fmt.Sprintf("Deleting deployment %s", UID))
-			err = utils.DeleteDeployment(clientSet, metav1.NamespaceDefault, deployment.Name)
-			gomega.Expect(err).To(gomega.BeNil())
-
-			ginkgo.By(fmt.Sprintf("wait for pod of deploy %s to disappear", UID))
-			err = utils.WaitForPodsToDisappear(clientSet, metav1.NamespaceDefault, labelSelector, constants.Interval, constants.Timeout)
-			gomega.Expect(err).To(gomega.BeNil())
-
-			utils.PrintTestcaseNameandStatus()
-		})
-
-		ginkgo.It("E2E_DEVICE_PLUGIN_1: Verify device plugin registration", func() {
-			replica := int32(1)
-			// Generate the random string and assign as a UID
-			UID = "sample-device-plugin-" + utils.GetRandomString(5)
-
-			ginkgo.By(fmt.Sprintf("Creating device plugin deployment %s", UID))
-			deployment := newDevicePluginDeployment(UID, "nvidia/k8s-device-plugin:v0.13.0", replica)
-			_, err := utils.CreateDeployment(clientSet, deployment)
-			gomega.Expect(err).To(gomega.BeNil())
-
-			ginkgo.By("Waiting for device plugin pod to be running")
-			labelSelector := labels.SelectorFromSet(map[string]string{
-				"app":                 UID,
-				constants.E2ELabelKey: constants.E2ELabelValue,
-			})
-			podList, err := utils.GetPods(clientSet, metav1.NamespaceDefault, labelSelector, nil)
-			gomega.Expect(err).To(gomega.BeNil())
-			gomega.Expect(podList.Items).NotTo(gomega.BeEmpty(), "Pod list should not be empty")
-			
-			utils.WaitForPodsRunning(clientSet, podList, 240*time.Second)
-
-			ginkgo.By("Verifying device plugin registration")
-			gomega.Eventually(func() bool {
-				nodeList, err := clientSet.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
-				if err != nil {
-					framework.Logf("Error listing nodes: %v", err)
-					return false
-				}
-
-				for _, node := range nodeList.Items {
-					if _, ok := node.Status.Capacity["nvidia.com/gpu"]; ok {
-						return true
-					}
-				}
-				return false
-			}, 5*time.Minute, 10*time.Second).Should(gomega.BeTrue(), "Device plugin should be registered on at least one node")
-
-			framework.Logf("Device plugin successfully registered")
-		})
-	})
-})
