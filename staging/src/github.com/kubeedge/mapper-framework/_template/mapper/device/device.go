@@ -266,12 +266,18 @@ func setVisitor(visitorConfig *driver.VisitorConfig, twin *common.Twin, dev *dri
 		return nil
 	}
 	klog.V(2).Infof("Convert type: %s, value: %s ", twin.Property.PProperty.DataType, twin.ObservedDesired.Value)
-	value, err := common.Convert(twin.Property.PProperty.DataType, twin.ObservedDesired.Value)
-	if err != nil {
-		klog.Errorf("Failed to convert value as %s : %v", twin.Property.PProperty.DataType, err)
-		return err
+	var value interface{}
+	if twin.ObservedDesired.Value != "" {
+		convertedValue, err := common.Convert(twin.Property.PProperty.DataType, twin.ObservedDesired.Value)
+		if err != nil {
+			klog.Errorf("Failed to convert value as %s : %v", twin.Property.PProperty.DataType, err)
+			return err
+		}
+		value = convertedValue
+	} else {
+		value = twin.ObservedDesired.Value
 	}
-	err = dev.CustomizedClient.SetDeviceData(value, visitorConfig)
+	err := dev.CustomizedClient.SetDeviceData(value, visitorConfig)
 	if err != nil {
 		return fmt.Errorf("%s set device data error: %v", twin.PropertyName, err)
 	}
