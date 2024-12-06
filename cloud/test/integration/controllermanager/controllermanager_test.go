@@ -17,8 +17,11 @@ limitations under the License.
 package controllermanager
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"reflect"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -27,11 +30,13 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	appsv1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
@@ -799,6 +804,7 @@ var _ = Describe("Test EdgeApplication Controller", func() {
 					return true
 				}, waitTimeOut, pollInterval).Should(BeTrue())
 			})
+
 			It("should create service with topology annotation", func() {
 				Eventually(func() bool {
 					svc := &corev1.Service{}
@@ -971,6 +977,167 @@ var _ = Describe("Test EdgeApplication Controller", func() {
 						}
 						return true
 					}, waitTimeOut, pollInterval).Should(BeTrue())
+				})
+				It("should create deployments for nodes selected by TargetNodeLabelSelector and apply overriders", func() {
+					deployTemplate := &appsv1.Deployment{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "Deployment",
+							APIVersion: appsv1.SchemeGroupVersion.String(),
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "app-deploy" + randomize,
+							Namespace: "default",
+						},
+						Spec: appsv1.DeploymentSpec{
+							Template: corev1.PodTemplateSpec{
+								ObjectMeta: metav1.ObjectMeta{
+									Labels: map[string]string{
+										"label": "app",
+									},
+								},
+								Spec: corev1.PodSpec{
+									Containers: []corev1.Container{
+										{
+											Name:  "container1",
+											Image: "foo.fir.io/bar:latest",
+											Resources: corev1.ResourceRequirements{
+												Limits: corev1.ResourceList{
+													corev1.ResourceCPU: resource.MustParse("100m"),
+												},
+											},
+										},
+										{
+											Name:  "container2",
+											Image: "foo.sec.io/bar:v0.1.0",
+										},
+									},
+								},
+							},
+							Selector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{
+									"label": "app",
+								},
+							},
+							Replicas: pointer.Int32Ptr(1),
+						},
+					}
+
+					newEdgeApp := &appsv1alpha1.EdgeApplication{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "edgeapp" + randomize,
+							Namespace: "default",
+						},
+						Spec: appsv1alpha1.EdgeApplicationSpec{
+							WorkloadTemplate: appsv1alpha1.ResourceTemplate{
+								Manifests: []appsv1alpha1.Manifest{
+									{
+										RawExtension: runtime.RawExtension{
+											Object: deployTemplate,
+										},
+									},
+								},
+							},
+							WorkloadScope: appsv1alpha1.WorkloadScope{
+								TargetNodeLabels: []appsv1alpha1.TargetNodeLabel{
+									{
+										LabelSelector: metav1.LabelSelector{
+											MatchLabels: map[string]string{
+												locationLabel: "location1-" + randomize,
+											},
+										},
+										Overriders: appsv1alpha1.Overriders{
+											Replicas: ptr.To(3),
+											ImageOverriders: []appsv1alpha1.ImageOverrider{
+												{
+													Component: appsv1alpha1.Registry,
+													Operator:  appsv1alpha1.OverriderOpReplace,
+													Value:     "new-registry.io",
+												},
+											},
+											EnvOverriders: []appsv1alpha1.EnvOverrider{
+												{
+													ContainerName: "container1",
+													Operator:      appsv1alpha1.OverriderOpAdd,
+													Value: []corev1.EnvVar{
+														{Name: "NEW_ENV", Value: "new_value"},
+													},
+												},
+											},
+											ResourcesOverriders: []appsv1alpha1.ResourcesOverrider{
+												{
+													ContainerName: "container1",
+													Value: corev1.ResourceRequirements{
+														Limits: corev1.ResourceList{
+															corev1.ResourceCPU: resource.MustParse("500m"),
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					}
+
+					Expect(k8sClient.Create(ctx, newEdgeApp)).Should(Succeed())
+
+					Eventually(func() bool {
+						deploy := &appsv1.Deployment{}
+						expectedSuffix := CreateSuffixFromLabels(newEdgeApp.Spec.WorkloadScope.TargetNodeLabels[0].LabelSelector.MatchLabels)
+						deployName := fmt.Sprintf("%s-%s", deployTemplate.Name, expectedSuffix)
+
+						if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: "default", Name: deployName}, deploy); err != nil {
+							return false
+						}
+
+						// Check node affinity
+						if deploy.Spec.Template.Spec.Affinity == nil ||
+							deploy.Spec.Template.Spec.Affinity.NodeAffinity == nil ||
+							deploy.Spec.Template.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution == nil {
+							return false
+						}
+
+						terms := deploy.Spec.Template.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms
+						if len(terms) != 1 || len(terms[0].MatchExpressions) != 1 {
+							return false
+						}
+
+						expr := terms[0].MatchExpressions[0]
+						if expr.Key != locationLabel || expr.Operator != corev1.NodeSelectorOpIn || len(expr.Values) != 1 || expr.Values[0] != "location1-"+randomize {
+							return false
+						}
+
+						// Check replicas
+						if *deploy.Spec.Replicas != 3 {
+							return false
+						}
+
+						// Check image overrider
+						if !strings.HasPrefix(deploy.Spec.Template.Spec.Containers[0].Image, "new-registry.io/") {
+							return false
+						}
+
+						// Check env overrider
+						envFound := false
+						for _, env := range deploy.Spec.Template.Spec.Containers[0].Env {
+							if env.Name == "NEW_ENV" && env.Value == "new_value" {
+								envFound = true
+								break
+							}
+						}
+						if !envFound {
+							return false
+						}
+
+						// Check resources overrider
+						cpu := deploy.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceCPU]
+						return cpu.String() == "500m"
+
+					}, waitTimeOut, pollInterval).Should(BeTrue())
+
+					// Clean up
+					Expect(k8sClient.Delete(ctx, newEdgeApp)).Should(Succeed())
 				})
 				It("should update replicas of deployments for each nodegroup when adding replicas overrider", func() {
 					newEdgeApp := edgeapp.DeepCopy()
@@ -1460,4 +1627,21 @@ func isOwnedByEdgeApp(ownerReferences []metav1.OwnerReference, edgeApp *appsv1al
 		}
 	}
 	return false
+}
+func CreateSuffixFromLabels(labels map[string]string) string {
+	// Sort keys for deterministic hash
+	keys := make([]string, 0, len(labels))
+	for k := range labels {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	// Create hash from labels
+	h := sha256.New()
+	for _, k := range keys {
+		h.Write([]byte(k))
+		h.Write([]byte(labels[k]))
+	}
+
+	return fmt.Sprintf("ls-%x", h.Sum(nil)[:4]) // ls prefix indicates LabelSelector
 }

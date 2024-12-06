@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	jsonpatch "github.com/evanphx/json-patch"
+	nodev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -90,6 +91,7 @@ func (c *Controller) SetupWithManager(mgr controllerruntime.Manager) error {
 	}
 	return controllerruntime.NewControllerManagedBy(mgr).
 		For(&appsv1alpha1.EdgeApplication{}).
+		Watches(&nodev1.Node{}, handler.EnqueueRequestsFromMapFunc(c.nodeMapFunc)).
 		WatchesRawSource(&source.Channel{Source: c.ReconcileTriggerChan}, &handler.EnqueueRequestForObject{}).
 		Complete(c)
 }
@@ -328,6 +330,32 @@ func (c *Controller) updateTemplate(ctx context.Context, tmpl *unstructured.Unst
 			curObj.GetNamespace(), curObj.GetName(), curObj.GroupVersionKind(), err)
 	}
 	return nil
+}
+
+func (c *Controller) nodeMapFunc(_ context.Context, obj client.Object) []controllerruntime.Request {
+	node := obj.(*nodev1.Node)
+	edgeappList := &appsv1alpha1.EdgeApplicationList{}
+
+	// list all EdgeApplications
+	if err := c.Client.List(context.TODO(), edgeappList); err != nil {
+		klog.Errorf("failed to list all edge applications, %s", err)
+		return nil
+	}
+
+	// filter EdgeApplications that select the node by label selector
+	matches := []controllerruntime.Request{}
+	for _, edgeapp := range edgeappList.Items {
+		if utils.IsNodeSelected(edgeapp, *node) { // Using the function for node label matching
+			matches = append(matches, controllerruntime.Request{
+				NamespacedName: types.NamespacedName{
+					Namespace: edgeapp.Namespace,
+					Name:      edgeapp.Name,
+				},
+			})
+		}
+	}
+	// reconcile the EdgeApplications that are assigned to the node
+	return matches
 }
 
 // applyTemplate will apply the passed-in template

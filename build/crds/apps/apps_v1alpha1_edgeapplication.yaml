@@ -1,11 +1,9 @@
-
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.2
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.14.0
   name: edgeapplications.apps.kubeedge.io
 spec:
   group: apps.kubeedge.io
@@ -24,14 +22,19 @@ spec:
         description: EdgeApplication is the Schema for the edgeapplications API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -46,9 +49,9 @@ spec:
                     description: TargetNodeGroups represents the target node groups
                       of workload to be deployed.
                     items:
-                      description: TargetNodeGroup represents the target node group
-                        of workload to be deployed, including override rules to apply
-                        for this node group.
+                      description: |-
+                        TargetNodeGroup represents the target node group of workload to be deployed, including
+                        override rules to apply for this node group.
                       properties:
                         name:
                           description: Name represents the name of target node group
@@ -75,12 +78,11 @@ spec:
                                     - remove
                                     type: string
                                   value:
-                                    description: Value to be applied to command/args.
-                                      Items in Value which will be appended after
-                                      command/args when Operator is 'add'. Items in
-                                      Value which match in command/args will be deleted
-                                      when Operator is 'remove'. If Value is empty,
-                                      then the command/args will remain the same.
+                                    description: |-
+                                      Value to be applied to command/args.
+                                      Items in Value which will be appended after command/args when Operator is 'add'.
+                                      Items in Value which match in command/args will be deleted when Operator is 'remove'.
+                                      If Value is empty, then the command/args will remain the same.
                                     items:
                                       type: string
                                     type: array
@@ -107,12 +109,11 @@ spec:
                                     - remove
                                     type: string
                                   value:
-                                    description: Value to be applied to command/args.
-                                      Items in Value which will be appended after
-                                      command/args when Operator is 'add'. Items in
-                                      Value which match in command/args will be deleted
-                                      when Operator is 'remove'. If Value is empty,
-                                      then the command/args will remain the same.
+                                    description: |-
+                                      Value to be applied to command/args.
+                                      Items in Value which will be appended after command/args when Operator is 'add'.
+                                      Items in Value which match in command/args will be deleted when Operator is 'remove'.
+                                      If Value is empty, then the command/args will remain the same.
                                     items:
                                       type: string
                                     type: array
@@ -140,12 +141,12 @@ spec:
                                     - replace
                                     type: string
                                   value:
-                                    description: Value to be applied to env. Must
-                                      not be empty when operator is 'add' or 'replace'.
-                                      When the operator is 'remove', the matched value
-                                      in env will be deleted and only the name of
-                                      the value will be matched. If Value is empty,
-                                      then the env will remain the same.
+                                    description: |-
+                                      Value to be applied to env.
+                                      Must not be empty when operator is 'add' or 'replace'.
+                                      When the operator is 'remove', the matched value in env will be deleted
+                                      and only the name of the value will be matched.
+                                      If Value is empty, then the env will remain the same.
                                     items:
                                       description: EnvVar represents an environment
                                         variable present in a Container.
@@ -155,19 +156,16 @@ spec:
                                             Must be a C_IDENTIFIER.
                                           type: string
                                         value:
-                                          description: 'Variable references $(VAR_NAME)
-                                            are expanded using the previously defined
-                                            environment variables in the container
-                                            and any service environment variables.
-                                            If a variable cannot be resolved, the
-                                            reference in the input string will be
-                                            unchanged. Double $$ are reduced to a
-                                            single $, which allows for escaping the
-                                            $(VAR_NAME) syntax: i.e. "$$(VAR_NAME)"
-                                            will produce the string literal "$(VAR_NAME)".
-                                            Escaped references will never be expanded,
-                                            regardless of whether the variable exists
-                                            or not. Defaults to "".'
+                                          description: |-
+                                            Variable references $(VAR_NAME) are expanded
+                                            using the previously defined environment variables in the container and
+                                            any service environment variables. If a variable cannot be resolved,
+                                            the reference in the input string will be unchanged. Double $$ are reduced
+                                            to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e.
+                                            "$$(VAR_NAME)" will produce the string literal "$(VAR_NAME)".
+                                            Escaped references will never be expanded, regardless of whether the variable
+                                            exists or not.
+                                            Defaults to "".
                                           type: string
                                         valueFrom:
                                           description: Source for the environment
@@ -181,10 +179,10 @@ spec:
                                                   description: The key to select.
                                                   type: string
                                                 name:
-                                                  description: 'Name of the referent.
+                                                  description: |-
+                                                    Name of the referent.
                                                     More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                                    TODO: Add other useful fields.
-                                                    apiVersion, kind, uid?'
+                                                    TODO: Add other useful fields. apiVersion, kind, uid?
                                                   type: string
                                                 optional:
                                                   description: Specify whether the
@@ -193,12 +191,11 @@ spec:
                                               required:
                                               - key
                                               type: object
+                                              x-kubernetes-map-type: atomic
                                             fieldRef:
-                                              description: 'Selects a field of the
-                                                pod: supports metadata.name, metadata.namespace,
-                                                `metadata.labels[''<KEY>'']`, `metadata.annotations[''<KEY>'']`,
-                                                spec.nodeName, spec.serviceAccountName,
-                                                status.hostIP, status.podIP, status.podIPs.'
+                                              description: |-
+                                                Selects a field of the pod: supports metadata.name, metadata.namespace, `metadata.labels['<KEY>']`, `metadata.annotations['<KEY>']`,
+                                                spec.nodeName, spec.serviceAccountName, status.hostIP, status.podIP, status.podIPs.
                                               properties:
                                                 apiVersion:
                                                   description: Version of the schema
@@ -212,13 +209,11 @@ spec:
                                               required:
                                               - fieldPath
                                               type: object
+                                              x-kubernetes-map-type: atomic
                                             resourceFieldRef:
-                                              description: 'Selects a resource of
-                                                the container: only resources limits
-                                                and requests (limits.cpu, limits.memory,
-                                                limits.ephemeral-storage, requests.cpu,
-                                                requests.memory and requests.ephemeral-storage)
-                                                are currently supported.'
+                                              description: |-
+                                                Selects a resource of the container: only resources limits and requests
+                                                (limits.cpu, limits.memory, limits.ephemeral-storage, requests.cpu, requests.memory and requests.ephemeral-storage) are currently supported.
                                               properties:
                                                 containerName:
                                                   description: 'Container name: required
@@ -241,6 +236,7 @@ spec:
                                               required:
                                               - resource
                                               type: object
+                                              x-kubernetes-map-type: atomic
                                             secretKeyRef:
                                               description: Selects a key of a secret
                                                 in the pod's namespace
@@ -251,10 +247,10 @@ spec:
                                                     secret key.
                                                   type: string
                                                 name:
-                                                  description: 'Name of the referent.
+                                                  description: |-
+                                                    Name of the referent.
                                                     More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                                    TODO: Add other useful fields.
-                                                    apiVersion, kind, uid?'
+                                                    TODO: Add other useful fields. apiVersion, kind, uid?
                                                   type: string
                                                 optional:
                                                   description: Specify whether the
@@ -263,6 +259,7 @@ spec:
                                               required:
                                               - key
                                               type: object
+                                              x-kubernetes-map-type: atomic
                                           type: object
                                       required:
                                       - name
@@ -281,13 +278,19 @@ spec:
                                   to handling image overrides.
                                 properties:
                                   component:
-                                    description: 'Component is part of image name.
-                                      Basically we presume an image can be made of
-                                      ''[registry/]repository[:tag]''. The registry
-                                      could be: - k8s.gcr.io - fictional.registry.example:10443
-                                      The repository could be: - kube-apiserver -
-                                      fictional/nginx The tag cloud be: - latest -
-                                      v1.19.1 - @sha256:dbcc1c35ac38df41fd2f5e4130b32ffdb93ebae8b3dbe638c23575912276fc9c'
+                                    description: |-
+                                      Component is part of image name.
+                                      Basically we presume an image can be made of '[registry/]repository[:tag]'.
+                                      The registry could be:
+                                      - k8s.gcr.io
+                                      - fictional.registry.example:10443
+                                      The repository could be:
+                                      - kube-apiserver
+                                      - fictional/nginx
+                                      The tag cloud be:
+                                      - latest
+                                      - v1.19.1
+                                      - @sha256:dbcc1c35ac38df41fd2f5e4130b32ffdb93ebae8b3dbe638c23575912276fc9c
                                     enum:
                                     - Registry
                                     - Repository
@@ -302,19 +305,20 @@ spec:
                                     - replace
                                     type: string
                                   predicate:
-                                    description: "Predicate filters images before
-                                      applying the rule. \n Defaults to nil, in that
-                                      case, the system will automatically detect image
-                                      fields if the resource type is Pod, ReplicaSet,
-                                      Deployment or StatefulSet by following rule:
-                                      \  - Pod: /spec/containers/<N>/image   - ReplicaSet:
-                                      /spec/template/spec/containers/<N>/image   -
-                                      Deployment: /spec/template/spec/containers/<N>/image
-                                      \  - StatefulSet: /spec/template/spec/containers/<N>/image
-                                      In addition, all images will be processed if
-                                      the resource object has more than one containers.
-                                      \n If not nil, only images matches the filters
-                                      will be processed."
+                                    description: |-
+                                      Predicate filters images before applying the rule.
+
+
+                                      Defaults to nil, in that case, the system will automatically detect image fields if the resource type is
+                                      Pod, ReplicaSet, Deployment or StatefulSet by following rule:
+                                        - Pod: /spec/containers/<N>/image
+                                        - ReplicaSet: /spec/template/spec/containers/<N>/image
+                                        - Deployment: /spec/template/spec/containers/<N>/image
+                                        - StatefulSet: /spec/template/spec/containers/<N>/image
+                                      In addition, all images will be processed if the resource object has more than one containers.
+
+
+                                      If not nil, only images matches the filters will be processed.
                                     properties:
                                       path:
                                         description: Path indicates the path of target
@@ -324,10 +328,10 @@ spec:
                                     - path
                                     type: object
                                   value:
-                                    description: Value to be applied to image. Must
-                                      not be empty when operator is 'add' or 'replace'.
-                                      Defaults to empty and ignored when operator
-                                      is 'remove'.
+                                    description: |-
+                                      Value to be applied to image.
+                                      Must not be empty when operator is 'add' or 'replace'.
+                                      Defaults to empty and ignored when operator is 'remove'.
                                     type: string
                                 required:
                                 - component
@@ -349,26 +353,30 @@ spec:
                                     description: The name of container
                                     type: string
                                   value:
-                                    description: Value to be applied to resources.
+                                    description: |-
+                                      Value to be applied to resources.
                                       Must not be empty
                                     properties:
                                       claims:
-                                        description: "Claims lists the names of resources,
-                                          defined in spec.resourceClaims, that are
-                                          used by this container. \n This is an alpha
-                                          field and requires enabling the DynamicResourceAllocation
-                                          feature gate. \n This field is immutable.
-                                          It can only be set for containers."
+                                        description: |-
+                                          Claims lists the names of resources, defined in spec.resourceClaims,
+                                          that are used by this container.
+
+
+                                          This is an alpha field and requires enabling the
+                                          DynamicResourceAllocation feature gate.
+
+
+                                          This field is immutable. It can only be set for containers.
                                         items:
                                           description: ResourceClaim references one
                                             entry in PodSpec.ResourceClaims.
                                           properties:
                                             name:
-                                              description: Name must match the name
-                                                of one entry in pod.spec.resourceClaims
-                                                of the Pod where this field is used.
-                                                It makes that resource available inside
-                                                a container.
+                                              description: |-
+                                                Name must match the name of one entry in pod.spec.resourceClaims of
+                                                the Pod where this field is used. It makes that resource available
+                                                inside a container.
                                               type: string
                                           required:
                                           - name
@@ -384,9 +392,9 @@ spec:
                                           - type: string
                                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                           x-kubernetes-int-or-string: true
-                                        description: 'Limits describes the maximum
-                                          amount of compute resources allowed. More
-                                          info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                                        description: |-
+                                          Limits describes the maximum amount of compute resources allowed.
+                                          More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
                                         type: object
                                       requests:
                                         additionalProperties:
@@ -395,13 +403,11 @@ spec:
                                           - type: string
                                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                           x-kubernetes-int-or-string: true
-                                        description: 'Requests describes the minimum
-                                          amount of compute resources required. If
-                                          Requests is omitted for a container, it
-                                          defaults to Limits if that is explicitly
-                                          specified, otherwise to an implementation-defined
-                                          value. Requests cannot exceed Limits. More
-                                          info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                                        description: |-
+                                          Requests describes the minimum amount of compute resources required.
+                                          If Requests is omitted for a container, it defaults to Limits if that is explicitly specified,
+                                          otherwise to an implementation-defined value. Requests cannot exceed Limits.
+                                          More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
                                         type: object
                                     type: object
                                 required:
@@ -413,10 +419,427 @@ spec:
                       - name
                       type: object
                     type: array
+                  targetNodeLabels:
+                    description: TargetNodeLabels represents the target nodes with
+                      specified labels of workload to be deployed
+                    items:
+                      description: |-
+                        TargetNodeLabels represents the target nodes with specified labels of workload to be deployed, including
+                        override rules to apply for the node.
+                      properties:
+                        labelSelector:
+                          description: |-
+                            LabelSelector represents the label selectors used to match nodes for workload deployment.
+                            It defines the criteria for selecting the target nodes based on their labels.
+                          properties:
+                            matchExpressions:
+                              description: matchExpressions is a list of label selector
+                                requirements. The requirements are ANDed.
+                              items:
+                                description: |-
+                                  A label selector requirement is a selector that contains values, a key, and an operator that
+                                  relates the key and values.
+                                properties:
+                                  key:
+                                    description: key is the label key that the selector
+                                      applies to.
+                                    type: string
+                                  operator:
+                                    description: |-
+                                      operator represents a key's relationship to a set of values.
+                                      Valid operators are In, NotIn, Exists and DoesNotExist.
+                                    type: string
+                                  values:
+                                    description: |-
+                                      values is an array of string values. If the operator is In or NotIn,
+                                      the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                                      the values array must be empty. This array is replaced during a strategic
+                                      merge patch.
+                                    items:
+                                      type: string
+                                    type: array
+                                required:
+                                - key
+                                - operator
+                                type: object
+                              type: array
+                            matchLabels:
+                              additionalProperties:
+                                type: string
+                              description: |-
+                                matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                                map is equivalent to an element of matchExpressions, whose key field is "key", the
+                                operator is "In", and the values array contains only "value". The requirements are ANDed.
+                              type: object
+                          type: object
+                          x-kubernetes-map-type: atomic
+                        overriders:
+                          description: |-
+                            Overriders represents the override rules that would apply to the workload for the nodes
+                            selected by the label selector.
+                          properties:
+                            argsOverriders:
+                              description: ArgsOverriders represents the rules dedicated
+                                to handling container args
+                              items:
+                                description: CommandArgsOverrider represents the rules
+                                  dedicated to handling command/args overrides.
+                                properties:
+                                  containerName:
+                                    description: The name of container
+                                    type: string
+                                  operator:
+                                    description: Operator represents the operator
+                                      which will apply on the command/args.
+                                    enum:
+                                    - add
+                                    - remove
+                                    type: string
+                                  value:
+                                    description: |-
+                                      Value to be applied to command/args.
+                                      Items in Value which will be appended after command/args when Operator is 'add'.
+                                      Items in Value which match in command/args will be deleted when Operator is 'remove'.
+                                      If Value is empty, then the command/args will remain the same.
+                                    items:
+                                      type: string
+                                    type: array
+                                required:
+                                - containerName
+                                - operator
+                                type: object
+                              type: array
+                            commandOverriders:
+                              description: CommandOverriders represents the rules
+                                dedicated to handling container command
+                              items:
+                                description: CommandArgsOverrider represents the rules
+                                  dedicated to handling command/args overrides.
+                                properties:
+                                  containerName:
+                                    description: The name of container
+                                    type: string
+                                  operator:
+                                    description: Operator represents the operator
+                                      which will apply on the command/args.
+                                    enum:
+                                    - add
+                                    - remove
+                                    type: string
+                                  value:
+                                    description: |-
+                                      Value to be applied to command/args.
+                                      Items in Value which will be appended after command/args when Operator is 'add'.
+                                      Items in Value which match in command/args will be deleted when Operator is 'remove'.
+                                      If Value is empty, then the command/args will remain the same.
+                                    items:
+                                      type: string
+                                    type: array
+                                required:
+                                - containerName
+                                - operator
+                                type: object
+                              type: array
+                            envOverriders:
+                              description: EnvOverriders will override the env field
+                                of the container
+                              items:
+                                description: EnvOverrider represents the rules dedicated
+                                  to handling env overrides.
+                                properties:
+                                  containerName:
+                                    description: The name of container
+                                    type: string
+                                  operator:
+                                    description: Operator represents the operator
+                                      which will apply on the env.
+                                    enum:
+                                    - add
+                                    - remove
+                                    - replace
+                                    type: string
+                                  value:
+                                    description: |-
+                                      Value to be applied to env.
+                                      Must not be empty when operator is 'add' or 'replace'.
+                                      When the operator is 'remove', the matched value in env will be deleted
+                                      and only the name of the value will be matched.
+                                      If Value is empty, then the env will remain the same.
+                                    items:
+                                      description: EnvVar represents an environment
+                                        variable present in a Container.
+                                      properties:
+                                        name:
+                                          description: Name of the environment variable.
+                                            Must be a C_IDENTIFIER.
+                                          type: string
+                                        value:
+                                          description: |-
+                                            Variable references $(VAR_NAME) are expanded
+                                            using the previously defined environment variables in the container and
+                                            any service environment variables. If a variable cannot be resolved,
+                                            the reference in the input string will be unchanged. Double $$ are reduced
+                                            to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e.
+                                            "$$(VAR_NAME)" will produce the string literal "$(VAR_NAME)".
+                                            Escaped references will never be expanded, regardless of whether the variable
+                                            exists or not.
+                                            Defaults to "".
+                                          type: string
+                                        valueFrom:
+                                          description: Source for the environment
+                                            variable's value. Cannot be used if value
+                                            is not empty.
+                                          properties:
+                                            configMapKeyRef:
+                                              description: Selects a key of a ConfigMap.
+                                              properties:
+                                                key:
+                                                  description: The key to select.
+                                                  type: string
+                                                name:
+                                                  description: |-
+                                                    Name of the referent.
+                                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                                    TODO: Add other useful fields. apiVersion, kind, uid?
+                                                  type: string
+                                                optional:
+                                                  description: Specify whether the
+                                                    ConfigMap or its key must be defined
+                                                  type: boolean
+                                              required:
+                                              - key
+                                              type: object
+                                              x-kubernetes-map-type: atomic
+                                            fieldRef:
+                                              description: |-
+                                                Selects a field of the pod: supports metadata.name, metadata.namespace, `metadata.labels['<KEY>']`, `metadata.annotations['<KEY>']`,
+                                                spec.nodeName, spec.serviceAccountName, status.hostIP, status.podIP, status.podIPs.
+                                              properties:
+                                                apiVersion:
+                                                  description: Version of the schema
+                                                    the FieldPath is written in terms
+                                                    of, defaults to "v1".
+                                                  type: string
+                                                fieldPath:
+                                                  description: Path of the field to
+                                                    select in the specified API version.
+                                                  type: string
+                                              required:
+                                              - fieldPath
+                                              type: object
+                                              x-kubernetes-map-type: atomic
+                                            resourceFieldRef:
+                                              description: |-
+                                                Selects a resource of the container: only resources limits and requests
+                                                (limits.cpu, limits.memory, limits.ephemeral-storage, requests.cpu, requests.memory and requests.ephemeral-storage) are currently supported.
+                                              properties:
+                                                containerName:
+                                                  description: 'Container name: required
+                                                    for volumes, optional for env
+                                                    vars'
+                                                  type: string
+                                                divisor:
+                                                  anyOf:
+                                                  - type: integer
+                                                  - type: string
+                                                  description: Specifies the output
+                                                    format of the exposed resources,
+                                                    defaults to "1"
+                                                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                                  x-kubernetes-int-or-string: true
+                                                resource:
+                                                  description: 'Required: resource
+                                                    to select'
+                                                  type: string
+                                              required:
+                                              - resource
+                                              type: object
+                                              x-kubernetes-map-type: atomic
+                                            secretKeyRef:
+                                              description: Selects a key of a secret
+                                                in the pod's namespace
+                                              properties:
+                                                key:
+                                                  description: The key of the secret
+                                                    to select from.  Must be a valid
+                                                    secret key.
+                                                  type: string
+                                                name:
+                                                  description: |-
+                                                    Name of the referent.
+                                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                                    TODO: Add other useful fields. apiVersion, kind, uid?
+                                                  type: string
+                                                optional:
+                                                  description: Specify whether the
+                                                    Secret or its key must be defined
+                                                  type: boolean
+                                              required:
+                                              - key
+                                              type: object
+                                              x-kubernetes-map-type: atomic
+                                          type: object
+                                      required:
+                                      - name
+                                      type: object
+                                    type: array
+                                required:
+                                - containerName
+                                - operator
+                                type: object
+                              type: array
+                            imageOverriders:
+                              description: ImageOverriders represents the rules dedicated
+                                to handling image overrides.
+                              items:
+                                description: ImageOverrider represents the rules dedicated
+                                  to handling image overrides.
+                                properties:
+                                  component:
+                                    description: |-
+                                      Component is part of image name.
+                                      Basically we presume an image can be made of '[registry/]repository[:tag]'.
+                                      The registry could be:
+                                      - k8s.gcr.io
+                                      - fictional.registry.example:10443
+                                      The repository could be:
+                                      - kube-apiserver
+                                      - fictional/nginx
+                                      The tag cloud be:
+                                      - latest
+                                      - v1.19.1
+                                      - @sha256:dbcc1c35ac38df41fd2f5e4130b32ffdb93ebae8b3dbe638c23575912276fc9c
+                                    enum:
+                                    - Registry
+                                    - Repository
+                                    - Tag
+                                    type: string
+                                  operator:
+                                    description: Operator represents the operator
+                                      which will apply on the image.
+                                    enum:
+                                    - add
+                                    - remove
+                                    - replace
+                                    type: string
+                                  predicate:
+                                    description: |-
+                                      Predicate filters images before applying the rule.
+
+
+                                      Defaults to nil, in that case, the system will automatically detect image fields if the resource type is
+                                      Pod, ReplicaSet, Deployment or StatefulSet by following rule:
+                                        - Pod: /spec/containers/<N>/image
+                                        - ReplicaSet: /spec/template/spec/containers/<N>/image
+                                        - Deployment: /spec/template/spec/containers/<N>/image
+                                        - StatefulSet: /spec/template/spec/containers/<N>/image
+                                      In addition, all images will be processed if the resource object has more than one containers.
+
+
+                                      If not nil, only images matches the filters will be processed.
+                                    properties:
+                                      path:
+                                        description: Path indicates the path of target
+                                          field
+                                        type: string
+                                    required:
+                                    - path
+                                    type: object
+                                  value:
+                                    description: |-
+                                      Value to be applied to image.
+                                      Must not be empty when operator is 'add' or 'replace'.
+                                      Defaults to empty and ignored when operator is 'remove'.
+                                    type: string
+                                required:
+                                - component
+                                - operator
+                                type: object
+                              type: array
+                            replicas:
+                              description: Replicas will override the replicas field
+                                of deployment
+                              type: integer
+                            resourcesOverriders:
+                              description: ResourcesOverriders will override the resources
+                                field of the container
+                              items:
+                                description: ResourcesOverrider represents the rules
+                                  dedicated to handling resources overrides.
+                                properties:
+                                  containerName:
+                                    description: The name of container
+                                    type: string
+                                  value:
+                                    description: |-
+                                      Value to be applied to resources.
+                                      Must not be empty
+                                    properties:
+                                      claims:
+                                        description: |-
+                                          Claims lists the names of resources, defined in spec.resourceClaims,
+                                          that are used by this container.
+
+
+                                          This is an alpha field and requires enabling the
+                                          DynamicResourceAllocation feature gate.
+
+
+                                          This field is immutable. It can only be set for containers.
+                                        items:
+                                          description: ResourceClaim references one
+                                            entry in PodSpec.ResourceClaims.
+                                          properties:
+                                            name:
+                                              description: |-
+                                                Name must match the name of one entry in pod.spec.resourceClaims of
+                                                the Pod where this field is used. It makes that resource available
+                                                inside a container.
+                                              type: string
+                                          required:
+                                          - name
+                                          type: object
+                                        type: array
+                                        x-kubernetes-list-map-keys:
+                                        - name
+                                        x-kubernetes-list-type: map
+                                      limits:
+                                        additionalProperties:
+                                          anyOf:
+                                          - type: integer
+                                          - type: string
+                                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                          x-kubernetes-int-or-string: true
+                                        description: |-
+                                          Limits describes the maximum amount of compute resources allowed.
+                                          More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                                        type: object
+                                      requests:
+                                        additionalProperties:
+                                          anyOf:
+                                          - type: integer
+                                          - type: string
+                                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                          x-kubernetes-int-or-string: true
+                                        description: |-
+                                          Requests describes the minimum amount of compute resources required.
+                                          If Requests is omitted for a container, it defaults to Limits if that is explicitly specified,
+                                          otherwise to an implementation-defined value. Requests cannot exceed Limits.
+                                          More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                                        type: object
+                                    type: object
+                                required:
+                                - containerName
+                                type: object
+                              type: array
+                          type: object
+                      type: object
+                    type: array
                 type: object
               workloadTemplate:
-                description: WorkloadTemplate contains original templates of resources
-                  to be deployed as an EdgeApplication.
+                description: |-
+                  WorkloadTemplate contains original templates of resources to be deployed
+                  as an EdgeApplication.
                 properties:
                   manifests:
                     description: Manifests represent a list of Kubernetes resources
@@ -442,11 +865,11 @@ spec:
                     manifest in spec.
                   properties:
                     conditions:
-                      description: 'Conditions contain the different condition statuses
-                        for this manifest. Valid condition types are: 1. Processing:
-                        this workload is under processing and the current state of
-                        manifest does not match the desired. 2. Available: the current
-                        status of this workload matches the desired.'
+                      description: |-
+                        Conditions contain the different condition statuses for this manifest.
+                        Valid condition types are:
+                        1. Processing: this workload is under processing and the current state of manifest does not match the desired.
+                        2. Available: the current status of this workload matches the desired.
                       enum:
                       - Processing
                       - Available
@@ -468,9 +891,9 @@ spec:
                           description: Namespace is the namespace of the resource
                           type: string
                         ordinal:
-                          description: Ordinal represents an index in manifests list,
-                            so the condition can still be linked to a manifest even
-                            though manifest cannot be parsed successfully.
+                          description: |-
+                            Ordinal represents an index in manifests list, so the condition can still be linked
+                            to a manifest even though manifest cannot be parsed successfully.
                           minimum: 0
                           type: integer
                         resource:
@@ -492,9 +915,3 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
