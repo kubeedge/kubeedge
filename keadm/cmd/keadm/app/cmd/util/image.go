@@ -23,6 +23,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	oteltrace "go.opentelemetry.io/otel/trace"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -44,6 +45,7 @@ type ContainerRuntime interface {
 	CopyResources(edgeImage string, files map[string]string) error
 	RunMQTT(mqttImage string) error
 	RemoveMQTT() error
+	GetImageDigest(image string) (string, error)
 }
 
 func NewContainerRuntime(endpoint, cgroupDriver string) (ContainerRuntime, error) {
@@ -97,6 +99,17 @@ func (runtime *CRIRuntime) PullImages(images []string) error {
 	return nil
 }
 
+func (runtime *CRIRuntime) GetImageDigest(image string) (string, error) {
+	image = convertCRIImage(image)
+	imageSpec := &runtimeapi.ImageSpec{Image: image}
+	imageStatus, err := runtime.ImageManagerService.ImageStatus(runtime.ctx, imageSpec, true)
+	if err != nil {
+		return "", err
+	}
+	imageDigest := imageStatus.Image.Spec.Image
+	return imageDigest, nil
+}
+
 func (runtime *CRIRuntime) PullImage(image string, authConfig *runtimeapi.AuthConfig, sandboxConfig *runtimeapi.PodSandboxConfig) error {
 	image = convertCRIImage(image)
 	imageSpec := &runtimeapi.ImageSpec{Image: image}
@@ -118,6 +131,7 @@ func (runtime *CRIRuntime) CopyResources(edgeImage string, files map[string]stri
 	psc := &runtimeapi.PodSandboxConfig{
 		Metadata: &runtimeapi.PodSandboxMetadata{
 			Name:      KubeEdgeBinaryName,
+			Uid:       uuid.New().String(),
 			Namespace: constants.SystemNamespace,
 		},
 		Linux: &runtimeapi.LinuxPodSandboxConfig{

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	jsonpatch "github.com/evanphx/json-patch"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	errorutil "k8s.io/apimachinery/pkg/util/errors"
 
@@ -24,8 +25,9 @@ type Overrider interface {
 }
 
 type OverriderInfo struct {
-	TargetNodeGroup string
-	Overriders      *appsv1alpha1.Overriders
+	TargetNodeGroup         string
+	TargetNodeLabelSelector v1.LabelSelector
+	Overriders              *appsv1alpha1.Overriders
 }
 
 type OverrideManager struct {

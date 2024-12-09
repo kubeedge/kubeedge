@@ -10,6 +10,12 @@ import (
 	"github.com/kubeedge/api/apis/operations/v1alpha1"
 )
 
+// EventPatchInfo is used for sending patch event information from edge to cloud
+type EventPatchInfo struct {
+	Event *v1.Event `json:"event"`
+	Data  string    `json:"patchData"`
+}
+
 // PodStatusRequest is Message.Content which comes from edge
 type PodStatusRequest struct {
 	UID    types.UID
@@ -33,11 +39,13 @@ type NodeStatusRequest struct {
 
 // NodeUpgradeJobRequest is upgrade msg coming from cloud to edge
 type NodeUpgradeJobRequest struct {
-	UpgradeID   string
-	HistoryID   string
-	Version     string
-	UpgradeTool string
-	Image       string
+	UpgradeID           string
+	HistoryID           string
+	Version             string
+	UpgradeTool         string
+	Image               string
+	ImageDigest         string
+	RequireConfirmation bool
 }
 
 // NodeUpgradeJobResponse is used to report status msg to cloudhub https service
@@ -109,4 +117,20 @@ type ImagePrePullJobResponse struct {
 type RestartResponse struct {
 	ErrMessages []string `json:"errMessages,omitempty"`
 	LogMessages []string `json:"LogMessages,omitempty"`
+}
+
+type NodeUpgradeConfirmResponse struct {
+	ErrMessages []string `json:"errMessages,omitempty"`
+	LogMessages []string `json:"logMessages,omitempty"`
+}
+
+type LogsResponse struct {
+	ErrMessages []string `json:"errMessages,omitempty"`
+	LogMessages []string `json:"logMessages,omitempty"`
+}
+
+type ExecResponse struct {
+	ErrMessages    []string `json:"errMessages,omitempty"`
+	RunOutMessages []string `json:"runOutMessages,omitempty"`
+	RunErrMessages []string `json:"runErrMessages,omitempty"`
 }

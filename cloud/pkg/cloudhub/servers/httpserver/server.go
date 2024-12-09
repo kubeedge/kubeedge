@@ -26,6 +26,7 @@ import (
 
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	certshandler "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/httpserver/certificate"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/httpserver/node"
 	nodetaskhandler "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/httpserver/nodetask"
 	"github.com/kubeedge/kubeedge/common/constants"
 )
@@ -59,6 +60,7 @@ func routes() *restful.WebService {
 	ws.Path("/")
 	ws.Route(ws.GET(constants.DefaultCertURL).To(certshandler.EdgeCoreClientCert))
 	ws.Route(ws.GET(constants.DefaultCAURL).To(certshandler.GetCA))
+	ws.Route(ws.GET(constants.DefaultCheckNodeURL).To(node.CheckNode))
 	ws.Route(ws.POST(constants.DefaultNodeUpgradeURL).To(nodetaskhandler.UpgradeEdge))
 	ws.Route(ws.POST(constants.DefaultTaskStateReportURL).To(nodetaskhandler.ReportStatus))
 	return ws

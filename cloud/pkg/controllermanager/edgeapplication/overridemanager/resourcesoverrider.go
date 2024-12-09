@@ -17,6 +17,7 @@ limitations under the License.
 package overridemanager
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -79,25 +80,53 @@ func buildResourcesPatchesWithPath(specContainersPath string, rawObj *unstructur
 		if container.(map[string]interface{})["name"] == resourcesOverrider.ContainerName {
 			resourcesPath := fmt.Sprintf("/%s/%d/resources", specContainersPath, index)
 			resourcesValue := resourcesOverrider.Value
-			var patch overrideOption
-			// Overridden with the current value regardless of whether the template value is empty
-			patch, _ = acquireOverride(resourcesPath, resourcesValue)
 
-			klog.V(4).Infof("[buildResourcesPatchesWithPath] containers patch info (%+v)", patch)
-			patches = append(patches, patch)
+			// Acquire selective override patches based on non-zero fields in resourcesValue
+			patchList, err := acquireOverride(resourcesPath, resourcesValue)
+			if err != nil {
+				return nil, err
+			}
+
+			klog.V(4).Infof("[buildResourcesPatchesWithPath] containers patch info (%+v)", patchList)
+			patches = append(patches, patchList...)
 		}
 	}
 	return patches, nil
 }
 
-// acquireOverrideOption for adding resources override.
-func acquireOverride(resourcesPath string, resourcesValue corev1.ResourceRequirements) (overrideOption, error) {
+// acquireOverrideOptions for adding selective resources override.
+func acquireOverride(resourcesPath string, resourcesValue corev1.ResourceRequirements) ([]overrideOption, error) {
 	if !strings.HasPrefix(resourcesPath, pathSplit) {
-		return overrideOption{}, fmt.Errorf("internal error: [acquireOverride] resourcesPath should start with / character")
+		return nil, errors.New("internal error: [acquireOverride] resourcesPath should start with / character")
 	}
-	return overrideOption{
-		Op:    string(v1alpha1.OverriderOpReplace),
-		Path:  resourcesPath,
-		Value: resourcesValue,
-	}, nil
+
+	patches := []overrideOption{}
+
+	// Handle Requests
+	for resourceName, quantity := range resourcesValue.Requests {
+		// If quantity is non-zero, add a patch for this specific request
+		if !quantity.IsZero() {
+			requestPath := fmt.Sprintf("%s/requests/%s", resourcesPath, resourceName)
+			patches = append(patches, overrideOption{
+				Op:    string(v1alpha1.OverriderOpReplace),
+				Path:  requestPath,
+				Value: quantity.String(),
+			})
+		}
+	}
+
+	// Handle Limits
+	for resourceName, quantity := range resourcesValue.Limits {
+		// If quantity is non-zero, add a patch for this specific limit
+		if !quantity.IsZero() {
+			limitPath := fmt.Sprintf("%s/limits/%s", resourcesPath, resourceName)
+			patches = append(patches, overrideOption{
+				Op:    string(v1alpha1.OverriderOpReplace),
+				Path:  limitPath,
+				Value: quantity.String(),
+			})
+		}
+	}
+
+	return patches, nil
 }

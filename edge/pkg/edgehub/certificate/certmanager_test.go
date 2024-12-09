@@ -21,7 +21,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/agiledragon/gomonkey"
+	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/require"
 
 	"github.com/kubeedge/kubeedge/common/constants"

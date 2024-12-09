@@ -60,6 +60,7 @@ func NewEdgePodGet() *cobra.Command {
 			cmdutil.CheckErr(podGetOptions.getPods(args))
 			return nil
 		},
+		Aliases: []string{"pods", "po"},
 	}
 	AddGetPodFlags(cmd, podGetOptions)
 	return cmd

@@ -1,3 +1,11 @@
+* [v1.16.5](#v1165)
+  * [Downloads for v1.16.5](#downloads-for-v1165)
+  * [KubeEdge v1.16.5 Release Notes](#kubeedge-v1165-release-notes)
+    * [Changelog since v1.16.4](#changelog-since-v1164)
+* [v1.16.4](#v1164)
+  * [Downloads for v1.16.4](#downloads-for-v1164)
+  * [KubeEdge v1.16.4 Release Notes](#kubeedge-v1164-release-notes)
+    * [Changelog since v1.16.3](#changelog-since-v1163)
 * [v1.16.3](#v1163)
   * [Downloads for v1.16.3](#downloads-for-v1163)
   * [KubeEdge v1.16.3 Release Notes](#kubeedge-v1163-release-notes)
@@ -15,6 +23,34 @@
     * [KubeEdge v1.16 Release Notes](#kubeedge-v116-release-notes)
         * [1.16 What's New](#116-whats-new)
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
+
+# v1.16.5
+
+## Downloads for v1.16.5
+
+Download v1.16.5 in the [v1.16.5 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.16.5).
+
+## KubeEdge v1.16.5 Release Notes
+
+### Changelog since v1.16.4
+
+- Fix errors due to singular and plural conversion in MetaServer. ([#5919](https://github.com/kubeedge/kubeedge/pull/5919), [@wbc6080](https://github.com/wbc6080))
+- Fix install EdgeCore failed with CRI-O(>v1.29.2) for uid missing. ([#6015](https://github.com/kubeedge/kubeedge/pull/6015), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
+
+# v1.16.4
+
+## Downloads for v1.16.4
+
+Download v1.16.4 in the [v1.16.4 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.16.4).
+
+## KubeEdge v1.16.4 Release Notes
+
+### Changelog since v1.16.3
+
+- Fix parentID setting in func NewErrorMessage. ([#5734](https://github.com/kubeedge/kubeedge/pull/5734), [@luomengY](https://github.com/luomengY))
+- Optimize time format to support international time. ([#5821](https://github.com/kubeedge/kubeedge/pull/5821), [@WillardHu](https://github.com/WillardHu))
+- Fix container runtime select error when keadm reset. ([#5842](https://github.com/kubeedge/kubeedge/pull/5842), [@tangming1996](https://github.com/tangming1996))
+- Fix PersistentVolumes data stored at edge deleted abnormally.  ([#5887](https://github.com/kubeedge/kubeedge/pull/5887), [@Shelley-BaoYue](https://github.com/Shelley-BaoYue))
 
 # v1.16.3
 

@@ -23,6 +23,12 @@ const (
 
 	// FlagNameKubeEdgeVersion sets the version of KubeEdge to be used
 	FlagNameKubeEdgeVersion = "kubeedge-version"
+
+	// FlagNamePreRun ...
+	FlagNamePreRun = "pre-run"
+
+	// FlagNamePostRun ...
+	FlagNamePostRun = "post-run"
 )
 
 // Cloud init and upgrade common flag names
@@ -120,7 +126,7 @@ const (
 	DefaultK8SMinimumVersion = 11
 
 	// DefaultKubeEdgeVersion is the default KubeEdge version, it must have no prefix 'v'
-	DefaultKubeEdgeVersion = "1.15.1"
+	DefaultKubeEdgeVersion = "1.19.0"
 
 	// Helm action
 	HelmInstallAction  = "install"
@@ -282,8 +288,21 @@ var (
 )
 
 const (
-	FlagNameNamespace     = "namespace"
-	FlagNameAllNamespaces = "all-namespaces"
-	FlagNameOutput        = "output"
-	FlagNameLabelSelector = "selector"
+	FlagNameNamespace                    = "namespace"
+	FlagNameAllNamespaces                = "all-namespaces"
+	FlagNameOutput                       = "output"
+	FlagNameLabelSelector                = "selector"
+	FlagNameContainer                    = "container"
+	FlagNameFollow                       = "follow"
+	FlagNamePrevious                     = "previous"
+	FlagNameSinceSecond                  = "since-second"
+	FlagNameSinceTime                    = "since-time"
+	FlagNameTimestamps                   = "timestamps"
+	FlagNameTailLines                    = "tail"
+	FlagNameLimitBytes                   = "limit-bytes"
+	FlagNameInsecureSkipTLSVerifyBackend = "insecure-skip-tls-verify-backend"
+	FlagNameStdin                        = "stdin"
+	FlagNameTTY                          = "tty"
+	FlagNameShowEvents                   = "show-events"
+	FlagNameChunkSize                    = "chunk-size"
 )

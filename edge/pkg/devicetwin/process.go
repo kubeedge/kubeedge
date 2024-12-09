@@ -270,7 +270,7 @@ func classifyMsg(message *dttype.DTMessage) bool {
 			return true
 		}
 		return false
-	} else if strings.Compare(msgSource, "meta") == 0 {
+	} else if strings.Compare(msgSource, "meta") == 0 || strings.Compare(msgSource, "metamanager") == 0 {
 		switch message.Msg.Content.(type) {
 		case []byte:
 			klog.Info("Message content type is []byte, no need to marshal again")

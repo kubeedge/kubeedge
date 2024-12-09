@@ -11,9 +11,9 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/viaduct/pkg/api"
-	qclient "github.com/kubeedge/viaduct/pkg/client"
-	"github.com/kubeedge/viaduct/pkg/conn"
+	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/api"
+	qclient "github.com/kubeedge/kubeedge/pkg/viaduct/pkg/client"
+	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/conn"
 )
 
 // QuicClient a quic client

@@ -110,6 +110,12 @@ jobs:
 
       - run: make crossbuild WHAT=cloudcore ARM_VERSION=GOARM8
 
+      - run: make crossbuild WHAT=cloudcore OS=GOOSwindows BUILD_WITH_CONTAINER=false
+
+      - run: make crossbuild WHAT=edgecore OS=GOOSwindows BUILD_WITH_CONTAINER=false
+
+      - run: make crossbuild WHAT=keadm OS=GOOSwindows BUILD_WITH_CONTAINER=false
+
   basic_test:
     runs-on: ubuntu-22.04
     timeout-minutes: 30
@@ -400,6 +406,13 @@ jobs:
       needs: image-prepare
       env:
         GO111MODULE: on
+      strategy:
+        matrix:
+          cases:
+            - conformance-type: "conformance"
+              result-name: "conformance-test-results"
+            - conformance-type: "nodeconformance"
+              result-name: "nodeconformance-test-results"
       steps:
         - name: Install Go
           uses: actions/setup-go@v4
@@ -413,7 +426,6 @@ jobs:
 
         - name: Install dependencies
           run: |
-            command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
             go install sigs.k8s.io/kind@v0.22.0
             curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
@@ -421,9 +433,6 @@ jobs:
           uses: actions/checkout@v4
           with:
             fetch-depth: 0
-
-        - name: Cleanup images
-          run: docker system prune -a -f
 
         - name: Retrieve saved kubeedge/build-tools image
           uses: actions/download-artifact@v4
@@ -434,19 +443,32 @@ jobs:
         - name: Docker load kubeedge/build-tools image
           run: |
             docker load < /home/runner/build-tools/build-tools.tar
+            rm -rf /home/runner/build-tools/build-tools.tar
 
         - name: Enable cri config in containerd service
           run: |
             containerd config default | sudo tee /etc/containerd/config.toml && sudo systemctl restart containerd.service
 
+        - name: Free Disk Space
+          uses: jlumbroso/free-disk-space@main
+          with:
+            tool-cache: false
+            android: true
+            dotnet: true
+            haskell: true
+            large-packages: true
+            docker-images: true
+            swap-storage: true
+
         - name: Run conformance e2e
           run: |
             export KIND_IMAGE=kindest/node:v1.29.2
+            export CONFORMANCE_TYPE=${{ matrix.cases.conformance-type }}
             make conformance_e2e
 
         - name: Upload conformance e2e test results
           uses: actions/upload-artifact@v4
           if: always()
           with:
-            name: kube-conformance-e2e-results
+            name: ${{ matrix.cases.result-name }}
             path: /tmp/results/

@@ -41,7 +41,11 @@ GENS="$1"
 OUTPUT_PKG="$2"
 APIS_PKG="$3"
 GROUPS_WITH_VERSIONS="$4"
-GOBIN="${GOBIN-$GOPATH/bin}"
+if [ $(go env GOBIN) != "" ]; then
+GOBIN=${GOBIN-$(go env GOBIN)}
+else
+GOBIN=${GOBIN-$(go env GOPATH)/bin}
+fi
 shift 4
 
 (

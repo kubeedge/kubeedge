@@ -1,14 +1,14 @@
 # Default values for kubeedge.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
-appVersion: "1.15.1"
+appVersion: "1.19.0"
 
 cloudCore:
   replicaCount: 1
   hostNetWork: true
   image:
     repository: "kubeedge/cloudcore"
-    tag: "v1.15.1"
+    tag: "v1.19.0"
     pullPolicy: "IfNotPresent"
     pullSecrets: []
   securityContext:
@@ -78,7 +78,7 @@ iptablesManager:
   hostNetWork: true
   image:
     repository: "kubeedge/iptables-manager"
-    tag: "v1.12.0"
+    tag: "v1.19.0"
     pullPolicy: "IfNotPresent"
     pullSecrets: []
   securityContext:
@@ -111,7 +111,7 @@ controllerManager:
   enable: false
   image:
     repository: "kubeedge/controller-manager"
-    tag: "v1.15.1"
+    tag: "v1.19.0"
     pullPolicy: "IfNotPresent"
     pullSecrets: []
   labels:
@@ -140,6 +140,36 @@ controllerManager:
     requests:
       cpu: 100m
       memory: 25Mi
+
+admission:
+  enable: false
+  replicaCount: 1
+  certsSecretName: ""
+  image:
+    repository: "kubeedge/admission"
+    tag: "v1.17.0"
+    pullPolicy: "IfNotPresent"
+    pullSecrets: []
+  labels:
+    k8s-app: kubeedge-admission
+    kubeedge: kubeedge-admission
+  annoations: {}
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/edge
+                operator: DoesNotExist
+  tolerations: []
+  nodeSelector: {}
+  resources:
+    limits:
+      cpu: 200m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 64Mi
 
 mosquitto:
   enable: true

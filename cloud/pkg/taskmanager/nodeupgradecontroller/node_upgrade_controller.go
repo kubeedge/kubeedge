@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -34,6 +35,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/klog/v2"
+	"oras.land/oras-go/v2/registry"
+	"oras.land/oras-go/v2/registry/remote"
+	"oras.land/oras-go/v2/registry/remote/auth"
+	"oras.land/oras-go/v2/registry/remote/retry"
 
 	api "github.com/kubeedge/api/apis/fsm/v1alpha1"
 	"github.com/kubeedge/api/apis/operations/v1alpha1"
@@ -285,11 +290,24 @@ func (ndc *NodeUpgradeController) processUpgrade(upgrade *v1alpha1.NodeUpgradeJo
 	imageTag := upgrade.Spec.Version
 	image := fmt.Sprintf("%s:%s", repo, imageTag)
 
+	var imageDigest string
+	if g := upgrade.Spec.ImageDigestGatter; g != nil {
+		switch {
+		case g.Value != nil && *g.Value != "":
+			imageDigest = *g.Value
+		case g.RegistryAPI != nil:
+			imageURL := fmt.Sprintf("%s/%s", g.RegistryAPI.Host, image)
+			imageDigest, _ = getImageDigest(imageURL, g.RegistryAPI.Token)
+		}
+	}
+
 	upgradeReq := commontypes.NodeUpgradeJobRequest{
-		UpgradeID: upgrade.Name,
-		HistoryID: uuid.New().String(),
-		Version:   upgrade.Spec.Version,
-		Image:     image,
+		UpgradeID:           upgrade.Name,
+		HistoryID:           uuid.New().String(),
+		Version:             upgrade.Spec.Version,
+		Image:               image,
+		ImageDigest:         imageDigest,
+		RequireConfirmation: upgrade.Spec.RequireConfirmation,
 	}
 
 	tolerate, err := strconv.ParseFloat(upgrade.Spec.FailureTolerate, 64)
@@ -315,6 +333,49 @@ func (ndc *NodeUpgradeController) processUpgrade(upgrade *v1alpha1.NodeUpgradeJo
 		Status:          v1alpha1.TaskStatus{},
 		Msg:             upgradeReq,
 	}
+}
+
+// GetImageDigest retrieves the digest of a given image from a registry
+func getImageDigest(imageURL string, token string) (string, error) {
+	// Parse the image reference (e.g., "docker.io/library/ubuntu:latest")
+	ref, err := registry.ParseReference(imageURL)
+	if err != nil {
+		return "", err
+	}
+	// Create a new remote repository instance
+	repository, err := remote.NewRepository(ref.Repository)
+	if err != nil {
+		return "", err
+	}
+
+	// If a token is provided, set up the authentication client
+	if token != "" {
+		credential := &auth.Credential{
+			AccessToken: token,
+		}
+		repository.Client = &auth.Client{
+			Client: retry.DefaultClient,
+			Header: http.Header{
+				"User-Agent": {"oras-go"},
+			},
+			Credential: func(ctx context.Context, host string) (auth.Credential, error) {
+				return *credential, nil
+			},
+			Cache:              nil,
+			ClientID:           "oras-client",
+			ForceAttemptOAuth2: false,
+		}
+	}
+	// Set up the context for the request
+	ctx := context.Background()
+	// Resolve the image reference to get the manifest descriptor
+	descriptor, err := repository.Resolve(ctx, ref.Reference)
+	if err != nil {
+		return "", err
+	}
+
+	// Return the image digest
+	return descriptor.Digest.String(), nil
 }
 
 func needUpgrade(node v1.Node, upgradeVersion string) bool {

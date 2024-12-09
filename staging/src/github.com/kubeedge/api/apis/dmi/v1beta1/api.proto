@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// To regenerate api.pb.go run hack/generate-dmi.sh
+// To regenerate api.pb.go run hack/generate-dmi-proto.sh
 syntax = "proto3";
 
 //option go_package = "path;name";
@@ -182,6 +182,18 @@ message DeviceSpec {
     ProtocolConfig protocol = 2;
     // List of properties which describe the device properties.
     repeated DeviceProperty properties = 3;
+    // List of methods which describe the device methods.
+    repeated DeviceMethod methods = 4;
+}
+
+// DeviceMethod describes the specifics all the methods of the device.
+message DeviceMethod {
+    // The device method name to be accessed. It must be unique.
+    string name = 1;
+    // the description of the device method.
+    string description = 2;
+    // the list of device properties that device methods can control.
+    repeated string propertyNames = 3;
 }
 
 // DeviceProperty describes the specifics all the properties of the device.
@@ -228,6 +240,7 @@ message CustomizedValue {
 message PushMethod {
     PushMethodHTTP http = 1;
     PushMethodMQTT mqtt = 2;
+    PushMethodOTEL otel = 4;
     DBMethod dbMethod = 3;
 }
 
@@ -247,6 +260,11 @@ message PushMethodMQTT {
     int32 qos = 3;
     // Is the message retained
     bool retained = 4;
+}
+
+message PushMethodOTEL {
+    // the target endpoint URL the Exporter will connect to, like https://localhost:4318/v1/metrics
+	string endpointURL = 1;
 }
 
 message DBMethod{
@@ -321,6 +339,15 @@ message MySQLClientConfig{
     string userName = 3;
 }
 
+message DBMethodOTEL{
+    OTELExporterConfig otelExporterConfig = 1;
+}
+
+message OTELExporterConfig{
+    //the target endpoint URL the Exporter will connect to, like https://localhost:4318/v1/metrics
+    string endpointURL = 1;
+}
+
 // MapperInfo is the information of mapper.
 message MapperInfo {
     // name of the mapper.
@@ -355,6 +382,11 @@ message ReportDeviceStatesRequest {
 message DeviceStatus {
     // the device twins of the device.
     repeated Twin twins = 1;
+    // whether be reported to the cloud
+    bool reportToCloud = 2;
+    // Define how frequent mapper will report the value.
+    int64 reportCycle = 3;
+
 }
 
 // Twin is the digital model of a device. It contains a series of properties.

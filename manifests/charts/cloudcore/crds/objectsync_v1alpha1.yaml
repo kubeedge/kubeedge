@@ -1,11 +1,9 @@
-
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.2
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.14.0
   name: objectsyncs.reliablesyncs.kubeedge.io
 spec:
   group: reliablesyncs.kubeedge.io
@@ -19,19 +17,24 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: ObjectSync stores the state of the namespaced object that was
-          successfully persisted to the edge node. ObjectSync name is a concatenation
-          of the node name which receiving the object and the object UUID.
+        description: |-
+          ObjectSync stores the state of the namespaced object that was successfully persisted to the edge node.
+          ObjectSync name is a concatenation of the node name which receiving the object and the object UUID.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -40,16 +43,19 @@ spec:
               to the edge.
             properties:
               objectAPIVersion:
-                description: ObjectAPIVersion is the APIVersion of the object that
-                  was successfully persist to the edge node.
+                description: |-
+                  ObjectAPIVersion is the APIVersion of the object
+                  that was successfully persist to the edge node.
                 type: string
               objectKind:
-                description: ObjectType is the kind of the object that was successfully
-                  persist to the edge node.
+                description: |-
+                  ObjectType is the kind of the object
+                  that was successfully persist to the edge node.
                 type: string
               objectName:
-                description: ObjectName is the name of the object that was successfully
-                  persist to the edge node.
+                description: |-
+                  ObjectName is the name of the object
+                  that was successfully persist to the edge node.
                 type: string
             type: object
           status:
@@ -57,7 +63,8 @@ spec:
               persist to the edge.
             properties:
               objectResourceVersion:
-                description: ObjectResourceVersion is the resourceversion of the object
+                description: |-
+                  ObjectResourceVersion is the resourceversion of the object
                   that was successfully persist to the edge node.
                 type: string
             type: object
@@ -66,9 +73,3 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []

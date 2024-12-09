@@ -14,7 +14,7 @@ KubeEdge 是一个开源的系统，可将本机容器化应用编排和管理�
 随着业务逻辑在边缘端上运行，可以在本地保护和处理大量数据。
 通过在边缘端处理数据，响应速度会显著提高，并且可以更好地保护数据隐私。
 
-KubeEdge 是一个由 [Cloud Native Computing Foundation](https://cncf.io) (CNCF) 托管的孵化级项目，CNCF 对 KubeEdge 的 [孵化公告](https://www.cncf.io/blog/2020/09/16/toc-approves-kubeedge-as-incubating-project/)
+KubeEdge 是一个由 [Cloud Native Computing Foundation](https://cncf.io) (CNCF) 托管的毕业级项目，CNCF 对 KubeEdge 的 [毕业公告](https://www.cncf.io/announcements/2024/10/15/cloud-native-computing-foundation-announces-kubeedge-graduation/)
 
 
 ## 优势
@@ -56,16 +56,15 @@ KubeEdge 由云端和边缘端部分构成：
 
 ### Kubernetes 版本兼容
 
-|                        | Kubernetes 1.20 | Kubernetes 1.21 | Kubernetes 1.22 | Kubernetes 1.23 | Kubernetes 1.24 | Kubernetes 1.25 | Kubernetes 1.26 | Kubernetes 1.27 | Kubernetes 1.28 | Kubernetes 1.29 |
-|------------------------| --------------- | --------------- | --------------- | --------------- | --------------- |-----------------| --------------- | --------------- | --------------- | --------------- |
-| KubeEdge 1.12          | ✓               | ✓               | ✓               | -               | -               | -               | -               | -               | -               | -               |
-| KubeEdge 1.13          | +               | ✓               | ✓               | ✓               | -               | -               | -               | -               | -               | -               |
-| KubeEdge 1.14          | +               | +               | ✓               | ✓               | ✓               | -               | -               | -               | -               | -               |
-| KubeEdge 1.15          | +               | +               | +               | +               | ✓               | ✓               | ✓               | -               | -               | -               |
-| KubeEdge 1.16          | +               | +               | +               | +               | +               | ✓               | ✓               | ✓               | -               | -               |
-| KubeEdge 1.17          | +               | +               | +               | +               | +               | +               | ✓               | ✓               | ✓               | -               |
-| KubeEdge 1.18          | +               | +               | +               | +               | +               | +               | +               | ✓               | ✓               | ✓               |
-| KubeEdge HEAD (master) | +               | +               | +               | +               | +               | +               | +               | ✓               | ✓               | ✓               |
+|                        | Kubernetes 1.22 | Kubernetes 1.23 | Kubernetes 1.24 | Kubernetes 1.25 | Kubernetes 1.26 | Kubernetes 1.27 | Kubernetes 1.28 | Kubernetes 1.29 |
+|------------------------| --------------- | --------------- |-----------------| --------------- |-----------------| --------------- | --------------- | --------------- |
+| KubeEdge 1.14          | ✓               | ✓               | ✓               | -               | -               | -               | -               | -               |
+| KubeEdge 1.15          | +               | +               | ✓               | ✓               | ✓               | -               | -               | -               |
+| KubeEdge 1.16          | +               | +               | +               | ✓               | ✓               | ✓               | -               | -               |
+| KubeEdge 1.17          | +               | +               | +               | +               | ✓               | ✓               | ✓               | -               |
+| KubeEdge 1.18          | +               | +               | +               | +               | +               | ✓               | ✓               | ✓               |
+| KubeEdge 1.19          | +               | +               | +               | +               | +               | ✓               | ✓               | ✓               |
+| KubeEdge HEAD (master) | +               | +               | +               | +               | +               | ✓               | ✓               | ✓               |
 
 说明：
 * `✓` KubeEdge 和 Kubernetes 的版本是完全兼容的

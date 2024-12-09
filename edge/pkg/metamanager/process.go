@@ -58,6 +58,18 @@ func sendToCloud(message *model.Message) {
 	beehiveContext.SendToGroup(string(metaManagerConfig.Config.ContextSendGroup), *message)
 }
 
+func sendToTwin(message *model.Message) {
+	beehiveContext.Send(modules.DeviceTwinModuleName, *message)
+}
+
+func sentToMetamanager(message *model.Message, sync bool) {
+	if sync {
+		beehiveContext.SendResp(*message)
+	} else {
+		beehiveContext.Send(modules.MetaManagerModuleName, *message)
+	}
+}
+
 // Resource format: <namespace>/<restype>[/resid]
 // return <reskey, restype, resid>
 func parseResource(message *model.Message) (string, string, string) {
@@ -182,6 +194,10 @@ func processDeletePodDB(message model.Message) error {
 }
 
 func (m *metaManager) processInsert(message model.Message) {
+	if _, resType, _ := parseResource(&message); resType == model.ResourceTypeEvent {
+		sendToCloud(&message)
+		return
+	}
 	imitator.DefaultV2Client.Inject(message)
 
 	msgSource := message.GetSource()
@@ -211,6 +227,10 @@ func (m *metaManager) processInsert(message model.Message) {
 }
 
 func (m *metaManager) processUpdate(message model.Message) {
+	if _, resType, _ := parseResource(&message); resType == model.ResourceTypeEvent {
+		sendToCloud(&message)
+		return
+	}
 	imitator.DefaultV2Client.Inject(message)
 
 	msgSource := message.GetSource()
@@ -247,12 +267,22 @@ func (m *metaManager) processUpdate(message model.Message) {
 	case cloudmodules.PolicyControllerModuleName:
 		resp := message.NewRespByMessage(&message, OK)
 		sendToCloud(resp)
+	case modules.MetaManagerModuleName:
+		// Process the update message from MetaManager(MetaServer)
+		// which is used to update the device in edge node.
+		sendToTwin(&message)
+		resp := message.NewRespByMessage(&message, OK)
+		sentToMetamanager(resp, message.IsSync())
 	default:
 		klog.Errorf("unsupport message source, %s", msgSource)
 	}
 }
 
 func (m *metaManager) processPatch(message model.Message) {
+	if _, resType, _ := parseResource(&message); resType == model.ResourceTypeEvent {
+		sendToCloud(&message)
+		return
+	}
 	if err := m.handleMessage(&message); err != nil {
 		feedbackError(err, message)
 		return

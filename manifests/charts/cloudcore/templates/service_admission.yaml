@@ -1,0 +1,19 @@
+{{- if .Values.admission.enable }}
+apiVersion: v1
+kind: Service
+metadata:
+  {{- with .Values.admission.labels }}
+  labels: {{- toYaml . | nindent 4 }}
+  {{- end }}
+  name: kubeedge-admission-service
+spec:
+  ports:
+    - port: 443
+      protocol: TCP
+      targetPort: 443
+  selector:
+  {{- with .Values.admission.labels }}
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
+  sessionAffinity: None
+{{- end }}

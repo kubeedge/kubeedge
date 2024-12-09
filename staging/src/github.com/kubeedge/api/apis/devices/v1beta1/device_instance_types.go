@@ -39,6 +39,10 @@ type DeviceSpec struct {
 	Properties []DeviceProperty `json:"properties,omitempty"`
 	// Required: The protocol configuration used to connect to the device.
 	Protocol ProtocolConfig `json:"protocol,omitempty"`
+	// List of methods of device.
+	// methods list item must be unique by method.Name.
+	// +optional
+	Methods []DeviceMethod `json:"methods,omitempty"`
 }
 
 // DeviceStatus reports the device state and the desired/reported values of twin attributes.
@@ -53,6 +57,12 @@ type DeviceStatus struct {
 	// Optional: The last time the device was online.
 	// +optional
 	LastOnlineTime string `json:"lastOnlineTime,omitempty"`
+	// Optional: whether be reported to the cloud
+	// +optional
+	ReportToCloud bool `json:"reportToCloud,omitempty"`
+	// Optional: Define how frequent mapper will report the device status.
+	// +optional
+	ReportCycle int64 `json:"reportCycle,omitempty"`
 }
 
 // Twin provides a logical representation of control properties (writable properties in the
@@ -95,6 +105,18 @@ type ProtocolConfig struct {
 	ConfigData *CustomizedValue `json:"configData,omitempty"`
 }
 
+// DeviceMethod describes the specifics all the methods of the device.
+type DeviceMethod struct {
+	// Required: The device method name to be accessed. It must be unique.
+	Name string `json:"name,omitempty"`
+	// Define the description of device method.
+	// +optional
+	Description string `json:"description,omitempty"`
+	// PropertyNames are list of device properties that device methods can control.
+	// Required: A device method can control multiple device properties.
+	PropertyNames []string `json:"propertyNames,omitempty"`
+}
+
 // DeviceProperty describes the specifics all the properties of the device.
 type DeviceProperty struct {
 	// Required: The device property name to be accessed. It must be unique.
@@ -127,6 +149,9 @@ type PushMethod struct {
 	// MQTT Push method configuration for mqtt
 	// +optional
 	MQTT *PushMethodMQTT `json:"mqtt,omitempty"`
+	// OTEL Push Method configuration for otel
+	// +optional
+	OTEL *PushMethodOTEL `json:"otel,omitempty"`
 	// DBMethod represents the method used to push data to database,
 	// please ensure that the mapper can access the destination address.
 	// +optional
@@ -157,6 +182,11 @@ type PushMethodMQTT struct {
 	// Is the message retained
 	// +optional
 	Retained bool `json:"retained,omitempty"`
+}
+
+type PushMethodOTEL struct {
+	// the target endpoint URL the Exporter will connect to, like https://localhost:4318/v1/metrics
+	EndpointURL string `protobuf:"bytes,1,opt,name=endpointURL,proto3" json:"endpointURL,omitempty"`
 }
 
 type DBMethodConfig struct {

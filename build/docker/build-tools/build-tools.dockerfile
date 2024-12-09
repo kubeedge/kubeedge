@@ -10,9 +10,9 @@ RUN apt-get autoremove -y &&\
     apt-get clean &&\
     rm -rf /var/lib/apt/lists/*
 
-RUN if [ "${ARCH}" = "amd64" ]; then wget -c https://dl.google.com/go/go1.21.11.linux-amd64.tar.gz -O - | tar -xz -C /usr/local; \
-    elif [ "${ARCH}" = "arm64" ]; then wget -c https://dl.google.com/go/go1.21.11.linux-arm64.tar.gz -O - | tar -xz -C /usr/local; \
-    elif [ "${ARCH}" = "arm" ]; then wget -c https://dl.google.com/go/go1.21.11.linux-armv6l.tar.gz -O - | tar -xz -C /usr/local; \
+RUN if [ "${ARCH}" = "amd64" ]; then wget -c https://dl.google.com/go/go1.22.9.linux-amd64.tar.gz -O - | tar -xz -C /usr/local; \
+    elif [ "${ARCH}" = "arm64" ]; then wget -c https://dl.google.com/go/go1.22.9.linux-arm64.tar.gz -O - | tar -xz -C /usr/local; \
+    elif [ "${ARCH}" = "arm" ]; then wget -c https://dl.google.com/go/go1.22.9.linux-armv6l.tar.gz -O - | tar -xz -C /usr/local; \
     fi
 
 ENV GO111MODULE=on
