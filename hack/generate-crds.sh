@@ -49,9 +49,21 @@ while [ $# -gt 0 ]; do
     --RELIABLESYNCS_VERSION=*)
       RELIABLESYNCS_VERSION="${1#*=}"
       ;;
+    --SERVICEACCOUNTACCESS_VERSION=*)
+      SERVICEACCOUNTACCESS_VERSION="${1#*=}"
+      ;;
+    --APPS_VERSION=*)
+      APPS_VERSION="${1#*=}"
+      ;;
+    --HELM_CRDS_DIR=*)
+      HELM_CRDS_DIR="${1#*=}"
+      ;;
+    --ROUTER_DIR=*)
+      ROUTER_DIR="${1#*=}"
+      ;;
     *)
       printf "***************************\n"
-      printf "* Error: Invalid argument.*\n"
+      printf "* Error: Invalid argument: %s *\n" "$1"
       printf "***************************\n"
       exit 1
   esac
