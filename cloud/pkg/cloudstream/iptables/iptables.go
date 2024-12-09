@@ -4,16 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	k8sinformer "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
-	v1 "k8s.io/client-go/listers/core/v1"
+	clientgov1 "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
@@ -28,7 +31,7 @@ import (
 type Manager struct {
 	iptables              utiliptables.Interface
 	sharedInformerFactory k8sinformer.SharedInformerFactory
-	cmLister              v1.ConfigMapLister
+	cmLister              clientgov1.ConfigMapLister
 	cmListerSynced        cache.InformerSynced
 	preTunnelPortRecord   *TunnelPortRecord
 	streamPort            int
@@ -111,6 +114,7 @@ func (im *Manager) Run(ctx context.Context) {
 		klog.Warningf("failed to delete all rules in tunnel port iptables chain: %v", err)
 	}
 
+	go im.listenCloudCore(ctx)
 	go wait.Until(im.reconcile, 10*time.Second, ctx.Done())
 }
 
@@ -202,4 +206,76 @@ func (im *Manager) getLatestTunnelPortRecords() (*TunnelPortRecord, error) {
 	}
 
 	return record, nil
+}
+
+func (im *Manager) listenCloudCore(ctx context.Context) {
+	// use podInformer listen cloudcore pod delete event
+	podInformer := im.sharedInformerFactory.Core().V1().Pods()
+	_, err := podInformer.Informer().AddEventHandler(
+		cache.ResourceEventHandlerFuncs{
+			DeleteFunc: func(obj interface{}) {
+				// listen pod delete event
+				pod, ok := obj.(*v1.Pod)
+				if !ok {
+					klog.Warningf("object type: %T unsupported when listen cloudcore pod delete", obj)
+					return
+				}
+				value, ok := pod.Labels[constants.SystemName]
+				if ok && value == constants.CloudConfigMapName {
+					// only handle coudcore pod delete
+					podIP := pod.Status.PodIP
+					if len(podIP) == 0 {
+						return
+					}
+					// find deleted cloudcore pod IP, remove it in configmap
+					err := im.CleanCloudCoreIPPort(ctx, podIP)
+					if err != nil {
+						klog.Errorf("Delete cloudcore ip from configmap err:%v", err)
+						return
+					}
+				}
+			},
+		},
+	)
+	if err != nil {
+		klog.Fatalf("new podInformer failed, add event handler err: %v", err)
+	}
+	podInformer.Informer().Run(ctx.Done())
+}
+
+func (im *Manager) CleanCloudCoreIPPort(ctx context.Context, podIP string) error {
+	// get tunnelport configmap
+	tunnelPortconfigmap, err := kubeClient.CoreV1().ConfigMaps(constants.SystemNamespace).Get(ctx, modules.TunnelPort, metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to get tunnelport configmap for iptables manager, err: %v", err)
+	}
+	// parse Annotations from tunnelport configmap, which include cloudcore IP and port
+	var record TunnelPortRecord
+	recordStr, found := tunnelPortconfigmap.Annotations[modules.TunnelPortRecordAnnotationKey]
+	recordBytes := []byte(recordStr)
+	if !found {
+		return errors.New("failed to get tunnel port record")
+	}
+
+	if err = json.Unmarshal(recordBytes, &record); err != nil {
+		return fmt.Errorf("Unmarshal tunnelPort configmap err: %v", err)
+	}
+	// find the deleted cloudcore ip record and delete it
+	_, found = record.IPTunnelPort[podIP]
+	if found {
+		delete(record.IPTunnelPort, podIP)
+		klog.Infof("will delete cloudcore pod record, ip = %s", podIP)
+		recordBytes, err = json.Marshal(record)
+		if err != nil {
+			return fmt.Errorf("Marshal tunnelPort configmap err: %v", err)
+		}
+		// update tunnelport configmap after cloudcore pod were deleted
+		tunnelPortconfigmap.Annotations[modules.TunnelPortRecordAnnotationKey] = string(recordBytes)
+		if _, err = kubeClient.CoreV1().ConfigMaps(constants.SystemNamespace).
+			Update(ctx, tunnelPortconfigmap, metav1.UpdateOptions{}); err != nil {
+			return fmt.Errorf("Update tunnelPort configmap err: %v", err)
+		}
+	}
+	klog.Info("update TunnelPort configmap done")
+	return nil
 }
