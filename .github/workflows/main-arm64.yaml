@@ -29,9 +29,9 @@ jobs:
     steps:
       - name: Pull kubeedge/build-tools image
         run: |
-          docker pull kubeedge/build-tools:1.21.11-ke1
+          docker pull kubeedge/build-tools:1.22.9-ke1
           mkdir -p /home/runner/build-tools/
-          docker save kubeedge/build-tools:1.21.11-ke1 > /home/runner/build-tools/build-tools.tar
+          docker save kubeedge/build-tools:1.22.9-ke1 > /home/runner/build-tools/build-tools.tar
 
       - name: Temporarily save kubeedge/build-tools image
         uses: actions/upload-artifact@v4

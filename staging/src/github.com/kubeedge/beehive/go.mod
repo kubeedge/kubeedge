@@ -1,6 +1,6 @@
 module github.com/kubeedge/beehive
 
-go 1.21
+go 1.22
 
 require (
 	github.com/google/uuid v1.2.0
