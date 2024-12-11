@@ -23,7 +23,7 @@ curpath=$PWD
 echo $PWD
 
 GOPATH=${GOPATH:-$(go env GOPATH)}
-KIND_IMAGE=${1:-"kindest/node:v1.27.11"}
+KIND_IMAGE=${1:-"kindest/node:v1.29.2"}
 compilemodule=$2
 
 which ginkgo &>/dev/null || (
