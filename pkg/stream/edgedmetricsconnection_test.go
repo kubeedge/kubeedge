@@ -27,7 +27,9 @@ import (
 func TestMetricsConnection_CreateConnectMessage(t *testing.T) {
 	assert := assert.New(t)
 	edgedMetricsConn := &EdgedMetricsConnection{
-		MessID: 1,
+		BaseEdgedConnection: BaseEdgedConnection{
+			MessID: 1,
+		},
 	}
 
 	msg, err := edgedMetricsConn.CreateConnectMessage()
@@ -44,7 +46,9 @@ func TestMetricsConnection_GetMessageID(t *testing.T) {
 	assert := assert.New(t)
 
 	edgedMetricsConn := &EdgedMetricsConnection{
-		MessID: uint64(100),
+		BaseEdgedConnection: BaseEdgedConnection{
+			MessID: uint64(100),
+		},
 	}
 
 	messID := edgedMetricsConn.GetMessageID()
@@ -57,7 +61,9 @@ func TestMetricsConnection_String(t *testing.T) {
 	assert := assert.New(t)
 
 	edgedMetricsConn := &EdgedMetricsConnection{
-		MessID: uint64(100),
+		BaseEdgedConnection: BaseEdgedConnection{
+			MessID: uint64(100),
+		},
 	}
 
 	stdResult := "EDGE_METRICS_CONNECTOR Message MessageID 100"
@@ -68,9 +74,13 @@ func TestMetricsConnection_String(t *testing.T) {
 
 func TestMetricsConnection_CacheTunnelMessage(t *testing.T) {
 	assert := assert.New(t)
+
 	edgedMetricsConn := &EdgedMetricsConnection{
-		ReadChan: make(chan *Message, 1),
+		BaseEdgedConnection: BaseEdgedConnection{
+			ReadChan: make(chan *Message, 1),
+		},
 	}
+	edgedMetricsConn.InitContext(nil)
 
 	msg := &Message{ConnectID: 100, MessageType: MessageTypeData, Data: []byte("test data")}
 	edgedMetricsConn.CacheTunnelMessage(msg)
@@ -81,8 +91,11 @@ func TestMetricsConnection_CacheTunnelMessage(t *testing.T) {
 func TestMetricsConnection_CloseReadChannel(t *testing.T) {
 	assert := assert.New(t)
 	edgedMetricsConn := &EdgedMetricsConnection{
-		ReadChan: make(chan *Message),
+		BaseEdgedConnection: BaseEdgedConnection{
+			ReadChan: make(chan *Message),
+		},
 	}
+	edgedMetricsConn.InitContext(nil)
 
 	go func() {
 		time.Sleep(1 * time.Second)

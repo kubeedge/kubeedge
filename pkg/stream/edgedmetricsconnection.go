@@ -18,69 +18,37 @@ package stream
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 
 	"k8s.io/klog/v2"
 )
 
 type EdgedMetricsConnection struct {
-	ReadChan chan *Message `json:"-"`
-	Stop     chan struct{} `json:"-"`
-	MessID   uint64        // message id
-	URL      url.URL       `json:"url"`
-	Header   http.Header   `json:"header"`
-}
-
-func (ms *EdgedMetricsConnection) GetMessageID() uint64 {
-	return ms.MessID
-}
-
-func (ms *EdgedMetricsConnection) CacheTunnelMessage(msg *Message) {
-	ms.ReadChan <- msg
-}
-
-func (ms *EdgedMetricsConnection) CloseReadChannel() {
-	close(ms.ReadChan)
-}
-
-func (ms *EdgedMetricsConnection) CleanChannel() {
-	for {
-		select {
-		case <-ms.Stop:
-		default:
-			return
-		}
-	}
+	BaseEdgedConnection `json:",inline"`
 }
 
 func (ms *EdgedMetricsConnection) CreateConnectMessage() (*Message, error) {
-	data, err := json.Marshal(ms)
-	if err != nil {
-		return nil, err
-	}
-	return NewMessage(ms.MessID, MessageTypeMetricConnect, data), nil
+	return ms.createConnectMessage(MessageTypeMetricConnect, ms)
 }
 
 func (ms *EdgedMetricsConnection) String() string {
 	return fmt.Sprintf("EDGE_METRICS_CONNECTOR Message MessageID %v", ms.MessID)
 }
 
-func (ms *EdgedMetricsConnection) receiveFromCloudStream(stop chan struct{}) {
+func (ms *EdgedMetricsConnection) receiveFromCloudStream() {
 	for mess := range ms.ReadChan {
 		if mess.MessageType == MessageTypeRemoveConnect {
 			klog.Infof("receive remove client id %v", mess.ConnectID)
-			stop <- struct{}{}
+			ms.Stop <- struct{}{}
 		}
 	}
-	klog.V(6).Infof("%s read channel closed", ms.String())
+	klog.V(2).Infof("%s read channel closed", ms.String())
 }
 
-func (ms *EdgedMetricsConnection) write2CloudStream(tunnel SafeWriteTunneler, resp *http.Response, stop chan struct{}) {
+func (ms *EdgedMetricsConnection) write2CloudStream(tunnel SafeWriteTunneler, resp *http.Response) {
 	defer func() {
-		stop <- struct{}{}
+		ms.Stop <- struct{}{}
 	}()
 	scan := bufio.NewScanner(resp.Body)
 	for scan.Scan() {
@@ -96,45 +64,18 @@ func (ms *EdgedMetricsConnection) write2CloudStream(tunnel SafeWriteTunneler, re
 }
 
 func (ms *EdgedMetricsConnection) Serve(tunnel SafeWriteTunneler) error {
-	//connect edged
-	client := http.Client{}
-	req, err := http.NewRequest(http.MethodGet, ms.URL.String(), nil)
-	if err != nil {
-		klog.Errorf("create new metrics request error %v", err)
-		return err
-	}
-	req.Header = ms.Header
-	// Since current tunnel implementation only support Text message,
-	// we should force Accept-Encoding to identity to avoid any compression.
-	// For example, user may pass accept-encoding: gzip in header.
-	// TODO: luogangyi
-	// When we support binary message, we can remove this setting.
-	req.Header.Set("accept-encoding", "identity")
-	resp, err := client.Do(req)
-	if err != nil {
-		klog.Errorf("request metrics error %v", err)
-		return err
-	}
-	defer resp.Body.Close()
-
-	go ms.receiveFromCloudStream(ms.Stop)
-
-	defer func() {
-		for retry := 0; retry < 3; retry++ {
-			msg := NewMessage(ms.MessID, MessageTypeRemoveConnect, nil)
-			if err := tunnel.WriteMessage(msg); err != nil {
-				klog.Errorf("%v send %s message error %v", ms, msg.MessageType, err)
-			} else {
-				break
-			}
-		}
-	}()
-
-	go ms.write2CloudStream(tunnel, resp, ms.Stop)
-
-	<-ms.Stop
-	klog.Infof("receive stop signal, so stop metrics scan ...")
-	return nil
+	return ms.serveByClient(tunnel, httpClientCustomization{
+		name: ms.String(),
+		handleRequest: func(r *http.Request) {
+			// Since current tunnel implementation only support Text message,
+			// we should force Accept-Encoding to identity to avoid any compression.
+			// For example, user may pass accept-encoding: gzip in header.
+			// TODO: When we support binary message, we can remove this setting.
+			r.Header.Set("accept-encoding", "identity")
+		},
+		receiveFromCloudStream: ms.receiveFromCloudStream,
+		write2CloudStream:      ms.write2CloudStream,
+	})
 }
 
 var _ EdgedConnection = &EdgedMetricsConnection{}

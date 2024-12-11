@@ -150,7 +150,7 @@ func (e *edged) Start() {
 	}()
 
 	kubeletReadyChan := make(chan struct{}, 1)
-	go kubeletHealthCheck(e.KubeletServer.ReadOnlyPort, kubeletReadyChan)
+	go kubeletHealthCheck(e.KubeletServer, kubeletReadyChan)
 
 	select {
 	case <-beehiveContext.Done():
@@ -496,8 +496,8 @@ func filterPodByNodeName(pod *v1.Pod, nodeName string) bool {
 	return pod.Spec.NodeName == nodeName
 }
 
-func kubeletHealthCheck(port int32, kubeletReadyChan chan struct{}) {
-	url := fmt.Sprintf("http://localhost:%d/healthz/syncloop", port)
+func kubeletHealthCheck(opts *kubeletoptions.KubeletServer, kubeletReadyChan chan struct{}) {
+	url := fmt.Sprintf("http://%s:%d/healthz/syncloop", opts.Address, opts.ReadOnlyPort)
 	for {
 		resp, err := http.Get(url)
 		if err != nil {
