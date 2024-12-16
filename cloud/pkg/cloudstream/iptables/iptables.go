@@ -19,6 +19,7 @@ import (
 	clientgov1 "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog/v2"
 	utiliptables "k8s.io/kubernetes/pkg/util/iptables"
 	utilexec "k8s.io/utils/exec"
@@ -28,6 +29,11 @@ import (
 	cloudcoreConfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
+const (
+	// maxRetries is the number of times trying to update TUNNEL-PORT configmap before dropped out of the queue.
+	maxRetries = 5
+)
+
 type Manager struct {
 	iptables              utiliptables.Interface
 	sharedInformerFactory k8sinformer.SharedInformerFactory
@@ -35,6 +41,9 @@ type Manager struct {
 	cmListerSynced        cache.InformerSynced
 	preTunnelPortRecord   *TunnelPortRecord
 	streamPort            int
+	enqueuePod            func(pod *v1.Pod)
+	queuePod              workqueue.RateLimitingInterface
+	syncHandler           func(ctx context.Context, pod *v1.Pod) error
 }
 
 type TunnelPortRecord struct {
@@ -75,6 +84,7 @@ func NewIptablesManager(config *cloudcoreConfig.KubeAPIConfig, streamPort int) *
 			Port:         make(map[int]bool),
 		},
 		streamPort: streamPort,
+		queuePod:   workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "pod"),
 	}
 
 	if kubeClient == nil {
@@ -98,7 +108,32 @@ func NewIptablesManager(config *cloudcoreConfig.KubeAPIConfig, streamPort int) *
 	iptablesMgr.cmListerSynced = configMapsInformer.Informer().HasSynced
 
 	iptablesMgr.sharedInformerFactory = k8sInformerFactory
+	iptablesMgr.enqueuePod = iptablesMgr.enqueue
+	iptablesMgr.syncHandler = iptablesMgr.CleanCloudCoreIPPort
 	return iptablesMgr
+}
+
+func (im *Manager) enqueue(pod *v1.Pod) {
+	im.queuePod.Add(pod)
+}
+
+func (im *Manager) worker(ctx context.Context) {
+	for im.processNextWorkItem(ctx) {
+	}
+}
+
+func (im *Manager) processNextWorkItem(ctx context.Context) bool {
+	// Get deleted pod information from the queue, quit represents whether the queue is closed
+	key, quit := im.queuePod.Get()
+	if quit {
+		return false
+	}
+	defer im.queuePod.Done(key)
+	err := im.syncHandler(ctx, key.(*v1.Pod))
+	//If there is an error in updating the configmap, it will be retried.
+	im.handleErr(err, key)
+
+	return true
 }
 
 func (im *Manager) Run(ctx context.Context) {
@@ -113,8 +148,10 @@ func (im *Manager) Run(ctx context.Context) {
 	if err != nil {
 		klog.Warningf("failed to delete all rules in tunnel port iptables chain: %v", err)
 	}
-
+	// iptablesmanager starts listening to cloudcore deletion events and puts the deleted pods into the queue
 	go im.listenCloudCore(ctx)
+	// Take out the deleted pod from the queue and update the configmap
+	go wait.UntilWithContext(ctx, im.worker, time.Second)
 	go wait.Until(im.reconcile, 10*time.Second, ctx.Done())
 }
 
@@ -137,7 +174,7 @@ func (im *Manager) reconcile() {
 
 	addedIPPort, deletedIPPort, err := im.getAddedAndDeletedCloudCoreIPPort()
 	if err != nil {
-		klog.Errorf("failed to get added and deleted cloudcore ip and port in iptables manager: %v", err)
+		klog.Errorf("failed to get added and deleted CloudCore ip and port in iptables manager: %v", err)
 		return
 	}
 
@@ -188,13 +225,13 @@ func (im *Manager) getAddedAndDeletedCloudCoreIPPort() ([]string, []string, erro
 func (im *Manager) getLatestTunnelPortRecords() (*TunnelPortRecord, error) {
 	configmap, err := im.cmLister.ConfigMaps(constants.SystemNamespace).Get(modules.TunnelPort)
 	if err != nil {
-		return nil, errors.New("failed to get tunnelport configmap for iptables manager")
+		return nil, errors.New("failed to get tunnel-port configmap for iptables manager")
 	}
 
 	recordStr, found := configmap.Annotations[modules.TunnelPortRecordAnnotationKey]
 	recordBytes := []byte(recordStr)
 	if !found {
-		return nil, errors.New("failed to get tunnel port record")
+		return nil, errors.New("failed to get tunnel-port record")
 	}
 
 	record := &TunnelPortRecord{
@@ -208,6 +245,25 @@ func (im *Manager) getLatestTunnelPortRecords() (*TunnelPortRecord, error) {
 	return record, nil
 }
 
+func (im *Manager) handleErr(err error, key interface{}) {
+	if err == nil {
+		// Update configmap without error
+		im.queuePod.Forget(key)
+		return
+	}
+	deletePod := key.(*v1.Pod)
+	ns, name, podIP := deletePod.Namespace, deletePod.Name, deletePod.Status.PodIP
+	if im.queuePod.NumRequeues(key) < maxRetries {
+		//The maximum number of retries has not been reached, re-enter the queue.
+		klog.Warningf("Error update tunnel-port configmap after deleted pod %s, podIP %s, err:%v", name, podIP, err)
+		im.queuePod.AddRateLimited(key)
+		return
+	}
+	//Maximum number of retries reached, update aborted
+	klog.Error("dropping pod out of the queue", "pod", klog.KRef(ns, name), "err", err)
+	im.queuePod.Forget(key)
+}
+
 func (im *Manager) listenCloudCore(ctx context.Context) {
 	// use podInformer listen cloudcore pod delete event
 	podInformer := im.sharedInformerFactory.Core().V1().Pods()
@@ -217,7 +273,7 @@ func (im *Manager) listenCloudCore(ctx context.Context) {
 				// listen pod delete event
 				pod, ok := obj.(*v1.Pod)
 				if !ok {
-					klog.Warningf("object type: %T unsupported when listen cloudcore pod delete", obj)
+					klog.Warningf("object type: %T unsupported when listen CloudCore pod delete", obj)
 					return
 				}
 				value, ok := pod.Labels[constants.SystemName]
@@ -227,12 +283,8 @@ func (im *Manager) listenCloudCore(ctx context.Context) {
 					if len(podIP) == 0 {
 						return
 					}
-					// find deleted cloudcore pod IP, remove it in configmap
-					err := im.CleanCloudCoreIPPort(ctx, podIP)
-					if err != nil {
-						klog.Errorf("Delete cloudcore ip from configmap err:%v", err)
-						return
-					}
+					// find deleted cloudcore pod, put it in queue
+					im.enqueuePod(pod)
 				}
 			},
 		},
@@ -243,39 +295,41 @@ func (im *Manager) listenCloudCore(ctx context.Context) {
 	podInformer.Informer().Run(ctx.Done())
 }
 
-func (im *Manager) CleanCloudCoreIPPort(ctx context.Context, podIP string) error {
+func (im *Manager) CleanCloudCoreIPPort(ctx context.Context, pod *v1.Pod) error {
+	podIP := pod.Status.PodIP
 	// get tunnelport configmap
 	tunnelPortconfigmap, err := kubeClient.CoreV1().ConfigMaps(constants.SystemNamespace).Get(ctx, modules.TunnelPort, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("failed to get tunnelport configmap for iptables manager, err: %v", err)
+		return fmt.Errorf("failed to get tunnel-port configmap for iptables manager, err: %v", err)
 	}
+
 	// parse Annotations from tunnelport configmap, which include cloudcore IP and port
 	var record TunnelPortRecord
 	recordStr, found := tunnelPortconfigmap.Annotations[modules.TunnelPortRecordAnnotationKey]
 	recordBytes := []byte(recordStr)
 	if !found {
-		return errors.New("failed to get tunnel port record")
+		return errors.New("failed to get tunnel-port record")
+	}
+	if err = json.Unmarshal(recordBytes, &record); err != nil {
+		return fmt.Errorf("unmarshal tunnel-port configmap err: %v", err)
 	}
 
-	if err = json.Unmarshal(recordBytes, &record); err != nil {
-		return fmt.Errorf("Unmarshal tunnelPort configmap err: %v", err)
-	}
 	// find the deleted cloudcore ip record and delete it
 	_, found = record.IPTunnelPort[podIP]
 	if found {
 		delete(record.IPTunnelPort, podIP)
-		klog.Infof("will delete cloudcore pod record, ip = %s", podIP)
+		klog.Infof("will delete CloudCore pod record, ip = %s", podIP)
 		recordBytes, err = json.Marshal(record)
 		if err != nil {
-			return fmt.Errorf("Marshal tunnelPort configmap err: %v", err)
+			return fmt.Errorf("marshal tunnel-port configmap err: %v", err)
 		}
 		// update tunnelport configmap after cloudcore pod were deleted
 		tunnelPortconfigmap.Annotations[modules.TunnelPortRecordAnnotationKey] = string(recordBytes)
 		if _, err = kubeClient.CoreV1().ConfigMaps(constants.SystemNamespace).
 			Update(ctx, tunnelPortconfigmap, metav1.UpdateOptions{}); err != nil {
-			return fmt.Errorf("Update tunnelPort configmap err: %v", err)
+			return fmt.Errorf("update tunnel-port configmap err: %v", err)
 		}
 	}
-	klog.Info("update TunnelPort configmap done")
+	klog.Info("update tunnel-port configmap done")
 	return nil
 }
