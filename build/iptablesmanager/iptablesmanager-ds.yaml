@@ -75,5 +75,8 @@ metadata:
     kubeedge: iptables-manager
 rules:
 - apiGroups: [""]
-  resources: ["pods", "configmaps"]
+  resources: ["configmaps"]
   verbs: ["get", "list", "watch", "update"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
