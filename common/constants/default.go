@@ -37,7 +37,7 @@ const (
 	DefaultHostnameOverride = "default-edge-node"
 	DefaultTunnelPort       = 10004
 
-	CurrentSupportK8sVersion = "v1.29.5"
+	CurrentSupportK8sVersion = "v1.30.7"
 
 	// MetaManager
 	DefaultMetaServerAddr = "127.0.0.1:10550"
