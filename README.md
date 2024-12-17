@@ -83,7 +83,7 @@ To learn deeply about KubeEdge, try some examples on [examples](https://github.c
 ## Meeting
 
 Regular Community Meeting:
-- Europe Time: **Wednesdays at 16:30-17:30 Beijing Time** (biweekly, starting from Feb. 19th 2020).
+- Europe Time: **Wednesdays at 16:00-17:30 Beijing Time** (weekly, starting from Feb. 19th 2020).
 ([Convert to your timezone.](https://www.thetimezoneconverter.com/?t=16%3A30&tz=GMT%2B8&))
 - Pacific Time: **Wednesdays at 10:00-11:00 Beijing Time** (biweekly, starting from Feb. 26th 2020).
 ([Convert to your timezone.](https://www.thetimezoneconverter.com/?t=10%3A00&tz=GMT%2B8&))
