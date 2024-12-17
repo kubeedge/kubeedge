@@ -63,6 +63,7 @@ func newSyncController(enable bool) *SyncController {
 	_, err := nodesInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		DeleteFunc: func(obj interface{}) {
 			sctl.deleteObjectSyncs()
+			sctl.deleteClusterObjectSyncs()
 		},
 	})
 	if err != nil {
