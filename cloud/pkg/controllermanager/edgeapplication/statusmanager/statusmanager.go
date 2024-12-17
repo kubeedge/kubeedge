@@ -183,7 +183,8 @@ func (s *statusManager) startToWatch(ctx context.Context, gvk schema.GroupVersio
 
 	watchObj := &unstructured.Unstructured{}
 	watchObj.SetGroupVersionKind(gvk)
-	if err := controller.Watch(source.Kind(s.mgr.GetCache(), watchObj), handler.EnqueueRequestForOwner(s.mgr.GetScheme(), s.mgr.GetRESTMapper(), &appsv1alpha1.EdgeApplication{}, handler.OnlyControllerOwner())); err != nil {
+	hdler := handler.TypedEnqueueRequestForOwner[client.Object](s.mgr.GetScheme(), s.mgr.GetRESTMapper(), &appsv1alpha1.EdgeApplication{}, handler.OnlyControllerOwner())
+	if err := controller.Watch(source.Kind[client.Object](s.mgr.GetCache(), watchObj, hdler)); err != nil {
 		klog.Errorf("failed to add delete event watch to controller for gvk: %s, %v", gvk, err)
 		return err
 	}

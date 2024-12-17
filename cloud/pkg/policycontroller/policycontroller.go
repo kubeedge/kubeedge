@@ -11,6 +11,7 @@ import (
 	"k8s.io/klog/v2"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	controllerruntimemetrics "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	policyv1alpha1 "github.com/kubeedge/api/apis/policy/v1alpha1"
 	"github.com/kubeedge/beehive/pkg/core"
@@ -38,8 +39,11 @@ func init() {
 
 func NewAccessRoleControllerManager(ctx context.Context, kubeCfg *rest.Config) (manager.Manager, error) {
 	controllerManager, err := controllerruntime.NewManager(kubeCfg, controllerruntime.Options{
-		Scheme:             accessScheme,
-		MetricsBindAddress: "0", // disable metrics
+		Scheme: accessScheme,
+		Metrics: controllerruntimemetrics.Options{
+			SecureServing: false,
+			BindAddress:   "0",
+		}, // disable metrics
 		// TODO: leader election
 		// TODO: /healthz
 	})

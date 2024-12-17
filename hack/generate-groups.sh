@@ -89,7 +89,7 @@ if [ "${GENS}" = "all" ] || grep -qw "informer" <<<"${GENS}"; then
            --versioned-clientset-package "${OUTPUT_PKG}/${CLIENTSET_PKG_NAME:-clientset}/${CLIENTSET_NAME_VERSIONED:-versioned}" \
            --listers-package "${OUTPUT_PKG}/listers" \
            --output-pkg "${OUTPUT_PKG}/informers" \
-	   --output-dir "staging/src/github.com/kubeedge/api/client/informers" \
+           --output-dir "staging/src/github.com/kubeedge/api/client/informers" \
            "${FQ_APIS[@]}" \
            "$@"
 fi

@@ -92,7 +92,7 @@ func (c *Controller) SetupWithManager(mgr controllerruntime.Manager) error {
 	return controllerruntime.NewControllerManagedBy(mgr).
 		For(&appsv1alpha1.EdgeApplication{}).
 		Watches(&nodev1.Node{}, handler.EnqueueRequestsFromMapFunc(c.nodeMapFunc)).
-		WatchesRawSource(&source.Channel{Source: c.ReconcileTriggerChan}, &handler.EnqueueRequestForObject{}).
+		WatchesRawSource(source.Channel(c.ReconcileTriggerChan, &handler.EnqueueRequestForObject{})).
 		Complete(c)
 }
 
