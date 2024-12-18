@@ -256,6 +256,10 @@ function start_edgecore {
   if [[ "${CONTAINER_RUNTIME}" = "isulad" ]]; then
     sed -i 's|imageServiceEndpoint: .*|imageServiceEndpoint: unix:///var/run/isulad.sock|' ${EDGE_CONFIGFILE}
     sed -i 's|containerRuntimeEndpoint: .*|containerRuntimeEndpoint: unix:///var/run/isulad.sock|' ${EDGE_CONFIGFILE}
+    # isulad currently does not support the `bind mount` attribute in higher versions of runc,
+    # so we will downgrade runc first and remove this code in the future.
+    sudo wget https://github.com/opencontainers/runc/releases/download/v1.1.13/runc.amd64 -O /usr/bin/runc
+    sudo chmod +x /usr/bin/runc
   fi
 
   token=$(kubectl get secret -nkubeedge tokensecret -o=jsonpath='{.data.tokendata}' | base64 -d)
