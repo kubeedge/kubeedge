@@ -32,7 +32,6 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/events"
 	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
 	"k8s.io/kubernetes/pkg/kubelet/util/format"
-	"k8s.io/kubernetes/pkg/util/config"
 )
 
 // PodConfigNotificationMode describes how changes are sent to the update channel.
@@ -61,7 +60,7 @@ type podStartupSLIObserver interface {
 // in order.
 type PodConfig struct {
 	pods *podStorage
-	mux  *config.Mux
+	mux  *mux
 
 	// the channel of denormalized changes passed to listeners
 	updates chan kubetypes.PodUpdate
@@ -88,7 +87,7 @@ func NewPodConfig(mode PodConfigNotificationMode, recorder record.EventRecorder,
 	storage := newPodStorage(updates, mode, recorder, startupSLIObserver)
 	podConfig := &PodConfig{
 		pods:    storage,
-		mux:     config.NewMux(storage),
+		mux:     newMux(storage),
 		updates: updates,
 		sources: sets.String{},
 	}
@@ -122,6 +121,11 @@ func (c *PodConfig) SetInitPodReady(readyStatus bool) {
 // Updates returns a channel of updates to the configuration, properly denormalized.
 func (c *PodConfig) Updates() <-chan kubetypes.PodUpdate {
 	return c.updates
+}
+
+// Sync requests the full configuration be delivered to the update channel.
+func (c *PodConfig) Sync() {
+	c.pods.sync()
 }
 
 // podStorage manages the current pod state at any point in time and ensures updates
@@ -198,6 +202,22 @@ func (s *podStorage) Merge(source string, change interface{}) error {
 		// Only add reconcile support here, because kubelet doesn't support Snapshot update now.
 		if len(reconciles.Pods) > 0 {
 			s.updates <- *reconciles
+		}
+
+	case PodConfigNotificationSnapshotAndUpdates:
+		if len(removes.Pods) > 0 || len(adds.Pods) > 0 || firstSet {
+			s.updates <- kubetypes.PodUpdate{Pods: s.mergedState().([]*v1.Pod), Op: kubetypes.SET, Source: source}
+		}
+		if len(updates.Pods) > 0 {
+			s.updates <- *updates
+		}
+		if len(deletes.Pods) > 0 {
+			s.updates <- *deletes
+		}
+
+	case PodConfigNotificationSnapshot:
+		if len(updates.Pods) > 0 || len(deletes.Pods) > 0 || len(adds.Pods) > 0 || len(removes.Pods) > 0 || firstSet {
+			s.updates <- kubetypes.PodUpdate{Pods: s.mergedState().([]*v1.Pod), Op: kubetypes.SET, Source: source}
 		}
 
 	case PodConfigNotificationUnknown:
@@ -451,6 +471,25 @@ func checkAndUpdatePod(existing, ref *v1.Pod) (needUpdate, needReconcile, needGr
 	}
 
 	return
+}
+
+// sync sends a copy of the current state through the update channel.
+func (s *podStorage) sync() {
+	s.updateLock.Lock()
+	defer s.updateLock.Unlock()
+	s.updates <- kubetypes.PodUpdate{Pods: s.mergedState().([]*v1.Pod), Op: kubetypes.SET, Source: kubetypes.AllSource}
+}
+
+func (s *podStorage) mergedState() interface{} {
+	s.podLock.RLock()
+	defer s.podLock.RUnlock()
+	pods := make([]*v1.Pod, 0)
+	for _, sourcePods := range s.pods {
+		for _, podRef := range sourcePods {
+			pods = append(pods, podRef.DeepCopy())
+		}
+	}
+	return pods
 }
 
 func copyPods(sourcePods []*v1.Pod) []*v1.Pod {
