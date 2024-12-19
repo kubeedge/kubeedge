@@ -26,6 +26,8 @@ const (
 	DefaultConcurrentConsumers         = 5
 	DefaultCgroupRoot                  = ""
 	DefaultVolumeStatsAggPeriod        = time.Minute
+	DefaultWebSocketPort               = 10000
+	DefaultQuicPort                    = 10001
 	DefaultTunnelPort                  = 10004
 	DefaultClusterDomain               = "cluster.local"
 
@@ -103,4 +105,14 @@ const (
 
 	// DeviceTwin
 	DefaultDMISockPath = "/etc/kubeedge/dmi.sock"
+
+	// DefaultMosquittoContainerName ...
+	// Deprecated: the mqtt broker is alreay managed by the DaemonSet in the cloud
+	DefaultMosquittoContainerName = "mqtt-kubeedge"
+	// DeployMqttContainerEnv ...
+	// Deprecated: the mqtt broker is alreay managed by the DaemonSet in the cloud
+	DeployMqttContainerEnv = "DEPLOY_MQTT_CONTAINER"
+	// DefaultMosquittoImage ...
+	// Deprecated: the mqtt broker is alreay managed by the DaemonSet in the cloud
+	DefaultMosquittoImage = "eclipse-mosquitto:1.6.15"
 )

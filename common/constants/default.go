@@ -29,13 +29,9 @@ const (
 	DefaultNodeUpgradeURL     = "/nodeupgrade"
 	DefaultTaskStateReportURL = "/task/{taskType}/name/{taskID}/node/{nodeID}/status"
 
-	// DefaultMosquittoImage ...
-	// Deprecated: the mqtt broker is alreay managed by the DaemonSet in the cloud
-	DefaultMosquittoImage = "eclipse-mosquitto:1.6.15"
 	// update PodSandboxImage version when bumping k8s vendor version, consistent with vendor/k8s.io/kubernetes/cmd/kubelet/app/options/container_runtime.go defaultPodSandboxImageVersion
 	// When this value are updated, also update comments in pkg/apis/componentconfig/edgecore/v1alpha1/types.go
 	DefaultHostnameOverride = "default-edge-node"
-	DefaultTunnelPort       = 10004
 
 	CurrentSupportK8sVersion = "v1.29.5"
 
@@ -86,8 +82,7 @@ const (
 	// DeployMqttContainerEnv ...
 	// Deprecated: the mqtt broker is alreay managed by the DaemonSet in the cloud
 	DeployMqttContainerEnv = "DEPLOY_MQTT_CONTAINER"
-
-	// EdgeHub
-	DefaultWebSocketPort = 10000
-	DefaultQuicPort      = 10001
+	// DefaultMosquittoImage ...
+	// Deprecated: the mqtt broker is alreay managed by the DaemonSet in the cloud
+	DefaultMosquittoImage = "eclipse-mosquitto:1.6.15"
 )

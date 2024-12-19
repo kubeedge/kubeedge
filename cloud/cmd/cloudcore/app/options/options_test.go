@@ -23,7 +23,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kubeedge/kubeedge/common/constants"
+	"github.com/kubeedge/api/apis/common/constants"
 )
 
 func TestNewCloudCoreOptions(t *testing.T) {

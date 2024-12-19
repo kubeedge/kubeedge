@@ -24,8 +24,8 @@ import (
 
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/api/apis/common/constants"
 	api "github.com/kubeedge/api/apis/fsm/v1alpha1"
-	"github.com/kubeedge/kubeedge/common/constants"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
