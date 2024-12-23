@@ -44,6 +44,8 @@ const (
 
 	EdgeRootDir = "C:\\var\\lib\\edged"
 
+	EdgeKubeletDir = "C:\\var\\lib\\kubelet"
+
 	downloadFileScript = `
 function DownloadFile($destination, $source) {
     Write-Host("Downloading $source to $destination")

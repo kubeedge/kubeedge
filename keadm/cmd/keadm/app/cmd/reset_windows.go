@@ -35,8 +35,8 @@ import (
 
 var (
 	resetLongDescription = `
-keadm reset command in windows can only be executed in edge node
-It shut down the edge processes of KubeEdge
+keadm reset command in windows can only be executed in edge node.
+It shut down the edge processes of KubeEdge.
 `
 	resetExample = `
 keadm reset
@@ -187,8 +187,6 @@ func cleanDirectories() error {
 }
 
 func addResetFlags(cmd *cobra.Command, resetOpts *common.ResetOptions) {
-	//cmd.Flags().StringVar(&resetOpts.Kubeconfig, common.KubeConfig, resetOpts.Kubeconfig,
-	//	"Use this key to set kube-config path, eg: $HOME/.kube/config")
 	cmd.Flags().BoolVar(&resetOpts.Force, "force", resetOpts.Force,
 		"Reset the node without prompting for confirmation, and continue even if running edgecore not found")
 	cmd.Flags().StringVar(&resetOpts.Endpoint, common.FlagNameRemoteRuntimeEndpoint, resetOpts.Endpoint,

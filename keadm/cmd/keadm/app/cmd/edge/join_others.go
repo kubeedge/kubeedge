@@ -38,6 +38,7 @@ import (
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2/validation"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/extsystem"
 	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
 	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/api"
 )
@@ -197,9 +198,19 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 	if err := request(opt, step); err != nil {
 		return err
 	}
+
 	step.Printf("Generate systemd service file")
-	if err := common.GenerateServiceFile(util.KubeEdgeBinaryName, filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), opt.WithMQTT); err != nil {
-		return fmt.Errorf("create systemd service file failed: %v", err)
+	extSystem, err := extsystem.GetExtSystem()
+	if err != nil {
+		return fmt.Errorf("failed to get ext system, err: %v", err)
+	}
+	if err := extSystem.ServiceCreate(util.KubeEdgeBinaryName,
+		filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName),
+		map[string]string{
+			constants.DeployMqttContainerEnv: strconv.FormatBool(opt.WithMQTT),
+		},
+	); err != nil {
+		return fmt.Errorf("failed to create edgecore systemd service, err: %v", err)
 	}
 
 	// write token to bootstrap configure file
@@ -215,8 +226,7 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 	}
 
 	step.Printf("Run EdgeCore daemon")
-	err := runEdgeCore(opt.WithMQTT)
-	if err != nil {
+	if err := runEdgeCore(opt.WithMQTT); err != nil {
 		return fmt.Errorf("start edgecore failed: %v", err)
 	}
 
