@@ -33,7 +33,7 @@ const (
 	// When this value are updated, also update comments in pkg/apis/componentconfig/edgecore/v1alpha1/types.go
 	DefaultHostnameOverride = "default-edge-node"
 
-	CurrentSupportK8sVersion = "v1.29.5"
+	CurrentSupportK8sVersion = "v1.30.7"
 
 	// MetaManager
 	DefaultMetaServerAddr = "127.0.0.1:10550"

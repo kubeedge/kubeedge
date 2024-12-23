@@ -40,6 +40,7 @@ import (
 // SetDefaultsKubeletConfiguration sets defaults for tailored kubelet configuration
 func SetDefaultsKubeletConfiguration(obj *TailoredKubeletConfiguration) {
 	obj.StaticPodPath = constants.DefaultManifestsDir
+	obj.PodLogsDir = configv1beta1.DefaultPodLogsDir
 	obj.SyncFrequency = metav1.Duration{Duration: 1 * time.Minute}
 	obj.FileCheckFrequency = metav1.Duration{Duration: 20 * time.Second}
 	obj.Address = constants.ServerAddress
@@ -85,6 +86,8 @@ func SetDefaultsKubeletConfiguration(obj *TailoredKubeletConfiguration) {
 	obj.FailSwapOn = utilpointer.Bool(false)
 	obj.ContainerLogMaxSize = "10Mi"
 	obj.ContainerLogMaxFiles = utilpointer.Int32(5)
+	obj.ContainerLogMonitorInterval = &metav1.Duration{Duration: 10 * time.Second}
+	obj.ContainerLogMaxWorkers = utilpointer.Int32(1)
 	obj.ConfigMapAndSecretChangeDetectionStrategy = kubeletconfigv1beta1.GetChangeDetectionStrategy
 	obj.EnforceNodeAllocatable = DefaultNodeAllocatableEnforcement
 	obj.VolumePluginDir = constants.DefaultVolumePluginDir
