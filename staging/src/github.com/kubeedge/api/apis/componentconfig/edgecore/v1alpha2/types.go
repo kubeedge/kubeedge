@@ -115,6 +115,9 @@ type Edged struct {
 	// RegisterNodeNamespace indicates register node namespace
 	// default "default"
 	RegisterNodeNamespace string `json:"registerNodeNamespace,omitempty"`
+	// BandwidthManager indicates whether bandwidth manager is enabled,
+	// default false
+	BandwidthManager bool `json:"bandwidthManager"`
 }
 
 // TailoredKubeletConfiguration indicates the tailored kubelet configuration.
