@@ -1,5 +1,5 @@
 /*
-Copyright 2023 The KubeEdge Authors.
+Copyright 2024 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package nodeupgradecontroller
+package configupdatecontroller
 
 import (
 	"fmt"
@@ -26,12 +26,12 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
 )
 
-func currentUpgradeNodeState(id, nodeName string) (fsmapi.State, error) {
+func currentConfigUpdateNodeState(id, nodeName string) (fsmapi.State, error) {
 	v, ok := cache.CacheMap.Load(id)
 	if !ok {
 		return "", fmt.Errorf("can not find task %s", id)
 	}
-	task := v.(*v1alpha1.NodeUpgradeJob)
+	task := v.(*v1alpha1.ConfigUpdateJob)
 	var state fsmapi.State
 	for _, status := range task.Status.Status {
 		if status.NodeName == nodeName {
@@ -45,12 +45,12 @@ func currentUpgradeNodeState(id, nodeName string) (fsmapi.State, error) {
 	return state, nil
 }
 
-func updateUpgradeNodeState(id, nodeName string, state fsmapi.State, event fsm.Event) error {
+func updateConfigUpdateNodeState(id, nodeName string, state fsmapi.State, event fsm.Event) error {
 	v, ok := cache.CacheMap.Load(id)
 	if !ok {
 		return fmt.Errorf("can not find task %s", id)
 	}
-	task := v.(*v1alpha1.NodeUpgradeJob)
+	task := v.(*v1alpha1.ConfigUpdateJob)
 	newTask := task.DeepCopy()
 	status := newTask.Status.DeepCopy()
 	for i, nodeStatus := range status.Status {
@@ -73,22 +73,22 @@ func updateUpgradeNodeState(id, nodeName string, state fsmapi.State, event fsm.E
 	return nil
 }
 
-func NewUpgradeNodeFSM(taskName, nodeName string) *fsm.FSM {
+func NewConfigUpdateNodeFSM(taskName, nodeName string) *fsm.FSM {
 	fsm := &fsm.FSM{}
-	return fsm.NodeName(nodeName).ID(taskName).Guard(fsmapi.UpgradeRule).StageSequence(fsmapi.UpdateStageSequence).CurrentFunc(currentUpgradeNodeState).UpdateFunc(updateUpgradeNodeState)
+	return fsm.NodeName(nodeName).ID(taskName).Guard(fsmapi.ConfigUpdateRule).StageSequence(fsmapi.ConfigUpdateStageSequence).CurrentFunc(currentConfigUpdateNodeState).UpdateFunc(updateConfigUpdateNodeState)
 }
 
-func NewUpgradeTaskFSM(taskName string) *fsm.FSM {
+func NewConfigUpdateTaskFSM(taskName string) *fsm.FSM {
 	fsm := &fsm.FSM{}
-	return fsm.ID(taskName).Guard(fsmapi.UpgradeRule).StageSequence(fsmapi.UpdateStageSequence).CurrentFunc(currentUpgradeTaskState).UpdateFunc(updateUpgradeTaskState)
+	return fsm.ID(taskName).Guard(fsmapi.ConfigUpdateRule).StageSequence(fsmapi.ConfigUpdateStageSequence).CurrentFunc(currentConfigUpdateTaskState).UpdateFunc(updateConfigUpdateTaskState)
 }
 
-func currentUpgradeTaskState(id, _ string) (fsmapi.State, error) {
+func currentConfigUpdateTaskState(id, _ string) (fsmapi.State, error) {
 	v, ok := cache.CacheMap.Load(id)
 	if !ok {
 		return "", fmt.Errorf("can not find task %s", id)
 	}
-	task := v.(*v1alpha1.NodeUpgradeJob)
+	task := v.(*v1alpha1.ConfigUpdateJob)
 	state := task.Status.State
 	if state == "" {
 		state = fsmapi.TaskInit
@@ -96,12 +96,12 @@ func currentUpgradeTaskState(id, _ string) (fsmapi.State, error) {
 	return state, nil
 }
 
-func updateUpgradeTaskState(id, _ string, state fsmapi.State, event fsm.Event) error {
+func updateConfigUpdateTaskState(id, _ string, state fsmapi.State, event fsm.Event) error {
 	v, ok := cache.CacheMap.Load(id)
 	if !ok {
 		return fmt.Errorf("can not find task %s", id)
 	}
-	task := v.(*v1alpha1.NodeUpgradeJob)
+	task := v.(*v1alpha1.ConfigUpdateJob)
 	newTask := task.DeepCopy()
 	status := newTask.Status.DeepCopy()
 

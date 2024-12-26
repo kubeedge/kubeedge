@@ -24,19 +24,18 @@ import (
 	"k8s.io/klog/v2"
 
 	fsmapi "github.com/kubeedge/api/apis/fsm/v1alpha1"
-	v1alpha12 "github.com/kubeedge/api/apis/fsm/v1alpha1"
 	"github.com/kubeedge/api/apis/operations/v1alpha1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
 )
 
-func currentPrePullNodeState(id, nodeName string) (v1alpha12.State, error) {
+func currentPrePullNodeState(id, nodeName string) (fsmapi.State, error) {
 	v, ok := cache.CacheMap.Load(id)
 	if !ok {
 		return "", fmt.Errorf("can not find task %s", id)
 	}
 	task := v.(*v1alpha1.ImagePrePullJob)
-	var state v1alpha12.State
+	var state fsmapi.State
 	for _, status := range task.Status.Status {
 		if status.NodeName == nodeName {
 			state = status.State
@@ -44,12 +43,12 @@ func currentPrePullNodeState(id, nodeName string) (v1alpha12.State, error) {
 		}
 	}
 	if state == "" {
-		state = v1alpha12.TaskInit
+		state = fsmapi.TaskInit
 	}
 	return state, nil
 }
 
-func updatePrePullNodeState(id, nodeName string, state v1alpha12.State, event fsm.Event) error {
+func updatePrePullNodeState(id, nodeName string, state fsmapi.State, event fsm.Event) error {
 	v, ok := cache.CacheMap.Load(id)
 	if !ok {
 		return fmt.Errorf("can not find task %s", id)
@@ -95,7 +94,7 @@ func NewImagePrePullTaskFSM(taskName string) *fsm.FSM {
 	return fsm.ID(taskName).Guard(fsmapi.PrePullRule).StageSequence(fsmapi.PrePullStageSequence).CurrentFunc(currentPrePullTaskState).UpdateFunc(updateUpgradeTaskState)
 }
 
-func currentPrePullTaskState(id, _ string) (v1alpha12.State, error) {
+func currentPrePullTaskState(id, _ string) (fsmapi.State, error) {
 	v, ok := cache.CacheMap.Load(id)
 	if !ok {
 		return "", fmt.Errorf("can not find task %s", id)
@@ -103,12 +102,12 @@ func currentPrePullTaskState(id, _ string) (v1alpha12.State, error) {
 	task := v.(*v1alpha1.ImagePrePullJob)
 	state := task.Status.State
 	if state == "" {
-		state = v1alpha12.TaskInit
+		state = fsmapi.TaskInit
 	}
 	return state, nil
 }
 
-func updateUpgradeTaskState(id, _ string, state v1alpha12.State, event fsm.Event) error {
+func updateUpgradeTaskState(id, _ string, state fsmapi.State, event fsm.Event) error {
 	v, ok := cache.CacheMap.Load(id)
 	if !ok {
 		return fmt.Errorf("can not find task %s", id)
