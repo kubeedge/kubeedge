@@ -111,7 +111,7 @@ function :copy:to:destination {
       elif [ "$CRD_NAME" == "objectsyncs" ]; then
           cp -v ${entry} ${CRD_OUTPUTS}/reliablesyncs/objectsync_${RELIABLESYNCS_VERSION}.yaml
           cp -v ${entry} ${HELM_CRDS_DIR}/objectsync_${RELIABLESYNCS_VERSION}.yaml
-      elif [ "$CRD_NAME" == "nodeupgradejobs" ] || [ "$CRD_NAME" == "imageprepulljobs" ]; then
+      elif [ "$CRD_NAME" == "nodeupgradejobs" ] || [ "$CRD_NAME" == "imageprepulljobs" ] || [ "$CRD_NAME" == "configupdatejobs" ]; then
           CRD_NAME=$(remove_suffix_s "$CRD_NAME")
           cp -v ${entry} ${CRD_OUTPUTS}/operations/operations_${OPERATIONS_VERSION}_${CRD_NAME}.yaml
           cp -v ${entry} ${HELM_CRDS_DIR}/operations_${OPERATIONS_VERSION}_${CRD_NAME}.yaml
