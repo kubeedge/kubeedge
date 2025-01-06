@@ -31,6 +31,7 @@ import (
 
 	"github.com/emicklei/go-restful"
 	"github.com/golang-jwt/jwt"
+	apierror "k8s.io/apimachinery/pkg/api/errors"
 	certutil "k8s.io/client-go/util/cert"
 	"k8s.io/klog/v2"
 
@@ -268,6 +269,10 @@ func PrepareAllCerts() error {
 		// Check whether the ca exists in the secret
 		caSecret, err := GetSecret(CaSecretName, constants.SystemNamespace)
 		if err != nil {
+			if !apierror.IsNotFound(err) {
+				return fmt.Errorf("get secret: %s error: %v", CaSecretName, err)
+			}
+
 			klog.Info("Ca and CaKey don't exist in the secret, and will be created by CloudCore")
 			var caKey crypto.Signer
 			caDER, caKey, err = NewCertificateAuthorityDer()
@@ -307,6 +312,10 @@ func PrepareAllCerts() error {
 		var certDER, keyDER []byte
 		cloudSecret, err := GetSecret(CloudCoreSecretName, constants.SystemNamespace)
 		if err != nil {
+			if !apierror.IsNotFound(err) {
+				return fmt.Errorf("get secret: %s error: %v", CloudCoreSecretName, err)
+			}
+
 			klog.Info("CloudCoreCert and key don't exist in the secret, and will be signed by CA")
 			certDER, keyDER, err = SignCerts()
 			if err != nil {
