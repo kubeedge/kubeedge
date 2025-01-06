@@ -23,6 +23,7 @@ import (
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
+	apierror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	certutil "k8s.io/client-go/util/cert"
 	"k8s.io/klog/v2"
@@ -63,6 +64,11 @@ func createCAToSecret(ctx context.Context) error {
 		// Check whether the ca exists in the secret
 		caSecret, err := client.GetSecret(ctx, CaSecretName, constants.SystemNamespace)
 		if err != nil {
+			if !apierror.IsNotFound(err) {
+				klog.Errorf("get secret: %s error: %v", CaSecretName, err)
+				return err
+			}
+
 			klog.Info("Ca and CaKey don't exist in the secret, and will be created by CloudCore")
 			h := certs.GetCAHandler(certs.CAHandlerTypeX509)
 			pk, err := h.GenPrivateKey()
@@ -106,6 +112,11 @@ func createCertsToSecret(ctx context.Context) error {
 		// Check whether the CloudCore certificates exist in the secret
 		cloudSecret, err := client.GetSecret(ctx, CloudCoreSecretName, constants.SystemNamespace)
 		if err != nil {
+			if !apierror.IsNotFound(err) {
+				klog.Errorf("get secret: %s error: %v", CloudCoreSecretName, err)
+				return err
+			}
+
 			klog.Info("CloudCoreCert and key don't exist in the secret, and will be signed by CA")
 
 			ips := make([]net.IP, 0, len(hubconfig.Config.AdvertiseAddress))
