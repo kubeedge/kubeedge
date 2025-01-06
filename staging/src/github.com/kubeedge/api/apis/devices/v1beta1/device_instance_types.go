@@ -315,7 +315,7 @@ type DeviceList struct {
 // CustomizedValue contains a map type data
 // +kubebuilder:validation:Type=object
 type CustomizedValue struct {
-	Data map[string]interface{} `json:"-"`
+	Data map[string]interface{} `json:"data"`
 }
 
 // MarshalJSON implements the Marshaler interface.
@@ -336,7 +336,7 @@ func (in *CustomizedValue) UnmarshalJSON(data []byte) error {
 
 // DeepCopyInto implements the DeepCopyInto interface.
 func (in *CustomizedValue) DeepCopyInto(out *CustomizedValue) {
-	bytes, err := json.Marshal(*in)
+	bytes, err := json.Marshal(in.Data)
 	if err != nil {
 		panic(err)
 	}
