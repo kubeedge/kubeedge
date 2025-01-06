@@ -9,12 +9,10 @@ import (
 	"strings"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
-	k8sinformer "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
-	v1 "k8s.io/client-go/listers/core/v1"
-	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
 	utiliptables "k8s.io/kubernetes/pkg/util/iptables"
@@ -26,12 +24,9 @@ import (
 )
 
 type Manager struct {
-	iptables              utiliptables.Interface
-	sharedInformerFactory k8sinformer.SharedInformerFactory
-	cmLister              v1.ConfigMapLister
-	cmListerSynced        cache.InformerSynced
-	preTunnelPortRecord   *TunnelPortRecord
-	streamPort            int
+	iptables            utiliptables.Interface
+	preTunnelPortRecord *TunnelPortRecord
+	streamPort          int
 }
 
 type TunnelPortRecord struct {
@@ -86,26 +81,10 @@ func NewIptablesManager(config *cloudcoreConfig.KubeAPIConfig, streamPort int) *
 		kubeClient = kubernetes.NewForConfigOrDie(kubeConfig)
 	}
 
-	// informer factory
-	k8sInformerFactory := k8sinformer.NewSharedInformerFactory(kubeClient, 0)
-	configMapsInformer := k8sInformerFactory.Core().V1().ConfigMaps()
-
-	// lister
-	iptablesMgr.cmLister = configMapsInformer.Lister()
-	iptablesMgr.cmListerSynced = configMapsInformer.Informer().HasSynced
-
-	iptablesMgr.sharedInformerFactory = k8sInformerFactory
 	return iptablesMgr
 }
 
 func (im *Manager) Run(ctx context.Context) {
-	im.sharedInformerFactory.Start(ctx.Done())
-
-	if !cache.WaitForCacheSync(ctx.Done(), im.cmListerSynced) {
-		klog.Error("unable to sync caches for iptables manager")
-		return
-	}
-
 	err := im.iptables.FlushChain(utiliptables.TableNAT, tunnelPortChain)
 	if err != nil {
 		klog.Warningf("failed to delete all rules in tunnel port iptables chain: %v", err)
@@ -182,7 +161,7 @@ func (im *Manager) getAddedAndDeletedCloudCoreIPPort() ([]string, []string, erro
 }
 
 func (im *Manager) getLatestTunnelPortRecords() (*TunnelPortRecord, error) {
-	configmap, err := im.cmLister.ConfigMaps(constants.SystemNamespace).Get(modules.TunnelPort)
+	configmap, err := kubeClient.CoreV1().ConfigMaps(constants.SystemNamespace).Get(context.Background(), modules.TunnelPort, metav1.GetOptions{})
 	if err != nil {
 		return nil, errors.New("failed to get tunnelport configmap for iptables manager")
 	}
