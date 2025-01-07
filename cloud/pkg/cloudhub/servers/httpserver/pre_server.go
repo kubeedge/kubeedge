@@ -65,8 +65,7 @@ func createCAToSecret(ctx context.Context) error {
 		caSecret, err := client.GetSecret(ctx, CaSecretName, constants.SystemNamespace)
 		if err != nil {
 			if !apierror.IsNotFound(err) {
-				klog.Errorf("get secret: %s error: %v", CaSecretName, err)
-				return err
+				return fmt.Errorf("get secret: %s error: %v", CaSecretName, err)
 			}
 
 			klog.Info("Ca and CaKey don't exist in the secret, and will be created by CloudCore")
@@ -113,8 +112,7 @@ func createCertsToSecret(ctx context.Context) error {
 		cloudSecret, err := client.GetSecret(ctx, CloudCoreSecretName, constants.SystemNamespace)
 		if err != nil {
 			if !apierror.IsNotFound(err) {
-				klog.Errorf("get secret: %s error: %v", CloudCoreSecretName, err)
-				return err
+				return fmt.Errorf("get secret: %s error: %v", CloudCoreSecretName, err)
 			}
 
 			klog.Info("CloudCoreCert and key don't exist in the secret, and will be signed by CA")
