@@ -1,5 +1,5 @@
 /*
-Copyright 2022 The KubeEdge Authors.
+Copyright 2024 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,25 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package common
+package extsystem
 
-import (
-	"fmt"
-	"strconv"
+import "k8s.io/kubernetes/cmd/kubeadm/app/util/initsystem"
 
-	"k8s.io/klog/v2"
-)
-
-func NewStep() *Step {
-	return &Step{}
-}
-
-type Step struct {
-	n int
-}
-
-func (s *Step) Printf(format string, args ...interface{}) {
-	s.n++
-	format = strconv.Itoa(s.n) + ". " + format
-	klog.InfoDepth(1, fmt.Sprintf(format, args...))
+type ExtSystem interface {
+	ServiceEnable(service string) error
+	ServiceDisable(service string) error
+	ServiceCreate(service, cmd string, envs map[string]string) error
+	ServiceRemove(service string) error
+	initsystem.InitSystem
 }

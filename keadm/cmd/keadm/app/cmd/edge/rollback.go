@@ -40,7 +40,7 @@ func NewEdgeRollback() *cobra.Command {
 		Use:   "rollback",
 		Short: "rollback edge component. Rollback the edge node to the desired version.",
 		Long:  "Rollback edge component. Rollback the edge node to the desired version.",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			// rollback edge core
 			return rollbackEdgeCore(rollbackOptions)
 		},

@@ -1,5 +1,7 @@
+//go:build windows
+
 /*
-Copyright 2022 The KubeEdge Authors.
+Copyright 2024 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,25 +16,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package common
+package extsystem
 
-import (
-	"fmt"
-	"strconv"
+import "errors"
 
-	"k8s.io/klog/v2"
-)
-
-func NewStep() *Step {
-	return &Step{}
-}
-
-type Step struct {
-	n int
-}
-
-func (s *Step) Printf(format string, args ...interface{}) {
-	s.n++
-	format = strconv.Itoa(s.n) + ". " + format
-	klog.InfoDepth(1, fmt.Sprintf(format, args...))
+// GetExtSystem returns an ExtSystem for the current system, or nil
+// if we cannot detect a supported init system.
+// This indicates we will skip init system checks, not an error.
+func GetExtSystem() (ExtSystem, error) {
+	// TODO: Implement this method when we need.
+	// Refer to: k8s.io/kubernetes/cmd/kubeadm/app/util/initsystem/initsystem_windows.go
+	return nil, errors.New("no supported init system detected")
 }

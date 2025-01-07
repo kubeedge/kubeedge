@@ -21,7 +21,9 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/yaml"
@@ -31,6 +33,7 @@ import (
 	api "github.com/kubeedge/api/apis/fsm/v1alpha1"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/extsystem"
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
 )
 
@@ -49,7 +52,7 @@ func NewEdgeUpgrade() *cobra.Command {
 		Use:   "edge",
 		Short: "Upgrade edge components",
 		Long:  "Upgrade edge components. Upgrade the edge node to the desired version.",
-		PreRunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(_ *cobra.Command, _ []string) error {
 			if upgradeOptions.PreRun != "" {
 				fmt.Printf("Executing pre-run script: %s\n", upgradeOptions.PreRun)
 				if err := util.RunScript(upgradeOptions.PreRun); err != nil {
@@ -58,11 +61,11 @@ func NewEdgeUpgrade() *cobra.Command {
 			}
 			return nil
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			// upgrade edgecore
 			return upgradeOptions.Upgrade()
 		},
-		PostRunE: func(cmd *cobra.Command, args []string) error {
+		PostRunE: func(_ *cobra.Command, _ []string) error {
 			// post-run script
 			if upgradeOptions.PostRun != "" {
 				fmt.Printf("Executing post-run script: %s\n", upgradeOptions.PostRun)
@@ -140,13 +143,13 @@ func (up *UpgradeOptions) Upgrade() error {
 		reason := fmt.Sprintf("failed to create idempotency_record dir: %v", err)
 		event.Action = api.ActionFailure
 		event.Msg = reason
-		return fmt.Errorf(reason)
+		return errors.New(reason)
 	}
 	if _, err := os.Create(idempotencyRecord); err != nil {
 		reason := fmt.Sprintf("failed to create idempotency_record file: %v", err)
 		event.Action = api.ActionFailure
 		event.Msg = reason
-		return fmt.Errorf(reason)
+		return errors.New(reason)
 	}
 
 	// run script to do upgrade operation
@@ -265,9 +268,17 @@ func (up *Upgrade) Process() error {
 	// set withMqtt to false during upgrading edgecore, it will not affect the MQTT container. This is a temporary workaround and will be modified in v1.15.
 	// generate edgecore.service
 	if util.HasSystemd() {
-		err = common.GenerateServiceFile(util.KubeEdgeBinaryName, fmt.Sprintf("%s --config %s", filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), up.ConfigFilePath), false)
+		extSystem, err := extsystem.GetExtSystem()
 		if err != nil {
-			return fmt.Errorf("failed to create edgecore.service file: %v", err)
+			return fmt.Errorf("failed to get ext system, err: %v", err)
+		}
+		if err := extSystem.ServiceCreate(util.KubeEdgeBinaryName,
+			fmt.Sprintf("%s --config %s", filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), up.ConfigFilePath),
+			map[string]string{
+				constants.DeployMqttContainerEnv: strconv.FormatBool(false),
+			},
+		); err != nil {
+			return fmt.Errorf("failed to create edgecore systemd service, err: %v", err)
 		}
 	}
 
@@ -311,9 +322,17 @@ func rollback(HistoryVersion, dataSource, configFilePath string) error {
 
 	// generate edgecore.service
 	if util.HasSystemd() {
-		err = common.GenerateServiceFile(util.KubeEdgeBinaryName, fmt.Sprintf("%s --config %s", filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), configFilePath), false)
+		extSystem, err := extsystem.GetExtSystem()
 		if err != nil {
-			return fmt.Errorf("failed to create edgecore.service file: %v", err)
+			return fmt.Errorf("failed to get ext system, err: %v", err)
+		}
+		if err := extSystem.ServiceCreate(util.KubeEdgeBinaryName,
+			fmt.Sprintf("%s --config %s", filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), configFilePath),
+			map[string]string{
+				constants.DeployMqttContainerEnv: strconv.FormatBool(false),
+			},
+		); err != nil {
+			return fmt.Errorf("failed to create edgecore systemd service, err: %v", err)
 		}
 	}
 

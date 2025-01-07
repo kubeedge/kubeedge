@@ -23,7 +23,7 @@ func NewUpgradeCommand() *cobra.Command {
 
 	// Used for backward compatibility of the edgecore trigger the upgrade command
 	upgradeOptions := edge.NewUpgradeOptions()
-	cmds.RunE = func(cmd *cobra.Command, args []string) error {
+	cmds.RunE = func(_ *cobra.Command, _ []string) error {
 		return upgradeOptions.Upgrade()
 	}
 	edge.AddUpgradeFlags(cmds, upgradeOptions)

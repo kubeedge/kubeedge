@@ -1,3 +1,5 @@
+//go:build !windows
+
 /*
 Copyright 2024 The KubeEdge Authors.
 
@@ -18,17 +20,21 @@ package edge
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/klog/v2"
 	phases "k8s.io/kubernetes/cmd/kubeadm/app/cmd/phases/reset"
 	utilsexec "k8s.io/utils/exec"
 
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/extsystem"
 )
 
 var (
@@ -43,33 +49,24 @@ keadm reset edge
 )
 
 func NewOtherEdgeReset() *cobra.Command {
-	isEdgeNode := false
+	const isEdgeNode = true
 	reset := util.NewResetOptions()
+	step := common.NewStep()
 	var cmd = &cobra.Command{
 		Use:     "edge",
 		Short:   "Teardowns EdgeCore component",
 		Long:    resetLongDescription,
 		Example: resetExample,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(_ *cobra.Command, _ []string) error {
 			if reset.PreRun != "" {
-				fmt.Printf("Executing pre-run script: %s\n", reset.PreRun)
+				step.Printf("executing pre-run script: %s", reset.PreRun)
 				if err := util.RunScript(reset.PreRun); err != nil {
 					return err
 				}
 			}
-			whoRunning := util.EdgeCoreRunningModuleV2(reset)
-			if whoRunning == common.NoneRunning {
-				fmt.Println("None of EdgeCore components are running in this host, exit")
-				os.Exit(0)
-			}
-
-			if whoRunning == common.KubeEdgeEdgeRunning {
-				isEdgeNode = true
-			}
-
 			return nil
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			if !reset.Force {
 				fmt.Println("[reset] WARNING: Changes made to this host by 'keadm init' or 'keadm join' will be reverted.")
 				fmt.Print("[reset] Are you sure you want to proceed? [y/N]: ")
@@ -83,56 +80,46 @@ func NewOtherEdgeReset() *cobra.Command {
 				}
 			}
 
-			staticPodPath := ""
+			step.Printf("clean up static pods")
 			config, err := util.ParseEdgecoreConfig(common.EdgecoreConfigPath)
 			if err != nil {
-				fmt.Printf("failed to get edgecore's config with err:%v\n", err)
+				klog.Warningf("failed to parse edgecore configuration, skip cleaning up static pods, err: %v", err)
 			} else {
 				if reset.Endpoint == "" {
 					reset.Endpoint = config.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint
 				}
-				staticPodPath = config.Modules.Edged.TailoredKubeletConfig.StaticPodPath
-			}
-			// first cleanup edge node static pod directory to stop static and mirror pod
-			if staticPodPath != "" {
-				if err := phases.CleanDir(staticPodPath); err != nil {
-					fmt.Printf("Failed to delete static pod directory %s: %v\n", staticPodPath, err)
-				} else {
-					time.Sleep(1 * time.Second)
-					fmt.Printf("Static pod directory has been removed!\n")
+				staticPodPath := config.Modules.Edged.TailoredKubeletConfig.StaticPodPath
+				if staticPodPath != "" {
+					if err := phases.CleanDir(staticPodPath); err != nil {
+						klog.Warningf("failed to delete static pod directory %s: %v", staticPodPath, err)
+					}
 				}
 			}
-
-			// 1. kill edgecore process.
-			// For edgecore, don't delete node from K8S
+			step.Printf("kill edgecore and remove edgecore service")
 			if err := TearDownEdgeCore(); err != nil {
 				return err
 			}
-
-			// 2. Remove containers managed by KubeEdge. Only for edge node.
+			step.Printf("clean up containers managed by KubeEdge")
 			if err := util.RemoveContainers(reset.Endpoint, utilsexec.New()); err != nil {
-				fmt.Printf("Failed to remove containers: %v\n", err)
+				klog.Warningf("failed to clean up containers, err: %v", err)
 			}
+			step.Printf("clean up dirs created by KubeEdge")
 
-			// 3. Clean stateful directories
 			if err := util.CleanDirectories(isEdgeNode); err != nil {
-				return err
+				klog.Warningf("failed to clean up directories, err: %v", err)
 			}
-
-			//4. TODO: clean status information
-
 			return nil
 		},
 
-		PostRunE: func(cmd *cobra.Command, args []string) error {
+		PostRun: func(_ *cobra.Command, _ []string) {
 			// post-run script
 			if reset.PostRun != "" {
-				fmt.Printf("Executing post-run script: %s\n", reset.PostRun)
+				step.Printf("executing post-run script: %s", reset.PostRun)
 				if err := util.RunScript(reset.PostRun); err != nil {
-					fmt.Printf("Execute post-run script: %s failed: %v\n", reset.PostRun, err)
+					klog.Warningf("execute post-run script: %s failed, err: %v", reset.PostRun, err)
 				}
 			}
-			return nil
+			klog.Info("reset edge node successfully!")
 		},
 	}
 
@@ -142,10 +129,37 @@ func NewOtherEdgeReset() *cobra.Command {
 
 // TearDownEdgeCore will bring down edge component,
 func TearDownEdgeCore() error {
-	ke := &util.KubeEdgeInstTool{Common: util.Common{}}
-	err := ke.TearDown()
+	extSystem, err := extsystem.GetExtSystem()
 	if err != nil {
-		return fmt.Errorf("TearDown failed, err:%v", err)
+		return fmt.Errorf("failed to get init system, err: %v", err)
+	}
+	service := util.KubeEdgeBinaryName
+	if extSystem.ServiceExists(service) {
+		klog.V(2).Info("edgecore service is exists")
+		if extSystem.ServiceIsActive(service) {
+			klog.V(2).Info("edgecore service is active, stopping it")
+			if err := extSystem.ServiceStop(service); err != nil {
+				klog.Warningf("failed to stop edgecore service, err: %v", err)
+			}
+			timeout, interval := 10*time.Second, 1*time.Second
+			if err := wait.PollUntilContextTimeout(context.Background(), interval, timeout, false,
+				func(_ context.Context) (done bool, err error) {
+					return !extSystem.ServiceIsActive(service), nil
+				},
+			); err != nil {
+				klog.Warningf("failed to wait for edgecore service to stop, err: %v", err)
+			}
+		}
+		if extSystem.ServiceIsEnabled(service) {
+			klog.V(2).Info("edgecore service is enabled, disable it")
+			if err := extSystem.ServiceDisable(service); err != nil {
+				klog.Warningf("failed to disable edgecore service, err: %v", err)
+			}
+		}
+		klog.V(2).Info("removing edgecore service")
+		if err := extSystem.ServiceRemove(service); err != nil {
+			klog.Warningf("failed to remove edgecore service, err: %v", err)
+		}
 	}
 	return nil
 }

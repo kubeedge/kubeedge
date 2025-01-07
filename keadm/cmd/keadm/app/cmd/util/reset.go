@@ -18,8 +18,9 @@ package util
 
 import (
 	"fmt"
+	"os"
 
-	phases "k8s.io/kubernetes/cmd/kubeadm/app/cmd/phases/reset"
+	"k8s.io/klog/v2"
 	utilruntime "k8s.io/kubernetes/cmd/kubeadm/app/util/runtime"
 	utilsexec "k8s.io/utils/exec"
 
@@ -72,14 +73,17 @@ func CleanDirectories(isEdgeNode bool) error {
 	}
 
 	if isEdgeNode {
-		dirToClean = append(dirToClean, "/var/lib/dockershim", "/var/run/kubernetes", "/var/lib/cni")
+		dirToClean = append(dirToClean, EdgeKubeletDir)
 	}
 
 	for _, dir := range dirToClean {
-		if err := phases.CleanDir(dir); err != nil {
-			fmt.Printf("Failed to delete directory %s: %v\n", dir, err)
+		klog.V(2).Infof("remove dir %s", dir)
+		if _, err := os.Stat(dir); os.IsNotExist(err) {
+			return nil
+		}
+		if err := os.RemoveAll(dir); err != nil {
+			klog.Warningf("failed to delete dir %s, err: %v", dir, err)
 		}
 	}
-
 	return nil
 }
