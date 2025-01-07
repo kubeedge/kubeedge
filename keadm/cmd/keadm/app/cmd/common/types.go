@@ -93,7 +93,7 @@ type JoinOptions struct {
 	CertPort              string
 	CGroupDriver          string
 	Labels                []string
-	Sets                  string
+	Sets                  []string
 	PreRun                string
 	PostRun               string
 
