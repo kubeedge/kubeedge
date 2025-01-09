@@ -25,7 +25,7 @@ spec:
               - key: node-role.kubernetes.io/master
                 operator: Exists
               - key: node-role.kubernetes.io/control-plane
-                effect: Exists
+                operator: Exists
       restartPolicy: Always
       containers:
         - name: iptables-manager
@@ -76,4 +76,7 @@ metadata:
 rules:
 - apiGroups: [""]
   resources: ["configmaps"]
+  verbs: ["get", "list", "watch", "update"]
+- apiGroups: [""]
+  resources: ["pods"]
   verbs: ["get", "list", "watch"]
