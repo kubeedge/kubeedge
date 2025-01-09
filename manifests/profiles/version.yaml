@@ -67,7 +67,7 @@ cloudCore:
 
 iptablesManager:
   enable: true
-  mode: "internal"
+  mode: "external"
   hostNetWork: true
   image:
     repository: "kubeedge/iptables-manager"
