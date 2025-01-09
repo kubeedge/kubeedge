@@ -17,21 +17,28 @@ limitations under the License.
 package client
 
 import (
-	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	api "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/mocks/beego"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
 const (
 	namespace = "test-namespace"
+	// FailedDBOperation is common Database operation fail message
+	FailedDBOperation = "Failed DB Operation"
 )
+
+var errFailedDBOperation = errors.New(FailedDBOperation)
 
 func TestNewConfigMaps(t *testing.T) {
 	assert := assert.New(t)
@@ -47,6 +54,11 @@ func TestNewConfigMaps(t *testing.T) {
 
 func TestConfigMaps_Get(t *testing.T) {
 	assert := assert.New(t)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock := beego.NewMockOrmer(mockCtrl)
+	querySetterMock := beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
 
 	configMapName := "test-configmap"
 	expectedConfigMap := &api.ConfigMap{
@@ -76,19 +88,6 @@ func TestConfigMaps_Get(t *testing.T) {
 			expectErr: false,
 		},
 		{
-			name: "Get from MetaDB",
-			respFunc: func(message *model.Message) (*model.Message, error) {
-				resp := model.NewMessage(message.GetID())
-				resp.Router.Source = modules.MetaManagerModuleName
-				resp.Router.Operation = model.ResponseOperation
-				configMapJSON, _ := json.Marshal(expectedConfigMap)
-				resp.Content = []string{string(configMapJSON)}
-				return resp, nil
-			},
-			stdResult: expectedConfigMap,
-			expectErr: false,
-		},
-		{
 			name: "Error response",
 			respFunc: func(message *model.Message) (*model.Message, error) {
 				return nil, fmt.Errorf("test error")
@@ -112,7 +111,9 @@ func TestConfigMaps_Get(t *testing.T) {
 			}
 
 			configMapsClient := newConfigMaps(namespace, mockSend)
-
+			querySetterMock.EXPECT().All(gomock.Any()).Return(int64(1), errFailedDBOperation).Times(1)
+			querySetterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySetterMock).Times(1)
+			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySetterMock).Times(1)
 			configMap, err := configMapsClient.Get(configMapName)
 
 			if test.expectErr {
@@ -131,13 +132,13 @@ func TestHandleConfigMapFromMetaDB(t *testing.T) {
 
 	testCases := []struct {
 		name              string
-		content           []byte
+		metas             []string
 		expectedConfigMap *api.ConfigMap
 		expectedErr       bool
 	}{
 		{
-			name:    "Valid ConfigMap",
-			content: []byte(`["{\"metadata\":{\"name\":\"test-config\",\"namespace\":\"default\"},\"data\":{\"key\":\"value\"}}"]`),
+			name:  "Valid ConfigMap",
+			metas: []string{"{\"metadata\":{\"name\":\"test-config\",\"namespace\":\"default\"},\"data\":{\"key\":\"value\"}}"},
 			expectedConfigMap: &api.ConfigMap{
 				Data: map[string]string{"key": "value"},
 				ObjectMeta: metav1.ObjectMeta{
@@ -149,19 +150,19 @@ func TestHandleConfigMapFromMetaDB(t *testing.T) {
 		},
 		{
 			name:              "Invalid JSON",
-			content:           []byte(`["invalid json"]`),
+			metas:             []string{"invalid json"},
 			expectedConfigMap: nil,
 			expectedErr:       true,
 		},
 		{
 			name:              "Empty list",
-			content:           []byte(`[]`),
+			metas:             []string{},
 			expectedConfigMap: nil,
 			expectedErr:       true,
 		},
 		{
 			name:              "Multiple ConfigMaps",
-			content:           []byte(`["{}", "{}"]`),
+			metas:             []string{"", ""},
 			expectedConfigMap: nil,
 			expectedErr:       true,
 		},
@@ -169,7 +170,7 @@ func TestHandleConfigMapFromMetaDB(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			cm, err := handleConfigMapFromMetaDB(test.content)
+			cm, err := handleConfigMapFromMetaDB(&test.metas)
 
 			if test.expectedErr {
 				assert.Error(err)

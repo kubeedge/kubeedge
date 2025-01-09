@@ -54,43 +54,35 @@ func TestHandleSecretFromMetaDB(t *testing.T) {
 		Type: api.SecretTypeOpaque,
 	}
 	secretJSON, _ := json.Marshal(secret)
-	content, _ := json.Marshal([]string{string(secretJSON)})
+	content := []string{string(secretJSON)}
 
-	result, err := handleSecretFromMetaDB(content)
+	result, err := handleSecretFromMetaDB(&content)
 	assert.NoError(err)
 	assert.Equal(secret, result)
 
 	// Test case 2: Empty list
-	emptyList, _ := json.Marshal([]string{})
+	var emptyList []string
 
-	result, err = handleSecretFromMetaDB(emptyList)
+	result, err = handleSecretFromMetaDB(&emptyList)
 	assert.Error(err)
 	assert.Nil(result)
 	assert.Contains(err.Error(), "secret length from meta db is 0")
 
 	// Test case 3: List with multiple elements
-	multipleSecrets, _ := json.Marshal([]string{string(secretJSON), string(secretJSON)})
+	multipleSecrets := []string{string(secretJSON), string(secretJSON)}
 
-	result, err = handleSecretFromMetaDB(multipleSecrets)
+	result, err = handleSecretFromMetaDB(&multipleSecrets)
 	assert.Error(err)
 	assert.Nil(result)
 	assert.Contains(err.Error(), "secret length from meta db is 2")
 
 	// Test case 4: Invalid JSON in the list
-	invalidJSON := []byte(`["{invalid json}"]`)
+	invalidJSON := []string{"{invalid json}"}
 
-	result, err = handleSecretFromMetaDB(invalidJSON)
+	result, err = handleSecretFromMetaDB(&invalidJSON)
 	assert.Error(err)
 	assert.Nil(result)
 	assert.Contains(err.Error(), "unmarshal message to secret from db failed")
-
-	// Test case 5: Invalid outer JSON (not a list)
-	invalidOuterJSON := []byte(`{"not": "a list"}`)
-
-	result, err = handleSecretFromMetaDB(invalidOuterJSON)
-	assert.Error(err)
-	assert.Nil(result)
-	assert.Contains(err.Error(), "unmarshal message to secret list from db failed")
 }
 
 func TestHandleSecretFromMetaManager(t *testing.T) {
