@@ -17,7 +17,9 @@ limitations under the License.
 package util
 
 import (
+	"context"
 	"fmt"
+	"time"
 	"strings"
 
 	"github.com/blang/semver"
@@ -59,8 +61,6 @@ func (r *RpmOS) InstallMQTT() error {
 	commands := []string{
 		"yum -y install epel-release",
 		"yum -y install mosquitto",
-		"systemctl start mosquitto",
-		"systemctl enable mosquitto",
 	}
 
 	vendorName, err := getOSVendorName()
@@ -78,6 +78,13 @@ func (r *RpmOS) InstallMQTT() error {
 		if err := cmd.Exec(); err != nil {
 			return err
 		}
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
+	defer cancel()
+
+	err = EnableAndRunSystemdUnit(ctx, "mosquitto.service", false)
+	if err != nil {
+		return err
 	}
 	fmt.Println("install MQTT service successfully.")
 

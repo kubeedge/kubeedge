@@ -19,13 +19,17 @@ limitations under the License.
 package util
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/blang/semver"
+	"github.com/coreos/go-systemd/v22/dbus"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/common/constants"
@@ -130,21 +134,34 @@ func KillKubeEdgeBinary(proc string) error {
 		systemdExist := HasSystemd()
 
 		var serviceName string
-		if running, err := isEdgeCoreServiceRunning("edge"); err == nil && running {
+		if running, err := isServiceRunning("edge"); err == nil && running {
 			serviceName = "edge"
 		}
-		if running, err := isEdgeCoreServiceRunning(KubeEdgeBinaryName); err == nil && running {
+		if running, err := isServiceRunning(KubeEdgeBinaryName); err == nil && running {
 			serviceName = KubeEdgeBinaryName
 		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
+		defer cancel()
+
+		conn, err := dbus.NewSystemConnectionContext(ctx)
+		if err != nil {
+			return err
+		}
+		defer conn.Close()
 
 		if systemdExist && serviceName != "" {
 			// remove the system service.
 			serviceFilePath := fmt.Sprintf("/etc/systemd/system/%s.service", serviceName)
-			serviceFileRemoveExec := fmt.Sprintf("&& sudo rm %s", serviceFilePath)
-			if _, err := os.Stat(serviceFilePath); err != nil && os.IsNotExist(err) {
-				serviceFileRemoveExec = ""
+			err := os.Remove(serviceFilePath)
+			if err != nil && !errors.Is(err, os.ErrNotExist) {
+				return err
 			}
-			binExec = fmt.Sprintf("sudo systemctl stop %s.service && sudo systemctl disable %s.service %s && sudo systemctl daemon-reload", serviceName, serviceName, serviceFileRemoveExec)
+			unitName := fmt.Sprintf("%s.service", serviceName)
+			err = DisableAndStopSystemdUnit(ctx, conn, unitName, true)
+			if err != nil {
+				return err
+			}
 		} else {
 			binExec = fmt.Sprintf("pkill %s", proc)
 		}
@@ -223,17 +240,27 @@ func retryDownload(filename, checksumFilename string, version semver.Version, ta
 	return fmt.Errorf("failed to download %s", filename)
 }
 
-func isEdgeCoreServiceRunning(serviceName string) (bool, error) {
-	serviceRunning := fmt.Sprintf("systemctl list-unit-files | grep enabled | grep %s ", serviceName)
-	cmd := NewCommand(serviceRunning)
-	err := cmd.Exec()
+func isServiceRunning(serviceName string) (bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
+	defer cancel()
 
-	if cmd.ExitCode == 0 {
-		return true, nil
-	} else if cmd.ExitCode == 1 {
-		return false, nil
+	d, err := dbus.NewSystemConnectionContext(ctx)
+	if err != nil {
+		return false, err
 	}
 
+	defer d.Close()
+
+	results, err := d.ListUnitsByPatternsContext(ctx, []string{}, []string{serviceName})
+
+	for result := range results {
+		if results[result].SubState == "running" && results[result].Name == serviceName {
+			fmt.Printf("%s is running\n", serviceName)
+			return true, nil
+		} else if results[result].SubState != "running" || results[result].ActiveState == "active" && results[result].Name == serviceName {
+			return false, fmt.Errorf("%s is not running: %s", serviceName, results[result].LoadState)
+		}
+	}
 	return false, err
 }
 
@@ -249,8 +276,19 @@ func runEdgeCore() error {
 
 	var binExec string
 	if systemdExist {
-		binExec = fmt.Sprintf("sudo ln /etc/kubeedge/%s.service /etc/systemd/system/%s.service && sudo systemctl daemon-reload && sudo systemctl enable %s && sudo systemctl start %s",
-			types.EdgeCore, types.EdgeCore, types.EdgeCore, types.EdgeCore)
+		unitName := string(types.EdgeCore) + ".service"
+		err := os.Link(filepath.Join(KubeEdgePath, unitName), filepath.Join("/etc/systemd/system", unitName))
+		if err != nil {
+			return err
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
+		defer cancel()
+
+		err = EnableAndRunSystemdUnit(ctx, unitName, true)
+		if err != nil {
+			return err
+		}
 	} else {
 		binExec = fmt.Sprintf("%s/%s > %skubeedge/edge/%s.log 2>&1 &", KubeEdgeUsrBinPath, KubeEdgeBinaryName, KubeEdgePath, KubeEdgeBinaryName)
 	}
@@ -359,6 +397,72 @@ func installKubeEdge(options types.InstallOptions, version semver.Version) error
 			return err
 		}
 		fmt.Println(cmd.GetStdOut())
+	}
+
+	return nil
+}
+
+// EnableAndRunSystemdUnit provides a wrapper around creating a new systemd system dbus connection, reloading
+// the systemd daemon if reload is true, and enabling and starting the systemd unit.
+func EnableAndRunSystemdUnit(ctx context.Context, unit string, reload bool) error {
+	conn, err := dbus.NewSystemConnectionContext(ctx)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	if reload {
+		err = conn.ReloadContext(ctx)
+		if err != nil {
+			return err
+		}
+	}
+
+	enabled, _, err := conn.EnableUnitFilesContext(ctx, []string{unit}, false, true)
+	if err != nil {
+		return fmt.Errorf("enable %s failed: %s", unit, err)
+	}
+	if !enabled {
+		return fmt.Errorf("enable %s failed: %s", unit, err)
+	}
+
+	done := make(chan string, 1)
+	_, err = conn.StartUnitContext(ctx, unit, "replace", done)
+	if err != nil {
+		return err
+	}
+
+	result := <-done
+	if result != "done" {
+		return fmt.Errorf("failed to start %s: %s", unit, result)
+	}
+	return nil
+}
+
+// DisableAndStopSystemdUnit provides a wrapper around removing a systemd system dbus connection, reloading
+// the systemd daemon if reload is true, and disabling and stopping the systemd unit.
+func DisableAndStopSystemdUnit(ctx context.Context, conn *dbus.Conn, unit string, reload bool) error {
+	done := make(chan string, 1)
+	_, err := conn.StopUnitContext(ctx, unit, "replace", done)
+	if err != nil {
+		return err
+	}
+
+	result := <-done
+	if result != "done" {
+		return fmt.Errorf("failed to stop %s: %s", unit, result)
+	}
+
+	_, err = conn.DisableUnitFilesContext(ctx, []string{unit}, false)
+	if err != nil {
+		return err
+	}
+
+	if reload {
+		err = conn.ReloadContext(ctx)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
