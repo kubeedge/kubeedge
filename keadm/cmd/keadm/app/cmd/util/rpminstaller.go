@@ -19,8 +19,8 @@ package util
 import (
 	"context"
 	"fmt"
-	"time"
 	"strings"
+	"time"
 
 	"github.com/blang/semver"
 
