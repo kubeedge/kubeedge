@@ -31,7 +31,7 @@ import (
 	"github.com/kubeedge/kubeedge/common/types"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
-	edgeutil "github.com/kubeedge/kubeedge/edge/pkg/common/util"
+	commonmsg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	metaclient "github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
@@ -104,7 +104,7 @@ func pullImages(taskReq types.NodeTaskRequest) fsm.Event {
 			Reason:          event.Msg,
 			ExternalMessage: string(data),
 		}
-		edgeutil.ReportTaskResult(taskReq.Type, taskReq.TaskID, resp)
+		commonmsg.ReportTaskResult(taskReq.Type, taskReq.TaskID, resp)
 	}()
 	return fsm.Event{}
 }
