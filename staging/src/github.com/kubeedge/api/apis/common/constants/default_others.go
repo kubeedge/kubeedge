@@ -23,7 +23,7 @@ const (
 	BootstrapFile = "/etc/kubeedge/bootstrap-edgecore.conf"
 
 	// Edged
-	DefaultRootDir               = "/var/lib/edged"
+	DefaultRootDir               = "/var/lib/kubelet"
 	DefaultRemoteRuntimeEndpoint = "unix:///run/containerd/containerd.sock"
 	DefaultRemoteImageEndpoint   = "unix:///run/containerd/containerd.sock"
 	DefaultCNIConfDir            = "/etc/cni/net.d"
