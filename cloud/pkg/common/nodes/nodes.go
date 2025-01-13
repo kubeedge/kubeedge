@@ -1,11 +1,11 @@
 /*
-Copyright 2023 The KubeEdge Authors.
+Copyright 2025 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-   http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,10 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package util
+package nodes
 
 import (
+	"sync"
+
 	metav1 "k8s.io/api/core/v1"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 )
@@ -39,17 +42,18 @@ func IsEdgeNode(node *metav1.Node) bool {
 	return true
 }
 
-// RemoveDuplicateElement deduplicate
-func RemoveDuplicateElement[T any](s []T) []T {
-	result := make([]T, 0, len(s))
-	temp := make(map[any]struct{}, len(s))
-
-	for _, item := range s {
-		if _, ok := temp[item]; !ok {
-			temp[item] = struct{}{}
-			result = append(result, item)
+// GetManagedEdgeNodes returns the managed edge nodes through the edge node session
+// (NodeSessions field of session.Manager) that connected to the current CloudCore instance.
+func GetManagedEdgeNodes(nodeSessions *sync.Map) []string {
+	nodes := make([]string, 0)
+	nodeSessions.Range(func(key, _ any) bool {
+		nodeID, ok := key.(string)
+		if ok {
+			nodes = append(nodes, nodeID)
+		} else {
+			klog.Warningf("invalid node session key %v, expected string type, actual type is %T", key, key)
 		}
-	}
-
-	return result
+		return true
+	})
+	return nodes
 }
