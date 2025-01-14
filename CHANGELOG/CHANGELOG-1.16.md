@@ -1,3 +1,7 @@
+* [v1.16.6](#v1166)
+  * [Downloads for v1.16.6](#downloads-for-v1166)
+  * [KubeEdge v1.16.6 Release Notes](#kubeedge-v1166-release-notes)
+    * [Changelog since v1.16.5](#changelog-since-v1165)
 * [v1.16.5](#v1165)
   * [Downloads for v1.16.5](#downloads-for-v1165)
   * [KubeEdge v1.16.5 Release Notes](#kubeedge-v1165-release-notes)
@@ -23,6 +27,21 @@
     * [KubeEdge v1.16 Release Notes](#kubeedge-v116-release-notes)
         * [1.16 What's New](#116-whats-new)
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
+
+# v1.16.6
+
+## Downloads for v1.16.6
+
+Download v1.16.6 in the [v1.16.6 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.16.6).
+
+## KubeEdge v1.16.6 Release Notes
+
+### Changelog since v1.16.5
+
+- Fix clusterobjectsync cannot be deleted when edge node deleted. ([#6061](https://github.com/kubeedge/kubeedge/pull/6061), [@wbc6080](https://github.com/wbc6080))
+- Fix duplicate generation of certificate if etcd fails. ([#6068](https://github.com/kubeedge/kubeedge/pull/6068), [@LRaito](https://github.com/LRaito))
+- Fix iptablesmanager cannot clean iptables rules when CloudCore deleted. ([#6070](https://github.com/kubeedge/kubeedge/pull/6070), [@wbc6080](https://github.com/wbc6080))
+
 
 # v1.16.5
 

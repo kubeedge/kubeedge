@@ -1,4 +1,8 @@
-* [v1.19.1(#v1191)
+* [v1.19.2](#v1192)
+    * [Downloads for v1.19.2](#downloads-for-v1192)
+    * [KubeEdge v1.19.2 Release Notes](#kubeedge-v1192-release-notes)
+        * [Changelog since v1.19.1](#changelog-since-v1191)
+* [v1.19.1](#v1191)
     * [Downloads for v1.19.1](#downloads-for-v1191)
     * [KubeEdge v1.19.1 Release Notes](#kubeedge-v1191-release-notes)
         * [Changelog since v1.19.0](#changelog-since-v1190)
@@ -7,6 +11,21 @@
     * [KubeEdge v1.19 Release Notes](#kubeedge-v119-release-notes)
         * [1.19 What's New](#119-whats-new)
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
+
+# v1.19.2
+
+## Downloads for v1.19.2
+
+Download v1.19.2 in the [v1.19.2 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.19.2).
+
+## KubeEdge v1.19.2 Release Notes
+
+### Changelog since v1.19.1
+
+- Fix clusterobjectsync cannot be deleted when edge node deleted. ([#6058](https://github.com/kubeedge/kubeedge/pull/6058), [@wbc6080](https://github.com/wbc6080))
+- Fix multiple `--set` parameters don't take effect in `keadm join` command. ([#6064](https://github.com/kubeedge/kubeedge/pull/6064), [@XmchxUp](https://github.com/XmchxUp))
+- Fix duplicate generation of certificate if etcd fails. ([#6067](https://github.com/kubeedge/kubeedge/pull/6067), [@LRaito](https://github.com/LRaito))
+- Fix iptablesmanager cannot clean iptables rules when CloudCore deleted. ([#6073](https://github.com/kubeedge/kubeedge/pull/6073), [@wbc6080](https://github.com/wbc6080))
 
 # v1.19.1
 
