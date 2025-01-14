@@ -61,6 +61,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.17.1
 	github.com/opencontainers/selinux v1.11.0
 	github.com/pkg/errors v0.9.1
+	github.com/safchain/ethtool v0.0.0-20190326074333-42ed695e3de8
 	github.com/stretchr/testify v1.9.0
 	github.com/vishvananda/netlink v1.1.1-0.20201029203352-d40f9887b852
 	go.opentelemetry.io/otel/trace v1.22.0
