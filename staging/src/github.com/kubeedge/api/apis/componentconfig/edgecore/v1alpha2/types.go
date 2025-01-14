@@ -784,8 +784,8 @@ type TailoredKubeletFlag struct {
 	ContainerRuntimeOptions
 	// rootDirectory is the directory path to place kubelet files (volume
 	// mounts,etc).
-	// default "/var/lib/edged"
-	// The default will change to "/var/lib/kubelet" in KubeEdge v1.20.
+	// From v1.20, default changes to "/var/lib/kubelet".
+	// The previous default is "/var/lib/edged".
 	RootDirectory string `json:"rootDirectory,omitempty"`
 	// WindowsService should be set to true if kubelet is running as a service on Windows.
 	// Its corresponding flag only gets registered in Windows builds.
