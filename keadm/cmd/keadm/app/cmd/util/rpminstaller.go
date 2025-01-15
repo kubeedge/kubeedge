@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/blang/semver"
+	"github.com/coreos/go-systemd/v22/dbus"
 
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
@@ -126,4 +127,70 @@ func getOSVendorName() (string, error) {
 	vendor := strings.Trim(cmd.GetStdOut(), "\"")
 
 	return vendor, nil
+}
+
+// EnableAndRunSystemdUnit provides a wrapper around creating a new systemd system dbus connection, reloading
+// the systemd daemon if reload is true, and enabling and starting the systemd unit.
+func EnableAndRunSystemdUnit(ctx context.Context, unit string, reload bool) error {
+	conn, err := dbus.NewSystemConnectionContext(ctx)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	if reload {
+		err = conn.ReloadContext(ctx)
+		if err != nil {
+			return err
+		}
+	}
+
+	enabled, _, err := conn.EnableUnitFilesContext(ctx, []string{unit}, false, true)
+	if err != nil {
+		return fmt.Errorf("enable %s failed: %s", unit, err)
+	}
+	if !enabled {
+		return fmt.Errorf("enable %s failed: %s", unit, err)
+	}
+
+	done := make(chan string, 1)
+	_, err = conn.StartUnitContext(ctx, unit, "replace", done)
+	if err != nil {
+		return err
+	}
+
+	result := <-done
+	if result != "done" {
+		return fmt.Errorf("failed to start %s: %s", unit, result)
+	}
+	return nil
+}
+
+// DisableAndStopSystemdUnit provides a wrapper around removing a systemd system dbus connection, reloading
+// the systemd daemon if reload is true, and disabling and stopping the systemd unit.
+func DisableAndStopSystemdUnit(ctx context.Context, conn *dbus.Conn, unit string, reload bool) error {
+	done := make(chan string, 1)
+	_, err := conn.StopUnitContext(ctx, unit, "replace", done)
+	if err != nil {
+		return err
+	}
+
+	result := <-done
+	if result != "done" {
+		return fmt.Errorf("failed to stop %s: %s", unit, result)
+	}
+
+	_, err = conn.DisableUnitFilesContext(ctx, []string{unit}, false)
+	if err != nil {
+		return err
+	}
+
+	if reload {
+		err = conn.ReloadContext(ctx)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
