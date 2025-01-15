@@ -30,7 +30,7 @@ jobs:
         with:
           token: ${{ secrets.MyPATToken }} # 使用 GitHub 提供的 token
           branch: auto-pr-branch # 新分支名称
-          base: main # 目标分支
+          base: master # 目标分支
           title: 'Automated PR: Update generated files'
           body: 'This is an automated pull request created by GitHub Actions.'
           commit-message: 'Auto-generated changes'
