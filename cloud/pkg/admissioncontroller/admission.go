@@ -396,6 +396,9 @@ func (ac *AdmissionController) getRuleEndpoint(namespace, name string) (*v1.Rule
 }
 
 func (ac *AdmissionController) listRule(namespace string) ([]v1.Rule, error) {
+	if ac.CrdClient == nil {
+		return nil, fmt.Errorf("client is not initialized")
+	}
 	rules, err := ac.CrdClient.RulesV1().Rules(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
