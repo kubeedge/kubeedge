@@ -155,6 +155,66 @@ type DiagnoseObject struct {
 	Use  string
 }
 
+// BatchProcessOptions has the kubeedge batch process information filled by CLI
+type BatchProcessOptions struct {
+	ConfigFile string
+}
+
+// Config defines the batch-process config file format
+type Config struct {
+	Keadm     Keadm  `yaml:"keadm"`
+	Nodes     []Node `yaml:"nodes"`
+	MaxRunNum int    `yaml:"maxRunNum"`
+}
+
+// Keadm defines the keadm config file format
+type Keadm struct {
+	Download          Download          `yaml:"download"`
+	KeadmVersion      string            `yaml:"keadmVersion"`
+	ArchGroup         []string          `yaml:"archGroup"`
+	OfflinePackageDir *string           `yaml:"offlinePackageDir,omitempty"`
+	CmdTplArgs        map[string]string `yaml:"cmdTplArgs,omitempty"`
+}
+
+// Download defines the url and enable flag
+type Download struct {
+	URL    *string `yaml:"url,omitempty"`
+	Enable *bool   `yaml:"enable"`
+}
+
+// Node defines the node information used in batch-process config file
+type Node struct {
+	NodeName string  `yaml:"nodeName"`
+	KeadmCmd string  `yaml:"keadmCmd"`
+	CopyFrom *string `yaml:"copyFrom,omitempty"`
+	SSH      SSH     `yaml:"ssh"`
+}
+
+// SSH defines the ssh information used in batch-process config file
+type SSH struct {
+	IP       string     `yaml:"ip"`
+	Username string     `yaml:"username"`
+	Port     *int       `yaml:"port,omitempty"`
+	Auth     AuthConfig `yaml:"auth"`
+}
+
+// AuthConfig defines the auth information used in batch-process config file
+type AuthConfig struct {
+	Type           string          `yaml:"type"`
+	PasswordAuth   *PasswordAuth   `yaml:"passwordAuth,omitempty"`
+	PrivateKeyAuth *PrivateKeyAuth `yaml:"privateKeyAuth,omitempty"`
+}
+
+// PasswordAuth is defined to know the password auth information used in batch-process config file
+type PasswordAuth struct {
+	Password string `yaml:"password"`
+}
+
+// PrivateKeyAuth is defined to know the private key auth information used in batch-process config file
+type PrivateKeyAuth struct {
+	PrivateKeyPath string `yaml:"privateKeyPath"`
+}
+
 // ModuleRunning is defined to know the running status of KubeEdge components
 type ModuleRunning uint8
 

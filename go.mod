@@ -61,6 +61,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.17.1
 	github.com/opencontainers/selinux v1.11.0
 	github.com/pkg/errors v0.9.1
+	github.com/pkg/sftp v1.13.5
 	github.com/stretchr/testify v1.9.0
 	github.com/vishvananda/netlink v1.1.1-0.20201029203352-d40f9887b852
 	go.opentelemetry.io/otel/trace v1.22.0
@@ -76,6 +77,7 @@ require (
 require (
 	github.com/distribution/reference v0.5.0 // indirect
 	github.com/fatih/camelcase v1.0.0 // indirect
+	github.com/kr/fs v0.1.0 // indirect
 	k8s.io/gengo/v2 v2.0.0-20240228010128-51d4e06bde70 // indirect
 )
 
@@ -257,7 +259,7 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
+	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/cloud-provider v0.30.7 // indirect
 	k8s.io/cluster-bootstrap v0.30.7 // indirect
 	k8s.io/controller-manager v0.0.0 // indirect
