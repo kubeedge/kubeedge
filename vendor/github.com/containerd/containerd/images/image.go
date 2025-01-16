@@ -23,13 +23,13 @@ import (
 	"sort"
 	"time"
 
-	"github.com/containerd/containerd/content"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/log"
-	"github.com/containerd/containerd/platforms"
+	"github.com/containerd/log"
+	"github.com/containerd/platforms"
 	digest "github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/pkg/errors"
+
+	"github.com/containerd/containerd/content"
+	"github.com/containerd/containerd/errdefs"
 )
 
 // Image provides the model for how containerd views container images.
@@ -115,7 +115,7 @@ func (image *Image) Size(ctx context.Context, provider content.Provider, platfor
 	var size int64
 	return size, Walk(ctx, Handlers(HandlerFunc(func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
 		if desc.Size < 0 {
-			return nil, errors.Errorf("invalid size %v in %v (%v)", desc.Size, desc.Digest, desc.MediaType)
+			return nil, fmt.Errorf("invalid size %v in %v (%v)", desc.Size, desc.Digest, desc.MediaType)
 		}
 		size += desc.Size
 		return nil, nil
@@ -139,7 +139,7 @@ type platformManifest struct {
 // TODO(stevvooe): This violates the current platform agnostic approach to this
 // package by returning a specific manifest type. We'll need to refactor this
 // to return a manifest descriptor or decide that we want to bring the API in
-// this direction because this abstraction is not needed.`
+// this direction because this abstraction is not needed.
 func Manifest(ctx context.Context, provider content.Provider, image ocispec.Descriptor, platform platforms.MatchComparer) (ocispec.Manifest, error) {
 	var (
 		limit    = 1
@@ -156,7 +156,7 @@ func Manifest(ctx context.Context, provider content.Provider, image ocispec.Desc
 			}
 
 			if err := validateMediaType(p, desc.MediaType); err != nil {
-				return nil, errors.Wrapf(err, "manifest: invalid desc %s", desc.Digest)
+				return nil, fmt.Errorf("manifest: invalid desc %s: %w", desc.Digest, err)
 			}
 
 			var manifest ocispec.Manifest
@@ -200,7 +200,7 @@ func Manifest(ctx context.Context, provider content.Provider, image ocispec.Desc
 			}
 
 			if err := validateMediaType(p, desc.MediaType); err != nil {
-				return nil, errors.Wrapf(err, "manifest: invalid desc %s", desc.Digest)
+				return nil, fmt.Errorf("manifest: invalid desc %s: %w", desc.Digest, err)
 			}
 
 			var idx ocispec.Index
@@ -236,15 +236,15 @@ func Manifest(ctx context.Context, provider content.Provider, image ocispec.Desc
 			}
 			return descs, nil
 		}
-		return nil, errors.Wrapf(errdefs.ErrNotFound, "unexpected media type %v for %v", desc.MediaType, desc.Digest)
+		return nil, fmt.Errorf("unexpected media type %v for %v: %w", desc.MediaType, desc.Digest, errdefs.ErrNotFound)
 	}), image); err != nil {
 		return ocispec.Manifest{}, err
 	}
 
 	if len(m) == 0 {
-		err := errors.Wrapf(errdefs.ErrNotFound, "manifest %v", image.Digest)
+		err := fmt.Errorf("manifest %v: %w", image.Digest, errdefs.ErrNotFound)
 		if wasIndex {
-			err = errors.Wrapf(errdefs.ErrNotFound, "no match for platform in manifest %v", image.Digest)
+			err = fmt.Errorf("no match for platform in manifest %v: %w", image.Digest, errdefs.ErrNotFound)
 		}
 		return ocispec.Manifest{}, err
 	}
@@ -269,6 +269,9 @@ func Platforms(ctx context.Context, provider content.Provider, image ocispec.Des
 	var platformSpecs []ocispec.Platform
 	return platformSpecs, Walk(ctx, Handlers(HandlerFunc(func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
 		if desc.Platform != nil {
+			if desc.Platform.OS == "unknown" || desc.Platform.Architecture == "unknown" {
+				return nil, ErrSkipDesc
+			}
 			platformSpecs = append(platformSpecs, *desc.Platform)
 			return nil, ErrSkipDesc
 		}
@@ -309,10 +312,10 @@ func Check(ctx context.Context, provider content.Provider, image ocispec.Descrip
 			return false, []ocispec.Descriptor{image}, nil, []ocispec.Descriptor{image}, nil
 		}
 
-		return false, nil, nil, nil, errors.Wrapf(err, "failed to check image %v", image.Digest)
+		return false, nil, nil, nil, fmt.Errorf("failed to check image %v: %w", image.Digest, err)
 	}
 
-	// TODO(stevvooe): It is possible that referenced conponents could have
+	// TODO(stevvooe): It is possible that referenced components could have
 	// children, but this is rare. For now, we ignore this and only verify
 	// that manifest components are present.
 	required = append([]ocispec.Descriptor{mfst.Config}, mfst.Layers...)
@@ -324,7 +327,7 @@ func Check(ctx context.Context, provider content.Provider, image ocispec.Descrip
 				missing = append(missing, desc)
 				continue
 			} else {
-				return false, nil, nil, nil, errors.Wrapf(err, "failed to check image %v", desc.Digest)
+				return false, nil, nil, nil, fmt.Errorf("failed to check image %v: %w", desc.Digest, err)
 			}
 		}
 		ra.Close()
@@ -346,7 +349,7 @@ func Children(ctx context.Context, provider content.Provider, desc ocispec.Descr
 		}
 
 		if err := validateMediaType(p, desc.MediaType); err != nil {
-			return nil, errors.Wrapf(err, "children: invalid desc %s", desc.Digest)
+			return nil, fmt.Errorf("children: invalid desc %s: %w", desc.Digest, err)
 		}
 
 		// TODO(stevvooe): We just assume oci manifest, for now. There may be
@@ -365,7 +368,7 @@ func Children(ctx context.Context, provider content.Provider, desc ocispec.Descr
 		}
 
 		if err := validateMediaType(p, desc.MediaType); err != nil {
-			return nil, errors.Wrapf(err, "children: invalid desc %s", desc.Digest)
+			return nil, fmt.Errorf("children: invalid desc %s: %w", desc.Digest, err)
 		}
 
 		var index ocispec.Index
