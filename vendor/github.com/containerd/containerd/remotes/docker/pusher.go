@@ -18,23 +18,25 @@ package docker
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/containerd/log"
+	digest "github.com/opencontainers/go-digest"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
+
 	"github.com/containerd/containerd/content"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/images"
-	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/remotes"
 	remoteserrors "github.com/containerd/containerd/remotes/errors"
-	digest "github.com/opencontainers/go-digest"
-	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/pkg/errors"
 )
 
 type dockerPusher struct {
@@ -57,7 +59,7 @@ func (p dockerPusher) Writer(ctx context.Context, opts ...content.WriterOpt) (co
 		}
 	}
 	if wOpts.Ref == "" {
-		return nil, errors.Wrap(errdefs.ErrInvalidArgument, "ref must not be empty")
+		return nil, fmt.Errorf("ref must not be empty: %w", errdefs.ErrInvalidArgument)
 	}
 	return p.push(ctx, wOpts.Desc, wOpts.Ref, true)
 }
@@ -78,22 +80,22 @@ func (p dockerPusher) push(ctx context.Context, desc ocispec.Descriptor, ref str
 	status, err := p.tracker.GetStatus(ref)
 	if err == nil {
 		if status.Committed && status.Offset == status.Total {
-			return nil, errors.Wrapf(errdefs.ErrAlreadyExists, "ref %v", ref)
+			return nil, fmt.Errorf("ref %v: %w", ref, errdefs.ErrAlreadyExists)
 		}
 		if unavailableOnFail && status.ErrClosed == nil {
 			// Another push of this ref is happening elsewhere. The rest of function
 			// will continue only when `errdefs.IsNotFound(err) == true` (i.e. there
 			// is no actively-tracked ref already).
-			return nil, errors.Wrap(errdefs.ErrUnavailable, "push is on-going")
+			return nil, fmt.Errorf("push is on-going: %w", errdefs.ErrUnavailable)
 		}
 		// TODO: Handle incomplete status
 	} else if !errdefs.IsNotFound(err) {
-		return nil, errors.Wrap(err, "failed to get status")
+		return nil, fmt.Errorf("failed to get status: %w", err)
 	}
 
 	hosts := p.filterHosts(HostCapabilityPush)
 	if len(hosts) == 0 {
-		return nil, errors.Wrap(errdefs.ErrNotFound, "no push hosts")
+		return nil, fmt.Errorf("no push hosts: %w", errdefs.ErrNotFound)
 	}
 
 	var (
@@ -137,6 +139,9 @@ func (p dockerPusher) push(ctx context.Context, desc ocispec.Descriptor, ref str
 			if exists {
 				p.tracker.SetStatus(ref, Status{
 					Committed: true,
+					PushStatus: PushStatus{
+						Exists: true,
+					},
 					Status: content.Status{
 						Ref:    ref,
 						Total:  desc.Size,
@@ -145,7 +150,7 @@ func (p dockerPusher) push(ctx context.Context, desc ocispec.Descriptor, ref str
 					},
 				})
 				resp.Body.Close()
-				return nil, errors.Wrapf(errdefs.ErrAlreadyExists, "content %v on remote", desc.Digest)
+				return nil, fmt.Errorf("content %v on remote: %w", desc.Digest, errdefs.ErrAlreadyExists)
 			}
 		} else if resp.StatusCode != http.StatusNotFound {
 			err := remoteserrors.NewUnexpectedStatusErr(resp)
@@ -164,6 +169,7 @@ func (p dockerPusher) push(ctx context.Context, desc ocispec.Descriptor, ref str
 		// Start upload request
 		req = p.request(host, http.MethodPost, "blobs", "uploads/")
 
+		mountedFrom := ""
 		var resp *http.Response
 		if fromRepo := selectRepositoryMountCandidate(p.refspec, desc.Annotations); fromRepo != "" {
 			preq := requestWithMountFrom(req, desc.Digest.String(), fromRepo)
@@ -180,17 +186,23 @@ func (p dockerPusher) push(ctx context.Context, desc ocispec.Descriptor, ref str
 				return nil, err
 			}
 
-			if resp.StatusCode == http.StatusUnauthorized {
+			switch resp.StatusCode {
+			case http.StatusUnauthorized:
 				log.G(ctx).Debugf("failed to mount from repository %s", fromRepo)
 
 				resp.Body.Close()
 				resp = nil
+			case http.StatusCreated:
+				mountedFrom = path.Join(p.refspec.Hostname(), fromRepo)
 			}
 		}
 
 		if resp == nil {
 			resp, err = req.doWithRetries(ctx, nil)
 			if err != nil {
+				if errors.Is(err, ErrInvalidAuthorization) {
+					return nil, fmt.Errorf("push access denied, repository does not exist or may require authorization: %w", err)
+				}
 				return nil, err
 			}
 		}
@@ -201,13 +213,16 @@ func (p dockerPusher) push(ctx context.Context, desc ocispec.Descriptor, ref str
 		case http.StatusCreated:
 			p.tracker.SetStatus(ref, Status{
 				Committed: true,
+				PushStatus: PushStatus{
+					MountedFrom: mountedFrom,
+				},
 				Status: content.Status{
 					Ref:    ref,
 					Total:  desc.Size,
 					Offset: desc.Size,
 				},
 			})
-			return nil, errors.Wrapf(errdefs.ErrAlreadyExists, "content %v on remote", desc.Digest)
+			return nil, fmt.Errorf("content %v on remote: %w", desc.Digest, errdefs.ErrAlreadyExists)
 		default:
 			err := remoteserrors.NewUnexpectedStatusErr(resp)
 			log.G(ctx).WithField("resp", resp).WithField("body", string(err.(remoteserrors.ErrUnexpectedStatus).Body)).Debug("unexpected response")
@@ -223,7 +238,7 @@ func (p dockerPusher) push(ctx context.Context, desc ocispec.Descriptor, ref str
 		if strings.HasPrefix(location, "/") {
 			lurl, err = url.Parse(lhost.Scheme + "://" + lhost.Host + location)
 			if err != nil {
-				return nil, errors.Wrapf(err, "unable to parse location %v", location)
+				return nil, fmt.Errorf("unable to parse location %v: %w", location, err)
 			}
 		} else {
 			if !strings.Contains(location, "://") {
@@ -231,17 +246,20 @@ func (p dockerPusher) push(ctx context.Context, desc ocispec.Descriptor, ref str
 			}
 			lurl, err = url.Parse(location)
 			if err != nil {
-				return nil, errors.Wrapf(err, "unable to parse location %v", location)
+				return nil, fmt.Errorf("unable to parse location %v: %w", location, err)
 			}
 
 			if lurl.Host != lhost.Host || lhost.Scheme != lurl.Scheme {
-
 				lhost.Scheme = lurl.Scheme
 				lhost.Host = lurl.Host
-				log.G(ctx).WithField("host", lhost.Host).WithField("scheme", lhost.Scheme).Debug("upload changed destination")
 
-				// Strip authorizer if change to host or scheme
-				lhost.Authorizer = nil
+				// Check if different than what was requested, accounting for fallback in the transport layer
+				requested := resp.Request.URL
+				if requested.Host != lhost.Host || requested.Scheme != lhost.Scheme {
+					// Strip authorizer if change to host or scheme
+					lhost.Authorizer = nil
+					log.G(ctx).WithField("host", lhost.Host).WithField("scheme", lhost.Scheme).Debug("upload changed destination, authorizer removed")
+				}
 			}
 		}
 		q := lurl.Query()
@@ -267,7 +285,7 @@ func (p dockerPusher) push(ctx context.Context, desc ocispec.Descriptor, ref str
 	req.body = func() (io.ReadCloser, error) {
 		pr, pw := io.Pipe()
 		pushw.setPipe(pw)
-		return ioutil.NopCloser(pr), nil
+		return pr, nil
 	}
 	req.size = desc.Size
 
@@ -275,7 +293,6 @@ func (p dockerPusher) push(ctx context.Context, desc ocispec.Descriptor, ref str
 		resp, err := req.doWithRetries(ctx, nil)
 		if err != nil {
 			pushw.setError(err)
-			pushw.Close()
 			return
 		}
 
@@ -285,7 +302,7 @@ func (p dockerPusher) push(ctx context.Context, desc ocispec.Descriptor, ref str
 			err := remoteserrors.NewUnexpectedStatusErr(resp)
 			log.G(ctx).WithField("resp", resp).WithField("body", string(err.(remoteserrors.ErrUnexpectedStatus).Body)).Debug("unexpected response")
 			pushw.setError(err)
-			pushw.Close()
+			return
 		}
 		pushw.setResponse(resp)
 	}()
@@ -318,10 +335,12 @@ type pushWriter struct {
 
 	pipe *io.PipeWriter
 
-	pipeC     chan *io.PipeWriter
-	respC     chan *http.Response
+	done      chan struct{}
 	closeOnce sync.Once
-	errC      chan error
+
+	pipeC chan *io.PipeWriter
+	respC chan *http.Response
+	errC  chan error
 
 	isManifest bool
 
@@ -339,19 +358,51 @@ func newPushWriter(db *dockerBase, ref string, expected digest.Digest, tracker S
 		pipeC:      make(chan *io.PipeWriter, 1),
 		respC:      make(chan *http.Response, 1),
 		errC:       make(chan error, 1),
+		done:       make(chan struct{}),
 		isManifest: isManifest,
 	}
 }
 
 func (pw *pushWriter) setPipe(p *io.PipeWriter) {
-	pw.pipeC <- p
+	select {
+	case <-pw.done:
+	case pw.pipeC <- p:
+	}
 }
 
 func (pw *pushWriter) setError(err error) {
-	pw.errC <- err
+	select {
+	case <-pw.done:
+	case pw.errC <- err:
+	}
 }
+
 func (pw *pushWriter) setResponse(resp *http.Response) {
-	pw.respC <- resp
+	select {
+	case <-pw.done:
+	case pw.respC <- resp:
+	}
+}
+
+func (pw *pushWriter) replacePipe(p *io.PipeWriter) error {
+	if pw.pipe == nil {
+		pw.pipe = p
+		return nil
+	}
+
+	pw.pipe.CloseWithError(content.ErrReset)
+	pw.pipe = p
+
+	// If content has already been written, the bytes
+	// cannot be written again and the caller must reset
+	status, err := pw.tracker.GetStatus(pw.ref)
+	if err != nil {
+		return err
+	}
+	status.Offset = 0
+	status.UpdatedAt = time.Now()
+	pw.tracker.SetStatus(pw.ref, status)
+	return content.ErrReset
 }
 
 func (pw *pushWriter) Write(p []byte) (n int, err error) {
@@ -361,26 +412,18 @@ func (pw *pushWriter) Write(p []byte) (n int, err error) {
 	}
 
 	if pw.pipe == nil {
-		p, ok := <-pw.pipeC
-		if !ok {
+		select {
+		case <-pw.done:
 			return 0, io.ErrClosedPipe
+		case p := <-pw.pipeC:
+			pw.replacePipe(p)
 		}
-		pw.pipe = p
 	} else {
 		select {
-		case p, ok := <-pw.pipeC:
-			if !ok {
-				return 0, io.ErrClosedPipe
-			}
-			pw.pipe.CloseWithError(content.ErrReset)
-			pw.pipe = p
-
-			// If content has already been written, the bytes
-			// cannot be written and the caller must reset
-			status.Offset = 0
-			status.UpdatedAt = time.Now()
-			pw.tracker.SetStatus(pw.ref, status)
-			return 0, content.ErrReset
+		case <-pw.done:
+			return 0, io.ErrClosedPipe
+		case p := <-pw.pipeC:
+			return 0, pw.replacePipe(p)
 		default:
 		}
 	}
@@ -390,9 +433,13 @@ func (pw *pushWriter) Write(p []byte) (n int, err error) {
 		// if the pipe is closed, we might have the original error on the error
 		// channel - so we should try and get it
 		select {
-		case err2 := <-pw.errC:
-			err = err2
-		default:
+		case <-pw.done:
+		case err = <-pw.errC:
+			pw.Close()
+		case p := <-pw.pipeC:
+			return 0, pw.replacePipe(p)
+		case resp := <-pw.respC:
+			pw.setResponse(resp)
 		}
 	}
 	status.Offset += int64(n)
@@ -405,7 +452,7 @@ func (pw *pushWriter) Close() error {
 	// Ensure pipeC is closed but handle `Close()` being
 	// called multiple times without panicking
 	pw.closeOnce.Do(func() {
-		close(pw.pipeC)
+		close(pw.done)
 	})
 	if pw.pipe != nil {
 		status, err := pw.tracker.GetStatus(pw.ref)
@@ -436,7 +483,7 @@ func (pw *pushWriter) Digest() digest.Digest {
 func (pw *pushWriter) Commit(ctx context.Context, size int64, expected digest.Digest, opts ...content.Opt) error {
 	// Check whether read has already thrown an error
 	if _, err := pw.pipe.Write([]byte{}); err != nil && !errors.Is(err, io.ErrClosedPipe) {
-		return errors.Wrap(err, "pipe error before commit")
+		return fmt.Errorf("pipe error before commit: %w", err)
 	}
 
 	if err := pw.pipe.Close(); err != nil {
@@ -445,30 +492,18 @@ func (pw *pushWriter) Commit(ctx context.Context, size int64, expected digest.Di
 	// TODO: timeout waiting for response
 	var resp *http.Response
 	select {
+	case <-pw.done:
+		return io.ErrClosedPipe
 	case err := <-pw.errC:
+		pw.Close()
 		return err
 	case resp = <-pw.respC:
 		defer resp.Body.Close()
-	case p, ok := <-pw.pipeC:
+	case p := <-pw.pipeC:
 		// check whether the pipe has changed in the commit, because sometimes Write
 		// can complete successfully, but the pipe may have changed. In that case, the
 		// content needs to be reset.
-		if !ok {
-			return io.ErrClosedPipe
-		}
-		pw.pipe.CloseWithError(content.ErrReset)
-		pw.pipe = p
-
-		// If content has already been written, the bytes
-		// cannot be written again and the caller must reset
-		status, err := pw.tracker.GetStatus(pw.ref)
-		if err != nil {
-			return err
-		}
-		status.Offset = 0
-		status.UpdatedAt = time.Now()
-		pw.tracker.SetStatus(pw.ref, status)
-		return content.ErrReset
+		return pw.replacePipe(p)
 	}
 
 	// 201 is specified return status, some registries return
@@ -481,11 +516,11 @@ func (pw *pushWriter) Commit(ctx context.Context, size int64, expected digest.Di
 
 	status, err := pw.tracker.GetStatus(pw.ref)
 	if err != nil {
-		return errors.Wrap(err, "failed to get status")
+		return fmt.Errorf("failed to get status: %w", err)
 	}
 
 	if size > 0 && size != status.Offset {
-		return errors.Errorf("unexpected size %d, expected %d", status.Offset, size)
+		return fmt.Errorf("unexpected size %d, expected %d", status.Offset, size)
 	}
 
 	if expected == "" {
@@ -494,11 +529,11 @@ func (pw *pushWriter) Commit(ctx context.Context, size int64, expected digest.Di
 
 	actual, err := digest.Parse(resp.Header.Get("Docker-Content-Digest"))
 	if err != nil {
-		return errors.Wrap(err, "invalid content digest in response")
+		return fmt.Errorf("invalid content digest in response: %w", err)
 	}
 
 	if actual != expected {
-		return errors.Errorf("got digest %s, expected %s", actual, expected)
+		return fmt.Errorf("got digest %s, expected %s", actual, expected)
 	}
 
 	status.Committed = true
