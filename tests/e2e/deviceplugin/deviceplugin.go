@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"time"
+	"strings"
 
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
@@ -80,10 +81,14 @@ var _ = GroupDescribe("Device Plugin E2E Tests", func() {
 			gomega.Expect(len(podList.Items)).To(gomega.Equal(1))
 
 			utils.WaitForPodsRunning(clientSet, podList, 240*time.Second)
-			gomega.Expect(err).To(gomega.BeNil())
 
 			// Step 3: Give some time for the device plugin to register
-			time.Sleep(90 * time.Second)
+			ginkgo.By("Waiting for device plugin registration")
+			time.Sleep(60 * time.Second)
+
+			// Get pod logs
+			logs, _ := clientSet.CoreV1().Pods(v1.NamespaceDefault).GetLogs(devicePluginName, &v1.PodLogOptions{}).Do(context.TODO()).Raw()
+			framework.Logf("Device Plugin Pod Logs: %s", string(logs))		
 
 			// Step 4: Verify device registration on the node
 			ginkgo.By("Verifying device registration on the edge node")
@@ -98,8 +103,17 @@ var _ = GroupDescribe("Device Plugin E2E Tests", func() {
 			// Check if the device is registered in node capacity
 			node := nodes.Items[0]
 			framework.Logf("Node Name: %s", node.Name)
-    framework.Logf("Node Capacity: %v", node.Status.Capacity)
-    framework.Logf("Node Allocatable: %v", node.Status.Allocatable)
+    		framework.Logf("Node Capacity: %v", node.Status.Capacity)
+    		framework.Logf("Node Allocatable: %v", node.Status.Allocatable)
+
+			// Check all available extended resources
+			framework.Logf("Available Extended Resources:")
+			for resourceName := range node.Status.Capacity {
+				if strings.Contains(resourceName.String(), "/") {
+					framework.Logf("Found Extended Resource: %s", resourceName)
+				}
+			}
+
 			_, hasDevice := node.Status.Capacity["nvidia.com/gpu"] // Replace with your device type
 			gomega.Expect(hasDevice).To(gomega.BeTrue(), "Device not registered on node")
 		})
@@ -188,22 +202,34 @@ func NewDevicePluginPod(podName, imgURL string) *v1.Pod {
 						Privileged: &[]bool{true}[0],
 					},
 					VolumeMounts: []v1.VolumeMount{
-						{
-							Name:      "device-plugin",
-							MountPath: "/var/lib/kubelet/device-plugins",
-						},
-					},
+                        {
+                            Name:      "device-plugin",
+                            MountPath: "/var/lib/kubelet/device-plugins",
+                        },
+                        {
+                            Name:      "dev",
+                            MountPath: "/dev",
+                        },
+                    },
 				},
 			},
 			Volumes: []v1.Volume{
 				{
-					Name: "device-plugin",
-					VolumeSource: v1.VolumeSource{
-						HostPath: &v1.HostPathVolumeSource{
-							Path: "/var/lib/kubelet/device-plugins",
-						},
-					},
-				},
+                    Name: "device-plugin",
+                    VolumeSource: v1.VolumeSource{
+                        HostPath: &v1.HostPathVolumeSource{
+                            Path: "/var/lib/kubelet/device-plugins",
+                        },
+                    },
+                },
+                {
+                    Name: "dev",
+                    VolumeSource: v1.VolumeSource{
+                        HostPath: &v1.HostPathVolumeSource{
+                            Path: "/dev",
+                        },
+                    },
+                },
 			},
 			NodeSelector: map[string]string{
 				"node-role.kubernetes.io/edge": "",
