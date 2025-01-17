@@ -93,8 +93,13 @@ var _ = GroupDescribe("Device Plugin E2E Tests", func() {
 			gomega.Expect(err).To(gomega.BeNil())
 			gomega.Expect(len(nodes.Items)).To(gomega.BeNumerically(">", 0), "No edge nodes found")
 
+			ginkgo.By("Now Node status capacity")
+
 			// Check if the device is registered in node capacity
 			node := nodes.Items[0]
+			framework.Logf("Node Name: %s", node.Name)
+    framework.Logf("Node Capacity: %v", node.Status.Capacity)
+    framework.Logf("Node Allocatable: %v", node.Status.Allocatable)
 			_, hasDevice := node.Status.Capacity["nvidia.com/gpu"] // Replace with your device type
 			gomega.Expect(hasDevice).To(gomega.BeTrue(), "Device not registered on node")
 		})
