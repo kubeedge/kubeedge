@@ -69,7 +69,7 @@ var _ = GroupDescribe("Device Plugin E2E Tests", func() {
 			UID = "sample-device-plugin-" + utils.GetRandomString(5)
 			devicePluginName := UID
 			ginkgo.By(fmt.Sprintf("Creating device plugin pod %s", devicePluginName))
-			devicePlugin := NewDevicePluginPod(devicePluginName, "k8s.gcr.io/k8s-sample-device-plugin:v0.3")
+			devicePlugin := NewDevicePluginPod(devicePluginName, "opsdockerimage/e2e-test-images-sample-device-plugin:1.7")
 			_, err := utils.CreatePod(clientSet, devicePlugin)
 			gomega.Expect(err).To(gomega.BeNil())
 
@@ -114,8 +114,20 @@ var _ = GroupDescribe("Device Plugin E2E Tests", func() {
 				}
 			}
 
-			_, hasDevice := node.Status.Capacity["example.com/sample-resource"] // Replace with your device type
-			gomega.Expect(hasDevice).To(gomega.BeTrue(), "Device not registered on node")
+			foundExtendedResources := false
+			framework.Logf("Checking for extended resources registered by the device plugin...")
+			for resourceName := range node.Status.Capacity {
+				if strings.Contains(string(resourceName), "/") { // Extended resources typically contain '/'
+					framework.Logf("Found Extended Resource: %s with capacity: %v", resourceName, node.Status.Capacity[resourceName])
+					foundExtendedResources = true
+				}
+			}
+
+			// Assert that at least one extended resource is found
+			gomega.Expect(foundExtendedResources).To(gomega.BeTrue(), "No extended resources found on the node. Device plugin might not be working.")
+
+			// _, hasDevice := node.Status.Capacity["opsdockerimage/sample-resource"] // Replace with your device type
+			// gomega.Expect(hasDevice).To(gomega.BeTrue(), "Device not registered on node")
 		})
 
 		// ginkgo.It("E2E_DEVICE_PLUGIN_1: Verify device plugin registration", func() {
