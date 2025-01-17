@@ -81,7 +81,7 @@ func NewKubeedgeCommand() *cobra.Command {
 
 	// recommended cmds
 	cmds.AddCommand(edge.NewEdgeJoin())
-	cmds.AddCommand(edge.NewEdgeBatchJoin())
+	cmds.AddCommand(edge.NewEdgeBatchProcess())
 	cmds.AddCommand(cloud.NewCloudInit())
 	cmds.AddCommand(cloud.NewManifestGenerate())
 	cmds.AddCommand(newCmdConfig())

@@ -34,5 +34,5 @@ type Step struct {
 func (s *Step) Printf(format string, args ...interface{}) {
 	s.n++
 	format = strconv.Itoa(s.n) + ". " + format
-	klog.InfoDepth(2, fmt.Sprintf(format, args...))
+	klog.InfoDepth(1, fmt.Sprintf(format, args...))
 }

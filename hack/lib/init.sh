@@ -22,12 +22,11 @@ set -o pipefail
 # The root of the kubeedge
 KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 
-KUBEEDGE_OUTPUT_SUBPATH="${KUBEEDGE_OUTPUT_SUBPATH:-_output/local}"
-KUBEEDGE_OUTPUT="${KUBEEDGE_ROOT}/${KUBEEDGE_OUTPUT_SUBPATH}"
-KUBEEDGE_OUTPUT_BINPATH="${KUBEEDGE_OUTPUT}/bin"
+export KUBEEDGE_OUTPUT_SUBPATH="${KUBEEDGE_OUTPUT_SUBPATH:-_output/local}"
+export KUBEEDGE_OUTPUT="${KUBEEDGE_ROOT}/${KUBEEDGE_OUTPUT_SUBPATH}"
+export KUBEEDGE_OUTPUT_BINPATH="${KUBEEDGE_OUTPUT}/bin"
 
 readonly KUBEEDGE_GO_PACKAGE="github.com/kubeedge/kubeedge"
 
 source "${KUBEEDGE_ROOT}/hack/lib/golang.sh"
-source "${KUBEEDGE_ROOT}/hack/lib/lint.sh"
 source "${KUBEEDGE_ROOT}/hack/lib/util.sh"

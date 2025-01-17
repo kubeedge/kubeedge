@@ -22,7 +22,8 @@ set -o pipefail
 
 KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 
-source "${KUBEEDGE_ROOT}/hack/lib/golang.sh"
+source "${KUBEEDGE_ROOT}/hack/lib/init.sh"
+
 ALL_RELEASE_TARGETS=(
   "kubeedge"
   "edgesite"

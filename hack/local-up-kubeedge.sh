@@ -21,7 +21,7 @@ LOG_LEVEL=${LOG_LEVEL:-2}
 TIMEOUT=${TIMEOUT:-60}s
 PROTOCOL=${PROTOCOL:-"WebSocket"}
 CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-"containerd"}
-KIND_IMAGE=${1:-"kindest/node:v1.29.0"}
+KIND_IMAGE=${1:-"kindest/node:v1.30.0"}
 SKIP_CR_INSTALL=${SKIP_CR_INSTALL:-"false"}
 echo -e "The installation of the cni plugin will overwrite the cni config file. Use export CNI_CONF_OVERWRITE=false to disable it."
 
@@ -263,6 +263,10 @@ function start_edgecore {
   if [[ "${CONTAINER_RUNTIME}" = "isulad" ]]; then
     sed -i 's|imageServiceEndpoint: .*|imageServiceEndpoint: unix:///var/run/isulad.sock|' ${EDGE_CONFIGFILE}
     sed -i 's|containerRuntimeEndpoint: .*|containerRuntimeEndpoint: unix:///var/run/isulad.sock|' ${EDGE_CONFIGFILE}
+    # isulad currently does not support the `bind mount` attribute in higher versions of runc,
+    # so we will downgrade runc first and remove this code in the future.
+    sudo wget https://github.com/opencontainers/runc/releases/download/v1.1.13/runc.amd64 -O /usr/bin/runc
+    sudo chmod +x /usr/bin/runc
   fi
 
   token=$(kubectl get secret -nkubeedge tokensecret -o=jsonpath='{.data.tokendata}' | base64 -d)
@@ -337,8 +341,10 @@ function generate_streamserver_cert {
 
 cleanup
 
-source "${KUBEEDGE_ROOT}/hack/lib/golang.sh"
+source "${KUBEEDGE_ROOT}/hack/lib/init.sh"
 source "${KUBEEDGE_ROOT}/hack/lib/install.sh"
+
+kubeedge::golang::setup_env
 
 if [[ "${SKIP_CR_INSTALL}" = "false" ]]; then
   install_cr

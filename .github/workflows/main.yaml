@@ -32,7 +32,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.21.x
+          go-version: 1.22.x
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -64,9 +64,9 @@ jobs:
     steps:
       - name: Pull kubeedge/build-tools image
         run: |
-          docker pull kubeedge/build-tools:1.21.11-ke1
+          docker pull kubeedge/build-tools:1.22.9-ke1
           mkdir -p /home/runner/build-tools/
-          docker save kubeedge/build-tools:1.21.11-ke1 > /home/runner/build-tools/build-tools.tar
+          docker save kubeedge/build-tools:1.22.9-ke1 > /home/runner/build-tools/build-tools.tar
 
       - name: Temporarily save kubeedge/build-tools image
         uses: actions/upload-artifact@v4
@@ -110,8 +110,6 @@ jobs:
 
       - run: make crossbuild WHAT=cloudcore ARM_VERSION=GOARM8
 
-      - run: make crossbuild WHAT=cloudcore OS=GOOSwindows BUILD_WITH_CONTAINER=false
-
       - run: make crossbuild WHAT=edgecore OS=GOOSwindows BUILD_WITH_CONTAINER=false
 
       - run: make crossbuild WHAT=keadm OS=GOOSwindows BUILD_WITH_CONTAINER=false
@@ -126,7 +124,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.21.x
+          go-version: 1.22.x
 
       - uses: actions/cache@v4
         with:
@@ -171,17 +169,17 @@ jobs:
       matrix:
         cases:
           - protocol: WebSocket
+            version: v1.30.0
+          - protocol: WebSocket
             version: v1.29.0
           - protocol: WebSocket
             version: v1.28.0
-          - protocol: WebSocket
-            version: v1.27.0
+          - protocol: QUIC
+            version: v1.30.0
           - protocol: QUIC
             version: v1.29.0
           - protocol: QUIC
             version: v1.28.0
-          - protocol: QUIC
-            version: v1.27.0
     timeout-minutes: 60
     name: E2e test
     needs: image-prepare
@@ -191,7 +189,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.21.x
+          go-version: 1.22.x
 
       - uses: actions/cache@v4
         with:
@@ -201,8 +199,8 @@ jobs:
       - name: Install dependencies
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
-          go install sigs.k8s.io/kind@v0.22.0
-          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          go install sigs.k8s.io/kind@v0.23.0
+          curl -LO https://dl.k8s.io/release/v1.30.7/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -254,7 +252,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.21.x
+          go-version: 1.22.x
 
       - uses: actions/cache@v4
         with:
@@ -264,8 +262,8 @@ jobs:
       - name: Install dependencies
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
-          go install sigs.k8s.io/kind@v0.22.0
-          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          go install sigs.k8s.io/kind@v0.23.0
+          curl -LO https://dl.k8s.io/release/v1.30.7/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -301,7 +299,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.21.x
+          go-version: 1.22.x
 
       - uses: actions/cache@v4
         with:
@@ -311,8 +309,8 @@ jobs:
       - name: Install dependencies
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
-          go install sigs.k8s.io/kind@v0.22.0
-          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          go install sigs.k8s.io/kind@v0.23.0
+          curl -LO https://dl.k8s.io/release/v1.30.7/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -368,7 +366,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.21.x
+          go-version: 1.22.x
 
       - uses: actions/cache@v4
         with:
@@ -378,8 +376,8 @@ jobs:
       - name: Install dependencies
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
-          go install sigs.k8s.io/kind@v0.22.0
-          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          go install sigs.k8s.io/kind@v0.23.0
+          curl -LO https://dl.k8s.io/release/v1.30.7/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -417,7 +415,7 @@ jobs:
         - name: Install Go
           uses: actions/setup-go@v4
           with:
-            go-version: 1.21.x
+            go-version: 1.22.x
 
         - uses: actions/cache@v4
           with:
@@ -426,8 +424,8 @@ jobs:
 
         - name: Install dependencies
           run: |
-            go install sigs.k8s.io/kind@v0.22.0
-            curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+            go install sigs.k8s.io/kind@v0.23.0
+            curl -LO https://dl.k8s.io/release/v1.30.7/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
         - name: Checkout code
           uses: actions/checkout@v4
@@ -462,7 +460,7 @@ jobs:
 
         - name: Run conformance e2e
           run: |
-            export KIND_IMAGE=kindest/node:v1.29.2
+            export KIND_IMAGE=kindest/node:v1.30.0
             export CONFORMANCE_TYPE=${{ matrix.cases.conformance-type }}
             make conformance_e2e
 

@@ -207,15 +207,18 @@ function install_docker() {
   sudo apt-get update
   sudo apt-get install docker-ce docker-ce-cli containerd.io
   git clone https://github.com/Mirantis/cri-dockerd.git -b ${CRIDOCKERD_VERSION}
-  cd cri-dockerd
-  make cri-dockerd
-  sudo install -o root -g root -m 0755 cri-dockerd /usr/local/bin/cri-dockerd
-  sudo install packaging/systemd/* /etc/systemd/system
-  sudo sed -i -e 's,/usr/bin/cri-dockerd,/usr/local/bin/cri-dockerd,' /etc/systemd/system/cri-docker.service
+  (
+    export GOWORK=off
+    cd cri-dockerd
+    make cri-dockerd
+    sudo install -o root -g root -m 0755 cri-dockerd /usr/local/bin/cri-dockerd
+    sudo install packaging/systemd/* /etc/systemd/system
+    sudo sed -i -e 's,/usr/bin/cri-dockerd,/usr/local/bin/cri-dockerd,' /etc/systemd/system/cri-docker.service
+  )
   sudo systemctl daemon-reload
   sudo systemctl enable --now cri-docker.socket
   sudo systemctl restart cri-docker
-  cd .. && sudo rm -rf cri-dockerd
+  sudo rm -rf cri-dockerd
 }
 
 function install_crio() {
@@ -235,13 +238,17 @@ function install_crio() {
 
 install_isulad() {
   # export LDFLAGS
+  set +u
   export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
   export LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/lib/x86_64-linux-gnu/:$LD_LIBRARY_PATH
+  set -u
+
   sudo sh -c "echo '/usr/local/lib' >>/etc/ld.so.conf"
   CURRENT_PATH=$(
     cd $(dirname $0)
     pwd
   )
+  sudo apt-get update
   sudo apt-get install -y g++ libprotobuf-dev protobuf-compiler protobuf-compiler-grpc libgrpc++-dev libgrpc-dev libtool automake autoconf cmake make pkg-config libyajl-dev zlib1g-dev libselinux1-dev libseccomp-dev libcap-dev libsystemd-dev git libarchive-dev libcurl4-gnutls-dev openssl libdevmapper-dev python3 libtar0 libtar-dev libhttp-parser-dev libwebsockets-dev
   BUILD_DIR=/tmp/build_isulad
 

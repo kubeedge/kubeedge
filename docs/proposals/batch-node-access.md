@@ -1,3 +1,30 @@
+---
+title: Keadm Batch Node Access Enhancement
+
+authors:
+  - "@Catherine-monk"
+
+creation-date: 2024-10-09
+last-updated: 2025-01-14
+
+status: deprecated
+new-feature: https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/batch-node-process.md
+
+---
+- [Motivation](#motivation)
+- [Goals](#goals)
+- [Proposal](#proposal)
+- [Use Cases](#use-cases)
+- [Design overview](#design-overview)
+- [Implementation Details](#implementation-details)
+    - [Preparation](#preparation)
+    - [Keadm tool acquisition and preparation](#keadm-tool-acquisition-and-preparation)
+    - [Configuration file preparation](#configuration-file-preparation)
+    - [Source code modification and new command addition](#source-code-modification-and-new-command-addition)
+    - [Logic for implementing batch access](#logic-for-implementing-batch-access)
+    - [Logging](#logging)
+- [Road map](#road-map)
+
 ## Motivation
 
 This proposal aims to solve the node access efficiency problem on the current KubeEdge edge computing platform.

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/avast/retry-go"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -24,6 +25,12 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller/config"
+)
+
+const (
+	// maxRetries is the number of times trying to delete ObjectSyncs and ClusterObjectSyncs.
+	maxRetries       = 5
+	deleteSyncsDelay = 1 * time.Second
 )
 
 // SyncController use beehive context message layer
@@ -63,6 +70,7 @@ func newSyncController(enable bool) *SyncController {
 	_, err := nodesInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		DeleteFunc: func(obj interface{}) {
 			sctl.deleteObjectSyncs()
+			sctl.deleteClusterObjectSyncs()
 		},
 	})
 	if err != nil {
@@ -150,18 +158,30 @@ func (sctl *SyncController) deleteObjectSyncs() {
 		klog.Errorf("Failed to list all the ObjectSyncs: %v", err)
 	}
 	for _, sync := range syncs {
-		nodeName := getNodeName(sync.Name)
-		isGarbage, err := sctl.checkObjectSync(sync)
+		// If an error occurs while deleting ObjectSyncs, will retry.
+		err = retry.Do(
+			func() error {
+				nodeName := getNodeName(sync.Name)
+				isGarbage, err := sctl.checkObjectSync(sync)
+				if err != nil {
+					klog.Warningf("failed to check ObjectSync outdated, %s", err)
+					return err
+				}
+				if isGarbage {
+					klog.Infof("ObjectSync %s will be deleted since node %s has been deleted", sync.Name, nodeName)
+					err = sctl.crdclient.ReliablesyncsV1alpha1().ObjectSyncs(sync.Namespace).Delete(context.Background(), sync.Name, *metav1.NewDeleteOptions(0))
+					if err != nil {
+						klog.Warningf("failed to delete objectSync %s for edgenode %s, err: %v", sync.Name, nodeName, err)
+						return err
+					}
+				}
+				return nil
+			},
+			retry.Delay(deleteSyncsDelay),
+			retry.Attempts(maxRetries),
+		)
 		if err != nil {
-			klog.Errorf("failed to check ObjectSync outdated, %s", err)
-			continue
-		}
-		if isGarbage {
-			klog.Infof("ObjectSync %s will be deleted since node %s has been deleted", sync.Name, nodeName)
-			err = sctl.crdclient.ReliablesyncsV1alpha1().ObjectSyncs(sync.Namespace).Delete(context.Background(), sync.Name, *metav1.NewDeleteOptions(0))
-			if err != nil {
-				klog.Errorf("failed to delete objectSync %s for edgenode %s, err: %v", sync.Name, nodeName, err)
-			}
+			klog.Errorf("failed to delete objectSync %s, err: %v", sync.Name, err)
 		}
 	}
 }
@@ -172,18 +192,30 @@ func (sctl *SyncController) deleteClusterObjectSyncs() {
 		klog.Errorf("Failed to list all the clusterObjectSync: %v", err)
 	}
 	for _, sync := range syncs {
-		nodeName := getNodeName(sync.Name)
-		isGarbage, err := sctl.checkClusterObjectSync(sync)
+		// If an error occurs while deleting ClusterObjectSyncs, will retry.
+		err = retry.Do(
+			func() error {
+				nodeName := getNodeName(sync.Name)
+				isGarbage, err := sctl.checkClusterObjectSync(sync)
+				if err != nil {
+					klog.Warningf("failed to check ClusterObjectSync outdated, %s", err)
+					return err
+				}
+				if isGarbage {
+					klog.Infof("ClusterObjectSync %s will be deleted since node %s has been deleted", sync.Name, nodeName)
+					err = sctl.crdclient.ReliablesyncsV1alpha1().ClusterObjectSyncs().Delete(context.Background(), sync.Name, *metav1.NewDeleteOptions(0))
+					if err != nil {
+						klog.Warningf("failed to delete ClusterObjectSync %s for edgenode %s, err: %v", sync.Name, nodeName, err)
+						return err
+					}
+				}
+				return nil
+			},
+			retry.Delay(deleteSyncsDelay),
+			retry.Attempts(maxRetries),
+		)
 		if err != nil {
-			klog.Errorf("failed to check clusterObjectSync outdated, %s", err)
-			continue
-		}
-		if isGarbage {
-			klog.Infof("ObjectSync %s will be deleted since node %s has been deleted", sync.Name, nodeName)
-			err = sctl.crdclient.ReliablesyncsV1alpha1().ClusterObjectSyncs().Delete(context.Background(), sync.Name, *metav1.NewDeleteOptions(0))
-			if err != nil {
-				klog.Errorf("failed to delete clusterObjectSync %s for edgenode %s, err: %v", sync.Name, nodeName, err)
-			}
+			klog.Errorf("failed to delete ClusterObjectSync %s, err: %v", sync.Name, err)
 		}
 	}
 }

@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/kubeedge/common/constants"
+	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 )
 

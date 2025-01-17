@@ -27,9 +27,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
+	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	apiutil "github.com/kubeedge/api/apis/util"
-	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/api"
@@ -63,7 +63,7 @@ func NewEdgeJoin() *cobra.Command {
 		Long:         edgeJoinDescription,
 		Example:      edgeJoinExample,
 		SilenceUsage: true,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(_ *cobra.Command, _ []string) error {
 			if joinOptions.PreRun != "" {
 				step.Printf("Executing pre-run script: %s\n", joinOptions.PreRun)
 				if err := util.RunScript(joinOptions.PreRun); err != nil {
@@ -97,7 +97,7 @@ func NewEdgeJoin() *cobra.Command {
 			step.Printf("Check if the node name is valid")
 			return isNodeExist(joinOptions)
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			ver, err := util.GetCurrentVersion(joinOptions.KubeEdgeVersion)
 			if err != nil {
 				return fmt.Errorf("edge node join failed: %v", err)
@@ -110,7 +110,7 @@ func NewEdgeJoin() *cobra.Command {
 
 			return nil
 		},
-		PostRunE: func(cmd *cobra.Command, args []string) error {
+		PostRunE: func(_ *cobra.Command, _ []string) error {
 			if joinOptions.PostRun != "" {
 				fmt.Printf("Executing post-run script: %s\n", joinOptions.PostRun)
 				if err := util.RunScript(joinOptions.PostRun); err != nil {

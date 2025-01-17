@@ -18,4 +18,6 @@ keadm/keadm
 _output
 _tmp
 build/edge/tmp
+
 coverage.out
+go.work.sum

@@ -35,9 +35,9 @@ import (
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/yaml"
 
+	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2/validation"
-	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
@@ -81,7 +81,7 @@ func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
 	cmd.Flags().StringVar(&joinOptions.HubProtocol, common.HubProtocol, joinOptions.HubProtocol,
 		`Use this key to decide which communication protocol the edge node adopts.`)
 
-	cmd.Flags().StringVar(&joinOptions.Sets, common.FlagNameSet, joinOptions.Sets,
+	cmd.Flags().StringArrayVar(&joinOptions.Sets, common.FlagNameSet, joinOptions.Sets,
 		`Set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)`)
 }
 
@@ -157,8 +157,10 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 	}
 
 	if len(opt.Sets) > 0 {
-		if err := util.ParseSet(edgeCoreConfig, opt.Sets); err != nil {
-			return err
+		for _, set := range opt.Sets {
+			if err := util.ParseSet(edgeCoreConfig, set); err != nil {
+				return err
+			}
 		}
 	}
 

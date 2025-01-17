@@ -31,8 +31,6 @@ import (
 
 	// Using v4 to match upstream
 	jsonpatch "github.com/evanphx/json-patch"
-	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
-
 	corev1 "k8s.io/api/core/v1"
 	policyv1 "k8s.io/api/policy/v1"
 	policyv1beta1 "k8s.io/api/policy/v1beta1"
@@ -52,10 +50,11 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/testing"
-	"sigs.k8s.io/controller-runtime/pkg/internal/field/selector"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
+	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
+	"sigs.k8s.io/controller-runtime/pkg/internal/field/selector"
 	"sigs.k8s.io/controller-runtime/pkg/internal/objectutil"
 )
 
@@ -88,19 +87,8 @@ const (
 
 // NewFakeClient creates a new fake client for testing.
 // You can choose to initialize it with a slice of runtime.Object.
-//
-// Deprecated: Please use NewClientBuilder instead.
 func NewFakeClient(initObjs ...runtime.Object) client.WithWatch {
 	return NewClientBuilder().WithRuntimeObjects(initObjs...).Build()
-}
-
-// NewFakeClientWithScheme creates a new fake client with the given scheme
-// for testing.
-// You can choose to initialize it with a slice of runtime.Object.
-//
-// Deprecated: Please use NewClientBuilder instead.
-func NewFakeClientWithScheme(clientScheme *runtime.Scheme, initObjs ...runtime.Object) client.WithWatch {
-	return NewClientBuilder().WithScheme(clientScheme).WithRuntimeObjects(initObjs...).Build()
 }
 
 // NewClientBuilder returns a new builder to create a fake client.
@@ -346,10 +334,12 @@ func (t versionedTracker) Create(gvr schema.GroupVersionResource, obj runtime.Ob
 // tries to assign whatever it finds into a ListType it gets from schema.New() - Thus we have to ensure
 // we save as the very same type, otherwise subsequent List requests will fail.
 func convertFromUnstructuredIfNecessary(s *runtime.Scheme, o runtime.Object) (runtime.Object, error) {
-	gvk := o.GetObjectKind().GroupVersionKind()
-
 	u, isUnstructured := o.(runtime.Unstructured)
-	if !isUnstructured || !s.Recognizes(gvk) {
+	if !isUnstructured {
+		return o, nil
+	}
+	gvk := o.GetObjectKind().GroupVersionKind()
+	if !s.Recognizes(gvk) {
 		return o, nil
 	}
 
@@ -373,7 +363,7 @@ func (t versionedTracker) Update(gvr schema.GroupVersionResource, obj runtime.Ob
 	isStatus := false
 	// We apply patches using a client-go reaction that ends up calling the trackers Update. As we can't change
 	// that reaction, we use the callstack to figure out if this originated from the status client.
-	if bytes.Contains(debug.Stack(), []byte("sigs.k8s.io/controller-runtime/pkg/client/fake.(*fakeSubResourceClient).Patch")) {
+	if bytes.Contains(debug.Stack(), []byte("sigs.k8s.io/controller-runtime/pkg/client/fake.(*fakeSubResourceClient).statusPatch")) {
 		isStatus = true
 	}
 	return t.update(gvr, obj, ns, isStatus, false)
@@ -392,12 +382,9 @@ func (t versionedTracker) update(gvr schema.GroupVersionResource, obj runtime.Ob
 			field.ErrorList{field.Required(field.NewPath("metadata.name"), "name is required")})
 	}
 
-	gvk := obj.GetObjectKind().GroupVersionKind()
-	if gvk.Empty() {
-		gvk, err = apiutil.GVKForObject(obj, t.scheme)
-		if err != nil {
-			return err
-		}
+	gvk, err := apiutil.GVKForObject(obj, t.scheme)
+	if err != nil {
+		return err
 	}
 
 	oldObject, err := t.ObjectTracker.Get(gvr, ns, accessor.GetName())
@@ -412,9 +399,14 @@ func (t versionedTracker) update(gvr schema.GroupVersionResource, obj runtime.Ob
 
 	if t.withStatusSubresource.Has(gvk) {
 		if isStatus { // copy everything but status and metadata.ResourceVersion from original object
-			if err := copyNonStatusFrom(oldObject, obj); err != nil {
+			if err := copyStatusFrom(obj, oldObject); err != nil {
 				return fmt.Errorf("failed to copy non-status field for object with status subresouce: %w", err)
 			}
+			passedRV := accessor.GetResourceVersion()
+			if err := copyFrom(oldObject, obj); err != nil {
+				return fmt.Errorf("failed to restore non-status fields: %w", err)
+			}
+			accessor.SetResourceVersion(passedRV)
 		} else { // copy status from original object
 			if err := copyStatusFrom(oldObject, obj); err != nil {
 				return fmt.Errorf("failed to copy the status for object with status subresource: %w", err)
@@ -431,9 +423,18 @@ func (t versionedTracker) update(gvr schema.GroupVersionResource, obj runtime.Ob
 
 	// If the new object does not have the resource version set and it allows unconditional update,
 	// default it to the resource version of the existing resource
-	if accessor.GetResourceVersion() == "" && allowsUnconditionalUpdate(gvk) {
-		accessor.SetResourceVersion(oldAccessor.GetResourceVersion())
+	if accessor.GetResourceVersion() == "" {
+		switch {
+		case allowsUnconditionalUpdate(gvk):
+			accessor.SetResourceVersion(oldAccessor.GetResourceVersion())
+		case bytes.
+			Contains(debug.Stack(), []byte("sigs.k8s.io/controller-runtime/pkg/client/fake.(*fakeClient).Patch")):
+			// We apply patches using a client-go reaction that ends up calling the trackers Update. As we can't change
+			// that reaction, we use the callstack to figure out if this originated from the "fakeClient.Patch" func.
+			accessor.SetResourceVersion(oldAccessor.GetResourceVersion())
+		}
 	}
+
 	if accessor.GetResourceVersion() != oldAccessor.GetResourceVersion() {
 		return apierrors.NewConflict(gvr.GroupResource(), accessor.GetName(), errors.New("object was modified"))
 	}
@@ -471,25 +472,28 @@ func (c *fakeClient) Get(ctx context.Context, key client.ObjectKey, obj client.O
 		return err
 	}
 
-	gvk, err := apiutil.GVKForObject(obj, c.scheme)
-	if err != nil {
-		return err
+	_, isUnstructured := obj.(runtime.Unstructured)
+	_, isPartialObject := obj.(*metav1.PartialObjectMetadata)
+
+	if isUnstructured || isPartialObject {
+		gvk, err := apiutil.GVKForObject(obj, c.scheme)
+		if err != nil {
+			return err
+		}
+		ta, err := meta.TypeAccessor(o)
+		if err != nil {
+			return err
+		}
+		ta.SetKind(gvk.Kind)
+		ta.SetAPIVersion(gvk.GroupVersion().String())
 	}
-	ta, err := meta.TypeAccessor(o)
-	if err != nil {
-		return err
-	}
-	ta.SetKind(gvk.Kind)
-	ta.SetAPIVersion(gvk.GroupVersion().String())
 
 	j, err := json.Marshal(o)
 	if err != nil {
 		return err
 	}
-	decoder := scheme.Codecs.UniversalDecoder()
 	zero(obj)
-	_, _, err = decoder.Decode(j, nil, obj)
-	return err
+	return json.Unmarshal(j, obj)
 }
 
 func (c *fakeClient) Watch(ctx context.Context, list client.ObjectList, opts ...client.ListOption) (watch.Interface, error) {
@@ -534,21 +538,21 @@ func (c *fakeClient) List(ctx context.Context, obj client.ObjectList, opts ...cl
 		return err
 	}
 
-	ta, err := meta.TypeAccessor(o)
-	if err != nil {
-		return err
+	if _, isUnstructured := obj.(runtime.Unstructured); isUnstructured {
+		ta, err := meta.TypeAccessor(o)
+		if err != nil {
+			return err
+		}
+		ta.SetKind(originalKind)
+		ta.SetAPIVersion(gvk.GroupVersion().String())
 	}
-	ta.SetKind(originalKind)
-	ta.SetAPIVersion(gvk.GroupVersion().String())
 
 	j, err := json.Marshal(o)
 	if err != nil {
 		return err
 	}
-	decoder := scheme.Codecs.UniversalDecoder()
 	zero(obj)
-	_, _, err = decoder.Decode(j, nil, obj)
-	if err != nil {
+	if err := json.Unmarshal(j, obj); err != nil {
 		return err
 	}
 
@@ -595,9 +599,7 @@ func (c *fakeClient) filterList(list []runtime.Object, gvk schema.GroupVersionKi
 }
 
 func (c *fakeClient) filterWithFields(list []runtime.Object, gvk schema.GroupVersionKind, fs fields.Selector) ([]runtime.Object, error) {
-	// We only allow filtering on the basis of a single field to ensure consistency with the
-	// behavior of the cache reader (which we're faking here).
-	fieldKey, fieldVal, requiresExact := selector.RequiresExactMatch(fs)
+	requiresExact := selector.RequiresExactMatch(fs)
 	if !requiresExact {
 		return nil, fmt.Errorf("field selector %s is not in one of the two supported forms \"key==val\" or \"key=val\"",
 			fs)
@@ -606,15 +608,24 @@ func (c *fakeClient) filterWithFields(list []runtime.Object, gvk schema.GroupVer
 	// Field selection is mimicked via indexes, so there's no sane answer this function can give
 	// if there are no indexes registered for the GroupVersionKind of the objects in the list.
 	indexes := c.indexes[gvk]
-	if len(indexes) == 0 || indexes[fieldKey] == nil {
-		return nil, fmt.Errorf("List on GroupVersionKind %v specifies selector on field %s, but no "+
-			"index with name %s has been registered for GroupVersionKind %v", gvk, fieldKey, fieldKey, gvk)
+	for _, req := range fs.Requirements() {
+		if len(indexes) == 0 || indexes[req.Field] == nil {
+			return nil, fmt.Errorf("List on GroupVersionKind %v specifies selector on field %s, but no "+
+				"index with name %s has been registered for GroupVersionKind %v", gvk, req.Field, req.Field, gvk)
+		}
 	}
 
-	indexExtractor := indexes[fieldKey]
 	filteredList := make([]runtime.Object, 0, len(list))
 	for _, obj := range list {
-		if c.objMatchesFieldSelector(obj, indexExtractor, fieldVal) {
+		matches := true
+		for _, req := range fs.Requirements() {
+			indexExtractor := indexes[req.Field]
+			if !c.objMatchesFieldSelector(obj, indexExtractor, req.Value) {
+				matches = false
+				break
+			}
+		}
+		if matches {
 			filteredList = append(filteredList, obj)
 		}
 	}
@@ -869,21 +880,22 @@ func (c *fakeClient) patch(obj client.Object, patch client.Patch, opts ...client
 	if !handled {
 		panic("tracker could not handle patch method")
 	}
-	ta, err := meta.TypeAccessor(o)
-	if err != nil {
-		return err
+
+	if _, isUnstructured := obj.(runtime.Unstructured); isUnstructured {
+		ta, err := meta.TypeAccessor(o)
+		if err != nil {
+			return err
+		}
+		ta.SetKind(gvk.Kind)
+		ta.SetAPIVersion(gvk.GroupVersion().String())
 	}
-	ta.SetKind(gvk.Kind)
-	ta.SetAPIVersion(gvk.GroupVersion().String())
 
 	j, err := json.Marshal(o)
 	if err != nil {
 		return err
 	}
-	decoder := scheme.Codecs.UniversalDecoder()
 	zero(obj)
-	_, _, err = decoder.Decode(j, nil, obj)
-	return err
+	return json.Unmarshal(j, obj)
 }
 
 // Applying a patch results in a deletionTimestamp that is truncated to the nearest second.
@@ -947,7 +959,7 @@ func dryPatch(action testing.PatchActionImpl, tracker testing.ObjectTracker) (ru
 		if err := json.Unmarshal(modified, obj); err != nil {
 			return nil, err
 		}
-	case types.StrategicMergePatchType, types.ApplyPatchType:
+	case types.StrategicMergePatchType:
 		mergedByte, err := strategicpatch.StrategicMergePatch(old, action.GetPatch(), obj)
 		if err != nil {
 			return nil, err
@@ -955,49 +967,12 @@ func dryPatch(action testing.PatchActionImpl, tracker testing.ObjectTracker) (ru
 		if err = json.Unmarshal(mergedByte, obj); err != nil {
 			return nil, err
 		}
+	case types.ApplyPatchType:
+		return nil, errors.New("apply patches are not supported in the fake client. Follow https://github.com/kubernetes/kubernetes/issues/115598 for the current status")
 	default:
-		return nil, fmt.Errorf("PatchType is not supported")
+		return nil, fmt.Errorf("%s PatchType is not supported", action.GetPatchType())
 	}
 	return obj, nil
-}
-
-func copyNonStatusFrom(old, new runtime.Object) error {
-	newClientObject, ok := new.(client.Object)
-	if !ok {
-		return fmt.Errorf("%T is not a client.Object", new)
-	}
-	// The only thing other than status we have to retain
-	rv := newClientObject.GetResourceVersion()
-
-	oldMapStringAny, err := toMapStringAny(old)
-	if err != nil {
-		return fmt.Errorf("failed to convert old to *unstructured.Unstructured: %w", err)
-	}
-	newMapStringAny, err := toMapStringAny(new)
-	if err != nil {
-		return fmt.Errorf("failed to convert new to *unststructured.Unstructured: %w", err)
-	}
-
-	// delete everything other than status in case it has fields that were not present in
-	// the old object
-	for k := range newMapStringAny {
-		if k != "status" {
-			delete(newMapStringAny, k)
-		}
-	}
-	// copy everything other than status from the old object
-	for k := range oldMapStringAny {
-		if k != "status" {
-			newMapStringAny[k] = oldMapStringAny[k]
-		}
-	}
-
-	if err := fromMapStringAny(newMapStringAny, new); err != nil {
-		return fmt.Errorf("failed to convert back from map[string]any: %w", err)
-	}
-	newClientObject.SetResourceVersion(rv)
-
-	return nil
 }
 
 // copyStatusFrom copies the status from old into new
@@ -1014,6 +989,19 @@ func copyStatusFrom(old, new runtime.Object) error {
 	newMapStringAny["status"] = oldMapStringAny["status"]
 
 	if err := fromMapStringAny(newMapStringAny, new); err != nil {
+		return fmt.Errorf("failed to convert back from map[string]any: %w", err)
+	}
+
+	return nil
+}
+
+// copyFrom copies from old into new
+func copyFrom(old, new runtime.Object) error {
+	oldMapStringAny, err := toMapStringAny(old)
+	if err != nil {
+		return fmt.Errorf("failed to convert old to *unstructured.Unstructured: %w", err)
+	}
+	if err := fromMapStringAny(oldMapStringAny, new); err != nil {
 		return fmt.Errorf("failed to convert back from map[string]any: %w", err)
 	}
 
@@ -1045,6 +1033,7 @@ func fromMapStringAny(u map[string]any, target runtime.Object) error {
 		return fmt.Errorf("failed to serialize: %w", err)
 	}
 
+	zero(target)
 	if err := json.Unmarshal(serialized, &target); err != nil {
 		return fmt.Errorf("failed to deserialize: %w", err)
 	}
@@ -1137,6 +1126,15 @@ func (sw *fakeSubResourceClient) Patch(ctx context.Context, obj client.Object, p
 		body = patchOptions.SubResourceBody
 	}
 
+	// this is necessary to identify that last call was made for status patch, through stack trace.
+	if sw.subResource == "status" {
+		return sw.statusPatch(body, patch, patchOptions)
+	}
+
+	return sw.client.patch(body, patch, &patchOptions.PatchOptions)
+}
+
+func (sw *fakeSubResourceClient) statusPatch(body client.Object, patch client.Patch, patchOptions client.SubResourcePatchOptions) error {
 	return sw.client.patch(body, patch, &patchOptions.PatchOptions)
 }
 
@@ -1177,7 +1175,7 @@ func allowsUnconditionalUpdate(gvk schema.GroupVersionKind) bool {
 		case "PodSecurityPolicy":
 			return true
 		}
-	case "rbac":
+	case "rbac.authorization.k8s.io":
 		switch gvk.Kind {
 		case "ClusterRole", "ClusterRoleBinding", "Role", "RoleBinding":
 			return true
@@ -1270,6 +1268,8 @@ func inTreeResourcesWithStatus() []schema.GroupVersionKind {
 
 		{Group: "flowcontrol.apiserver.k8s.io", Version: "v1beta2", Kind: "FlowSchema"},
 		{Group: "flowcontrol.apiserver.k8s.io", Version: "v1beta2", Kind: "PriorityLevelConfiguration"},
+		{Group: "flowcontrol.apiserver.k8s.io", Version: "v1", Kind: "FlowSchema"},
+		{Group: "flowcontrol.apiserver.k8s.io", Version: "v1", Kind: "PriorityLevelConfiguration"},
 	}
 }
 

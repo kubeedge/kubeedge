@@ -45,6 +45,8 @@ const (
 
 	EdgeRootDir = "/var/lib/edged"
 
+	EdgeKubeletDir = "/var/lib/kubelet"
+
 	SystemdBootPath = "/run/systemd/system"
 )
 
@@ -131,8 +133,8 @@ func KillKubeEdgeBinary(proc string) error {
 		if running, err := isEdgeCoreServiceRunning("edge"); err == nil && running {
 			serviceName = "edge"
 		}
-		if running, err := isEdgeCoreServiceRunning("edgecore"); err == nil && running {
-			serviceName = "edgecore"
+		if running, err := isEdgeCoreServiceRunning(KubeEdgeBinaryName); err == nil && running {
+			serviceName = KubeEdgeBinaryName
 		}
 
 		if systemdExist && serviceName != "" {

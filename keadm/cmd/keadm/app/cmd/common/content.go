@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/kubeedge/kubeedge/common/constants"
+	"github.com/kubeedge/api/apis/common/constants"
 )
 
 // TODO (@zc2638) Need to migrate util's constants to common

@@ -1,0 +1,8 @@
+go 1.22.9
+
+use (
+	.
+	./staging/src/github.com/kubeedge/api
+	./staging/src/github.com/kubeedge/beehive
+	./staging/src/github.com/kubeedge/mapper-framework
+)

@@ -81,7 +81,6 @@ endif
 .PHONY: verify-golang
 verify-golang:
 	hack/verify-golang.sh
-
 .PHONY: verify-vendor
 verify-vendor:
 	hack/verify-vendor.sh
@@ -94,6 +93,7 @@ verify-vendor-licenses:
 .PHONY: verify-crds
 verify-crds:
 	hack/verify-crds.sh
+
 
 define TEST_HELP_INFO
 # run golang test case.
