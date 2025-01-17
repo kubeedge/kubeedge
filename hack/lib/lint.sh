@@ -79,4 +79,5 @@ kubeedge::lint::check() {
     echo "check any issue by golangci-lint under staging dir ..."
     cd "${KUBEEDGE_ROOT}/staging/src/github.com/kubeedge/beehive" && GOOS="linux" golangci-lint run -v --timeout=1m
     cd "${KUBEEDGE_ROOT}/staging/src/github.com/kubeedge/mapper-framework" && GOOS="linux" golangci-lint run -v --timeout=2m
+    cd "${KUBEEDGE_ROOT}/staging/src/github.com/kubeedge/mapper-framework/_template/mapper" && GOOS="linux" golangci-lint run -v --timeout=2m
 }
