@@ -69,7 +69,7 @@ var _ = GroupDescribe("Device Plugin E2E Tests", func() {
 			UID = "sample-device-plugin-" + utils.GetRandomString(5)
 			devicePluginName := UID
 			ginkgo.By(fmt.Sprintf("Creating device plugin pod %s", devicePluginName))
-			devicePlugin := NewDevicePluginPod(devicePluginName, "nvidia/k8s-device-plugin:v0.5.0")
+			devicePlugin := NewDevicePluginPod(devicePluginName, "k8s.gcr.io/k8s-sample-device-plugin:v0.3")
 			_, err := utils.CreatePod(clientSet, devicePlugin)
 			gomega.Expect(err).To(gomega.BeNil())
 
@@ -114,7 +114,7 @@ var _ = GroupDescribe("Device Plugin E2E Tests", func() {
 				}
 			}
 
-			_, hasDevice := node.Status.Capacity["nvidia.com/gpu"] // Replace with your device type
+			_, hasDevice := node.Status.Capacity["example.com/sample-resource"] // Replace with your device type
 			gomega.Expect(hasDevice).To(gomega.BeTrue(), "Device not registered on node")
 		})
 
