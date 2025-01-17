@@ -40,7 +40,7 @@ kill_all_components() {
 cleanup_files(){
     sudo rm -rf /tmp/etc/kubeedge /tmp/var/lib/kubeedge
     sudo rm -f tests/e2e/config.json
-    find -name "*.test" | xargs sudo rm -f
+    find -name "*.test" -type f | xargs sudo rm -f
 }
 
 kill_all_components
