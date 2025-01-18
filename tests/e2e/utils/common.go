@@ -189,6 +189,62 @@ func NewPod(podName, imgURL string) *v1.Pod {
 	return &pod
 }
 
+func NewDevicePluginPod(podName, imgURL string) *v1.Pod {
+	devicePluginPod := v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      podName,
+			Namespace: v1.NamespaceDefault,
+			Labels: map[string]string{
+				"app":                 podName,
+				constants.E2ELabelKey: constants.E2ELabelValue,
+			},
+		},
+		Spec: v1.PodSpec{
+			Containers: []v1.Container{
+				{
+					Name:  podName,
+					Image: imgURL,
+					SecurityContext: &v1.SecurityContext{
+						Privileged: &[]bool{true}[0],
+					},
+					VolumeMounts: []v1.VolumeMount{
+                        {
+                            Name:      "device-plugin",
+                            MountPath: "/var/lib/kubelet/device-plugins",
+                        },
+                        {
+                            Name:      "dev",
+                            MountPath: "/dev",
+                        },
+                    },
+				},
+			},
+			Volumes: []v1.Volume{
+				{
+                    Name: "device-plugin",
+                    VolumeSource: v1.VolumeSource{
+                        HostPath: &v1.HostPathVolumeSource{
+                            Path: "/var/lib/kubelet/device-plugins",
+                        },
+                    },
+                },
+                {
+                    Name: "dev",
+                    VolumeSource: v1.VolumeSource{
+                        HostPath: &v1.HostPathVolumeSource{
+                            Path: "/dev",
+                        },
+                    },
+                },
+			},
+			NodeSelector: map[string]string{
+				"node-role.kubernetes.io/edge": "",
+			},
+		},
+	}
+	return &devicePluginPod
+}
+
 func GetDeployment(c clientset.Interface, ns, name string) (*apps.Deployment, error) {
 	return c.AppsV1().Deployments(ns).Get(context.TODO(), name, metav1.GetOptions{})
 }
