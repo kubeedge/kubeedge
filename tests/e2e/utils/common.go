@@ -208,34 +208,34 @@ func NewDevicePluginPod(podName, imgURL string) *v1.Pod {
 						Privileged: &[]bool{true}[0],
 					},
 					VolumeMounts: []v1.VolumeMount{
-                        {
-                            Name:      "device-plugin",
-                            MountPath: "/var/lib/kubelet/device-plugins",
-                        },
-                        {
-                            Name:      "dev",
-                            MountPath: "/dev",
-                        },
-                    },
+						{
+							Name:      "device-plugin",
+							MountPath: "/var/lib/kubelet/device-plugins",
+						},
+						{
+							Name:      "dev",
+							MountPath: "/dev",
+						},
+					},
 				},
 			},
 			Volumes: []v1.Volume{
 				{
-                    Name: "device-plugin",
-                    VolumeSource: v1.VolumeSource{
-                        HostPath: &v1.HostPathVolumeSource{
-                            Path: "/var/lib/kubelet/device-plugins",
-                        },
-                    },
-                },
-                {
-                    Name: "dev",
-                    VolumeSource: v1.VolumeSource{
-                        HostPath: &v1.HostPathVolumeSource{
-                            Path: "/dev",
-                        },
-                    },
-                },
+					Name: "device-plugin",
+					VolumeSource: v1.VolumeSource{
+						HostPath: &v1.HostPathVolumeSource{
+							Path: "/var/lib/kubelet/device-plugins",
+						},
+					},
+				},
+				{
+					Name: "dev",
+					VolumeSource: v1.VolumeSource{
+						HostPath: &v1.HostPathVolumeSource{
+							Path: "/dev",
+						},
+					},
+				},
 			},
 			NodeSelector: map[string]string{
 				"node-role.kubernetes.io/edge": "",
