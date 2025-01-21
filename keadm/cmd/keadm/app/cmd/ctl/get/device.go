@@ -23,15 +23,14 @@ import (
 
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/cli-runtime/pkg/printers"
 	"k8s.io/klog/v2"
 	"k8s.io/kubectl/pkg/cmd/get"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
-	"k8s.io/kubectl/pkg/scheme"
 
 	"github.com/kubeedge/api/apis/devices/v1beta1"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/client"
+	ctlcommon "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
 
@@ -42,8 +41,8 @@ type DeviceGetOptions struct {
 	LabelSelector string
 	AllNamespaces bool
 	Output        string
-	// PrintFlags holds the flags for printing resources
-	PrintFlags *get.PrintFlags
+	// ExtPrintFlags holds the flags for printing resources
+	ctlcommon.ExtPrintFlags
 }
 
 // NewEdgeDeviceGet returns KubeEdge get edge device command.
@@ -73,12 +72,10 @@ func (o *DeviceGetOptions) getDevices(args []string) error {
 
 	ctx := context.Background()
 	var deviceListFilter *v1beta1.DeviceList
-
 	if len(args) > 0 {
 		deviceListFilter = &v1beta1.DeviceList{
 			Items: make([]v1beta1.Device, 0, len(args)),
 		}
-
 		var deviceRequest *client.DeviceRequest
 
 		for _, deviceName := range args {
@@ -134,28 +131,14 @@ func (o *DeviceGetOptions) getDevices(args []string) error {
 		return nil
 	}
 
-	if o.AllNamespaces {
-		if err := o.PrintFlags.EnsureWithNamespace(); err != nil {
-			return err
-		}
+	if *o.PrintFlags.OutputFormat == "" || *o.PrintFlags.OutputFormat == "wide" {
+		return o.PrintToTable(deviceListFilter, o.AllNamespaces, os.Stdout)
 	}
-
-	o.PrintFlags.SetKind(v1beta1.SchemeGroupVersion.WithKind("DeviceList").GroupKind())
-
-	printer, err := o.PrintFlags.ToPrinter()
-	if err != nil {
-		return err
+	runtimeObjects := make([]runtime.Object, 0, len(deviceListFilter.Items))
+	for _, device := range deviceListFilter.Items {
+		runtimeObjects = append(runtimeObjects, &device)
 	}
-
-	printer, err = printers.NewTypeSetter(scheme.Scheme).WrapToPrinter(printer, nil)
-	if err != nil {
-		return nil
-	}
-
-	var deviceObjectList runtime.Object = deviceListFilter
-	deviceObjectList.GetObjectKind().SetGroupVersionKind(v1beta1.SchemeGroupVersion.WithKind("DeviceList"))
-
-	return printer.PrintObj(deviceObjectList, os.Stdout)
+	return o.PrintToJSONYaml(runtimeObjects)
 }
 
 func NewDeviceGetOpts() *DeviceGetOptions {
@@ -173,4 +156,6 @@ func AddGetDeviceFlags(cmd *cobra.Command, deviceGetOptions *DeviceGetOptions) {
 		"Selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)")
 	cmd.Flags().BoolVarP(&deviceGetOptions.AllNamespaces, common.FlagNameAllNamespaces, "A", deviceGetOptions.AllNamespaces,
 		"If present, list the requested object(s) across all namespaces. Namespace in current context is ignored even if specified with --namespace")
+	cmd.Flags().StringVarP(&deviceGetOptions.Output, common.FlagNameOutput, "o", deviceGetOptions.Output,
+		"Indicate the output format. Currently supports formats such as yaml|json|wide")
 }
