@@ -1,6 +1,8 @@
 module github.com/kubeedge/Template
 
-go 1.21
+go 1.22.0
+
+toolchain go1.23.2
 
 require (
 	github.com/eclipse/paho.mqtt.golang v1.2.0
@@ -13,9 +15,10 @@ require (
 	github.com/taosdata/driver-go/v3 v3.5.1
 	go.opentelemetry.io/otel v1.23.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.23.0
+	go.opentelemetry.io/otel/metric v1.23.0
 	go.opentelemetry.io/otel/sdk v1.23.0
 	go.opentelemetry.io/otel/sdk/metric v1.23.0
-	k8s.io/klog/v2 v2.110.1
+	k8s.io/klog/v2 v2.120.1
 )
 
 require (
@@ -37,7 +40,6 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/oapi-codegen/runtime v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.6-0.20210604193023-d5e0c0615ace // indirect
-	go.opentelemetry.io/otel/metric v1.23.0 // indirect
 	go.opentelemetry.io/otel/trace v1.23.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.3.1 // indirect
 	golang.org/x/net v0.30.0 // indirect
