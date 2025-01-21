@@ -21,6 +21,8 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
 
 type PodRequest struct {
@@ -39,6 +41,8 @@ func (podRequest *PodRequest) GetPod(ctx context.Context) (*corev1.Pod, error) {
 	if err != nil {
 		return nil, err
 	}
+	pod.APIVersion = common.PodAPIVersion
+	pod.Kind = common.PodKind
 	return pod, nil
 }
 

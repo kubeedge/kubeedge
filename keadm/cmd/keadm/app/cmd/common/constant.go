@@ -306,3 +306,10 @@ const (
 	FlagNameShowEvents                   = "show-events"
 	FlagNameChunkSize                    = "chunk-size"
 )
+
+const (
+	PodAPIVersion    = "v1"
+	PodKind          = "Pod"
+	DeviceAPIVersion = "devices.kubeedge.io/v1beta1"
+	DeviceKind       = "Device"
+)
