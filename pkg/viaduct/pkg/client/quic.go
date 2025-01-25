@@ -1,10 +1,11 @@
 package client
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
-	"github.com/lucas-clemente/quic-go"
+	"github.com/quic-go/quic-go"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -39,15 +40,14 @@ func NewQuicClient(opts Options, exOpts interface{}) *QuicClient {
 // TODO: add additional options
 func (c *QuicClient) getQuicConfig() *quic.Config {
 	return &quic.Config{
-		HandshakeTimeout: c.options.HandshakeTimeout,
-		// keep the session by default
-		KeepAlive: true,
+		HandshakeIdleTimeout: c.options.HandshakeTimeout,
+		MaxIdleTimeout: c.options.HandshakeTimeout * 2,
 	}
 }
 
 // the basic lan for connection control
 // never be closed
-func (c *QuicClient) getControlLane(s quic.Session) error {
+func (c *QuicClient) getControlLane(s quic.Connection) error {
 	c.laneLock.Lock()
 	defer c.laneLock.Unlock()
 
@@ -55,7 +55,7 @@ func (c *QuicClient) getControlLane(s quic.Session) error {
 		return nil
 	}
 
-	stream, err := s.OpenStreamSync()
+	stream, err := s.OpenStream()
 	if err != nil {
 		klog.Errorf("open control stream error(%+v)", err)
 		return fmt.Errorf("open control stream")
@@ -92,8 +92,14 @@ func (c *QuicClient) sendHeader() error {
 
 // try to dial server and get connection interface for operations
 func (c *QuicClient) Connect() (conn.Connection, error) {
+	ctx := context.Background()
 	quicConfig := c.getQuicConfig()
-	session, err := quic.DialAddr(c.options.Addr, c.options.TLSConfig, quicConfig)
+	session, err := quic.DialAddr(
+        ctx,
+        c.options.Addr, 
+        c.options.TLSConfig, 
+        quicConfig,
+    )
 	if err != nil {
 		klog.Errorf("failed dial addr %s, error:%+v", c.options.Addr, err)
 		return nil, err
@@ -102,7 +108,7 @@ func (c *QuicClient) Connect() (conn.Connection, error) {
 	// get control lan
 	err = c.getControlLane(session)
 	if err != nil {
-		session.Close()
+		session.CloseWithError(0, "failed to get control lane")
 		return nil, err
 	}
 
@@ -123,7 +129,7 @@ func (c *QuicClient) Connect() (conn.Connection, error) {
 		State: &conn.ConnectionState{
 			State:            api.StatConnected,
 			Headers:          c.exOpts.Header,
-			PeerCertificates: session.ConnectionState().PeerCertificates,
+			PeerCertificates: session.ConnectionState().TLS.PeerCertificates,
 		},
 		AutoRoute: c.options.AutoRoute,
 	}), nil

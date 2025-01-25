@@ -1,10 +1,12 @@
 package smgr
 
 import (
-	"io"
+	"context"
+    "fmt"
+    "io"
+	"time"
 
-	"github.com/lucas-clemente/quic-go"
-	"k8s.io/klog/v2"
+	"github.com/quic-go/quic-go"
 
 	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/api"
 )
@@ -15,55 +17,85 @@ type Stream struct {
 	UseType api.UseType
 	// quic stream
 	Stream quic.Stream
+	ctx     context.Context
+    cancel  context.CancelFunc
 }
 
 type Session struct {
-	Sess quic.Session
+	Sess quic.Connection
+	ctx  context.Context
+}
+
+func NewSession(conn quic.Connection) *Session {
+    return &Session{
+        Sess: conn,
+        ctx:  context.Background(),
+    }
 }
 
 func (s *Session) OpenStreamSync(streamUse api.UseType) (*Stream, error) {
-	stream, err := s.Sess.OpenStreamSync()
-	if err != nil {
-		klog.Errorf("failed to open stream, error: %+v", err)
-		return nil, err
-	}
+    // Add timeout context
+    ctx, cancel := context.WithTimeout(s.ctx, 30*time.Second)
+    defer cancel()
 
-	// TODO: add write timeout
-	_, err = stream.Write([]byte(streamUse))
-	if err != nil {
-		klog.Errorf("write stream type, error: %+v", err)
-		return nil, err
-	}
+    stream, err := s.Sess.OpenStreamSync(ctx)
+    if err != nil {
+        return nil, fmt.Errorf("open stream: %w", err)
+    }
 
-	return &Stream{
-		UseType: streamUse,
-		Stream:  stream,
-	}, nil
+    // Set write deadline
+    if err := stream.SetWriteDeadline(time.Now().Add(5 * time.Second)); err != nil {
+        stream.Close()
+        return nil, fmt.Errorf("set write deadline: %w", err)
+    }
+
+    if _, err = stream.Write([]byte(streamUse)); err != nil {
+        stream.Close()
+        return nil, fmt.Errorf("write stream type: %w", err)
+    }
+
+    streamCtx, streamCancel := context.WithCancel(s.ctx)
+    return &Stream{
+        UseType: streamUse,
+        Stream:  stream,
+        ctx:     streamCtx,
+        cancel:  streamCancel,
+    }, nil
 }
 
 func (s *Session) AcceptStream() (*Stream, error) {
-	stream, err := s.Sess.AcceptStream()
-	if err != nil {
-		klog.Errorf("failed to accept stream, error: %+v", err)
-		return nil, err
-	}
+    stream, err := s.Sess.AcceptStream(s.ctx)
+    if err != nil {
+        return nil, fmt.Errorf("accept stream: %w", err)
+    }
 
-	// TODO: add read timeout
-	typeBytes := make([]byte, api.UseLen)
-	_, err = io.ReadFull(stream, typeBytes)
-	if err != nil {
-		klog.Errorf("read stream type, error: %+v", err)
-		return nil, err
-	}
+    // Set read deadline
+    if err := stream.SetReadDeadline(time.Now().Add(5 * time.Second)); err != nil {
+        stream.Close()
+        return nil, fmt.Errorf("set read deadline: %w", err)
+    }
 
-	klog.Infof("receive a stream(%s)", string(typeBytes))
+    typeBytes := make([]byte, api.UseLen)
+    if _, err = io.ReadFull(stream, typeBytes); err != nil {
+        stream.Close()
+        return nil, fmt.Errorf("read stream type: %w", err)
+    }
 
-	return &Stream{
-		UseType: api.UseType(typeBytes),
-		Stream:  stream,
-	}, nil
+    streamCtx, streamCancel := context.WithCancel(s.ctx)
+    return &Stream{
+        UseType: api.UseType(typeBytes),
+        Stream:  stream,
+        ctx:     streamCtx,
+        cancel:  streamCancel,
+    }, nil
 }
 
 func (s *Session) Close() error {
-	return s.Sess.Close()
+    return s.Sess.CloseWithError(0, "normal closure")
+}
+
+// New method for Stream
+func (s *Stream) Close() error {
+    s.cancel()
+    return s.Stream.Close()
 }

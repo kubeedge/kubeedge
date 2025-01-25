@@ -1,12 +1,13 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"sync"
 
-	"github.com/lucas-clemente/quic-go"
+	"github.com/quic-go/quic-go"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -21,52 +22,67 @@ type QuicServer struct {
 	exOpts       api.QuicServerOption
 	listener     quic.Listener
 	listenerLock sync.Mutex
+	ctx          context.Context
+    cancel       context.CancelFunc
 }
 
 func NewQuicServer(opts Options, exOpts interface{}) *QuicServer {
+	ctx, cancel := context.WithCancel(context.Background())
 	extendOption, ok := exOpts.(api.QuicServerOption)
 	if !ok {
+		cancel()
 		panic("bad extend options")
 	}
 	return &QuicServer{
 		options: opts,
 		exOpts:  extendOption,
+		ctx:     ctx,
+        cancel:  cancel,
 	}
 }
 
 func (srv *QuicServer) serveTLS(quicConfig *quic.Config) error {
-	srv.listenerLock.Lock()
-	if srv.listener != nil {
-		srv.listenerLock.Unlock()
-		return fmt.Errorf("ListenAndServeTLS may only be called once")
-	}
+    srv.listenerLock.Lock()
+	if srv.listener == (quic.Listener{}) {
+        srv.listenerLock.Unlock()
+        return fmt.Errorf("ListenAndServeTLS may only be called once")
+    }
 
-	listener, err := quic.ListenAddr(srv.options.Addr, srv.options.TLS, quicConfig)
-	if err != nil {
-		srv.listenerLock.Unlock()
-		return err
-	}
-	srv.listener = listener
-	srv.listenerLock.Unlock()
+    listener, err := quic.ListenAddr(srv.options.Addr, srv.options.TLS, quicConfig)
+    if err != nil {
+        srv.listenerLock.Unlock()
+        return fmt.Errorf("listen addr: %w", err)
+    }
+    srv.listener = *listener
+    srv.listenerLock.Unlock()
 
-	for {
-		session, err := listener.Accept()
-		if err != nil {
-			return err
-		}
-
-		go srv.handleSession(session)
-	}
+    for {
+        select {
+        case <-srv.ctx.Done():
+            return nil
+        default:
+            session, err := listener.Accept(srv.ctx)
+            if err != nil {
+                if err == context.Canceled {
+                    return nil
+                }
+                return fmt.Errorf("accept connection: %w", err)
+            }
+            go srv.handleSession(session)
+        }
+    }
 }
 
 // accept control stream
-func (srv *QuicServer) acceptControlStream(session quic.Session) quic.Stream {
-	stream, err := session.AcceptStream()
-	if err != nil {
-		klog.Errorf("failed to accept stream, error:%+v", err)
-		return nil
-	}
-	return stream
+func (srv *QuicServer) acceptControlStream(session quic.Connection) (quic.Stream, error) {
+    ctx, cancel := context.WithTimeout(srv.ctx, srv.options.HandshakeTimeout)
+    defer cancel()
+    
+    stream, err := session.AcceptStream(ctx)
+    if err != nil {
+        return nil, fmt.Errorf("accept stream: %w", err)
+    }
+    return stream, nil
 }
 
 // receive header from control lane
@@ -103,10 +119,10 @@ func (srv *QuicServer) receiveHeader(lane lane.Lane) (http.Header, error) {
 // 2) notify connection event
 // 3) add connection into manager
 // 4) auto route to entries
-func (srv *QuicServer) handleSession(session quic.Session) {
-	ctrlStream := srv.acceptControlStream(session)
-	if ctrlStream == nil {
-		klog.Error("failed to accept control stream")
+func (srv *QuicServer) handleSession(session quic.Connection) {
+	ctrlStream, err := srv.acceptControlStream(session)
+	if err != nil {
+		klog.Errorf("failed to accept control stream: %v", err)
 		return
 	}
 
@@ -127,7 +143,7 @@ func (srv *QuicServer) handleSession(session quic.Session) {
 		State: &conn.ConnectionState{
 			State:            api.StatConnected,
 			Headers:          header,
-			PeerCertificates: session.ConnectionState().PeerCertificates,
+			PeerCertificates: session.ConnectionState().TLS.PeerCertificates,
 		},
 		AutoRoute:          srv.options.AutoRoute,
 		OnReadTransportErr: srv.options.OnReadTransportErr,
@@ -149,9 +165,11 @@ func (srv *QuicServer) handleSession(session quic.Session) {
 
 func (srv *QuicServer) getQuicConfig() *quic.Config {
 	return &quic.Config{
-		HandshakeTimeout:   srv.options.HandshakeTimeout,
-		KeepAlive:          true,
-		MaxIncomingStreams: srv.exOpts.MaxIncomingStreams,
+        HandshakeIdleTimeout: srv.options.HandshakeTimeout,
+        MaxIdleTimeout:       srv.options.HandshakeTimeout * 2,
+        EnableDatagrams:      true,
+		MaxIncomingStreams:   int64(srv.exOpts.MaxIncomingStreams),
+        Allow0RTT:            false,
 	}
 }
 
@@ -161,14 +179,14 @@ func (srv *QuicServer) ListenAndServeTLS() error {
 }
 
 func (srv *QuicServer) Close() error {
-	srv.listenerLock.Lock()
-	defer srv.listenerLock.Unlock()
+    srv.cancel()
+    srv.listenerLock.Lock()
+    defer srv.listenerLock.Unlock()
 
-	if srv.listener != nil {
-		err := srv.listener.Close()
-		srv.listener = nil
-		return err
-	}
-
-	return nil
+    if srv.listener != (quic.Listener{}) {
+        err := srv.listener.Close()
+        srv.listener = (quic.Listener{})
+        return err
+    }
+    return nil
 }
