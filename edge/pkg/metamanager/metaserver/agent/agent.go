@@ -164,7 +164,9 @@ func (a *Agent) GC() {
 }
 
 func (a *Agent) SyncWatchAppOnConnected() {
-	a.watchSyncQueue.Add("SyncWatchApp")
+	if metaserverconfig.Config.Enable {
+		a.watchSyncQueue.Add("SyncWatchApp")
+	}
 }
 
 func (a *Agent) watchSync() {
