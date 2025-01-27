@@ -17,13 +17,17 @@ limitations under the License.
 package taskmanager
 
 import (
+	"context"
+	"fmt"
 	"time"
 
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 	"github.com/kubeedge/beehive/pkg/core"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/imageprepullcontroller"
@@ -31,53 +35,26 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/nodeupgradecontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/util"
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/util/controller"
+	v1alpha2ctl "github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/v1alpha2/controller"
+	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/v1alpha2/controller/handlers"
+	"github.com/kubeedge/kubeedge/pkg/nodetask/message"
 )
 
 type TaskManager struct {
-	downstream      *manager.DownstreamController
-	executorMachine *manager.ExecutorMachine
-	upstream        *manager.UpstreamController
-	enable          bool
+	enable               bool
+	upstreamV1alpha1Chan chan model.Message
+	upstreamV1alpha2Chan chan model.Message
+	msglayer             messagelayer.MessageLayer
 }
 
 var _ core.Module = (*TaskManager)(nil)
 
 func newTaskManager(enable bool) *TaskManager {
-	if !enable {
-		return &TaskManager{enable: enable}
-	}
-	taskMessage := make(chan util.TaskMessage, 10)
-	downStreamMessage := make(chan model.Message, 10)
-	downstream, err := manager.NewDownstreamController(downStreamMessage)
-	if err != nil {
-		klog.Exitf("New task manager downstream failed with error: %s", err)
-	}
-	upstream, err := manager.NewUpstreamController(downstream)
-	if err != nil {
-		klog.Exitf("New task manager upstream failed with error: %s", err)
-	}
-	executorMachine, err := manager.NewExecutorMachine(taskMessage, downStreamMessage)
-	if err != nil {
-		klog.Exitf("New executor machine failed with error: %s", err)
-	}
-
-	upgradeNodeController, err := nodeupgradecontroller.NewNodeUpgradeController(taskMessage)
-	if err != nil {
-		klog.Exitf("New upgrade node controller failed with error: %s", err)
-	}
-
-	imagePrePullController, err := imageprepullcontroller.NewImagePrePullController(taskMessage)
-	if err != nil {
-		klog.Exitf("New upgrade node controller failed with error: %s", err)
-	}
-	controller.Register(util.TaskUpgrade, upgradeNodeController)
-	controller.Register(util.TaskPrePull, imagePrePullController)
-
 	return &TaskManager{
-		downstream:      downstream,
-		executorMachine: executorMachine,
-		upstream:        upstream,
-		enable:          enable,
+		enable:               enable,
+		upstreamV1alpha1Chan: make(chan model.Message, 64),
+		upstreamV1alpha2Chan: make(chan model.Message, 64),
+		msglayer:             messagelayer.TaskManagerMessageLayer(),
 	}
 }
 
@@ -104,20 +81,96 @@ func (uc *TaskManager) Enable() bool {
 
 // Start controller
 func (uc *TaskManager) Start() {
-	if err := uc.downstream.Start(); err != nil {
-		klog.Exitf("start task manager downstream failed with error: %s", err)
+	ctx := beehiveContext.GetContext()
+	asyncCallFunc(ctx, uc.dispatchMessage)
+	asyncCallFunc(ctx, uc.initAndStartV1alpha1Controller)
+	asyncCallFunc(ctx, uc.initAndStartV1alpha2Controller)
+	<-ctx.Done()
+}
+
+func asyncCallFunc(ctx context.Context, fn func(context.Context) error) {
+	go func() {
+		if err := fn(ctx); err != nil {
+			panic(err)
+		}
+	}()
+}
+
+func (uc *TaskManager) dispatchMessage(ctx context.Context) error {
+	for {
+		select {
+		case <-ctx.Done():
+			klog.Info("stop dispatch task upstream message")
+			return nil
+		default:
+		}
+		msg, err := uc.msglayer.Receive()
+		if err != nil {
+			klog.Warningf("failed to receive node task upstream message, err: %v", err)
+			continue
+		}
+		if message.IsNodeTaskResource(msg.GetResource()) {
+			uc.upstreamV1alpha2Chan <- msg
+		} else {
+			uc.upstreamV1alpha1Chan <- msg
+		}
+	}
+}
+
+func (uc *TaskManager) initAndStartV1alpha1Controller(_ context.Context) error {
+	taskMessage := make(chan util.TaskMessage, 10)
+	downStreamMessage := make(chan model.Message, 10)
+	downstream, err := manager.NewDownstreamController(downStreamMessage)
+	if err != nil {
+		return fmt.Errorf("New task manager downstream failed with error: %s", err)
+	}
+	upstream, err := manager.NewUpstreamController(downstream, uc.upstreamV1alpha1Chan)
+	if err != nil {
+		return fmt.Errorf("New task manager upstream failed with error: %s", err)
+	}
+	executorMachine, err := manager.NewExecutorMachine(taskMessage, downStreamMessage)
+	if err != nil {
+		return fmt.Errorf("New executor machine failed with error: %s", err)
+	}
+
+	upgradeNodeController, err := nodeupgradecontroller.NewNodeUpgradeController(taskMessage)
+	if err != nil {
+		return fmt.Errorf("New upgrade node controller failed with error: %s", err)
+	}
+
+	imagePrePullController, err := imageprepullcontroller.NewImagePrePullController(taskMessage)
+	if err != nil {
+		return fmt.Errorf("New upgrade node controller failed with error: %s", err)
+	}
+	controller.Register(util.TaskUpgrade, upgradeNodeController)
+	controller.Register(util.TaskPrePull, imagePrePullController)
+
+	if err := downstream.Start(); err != nil {
+		return fmt.Errorf("start task manager downstream failed with error: %s", err)
 	}
 	// wait for downstream controller to start and load NodeUpgradeJob
 	// TODO think about sync
 	time.Sleep(1 * time.Second)
-	if err := uc.upstream.Start(); err != nil {
-		klog.Exitf("start task manager upstream failed with error: %s", err)
+	if err := upstream.Start(); err != nil {
+		return fmt.Errorf("start task manager upstream failed with error: %s", err)
 	}
-	if err := uc.executorMachine.Start(); err != nil {
-		klog.Exitf("start task manager executorMachine failed with error: %s", err)
+	if err := executorMachine.Start(); err != nil {
+		return fmt.Errorf("start task manager executorMachine failed with error: %s", err)
 	}
-
 	if err := controller.StartAllController(); err != nil {
-		klog.Exitf("start controller failed with error: %s", err)
+		return fmt.Errorf("start controller failed with error: %s", err)
 	}
+	return nil
+}
+
+func (uc *TaskManager) initAndStartV1alpha2Controller(ctx context.Context) error {
+	mgr := v1alpha2ctl.NewManager(uc.upstreamV1alpha2Chan)
+	mgr.Registry(handlers.NewNodeUpgradeJobHandler()).
+		Registry(handlers.NewImagePrePullJobHandler())
+
+	if err := mgr.DoDownstream(ctx); err != nil {
+		return fmt.Errorf("failed to do node task downstream, err: %v", err)
+	}
+	go mgr.DoUpstream(ctx)
+	return nil
 }
