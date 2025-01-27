@@ -35,7 +35,7 @@ func TestMergeProfileValues(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			vals, err := MergeProfileValues(c.file, []string{})
 			if err != nil {
-				t.Fatalf("faield to load helm values, err: %v", err)
+				t.Fatalf("failed to load helm values, err: %v", err)
 			}
 			if len(vals) == 0 {
 				t.Fatal("the value returned is empty")

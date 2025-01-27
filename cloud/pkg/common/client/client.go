@@ -94,7 +94,7 @@ var DefaultGetRestMapper RestMapperFunc = GetRestMapper
 func GetRestMapper() (meta.RESTMapper, error) {
 	client, err := rest.HTTPClientFor(KubeConfig)
 	if err != nil {
-		return nil, fmt.Errorf("new http client for kubeConfig faled, err: %v", err)
+		return nil, fmt.Errorf("new http client for kubeConfig failed, err: %v", err)
 	}
 	return apiutil.NewDynamicRESTMapper(KubeConfig, client)
 }
