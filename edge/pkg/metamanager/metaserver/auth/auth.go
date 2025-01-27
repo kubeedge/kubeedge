@@ -11,6 +11,7 @@ import (
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/serviceaccount"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
@@ -62,53 +63,21 @@ func (j *jwtTokenAuthenticator) AuthenticateToken(ctx context.Context, tokenData
 	if !j.hasCorrectIssuer(tokenData) {
 		return nil, false, nil
 	}
+
 	public := &jwt.Claims{}
 	private := j.validator.NewPrivateClaims()
 	if err := parseSigned(tokenData, public, private); err != nil {
 		return nil, false, err
 	}
-	if len(j.keys) == 0 {
-		// no public key for decode, auth token is existing in local db
-		if !client.CheckTokenExist(tokenData) {
-			return nil, false, fmt.Errorf("tokenData not found when authenticating")
-		}
-	} else {
-		tok, err := jwt.ParseSigned(tokenData)
-		if err != nil {
-			return nil, false, nil
-		}
-		var (
-			found   bool
-			errlist []error
-		)
-		for _, key := range j.keys {
-			if err := tok.Claims(key, public, private); err != nil {
-				errlist = append(errlist, err)
-				continue
-			}
-			found = true
-			break
-		}
 
-		if !found {
-			return nil, false, utilerrors.NewAggregate(errlist)
-		}
+	exists, err := checkTokenExists(tokenData, j.keys, public, private)
+	if !exists {
+		return nil, false, err
 	}
 
-	tokenAudiences := authenticator.Audiences(public.Audience)
-	if len(tokenAudiences) == 0 {
-		tokenAudiences = j.implicitAuds
-	}
-
-	requestedAudiences, ok := authenticator.AudiencesFrom(ctx)
-	if !ok {
-		// default to apiserver audiences
-		requestedAudiences = j.implicitAuds
-	}
-
-	auds := authenticator.Audiences(tokenAudiences).Intersect(requestedAudiences)
-	if len(auds) == 0 && len(j.implicitAuds) != 0 {
-		return nil, false, fmt.Errorf("tokenData audiences %q is invalid for the target audiences %q", tokenAudiences, requestedAudiences)
+	audiences, err := checkAudiences(ctx, public, j.implicitAuds)
+	if err != nil {
+		return nil, false, err
 	}
 
 	// If we get here, we have a tokenData with a recognized signature and
@@ -120,6 +89,57 @@ func (j *jwtTokenAuthenticator) AuthenticateToken(ctx context.Context, tokenData
 
 	return &authenticator.Response{
 		User:      sa.UserInfo(),
-		Audiences: auds,
+		Audiences: audiences,
 	}, true, nil
+}
+
+func checkAudiences(ctx context.Context, public *jwt.Claims, implicitAudiences authenticator.Audiences) (authenticator.Audiences, error) {
+	tokenAudiences := authenticator.Audiences(public.Audience)
+	if len(tokenAudiences) == 0 {
+		tokenAudiences = implicitAudiences
+	}
+
+	requestedAudiences, ok := authenticator.AudiencesFrom(ctx)
+	if !ok {
+		// default to apiserver audiences
+		requestedAudiences = implicitAudiences
+	}
+
+	auds := tokenAudiences.Intersect(requestedAudiences)
+	if len(auds) == 0 && len(implicitAudiences) != 0 {
+		return nil, fmt.Errorf("tokenData audiences %q is invalid for the target audiences %q", tokenAudiences, requestedAudiences)
+	}
+	return auds, nil
+}
+
+func checkTokenExists(tokenData string, keys []interface{}, public *jwt.Claims, private interface{}) (bool, error) {
+	if len(keys) == 0 {
+		// no public key for decode, auth token is existing in local db
+		if !client.CheckTokenExist(tokenData) {
+			return false, fmt.Errorf("tokenData not found when authenticating")
+		}
+		return true, nil
+	}
+
+	token, err := jwt.ParseSigned(tokenData)
+	if err != nil {
+		klog.Warning("convert to token failed: %s", err.Error())
+		return false, nil
+	}
+
+	var found bool
+	var errList []error
+	for _, key := range keys {
+		err = token.Claims(key, public, private)
+		if err == nil {
+			found = true
+			break
+		}
+		errList = append(errList, err)
+	}
+
+	if !found {
+		return false, utilerrors.NewAggregate(errList)
+	}
+	return true, nil
 }
