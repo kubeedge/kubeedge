@@ -214,7 +214,8 @@ func TestExec(t *testing.T) {
 		if cases.isHandlerExist {
 			return &types.ExecResponse{}, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 				w.WriteHeader(http.StatusOK)
-				w.Write([]byte("handler response"))
+				_, err := w.Write([]byte("handler response"))
+				assert.NoError(t, err)
 			})
 		}
 		return &types.ExecResponse{

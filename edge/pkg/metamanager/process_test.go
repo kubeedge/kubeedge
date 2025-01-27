@@ -23,6 +23,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 	coordinationv1 "k8s.io/api/coordination/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -171,7 +172,9 @@ func TestProcessInsert(t *testing.T) {
 	}
 	beehiveContext.SendResp(message)
 	message, err = beehiveContext.Receive(ModuleNameEdged)
-	beehiveContext.Receive(ModuleNameEdgeHub)
+	assert.NoError(t, err)
+	_, err = beehiveContext.Receive(ModuleNameEdgeHub)
+	assert.NoError(t, err)
 	t.Run("Insert successfully", func(t *testing.T) {
 		if err != nil {
 			t.Errorf("EdgeD Channel not found: %v", err)
@@ -757,8 +760,10 @@ func TestProcessQuery(t *testing.T) {
 	message, _ = beehiveContext.Receive(ModuleNameEdgeHub)
 	msg = model.NewMessage(message.GetID()).BuildRouter(ModuleNameEdged, GroupResource, "test/"+model.ResourceTypeConfigmap, model.QueryOperation).FillBody("TestMessage")
 	beehiveContext.SendResp(*msg)
-	beehiveContext.Receive(ModuleNameEdgeHub)
-	message, _ = beehiveContext.Receive(ModuleNameEdged)
+	_, err := beehiveContext.Receive(ModuleNameEdgeHub)
+	assert.NoError(t, err)
+	message, err = beehiveContext.Receive(ModuleNameEdged)
+	assert.NoError(t, err)
 	t.Run("ProcessRemoteQueryDbFail", func(t *testing.T) {
 		want := "TestMessage"
 		if message.GetContent() != want {

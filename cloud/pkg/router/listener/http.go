@@ -304,7 +304,7 @@ func requestForward(targetCloudCoreIP string, w http.ResponseWriter, forwardReq 
 }
 
 func writeErr(w http.ResponseWriter, r *http.Request, statusCode int, err error) {
-	klog.Errorf(err.Error())
+	klog.Error(err.Error())
 	w.WriteHeader(statusCode)
 	if _, err := w.Write([]byte(err.Error())); err != nil {
 		klog.Errorf("Response write error: %s, %s", r.RequestURI, err.Error())

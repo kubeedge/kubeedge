@@ -224,7 +224,7 @@ func (ndc *NodeUpgradeController) Start() error {
 func (ndc *NodeUpgradeController) startSync() {
 	nodeUpgradeList, err := ndc.CrdClient.OperationsV1alpha1().NodeUpgradeJobs().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		klog.Errorf(err.Error())
+		klog.Error(err.Error())
 		os.Exit(2)
 	}
 	for _, nodeUpgrade := range nodeUpgradeList.Items {
