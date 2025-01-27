@@ -19,12 +19,15 @@ limitations under the License.
 package extsystem
 
 import (
+	"context"
 	_ "embed"
 	"errors"
 	"fmt"
 	"os"
 	"os/exec"
+	"time"
 
+	"github.com/coreos/go-systemd/v22/dbus"
 	"k8s.io/kubernetes/cmd/kubeadm/app/util/initsystem"
 )
 
@@ -52,6 +55,7 @@ func (OpenRCExtSystem) ServiceRemove(_ string) error {
 }
 
 type SystemdExtSystem struct {
+	conn *dbus.Conn
 	initsystem.SystemdInitSystem
 }
 
@@ -95,6 +99,14 @@ func GetExtSystem() (ExtSystem, error) {
 	// Assume existence of systemctl in path implies this is a systemd system:
 	_, err := exec.LookPath("systemctl")
 	if err == nil {
+		// Check if we can establish a DBus connection for systemd
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
+		defer cancel()
+		conn, err := dbus.NewSystemConnectionContext(ctx)
+
+		if err == nil {
+			return &SystemdExtSystem{conn: conn}, nil
+		}
 		return &SystemdExtSystem{}, nil
 	}
 	_, err = exec.LookPath("openrc")
