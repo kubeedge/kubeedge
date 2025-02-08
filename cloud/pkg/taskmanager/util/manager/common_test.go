@@ -1,5 +1,5 @@
 /*
-Copyright 2023 The KubeEdge Authors.
+Copyright 2025 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -38,16 +38,6 @@ func (t *TestObject) DeepCopyObject() runtime.Object {
 		ObjectMeta: t.ObjectMeta,
 	}
 }
-
-// Testing Guidelines:
-// 1. Each test function should focus on testing a single functionality
-// 2. Use descriptive test names that indicate what's being tested
-// 3. Follow table-driven test pattern for testing multiple scenarios
-// 4. Include both positive and negative test cases
-// 5. Verify channel operations with appropriate timeouts
-// 6. Test edge cases and error conditions
-// 7. Use assert package for clearer test assertions
-// 8. Include comments explaining complex test scenarios
 
 func TestNewCommonResourceEventHandler(t *testing.T) {
 	events := make(chan watch.Event)
