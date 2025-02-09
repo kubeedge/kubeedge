@@ -157,31 +157,26 @@ func GetTwinAttributesFromDB(deviceID string, Name string) TwinAttribute {
 		common.Fatalf("Open Sqlite DB failed : %v", err)
 	}
 	defer db.Close()
-	row, err := db.Query("SELECT * FROM device_twin")
-	defer row.Close()
+	row := db.QueryRow("SELECT * FROM device_twin WHERE deviceid = ? AND name = ? ORDER BY id DESC LIMIT 1", deviceID, Name)
 
-	for row.Next() {
-		err = row.Scan(&twinAttribute.ID,
-			&twinAttribute.DeviceID,
-			&twinAttribute.Name,
-			&twinAttribute.Description,
-			&twinAttribute.Expected,
-			&twinAttribute.Actual,
-			&twinAttribute.ExpectedMeta,
-			&twinAttribute.ActualMeta,
-			&twinAttribute.ExpectedVer,
-			&twinAttribute.ActualVer,
-			&twinAttribute.Optional,
-			&twinAttribute.Type,
-			&twinAttribute.MetaData)
+	err = row.Scan(&twinAttribute.ID,
+		&twinAttribute.DeviceID,
+		&twinAttribute.Name,
+		&twinAttribute.Description,
+		&twinAttribute.Expected,
+		&twinAttribute.Actual,
+		&twinAttribute.ExpectedMeta,
+		&twinAttribute.ActualMeta,
+		&twinAttribute.ExpectedVer,
+		&twinAttribute.ActualVer,
+		&twinAttribute.Optional,
+		&twinAttribute.Type,
+		&twinAttribute.MetaData)
 
-		if err != nil {
-			common.Fatalf("Failed to scan DB rows: %v", err)
-		}
-		if string(twinAttribute.DeviceID) == deviceID && twinAttribute.Name == Name {
-			break
-		}
+	if err != nil && err != sql.ErrNoRows {
+		common.Fatalf("Failed to scan DB row: %v", err)
 	}
+
 	return twinAttribute
 }
 
@@ -193,18 +188,22 @@ func GetDeviceAttributesFromDB(deviceID string, Name string) Attribute {
 		common.Fatalf("Open Sqlite DB failed : %v", err)
 	}
 	defer db.Close()
-	row, err := db.Query("SELECT * FROM device_attr")
-	defer row.Close()
 
-	for row.Next() {
-		err = row.Scan(&attribute.ID, &attribute.DeviceID, &attribute.Name, &attribute.Description, &attribute.Value, &attribute.Optional, &attribute.Type, &attribute.MetaData)
-		if err != nil {
-			common.Fatalf("Failed to scan DB rows: %v", err)
-		}
-		if string(attribute.DeviceID) == deviceID && attribute.Name == Name {
-			break
-		}
+	row := db.QueryRow("SELECT * FROM device_attr WHERE deviceid = ? AND name = ? ORDER BY id DESC LIMIT 1", deviceID, Name)
+
+	err = row.Scan(&attribute.ID,
+		&attribute.DeviceID,
+		&attribute.Name,
+		&attribute.Description,
+		&attribute.Value,
+		&attribute.Optional,
+		&attribute.Type,
+		&attribute.MetaData)
+
+	if err != nil && err != sql.ErrNoRows {
+		common.Fatalf("Failed to scan DB row: %v", err)
 	}
+
 	return attribute
 }
 
@@ -227,12 +226,12 @@ func HandleAddAndDeleteDevice(operation, testMgrEndPoint string, device dttype.D
 	var httpMethod string
 	var payload dttype.MembershipUpdate
 	switch operation {
-	case "PUT":
+	case http.MethodPut:
 		httpMethod = http.MethodPut
 		payload = dttype.MembershipUpdate{AddDevices: []dttype.Device{
 			device,
 		}}
-	case "DELETE":
+	case http.MethodDelete:
 		httpMethod = http.MethodDelete
 		payload = dttype.MembershipUpdate{RemoveDevices: []dttype.Device{
 			device,
@@ -262,7 +261,7 @@ func HandleAddAndDeleteDevice(operation, testMgrEndPoint string, device dttype.D
 
 	if err != nil {
 		// handle error
-		common.Fatalf("HTTP request is failed :%v", err)
+		common.Fatalf("HTTP request is failed: %v", err)
 		return false
 	}
 	defer resp.Body.Close()
@@ -306,7 +305,7 @@ func HandleAddAndDeletePods(operation string, edgedpoint string, UID string, con
 	resp, err := client.Do(req)
 	if err != nil {
 		// handle error
-		common.Fatalf("HTTP request is failed :%v", err)
+		common.Fatalf("HTTP request is failed: %v", err)
 		return false
 	}
 	defer resp.Body.Close()
