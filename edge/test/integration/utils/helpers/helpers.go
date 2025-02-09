@@ -227,12 +227,12 @@ func HandleAddAndDeleteDevice(operation, testMgrEndPoint string, device dttype.D
 	var httpMethod string
 	var payload dttype.MembershipUpdate
 	switch operation {
-	case "PUT":
+	case http.MethodPut:
 		httpMethod = http.MethodPut
 		payload = dttype.MembershipUpdate{AddDevices: []dttype.Device{
 			device,
 		}}
-	case "DELETE":
+	case http.MethodDelete:
 		httpMethod = http.MethodDelete
 		payload = dttype.MembershipUpdate{RemoveDevices: []dttype.Device{
 			device,
