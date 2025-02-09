@@ -22,8 +22,8 @@ require (
 	github.com/kubeedge/beehive v0.0.0
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1
 	github.com/mattn/go-sqlite3 v1.14.22
-	github.com/onsi/ginkgo/v2 v2.22.2
-	github.com/onsi/gomega v1.36.2
+	github.com/onsi/ginkgo/v2 v2.17.1
+	github.com/onsi/gomega v1.32.0
 	github.com/opencontainers/selinux v1.11.0
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.5
@@ -40,7 +40,7 @@ require (
 	golang.org/x/text v0.21.0
 	golang.org/x/time v0.5.0
 	google.golang.org/grpc v1.63.0
-	google.golang.org/protobuf v1.36.1
+	google.golang.org/protobuf v1.35.2
 	gopkg.in/square/go-jose.v2 v2.6.0
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.12.3
@@ -68,7 +68,7 @@ require (
 )
 
 require (
-	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
+	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	go.uber.org/mock v0.5.0 // indirect
 )
 
