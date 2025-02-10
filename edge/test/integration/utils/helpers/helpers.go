@@ -258,16 +258,35 @@ func HandleAddAndDeleteDevice(operation, testMgrEndPoint string, device dttype.D
 	client := &http.Client{}
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	t := time.Now()
-	resp, err := client.Do(req)
+	// resp, err := client.Do(req)
 
-	if err != nil {
-		// handle error
-		common.Fatalf("HTTP request is failed :%v", err)
-		return false
-	}
-	defer resp.Body.Close()
-	common.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
-	return true
+	maxRetries := 3
+    for i := 0; i < maxRetries; i++ {
+        resp, err := client.Do(req)
+        if err == nil {
+            defer resp.Body.Close()
+            common.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
+            return true
+        }
+        
+        if i < maxRetries-1 { // Don't sleep on last attempt
+            time.Sleep(time.Second)
+            common.Infof("Retrying request attempt %d after error: %v", i+1, err)
+        } else {
+            common.Fatalf("HTTP request failed after %d attempts: %v", maxRetries, err)
+        }
+    }
+
+	return false
+
+	// if err != nil {
+	// 	// handle error
+	// 	common.Fatalf("HTTP request is failed: %v", err)
+	// 	return false
+	// }
+	// defer resp.Body.Close()
+	// common.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
+	// return true
 }
 
 // HandleAddAndDeletePods is function to handle app deployment/delete deployment.
