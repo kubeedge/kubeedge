@@ -173,9 +173,9 @@ func GetTwinAttributesFromDB(deviceID string, Name string) TwinAttribute {
 		&twinAttribute.Type,
 		&twinAttribute.MetaData)
 
-		if err != nil && err != sql.ErrNoRows {
-			common.Fatalf("Failed to scan DB row: %v", err)
-		}
+	if err != nil && err != sql.ErrNoRows {
+		common.Fatalf("Failed to scan DB row: %v", err)
+	}
 
 	return twinAttribute
 }
@@ -190,7 +190,7 @@ func GetDeviceAttributesFromDB(deviceID string, Name string) Attribute {
 	defer db.Close()
 
 	row := db.QueryRow("SELECT * FROM device_attr WHERE deviceid = ? AND name = ? ORDER BY id DESC LIMIT 1", deviceID, Name)
-	
+
 	err = row.Scan(&attribute.ID,
 		&attribute.DeviceID,
 		&attribute.Name,
@@ -203,7 +203,7 @@ func GetDeviceAttributesFromDB(deviceID string, Name string) Attribute {
 	if err != nil && err != sql.ErrNoRows {
 		common.Fatalf("Failed to scan DB row: %v", err)
 	}
-	
+
 	return attribute
 }
 
