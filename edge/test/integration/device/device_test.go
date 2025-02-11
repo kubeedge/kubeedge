@@ -310,11 +310,13 @@ var _ = Describe("Event Bus Testing", func() {
 			common.PrintTestcaseNameandStatus()
 		})
 		It("TC_TEST_EBUS_9: Add a sample device with device attributes to kubeedge node", func() {
-			//Generating Device ID
+			// Generate Device ID
 			DeviceIDWithAttr = GenerateDeviceID("kubeedge-device-WithDeviceAttributes")
-			//Generate a Device
+			// Create a Device
 			DeviceATT = CreateDevice(DeviceIDWithAttr, "DeviceATT", "unknown")
-			//Add Attribute to device
+			common.Infof("Created a device: %v, of DeviceId: %s", DeviceATT.Name, DeviceIDWithAttr)
+
+			// Add Attribute to device
 			AddDeviceAttribute(DeviceATT, "Temperature", "25.25", "float")
 
 			IsDeviceAdded := HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, DeviceATT)
@@ -329,11 +331,13 @@ var _ = Describe("Event Bus Testing", func() {
 		})
 
 		It("TC_TEST_EBUS_10: Add a sample device with Twin attributes to kubeedge node", func() {
-			//Generating Device ID
+			// Generate Device ID
 			DeviceIDWithTwin = GenerateDeviceID("kubeedge-device-WithTwinAttributes")
-			//Generate a Device
+			// Create a Device
 			DeviceTW = CreateDevice(DeviceIDWithTwin, "DeviceTW", "unknown")
-			//Add twin attribute
+			common.Infof("Created a device: %v, of DeviceId: %s", DeviceTW.Name, DeviceIDWithTwin)
+
+			// Add twin attribute
 			AddTwinAttribute(DeviceTW, "Temperature", "25.25", "float")
 
 			IsDeviceAdded := HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, DeviceTW)
@@ -344,17 +348,15 @@ var _ = Describe("Event Bus Testing", func() {
 				common.Infof("DeviceID= %s, Value= %s", attributeDB.DeviceID, attributeDB.Expected)
 				return attributeDB.Expected
 			}, "60s", "2s").Should(Equal("25.25"), "Device is not added within specified time")
-
 		})
 
 		It("TC_TEST_EBUS_11: Update existing device with new attributes", func() {
+			common.Infof("Existing device: %v, DeviceId: %s", DeviceATT.Name, DeviceIDWithAttr)
 
-			//Generate a Device
-			device := CreateDevice(DeviceIDWithAttr, "DeviceATT", "unknown")
-			//Add Attribute to device
-			AddDeviceAttribute(device, "Temperature", "50.50", "float")
+			// Update Attribute
+			AddDeviceAttribute(DeviceATT, "Temperature", "50.50", "float")
 
-			IsDeviceAdded := HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, device)
+			IsDeviceAdded := HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, DeviceATT)
 			Expect(IsDeviceAdded).Should(BeTrue())
 
 			Eventually(func() string {
@@ -366,13 +368,12 @@ var _ = Describe("Event Bus Testing", func() {
 		})
 
 		It("TC_TEST_EBUS_12: Update existing device with new Twin attributes", func() {
+			common.Infof("Existing device: %v, DeviceId: %s", DeviceTW.Name, DeviceIDWithTwin)
 
-			//Generate a Device
-			device := CreateDevice(DeviceIDWithTwin, "DeviceTW", "unknown")
-			//Add twin attribute
-			AddTwinAttribute(device, "Temperature", "50.50", "float")
+			// Update twin attribute
+			AddTwinAttribute(DeviceTW, "Temperature", "50.50", "float")
 
-			IsDeviceAdded := HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, device)
+			IsDeviceAdded := HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, DeviceTW)
 			Expect(IsDeviceAdded).Should(BeTrue())
 
 			Eventually(func() string {
@@ -384,7 +385,9 @@ var _ = Describe("Event Bus Testing", func() {
 		})
 
 		It("TC_TEST_EBUS_13: Add a new Device attribute to existing device", func() {
-			//Adding a new attribute to a device
+			common.Infof("Existing device: %v, DeviceId: %s", DeviceATT.Name, DeviceIDWithAttr)
+
+			// Add a new attribute to the device
 			AddDeviceAttribute(DeviceATT, "Humidity", "30", "Int")
 
 			IsDeviceAdded := HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, DeviceATT)
@@ -399,7 +402,9 @@ var _ = Describe("Event Bus Testing", func() {
 		})
 
 		It("TC_TEST_EBUS_14: Add a new Twin attribute to existing device", func() {
-			//Preparing temporary Twin Attributes
+			common.Infof("Existing device: %v, DeviceId: %s", DeviceTW.Name, DeviceIDWithTwin)
+
+			// Add a new twin attribute to the device
 			AddTwinAttribute(DeviceTW, "Humidity", "100.100", "float")
 
 			IsDeviceAdded := HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, DeviceTW)
@@ -410,7 +415,6 @@ var _ = Describe("Event Bus Testing", func() {
 				common.Infof("DeviceID= %s, Value= %s", attributeDB.DeviceID, attributeDB.Expected)
 				return attributeDB.Expected
 			}, "60s", "2s").Should(Equal("100.100"), "Device Twin Attributes are not Added within specified time")
-
 		})
 	})
 })
