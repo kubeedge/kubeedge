@@ -25,27 +25,28 @@ import (
 )
 
 func TestNodeUpgradeActionFlow(t *testing.T) {
-	require.Equal(t, string(v1alpha2.NodeUpgradeJobActionInit), FlowNodeUpgradeJob.First.Name)
-	check := FlowNodeUpgradeJob.First.Next(true)
+	check := FlowNodeUpgradeJob.First
 	require.Equal(t, string(v1alpha2.NodeUpgradeJobActionCheck), check.Name)
 	require.Nil(t, FlowNodeUpgradeJob.First.Next(false))
-	confirm := check.Next(true)
+	waitConfirm := check.Next(true)
+	require.Equal(t, string(v1alpha2.NodeUpgradeJobActionWaitingConfirmation), waitConfirm.Name)
+	require.Nil(t, waitConfirm.Next(false))
+	confirm := waitConfirm.Next(true)
 	require.Equal(t, string(v1alpha2.NodeUpgradeJobActionConfirm), confirm.Name)
-	require.Nil(t, check.Next(false))
+	require.Nil(t, confirm.Next(false))
 	backUp := confirm.Next(true)
 	require.Equal(t, string(v1alpha2.NodeUpgradeJobActionBackUp), backUp.Name)
-	require.Nil(t, confirm.Next(false))
+	require.Nil(t, backUp.Next(false))
 	upgrade := backUp.Next(true)
 	require.Equal(t, string(v1alpha2.NodeUpgradeJobActionUpgrade), upgrade.Name)
-	require.Nil(t, backUp.Next(false))
 	require.Nil(t, upgrade.Next(true))
 	rollback := upgrade.Next(false)
 	require.Equal(t, string(v1alpha2.NodeUpgradeJobActionRollBack), rollback.Name)
 }
 
 func TestFound(t *testing.T) {
-	require.NotNil(t, FlowNodeUpgradeJob.Find(string(v1alpha2.NodeUpgradeJobActionInit)))
 	require.NotNil(t, FlowNodeUpgradeJob.Find(string(v1alpha2.NodeUpgradeJobActionCheck)))
+	require.NotNil(t, FlowNodeUpgradeJob.Find(string(v1alpha2.NodeUpgradeJobActionWaitingConfirmation)))
 	require.NotNil(t, FlowNodeUpgradeJob.Find(string(v1alpha2.NodeUpgradeJobActionConfirm)))
 	require.NotNil(t, FlowNodeUpgradeJob.Find(string(v1alpha2.NodeUpgradeJobActionBackUp)))
 	require.NotNil(t, FlowNodeUpgradeJob.Find(string(v1alpha2.NodeUpgradeJobActionUpgrade)))

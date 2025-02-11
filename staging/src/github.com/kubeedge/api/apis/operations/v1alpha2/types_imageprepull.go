@@ -121,7 +121,6 @@ type ImagePrePullTemplate struct {
 type ImagePrePullJobAction string
 
 const (
-	ImagePrePullJobActionInit  ImagePrePullJobAction = "Init"
 	ImagePrePullJobActionCheck ImagePrePullJobAction = "Check"
 	ImagePrePullJobActionPull  ImagePrePullJobAction = "Pull"
 )
@@ -180,7 +179,7 @@ type ImageStatus struct {
 	Image string `json:"image,omitempty"`
 
 	// State represents for the state phase of this image pull on the edge node.
-	State NodeExecutionState `json:"state,omitempty"`
+	State metav1.ConditionStatus `json:"state,omitempty"`
 
 	// Reason represents the fail reason if image pull failed
 	// +optional

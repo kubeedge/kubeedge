@@ -140,7 +140,6 @@ type RegistryAPI struct {
 type NodeUpgradeJobAction string
 
 const (
-	NodeUpgradeJobActionInit                NodeUpgradeJobAction = "Init"
 	NodeUpgradeJobActionCheck               NodeUpgradeJobAction = "Check"
 	NodeUpgradeJobActionConfirm             NodeUpgradeJobAction = "Confirm"
 	NodeUpgradeJobActionWaitingConfirmation NodeUpgradeJobAction = "WaitingConfirmation"
@@ -157,9 +156,13 @@ type NodeUpgradeJobStatus struct {
 	State JobState `json:"state,omitempty"`
 
 	// CurrentVersion represents for the current status of the EdgeCore.
+	// +optional
+	// Deprecated: For compatibility with v1alpha1 version, It will be removed in v1.23
 	CurrentVersion string `json:"currentVersion,omitempty"`
 
 	// HistoricVersion represents for the historic status of the EdgeCore.
+	// +optional
+	// Deprecated: For compatibility with v1alpha1 version, It will be removed in v1.23
 	HistoricVersion string `json:"historicVersion,omitempty"`
 
 	// Reason represents for the reason of the ImagePrePullJob.
@@ -175,13 +178,13 @@ type NodeUpgradeJobStatus struct {
 	// Event represents for the event of the ImagePrePullJob.
 	// There are six possible event values: Init, Check, BackUp, Upgrade, TimeOut, Rollback.
 	// +optional
-	// Deprecated: For compatibility with v1alpha1 version, It will be removed in v1.21
+	// Deprecated: For compatibility with v1alpha1 version, It will be removed in v1.23
 	Event string `json:"event,omitempty"`
 
 	// Action represents for the action of the ImagePrePullJob.
 	// There are two possible action values: Success, Failure.
 	// +optional
-	// Deprecated: For compatibility with v1alpha1 version, It will be removed in v1.21
+	// Deprecated: For compatibility with v1alpha1 version, It will be removed in v1.23
 	Action fsmv1alpha1.Action `json:"action,omitempty"`
 }
 
@@ -191,16 +194,22 @@ type NodeUpgradeJobNodeTaskStatus struct {
 	// Action represents for the action phase of the NodeUpgradeJob
 	Action NodeUpgradeJobAction `json:"action,omitempty"`
 
+	// CurrentVersion represents for the current status of the EdgeCore.
+	CurrentVersion string `json:"currentVersion,omitempty"`
+
+	// HistoricVersion represents for the historic status of the EdgeCore.
+	HistoricVersion string `json:"historicVersion,omitempty"`
+
 	BasicNodeTaskStatus `json:",inline"`
 
 	// State represents for the upgrade state phase of the edge node.
 	// There are several possible state values: "", Upgrading, BackingUp, RollingBack and Checking.
 	// +optional
-	// Deprecated: For compatibility with v1alpha1 version, It will be removed in v1.21
+	// Deprecated: For compatibility with v1alpha1 version, It will be removed in v1.23
 	State fsmv1alpha1.State `json:"state,omitempty"`
 	// Event represents for the event of the ImagePrePullJob.
 	// There are three possible event values: Init, Check, Pull.
 	// +optional
-	// Deprecated: For compatibility with v1alpha1 version, It will be removed in v1.21
+	// Deprecated: For compatibility with v1alpha1 version, It will be removed in v1.23
 	Event string `json:"event,omitempty"`
 }

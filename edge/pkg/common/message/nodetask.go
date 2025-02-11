@@ -23,7 +23,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	nodetaskmsg "github.com/kubeedge/kubeedge/pkg/nodetask/message"
+	taskmsg "github.com/kubeedge/kubeedge/pkg/nodetask/message"
 )
 
 // ReportTaskResult reports the status of node tasks, only for v1alpha2 version.
@@ -36,9 +36,9 @@ func ReportTaskResult(taskType, taskID string, resp types.NodeTaskResponse) {
 
 // ReportNodeTaskStatus reports the status of node tasks, used in v1alpha2 and later versions.
 // The message will be send to the cloud from the edge.
-func ReportNodeTaskStatus(r nodetaskmsg.Resource, nodeTaskStatus any) {
+func ReportNodeTaskStatus(res taskmsg.Resource, msgbody taskmsg.UpstreamMessage) {
 	msg := model.NewMessage("").SetRoute(modules.EdgeHubModuleName, modules.HubGroup).
-		SetResourceOperation(r.String(), nodetaskmsg.OperationUpdateNodeTaskStatus).
-		FillBody(nodeTaskStatus)
+		SetResourceOperation(res.String(), taskmsg.OperationUpdateNodeActionStatus).
+		FillBody(msgbody)
 	beehiveContext.Send(modules.EdgeHubModuleName, *msg)
 }

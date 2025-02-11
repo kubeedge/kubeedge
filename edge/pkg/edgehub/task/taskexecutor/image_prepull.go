@@ -17,6 +17,7 @@ limitations under the License.
 package taskexecutor
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -79,7 +80,10 @@ func pullImages(taskReq types.NodeTaskRequest) fsm.Event {
 	}
 
 	// pull images
-	container, err := util.NewContainerRuntime(edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint, edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.CgroupDriver)
+	container, err := util.NewContainerRuntime(
+		edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint,
+		edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.CgroupDriver,
+	)
 	if err != nil {
 		event.Msg = err.Error()
 		event.Action = api.ActionFailure
@@ -123,6 +127,7 @@ func getImagePrePullJobRequest(taskReq commontypes.NodeTaskRequest) (*commontype
 }
 
 func prePullImages(prePullReq commontypes.ImagePrePullJobRequest, container util.ContainerRuntime) (string, []v1alpha1.ImageStatus) {
+	ctx := context.Background()
 	errorStr := ""
 	authConfig, err := makeAuthConfig(prePullReq.Secret)
 	if err != nil {
@@ -135,7 +140,7 @@ func prePullImages(prePullReq commontypes.ImagePrePullJobRequest, container util
 			Image: image,
 		}
 		for i := 0; i <= int(prePullReq.RetryTimes); i++ {
-			err = container.PullImage(image, authConfig, nil)
+			err = container.PullImage(ctx, image, authConfig, nil)
 			if err == nil {
 				break
 			}

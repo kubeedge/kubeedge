@@ -17,7 +17,7 @@ limitations under the License.
 package taskv1alpha2
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -39,10 +39,10 @@ func (h *messageHandler) Filter(msg *model.Message) bool {
 	if msg.GetGroup() != modules.TaskManagerModuleName {
 		return false
 	}
-	return nodetaskmsg.IsNodeTaskResource(msg.GetResource())
+	return nodetaskmsg.IsNodeJobResource(msg.GetResource())
 }
 
-// Process handles the node task message.
+// Process handles the node job message.
 // These errors are returned due to code logic problems and will not affect business processes.
 func (h *messageHandler) Process(msg *model.Message, _ clients.Adapter) error {
 	msgres := nodetaskmsg.ParseResource(msg.GetResource())
@@ -52,12 +52,8 @@ func (h *messageHandler) Process(msg *model.Message, _ clients.Adapter) error {
 	}
 	data, err := msg.GetContentData()
 	if err != nil {
-		return fmt.Errorf("failed to get node task message content data: %v", err)
+		return fmt.Errorf("failed to get node job message content data: %v", err)
 	}
-	var taskmsg nodetaskmsg.TaskDownstreamMessage
-	if json.Unmarshal(data, &taskmsg) != nil {
-		return fmt.Errorf("failed to unmarshal node task message content data: %v", err)
-	}
-	runner.RunAction(msg.GetOperation(), &taskmsg)
+	runner.RunAction(context.Background(), msgres.JobName, msgres.NodeName, msg.GetOperation(), data)
 	return nil
 }

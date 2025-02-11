@@ -25,7 +25,6 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/taskv1alpha2/actions"
-	nodetaskmsg "github.com/kubeedge/kubeedge/pkg/nodetask/message"
 )
 
 func TestFilter(t *testing.T) {
@@ -80,9 +79,11 @@ func TestProcess(t *testing.T) {
 		patches := gomonkey.NewPatches()
 		defer patches.Reset()
 
-		patches.ApplyFunc(actions.GetRunner, func(_ string) actions.ActionRunner {
-			return &fakeRunner{}
+		patches.ApplyFunc(actions.GetRunner, func(_ string) *actions.ActionRunner {
+			return &actions.ActionRunner{}
 		})
+		patches.ApplyMethodFunc(&actions.ActionRunner{}, "RunAction",
+			func(_jobname, _nodename, _action string, _specData []byte) {})
 
 		msghandler := NewMessageHandler()
 		msg := model.NewMessage("").
@@ -92,7 +93,3 @@ func TestProcess(t *testing.T) {
 		require.NoError(t, err)
 	})
 }
-
-type fakeRunner struct{}
-
-func (*fakeRunner) RunAction(_ string, _ *nodetaskmsg.TaskDownstreamMessage) {}

@@ -33,14 +33,14 @@ func TestResourceCheck(t *testing.T) {
 	require.ErrorContains(t, err, "the APIVersion field must not be blank")
 	res.APIVersion = operationsv1alpha2.SchemeGroupVersion.String()
 	err = res.Check()
-	require.ErrorContains(t, err, "the ResourceType field must not be blank")
+	require.ErrorContains(t, err, "the resource type field must not be blank")
 	res.ResourceType = operationsv1alpha2.ResourceNodeUpgradeJob
 	err = res.Check()
-	require.ErrorContains(t, err, "the TaskName field must not be blank")
-	res.TaskName = "test"
+	require.ErrorContains(t, err, "the job name field must not be blank")
+	res.JobName = "test"
 	err = res.Check()
-	require.ErrorContains(t, err, "the Node field must not be blank")
-	res.Node = "node1"
+	require.ErrorContains(t, err, "the node name field must not be blank")
+	res.NodeName = "node1"
 	err = res.Check()
 	require.NoError(t, err)
 }
@@ -49,14 +49,14 @@ func TestResource(t *testing.T) {
 	res := Resource{
 		APIVersion:   operationsv1alpha2.SchemeGroupVersion.String(),
 		ResourceType: operationsv1alpha2.ResourceNodeUpgradeJob,
-		TaskName:     "test",
-		Node:         "node1",
+		JobName:      "test",
+		NodeName:     "node1",
 	}
-	require.True(t, IsNodeTaskResource(res.String()))
+	require.True(t, IsNodeJobResource(res.String()))
 	parsed := ParseResource(res.String())
 	require.NotNil(t, parsed)
 	require.Equal(t, res.APIVersion, parsed.APIVersion)
 	require.Equal(t, res.ResourceType, parsed.ResourceType)
-	require.Equal(t, res.TaskName, parsed.TaskName)
-	require.Equal(t, res.Node, parsed.Node)
+	require.Equal(t, res.JobName, parsed.JobName)
+	require.Equal(t, res.NodeName, parsed.NodeName)
 }

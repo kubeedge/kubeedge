@@ -28,6 +28,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/msghandler"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/task/taskexecutor"
+	nodetaskmsg "github.com/kubeedge/kubeedge/pkg/nodetask/message"
 )
 
 func NewMessageHandler() msghandler.Handler {
@@ -36,9 +37,10 @@ func NewMessageHandler() msghandler.Handler {
 
 type taskHandler struct{}
 
-func (th *taskHandler) Filter(message *model.Message) bool {
-	name := message.GetGroup()
-	return name == modules.TaskManagerModuleName
+func (th *taskHandler) Filter(msg *model.Message) bool {
+	name := msg.GetGroup()
+	return name == modules.TaskManagerModuleName &&
+		!nodetaskmsg.IsNodeJobResource(msg.GetResource())
 }
 
 func (th *taskHandler) Process(message *model.Message, _ clients.Adapter) error {

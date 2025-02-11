@@ -24,11 +24,12 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 
 	beehivemodel "github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	edgecon "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/conn"
@@ -94,7 +95,8 @@ func ConstructConnectMessage(info *model.HubInfo, isConnected bool) *beehivemode
 	content, _ := json.Marshal(body)
 
 	msg := beehivemodel.NewMessage("")
-	msg.BuildRouter(model.SrcCloudHub, model.GpResource, model.NewResource(model.ResNode, info.NodeID, nil), connected)
+	msg.BuildRouter(modules.CloudHubModuleName, model.GpResource,
+		model.NewResource(model.ResNode, info.NodeID, nil), connected)
 	msg.FillBody(content)
 	return msg
 }
@@ -111,7 +113,7 @@ func DeepCopy(msg *beehivemodel.Message) *beehivemodel.Message {
 }
 
 func NotifyEventQueueError(conn conn.Connection, nodeID string) {
-	msg := beehivemodel.NewMessage("").BuildRouter(model.GpResource, model.SrcCloudHub,
+	msg := beehivemodel.NewMessage("").BuildRouter(model.GpResource, modules.CloudHubModuleName,
 		model.NewResource(model.ResNode, nodeID, nil), model.OpDisConnect)
 
 	err := conn.WriteMessageAsync(msg)

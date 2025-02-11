@@ -14,11 +14,28 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package worker
+package executor
 
-type NodeTaskExecutor struct {
+type Pool struct {
+	pool chan struct{}
 }
 
-func (nte *NodeTaskExecutor) Execute() {
-	// 下发任务，控制节点数量执行节点任务
+func NewPool(size int) *Pool {
+	if size <= 0 {
+		size = 1
+	}
+	return &Pool{
+		pool: make(chan struct{}, size),
+	}
+}
+
+func (p *Pool) Acquire() {
+	p.pool <- struct{}{}
+}
+
+func (p *Pool) Release() {
+	select {
+	case <-p.pool:
+	default:
+	}
 }

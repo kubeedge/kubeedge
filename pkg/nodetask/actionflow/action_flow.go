@@ -33,22 +33,22 @@ func (a *Action) Next(success bool) *Action {
 	return a.NextFailure
 }
 
-// Final returns whether current action is the final action.
-func (a *Action) Final() bool {
+// IsFinal returns whether current action is the final action.
+func (a *Action) IsFinal() bool {
 	return a.NextSuccessful == nil && a.NextFailure == nil
 }
 
 // Flow defines the action flow of node task.
 type Flow struct {
-	First Action
+	First *Action
 }
 
 // Find returns the found action by name.
 func (sf *Flow) Find(name string) *Action {
 	if sf.First.Name == name {
-		return &sf.First
+		return sf.First
 	}
-	return doFind(name, &sf.First)
+	return doFind(name, sf.First)
 }
 
 // Using recursion to find a action by name.
@@ -69,46 +69,40 @@ func doFind(name string, act *Action) *Action {
 
 var (
 	// FlowNodeUpgradeJob defines the action flow of node upgrade job.
-	//
-	//	Init --> Check (--> Confirm --> WaitingConfirmation) -
-	//    --> BackUp --> Upgrade
-	//	                    └─ [If fails]-> RollBack
-	FlowNodeUpgradeJob = &Flow{
-		First: Action{
-			Name: string(v1alpha2.NodeUpgradeJobActionInit),
-			NextSuccessful: &Action{
-				Name: string(v1alpha2.NodeUpgradeJobActionCheck),
-				NextSuccessful: &Action{
-					Name: string(v1alpha2.NodeUpgradeJobActionConfirm),
-					NextSuccessful: &Action{
-						Name: string(v1alpha2.NodeUpgradeJobActionWaitingConfirmation),
-						NextSuccessful: &Action{
-							Name: string(v1alpha2.NodeUpgradeJobActionBackUp),
-							NextSuccessful: &Action{
-								Name: string(v1alpha2.NodeUpgradeJobActionUpgrade),
-								NextFailure: &Action{
-									Name: string(v1alpha2.NodeUpgradeJobActionRollBack),
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
+	FlowNodeUpgradeJob = initNodeUpgradeJobFlow()
 	// FlowImagePrePullJob defines the action flow of image pre pull job.
-	//
-	//	Init --> Check --> Pulls
-	FlowImagePrePullJob = &Flow{
-		First: Action{
-			Name: string(v1alpha2.ImagePrePullJobActionInit),
-			NextSuccessful: &Action{
-				Name: string(v1alpha2.ImagePrePullJobActionCheck),
-				NextSuccessful: &Action{
-					Name: string(v1alpha2.ImagePrePullJobActionPull),
-				},
-			},
-		},
-	}
+	FlowImagePrePullJob = initImagePrePullJob()
 )
+
+// initNodeUpgradeJobFlow initializes the action flow of node upgrade job.
+//
+//	Check (--> WaitingConfirmation --> Confirm) --> BackUp
+//	  --> Upgrade --> [If fails]-> RollBack
+func initNodeUpgradeJobFlow() *Flow {
+	check := &Action{Name: string(v1alpha2.NodeUpgradeJobActionCheck)}
+	waitingConfirmation := &Action{Name: string(v1alpha2.NodeUpgradeJobActionWaitingConfirmation)}
+	check.NextSuccessful = waitingConfirmation
+	confirm := &Action{Name: string(v1alpha2.NodeUpgradeJobActionConfirm)}
+	waitingConfirmation.NextSuccessful = confirm
+	backUp := &Action{Name: string(v1alpha2.NodeUpgradeJobActionBackUp)}
+	confirm.NextSuccessful = backUp
+	upgrade := &Action{Name: string(v1alpha2.NodeUpgradeJobActionUpgrade)}
+	backUp.NextSuccessful = upgrade
+	rollBack := &Action{Name: string(v1alpha2.NodeUpgradeJobActionRollBack)}
+	upgrade.NextFailure = rollBack
+	return &Flow{
+		First: check,
+	}
+}
+
+// initImagePrePullJob initializes the action flow of image pre pull job.
+//
+//	Check --> Pulls
+func initImagePrePullJob() *Flow {
+	check := &Action{Name: string(v1alpha2.ImagePrePullJobActionCheck)}
+	pulls := &Action{Name: string(v1alpha2.ImagePrePullJobActionPull)}
+	check.NextSuccessful = pulls
+	return &Flow{
+		First: check,
+	}
+}
