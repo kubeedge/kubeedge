@@ -27,6 +27,11 @@ const (
 	JobStateFailure    JobState = "Failure"
 )
 
+// IsFinal returns whether the node task is in the final state.
+func (s JobState) IsFinal() bool {
+	return s == JobStateComplated || s == JobStateFailure
+}
+
 type NodeExecutionState string
 
 const (

@@ -13,12 +13,16 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+package commons
 
-package worker
+import "time"
 
-type NodeTaskExecutor struct {
-}
+const (
+	LoggerNameNodeUpgradeJob  = "node-upgrade-job"
+	LoggerNameImagePrePullJob = "image-prepull-job"
+	LoggerFieldInstanceName   = "name"
+)
 
-func (nte *NodeTaskExecutor) Execute() {
-	// 下发任务，控制节点数量执行节点任务
-}
+const (
+	DefaultRequeueTime = 10 * time.Second
+)

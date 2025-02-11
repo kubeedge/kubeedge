@@ -19,6 +19,8 @@ package slices
 import (
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRemoveDuplicateElement(t *testing.T) {
@@ -52,4 +54,14 @@ func TestRemoveDuplicateElement(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestIn(t *testing.T) {
+	intArr := []int{1, 2, 3}
+	assert.True(t, In(intArr, 1))
+	assert.False(t, In(intArr, 4))
+
+	strArr := []string{"a", "b", "c"}
+	assert.True(t, In(strArr, "b"))
+	assert.False(t, In(strArr, "d"))
 }

@@ -16,12 +16,14 @@ limitations under the License.
 
 package slices
 
-// RemoveDuplicateElement deduplicate
-func RemoveDuplicateElement[T any](s []T) []T {
-	result := make([]T, 0, len(s))
-	temp := make(map[any]struct{}, len(s))
+import "reflect"
 
-	for _, item := range s {
+// RemoveDuplicateElement deduplicate
+func RemoveDuplicateElement[T any](slice []T) []T {
+	result := make([]T, 0, len(slice))
+	temp := make(map[any]struct{}, len(slice))
+
+	for _, item := range slice {
 		if _, ok := temp[item]; !ok {
 			temp[item] = struct{}{}
 			result = append(result, item)
@@ -29,4 +31,13 @@ func RemoveDuplicateElement[T any](s []T) []T {
 	}
 
 	return result
+}
+
+func In[T any](slice []T, item T) bool {
+	for i := range slice {
+		if reflect.DeepEqual(slice[i], item) {
+			return true
+		}
+	}
+	return false
 }

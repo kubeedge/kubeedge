@@ -67,10 +67,10 @@ func (r Resource) Check() error {
 }
 
 // String returns resource that satisfy the message resource format
-// {apiversion}/{resource_type}/{task_name}/nodes/{node_name}.
+// {apiversion}/{resource_type}/{task_name}/node/{node_name}.
 // It is best to use Check method to verify fields first.
 func (r Resource) String() string {
-	return strings.Join([]string{r.APIVersion, r.ResourceType, r.TaskName, "nodes", r.Node}, constants.ResourceSep)
+	return strings.Join([]string{r.APIVersion, r.ResourceType, r.TaskName, "node", r.Node}, constants.ResourceSep)
 }
 
 // IsNodeTaskResource returns whether the resource is a node task resource.

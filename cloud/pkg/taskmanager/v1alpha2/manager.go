@@ -23,14 +23,16 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/v1alpha2/controller/handlers"
+	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/v1alpha2/handlers"
 )
 
+// Manager a manager for upstream and downstream of node task.
 type Manager struct {
 	handlers   map[string]handlers.Handler
 	statusChan <-chan model.Message
 }
 
+// NewManager creates a new manager.
 func NewManager(statusChan <-chan model.Message) *Manager {
 	return &Manager{
 		statusChan: statusChan,
@@ -38,12 +40,14 @@ func NewManager(statusChan <-chan model.Message) *Manager {
 	}
 }
 
-func (m *Manager) Registry(h handlers.Handler) *Manager {
+// AddHandler adds the downstream/upstream handler of the node task.
+func (m *Manager) AddHandler(h handlers.Handler) *Manager {
 	m.handlers[h.Name()] = h
 	return m
 }
 
-func (m *Manager) DoDownstream(_ context.Context) error {
+// InitDownstream registers the informer events(add/update/delete) of the node task resources.
+func (m *Manager) InitDownstream() error {
 	for k, v := range m.handlers {
 		if _, err := v.Informer().AddEventHandler(v); err != nil {
 			return fmt.Errorf("failed to add event handler of %s, err: %v", k, err)
@@ -52,7 +56,9 @@ func (m *Manager) DoDownstream(_ context.Context) error {
 	return nil
 }
 
-func (m *Manager) DoUpstream(ctx context.Context) {
+// StartWatchUpstream starts watching the upstream messages of node task.
+// It selects the handler to update the node action status according to the node task type.
+func (m *Manager) StartWatchUpstream(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
