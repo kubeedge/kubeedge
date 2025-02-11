@@ -22,7 +22,8 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
-	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
+	typeoperationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
+	clientoperationsv1alpha2 "github.com/kubeedge/api/client/informers/externalversions/operations/v1alpha2"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 )
@@ -31,23 +32,25 @@ import (
 var _ Handler = (*NodeUpgradeJobHandler)(nil)
 
 type NodeUpgradeJobHandler struct {
+	nodeUpgradeJobInformer clientoperationsv1alpha2.NodeUpgradeJobInformer
 }
 
 func NewNodeUpgradeJobHandler() *NodeUpgradeJobHandler {
-	return &NodeUpgradeJobHandler{}
+	return &NodeUpgradeJobHandler{
+		nodeUpgradeJobInformer: informers.GetInformersManager().
+			GetKubeEdgeInformerFactory().
+			Operations().
+			V1alpha2().
+			NodeUpgradeJobs(),
+	}
 }
 
-func (h *NodeUpgradeJobHandler) Name() string {
-	return operationsv1alpha2.ResourceNodeUpgradeJob
+func (NodeUpgradeJobHandler) Name() string {
+	return typeoperationsv1alpha2.ResourceNodeUpgradeJob
 }
 
-func (NodeUpgradeJobHandler) Informer() cache.SharedIndexInformer {
-	return informers.GetInformersManager().
-		GetKubeEdgeInformerFactory().
-		Operations().
-		V1alpha2().
-		NodeUpgradeJobs().
-		Informer()
+func (h *NodeUpgradeJobHandler) Informer() cache.SharedIndexInformer {
+	return h.nodeUpgradeJobInformer.Informer()
 }
 
 func (h *NodeUpgradeJobHandler) UpdateNodeActionStatus(ctx context.Context, msg model.Message) error {
@@ -55,17 +58,30 @@ func (h *NodeUpgradeJobHandler) UpdateNodeActionStatus(ctx context.Context, msg 
 	return nil
 }
 
-func (h *NodeUpgradeJobHandler) OnAdd(obj any, _ bool) {
+func (h *NodeUpgradeJobHandler) OnAdd(obj any, isInInitialList bool) {
+	nodeUpgradeJob, ok := obj.(*typeoperationsv1alpha2.NodeUpgradeJob)
+	if !ok {
+		klog.Errorf("Failed to convert obj to NodeUpgradeJob, obj type is: %T", obj)
+		return
+	}
+	if isInInitialList {
+		if nodeUpgradeJob.Status.State.IsFinal() {
+			klog.V(5).Infof("this node upgrade task '%s' is already in the final state, ignore it",
+				nodeUpgradeJob.Name)
+			return
+		}
+	}
+
 	// TODO: ...
-	klog.Info("add node upgrade job %v", obj)
+	klog.Infof("add node upgrade job %v", obj)
 }
 
 func (h *NodeUpgradeJobHandler) OnUpdate(old, new any) {
 	// TODO: ...
-	klog.Info("update node upgrade job %v", new)
+	klog.Infof("update node upgrade job %v", new)
 }
 
 func (h *NodeUpgradeJobHandler) OnDelete(obj any) {
 	// TODO: ...
-	klog.Info("delete node upgrade job %v", obj)
+	klog.Infof("delete node upgrade job %v", obj)
 }

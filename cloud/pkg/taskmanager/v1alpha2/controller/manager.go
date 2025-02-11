@@ -43,7 +43,7 @@ func (m *Manager) Registry(h handlers.Handler) *Manager {
 	return m
 }
 
-func (m *Manager) DoDownstream(_ context.Context) error {
+func (m *Manager) RegisterEventHandler() error {
 	for k, v := range m.handlers {
 		if _, err := v.Informer().AddEventHandler(v); err != nil {
 			return fmt.Errorf("failed to add event handler of %s, err: %v", k, err)
