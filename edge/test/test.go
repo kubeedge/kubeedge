@@ -2,6 +2,7 @@ package test
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -34,11 +35,11 @@ type testManager struct {
 
 var _ core.Module = (*testManager)(nil)
 
-func (tm *testManager) Name() string {
+func (testManager) Name() string {
 	return name
 }
 
-func (tm *testManager) Group() string {
+func (testManager) Group() string {
 	// return core.MetaGroup
 	return modules.MetaGroup
 }
@@ -82,13 +83,15 @@ func GetPodListFromEdged(w http.ResponseWriter) error {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(respBody)
+	if _, err := w.Write(respBody); err != nil {
+		return fmt.Errorf("failed to write response, err: %v", err)
+	}
 
 	return nil
 }
 
 // podHandler handles Get/Add/Delete deployment list.
-func (tm *testManager) podHandler(w http.ResponseWriter, req *http.Request) {
+func (*testManager) podHandler(w http.ResponseWriter, req *http.Request) {
 	var operation string
 	var p v1.Pod
 	if req.Method == http.MethodGet {
@@ -100,12 +103,18 @@ func (tm *testManager) podHandler(w http.ResponseWriter, req *http.Request) {
 		body, err := io.ReadAll(req.Body)
 		if err != nil {
 			klog.Errorf("read body error %v", err)
-			w.Write([]byte("read request body error"))
+			if _, err := w.Write([]byte("read request body error")); err != nil {
+				// TODO: handle error
+				klog.Error(err)
+			}
 		}
-		klog.Infof("request body is %s\n", string(body))
+		klog.Infof("request body is %s", string(body))
 		if err = json.Unmarshal(body, &p); err != nil {
 			klog.Errorf("unmarshal request body error %v", err)
-			w.Write([]byte("unmarshal request body error"))
+			if _, err := w.Write([]byte("unmarshal request body error")); err != nil {
+				// TODO: handle error
+				klog.Error(err)
+			}
 		}
 
 		switch req.Method {
@@ -128,7 +137,7 @@ func (tm *testManager) podHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 // Function to handle device addition and removal from the edgenode
-func (tm *testManager) deviceHandler(w http.ResponseWriter, req *http.Request) {
+func (*testManager) deviceHandler(w http.ResponseWriter, req *http.Request) {
 	var operation string
 	var Content interface{}
 
@@ -136,13 +145,19 @@ func (tm *testManager) deviceHandler(w http.ResponseWriter, req *http.Request) {
 		body, err := io.ReadAll(req.Body)
 		if err != nil {
 			klog.Errorf("read body error %v", err)
-			w.Write([]byte("read request body error"))
+			if _, err := w.Write([]byte("read request body error")); err != nil {
+				// TODO: handle error
+				klog.Error(err)
+			}
 		}
 		klog.Infof("request body is %s\n", string(body))
 		err = json.Unmarshal(body, &Content)
 		if err != nil {
 			klog.Errorf("unmarshal request body error %v", err)
-			w.Write([]byte("unmarshal request body error"))
+			if _, err := w.Write([]byte("unmarshal request body error")); err != nil {
+				// TODO: handle error
+				klog.Error(err)
+			}
 		}
 		switch req.Method {
 		case http.MethodPost:
@@ -158,19 +173,25 @@ func (tm *testManager) deviceHandler(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (tm *testManager) secretHandler(w http.ResponseWriter, req *http.Request) {
+func (*testManager) secretHandler(w http.ResponseWriter, req *http.Request) {
 	var operation string
 	var p v1.Secret
 	if req.Body != nil {
 		body, err := io.ReadAll(req.Body)
 		if err != nil {
 			klog.Errorf("read body error %v", err)
-			w.Write([]byte("read request body error"))
+			if _, err := w.Write([]byte("read request body error")); err != nil {
+				// TODO: handle error
+				klog.Error(err)
+			}
 		}
 		klog.Infof("request body is %s\n", string(body))
 		if err = json.Unmarshal(body, &p); err != nil {
 			klog.Errorf("unmarshal request body error %v", err)
-			w.Write([]byte("unmarshal request body error"))
+			if _, err := w.Write([]byte("unmarshal request body error")); err != nil {
+				// TODO: handle error
+				klog.Error(err)
+			}
 		}
 
 		switch req.Method {
@@ -188,19 +209,25 @@ func (tm *testManager) secretHandler(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (tm *testManager) configmapHandler(w http.ResponseWriter, req *http.Request) {
+func (*testManager) configmapHandler(w http.ResponseWriter, req *http.Request) {
 	var operation string
 	var p v1.ConfigMap
 	if req.Body != nil {
 		body, err := io.ReadAll(req.Body)
 		if err != nil {
 			klog.Errorf("read body error %v", err)
-			w.Write([]byte("read request body error"))
+			if _, err := w.Write([]byte("read request body error")); err != nil {
+				// TODO: handle error
+				klog.Error(err)
+			}
 		}
 		klog.Infof("request body is %s\n", string(body))
 		if err = json.Unmarshal(body, &p); err != nil {
 			klog.Errorf("unmarshal request body error %v", err)
-			w.Write([]byte("unmarshal request body error"))
+			if _, err := w.Write([]byte("unmarshal request body error")); err != nil {
+				// TODO: handle error
+				klog.Error(err)
+			}
 		}
 
 		switch req.Method {

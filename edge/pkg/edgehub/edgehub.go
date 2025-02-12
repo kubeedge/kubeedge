@@ -14,8 +14,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/certificate"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
-	// register Task handler
-	_ "github.com/kubeedge/kubeedge/edge/pkg/edgehub/task"
+	_ "github.com/kubeedge/kubeedge/edge/pkg/edgehub/task" // register Task handler
 )
 
 // EdgeHub defines edgehub object structure

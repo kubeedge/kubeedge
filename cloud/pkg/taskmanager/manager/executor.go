@@ -17,6 +17,7 @@ limitations under the License.
 package manager
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -243,7 +244,7 @@ func initExecutor(message util.TaskMessage) (*Executor, error) {
 func (e *Executor) start() {
 	index, err := e.initWorker(0)
 	if err != nil {
-		klog.Errorf(err.Error())
+		klog.Error(err.Error())
 		return
 	}
 	for {
@@ -261,7 +262,7 @@ func (e *Executor) start() {
 			var endNode int
 			endNode, err = e.workers.endJob(status.NodeName)
 			if err != nil {
-				klog.Errorf(err.Error())
+				klog.Error(err.Error())
 				break
 			}
 
@@ -279,7 +280,7 @@ func (e *Executor) start() {
 				var state api.State
 				state, err = e.completedTaskStage()
 				if err != nil {
-					klog.Errorf(err.Error())
+					klog.Error(err.Error())
 					break
 				}
 				if fsm.TaskFinish(state) {
@@ -294,7 +295,7 @@ func (e *Executor) start() {
 
 			index, err = e.initWorker(index)
 			if err != nil {
-				klog.Errorf(err.Error())
+				klog.Error(err.Error())
 			}
 		}
 	}
@@ -322,7 +323,7 @@ func (e *Executor) dealFailedNode(node v1alpha1.TaskStatus) error {
 	if err != nil {
 		return fmt.Errorf("%s, report status failed, %s", errMsg, err.Error())
 	}
-	return fmt.Errorf(errMsg)
+	return errors.New(errMsg)
 }
 
 func (e *Executor) completedTaskStage() (api.State, error) {
@@ -406,7 +407,7 @@ func (e *Executor) handelTimeOutJob(index int) {
 			Msg:    fmt.Sprintf("node task %s execution timeout, %s", lastState, err.Error()),
 		})
 		if err != nil {
-			klog.Warningf(err.Error())
+			klog.Warning(err.Error())
 		}
 	}
 }

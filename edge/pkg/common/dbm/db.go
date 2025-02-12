@@ -4,7 +4,6 @@ import (
 	"sync"
 
 	"github.com/beego/beego/v2/client/orm"
-	//Blank import to run only the init function
 	_ "github.com/mattn/go-sqlite3"
 	"k8s.io/klog/v2"
 )
