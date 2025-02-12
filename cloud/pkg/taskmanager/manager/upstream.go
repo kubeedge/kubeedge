@@ -28,7 +28,6 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	keclient "github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
-	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/util"
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/util/controller"
@@ -41,47 +40,20 @@ type UpstreamController struct {
 	// downstream controller to update NodeUpgradeJob status in cache
 	dc *DownstreamController
 
-	kubeClient   kubernetes.Interface
-	informer     k8sinformer.SharedInformerFactory
-	crdClient    crdClientset.Interface
-	messageLayer messagelayer.MessageLayer
+	kubeClient kubernetes.Interface
+	informer   k8sinformer.SharedInformerFactory
+	crdClient  crdClientset.Interface
 	// message channel
 	taskStatusChan chan model.Message
 }
 
 // Start UpstreamController
 func (uc *UpstreamController) Start() error {
-	klog.Info("Start Task Upstream Controller")
-
-	uc.taskStatusChan = make(chan model.Message, config.Config.Buffer.TaskStatus)
-	go uc.dispatchMessage()
-
+	klog.V(2).Info("start task upstream controller")
 	for i := 0; i < int(config.Config.Load.TaskWorkers); i++ {
 		go uc.updateTaskStatus()
 	}
 	return nil
-}
-
-// Start UpstreamController
-func (uc *UpstreamController) dispatchMessage() {
-	for {
-		select {
-		case <-beehiveContext.Done():
-			klog.Info("Stop dispatch task upstream message")
-			return
-		default:
-		}
-
-		msg, err := uc.messageLayer.Receive()
-		if err != nil {
-			klog.Warningf("Receive message failed, %v", err)
-			continue
-		}
-
-		klog.V(4).Infof("task upstream controller receive msg %#v", msg)
-
-		uc.taskStatusChan <- msg
-	}
 }
 
 // updateTaskStatus update NodeUpgradeJob status field
@@ -133,13 +105,14 @@ func (uc *UpstreamController) updateTaskStatus() {
 }
 
 // NewUpstreamController create UpstreamController from config
-func NewUpstreamController(dc *DownstreamController) (*UpstreamController, error) {
+func NewUpstreamController(dc *DownstreamController, statusChan chan model.Message,
+) (*UpstreamController, error) {
 	uc := &UpstreamController{
-		kubeClient:   keclient.GetKubeClient(),
-		informer:     informers.GetInformersManager().GetKubeInformerFactory(),
-		crdClient:    keclient.GetCRDClient(),
-		messageLayer: messagelayer.TaskManagerMessageLayer(),
-		dc:           dc,
+		kubeClient:     keclient.GetKubeClient(),
+		informer:       informers.GetInformersManager().GetKubeInformerFactory(),
+		crdClient:      keclient.GetCRDClient(),
+		dc:             dc,
+		taskStatusChan: statusChan,
 	}
 	return uc, nil
 }
