@@ -78,17 +78,19 @@ patch_cilium_rbac() {
 
 update_edgecore_config() {
   echo "Updating edgecore config..."
-  # # TODO: use https://github.com/kubeedge/kubeedge/pull/6049
 
-  # PATCH_FILE=/etc/kubeedge/config/edgecore.yaml
+  # FEAT: support configure edgecore in cloud side
+  # https://github.com/kubeedge/kubeedge/pull/6049
 
-  # sudo yq e '.modules.edgeStream.enable = true' -i "$PATCH_FILE"
-  # sudo yq e '.modules.edged.tailoredKubeletConfig.clusterDNS = ["10.96.0.10"]' -i "$PATCH_FILE"
-  # sudo yq e '.modules.metaManager.metaServer.enable = true' -i "$PATCH_FILE"
-  # sudo yq e '.modules.serviceBus.enable = true' -i "$PATCH_FILE"
+  PATCH_FILE=/etc/kubeedge/config/edgecore.yaml
 
-  # systemctl daemon-reload
-  # systemctl restart edgecore
+  sudo yq e '.modules.edgeStream.enable = true' -i "$PATCH_FILE"
+  sudo yq e '.modules.edged.tailoredKubeletConfig.clusterDNS = ["10.96.0.10"]' -i "$PATCH_FILE"
+  sudo yq e '.modules.metaManager.metaServer.enable = true' -i "$PATCH_FILE"
+  sudo yq e '.modules.serviceBus.enable = true' -i "$PATCH_FILE"
+
+  systemctl daemon-reload
+  systemctl restart edgecore
 }
 
 deploy_edge_daemonset() {
@@ -133,14 +135,33 @@ cleanup() {
 }
 
 main() {
-  check_prerequisites
-  patch_cilium_daemonset
-  enable_dynamic_controller
-  patch_cilium_rbac
-  update_edgecore_config
-  deploy_edge_daemonset
-  cleanup
+  if [[ $# -ne 1 ]]; then
+    echo "Usage: $0 <cloudcore|edgecore>"
+    exit 1
+  fi
+
+  case "$1" in
+  cloudcore)
+    check_prerequisites
+    patch_cilium_daemonset
+    enable_dynamic_controller
+    patch_cilium_rbac
+    deploy_edge_daemonset
+    cleanup
+    ;;
+  edgecore)
+    check_prerequisites
+    update_edgecore_config
+    cleanup
+    ;;
+  *)
+    echo "Invalid argument: $1"
+    echo "Usage: $0 <cloudcore|edgecore>"
+    exit 1
+    ;;
+  esac
+
   echo "Configuration completed."
 }
 
-main
+main "$@"
