@@ -1,5 +1,5 @@
 /*
-Copyright 2025 The KubeEdge Authors.
+Copyright 2024 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,6 +29,11 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+)
+
+const (
+	defaultTestTimeout = 100 * time.Millisecond
+	defaultWaitTime    = 1 * time.Second
 )
 
 type mockSafeWriteTunneler struct {
@@ -140,7 +145,7 @@ func TestLogConnection_CloseReadChannel(t *testing.T) {
 	assert.False(ok)
 }
 
-func TestEdgedLogsConnection_receiveFromCloudStream(t *testing.T) {
+func TestLogConnection_receiveFromCloudStream(t *testing.T) {
 	assert := assert.New(t)
 
 	stop := make(chan struct{}, 1)
@@ -151,6 +156,8 @@ func TestEdgedLogsConnection_receiveFromCloudStream(t *testing.T) {
 		MessID:   1,
 	}
 
+	defer close(logs.ReadChan)
+
 	go logs.receiveFromCloudStream(stop)
 
 	dataMsg := NewMessage(1, MessageTypeData, []byte("test data"))
@@ -159,7 +166,7 @@ func TestEdgedLogsConnection_receiveFromCloudStream(t *testing.T) {
 	select {
 	case <-stop:
 		assert.Fail("Should not receive stop signal for data message")
-	case <-time.After(100 * time.Millisecond):
+	case <-time.After(defaultTestTimeout):
 	}
 
 	removeMsg := NewMessage(1, MessageTypeRemoveConnect, nil)
@@ -167,11 +174,9 @@ func TestEdgedLogsConnection_receiveFromCloudStream(t *testing.T) {
 
 	select {
 	case <-stop:
-	case <-time.After(time.Second):
+	case <-time.After(defaultWaitTime):
 		assert.Fail("Should have received stop signal")
 	}
-
-	close(logs.ReadChan)
 }
 
 func TestEdgedLogsConnection_write2CloudStream(t *testing.T) {
