@@ -61,6 +61,7 @@ type KubeCloudHelmInstTool struct {
 	DryRun           bool
 	Action           string
 	existsProfile    bool
+	ImageRepository  string
 }
 
 // InstallTools downloads KubeEdge for the specified version
@@ -355,6 +356,13 @@ func (cu *KubeCloudHelmInstTool) checkProfile(baseHelmRoot string) error {
 func (cu *KubeCloudHelmInstTool) handleProfile(profileValue string) error {
 	// the current version
 	currentVersion := cu.Common.ToolVersion.String()
+
+	if cu.ImageRepository != "" {
+		cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "cloudCore.image.repository", cu.ImageRepository+"/cloudcore"))
+        cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "iptablesManager.image.repository", cu.ImageRepository+"/iptables-manager"))
+        cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", "controllerManager.image.repository", cu.ImageRepository+"/controller-manager"))
+    }
+
 	switch cu.ProfileKey {
 	case VersionProfileKey:
 		if profileValue == "" {
