@@ -29,7 +29,6 @@ import (
 	"github.com/kubeedge/api/apis/operations/v1alpha1"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/common/types"
-	commontypes "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
 	edgeutil "github.com/kubeedge/kubeedge/edge/pkg/common/util"
 	metaclient "github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
@@ -97,7 +96,7 @@ func pullImages(taskReq types.NodeTaskRequest) fsm.Event {
 		if err != nil {
 			klog.Warningf("marshal imageStatus failed: %v", err)
 		}
-		resp := commontypes.NodeTaskResponse{
+		resp := types.NodeTaskResponse{
 			NodeName:        edgeCoreConfig.Modules.Edged.HostnameOverride,
 			Event:           event.Type,
 			Action:          event.Action,
@@ -109,8 +108,8 @@ func pullImages(taskReq types.NodeTaskRequest) fsm.Event {
 	return fsm.Event{}
 }
 
-func getImagePrePullJobRequest(taskReq commontypes.NodeTaskRequest) (*commontypes.ImagePrePullJobRequest, error) {
-	var prePullReq commontypes.ImagePrePullJobRequest
+func getImagePrePullJobRequest(taskReq types.NodeTaskRequest) (*types.ImagePrePullJobRequest, error) {
+	var prePullReq types.ImagePrePullJobRequest
 	data, err := json.Marshal(taskReq.Item)
 	if err != nil {
 		return nil, err
@@ -122,7 +121,7 @@ func getImagePrePullJobRequest(taskReq commontypes.NodeTaskRequest) (*commontype
 	return &prePullReq, err
 }
 
-func prePullImages(prePullReq commontypes.ImagePrePullJobRequest, container util.ContainerRuntime) (string, []v1alpha1.ImageStatus) {
+func prePullImages(prePullReq types.ImagePrePullJobRequest, container util.ContainerRuntime) (string, []v1alpha1.ImageStatus) {
 	errorStr := ""
 	authConfig, err := makeAuthConfig(prePullReq.Secret)
 	if err != nil {

@@ -37,10 +37,11 @@ const (
 )
 
 const (
-	TaskUpgrade  = "upgrade"
-	TaskRollback = "rollback"
-	TaskBackup   = "backup"
-	TaskPrePull  = "prepull"
+	TaskUpgrade      = "upgrade"
+	TaskRollback     = "rollback"
+	TaskBackup       = "backup"
+	TaskPrePull      = "prepull"
+	TaskConfigUpdate = "configUpdate"
 )
 
 type TaskMessage struct {

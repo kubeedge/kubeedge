@@ -29,6 +29,7 @@ import (
 func init() {
 	Register(TaskUpgrade, NewUpgradeExecutor())
 	Register(TaskPrePull, NewPrePullExecutor())
+	Register(TaskConfigUpdate, NewConfigUpdateExecutor())
 }
 
 type Executor interface {
