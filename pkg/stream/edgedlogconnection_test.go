@@ -311,7 +311,7 @@ func TestEdgedLogsConnection_Serve(t *testing.T) {
 			}()
 
 			go func() {
-				time.Sleep(100 * time.Millisecond)
+				time.Sleep(defaultTestTimeout)
 				logs.Stop <- struct{}{}
 			}()
 
