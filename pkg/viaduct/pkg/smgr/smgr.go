@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/lucas-clemente/quic-go"
+	"github.com/quic-go/quic-go"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/api"
@@ -80,30 +80,30 @@ func (pool *streamPool) getStream() *Stream {
 
 // free stream by stream id
 func (pool *streamPool) freeStream(s quic.Stream) bool {
-	pool.lock.Lock()
-	defer pool.lock.Unlock()
+    pool.lock.Lock()
+    defer pool.lock.Unlock()
 
-	for streamID := range pool.streamMap {
-		if streamID == s.StreamID() {
-			delete(pool.streamMap, s.StreamID())
-			_ = s.CancelRead(quic.ErrorCode(comm.StatusCodeFreeStream))
-			s.Close()
-			_ = s.CancelWrite(quic.ErrorCode(comm.StatusCodeFreeStream))
-			return true
-		}
-	}
-	return false
+    for streamID := range pool.streamMap {
+        if streamID == s.StreamID() {
+            delete(pool.streamMap, s.StreamID())
+            s.CancelRead(quic.StreamErrorCode(comm.StatusCodeFreeStream))
+            s.Close()
+            s.CancelWrite(quic.StreamErrorCode(comm.StatusCodeFreeStream))
+            return true
+        }
+    }
+    return false
 }
 
 func (pool *streamPool) destroyStreams() {
-	pool.lock.Lock()
-	defer pool.lock.Unlock()
-	for _, stream := range pool.streamMap {
-		_ = stream.Stream.CancelRead(quic.ErrorCode(comm.StatusCodeFreeStream))
-		stream.Stream.Close()
-		_ = stream.Stream.CancelWrite(quic.ErrorCode(comm.StatusCodeFreeStream))
-	}
-	pool.streamMap = make(map[quic.StreamID]*Stream)
+    pool.lock.Lock()
+    defer pool.lock.Unlock()
+    for _, stream := range pool.streamMap {
+        stream.Stream.CancelRead(quic.StreamErrorCode(comm.StatusCodeFreeStream))
+        stream.Stream.Close()
+        stream.Stream.CancelWrite(quic.StreamErrorCode(comm.StatusCodeFreeStream))
+    }
+    pool.streamMap = make(map[quic.StreamID]*Stream)
 }
 
 func (mgr *PoolManager) len() int {
@@ -196,36 +196,36 @@ func (mgr *PoolManager) Destroy() {
 	mgr.busyPool.destroyStreams()
 }
 
-func NewStreamManager(streamMax int, autoFree bool, session quic.Session) *StreamManager {
-	if streamMax <= 0 {
-		streamMax = NumStreamsMax
-	}
+func NewStreamManager(streamMax int, autoFree bool, session quic.Connection) *StreamManager {
+    if streamMax <= 0 {
+        streamMax = NumStreamsMax
+    }
 
-	streamMgr := &StreamManager{
-		NumStreamsMax: streamMax,
-		Session:       &Session{session},
-		messagePool: PoolManager{
-			idlePool: streamPool{
-				streamMap: make(map[quic.StreamID]*Stream),
-			},
-			busyPool: streamPool{
-				streamMap: make(map[quic.StreamID]*Stream),
-			},
+    streamMgr := &StreamManager{
+        NumStreamsMax: streamMax,
+        Session:      NewSession(session),
+        messagePool: PoolManager{
+            idlePool: streamPool{
+                streamMap: make(map[quic.StreamID]*Stream),
+            },
+            busyPool: streamPool{
+                streamMap: make(map[quic.StreamID]*Stream),
+            },
+            autoFree: autoFree,
+        },
+        binaryPool: PoolManager{
+            idlePool: streamPool{
+                streamMap: make(map[quic.StreamID]*Stream),
+            },
+            busyPool: streamPool{
+                streamMap: make(map[quic.StreamID]*Stream),
+            },
 			autoFree: autoFree,
-		},
-		binaryPool: PoolManager{
-			idlePool: streamPool{
-				streamMap: make(map[quic.StreamID]*Stream),
-			},
-			busyPool: streamPool{
-				streamMap: make(map[quic.StreamID]*Stream),
-			},
-			autoFree: autoFree,
-		},
-	}
-	streamMgr.messagePool.cond.L = &streamMgr.messagePool.lock
-	streamMgr.binaryPool.cond.L = &streamMgr.binaryPool.lock
-	return streamMgr
+        },
+    }
+    streamMgr.messagePool.cond.L = &streamMgr.messagePool.lock
+    streamMgr.binaryPool.cond.L = &streamMgr.binaryPool.lock
+    return streamMgr
 }
 
 func (mgr *StreamManager) getPoolManager(useType api.UseType) *PoolManager {
