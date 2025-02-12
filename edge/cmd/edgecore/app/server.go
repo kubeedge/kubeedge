@@ -3,7 +3,9 @@ package app
 import (
 	"errors"
 	"fmt"
+	"net"
 	"os"
+	"strconv"
 	"strings"
 
 	ps "github.com/shirou/gopsutil/v3/process"
@@ -200,7 +202,8 @@ func registerModules(c *v1alpha2.EdgeCoreConfig) {
 	eventbus.Register(c.Modules.EventBus, c.Modules.Edged.HostnameOverride)
 	metamanager.Register(c.Modules.MetaManager)
 	servicebus.Register(c.Modules.ServiceBus)
-	edgestream.Register(c.Modules.EdgeStream, c.Modules.Edged.HostnameOverride, c.Modules.Edged.NodeIP)
+	kubeletHost := net.JoinHostPort(c.Modules.Edged.TailoredKubeletConfig.Address, strconv.Itoa(int(c.Modules.Edged.TailoredKubeletConfig.ReadOnlyPort)))
+	edgestream.Register(c.Modules.EdgeStream, c.Modules.Edged.HostnameOverride, c.Modules.Edged.NodeIP, kubeletHost)
 	test.Register(c.Modules.DBTest)
 	// Note: Need to put it to the end, and wait for all models to register before executing
 	dbm.InitDBConfig(c.DataBase.DriverName, c.DataBase.AliasName, c.DataBase.DataSource)
