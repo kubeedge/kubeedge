@@ -1,6 +1,8 @@
 package endpointresource
 
 import (
+	"fmt"
+
 	v1 "k8s.io/api/core/v1"
 	discovery "k8s.io/api/discovery/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -20,9 +22,10 @@ type FilterImpl struct {
 }
 
 const (
-	resourceEpSliceName = "EndpointSlice"
-	resourceEpName      = "Endpoints"
-	filterName          = "EndpointResource"
+	resourceEpSliceName      = "EndpointSlice"
+	resourceEpName           = "Endpoints"
+	filterName               = "EndpointResource"
+	ServiceToplogyAnnotation = "service.kubernetes.io/topology-mode"
 )
 
 func newEndpointsliceFilter() *FilterImpl {
@@ -54,12 +57,33 @@ func (f *FilterImpl) NeedFilter(content interface{}) bool {
 	return false
 }
 
+func getNodeZone(nodeName string) (string, error) {
+	node, err := filter.GetDynamicResourceInformer(v1.SchemeGroupVersion.WithResource("nodes")).Lister().Get(nodeName)
+	if err != nil {
+		return "", fmt.Errorf("failed to get node %s: %w", nodeName, err)
+	}
+
+	nodeObj, err := meta.Accessor(node)
+	if err != nil {
+		return "", fmt.Errorf("failed to access node %s metadata: %w", nodeName, err)
+	}
+
+	labels := nodeObj.GetLabels()
+	if labels == nil {
+		return "", nil // Node has no labels
+	}
+
+	zone := labels[nodegroup.LabelTopologyZone]
+	return zone, nil
+}
+
 func filterEndpointSlice(targetNode string, obj runtime.Object) {
 	unstruct, ok := obj.(*unstructured.Unstructured)
 	if !ok {
 		return
 	}
 	var epSlice discovery.EndpointSlice
+
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstruct.UnstructuredContent(), &epSlice)
 	if err != nil {
 		klog.Errorf("convert unstructure content %v err: %v", unstruct.GetName(), err)
@@ -77,6 +101,13 @@ func filterEndpointSlice(targetNode string, obj runtime.Object) {
 			klog.Errorf("get service %v accessor error: %v", svcName, err)
 			return
 		}
+		annotations := svcObj.GetAnnotations()
+		if annotations == nil {
+			annotations = make(map[string]string)
+		}
+		// Enable both topology-aware routing and nodegroup filtering
+		annotations[ServiceToplogyAnnotation] = "Auto"
+
 		svcTopology = svcObj.GetAnnotations()[nodegroup.ServiceTopologyAnnotation]
 	}
 	if svcTopology != nodegroup.ServiceTopologyRangeNodegroup {
@@ -85,7 +116,21 @@ func filterEndpointSlice(targetNode string, obj runtime.Object) {
 	}
 	var epsTmp []discovery.Endpoint
 	for _, ep := range epSlice.Endpoints {
+		if ep.NodeName == nil {
+			continue
+		}
 		if filter.IsBelongToSameGroup(targetNode, *ep.NodeName) {
+			// Add zone information for topology-aware routing
+			if ep.Zone == nil || *ep.Zone == "" {
+				zone, err := getNodeZone(*ep.NodeName)
+				if err != nil {
+					klog.Errorf("failed to get zone for node %s: %v", *ep.NodeName, err)
+					continue
+				}
+				if zone != "" {
+					ep.Zone = &zone
+				}
+			}
 			epsTmp = append(epsTmp, ep)
 		}
 	}
@@ -100,17 +145,34 @@ func filterEndpointSlice(targetNode string, obj runtime.Object) {
 
 func filterEndpointsAddress(targetNode string, address []v1.EndpointAddress) []v1.EndpointAddress {
 	var tmpAddress []v1.EndpointAddress
+	targetZone, err := getNodeZone(targetNode)
+	if err != nil {
+		klog.Errorf("Failed to get zone for target node %s: %v", targetNode, err)
+		return tmpAddress
+	}
+
 	for _, addr := range address {
 		if addr.NodeName == nil {
 			continue
 		}
-		if filter.IsBelongToSameGroup(targetNode, *addr.NodeName) {
+
+		if !filter.IsBelongToSameGroup(targetNode, *addr.NodeName) {
+			continue
+		}
+
+		// Check zone level topology
+		nodeZone, err := getNodeZone(*addr.NodeName)
+		if err != nil {
+			klog.Errorf("Failed to get zone for node %s: %v", *addr.NodeName, err)
+			continue
+		}
+
+		if nodeZone == targetZone {
 			tmpAddress = append(tmpAddress, addr)
 		}
 	}
 	return tmpAddress
 }
-
 func filterEndpoints(targetNode string, obj runtime.Object) {
 	unstruct, ok := obj.(*unstructured.Unstructured)
 	if !ok {
