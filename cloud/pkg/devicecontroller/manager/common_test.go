@@ -85,9 +85,8 @@ func TestCommonResourceEventHandler(t *testing.T) {
 
 		select {
 		case <-eventsChan:
-			t.Errorf("Event should not be sent for unsupported type")
+			t.Error("Event should not be sent for unsupported type")
 		default:
-			// Expected behavior - no event sent
 		}
 	})
 }
