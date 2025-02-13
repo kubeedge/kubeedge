@@ -21,9 +21,12 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
+	"strings"
 
 	"github.com/golang/mock/gomock"
 	coordinationv1 "k8s.io/api/coordination/v1"
+	authenticationv1 "k8s.io/api/authentication/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/uuid"
@@ -833,3 +836,391 @@ func TestProcessQuery(t *testing.T) {
 		}
 	})
 }
+
+func TestParseResource_TokenRequest(t *testing.T) {
+    // Test case 1: Invalid content data
+    msg := model.NewMessage("")
+    msg.BuildRouter("", "", "default/serviceaccounttoken/name", "")
+    resKey, resType, resID := parseResource(msg)
+    t.Run("InvalidContentData", func(t *testing.T) {
+        expectedType := model.ResourceTypeServiceAccountToken
+        expectedKey := `"name"/"default"/[]string(nil)/0/v1.BoundObjectReference{Kind:"", APIVersion:"", Name:"", UID:""}`
+        if resKey != expectedKey || resType != expectedType || resID != "" {
+            t.Errorf("Expected resKey=%s, resType=%s, resID='', got resKey=%s, resType=%s, resID=%s",
+                expectedKey, expectedType, resKey, resType, resID)
+        }
+    })
+
+    // Test case 2: Invalid JSON unmarshal
+    msg = model.NewMessage("")
+    msg.BuildRouter("", "", "default/serviceaccounttoken/name", "")
+    msg.Content = "invalid json"
+    resKey, resType, resID = parseResource(msg)
+    t.Run("InvalidJSONUnmarshal", func(t *testing.T) {
+        expectedType := ""
+        expectedKey := ""
+        if resKey != expectedKey || resType != expectedType || resID != "" {
+            t.Errorf("Expected resKey='', resType='', resID='', got resKey=%s, resType=%s, resID=%s",
+                resKey, resType, resID)
+        }
+    })
+
+    // Test case 3: Invalid resource format
+    msg = model.NewMessage("")
+    msg.BuildRouter("", "", "invalid/format", "")
+    tokenReq := &authenticationv1.TokenRequest{}
+    content, _ := json.Marshal(tokenReq)
+    msg.Content = content
+    resKey, resType, resID = parseResource(msg)
+    t.Run("InvalidResourceFormat", func(t *testing.T) {
+        expectedKey := "invalid/format"
+        expectedType := "format"
+        if resKey != expectedKey || resType != expectedType || resID != "" {
+            t.Errorf("Expected resKey=%s, resType=%s, resID='', got resKey=%s, resType=%s, resID=%s",
+                expectedKey, expectedType, resKey, resType, resID)
+        }
+    })
+
+    // Test case 4: Valid token request
+    msg = model.NewMessage("")
+    msg.BuildRouter("", "", "default/serviceaccounttoken/name", "")
+    tokenReq = &authenticationv1.TokenRequest{
+        Spec: authenticationv1.TokenRequestSpec{
+            Audiences: []string{"test"},
+        },
+    }
+    content, _ = json.Marshal(tokenReq)
+    msg.Content = content
+    resKey, resType, resID = parseResource(msg)
+    t.Run("ValidTokenRequest", func(t *testing.T) {
+        expectedType := model.ResourceTypeServiceAccountToken
+        expectedKey := `"name"/"default"/[]string{"test"}/0/v1.BoundObjectReference{Kind:"", APIVersion:"", Name:"", UID:""}`
+        if resKey != expectedKey || resType != expectedType || resID != "" {
+            t.Errorf("Expected resKey=%s, resType=%s, resID='', got resKey=%s, resType=%s, resID=%s",
+                expectedKey, expectedType, resKey, resType, resID)
+        }
+    })
+}
+
+func TestProcessVolume(t *testing.T) {
+    // Setup meta manager
+    meta := newMetaManager(true)
+    core.Register(meta)
+
+    // Initialize context with required modules
+    beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
+
+    // Add required modules
+    edged := &common.ModuleInfo{
+        ModuleName: ModuleNameEdged,
+        ModuleType: common.MsgCtxTypeChannel,
+    }
+    beehiveContext.AddModule(edged)
+
+    edgeHub := &common.ModuleInfo{
+        ModuleName: ModuleNameEdgeHub,
+        ModuleType: common.MsgCtxTypeChannel,
+    }
+    beehiveContext.AddModule(edgeHub)
+    beehiveContext.AddModuleGroup(ModuleNameEdgeHub, modules.HubGroup)
+
+    // Test case: Send to edged success
+    msg := model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, 
+        "volume", constants.CSIOperationTypeCreateVolume)
+    
+    // Create channels for test coordination
+    done := make(chan struct{})
+    responseReceived := make(chan struct{})
+
+    // Start a goroutine to handle the volume processing
+    go func() {
+        meta.processVolume(*msg)
+        close(done)
+    }()
+
+    // Start a goroutine to simulate edged response
+    go func() {
+        time.Sleep(100 * time.Millisecond)
+        resp := model.NewMessage(msg.GetID())
+        resp.Content = "success"
+        beehiveContext.SendResp(*resp)
+        close(responseReceived)
+    }()
+
+    // Wait for both response and processing with timeout
+    timeout := time.After(2 * time.Second)
+    select {
+    case <-done:
+        // Wait for response to be received
+        select {
+        case <-responseReceived:
+            // Try to receive the message
+            message, err := beehiveContext.Receive(ModuleNameEdgeHub)
+            t.Run("ProcessVolumeSuccess", func(t *testing.T) {
+                if err != nil {
+                    t.Errorf("Failed to receive message: %v", err)
+                    return
+                }
+                if message.GetContent() != "success" {
+                    t.Errorf("Expected content 'success', got %v", message.GetContent())
+                }
+            })
+        case <-timeout:
+            t.Error("Timeout waiting for response")
+        }
+    case <-timeout:
+        t.Error("Timeout waiting for volume processing")
+    }
+
+    // Cleanup
+    beehiveContext.Cancel()
+}
+
+func TestIsObjectResp(t *testing.T) {
+    // Test case 1: Empty map
+    data := make(map[string]interface{})
+    result := isObjectResp(data)
+    t.Run("EmptyMap", func(t *testing.T) {
+        if result {
+            t.Error("Expected false for empty map")
+        }
+    })
+
+    // Test case 2: Only Object key
+    data = map[string]interface{}{
+        "Object": "test",
+    }
+    result = isObjectResp(data)
+    t.Run("OnlyObjectKey", func(t *testing.T) {
+        if result {
+            t.Error("Expected false for map with only Object key")
+        }
+    })
+
+    // Test case 3: Only Err key
+    data = map[string]interface{}{
+        "Err": nil,
+    }
+    result = isObjectResp(data)
+    t.Run("OnlyErrKey", func(t *testing.T) {
+        if result {
+            t.Error("Expected false for map with only Err key")
+        }
+    })
+
+    // Test case 4: Valid object response
+    data = map[string]interface{}{
+        "Object": "test",
+        "Err":    nil,
+    }
+    result = isObjectResp(data)
+    t.Run("ValidObjectResponse", func(t *testing.T) {
+        if !result {
+            t.Error("Expected true for valid object response")
+        }
+    })
+}
+
+func TestProcessPatch(t *testing.T) {
+    // Setup mock controller
+    mockCtrl := gomock.NewController(t)
+    defer mockCtrl.Finish()
+    
+    // Create mock objects
+    ormerMock := beego.NewMockOrmer(mockCtrl)
+    rawSetterMock := beego.NewMockRawSeter(mockCtrl)
+    dbm.DBAccess = ormerMock
+
+    // Setup meta manager
+    meta := newMetaManager(true)
+
+    // Initialize context
+    beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
+
+    // Add required modules
+    edged := &common.ModuleInfo{
+        ModuleName: ModuleNameEdged,
+        ModuleType: common.MsgCtxTypeChannel,
+    }
+    beehiveContext.AddModule(edged)
+    
+    edgeHub := &common.ModuleInfo{
+        ModuleName: ModuleNameEdgeHub,
+        ModuleType: common.MsgCtxTypeChannel,
+    }
+    beehiveContext.AddModule(edgeHub)
+    beehiveContext.AddModuleGroup(ModuleNameEdgeHub, modules.HubGroup)
+
+    metaManager := &common.ModuleInfo{
+        ModuleName: modules.MetaManagerModuleName,
+        ModuleType: common.MsgCtxTypeChannel,
+    }
+    beehiveContext.AddModule(metaManager)
+    beehiveContext.AddModuleGroup(modules.MetaManagerModuleName, modules.MetaGroup)
+
+    // Set connection status
+    connect.SetConnected(true)
+
+    // Test case 1: Event resource type
+    msg := model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, 
+        "test/"+model.ResourceTypeEvent, model.PatchOperation)
+    
+    // Use a channel to coordinate test completion
+    done := make(chan struct{})
+    go func() {
+        meta.processPatch(*msg)
+        message, err := beehiveContext.Receive(ModuleNameEdgeHub)
+        if err == nil {
+            t.Run("EventResourceType", func(t *testing.T) {
+                if message.GetOperation() != model.PatchOperation {
+                    t.Errorf("Expected operation %s, got %s", model.PatchOperation, message.GetOperation())
+                }
+            })
+        }
+        close(done)
+    }()
+
+    // Wait for test completion with timeout
+    select {
+    case <-done:
+        // Test completed successfully
+    case <-time.After(5 * time.Second):
+        t.Fatal("Test timed out")
+    }
+
+    // Test case 2: Handle message error
+    rawSetterMock.EXPECT().Exec().Return(nil, errFailedDBOperation).Times(1)
+    ormerMock.EXPECT().Raw(gomock.Any(), gomock.Any()).Return(rawSetterMock).Times(1)
+    
+    msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, 
+        "test/resource", model.PatchOperation)
+    
+    done = make(chan struct{})
+    go func() {
+        meta.processPatch(*msg)
+        message, err := beehiveContext.Receive(ModuleNameEdgeHub)
+        if err == nil {
+            t.Run("HandleMessageError", func(t *testing.T) {
+                if !strings.Contains(message.GetContent().(string), FailedDBOperation) {
+                    t.Errorf("Expected error containing %s, got %v", FailedDBOperation, message.GetContent())
+                }
+            })
+        }
+        close(done)
+    }()
+
+    // Wait for test completion with timeout
+    select {
+    case <-done:
+        // Test completed successfully
+    case <-time.After(5 * time.Second):
+        t.Fatal("Test timed out")
+    }
+
+    // Test case 3: Success with connection
+    rawSetterMock.EXPECT().Exec().Return(nil, nil).Times(1)
+    ormerMock.EXPECT().Raw(gomock.Any(), gomock.Any()).Return(rawSetterMock).Times(1)
+    
+    msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, 
+        "test/resource", model.PatchOperation)
+    
+    done = make(chan struct{})
+    go func() {
+        meta.processPatch(*msg)
+        message, err := beehiveContext.Receive(ModuleNameEdgeHub)
+        if err == nil {
+            t.Run("SuccessWithConnection", func(t *testing.T) {
+                if message.GetOperation() != model.PatchOperation {
+                    t.Errorf("Expected operation %s, got %s", model.PatchOperation, message.GetOperation())
+                }
+            })
+        }
+        close(done)
+    }()
+
+    // Wait for test completion with timeout
+    select {
+    case <-done:
+        // Test completed successfully
+    case <-time.After(5 * time.Second):
+        t.Fatal("Test timed out")
+    }
+
+    // Cleanup
+    beehiveContext.Cancel()
+}
+
+func TestRunMetaManager(t *testing.T) {
+    // Setup mock controller
+    mockCtrl := gomock.NewController(t)
+    defer mockCtrl.Finish()
+    
+    // Create mock objects
+    ormerMock := beego.NewMockOrmer(mockCtrl)
+    querySetterMock := beego.NewMockQuerySeter(mockCtrl)
+    dbm.DBAccess = ormerMock
+
+    // Setup meta manager
+    meta := newMetaManager(true)
+    core.Register(meta)
+
+    // Add required modules
+    edged := &common.ModuleInfo{
+        ModuleName: ModuleNameEdged,
+        ModuleType: common.MsgCtxTypeChannel,
+    }
+    beehiveContext.AddModule(edged)
+
+    edgeHub := &common.ModuleInfo{
+        ModuleName: ModuleNameEdgeHub,
+        ModuleType: common.MsgCtxTypeChannel,
+    }
+    beehiveContext.AddModule(edgeHub)
+
+    // Setup expectations for database queries
+    fakeDao := new([]dao.Meta)
+    fakeDaoArray := make([]dao.Meta, 1)
+    fakeDaoArray[0] = dao.Meta{Key: "Test", Value: MessageTest}
+    fakeDao = &fakeDaoArray
+
+    querySetterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDao).Return(int64(1), nil).AnyTimes()
+    querySetterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySetterMock).AnyTimes()
+    ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySetterMock).AnyTimes()
+
+    // Start meta manager in a goroutine
+    go meta.runMetaManager()
+
+    // Wait for manager to start
+    time.Sleep(100 * time.Millisecond)
+
+    // Send a test message
+    msg := model.NewMessage("")
+    msg.BuildRouter(ModuleNameEdgeHub, GroupResource, "test/"+model.ResourceTypeRule, model.QueryOperation)
+    beehiveContext.Send(meta.Name(), *msg)
+
+    // Wait for processing
+    time.Sleep(100 * time.Millisecond)
+
+    // Receive response
+    message, err := beehiveContext.Receive(ModuleNameEdged)
+    
+    t.Run("RunMetaManager", func(t *testing.T) {
+        if err != nil {
+            t.Errorf("Failed to receive response: %v", err)
+            return
+        }
+
+        // Verify response content
+        want := make([]string, 1)
+        want[0] = MessageTest
+        bytesWant, _ := json.Marshal(want)
+        bytesGot, _ := json.Marshal(message.GetContent())
+        if string(bytesGot) != string(bytesWant) {
+            t.Errorf("Wrong message received: Wanted %v and Got %v", want, message.GetContent())
+        }
+    })
+
+    // Stop meta manager
+    beehiveContext.Cancel()
+}
+

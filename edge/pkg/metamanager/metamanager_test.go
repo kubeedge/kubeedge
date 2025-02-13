@@ -21,8 +21,9 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/common"
 	"github.com/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
-	commodule "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+    commodule "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
 // metaModule is metamanager implementation of Module interface
@@ -59,4 +60,33 @@ func TestNameAndGroup(t *testing.T) {
 			t.Errorf("Group of module is not correct wanted: %v and got: %v", commodule.MetaGroup, metaModule.Group())
 		}
 	})
+}
+
+func TestRegister(t *testing.T) {
+    t.Run("RegisterWithEnabledManager", func(t *testing.T) {
+        // Setup
+        beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
+        beehiveContext.Cancel() // Clean up previous context
+        beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
+        
+        metaManager := &v1alpha2.MetaManager{
+            Enable: true,
+        }
+        Register(metaManager)
+
+        // Verify registration
+        modules := core.GetModules()
+        var found bool
+        for name := range modules {
+            if name == commodule.MetaManagerModuleName {
+                found = true
+                break
+            }
+        }
+        if !found {
+            t.Error("MetaManager module was not registered when enabled")
+        }
+    })
+    // Cleanup after all tests
+    beehiveContext.Cancel()
 }
