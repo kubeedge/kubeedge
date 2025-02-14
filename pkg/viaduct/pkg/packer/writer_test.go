@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package packer
 
 import (
@@ -56,12 +57,12 @@ func TestWriter_Write(t *testing.T) {
 	nilWriter := NewWriter(nil)
 	_, err = nilWriter.Write(data)
 	if err == nil {
-		t.Errorf("expected error, got nil")
+		t.Error("expected error, got nil")
 	}
 
 	failingWriter := NewWriter(&mockWriter{fail: true})
 	_, err = failingWriter.Write(data)
 	if err == nil {
-		t.Errorf("expected error, got nil")
+		t.Error("expected error, got nil")
 	}
 }
