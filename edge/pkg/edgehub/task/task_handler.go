@@ -24,15 +24,14 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
+	commonmsg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/msghandler"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/task/taskexecutor"
 )
 
-func init() {
-	handler := &taskHandler{}
-	msghandler.RegisterHandler(handler)
+func NewMessageHandler() msghandler.Handler {
+	return &taskHandler{}
 }
 
 type taskHandler struct{}
@@ -73,6 +72,6 @@ func (th *taskHandler) Process(message *model.Message, _ clients.Adapter) error 
 		Action:   event.Action,
 		Reason:   event.Msg,
 	}
-	util.ReportTaskResult(taskReq.Type, taskReq.TaskID, resp)
+	commonmsg.ReportTaskResult(taskReq.Type, taskReq.TaskID, resp)
 	return nil
 }
