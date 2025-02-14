@@ -11,10 +11,16 @@ import (
 	"testing"
 	"time"
 
+	"k8s.io/apimachinery/pkg/watch"
+
 	"github.com/agiledragon/gomonkey/v2"
 	"go.opentelemetry.io/otel/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
+	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	cri "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
@@ -29,8 +35,10 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/common"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/restful"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite"
 	fakeclient "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator/fake"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
+	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 )
 
 func TestREST_PassThrough(t *testing.T) {
@@ -549,6 +557,374 @@ func TestREST_Logs(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestREST_List(t *testing.T) {
+    patch := gomonkey.NewPatches()
+    defer patch.Reset()
+
+    // Create a proper REST instance
+    rest, err := NewREST()
+    if err != nil {
+        t.Fatalf("Failed to create REST instance: %v", err)
+    }
+
+    // Create a fake storage interface that implements DryRunnableStorage
+    fakeStorage := &genericregistry.Store{
+        NewFunc: func() runtime.Object {
+            return &unstructured.Unstructured{}
+        },
+        NewListFunc: func() runtime.Object {
+            return &unstructured.UnstructuredList{}
+        },
+        DefaultQualifiedResource: schema.GroupResource{
+            Group:    "test",
+            Resource: "tests",
+        },
+    }
+
+    // Set the store directly
+    rest.Store = fakeStorage
+
+    // Initialize agent
+    rest.Agent = &agent.Agent{Applications: sync.Map{}}
+
+    tests := []struct {
+        name           string
+        setupMocks     func()
+        wantErr        bool
+        expectedResult bool
+    }{
+        {
+            name: "successful cloud list",
+            setupMocks: func() {
+                // Mock IsConnected
+                patch.ApplyFunc(connect.IsConnected, func() bool {
+                    return true
+                })
+
+                // Mock SendSync
+                patch.ApplyFunc(beehiveContext.SendSync, func(string, model.Message, time.Duration) (model.Message, error) {
+                    app := metaserver.Application{
+                        RespBody: []byte(`{"items": [{"metadata": {"name": "test"}}]}`),
+                        Status:   metaserver.Approved,
+                    }
+                    content, _ := json.Marshal(app)
+                    return model.Message{Content: content}, nil
+                })
+
+                // Mock Store.List method
+                patch.ApplyMethod(reflect.TypeOf(rest.Store), "List",
+                    func(_ *genericregistry.Store, _ context.Context, _ *metainternalversion.ListOptions) (runtime.Object, error) {
+                        return &unstructured.UnstructuredList{
+                            Items: []unstructured.Unstructured{
+                                {
+                                    Object: map[string]interface{}{
+                                        "metadata": map[string]interface{}{
+                                            "name": "test",
+                                        },
+                                    },
+                                },
+                            },
+                        }, nil
+                    })
+            },
+            expectedResult: true,
+        },
+        {
+            name: "failed cloud list, successful local list",
+            setupMocks: func() {
+                patch.ApplyFunc(connect.IsConnected, func() bool {
+                    return true
+                })
+
+                // Mock failed cloud request
+                patch.ApplyFunc(beehiveContext.SendSync, func(string, model.Message, time.Duration) (model.Message, error) {
+                    return model.Message{}, fmt.Errorf("cloud error")
+                })
+
+                // Mock successful local list
+                patch.ApplyMethod(reflect.TypeOf(rest.Store), "List",
+                    func(_ *genericregistry.Store, _ context.Context, _ *metainternalversion.ListOptions) (runtime.Object, error) {
+                        return &unstructured.UnstructuredList{
+                            Items: []unstructured.Unstructured{
+                                {
+                                    Object: map[string]interface{}{
+                                        "metadata": map[string]interface{}{
+                                            "name": "local-test",
+                                        },
+                                    },
+                                },
+                            },
+                        }, nil
+                    })
+            },
+            expectedResult: true,
+        },
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            if tt.setupMocks != nil {
+                tt.setupMocks()
+            }
+
+            ctx := request.WithRequestInfo(context.Background(), &request.RequestInfo{
+                APIGroup:   "test",
+                APIVersion: "v1",
+                Resource:   "tests",
+                Namespace:  "default",
+            })
+
+            options := &metainternalversion.ListOptions{}
+
+            result, err := rest.List(ctx, options)
+
+            if (err != nil) != tt.wantErr {
+                t.Errorf("List() error = %v, wantErr %v", err, tt.wantErr)
+                return
+            }
+
+            if tt.expectedResult {
+                if result == nil {
+                    t.Error("List() expected result but got nil")
+                } else {
+                    list, ok := result.(*unstructured.UnstructuredList)
+                    if !ok {
+                        t.Error("List() result is not an UnstructuredList")
+                    } else if len(list.Items) == 0 {
+                        t.Error("List() result has no items")
+                    }
+                }
+            }
+        })
+    }
+}
+
+func TestREST_Watch(t *testing.T) {
+    patch := gomonkey.NewPatches()
+    defer patch.Reset()
+
+    // Create a proper REST instance
+    rest, err := NewREST()
+    if err != nil {
+        t.Fatalf("Failed to create REST instance: %v", err)
+    }
+
+    // Initialize store with required fields
+    store := &genericregistry.Store{
+        NewFunc: func() runtime.Object {
+            return &unstructured.Unstructured{}
+        },
+        NewListFunc: func() runtime.Object {
+            return &unstructured.UnstructuredList{}
+        },
+        DefaultQualifiedResource: schema.GroupResource{
+            Group:    "test",
+            Resource: "tests",
+        },
+        Storage: genericregistry.DryRunnableStorage{
+            Storage: sqlite.New(),
+            Codec:   unstructured.UnstructuredJSONScheme,
+        },
+    }
+    rest.Store = store
+
+    // Initialize agent
+    rest.Agent = &agent.Agent{Applications: sync.Map{}}
+
+    tests := []struct {
+        name       string
+        setupMocks func()
+        wantErr    bool
+    }{
+        {
+            name: "successful watch",
+            setupMocks: func() {
+                // Mock IsConnected
+                patch.ApplyFunc(connect.IsConnected, func() bool {
+                    return true
+                })
+
+                // Mock SendSync
+                patch.ApplyFunc(beehiveContext.SendSync, func(string, model.Message, time.Duration) (model.Message, error) {
+                    app := metaserver.Application{
+                        Status: metaserver.Approved,
+                        ID:     "test-watch-id",
+                    }
+                    content, _ := json.Marshal(app)
+                    return model.Message{Content: content}, nil
+                })
+
+                // Mock Watch method
+                patch.ApplyMethod(reflect.TypeOf(rest.Store), "Watch",
+                    func(_ *genericregistry.Store, _ context.Context, _ *metainternalversion.ListOptions) (watch.Interface, error) {
+                        return watch.NewEmptyWatch(), nil
+                    })
+            },
+            wantErr: false,
+        },
+        {
+            name: "watch error when not connected",
+            setupMocks: func() {
+                // Mock IsConnected to return false
+                patch.ApplyFunc(connect.IsConnected, func() bool {
+                    return false
+                })
+
+                // Mock Store.Watch to return error
+                patch.ApplyMethod(reflect.TypeOf(rest.Store), "Watch",
+                    func(_ *genericregistry.Store, _ context.Context, _ *metainternalversion.ListOptions) (watch.Interface, error) {
+                        return nil, fmt.Errorf("store watch error when not connected")
+                    })
+            },
+            wantErr: true,
+        },
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            if tt.setupMocks != nil {
+                tt.setupMocks()
+            }
+
+            ctx := request.WithRequestInfo(context.Background(), &request.RequestInfo{
+                APIGroup:   "test",
+                APIVersion: "v1",
+                Resource:   "tests",
+                Namespace:  "default",
+            })
+
+            options := &metainternalversion.ListOptions{}
+
+            w, err := rest.Watch(ctx, options)
+
+            // Check error condition
+            if tt.wantErr {
+                if err == nil {
+                    t.Error("Watch() expected error but got nil")
+                }
+            } else {
+                if err != nil {
+                    t.Errorf("Watch() unexpected error: %v", err)
+                }
+                if w == nil {
+                    t.Error("Watch() expected watch interface but got nil")
+                }
+            }
+
+            // Cleanup
+            if w != nil {
+                w.Stop()
+            }
+        })
+    }
+}
+
+func TestREST_Restart(t *testing.T) {
+    patch := gomonkey.NewPatches()
+    defer patch.Reset()
+
+    // Initialize REST
+    rest := &REST{}
+
+    // Mock config.Config
+    patch.ApplyGlobalVar(&config.Config, config.Configure{
+        Edged: v1alpha2.Edged{
+            Enable: true,
+            TailoredKubeletConfig: &v1alpha2.TailoredKubeletConfiguration{
+                ContainerRuntimeEndpoint: "unix:///var/run/containerd/containerd.sock",
+            },
+        },
+    })
+
+    tests := []struct {
+        name           string
+        restartInfo    common.RestartInfo
+        setupMocks     func()
+        expectedErrors int
+        expectedLogs   int
+    }{
+        {
+            name: "successful restart",
+            restartInfo: common.RestartInfo{
+                Namespace: "default",
+                PodNames:  []string{"pod1"},
+            },
+            setupMocks: func() {
+                patch.ApplyFunc(remote.NewRemoteRuntimeService, func(string, time.Duration, trace.TracerProvider) (cri.RuntimeService, error) {
+                    return &fakeRuntimeService{
+                        ListContainersF: func(ctx context.Context, filter *runtimeapi.ContainerFilter) ([]*runtimeapi.Container, error) {
+                            return []*runtimeapi.Container{{
+                                Id: "container1",
+                                Metadata: &runtimeapi.ContainerMetadata{
+                                    Name: "container1",
+                                },
+                            }}, nil
+                        },
+                        StopContainerF: func(ctx context.Context, containerID string, timeout int64) error {
+                            return nil
+                        },
+                    }, nil
+                })
+            },
+            expectedErrors: 0,
+            expectedLogs:   1,
+        },
+        {
+            name: "list containers error",
+            restartInfo: common.RestartInfo{
+                Namespace: "default",
+                PodNames:  []string{"pod1"},
+            },
+            setupMocks: func() {
+                patch.ApplyFunc(remote.NewRemoteRuntimeService, func(string, time.Duration, trace.TracerProvider) (cri.RuntimeService, error) {
+                    return &fakeRuntimeService{
+                        ListContainersF: func(ctx context.Context, filter *runtimeapi.ContainerFilter) ([]*runtimeapi.Container, error) {
+                            return nil, fmt.Errorf("list error")
+                        },
+                    }, nil
+                })
+            },
+            expectedErrors: 1,
+            expectedLogs:   0,
+        },
+        {
+            name: "no containers found",
+            restartInfo: common.RestartInfo{
+                Namespace: "default",
+                PodNames:  []string{"pod1"},
+            },
+            setupMocks: func() {
+                patch.ApplyFunc(remote.NewRemoteRuntimeService, func(string, time.Duration, trace.TracerProvider) (cri.RuntimeService, error) {
+                    return &fakeRuntimeService{
+                        ListContainersF: func(ctx context.Context, filter *runtimeapi.ContainerFilter) ([]*runtimeapi.Container, error) {
+                            return []*runtimeapi.Container{}, nil
+                        },
+                    }, nil
+                })
+            },
+            expectedErrors: 1,
+            expectedLogs:   0,
+        },
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            if tt.setupMocks != nil {
+                tt.setupMocks()
+            }
+
+            response := rest.Restart(context.Background(), tt.restartInfo)
+
+            if len(response.ErrMessages) != tt.expectedErrors {
+                t.Errorf("Restart() got %v errors, want %v", len(response.ErrMessages), tt.expectedErrors)
+            }
+            if len(response.LogMessages) != tt.expectedLogs {
+                t.Errorf("Restart() got %v logs, want %v", len(response.LogMessages), tt.expectedLogs)
+            }
+        })
+    }
 }
 
 type fakeRuntimeService struct {

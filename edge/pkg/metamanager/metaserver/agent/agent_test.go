@@ -18,6 +18,7 @@ package agent
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -27,6 +28,7 @@ import (
 	commontypes "github.com/kubeedge/kubeedge/common/types"
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
+	"github.com/kubeedge/kubeedge/pkg/metaserver"
 )
 
 func TestApplicationGC(t *testing.T) {
@@ -67,3 +69,101 @@ func TestApplicationGC(t *testing.T) {
 		})
 	}
 }
+
+func TestAgent_Apply(t *testing.T) {
+	tests := []struct {
+		name        string
+		setupApp    func(*Agent) *metaserver.Application
+		wantStatus  metaserver.ApplicationStatus
+		wantErr     bool
+		errContains string
+	}{
+		{
+			name: "Unregistered application",
+			setupApp: func(a *Agent) *metaserver.Application {
+				return &metaserver.Application{ID: "unregistered"}
+			},
+			wantErr:     true,
+			errContains: "has not been registered",
+		},
+		{
+			name: "Approved application",
+			setupApp: func(a *Agent) *metaserver.Application {
+				app := &metaserver.Application{ID: "approved", Status: metaserver.Approved}
+				a.Applications.Store(app.ID, app)
+				return app
+			},
+			wantStatus: metaserver.Approved,
+		},
+		{
+			name: "Failed application",
+			setupApp: func(a *Agent) *metaserver.Application {
+				app := &metaserver.Application{
+					ID:     "failed",
+					Status: metaserver.Failed,
+					Reason: "test failure",
+				}
+				a.Applications.Store(app.ID, app)
+				return app
+			},
+			wantErr:     true,
+			errContains: "test failure",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := NewApplicationAgent()
+			app := tt.setupApp(a)
+
+			err := a.Apply(app)
+			if tt.wantErr {
+				if err == nil {
+					t.Error("expected error but got none")
+				} else if !strings.Contains(err.Error(), tt.errContains) {
+					t.Errorf("error %q should contain %q", err.Error(), tt.errContains)
+				}
+				return
+			}
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+			if app.GetStatus() != tt.wantStatus {
+				t.Errorf("got status %v, want %v", app.GetStatus(), tt.wantStatus)
+			}
+		})
+	}
+}
+
+func TestAgent_ListWatchApplications(t *testing.T) {
+	a := NewApplicationAgent()
+
+	// Add some test applications
+	watchApp := &metaserver.Application{
+		ID:   "watch-app",
+		Verb: metaserver.Watch,
+	}
+	nonWatchApp := &metaserver.Application{
+		ID:   "non-watch-app",
+		Verb: metaserver.Get,
+	}
+
+	a.Applications.Store(watchApp.ID, watchApp)
+	a.Applications.Store(nonWatchApp.ID, nonWatchApp)
+
+	watchApps := a.listWatchApplications()
+
+	if len(watchApps) != 1 {
+		t.Errorf("expected 1 watch application, got %d", len(watchApps))
+	}
+
+	if _, exists := watchApps[watchApp.ID]; !exists {
+		t.Error("watch application not found in result")
+	}
+
+	if _, exists := watchApps[nonWatchApp.ID]; exists {
+		t.Error("non-watch application found in result")
+	}
+}
+
+
