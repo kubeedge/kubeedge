@@ -339,3 +339,207 @@ func TestHandleNodeResp(t *testing.T) {
 	assert.Nil(result)
 	assert.Contains(err.Error(), "unmarshal message to node failed")
 }
+
+func TestNode_Update(t *testing.T) {
+	assert := assert.New(t)
+
+	nodeName := "test-node"
+	inputNode := &api.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: nodeName,
+		},
+		Spec: api.NodeSpec{
+			PodCIDR: "10.0.0.0/24",
+		},
+	}
+
+	testCases := []struct {
+		name      string
+		respFunc  func(*model.Message) (*model.Message, error)
+		expectErr bool
+	}{
+		{
+			name: "Successful Update",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				return model.NewMessage(message.GetID()), nil
+			},
+			expectErr: false,
+		},
+		{
+			name: "Update Error",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				return nil, fmt.Errorf("update failed")
+			},
+			expectErr: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			mockSend := &mockSendInterface{}
+			mockSend.sendSyncFunc = func(message *model.Message) (*model.Message, error) {
+				// Verify message properties
+				assert.Equal(modules.MetaGroup, message.GetGroup())
+				assert.Equal(modules.EdgedModuleName, message.GetSource())
+				assert.NotEmpty(message.GetID())
+				assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypeNode, nodeName), message.GetResource())
+				assert.Equal(model.UpdateOperation, message.GetOperation())
+
+				// Verify node content
+				content, err := message.GetContentData()
+				assert.NoError(err)
+				var node api.Node
+				err = json.Unmarshal(content, &node)
+				assert.NoError(err)
+				assert.Equal(inputNode, &node)
+
+				return test.respFunc(message)
+			}
+
+			nodeClient := newNodes(namespace, mockSend)
+			err := nodeClient.Update(inputNode)
+
+			if test.expectErr {
+				assert.Error(err)
+				assert.Contains(err.Error(), "update node failed")
+			} else {
+				assert.NoError(err)
+			}
+		})
+	}
+}
+
+func TestNode_Delete(t *testing.T) {
+	assert := assert.New(t)
+
+	nodeName := "test-node"
+
+	testCases := []struct {
+		name      string
+		expectErr bool
+	}{
+		{
+			name:      "Delete Not Implemented",
+			expectErr: false,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			mockSend := &mockSendInterface{}
+			nodeClient := newNodes(namespace, mockSend)
+
+			err := nodeClient.Delete(nodeName)
+
+			if test.expectErr {
+				assert.Error(err)
+			} else {
+				assert.NoError(err)
+			}
+		})
+	}
+}
+
+func TestNode_Get(t *testing.T) {
+	assert := assert.New(t)
+
+	nodeName := "test-node"
+	expectedNode := &api.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: nodeName,
+		},
+		Spec: api.NodeSpec{
+			PodCIDR: "10.0.0.0/24",
+		},
+	}
+
+	testCases := []struct {
+		name         string
+		respFunc     func(*model.Message) (*model.Message, error)
+		source       string
+		operation    string
+		expectedNode *api.Node
+		expectErr    bool
+	}{
+		{
+			name: "Get from MetaDB",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				nodeJSON, _ := json.Marshal(expectedNode)
+				content, _ := json.Marshal([]string{string(nodeJSON)})
+				resp := model.NewMessage(message.GetID())
+				resp.Router.Source = modules.MetaManagerModuleName
+				resp.Router.Operation = model.ResponseOperation
+				resp.Content = content
+				return resp, nil
+			},
+			source:       modules.MetaManagerModuleName,
+			operation:    model.ResponseOperation,
+			expectedNode: expectedNode,
+			expectErr:    false,
+		},
+		{
+			name: "Get from MetaManager",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				resp := model.NewMessage(message.GetID())
+				resp.Router.Source = "other"
+				resp.Router.Operation = "other"
+				content, _ := json.Marshal(expectedNode)
+				resp.Content = content
+				return resp, nil
+			},
+			source:       "other",
+			operation:    "other",
+			expectedNode: expectedNode,
+			expectErr:    false,
+		},
+		{
+			name: "Get from MetaManager",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				resp := model.NewMessage(message.GetID())
+				resp.Router.Source = "other"
+				resp.Router.Operation = "other"
+				content, _ := json.Marshal(expectedNode)
+				resp.Content = content
+				return resp, nil
+			},
+			source:       "other",
+			operation:    "other",
+			expectedNode: expectedNode,
+			expectErr:    false,
+		},
+		{
+			name: "Get Error",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				return nil, fmt.Errorf("get failed")
+			},
+			expectErr: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			mockSend := &mockSendInterface{}
+			mockSend.sendSyncFunc = func(message *model.Message) (*model.Message, error) {
+				// Verify message properties
+				assert.Equal(modules.MetaGroup, message.GetGroup())
+				assert.Equal(modules.EdgedModuleName, message.GetSource())
+				assert.NotEmpty(message.GetID())
+				assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypeNode, nodeName), message.GetResource())
+				assert.Equal(model.QueryOperation, message.GetOperation())
+
+				return test.respFunc(message)
+			}
+
+			nodeClient := newNodes(namespace, mockSend)
+			node, err := nodeClient.Get(nodeName)
+
+			if test.expectErr {
+				assert.Error(err)
+				assert.Nil(node)
+			} else {
+				assert.NoError(err)
+				assert.Equal(test.expectedNode, node)
+			}
+		})
+	}
+}
