@@ -28,6 +28,7 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"k8s.io/utils/pointer"
 )
 
 func TestNewLeases(t *testing.T) {
@@ -258,4 +259,114 @@ func TestHandleLeaseResp(t *testing.T) {
 	assert.Error(err)
 	assert.Nil(lease)
 	assert.Contains(err.Error(), "unmarshal message to lease failed")
+}
+
+func TestLeases_Update(t *testing.T) {
+    assert := assert.New(t)
+
+    leaseName := "test-lease"
+    inputLease := &coordinationv1.Lease{
+        ObjectMeta: metav1.ObjectMeta{
+            Name: leaseName,
+        },
+        Spec: coordinationv1.LeaseSpec{
+            HolderIdentity: pointer.String("test-holder"),
+            LeaseDurationSeconds: pointer.Int32(30),
+        },
+    }
+
+    testCases := []struct {
+        name          string
+        respFunc      func(*model.Message) (*model.Message, error)
+        expectedLease *coordinationv1.Lease
+        expectErr     bool
+    }{
+        {
+            name: "Successful Update",
+            respFunc: func(message *model.Message) (*model.Message, error) {
+                resp := model.NewMessage(message.GetID())
+                leaseResp := LeaseResp{
+                    Object: inputLease,
+                    Err:    apierrors.StatusError{},
+                }
+                content, _ := json.Marshal(leaseResp)
+                resp.Content = content
+                return resp, nil
+            },
+            expectedLease: inputLease,
+            expectErr:     false,
+        },
+        {
+            name: "SendSync Error",
+            respFunc: func(message *model.Message) (*model.Message, error) {
+                return nil, fmt.Errorf("SendSync error")
+            },
+            expectedLease: nil,
+            expectErr:     true,
+        },
+        {
+            name: "Error Status Response",
+            respFunc: func(message *model.Message) (*model.Message, error) {
+                resp := model.NewMessage(message.GetID())
+                leaseResp := LeaseResp{
+                    Object: nil,
+                    Err: apierrors.StatusError{
+                        ErrStatus: metav1.Status{
+                            Message: "Update failed",
+                            Reason:  metav1.StatusReasonInternalError,
+                            Code:    500,
+                        },
+                    },
+                }
+                content, _ := json.Marshal(leaseResp)
+                resp.Content = content
+                return resp, nil
+            },
+            expectedLease: nil,
+            expectErr:     true,
+        },
+        {
+            name: "Invalid Response Content",
+            respFunc: func(message *model.Message) (*model.Message, error) {
+                resp := model.NewMessage(message.GetID())
+                resp.Content = []byte("invalid json")
+                return resp, nil
+            },
+            expectedLease: nil,
+            expectErr:     true,
+        },
+    }
+
+    for _, test := range testCases {
+        t.Run(test.name, func(t *testing.T) {
+            mockSend := &mockSendInterface{}
+            mockSend.sendSyncFunc = func(message *model.Message) (*model.Message, error) {
+                assert.Equal(modules.MetaGroup, message.GetGroup())
+                assert.Equal(modules.EdgedModuleName, message.GetSource())
+                assert.NotEmpty(message.GetID())
+                assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypeLease, leaseName), message.GetResource())
+                assert.Equal(model.UpdateOperation, message.GetOperation())
+
+                content, err := message.GetContentData()
+                assert.NoError(err)
+                var lease coordinationv1.Lease
+                err = json.Unmarshal(content, &lease)
+                assert.NoError(err)
+                assert.Equal(inputLease, &lease)
+
+                return test.respFunc(message)
+            }
+
+            leaseClient := newLeases(namespace, mockSend)
+            updatedLease, err := leaseClient.Update(inputLease)
+
+            if test.expectErr {
+                assert.Error(err)
+                assert.Nil(updatedLease)
+            } else {
+                assert.NoError(err)
+                assert.Equal(test.expectedLease, updatedLease)
+            }
+        })
+    }
 }

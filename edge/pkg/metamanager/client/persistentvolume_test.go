@@ -18,8 +18,11 @@ package client
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
+	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/stretchr/testify/assert"
 	api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -39,7 +42,6 @@ func TestNewPersistentVolumes(t *testing.T) {
 func TestHandlePersistentVolumeFromMetaDB(t *testing.T) {
 	assert := assert.New(t)
 
-	// Test case 1: Valid PersistentVolume JSON in list
 	pv := &api.PersistentVolume{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-pv",
@@ -58,7 +60,6 @@ func TestHandlePersistentVolumeFromMetaDB(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(pv, result)
 
-	// Test case 2: Empty list
 	emptyList := []string{}
 	emptyContent, _ := json.Marshal(emptyList)
 
@@ -67,7 +68,6 @@ func TestHandlePersistentVolumeFromMetaDB(t *testing.T) {
 	assert.Nil(result)
 	assert.Contains(err.Error(), "persistentvolume length from meta db is 0")
 
-	// Test case 3: Invalid JSON in list
 	invalidList := []string{`{"invalid": json}`}
 	invalidContent, _ := json.Marshal(invalidList)
 
@@ -80,7 +80,6 @@ func TestHandlePersistentVolumeFromMetaDB(t *testing.T) {
 func TestHandlePersistentVolumeFromMetaManager(t *testing.T) {
 	assert := assert.New(t)
 
-	// Test case 1: Valid PersistentVolume JSON
 	pv := &api.PersistentVolume{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-pv",
@@ -97,18 +96,147 @@ func TestHandlePersistentVolumeFromMetaManager(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(pv, result)
 
-	// Test case 2: Empty JSON
 	emptyContent := []byte("{}")
 
 	result, err = handlePersistentVolumeFromMetaManager(emptyContent)
 	assert.NoError(err)
 	assert.Equal(&api.PersistentVolume{}, result)
 
-	// Test case 3: Invalid JSON
 	invalidContent := []byte(`{"invalid": json}`)
 
 	result, err = handlePersistentVolumeFromMetaManager(invalidContent)
 	assert.Error(err)
 	assert.Nil(result)
 	assert.Contains(err.Error(), "unmarshal message to persistentvolume failed")
+}
+
+func TestPersistentVolumes_Create(t *testing.T) {
+	assert := assert.New(t)
+
+	s := newMockSend()
+	pv := newPersistentVolumes(s)
+
+	input := &api.PersistentVolume{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-pv",
+		},
+		Spec: api.PersistentVolumeSpec{
+			Capacity: api.ResourceList{
+				api.ResourceStorage: resource.MustParse("5Gi"),
+			},
+		},
+	}
+
+	result, err := pv.Create(input)
+
+	assert.Nil(result)
+	assert.NoError(err)
+}
+
+func TestPersistentVolumes_Update(t *testing.T) {
+	assert := assert.New(t)
+
+	s := newMockSend()
+	pv := newPersistentVolumes(s)
+
+	input := &api.PersistentVolume{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-pv",
+		},
+		Spec: api.PersistentVolumeSpec{
+			Capacity: api.ResourceList{
+				api.ResourceStorage: resource.MustParse("5Gi"),
+			},
+		},
+	}
+
+	err := pv.Update(input)
+	assert.NoError(err)
+}
+
+func TestPersistentVolumes_Delete(t *testing.T) {
+	assert := assert.New(t)
+
+	s := newMockSend()
+	pv := newPersistentVolumes(s)
+
+	err := pv.Delete("test-pv")
+	assert.NoError(err)
+}
+
+func TestPersistentVolumes_Get(t *testing.T) {
+	testCases := []struct {
+		name        string
+		pvName      string
+		mockSetup   func(*mockSend)
+		expectError bool
+		expectPV    *api.PersistentVolume
+	}{
+		{
+			name:   "successful get from MetaDB",
+			pvName: "test-pv",
+			mockSetup: func(m *mockSend) {
+				m.sendSyncFunc = func(msg *model.Message) (*model.Message, error) {
+					resp := model.NewMessage(msg.GetID())
+					resp.Router.Operation = model.ResponseOperation
+					resp.Router.Source = modules.MetaManagerModuleName
+
+					pv := &api.PersistentVolume{
+						ObjectMeta: metav1.ObjectMeta{Name: "test-pv"},
+						Spec: api.PersistentVolumeSpec{
+							Capacity: api.ResourceList{
+								api.ResourceStorage: resource.MustParse("5Gi"),
+							},
+						},
+					}
+					pvJSON, _ := json.Marshal(pv)
+					content, _ := json.Marshal([]string{string(pvJSON)})
+					resp.Content = content
+					return resp, nil
+				}
+			},
+			expectError: false,
+			expectPV: &api.PersistentVolume{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-pv"},
+				Spec: api.PersistentVolumeSpec{
+					Capacity: api.ResourceList{
+						api.ResourceStorage: resource.MustParse("5Gi"),
+					},
+				},
+			},
+		},
+		{
+			name:   "error from SendSync",
+			pvName: "test-pv",
+			mockSetup: func(m *mockSend) {
+				m.sendSyncFunc = func(msg *model.Message) (*model.Message, error) {
+					return nil, fmt.Errorf("send sync error")
+				}
+			},
+			expectError: true,
+			expectPV:    nil,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			mock := newMockSend()
+			if tt.mockSetup != nil {
+				tt.mockSetup(mock)
+			}
+
+			pv := newPersistentVolumes(mock)
+			result, err := pv.Get(tt.pvName, metav1.GetOptions{})
+
+			if tt.expectError {
+				assert.Error(err)
+				assert.Nil(result)
+			} else {
+				assert.NoError(err)
+				assert.Equal(tt.expectPV, result)
+			}
+		})
+	}
 }

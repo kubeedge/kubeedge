@@ -20,12 +20,16 @@ import (
 	"database/sql"
 	"errors"
 	"testing"
+	"encoding/json"
+	"fmt"
 
 	"github.com/beego/beego/v2/client/orm"
 	"github.com/golang/mock/gomock"
 
 	"github.com/kubeedge/kubeedge/edge/mocks/beego"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
+	"github.com/kubeedge/kubeedge/common/constants"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // errFailedDBOperation is common DB operation fail error
@@ -532,4 +536,91 @@ func TestIsNonUniqueNameError(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSaveMQTTMeta(t *testing.T) {
+    // Initialize Global Variables (Mocks)
+    mockCtrl := gomock.NewController(t)
+    defer mockCtrl.Finish()
+    ormerMock := beego.NewMockOrmer(mockCtrl)
+    dbm.DBAccess = ormerMock
+
+    testNodeName := "test-node"
+
+    cases := []struct {
+        name      string
+        returnInt int64
+        returnErr error
+    }{
+        {
+            // Success Case
+            name:      "SuccessCase",
+            returnInt: int64(1),
+            returnErr: nil,
+        },
+        {
+            // Failure Case
+            name:      "FailureCase",
+            returnInt: int64(0),
+            returnErr: errFailedDBOperation,
+        },
+    }
+
+    // run the test cases
+    for _, test := range cases {
+        t.Run(test.name, func(t *testing.T) {
+            // Expect Insert to be called with a meta object containing MQTT data
+            ormerMock.EXPECT().Insert(gomock.Any()).DoAndReturn(
+                func(meta interface{}) (int64, error) {
+                    // Verify the meta object contains expected MQTT configuration
+                    m, ok := meta.(*Meta)
+                    if !ok {
+                        t.Error("Expected *Meta type for Insert")
+                        return test.returnInt, test.returnErr
+                    }
+
+                    // Verify key format
+                    expectedKey := fmt.Sprintf("default/pod/%s", constants.DefaultMosquittoContainerName)
+                    if m.Key != expectedKey {
+                        t.Errorf("Expected key %s, got %s", expectedKey, m.Key)
+                    }
+
+                    // Verify type is "pod"
+                    if m.Type != "pod" {
+                        t.Errorf("Expected type 'pod', got %s", m.Type)
+                    }
+
+                    // Unmarshal and verify pod configuration
+                    var pod corev1.Pod
+                    err := json.Unmarshal([]byte(m.Value), &pod)
+                    if err != nil {
+                        t.Errorf("Failed to unmarshal pod data: %v", err)
+                    }
+
+                    // Verify essential pod configuration
+                    if pod.Name != constants.DefaultMosquittoContainerName {
+                        t.Errorf("Expected pod name %s, got %s", constants.DefaultMosquittoContainerName, pod.Name)
+                    }
+                    if pod.Namespace != "default" {
+                        t.Errorf("Expected namespace 'default', got %s", pod.Namespace)
+                    }
+                    if pod.Spec.NodeName != testNodeName {
+                        t.Errorf("Expected node name %s, got %s", testNodeName, pod.Spec.NodeName)
+                    }
+                    if len(pod.Spec.Containers) != 1 {
+                        t.Errorf("Expected 1 container, got %d", len(pod.Spec.Containers))
+                    }
+                    if pod.Spec.Containers[0].Image != constants.DefaultMosquittoImage {
+                        t.Errorf("Expected image %s, got %s", constants.DefaultMosquittoImage, pod.Spec.Containers[0].Image)
+                    }
+
+                    return test.returnInt, test.returnErr
+                }).Times(1)
+
+            err := SaveMQTTMeta(testNodeName)
+            if test.returnErr != err {
+                t.Errorf("SaveMQTTMeta() error = %v, want %v", err, test.returnErr)
+            }
+        })
+    }
 }

@@ -18,8 +18,11 @@ package client
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
+	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/stretchr/testify/assert"
 	api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -40,7 +43,6 @@ func TestNewPersistentVolumeClaims(t *testing.T) {
 func TestHandlePersistentVolumeClaimFromMetaDB(t *testing.T) {
 	assert := assert.New(t)
 
-	// Test case 1: Valid PersistentVolumeClaim JSON
 	pvc := &api.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-pvc",
@@ -62,7 +64,6 @@ func TestHandlePersistentVolumeClaimFromMetaDB(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(pvc, result)
 
-	// Test case 2: Empty list
 	emptyContent, _ := json.Marshal([]string{})
 
 	result, err = handlePersistentVolumeClaimFromMetaDB(emptyContent)
@@ -70,7 +71,6 @@ func TestHandlePersistentVolumeClaimFromMetaDB(t *testing.T) {
 	assert.Nil(result)
 	assert.Contains(err.Error(), "persistentvolumeclaim length from meta db is 0")
 
-	// Test case 3: Multiple PVCs in list
 	multiplePVCs, _ := json.Marshal([]string{string(pvcJSON), string(pvcJSON)})
 
 	result, err = handlePersistentVolumeClaimFromMetaDB(multiplePVCs)
@@ -78,7 +78,6 @@ func TestHandlePersistentVolumeClaimFromMetaDB(t *testing.T) {
 	assert.Nil(result)
 	assert.Contains(err.Error(), "persistentvolumeclaim length from meta db is 2")
 
-	// Test case 4: Invalid JSON in list
 	invalidJSON := []byte(`["{invalid json}"]`)
 
 	result, err = handlePersistentVolumeClaimFromMetaDB(invalidJSON)
@@ -86,7 +85,6 @@ func TestHandlePersistentVolumeClaimFromMetaDB(t *testing.T) {
 	assert.Nil(result)
 	assert.Contains(err.Error(), "unmarshal message to persistentvolumeclaim from db failed")
 
-	// Test case 5: Invalid outer JSON
 	invalidOuterJSON := []byte(`{"not": "a list"}`)
 
 	result, err = handlePersistentVolumeClaimFromMetaDB(invalidOuterJSON)
@@ -98,7 +96,6 @@ func TestHandlePersistentVolumeClaimFromMetaDB(t *testing.T) {
 func TestHandlePersistentVolumeClaimFromMetaManager(t *testing.T) {
 	assert := assert.New(t)
 
-	// Test case 1: Valid PersistentVolumeClaim JSON
 	pvc := &api.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-pvc",
@@ -119,18 +116,145 @@ func TestHandlePersistentVolumeClaimFromMetaManager(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(pvc, result)
 
-	// Test case 2: Empty JSON
 	emptyContent := []byte("{}")
 
 	result, err = handlePersistentVolumeClaimFromMetaManager(emptyContent)
 	assert.NoError(err)
 	assert.Equal(&api.PersistentVolumeClaim{}, result)
 
-	// Test case 3: Invalid JSON
 	invalidContent := []byte(`{"invalid": json}`)
 
 	result, err = handlePersistentVolumeClaimFromMetaManager(invalidContent)
 	assert.Error(err)
 	assert.Nil(result)
 	assert.Contains(err.Error(), "unmarshal message to persistentvolumeclaim failed")
+}
+
+func TestPersistentVolumeClaims_Create(t *testing.T) {
+	assert := assert.New(t)
+
+	s := newMockSend()
+	pvc := newPersistentVolumeClaims(namespace, s)
+
+	input := &api.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-pvc",
+			Namespace: namespace,
+		},
+		Spec: api.PersistentVolumeClaimSpec{
+			AccessModes: []api.PersistentVolumeAccessMode{api.ReadWriteOnce},
+			Resources: api.VolumeResourceRequirements{
+				Requests: api.ResourceList{
+					api.ResourceStorage: resource.MustParse("1Gi"),
+				},
+			},
+		},
+	}
+
+	result, err := pvc.Create(input)
+
+	assert.Nil(result)
+	assert.NoError(err)
+}
+
+func TestPersistentVolumeClaims_Update(t *testing.T) {
+	assert := assert.New(t)
+
+	s := newMockSend()
+	pvc := newPersistentVolumeClaims(namespace, s)
+
+	input := &api.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-pvc",
+			Namespace: namespace,
+		},
+	}
+
+	err := pvc.Update(input)
+
+	assert.NoError(err)
+}
+
+func TestPersistentVolumeClaims_Delete(t *testing.T) {
+	assert := assert.New(t)
+
+	s := newMockSend()
+	pvc := newPersistentVolumeClaims(namespace, s)
+
+	err := pvc.Delete("test-pvc")
+
+	assert.NoError(err)
+}
+
+func TestPersistentVolumeClaims_Get(t *testing.T) {
+	testCases := []struct {
+		name        string
+		pvcName     string
+		mockSetup   func(*mockSend)
+		expectError bool
+		expectPVC   *api.PersistentVolumeClaim
+	}{
+		{
+			name:    "successful get from MetaDB",
+			pvcName: "test-pvc",
+			mockSetup: func(m *mockSend) {
+				m.sendSyncFunc = func(msg *model.Message) (*model.Message, error) {
+					resp := model.NewMessage(msg.GetID())
+					resp.Router.Operation = model.ResponseOperation
+					resp.Router.Source = modules.MetaManagerModuleName
+
+					pvc := &api.PersistentVolumeClaim{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "test-pvc",
+							Namespace: namespace,
+						},
+					}
+					pvcJSON, _ := json.Marshal(pvc)
+					content, _ := json.Marshal([]string{string(pvcJSON)})
+					resp.Content = content
+					return resp, nil
+				}
+			},
+			expectError: false,
+			expectPVC: &api.PersistentVolumeClaim{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-pvc",
+					Namespace: namespace,
+				},
+			},
+		},
+		{
+			name:    "error from SendSync",
+			pvcName: "test-pvc",
+			mockSetup: func(m *mockSend) {
+				m.sendSyncFunc = func(msg *model.Message) (*model.Message, error) {
+					return nil, fmt.Errorf("send sync error")
+				}
+			},
+			expectError: true,
+			expectPVC:   nil,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			mock := newMockSend()
+			if tt.mockSetup != nil {
+				tt.mockSetup(mock)
+			}
+
+			pvc := newPersistentVolumeClaims(namespace, mock)
+			result, err := pvc.Get(tt.pvcName, metav1.GetOptions{})
+
+			if tt.expectError {
+				assert.Error(err)
+				assert.Nil(result)
+			} else {
+				assert.NoError(err)
+				assert.Equal(tt.expectPVC, result)
+			}
+		})
+	}
 }
