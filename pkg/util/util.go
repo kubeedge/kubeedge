@@ -36,8 +36,17 @@ func GetLocalIP(hostName string) (string, error) {
 	var ipAddr net.IP
 	var err error
 
-	// If looks up host failed, will use utilnet.ChooseHostInterface() below,
-	// So ignore the error here
+	// fix https://github.com/kubeedge/kubeedge/issues/6023
+	// LookupIP maybe get docker0 ip's or other cni ip's
+	// maybe get default route interface ip's can be safter
+	// if get default ip fails then should use LookupIP
+	// ignore when ChooseHostInterface fails
+	ipAddr, err = utilnet.ChooseHostInterface()
+	if err == nil {
+		return ipAddr.String(), nil
+	}
+
+	// if ChooseHostInterface fails we can use LookupIP
 	addrs, _ := net.LookupIP(hostName)
 	for _, addr := range addrs {
 		if err := ValidateNodeIP(addr); err != nil {
@@ -51,13 +60,10 @@ func GetLocalIP(hostName string) (string, error) {
 			ipAddr = addr
 		}
 	}
-
 	if ipAddr == nil {
-		ipAddr, err = utilnet.ChooseHostInterface()
-		if err != nil {
-			return "", err
-		}
+		return "", fmt.Errorf("can not get any useable node IP")
 	}
+
 	return ipAddr.String(), nil
 }
 
