@@ -129,3 +129,36 @@ func TestHandleSecretFromMetaManager(t *testing.T) {
 	assert.Equal("partial-secret", result.Name)
 	assert.Nil(result.Data)
 }
+
+// TODO: for now just testing current impl but need to change latter
+func TestSecrets_Create(t *testing.T) {
+	assert := assert.New(t)
+
+	// For now, just test the nil implementation
+	s := newSecrets("default", newSend())
+	result, err := s.Create(&api.Secret{})
+
+	assert.Nil(result)
+	assert.NoError(err)
+}
+
+func TestSecrets_Update(t *testing.T) {
+	assert := assert.New(t)
+
+	// For now, just test the nil implementation
+	s := newSecrets("default", newSend())
+	err := s.Update(&api.Secret{})
+
+	assert.NoError(err)
+}
+
+func TestSecrets_Delete(t *testing.T) {
+	assert := assert.New(t)
+
+	// For now, just test the nil implementation
+	s := newSecrets("default", newSend())
+	err := s.Delete("test-secret")
+
+	assert.NoError(err)
+}
+
