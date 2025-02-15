@@ -338,7 +338,7 @@ func (dc *DownstreamController) sendDeviceModelMsg(device *v1beta1.Device, opera
 		retry.DelayType(retry.FixedDelay),
 	)
 	if err != nil {
-		klog.Warningf(err.Error())
+		klog.Warning(err.Error())
 		return
 	}
 

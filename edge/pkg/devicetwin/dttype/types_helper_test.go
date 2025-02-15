@@ -19,6 +19,7 @@ package dttype
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -203,19 +204,26 @@ func createDeviceTwin(devTwin dtclient.DeviceTwin) []dtclient.DeviceTwin {
 }
 
 // createMessageTwinFromDeviceTwin() is function to create MessageTwin corresponding to a particular DeviceTwin.
-func createMessageTwinFromDeviceTwin(devTwin dtclient.DeviceTwin) map[string]*MsgTwin {
-	var expectedMeta ValueMetadata
+func createMessageTwinFromDeviceTwin(t *testing.T, devTwin dtclient.DeviceTwin) map[string]*MsgTwin {
+	var (
+		expectedMeta ValueMetadata
+		err          error
+	)
 	expectedValue := &TwinValue{Value: &devTwin.Expected}
-	json.Unmarshal([]byte(devTwin.ExpectedMeta), &expectedMeta)
+	err = json.Unmarshal([]byte(devTwin.ExpectedMeta), &expectedMeta)
+	assert.NoError(t, err)
 	expectedValue.Metadata = &expectedMeta
 	var actualMeta ValueMetadata
 	actualValue := &TwinValue{Value: &devTwin.Actual}
-	json.Unmarshal([]byte(devTwin.ActualMeta), &actualMeta)
+	err = json.Unmarshal([]byte(devTwin.ActualMeta), &actualMeta)
+	assert.NoError(t, err)
 	actualValue.Metadata = &actualMeta
 	var expectedVersion TwinVersion
-	json.Unmarshal([]byte(devTwin.ExpectedVersion), &expectedVersion)
+	err = json.Unmarshal([]byte(devTwin.ExpectedVersion), &expectedVersion)
+	assert.NoError(t, err)
 	var actualVersion TwinVersion
-	json.Unmarshal([]byte(devTwin.ActualVersion), &actualVersion)
+	err = json.Unmarshal([]byte(devTwin.ActualVersion), &actualVersion)
+	assert.NoError(t, err)
 	msgTwins := make(map[string]*MsgTwin)
 	msgTwin := &MsgTwin{
 		Optional: &devTwin.Optional,
@@ -242,15 +250,15 @@ func TestDeviceTwinToMsgTwin(t *testing.T) {
 		Description:     "Sensor",
 		Expected:        "ON",
 		Actual:          "ON",
-		ExpectedVersion: "Version1",
-		ActualVersion:   "Version1",
+		ExpectedVersion: `{"cloud": 10, "Edge": 10}`,
+		ActualVersion:   `{"cloud": 10, "Edge": 10}`,
 		Optional:        true,
-		ExpectedMeta:    "Updation",
-		ActualMeta:      "Updation",
+		ExpectedMeta:    fmt.Sprintf(`{"timestamp": %d}`, time.Now().Unix()),
+		ActualMeta:      fmt.Sprintf(`{"timestamp": %d}`, time.Now().Unix()),
 		AttrType:        "Temperature",
 	}
 	deviceTwin := createDeviceTwin(devTwin)
-	msgTwins := createMessageTwinFromDeviceTwin(devTwin)
+	msgTwins := createMessageTwinFromDeviceTwin(t, devTwin)
 	tests := []struct {
 		name        string
 		deviceTwins []dtclient.DeviceTwin
@@ -717,7 +725,8 @@ func TestBuildErrorResult(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			got, err := BuildErrorResult(test.para)
 			var gotResult Result
-			json.Unmarshal(got, &gotResult)
+			err = json.Unmarshal(got, &gotResult)
+			assert.NoError(err)
 			assert.Equal(test.wantErr, err)
 			assert.Equal(test.want.EventID, gotResult.EventID)
 			assert.Equal(test.want.Reason, gotResult.Reason)
