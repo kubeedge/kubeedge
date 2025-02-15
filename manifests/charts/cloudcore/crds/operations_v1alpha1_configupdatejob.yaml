@@ -1,0 +1,189 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.14.0
+  name: configupdatejobs.operations.kubeedge.io
+spec:
+  group: operations.kubeedge.io
+  names:
+    kind: ConfigUpdateJob
+    listKind: ConfigUpdateJobList
+    plural: configupdatejobs
+    singular: configupdatejob
+  scope: Cluster
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: ConfigUpdateJob is used to update edge configuration from cloud
+          side.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: Spec represents the specification of the desired behavior
+              of ConfigUpdateJob.
+            properties:
+              concurrency:
+                description: |-
+                  Concurrency specifies the max number of edge nodes that can be updated at the same time.
+                  The default Concurrency value is 1.
+                format: int32
+                type: integer
+              failureTolerate:
+                description: |-
+                  FailureTolerate specifies the task tolerance failure ratio.
+                  The default FailureTolerate value is 0.1.
+                type: string
+              labelSelector:
+                description: |-
+                  LabelSelector is a filter to select member clusters by labels.
+                  It must match a node's labels for the ConfigUpdateJo to be operated on that node.
+                  Please note that sets of NodeNames and LabelSelector are ORed.
+                  Users must set one and can only set one.
+                properties:
+                  matchExpressions:
+                    description: matchExpressions is a list of label selector requirements.
+                      The requirements are ANDed.
+                    items:
+                      description: |-
+                        A label selector requirement is a selector that contains values, a key, and an operator that
+                        relates the key and values.
+                      properties:
+                        key:
+                          description: key is the label key that the selector applies
+                            to.
+                          type: string
+                        operator:
+                          description: |-
+                            operator represents a key's relationship to a set of values.
+                            Valid operators are In, NotIn, Exists and DoesNotExist.
+                          type: string
+                        values:
+                          description: |-
+                            values is an array of string values. If the operator is In or NotIn,
+                            the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                            the values array must be empty. This array is replaced during a strategic
+                            merge patch.
+                          items:
+                            type: string
+                          type: array
+                      required:
+                      - key
+                      - operator
+                      type: object
+                    type: array
+                  matchLabels:
+                    additionalProperties:
+                      type: string
+                    description: |-
+                      matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                      map is equivalent to an element of matchExpressions, whose key field is "key", the
+                      operator is "In", and the values array contains only "value". The requirements are ANDed.
+                    type: object
+                type: object
+                x-kubernetes-map-type: atomic
+              nodeNames:
+                description: |-
+                  NodeNames is a request to select some specific nodes. If it is non-empty,
+                  the update job simply select these edge nodes to do config update operation.
+                  Please note that sets of NodeNames and LabelSelector are ORed.
+                  Users must set one and can only set one.
+                items:
+                  type: string
+                type: array
+              timeoutSeconds:
+                description: |-
+                  TimeoutSeconds limits the duration of the edge config update job.
+                  Default to 300.
+                  If set to 0, we'll use the default value 300.
+                format: int32
+                type: integer
+              updateFields:
+                additionalProperties:
+                  type: string
+                description: UpdateFields specify certain fields in EdgeCore configurations
+                  to update.
+                type: object
+            type: object
+          status:
+            description: Status represents the status of ConfigUpdateJob.
+            properties:
+              action:
+                description: |-
+                  Action represents for the action of the ConfigUpdateJob.
+                  There are two possible action values: Success, Failure.
+                type: string
+              event:
+                description: |-
+                  Event represents for the event of the ConfigUpdateJob.
+                  There are six possible event values: Init, BackUp, Update, TimeOut, Rollback.
+                type: string
+              nodeStatus:
+                description: Status contains update Status for each edge node.
+                items:
+                  description: TaskStatus stores the status of Upgrade for each edge
+                    node.
+                  properties:
+                    action:
+                      description: |-
+                        Action represents for the action of the ImagePrePullJob.
+                        There are three possible action values: Success, Failure, TimeOut.
+                      type: string
+                    event:
+                      description: |-
+                        Event represents for the event of the ImagePrePullJob.
+                        There are three possible event values: Init, Check, Pull.
+                      type: string
+                    nodeName:
+                      description: NodeName is the name of edge node.
+                      type: string
+                    reason:
+                      description: Reason represents for the reason of the ImagePrePullJob.
+                      type: string
+                    state:
+                      description: |-
+                        State represents for the upgrade state phase of the edge node.
+                        There are several possible state values: "", Upgrading, BackingUp, RollingBack and Checking.
+                      type: string
+                    time:
+                      description: Time represents for the running time of the ImagePrePullJob.
+                      type: string
+                  type: object
+                type: array
+              reason:
+                description: Reason represents for the reason of the ConfigUpdateJob.
+                type: string
+              state:
+                description: |-
+                  State represents for the state phase of the ConfigUpdateJob.
+                  There are several possible state values: "", Updating, BackingUp and RollingBack.
+                type: string
+              time:
+                description: Time represents for the running time of the ConfigUpdateJob.
+                type: string
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
