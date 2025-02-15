@@ -40,22 +40,38 @@ type edgestream struct {
 	enable           bool
 	hostnameOverride string
 	nodeIP           string
+	kubeletHost      string
 }
 
 var _ core.Module = (*edgestream)(nil)
 
-func newEdgeStream(enable bool, hostnameOverride, nodeIP string) *edgestream {
+func newEdgeStream(enable bool, hostnameOverride, nodeIP string, kubeletHost string) (*edgestream, error) {
+	var err error
+	if nodeIP == "" {
+		nodeIP, err = util.GetLocalIP(util.GetHostname())
+		if err != nil {
+			klog.Errorf("Failed to get Local IP address: %v", err)
+			return nil, err
+		}
+		klog.Infof("Get node local IP address successfully: %s", nodeIP)
+	}
+
 	return &edgestream{
 		enable:           enable,
 		hostnameOverride: hostnameOverride,
 		nodeIP:           nodeIP,
-	}
+		kubeletHost:      kubeletHost,
+	}, nil
 }
 
 // Register register edgestream
-func Register(s *v1alpha2.EdgeStream, hostnameOverride, nodeIP string) {
+func Register(s *v1alpha2.EdgeStream, hostnameOverride, nodeIP string, kubeletHost string) {
 	config.InitConfigure(s)
-	core.Register(newEdgeStream(s.Enable, hostnameOverride, nodeIP))
+	edgeStream, err := newEdgeStream(s.Enable, hostnameOverride, nodeIP, kubeletHost)
+	if err != nil {
+		panic(fmt.Errorf("init new edged error, %v", err))
+	}
+	core.Register(edgeStream)
 }
 
 func (e *edgestream) Name() string {
@@ -136,6 +152,6 @@ func (e *edgestream) TLSClientConnect(url url.URL, tlsConfig *tls.Config) error 
 		klog.Errorf("dial %v error %v", url.String(), err)
 		return err
 	}
-	session := NewTunnelSession(con)
+	session := NewTunnelSession(con, e.kubeletHost)
 	return session.Serve()
 }
