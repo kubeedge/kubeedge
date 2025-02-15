@@ -18,12 +18,184 @@ package controller
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 	"github.com/kubeedge/api/apis/devices/v1beta1"
+	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/config"
+	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 )
 
+type MockMessageLayer struct {
+	messages chan model.Message
+}
+
+func NewMockMessageLayer() *MockMessageLayer {
+	return &MockMessageLayer{
+		messages: make(chan model.Message, 10),
+	}
+}
+
+func (ml *MockMessageLayer) Send(_ model.Message) error {
+	// In a real implementation, this would send the message.  Here, we just simulate success.
+	return nil
+}
+
+func (ml *MockMessageLayer) Receive() (model.Message, error) {
+	msg := <-ml.messages
+	return msg, nil
+}
+
+func (ml *MockMessageLayer) SendResponse(_ model.Message) error {
+	//TODO: consider removing it if have same functionality
+	return nil
+}
+
+func (ml *MockMessageLayer) Response(_ model.Message) error {
+	//TODO: consider removing it if have same functionality
+	return nil
+}
+
+func createMessage(resourceType string) model.Message {
+	resource := "node/device/" + resourceType
+	return model.Message{
+		Header: model.MessageHeader{
+			ID:              "test-id",
+			ParentID:        "",
+			Timestamp:       time.Now().UnixNano() / 1e6,
+			ResourceVersion: "1",
+		},
+		Router: model.MessageRoute{
+			Resource: resource,
+		},
+		Content: "test-content",
+	}
+}
+
+func initTestConfig() {
+	deviceController := &v1alpha1.DeviceController{
+		Enable: true,
+		Buffer: &v1alpha1.DeviceControllerBuffer{
+			UpdateDeviceTwins:  100,
+			UpdateDeviceStates: 100,
+		},
+		Load: &v1alpha1.DeviceControllerLoad{
+			UpdateDeviceStatusWorkers: 2,
+		},
+	}
+	config.InitConfigure(deviceController)
+}
+
+func TestMain(m *testing.M) {
+	initTestConfig()
+	m.Run()
+}
+
+func TestUpstreamControllerStart(t *testing.T) {
+	mockML := NewMockMessageLayer()
+	dc := &DownstreamController{}
+	uc := &UpstreamController{
+		messageLayer: mockML,
+		dc:           dc,
+	}
+	err := uc.Start()
+	assert.NoError(t, err)
+
+	assert.NotNil(t, uc.deviceTwinsChan, "deviceTwinsChan should be initialized")
+	assert.NotNil(t, uc.deviceStatesChan, "deviceStatesChan should be initialized")
+
+	assert.Equal(t, int(config.Config.Buffer.UpdateDeviceTwins), cap(uc.deviceTwinsChan),
+		"deviceTwinsChan should have correct buffer size")
+	assert.Equal(t, int(config.Config.Buffer.UpdateDeviceStates), cap(uc.deviceStatesChan),
+		"deviceStatesChan should have correct buffer size")
+
+	defer closeChannels(uc)
+}
+
+func TestDispatchMessage(t *testing.T) {
+	mockML := NewMockMessageLayer()
+
+	uc := &UpstreamController{
+		messageLayer:     mockML,
+		deviceTwinsChan:  make(chan model.Message, 1),
+		deviceStatesChan: make(chan model.Message, 1),
+	}
+
+	go uc.dispatchMessage()
+
+	defer closeChannels(uc)
+
+	tests := []struct {
+		name         string
+		resourceType string
+		expectChan   chan model.Message
+	}{
+		{
+			name:         "Twin Update Message",
+			resourceType: constants.ResourceTypeTwinEdgeUpdated,
+			expectChan:   uc.deviceTwinsChan,
+		},
+		{
+			name:         "Device State Update Message",
+			resourceType: constants.ResourceDeviceStateUpdated,
+			expectChan:   uc.deviceStatesChan,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			msg := createMessage(tt.resourceType)
+			mockML.messages <- msg
+
+			select {
+			case receivedMsg := <-tt.expectChan:
+				assert.Equal(t, msg.GetID(), receivedMsg.GetID())
+				assert.Equal(t, msg.GetResource(), receivedMsg.GetResource())
+			case <-time.After(2 * time.Second):
+				t.Error("Timeout waiting for message dispatch")
+			}
+		})
+	}
+}
+
+func TestDispatchMessageInvalidResource(t *testing.T) {
+	mockML := NewMockMessageLayer()
+
+	uc := &UpstreamController{
+		messageLayer:     mockML,
+		deviceTwinsChan:  make(chan model.Message, 1),
+		deviceStatesChan: make(chan model.Message, 1),
+	}
+
+	go uc.dispatchMessage()
+
+	defer closeChannels(uc)
+
+	msg := createMessage("invalid-resource-type")
+	mockML.messages <- msg
+
+	time.Sleep(1 * time.Second)
+
+	select {
+	case <-uc.deviceTwinsChan:
+		t.Error("Message should not have been dispatched to deviceTwinsChan")
+	case <-uc.deviceStatesChan:
+		t.Error("Message should not have been dispatched to deviceStatesChan")
+	default:
+	}
+}
+
+func closeChannels(uc *UpstreamController) {
+	if uc.deviceTwinsChan != nil {
+		close(uc.deviceTwinsChan)
+	}
+	if uc.deviceStatesChan != nil {
+		close(uc.deviceStatesChan)
+	}
+}
 func TestNewUpstreamController(t *testing.T) {
 	assert := assert.New(t)
 
@@ -36,7 +208,6 @@ func TestNewUpstreamController(t *testing.T) {
 	assert.NotNil(uc.dc)
 	assert.Equal(dc, uc.dc)
 
-	// Channels are not initialized (they should be initialized in Start())
 	assert.Nil(uc.deviceTwinsChan)
 	assert.Nil(uc.deviceStatesChan)
 }
@@ -149,7 +320,6 @@ func TestFindOrCreateTwinByName(t *testing.T) {
 				if tt.expected.Reported.Value != "" {
 					assert.Equal(tt.expected.Reported, result.Reported)
 				}
-				// Verify twin was added to DeviceStatus if created
 				if len(tt.status.Status.Twins) > 0 {
 					found := false
 					for _, twin := range tt.status.Status.Twins {
@@ -164,7 +334,6 @@ func TestFindOrCreateTwinByName(t *testing.T) {
 		})
 	}
 }
-
 func TestFindTwinByName(t *testing.T) {
 	tests := []struct {
 		name         string
