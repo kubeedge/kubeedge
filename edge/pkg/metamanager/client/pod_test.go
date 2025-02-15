@@ -23,6 +23,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -233,4 +234,228 @@ func TestHandlePodFromMetaDB(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestPods_Create(t *testing.T) {
+	assert := assert.New(t)
+
+	podName := "test-pod"
+	expectedPod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      podName,
+			Namespace: namespace,
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "test-container",
+					Image: "test-image",
+				},
+			},
+		},
+	}
+
+	testCases := []struct {
+		name      string
+		pod       *corev1.Pod
+		respFunc  func(*model.Message) (*model.Message, error)
+		stdResult *corev1.Pod
+		expectErr bool
+	}{
+		{
+			name: "Create Pod Success",
+			pod:  expectedPod,
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				resp := model.NewMessage(message.GetID())
+				podResp := PodResp{
+					Object: expectedPod,
+					Err: apierrors.StatusError{
+						ErrStatus: metav1.Status{
+							Status: metav1.StatusSuccess,
+						},
+					},
+				}
+				content, _ := json.Marshal(podResp)
+				resp.Content = content
+				return resp, nil
+			},
+			stdResult: expectedPod,
+			expectErr: false,
+		},
+		{
+			name: "Send Message Error",
+			pod:  expectedPod,
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				return nil, fmt.Errorf("send error")
+			},
+			stdResult: nil,
+			expectErr: true,
+		},
+		{
+			name: "Invalid Response Content",
+			pod:  expectedPod,
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				resp := model.NewMessage(message.GetID())
+				resp.Content = "invalid content"
+				return resp, nil
+			},
+			stdResult: nil,
+			expectErr: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			mockSend := &mockSendInterface{
+				sendSyncFunc: func(message *model.Message) (*model.Message, error) {
+					assert.Equal(modules.MetaGroup, message.GetGroup())
+					assert.Equal(modules.EdgedModuleName, message.GetSource())
+					assert.NotEmpty(message.GetID())
+					assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypePod, podName), message.GetResource())
+					assert.Equal(model.InsertOperation, message.GetOperation())
+
+					return test.respFunc(message)
+				},
+			}
+
+			podsClient := newPods(namespace, mockSend)
+			result, err := podsClient.Create(test.pod)
+
+			if test.expectErr {
+				assert.Error(err)
+				assert.Nil(result)
+			} else {
+				assert.Equal(test.stdResult, result)
+			}
+		})
+	}
+}
+
+// TODO: for now lets just assertit to no error as per its implementation but need to change latter
+func TestPods_Update(t *testing.T) {
+	assert := assert.New(t)
+
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+            Name:      "test-pod",
+            Namespace: namespace,
+        },
+        Spec: corev1.PodSpec{
+            Containers: []corev1.Container{
+                {
+                    Name:  "test-container",
+                    Image: "test-image",
+                },
+            },
+        },
+    }
+
+	podsClient := newPods(namespace, newSend())
+
+	err := podsClient.Update(pod)
+    assert.NoError(err)
+}
+
+// verify patch works perfectly with every error handling
+func TestPods_Patch(t *testing.T) {
+    assert := assert.New(t)
+
+    podName := "test-pod"
+    patchBytes := []byte(`{"spec":{"containers":[{"name":"test-container","image":"new-image"}]}}`)
+    
+    expectedPod := &corev1.Pod{
+        ObjectMeta: metav1.ObjectMeta{
+            Name:      podName,
+            Namespace: namespace,
+        },
+        Spec: corev1.PodSpec{
+            Containers: []corev1.Container{
+                {
+                    Name:  "test-container",
+                    Image: "new-image",
+                },
+            },
+        },
+    }
+
+    testCases := []struct {
+        name       string
+        podName    string
+        patchBytes []byte
+        respFunc   func(*model.Message) (*model.Message, error)
+        stdResult  *corev1.Pod
+        expectErr  bool
+    }{
+        {
+            name:       "Patch Pod Success",
+            podName:    podName,
+            patchBytes: patchBytes,
+            respFunc: func(message *model.Message) (*model.Message, error) {
+                resp := model.NewMessage(message.GetID())
+                podResp := PodResp{
+                    Object: expectedPod,
+                    Err: apierrors.StatusError{
+                        ErrStatus: metav1.Status{
+                            Status: metav1.StatusSuccess,
+                        },
+                    },
+                }
+                content, _ := json.Marshal(podResp)
+                resp.Content = content
+                return resp, nil
+            },
+            stdResult: expectedPod,
+            expectErr: false,
+        },
+        {
+            name:       "Send Message Error",
+            podName:    podName,
+            patchBytes: patchBytes,
+            respFunc: func(message *model.Message) (*model.Message, error) {
+                return nil, fmt.Errorf("send error")
+            },
+            stdResult: nil,
+            expectErr: true,
+        },
+        {
+            name:       "Response Error Operation",
+            podName:    podName,
+            patchBytes: patchBytes,
+            respFunc: func(message *model.Message) (*model.Message, error) {
+                resp := model.NewMessage(message.GetID())
+                resp.Router.Operation = model.ResponseErrorOperation
+                resp.Content = []byte("error content")
+                return resp, nil
+            },
+            stdResult: nil,
+            expectErr: true,
+        },
+    }
+
+    for _, test := range testCases {
+        t.Run(test.name, func(t *testing.T) {
+            mockSend := &mockSendInterface{
+                sendSyncFunc: func(message *model.Message) (*model.Message, error) {
+                    assert.Equal(modules.MetaGroup, message.GetGroup())
+                    assert.Equal(modules.EdgedModuleName, message.GetSource())
+                    assert.NotEmpty(message.GetID())
+                    assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypePodPatch, test.podName), message.GetResource())
+                    assert.Equal(model.PatchOperation, message.GetOperation())
+                    assert.Equal(string(test.patchBytes), message.GetContent())
+
+                    return test.respFunc(message)
+                },
+            }
+
+            podsClient := newPods(namespace, mockSend)
+            result, err := podsClient.Patch(test.podName, test.patchBytes)
+
+            if test.expectErr {
+                assert.Error(err)
+                assert.Nil(result)
+            } else {
+                assert.Equal(test.stdResult, result)
+            }
+        })
+    }
 }
