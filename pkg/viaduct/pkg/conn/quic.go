@@ -1,6 +1,7 @@
 package conn
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lucas-clemente/quic-go"
+	"github.com/quic-go/quic-go"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -44,11 +45,14 @@ type QuicConnection struct {
 	autoRoute          bool
 	OnReadTransportErr func(nodeID, projectID string)
 	locker             sync.Mutex
+	ctx           	   context.Context
+    cancel       	   context.CancelFunc
 }
 
 // NewQuicConn new quic connection
 func NewQuicConn(options *ConnectionOptions) *QuicConnection {
-	quicSession := options.Base.(quic.Session)
+    ctx, cancel := context.WithCancel(context.Background())
+    quicSession := options.Base.(quic.Connection) 
 	return &QuicConnection{
 		session:            smgr.Session{Sess: quicSession},
 		handler:            options.Handler,
@@ -61,6 +65,8 @@ func NewQuicConn(options *ConnectionOptions) *QuicConnection {
 		messageFifo:        fifo.NewMessageFifo(),
 		OnReadTransportErr: options.OnReadTransportErr,
 		streamManager:      smgr.NewStreamManager(smgr.NumStreamsMax, autoFree, quicSession),
+		ctx:              ctx,
+        cancel:           cancel,
 	}
 }
 
@@ -104,26 +110,30 @@ func (conn *QuicConnection) serveControlLan() {
 // ServeSession accept steams from remote peer
 // then, receive messages from the steam
 func (conn *QuicConnection) serveSession() {
-	for {
-		stream, err := conn.session.AcceptStream()
-		if err != nil {
-			// close the session
-			klog.Warningf("accept stream error(%+v) or the session has been closed",
-				err)
-			// close local session
-			_ = conn.Close()
+    for {
+        select {
+        case <-conn.ctx.Done():
+            return
+        default:
+            stream, err := conn.session.AcceptStream()
+            if err != nil {
+                if errors.Is(err, quic.ErrServerClosed) {
+                    return
+                }
+                conn.closeWithError(err)
+                return
+            }
+            conn.streamManager.AddStream(stream)
+            conn.dispatch(stream)
+        }
+    }
+}
 
-			if conn.OnReadTransportErr != nil {
-				conn.OnReadTransportErr(conn.state.Headers.Get("node_id"),
-					conn.state.Headers.Get("project_id"))
-			}
-
-			return
-		}
-		conn.streamManager.AddStream(stream)
-		// auto route to mux or raw data consumer
-		conn.dispatch(stream)
-	}
+func (conn *QuicConnection) closeWithError(err error) {
+    conn.cancel()
+    conn.state.State = api.StatDisconnected
+    conn.streamManager.Destroy()
+	_ = conn.session.Sess.CloseWithError(1, err.Error())
 }
 
 // dispatch the message
@@ -185,6 +195,9 @@ func (conn *QuicConnection) acceptStream(_ api.UseType, autoDispatch bool) (*smg
 
 // Write write raw data into stream
 func (conn *QuicConnection) Write(raw []byte) (int, error) {
+	if err := conn.ctx.Err(); err != nil {
+        return 0, fmt.Errorf("connection closed: %w", err)
+    }
 	conn.locker.Lock()
 	defer conn.locker.Unlock()
 
@@ -257,9 +270,10 @@ func (conn *QuicConnection) handleMessage(stream *smgr.Stream) {
 // Close will cancel write and read
 // close the session
 func (conn *QuicConnection) Close() error {
-	conn.state.State = api.StatDisconnected
-	conn.streamManager.Destroy()
-	return conn.session.Close()
+    conn.cancel()
+    conn.state.State = api.StatDisconnected
+    conn.streamManager.Destroy()
+	return conn.session.Sess.CloseWithError(0, "normal closure")
 }
 
 // WriteMessageSync write sync message
