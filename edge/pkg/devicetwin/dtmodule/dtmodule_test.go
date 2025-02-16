@@ -26,6 +26,145 @@ import (
 	. "github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtmodule"
 )
 
+// mockPanicWorker implements a worker that panics for testing
+type mockPanicWorker struct {
+	Worker
+}
+
+func (w mockPanicWorker) Start() {
+	panic("simulated panic for testing recovery")
+}
+
+func TestDTModule_InitWorker_DMIModule(t *testing.T) {
+	ctx, err := dtcontext.InitDTContext()
+	if err != nil {
+		t.Fatalf("failed to init devicetwin context: %v", err)
+	}
+	recvCh, confirmCh, heartBeatCh := make(chan interface{}), make(chan interface{}), make(chan interface{})
+
+	dm := &DTModule{
+		Name: dtcommon.DMIModule,
+	}
+	dm.InitWorker(recvCh, confirmCh, heartBeatCh, ctx)
+
+	dmiWorker, ok := dm.Worker.(DMIWorker)
+	if !ok {
+		t.Errorf("Expected worker type DMIWorker, got %T", dm.Worker)
+	}
+
+	if dmiWorker.Group != dtcommon.DMIModule {
+		t.Errorf("Expected group %s, got %s", dtcommon.DMIModule, dmiWorker.Group)
+	}
+
+	if dmiWorker.ReceiverChan != recvCh {
+		t.Error("ReceiverChan not properly initialized")
+	}
+	if dmiWorker.ConfirmChan != confirmCh {
+		t.Error("ConfirmChan not properly initialized")
+	}
+	if dmiWorker.HeartBeatChan != heartBeatCh {
+		t.Error("HeartBeatChan not properly initialized")
+	}
+	if dmiWorker.DTContexts != ctx {
+		t.Error("DTContexts not properly initialized")
+	}
+}
+
+func TestDTModule_Start_PanicRecovery(t *testing.T) {
+	ctx, err := dtcontext.InitDTContext()
+	if err != nil {
+		t.Fatalf("failed to init devicetwin context: %v", err)
+	}
+
+	// Create channels
+	recvCh, confirmCh, heartBeatCh := make(chan interface{}), make(chan interface{}), make(chan interface{})
+
+	// Create DTModule with mock worker
+	dm := &DTModule{
+		Name: "TestModule",
+		Worker: mockPanicWorker{
+			Worker: Worker{
+				ReceiverChan:  recvCh,
+				ConfirmChan:   confirmCh,
+				HeartBeatChan: heartBeatCh,
+				DTContexts:    ctx,
+			},
+		},
+	}
+
+	// The Start method should recover from panic and not crash the test
+	dm.Start()
+}
+
+func TestDTModule_InitWorker_Coverage(t *testing.T) {
+	existingTests := []struct {
+		name string
+	}{
+		{name: dtcommon.MemModule},
+		{name: dtcommon.TwinModule},
+		{name: dtcommon.DeviceModule},
+		{name: dtcommon.CommModule},
+		{name: dtcommon.DMIModule},
+	}
+
+	ctx, err := dtcontext.InitDTContext()
+	if err != nil {
+		t.Fatalf("failed to init devicetwin context: %v", err)
+	}
+
+	for _, tt := range existingTests {
+		t.Run(tt.name, func(t *testing.T) {
+			recvCh, confirmCh, heartBeatCh := make(chan interface{}), make(chan interface{}), make(chan interface{})
+			dm := &DTModule{
+				Name: tt.name,
+			}
+			dm.InitWorker(recvCh, confirmCh, heartBeatCh, ctx)
+
+			if dm.Worker == nil {
+				t.Errorf("Worker not initialized for module %s", tt.name)
+			}
+
+			// Verify the basic worker properties are set
+			worker := reflect.ValueOf(dm.Worker)
+			if !worker.IsValid() {
+				t.Errorf("Invalid worker for module %s", tt.name)
+				return
+			}
+
+			// Get the embedded Worker field
+			var basicWorker Worker
+			switch v := dm.Worker.(type) {
+			case MemWorker:
+				basicWorker = v.Worker
+			case TwinWorker:
+				basicWorker = v.Worker
+			case DeviceWorker:
+				basicWorker = v.Worker
+			case CommWorker:
+				basicWorker = v.Worker
+			case DMIWorker:
+				basicWorker = v.Worker
+			default:
+				t.Errorf("Unknown worker type for module %s: %T", tt.name, dm.Worker)
+				return
+			}
+
+			if basicWorker.ReceiverChan != recvCh {
+				t.Errorf("ReceiverChan not properly set for module %s", tt.name)
+			}
+			if basicWorker.ConfirmChan != confirmCh {
+				t.Errorf("ConfirmChan not properly set for module %s", tt.name)
+			}
+			if basicWorker.HeartBeatChan != heartBeatCh {
+				t.Errorf("HeartBeatChan not properly set for module %s", tt.name)
+			}
+			if basicWorker.DTContexts != ctx {
+				t.Errorf("DTContexts not properly set for module %s", tt.name)
+			}
+		})
+	}
+}
+
 func TestDTModule_InitWorker(t *testing.T) {
 	type fields struct {
 		Name string
