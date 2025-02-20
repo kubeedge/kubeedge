@@ -111,8 +111,7 @@ func TestUpstreamControllerStart(t *testing.T) {
 		"deviceTwinsChan should have correct buffer size")
 	assert.Equal(t, int(config.Config.Buffer.UpdateDeviceStates), cap(uc.deviceStatesChan),
 		"deviceStatesChan should have correct buffer size")
-
-	defer closeChannels(uc)
+	closeChannels(uc)
 }
 
 func TestDispatchMessage(t *testing.T) {
@@ -207,7 +206,7 @@ func TestNewUpstreamController(t *testing.T) {
 	assert.NotNil(uc.messageLayer)
 	assert.NotNil(uc.dc)
 	assert.Equal(dc, uc.dc)
-
+	// Channels are not initialized (they should be initialized in Start())
 	assert.Nil(uc.deviceTwinsChan)
 	assert.Nil(uc.deviceStatesChan)
 }
@@ -320,6 +319,7 @@ func TestFindOrCreateTwinByName(t *testing.T) {
 				if tt.expected.Reported.Value != "" {
 					assert.Equal(tt.expected.Reported, result.Reported)
 				}
+				// Verify twin was added to DeviceStatus if created
 				if len(tt.status.Status.Twins) > 0 {
 					found := false
 					for _, twin := range tt.status.Status.Twins {
