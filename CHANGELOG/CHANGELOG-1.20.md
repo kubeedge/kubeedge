@@ -53,7 +53,7 @@ Refer to the document https://kubeedge.io/docs/advanced/support_ipv6
 
 Upgrade the vendered kubernetes version to v1.30.7, users are now able to use the feature of new version on the cloud and on the edge side.
 
-Refer to the link for more details. ([#5997](https://github.com/kubeedge/kubeedge/issues/5997)
+Refer to the link for more details. ([#5997](https://github.com/kubeedge/kubeedge/issues/5997))
 
 ## Important Steps before Upgrading
 
