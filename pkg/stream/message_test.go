@@ -19,9 +19,13 @@ package stream
 import (
 	"bytes"
 	"encoding/binary"
+	"io"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 func TestMessageType_String(t *testing.T) {
@@ -114,4 +118,58 @@ func TestReadMessageFromTunnel(t *testing.T) {
 	assert.Equal(readMessage.ConnectID, uint64(100))
 	assert.Equal(readMessage.MessageType, MessageTypeLogsConnect)
 	assert.Equal(readMessage.Data, []byte("test data"))
+}
+
+func TestReadMessageFromTunnel_ConnectIDError(t *testing.T) {
+	assert := assert.New(t)
+	errorReader := &errorReader{err: io.ErrClosedPipe}
+	_, err := ReadMessageFromTunnel(errorReader)
+	assert.ErrorContains(err, "closed pipe")
+}
+
+func TestReadMessageFromTunnel_MessageTypeError(t *testing.T) {
+	assert := assert.New(t)
+	buf := bytes.NewBuffer([]byte{0x01}) // Valid connectID
+	buf.WriteByte(0x80)                  // Start multi-byte varint
+	errorReader := io.MultiReader(buf, &errorReader{err: io.ErrUnexpectedEOF})
+
+	_, err := ReadMessageFromTunnel(errorReader)
+	assert.ErrorContains(err, "unexpected EOF")
+}
+
+func TestReadMessageFromTunnel_DataReadError(t *testing.T) {
+	assert := assert.New(t)
+
+	headerBuf := bytes.NewBuffer(nil)
+	err := binary.Write(headerBuf, binary.LittleEndian, uint64(1)) // ConnectID
+	assert.NoError(err, "should write connect ID")
+	err = binary.Write(headerBuf, binary.LittleEndian, uint64(2)) // MessageType
+	assert.NoError(err, "should write message type")
+
+	errorReader := io.MultiReader(
+		strings.NewReader("partial_data"),
+		&errorReader{err: io.ErrUnexpectedEOF},
+	)
+
+	testReader := io.MultiReader(headerBuf, errorReader)
+
+	_, err = ReadMessageFromTunnel(testReader)
+	assert.ErrorContains(err, "unexpected EOF", "Should propagate data read errors")
+}
+
+func TestReadMessageFromTunnel_MaxDataLength(t *testing.T) {
+	assert := assert.New(t)
+	data := bytes.Repeat([]byte{0x41}, constants.MaxRespBodyLength)
+	msg := NewMessage(1, MessageTypeData, data)
+
+	readMsg, err := ReadMessageFromTunnel(bytes.NewReader(msg.Bytes()))
+	assert.NoError(err)
+	assert.Len(readMsg.Data, constants.MaxRespBodyLength)
+}
+
+// errorReader helper implements io.Reader returning specified error
+type errorReader struct{ err error }
+
+func (r *errorReader) Read(_ []byte) (int, error) {
+	return 0, r.err
 }

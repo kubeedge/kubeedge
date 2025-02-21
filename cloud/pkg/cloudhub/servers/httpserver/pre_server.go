@@ -125,7 +125,7 @@ func createCertsToSecret(ctx context.Context) error {
 
 			keywrap, err := h.GenPrivateKey()
 			if err != nil {
-				return fmt.Errorf("faield to generate the private key, err: %v", err)
+				return fmt.Errorf("failed to generate the private key, err: %v", err)
 			}
 			key, err := keywrap.Signer()
 			if err != nil {
