@@ -22,6 +22,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -174,6 +175,14 @@ func cleanDirectories() error {
 		util.KubeEdgeSocketPath,
 		util.EdgeRootDir,
 		util.KubeEdgeUsrBinPath,
+		util.EdgeCoreRunDirectory,
+	}
+
+	for _, dir := range dirToClean {
+		if err := unmountIfNeeded(dir); 
+		err != nil {
+			fmt.Printf("Failed to unmount directory %s: %v\n", dir, err)
+		}
 	}
 
 	for _, dir := range dirToClean {
@@ -191,4 +200,18 @@ func addResetFlags(cmd *cobra.Command, resetOpts *common.ResetOptions) {
 		"Reset the node without prompting for confirmation, and continue even if running edgecore not found")
 	cmd.Flags().StringVar(&resetOpts.Endpoint, common.FlagNameRemoteRuntimeEndpoint, resetOpts.Endpoint,
 		"Use this key to set container runtime endpoint")
+}
+
+func unmountIfNeeded(path string) error {
+    cmd := exec.Command("cmd", "/C", "taskkill", "/F", "/IM", "handle.exe", "/FI", fmt.Sprintf("Path eq %s", path))
+    if err := cmd.Run(); err != nil {
+        // here Ignoring errors as the process might not exist
+        fmt.Printf("Warning: Failed to release handles for %s: %v\n", path, err)
+    }
+    dismountCmd := exec.Command("cmd", "/C", "mountvol", path, "/D")
+    if err := dismountCmd.Run(); err != nil {
+        // same as before Ignoring dismount errors as the path might not be mounted
+        fmt.Printf("Warning: Failed to dismount %s: %v\n", path, err)
+    }
+    return nil
 }
