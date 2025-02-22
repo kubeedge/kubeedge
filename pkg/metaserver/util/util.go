@@ -60,7 +60,7 @@ func UnsafeResourceToKind(r string) string {
 		"ingressclasses":               "IngressClass",
 		"ingressclasslist":             "IngressClassList",
 		"configmaps":                   "ConfigMap",
-		"configmaplist":                "ConfigMapList",  
+		"configmaplist":                "ConfigMapList",
 	}
 	if v, isUnusual := unusualResourceToKind[r]; isUnusual {
 		return v
@@ -91,7 +91,7 @@ func UnsafeKindToResource(k string) string {
 		"IngressClass":                 "ingressclasses",
 		"IngressClassList":             "ingressclasslist",
 		"ConfigMap":                    "configmaps",
-		"ConfigMapList":                "configmaplist", 
+		"ConfigMapList":                "configmaplist",
 	}
 	if v, isUnusual := unusualKindToResource[k]; isUnusual {
 		return v
