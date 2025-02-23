@@ -18,12 +18,16 @@ package dao
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/beego/beego/v2/client/orm"
 	"github.com/golang/mock/gomock"
+	coreV1 "k8s.io/api/core/v1"
 
+	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/kubeedge/edge/mocks/beego"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 )
@@ -529,6 +533,84 @@ func TestIsNonUniqueNameError(t *testing.T) {
 			gotBool := IsNonUniqueNameError(test.err)
 			if gotBool != test.wantBool {
 				t.Errorf("IsNonUniqueError() failed, Got = %v, Want = %v", gotBool, test.wantBool)
+			}
+		})
+	}
+}
+
+func TestSaveMQTTMeta(t *testing.T) {
+	// Initialize Global Variables (Mocks)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock := beego.NewMockOrmer(mockCtrl)
+	dbm.DBAccess = ormerMock
+
+	cases := []struct {
+		name      string
+		nodeName  string
+		returnInt int64
+		returnErr error
+	}{
+		{
+			// Success Case
+			name:      "SuccessCase",
+			nodeName:  "test-node",
+			returnInt: int64(1),
+			returnErr: nil,
+		},
+		{
+			// Failure Case
+			name:      "FailureCase",
+			nodeName:  "test-node",
+			returnInt: int64(0),
+			returnErr: errFailedDBOperation,
+		},
+	}
+
+	// run the test cases
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			// Set up expectations
+			ormerMock.EXPECT().Insert(gomock.Any()).DoAndReturn(
+				func(meta interface{}) (int64, error) {
+					// Type assert and verify the meta object
+					mqttMeta, ok := meta.(*Meta)
+					if !ok {
+						t.Error("Expected *Meta type for Insert argument")
+						return 0, errFailedDBOperation
+					}
+
+					// Verify key format
+					expectedKey := fmt.Sprintf("default/pod/%s", constants.DefaultMosquittoContainerName)
+					if mqttMeta.Key != expectedKey {
+						t.Errorf("Expected key %s but got %s", expectedKey, mqttMeta.Key)
+					}
+
+					// Verify type
+					if mqttMeta.Type != "pod" {
+						t.Errorf("Expected type 'pod' but got %s", mqttMeta.Type)
+					}
+
+					// Verify that Value contains valid JSON
+					var pod coreV1.Pod
+					if err := json.Unmarshal([]byte(mqttMeta.Value), &pod); err != nil {
+						t.Errorf("Failed to unmarshal pod JSON: %v", err)
+					}
+
+					// Verify essential pod fields
+					if pod.Spec.NodeName != test.nodeName {
+						t.Errorf("Expected NodeName %s but got %s", test.nodeName, pod.Spec.NodeName)
+					}
+
+					return test.returnInt, test.returnErr
+				}).Times(1)
+
+			// Execute the function
+			err := SaveMQTTMeta(test.nodeName)
+
+			// Verify results
+			if test.returnErr != err {
+				t.Errorf("SaveMQTTMeta case failed: wanted error %v and got error %v", test.returnErr, err)
 			}
 		})
 	}
