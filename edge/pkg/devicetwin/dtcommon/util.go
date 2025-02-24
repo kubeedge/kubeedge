@@ -66,7 +66,7 @@ func ValidateTwinValue(value string) bool {
 
 func ConvertDevice(device *v1beta1.Device) (*pb.Device, error) {
 	if device == nil {
-		return nil, errors.New("device cannot be nil")
+		return nil, fmt.Errorf("device cannot be nil")
 	}
 
 	data, err := json.Marshal(device)
@@ -105,11 +105,15 @@ func ConvertDevice(device *v1beta1.Device) (*pb.Device, error) {
 	edgeDevice.Name = device.Name
 	edgeDevice.Namespace = device.Namespace
 
+	if device.Spec.DeviceModelRef != nil {
+		edgeDevice.Spec.DeviceModelReference = device.Spec.DeviceModelRef.Name
+	}
+
 	return &edgeDevice, nil
 }
 func convertDeviceProperty(prop *v1beta1.DeviceProperty) (*pb.DeviceProperty, error) {
 	if prop == nil {
-		return nil, errors.New("property cannot be nil")
+		return nil, fmt.Errorf("property cannot be nil")
 	}
 
 	item := new(pb.DeviceProperty)
