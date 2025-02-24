@@ -19,7 +19,7 @@ on:
 
 env:
   CONTAINER_RUN_OPTIONS: " "
-  GINKGO_VERSION: "v2.17.1"
+  GINKGO_VERSION: "v2.9.5"
 
 jobs:
   lint:
@@ -285,7 +285,7 @@ jobs:
 
       - name: enable cri config in containerd service
         run: |
-          containerd config default | sudo tee /etc/containerd/config.toml && sudo systemctl restart containerd.service
+          containerd config default | sudo tee /etc/containerd/config.toml && sudo systemctl restart containerd.service         
 
       - run: make keadm_deprecated_e2e
 
