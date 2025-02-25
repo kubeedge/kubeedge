@@ -175,17 +175,12 @@ func cleanDirectories() error {
 		util.KubeEdgeSocketPath,
 		util.EdgeRootDir,
 		util.KubeEdgeUsrBinPath,
-		util.EdgeCoreRunDirectory,
 	}
 
 	for _, dir := range dirToClean {
-		if err := unmountIfNeeded(dir); 
-		err != nil {
+		if err := unmountIfNeeded(dir); err != nil {
 			fmt.Printf("Failed to unmount directory %s: %v\n", dir, err)
 		}
-	}
-
-	for _, dir := range dirToClean {
 		if err := phases.CleanDir(dir); err != nil {
 			fmt.Printf("Failed to delete directory %s: %v\n", dir, err)
 		}
@@ -203,11 +198,26 @@ func addResetFlags(cmd *cobra.Command, resetOpts *common.ResetOptions) {
 }
 
 func unmountIfNeeded(path string) error {
-    cmd := exec.Command("cmd", "/C", "taskkill", "/F", "/IM", "handle.exe", "/FI", fmt.Sprintf("Path eq %s", path))
-    if err := cmd.Run(); err != nil {
-        // here Ignoring errors as the process might not exist
-        fmt.Printf("Warning: Failed to release handles for %s: %v\n", path, err)
+	// try native windows command
+	openFiles := exec.Command("cmd", "/C", "openfiles /query /fo table | findstr /I " + path)
+    if err := openFiles.Run(); err == nil {
+		// means the path is open
+		// close open files
+		closeCmd := exec.Command("cmd", "/C", "openfiles /disconnect /a /op " + path)
+        if err := closeCmd.Run(); err != nil {
+            fmt.Printf("Warning: Failed to close open files for %s: %v\n", path, err)
+        }
+	}
+
+	// try handle.exe if avaliable
+    if handleExists := exec.Command("where", "handle.exe").Run(); handleExists == nil {
+        cmd := exec.Command("cmd", "/C", "handle.exe", "-nobanner", path)
+        if err := cmd.Run(); err != nil {
+            fmt.Printf("Warning: Failed to check handles using handle.exe for %s: %v\n", path, err)
+        }
     }
+
+	// dismount
     dismountCmd := exec.Command("cmd", "/C", "mountvol", path, "/D")
     if err := dismountCmd.Run(); err != nil {
         // same as before Ignoring dismount errors as the path might not be mounted

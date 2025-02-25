@@ -44,8 +44,6 @@ const (
 
 	EdgeRootDir = "C:\\var\\lib\\edged"
 
-	EdgeCoreRunDirectory = "C:\\var\\lib\\edged"
-
 	EdgeKubeletDir = "C:\\var\\lib\\kubelet"
 
 	downloadFileScript = `
