@@ -30,6 +30,7 @@ import (
 // used to cache the implementation of the job action runner.
 var runners = map[string]*ActionRunner{}
 
+// Init registers the node job action runner.
 func Init() {
 	RegisterRunner(operationsv1alpha2.ResourceNodeUpgradeJob,
 		newNodeUpgradeJobRunner())
@@ -48,7 +49,10 @@ func GetRunner(name string) *ActionRunner {
 }
 
 type ActionResponse interface {
+	// Error returns an error if the task run fails, otherwise return nil
 	Error() error
+	// DoNext returns whether the action should continue.
+	// If false, the action flow will be interrupted.
 	DoNext() bool
 }
 

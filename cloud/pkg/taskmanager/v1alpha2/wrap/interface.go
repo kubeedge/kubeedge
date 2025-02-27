@@ -23,16 +23,24 @@ import (
 )
 
 type NodeJob interface {
+	// Name returns the name of the node job.
 	Name() string
+	// ResourceType returns the resource type of the node job.
 	ResourceType() string
+	// Concurrency returns the concurrency in the node job spec.
 	Concurrency() int
+	// Spec returns the spec of the node job.
 	Spec() any
+	// Tasks returns the node tasks of the node job.
 	Tasks() []NodeJobTask
+	// GetObject returns the node job object.
 	GetObject() any
 }
 
 type NodeJobTask interface {
+	// NodeName returns the node name of the node task.
 	NodeName() string
+	// CanExecute returns whether the node job status can be executed.
 	CanExecute() bool
 	// Status returns the status of the node task.
 	Status() operationsv1alpha2.NodeTaskStatus
@@ -46,6 +54,7 @@ type NodeJobTask interface {
 	GetObject() any
 }
 
+// WithEventObj returns the node job wrap based on the event object.
 func WithEventObj(obj any) (NodeJob, error) {
 	switch obj := obj.(type) {
 	case *operationsv1alpha2.NodeUpgradeJob:

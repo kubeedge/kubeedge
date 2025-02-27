@@ -35,15 +35,22 @@ import (
 )
 
 var (
+	// nodeTaskExecutors is the map of node task executors.
+	// The running executor will be in the map until it is
+	// removed from the map after execution is completed.
 	nodeTaskExecutors sync.Map
 
 	ErrExecutorNotExists = errors.New("executor not exists")
 )
 
+// executorsKey returns the key of the node task executor.
+// The key consists of the {resource_type}/{job_name}.
 func executorsKey(resourceType, jobName string) string {
 	return strings.Join([]string{resourceType, jobName}, "/")
 }
 
+// NewNodeTaskExecutor create an executor and add to nodeTaskExecutors.
+// If one already exists in nodeTaskExecutors, use it.
 func NewNodeTaskExecutor(ctx context.Context, job wrap.NodeJob,
 ) (*NodeTaskExecutor, bool, error) {
 	key := executorsKey(job.ResourceType(), job.Name())
@@ -63,6 +70,8 @@ func NewNodeTaskExecutor(ctx context.Context, job wrap.NodeJob,
 	return executor, loaded, nil
 }
 
+// GetExecutor returns the found executors from the nodeTaskExecutors,
+// found by resource type and job name.
 func GetExecutor(resourceType, jobName string) (*NodeTaskExecutor, error) {
 	key := executorsKey(resourceType, jobName)
 	actual, loaded := nodeTaskExecutors.Load(key)
@@ -77,21 +86,32 @@ func GetExecutor(resourceType, jobName string) (*NodeTaskExecutor, error) {
 	return executor, nil
 }
 
+// RemoveExecutor removes the executor from the nodeTaskExecutors,
+// found by resource type and job name.
 func RemoveExecutor(resourceType, jobName string) {
 	nodeTaskExecutors.Delete(executorsKey(resourceType, jobName))
 }
 
 type NodeTaskExecutor struct {
-	job          wrap.NodeJob
-	pool         *Pool
-	interrupted  atomic.Bool
+	// job is the node job to be executed.
+	job wrap.NodeJob
+	// pool is the pool of concurrent resources.
+	pool *Pool
+	// interrupted indicates whether the executor is interrupted.
+	interrupted atomic.Bool
+	// messageLayer defines the message layer used to send edge nodes.
 	messageLayer messagelayer.MessageLayer
-	logger       logr.Logger
+	// logger is the logger for the executor.
+	logger logr.Logger
 }
 
+// ErrorHandler defines the error handler function for the executor.
+// This function is used to update the status of the node task when an error occurs in executor.
 type ErrorHandler func(ctx context.Context, job wrap.NodeJob, errTask wrap.NodeJobTask, err error)
 
 // Execute executes the node tasks. It uses a pool to control the number of concurrent executions of node tasks.
+// The connectedNodes arg indicates the edge nodes that the current CloudCore is connected to. Only these nodes
+// will execute tasks.
 func (executor *NodeTaskExecutor) Execute(ctx context.Context, connectedNodes []string, handleErr ErrorHandler) {
 	defer RemoveExecutor(executor.job.ResourceType(), executor.job.Name())
 
