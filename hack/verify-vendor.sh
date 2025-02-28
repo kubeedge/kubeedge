@@ -29,7 +29,9 @@ function kubeedge::git::check_status() {
 }
 
 ${KUBEEDGE_ROOT}/hack/update-vendor.sh
- 
+
+git status
+
 ret=$(kubeedge::git::check_status)
 if [ ${ret} -eq 0 ]; then
 	echo "SUCCESS: Vendor Verified."

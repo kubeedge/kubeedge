@@ -19,7 +19,9 @@ func (nm *NodesManager) Events() chan watch.Event {
 func NewNodesManager(si cache.SharedIndexInformer) (*NodesManager, error) {
 	events := make(chan watch.Event)
 	rh := NewCommonResourceEventHandler(events, nil)
-	si.AddEventHandler(rh)
+	if _, err := si.AddEventHandler(rh); err != nil {
+		return nil, err
+	}
 
 	return &NodesManager{events: events}, nil
 }

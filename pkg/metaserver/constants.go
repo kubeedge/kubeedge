@@ -17,7 +17,7 @@ limitations under the License.
 package metaserver
 
 import (
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -55,7 +55,7 @@ type PatchInfo struct {
 	Name         string
 	PatchType    types.PatchType
 	Data         []byte
-	Options      v1.PatchOptions
+	Options      metav1.PatchOptions
 	Subresources []string
 }
 

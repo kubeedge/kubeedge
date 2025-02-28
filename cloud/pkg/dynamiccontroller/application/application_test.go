@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"k8s.io/api/authorization/v1"
+	v1 "k8s.io/api/authorization/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes"
