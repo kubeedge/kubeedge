@@ -37,5 +37,5 @@ rules:
   resources: ["*"]
   verbs: ["get", "list", "watch"]
 - apiGroups: ["operations.kubeedge.io"]
-  resources: ["nodeupgradejobs", "nodeupgradejobs/status", "imageprepulljobs", "imageprepulljobs/status"]
+  resources: ["nodeupgradejobs", "nodeupgradejobs/status", "imageprepulljobs", "imageprepulljobs/status", "configupdatejobs", "configupdatejobs/status"]
   verbs: ["get", "list", "watch", "update", "patch"]

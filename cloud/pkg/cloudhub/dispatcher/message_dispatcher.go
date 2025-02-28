@@ -186,7 +186,8 @@ func (md *messageDispatcher) DispatchUpstream(message *beehivemodel.Message, inf
 		beehivecontext.Send(modules.RouterModuleName, *message)
 
 	case message.GetOperation() == taskutil.TaskPrePull ||
-		message.GetOperation() == taskutil.TaskUpgrade:
+		message.GetOperation() == taskutil.TaskUpgrade ||
+		message.GetOperation() == taskutil.TaskConfigUpdate:
 		beehivecontext.SendToGroup(modules.TaskManagerModuleGroup, *message)
 
 	case message.GetResource() == beehivemodel.ResourceTypeK8sCA:
