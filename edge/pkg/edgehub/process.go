@@ -15,6 +15,8 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/msghandler"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/task"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/taskv1alpha2"
 )
 
 var groupMap = map[string]string{
@@ -45,9 +47,11 @@ func isSyncResponse(msgID string) bool {
 	return msgID != ""
 }
 
-func init() {
-	handler := &defaultHandler{}
-	msghandler.RegisterHandler(handler)
+// RegisterMessageHandlers registers the all message handlers
+func RegisterMessageHandlers() {
+	msghandler.RegisterHandler(&defaultHandler{})
+	msghandler.RegisterHandler(task.NewMessageHandler())
+	msghandler.RegisterHandler(taskv1alpha2.NewMessageHandler())
 }
 
 type defaultHandler struct {
@@ -97,13 +101,7 @@ func (*defaultHandler) Process(message *model.Message, _ clients.Adapter) error 
 }
 
 func (eh *EdgeHub) dispatch(message model.Message) error {
-	// handler for msg.
-	err := msghandler.ProcessHandler(message, eh.chClient)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return msghandler.ProcessHandler(message, eh.chClient)
 }
 
 func (eh *EdgeHub) routeToEdge() {
@@ -120,11 +118,9 @@ func (eh *EdgeHub) routeToEdge() {
 			eh.reconnectChan <- struct{}{}
 			return
 		}
-
-		klog.V(4).Infof("[edgehub/routeToEdge] receive msg from cloud, msg:% +v", message)
-		err = eh.dispatch(message)
-		if err != nil {
-			klog.Errorf("failed to dispatch message, discard: %v", err)
+		klog.V(4).Infof("[edgehub/routeToEdge] receive msg from cloud, msg: %+v", message)
+		if err = eh.dispatch(message); err != nil {
+			klog.Error(err)
 		}
 	}
 }
