@@ -53,6 +53,10 @@ spec:
                 items:
                   type: string
                 type: array
+              topologyEnabled:
+                description: topologyEnabled indicates whether the topology is enabled
+                  for this NodeGroup.
+                type: boolean
             type: object
           status:
             description: Status represents the status of member nodegroup.
