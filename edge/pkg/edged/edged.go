@@ -56,6 +56,9 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/bandwidth/consts"
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/bandwidth/kube"
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/bandwidth/tclimit"
 	edgedconfig "github.com/kubeedge/kubeedge/edge/pkg/edged/config"
 	kubebridge "github.com/kubeedge/kubeedge/edge/pkg/edged/kubeclientbridge"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
@@ -85,21 +88,23 @@ var DefaultRunLiteKubelet RunLiteKubelet = kubeletserver.Run
 
 // edged is the main edged implementation.
 type edged struct {
-	enable        bool
-	KubeletServer *kubeletoptions.KubeletServer
-	KubeletDeps   *kubelet.Dependencies
-	FeatureGate   featuregate.FeatureGate
-	context       context.Context
-	nodeName      string
-	namespace     string
+	enable           bool
+	KubeletServer    *kubeletoptions.KubeletServer
+	KubeletDeps      *kubelet.Dependencies
+	FeatureGate      featuregate.FeatureGate
+	context          context.Context
+	nodeName         string
+	namespace        string
+	metaServerURL    string
+	bandwidthManager bool
 }
 
 var _ core.Module = (*edged)(nil)
 
 // Register register edged
-func Register(e *v1alpha2.Edged) {
+func Register(e *v1alpha2.Edged, metaServerURL string) {
 	edgedconfig.InitConfigure(e)
-	edged, err := newEdged(e.Enable, e.HostnameOverride, e.RegisterNodeNamespace)
+	edged, err := newEdged(e.Enable, e.HostnameOverride, e.RegisterNodeNamespace, metaServerURL, e.BandwidthManager)
 	if err != nil {
 		klog.Errorf("init new edged error, %v", err)
 		os.Exit(1)
@@ -163,11 +168,15 @@ func (e *edged) Start() {
 		klog.Info("Start sync pod")
 	}
 
+	if e.bandwidthManager {
+		go e.bandwidthLimit()
+	}
+
 	e.syncPod(e.KubeletDeps.PodConfig)
 }
 
 // newEdged creates new edged object and initialises it
-func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
+func newEdged(enable bool, nodeName, namespace, metaServerURL string, bandwidthManager bool) (*edged, error) {
 	var ed *edged
 	var err error
 	if !enable {
@@ -223,13 +232,15 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 	kubeletDeps.PodConfig = config.NewPodConfig(config.PodConfigNotificationIncremental, kubeletDeps.Recorder, kubeletDeps.PodStartupLatencyTracker)
 
 	ed = &edged{
-		enable:        true,
-		context:       context.Background(),
-		KubeletServer: &kubeletServer,
-		KubeletDeps:   kubeletDeps,
-		FeatureGate:   utilfeature.DefaultFeatureGate,
-		nodeName:      nodeName,
-		namespace:     namespace,
+		enable:           true,
+		context:          context.Background(),
+		KubeletServer:    &kubeletServer,
+		KubeletDeps:      kubeletDeps,
+		FeatureGate:      utilfeature.DefaultFeatureGate,
+		nodeName:         nodeName,
+		namespace:        namespace,
+		bandwidthManager: bandwidthManager,
+		metaServerURL:    metaServerURL,
 	}
 
 	return ed, nil
@@ -520,4 +531,21 @@ func kubeletHealthCheck(port int32, kubeletReadyChan chan struct{}) {
 		}
 		time.Sleep(50 * time.Millisecond)
 	}
+}
+
+func (e *edged) bandwidthLimit() {
+	// sleep 30s, wait edgecore is started
+	time.Sleep(consts.TCSleepTimes * time.Second)
+	// todo listen in syncPod and abandon client
+	// Initialize metaServer connection
+	err := kube.InitEdgeClient(fmt.Sprintf("http://%s", e.metaServerURL))
+	if err != nil {
+		klog.Errorf("failed to start bandwidth limit, err: %v", err)
+		return
+	}
+	if err := tclimit.EdgeWatch(beehiveContext.GetContext(), e.nodeName); err != nil {
+		klog.Errorf("failed to watch pod by informer, err: %v", err)
+		return
+	}
+	klog.Infof("enable edge pod watch...")
 }
