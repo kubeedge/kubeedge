@@ -269,7 +269,7 @@ func NegotiateTunnelPort() (*int, error) {
 }
 
 func negotiatePort(portRecord map[int]bool) int {
-	for port := constants.ServerPort; ; {
+	for port := constants.KubeletDefaultServerPort; ; {
 		port++
 		if _, found := portRecord[port]; !found {
 			return port
