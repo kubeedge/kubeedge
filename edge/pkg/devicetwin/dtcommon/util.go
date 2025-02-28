@@ -65,73 +65,84 @@ func ValidateTwinValue(value string) bool {
 }
 
 func ConvertDevice(device *v1beta1.Device) (*pb.Device, error) {
+	if device == nil {
+		return nil, errors.New("device cannot be nil")
+	}
+
 	data, err := json.Marshal(device)
 	if err != nil {
 		klog.Errorf("fail to marshal device %s with err: %v", device.Name, err)
 		return nil, err
 	}
-
 	var edgeDevice pb.Device
 	err = json.Unmarshal(data, &edgeDevice)
 	if err != nil {
 		klog.Errorf("fail to unmarshal device %s with err: %v", device.Name, err)
 		return nil, err
 	}
-	if device.Spec.Protocol.ConfigData != nil {
-		// interface data to anypb.Any data
+	if device.Spec.Protocol.ConfigData != nil && device.Spec.Protocol.ConfigData.Data != nil {
 		configAnyData := make(map[string]*anypb.Any)
 		for k, v := range device.Spec.Protocol.ConfigData.Data {
 			anyValue, err := dataToAny(v)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("failed to convert protocol config data: %v", err)
 			}
 			configAnyData[k] = anyValue
 		}
 		edgeDevice.Spec.Protocol.ConfigData.Data = configAnyData
 	}
+
 	var edgePropertyVisitors []*pb.DeviceProperty
 	for i := range device.Spec.Properties {
-		var item *pb.DeviceProperty = new(pb.DeviceProperty)
-		propertyData, err := json.Marshal(device.Spec.Properties[i])
+		property, err := convertDeviceProperty(&device.Spec.Properties[i])
 		if err != nil {
-			klog.Errorf("fail to marshal device %s with err: %v", device.Name, err)
-			return nil, err
+			return nil, fmt.Errorf("failed to convert property: %v", err)
 		}
-		err = json.Unmarshal(propertyData, item)
-		if err != nil {
-			klog.Errorf("fail to unmarshal device %s with err: %v", device.Name, err)
-			return nil, err
-		}
-
-		if device.Spec.Properties[i].Visitors.ConfigData != nil {
-			configAnyData := make(map[string]*anypb.Any)
-			for k, v := range device.Spec.Properties[i].Visitors.ConfigData.Data {
-				anyValue, err := dataToAny(v)
-				if err != nil {
-					return nil, err
-				}
-				configAnyData[k] = anyValue
-			}
-			item.Visitors.ConfigData.Data = configAnyData
-		}
-		edgePropertyVisitors = append(edgePropertyVisitors, item)
+		edgePropertyVisitors = append(edgePropertyVisitors, property)
 	}
 
 	edgeDevice.Spec.Properties = edgePropertyVisitors
 	edgeDevice.Name = device.Name
-	edgeDevice.Spec.DeviceModelReference = device.Spec.DeviceModelRef.Name
+	if device.Spec.DeviceModelRef != nil {
+		edgeDevice.Spec.DeviceModelReference = device.Spec.DeviceModelRef.Name
+	}
 	edgeDevice.Namespace = device.Namespace
 
 	return &edgeDevice, nil
 }
+func convertDeviceProperty(prop *v1beta1.DeviceProperty) (*pb.DeviceProperty, error) {
+	if prop == nil {
+		return nil, errors.New("property cannot be nil")
+	}
 
+	item := new(pb.DeviceProperty)
+	propertyData, err := json.Marshal(prop)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal property: %v", err)
+	}
+
+	err = json.Unmarshal(propertyData, item)
+
+	if prop.Visitors.ConfigData != nil && prop.Visitors.ConfigData.Data != nil {
+		configAnyData := make(map[string]*anypb.Any)
+		for k, v := range prop.Visitors.ConfigData.Data {
+			anyValue, err := dataToAny(v)
+			if err != nil {
+				return nil, fmt.Errorf("failed to convert visitor config data: %v", err)
+			}
+			configAnyData[k] = anyValue
+		}
+		item.Visitors.ConfigData.Data = configAnyData
+	}
+
+	return item, nil
+}
 func ConvertDeviceModel(model *v1beta1.DeviceModel) (*pb.DeviceModel, error) {
 	data, err := json.Marshal(model)
 	if err != nil {
 		klog.Errorf("fail to marshal device model %s with err: %v", model.Name, err)
 		return nil, err
 	}
-
 	var edgeDeviceModel pb.DeviceModel
 	err = json.Unmarshal(data, &edgeDeviceModel)
 	if err != nil {
@@ -140,10 +151,8 @@ func ConvertDeviceModel(model *v1beta1.DeviceModel) (*pb.DeviceModel, error) {
 	}
 	edgeDeviceModel.Name = model.Name
 	edgeDeviceModel.Namespace = model.Namespace
-
 	return &edgeDeviceModel, nil
 }
-
 func dataToAny(v interface{}) (*anypb.Any, error) {
 	switch m := v.(type) {
 	case string:
