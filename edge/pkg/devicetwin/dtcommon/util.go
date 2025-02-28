@@ -91,7 +91,7 @@ func ConvertDevice(device *v1beta1.Device) (*pb.Device, error) {
 	}
 	var edgePropertyVisitors []*pb.DeviceProperty
 	for i := range device.Spec.Properties {
-		var item *pb.DeviceProperty = new(pb.DeviceProperty)
+		item := new(pb.DeviceProperty)
 		propertyData, err := json.Marshal(device.Spec.Properties[i])
 		if err != nil {
 			klog.Errorf("fail to marshal device %s with err: %v", device.Name, err)
