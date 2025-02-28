@@ -17,67 +17,32 @@ limitations under the License.
 package stream
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net"
-	"net/http"
-	"net/url"
 
-	"k8s.io/apimachinery/pkg/util/httpstream/spdy"
 	"k8s.io/klog/v2"
 )
 
 type EdgedAttachConnection struct {
-	ReadChan chan *Message `json:"-"`
-	Stop     chan struct{} `json:"-"`
-	MessID   uint64
-	URL      url.URL     `json:"url"`
-	Header   http.Header `json:"header"`
-	Method   string      `json:"method"`
+	BaseEdgedConnection `json:",inline"`
 }
 
 func (ah *EdgedAttachConnection) CreateConnectMessage() (*Message, error) {
-	data, err := json.Marshal(ah)
-	if err != nil {
-		return nil, err
-	}
-	return NewMessage(ah.MessID, MessageTypeAttachConnect, data), nil
-}
-
-func (ah *EdgedAttachConnection) GetMessageID() uint64 {
-	return ah.MessID
+	return ah.createConnectMessage(MessageTypeAttachConnect, ah)
 }
 
 func (ah *EdgedAttachConnection) String() string {
 	return fmt.Sprintf("EDGE_ATTACH_CONNECTOR Message MessageID %v", ah.MessID)
 }
 
-func (ah *EdgedAttachConnection) CacheTunnelMessage(msg *Message) {
-	ah.ReadChan <- msg
-}
-
-func (ah *EdgedAttachConnection) CloseReadChannel() {
-	close(ah.ReadChan)
-}
-
-func (ah *EdgedAttachConnection) CleanChannel() {
-	for {
-		select {
-		case <-ah.Stop:
-		default:
-			return
-		}
-	}
-}
-
-func (ah *EdgedAttachConnection) receiveFromCloudStream(con net.Conn, stop chan struct{}) {
+func (ah *EdgedAttachConnection) receiveFromCloudStream(con net.Conn) {
 	for message := range ah.ReadChan {
 		switch message.MessageType {
 		case MessageTypeRemoveConnect:
 			klog.V(6).Infof("%s receive remove client id %v", ah.String(), message.ConnectID)
-			stop <- struct{}{}
+			ah.Stop <- struct{}{}
 		case MessageTypeData:
 			_, err := con.Write(message.Data)
 			klog.V(6).Infof("%s receive attach %v data ", ah.String(), message.Data)
@@ -86,12 +51,12 @@ func (ah *EdgedAttachConnection) receiveFromCloudStream(con net.Conn, stop chan 
 			}
 		}
 	}
-	klog.V(6).Infof("%s read channel closed", ah.String())
+	klog.V(2).Infof("%s read channel closed", ah.String())
 }
 
-func (ah *EdgedAttachConnection) write2CloudStream(tunnel SafeWriteTunneler, con net.Conn, stop chan struct{}) {
+func (ah *EdgedAttachConnection) write2CloudStream(tunnel SafeWriteTunneler, con net.Conn) {
 	defer func() {
-		stop <- struct{}{}
+		ah.Stop <- struct{}{}
 	}()
 
 	var data [256]byte
@@ -113,40 +78,11 @@ func (ah *EdgedAttachConnection) write2CloudStream(tunnel SafeWriteTunneler, con
 }
 
 func (ah *EdgedAttachConnection) Serve(tunnel SafeWriteTunneler) error {
-	tripper, err := spdy.NewRoundTripper(nil)
-	if err != nil {
-		return fmt.Errorf("failed to creates a new tripper, err: %v", err)
-	}
-	req, err := http.NewRequest(ah.Method, ah.URL.String(), nil)
-	if err != nil {
-		return fmt.Errorf("failed to create attach request, err: %v", err)
-	}
-	req.Header = ah.Header
-	con, err := tripper.Dial(req)
-	if err != nil {
-		klog.Errorf("failed to dial, err: %v", err)
-		return err
-	}
-	defer con.Close()
-
-	go ah.receiveFromCloudStream(con, ah.Stop)
-
-	defer func() {
-		for retry := 0; retry < 3; retry++ {
-			msg := NewMessage(ah.MessID, MessageTypeRemoveConnect, nil)
-			if err := tunnel.WriteMessage(msg); err != nil {
-				klog.Errorf("%v send %s message error %v", ah, msg.MessageType, err)
-			} else {
-				break
-			}
-		}
-	}()
-
-	go ah.write2CloudStream(tunnel, con, ah.Stop)
-
-	<-ah.Stop
-	klog.V(6).Infof("receive stop signal, so stop attach scan ...")
-	return nil
+	return ah.serveByRoundTripper(tunnel, roundTripperCustomization{
+		name:                   ah.String(),
+		receiveFromCloudStream: ah.receiveFromCloudStream,
+		write2CloudStream:      ah.write2CloudStream,
+	})
 }
 
 var _ EdgedConnection = &EdgedAttachConnection{}
