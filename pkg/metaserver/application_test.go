@@ -20,9 +20,12 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -56,6 +59,15 @@ func TestNewApplication(t *testing.T) {
 			option:      []byte(`{"field-one":"value-one"}`),
 			reqBody:     []byte(`{"field-one":"value-one"}`),
 		},
+		{
+			ctx:         context.TODO(),
+			key:         "key3",
+			verb:        "PUT",
+			nodename:    "node3",
+			subresource: "subresource3",
+			option:      metainternalversion.ListOptions{},
+			reqBody:     map[string]string{"key": "value"},
+		},
 	}
 
 	for _, test := range cases {
@@ -65,6 +77,8 @@ func TestNewApplication(t *testing.T) {
 		assert.Equal(t, test.verb, app.Verb)
 		assert.Equal(t, test.nodename, app.Nodename)
 		assert.Equal(t, test.subresource, app.Subresource)
+		assert.Equal(t, uint64(1), app.getCount())
+		assert.Equal(t, PreApplying, app.Status)
 	}
 }
 
@@ -95,12 +109,25 @@ func TestIdentifier(t *testing.T) {
 			},
 			stdResult: fmt.Sprintf("%x", sha256.Sum256([]byte("test-node-twogroup/version/resource/namespaces/namePOST{\"foo\":\"bar\"}{\"baz\":\"qux\"}pod"))),
 		},
+		{
+			app: Application{
+				ID:          "predefined-id",
+				Nodename:    "test-node-three",
+				Key:         "group/version/resource/namespaces/name",
+				Verb:        "PUT",
+				Option:      []byte(`{"foo":"bar"}`),
+				ReqBody:     []byte(`{"baz":"qux"}`),
+				Subresource: "pod",
+			},
+			stdResult: "predefined-id",
+		},
 	}
 
 	for _, test := range cases {
 		t.Run(fmt.Sprintf("Identifier for %v", test.app), func(t *testing.T) {
 			id := test.app.Identifier()
 			assert.Equal(t, test.stdResult, id)
+			assert.Equal(t, test.stdResult, test.app.ID)
 		})
 	}
 }
@@ -215,6 +242,12 @@ func TestOptionTo(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, test.stdResult, result)
 	}
+
+	// Test error case
+	app := Application{Option: []byte(`{invalid-json}`)}
+	var result map[string]string
+	err := app.OptionTo(&result)
+	assert.Error(t, err)
 }
 
 func TestReqBodyTo(t *testing.T) {
@@ -233,6 +266,12 @@ func TestReqBodyTo(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, result, test.stdResult)
 	}
+
+	// Test error case
+	app := Application{ReqBody: []byte(`{invalid-json}`)}
+	var result map[string]string
+	err := app.ReqBodyTo(&result)
+	assert.Error(t, err)
 }
 
 func TestRespBodyTo(t *testing.T) {
@@ -252,6 +291,12 @@ func TestRespBodyTo(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, test.expected, result)
 	}
+
+	// Test error case
+	app := Application{RespBody: []byte(`{invalid-json}`)}
+	var result map[string]string
+	err := app.RespBodyTo(&result)
+	assert.Error(t, err)
 }
 
 func TestGVR(t *testing.T) {
@@ -423,4 +468,172 @@ func TestMsgToApplications(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestToBytes(t *testing.T) {
+	cases := []struct {
+		input    interface{}
+		expected []byte
+	}{
+		{
+			input:    nil,
+			expected: nil,
+		},
+		{
+			input:    []byte("test-bytes"),
+			expected: []byte("test-bytes"),
+		},
+		{
+			input:    map[string]string{"key": "value"},
+			expected: []byte(`{"key":"value"}`),
+		},
+		{
+			input:    "string-value",
+			expected: []byte(`"string-value"`),
+		},
+	}
+
+	for _, test := range cases {
+		t.Run(fmt.Sprintf("ToBytes for %T", test.input), func(t *testing.T) {
+			result := ToBytes(test.input)
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestCancel(t *testing.T) {
+	// Test case 1: Normal case with valid context and cancel function
+	ctx, cancel := context.WithCancel(context.Background())
+	app := Application{
+		ctx:    ctx,
+		cancel: cancel,
+	}
+
+	// Verify canceling works when cancel function is provided
+	app.Cancel()
+	select {
+	case <-ctx.Done():
+		// This is the expected path - context should be canceled
+	default:
+		t.Error("Context was not canceled")
+	}
+
+	// Test case 2: Edge case - application with nil cancel function
+	app = Application{
+		cancel: nil,
+	}
+	app.Cancel()
+}
+
+func TestReset(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	app := Application{
+		ctx:      ctx,
+		cancel:   cancel,
+		Reason:   "some reason",
+		RespBody: []byte(`{"some":"data"}`),
+	}
+
+	app.Reset()
+
+	select {
+	case <-ctx.Done():
+	default:
+		t.Error("Old context was not canceled")
+	}
+
+	select {
+	case <-app.ctx.Done():
+		t.Error("New context should not be canceled")
+	default:
+	}
+
+	assert.Empty(t, app.Reason)
+	assert.Empty(t, app.RespBody)
+	assert.NotNil(t, app.ctx)
+	assert.NotNil(t, app.cancel)
+}
+
+func TestAddAndClose(t *testing.T) {
+	app := Application{
+		countLock: &sync.Mutex{},
+		count:     1, // Initial count
+	}
+
+	app.Add()
+	assert.Equal(t, uint64(2), app.getCount())
+
+	app.Close()
+	assert.Equal(t, uint64(1), app.getCount())
+	assert.NotEqual(t, Completed, app.Status) // Status should not change yet
+
+	app.Close()
+	assert.Equal(t, uint64(0), app.getCount())
+	assert.Equal(t, Completed, app.Status)  // Status should change to Completed
+	assert.False(t, app.Timestamp.IsZero()) // Timestamp should be set
+
+	initialTimestamp := app.Timestamp
+	time.Sleep(1 * time.Millisecond) // Ensure time would change if updated
+	app.Close()
+	assert.Equal(t, uint64(0), app.getCount())
+	assert.Equal(t, initialTimestamp, app.Timestamp) // Timestamp should not change
+}
+
+func TestLastCloseTime(t *testing.T) {
+	app1 := Application{
+		countLock: &sync.Mutex{},
+		count:     1,
+		Timestamp: time.Now(),
+	}
+	result1 := app1.LastCloseTime()
+	assert.True(t, result1.IsZero())
+
+	app2 := Application{
+		countLock: &sync.Mutex{},
+		count:     0,
+		Timestamp: time.Time{}, // Zero timestamp
+	}
+	result2 := app2.LastCloseTime()
+	assert.True(t, result2.IsZero())
+
+	expectedTime := time.Now()
+	app3 := Application{
+		countLock: &sync.Mutex{},
+		count:     0,
+		Timestamp: expectedTime,
+	}
+	result3 := app3.LastCloseTime()
+	assert.Equal(t, expectedTime, result3)
+}
+
+func TestWait(t *testing.T) {
+	// Test case 1: Normal case - Wait should block until context is canceled
+	ctx, cancel := context.WithCancel(context.Background())
+	app := Application{
+		ctx:    ctx,
+		cancel: cancel,
+	}
+
+	// Cancel the context in a goroutine to unblock Wait
+	go func() {
+		cancel()
+	}()
+
+	// Wait should return once the context is canceled
+	app.Wait()
+
+	// Verify that the context is indeed done
+	select {
+	case <-ctx.Done():
+		// This is the expected path
+	default:
+		t.Error("Context should be done")
+	}
+
+	// Test case 2: Edge case - application with nil context
+	app = Application{
+		ctx: nil,
+	}
+	// Should not block or panic when context is nil
+	app.Wait()
 }
