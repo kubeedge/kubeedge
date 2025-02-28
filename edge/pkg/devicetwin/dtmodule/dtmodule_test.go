@@ -17,7 +17,9 @@ limitations under the License.
 package dtmodule_test
 
 import (
+	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
@@ -25,6 +27,177 @@ import (
 	. "github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtmanager"
 	. "github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtmodule"
 )
+
+// mockPanicWorker implements a worker that panics for testing
+type mockPanicWorker struct {
+	Worker
+}
+
+func (w mockPanicWorker) Start() {
+	panic("simulated panic for testing recovery")
+}
+
+func TestDTModule_InitWorker_DMIModule(t *testing.T) {
+	ctx, err := dtcontext.InitDTContext()
+	if err != nil {
+		t.Fatalf("failed to init devicetwin context: %v", err)
+	}
+	recvCh, confirmCh, heartBeatCh := make(chan interface{}), make(chan interface{}), make(chan interface{})
+
+	dm := &DTModule{
+		Name: dtcommon.DMIModule,
+	}
+	dm.InitWorker(recvCh, confirmCh, heartBeatCh, ctx)
+
+	dmiWorker, ok := dm.Worker.(DMIWorker)
+	if !ok {
+		t.Errorf("Expected worker type DMIWorker, got %T", dm.Worker)
+	}
+
+	if dmiWorker.Group != dtcommon.DMIModule {
+		t.Errorf("Expected group %s, got %s", dtcommon.DMIModule, dmiWorker.Group)
+	}
+
+	if dmiWorker.ReceiverChan != recvCh {
+		t.Error("ReceiverChan not properly initialized")
+	}
+	if dmiWorker.ConfirmChan != confirmCh {
+		t.Error("ConfirmChan not properly initialized")
+	}
+	if dmiWorker.HeartBeatChan != heartBeatCh {
+		t.Error("HeartBeatChan not properly initialized")
+	}
+	if dmiWorker.DTContexts != ctx {
+		t.Error("DTContexts not properly initialized")
+	}
+}
+
+func TestDTModule_Start_PanicRecovery(t *testing.T) {
+	ctx, err := dtcontext.InitDTContext()
+	if err != nil {
+		t.Fatalf("failed to init devicetwin context: %v", err)
+	}
+
+	// Create channels
+	recvCh, confirmCh, heartBeatCh := make(chan interface{}), make(chan interface{}), make(chan interface{})
+
+	// Create DTModule with mock worker
+	dm := &DTModule{
+		Name: "TestModule",
+		Worker: mockPanicWorker{
+			Worker: Worker{
+				ReceiverChan:  recvCh,
+				ConfirmChan:   confirmCh,
+				HeartBeatChan: heartBeatCh,
+				DTContexts:    ctx,
+			},
+		},
+	}
+
+	// The Start method should recover from panic and not crash the test
+	dm.Start()
+}
+
+func TestDTModule_InitWorker_Coverage(t *testing.T) {
+	testCases := []struct {
+		name          string
+		expectedType  string
+		expectedGroup string
+		isDMI         bool // Special flag for DMI module
+	}{
+		{name: dtcommon.MemModule, expectedType: "dtmanager.MemWorker", expectedGroup: dtcommon.MemModule, isDMI: false},
+		{name: dtcommon.TwinModule, expectedType: "dtmanager.TwinWorker", expectedGroup: dtcommon.TwinModule, isDMI: false},
+		{name: dtcommon.DeviceModule, expectedType: "dtmanager.DeviceWorker", expectedGroup: dtcommon.DeviceModule, isDMI: false},
+		{name: dtcommon.CommModule, expectedType: "dtmanager.CommWorker", expectedGroup: dtcommon.CommModule, isDMI: false},
+		{name: dtcommon.DMIModule, expectedType: "dtmanager.DMIWorker", expectedGroup: dtcommon.DMIModule, isDMI: true},
+	}
+
+	ctx, err := dtcontext.InitDTContext()
+	if err != nil {
+		t.Fatalf("failed to init devicetwin context: %v", err)
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			recvCh := make(chan interface{})
+			confirmCh := make(chan interface{})
+			heartBeatCh := make(chan interface{})
+
+			dm := &DTModule{
+				Name: tt.name,
+			}
+			dm.InitWorker(recvCh, confirmCh, heartBeatCh, ctx)
+
+			if dm.Worker == nil {
+				t.Errorf("Worker not initialized for module %s", tt.name)
+				return
+			}
+
+			// Check the type name
+			actualType := fmt.Sprintf("%T", dm.Worker)
+			if !strings.HasSuffix(actualType, tt.expectedType) {
+				t.Errorf("Expected worker type %s, got %s", tt.expectedType, actualType)
+			}
+
+			// Access fields differently based on module type
+			if tt.isDMI {
+				// For DMI module, Worker field is embedded directly
+				workerValue := reflect.ValueOf(dm.Worker)
+
+				// Check the channels are properly set
+				if workerValue.FieldByName("ReceiverChan").Interface() != recvCh {
+					t.Errorf("ReceiverChan not properly set for module %s", tt.name)
+				}
+				if workerValue.FieldByName("ConfirmChan").Interface() != confirmCh {
+					t.Errorf("ConfirmChan not properly set for module %s", tt.name)
+				}
+				if workerValue.FieldByName("HeartBeatChan").Interface() != heartBeatCh {
+					t.Errorf("HeartBeatChan not properly set for module %s", tt.name)
+				}
+				if workerValue.FieldByName("DTContexts").Interface() != ctx {
+					t.Errorf("DTContexts not properly set for module %s", tt.name)
+				}
+
+				// Check Group field
+				if groupField := workerValue.FieldByName("Group"); groupField.IsValid() {
+					if groupField.String() != tt.expectedGroup {
+						t.Errorf("Expected group %s, got %s", tt.expectedGroup, groupField.String())
+					}
+				}
+			} else {
+				// For other modules, Worker field is nested
+				workerValue := reflect.ValueOf(dm.Worker)
+				workerField := workerValue.FieldByName("Worker")
+
+				if !workerField.IsValid() {
+					t.Errorf("Worker field not found in %T", dm.Worker)
+					return
+				}
+
+				// Check the channels are properly set
+				if workerField.FieldByName("ReceiverChan").Interface() != recvCh {
+					t.Errorf("ReceiverChan not properly set for module %s", tt.name)
+				}
+				if workerField.FieldByName("ConfirmChan").Interface() != confirmCh {
+					t.Errorf("ConfirmChan not properly set for module %s", tt.name)
+				}
+				if workerField.FieldByName("HeartBeatChan").Interface() != heartBeatCh {
+					t.Errorf("HeartBeatChan not properly set for module %s", tt.name)
+				}
+				if workerField.FieldByName("DTContexts").Interface() != ctx {
+					t.Errorf("DTContexts not properly set for module %s", tt.name)
+				}
+
+				// Check Group field
+				if groupField := workerValue.FieldByName("Group"); groupField.IsValid() {
+					if groupField.String() != tt.expectedGroup {
+						t.Errorf("Expected group %s, got %s", tt.expectedGroup, groupField.String())
+					}
+				}
+			}
+		})
+	}
+}
 
 func TestDTModule_InitWorker(t *testing.T) {
 	type fields struct {
