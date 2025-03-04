@@ -36,9 +36,9 @@ If not installed, please install the Kubernetes first.
 `
 	cloudInitExample = `
 keadm init
-- This command will render and install the Charts for Kubeedge cloud component
+- This command will render and install the Charts for KubeEdge cloud component
 
-keadm init --advertise-address=127.0.0.1 --profile version=v%s --kube-config=/root/.kube/config
+keadm init --advertise-address=127.0.0.1 --kubeedge-version=v%s --kube-config=/root/.kube/config
   - kube-config is the absolute path of kubeconfig which used to secure connectivity between cloudcore and kube-apiserver
 	- a list of helm style set flags like "--set key=value" can be implemented, ref: https://github.com/kubeedge/kubeedge/tree/master/manifests/charts/cloudcore/README.md
 `
