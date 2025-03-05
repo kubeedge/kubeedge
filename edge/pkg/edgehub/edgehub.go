@@ -14,8 +14,6 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/certificate"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
-	// register Task handler
-	_ "github.com/kubeedge/kubeedge/edge/pkg/edgehub/task"
 )
 
 // EdgeHub defines edgehub object structure
@@ -55,7 +53,12 @@ func newEdgeHub(enable bool) *EdgeHub {
 
 // Register register edgehub
 func Register(eh *v1alpha2.EdgeHub, nodeName string) {
+	// Initialize the hub configuration
 	config.InitConfigure(eh, nodeName)
+
+	RegisterMessageHandlers()
+
+	// Register self to beehive modules
 	core.Register(newEdgeHub(eh.Enable))
 }
 
