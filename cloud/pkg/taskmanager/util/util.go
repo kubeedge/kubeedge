@@ -93,21 +93,6 @@ func IsEdgeNode(node *metav1.Node) bool {
 	return true
 }
 
-// RemoveDuplicateElement deduplicate
-func RemoveDuplicateElement(s []string) []string {
-	result := make([]string, 0, len(s))
-	temp := make(map[string]struct{}, len(s))
-
-	for _, item := range s {
-		if _, ok := temp[item]; !ok {
-			temp[item] = struct{}{}
-			result = append(result, item)
-		}
-	}
-
-	return result
-}
-
 // MergeAnnotationUpgradeHistory constructs the new history based on the origin history
 // and we'll only keep 3 records
 func MergeAnnotationUpgradeHistory(origin, fromVersion, toVersion string) string {

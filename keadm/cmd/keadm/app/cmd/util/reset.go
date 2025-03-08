@@ -17,6 +17,7 @@ limitations under the License.
 package util
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -37,8 +38,7 @@ func RemoveMqttContainer(endpoint, cgroupDriver string) error {
 	if err != nil {
 		return fmt.Errorf("failed to new container runtime: %v", err)
 	}
-
-	return runtime.RemoveMQTT()
+	return runtime.RemoveMQTT(context.Background())
 }
 
 // RemoveContainers removes all Kubernetes-managed containers
