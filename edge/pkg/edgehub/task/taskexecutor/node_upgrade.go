@@ -27,7 +27,6 @@ import (
 
 	api "github.com/kubeedge/api/apis/fsm/v1alpha1"
 	"github.com/kubeedge/kubeedge/common/types"
-	commontypes "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/upgradedb"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
@@ -74,7 +73,7 @@ func initUpgrade(taskReq types.NodeTaskRequest) (event fsm.Event) {
 		}
 	}()
 
-	var upgradeReq *commontypes.NodeUpgradeJobRequest
+	var upgradeReq *types.NodeUpgradeJobRequest
 	upgradeReq, err = getTaskRequest(taskReq)
 	if err != nil {
 		return
@@ -85,7 +84,7 @@ func initUpgrade(taskReq types.NodeTaskRequest) (event fsm.Event) {
 		return
 	}
 	if upgradeReq.RequireConfirmation {
-		var upgradeJobReqDB = commontypes.NodeUpgradeJobRequest{
+		var upgradeJobReqDB = types.NodeUpgradeJobRequest{
 			UpgradeID:           upgradeReq.UpgradeID,
 			HistoryID:           upgradeReq.HistoryID,
 			Version:             upgradeReq.Version,
@@ -129,12 +128,12 @@ func initUpgrade(taskReq types.NodeTaskRequest) (event fsm.Event) {
 	return event
 }
 
-func getTaskRequest(taskReq commontypes.NodeTaskRequest) (*commontypes.NodeUpgradeJobRequest, error) {
+func getTaskRequest(taskReq types.NodeTaskRequest) (*types.NodeUpgradeJobRequest, error) {
 	data, err := json.Marshal(taskReq.Item)
 	if err != nil {
 		return nil, err
 	}
-	var upgradeReq commontypes.NodeUpgradeJobRequest
+	var upgradeReq types.NodeUpgradeJobRequest
 	err = json.Unmarshal(data, &upgradeReq)
 	if err != nil {
 		return nil, err
@@ -161,7 +160,7 @@ func upgrade(taskReq types.NodeTaskRequest) (event fsm.Event) {
 	return
 }
 
-func keadmUpgrade(upgradeReq commontypes.NodeUpgradeJobRequest, opts *options.EdgeCoreOptions) error {
+func keadmUpgrade(upgradeReq types.NodeUpgradeJobRequest, opts *options.EdgeCoreOptions) error {
 	klog.Infof("Begin to run upgrade command")
 	upgradeCmd := fmt.Sprintf("keadm upgrade edge --upgradeID %s --historyID %s --fromVersion %s --toVersion %s --config %s --image %s > /tmp/keadm.log 2>&1",
 		upgradeReq.UpgradeID, upgradeReq.HistoryID, version.Get(), upgradeReq.Version, opts.ConfigFile, upgradeReq.Image)
@@ -178,7 +177,7 @@ func keadmUpgrade(upgradeReq commontypes.NodeUpgradeJobRequest, opts *options.Ed
 	return nil
 }
 
-func prepareKeadm(upgradeReq *commontypes.NodeUpgradeJobRequest) error {
+func prepareKeadm(upgradeReq *types.NodeUpgradeJobRequest) error {
 	config := options.GetEdgeCoreConfig()
 
 	// install the requested installer keadm from docker image
