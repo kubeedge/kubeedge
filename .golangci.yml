@@ -12,21 +12,51 @@ run:
   # exit code when at least one issue was found, default is 1
   issues-exit-code: 1
 
-  # which dirs to skip: issues from them won't be reported;
-  # can use regexp here: generated.*, regexp is applied on full path;
-  # default value is empty list, but default dirs are skipped independently
-  # from this option's value (see skip-dirs-use-default).
-  # "/" will be replaced by current OS file path separator to properly work
-  # on Windows.
-  skip-dirs:
+issues:
+  # Which dirs to exclude: issues from them won't be reported.
+  # Can use regexp here: `generated.*`, regexp is applied on full path,
+  # including the path prefix if one is set.
+  # Default dirs are skipped independently of this option's value (see exclude-dirs-use-default).
+  # "/" will be replaced by current OS file path separator to properly work on Windows.
+  # Default: []
+  exclude-dirs:
     - vendor
     - fake
     - externalversions
+  exclude-dirs-use-default: true
+  # Maximum count of issues with the same text. Set to 0 to disable. Default is 3.
+  max-same-issues: 0
 
 # output configuration options
 output:
-  # colored-line-number|line-number|json|tab|checkstyle|code-climate, default is "colored-line-number"
-  format: colored-line-number
+  # The formats used to render issues.
+  # Formats:
+  # - `colored-line-number`
+  # - `line-number`
+  # - `json`
+  # - `colored-tab`
+  # - `tab`
+  # - `html`
+  # - `checkstyle`
+  # - `code-climate`
+  # - `junit-xml`
+  # - `github-actions`
+  # - `teamcity`
+  # - `sarif`
+  # Output path can be either `stdout`, `stderr` or path to the file to write to.
+  #
+  # For the CLI flag (`--out-format`), multiple formats can be specified by separating them by comma.
+  # The output can be specified for each of them by separating format name and path by colon symbol.
+  # Example: "--out-format=checkstyle:report.xml,json:stdout,colored-line-number"
+  # The CLI flag (`--out-format`) override the configuration file.
+  #
+  # Default:
+  #   formats:
+  #     - format: colored-line-number
+  #       path: stdout
+  formats:
+    - format: colored-line-number
+      path: stdout
 
   # print lines of code with issue, default is true
   print-issued-lines: true
@@ -38,31 +68,42 @@ output:
   uniq-by-line: true
 
 linters-settings:
-  gci:
+  goimports:
     local-prefixes: github.com/kubeedge
+
   misspell:
     ignore-words:
       - mosquitto
-      - creater
+      - creater  # creater
+      - resouce  # resource
+  revive:
+    rules:
+      - name: dot-imports
+        severity: warning
+        disabled: false
+        exclude: []
+        arguments:
+          - allowedPackages: ["github.com/onsi/ginkgo/v2","github.com/onsi/gomega"]
+      - name: unused-parameter
+        severity: warning
+        disabled: true
+        arguments:
+          - allowRegex: "^_"
+      - name: unused-receiver
+        severity: warning
+        disabled: true
+        arguments:
+          - allowRegex: "^_"
 
 linters:
   disable-all: true
   enable:
-    - gci
-    - goconst
     - errcheck
+    - goconst
     - gofmt
-    - revive
+    - goimports
     - gosimple
     - govet
     - misspell
+    - revive
     - whitespace
-
-issues:
-    # Maximum count of issues with the same text. Set to 0 to disable. Default is 3.
-    max-same-issues: 0
-    # Excluding configuration per-path, per-linter, per-text and per-source
-    exclude-rules:
-      - path: edge
-        linters:
-          - errcheck

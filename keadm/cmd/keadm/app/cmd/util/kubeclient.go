@@ -51,7 +51,7 @@ func IsCloudcoreContainerRunning(ns, kubeConfigPath string) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("failed to query pods, error: %s", err)
 	}
-	if podList.Items == nil || len(podList.Items) == 0 {
+	if len(podList.Items) == 0 {
 		return false, nil
 	}
 	return true, nil

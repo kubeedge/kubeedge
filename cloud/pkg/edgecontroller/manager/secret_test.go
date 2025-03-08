@@ -21,6 +21,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/tools/cache"
@@ -101,7 +102,8 @@ func TestNewSecretManager(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			NewSecretManager(config, tt.args.informer)
+			_, err = NewSecretManager(config, tt.args.informer)
+			assert.NoError(t, err)
 		})
 	}
 }

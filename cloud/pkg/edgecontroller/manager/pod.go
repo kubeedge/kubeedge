@@ -59,15 +59,15 @@ var _ EventFilter = &podEventFilter{}
 
 type podEventFilter struct{}
 
-func (pef *podEventFilter) Create(interface{}) bool {
+func (*podEventFilter) Create(_ interface{}) bool {
 	return true
 }
 
-func (pef *podEventFilter) Delete(interface{}) bool {
+func (*podEventFilter) Delete(_ interface{}) bool {
 	return true
 }
 
-func (pef *podEventFilter) Update(oldObj, newObj interface{}) bool {
+func (*podEventFilter) Update(oldObj, newObj interface{}) bool {
 	curPod := newObj.(*v1.Pod)
 	oldPod := oldObj.(*v1.Pod)
 
@@ -79,7 +79,9 @@ func NewPodManager(config *v1alpha1.EdgeController, si cache.SharedIndexInformer
 	realEvents := make(chan watch.Event, config.Buffer.PodEvent)
 	mergedEvents := make(chan watch.Event, config.Buffer.PodEvent)
 	rh := NewCommonResourceEventHandler(realEvents, &podEventFilter{})
-	si.AddEventHandler(rh)
+	if _, err := si.AddEventHandler(rh); err != nil {
+		return nil, err
+	}
 	pm := &PodManager{realEvents: realEvents, mergedEvents: mergedEvents}
 	go pm.merge()
 	return pm, nil

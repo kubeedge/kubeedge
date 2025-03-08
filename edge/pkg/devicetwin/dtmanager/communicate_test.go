@@ -22,6 +22,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/kubeedge/beehive/pkg/common"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -104,7 +106,7 @@ func TestStartHeartBeat(t *testing.T) {
 }
 
 // TestDealSendToEdge is function to test dealSendToEdge().
-func TestDealSendToEdge(*testing.T) {
+func TestDealSendToEdge(t *testing.T) {
 	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 	msg := model.Message{
 		Header: model.MessageHeader{
@@ -112,7 +114,8 @@ func TestDealSendToEdge(*testing.T) {
 		},
 	}
 
-	dealSendToEdge(nil, "", &msg)
+	err := dealSendToEdge(nil, "", &msg)
+	assert.NoError(t, err)
 }
 
 // TestDealSendToCloud is function to test dealSendToCloud().
