@@ -31,6 +31,7 @@ import (
 	"github.com/gorilla/websocket"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
+	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	certutil "k8s.io/client-go/util/cert"
 	"k8s.io/klog/v2"
 
@@ -42,24 +43,41 @@ import (
 
 const (
 	// The amount of time the tunnelserver should sleep between retrying node status updates
-	retrySleepTime          = 20 * time.Second
-	nodeStatusUpdateTimeout = 2 * time.Minute
+	DefaultRetrySleepTime          = 20 * time.Second
+	DefaultNodeStatusUpdateTimeout = 2 * time.Minute
 )
 
 type TunnelServer struct {
 	container *restful.Container
 	upgrader  websocket.Upgrader
 	sync.Mutex
-	sessions   map[string]*Session
-	nodeNameIP sync.Map
-	tunnelPort int
+	sessions      map[string]*Session
+	nodeNameIP    sync.Map
+	tunnelPort    int
+	kubeClient    v1.CoreV1Interface
+	retrySleep    time.Duration
+	updateTimeout time.Duration
 }
 
 func newTunnelServer(tunnelPort int) *TunnelServer {
+	var kubeClient v1.CoreV1Interface
+	// Safely get the kube client, handling the nil case for tests
+	k8sClient := client.GetKubeClient()
+	if k8sClient != nil {
+		kubeClient = k8sClient.CoreV1()
+	}
+
+	return newTunnelServerWithClient(tunnelPort, kubeClient, DefaultRetrySleepTime, DefaultNodeStatusUpdateTimeout)
+}
+
+func newTunnelServerWithClient(tunnelPort int, kubeClient v1.CoreV1Interface, retrySleep, updateTimeout time.Duration) *TunnelServer {
 	return &TunnelServer{
-		container:  restful.NewContainer(),
-		sessions:   make(map[string]*Session),
-		tunnelPort: tunnelPort,
+		container:     restful.NewContainer(),
+		sessions:      make(map[string]*Session),
+		tunnelPort:    tunnelPort,
+		kubeClient:    kubeClient,
+		retrySleep:    retrySleep,
+		updateTimeout: updateTimeout,
 		upgrader: websocket.Upgrader{
 			HandshakeTimeout: time.Second * 2,
 			ReadBufferSize:   1024,
@@ -196,15 +214,19 @@ func (s *TunnelServer) Start() {
 }
 
 func (s *TunnelServer) updateNodeKubeletEndpoint(nodeName string) error {
-	if err := wait.PollImmediate(retrySleepTime, nodeStatusUpdateTimeout, func() (bool, error) {
-		getNode, err := client.GetKubeClient().CoreV1().Nodes().Get(context.Background(), nodeName, metav1.GetOptions{})
+	if s.kubeClient == nil {
+		klog.V(4).Info("Skip updating node kubelet endpoint in test mode")
+		return fmt.Errorf("kubeclient is nil, cannot update node kubelet endpoint")
+	}
+	if err := wait.PollImmediate(s.retrySleep, s.updateTimeout, func() (bool, error) {
+		getNode, err := s.kubeClient.Nodes().Get(context.Background(), nodeName, metav1.GetOptions{})
 		if err != nil {
 			klog.Errorf("Failed while getting a Node to retry updating node KubeletEndpoint Port, node: %s, error: %v", nodeName, err)
 			return false, nil
 		}
 
 		getNode.Status.DaemonEndpoints.KubeletEndpoint.Port = int32(s.tunnelPort)
-		_, err = client.GetKubeClient().CoreV1().Nodes().UpdateStatus(context.Background(), getNode, metav1.UpdateOptions{})
+		_, err = s.kubeClient.Nodes().UpdateStatus(context.Background(), getNode, metav1.UpdateOptions{})
 		if err != nil {
 			klog.Errorf("Failed to update node KubeletEndpoint Port, node: %s, tunnelPort: %d, err: %v", nodeName, s.tunnelPort, err)
 			return false, nil
