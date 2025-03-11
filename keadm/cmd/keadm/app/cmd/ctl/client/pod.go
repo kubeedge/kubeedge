@@ -21,8 +21,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"k8s.io/client-go/kubernetes/scheme"
 )
 
 type PodRequest struct {
@@ -41,8 +40,12 @@ func (podRequest *PodRequest) GetPod(ctx context.Context) (*corev1.Pod, error) {
 	if err != nil {
 		return nil, err
 	}
-	pod.APIVersion = common.PodAPIVersion
-	pod.Kind = common.PodKind
+	kinds, _, err := scheme.Scheme.ObjectKinds(pod)
+	if err != nil {
+		return nil, err
+	}
+	gvk := kinds[0]
+	pod.GetObjectKind().SetGroupVersionKind(gvk)
 	return pod, nil
 }
 

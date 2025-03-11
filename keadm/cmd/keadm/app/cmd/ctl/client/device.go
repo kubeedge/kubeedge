@@ -25,7 +25,6 @@ import (
 
 	"github.com/kubeedge/api/apis/devices/v1beta1"
 	"github.com/kubeedge/api/client/clientset/versioned/scheme"
-	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
 
 type DeviceRequest struct {
@@ -44,8 +43,12 @@ func (deviceRequest *DeviceRequest) GetDevice(ctx context.Context) (*v1beta1.Dev
 	if err != nil {
 		return nil, err
 	}
-	device.APIVersion = common.DeviceAPIVersion
-	device.Kind = common.DeviceKind
+	kinds, _, err := scheme.Scheme.ObjectKinds(device)
+	if err != nil {
+		return nil, err
+	}
+	gvk := kinds[0]
+	device.GetObjectKind().SetGroupVersionKind(gvk)
 	return device, nil
 }
 
