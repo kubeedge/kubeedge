@@ -52,6 +52,8 @@ func newStreamServer(t *TunnelServer) *StreamServer {
 	}
 }
 
+var getPodNodeNameFunc = defaultGetPodNodeName
+
 func (s *StreamServer) installDebugHandler() {
 	ws := new(restful.WebService)
 	ws.Path("/containerLogs")
@@ -362,15 +364,7 @@ func (s *StreamServer) getAttach(request *restful.Request, response *restful.Res
 	}
 }
 
-func (s *StreamServer) getSessionKey(urlPath string) (string, error) {
-	// extract pod namespace and pod name from request
-	meta := strings.Split(urlPath, "/")
-	if len(meta) < 4 {
-		return "", fmt.Errorf("can not get pod name from url path: %s", urlPath)
-	}
-	namespaceName := meta[2]
-	podName := meta[3]
-
+func defaultGetPodNodeName(namespaceName, podName string) (string, error) {
 	kubeClient := client.GetKubeClient()
 	if kubeClient == nil {
 		return "", fmt.Errorf("can not get kube client")
@@ -381,6 +375,18 @@ func (s *StreamServer) getSessionKey(urlPath string) (string, error) {
 		return "", fmt.Errorf("get pod %s/%s failed: %v", namespaceName, podName, err)
 	}
 	return pod.Spec.NodeName, nil
+}
+
+func (s *StreamServer) getSessionKey(urlPath string) (string, error) {
+	// extract pod namespace and pod name from request
+	meta := strings.Split(urlPath, "/")
+	if len(meta) < 4 {
+		return "", fmt.Errorf("can not get pod name from url path: %s", urlPath)
+	}
+	namespaceName := meta[2]
+	podName := meta[3]
+
+	return getPodNodeNameFunc(namespaceName, podName)
 }
 
 func (s *StreamServer) Start() {
