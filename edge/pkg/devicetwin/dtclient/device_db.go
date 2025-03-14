@@ -20,7 +20,7 @@ type Device struct {
 
 // SaveDevice save device
 func SaveDevice(o orm.Ormer, doc *Device) error {
-	err := o.DoTx(func(ctx context.Context, txOrm orm.TxOrmer) error {
+	err := o.DoTx(func(_ context.Context, txOrm orm.TxOrmer) error {
 		// insert data
 		// Using txOrm to execute SQL
 		_, e := txOrm.Insert(doc)
@@ -38,7 +38,7 @@ func SaveDevice(o orm.Ormer, doc *Device) error {
 
 // DeleteDeviceByID delete device by id
 func DeleteDeviceByID(o orm.Ormer, id string) error {
-	err := o.DoTx(func(ctx context.Context, txOrm orm.TxOrmer) error {
+	err := o.DoTx(func(_ context.Context, txOrm orm.TxOrmer) error {
 		// delete data
 		// Using txOrm to execute SQL
 		_, e := txOrm.QueryTable(DeviceTableName).Filter("id", id).Delete()

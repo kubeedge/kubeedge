@@ -171,7 +171,12 @@ func (p *Proxy) runUDSMasterServer(ctx context.Context, o *options.ProxyRunOptio
 		if err != nil {
 			return nil, fmt.Errorf("failed to get uds listener: %v", err)
 		}
-		go grpcServer.Serve(lis)
+		go func() {
+			if err := grpcServer.Serve(lis); err != nil {
+				// TODO: handle err
+				klog.Error(err)
+			}
+		}()
 		stop = grpcServer.GracefulStop
 	} else {
 		// http-connect
@@ -251,7 +256,12 @@ func (p *Proxy) runMTLSMasterServer(ctx context.Context, o *options.ProxyRunOpti
 		if err != nil {
 			return nil, fmt.Errorf("failed to listen on %s: %v", addr, err)
 		}
-		go grpcServer.Serve(lis)
+		go func() {
+			if err := grpcServer.Serve(lis); err != nil {
+				// TODO: handle err
+				klog.Error(err)
+			}
+		}()
 		stop = grpcServer.GracefulStop
 	} else {
 		// http-connect with no tls
@@ -316,7 +326,12 @@ func (p *Proxy) runAgentServer(o *options.ProxyRunOptions, server *server.ProxyS
 	if err != nil {
 		return fmt.Errorf("failed to listen on %s: %v", addr, err)
 	}
-	go grpcServer.Serve(lis)
+	go func() {
+		if err := grpcServer.Serve(lis); err != nil {
+			// TODO: handle err
+			klog.Error(err)
+		}
+	}()
 
 	return nil
 }
@@ -348,17 +363,17 @@ func (p *Proxy) runAdminServer(o *options.ProxyRunOptions) {
 
 func (p *Proxy) runHealthServer(o *options.ProxyRunOptions, server *server.ProxyServer) {
 	livenessHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "ok")
+		fmt.Fprint(w, "ok")
 	})
 	readinessHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ready, msg := server.Readiness.Ready()
 		if ready {
 			w.WriteHeader(http.StatusOK)
-			fmt.Fprintf(w, "ok")
+			fmt.Fprint(w, "ok")
 			return
 		}
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, msg)
+		fmt.Fprint(w, msg)
 	})
 
 	muxHandler := http.NewServeMux()
