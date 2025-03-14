@@ -60,42 +60,9 @@ func TestFilterVersion(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.name, func(_t *testing.T) {
 			result := FilterVersion(test.version, test.expected)
 			assert.Equal(test.expectResult, result)
-		})
-	}
-}
-
-func TestRemoveDuplicateElement(t *testing.T) {
-	assert := assert.New(t)
-
-	tests := []struct {
-		name     string
-		input    []string
-		expected []string
-	}{
-		{
-			name:     "case 1",
-			input:    []string{"a", "b", "c"},
-			expected: []string{"a", "b", "c"},
-		},
-		{
-			name:     "case 2",
-			input:    []string{"a", "a", "b", "c", "b", "a", "a"},
-			expected: []string{"a", "b", "c"},
-		},
-		{
-			name:     "case 3",
-			input:    []string{},
-			expected: []string{},
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := RemoveDuplicateElement(test.input)
-			assert.Equal(test.expected, result)
 		})
 	}
 }
@@ -134,7 +101,7 @@ func TestMergeAnnotationUpgradeHistory(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.name, func(_t *testing.T) {
 			result := MergeAnnotationUpgradeHistory(test.origin, test.fromVersion, test.toVersion)
 			assert.Equal(test.expected, result)
 		})
@@ -163,7 +130,7 @@ func TestGetImageRepo(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.Image, func(t *testing.T) {
+		t.Run(test.Image, func(_t *testing.T) {
 			repo, err := GetImageRepo(test.Image)
 			assert.NoError(err)
 			assert.Equal(test.ExpectRepo, repo)
@@ -202,7 +169,7 @@ func TestGetNodeName(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.name, func(_t *testing.T) {
 			result := GetNodeName(test.resource)
 			assert.Equal(test.expected, result)
 		})
@@ -240,7 +207,7 @@ func TestGetTaskID(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.name, func(_t *testing.T) {
 			result := GetTaskID(test.resource)
 			assert.Equal(test.expected, result)
 		})
@@ -309,7 +276,7 @@ func TestVersionLess(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.name, func(_t *testing.T) {
 			result, err := VersionLess(test.version1, test.version2)
 
 			if test.expectError {
@@ -359,7 +326,7 @@ func TestNodeUpdated(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.name, func(_t *testing.T) {
 			result := NodeUpdated(test.oldStatus, test.newStatus)
 			assert.Equal(test.stdResult, result)
 		})
