@@ -23,7 +23,28 @@ KUBEEDGE_ROOT=$(unset CDPATH && cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P
 source "${KUBEEDGE_ROOT}/hack/lib/init.sh"
 kubeedge::golang::setup_env
 
-"${KUBEEDGE_ROOT}/hack/generate-groups.sh" "deepcopy,client,informer,lister" \
+API_VERSIONS=(
+    "devices:v1beta1"
+    "reliablesyncs:v1alpha1"
+    "rules:v1"
+    "apps:v1alpha1"
+    "operations:v1alpha1"
+    "operations:v1alpha2"
+    "policy:v1alpha1"
+)
+
+function api_versions_tostring() {
+    local res=""
+    for i in ${API_VERSIONS[@]}; do
+        if [[ -n "$res" ]]; then
+            res+=" "
+        fi
+        res+=$i
+    done
+    echo $res
+}
+
+${KUBEEDGE_ROOT}/hack/generate-groups.sh "deepcopy,client,informer,lister" \
   github.com/kubeedge/api/client github.com/kubeedge/api/apis \
-  "devices:v1beta1 reliablesyncs:v1alpha1 rules:v1 apps:v1alpha1 operations:v1alpha1 policy:v1alpha1" \
+  "$(api_versions_tostring)" \
   --go-header-file ${KUBEEDGE_ROOT}/hack/boilerplate/boilerplate.txt
