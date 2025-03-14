@@ -29,7 +29,7 @@ type NodeJobEventHandler struct {
 	downstream chan<- wrap.NodeJob
 }
 
-// Check that NodeJobEventHandler implements the ResourceEventHandler interface
+// Check whether NodeJobEventHandler implements the ResourceEventHandler interface
 var _ cache.ResourceEventHandler = (*NodeJobEventHandler)(nil)
 
 // NewNodeJobEventHandler creates a new NodeJobEventHandler

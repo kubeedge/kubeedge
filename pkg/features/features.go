@@ -36,7 +36,7 @@ const (
 
 	// DisableNodeTaskV1alpha2 disables the node task v1alpha2 feature, uses v1alpha1.
 	// TODO: After v1.23, this switch will be removed and only v1alpha2+ will be supported.
-	DisableNodeTaskV1alpha2 featuregate.Feature = "disablenodeTaskV1alpha2"
+	DisableNodeTaskV1alpha2 featuregate.Feature = "disableNodeTaskV1alpha2"
 )
 
 // defaultFeatureGates consists of all known Kubeedge-specific feature keys.

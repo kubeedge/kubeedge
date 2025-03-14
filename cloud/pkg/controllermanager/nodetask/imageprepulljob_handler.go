@@ -60,7 +60,8 @@ func (ImagePrePullJobReconcileHandler) NotInitialized(job *operationsv1alpha2.Im
 }
 
 func (ImagePrePullJobReconcileHandler) IsFinalPhase(job *operationsv1alpha2.ImagePrePullJob) bool {
-	return job.Status.Phase.IsFinal()
+	return job.Status.Phase == operationsv1alpha2.JobPhaseCompleted ||
+		job.Status.Phase == operationsv1alpha2.JobPhaseFailure
 }
 
 func (h *ImagePrePullJobReconcileHandler) InitNodesStatus(ctx context.Context, job *operationsv1alpha2.ImagePrePullJob) {
@@ -81,11 +82,9 @@ func (h *ImagePrePullJobReconcileHandler) InitNodesStatus(ctx context.Context, j
 			phase = operationsv1alpha2.NodeTaskPhaseFailure
 		}
 		nodeStatus = append(nodeStatus, operationsv1alpha2.ImagePrePullNodeTaskStatus{
-			BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-				NodeName: it.NodeName,
-				Phase:    phase,
-				Reason:   it.ErrorMessage,
-			},
+			NodeName: it.NodeName,
+			Phase:    phase,
+			Reason:   it.ErrorMessage,
 		})
 	}
 	job.Status.NodeStatus = nodeStatus

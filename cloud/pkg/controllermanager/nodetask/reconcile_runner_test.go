@@ -98,7 +98,8 @@ func (h *fakeReconcileHandler) NotInitialized(job *operationsv1alpha2.ImagePrePu
 }
 
 func (h *fakeReconcileHandler) IsFinalPhase(job *operationsv1alpha2.ImagePrePullJob) bool {
-	return job.Status.Phase.IsFinal()
+	return job.Status.Phase == operationsv1alpha2.JobPhaseCompleted ||
+		job.Status.Phase == operationsv1alpha2.JobPhaseFailure
 }
 
 func (h *fakeReconcileHandler) InitNodesStatus(_ctx context.Context, _job *operationsv1alpha2.ImagePrePullJob) {

@@ -26,11 +26,6 @@ const (
 	JobPhaseFailure    JobPhase = "Failure"
 )
 
-// IsFinal returns whether the node task is in the final phase.
-func (s JobPhase) IsFinal() bool {
-	return s == JobPhaseCompleted || s == JobPhaseFailure
-}
-
 type NodeTaskPhase string
 
 // Constants for node task status.
@@ -42,33 +37,9 @@ const (
 	NodeTaskPhaseUnknown    NodeTaskPhase = "Unknown"
 )
 
-// BasicNodeTaskStatus defines basic fields of node execution status.
-// +kubebuilder:validation:Type=object
-type BasicNodeTaskStatus struct {
-	// NodeName is the name of edge node.
-	NodeName string `json:"nodeName,omitempty"`
-	// Phase represents for the phase of the node task.
-	Phase NodeTaskPhase `json:"phase,omitempty"`
-	// Reason represents for the reason of the node task.
-	// +optional
-	Reason string `json:"reason,omitempty"`
-	// Time represents for the running time of the node task.
-	Time string `json:"time,omitempty"`
-}
-
 // Constants for node job check items.
 const (
 	CheckItemCPU  string = "cpu"
 	CheckItemMem  string = "mem"
 	CheckItemDisk string = "disk"
 )
-
-// NodeJobType uses to constrain paradigm type of node jobs.
-type NodeJobType interface {
-	NodeUpgradeJob | ImagePrePullJob | ConfigUpdateJob
-}
-
-// NodeTaskStatusType uses to constrain paradigm type of node tasks status.
-type NodeTaskStatusType interface {
-	ImagePrePullNodeTaskStatus | NodeUpgradeJobNodeTaskStatus | ConfigUpdateJobNodeTaskStatus
-}

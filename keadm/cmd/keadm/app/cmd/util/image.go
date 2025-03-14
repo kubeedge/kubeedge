@@ -31,7 +31,6 @@ const (
 
 const (
 	EdgeCore = "edgecore"
-	EdgeMQTT = "mqtt"
 )
 
 type Set map[string]string

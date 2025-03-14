@@ -18,85 +18,52 @@ package confirm
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
 	"github.com/spf13/cobra"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/klog/v2"
-	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 
-	"github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/metaclient"
-)
-
-var (
-	edgeConfirmShortDescription = `Send a confirmation signal to the MetaService API`
 )
 
 // NewEdgeConfirm returns KubeEdge confirm command.
 func NewEdgeConfirm() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "confirm",
-		Short: edgeConfirmShortDescription,
-		Long:  edgeConfirmShortDescription,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) <= 0 {
-				return errors.New("no specified node name for confirm upgrade")
+		Short: "Send a confirmation signal to the MetaService API.",
+		RunE: func(_cmd *cobra.Command, _args []string) error {
+			ctx := context.Background()
+			clientset, err := metaclient.KubeClient()
+			if err != nil {
+				return err
 			}
-			cmdutil.CheckErr(confirmNode())
-			return nil
+			return confirmNodeUpgrade(ctx, clientset)
 		},
 	}
 	return cmd
 }
-func confirmNode() error {
-	kubeClient, err := metaclient.KubeClient()
-	if err != nil {
-		return err
-	}
-	ctx := context.Background()
-	confirmResponse, err := nodeConfirm(ctx, kubeClient)
-	if err != nil {
-		return err
-	}
 
-	for _, logMsg := range confirmResponse.LogMessages {
-		klog.Info(logMsg)
-	}
-
-	for _, errMsg := range confirmResponse.ErrMessages {
-		klog.Error(errMsg)
-	}
-	return nil
-}
-
-func nodeConfirm(ctx context.Context, clientSet kubernetes.Interface) (*types.NodeUpgradeConfirmResponse, error) {
+func confirmNodeUpgrade(ctx context.Context, clientSet kubernetes.Interface) error {
 	result := clientSet.CoreV1().RESTClient().Post().
 		Resource("taskupgrade").
 		SubResource("confirm-upgrade").
 		Do(ctx)
-
-	if result.Error() != nil {
-		return nil, result.Error()
+	if err := result.Error(); err != nil {
+		// Do not use the wrapped error when an error http code is returned.
+		stErr, ok := err.(*apierrors.StatusError)
+		if ok || errors.As(err, &stErr) {
+			var msg string
+			if dtl := stErr.Status().Details; dtl != nil && len(dtl.Causes) > 0 {
+				msg = dtl.Causes[0].Message
+			} else {
+				msg = stErr.Status().Message
+			}
+			return fmt.Errorf("failed to confirm node upgrade, status code: %d, message: %s",
+				stErr.Status().Code, msg)
+		}
+		return fmt.Errorf("failed to send confirm request to MetaService API, err: %v", result.Error())
 	}
-
-	statusCode := -1
-	result.StatusCode(&statusCode)
-	if statusCode != 200 {
-		return nil, fmt.Errorf("node upgrade confirm failed with status code: %d", statusCode)
-	}
-
-	body, err := result.Raw()
-	if err != nil {
-		return nil, err
-	}
-
-	var nodeUpgradeConfirmResponse types.NodeUpgradeConfirmResponse
-	err = json.Unmarshal(body, &nodeUpgradeConfirmResponse)
-	if err != nil {
-		return nil, err
-	}
-	return &nodeUpgradeConfirmResponse, nil
+	return nil
 }

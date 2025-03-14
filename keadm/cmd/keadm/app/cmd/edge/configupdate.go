@@ -27,6 +27,7 @@ import (
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	upgrdeedge "github.com/kubeedge/kubeedge/pkg/upgrade/edge"
+	"github.com/kubeedge/kubeedge/pkg/util/execs"
 )
 
 func NewEdgeConfigUpdate() *cobra.Command {
@@ -105,7 +106,7 @@ func (executor *configUpdateExecutor) configUpdate(opts ConfigUpdateOptions) err
 		return fmt.Errorf("failed to write new edgecore config: %v", err)
 	}
 
-	cmd := util.NewCommand("sudo systemctl restart edgecore.service")
+	cmd := execs.NewCommand("sudo systemctl restart edgecore.service")
 	err = cmd.Exec()
 	if err != nil {
 		return fmt.Errorf("failed restart edgecore %v", err)

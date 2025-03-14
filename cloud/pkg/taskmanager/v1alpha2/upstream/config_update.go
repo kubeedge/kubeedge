@@ -18,19 +18,17 @@ package upstream
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync"
 
 	"github.com/go-logr/logr"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 
 	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 	crdcliset "github.com/kubeedge/api/client/clientset/versioned"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
-	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/v1alpha2/executor"
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/v1alpha2/status"
-	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/v1alpha2/wrap"
 	"github.com/kubeedge/kubeedge/pkg/nodetask/actionflow"
 	taskmsg "github.com/kubeedge/kubeedge/pkg/nodetask/message"
 )
@@ -57,70 +55,56 @@ func (h *ConfigUpdateJobHandler) Logger() logr.Logger {
 	return h.logger
 }
 
-func (h *ConfigUpdateJobHandler) ConvToNodeTask(nodename string, upmsg *taskmsg.UpstreamMessage,
-) (wrap.NodeJobTask, error) {
-	obj := &operationsv1alpha2.ConfigUpdateJobNodeTaskStatus{
-		BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-			NodeName: nodename,
-		},
-		Action: operationsv1alpha2.ConfigUpdateJobAction(upmsg.Action),
-	}
-	if !upmsg.Succ {
-		obj.Phase = operationsv1alpha2.NodeTaskPhaseFailure
-		obj.Reason = upmsg.Reason
-	} else {
-		obj.Phase = operationsv1alpha2.NodeTaskPhaseInProgress
-	}
-	h.logger.V(3).Info("convert extend message", "action", obj.Action, "extend", upmsg.Extend)
-	return &wrap.ConfigUpdateJobTask{Obj: obj}, nil
+func (ConfigUpdateJobHandler) GetAction(name string) *actionflow.Action {
+	return actionflow.FlowConfigUpdateJob.Find(name)
 }
 
-func (h *ConfigUpdateJobHandler) GetCurrentAction(nodetask any) (*actionflow.Action, error) {
-	obj, ok := nodetask.(*operationsv1alpha2.ConfigUpdateJobNodeTaskStatus)
-	if !ok {
-		return nil, fmt.Errorf("failed to convert nodetask to ConfigUpdateJobNodeTaskStatus, "+
-			"invalid type: %T", nodetask)
-	}
-	action := actionflow.FlowConfigUpdateJob.Find(string(obj.Action))
-	if action == nil {
-		return nil, fmt.Errorf("invalid action %s", obj.Action)
-	}
-	return action, nil
-}
-
-func (h *ConfigUpdateJobHandler) ReleaseExecutorConcurrent(res taskmsg.Resource) error {
-	exec, err := executor.GetExecutor(res.ResourceType, res.JobName)
-	if err != nil && !errors.Is(err, executor.ErrExecutorNotExists) {
-		return fmt.Errorf("failed to get executor, err: %v", err)
-	}
-	if exec != nil {
-		exec.FinishTask()
-	}
-	return nil
-}
-
-func (h *ConfigUpdateJobHandler) UpdateNodeTaskStatus(jobname string, nodetask wrap.NodeJobTask) error {
-	obj, ok := nodetask.GetObject().(*operationsv1alpha2.ConfigUpdateJobNodeTaskStatus)
-	if !ok {
-		return fmt.Errorf("failed to convert nodetask to ConfigUpdateJobNodeTaskStatus, "+
-			"invalid type: %T", nodetask)
-	}
+func (h *ConfigUpdateJobHandler) UpdateNodeTaskStatus(
+	jobName, nodeName string,
+	isFinalAction bool,
+	upmsg taskmsg.UpstreamMessage,
+) error {
 	var (
-		err error
-		wg  sync.WaitGroup
+		actoinStatus operationsv1alpha2.ConfigUpdateJobActionStatus
+		err          error
+		wg           sync.WaitGroup
 	)
+
+	actoinStatus.Action = operationsv1alpha2.ConfigUpdateJobAction(upmsg.Action)
+	if upmsg.Succ {
+		actoinStatus.Status = metav1.ConditionTrue
+	} else {
+		actoinStatus.Status = metav1.ConditionFalse
+		actoinStatus.Reason = upmsg.Reason
+	}
+	actoinStatus.Time = upmsg.FinishTime
+
+	phase := operationsv1alpha2.NodeTaskPhaseInProgress
+	if isFinalAction {
+		if upmsg.Succ {
+			phase = operationsv1alpha2.NodeTaskPhaseSuccessful
+		} else {
+			phase = operationsv1alpha2.NodeTaskPhaseFailure
+		}
+	}
+
 	wg.Add(1)
-	opts := status.UpdateStatusOptions[operationsv1alpha2.ConfigUpdateJobNodeTaskStatus]{
-		JobName:        jobname,
-		NodeTaskStatus: *obj,
+	opts := status.UpdateStatusOptions{
+		TryUpdateStatusOptions: status.TryUpdateStatusOptions{
+			JobName:      jobName,
+			NodeName:     nodeName,
+			Phase:        phase,
+			ExtendInfo:   upmsg.Extend,
+			ActionStatus: &actoinStatus,
+		},
 		Callback: func(err error) {
 			if err != nil {
-				err = fmt.Errorf("failed to update configupdate job status, err: %v", err)
+				err = fmt.Errorf("failed to update image prepull job status, err: %v", err)
 			}
 			wg.Done()
 		},
 	}
-	status.GetConfigeUpdateJobStatusUpdater().UpdateStatus(opts)
+	status.GetImagePrePullJobStatusUpdater().UpdateStatus(opts)
 	wg.Wait()
 	return err
 }

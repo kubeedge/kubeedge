@@ -135,9 +135,31 @@ spec:
                   description: ConfigUpdateJobNodeTaskStatus stores the status of
                     config update for each edge node.
                   properties:
-                    action:
-                      description: Action represents for the action phase of the ConfigUpdateJob
-                      type: string
+                    actionFlow:
+                      description: ActionFlow represents for the results of executing
+                        the action flow.
+                      items:
+                        description: ConfigUpdateJobActionStatus defines the results
+                          of executing the action.
+                        properties:
+                          action:
+                            description: Action represents for the action phase of
+                              the ConfigUpdateJob
+                            type: string
+                          reason:
+                            description: Reason represents the reason for the failure
+                              of the action.
+                            type: string
+                          status:
+                            description: State represents for the status of this image
+                              pull on the edge node.
+                            type: string
+                          time:
+                            description: Time represents for the running time of the
+                              node task.
+                            type: string
+                        type: object
+                      type: array
                     nodeName:
                       description: NodeName is the name of edge node.
                       type: string
@@ -145,11 +167,8 @@ spec:
                       description: Phase represents for the phase of the node task.
                       type: string
                     reason:
-                      description: Reason represents for the reason of the node task.
-                      type: string
-                    time:
-                      description: Time represents for the running time of the node
-                        task.
+                      description: Reason represents the reason for the failure of
+                        the node task.
                       type: string
                   type: object
                 type: array

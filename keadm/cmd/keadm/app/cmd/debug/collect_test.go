@@ -31,6 +31,7 @@ import (
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
+	"github.com/kubeedge/kubeedge/pkg/util/execs"
 	"github.com/kubeedge/kubeedge/pkg/util/files"
 )
 
@@ -97,14 +98,14 @@ func TestPrintDetail(t *testing.T) {
 func TestExecuteShell(t *testing.T) {
 	assert := assert.New(t)
 
-	mockCmd := &util.Command{}
+	mockCmd := &execs.Command{}
 
-	cmdPatch := gomonkey.ApplyFunc(util.NewCommand, func(command string) *util.Command {
+	cmdPatch := gomonkey.ApplyFunc(execs.NewCommand, func(command string) *execs.Command {
 		return mockCmd
 	})
 	defer cmdPatch.Reset()
 
-	execPatch := gomonkey.ApplyMethod((*util.Command)(nil), "Exec", func(_ *util.Command) error {
+	execPatch := gomonkey.ApplyMethod((*execs.Command)(nil), "Exec", func(_ *execs.Command) error {
 		return nil
 	})
 	defer execPatch.Reset()
@@ -113,7 +114,7 @@ func TestExecuteShell(t *testing.T) {
 	assert.NoError(err)
 
 	execPatch.Reset()
-	execErrorPatch := gomonkey.ApplyMethod((*util.Command)(nil), "Exec", func(_ *util.Command) error {
+	execErrorPatch := gomonkey.ApplyMethod((*execs.Command)(nil), "Exec", func(_ *execs.Command) error {
 		return errors.New("command execution failed")
 	})
 	defer execErrorPatch.Reset()
@@ -126,14 +127,14 @@ func TestExecuteShell(t *testing.T) {
 func TestCopyFile(t *testing.T) {
 	assert := assert.New(t)
 
-	mockCmd := &util.Command{}
+	mockCmd := &execs.Command{}
 
-	cmdPatch := gomonkey.ApplyFunc(util.NewCommand, func(command string) *util.Command {
+	cmdPatch := gomonkey.ApplyFunc(execs.NewCommand, func(command string) *execs.Command {
 		return mockCmd
 	})
 	defer cmdPatch.Reset()
 
-	execPatch := gomonkey.ApplyMethod((*util.Command)(nil), "Exec", func(_ *util.Command) error {
+	execPatch := gomonkey.ApplyMethod((*execs.Command)(nil), "Exec", func(_ *execs.Command) error {
 		return nil
 	})
 	defer execPatch.Reset()
@@ -142,7 +143,7 @@ func TestCopyFile(t *testing.T) {
 	assert.NoError(err)
 
 	execPatch.Reset()
-	execErrorPatch := gomonkey.ApplyMethod((*util.Command)(nil), "Exec", func(_ *util.Command) error {
+	execErrorPatch := gomonkey.ApplyMethod((*execs.Command)(nil), "Exec", func(_ *execs.Command) error {
 		return errors.New("file copy failed")
 	})
 	defer execErrorPatch.Reset()

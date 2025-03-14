@@ -25,7 +25,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 	crdcliset "github.com/kubeedge/api/client/clientset/versioned"
 )
 
@@ -34,20 +33,17 @@ func TestUpdateStatus(t *testing.T) {
 		var wg sync.WaitGroup
 		var callback bool
 		wg.Add(1)
-		tryUpdateFun := func(_ctx context.Context,
-			_cli crdcliset.Interface,
-			_nodeName string,
-			_nodeTaskStatus operationsv1alpha2.ImagePrePullNodeTaskStatus,
-		) error {
+		tryUpdateFun := func(_ctx context.Context, _cli crdcliset.Interface, _opts TryUpdateStatusOptions) error {
 			return nil
 		}
 		updater := NewStatusUpdater(context.Background(), tryUpdateFun)
 		go updater.WatchUpdateChannel()
 		time.Sleep(1 * time.Second)
 
-		updater.UpdateStatus(UpdateStatusOptions[operationsv1alpha2.ImagePrePullNodeTaskStatus]{
-			JobName:        "test",
-			NodeTaskStatus: operationsv1alpha2.ImagePrePullNodeTaskStatus{},
+		updater.UpdateStatus(UpdateStatusOptions{
+			TryUpdateStatusOptions: TryUpdateStatusOptions{
+				JobName: "test",
+			},
 			Callback: func(err error) {
 				defer wg.Done()
 				callback = true
@@ -62,20 +58,17 @@ func TestUpdateStatus(t *testing.T) {
 		var wg sync.WaitGroup
 		var callback bool
 		wg.Add(1)
-		tryUpdateFun := func(_ctx context.Context,
-			_cli crdcliset.Interface,
-			_nodeName string,
-			_nodeTaskStatus operationsv1alpha2.ImagePrePullNodeTaskStatus,
-		) error {
+		tryUpdateFun := func(_ctx context.Context, _cli crdcliset.Interface, _opts TryUpdateStatusOptions) error {
 			return errors.New("test error")
 		}
 		updater := NewStatusUpdater(context.Background(), tryUpdateFun)
 		go updater.WatchUpdateChannel()
 		time.Sleep(1 * time.Second)
 
-		updater.UpdateStatus(UpdateStatusOptions[operationsv1alpha2.ImagePrePullNodeTaskStatus]{
-			JobName:        "test",
-			NodeTaskStatus: operationsv1alpha2.ImagePrePullNodeTaskStatus{},
+		updater.UpdateStatus(UpdateStatusOptions{
+			TryUpdateStatusOptions: TryUpdateStatusOptions{
+				JobName: "test",
+			},
 			Callback: func(err error) {
 				defer wg.Done()
 				callback = true
