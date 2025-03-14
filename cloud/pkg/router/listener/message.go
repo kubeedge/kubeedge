@@ -11,6 +11,8 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/router/constants"
+	"github.com/kubeedge/kubeedge/cloud/pkg/router/utils"
 )
 
 var MessageHandlerInstance = &MessageHandler{}
@@ -35,12 +37,39 @@ func (mh *MessageHandler) RemoveListener(key interface{}) {
 	mh.handlers.Delete(resource)
 }
 
+func (mh *MessageHandler) matchedMqttTopic(topic string) (string, bool) {
+	var candidateRes string
+	mh.handlers.Range(func(key, value interface{}) bool {
+		pathReg, ok := key.(string)
+		if !ok {
+			return true
+		}
+		if utils.IsMqttTopicMatch(pathReg, topic) {
+			candidateRes = pathReg
+			return false
+		}
+		return true
+	})
+	if candidateRes == "" {
+		return candidateRes, false
+	}
+	return candidateRes, true
+}
+
 func (mh *MessageHandler) getHandler(source string, resource string) (Handle, error) {
 	rs := strings.Split(resource, "/")
 	if len(rs) >= 2 && (rs[0] == model.ResourceTypeRuleEndpoint || rs[0] == model.ResourceTypeRule) {
 		resource = rs[0]
 	}
 	key := fmt.Sprintf("%s/%s", source, resource)
+	if source == constants.EventBusResource {
+		candidate, exists := mh.matchedMqttTopic(key)
+		if !exists {
+			return nil, fmt.Errorf("no rule match for key %s", key)
+		}
+		key = candidate
+	}
+
 	v, exist := mh.handlers.Load(key)
 	if !exist {
 		return nil, errors.New("no handler for message")
