@@ -49,6 +49,7 @@ var upstreamHandlers = make(map[string]UpstreamHandler)
 
 // Init registers the upstream handlers.
 func Init(ctx context.Context) {
+	upstreamHandlers[operationsv1alpha2.ResourceNodeUpgradeJob] = newNodeUpgradeJobHandler(ctx)
 	upstreamHandlers[operationsv1alpha2.ResourceImagePrePullJob] = newImagePrePullJobHandler(ctx)
 }
 
@@ -97,15 +98,27 @@ func updateNodeJobTaskStatus(res taskmsg.Resource,
 ) error {
 	nodetask, err := handler.ConvToNodeTask(res.NodeName, &upmsg)
 	if err != nil {
-		return fmt.Errorf("failed to set node task status, err: %v", err)
+		return fmt.Errorf("failed to convert node task status, err: %v", err)
 	}
+
 	action, err := nodetask.Action()
 	if err != nil {
 		return err // Enough error messages.
 	}
-	if action.IsFinal() {
-		if nodetask.Phase() == operationsv1alpha2.NodeTaskPhaseInProgress {
-			nodetask.ToSuccessful()
+
+	if upmsg.Succ && action.NextSuccessful == nil || !upmsg.Succ && action.NextFailure == nil {
+		// In the 'handler.ConvToNodeTask()' method implementation, if the reported action result is successful,
+		// the phase can be kept as InProgress, otherwise the phase needs to be changed to Failure.
+		// This can reduce the conversion and judgment of the action.
+		if upmsg.Succ {
+			if nodetask.Phase() == operationsv1alpha2.NodeTaskPhaseInProgress {
+				nodetask.ToSuccessful()
+			}
+		} else {
+			// Prevent the phase from not being set in the 'handler.ConvToNodeTask()' method implementation.
+			if nodetask.Phase() != operationsv1alpha2.NodeTaskPhaseFailure {
+				nodetask.ToFailure(upmsg.Reason)
+			}
 		}
 		if err := handler.ReleaseExecutorConcurrent(res); err != nil {
 			// This error does not affect the process, just logger.
@@ -118,6 +131,7 @@ func updateNodeJobTaskStatus(res taskmsg.Resource,
 			nodetask.SetAction(next)
 		}
 	}
+
 	if err := handler.UpdateNodeTaskStatus(res.JobName, nodetask); err != nil {
 		return err // Enough error messages.
 	}

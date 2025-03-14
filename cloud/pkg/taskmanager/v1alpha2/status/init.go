@@ -94,6 +94,14 @@ func tryUpdateNodeUpgradeJobStatus(
 			if nodeTaskStatus.Time == "" {
 				nodeTaskStatus.Time = job.Status.NodeStatus[i].Time
 			}
+			// If the rollback is successful, keep the reason why the upgrade failed.
+			if nodeTaskStatus.Action == operationsv1alpha2.NodeUpgradeJobActionBackUp &&
+				(status.Action == operationsv1alpha2.NodeUpgradeJobActionUpgrade ||
+					status.Action == operationsv1alpha2.NodeUpgradeJobActionRollBack) {
+				if status.Reason != "" && nodeTaskStatus.Reason == "" {
+					nodeTaskStatus.Reason = status.Reason
+				}
+			}
 			job.Status.NodeStatus[i] = nodeTaskStatus
 			break
 		}

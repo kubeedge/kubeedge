@@ -18,7 +18,6 @@ package upstream
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"sync"
@@ -41,7 +40,7 @@ type ImagePrePullJobHandler struct {
 	crdcli crdcliset.Interface
 }
 
-// Check that ImagePrePullJobHandler implements UpstreamHandler interface.
+// Check whether ImagePrePullJobHandler implements UpstreamHandler interface.
 var _ UpstreamHandler = (*ImagePrePullJobHandler)(nil)
 
 // newImagePrePullJobHandler creates a new ImagePrePullJobHandler.
@@ -73,10 +72,10 @@ func (h *ImagePrePullJobHandler) ConvToNodeTask(nodename string, upmsg *taskmsg.
 		obj.Phase = operationsv1alpha2.NodeTaskPhaseInProgress
 	}
 	h.logger.V(3).Info("convert extend message", "action", obj.Action, "extend", upmsg.Extend)
-	if obj.Action == operationsv1alpha2.ImagePrePullJobActionPull && upmsg.Extend != "" {
-		imageStatus := make([]operationsv1alpha2.ImageStatus, 0)
-		if err := json.Unmarshal([]byte(upmsg.Extend), &imageStatus); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal image mapper, err: %v", err)
+	if upmsg.Extend != "" {
+		imageStatus, err := taskmsg.ParseImagePrePullJobExtend(upmsg.Extend)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse image prepull job extend, err: %v", err)
 		}
 		obj.ImageStatus = imageStatus
 	}

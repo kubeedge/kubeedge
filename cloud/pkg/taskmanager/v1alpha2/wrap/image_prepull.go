@@ -28,7 +28,7 @@ type ImagePrePullJobTask struct {
 	Obj *operationsv1alpha2.ImagePrePullNodeTaskStatus
 }
 
-// Check that ImagePrePullJobTask implements the NodeJobTask interface
+// Check whether ImagePrePullJobTask implements the NodeJobTask interface
 var _ NodeJobTask = (*ImagePrePullJobTask)(nil)
 
 func (task ImagePrePullJobTask) NodeName() string {
@@ -81,7 +81,7 @@ type ImagePrePullJob struct {
 	Obj *operationsv1alpha2.ImagePrePullJob
 }
 
-// Check that ImagePrePullJob implements the NodeJob interface
+// Check whether ImagePrePullJob implements the NodeJob interface
 var _ NodeJob = (*ImagePrePullJob)(nil)
 
 func NewImagePrepullJob(obj *operationsv1alpha2.ImagePrePullJob) *ImagePrePullJob {

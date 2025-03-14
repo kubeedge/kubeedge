@@ -92,6 +92,8 @@ type Modules struct {
 	// EdgeStream indicates edgestream module config
 	// +Required
 	EdgeStream *EdgeStream `json:"edgeStream,omitempty"`
+	// TaskManager indicates taskmanager module config
+	TaskManager *TaskManager `json:"taskManager,omitempty"`
 }
 
 // Edged indicates the config fo edged module
@@ -1077,4 +1079,11 @@ type EdgeStream struct {
 	// WriteDeadline indicates write deadline (second)
 	// default 15
 	WriteDeadline int32 `json:"writeDeadline,omitempty"`
+}
+
+// TaskManager indicates the task manager module config
+type TaskManager struct {
+	// Enable indicates whether TaskManager is enabled.
+	// Default false
+	Enable bool `json:"enable"`
 }

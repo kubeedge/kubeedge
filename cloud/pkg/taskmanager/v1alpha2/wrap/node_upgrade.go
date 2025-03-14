@@ -28,7 +28,7 @@ type NodeUpgradeJobTask struct {
 	Obj *operationsv1alpha2.NodeUpgradeJobNodeTaskStatus
 }
 
-// Check that NodeUpgradeJobTask implements the NodeJobTask interface
+// Check whether NodeUpgradeJobTask implements the NodeJobTask interface
 var _ NodeJobTask = (*NodeUpgradeJobTask)(nil)
 
 func (task NodeUpgradeJobTask) NodeName() string {
@@ -81,7 +81,7 @@ type NodeUpgradeJob struct {
 	Obj *operationsv1alpha2.NodeUpgradeJob
 }
 
-// Check that NodeUpgradeJob implements the NodeJob interface
+// Check whether NodeUpgradeJob implements the NodeJob interface
 var _ NodeJob = (*NodeUpgradeJob)(nil)
 
 func NewNodeUpgradeJob(obj *operationsv1alpha2.NodeUpgradeJob) *NodeUpgradeJob {

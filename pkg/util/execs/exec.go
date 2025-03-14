@@ -24,7 +24,7 @@ func (cmd *Command) Exec() error {
 	cmd.Cmd.Stdout = &stdoutBuf
 	cmd.Cmd.Stderr = &stderrBuf
 
-	errString := fmt.Sprintf("failed to exec '%s'", cmd.GetCommand())
+	errString := fmt.Sprintf("failed to exec [%s]", cmd.GetCommand())
 
 	if err := cmd.Cmd.Start(); err != nil {
 		errString = fmt.Sprintf("%s, err: %v", errString, err)
@@ -32,10 +32,14 @@ func (cmd *Command) Exec() error {
 	}
 
 	if err := cmd.Cmd.Wait(); err != nil {
-		cmd.StdErr = stderrBuf.Bytes()
+		cmd.StdOut, cmd.StdErr = stdoutBuf.Bytes(), stderrBuf.Bytes()
 		if exit, ok := err.(*exec.ExitError); ok {
+			message := string(cmd.StdErr)
+			if message == "" {
+				message = string(cmd.StdOut)
+			}
 			cmd.ExitCode = exit.Sys().(syscall.WaitStatus).ExitStatus()
-			errString = fmt.Sprintf("%s, err: %s", errString, stderrBuf.Bytes())
+			errString = fmt.Sprintf("%s, err: %s", errString, message)
 		} else {
 			cmd.ExitCode = 1
 			errString = fmt.Sprintf("%s, err: %v", errString, err)

@@ -30,6 +30,7 @@ import (
 
 	"github.com/kubeedge/api/apis/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/pkg/util/execs"
 	"github.com/kubeedge/kubeedge/pkg/util/files"
 )
 
@@ -50,7 +51,7 @@ DownloadFile %s %s
 )
 
 func IsServiceExist(service string) bool {
-	cmd := NewCommand(fmt.Sprintf("Get-Service '%s'", service))
+	cmd := execs.NewCommand(fmt.Sprintf("Get-Service '%s'", service))
 	_err := cmd.Exec()
 	return _err == nil
 }
@@ -69,7 +70,7 @@ func HasSystemd() bool {
 }
 
 func CopyFile(src, dst string) error {
-	return NewCommand(fmt.Sprintf("Copy-Item -Path %s -Destination %s -Force", src, dst)).Exec()
+	return execs.NewCommand(fmt.Sprintf("Copy-Item -Path %s -Destination %s -Force", src, dst)).Exec()
 }
 
 // RunningModuleV2 identifies cloudcore/edgecore running or not.
@@ -129,7 +130,7 @@ func installKubeEdge(options types.InstallOptions, version semver.Version) error
 				}
 				if confirm {
 					cmdStr := fmt.Sprintf("cd %s && rm -f %s", options.TarballPath, filename)
-					if err := NewCommand(cmdStr).Exec(); err != nil {
+					if err := execs.NewCommand(cmdStr).Exec(); err != nil {
 						return err
 					}
 					fmt.Printf("%v have been deleted and will try to download again\n", filename)
@@ -185,7 +186,7 @@ func checkSum(filename, checksumFilename string, version semver.Version, tarball
 		// download checksum file
 		dwnldURL := fmt.Sprintf(downloadFileScript,
 			checksumFilepath, fmt.Sprintf("%s/v%s/%s", KubeEdgeDownloadURL, version, checksumFilename))
-		if err := NewCommand(dwnldURL).Exec(); err != nil {
+		if err := execs.NewCommand(dwnldURL).Exec(); err != nil {
 			return false, err
 		}
 	}
@@ -210,7 +211,7 @@ func retryDownload(filename, checksumFilename string, version semver.Version, ta
 		//Download the tar from repo
 		dwnldURL := fmt.Sprintf(downloadFileScript,
 			filePath, fmt.Sprintf("%s/v%s/%s", KubeEdgeDownloadURL, version, filename))
-		if err := NewCommand(dwnldURL).Exec(); err != nil {
+		if err := execs.NewCommand(dwnldURL).Exec(); err != nil {
 			return err
 		}
 
@@ -224,7 +225,7 @@ func retryDownload(filename, checksumFilename string, version semver.Version, ta
 		}
 		fmt.Printf("Failed to verify the checksum of %s, try to download it again ... \n\n", filename)
 		//Cleanup the downloaded files
-		if err = NewCommand(fmt.Sprintf("Remove-Item -Force %s", filePath)).Exec(); err != nil {
+		if err = execs.NewCommand(fmt.Sprintf("Remove-Item -Force %s", filePath)).Exec(); err != nil {
 			return err
 		}
 	}

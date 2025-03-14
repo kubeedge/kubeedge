@@ -72,12 +72,22 @@ func (runtime *RuntimeImpl) PullImages(
 func (runtime *RuntimeImpl) GetImageDigest(ctx context.Context, image string) (string, error) {
 	image = ConvToCRIImage(image)
 	imageSpec := &runtimeapi.ImageSpec{Image: image}
-	imageStatus, err := runtime.imgsvc.ImageStatus(ctx, imageSpec, true)
+	resp, err := runtime.imgsvc.ImageStatus(ctx, imageSpec, true)
 	if err != nil {
 		return "", err
 	}
-	imageDigest := imageStatus.Image.Spec.Image
-	return imageDigest, nil
+	if resp.Image == nil {
+		return "", nil
+	}
+	for i := range resp.Image.RepoTags {
+		tag := resp.Image.RepoTags[i]
+		if tag == image {
+			repoDigest := resp.Image.RepoDigests[i]
+			digestIndex := strings.LastIndex(repoDigest, "@sha256:")
+			return repoDigest[digestIndex+1:], nil
+		}
+	}
+	return "", nil
 }
 
 func (runtime *RuntimeImpl) PullImage(
