@@ -52,4 +52,7 @@ rules:
   - apiGroups: [""]
     resources: ["services"]
     verbs: ["list", "watch", "create", "update", "patch", "delete", "get"]
+  - apiGroups: ["operations.kubeedge.io"]
+    resources: ["nodeupgradejobs", "nodeupgradejobs/status", "imageprepulljobs", "imageprepulljobs/status"]
+    verbs: ["get", "list", "watch", "update", "patch"]
 {{- end }}

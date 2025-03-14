@@ -43,6 +43,7 @@ import (
 	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
+	taskmsg "github.com/kubeedge/kubeedge/pkg/nodetask/message"
 )
 
 // There are two `AcknowledgeMode` for message that send to edge node
@@ -130,7 +131,7 @@ func (md *messageDispatcher) DispatchDownstream() {
 			return
 
 		default:
-			msg, err := beehivecontext.Receive(model.SrcCloudHub)
+			msg, err := beehivecontext.Receive(modules.CloudHubModuleName)
 			if err != nil {
 				klog.Errorf("receive message failed %v", err)
 				continue
@@ -186,7 +187,8 @@ func (md *messageDispatcher) DispatchUpstream(message *beehivemodel.Message, inf
 		beehivecontext.Send(modules.RouterModuleName, *message)
 
 	case message.GetOperation() == taskutil.TaskPrePull ||
-		message.GetOperation() == taskutil.TaskUpgrade:
+		message.GetOperation() == taskutil.TaskUpgrade ||
+		message.GetOperation() == taskmsg.OperationUpdateNodeActionStatus:
 		beehivecontext.SendToGroup(modules.TaskManagerModuleGroup, *message)
 
 	case message.GetResource() == beehivemodel.ResourceTypeK8sCA:

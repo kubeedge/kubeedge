@@ -9,7 +9,7 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	hubmodel "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/common/constants"
 )
 
@@ -26,7 +26,8 @@ func StartServer(address string) {
 		}
 
 		// Send message to edge
-		resp, err := beehiveContext.SendSync(hubmodel.SrcCloudHub, *msg, constants.CSISyncMsgRespTimeout)
+		resp, err := beehiveContext.SendSync(modules.CloudHubModuleName, *msg,
+			constants.CSISyncMsgRespTimeout)
 		if err != nil {
 			klog.Errorf("failed to send message to edge: %v", err)
 			return feedbackError(err, msg)
@@ -64,7 +65,8 @@ func ExtractMessage(context string) (*model.Message, error) {
 // feedbackError sends back error message
 func feedbackError(err error, request *model.Message) string {
 	// Build message
-	errResponse := model.NewErrorMessage(request, err.Error()).SetRoute(hubmodel.SrcCloudHub, request.GetGroup())
+	errResponse := model.NewErrorMessage(request, err.Error()).
+		SetRoute(modules.CloudHubModuleName, request.GetGroup())
 	// Marshal message
 	data, err := json.Marshal(errResponse)
 	if err != nil {

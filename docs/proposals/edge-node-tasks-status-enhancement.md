@@ -397,14 +397,14 @@ func NewControllerManagerCommand(ctx context.Context) *cobra.Command {
 }
 ```
 
-Setup the node job controllers when the feature of node task v1alpha2 is enabled.
+By default, the node jobs of v1alpha2 will be used. When the function gate flag `disablenodeTaskV1alpha2` is set, the controller will not affect the node jobs of v1alpah1.
 ```golang
-if features.DefaultFeatureGate.Enabled(features.NodeTaskV1alpha2) {
+if !features.DefaultFeatureGate.Enabled(features.DisableNodeTaskV1alpha2) {
     // Setup node job controllers
 }
 ```
 
-Add args `--feature-gates=nodeTaskV1alpha2` in Deployment resource to support the feature of node task v1alpha2.
+Add args `--feature-gates=disablenodeTaskV1alpha2` in Deployment resource to support the feature of node task v1alpha2.
 ```yaml
 spec:
   template:
@@ -412,11 +412,11 @@ spec:
       containers:
       - name: controller-manager
         args:
-        - --feature-gates=nodeTaskV1alpha2
+        - --feature-gates=disablenodeTaskV1alpha2
         ...
 ```
 
-#### 
+####
 
 After the node task status change, ControllerManager calculates the node job phase.
 ```golang
@@ -460,7 +460,8 @@ func CalculatePhaseWithCounts(total, proc, fail int64,
 
 #### Feature Gates
 
-CloudCore also uses feature gates to enable the v1alpha2 of node jobs. Use feature gates to switch between v1alpha1 and v1alpha2.
+By default, the node jobs of v1alpha2 will be used. 
+Use feature gates to disable the v1alpha2 to use v1alpha1.
 
 CloudCore supports setting feature gates in the configuration file:
 ```yaml
@@ -470,7 +471,7 @@ featureGates:
 
 Add logic in the task manager module:
 ```golang
-if features.DefaultFeatureGate.Enabled(features.NodeTaskV1alpha2) {
+if !features.DefaultFeatureGate.Enabled(features.DisableNodeTaskV1alpha2) {
     // Init and start v1alpha2 node job downstream and upstream
 } else {
      // Init and start v1alpha1 node job downstream and upstream

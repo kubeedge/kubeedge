@@ -17,16 +17,17 @@ limitations under the License.
 package edge
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
-	"github.com/kubeedge/kubeedge/pkg/image"
 )
 
 func request(opt *common.JoinOptions, step *common.Step) error {
-	imageSet := image.EdgeSet(opt)
+	ctx := context.Background()
+	imageSet := util.EdgeSet(opt)
 	images := imageSet.List()
 
 	runtime, err := util.NewContainerRuntime(opt.RemoteRuntimeEndpoint, opt.CGroupDriver)
@@ -35,7 +36,7 @@ func request(opt *common.JoinOptions, step *common.Step) error {
 	}
 
 	step.Printf("Pull Images")
-	if err := runtime.PullImages(images); err != nil {
+	if err := runtime.PullImages(ctx, images, nil); err != nil {
 		return fmt.Errorf("pull Images failed: %v", err)
 	}
 
@@ -43,7 +44,7 @@ func request(opt *common.JoinOptions, step *common.Step) error {
 	files := map[string]string{
 		filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName): filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName),
 	}
-	if err := runtime.CopyResources(imageSet.Get(image.EdgeCore), files); err != nil {
+	if err := runtime.CopyResources(ctx, imageSet.Get(util.EdgeCore), files); err != nil {
 		return fmt.Errorf("copy resources failed: %v", err)
 	}
 	return nil

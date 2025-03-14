@@ -65,7 +65,7 @@ var _ = BeforeSuite(func() {
 	Expect(k8sClient).NotTo(BeNil())
 
 	By("starting controller manager")
-	controllerManager, err := controllermanager.NewAppsControllerManager(ctx, cfg)
+	controllerManager, err := controllermanager.NewControllerManager(ctx, cfg, "")
 	Expect(err).To(BeNil())
 	go func() {
 		defer GinkgoRecover()

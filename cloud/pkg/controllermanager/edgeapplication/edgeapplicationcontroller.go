@@ -23,6 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	appsv1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
@@ -41,6 +42,26 @@ type Controller struct {
 	statusmanager.StatusManager
 	UseServerSideApply   bool
 	ReconcileTriggerChan chan event.GenericEvent
+}
+
+func NewController(ctx context.Context, cli client.Client, serializer runtime.Serializer, mgr manager.Manager) *Controller {
+	return &Controller{
+		Client:        cli,
+		Serializer:    serializer,
+		StatusManager: statusmanager.NewStatusManager(ctx, mgr, cli, serializer),
+		Overrider: &overridemanager.OverrideManager{
+			Overriders: []overridemanager.Overrider{
+				&overridemanager.NameOverrider{},
+				&overridemanager.ReplicasOverrider{},
+				&overridemanager.ImageOverrider{},
+				&overridemanager.NodeSelectorOverrider{},
+				&overridemanager.CommandOverrider{},
+				&overridemanager.ArgsOverrider{},
+				&overridemanager.EnvOverrider{},
+				&overridemanager.ResourcesOverrider{},
+			},
+		},
+	}
 }
 
 // Reconcile performs a full reconciliation for the object referred to by the Request.
@@ -70,7 +91,7 @@ func (c *Controller) Reconcile(ctx context.Context, req controllerruntime.Reques
 }
 
 // SetupWithManager creates a controller and register to controller manager.
-func (c *Controller) SetupWithManager(mgr controllerruntime.Manager) error {
+func (c *Controller) SetupWithManager(_ctx context.Context, mgr controllerruntime.Manager) error {
 	if c.Client == nil {
 		return fmt.Errorf("client of edgeapplication controller cannot be nil")
 	}
@@ -314,7 +335,7 @@ func (c *Controller) updateTemplate(ctx context.Context, tmpl *unstructured.Unst
 	if err != nil {
 		// error occurs when comparing the overridden template with the last applied template
 		return err
-	} else if err == nil && same {
+	} else if same {
 		// nothing to do for this template
 		return nil
 	}
