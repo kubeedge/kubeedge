@@ -12,7 +12,7 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
 )
 
 // DefaultV2Client is the only one client. Because of v2Client
