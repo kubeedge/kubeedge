@@ -40,6 +40,7 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/extsystem"
+	"github.com/kubeedge/kubeedge/pkg/containers"
 	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
 	"github.com/kubeedge/kubeedge/pkg/util/execs"
 	"github.com/kubeedge/kubeedge/pkg/util/files"
@@ -247,7 +248,7 @@ func pullImagesAndCopyResources(opt *common.JoinOptions, step *common.Step) erro
 	imageSet := util.EdgeSet(opt)
 	images := imageSet.List()
 
-	runtime, err := util.NewContainerRuntime(opt.RemoteRuntimeEndpoint, opt.CGroupDriver)
+	runtime, err := containers.NewContainerRuntime(opt.RemoteRuntimeEndpoint, opt.CGroupDriver)
 	if err != nil {
 		return err
 	}

@@ -17,9 +17,6 @@ limitations under the License.
 package wrap
 
 import (
-	"fmt"
-	"time"
-
 	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 	"github.com/kubeedge/kubeedge/pkg/nodetask/actionflow"
 )
@@ -44,33 +41,15 @@ func (task *ConfigUpdateJobTask) Phase() operationsv1alpha2.NodeTaskPhase {
 	return task.Obj.Phase
 }
 
-func (task *ConfigUpdateJobTask) ToSuccessful() {
-	task.Obj.Phase = operationsv1alpha2.NodeTaskPhaseSuccessful
-}
-
-func (task *ConfigUpdateJobTask) ToInProgress(t time.Time) {
-	task.Obj.Phase = operationsv1alpha2.NodeTaskPhaseInProgress
-	task.Obj.Time = t.UTC().Format(time.RFC3339)
-}
-
-func (task *ConfigUpdateJobTask) ToFailure(reason string) {
-	task.Obj.Phase = operationsv1alpha2.NodeTaskPhaseFailure
-	task.Obj.Reason = reason
+func (task *ConfigUpdateJobTask) SetPhase(phase operationsv1alpha2.NodeTaskPhase, reason ...string) {
+	task.Obj.Phase = phase
+	if len(reason) > 0 {
+		task.Obj.Reason = reason[0]
+	}
 }
 
 func (task *ConfigUpdateJobTask) Action() (*actionflow.Action, error) {
-	if task.Obj.Action == "" {
-		return actionflow.FlowConfigUpdateJob.First, nil
-	}
-	action := actionflow.FlowConfigUpdateJob.Find(string(task.Obj.Action))
-	if action == nil {
-		return nil, fmt.Errorf("no valid config update job action '%s' was found", task.Obj.Action)
-	}
-	return action, nil
-}
-
-func (task *ConfigUpdateJobTask) SetAction(action *actionflow.Action) {
-	task.Obj.Action = operationsv1alpha2.ConfigUpdateJobAction(action.Name)
+	return actionflow.FlowConfigUpdateJob.First, nil
 }
 
 func (task *ConfigUpdateJobTask) GetObject() any {

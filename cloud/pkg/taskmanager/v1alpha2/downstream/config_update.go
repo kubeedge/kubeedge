@@ -114,9 +114,13 @@ func (h *ConfigUpdateJobHandler) UpdateNodeTaskStatus(
 			"invalid type", reflect.TypeOf(task.GetObject()))
 		return
 	}
-	opts := status.UpdateStatusOptions[operationsv1alpha2.ConfigUpdateJobNodeTaskStatus]{
-		JobName:        configUpdateJob.Name,
-		NodeTaskStatus: *nodeTaskStatus,
+	opts := status.UpdateStatusOptions{
+		TryUpdateStatusOptions: status.TryUpdateStatusOptions{
+			JobName:  configUpdateJob.Name,
+			NodeName: nodeTaskStatus.NodeName,
+			Phase:    nodeTaskStatus.Phase,
+			Reason:   nodeTaskStatus.Reason,
+		},
 		Callback: func(err error) {
 			if err != nil {
 				h.logger.Error(err, "failed to update ConfigUpdateJob node task status",

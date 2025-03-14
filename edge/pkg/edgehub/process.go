@@ -13,17 +13,9 @@ import (
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/msghandler"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/task"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/taskv1alpha2"
+	msghandler "github.com/kubeedge/kubeedge/edge/pkg/edgehub/messagehandler"
 )
-
-var groupMap = map[string]string{
-	"twin": modules.TwinGroup,
-	"func": modules.MetaGroup,
-	"user": modules.BusGroup,
-}
 
 var (
 	// longThrottleLatency defines threshold for logging requests. All requests being
@@ -40,63 +32,6 @@ func (eh *EdgeHub) initial() (err error) {
 
 	eh.chClient = cloudHubClient
 
-	return nil
-}
-
-func isSyncResponse(msgID string) bool {
-	return msgID != ""
-}
-
-// RegisterMessageHandlers registers the all message handlers
-func RegisterMessageHandlers() {
-	msghandler.RegisterHandler(&defaultHandler{})
-	msghandler.RegisterHandler(task.NewMessageHandler())
-	msghandler.RegisterHandler(taskv1alpha2.NewMessageHandler())
-}
-
-type defaultHandler struct {
-}
-
-func (*defaultHandler) Filter(message *model.Message) bool {
-	group := message.GetGroup()
-	return group == messagepkg.ResourceGroupName || group == messagepkg.TwinGroupName ||
-		group == messagepkg.FuncGroupName || group == messagepkg.UserGroupName
-}
-
-func (*defaultHandler) Process(message *model.Message, _ clients.Adapter) error {
-	group := message.GetGroup()
-	md := ""
-	switch group {
-	case messagepkg.ResourceGroupName:
-		md = modules.MetaGroup
-	case messagepkg.TwinGroupName:
-		md = modules.TwinGroup
-	case messagepkg.FuncGroupName:
-		md = modules.MetaGroup
-	case messagepkg.UserGroupName:
-		md = modules.BusGroup
-	}
-
-	// TODO: just for a temporary fix.
-	// The code related to device twin message transmission will be reconstructed
-	//  by using sendSync function instead of send function.
-	if group == messagepkg.TwinGroupName {
-		beehiveContext.SendToGroup(md, *message)
-		return nil
-	}
-
-	isResponse := isSyncResponse(message.GetParentID())
-	if isResponse {
-		beehiveContext.SendResp(*message)
-		return nil
-	}
-	if group == messagepkg.UserGroupName && message.GetSource() == "router_eventbus" {
-		beehiveContext.Send(modules.EventBusModuleName, *message)
-	} else if group == messagepkg.UserGroupName && message.GetSource() == "router_servicebus" {
-		beehiveContext.Send(modules.ServiceBusModuleName, *message)
-	} else {
-		beehiveContext.SendToGroup(md, *message)
-	}
 	return nil
 }
 
@@ -192,6 +127,8 @@ func (eh *EdgeHub) keepalive() {
 	}
 }
 
+var pubGroups = []string{modules.TwinGroup, modules.MetaGroup, modules.BusGroup, modules.TaskManagerGroup}
+
 func (eh *EdgeHub) pubConnectInfo(isConnected bool) {
 	// update connected info
 	connect.SetConnected(isConnected)
@@ -202,7 +139,7 @@ func (eh *EdgeHub) pubConnectInfo(isConnected bool) {
 		content = connect.CloudDisconnected
 	}
 
-	for _, group := range groupMap {
+	for _, group := range pubGroups {
 		message := model.NewMessage("").BuildRouter(messagepkg.SourceNodeConnection, group,
 			messagepkg.ResourceTypeNodeConnection, messagepkg.OperationNodeConnection).FillBody(content)
 		beehiveContext.SendToGroup(group, *message)

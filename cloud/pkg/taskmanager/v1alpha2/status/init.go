@@ -18,20 +18,14 @@ package status
 
 import (
 	"context"
-	"fmt"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
-	crdcliset "github.com/kubeedge/api/client/clientset/versioned"
 )
 
 var (
-	imagePrePullJobStatusUpdater *StatusUpdater[operationsv1alpha2.ImagePrePullNodeTaskStatus]
+	imagePrePullJobStatusUpdater *StatusUpdater
 
-	nodeUpgradeJobStatusUpdater *StatusUpdater[operationsv1alpha2.NodeUpgradeJobNodeTaskStatus]
+	nodeUpgradeJobStatusUpdater *StatusUpdater
 
-	configUpdateJobStatusUpdater *StatusUpdater[operationsv1alpha2.ConfigUpdateJobNodeTaskStatus]
+	configUpdateJobStatusUpdater *StatusUpdater
 )
 
 func Init(ctx context.Context) {
@@ -45,101 +39,14 @@ func Init(ctx context.Context) {
 	go configUpdateJobStatusUpdater.WatchUpdateChannel()
 }
 
-func GetImagePrePullJobStatusUpdater() *StatusUpdater[operationsv1alpha2.ImagePrePullNodeTaskStatus] {
+func GetImagePrePullJobStatusUpdater() *StatusUpdater {
 	return imagePrePullJobStatusUpdater
 }
 
-func GetNodeUpgradeJobStatusUpdater() *StatusUpdater[operationsv1alpha2.NodeUpgradeJobNodeTaskStatus] {
+func GetNodeUpgradeJobStatusUpdater() *StatusUpdater {
 	return nodeUpgradeJobStatusUpdater
 }
 
-func GetConfigeUpdateJobStatusUpdater() *StatusUpdater[operationsv1alpha2.ConfigUpdateJobNodeTaskStatus] {
+func GetConfigeUpdateJobStatusUpdater() *StatusUpdater {
 	return configUpdateJobStatusUpdater
-}
-
-func tryUpdateImagePrePullJobStatus(
-	ctx context.Context,
-	cli crdcliset.Interface,
-	jobName string,
-	nodeTaskStatus operationsv1alpha2.ImagePrePullNodeTaskStatus,
-) error {
-	job, err := cli.OperationsV1alpha2().ImagePrePullJobs().
-		Get(ctx, jobName, metav1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("faield to get image prepull job %s, err: %v", jobName, err)
-	}
-	for i := range job.Status.NodeStatus {
-		status := &job.Status.NodeStatus[i]
-		if status.NodeName == nodeTaskStatus.NodeName {
-			if nodeTaskStatus.Time == "" {
-				nodeTaskStatus.Time = job.Status.NodeStatus[i].Time
-			}
-			job.Status.NodeStatus[i] = nodeTaskStatus
-			break
-		}
-	}
-	_, err = cli.OperationsV1alpha2().ImagePrePullJobs().
-		UpdateStatus(ctx, job, metav1.UpdateOptions{})
-	if err != nil {
-		return fmt.Errorf("failed to update image prepull job %s status, err: %v", jobName, err)
-	}
-	return nil
-}
-
-func tryUpdateNodeUpgradeJobStatus(
-	ctx context.Context,
-	cli crdcliset.Interface,
-	jobName string,
-	nodeTaskStatus operationsv1alpha2.NodeUpgradeJobNodeTaskStatus,
-) error {
-	job, err := cli.OperationsV1alpha2().NodeUpgradeJobs().
-		Get(ctx, jobName, metav1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("faield to get node upgrade job %s, err: %v", jobName, err)
-	}
-	for i := range job.Status.NodeStatus {
-		status := &job.Status.NodeStatus[i]
-		if status.NodeName == nodeTaskStatus.NodeName {
-			if nodeTaskStatus.Time == "" {
-				nodeTaskStatus.Time = job.Status.NodeStatus[i].Time
-			}
-			job.Status.NodeStatus[i] = nodeTaskStatus
-			break
-		}
-	}
-	_, err = cli.OperationsV1alpha2().NodeUpgradeJobs().
-		UpdateStatus(ctx, job, metav1.UpdateOptions{})
-	if err != nil {
-		return fmt.Errorf("failed to update node upgrade job %s status, err: %v", jobName, err)
-	}
-	return nil
-}
-
-func tryUpdateConfigUpdateJobStatus(
-	ctx context.Context,
-	cli crdcliset.Interface,
-	jobName string,
-	nodeTaskStatus operationsv1alpha2.ConfigUpdateJobNodeTaskStatus,
-) error {
-	job, err := cli.OperationsV1alpha2().ConfigUpdateJobs().
-		Get(ctx, jobName, metav1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("faield to get configupdate job %s, err: %v", jobName, err)
-	}
-	for i := range job.Status.NodeStatus {
-		status := &job.Status.NodeStatus[i]
-		if status.NodeName == nodeTaskStatus.NodeName {
-			if nodeTaskStatus.Time == "" {
-				nodeTaskStatus.Time = job.Status.NodeStatus[i].Time
-			}
-			job.Status.NodeStatus[i] = nodeTaskStatus
-			break
-		}
-	}
-	_, err = cli.OperationsV1alpha2().ConfigUpdateJobs().
-		UpdateStatus(ctx, job, metav1.UpdateOptions{})
-	if err != nil {
-		return fmt.Errorf("failed to update configupdate job %s status, err: %v", jobName, err)
-	}
-	return nil
 }

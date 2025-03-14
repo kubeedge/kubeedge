@@ -55,7 +55,12 @@ func TestRegister(t *testing.T) {
 			name:         "",
 			nodeName:     "test1",
 			wantNodeName: "test1",
-			eh:           &v1alpha2.EdgeHub{WebSocket: &v1alpha2.EdgeHubWebSocket{Server: "localhost:8080"}, ProjectID: "test_id"},
+			eh: &v1alpha2.EdgeHub{
+				WebSocket: &v1alpha2.EdgeHubWebSocket{
+					Server: "localhost:8080",
+				},
+				ProjectID: "test_id",
+			},
 		},
 	}
 

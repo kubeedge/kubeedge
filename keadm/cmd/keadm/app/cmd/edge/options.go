@@ -44,6 +44,9 @@ type UpgradeOptions struct {
 	// Force is a flag to force upgrade.
 	// If set to true, the upgrade command will not prompt for confirmation.
 	Force bool
+	// ImageDigest defines the correct image digest to verify the local image.
+	// When this value is set, the image digest is verified.
+	ImageDigest string
 
 	BaseOptions
 
@@ -104,6 +107,8 @@ func AddUpgradeFlags(cmd *cobra.Command, opts *UpgradeOptions) {
 		"Use this key to specify installation image to download.")
 	cmd.Flags().BoolVar(&opts.Force, "force", opts.Force,
 		"Upgrade the node without prompting for confirmation")
+	cmd.Flags().StringVar(&opts.ImageDigest, "image-digest", opts.ImageDigest,
+		"Use this key to specify the correct image digest to verify the local image.")
 
 	// TODO: remove these flags in v1.23
 	const deprecatedMessage = "For compatibility with historical versions, It will be removed in v1.23"

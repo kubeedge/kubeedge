@@ -199,22 +199,16 @@ func TestImagePrePullJobCalculateStatus(t *testing.T) {
 					Phase: operationsv1alpha2.JobPhaseInProgress,
 					NodeStatus: []operationsv1alpha2.ImagePrePullNodeTaskStatus{
 						{
-							BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-								NodeName: "node1",
-								Phase:    operationsv1alpha2.NodeTaskPhaseInProgress,
-							},
+							NodeName: "node1",
+							Phase:    operationsv1alpha2.NodeTaskPhaseInProgress,
 						},
 						{
-							BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-								NodeName: "node2",
-								Phase:    operationsv1alpha2.NodeTaskPhaseSuccessful,
-							},
+							NodeName: "node2",
+							Phase:    operationsv1alpha2.NodeTaskPhaseSuccessful,
 						},
 						{
-							BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-								NodeName: "node3",
-								Phase:    operationsv1alpha2.NodeTaskPhaseFailure,
-							},
+							NodeName: "node3",
+							Phase:    operationsv1alpha2.NodeTaskPhaseFailure,
 						},
 					},
 				},
@@ -234,22 +228,16 @@ func TestImagePrePullJobCalculateStatus(t *testing.T) {
 					Phase: operationsv1alpha2.JobPhaseInProgress,
 					NodeStatus: []operationsv1alpha2.ImagePrePullNodeTaskStatus{
 						{
-							BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-								NodeName: "node1",
-								Phase:    operationsv1alpha2.NodeTaskPhaseUnknown,
-							},
+							NodeName: "node1",
+							Phase:    operationsv1alpha2.NodeTaskPhaseUnknown,
 						},
 						{
-							BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-								NodeName: "node2",
-								Phase:    operationsv1alpha2.NodeTaskPhaseSuccessful,
-							},
+							NodeName: "node2",
+							Phase:    operationsv1alpha2.NodeTaskPhaseSuccessful,
 						},
 						{
-							BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-								NodeName: "node3",
-								Phase:    operationsv1alpha2.NodeTaskPhaseFailure,
-							},
+							NodeName: "node3",
+							Phase:    operationsv1alpha2.NodeTaskPhaseFailure,
 						},
 					},
 				},
@@ -269,22 +257,16 @@ func TestImagePrePullJobCalculateStatus(t *testing.T) {
 					Phase: operationsv1alpha2.JobPhaseInProgress,
 					NodeStatus: []operationsv1alpha2.ImagePrePullNodeTaskStatus{
 						{
-							BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-								NodeName: "node1",
-								Phase:    operationsv1alpha2.NodeTaskPhaseSuccessful,
-							},
+							NodeName: "node1",
+							Phase:    operationsv1alpha2.NodeTaskPhaseSuccessful,
 						},
 						{
-							BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-								NodeName: "node2",
-								Phase:    operationsv1alpha2.NodeTaskPhaseSuccessful,
-							},
+							NodeName: "node2",
+							Phase:    operationsv1alpha2.NodeTaskPhaseSuccessful,
 						},
 						{
-							BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-								NodeName: "node3",
-								Phase:    operationsv1alpha2.NodeTaskPhaseFailure,
-							},
+							NodeName: "node3",
+							Phase:    operationsv1alpha2.NodeTaskPhaseFailure,
 						},
 					},
 				},

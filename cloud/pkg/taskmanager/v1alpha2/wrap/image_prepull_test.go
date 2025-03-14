@@ -41,22 +41,22 @@ func TestImagePrePullJob(t *testing.T) {
 			Phase: operationsv1alpha2.JobPhaseInProgress,
 			NodeStatus: []operationsv1alpha2.ImagePrePullNodeTaskStatus{
 				{
-					BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-						NodeName: "node1",
-						Phase:    operationsv1alpha2.NodeTaskPhasePending,
-					},
+					NodeName: "node1",
+					Phase:    operationsv1alpha2.NodeTaskPhasePending,
 				},
 				{
-					BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-						NodeName: "node2",
-						Phase:    operationsv1alpha2.NodeTaskPhasePending,
-					},
+					NodeName: "node2",
+					Phase:    operationsv1alpha2.NodeTaskPhasePending,
 				},
 				{
-					Action: operationsv1alpha2.ImagePrePullJobActionPull,
-					BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-						NodeName: "node3",
-						Phase:    operationsv1alpha2.NodeTaskPhaseSuccessful,
+					NodeName: "node3",
+					Phase:    operationsv1alpha2.NodeTaskPhaseSuccessful,
+					ActionFlow: []operationsv1alpha2.ImagePrePullJobActionStatus{
+						{
+							Action: operationsv1alpha2.ImagePrePullJobActionPull,
+							Status: metav1.ConditionTrue,
+							Time:   time.Now().Format(time.RFC3339),
+						},
 					},
 				},
 			},
@@ -77,16 +77,12 @@ func TestImagePrePullJob(t *testing.T) {
 	act, err := tasks[0].Action()
 	assert.NoError(t, err)
 	assert.Equal(t, actionflow.FlowImagePrePullJob.First, act)
-	tasks[0].ToInProgress(time.Now())
+	tasks[0].SetPhase(operationsv1alpha2.NodeTaskPhaseInProgress)
 	assert.Equal(t, operationsv1alpha2.NodeTaskPhaseInProgress, tasks[0].Phase())
-	tasks[0].ToFailure("test error")
+	tasks[0].SetPhase(operationsv1alpha2.NodeTaskPhaseFailure, "test error")
 	assert.Equal(t, operationsv1alpha2.NodeTaskPhaseFailure, tasks[0].Phase())
 	assert.Equal(t, "test error", obj.Status.NodeStatus[0].Reason)
 
-	tasks[1].ToSuccessful()
+	tasks[1].SetPhase(operationsv1alpha2.NodeTaskPhaseSuccessful)
 	assert.Equal(t, operationsv1alpha2.NodeTaskPhaseSuccessful, tasks[1].Phase())
-	tasks[1].SetAction(&actionflow.Action{Name: "not-found"})
-	_, err = tasks[1].Action()
-	assert.Error(t, err)
-	assert.ErrorContains(t, err, "no valid image prepull job action")
 }

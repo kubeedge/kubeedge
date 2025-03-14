@@ -17,9 +17,6 @@ limitations under the License.
 package wrap
 
 import (
-	"fmt"
-	"time"
-
 	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 	"github.com/kubeedge/kubeedge/pkg/nodetask/actionflow"
 )
@@ -28,7 +25,7 @@ type NodeUpgradeJobTask struct {
 	Obj *operationsv1alpha2.NodeUpgradeJobNodeTaskStatus
 }
 
-// Check that NodeUpgradeJobTask implements the NodeJobTask interface
+// Check whether NodeUpgradeJobTask implements the NodeJobTask interface
 var _ NodeJobTask = (*NodeUpgradeJobTask)(nil)
 
 func (task NodeUpgradeJobTask) NodeName() string {
@@ -44,33 +41,15 @@ func (task NodeUpgradeJobTask) Phase() operationsv1alpha2.NodeTaskPhase {
 	return task.Obj.Phase
 }
 
-func (task *NodeUpgradeJobTask) ToSuccessful() {
-	task.Obj.Phase = operationsv1alpha2.NodeTaskPhaseSuccessful
-}
-
-func (task *NodeUpgradeJobTask) ToInProgress(t time.Time) {
-	task.Obj.Phase = operationsv1alpha2.NodeTaskPhaseInProgress
-	task.Obj.Time = t.UTC().Format(time.RFC3339)
-}
-
-func (task *NodeUpgradeJobTask) ToFailure(reason string) {
-	task.Obj.Phase = operationsv1alpha2.NodeTaskPhaseFailure
-	task.Obj.Reason = reason
+func (task *NodeUpgradeJobTask) SetPhase(phase operationsv1alpha2.NodeTaskPhase, reason ...string) {
+	task.Obj.Phase = phase
+	if len(reason) > 0 {
+		task.Obj.Reason = reason[0]
+	}
 }
 
 func (task NodeUpgradeJobTask) Action() (*actionflow.Action, error) {
-	if task.Obj.Action == "" {
-		return actionflow.FlowNodeUpgradeJob.First, nil
-	}
-	action := actionflow.FlowNodeUpgradeJob.Find(string(task.Obj.Action))
-	if action == nil {
-		return nil, fmt.Errorf("no valid node upgrade job action '%s' was found", task.Obj.Action)
-	}
-	return action, nil
-}
-
-func (task *NodeUpgradeJobTask) SetAction(action *actionflow.Action) {
-	task.Obj.Action = operationsv1alpha2.NodeUpgradeJobAction(action.Name)
+	return actionflow.FlowNodeUpgradeJob.First, nil
 }
 
 func (task NodeUpgradeJobTask) GetObject() any {
@@ -81,7 +60,7 @@ type NodeUpgradeJob struct {
 	Obj *operationsv1alpha2.NodeUpgradeJob
 }
 
-// Check that NodeUpgradeJob implements the NodeJob interface
+// Check whether NodeUpgradeJob implements the NodeJob interface
 var _ NodeJob = (*NodeUpgradeJob)(nil)
 
 func NewNodeUpgradeJob(obj *operationsv1alpha2.NodeUpgradeJob) *NodeUpgradeJob {

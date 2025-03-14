@@ -27,7 +27,13 @@ import (
 	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 )
 
-type ReconcileHandler[T operationsv1alpha2.NodeJobType] interface {
+// NodeJobType uses to constrain paradigm type of node jobs.
+type NodeJobType interface {
+	operationsv1alpha2.NodeUpgradeJob | operationsv1alpha2.ImagePrePullJob |
+		operationsv1alpha2.ConfigUpdateJob
+}
+
+type ReconcileHandler[T NodeJobType] interface {
 	// GetJob returns the node job found by controller-runtime Client.
 	// If not found, returns nil.
 	GetJob(ctx context.Context, req controllerruntime.Request) (*T, error)
@@ -54,7 +60,7 @@ const (
 )
 
 // RunReconcile runs the common reconcile logic for the node job.
-func RunReconcile[T operationsv1alpha2.NodeJobType](
+func RunReconcile[T NodeJobType](
 	ctx context.Context,
 	req controllerruntime.Request,
 	handler ReconcileHandler[T],
