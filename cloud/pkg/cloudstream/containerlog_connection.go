@@ -76,9 +76,11 @@ func (l *ContainerLogsConnection) WriteToTunnel(m *stream.Message) error {
 
 func (l *ContainerLogsConnection) SendConnection() (stream.EdgedConnection, error) {
 	connector := &stream.EdgedLogsConnection{
-		MessID: l.MessageID,
-		URL:    *l.r.Request.URL,
-		Header: l.r.Request.Header,
+		BaseEdgedConnection: stream.BaseEdgedConnection{
+			MessID: l.MessageID,
+			URL:    *l.r.Request.URL,
+			Header: l.r.Request.Header,
+		},
 	}
 	connector.URL.Scheme = httpScheme
 	connector.URL.Host = net.JoinHostPort(defaultServerHost, fmt.Sprintf("%v", constants.ServerPort))
