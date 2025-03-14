@@ -24,6 +24,7 @@ import (
 	v1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
 	v1beta1 "github.com/kubeedge/api/apis/devices/v1beta1"
 	operationsv1alpha1 "github.com/kubeedge/api/apis/operations/v1alpha1"
+	v1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 	policyv1alpha1 "github.com/kubeedge/api/apis/policy/v1alpha1"
 	reliablesyncsv1alpha1 "github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
 	v1 "github.com/kubeedge/api/apis/rules/v1"
@@ -74,6 +75,12 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Operations().V1alpha1().ImagePrePullJobs().Informer()}, nil
 	case operationsv1alpha1.SchemeGroupVersion.WithResource("nodeupgradejobs"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Operations().V1alpha1().NodeUpgradeJobs().Informer()}, nil
+
+		// Group=operations, Version=v1alpha2
+	case v1alpha2.SchemeGroupVersion.WithResource("imageprepulljobs"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Operations().V1alpha2().ImagePrePullJobs().Informer()}, nil
+	case v1alpha2.SchemeGroupVersion.WithResource("nodeupgradejobs"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Operations().V1alpha2().NodeUpgradeJobs().Informer()}, nil
 
 		// Group=policy.kubeedge.io, Version=v1alpha1
 	case policyv1alpha1.SchemeGroupVersion.WithResource("serviceaccountaccesses"):
