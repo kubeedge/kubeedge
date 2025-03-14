@@ -30,6 +30,7 @@ const (
 	NodeGroupControllerFinalizer  = "apps.kubeedge.io/nodegroup-controller"
 	ServiceTopologyAnnotation     = "apps.kubeedge.io/service-topology"
 	ServiceTopologyRangeNodegroup = "range-nodegroup"
+	LabelTopologyZone             = "topology.kubernetes.io/zone"
 )
 
 var (
@@ -197,6 +198,7 @@ func (c *Controller) evictNodes(ctx context.Context, nodes []corev1.Node) error 
 		n := node.DeepCopy()
 		ng := n.Labels[LabelBelongingTo]
 		delete(n.Labels, LabelBelongingTo)
+		delete(n.Labels, LabelTopologyZone)
 		if err := c.Client.Patch(ctx, n, client.MergeFrom(&node)); err != nil {
 			klog.Errorf("failed to remove belonging label of nodegroup %s on node %s, %v", ng, node.Name, err)
 			errs = append(errs, err)
@@ -364,7 +366,9 @@ func (c *Controller) addOrUpdateNodeLabel(ctx context.Context, node *corev1.Node
 	if newnode.Labels == nil {
 		newnode.Labels = map[string]string{}
 	}
+
 	newnode.Labels[LabelBelongingTo] = nodeGroupName
+	newnode.Labels[LabelTopologyZone] = nodeGroupName
 	if err := c.Client.Patch(ctx, newnode, client.MergeFrom(node)); err != nil {
 		klog.Errorf("failed to add label %s=%s to node %s, %s", LabelBelongingTo, nodeGroupName, node.Name, err)
 		return err
