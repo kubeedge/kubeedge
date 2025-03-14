@@ -36,6 +36,8 @@ type UpstreamMessage struct {
 	Action string `json:"action"`
 	// Succ defines whether the action is successful.
 	Succ bool `json:"succ"`
+	// FinishTime defines the finish time of the action.
+	FinishTime string `json:"finishTime"`
 	// Reason defines error message.
 	Reason string `json:"reason"`
 	// Extend uses to stored serializable string. Some node actions may do multiple things,

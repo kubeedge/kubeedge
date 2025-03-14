@@ -27,7 +27,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/v1alpha2/executor"
 )
 
-func TestCanDownstreamPhase(t *testing.T) {
+func TestImagePrePullJobCanDownstreamPhase(t *testing.T) {
 	cases := []struct {
 		name string
 		obj  any
@@ -68,7 +68,7 @@ func TestCanDownstreamPhase(t *testing.T) {
 	}
 }
 
-func TestInterruptExecutor(t *testing.T) {
+func TestImagePrePullJobInterruptExecutor(t *testing.T) {
 	var interrupted, removed bool
 
 	patches := gomonkey.NewPatches()

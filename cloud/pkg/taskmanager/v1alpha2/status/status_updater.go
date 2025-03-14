@@ -33,52 +33,64 @@ const (
 )
 
 // UpdateStatusOptions defines options for update status.
-type UpdateStatusOptions[T operationsv1alpha2.NodeTaskStatusType] struct {
-	// JobName is the name of the node job.
-	JobName string
-	// NodeTaskStatus is the node task status object.
-	NodeTaskStatus T
+type UpdateStatusOptions struct {
 	// Callback is the callback function of UpdateStatus(..). It will report the result of updating the status.
 	Callback func(err error)
+
+	TryUpdateStatusOptions
+}
+
+// TryUpdateStatusOptions defines options for function of try to update status.
+type TryUpdateStatusOptions struct {
+	// JobName is the name of the node job.
+	JobName string
+	// NodeName is the name of the edge node.
+	NodeName string
+	// Phase is the phase of the node task.
+	Phase operationsv1alpha2.NodeTaskPhase
+	// Reason is the failure reason of the node task.
+	Reason string
+	// ExtendInfo is the extended reporting information.
+	ExtendInfo string
+	// ActionStatus is the action status of the node task.
+	// I.e., *ImagePrePullJobActionStatus or *NodeUpgradeJobActionStatus,
+	// or the action status of other node jobs that must be a pointer structure.
+	ActionStatus any
 }
 
 // TryUpdateFun defines the function type for updateing the status.
-type TryUpdateFun[T operationsv1alpha2.NodeTaskStatusType] func(
-	ctx context.Context,
-	cli crdcliset.Interface,
-	jobName string,
-	nodeTaskStatus T) error
+type TryUpdateFun func(ctx context.Context, cli crdcliset.Interface, opts TryUpdateStatusOptions) error
 
 // StatusUpdater defines the updater of the node task status.
-type StatusUpdater[T operationsv1alpha2.NodeTaskStatusType] struct {
-	ctx          context.Context
-	crdcli       crdcliset.Interface
-	updateCh     chan UpdateStatusOptions[T]
-	tryUpdateFun TryUpdateFun[T]
+type StatusUpdater struct {
+	ctx       context.Context
+	crdcli    crdcliset.Interface
+	updateCh  chan UpdateStatusOptions
+	tryUpdate TryUpdateFun
 }
 
 // NewStatusUpdater returns a new StatusUpdater.
-func NewStatusUpdater[T operationsv1alpha2.NodeTaskStatusType](
+func NewStatusUpdater(
 	ctx context.Context,
-	tryUpdateFun TryUpdateFun[T],
-) *StatusUpdater[T] {
-	return &StatusUpdater[T]{
-		ctx:          ctx,
-		crdcli:       client.GetCRDClient(),
-		updateCh:     make(chan UpdateStatusOptions[T], 100),
-		tryUpdateFun: tryUpdateFun,
+	tryUpdate TryUpdateFun,
+) *StatusUpdater {
+	return &StatusUpdater{
+		ctx:       ctx,
+		crdcli:    client.GetCRDClient(),
+		updateCh:  make(chan UpdateStatusOptions, 100),
+		tryUpdate: tryUpdate,
 	}
 }
 
 // UpdateStatus sends the UpdateStatusOptions to the channel.
 // Must call the WatchUpdateChannel() method before calling this method.
-func (u *StatusUpdater[T]) UpdateStatus(opts UpdateStatusOptions[T]) {
+func (u *StatusUpdater) UpdateStatus(opts UpdateStatusOptions) {
 	u.updateCh <- opts
 }
 
 // WatchUpdateChannel watches the update channel and updates the status of the node task.
 // It will retry the update operation if the update fails.
-func (u *StatusUpdater[T]) WatchUpdateChannel() {
+func (u *StatusUpdater) WatchUpdateChannel() {
 	for {
 		select {
 		case <-u.ctx.Done():
@@ -86,7 +98,7 @@ func (u *StatusUpdater[T]) WatchUpdateChannel() {
 		case opts := <-u.updateCh:
 			err := retry.Do(
 				func() error {
-					return u.tryUpdateFun(u.ctx, u.crdcli, opts.JobName, opts.NodeTaskStatus)
+					return u.tryUpdate(u.ctx, u.crdcli, opts.TryUpdateStatusOptions)
 				},
 				retry.Delay(UpdateStatusRetryDelay),
 				retry.Attempts(UpdateStatusRetryAttempts),
