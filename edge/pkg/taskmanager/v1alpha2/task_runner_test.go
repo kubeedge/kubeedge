@@ -23,56 +23,26 @@ import (
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/require"
 
+	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/taskv1alpha2/actions"
+	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
+	"github.com/kubeedge/kubeedge/edge/pkg/taskmanager/v1alpha2/actions"
 )
 
-func TestFilter(t *testing.T) {
-	cases := []struct {
-		name string
-		msg  *model.Message
-		exp  bool
-	}{
-		{
-			name: "different group",
-			msg: model.NewMessage("").
-				SetRoute(modules.RouterModuleName, modules.RouterGroupName),
-			exp: false,
-		},
-		{
-			name: "different resource",
-			msg: model.NewMessage("").
-				SetRoute(modules.TaskManagerModuleName, modules.TaskManagerModuleGroup),
-			exp: false,
-		},
-		{
-			name: "match message",
-			msg: model.NewMessage("").
-				SetRoute(modules.TaskManagerModuleName, modules.TaskManagerModuleGroup).
-				SetResourceOperation("operations.kubeedge.io/v1alpha2", ""),
-			exp: true,
-		},
-	}
-	msghandler := NewMessageHandler()
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			got := msghandler.Filter(c.msg)
-			if got != c.exp {
-				require.Equal(t, c.exp, got)
-			}
-		})
-	}
-}
+func TestRunTask(t *testing.T) {
+	globalPatches := gomonkey.NewPatches()
+	defer globalPatches.Reset()
 
-func TestProcess(t *testing.T) {
+	globalPatches.ApplyFunc(options.GetEdgeCoreConfig, func() *v1alpha2.EdgeCoreConfig {
+		return v1alpha2.NewDefaultEdgeCoreConfig()
+	})
+
 	t.Run("runner is nil", func(t *testing.T) {
-		msghandler := NewMessageHandler()
 		msg := model.NewMessage("").
 			SetRoute(modules.TaskManagerModuleName, modules.TaskManagerModuleGroup).
 			SetResourceOperation("operations.kubeedge.io/v1alpha2/unknow/taskname/nodes/node1", "")
-		err := msghandler.Process(msg, nil)
-		require.Error(t, err)
+		err := RunTask(msg)
 		require.ErrorContains(t, err, "invalid resource type unknow")
 	})
 
@@ -86,11 +56,10 @@ func TestProcess(t *testing.T) {
 		patches.ApplyMethodFunc(&actions.ActionRunner{}, "RunAction",
 			func(_ctx context.Context, _jobname, _nodename, _action string, _specData []byte) {})
 
-		msghandler := NewMessageHandler()
 		msg := model.NewMessage("").
 			SetRoute(modules.TaskManagerModuleName, modules.TaskManagerModuleGroup).
 			SetResourceOperation("operations.kubeedge.io/v1alpha2/fakeRunner/taskname/nodes/node1", "")
-		err := msghandler.Process(msg, nil)
+		err := RunTask(msg)
 		require.NoError(t, err)
 	})
 }

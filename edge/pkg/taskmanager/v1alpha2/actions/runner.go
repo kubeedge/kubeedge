@@ -32,6 +32,8 @@ var runners = map[string]*ActionRunner{}
 
 // Init registers the node job action runner.
 func Init() {
+	RegisterRunner(operationsv1alpha2.ResourceNodeUpgradeJob,
+		newNodeUpgradeJobRunner())
 	RegisterRunner(operationsv1alpha2.ResourceImagePrePullJob,
 		newImagePrePullJobRunner())
 }
@@ -59,7 +61,7 @@ type baseActionResponse struct {
 	doNext bool
 }
 
-// Check that baseActionResponse implements ActionResponse interface.
+// Check whether baseActionResponse implements ActionResponse interface.
 var _ ActionResponse = (*baseActionResponse)(nil)
 
 func (resp baseActionResponse) Error() error {

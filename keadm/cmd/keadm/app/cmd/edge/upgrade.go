@@ -162,9 +162,22 @@ func getEdgeCoreBinary(ctx context.Context, opts UpgradeOptions, config *cfgv1al
 		return "", fmt.Errorf("failed to new container runtime, err: %v", err)
 	}
 	image := opts.Image + ":" + opts.ToVersion
+	// Pull installation-package image
 	if err := container.PullImage(ctx, image, nil, nil); err != nil {
 		return "", fmt.Errorf("failed to pull image %s, err: %v", image, err)
 	}
+	// If the ImageDigest is not empty, verify the image.
+	if opts.ImageDigest != "" {
+		local, err := container.GetImageDigest(ctx, image)
+		if err != nil {
+			return "", fmt.Errorf("failed to get image digest of %s, err: %v", image, err)
+		}
+		if local != opts.ImageDigest {
+			return "", fmt.Errorf("image digest of %s is not correct, local: %s, expected: %s",
+				image, local, opts.ImageDigest)
+		}
+	}
+	// Copy edgecore binary from the image to the upgrade path.
 	containerFilePath := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName)
 	hostPath := filepath.Join(upgradePath(opts.ToVersion), constants.KubeEdgeBinaryName)
 	files := map[string]string{containerFilePath: hostPath}

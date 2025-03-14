@@ -49,6 +49,7 @@ var upstreamHandlers = make(map[string]UpstreamHandler)
 
 // Init registers the upstream handlers.
 func Init(ctx context.Context) {
+	upstreamHandlers[operationsv1alpha2.ResourceNodeUpgradeJob] = newNodeUpgradeJobHandler(ctx)
 	upstreamHandlers[operationsv1alpha2.ResourceImagePrePullJob] = newImagePrePullJobHandler(ctx)
 }
 
@@ -97,7 +98,7 @@ func updateNodeJobTaskStatus(res taskmsg.Resource,
 ) error {
 	nodetask, err := handler.ConvToNodeTask(res.NodeName, &upmsg)
 	if err != nil {
-		return fmt.Errorf("failed to set node task status, err: %v", err)
+		return fmt.Errorf("failed to convert node task status, err: %v", err)
 	}
 	action, err := nodetask.Action()
 	if err != nil {

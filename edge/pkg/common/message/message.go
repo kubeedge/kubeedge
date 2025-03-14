@@ -23,7 +23,6 @@ const (
 	OperationStop              = "stop"
 
 	ResourceGroupName = "resource"
-	TwinGroupName     = "twin"
 	FuncGroupName     = "func"
 	UserGroupName     = "user"
 )

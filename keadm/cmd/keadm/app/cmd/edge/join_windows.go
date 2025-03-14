@@ -245,7 +245,7 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 }
 
 func runEdgeCore() error {
-	return util.StartNSSMService(util.KubeEdgeBinaryName)
+	return util.StartNSSMService(constants.KubeEdgeBinaryName)
 }
 
 func prepareWindowsNssm(step *common.Step) error {

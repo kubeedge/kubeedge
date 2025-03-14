@@ -26,7 +26,7 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
 )
 
-func init() {
+func Init() {
 	Register(TaskUpgrade, NewUpgradeExecutor())
 	Register(TaskPrePull, NewPrePullExecutor())
 }

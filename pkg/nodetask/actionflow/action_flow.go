@@ -76,16 +76,13 @@ var (
 
 // initNodeUpgradeJobFlow initializes the action flow of node upgrade job.
 //
-//	Check (--> WaitingConfirmation --> Confirm) --> BackUp
-//	  --> Upgrade --> [If fails]-> RollBack
+//	Check (--> WaitingConfirmation) --> BackUp --> Upgrade --> [If fails]-> RollBack
 func initNodeUpgradeJobFlow() *Flow {
 	check := &Action{Name: string(v1alpha2.NodeUpgradeJobActionCheck)}
 	waitingConfirmation := &Action{Name: string(v1alpha2.NodeUpgradeJobActionWaitingConfirmation)}
 	check.NextSuccessful = waitingConfirmation
-	confirm := &Action{Name: string(v1alpha2.NodeUpgradeJobActionConfirm)}
-	waitingConfirmation.NextSuccessful = confirm
 	backUp := &Action{Name: string(v1alpha2.NodeUpgradeJobActionBackUp)}
-	confirm.NextSuccessful = backUp
+	waitingConfirmation.NextSuccessful = backUp
 	upgrade := &Action{Name: string(v1alpha2.NodeUpgradeJobActionUpgrade)}
 	backUp.NextSuccessful = upgrade
 	rollBack := &Action{Name: string(v1alpha2.NodeUpgradeJobActionRollBack)}

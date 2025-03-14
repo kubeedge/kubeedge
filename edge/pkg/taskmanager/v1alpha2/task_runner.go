@@ -21,30 +21,16 @@ import (
 	"fmt"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/msghandler"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/taskv1alpha2/actions"
+	"github.com/kubeedge/kubeedge/edge/pkg/taskmanager/v1alpha2/actions"
 	nodetaskmsg "github.com/kubeedge/kubeedge/pkg/nodetask/message"
 )
 
-type messageHandler struct{}
-
-func NewMessageHandler() msghandler.Handler {
+func Init() {
 	actions.Init()
-	return &messageHandler{}
 }
 
-func (h *messageHandler) Filter(msg *model.Message) bool {
-	if msg.GetGroup() != modules.TaskManagerModuleName {
-		return false
-	}
-	return nodetaskmsg.IsNodeJobResource(msg.GetResource())
-}
-
-// Process handles the node job message.
-// These errors are returned due to code logic problems and will not affect business processes.
-func (h *messageHandler) Process(msg *model.Message, _ clients.Adapter) error {
+// RunTask parses the message and runs the node task actions.
+func RunTask(msg *model.Message) error {
 	msgres := nodetaskmsg.ParseResource(msg.GetResource())
 	runner := actions.GetRunner(msgres.ResourceType)
 	if runner == nil {

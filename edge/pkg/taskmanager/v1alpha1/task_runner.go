@@ -21,29 +21,18 @@ import (
 	"fmt"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
 	commonmsg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/msghandler"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/task/taskexecutor"
-	nodetaskmsg "github.com/kubeedge/kubeedge/pkg/nodetask/message"
+	"github.com/kubeedge/kubeedge/edge/pkg/taskmanager/v1alpha1/taskexecutor"
 )
 
-func NewMessageHandler() msghandler.Handler {
-	return &taskHandler{}
+func Init() {
+	taskexecutor.Init()
 }
 
-type taskHandler struct{}
-
-func (th *taskHandler) Filter(msg *model.Message) bool {
-	name := msg.GetGroup()
-	return name == modules.TaskManagerModuleName &&
-		!nodetaskmsg.IsNodeJobResource(msg.GetResource())
-}
-
-func (th *taskHandler) Process(message *model.Message, _ clients.Adapter) error {
+// RunTask pparses the message, then gets the executor by type and runs it.
+func RunTask(message *model.Message) error {
 	taskReq := &commontypes.NodeTaskRequest{}
 	data, err := message.GetContentData()
 	if err != nil {

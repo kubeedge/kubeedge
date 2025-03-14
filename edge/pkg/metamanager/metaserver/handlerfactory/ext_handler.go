@@ -15,9 +15,9 @@ import (
 	"github.com/kubeedge/kubeedge/common/types"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/task/taskexecutor"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/upgradedb"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/common"
+	"github.com/kubeedge/kubeedge/edge/pkg/taskmanager/v1alpha1/taskexecutor"
 	"github.com/kubeedge/kubeedge/pkg/version"
 )
 

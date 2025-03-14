@@ -285,11 +285,22 @@ spec:
                 type: string
               imageDigestGatter:
                 description: |-
-                  ImageDigestGatter define registry v2 interface access configuration.
+                  ImageDigestGetter define registry v2 interface access configuration.
                   As a transition, it is not required at first, and the image digest is checked when this field is set.
                 properties:
+                  amd64:
+                    description: AMD64 indicates the image digest of the amd64 platform
+                      for verification.
+                    type: string
+                  arm64:
+                    description: ARM64 indicates the image digest of the arm64 platform
+                      for verification.
+                    type: string
                   registryAPI:
-                    description: RegistryAPI define registry v2 interface access configuration
+                    description: |-
+                      RegistryAPI define registry v2 interface access configuration.
+                      Used to automatically gets multiple platform image digests from a remote registry
+                      to set values into ARM64 and AMD64 fields.
                     properties:
                       host:
                         type: string
@@ -299,9 +310,6 @@ spec:
                     - host
                     - token
                     type: object
-                  value:
-                    description: Value used to directly set a value to check image
-                    type: string
                 type: object
               labelSelector:
                 description: |-

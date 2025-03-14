@@ -18,7 +18,6 @@ package taskexecutor
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 
@@ -29,6 +28,7 @@ import (
 	commontypes "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/pkg/util/files"
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
 	"github.com/kubeedge/kubeedge/pkg/version"
 )
@@ -65,43 +65,17 @@ func backup(backupPath string) error {
 	}
 
 	// backup edgecore.db: copy from origin path to backup path
-	if err := filecopy(config.DataBase.DataSource, filepath.Join(backupPath, "edgecore.db")); err != nil {
+	if err := files.FileCopy(config.DataBase.DataSource, filepath.Join(backupPath, "edgecore.db")); err != nil {
 		return fmt.Errorf("failed to backup db: %v", err)
 	}
 	// backup edgecore.yaml: copy from origin path to backup path
-	if err := filecopy(constants.DefaultConfigDir+"edgecore.yaml", filepath.Join(backupPath, "edgecore.yaml")); err != nil {
+	if err := files.FileCopy(constants.DefaultConfigDir+"edgecore.yaml", filepath.Join(backupPath, "edgecore.yaml")); err != nil {
 		return fmt.Errorf("failed to back config: %v", err)
 	}
 	// backup edgecore: copy from origin path to backup path
-	if err := filecopy(filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName),
+	if err := files.FileCopy(filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName),
 		filepath.Join(backupPath, constants.KubeEdgeBinaryName)); err != nil {
 		return fmt.Errorf("failed to backup edgecore: %v", err)
 	}
 	return nil
-}
-
-func filecopy(src, dst string) error {
-	sourceFileStat, err := os.Stat(src)
-	if err != nil {
-		return err
-	}
-
-	if !sourceFileStat.Mode().IsRegular() {
-		return fmt.Errorf("%s is not a regular file", src)
-	}
-
-	source, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer source.Close()
-
-	// copy file using src file mode
-	destination, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, sourceFileStat.Mode())
-	if err != nil {
-		return err
-	}
-	defer destination.Close()
-	_, err = io.Copy(destination, source)
-	return err
 }

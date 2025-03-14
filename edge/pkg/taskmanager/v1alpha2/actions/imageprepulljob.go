@@ -66,7 +66,7 @@ type imagePrePullJobActionResponse struct {
 	baseActionResponse
 }
 
-// Check that imagePrePullJobActionResponse implements ActionResponse interface.
+// Check whether imagePrePullJobActionResponse implements ActionResponse interface.
 var _ ActionResponse = (*imagePrePullJobActionResponse)(nil)
 
 // imagePrePullJobActionHandler defines action-related functions
@@ -173,7 +173,7 @@ func (imagePrePullJobActionHandler) getSpecSerializer(specData []byte) (SpecSeri
 	})
 }
 
-func (h imagePrePullJobActionHandler) reportActionStatus(jobname, nodename, action string, resp ActionResponse) {
+func (h *imagePrePullJobActionHandler) reportActionStatus(jobname, nodename, action string, resp ActionResponse) {
 	res := taskmsg.Resource{
 		APIVersion:   operationsv1alpha2.SchemeGroupVersion.String(),
 		ResourceType: operationsv1alpha2.ResourceImagePrePullJob,
@@ -183,11 +183,10 @@ func (h imagePrePullJobActionHandler) reportActionStatus(jobname, nodename, acti
 	var extend string
 	if resp, ok := resp.(*imagePrePullJobActionResponse); ok &&
 		action == string(operationsv1alpha2.ImagePrePullJobActionPull) {
-		bff, err := json.Marshal(resp.imageStatus)
+		var err error
+		extend, err = taskmsg.FormatImagePrePullJobExtend(resp.imageStatus)
 		if err != nil {
 			h.logger.Error(err, "failed to marshal image status")
-		} else {
-			extend = string(bff)
 		}
 	}
 	body := taskmsg.UpstreamMessage{

@@ -61,6 +61,12 @@ var (
 
 // Init registers the downstream handlers.
 func Init(ctx context.Context) error {
+	nodeUpgradeJobHandler, err := newNodeUpgradeJobHandler(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create node upgrade job downstream handler, err: %v", err)
+	}
+	downstreamHandlers[operationsv1alpha2.ResourceNodeUpgradeJob] = nodeUpgradeJobHandler
+
 	imagePrePullJobHandler, err := newImagePrepullJobHandler(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create image pre pull job downstream handler, err: %v", err)
