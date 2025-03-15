@@ -32,6 +32,14 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
+var (
+	newCommonResourceEventHandlerFunc = NewCommonResourceEventHandler
+
+	dynamicControllerMessageLayerFunc = messagelayer.DynamicControllerMessageLayer
+
+	getInformersManagerFunc = genericinformers.GetInformersManager
+)
+
 // HandlerCenter is used to prepare corresponding CommonResourceEventHandler for listener
 // CommonResourceEventHandler then will send to the listener the objs it is interested in,
 // including subsequent changes (watch event)
@@ -73,7 +81,7 @@ func (c *handlerCenter) ForResource(gvr schema.GroupVersionResource) *CommonReso
 
 	klog.Infof("[metaserver/HandlerCenter] prepare a new resourceEventHandler(%v)", gvr)
 
-	handler := NewCommonResourceEventHandler(gvr, c.listenerManager, c.messageLayer)
+	handler := newCommonResourceEventHandlerFunc(gvr, c.listenerManager, c.messageLayer)
 	c.handlers[gvr] = handler
 
 	return handler
@@ -141,6 +149,21 @@ func NewCommonResourceEventHandler(
 	klog.Infof("[metaserver/resourceEventHandler] handler(%v) init successfully, start to dispatch events to it's listeners", gvr)
 	go handler.dispatchEvents()
 	return handler
+}
+
+// handleAddEvent handles the Add event
+func (c *CommonResourceEventHandler) handleAddEvent(obj interface{}) {
+	c.objToEvent(watch.Added, obj)
+}
+
+// handleUpdateEvent handles the Update event
+func (c *CommonResourceEventHandler) handleUpdateEvent(_, obj interface{}) {
+	c.objToEvent(watch.Modified, obj)
+}
+
+// handleDeleteEvent handles the Delete event
+func (c *CommonResourceEventHandler) handleDeleteEvent(obj interface{}) {
+	c.objToEvent(watch.Deleted, obj)
 }
 
 func (c *CommonResourceEventHandler) objToEvent(t watch.EventType, obj interface{}) {
