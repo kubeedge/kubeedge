@@ -30,6 +30,7 @@ import (
 
 	"github.com/kubeedge/api/apis/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/pkg/util/files"
 )
 
 // Constants used by installers
@@ -156,7 +157,7 @@ func installKubeEdge(options types.InstallOptions, version semver.Version) error
 		return err
 	}
 	// check if the edgecore.exe exists
-	if !FileExists(filepath.Join(options.TarballPath, dirname, "edge", "edgecore.exe")) {
+	if !files.FileExists(filepath.Join(options.TarballPath, dirname, "edge", "edgecore.exe")) {
 		return fmt.Errorf("cannot find edgecore binary at %s", filepath.Join(options.TarballPath, dirname, "edge", "edgecore.exe"))
 	}
 	os.MkdirAll(constants.KubeEdgeUsrBinPath, os.ModePerm)
