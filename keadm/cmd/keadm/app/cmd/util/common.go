@@ -548,14 +548,6 @@ func ExecShellFilter(c string) (string, error) {
 	return cmd.GetStdOut(), nil
 }
 
-func FileExists(path string) bool {
-	_, err := os.Stat(path)
-	if err != nil {
-		return os.IsExist(err)
-	}
-	return true
-}
-
 func ParseEdgecoreConfig(edgecorePath string) (*v1alpha2.EdgeCoreConfig, error) {
 	edgeCoreConfig := v1alpha2.NewDefaultEdgeCoreConfig()
 	if err := edgeCoreConfig.Parse(edgecorePath); err != nil {
@@ -637,4 +629,16 @@ func downloadServiceFile(componentType types.ComponentType, version semver.Versi
 		}
 	}
 	return nil
+}
+
+func EdgeCoreVersion() (string, error) {
+	cmdstr := "edgecore --version"
+	cmd := NewCommand(cmdstr)
+	if err := cmd.Exec(); err != nil {
+		return "", fmt.Errorf("failed to start '%s', err: %v", cmdstr, err)
+	}
+	if cmd.GetStdErr() != "" {
+		return "", fmt.Errorf("failed to execute '%s', err: %s", cmdstr, cmd.GetStdErr())
+	}
+	return cmd.GetStdOut(), nil
 }

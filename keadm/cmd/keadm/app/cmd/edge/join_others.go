@@ -40,6 +40,7 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/extsystem"
 	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
+	"github.com/kubeedge/kubeedge/pkg/util/files"
 	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/api"
 )
 
@@ -236,9 +237,9 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 	// if edgecore start, it will get ca/certs from cloud
 	// if ca/certs generated, we can remove bootstrap file
 	err = wait.Poll(10*time.Second, 300*time.Second, func() (bool, error) {
-		if util.FileExists(edgeCoreConfig.Modules.EdgeHub.TLSCAFile) &&
-			util.FileExists(edgeCoreConfig.Modules.EdgeHub.TLSCertFile) &&
-			util.FileExists(edgeCoreConfig.Modules.EdgeHub.TLSPrivateKeyFile) {
+		if files.FileExists(edgeCoreConfig.Modules.EdgeHub.TLSCAFile) &&
+			files.FileExists(edgeCoreConfig.Modules.EdgeHub.TLSCertFile) &&
+			files.FileExists(edgeCoreConfig.Modules.EdgeHub.TLSPrivateKeyFile) {
 			return true, nil
 		}
 		return false, nil
