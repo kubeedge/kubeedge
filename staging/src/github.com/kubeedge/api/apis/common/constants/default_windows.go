@@ -7,7 +7,8 @@ const (
 	KubeEdgePath       = "C:\\etc\\kubeedge\\"
 	KubeEdgeUsrBinPath = "C:\\usr\\local\\bin"
 
-	DefaultConfigDir = "c:\\etc\\kubeedge\\config\\"
+	DefaultConfigDir   = "c:\\etc\\kubeedge\\config\\"
+	EdgecoreConfigPath = "c:\\etc\\kubeedge\\config\\edgecore.yaml"
 
 	// Certificates
 	// DefaultCertPath is the default certificate path in edge node

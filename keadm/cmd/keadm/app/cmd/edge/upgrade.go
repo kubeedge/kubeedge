@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,378 +17,165 @@ limitations under the License.
 package edge
 
 import (
+	"bufio"
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"k8s.io/klog/v2"
-	"sigs.k8s.io/yaml"
 
 	"github.com/kubeedge/api/apis/common/constants"
-	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
-	api "github.com/kubeedge/api/apis/fsm/v1alpha1"
+	cfgv1alpha2 "github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
-	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/extsystem"
-	"github.com/kubeedge/kubeedge/pkg/util/fsm"
+	upgrdeedge "github.com/kubeedge/kubeedge/pkg/upgrade/edge"
+	"github.com/kubeedge/kubeedge/pkg/util/files"
 )
 
-var (
-	// idempotencyRecord is a file that is used to avoid upgrading node twice once a time.
-	// If the file exist, we don't allow upgrade node again
-	// we only allow upgrade nodes when the file NOT exist
-	idempotencyRecord = filepath.Join(util.KubeEdgePath, "idempotency_record")
-)
+const upgradeTips = `WARNING: The upgrade command no longer automatically execute backup. 
+If backup is required, please interrupt the current upgrade command and execute the backup command 'keadm backup edge'.`
 
-// NewEdgeUpgrade returns KubeEdge edge upgrade command.
-func NewEdgeUpgrade() *cobra.Command {
-	upgradeOptions := NewUpgradeOptions()
+func NewUpgradeCommand() *cobra.Command {
+	var opts UpgradeOptions
+	executor := newUpgradeExecutor()
 
 	cmd := &cobra.Command{
 		Use:   "edge",
-		Short: "Upgrade edge components",
-		Long:  "Upgrade edge components. Upgrade the edge node to the desired version.",
-		PreRunE: func(_ *cobra.Command, _ []string) error {
-			if upgradeOptions.PreRun != "" {
-				fmt.Printf("Executing pre-run script: %s\n", upgradeOptions.PreRun)
-				if err := util.RunScript(upgradeOptions.PreRun); err != nil {
+		Short: "Upgrade the edge node to the desired version.",
+		Long:  "Upgrade the edge node to the desired version.\n" + upgradeTips,
+		RunE: func(_cmd *cobra.Command, _args []string) error {
+			fmt.Println(upgradeTips)
+			// If the opts.UpgradeID is not empty, it means that it‘s the command triggered by the v1alpha1 node upgrade job.
+			// At this time, we cannot add input, which will cause the upgrade task to be blocked.
+			// The opts.UpgradeID judgment for compatibility with historical versions, It will be removed in v1.23.
+			if !opts.Force && opts.UpgradeID == "" {
+				fmt.Print("Are you sure you want to proceed? [y/N]: ")
+				s := bufio.NewScanner(os.Stdin)
+				s.Scan()
+				if err := s.Err(); err != nil {
 					return err
 				}
-			}
-			return nil
-		},
-		RunE: func(_ *cobra.Command, _ []string) error {
-			// upgrade edgecore
-			return upgradeOptions.Upgrade()
-		},
-		PostRunE: func(_ *cobra.Command, _ []string) error {
-			// post-run script
-			if upgradeOptions.PostRun != "" {
-				fmt.Printf("Executing post-run script: %s\n", upgradeOptions.PostRun)
-				if err := util.RunScript(upgradeOptions.PostRun); err != nil {
-					fmt.Printf("Execute post-run script: %s failed: %v\n", upgradeOptions.PostRun, err)
+				if strings.ToLower(s.Text()) != "y" {
+					klog.Infof("aborted upgrade operation")
+					return nil
 				}
 			}
+
+			var err error
+			defer func() {
+				// Report the result of the rollback process.
+				reporter := executor.newReporter(opts.UpgradeID, opts.ToVersion)
+				if reperr := reporter.Report(err); reperr != nil {
+					klog.Errorf("failed to report upgrade result: %v", reperr)
+				}
+				if err != OccupiedError {
+					executor.release()
+				}
+			}()
+
+			err = executor.prerun(opts)
+			if err != nil {
+				return err
+			}
+			err = executor.upgrade(opts)
+			if err != nil {
+				return err
+			}
+			executor.runPostRunHook(opts.PostRun)
 			return nil
 		},
 	}
-
-	AddUpgradeFlags(cmd, upgradeOptions)
+	AddUpgradeFlags(cmd, &opts)
 	return cmd
 }
 
-// NewUpgradeOptions returns a struct ready for being used for creating cmd join flags.
-func NewUpgradeOptions() *UpgradeOptions {
-	opts := &UpgradeOptions{}
-	opts.ToVersion = "v" + common.DefaultKubeEdgeVersion
-	opts.Config = constants.DefaultConfigDir + "edgecore.yaml"
-
-	return opts
+type upgradeExecutor struct {
+	baseUpgradeExecutor
 }
 
-// Upgrade handles upgrade command logic
-func (up *UpgradeOptions) Upgrade() error {
-	// get EdgeCore configuration from edgecore.yaml config file
-	data, err := os.ReadFile(up.Config)
+func newUpgradeExecutor() upgradeExecutor {
+	return upgradeExecutor{baseUpgradeExecutor: baseUpgradeExecutor{}}
+}
+
+func (executor *upgradeExecutor) prerun(opts UpgradeOptions) error {
+	if err := executor.baseUpgradeExecutor.prePreRun(opts.Config); err != nil {
+		return err
+	}
+	if err := executor.baseUpgradeExecutor.postPreRun(opts.PreRun); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (executor *upgradeExecutor) upgrade(opts UpgradeOptions) error {
+	// Get new edgecore binary from the image.
+	klog.Infof("Begin to download %s of edgecore", opts.ToVersion)
+	edgecorePath, err := getEdgeCoreBinary(opts, executor.cfg)
 	if err != nil {
-		return fmt.Errorf("failed to read config file %s: %v", up.Config, err)
-	}
-
-	configure := &v1alpha2.EdgeCoreConfig{}
-	err = yaml.Unmarshal(data, configure)
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal config file %s: %v", up.Config, err)
-	}
-
-	upgrade := Upgrade{
-		UpgradeID:      up.UpgradeID,
-		HistoryID:      up.HistoryID,
-		FromVersion:    up.FromVersion,
-		ToVersion:      up.ToVersion,
-		TaskType:       up.TaskType,
-		Image:          up.Image,
-		DisableBackup:  up.DisableBackup,
-		ConfigFilePath: up.Config,
-		EdgeCoreConfig: configure,
-	}
-
-	event := &fsm.Event{
-		Type:   "Upgrade",
-		Action: api.ActionSuccess,
+		return fmt.Errorf("failed to get edgecore binary, err: %v", err)
 	}
 	defer func() {
-		// report upgrade result to cloudhub
-		if err = util.ReportTaskResult(configure, upgrade.TaskType, upgrade.UpgradeID, *event); err != nil {
-			klog.Errorf("failed to report upgrade result to cloud: %v", err)
-		}
-		// cleanup idempotency record
-		if err = os.Remove(idempotencyRecord); err != nil {
-			klog.Errorf("failed to remove idempotency_record file(%s): %v", idempotencyRecord, err)
+		if err := os.RemoveAll(filepath.Dir(edgecorePath)); err != nil {
+			klog.Errorf("failed to remove edgecore binary: %v", err)
 		}
 	}()
-
-	// only allow upgrade when last upgrade finished
-	if util.FileExists(idempotencyRecord) {
-		event.Action = api.ActionFailure
-		event.Msg = "last upgrade not finished, not allowed upgrade again"
-		return fmt.Errorf("last upgrade not finished, not allowed upgrade again")
+	klog.Infof("Upgrade process start ...")
+	// Stop origin edgecore.
+	if err := util.KillKubeEdgeBinary(constants.KubeEdgeBinaryName); err != nil {
+		return fmt.Errorf("failed to stop edgecore, err: %v", err)
 	}
-
-	// create idempotency_record file
-	if err := os.MkdirAll(filepath.Dir(idempotencyRecord), 0750); err != nil {
-		reason := fmt.Sprintf("failed to create idempotency_record dir: %v", err)
-		event.Action = api.ActionFailure
-		event.Msg = reason
-		return errors.New(reason)
+	// Copy new edgecore to /usr/local/bin.
+	dest := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName)
+	if err := files.FileCopy(edgecorePath, dest); err != nil {
+		return fmt.Errorf("failed to copy edgecore to %s, err: %v", dest, err)
 	}
-	if _, err := os.Create(idempotencyRecord); err != nil {
-		reason := fmt.Sprintf("failed to create idempotency_record file: %v", err)
-		event.Action = api.ActionFailure
-		event.Msg = reason
-		return errors.New(reason)
+	// Start new edgecore.
+	if err := runEdgeCore(); err != nil {
+		return fmt.Errorf("failed to start edgecore, err: %v", err)
 	}
-
-	// run script to do upgrade operation
-	err = upgrade.PreProcess()
-	if err != nil {
-		event.Action = api.ActionFailure
-		event.Msg = fmt.Sprintf("upgrade pre process failed: %v", err)
-		return fmt.Errorf("upgrade pre process failed: %v", err)
-	}
-
-	err = upgrade.Process()
-	if err != nil {
-		event.Type = "Rollback"
-		rbErr := upgrade.Rollback()
-		if rbErr != nil {
-			event.Action = api.ActionFailure
-			event.Msg = rbErr.Error()
-		} else {
-			event.Msg = err.Error()
-		}
-		return fmt.Errorf("upgrade process failed: %v", err)
-	}
-
+	klog.Info("Upgrade process successful")
 	return nil
 }
 
-func (up *Upgrade) PreProcess() error {
+func (executor *upgradeExecutor) newReporter(upgradeID, toVersion string) upgrdeedge.Reporter {
+	var reporter upgrdeedge.Reporter
+	if upgradeID != "" {
+		// For compatibility with historical versions, It will be removed in v1.23
+		reporter = upgrdeedge.NewTaskEventReporter(upgradeID, upgrdeedge.EventTypeUpgrade, executor.cfg)
+	} else {
+		reporter = upgrdeedge.NewJSONFileReporter(upgrdeedge.EventTypeUpgrade, executor.currentVersion, toVersion)
+	}
+	return reporter
+}
+
+// getEdgeCoreBinary pulls the installation-package image and obtains the edgecore binary from it.
+// The edgecore binary is copied to the upgrade path, and the filepath is returned.
+func getEdgeCoreBinary(opts UpgradeOptions, config *cfgv1alpha2.EdgeCoreConfig) (string, error) {
 	ctx := context.Background()
-	// download the request version edgecore
-	klog.Infof("Begin to download version %s edgecore", up.ToVersion)
-	if !up.DisableBackup {
-		backupPath := filepath.Join(util.KubeEdgeBackupPath, up.FromVersion)
-		if err := os.MkdirAll(backupPath, 0750); err != nil {
-			return fmt.Errorf("mkdirall failed: %v", err)
-		}
-
-		// backup edgecore.db: copy from origin path to backup path
-		if err := copyFile(up.EdgeCoreConfig.DataBase.DataSource, filepath.Join(backupPath, "edgecore.db")); err != nil {
-			return fmt.Errorf("failed to backup db: %v", err)
-		}
-		// backup edgecore.yaml: copy from origin path to backup path
-		if err := copyFile(up.ConfigFilePath, filepath.Join(backupPath, "edgecore.yaml")); err != nil {
-			return fmt.Errorf("failed to back config: %v", err)
-		}
-		// backup edgecore: copy from origin path to backup path
-		if err := copyFile(filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), filepath.Join(backupPath, util.KubeEdgeBinaryName)); err != nil {
-			return fmt.Errorf("failed to backup edgecore: %v", err)
-		}
-	}
-
-	upgradePath := filepath.Join(util.KubeEdgeUpgradePath, up.ToVersion)
-	container, err := util.NewContainerRuntime(up.EdgeCoreConfig.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint,
-		up.EdgeCoreConfig.Modules.Edged.TailoredKubeletConfig.CgroupDriver)
+	container, err := util.NewContainerRuntime(
+		config.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint,
+		config.Modules.Edged.TailoredKubeletConfig.CgroupDriver)
 	if err != nil {
-		return fmt.Errorf("failed to new container runtime: %v", err)
+		return "", fmt.Errorf("failed to new container runtime, err: %v", err)
 	}
-
-	image := up.Image
-
-	err = container.PullImages(ctx, []string{image}, nil)
-	if err != nil {
-		return fmt.Errorf("pull image failed: %v", err)
+	image := opts.Image + ":" + opts.ToVersion
+	if err := container.PullImage(ctx, image, nil, nil); err != nil {
+		return "", fmt.Errorf("failed to pull image %s, err: %v", image, err)
 	}
-	files := map[string]string{
-		filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName): filepath.Join(upgradePath, util.KubeEdgeBinaryName),
+	containerFilePath := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName)
+	hostPath := filepath.Join(upgradePath(opts.ToVersion), constants.KubeEdgeBinaryName)
+	files := map[string]string{containerFilePath: hostPath}
+	if err := container.CopyResources(ctx, image, files); err != nil {
+		return "", fmt.Errorf("failed to copy edgecore from %s in the image %s to host %s, err: %v",
+			containerFilePath, image, hostPath, err)
 	}
-	err = container.CopyResources(ctx, image, files)
-	if err != nil {
-		return fmt.Errorf("failed to cp file from image to host: %v", err)
-	}
-
-	return nil
+	return hostPath, nil
 }
 
-func copyFile(src, dst string) error {
-	sourceFileStat, err := os.Stat(src)
-	if err != nil {
-		return err
-	}
-
-	if !sourceFileStat.Mode().IsRegular() {
-		return fmt.Errorf("%s is not a regular file", src)
-	}
-
-	source, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer source.Close()
-
-	// copy file using src file mode
-	destination, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, sourceFileStat.Mode())
-	if err != nil {
-		return err
-	}
-	defer destination.Close()
-	_, err = io.Copy(destination, source)
-	return err
-}
-
-func (up *Upgrade) Process() error {
-	klog.Infof("upgrade process start")
-
-	// stop origin edgecore
-	err := util.KillKubeEdgeBinary(util.KubeEdgeBinaryName)
-	if err != nil {
-		return fmt.Errorf("failed to stop edgecore: %v", err)
-	}
-
-	// copy new edgecore from upgradePath to /usr/local/bin
-	upgradePath := filepath.Join(util.KubeEdgeUpgradePath, up.ToVersion)
-	err = copyFile(filepath.Join(upgradePath, util.KubeEdgeBinaryName), filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName))
-	if err != nil {
-		return fmt.Errorf("failed to cp file: %v", err)
-	}
-
-	// start new edgecore service
-	err = runEdgeCore()
-	if err != nil {
-		return fmt.Errorf("failed to start edgecore: %v", err)
-	}
-
-	return nil
-}
-
-func (up *Upgrade) Rollback() error {
-	return rollback(up.FromVersion, up.EdgeCoreConfig.DataBase.DataSource, up.ConfigFilePath)
-}
-
-func rollback(HistoryVersion, dataSource, configFilePath string) error {
-	klog.Infof("upgrade rollback process start")
-
-	// stop edgecore
-	err := util.KillKubeEdgeBinary(util.KubeEdgeBinaryName)
-	if err != nil {
-		return fmt.Errorf("failed to stop edgecore: %v", err)
-	}
-
-	// rollback origin config/db/binary
-
-	// backup edgecore.db: copy from backup path to origin path
-	backupPath := filepath.Join(util.KubeEdgeBackupPath, HistoryVersion)
-	if err := copyFile(filepath.Join(backupPath, "edgecore.db"), dataSource); err != nil {
-		return fmt.Errorf("failed to rollback db: %v", err)
-	}
-	// backup edgecore.yaml: copy from backup path to origin path
-	if err := copyFile(filepath.Join(backupPath, "edgecore.yaml"), configFilePath); err != nil {
-		return fmt.Errorf("failed to back config: %v", err)
-	}
-	// backup edgecore: copy from backup path to origin path
-	if err := copyFile(filepath.Join(backupPath, util.KubeEdgeBinaryName), filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName)); err != nil {
-		return fmt.Errorf("failed to backup edgecore: %v", err)
-	}
-
-	// generate edgecore.service
-	if util.HasSystemd() {
-		extSystem, err := extsystem.GetExtSystem()
-		if err != nil {
-			return fmt.Errorf("failed to get ext system, err: %v", err)
-		}
-		systemdCmd := fmt.Sprintf("%s --config %s", filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), configFilePath)
-		if err := extSystem.ServiceCreate(util.KubeEdgeBinaryName, systemdCmd, nil); err != nil {
-			return fmt.Errorf("failed to create edgecore systemd service, err: %v", err)
-		}
-	}
-
-	// start edgecore
-	err = runEdgeCore()
-	if err != nil {
-		return fmt.Errorf("failed to start origin edgecore: %v", err)
-	}
-	return nil
-}
-
-func (up *Upgrade) UpdateStatus(status string) {
-	up.Status = status
-}
-
-func (up *Upgrade) UpdateFailureReason(reason string) {
-	up.Reason = reason
-}
-
-type UpgradeOptions struct {
-	UpgradeID     string
-	HistoryID     string
-	FromVersion   string
-	ToVersion     string
-	Config        string
-	Image         string
-	DisableBackup bool
-	TaskType      string
-	PreRun        string
-	PostRun       string
-}
-
-type Upgrade struct {
-	UpgradeID      string
-	HistoryID      string
-	FromVersion    string
-	ToVersion      string
-	Image          string
-	DisableBackup  bool
-	ConfigFilePath string
-	TaskType       string
-	EdgeCoreConfig *v1alpha2.EdgeCoreConfig
-
-	Status string
-	Reason string
-}
-
-// AddUpgradeFlags adds some flags to the upgrade command, and use UpgradeOptions struct to map these flags.
-func AddUpgradeFlags(cmd *cobra.Command, upgradeOptions *UpgradeOptions) {
-	cmd.Flags().StringVar(&upgradeOptions.UpgradeID, "upgradeID", upgradeOptions.UpgradeID,
-		"Use this key to specify Upgrade CR ID")
-
-	cmd.Flags().StringVar(&upgradeOptions.HistoryID, "historyID", upgradeOptions.HistoryID,
-		"Use this key to specify Upgrade CR status history ID.")
-
-	cmd.Flags().StringVar(&upgradeOptions.FromVersion, "fromVersion", upgradeOptions.FromVersion,
-		"Use this key to specify the origin version before upgrade")
-
-	cmd.Flags().StringVar(&upgradeOptions.ToVersion, "toVersion", upgradeOptions.ToVersion,
-		"Use this key to upgrade the required KubeEdge version")
-
-	cmd.Flags().StringVar(&upgradeOptions.Config, "config", upgradeOptions.Config,
-		"Use this key to specify the path to the edgecore configuration file.")
-
-	cmd.Flags().StringVar(&upgradeOptions.Image, "image", upgradeOptions.Image,
-		"Use this key to specify installation image to download.")
-
-	cmd.Flags().StringVar(&upgradeOptions.TaskType, "type", "upgrade",
-		"Use this key to specify the task type for reporting status.")
-
-	cmd.Flags().BoolVar(&upgradeOptions.DisableBackup, "disable-backup", upgradeOptions.DisableBackup,
-		"Use this key to specify the backup enable for upgrade.")
-
-	cmd.Flags().StringVar(&upgradeOptions.PreRun, common.FlagNamePreRun, upgradeOptions.PreRun,
-		"Execute the prescript before upgrading the node. (for example: keadm upgrade edge --pre-run=./test-script.sh ...)")
-
-	cmd.Flags().StringVar(&upgradeOptions.PostRun, common.FlagNamePostRun, upgradeOptions.PostRun,
-		"Execute the postscript after upgrading the node. (for example: keadm upgrade edge --post-run=./test-script.sh ...)")
+// upgradePath returns the path of the upgrade directory.
+func upgradePath(ver string) string {
+	return filepath.Join(common.KubeEdgeUpgradePath, ver)
 }

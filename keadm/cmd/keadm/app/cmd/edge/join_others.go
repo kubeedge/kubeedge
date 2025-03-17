@@ -19,6 +19,7 @@ limitations under the License.
 package edge
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -40,6 +41,7 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/extsystem"
 	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
+	"github.com/kubeedge/kubeedge/pkg/util/files"
 	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/api"
 )
 
@@ -189,7 +191,7 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 
 	// Do not create any files in the management directory,
 	// you need to mount the contents of the mirror first.
-	if err := request(opt, step); err != nil {
+	if err := pullImagesAndCopyResources(opt, step); err != nil {
 		return err
 	}
 
@@ -224,9 +226,9 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 	// if edgecore start, it will get ca/certs from cloud
 	// if ca/certs generated, we can remove bootstrap file
 	err = wait.Poll(10*time.Second, 300*time.Second, func() (bool, error) {
-		if util.FileExists(edgeCoreConfig.Modules.EdgeHub.TLSCAFile) &&
-			util.FileExists(edgeCoreConfig.Modules.EdgeHub.TLSCertFile) &&
-			util.FileExists(edgeCoreConfig.Modules.EdgeHub.TLSPrivateKeyFile) {
+		if files.FileExists(edgeCoreConfig.Modules.EdgeHub.TLSCAFile) &&
+			files.FileExists(edgeCoreConfig.Modules.EdgeHub.TLSCertFile) &&
+			files.FileExists(edgeCoreConfig.Modules.EdgeHub.TLSPrivateKeyFile) {
 			return true, nil
 		}
 		return false, nil
@@ -237,6 +239,31 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 	}
 	step.Printf("Install Complete!")
 	return err
+}
+
+func pullImagesAndCopyResources(opt *common.JoinOptions, step *common.Step) error {
+	ctx := context.Background()
+	imageSet := util.EdgeSet(opt)
+	images := imageSet.List()
+
+	runtime, err := util.NewContainerRuntime(opt.RemoteRuntimeEndpoint, opt.CGroupDriver)
+	if err != nil {
+		return err
+	}
+
+	step.Printf("Pull Images")
+	if err := runtime.PullImages(ctx, images, nil); err != nil {
+		return fmt.Errorf("pull Images failed: %v", err)
+	}
+
+	step.Printf("Copy resources from the image to the management directory")
+	containerPath := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName)
+	hostPath := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName)
+	files := map[string]string{containerPath: hostPath}
+	if err := runtime.CopyResources(ctx, imageSet.Get(util.EdgeCore), files); err != nil {
+		return fmt.Errorf("copy resources failed: %v", err)
+	}
+	return nil
 }
 
 func runEdgeCore() error {

@@ -26,7 +26,9 @@ import (
 	"github.com/blang/semver"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
 
@@ -133,7 +135,7 @@ func TestKubeCloudInstTool_RunCloudCore(t *testing.T) {
 
 	patches.Reset()
 	patches.ApplyFunc(os.MkdirAll, func(path string, perm os.FileMode) error {
-		if path == KubeEdgeLogPath {
+		if path == common.KubeEdgeLogPath {
 			return errors.New("mkdir error")
 		}
 		return nil
@@ -144,7 +146,7 @@ func TestKubeCloudInstTool_RunCloudCore(t *testing.T) {
 
 	patches.Reset()
 	patches.ApplyFunc(os.MkdirAll, func(path string, perm os.FileMode) error {
-		if path == KubeEdgeUsrBinPath {
+		if path == constants.KubeEdgeUsrBinPath {
 			return errors.New("mkdir error")
 		}
 		return nil
@@ -289,10 +291,10 @@ func init() {
 		if err := os.MkdirAll(KubeEdgeConfigDir, os.ModePerm); err != nil {
 			os.Stderr.WriteString("Failed to create KubeEdgeConfigDir: " + err.Error() + "\n")
 		}
-		if err := os.MkdirAll(KubeEdgeLogPath, os.ModePerm); err != nil {
+		if err := os.MkdirAll(common.KubeEdgeLogPath, os.ModePerm); err != nil {
 			os.Stderr.WriteString("Failed to create KubeEdgeLogPath: " + err.Error() + "\n")
 		}
-		if err := os.MkdirAll(KubeEdgeUsrBinPath, os.ModePerm); err != nil {
+		if err := os.MkdirAll(constants.KubeEdgeUsrBinPath, os.ModePerm); err != nil {
 			os.Stderr.WriteString("Failed to create KubeEdgeUsrBinPath: " + err.Error() + "\n")
 		}
 	}

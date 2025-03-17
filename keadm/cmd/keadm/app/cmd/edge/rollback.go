@@ -18,96 +18,122 @@ package edge
 
 import (
 	"fmt"
-	"os"
+	"path/filepath"
+	"slices"
 
 	"github.com/spf13/cobra"
 	"k8s.io/klog/v2"
-	"sigs.k8s.io/yaml"
 
 	"github.com/kubeedge/api/apis/common/constants"
-	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
-	api "github.com/kubeedge/api/apis/fsm/v1alpha1"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
-	"github.com/kubeedge/kubeedge/pkg/util/fsm"
+	upgrdeedge "github.com/kubeedge/kubeedge/pkg/upgrade/edge"
+	"github.com/kubeedge/kubeedge/pkg/util/files"
 	"github.com/kubeedge/kubeedge/pkg/version"
 )
 
-// NewEdgeUpgrade returns KubeEdge edge upgrade command.
-func NewEdgeRollback() *cobra.Command {
-	rollbackOptions := newRollbackOptions()
+func NewRollbackCommand() *cobra.Command {
+	var opts RollbackOptions
+	executor := newRollbackExecutor()
 
 	cmd := &cobra.Command{
-		Use:   "rollback",
-		Short: "rollback edge component. Rollback the edge node to the desired version.",
-		Long:  "Rollback edge component. Rollback the edge node to the desired version.",
-		RunE: func(_ *cobra.Command, _ []string) error {
-			// rollback edge core
-			return rollbackEdgeCore(rollbackOptions)
+		Use:   "edge",
+		Short: "Roll back the edge node to the desired version.",
+		RunE: func(_cmd *cobra.Command, _args []string) error {
+			var err error
+			defer func() {
+				// Report the result of the rollback process.
+				reporter := upgrdeedge.NewJSONFileReporter(upgrdeedge.EventTypeRollback,
+					executor.currentVersion, opts.HistoricalVersion)
+				if reperr := reporter.Report(err); reperr != nil {
+					klog.Errorf("failed to report rollback result: %v", reperr)
+				}
+				if err != OccupiedError {
+					executor.release()
+				}
+			}()
+
+			err = executor.prerun(&opts)
+			if err != nil {
+				return err
+			}
+			err = executor.rollback(opts)
+			if err != nil {
+				return err
+			}
+			// Remove edgecore version file when rollback is successful.
+			// If an error occurs, it will not affect the rollback result.
+			if err := version.RemoveEdgeCoreVersion(opts.Config); err != nil {
+				klog.Errorf("failed to remove edgecore version file, err: %v", err)
+			}
+			executor.runPostRunHook(opts.PostRun)
+			return nil
 		},
 	}
-
-	addRollbackFlags(cmd, rollbackOptions)
+	AddRollbackFlags(cmd, &opts)
 	return cmd
 }
 
-// newJoinOptions returns a struct ready for being used for creating cmd join flags.
-func newRollbackOptions() *RollbackOptions {
-	opts := &RollbackOptions{}
-	opts.HistoryVersion = version.Get().String()
-	opts.Config = constants.DefaultConfigDir + "edgecore.yaml"
-
-	return opts
+type rollbackExecutor struct {
+	baseUpgradeExecutor
 }
 
-func rollbackEdgeCore(ro *RollbackOptions) error {
-	// get EdgeCore configuration from edgecore.yaml config file
-	data, err := os.ReadFile(ro.Config)
-	if err != nil {
-		return fmt.Errorf("failed to read config file %s: %v", ro.Config, err)
+func newRollbackExecutor() rollbackExecutor {
+	return rollbackExecutor{baseUpgradeExecutor: baseUpgradeExecutor{}}
+}
+
+func (executor *rollbackExecutor) prerun(opts *RollbackOptions) error {
+	if err := executor.baseUpgradeExecutor.prePreRun(opts.Config); err != nil {
+		return err
 	}
 
-	configure := &v1alpha2.EdgeCoreConfig{}
-	err = yaml.Unmarshal(data, configure)
+	// If HistoricalVersion is not null, validate it, otherwise set it to the latast version.
+	subdirs, err := files.GetSubDirs(common.KubeEdgeBackupPath, true)
 	if err != nil {
-		return fmt.Errorf("failed to unmarshal config file %s: %v", ro.Config, err)
+		return fmt.Errorf("failed to get backup dirs from %s, err: %v",
+			common.KubeEdgeBackupPath, err)
 	}
-	event := &fsm.Event{
-		Type:   "RollBack",
-		Action: api.ActionSuccess,
-	}
-	defer func() {
-		// report upgrade result to cloudhub
-		if err = util.ReportTaskResult(configure, ro.TaskType, ro.TaskName, *event); err != nil {
-			klog.Warningf("failed to report upgrade result to cloud: %v", err)
+	if opts.HistoricalVersion != "" {
+		if exist := slices.Contains(subdirs, opts.HistoricalVersion); !exist {
+			return fmt.Errorf("the historical version %s is not exist in backup dir %s",
+				opts.HistoricalVersion, common.KubeEdgeBackupPath)
 		}
-	}()
-
-	rbErr := rollback(ro.HistoryVersion, configure.DataBase.DataSource, ro.Config)
-	if rbErr != nil {
-		event.Action = api.ActionFailure
-		event.Msg = fmt.Sprintf("upgrade error: %v, rollback error: %v", err, rbErr)
+	} else {
+		if len(subdirs) == 0 {
+			return fmt.Errorf("no historical version is found in backup dir %s",
+				common.KubeEdgeBackupPath)
+		}
+		opts.HistoricalVersion = subdirs[0]
 	}
 
+	if err := executor.baseUpgradeExecutor.postPreRun(opts.PreRun); err != nil {
+		return err
+	}
 	return nil
 }
 
-type RollbackOptions struct {
-	HistoryVersion string
-	TaskType       string
-	TaskName       string
-	Config         string
-}
-
-func addRollbackFlags(cmd *cobra.Command, rollbackOptions *RollbackOptions) {
-	cmd.Flags().StringVar(&rollbackOptions.HistoryVersion, "history", rollbackOptions.HistoryVersion,
-		"Use this key to specify the origin version before upgrade")
-
-	cmd.Flags().StringVar(&rollbackOptions.Config, "config", rollbackOptions.Config,
-		"Use this key to specify the path to the edgecore configuration file.")
-
-	cmd.Flags().StringVar(&rollbackOptions.TaskType, "type", "rollback",
-		"Use this key to specify the task type for reporting status.")
-
-	cmd.Flags().StringVar(&rollbackOptions.TaskName, "name", rollbackOptions.TaskName,
-		"Use this key to specify the task name for reporting status.")
+func (executor *rollbackExecutor) rollback(opts RollbackOptions) error {
+	klog.Infof("rollback process start ...")
+	// Stop origin edgecore.
+	if err := util.KillKubeEdgeBinary(constants.KubeEdgeBinaryName); err != nil {
+		return fmt.Errorf("failed to stop edgecore, err: %v", err)
+	}
+	rollbackFilesPathMap := map[string]string{
+		"edgecore.db":                executor.cfg.DataBase.DataSource,
+		"edgecore.yaml":              opts.Config,
+		constants.KubeEdgeBinaryName: filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName),
+	}
+	// Rollback backup files.
+	backupPath := filepath.Join(common.KubeEdgeBackupPath, opts.HistoricalVersion)
+	for backupFile, dest := range rollbackFilesPathMap {
+		if err := files.FileCopy(filepath.Join(backupPath, backupFile), dest); err != nil {
+			return fmt.Errorf("failed to rollback file %s, err: %v", dest, err)
+		}
+	}
+	// Start new edgecore.
+	if err := runEdgeCore(); err != nil {
+		return fmt.Errorf("failed to start edgecore, err: %v", err)
+	}
+	klog.Infof("rollback process successful")
+	return nil
 }
