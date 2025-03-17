@@ -13,6 +13,7 @@ import (
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
+	"github.com/kubeedge/kubeedge/pkg/util/files"
 )
 
 var (
@@ -125,7 +126,7 @@ func ExecuteCollect(collectOptions *common.CollectOptions) error {
 
 // VerificationParameters verifies parameters for debug collect
 func VerificationParameters(collectOptions *common.CollectOptions) error {
-	if !util.FileExists(collectOptions.Config) {
+	if !files.FileExists(collectOptions.Config) {
 		return fmt.Errorf("edgecore config %s does not exist", collectOptions.Config)
 	}
 
@@ -133,7 +134,7 @@ func VerificationParameters(collectOptions *common.CollectOptions) error {
 	if err != nil {
 		return err
 	}
-	if !util.FileExists(path) {
+	if !files.FileExists(path) {
 		return fmt.Errorf("output-path %s does not exist", path)
 	}
 	collectOptions.OutputPath = path

@@ -13,6 +13,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
+	"github.com/kubeedge/kubeedge/pkg/util/files"
 )
 
 var (
@@ -126,7 +127,7 @@ func DiagnoseNode(ops *common.DiagnoseOptions) error {
 	}
 	fmt.Println("edgecore is running")
 
-	isFileExists := util.FileExists(ops.Config)
+	isFileExists := files.FileExists(ops.Config)
 	if !isFileExists {
 		return fmt.Errorf("edge config is not exists")
 	}
@@ -143,7 +144,7 @@ func DiagnoseNode(ops *common.DiagnoseOptions) error {
 		dataSource = edgeconfig.DataBase.DataSource
 	}
 	ops.DBPath = dataSource
-	isFileExists = util.FileExists(dataSource)
+	isFileExists = files.FileExists(dataSource)
 	if !isFileExists {
 		return fmt.Errorf("dataSource is not exists")
 	}
