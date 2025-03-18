@@ -117,7 +117,9 @@ func (r *REST) Get(ctx context.Context, _ string, options *metav1.GetOptions) (r
 			return nil, err
 		}
 		// save to local, ignore error
-		imitator.DefaultV2Client.InsertOrUpdateObj(context.TODO(), obj)
+		if err := imitator.DefaultV2Client.InsertOrUpdateObj(context.TODO(), obj); err != nil {
+			klog.V(3).Infof("failed to save obj to metav2, err: %v", err)
+		}
 		klog.Infof("[metaserver/reststorage] successfully process get req (%v) through cloud", info.Path)
 		return obj, nil
 	}()

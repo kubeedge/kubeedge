@@ -139,5 +139,8 @@ func (m *Server) Publish(topic string, payload []byte) {
 		Payload: payload,
 		QOS:     packet.QOS(m.qos),
 	}
-	m.backend.Publish(client, msg, nil)
+	if err := m.backend.Publish(client, msg, nil); err != nil {
+		// TODO: handle error
+		klog.Error(err)
+	}
 }

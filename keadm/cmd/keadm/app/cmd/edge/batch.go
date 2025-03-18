@@ -238,10 +238,10 @@ func batchProcessNodes(cfg *common.Config, logWriter *bufio.Writer) error {
 			var result string
 			if err := processNode(&node, cfg); err != nil {
 				result = fmt.Sprintf("Failed to process node %s: %v", node.NodeName, err)
-				klog.Errorf(result)
+				klog.Error(result)
 			} else {
 				result = fmt.Sprintf("Successfully processed node %s", node.NodeName)
-				klog.Infof(result)
+				klog.Info(result)
 			}
 
 			// Log result to file

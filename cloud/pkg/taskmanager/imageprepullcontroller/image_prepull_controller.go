@@ -201,7 +201,7 @@ func (ndc *ImagePrePullController) Start() error {
 func (ndc *ImagePrePullController) startSync() {
 	imagePrePullList, err := ndc.CrdClient.OperationsV1alpha1().ImagePrePullJobs().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		klog.Errorf(err.Error())
+		klog.Error(err.Error())
 		os.Exit(2)
 	}
 	for _, imagePrePull := range imagePrePullList.Items {

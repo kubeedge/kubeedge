@@ -21,6 +21,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/watch"
@@ -238,7 +239,8 @@ func TestNewPodManager(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			NewPodManager(config, tt.args.informer)
+			_, err = NewPodManager(config, tt.args.informer)
+			assert.NoError(t, err)
 		})
 	}
 }

@@ -386,7 +386,7 @@ func MqttConnect() error {
 	ClientOpts = MqttClientInit("tcp://127.0.0.1:1884", "eventbus", "", "")
 	Client = MQTT.NewClient(ClientOpts)
 	if TokenClient = Client.Connect(); TokenClient.Wait() && TokenClient.Error() != nil {
-		return fmt.Errorf("client.Connect() Error is %s" + TokenClient.Error().Error())
+		return fmt.Errorf("client.Connect() Error is %s", TokenClient.Error().Error())
 	}
 	return nil
 }
@@ -395,12 +395,12 @@ func MqttConnect() error {
 func ChangeTwinValue(updateMessage DeviceTwinUpdate, deviceID string) error {
 	twinUpdateBody, err := json.Marshal(updateMessage)
 	if err != nil {
-		return fmt.Errorf("Error in marshalling: %s" + err.Error())
+		return fmt.Errorf("Error in marshalling: %s", err.Error())
 	}
 	deviceTwinUpdate := DeviceETPrefix + deviceID + TwinETUpdateSuffix
 	TokenClient = Client.Publish(deviceTwinUpdate, 0, false, twinUpdateBody)
 	if TokenClient.Wait() && TokenClient.Error() != nil {
-		return fmt.Errorf("client.publish() Error in device twin update is %s" + TokenClient.Error().Error())
+		return fmt.Errorf("client.publish() Error in device twin update is %s", TokenClient.Error().Error())
 	}
 	return nil
 }
@@ -410,11 +410,11 @@ func GetTwin(updateMessage DeviceTwinUpdate, deviceID string) error {
 	getTwin := DeviceETPrefix + deviceID + TwinETGetSuffix
 	twinUpdateBody, err := json.Marshal(updateMessage)
 	if err != nil {
-		return fmt.Errorf("Error in marshalling: %s" + err.Error())
+		return fmt.Errorf("Error in marshalling: %s", err.Error())
 	}
 	TokenClient = Client.Publish(getTwin, 0, false, twinUpdateBody)
 	if TokenClient.Wait() && TokenClient.Error() != nil {
-		return fmt.Errorf("client.publish() Error in device twin get  is: %s " + TokenClient.Error().Error())
+		return fmt.Errorf("client.publish() Error in device twin get  is: %s ", TokenClient.Error().Error())
 	}
 	return nil
 }

@@ -73,7 +73,7 @@ func (dt *DeviceTwin) distributeMsg(m interface{}) error {
 		}
 	} else {
 		err := fmt.Errorf("not found deal module for msg, action: %s", message.Action)
-		klog.Errorf(err.Error())
+		klog.Error(err.Error())
 		return err
 	}
 

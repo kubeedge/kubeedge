@@ -18,6 +18,7 @@ package taskexecutor
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -146,7 +147,7 @@ func checkDisk() error {
 	if err != nil {
 		return err
 	}
-	return fmt.Errorf(string(result))
+	return errors.New(string(result))
 }
 
 func normalInit(types.NodeTaskRequest) fsm.Event {

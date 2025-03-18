@@ -183,7 +183,10 @@ func (f *Factory) PassThrough() http.Handler {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write(result)
+		if _, err := w.Write(result); err != nil {
+			// TODO: handle error
+			klog.Error(err)
+		}
 	})
 	return h
 }

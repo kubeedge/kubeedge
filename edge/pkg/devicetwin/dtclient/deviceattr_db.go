@@ -23,7 +23,7 @@ type DeviceAttr struct {
 
 // SaveDeviceAttr save device attributes
 func SaveDeviceAttr(o orm.Ormer, doc *DeviceAttr) error {
-	err := o.DoTx(func(ctx context.Context, txOrm orm.TxOrmer) error {
+	err := o.DoTx(func(_ context.Context, txOrm orm.TxOrmer) error {
 		// insert data
 		// Using txOrm to execute SQL
 		_, e := txOrm.Insert(doc)
@@ -41,7 +41,7 @@ func SaveDeviceAttr(o orm.Ormer, doc *DeviceAttr) error {
 
 // DeleteDeviceAttrByDeviceID delete device attr
 func DeleteDeviceAttrByDeviceID(o orm.Ormer, deviceID string) error {
-	err := o.DoTx(func(ctx context.Context, txOrm orm.TxOrmer) error {
+	err := o.DoTx(func(_ context.Context, txOrm orm.TxOrmer) error {
 		// delete data
 		// Using txOrm to execute SQL
 		_, e := txOrm.QueryTable(DeviceAttrTableName).Filter("deviceid", deviceID).Delete()
@@ -60,7 +60,7 @@ func DeleteDeviceAttrByDeviceID(o orm.Ormer, deviceID string) error {
 
 // DeleteDeviceAttr delete device attr
 func DeleteDeviceAttr(o orm.Ormer, deviceID string, name string) error {
-	err := o.DoTx(func(ctx context.Context, txOrm orm.TxOrmer) error {
+	err := o.DoTx(func(_ context.Context, txOrm orm.TxOrmer) error {
 		// delete data
 		// Using txOrm to execute SQL
 		_, e := txOrm.QueryTable(DeviceAttrTableName).Filter("deviceid", deviceID).Filter("name", name).Delete()
