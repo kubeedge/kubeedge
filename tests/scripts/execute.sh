@@ -43,8 +43,8 @@ sudo rm -rf ${curpath}/tests/e2e_keadm/e2e_keadm.test
 # Specify the module name to compile in below command
 bash -x ${curpath}/tests/scripts/compile.sh ${compilemodule}
 
-ENABLE_DAEMON=true bash -x ${curpath}/hack/local-up-kubeedge.sh ${KIND_IMAGE} || {
-  echo "failed to start cluster !!!"
+ENABLE_DAEMON=true bash -x ${curpath}/hack/local-up-kubeedge.sh ${KIND_IMAGE} 2 >> /tmp/process.log || {
+  echo "failed to execute local-up-kubeedge.sh !!!"
   exit 1
 }
 

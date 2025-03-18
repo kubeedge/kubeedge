@@ -37,7 +37,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0 
           path: ./src/github.com/${{ github.repository }}
 
       - uses: actions/cache@v4
@@ -88,7 +88,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0 
 
       - name: Retrieve saved kubeedge/build-tools image
         uses: actions/download-artifact@v4
@@ -138,7 +138,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0 
 
       - run: make test PROFILE=y
 
@@ -166,20 +166,33 @@ jobs:
   e2e_test:
     runs-on: ubuntu-22.04
     strategy:
+      fail-fast: false
       matrix:
         cases:
           - protocol: WebSocket
             version: v1.30.0
+            kindnetwork: default
+          - protocol: WebSocket
+            version: v1.30.0
+            kindnetwork: ipvs
           - protocol: WebSocket
             version: v1.29.0
+            kindnetwork: iptable
           - protocol: WebSocket
             version: v1.28.0
+            kindnetwork: nftnetwork
           - protocol: QUIC
             version: v1.30.0
+            kindnetwork: default
+          - protocol: QUIC
+            version: v1.30.0
+            kindnetwork: ipvs
           - protocol: QUIC
             version: v1.29.0
+            kindnetwork: iptable
           - protocol: QUIC
             version: v1.28.0
+            kindnetwork: nftnetwork
     timeout-minutes: 60
     name: E2e test
     needs: image-prepare
@@ -205,7 +218,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0 
 
       - name: cleanup images
         run: docker system prune -a -f
@@ -227,16 +240,25 @@ jobs:
       # for QUIC protocol, we will use docker as edgecore container runtime
       # for WebSocket protocol, we will use containerd as edgecore container runtime
       # just for covering both docker and CRI runtime e2e cases
+      # for kind network, we will use kind setting for kubeproxy network models
+      # ref https://github.com/kubernetes-sigs/kind/blob/b98dc21ad34b779d35896991cefa91e6b6fb4fbc/pkg/internal/apis/config/validate.go#L70
+      # ref https://kind.sigs.k8s.io/docs/user/configuration/#kube-proxy-mode
       - run: |
           export PROTOCOL=${{ matrix.cases.protocol }}
+          export KIND_NETWORK=${{ matrix.cases.kindnetwork }}
           export KIND_IMAGE=kindest/node:${{ matrix.cases.version }}
           export CONTAINER_RUNTIME="containerd"
           make e2e
 
+      - name: check process log
+        if: always()
+        run: |
+         cat /tmp/process.log 
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ${{ matrix.cases.version }}-${{ matrix.cases.protocol }}-e2e-test-logs
+          name: ${{ matrix.cases.version }}-${{ matrix.cases.protocol }}-${{ matrix.cases.kindnetwork }}-e2e-test-logs
           path: |
             /tmp/cloudcore.log
             /tmp/edgecore.log
@@ -268,7 +290,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0 
 
       - name: cleanup images
         run: docker system prune -a -f
@@ -315,7 +337,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0 
 
       - name: Set up Helm
         uses: azure/setup-helm@v3
@@ -344,7 +366,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0 
 
       - name: cleanup images
         run: docker system prune -a -f
@@ -382,12 +404,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0 
 
       - name: Run e2e
         run: make e2e
         env:
           CONTAINER_RUNTIME: ${{ matrix.container-runtime }}
+
+      - name: check process log
+        if: always()
+        run: |
+         cat /tmp/process.log 
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -430,7 +457,7 @@ jobs:
         - name: Checkout code
           uses: actions/checkout@v4
           with:
-            fetch-depth: 0
+            fetch-depth: 0 
 
         - name: Retrieve saved kubeedge/build-tools image
           uses: actions/download-artifact@v4

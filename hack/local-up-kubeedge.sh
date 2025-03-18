@@ -154,6 +154,8 @@ function cleanup {
   echo "Running kind: [kind delete cluster ${CLUSTER_CONTEXT}]"
   kind delete cluster ${CLUSTER_CONTEXT}
 
+  echo "If pipeline exit in error, please check if this function been invoked as trap"
+  echo "Complete Cleaning function successful"
 }
 
 if [[ "${ENABLE_DAEMON}" = false ]]; then
@@ -339,6 +341,7 @@ function generate_streamserver_cert {
   openssl x509 -req -in ${STREAM_CSR_FILE} -CA ${K8SCA_FILE} -CAkey ${K8SCA_KEY_FILE} -CAcreateserial -out ${STREAM_CRT_FILE} -days 5000 -sha256 -extfile /tmp/server-extfile.cnf
 }
 
+echo "invoke clean up by design, other invokes of clean up from process err or other reason"
 cleanup
 
 source "${KUBEEDGE_ROOT}/hack/lib/init.sh"
