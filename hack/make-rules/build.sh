@@ -25,5 +25,4 @@ source "${KUBEEDGE_ROOT}/hack/lib/init.sh"
 
 kubeedge::golang::setup_env
 export GOWORK=off
-
 kubeedge::golang::build_binaries "$@"

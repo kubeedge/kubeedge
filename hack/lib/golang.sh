@@ -19,6 +19,7 @@
 # KubeEdge Authors:
 # To Get Detail Version Info for KubeEdge Project
 
+
 readonly KUBEEDGE_GOPATH="${KUBEEDGE_GOPATH:-"${KUBEEDGE_OUTPUT}/_go"}"
 export KUBEEDGE_GOPATH
 

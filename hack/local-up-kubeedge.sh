@@ -23,7 +23,7 @@ PROTOCOL=${PROTOCOL:-"WebSocket"}
 CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-"containerd"}
 KIND_IMAGE=${1:-"kindest/node:v1.30.0"}
 SKIP_CR_INSTALL=${SKIP_CR_INSTALL:-"false"}
-KIND_NETWORK={$KIND_NETWORK:-"default"}
+KIND_NETWORK=${KIND_NETWORK:-"default"}
 echo -e "The installation of the cni plugin will overwrite the cni config file. Use export CNI_CONF_OVERWRITE=false to disable it."
 
 if [[ "${CLUSTER_NAME}x" == "x" ]]; then
