@@ -23,6 +23,7 @@ PROTOCOL=${PROTOCOL:-"WebSocket"}
 CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-"containerd"}
 KIND_IMAGE=${1:-"kindest/node:v1.30.0"}
 SKIP_CR_INSTALL=${SKIP_CR_INSTALL:-"false"}
+KIND_NETWORK={$KIND_NETWORK:-"default"}
 echo -e "The installation of the cni plugin will overwrite the cni config file. Use export CNI_CONF_OVERWRITE=false to disable it."
 
 if [[ "${CLUSTER_NAME}x" == "x" ]]; then
@@ -131,7 +132,11 @@ function check_prerequisites {
 # spin up cluster with kind command
 function kind_up_cluster {
   echo "Running kind: [kind create cluster ${CLUSTER_CONTEXT}]"
-  kind create cluster ${CLUSTER_CONTEXT} --image ${KIND_IMAGE}
+  if [[ "${KIND_NETWORK}" = "default" ]]; then
+    kind create cluster ${CLUSTER_CONTEXT} --image ${KIND_IMAGE}
+  else
+    kind create cluster ${CLUSTER_CONTEXT} --image ${KIND_IMAGE} --config ${KUBEEDGE_ROOT}/hack/kind_config/${KIND_NETWORK}.yaml
+  fi
 }
 
 function uninstall_kubeedge {
