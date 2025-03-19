@@ -37,7 +37,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 
+          fetch-depth: 0
           path: ./src/github.com/${{ github.repository }}
 
       - uses: actions/cache@v4
@@ -88,7 +88,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 
+          fetch-depth: 0
 
       - name: Retrieve saved kubeedge/build-tools image
         uses: actions/download-artifact@v4
@@ -138,7 +138,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 
+          fetch-depth: 0
 
       - run: make test PROFILE=y
 
@@ -218,7 +218,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 
+          fetch-depth: 0
 
       - name: cleanup images
         run: docker system prune -a -f
@@ -290,7 +290,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 
+          fetch-depth: 0
 
       - name: cleanup images
         run: docker system prune -a -f
@@ -337,7 +337,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 
+          fetch-depth: 0
 
       - name: Set up Helm
         uses: azure/setup-helm@v3
@@ -366,7 +366,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 
+          fetch-depth: 0
 
       - name: cleanup images
         run: docker system prune -a -f
@@ -404,7 +404,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 
+          fetch-depth: 0
 
       - name: Run e2e
         run: make e2e
@@ -457,7 +457,7 @@ jobs:
         - name: Checkout code
           uses: actions/checkout@v4
           with:
-            fetch-depth: 0 
+            fetch-depth: 0
 
         - name: Retrieve saved kubeedge/build-tools image
           uses: actions/download-artifact@v4

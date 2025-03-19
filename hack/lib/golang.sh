@@ -48,7 +48,7 @@ kubeedge::golang::verify_golang_version() {
 
 kubeedge::version::get_version_info() {
 
-  GIT_COMMIT=$(git rev-parse "HEAD^{commit}" 2>/dev/null )
+  GIT_COMMIT=$(git rev-parse "HEAD^{commit}" 2>/dev/null)
 
   if git_status=$(git status --porcelain 2>/dev/null) && [[ -z ${git_status} ]]; then
     GIT_TREE_STATE="clean"
@@ -56,7 +56,7 @@ kubeedge::version::get_version_info() {
     GIT_TREE_STATE="dirty"
   fi
 
-  GIT_VERSION=$(git describe --tags --abbrev=14 2>/dev/null)
+  GIT_VERSION=$(git describe --tags --abbrev=14 "${GIT_COMMIT}^{commit}" 2>/dev/null)
 
   # This translates the "git describe" to an actual semver.org
   # compatible semantic version that looks something like this:
