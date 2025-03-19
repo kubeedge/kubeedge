@@ -177,10 +177,10 @@ jobs:
             kindnetwork: ipvs
           - protocol: WebSocket
             version: v1.29.0
-            kindnetwork: iptable
+            kindnetwork: iptables
           - protocol: WebSocket
             version: v1.28.0
-            kindnetwork: nftnetwork
+            kindnetwork: nftables
           - protocol: QUIC
             version: v1.30.0
             kindnetwork: default
@@ -189,10 +189,10 @@ jobs:
             kindnetwork: ipvs
           - protocol: QUIC
             version: v1.29.0
-            kindnetwork: iptable
+            kindnetwork: iptables
           - protocol: QUIC
             version: v1.28.0
-            kindnetwork: nftnetwork
+            kindnetwork: nftables
     timeout-minutes: 60
     name: E2e test
     needs: image-prepare
