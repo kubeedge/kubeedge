@@ -26,6 +26,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/config"
+	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/configupdatecontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/imageprepullcontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/manager"
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/nodeupgradecontroller"
@@ -68,10 +69,17 @@ func newTaskManager(enable bool) *TaskManager {
 
 	imagePrePullController, err := imageprepullcontroller.NewImagePrePullController(taskMessage)
 	if err != nil {
-		klog.Exitf("New upgrade node controller failed with error: %s", err)
+		klog.Exitf("New image prepull controller failed with error: %s", err)
 	}
+
+	configUpdateController, err := configupdatecontroller.NewConfigUpdateController(taskMessage)
+	if err != nil {
+		klog.Exitf("New config update controller failed with error: %s", err)
+	}
+
 	controller.Register(util.TaskUpgrade, upgradeNodeController)
 	controller.Register(util.TaskPrePull, imagePrePullController)
+	controller.Register(util.TaskConfigUpdate, configUpdateController)
 
 	return &TaskManager{
 		downstream:      downstream,
