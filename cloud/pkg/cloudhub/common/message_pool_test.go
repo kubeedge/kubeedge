@@ -20,7 +20,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/rand"
 
@@ -29,8 +29,8 @@ import (
 )
 
 type TestMessageObj struct {
-	v1.TypeMeta
-	v1.ObjectMeta
+	metav1.TypeMeta
+	metav1.ObjectMeta
 }
 
 func (in *TestMessageObj) DeepCopyObject() runtime.Object {
@@ -64,7 +64,7 @@ func TestGetAckMessage(t *testing.T) {
 	assert.Contains(t, err.Error(), "not found", "Error should indicate message not found")
 
 	testObj := &TestMessageObj{
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			UID: "test-uid",
 		},
 	}
