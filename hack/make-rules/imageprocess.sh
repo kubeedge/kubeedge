@@ -32,6 +32,7 @@ ALL_IMAGES_AND_TARGETS=(
   edgesite-server:edgesite-server:build/edgesite/server-build.Dockerfile
   csidriver:csidriver:build/csidriver/Dockerfile
   iptables-manager:iptables-manager:build/iptablesmanager/Dockerfile
+  iptables-manager-nft:iptables-manager-nft:build/iptablesmanager/iptablesmanager-nft.Dockerfile
   edgemark:edgemark:build/edgemark/Dockerfile
   installation-package:installation-package:build/docker/installation-package/installation-package.dockerfile
   controller-manager:controller-manager:build/controllermanager/Dockerfile
