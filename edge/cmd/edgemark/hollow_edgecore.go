@@ -113,8 +113,7 @@ func run(config *hollowEdgeNodeConfig) {
 		kubeDeps *kubelet.Dependencies, featureGate featuregate.FeatureGate) error {
 		return kubeletapp.RunKubelet(s, kubeDeps, false)
 	}
-
-	edged.Register(c.Modules.Edged)
+	edged.Register(c.Modules.Edged, c.Modules.MetaManager.MetaServer.Server)
 	edgehub.Register(c.Modules.EdgeHub, c.Modules.Edged.HostnameOverride)
 	metamanager.Register(c.Modules.MetaManager)
 
