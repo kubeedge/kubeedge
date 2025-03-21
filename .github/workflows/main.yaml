@@ -189,7 +189,7 @@ jobs:
             kindnetwork: default
           - protocol: QUIC
             version: v1.31.0
-            kindnetwork: default
+            kindnetwork: nftables
           - protocol: QUIC
             version: v1.31.0
             kindnetwork: ipvs
