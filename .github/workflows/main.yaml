@@ -170,29 +170,41 @@ jobs:
       matrix:
         cases:
           - protocol: WebSocket
+            version: v1.31.0
+            kindnetwork: default
+          - protocol: WebSocket
+            version: v1.31.0
+            kindnetwork: ipvs
+          - protocol: WebSocket
+            version: v1.31.0
+            kindnetwork: iptables
+          - protocol: WebSocket
             version: v1.30.0
             kindnetwork: default
           - protocol: WebSocket
-            version: v1.30.0
-            kindnetwork: ipvs
-          - protocol: WebSocket
             version: v1.29.0
-            kindnetwork: iptables
+            kindnetwork: default
           - protocol: WebSocket
             version: v1.28.0
-            kindnetwork: nftables
+            kindnetwork: default
+          - protocol: QUIC
+            version: v1.31.0
+            kindnetwork: default
+          - protocol: QUIC
+            version: v1.31.0
+            kindnetwork: default
+          - protocol: QUIC
+            version: v1.31.0
+            kindnetwork: default
           - protocol: QUIC
             version: v1.30.0
             kindnetwork: default
           - protocol: QUIC
-            version: v1.30.0
-            kindnetwork: ipvs
-          - protocol: QUIC
             version: v1.29.0
-            kindnetwork: iptables
+            kindnetwork: default
           - protocol: QUIC
             version: v1.28.0
-            kindnetwork: nftables
+            kindnetwork: default
     timeout-minutes: 60
     name: E2e test
     needs: image-prepare
