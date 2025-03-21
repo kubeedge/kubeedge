@@ -171,7 +171,7 @@ jobs:
         cases:
           - protocol: WebSocket
             version: v1.31.0
-            kindnetwork: default
+            kindnetwork: nftables
           - protocol: WebSocket
             version: v1.31.0
             kindnetwork: ipvs
@@ -192,10 +192,10 @@ jobs:
             kindnetwork: default
           - protocol: QUIC
             version: v1.31.0
-            kindnetwork: default
+            kindnetwork: ipvs
           - protocol: QUIC
             version: v1.31.0
-            kindnetwork: default
+            kindnetwork: iptables
           - protocol: QUIC
             version: v1.30.0
             kindnetwork: default
