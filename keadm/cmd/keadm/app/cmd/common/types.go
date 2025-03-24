@@ -96,14 +96,9 @@ type JoinOptions struct {
 	Sets                  []string
 	PreRun                string
 	PostRun               string
-
-	// WithMQTT ...
-	// Deprecated: the mqtt broker is alreay managed by the DaemonSet in the cloud
-	WithMQTT bool
-
-	ImageRepository string
-	HubProtocol     string
-	TarballPath     string
+	ImageRepository       string
+	HubProtocol           string
+	TarballPath           string
 }
 
 type CheckOptions struct {

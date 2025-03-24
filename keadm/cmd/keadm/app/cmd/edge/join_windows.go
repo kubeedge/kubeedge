@@ -218,7 +218,7 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 	}
 
 	step.Printf("Run EdgeCore daemon")
-	err := runEdgeCore(false)
+	err := runEdgeCore()
 	if err != nil {
 		return fmt.Errorf("start edgecore failed: %v", err)
 	}
@@ -242,7 +242,7 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 	return err
 }
 
-func runEdgeCore(_ bool) error {
+func runEdgeCore() error {
 	return util.StartNSSMService(util.KubeEdgeBinaryName)
 }
 

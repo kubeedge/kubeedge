@@ -18,7 +18,6 @@ package edge
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
@@ -47,26 +46,5 @@ func request(opt *common.JoinOptions, step *common.Step) error {
 	if err := runtime.CopyResources(imageSet.Get(image.EdgeCore), files); err != nil {
 		return fmt.Errorf("copy resources failed: %v", err)
 	}
-
-	if opt.WithMQTT {
-		step.Printf("Start the default mqtt service")
-		if err := createMQTTConfigFile(); err != nil {
-			return fmt.Errorf("create MQTT config file failed: %v", err)
-		}
-	}
 	return nil
-}
-
-func createMQTTConfigFile() error {
-	dir := filepath.Join(util.KubeEdgeSocketPath, image.EdgeMQTT, "config")
-	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
-		return err
-	}
-
-	data := `persistence true
-persistence_location /mosquitto/data
-log_dest file /mosquitto/log/mosquitto.log
-`
-	currentPath := filepath.Join(dir, "mosquitto.conf")
-	return os.WriteFile(currentPath, []byte(data), os.ModePerm)
 }

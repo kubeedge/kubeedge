@@ -21,7 +21,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strconv"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -265,25 +264,8 @@ func (up *Upgrade) Process() error {
 		return fmt.Errorf("failed to cp file: %v", err)
 	}
 
-	// set withMqtt to false during upgrading edgecore, it will not affect the MQTT container. This is a temporary workaround and will be modified in v1.15.
-	// generate edgecore.service
-	if util.HasSystemd() {
-		extSystem, err := extsystem.GetExtSystem()
-		if err != nil {
-			return fmt.Errorf("failed to get ext system, err: %v", err)
-		}
-		if err := extSystem.ServiceCreate(util.KubeEdgeBinaryName,
-			fmt.Sprintf("%s --config %s", filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), up.ConfigFilePath),
-			map[string]string{
-				constants.DeployMqttContainerEnv: strconv.FormatBool(false),
-			},
-		); err != nil {
-			return fmt.Errorf("failed to create edgecore systemd service, err: %v", err)
-		}
-	}
-
 	// start new edgecore service
-	err = runEdgeCore(false)
+	err = runEdgeCore()
 	if err != nil {
 		return fmt.Errorf("failed to start edgecore: %v", err)
 	}
@@ -326,18 +308,14 @@ func rollback(HistoryVersion, dataSource, configFilePath string) error {
 		if err != nil {
 			return fmt.Errorf("failed to get ext system, err: %v", err)
 		}
-		if err := extSystem.ServiceCreate(util.KubeEdgeBinaryName,
-			fmt.Sprintf("%s --config %s", filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), configFilePath),
-			map[string]string{
-				constants.DeployMqttContainerEnv: strconv.FormatBool(false),
-			},
-		); err != nil {
+		systemdCmd := fmt.Sprintf("%s --config %s", filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), configFilePath)
+		if err := extSystem.ServiceCreate(util.KubeEdgeBinaryName, systemdCmd, nil); err != nil {
 			return fmt.Errorf("failed to create edgecore systemd service, err: %v", err)
 		}
 	}
 
 	// start edgecore
-	err = runEdgeCore(false)
+	err = runEdgeCore()
 	if err != nil {
 		return fmt.Errorf("failed to start origin edgecore: %v", err)
 	}

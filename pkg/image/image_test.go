@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
 
@@ -18,46 +17,29 @@ func TestEdgeSet(t *testing.T) {
 		want Set
 	}{
 		{
-			name: "repo nil, ver not nil, need mqtt",
+			name: "repo nil, ver not nil",
 			args: common.JoinOptions{
 				ImageRepository: "",
-				WithMQTT:        true,
 				KubeEdgeVersion: "v1.9.1",
 			},
 			want: Set{
 				EdgeCore: "kubeedge/installation-package:v1.9.1",
-				EdgeMQTT: constants.DefaultMosquittoImage,
 			},
 		},
 		{
-			name: "repo nil, ver nil, , need mqtt",
+			name: "repo nil, ver nil",
 			args: common.JoinOptions{
 				ImageRepository: "",
-				WithMQTT:        true,
 				KubeEdgeVersion: "",
 			},
 			want: Set{
 				EdgeCore: "kubeedge/installation-package",
-				EdgeMQTT: constants.DefaultMosquittoImage,
 			},
 		},
 		{
-			name: "repo not nil, ver not nil, , need mqtt",
+			name: "repo not nil, ver not nil",
 			args: common.JoinOptions{
 				ImageRepository: "kubeedge-test",
-				WithMQTT:        true,
-				KubeEdgeVersion: "v1.9.1",
-			},
-			want: Set{
-				EdgeCore: "kubeedge-test/installation-package:v1.9.1",
-				EdgeMQTT: "kubeedge-test/" + constants.DefaultMosquittoImage,
-			},
-		},
-		{
-			name: "repo not nil, ver not nil, , don't need mqtt",
-			args: common.JoinOptions{
-				ImageRepository: "kubeedge-test",
-				WithMQTT:        false,
 				KubeEdgeVersion: "v1.9.1",
 			},
 			want: Set{
@@ -68,12 +50,10 @@ func TestEdgeSet(t *testing.T) {
 			name: "repo not nil, ver nil",
 			args: common.JoinOptions{
 				ImageRepository: "kubeedge-test",
-				WithMQTT:        true,
 				KubeEdgeVersion: "",
 			},
 			want: Set{
 				EdgeCore: "kubeedge-test/installation-package",
-				EdgeMQTT: "kubeedge-test/" + constants.DefaultMosquittoImage,
 			},
 		},
 	}
@@ -261,7 +241,7 @@ func TestSet_Remove(t *testing.T) {
 			name: "get edgecore image",
 			s: Set{
 				EdgeCore: "kubeedge/installation-package:v1.12.2",
-				EdgeMQTT: "kubeedge/" + constants.DefaultMosquittoImage,
+				"mqtt":   "kubeedge/eclipse-mosquitto:1.6.15",
 			},
 			want: Set{
 				EdgeCore: "kubeedge/installation-package:v1.12.2",
@@ -270,7 +250,7 @@ func TestSet_Remove(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.s.Remove(EdgeMQTT)
+			got := tt.s.Remove("mqtt")
 			assert.Equal(tt.want, got)
 		})
 	}
