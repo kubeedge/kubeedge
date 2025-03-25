@@ -45,6 +45,7 @@ helm upgrade --install cloudcore ./cloudcore --namespace kubeedge --create-names
 ### iptables-manager
 - `iptablesManager.enable`,  default `true`
 - `iptablesManager.mode`,  default `external`, can be modified to `internal`. The external mode will set up a iptables manager component which shares the host network.
+- `iptablesManager.framework`,  default `legacy`, can be modified to `nft`. Iptables of different frameworks are not compatible in the same network environment and need to be configured according to the operating environment.
 - `iptablesManager.image.repository`, default `kubeedge`, defines the image repo.
 - `iptablesManager.image.tag`, default `v1.19.0`, defines the image tag.
 - `iptablesManager.image.pullPolicy`, default `IfNotPresent`, defines the policies to pull images.
