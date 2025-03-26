@@ -101,6 +101,9 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 
 			// To help debugging, immediately log version
 			klog.Infof("Version: %+v", version.Get())
+			if err := version.WriteEdgeCoreVersion(opts.ConfigFile); err != nil {
+				klog.Warningf("failed to write edgecore version file, err: %v", err)
+			}
 
 			// Force skip check if enable metaserver
 			skipCheck := os.Getenv("CHECK_EDGECORE_ENVIRONMENT") == "false" || config.Modules.MetaManager.MetaServer.Enable

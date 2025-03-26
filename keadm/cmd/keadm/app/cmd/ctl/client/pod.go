@@ -22,6 +22,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/scheme"
+
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/metaclient"
 )
 
 type PodRequest struct {
@@ -32,7 +34,7 @@ type PodRequest struct {
 }
 
 func (podRequest *PodRequest) GetPod(ctx context.Context) (*corev1.Pod, error) {
-	kubeClient, err := KubeClient()
+	kubeClient, err := metaclient.KubeClient()
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +52,7 @@ func (podRequest *PodRequest) GetPod(ctx context.Context) (*corev1.Pod, error) {
 }
 
 func (podRequest *PodRequest) GetPods(ctx context.Context) (*corev1.PodList, error) {
-	kubeClient, err := KubeClient()
+	kubeClient, err := metaclient.KubeClient()
 	if err != nil {
 		return nil, err
 	}

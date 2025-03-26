@@ -28,24 +28,13 @@ import (
 
 	"github.com/blang/semver"
 
+	"github.com/kubeedge/api/apis/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/pkg/util/files"
 )
 
 // Constants used by installers
 const (
-	KubeEdgePath        = "C:\\etc\\kubeedge\\"
-	KubeEdgeBackupPath  = "C:\\etc\\kubeedge\\backup\\"
-	KubeEdgeUpgradePath = "C:\\etc\\kubeedge\\upgrade\\"
-	KubeEdgeUsrBinPath  = "C:\\usr\\local\\bin"
-
-	KubeEdgeLogPath = "C:\\var\\log\\kubeedge\\"
-
-	KubeEdgeSocketPath = "C:\\var\\lib\\kubeedge\\"
-
-	EdgeRootDir = "C:\\var\\lib\\edged"
-
-	EdgeKubeletDir = "C:\\var\\lib\\kubelet"
-
 	downloadFileScript = `
 function DownloadFile($destination, $source) {
     Write-Host("Downloading $source to $destination")
@@ -86,7 +75,7 @@ func CopyFile(src, dst string) error {
 // RunningModuleV2 identifies cloudcore/edgecore running or not.
 // only used for cloudcore container install and edgecore binary install
 func RunningModuleV2(opt *types.ResetOptions) types.ModuleRunning {
-	if IsNSSMServiceExist(KubeEdgeBinaryName) {
+	if IsNSSMServiceExist(constants.KubeEdgeBinaryName) {
 		return types.KubeEdgeEdgeRunning
 	}
 	return types.NoneRunning
@@ -105,7 +94,7 @@ func installKubeEdge(options types.InstallOptions, version semver.Version) error
 
 	// create the storage path of the kubeedge installation packages
 	if options.TarballPath == "" {
-		options.TarballPath = KubeEdgePath
+		options.TarballPath = constants.KubeEdgePath
 	} else {
 		err := os.MkdirAll(options.TarballPath, os.ModePerm)
 		if err != nil {
@@ -113,9 +102,9 @@ func installKubeEdge(options types.InstallOptions, version semver.Version) error
 		}
 	}
 
-	err := os.MkdirAll(KubeEdgePath, os.ModePerm)
+	err := os.MkdirAll(constants.KubeEdgePath, os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("not able to create %s folder path", KubeEdgePath)
+		return fmt.Errorf("not able to create %s folder path", constants.KubeEdgePath)
 	}
 
 	//Check if the same version exists, then skip the download and just checksum for it
@@ -168,12 +157,12 @@ func installKubeEdge(options types.InstallOptions, version semver.Version) error
 		return err
 	}
 	// check if the edgecore.exe exists
-	if !FileExists(filepath.Join(options.TarballPath, dirname, "edge", "edgecore.exe")) {
+	if !files.FileExists(filepath.Join(options.TarballPath, dirname, "edge", "edgecore.exe")) {
 		return fmt.Errorf("cannot find edgecore binary at %s", filepath.Join(options.TarballPath, dirname, "edge", "edgecore.exe"))
 	}
-	os.MkdirAll(KubeEdgeUsrBinPath, os.ModePerm)
+	os.MkdirAll(constants.KubeEdgeUsrBinPath, os.ModePerm)
 	// copy the binary to the executable path
-	if err = CopyFile(filepath.Join(options.TarballPath, dirname, "edge", "edgecore.exe"), filepath.Join(KubeEdgeUsrBinPath, KubeEdgeBinaryName+".exe")); err != nil {
+	if err = CopyFile(filepath.Join(options.TarballPath, dirname, "edge", "edgecore.exe"), filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName+".exe")); err != nil {
 		return err
 	}
 

@@ -17,6 +17,7 @@ limitations under the License.
 package taskexecutor
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -25,6 +26,7 @@ import (
 
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/api/apis/common/constants"
 	api "github.com/kubeedge/api/apis/fsm/v1alpha1"
 	"github.com/kubeedge/kubeedge/common/types"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
@@ -179,6 +181,7 @@ func keadmUpgrade(upgradeReq commontypes.NodeUpgradeJobRequest, opts *options.Ed
 }
 
 func prepareKeadm(upgradeReq *commontypes.NodeUpgradeJobRequest) error {
+	ctx := context.Background()
 	config := options.GetEdgeCoreConfig()
 
 	// install the requested installer keadm from docker image
@@ -191,14 +194,14 @@ func prepareKeadm(upgradeReq *commontypes.NodeUpgradeJobRequest) error {
 
 	// TODO: do some verification 1.sha256(pass in using CRD) 2.image signature verification
 	// TODO: release verification mechanism
-	err = container.PullImages([]string{image})
+	err = container.PullImages(ctx, []string{image}, nil)
 	if err != nil {
 		return fmt.Errorf("pull image failed: %v", err)
 	}
 	// Check installation-package image digest
 	if upgradeReq.ImageDigest != "" {
 		var local string
-		local, err = container.GetImageDigest(image)
+		local, err = container.GetImageDigest(ctx, image)
 		if err != nil {
 			return err
 		}
@@ -206,10 +209,11 @@ func prepareKeadm(upgradeReq *commontypes.NodeUpgradeJobRequest) error {
 			return fmt.Errorf("invalid installation-package image digest value: %s", local)
 		}
 	}
-	files := map[string]string{
-		filepath.Join(util.KubeEdgeUsrBinPath, util.KeadmBinaryName): filepath.Join(util.KubeEdgeUsrBinPath, util.KeadmBinaryName),
-	}
-	err = container.CopyResources(image, files)
+
+	containerPath := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KeadmBinaryName)
+	hostPath := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KeadmBinaryName)
+	files := map[string]string{containerPath: hostPath}
+	err = container.CopyResources(ctx, image, files)
 	if err != nil {
 		return fmt.Errorf("failed to cp file from image to host: %v", err)
 	}

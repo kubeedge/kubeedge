@@ -28,7 +28,7 @@ import (
 	api "github.com/kubeedge/api/apis/fsm/v1alpha1"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
-	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
 	"github.com/kubeedge/kubeedge/pkg/version"
 )
@@ -45,7 +45,7 @@ func backupNode(commontypes.NodeTaskRequest) (event fsm.Event) {
 			event.Msg = err.Error()
 		}
 	}()
-	backupPath := filepath.Join(util.KubeEdgeBackupPath, version.Get().String())
+	backupPath := filepath.Join(common.KubeEdgeBackupPath, version.Get().String())
 	err = backup(backupPath)
 	if err != nil {
 		cleanErr := os.Remove(backupPath)
@@ -73,7 +73,8 @@ func backup(backupPath string) error {
 		return fmt.Errorf("failed to back config: %v", err)
 	}
 	// backup edgecore: copy from origin path to backup path
-	if err := filecopy(filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), filepath.Join(backupPath, util.KubeEdgeBinaryName)); err != nil {
+	if err := filecopy(filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName),
+		filepath.Join(backupPath, constants.KubeEdgeBinaryName)); err != nil {
 		return fmt.Errorf("failed to backup edgecore: %v", err)
 	}
 	return nil
