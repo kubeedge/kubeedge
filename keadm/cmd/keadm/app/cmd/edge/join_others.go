@@ -52,7 +52,7 @@ func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
 		"CGroupDriver that uses to manipulate cgroups on the host (cgroupfs or systemd), the default value is cgroupfs")
 
 	cmd.Flags().StringVar(&joinOptions.CertPath, common.FlagNameCertPath, joinOptions.CertPath,
-		fmt.Sprintf("The certPath used by edgecore, the default value is %s", common.DefaultCertPath))
+		fmt.Sprintf("The certPath used by edgecore, the default value is %s", constants.DefaultCertPath))
 
 	cmd.Flags().StringVarP(&joinOptions.CloudCoreIPPort, common.FlagNameCloudCoreIPPort, "e", joinOptions.CloudCoreIPPort,
 		"IP:Port address of KubeEdge CloudCore")
@@ -97,7 +97,7 @@ func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
 }
 
 func createEdgeConfigFiles(opt *common.JoinOptions) error {
-	configFilePath := filepath.Join(util.KubeEdgePath, "config/edgecore.yaml")
+	configFilePath := filepath.Join(constants.KubeEdgePath, "config/edgecore.yaml")
 	_, err := os.Stat(configFilePath)
 	if err == nil || os.IsExist(err) {
 		klog.Infoln("Read existing configuration file")
@@ -198,8 +198,8 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 	if err != nil {
 		return fmt.Errorf("failed to get ext system, err: %v", err)
 	}
-	systemdCmd := filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName)
-	if err := extSystem.ServiceCreate(util.KubeEdgeBinaryName, systemdCmd, nil); err != nil {
+	systemdCmd := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName)
+	if err := extSystem.ServiceCreate(constants.KubeEdgeBinaryName, systemdCmd, nil); err != nil {
 		return fmt.Errorf("failed to create edgecore systemd service, err: %v", err)
 	}
 
@@ -255,12 +255,12 @@ func runEdgeCore() error {
 			"sudo systemctl daemon-reload && sudo systemctl enable %s && sudo systemctl start %s",
 			common.EdgeCore, common.EdgeCore)
 	} else {
-		tip = fmt.Sprintf("KubeEdge edgecore is running, For logs visit: %s%s.log", util.KubeEdgeLogPath, util.KubeEdgeBinaryName)
+		tip = fmt.Sprintf("KubeEdge edgecore is running, For logs visit: %s%s.log", common.KubeEdgeLogPath, constants.KubeEdgeBinaryName)
 		binExec = fmt.Sprintf(
 			"%s > %skubeedge/edge/%s.log 2>&1 &",
-			filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName),
-			util.KubeEdgePath,
-			util.KubeEdgeBinaryName,
+			filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName),
+			constants.KubeEdgePath,
+			constants.KubeEdgeBinaryName,
 		)
 	}
 
@@ -278,13 +278,14 @@ func selinuxLabelRevision(enable bool) error {
 		return nil
 	}
 
-	label, err := selinux.FileLabel(filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName))
+	label, err := selinux.FileLabel(filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName))
 	if err != nil {
 		return fmt.Errorf("get selinux context of edgecore faild with error:%w", err)
 	}
 
 	if label != util.EdgeCoreSELinuxLabel {
-		if err = selinux.SetFileLabel(filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), util.EdgeCoreSELinuxLabel); err != nil {
+		if err = selinux.SetFileLabel(filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName),
+			util.EdgeCoreSELinuxLabel); err != nil {
 			return fmt.Errorf("reset selinux context on edgecore faild with error:%w", err)
 		}
 	}

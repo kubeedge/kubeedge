@@ -29,6 +29,7 @@ import (
 	api "k8s.io/kubernetes/pkg/apis/core"
 	k8s_v1_api "k8s.io/kubernetes/pkg/apis/core/v1"
 
+	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/client"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
@@ -79,7 +80,7 @@ func AddDescribePodFlags(cmd *cobra.Command, options *PodDescribeOptions) {
 }
 
 func (o *PodDescribeOptions) describePod(args []string) error {
-	config, err := util.ParseEdgecoreConfig(common.EdgecoreConfigPath)
+	config, err := util.ParseEdgecoreConfig(constants.EdgecoreConfigPath)
 	if err != nil {
 		return fmt.Errorf("get edge config failed with err:%v", err)
 	}
