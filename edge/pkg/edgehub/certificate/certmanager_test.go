@@ -18,8 +18,15 @@ package certificate
 
 import (
 	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
+	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/require"
@@ -27,7 +34,42 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 	commhttp "github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/http"
 	httpfake "github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/http/fake"
+	"github.com/kubeedge/kubeedge/pkg/security/certs"
 )
+
+func TestGetCurrent(t *testing.T) {
+	err := genFakeCerts()
+	require.NoError(t, err)
+
+	defer func() {
+		if err := os.RemoveAll(fakeCertsDir); err != nil {
+			t.Error(err)
+		}
+	}()
+
+	t.Run("invalid node name", func(t *testing.T) {
+		cm := &CertManager{
+			NodeName: "node1",
+			caFile:   filepath.Join(fakeCertsDir, "ca.crt"),
+			certFile: filepath.Join(fakeCertsDir, "server.crt"),
+			keyFile:  filepath.Join(fakeCertsDir, "server.key"),
+		}
+		_, err := cm.getCurrent()
+		require.ErrorContains(t, err, "certificate CN system:node:testnode does not match node name node1")
+	})
+
+	t.Run("get tls certificate successfully", func(t *testing.T) {
+		cm := &CertManager{
+			NodeName: "testnode",
+			caFile:   filepath.Join(fakeCertsDir, "ca.crt"),
+			certFile: filepath.Join(fakeCertsDir, "server.crt"),
+			keyFile:  filepath.Join(fakeCertsDir, "server.key"),
+		}
+		tlscert, err := cm.getCurrent()
+		require.NoError(t, err)
+		require.NotNil(t, tlscert)
+	})
+}
 
 func TestGetCACert(t *testing.T) {
 	const fakehost = "http://localhost"
@@ -47,23 +89,16 @@ func TestGetCACert(t *testing.T) {
 func TestGetEdgeCert(t *testing.T) {
 	const (
 		fakehost = "http://localhost"
-
-		capem = `-----BEGIN CERTIFICATE-----
-MIIBejCCAR+gAwIBAgICBAAwCgYIKoZIzj0EAwIwEzERMA8GA1UEAxMIS3ViZUVk
-Z2UwIBcNMjQwNTA5MDczNzU2WhgPMjEyNDAxMDYwNzM3NTZaMBMxETAPBgNVBAMT
-CEt1YmVFZGdlMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEq4Rd11aJ/FXEYBE2
-YCUMjRZVpqytxDBq2anuzokPculGaTrSDiRy1IKukPhlg34bq7J6wqkF0cmFUvcT
-jtReq6NhMF8wDgYDVR0PAQH/BAQDAgKkMB0GA1UdJQQWMBQGCCsGAQUFBwMBBggr
-BgEFBQcDAjAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTvK3f704DC7OOiVbmO
-PyKwJAUwQjAKBggqhkjOPQQDAgNJADBGAiEAkOgvZtFy+aYSqsfxIVMXxScsGilA
-P1Iiy/r5PerqODcCIQCH+qeEuxIgZzUAD/Wm6xameEmyn/mO4su/4UE6APNZFQ==
------END CERTIFICATE-----`
 	)
 
 	t.Run("request failed", func(t *testing.T) {
 		patches := gomonkey.NewPatches()
 		defer patches.Reset()
 
+		patches.ApplyFunc(commhttp.NewHTTPClientWithCA,
+			func(capem []byte, certificate tls.Certificate) (*http.Client, error) {
+				return &http.Client{}, nil
+			})
 		patches.ApplyFunc(commhttp.SendRequest,
 			func(_ *http.Request, _ *http.Client) (*http.Response, error) {
 				return &http.Response{
@@ -73,10 +108,7 @@ P1Iiy/r5PerqODcCIQCH+qeEuxIgZzUAD/Wm6xameEmyn/mO4su/4UE6APNZFQ==
 			})
 
 		cm := &CertManager{}
-		tls, err := tls.LoadX509KeyPair("testdata/server.crt", "testdata/server.key")
-		require.NoError(t, err)
-
-		_, _, err = cm.GetEdgeCert(fakehost+constants.DefaultCAURL, []byte(capem), tls, "")
+		_, _, err := cm.GetEdgeCert(fakehost+constants.DefaultCAURL, []byte{}, tls.Certificate{}, "")
 		require.Error(t, err)
 		require.ErrorContains(t, err, "failed to call http, code: 500, message: test error")
 	})
@@ -85,6 +117,10 @@ P1Iiy/r5PerqODcCIQCH+qeEuxIgZzUAD/Wm6xameEmyn/mO4su/4UE6APNZFQ==
 		patches := gomonkey.NewPatches()
 		defer patches.Reset()
 
+		patches.ApplyFunc(commhttp.NewHTTPClientWithCA,
+			func(capem []byte, certificate tls.Certificate) (*http.Client, error) {
+				return &http.Client{}, nil
+			})
 		patches.ApplyFunc(commhttp.SendRequest,
 			func(_ *http.Request, _ *http.Client) (*http.Response, error) {
 				return &http.Response{
@@ -94,10 +130,59 @@ P1Iiy/r5PerqODcCIQCH+qeEuxIgZzUAD/Wm6xameEmyn/mO4su/4UE6APNZFQ==
 			})
 
 		cm := &CertManager{}
-		tls, err := tls.LoadX509KeyPair("testdata/server.crt", "testdata/server.key")
-		require.NoError(t, err)
-
-		_, _, err = cm.GetEdgeCert(fakehost+constants.DefaultCAURL, []byte(capem), tls, "")
+		_, _, err := cm.GetEdgeCert(fakehost+constants.DefaultCAURL, []byte{}, tls.Certificate{}, "")
 		require.NoError(t, err)
 	})
+}
+
+const (
+	fakeCertsDir = "fake-certs"
+)
+
+func genFakeCerts() error {
+	cahandler := certs.GetCAHandler(certs.CAHandlerTypeX509)
+	pk, err := cahandler.GenPrivateKey()
+	if err != nil {
+		return fmt.Errorf("failed to generate a private key, err: %v", err)
+	}
+	caPem, err := cahandler.NewSelfSigned(pk)
+	if err != nil {
+		return fmt.Errorf("failed to create Certificate Authority, error: %v", err)
+	}
+
+	certshandler := certs.GetHandler(certs.HandlerTypeX509)
+	csrPem, err := certshandler.CreateCSR(pkix.Name{
+		Country:      []string{"CN"},
+		Organization: []string{"system:nodes"},
+		Locality:     []string{"Hangzhou"},
+		Province:     []string{"Zhejiang"},
+		CommonName:   "system:node:testnode",
+	}, pk, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create a csr of edge cert, err %v", err)
+	}
+	certBlock, err := certshandler.SignCerts(certs.SignCertsOptionsWithCSR(
+		csrPem.Bytes,
+		caPem.Bytes,
+		pk.DER(),
+		[]x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+		time.Hour,
+	))
+	if err != nil {
+		return fmt.Errorf("fail to sign certs, err: %v", err)
+	}
+	fileContents := map[string][]byte{
+		filepath.Join(fakeCertsDir, "ca.crt"):     pem.EncodeToMemory(caPem),
+		filepath.Join(fakeCertsDir, "server.crt"): pem.EncodeToMemory(certBlock),
+		filepath.Join(fakeCertsDir, "server.key"): pk.PEM(),
+	}
+	if err := os.Mkdir(fakeCertsDir, os.ModePerm); err != nil {
+		return fmt.Errorf("failed to create the certs directory %s, err: %v", fakeCertsDir, err)
+	}
+	for path, content := range fileContents {
+		if err := os.WriteFile(path, content, os.ModePerm); err != nil {
+			return fmt.Errorf("failed to create the certificate file %s, err: %v", path, err)
+		}
+	}
+	return nil
 }
