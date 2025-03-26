@@ -2,13 +2,16 @@
 
 package constants
 
-// Module name and group name
-const ()
-
 // Resources
 const (
-	// Certificates
+	KubeEdgePath       = "C:\\etc\\kubeedge\\"
+	KubeEdgeUsrBinPath = "C:\\usr\\local\\bin"
+
 	DefaultConfigDir = "c:\\etc\\kubeedge\\config\\"
+
+	// Certificates
+	// DefaultCertPath is the default certificate path in edge node
+	DefaultCertPath  = "c:\\etc\\kubeedge\\certs"
 	DefaultCAFile    = "c:\\etc\\kubeedge\\ca\\rootCA.crt"
 	DefaultCAKeyFile = "c:\\etc\\kubeedge\\ca\\rootCA.key"
 	DefaultCertFile  = "c:\\etc\\kubeedge\\certs\\server.crt"

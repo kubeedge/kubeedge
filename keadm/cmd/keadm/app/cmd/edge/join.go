@@ -71,7 +71,7 @@ func NewEdgeJoin() *cobra.Command {
 				}
 			}
 			step.Printf("Check KubeEdge edgecore process status")
-			running, err := util.IsKubeEdgeProcessRunning(util.KubeEdgeBinaryName)
+			running, err := util.IsKubeEdgeProcessRunning(constants.KubeEdgeBinaryName)
 			if err != nil {
 				return fmt.Errorf("check KubeEdge edgecore process status failed: %v", err)
 			}
@@ -80,17 +80,17 @@ func NewEdgeJoin() *cobra.Command {
 			}
 
 			step.Printf("Check if the management directory is clean")
-			if _, err := os.Stat(util.KubeEdgePath); err != nil {
+			if _, err := os.Stat(constants.KubeEdgePath); err != nil {
 				if !os.IsNotExist(err) {
-					return fmt.Errorf("Stat management directory %s failed: %v", util.KubeEdgePath, err)
+					return fmt.Errorf("Stat management directory %s failed: %v", constants.KubeEdgePath, err)
 				}
 			} else {
-				entries, err := os.ReadDir(util.KubeEdgePath)
+				entries, err := os.ReadDir(constants.KubeEdgePath)
 				if err != nil {
-					return fmt.Errorf("read management directory %s failed: %v", util.KubeEdgePath, err)
+					return fmt.Errorf("read management directory %s failed: %v", constants.KubeEdgePath, err)
 				}
 				if len(entries) > 0 {
-					return fmt.Errorf("the management directory %s is not clean, please remove it first", util.KubeEdgePath)
+					return fmt.Errorf("the management directory %s is not clean, please remove it first", constants.KubeEdgePath)
 				}
 			}
 
@@ -128,7 +128,7 @@ func NewEdgeJoin() *cobra.Command {
 func newOption() *common.JoinOptions {
 	joinOptions := &common.JoinOptions{}
 	joinOptions.CGroupDriver = v1alpha2.CGroupDriverCGroupFS
-	joinOptions.CertPath = common.DefaultCertPath
+	joinOptions.CertPath = constants.DefaultCertPath
 	joinOptions.RemoteRuntimeEndpoint = constants.DefaultRemoteRuntimeEndpoint
 	joinOptions.HubProtocol = api.ProtocolTypeWS
 	return joinOptions
@@ -136,20 +136,20 @@ func newOption() *common.JoinOptions {
 
 func createDirs() error {
 	// Create management directory
-	if err := os.MkdirAll(util.KubeEdgePath, os.ModePerm); err != nil {
-		return fmt.Errorf("create %s folder path failed: %v", util.KubeEdgePath, err)
+	if err := os.MkdirAll(constants.KubeEdgePath, os.ModePerm); err != nil {
+		return fmt.Errorf("create %s folder path failed: %v", constants.KubeEdgePath, err)
 	}
 	// Create config directory
 	if err := os.MkdirAll(util.KubeEdgeConfigDir, os.ModePerm); err != nil {
 		return fmt.Errorf("create %s folder path failed: %v", util.KubeEdgeConfigDir, err)
 	}
 	// Create log directory
-	if err := os.MkdirAll(util.KubeEdgeLogPath, os.ModePerm); err != nil {
-		return fmt.Errorf("create %s folder path failed: %v", util.KubeEdgeLogPath, err)
+	if err := os.MkdirAll(common.KubeEdgeLogPath, os.ModePerm); err != nil {
+		return fmt.Errorf("create %s folder path failed: %v", common.KubeEdgeLogPath, err)
 	}
 	// Create resource directory
-	if err := os.MkdirAll(util.KubeEdgeSocketPath, os.ModePerm); err != nil {
-		return fmt.Errorf("create %s folder path failed: %v", util.KubeEdgeSocketPath, err)
+	if err := os.MkdirAll(common.KubeEdgeSocketPath, os.ModePerm); err != nil {
+		return fmt.Errorf("create %s folder path failed: %v", common.KubeEdgeSocketPath, err)
 	}
 	return nil
 }

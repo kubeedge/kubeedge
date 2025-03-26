@@ -29,6 +29,7 @@ import (
 	utilruntime "k8s.io/kubernetes/cmd/kubeadm/app/util/runtime"
 	utilsexec "k8s.io/utils/exec"
 
+	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
@@ -169,11 +170,11 @@ func RemoveContainers(execer utilsexec.Interface) error {
 func cleanDirectories() error {
 	fmt.Println("Start cleaning directories...")
 	var dirToClean = []string{
-		util.KubeEdgePath,
-		util.KubeEdgeLogPath,
-		util.KubeEdgeSocketPath,
-		util.EdgeRootDir,
-		util.KubeEdgeUsrBinPath,
+		constants.KubeEdgePath,
+		constants.KubeEdgeLogPath,
+		constants.KubeEdgeSocketPath,
+		constants.EdgeRootDir,
+		constants.KubeEdgeUsrBinPath,
 	}
 
 	for _, dir := range dirToClean {

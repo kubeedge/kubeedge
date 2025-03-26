@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 
+	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
@@ -55,13 +56,13 @@ func TestNewSubDiagnose(t *testing.T) {
 		{
 			use: common.ArgDiagnoseNode,
 			expectedDefValue: map[string]string{
-				common.EdgecoreConfig: common.EdgecoreConfigPath,
+				common.EdgecoreConfig: constants.EdgecoreConfigPath,
 			},
 			expectedShorthand: map[string]string{
 				common.EdgecoreConfig: "c",
 			},
 			expectedUsage: map[string]string{
-				common.EdgecoreConfig: fmt.Sprintf("Specify configuration file, default is %s", common.EdgecoreConfigPath),
+				common.EdgecoreConfig: fmt.Sprintf("Specify configuration file, default is %s", constants.EdgecoreConfigPath),
 			},
 		},
 		{
@@ -135,7 +136,7 @@ func TestNewDiagnoseOptions(t *testing.T) {
 	assert.NotNil(do)
 
 	assert.Equal("default", do.Namespace)
-	assert.Equal(common.EdgecoreConfigPath, do.Config)
+	assert.Equal(constants.EdgecoreConfigPath, do.Config)
 	assert.Equal("", do.CheckOptions.IP)
 	assert.Equal(3, do.CheckOptions.Timeout)
 }

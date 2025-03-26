@@ -32,6 +32,7 @@ import (
 	phases "k8s.io/kubernetes/cmd/kubeadm/app/cmd/phases/reset"
 	utilsexec "k8s.io/utils/exec"
 
+	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/extsystem"
@@ -81,7 +82,7 @@ func NewOtherEdgeReset() *cobra.Command {
 			}
 
 			step.Printf("clean up static pods")
-			config, err := util.ParseEdgecoreConfig(common.EdgecoreConfigPath)
+			config, err := util.ParseEdgecoreConfig(constants.EdgecoreConfigPath)
 			if err != nil {
 				klog.Warningf("failed to parse edgecore configuration, skip cleaning up static pods, err: %v", err)
 			} else {
@@ -133,7 +134,7 @@ func TearDownEdgeCore() error {
 	if err != nil {
 		return fmt.Errorf("failed to get init system, err: %v", err)
 	}
-	service := util.KubeEdgeBinaryName
+	service := constants.KubeEdgeBinaryName
 	if extSystem.ServiceExists(service) {
 		klog.V(2).Info("edgecore service is exists")
 		if extSystem.ServiceIsActive(service) {

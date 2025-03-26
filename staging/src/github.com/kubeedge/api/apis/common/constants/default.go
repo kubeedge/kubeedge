@@ -105,4 +105,7 @@ const (
 
 	// DeviceTwin
 	DefaultDMISockPath = "/etc/kubeedge/dmi.sock"
+
+	KubeEdgeBinaryName = "edgecore"
+	KeadmBinaryName    = "keadm"
 )

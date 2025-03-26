@@ -16,6 +16,7 @@ import (
 	"github.com/shirou/gopsutil/mem"
 	"github.com/spf13/cobra"
 
+	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
@@ -85,7 +86,7 @@ func NewSubEdgeCheck(object CheckObject) *cobra.Command {
 		cmd.Flags().StringVarP(&co.CloudHubServer, "cloud-hub-server", "s", co.CloudHubServer, "specify cloudhub server")
 		cmd.Flags().StringVarP(&co.DNSIP, "dns-ip", "D", co.DNSIP, "specify test dns ip")
 		cmd.Flags().StringVarP(&co.Config, common.EdgecoreConfig, "c", co.Config,
-			fmt.Sprintf("Specify configuration file, default is %s", common.EdgecoreConfigPath))
+			fmt.Sprintf("Specify configuration file, default is %s", constants.EdgecoreConfigPath))
 	case common.ArgCheckDNS:
 		cmd.Flags().StringVarP(&co.Domain, "domain", "d", co.Domain, "specify test domain")
 		cmd.Flags().StringVarP(&co.DNSIP, "dns-ip", "D", co.DNSIP, "specify test dns ip")
@@ -93,7 +94,7 @@ func NewSubEdgeCheck(object CheckObject) *cobra.Command {
 		cmd.Flags().StringVarP(&co.IP, "ip", "i", co.IP, "specify test ip")
 		cmd.Flags().StringVarP(&co.CloudHubServer, "cloud-hub-server", "s", co.CloudHubServer, "specify cloudhub server")
 		cmd.Flags().StringVarP(&co.Config, common.EdgecoreConfig, "c", co.Config,
-			fmt.Sprintf("Specify configuration file, default is %s", common.EdgecoreConfigPath))
+			fmt.Sprintf("Specify configuration file, default is %s", constants.EdgecoreConfigPath))
 	}
 
 	return cmd
@@ -112,7 +113,7 @@ func (co *CheckObject) ExecuteCheck(use string, ob *common.CheckOptions) {
 	err := fmt.Errorf("")
 
 	if ob.Config == "" {
-		ob.Config = common.EdgecoreConfigPath
+		ob.Config = constants.EdgecoreConfigPath
 	}
 
 	switch use {

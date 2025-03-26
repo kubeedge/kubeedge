@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
 
+	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
@@ -62,7 +63,7 @@ func NewSubDiagnose(object Diagnose) *cobra.Command {
 	switch object.Use {
 	case common.ArgDiagnoseNode:
 		cmd.Flags().StringVarP(&do.Config, common.EdgecoreConfig, "c", do.Config,
-			fmt.Sprintf("Specify configuration file, default is %s", common.EdgecoreConfigPath))
+			fmt.Sprintf("Specify configuration file, default is %s", constants.EdgecoreConfigPath))
 	case common.ArgDiagnosePod:
 		cmd.Flags().StringVarP(&do.Namespace, "namespace", "n", do.Namespace, "specify namespace")
 	case common.ArgDiagnoseInstall:
@@ -78,7 +79,7 @@ func NewSubDiagnose(object Diagnose) *cobra.Command {
 func NewDiagnoseOptions() *common.DiagnoseOptions {
 	do := &common.DiagnoseOptions{}
 	do.Namespace = "default"
-	do.Config = common.EdgecoreConfigPath
+	do.Config = constants.EdgecoreConfigPath
 	do.CheckOptions = &common.CheckOptions{
 		IP:      "",
 		Timeout: 3,
@@ -115,7 +116,7 @@ func (da Diagnose) ExecuteDiagnose(use string, ops *common.DiagnoseOptions, args
 
 func DiagnoseNode(ops *common.DiagnoseOptions) error {
 	osType := util.GetOSInterface()
-	isEdgeRunning, err := osType.IsKubeEdgeProcessRunning(util.KubeEdgeBinaryName)
+	isEdgeRunning, err := osType.IsKubeEdgeProcessRunning(constants.KubeEdgeBinaryName)
 	if err != nil {
 		return fmt.Errorf("get edgecore status fail")
 	}
