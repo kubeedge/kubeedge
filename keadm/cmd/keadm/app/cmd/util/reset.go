@@ -32,15 +32,6 @@ func NewResetOptions() *common.ResetOptions {
 	return opts
 }
 
-func RemoveMqttContainer(endpoint, cgroupDriver string) error {
-	runtime, err := NewContainerRuntime(endpoint, cgroupDriver)
-	if err != nil {
-		return fmt.Errorf("failed to new container runtime: %v", err)
-	}
-
-	return runtime.RemoveMQTT()
-}
-
 // RemoveContainers removes all Kubernetes-managed containers
 func RemoveContainers(criSocketPath string, execer utilsexec.Interface) error {
 	if criSocketPath == "" {

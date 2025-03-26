@@ -33,18 +33,12 @@ import (
 
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/common/constants"
-	"github.com/kubeedge/kubeedge/pkg/image"
 )
-
-// mqttLabel is used to select MQTT containers
-var mqttLabel = map[string]string{"io.kubeedge.edgecore/mqtt": image.EdgeMQTT}
 
 type ContainerRuntime interface {
 	PullImages(images []string) error
 	PullImage(image string, authConfig *runtimeapi.AuthConfig, sandboxConfig *runtimeapi.PodSandboxConfig) error
 	CopyResources(edgeImage string, files map[string]string) error
-	RunMQTT(mqttImage string) error
-	RemoveMQTT() error
 	GetImageDigest(image string) (string, error)
 }
 
@@ -210,80 +204,6 @@ func (runtime *CRIRuntime) CopyResources(edgeImage string, files map[string]stri
 	stdout, stderr, err := runtime.RuntimeService.ExecSync(runtime.ctx, containerID, cmd, 30*time.Second)
 	if err != nil {
 		return fmt.Errorf("failed to exec copy cmd, err: %v, stderr: %s, stdout: %s", err, string(stderr), string(stdout))
-	}
-
-	return nil
-}
-
-func (runtime *CRIRuntime) RunMQTT(mqttImage string) error {
-	mqttImage = convertCRIImage(mqttImage)
-	psc := &runtimeapi.PodSandboxConfig{
-		Metadata: &runtimeapi.PodSandboxMetadata{Name: image.EdgeMQTT},
-		PortMappings: []*runtimeapi.PortMapping{
-			{
-				ContainerPort: 1883,
-				HostPort:      1883,
-			},
-			{
-				ContainerPort: 9001,
-				HostPort:      9001,
-			},
-		},
-		Labels: mqttLabel,
-		Linux: &runtimeapi.LinuxPodSandboxConfig{
-			SecurityContext: &runtimeapi.LinuxSandboxSecurityContext{
-				NamespaceOptions: &runtimeapi.NamespaceOption{
-					Network: runtimeapi.NamespaceMode_POD,
-					Pid:     runtimeapi.NamespaceMode_CONTAINER,
-					Ipc:     runtimeapi.NamespaceMode_POD,
-				},
-			},
-		},
-	}
-	sandbox, err := runtime.RuntimeService.RunPodSandbox(runtime.ctx, psc, "")
-	if err != nil {
-		return err
-	}
-
-	containerConfig := &runtimeapi.ContainerConfig{
-		Metadata: &runtimeapi.ContainerMetadata{Name: image.EdgeMQTT},
-		Image: &runtimeapi.ImageSpec{
-			Image: mqttImage,
-		},
-		Mounts: []*runtimeapi.Mount{
-			{
-				ContainerPath: "/mosquitto",
-				HostPath:      filepath.Join(KubeEdgeSocketPath, image.EdgeMQTT),
-			},
-		},
-	}
-	containerID, err := runtime.RuntimeService.CreateContainer(runtime.ctx, sandbox, containerConfig, psc)
-	if err != nil {
-		return err
-	}
-	return runtime.RuntimeService.StartContainer(runtime.ctx, containerID)
-}
-
-func (runtime *CRIRuntime) RemoveMQTT() error {
-	sandboxFilter := &runtimeapi.PodSandboxFilter{
-		LabelSelector: mqttLabel,
-	}
-
-	sandbox, err := runtime.RuntimeService.ListPodSandbox(runtime.ctx, sandboxFilter)
-	if err != nil {
-		fmt.Printf("List MQTT containers failed: %v\n", err)
-		return err
-	}
-
-	for _, c := range sandbox {
-		// by reference doc
-		// RemovePodSandbox removes the sandbox. If there are running containers in the
-		// sandbox, they should be forcibly removed.
-		// so we can remove mqtt containers totally.
-		err = runtime.RuntimeService.RemovePodSandbox(runtime.ctx, c.Id)
-		if err != nil {
-			fmt.Printf("failed to remove MQTT container: %v\n", err)
-		}
 	}
 
 	return nil

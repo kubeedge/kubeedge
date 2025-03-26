@@ -127,7 +127,6 @@ func NewEdgeJoin() *cobra.Command {
 
 func newOption() *common.JoinOptions {
 	joinOptions := &common.JoinOptions{}
-	joinOptions.WithMQTT = false
 	joinOptions.CGroupDriver = v1alpha2.CGroupDriverCGroupFS
 	joinOptions.CertPath = common.DefaultCertPath
 	joinOptions.RemoteRuntimeEndpoint = constants.DefaultRemoteRuntimeEndpoint
