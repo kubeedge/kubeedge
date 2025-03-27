@@ -76,9 +76,10 @@ func NewCertManager(edgehub v1alpha2.EdgeHub, nodename string) CertManager {
 // Start starts the CertManager
 func (cm *CertManager) Start() {
 	if _, err := cm.getCurrent(); err != nil {
-		klog.Infof("unable to get the current edge certs, reason: %v", err)
+		klog.Warningf("unable to get the current edge certs, reason: %v", err)
+		klog.Info("Reuse the token to obtain the certificate")
 		if err = cm.applyCerts(); err != nil {
-			klog.Exitf("failed to apply the edge certs, err: %v", err)
+			panic(fmt.Errorf("failed to apply the edge certs, err: %v", err))
 		}
 		// inform to cleanup token in configuration edgecore.yaml
 		CleanupTokenChan <- struct{}{}
@@ -92,11 +93,14 @@ func (cm *CertManager) Start() {
 func (cm *CertManager) getCurrent() (*tls.Certificate, error) {
 	cert, err := tls.LoadX509KeyPair(cm.certFile, cm.keyFile)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to load cert/key pair: %v", err)
 	}
 	certs, err := x509.ParseCertificates(cert.Certificate[0])
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse certificate data: %v", err)
+	}
+	if cn := certs[0].Subject.CommonName; cn != fmt.Sprintf("system:node:%s", cm.NodeName) {
+		return nil, fmt.Errorf("certificate CN %s does not match node name %s", cn, cm.NodeName)
 	}
 	cert.Leaf = certs[0]
 	return &cert, nil
