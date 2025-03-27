@@ -36,16 +36,20 @@ type TunnelSession struct {
 	closed        bool // tunnel whether closed
 	localCons     map[uint64]stream.EdgedConnection
 	localConsLock sync.RWMutex
+	kubeletHost   string
 }
 
-func NewTunnelSession(c *websocket.Conn) *TunnelSession {
+func NewTunnelSession(c *websocket.Conn, kubeletHost string) *TunnelSession {
 	return &TunnelSession{
 		closeLock:     sync.Mutex{},
 		localConsLock: sync.RWMutex{},
 		Tunnel:        stream.NewDefaultTunnel(c),
 		localCons:     make(map[uint64]stream.EdgedConnection, 128),
+		kubeletHost:   kubeletHost,
 	}
 }
+
+const kubeletDefaultScheme = "http"
 
 func (s *TunnelSession) serveLogsConnection(m *stream.Message) error {
 	logCon := &stream.EdgedLogsConnection{
@@ -56,6 +60,8 @@ func (s *TunnelSession) serveLogsConnection(m *stream.Message) error {
 		klog.Errorf("unmarshal connector data error %v", err)
 		return err
 	}
+	logCon.URL.Scheme = kubeletDefaultScheme
+	logCon.URL.Host = s.kubeletHost
 
 	s.AddLocalConnection(m.ConnectID, logCon)
 	return logCon.Serve(s.Tunnel)
@@ -70,6 +76,8 @@ func (s *TunnelSession) serveContainerExecConnection(m *stream.Message) error {
 		klog.Errorf("unmarshal connector data error %v", err)
 		return err
 	}
+	execCon.URL.Scheme = kubeletDefaultScheme
+	execCon.URL.Host = s.kubeletHost
 
 	s.AddLocalConnection(m.ConnectID, execCon)
 	klog.V(6).Infof("Get Exec Connection info: %+v", *execCon)
@@ -85,6 +93,8 @@ func (s *TunnelSession) serveContainerAttachConnection(m *stream.Message) error 
 		klog.Errorf("unmarshal connector data error %v", err)
 		return err
 	}
+	attachCon.URL.Scheme = kubeletDefaultScheme
+	attachCon.URL.Host = s.kubeletHost
 
 	s.AddLocalConnection(m.ConnectID, attachCon)
 	klog.V(6).Infof("Get Attach Connection info: %+v", *attachCon)
@@ -100,6 +110,8 @@ func (s *TunnelSession) serveMetricsConnection(m *stream.Message) error {
 		klog.Errorf("unmarshal connector data error %v", err)
 		return err
 	}
+	metricsCon.URL.Scheme = kubeletDefaultScheme
+	metricsCon.URL.Host = s.kubeletHost
 
 	s.AddLocalConnection(m.ConnectID, metricsCon)
 	return metricsCon.Serve(s.Tunnel)

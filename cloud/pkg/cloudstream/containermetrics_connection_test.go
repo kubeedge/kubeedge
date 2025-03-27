@@ -17,16 +17,13 @@ limitations under the License.
 package cloudstream
 
 import (
-	"net"
 	"net/http"
 	"net/url"
-	"strconv"
 	"testing"
 
 	"github.com/emicklei/go-restful"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/stream"
 )
 
@@ -134,8 +131,7 @@ func TestSendConnection_Metrics(t *testing.T) {
 	mockReq := &http.Request{
 		URL: &url.URL{
 			Scheme: "http",
-			Host:   "localhost",
-			Path:   "/api/v1/nodes",
+			Host:   "localhost:10350",
 		},
 		Header: http.Header{
 			"Content-Type": []string{"application/json"},
@@ -161,9 +157,7 @@ func TestSendConnection_Metrics(t *testing.T) {
 	metricsEdgedConn, ok := conn.(*stream.EdgedMetricsConnection)
 	assert.True(ok)
 
-	assert.Equal("http", metricsEdgedConn.URL.Scheme)
-	assert.Equal(net.JoinHostPort(defaultServerHost, strconv.Itoa(constants.ServerPort)), metricsEdgedConn.URL.Host)
-
+	assert.Equal(*mockReq.URL, metricsEdgedConn.URL)
 	assert.NotNil(mockTunneler.lastMessage)
 	assert.Equal(stream.MessageTypeMetricConnect, mockTunneler.lastMessage.MessageType)
 }

@@ -26,7 +26,6 @@ import (
 	"github.com/emicklei/go-restful"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/stream"
 )
 
@@ -81,8 +80,6 @@ func (ah *ContainerAttachConnection) SendConnection() (stream.EdgedConnection, e
 		URL:    *ah.r.Request.URL,
 		Header: ah.r.Request.Header,
 	}
-	connector.URL.Scheme = httpScheme
-	connector.URL.Host = net.JoinHostPort(defaultServerHost, fmt.Sprintf("%v", constants.ServerPort))
 	m, err := connector.CreateConnectMessage()
 	if err != nil {
 		return nil, err
