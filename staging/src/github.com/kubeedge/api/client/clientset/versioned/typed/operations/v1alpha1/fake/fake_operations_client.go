@@ -28,6 +28,10 @@ type FakeOperationsV1alpha1 struct {
 	*testing.Fake
 }
 
+func (c *FakeOperationsV1alpha1) ConfigUpdateJobs() v1alpha1.ConfigUpdateJobInterface {
+	return &FakeConfigUpdateJobs{c}
+}
+
 func (c *FakeOperationsV1alpha1) ImagePrePullJobs() v1alpha1.ImagePrePullJobInterface {
 	return &FakeImagePrePullJobs{c}
 }
