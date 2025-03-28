@@ -29,6 +29,7 @@ import (
 	utilruntime "k8s.io/kubernetes/cmd/kubeadm/app/util/runtime"
 	utilsexec "k8s.io/utils/exec"
 
+	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
@@ -122,9 +123,9 @@ func NewKubeEdgeReset() *cobra.Command {
 // depending upon in which type of node it is executed
 func TearDownKubeEdge(_ string) error {
 	// 1.1 stop check if running now, stop it if running
-	if util.IsNSSMServiceRunning(util.KubeEdgeBinaryName) {
+	if util.IsNSSMServiceRunning(constants.KubeEdgeBinaryName) {
 		fmt.Println("Egdecore service is running, stop...")
-		if _err := util.StopNSSMService(util.KubeEdgeBinaryName); _err != nil {
+		if _err := util.StopNSSMService(constants.KubeEdgeBinaryName); _err != nil {
 			return _err
 		}
 		fmt.Println("Egdecore service stop success.")
@@ -132,7 +133,7 @@ func TearDownKubeEdge(_ string) error {
 
 	// 1.2 remove nssm service
 	fmt.Println("Start removing egdecore service using nssm")
-	_err := util.UninstallNSSMService(util.KubeEdgeBinaryName)
+	_err := util.UninstallNSSMService(constants.KubeEdgeBinaryName)
 	if _err != nil {
 		return _err
 	}
@@ -169,11 +170,11 @@ func RemoveContainers(execer utilsexec.Interface) error {
 func cleanDirectories() error {
 	fmt.Println("Start cleaning directories...")
 	var dirToClean = []string{
-		util.KubeEdgePath,
-		util.KubeEdgeLogPath,
-		util.KubeEdgeSocketPath,
-		util.EdgeRootDir,
-		util.KubeEdgeUsrBinPath,
+		constants.KubeEdgePath,
+		common.KubeEdgeLogPath,
+		common.KubeEdgeSocketPath,
+		common.EdgeRootDir,
+		constants.KubeEdgeUsrBinPath,
 	}
 
 	for _, dir := range dirToClean {

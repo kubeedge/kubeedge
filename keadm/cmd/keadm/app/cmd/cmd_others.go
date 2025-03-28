@@ -89,9 +89,11 @@ func NewKubeedgeCommand() *cobra.Command {
 
 	// beta cmds
 	cmds.AddCommand(beta.NewBeta())
-	cmds.AddCommand(NewUpgradeCommand())
 
-	cmds.AddCommand(edge.NewEdgeRollback())
+	// Upgrade related commands: backup, upgrade, rollback
+	cmds.AddCommand(NewUpgradeCommand())
+	cmds.AddCommand(NewBackupCommand())
+	cmds.AddCommand(NewRollbackCommand())
 
 	cmds.AddCommand(ctl.NewCtl())
 

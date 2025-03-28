@@ -31,8 +31,10 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/cm"
 	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
 
+	apiconsts "github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/common/constants"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/pkg/image"
 )
 
@@ -130,7 +132,7 @@ func (runtime *CRIRuntime) PullImage(image string, authConfig *runtimeapi.AuthCo
 func (runtime *CRIRuntime) CopyResources(edgeImage string, files map[string]string) error {
 	psc := &runtimeapi.PodSandboxConfig{
 		Metadata: &runtimeapi.PodSandboxMetadata{
-			Name:      KubeEdgeBinaryName,
+			Name:      apiconsts.KubeEdgeBinaryName,
 			Uid:       uuid.New().String(),
 			Namespace: constants.SystemNamespace,
 		},
@@ -253,7 +255,7 @@ func (runtime *CRIRuntime) RunMQTT(mqttImage string) error {
 		Mounts: []*runtimeapi.Mount{
 			{
 				ContainerPath: "/mosquitto",
-				HostPath:      filepath.Join(KubeEdgeSocketPath, image.EdgeMQTT),
+				HostPath:      filepath.Join(common.KubeEdgeSocketPath, image.EdgeMQTT),
 			},
 		},
 	}

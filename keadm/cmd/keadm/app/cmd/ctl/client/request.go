@@ -24,8 +24,8 @@ import (
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/api/client/clientset/versioned"
-	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	keadutil "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
 
@@ -42,7 +42,7 @@ func KubeClient() (*kubernetes.Clientset, error) {
 }
 
 func GetKubeConfig() (*restclient.Config, error) {
-	config, err := keadutil.ParseEdgecoreConfig(common.EdgecoreConfigPath)
+	config, err := keadutil.ParseEdgecoreConfig(constants.EdgecoreConfigPath)
 	if err != nil {
 		return nil, fmt.Errorf("get edge config failed with err:%v", err)
 	}

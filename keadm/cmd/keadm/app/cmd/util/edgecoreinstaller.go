@@ -53,7 +53,7 @@ type KubeEdgeInstTool struct {
 func (ku *KubeEdgeInstTool) InstallTools() error {
 	ku.SetOSInterface(GetOSInterface())
 
-	edgeCoreRunning, err := ku.IsKubeEdgeProcessRunning(KubeEdgeBinaryName)
+	edgeCoreRunning, err := ku.IsKubeEdgeProcessRunning(constants.KubeEdgeBinaryName)
 	if err != nil {
 		return err
 	}
@@ -159,5 +159,5 @@ func (ku *KubeEdgeInstTool) TearDown() error {
 	ku.SetKubeEdgeVersion(ku.ToolVersion)
 
 	//Kill edge core process
-	return ku.KillKubeEdgeBinary(KubeEdgeBinaryName)
+	return ku.KillKubeEdgeBinary(constants.KubeEdgeBinaryName)
 }

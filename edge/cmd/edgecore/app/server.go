@@ -58,6 +58,11 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 			flag.PrintDefaultConfigAndExitIfRequested(v1alpha2.NewDefaultEdgeCoreConfig())
 			flag.PrintFlags(cmd.Flags())
 
+			if opts.PrintVersion {
+				fmt.Println(version.Get().String())
+				os.Exit(0)
+			}
+
 			if errs := opts.Validate(); len(errs) > 0 {
 				klog.Exit(util.SpliceErrors(errs))
 			}
