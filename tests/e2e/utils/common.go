@@ -51,8 +51,15 @@ const (
 	TwinETGetResultSuffix = "/twin/get/result"
 
 	ModBus            = "modbus"
+	DeviceName        = "modbus-instance"
+	DeviceModelName   = "modbus-model"
+	PropertyName      = "temperature"
+	ModBusMapper      = "modbus-mapper"
 	IncorrectInstance = "incorrect-instance"
 	IncorrectModel    = "incorrect-model"
+	MapperVolumeName  = "test-volume"
+	MapperMountPath   = "/tmp/etc/kubeedge"
+	MapperImageName   = "modbus-e2e-mapper:v1.0.0"
 )
 
 var TokenClient Token
@@ -265,6 +272,91 @@ func HandleDeviceInstance(c edgeclientset.Interface, operation string, nodeName 
 	return nil
 }
 
+func NewMapperDeployment(replicas int32) *apps.Deployment {
+	podVolumeMounts := v1.VolumeMount{
+		Name:      MapperVolumeName,
+		MountPath: MapperMountPath,
+	}
+	podVolume := v1.Volume{
+		Name: MapperVolumeName,
+		VolumeSource: v1.VolumeSource{
+			HostPath: &v1.HostPathVolumeSource{
+				Path: MapperMountPath,
+			},
+		},
+	}
+
+	deployment := apps.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      constants.MapperName,
+			Labels:    map[string]string{"app": constants.MapperName},
+			Namespace: Namespace,
+		},
+		Spec: apps.DeploymentSpec{
+			Replicas: &replicas,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": constants.MapperName,
+				},
+			},
+			Template: v1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"app": constants.MapperName,
+					},
+				},
+				Spec: v1.PodSpec{
+					Containers: []v1.Container{
+						{
+							Name: constants.MapperName,
+							VolumeMounts: []v1.VolumeMount{
+								podVolumeMounts,
+							},
+							Image:           MapperImageName,
+							ImagePullPolicy: v1.PullIfNotPresent,
+							Command:         []string{"/bin/sh", "-c"},
+							Args:            []string{"/kubeedge/main --config-file /kubeedge/config.yaml --v 4"},
+						},
+					},
+					NodeSelector: map[string]string{
+						"node-role.kubernetes.io/edge": "",
+					},
+					Volumes: []v1.Volume{
+						podVolume,
+					},
+				},
+			},
+		},
+	}
+	return &deployment
+}
+
+func GetDevice(c edgeclientset.Interface, name, ns string) (*v1beta1.Device, error) {
+	device, err := c.DevicesV1beta1().Devices(ns).Get(context.TODO(), name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return device, nil
+}
+
+// CheckDeviceStatus check whether mapper reports device data correctly.
+func CheckDeviceStatus(device *v1beta1.Device, propertyname string) error {
+	if len(device.Status.Twins) == 0 {
+		return fmt.Errorf("the device twin is nil")
+	}
+	for _, twin := range device.Status.Twins {
+		if twin.PropertyName != propertyname {
+			continue
+		}
+
+		if twin.Reported.Value == "12" { // The device data successfully reported by the mapper is set to 12
+			return nil
+		}
+		return fmt.Errorf("the value of twin is not as expected")
+	}
+	return fmt.Errorf("no matching twin found")
+}
+
 // newDeviceInstanceObject creates a new device instance object
 func newDeviceInstanceObject(nodeName string, protocolType string, updated bool) *v1beta1.Device {
 	var deviceInstance v1beta1.Device
@@ -274,6 +366,8 @@ func newDeviceInstanceObject(nodeName string, protocolType string, updated bool)
 			deviceInstance = NewModbusDeviceInstance(nodeName)
 		case IncorrectInstance:
 			deviceInstance = IncorrectDeviceInstance()
+		case ModBusMapper:
+			deviceInstance = NewDeviceInstanceForMapper(nodeName)
 		}
 	} else {
 		switch protocolType {
@@ -295,6 +389,8 @@ func newDeviceModelObject(protocolType string, updated bool) *v1beta1.DeviceMode
 			deviceModel = NewModbusDeviceModel()
 		case IncorrectModel:
 			deviceModel = IncorrectDeviceModel()
+		case ModBusMapper:
+			deviceModel = NewDeviceModelForMapper()
 		}
 	} else {
 		switch protocolType {

@@ -50,6 +50,12 @@ ENABLE_DAEMON=true bash -x ${curpath}/hack/local-up-kubeedge.sh ${KIND_IMAGE} ||
 
 : >/tmp/testcase.log
 
+# Build test mapper project and docker image
+bash -x ${curpath}/tests/scripts/generate_mapper.sh || {
+  echo "failed to build mapper image !!!"
+  exit 1
+}
+
 export GINKGO_TESTING_RESULT=0
 
 trap cleanup EXIT
