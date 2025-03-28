@@ -53,6 +53,9 @@ const (
 	ModBus            = "modbus"
 	IncorrectInstance = "incorrect-instance"
 	IncorrectModel    = "incorrect-model"
+	MapperVolumeName  = "test-volume"
+	MapperMountPath   = "/tmp/etc/kubeedge"
+	MapperImageName   = "modbus-e2e-mapper:v1.0.0"
 )
 
 var TokenClient Token
@@ -263,6 +266,65 @@ func HandleDeviceInstance(c edgeclientset.Interface, operation string, nodeName 
 	}
 
 	return nil
+}
+
+func NewMapperDeployment(replicas int32) *apps.Deployment {
+	podVolumeMounts := v1.VolumeMount{
+		Name:      MapperVolumeName,
+		MountPath: MapperMountPath,
+	}
+	podVolume := v1.Volume{
+		Name: MapperVolumeName,
+		VolumeSource: v1.VolumeSource{
+			HostPath: &v1.HostPathVolumeSource{
+				Path: MapperMountPath,
+			},
+		},
+	}
+
+	deployment := apps.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      constants.MapperName,
+			Labels:    map[string]string{"app": constants.MapperName},
+			Namespace: Namespace,
+		},
+		Spec: apps.DeploymentSpec{
+			Replicas: &replicas,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": constants.MapperName,
+				},
+			},
+			Template: v1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"app": constants.MapperName,
+					},
+				},
+				Spec: v1.PodSpec{
+					Containers: []v1.Container{
+						{
+							Name: constants.MapperName,
+							VolumeMounts: []v1.VolumeMount{
+								podVolumeMounts,
+							},
+							Image:           MapperImageName,
+							ImagePullPolicy: v1.PullIfNotPresent,
+							Command:         []string{"/bin/sh", "-c"},
+							Args:            []string{"/kubeedge/main --config-file /kubeedge/config.yaml --v 4"},
+						},
+					},
+					NodeSelector: map[string]string{
+						"node-role.kubernetes.io/edge": "",
+					},
+					Volumes: []v1.Volume{
+						podVolume,
+					},
+				},
+			},
+		},
+	}
+	return &deployment
 }
 
 // newDeviceInstanceObject creates a new device instance object
