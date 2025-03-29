@@ -45,6 +45,12 @@ ENABLE_DAEMON=true bash -x ${KUBEEDGE_ROOT}/hack/local-up-kubeedge.sh ${KIND_IMA
   exit 1
 }
 
+# Build test mapper project and docker image
+bash -x ${KUBEEDGE_ROOT}/tests/scripts/generate_mapper.sh || {
+  echo "failed to build mapper image !!!"
+  exit 1
+}
+
 trap cleanup EXIT
 
 sleep 10
