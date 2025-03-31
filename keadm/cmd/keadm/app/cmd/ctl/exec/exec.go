@@ -32,7 +32,7 @@ import (
 
 	"github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
-	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/client"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/metaclient"
 )
 
 // PodExecOptions defines the options for executing command in edge pod
@@ -85,7 +85,7 @@ func AddPodExecFlags(cmd *cobra.Command, execOpts *PodExecOptions) {
 }
 
 func (o *PodExecOptions) execPod(args []string) error {
-	kubeClient, err := client.KubeClient()
+	kubeClient, err := metaclient.KubeClient()
 	if err != nil {
 		return err
 	}
@@ -115,7 +115,7 @@ func (o *PodExecOptions) execPod(args []string) error {
 	return nil
 }
 
-func podExec(ctx context.Context, clientSet *kubernetes.Clientset, pod string, commands []string, o *PodExecOptions) (*types.ExecResponse, error) {
+func podExec(ctx context.Context, clientSet kubernetes.Interface, pod string, commands []string, o *PodExecOptions) (*types.ExecResponse, error) {
 	exexRequest := clientSet.CoreV1().RESTClient().
 		Post().
 		Namespace(o.Namespace).
@@ -128,7 +128,7 @@ func podExec(ctx context.Context, clientSet *kubernetes.Clientset, pod string, c
 		req.Param("command", cmd)
 	}
 
-	config, err := client.GetKubeConfig()
+	config, err := metaclient.GetKubeConfig()
 	if err != nil {
 		return nil, err
 	}
