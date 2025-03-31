@@ -27,7 +27,7 @@ import (
 
 	"github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
-	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/client"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/metaclient"
 )
 
 type PodRestartOptions struct {
@@ -70,7 +70,7 @@ func AddRestartPodFlags(cmd *cobra.Command, RestartPodOptions *PodRestartOptions
 }
 
 func (o *PodRestartOptions) restartPod(podNames []string) error {
-	kubeClient, err := client.KubeClient()
+	kubeClient, err := metaclient.KubeClient()
 	if err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func (o *PodRestartOptions) restartPod(podNames []string) error {
 	return nil
 }
 
-func podRestart(ctx context.Context, clientSet *kubernetes.Clientset, namespace string, podNames []string) (*types.RestartResponse, error) {
+func podRestart(ctx context.Context, clientSet kubernetes.Interface, namespace string, podNames []string) (*types.RestartResponse, error) {
 	bodyBytes, err := json.Marshal(podNames)
 	if err != nil {
 		return nil, err

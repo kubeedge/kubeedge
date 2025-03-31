@@ -33,6 +33,7 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/client"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/metaclient"
 )
 
 var edgeDescribePodShortDescription = `Describe pod in edge node`
@@ -164,7 +165,7 @@ func (o *PodDescribeOptions) describePod(args []string) error {
 		NamespaceToPodName[pod.Namespace] = append(NamespaceToPodName[pod.Namespace], pod.Name)
 	}
 
-	c, err := client.KubeClient()
+	c, err := metaclient.KubeClient()
 	if err != nil {
 		return err
 	}

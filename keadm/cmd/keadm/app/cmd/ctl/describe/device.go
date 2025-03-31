@@ -33,6 +33,7 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/client"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/metaclient"
 )
 
 var edgeDescribeDeviceShortDescription = `Describe device in edge node`
@@ -163,7 +164,7 @@ func (o *DeviceDescribeOptions) describeDevice(args []string) error {
 		GroupVersionKind: v1beta1.SchemeGroupVersion.WithKind("Device"),
 		Scope:            meta.RESTScopeNamespace,
 	}
-	c, err := client.GetKubeConfig()
+	c, err := metaclient.GetKubeConfig()
 	if err != nil {
 		return err
 	}

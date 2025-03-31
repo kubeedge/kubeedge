@@ -31,7 +31,7 @@ import (
 
 	"github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
-	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/client"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/metaclient"
 )
 
 var edgePodLogsShortDescription = `Get pod logs in edge node`
@@ -96,7 +96,7 @@ func AddLogsPodFlags(cmd *cobra.Command, podLogsOptions *PodLogsOptions) {
 }
 
 func (o *PodLogsOptions) getPodLogs(args []string) error {
-	kubeClient, err := client.KubeClient()
+	kubeClient, err := metaclient.KubeClient()
 	if err != nil {
 		return err
 	}
@@ -119,7 +119,7 @@ func (o *PodLogsOptions) getPodLogs(args []string) error {
 	return nil
 }
 
-func logsPod(ctx context.Context, clientSet *kubernetes.Clientset, pod string, o *PodLogsOptions) (*types.LogsResponse, error) {
+func logsPod(ctx context.Context, clientSet kubernetes.Interface, pod string, o *PodLogsOptions) (*types.LogsResponse, error) {
 	logRequest := clientSet.CoreV1().RESTClient().
 		Get().
 		Namespace(o.Namespace).
