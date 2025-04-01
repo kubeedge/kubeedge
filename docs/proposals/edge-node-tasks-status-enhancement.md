@@ -25,7 +25,7 @@ In addition, there is another problem that some errors in the processing process
 ## Proposal
 ### Node Job Status
 
-The node job status consists of phase and nodeStatus fields. The phase field is one of there values: Init, InProgress, Complated or Failure. 
+The node job status consists of phase and nodeStatus fields. The phase field is one of there values: Init, InProgress, Complated or Failure.
 
 ```mermaid
 graph LR
@@ -41,7 +41,7 @@ A --Fail--> E
 - **Complated** - All node tasks are already final status and the number of node tasks failures is not greater than the defined failure rate, then set the phase to "Complated".
 - **Failure** - If the initialization of node tasks fails, or the number of failures for node tasks is greater than the defined failure rate, set the phase to "Failure".
 
-When each node reports the execution results, the node job phase will be calculated and updated. 
+When each node reports the execution results, the node job phase will be calculated and updated.
 
 The nodeStatus fields records the status of node task execution actions.
 
@@ -416,7 +416,7 @@ spec:
         ...
 ```
 
-#### 
+####
 
 After the node task status change, ControllerManager calculates the node job phase.
 ```golang
@@ -604,7 +604,7 @@ type DownstreamHandler interface {
 }
 ```
 
-Define a common event handler for node jobs. Use channel to receive node jobs that can be sent downstream. 
+Define a common event handler for node jobs. Use channel to receive node jobs that can be sent downstream.
 ```golang
 type NodeJobEventHandler struct {
     downstream chan<- wrap.NodeJob
@@ -854,7 +854,7 @@ type UpstreamHandler interface {
     UpdateNodeActionStatus(jobname string, nodetask any) error
 }
 
-// Start starts the upstream handler. 
+// Start starts the upstream handler.
 // Call the Start(ctx, upstreamV1alpha2Chan) function in the TaskManager module.
 func Start(ctx context.Context, statusChan <-chan model.Message) {
     go func() {
@@ -937,7 +937,7 @@ type UpdateStatusOptions[T operationsv1alpha2.TaskStatus] struct {
 }
 
 // TryUpdateFun defines the function type for updateing the status.
-type TryUpdateFun[T operationsv1alpha2.TaskStatus] func(ctx context.Context, 
+type TryUpdateFun[T operationsv1alpha2.TaskStatus] func(ctx context.Context,
     cli crdcliset.Interface, opts UpdateStatusOptions[T]) error
 
 // StatusUpdater defines the updater of the node task status
@@ -980,7 +980,7 @@ func (u *StatusUpdater[T]) WatchUpdateChannel() {
 
 ### EdgeCore
 
-#### Upstream message 
+#### Upstream message
 
 Define a function to build the upstream node task message and send message to Cloud (Refer to the message.ReportTaskResult(..) function in v1alpha1), the Resource structure used to generate message routes, the message body is the UpstreamMessage struct.
 ```golang
