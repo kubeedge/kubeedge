@@ -125,12 +125,18 @@ func processMessage(msg *beehiveModel.Message) {
 	resource := msg.GetResource()
 	switch msg.GetOperation() {
 	case message.OperationStart:
-		dao.InsertUrls(resource)
+		if err := dao.InsertUrls(resource); err != nil {
+			// TODO: handle err
+			klog.Error(err)
+		}
 		if atomic.CompareAndSwapInt32(&inited, 0, 1) {
 			go server(c)
 		}
 	case message.OperationStop:
-		dao.DeleteUrlsByKey(resource)
+		if err := dao.DeleteUrlsByKey(resource); err != nil {
+			// TODO: handle err
+			klog.Error(err)
+		}
 		if dao.IsTableEmpty() {
 			c <- struct{}{}
 		}
@@ -138,7 +144,7 @@ func processMessage(msg *beehiveModel.Message) {
 		r := strings.Split(resource, ":")
 		if len(r) != 2 {
 			m := "the format of resource " + resource + " is incorrect"
-			klog.Warningf(m)
+			klog.Warning(m)
 			code := http.StatusBadRequest
 			if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
 				beehiveContext.SendToGroup(modules.HubGroup, response)
@@ -241,19 +247,28 @@ func buildBasicHandler(timeout time.Duration) http.Handler {
 		if err != nil {
 			sResp.Code = http.StatusBadRequest
 			sResp.Msg = "can't read data from body of the http's request"
-			w.Write(marshalResult(sResp))
+			if _, err := w.Write(marshalResult(sResp)); err != nil {
+				// TODO: handle err
+				klog.Error(err)
+			}
 			return
 		}
 		if err = json.Unmarshal(byteData, sReq); err != nil {
 			sResp.Code = http.StatusBadRequest
 			sResp.Msg = "invalid params"
-			w.Write(marshalResult(sResp))
+			if _, err := w.Write(marshalResult(sResp)); err != nil {
+				// TODO: handle err
+				klog.Error(err)
+			}
 			return
 		}
 		if targetURL, _ := dao.GetUrlsByKey(sReq.TargetURL); targetURL == nil {
 			sResp.Code = http.StatusBadRequest
 			sResp.Msg = fmt.Sprintf("url %s is not allowed and please make a rule for this url in the cloud", sReq.TargetURL)
-			w.Write(marshalResult(sResp))
+			if _, err := w.Write(marshalResult(sResp)); err != nil {
+				// TODO: handle err
+				klog.Error(err)
+			}
 			return
 		}
 		msg := beehiveModel.NewMessage("").BuildRouter(modules.ServiceBusModuleName, modules.UserGroup,
@@ -262,21 +277,30 @@ func buildBasicHandler(timeout time.Duration) http.Handler {
 		if err != nil {
 			sResp.Code = http.StatusBadRequest
 			sResp.Msg = err.Error()
-			w.Write(marshalResult(sResp))
+			if _, err := w.Write(marshalResult(sResp)); err != nil {
+				// TODO: handle err
+				klog.Error(err)
+			}
 			return
 		}
 		resp, err := responseMessage.GetContentData()
 		if err != nil {
 			sResp.Code = http.StatusInternalServerError
 			sResp.Msg = err.Error()
-			w.Write(marshalResult(sResp))
+			if _, err := w.Write(marshalResult(sResp)); err != nil {
+				// TODO: handle err
+				klog.Error(err)
+			}
 			return
 		}
 
 		sResp.Code = http.StatusOK
 		sResp.Msg = "receive response from cloud successfully"
 		sResp.Body = string(resp)
-		w.Write(marshalResult(sResp))
+		if _, err := w.Write(marshalResult(sResp)); err != nil {
+			// TODO: handle err
+			klog.Error(err)
+		}
 	})
 }
 

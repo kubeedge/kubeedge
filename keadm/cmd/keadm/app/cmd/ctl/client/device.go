@@ -43,6 +43,12 @@ func (deviceRequest *DeviceRequest) GetDevice(ctx context.Context) (*v1beta1.Dev
 	if err != nil {
 		return nil, err
 	}
+	kinds, _, err := scheme.Scheme.ObjectKinds(device)
+	if err != nil {
+		return nil, err
+	}
+	gvk := kinds[0]
+	device.GetObjectKind().SetGroupVersionKind(gvk)
 	return device, nil
 }
 

@@ -162,7 +162,7 @@ func (mh *messageHandler) HandleConnection(connection conn.Connection) {
 				retry.DelayType(retry.FixedDelay),
 			)
 			if err != nil {
-				klog.Errorf(err.Error())
+				klog.Error(err.Error())
 			}
 		}()
 

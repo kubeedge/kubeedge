@@ -21,6 +21,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes/scheme"
 )
 
 type PodRequest struct {
@@ -39,6 +40,12 @@ func (podRequest *PodRequest) GetPod(ctx context.Context) (*corev1.Pod, error) {
 	if err != nil {
 		return nil, err
 	}
+	kinds, _, err := scheme.Scheme.ObjectKinds(pod)
+	if err != nil {
+		return nil, err
+	}
+	gvk := kinds[0]
+	pod.GetObjectKind().SetGroupVersionKind(gvk)
 	return pod, nil
 }
 

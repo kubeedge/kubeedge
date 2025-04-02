@@ -20,7 +20,7 @@ spec:
       hostNetwork: true
       containers:
         - name: cloudcore
-          image: kubeedge/cloudcore:v1.8.0
+          image: kubeedge/cloudcore:v1.20.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 10000

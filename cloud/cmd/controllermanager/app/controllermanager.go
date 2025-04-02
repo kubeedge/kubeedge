@@ -8,9 +8,7 @@ import (
 	"github.com/spf13/pflag"
 	"k8s.io/component-base/cli/globalflag"
 	"k8s.io/klog/v2"
-	controllerruntime "sigs.k8s.io/controller-runtime"
-	// set --kubeconfig option
-	_ "sigs.k8s.io/controller-runtime/pkg/client/config"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
 
 	"github.com/kubeedge/kubeedge/cloud/cmd/controllermanager/app/options"
 	"github.com/kubeedge/kubeedge/cloud/pkg/controllermanager"
@@ -40,7 +38,7 @@ func NewControllerManagerCommand(ctx context.Context) *cobra.Command {
 }
 
 func Run(ctx context.Context) {
-	kubeconfig := controllerruntime.GetConfigOrDie()
+	kubeconfig := config.GetConfigOrDie()
 	mgr, err := controllermanager.NewAppsControllerManager(ctx, kubeconfig)
 	if err != nil {
 		klog.Fatalf("failed to get controller manager, %v", err)

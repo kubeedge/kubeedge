@@ -44,7 +44,7 @@ func (tm *stubCloudHub) Enable() bool {
 	return tm.enable
 }
 
-func (tm *stubCloudHub) eventReadLoop(conn *websocket.Conn, stop chan bool) {
+func (*stubCloudHub) eventReadLoop(conn *websocket.Conn, stop chan bool) {
 	for {
 		var event interface{}
 		err := conn.ReadJSON(&event)
@@ -79,7 +79,9 @@ func (tm *stubCloudHub) podHandler(w http.ResponseWriter, req *http.Request) {
 		body, err := io.ReadAll(req.Body)
 		if err != nil {
 			klog.Errorf("read body error %v", err)
-			w.Write([]byte("read request body error"))
+			if _, err := w.Write([]byte("read request body error")); err != nil {
+				klog.Error(err)
+			}
 			return
 		}
 		klog.Infof("request body is %s\n", string(body))
@@ -87,7 +89,9 @@ func (tm *stubCloudHub) podHandler(w http.ResponseWriter, req *http.Request) {
 		var pod v1.Pod
 		if err = json.Unmarshal(body, &pod); err != nil {
 			klog.Errorf("unmarshal request body error %v", err)
-			w.Write([]byte("unmarshal request body error"))
+			if _, err := w.Write([]byte("unmarshal request body error")); err != nil {
+				klog.Error(err)
+			}
 			return
 		}
 		var msgReq *model.Message
@@ -101,11 +105,15 @@ func (tm *stubCloudHub) podHandler(w http.ResponseWriter, req *http.Request) {
 		}
 
 		if tm.wsConn != nil {
-			tm.wsConn.WriteJSON(*msgReq)
+			if err := tm.wsConn.WriteJSON(*msgReq); err != nil {
+				klog.Error(err)
+			}
 			klog.Infof("send message to edgehub is %+v\n", *msgReq)
 		}
 
-		io.WriteString(w, "OK\n")
+		if _, err := io.WriteString(w, "OK\n"); err != nil {
+			klog.Error(err)
+		}
 	}
 }
 
