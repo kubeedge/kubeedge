@@ -34,7 +34,18 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
 
-var edgeDeviceGetShortDescription = `Get devices in edge node`
+const (
+	defaultNamespace              = "default"
+	edgeDeviceGetShortDescription = `Get devices in edge node`
+)
+
+var (
+	testDeviceMode         = false
+	testDeviceEdgeNodeName = ""
+	testGetDeviceFunc      func(ctx context.Context, namespace, name string) (*v1beta1.Device, error)
+	testGetDevicesFunc     func(ctx context.Context, namespace, labelSelector string, allNamespaces bool) (*v1beta1.DeviceList, error)
+	testDeviceConfigError  error
+)
 
 type DeviceGetOptions struct {
 	Namespace     string
@@ -64,11 +75,20 @@ func NewEdgeDeviceGet() *cobra.Command {
 }
 
 func (o *DeviceGetOptions) getDevices(args []string) error {
-	config, err := util.ParseEdgecoreConfig(common.EdgecoreConfigPath)
-	if err != nil {
-		return fmt.Errorf("get edge config failed with err:%v", err)
+	var nodeName string
+
+	if testDeviceMode {
+		if testDeviceConfigError != nil {
+			return fmt.Errorf("get edge config failed with err:%v", testDeviceConfigError)
+		}
+		nodeName = testDeviceEdgeNodeName
+	} else {
+		config, err := util.ParseEdgecoreConfig(common.EdgecoreConfigPath)
+		if err != nil {
+			return fmt.Errorf("get edge config failed with err:%v", err)
+		}
+		nodeName = config.Modules.Edged.HostnameOverride
 	}
-	nodeName := config.Modules.Edged.HostnameOverride
 
 	ctx := context.Background()
 	var deviceListFilter *v1beta1.DeviceList
@@ -76,15 +96,21 @@ func (o *DeviceGetOptions) getDevices(args []string) error {
 		deviceListFilter = &v1beta1.DeviceList{
 			Items: make([]v1beta1.Device, 0, len(args)),
 		}
-		var deviceRequest *client.DeviceRequest
 
 		for _, deviceName := range args {
-			deviceRequest = &client.DeviceRequest{
-				Namespace:  o.Namespace,
-				DeviceName: deviceName,
+			var device *v1beta1.Device
+			var err error
+
+			if testDeviceMode && testGetDeviceFunc != nil {
+				device, err = testGetDeviceFunc(ctx, o.Namespace, deviceName)
+			} else {
+				deviceRequest := &client.DeviceRequest{
+					Namespace:  o.Namespace,
+					DeviceName: deviceName,
+				}
+				device, err = deviceRequest.GetDevice(ctx)
 			}
 
-			device, err := deviceRequest.GetDevice(ctx)
 			if err != nil {
 				klog.Error(err.Error())
 				continue
@@ -97,13 +123,20 @@ func (o *DeviceGetOptions) getDevices(args []string) error {
 			}
 		}
 	} else {
-		deviceRequest := &client.DeviceRequest{
-			Namespace:     o.Namespace,
-			LabelSelector: o.LabelSelector,
-			AllNamespaces: o.AllNamespaces,
+		var deviceList *v1beta1.DeviceList
+		var err error
+
+		if testDeviceMode && testGetDevicesFunc != nil {
+			deviceList, err = testGetDevicesFunc(ctx, o.Namespace, o.LabelSelector, o.AllNamespaces)
+		} else {
+			deviceRequest := &client.DeviceRequest{
+				Namespace:     o.Namespace,
+				LabelSelector: o.LabelSelector,
+				AllNamespaces: o.AllNamespaces,
+			}
+			deviceList, err = deviceRequest.GetDevices(ctx)
 		}
 
-		deviceList, err := deviceRequest.GetDevices(ctx)
 		if err != nil {
 			return err
 		}
@@ -143,7 +176,7 @@ func (o *DeviceGetOptions) getDevices(args []string) error {
 
 func NewDeviceGetOpts() *DeviceGetOptions {
 	deviceGetOptions := &DeviceGetOptions{}
-	deviceGetOptions.Namespace = "default"
+	deviceGetOptions.Namespace = defaultNamespace
 	deviceGetOptions.PrintFlags = get.NewGetPrintFlags()
 	deviceGetOptions.PrintFlags.OutputFormat = &deviceGetOptions.Output
 	return deviceGetOptions
