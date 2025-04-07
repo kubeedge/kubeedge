@@ -42,6 +42,7 @@ import (
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/pkg/util/execs"
 	pkgversion "github.com/kubeedge/kubeedge/pkg/version"
 )
 
@@ -105,7 +106,7 @@ func (co *Common) SetOSInterface(intf types.OSTypeInstaller) {
 
 // GetPackageManager get package manager of OS
 func GetPackageManager() string {
-	cmd := NewCommand("command -v apt || command -v yum || command -v pacman")
+	cmd := execs.NewCommand("command -v apt || command -v yum || command -v pacman")
 	err := cmd.Exec()
 	if err != nil {
 		fmt.Println(err)
@@ -540,7 +541,7 @@ func askForconfirm() (bool, error) {
 
 // ExecShellFilter executes shell script and filter
 func ExecShellFilter(c string) (string, error) {
-	cmd := NewCommand(c)
+	cmd := execs.NewCommand(c)
 	if err := cmd.Exec(); err != nil {
 		return "", err
 	}
@@ -617,7 +618,7 @@ func downloadServiceFile(componentType types.ComponentType, version semver.Versi
 			if os.IsNotExist(err) {
 				cmdStr := fmt.Sprintf("cd %s && sudo -E wget -t %d -k --no-check-certificate %s", storeDir, RetryTimes, ServiceFileURL)
 				fmt.Printf("[Run as service] start to download service file for %s\n", componentType)
-				if err := NewCommand(cmdStr).Exec(); err != nil {
+				if err := execs.NewCommand(cmdStr).Exec(); err != nil {
 					return err
 				}
 				fmt.Printf("[Run as service] success to download service file for %s\n", componentType)
