@@ -6,6 +6,7 @@ import (
 	"github.com/blang/semver"
 
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/pkg/util/execs"
 )
 
 // PacmanOS struct objects shall have information of the tools version to be installed
@@ -23,7 +24,7 @@ func (o *PacmanOS) SetKubeEdgeVersion(version semver.Version) {
 
 // InstallMQTT checks if MQTT is already installed and running, if not then install it from OS repo
 func (o *PacmanOS) InstallMQTT() error {
-	cmd := NewCommand("ps aux |awk '/mosquitto/ {print $11}' | awk '/mosquit/ {print}'")
+	cmd := execs.NewCommand("ps aux |awk '/mosquitto/ {print $11}' | awk '/mosquit/ {print}'")
 	if err := cmd.Exec(); err != nil {
 		return err
 	}
@@ -34,7 +35,7 @@ func (o *PacmanOS) InstallMQTT() error {
 	}
 
 	// Install mqttInst
-	cmd = NewCommand("pacman -Syy --noconfirm mosquitto")
+	cmd = execs.NewCommand("pacman -Syy --noconfirm mosquitto")
 	if err := cmd.Exec(); err != nil {
 		return err
 	}

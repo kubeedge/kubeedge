@@ -9,6 +9,7 @@ import (
 	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/pkg/util/execs"
 )
 
 // KubeCloudInstTool embeds Common struct
@@ -86,7 +87,7 @@ func (cu *KubeCloudInstTool) RunCloudCore() error {
 
 	// add +x for cloudcore
 	command := fmt.Sprintf("chmod +x %s/%s", apiconsts.KubeEdgeUsrBinPath, KubeCloudBinaryName)
-	cmd := NewCommand(command)
+	cmd := execs.NewCommand(command)
 	if err := cmd.Exec(); err != nil {
 		return err
 	}
@@ -94,7 +95,7 @@ func (cu *KubeCloudInstTool) RunCloudCore() error {
 	// start cloudcore
 	command = fmt.Sprintf("%s/%s > %s/%s.log 2>&1 &", apiconsts.KubeEdgeUsrBinPath, KubeCloudBinaryName, types.KubeEdgeLogPath, KubeCloudBinaryName)
 
-	cmd = NewCommand(command)
+	cmd = execs.NewCommand(command)
 
 	if err := cmd.Exec(); err != nil {
 		return err
