@@ -13,6 +13,7 @@ import (
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
+	"github.com/kubeedge/kubeedge/pkg/util/execs"
 	"github.com/kubeedge/kubeedge/pkg/util/files"
 )
 
@@ -289,12 +290,12 @@ func collectRuntimeData(tmpPath string) error {
 }
 
 func CopyFile(pathSrc, tmpPath string) error {
-	cmd := util.NewCommand(fmt.Sprintf(common.CmdCopyFile, pathSrc, tmpPath))
+	cmd := execs.NewCommand(fmt.Sprintf(common.CmdCopyFile, pathSrc, tmpPath))
 	return cmd.Exec()
 }
 
 func ExecuteShell(cmdStr string, tmpPath string) error {
-	cmd := util.NewCommand(fmt.Sprintf(cmdStr, tmpPath))
+	cmd := execs.NewCommand(fmt.Sprintf(cmdStr, tmpPath))
 	return cmd.Exec()
 }
 
