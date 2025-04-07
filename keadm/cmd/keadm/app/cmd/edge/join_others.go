@@ -41,6 +41,7 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/extsystem"
 	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
+	"github.com/kubeedge/kubeedge/pkg/util/execs"
 	"github.com/kubeedge/kubeedge/pkg/util/files"
 	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/api"
 )
@@ -291,7 +292,7 @@ func runEdgeCore() error {
 		)
 	}
 
-	cmd := util.NewCommand(binExec)
+	cmd := execs.NewCommand(binExec)
 	if err := cmd.Exec(); err != nil {
 		return err
 	}
