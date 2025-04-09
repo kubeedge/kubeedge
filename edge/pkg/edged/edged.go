@@ -63,6 +63,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	kefeatures "github.com/kubeedge/kubeedge/pkg/features"
 	"github.com/kubeedge/kubeedge/pkg/version"
+	"k8s.io/kubernetes/pkg/volume"
 )
 
 // GetKubeletDeps returns a Dependencies suitable for lite kubelet being run.
@@ -219,6 +220,8 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 	}
 	MakeKubeClientBridge(kubeletDeps)
 
+	kubeletDeps.VolumePlugins = filterVolumePluginsByDefaultFeatureGate(kubeletDeps.VolumePlugins)
+
 	// source of all configuration
 	kubeletDeps.PodConfig = config.NewPodConfig(config.PodConfigNotificationIncremental, kubeletDeps.Recorder, kubeletDeps.PodStartupLatencyTracker)
 
@@ -233,6 +236,23 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 	}
 
 	return ed, nil
+}
+
+// filterVolumePluginsByDefaultFeatureGate filters the list of volume plugins based on feature gate settings.
+// Currently only supports DisableCSI; by default, the CSI plugin is enabled
+func filterVolumePluginsByDefaultFeatureGate(plugins []volume.VolumePlugin) []volume.VolumePlugin {
+	// filter the current edged-supported CSI plugin enable/disable control through feature gates
+	res := []volume.VolumePlugin{}
+	for _, plugin := range plugins {
+		if plugin.GetPluginName() == csiplugin.CSIPluginName {
+			if kefeatures.DefaultFeatureGate.Enabled(kefeatures.DisableCSI) {
+				klog.Warningf("CSI plugin disabled by configuration, skipping %q", plugin.GetPluginName())
+				continue
+			}
+		}
+		res = append(res, plugin)
+	}
+	return res
 }
 
 func (e *edged) syncPod(podCfg *config.PodConfig) {
