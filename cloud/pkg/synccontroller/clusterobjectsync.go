@@ -21,6 +21,26 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
+var (
+	sendToEdge = beehiveContext.Send
+
+	buildEdgeControllerMessageFunc = buildEdgeControllerMessage
+
+	getNodeNameFunc = getNodeName
+
+	getObjectUIDFunc = getObjectUID
+
+	compareResourceVersionFunc = CompareResourceVersion
+
+	gcOrphanedClusterObjectSyncFunc = func(sctl *SyncController, sync *v1alpha1.ClusterObjectSync) {
+		sctl.gcOrphanedClusterObjectSyncImpl(sync)
+	}
+
+	deleteClusterObjectSyncFunc = func(sctl *SyncController, name string) error {
+		return sctl.crdclient.ReliablesyncsV1alpha1().ClusterObjectSyncs().Delete(context.Background(), name, *metav1.NewDeleteOptions(0))
+	}
+)
+
 func (sctl *SyncController) reconcileClusterObjectSync(sync *v1alpha1.ClusterObjectSync) {
 	var object metav1.Object
 
@@ -30,7 +50,7 @@ func (sctl *SyncController) reconcileClusterObjectSync(sync *v1alpha1.ClusterObj
 	}
 	resource := util.UnsafeKindToResource(sync.Spec.ObjectKind)
 	gvr := gv.WithResource(resource)
-	nodeName := getNodeName(sync.Name)
+	nodeName := getNodeNameFunc(sync.Name)
 	resourceType := strings.ToLower(sync.Spec.ObjectKind)
 
 	lister, err := sctl.informerManager.GetLister(gvr)
@@ -55,7 +75,7 @@ func (sctl *SyncController) reconcileClusterObjectSync(sync *v1alpha1.ClusterObj
 		return
 	}
 
-	syncObjUID := getObjectUID(sync.Name)
+	syncObjUID := getObjectUIDFunc(sync.Name)
 	if syncObjUID != string(object.GetUID()) {
 		sctl.gcOrphanedClusterObjectSync(sync)
 		return
@@ -64,23 +84,27 @@ func (sctl *SyncController) reconcileClusterObjectSync(sync *v1alpha1.ClusterObj
 	sendClusterObjectSyncEvent(nodeName, sync, resourceType, object.GetResourceVersion(), object)
 }
 
-// gcOrphanedClusterObjectSync try to send delete message to the edge node
+func (sctl *SyncController) gcOrphanedClusterObjectSync(sync *v1alpha1.ClusterObjectSync) {
+	gcOrphanedClusterObjectSyncFunc(sctl, sync)
+}
+
+// gcOrphanedClusterObjectSyncImpl try to send delete message to the edge node
 // to make sure that the resource is deleted in the edge node. After the
 // message ACK is received by `cloudHub`, the objectSync will be deleted
 // directly in the `cloudHub`. But if message build failed, the ClusterObjectSync
 // will be deleted directly in the `syncController`.
-func (sctl *SyncController) gcOrphanedClusterObjectSync(sync *v1alpha1.ClusterObjectSync) {
+func (sctl *SyncController) gcOrphanedClusterObjectSyncImpl(sync *v1alpha1.ClusterObjectSync) {
 	resourceType := strings.ToLower(sync.Spec.ObjectKind)
-	nodeName := getNodeName(sync.Name)
+	nodeName := getNodeNameFunc(sync.Name)
 	klog.V(4).Infof("%s: %s has been deleted in K8s, send the delete event to edge in sync loop", resourceType, sync.Spec.ObjectName)
 
 	object := &unstructured.Unstructured{}
 	object.SetName(sync.Spec.ObjectName)
-	object.SetUID(types.UID(getObjectUID(sync.Name)))
-	if msg := buildEdgeControllerMessage(nodeName, v2.NullNamespace, resourceType, sync.Spec.ObjectName, model.DeleteOperation, object); msg != nil {
-		beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
+	object.SetUID(types.UID(getObjectUIDFunc(sync.Name)))
+	if msg := buildEdgeControllerMessageFunc(nodeName, v2.NullNamespace, resourceType, sync.Spec.ObjectName, model.DeleteOperation, object); msg != nil {
+		sendToEdge(commonconst.DefaultContextSendModuleName, *msg)
 	} else {
-		if err := sctl.crdclient.ReliablesyncsV1alpha1().ClusterObjectSyncs().Delete(context.Background(), sync.Name, *metav1.NewDeleteOptions(0)); err != nil {
+		if err := deleteClusterObjectSyncFunc(sctl, sync.Name); err != nil {
 			klog.Errorf("Failed to delete clusterObjectSync %s: %v", sync.Name, err)
 		}
 	}
@@ -98,10 +122,10 @@ func sendClusterObjectSyncEvent(nodeName string, sync *v1alpha1.ClusterObjectSyn
 		return
 	}
 
-	if CompareResourceVersion(objectResourceVersion, sync.Status.ObjectResourceVersion) > 0 {
+	if compareResourceVersionFunc(objectResourceVersion, sync.Status.ObjectResourceVersion) > 0 {
 		// trigger the update event
 		klog.V(4).Infof("The resourceVersion: %s of %s in K8s is greater than in edgenode: %s, send the update event", objectResourceVersion, resourceType, sync.Status.ObjectResourceVersion)
-		msg := buildEdgeControllerMessage(nodeName, v2.NullNamespace, resourceType, sync.Spec.ObjectName, model.UpdateOperation, obj)
-		beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
+		msg := buildEdgeControllerMessageFunc(nodeName, v2.NullNamespace, resourceType, sync.Spec.ObjectName, model.UpdateOperation, obj)
+		sendToEdge(commonconst.DefaultContextSendModuleName, *msg)
 	}
 }
