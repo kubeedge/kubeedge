@@ -222,35 +222,13 @@ var _ = GroupDescribe("Device Management test in E2E scenario", func() {
 			gomega.Expect(err).To(gomega.BeNil())
 		})
 	})
-	// Test whether mapper can be created and deleted normally by mapper-framework.
-	// The method is to generate a mapper project based on mapper-framework and check whether the mapper project can be compiled normally to form an image.
-	ginkgo.Context("Test Mapper Creation and Deletion", func() {
+
+	ginkgo.Context("Test Mapper Creation, Deletion and Manage Device", func() {
 		ginkgo.BeforeEach(func() {
 			// Get current test SpecReport
 			testSpecReport = ginkgo.CurrentSpecReport()
 			// Start test timer
 			testTimer = utils.CRDTestTimerGroup.NewTestTimer(testSpecReport.LeafNodeText)
-		})
-		ginkgo.AfterEach(func() {
-			// End test timer
-			testTimer.End()
-			// Print result
-			testTimer.PrintResult()
-			// Delete the deployment in test
-			utils.DeleteMapperDeployment(clientSet)
-		})
-		framework.ConformanceIt("E2E_CREATE_MAPPER_1: Create mapper for modbus protocol", func() {
-			replica := int32(1)
-			utils.CreateMapperDeployment(clientSet, replica, constants.MapperName)
-		})
-	})
-
-	// Test whether mapper can properly manage edge devices.
-	// The method is to first generate a mapper project, deploy it in the cluster, then create device-model and device-instance, and observe whether
-	// the mapper reports device data correctly.
-	ginkgo.Context("Test Device and Mapper connected", func() {
-		ginkgo.BeforeEach(func() {
-
 			// Delete the device instances created
 			deviceInstanceList, err := utils.ListDevice(edgeClientSet, "default")
 			gomega.Expect(err).To(gomega.BeNil())
@@ -265,13 +243,8 @@ var _ = GroupDescribe("Device Management test in E2E scenario", func() {
 				err := utils.HandleDeviceModel(edgeClientSet, http.MethodDelete, model.Name, "")
 				gomega.Expect(err).To(gomega.BeNil())
 			}
-			// Get current test SpecReport
-			testSpecReport = ginkgo.CurrentSpecReport()
-			// Start test timer
-			testTimer = utils.CRDTestTimerGroup.NewTestTimer(testSpecReport.LeafNodeText)
 		})
 		ginkgo.AfterEach(func() {
-
 			// End test timer
 			testTimer.End()
 			// Print result
@@ -292,16 +265,21 @@ var _ = GroupDescribe("Device Management test in E2E scenario", func() {
 			}
 			// Delete the deployment in test
 			utils.DeleteMapperDeployment(clientSet)
-
 			utils.PrintTestcaseNameandStatus()
 
 		})
-		framework.ConformanceIt("E2E_TEST_DEVICE_MAPPER_CONNECT: Test the connection of mapper and device", func() {
 
-			// Create the mapper deployment
+		// Test whether mapper can be created and deleted normally by mapper-framework.
+		// The method is to generate a mapper project based on mapper-framework and check whether the mapper project can be compiled normally to form an image.
+		ginkgo.It("E2E_MAPPER_1: Create mapper for modbus protocol", func() {
 			replica := int32(1)
 			utils.CreateMapperDeployment(clientSet, replica, constants.MapperName)
-			time.Sleep(10 * time.Second)
+		})
+
+		// Test whether mapper can properly manage edge devices.
+		// The method is to first generate a mapper project, deploy it in the cluster, then create device-model and device-instance, and observe whether
+		// the mapper reports device data correctly.
+		ginkgo.It("E2E_MAPPER_2: Test the connection of mapper and device", func() {
 			// Create the modbus device model
 			err := utils.HandleDeviceModel(edgeClientSet, http.MethodPost, "", utils.ModBusMapper)
 			gomega.Expect(err).To(gomega.BeNil())
@@ -309,14 +287,11 @@ var _ = GroupDescribe("Device Management test in E2E scenario", func() {
 			err = utils.HandleDeviceInstance(edgeClientSet, http.MethodPost, constants.NodeName, "", utils.ModBusMapper)
 			gomega.Expect(err).To(gomega.BeNil())
 			time.Sleep(30 * time.Second)
-
 			// Check device status
 			device, err := utils.GetDevice(edgeClientSet, utils.DeviceName, utils.Namespace)
 			gomega.Expect(err).To(gomega.BeNil())
-
 			err = utils.CheckDeviceStatus(device, utils.PropertyName)
 			gomega.Expect(err).To(gomega.BeNil())
 		})
 	})
-
 })
