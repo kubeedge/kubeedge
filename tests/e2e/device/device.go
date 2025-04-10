@@ -271,7 +271,7 @@ var _ = GroupDescribe("Device Management test in E2E scenario", func() {
 
 		// Test whether mapper can be created and deleted normally by mapper-framework.
 		// The method is to generate a mapper project based on mapper-framework and check whether the mapper project can be compiled normally to form an image.
-		ginkgo.It("E2E_MAPPER_1: Create mapper for modbus protocol", func() {
+		framework.ConformanceIt("E2E_MAPPER_1: Create mapper for modbus protocol", func() {
 			replica := int32(1)
 			utils.CreateMapperDeployment(clientSet, replica, constants.MapperName)
 		})
@@ -279,7 +279,7 @@ var _ = GroupDescribe("Device Management test in E2E scenario", func() {
 		// Test whether mapper can properly manage edge devices.
 		// The method is to first generate a mapper project, deploy it in the cluster, then create device-model and device-instance, and observe whether
 		// the mapper reports device data correctly.
-		ginkgo.It("E2E_MAPPER_2: Test the connection of mapper and device", func() {
+		framework.ConformanceIt("E2E_MAPPER_2: Test the connection of mapper and device", func() {
 			// Create the modbus device model
 			err := utils.HandleDeviceModel(edgeClientSet, http.MethodPost, "", utils.ModBusMapper)
 			gomega.Expect(err).To(gomega.BeNil())
