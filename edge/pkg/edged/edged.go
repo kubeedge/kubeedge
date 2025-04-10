@@ -47,6 +47,7 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/config"
 	"k8s.io/kubernetes/pkg/kubelet/nodestatus"
 	kubelettypes "k8s.io/kubernetes/pkg/kubelet/types"
+	"k8s.io/kubernetes/pkg/volume"
 	csiplugin "k8s.io/kubernetes/pkg/volume/csi"
 
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
@@ -63,7 +64,6 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	kefeatures "github.com/kubeedge/kubeedge/pkg/features"
 	"github.com/kubeedge/kubeedge/pkg/version"
-	"k8s.io/kubernetes/pkg/volume"
 )
 
 // GetKubeletDeps returns a Dependencies suitable for lite kubelet being run.
