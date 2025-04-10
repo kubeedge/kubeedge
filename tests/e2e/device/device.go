@@ -280,6 +280,8 @@ var _ = GroupDescribe("Device Management test in E2E scenario", func() {
 		// The method is to first generate a mapper project, deploy it in the cluster, then create device-model and device-instance, and observe whether
 		// the mapper reports device data correctly.
 		framework.ConformanceIt("E2E_MAPPER_2: Test the connection of mapper and device", func() {
+			replica := int32(1)
+			utils.CreateMapperDeployment(clientSet, replica, constants.MapperName)
 			// Create the modbus device model
 			err := utils.HandleDeviceModel(edgeClientSet, http.MethodPost, "", utils.ModBusMapper)
 			gomega.Expect(err).To(gomega.BeNil())
