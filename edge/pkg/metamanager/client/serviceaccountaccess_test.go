@@ -22,11 +22,14 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
+
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 )
 
 const (
@@ -200,18 +203,15 @@ func createSecondMockResponse() []string {
 }
 
 func TestRoleGetter_GetRole(t *testing.T) {
-	mockQueryMeta := func(field, value string) (*[]string, error) {
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	patches.ApplyFunc(dao.QueryMeta, func(field, value string) (*[]string, error) {
 		if field == typeField && value == serviceAccountAccessVal {
 			return &[]string{createMockResponse()[0]}, nil
 		}
 		return nil, errors.New("expected Role not found")
-	}
-
-	originalImpl := queryMetaImpl
-	queryMetaImpl = mockQueryMeta
-	defer func() {
-		queryMetaImpl = originalImpl
-	}()
+	})
 
 	roleGetter := &RoleGetter{}
 
@@ -231,13 +231,11 @@ func TestRoleGetter_GetRole(t *testing.T) {
 	assert.Error(t, err)
 	assert.Nil(t, role)
 
-	originalImpl2 := queryMetaImpl
-	queryMetaImpl = func(field, value string) (*[]string, error) {
+	// Test with database error
+	patches.Reset()
+	patches.ApplyFunc(dao.QueryMeta, func(field, value string) (*[]string, error) {
 		return nil, errors.New("database error")
-	}
-	defer func() {
-		queryMetaImpl = originalImpl2
-	}()
+	})
 
 	role, err = roleGetter.GetRole("test-namespace", "test-role")
 	assert.Error(t, err)
@@ -245,18 +243,15 @@ func TestRoleGetter_GetRole(t *testing.T) {
 }
 
 func TestRoleBindingLister_ListRoleBindings(t *testing.T) {
-	mockQueryMeta := func(field, value string) (*[]string, error) {
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	patches.ApplyFunc(dao.QueryMeta, func(field, value string) (*[]string, error) {
 		if field == typeField && value == serviceAccountAccessVal {
 			return &[]string{createMockResponse()[0]}, nil
 		}
 		return nil, errors.New("expected RoleBindings not found")
-	}
-
-	originalImpl := queryMetaImpl
-	queryMetaImpl = mockQueryMeta
-	defer func() {
-		queryMetaImpl = originalImpl
-	}()
+	})
 
 	roleBindingLister := &RoleBindingLister{}
 
@@ -271,18 +266,15 @@ func TestRoleBindingLister_ListRoleBindings(t *testing.T) {
 }
 
 func TestClusterRoleGetter_GetClusterRole(t *testing.T) {
-	mockQueryMeta := func(field, value string) (*[]string, error) {
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	patches.ApplyFunc(dao.QueryMeta, func(field, value string) (*[]string, error) {
 		if field == typeField && value == serviceAccountAccessVal {
 			return &[]string{createMockResponse()[0]}, nil
 		}
 		return nil, errors.New("expected ClusterRole not found")
-	}
-
-	originalImpl := queryMetaImpl
-	queryMetaImpl = mockQueryMeta
-	defer func() {
-		queryMetaImpl = originalImpl
-	}()
+	})
 
 	clusterRoleGetter := &ClusterRoleGetter{}
 
@@ -306,18 +298,15 @@ func TestClusterRoleGetter_GetClusterRole(t *testing.T) {
 }
 
 func TestClusterRoleBindingLister_ListClusterRoleBindings(t *testing.T) {
-	mockQueryMeta := func(field, value string) (*[]string, error) {
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	patches.ApplyFunc(dao.QueryMeta, func(field, value string) (*[]string, error) {
 		if field == typeField && value == serviceAccountAccessVal {
 			return &[]string{createMockResponse()[0]}, nil
 		}
 		return nil, errors.New("expected ClusterRoleBindings not found")
-	}
-
-	originalImpl := queryMetaImpl
-	queryMetaImpl = mockQueryMeta
-	defer func() {
-		queryMetaImpl = originalImpl
-	}()
+	})
 
 	clusterRoleBindingLister := &ClusterRoleBindingLister{}
 
@@ -333,18 +322,15 @@ func TestMultipleServiceAccountAccess(t *testing.T) {
 		createSecondMockResponse()[0],
 	}
 
-	mockQueryMultiFunc := func(field, value string) (*[]string, error) {
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	patches.ApplyFunc(dao.QueryMeta, func(field, value string) (*[]string, error) {
 		if field == typeField && value == serviceAccountAccessVal {
 			return &mockData, nil
 		}
 		return nil, errors.New("expected ServiceAccountAccess not found")
-	}
-
-	originalImpl := queryMetaImpl
-	queryMetaImpl = mockQueryMultiFunc
-	defer func() {
-		queryMetaImpl = originalImpl
-	}()
+	})
 
 	roleGetter := &RoleGetter{}
 
