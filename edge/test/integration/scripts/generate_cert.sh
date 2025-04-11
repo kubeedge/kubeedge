@@ -42,7 +42,7 @@ sudo openssl req -x509 -new -nodes -key rootCA.key -sha256 -days 1024 -out rootC
 sudo openssl genrsa -out kubeedge.key 2048
 # Generate csr, Fill required details after running the command
 sudo openssl req -new -key kubeedge.key -out kubeedge.csr -passin pass:$password \
-    -subj "/C=$country/ST=$state/L=$locality/O=$organization/OU=$organizationalunit/CN=$commonname/emailAddress=$email"
+    -subj "/C=$country/ST=$state/L=$locality/O=$organization/OU=$organizationalunit/CN=system:node:edge-node/emailAddress=$email"
 # Generate Certificate
 sudo openssl x509 -req -in kubeedge.csr -CA rootCA.crt -CAkey rootCA.key -CAcreateserial -out kubeedge.crt -days 500 -sha256 -passin pass:$password
 
