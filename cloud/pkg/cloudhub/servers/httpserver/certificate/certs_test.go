@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/require"
 
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
@@ -31,14 +31,14 @@ func TestVerifyAuthorization(t *testing.T) {
 	require.NoError(t, err)
 	hubconfig.Config.CaKey = cakeyDer
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
-		ExpiresAt: time.Now().Add(-1 * time.Minute).Unix(),
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(-1 * time.Minute)),
 	})
 	expiredToken, err := token.SignedString(cakeyDer)
 	require.NoError(t, err)
 
-	token = jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
-		ExpiresAt: time.Now().Add(1 * time.Minute).Unix(),
+	token = jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Minute)),
 	})
 	passedToken, err := token.SignedString(cakeyDer)
 	require.NoError(t, err)
@@ -71,7 +71,7 @@ func TestVerifyAuthorization(t *testing.T) {
 			name:          "expired token",
 			token:         "Bearer " + expiredToken,
 			wantCode:      http.StatusUnauthorized,
-			containsError: "token validation failure, err: Token is expired",
+			containsError: "token validation failure, err: token has invalid claims: token is expire",
 		},
 		{
 			name:     "passed token",
