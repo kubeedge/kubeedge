@@ -31,7 +31,6 @@ import (
 	"net/http"
 	"os"
 	"reflect"
-	"strconv"
 	"time"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
@@ -60,7 +59,6 @@ import (
 	kubebridge "github.com/kubeedge/kubeedge/edge/pkg/edged/kubeclientbridge"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	metaclient "github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	kefeatures "github.com/kubeedge/kubeedge/pkg/features"
 	"github.com/kubeedge/kubeedge/pkg/version"
 )
@@ -122,21 +120,6 @@ func (e *edged) Enable() bool {
 
 func (e *edged) Start() {
 	klog.Info("Starting edged...")
-
-	// FIXME: cleanup this code when the static pod mqtt broker no longer needs to be compatible
-	// edged saves the data of mqtt container in sqlite3 and starts it. This is a temporary workaround and will be modified in v1.15.
-	withMqtt, err := strconv.ParseBool(os.Getenv(constants.DeployMqttContainerEnv))
-	if err == nil && withMqtt {
-		if err := dao.SaveMQTTMeta(e.nodeName); err != nil {
-			klog.ErrorS(err, "Start mqtt container failed")
-		}
-	} else {
-		// Delete a not exists key does not return an error
-		if err := dao.DeleteMetaByKey(fmt.Sprintf("default/pod/%s", constants.DefaultMosquittoContainerName)); err != nil {
-			klog.ErrorS(err, "delete mqtt container failed")
-		}
-	}
-
 	kubeletErrChan := make(chan error, 1)
 	go func() {
 		err := DefaultRunLiteKubelet(e.context, e.KubeletServer, e.KubeletDeps, e.FeatureGate)

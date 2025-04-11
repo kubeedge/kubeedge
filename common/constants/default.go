@@ -75,14 +75,4 @@ const (
 
 	EdgeNodeRoleKey   = "node-role.kubernetes.io/edge"
 	EdgeNodeRoleValue = ""
-
-	// DefaultMosquittoContainerName ...
-	// Deprecated: the mqtt broker is alreay managed by the DaemonSet in the cloud
-	DefaultMosquittoContainerName = "mqtt-kubeedge"
-	// DeployMqttContainerEnv ...
-	// Deprecated: the mqtt broker is alreay managed by the DaemonSet in the cloud
-	DeployMqttContainerEnv = "DEPLOY_MQTT_CONTAINER"
-	// DefaultMosquittoImage ...
-	// Deprecated: the mqtt broker is alreay managed by the DaemonSet in the cloud
-	DefaultMosquittoImage = "eclipse-mosquitto:1.6.15"
 )
