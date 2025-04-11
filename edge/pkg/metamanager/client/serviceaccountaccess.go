@@ -23,11 +23,20 @@ const (
 	clusterRoleKind = "ClusterRole"
 )
 
+// QueryMetaFunc defines the function signature for querying metadata
+// This allows us to replace it in tests
+type QueryMetaFunc func(field, value string) (*[]string, error)
+
+// queryMetaImpl is the actual implementation used - defaults to dao.QueryMeta
+// This can be replaced in tests
+var queryMetaImpl QueryMetaFunc = dao.QueryMeta
+
+// RoleGetter interface for getting roles
 type RoleGetter struct {
 }
 
 func (g *RoleGetter) GetRole(namespace, name string) (*rbacv1.Role, error) {
-	rst, err := dao.QueryMeta("type", model.ResourceTypeSaAccess)
+	rst, err := queryMetaImpl("type", model.ResourceTypeSaAccess)
 	if err != nil {
 		return nil, err
 	}
@@ -54,11 +63,12 @@ func (g *RoleGetter) GetRole(namespace, name string) (*rbacv1.Role, error) {
 	return nil, fmt.Errorf("role %s/%s not found", namespace, name)
 }
 
+// RoleBindingLister interface for listing role bindings
 type RoleBindingLister struct {
 }
 
 func (l *RoleBindingLister) ListRoleBindings(namespace string) ([]*rbacv1.RoleBinding, error) {
-	rst, err := dao.QueryMeta("type", model.ResourceTypeSaAccess)
+	rst, err := queryMetaImpl("type", model.ResourceTypeSaAccess)
 	if err != nil {
 		return nil, err
 	}
@@ -89,11 +99,12 @@ func (l *RoleBindingLister) ListRoleBindings(namespace string) ([]*rbacv1.RoleBi
 	return res, nil
 }
 
+// ClusterRoleGetter interface for getting cluster roles
 type ClusterRoleGetter struct {
 }
 
 func (g *ClusterRoleGetter) GetClusterRole(name string) (*rbacv1.ClusterRole, error) {
-	rst, err := dao.QueryMeta("type", model.ResourceTypeSaAccess)
+	rst, err := queryMetaImpl("type", model.ResourceTypeSaAccess)
 	if err != nil {
 		return nil, err
 	}
@@ -128,11 +139,12 @@ func (g *ClusterRoleGetter) GetClusterRole(name string) (*rbacv1.ClusterRole, er
 	return nil, fmt.Errorf("clusterrole %s not found", name)
 }
 
+// ClusterRoleBindingLister interface for listing cluster role bindings
 type ClusterRoleBindingLister struct {
 }
 
 func (l *ClusterRoleBindingLister) ListClusterRoleBindings() ([]*rbacv1.ClusterRoleBinding, error) {
-	rst, err := dao.QueryMeta("type", model.ResourceTypeSaAccess)
+	rst, err := queryMetaImpl("type", model.ResourceTypeSaAccess)
 	if err != nil {
 		klog.Errorf("failed to query meta %v", err)
 		return nil, err
