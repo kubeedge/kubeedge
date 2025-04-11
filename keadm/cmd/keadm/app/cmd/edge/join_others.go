@@ -19,6 +19,7 @@ limitations under the License.
 package edge
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -263,14 +264,18 @@ func runEdgeCore(withMqtt bool) error {
 	var binExec, tip string
 	if systemdExist {
 		tip = fmt.Sprintf("KubeEdge edgecore is running, For logs visit: journalctl -u %s.service -xe", common.EdgeCore)
-		binExec = fmt.Sprintf(
-			"sudo systemctl daemon-reload && sudo systemctl enable %s && sudo systemctl start %s",
-			common.EdgeCore, common.EdgeCore)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
+		defer cancel()
+
+		err := util.EnableAndRunSystemdUnit(ctx, "edgecore.service", true)
+		if err != nil {
+			return err
+		}
 	} else {
 		tip = fmt.Sprintf("KubeEdge edgecore is running, For logs visit: %s%s.log", util.KubeEdgeLogPath, util.KubeEdgeBinaryName)
 
 		// FIXME: cleanup this code when the static pod mqtt broker no longer needs to be compatible
-		err := os.Setenv(constants.DeployMqttContainerEnv, strconv.FormatBool(withMqtt))
+		err = os.Setenv(constants.DeployMqttContainerEnv, strconv.FormatBool(withMqtt))
 		if err != nil {
 			klog.Errorf("Set Environment %s failed, err: %v", constants.DeployMqttContainerEnv, err)
 		}
