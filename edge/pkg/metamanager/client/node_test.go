@@ -31,6 +31,11 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
+const (
+	testNodeName = "test-node"
+	testPodCIDR  = "10.0.0.0/24"
+)
+
 func TestNewNodes(t *testing.T) {
 	assert := assert.New(t)
 
@@ -45,10 +50,9 @@ func TestNewNodes(t *testing.T) {
 func TestNode_Create(t *testing.T) {
 	assert := assert.New(t)
 
-	nodeName := "test-node"
 	inputNode := &api.Node{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: nodeName,
+			Name: testNodeName,
 		},
 	}
 
@@ -94,6 +98,24 @@ func TestNode_Create(t *testing.T) {
 			expectedNode: nil,
 			expectErr:    true,
 		},
+		{
+			name: "SendSync Error",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				return nil, fmt.Errorf("sendSync error")
+			},
+			expectedNode: nil,
+			expectErr:    true,
+		},
+		{
+			name: "GetContentData Error",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				resp := model.NewMessage(message.GetID())
+				resp.Content = 123
+				return resp, nil
+			},
+			expectedNode: nil,
+			expectErr:    true,
+		},
 	}
 
 	for _, test := range testCases {
@@ -103,7 +125,7 @@ func TestNode_Create(t *testing.T) {
 				assert.Equal(modules.MetaGroup, message.GetGroup())
 				assert.Equal(modules.EdgedModuleName, message.GetSource())
 				assert.NotEmpty(message.GetID())
-				assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypeNode, nodeName), message.GetResource())
+				assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypeNode, testNodeName), message.GetResource())
 				assert.Equal(model.InsertOperation, message.GetOperation())
 
 				content, err := message.GetContentData()
@@ -122,7 +144,9 @@ func TestNode_Create(t *testing.T) {
 
 			if test.expectErr {
 				assert.Error(err)
-				assert.Nil(createdNode)
+				if test.name != "Error response" {
+					assert.Nil(createdNode)
+				}
 			} else {
 				assert.NoError(err)
 				assert.Equal(test.expectedNode, createdNode)
@@ -131,15 +155,90 @@ func TestNode_Create(t *testing.T) {
 	}
 }
 
+func TestNode_Update(t *testing.T) {
+	assert := assert.New(t)
+
+	inputNode := &api.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: testNodeName,
+		},
+		Spec: api.NodeSpec{
+			PodCIDR: testPodCIDR,
+		},
+	}
+
+	testCases := []struct {
+		name      string
+		respFunc  func(*model.Message) (*model.Message, error)
+		expectErr bool
+	}{
+		{
+			name: "Successful Update",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				resp := model.NewMessage(message.GetID())
+				return resp, nil
+			},
+			expectErr: false,
+		},
+		{
+			name: "SendSync Error",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				return nil, fmt.Errorf("sendSync error")
+			},
+			expectErr: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			mockSend := &mockSendInterface{}
+			mockSend.sendSyncFunc = func(message *model.Message) (*model.Message, error) {
+				assert.Equal(modules.MetaGroup, message.GetGroup())
+				assert.Equal(modules.EdgedModuleName, message.GetSource())
+				assert.NotEmpty(message.GetID())
+				assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypeNode, testNodeName), message.GetResource())
+				assert.Equal(model.UpdateOperation, message.GetOperation())
+
+				content, err := message.GetContentData()
+				assert.NoError(err)
+				var node api.Node
+				err = json.Unmarshal(content, &node)
+				assert.NoError(err)
+				assert.Equal(inputNode, &node)
+
+				return test.respFunc(message)
+			}
+
+			nodeClient := newNodes(namespace, mockSend)
+
+			err := nodeClient.Update(inputNode)
+
+			if test.expectErr {
+				assert.Error(err)
+				assert.Contains(err.Error(), "update node failed")
+			} else {
+				assert.NoError(err)
+			}
+		})
+	}
+}
+
+func TestNode_Delete(t *testing.T) {
+	assert := assert.New(t)
+
+	nodeClient := newNodes(namespace, nil)
+	err := nodeClient.Delete(testNodeName)
+	assert.NoError(err, "Delete method should always return nil")
+}
+
 func TestNode_Patch(t *testing.T) {
 	assert := assert.New(t)
 
-	nodeName := "test-node"
 	patchData := []byte(`{"metadata":{"labels":{"test":"label"}}}`)
 
 	expectedNode := &api.Node{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: nodeName,
+			Name: testNodeName,
 			Labels: map[string]string{
 				"test": "label",
 			},
@@ -188,6 +287,24 @@ func TestNode_Patch(t *testing.T) {
 			expectedNode: nil,
 			expectErr:    true,
 		},
+		{
+			name: "SendSync Error",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				return nil, fmt.Errorf("sendSync error")
+			},
+			expectedNode: nil,
+			expectErr:    true,
+		},
+		{
+			name: "GetContentData Error",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				resp := model.NewMessage(message.GetID())
+				resp.Content = 123
+				return resp, nil
+			},
+			expectedNode: nil,
+			expectErr:    true,
+		},
 	}
 
 	for _, test := range testCases {
@@ -197,7 +314,7 @@ func TestNode_Patch(t *testing.T) {
 				assert.Equal(modules.MetaGroup, message.GetGroup())
 				assert.Equal(modules.EdgedModuleName, message.GetSource())
 				assert.NotEmpty(message.GetID())
-				assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypeNodePatch, nodeName), message.GetResource())
+				assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypeNodePatch, testNodeName), message.GetResource())
 				assert.Equal(model.PatchOperation, message.GetOperation())
 
 				content, err := message.GetContentData()
@@ -209,14 +326,137 @@ func TestNode_Patch(t *testing.T) {
 
 			nodeClient := newNodes(namespace, mockSend)
 
-			patchedNode, err := nodeClient.Patch(nodeName, patchData)
+			patchedNode, err := nodeClient.Patch(testNodeName, patchData)
 
 			if test.expectErr {
 				assert.Error(err)
-				assert.Nil(patchedNode)
+				if test.name != "Error response" {
+					assert.Nil(patchedNode)
+				}
 			} else {
 				assert.NoError(err)
 				assert.Equal(test.expectedNode, patchedNode)
+			}
+		})
+	}
+}
+
+func TestNode_Get(t *testing.T) {
+	assert := assert.New(t)
+
+	expectedNode := &api.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: testNodeName,
+		},
+		Spec: api.NodeSpec{
+			PodCIDR: testPodCIDR,
+		},
+	}
+	nodeJSON, _ := json.Marshal(expectedNode)
+
+	testCases := []struct {
+		name         string
+		respFunc     func(*model.Message) (*model.Message, error)
+		metaDBNode   bool
+		expectedNode *api.Node
+		expectErr    bool
+	}{
+		{
+			name: "Get Node from MetaManager",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				resp := model.NewMessage(message.GetID())
+				resp.Router.Source = "other-module"
+				resp.Content = nodeJSON
+				return resp, nil
+			},
+			metaDBNode:   false,
+			expectedNode: expectedNode,
+			expectErr:    false,
+		},
+		{
+			name: "Get Node from MetaDB",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				resp := model.NewMessage(message.GetID())
+				resp.Router.Operation = model.ResponseOperation
+				resp.Router.Source = modules.MetaManagerModuleName
+				nodeList := []string{string(nodeJSON)}
+				listJSON, _ := json.Marshal(nodeList)
+				resp.Content = listJSON
+				return resp, nil
+			},
+			metaDBNode:   true,
+			expectedNode: expectedNode,
+			expectErr:    false,
+		},
+		{
+			name: "SendSync Error",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				return nil, fmt.Errorf("sendSync error")
+			},
+			metaDBNode:   false,
+			expectedNode: nil,
+			expectErr:    true,
+		},
+		{
+			name: "GetContentData Error",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				resp := model.NewMessage(message.GetID())
+				resp.Content = 123
+				return resp, nil
+			},
+			metaDBNode:   false,
+			expectedNode: nil,
+			expectErr:    true,
+		},
+		{
+			name: "MetaDB Node Unmarshal Error",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				resp := model.NewMessage(message.GetID())
+				resp.Router.Operation = model.ResponseOperation
+				resp.Router.Source = modules.MetaManagerModuleName
+				resp.Content = []byte(`{"invalid": json}`)
+				return resp, nil
+			},
+			metaDBNode:   true,
+			expectedNode: nil,
+			expectErr:    true,
+		},
+		{
+			name: "MetaManager Node Unmarshal Error",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				resp := model.NewMessage(message.GetID())
+				resp.Content = []byte(`{"invalid": json}`)
+				return resp, nil
+			},
+			metaDBNode:   false,
+			expectedNode: nil,
+			expectErr:    true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			mockSend := &mockSendInterface{}
+			mockSend.sendSyncFunc = func(message *model.Message) (*model.Message, error) {
+				assert.Equal(modules.MetaGroup, message.GetGroup())
+				assert.Equal(modules.EdgedModuleName, message.GetSource())
+				assert.NotEmpty(message.GetID())
+				assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypeNode, testNodeName), message.GetResource())
+				assert.Equal(model.QueryOperation, message.GetOperation())
+
+				return test.respFunc(message)
+			}
+
+			nodeClient := newNodes(namespace, mockSend)
+
+			node, err := nodeClient.Get(testNodeName)
+
+			if test.expectErr {
+				assert.Error(err)
+				assert.Nil(node)
+			} else {
+				assert.NoError(err)
+				assert.Equal(test.expectedNode, node)
 			}
 		})
 	}
@@ -228,10 +468,10 @@ func TestHandleNodeFromMetaDB(t *testing.T) {
 	// Test case 1: Valid node JSON in list
 	node := &api.Node{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-node",
+			Name: testNodeName,
 		},
 		Spec: api.NodeSpec{
-			PodCIDR: "10.0.0.0/24",
+			PodCIDR: testPodCIDR,
 		},
 	}
 	nodeJSON, _ := json.Marshal(node)
@@ -259,6 +499,21 @@ func TestHandleNodeFromMetaDB(t *testing.T) {
 	assert.Error(err)
 	assert.Nil(result)
 	assert.Contains(err.Error(), "unmarshal message to node from db failed")
+
+	multipleList := []string{string(nodeJSON), string(nodeJSON)}
+	multipleContent, _ := json.Marshal(multipleList)
+
+	result, err = handleNodeFromMetaDB(multipleContent)
+	assert.Error(err)
+	assert.Nil(result)
+	assert.Contains(err.Error(), "node length from meta db is 2")
+
+	invalidContent = []byte(`{"not": "a list"}`)
+
+	result, err = handleNodeFromMetaDB(invalidContent)
+	assert.Error(err)
+	assert.Nil(result)
+	assert.Contains(err.Error(), "unmarshal message to node list from db failed")
 }
 
 func TestHandleNodeFromMetaManager(t *testing.T) {
@@ -267,10 +522,10 @@ func TestHandleNodeFromMetaManager(t *testing.T) {
 	// Test case 1: Valid node JSON
 	node := &api.Node{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-node",
+			Name: testNodeName,
 		},
 		Spec: api.NodeSpec{
-			PodCIDR: "10.0.0.0/24",
+			PodCIDR: testPodCIDR,
 		},
 	}
 	content, _ := json.Marshal(node)
@@ -301,7 +556,7 @@ func TestHandleNodeResp(t *testing.T) {
 	// Test case 1: Valid node response
 	node := &api.Node{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-node",
+			Name: testNodeName,
 		},
 	}
 	nodeResp := NodeResp{
