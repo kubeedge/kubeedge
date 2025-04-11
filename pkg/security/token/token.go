@@ -22,7 +22,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 // Create will creates a new token consisting of caHash and jwt token.
