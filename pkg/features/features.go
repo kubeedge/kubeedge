@@ -33,6 +33,8 @@ const (
 	// alpha: v1.17
 	// owner: @micplus
 	ModuleRestart featuregate.Feature = "moduleRestart"
+
+	NodeTaskV1alpha2 featuregate.Feature = "nodeTaskV1alpha2"
 )
 
 // defaultFeatureGates consists of all known Kubeedge-specific feature keys.
@@ -41,4 +43,5 @@ const (
 var defaultFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
 	RequireAuthorization: {Default: false, PreRelease: featuregate.Alpha},
 	ModuleRestart:        {Default: false, PreRelease: featuregate.Alpha},
+	NodeTaskV1alpha2:     {Default: false, PreRelease: featuregate.Alpha},
 }

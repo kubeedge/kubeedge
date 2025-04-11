@@ -38,7 +38,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
+	commonmsg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 )
 
@@ -302,7 +302,7 @@ func (g *GetOptions) getPodsFromDatabase(resNS string, resNames []string) ([]dao
 		return nil, err
 	}
 	for _, v := range *podRecords {
-		namespaceParsed, _, _, _ := util.ParseResourceEdge(v.Key, model.QueryOperation)
+		namespaceParsed, _, _, _ := commonmsg.ParseResourceEdge(v.Key, model.QueryOperation)
 		if namespaceParsed != resNS && !g.AllNamespace {
 			continue
 		}
@@ -348,7 +348,7 @@ func (g *GetOptions) getNodeFromDatabase(resNS string, resNames []string) ([]dao
 		return nil, err
 	}
 	for _, v := range *nodeRecords {
-		namespaceParsed, _, _, _ := util.ParseResourceEdge(v.Key, model.QueryOperation)
+		namespaceParsed, _, _, _ := commonmsg.ParseResourceEdge(v.Key, model.QueryOperation)
 		if namespaceParsed != resNS && !g.AllNamespace {
 			continue
 		}
@@ -392,7 +392,7 @@ func (g *GetOptions) getResourceFromDatabase(resNS string, resNames []string, re
 		return nil, err
 	}
 	for _, v := range *resRecords {
-		namespaceParsed, _, _, _ := util.ParseResourceEdge(v.Key, model.QueryOperation)
+		namespaceParsed, _, _, _ := commonmsg.ParseResourceEdge(v.Key, model.QueryOperation)
 		if namespaceParsed != resNS && !g.AllNamespace {
 			continue
 		}

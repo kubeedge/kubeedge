@@ -22,6 +22,7 @@ import (
 	appsv1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
 	devicesv1beta1 "github.com/kubeedge/api/apis/devices/v1beta1"
 	operationsv1alpha1 "github.com/kubeedge/api/apis/operations/v1alpha1"
+	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 	policyv1alpha1 "github.com/kubeedge/api/apis/policy/v1alpha1"
 	reliablesyncsv1alpha1 "github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
 	rulesv1 "github.com/kubeedge/api/apis/rules/v1"
@@ -39,6 +40,7 @@ var localSchemeBuilder = runtime.SchemeBuilder{
 	appsv1alpha1.AddToScheme,
 	devicesv1beta1.AddToScheme,
 	operationsv1alpha1.AddToScheme,
+	operationsv1alpha2.AddToScheme,
 	policyv1alpha1.AddToScheme,
 	reliablesyncsv1alpha1.AddToScheme,
 	rulesv1.AddToScheme,

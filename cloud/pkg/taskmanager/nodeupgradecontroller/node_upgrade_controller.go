@@ -310,10 +310,13 @@ func (ndc *NodeUpgradeController) processUpgrade(upgrade *v1alpha1.NodeUpgradeJo
 		RequireConfirmation: upgrade.Spec.RequireConfirmation,
 	}
 
-	tolerate, err := strconv.ParseFloat(upgrade.Spec.FailureTolerate, 64)
-	if err != nil {
-		klog.Errorf("convert FailureTolerate to float64 failed: %v", err)
-		tolerate = 0.1
+	tolerate := 0.1
+	if upgrade.Spec.FailureTolerate != "" {
+		var err error
+		tolerate, err = strconv.ParseFloat(upgrade.Spec.FailureTolerate, 64)
+		if err != nil {
+			klog.Errorf("convert FailureTolerate to float64 failed: %v", err)
+		}
 	}
 
 	concurrency := upgrade.Spec.Concurrency
