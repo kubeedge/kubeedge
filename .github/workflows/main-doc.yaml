@@ -73,16 +73,28 @@ jobs:
         cases:
           - protocol: WebSocket
             version: v1.30.0
+            kindnetwork: default
+          - protocol: WebSocket
+            version: v1.30.0
+            kindnetwork: ipvs
           - protocol: WebSocket
             version: v1.29.0
+            kindnetwork: iptable
           - protocol: WebSocket
             version: v1.28.0
+            kindnetwork: nftnetwork
           - protocol: QUIC
             version: v1.30.0
+            kindnetwork: default
+          - protocol: QUIC
+            version: v1.30.0
+            kindnetwork: ipvs
           - protocol: QUIC
             version: v1.29.0
+            kindnetwork: iptable
           - protocol: QUIC
             version: v1.28.0
+            kindnetwork: nftnetwork
     timeout-minutes: 30
     name: E2e test
     needs: image-prepare

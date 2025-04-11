@@ -149,3 +149,4 @@ The location of the test code varies with type, as do the specifics of the envir
 * End-to-end ("e2e"): These are broad tests of overall system behavior and coherence. The e2e tests are in [kubeedge e2e](https://github.com/kubeedge/kubeedge/tree/master/tests/e2e).
 
 Continuous integration will run these tests on PRs.
+> if you want to run CI on your own fork, please sync tags on your fork. In parts of CI we enalbed tag checking.
