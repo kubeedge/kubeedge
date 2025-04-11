@@ -28,26 +28,9 @@ import (
 	"github.com/blang/semver"
 	"k8s.io/klog/v2"
 
+	apiconsts "github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
-)
-
-// Constants used by installers
-const (
-	KubeEdgePath        = "/etc/kubeedge/"
-	KubeEdgeBackupPath  = "/etc/kubeedge/backup/"
-	KubeEdgeUpgradePath = "/etc/kubeedge/upgrade/"
-	KubeEdgeUsrBinPath  = "/usr/local/bin"
-
-	KubeEdgeLogPath = "/var/log/kubeedge/"
-
-	KubeEdgeSocketPath = "/var/lib/kubeedge/"
-
-	EdgeRootDir = "/var/lib/edged"
-
-	EdgeKubeletDir = "/var/lib/kubelet"
-
-	SystemdBootPath = "/run/systemd/system"
 )
 
 // IsKubeEdgeProcessRunning checks if the given process is running or not
@@ -76,7 +59,7 @@ func HasSystemd() bool {
 	}
 	// checks whether `SystemdBootPath` exists and is a directory
 	// reference http://www.freedesktop.org/software/systemd/man/sd_booted.html
-	fi, err := os.Lstat(SystemdBootPath)
+	fi, err := os.Lstat(types.SystemdBootPath)
 	if err != nil {
 		return false
 	}
@@ -107,7 +90,7 @@ func CloudCoreRunningModuleV2(opt *types.ResetOptions) types.ModuleRunning {
 
 func EdgeCoreRunningModuleV2(*types.ResetOptions) types.ModuleRunning {
 	osType := GetOSInterface()
-	edgeCoreRunning, err := osType.IsKubeEdgeProcessRunning(KubeEdgeBinaryName)
+	edgeCoreRunning, err := osType.IsKubeEdgeProcessRunning(apiconsts.KubeEdgeBinaryName)
 	if err != nil {
 		// just log the error, maybe we do not care
 		klog.Warningf("failed to check edgecore is running: %v", err)
@@ -128,23 +111,15 @@ func KillKubeEdgeBinary(proc string) error {
 		binExec = fmt.Sprintf("pkill %s", proc)
 	} else {
 		systemdExist := HasSystemd()
-
 		var serviceName string
 		if running, err := isEdgeCoreServiceRunning("edge"); err == nil && running {
 			serviceName = "edge"
 		}
-		if running, err := isEdgeCoreServiceRunning(KubeEdgeBinaryName); err == nil && running {
-			serviceName = KubeEdgeBinaryName
+		if running, err := isEdgeCoreServiceRunning(apiconsts.KubeEdgeBinaryName); err == nil && running {
+			serviceName = apiconsts.KubeEdgeBinaryName
 		}
-
 		if systemdExist && serviceName != "" {
-			// remove the system service.
-			serviceFilePath := fmt.Sprintf("/etc/systemd/system/%s.service", serviceName)
-			serviceFileRemoveExec := fmt.Sprintf("&& sudo rm %s", serviceFilePath)
-			if _, err := os.Stat(serviceFilePath); err != nil && os.IsNotExist(err) {
-				serviceFileRemoveExec = ""
-			}
-			binExec = fmt.Sprintf("sudo systemctl stop %s.service && sudo systemctl disable %s.service %s && sudo systemctl daemon-reload", serviceName, serviceName, serviceFileRemoveExec)
+			binExec = fmt.Sprintf("sudo systemctl stop %s.service && sudo systemctl disable %s.service", serviceName, serviceName)
 		} else {
 			binExec = fmt.Sprintf("pkill %s", proc)
 		}
@@ -240,9 +215,9 @@ func isEdgeCoreServiceRunning(serviceName string) (bool, error) {
 // runEdgeCore starts edgecore with logs being captured
 func runEdgeCore() error {
 	// create the log dir for kubeedge
-	err := os.MkdirAll(KubeEdgeLogPath, os.ModePerm)
+	err := os.MkdirAll(types.KubeEdgeLogPath, os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("not able to create %s folder path", KubeEdgeLogPath)
+		return fmt.Errorf("not able to create %s folder path", types.KubeEdgeLogPath)
 	}
 
 	systemdExist := HasSystemd()
@@ -252,7 +227,7 @@ func runEdgeCore() error {
 		binExec = fmt.Sprintf("sudo ln /etc/kubeedge/%s.service /etc/systemd/system/%s.service && sudo systemctl daemon-reload && sudo systemctl enable %s && sudo systemctl start %s",
 			types.EdgeCore, types.EdgeCore, types.EdgeCore, types.EdgeCore)
 	} else {
-		binExec = fmt.Sprintf("%s/%s > %skubeedge/edge/%s.log 2>&1 &", KubeEdgeUsrBinPath, KubeEdgeBinaryName, KubeEdgePath, KubeEdgeBinaryName)
+		binExec = fmt.Sprintf("%s/%s > %skubeedge/edge/%s.log 2>&1 &", apiconsts.KubeEdgeUsrBinPath, apiconsts.KubeEdgeBinaryName, apiconsts.KubeEdgePath, apiconsts.KubeEdgeBinaryName)
 	}
 
 	cmd := NewCommand(binExec)
@@ -264,7 +239,7 @@ func runEdgeCore() error {
 	if systemdExist {
 		fmt.Printf("KubeEdge edgecore is running, For logs visit: journalctl -u %s.service -xe\n", types.EdgeCore)
 	} else {
-		fmt.Println("KubeEdge edgecore is running, For logs visit: ", KubeEdgeLogPath+KubeEdgeBinaryName+".log")
+		fmt.Println("KubeEdge edgecore is running, For logs visit: ", types.KubeEdgeLogPath+apiconsts.KubeEdgeBinaryName+".log")
 	}
 	return nil
 }
@@ -278,7 +253,7 @@ func installKubeEdge(options types.InstallOptions, version semver.Version) error
 
 	// create the storage path of the kubeedge installation packages
 	if options.TarballPath == "" {
-		options.TarballPath = KubeEdgePath
+		options.TarballPath = apiconsts.KubeEdgePath
 	} else {
 		err := os.MkdirAll(options.TarballPath, os.ModePerm)
 		if err != nil {
@@ -286,9 +261,9 @@ func installKubeEdge(options types.InstallOptions, version semver.Version) error
 		}
 	}
 
-	err := os.MkdirAll(KubeEdgePath, os.ModePerm)
+	err := os.MkdirAll(apiconsts.KubeEdgePath, os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("not able to create %s folder path", KubeEdgePath)
+		return fmt.Errorf("not able to create %s folder path", apiconsts.KubeEdgePath)
 	}
 
 	//Check if the same version exists, then skip the download and just checksum for it
@@ -336,7 +311,7 @@ func installKubeEdge(options types.InstallOptions, version semver.Version) error
 		}
 	}
 
-	if err := downloadServiceFile(options.ComponentType, version, KubeEdgePath); err != nil {
+	if err := downloadServiceFile(options.ComponentType, version, apiconsts.KubeEdgePath); err != nil {
 		return fmt.Errorf("fail to download service file,error:{%s}", err.Error())
 	}
 
@@ -344,7 +319,7 @@ func installKubeEdge(options types.InstallOptions, version semver.Version) error
 
 	if options.ComponentType == types.CloudCore {
 		untarFileAndMoveCloudCore = fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s/%s/cloud/cloudcore/%s %s/",
-			options.TarballPath, options.TarballPath, filename, options.TarballPath, dirname, KubeCloudBinaryName, KubeEdgeUsrBinPath)
+			options.TarballPath, options.TarballPath, filename, options.TarballPath, dirname, KubeCloudBinaryName, apiconsts.KubeEdgeUsrBinPath)
 
 		cmd := NewCommand(untarFileAndMoveCloudCore)
 		if err := cmd.Exec(); err != nil {
@@ -353,7 +328,7 @@ func installKubeEdge(options types.InstallOptions, version semver.Version) error
 		fmt.Println(cmd.GetStdOut())
 	} else if options.ComponentType == types.EdgeCore {
 		untarFileAndMoveEdgeCore = fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s/%s/edge/%s %s/",
-			options.TarballPath, options.TarballPath, filename, options.TarballPath, dirname, KubeEdgeBinaryName, KubeEdgeUsrBinPath)
+			options.TarballPath, options.TarballPath, filename, options.TarballPath, dirname, apiconsts.KubeEdgeBinaryName, apiconsts.KubeEdgeUsrBinPath)
 		cmd := NewCommand(untarFileAndMoveEdgeCore)
 		if err := cmd.Exec(); err != nil {
 			return err

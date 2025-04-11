@@ -28,7 +28,7 @@ import (
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 
 	"github.com/kubeedge/kubeedge/common/types"
-	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/client"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/metaclient"
 )
 
 var (
@@ -52,7 +52,7 @@ func NewEdgeConfirm() *cobra.Command {
 	return cmd
 }
 func confirmNode() error {
-	kubeClient, err := client.KubeClient()
+	kubeClient, err := metaclient.KubeClient()
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func confirmNode() error {
 	return nil
 }
 
-func nodeConfirm(ctx context.Context, clientSet *kubernetes.Clientset) (*types.NodeUpgradeConfirmResponse, error) {
+func nodeConfirm(ctx context.Context, clientSet kubernetes.Interface) (*types.NodeUpgradeConfirmResponse, error) {
 	result := clientSet.CoreV1().RESTClient().Post().
 		Resource("taskupgrade").
 		SubResource("confirm-upgrade").
