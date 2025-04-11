@@ -7,19 +7,52 @@ import (
 	"strings"
 )
 
+const tokenDelimiter = "."
+
 type Parser struct {
-	ValidMethods         []string // If populated, only these methods will be considered valid
-	UseJSONNumber        bool     // Use JSON Number format in JSON decoder
-	SkipClaimsValidation bool     // Skip claims validation during token parsing
+	// If populated, only these methods will be considered valid.
+	//
+	// Deprecated: In future releases, this field will not be exported anymore and should be set with an option to NewParser instead.
+	ValidMethods []string
+
+	// Use JSON Number format in JSON decoder.
+	//
+	// Deprecated: In future releases, this field will not be exported anymore and should be set with an option to NewParser instead.
+	UseJSONNumber bool
+
+	// Skip claims validation during token parsing.
+	//
+	// Deprecated: In future releases, this field will not be exported anymore and should be set with an option to NewParser instead.
+	SkipClaimsValidation bool
 }
 
-// Parse, validate, and return a token.
-// keyFunc will receive the parsed token and should return the key for validating.
-// If everything is kosher, err will be nil
+// NewParser creates a new Parser with the specified options
+func NewParser(options ...ParserOption) *Parser {
+	p := &Parser{}
+
+	// loop through our parsing options and apply them
+	for _, option := range options {
+		option(p)
+	}
+
+	return p
+}
+
+// Parse parses, validates, verifies the signature and returns the parsed token. keyFunc will
+// receive the parsed token and should return the key for validating.
 func (p *Parser) Parse(tokenString string, keyFunc Keyfunc) (*Token, error) {
 	return p.ParseWithClaims(tokenString, MapClaims{}, keyFunc)
 }
 
+// ParseWithClaims parses, validates, and verifies like Parse, but supplies a default object
+// implementing the Claims interface. This provides default values which can be overridden and
+// allows a caller to use their own type, rather than the default MapClaims implementation of
+// Claims.
+//
+// Note: If you provide a custom claim implementation that embeds one of the standard claims (such
+// as RegisteredClaims), make sure that a) you either embed a non-pointer version of the claims or
+// b) if you are using a pointer, allocate the proper memory for it before passing in the overall
+// claims, otherwise you might run into a panic.
 func (p *Parser) ParseWithClaims(tokenString string, claims Claims, keyFunc Keyfunc) (*Token, error) {
 	token, parts, err := p.ParseUnverified(tokenString, claims)
 	if err != nil {
@@ -56,12 +89,17 @@ func (p *Parser) ParseWithClaims(tokenString string, claims Claims, keyFunc Keyf
 		return token, &ValidationError{Inner: err, Errors: ValidationErrorUnverifiable}
 	}
 
+	// Perform validation
+	token.Signature = parts[2]
+	if err := token.Method.Verify(strings.Join(parts[0:2], "."), token.Signature, key); err != nil {
+		return token, &ValidationError{Inner: err, Errors: ValidationErrorSignatureInvalid}
+	}
+
 	vErr := &ValidationError{}
 
 	// Validate Claims
 	if !p.SkipClaimsValidation {
 		if err := token.Claims.Valid(); err != nil {
-
 			// If the Claims Valid returned an error, check if it is a validation error,
 			// If it was another error type, create a ValidationError with a generic ClaimsInvalid flag set
 			if e, ok := err.(*ValidationError); !ok {
@@ -69,34 +107,27 @@ func (p *Parser) ParseWithClaims(tokenString string, claims Claims, keyFunc Keyf
 			} else {
 				vErr = e
 			}
+			return token, vErr
 		}
 	}
 
-	// Perform validation
-	token.Signature = parts[2]
-	if err = token.Method.Verify(strings.Join(parts[0:2], "."), token.Signature, key); err != nil {
-		vErr.Inner = err
-		vErr.Errors |= ValidationErrorSignatureInvalid
-	}
+	// No errors so far, token is valid.
+	token.Valid = true
 
-	if vErr.valid() {
-		token.Valid = true
-		return token, nil
-	}
-
-	return token, vErr
+	return token, nil
 }
 
-// WARNING: Don't use this method unless you know what you're doing
+// ParseUnverified parses the token but doesn't validate the signature.
 //
-// This method parses the token but doesn't validate the signature. It's only
-// ever useful in cases where you know the signature is valid (because it has
-// been checked previously in the stack) and you want to extract values from
-// it.
+// WARNING: Don't use this method unless you know what you're doing.
+//
+// It's only ever useful in cases where you know the signature is valid (because it has
+// been checked previously in the stack) and you want to extract values from it.
 func (p *Parser) ParseUnverified(tokenString string, claims Claims) (token *Token, parts []string, err error) {
-	parts = strings.Split(tokenString, ".")
-	if len(parts) != 3 {
-		return nil, parts, NewValidationError("token contains an invalid number of segments", ValidationErrorMalformed)
+	var ok bool
+	parts, ok = splitToken(tokenString)
+	if !ok {
+		return nil, nil, NewValidationError("token contains an invalid number of segments", ValidationErrorMalformed)
 	}
 
 	token = &Token{Raw: tokenString}
@@ -145,4 +176,31 @@ func (p *Parser) ParseUnverified(tokenString string, claims Claims) (token *Toke
 	}
 
 	return token, parts, nil
+}
+
+// splitToken splits a token string into three parts: header, claims, and signature. It will only
+// return true if the token contains exactly two delimiters and three parts. In all other cases, it
+// will return nil parts and false.
+func splitToken(token string) ([]string, bool) {
+	parts := make([]string, 3)
+	header, remain, ok := strings.Cut(token, tokenDelimiter)
+	if !ok {
+		return nil, false
+	}
+	parts[0] = header
+	claims, remain, ok := strings.Cut(remain, tokenDelimiter)
+	if !ok {
+		return nil, false
+	}
+	parts[1] = claims
+	// One more cut to ensure the signature is the last part of the token and there are no more
+	// delimiters. This avoids an issue where malicious input could contain additional delimiters
+	// causing unecessary overhead parsing tokens.
+	signature, _, unexpected := strings.Cut(remain, tokenDelimiter)
+	if unexpected {
+		return nil, false
+	}
+	parts[2] = signature
+
+	return parts, true
 }
