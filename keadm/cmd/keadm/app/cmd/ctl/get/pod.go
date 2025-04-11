@@ -39,8 +39,17 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
 
-var (
+const (
+	defaultNamespace           = "default"
 	edgePodGetShortDescription = `Get pods in edge node`
+)
+
+var (
+	testMode         = false
+	testEdgeNodeName = ""
+	testGetPodFunc   func(ctx context.Context, namespace, name string) (*v1.Pod, error)
+	testGetPodsFunc  func(ctx context.Context, namespace, labelSelector string, allNamespaces bool) (*v1.PodList, error)
+	testConfigError  error
 )
 
 type PodGetOptions struct {
@@ -69,11 +78,20 @@ func NewEdgePodGet() *cobra.Command {
 }
 
 func (o *PodGetOptions) getPods(args []string) error {
-	config, err := util.ParseEdgecoreConfig(common.EdgecoreConfigPath)
-	if err != nil {
-		return fmt.Errorf("get edge config failed with err:%v", err)
+	var nodeName string
+
+	if testMode {
+		if testConfigError != nil {
+			return fmt.Errorf("get edge config failed with err:%v", testConfigError)
+		}
+		nodeName = testEdgeNodeName
+	} else {
+		config, err := util.ParseEdgecoreConfig(common.EdgecoreConfigPath)
+		if err != nil {
+			return fmt.Errorf("get edge config failed with err:%v", err)
+		}
+		nodeName = config.Modules.Edged.HostnameOverride
 	}
-	nodeName := config.Modules.Edged.HostnameOverride
 
 	ctx := context.Background()
 	var podList *v1.PodList
@@ -81,13 +99,21 @@ func (o *PodGetOptions) getPods(args []string) error {
 		podList = &v1.PodList{
 			Items: make([]v1.Pod, 0, len(args)),
 		}
-		var podRequest *client.PodRequest
+
 		for _, podName := range args {
-			podRequest = &client.PodRequest{
-				Namespace: o.Namespace,
-				PodName:   podName,
+			var pod *v1.Pod
+			var err error
+
+			if testMode && testGetPodFunc != nil {
+				pod, err = testGetPodFunc(ctx, o.Namespace, podName)
+			} else {
+				podRequest := &client.PodRequest{
+					Namespace: o.Namespace,
+					PodName:   podName,
+				}
+				pod, err = podRequest.GetPod(ctx)
 			}
-			pod, err := podRequest.GetPod(ctx)
+
 			if err != nil {
 				fmt.Println(err.Error())
 				continue
@@ -100,12 +126,19 @@ func (o *PodGetOptions) getPods(args []string) error {
 			}
 		}
 	} else {
-		podRequest := &client.PodRequest{
-			Namespace:     o.Namespace,
-			AllNamespaces: o.AllNamespaces,
-			LabelSelector: o.LabelSelector,
+		var err error
+
+		if testMode && testGetPodsFunc != nil {
+			podList, err = testGetPodsFunc(ctx, o.Namespace, o.LabelSelector, o.AllNamespaces)
+		} else {
+			podRequest := &client.PodRequest{
+				Namespace:     o.Namespace,
+				AllNamespaces: o.AllNamespaces,
+				LabelSelector: o.LabelSelector,
+			}
+			podList, err = podRequest.GetPods(ctx)
 		}
-		podList, err = podRequest.GetPods(ctx)
+
 		if err != nil {
 			return err
 		}
@@ -153,7 +186,7 @@ func (o *PodGetOptions) getPods(args []string) error {
 
 func NewGetOpts() *PodGetOptions {
 	podGetOptions := &PodGetOptions{}
-	podGetOptions.Namespace = "default"
+	podGetOptions.Namespace = defaultNamespace
 	podGetOptions.PrintFlags = get.NewGetPrintFlags()
 	podGetOptions.PrintFlags.OutputFormat = &podGetOptions.Output
 	return podGetOptions
