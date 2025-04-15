@@ -19,7 +19,6 @@ package image
 import (
 	"strings"
 
-	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
 
@@ -32,7 +31,6 @@ const (
 
 const (
 	EdgeCore = "edgecore"
-	EdgeMQTT = "mqtt"
 )
 
 type Set map[string]string
@@ -50,16 +48,11 @@ var edgeComponentSet = Set{
 	EdgeCore: "kubeedge/installation-package",
 }
 
-var edgeThirdPartySet = Set{
-	EdgeMQTT: constants.DefaultMosquittoImage,
-}
+var edgeThirdPartySet = Set{}
 
 func EdgeSet(opt *common.JoinOptions) Set {
 	set := edgeComponentSet.Current(opt.ImageRepository, opt.KubeEdgeVersion)
 	thirdSet := edgeThirdPartySet.Current(opt.ImageRepository, "")
-	if !opt.WithMQTT {
-		thirdSet.Remove(EdgeMQTT)
-	}
 	set = set.Merge(thirdSet)
 	return set
 }
