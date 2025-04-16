@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
@@ -53,7 +54,12 @@ func (l *SelectorListener) sendObj(event watch.Event, messageLayer messagelayer.
 	}
 	// filter message
 	filterEvent := *(event.DeepCopy())
-	filter.MessageFilter(filterEvent.Object, l.nodeName)
+	content, err := convertToUnstructured(filterEvent.Object)
+	if err != nil {
+		klog.Errorf("convertToUnstructured error %v", err)
+		return
+	}
+	filter.MessageFilter(content, l.nodeName)
 
 	namespace := accessor.GetNamespace()
 	if namespace == "" {
@@ -83,11 +89,19 @@ func (l *SelectorListener) sendObj(event watch.Event, messageLayer messagelayer.
 	msg := model.NewMessage("").
 		SetResourceVersion(accessor.GetResourceVersion()).
 		BuildRouter(modules.DynamicControllerModuleName, constants.GroupResource, resource, operation).
-		FillBody(filterEvent.Object)
+		FillBody(content.DeepCopyObject())
 
 	if err := messageLayer.Send(*msg); err != nil {
 		klog.Warningf("send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
 	} else {
 		klog.V(4).Infof("send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
 	}
+}
+
+func convertToUnstructured(obj interface{}) (*unstructured.Unstructured, error) {
+	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	if err != nil {
+		return nil, err
+	}
+	return &unstructured.Unstructured{Object: unstructuredObj}, nil
 }
