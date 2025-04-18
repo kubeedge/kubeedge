@@ -1,19 +1,65 @@
+/*
+Copyright 2025 The KubeEdge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package client
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
+	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
 	authenticationv1 "k8s.io/api/authentication/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 )
+
+const testNamespace = "test-namespace"
+
+type fakeSend struct {
+	syncHandler func(*model.Message) (*model.Message, error)
+	sendHandler func(*model.Message)
+}
+
+func (f *fakeSend) SendSync(message *model.Message) (*model.Message, error) {
+	if f.syncHandler != nil {
+		return f.syncHandler(message)
+	}
+	return &model.Message{}, nil
+}
+
+func (f *fakeSend) Send(message *model.Message) {
+	if f.sendHandler != nil {
+		f.sendHandler(message)
+	}
+}
+
+func newFakeSend() *fakeSend {
+	return &fakeSend{}
+}
 
 func TestNewServiceAccountToken(t *testing.T) {
 	assert := assert.New(t)
 
-	sendInterface := newSend()
+	sendInterface := newFakeSend()
 
 	sat := newServiceAccountToken(sendInterface)
 	assert.NotNil(sat)
@@ -53,6 +99,43 @@ func TestRequiresRefresh(t *testing.T) {
 				},
 			},
 			expected: true,
+		},
+		{
+			name: "Near expiration (within 20% of TTL)",
+			tr: &authenticationv1.TokenRequest{
+				Spec: authenticationv1.TokenRequestSpec{
+					ExpirationSeconds: func() *int64 { i := int64(3600); return &i }(),
+				},
+				Status: authenticationv1.TokenRequestStatus{
+					ExpirationTimestamp: metav1.NewTime(now.Add(time.Minute * 10)),
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "Beyond max TTL",
+			tr: &authenticationv1.TokenRequest{
+				Spec: authenticationv1.TokenRequestSpec{
+					ExpirationSeconds: func() *int64 { i := int64(24 * 3600 * 2); return &i }(),
+				},
+				Status: authenticationv1.TokenRequestStatus{
+					ExpirationTimestamp: metav1.NewTime(now.Add(time.Hour * 48)),
+					Token:               "test-token",
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "Nil ExpirationSeconds",
+			tr: &authenticationv1.TokenRequest{
+				Spec: authenticationv1.TokenRequestSpec{
+					ExpirationSeconds: nil,
+				},
+				Status: authenticationv1.TokenRequestStatus{
+					ExpirationTimestamp: metav1.NewTime(now.Add(time.Hour)),
+				},
+			},
+			expected: false,
 		},
 	}
 
@@ -226,11 +309,396 @@ func TestHandleServiceAccountTokenFromMetaManager(t *testing.T) {
 }
 
 func TestNewServiceAccount(t *testing.T) {
-	namespace := "test-namespace"
+	namespace := testNamespace
 
 	sa := newServiceAccount(namespace)
 
 	assert.NotNil(t, sa)
 	assert.IsType(t, &serviceAccount{}, sa)
 	assert.Equal(t, namespace, sa.namespace)
+}
+
+func TestDeleteServiceAccountToken(t *testing.T) {
+	assert := assert.New(t)
+
+	podUID := types.UID("pod-123")
+
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	metaList := []dao.Meta{
+		{
+			Key: "key1",
+			Value: func() string {
+				tr := authenticationv1.TokenRequest{
+					Spec: authenticationv1.TokenRequestSpec{
+						BoundObjectRef: &authenticationv1.BoundObjectReference{
+							UID: podUID,
+						},
+					},
+				}
+				data, _ := json.Marshal(tr)
+				return string(data)
+			}(),
+		},
+		{
+			Key: "key2",
+			Value: func() string {
+				tr := authenticationv1.TokenRequest{
+					Spec: authenticationv1.TokenRequestSpec{
+						BoundObjectRef: &authenticationv1.BoundObjectReference{
+							UID: "other-pod",
+						},
+					},
+				}
+				data, _ := json.Marshal(tr)
+				return string(data)
+			}(),
+		},
+	}
+
+	patches.ApplyFunc(dao.QueryAllMeta, func(key, value string) (*[]dao.Meta, error) {
+		assert.Equal("type", key)
+		assert.Equal(model.ResourceTypeServiceAccountToken, value)
+		return &metaList, nil
+	})
+
+	var deletedKey string
+	patches.ApplyFunc(dao.DeleteMetaByKey, func(key string) error {
+		deletedKey = key
+		return nil
+	})
+
+	sat := &serviceAccountToken{}
+	sat.DeleteServiceAccountToken(podUID)
+
+	assert.Equal("key1", deletedKey)
+
+	patches.Reset()
+	patches.ApplyFunc(dao.QueryAllMeta, func(key, value string) (*[]dao.Meta, error) {
+		return nil, fmt.Errorf("query error")
+	})
+
+	sat.DeleteServiceAccountToken(podUID)
+
+	patches.Reset()
+	metaList = []dao.Meta{
+		{
+			Key:   "key1",
+			Value: "invalid json",
+		},
+	}
+	patches.ApplyFunc(dao.QueryAllMeta, func(key, value string) (*[]dao.Meta, error) {
+		return &metaList, nil
+	})
+
+	sat.DeleteServiceAccountToken(podUID)
+
+	patches.Reset()
+	metaList = []dao.Meta{
+		{
+			Key: "key1",
+			Value: func() string {
+				tr := authenticationv1.TokenRequest{
+					Spec: authenticationv1.TokenRequestSpec{
+						BoundObjectRef: &authenticationv1.BoundObjectReference{
+							UID: podUID,
+						},
+					},
+				}
+				data, _ := json.Marshal(tr)
+				return string(data)
+			}(),
+		},
+	}
+	patches.ApplyFunc(dao.QueryAllMeta, func(key, value string) (*[]dao.Meta, error) {
+		return &metaList, nil
+	})
+	patches.ApplyFunc(dao.DeleteMetaByKey, func(key string) error {
+		return fmt.Errorf("delete error")
+	})
+
+	sat.DeleteServiceAccountToken(podUID)
+}
+
+func TestGetTokenLocally(t *testing.T) {
+	assert := assert.New(t)
+
+	name := "sa-name"
+	namespace := "default"
+	tr := &authenticationv1.TokenRequest{
+		Spec: authenticationv1.TokenRequestSpec{
+			ExpirationSeconds: func() *int64 { i := int64(3600); return &i }(),
+		},
+	}
+	key := KeyFunc(name, namespace, tr)
+
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	validTR := &authenticationv1.TokenRequest{
+		Spec: authenticationv1.TokenRequestSpec{
+			ExpirationSeconds: func() *int64 { i := int64(3600); return &i }(),
+		},
+		Status: authenticationv1.TokenRequestStatus{
+			ExpirationTimestamp: metav1.NewTime(time.Now().Add(time.Hour)),
+		},
+	}
+	validTRBytes, _ := json.Marshal(validTR)
+
+	patches.ApplyFunc(dao.QueryMeta, func(k, v string) (*[]string, error) {
+		assert.Equal("key", k)
+		assert.Equal(key, v)
+		return &[]string{string(validTRBytes)}, nil
+	})
+
+	result, err := getTokenLocally(name, namespace, tr)
+	assert.NoError(err)
+	assert.NotNil(result)
+
+	patches.Reset()
+	patches.ApplyFunc(dao.QueryMeta, func(k, v string) (*[]string, error) {
+		return nil, fmt.Errorf("query error")
+	})
+
+	result, err = getTokenLocally(name, namespace, tr)
+	assert.Error(err)
+	assert.Nil(result)
+	assert.Contains(err.Error(), "query error")
+
+	patches.Reset()
+	patches.ApplyFunc(dao.QueryMeta, func(k, v string) (*[]string, error) {
+		return &[]string{}, nil
+	})
+
+	result, err = getTokenLocally(name, namespace, tr)
+	assert.Error(err)
+	assert.Nil(result)
+	assert.Contains(err.Error(), "query meta")
+	assert.Contains(err.Error(), "length error")
+
+	patches.Reset()
+	patches.ApplyFunc(dao.QueryMeta, func(k, v string) (*[]string, error) {
+		return &[]string{"invalid-json"}, nil
+	})
+
+	result, err = getTokenLocally(name, namespace, tr)
+	assert.Error(err)
+	assert.Nil(result)
+
+	patches.Reset()
+	expiredTR := &authenticationv1.TokenRequest{
+		Spec: authenticationv1.TokenRequestSpec{
+			ExpirationSeconds: func() *int64 { i := int64(3600); return &i }(),
+		},
+		Status: authenticationv1.TokenRequestStatus{
+			ExpirationTimestamp: metav1.NewTime(time.Now().Add(-time.Hour)),
+		},
+	}
+	expiredTRBytes, _ := json.Marshal(expiredTR)
+
+	patches.ApplyFunc(dao.QueryMeta, func(k, v string) (*[]string, error) {
+		return &[]string{string(expiredTRBytes)}, nil
+	})
+
+	patches.ApplyFunc(dao.DeleteMetaByKey, func(k string) error {
+		assert.Equal(key, k)
+		return nil
+	})
+
+	result, err = getTokenLocally(name, namespace, tr)
+	assert.Error(err)
+	assert.Nil(result)
+	assert.Contains(err.Error(), "token expired")
+
+	patches.Reset()
+	patches.ApplyFunc(dao.QueryMeta, func(k, v string) (*[]string, error) {
+		return &[]string{string(expiredTRBytes)}, nil
+	})
+
+	patches.ApplyFunc(dao.DeleteMetaByKey, func(k string) error {
+		return fmt.Errorf("delete error")
+	})
+
+	result, err = getTokenLocally(name, namespace, tr)
+	assert.Error(err)
+	assert.Nil(result)
+	assert.Contains(err.Error(), "delete error")
+}
+
+func TestGetServiceAccountToken(t *testing.T) {
+	assert := assert.New(t)
+
+	name := "sa-name"
+	namespace := "default"
+	tr := &authenticationv1.TokenRequest{
+		Spec: authenticationv1.TokenRequestSpec{
+			ExpirationSeconds: func() *int64 { i := int64(3600); return &i }(),
+		},
+	}
+
+	fakeSender := newFakeSend()
+	sat := &serviceAccountToken{send: fakeSender}
+
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	localToken := &authenticationv1.TokenRequest{
+		Status: authenticationv1.TokenRequestStatus{
+			Token: "local-token",
+		},
+	}
+
+	patches.ApplyFunc(getTokenLocally, func(n, ns string, t *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
+		assert.Equal(name, n)
+		assert.Equal(namespace, ns)
+		assert.Equal(tr, t)
+		return localToken, nil
+	})
+
+	result, err := sat.GetServiceAccountToken(namespace, name, tr)
+	assert.NoError(err)
+	assert.Equal(localToken, result)
+
+	// Test remote token fetching
+	patches.Reset()
+	patches.ApplyFunc(getTokenLocally, func(n, ns string, t *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
+		return nil, fmt.Errorf("local token not found")
+	})
+
+	responseMsg := model.NewMessage("")
+	remoteToken := &authenticationv1.TokenRequest{
+		Status: authenticationv1.TokenRequestStatus{
+			Token: "remote-token",
+		},
+	}
+	remoteTokenBytes, _ := json.Marshal(remoteToken)
+	responseMsg.Content = remoteTokenBytes
+
+	var capturedMessage *model.Message
+	fakeSender.syncHandler = func(msg *model.Message) (*model.Message, error) {
+		capturedMessage = msg
+		return responseMsg, nil
+	}
+
+	result, err = sat.GetServiceAccountToken(namespace, name, tr)
+	assert.NoError(err)
+	assert.NotNil(result)
+	assert.NotNil(capturedMessage)
+	assert.Equal("remote-token", result.Status.Token)
+
+	patches.Reset()
+	patches.ApplyFunc(getTokenLocally, func(n, ns string, t *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
+		return nil, fmt.Errorf("local token not found")
+	})
+
+	fakeSender.syncHandler = func(msg *model.Message) (*model.Message, error) {
+		return nil, fmt.Errorf("send error")
+	}
+
+	result, err = sat.GetServiceAccountToken(namespace, name, tr)
+	assert.Error(err)
+	assert.Nil(result)
+	assert.Contains(err.Error(), "send error")
+}
+
+func TestServiceAccountGet(t *testing.T) {
+	assert := assert.New(t)
+
+	namespace := testNamespace
+	name := "test-sa"
+	sa := newServiceAccount(namespace)
+
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	patches.ApplyFunc(dao.QueryMeta, func(key, value string) (*[]string, error) {
+		assert.Equal("type", key)
+		assert.Equal(model.ResourceTypeSaAccess, value)
+
+		mockData := `{"metadata":{"namespace":"test-namespace"},"spec":{"serviceAccount":{"metadata":{"name":"test-sa"}},"serviceAccountUID":"test-uid"}}`
+		return &[]string{mockData}, nil
+	})
+
+	result, err := sa.Get(name)
+	assert.NoError(err)
+	assert.NotNil(result)
+	assert.Equal(name, result.Name)
+	assert.Equal(types.UID("test-uid"), result.UID)
+
+	patches.Reset()
+	patches.ApplyFunc(dao.QueryMeta, func(key, value string) (*[]string, error) {
+		return nil, fmt.Errorf("query error")
+	})
+
+	result, err = sa.Get(name)
+	assert.Error(err)
+	assert.Nil(result)
+	assert.Contains(err.Error(), "query error")
+
+	patches.Reset()
+	patches.ApplyFunc(dao.QueryMeta, func(key, value string) (*[]string, error) {
+		return &[]string{`{"metadata":{"namespace":"other-namespace"},"spec":{"serviceAccount":{"metadata":{"name":"other-name"}}}}`}, nil
+	})
+
+	result, err = sa.Get(name)
+	assert.Error(err)
+	assert.Nil(result)
+	assert.Contains(err.Error(), "not found")
+
+	patches.Reset()
+	patches.ApplyFunc(dao.QueryMeta, func(key, value string) (*[]string, error) {
+		return &[]string{"invalid-json"}, nil
+	})
+
+	result, err = sa.Get(name)
+	assert.Error(err)
+	assert.Nil(result)
+}
+
+func TestCheckTokenExist(t *testing.T) {
+	assert := assert.New(t)
+
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	assert.False(CheckTokenExist(""))
+
+	tr1 := authenticationv1.TokenRequest{
+		Status: authenticationv1.TokenRequestStatus{
+			Token: "test-token",
+		},
+	}
+	tr1Bytes, _ := json.Marshal(tr1)
+
+	tr2 := authenticationv1.TokenRequest{
+		Status: authenticationv1.TokenRequestStatus{
+			Token: "other-token",
+		},
+	}
+	tr2Bytes, _ := json.Marshal(tr2)
+
+	patches.ApplyFunc(dao.QueryMeta, func(key, value string) (*[]string, error) {
+		assert.Equal("type", key)
+		assert.Equal(model.ResourceTypeServiceAccountToken, value)
+		return &[]string{string(tr1Bytes), string(tr2Bytes)}, nil
+	})
+
+	assert.True(CheckTokenExist("test-token"))
+	assert.True(CheckTokenExist("other-token"))
+	assert.False(CheckTokenExist("non-existent-token"))
+
+	patches.Reset()
+	patches.ApplyFunc(dao.QueryMeta, func(key, value string) (*[]string, error) {
+		return nil, fmt.Errorf("query error")
+	})
+
+	assert.False(CheckTokenExist("test-token"))
+
+	patches.Reset()
+	patches.ApplyFunc(dao.QueryMeta, func(key, value string) (*[]string, error) {
+		return &[]string{"invalid-json"}, nil
+	})
+
+	assert.False(CheckTokenExist("test-token"))
 }
