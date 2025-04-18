@@ -33,6 +33,12 @@ const (
 	// alpha: v1.17
 	// owner: @micplus
 	ModuleRestart featuregate.Feature = "moduleRestart"
+	// SupportCSINode enables CSI (Container Storage Interface) support in edgecore.
+	// When set to true (default), CSI drivers are used for storage operations.
+	// Disabling this (set to false) will turn off all CSI-related functionality.
+	// This is useful in environments that do not require CSI or for troubleshooting.
+	// alpha: v1.21
+	SupportCSINode featuregate.Feature = "supportCSINode"
 )
 
 // defaultFeatureGates consists of all known Kubeedge-specific feature keys.
@@ -41,4 +47,5 @@ const (
 var defaultFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
 	RequireAuthorization: {Default: false, PreRelease: featuregate.Alpha},
 	ModuleRestart:        {Default: false, PreRelease: featuregate.Alpha},
+	SupportCSINode:       {Default: true, PreRelease: featuregate.Alpha},
 }
