@@ -197,3 +197,86 @@ func IncorrectDeviceInstance() v1beta1.Device {
 	}
 	return deviceInstance
 }
+
+func NewDeviceModelForMapper() v1beta1.DeviceModel {
+	modelProperty1 := v1beta1.ModelProperty{
+		Name:        PropertyName,
+		Description: "temperature in degree celsius",
+		Type:        v1beta1.INT,
+		AccessMode:  "ReadWrite",
+		Maximum:     "100",
+		Unit:        "degree celsius",
+	}
+
+	newDeviceModel := v1beta1.DeviceModel{
+		TypeMeta: v1.TypeMeta{
+			Kind:       "DeviceModel",
+			APIVersion: "devices.kubeedge.io/v1beta1",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      DeviceModelName,
+			Namespace: Namespace,
+		},
+		Spec: v1beta1.DeviceModelSpec{
+			Properties: []v1beta1.ModelProperty{modelProperty1},
+			Protocol:   ModBusMapper,
+		},
+	}
+	return newDeviceModel
+}
+
+func NewDeviceInstanceForMapper(nodeName string) v1beta1.Device {
+	property := v1beta1.DeviceProperty{
+		Name: PropertyName,
+		Desired: v1beta1.TwinProperty{
+			Value: "20",
+		},
+		CollectCycle:  10000,
+		ReportCycle:   10000,
+		ReportToCloud: true,
+		Visitors: v1beta1.VisitorConfig{
+			ProtocolName: ModBusMapper,
+			ConfigData: &v1beta1.CustomizedValue{
+				Data: map[string]interface{}{
+					"dataType": "int",
+				},
+			},
+		},
+	}
+
+	deviceInstance := v1beta1.Device{
+		TypeMeta: v1.TypeMeta{
+			Kind:       "Device",
+			APIVersion: "devices.kubeedge.io/v1beta1",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      DeviceName,
+			Namespace: Namespace,
+			Labels: map[string]string{
+				"description":  "TISimplelinkSensorTag",
+				"manufacturer": "TexasInstruments",
+				"model":        "CC2650",
+			},
+		},
+		Spec: v1beta1.DeviceSpec{
+			DeviceModelRef: &v12.LocalObjectReference{
+				Name: DeviceModelName,
+			},
+			NodeName: nodeName,
+			Protocol: v1beta1.ProtocolConfig{
+				ProtocolName: ModBusMapper,
+				ConfigData: &v1beta1.CustomizedValue{Data: map[string]interface{}{
+					"deviceID":   "2",
+					"serialPort": "/dev/ttyS0",
+					"baudRate":   "9600",
+					"dataBits":   "8",
+					"parity":     "even",
+					"stopBits":   "1",
+					"protocolID": "1",
+				}},
+			},
+			Properties: []v1beta1.DeviceProperty{property},
+		},
+	}
+	return deviceInstance
+}

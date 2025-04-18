@@ -22,6 +22,7 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
+	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/kubernetes/test/e2e/framework"
 
 	edgeclientset "github.com/kubeedge/api/client/clientset/versioned"
@@ -38,9 +39,11 @@ var _ = GroupDescribe("Device Management test in E2E scenario", func() {
 	var testTimer *utils.TestTimer
 	var testSpecReport ginkgo.SpecReport
 	var edgeClientSet edgeclientset.Interface
+	var clientSet clientset.Interface
 
 	ginkgo.BeforeEach(func() {
 		edgeClientSet = utils.NewKubeEdgeClient(framework.TestContext.KubeConfig)
+		clientSet = utils.NewKubeClient(framework.TestContext.KubeConfig)
 	})
 
 	ginkgo.Context("Test Device Model Creation, Updation and Deletion", func() {
@@ -216,6 +219,80 @@ var _ = GroupDescribe("Device Management test in E2E scenario", func() {
 		})
 		ginkgo.It("E2E_DELETE_DEVICE_2: Delete device instance for a non-existing device", func() {
 			err := utils.HandleDeviceInstance(edgeClientSet, http.MethodDelete, constants.NodeName, utils.NewModbusDeviceModel().Name, "")
+			gomega.Expect(err).To(gomega.BeNil())
+		})
+	})
+
+	ginkgo.Context("Test Mapper Creation, Deletion and Manage Device", func() {
+		ginkgo.BeforeEach(func() {
+			// Get current test SpecReport
+			testSpecReport = ginkgo.CurrentSpecReport()
+			// Start test timer
+			testTimer = utils.CRDTestTimerGroup.NewTestTimer(testSpecReport.LeafNodeText)
+			// Delete the device instances created
+			deviceInstanceList, err := utils.ListDevice(edgeClientSet, "default")
+			gomega.Expect(err).To(gomega.BeNil())
+			for _, device := range deviceInstanceList {
+				err := utils.HandleDeviceInstance(edgeClientSet, http.MethodDelete, constants.NodeName, device.Name, "")
+				gomega.Expect(err).To(gomega.BeNil())
+			}
+			// Delete any pre-existing device models
+			deviceModelList, err := utils.ListDeviceModel(edgeClientSet, "default")
+			gomega.Expect(err).To(gomega.BeNil())
+			for _, model := range deviceModelList {
+				err := utils.HandleDeviceModel(edgeClientSet, http.MethodDelete, model.Name, "")
+				gomega.Expect(err).To(gomega.BeNil())
+			}
+		})
+		ginkgo.AfterEach(func() {
+			// End test timer
+			testTimer.End()
+			// Print result
+			testTimer.PrintResult()
+			// Delete the device instances created
+			deviceInstanceList, err := utils.ListDevice(edgeClientSet, "default")
+			gomega.Expect(err).To(gomega.BeNil())
+			for _, device := range deviceInstanceList {
+				err := utils.HandleDeviceInstance(edgeClientSet, http.MethodDelete, constants.NodeName, device.Name, "")
+				gomega.Expect(err).To(gomega.BeNil())
+			}
+			// Delete the device models created
+			deviceModelList, err := utils.ListDeviceModel(edgeClientSet, "default")
+			gomega.Expect(err).To(gomega.BeNil())
+			for _, model := range deviceModelList {
+				err := utils.HandleDeviceModel(edgeClientSet, http.MethodDelete, model.Name, "")
+				gomega.Expect(err).To(gomega.BeNil())
+			}
+			// Delete the deployment in test
+			utils.DeleteMapperDeployment(clientSet)
+			utils.PrintTestcaseNameandStatus()
+
+		})
+
+		// Test whether mapper can be created and deleted normally by mapper-framework.
+		// The method is to generate a mapper project based on mapper-framework and check whether the mapper project can be compiled normally to form an image.
+		framework.ConformanceIt("E2E_MAPPER_1: Create mapper for modbus protocol", func() {
+			replica := int32(1)
+			utils.CreateMapperDeployment(clientSet, replica, constants.MapperName)
+		})
+
+		// Test whether mapper can properly manage edge devices.
+		// The method is to first generate a mapper project, deploy it in the cluster, then create device-model and device-instance, and observe whether
+		// the mapper reports device data correctly.
+		framework.ConformanceIt("E2E_MAPPER_2: Test the connection of mapper and device", func() {
+			replica := int32(1)
+			utils.CreateMapperDeployment(clientSet, replica, constants.MapperName)
+			// Create the modbus device model
+			err := utils.HandleDeviceModel(edgeClientSet, http.MethodPost, "", utils.ModBusMapper)
+			gomega.Expect(err).To(gomega.BeNil())
+			// Create the modbus device instance
+			err = utils.HandleDeviceInstance(edgeClientSet, http.MethodPost, constants.NodeName, "", utils.ModBusMapper)
+			gomega.Expect(err).To(gomega.BeNil())
+			time.Sleep(30 * time.Second)
+			// Check device status
+			device, err := utils.GetDevice(edgeClientSet, utils.DeviceName, utils.Namespace)
+			gomega.Expect(err).To(gomega.BeNil())
+			err = utils.CheckDeviceStatus(device, utils.PropertyName)
 			gomega.Expect(err).To(gomega.BeNil())
 		})
 	})
