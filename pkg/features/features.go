@@ -33,12 +33,17 @@ const (
 	// alpha: v1.17
 	// owner: @micplus
 	ModuleRestart featuregate.Feature = "moduleRestart"
+
+	// DisableNodeTaskV1alpha2 disables the node task v1alpha2 feature, uses v1alpha1.
+	// TODO: After v1.23, this switch will be removed and only v1alpha2+ will be supported.
+	DisableNodeTaskV1alpha2 featuregate.Feature = "disablenodeTaskV1alpha2"
 )
 
 // defaultFeatureGates consists of all known Kubeedge-specific feature keys.
 // To add a new feature, define a key for it above and add it here. The features will be
 // available throughout Kubeedge binaries.
 var defaultFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
-	RequireAuthorization: {Default: false, PreRelease: featuregate.Alpha},
-	ModuleRestart:        {Default: false, PreRelease: featuregate.Alpha},
+	RequireAuthorization:    {Default: false, PreRelease: featuregate.Alpha},
+	ModuleRestart:           {Default: false, PreRelease: featuregate.Alpha},
+	DisableNodeTaskV1alpha2: {Default: false, PreRelease: featuregate.Alpha},
 }

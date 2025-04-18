@@ -19,6 +19,10 @@ limitations under the License.
 package common
 
 const (
-	// DefaultCertPath is the default certificate path in edge node
-	DefaultCertPath = "/etc/kubeedge/certs"
+	KubeEdgeBackupPath  = "/etc/kubeedge/backup/"
+	KubeEdgeUpgradePath = "/etc/kubeedge/upgrade/"
+	KubeEdgeLogPath     = "/var/log/kubeedge/"
+	KubeEdgeSocketPath  = "/var/lib/kubeedge/"
+	EdgeRootDir         = "/var/lib/edged"
+	SystemdBootPath     = "/run/systemd/system"
 )

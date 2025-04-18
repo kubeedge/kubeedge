@@ -42,5 +42,5 @@ func TestFlags(t *testing.T) {
 	assert.NotNil(flag)
 	assert.Equal("use-server-side-apply", flag.Name)
 	assert.Equal("false", flag.DefValue)
-	assert.Equal("If use server-side apply when updating templates", flag.Usage)
+	assert.Equal("If use server-side apply when updating templates.", flag.Usage)
 }

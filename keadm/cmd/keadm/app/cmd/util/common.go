@@ -18,22 +18,16 @@ package util
 
 import (
 	"archive/tar"
-	"bytes"
 	"compress/gzip"
 	"crypto/sha512"
-	"crypto/tls"
-	"crypto/x509"
-	"encoding/json"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/blang/semver"
 	"github.com/spf13/pflag"
@@ -44,11 +38,11 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
 
+	apiconsts "github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/common/constants"
-	commontypes "github.com/kubeedge/kubeedge/common/types"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
-	"github.com/kubeedge/kubeedge/pkg/util/fsm"
+	"github.com/kubeedge/kubeedge/pkg/util/execs"
 	pkgversion "github.com/kubeedge/kubeedge/pkg/version"
 )
 
@@ -62,16 +56,14 @@ const (
 	EdgeServiceFile      = "edgecore.service"
 	CloudServiceFile     = "cloudcore.service"
 	ServiceFileURLFormat = "https://raw.githubusercontent.com/kubeedge/kubeedge/release-%s/build/tools/%s"
-	KubeEdgeBinaryName   = "edgecore"
-	KeadmBinaryName      = "keadm"
 
 	KubeCloudBinaryName = "cloudcore"
 
-	KubeEdgeConfigDir        = KubeEdgePath + "config/"
-	KubeEdgeCloudCoreNewYaml = KubeEdgeConfigDir + "cloudcore.yaml"
-	KubeEdgeEdgeCoreNewYaml  = KubeEdgeConfigDir + "edgecore.yaml"
+	KubeEdgeConfigDir        = apiconsts.KubeEdgePath + "config/"
+	KubeEdgeCloudCoreNewYaml = apiconsts.DefaultConfigDir + "cloudcore.yaml"
+	KubeEdgeEdgeCoreNewYaml  = apiconsts.DefaultConfigDir + "edgecore.yaml"
 
-	KubeEdgeCrdPath = KubeEdgePath + "crds"
+	KubeEdgeCrdPath = apiconsts.KubeEdgePath + "crds"
 
 	KubeEdgeCRDDownloadURL = "https://raw.githubusercontent.com/kubeedge/kubeedge/release-%s/build/crds"
 
@@ -114,7 +106,7 @@ func (co *Common) SetOSInterface(intf types.OSTypeInstaller) {
 
 // GetPackageManager get package manager of OS
 func GetPackageManager() string {
-	cmd := NewCommand("command -v apt || command -v yum || command -v pacman")
+	cmd := execs.NewCommand("command -v apt || command -v yum || command -v pacman")
 	err := cmd.Exec()
 	if err != nil {
 		fmt.Println(err)
@@ -158,7 +150,7 @@ func RunningModule() (types.ModuleRunning, error) {
 		return types.NoneRunning, err
 	}
 
-	edgeCoreRunning, err := osType.IsKubeEdgeProcessRunning(KubeEdgeBinaryName)
+	edgeCoreRunning, err := osType.IsKubeEdgeProcessRunning(apiconsts.KubeEdgeBinaryName)
 
 	if edgeCoreRunning {
 		return types.KubeEdgeEdgeRunning, nil
@@ -549,20 +541,12 @@ func askForconfirm() (bool, error) {
 
 // ExecShellFilter executes shell script and filter
 func ExecShellFilter(c string) (string, error) {
-	cmd := NewCommand(c)
+	cmd := execs.NewCommand(c)
 	if err := cmd.Exec(); err != nil {
 		return "", err
 	}
 
 	return cmd.GetStdOut(), nil
-}
-
-func FileExists(path string) bool {
-	_, err := os.Stat(path)
-	if err != nil {
-		return os.IsExist(err)
-	}
-	return true
 }
 
 func ParseEdgecoreConfig(edgecorePath string) (*v1alpha2.EdgeCoreConfig, error) {
@@ -634,7 +618,7 @@ func downloadServiceFile(componentType types.ComponentType, version semver.Versi
 			if os.IsNotExist(err) {
 				cmdStr := fmt.Sprintf("cd %s && sudo -E wget -t %d -k --no-check-certificate %s", storeDir, RetryTimes, ServiceFileURL)
 				fmt.Printf("[Run as service] start to download service file for %s\n", componentType)
-				if err := NewCommand(cmdStr).Exec(); err != nil {
+				if err := execs.NewCommand(cmdStr).Exec(); err != nil {
 					return err
 				}
 				fmt.Printf("[Run as service] success to download service file for %s\n", componentType)
@@ -645,59 +629,5 @@ func downloadServiceFile(componentType types.ComponentType, version semver.Versi
 			fmt.Printf("[Run as service] service file already exisits in %s, skip download\n", ServiceFilePath)
 		}
 	}
-	return nil
-}
-
-func ReportTaskResult(config *v1alpha2.EdgeCoreConfig, taskType, taskID string, event fsm.Event) error {
-	resp := &commontypes.NodeTaskResponse{
-		NodeName: config.Modules.Edged.HostnameOverride,
-		Event:    event.Type,
-		Action:   event.Action,
-		Time:     time.Now().UTC().Format(time.RFC3339),
-		Reason:   event.Msg,
-	}
-	edgeHub := config.Modules.EdgeHub
-	var caCrt []byte
-	caCertPath := edgeHub.TLSCAFile
-	caCrt, err := os.ReadFile(caCertPath)
-	if err != nil {
-		return fmt.Errorf("failed to read ca: %v", err)
-	}
-
-	rootCAs := x509.NewCertPool()
-	rootCAs.AppendCertsFromPEM(caCrt)
-
-	certFile := edgeHub.TLSCertFile
-	keyFile := edgeHub.TLSPrivateKeyFile
-	cliCrt, err := tls.LoadX509KeyPair(certFile, keyFile)
-
-	transport := &http.Transport{
-		DialContext: (&net.Dialer{
-			Timeout:   30 * time.Second,
-			KeepAlive: 30 * time.Second,
-		}).DialContext,
-		// use TLS configuration
-		TLSClientConfig: &tls.Config{
-			RootCAs:            rootCAs,
-			InsecureSkipVerify: false,
-			Certificates:       []tls.Certificate{cliCrt},
-		},
-	}
-
-	client := &http.Client{Transport: transport, Timeout: 30 * time.Second}
-
-	respData, err := json.Marshal(resp)
-	if err != nil {
-		return fmt.Errorf("marshal failed: %v", err)
-	}
-	url := edgeHub.HTTPServer + fmt.Sprintf("/task/%s/name/%s/node/%s/status", taskType, taskID, config.Modules.Edged.HostnameOverride)
-	result, err := client.Post(url, "application/json", bytes.NewReader(respData))
-
-	if err != nil {
-		return fmt.Errorf("post http request failed: %v", err)
-	}
-	klog.Error("report result ", result)
-	defer result.Body.Close()
-
 	return nil
 }

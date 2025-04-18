@@ -155,6 +155,9 @@ func NewDefaultEdgeCoreConfig() (config *EdgeCoreConfig) {
 				TunnelServer:            net.JoinHostPort("127.0.0.1", strconv.Itoa(constants.DefaultTunnelPort)),
 				WriteDeadline:           15,
 			},
+			TaskManager: &TaskManager{
+				Enable: false,
+			},
 		},
 	}
 	return

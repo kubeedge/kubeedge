@@ -17,6 +17,7 @@ limitations under the License.
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -24,7 +25,6 @@ import (
 
 	cmdcommon "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
-	"github.com/kubeedge/kubeedge/pkg/image"
 )
 
 // Configuration represent keadm config options
@@ -110,6 +110,7 @@ func newCmdConfigImagesPull() *cobra.Command {
 		Use:   "pull",
 		Short: "Pull images used by keadm",
 		RunE: func(_ *cobra.Command, _ []string) error {
+			ctx := context.Background()
 			ver, err := util.GetCurrentVersion(cfg.KubeEdgeVersion)
 			if err != nil {
 				return err
@@ -117,22 +118,16 @@ func newCmdConfigImagesPull() *cobra.Command {
 			cfg.KubeEdgeVersion = ver
 
 			images := GetKubeEdgeImages(cfg)
-			return pullImages(cfg.RemoteRuntimeEndpoint, "", images)
+			runtime, err := util.NewContainerRuntime(cfg.RemoteRuntimeEndpoint, "")
+			if err != nil {
+				return err
+			}
+			return runtime.PullImages(ctx, images, nil)
 		},
 		Args: cobra.NoArgs,
 	}
 	AddImagesCommonConfigFlags(cmd, cfg)
-
 	return cmd
-}
-
-func pullImages(endpoint, cgroupDriver string, images []string) error {
-	runtime, err := util.NewContainerRuntime(endpoint, cgroupDriver)
-	if err != nil {
-		return err
-	}
-
-	return runtime.PullImages(images)
 }
 
 // AddImagesCommonConfigFlags adds the flags that configure keadm
@@ -155,16 +150,16 @@ func GetKubeEdgeImages(cfg *Configuration) []string {
 	var images []string
 	switch strings.ToLower(cfg.Part) {
 	case "cloud":
-		images = image.CloudSet(cfg.ImageRepository, cfg.KubeEdgeVersion).List()
+		images = util.CloudSet(cfg.ImageRepository, cfg.KubeEdgeVersion).List()
 	case "edge":
-		images = image.EdgeSet(&cmdcommon.JoinOptions{
+		images = util.EdgeSet(&cmdcommon.JoinOptions{
 			KubeEdgeVersion: cfg.KubeEdgeVersion,
 			ImageRepository: cfg.ImageRepository,
 		}).List()
 	default:
 		// if not specified, will return all images used by both cloud part and edge part
-		cloudSet := image.CloudSet(cfg.ImageRepository, cfg.KubeEdgeVersion)
-		edgeSet := image.EdgeSet(&cmdcommon.JoinOptions{
+		cloudSet := util.CloudSet(cfg.ImageRepository, cfg.KubeEdgeVersion)
+		edgeSet := util.EdgeSet(&cmdcommon.JoinOptions{
 			KubeEdgeVersion: cfg.KubeEdgeVersion,
 			ImageRepository: cfg.ImageRepository,
 		})

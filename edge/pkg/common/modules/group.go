@@ -15,4 +15,6 @@ const (
 	UserGroup = "user"
 	// StreamGroup group
 	StreamGroup = "edgestream"
+	// TaskGroup is a group name of task-related modules.
+	TaskManagerGroup = "taskmanager"
 )
