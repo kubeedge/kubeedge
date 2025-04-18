@@ -17,12 +17,278 @@ limitations under the License.
 package stream
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
+	"io"
+	"net"
+	"net/http"
+	"net/url"
 	"testing"
 	"time"
 
+	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/util/httpstream/spdy"
 )
+
+type MockConn struct {
+	ReadData  []byte
+	ReadErr   error
+	WriteData []byte
+	WriteErr  error
+	Closed    bool
+}
+
+func (m *MockConn) Read(b []byte) (n int, err error) {
+	if m.ReadErr != nil {
+		return 0, m.ReadErr
+	}
+	if len(m.ReadData) == 0 {
+		return 0, io.EOF
+	}
+	n = copy(b, m.ReadData)
+	m.ReadData = m.ReadData[n:]
+	return n, nil
+}
+
+func (m *MockConn) Write(b []byte) (n int, err error) {
+	if m.WriteErr != nil {
+		return 0, m.WriteErr
+	}
+	m.WriteData = append(m.WriteData, b...)
+	return len(b), nil
+}
+
+func (m *MockConn) Close() error {
+	m.Closed = true
+	return nil
+}
+
+func (m *MockConn) LocalAddr() net.Addr                { return nil }
+func (m *MockConn) RemoteAddr() net.Addr               { return nil }
+func (m *MockConn) SetDeadline(t time.Time) error      { return nil }
+func (m *MockConn) SetReadDeadline(t time.Time) error  { return nil }
+func (m *MockConn) SetWriteDeadline(t time.Time) error { return nil }
+
+type MockTunneler struct {
+	Messages    []*Message
+	WriteErr    error
+	ControlData []byte
+	ControlType int
+	ControlErr  error
+	ReaderType  int
+	ReaderData  []byte
+	ReaderErr   error
+	CloseErr    error
+	Closed      bool
+}
+
+func (m *MockTunneler) WriteMessage(msg *Message) error {
+	if m.WriteErr != nil {
+		return m.WriteErr
+	}
+	m.Messages = append(m.Messages, msg)
+	return nil
+}
+
+func (m *MockTunneler) WriteControl(messageType int, data []byte, deadline time.Time) error {
+	m.ControlType = messageType
+	m.ControlData = data
+	return m.ControlErr
+}
+
+func (m *MockTunneler) NextReader() (messageType int, r io.Reader, err error) {
+	if m.ReaderErr != nil {
+		return 0, nil, m.ReaderErr
+	}
+	return m.ReaderType, io.NopCloser(bytes.NewReader(m.ReaderData)), nil
+}
+
+func (m *MockTunneler) Close() error {
+	m.Closed = true
+	return m.CloseErr
+}
+
+func TestExecConnection_CleanChannel(t *testing.T) {
+	assert := assert.New(t)
+
+	edgedExecConn := &EdgedExecConnection{
+		Stop: make(chan struct{}, 2),
+	}
+
+	edgedExecConn.Stop <- struct{}{}
+	edgedExecConn.Stop <- struct{}{}
+
+	edgedExecConn.CleanChannel()
+
+	assert.Equal(0, len(edgedExecConn.Stop))
+}
+
+func TestExecConnection_receiveFromCloudStream(t *testing.T) {
+	assert := assert.New(t)
+
+	mockConn := &MockConn{}
+	stop := make(chan struct{}, 1)
+
+	edgedExecConn := &EdgedExecConnection{
+		MessID:   uint64(100),
+		ReadChan: make(chan *Message, 3),
+	}
+
+	removeConnMsg := NewMessage(edgedExecConn.MessID, MessageTypeRemoveConnect, nil)
+
+	dataBytes := []byte("test data")
+	dataMsg := NewMessage(edgedExecConn.MessID, MessageTypeData, dataBytes)
+
+	edgedExecConn.ReadChan <- removeConnMsg
+	edgedExecConn.ReadChan <- dataMsg
+
+	close(edgedExecConn.ReadChan)
+
+	edgedExecConn.receiveFromCloudStream(mockConn, stop)
+
+	assert.Equal(1, len(stop))
+
+	assert.Equal(dataBytes, mockConn.WriteData)
+}
+
+func TestExecConnection_write2CloudStream(t *testing.T) {
+	assert := assert.New(t)
+
+	mockTunneler := &MockTunneler{}
+	stop := make(chan struct{}, 1)
+
+	mockConn := &MockConn{
+		ReadData: []byte("test data for tunnel"),
+	}
+
+	edgedExecConn := &EdgedExecConnection{
+		MessID: uint64(100),
+	}
+
+	go edgedExecConn.write2CloudStream(mockTunneler, mockConn, stop)
+
+	time.Sleep(100 * time.Millisecond)
+
+	assert.Equal(1, len(mockTunneler.Messages))
+	assert.Equal(MessageTypeData, mockTunneler.Messages[0].MessageType)
+	assert.Equal([]byte("test data for tunnel"), mockTunneler.Messages[0].Data)
+
+	assert.Equal(1, len(stop))
+}
+
+func TestExecConnection_write2CloudStream_ReadError(t *testing.T) {
+	assert := assert.New(t)
+
+	mockTunneler := &MockTunneler{}
+	stop := make(chan struct{}, 1)
+
+	mockConn := &MockConn{
+		ReadErr: errors.New("read error"),
+	}
+
+	edgedExecConn := &EdgedExecConnection{
+		MessID: uint64(100),
+	}
+
+	go edgedExecConn.write2CloudStream(mockTunneler, mockConn, stop)
+
+	time.Sleep(100 * time.Millisecond)
+
+	assert.Equal(0, len(mockTunneler.Messages))
+
+	assert.Equal(1, len(stop))
+}
+
+func TestExecConnection_write2CloudStream_WriteError(t *testing.T) {
+	assert := assert.New(t)
+
+	mockTunneler := &MockTunneler{
+		WriteErr: errors.New("tunnel write error"),
+	}
+	stop := make(chan struct{}, 1)
+
+	mockConn := &MockConn{
+		ReadData: []byte("test data for tunnel"),
+	}
+
+	edgedExecConn := &EdgedExecConnection{
+		MessID: uint64(100),
+	}
+
+	go edgedExecConn.write2CloudStream(mockTunneler, mockConn, stop)
+
+	time.Sleep(100 * time.Millisecond)
+
+	assert.Equal(1, len(stop))
+}
+
+func TestExecConnection_Serve(t *testing.T) {
+	assert := assert.New(t)
+
+	edgedExecConn := &EdgedExecConnection{
+		MessID:   uint64(100),
+		ReadChan: make(chan *Message, 10),
+		Stop:     make(chan struct{}, 1),
+		URL:      url.URL{Scheme: "https", Host: "example.com", Path: "/exec"},
+		Header:   http.Header{},
+		Method:   "POST",
+	}
+
+	mockConn := &MockConn{}
+	mockTunneler := &MockTunneler{}
+
+	mockRoundTripper := &MockRoundTripper{
+		DialConn: mockConn,
+	}
+
+	patchNewRequest := gomonkey.ApplyFunc(http.NewRequest,
+		func(method, url string, body io.Reader) (*http.Request, error) {
+			return &http.Request{}, nil
+		})
+	defer patchNewRequest.Reset()
+
+	patchTripper := gomonkey.ApplyFunc(spdy.NewRoundTripper,
+		func(tlsConfig interface{}) (http.RoundTripper, error) {
+			return mockRoundTripper, nil
+		})
+	defer patchTripper.Reset()
+
+	go func() {
+		time.Sleep(100 * time.Millisecond)
+		edgedExecConn.Stop <- struct{}{}
+	}()
+
+	err := edgedExecConn.Serve(mockTunneler)
+
+	assert.NoError(err)
+
+	found := false
+	for _, msg := range mockTunneler.Messages {
+		if msg.MessageType == MessageTypeRemoveConnect {
+			found = true
+			break
+		}
+	}
+	assert.True(found, "Expected a RemoveConnect message to be sent")
+}
+
+type MockRoundTripper struct {
+	DialConn net.Conn
+	DialErr  error
+}
+
+func (m *MockRoundTripper) RoundTrip(*http.Request) (*http.Response, error) {
+	return nil, nil
+}
+
+func (m *MockRoundTripper) Dial(req *http.Request) (net.Conn, error) {
+	if m.DialErr != nil {
+		return nil, m.DialErr
+	}
+	return m.DialConn, nil
+}
 
 func TestExecConnection_CreateConnectMessage(t *testing.T) {
 	assert := assert.New(t)
