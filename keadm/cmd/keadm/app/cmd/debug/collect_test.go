@@ -22,8 +22,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
-	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
 
 func TestCollect_NewCollect(t *testing.T) {
@@ -49,8 +49,8 @@ func TestCollect_NewCollect(t *testing.T) {
 		{
 			flagName:    "config",
 			shorthand:   "c",
-			defaultVal:  common.EdgecoreConfigPath,
-			expectedVal: common.EdgecoreConfigPath,
+			defaultVal:  constants.EdgecoreConfigPath,
+			expectedVal: constants.EdgecoreConfigPath,
 		},
 		{
 			flagName:    "detail",
@@ -67,8 +67,8 @@ func TestCollect_NewCollect(t *testing.T) {
 		{
 			flagName:    "log-path",
 			shorthand:   "l",
-			defaultVal:  util.KubeEdgeLogPath,
-			expectedVal: util.KubeEdgeLogPath,
+			defaultVal:  common.KubeEdgeLogPath,
+			expectedVal: common.KubeEdgeLogPath,
 		},
 	}
 
@@ -99,8 +99,8 @@ func TestCollect_AddCollectOtherFlags(t *testing.T) {
 		{
 			flagName:    "config",
 			shorthand:   "c",
-			defaultVal:  common.EdgecoreConfigPath,
-			expectedVal: common.EdgecoreConfigPath,
+			defaultVal:  constants.EdgecoreConfigPath,
+			expectedVal: constants.EdgecoreConfigPath,
 		},
 		{
 			flagName:    "detail",
@@ -117,8 +117,8 @@ func TestCollect_AddCollectOtherFlags(t *testing.T) {
 		{
 			flagName:    "log-path",
 			shorthand:   "l",
-			defaultVal:  util.KubeEdgeLogPath,
-			expectedVal: util.KubeEdgeLogPath,
+			defaultVal:  common.KubeEdgeLogPath,
+			expectedVal: common.KubeEdgeLogPath,
 		},
 	}
 
@@ -139,7 +139,7 @@ func TestCollect_NewCollectOptions(t *testing.T) {
 	co := newCollectOptions()
 	assert.NotNil(co)
 
-	assert.Equal(common.EdgecoreConfigPath, co.Config)
+	assert.Equal(constants.EdgecoreConfigPath, co.Config)
 	assert.Equal(".", co.OutputPath)
 	assert.Equal(false, co.Detail)
 }

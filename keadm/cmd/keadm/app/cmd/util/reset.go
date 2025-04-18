@@ -24,6 +24,7 @@ import (
 	utilruntime "k8s.io/kubernetes/cmd/kubeadm/app/util/runtime"
 	utilsexec "k8s.io/utils/exec"
 
+	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
 
@@ -57,14 +58,14 @@ func RemoveContainers(criSocketPath string, execer utilsexec.Interface) error {
 
 func CleanDirectories(isEdgeNode bool) error {
 	var dirToClean = []string{
-		KubeEdgePath,
-		KubeEdgeLogPath,
-		KubeEdgeSocketPath,
-		EdgeRootDir,
+		constants.KubeEdgePath,
+		common.KubeEdgeLogPath,
+		common.KubeEdgeSocketPath,
+		common.EdgeRootDir,
 	}
 
 	if isEdgeNode {
-		dirToClean = append(dirToClean, EdgeKubeletDir)
+		dirToClean = append(dirToClean, constants.DefaultRootDir)
 	}
 
 	for _, dir := range dirToClean {

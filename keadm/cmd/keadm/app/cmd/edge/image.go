@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/kubeedge/kubeedge/pkg/image"
@@ -40,9 +41,9 @@ func request(opt *common.JoinOptions, step *common.Step) error {
 	}
 
 	step.Printf("Copy resources from the image to the management directory")
-	files := map[string]string{
-		filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName): filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName),
-	}
+	containerPath := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName)
+	hostPath := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName)
+	files := map[string]string{containerPath: hostPath}
 	if err := runtime.CopyResources(imageSet.Get(image.EdgeCore), files); err != nil {
 		return fmt.Errorf("copy resources failed: %v", err)
 	}
