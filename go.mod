@@ -28,6 +28,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.5
 	github.com/prometheus/client_golang v1.16.0
+	github.com/safchain/ethtool v0.5.9
 	github.com/shirou/gopsutil v2.21.11+incompatible
 	github.com/shirou/gopsutil/v3 v3.23.2
 	github.com/spf13/cobra v1.7.0
