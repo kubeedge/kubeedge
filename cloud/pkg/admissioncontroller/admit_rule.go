@@ -1,6 +1,7 @@
 package admissioncontroller
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -10,13 +11,34 @@ import (
 	rulesv1 "github.com/kubeedge/api/apis/rules/v1"
 )
 
+// RuleEndpointGetter defines the interface for getting RuleEndpoints
+type RuleEndpointGetter interface {
+	GetRuleEndpoint(namespace, name string) (*rulesv1.RuleEndpoint, error)
+	ListRule(namespace string) ([]rulesv1.Rule, error)
+}
+
+var (
+	skipInternalCall bool
+	errTest          = errors.New("test error")
+)
+
 var (
 	sourceToTarget = [][2]rulesv1.RuleEndpointTypeDef{
 		{rulesv1.RuleEndpointTypeRest, rulesv1.RuleEndpointTypeEventBus},
 		{rulesv1.RuleEndpointTypeRest, rulesv1.RuleEndpointTypeServiceBus},
 		{rulesv1.RuleEndpointTypeEventBus, rulesv1.RuleEndpointTypeRest},
 	}
+
+	// controllerInstance is the default controller implementation
+	controllerInstance RuleEndpointGetter = controller
 )
+
+// SetControllerForTesting allows tests to replace the controller with a test double
+func SetControllerForTesting(c RuleEndpointGetter) func() {
+	old := controllerInstance
+	controllerInstance = c
+	return func() { controllerInstance = old }
+}
 
 func admitRule(review admissionv1.AdmissionReview) *admissionv1.AdmissionResponse {
 	reviewResponse := admissionv1.AdmissionResponse{}
@@ -49,7 +71,7 @@ func admitRule(review admissionv1.AdmissionReview) *admissionv1.AdmissionRespons
 
 func validateRule(rule *rulesv1.Rule) error {
 	sourceKey := fmt.Sprintf("%s/%s", rule.Namespace, rule.Spec.Source)
-	sourceEndpoint, err := controller.getRuleEndpoint(rule.Namespace, rule.Spec.Source)
+	sourceEndpoint, err := controllerInstance.GetRuleEndpoint(rule.Namespace, rule.Spec.Source)
 	if err != nil {
 		return fmt.Errorf("cant get source ruleEndpoint %s. Reason: %w", sourceKey, err)
 	} else if sourceEndpoint == nil {
@@ -59,7 +81,7 @@ func validateRule(rule *rulesv1.Rule) error {
 		return err
 	}
 	targetKey := fmt.Sprintf("%s/%s", rule.Namespace, rule.Spec.Target)
-	targetEndpoint, err := controller.getRuleEndpoint(rule.Namespace, rule.Spec.Target)
+	targetEndpoint, err := controllerInstance.GetRuleEndpoint(rule.Namespace, rule.Spec.Target)
 	if err != nil {
 		return fmt.Errorf("cant get target ruleEndpoint %s. Reason: %w", targetKey, err)
 	} else if targetEndpoint == nil {
@@ -81,6 +103,7 @@ func validateRule(rule *rulesv1.Rule) error {
 	}
 	return nil
 }
+
 func validateSourceRuleEndpoint(ruleEndpoint *rulesv1.RuleEndpoint, sourceResource map[string]string) error {
 	switch ruleEndpoint.Spec.RuleEndpointType {
 	case rulesv1.RuleEndpointTypeRest:
@@ -88,7 +111,7 @@ func validateSourceRuleEndpoint(ruleEndpoint *rulesv1.RuleEndpoint, sourceResour
 		if !exist {
 			return fmt.Errorf("\"path\" property missed in sourceResource when ruleEndpoint is \"rest\"")
 		}
-		rules, err := controller.listRule(ruleEndpoint.Namespace)
+		rules, err := controllerInstance.ListRule(ruleEndpoint.Namespace)
 		if err != nil {
 			return err
 		}
@@ -106,7 +129,7 @@ func validateSourceRuleEndpoint(ruleEndpoint *rulesv1.RuleEndpoint, sourceResour
 		if !exist {
 			return fmt.Errorf("\"node_name\" property missed in sourceResource when ruleEndpoint is \"eventbus\"")
 		}
-		rules, err := controller.listRule(ruleEndpoint.Namespace)
+		rules, err := controllerInstance.ListRule(ruleEndpoint.Namespace)
 		if err != nil {
 			return err
 		}
@@ -142,4 +165,18 @@ func validateTargetRuleEndpoint(ruleEndpoint *rulesv1.RuleEndpoint, targetResour
 
 func serveRule(w http.ResponseWriter, r *http.Request) {
 	serve(w, r, admitRule)
+}
+
+func (ac *AdmissionController) GetRuleEndpoint(namespace, name string) (*rulesv1.RuleEndpoint, error) {
+	if skipInternalCall {
+		return nil, errTest
+	}
+	return ac.getRuleEndpoint(namespace, name)
+}
+
+func (ac *AdmissionController) ListRule(namespace string) ([]rulesv1.Rule, error) {
+	if skipInternalCall {
+		return nil, errTest
+	}
+	return ac.listRule(namespace)
 }
