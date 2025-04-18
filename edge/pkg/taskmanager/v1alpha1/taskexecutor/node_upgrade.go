@@ -31,7 +31,7 @@ import (
 	"github.com/kubeedge/kubeedge/common/types"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/upgradedb"
+	daov2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
 	"github.com/kubeedge/kubeedge/pkg/version"
@@ -81,35 +81,17 @@ func initUpgrade(taskReq types.NodeTaskRequest) (event fsm.Event) {
 	if err != nil {
 		return
 	}
+	taskReq.Item = upgradeReq
 
 	if upgradeReq.UpgradeID == "" {
 		err = errors.New("upgradeID cannot be empty")
 		return
 	}
 	if upgradeReq.RequireConfirmation {
-		var upgradeJobReqDB = commontypes.NodeUpgradeJobRequest{
-			UpgradeID:           upgradeReq.UpgradeID,
-			HistoryID:           upgradeReq.HistoryID,
-			Version:             upgradeReq.Version,
-			UpgradeTool:         upgradeReq.UpgradeTool,
-			Image:               upgradeReq.Image,
-			ImageDigest:         upgradeReq.ImageDigest,
-			RequireConfirmation: upgradeReq.RequireConfirmation,
-		}
-		if err = upgradedb.SaveNodeUpgradeJobRequestToMetaV2(upgradeJobReqDB); err != nil {
-			event.Action = api.ActionFailure
-			event.Msg = err.Error()
-		}
-		e, _ := GetExecutor(TaskUpgrade)
-		var taskReqDB = types.NodeTaskRequest{
-			TaskID: e.Name(),
-			Type:   "Confirm",
-			State:  string(api.NodeUpgrading),
-			Item:   "Wait for a confirm for upgrade request on the edge site.",
-		}
-		if err = upgradedb.SaveNodeTaskRequestToMetaV2(taskReqDB); err != nil {
-			event.Action = api.ActionFailure
-			event.Msg = err.Error()
+		upgradedao := daov2.NewUpgradeV1alpha1()
+		err = upgradedao.Save(&taskReq)
+		if err != nil {
+			return
 		}
 		return fsm.Event{
 			Type:   "Confirm",
@@ -117,13 +99,13 @@ func initUpgrade(taskReq types.NodeTaskRequest) (event fsm.Event) {
 			Msg:    "Wait for a confirm for upgrade request on the edge site.",
 		}
 	}
+
 	if upgradeReq.Version == version.Get().String() {
 		return fsm.Event{
 			Type:   "Upgrading",
 			Action: api.ActionSuccess,
 		}
 	}
-
 	err = prepareKeadm(upgradeReq)
 	if err != nil {
 		return

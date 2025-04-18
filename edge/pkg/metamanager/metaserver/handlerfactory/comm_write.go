@@ -2,12 +2,10 @@ package handlerfactory
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -16,66 +14,16 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/validation"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apiserver/pkg/endpoints/handlers"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/api/apis/devices/v1beta1"
-	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/fakers"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/scope"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
-
-type Factory struct {
-	storage           *storage.REST
-	scope             *handlers.RequestScope
-	MinRequestTimeout time.Duration
-	handlers          map[string]http.Handler
-	lock              sync.RWMutex
-}
-
-func NewFactory() *Factory {
-	s, err := storage.NewREST()
-	utilruntime.Must(err)
-	f := Factory{
-		storage:           s,
-		scope:             scope.NewRequestScope(),
-		MinRequestTimeout: 1800 * time.Second,
-		handlers:          make(map[string]http.Handler),
-		lock:              sync.RWMutex{},
-	}
-	return &f
-}
-
-func (f *Factory) Get() http.Handler {
-	if h, ok := f.getHandler("get"); ok {
-		return h
-	}
-	f.lock.Lock()
-	defer f.lock.Unlock()
-	h := handlers.GetResource(f.storage, f.scope)
-	f.handlers["get"] = h
-	return h
-}
-
-func (f *Factory) List() http.Handler {
-	if h, ok := f.getHandler("list"); ok {
-		return h
-	}
-	f.lock.Lock()
-	defer f.lock.Unlock()
-	h := handlers.ListResource(f.storage, f.storage, f.scope, false, f.MinRequestTimeout)
-	f.handlers["list"] = h
-	return h
-}
 
 func (f *Factory) Create(req *request.RequestInfo) http.Handler {
 	s := scope.NewRequestScope()
@@ -86,24 +34,6 @@ func (f *Factory) Create(req *request.RequestInfo) http.Handler {
 	}
 	h := handlers.CreateResource(f.storage, s, fakers.NewAlwaysAdmit())
 	return h
-}
-
-func (f *Factory) Delete() http.Handler {
-	if h, ok := f.getHandler("delete"); ok {
-		return h
-	}
-	f.lock.Lock()
-	defer f.lock.Unlock()
-	h := handlers.DeleteResource(f.storage, true, f.scope, fakers.NewAlwaysAdmit())
-	f.handlers["delete"] = h
-	return h
-}
-
-func (f *Factory) getHandler(key string) (http.Handler, bool) {
-	f.lock.RLock()
-	defer f.lock.RUnlock()
-	h, ok := f.handlers[key]
-	return h, ok
 }
 
 func (f *Factory) Update(req *request.RequestInfo) http.Handler {
@@ -121,73 +51,14 @@ func (f *Factory) Update(req *request.RequestInfo) http.Handler {
 	return h
 }
 
-func updateEdgeDevice() http.Handler {
-	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		body, err := io.ReadAll(req.Body)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		var device *v1beta1.Device
-		if err := json.Unmarshal(body, &device); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		source := modules.MetaManagerModuleName
-		target := modules.DeviceTwinModuleName
-		resourece := device.Namespace + "/device/updated"
-
-		operation := model.UpdateOperation
-
-		device.SetGroupVersionKind(schema.GroupVersionKind{
-			Group:   v1beta1.GroupName,
-			Version: v1beta1.Version,
-			Kind:    constants.KindTypeDevice,
-		})
-		modelMsg := model.NewMessage("").
-			SetResourceVersion(device.ResourceVersion).
-			FillBody(device)
-		modelMsg.BuildRouter(source, target, resourece, operation)
-		resp, err := beehiveContext.SendSync(source, *modelMsg, 1*time.Minute)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		respData, err := resp.GetContentData()
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_, err = w.Write(respData)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	})
-	return h
-}
-
-// PassThrough
-// handel with the pass through request
-func (f *Factory) PassThrough() http.Handler {
-	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		options := metav1.GetOptions{}
-		result, err := f.storage.PassThrough(req.Context(), &options)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		if _, err := w.Write(result); err != nil {
-			// TODO: handle error
-			klog.Error(err)
-		}
-	})
+func (f *Factory) Delete() http.Handler {
+	if h, ok := f.getHandler("delete"); ok {
+		return h
+	}
+	f.lock.Lock()
+	defer f.lock.Unlock()
+	h := handlers.DeleteResource(f.storage, true, f.scope, fakers.NewAlwaysAdmit())
+	f.handlers["delete"] = h
 	return h
 }
 
