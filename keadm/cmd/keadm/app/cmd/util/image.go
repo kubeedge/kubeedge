@@ -17,209 +17,99 @@ limitations under the License.
 package util
 
 import (
-	"context"
-	"fmt"
-	"path/filepath"
 	"strings"
-	"time"
 
-	"github.com/google/uuid"
-	oteltrace "go.opentelemetry.io/otel/trace"
-	internalapi "k8s.io/cri-api/pkg/apis"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-	"k8s.io/klog/v2"
-	"k8s.io/kubernetes/pkg/kubelet/cm"
-	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
-
-	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
-	"github.com/kubeedge/kubeedge/common/constants"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
 
-type ContainerRuntime interface {
-	PullImages(images []string) error
-	PullImage(image string, authConfig *runtimeapi.AuthConfig, sandboxConfig *runtimeapi.PodSandboxConfig) error
-	CopyResources(edgeImage string, files map[string]string) error
-	GetImageDigest(image string) (string, error)
+const (
+	CloudAdmission         = "admission"
+	CloudCloudcore         = "cloudcore"
+	CloudIptablesManager   = "iptables-manager"
+	CloudControllerManager = "controller-manager"
+)
+
+const (
+	EdgeCore = "edgecore"
+	EdgeMQTT = "mqtt"
+)
+
+type Set map[string]string
+
+var cloudComponentSet = Set{
+	CloudAdmission:         "kubeedge/admission",
+	CloudCloudcore:         "kubeedge/cloudcore",
+	CloudIptablesManager:   "kubeedge/iptables-manager",
+	CloudControllerManager: "kubeedge/controller-manager",
 }
 
-func NewContainerRuntime(endpoint, cgroupDriver string) (ContainerRuntime, error) {
-	var runtime ContainerRuntime
-	imageService, err := remote.NewRemoteImageService(endpoint, time.Second*10, oteltrace.NewNoopTracerProvider())
-	if err != nil {
-		return runtime, err
-	}
-	runtimeService, err := remote.NewRemoteRuntimeService(endpoint, time.Second*10, oteltrace.NewNoopTracerProvider())
-	if err != nil {
-		return runtime, err
-	}
-	runtime = &CRIRuntime{
-		endpoint:            endpoint,
-		cgroupDriver:        cgroupDriver,
-		ImageManagerService: imageService,
-		RuntimeService:      runtimeService,
-		ctx:                 context.Background(),
-	}
+var cloudThirdPartySet = Set{}
 
-	return runtime, nil
+var edgeComponentSet = Set{
+	EdgeCore: "kubeedge/installation-package",
 }
 
-type CRIRuntime struct {
-	endpoint            string
-	cgroupDriver        string
-	ImageManagerService internalapi.ImageManagerService
-	RuntimeService      internalapi.RuntimeService
-	ctx                 context.Context
+var edgeThirdPartySet = Set{}
+
+func EdgeSet(opt *common.JoinOptions) Set {
+	set := edgeComponentSet.Current(opt.ImageRepository, opt.KubeEdgeVersion)
+	thirdSet := edgeThirdPartySet.Current(opt.ImageRepository, "")
+	set = set.Merge(thirdSet)
+	return set
 }
 
-func convertCRIImage(image string) string {
-	imageSeg := strings.Split(image, "/")
-	if len(imageSeg) == 1 {
-		return "docker.io/library/" + image
-	} else if len(imageSeg) == 2 {
-		return "docker.io/" + image
-	}
-	return image
+func CloudSet(imageRepository, version string) Set {
+	set := cloudComponentSet.Current(imageRepository, version)
+	thirdSet := cloudThirdPartySet.Current(imageRepository, "")
+	set = set.Merge(thirdSet)
+	return set
 }
 
-func (runtime *CRIRuntime) PullImages(images []string) error {
-	for _, image := range images {
-		fmt.Printf("Pulling %s ...\n", image)
-		err := runtime.PullImage(image, nil, nil)
-		if err != nil {
-			return err
+// Current replace repository and version for set
+func (s Set) Current(imageRepository, ver string) Set {
+	// To prevent the initial set from being modified,
+	// a new set is returned anyway.
+	set := make(Set)
+
+	for k, v := range s {
+		cur := v
+		if ver != "" {
+			arr := strings.SplitN(v, ":", 2)
+			cur = arr[0] + ":" + ver
 		}
-		fmt.Printf("Successfully pulled %s\n", image)
+		if imageRepository != "" {
+			arr := strings.SplitN(cur, "/", 2)
+			cur = imageRepository + "/" + arr[0]
+			if len(arr) == 2 {
+				cur = imageRepository + "/" + arr[1]
+			}
+		}
+		set[k] = cur
 	}
-	return nil
+
+	return set
 }
 
-func (runtime *CRIRuntime) GetImageDigest(image string) (string, error) {
-	image = convertCRIImage(image)
-	imageSpec := &runtimeapi.ImageSpec{Image: image}
-	imageStatus, err := runtime.ImageManagerService.ImageStatus(runtime.ctx, imageSpec, true)
-	if err != nil {
-		return "", err
-	}
-	imageDigest := imageStatus.Image.Spec.Image
-	return imageDigest, nil
+func (s Set) Get(name string) string {
+	return s[name]
 }
 
-func (runtime *CRIRuntime) PullImage(image string, authConfig *runtimeapi.AuthConfig, sandboxConfig *runtimeapi.PodSandboxConfig) error {
-	image = convertCRIImage(image)
-	imageSpec := &runtimeapi.ImageSpec{Image: image}
-	status, err := runtime.ImageManagerService.ImageStatus(runtime.ctx, imageSpec, true)
-	if err != nil {
-		return err
+func (s Set) Merge(src Set) Set {
+	for k, v := range src {
+		s[k] = v
 	}
-	if status == nil || status.Image == nil {
-		if _, err := runtime.ImageManagerService.PullImage(runtime.ctx, imageSpec, authConfig, sandboxConfig); err != nil {
-			return err
-		}
-	}
-	return nil
+	return s
 }
 
-// CopyResources copies binary and configuration file from the image to the host.
-// The same way as func (runtime *DockerRuntime) CopyResources
-func (runtime *CRIRuntime) CopyResources(edgeImage string, files map[string]string) error {
-	psc := &runtimeapi.PodSandboxConfig{
-		Metadata: &runtimeapi.PodSandboxMetadata{
-			Name:      KubeEdgeBinaryName,
-			Uid:       uuid.New().String(),
-			Namespace: constants.SystemNamespace,
-		},
-		Linux: &runtimeapi.LinuxPodSandboxConfig{
-			SecurityContext: &runtimeapi.LinuxSandboxSecurityContext{
-				NamespaceOptions: &runtimeapi.NamespaceOption{
-					Network: runtimeapi.NamespaceMode_NODE,
-				},
-				Privileged: true,
-			},
-		},
+func (s Set) List() []string {
+	var result []string
+	for _, v := range s {
+		result = append(result, v)
 	}
-	if runtime.cgroupDriver == v1alpha2.CGroupDriverSystemd {
-		cgroupName := cm.NewCgroupName(cm.CgroupName{"kubeedge", "setup", "podcopyresource"})
-		psc.Linux.CgroupParent = cgroupName.ToSystemd()
-	}
-	sandbox, err := runtime.RuntimeService.RunPodSandbox(runtime.ctx, psc, "")
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := runtime.RuntimeService.RemovePodSandbox(runtime.ctx, sandbox); err != nil {
-			klog.V(3).ErrorS(err, "Remove pod sandbox failed", "containerID", sandbox)
-		}
-	}()
-
-	var mounts []*runtimeapi.Mount
-	for _, hostPath := range files {
-		mounts = append(mounts, &runtimeapi.Mount{
-			HostPath:      filepath.Dir(hostPath),
-			ContainerPath: filepath.Join("/tmp", filepath.Dir(hostPath)),
-		})
-	}
-	containerConfig := &runtimeapi.ContainerConfig{
-		Metadata: &runtimeapi.ContainerMetadata{
-			Name: "container",
-		},
-		Image: &runtimeapi.ImageSpec{
-			Image: edgeImage,
-		},
-		// Keep the container running by passing in a command that never ends.
-		// so that we can ExecSync in the following operations,
-		// to ensure that we can copy files from container to host totally and correctly
-		Command: []string{
-			"/bin/sh",
-			"-c",
-			"sleep infinity",
-		},
-		Mounts: mounts,
-		Linux: &runtimeapi.LinuxContainerConfig{
-			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
-				Privileged: true,
-			},
-		},
-	}
-	containerID, err := runtime.RuntimeService.CreateContainer(runtime.ctx, sandbox, containerConfig, psc)
-	if err != nil {
-		return fmt.Errorf("create container failed: %v", err)
-	}
-	defer func() {
-		if err := runtime.RuntimeService.RemoveContainer(runtime.ctx, containerID); err != nil {
-			klog.V(3).ErrorS(err, "Remove container failed", "containerID", containerID)
-		}
-	}()
-
-	err = runtime.RuntimeService.StartContainer(runtime.ctx, containerID)
-	if err != nil {
-		return fmt.Errorf("start container failed: %v", err)
-	}
-
-	copyCmd := copyResourcesCmd(files)
-	cmd := []string{
-		"/bin/sh",
-		"-c",
-		copyCmd,
-	}
-	stdout, stderr, err := runtime.RuntimeService.ExecSync(runtime.ctx, containerID, cmd, 30*time.Second)
-	if err != nil {
-		return fmt.Errorf("failed to exec copy cmd, err: %v, stderr: %s, stdout: %s", err, string(stderr), string(stdout))
-	}
-
-	return nil
+	return result
 }
 
-func copyResourcesCmd(files map[string]string) string {
-	var copyCmd string
-	first := true
-
-	for containerPath, hostPath := range files {
-		if first {
-			copyCmd = copyCmd + fmt.Sprintf("cp %s %s", containerPath, filepath.Join("/tmp", hostPath))
-		} else {
-			copyCmd = copyCmd + fmt.Sprintf(" && cp %s %s", containerPath, filepath.Join("/tmp", hostPath))
-		}
-		first = false
-	}
-	return copyCmd
+func (s Set) Remove(name string) Set {
+	delete(s, name)
+	return s
 }

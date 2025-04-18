@@ -17,6 +17,7 @@ limitations under the License.
 package edge
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -176,6 +177,7 @@ func (up *UpgradeOptions) Upgrade() error {
 }
 
 func (up *Upgrade) PreProcess() error {
+	ctx := context.Background()
 	// download the request version edgecore
 	klog.Infof("Begin to download version %s edgecore", up.ToVersion)
 	if !up.DisableBackup {
@@ -207,14 +209,14 @@ func (up *Upgrade) PreProcess() error {
 
 	image := up.Image
 
-	err = container.PullImages([]string{image})
+	err = container.PullImages(ctx, []string{image}, nil)
 	if err != nil {
 		return fmt.Errorf("pull image failed: %v", err)
 	}
 	files := map[string]string{
 		filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName): filepath.Join(upgradePath, util.KubeEdgeBinaryName),
 	}
-	err = container.CopyResources(image, files)
+	err = container.CopyResources(ctx, image, files)
 	if err != nil {
 		return fmt.Errorf("failed to cp file from image to host: %v", err)
 	}
