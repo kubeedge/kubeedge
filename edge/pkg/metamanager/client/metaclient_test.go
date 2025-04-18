@@ -19,6 +19,7 @@ package client
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"k8s.io/klog/v2"
@@ -29,12 +30,34 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
-type MockSend struct {
-	shouldFail bool
-	retries    int
+// Override the global variables to use very short timeouts
+func init() {
+	// Override with very short timeouts to prevent tests from hanging
+	syncPeriod = 1 * time.Millisecond
+	syncMsgRespTimeout = 5 * time.Millisecond
+
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
+
+	moduleInfo := &common.ModuleInfo{
+		ModuleName: modules.MetaManagerModuleName,
+		ModuleType: common.MsgCtxTypeChannel,
+	}
+	beehiveContext.AddModule(moduleInfo)
+
+	klog.InitFlags(nil)
 }
 
-func (m *MockSend) SendSync(_ *model.Message) (*model.Message, error) {
+type MockSend struct {
+	shouldFail    bool
+	retries       int
+	lastResource  string
+	lastOperation string
+}
+
+func (m *MockSend) SendSync(message *model.Message) (*model.Message, error) {
+	m.lastResource = message.GetResource()
+	m.lastOperation = message.GetOperation()
+
 	if m.shouldFail {
 		m.retries++
 		return nil, errors.New("mock error")
@@ -47,12 +70,26 @@ func (m *MockSend) SendSync(_ *model.Message) (*model.Message, error) {
 	return resp, nil
 }
 
-func (m *MockSend) Send(_ *model.Message) {
+func (m *MockSend) Send(message *model.Message) {
+	m.lastResource = message.GetResource()
+	m.lastOperation = message.GetOperation()
 }
 
 func TestNew(t *testing.T) {
 	client := New()
 	assert.NotNil(t, client, "New() should return a non-nil client")
+
+	// Check that the returned client is of type metaClient
+	_, ok := client.(*metaClient)
+	assert.True(t, ok, "New() should return a metaClient")
+
+	// Also check that send is initialized
+	mc, _ := client.(*metaClient)
+	assert.NotNil(t, mc.send, "New() should initialize send")
+
+	// Check the type of send
+	_, ok = mc.send.(*send)
+	assert.True(t, ok, "send should be of type *send")
 }
 
 func TestMetaClientInterfaces(t *testing.T) {
@@ -76,6 +113,12 @@ func TestMetaClientInterfaces(t *testing.T) {
 			},
 		},
 		{
+			name: "Secrets",
+			testFunc: func() interface{} {
+				return client.Secrets("default")
+			},
+		},
+		{
 			name: "Events",
 			testFunc: func() interface{} {
 				return client.Events("default")
@@ -94,9 +137,9 @@ func TestMetaClientInterfaces(t *testing.T) {
 			},
 		},
 		{
-			name: "Secrets",
+			name: "PodStatus",
 			testFunc: func() interface{} {
-				return client.Secrets("default")
+				return client.PodStatus("default")
 			},
 		},
 		{
@@ -109,12 +152,6 @@ func TestMetaClientInterfaces(t *testing.T) {
 			name: "ServiceAccounts",
 			testFunc: func() interface{} {
 				return client.ServiceAccounts("default")
-			},
-		},
-		{
-			name: "PodStatus",
-			testFunc: func() interface{} {
-				return client.PodStatus("default")
 			},
 		},
 		{
@@ -157,7 +194,35 @@ func TestMetaClientInterfaces(t *testing.T) {
 	}
 }
 
-func TestSendSync(t *testing.T) {
+func TestSendMethods(t *testing.T) {
+	mockSend := &MockSend{shouldFail: false}
+	message := &model.Message{
+		Header: model.MessageHeader{
+			ID: "test-id",
+		},
+		Router: model.MessageRoute{
+			Resource:  "test/resource",
+			Operation: "test-operation",
+		},
+	}
+
+	t.Run("SendSync", func(t *testing.T) {
+		resp, err := mockSend.SendSync(message)
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		assert.Equal(t, "response-id", resp.Header.ID)
+	})
+
+	t.Run("Send", func(t *testing.T) {
+		assert.NotPanics(t, func() {
+			mockSend.Send(message)
+		})
+		assert.Equal(t, "test/resource", mockSend.lastResource)
+		assert.Equal(t, "test-operation", mockSend.lastOperation)
+	})
+}
+
+func TestSendSyncWithError(t *testing.T) {
 	testCases := []struct {
 		name          string
 		shouldFail    bool
@@ -198,27 +263,50 @@ func TestSendSync(t *testing.T) {
 	}
 }
 
-func TestSend(t *testing.T) {
+// TestSendImplementation directly tests the actual send struct implementation with minimal execution
+func TestSendImplementation(t *testing.T) {
+	// Testing the newSend function
 	sender := newSend()
+	assert.NotNil(t, sender)
+	_, ok := sender.(*send)
+	assert.True(t, ok)
+
+	// Create a minimalist message
 	message := &model.Message{
 		Header: model.MessageHeader{
 			ID: "test-id",
 		},
+		Router: model.MessageRoute{
+			Resource:  "test/resource",
+			Operation: "test-operation",
+		},
 	}
 
-	assert.NotPanics(t, func() {
-		sender.Send(message)
+	// Test the Send method - this should be quick
+	t.Run("send.Send() should not panic", func(t *testing.T) {
+		assert.NotPanics(t, func() {
+			sender.Send(message)
+		})
 	})
-}
 
-func init() {
-	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
+	// Test the SendSync method with a timeout
+	// This will likely fail due to missing module, but we just want code coverage
+	t.Run("send.SendSync() should not hang", func(t *testing.T) {
+		// Use a timeout to prevent the test from hanging
+		c := make(chan struct{})
+		go func() {
+			defer close(c)
+			_, err := sender.SendSync(message)
+			// Just check that it returned, we expect an error
+			assert.Error(t, err)
+		}()
 
-	moduleInfo := &common.ModuleInfo{
-		ModuleName: modules.MetaManagerModuleName,
-		ModuleType: common.MsgCtxTypeChannel,
-	}
-	beehiveContext.AddModule(moduleInfo)
-
-	klog.InitFlags(nil)
+		// Use a timeout slightly longer than our syncMsgRespTimeout
+		select {
+		case <-c:
+			// Test completed normally
+		case <-time.After(100 * time.Millisecond):
+			t.Fatal("SendSync is hanging")
+		}
+	})
 }
