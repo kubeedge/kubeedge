@@ -48,7 +48,24 @@ type DownstreamController struct {
 
 	podLister clientgov1.PodLister
 }
+type DownstreamControllerOptions struct {
+	kubeClient   kubernetes.Interface
+	messageLayer messagelayer.MessageLayer
+}
 
+type DownstreamControllerOption func(*DownstreamControllerOptions)
+
+func WithKubeClient(client kubernetes.Interface) DownstreamControllerOption {
+	return func(opts *DownstreamControllerOptions) {
+		opts.kubeClient = client
+	}
+}
+
+func WithMessageLayer(ml messagelayer.MessageLayer) DownstreamControllerOption {
+	return func(opts *DownstreamControllerOptions) {
+		opts.messageLayer = ml
+	}
+}
 func (dc *DownstreamController) syncPod() {
 	for {
 		select {
@@ -379,8 +396,16 @@ func (dc *DownstreamController) initLocating() error {
 }
 
 // NewDownstreamController create a DownstreamController from config
-func NewDownstreamController(config *v1alpha1.EdgeController, k8sInformerFactory k8sinformers.SharedInformerFactory, keInformerFactory informers.KubeEdgeCustomInformer,
-	crdInformerFactory crdinformers.SharedInformerFactory) (*DownstreamController, error) {
+func NewDownstreamController(config *v1alpha1.EdgeController, k8sInformerFactory k8sinformers.SharedInformerFactory, keInformerFactory informers.KubeEdgeCustomInformer, crdInformerFactory crdinformers.SharedInformerFactory, opts ...DownstreamControllerOption) (*DownstreamController, error) {
+	options := &DownstreamControllerOptions{
+		kubeClient:   client.GetKubeClient(),
+		messageLayer: messagelayer.EdgeControllerMessageLayer(),
+	}
+
+	for _, opt := range opts {
+		opt(options)
+	}
+
 	lc := &manager.LocationCache{}
 
 	podInformer := k8sInformerFactory.Core().V1().Pods()
@@ -425,12 +450,12 @@ func NewDownstreamController(config *v1alpha1.EdgeController, k8sInformerFactory
 	}
 
 	dc := &DownstreamController{
-		kubeClient:           client.GetKubeClient(),
+		kubeClient:           options.kubeClient,
 		podManager:           podManager,
 		configmapManager:     configMapManager,
 		secretManager:        secretManager,
 		nodeManager:          nodesManager,
-		messageLayer:         messagelayer.EdgeControllerMessageLayer(),
+		messageLayer:         options.messageLayer,
 		lc:                   lc,
 		podLister:            podInformer.Lister(),
 		rulesManager:         rulesManager,
