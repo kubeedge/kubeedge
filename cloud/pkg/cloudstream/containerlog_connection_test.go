@@ -18,8 +18,6 @@ package cloudstream
 
 import (
 	"bytes"
-	"fmt"
-	"net"
 	"net/http"
 	"net/url"
 	"testing"
@@ -27,7 +25,6 @@ import (
 	"github.com/emicklei/go-restful"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/stream"
 )
 
@@ -149,7 +146,10 @@ func TestSendConnection_Log(t *testing.T) {
 	r := &restful.Request{
 		Request: &http.Request{
 			Method: "GET",
-			URL:    &url.URL{},
+			URL: &url.URL{
+				Scheme: "http",
+				Host:   "localhost:10350",
+			},
 			Header: http.Header{},
 		},
 	}
@@ -166,11 +166,7 @@ func TestSendConnection_Log(t *testing.T) {
 	edgedConnector, ok := connector.(*stream.EdgedLogsConnection)
 	assert.True(ok, "Expected connector to be of type *stream.EdgedLogsConnection")
 	assert.Equal(logsConnection.MessageID, edgedConnector.MessID)
-	expectedURL := url.URL{
-		Scheme: "http",
-		Host:   net.JoinHostPort(defaultServerHost, fmt.Sprintf("%v", constants.ServerPort)),
-	}
-	assert.Equal(expectedURL, edgedConnector.URL)
+	assert.Equal(*r.Request.URL, edgedConnector.URL)
 	assert.Equal(r.Request.Header, edgedConnector.Header)
 
 	assert.Equal(stream.MessageTypeLogsConnect, mockTunneler.lastMessage.MessageType)
