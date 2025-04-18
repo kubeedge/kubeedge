@@ -59,6 +59,12 @@ type NodeUpgradeJobResponse struct {
 	Reason      string
 }
 
+// ConfigUpdateJobRequest is config update msg form cloud to edge
+type ConfigUpdateJobRequest struct {
+	UpdateID     string
+	UpdateFields map[string]string
+}
+
 // NodePreCheckRequest is pre-check msg coming from cloud to edge
 type NodePreCheckRequest struct {
 	CheckItem []string

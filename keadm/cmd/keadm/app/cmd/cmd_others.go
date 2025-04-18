@@ -86,6 +86,7 @@ func NewKubeedgeCommand() *cobra.Command {
 	cmds.AddCommand(cloud.NewManifestGenerate())
 	cmds.AddCommand(newCmdConfig())
 	cmds.AddCommand(NewKubeEdgeReset())
+	cmds.AddCommand(edge.NewEdgeConfigUpdate())
 
 	// beta cmds
 	cmds.AddCommand(beta.NewBeta())
