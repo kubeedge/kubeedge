@@ -22,13 +22,13 @@ type JobPhase string
 const (
 	JobPhaseInit       JobPhase = "Init"
 	JobPhaseInProgress JobPhase = "InProgress"
-	JobPhaseComplated  JobPhase = "Complated"
+	JobPhaseCompleted  JobPhase = "Completed"
 	JobPhaseFailure    JobPhase = "Failure"
 )
 
 // IsFinal returns whether the node task is in the final phase.
 func (s JobPhase) IsFinal() bool {
-	return s == JobPhaseComplated || s == JobPhaseFailure
+	return s == JobPhaseCompleted || s == JobPhaseFailure
 }
 
 type NodeTaskPhase string
@@ -65,10 +65,10 @@ const (
 
 // NodeJobType uses to constrain paradigm type of node jobs.
 type NodeJobType interface {
-	NodeUpgradeJob | ImagePrePullJob
+	NodeUpgradeJob | ImagePrePullJob | ConfigUpdateJob
 }
 
 // NodeTaskStatusType uses to constrain paradigm type of node tasks status.
 type NodeTaskStatusType interface {
-	ImagePrePullNodeTaskStatus | NodeUpgradeJobNodeTaskStatus
+	ImagePrePullNodeTaskStatus | NodeUpgradeJobNodeTaskStatus | ConfigUpdateJobNodeTaskStatus
 }

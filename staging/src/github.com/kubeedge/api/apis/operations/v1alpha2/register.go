@@ -67,6 +67,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&NodeUpgradeJobList{},
 		&ImagePrePullJob{},
 		&ImagePrePullJobList{},
+		&ConfigUpdateJob{},
+		&ConfigUpdateJobList{},
 	)
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil
