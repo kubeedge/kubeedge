@@ -56,5 +56,5 @@ func CalculatePhaseWithCounts(total, proc, fail int64,
 		return operationsv1alpha2.JobPhaseFailure
 	}
 	// succ == total || fail / total <= failureTolerate
-	return operationsv1alpha2.JobPhaseComplated
+	return operationsv1alpha2.JobPhaseCompleted
 }
