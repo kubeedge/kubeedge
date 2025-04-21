@@ -25,6 +25,7 @@ import (
 
 	beehivemodel "github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	edgecon "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/common/constants"
 )
@@ -166,7 +167,7 @@ func TestConstructConnectMessage(t *testing.T) {
 
 	msg := ConstructConnectMessage(info, true)
 	assert.NotNil(msg)
-	assert.Equal(model.SrcCloudHub, msg.GetSource())
+	assert.Equal(modules.CloudHubModuleName, msg.GetSource())
 	assert.Equal(model.GpResource, msg.GetGroup())
 	assert.Equal(model.NewResource(model.ResNode, nodeID, nil), msg.GetResource())
 

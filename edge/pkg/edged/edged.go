@@ -53,8 +53,8 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
+	commonmsg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
 	edgedconfig "github.com/kubeedge/kubeedge/edge/pkg/edged/config"
 	kubebridge "github.com/kubeedge/kubeedge/edge/pkg/edged/kubeclientbridge"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
@@ -239,7 +239,7 @@ func (e *edged) syncPod(podCfg *config.PodConfig) {
 			continue
 		}
 
-		_, resType, resID, err := util.ParseResourceEdge(result.GetResource(), result.GetOperation())
+		_, resType, resID, err := commonmsg.ParseResourceEdge(result.GetResource(), result.GetOperation())
 		if err != nil {
 			klog.Errorf("failed to parse the Resource: %v", err)
 			continue

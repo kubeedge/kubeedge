@@ -598,6 +598,7 @@ github.com/kubeedge/api/apis/devices/v1beta1
 github.com/kubeedge/api/apis/dmi/v1beta1
 github.com/kubeedge/api/apis/fsm/v1alpha1
 github.com/kubeedge/api/apis/operations/v1alpha1
+github.com/kubeedge/api/apis/operations/v1alpha2
 github.com/kubeedge/api/apis/policy/v1alpha1
 github.com/kubeedge/api/apis/reliablesyncs/v1alpha1
 github.com/kubeedge/api/apis/rules/v1
@@ -612,6 +613,8 @@ github.com/kubeedge/api/client/clientset/versioned/typed/devices/v1beta1
 github.com/kubeedge/api/client/clientset/versioned/typed/devices/v1beta1/fake
 github.com/kubeedge/api/client/clientset/versioned/typed/operations/v1alpha1
 github.com/kubeedge/api/client/clientset/versioned/typed/operations/v1alpha1/fake
+github.com/kubeedge/api/client/clientset/versioned/typed/operations/v1alpha2
+github.com/kubeedge/api/client/clientset/versioned/typed/operations/v1alpha2/fake
 github.com/kubeedge/api/client/clientset/versioned/typed/policy/v1alpha1
 github.com/kubeedge/api/client/clientset/versioned/typed/policy/v1alpha1/fake
 github.com/kubeedge/api/client/clientset/versioned/typed/reliablesyncs/v1alpha1
@@ -626,6 +629,7 @@ github.com/kubeedge/api/client/informers/externalversions/devices/v1beta1
 github.com/kubeedge/api/client/informers/externalversions/internalinterfaces
 github.com/kubeedge/api/client/informers/externalversions/operations
 github.com/kubeedge/api/client/informers/externalversions/operations/v1alpha1
+github.com/kubeedge/api/client/informers/externalversions/operations/v1alpha2
 github.com/kubeedge/api/client/informers/externalversions/policy
 github.com/kubeedge/api/client/informers/externalversions/policy/v1alpha1
 github.com/kubeedge/api/client/informers/externalversions/reliablesyncs
@@ -635,6 +639,7 @@ github.com/kubeedge/api/client/informers/externalversions/rules/v1
 github.com/kubeedge/api/client/listers/apps/v1alpha1
 github.com/kubeedge/api/client/listers/devices/v1beta1
 github.com/kubeedge/api/client/listers/operations/v1alpha1
+github.com/kubeedge/api/client/listers/operations/v1alpha2
 github.com/kubeedge/api/client/listers/policy/v1alpha1
 github.com/kubeedge/api/client/listers/reliablesyncs/v1alpha1
 github.com/kubeedge/api/client/listers/rules/v1
@@ -2800,6 +2805,7 @@ sigs.k8s.io/apiserver-network-proxy/konnectivity-client/proto/client
 sigs.k8s.io/controller-runtime
 sigs.k8s.io/controller-runtime/pkg/builder
 sigs.k8s.io/controller-runtime/pkg/cache
+sigs.k8s.io/controller-runtime/pkg/cache/informertest
 sigs.k8s.io/controller-runtime/pkg/cache/internal
 sigs.k8s.io/controller-runtime/pkg/certwatcher
 sigs.k8s.io/controller-runtime/pkg/certwatcher/metrics
@@ -2811,6 +2817,7 @@ sigs.k8s.io/controller-runtime/pkg/client/interceptor
 sigs.k8s.io/controller-runtime/pkg/cluster
 sigs.k8s.io/controller-runtime/pkg/config
 sigs.k8s.io/controller-runtime/pkg/controller
+sigs.k8s.io/controller-runtime/pkg/controller/controllertest
 sigs.k8s.io/controller-runtime/pkg/controller/controllerutil
 sigs.k8s.io/controller-runtime/pkg/conversion
 sigs.k8s.io/controller-runtime/pkg/envtest

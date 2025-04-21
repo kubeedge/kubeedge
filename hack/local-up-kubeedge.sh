@@ -183,8 +183,8 @@ function create_rule_crd {
 
 function create_operation_crd {
   echo "creating the operation crd..."
-  kubectl apply -f ${KUBEEDGE_ROOT}/build/crds/operations/operations_v1alpha1_nodeupgradejob.yaml
-  kubectl apply -f ${KUBEEDGE_ROOT}/build/crds/operations/operations_v1alpha1_imageprepulljob.yaml
+  kubectl apply -f ${KUBEEDGE_ROOT}/build/crds/operations/operations_v1alpha2_nodeupgradejob.yaml
+  kubectl apply -f ${KUBEEDGE_ROOT}/build/crds/operations/operations_v1alpha2_imageprepulljob.yaml
 }
 
 function create_serviceaccountaccess_crd {

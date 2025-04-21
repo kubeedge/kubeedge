@@ -259,10 +259,14 @@ func (ndc *ImagePrePullController) processPrePull(imagePrePull *v1alpha1.ImagePr
 		RetryTimes: imagePrePullTemplateInfo.RetryTimes,
 		CheckItems: imagePrePullTemplateInfo.CheckItems,
 	}
-	tolerate, err := strconv.ParseFloat(imagePrePull.Spec.ImagePrePullTemplate.FailureTolerate, 64)
-	if err != nil {
-		klog.Errorf("convert FailureTolerate to float64 failed: %v", err)
-		tolerate = 0.1
+
+	tolerate := 0.1
+	if imagePrePull.Spec.ImagePrePullTemplate.FailureTolerate != "" {
+		var err error
+		tolerate, err = strconv.ParseFloat(imagePrePull.Spec.ImagePrePullTemplate.FailureTolerate, 64)
+		if err != nil {
+			klog.Errorf("convert FailureTolerate to float64 failed: %v", err)
+		}
 	}
 
 	concurrency := imagePrePull.Spec.ImagePrePullTemplate.Concurrency

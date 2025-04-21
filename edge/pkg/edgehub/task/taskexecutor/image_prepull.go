@@ -17,6 +17,7 @@ limitations under the License.
 package taskexecutor
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -31,7 +32,7 @@ import (
 	"github.com/kubeedge/kubeedge/common/types"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
-	edgeutil "github.com/kubeedge/kubeedge/edge/pkg/common/util"
+	commonmsg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	metaclient "github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
@@ -79,7 +80,10 @@ func pullImages(taskReq types.NodeTaskRequest) fsm.Event {
 	}
 
 	// pull images
-	container, err := util.NewContainerRuntime(edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint, edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.CgroupDriver)
+	container, err := util.NewContainerRuntime(
+		edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint,
+		edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.CgroupDriver,
+	)
 	if err != nil {
 		event.Msg = err.Error()
 		event.Action = api.ActionFailure
@@ -104,7 +108,7 @@ func pullImages(taskReq types.NodeTaskRequest) fsm.Event {
 			Reason:          event.Msg,
 			ExternalMessage: string(data),
 		}
-		edgeutil.ReportTaskResult(taskReq.Type, taskReq.TaskID, resp)
+		commonmsg.ReportTaskResult(taskReq.Type, taskReq.TaskID, resp)
 	}()
 	return fsm.Event{}
 }
@@ -123,6 +127,7 @@ func getImagePrePullJobRequest(taskReq commontypes.NodeTaskRequest) (*commontype
 }
 
 func prePullImages(prePullReq commontypes.ImagePrePullJobRequest, container util.ContainerRuntime) (string, []v1alpha1.ImageStatus) {
+	ctx := context.Background()
 	errorStr := ""
 	authConfig, err := makeAuthConfig(prePullReq.Secret)
 	if err != nil {
@@ -135,7 +140,7 @@ func prePullImages(prePullReq commontypes.ImagePrePullJobRequest, container util
 			Image: image,
 		}
 		for i := 0; i <= int(prePullReq.RetryTimes); i++ {
-			err = container.PullImage(image, authConfig, nil)
+			err = container.PullImage(ctx, image, authConfig, nil)
 			if err == nil {
 				break
 			}

@@ -11,7 +11,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package message_test
+package message
 
 import (
 	"testing"
@@ -19,7 +19,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 )
 
 func TestBuildMsg(t *testing.T) {
@@ -98,13 +97,104 @@ func TestBuildMsg(t *testing.T) {
 
 	for _, test := range cases {
 		t.Run(test.name, func(_ *testing.T) {
-			result := message.BuildMsg(test.group, test.parentID, test.source, test.resource, test.operation, test.content)
+			result := BuildMsg(test.group, test.parentID, test.source, test.resource, test.operation, test.content)
 			assert.NotNil(result)
 			assert.Equal(test.result.Router.Group, result.GetGroup())
 			assert.Equal(test.result.Router.Resource, result.GetResource())
 			assert.Equal(test.result.Router.Operation, result.GetOperation())
 			assert.Equal(test.result.Router.Source, result.GetSource())
 			assert.Equal(test.result.Content, result.GetContent())
+		})
+	}
+}
+
+func TestParseResourceEdge(t *testing.T) {
+	tests := []struct {
+		name           string
+		resource       string
+		operation      string
+		wantNamespace  string
+		wantType       string
+		wantID         string
+		wantErr        bool
+		expectedErrMsg string
+	}{
+		{
+			name:          "Valid resource with namespace/type/id",
+			resource:      "namespace/resourceType/resourceID",
+			operation:     model.UpdateOperation,
+			wantNamespace: "namespace",
+			wantType:      "resourceType",
+			wantID:        "resourceID",
+			wantErr:       false,
+		},
+		{
+			name:          "Valid query operation with namespace/type",
+			resource:      "namespace/resourceType",
+			operation:     model.QueryOperation,
+			wantNamespace: "namespace",
+			wantType:      "resourceType",
+			wantID:        "",
+			wantErr:       false,
+		},
+		{
+			name:          "Valid response operation with namespace/type",
+			resource:      "namespace/resourceType",
+			operation:     model.ResponseOperation,
+			wantNamespace: "namespace",
+			wantType:      "resourceType",
+			wantID:        "",
+			wantErr:       false,
+		},
+		{
+			name:           "Invalid operation with incomplete resource",
+			resource:       "namespace/resourceType",
+			operation:      model.UpdateOperation,
+			wantNamespace:  "",
+			wantType:       "",
+			wantID:         "",
+			wantErr:        true,
+			expectedErrMsg: "resource: namespace/resourceType format incorrect, or Operation: update is not query/response",
+		},
+		{
+			name:           "Empty resource and operation",
+			resource:       "",
+			operation:      "",
+			wantNamespace:  "",
+			wantType:       "",
+			wantID:         "",
+			wantErr:        true,
+			expectedErrMsg: "resource:  format incorrect, or Operation:  is not query/response",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotNamespace, gotType, gotID, err := ParseResourceEdge(tt.resource, tt.operation)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ParseResourceEdge() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if tt.wantErr {
+				if err == nil || err.Error() != tt.expectedErrMsg {
+					t.Errorf("ParseResourceEdge() error message = %v, expected %v", err, tt.expectedErrMsg)
+				}
+				return
+			}
+
+			if gotNamespace != tt.wantNamespace {
+				t.Errorf("ParseResourceEdge() gotNamespace = %v, want %v", gotNamespace, tt.wantNamespace)
+			}
+
+			if gotType != tt.wantType {
+				t.Errorf("ParseResourceEdge() gotType = %v, want %v", gotType, tt.wantType)
+			}
+
+			if gotID != tt.wantID {
+				t.Errorf("ParseResourceEdge() gotID = %v, want %v", gotID, tt.wantID)
+			}
 		})
 	}
 }

@@ -18,12 +18,11 @@ package edgehub
 
 import (
 	"errors"
-	"fmt"
-	"reflect"
 	"testing"
 	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/kubeedge/beehive/pkg/common"
 	"github.com/kubeedge/beehive/pkg/core"
@@ -78,40 +77,43 @@ func TestIsSyncResponse(t *testing.T) {
 
 // TestDispatch() tests whether the messages are properly dispatched to their respective modules
 func TestDispatch(t *testing.T) {
+	RegisterMessageHandlers()
 	tests := []struct {
 		name          string
 		hub           *EdgeHub
 		message       *model.Message
-		expectedError error
+		expectedError string
 		isResponse    bool
 	}{
 		{
 			name:          "dispatch with valid input",
 			hub:           &EdgeHub{},
 			message:       model.NewMessage("").BuildRouter(module.EdgeHubModuleName, module.TwinGroup, "", ""),
-			expectedError: nil,
+			expectedError: "",
 			isResponse:    false,
 		},
 		{
 			name:          "Error Case in dispatch",
 			hub:           &EdgeHub{},
 			message:       model.NewMessage("test").BuildRouter(module.EdgeHubModuleName, module.EdgedGroup, "", ""),
-			expectedError: fmt.Errorf("failed to handle message, no handler found for the message, message group: edged"),
+			expectedError: "failed to handle message, no handler found for the message, message group: edged",
 			isResponse:    true,
 		},
 		{
 			name:          "Response Case in dispatch",
 			hub:           &EdgeHub{},
 			message:       model.NewMessage("test").BuildRouter(module.EdgeHubModuleName, module.TwinGroup, "", ""),
-			expectedError: nil,
+			expectedError: "",
 			isResponse:    true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.hub.dispatch(*tt.message)
-			if !reflect.DeepEqual(err, tt.expectedError) {
-				t.Errorf("TestController_dispatch() error = %v, wantErr %v", err, tt.expectedError)
+			if tt.expectedError != "" {
+				require.ErrorContains(t, err, tt.expectedError)
+			} else {
+				require.NoError(t, err)
 			}
 		})
 	}
@@ -167,7 +169,7 @@ func TestSendToCloud(t *testing.T) {
 		name            string
 		hub             *EdgeHub
 		message         model.Message
-		expectedError   error
+		expectedError   string
 		mockError       error
 		HeartbeatPeriod int32
 	}{
@@ -178,7 +180,7 @@ func TestSendToCloud(t *testing.T) {
 			},
 			HeartbeatPeriod: 6,
 			message:         *msg,
-			expectedError:   nil,
+			expectedError:   "",
 			mockError:       nil,
 		},
 		{
@@ -188,7 +190,7 @@ func TestSendToCloud(t *testing.T) {
 			},
 			HeartbeatPeriod: 3,
 			message:         *msg,
-			expectedError:   nil,
+			expectedError:   "",
 			mockError:       nil,
 		},
 		{
@@ -198,7 +200,7 @@ func TestSendToCloud(t *testing.T) {
 			},
 			HeartbeatPeriod: 3,
 			message:         model.Message{},
-			expectedError:   fmt.Errorf("failed to send message, error: Connection Refused"),
+			expectedError:   "failed to send message, error: Connection Refused",
 			mockError:       errors.New("Connection Refused"),
 		},
 	}
@@ -207,8 +209,10 @@ func TestSendToCloud(t *testing.T) {
 			mockAdapter.EXPECT().Send(gomock.Any()).Return(tt.mockError).Times(1)
 			config.Config.Heartbeat = tt.HeartbeatPeriod
 			err := tt.hub.sendToCloud(tt.message)
-			if !reflect.DeepEqual(err, tt.expectedError) {
-				t.Errorf("SendToCloud() error = %v, wantErr %v", err, tt.expectedError)
+			if tt.expectedError != "" {
+				require.ErrorContains(t, err, tt.expectedError)
+			} else {
+				require.NoError(t, err)
 			}
 		})
 	}
