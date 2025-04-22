@@ -20,20 +20,28 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os/exec"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/common/types"
+	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/task/taskexecutor"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/upgradedb"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/common"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage"
+	"github.com/kubeedge/kubeedge/pkg/util/fsm"
 )
 
 func TestLogs(t *testing.T) {
@@ -169,7 +177,10 @@ func TestLogs(t *testing.T) {
 			handler.ServeHTTP(w, req)
 
 			resp := w.Result()
-			body, _ := io.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				t.Fatalf("Failed to read response body: %v", err)
+			}
 
 			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
 			if tt.expectedStatus == http.StatusOK && tt.cases.queryParams == "follow=true" {
@@ -282,7 +293,10 @@ func TestExec(t *testing.T) {
 			handler.ServeHTTP(w, req)
 
 			resp := w.Result()
-			body, _ := io.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				t.Fatalf("Failed to read response body: %v", err)
+			}
 
 			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
 			if tt.expectedStatus == http.StatusOK && tt.cases.isHandlerExist {
@@ -301,4 +315,229 @@ func TestExec(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRestart(t *testing.T) {
+	patch := gomonkey.NewPatches()
+	defer patch.Reset()
+
+	f := NewFactory()
+
+	mockRestartResponse := &types.RestartResponse{}
+
+	patch.ApplyFunc(limitedReadBody, func(req *http.Request, size int64) ([]byte, error) {
+		if req.Body == nil {
+			return []byte("[]"), nil
+		}
+		data, err := io.ReadAll(req.Body)
+		if err != nil {
+			return nil, err
+		}
+		return data, nil
+	})
+
+	patch.ApplyMethod(reflect.TypeOf(f.storage), "Restart",
+		func(_ *storage.REST, _ context.Context, _ common.RestartInfo) *types.RestartResponse {
+			return mockRestartResponse
+		})
+
+	originalMarshal := json.Marshal
+
+	patch.ApplyFunc(json.Marshal, func(v interface{}) ([]byte, error) {
+		if _, ok := v.(*types.RestartResponse); ok {
+			return []byte(`{"success":true,"message":"Pods restarted successfully"}`), nil
+		}
+		return originalMarshal(v)
+	})
+
+	t.Run("Successful restart", func(t *testing.T) {
+		req := httptest.NewRequest("POST", "/restart", strings.NewReader(`["pod1", "pod2"]`))
+		w := httptest.NewRecorder()
+
+		handler := f.Restart("default")
+		handler.ServeHTTP(w, req)
+
+		resp := w.Result()
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatalf("Failed to read response body: %v", err)
+		}
+
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.Equal(t, "application/json", resp.Header.Get("Content-Type"))
+		assert.JSONEq(t, `{"success":true,"message":"Pods restarted successfully"}`, string(body))
+	})
+
+	t.Run("Invalid JSON", func(t *testing.T) {
+		invalidJSONPatch := gomonkey.ApplyFunc(limitedReadBody, func(_ *http.Request, _ int64) ([]byte, error) {
+			return []byte("invalid json"), nil
+		})
+		defer invalidJSONPatch.Reset()
+
+		jsonUnmarshalPatch := gomonkey.ApplyFunc(json.Unmarshal, func(data []byte, v interface{}) error {
+			if string(data) == "invalid json" {
+				return errors.New("invalid character 'i' looking for beginning of value")
+			}
+			return nil
+		})
+		defer jsonUnmarshalPatch.Reset()
+
+		req := httptest.NewRequest("POST", "/restart", strings.NewReader("invalid json"))
+		w := httptest.NewRecorder()
+
+		handler := f.Restart("default")
+		handler.ServeHTTP(w, req)
+
+		resp := w.Result()
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatalf("Failed to read response body: %v", err)
+		}
+
+		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+		assert.Contains(t, string(body), "invalid character")
+	})
+
+	t.Run("Marshal error", func(t *testing.T) {
+		marshalErrorPatch := gomonkey.ApplyFunc(json.Marshal, func(v interface{}) ([]byte, error) {
+			if _, ok := v.(*types.RestartResponse); ok {
+				return nil, errors.New("marshal error")
+			}
+			return nil, nil
+		})
+		defer marshalErrorPatch.Reset()
+
+		req := httptest.NewRequest("POST", "/restart", strings.NewReader(`["pod1"]`))
+		w := httptest.NewRecorder()
+
+		handler := f.Restart("default")
+		handler.ServeHTTP(w, req)
+
+		resp := w.Result()
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatalf("Failed to read response body: %v", err)
+		}
+
+		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+		assert.Contains(t, string(body), "marshal error")
+	})
+}
+
+func TestConfirmUpgrade(t *testing.T) {
+	patch := gomonkey.NewPatches()
+	defer patch.Reset()
+
+	f := NewFactory()
+
+	patch.ApplyFunc(options.GetEdgeCoreOptions, func() *options.EdgeCoreOptions {
+		return &options.EdgeCoreOptions{
+			ConfigFile: "/etc/kubeedge/config/edgecore.yaml",
+		}
+	})
+
+	patch.ApplyFunc(upgradedb.QueryNodeTaskRequestFromMetaV2, func() (types.NodeTaskRequest, error) {
+		return types.NodeTaskRequest{
+			TaskID: "task-123",
+			Type:   "upgrade",
+		}, nil
+	})
+
+	patch.ApplyFunc(upgradedb.QueryNodeUpgradeJobRequestFromMetaV2, func() (types.NodeUpgradeJobRequest, error) {
+		return types.NodeUpgradeJobRequest{
+			UpgradeID: "upgrade-123",
+			HistoryID: "history-123",
+			Version:   "v1.12.0",
+			Image:     "kubeedge/installation-package:v1.12.0",
+		}, nil
+	})
+
+	executorMock := &mockExecutor{}
+	patch.ApplyFunc(taskexecutor.GetExecutor, func(taskType string) (taskexecutor.Executor, error) {
+		return executorMock, nil
+	})
+
+	patch.ApplyFunc(klog.Errorf, func(format string, args ...interface{}) {})
+	patch.ApplyFunc(klog.Info, func(args ...interface{}) {})
+	patch.ApplyFunc(klog.Infof, func(format string, args ...interface{}) {})
+
+	patch.ApplyFunc(exec.Command, func(name string, args ...string) *exec.Cmd {
+		return &exec.Cmd{}
+	})
+
+	patch.ApplyMethod((*exec.Cmd)(nil), "CombinedOutput", func(_ *exec.Cmd) ([]byte, error) {
+		return []byte("upgrade successful"), nil
+	})
+
+	patch.ApplyFunc(upgradedb.DeleteNodeTaskRequestFromMetaV2, func() error {
+		return nil
+	})
+
+	patch.ApplyFunc(upgradedb.DeleteNodeUpgradeJobRequestFromMetaV2, func() error {
+		return nil
+	})
+
+	t.Run("ConfirmUpgrade success", func(t *testing.T) {
+		req := httptest.NewRequest("POST", "/confirm-upgrade", nil)
+		w := httptest.NewRecorder()
+
+		handler := f.ConfirmUpgrade()
+		handler.ServeHTTP(w, req)
+
+		resp := w.Result()
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+	})
+
+	t.Run("ConfirmUpgrade command error", func(t *testing.T) {
+		cmdErrorPatch := gomonkey.ApplyMethod((*exec.Cmd)(nil), "CombinedOutput",
+			func(_ *exec.Cmd) ([]byte, error) {
+				return []byte("command failed"), errors.New("command failed")
+			})
+		defer cmdErrorPatch.Reset()
+
+		req := httptest.NewRequest("POST", "/confirm-upgrade", nil)
+		w := httptest.NewRecorder()
+
+		handler := f.ConfirmUpgrade()
+		handler.ServeHTTP(w, req)
+
+		resp := w.Result()
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatalf("Failed to read response body: %v", err)
+		}
+
+		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+		assert.Contains(t, string(body), "command failed")
+	})
+
+	t.Run("ConfirmUpgrade with db error handling", func(t *testing.T) {
+		dbErrorPatch := gomonkey.ApplyFunc(upgradedb.DeleteNodeTaskRequestFromMetaV2, func() error {
+			return errors.New("db delete error")
+		})
+		defer dbErrorPatch.Reset()
+
+		req := httptest.NewRequest("POST", "/confirm-upgrade", nil)
+		w := httptest.NewRecorder()
+
+		handler := f.ConfirmUpgrade()
+		handler.ServeHTTP(w, req)
+
+		resp := w.Result()
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+	})
+}
+
+// mockExecutor implements the taskexecutor.Executor interface
+type mockExecutor struct{}
+
+func (m *mockExecutor) Name() string {
+	return "mockExecutor"
+}
+
+func (m *mockExecutor) Do(req types.NodeTaskRequest) (fsm.Event, error) {
+	return fsm.Event{
+		Type:   "UpgradeConfirmed",
+		Action: "Success",
+	}, nil
 }
