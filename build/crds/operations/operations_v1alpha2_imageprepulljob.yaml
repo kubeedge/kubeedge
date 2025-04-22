@@ -437,7 +437,7 @@ spec:
                 type: string
               state:
                 description: |-
-                  State represents for the state phase of the NodeUpgradeJob.
+                  State represents for the state phase of the ImagePrePullJob.
                   There are several possible state values: "", Upgrading, BackingUp, RollingBack and Checking.
                   Deprecated: For compatibility with v1alpha1 version, It will be removed in v1.23
                 type: string

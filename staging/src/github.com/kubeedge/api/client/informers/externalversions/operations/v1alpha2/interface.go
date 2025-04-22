@@ -24,6 +24,8 @@ import (
 
 // Interface provides access to all the informers in this group version.
 type Interface interface {
+	// ConfigUpdateJobs returns a ConfigUpdateJobInformer.
+	ConfigUpdateJobs() ConfigUpdateJobInformer
 	// ImagePrePullJobs returns a ImagePrePullJobInformer.
 	ImagePrePullJobs() ImagePrePullJobInformer
 	// NodeUpgradeJobs returns a NodeUpgradeJobInformer.
@@ -39,6 +41,11 @@ type version struct {
 // New returns a new Interface.
 func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakListOptions internalinterfaces.TweakListOptionsFunc) Interface {
 	return &version{factory: f, namespace: namespace, tweakListOptions: tweakListOptions}
+}
+
+// ConfigUpdateJobs returns a ConfigUpdateJobInformer.
+func (v *version) ConfigUpdateJobs() ConfigUpdateJobInformer {
+	return &configUpdateJobInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
 
 // ImagePrePullJobs returns a ImagePrePullJobInformer.
