@@ -19,6 +19,7 @@ limitations under the License.
 package edge
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -40,6 +41,7 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/extsystem"
 	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
+	"github.com/kubeedge/kubeedge/pkg/util/files"
 	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/api"
 )
 
@@ -52,7 +54,7 @@ func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
 		"CGroupDriver that uses to manipulate cgroups on the host (cgroupfs or systemd), the default value is cgroupfs")
 
 	cmd.Flags().StringVar(&joinOptions.CertPath, common.FlagNameCertPath, joinOptions.CertPath,
-		fmt.Sprintf("The certPath used by edgecore, the default value is %s", common.DefaultCertPath))
+		fmt.Sprintf("The certPath used by edgecore, the default value is %s", constants.DefaultCertPath))
 
 	cmd.Flags().StringVarP(&joinOptions.CloudCoreIPPort, common.FlagNameCloudCoreIPPort, "e", joinOptions.CloudCoreIPPort,
 		"IP:Port address of KubeEdge CloudCore")
@@ -97,7 +99,7 @@ func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
 }
 
 func createEdgeConfigFiles(opt *common.JoinOptions) error {
-	configFilePath := filepath.Join(util.KubeEdgePath, "config/edgecore.yaml")
+	configFilePath := filepath.Join(constants.KubeEdgePath, "config/edgecore.yaml")
 	_, err := os.Stat(configFilePath)
 	if err == nil || os.IsExist(err) {
 		klog.Infoln("Read existing configuration file")
@@ -178,7 +180,7 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 	if errs := validation.ValidateEdgeCoreConfiguration(edgeCoreConfig); len(errs) > 0 {
 		return errors.New(pkgutil.SpliceErrors(errs.ToAggregate().Errors()))
 	}
-	return common.Write2File(configFilePath, edgeCoreConfig)
+	return edgeCoreConfig.WriteTo(configFilePath)
 }
 
 func join(opt *common.JoinOptions, step *common.Step) error {
@@ -189,7 +191,7 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 
 	// Do not create any files in the management directory,
 	// you need to mount the contents of the mirror first.
-	if err := request(opt, step); err != nil {
+	if err := pullImagesAndCopyResources(opt, step); err != nil {
 		return err
 	}
 
@@ -198,8 +200,8 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 	if err != nil {
 		return fmt.Errorf("failed to get ext system, err: %v", err)
 	}
-	systemdCmd := filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName)
-	if err := extSystem.ServiceCreate(util.KubeEdgeBinaryName, systemdCmd, nil); err != nil {
+	systemdCmd := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName)
+	if err := extSystem.ServiceCreate(constants.KubeEdgeBinaryName, systemdCmd, nil); err != nil {
 		return fmt.Errorf("failed to create edgecore systemd service, err: %v", err)
 	}
 
@@ -224,9 +226,9 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 	// if edgecore start, it will get ca/certs from cloud
 	// if ca/certs generated, we can remove bootstrap file
 	err = wait.Poll(10*time.Second, 300*time.Second, func() (bool, error) {
-		if util.FileExists(edgeCoreConfig.Modules.EdgeHub.TLSCAFile) &&
-			util.FileExists(edgeCoreConfig.Modules.EdgeHub.TLSCertFile) &&
-			util.FileExists(edgeCoreConfig.Modules.EdgeHub.TLSPrivateKeyFile) {
+		if files.FileExists(edgeCoreConfig.Modules.EdgeHub.TLSCAFile) &&
+			files.FileExists(edgeCoreConfig.Modules.EdgeHub.TLSCertFile) &&
+			files.FileExists(edgeCoreConfig.Modules.EdgeHub.TLSPrivateKeyFile) {
 			return true, nil
 		}
 		return false, nil
@@ -237,6 +239,31 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 	}
 	step.Printf("Install Complete!")
 	return err
+}
+
+func pullImagesAndCopyResources(opt *common.JoinOptions, step *common.Step) error {
+	ctx := context.Background()
+	imageSet := util.EdgeSet(opt)
+	images := imageSet.List()
+
+	runtime, err := util.NewContainerRuntime(opt.RemoteRuntimeEndpoint, opt.CGroupDriver)
+	if err != nil {
+		return err
+	}
+
+	step.Printf("Pull Images")
+	if err := runtime.PullImages(ctx, images, nil); err != nil {
+		return fmt.Errorf("pull Images failed: %v", err)
+	}
+
+	step.Printf("Copy resources from the image to the management directory")
+	containerPath := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName)
+	hostPath := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName)
+	files := map[string]string{containerPath: hostPath}
+	if err := runtime.CopyResources(ctx, imageSet.Get(util.EdgeCore), files); err != nil {
+		return fmt.Errorf("copy resources failed: %v", err)
+	}
+	return nil
 }
 
 func runEdgeCore() error {
@@ -255,12 +282,12 @@ func runEdgeCore() error {
 			"sudo systemctl daemon-reload && sudo systemctl enable %s && sudo systemctl start %s",
 			common.EdgeCore, common.EdgeCore)
 	} else {
-		tip = fmt.Sprintf("KubeEdge edgecore is running, For logs visit: %s%s.log", util.KubeEdgeLogPath, util.KubeEdgeBinaryName)
+		tip = fmt.Sprintf("KubeEdge edgecore is running, For logs visit: %s%s.log", common.KubeEdgeLogPath, constants.KubeEdgeBinaryName)
 		binExec = fmt.Sprintf(
 			"%s > %skubeedge/edge/%s.log 2>&1 &",
-			filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName),
-			util.KubeEdgePath,
-			util.KubeEdgeBinaryName,
+			filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName),
+			constants.KubeEdgePath,
+			constants.KubeEdgeBinaryName,
 		)
 	}
 
@@ -278,13 +305,14 @@ func selinuxLabelRevision(enable bool) error {
 		return nil
 	}
 
-	label, err := selinux.FileLabel(filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName))
+	label, err := selinux.FileLabel(filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName))
 	if err != nil {
 		return fmt.Errorf("get selinux context of edgecore faild with error:%w", err)
 	}
 
 	if label != util.EdgeCoreSELinuxLabel {
-		if err = selinux.SetFileLabel(filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName), util.EdgeCoreSELinuxLabel); err != nil {
+		if err = selinux.SetFileLabel(filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName),
+			util.EdgeCoreSELinuxLabel); err != nil {
 			return fmt.Errorf("reset selinux context on edgecore faild with error:%w", err)
 		}
 	}

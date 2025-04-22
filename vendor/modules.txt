@@ -586,7 +586,7 @@ github.com/klauspost/compress/zstd/internal/xxhash
 ## explicit
 github.com/kr/fs
 # github.com/kubeedge/api v0.0.0 => ./staging/src/github.com/kubeedge/api
-## explicit; go 1.22.0
+## explicit; go 1.22.9
 github.com/kubeedge/api/apis/apps/v1alpha1
 github.com/kubeedge/api/apis/common/constants
 github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1
@@ -926,9 +926,10 @@ github.com/spf13/pflag
 # github.com/stoewer/go-strcase v1.2.0
 ## explicit; go 1.11
 github.com/stoewer/go-strcase
-# github.com/stretchr/testify v1.9.0
+# github.com/stretchr/testify v1.10.0
 ## explicit; go 1.17
 github.com/stretchr/testify/assert
+github.com/stretchr/testify/assert/yaml
 github.com/stretchr/testify/require
 # github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635
 ## explicit

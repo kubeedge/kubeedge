@@ -7,11 +7,13 @@ import (
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
 
+	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
+	"github.com/kubeedge/kubeedge/pkg/util/files"
 )
 
 var (
@@ -62,7 +64,7 @@ func NewSubDiagnose(object Diagnose) *cobra.Command {
 	switch object.Use {
 	case common.ArgDiagnoseNode:
 		cmd.Flags().StringVarP(&do.Config, common.EdgecoreConfig, "c", do.Config,
-			fmt.Sprintf("Specify configuration file, default is %s", common.EdgecoreConfigPath))
+			fmt.Sprintf("Specify configuration file, default is %s", constants.EdgecoreConfigPath))
 	case common.ArgDiagnosePod:
 		cmd.Flags().StringVarP(&do.Namespace, "namespace", "n", do.Namespace, "specify namespace")
 	case common.ArgDiagnoseInstall:
@@ -78,7 +80,7 @@ func NewSubDiagnose(object Diagnose) *cobra.Command {
 func NewDiagnoseOptions() *common.DiagnoseOptions {
 	do := &common.DiagnoseOptions{}
 	do.Namespace = "default"
-	do.Config = common.EdgecoreConfigPath
+	do.Config = constants.EdgecoreConfigPath
 	do.CheckOptions = &common.CheckOptions{
 		IP:      "",
 		Timeout: 3,
@@ -115,7 +117,7 @@ func (da Diagnose) ExecuteDiagnose(use string, ops *common.DiagnoseOptions, args
 
 func DiagnoseNode(ops *common.DiagnoseOptions) error {
 	osType := util.GetOSInterface()
-	isEdgeRunning, err := osType.IsKubeEdgeProcessRunning(util.KubeEdgeBinaryName)
+	isEdgeRunning, err := osType.IsKubeEdgeProcessRunning(constants.KubeEdgeBinaryName)
 	if err != nil {
 		return fmt.Errorf("get edgecore status fail")
 	}
@@ -125,7 +127,7 @@ func DiagnoseNode(ops *common.DiagnoseOptions) error {
 	}
 	fmt.Println("edgecore is running")
 
-	isFileExists := util.FileExists(ops.Config)
+	isFileExists := files.FileExists(ops.Config)
 	if !isFileExists {
 		return fmt.Errorf("edge config is not exists")
 	}
@@ -133,7 +135,7 @@ func DiagnoseNode(ops *common.DiagnoseOptions) error {
 
 	edgeconfig, err := util.ParseEdgecoreConfig(ops.Config)
 	if err != nil {
-		return fmt.Errorf("parse Edgecore config failed")
+		return fmt.Errorf("parse edgecore config failed")
 	}
 
 	// check datebase
@@ -142,7 +144,7 @@ func DiagnoseNode(ops *common.DiagnoseOptions) error {
 		dataSource = edgeconfig.DataBase.DataSource
 	}
 	ops.DBPath = dataSource
-	isFileExists = util.FileExists(dataSource)
+	isFileExists = files.FileExists(dataSource)
 	if !isFileExists {
 		return fmt.Errorf("dataSource is not exists")
 	}
@@ -164,7 +166,7 @@ func DiagnoseNode(ops *common.DiagnoseOptions) error {
 }
 
 func DiagnosePod(ops *common.DiagnoseOptions, podName string) error {
-	ready := false
+	var ready bool
 	if ops.DBPath == "" {
 		ops.DBPath = v1alpha2.DataBaseDataSource
 	}
@@ -263,37 +265,26 @@ func QueryPodFromDatabase(resNamePaces string, podName string) (*v1.PodStatus, e
 }
 
 func DiagnoseInstall(ob *common.CheckOptions) error {
-	err := CheckCPU()
-	if err != nil {
+	if err := CheckCPU(); err != nil {
 		return err
 	}
-
-	err = CheckMemory()
-	if err != nil {
+	if err := CheckMemory(); err != nil {
 		return err
 	}
-
-	err = CheckDisk()
-	if err != nil {
+	if err := CheckDisk(); err != nil {
 		return err
 	}
-
 	if ob.Domain != "" {
-		err = CheckDNSSpecify(ob.Domain, ob.DNSIP)
-		if err != nil {
+		if err := CheckDNSSpecify(ob.Domain, ob.DNSIP); err != nil {
 			return err
 		}
 	}
-
-	err = CheckNetWork(ob.IP, ob.Timeout, ob.CloudHubServer, ob.EdgecoreServer, ob.Config)
-	if err != nil {
+	if err := CheckNetWork(ob.IP, ob.Timeout, ob.CloudHubServer,
+		ob.EdgecoreServer, ob.Config); err != nil {
 		return err
 	}
-
-	err = CheckPid()
-	if err != nil {
+	if err := CheckPid(); err != nil {
 		return err
 	}
-
 	return nil
 }

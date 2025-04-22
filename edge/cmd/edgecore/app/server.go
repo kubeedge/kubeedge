@@ -101,6 +101,11 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 
 			// To help debugging, immediately log version
 			klog.Infof("Version: %+v", version.Get())
+			// TODO: upgrade version to edgecore.yaml
+			if config.EdgeCoreVersion != version.Get().String() {
+				config.EdgeCoreVersion = version.Get().String()
+
+			}
 
 			// Force skip check if enable metaserver
 			skipCheck := os.Getenv("CHECK_EDGECORE_ENVIRONMENT") == "false" || config.Modules.MetaManager.MetaServer.Enable

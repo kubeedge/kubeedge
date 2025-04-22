@@ -33,6 +33,7 @@ import (
 	printersinternal "k8s.io/kubernetes/pkg/printers/internalversion"
 	"k8s.io/kubernetes/pkg/printers/storage"
 
+	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/client"
 	ctlcommon "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/common"
@@ -69,7 +70,7 @@ func NewEdgePodGet() *cobra.Command {
 }
 
 func (o *PodGetOptions) getPods(args []string) error {
-	config, err := util.ParseEdgecoreConfig(common.EdgecoreConfigPath)
+	config, err := util.ParseEdgecoreConfig(constants.EdgecoreConfigPath)
 	if err != nil {
 		return fmt.Errorf("get edge config failed with err:%v", err)
 	}

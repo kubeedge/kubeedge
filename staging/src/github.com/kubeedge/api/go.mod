@@ -1,12 +1,11 @@
 module github.com/kubeedge/api
 
-go 1.22.0
+go 1.22.9
 
-toolchain go1.23.2
+toolchain go1.24.2
 
 require (
 	github.com/cilium/ebpf v0.9.1 // indirect
-	github.com/docker/docker v23.0.3+incompatible // indirect
 	github.com/spf13/pflag v1.0.6-0.20210604193023-d5e0c0615ace
 	google.golang.org/grpc v1.63.0
 	google.golang.org/protobuf v1.35.2
@@ -23,6 +22,7 @@ require (
 )
 
 require (
+	github.com/kubeedge/kubeedge v1.20.0
 	k8s.io/apiserver v0.30.7
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340
 )
@@ -89,10 +89,7 @@ require (
 	github.com/mrunalp/fileutils v0.5.1 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
-	github.com/onsi/ginkgo/v2 v2.17.1 // indirect
-	github.com/onsi/gomega v1.32.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/opencontainers/runc v1.1.13 // indirect
 	github.com/opencontainers/runtime-spec v1.1.0 // indirect
 	github.com/opencontainers/selinux v1.11.0 // indirect
@@ -105,7 +102,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spf13/cobra v1.7.0 // indirect
 	github.com/stoewer/go-strcase v1.2.0 // indirect
-	github.com/stretchr/testify v1.9.0 // indirect
+	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635 // indirect
 	github.com/vishvananda/netlink v1.2.1-beta.2 // indirect
 	github.com/vishvananda/netns v0.0.4 // indirect

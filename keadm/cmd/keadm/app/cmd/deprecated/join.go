@@ -24,6 +24,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
+	apiconsts "github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/edge"
@@ -84,7 +85,7 @@ func NewDeprecatedEdgeJoin() *cobra.Command {
 // newJoinOptions returns a struct ready for being used for creating cmd join flags.
 func newJoinOptions() *types.JoinOptions {
 	opts := &types.JoinOptions{}
-	opts.CertPath = types.DefaultCertPath
+	opts.CertPath = apiconsts.DefaultCertPath
 	opts.HubProtocol = api.ProtocolTypeWS
 
 	return opts
