@@ -27,7 +27,7 @@ import (
 
 	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
-	daov2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/taskmanager/actions"
 	taskmsg "github.com/kubeedge/kubeedge/pkg/nodetask/message"
 	upgradeedge "github.com/kubeedge/kubeedge/pkg/upgrade/edge"
@@ -50,11 +50,11 @@ func TestReportUpgradeStatus(t *testing.T) {
 	globpatches.ApplyFunc(upgradeedge.RemoveJSONReporterInfo, func() error {
 		return nil
 	})
-	globpatches.ApplyMethodFunc(reflect.TypeOf((*daov2.Upgrade)(nil)), "Get",
+	globpatches.ApplyMethodFunc(reflect.TypeOf((*dbclient.Upgrade)(nil)), "Get",
 		func() (string, string, *operationsv1alpha2.NodeUpgradeJobSpec, error) {
 			return jobName, nodeName, nil, nil
 		})
-	globpatches.ApplyMethodFunc(reflect.TypeOf((*daov2.Upgrade)(nil)), "Delete",
+	globpatches.ApplyMethodFunc(reflect.TypeOf((*dbclient.Upgrade)(nil)), "Delete",
 		func() error {
 			return nil
 		})
@@ -84,7 +84,7 @@ func TestReportUpgradeStatus(t *testing.T) {
 		patches.ApplyFunc(upgradeedge.ParseJSONReporterInfo, func() (upgradeedge.JSONReporterInfo, error) {
 			return upgradeedge.JSONReporterInfo{}, nil
 		})
-		patches.ApplyMethodFunc(reflect.TypeOf((*daov2.Upgrade)(nil)), "Get",
+		patches.ApplyMethodFunc(reflect.TypeOf((*dbclient.Upgrade)(nil)), "Get",
 			func() (string, string, *operationsv1alpha2.NodeUpgradeJobSpec, error) {
 				return "", "", nil, nil
 			})

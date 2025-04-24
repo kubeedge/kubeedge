@@ -34,7 +34,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 	"github.com/kubeedge/kubeedge/pkg/util"
 )
 
@@ -45,6 +45,10 @@ type DMIWorker struct {
 	dmiCache *dmiserver.DMICache
 	//dmiActionCallBack map for action to callback
 	dmiActionCallBack map[string]CallBack
+	// dmiClient is the client for dmi
+	DeviceService *dbclient.DeviceService
+	// metaservice is the client for meta
+	MetaService *dbclient.MetaService
 }
 
 func (dw *DMIWorker) init() {
@@ -199,7 +203,7 @@ func (dw *DMIWorker) dealMetaDeviceOperation(_ *dtcontext.DTContext, _ string, m
 }
 
 func (dw *DMIWorker) initDeviceModelInfoFromDB() {
-	metas, err := dao.QueryMeta("type", constants.ResourceTypeDeviceModel)
+	metas, err := dw.MetaService.QueryMeta("type", constants.ResourceTypeDeviceModel)
 	if err != nil {
 		klog.Errorf("fail to init device model info from db with err: %v", err)
 		return
@@ -220,7 +224,7 @@ func (dw *DMIWorker) initDeviceModelInfoFromDB() {
 }
 
 func (dw *DMIWorker) initDeviceInfoFromDB() {
-	metas, err := dao.QueryMeta("type", constants.ResourceTypeDevice)
+	metas, err := dw.MetaService.QueryMeta("type", constants.ResourceTypeDevice)
 	if err != nil {
 		klog.Errorf("fail to init device info from db with err: %v", err)
 		return
@@ -241,7 +245,7 @@ func (dw *DMIWorker) initDeviceInfoFromDB() {
 }
 
 func (dw *DMIWorker) initDeviceMapperInfoFromDB() {
-	metas, err := dao.QueryMeta("type", constants.ResourceTypeDeviceMapper)
+	metas, err := dw.MetaService.QueryMeta("type", constants.ResourceTypeDeviceMapper)
 	if err != nil {
 		klog.Errorf("fail to init device mapper info from db with err: %v", err)
 		return

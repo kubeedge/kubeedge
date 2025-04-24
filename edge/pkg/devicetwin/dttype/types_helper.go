@@ -7,8 +7,8 @@ import (
 
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 )
 
 // UnmarshalMembershipDetail Unmarshal membershipdetail
@@ -42,7 +42,7 @@ func UnmarshalBaseMessage(payload []byte) (*BaseMessage, error) {
 }
 
 // DeviceAttrToMsgAttr  deviceattr to msgattr
-func DeviceAttrToMsgAttr(deviceAttrs []dtclient.DeviceAttr) map[string]*MsgAttr {
+func DeviceAttrToMsgAttr(deviceAttrs []models.DeviceAttr) map[string]*MsgAttr {
 	msgAttrs := make(map[string]*MsgAttr, len(deviceAttrs))
 	for _, attr := range deviceAttrs {
 		optional := attr.Optional
@@ -55,7 +55,7 @@ func DeviceAttrToMsgAttr(deviceAttrs []dtclient.DeviceAttr) map[string]*MsgAttr 
 }
 
 // DeviceTwinToMsgTwin  devicetwin contains meta and version to msgtwin,
-func DeviceTwinToMsgTwin(deviceTwins []dtclient.DeviceTwin) map[string]*MsgTwin {
+func DeviceTwinToMsgTwin(deviceTwins []models.DeviceTwin) map[string]*MsgTwin {
 	msgTwins := make(map[string]*MsgTwin, len(deviceTwins))
 	for _, twin := range deviceTwins {
 		var expectedMeta ValueMetadata
@@ -113,7 +113,7 @@ func DeviceTwinToMsgTwin(deviceTwins []dtclient.DeviceTwin) map[string]*MsgTwin 
 }
 
 // MsgAttrToDeviceAttr msgattr to deviceattr
-func MsgAttrToDeviceAttr(name string, msgAttr *MsgAttr) dtclient.DeviceAttr {
+func MsgAttrToDeviceAttr(name string, msgAttr *MsgAttr) models.DeviceAttr {
 	attrType := "string"
 	if msgAttr.Metadata != nil {
 		attrType = msgAttr.Metadata.Type
@@ -122,7 +122,7 @@ func MsgAttrToDeviceAttr(name string, msgAttr *MsgAttr) dtclient.DeviceAttr {
 	if msgAttr.Optional != nil {
 		optional = *msgAttr.Optional
 	}
-	return dtclient.DeviceAttr{
+	return models.DeviceAttr{
 		Name:     name,
 		AttrType: attrType,
 		Optional: optional}
@@ -155,7 +155,7 @@ func CopyMsgAttr(msgAttr *MsgAttr) MsgAttr {
 }
 
 // MsgTwinToDeviceTwin msgtwin convert to devicetwin
-func MsgTwinToDeviceTwin(name string, msgTwin *MsgTwin) dtclient.DeviceTwin {
+func MsgTwinToDeviceTwin(name string, msgTwin *MsgTwin) models.DeviceTwin {
 	optional := true
 	if msgTwin.Optional != nil {
 		optional = *msgTwin.Optional
@@ -164,7 +164,7 @@ func MsgTwinToDeviceTwin(name string, msgTwin *MsgTwin) dtclient.DeviceTwin {
 	if msgTwin.Metadata != nil {
 		attrType = msgTwin.Metadata.Type
 	}
-	return dtclient.DeviceTwin{
+	return models.DeviceTwin{
 		Name:     name,
 		AttrType: attrType,
 		Optional: optional}
