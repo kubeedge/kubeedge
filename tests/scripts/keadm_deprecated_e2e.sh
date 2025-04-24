@@ -100,10 +100,18 @@ function run_test() {
   fi
 }
 
+function change_apt_source() {
+  sudo sed -i 's@//.*archive.ubuntu.com@//mirrors.ustc.edu.cn@g' /etc/apt/sources.list
+  sudo apt-get update
+}
+
 trap cleanup EXIT
 trap cleanup ERR
 
 echo -e "\nUsing latest commit code to do keadm_deprecated_e2e test..."
+
+echo -e "\nChange apt source"
+change_apt_source
 
 echo -e "\nBuilding keadm..."
 build_keadm
