@@ -33,7 +33,7 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/klog/v2"
 
-	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/agent"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
@@ -203,7 +203,7 @@ func (wc *watchChan) sync() error {
 
 // parseMeta converts meta data to watch.Event
 // and is only called in sync()
-func (wc *watchChan) parseMeta(kv *v2.MetaV2) (*watch.Event, error) {
+func (wc *watchChan) parseMeta(kv *models.MetaV2) (*watch.Event, error) {
 	obj, err := runtime.Decode(wc.watcher.codec, []byte(kv.Value))
 	if err != nil {
 		return nil, err
