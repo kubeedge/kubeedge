@@ -42,7 +42,8 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dmicache"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dmiclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 	"github.com/kubeedge/kubeedge/pkg/util"
 )
 
@@ -255,11 +256,11 @@ func saveMapper(mapper *pb.MapperInfo) error {
 	}
 	resource := fmt.Sprintf("%s%s%s%s%s%s%s%s%s", "node", constants.ResourceSep, "nodeID",
 		constants.ResourceSep, "namespace", constants.ResourceSep, deviceconst.ResourceTypeDeviceMapper, constants.ResourceSep, mapper.Name)
-	meta := &dao.Meta{
+	meta := &models.Meta{
 		Key:   resource,
 		Type:  deviceconst.ResourceTypeDeviceMapper,
 		Value: string(content)}
-	err = dao.SaveMeta(meta)
+	err = dbclient.NewMetaService().SaveMeta(meta)
 	if err != nil {
 		klog.Errorf("save meta failed, %s: %v", mapper.Name, err)
 		return err

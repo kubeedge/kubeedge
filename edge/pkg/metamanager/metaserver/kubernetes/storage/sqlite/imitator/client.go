@@ -9,10 +9,11 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/storage"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
-	daov2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 )
 
 // DefaultV2Client is the only one client. Because of v2Client
@@ -41,7 +42,7 @@ type Client interface {
 
 type Resp struct {
 	//TODO: change to []*MetaV2
-	Kvs *[]daov2.MetaV2
+	Kvs *[]models.MetaV2
 	// synonymous with resource version
 	Revision uint64
 }
@@ -56,9 +57,10 @@ func newV2Client() Client {
 
 // StorageInit must be called before using imitator storage (run metaserver or metamanager)
 func StorageInit() {
-	m := new(daov2.MetaV2)
-	// get the most recent record as the init resource version
-	_, err := dbm.DBAccess.QueryTable(daov2.NewMetaTableName).OrderBy("-" + daov2.RV).Limit(1).All(m)
+	meta, err := dbclient.NewMetaV2Service().GetLatestMetaV2()
+
 	utilruntime.Must(err)
-	DefaultV2Client.SetRevision(m.ResourceVersion)
+
+	DefaultV2Client.SetRevision(meta.ResourceVersion)
+	klog.Infof("StorageInit set revision to: %s", meta.ResourceVersion)
 }
