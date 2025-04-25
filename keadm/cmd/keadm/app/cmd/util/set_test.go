@@ -460,8 +460,11 @@ func TestSetVariableValue(t *testing.T) {
 	}
 
 	err = setVariableValue(config, "Name1.Name2[2].Variable1", 200)
-	if err == nil {
-		t.Error("Expected error for updating out of range index, but got nil")
+	if err != nil {
+		t.Errorf("Error updating field: %v", err)
+	}
+	if config.Name1.Name2[2].Variable1 != 200 {
+		t.Errorf("Variable1 not updated properly")
 	}
 }
 
@@ -487,8 +490,11 @@ func TestSetVariableValue_EmptySlice(t *testing.T) {
 	}
 
 	err := setVariableValue(config, "Name1.Name2[0].Variable1", 100)
-	if err == nil {
-		t.Error("Expected error for updating empty slice, but got nil")
+	if err != nil {
+		t.Errorf("Error updating field: %v", err)
+	}
+	if config.Name1.Name2[0].Variable1 != 100 {
+		t.Errorf("Variable1 not updated properly")
 	}
 }
 
@@ -503,6 +509,9 @@ func TestEdgeCoreConfig(t *testing.T) {
 func TestSetEdgeCoreConfigRegisterWithTaints(t *testing.T) {
 	cfg := v1alpha2.NewDefaultEdgeCoreConfig()
 	if err := ParseSet(cfg, `Modules.Edged.TailoredKubeletConfig.RegisterWithTaints[0]={"key":"node-role.kubernetes.io/edge","value":"","effect":"NoSchedule"}`); err != nil {
+		t.Fatal(err)
+	}
+	if err := ParseSet(cfg, `Modules.Edged.TailoredKubeletConfig.RegisterWithTaints[1].Key=node-role.kubernetes.io/edge,Modules.Edged.TailoredKubeletConfig.RegisterWithTaints[1].Value=edge-node-01,Modules.Edged.TailoredKubeletConfig.RegisterWithTaints[1].Effect=NoExecute`); err != nil {
 		t.Fatal(err)
 	}
 	t.Log(cfg.Modules.Edged.TailoredKubeletConfig.RegisterWithTaints)

@@ -236,11 +236,11 @@ func setCommonValue(structPtr interface{}, fieldPath string, value interface{}) 
 
 	// Set new value
 	val := reflect.ValueOf(value)
-	targetValue, err := convertTargetValue(fieldVal.Type(), val)
+	convertedValue, err := convertTargetValue(fieldVal.Type(), val)
 	if err != nil {
 		return fmt.Errorf("%s: Convert to target value failed, err: %s", fieldPath, err)
 	}
-	fieldVal.Set(targetValue)
+	fieldVal.Set(convertedValue)
 
 	return nil
 }
@@ -294,30 +294,31 @@ func setArrayValue(structPtr interface{}, fieldPath string, index int, newValue 
 			return fmt.Errorf("index out of range for %s", pathParts[len(pathParts)-1])
 		}
 		// If it is a slice, you need to ensure its capacity
-		if index >= fieldVal.Len() {
-			newSlice := reflect.MakeSlice(fieldVal.Type(), index+1, index+1)
-			reflect.Copy(newSlice, fieldVal)
-			fieldVal.Set(newSlice)
-		}
+		ensureSliceCapacity(fieldVal, index)
 	}
 	// Set new value
 	valueToSet := reflect.ValueOf(newValue)
 	elemType := fieldVal.Type().Elem()
-	targetValue, err := convertTargetValue(elemType, valueToSet)
+	convertedValue, err := convertTargetValue(elemType, valueToSet)
 	if err != nil {
 		return fmt.Errorf("%s: Convert to elem value failed, err: %s", fieldPath, err)
 	}
-	fieldVal.Index(index).Set(targetValue)
+	fieldVal.Index(index).Set(convertedValue)
 	return nil
 }
 
 // convertTargetValue convert newValue to targetType
-// use JSON Marshal & Unmarshal to handle map to struct & map to map conversion
 func convertTargetValue(targetType reflect.Type, valueToSet reflect.Value) (reflect.Value, error) {
 	if valueToSet.Type().AssignableTo(targetType) {
 		return valueToSet, nil
 	}
-	if (targetType.Kind() == reflect.Struct || targetType.Kind() == reflect.Map) && valueToSet.Kind() == reflect.Map {
+	// support field convert like string to string alias(eg. v1.TaintEffect)
+	// string to int or int to string is intentionally forbid to avoid ambiguity
+	if targetType.Kind() == valueToSet.Kind() && valueToSet.Type().ConvertibleTo(targetType) {
+		return valueToSet.Convert(targetType), nil
+	}
+	// use JSON Marshal & Unmarshal to handle map to struct & map to map conversion
+	if targetType.Kind() == reflect.Struct || targetType.Kind() == reflect.Map {
 		jsonNewValue, err := json.Marshal(valueToSet.Interface())
 		if err != nil {
 			return reflect.Value{}, err
@@ -330,6 +331,14 @@ func convertTargetValue(targetType reflect.Type, valueToSet reflect.Value) (refl
 		return reflect.Indirect(reflect.ValueOf(targetValue)), nil
 	}
 	return reflect.Value{}, fmt.Errorf("Provided value type %s does not match target type %s", valueToSet.Type(), targetType)
+}
+
+func ensureSliceCapacity(sliceVal reflect.Value, index int) {
+	if index >= sliceVal.Len() {
+		newSlice := reflect.MakeSlice(sliceVal.Type(), index+1, index+1)
+		reflect.Copy(newSlice, sliceVal)
+		sliceVal.Set(newSlice)
+	}
 }
 
 // ParseFieldPath1 parses the names in form of "name1.name2.(...).nameM[N]".
@@ -370,9 +379,10 @@ func setVariableValue(obj interface{}, fieldPath string, value interface{}) erro
 			if err != nil {
 				return err
 			}
-			if index < 0 || index >= objValue.Len() {
+			if index < 0 {
 				return fmt.Errorf("index out of range for field %s", fieldName)
 			}
+			ensureSliceCapacity(objValue, index)
 			objValue = objValue.Index(index)
 		case reflect.Ptr:
 			if objValue.IsNil() {
@@ -406,11 +416,12 @@ func setVariableValue(obj interface{}, fieldPath string, value interface{}) erro
 	}
 
 	valueToSet := reflect.ValueOf(value)
-	if !valueToSet.Type().AssignableTo(targetFieldValue.Type()) {
-		return fmt.Errorf("value type %s is not assignable to field %s type %s", valueToSet.Type(), targetFieldName, targetFieldValue.Type())
+	convertedValue, err := convertTargetValue(targetFieldValue.Type(), valueToSet)
+	if err != nil {
+		return fmt.Errorf("%s: Convert to target value failed, err: %s", fieldPath, err)
 	}
 
-	targetFieldValue.Set(valueToSet)
+	targetFieldValue.Set(convertedValue)
 
 	return nil
 }
