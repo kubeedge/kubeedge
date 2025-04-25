@@ -20,5 +20,5 @@ import "github.com/onsi/ginkgo/v2"
 
 // GroupDescribe annotates the test with the group label.
 func GroupDescribe(text string, body func()) bool {
-	return ginkgo.Describe("[KubeEdge-IOT] "+text, body)
+	return ginkgo.Describe("[KubeEdge-IOT] "+text, ginkgo.Ordered, body)
 }
