@@ -317,6 +317,13 @@ func convertTargetValue(targetType reflect.Type, valueToSet reflect.Value) (refl
 	if targetType.Kind() == valueToSet.Kind() && valueToSet.Type().ConvertibleTo(targetType) {
 		return valueToSet.Convert(targetType), nil
 	}
+	// support point value
+	if targetType.Kind() == reflect.Ptr && valueToSet.Type().ConvertibleTo(targetType.Elem()) {
+		ptr := reflect.New(targetType.Elem())
+		convertedValue := valueToSet.Convert(targetType.Elem())
+		ptr.Elem().Set(convertedValue)
+		return ptr, nil
+	}
 	// use JSON Marshal & Unmarshal to handle map to struct & map to map conversion
 	if targetType.Kind() == reflect.Struct || targetType.Kind() == reflect.Map {
 		jsonNewValue, err := json.Marshal(valueToSet.Interface())

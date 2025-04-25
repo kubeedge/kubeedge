@@ -516,3 +516,14 @@ func TestSetEdgeCoreConfigRegisterWithTaints(t *testing.T) {
 	}
 	t.Log(cfg.Modules.Edged.TailoredKubeletConfig.RegisterWithTaints)
 }
+
+func TestSetEdgeCoreConfigWithPtrValue(t *testing.T) {
+	cfg := v1alpha2.NewDefaultEdgeCoreConfig()
+	// ImageGCHighThresholdPercent *int32
+	// RegisterNode *bool
+	// ReportEvent bool
+	if err := ParseSet(cfg, `Modules.Edged.TailoredKubeletConfig.ImageGCHighThresholdPercent=90,Modules.Edged.TailoredKubeletConfig.RegisterNode=true,Modules.Edged.ReportEvent=true`); err != nil {
+		t.Fatal(err)
+	}
+	t.Log(*cfg.Modules.Edged.TailoredKubeletConfig.ImageGCHighThresholdPercent, *cfg.Modules.Edged.TailoredKubeletConfig.RegisterNode, cfg.Modules.Edged.ReportEvent)
+}
