@@ -1,13 +1,17 @@
 package endpointresource
 
 import (
+	"context"
+
 	v1 "k8s.io/api/core/v1"
 	discovery "k8s.io/api/discovery/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/controllermanager/nodegroup"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/application"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/filter"
@@ -123,11 +127,24 @@ func filterEndpoints(targetNode string, obj runtime.Object) {
 		return
 	}
 	svcName := ep.GetName()
-	svcRaw, err := filter.GetDynamicResourceInformer(v1.SchemeGroupVersion.WithResource("services")).Lister().ByNamespace(ep.Namespace).Get(svcName)
-	if err != nil {
-		klog.Errorf("filter endpoint slice for svc %s error: %v", svcName, err)
-		return
+	var svcRaw interface{}
+
+	if !filter.GetDynamicResourceInformer(v1.SchemeGroupVersion.WithResource("services")).Informer().HasSynced() {
+		klog.Info("services informer has not synced yet")
+		svcRaw, err = client.GetDynamicClient().Resource(v1.SchemeGroupVersion.WithResource("services")).Namespace(ep.Namespace).Get(context.TODO(), svcName, metav1.GetOptions{})
+		if err != nil {
+			klog.Errorf("filter endpoint for svc %s error: %v", svcName, err)
+			return
+		}
+	} else {
+		svcRaw, err = filter.GetDynamicResourceInformer(v1.SchemeGroupVersion.WithResource("services")).Lister().
+			ByNamespace(ep.Namespace).Get(svcName)
+		if err != nil {
+			klog.Errorf("filter endpoint for svc %s error: %v", svcName, err)
+			return
+		}
 	}
+
 	svcObj, err := meta.Accessor(svcRaw)
 	if err != nil {
 		klog.Errorf("get service %v accessor error: %v", svcName, err)
@@ -135,7 +152,7 @@ func filterEndpoints(targetNode string, obj runtime.Object) {
 	}
 
 	if svcObj.GetAnnotations()[nodegroup.ServiceTopologyAnnotation] != nodegroup.ServiceTopologyRangeNodegroup {
-		klog.V(4).Infof("skip filter for endpointSlice %v", unstruct.GetName())
+		klog.V(4).Infof("skip filter for endpoint %v", unstruct.GetName())
 		return
 	}
 	for i := range ep.Subsets {
@@ -144,7 +161,7 @@ func filterEndpoints(targetNode string, obj runtime.Object) {
 	}
 	unstrRaw, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&ep)
 	if err != nil {
-		klog.Errorf("endpointslice %v convert to unstructure error: %v", ep.Name, err)
+		klog.Errorf("endpoints %v convert to unstructure error: %v", ep.Name, err)
 		return
 	}
 	unstruct.SetUnstructuredContent(unstrRaw)
