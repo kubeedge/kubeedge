@@ -64,12 +64,8 @@ func (executor *baseUpgradeExecutor) prePreRun(configpath string) error {
 	executor.cfg = cfg
 
 	// Get the current version of edgecore.
-	if ver, err := edgecoreutil.GetVersion(ctx, configpath, cfg); err != nil {
-		klog.Warningf("failed to get edgecore version, err: %v", err)
-	} else {
-		if ver != "" {
-			executor.currentVersion = ver
-		}
+	if ver := edgecoreutil.GetVersion(ctx, cfg); ver != "" {
+		executor.currentVersion = ver
 	}
 	return nil
 }

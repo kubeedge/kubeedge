@@ -29,7 +29,6 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	upgrdeedge "github.com/kubeedge/kubeedge/pkg/upgrade/edge"
 	"github.com/kubeedge/kubeedge/pkg/util/files"
-	"github.com/kubeedge/kubeedge/pkg/version"
 )
 
 func NewRollbackCommand() *cobra.Command {
@@ -60,11 +59,6 @@ func NewRollbackCommand() *cobra.Command {
 			err = executor.rollback(opts)
 			if err != nil {
 				return err
-			}
-			// Remove edgecore version file when rollback is successful.
-			// If an error occurs, it will not affect the rollback result.
-			if err := version.RemoveEdgeCoreVersion(opts.Config); err != nil {
-				klog.Errorf("failed to remove edgecore version file, err: %v", err)
 			}
 			executor.runPostRunHook(opts.PostRun)
 			return nil
@@ -113,7 +107,7 @@ func (executor *rollbackExecutor) prerun(opts *RollbackOptions) error {
 }
 
 func (executor *rollbackExecutor) rollback(opts RollbackOptions) error {
-	klog.Infof("rollback process start ...")
+	klog.Info("rollback process start ...")
 	// Stop origin edgecore.
 	if err := util.KillKubeEdgeBinary(constants.KubeEdgeBinaryName); err != nil {
 		return fmt.Errorf("failed to stop edgecore, err: %v", err)
@@ -134,6 +128,6 @@ func (executor *rollbackExecutor) rollback(opts RollbackOptions) error {
 	if err := runEdgeCore(); err != nil {
 		return fmt.Errorf("failed to start edgecore, err: %v", err)
 	}
-	klog.Infof("rollback process successful")
+	klog.Info("rollback process successful")
 	return nil
 }

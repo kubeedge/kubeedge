@@ -1,11 +1,11 @@
 /*
-Copyright 2019 The KubeEdge Authors.
+Copyright 2025 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,20 +14,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package common
+package edge
 
 import (
 	"os"
-
-	"sigs.k8s.io/yaml"
+	"path/filepath"
 )
 
-// Write2File writes data into a file in path
-func Write2File(path string, data interface{}) error {
-	d, err := yaml.Marshal(data)
-	if err != nil {
-		return err
-	}
+var (
+	ConfigFile string
+	DBFile     string
+)
 
-	return os.WriteFile(path, d, 0666)
+func init() {
+	tmpdir, err := os.MkdirTemp("", "kubeedge")
+	if err != nil {
+		panic(err)
+	}
+	ConfigFile = filepath.Join(tmpdir, "edgecore.yaml")
+	DBFile = filepath.Join(tmpdir, "edgecore.db")
 }

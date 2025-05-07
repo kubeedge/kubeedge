@@ -21,7 +21,6 @@ import (
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 
 	cfgv1alpha2 "github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
@@ -62,9 +61,8 @@ func TestPrePreRun(t *testing.T) {
 		patches.ApplyFunc(util.ParseEdgecoreConfig, func(_configPath string) (*cfgv1alpha2.EdgeCoreConfig, error) {
 			return &cfgv1alpha2.EdgeCoreConfig{}, nil
 		})
-		patches.ApplyFunc(edgecoreutil.GetVersion, func(_ctx context.Context, _configPath string,
-			_config *cfgv1alpha2.EdgeCoreConfig) (string, error) {
-			return "", errors.New("failed to get version")
+		patches.ApplyFunc(edgecoreutil.GetVersion, func(_ctx context.Context, _config *cfgv1alpha2.EdgeCoreConfig) string {
+			return ""
 		})
 
 		err := executor.prePreRun("")
@@ -84,9 +82,8 @@ func TestPrePreRun(t *testing.T) {
 		patches.ApplyFunc(util.ParseEdgecoreConfig, func(_configPath string) (*cfgv1alpha2.EdgeCoreConfig, error) {
 			return &cfgv1alpha2.EdgeCoreConfig{}, nil
 		})
-		patches.ApplyFunc(edgecoreutil.GetVersion, func(_ctx context.Context, _configPath string,
-			_config *cfgv1alpha2.EdgeCoreConfig) (string, error) {
-			return fakeCurrentVersion, nil
+		patches.ApplyFunc(edgecoreutil.GetVersion, func(_ctx context.Context, _config *cfgv1alpha2.EdgeCoreConfig) string {
+			return fakeCurrentVersion
 		})
 
 		err := executor.prePreRun("")

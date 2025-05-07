@@ -2,8 +2,8 @@ package certificate
 
 import (
 	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/base64"
-	"encoding/pem"
 	"net/http"
 	"testing"
 	"time"
@@ -12,21 +12,46 @@ import (
 	"github.com/stretchr/testify/require"
 
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
+	"github.com/kubeedge/kubeedge/pkg/security/certs"
 )
 
 func TestVerifyCert(t *testing.T) {
-	capem, _ := pem.Decode([]byte(ca))
-	hubconfig.Config.Ca = capem.Bytes
-
-	certpem, _ := pem.Decode([]byte(cert))
-	certs, err := x509.ParseCertificate(certpem.Bytes)
+	cahandler := certs.GetCAHandler(certs.CAHandlerTypeX509)
+	pk, err := cahandler.GenPrivateKey()
 	require.NoError(t, err)
 
-	err = verifyCert(certs, "hw-test1ht6hcsru")
+	caPem, err := cahandler.NewSelfSigned(pk)
+	require.NoError(t, err)
+
+	certshandler := certs.GetHandler(certs.HandlerTypeX509)
+	csrPem, err := certshandler.CreateCSR(pkix.Name{
+		Country:      []string{"CN"},
+		Organization: []string{"system:nodes"},
+		Locality:     []string{"Hangzhou"},
+		Province:     []string{"Zhejiang"},
+		CommonName:   "system:node:testnode",
+	}, pk, nil)
+	require.NoError(t, err)
+
+	certPrm, err := certshandler.SignCerts(certs.SignCertsOptionsWithCSR(
+		csrPem.Bytes,
+		caPem.Bytes,
+		pk.DER(),
+		[]x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+		time.Hour,
+	))
+	require.NoError(t, err)
+
+	hubconfig.Config.Ca = caPem.Bytes
+	certs, err := x509.ParseCertificate(certPrm.Bytes)
+	require.NoError(t, err)
+
+	err = verifyCert(certs, "testnode")
 	require.NoError(t, err)
 }
 
 func TestVerifyAuthorization(t *testing.T) {
+	const cakey = `MHcCAQEEIJQgy45Hw91mXm3pRXwxwDg4BgR4DY1UvHlzm/JXr9K6oAoGCCqGSM49AwEHoUQDQgAEq4Rd11aJ/FXEYBE2YCUMjRZVpqytxDBq2anuzokPculGaTrSDiRy1IKukPhlg34bq7J6wqkF0cmFUvcTjtReqw==`
 	cakeyDer, err := base64.StdEncoding.DecodeString(cakey)
 	require.NoError(t, err)
 	hubconfig.Config.CaKey = cakeyDer
@@ -93,36 +118,3 @@ func TestVerifyAuthorization(t *testing.T) {
 		})
 	}
 }
-
-const (
-	ca = `-----BEGIN CERTIFICATE-----
-MIIBejCCAR+gAwIBAgICBAAwCgYIKoZIzj0EAwIwEzERMA8GA1UEAxMIS3ViZUVk
-Z2UwIBcNMjQwNTA5MDczNzU2WhgPMjEyNDAxMDYwNzM3NTZaMBMxETAPBgNVBAMT
-CEt1YmVFZGdlMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEq4Rd11aJ/FXEYBE2
-YCUMjRZVpqytxDBq2anuzokPculGaTrSDiRy1IKukPhlg34bq7J6wqkF0cmFUvcT
-jtReq6NhMF8wDgYDVR0PAQH/BAQDAgKkMB0GA1UdJQQWMBQGCCsGAQUFBwMBBggr
-BgEFBQcDAjAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTvK3f704DC7OOiVbmO
-PyKwJAUwQjAKBggqhkjOPQQDAgNJADBGAiEAkOgvZtFy+aYSqsfxIVMXxScsGilA
-P1Iiy/r5PerqODcCIQCH+qeEuxIgZzUAD/Wm6xameEmyn/mO4su/4UE6APNZFQ==
------END CERTIFICATE-----`
-
-	cakey = `MHcCAQEEIJQgy45Hw91mXm3pRXwxwDg4BgR4DY1UvHlzm/JXr9K6oAoGCCqGSM49AwEHoUQDQgAEq4Rd11aJ/FXEYBE2YCUMjRZVpqytxDBq2anuzokPculGaTrSDiRy1IKukPhlg34bq7J6wqkF0cmFUvcTjtReqw==`
-
-	cert = `-----BEGIN CERTIFICATE-----
-MIIBjjCCATWgAwIBAgIIWugtLvecOyUwCgYIKoZIzj0EAwIwEzERMA8GA1UEAxMI
-S3ViZUVkZ2UwHhcNMjQwNTA5MDc0MjQ4WhcNMjUwNTA5MDc0MjQ4WjA+MRUwEwYD
-VQQKEwxzeXN0ZW06bm9kZXMxJTAjBgNVBAMTHHN5c3RlbTpub2RlOmh3LXRlc3Qx
-aHQ2aGNzcnUwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAARH0RepNVRX5U5lXcTJ
-XJM/3PgoaDbxEeiS4RZq2Vz86fESc1KmFL+dUyvaqQ4BBIq3FOfirkwUYuhtiSXr
-UyiRo0gwRjAOBgNVHQ8BAf8EBAMCBaAwEwYDVR0lBAwwCgYIKwYBBQUHAwIwHwYD
-VR0jBBgwFoAU7yt3+9OAwuzjolW5jj8isCQFMEIwCgYIKoZIzj0EAwIDRwAwRAIg
-fswApb3FlJZXRw5aSIvls+uqR1ryfczy4fuzL/Y2i4MCIFyyV0t9Ts9uMHHx8R2+
-6oFBzFcJvH65edh9/eH8rUy8
------END CERTIFICATE-----`
-
-	certKey = `-----BEGIN EC PRIVATE KEY-----
-MHcCAQEEIJOhw4Hxmkq6E9YTwj/y+L+bl7nUgxNKcz1dcgiPlm4WoAoGCCqGSM49
-AwEHoUQDQgAER9EXqTVUV+VOZV3EyVyTP9z4KGg28RHokuEWatlc/OnxEnNSphS/
-nVMr2qkOAQSKtxTn4q5MFGLobYkl61MokQ==
------END EC PRIVATE KEY-----`
-)

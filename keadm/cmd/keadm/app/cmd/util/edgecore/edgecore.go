@@ -18,37 +18,31 @@ package edgecore
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/metaclient"
-	"github.com/kubeedge/kubeedge/pkg/version"
 )
 
-func GetVersion(ctx context.Context, configPath string, config *v1alpha2.EdgeCoreConfig) (string, error) {
-	ver, err := version.ReadEdgeCoreVersion(configPath)
-	if err != nil {
-		return "", fmt.Errorf("failed to read edgecore version file, err: %v", err)
-	}
-	if ver != "" {
-		return ver, nil
-	}
+func GetVersion(ctx context.Context, config *v1alpha2.EdgeCoreConfig) string {
 	kubecli, err := metaclient.KubeClientWithConfig(config)
 	if err != nil {
-		return "", fmt.Errorf("failed to get kube client, err: %v", err)
+		klog.Warningf("failed to get kube client, uses default version: %s, err: %v", config.EdgeCoreVersion, err)
+		return config.EdgeCoreVersion
 	}
 	nodeName := config.Modules.Edged.HostnameOverride
 	node, err := kubecli.CoreV1().Nodes().
 		Get(ctx, nodeName, metav1.GetOptions{})
 	if err != nil {
-		return "", fmt.Errorf("failed to get node %s, err: %v", nodeName, err)
+		klog.Warningf("failed to get node %s, uses default version: %s, err: %v", nodeName, config.EdgeCoreVersion, err)
+		return config.EdgeCoreVersion
 	}
 	if kver := node.Status.NodeInfo.KubeletVersion; kver != "" {
 		arr := strings.SplitN(kver, "-", 3)
-		return arr[len(arr)-1], nil
+		return arr[len(arr)-1]
 	}
-	return "", nil
+	return ""
 }

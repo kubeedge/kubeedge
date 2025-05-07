@@ -59,7 +59,7 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 		cloudCoreConfig.Modules.CloudHub.DNSNames = strings.Split(cu.DNSName, ",")
 	}
 
-	if err := types.Write2File(KubeEdgeCloudCoreNewYaml, cloudCoreConfig); err != nil {
+	if err := cloudCoreConfig.WriteTo(KubeEdgeCloudCoreNewYaml); err != nil {
 		return err
 	}
 

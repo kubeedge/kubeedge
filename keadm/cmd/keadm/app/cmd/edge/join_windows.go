@@ -168,7 +168,7 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 	if errs := validation.ValidateEdgeCoreConfiguration(edgeCoreConfig); len(errs) > 0 {
 		return errors.New(pkgutil.SpliceErrors(errs.ToAggregate().Errors()))
 	}
-	return common.Write2File(configFilePath, edgeCoreConfig)
+	return edgeCoreConfig.WriteTo(configFilePath)
 }
 
 func join(opt *common.JoinOptions, step *common.Step) error {

@@ -23,6 +23,7 @@ import (
 
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -30,7 +31,6 @@ import (
 
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/metaclient"
-	"github.com/kubeedge/kubeedge/pkg/version"
 )
 
 func TestGetVersion(t *testing.T) {
@@ -43,50 +43,20 @@ func TestGetVersion(t *testing.T) {
 				},
 			},
 		},
+		EdgeCoreVersion: "0.0.0",
 	}
-
-	t.Run("read edgecore version file failed", func(t *testing.T) {
-		patches := gomonkey.NewPatches()
-		defer patches.Reset()
-
-		patches.ApplyFunc(version.ReadEdgeCoreVersion,
-			func(_configPath string) (string, error) {
-				return "", errors.New("test error")
-			})
-
-		_, err := GetVersion(ctx, "", cfg)
-		assert.ErrorContains(t, err, "failed to read edgecore version file")
-	})
-
-	t.Run("read edgecore version file success", func(t *testing.T) {
-		patches := gomonkey.NewPatches()
-		defer patches.Reset()
-
-		patches.ApplyFunc(version.ReadEdgeCoreVersion,
-			func(_configPath string) (string, error) {
-				return "v1.0.0", nil
-			})
-
-		ver, err := GetVersion(ctx, "", cfg)
-		assert.NoError(t, err)
-		assert.Equal(t, "v1.0.0", ver)
-	})
 
 	t.Run("get kube client failed", func(t *testing.T) {
 		patches := gomonkey.NewPatches()
 		defer patches.Reset()
 
-		patches.ApplyFunc(version.ReadEdgeCoreVersion,
-			func(_configPath string) (string, error) {
-				return "", nil
-			})
 		patches.ApplyFunc(metaclient.KubeClientWithConfig,
 			func(_config *v1alpha2.EdgeCoreConfig) (kubernetes.Interface, error) {
 				return nil, errors.New("test error")
 			})
 
-		_, err := GetVersion(ctx, "", cfg)
-		assert.ErrorContains(t, err, "failed to get kube client")
+		ver := GetVersion(ctx, cfg)
+		require.Equal(t, cfg.EdgeCoreVersion, ver)
 	})
 
 	t.Run("not found node", func(t *testing.T) {
@@ -95,17 +65,13 @@ func TestGetVersion(t *testing.T) {
 		patches := gomonkey.NewPatches()
 		defer patches.Reset()
 
-		patches.ApplyFunc(version.ReadEdgeCoreVersion,
-			func(_configPath string) (string, error) {
-				return "", nil
-			})
 		patches.ApplyFunc(metaclient.KubeClientWithConfig,
 			func(_config *v1alpha2.EdgeCoreConfig) (kubernetes.Interface, error) {
 				return cli, nil
 			})
 
-		_, err := GetVersion(ctx, "", cfg)
-		assert.ErrorContains(t, err, "failed to get node test-node")
+		ver := GetVersion(ctx, cfg)
+		require.Equal(t, cfg.EdgeCoreVersion, ver)
 	})
 
 	t.Run("get version from the node info", func(t *testing.T) {
@@ -123,17 +89,12 @@ func TestGetVersion(t *testing.T) {
 		patches := gomonkey.NewPatches()
 		defer patches.Reset()
 
-		patches.ApplyFunc(version.ReadEdgeCoreVersion,
-			func(_configPath string) (string, error) {
-				return "", nil
-			})
 		patches.ApplyFunc(metaclient.KubeClientWithConfig,
 			func(_config *v1alpha2.EdgeCoreConfig) (kubernetes.Interface, error) {
 				return cli, nil
 			})
 
-		ver, err := GetVersion(ctx, "", cfg)
-		assert.NoError(t, err)
+		ver := GetVersion(ctx, cfg)
 		assert.Equal(t, "v1.20.0-beta.0.71+3ec13c91a30adb-dirty", ver)
 	})
 }

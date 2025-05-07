@@ -20,6 +20,7 @@ import (
 	"errors"
 	"os"
 	"os/exec"
+	"reflect"
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
@@ -234,11 +235,11 @@ func TestCloudCoreConfigCreation(t *testing.T) {
 	})
 
 	var capturedConfig *v1alpha1.CloudCoreConfig
-
-	patches.ApplyFunc(types.Write2File, func(filePath string, content interface{}) error {
-		capturedConfig = content.(*v1alpha1.CloudCoreConfig)
-		return nil
-	})
+	patches.ApplyMethod(reflect.TypeOf(&v1alpha1.CloudCoreConfig{}), "WriteTo",
+		func(cfg *v1alpha1.CloudCoreConfig, _filename string) error {
+			capturedConfig = cfg
+			return nil
+		})
 
 	patches.ApplyMethod(&KubeCloudInstTool{}, "RunCloudCore", func(_ *KubeCloudInstTool) error {
 		return nil
@@ -266,11 +267,11 @@ func TestCloudCoreConfigCreation(t *testing.T) {
 	})
 
 	capturedConfig = nil
-
-	patches2.ApplyFunc(types.Write2File, func(filePath string, content interface{}) error {
-		capturedConfig = content.(*v1alpha1.CloudCoreConfig)
-		return nil
-	})
+	patches.ApplyMethod(reflect.TypeOf(&v1alpha1.CloudCoreConfig{}), "WriteTo",
+		func(cfg *v1alpha1.CloudCoreConfig, _filename string) error {
+			capturedConfig = cfg
+			return nil
+		})
 
 	patches2.ApplyMethod(&KubeCloudInstTool{}, "RunCloudCore", func(_ *KubeCloudInstTool) error {
 		return nil

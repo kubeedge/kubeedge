@@ -90,7 +90,7 @@ func (executor *backupExecutor) prerun(opts BaseOptions) error {
 }
 
 func (executor *backupExecutor) backup(opts BaseOptions) error {
-	klog.Infof("backup process start ...")
+	klog.Info("backup process start ...")
 	backupFiles := []string{
 		executor.cfg.DataBase.DataSource,
 		opts.Config,
@@ -106,6 +106,6 @@ func (executor *backupExecutor) backup(opts BaseOptions) error {
 			return fmt.Errorf("failed to backup file %s, err: %v", file, err)
 		}
 	}
-	klog.Infof("backup process successful")
+	klog.Info("backup process successful")
 	return nil
 }
