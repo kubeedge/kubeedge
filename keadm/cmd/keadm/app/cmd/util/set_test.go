@@ -162,6 +162,11 @@ func TestParseValue(t *testing.T) {
 			s:            "false",
 			expectResult: false,
 		},
+		// Test case 8: JSON input
+		{
+			s:            `{"key":"value"}`,
+			expectResult: map[string]string{"key": "value"},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -190,7 +195,17 @@ func TestParseArray(t *testing.T) {
 		// Test case 3: String array input
 		{
 			s:            `{"apple", "banana", "cherry"}`,
-			expectResult: []string{`"apple"`, `"banana"`, `"cherry"`},
+			expectResult: []string{"apple", "banana", "cherry"},
+		},
+		// Test case 4: String array input without quotation marks
+		{
+			s:            `{apple, banana, cherry}`,
+			expectResult: []string{"apple", "banana", "cherry"},
+		},
+		// Test case 5: String number array input
+		{
+			s:            `{"1", "2", "3"}`,
+			expectResult: []string{"1", "2", "3"},
 		},
 	}
 
@@ -326,9 +341,13 @@ func TestParseAndSetArrayValue(t *testing.T) {
 func TestSetArrayValue(t *testing.T) {
 	type Config struct {
 		ArrayField [3]string
+		SliceField []string
 	}
 	// Initialize a test struct
-	testStruct := Config{ArrayField: [3]string{"1", "2", "3"}}
+	testStruct := Config{
+		ArrayField: [3]string{"1", "2", "3"},
+		SliceField: []string{"1", "2", "3"},
+	}
 
 	// Test case 1: Set array value
 	err := setArrayValue(&testStruct, "ArrayField", 1, "10")
@@ -341,7 +360,7 @@ func TestSetArrayValue(t *testing.T) {
 	}
 
 	// Test case 2: Set value to non-existent index
-	err = setArrayValue(&testStruct, "ArrayField", 10, 5)
+	err = setArrayValue(&testStruct, "ArrayField", 10, "5")
 	if err == nil {
 		t.Error("Expected an error for setting value to non-existent index, but got nil")
 	}
@@ -350,6 +369,24 @@ func TestSetArrayValue(t *testing.T) {
 	err = setArrayValue(&testStruct, "ArrayField", 1, 1)
 	if err == nil {
 		t.Error("Expected an error for setting incorrect value type, but got nil")
+	}
+
+	// Test case 4: Set slice value
+	err = setArrayValue(&testStruct, "SliceField", 1, "10")
+	if err != nil {
+		t.Errorf("Failed to set slice value: %v", err)
+	}
+	if testStruct.SliceField[1] != "10" {
+		t.Errorf("Failed to set slice value. Expected '10', got '%s'", testStruct.SliceField[1])
+	}
+
+	// Test case 5: Extend slice value
+	err = setArrayValue(&testStruct, "SliceField", 4, "10")
+	if err != nil {
+		t.Errorf("Failed to Extend slice value: %v", err)
+	}
+	if len(testStruct.SliceField) != 5 || testStruct.SliceField[4] != "10" {
+		t.Errorf("Failed to Extend slice value. Expected '10', got '%s'", testStruct.SliceField[1])
 	}
 }
 
@@ -423,8 +460,11 @@ func TestSetVariableValue(t *testing.T) {
 	}
 
 	err = setVariableValue(config, "Name1.Name2[2].Variable1", 200)
-	if err == nil {
-		t.Error("Expected error for updating out of range index, but got nil")
+	if err != nil {
+		t.Errorf("Error updating field: %v", err)
+	}
+	if config.Name1.Name2[2].Variable1 != 200 {
+		t.Errorf("Variable1 not updated properly")
 	}
 }
 
@@ -450,8 +490,11 @@ func TestSetVariableValue_EmptySlice(t *testing.T) {
 	}
 
 	err := setVariableValue(config, "Name1.Name2[0].Variable1", 100)
-	if err == nil {
-		t.Error("Expected error for updating empty slice, but got nil")
+	if err != nil {
+		t.Errorf("Error updating field: %v", err)
+	}
+	if config.Name1.Name2[0].Variable1 != 100 {
+		t.Errorf("Variable1 not updated properly")
 	}
 }
 
@@ -461,4 +504,26 @@ func TestEdgeCoreConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(cfg.DataBase.AliasName, cfg.DataBase.DriverName, cfg.Modules.DBTest.Enable, cfg.Modules.Edged.TailoredKubeletFlag.HostnameOverride, cfg.Modules.MetaManager.MetaServer.ServiceAccountIssuers, cfg.FeatureGates)
+}
+
+func TestSetEdgeCoreConfigRegisterWithTaints(t *testing.T) {
+	cfg := v1alpha2.NewDefaultEdgeCoreConfig()
+	if err := ParseSet(cfg, `Modules.Edged.TailoredKubeletConfig.RegisterWithTaints[0]={"key":"node-role.kubernetes.io/edge","value":"","effect":"NoSchedule"}`); err != nil {
+		t.Fatal(err)
+	}
+	if err := ParseSet(cfg, `Modules.Edged.TailoredKubeletConfig.RegisterWithTaints[1].Key=node-role.kubernetes.io/edge,Modules.Edged.TailoredKubeletConfig.RegisterWithTaints[1].Value=edge-node-01,Modules.Edged.TailoredKubeletConfig.RegisterWithTaints[1].Effect=NoExecute`); err != nil {
+		t.Fatal(err)
+	}
+	t.Log(cfg.Modules.Edged.TailoredKubeletConfig.RegisterWithTaints)
+}
+
+func TestSetEdgeCoreConfigWithPtrValue(t *testing.T) {
+	cfg := v1alpha2.NewDefaultEdgeCoreConfig()
+	// ImageGCHighThresholdPercent *int32
+	// RegisterNode *bool
+	// ReportEvent bool
+	if err := ParseSet(cfg, `Modules.Edged.TailoredKubeletConfig.ImageGCHighThresholdPercent=90,Modules.Edged.TailoredKubeletConfig.RegisterNode=true,Modules.Edged.ReportEvent=true`); err != nil {
+		t.Fatal(err)
+	}
+	t.Log(*cfg.Modules.Edged.TailoredKubeletConfig.ImageGCHighThresholdPercent, *cfg.Modules.Edged.TailoredKubeletConfig.RegisterNode, cfg.Modules.Edged.ReportEvent)
 }
