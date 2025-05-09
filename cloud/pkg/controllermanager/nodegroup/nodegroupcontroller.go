@@ -30,6 +30,7 @@ const (
 	NodeGroupControllerFinalizer  = "apps.kubeedge.io/nodegroup-controller"
 	ServiceTopologyAnnotation     = "apps.kubeedge.io/service-topology"
 	ServiceTopologyRangeNodegroup = "range-nodegroup"
+	LabelTopologyZone             = "topology.kubernetes.io/zone"
 )
 
 var (
@@ -146,7 +147,7 @@ func (c *Controller) syncNodeGroup(ctx context.Context, nodeGroup *appsv1alpha1.
 		klog.V(4).Infof("get status %s for node %s, when reconciling nodegroup %s", nodeStatus.ReadyStatus, node.Name, nodeGroup.Name)
 
 		// try to add node group label to this node
-		if err := c.addOrUpdateNodeLabel(ctx, &node, nodeGroup.Name); err != nil {
+		if err := c.addOrUpdateNodeLabel(ctx, &node, nodeGroup.Name, nodeGroup.Spec.TopologyEnabled); err != nil {
 			klog.Errorf("failed to update belonging label for node %s in nodegroup %s, %s, continue to reconcile other nodes", node.Name, nodeGroup.Name, err)
 			nodeStatus.SelectionStatus = appsv1alpha1.FailedSelection
 			nodeStatus.SelectionStatusReason = err.Error()
@@ -203,6 +204,7 @@ func (c *Controller) evictNodes(ctx context.Context, nodes []corev1.Node) error 
 		n := node.DeepCopy()
 		ng := n.Labels[LabelBelongingTo]
 		delete(n.Labels, LabelBelongingTo)
+		delete(n.Labels, LabelTopologyZone)
 		if err := c.Client.Patch(ctx, n, client.MergeFrom(&node)); err != nil {
 			klog.Errorf("failed to remove belonging label of nodegroup %s on node %s, %v", ng, node.Name, err)
 			errs = append(errs, err)
@@ -353,14 +355,30 @@ func (c *Controller) getNodesByNodeName(ctx context.Context, nodeNames []string)
 	return nodes, utilerrors.NewAggregate(errs)
 }
 
-func (c *Controller) addOrUpdateNodeLabel(ctx context.Context, node *corev1.Node, nodeGroupName string) error {
-	nodeLabels := node.Labels
-	v, ok := nodeLabels[LabelBelongingTo]
-	if ok && v == nodeGroupName {
-		// nothing to do
-		return nil
-	}
-	if ok && v != nodeGroupName {
+func (c *Controller) addOrUpdateNodeLabel(ctx context.Context,
+	node *corev1.Node,
+	nodeGroupName string,
+	topologyEnabled bool,
+) error {
+	if v, ok := node.Labels[LabelBelongingTo]; ok {
+		if v == nodeGroupName {
+			// Check if the topology label needs to be updated.
+			newNode := node.DeepCopy()
+			if topologyEnabled {
+				newNode.Labels[LabelTopologyZone] = nodeGroupName
+			} else {
+				delete(newNode.Labels, LabelTopologyZone)
+			}
+			if equality.Semantic.DeepEqual(node.Labels, newNode.Labels) {
+				// The label has not changed and is returned directly.
+				return nil
+			}
+			if err := c.Client.Patch(ctx, newNode, client.MergeFrom(node)); err != nil {
+				klog.Errorf("failed to update labels on node %s for nodeGroup %s: %v", node.Name, nodeGroupName, err)
+				return err
+			}
+			return nil
+		}
 		return fmt.Errorf("node %s has already belonged to NodeGroup %s", node.Name, v)
 	}
 
@@ -370,7 +388,11 @@ func (c *Controller) addOrUpdateNodeLabel(ctx context.Context, node *corev1.Node
 	if newnode.Labels == nil {
 		newnode.Labels = map[string]string{}
 	}
+
 	newnode.Labels[LabelBelongingTo] = nodeGroupName
+	if topologyEnabled {
+		newnode.Labels[LabelTopologyZone] = nodeGroupName
+	}
 	if err := c.Client.Patch(ctx, newnode, client.MergeFrom(node)); err != nil {
 		klog.Errorf("failed to add label %s=%s to node %s, %s", LabelBelongingTo, nodeGroupName, node.Name, err)
 		return err

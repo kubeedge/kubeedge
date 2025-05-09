@@ -29,6 +29,10 @@ type NodeGroupSpec struct {
 	// MatchLabels are used to select nodes that have these labels.
 	// +optional
 	MatchLabels map[string]string `json:"matchLabels,omitempty"`
+
+	// topologyEnabled indicates whether the topology is enabled for this NodeGroup.
+	// +optional
+	TopologyEnabled bool `json:"topologyEnabled,omitempty"`
 }
 
 // NodeGroupStatus contains the observed status of all selected nodes in
