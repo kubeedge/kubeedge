@@ -41,6 +41,7 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
+	"github.com/kubeedge/kubeedge/pkg/util/files"
 	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/api"
 )
 
@@ -50,7 +51,7 @@ func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
 	cmd.Flags().Lookup(common.FlagNameKubeEdgeVersion).NoOptDefVal = joinOptions.KubeEdgeVersion
 
 	cmd.Flags().StringVar(&joinOptions.CertPath, common.FlagNameCertPath, joinOptions.CertPath,
-		fmt.Sprintf("The certPath used by edgecore, the default value is %s", common.DefaultCertPath))
+		fmt.Sprintf("The certPath used by edgecore, the default value is %s", constants.DefaultCertPath))
 
 	cmd.Flags().StringVarP(&joinOptions.CloudCoreIPPort, common.FlagNameCloudCoreIPPort, "e", joinOptions.CloudCoreIPPort,
 		"IP:Port address of KubeEdge CloudCore")
@@ -94,7 +95,7 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 		return errors.New("edgecore for windows dont support version earlier than v1.15.0")
 	}
 
-	configFilePath := filepath.Join(util.KubeEdgePath, "config/edgecore.yaml")
+	configFilePath := filepath.Join(constants.KubeEdgePath, "config/edgecore.yaml")
 	_, err = os.Stat(configFilePath)
 	if err == nil || os.IsExist(err) {
 		klog.Infoln("Read existing configuration file")
@@ -167,7 +168,7 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 	if errs := validation.ValidateEdgeCoreConfiguration(edgeCoreConfig); len(errs) > 0 {
 		return errors.New(pkgutil.SpliceErrors(errs.ToAggregate().Errors()))
 	}
-	return common.Write2File(configFilePath, edgeCoreConfig)
+	return edgeCoreConfig.WriteTo(configFilePath)
 }
 
 func join(opt *common.JoinOptions, step *common.Step) error {
@@ -182,7 +183,7 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 
 	step.Printf("Check edge bin exist")
 	// check if the binary download successfully manual
-	if !util.FileExists(filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName+".exe")) {
+	if !files.FileExists(filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName+".exe")) {
 		fmt.Println("Edge binary not found, start download now")
 		v, err := semver.ParseTolerant(opt.KubeEdgeVersion)
 		if err != nil {
@@ -194,14 +195,15 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 	}
 
 	step.Printf("Register edgecore as windows service")
-	if err := util.InstallNSSMService(util.KubeEdgeBinaryName, filepath.Join(util.KubeEdgeUsrBinPath, util.KubeEdgeBinaryName+".exe"), "--config", filepath.Join(util.KubeEdgePath, "config/edgecore.yaml")); err != nil {
+	if err := util.InstallNSSMService(constants.KubeEdgeBinaryName, filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName+".exe"),
+		"--config", filepath.Join(constants.KubeEdgePath, "config/edgecore.yaml")); err != nil {
 		return fmt.Errorf("install edgecore useing nssm fail: %v", err)
 	}
 
-	if err := util.SetNSSMServiceStdout(util.KubeEdgeBinaryName, filepath.Join(util.KubeEdgeLogPath, "out.log")); err != nil {
+	if err := util.SetNSSMServiceStdout(constants.KubeEdgeBinaryName, filepath.Join(common.KubeEdgeLogPath, "out.log")); err != nil {
 		return fmt.Errorf("setting edgecore stdout log using nssm fail: %v", err)
 	}
-	if err := util.SetNSSMServiceStderr(util.KubeEdgeBinaryName, filepath.Join(util.KubeEdgeLogPath, "err.log")); err != nil {
+	if err := util.SetNSSMServiceStderr(constants.KubeEdgeBinaryName, filepath.Join(common.KubeEdgeLogPath, "err.log")); err != nil {
 		return fmt.Errorf("setting edgecore stderr log using nssm fail: %v", err)
 	}
 
@@ -227,9 +229,9 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 	// if edgecore start, it will get ca/certs from cloud
 	// if ca/certs generated, we can remove bootstrap file
 	err = wait.Poll(10*time.Second, 300*time.Second, func() (bool, error) {
-		if util.FileExists(edgeCoreConfig.Modules.EdgeHub.TLSCAFile) &&
-			util.FileExists(edgeCoreConfig.Modules.EdgeHub.TLSCertFile) &&
-			util.FileExists(edgeCoreConfig.Modules.EdgeHub.TLSPrivateKeyFile) {
+		if files.FileExists(edgeCoreConfig.Modules.EdgeHub.TLSCAFile) &&
+			files.FileExists(edgeCoreConfig.Modules.EdgeHub.TLSCertFile) &&
+			files.FileExists(edgeCoreConfig.Modules.EdgeHub.TLSPrivateKeyFile) {
 			return true, nil
 		}
 		return false, nil
@@ -243,7 +245,7 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 }
 
 func runEdgeCore() error {
-	return util.StartNSSMService(util.KubeEdgeBinaryName)
+	return util.StartNSSMService(constants.KubeEdgeBinaryName)
 }
 
 func prepareWindowsNssm(step *common.Step) error {

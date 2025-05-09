@@ -32,7 +32,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
-	"github.com/kubeedge/kubeedge/edge/test/integration/utils"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/edge"
 )
@@ -128,7 +127,7 @@ func AddTwinAttribute(device dttype.Device, attributeName string, attributeValue
 // Function to access the edgecore DB and return the device state.
 func GetDeviceStateFromDB(deviceID string) string {
 	var device Device
-	db, err := sql.Open("sqlite3", utils.DBFile)
+	db, err := sql.Open("sqlite3", edge.DBFile)
 	if err != nil {
 		common.Fatalf("Open Sqlite DB failed : %v", err)
 	}
@@ -152,7 +151,7 @@ func GetDeviceStateFromDB(deviceID string) string {
 
 func GetTwinAttributesFromDB(deviceID string, Name string) TwinAttribute {
 	var twinAttribute TwinAttribute
-	db, err := sql.Open("sqlite3", utils.DBFile)
+	db, err := sql.Open("sqlite3", edge.DBFile)
 	if err != nil {
 		common.Fatalf("Open Sqlite DB failed : %v", err)
 	}
@@ -188,7 +187,7 @@ func GetTwinAttributesFromDB(deviceID string, Name string) TwinAttribute {
 func GetDeviceAttributesFromDB(deviceID string, Name string) Attribute {
 	var attribute Attribute
 
-	db, err := sql.Open("sqlite3", utils.DBFile)
+	db, err := sql.Open("sqlite3", edge.DBFile)
 	if err != nil {
 		common.Fatalf("Open Sqlite DB failed : %v", err)
 	}

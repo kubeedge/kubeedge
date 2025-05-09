@@ -23,6 +23,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+// Parse reads config file and converts YAML to EdgeCoreConfig
 func (c *EdgeCoreConfig) Parse(filename string) error {
 	data, err := os.ReadFile(filename)
 	if err != nil {
@@ -33,4 +34,19 @@ func (c *EdgeCoreConfig) Parse(filename string) error {
 		return fmt.Errorf("failed to unmarshal configfile %s, err: %v", filename, err)
 	}
 	return nil
+}
+
+// WriteTo converts EdgeCoreConfig to yaml and write it to the file
+func (c *EdgeCoreConfig) WriteTo(filename string) error {
+	data, err := yaml.Marshal(c)
+	if err != nil {
+		return err
+	}
+	fileInfo, err := os.Stat(filename)
+	if err != nil {
+		// If the file does not exist, the default permissions are 0644.
+		return os.WriteFile(filename, data, 0644)
+	}
+	// Write the file using the original file permissions.
+	return os.WriteFile(filename, data, fileInfo.Mode())
 }

@@ -151,9 +151,6 @@ const (
 
 	EdgeCoreServer = "127.0.0.1:10350"
 
-	// EdgecoreConfigPath is default edgecore config path
-	EdgecoreConfigPath = "/etc/kubeedge/config/edgecore.yaml"
-
 	// CmdCopyFile is the cmd to copy file
 	CmdCopyFile = "cp -r %s %s/"
 

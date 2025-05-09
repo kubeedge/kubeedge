@@ -30,8 +30,10 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/cm"
 	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
 
+	apiconsts "github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/common/constants"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/pkg/image"
 )
 
@@ -50,7 +52,7 @@ type ContainerRuntime interface {
 	image.Runtime
 }
 
-type containerRuntimeImpl struct {
+type ContainerRuntimeImpl struct {
 	cgroupDriver string
 	ctrsvc       internalapi.RuntimeService
 
@@ -67,7 +69,7 @@ func NewContainerRuntime(endpoint, cgroupDriver string) (ContainerRuntime, error
 	if err != nil {
 		return nil, fmt.Errorf("failed to new remote runtime service, err: %v", err)
 	}
-	return &containerRuntimeImpl{
+	return &ContainerRuntimeImpl{
 		RuntimeImpl:  imgrt,
 		cgroupDriver: cgroupDriver,
 		ctrsvc:       ctrsvc,
@@ -76,14 +78,14 @@ func NewContainerRuntime(endpoint, cgroupDriver string) (ContainerRuntime, error
 
 // CopyResources copies binary and configuration file from the image to the host.
 // The same way as func (runtime *DockerRuntime) CopyResources
-func (runtime *containerRuntimeImpl) CopyResources(
+func (runtime *ContainerRuntimeImpl) CopyResources(
 	ctx context.Context,
 	edgeImage string,
 	files map[string]string,
 ) error {
 	psc := &runtimeapi.PodSandboxConfig{
 		Metadata: &runtimeapi.PodSandboxMetadata{
-			Name:      KubeEdgeBinaryName,
+			Name:      apiconsts.KubeEdgeBinaryName,
 			Uid:       uuid.New().String(),
 			Namespace: constants.SystemNamespace,
 		},
@@ -163,7 +165,7 @@ func (runtime *containerRuntimeImpl) CopyResources(
 	return nil
 }
 
-func (runtime *containerRuntimeImpl) RunMQTT(ctx context.Context, mqttImage string) error {
+func (runtime *ContainerRuntimeImpl) RunMQTT(ctx context.Context, mqttImage string) error {
 	mqttImage = image.ConvToCRIImage(mqttImage)
 	psc := &runtimeapi.PodSandboxConfig{
 		Metadata: &runtimeapi.PodSandboxMetadata{Name: EdgeMQTT},
@@ -201,7 +203,7 @@ func (runtime *containerRuntimeImpl) RunMQTT(ctx context.Context, mqttImage stri
 		Mounts: []*runtimeapi.Mount{
 			{
 				ContainerPath: "/mosquitto",
-				HostPath:      filepath.Join(KubeEdgeSocketPath, EdgeMQTT),
+				HostPath:      filepath.Join(common.KubeEdgeSocketPath, EdgeMQTT),
 			},
 		},
 	}
@@ -212,7 +214,7 @@ func (runtime *containerRuntimeImpl) RunMQTT(ctx context.Context, mqttImage stri
 	return runtime.ctrsvc.StartContainer(ctx, containerID)
 }
 
-func (runtime *containerRuntimeImpl) RemoveMQTT(ctx context.Context) error {
+func (runtime *ContainerRuntimeImpl) RemoveMQTT(ctx context.Context) error {
 	sandboxFilter := &runtimeapi.PodSandboxFilter{
 		LabelSelector: mqttLabel,
 	}

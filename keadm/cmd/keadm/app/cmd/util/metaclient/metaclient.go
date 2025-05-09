@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package client
+package metaclient
 
 import (
 	"fmt"
@@ -24,13 +24,22 @@ import (
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/kubeedge/api/apis/common/constants"
+	cfgv1alpha2 "github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/api/client/clientset/versioned"
-	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	keadutil "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
 
-func KubeClient() (*kubernetes.Clientset, error) {
-	kubeConfig, err := GetKubeConfig()
+func KubeClient() (kubernetes.Interface, error) {
+	config, err := keadutil.ParseEdgecoreConfig(constants.EdgecoreConfigPath)
+	if err != nil {
+		return nil, fmt.Errorf("get edge config failed with err: %v", err)
+	}
+	return KubeClientWithConfig(config)
+}
+
+func KubeClientWithConfig(config *cfgv1alpha2.EdgeCoreConfig) (kubernetes.Interface, error) {
+	kubeConfig, err := GetKubeConfigWithConfig(config)
 	if err != nil {
 		return nil, err
 	}
@@ -42,11 +51,14 @@ func KubeClient() (*kubernetes.Clientset, error) {
 }
 
 func GetKubeConfig() (*restclient.Config, error) {
-	config, err := keadutil.ParseEdgecoreConfig(common.EdgecoreConfigPath)
+	config, err := keadutil.ParseEdgecoreConfig(constants.EdgecoreConfigPath)
 	if err != nil {
-		return nil, fmt.Errorf("get edge config failed with err:%v", err)
+		return nil, fmt.Errorf("get edge config failed with err: %v", err)
 	}
+	return GetKubeConfigWithConfig(config)
+}
 
+func GetKubeConfigWithConfig(config *cfgv1alpha2.EdgeCoreConfig) (*restclient.Config, error) {
 	if !config.Modules.MetaManager.MetaServer.Enable {
 		return nil, fmt.Errorf("metaserver don't open")
 	}
@@ -76,8 +88,16 @@ func GetKubeConfig() (*restclient.Config, error) {
 	return kubeConfig, nil
 }
 
-func VersionedKubeClient() (*versioned.Clientset, error) {
-	kubeConfig, err := GetKubeConfig()
+func VersionedKubeClient() (versioned.Interface, error) {
+	config, err := keadutil.ParseEdgecoreConfig(constants.EdgecoreConfigPath)
+	if err != nil {
+		return nil, fmt.Errorf("get edge config failed with err: %v", err)
+	}
+	return VersionedKubeClientWithConfig(config)
+}
+
+func VersionedKubeClientWithConfig(config *cfgv1alpha2.EdgeCoreConfig) (versioned.Interface, error) {
+	kubeConfig, err := GetKubeConfigWithConfig(config)
 	if err != nil {
 		return nil, err
 	}

@@ -68,6 +68,9 @@ func (SystemdExtSystem) ServiceDisable(service string) error {
 	return exec.Command("systemctl", args...).Run()
 }
 
+// simpleSystemdServiceTemplate is a template for a simple systemd service file.
+// ⚠️ When we want to modify it, we need to consider how to handle this file during backup, upgrade, and rollback.
+//
 //go:embed simple.service
 var simpleSystemdServiceTemplate string
 

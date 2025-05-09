@@ -26,6 +26,7 @@ import (
 
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/api/apis/common/constants"
 	api "github.com/kubeedge/api/apis/fsm/v1alpha1"
 	"github.com/kubeedge/kubeedge/common/types"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
@@ -208,9 +209,9 @@ func prepareKeadm(upgradeReq *commontypes.NodeUpgradeJobRequest) error {
 			return fmt.Errorf("invalid installation-package image digest value: %s", local)
 		}
 	}
-	files := map[string]string{
-		filepath.Join(util.KubeEdgeUsrBinPath, util.KeadmBinaryName): filepath.Join(util.KubeEdgeUsrBinPath, util.KeadmBinaryName),
-	}
+	containerPath := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KeadmBinaryName)
+	hostPath := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KeadmBinaryName)
+	files := map[string]string{containerPath: hostPath}
 	err = container.CopyResources(ctx, image, files)
 	if err != nil {
 		return fmt.Errorf("failed to cp file from image to host: %v", err)
