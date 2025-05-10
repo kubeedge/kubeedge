@@ -18,12 +18,23 @@ package client
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
+	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
 	api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+)
+
+const (
+	testNamespace = "default"
+	testPVCName   = "test-pvc"
 )
 
 func TestNewPersistentVolumeClaims(t *testing.T) {
@@ -43,8 +54,8 @@ func TestHandlePersistentVolumeClaimFromMetaDB(t *testing.T) {
 	// Test case 1: Valid PersistentVolumeClaim JSON
 	pvc := &api.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-pvc",
-			Namespace: "default",
+			Name:      testPVCName,
+			Namespace: testNamespace,
 		},
 		Spec: api.PersistentVolumeClaimSpec{
 			AccessModes: []api.PersistentVolumeAccessMode{api.ReadWriteOnce},
@@ -101,8 +112,8 @@ func TestHandlePersistentVolumeClaimFromMetaManager(t *testing.T) {
 	// Test case 1: Valid PersistentVolumeClaim JSON
 	pvc := &api.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-pvc",
-			Namespace: "default",
+			Name:      testPVCName,
+			Namespace: testNamespace,
 		},
 		Spec: api.PersistentVolumeClaimSpec{
 			AccessModes: []api.PersistentVolumeAccessMode{api.ReadWriteOnce},
@@ -133,4 +144,157 @@ func TestHandlePersistentVolumeClaimFromMetaManager(t *testing.T) {
 	assert.Error(err)
 	assert.Nil(result)
 	assert.Contains(err.Error(), "unmarshal message to persistentvolumeclaim failed")
+}
+
+func TestPersistentVolumeClaimsStubMethods(t *testing.T) {
+	assert := assert.New(t)
+
+	s := newSend()
+	pvcClient := newPersistentVolumeClaims(testNamespace, s)
+
+	testPVC := &api.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      testPVCName,
+			Namespace: testNamespace,
+		},
+	}
+
+	result, err := pvcClient.Create(testPVC)
+	assert.Nil(result)
+	assert.NoError(err)
+
+	err = pvcClient.Update(testPVC)
+	assert.NoError(err)
+
+	err = pvcClient.Delete(testPVCName)
+	assert.NoError(err)
+}
+
+func TestPersistentVolumeClaimsGet(t *testing.T) {
+	t.Run("SendSync Error", func(t *testing.T) {
+		assert := assert.New(t)
+
+		s := newSend()
+		pvcClient := newPersistentVolumeClaims(testNamespace, s)
+
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		patches.ApplyMethod(s, "SendSync",
+			func(_ *send, _ *model.Message) (*model.Message, error) {
+				return nil, fmt.Errorf("send sync error")
+			})
+
+		result, err := pvcClient.Get(testPVCName, metav1.GetOptions{})
+
+		assert.Error(err)
+		assert.Nil(result)
+		assert.Contains(err.Error(), "get persistentvolumeclaim from metaManager failed")
+	})
+
+	t.Run("GetContentData Error", func(t *testing.T) {
+		assert := assert.New(t)
+
+		s := newSend()
+		pvcClient := newPersistentVolumeClaims(testNamespace, s)
+		mockMsg := &model.Message{}
+
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		patches.ApplyMethod(s, "SendSync",
+			func(_ *send, _ *model.Message) (*model.Message, error) {
+				return mockMsg, nil
+			})
+
+		patches.ApplyMethod(mockMsg, "GetContentData",
+			func(_ *model.Message) ([]byte, error) {
+				return nil, fmt.Errorf("get content data error")
+			})
+
+		result, err := pvcClient.Get(testPVCName, metav1.GetOptions{})
+
+		assert.Error(err)
+		assert.Nil(result)
+		assert.Contains(err.Error(), "parse message to persistentvolumeclaim failed")
+	})
+
+	t.Run("MetaManager Handler Error", func(t *testing.T) {
+		assert := assert.New(t)
+
+		s := newSend()
+		pvcClient := newPersistentVolumeClaims(testNamespace, s)
+		mockMsg := &model.Message{}
+
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		patches.ApplyMethod(s, "SendSync",
+			func(_ *send, _ *model.Message) (*model.Message, error) {
+				return mockMsg, nil
+			})
+
+		patches.ApplyMethod(mockMsg, "GetOperation",
+			func(_ *model.Message) string {
+				return "OtherOperation"
+			})
+
+		patches.ApplyMethod(mockMsg, "GetSource",
+			func(_ *model.Message) string {
+				return modules.MetaManagerModuleName
+			})
+
+		patches.ApplyMethod(mockMsg, "GetContentData",
+			func(_ *model.Message) ([]byte, error) {
+				return []byte(`{"invalid json`), nil
+			})
+
+		result, err := pvcClient.Get(testPVCName, metav1.GetOptions{})
+
+		assert.Error(err)
+		assert.Nil(result)
+		assert.Contains(err.Error(), "unmarshal message to persistentvolumeclaim failed")
+	})
+
+	t.Run("Test BuildMsg Parameters", func(t *testing.T) {
+		assert := assert.New(t)
+
+		s := newSend()
+		pvcClient := newPersistentVolumeClaims(testNamespace, s)
+
+		expectedResource := fmt.Sprintf("%s/%s/%s", testNamespace, "persistentvolumeclaim", testPVCName)
+
+		var capturedGroup, capturedResource, capturedSource, capturedDest string
+		var capturedOperation string
+		var capturedContent interface{}
+
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		patches.ApplyFunc(message.BuildMsg,
+			func(group, source, dest, resource string, operation string, content interface{}) *model.Message {
+				capturedGroup = group
+				capturedSource = source
+				capturedDest = dest
+				capturedResource = resource
+				capturedOperation = operation
+				capturedContent = content
+
+				return &model.Message{}
+			})
+
+		patches.ApplyMethod(s, "SendSync",
+			func(_ *send, _ *model.Message) (*model.Message, error) {
+				return nil, fmt.Errorf("some error")
+			})
+
+		_, _ = pvcClient.Get(testPVCName, metav1.GetOptions{})
+
+		assert.Equal(modules.MetaGroup, capturedGroup)
+		assert.Equal("", capturedSource)
+		assert.Equal(modules.EdgedModuleName, capturedDest)
+		assert.Equal(expectedResource, capturedResource)
+		assert.Equal(model.QueryOperation, capturedOperation)
+		assert.Nil(capturedContent)
+	})
 }
