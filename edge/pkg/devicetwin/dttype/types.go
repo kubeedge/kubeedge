@@ -8,8 +8,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 )
 
 // Device the struct of device
@@ -299,9 +299,9 @@ func UnmarshalDeviceTwinUpdate(payload []byte) (*DeviceTwinUpdate, error) {
 
 // DealTwinResult the result of dealing twin
 type DealTwinResult struct {
-	Add        []dtclient.DeviceTwin
-	Delete     []dtclient.DeviceDelete
-	Update     []dtclient.DeviceTwinUpdate
+	Add        []models.DeviceTwin
+	Delete     []models.DeviceDelete
+	Update     []models.DeviceTwinUpdate
 	Result     map[string]*MsgTwin
 	SyncResult map[string]*MsgTwin
 	Document   map[string]*TwinDoc
@@ -310,9 +310,9 @@ type DealTwinResult struct {
 
 // DealAttrResult the result of dealing attr
 type DealAttrResult struct {
-	Add    []dtclient.DeviceAttr
-	Delete []dtclient.DeviceDelete
-	Update []dtclient.DeviceAttrUpdate
+	Add    []models.DeviceAttr
+	Delete []models.DeviceDelete
+	Update []models.DeviceAttrUpdate
 	Result map[string]*MsgAttr
 	Err    error
 }

@@ -30,7 +30,7 @@ import (
 	"github.com/kubeedge/kubeedge/common/types"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/upgradedb"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
 	"github.com/kubeedge/kubeedge/pkg/version"
@@ -86,6 +86,7 @@ func initUpgrade(taskReq types.NodeTaskRequest) (event fsm.Event) {
 		return
 	}
 	if upgradeReq.RequireConfirmation {
+		dbc := dbclient.NewMetaV2Service()
 		var upgradeJobReqDB = commontypes.NodeUpgradeJobRequest{
 			UpgradeID:           upgradeReq.UpgradeID,
 			HistoryID:           upgradeReq.HistoryID,
@@ -95,7 +96,7 @@ func initUpgrade(taskReq types.NodeTaskRequest) (event fsm.Event) {
 			ImageDigest:         upgradeReq.ImageDigest,
 			RequireConfirmation: upgradeReq.RequireConfirmation,
 		}
-		if err = upgradedb.SaveNodeUpgradeJobRequestToMetaV2(upgradeJobReqDB); err != nil {
+		if err = dbc.SaveNodeUpgradeJobRequestToMetaV2(upgradeJobReqDB); err != nil {
 			event.Action = api.ActionFailure
 			event.Msg = err.Error()
 		}
@@ -106,7 +107,7 @@ func initUpgrade(taskReq types.NodeTaskRequest) (event fsm.Event) {
 			State:  string(api.NodeUpgrading),
 			Item:   "Wait for a confirm for upgrade request on the edge site.",
 		}
-		if err = upgradedb.SaveNodeTaskRequestToMetaV2(taskReqDB); err != nil {
+		if err = dbc.SaveNodeTaskRequestToMetaV2(taskReqDB); err != nil {
 			event.Action = api.ActionFailure
 			event.Msg = err.Error()
 		}

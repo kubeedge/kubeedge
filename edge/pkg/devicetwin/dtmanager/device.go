@@ -12,10 +12,11 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 )
 
 var (
@@ -101,7 +102,7 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 		lastOnline = time.Now().UTC().Format(time.RFC3339)
 	}
 	for i := 1; i <= dtcommon.RetryTimes; i++ {
-		err = dtclient.UpdateDeviceFields(
+		err = dbclient.NewDeviceService().UpdateDeviceFields(
 			device.ID,
 			map[string]interface{}{
 				"last_online": lastOnline,
@@ -186,7 +187,7 @@ func UpdateDeviceAttr(context *dtcontext.DTContext, deviceID string, attributes 
 	add, deviceAttrDelete, update, result := dealAttrResult.Add, dealAttrResult.Delete, dealAttrResult.Update, dealAttrResult.Result
 	if len(add) != 0 || len(deviceAttrDelete) != 0 || len(update) != 0 {
 		for i := 1; i <= dtcommon.RetryTimes; i++ {
-			err = dtclient.DeviceAttrTrans(add, deviceAttrDelete, update)
+			err = dbclient.NewDeviceService().DeviceAttrTrans(add, deviceAttrDelete, update)
 			if err == nil {
 				break
 			}
@@ -234,16 +235,16 @@ func DealMsgAttr(context *dtcontext.DTContext, deviceID string, msgAttrs map[str
 		device.Attributes = make(map[string]*dttype.MsgAttr)
 		attrs = device.Attributes
 	}
-	add := make([]dtclient.DeviceAttr, 0)
-	deletes := make([]dtclient.DeviceDelete, 0)
-	update := make([]dtclient.DeviceAttrUpdate, 0)
+	add := make([]models.DeviceAttr, 0)
+	deletes := make([]models.DeviceDelete, 0)
+	update := make([]models.DeviceAttrUpdate, 0)
 	result := make(map[string]*dttype.MsgAttr)
 
 	for key, msgAttr := range msgAttrs {
 		if attr, exist := attrs[key]; exist {
 			if msgAttr == nil && dealType == 0 {
 				if *attr.Optional {
-					deletes = append(deletes, dtclient.DeviceDelete{DeviceID: deviceID, Name: key})
+					deletes = append(deletes, models.DeviceDelete{DeviceID: deviceID, Name: key})
 					result[key] = nil
 					delete(attrs, key)
 				}
@@ -285,7 +286,7 @@ func DealMsgAttr(context *dtcontext.DTContext, deviceID string, msgAttrs map[str
 				}
 			}
 			if isChange {
-				update = append(update, dtclient.DeviceAttrUpdate{DeviceID: deviceID, Name: key, Cols: cols})
+				update = append(update, models.DeviceAttrUpdate{DeviceID: deviceID, Name: key, Cols: cols})
 			} else {
 				delete(result, key)
 			}
@@ -313,7 +314,7 @@ func DealMsgAttr(context *dtcontext.DTContext, deviceID string, msgAttrs map[str
 	if dealType > 0 {
 		for key := range attrs {
 			if _, exist := msgAttrs[key]; !exist {
-				deletes = append(deletes, dtclient.DeviceDelete{DeviceID: deviceID, Name: key})
+				deletes = append(deletes, models.DeviceDelete{DeviceID: deviceID, Name: key})
 				result[key] = nil
 			}
 		}
