@@ -77,9 +77,11 @@ func (ms *ContainerMetricsConnection) WriteToTunnel(m *stream.Message) error {
 
 func (ms *ContainerMetricsConnection) SendConnection() (stream.EdgedConnection, error) {
 	connector := &stream.EdgedMetricsConnection{
-		MessID: ms.MessageID,
-		URL:    *ms.r.Request.URL,
-		Header: ms.r.Request.Header,
+		BaseEdgedConnection: stream.BaseEdgedConnection{
+			MessID: ms.MessageID,
+			URL:    *ms.r.Request.URL,
+			Header: ms.r.Request.Header,
+		},
 	}
 	connector.URL.Scheme = httpScheme
 	connector.URL.Host = net.JoinHostPort(defaultServerHost, strconv.Itoa(constants.ServerPort))
