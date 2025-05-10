@@ -17,12 +17,17 @@ limitations under the License.
 package cloud
 
 import (
+	"errors"
 	"testing"
 
+	"github.com/agiledragon/gomonkey/v2"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/client-go/kubernetes"
 
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
 
 func TestNewGetToken(t *testing.T) {
@@ -92,4 +97,102 @@ func TestShowToken(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestQueryToken(t *testing.T) {
+	assert := assert.New(t)
+
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	patches.ApplyFunc(util.KubeClient, func(kubeConfigPath string) (*kubernetes.Clientset, error) {
+		return nil, errors.New("kube client error")
+	})
+
+	token, err := queryToken("namespace", "name", "kubeconfig")
+	assert.Error(err)
+	assert.Nil(token)
+	assert.Contains(err.Error(), "kube client error")
+
+	patches.Reset()
+
+	mockClient := &kubernetes.Clientset{}
+	patches.ApplyFunc(util.KubeClient, func(kubeConfigPath string) (*kubernetes.Clientset, error) {
+		return mockClient, nil
+	})
+
+	patches.ApplyFunc(queryToken, func(namespace, name, kubeConfigPath string) ([]byte, error) {
+		if name == "nonexistent-secret" {
+			return nil, errors.New("secret not found")
+		}
+		return []byte("test-token"), nil
+	})
+
+	token, err = queryToken("namespace", "nonexistent-secret", "kubeconfig")
+	assert.Error(err)
+	assert.Contains(err.Error(), "secret not found")
+
+	token, err = queryToken("test-namespace", "test-secret", "kubeconfig")
+	assert.NoError(err)
+	assert.Equal([]byte("test-token"), token)
+}
+
+func TestGettokenRunE(t *testing.T) {
+	assert := assert.New(t)
+
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	patches.ApplyFunc(queryToken, func(namespace, name, kubeConfigPath string) ([]byte, error) {
+		assert.Equal(constants.SystemNamespace, namespace)
+		assert.Equal(common.TokenSecretName, name)
+		assert.Equal(common.DefaultKubeConfig, kubeConfigPath)
+		return nil, errors.New("query token error")
+	})
+
+	cmd := NewGettoken()
+	err := cmd.RunE(cmd, []string{})
+	assert.Error(err)
+	assert.Contains(err.Error(), "query token error")
+
+	patches.Reset()
+
+	tokenData := []byte("mock token")
+	patches.ApplyFunc(queryToken, func(namespace, name, kubeConfigPath string) ([]byte, error) {
+		assert.Equal(constants.SystemNamespace, namespace)
+		assert.Equal(common.TokenSecretName, name)
+		assert.Equal(common.DefaultKubeConfig, kubeConfigPath)
+		return tokenData, nil
+	})
+
+	showTokenCalled := false
+	patches.ApplyFunc(showToken, func(data []byte) error {
+		showTokenCalled = true
+		assert.Equal(tokenData, data)
+		return nil
+	})
+
+	cmd = NewGettoken()
+	err = cmd.RunE(cmd, []string{})
+	assert.NoError(err)
+	assert.True(showTokenCalled)
+
+	patches.Reset()
+
+	patches.ApplyFunc(queryToken, func(namespace, name, kubeConfigPath string) ([]byte, error) {
+		assert.Equal(constants.SystemNamespace, namespace)
+		assert.Equal(common.TokenSecretName, name)
+		assert.Equal("/custom/config", kubeConfigPath)
+		return tokenData, nil
+	})
+
+	patches.ApplyFunc(showToken, func(data []byte) error {
+		return nil
+	})
+
+	cmd = NewGettoken()
+	err = cmd.Flags().Set(common.FlagNameKubeConfig, "/custom/config")
+	assert.NoError(err)
+	err = cmd.RunE(cmd, []string{})
+	assert.NoError(err)
 }
