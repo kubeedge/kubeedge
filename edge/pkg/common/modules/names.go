@@ -15,4 +15,6 @@ const (
 	EdgeHubModuleName = "websocket"
 	// MetaManagerModuleName metamanager module name
 	MetaManagerModuleName = "metamanager"
+	// TaskManagerModuleName is a module name of taskmanager.
+	TaskManagerModuleName = "taskmanager"
 )

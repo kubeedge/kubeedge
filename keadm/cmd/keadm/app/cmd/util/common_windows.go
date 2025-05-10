@@ -28,24 +28,14 @@ import (
 
 	"github.com/blang/semver"
 
+	"github.com/kubeedge/api/apis/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/pkg/util/execs"
+	"github.com/kubeedge/kubeedge/pkg/util/files"
 )
 
 // Constants used by installers
 const (
-	KubeEdgePath        = "C:\\etc\\kubeedge\\"
-	KubeEdgeBackupPath  = "C:\\etc\\kubeedge\\backup\\"
-	KubeEdgeUpgradePath = "C:\\etc\\kubeedge\\upgrade\\"
-	KubeEdgeUsrBinPath  = "C:\\usr\\local\\bin"
-
-	KubeEdgeLogPath = "C:\\var\\log\\kubeedge\\"
-
-	KubeEdgeSocketPath = "C:\\var\\lib\\kubeedge\\"
-
-	EdgeRootDir = "C:\\var\\lib\\edged"
-
-	EdgeKubeletDir = "C:\\var\\lib\\kubelet"
-
 	downloadFileScript = `
 function DownloadFile($destination, $source) {
     Write-Host("Downloading $source to $destination")
@@ -61,7 +51,7 @@ DownloadFile %s %s
 )
 
 func IsServiceExist(service string) bool {
-	cmd := NewCommand(fmt.Sprintf("Get-Service '%s'", service))
+	cmd := execs.NewCommand(fmt.Sprintf("Get-Service '%s'", service))
 	_err := cmd.Exec()
 	return _err == nil
 }
@@ -80,13 +70,13 @@ func HasSystemd() bool {
 }
 
 func CopyFile(src, dst string) error {
-	return NewCommand(fmt.Sprintf("Copy-Item -Path %s -Destination %s -Force", src, dst)).Exec()
+	return execs.NewCommand(fmt.Sprintf("Copy-Item -Path %s -Destination %s -Force", src, dst)).Exec()
 }
 
 // RunningModuleV2 identifies cloudcore/edgecore running or not.
 // only used for cloudcore container install and edgecore binary install
 func RunningModuleV2(opt *types.ResetOptions) types.ModuleRunning {
-	if IsNSSMServiceExist(KubeEdgeBinaryName) {
+	if IsNSSMServiceExist(constants.KubeEdgeBinaryName) {
 		return types.KubeEdgeEdgeRunning
 	}
 	return types.NoneRunning
@@ -105,7 +95,7 @@ func installKubeEdge(options types.InstallOptions, version semver.Version) error
 
 	// create the storage path of the kubeedge installation packages
 	if options.TarballPath == "" {
-		options.TarballPath = KubeEdgePath
+		options.TarballPath = constants.KubeEdgePath
 	} else {
 		err := os.MkdirAll(options.TarballPath, os.ModePerm)
 		if err != nil {
@@ -113,9 +103,9 @@ func installKubeEdge(options types.InstallOptions, version semver.Version) error
 		}
 	}
 
-	err := os.MkdirAll(KubeEdgePath, os.ModePerm)
+	err := os.MkdirAll(constants.KubeEdgePath, os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("not able to create %s folder path", KubeEdgePath)
+		return fmt.Errorf("not able to create %s folder path", constants.KubeEdgePath)
 	}
 
 	//Check if the same version exists, then skip the download and just checksum for it
@@ -140,7 +130,7 @@ func installKubeEdge(options types.InstallOptions, version semver.Version) error
 				}
 				if confirm {
 					cmdStr := fmt.Sprintf("cd %s && rm -f %s", options.TarballPath, filename)
-					if err := NewCommand(cmdStr).Exec(); err != nil {
+					if err := execs.NewCommand(cmdStr).Exec(); err != nil {
 						return err
 					}
 					fmt.Printf("%v have been deleted and will try to download again\n", filename)
@@ -168,12 +158,12 @@ func installKubeEdge(options types.InstallOptions, version semver.Version) error
 		return err
 	}
 	// check if the edgecore.exe exists
-	if !FileExists(filepath.Join(options.TarballPath, dirname, "edge", "edgecore.exe")) {
+	if !files.FileExists(filepath.Join(options.TarballPath, dirname, "edge", "edgecore.exe")) {
 		return fmt.Errorf("cannot find edgecore binary at %s", filepath.Join(options.TarballPath, dirname, "edge", "edgecore.exe"))
 	}
-	os.MkdirAll(KubeEdgeUsrBinPath, os.ModePerm)
+	os.MkdirAll(constants.KubeEdgeUsrBinPath, os.ModePerm)
 	// copy the binary to the executable path
-	if err = CopyFile(filepath.Join(options.TarballPath, dirname, "edge", "edgecore.exe"), filepath.Join(KubeEdgeUsrBinPath, KubeEdgeBinaryName+".exe")); err != nil {
+	if err = CopyFile(filepath.Join(options.TarballPath, dirname, "edge", "edgecore.exe"), filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName+".exe")); err != nil {
 		return err
 	}
 
@@ -196,7 +186,7 @@ func checkSum(filename, checksumFilename string, version semver.Version, tarball
 		// download checksum file
 		dwnldURL := fmt.Sprintf(downloadFileScript,
 			checksumFilepath, fmt.Sprintf("%s/v%s/%s", KubeEdgeDownloadURL, version, checksumFilename))
-		if err := NewCommand(dwnldURL).Exec(); err != nil {
+		if err := execs.NewCommand(dwnldURL).Exec(); err != nil {
 			return false, err
 		}
 	}
@@ -221,7 +211,7 @@ func retryDownload(filename, checksumFilename string, version semver.Version, ta
 		//Download the tar from repo
 		dwnldURL := fmt.Sprintf(downloadFileScript,
 			filePath, fmt.Sprintf("%s/v%s/%s", KubeEdgeDownloadURL, version, filename))
-		if err := NewCommand(dwnldURL).Exec(); err != nil {
+		if err := execs.NewCommand(dwnldURL).Exec(); err != nil {
 			return err
 		}
 
@@ -235,7 +225,7 @@ func retryDownload(filename, checksumFilename string, version semver.Version, ta
 		}
 		fmt.Printf("Failed to verify the checksum of %s, try to download it again ... \n\n", filename)
 		//Cleanup the downloaded files
-		if err = NewCommand(fmt.Sprintf("Remove-Item -Force %s", filePath)).Exec(); err != nil {
+		if err = execs.NewCommand(fmt.Sprintf("Remove-Item -Force %s", filePath)).Exec(); err != nil {
 			return err
 		}
 	}

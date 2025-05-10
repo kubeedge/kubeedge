@@ -30,27 +30,19 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/cm"
 	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
 
+	apiconsts "github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/image"
 )
 
-// mqttLabel is used to select MQTT containers
-var mqttLabel = map[string]string{"io.kubeedge.edgecore/mqtt": EdgeMQTT}
-
 type ContainerRuntime interface {
 	CopyResources(ctx context.Context, edgeImage string, files map[string]string) error
-	// RunMQTT create and start the mosquitto container service.
-	// Deprecated: MQTT server is maintained by DaemonSet now.
-	RunMQTT(ctx context.Context, mqttImage string) error
-	// RemoveMQTT stop and remove the mosquitto container service.
-	// Deprecated: MQTT server is maintained by DaemonSet now.
-	RemoveMQTT(ctx context.Context) error
 
 	image.Runtime
 }
 
-type containerRuntimeImpl struct {
+type ContainerRuntimeImpl struct {
 	cgroupDriver string
 	ctrsvc       internalapi.RuntimeService
 
@@ -67,7 +59,7 @@ func NewContainerRuntime(endpoint, cgroupDriver string) (ContainerRuntime, error
 	if err != nil {
 		return nil, fmt.Errorf("failed to new remote runtime service, err: %v", err)
 	}
-	return &containerRuntimeImpl{
+	return &ContainerRuntimeImpl{
 		RuntimeImpl:  imgrt,
 		cgroupDriver: cgroupDriver,
 		ctrsvc:       ctrsvc,
@@ -76,14 +68,14 @@ func NewContainerRuntime(endpoint, cgroupDriver string) (ContainerRuntime, error
 
 // CopyResources copies binary and configuration file from the image to the host.
 // The same way as func (runtime *DockerRuntime) CopyResources
-func (runtime *containerRuntimeImpl) CopyResources(
+func (runtime *ContainerRuntimeImpl) CopyResources(
 	ctx context.Context,
 	edgeImage string,
 	files map[string]string,
 ) error {
 	psc := &runtimeapi.PodSandboxConfig{
 		Metadata: &runtimeapi.PodSandboxMetadata{
-			Name:      KubeEdgeBinaryName,
+			Name:      apiconsts.KubeEdgeBinaryName,
 			Uid:       uuid.New().String(),
 			Namespace: constants.SystemNamespace,
 		},
@@ -158,80 +150,6 @@ func (runtime *containerRuntimeImpl) CopyResources(
 	stdout, stderr, err := runtime.ctrsvc.ExecSync(ctx, containerID, cmd, 30*time.Second)
 	if err != nil {
 		return fmt.Errorf("failed to exec copy cmd, err: %v, stderr: %s, stdout: %s", err, string(stderr), string(stdout))
-	}
-
-	return nil
-}
-
-func (runtime *containerRuntimeImpl) RunMQTT(ctx context.Context, mqttImage string) error {
-	mqttImage = image.ConvToCRIImage(mqttImage)
-	psc := &runtimeapi.PodSandboxConfig{
-		Metadata: &runtimeapi.PodSandboxMetadata{Name: EdgeMQTT},
-		PortMappings: []*runtimeapi.PortMapping{
-			{
-				ContainerPort: 1883,
-				HostPort:      1883,
-			},
-			{
-				ContainerPort: 9001,
-				HostPort:      9001,
-			},
-		},
-		Labels: mqttLabel,
-		Linux: &runtimeapi.LinuxPodSandboxConfig{
-			SecurityContext: &runtimeapi.LinuxSandboxSecurityContext{
-				NamespaceOptions: &runtimeapi.NamespaceOption{
-					Network: runtimeapi.NamespaceMode_POD,
-					Pid:     runtimeapi.NamespaceMode_CONTAINER,
-					Ipc:     runtimeapi.NamespaceMode_POD,
-				},
-			},
-		},
-	}
-	sandbox, err := runtime.ctrsvc.RunPodSandbox(ctx, psc, "")
-	if err != nil {
-		return err
-	}
-
-	containerConfig := &runtimeapi.ContainerConfig{
-		Metadata: &runtimeapi.ContainerMetadata{Name: EdgeMQTT},
-		Image: &runtimeapi.ImageSpec{
-			Image: mqttImage,
-		},
-		Mounts: []*runtimeapi.Mount{
-			{
-				ContainerPath: "/mosquitto",
-				HostPath:      filepath.Join(KubeEdgeSocketPath, EdgeMQTT),
-			},
-		},
-	}
-	containerID, err := runtime.ctrsvc.CreateContainer(ctx, sandbox, containerConfig, psc)
-	if err != nil {
-		return err
-	}
-	return runtime.ctrsvc.StartContainer(ctx, containerID)
-}
-
-func (runtime *containerRuntimeImpl) RemoveMQTT(ctx context.Context) error {
-	sandboxFilter := &runtimeapi.PodSandboxFilter{
-		LabelSelector: mqttLabel,
-	}
-
-	sandbox, err := runtime.ctrsvc.ListPodSandbox(ctx, sandboxFilter)
-	if err != nil {
-		fmt.Printf("List MQTT containers failed: %v\n", err)
-		return err
-	}
-
-	for _, c := range sandbox {
-		// by reference doc
-		// RemovePodSandbox removes the sandbox. If there are running containers in the
-		// sandbox, they should be forcibly removed.
-		// so we can remove mqtt containers totally.
-		err = runtime.ctrsvc.RemovePodSandbox(ctx, c.Id)
-		if err != nil {
-			fmt.Printf("failed to remove MQTT container: %v\n", err)
-		}
 	}
 
 	return nil

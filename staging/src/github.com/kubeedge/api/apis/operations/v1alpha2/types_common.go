@@ -26,11 +26,6 @@ const (
 	JobPhaseFailure    JobPhase = "Failure"
 )
 
-// IsFinal returns whether the node task is in the final phase.
-func (s JobPhase) IsFinal() bool {
-	return s == JobPhaseComplated || s == JobPhaseFailure
-}
-
 type NodeTaskPhase string
 
 // Constants for node task status.

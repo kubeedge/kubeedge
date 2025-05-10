@@ -9,9 +9,12 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/kubeedge/api/apis/common/constants"
+	apiconsts "github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
+	"github.com/kubeedge/kubeedge/pkg/util/execs"
+	"github.com/kubeedge/kubeedge/pkg/util/files"
 )
 
 var (
@@ -49,12 +52,12 @@ func NewCollect() *cobra.Command {
 // add flags
 func addCollectOtherFlags(cmd *cobra.Command, collectOptions *common.CollectOptions) {
 	cmd.Flags().StringVarP(&collectOptions.Config, common.EdgecoreConfig, "c", collectOptions.Config,
-		fmt.Sprintf("Specify configuration file, default is %s", common.EdgecoreConfigPath))
+		fmt.Sprintf("Specify configuration file, default is %s", apiconsts.EdgecoreConfigPath))
 	cmd.Flags().BoolVarP(&collectOptions.Detail, "detail", "d", false,
 		"Whether to print internal log output")
 	cmd.Flags().StringVarP(&collectOptions.OutputPath, "output-path", "o", collectOptions.OutputPath,
 		"Cache data and store data compression packages in a directory that default to the current directory")
-	cmd.Flags().StringVarP(&collectOptions.LogPath, "log-path", "l", util.KubeEdgeLogPath,
+	cmd.Flags().StringVarP(&collectOptions.LogPath, "log-path", "l", common.KubeEdgeLogPath,
 		"Specify log file")
 }
 
@@ -62,7 +65,7 @@ func addCollectOtherFlags(cmd *cobra.Command, collectOptions *common.CollectOpti
 func newCollectOptions() *common.CollectOptions {
 	opts := &common.CollectOptions{}
 
-	opts.Config = common.EdgecoreConfigPath
+	opts.Config = apiconsts.EdgecoreConfigPath
 	opts.OutputPath = "."
 	opts.Detail = false
 	return opts
@@ -124,7 +127,7 @@ func ExecuteCollect(collectOptions *common.CollectOptions) error {
 
 // VerificationParameters verifies parameters for debug collect
 func VerificationParameters(collectOptions *common.CollectOptions) error {
-	if !util.FileExists(collectOptions.Config) {
+	if !files.FileExists(collectOptions.Config) {
 		return fmt.Errorf("edgecore config %s does not exist", collectOptions.Config)
 	}
 
@@ -132,7 +135,7 @@ func VerificationParameters(collectOptions *common.CollectOptions) error {
 	if err != nil {
 		return err
 	}
-	if !util.FileExists(path) {
+	if !files.FileExists(path) {
 		return fmt.Errorf("output-path %s does not exist", path)
 	}
 	collectOptions.OutputPath = path
@@ -224,7 +227,7 @@ func collectEdgecoreData(tmpPath string, config *v1alpha2.EdgeCoreConfig, ops *c
 			return err
 		}
 	} else {
-		if err = CopyFile(util.KubeEdgeLogPath, fmt.Sprintf("%s/log", tmpPath)); err != nil {
+		if err = CopyFile(common.KubeEdgeLogPath, fmt.Sprintf("%s/log", tmpPath)); err != nil {
 			return err
 		}
 	}
@@ -245,7 +248,7 @@ func collectEdgecoreData(tmpPath string, config *v1alpha2.EdgeCoreConfig, ops *c
 		}
 	} else {
 		printDetail(fmt.Sprintf("not found cert config, use default path: %s", tmpPath))
-		if err = CopyFile(common.DefaultCertPath+"/", tmpPath); err != nil {
+		if err = CopyFile(apiconsts.DefaultCertPath+"/", tmpPath); err != nil {
 			return err
 		}
 	}
@@ -287,12 +290,12 @@ func collectRuntimeData(tmpPath string) error {
 }
 
 func CopyFile(pathSrc, tmpPath string) error {
-	cmd := util.NewCommand(fmt.Sprintf(common.CmdCopyFile, pathSrc, tmpPath))
+	cmd := execs.NewCommand(fmt.Sprintf(common.CmdCopyFile, pathSrc, tmpPath))
 	return cmd.Exec()
 }
 
 func ExecuteShell(cmdStr string, tmpPath string) error {
-	cmd := util.NewCommand(fmt.Sprintf(cmdStr, tmpPath))
+	cmd := execs.NewCommand(fmt.Sprintf(cmdStr, tmpPath))
 	return cmd.Exec()
 }
 

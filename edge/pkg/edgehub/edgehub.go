@@ -14,6 +14,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/certificate"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
+	msghandler "github.com/kubeedge/kubeedge/edge/pkg/edgehub/messagehandler"
 )
 
 // EdgeHub defines edgehub object structure
@@ -55,9 +56,8 @@ func newEdgeHub(enable bool) *EdgeHub {
 func Register(eh *v1alpha2.EdgeHub, nodeName string) {
 	// Initialize the hub configuration
 	config.InitConfigure(eh, nodeName)
-
-	RegisterMessageHandlers()
-
+	// Initialize the message handler
+	msghandler.RegisterHandlers()
 	// Register self to beehive modules
 	core.Register(newEdgeHub(eh.Enable))
 }

@@ -93,10 +93,10 @@ type NodeUpgradeJobSpec struct {
 	// +optional
 	Image string `json:"image,omitempty"`
 
-	// ImageDigestGatter define registry v2 interface access configuration.
+	// ImageDigestGetter define registry v2 interface access configuration.
 	// As a transition, it is not required at first, and the image digest is checked when this field is set.
 	// +optional
-	ImageDigestGatter *ImageDigestGatter `json:"imageDigestGatter"`
+	ImageDigestGetter *ImageDigestGetter `json:"imageDigestGatter"`
 
 	// Concurrency specifies the maximum number of concurrent that edge nodes associated with
 	// each CloudCore instance can be upgraded at the same time.
@@ -120,18 +120,22 @@ type NodeUpgradeJobSpec struct {
 	RequireConfirmation bool `json:"requireConfirmation,omitempty"`
 }
 
-// ImageDigestGatter used to define a method for getting the image digest
-type ImageDigestGatter struct {
-	// Value used to directly set a value to check image
+// ImageDigestGetter used to define a method for getting the image digest.
+type ImageDigestGetter struct {
+	// ARM64 indicates the image digest of the arm64 platform for verification.
 	// +optional
-	Value *string `json:"value,omitempty"`
-
-	// RegistryAPI define registry v2 interface access configuration
+	ARM64 string `json:"arm64,omitempty"`
+	// AMD64 indicates the image digest of the amd64 platform for verification.
+	// +optional
+	AMD64 string `json:"amd64,omitempty"`
+	// RegistryAPI define registry v2 interface access configuration.
+	// Used to automatically gets multiple platform image digests from a remote registry
+	// to set values into ARM64 and AMD64 fields.
 	// +optional
 	RegistryAPI *RegistryAPI `json:"registryAPI,omitempty"`
 }
 
-// RegistryAPI used to define registry v2 interface access configuration
+// RegistryAPI used to define registry v2 interface access configuration.
 type RegistryAPI struct {
 	Host  string `json:"host"`
 	Token string `json:"token"`
@@ -141,7 +145,6 @@ type NodeUpgradeJobAction string
 
 const (
 	NodeUpgradeJobActionCheck               NodeUpgradeJobAction = "Check"
-	NodeUpgradeJobActionConfirm             NodeUpgradeJobAction = "Confirm"
 	NodeUpgradeJobActionWaitingConfirmation NodeUpgradeJobAction = "WaitingConfirmation"
 	NodeUpgradeJobActionBackUp              NodeUpgradeJobAction = "BackUp"
 	NodeUpgradeJobActionUpgrade             NodeUpgradeJobAction = "Upgrade"
