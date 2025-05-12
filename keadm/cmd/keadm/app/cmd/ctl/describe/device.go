@@ -28,10 +28,12 @@ import (
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 	"k8s.io/kubectl/pkg/describe"
 
+	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/api/apis/devices/v1beta1"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/client"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/metaclient"
 )
 
 var edgeDescribeDeviceShortDescription = `Describe device in edge node`
@@ -79,7 +81,7 @@ func AddDescribeDeviceFlags(cmd *cobra.Command, options *DeviceDescribeOptions) 
 }
 
 func (o *DeviceDescribeOptions) describeDevice(args []string) error {
-	config, err := util.ParseEdgecoreConfig(common.EdgecoreConfigPath)
+	config, err := util.ParseEdgecoreConfig(constants.EdgecoreConfigPath)
 	if err != nil {
 		return fmt.Errorf("get edge config failed with err:%v", err)
 	}
@@ -162,7 +164,7 @@ func (o *DeviceDescribeOptions) describeDevice(args []string) error {
 		GroupVersionKind: v1beta1.SchemeGroupVersion.WithKind("Device"),
 		Scope:            meta.RESTScopeNamespace,
 	}
-	c, err := client.GetKubeConfig()
+	c, err := metaclient.GetKubeConfig()
 	if err != nil {
 		return err
 	}

@@ -32,6 +32,7 @@ const (
 	ExternalMode IptablesMgrMode = "external"
 )
 
+// Parse reads config file and converts YAML to CloudCoreConfig
 func (c *CloudCoreConfig) Parse(filename string) error {
 	data, err := os.ReadFile(filename)
 	if err != nil {
@@ -44,6 +45,21 @@ func (c *CloudCoreConfig) Parse(filename string) error {
 		return err
 	}
 	return nil
+}
+
+// WriteTo converts CloudCoreConfig to yaml and write it to the file
+func (c *CloudCoreConfig) WriteTo(filename string) error {
+	data, err := yaml.Marshal(c)
+	if err != nil {
+		return err
+	}
+	fileInfo, err := os.Stat(filename)
+	if err != nil {
+		// If the file does not exist, the default permissions are 0644.
+		return os.WriteFile(filename, data, 0644)
+	}
+	// Write the file using the original file permissions.
+	return os.WriteFile(filename, data, fileInfo.Mode())
 }
 
 func (in *IptablesManager) UnmarshalJSON(data []byte) error {

@@ -29,6 +29,7 @@ import (
 	phases "k8s.io/kubernetes/cmd/kubeadm/app/cmd/phases/reset"
 	utilsexec "k8s.io/utils/exec"
 
+	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/cloud"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/edge"
@@ -63,7 +64,7 @@ func NewKubeEdgeReset() *cobra.Command {
 		Long:    resetLongDescription,
 		Example: resetExample,
 		PreRunE: func(_ *cobra.Command, _ []string) error {
-			// FIXME: remove thie hint after version v1.22
+			// TODO: remove thie hint after version v1.22
 			fmt.Println("WARNING: 'keadm reset' is no longer supported after version v1.22.")
 			fmt.Println("You must use the third-level command 'keadm reset cloud' or 'keadm reset edge'.")
 
@@ -95,7 +96,7 @@ func NewKubeEdgeReset() *cobra.Command {
 
 			if isEdgeNode {
 				staticPodPath := ""
-				config, err := util.ParseEdgecoreConfig(common.EdgecoreConfigPath)
+				config, err := util.ParseEdgecoreConfig(constants.EdgecoreConfigPath)
 				if err != nil {
 					fmt.Printf("failed to get edgecore's config with err:%v\n", err)
 				} else {

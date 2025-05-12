@@ -24,8 +24,11 @@ import (
 )
 
 const (
-	// DefaultCertPath is the default certificate path in edge node
-	DefaultCertPath = "c:/etc/kubeedge/certs"
+	KubeEdgeBackupPath  = "C:\\etc\\kubeedge\\backup\\"
+	KubeEdgeUpgradePath = "C:\\etc\\kubeedge\\upgrade\\"
+	KubeEdgeLogPath     = "C:\\var\\log\\kubeedge\\"
+	KubeEdgeSocketPath  = "C:\\var\\lib\\kubeedge\\"
+	EdgeRootDir         = "C:\\var\\lib\\edged"
 )
 
 func init() {

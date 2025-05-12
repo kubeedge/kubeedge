@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"path/filepath"
 	"testing"
 
 	"github.com/blang/semver"
@@ -160,24 +159,6 @@ func TestGetLatestVersion(t *testing.T) {
 
 func TestHasSystemd(*testing.T) {
 	HasSystemd()
-}
-
-func TestFileExists(t *testing.T) {
-	dir := t.TempDir()
-
-	ef, err := os.CreateTemp(dir, "FileExist")
-	if err == nil {
-		if !FileExists(ef.Name()) {
-			t.Fatalf("file %v should exist", ef.Name())
-		}
-	}
-
-	nonexistentDir := filepath.Join(dir, "not_exists_dir")
-	notExistFile := filepath.Join(nonexistentDir, "not_exist_file")
-
-	if FileExists(notExistFile) {
-		t.Fatalf("file %v should not exist", notExistFile)
-	}
 }
 
 func TestComputeSHA512Checksum(t *testing.T) {

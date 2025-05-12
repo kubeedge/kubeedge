@@ -52,6 +52,8 @@ type EdgeCoreConfig struct {
 	Modules *Modules `json:"modules,omitempty"`
 	// FeatureGates is a map of feature names to bools that enable or disable alpha/experimental features.
 	FeatureGates map[string]bool `json:"featureGates,omitempty"`
+	// EdgeCoreVersion records the latest version of edgecore
+	EdgeCoreVersion string `json:"edgecoreVersion"`
 }
 
 // DataBase indicates the database info

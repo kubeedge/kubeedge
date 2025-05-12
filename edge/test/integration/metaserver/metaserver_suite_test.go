@@ -32,7 +32,7 @@ func TestEdgecoreMetaServer(t *testing.T) {
 		c.Modules.MetaManager.MetaServer.TLSCertFile = "/tmp/edgecore/kubeedge.crt"
 		c.Modules.MetaManager.MetaServer.TLSPrivateKeyFile = "/tmp/edgecore/kubeedge.key"
 
-		Expect(utils.CfgToFile(c)).Should(BeNil())
+		Expect(c.WriteTo(edge.ConfigFile)).Should(BeNil())
 		Expect(utils.StartEdgeCore()).Should(BeNil())
 	})
 	AfterSuite(func() {

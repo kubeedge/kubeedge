@@ -4,8 +4,16 @@ package constants
 
 // Resources
 const (
-	// Certificates
+	KubeEdgePath       = "/etc/kubeedge/"
+	KubeEdgeUsrBinPath = "/usr/local/bin"
+
 	DefaultConfigDir = "/etc/kubeedge/config/"
+	// EdgecoreConfigPath is default edgecore config path
+	EdgecoreConfigPath = "/etc/kubeedge/config/edgecore.yaml"
+
+	// Certificates
+	// DefaultCertPath is the default certificate path in edge node
+	DefaultCertPath  = "/etc/kubeedge/certs"
 	DefaultCAFile    = "/etc/kubeedge/ca/rootCA.crt"
 	DefaultCAKeyFile = "/etc/kubeedge/ca/rootCA.key"
 	DefaultCertFile  = "/etc/kubeedge/certs/server.crt"

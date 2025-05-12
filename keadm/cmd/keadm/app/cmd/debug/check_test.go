@@ -22,6 +22,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
 
@@ -81,7 +82,7 @@ func TestNewCheck(t *testing.T) {
 			assert.NotNil(flag)
 			assert.Equal("", flag.DefValue)
 			assert.Equal("c", flag.Shorthand)
-			expectedUsage := fmt.Sprintf("Specify configuration file, default is %s", common.EdgecoreConfigPath)
+			expectedUsage := fmt.Sprintf("Specify configuration file, default is %s", constants.EdgecoreConfigPath)
 			assert.Equal(expectedUsage, flag.Usage)
 
 		case common.ArgCheckDNS:
@@ -119,7 +120,7 @@ func TestNewCheck(t *testing.T) {
 			assert.NotNil(flag)
 			assert.Equal("", flag.DefValue)
 			assert.Equal("c", flag.Shorthand)
-			expectedUsage := fmt.Sprintf("Specify configuration file, default is %s", common.EdgecoreConfigPath)
+			expectedUsage := fmt.Sprintf("Specify configuration file, default is %s", constants.EdgecoreConfigPath)
 			assert.Equal(expectedUsage, flag.Usage)
 		}
 	}
@@ -155,7 +156,7 @@ func TestNewSubEdgeCheck(t *testing.T) {
 				"ip":               "specify test ip",
 				"cloud-hub-server": "specify cloudhub server",
 				"dns-ip":           "specify test dns ip",
-				"config":           fmt.Sprintf("Specify configuration file, default is %s", common.EdgecoreConfigPath),
+				"config":           fmt.Sprintf("Specify configuration file, default is %s", constants.EdgecoreConfigPath),
 			},
 		},
 		{
@@ -188,7 +189,7 @@ func TestNewSubEdgeCheck(t *testing.T) {
 			expectedUsage: map[string]string{
 				"ip":               "specify test ip",
 				"cloud-hub-server": "specify cloudhub server",
-				"config":           fmt.Sprintf("Specify configuration file, default is %s", common.EdgecoreConfigPath),
+				"config":           fmt.Sprintf("Specify configuration file, default is %s", constants.EdgecoreConfigPath),
 			},
 		},
 	}

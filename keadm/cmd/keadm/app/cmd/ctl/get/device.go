@@ -27,6 +27,7 @@ import (
 	"k8s.io/kubectl/pkg/cmd/get"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 
+	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/api/apis/devices/v1beta1"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/client"
@@ -64,7 +65,7 @@ func NewEdgeDeviceGet() *cobra.Command {
 }
 
 func (o *DeviceGetOptions) getDevices(args []string) error {
-	config, err := util.ParseEdgecoreConfig(common.EdgecoreConfigPath)
+	config, err := util.ParseEdgecoreConfig(constants.EdgecoreConfigPath)
 	if err != nil {
 		return fmt.Errorf("get edge config failed with err:%v", err)
 	}

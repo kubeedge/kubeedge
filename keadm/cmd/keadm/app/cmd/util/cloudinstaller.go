@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	apiconsts "github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
@@ -58,7 +59,7 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 		cloudCoreConfig.Modules.CloudHub.DNSNames = strings.Split(cu.DNSName, ",")
 	}
 
-	if err := types.Write2File(KubeEdgeCloudCoreNewYaml, cloudCoreConfig); err != nil {
+	if err := cloudCoreConfig.WriteTo(KubeEdgeCloudCoreNewYaml); err != nil {
 		return err
 	}
 
@@ -74,24 +75,24 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 // RunCloudCore starts cloudcore process
 func (cu *KubeCloudInstTool) RunCloudCore() error {
 	// create the log dir for kubeedge
-	err := os.MkdirAll(KubeEdgeLogPath, os.ModePerm)
+	err := os.MkdirAll(types.KubeEdgeLogPath, os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("not able to create %s folder path", KubeEdgeLogPath)
+		return fmt.Errorf("not able to create %s folder path", types.KubeEdgeLogPath)
 	}
 
-	if err := os.MkdirAll(KubeEdgeUsrBinPath, os.ModePerm); err != nil {
-		return fmt.Errorf("failed to create %s folder path", KubeEdgeUsrBinPath)
+	if err := os.MkdirAll(apiconsts.KubeEdgeUsrBinPath, os.ModePerm); err != nil {
+		return fmt.Errorf("failed to create %s folder path", apiconsts.KubeEdgeUsrBinPath)
 	}
 
 	// add +x for cloudcore
-	command := fmt.Sprintf("chmod +x %s/%s", KubeEdgeUsrBinPath, KubeCloudBinaryName)
+	command := fmt.Sprintf("chmod +x %s/%s", apiconsts.KubeEdgeUsrBinPath, KubeCloudBinaryName)
 	cmd := NewCommand(command)
 	if err := cmd.Exec(); err != nil {
 		return err
 	}
 
 	// start cloudcore
-	command = fmt.Sprintf("%s/%s > %s/%s.log 2>&1 &", KubeEdgeUsrBinPath, KubeCloudBinaryName, KubeEdgeLogPath, KubeCloudBinaryName)
+	command = fmt.Sprintf("%s/%s > %s/%s.log 2>&1 &", apiconsts.KubeEdgeUsrBinPath, KubeCloudBinaryName, types.KubeEdgeLogPath, KubeCloudBinaryName)
 
 	cmd = NewCommand(command)
 
@@ -101,7 +102,7 @@ func (cu *KubeCloudInstTool) RunCloudCore() error {
 
 	fmt.Println(cmd.GetStdOut())
 
-	fmt.Println("KubeEdge cloudcore is running, For logs visit: ", KubeEdgeLogPath+KubeCloudBinaryName+".log")
+	fmt.Println("KubeEdge cloudcore is running, For logs visit: ", types.KubeEdgeLogPath+KubeCloudBinaryName+".log")
 
 	return nil
 }

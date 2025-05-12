@@ -53,7 +53,7 @@ type KubeEdgeInstTool struct {
 func (ku *KubeEdgeInstTool) InstallTools() error {
 	ku.SetOSInterface(GetOSInterface())
 
-	edgeCoreRunning, err := ku.IsKubeEdgeProcessRunning(KubeEdgeBinaryName)
+	edgeCoreRunning, err := ku.IsKubeEdgeProcessRunning(constants.KubeEdgeBinaryName)
 	if err != nil {
 		return err
 	}
@@ -150,7 +150,7 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 	if errs := validation.ValidateEdgeCoreConfiguration(edgeCoreConfig); len(errs) > 0 {
 		return errors.New(util.SpliceErrors(errs.ToAggregate().Errors()))
 	}
-	return types.Write2File(KubeEdgeEdgeCoreNewYaml, edgeCoreConfig)
+	return edgeCoreConfig.WriteTo(KubeEdgeEdgeCoreNewYaml)
 }
 
 // TearDown method will remove the edge node from api-server and stop edgecore process
@@ -159,5 +159,5 @@ func (ku *KubeEdgeInstTool) TearDown() error {
 	ku.SetKubeEdgeVersion(ku.ToolVersion)
 
 	//Kill edge core process
-	return ku.KillKubeEdgeBinary(KubeEdgeBinaryName)
+	return ku.KillKubeEdgeBinary(constants.KubeEdgeBinaryName)
 }

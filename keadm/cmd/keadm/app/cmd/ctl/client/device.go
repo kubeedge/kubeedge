@@ -25,6 +25,7 @@ import (
 
 	"github.com/kubeedge/api/apis/devices/v1beta1"
 	"github.com/kubeedge/api/client/clientset/versioned/scheme"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/metaclient"
 )
 
 type DeviceRequest struct {
@@ -35,7 +36,7 @@ type DeviceRequest struct {
 }
 
 func (deviceRequest *DeviceRequest) GetDevice(ctx context.Context) (*v1beta1.Device, error) {
-	versionedClient, err := VersionedKubeClient()
+	versionedClient, err := metaclient.VersionedKubeClient()
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +54,7 @@ func (deviceRequest *DeviceRequest) GetDevice(ctx context.Context) (*v1beta1.Dev
 }
 
 func (deviceRequest *DeviceRequest) GetDevices(ctx context.Context) (*v1beta1.DeviceList, error) {
-	versionedClient, err := VersionedKubeClient()
+	versionedClient, err := metaclient.VersionedKubeClient()
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +78,7 @@ func (deviceRequest *DeviceRequest) GetDevices(ctx context.Context) (*v1beta1.De
 }
 
 func (deviceRequest *DeviceRequest) UpdateDevice(ctx context.Context, device *v1beta1.Device) (*rest.Result, error) {
-	versionedClient, err := VersionedKubeClient()
+	versionedClient, err := metaclient.VersionedKubeClient()
 	if err != nil {
 		return nil, err
 	}
