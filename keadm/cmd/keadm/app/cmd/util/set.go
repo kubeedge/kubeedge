@@ -17,6 +17,7 @@ limitations under the License.
 package util
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -107,7 +108,7 @@ func parseValue(s string) interface{} {
 	if boolvalue, err := strconv.ParseBool(s); err == nil {
 		return boolvalue
 	}
-	return s
+	return trimStringVal(s)
 }
 
 // ParseMap parses the value of map.
@@ -163,10 +164,20 @@ func parseArray(s string) interface{} {
 	default:
 		stringArray := make([]string, len(vals))
 		for i, v := range vals {
-			stringArray[i] = strings.TrimSpace(v)
+			stringArray[i] = trimStringVal(v)
 		}
 		return stringArray
 	}
+}
+
+func trimStringVal(s string) string {
+	// trim space
+	s = strings.TrimSpace(s)
+	if (strings.HasPrefix(s, "'") && strings.HasSuffix(s, "'")) || (strings.HasPrefix(s, "\"") && strings.HasSuffix(s, "\"")) {
+		// trim paired single or double quotation marks
+		s = s[1 : len(s)-1]
+	}
+	return s
 }
 
 // ParseType parses the type of array and interprets it to int, float64, string.
@@ -223,12 +234,13 @@ func setCommonValue(structPtr interface{}, fieldPath string, value interface{}) 
 		}
 	}
 
+	// Set new value
 	val := reflect.ValueOf(value)
-
-	if fieldVal.Type() != val.Type() {
-		return fmt.Errorf("%s: Provided value type %s does not match field type %s", fieldPath, val.Type(), fieldVal.Type())
+	convertedValue, err := convertTargetValue(fieldVal.Type(), val)
+	if err != nil {
+		return fmt.Errorf("%s: Convert to target value failed, err: %s", fieldPath, err)
 	}
-	fieldVal.Set(val)
+	fieldVal.Set(convertedValue)
 
 	return nil
 }
@@ -271,24 +283,69 @@ func setArrayValue(structPtr interface{}, fieldPath string, index int, newValue 
 	if fieldVal.Kind() != reflect.Array && fieldVal.Kind() != reflect.Slice && fieldVal.Kind() != reflect.Map {
 		return fmt.Errorf("%s is not an array,slice and map", pathParts[len(pathParts)-1])
 	}
-	// If it is an array or slice, you need to check whether the index is within the range
-	if index < 0 || index >= fieldVal.Len() {
-		return fmt.Errorf("index out of range for %s", pathParts[len(pathParts)-1])
-	}
 
-	//Extend array or slice length
-	if index >= fieldVal.Len() {
-		newSlice := reflect.MakeSlice(fieldVal.Type(), index+1, index+1)
-		reflect.Copy(newSlice, fieldVal)
-		fieldVal.Set(newSlice)
+	if fieldVal.Kind() == reflect.Array {
+		// If it is an array, you need to check whether the index is within the range
+		if index < 0 || index >= fieldVal.Len() {
+			return fmt.Errorf("index out of range for %s", pathParts[len(pathParts)-1])
+		}
+	} else if fieldVal.Kind() == reflect.Slice {
+		if index < 0 {
+			return fmt.Errorf("index out of range for %s", pathParts[len(pathParts)-1])
+		}
+		// If it is a slice, you need to ensure its capacity
+		ensureSliceCapacity(fieldVal, index)
 	}
-	//Set new value
-	elem := reflect.ValueOf(newValue)
-	if elem.Type() != fieldVal.Type().Elem() {
-		return fmt.Errorf("type mismatch for field %s", pathParts[len(pathParts)-1])
+	// Set new value
+	valueToSet := reflect.ValueOf(newValue)
+	elemType := fieldVal.Type().Elem()
+	convertedValue, err := convertTargetValue(elemType, valueToSet)
+	if err != nil {
+		return fmt.Errorf("%s: Convert to elem value failed, err: %s", fieldPath, err)
 	}
-	fieldVal.Index(index).Set(elem)
+	fieldVal.Index(index).Set(convertedValue)
 	return nil
+}
+
+// convertTargetValue convert newValue to targetType
+func convertTargetValue(targetType reflect.Type, valueToSet reflect.Value) (reflect.Value, error) {
+	if valueToSet.Type().AssignableTo(targetType) {
+		return valueToSet, nil
+	}
+	// support field convert like string to string alias(eg. v1.TaintEffect)
+	// string to int or int to string is intentionally forbid to avoid ambiguity
+	if targetType.Kind() == valueToSet.Kind() && valueToSet.Type().ConvertibleTo(targetType) {
+		return valueToSet.Convert(targetType), nil
+	}
+	// support point value
+	if targetType.Kind() == reflect.Ptr && valueToSet.Type().ConvertibleTo(targetType.Elem()) {
+		ptr := reflect.New(targetType.Elem())
+		convertedValue := valueToSet.Convert(targetType.Elem())
+		ptr.Elem().Set(convertedValue)
+		return ptr, nil
+	}
+	// use JSON Marshal & Unmarshal to handle map to struct & map to map conversion
+	if targetType.Kind() == reflect.Struct || targetType.Kind() == reflect.Map {
+		jsonNewValue, err := json.Marshal(valueToSet.Interface())
+		if err != nil {
+			return reflect.Value{}, err
+		}
+		targetValue := reflect.New(targetType).Interface()
+		err = json.Unmarshal(jsonNewValue, targetValue)
+		if err != nil {
+			return reflect.Value{}, err
+		}
+		return reflect.Indirect(reflect.ValueOf(targetValue)), nil
+	}
+	return reflect.Value{}, fmt.Errorf("Provided value type %s does not match target type %s", valueToSet.Type(), targetType)
+}
+
+func ensureSliceCapacity(sliceVal reflect.Value, index int) {
+	if index >= sliceVal.Len() {
+		newSlice := reflect.MakeSlice(sliceVal.Type(), index+1, index+1)
+		reflect.Copy(newSlice, sliceVal)
+		sliceVal.Set(newSlice)
+	}
 }
 
 // ParseFieldPath1 parses the names in form of "name1.name2.(...).nameM[N]".
@@ -329,9 +386,10 @@ func setVariableValue(obj interface{}, fieldPath string, value interface{}) erro
 			if err != nil {
 				return err
 			}
-			if index < 0 || index >= objValue.Len() {
+			if index < 0 {
 				return fmt.Errorf("index out of range for field %s", fieldName)
 			}
+			ensureSliceCapacity(objValue, index)
 			objValue = objValue.Index(index)
 		case reflect.Ptr:
 			if objValue.IsNil() {
@@ -365,11 +423,12 @@ func setVariableValue(obj interface{}, fieldPath string, value interface{}) erro
 	}
 
 	valueToSet := reflect.ValueOf(value)
-	if !valueToSet.Type().AssignableTo(targetFieldValue.Type()) {
-		return fmt.Errorf("value type %s is not assignable to field %s type %s", valueToSet.Type(), targetFieldName, targetFieldValue.Type())
+	convertedValue, err := convertTargetValue(targetFieldValue.Type(), valueToSet)
+	if err != nil {
+		return fmt.Errorf("%s: Convert to target value failed, err: %s", fieldPath, err)
 	}
 
-	targetFieldValue.Set(valueToSet)
+	targetFieldValue.Set(convertedValue)
 
 	return nil
 }
