@@ -38,6 +38,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	"k8s.io/component-base/featuregate"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/klog/v2"
 	kubeletserver "k8s.io/kubernetes/cmd/kubelet/app"
 	kubeletoptions "k8s.io/kubernetes/cmd/kubelet/app/options"
@@ -121,16 +122,26 @@ func (e *edged) Enable() bool {
 func (e *edged) Start() {
 	klog.Info("Starting edged...")
 	kubeletErrChan := make(chan error, 1)
+
 	go func() {
+		origOsExit := klog.OsExit
+		klog.OsExit = func(code int) {
+			klog.Flush()
+			e.cleanupContainers()
+			origOsExit(code)
+		}
+		defer func() { klog.OsExit = origOsExit }()
+
 		err := DefaultRunLiteKubelet(e.context, e.KubeletServer, e.KubeletDeps, e.FeatureGate)
 		if err != nil {
 			if !kefeatures.DefaultFeatureGate.Enabled(kefeatures.ModuleRestart) {
-				klog.Errorf("Start edged failed, err: %v", err)
-				os.Exit(1)
+				klog.Exitf("Start edged failed, err: %v", err)
 			}
 			kubeletErrChan <- err
 		}
 	}()
+
+	defer e.cleanupContainers()
 
 	kubeletReadyChan := make(chan struct{}, 1)
 	go kubeletHealthCheck(e.KubeletServer.ReadOnlyPort, kubeletReadyChan)
@@ -147,6 +158,42 @@ func (e *edged) Start() {
 	}
 
 	e.syncPod(e.KubeletDeps.PodConfig)
+}
+
+func (e *edged) cleanupContainers() {
+	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Second)
+	defer cancel()
+	containers, err := e.KubeletDeps.RemoteRuntimeService.ListContainers(
+		ctx, &runtimeapi.ContainerFilter{},
+	)
+	if err != nil {
+		klog.Errorf("cleanupContainers: CRI ListContainers failed: %v", err)
+		return
+	}
+
+	var toRemove []string
+	for _, c := range containers {
+		if _, ok := c.Labels["io.kubernetes.pod.name"]; !ok {
+			continue
+		}
+
+		if c.State != runtimeapi.ContainerState_CONTAINER_RUNNING {
+			toRemove = append(toRemove, c.GetId())
+		}
+	}
+
+	if len(toRemove) == 0 {
+		klog.Info("cleanupContainers: no non-running containers to remove")
+		return
+	}
+
+	for _, id := range toRemove {
+		klog.Infof("cleanupContainers: removed container %s", id)
+		err := e.KubeletDeps.RemoteRuntimeService.RemoveContainer(ctx, id)
+		if err != nil {
+			klog.Errorf("cleanupContainers: removed container %s error:%v", id, err)
+		}
+	}
 }
 
 // newEdged creates new edged object and initialises it
