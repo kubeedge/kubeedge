@@ -59,7 +59,6 @@ keadm:
     token: ""                 # This is an example parameter, which can be used in conjunction with nodes[x].keadmCmd.
 nodes:
   - nodeName: edge-node       # <Required> Unique name, used to identify the node
-    arch: amd64               # <Required> The architecture of the node, which can be configured as amd64/arm64/arm
     keadmCmd: ""              # <Required> The command to be executed on the node, can used in conjunction with keadm.cmdTplArgs. for example: "{{.cmd}} --edgenode-name=containerd-node1 --token={{.token}}"
     copyFrom: ""              # <Optional> The path of the file to be copied from the local machine to the node, which can be left unconfigured.
     ssh:
