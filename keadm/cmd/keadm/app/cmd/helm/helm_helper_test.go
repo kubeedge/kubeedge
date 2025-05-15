@@ -15,12 +15,20 @@ limitations under the License.
 */
 package helm
 
-import "testing"
+import (
+	"testing"
+
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/cli"
+)
 
 func TestMergeProfileValues(t *testing.T) {
 	cases := []struct {
-		name string
-		file string
+		name    string
+		file    string
+		sets    []string
+		wantErr bool
+		errMsg  string
 	}{
 		{
 			name: "load cloudcore values.yaml",
@@ -30,10 +38,38 @@ func TestMergeProfileValues(t *testing.T) {
 			name: "load profile values",
 			file: "profiles/version.yaml",
 		},
+		{
+			name:    "invalid profile path",
+			file:    "nonexistent.yaml",
+			wantErr: true,
+			errMsg:  "failed to read build in profile",
+		},
+		{
+			name: "with valid set values",
+			file: "charts/cloudcore/values.yaml",
+			sets: []string{"key1=value1"},
+		},
+		{
+			name:    "with invalid set syntax",
+			file:    "charts/cloudcore/values.yaml",
+			sets:    []string{"key1..[]=value1"}, // Invalid path syntax
+			wantErr: true,
+			errMsg:  "failed to parse --set data",
+		},
 	}
+
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			vals, err := MergeProfileValues(c.file, []string{})
+			vals, err := MergeProfileValues(c.file, c.sets)
+			if c.wantErr {
+				if err == nil {
+					t.Fatalf("expected error for case %s but got nil", c.name)
+				}
+				if c.errMsg != "" && !contains(err.Error(), c.errMsg) {
+					t.Fatalf("expected error containing %q, got %v", c.errMsg, err)
+				}
+				return
+			}
 			if err != nil {
 				t.Fatalf("failed to load helm values, err: %v", err)
 			}
@@ -43,3 +79,110 @@ func TestMergeProfileValues(t *testing.T) {
 		})
 	}
 }
+
+func TestNewHelper(t *testing.T) {
+	cases := []struct {
+		name       string
+		kubeconfig string
+		namespace  string
+		wantErr    bool
+	}{
+		{
+			name:       "valid basic config",
+			kubeconfig: "",
+			namespace:  "default",
+			wantErr:    false,
+		},
+		{
+			name:       "empty namespace",
+			kubeconfig: "",
+			namespace:  "",
+			wantErr:    false,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			helper, err := NewHelper(c.kubeconfig, c.namespace)
+			if c.wantErr {
+				if err == nil {
+					t.Fatal("expected error but got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if helper == nil {
+				t.Fatal("helper is nil")
+			}
+			if helper.GetConfig() == nil {
+				t.Fatal("config is nil")
+			}
+		})
+	}
+}
+
+func TestHelper_GetValues(t *testing.T) {
+	settings := cli.New()
+	actionConfig := new(action.Configuration)
+	if err := actionConfig.Init(settings.RESTClientGetter(), settings.Namespace(), "memory", debug); err != nil {
+		t.Fatalf("failed to initialize action configuration: %v", err)
+	}
+
+	helper := &Helper{cfg: actionConfig}
+	_, err := helper.GetValues("test-release")
+	if err == nil {
+		t.Fatal("expected error but got nil")
+	}
+}
+
+func TestMergeExternValues(t *testing.T) {
+	cases := []struct {
+		name    string
+		file    string
+		sets    []string
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name:    "nonexistent file",
+			file:    "nonexistent.yaml",
+			wantErr: true,
+			errMsg:  "failed to read build in profile",
+		},
+		{
+			name:    "with nonexistent values file",
+			file:    "test/values.yaml",
+			sets:    []string{"key1=value1"},
+			wantErr: true,
+			errMsg:  "failed to read build in profile",
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			_, err := MergeExternValues(c.file, c.sets)
+			if !c.wantErr {
+				if err != nil {
+					t.Fatalf("unexpected error: %v", err)
+				}
+				return
+			}
+			if err == nil {
+				t.Fatalf("expected error for case %s but got nil", c.name)
+			}
+			if c.errMsg != "" && !contains(err.Error(), c.errMsg) {
+				t.Fatalf("expected error containing %q, got %v", c.errMsg, err)
+			}
+		})
+	}
+}
+
+// Helper function to check if a string contains a substring
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && s[0:len(substr)] == substr
+}
+
+// Debug function for Helm configuration
+func debug(_ string, _ ...interface{}) {}
