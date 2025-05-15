@@ -39,7 +39,11 @@ spec:
       containers:
       - name: iptables-manager
         command: ['iptables-manager']
+        {{- if eq .Values.iptablesManager.framework "nft" }}
+        image: {{ .Values.iptablesManager.image.nftRepository }}:{{ .Values.iptablesManager.image.tag }}
+        {{- else }}
         image: {{ .Values.iptablesManager.image.repository }}:{{ .Values.iptablesManager.image.tag }}
+        {{- end }}
         imagePullPolicy: {{ .Values.iptablesManager.image.pullPolicy }}
         {{- with .Values.iptablesManager.securityContext }}
         securityContext: {{ toYaml . | nindent 10 }}

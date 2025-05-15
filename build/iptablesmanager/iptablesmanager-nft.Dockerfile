@@ -12,10 +12,7 @@ FROM debian:12
 
 COPY --from=builder /usr/local/bin/iptables-manager /usr/local/bin/iptables-manager
 
+# iptables in nft mode is used by default
 RUN apt-get update && apt-get -y install iptables
-
-# Switch the iptables mode from the default nft mode back to the legacy mode, refer to https://wiki.debian.org/iptables
-RUN update-alternatives --set iptables /usr/sbin/iptables-legacy \
-     && update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
 
 ENTRYPOINT ["iptables-manager"]

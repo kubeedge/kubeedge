@@ -75,9 +75,11 @@ cloudCore:
 iptablesManager:
   enable: true
   mode: "external"
+  framework: "legacy"
   hostNetWork: true
   image:
     repository: "kubeedge/iptables-manager"
+    nftRepository: "kubeedge/iptables-manager-nft"
     tag: "v1.20.0"
     pullPolicy: "IfNotPresent"
     pullSecrets: []
