@@ -33,6 +33,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/kubeedge/kubeedge/common/constants"
+	"github.com/kubeedge/kubeedge/pkg/util/execs"
 )
 
 // K8SInstTool embeds Common struct and contains the default K8S version and
@@ -158,7 +159,7 @@ func installCRDs(ks *K8SInstTool) error {
 				if os.IsNotExist(err) {
 					// Download the tar from repo
 					downloadURL := fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/%s", KubeEdgeCrdPath+"/"+dir, CRDDownloadURL, dir+"/"+crdFile)
-					cmd := NewCommand(downloadURL)
+					cmd := execs.NewCommand(downloadURL)
 					if err := cmd.Exec(); err != nil {
 						return err
 					}

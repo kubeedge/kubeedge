@@ -19,6 +19,8 @@ package util
 import (
 	"fmt"
 	"strings"
+
+	"github.com/kubeedge/kubeedge/pkg/util/execs"
 )
 
 const installNSSMScript = `
@@ -55,29 +57,29 @@ $newPath = "$global:NssmInstallDirectory;" +
 `
 
 func IsNSSMInstalled() bool {
-	cmd := NewCommand("nssm version")
+	cmd := execs.NewCommand("nssm version")
 	err := cmd.Exec()
 	return err == nil
 }
 
 func InstallNSSM() error {
-	cmd := NewCommand(installNSSMScript)
+	cmd := execs.NewCommand(installNSSMScript)
 	err := cmd.Exec()
 	return err
 }
 
 func InstallNSSMService(name, path string, args ...string) error {
-	cmd := NewCommand(fmt.Sprintf("nssm install %s %s %s", name, path, strings.Join(args, " ")))
+	cmd := execs.NewCommand(fmt.Sprintf("nssm install %s %s %s", name, path, strings.Join(args, " ")))
 	return cmd.Exec()
 }
 
 func IsNSSMServiceExist(service string) bool {
-	cmd := NewCommand("nssm status " + service)
+	cmd := execs.NewCommand("nssm status " + service)
 	return cmd.Exec() == nil
 }
 
 func IsNSSMServiceRunning(service string) bool {
-	cmd := NewCommand("nssm status " + service)
+	cmd := execs.NewCommand("nssm status " + service)
 	err := cmd.Exec()
 	if err != nil || cmd.ExitCode > 0 {
 		return false
@@ -89,26 +91,26 @@ func IsNSSMServiceRunning(service string) bool {
 }
 
 func StartNSSMService(service string) error {
-	cmd := NewCommand("nssm start " + service)
+	cmd := execs.NewCommand("nssm start " + service)
 	return cmd.Exec()
 }
 
 func StopNSSMService(service string) error {
-	cmd := NewCommand("nssm stop " + service)
+	cmd := execs.NewCommand("nssm stop " + service)
 	return cmd.Exec()
 }
 
 func SetNSSMServiceStdout(service string, file string) error {
-	cmd := NewCommand(strings.Join([]string{"nssm", "set", service, "AppStdout", file}, " "))
+	cmd := execs.NewCommand(strings.Join([]string{"nssm", "set", service, "AppStdout", file}, " "))
 	return cmd.Exec()
 }
 
 func SetNSSMServiceStderr(service string, file string) error {
-	cmd := NewCommand(strings.Join([]string{"nssm", "set", service, "AppStderr", file}, " "))
+	cmd := execs.NewCommand(strings.Join([]string{"nssm", "set", service, "AppStderr", file}, " "))
 	return cmd.Exec()
 }
 
 func UninstallNSSMService(service string) error {
-	cmd := NewCommand(strings.Join([]string{"nssm", "remove", service, "confirm"}, " "))
+	cmd := execs.NewCommand(strings.Join([]string{"nssm", "remove", service, "confirm"}, " "))
 	return cmd.Exec()
 }

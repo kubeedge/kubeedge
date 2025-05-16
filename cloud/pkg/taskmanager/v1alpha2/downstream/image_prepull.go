@@ -108,19 +108,23 @@ func (h *ImagePrePullJobHandler) UpdateNodeTaskStatus(
 			"invalid type", reflect.TypeOf(job.GetObject()))
 		return
 	}
-	nodeTaskStatus, ok := task.GetObject().(*operationsv1alpha2.ImagePrePullNodeTaskStatus)
+	taskStatus, ok := task.GetObject().(*operationsv1alpha2.ImagePrePullNodeTaskStatus)
 	if !ok {
 		h.logger.Error(nil, "failed to convert task to ImagePrePullNodeTaskStatus",
 			"invalid type", reflect.TypeOf(task.GetObject()))
 		return
 	}
-	opts := status.UpdateStatusOptions[operationsv1alpha2.ImagePrePullNodeTaskStatus]{
-		JobName:        imagePrepullJob.Name,
-		NodeTaskStatus: *nodeTaskStatus,
+	opts := status.UpdateStatusOptions{
+		TryUpdateStatusOptions: status.TryUpdateStatusOptions{
+			JobName:  imagePrepullJob.Name,
+			NodeName: taskStatus.NodeName,
+			Phase:    taskStatus.Phase,
+			Reason:   taskStatus.Reason,
+		},
 		Callback: func(err error) {
 			if err != nil {
 				h.logger.Error(err, "failed to update ImagePrePullJob node task status",
-					"job name", imagePrepullJob.Name, "node name", nodeTaskStatus.NodeName)
+					"job name", imagePrepullJob.Name, "node name", taskStatus.NodeName)
 			}
 		},
 	}

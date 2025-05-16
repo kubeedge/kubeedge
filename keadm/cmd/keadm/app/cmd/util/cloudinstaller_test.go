@@ -31,6 +31,7 @@ import (
 	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/pkg/util/execs"
 )
 
 type mockOSTypeInstaller struct {
@@ -115,19 +116,19 @@ func TestKubeCloudInstTool_RunCloudCore(t *testing.T) {
 		return &exec.Cmd{}
 	})
 
-	mockCmd := &Command{
+	mockCmd := &execs.Command{
 		Cmd: &exec.Cmd{},
 	}
 
-	patches.ApplyFunc(NewCommand, func(command string) *Command {
+	patches.ApplyFunc(execs.NewCommand, func(command string) *execs.Command {
 		return mockCmd
 	})
 
-	patches.ApplyMethod(mockCmd, "Exec", func(_ *Command) error {
+	patches.ApplyMethod(mockCmd, "Exec", func(_ *execs.Command) error {
 		return nil
 	})
 
-	patches.ApplyMethod(mockCmd, "GetStdOut", func(_ *Command) string {
+	patches.ApplyMethod(mockCmd, "GetStdOut", func(_ *execs.Command) string {
 		return "CloudCore started"
 	})
 
@@ -166,13 +167,13 @@ func TestKubeCloudInstTool_RunCloudCore(t *testing.T) {
 	})
 
 	cmdExecCallCount := 0
-	patches.ApplyFunc(NewCommand, func(command string) *Command {
-		return &Command{
+	patches.ApplyFunc(execs.NewCommand, func(command string) *execs.Command {
+		return &execs.Command{
 			Cmd: &exec.Cmd{},
 		}
 	})
 
-	patches.ApplyMethod(&Command{}, "Exec", func(_ *Command) error {
+	patches.ApplyMethod(&execs.Command{}, "Exec", func(_ *execs.Command) error {
 		if cmdExecCallCount == 0 {
 			cmdExecCallCount++
 			return errors.New("chmod error")
@@ -194,13 +195,13 @@ func TestKubeCloudInstTool_RunCloudCore(t *testing.T) {
 	})
 
 	cmdExecCallCount = 0
-	patches.ApplyFunc(NewCommand, func(command string) *Command {
-		return &Command{
+	patches.ApplyFunc(execs.NewCommand, func(command string) *execs.Command {
+		return &execs.Command{
 			Cmd: &exec.Cmd{},
 		}
 	})
 
-	patches.ApplyMethod(&Command{}, "Exec", func(_ *Command) error {
+	patches.ApplyMethod(&execs.Command{}, "Exec", func(_ *execs.Command) error {
 		cmdExecCallCount++
 		if cmdExecCallCount == 2 {
 			return errors.New("start error")

@@ -17,101 +17,74 @@ limitations under the License.
 package upstream
 
 import (
-	"encoding/json"
+	"reflect"
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/klog/v2"
+	"github.com/stretchr/testify/require"
 
 	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
-	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/v1alpha2/executor"
+	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/v1alpha2/status"
 	taskmsg "github.com/kubeedge/kubeedge/pkg/nodetask/message"
 )
 
-func TestConvToNodeTask(t *testing.T) {
-	t.Run("upstream action run successful", func(t *testing.T) {
-		upmsg := taskmsg.UpstreamMessage{
-			Action: string(operationsv1alpha2.ImagePrePullJobActionCheck),
-			Succ:   true,
-		}
-		handler := ImagePrePullJobHandler{logger: klog.Background()}
-		task, err := handler.ConvToNodeTask("node1", &upmsg)
-		assert.NoError(t, err)
-		assert.NotNil(t, task)
+func TestImagePrePullJobUpdateNodeTaskStatus(t *testing.T) {
+	var (
+		jobName  = "test-job"
+		nodeNmae = "node1"
+	)
+	t.Run("final action successful", func(t *testing.T) {
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
 
-		taskStatus, ok := task.GetObject().(*operationsv1alpha2.ImagePrePullNodeTaskStatus)
-		assert.True(t, ok)
-		assert.Equal(t, operationsv1alpha2.NodeTaskPhaseInProgress, taskStatus.Phase)
-		assert.Equal(t, operationsv1alpha2.ImagePrePullJobActionCheck, taskStatus.Action)
+		gomonkey.ApplyFunc(status.GetImagePrePullJobStatusUpdater, func() *status.StatusUpdater {
+			return &status.StatusUpdater{}
+		})
+		gomonkey.ApplyMethodFunc(reflect.TypeOf(&status.StatusUpdater{}), "UpdateStatus",
+			func(opts status.UpdateStatusOptions) {
+				act, ok := opts.ActionStatus.(*operationsv1alpha2.ImagePrePullJobActionStatus)
+				require.True(t, ok)
+				assert.Equal(t, operationsv1alpha2.ImagePrePullJobActionPull, act.Action)
+				assert.Equal(t, operationsv1alpha2.NodeTaskPhaseSuccessful, opts.Phase)
+				assert.Equal(t, jobName, opts.JobName)
+				assert.Equal(t, nodeNmae, opts.NodeName)
+				require.NotNil(t, opts.Callback)
+				opts.Callback(nil)
+			})
+
+		handler := &ImagePrePullJobHandler{}
+		err := handler.UpdateNodeTaskStatus(jobName, nodeNmae, true, taskmsg.UpstreamMessage{
+			Action: string(operationsv1alpha2.ImagePrePullJobActionPull),
+			Succ:   true,
+		})
+		require.NoError(t, err)
 	})
 
-	t.Run("upstream action run failed", func(t *testing.T) {
-		imgStatus := []operationsv1alpha2.ImageStatus{
-			{Image: "image1", Status: metav1.ConditionTrue},
-			{Image: "image2", Status: metav1.ConditionFalse, Reason: "pull failed"},
-		}
-		bff, err := json.Marshal(imgStatus)
-		assert.NoError(t, err)
-		upmsg := taskmsg.UpstreamMessage{
+	t.Run("final action failed", func(t *testing.T) {
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		gomonkey.ApplyFunc(status.GetImagePrePullJobStatusUpdater, func() *status.StatusUpdater {
+			return &status.StatusUpdater{}
+		})
+		gomonkey.ApplyMethodFunc(reflect.TypeOf(&status.StatusUpdater{}), "UpdateStatus",
+			func(opts status.UpdateStatusOptions) {
+				act, ok := opts.ActionStatus.(*operationsv1alpha2.ImagePrePullJobActionStatus)
+				require.True(t, ok)
+				assert.Equal(t, operationsv1alpha2.ImagePrePullJobActionPull, act.Action)
+				assert.Equal(t, operationsv1alpha2.NodeTaskPhaseFailure, opts.Phase)
+				assert.Equal(t, jobName, opts.JobName)
+				assert.Equal(t, nodeNmae, opts.NodeName)
+				require.NotNil(t, opts.Callback)
+				opts.Callback(nil)
+			})
+
+		handler := &ImagePrePullJobHandler{}
+		err := handler.UpdateNodeTaskStatus(jobName, nodeNmae, true, taskmsg.UpstreamMessage{
 			Action: string(operationsv1alpha2.ImagePrePullJobActionPull),
 			Succ:   false,
-			Extend: string(bff),
-		}
-		handler := ImagePrePullJobHandler{logger: klog.Background()}
-		task, err := handler.ConvToNodeTask("node1", &upmsg)
-		assert.NoError(t, err)
-		assert.NotNil(t, task)
-
-		taskStatus, ok := task.GetObject().(*operationsv1alpha2.ImagePrePullNodeTaskStatus)
-		assert.True(t, ok)
-		assert.Equal(t, operationsv1alpha2.NodeTaskPhaseFailure, taskStatus.Phase)
-		assert.Equal(t, operationsv1alpha2.ImagePrePullJobActionPull, taskStatus.Action)
-		assert.Len(t, taskStatus.ImageStatus, 2)
-	})
-}
-
-func TestGetCurrentAction(t *testing.T) {
-	t.Run("get action successful", func(t *testing.T) {
-		nodetask := &operationsv1alpha2.ImagePrePullNodeTaskStatus{
-			Action: operationsv1alpha2.ImagePrePullJobActionCheck,
-		}
-		handler := ImagePrePullJobHandler{logger: klog.Background()}
-		act, err := handler.GetCurrentAction(nodetask)
-		assert.NoError(t, err)
-		assert.NotNil(t, act)
-		assert.Equal(t, string(operationsv1alpha2.ImagePrePullJobActionCheck), act.Name)
-	})
-
-	t.Run("invalid action", func(t *testing.T) {
-		nodetask := &operationsv1alpha2.ImagePrePullNodeTaskStatus{
-			Action: operationsv1alpha2.ImagePrePullJobAction("xxx"),
-		}
-		handler := ImagePrePullJobHandler{logger: klog.Background()}
-		act, err := handler.GetCurrentAction(nodetask)
-		assert.ErrorContains(t, err, "invalid action")
-		assert.Nil(t, act)
-	})
-}
-
-func TestReleaseExecutorConcurrent(t *testing.T) {
-	var finishTask bool
-
-	patches := gomonkey.NewPatches()
-	defer patches.Reset()
-
-	patches.ApplyFunc(executor.GetExecutor, func(_resourceType, _jobname string,
-	) (*executor.NodeTaskExecutor, error) {
-		return &executor.NodeTaskExecutor{}, nil
-	})
-	patches.ApplyMethodFunc(&executor.NodeTaskExecutor{}, "FinishTask",
-		func() {
-			finishTask = true
 		})
-
-	handler := ImagePrePullJobHandler{logger: klog.Background()}
-	err := handler.ReleaseExecutorConcurrent(taskmsg.Resource{})
-	assert.NoError(t, err)
-	assert.True(t, finishTask)
+		require.NoError(t, err)
+	})
 }

@@ -32,8 +32,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/kubeedge/kubeedge/common/constants"
-	commhttp "github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/http"
-	httpfake "github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/http/fake"
+	commhttp "github.com/kubeedge/kubeedge/edge/pkg/edgehub/certificate/http"
+	httpfake "github.com/kubeedge/kubeedge/edge/pkg/edgehub/certificate/http/fake"
 	"github.com/kubeedge/kubeedge/pkg/security/certs"
 )
 

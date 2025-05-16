@@ -31,12 +31,13 @@ import (
 	apiconsts "github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/pkg/util/execs"
 )
 
 // IsKubeEdgeProcessRunning checks if the given process is running or not
 func IsKubeEdgeProcessRunning(proc string) (bool, error) {
 	procRunning := fmt.Sprintf("pidof %s 2>&1", proc)
-	cmd := NewCommand(procRunning)
+	cmd := execs.NewCommand(procRunning)
 
 	err := cmd.Exec()
 
@@ -54,7 +55,7 @@ func IsKubeEdgeProcessRunning(proc string) (bool, error) {
 func HasSystemd() bool {
 	cmd := "file /sbin/init"
 
-	if err := NewCommand(cmd).Exec(); err == nil {
+	if err := execs.NewCommand(cmd).Exec(); err == nil {
 		return true
 	}
 	// checks whether `SystemdBootPath` exists and is a directory
@@ -124,7 +125,7 @@ func KillKubeEdgeBinary(proc string) error {
 			binExec = fmt.Sprintf("pkill %s", proc)
 		}
 	}
-	cmd := NewCommand(binExec)
+	cmd := execs.NewCommand(binExec)
 	if err := cmd.Exec(); err != nil {
 		return err
 	}
@@ -157,7 +158,7 @@ func checkSum(filename, checksumFilename string, version semver.Version, tarball
 			return false, nil
 		}
 	} else {
-		getDesiredCheckSum := NewCommand(fmt.Sprintf("wget -qO- %s/v%s/%s", KubeEdgeDownloadURL, version, checksumFilename))
+		getDesiredCheckSum := execs.NewCommand(fmt.Sprintf("wget -qO- %s/v%s/%s", KubeEdgeDownloadURL, version, checksumFilename))
 		if err := getDesiredCheckSum.Exec(); err != nil {
 			return false, err
 		}
@@ -177,7 +178,7 @@ func retryDownload(filename, checksumFilename string, version semver.Version, ta
 		//Download the tar from repo
 		dwnldURL := fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/v%s/%s",
 			tarballPath, KubeEdgeDownloadURL, version, filename)
-		if err := NewCommand(dwnldURL).Exec(); err != nil {
+		if err := execs.NewCommand(dwnldURL).Exec(); err != nil {
 			return err
 		}
 
@@ -191,7 +192,7 @@ func retryDownload(filename, checksumFilename string, version semver.Version, ta
 		}
 		fmt.Printf("Failed to verify the checksum of %s, try to download it again ... \n\n", filename)
 		//Cleanup the downloaded files
-		if err = NewCommand(fmt.Sprintf("rm -f %s", filePath)).Exec(); err != nil {
+		if err = execs.NewCommand(fmt.Sprintf("rm -f %s", filePath)).Exec(); err != nil {
 			return err
 		}
 	}
@@ -200,7 +201,7 @@ func retryDownload(filename, checksumFilename string, version semver.Version, ta
 
 func isEdgeCoreServiceRunning(serviceName string) (bool, error) {
 	serviceRunning := fmt.Sprintf("systemctl list-unit-files | grep enabled | grep %s ", serviceName)
-	cmd := NewCommand(serviceRunning)
+	cmd := execs.NewCommand(serviceRunning)
 	err := cmd.Exec()
 
 	if cmd.ExitCode == 0 {
@@ -230,7 +231,7 @@ func runEdgeCore() error {
 		binExec = fmt.Sprintf("%s/%s > %skubeedge/edge/%s.log 2>&1 &", apiconsts.KubeEdgeUsrBinPath, apiconsts.KubeEdgeBinaryName, apiconsts.KubeEdgePath, apiconsts.KubeEdgeBinaryName)
 	}
 
-	cmd := NewCommand(binExec)
+	cmd := execs.NewCommand(binExec)
 	if err := cmd.Exec(); err != nil {
 		return err
 	}
@@ -288,7 +289,7 @@ func installKubeEdge(options types.InstallOptions, version semver.Version) error
 				}
 				if confirm {
 					cmdStr := fmt.Sprintf("cd %s && rm -f %s", options.TarballPath, filename)
-					if err := NewCommand(cmdStr).Exec(); err != nil {
+					if err := execs.NewCommand(cmdStr).Exec(); err != nil {
 						return err
 					}
 					fmt.Printf("%v have been deleted and will try to download again\n", filename)
@@ -321,7 +322,7 @@ func installKubeEdge(options types.InstallOptions, version semver.Version) error
 		untarFileAndMoveCloudCore = fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s/%s/cloud/cloudcore/%s %s/",
 			options.TarballPath, options.TarballPath, filename, options.TarballPath, dirname, KubeCloudBinaryName, apiconsts.KubeEdgeUsrBinPath)
 
-		cmd := NewCommand(untarFileAndMoveCloudCore)
+		cmd := execs.NewCommand(untarFileAndMoveCloudCore)
 		if err := cmd.Exec(); err != nil {
 			return err
 		}
@@ -329,7 +330,7 @@ func installKubeEdge(options types.InstallOptions, version semver.Version) error
 	} else if options.ComponentType == types.EdgeCore {
 		untarFileAndMoveEdgeCore = fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s/%s/edge/%s %s/",
 			options.TarballPath, options.TarballPath, filename, options.TarballPath, dirname, apiconsts.KubeEdgeBinaryName, apiconsts.KubeEdgeUsrBinPath)
-		cmd := NewCommand(untarFileAndMoveEdgeCore)
+		cmd := execs.NewCommand(untarFileAndMoveEdgeCore)
 		if err := cmd.Exec(); err != nil {
 			return err
 		}
