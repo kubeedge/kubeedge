@@ -52,10 +52,10 @@ import (
 
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
+	dao "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 )
 
 type hollowEdgeNodeConfig struct {
@@ -118,8 +118,10 @@ func run(config *hollowEdgeNodeConfig) {
 	edgehub.Register(c.Modules.EdgeHub, c.Modules.Edged.HostnameOverride)
 	metamanager.Register(c.Modules.MetaManager)
 
-	dbm.InitDBConfig(c.DataBase.DriverName, c.DataBase.AliasName, c.DataBase.DataSource)
-
+	dao.Init(
+		c.DataBase.DataSource,
+		c.Modules.MetaManager,
+	)
 	// start all modules
 	core.Run()
 }

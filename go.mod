@@ -4,6 +4,7 @@ go 1.22.9
 
 require (
 	github.com/256dpi/gomqtt v0.10.4
+	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/agiledragon/gomonkey/v2 v2.12.0
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/beego/beego/v2 v2.1.6
@@ -44,6 +45,8 @@ require (
 	google.golang.org/protobuf v1.35.2
 	gopkg.in/square/go-jose.v2 v2.6.0
 	gopkg.in/yaml.v3 v3.0.1
+	gorm.io/driver/sqlite v1.5.7
+	gorm.io/gorm v1.25.12
 	helm.sh/helm/v3 v3.12.3
 	k8s.io/api v0.30.7
 	k8s.io/apiextensions-apiserver v0.30.7
@@ -159,6 +162,8 @@ require (
 	github.com/huandu/xstrings v1.4.0 // indirect
 	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/jmoiron/sqlx v1.3.5 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
