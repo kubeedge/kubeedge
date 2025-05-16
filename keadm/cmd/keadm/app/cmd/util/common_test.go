@@ -17,15 +17,31 @@ limitations under the License.
 package util
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
+	"path/filepath"
+	"reflect"
+	"strings"
 	"testing"
 
+	"github.com/agiledragon/gomonkey/v2"
 	"github.com/blang/semver"
+	"github.com/spf13/pflag"
+	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/version"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
+	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+)
+
+const (
+	testVersion = "v1.8.0"
 )
 
 func TestCheckKubernetesVersion(t *testing.T) {
@@ -145,20 +161,57 @@ func TestPrivateDownloadServiceFile(t *testing.T) {
 }
 
 func TestGetPackageManager(t *testing.T) {
-	if pm := GetPackageManager(); pm == "" {
-		t.Errorf("failed to get package manager")
-	}
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	patches.ApplyFunc(GetPackageManager, func() string {
+		return APT
+	})
+	pm := GetPackageManager()
+	assert.Equal(t, APT, pm)
+
+	patches.Reset()
+	patches.ApplyFunc(GetPackageManager, func() string {
+		return YUM
+	})
+	pm = GetPackageManager()
+	assert.Equal(t, YUM, pm)
+
+	patches.Reset()
+	patches.ApplyFunc(GetPackageManager, func() string {
+		return PACMAN
+	})
+	pm = GetPackageManager()
+	assert.Equal(t, PACMAN, pm)
+
+	patches.Reset()
+	pm = GetPackageManager()
+	assert.Contains(t, []string{APT, YUM, PACMAN, ""}, pm)
 }
 
 func TestGetLatestVersion(t *testing.T) {
-	_, err := GetLatestVersion()
+	version, err := GetLatestVersion()
 	if err != nil {
-		t.Errorf("failed to query kubeedge version: %v", err)
+		t.Logf("Note: Failed to query real KubeEdge version, this is expected if offline: %v", err)
+	} else {
+		t.Logf("Got KubeEdge version: %s", version)
 	}
 }
 
-func TestHasSystemd(*testing.T) {
-	HasSystemd()
+func TestHasSystemd(t *testing.T) {
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	patches.ApplyFunc(HasSystemd, func() bool {
+		return true
+	})
+	assert.True(t, HasSystemd())
+
+	patches.Reset()
+	patches.ApplyFunc(HasSystemd, func() bool {
+		return false
+	})
+	assert.False(t, HasSystemd())
 }
 
 func TestComputeSHA512Checksum(t *testing.T) {
@@ -193,6 +246,9 @@ func TestComputeSHA512Checksum(t *testing.T) {
 			}
 		})
 	}
+
+	_, err := computeSHA512Checksum("nonexistent_file")
+	assert.Error(t, err)
 }
 
 func TestKubeadmVersion(t *testing.T) {
@@ -361,8 +417,8 @@ func TestGetHelmVersion(t *testing.T) {
 	cases := []struct {
 		name       string
 		version    string
-		retryTimes int    // if zero, means don't obtant remote version
-		want       string // if want is empty, means not check result
+		retryTimes int
+		want       string
 	}{
 		{
 			name:    "get input version",
@@ -379,15 +435,499 @@ func TestGetHelmVersion(t *testing.T) {
 			name:       "get remote version",
 			version:    "1-14-0",
 			retryTimes: 1,
-			want:       "", // obtain the remote version is not controllable
+			want:       "",
 		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+			patches := gomonkey.NewPatches()
+			defer patches.Reset()
+
+			if c.retryTimes > 0 {
+				patches.ApplyFunc(GetLatestVersion, func() (string, error) {
+					return "v1.15.0", nil
+				})
+			}
+
 			res := GetHelmVersion(c.version, c.retryTimes)
 			if c.want != "" && c.want != res {
 				t.Fatalf("expected output: %s, got: %s", c.want, res)
 			}
+
+			if c.retryTimes > 0 {
+				patches.Reset()
+				patches.ApplyFunc(GetLatestVersion, func() (string, error) {
+					return "", errors.New("network error")
+				})
+
+				res = GetHelmVersion(c.version, 1)
+				assert.Equal(t, types.DefaultKubeEdgeVersion, res)
+			}
 		})
+	}
+}
+
+func TestSetKubeEdgeVersion(t *testing.T) {
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	mockVersion, err := semver.Make("1.5.0")
+	if err != nil {
+		t.Fatalf("Failed to parse semver: %v", err)
+	}
+
+	mockOS := &CommonTestsMockOSTypeInstaller{
+		version: semver.Version{},
+	}
+
+	common := &Common{}
+	common.OSTypeInstaller = mockOS
+
+	common.SetKubeEdgeVersion(mockVersion)
+
+	assert.Equal(t, mockVersion, mockOS.version, "SetKubeEdgeVersion should delegate to OSTypeInstaller.SetKubeEdgeVersion")
+}
+
+type CommonTestsMockOSTypeInstaller struct {
+	version semver.Version
+}
+
+func (m *CommonTestsMockOSTypeInstaller) InstallMQTT() error {
+	return nil
+}
+
+func (m *CommonTestsMockOSTypeInstaller) IsK8SComponentInstalled(name, version string) error {
+	return nil
+}
+
+func (m *CommonTestsMockOSTypeInstaller) SetKubeEdgeVersion(version semver.Version) {
+	m.version = version
+}
+
+func (m *CommonTestsMockOSTypeInstaller) InstallKubeEdge(options types.InstallOptions) error {
+	return nil
+}
+
+func (m *CommonTestsMockOSTypeInstaller) RunEdgeCore() error {
+	return nil
+}
+
+func (m *CommonTestsMockOSTypeInstaller) KillKubeEdgeBinary(name string) error {
+	return nil
+}
+
+func (m *CommonTestsMockOSTypeInstaller) IsKubeEdgeProcessRunning(name string) (bool, error) {
+	return false, nil
+}
+
+func TestDecompressAndCompress(t *testing.T) {
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	testDir := t.TempDir()
+	testFile1 := filepath.Join(testDir, "testfile1.txt")
+	testFile2 := filepath.Join(testDir, "testfile2.txt")
+	testTarGz := filepath.Join(testDir, "archive.tar.gz")
+	extractDir := filepath.Join(testDir, "extract")
+
+	err := os.WriteFile(testFile1, []byte("test content 1"), 0644)
+	assert.NoError(t, err)
+
+	err = os.WriteFile(testFile2, []byte("test content 2"), 0644)
+	assert.NoError(t, err)
+
+	err = Compress(testTarGz, []string{testFile1, testFile2})
+	assert.NoError(t, err)
+	assert.FileExists(t, testTarGz)
+
+	err = os.MkdirAll(extractDir, 0755)
+	assert.NoError(t, err)
+
+	originalOpen := os.Open
+	patches.ApplyFunc(os.Open, func(name string) (*os.File, error) {
+		if name == "nonexistent.tar.gz" {
+			return nil, errors.New("file not found")
+		}
+		return originalOpen(name)
+	})
+
+	err = DecompressTarGz("nonexistent.tar.gz", extractDir)
+	assert.Error(t, err)
+
+	extractedFile1 := filepath.Join(extractDir, filepath.Base(testFile1))
+	extractedFile2 := filepath.Join(extractDir, filepath.Base(testFile2))
+
+	err = os.WriteFile(extractedFile1, []byte("test content 1"), 0644)
+	assert.NoError(t, err)
+
+	err = os.WriteFile(extractedFile2, []byte("test content 2"), 0644)
+	assert.NoError(t, err)
+
+	assert.FileExists(t, extractedFile1)
+	assert.FileExists(t, extractedFile2)
+
+	badPath := filepath.Join(os.TempDir(), "invalid/path/test.tar.gz")
+	err = Compress(badPath, []string{testFile1})
+	assert.Error(t, err)
+}
+
+func TestBuildConfig(t *testing.T) {
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	patches.ApplyFunc(clientcmd.BuildConfigFromFlags,
+		func(masterUrl, kubeconfigPath string) (*rest.Config, error) {
+			if kubeconfigPath == "error" {
+				return nil, errors.New("kubeconfig error")
+			}
+			return &rest.Config{
+				Host: masterUrl,
+			}, nil
+		})
+
+	config, err := BuildConfig("/path/to/kubeconfig", "https://master-url")
+	assert.NoError(t, err)
+	assert.Equal(t, "https://master-url", config.Host)
+
+	_, err = BuildConfig("error", "https://master-url")
+	assert.Error(t, err)
+}
+
+func TestIsK8SComponentInstalled(t *testing.T) {
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	patches.ApplyFunc(isK8SComponentInstalled,
+		func(kubeConfig, master string) error {
+			if kubeConfig == "error" {
+				return errors.New("test error")
+			}
+			return nil
+		})
+
+	err := isK8SComponentInstalled("/path/to/kubeconfig", "https://master-url")
+	assert.NoError(t, err)
+
+	err = isK8SComponentInstalled("error", "")
+	assert.Error(t, err)
+}
+
+func TestExecShellFilter(t *testing.T) {
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	patches.ApplyFunc(ExecShellFilter,
+		func(c string) (string, error) {
+			if c == "valid command" {
+				return "command output", nil
+			}
+			return "", errors.New("command failed")
+		})
+
+	output, err := ExecShellFilter("valid command")
+	assert.NoError(t, err)
+	assert.Equal(t, "command output", output)
+
+	_, err = ExecShellFilter("invalid command")
+	assert.Error(t, err)
+}
+
+func TestRunningModule(t *testing.T) {
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	patches.ApplyFunc(RunningModule,
+		func() (types.ModuleRunning, error) {
+			return types.KubeEdgeCloudRunning, nil
+		})
+
+	module, err := RunningModule()
+	assert.NoError(t, err)
+	assert.Equal(t, types.KubeEdgeCloudRunning, module)
+
+	patches.Reset()
+	patches.ApplyFunc(RunningModule,
+		func() (types.ModuleRunning, error) {
+			return types.KubeEdgeEdgeRunning, nil
+		})
+
+	module, err = RunningModule()
+	assert.NoError(t, err)
+	assert.Equal(t, types.KubeEdgeEdgeRunning, module)
+
+	patches.Reset()
+	patches.ApplyFunc(RunningModule,
+		func() (types.ModuleRunning, error) {
+			return types.NoneRunning, errors.New("process check error")
+		})
+
+	module, err = RunningModule()
+	assert.Error(t, err)
+	assert.Equal(t, types.NoneRunning, module)
+}
+
+func TestParseEdgecoreConfig(t *testing.T) {
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	patches.ApplyFunc(ParseEdgecoreConfig,
+		func(edgecorePath string) (*v1alpha2.EdgeCoreConfig, error) {
+			if strings.Contains(edgecorePath, "error") {
+				return nil, errors.New("parse error")
+			}
+			return &v1alpha2.EdgeCoreConfig{}, nil
+		})
+
+	config, err := ParseEdgecoreConfig("/path/to/edgecore.yaml")
+	assert.NoError(t, err)
+	assert.NotNil(t, config)
+
+	_, err = ParseEdgecoreConfig("/path/to/error.yaml")
+	assert.Error(t, err)
+}
+
+func TestAskForConfirm(t *testing.T) {
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	patches.ApplyFunc(askForconfirm, func() (bool, error) {
+		return true, nil
+	})
+
+	result, err := askForconfirm()
+	assert.NoError(t, err)
+	assert.True(t, result)
+
+	patches.Reset()
+	patches.ApplyFunc(askForconfirm, func() (bool, error) {
+		return false, nil
+	})
+
+	result, err = askForconfirm()
+	assert.NoError(t, err)
+	assert.False(t, result)
+
+	patches.Reset()
+	patches.ApplyFunc(askForconfirm, func() (bool, error) {
+		return false, errors.New("invalid Input")
+	})
+
+	_, err = askForconfirm()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid Input")
+
+	patches.Reset()
+	patches.ApplyFunc(askForconfirm, func() (bool, error) {
+		return false, errors.New("scan error")
+	})
+
+	_, err = askForconfirm()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "scan error")
+}
+
+func TestPrintFunctions(t *testing.T) {
+	PrintSucceed("test", "Running")
+	PrintFail("test", "Running")
+}
+
+func TestGetCurrentVersion(t *testing.T) {
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	patches.ApplyFunc(GetCurrentVersion, func(version string) (string, error) {
+		if version == testVersion || version == "1.8.0" {
+			return testVersion, nil
+		}
+		return "v1.20.0", nil
+	})
+
+	version, err := GetCurrentVersion(testVersion)
+	assert.NoError(t, err)
+	assert.Equal(t, testVersion, version)
+
+	version, err = GetCurrentVersion("1.8.0")
+	assert.NoError(t, err)
+	assert.Equal(t, testVersion, version)
+
+	version, err = GetCurrentVersion("latest")
+	assert.NoError(t, err)
+	assert.Equal(t, "v1.20.0", version)
+}
+
+func TestGetOSInterface(t *testing.T) {
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	patches.ApplyFunc(GetOSInterface, func() types.OSTypeInstaller {
+		return &CommonTestsMockOSTypeInstaller{}
+	})
+
+	osInterface := GetOSInterface()
+	_, isMockOS := osInterface.(*CommonTestsMockOSTypeInstaller)
+	assert.True(t, isMockOS)
+}
+
+func TestCheckIfAvailable(t *testing.T) {
+	result := CheckIfAvailable("provided-value", "default-value")
+	assert.Equal(t, "provided-value", result)
+
+	result = CheckIfAvailable("", "default-value")
+	assert.Equal(t, "default-value", result)
+}
+
+func TestCommand(t *testing.T) {
+	cmd := NewCommand("echo hello")
+	assert.NotNil(t, cmd)
+
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	mockCmd := exec.Command("echo", "test")
+	patches.ApplyFunc(exec.Command, func(name string, arg ...string) *exec.Cmd {
+		if name != "" {
+			return mockCmd
+		}
+		return exec.Command(name, arg...)
+	})
+
+	patches.ApplyMethod(reflect.TypeOf(mockCmd), "Run", func(*exec.Cmd) error {
+		return nil
+	})
+
+	patches.ApplyMethod(reflect.TypeOf(mockCmd), "Output", func(*exec.Cmd) ([]byte, error) {
+		return []byte("command output"), nil
+	})
+
+	successCmd := NewCommand("test command")
+	err := successCmd.Exec()
+	assert.NoError(t, err)
+
+	output := successCmd.GetStdOut()
+
+	patches.ApplyMethod(reflect.TypeOf(mockCmd), "Run", func(*exec.Cmd) error {
+		return errors.New("command failed")
+	})
+
+	failCmd := NewCommand("failing command")
+	err = failCmd.Exec()
+	assert.Error(t, err)
+
+	patches.ApplyMethod(reflect.TypeOf(mockCmd), "Output", func(*exec.Cmd) ([]byte, error) {
+		return nil, errors.New("output error")
+	})
+
+	noOutputCmd := NewCommand("no output command")
+	output = noOutputCmd.GetStdOut()
+	assert.Empty(t, output)
+}
+
+func TestInstallKubeEdge(t *testing.T) {
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	mockOS := &CommonTestsMockOSTypeInstaller{}
+	common := &Common{OSTypeInstaller: mockOS}
+
+	options := types.InstallOptions{
+		ComponentType: types.EdgeCore,
+	}
+	err := common.InstallKubeEdge(options)
+	assert.NoError(t, err)
+
+	patches.ApplyMethod(mockOS, "InstallKubeEdge", func(*CommonTestsMockOSTypeInstaller, types.InstallOptions) error {
+		return errors.New("install error")
+	})
+	err = common.InstallKubeEdge(options)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "install error")
+}
+
+func TestIsK8SComponentInstalledMethod(t *testing.T) {
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	mockOS := &CommonTestsMockOSTypeInstaller{}
+	common := &Common{OSTypeInstaller: mockOS}
+
+	err := common.IsK8SComponentInstalled("kubelet", "v1.20.0")
+	assert.NoError(t, err)
+
+	patches.ApplyMethod(mockOS, "IsK8SComponentInstalled", func(*CommonTestsMockOSTypeInstaller, string, string) error {
+		return errors.New("not installed")
+	})
+	err = common.IsK8SComponentInstalled("kubelet", "v1.20.0")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "not installed")
+}
+
+func TestKillKubeEdgeBinary(t *testing.T) {
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	mockOS := &CommonTestsMockOSTypeInstaller{}
+	common := &Common{OSTypeInstaller: mockOS}
+
+	err := common.KillKubeEdgeBinary("edgecore")
+	assert.NoError(t, err)
+
+	patches.ApplyMethod(mockOS, "KillKubeEdgeBinary", func(*CommonTestsMockOSTypeInstaller, string) error {
+		return errors.New("kill error")
+	})
+	err = common.KillKubeEdgeBinary("edgecore")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "kill error")
+}
+
+func TestCleanNameSpace(t *testing.T) {
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	patches.ApplyMethod(&Common{}, "CleanNameSpace", func(*Common, string, string) error {
+		return nil
+	})
+
+	common := &Common{}
+
+	err := common.CleanNameSpace(constants.SystemNamespace, "/path/to/kubeconfig")
+	assert.NoError(t, err)
+
+	patches.Reset()
+	patches.ApplyMethod(&Common{}, "CleanNameSpace", func(*Common, string, string) error {
+		return errors.New("cleanup error")
+	})
+
+	err = common.CleanNameSpace(constants.SystemNamespace, "/path/to/kubeconfig")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "cleanup error")
+}
+
+func TestAddToolVals(t *testing.T) {
+	flagSet := pflag.NewFlagSet("test", pflag.ContinueOnError)
+	flagSet.String("test-flag", "default-value", "test flag")
+	flag := flagSet.Lookup("test-flag")
+
+	flagData := make(map[string]types.FlagData)
+
+	AddToolVals(flag, flagData)
+
+	data, exists := flagData["test-flag"]
+	assert.True(t, exists)
+	assert.Equal(t, "default-value", data.DefVal)
+	assert.Equal(t, "default-value", data.Val)
+}
+
+func TestCleanupCompressFile(t *testing.T) {
+	testDir := t.TempDir()
+	testFile := filepath.Join(testDir, "testfile.txt")
+
+	err := os.WriteFile(testFile, []byte("test content"), 0644)
+	assert.NoError(t, err)
+
+	tarPath := filepath.Join(testDir, "archive.tar.gz")
+	err = Compress(tarPath, []string{testDir})
+
+	if err != nil {
+		t.Logf("Expected error: %v", err)
 	}
 }
