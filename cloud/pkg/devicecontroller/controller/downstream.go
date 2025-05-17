@@ -232,18 +232,15 @@ func (dc *DownstreamController) deviceUpdated(device *v1beta1.Device) {
 			}
 		}
 	} else {
-		// If device not present in device map means it is not modified and added.
+		// If device not present in device map means it is not modified and added. This may occur in update to device.name or namespace.
 		dc.deviceAdded(device)
 	}
 }
 
 // isDeviceUpdated checks if device is actually updated
 func isDeviceUpdated(oldTwin *v1beta1.Device, newTwin *v1beta1.Device) bool {
-	// does not care fields
-	oldTwin.ObjectMeta.ResourceVersion = newTwin.ObjectMeta.ResourceVersion
-	oldTwin.ObjectMeta.Generation = newTwin.ObjectMeta.Generation
-	// return true if ObjectMeta or Spec or Status changed, else false
-	return !reflect.DeepEqual(oldTwin.ObjectMeta, newTwin.ObjectMeta) || !reflect.DeepEqual(oldTwin.Spec, newTwin.Spec)
+	// return true if device.Spec changed, else false
+	return !reflect.DeepEqual(oldTwin.Spec, newTwin.Spec)
 }
 
 // deviceDeleted send a deleted message to the edgeNode and deletes the device from the deviceManager.Device map
