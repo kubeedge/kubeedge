@@ -66,6 +66,12 @@ func Init(ctx context.Context) error {
 		return fmt.Errorf("failed to create image pre pull job downstream handler, err: %v", err)
 	}
 	downstreamHandlers[operationsv1alpha2.ResourceImagePrePullJob] = imagePrePullJobHandler
+
+	configUpdateJobHandler, err := newConfigUpdateJobHandler(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create configupdate job downstream handler, err: %v", err)
+	}
+	downstreamHandlers[operationsv1alpha2.ResourceConfigUpdateJob] = configUpdateJobHandler
 	return nil
 }
 
@@ -77,6 +83,8 @@ func MustGetHandlerWithObj(obj any) (DownstreamHandler, error) {
 		downstreamHandler = downstreamHandlers[operationsv1alpha2.ResourceNodeUpgradeJob]
 	case *operationsv1alpha2.ImagePrePullJob:
 		downstreamHandler = downstreamHandlers[operationsv1alpha2.ResourceImagePrePullJob]
+	case *operationsv1alpha2.ConfigUpdateJob:
+		downstreamHandler = downstreamHandlers[operationsv1alpha2.ResourceConfigUpdateJob]
 	default:
 		return nil, fmt.Errorf("invalid node job type %T", obj)
 	}
