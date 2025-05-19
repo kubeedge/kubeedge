@@ -18,13 +18,14 @@ package commons
 
 import "time"
 
-// Constants for name-related values ​​used by the logger.
+// Constants for name-related values used by the logger.
 const (
 	LoggerFieldInstanceName = "name"
 
-	LoggerNameNodeUpgradeJob  = "node-upgrade-job"
-	LoggerNameImagePrePullJob = "image-prepull-job"
-	LoggerFieldNodeJobType    = "jobtype"
+	LoggerNameNodeUpgradeJob   = "node-upgrade-job"
+	LoggerNameImagePrePullJob  = "image-prepull-job"
+	LoggerNameConfigeUpdateJob = "config-update-job"
+	LoggerFieldNodeJobType     = "jobtype"
 )
 
 // Constants for the default values.

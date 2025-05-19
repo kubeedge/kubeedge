@@ -68,6 +68,8 @@ func WithEventObj(obj any) (NodeJob, error) {
 		return NewNodeUpgradeJob(obj), nil
 	case *operationsv1alpha2.ImagePrePullJob:
 		return NewImagePrepullJob(obj), nil
+	case *operationsv1alpha2.ConfigUpdateJob:
+		return NewConfigUpdateJob(obj), nil
 	default:
 		return nil, fmt.Errorf("invalid event object type %T", obj)
 	}
