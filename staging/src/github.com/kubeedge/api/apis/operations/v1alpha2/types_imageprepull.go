@@ -23,7 +23,11 @@ import (
 	opsv1alpha1 "github.com/kubeedge/api/apis/operations/v1alpha1"
 )
 
-const ResourceImagePrePullJob = "imageprepulljob"
+const (
+	ResourceImagePrePullJob = "imageprepulljob"
+
+	FinalizerImagePrePullJob = "kubeedge.io/imageprepulljob-controller"
+)
 
 // +genclient
 // +genclient:nonNamespaced

@@ -19,11 +19,15 @@ package nodetask
 import (
 	"context"
 	"fmt"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/klog/v2"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 )
@@ -42,6 +46,10 @@ func NewImagePrePullJobReconcileHandler(cli client.Client, che cache.Cache) *Ima
 	}
 }
 
+func (ImagePrePullJobReconcileHandler) GetResource() string {
+	return operationsv1alpha2.ResourceImagePrePullJob
+}
+
 func (h *ImagePrePullJobReconcileHandler) GetJob(ctx context.Context, req controllerruntime.Request,
 ) (*operationsv1alpha2.ImagePrePullJob, error) {
 	var job operationsv1alpha2.ImagePrePullJob
@@ -49,19 +57,30 @@ func (h *ImagePrePullJobReconcileHandler) GetJob(ctx context.Context, req contro
 		if apierrors.IsNotFound(err) {
 			return nil, nil
 		}
-		return nil, fmt.Errorf("failed to get node upgrade job %s, err: %v",
+		return nil, fmt.Errorf("failed to get image prepull job %s, err: %v",
 			req.NamespacedName, err)
 	}
 	return &job, nil
 }
 
-func (ImagePrePullJobReconcileHandler) NotInitialized(job *operationsv1alpha2.ImagePrePullJob) bool {
-	return job.Status.Phase == ""
+func (ImagePrePullJobReconcileHandler) NoFinalizer(job *operationsv1alpha2.ImagePrePullJob) bool {
+	return !controllerutil.ContainsFinalizer(job, operationsv1alpha2.FinalizerImagePrePullJob)
 }
 
-func (ImagePrePullJobReconcileHandler) IsFinalPhase(job *operationsv1alpha2.ImagePrePullJob) bool {
-	return job.Status.Phase == operationsv1alpha2.JobPhaseCompleted ||
-		job.Status.Phase == operationsv1alpha2.JobPhaseFailure
+func (h *ImagePrePullJobReconcileHandler) AddFinalizer(ctx context.Context, job *operationsv1alpha2.ImagePrePullJob) error {
+	newOne := job.DeepCopy()
+	controllerutil.AddFinalizer(newOne, operationsv1alpha2.FinalizerImagePrePullJob)
+	return h.cli.Patch(ctx, newOne, client.MergeFrom(job))
+}
+
+func (h *ImagePrePullJobReconcileHandler) RemoveFinalizer(ctx context.Context, job *operationsv1alpha2.ImagePrePullJob) error {
+	newOne := job.DeepCopy()
+	controllerutil.RemoveFinalizer(newOne, operationsv1alpha2.FinalizerImagePrePullJob)
+	return h.cli.Patch(ctx, newOne, client.MergeFrom(job))
+}
+
+func (ImagePrePullJobReconcileHandler) NotInitialized(job *operationsv1alpha2.ImagePrePullJob) bool {
+	return job.Status.Phase == ""
 }
 
 func (h *ImagePrePullJobReconcileHandler) InitNodesStatus(ctx context.Context, job *operationsv1alpha2.ImagePrePullJob) {
@@ -88,6 +107,15 @@ func (h *ImagePrePullJobReconcileHandler) InitNodesStatus(ctx context.Context, j
 		})
 	}
 	job.Status.NodeStatus = nodeStatus
+}
+
+func (ImagePrePullJobReconcileHandler) IsFinalPhase(job *operationsv1alpha2.ImagePrePullJob) bool {
+	return job.Status.Phase == operationsv1alpha2.JobPhaseCompleted ||
+		job.Status.Phase == operationsv1alpha2.JobPhaseFailure
+}
+
+func (ImagePrePullJobReconcileHandler) IsDeleted(job *operationsv1alpha2.ImagePrePullJob) bool {
+	return job.DeletionTimestamp != nil && !job.DeletionTimestamp.IsZero()
 }
 
 func (ImagePrePullJobReconcileHandler) CalculateStatus(ctx context.Context, job *operationsv1alpha2.ImagePrePullJob) bool {
@@ -127,6 +155,69 @@ func (h *ImagePrePullJobReconcileHandler) UpdateJobStatus(ctx context.Context, j
 	if err := h.cli.Status().Update(ctx, job); err != nil {
 		return fmt.Errorf("failed to update image prepull job %s status, err: %v",
 			job.Name, err)
+	}
+	return nil
+}
+
+func (h *ImagePrePullJobReconcileHandler) CheckTimeout(ctx context.Context, jobName string) error {
+	logger := klog.FromContext(ctx)
+	job, err := h.GetJob(ctx, controllerruntime.Request{
+		NamespacedName: types.NamespacedName{Name: jobName},
+	})
+	if err != nil {
+		return err
+	}
+	if job.Status.Phase != operationsv1alpha2.JobPhaseInProgress {
+		logger.V(2).Info("job is not in InProgress phase, no need to check timeout")
+		return nil
+	}
+
+	var timeoutSeconds int64
+	if ts := job.Spec.ImagePrePullTemplate.TimeoutSeconds; ts != nil && *ts > 0 {
+		timeoutSeconds = int64(*ts)
+	}
+	if timeoutSeconds <= 0 {
+		logger.V(2).Info("the timeout seconds is not a value greater than zero, no need to check timeout")
+		return nil
+	}
+
+	var changed bool
+	for i := range job.Status.NodeStatus {
+		it := &job.Status.NodeStatus[i]
+		if it.Phase == operationsv1alpha2.NodeTaskPhaseSuccessful ||
+			it.Phase == operationsv1alpha2.NodeTaskPhaseFailure ||
+			it.Phase == operationsv1alpha2.NodeTaskPhaseUnknown {
+			continue
+		}
+		now := time.Now().UTC()
+		if len(it.ActionFlow) > 0 {
+			// check last action update time
+			lastAction := it.ActionFlow[len(it.ActionFlow)-1]
+			lastUpdateTime, err := time.Parse(time.RFC3339, lastAction.Time)
+			if err != nil {
+				return fmt.Errorf("failed to parse last action update time %s, err: %v",
+					lastAction.Time, err)
+			}
+			timeout := lastUpdateTime.Add(time.Duration(timeoutSeconds) * time.Second).UTC()
+			if now.After(timeout) {
+				it.Phase = operationsv1alpha2.NodeTaskPhaseUnknown
+				it.Reason = NodeTaskReasonTimeout
+				changed = true
+			}
+		} else {
+			timeout := job.CreationTimestamp.Time.Add(time.Duration(timeoutSeconds) * time.Second).UTC()
+			if now.After(timeout) {
+				it.Phase = operationsv1alpha2.NodeTaskPhaseUnknown
+				it.Reason = NodeTaskReasonTimeout
+				changed = true
+			}
+		}
+	}
+
+	if changed {
+		if err := h.UpdateJobStatus(ctx, job); err != nil {
+			return err
+		}
 	}
 	return nil
 }

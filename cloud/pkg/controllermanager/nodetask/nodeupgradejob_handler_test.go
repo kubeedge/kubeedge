@@ -19,10 +19,13 @@ package nodetask
 import (
 	"context"
 	"errors"
+	"reflect"
 	"testing"
+	"time"
 
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	controllerruntime "sigs.k8s.io/controller-runtime"
@@ -57,6 +60,34 @@ func TestNodeUpgradeJobGetJob(t *testing.T) {
 	})
 }
 
+func TestNodeUpgradeJobFinalizer(t *testing.T) {
+	ctx := context.TODO()
+	cli := fakeNodeUpgradeJobClient(&operationsv1alpha2.NodeUpgradeJob{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-job",
+		},
+	})
+	handler := NewNodeUpgradeJobReconcileHandler(cli, nil)
+
+	var found operationsv1alpha2.NodeUpgradeJob
+	var err error
+	err = cli.Get(ctx, client.ObjectKey{Name: "test-job"}, &found)
+	require.NoError(t, err)
+	assert.True(t, handler.NoFinalizer(&found))
+
+	err = handler.AddFinalizer(ctx, &found)
+	require.NoError(t, err)
+	err = cli.Get(ctx, client.ObjectKey{Name: "test-job"}, &found)
+	require.NoError(t, err)
+	assert.False(t, handler.NoFinalizer(&found))
+
+	err = handler.RemoveFinalizer(ctx, &found)
+	require.NoError(t, err)
+	err = cli.Get(ctx, client.ObjectKey{Name: "test-job"}, &found)
+	require.NoError(t, err)
+	assert.True(t, handler.NoFinalizer(&found))
+}
+
 func TestNodeUpgradeJobNotInitialized(t *testing.T) {
 	cases := []struct {
 		name string
@@ -83,49 +114,6 @@ func TestNodeUpgradeJobNotInitialized(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			assert.Equal(t, c.want, handler.NotInitialized(c.obj))
-		})
-	}
-}
-
-func TestNodeUpgradeJobIsFinalPhase(t *testing.T) {
-	cases := []struct {
-		name string
-		obj  *operationsv1alpha2.NodeUpgradeJob
-		want bool
-	}{
-		{
-			name: "init is not a final phase",
-			obj: &operationsv1alpha2.NodeUpgradeJob{
-				Status: operationsv1alpha2.NodeUpgradeJobStatus{
-					Phase: operationsv1alpha2.JobPhaseInProgress,
-				},
-			},
-			want: false,
-		},
-		{
-			name: "failure is not a final phase",
-			obj: &operationsv1alpha2.NodeUpgradeJob{
-				Status: operationsv1alpha2.NodeUpgradeJobStatus{
-					Phase: operationsv1alpha2.JobPhaseFailure,
-				},
-			},
-			want: false,
-		},
-		{
-			name: "complated is a final phase",
-			obj: &operationsv1alpha2.NodeUpgradeJob{
-				Status: operationsv1alpha2.NodeUpgradeJobStatus{
-					Phase: operationsv1alpha2.JobPhaseCompleted,
-				},
-			},
-			want: true,
-		},
-	}
-
-	handler := NewNodeUpgradeJobReconcileHandler(nil, nil)
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			assert.Equal(t, c.want, handler.IsFinalPhase(c.obj))
 		})
 	}
 }
@@ -183,6 +171,83 @@ func TestNodeUpgradeJobInitNodesStatus(t *testing.T) {
 		assert.Equal(t, operationsv1alpha2.NodeTaskPhaseFailure, job.Status.NodeStatus[1].Phase)
 		assert.Equal(t, "failed to init node2", job.Status.NodeStatus[1].Reason)
 	})
+}
+
+func TestNodeUpgradeJobIsFinalPhase(t *testing.T) {
+	cases := []struct {
+		name string
+		obj  *operationsv1alpha2.NodeUpgradeJob
+		want bool
+	}{
+		{
+			name: "init is not a final phase",
+			obj: &operationsv1alpha2.NodeUpgradeJob{
+				Status: operationsv1alpha2.NodeUpgradeJobStatus{
+					Phase: operationsv1alpha2.JobPhaseInProgress,
+				},
+			},
+			want: false,
+		},
+		{
+			name: "failure is not a final phase",
+			obj: &operationsv1alpha2.NodeUpgradeJob{
+				Status: operationsv1alpha2.NodeUpgradeJobStatus{
+					Phase: operationsv1alpha2.JobPhaseFailure,
+				},
+			},
+			want: false,
+		},
+		{
+			name: "complated is a final phase",
+			obj: &operationsv1alpha2.NodeUpgradeJob{
+				Status: operationsv1alpha2.NodeUpgradeJobStatus{
+					Phase: operationsv1alpha2.JobPhaseCompleted,
+				},
+			},
+			want: true,
+		},
+	}
+
+	handler := NewNodeUpgradeJobReconcileHandler(nil, nil)
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			assert.Equal(t, c.want, handler.IsFinalPhase(c.obj))
+		})
+	}
+}
+
+func TestNodeUpgradeJobIsDeleted(t *testing.T) {
+	cases := []struct {
+		name string
+		obj  *operationsv1alpha2.NodeUpgradeJob
+		want bool
+	}{
+		{
+			name: "not deleted",
+			obj: &operationsv1alpha2.NodeUpgradeJob{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-job",
+				},
+			},
+			want: false,
+		},
+		{
+			name: "deleted",
+			obj: &operationsv1alpha2.NodeUpgradeJob{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "test-job",
+					DeletionTimestamp: &metav1.Time{Time: time.Now()},
+				},
+			},
+			want: true,
+		},
+	}
+	handler := NewNodeUpgradeJobReconcileHandler(nil, nil)
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			assert.Equal(t, c.want, handler.IsDeleted(c.obj))
+		})
+	}
 }
 
 func TestNodeUpgradeJobCalculateStatus(t *testing.T) {
@@ -293,6 +358,206 @@ func TestNodeUpgradeJobUpdateJobStatus(t *testing.T) {
 	job.Status.Phase = operationsv1alpha2.JobPhaseInProgress
 	err := handler.UpdateJobStatus(ctx, job)
 	assert.NoError(t, err)
+}
+
+func TestNodeUpgradeJobCheckTimeout(t *testing.T) {
+	ctx := context.TODO()
+
+	t.Run("job is not in progress", func(t *testing.T) {
+		var updateJobStatusCalled bool
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		patches.ApplyMethodFunc(reflect.TypeOf((*NodeUpgradeJobReconcileHandler)(nil)), "GetJob",
+			func(_ctx context.Context, _req controllerruntime.Request) (*operationsv1alpha2.NodeUpgradeJob, error) {
+				return &operationsv1alpha2.NodeUpgradeJob{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-job",
+					},
+					Status: operationsv1alpha2.NodeUpgradeJobStatus{
+						Phase: operationsv1alpha2.JobPhaseInit,
+					},
+				}, nil
+			})
+		patches.ApplyMethodFunc(reflect.TypeOf((*NodeUpgradeJobReconcileHandler)(nil)), "UpdateJobStatus",
+			func(_ctx context.Context, _job *operationsv1alpha2.NodeUpgradeJob) error {
+				updateJobStatusCalled = true
+				return nil
+			})
+
+		handler := &NodeUpgradeJobReconcileHandler{}
+		err := handler.CheckTimeout(ctx, "test-job")
+		require.NoError(t, err)
+		assert.False(t, updateJobStatusCalled)
+	})
+
+	t.Run("timeout seconds is not set", func(t *testing.T) {
+		var updateJobStatusCalled bool
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		patches.ApplyMethodFunc(reflect.TypeOf((*NodeUpgradeJobReconcileHandler)(nil)), "GetJob",
+			func(_ctx context.Context, _req controllerruntime.Request) (*operationsv1alpha2.NodeUpgradeJob, error) {
+				return &operationsv1alpha2.NodeUpgradeJob{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-job",
+					},
+					Status: operationsv1alpha2.NodeUpgradeJobStatus{
+						Phase: operationsv1alpha2.JobPhaseInProgress,
+					},
+				}, nil
+			})
+		patches.ApplyMethodFunc(reflect.TypeOf((*NodeUpgradeJobReconcileHandler)(nil)), "UpdateJobStatus",
+			func(_ctx context.Context, _job *operationsv1alpha2.NodeUpgradeJob) error {
+				updateJobStatusCalled = true
+				return nil
+			})
+
+		handler := &NodeUpgradeJobReconcileHandler{}
+		err := handler.CheckTimeout(ctx, "test-job")
+		require.NoError(t, err)
+		assert.False(t, updateJobStatusCalled)
+	})
+
+	t.Run("the status of node tasks does not need timeout processing", func(t *testing.T) {
+		var updateJobStatusCalled bool
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		patches.ApplyMethodFunc(reflect.TypeOf((*NodeUpgradeJobReconcileHandler)(nil)), "GetJob",
+			func(_ctx context.Context, _req controllerruntime.Request) (*operationsv1alpha2.NodeUpgradeJob, error) {
+				ts := uint32(10)
+				obj := &operationsv1alpha2.NodeUpgradeJob{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-job",
+					},
+					Spec: operationsv1alpha2.NodeUpgradeJobSpec{
+						TimeoutSeconds: &ts,
+					},
+					Status: operationsv1alpha2.NodeUpgradeJobStatus{
+						Phase: operationsv1alpha2.JobPhaseInProgress,
+						NodeStatus: []operationsv1alpha2.NodeUpgradeJobNodeTaskStatus{
+							{Phase: operationsv1alpha2.NodeTaskPhaseSuccessful},
+							{Phase: operationsv1alpha2.NodeTaskPhaseFailure},
+							{Phase: operationsv1alpha2.NodeTaskPhaseUnknown},
+						},
+					},
+				}
+				return obj, nil
+			})
+		patches.ApplyMethodFunc(reflect.TypeOf((*NodeUpgradeJobReconcileHandler)(nil)), "UpdateJobStatus",
+			func(_ctx context.Context, _job *operationsv1alpha2.NodeUpgradeJob) error {
+				updateJobStatusCalled = true
+				return nil
+			})
+
+		handler := &NodeUpgradeJobReconcileHandler{}
+		err := handler.CheckTimeout(ctx, "test-job")
+		require.NoError(t, err)
+		assert.False(t, updateJobStatusCalled)
+	})
+
+	t.Run("the node task has timed out due to last action time.", func(t *testing.T) {
+		var updateJobStatusCalled bool
+		ts := uint32(10)
+		obj := &operationsv1alpha2.NodeUpgradeJob{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test-job",
+			},
+			Spec: operationsv1alpha2.NodeUpgradeJobSpec{
+				TimeoutSeconds: &ts,
+			},
+			Status: operationsv1alpha2.NodeUpgradeJobStatus{
+				Phase: operationsv1alpha2.JobPhaseInProgress,
+				NodeStatus: []operationsv1alpha2.NodeUpgradeJobNodeTaskStatus{
+					{
+						Phase: operationsv1alpha2.NodeTaskPhaseInProgress,
+						ActionFlow: []operationsv1alpha2.NodeUpgradeJobActionStatus{
+							{
+								Action: operationsv1alpha2.NodeUpgradeJobActionUpgrade,
+								Time:   time.Now().UTC().Add(-time.Second * 8).Format(time.RFC3339),
+							},
+						},
+					},
+				},
+			},
+		}
+
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		patches.ApplyMethodFunc(reflect.TypeOf((*NodeUpgradeJobReconcileHandler)(nil)), "GetJob",
+			func(_ctx context.Context, _req controllerruntime.Request) (*operationsv1alpha2.NodeUpgradeJob, error) {
+				return obj, nil
+			})
+		patches.ApplyMethodFunc(reflect.TypeOf((*NodeUpgradeJobReconcileHandler)(nil)), "UpdateJobStatus",
+			func(_ctx context.Context, _job *operationsv1alpha2.NodeUpgradeJob) error {
+				updateJobStatusCalled = true
+				return nil
+			})
+
+		handler := &NodeUpgradeJobReconcileHandler{}
+		err := handler.CheckTimeout(ctx, "test-job")
+		require.NoError(t, err)
+		assert.False(t, updateJobStatusCalled)
+
+		// Wait for time out
+		time.Sleep(2 * time.Second)
+		err = handler.CheckTimeout(ctx, "test-job")
+		require.NoError(t, err)
+		assert.True(t, updateJobStatusCalled)
+		assert.Equal(t, operationsv1alpha2.NodeTaskPhaseUnknown, obj.Status.NodeStatus[0].Phase)
+		assert.Equal(t, NodeTaskReasonTimeout, obj.Status.NodeStatus[0].Reason)
+	})
+
+	t.Run("no any actions, the node task has timed out due to creation time.", func(t *testing.T) {
+		var updateJobStatusCalled bool
+		ts := uint32(10)
+		obj := &operationsv1alpha2.NodeUpgradeJob{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "test-job",
+				CreationTimestamp: metav1.Time{Time: time.Now().UTC().Add(-time.Second * 8)},
+			},
+			Spec: operationsv1alpha2.NodeUpgradeJobSpec{
+				TimeoutSeconds: &ts,
+			},
+			Status: operationsv1alpha2.NodeUpgradeJobStatus{
+				Phase: operationsv1alpha2.JobPhaseInProgress,
+				NodeStatus: []operationsv1alpha2.NodeUpgradeJobNodeTaskStatus{
+					{
+						Phase:      operationsv1alpha2.NodeTaskPhaseInProgress,
+						ActionFlow: []operationsv1alpha2.NodeUpgradeJobActionStatus{},
+					},
+				},
+			},
+		}
+
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		patches.ApplyMethodFunc(reflect.TypeOf((*NodeUpgradeJobReconcileHandler)(nil)), "GetJob",
+			func(_ctx context.Context, _req controllerruntime.Request) (*operationsv1alpha2.NodeUpgradeJob, error) {
+				return obj, nil
+			})
+		patches.ApplyMethodFunc(reflect.TypeOf((*NodeUpgradeJobReconcileHandler)(nil)), "UpdateJobStatus",
+			func(_ctx context.Context, _job *operationsv1alpha2.NodeUpgradeJob) error {
+				updateJobStatusCalled = true
+				return nil
+			})
+
+		handler := &NodeUpgradeJobReconcileHandler{}
+		err := handler.CheckTimeout(ctx, "test-job")
+		require.NoError(t, err)
+		assert.False(t, updateJobStatusCalled)
+
+		// Wait for time out
+		time.Sleep(2 * time.Second)
+		err = handler.CheckTimeout(ctx, "test-job")
+		require.NoError(t, err)
+		assert.True(t, updateJobStatusCalled)
+		assert.Equal(t, operationsv1alpha2.NodeTaskPhaseUnknown, obj.Status.NodeStatus[0].Phase)
+		assert.Equal(t, NodeTaskReasonTimeout, obj.Status.NodeStatus[0].Reason)
+	})
 }
 
 func fakeNodeUpgradeJobClient(objs ...client.Object) client.Client {
