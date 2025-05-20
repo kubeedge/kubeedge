@@ -44,7 +44,6 @@ func VerifyNodeDefine(
 	nodeNames []string,
 	nodeSelector *metav1.LabelSelector,
 ) (res []NodeVerificationResult, err error) {
-	fmt.Println("--------- nodeNames empty?", len(nodeNames), ", nodeSelector nil?", nodeSelector == nil)
 	if len(nodeNames) > 0 && nodeSelector != nil {
 		return nil, errors.New("nodeNames and nodeSelector cannot be specified at the same time")
 	}

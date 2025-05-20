@@ -93,7 +93,7 @@ func (h *NodeUpgradeJobHandler) InterruptExecutor(obj any) {
 	}
 	if exec != nil {
 		exec.Interrupt()
-		executor.RemoveExecutor(operationsv1alpha2.ResourceImagePrePullJob, job.Name)
+		executor.RemoveExecutor(operationsv1alpha2.ResourceNodeUpgradeJob, job.Name)
 	}
 }
 

@@ -336,19 +336,32 @@ type NodeJobType interface {
 }
 
 type ReconcileHandler[T operationsv1alpha2.NodeJobType] interface {
+    //GetResource returns the resource name of k8s CRD.
+    GetResource() string
     // GetJob returns the node job found by controller-runtime Client.
     // If not found, returns nil.
     GetJob(ctx context.Context, req controllerruntime.Request) (*T, error)
+    // NoFinalizer returns whether the node job has no finalizer.
+    NoFinalizer(job *T) bool
+    // AddFinalizer adds the finalizer to the node job.
+    AddFinalizer(ctx context.Context, job *T) error
+    // RemoveFinalizer removes the finalizer from the node job.
+    RemoveFinalizer(ctx context.Context, job *T) error
     // NotInitialized returns whether the node job is not initialized
     NotInitialized(job *T) bool
-    // IsFinalPhase returns whether the node job is final phase.
-    IsFinalPhase(job *T) bool
     // InitNodesStatus initializes nodes status for the node job.
     InitNodesStatus(ctx context.Context, job *T)
+    // IsFinalPhase returns whether the node job is final phase.
+    IsFinalPhase(job *T) bool
+    // IsDeleted returns whether the node job is deleted.
+    IsDeleted(job *T) bool
     // CalculateStatus calculates the node job phase through the all node tasks phases.
     CalculateStatus(ctx context.Context, job *T) bool
     // UpdateJobStatus updates the node job status by controller-runtime Client.
     UpdateJobStatus(ctx context.Context, job *T) error
+    // CheckTimeout checks whather the node task has timed out. If so,
+    // the node task needs to set the status to unknown, and update the resources.
+    CheckTimeout(ctx context.Context, jobName string) error
 }
 
 // RunReconcile runs the common reconcile logic for the node job.
@@ -357,22 +370,41 @@ func RunReconcile[T operationsv1alpha2.NodeJobType](
     req controllerruntime.Request,
     handler ReconcileHandler[T],
 ) error {
+    // 1. Get the node job CR structure, if not found, return nil to interrupt the reconcile.
     job, err := handler.GetJob(ctx, req)
-    if err != nil {
-        return err
+    ...
+    
+    // 2. If the node job CR does not have a finalizer, add a finalizer to it.
+    if handler.NoFinalizer(job) {
+        return handler.AddFinalizer(ctx, job)
     }
-    // The resource may no longer exist, in which case we stop processing.
-    if job == nil {
-        return nil
+
+    // 3. If the node job CR is deleted, execute related processing.
+    if handler.IsDeleted(job) {
+        // stop the timeout job
+        ...
+        return handler.RemoveFinalizer(ctx, job)
     }
-    // The final phase does not need to be calculated.
-    if handler.IsFinalPhase(job) {
-        return nil
-    }
+
+    // 4. If the node job CR is not initialized, initialize the node job.
     if handler.NotInitialized(job) {
         handler.InitNodesStatus(ctx, job)
         return handler.UpdateJobStatus(ctx, job)
     }
+
+    // 5. The final phase does not need to be calculated.
+    if handler.IsFinalPhase(job) {
+        // If job is in final phase, the the timeout job needs to be stopped.
+        ...
+        return nil
+    }
+
+    // 6. Creates a timeout job to check the node task status.
+    // If the node task has not reported the status for a long time,
+    // the node task will be set to unknown.
+    ...
+
+    // 7. Calculate the node job status through node tasks status.
     // Retry update status error due to resourceVersion change.
     return retry.Do(
         func() error {
@@ -391,6 +423,22 @@ func RunReconcile[T operationsv1alpha2.NodeJobType](
         retry.DelayType(retry.FixedDelay))
 }
 ```
+
+#### Timeout Job
+
+The timeout job used to check the node task status.
+If the node task has not reported the status for a long time, the node task will be set to unknown.
+
+After each node task is created, a timeout job is bound to it, which checks every 10 seconds (More appropriate frequency) whether the node task has no updates after the specified timeout field `timeoutSeconds`. 
+If the node job already has an action status, compare it with the completion time of the latest action. 
+```Text
+isTimeOut = now + timeoutSeconds > actionStatus.Time
+```
+Otherwise, compare it with the creation time of node job.
+```Text
+isTimeOut = now + timeoutSeconds > nodeJobMetadata.CreationTimestamp
+```
+When the node job is deleted or reaches the final status, the timeout job will be stopped.
 
 
 #### Feature Gates
@@ -443,7 +491,7 @@ spec:
         ...
 ```
 
-####
+#### Calculate The Node Job Status
 
 After the node task status change, ControllerManager calculates the node job phase.
 ```golang
