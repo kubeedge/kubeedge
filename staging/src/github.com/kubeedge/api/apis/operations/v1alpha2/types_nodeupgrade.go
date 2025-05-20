@@ -22,7 +22,11 @@ import (
 	fsmv1alpha1 "github.com/kubeedge/api/apis/fsm/v1alpha1"
 )
 
-const ResourceNodeUpgradeJob = "nodeupgradejob"
+const (
+	ResourceNodeUpgradeJob = "nodeupgradejob"
+
+	FinalizerNodeUpgradeJob = "kubeedge.io/nodeupgradejob-controller"
+)
 
 // +genclient
 // +genclient:nonNamespaced
