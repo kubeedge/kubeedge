@@ -390,7 +390,7 @@ kubeedge::golang::get_cloud_test_dirs() {
 kubeedge::golang::get_keadm_test_dirs() {
     cd ${KUBEEDGE_ROOT}
     findDirs=$(find -L ./keadm \
-	    -name '*_test.go' -print | xargs -n1 dirname | uniq)
+	    -name '*_test.go' -print | xargs -n1 dirname | sort -u)
     dirArray=(${findDirs// /})
     echo "${dirArray[@]}"
 }
@@ -400,7 +400,7 @@ kubeedge::golang::get_edge_test_dirs() {
     local findDirs
     local -a dirArray=()
     cd ${KUBEEDGE_ROOT}
-    findDirs=$(find "./edge/pkg" -name "*_test.go"| xargs -I{} dirname {} | uniq)
+    findDirs=$(find "./edge/pkg" -name "*_test.go"| xargs -I{} dirname {} | sort -u)
     dirArray=(${findDirs// /})
     echo "${dirArray[@]}"
   )
@@ -409,7 +409,7 @@ kubeedge::golang::get_edge_test_dirs() {
 kubeedge::golang::get_pkg_test_dirs() {
     cd ${KUBEEDGE_ROOT}
     findDirs=$(find -L ./pkg \
-	    -name '*_test.go' -print | xargs -n1 dirname | uniq)
+	    -name '*_test.go' -print | xargs -n1 dirname | sort -u)
     dirArray=(${findDirs// /})
     echo "${dirArray[@]}"
 }
