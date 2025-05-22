@@ -18,7 +18,6 @@ package wrap
 
 import (
 	"fmt"
-	"time"
 
 	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 	"github.com/kubeedge/kubeedge/pkg/nodetask/actionflow"
@@ -46,17 +45,11 @@ type NodeJobTask interface {
 	CanExecute() bool
 	// Phase returns the phase of the node task.
 	Phase() operationsv1alpha2.NodeTaskPhase
-	// ToSuccessful sets the phase of the node task to successful.
-	ToSuccessful()
-	// ToInProgress sets the phase of the node task to in progress, and set the processing time.
-	ToInProgress(t time.Time)
-	// ToFailure sets the phase of the node task to failure, and set the failure reason.
-	ToFailure(reason string)
-	// Action returns the current action of the node task. If the action value is empty,
-	// return the first action from the action flow.
+	// SetPhase sets the phase of the node task.
+	SetPhase(phase operationsv1alpha2.NodeTaskPhase, reason ...string)
+	// Action returns the first action from the action flow.
+	// Continuing execution is not supported now.
 	Action() (*actionflow.Action, error)
-	// SetAction sets the action of the node task.
-	SetAction(action *actionflow.Action)
 	// GetObject returns the node task object.
 	GetObject() any
 }

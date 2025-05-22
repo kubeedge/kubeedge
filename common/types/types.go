@@ -119,11 +119,6 @@ type RestartResponse struct {
 	LogMessages []string `json:"LogMessages,omitempty"`
 }
 
-type NodeUpgradeConfirmResponse struct {
-	ErrMessages []string `json:"errMessages,omitempty"`
-	LogMessages []string `json:"logMessages,omitempty"`
-}
-
 type LogsResponse struct {
 	ErrMessages []string `json:"errMessages,omitempty"`
 	LogMessages []string `json:"logMessages,omitempty"`

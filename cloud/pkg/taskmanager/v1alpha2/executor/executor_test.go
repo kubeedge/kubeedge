@@ -45,10 +45,8 @@ func TestExecutorOperation(t *testing.T) {
 		Status: operationsv1alpha2.ImagePrePullJobStatus{
 			NodeStatus: []operationsv1alpha2.ImagePrePullNodeTaskStatus{
 				{
-					BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-						NodeName: "node1",
-						Phase:    operationsv1alpha2.NodeTaskPhasePending,
-					},
+					NodeName: "node1",
+					Phase:    operationsv1alpha2.NodeTaskPhasePending,
 				},
 			},
 		},
@@ -91,41 +89,24 @@ func TestExecute(t *testing.T) {
 		Status: operationsv1alpha2.ImagePrePullJobStatus{
 			NodeStatus: []operationsv1alpha2.ImagePrePullNodeTaskStatus{
 				{ // phase is in progress, ignore it.
-					BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-						NodeName: "node1",
-						Phase:    operationsv1alpha2.NodeTaskPhaseInProgress,
-					},
-				},
-				{ // invalid action, phase to be failure.
-					Action: "invalid",
-					BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-						NodeName: "node2",
-						Phase:    operationsv1alpha2.NodeTaskPhasePending,
-					},
+					NodeName: "node1",
+					Phase:    operationsv1alpha2.NodeTaskPhaseInProgress,
 				},
 				{
-					BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-						NodeName: "node3",
-						Phase:    operationsv1alpha2.NodeTaskPhasePending,
-					},
+					NodeName: "node2",
+					Phase:    operationsv1alpha2.NodeTaskPhasePending,
 				},
 				{
-					BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-						NodeName: "node4",
-						Phase:    operationsv1alpha2.NodeTaskPhasePending,
-					},
+					NodeName: "node3",
+					Phase:    operationsv1alpha2.NodeTaskPhasePending,
 				},
-				{ // not in connectedNodes, ignore it.
-					BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-						NodeName: "node5",
-						Phase:    operationsv1alpha2.NodeTaskPhasePending,
-					},
+				{ // not in connectedNodes, failed
+					NodeName: "node4",
+					Phase:    operationsv1alpha2.NodeTaskPhasePending,
 				},
 				{ // send message failed
-					BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-						NodeName: "node6",
-						Phase:    operationsv1alpha2.NodeTaskPhasePending,
-					},
+					NodeName: "node5",
+					Phase:    operationsv1alpha2.NodeTaskPhasePending,
 				},
 			},
 		},
@@ -144,20 +125,19 @@ func TestExecute(t *testing.T) {
 	patches.ApplyMethodFunc(&messagelayer.ContextMessageLayer{}, "Send",
 		func(message model.Message) error {
 			res := taskmsg.ParseResource(message.GetResource())
-			if res.NodeName == "node6" {
+			if res.NodeName == "node5" {
 				return errors.New("test error")
 			}
 			exec.FinishTask()
 			return nil
 		})
 
-	exec.Execute(ctx, []string{"node1", "node2", "node3", "node4", "node6"})
+	exec.Execute(ctx, []string{"node1", "node2", "node3", "node5"})
 	assert.Equal(t, operationsv1alpha2.NodeTaskPhaseInProgress, obj.Status.NodeStatus[0].Phase)
-	assert.Equal(t, operationsv1alpha2.NodeTaskPhaseFailure, obj.Status.NodeStatus[1].Phase)
-	assert.Contains(t, obj.Status.NodeStatus[1].Reason, "failed to get node task action")
+	assert.Equal(t, operationsv1alpha2.NodeTaskPhaseInProgress, obj.Status.NodeStatus[1].Phase)
 	assert.Equal(t, operationsv1alpha2.NodeTaskPhaseInProgress, obj.Status.NodeStatus[2].Phase)
-	assert.Equal(t, operationsv1alpha2.NodeTaskPhaseInProgress, obj.Status.NodeStatus[3].Phase)
-	assert.Equal(t, operationsv1alpha2.NodeTaskPhasePending, obj.Status.NodeStatus[4].Phase)
-	assert.Equal(t, operationsv1alpha2.NodeTaskPhaseFailure, obj.Status.NodeStatus[5].Phase)
-	assert.Contains(t, obj.Status.NodeStatus[5].Reason, "failed to send message to edge")
+	assert.Equal(t, operationsv1alpha2.NodeTaskPhaseFailure, obj.Status.NodeStatus[3].Phase)
+	assert.Contains(t, obj.Status.NodeStatus[3].Reason, "the node node4 is not connected to the current cloudcore instance")
+	assert.Equal(t, operationsv1alpha2.NodeTaskPhaseFailure, obj.Status.NodeStatus[4].Phase)
+	assert.Contains(t, obj.Status.NodeStatus[4].Reason, "failed to send message to edge")
 }

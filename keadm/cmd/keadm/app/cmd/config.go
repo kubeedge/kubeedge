@@ -25,6 +25,7 @@ import (
 
 	cmdcommon "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
+	"github.com/kubeedge/kubeedge/pkg/containers"
 )
 
 // Configuration represent keadm config options
@@ -118,7 +119,7 @@ func newCmdConfigImagesPull() *cobra.Command {
 			cfg.KubeEdgeVersion = ver
 
 			images := GetKubeEdgeImages(cfg)
-			runtime, err := util.NewContainerRuntime(cfg.RemoteRuntimeEndpoint, "")
+			runtime, err := containers.NewContainerRuntime(cfg.RemoteRuntimeEndpoint, "")
 			if err != nil {
 				return err
 			}

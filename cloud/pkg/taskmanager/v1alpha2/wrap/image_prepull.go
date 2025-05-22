@@ -17,9 +17,6 @@ limitations under the License.
 package wrap
 
 import (
-	"fmt"
-	"time"
-
 	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 	"github.com/kubeedge/kubeedge/pkg/nodetask/actionflow"
 )
@@ -28,7 +25,7 @@ type ImagePrePullJobTask struct {
 	Obj *operationsv1alpha2.ImagePrePullNodeTaskStatus
 }
 
-// Check that ImagePrePullJobTask implements the NodeJobTask interface
+// Check whether ImagePrePullJobTask implements the NodeJobTask interface
 var _ NodeJobTask = (*ImagePrePullJobTask)(nil)
 
 func (task ImagePrePullJobTask) NodeName() string {
@@ -44,33 +41,15 @@ func (task ImagePrePullJobTask) Phase() operationsv1alpha2.NodeTaskPhase {
 	return task.Obj.Phase
 }
 
-func (task *ImagePrePullJobTask) ToSuccessful() {
-	task.Obj.Phase = operationsv1alpha2.NodeTaskPhaseSuccessful
-}
-
-func (task *ImagePrePullJobTask) ToInProgress(t time.Time) {
-	task.Obj.Phase = operationsv1alpha2.NodeTaskPhaseInProgress
-	task.Obj.Time = t.UTC().Format(time.RFC3339)
-}
-
-func (task *ImagePrePullJobTask) ToFailure(reason string) {
-	task.Obj.Phase = operationsv1alpha2.NodeTaskPhaseFailure
-	task.Obj.Reason = reason
+func (task *ImagePrePullJobTask) SetPhase(phase operationsv1alpha2.NodeTaskPhase, reason ...string) {
+	task.Obj.Phase = phase
+	if len(reason) > 0 {
+		task.Obj.Reason = reason[0]
+	}
 }
 
 func (task ImagePrePullJobTask) Action() (*actionflow.Action, error) {
-	if task.Obj.Action == "" {
-		return actionflow.FlowImagePrePullJob.First, nil
-	}
-	action := actionflow.FlowImagePrePullJob.Find(string(task.Obj.Action))
-	if action == nil {
-		return nil, fmt.Errorf("no valid image prepull job action '%s' was found", task.Obj.Action)
-	}
-	return action, nil
-}
-
-func (task *ImagePrePullJobTask) SetAction(action *actionflow.Action) {
-	task.Obj.Action = operationsv1alpha2.ImagePrePullJobAction(action.Name)
+	return actionflow.FlowImagePrePullJob.First, nil
 }
 
 func (task ImagePrePullJobTask) GetObject() any {
@@ -81,7 +60,7 @@ type ImagePrePullJob struct {
 	Obj *operationsv1alpha2.ImagePrePullJob
 }
 
-// Check that ImagePrePullJob implements the NodeJob interface
+// Check whether ImagePrePullJob implements the NodeJob interface
 var _ NodeJob = (*ImagePrePullJob)(nil)
 
 func NewImagePrepullJob(obj *operationsv1alpha2.ImagePrePullJob) *ImagePrePullJob {

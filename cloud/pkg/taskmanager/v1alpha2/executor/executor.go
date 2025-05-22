@@ -23,7 +23,6 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"github.com/go-logr/logr"
 	"k8s.io/klog/v2"
@@ -130,53 +129,52 @@ func (executor *NodeTaskExecutor) Execute(ctx context.Context, connectedNodes []
 			return
 		}
 		task := tasks[i]
-		if !slices.In(connectedNodes, task.NodeName()) {
-			executor.logger.Info("the node has no connection to the current cloudcore instance, skip it",
-				"nodename", task.NodeName())
-			continue
-		}
 		if !task.CanExecute() {
 			executor.logger.Info("the node does not meet the execution conditions, skip it",
 				"nodename", task.NodeName())
 			continue
 		}
+
 		executor.logger.V(2).Info("acquire a pool item ...")
 		executor.pool.Acquire()
 		executor.logger.V(2).Info("do node action", "nodename", task.NodeName())
 		executor.wg.Add(1)
 
-		msgres := taskmsg.Resource{
-			APIVersion:   operationsv1alpha2.SchemeGroupVersion.String(),
-			ResourceType: executor.job.ResourceType(),
-			JobName:      executor.job.Name(),
-			NodeName:     task.NodeName(),
-		}
-		action, err := task.Action()
-		if err != nil {
-			executor.logger.Error(err, "failed to get node task action")
-			task.ToFailure(fmt.Sprintf("failed to get node task action, err: %v", err))
-			executor.UpdateNodeTaskStatus(ctx, executor.job, task)
+		if err := executor.executeTask(ctx, task, connectedNodes); err != nil {
+			task.SetPhase(operationsv1alpha2.NodeTaskPhaseFailure, err.Error())
 			executor.FinishTask()
-			continue
+		} else {
+			if task.Phase() != operationsv1alpha2.NodeTaskPhaseInProgress {
+				task.SetPhase(operationsv1alpha2.NodeTaskPhaseInProgress)
+			}
 		}
-		msg := messagelayer.BuildNodeTaskRouter(msgres, action.Name).
-			FillBody(executor.job.Spec())
-		if err := executor.messageLayer.Send(*msg); err != nil {
-			executor.logger.Error(err, "failed to send message to edge")
-			task.ToFailure(fmt.Sprintf("failed to send message to edge, err: %v", err))
-			executor.UpdateNodeTaskStatus(ctx, executor.job, task)
-			executor.FinishTask()
-			continue
-		}
-		if task.Phase() != operationsv1alpha2.NodeTaskPhaseInProgress {
-			// Init the action value to the first action of the action flow
-			// when a node triggers the task to execute
-			task.SetAction(action)
-			task.ToInProgress(time.Now())
-			executor.UpdateNodeTaskStatus(ctx, executor.job, task)
-		}
+		executor.UpdateNodeTaskStatus(ctx, executor.job, task)
 	}
 	executor.wg.Wait()
+}
+
+// executeTask executes the node task. It sends a message to the edge node to execute the task.
+func (executor *NodeTaskExecutor) executeTask(_ctx context.Context, task wrap.NodeJobTask, connectedNodes []string,
+) error {
+	if !slices.In(connectedNodes, task.NodeName()) {
+		return fmt.Errorf("the node %s is not connected to the current cloudcore instance", task.NodeName())
+	}
+	msgres := taskmsg.Resource{
+		APIVersion:   operationsv1alpha2.SchemeGroupVersion.String(),
+		ResourceType: executor.job.ResourceType(),
+		JobName:      executor.job.Name(),
+		NodeName:     task.NodeName(),
+	}
+	action, err := task.Action()
+	if err != nil {
+		return fmt.Errorf("failed to get node task action, err: %v", err)
+	}
+	msg := messagelayer.BuildNodeTaskRouter(msgres, action.Name).
+		FillBody(executor.job.Spec())
+	if err := executor.messageLayer.Send(*msg); err != nil {
+		return fmt.Errorf("failed to send message to edge, err: %v", err)
+	}
+	return nil
 }
 
 // FinishTask when a node task has been completed, this function needs to be executed.

@@ -18,20 +18,17 @@ package upstream
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"sync"
 
 	"github.com/go-logr/logr"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 
 	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 	crdcliset "github.com/kubeedge/api/client/clientset/versioned"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
-	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/v1alpha2/executor"
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/v1alpha2/status"
-	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/v1alpha2/wrap"
 	"github.com/kubeedge/kubeedge/pkg/nodetask/actionflow"
 	taskmsg "github.com/kubeedge/kubeedge/pkg/nodetask/message"
 )
@@ -41,7 +38,7 @@ type ImagePrePullJobHandler struct {
 	crdcli crdcliset.Interface
 }
 
-// Check that ImagePrePullJobHandler implements UpstreamHandler interface.
+// Check whether ImagePrePullJobHandler implements UpstreamHandler interface.
 var _ UpstreamHandler = (*ImagePrePullJobHandler)(nil)
 
 // newImagePrePullJobHandler creates a new ImagePrePullJobHandler.
@@ -54,73 +51,52 @@ func newImagePrePullJobHandler(ctx context.Context) *ImagePrePullJobHandler {
 	}
 }
 
-func (h *ImagePrePullJobHandler) Logger() logr.Logger {
+func (h ImagePrePullJobHandler) Logger() logr.Logger {
 	return h.logger
 }
 
-func (h *ImagePrePullJobHandler) ConvToNodeTask(nodename string, upmsg *taskmsg.UpstreamMessage,
-) (wrap.NodeJobTask, error) {
-	obj := &operationsv1alpha2.ImagePrePullNodeTaskStatus{
-		BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-			NodeName: nodename,
-		},
-		Action: operationsv1alpha2.ImagePrePullJobAction(upmsg.Action),
-	}
-	if !upmsg.Succ {
-		obj.Phase = operationsv1alpha2.NodeTaskPhaseFailure
-		obj.Reason = upmsg.Reason
-	} else {
-		obj.Phase = operationsv1alpha2.NodeTaskPhaseInProgress
-	}
-	h.logger.V(3).Info("convert extend message", "action", obj.Action, "extend", upmsg.Extend)
-	if obj.Action == operationsv1alpha2.ImagePrePullJobActionPull && upmsg.Extend != "" {
-		imageStatus := make([]operationsv1alpha2.ImageStatus, 0)
-		if err := json.Unmarshal([]byte(upmsg.Extend), &imageStatus); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal image mapper, err: %v", err)
-		}
-		obj.ImageStatus = imageStatus
-	}
-	return &wrap.ImagePrePullJobTask{Obj: obj}, nil
+func (ImagePrePullJobHandler) GetAction(name string) *actionflow.Action {
+	return actionflow.FlowImagePrePullJob.Find(name)
 }
 
-func (h *ImagePrePullJobHandler) GetCurrentAction(nodetask any) (*actionflow.Action, error) {
-	obj, ok := nodetask.(*operationsv1alpha2.ImagePrePullNodeTaskStatus)
-	if !ok {
-		return nil, fmt.Errorf("failed to convert nodetask to ImagePrePullNodeTaskStatus, "+
-			"invalid type: %T", nodetask)
-	}
-	action := actionflow.FlowImagePrePullJob.Find(string(obj.Action))
-	if action == nil {
-		return nil, fmt.Errorf("invalid action %s", obj.Action)
-	}
-	return action, nil
-}
-
-func (h *ImagePrePullJobHandler) ReleaseExecutorConcurrent(res taskmsg.Resource) error {
-	exec, err := executor.GetExecutor(res.ResourceType, res.JobName)
-	if err != nil && !errors.Is(err, executor.ErrExecutorNotExists) {
-		return fmt.Errorf("failed to get executor, err: %v", err)
-	}
-	if exec != nil {
-		exec.FinishTask()
-	}
-	return nil
-}
-
-func (h *ImagePrePullJobHandler) UpdateNodeTaskStatus(jobname string, nodetask wrap.NodeJobTask) error {
-	obj, ok := nodetask.GetObject().(*operationsv1alpha2.ImagePrePullNodeTaskStatus)
-	if !ok {
-		return fmt.Errorf("failed to convert nodetask to ImagePrePullNodeTaskStatus, "+
-			"invalid type: %T", nodetask)
-	}
+func (h *ImagePrePullJobHandler) UpdateNodeTaskStatus(
+	jobName, nodeName string,
+	isFinalAction bool,
+	upmsg taskmsg.UpstreamMessage,
+) error {
 	var (
-		err error
-		wg  sync.WaitGroup
+		actoinStatus operationsv1alpha2.ImagePrePullJobActionStatus
+		err          error
+		wg           sync.WaitGroup
 	)
+
+	actoinStatus.Action = operationsv1alpha2.ImagePrePullJobAction(upmsg.Action)
+	if upmsg.Succ {
+		actoinStatus.Status = metav1.ConditionTrue
+	} else {
+		actoinStatus.Status = metav1.ConditionFalse
+		actoinStatus.Reason = upmsg.Reason
+	}
+	actoinStatus.Time = upmsg.FinishTime
+
+	phase := operationsv1alpha2.NodeTaskPhaseInProgress
+	if isFinalAction {
+		if upmsg.Succ {
+			phase = operationsv1alpha2.NodeTaskPhaseSuccessful
+		} else {
+			phase = operationsv1alpha2.NodeTaskPhaseFailure
+		}
+	}
+
 	wg.Add(1)
-	opts := status.UpdateStatusOptions[operationsv1alpha2.ImagePrePullNodeTaskStatus]{
-		JobName:        jobname,
-		NodeTaskStatus: *obj,
+	opts := status.UpdateStatusOptions{
+		TryUpdateStatusOptions: status.TryUpdateStatusOptions{
+			JobName:      jobName,
+			NodeName:     nodeName,
+			Phase:        phase,
+			ExtendInfo:   upmsg.Extend,
+			ActionStatus: &actoinStatus,
+		},
 		Callback: func(err error) {
 			if err != nil {
 				err = fmt.Errorf("failed to update image prepull job status, err: %v", err)

@@ -18,17 +18,19 @@ package upstream
 
 import (
 	"context"
+	"errors"
 	"reflect"
 	"sync"
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/klog/v2"
 
 	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/v1alpha2/wrap"
+	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/v1alpha2/executor"
 	taskmsg "github.com/kubeedge/kubeedge/pkg/nodetask/message"
 )
 
@@ -42,8 +44,10 @@ func TestStart(t *testing.T) {
 	patches := gomonkey.NewPatches()
 	defer patches.Reset()
 
-	patches.ApplyFunc(updateNodeJobTaskStatus, func(res taskmsg.Resource,
-		upmsg taskmsg.UpstreamMessage, handler UpstreamHandler,
+	patches.ApplyFunc(handleUpstreamMessage, func(
+		handler UpstreamHandler,
+		upmsg taskmsg.UpstreamMessage,
+		res taskmsg.Resource,
 	) error {
 		assert.Equal(t, res.ResourceType, "imageprepulljob")
 		assert.Equal(t, res.JobName, "test-job")
@@ -70,7 +74,7 @@ func TestStart(t *testing.T) {
 	wg.Wait()
 }
 
-func TestUpdateNodeJobTaskStatus(t *testing.T) {
+func TestHandleUpstreamMessage(t *testing.T) {
 	res := taskmsg.Resource{
 		APIVersion:   "operations.kubeedge.io/v1alpha2",
 		ResourceType: "imageprepulljob",
@@ -81,58 +85,107 @@ func TestUpdateNodeJobTaskStatus(t *testing.T) {
 		logger: klog.Background(),
 	}
 
+	var releaseExecutorCalled bool
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	patches.ApplyFunc(releaseExecutorConcurrent, func(_res taskmsg.Resource) error {
+		releaseExecutorCalled = true
+		return nil
+	})
+	patches.ApplyMethodFunc(reflect.TypeOf(handler), "UpdateNodeTaskStatus",
+		func(_jobName, _nodeName string, _isFinalAction bool, _upmsg taskmsg.UpstreamMessage) error {
+			return nil
+		})
+
+	t.Run("invalid action", func(t *testing.T) {
+		upmsg := taskmsg.UpstreamMessage{
+			Action: "invalid",
+			Succ:   true,
+		}
+		err := handleUpstreamMessage(handler, upmsg, res)
+		require.ErrorContains(t, err, "invalid imageprepulljob action invalid")
+	})
+
 	t.Run("not final action", func(t *testing.T) {
-		var updated bool
-		patches := gomonkey.NewPatches()
-		defer patches.Reset()
-
-		patches.ApplyMethodFunc(reflect.TypeOf(handler), "UpdateNodeTaskStatus",
-			func(jobname string, nodetask wrap.NodeJobTask) error {
-				assert.Equal(t, jobname, "test-job")
-				assert.Equal(t, operationsv1alpha2.NodeTaskPhaseInProgress, nodetask.Phase())
-				act, err := nodetask.Action()
-				assert.NoError(t, err)
-				assert.NotNil(t, act)
-				// check -> pull
-				assert.Equal(t, string(operationsv1alpha2.ImagePrePullJobActionPull), act.Name)
-				updated = true
-				return nil
-			})
-
+		releaseExecutorCalled = false
 		upmsg := taskmsg.UpstreamMessage{
 			Action: string(operationsv1alpha2.ImagePrePullJobActionCheck),
 			Succ:   true,
 		}
-		err := updateNodeJobTaskStatus(res, upmsg, handler)
-		assert.NoError(t, err)
-		assert.True(t, updated)
+		err := handleUpstreamMessage(handler, upmsg, res)
+		require.NoError(t, err)
+		assert.False(t, releaseExecutorCalled)
 	})
 
-	t.Run("final action", func(t *testing.T) {
-		var updated, releaseExecutor bool
-		patches := gomonkey.NewPatches()
-		defer patches.Reset()
-
-		patches.ApplyMethodFunc(reflect.TypeOf(handler), "UpdateNodeTaskStatus",
-			func(jobname string, nodetask wrap.NodeJobTask) error {
-				assert.Equal(t, jobname, "test-job")
-				assert.Equal(t, operationsv1alpha2.NodeTaskPhaseSuccessful, nodetask.Phase())
-				updated = true
-				return nil
-			})
-		patches.ApplyMethodFunc(reflect.TypeOf(handler), "ReleaseExecutorConcurrent",
-			func(res taskmsg.Resource) error {
-				releaseExecutor = true
-				return nil
-			})
-
+	t.Run("is final action", func(t *testing.T) {
+		releaseExecutorCalled = false
 		upmsg := taskmsg.UpstreamMessage{
 			Action: string(operationsv1alpha2.ImagePrePullJobActionPull),
 			Succ:   true,
 		}
-		err := updateNodeJobTaskStatus(res, upmsg, handler)
-		assert.NoError(t, err)
-		assert.True(t, updated)
-		assert.True(t, releaseExecutor)
+		err := handleUpstreamMessage(handler, upmsg, res)
+		require.NoError(t, err)
+		assert.True(t, releaseExecutorCalled)
+	})
+}
+
+func TestReleaseExecutorConcurrent(t *testing.T) {
+	var finishTaskCalled bool
+
+	globpatches := gomonkey.NewPatches()
+	defer globpatches.Reset()
+
+	globpatches.ApplyFunc(executor.GetExecutor, func(resourceType, _jobname string,
+	) (*executor.NodeTaskExecutor, error) {
+		switch resourceType {
+		case "fake":
+			return &executor.NodeTaskExecutor{}, nil
+		case "wantError":
+			return nil, errors.New("test error")
+		default:
+			return nil, executor.ErrExecutorNotExists
+		}
+	})
+
+	globpatches.ApplyMethodFunc(reflect.TypeOf((*executor.NodeTaskExecutor)(nil)),
+		"FinishTask", func() {
+			finishTaskCalled = true
+		})
+
+	t.Run("get executor failed", func(t *testing.T) {
+		finishTaskCalled = false
+		res := taskmsg.Resource{
+			APIVersion:   "operations.kubeedge.io/v1alpha2",
+			ResourceType: "wantError",
+			JobName:      "test-job",
+			NodeName:     "node1",
+		}
+		err := releaseExecutorConcurrent(res)
+		require.ErrorContains(t, err, "failed to get executor")
+	})
+
+	t.Run("executor not exists", func(t *testing.T) {
+		res := taskmsg.Resource{
+			APIVersion:   "operations.kubeedge.io/v1alpha2",
+			ResourceType: "notExists",
+			JobName:      "test-job",
+			NodeName:     "node1",
+		}
+		err := releaseExecutorConcurrent(res)
+		require.NoError(t, err)
+		assert.False(t, finishTaskCalled)
+	})
+
+	t.Run("finish task", func(t *testing.T) {
+		res := taskmsg.Resource{
+			APIVersion:   "operations.kubeedge.io/v1alpha2",
+			ResourceType: "fake",
+			JobName:      "test-job",
+			NodeName:     "node1",
+		}
+		err := releaseExecutorConcurrent(res)
+		require.NoError(t, err)
+		assert.True(t, finishTaskCalled)
 	})
 }
