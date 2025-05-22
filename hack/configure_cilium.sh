@@ -48,6 +48,15 @@ check_prerequisites() {
   echo "Checking prerequisites for ${mode}..."
   if ! command -v yq &>/dev/null; then
     install_yq
+  else
+    yq_path=$(command -v yq)
+    if [[ "$yq_path" == /snap/bin/yq ]]; then
+      echo "Detected snap binary for yq at $yq_path. Reinstalling non-snap version..."
+      snap remove yq
+      install_yq
+    else
+      echo "yq is already installed at $yq_path (non-snap version)."
+    fi
   fi
 
   case $mode in
