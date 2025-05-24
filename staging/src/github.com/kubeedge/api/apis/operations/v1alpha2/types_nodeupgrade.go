@@ -158,7 +158,7 @@ type NodeUpgradeJobStatus struct {
 	// NodeStatus contains upgrade Status for each edge node.
 	NodeStatus []NodeUpgradeJobNodeTaskStatus `json:"nodeStatus,omitempty"`
 
-	// Reason represents for the reason of the ImagePrePullJob.
+	// Reason represents for the reason of the NodeUpgradeJob.
 	// +optional
 	Reason string `json:"reason,omitempty"`
 

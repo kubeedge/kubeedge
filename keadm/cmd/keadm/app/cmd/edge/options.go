@@ -77,6 +77,13 @@ type RollbackOptions struct {
 	BaseOptions
 }
 
+type ConfigUpdateOptions struct {
+	BaseOptions
+
+	// Sets specify multiple or separate values to be modified for EdgeCore configuration
+	Sets string
+}
+
 // AddBaseFlags adds some common flags to the upgrade related commands, and use BaseOptions struct to map these flags.
 func AddBaseFlags(cmd *cobra.Command, opts *BaseOptions) {
 	cmd.Flags().StringVar(&opts.Config, "config", constants.EdgecoreConfigPath,
@@ -133,4 +140,12 @@ func AddRollbackFlags(cmd *cobra.Command, opts *RollbackOptions) {
 
 	cmd.Flags().StringVar(&opts.HistoricalVersion, "historical-version", opts.HistoricalVersion,
 		"Use this key to roll back the KubeEdge version, If not set, get the latest backup version.")
+}
+
+// AddConfigUpdateFlags adds some flags to the config-update command, and use ConfigUpdateOptions struct to map these flags.
+func AddConfigUpdateFlags(cmd *cobra.Command, opts *ConfigUpdateOptions) {
+	AddBaseFlags(cmd, &opts.BaseOptions)
+
+	cmd.Flags().StringVar(&opts.Sets, "set", opts.Sets,
+		"Set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
 }

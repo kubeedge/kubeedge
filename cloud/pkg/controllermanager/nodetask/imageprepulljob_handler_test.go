@@ -115,7 +115,7 @@ func TestImagePrePullJobIsFinalPhase(t *testing.T) {
 			name: "complated is a final phase",
 			obj: &operationsv1alpha2.ImagePrePullJob{
 				Status: operationsv1alpha2.ImagePrePullJobStatus{
-					Phase: operationsv1alpha2.JobPhaseComplated,
+					Phase: operationsv1alpha2.JobPhaseCompleted,
 				},
 			},
 			want: true,
@@ -290,7 +290,7 @@ func TestImagePrePullJobCalculateStatus(t *testing.T) {
 				},
 			},
 			wantChanged: true,
-			wantPhase:   operationsv1alpha2.JobPhaseComplated,
+			wantPhase:   operationsv1alpha2.JobPhaseCompleted,
 		},
 	}
 

@@ -43,7 +43,7 @@ func TestRunReconcile(t *testing.T) {
 		handler := &fakeReconcileHandler{
 			obj: &operationsv1alpha2.ImagePrePullJob{
 				Status: operationsv1alpha2.ImagePrePullJobStatus{
-					Phase: operationsv1alpha2.JobPhaseComplated,
+					Phase: operationsv1alpha2.JobPhaseCompleted,
 				},
 			},
 		}

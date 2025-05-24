@@ -18,6 +18,10 @@ limitations under the License.
 
 package v1alpha2
 
+// ConfigUpdateJobListerExpansion allows custom methods to be added to
+// ConfigUpdateJobLister.
+type ConfigUpdateJobListerExpansion interface{}
+
 // ImagePrePullJobListerExpansion allows custom methods to be added to
 // ImagePrePullJobLister.
 type ImagePrePullJobListerExpansion interface{}

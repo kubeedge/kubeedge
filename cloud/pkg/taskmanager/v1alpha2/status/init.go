@@ -30,6 +30,8 @@ var (
 	imagePrePullJobStatusUpdater *StatusUpdater[operationsv1alpha2.ImagePrePullNodeTaskStatus]
 
 	nodeUpgradeJobStatusUpdater *StatusUpdater[operationsv1alpha2.NodeUpgradeJobNodeTaskStatus]
+
+	configUpdateJobStatusUpdater *StatusUpdater[operationsv1alpha2.ConfigUpdateJobNodeTaskStatus]
 )
 
 func Init(ctx context.Context) {
@@ -38,6 +40,9 @@ func Init(ctx context.Context) {
 
 	nodeUpgradeJobStatusUpdater = NewStatusUpdater(ctx, tryUpdateNodeUpgradeJobStatus)
 	go nodeUpgradeJobStatusUpdater.WatchUpdateChannel()
+
+	configUpdateJobStatusUpdater = NewStatusUpdater(ctx, tryUpdateConfigUpdateJobStatus)
+	go configUpdateJobStatusUpdater.WatchUpdateChannel()
 }
 
 func GetImagePrePullJobStatusUpdater() *StatusUpdater[operationsv1alpha2.ImagePrePullNodeTaskStatus] {
@@ -46,6 +51,10 @@ func GetImagePrePullJobStatusUpdater() *StatusUpdater[operationsv1alpha2.ImagePr
 
 func GetNodeUpgradeJobStatusUpdater() *StatusUpdater[operationsv1alpha2.NodeUpgradeJobNodeTaskStatus] {
 	return nodeUpgradeJobStatusUpdater
+}
+
+func GetConfigeUpdateJobStatusUpdater() *StatusUpdater[operationsv1alpha2.ConfigUpdateJobNodeTaskStatus] {
+	return configUpdateJobStatusUpdater
 }
 
 func tryUpdateImagePrePullJobStatus(
@@ -102,6 +111,35 @@ func tryUpdateNodeUpgradeJobStatus(
 		UpdateStatus(ctx, job, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to update node upgrade job %s status, err: %v", jobName, err)
+	}
+	return nil
+}
+
+func tryUpdateConfigUpdateJobStatus(
+	ctx context.Context,
+	cli crdcliset.Interface,
+	jobName string,
+	nodeTaskStatus operationsv1alpha2.ConfigUpdateJobNodeTaskStatus,
+) error {
+	job, err := cli.OperationsV1alpha2().ConfigUpdateJobs().
+		Get(ctx, jobName, metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("faield to get configupdate job %s, err: %v", jobName, err)
+	}
+	for i := range job.Status.NodeStatus {
+		status := &job.Status.NodeStatus[i]
+		if status.NodeName == nodeTaskStatus.NodeName {
+			if nodeTaskStatus.Time == "" {
+				nodeTaskStatus.Time = job.Status.NodeStatus[i].Time
+			}
+			job.Status.NodeStatus[i] = nodeTaskStatus
+			break
+		}
+	}
+	_, err = cli.OperationsV1alpha2().ConfigUpdateJobs().
+		UpdateStatus(ctx, job, metav1.UpdateOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to update configupdate job %s status, err: %v", jobName, err)
 	}
 	return nil
 }

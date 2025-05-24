@@ -139,7 +139,7 @@ type ImagePrePullJobStatus struct {
 	// +optional
 	Reason string `json:"reason,omitempty"`
 
-	// State represents for the state phase of the NodeUpgradeJob.
+	// State represents for the state phase of the ImagePrePullJob.
 	// There are several possible state values: "", Upgrading, BackingUp, RollingBack and Checking.
 	// +optional
 	// Deprecated: For compatibility with v1alpha1 version, It will be removed in v1.23

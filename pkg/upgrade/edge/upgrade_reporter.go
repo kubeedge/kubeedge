@@ -32,9 +32,10 @@ type Reporter interface {
 }
 
 const (
-	EventTypeBackup   = "Backup"
-	EventTypeUpgrade  = "Upgrade"
-	EventTypeRollback = "Rollback"
+	EventTypeBackup       = "Backup"
+	EventTypeUpgrade      = "Upgrade"
+	EventTypeRollback     = "Rollback"
+	EventTypeConfigUpdate = "ConfigUpdate"
 )
 
 var upgradeReportJSONFile = filepath.Join(constants.KubeEdgePath, "upgrade_report.json")

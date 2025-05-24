@@ -72,6 +72,8 @@ var (
 	FlowNodeUpgradeJob = initNodeUpgradeJobFlow()
 	// FlowImagePrePullJob defines the action flow of image pre pull job.
 	FlowImagePrePullJob = initImagePrePullJob()
+	// FlowConfigUpdateJob defines the action flow of config update job.
+	FlowConfigUpdateJob = initConfigUpdateJobFlow()
 )
 
 // initNodeUpgradeJobFlow initializes the action flow of node upgrade job.
@@ -102,6 +104,22 @@ func initImagePrePullJob() *Flow {
 	check := &Action{Name: string(v1alpha2.ImagePrePullJobActionCheck)}
 	pulls := &Action{Name: string(v1alpha2.ImagePrePullJobActionPull)}
 	check.NextSuccessful = pulls
+	return &Flow{
+		First: check,
+	}
+}
+
+// initConfigUpdateJobFlow initializes the action flow of config update job.
+//
+//	Check --> BackUp --> Update --> [If fails]-> RollBack
+func initConfigUpdateJobFlow() *Flow {
+	check := &Action{Name: string(v1alpha2.ConfigUpdateJobActionCheck)}
+	backUp := &Action{Name: string(v1alpha2.ConfigUpdateJobActionBackUp)}
+	check.NextSuccessful = backUp
+	update := &Action{Name: string(v1alpha2.ConfigUpdateJobActionUpdate)}
+	backUp.NextSuccessful = update
+	rollBack := &Action{Name: string(v1alpha2.ConfigUpdateJobActionRollBack)}
+	update.NextFailure = rollBack
 	return &Flow{
 		First: check,
 	}

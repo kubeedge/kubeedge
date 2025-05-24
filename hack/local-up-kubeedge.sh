@@ -185,6 +185,7 @@ function create_operation_crd {
   echo "creating the operation crd..."
   kubectl apply -f ${KUBEEDGE_ROOT}/build/crds/operations/operations_v1alpha2_nodeupgradejob.yaml
   kubectl apply -f ${KUBEEDGE_ROOT}/build/crds/operations/operations_v1alpha2_imageprepulljob.yaml
+  kubectl apply -f ${KUBEEDGE_ROOT}/build/crds/operations/operations_v1alpha2_configupdatejob.yaml
 }
 
 function create_serviceaccountaccess_crd {
