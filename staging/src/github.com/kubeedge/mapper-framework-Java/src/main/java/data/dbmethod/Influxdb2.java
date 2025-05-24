@@ -117,7 +117,7 @@ public class Influxdb2 {
                     .time(Instant.now(), WritePrecision.NS);
             // Write point immediately
             try {
-                writeApi.writePoint(influxdb2ClientConfig.getOrg(), influxdb2ClientConfig.getBucket(), point);
+                writeApi.writePoint(influxdb2ClientConfig.getBucket(), influxdb2ClientConfig.getOrg(), point);
             } catch (Exception e) {
                 log.error("Exit AddData: {}", e.getMessage(),e);
             }
