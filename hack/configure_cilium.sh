@@ -190,8 +190,7 @@ update_edgecore_configuration() {
 
   if yq e '.modules.edgeStream.enable = true' -i "$PATCH_FILE" &&
     yq e '.modules.edged.tailoredKubeletConfig.clusterDNS = ["10.96.0.10"]' -i "$PATCH_FILE" &&
-    yq e '.modules.metaManager.metaServer.enable = true' -i "$PATCH_FILE" &&
-    yq e '.modules.serviceBus.enable = true' -i "$PATCH_FILE"; then
+    yq e '.modules.metaManager.metaServer.enable = true' -i "$PATCH_FILE"; then
     echo "EdgeCore configuration updated successfully."
   else
     echo "[ERROR] Failed to update ${PATCH_FILE} with yq. Check yq installation and YAML format."
@@ -286,7 +285,6 @@ cleanup() {
 # - Enables EdgeStream module for cloud-edge communication
 # - Configures clusterDNS to use CoreDNS service IP
 # - Enables MetaServer for edge node API access
-# - Enables ServiceBus for edge services
 # - Restarts EdgeCore service
 #######################################
 main() {
