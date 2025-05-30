@@ -26,5 +26,5 @@ rules:
     resources: ["rules", "ruleendpoints"]
     verbs: ["get", "list"]
   - apiGroups: ["operations.kubeedge.io"]
-    resources: ["nodeupgradejobs", "imageprepulljobs"]
+    resources: ["nodeupgradejobs", "imageprepulljobs", "configupdatejobs"]
     verbs: ["get", "list"]

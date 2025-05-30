@@ -450,7 +450,7 @@ spec:
                 description: Phase represents for the phase of the NodeUpgradeJob
                 type: string
               reason:
-                description: Reason represents for the reason of the ImagePrePullJob.
+                description: Reason represents for the reason of the NodeUpgradeJob.
                 type: string
               state:
                 description: |-

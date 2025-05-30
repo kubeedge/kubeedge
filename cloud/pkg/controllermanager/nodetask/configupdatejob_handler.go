@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,23 +28,23 @@ import (
 	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 )
 
-type ImagePrePullJobReconcileHandler struct {
+type ConfigUpdateJobReconcileHandler struct {
 	cli client.Client
 	che cache.Cache
 }
 
-var _ ReconcileHandler[operationsv1alpha2.ImagePrePullJob] = (*ImagePrePullJobReconcileHandler)(nil)
+var _ ReconcileHandler[operationsv1alpha2.ConfigUpdateJob] = (*ConfigUpdateJobReconcileHandler)(nil)
 
-func NewImagePrePullJobReconcileHandler(cli client.Client, che cache.Cache) *ImagePrePullJobReconcileHandler {
-	return &ImagePrePullJobReconcileHandler{
+func NewConfigUpdateJobReconcileHandler(cli client.Client, che cache.Cache) *ConfigUpdateJobReconcileHandler {
+	return &ConfigUpdateJobReconcileHandler{
 		cli: cli,
 		che: che,
 	}
 }
 
-func (h *ImagePrePullJobReconcileHandler) GetJob(ctx context.Context, req controllerruntime.Request,
-) (*operationsv1alpha2.ImagePrePullJob, error) {
-	var job operationsv1alpha2.ImagePrePullJob
+func (h *ConfigUpdateJobReconcileHandler) GetJob(ctx context.Context, req controllerruntime.Request,
+) (*operationsv1alpha2.ConfigUpdateJob, error) {
+	var job operationsv1alpha2.ConfigUpdateJob
 	if err := h.cli.Get(ctx, req.NamespacedName, &job); err != nil {
 		if apierrors.IsNotFound(err) {
 			return nil, nil
@@ -55,24 +55,23 @@ func (h *ImagePrePullJobReconcileHandler) GetJob(ctx context.Context, req contro
 	return &job, nil
 }
 
-func (ImagePrePullJobReconcileHandler) NotInitialized(job *operationsv1alpha2.ImagePrePullJob) bool {
+func (h *ConfigUpdateJobReconcileHandler) NotInitialized(job *operationsv1alpha2.ConfigUpdateJob) bool {
 	return job.Status.Phase == ""
 }
 
-func (ImagePrePullJobReconcileHandler) IsFinalPhase(job *operationsv1alpha2.ImagePrePullJob) bool {
+func (h *ConfigUpdateJobReconcileHandler) IsFinalPhase(job *operationsv1alpha2.ConfigUpdateJob) bool {
 	return job.Status.Phase.IsFinal()
 }
 
-func (h *ImagePrePullJobReconcileHandler) InitNodesStatus(ctx context.Context, job *operationsv1alpha2.ImagePrePullJob) {
-	verifyResult, err := VerifyNodeDefine(ctx, h.che, job.Spec.ImagePrePullTemplate.NodeNames,
-		job.Spec.ImagePrePullTemplate.LabelSelector)
+func (h *ConfigUpdateJobReconcileHandler) InitNodesStatus(ctx context.Context, job *operationsv1alpha2.ConfigUpdateJob) {
+	verifyResult, err := VerifyNodeDefine(ctx, h.che, job.Spec.NodeNames, job.Spec.LabelSelector)
 	if err != nil {
 		job.Status.Phase = operationsv1alpha2.JobPhaseFailure
 		job.Status.Reason = err.Error()
 		return
 	}
 	job.Status.Phase = operationsv1alpha2.JobPhaseInit
-	nodeStatus := make([]operationsv1alpha2.ImagePrePullNodeTaskStatus, 0, len(verifyResult))
+	nodeStatus := make([]operationsv1alpha2.ConfigUpdateJobNodeTaskStatus, 0, len(verifyResult))
 	for _, it := range verifyResult {
 		var phase operationsv1alpha2.NodeTaskPhase
 		if it.ErrorMessage == "" {
@@ -80,7 +79,7 @@ func (h *ImagePrePullJobReconcileHandler) InitNodesStatus(ctx context.Context, j
 		} else {
 			phase = operationsv1alpha2.NodeTaskPhaseFailure
 		}
-		nodeStatus = append(nodeStatus, operationsv1alpha2.ImagePrePullNodeTaskStatus{
+		nodeStatus = append(nodeStatus, operationsv1alpha2.ConfigUpdateJobNodeTaskStatus{
 			BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
 				NodeName: it.NodeName,
 				Phase:    phase,
@@ -91,7 +90,7 @@ func (h *ImagePrePullJobReconcileHandler) InitNodesStatus(ctx context.Context, j
 	job.Status.NodeStatus = nodeStatus
 }
 
-func (ImagePrePullJobReconcileHandler) CalculateStatus(ctx context.Context, job *operationsv1alpha2.ImagePrePullJob) bool {
+func (h *ConfigUpdateJobReconcileHandler) CalculateStatus(ctx context.Context, job *operationsv1alpha2.ConfigUpdateJob) bool {
 	var processingCount, failedCount int64
 	for _, it := range job.Status.NodeStatus {
 		if it.Phase == operationsv1alpha2.NodeTaskPhaseFailure ||
@@ -106,7 +105,7 @@ func (ImagePrePullJobReconcileHandler) CalculateStatus(ctx context.Context, job 
 	}
 
 	phase := CalculatePhaseWithCounts(int64(len(job.Status.NodeStatus)),
-		processingCount, failedCount, job.Spec.ImagePrePullTemplate.FailureTolerate)
+		processingCount, failedCount, job.Spec.FailureTolerate)
 	var reason string
 	if phase == operationsv1alpha2.JobPhaseFailure {
 		reason = fmt.Sprintf("the number of failed nodes is %d/%d, which exceeds the failure tolerance threshold",
@@ -124,9 +123,9 @@ func (ImagePrePullJobReconcileHandler) CalculateStatus(ctx context.Context, job 
 	return changed
 }
 
-func (h *ImagePrePullJobReconcileHandler) UpdateJobStatus(ctx context.Context, job *operationsv1alpha2.ImagePrePullJob) error {
+func (h *ConfigUpdateJobReconcileHandler) UpdateJobStatus(ctx context.Context, job *operationsv1alpha2.ConfigUpdateJob) error {
 	if err := h.cli.Status().Update(ctx, job); err != nil {
-		return fmt.Errorf("failed to update image prepull job %s status, err: %v",
+		return fmt.Errorf("failed to update configupdate job %s status, err: %v",
 			job.Name, err)
 	}
 	return nil

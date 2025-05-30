@@ -18,6 +18,8 @@ limitations under the License.
 
 package v1alpha2
 
+type ConfigUpdateJobExpansion interface{}
+
 type ImagePrePullJobExpansion interface{}
 
 type NodeUpgradeJobExpansion interface{}

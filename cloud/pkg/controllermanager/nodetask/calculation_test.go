@@ -55,7 +55,7 @@ func TestCalculateStatusWithCounts(t *testing.T) {
 			total:               10,
 			fail:                5,
 			failureTolerateSpec: "0.5",
-			wantStatus:          operationsv1alpha2.JobPhaseComplated,
+			wantStatus:          operationsv1alpha2.JobPhaseCompleted,
 		},
 		{
 			name:                "partial error, outside the ratio",
@@ -69,7 +69,7 @@ func TestCalculateStatusWithCounts(t *testing.T) {
 			total:               10,
 			fail:                0,
 			failureTolerateSpec: "0.5",
-			wantStatus:          operationsv1alpha2.JobPhaseComplated,
+			wantStatus:          operationsv1alpha2.JobPhaseCompleted,
 		},
 	}
 
