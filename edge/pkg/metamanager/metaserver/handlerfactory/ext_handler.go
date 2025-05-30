@@ -16,7 +16,7 @@ import (
 	commontypes "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/task/taskexecutor"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/upgradedb"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/common"
 	"github.com/kubeedge/kubeedge/pkg/version"
 )
@@ -67,8 +67,8 @@ func (f *Factory) ConfirmUpgrade() http.Handler {
 		opts := options.GetEdgeCoreOptions()
 		var upgradeReq commontypes.NodeUpgradeJobRequest
 		var nodeTaskReq types.NodeTaskRequest
-		nodeTaskReq, _ = upgradedb.QueryNodeTaskRequestFromMetaV2()
-		upgradeReq, _ = upgradedb.QueryNodeUpgradeJobRequestFromMetaV2()
+		nodeTaskReq, _ = dbclient.NewMetaV2Service().QueryNodeTaskRequestFromMetaV2()
+		upgradeReq, _ = dbclient.NewMetaV2Service().QueryNodeUpgradeJobRequestFromMetaV2()
 		upgradeCmd := fmt.Sprintf("keadm upgrade edge --upgradeID %s --historyID %s --fromVersion %s --toVersion %s --config %s --image %s > /tmp/keadm.log 2>&1",
 			upgradeReq.UpgradeID, upgradeReq.HistoryID, version.Get(), upgradeReq.Version, opts.ConfigFile, upgradeReq.Image)
 
@@ -86,11 +86,11 @@ func (f *Factory) ConfirmUpgrade() http.Handler {
 			return
 		}
 		klog.Infof("Finish upgrade from Version %s to %s ...", version.Get(), upgradeReq.Version)
-		err = upgradedb.DeleteNodeTaskRequestFromMetaV2()
+		err = dbclient.NewMetaV2Service().DeleteNodeTaskRequestFromMetaV2()
 		if err != nil {
 			klog.Errorf("Failed to delete NodeTaskRequest%s", err.Error())
 		}
-		err = upgradedb.DeleteNodeUpgradeJobRequestFromMetaV2()
+		err = dbclient.NewMetaV2Service().DeleteNodeUpgradeJobRequestFromMetaV2()
 		if err != nil {
 			klog.Errorf("Failed to delete NodeUpgradeJobRequest%s", err.Error())
 		}

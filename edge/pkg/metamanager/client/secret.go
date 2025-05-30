@@ -9,7 +9,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 )
 
 // SecretsGetter is interface to get client secrets
@@ -68,7 +68,7 @@ func (c *secrets) Get(name string) (*api.Secret, error) {
 		return handleSecretFromMetaManager(content)
 	}
 
-	metas, err := dao.QueryMeta("key", resource)
+	metas, err := dbclient.NewMetaService().QueryMeta("key", resource)
 	if err != nil || len(*metas) == 0 {
 		return remoteGet()
 	}
