@@ -16,10 +16,12 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	metaManagerConfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
+	"github.com/kubeedge/kubeedge/pkg/metaserver"
 )
 
 // Constants to check metamanager processes
@@ -56,18 +58,6 @@ func sendToEdged(message *model.Message, sync bool) {
 
 func sendToCloud(message *model.Message) {
 	beehiveContext.SendToGroup(string(metaManagerConfig.Config.ContextSendGroup), *message)
-}
-
-func sendToTwin(message *model.Message) {
-	beehiveContext.Send(modules.DeviceTwinModuleName, *message)
-}
-
-func sentToMetamanager(message *model.Message, sync bool) {
-	if sync {
-		beehiveContext.SendResp(*message)
-	} else {
-		beehiveContext.Send(modules.MetaManagerModuleName, *message)
-	}
 }
 
 // Resource format: <namespace>/<restype>[/resid]
@@ -267,12 +257,16 @@ func (m *metaManager) processUpdate(message model.Message) {
 	case cloudmodules.PolicyControllerModuleName:
 		resp := message.NewRespByMessage(&message, OK)
 		sendToCloud(resp)
-	case modules.MetaManagerModuleName:
-		// Process the update message from MetaManager(MetaServer)
-		// which is used to update the device in edge node.
-		sendToTwin(&message)
-		resp := message.NewRespByMessage(&message, OK)
-		sentToMetamanager(resp, message.IsSync())
+	case metaserver.MetaServerSource:
+		switch resType {
+		case dtcommon.ResourceDevice:
+			resp := message.NewRespByMessage(&message, OK)
+			beehiveContext.SendResp(*resp)
+			message.SetRoute(modules.MetaGroup, modules.DeviceTwinModuleName)
+			beehiveContext.Send(modules.DeviceTwinModuleName, message)
+		default:
+			klog.Errorf("unsupport message resType, %s", resType)
+		}
 	default:
 		klog.Errorf("unsupport message source, %s", msgSource)
 	}

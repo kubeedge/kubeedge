@@ -128,4 +128,6 @@ const (
 	DeviceStatusOffline   = "offline"
 	DeviceStatusUnhealthy = "unhealthy" /* Unhealthy status from device */
 	DeviceStatusUnknown   = "unknown"
+
+	ResourceDevice = "device"
 )
