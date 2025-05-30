@@ -119,6 +119,12 @@ type Edged struct {
 	// RegisterNodeNamespace indicates register node namespace
 	// default "default"
 	RegisterNodeNamespace string `json:"registerNodeNamespace,omitempty"`
+	// DisableCSI disables CSI (Container Storage Interface) support in edgecore.
+	// The default value is false, CSI drivers are used for storage operations.
+	// Disabling this (set to true) will turn off all CSI-related functionality.
+	// This is useful in environments that do not require CSI or for troubleshooting.
+	// default false
+	DisableCSI bool `json:"disableCSI"`
 }
 
 // TailoredKubeletConfiguration indicates the tailored kubelet configuration.
