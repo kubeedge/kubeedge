@@ -19,10 +19,13 @@ package nodetask
 import (
 	"context"
 	"errors"
+	"reflect"
 	"testing"
+	"time"
 
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	controllerruntime "sigs.k8s.io/controller-runtime"
@@ -57,6 +60,34 @@ func TestImagePrePullJobGetJob(t *testing.T) {
 	})
 }
 
+func TestImagePrePullJobFinalizer(t *testing.T) {
+	ctx := context.TODO()
+	cli := fakeImagePrePullJobClient(&operationsv1alpha2.ImagePrePullJob{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-job",
+		},
+	})
+	handler := NewImagePrePullJobReconcileHandler(cli, nil)
+
+	var found operationsv1alpha2.ImagePrePullJob
+	var err error
+	err = cli.Get(ctx, client.ObjectKey{Name: "test-job"}, &found)
+	require.NoError(t, err)
+	assert.True(t, handler.NoFinalizer(&found))
+
+	err = handler.AddFinalizer(ctx, &found)
+	require.NoError(t, err)
+	err = cli.Get(ctx, client.ObjectKey{Name: "test-job"}, &found)
+	require.NoError(t, err)
+	assert.False(t, handler.NoFinalizer(&found))
+
+	err = handler.RemoveFinalizer(ctx, &found)
+	require.NoError(t, err)
+	err = cli.Get(ctx, client.ObjectKey{Name: "test-job"}, &found)
+	require.NoError(t, err)
+	assert.True(t, handler.NoFinalizer(&found))
+}
+
 func TestImagePrePullJobNotInitialized(t *testing.T) {
 	cases := []struct {
 		name string
@@ -83,49 +114,6 @@ func TestImagePrePullJobNotInitialized(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			assert.Equal(t, c.want, handler.NotInitialized(c.obj))
-		})
-	}
-}
-
-func TestImagePrePullJobIsFinalPhase(t *testing.T) {
-	cases := []struct {
-		name string
-		obj  *operationsv1alpha2.ImagePrePullJob
-		want bool
-	}{
-		{
-			name: "init is not a final phase",
-			obj: &operationsv1alpha2.ImagePrePullJob{
-				Status: operationsv1alpha2.ImagePrePullJobStatus{
-					Phase: operationsv1alpha2.JobPhaseInProgress,
-				},
-			},
-			want: false,
-		},
-		{
-			name: "failure is a final phase",
-			obj: &operationsv1alpha2.ImagePrePullJob{
-				Status: operationsv1alpha2.ImagePrePullJobStatus{
-					Phase: operationsv1alpha2.JobPhaseFailure,
-				},
-			},
-			want: true,
-		},
-		{
-			name: "complated is a final phase",
-			obj: &operationsv1alpha2.ImagePrePullJob{
-				Status: operationsv1alpha2.ImagePrePullJobStatus{
-					Phase: operationsv1alpha2.JobPhaseCompleted,
-				},
-			},
-			want: true,
-		},
-	}
-
-	handler := NewImagePrePullJobReconcileHandler(nil, nil)
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			assert.Equal(t, c.want, handler.IsFinalPhase(c.obj))
 		})
 	}
 }
@@ -185,6 +173,83 @@ func TestImagePrePullJobInitNodesStatus(t *testing.T) {
 	})
 }
 
+func TestImagePrePullJobIsFinalPhase(t *testing.T) {
+	cases := []struct {
+		name string
+		obj  *operationsv1alpha2.ImagePrePullJob
+		want bool
+	}{
+		{
+			name: "init is not a final phase",
+			obj: &operationsv1alpha2.ImagePrePullJob{
+				Status: operationsv1alpha2.ImagePrePullJobStatus{
+					Phase: operationsv1alpha2.JobPhaseInProgress,
+				},
+			},
+			want: false,
+		},
+		{
+			name: "failure is a final phase",
+			obj: &operationsv1alpha2.ImagePrePullJob{
+				Status: operationsv1alpha2.ImagePrePullJobStatus{
+					Phase: operationsv1alpha2.JobPhaseFailure,
+				},
+			},
+			want: true,
+		},
+		{
+			name: "complated is a final phase",
+			obj: &operationsv1alpha2.ImagePrePullJob{
+				Status: operationsv1alpha2.ImagePrePullJobStatus{
+					Phase: operationsv1alpha2.JobPhaseCompleted,
+				},
+			},
+			want: true,
+		},
+	}
+
+	handler := NewImagePrePullJobReconcileHandler(nil, nil)
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			assert.Equal(t, c.want, handler.IsFinalPhase(c.obj))
+		})
+	}
+}
+
+func TestImagePrePullJobIsDeleted(t *testing.T) {
+	cases := []struct {
+		name string
+		obj  *operationsv1alpha2.ImagePrePullJob
+		want bool
+	}{
+		{
+			name: "not deleted",
+			obj: &operationsv1alpha2.ImagePrePullJob{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-job",
+				},
+			},
+			want: false,
+		},
+		{
+			name: "deleted",
+			obj: &operationsv1alpha2.ImagePrePullJob{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "test-job",
+					DeletionTimestamp: &metav1.Time{Time: time.Now()},
+				},
+			},
+			want: true,
+		},
+	}
+	handler := NewImagePrePullJobReconcileHandler(nil, nil)
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			assert.Equal(t, c.want, handler.IsDeleted(c.obj))
+		})
+	}
+}
+
 func TestImagePrePullJobCalculateStatus(t *testing.T) {
 	cases := []struct {
 		name        string
@@ -199,22 +264,16 @@ func TestImagePrePullJobCalculateStatus(t *testing.T) {
 					Phase: operationsv1alpha2.JobPhaseInProgress,
 					NodeStatus: []operationsv1alpha2.ImagePrePullNodeTaskStatus{
 						{
-							BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-								NodeName: "node1",
-								Phase:    operationsv1alpha2.NodeTaskPhaseInProgress,
-							},
+							NodeName: "node1",
+							Phase:    operationsv1alpha2.NodeTaskPhaseInProgress,
 						},
 						{
-							BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-								NodeName: "node2",
-								Phase:    operationsv1alpha2.NodeTaskPhaseSuccessful,
-							},
+							NodeName: "node2",
+							Phase:    operationsv1alpha2.NodeTaskPhaseSuccessful,
 						},
 						{
-							BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-								NodeName: "node3",
-								Phase:    operationsv1alpha2.NodeTaskPhaseFailure,
-							},
+							NodeName: "node3",
+							Phase:    operationsv1alpha2.NodeTaskPhaseFailure,
 						},
 					},
 				},
@@ -234,22 +293,16 @@ func TestImagePrePullJobCalculateStatus(t *testing.T) {
 					Phase: operationsv1alpha2.JobPhaseInProgress,
 					NodeStatus: []operationsv1alpha2.ImagePrePullNodeTaskStatus{
 						{
-							BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-								NodeName: "node1",
-								Phase:    operationsv1alpha2.NodeTaskPhaseUnknown,
-							},
+							NodeName: "node1",
+							Phase:    operationsv1alpha2.NodeTaskPhaseUnknown,
 						},
 						{
-							BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-								NodeName: "node2",
-								Phase:    operationsv1alpha2.NodeTaskPhaseSuccessful,
-							},
+							NodeName: "node2",
+							Phase:    operationsv1alpha2.NodeTaskPhaseSuccessful,
 						},
 						{
-							BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-								NodeName: "node3",
-								Phase:    operationsv1alpha2.NodeTaskPhaseFailure,
-							},
+							NodeName: "node3",
+							Phase:    operationsv1alpha2.NodeTaskPhaseFailure,
 						},
 					},
 				},
@@ -269,22 +322,16 @@ func TestImagePrePullJobCalculateStatus(t *testing.T) {
 					Phase: operationsv1alpha2.JobPhaseInProgress,
 					NodeStatus: []operationsv1alpha2.ImagePrePullNodeTaskStatus{
 						{
-							BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-								NodeName: "node1",
-								Phase:    operationsv1alpha2.NodeTaskPhaseSuccessful,
-							},
+							NodeName: "node1",
+							Phase:    operationsv1alpha2.NodeTaskPhaseSuccessful,
 						},
 						{
-							BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-								NodeName: "node2",
-								Phase:    operationsv1alpha2.NodeTaskPhaseSuccessful,
-							},
+							NodeName: "node2",
+							Phase:    operationsv1alpha2.NodeTaskPhaseSuccessful,
 						},
 						{
-							BasicNodeTaskStatus: operationsv1alpha2.BasicNodeTaskStatus{
-								NodeName: "node3",
-								Phase:    operationsv1alpha2.NodeTaskPhaseFailure,
-							},
+							NodeName: "node3",
+							Phase:    operationsv1alpha2.NodeTaskPhaseFailure,
 						},
 					},
 				},
@@ -315,6 +362,212 @@ func TestImagePrePullJobUpdateJobStatus(t *testing.T) {
 	job.Status.Phase = operationsv1alpha2.JobPhaseInProgress
 	err := handler.UpdateJobStatus(ctx, job)
 	assert.NoError(t, err)
+}
+
+func TestImagePrePullJobCheckTimeout(t *testing.T) {
+	ctx := context.TODO()
+
+	t.Run("job is not in progress", func(t *testing.T) {
+		var updateJobStatusCalled bool
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		patches.ApplyMethodFunc(reflect.TypeOf((*ImagePrePullJobReconcileHandler)(nil)), "GetJob",
+			func(_ctx context.Context, _req controllerruntime.Request) (*operationsv1alpha2.ImagePrePullJob, error) {
+				return &operationsv1alpha2.ImagePrePullJob{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-job",
+					},
+					Status: operationsv1alpha2.ImagePrePullJobStatus{
+						Phase: operationsv1alpha2.JobPhaseInit,
+					},
+				}, nil
+			})
+		patches.ApplyMethodFunc(reflect.TypeOf((*ImagePrePullJobReconcileHandler)(nil)), "UpdateJobStatus",
+			func(_ctx context.Context, _job *operationsv1alpha2.ImagePrePullJob) error {
+				updateJobStatusCalled = true
+				return nil
+			})
+
+		handler := &ImagePrePullJobReconcileHandler{}
+		err := handler.CheckTimeout(ctx, "test-job")
+		require.NoError(t, err)
+		assert.False(t, updateJobStatusCalled)
+	})
+
+	t.Run("timeout seconds is not set", func(t *testing.T) {
+		var updateJobStatusCalled bool
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		patches.ApplyMethodFunc(reflect.TypeOf((*ImagePrePullJobReconcileHandler)(nil)), "GetJob",
+			func(_ctx context.Context, _req controllerruntime.Request) (*operationsv1alpha2.ImagePrePullJob, error) {
+				return &operationsv1alpha2.ImagePrePullJob{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-job",
+					},
+					Status: operationsv1alpha2.ImagePrePullJobStatus{
+						Phase: operationsv1alpha2.JobPhaseInProgress,
+					},
+				}, nil
+			})
+		patches.ApplyMethodFunc(reflect.TypeOf((*ImagePrePullJobReconcileHandler)(nil)), "UpdateJobStatus",
+			func(_ctx context.Context, _job *operationsv1alpha2.ImagePrePullJob) error {
+				updateJobStatusCalled = true
+				return nil
+			})
+
+		handler := &ImagePrePullJobReconcileHandler{}
+		err := handler.CheckTimeout(ctx, "test-job")
+		require.NoError(t, err)
+		assert.False(t, updateJobStatusCalled)
+	})
+
+	t.Run("the status of node tasks does not need timeout processing", func(t *testing.T) {
+		var updateJobStatusCalled bool
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		patches.ApplyMethodFunc(reflect.TypeOf((*ImagePrePullJobReconcileHandler)(nil)), "GetJob",
+			func(_ctx context.Context, _req controllerruntime.Request) (*operationsv1alpha2.ImagePrePullJob, error) {
+				ts := uint32(10)
+				obj := &operationsv1alpha2.ImagePrePullJob{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-job",
+					},
+					Spec: operationsv1alpha2.ImagePrePullJobSpec{
+						ImagePrePullTemplate: operationsv1alpha2.ImagePrePullTemplate{
+							TimeoutSeconds: &ts,
+						},
+					},
+					Status: operationsv1alpha2.ImagePrePullJobStatus{
+						Phase: operationsv1alpha2.JobPhaseInProgress,
+						NodeStatus: []operationsv1alpha2.ImagePrePullNodeTaskStatus{
+							{Phase: operationsv1alpha2.NodeTaskPhaseSuccessful},
+							{Phase: operationsv1alpha2.NodeTaskPhaseFailure},
+							{Phase: operationsv1alpha2.NodeTaskPhaseUnknown},
+						},
+					},
+				}
+				return obj, nil
+			})
+		patches.ApplyMethodFunc(reflect.TypeOf((*ImagePrePullJobReconcileHandler)(nil)), "UpdateJobStatus",
+			func(_ctx context.Context, _job *operationsv1alpha2.ImagePrePullJob) error {
+				updateJobStatusCalled = true
+				return nil
+			})
+
+		handler := &ImagePrePullJobReconcileHandler{}
+		err := handler.CheckTimeout(ctx, "test-job")
+		require.NoError(t, err)
+		assert.False(t, updateJobStatusCalled)
+	})
+
+	t.Run("the node task has timed out due to last action time.", func(t *testing.T) {
+		var updateJobStatusCalled bool
+		ts := uint32(10)
+		obj := &operationsv1alpha2.ImagePrePullJob{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test-job",
+			},
+			Spec: operationsv1alpha2.ImagePrePullJobSpec{
+				ImagePrePullTemplate: operationsv1alpha2.ImagePrePullTemplate{
+					TimeoutSeconds: &ts,
+				},
+			},
+			Status: operationsv1alpha2.ImagePrePullJobStatus{
+				Phase: operationsv1alpha2.JobPhaseInProgress,
+				NodeStatus: []operationsv1alpha2.ImagePrePullNodeTaskStatus{
+					{
+						Phase: operationsv1alpha2.NodeTaskPhaseInProgress,
+						ActionFlow: []operationsv1alpha2.ImagePrePullJobActionStatus{
+							{
+								Action: operationsv1alpha2.ImagePrePullJobActionPull,
+								Time:   time.Now().UTC().Add(-time.Second * 8).Format(time.RFC3339),
+							},
+						},
+					},
+				},
+			},
+		}
+
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		patches.ApplyMethodFunc(reflect.TypeOf((*ImagePrePullJobReconcileHandler)(nil)), "GetJob",
+			func(_ctx context.Context, _req controllerruntime.Request) (*operationsv1alpha2.ImagePrePullJob, error) {
+				return obj, nil
+			})
+		patches.ApplyMethodFunc(reflect.TypeOf((*ImagePrePullJobReconcileHandler)(nil)), "UpdateJobStatus",
+			func(_ctx context.Context, _job *operationsv1alpha2.ImagePrePullJob) error {
+				updateJobStatusCalled = true
+				return nil
+			})
+
+		handler := &ImagePrePullJobReconcileHandler{}
+		err := handler.CheckTimeout(ctx, "test-job")
+		require.NoError(t, err)
+		assert.False(t, updateJobStatusCalled)
+
+		// Wait for time out
+		time.Sleep(2 * time.Second)
+		err = handler.CheckTimeout(ctx, "test-job")
+		require.NoError(t, err)
+		assert.True(t, updateJobStatusCalled)
+		assert.Equal(t, operationsv1alpha2.NodeTaskPhaseUnknown, obj.Status.NodeStatus[0].Phase)
+		assert.Equal(t, NodeTaskReasonTimeout, obj.Status.NodeStatus[0].Reason)
+	})
+
+	t.Run("no any actions, the node task has timed out due to creation time.", func(t *testing.T) {
+		var updateJobStatusCalled bool
+		ts := uint32(10)
+		obj := &operationsv1alpha2.ImagePrePullJob{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "test-job",
+				CreationTimestamp: metav1.Time{Time: time.Now().UTC().Add(-time.Second * 8)},
+			},
+			Spec: operationsv1alpha2.ImagePrePullJobSpec{
+				ImagePrePullTemplate: operationsv1alpha2.ImagePrePullTemplate{
+					TimeoutSeconds: &ts,
+				},
+			},
+			Status: operationsv1alpha2.ImagePrePullJobStatus{
+				Phase: operationsv1alpha2.JobPhaseInProgress,
+				NodeStatus: []operationsv1alpha2.ImagePrePullNodeTaskStatus{
+					{
+						Phase:      operationsv1alpha2.NodeTaskPhaseInProgress,
+						ActionFlow: []operationsv1alpha2.ImagePrePullJobActionStatus{},
+					},
+				},
+			},
+		}
+
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		patches.ApplyMethodFunc(reflect.TypeOf((*ImagePrePullJobReconcileHandler)(nil)), "GetJob",
+			func(_ctx context.Context, _req controllerruntime.Request) (*operationsv1alpha2.ImagePrePullJob, error) {
+				return obj, nil
+			})
+		patches.ApplyMethodFunc(reflect.TypeOf((*ImagePrePullJobReconcileHandler)(nil)), "UpdateJobStatus",
+			func(_ctx context.Context, _job *operationsv1alpha2.ImagePrePullJob) error {
+				updateJobStatusCalled = true
+				return nil
+			})
+
+		handler := &ImagePrePullJobReconcileHandler{}
+		err := handler.CheckTimeout(ctx, "test-job")
+		require.NoError(t, err)
+		assert.False(t, updateJobStatusCalled)
+
+		// Wait for time out
+		time.Sleep(2 * time.Second)
+		err = handler.CheckTimeout(ctx, "test-job")
+		require.NoError(t, err)
+		assert.True(t, updateJobStatusCalled)
+		assert.Equal(t, operationsv1alpha2.NodeTaskPhaseUnknown, obj.Status.NodeStatus[0].Phase)
+		assert.Equal(t, NodeTaskReasonTimeout, obj.Status.NodeStatus[0].Reason)
+	})
 }
 
 func fakeImagePrePullJobClient(objs ...client.Object) client.Client {

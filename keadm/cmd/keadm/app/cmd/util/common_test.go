@@ -38,6 +38,7 @@ import (
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/pkg/util/execs"
 )
 
 const (
@@ -777,7 +778,7 @@ func TestCheckIfAvailable(t *testing.T) {
 }
 
 func TestCommand(t *testing.T) {
-	cmd := NewCommand("echo hello")
+	cmd := execs.NewCommand("echo hello")
 	assert.NotNil(t, cmd)
 
 	patches := gomonkey.NewPatches()
@@ -799,7 +800,7 @@ func TestCommand(t *testing.T) {
 		return []byte("command output"), nil
 	})
 
-	successCmd := NewCommand("test command")
+	successCmd := execs.NewCommand("test command")
 	err := successCmd.Exec()
 	assert.NoError(t, err)
 
@@ -809,7 +810,7 @@ func TestCommand(t *testing.T) {
 		return errors.New("command failed")
 	})
 
-	failCmd := NewCommand("failing command")
+	failCmd := execs.NewCommand("failing command")
 	err = failCmd.Exec()
 	assert.Error(t, err)
 
@@ -817,7 +818,7 @@ func TestCommand(t *testing.T) {
 		return nil, errors.New("output error")
 	})
 
-	noOutputCmd := NewCommand("no output command")
+	noOutputCmd := execs.NewCommand("no output command")
 	output = noOutputCmd.GetStdOut()
 	assert.Empty(t, output)
 }

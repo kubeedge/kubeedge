@@ -285,11 +285,24 @@ spec:
                 type: string
               imageDigestGatter:
                 description: |-
-                  ImageDigestGatter define registry v2 interface access configuration.
+                  ImageDigestGetter define registry v2 interface access configuration.
                   As a transition, it is not required at first, and the image digest is checked when this field is set.
                 properties:
+                  amd64:
+                    description: |-
+                      AMD64 indicates the image digest of the amd64 platform for verification.
+                      E.g., sha256:0738039541234567890123456789012345678901234567890123456789012345
+                    type: string
+                  arm64:
+                    description: |-
+                      ARM64 indicates the image digest of the arm64 platform for verification.
+                      E.g., sha256:0738039541234567890123456789012345678901234567890123456789012345
+                    type: string
                   registryAPI:
-                    description: RegistryAPI define registry v2 interface access configuration
+                    description: |-
+                      RegistryAPI define registry v2 interface access configuration.
+                      Used to automatically gets multiple platform image digests from a remote registry
+                      to set values into ARM64 and AMD64 fields.
                     properties:
                       host:
                         type: string
@@ -299,9 +312,6 @@ spec:
                     - host
                     - token
                     type: object
-                  value:
-                    description: Value used to directly set a value to check image
-                    type: string
                 type: object
               labelSelector:
                 description: |-
@@ -408,9 +418,30 @@ spec:
                   description: NodeUpgradeJobNodeTaskStatus stores the status of Upgrade
                     for each edge node.
                   properties:
-                    action:
-                      description: Action represents for the action phase of the NodeUpgradeJob
-                      type: string
+                    actionFlow:
+                      description: ActionFlow represents for the results of executing
+                        the action flow.
+                      items:
+                        description: NodeUpgradeJobActionStatus defines the results
+                          of executing the action.
+                        properties:
+                          action:
+                            description: Action represents for the action name
+                            type: string
+                          reason:
+                            description: Reason represents the reason for the failure
+                              of the action.
+                            type: string
+                          status:
+                            description: State represents for the status of this image
+                              pull on the edge node.
+                            type: string
+                          time:
+                            description: Time represents for the running time of the
+                              node task.
+                            type: string
+                        type: object
+                      type: array
                     currentVersion:
                       description: CurrentVersion represents for the current status
                         of the EdgeCore.
@@ -432,17 +463,14 @@ spec:
                       description: Phase represents for the phase of the node task.
                       type: string
                     reason:
-                      description: Reason represents for the reason of the node task.
+                      description: Reason represents the reason for the failure of
+                        the node task.
                       type: string
                     state:
                       description: |-
                         State represents for the upgrade state phase of the edge node.
                         There are several possible state values: "", Upgrading, BackingUp, RollingBack and Checking.
                         Deprecated: For compatibility with v1alpha1 version, It will be removed in v1.23
-                      type: string
-                    time:
-                      description: Time represents for the running time of the node
-                        task.
                       type: string
                   type: object
                 type: array

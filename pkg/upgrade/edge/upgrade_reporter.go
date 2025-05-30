@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 
 	"github.com/kubeedge/api/apis/common/constants"
+	"github.com/kubeedge/kubeedge/pkg/util/files"
 )
 
 type Reporter interface {
@@ -91,6 +92,11 @@ func (r JSONFileReporter) Report(inerr error) error {
 	return nil
 }
 
+// JSONReporterInfoExists checks whether the result file exists.
+func JSONReporterInfoExists() bool {
+	return files.FileExists(upgradeReportJSONFile)
+}
+
 // ParseJSONReporterInfo parses the result of the upgrade related commands from a JSON file.
 func ParseJSONReporterInfo() (JSONReporterInfo, error) {
 	var info JSONReporterInfo
@@ -106,6 +112,8 @@ func ParseJSONReporterInfo() (JSONReporterInfo, error) {
 	return info, nil
 }
 
+// RemoveJSONReporterInfo removes the result file.
+// After the upgrade results are processed, you can choose to delete this file.
 func RemoveJSONReporterInfo() error {
 	return os.Remove(upgradeReportJSONFile)
 }

@@ -23,7 +23,11 @@ import (
 	opsv1alpha1 "github.com/kubeedge/api/apis/operations/v1alpha1"
 )
 
-const ResourceImagePrePullJob = "imageprepulljob"
+const (
+	ResourceImagePrePullJob = "imageprepulljob"
+
+	FinalizerImagePrePullJob = "kubeedge.io/imageprepulljob-controller"
+)
 
 // +genclient
 // +genclient:nonNamespaced
@@ -171,13 +175,38 @@ type ImagePrePullJobStatus struct {
 // ImagePrePullNodeTaskStatus stores image prepull status for each edge node.
 // +kubebuilder:validation:Type=object
 type ImagePrePullNodeTaskStatus struct {
-	// Action represents for the action phase of the ImagePrePullJob
-	Action ImagePrePullJobAction `json:"action,omitempty"`
+	// ActionFlow represents for the results of executing the action flow.
+	ActionFlow []ImagePrePullJobActionStatus `json:"actionFlow,omitempty"`
 
 	// ImageStatus represents the prepull status for each image
 	ImageStatus []ImageStatus `json:"imageStatus,omitempty"`
 
-	BasicNodeTaskStatus `json:",inline"`
+	// NodeName is the name of edge node.
+	NodeName string `json:"nodeName,omitempty"`
+
+	// Phase represents for the phase of the node task.
+	Phase NodeTaskPhase `json:"phase,omitempty"`
+
+	// Reason represents the reason for the failure of the node task.
+	// +optional
+	Reason string `json:"reason,omitempty"`
+}
+
+// ImagePrePullJobActionStatus defines the results of executing the action.
+// +kubebuilder:validation:Type=object
+type ImagePrePullJobActionStatus struct {
+	// Action represents for the action name
+	Action ImagePrePullJobAction `json:"action,omitempty"`
+
+	// State represents for the status of this image pull on the edge node.
+	Status metav1.ConditionStatus `json:"status,omitempty"`
+
+	// Reason represents the reason for the failure of the action.
+	// +optional
+	Reason string `json:"reason,omitempty"`
+
+	// Time represents for the running time of the node task.
+	Time string `json:"time,omitempty"`
 }
 
 // ImageStatus stores the prepull status for each image.

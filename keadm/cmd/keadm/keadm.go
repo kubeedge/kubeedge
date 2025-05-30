@@ -17,7 +17,6 @@ limitations under the License.
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app"
@@ -25,7 +24,6 @@ import (
 
 func main() {
 	if err := app.Run(); err != nil {
-		fmt.Println("execute keadm command failed: ", err)
 		os.Exit(1)
 	}
 }

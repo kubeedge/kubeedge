@@ -29,7 +29,7 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/util"
+	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/v1alpha1/util"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
 )
 

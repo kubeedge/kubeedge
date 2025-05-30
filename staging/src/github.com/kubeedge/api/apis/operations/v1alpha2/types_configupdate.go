@@ -18,7 +18,11 @@ package v1alpha2
 
 import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-const ResourceConfigUpdateJob = "configupdatejob"
+const (
+	ResourceConfigUpdateJob = "configupdatejob"
+
+	FinalizerConfigUpdateJob = "kubeedge.io/configupdatejob-controller"
+)
 
 // +genclient
 // +genclient:nonNamespaced
@@ -120,8 +124,33 @@ type ConfigUpdateJobStatus struct {
 // ConfigUpdateJobNodeTaskStatus stores the status of config update for each edge node.
 // +kubebuilder:validation:Type=object
 type ConfigUpdateJobNodeTaskStatus struct {
+	// ActionFlow represents for the results of executing the action flow.
+	ActionFlow []ConfigUpdateJobActionStatus `json:"actionFlow,omitempty"`
+
+	// NodeName is the name of edge node.
+	NodeName string `json:"nodeName,omitempty"`
+
+	// Phase represents for the phase of the node task.
+	Phase NodeTaskPhase `json:"phase,omitempty"`
+
+	// Reason represents the reason for the failure of the node task.
+	// +optional
+	Reason string `json:"reason,omitempty"`
+}
+
+// ConfigUpdateJobActionStatus defines the results of executing the action.
+// +kubebuilder:validation:Type=object
+type ConfigUpdateJobActionStatus struct {
 	// Action represents for the action phase of the ConfigUpdateJob
 	Action ConfigUpdateJobAction `json:"action,omitempty"`
 
-	BasicNodeTaskStatus `json:",inline"`
+	// State represents for the status of this image pull on the edge node.
+	Status metav1.ConditionStatus `json:"status,omitempty"`
+
+	// Reason represents the reason for the failure of the action.
+	// +optional
+	Reason string `json:"reason,omitempty"`
+
+	// Time represents for the running time of the node task.
+	Time string `json:"time,omitempty"`
 }

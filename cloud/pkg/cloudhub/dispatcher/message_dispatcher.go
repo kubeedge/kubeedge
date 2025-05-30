@@ -38,7 +38,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
-	taskutil "github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/util"
+	taskutil "github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/v1alpha1/util"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
 	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"

@@ -22,6 +22,7 @@ import (
 	"github.com/blang/semver"
 
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/pkg/util/execs"
 )
 
 const downloadRetryTimes int = 3
@@ -41,7 +42,7 @@ func (d *DebOS) SetKubeEdgeVersion(version semver.Version) {
 
 // InstallMQTT checks if MQTT is already installed and running, if not then install it from OS repo
 func (d *DebOS) InstallMQTT() error {
-	cmd := NewCommand("ps aux |awk '/mosquitto/ {print $11}' | awk '/mosquit/ {print}'")
+	cmd := execs.NewCommand("ps aux |awk '/mosquitto/ {print $11}' | awk '/mosquit/ {print}'")
 	if err := cmd.Exec(); err != nil {
 		return err
 	}
@@ -52,7 +53,7 @@ func (d *DebOS) InstallMQTT() error {
 	}
 
 	//Install mqttInst
-	cmd = NewCommand("apt-get install -y --allow-change-held-packages --allow-downgrades mosquitto")
+	cmd = execs.NewCommand("apt-get install -y --allow-change-held-packages --allow-downgrades mosquitto")
 	if err := cmd.Exec(); err != nil {
 		return err
 	}

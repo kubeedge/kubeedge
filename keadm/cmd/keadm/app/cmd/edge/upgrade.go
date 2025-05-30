@@ -31,6 +31,7 @@ import (
 	cfgv1alpha2 "github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
+	"github.com/kubeedge/kubeedge/pkg/containers"
 	upgrdeedge "github.com/kubeedge/kubeedge/pkg/upgrade/edge"
 	"github.com/kubeedge/kubeedge/pkg/util/files"
 )
@@ -41,6 +42,7 @@ If backup is required, please interrupt the current upgrade command and execute 
 func NewUpgradeCommand() *cobra.Command {
 	var opts UpgradeOptions
 	executor := newUpgradeExecutor()
+	ctx := context.Background()
 
 	cmd := &cobra.Command{
 		Use:   "edge",
@@ -80,7 +82,7 @@ func NewUpgradeCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			err = executor.upgrade(opts)
+			err = executor.upgrade(ctx, opts)
 			if err != nil {
 				return err
 			}
@@ -110,10 +112,10 @@ func (executor *upgradeExecutor) prerun(opts UpgradeOptions) error {
 	return nil
 }
 
-func (executor *upgradeExecutor) upgrade(opts UpgradeOptions) error {
+func (executor *upgradeExecutor) upgrade(ctx context.Context, opts UpgradeOptions) error {
 	// Get new edgecore binary from the image.
 	klog.Infof("Begin to download %s of edgecore", opts.ToVersion)
-	edgecorePath, err := getEdgeCoreBinary(opts, executor.cfg)
+	edgecorePath, err := getEdgeCoreBinary(ctx, opts, executor.cfg)
 	if err != nil {
 		return fmt.Errorf("failed to get edgecore binary, err: %v", err)
 	}
@@ -153,22 +155,34 @@ func (executor *upgradeExecutor) newReporter(upgradeID, toVersion string) upgrde
 
 // getEdgeCoreBinary pulls the installation-package image and obtains the edgecore binary from it.
 // The edgecore binary is copied to the upgrade path, and the filepath is returned.
-func getEdgeCoreBinary(opts UpgradeOptions, config *cfgv1alpha2.EdgeCoreConfig) (string, error) {
-	ctx := context.Background()
-	container, err := util.NewContainerRuntime(
+func getEdgeCoreBinary(ctx context.Context, opts UpgradeOptions, config *cfgv1alpha2.EdgeCoreConfig) (string, error) {
+	ctrcli, err := containers.NewContainerRuntime(
 		config.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint,
 		config.Modules.Edged.TailoredKubeletConfig.CgroupDriver)
 	if err != nil {
 		return "", fmt.Errorf("failed to new container runtime, err: %v", err)
 	}
 	image := opts.Image + ":" + opts.ToVersion
-	if err := container.PullImage(ctx, image, nil, nil); err != nil {
+	// Pull installation-package image
+	if err := ctrcli.PullImage(ctx, image, nil, nil); err != nil {
 		return "", fmt.Errorf("failed to pull image %s, err: %v", image, err)
 	}
+	// If the ImageDigest is not empty, verify the image.
+	if opts.ImageDigest != "" {
+		local, err := ctrcli.GetImageDigest(ctx, image)
+		if err != nil {
+			return "", fmt.Errorf("failed to get image digest of %s, err: %v", image, err)
+		}
+		if local != opts.ImageDigest {
+			return "", fmt.Errorf("image digest of %s is not correct, local: %s, expected: %s",
+				image, local, opts.ImageDigest)
+		}
+	}
+	// Copy edgecore binary from the image to the upgrade path.
 	containerFilePath := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName)
 	hostPath := filepath.Join(upgradePath(opts.ToVersion), constants.KubeEdgeBinaryName)
 	files := map[string]string{containerFilePath: hostPath}
-	if err := container.CopyResources(ctx, image, files); err != nil {
+	if err := ctrcli.CopyResources(ctx, image, files); err != nil {
 		return "", fmt.Errorf("failed to copy edgecore from %s in the image %s to host %s, err: %v",
 			containerFilePath, image, hostPath, err)
 	}

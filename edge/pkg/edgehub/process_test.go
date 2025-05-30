@@ -18,9 +18,11 @@ package edgehub
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
+	"github.com/agiledragon/gomonkey/v2"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
@@ -28,94 +30,171 @@ import (
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	cloudmodules "github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/mocks/edgehub"
-	module "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
+	msghandler "github.com/kubeedge/kubeedge/edge/pkg/edgehub/messagehandler"
 )
 
 func init() {
 	add := &common.ModuleInfo{
-		ModuleName: module.EdgeHubModuleName,
+		ModuleName: modules.EdgeHubModuleName,
 		ModuleType: common.MsgCtxTypeChannel,
 	}
 
 	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 
 	beehiveContext.AddModule(add)
-	beehiveContext.AddModuleGroup(module.EdgeHubModuleName, module.EdgeHubModuleName)
-}
-
-// TestIsSyncResponse() tests whether there exists a channel with the given message_id in the syncKeeper
-func TestIsSyncResponse(t *testing.T) {
-	tests := []struct {
-		name  string
-		hub   *EdgeHub
-		msgID string
-		want  bool
-	}{
-		{
-			name:  "Sync message response case",
-			hub:   &EdgeHub{},
-			msgID: "test",
-			want:  true,
-		},
-		{
-			name:  "Non sync message response  case",
-			hub:   &EdgeHub{},
-			msgID: "",
-			want:  false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := isSyncResponse(tt.msgID); got != tt.want {
-				t.Errorf("TestController_isSyncResponse() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+	beehiveContext.AddModuleGroup(modules.EdgeHubModuleName, modules.EdgeHubModuleName)
 }
 
 // TestDispatch() tests whether the messages are properly dispatched to their respective modules
 func TestDispatch(t *testing.T) {
-	RegisterMessageHandlers()
+	var handleLog string
+
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	patches.ApplyFunc(beehiveContext.SendToGroup, func(group string, _msg model.Message) {
+		handleLog = fmt.Sprintf("send to %s group", group)
+	})
+	patches.ApplyFunc(beehiveContext.Send, func(module string, _msg model.Message) {
+		handleLog = fmt.Sprintf("send to %s module", module)
+	})
+	patches.ApplyFunc(beehiveContext.SendResp, func(msg model.Message) {
+		handleLog = fmt.Sprintf("send response to %s", msg.GetParentID())
+	})
+
 	tests := []struct {
-		name          string
-		hub           *EdgeHub
-		message       *model.Message
-		expectedError string
-		isResponse    bool
+		name              string
+		message           *model.Message
+		expectedHandleLog string
+		expectedError     string
 	}{
 		{
-			name:          "dispatch with valid input",
-			hub:           &EdgeHub{},
-			message:       model.NewMessage("").BuildRouter(module.EdgeHubModuleName, module.TwinGroup, "", ""),
-			expectedError: "",
-			isResponse:    false,
-		},
-		{
-			name:          "Error Case in dispatch",
-			hub:           &EdgeHub{},
-			message:       model.NewMessage("test").BuildRouter(module.EdgeHubModuleName, module.EdgedGroup, "", ""),
+			name: "error case in dispatch",
+			message: model.NewMessage("test").
+				BuildRouter(modules.EdgeHubModuleName, modules.EdgedGroup, "", ""),
 			expectedError: "failed to handle message, no handler found for the message, message group: edged",
-			isResponse:    true,
 		},
 		{
-			name:          "Response Case in dispatch",
-			hub:           &EdgeHub{},
-			message:       model.NewMessage("test").BuildRouter(module.EdgeHubModuleName, module.TwinGroup, "", ""),
-			expectedError: "",
-			isResponse:    true,
+			name: "dispatch to twin group and not support response",
+			message: model.NewMessage("parent").
+				BuildRouter(modules.EdgeHubModuleName, modules.TwinGroup, "", ""),
+			expectedHandleLog: "send to twin group",
+		},
+		{
+			name: "dispatch to event bus module",
+			message: model.NewMessage("").
+				BuildRouter("router_eventbus", message.UserGroupName, "", ""),
+			expectedHandleLog: "send to eventbus module",
+		},
+		{
+			name: "dispatch to service bus module",
+			message: model.NewMessage("").
+				BuildRouter("router_servicebus", message.UserGroupName, "", ""),
+			expectedHandleLog: "send to servicebus module",
+		},
+		{
+			name: "dispatch to service bus module to call response",
+			message: model.NewMessage("parent").
+				BuildRouter("router_servicebus", message.UserGroupName, "", ""),
+			expectedHandleLog: "send response to parent",
+		},
+		{
+			name: "dispatch to meta group with resource message group",
+			message: model.NewMessage("").
+				BuildRouter(modules.EdgeHubModuleName, message.ResourceGroupName, "", ""),
+			expectedHandleLog: "send to meta group",
+		},
+		{
+			name: "dispatch to meta group with func message group",
+			message: model.NewMessage("").
+				BuildRouter(modules.EdgeHubModuleName, message.FuncGroupName, "", ""),
+			expectedHandleLog: "send to meta group",
+		},
+		{
+			name: "dispatch to meta group to call response",
+			message: model.NewMessage("parent").
+				BuildRouter(modules.EdgeHubModuleName, message.FuncGroupName, "", ""),
+			expectedHandleLog: "send response to parent",
+		},
+		{
+			name: "dispatch to taskmassage module and not support response",
+			message: model.NewMessage("parent").
+				BuildRouter(modules.EdgeHubModuleName, cloudmodules.TaskManagerModuleName, "", ""),
+			expectedHandleLog: "send to taskmanager module",
 		},
 	}
+
+	msghandler.RegisterHandlers()
+	hub := &EdgeHub{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.hub.dispatch(*tt.message)
+			handleLog = ""
+			err := hub.dispatch(*tt.message)
 			if tt.expectedError != "" {
 				require.ErrorContains(t, err, tt.expectedError)
 			} else {
 				require.NoError(t, err)
+				require.Equal(t, tt.expectedHandleLog, handleLog)
+			}
+
+			// New logic, ignore it
+			if tt.message.GetGroup() == cloudmodules.TaskManagerModuleName {
+				return
+			}
+
+			// Verify that logic has not changed due to changes
+			handleLog = ""
+			checkSameAsHistoricalDispatch(*tt.message)
+			if tt.expectedError != "" {
+				require.False(t, checkSameAsHistoricalDispatchFilter(*tt.message))
+			} else {
+				require.True(t, checkSameAsHistoricalDispatchFilter(*tt.message))
+				require.Equal(t, tt.expectedHandleLog, handleLog)
 			}
 		})
+	}
+}
+
+func checkSameAsHistoricalDispatchFilter(msg model.Message) bool {
+	group := msg.GetGroup()
+	return group == message.ResourceGroupName || group == modules.TwinGroup ||
+		group == message.FuncGroupName || group == message.UserGroupName
+}
+
+func checkSameAsHistoricalDispatch(msg model.Message) {
+	group := msg.GetGroup()
+	md := ""
+	switch group {
+	case message.ResourceGroupName:
+		md = modules.MetaGroup
+	case modules.TwinGroup:
+		md = modules.TwinGroup
+	case message.FuncGroupName:
+		md = modules.MetaGroup
+	case message.UserGroupName:
+		md = modules.BusGroup
+	}
+
+	if group == modules.TwinGroup {
+		beehiveContext.SendToGroup(md, msg)
+		return
+	}
+
+	if msg.GetParentID() != "" {
+		beehiveContext.SendResp(msg)
+		return
+	}
+	if group == message.UserGroupName && msg.GetSource() == "router_eventbus" {
+		beehiveContext.Send(modules.EventBusModuleName, msg)
+	} else if group == message.UserGroupName && msg.GetSource() == "router_servicebus" {
+		beehiveContext.Send(modules.ServiceBusModuleName, msg)
+	} else {
+		beehiveContext.SendToGroup(md, msg)
 	}
 }
 
@@ -145,9 +224,15 @@ func TestRouteToEdge(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockAdapter.EXPECT().Receive().Return(*model.NewMessage("test").BuildRouter(module.EdgeHubModuleName, module.EdgedGroup, "", ""), nil).Times(tt.receiveTimes)
-			mockAdapter.EXPECT().Receive().Return(*model.NewMessage("test").BuildRouter(module.EdgeHubModuleName, module.TwinGroup, "", ""), nil).Times(tt.receiveTimes)
-			mockAdapter.EXPECT().Receive().Return(*model.NewMessage(""), errors.New("Connection Refused")).Times(1)
+			mockAdapter.EXPECT().Receive().
+				Return(*model.NewMessage("test").BuildRouter(modules.EdgeHubModuleName, modules.EdgedGroup, "", ""), nil).
+				Times(tt.receiveTimes)
+			mockAdapter.EXPECT().Receive().
+				Return(*model.NewMessage("test").BuildRouter(modules.EdgeHubModuleName, modules.TwinGroup, "", ""), nil).
+				Times(tt.receiveTimes)
+			mockAdapter.EXPECT().Receive().
+				Return(*model.NewMessage(""), errors.New("Connection Refused")).
+				Times(1)
 			go tt.hub.routeToEdge()
 			stop := <-tt.hub.reconnectChan
 			if stop != struct{}{} {
@@ -247,7 +332,7 @@ func TestRouteToCloud(t *testing.T) {
 			time.Sleep(2 * time.Second)
 
 			msg := model.NewMessage("").BuildHeader("test_id", "", 1)
-			beehiveContext.Send(module.EdgeHubModuleName, *msg)
+			beehiveContext.Send(modules.EdgeHubModuleName, *msg)
 			stopChan := <-tt.hub.reconnectChan
 			if stopChan != struct{}{} {
 				t.Errorf("Error in route to cloud")

@@ -22,7 +22,11 @@ import (
 	fsmv1alpha1 "github.com/kubeedge/api/apis/fsm/v1alpha1"
 )
 
-const ResourceNodeUpgradeJob = "nodeupgradejob"
+const (
+	ResourceNodeUpgradeJob = "nodeupgradejob"
+
+	FinalizerNodeUpgradeJob = "kubeedge.io/nodeupgradejob-controller"
+)
 
 // +genclient
 // +genclient:nonNamespaced
@@ -93,10 +97,10 @@ type NodeUpgradeJobSpec struct {
 	// +optional
 	Image string `json:"image,omitempty"`
 
-	// ImageDigestGatter define registry v2 interface access configuration.
+	// ImageDigestGetter define registry v2 interface access configuration.
 	// As a transition, it is not required at first, and the image digest is checked when this field is set.
 	// +optional
-	ImageDigestGatter *ImageDigestGatter `json:"imageDigestGatter"`
+	ImageDigestGetter *ImageDigestGetter `json:"imageDigestGatter"`
 
 	// Concurrency specifies the maximum number of concurrent that edge nodes associated with
 	// each CloudCore instance can be upgraded at the same time.
@@ -120,18 +124,26 @@ type NodeUpgradeJobSpec struct {
 	RequireConfirmation bool `json:"requireConfirmation,omitempty"`
 }
 
-// ImageDigestGatter used to define a method for getting the image digest
-type ImageDigestGatter struct {
-	// Value used to directly set a value to check image
+// ImageDigestGetter used to define a method for getting the image digest.
+type ImageDigestGetter struct {
+	// ARM64 indicates the image digest of the arm64 platform for verification.
+	// E.g., sha256:0738039541234567890123456789012345678901234567890123456789012345
 	// +optional
-	Value *string `json:"value,omitempty"`
+	ARM64 string `json:"arm64,omitempty"`
 
-	// RegistryAPI define registry v2 interface access configuration
+	// AMD64 indicates the image digest of the amd64 platform for verification.
+	// E.g., sha256:0738039541234567890123456789012345678901234567890123456789012345
+	// +optional
+	AMD64 string `json:"amd64,omitempty"`
+
+	// RegistryAPI define registry v2 interface access configuration.
+	// Used to automatically gets multiple platform image digests from a remote registry
+	// to set values into ARM64 and AMD64 fields.
 	// +optional
 	RegistryAPI *RegistryAPI `json:"registryAPI,omitempty"`
 }
 
-// RegistryAPI used to define registry v2 interface access configuration
+// RegistryAPI used to define registry v2 interface access configuration.
 type RegistryAPI struct {
 	Host  string `json:"host"`
 	Token string `json:"token"`
@@ -141,7 +153,6 @@ type NodeUpgradeJobAction string
 
 const (
 	NodeUpgradeJobActionCheck               NodeUpgradeJobAction = "Check"
-	NodeUpgradeJobActionConfirm             NodeUpgradeJobAction = "Confirm"
 	NodeUpgradeJobActionWaitingConfirmation NodeUpgradeJobAction = "WaitingConfirmation"
 	NodeUpgradeJobActionBackUp              NodeUpgradeJobAction = "BackUp"
 	NodeUpgradeJobActionUpgrade             NodeUpgradeJobAction = "Upgrade"
@@ -199,8 +210,8 @@ type NodeUpgradeJobStatus struct {
 // NodeUpgradeJobNodeTaskStatus stores the status of Upgrade for each edge node.
 // +kubebuilder:validation:Type=object
 type NodeUpgradeJobNodeTaskStatus struct {
-	// Action represents for the action phase of the NodeUpgradeJob
-	Action NodeUpgradeJobAction `json:"action,omitempty"`
+	// ActionFlow represents for the results of executing the action flow.
+	ActionFlow []NodeUpgradeJobActionStatus `json:"actionFlow,omitempty"`
 
 	// CurrentVersion represents for the current status of the EdgeCore.
 	CurrentVersion string `json:"currentVersion,omitempty"`
@@ -208,16 +219,42 @@ type NodeUpgradeJobNodeTaskStatus struct {
 	// HistoricVersion represents for the historic status of the EdgeCore.
 	HistoricVersion string `json:"historicVersion,omitempty"`
 
-	BasicNodeTaskStatus `json:",inline"`
+	// NodeName is the name of edge node.
+	NodeName string `json:"nodeName,omitempty"`
+
+	// Phase represents for the phase of the node task.
+	Phase NodeTaskPhase `json:"phase,omitempty"`
+
+	// Reason represents the reason for the failure of the node task.
+	// +optional
+	Reason string `json:"reason,omitempty"`
 
 	// State represents for the upgrade state phase of the edge node.
 	// There are several possible state values: "", Upgrading, BackingUp, RollingBack and Checking.
 	// +optional
 	// Deprecated: For compatibility with v1alpha1 version, It will be removed in v1.23
 	State fsmv1alpha1.State `json:"state,omitempty"`
+
 	// Event represents for the event of the ImagePrePullJob.
 	// There are three possible event values: Init, Check, Pull.
 	// +optional
 	// Deprecated: For compatibility with v1alpha1 version, It will be removed in v1.23
 	Event string `json:"event,omitempty"`
+}
+
+// NodeUpgradeJobActionStatus defines the results of executing the action.
+// +kubebuilder:validation:Type=object
+type NodeUpgradeJobActionStatus struct {
+	// Action represents for the action name
+	Action NodeUpgradeJobAction `json:"action,omitempty"`
+
+	// State represents for the status of this image pull on the edge node.
+	Status metav1.ConditionStatus `json:"status,omitempty"`
+
+	// Reason represents the reason for the failure of the action.
+	// +optional
+	Reason string `json:"reason,omitempty"`
+
+	// Time represents for the running time of the node task.
+	Time string `json:"time,omitempty"`
 }

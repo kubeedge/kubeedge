@@ -23,6 +23,7 @@ import (
 	"github.com/blang/semver"
 
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/pkg/util/execs"
 )
 
 const (
@@ -46,7 +47,7 @@ func (r *RpmOS) SetKubeEdgeVersion(version semver.Version) {
 // Information is used from https://www.digitalocean.com/community/tutorials/how-to-install-and-secure-the-mosquitto-mqtt-messaging-broker-on-centos-7
 func (r *RpmOS) InstallMQTT() error {
 	// check MQTT
-	cmd := NewCommand("ps aux |awk '/mosquitto/ {print $11}' | awk '/mosquit/ {print}'")
+	cmd := execs.NewCommand("ps aux |awk '/mosquitto/ {print $11}' | awk '/mosquit/ {print}'")
 	if err := cmd.Exec(); err != nil {
 		return err
 	}
@@ -74,7 +75,7 @@ func (r *RpmOS) InstallMQTT() error {
 
 	// install MQTT
 	for _, command := range commands {
-		cmd := NewCommand(command)
+		cmd := execs.NewCommand(command)
 		if err := cmd.Exec(); err != nil {
 			return err
 		}
@@ -112,7 +113,7 @@ func (r *RpmOS) IsKubeEdgeProcessRunning(proc string) (bool, error) {
 }
 
 func getOSVendorName() (string, error) {
-	cmd := NewCommand("cat /etc/os-release | grep -E \"^NAME=\" | awk -F'=' '{print $2}'")
+	cmd := execs.NewCommand("cat /etc/os-release | grep -E \"^NAME=\" | awk -F'=' '{print $2}'")
 	if err := cmd.Exec(); err != nil {
 		return "", err
 	}

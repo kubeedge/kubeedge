@@ -151,20 +151,6 @@ const (
     NodeTaskPhaseFailure    NodeTaskPhase = "Failure"
     NodeTaskPhaseUnknown    NodeTaskPhase = "Unknown"
 )
-
-// BasicNodeTaskStatus defines basic fields of node execution status.
-// +kubebuilder:validation:Type=object
-type BasicNodeTaskStatus struct {
-    // NodeName is the name of edge node.
-    NodeName string `json:"nodeName,omitempty"`
-    // Phase represents for the phase of the node task.
-    Phase NodeTaskPhase `json:"phase,omitempty"`
-    // Reason represents for the reason of the node task.
-    // +optional
-    Reason string `json:"reason,omitempty"`
-    // Time represents for the running time of the node task.
-    Time string `json:"time,omitempty"`
-}
 ```
 
 
@@ -194,11 +180,31 @@ type ImagePrePullJobStatus struct {
 // ImagePrePullNodeTaskStatus stores image prepull status for each edge node.
 // +kubebuilder:validation:Type=object
 type ImagePrePullNodeTaskStatus struct {
-    // Action represents for the action phase of the ImagePrePullJob
-    Action ImagePrePullJobAction `json:"action,omitempty"`
+    // ActionFlow represents for the results of executing the action flow.
+    ActionFlow []ImagePrePullJobActionStatus `json:"actionFlow,omitempty"`
     // ImageStatus represents the prepull status for each image
     ImageStatus []ImageStatus `json:"imageStatus,omitempty"`
-    BasicNodeTaskStatus `json:",inline"`
+    // NodeName is the name of edge node.
+    NodeName string `json:"nodeName,omitempty"`
+    // Phase represents for the phase of the node task.
+    Phase NodeTaskPhase `json:"phase,omitempty"`
+    // Reason represents the reason for the failure of the node task.
+    // +optional
+    Reason string `json:"reason,omitempty"`
+}
+
+// ImagePrePullJobActionStatus defines the results of executing the action.
+// +kubebuilder:validation:Type=object
+type ImagePrePullJobActionStatus struct {
+    // Action represents for the action name
+    Action ImagePrePullJobAction `json:"action,omitempty"`
+    // State represents for the status of this image pull on the edge node.
+    Status metav1.ConditionStatus `json:"status,omitempty"`
+    // Reason represents the reason for the failure of the action.
+    // +optional
+    Reason string `json:"reason,omitempty"`
+    // Time represents for the running time of the node task.
+    Time string `json:"time,omitempty"`
 }
 
 // ImageStatus stores the prepull status for each image.
@@ -245,16 +251,37 @@ type NodeUpgradeJobStatus struct {
 // NodeUpgradeJobNodeTaskStatus stores the status of Upgrade for each edge node.
 // +kubebuilder:validation:Type=object
 type NodeUpgradeJobNodeTaskStatus struct {
-    // Action represents for the action phase of the NodeUpgradeJob
-    Action NodeUpgradeJobAction `json:"action,omitempty"`
+    // ActionFlow represents for the results of executing the action flow.
+    ActionFlow []NodeUpgradeJobActionStatus `json:"actionFlow,omitempty"`
     // CurrentVersion represents for the current status of the EdgeCore.
     CurrentVersion string `json:"currentVersion,omitempty"`
     // HistoricVersion represents for the historic status of the EdgeCore.
     HistoricVersion string `json:"historicVersion,omitempty"`
-    BasicNodeTaskStatus `json:",inline"`
+    // NodeName is the name of edge node.
+    NodeName string `json:"nodeName,omitempty"`
+    // Phase represents for the phase of the node task.
+    Phase NodeTaskPhase `json:"phase,omitempty"`
+    // Reason represents the reason for the failure of the node task.
+    // +optional
+    Reason string `json:"reason,omitempty"`
     // Some compatible fields ...
 }
+
+// NodeUpgradeJobActionStatus defines the results of executing the action.
+// +kubebuilder:validation:Type=object
+type NodeUpgradeJobActionStatus struct {
+    // Action represents for the action name
+    Action NodeUpgradeJobAction `json:"action,omitempty"`
+    // State represents for the status of this image pull on the edge node.
+    Status metav1.ConditionStatus `json:"status,omitempty"`
+    // Reason represents the reason for the failure of the action.
+    // +optional
+    Reason string `json:"reason,omitempty"`
+    // Time represents for the running time of the node task.
+    Time string `json:"time,omitempty"`
+}
 ```
+
 
 ### Action Flow
 
@@ -309,19 +336,32 @@ type NodeJobType interface {
 }
 
 type ReconcileHandler[T operationsv1alpha2.NodeJobType] interface {
+    //GetResource returns the resource name of k8s CRD.
+    GetResource() string
     // GetJob returns the node job found by controller-runtime Client.
     // If not found, returns nil.
     GetJob(ctx context.Context, req controllerruntime.Request) (*T, error)
+    // NoFinalizer returns whether the node job has no finalizer.
+    NoFinalizer(job *T) bool
+    // AddFinalizer adds the finalizer to the node job.
+    AddFinalizer(ctx context.Context, job *T) error
+    // RemoveFinalizer removes the finalizer from the node job.
+    RemoveFinalizer(ctx context.Context, job *T) error
     // NotInitialized returns whether the node job is not initialized
     NotInitialized(job *T) bool
-    // IsFinalPhase returns whether the node job is final phase.
-    IsFinalPhase(job *T) bool
     // InitNodesStatus initializes nodes status for the node job.
     InitNodesStatus(ctx context.Context, job *T)
+    // IsFinalPhase returns whether the node job is final phase.
+    IsFinalPhase(job *T) bool
+    // IsDeleted returns whether the node job is deleted.
+    IsDeleted(job *T) bool
     // CalculateStatus calculates the node job phase through the all node tasks phases.
     CalculateStatus(ctx context.Context, job *T) bool
     // UpdateJobStatus updates the node job status by controller-runtime Client.
     UpdateJobStatus(ctx context.Context, job *T) error
+    // CheckTimeout checks whather the node task has timed out. If so,
+    // the node task needs to set the status to unknown, and update the resources.
+    CheckTimeout(ctx context.Context, jobName string) error
 }
 
 // RunReconcile runs the common reconcile logic for the node job.
@@ -330,22 +370,41 @@ func RunReconcile[T operationsv1alpha2.NodeJobType](
     req controllerruntime.Request,
     handler ReconcileHandler[T],
 ) error {
+    // 1. Get the node job CR structure, if not found, return nil to interrupt the reconcile.
     job, err := handler.GetJob(ctx, req)
-    if err != nil {
-        return err
+    ...
+    
+    // 2. If the node job CR does not have a finalizer, add a finalizer to it.
+    if handler.NoFinalizer(job) {
+        return handler.AddFinalizer(ctx, job)
     }
-    // The resource may no longer exist, in which case we stop processing.
-    if job == nil {
-        return nil
+
+    // 3. If the node job CR is deleted, execute related processing.
+    if handler.IsDeleted(job) {
+        // stop the timeout job
+        ...
+        return handler.RemoveFinalizer(ctx, job)
     }
-    // The final phase does not need to be calculated.
-    if handler.IsFinalPhase(job) {
-        return nil
-    }
+
+    // 4. If the node job CR is not initialized, initialize the node job.
     if handler.NotInitialized(job) {
         handler.InitNodesStatus(ctx, job)
         return handler.UpdateJobStatus(ctx, job)
     }
+
+    // 5. The final phase does not need to be calculated.
+    if handler.IsFinalPhase(job) {
+        // If job is in final phase, the the timeout job needs to be stopped.
+        ...
+        return nil
+    }
+
+    // 6. Creates a timeout job to check the node task status.
+    // If the node task has not reported the status for a long time,
+    // the node task will be set to unknown.
+    ...
+
+    // 7. Calculate the node job status through node tasks status.
     // Retry update status error due to resourceVersion change.
     return retry.Do(
         func() error {
@@ -364,6 +423,22 @@ func RunReconcile[T operationsv1alpha2.NodeJobType](
         retry.DelayType(retry.FixedDelay))
 }
 ```
+
+#### Timeout Job
+
+The timeout job used to check the node task status.
+If the node task has not reported the status for a long time, the node task will be set to unknown.
+
+After each node task is created, a timeout job is bound to it, which checks every 10 seconds (More appropriate frequency) whether the node task has no updates after the specified timeout field `timeoutSeconds`. 
+If the node job already has an action status, compare it with the completion time of the latest action. 
+```Text
+isTimeOut = now + timeoutSeconds > actionStatus.Time
+```
+Otherwise, compare it with the creation time of node job.
+```Text
+isTimeOut = now + timeoutSeconds > nodeJobMetadata.CreationTimestamp
+```
+When the node job is deleted or reaches the final status, the timeout job will be stopped.
 
 
 #### Feature Gates
@@ -397,14 +472,14 @@ func NewControllerManagerCommand(ctx context.Context) *cobra.Command {
 }
 ```
 
-By default, the node jobs of v1alpha2 will be used. When the function gate flag `disablenodeTaskV1alpha2` is set, the controller will not affect the node jobs of v1alpah1.
+By default, the node jobs of v1alpha2 will be used. When the function gate flag `disableNodeTaskV1alpha2` is set, the controller will not affect the node jobs of v1alpah1.
 ```golang
 if !features.DefaultFeatureGate.Enabled(features.DisableNodeTaskV1alpha2) {
     // Setup node job controllers
 }
 ```
 
-Add args `--feature-gates=disablenodeTaskV1alpha2` in Deployment resource to support the feature of node task v1alpha2.
+Add args `--feature-gates=disableNodeTaskV1alpha2` in Deployment resource to support the feature of node task v1alpha2.
 ```yaml
 spec:
   template:
@@ -412,11 +487,11 @@ spec:
       containers:
       - name: controller-manager
         args:
-        - --feature-gates=disablenodeTaskV1alpha2
+        - --feature-gates=disableNodeTaskV1alpha2
         ...
 ```
 
-####
+#### Calculate The Node Job Status
 
 After the node task status change, ControllerManager calculates the node job phase.
 ```golang
@@ -466,7 +541,7 @@ Use feature gates to disable the v1alpha2 to use v1alpha1.
 CloudCore supports setting feature gates in the configuration file:
 ```yaml
 featureGates:
-  nodeTaskV1alpha2: true
+  disableNodeTaskV1alpha2: true
 ```
 
 Add logic in the task manager module:
@@ -505,16 +580,11 @@ type NodeJobTask interface {
     CanExecute() bool
     // Phase returns the phase of the node task.
     Phase() operationsv1alpha2.NodeTaskPhase
-    // ToSuccessful sets the phase of the node task to successful.
-    ToSuccessful()
-    // ToInProgress sets the phase of the node task to in progress, and set the processing time.
-    ToInProgress(t time.Time)
-    // ToFailure sets the phase of the node task to failure, and set the failure reason.
-    ToFailure(reason string)
-    // Action returns the current action of the node task.
+    // SetPhase sets the phase of the node task.
+    SetPhase(phase operationsv1alpha2.NodeTaskPhase, reason ...string)
+    // Action returns the first action from the action flow.
+    // Continuing execution is not supported now.
     Action() (*actionflow.Action, error)
-    // SetAction sets the action of the node task.
-    SetAction(action *actionflow.Action)
     // GetObject returns the node task object.
     GetObject() any
 }
@@ -735,57 +805,17 @@ type UpdateNodeTaskStatus func(ctx context.Context, job wrap.NodeJob, errTask wr
 // Execute executes the node tasks. It uses a pool to control the number of concurrent executions of node tasks.
 // The connectedNodes arg indicates the edge nodes that the current CloudCore is connected to. Only these nodes
 // will execute tasks.
-func (executor *NodeTaskExecutor) Execute(ctx context.Context, connectedNodes []string) {
-    // All node tasks of the node job have been executed, delete the executor.
-    defer RemoveExecutor(executor.job.ResourceType(), executor.job.Name())
+func (executor *NodeTaskExecutor) Execute(ctx context.Context, connectedNodes []string) {}
 
-    tasks := executor.job.Tasks()
-    for i := range tasks {
-        if executor.interrupted.Load() {
-            return
-        }
-        task := tasks[i]
-        // the node has no connection to the current cloudcore instance, skip it.
-        if !slices.In(connectedNodes, task.NodeName()) {
-            continue
-        }
-        // the node does not meet the execution conditions, skip it.
-        if !task.CanExecute() {
-            continue
-        }
-        executor.pool.Acquire()
-
-        msgres := taskmsg.Resource{
-            APIVersion:   operationsv1alpha2.SchemeGroupVersion.String(),
-            ResourceType: executor.job.ResourceType(),
-            JobName:      executor.job.Name(),
-            NodeName:     task.NodeName(),
-        }
-        action, err := task.Action()
-        if err != nil {
-            task.ToFailure(fmt.Sprintf("failed to get node task action, err: %v", err))
-            executor.UpdateNodeTaskStatus(ctx, executor.job, task)
-            return
-        }
-        msg := messagelayer.BuildNodeTaskRouter(msgres, action).
-            FillBody(executor.job.Spec())
-        if err := executor.messageLayer.Send(*msg); err != nil {
-            task.ToFailure(fmt.Sprintf("failed to send message to edge, err: %v", err))
-            executor.UpdateNodeTaskStatus(ctx, executor.job, task)
-            return
-        }
-    }
-}
+// executeTask executes the node task. It sends a message to the edge node to execute the task.
+func (executor *NodeTaskExecutor) executeTask(
+    ctx context.Context, task wrap.NodeJobTask, connectedNodes []string) error {}
 
 // ReleaseOne releases a concurrent resource
-func (executor *NodeTaskExecutor) ReleaseOne() {
-    executor.pool.Release()
-}
+func (executor *NodeTaskExecutor) ReleaseOne() {}
 
 // Interrupt interrupts the executor
-func (executor *NodeTaskExecutor) Interrupt() {
-    executor.interrupted.Store(true)
-}
+func (executor *NodeTaskExecutor) Interrupt() {}
 ```
 
 At the edge nodes, the [ActionRunner](#action-runner) will execute the node tasks.
@@ -844,15 +874,10 @@ After the CloudCore receives the message, The upstream will unify the logic of p
 type UpstreamHandler interface {
     // Logger returns the upstream handler logger.
     Logger() logr.Logger
-    // ConvToNodeTask converts the upstream message to node task.
-    ConvToNodeTask(nodename string, upmsg *taskmsg.UpstreamMessage) (any, error)
-    // IsFinalAction returns true if the node task is the final action.
-    IsFinalAction(nodetask any) (bool, error)
-    // ReleaseExecutorConcurrent releases the executor concurrent when the node task is the final action.
-    ReleaseExecutorConcurrent(res taskmsg.Resource) error
-    // UpdateNodeActionStatus updates the status of node action when obtaining upstream message.
-    // Parameters idx and nodetask are obtained through FindNodeTaskStatus(..)
-    UpdateNodeActionStatus(jobname string, nodetask any) error
+    // GetAction returns the queried action of the node task.
+    GetAction(name string) *actionflow.Action
+    // UpdateNodeTaskStatus updates the status of node task.
+    UpdateNodeTaskStatus(jobName, nodeName string, isFinalAction bool, upmsg taskmsg.UpstreamMessage) error
 }
 
 // Start starts the upstream handler. 
@@ -867,48 +892,12 @@ func Start(ctx context.Context, statusChan <-chan model.Message) {
                 if !ok {
                     return
                 }
-                data, err := msg.GetContentData()
-                if err != nil {
-                    // handle error...
-                }
-                var upmsg taskmsg.UpstreamMessage
-                if err := json.Unmarshal(data, &upmsg); err != nil {
-                    // handle error...
-                }
-                res := taskmsg.ParseResource(msg.GetResource())
-                handler, ok := upstreamHandlers[res.ResourceType]
-                if !ok {
-                    // handle error...
-                }
-                if err := updateNodeJobTaskStatus(res, upmsg, handler); err != nil {
-                    // handle error...
-                }
+                // 1. Parse the message content to the upstream message and parse the message resource.
+                // 2. Update node task status through upsstream message.
+                // 3. If the node task is the final action, release the executor.
             }
         }
     }()
-}
-
-// updateNodeJobTaskStatus updates the status of node job task.
-func updateNodeJobTaskStatus(res taskmsg.Resource,
-    upmsg taskmsg.UpstreamMessage, handler UpstreamHandler,
-) error {
-    nodetask, err := handler.ConvToNodeTask(res.NodeName, &upmsg)
-    if err != nil {
-        // handle error...
-    }
-    final, err := handler.IsFinalAction(nodetask)
-    if err != nil {
-        // handle error...
-    }
-    if final {
-        if err := handler.ReleaseExecutorConcurrent(res); err != nil {
-            // handle error...
-        }
-    }
-    if err := handler.UpdateNodeActionStatus(res.JobName, nodetask); err != nil {
-        // handle error...
-    }
-    return nil
 }
 ```
 
@@ -918,65 +907,90 @@ Frequent updates of node job status will cause resourceVersion conflicts, so we 
 
 ```golang
 const (
-    RetryAttempts = 10
-    RetryDelay    = 1 * time.Second
+	UpdateStatusRetryAttempts = 5
+	UpdateStatusRetryDelay    = 200 * time.Millisecond
 )
 
-// TashStatus uses to constrain paradigm type
-type TaskStatus interface {
-    ImagePrePullNodeTaskStatus | NodeUpgradeJobNodeTaskStatus
+// UpdateStatusOptions defines options for update status.
+type UpdateStatusOptions struct {
+	// Callback is the callback function of UpdateStatus(..). It will report the result of updating the status.
+	Callback func(err error)
+
+	TryUpdateStatusOptions
 }
 
-// UpdateStatusOptions defines options for update status
-type UpdateStatusOptions[T operationsv1alpha2.TaskStatus] struct {
-    // JobName is the name of the node job.
-    JobName string
-    // NodeTaskStatus is the node task status object.
-    NodeTaskStatus T
-    // Callback is the callback function of UpdateStatus(..). It will report the result of updating the status.
-    Callback func(err error)
+// TryUpdateStatusOptions defines options for function of try to update status.
+type TryUpdateStatusOptions struct {
+	// JobName is the name of the node job.
+	JobName string
+	// NodeName is the name of the edge node.
+	NodeName string
+	// Phase is the phase of the node task.
+	Phase operationsv1alpha2.NodeTaskPhase
+	// Reason is the failure reason of the node task.
+	Reason string
+	// ExtendInfo is the extended reporting information.
+	ExtendInfo string
+	// ActionStatus is the action status of the node task.
+	// I.e., *ImagePrePullJobActionStatus or *NodeUpgradeJobActionStatus,
+	// or the action status of other node jobs that must be a pointer structure.
+	ActionStatus any
 }
 
 // TryUpdateFun defines the function type for updateing the status.
-type TryUpdateFun[T operationsv1alpha2.TaskStatus] func(ctx context.Context, 
-    cli crdcliset.Interface, opts UpdateStatusOptions[T]) error
+type TryUpdateFun func(ctx context.Context, cli crdcliset.Interface, opts TryUpdateStatusOptions) error
 
-// StatusUpdater defines the updater of the node task status
-type StatusUpdater[T operationsv1alpha2.TaskStatus] struct {
-    ctx          context.Context
-    crdcli       crdcliset.Interface
-    updateCh     chan UpdateStatusOptions[T]
-    tryUpdateFun TryUpdateFun[T]
+// StatusUpdater defines the updater of the node task status.
+type StatusUpdater struct {
+	ctx       context.Context
+	crdcli    crdcliset.Interface
+	updateCh  chan UpdateStatusOptions
+	tryUpdate TryUpdateFun
+}
+
+// NewStatusUpdater returns a new StatusUpdater.
+func NewStatusUpdater(
+	ctx context.Context,
+	tryUpdate TryUpdateFun,
+) *StatusUpdater {
+	return &StatusUpdater{
+		ctx:       ctx,
+		crdcli:    client.GetCRDClient(),
+		updateCh:  make(chan UpdateStatusOptions, 100),
+		tryUpdate: tryUpdate,
+	}
 }
 
 // UpdateStatus sends the UpdateStatusOptions to the channel.
 // Must call the WatchUpdateChannel() method before calling this method.
-func (u *StatusUpdater[T]) UpdateStatus(opts UpdateStatusOptions[T]) {
-    u.updateCh <- opts
+func (u *StatusUpdater) UpdateStatus(opts UpdateStatusOptions) {
+	u.updateCh <- opts
 }
 
 // WatchUpdateChannel watches the update channel and updates the status of the node task.
 // It will retry the update operation if the update fails.
-func (u *StatusUpdater[T]) WatchUpdateChannel() {
-    for {
-        select {
-        case <-u.ctx.Done():
-            return
-        case opts := <-u.updateCh:
-            err := retry.Do(
-                func() error {
-                    return u.tryUpdateFun(u.ctx, u.crdcli, opts)
-                },
-                retry.Delay(RetryAttempts),
-                retry.Attempts(RetryAttempts),
-                retry.DelayType(retry.FixedDelay))
-            if opts.Callback != nil {
-                opts.Callback(err)
-            }
-        }
-    }
+func (u *StatusUpdater) WatchUpdateChannel() {
+	for {
+		select {
+		case <-u.ctx.Done():
+			return
+		case opts := <-u.updateCh:
+			err := retry.Do(
+				func() error {
+					return u.tryUpdate(u.ctx, u.crdcli, opts.TryUpdateStatusOptions)
+				},
+				retry.Delay(UpdateStatusRetryDelay),
+				retry.Attempts(UpdateStatusRetryAttempts),
+				retry.DelayType(retry.FixedDelay))
+			if opts.Callback != nil {
+				opts.Callback(err)
+			}
+		}
+	}
 }
 ```
+We just need create an instance of the `StatusUpdater` for node jobs and implements the `TryUpdateFun` function field.
+In status/init.go, define a global variable and provide a function to get it, and call `WatchUpdateChannel()` after construct it in `Init()` function.
 
 
 ### EdgeCore
