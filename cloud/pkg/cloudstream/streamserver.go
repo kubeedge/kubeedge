@@ -21,9 +21,11 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/emicklei/go-restful"
@@ -183,7 +185,7 @@ func (s *StreamServer) getMetrics(r *restful.Request, w *restful.Response) {
 		if t := strings.Split(forwardedURI, "/"); strings.HasPrefix(forwardedURI, "/api/v1/nodes/") && len(t) > 6 {
 			sessionKey = t[4]
 			if ip, ok := s.tunnel.getNodeIP(sessionKey); ok {
-				r.Request.Host = fmt.Sprintf("%s:%d", ip, constants.ServerPort)
+				r.Request.Host = net.JoinHostPort(ip, strconv.Itoa(constants.KubeletDefaultServerPort))
 			}
 		}
 	}
