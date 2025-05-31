@@ -271,6 +271,7 @@ install_isulad() {
   cd $BUILD_DIR
   sudo git clone https://gitee.com/openeuler/lcr.git -b v2.1.4
   cd lcr
+  sudo sed -i 's/cmake_minimum_required (VERSION 2.8)/cmake_minimum_required (VERSION 3.5)/' CMakeLists.txt
   sudo mkdir build
   cd build
   sudo cmake ..
