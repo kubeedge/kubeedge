@@ -27,7 +27,9 @@ import (
 func TestCreateConnectMessage(t *testing.T) {
 	assert := assert.New(t)
 	edgedAttachConn := &EdgedAttachConnection{
-		MessID: 1,
+		BaseEdgedConnection: BaseEdgedConnection{
+			MessID: 1,
+		},
 	}
 
 	msg, err := edgedAttachConn.CreateConnectMessage()
@@ -44,7 +46,9 @@ func TestGetMessageID(t *testing.T) {
 	assert := assert.New(t)
 
 	edgedAttachConn := &EdgedAttachConnection{
-		MessID: uint64(100),
+		BaseEdgedConnection: BaseEdgedConnection{
+			MessID: uint64(100),
+		},
 	}
 
 	messID := edgedAttachConn.GetMessageID()
@@ -57,7 +61,9 @@ func TestString(t *testing.T) {
 	assert := assert.New(t)
 
 	edgedAttachConn := &EdgedAttachConnection{
-		MessID: uint64(100),
+		BaseEdgedConnection: BaseEdgedConnection{
+			MessID: uint64(100),
+		},
 	}
 
 	stdResult := "EDGE_ATTACH_CONNECTOR Message MessageID 100"
@@ -69,8 +75,11 @@ func TestString(t *testing.T) {
 func TestCacheTunnelMessage(t *testing.T) {
 	assert := assert.New(t)
 	edgedAttachConn := &EdgedAttachConnection{
-		ReadChan: make(chan *Message, 1),
+		BaseEdgedConnection: BaseEdgedConnection{
+			ReadChan: make(chan *Message, 1),
+		},
 	}
+	edgedAttachConn.InitContext(nil)
 
 	msg := &Message{ConnectID: 100, MessageType: MessageTypeData, Data: []byte("test data")}
 	edgedAttachConn.CacheTunnelMessage(msg)
@@ -81,8 +90,11 @@ func TestCacheTunnelMessage(t *testing.T) {
 func TestCloseReadChannel(t *testing.T) {
 	assert := assert.New(t)
 	edgedAttachConn := &EdgedAttachConnection{
-		ReadChan: make(chan *Message),
+		BaseEdgedConnection: BaseEdgedConnection{
+			ReadChan: make(chan *Message),
+		},
 	}
+	edgedAttachConn.InitContext(nil)
 
 	go func() {
 		time.Sleep(1 * time.Second)

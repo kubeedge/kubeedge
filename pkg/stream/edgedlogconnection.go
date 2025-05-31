@@ -18,128 +18,77 @@ package stream
 
 import (
 	"bufio"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 
 	"k8s.io/klog/v2"
 )
 
 type EdgedLogsConnection struct {
-	ReadChan chan *Message `json:"-"`
-	Stop     chan struct{} `json:"-"`
-	MessID   uint64        // message id
-	URL      url.URL       `json:"url"`
-	Header   http.Header   `json:"header"`
+	BaseEdgedConnection `json:",inline"`
 }
 
-func (l *EdgedLogsConnection) GetMessageID() uint64 {
-	return l.MessID
+func (el *EdgedLogsConnection) CreateConnectMessage() (*Message, error) {
+	return el.createConnectMessage(MessageTypeLogsConnect, el)
 }
 
-func (l *EdgedLogsConnection) CacheTunnelMessage(msg *Message) {
-	l.ReadChan <- msg
+func (el *EdgedLogsConnection) String() string {
+	return fmt.Sprintf("EDGE_LOGS_CONNECTOR Message MessageID %v", el.MessID)
 }
 
-func (l *EdgedLogsConnection) CloseReadChannel() {
-	close(l.ReadChan)
-}
-
-func (l *EdgedLogsConnection) CleanChannel() {
-	for {
-		select {
-		case <-l.Stop:
-		default:
-			return
-		}
-	}
-}
-
-func (l *EdgedLogsConnection) CreateConnectMessage() (*Message, error) {
-	data, err := json.Marshal(l)
-	if err != nil {
-		return nil, err
-	}
-	return NewMessage(l.MessID, MessageTypeLogsConnect, data), nil
-}
-
-func (l *EdgedLogsConnection) String() string {
-	return fmt.Sprintf("EDGE_LOGS_CONNECTOR Message MessageID %v", l.MessID)
-}
-
-func (l *EdgedLogsConnection) receiveFromCloudStream(stop chan struct{}) {
-	for mess := range l.ReadChan {
+func (el *EdgedLogsConnection) receiveFromCloudStream() {
+	for mess := range el.ReadChan {
 		if mess.MessageType == MessageTypeRemoveConnect {
 			klog.Infof("receive remove client id %v", mess.ConnectID)
-			stop <- struct{}{}
+			el.Stop <- struct{}{}
 		}
 	}
-	klog.V(6).Infof("%s read channel closed", l.String())
+	klog.V(2).Infof("%s read channel closed", el.String())
 }
 
-func (l *EdgedLogsConnection) write2CloudStream(tunnel SafeWriteTunneler, reader bufio.Reader, stop chan struct{}) {
+func (el *EdgedLogsConnection) write2CloudStream(tunnel SafeWriteTunneler, resp *http.Response) {
 	defer func() {
-		stop <- struct{}{}
+		el.Stop <- struct{}{}
 	}()
-	var data [256]byte
-	for {
-		n, err := reader.Read(data[:])
-		if err != nil {
-			if !errors.Is(err, io.EOF) {
-				klog.Errorf("%v failed to write log data, err:%v", l.String(), err)
-			}
-			return
-		}
-
-		msg := NewMessage(l.MessID, MessageTypeData, data[:n])
-
-		err = tunnel.WriteMessage(msg)
-		if err != nil {
-			klog.Errorf("write tunnel message %v error", msg)
-			return
-		}
-		klog.V(4).Infof("%v write logs %v", l.String(), string(data[:n]))
-	}
-}
-
-func (l *EdgedLogsConnection) Serve(tunnel SafeWriteTunneler) error {
-	//connect edged
-	client := http.Client{}
-	req, err := http.NewRequest(http.MethodGet, l.URL.String(), nil)
-	if err != nil {
-		klog.Errorf("create new logs request error %v", err)
-		return err
-	}
-	req.Header = l.Header
-	resp, err := client.Do(req)
-	if err != nil {
-		klog.Errorf("request logs error %v", err)
-		return err
-	}
-	defer resp.Body.Close()
+	data := make([]byte, 256)
 	reader := bufio.NewReader(resp.Body)
-
-	go l.receiveFromCloudStream(l.Stop)
-
-	defer func() {
-		for retry := 0; retry < 3; retry++ {
-			msg := NewMessage(l.MessID, MessageTypeRemoveConnect, nil)
-			if err := tunnel.WriteMessage(msg); err != nil {
-				klog.Errorf("%v send %s message error %v", l, msg.MessageType, err)
-			} else {
-				break
+	for {
+		n, err := reader.Read(data)
+		if err != nil {
+			if err == io.EOF {
+				klog.V(2).Info("trigger EOF when read response body")
+				if n > 0 {
+					el.writeMessage(tunnel, data[:n])
+				}
+				return
 			}
+			klog.Errorf("%s failed to read log data, err: %v", el.String(), err)
+			return
 		}
-	}()
+		if n < 1 {
+			klog.V(2).Infof("%s read zero value, break the loop", el.String())
+			return
+		}
+		el.writeMessage(tunnel, data[:n])
+	}
+}
 
-	go l.write2CloudStream(tunnel, *reader, l.Stop)
+func (el *EdgedLogsConnection) writeMessage(tunnel SafeWriteTunneler, data []byte) {
+	msg := NewMessage(el.MessID, MessageTypeData, data)
+	if err := tunnel.WriteMessage(msg); err != nil {
+		klog.Errorf("write tunnel message %v error", msg)
+		return
+	}
+	klog.V(4).Infof("%s write logs %s", el.String(), data)
+}
 
-	<-l.Stop
-	klog.Infof("receive stop signal, so stop logs scan ...")
-	return nil
+func (el *EdgedLogsConnection) Serve(tunnel SafeWriteTunneler) error {
+	return el.serveByClient(tunnel, httpClientCustomization{
+		name:                   el.String(),
+		receiveFromCloudStream: el.receiveFromCloudStream,
+		write2CloudStream:      el.write2CloudStream,
+	})
 }
 
 var _ EdgedConnection = &EdgedLogsConnection{}

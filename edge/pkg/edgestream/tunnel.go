@@ -49,9 +49,12 @@ func NewTunnelSession(c *websocket.Conn) *TunnelSession {
 
 func (s *TunnelSession) serveLogsConnection(m *stream.Message) error {
 	logCon := &stream.EdgedLogsConnection{
-		ReadChan: make(chan *stream.Message, 128),
-		Stop:     make(chan struct{}, 2),
+		BaseEdgedConnection: stream.BaseEdgedConnection{
+			ReadChan: make(chan *stream.Message, 128),
+			Stop:     make(chan struct{}, 2),
+		},
 	}
+	logCon.InitContext(nil)
 	if err := json.Unmarshal(m.Data, logCon); err != nil {
 		klog.Errorf("unmarshal connector data error %v", err)
 		return err
@@ -63,39 +66,48 @@ func (s *TunnelSession) serveLogsConnection(m *stream.Message) error {
 
 func (s *TunnelSession) serveContainerExecConnection(m *stream.Message) error {
 	execCon := &stream.EdgedExecConnection{
-		ReadChan: make(chan *stream.Message, 128),
-		Stop:     make(chan struct{}, 2),
+		BaseEdgedConnection: stream.BaseEdgedConnection{
+			ReadChan: make(chan *stream.Message, 128),
+			Stop:     make(chan struct{}, 2),
+		},
 	}
+	execCon.InitContext(nil)
 	if err := json.Unmarshal(m.Data, execCon); err != nil {
 		klog.Errorf("unmarshal connector data error %v", err)
 		return err
 	}
 
 	s.AddLocalConnection(m.ConnectID, execCon)
-	klog.V(6).Infof("Get Exec Connection info: %+v", *execCon)
+	klog.V(6).Infof("Get Exec Connection info: %+v", execCon)
 	return execCon.Serve(s.Tunnel)
 }
 
 func (s *TunnelSession) serveContainerAttachConnection(m *stream.Message) error {
 	attachCon := &stream.EdgedAttachConnection{
-		ReadChan: make(chan *stream.Message, 128),
-		Stop:     make(chan struct{}, 2),
+		BaseEdgedConnection: stream.BaseEdgedConnection{
+			ReadChan: make(chan *stream.Message, 128),
+			Stop:     make(chan struct{}, 2),
+		},
 	}
+	attachCon.InitContext(nil)
 	if err := json.Unmarshal(m.Data, attachCon); err != nil {
 		klog.Errorf("unmarshal connector data error %v", err)
 		return err
 	}
 
 	s.AddLocalConnection(m.ConnectID, attachCon)
-	klog.V(6).Infof("Get Attach Connection info: %+v", *attachCon)
+	klog.V(6).Infof("Get Attach Connection info: %+v", attachCon)
 	return attachCon.Serve(s.Tunnel)
 }
 
 func (s *TunnelSession) serveMetricsConnection(m *stream.Message) error {
 	metricsCon := &stream.EdgedMetricsConnection{
-		ReadChan: make(chan *stream.Message, 128),
-		Stop:     make(chan struct{}, 2),
+		BaseEdgedConnection: stream.BaseEdgedConnection{
+			ReadChan: make(chan *stream.Message, 128),
+			Stop:     make(chan struct{}, 2),
+		},
 	}
+	metricsCon.InitContext(nil)
 	if err := json.Unmarshal(m.Data, metricsCon); err != nil {
 		klog.Errorf("unmarshal connector data error %v", err)
 		return err

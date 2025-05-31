@@ -1,59 +1,25 @@
 package stream
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
-	"net/url"
 
-	"k8s.io/apimachinery/pkg/util/httpstream/spdy"
 	"k8s.io/klog/v2"
 )
 
 type EdgedExecConnection struct {
-	ReadChan chan *Message `json:"-"`
-	Stop     chan struct{} `json:"-"`
-	MessID   uint64
-	URL      url.URL     `json:"url"`
-	Header   http.Header `json:"header"`
-	Method   string      `json:"method"`
+	BaseEdgedConnection `json:",inline"`
 }
 
 func (e *EdgedExecConnection) CreateConnectMessage() (*Message, error) {
-	data, err := json.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	return NewMessage(e.MessID, MessageTypeExecConnect, data), nil
-}
-
-func (e *EdgedExecConnection) GetMessageID() uint64 {
-	return e.MessID
+	return e.createConnectMessage(MessageTypeExecConnect, e)
 }
 
 func (e *EdgedExecConnection) String() string {
 	return fmt.Sprintf("EDGE_EXEC_CONNECTOR Message MessageID %v", e.MessID)
-}
-
-func (e *EdgedExecConnection) CacheTunnelMessage(msg *Message) {
-	e.ReadChan <- msg
-}
-
-func (e *EdgedExecConnection) CloseReadChannel() {
-	close(e.ReadChan)
-}
-
-func (e *EdgedExecConnection) CleanChannel() {
-	for {
-		select {
-		case <-e.Stop:
-		default:
-			return
-		}
-	}
 }
 
 type responder struct{}
@@ -63,12 +29,13 @@ func (r *responder) Error(w http.ResponseWriter, _ *http.Request, err error) {
 	http.Error(w, err.Error(), http.StatusInternalServerError)
 }
 
-func (e *EdgedExecConnection) receiveFromCloudStream(con net.Conn, stop chan struct{}) {
+func (e *EdgedExecConnection) receiveFromCloudStream(con net.Conn) {
 	for message := range e.ReadChan {
 		switch message.MessageType {
 		case MessageTypeRemoveConnect:
 			klog.V(6).Infof("%s receive remove client id %v", e.String(), message.ConnectID)
-			stop <- struct{}{}
+			e.Stop <- struct{}{}
+
 		case MessageTypeData:
 			_, err := con.Write(message.Data)
 			klog.V(6).Infof("%s receive exec %v data ", e.String(), message.Data)
@@ -77,12 +44,12 @@ func (e *EdgedExecConnection) receiveFromCloudStream(con net.Conn, stop chan str
 			}
 		}
 	}
-	klog.V(6).Infof("%s read channel closed", e.String())
+	klog.V(2).Infof("%s read channel closed", e.String())
 }
 
-func (e *EdgedExecConnection) write2CloudStream(tunnel SafeWriteTunneler, con net.Conn, stop chan struct{}) {
+func (e *EdgedExecConnection) write2CloudStream(tunnel SafeWriteTunneler, con net.Conn) {
 	defer func() {
-		stop <- struct{}{}
+		e.Stop <- struct{}{}
 	}()
 
 	var data [256]byte
@@ -104,40 +71,11 @@ func (e *EdgedExecConnection) write2CloudStream(tunnel SafeWriteTunneler, con ne
 }
 
 func (e *EdgedExecConnection) Serve(tunnel SafeWriteTunneler) error {
-	tripper, err := spdy.NewRoundTripper(nil)
-	if err != nil {
-		return fmt.Errorf("failed to creates a new tripper, err: %v", err)
-	}
-	req, err := http.NewRequest(e.Method, e.URL.String(), nil)
-	if err != nil {
-		return fmt.Errorf("failed to create exec request, err: %v", err)
-	}
-	req.Header = e.Header
-	con, err := tripper.Dial(req)
-	if err != nil {
-		klog.Errorf("failed to dial, err: %v", err)
-		return err
-	}
-	defer con.Close()
-
-	go e.receiveFromCloudStream(con, e.Stop)
-
-	defer func() {
-		for retry := 0; retry < 3; retry++ {
-			msg := NewMessage(e.MessID, MessageTypeRemoveConnect, nil)
-			if err := tunnel.WriteMessage(msg); err != nil {
-				klog.Errorf("%v send %s message error %v", e, msg.MessageType, err)
-			} else {
-				break
-			}
-		}
-	}()
-
-	go e.write2CloudStream(tunnel, con, e.Stop)
-
-	<-e.Stop
-	klog.V(6).Infof("receive stop signal, so stop exec scan ...")
-	return nil
+	return e.serveByRoundTripper(tunnel, roundTripperCustomization{
+		name:                   e.String(),
+		receiveFromCloudStream: e.receiveFromCloudStream,
+		write2CloudStream:      e.write2CloudStream,
+	})
 }
 
 var _ EdgedConnection = &EdgedExecConnection{}
