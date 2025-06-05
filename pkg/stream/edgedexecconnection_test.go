@@ -17,10 +17,8 @@ limitations under the License.
 package stream
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
-	"io"
 	"net"
 	"net/http"
 	"testing"
@@ -28,84 +26,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 )
-
-type MockConn struct {
-	ReadData  []byte
-	ReadErr   error
-	WriteData []byte
-	WriteErr  error
-	Closed    bool
-}
-
-func (m *MockConn) Read(b []byte) (n int, err error) {
-	if m.ReadErr != nil {
-		return 0, m.ReadErr
-	}
-	if len(m.ReadData) == 0 {
-		return 0, io.EOF
-	}
-	n = copy(b, m.ReadData)
-	m.ReadData = m.ReadData[n:]
-	return n, nil
-}
-
-func (m *MockConn) Write(b []byte) (n int, err error) {
-	if m.WriteErr != nil {
-		return 0, m.WriteErr
-	}
-	m.WriteData = append(m.WriteData, b...)
-	return len(b), nil
-}
-
-func (m *MockConn) Close() error {
-	m.Closed = true
-	return nil
-}
-
-func (m *MockConn) LocalAddr() net.Addr                { return nil }
-func (m *MockConn) RemoteAddr() net.Addr               { return nil }
-func (m *MockConn) SetDeadline(t time.Time) error      { return nil }
-func (m *MockConn) SetReadDeadline(t time.Time) error  { return nil }
-func (m *MockConn) SetWriteDeadline(t time.Time) error { return nil }
-
-type MockTunneler struct {
-	Messages    []*Message
-	WriteErr    error
-	ControlData []byte
-	ControlType int
-	ControlErr  error
-	ReaderType  int
-	ReaderData  []byte
-	ReaderErr   error
-	CloseErr    error
-	Closed      bool
-}
-
-func (m *MockTunneler) WriteMessage(msg *Message) error {
-	if m.WriteErr != nil {
-		return m.WriteErr
-	}
-	m.Messages = append(m.Messages, msg)
-	return nil
-}
-
-func (m *MockTunneler) WriteControl(messageType int, data []byte, deadline time.Time) error {
-	m.ControlType = messageType
-	m.ControlData = data
-	return m.ControlErr
-}
-
-func (m *MockTunneler) NextReader() (messageType int, r io.Reader, err error) {
-	if m.ReaderErr != nil {
-		return 0, nil, m.ReaderErr
-	}
-	return m.ReaderType, io.NopCloser(bytes.NewReader(m.ReaderData)), nil
-}
-
-func (m *MockTunneler) Close() error {
-	m.Closed = true
-	return m.CloseErr
-}
 
 func TestExecConnection_CleanChannel(t *testing.T) {
 	assert := assert.New(t)
@@ -146,7 +66,7 @@ func TestExecConnection_receiveFromCloudStream(t *testing.T) {
 	edgedExecConn.receiveFromCloudStream(mockConn, stop)
 
 	assert.Equal(1, len(stop))
-	assert.Equal(dataBytes, mockConn.WriteData)
+	assert.Equal(dataBytes, mockConn.WrittenData)
 }
 
 func TestExecConnection_write2CloudStream(t *testing.T) {
@@ -181,7 +101,7 @@ func TestExecConnection_write2CloudStream_ReadError(t *testing.T) {
 	stop := make(chan struct{}, 1)
 
 	mockConn := &MockConn{
-		ReadErr: errors.New("read error"),
+		ReadError: errors.New("read error"),
 	}
 
 	edgedExecConn := &EdgedExecConnection{

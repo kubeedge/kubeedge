@@ -41,10 +41,6 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/util/execs"
 )
 
-const (
-	testVersion = "v1.8.0"
-)
-
 func TestCheckKubernetesVersion(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -127,6 +123,7 @@ func TestPrivateDownloadServiceFile(t *testing.T) {
 	componentType = types.CloudCore
 	targetVersion, _ = semver.Make(types.DefaultKubeEdgeVersion)
 	serviceFilePath = testTmpDir + "/" + CloudServiceFile
+
 	t.Run("test with reDownloading cloudcore service file if version = latest", func(t *testing.T) {
 		err := downloadServiceFile(componentType, targetVersion, testTmpDir)
 		if err != nil {
@@ -145,6 +142,7 @@ func TestPrivateDownloadServiceFile(t *testing.T) {
 	componentType = types.EdgeCore
 	targetVersion, _ = semver.Make(types.DefaultKubeEdgeVersion)
 	serviceFilePath = testTmpDir + "/" + EdgeServiceFile
+
 	t.Run("test with reDownloading edgecore service file if version = latest", func(t *testing.T) {
 		err := downloadServiceFile(componentType, targetVersion, testTmpDir)
 		if err != nil {
@@ -733,6 +731,8 @@ func TestPrintFunctions(t *testing.T) {
 }
 
 func TestGetCurrentVersion(t *testing.T) {
+	testVersion := "v1.8.0"
+
 	patches := gomonkey.NewPatches()
 	defer patches.Reset()
 

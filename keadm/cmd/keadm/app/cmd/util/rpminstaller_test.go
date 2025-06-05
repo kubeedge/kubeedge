@@ -26,22 +26,22 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/pkg/util/execs"
 )
 
 const (
-	testVersion    = "1.6.0"
 	testKubeConfig = "/path/to/kubeconfig"
 	testMasterNode = "master-node"
 )
 
-func TestSetKubeEdgeVersion(t *testing.T) {
-	version := semver.MustParse(testVersion)
+func TestRPMOSSetKubeEdgeVersion(t *testing.T) {
+	version := semver.MustParse("1.6.0")
 	rpmOS := RpmOS{}
 	rpmOS.SetKubeEdgeVersion(version)
 	assert.Equal(t, version, rpmOS.KubeEdgeVersion)
 }
 
-func TestIsK8SComponentInstalled(t *testing.T) {
+func TestRPMOSIsK8SComponentInstalled(t *testing.T) {
 	rpmOS := RpmOS{}
 
 	p1 := gomonkey.ApplyFunc(isK8SComponentInstalled, func(kubeConfig, master string) error {
@@ -55,7 +55,8 @@ func TestIsK8SComponentInstalled(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestInstallKubeEdge(t *testing.T) {
+func TestRPMOSInstallKubeEdge(t *testing.T) {
+	testVersion := "1.6.0"
 	version := semver.MustParse(testVersion)
 	rpmOS := RpmOS{
 		KubeEdgeVersion: version,
@@ -72,7 +73,7 @@ func TestInstallKubeEdge(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestRunEdgeCore(t *testing.T) {
+func TestRPMOSRunEdgeCore(t *testing.T) {
 	rpmOS := RpmOS{}
 
 	p1 := gomonkey.ApplyFunc(runEdgeCore, func() error {
@@ -84,7 +85,7 @@ func TestRunEdgeCore(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestKillKubeEdgeBinary(t *testing.T) {
+func TestRPMOSKillKubeEdgeBinary(t *testing.T) {
 	rpmOS := RpmOS{}
 	proc := "edgecore"
 
@@ -98,7 +99,7 @@ func TestKillKubeEdgeBinary(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestIsKubeEdgeProcessRunning(t *testing.T) {
+func TestRPMOSIsKubeEdgeProcessRunning(t *testing.T) {
 	rpmOS := RpmOS{}
 	proc := "edgecore"
 
@@ -113,13 +114,13 @@ func TestIsKubeEdgeProcessRunning(t *testing.T) {
 	assert.True(t, running)
 }
 
-func TestGetOSVendorName_Error(t *testing.T) {
-	cmd := &Command{}
+func TestRPMOSGetOSVendorName_Error(t *testing.T) {
+	cmd := &execs.Command{}
 
-	p1 := gomonkey.ApplyFunc(NewCommand, func(command string) *Command {
+	p1 := gomonkey.ApplyFunc(execs.NewCommand, func(command string) *execs.Command {
 		return cmd
 	})
-	p2 := gomonkey.ApplyMethod(reflect.TypeOf(cmd), "Exec", func(*Command) error {
+	p2 := gomonkey.ApplyMethod(reflect.TypeOf(cmd), "Exec", func(*execs.Command) error {
 		return errors.New("os vendor name error")
 	})
 

@@ -19,8 +19,6 @@ package stream
 import (
 	"encoding/json"
 	"errors"
-	"io"
-	"net"
 	"testing"
 	"time"
 
@@ -136,74 +134,6 @@ func TestCleanChannel(t *testing.T) {
 	edgedAttachConn.CleanChannel()
 
 	assert.Equal(0, len(edgedAttachConn.Stop))
-}
-
-type MockConn struct {
-	ReadData       []byte
-	ReadError      error
-	WrittenData    []byte
-	CloseCallCount int
-	WriteError     error
-}
-
-func (m *MockConn) Read(b []byte) (n int, err error) {
-	if m.ReadError != nil {
-		return 0, m.ReadError
-	}
-	if len(m.ReadData) == 0 {
-		return 0, io.EOF
-	}
-	n = copy(b, m.ReadData)
-	m.ReadData = m.ReadData[n:]
-	return n, nil
-}
-
-func (m *MockConn) Write(b []byte) (n int, err error) {
-	if m.WriteError != nil {
-		return 0, m.WriteError
-	}
-	m.WrittenData = append(m.WrittenData, b...)
-	return len(b), nil
-}
-
-func (m *MockConn) Close() error {
-	m.CloseCallCount++
-	return nil
-}
-
-func (m *MockConn) LocalAddr() net.Addr                { return nil }
-func (m *MockConn) RemoteAddr() net.Addr               { return nil }
-func (m *MockConn) SetDeadline(t time.Time) error      { return nil }
-func (m *MockConn) SetReadDeadline(t time.Time) error  { return nil }
-func (m *MockConn) SetWriteDeadline(t time.Time) error { return nil }
-
-// Mock SafeWriteTunneler for testing
-type MockSafeWriteTunneler struct {
-	WrittenMessages []*Message
-	WriteError      error
-	CloseCallCount  int
-}
-
-func (m *MockSafeWriteTunneler) WriteMessage(msg *Message) error {
-	if m.WriteError != nil {
-		return m.WriteError
-	}
-	m.WrittenMessages = append(m.WrittenMessages, msg)
-	return nil
-}
-
-func (m *MockSafeWriteTunneler) Close() error {
-	m.CloseCallCount++
-	return nil
-}
-
-// These methods are not used in our tests but needed to satisfy the interface
-func (m *MockSafeWriteTunneler) WriteControl(messageType int, data []byte, deadline time.Time) error {
-	return nil
-}
-
-func (m *MockSafeWriteTunneler) NextReader() (messageType int, r io.Reader, err error) {
-	return 0, nil, nil
 }
 
 func TestReceiveFromCloudStream(t *testing.T) {
