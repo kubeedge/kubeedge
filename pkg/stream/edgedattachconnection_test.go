@@ -38,9 +38,9 @@ func setupEdgedAttachConn(t *testing.T) *EdgedAttachConnection {
 	}
 }
 
-func setupMockConn(t *testing.T, readData []byte, readErr, writeErr error) *MockConn {
+func setupAttachMockConn(t *testing.T, readData []byte, readErr, writeErr error) *attachMockConn {
 	t.Helper()
-	return &MockConn{
+	return &attachMockConn{
 		ReadData:   readData,
 		ReadError:  readErr,
 		WriteError: writeErr,
@@ -138,7 +138,7 @@ func TestCleanChannel(t *testing.T) {
 	assert.Equal(0, len(edgedAttachConn.Stop))
 }
 
-type MockConn struct {
+type attachMockConn struct {
 	ReadData       []byte
 	ReadError      error
 	WrittenData    []byte
@@ -146,7 +146,7 @@ type MockConn struct {
 	WriteError     error
 }
 
-func (m *MockConn) Read(b []byte) (n int, err error) {
+func (m *attachMockConn) Read(b []byte) (n int, err error) {
 	if m.ReadError != nil {
 		return 0, m.ReadError
 	}
@@ -158,7 +158,7 @@ func (m *MockConn) Read(b []byte) (n int, err error) {
 	return n, nil
 }
 
-func (m *MockConn) Write(b []byte) (n int, err error) {
+func (m *attachMockConn) Write(b []byte) (n int, err error) {
 	if m.WriteError != nil {
 		return 0, m.WriteError
 	}
@@ -166,16 +166,16 @@ func (m *MockConn) Write(b []byte) (n int, err error) {
 	return len(b), nil
 }
 
-func (m *MockConn) Close() error {
+func (m *attachMockConn) Close() error {
 	m.CloseCallCount++
 	return nil
 }
 
-func (m *MockConn) LocalAddr() net.Addr                { return nil }
-func (m *MockConn) RemoteAddr() net.Addr               { return nil }
-func (m *MockConn) SetDeadline(t time.Time) error      { return nil }
-func (m *MockConn) SetReadDeadline(t time.Time) error  { return nil }
-func (m *MockConn) SetWriteDeadline(t time.Time) error { return nil }
+func (m *attachMockConn) LocalAddr() net.Addr                { return nil }
+func (m *attachMockConn) RemoteAddr() net.Addr               { return nil }
+func (m *attachMockConn) SetDeadline(t time.Time) error      { return nil }
+func (m *attachMockConn) SetReadDeadline(t time.Time) error  { return nil }
+func (m *attachMockConn) SetWriteDeadline(t time.Time) error { return nil }
 
 // Mock SafeWriteTunneler for testing
 type MockSafeWriteTunneler struct {
@@ -215,30 +215,30 @@ func TestReceiveFromCloudStream(t *testing.T) {
 	t.Run("MessageTypeData", func(t *testing.T) {
 		assert := assert.New(t)
 
-		mockConn := setupMockConn(t, nil, nil, nil)
+		attachMockConn := setupAttachMockConn(t, nil, nil, nil)
 		edgedAttachConn := setupEdgedAttachConn(t)
 
 		testData := []byte("test data")
 		dataMsg := NewMessage(edgedAttachConn.MessID, MessageTypeData, testData)
 
 		stopChan := make(chan struct{}, 1)
-		go edgedAttachConn.receiveFromCloudStream(mockConn, stopChan)
+		go edgedAttachConn.receiveFromCloudStream(attachMockConn, stopChan)
 
 		edgedAttachConn.ReadChan <- dataMsg
 
 		time.Sleep(10 * time.Millisecond)
 
-		assert.Equal(testData, mockConn.WrittenData)
+		assert.Equal(testData, attachMockConn.WrittenData)
 
 		close(edgedAttachConn.ReadChan)
 	})
 
 	t.Run("MessageTypeRemoveConnect", func(t *testing.T) {
-		mockConn := setupMockConn(t, nil, nil, nil)
+		attachMockConn := setupAttachMockConn(t, nil, nil, nil)
 		edgedAttachConn := setupEdgedAttachConn(t)
 
 		stopChan := make(chan struct{}, 1)
-		go edgedAttachConn.receiveFromCloudStream(mockConn, stopChan)
+		go edgedAttachConn.receiveFromCloudStream(attachMockConn, stopChan)
 
 		removeMsg := NewMessage(edgedAttachConn.MessID, MessageTypeRemoveConnect, nil)
 		edgedAttachConn.ReadChan <- removeMsg
@@ -253,11 +253,11 @@ func TestReceiveFromCloudStream(t *testing.T) {
 	})
 
 	t.Run("Write error", func(t *testing.T) {
-		mockConn := setupMockConn(t, nil, nil, errors.New("write error"))
+		attachMockConn := setupAttachMockConn(t, nil, nil, errors.New("write error"))
 		edgedAttachConn := setupEdgedAttachConn(t)
 
 		stopChan := make(chan struct{}, 1)
-		go edgedAttachConn.receiveFromCloudStream(mockConn, stopChan)
+		go edgedAttachConn.receiveFromCloudStream(attachMockConn, stopChan)
 
 		dataMsg := NewMessage(edgedAttachConn.MessID, MessageTypeData, []byte("test data"))
 		edgedAttachConn.ReadChan <- dataMsg
@@ -277,7 +277,7 @@ func TestWrite2CloudStream(t *testing.T) {
 	t.Run("Normal operation", func(t *testing.T) {
 		assert := assert.New(t)
 
-		mockConn := setupMockConn(t, []byte("test data"), nil, nil)
+		attachMockConn := setupAttachMockConn(t, []byte("test data"), nil, nil)
 		mockTunnel := setupMockTunneler(t, nil)
 		edgedAttachConn := setupEdgedAttachConn(t)
 
@@ -285,7 +285,7 @@ func TestWrite2CloudStream(t *testing.T) {
 		done := make(chan struct{})
 
 		go func() {
-			edgedAttachConn.write2CloudStream(mockTunnel, mockConn, stopChan)
+			edgedAttachConn.write2CloudStream(mockTunnel, attachMockConn, stopChan)
 			close(done)
 		}()
 
@@ -302,13 +302,13 @@ func TestWrite2CloudStream(t *testing.T) {
 	})
 
 	t.Run("Read error", func(t *testing.T) {
-		mockConn := setupMockConn(t, nil, errors.New("read error"), nil)
+		attachMockConn := setupAttachMockConn(t, nil, errors.New("read error"), nil)
 		mockTunnel := setupMockTunneler(t, nil)
 		edgedAttachConn := setupEdgedAttachConn(t)
 
 		stopChan := make(chan struct{}, 1)
 
-		go edgedAttachConn.write2CloudStream(mockTunnel, mockConn, stopChan)
+		go edgedAttachConn.write2CloudStream(mockTunnel, attachMockConn, stopChan)
 
 		select {
 		case <-stopChan:
@@ -318,13 +318,13 @@ func TestWrite2CloudStream(t *testing.T) {
 	})
 
 	t.Run("Write error", func(t *testing.T) {
-		mockConn := setupMockConn(t, []byte("test data"), nil, nil)
+		attachMockConn := setupAttachMockConn(t, []byte("test data"), nil, nil)
 		mockTunnel := setupMockTunneler(t, errors.New("write error"))
 		edgedAttachConn := setupEdgedAttachConn(t)
 
 		stopChan := make(chan struct{}, 1)
 
-		go edgedAttachConn.write2CloudStream(mockTunnel, mockConn, stopChan)
+		go edgedAttachConn.write2CloudStream(mockTunnel, attachMockConn, stopChan)
 
 		select {
 		case <-stopChan:

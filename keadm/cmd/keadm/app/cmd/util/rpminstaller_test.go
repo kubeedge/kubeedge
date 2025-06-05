@@ -17,8 +17,6 @@ limitations under the License.
 package util
 
 import (
-	"errors"
-	"reflect"
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
@@ -29,19 +27,19 @@ import (
 )
 
 const (
-	testVersion    = "1.6.0"
-	testKubeConfig = "/path/to/kubeconfig"
-	testMasterNode = "master-node"
+	testKubeConfig         = "/path/to/kubeconfig"
+	testMasterNode         = "master-node"
+	rpmTestKubeEdgeVersion = "1.6.0"
 )
 
-func TestSetKubeEdgeVersion(t *testing.T) {
-	version := semver.MustParse(testVersion)
+func TestRpmOSSetKubeEdgeVersion(t *testing.T) {
+	version := semver.MustParse(rpmTestKubeEdgeVersion)
 	rpmOS := RpmOS{}
 	rpmOS.SetKubeEdgeVersion(version)
 	assert.Equal(t, version, rpmOS.KubeEdgeVersion)
 }
 
-func TestIsK8SComponentInstalled(t *testing.T) {
+func TestRpmOSIsK8SComponentInstalled(t *testing.T) {
 	rpmOS := RpmOS{}
 
 	p1 := gomonkey.ApplyFunc(isK8SComponentInstalled, func(kubeConfig, master string) error {
@@ -55,15 +53,15 @@ func TestIsK8SComponentInstalled(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestInstallKubeEdge(t *testing.T) {
-	version := semver.MustParse(testVersion)
+func TestRpmOSInstallKubeEdge(t *testing.T) {
+	version := semver.MustParse(rpmTestKubeEdgeVersion)
 	rpmOS := RpmOS{
 		KubeEdgeVersion: version,
 	}
 	options := types.InstallOptions{}
 
 	p1 := gomonkey.ApplyFunc(installKubeEdge, func(options types.InstallOptions, version semver.Version) error {
-		assert.Equal(t, semver.MustParse(testVersion), version)
+		assert.Equal(t, semver.MustParse(rpmTestKubeEdgeVersion), version)
 		return nil
 	})
 	defer p1.Reset()
@@ -84,7 +82,7 @@ func TestRunEdgeCore(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestKillKubeEdgeBinary(t *testing.T) {
+func TestRpmKillKubeEdgeBinary(t *testing.T) {
 	rpmOS := RpmOS{}
 	proc := "edgecore"
 
@@ -111,23 +109,4 @@ func TestIsKubeEdgeProcessRunning(t *testing.T) {
 	running, err := rpmOS.IsKubeEdgeProcessRunning(proc)
 	assert.NoError(t, err)
 	assert.True(t, running)
-}
-
-func TestGetOSVendorName_Error(t *testing.T) {
-	cmd := &Command{}
-
-	p1 := gomonkey.ApplyFunc(NewCommand, func(command string) *Command {
-		return cmd
-	})
-	p2 := gomonkey.ApplyMethod(reflect.TypeOf(cmd), "Exec", func(*Command) error {
-		return errors.New("os vendor name error")
-	})
-
-	vendor, err := getOSVendorName()
-	assert.Error(t, err)
-	assert.Equal(t, "os vendor name error", err.Error())
-	assert.Empty(t, vendor)
-
-	p1.Reset()
-	p2.Reset()
 }
