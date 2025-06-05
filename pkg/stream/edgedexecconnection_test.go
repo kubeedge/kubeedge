@@ -29,7 +29,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type MockConn struct {
+type execMockConn struct {
 	ReadData  []byte
 	ReadErr   error
 	WriteData []byte
@@ -37,7 +37,7 @@ type MockConn struct {
 	Closed    bool
 }
 
-func (m *MockConn) Read(b []byte) (n int, err error) {
+func (m *execMockConn) Read(b []byte) (n int, err error) {
 	if m.ReadErr != nil {
 		return 0, m.ReadErr
 	}
@@ -49,7 +49,7 @@ func (m *MockConn) Read(b []byte) (n int, err error) {
 	return n, nil
 }
 
-func (m *MockConn) Write(b []byte) (n int, err error) {
+func (m *execMockConn) Write(b []byte) (n int, err error) {
 	if m.WriteErr != nil {
 		return 0, m.WriteErr
 	}
@@ -57,16 +57,16 @@ func (m *MockConn) Write(b []byte) (n int, err error) {
 	return len(b), nil
 }
 
-func (m *MockConn) Close() error {
+func (m *execMockConn) Close() error {
 	m.Closed = true
 	return nil
 }
 
-func (m *MockConn) LocalAddr() net.Addr                { return nil }
-func (m *MockConn) RemoteAddr() net.Addr               { return nil }
-func (m *MockConn) SetDeadline(t time.Time) error      { return nil }
-func (m *MockConn) SetReadDeadline(t time.Time) error  { return nil }
-func (m *MockConn) SetWriteDeadline(t time.Time) error { return nil }
+func (m *execMockConn) LocalAddr() net.Addr                { return nil }
+func (m *execMockConn) RemoteAddr() net.Addr               { return nil }
+func (m *execMockConn) SetDeadline(t time.Time) error      { return nil }
+func (m *execMockConn) SetReadDeadline(t time.Time) error  { return nil }
+func (m *execMockConn) SetWriteDeadline(t time.Time) error { return nil }
 
 type MockTunneler struct {
 	Messages    []*Message
@@ -125,7 +125,7 @@ func TestExecConnection_CleanChannel(t *testing.T) {
 func TestExecConnection_receiveFromCloudStream(t *testing.T) {
 	assert := assert.New(t)
 
-	mockConn := &MockConn{}
+	execMockConn := &execMockConn{}
 	stop := make(chan struct{}, 1)
 
 	edgedExecConn := &EdgedExecConnection{
@@ -143,10 +143,10 @@ func TestExecConnection_receiveFromCloudStream(t *testing.T) {
 
 	close(edgedExecConn.ReadChan)
 
-	edgedExecConn.receiveFromCloudStream(mockConn, stop)
+	edgedExecConn.receiveFromCloudStream(execMockConn, stop)
 
 	assert.Equal(1, len(stop))
-	assert.Equal(dataBytes, mockConn.WriteData)
+	assert.Equal(dataBytes, execMockConn.WriteData)
 }
 
 func TestExecConnection_write2CloudStream(t *testing.T) {
@@ -155,7 +155,7 @@ func TestExecConnection_write2CloudStream(t *testing.T) {
 	mockTunneler := &MockTunneler{}
 	stop := make(chan struct{}, 1)
 
-	mockConn := &MockConn{
+	execMockConn := &execMockConn{
 		ReadData: []byte("test data for tunnel"),
 	}
 
@@ -163,7 +163,7 @@ func TestExecConnection_write2CloudStream(t *testing.T) {
 		MessID: uint64(100),
 	}
 
-	go edgedExecConn.write2CloudStream(mockTunneler, mockConn, stop)
+	go edgedExecConn.write2CloudStream(mockTunneler, execMockConn, stop)
 
 	time.Sleep(100 * time.Millisecond)
 
@@ -180,7 +180,7 @@ func TestExecConnection_write2CloudStream_ReadError(t *testing.T) {
 	mockTunneler := &MockTunneler{}
 	stop := make(chan struct{}, 1)
 
-	mockConn := &MockConn{
+	execMockConn := &execMockConn{
 		ReadErr: errors.New("read error"),
 	}
 
@@ -188,7 +188,7 @@ func TestExecConnection_write2CloudStream_ReadError(t *testing.T) {
 		MessID: uint64(100),
 	}
 
-	go edgedExecConn.write2CloudStream(mockTunneler, mockConn, stop)
+	go edgedExecConn.write2CloudStream(mockTunneler, execMockConn, stop)
 
 	time.Sleep(100 * time.Millisecond)
 
@@ -204,7 +204,7 @@ func TestExecConnection_write2CloudStream_WriteError(t *testing.T) {
 	}
 	stop := make(chan struct{}, 1)
 
-	mockConn := &MockConn{
+	execMockConn := &execMockConn{
 		ReadData: []byte("test data for tunnel"),
 	}
 
@@ -212,7 +212,7 @@ func TestExecConnection_write2CloudStream_WriteError(t *testing.T) {
 		MessID: uint64(100),
 	}
 
-	go edgedExecConn.write2CloudStream(mockTunneler, mockConn, stop)
+	go edgedExecConn.write2CloudStream(mockTunneler, execMockConn, stop)
 
 	time.Sleep(100 * time.Millisecond)
 
