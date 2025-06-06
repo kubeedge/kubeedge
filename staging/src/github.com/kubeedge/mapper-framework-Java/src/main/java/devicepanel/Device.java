@@ -414,12 +414,16 @@ public class Device {
             switch (twin.getProperty().getPushMethod().getDbMethod().getDbMethodName()){
                 case "influx":
                     Influxdb2.dataHandler(twin, client, visitorConfig, dataModel, futures);
+                    break;
                 case "redis":
                     Redis.dataHandler(twin,client,visitorConfig,dataModel,futures);
+                    break;
                 case "tdengine":
                     Tdengine.dataHandler(twin,client,visitorConfig,dataModel,futures);
+                    break;
                 case "mysql":
                     Mysql.dataHandler(twin,client,visitorConfig,dataModel,futures);
+                    break;
             }
         }
     }
