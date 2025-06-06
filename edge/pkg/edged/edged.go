@@ -47,6 +47,7 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/config"
 	"k8s.io/kubernetes/pkg/kubelet/nodestatus"
 	kubelettypes "k8s.io/kubernetes/pkg/kubelet/types"
+	"k8s.io/kubernetes/pkg/volume"
 	csiplugin "k8s.io/kubernetes/pkg/volume/csi"
 
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
@@ -218,6 +219,14 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 	}
 	edgedconfig.ConvertConfigEdgedFlagToConfigKubeletFlag(&edgedconfig.Config.TailoredKubeletFlag, &kubeletFlags)
 
+	// Register the DisableCSIVolumePlugin Custom feature gate.
+	featurekey := featuregate.Feature(kefeatures.DisableCSIVolumePlugin)
+	if err := utilfeature.DefaultMutableFeatureGate.Add(map[featuregate.Feature]featuregate.FeatureSpec{
+		featurekey: {Default: false, PreRelease: featuregate.Alpha},
+	}); err != nil {
+		return nil, fmt.Errorf("failed to set default DisableCSIVolumePlugin feature gate : %w", err)
+	}
+
 	// set feature gates from initial flags-based config
 	if err := utilfeature.DefaultMutableFeatureGate.SetFromMap(kubeletConfig.FeatureGates); err != nil {
 		return nil, fmt.Errorf("failed to set feature gates from initial flags-based config: %w", err)
@@ -249,6 +258,8 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 	}
 	MakeKubeClientBridge(kubeletDeps)
 
+	kubeletDeps.VolumePlugins = filterVolumePluginsByFeatureGate(kubeletDeps.VolumePlugins)
+
 	// source of all configuration
 	kubeletDeps.PodConfig = config.NewPodConfig(config.PodConfigNotificationIncremental, kubeletDeps.Recorder, kubeletDeps.PodStartupLatencyTracker)
 
@@ -263,6 +274,22 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 	}
 
 	return ed, nil
+}
+
+// filterVolumePluginsByFeatureGate filters the list of volume plugins based on feature gate settings.
+func filterVolumePluginsByFeatureGate(plugins []volume.VolumePlugin) []volume.VolumePlugin {
+	// filter the current edged-supported CSI plugin enable/disable control through feature gates
+	res := []volume.VolumePlugin{}
+	for _, plugin := range plugins {
+		if plugin.GetPluginName() == csiplugin.CSIPluginName {
+			if utilfeature.DefaultFeatureGate.Enabled(kefeatures.DisableCSIVolumePlugin) {
+				klog.Infof("CSI plugin disabled by configuration, skipping %q", plugin.GetPluginName())
+				continue
+			}
+		}
+		res = append(res, plugin)
+	}
+	return res
 }
 
 func (e *edged) syncPod(podCfg *config.PodConfig) {
