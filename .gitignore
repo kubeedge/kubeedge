@@ -21,3 +21,7 @@ build/edge/tmp
 
 coverage.out
 go.work.sum
+
+tests/e2e/e2e.test
+tests/e2e_edgesite/e2e_edgesite.test
+tests/e2e_keadm/e2e_keadm.test
