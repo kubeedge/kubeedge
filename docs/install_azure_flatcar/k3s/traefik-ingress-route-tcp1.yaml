@@ -1,0 +1,13 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: cloudcore-tcp1-ingress
+  namespace: kubeedge
+spec:
+  entryPoints:
+    - tcp1
+  routes:
+    - match: HostSNI(`*`)
+      services:
+        - name: cloudcore
+          port: 10001
