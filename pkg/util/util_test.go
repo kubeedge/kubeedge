@@ -1,3 +1,19 @@
+/*
+Copyright 2025 The KubeEdge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package util
 
 import (
@@ -7,7 +23,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
+	utilnet "k8s.io/apimachinery/pkg/util/net"
+	nodeutil "k8s.io/component-helpers/node/util"
 )
 
 func TestValidateNodeIP(t *testing.T) {
@@ -61,6 +80,15 @@ func TestValidateNodeIP(t *testing.T) {
 		err := ValidateNodeIP(c.ip)
 		assert.Equal(c.expected, err, c.name)
 	}
+
+	patches := gomonkey.ApplyFunc(net.InterfaceAddrs, func() ([]net.Addr, error) {
+		return nil, fmt.Errorf("mock interface addrs error")
+	})
+	defer patches.Reset()
+
+	err := ValidateNodeIP(net.IPv4(192, 168, 1, 1))
+	assert.Error(err)
+	assert.Contains(err.Error(), "mock interface addrs error")
 }
 
 func TestCommand(t *testing.T) {
@@ -87,6 +115,10 @@ func TestCommand(t *testing.T) {
 		isSuccess := err == nil
 		assert.Equal(c.expected, isSuccess, c.name)
 	}
+
+	output, err := Command("echo", []string{"-n", "hello\n"})
+	assert.NoError(err)
+	assert.Equal("hello", output)
 }
 
 func TestGetCurPath(t *testing.T) {
@@ -101,13 +133,81 @@ func TestGetHostname(t *testing.T) {
 
 	name := GetHostname()
 	assert.NotEmpty(name)
+
+	patches := gomonkey.ApplyFunc(nodeutil.GetHostname, func(hostnameOverride string) (string, error) {
+		return "", fmt.Errorf("hostname error")
+	})
+	defer patches.Reset()
+
+	name = GetHostname()
+	assert.Equal("default-edge-node", name)
 }
 
 func TestGetLocalIP(t *testing.T) {
 	assert := assert.New(t)
 
-	_, err := GetLocalIP(GetHostname())
+	ip, err := GetLocalIP(GetHostname())
 	assert.NoError(err)
+	assert.NotEmpty(ip)
+
+	patches := gomonkey.ApplyFunc(net.LookupIP, func(host string) ([]net.IP, error) {
+		return []net.IP{
+			net.ParseIP("fe80::1"),
+			net.ParseIP("2001:db8::1"),
+			net.ParseIP("127.0.0.1"),
+			net.ParseIP("192.168.1.1"),
+		}, nil
+	})
+	defer patches.Reset()
+
+	validatePatch := gomonkey.ApplyFunc(ValidateNodeIP, func(ip net.IP) error {
+		if ip.Equal(net.ParseIP("127.0.0.1")) || ip.Equal(net.ParseIP("fe80::1")) {
+			return fmt.Errorf("invalid IP")
+		}
+		return nil
+	})
+	defer validatePatch.Reset()
+
+	ip, err = GetLocalIP("test-host")
+	assert.NoError(err)
+	assert.Equal("192.168.1.1", ip)
+
+	patches.Reset()
+	patches = gomonkey.ApplyFunc(net.LookupIP, func(host string) ([]net.IP, error) {
+		return []net.IP{
+			net.ParseIP("fe80::1"),
+			net.ParseIP("2001:db8::1"),
+		}, nil
+	})
+
+	validatePatch.Reset()
+	validatePatch = gomonkey.ApplyFunc(ValidateNodeIP, func(ip net.IP) error {
+		if ip.Equal(net.ParseIP("fe80::1")) {
+			return fmt.Errorf("invalid IP")
+		}
+		return nil
+	})
+
+	ip, err = GetLocalIP("test-host")
+	assert.NoError(err)
+	assert.Equal("2001:db8::1", ip)
+
+	patches.Reset()
+	validatePatch.Reset()
+
+	lookupPatch := gomonkey.ApplyFunc(net.LookupIP, func(host string) ([]net.IP, error) {
+		return []net.IP{}, nil
+	})
+	defer lookupPatch.Reset()
+
+	chooseHostPatch := gomonkey.ApplyFunc(utilnet.ChooseHostInterface, func() (net.IP, error) {
+		return nil, fmt.Errorf("no interface found")
+	})
+	defer chooseHostPatch.Reset()
+
+	if err != nil {
+		assert.Contains(err.Error(), "no interface found")
+	}
 }
 
 func TestSpliceErrors(t *testing.T) {
@@ -157,5 +257,41 @@ func TestConcatStrings(t *testing.T) {
 	for _, testcase := range cases {
 		s := ConcatStrings(testcase.args...)
 		assert.Equal(testcase.expect, s)
+	}
+}
+
+func TestGetResourceID(t *testing.T) {
+	assert := assert.New(t)
+
+	cases := []struct {
+		namespace string
+		name      string
+		expected  string
+	}{
+		{
+			namespace: "default",
+			name:      "pod",
+			expected:  "default/pod",
+		},
+		{
+			namespace: "",
+			name:      "pod",
+			expected:  "/pod",
+		},
+		{
+			namespace: "default",
+			name:      "",
+			expected:  "default/",
+		},
+		{
+			namespace: "",
+			name:      "",
+			expected:  "/",
+		},
+	}
+
+	for _, c := range cases {
+		result := GetResourceID(c.namespace, c.name)
+		assert.Equal(c.expected, result)
 	}
 }
