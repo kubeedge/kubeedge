@@ -15,10 +15,11 @@ last-updated: 2025-XX-XX
 # Edge Resource Upgrade Control
 
 - [Motivation / Background](#motivation--background)
-- [Requirement](#requirement)
+- [Use cases](#use-cases)
 - [Proposal Design](#proposal-design)
-  - [API / Interfaces](#api--interfaces)
-  - [Implementation](#implementation)
+  - [Annotation](#annotation)
+  - [MetaServer/MetaService API](#metaservermetaservice-api)
+  - [`keadm ctl` Extension](#keadm-ctl-extension)
   - [Testing](#testing)
 - [Consideration](#consideration)
 - [Additional Note](#additional-note)
@@ -54,30 +55,63 @@ This feature enables us to control the update timing to confirm and release the 
   Edge device onboard drone (e.g. PX4 companion computer) knows flight state always, then signals when landed or in safe altitude hold mode.
   Resource updates only can be applied to post-flight or during downtime.
 
-## Requirement
-
-- **T.B.D**
-
 ## Proposal Design
 
-- **T.B.D**
+We can use annotations like `edge.kubeedge.io/hold-upgrade: "true"` on Deployments, StatefulSets, DaemonSets, etc., to indicate that their Pod updates should be held at the edge unless the edge system or application releases the lock.
+It propagates this state via a new PodCondition (e.g. `HoldUpgrade`) so the cloud knows that the update is deferred.
+Add a new MetaServer API and `keadm ctl command` (`keadm ctl unhold-upgrade pod <pod>` and `keadm ctl unhold-upgrade node`) to release the hold and allow the update to apply.
 
-### API / Interfaces
+### Annotation
 
-- **T.B.D**
+We can define new annotation key, `edge.kubeedge.io/hold-upgrade: "true"`, then at cloud-side `EdgeController` can watch the events for Deployment/StatefulSet, detect annotation changes.
+When they are detected, it can set PodCondition `"HeldUpgrade": "True"` on newly created Pods and resources.
+And it should stop sending Pod UPDATE messages to edge for this resource group.
 
-### Implementation
+```yaml
+status:
+  conditions:
+    - type: HeldUpgrade
+      status: "True"
+      reason: UpdateHoldActive
+      message: Pod upgrade is currently held at the edge.
+```
 
-- **T.B.D**
+### MetaServer/MetaService API
+
+It needs to extend KubeEdge metaserver with new endpoints, `POST /edge/unhold/pod/{podName}` — clears the hold annotation and resumes upgrades, and likewise for node-level holds.
+
+### `keadm ctl` Extension
+
+We can add the subcommand to `keadm ctl` as followings.
+
+```bash
+keadm ctl unhold-upgrade pod <pod-name>   ### release the specific pod upgrade only
+keadm ctl unhold-upgrade node   ### release the node wide upgrade, all help-upgrade pods are restarted
+```
+
+These commands internally call on newly developed MetaServer handlers via MetaService APIs described above to send the unhold signal.
 
 ### Testing
 
-- **T.B.D**
+- Corresponding test should be added align with `kubeedge/edge/pkg/metamanager/metaserver/handlerfactory/extend_confirm_upgrade_test.go`.
 
 ## Consideration
 
-- **T.B.D**
+- What kinds of resource need to be managed and controlled by this new feature?
+  Currently Pod, Deployments, StatefulSets, DaemonSets are in scope, but what about ConfigMaps and Secrets?
+  Those are likely to be bound to the workloads, and it does not automatically rebound the configuration to the workloads unless the workloads are restarted and redeployed.
+  So I would suggest that ConfigMaps and Secrets are out of scope for this feature at this moment.
+
+  | Resource | Control Required | Description / Reason |
+  | -------- | ---------------- | -------------------- |
+  | **Pods**           | ✅ Yes    | Primary unit of runtime workload. Restart affects running application. |
+  | **Deployments**    | ✅ Yes    | Controls rollout strategy. Might recreate Pods if spec changes. |
+  | **StatefulSets**   | ✅ Yes    | Stateful services (like databases); restart or scale could be dangerous. |
+  | **DaemonSets**     | ✅ Yes    | Often used in edge use-cases for agents, telemetry, etc. |
+  | **ConfigMaps**     | ⚠️ *Maybe* | Apps *mount* or *env-inject* values; updates have no effect unless pod restarts. |
+  | **Secrets**        | ⚠️ *Maybe* | Same behavior as ConfigMaps — no automatic propagation into running Pods. |
+  | **CRDs / Volumes** | ❓ Maybe   | Depending on use case. Might not require gating, but may be referenced indirectly. |
 
 ## Additional Note
 
-- **T.B.D**
+- N.A
