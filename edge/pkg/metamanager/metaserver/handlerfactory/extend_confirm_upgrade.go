@@ -97,7 +97,7 @@ func doUpgrade(jobname, nodename string, spec *operationsv1alpha2.NodeUpgradeJob
 		return fmt.Errorf("failed to marshal NodeUpgradeJobSpec to json, err: %v", err)
 	}
 	runner.RunAction(context.Background(), jobname, nodename,
-		string(operationsv1alpha2.NodeUpgradeJobActionUpgrade), specData)
+		string(operationsv1alpha2.NodeUpgradeJobActionBackUp), specData)
 	return nil
 }
 

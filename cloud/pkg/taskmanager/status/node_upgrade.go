@@ -60,6 +60,7 @@ func tryUpdateNodeUpgradeJobStatus(ctx context.Context, cli crdcliset.Interface,
 	}
 
 	nodeStatus.Phase = opts.Phase
+	nodeStatus.Reason = opts.Reason
 	if opts.ExtendInfo != "" {
 		fromVer, toVer, err := taskmsg.ParseNodeUpgradeJobExtend(opts.ExtendInfo)
 		if err != nil {
