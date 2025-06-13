@@ -150,6 +150,11 @@ func TestGetLocalIP(t *testing.T) {
 	assert.NoError(err)
 	assert.NotEmpty(ip)
 
+	chooseHostPatch := gomonkey.ApplyFunc(utilnet.ChooseHostInterface, func() (net.IP, error) {
+		return nil, fmt.Errorf("no interface found")
+	})
+	defer chooseHostPatch.Reset()
+
 	patches := gomonkey.ApplyFunc(net.LookupIP, func(host string) ([]net.IP, error) {
 		return []net.IP{
 			net.ParseIP("fe80::1"),
@@ -199,15 +204,6 @@ func TestGetLocalIP(t *testing.T) {
 		return []net.IP{}, nil
 	})
 	defer lookupPatch.Reset()
-
-	chooseHostPatch := gomonkey.ApplyFunc(utilnet.ChooseHostInterface, func() (net.IP, error) {
-		return nil, fmt.Errorf("no interface found")
-	})
-	defer chooseHostPatch.Reset()
-
-	if err != nil {
-		assert.Contains(err.Error(), "no interface found")
-	}
 }
 
 func TestSpliceErrors(t *testing.T) {
