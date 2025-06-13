@@ -104,7 +104,7 @@ func (h *ConfigUpdateJobHandler) UpdateNodeTaskStatus(
 			wg.Done()
 		},
 	}
-	status.GetImagePrePullJobStatusUpdater().UpdateStatus(opts)
+	status.GetConfigeUpdateJobStatusUpdater().UpdateStatus(opts)
 	wg.Wait()
 	return err
 }
