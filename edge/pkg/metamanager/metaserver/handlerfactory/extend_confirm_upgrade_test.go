@@ -171,7 +171,7 @@ func TestConfirmUpgradeDoUpgrade(t *testing.T) {
 			runActionCalled = true
 			assert.Equal(t, jobName, jobname)
 			assert.Equal(t, nodeName, nodename)
-			assert.Equal(t, string(operationsv1alpha2.NodeUpgradeJobActionUpgrade), action)
+			assert.Equal(t, string(operationsv1alpha2.NodeUpgradeJobActionBackUp), action)
 		})
 	err := doUpgrade(jobName, nodeName, &operationsv1alpha2.NodeUpgradeJobSpec{})
 	require.NoError(t, err)
