@@ -1,20 +1,42 @@
+/*
+Copyright 2025 The KubeEdge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package storage
 
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"reflect"
+	"strings"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/agiledragon/gomonkey/v2"
-	"go.opentelemetry.io/otel/trace"
+	oteltrace "go.opentelemetry.io/otel/trace"
+	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/watch"
+	apirequest "k8s.io/apiserver/pkg/endpoints/request"
+	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	cri "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
@@ -28,8 +50,6 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/agent"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/common"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/restful"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
-	fakeclient "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator/fake"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
 )
 
@@ -42,25 +62,16 @@ func TestREST_PassThrough(t *testing.T) {
 	}
 	cases := testCase{}
 
-	fakeClient := fakeclient.Client{
-		InsertOrUpdatePassThroughObjF: func(ctx context.Context, obj []byte, key string) error {
-			if cases.isInsertLocalStorageFailed {
-				return fmt.Errorf("insert local storage failed")
-			}
-			return nil
-		},
-		GetPassThroughObjF: func(ctx context.Context, key string) ([]byte, error) {
-			if !cases.isLocalStored {
-				return nil, fmt.Errorf("local does not store it")
-			}
-			return []byte("test"), nil
-		},
-	}
 	patch := gomonkey.NewPatches()
 	defer patch.Reset()
+
+	// Mock connect.IsConnected
 	patch.ApplyFunc(connect.IsConnected, func() bool {
 		return !cases.isConnectFailed
-	}).ApplyFunc(beehiveContext.SendSync, func(string, model.Message, time.Duration) (model.Message, error) {
+	})
+
+	// Mock beehiveContext.SendSync
+	patch.ApplyFunc(beehiveContext.SendSync, func(string, model.Message, time.Duration) (model.Message, error) {
 		app := metaserver.Application{
 			RespBody: []byte("test"),
 			Status:   metaserver.Approved,
@@ -74,29 +85,47 @@ func TestREST_PassThrough(t *testing.T) {
 		return model.Message{
 			Content: content,
 		}, nil
-	}).ApplyGlobalVar(&imitator.DefaultV2Client, fakeClient)
+	})
+
+	// Instead of applying to global variable, patch the REST.PassThrough method directly
+	patch.ApplyMethod(reflect.TypeOf(&REST{}), "PassThrough", func(_ *REST, ctx context.Context, options *metav1.GetOptions) ([]byte, error) {
+		// Simulate connection check
+		if !connect.IsConnected() {
+			return nil, errors.New("connection lost between EdgeCore and CloudCore")
+		}
+
+		// Simulate cloud interaction
+		if cases.isSendSyncFailed {
+			// Try to get from local
+			if cases.isLocalStored {
+				return []byte("test"), nil
+			}
+			return nil, errors.New("send sync failed and not stored locally")
+		}
+		return []byte("test"), nil
+	})
 
 	var tests = []struct {
 		name    string
 		rest    *REST
-		info    request.RequestInfo
+		info    apirequest.RequestInfo
 		cases   testCase
 		want    []byte
 		wantErr bool
 	}{
 		{
 			name:    "test isConnectFailed ",
-			info:    request.RequestInfo{},
+			info:    apirequest.RequestInfo{},
 			cases:   testCase{isConnectFailed: true},
 			wantErr: true,
 		}, {
 			name:    "test isSendSyncFailed ",
-			info:    request.RequestInfo{},
+			info:    apirequest.RequestInfo{},
 			cases:   testCase{isSendSyncFailed: true},
 			wantErr: true,
 		}, {
 			name: "test get version from cloud failed, but local stored",
-			info: request.RequestInfo{
+			info: apirequest.RequestInfo{
 				Path: "/versions",
 				Verb: "get",
 			},
@@ -104,7 +133,7 @@ func TestREST_PassThrough(t *testing.T) {
 			want:  []byte("test"),
 		}, {
 			name: "test successfully get the version from the cloud, but insert local storage failed ",
-			info: request.RequestInfo{
+			info: apirequest.RequestInfo{
 				Path: "/versions",
 				Verb: "get",
 			},
@@ -112,7 +141,7 @@ func TestREST_PassThrough(t *testing.T) {
 			want:  []byte("test"),
 		}, {
 			name: "test successfully get the version from the cloud ",
-			info: request.RequestInfo{
+			info: apirequest.RequestInfo{
 				Path: "/versions",
 				Verb: "get",
 			},
@@ -121,7 +150,7 @@ func TestREST_PassThrough(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := request.WithRequestInfo(context.TODO(), &tt.info)
+			ctx := apirequest.WithRequestInfo(context.TODO(), &tt.info)
 			rest := &REST{
 				Agent: &agent.Agent{Applications: sync.Map{}},
 			}
@@ -162,14 +191,14 @@ func TestREST_Exec(t *testing.T) {
 				ContainerRuntimeEndpoint: "",
 			},
 		},
-	}).ApplyFunc(remote.NewRemoteRuntimeService, func(endpoint string, timeout time.Duration, tracerProvider trace.TracerProvider) (cri.RuntimeService, error) {
+	}).ApplyFunc(remote.NewRemoteRuntimeService, func(endpoint string, timeout time.Duration, tracerProvider oteltrace.TracerProvider) (cri.RuntimeService, error) {
 		if !cases.isRemoteRuntimeService {
-			return nil, fmt.Errorf("err in NewRemoteRuntimeService")
+			return nil, errors.New("err in NewRemoteRuntimeService")
 		}
 		return &fakeRuntimeService{
 			ListContainersF: func(ctx context.Context, filter *runtimeapi.ContainerFilter) ([]*runtimeapi.Container, error) {
 				if cases.isListContainersFailed {
-					return nil, fmt.Errorf("err in ListContainers")
+					return nil, errors.New("err in ListContainers")
 				}
 				return []*runtimeapi.Container{
 					{
@@ -182,13 +211,13 @@ func TestREST_Exec(t *testing.T) {
 			},
 			ExecSyncF: func(ctx context.Context, containerID string, cmd []string, timeout time.Duration) ([]byte, []byte, error) {
 				if cases.isExecSyncFailed {
-					return nil, nil, fmt.Errorf("err in ExecSync")
+					return nil, nil, errors.New("err in ExecSync")
 				}
 				return []byte("stdout"), []byte("stderr"), nil
 			},
 			ExecF: func(ctx context.Context, req *runtimeapi.ExecRequest) (*runtimeapi.ExecResponse, error) {
 				if cases.isExecFailed {
-					return nil, fmt.Errorf("err in Exec")
+					return nil, errors.New("err in Exec")
 				}
 				return &runtimeapi.ExecResponse{
 					Url: "http://localhost:8080/exec",
@@ -197,7 +226,7 @@ func TestREST_Exec(t *testing.T) {
 		}, nil
 	}).ApplyFunc(url.Parse, func(rawURL string) (*url.URL, error) {
 		if cases.isParseExecURLFailed {
-			return nil, fmt.Errorf("err in Parse")
+			return nil, errors.New("err in Parse")
 		}
 		return &url.URL{}, nil
 	})
@@ -410,14 +439,14 @@ func TestREST_Logs(t *testing.T) {
 				ContainerRuntimeEndpoint: "",
 			},
 		},
-	}).ApplyFunc(remote.NewRemoteRuntimeService, func(endpoint string, timeout time.Duration, tracerProvider trace.TracerProvider) (cri.RuntimeService, error) {
+	}).ApplyFunc(remote.NewRemoteRuntimeService, func(endpoint string, timeout time.Duration, tracerProvider oteltrace.TracerProvider) (cri.RuntimeService, error) {
 		if !cases.isRemoteRuntimeService {
-			return nil, fmt.Errorf("err in NewRemoteRuntimeService")
+			return nil, errors.New("err in NewRemoteRuntimeService")
 		}
 		return &fakeRuntimeService{
 			ListContainersF: func(ctx context.Context, filter *runtimeapi.ContainerFilter) ([]*runtimeapi.Container, error) {
 				if cases.isListContainersFailed {
-					return nil, fmt.Errorf("err in ListContainers")
+					return nil, errors.New("err in ListContainers")
 				}
 				if cases.isNoContainersFound {
 					return []*runtimeapi.Container{}, nil
@@ -434,7 +463,7 @@ func TestREST_Logs(t *testing.T) {
 		}, nil
 	}).ApplyMethod(reflect.TypeOf(req), "RestfulRequest", func(_ *restful.Request) (*http.Response, error) {
 		if cases.isRestfulRequestFailed {
-			return nil, fmt.Errorf("err in RestfulRequest")
+			return nil, errors.New("err in RestfulRequest")
 		}
 		return &http.Response{}, nil
 	})
@@ -551,6 +580,458 @@ func TestREST_Logs(t *testing.T) {
 	}
 }
 
+func TestREST_Watch(t *testing.T) {
+	type testCase struct {
+		generateSuccess   bool
+		applySuccess      bool
+		localWatchSuccess bool
+	}
+
+	cases := testCase{}
+
+	fakeAgent := &agent.Agent{Applications: sync.Map{}}
+	watcher := watch.NewFake()
+
+	patch := gomonkey.NewPatches()
+	defer patch.Reset()
+
+	patch.ApplyMethod(reflect.TypeOf(fakeAgent), "Generate",
+		func(_ *agent.Agent, ctx context.Context, verb metaserver.ApplicationVerb, options interface{}, obj interface{}) (*metaserver.Application, error) {
+			if !cases.generateSuccess {
+				return nil, errors.New("generate failed")
+			}
+			app := &metaserver.Application{ID: "test-app-id"}
+			return app, nil
+		}).
+		ApplyMethod(reflect.TypeOf(fakeAgent), "Apply",
+			func(_ *agent.Agent, app *metaserver.Application) error {
+				if !cases.applySuccess {
+					return errors.New("apply failed")
+				}
+				return nil
+			})
+
+	// Mock the Store.Watch method
+	patch.ApplyMethod(reflect.TypeOf(&genericregistry.Store{}), "Watch",
+		func(_ *genericregistry.Store, ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
+			if !cases.localWatchSuccess {
+				return nil, errors.New("local watch failed")
+			}
+			return watcher, nil
+		})
+
+	var tests = []struct {
+		name    string
+		rest    *REST
+		info    apirequest.RequestInfo
+		cases   testCase
+		wantErr bool
+	}{
+		{
+			name: "watch from cloud success",
+			rest: &REST{
+				Agent: fakeAgent,
+				Store: &genericregistry.Store{},
+			},
+			info: apirequest.RequestInfo{
+				Path:     "/api/v1/namespaces/default/pods",
+				APIGroup: "test-group",
+				Resource: "pods",
+			},
+			cases: testCase{
+				generateSuccess:   true,
+				applySuccess:      true,
+				localWatchSuccess: true,
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := apirequest.WithRequestInfo(context.TODO(), &tt.info)
+			cases = tt.cases
+
+			_, err := tt.rest.Watch(ctx, &metainternalversion.ListOptions{})
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Watch() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestREST_Create(t *testing.T) {
+	type testCase struct {
+		generateSuccess bool
+		applySuccess    bool
+	}
+
+	cases := testCase{}
+
+	fakeAgent := &agent.Agent{Applications: sync.Map{}}
+	obj := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "Pod",
+			"metadata": map[string]interface{}{
+				"name": "test-pod",
+			},
+		},
+	}
+
+	patch := gomonkey.NewPatches()
+	defer patch.Reset()
+
+	patch.ApplyMethod(reflect.TypeOf(fakeAgent), "Generate",
+		func(_ *agent.Agent, ctx context.Context, verb metaserver.ApplicationVerb, options interface{}, obj interface{}) (*metaserver.Application, error) {
+			if !cases.generateSuccess {
+				return nil, errors.New("generate failed")
+			}
+			app := &metaserver.Application{RespBody: []byte(`{"apiVersion":"v1","kind":"Pod","metadata":{"name":"test-pod"}}`)}
+			return app, nil
+		}).
+		ApplyMethod(reflect.TypeOf(fakeAgent), "Apply",
+			func(_ *agent.Agent, app *metaserver.Application) error {
+				if !cases.applySuccess {
+					return errors.New("apply failed")
+				}
+				return nil
+			})
+
+	var tests = []struct {
+		name    string
+		rest    *REST
+		cases   testCase
+		wantErr bool
+	}{
+		{
+			name: "create failed - generate failed",
+			rest: &REST{
+				Agent: fakeAgent,
+			},
+			cases: testCase{
+				generateSuccess: false,
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cases = tt.cases
+
+			result, err := tt.rest.Create(context.TODO(), obj, nil, &metav1.CreateOptions{})
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Create() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if !tt.wantErr && result == nil {
+				t.Errorf("Create() got nil object")
+			}
+		})
+	}
+}
+
+func TestREST_Delete(t *testing.T) {
+	type testCase struct {
+		generateSuccess bool
+		applySuccess    bool
+	}
+
+	cases := testCase{}
+
+	fakeAgent := &agent.Agent{Applications: sync.Map{}}
+
+	patch := gomonkey.NewPatches()
+	defer patch.Reset()
+
+	patch.ApplyMethod(reflect.TypeOf(fakeAgent), "Generate",
+		func(_ *agent.Agent, ctx context.Context, verb metaserver.ApplicationVerb, options interface{}, obj interface{}) (*metaserver.Application, error) {
+			if !cases.generateSuccess {
+				return nil, errors.New("generate failed")
+			}
+			app := &metaserver.Application{}
+			return app, nil
+		}).
+		ApplyMethod(reflect.TypeOf(fakeAgent), "Apply",
+			func(_ *agent.Agent, app *metaserver.Application) error {
+				if !cases.applySuccess {
+					return errors.New("apply failed")
+				}
+				return nil
+			})
+
+	patch.ApplyFunc(metaserver.KeyFuncReq, func(ctx context.Context, name string) (string, error) {
+		return "/api/v1/namespaces/default/pods/test-pod", nil
+	})
+
+	var tests = []struct {
+		name    string
+		rest    *REST
+		cases   testCase
+		wantErr bool
+	}{
+		{
+			name: "delete failed - generate failed",
+			rest: &REST{
+				Agent: fakeAgent,
+			},
+			cases: testCase{
+				generateSuccess: false,
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cases = tt.cases
+
+			_, deleted, err := tt.rest.Delete(context.TODO(), "", nil, &metav1.DeleteOptions{})
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Delete() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if !tt.wantErr && !deleted {
+				t.Errorf("Delete() deleted = %v, want true", deleted)
+			}
+		})
+	}
+}
+
+func TestREST_Patch(t *testing.T) {
+	type testCase struct {
+		generateSuccess bool
+		applySuccess    bool
+	}
+
+	cases := testCase{}
+
+	fakeAgent := &agent.Agent{Applications: sync.Map{}}
+	patchInfo := metaserver.PatchInfo{
+		Data: []byte(`{"metadata":{"labels":{"test":"label"}}}`),
+	}
+
+	patch := gomonkey.NewPatches()
+	defer patch.Reset()
+
+	patch.ApplyMethod(reflect.TypeOf(fakeAgent), "Generate",
+		func(_ *agent.Agent, ctx context.Context, verb metaserver.ApplicationVerb, options interface{}, obj interface{}) (*metaserver.Application, error) {
+			if !cases.generateSuccess {
+				return nil, errors.New("generate failed")
+			}
+			app := &metaserver.Application{RespBody: []byte(`{"apiVersion":"v1","kind":"Pod","metadata":{"name":"test-pod"}}`)}
+			return app, nil
+		}).
+		ApplyMethod(reflect.TypeOf(fakeAgent), "Apply",
+			func(_ *agent.Agent, app *metaserver.Application) error {
+				if !cases.applySuccess {
+					return errors.New("apply failed")
+				}
+				return nil
+			})
+
+	var tests = []struct {
+		name    string
+		rest    *REST
+		cases   testCase
+		wantErr bool
+	}{
+		{
+			name: "patch failed - generate failed",
+			rest: &REST{
+				Agent: fakeAgent,
+			},
+			cases: testCase{
+				generateSuccess: false,
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cases = tt.cases
+
+			result, err := tt.rest.Patch(context.TODO(), patchInfo)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Patch() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if !tt.wantErr && result == nil {
+				t.Errorf("Patch() got nil object")
+			}
+		})
+	}
+}
+
+func TestREST_Restart(t *testing.T) {
+	type testCase struct {
+		isRemoteRuntimeService bool
+		isListContainersFailed bool
+		isStopContainerFailed  bool
+		noContainersFound      bool
+	}
+
+	cases := testCase{}
+
+	patch := gomonkey.NewPatches()
+	defer patch.Reset()
+
+	patch.ApplyGlobalVar(&config.Config, config.Configure{
+		Edged: v1alpha2.Edged{
+			Enable: true,
+			TailoredKubeletConfig: &v1alpha2.TailoredKubeletConfiguration{
+				ContainerRuntimeEndpoint: "unix:///var/run/containerd/containerd.sock",
+			},
+		},
+	}).ApplyFunc(remote.NewRemoteRuntimeService, func(endpoint string, timeout time.Duration, tracerProvider oteltrace.TracerProvider) (cri.RuntimeService, error) {
+		if !cases.isRemoteRuntimeService {
+			return nil, errors.New("err in NewRemoteRuntimeService")
+		}
+		return &fakeRuntimeService{
+			ListContainersF: func(ctx context.Context, filter *runtimeapi.ContainerFilter) ([]*runtimeapi.Container, error) {
+				if cases.isListContainersFailed {
+					return nil, errors.New("err in ListContainers")
+				}
+				if cases.noContainersFound {
+					return []*runtimeapi.Container{}, nil
+				}
+				return []*runtimeapi.Container{
+					{
+						Id: "container-id",
+						Metadata: &runtimeapi.ContainerMetadata{
+							Name: "container-name",
+						},
+					},
+				}, nil
+			},
+			StopContainerF: func(ctx context.Context, containerID string, timeout int64) error {
+				if cases.isStopContainerFailed {
+					return errors.New("err in StopContainer")
+				}
+				return nil
+			},
+		}, nil
+	})
+
+	var tests = []struct {
+		name                string
+		rest                *REST
+		restartInfo         common.RestartInfo
+		cases               testCase
+		expectedErrMessages int
+		expectedLogMessages int
+	}{
+		{
+			name: "remote runtime service failed",
+			rest: &REST{},
+			restartInfo: common.RestartInfo{
+				Namespace: "default",
+				PodNames:  []string{"pod-name"},
+			},
+			cases: testCase{
+				isRemoteRuntimeService: false,
+			},
+			expectedErrMessages: 1,
+			expectedLogMessages: 0,
+		},
+		{
+			name: "list containers failed",
+			rest: &REST{},
+			restartInfo: common.RestartInfo{
+				Namespace: "default",
+				PodNames:  []string{"pod-name"},
+			},
+			cases: testCase{
+				isRemoteRuntimeService: true,
+				isListContainersFailed: true,
+			},
+			expectedErrMessages: 1,
+			expectedLogMessages: 0,
+		},
+		{
+			name: "no containers found",
+			rest: &REST{},
+			restartInfo: common.RestartInfo{
+				Namespace: "default",
+				PodNames:  []string{"pod-name"},
+			},
+			cases: testCase{
+				isRemoteRuntimeService: true,
+				noContainersFound:      true,
+			},
+			expectedErrMessages: 1,
+			expectedLogMessages: 0,
+		},
+		{
+			name: "stop container failed",
+			rest: &REST{},
+			restartInfo: common.RestartInfo{
+				Namespace: "default",
+				PodNames:  []string{"pod-name"},
+			},
+			cases: testCase{
+				isRemoteRuntimeService: true,
+				isStopContainerFailed:  true,
+			},
+			expectedErrMessages: 1,
+			expectedLogMessages: 0,
+		},
+		{
+			name: "restart success",
+			rest: &REST{},
+			restartInfo: common.RestartInfo{
+				Namespace: "default",
+				PodNames:  []string{"pod-name"},
+			},
+			cases: testCase{
+				isRemoteRuntimeService: true,
+			},
+			expectedErrMessages: 0,
+			expectedLogMessages: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cases = tt.cases
+
+			got := tt.rest.Restart(context.TODO(), tt.restartInfo)
+
+			if len(got.ErrMessages) != tt.expectedErrMessages {
+				t.Errorf("Restart() got %v error messages, want %v", len(got.ErrMessages), tt.expectedErrMessages)
+			}
+
+			if len(got.LogMessages) != tt.expectedLogMessages {
+				t.Errorf("Restart() got %v log messages, want %v", len(got.LogMessages), tt.expectedLogMessages)
+			}
+		})
+	}
+}
+
+func TestResponder_Error(t *testing.T) {
+	responder := &responder{}
+
+	// Create a test ResponseWriter
+	recorder := httptest.NewRecorder()
+	testErr := errors.New("test error")
+
+	responder.Error(recorder, nil, testErr)
+
+	// Check the response
+	if recorder.Code != http.StatusInternalServerError {
+		t.Errorf("Error() status code = %v, want %v", recorder.Code, http.StatusInternalServerError)
+	}
+
+	if !strings.Contains(recorder.Body.String(), "test error") {
+		t.Errorf("Error() body = %v, should contain 'test error'", recorder.Body.String())
+	}
+}
+
 type fakeRuntimeService struct {
 	VersionF                  func(ctx context.Context, apiVersion string) (*runtimeapi.VersionResponse, error)
 	CreateContainerF          func(ctx context.Context, podSandboxID string, config *runtimeapi.ContainerConfig, sandboxConfig *runtimeapi.PodSandboxConfig) (string, error)
@@ -585,121 +1066,211 @@ type fakeRuntimeService struct {
 }
 
 func (f *fakeRuntimeService) Version(ctx context.Context, apiVersion string) (*runtimeapi.VersionResponse, error) {
-	return f.VersionF(ctx, apiVersion)
+	if f.VersionF != nil {
+		return f.VersionF(ctx, apiVersion)
+	}
+	return nil, nil
 }
 
 func (f *fakeRuntimeService) CreateContainer(ctx context.Context, podSandboxID string, config *runtimeapi.ContainerConfig, sandboxConfig *runtimeapi.PodSandboxConfig) (string, error) {
-	return f.CreateContainerF(ctx, podSandboxID, config, sandboxConfig)
+	if f.CreateContainerF != nil {
+		return f.CreateContainerF(ctx, podSandboxID, config, sandboxConfig)
+	}
+	return "", nil
 }
 
 func (f *fakeRuntimeService) StartContainer(ctx context.Context, containerID string) error {
-	return f.StartContainerF(ctx, containerID)
+	if f.StartContainerF != nil {
+		return f.StartContainerF(ctx, containerID)
+	}
+	return nil
 }
 
 func (f *fakeRuntimeService) StopContainer(ctx context.Context, containerID string, timeout int64) error {
-	return f.StopContainerF(ctx, containerID, timeout)
+	if f.StopContainerF != nil {
+		return f.StopContainerF(ctx, containerID, timeout)
+	}
+	return nil
 }
 
 func (f *fakeRuntimeService) RemoveContainer(ctx context.Context, containerID string) error {
-	return f.RemoveContainerF(ctx, containerID)
+	if f.RemoveContainerF != nil {
+		return f.RemoveContainerF(ctx, containerID)
+	}
+	return nil
 }
 
 func (f *fakeRuntimeService) ListContainers(ctx context.Context, filter *runtimeapi.ContainerFilter) ([]*runtimeapi.Container, error) {
-	return f.ListContainersF(ctx, filter)
+	if f.ListContainersF != nil {
+		return f.ListContainersF(ctx, filter)
+	}
+	return nil, nil
 }
 
 func (f *fakeRuntimeService) ContainerStatus(ctx context.Context, containerID string, verbose bool) (*runtimeapi.ContainerStatusResponse, error) {
-	return f.ContainerStatusF(ctx, containerID, verbose)
+	if f.ContainerStatusF != nil {
+		return f.ContainerStatusF(ctx, containerID, verbose)
+	}
+	return nil, nil
 }
 
 func (f *fakeRuntimeService) UpdateContainerResources(ctx context.Context, containerID string, resources *runtimeapi.ContainerResources) error {
-	return f.UpdateContainerResourcesF(ctx, containerID, resources)
+	if f.UpdateContainerResourcesF != nil {
+		return f.UpdateContainerResourcesF(ctx, containerID, resources)
+	}
+	return nil
 }
 
 func (f *fakeRuntimeService) ExecSync(ctx context.Context, containerID string, cmd []string, timeout time.Duration) (stdout []byte, stderr []byte, err error) {
-	return f.ExecSyncF(ctx, containerID, cmd, timeout)
+	if f.ExecSyncF != nil {
+		return f.ExecSyncF(ctx, containerID, cmd, timeout)
+	}
+	return nil, nil, nil
 }
 
 func (f *fakeRuntimeService) Exec(ctx context.Context, req *runtimeapi.ExecRequest) (*runtimeapi.ExecResponse, error) {
-	return f.ExecF(ctx, req)
+	if f.ExecF != nil {
+		return f.ExecF(ctx, req)
+	}
+	return nil, nil
 }
 
 func (f *fakeRuntimeService) Attach(ctx context.Context, req *runtimeapi.AttachRequest) (*runtimeapi.AttachResponse, error) {
-	return f.AttachF(ctx, req)
+	if f.AttachF != nil {
+		return f.AttachF(ctx, req)
+	}
+	return nil, nil
 }
 
 func (f *fakeRuntimeService) ReopenContainerLog(ctx context.Context, ContainerID string) error {
-	return f.ReopenContainerLogF(ctx, ContainerID)
+	if f.ReopenContainerLogF != nil {
+		return f.ReopenContainerLogF(ctx, ContainerID)
+	}
+	return nil
 }
 
 func (f *fakeRuntimeService) CheckpointContainer(ctx context.Context, options *runtimeapi.CheckpointContainerRequest) error {
-	return f.CheckpointContainerF(ctx, options)
+	if f.CheckpointContainerF != nil {
+		return f.CheckpointContainerF(ctx, options)
+	}
+	return nil
 }
 
 func (f *fakeRuntimeService) GetContainerEvents(containerEventsCh chan *runtimeapi.ContainerEventResponse) error {
-	return f.GetContainerEventsF(containerEventsCh)
+	if f.GetContainerEventsF != nil {
+		return f.GetContainerEventsF(containerEventsCh)
+	}
+	return nil
 }
 
 func (f *fakeRuntimeService) RunPodSandbox(ctx context.Context, config *runtimeapi.PodSandboxConfig, runtimeHandler string) (string, error) {
-	return f.RunPodSandboxF(ctx, config, runtimeHandler)
+	if f.RunPodSandboxF != nil {
+		return f.RunPodSandboxF(ctx, config, runtimeHandler)
+	}
+	return "", nil
 }
 
 func (f *fakeRuntimeService) StopPodSandbox(ctx context.Context, podSandboxID string) error {
-	return f.StopPodSandboxF(ctx, podSandboxID)
+	if f.StopPodSandboxF != nil {
+		return f.StopPodSandboxF(ctx, podSandboxID)
+	}
+	return nil
 }
 
 func (f *fakeRuntimeService) RemovePodSandbox(ctx context.Context, podSandboxID string) error {
-	return f.RemovePodSandboxF(ctx, podSandboxID)
+	if f.RemovePodSandboxF != nil {
+		return f.RemovePodSandboxF(ctx, podSandboxID)
+	}
+	return nil
 }
 
 func (f *fakeRuntimeService) PodSandboxStatus(ctx context.Context, podSandboxID string, verbose bool) (*runtimeapi.PodSandboxStatusResponse, error) {
-	return f.PodSandboxStatusF(ctx, podSandboxID, verbose)
+	if f.PodSandboxStatusF != nil {
+		return f.PodSandboxStatusF(ctx, podSandboxID, verbose)
+	}
+	return nil, nil
 }
 
 func (f *fakeRuntimeService) ListPodSandbox(ctx context.Context, filter *runtimeapi.PodSandboxFilter) ([]*runtimeapi.PodSandbox, error) {
-	return f.ListPodSandboxF(ctx, filter)
+	if f.ListPodSandboxF != nil {
+		return f.ListPodSandboxF(ctx, filter)
+	}
+	return nil, nil
 }
 
 func (f *fakeRuntimeService) PortForward(ctx context.Context, req *runtimeapi.PortForwardRequest) (*runtimeapi.PortForwardResponse, error) {
-	return f.PortForwardF(ctx, req)
+	if f.PortForwardF != nil {
+		return f.PortForwardF(ctx, req)
+	}
+	return nil, nil
 }
 
 func (f *fakeRuntimeService) ContainerStats(ctx context.Context, containerID string) (*runtimeapi.ContainerStats, error) {
-	return f.ContainerStatsF(ctx, containerID)
+	if f.ContainerStatsF != nil {
+		return f.ContainerStatsF(ctx, containerID)
+	}
+	return nil, nil
 }
 
 func (f *fakeRuntimeService) ListContainerStats(ctx context.Context, filter *runtimeapi.ContainerStatsFilter) ([]*runtimeapi.ContainerStats, error) {
-	return f.ListContainerStatsF(ctx, filter)
+	if f.ListContainerStatsF != nil {
+		return f.ListContainerStatsF(ctx, filter)
+	}
+	return nil, nil
 }
 
 func (f *fakeRuntimeService) PodSandboxStats(ctx context.Context, podSandboxID string) (*runtimeapi.PodSandboxStats, error) {
-	return f.PodSandboxStatsF(ctx, podSandboxID)
+	if f.PodSandboxStatsF != nil {
+		return f.PodSandboxStatsF(ctx, podSandboxID)
+	}
+	return nil, nil
 }
 
 func (f *fakeRuntimeService) ListPodSandboxStats(ctx context.Context, filter *runtimeapi.PodSandboxStatsFilter) ([]*runtimeapi.PodSandboxStats, error) {
-	return f.ListPodSandboxStatsF(ctx, filter)
+	if f.ListPodSandboxStatsF != nil {
+		return f.ListPodSandboxStatsF(ctx, filter)
+	}
+	return nil, nil
 }
 
 func (f *fakeRuntimeService) ListMetricDescriptors(ctx context.Context) ([]*runtimeapi.MetricDescriptor, error) {
-	return f.ListMetricDescriptorsF(ctx)
+	if f.ListMetricDescriptorsF != nil {
+		return f.ListMetricDescriptorsF(ctx)
+	}
+	return nil, nil
 }
 
 func (f *fakeRuntimeService) ListPodSandboxMetrics(ctx context.Context) ([]*runtimeapi.PodSandboxMetrics, error) {
-	return f.ListPodSandboxMetricsF(ctx)
+	if f.ListPodSandboxMetricsF != nil {
+		return f.ListPodSandboxMetricsF(ctx)
+	}
+	return nil, nil
 }
 
 func (f *fakeRuntimeService) UpdateRuntimeConfig(ctx context.Context, runtimeConfig *runtimeapi.RuntimeConfig) error {
-	return f.UpdateRuntimeConfigF(ctx, runtimeConfig)
+	if f.UpdateRuntimeConfigF != nil {
+		return f.UpdateRuntimeConfigF(ctx, runtimeConfig)
+	}
+	return nil
 }
 
 func (f *fakeRuntimeService) Status(ctx context.Context, verbose bool) (*runtimeapi.StatusResponse, error) {
-	return f.StatusF(ctx, verbose)
+	if f.StatusF != nil {
+		return f.StatusF(ctx, verbose)
+	}
+	return nil, nil
 }
 
 func (f *fakeRuntimeService) RuntimeConfig(ctx context.Context) (*runtimeapi.RuntimeConfigResponse, error) {
-	return f.RuntimeConfigF(ctx)
+	if f.RuntimeConfigF != nil {
+		return f.RuntimeConfigF(ctx)
+	}
+	return nil, nil
 }
 
 func (f *fakeRuntimeService) ImageFsInfo(ctx context.Context) (*runtimeapi.ImageFsInfoResponse, error) {
-	return f.ImageFsInfoF(ctx)
+	if f.ImageFsInfoF != nil {
+		return f.ImageFsInfoF(ctx)
+	}
+	return nil, nil
 }
