@@ -17,7 +17,7 @@ Download v1.21.0 in the [v1.21.0 release page](https://github.com/kubeedge/kubee
 
 ### New Generation Node Task API and Implementation
 
-In version 1.21, we redesigned the status structure and operation process of node jobs to track error information and facilitate developers' understanding. In the new design, the node job status includes Phase (Init, InProgress, Completed, Failure) and nodeStatus. 
+In v1.21, we redesigned the status structure and operation process of node jobs to track error information and facilitate developers' understanding. In the new design, the node job status includes Phase (Init, InProgress, Completed, Failure) and nodeStatus. 
 The nodeStatus consists of Phase (Pending, InProgress, Successful, Failure, Unknown), actionFlow, nodeName, reason, and business-related fields. 
 A YAML example of the NodeUpgradeJob status is provided below.
 ```yaml
@@ -47,7 +47,7 @@ Refer to the link for more details.([#6082](https://github.com/kubeedge/kubeedge
 
 ### Support Closed Loop Flow Control
 
-In version 1.21, we have optimized the traffic closed-loop function of node groups. Applications within a node group can only access application services within the same group and unable to access services of other node groups. 
+In v1.21, we have optimized the traffic closed-loop function of node groups. Applications within a node group can only access application services within the same group and unable to access services of other node groups. 
 With this mechanism, users can easily achieve network isolation between multiple edge regions, ensuring that application services in different regions do not interfere with each other.
 
 Refer to the link for more details.([#6097](https://github.com/kubeedge/kubeedge/pull/6097), [#6077](https://github.com/kubeedge/kubeedge/pull/6077))
@@ -85,7 +85,7 @@ Refer to the link for more details.([#6338](https://github.com/kubeedge/kubeedge
 
 ### Support One-Click Deployment of Dashboard and Integration of kubeedge/keink
 
-In version 1.21, the dashboard functionality has been enhanced by designing a BFF (Backend for Frontend) layer to connect the frontend user interface layer with the KubeEdge backend API. 
+In v1.21, the dashboard functionality has been enhanced by designing a BFF (Backend for Frontend) layer to connect the frontend user interface layer with the KubeEdge backend API. 
 Additionally, the dashboard is integrated with the keink project, allowing users to launch a keink cluster in the dashboard environment with just one command to experience KubeEdge features.
 
 Refer to the link for more details.([#50](https://github.com/kubeedge/dashboard/pull/50))
@@ -107,7 +107,7 @@ Refer to the link for more details.([#50](https://github.com/kubeedge/dashboard/
     ```
 
 **Note:**
-The node job v1alpha2 CRDs are compatible with v1alpah1, but they **cannot be switched** between them. The code logic of v1alpha1 will destroy the data of v1alpha2 node job CR.
+The node job v1alpha2 CRDs are compatible with v1alpha1, but they **cannot be switched** between them. The code logic of v1alpha1 will destroy the data of v1alpha2 node job CR.
 
 The v1alpha1 node jobs will no longer be maintained, and relevant codes will be clean up after v1.23. In addition, the node job has become a default **disabled Beehive module** in EdgeCore. 
 If you want to use the node jobs, please modify the edgecore.yaml to enable it.
@@ -115,7 +115,7 @@ If you want to use the node jobs, please modify the edgecore.yaml to enable it.
   modules:
     ...
     taskManager:
-      enbale: true
+      enable: true
 ```
 
 - From v1.21, keadm upgrade related commands(backup, upgrade, rollback) at the edge have been adjusted.
