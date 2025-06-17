@@ -14,15 +14,17 @@ last-updated: 2025-XX-XX
 
 # Edge Resource Upgrade Control
 
-- [Motivation / Background](#motivation--background)
-- [Use cases](#use-cases)
-- [Proposal Design](#proposal-design)
-  - [Annotation](#annotation)
-  - [MetaServer/MetaService API](#metaservermetaservice-api)
-  - [`keadm ctl` Extension](#keadm-ctl-extension)
-  - [Testing](#testing)
-- [Consideration](#consideration)
-- [Additional Note](#additional-note)
+- [Edge Resource Upgrade Control](#edge-resource-upgrade-control)
+  - [Motivation / Background](#motivation--background)
+  - [Use cases](#use-cases)
+  - [Proposal Design](#proposal-design)
+    - [Cloud Side](#cloud-side)
+    - [Edge Side](#edge-side)
+    - [MetaServer/MetaService API](#metaservermetaservice-api)
+    - [`keadm ctl` Extension](#keadm-ctl-extension)
+    - [Testing](#testing)
+  - [Consideration](#consideration)
+  - [Additional Note](#additional-note)
 
 ## Motivation / Background
 
@@ -59,13 +61,36 @@ This feature enables us to control the update timing to confirm and release the 
 
 We can use annotations like `edge.kubeedge.io/hold-upgrade: "true"` on Deployments, StatefulSets, DaemonSets, etc., to indicate that their Pod updates should be held at the edge unless the edge system or application releases the lock.
 It propagates this state via a new PodCondition (e.g. `HoldUpgrade`) so the cloud knows that the update is deferred.
-Add a new MetaServer API and `keadm ctl command` (`keadm ctl unhold-upgrade pod <pod>` and `keadm ctl unhold-upgrade node`) to release the hold and allow the update to apply.
+Add a new MetaServer API and `keadm ctl command` (`keadm ctl unhold-upgrade pod <pod>` and `keadm ctl unhold-upgrade node`) to release the oold and allow the update to apply.
 
-### Annotation
+Below is the Hold Upgrade logic diagram we are concerned with. 
 
-We can define new annotation key, `edge.kubeedge.io/hold-upgrade: "true"`, then at cloud-side `EdgeController` can watch the events for Deployment/StatefulSet, detect annotation changes.
-When they are detected, it can set PodCondition `"HeldUpgrade": "True"` on newly created Pods and resources.
-And it should stop sending Pod UPDATE messages to edge for this resource group.
+For the normal version of the diagram, see [here](https://kubeedge.io/assets/images/meta-update-816c9e626d823c7cb36eaeda971be81e.png).
+
+![](../../images/edge-resource-upgrade-control/1.png)
+
+### Cloud Side
+
+On the cloud side, users can apply the annotation `edge.kubeedge.io/hold-upgrade: "true"` to resources such as `Deployments`, `StatefulSets`, or `DaemonSets`. These updates are propagated as usual through CloudCore to the corresponding edge nodes.
+
+> Note: CloudCore does not perform any additional logic or message interception for this feature. It simply relays resource updates downstream to the edge.
+
+### Edge Side
+
+When a resource is marked with the annotation `edge.kubeedge.io/hold-upgrade: "true"`, the MetaManager module on the edge intercepts and handles the update message before it reaches edged.
+
+**1. Check Hold Condition**
+
+Upon receiving a Pod update message:
+
+- Parse the incoming Pod metadata.
+- If the annotation `edge.kubeedge.io/hold-upgrade: "true"` is not present, forward the message to edged and process normally.
+- If the annotation is present, proceed with hold-handling logic.
+
+**2. Set PodCondition**
+
+MetaManager augments the incoming Pod object with the following condition:
+
 
 ```yaml
 status:
@@ -75,6 +100,40 @@ status:
       reason: UpdateHoldActive
       message: Pod upgrade is currently held at the edge.
 ```
+
+- This condition notifies both edge and cloud that the update is intentionally being held.
+- MetaManager sends a new Pod status update (with the HeldUpgrade condition) to edged.
+- edged then forwards this status to CloudCore, providing cluster-wide visibility.
+
+**3. Store the Latest Update**
+
+The original Pod update message (e.g., spec change like container image) is not sent to edged immediately.
+
+- Instead, it is stored in an internal map, keyed by Pod UID or name.
+
+- If a newer update arrives (e.g., a second image update):
+  - It replaces the existing entry in the map.
+  - This ensures only the latest version is retained for future application.
+
+**4. Acknowledge the Update to CloudCore**
+
+To avoid reconciliation loops:
+
+- MetaManager must acknowledge the original update message to CloudCore as "processed", even though the update is held.
+
+- This prevents CloudCore from detecting a spec/status mismatch and retrying the same update.
+
+> ⚠️ If this acknowledgment is missing or malformed, the cloud’s controller may continuously resend the update, causing flooding and update churn.
+
+**5. Apply Update on Confirmation**
+
+When the user explicitly confirms the upgrade (e.g., using keadm ctl unhold-upgrade), MetaManager:
+
+- MetaManager retrieves the held update message from the map.
+- Forwards it to edged for actual application.
+- Once applied, the HeldUpgrade condition is cleared in the next Pod status update cycle.
+- The map entry is deleted.
+
 
 ### MetaServer/MetaService API
 
@@ -102,15 +161,15 @@ These commands internally call on newly developed MetaServer handlers via MetaSe
   Those are likely to be bound to the workloads, and it does not automatically rebound the configuration to the workloads unless the workloads are restarted and redeployed.
   So I would suggest that ConfigMaps and Secrets are out of scope for this feature at this moment.
 
-  | Resource | Control Required | Description / Reason |
-  | -------- | ---------------- | -------------------- |
-  | **Pods**           | ✅ Yes    | Primary unit of runtime workload. Restart affects running application. |
-  | **Deployments**    | ✅ Yes    | Controls rollout strategy. Might recreate Pods if spec changes. |
-  | **StatefulSets**   | ✅ Yes    | Stateful services (like databases); restart or scale could be dangerous. |
-  | **DaemonSets**     | ✅ Yes    | Often used in edge use-cases for agents, telemetry, etc. |
-  | **ConfigMaps**     | ⚠️ *Maybe* | Apps *mount* or *env-inject* values; updates have no effect unless pod restarts. |
-  | **Secrets**        | ⚠️ *Maybe* | Same behavior as ConfigMaps — no automatic propagation into running Pods. |
-  | **CRDs / Volumes** | ❓ Maybe   | Depending on use case. Might not require gating, but may be referenced indirectly. |
+  | Resource           | Control Required | Description / Reason                                                               |
+  | ------------------ | ---------------- | ---------------------------------------------------------------------------------- |
+  | **Pods**           | ✅ Yes            | Primary unit of runtime workload. Restart affects running application.             |
+  | **Deployments**    | ✅ Yes            | Controls rollout strategy. Might recreate Pods if spec changes.                    |
+  | **StatefulSets**   | ✅ Yes            | Stateful services (like databases); restart or scale could be dangerous.           |
+  | **DaemonSets**     | ✅ Yes            | Often used in edge use-cases for agents, telemetry, etc.                           |
+  | **ConfigMaps**     | ⚠️ *Maybe*        | Apps *mount* or *env-inject* values; updates have no effect unless pod restarts.   |
+  | **Secrets**        | ⚠️ *Maybe*        | Same behavior as ConfigMaps — no automatic propagation into running Pods.          |
+  | **CRDs / Volumes** | ❓ Maybe          | Depending on use case. Might not require gating, but may be referenced indirectly. |
 
 ## Additional Note
 
