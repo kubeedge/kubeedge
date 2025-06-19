@@ -1,0 +1,73 @@
+name: Cilium E2E Workflow
+
+on:
+  pull_request:
+    types: [labeled]
+
+jobs:
+  image-prepare:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    name: Prepare kubeedge/build-tools image
+    steps:
+      - name: Pull kubeedge/build-tools image
+        run: |
+          docker pull kubeedge/build-tools:1.22.9-ke1
+          mkdir -p /home/runner/build-tools/
+          docker save kubeedge/build-tools:1.22.9-ke1 > /home/runner/build-tools/build-tools.tar
+
+      - name: Temporarily save kubeedge/build-tools image
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-tools-docker-artifact
+          path: /home/runner/build-tools
+
+  cilium_e2e_test:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    name: Cilium E2E Test
+    needs: image-prepare
+    if: github.event.label.name == 'cilium-e2e-test'
+    env:
+      GO111MODULE: on
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.22.x
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+
+      - name: Install dependencies
+        run: |
+          go install sigs.k8s.io/kind@v0.23.0
+          curl -LO https://dl.k8s.io/release/v1.30.7/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          curl -L --remote-name-all https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz
+          sudo tar xzvfC cilium-linux-amd64.tar.gz /usr/local/bin
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Retrieve saved kubeedge/build-tools image
+        uses: actions/download-artifact@v4
+        with:
+          name: build-tools-docker-artifact
+          path: /home/runner/build-tools
+
+      - name: Docker load kubeedge/build-tools image
+        run: |
+          docker load < /home/runner/build-tools/build-tools.tar
+          rm -rf /home/runner/build-tools/build-tools.tar
+
+      - name: Enable CRI config in containerd service
+        run: |
+          containerd config default | sudo tee /etc/containerd/config.toml && sudo systemctl restart containerd.service
+
+      - name: Test
+        run: |
+          hack/cilium_e2e_test.sh
