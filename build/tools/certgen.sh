@@ -234,4 +234,111 @@ $(pr -T -o 4 "${certPath}/${name}.key")
 EOF
 }
 
-$@
+cmd=$1
+shift || true
+
+if [ -z "$cmd" ]; then
+  echo ""
+  echo "Usage: ./certgen.sh <command> [args]"
+  echo ""
+  echo "Available commands:"
+  echo "  genCertAndKey     Generate CSR and certificate"
+  echo "  genCert           Sign CSR into certificate"
+  echo "  genCsr            Generate private key and CSR"
+  echo "  stream            Generate stream certs using K8S CA"
+  echo ""
+  echo "Run './certgen.sh help' to see environment variables and examples"
+  echo ""
+  exit 0
+fi
+
+case "$cmd" in
+  "genCertAndKey")
+    genCertAndKey "$@"
+    ;;
+  "genCert")
+    genCert "$@"
+    ;;
+  "genCsr")
+    genCsr "$@"
+    ;;
+  "stream")
+    stream "$@"
+    ;;
+  "help"|"-h"|"--help")
+    subcmd=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+    case "$subcmd" in
+      "gencertandkey")
+        echo ""
+        echo "genCertAndKey <name> [ip1 ip2 ...]"
+        echo "  - Generates key, CSR, and cert signed by local CA"
+        echo "  - Uses ENV variables:"
+        echo "      SUBJECT, KEY_TYPE (rsa/ec), USE_PASSWORD, KEY_PASSWORD"
+        echo "      CA_PATH, CERT_PATH"
+        echo "  - Example:"
+        echo "      KEY_TYPE=rsa USE_PASSWORD=true KEY_PASSWORD=secret123 \\"
+        echo "      ./certgen.sh genCertAndKey my-node 192.168.1.100"
+        echo ""
+        ;;
+      "gencert")
+        echo ""
+        echo "genCert <name> [ip1 ip2 ...]"
+        echo "  - Signs an existing CSR into a certificate"
+        echo "  - Uses ENV: CA_PATH, CERT_PATH, USE_PASSWORD, KEY_PASSWORD"
+        echo ""
+        ;;
+      "gencsr")
+        echo ""
+        echo "genCsr <name>"
+        echo "  - Generates a CSR and private key"
+        echo "  - Uses ENV: SUBJECT, KEY_TYPE, USE_PASSWORD, KEY_PASSWORD"
+        echo ""
+        ;;
+      "stream")
+        echo ""
+        echo "stream"
+        echo "  - Generates stream certs using Kubernetes CA"
+        echo "  - Requires ENV: CLOUDCOREIPS or CLOUDCORE_DOMAINS"
+        echo "  - Uses ENV:"
+        echo "      K8SCA_FILE, K8SCA_KEY_FILE, KEY_TYPE, USE_PASSWORD, KEY_PASSWORD"
+        echo ""
+        echo "  - Example:"
+        echo "      CLOUDCOREIPS=\"10.1.1.1\" KEY_TYPE=rsa USE_PASSWORD=true \\"
+        echo "      KEY_PASSWORD=secret123 ./certgen.sh stream"
+        echo ""
+        ;;
+      *)
+        echo ""
+        echo "Usage: ./certgen.sh <command> [args]"
+        echo ""
+        echo "Available commands:"
+        echo "  genCertAndKey     Generate CSR and certificate"
+        echo "  genCert           Sign CSR into certificate"
+        echo "  genCsr            Generate private key and CSR"
+        echo "  stream            Generate stream certs using K8S CA"
+        echo ""
+        echo "Environment Variables (optional):"
+        echo "  SUBJECT           Cert subject (default: /C=CN/.../CN=kubeedge.io)"
+        echo "  KEY_TYPE          rsa or ec (default: ec)"
+        echo "  USE_PASSWORD      true/false (encrypt private keys)"
+        echo "  KEY_PASSWORD      Password for key encryption/decryption"
+        echo "  CA_PATH           Local CA location (default: /etc/kubeedge/ca)"
+        echo "  CERT_PATH         Cert storage path (default: /etc/kubeedge/certs)"
+        echo "  K8SCA_FILE        Kubernetes CA file (default: /etc/kubernetes/pki/ca.crt)"
+        echo "  K8SCA_KEY_FILE    Kubernetes CA key (default: /etc/kubernetes/pki/ca.key)"
+        echo "  CLOUDCOREIPS      Required for stream (space-separated IPs)"
+        echo "  CLOUDCORE_DOMAINS Optional domain names for stream cert"
+        echo ""
+        echo "Run './certgen.sh help <command>' for command-specific info"
+        echo ""
+        ;;
+    esac
+    ;;
+  *)
+    echo "Unknown command: $cmd"
+    echo "Run './certgen.sh help' to see available commands"
+    exit 1
+    ;;
+esac
+
+
