@@ -24,6 +24,8 @@ CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-"containerd"}
 KIND_IMAGE=${1:-"kindest/node:v1.30.0"}
 SKIP_CR_INSTALL=${SKIP_CR_INSTALL:-"false"}
 echo -e "The installation of the cni plugin will overwrite the cni config file. Use export CNI_CONF_OVERWRITE=false to disable it."
+CLOUDCORE_BIN="${KUBEEDGE_ROOT}/_output/local/bin/cloudcore"
+EDGECORE_BIN="${KUBEEDGE_ROOT}/_output/local/bin/edgecore"
 
 if [[ "${CLUSTER_NAME}x" == "x" ]]; then
   CLUSTER_NAME="test"
@@ -345,6 +347,7 @@ cleanup
 source "${KUBEEDGE_ROOT}/hack/lib/init.sh"
 source "${KUBEEDGE_ROOT}/hack/lib/install.sh"
 
+echo "[INFO] Setting up environment"
 kubeedge::golang::setup_env
 
 if [[ "${SKIP_CR_INSTALL}" = "false" ]]; then
@@ -353,14 +356,21 @@ else
   echo "Skip container runtime installation"
 fi
 
+echo "[INFO] Checking Pre-requisites"
 check_prerequisites
 
 # Stop right away if there's an error
 set -eE
 
-build_cloudcore
-build_edgecore
+if [ ! -f "$CLOUDCORE_BIN" ] || [ ! -f "$EDGECORE_BIN" ]; then
+  echo "[INFO] Building cloudcore and edgecore..."
+  build_cloudcore
+  build_edgecore
+else
+  echo "[INFO] cloudcore and edgecore already exist. Skipping build."
+fi
 
+echo "[INFO] Starting local KubeEdge cluster with kind..."
 kind_up_cluster
 
 export KUBECONFIG=$HOME/.kube/config
