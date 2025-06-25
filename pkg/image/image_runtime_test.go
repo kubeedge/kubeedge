@@ -82,7 +82,6 @@ func TestGetImageDigest(t *testing.T) {
 	})
 }
 
-
 func TestConvToCRIImage(t *testing.T) {
 	tests := []struct {
 		name     string
