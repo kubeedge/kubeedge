@@ -253,6 +253,7 @@ function start_edgecore {
   if [[ "${CONTAINER_RUNTIME}" = "docker" ]]; then
     sed -i 's|imageServiceEndpoint: .*|imageServiceEndpoint: unix:///var/run/cri-dockerd.sock|' ${EDGE_CONFIGFILE}
     sed -i 's|containerRuntimeEndpoint: .*|containerRuntimeEndpoint: unix:///var/run/cri-dockerd.sock|' ${EDGE_CONFIGFILE}
+    sed -i 's|cgroupDriver: .*|cgroupDriver: systemd|' ${EDGE_CONFIGFILE}
   fi
 
   if [[ "${CONTAINER_RUNTIME}" = "cri-o" ]]; then
