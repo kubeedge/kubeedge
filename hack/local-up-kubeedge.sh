@@ -23,6 +23,7 @@ PROTOCOL=${PROTOCOL:-"WebSocket"}
 CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-"containerd"}
 KIND_IMAGE=${1:-"kindest/node:v1.30.0"}
 SKIP_CR_INSTALL=${SKIP_CR_INSTALL:-"false"}
+ENABLE_CNI=${ENABLE_CNI:-false}
 echo -e "The installation of the cni plugin will overwrite the cni config file. Use export CNI_CONF_OVERWRITE=false to disable it."
 
 if [[ "${CLUSTER_NAME}x" == "x" ]]; then
@@ -34,8 +35,8 @@ export CLUSTER_CONTEXT="--name ${CLUSTER_NAME}"
 function install_cr() {
 
   if [[ "${CONTAINER_RUNTIME}" = "containerd" ]]; then
-      echo "No need to download container runtime for containerd"
-      return
+    echo "No need to download container runtime for containerd"
+    return
   fi
 
   echo -e "The installation of the container runtime will try to install ${CONTAINER_RUNTIME}. Use export SKIP_CR_INSTALL=true to skip it."
@@ -273,12 +274,20 @@ function start_edgecore {
 
   token=$(kubectl get secret -nkubeedge tokensecret -o=jsonpath='{.data.tokendata}' | base64 -d)
 
-  sed -i -e "s|token: .*|token: ${token}|g" \
-    -e "s|hostnameOverride: .*|hostnameOverride: edge-node|g" \
-    -e "s|/etc/|/tmp/etc/|g" \
-    -e "s|/var/lib/kubeedge/|/tmp&|g" \
-    -e "s|mqttMode: .*|mqttMode: 0|g" \
-    -e '/serviceBus:/{n;s/false/true/;}' ${EDGE_CONFIGFILE}
+  sed_commands=(
+    -e "s|token: .*|token: ${token}|g"
+    -e "s|hostnameOverride: .*|hostnameOverride: edge-node|g"
+    -e "s|/etc/|/tmp/etc/|g"
+    -e "s|/var/lib/kubeedge/|/tmp&|g"
+    -e "s|mqttMode: .*|mqttMode: 0|g"
+    -e '/serviceBus:/{n;s/false/true/;}'
+  )
+
+  if [[ "${ENABLE_CNI}" = true ]]; then
+    sed_commands+=(-e '/clusterDomain: cluster.local/a\      clusterDNS:\n      - 10.96.0.10')
+  fi
+
+  sed -i "${sed_commands[@]}" ${EDGE_CONFIGFILE}
 
   sed -i -e "s|/tmp/etc/resolv|/etc/resolv|g" ${EDGE_CONFIGFILE}
   EDGECORE_LOG=${LOG_DIR}/edgecore.log
