@@ -22,6 +22,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/distribution/reference"
 	"go.opentelemetry.io/otel/trace/noop"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -111,11 +112,9 @@ func (runtime *RuntimeImpl) PullImage(
 }
 
 func ConvToCRIImage(image string) string {
-	imageSeg := strings.Split(image, "/")
-	if len(imageSeg) == 1 {
-		return "docker.io/library/" + image
-	} else if len(imageSeg) == 2 {
-		return "docker.io/" + image
+	ref, err := reference.ParseAnyReference(image)
+	if err != nil {
+		return image
 	}
-	return image
+	return ref.String()
 }
