@@ -20,9 +20,9 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-	"strings"
 	"time"
 
+	"github.com/distribution/reference"
 	"github.com/google/uuid"
 	oteltrace "go.opentelemetry.io/otel/trace"
 	internalapi "k8s.io/cri-api/pkg/apis"
@@ -77,13 +77,11 @@ type CRIRuntime struct {
 }
 
 func convertCRIImage(image string) string {
-	imageSeg := strings.Split(image, "/")
-	if len(imageSeg) == 1 {
-		return "docker.io/library/" + image
-	} else if len(imageSeg) == 2 {
-		return "docker.io/" + image
+	ref, err := reference.ParseAnyReference(image)
+	if err != nil {
+		return image
 	}
-	return image
+	return ref.String()
 }
 
 func (runtime *CRIRuntime) PullImages(images []string) error {
