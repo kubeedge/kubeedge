@@ -74,7 +74,7 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1
 )
 
-require github.com/distribution/reference v0.5.0 // indirect
+require github.com/distribution/reference v0.5.0
 
 require (
 	cloud.google.com/go/compute v1.24.0 // indirect
