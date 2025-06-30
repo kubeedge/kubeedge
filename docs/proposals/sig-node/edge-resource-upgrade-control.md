@@ -89,8 +89,7 @@ Upon receiving a Pod update message:
 
 **2. Set PodCondition**
 
-MetaManager augments the incoming Pod object with the following condition:
-
+edged augments the incoming Pod object with the following condition:
 
 ```yaml
 status:
@@ -101,39 +100,21 @@ status:
       message: Pod upgrade is currently held at the edge.
 ```
 
-- This condition notifies both edge and cloud that the update is intentionally being held.
-- MetaManager sends a new Pod status update (with the HeldUpgrade condition) to edged.
-- edged then forwards this status to CloudCore, providing cluster-wide visibility.
+- This condition notifies cloud that the update is intentionally being held.
+- edged sends a new Pod status update (with the HeldUpgrade condition) to cloudcore.
 
 **3. Store the Latest Update**
 
-The original Pod update message (e.g., spec change like container image) is not sent to edged immediately.
+- The update message is not applied immediately.
+- Instead, it is stored in an internal map, keyed by Pod name.
 
-- Instead, it is stored in an internal map, keyed by Pod UID or name.
-
-- If a newer update arrives (e.g., a second image update):
-  - It replaces the existing entry in the map.
-  - This ensures only the latest version is retained for future application.
-
-**4. Acknowledge the Update to CloudCore**
-
-To avoid reconciliation loops:
-
-- MetaManager must acknowledge the original update message to CloudCore as "processed", even though the update is held.
-
-- This prevents CloudCore from detecting a spec/status mismatch and retrying the same update.
-
-> ⚠️ If this acknowledgment is missing or malformed, the cloud’s controller may continuously resend the update, causing flooding and update churn.
-
-**5. Apply Update on Confirmation**
+**4. Apply Update on Confirmation**
 
 When the user explicitly confirms the upgrade (e.g., using keadm ctl unhold-upgrade), MetaManager:
 
-- MetaManager retrieves the held update message from the map.
-- Forwards it to edged for actual application.
-- Once applied, the HeldUpgrade condition is cleared in the next Pod status update cycle.
-- The map entry is deleted.
-
+- edged retrieves the held update message from the internal map.
+- Applies the update to the local runtime.
+- Removes the stored entry from the map.
 
 ### MetaServer/MetaService API
 
