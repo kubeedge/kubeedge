@@ -2,10 +2,11 @@
 title: Keadm Tool Enhancement
 authors:
 - "@HT0403"
-  approvers:
-  creation-date: 2024-04-27
-  last-updated: 2024-05-22
-
+approvers:
+- "@WillardHu"
+creation-date: 2024-04-27
+last-updated: 2024-05-22
+status: implementable
 ---
 
 # Keadm Tool Enhancement
