@@ -35,5 +35,7 @@ if [ ${ret} -eq 0 ]; then
 	echo "SUCCESS: Vendor Verified."
 else
 	echo  "FAILED: Vendor Verify failed. Please run the command to check your directories: git status"
+	git status
+	git diff
 	exit 1
 fi
