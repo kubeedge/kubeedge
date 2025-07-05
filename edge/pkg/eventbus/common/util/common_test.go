@@ -18,9 +18,12 @@ package util
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/url"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -221,4 +224,131 @@ func TestLoopConnect(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestTLSConfig tests the TLS configuration code paths
+func TestTLSConfig(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "tls-test")
+	if err != nil {
+		t.Fatalf("Failed to create temp directory: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	certContent := []byte(`-----BEGIN CERTIFICATE-----
+MIIBhTCCASugAwIBAgIQIRi6zePL6mKjOipn+dNuaTAKBggqhkjOPQQDAjASMRAw
+DgYDVQQKEwdBY21lIENvMB4XDTIzMDQwODE5NDMwNloXDTI5MDQwODE5NDMwNlow
+EjEQMA4GA1UEChMHQWNtZSBDbzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABD0d
+7VNhbWvZLWPuj/RtHFjvtJBEwOkhbN/BnnE8rnZR8+sbwnc/KhCk3FhnpHZnQz7B
+5aETbbIgmuvewdjvSBSjYzBhMA4GA1UdDwEB/wQEAwICpDATBgNVHSUEDDAKBggr
+BgEFBQcDATAPBgNVHRMBAf8EBTADAQH/MCkGA1UdEQQiMCCCDmxvY2FsaG9zdDo1
+NDUzgg4xMjcuMC4wLjE6NTQ1MzAKBggqhkjOPQQDAgNIADBFAiEA2zpJEPQyz6/l
+Wf86aX6PepsntZv2GYlA5UpabfT2EZICICpJ5h/iI+i341gBmLiAFQOyTDT+/wQc
+6MF9+Yw1Yy0t
+-----END CERTIFICATE-----`)
+
+	keyContent := []byte(`-----BEGIN EC PRIVATE KEY-----
+MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
+AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
+EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+-----END EC PRIVATE KEY-----`)
+
+	caContent := certContent
+
+	certFile := tempDir + "/cert.pem"
+	keyFile := tempDir + "/key.pem"
+	caFile := tempDir + "/ca.pem"
+	invalidFile := tempDir + "/invalid.pem"
+
+	if err := os.WriteFile(certFile, certContent, 0644); err != nil {
+		t.Fatalf("Failed to create cert file: %v", err)
+	}
+	if err := os.WriteFile(keyFile, keyContent, 0644); err != nil {
+		t.Fatalf("Failed to create key file: %v", err)
+	}
+	if err := os.WriteFile(caFile, caContent, 0644); err != nil {
+		t.Fatalf("Failed to create CA file: %v", err)
+	}
+	if err := os.WriteFile(invalidFile, []byte("invalid content"), 0644); err != nil {
+		t.Fatalf("Failed to create invalid file: %v", err)
+	}
+
+	originalTLSConfig := eventconfig.Config.TLS
+	defer func() {
+		eventconfig.Config.TLS = originalTLSConfig
+	}()
+
+	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+	if err != nil {
+		t.Fatalf("LoadX509KeyPair failed: %v", err)
+	}
+	if len(cert.Certificate) == 0 {
+		t.Fatalf("Certificate is empty")
+	}
+
+	caCert, err := os.ReadFile(caFile)
+	if err != nil {
+		t.Fatalf("Failed to read CA file: %v", err)
+	}
+	pool := x509.NewCertPool()
+	if !pool.AppendCertsFromPEM(caCert) {
+		t.Fatalf("Failed to append CA certificate to pool")
+	}
+
+	t.Run("TLS enabled", func(t *testing.T) {
+		eventconfig.Config.TLS.Enable = true
+		eventconfig.Config.TLS.TLSMqttCertFile = certFile
+		eventconfig.Config.TLS.TLSMqttPrivateKeyFile = keyFile
+		eventconfig.Config.TLS.TLSMqttCAFile = caFile
+
+		opts := HubClientInit("tcp://127.0.0.1:1883", "testClient", "", "")
+		if opts == nil {
+			t.Fatal("HubClientInit returned nil with valid certificate")
+		}
+		if opts.TLSConfig == nil {
+			t.Fatal("TLS config is nil")
+		}
+		if opts.TLSConfig.InsecureSkipVerify {
+			t.Error("InsecureSkipVerify should be false")
+		}
+		if opts.TLSConfig.RootCAs == nil {
+			t.Error("RootCAs is nil")
+		}
+	})
+
+	t.Run("Invalid CA file", func(t *testing.T) {
+		eventconfig.Config.TLS.Enable = true
+		eventconfig.Config.TLS.TLSMqttCertFile = certFile
+		eventconfig.Config.TLS.TLSMqttPrivateKeyFile = keyFile
+		eventconfig.Config.TLS.TLSMqttCAFile = invalidFile
+
+		opts := HubClientInit("tcp://127.0.0.1:1883", "testClient", "", "")
+		if opts != nil {
+			t.Error("Expected nil result with invalid CA")
+		}
+	})
+
+	t.Run("Non-existent CA file", func(t *testing.T) {
+		eventconfig.Config.TLS.Enable = true
+		eventconfig.Config.TLS.TLSMqttCertFile = certFile
+		eventconfig.Config.TLS.TLSMqttPrivateKeyFile = keyFile
+		eventconfig.Config.TLS.TLSMqttCAFile = tempDir + "/nonexistent.pem"
+
+		opts := HubClientInit("tcp://127.0.0.1:1883", "testClient", "", "")
+		if opts != nil {
+			t.Errorf("Expected nil result with non-existent CA file")
+		}
+	})
+
+	t.Run("TLS disabled", func(t *testing.T) {
+		eventconfig.Config.TLS.Enable = false
+		opts := HubClientInit("tcp://127.0.0.1:1883", "testClient", "", "")
+
+		if opts == nil {
+			t.Error("Expected non-nil result with TLS disabled")
+		} else if opts.TLSConfig == nil {
+			t.Error("TLS config should not be nil")
+		} else if !opts.TLSConfig.InsecureSkipVerify {
+			t.Error("InsecureSkipVerify should be true when TLS is disabled")
+		}
+	})
 }
