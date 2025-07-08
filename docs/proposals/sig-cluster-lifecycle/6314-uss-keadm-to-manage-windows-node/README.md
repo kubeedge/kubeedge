@@ -5,7 +5,7 @@ authors:
   - "@Believeht029"
 
 creation-date: 2025-07-02
-last-updated: 2025-07-02
+last-updated: 2025-07-08
 
 status: WIP
 
@@ -42,7 +42,7 @@ This project aims to enable Keadm to automatically manage EdgeCore services on W
 
 ## Design overview
 
-<img src="../../images/proposals/use-keadm-manage-windows-nodes.png" alt="alt text"/>
+<img src="./use-keadm-manage-windows-nodes.png" alt="alt text"/>
 
 ### Key Components:
 1. **Service Controller:** Manages service lifecycle using ``windows/svc/mgr``.
@@ -407,7 +407,7 @@ func main() {
 
 ## Module Integration Flow
 
-<img src="../../images/proposals/use-keadm-manage-windows-nodes-flow.png" alt="alt text"/>
+<img src="./use-keadm-manage-windows-nodes-flow.png" alt="alt text"/>
 
 ## Test Matrix
 
