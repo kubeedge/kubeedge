@@ -1,0 +1,49 @@
+package {{.PackageName}}
+
+import (
+	"testing"
+	
+	"github.com/stretchr/testify/assert"
+)
+
+func TestExampleFunction(t *testing.T) {
+	tests := []struct {
+		name           string
+		input          interface{}
+		expectedResult interface{}
+		expectedError  bool
+	}{
+		{
+			name:           "success case",
+			input:          "valid input",
+			expectedResult: "expected output",
+			expectedError:  false,
+		},
+		{
+			name:           "error case",
+			input:          nil,
+			expectedResult: nil,
+			expectedError:  true,
+		},
+		{
+			name:           "edge case - empty input",
+			input:          "",
+			expectedResult: "",
+			expectedError:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Call the function being tested
+			// result, err := YourFunction(tt.input)
+
+			if tt.expectedError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				// assert.Equal(t, tt.expectedResult, result)
+			}
+		})
+	}
+}
