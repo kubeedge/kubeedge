@@ -3,7 +3,7 @@ title: Provide A Common MQTT Mapper
 authors: 
 
 - "@fuchendou"
-  approvers:
+approvers:
 
 creation-date: 2024-7-15
 last-updated: 2024-8-15
