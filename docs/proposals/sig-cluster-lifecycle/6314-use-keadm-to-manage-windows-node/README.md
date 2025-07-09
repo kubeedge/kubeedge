@@ -44,30 +44,78 @@ This project aims to enable Keadm to automatically manage EdgeCore services on W
 
 <img src="./use-keadm-manage-windows-nodes.png" alt="alt text"/>
 
-### Key Components:
-1. **Service Controller:** Manages service lifecycle using ``windows/svc/mgr``.
-2. **File Manager:** Handles versioned binaries and configs.
-3. **Backup System:** Automatic version snapshots for rollback.
-4. **Recovery Engine:** Configurable failure policies via SCM.
-
 
 ## Implementation Details
 
-#### Windows Service Management Module
+### Platform Abstraction Layer
 
-**Objective:** Replace nssm dependency with native Windows service APIs for robust lifecycle control.
-
-We will use the `golang.org/x/sys/windows/svc/mgr` package to manage the EdgeCore service. This replaces the current `nssm` dependency with native Windows service APIs, ensuring better integration with Windows Service Control Manager (SCM).
+**Objective:** Create a unified service management interface with platform-specific implementations using Go build tags.
 
 **Implementation:**
 
 ```go
-// ServiceController manages EdgeCore via Windows SCM
-type ServiceController struct {
+// +build windows
+
+package service
+
+import (
+    "golang.org/x/sys/windows/svc/mgr"
+    // Windows-specific imports
+)
+
+type serviceController struct {
     name string
     mgr  *mgr.Mgr
 }
 
+func NewServiceController(name string) ServiceController {
+    return &serviceController{name: name}
+}
+
+func (sc *serviceController) Install(binaryPath string) error {
+    // Windows-specific implementation
+    // [Previous Windows service code here]
+}
+
+// +build linux
+
+package service
+
+import (
+    "github.com/coreos/go-systemd/v22/dbus"
+    // Linux-specific imports
+)
+
+type serviceController struct {
+    name string
+}
+
+func NewServiceController(name string) ServiceController {
+    return &serviceController{name: name}
+}
+
+func (sc *serviceController) Install(binaryPath string) error {
+    // Linux-specific implementation
+    // Existing Linux service management
+}
+```
+**Usage in commands:**
+```go
+func runJoin(cmd *cobra.Command, args []string) {
+    // ...
+    serviceCtrl := service.NewServiceController("EdgeCore")
+    // Platform-agnostic usage
+    // ...
+}
+```
+
+### Windows Service Management Module
+
+**Objective:** Replace nssm dependency with native Windows service APIs for robust lifecycle control.
+
+**Implementation:**
+
+```go
 func (sc *ServiceController) Install(binaryPath string) error {
     // Connect to SCM
     mgr, err := mgr.Connect()
@@ -228,7 +276,7 @@ func (au *AtomicUpgrader) Rollback(backupPath string) {
     └── v1.13.2/
     ```
 
-#### Security Module
+### Security Module
 
 **Objective:** Enforce enterprise-grade security for service and file assets.
 
@@ -310,39 +358,76 @@ func (se *SecurityEnforcer) HardenService() {
 }
 ```
 
-#### Build & Packaging Module
+### Build & Packaging Module
 
 **Objective:** Automate Windows binary generation and installer creation
+
+#### Prerequisites for Packaging
+
+The Windows packaging targets require:
+1. NSIS (Nullsoft Scriptable Install System):
+    - Used for creating EXE installers
+    - Install via Chocolatey: `choco install nsis`
+2. WiX Toolset:
+    - Used for creating MSI packages
+    - Install via Chocolatey: `choco install wixtoolset`
+
+**CI Setup:**
+```yaml
+# Sample GitHub Actions configuration
+jobs:
+  package-windows:
+    runs-on: windows-latest
+    steps:
+    - name: Install dependencies
+      run: |
+        choco install nsis -y
+        choco install wixtoolset -y
+        
+    - name: Build and package
+      run: |
+        make build-windows
+        make package-windows
+```
 
 **Makefile Changes:**
 
 ```makefile
-# Makefile targets
+# Integrated with existing build system
+build-all: build-linux build-windows
+
 build-windows:
     @echo "Building Windows binaries..."
     GOOS=windows GOARCH=amd64 go build -ldflags "-s -w" -o bin/windows/keadm.exe ./cmd/keadm
     GOOS=windows GOARCH=amd64 go build -ldflags "-s -w" -o bin/windows/edgecore.exe ./cmd/edgecore
 
-package-installer:
+# Optional packaging targets (require CI setup)
+package-windows: check-packaging-tools
     makensis -V4 \
         -DOUTPUT_DIR="dist" \
         -DVERSION="${VERSION}" \
         packaging/windows/installer.nsi
-
-create-msi:
     heat dir bin/windows -gg -scom -sfrag -dr INSTALLDIR -cg EdgeFiles -out edgecore.wxs
     candle -dVersion=${VERSION} edgecore.wxs
-    light -ext WixUIExtension -out KubeEdge-${VERSION}.msi edgecore.wixobj
+    light -ext WixUIExtension -out dist/KubeEdge-${VERSION}.msi edgecore.wixobj
+
+check-packaging-tools:
+    @which makensis >/dev/null || (echo "NSIS required: https://nsis.sourceforge.io" ; exit 1)
+    @which heat >/dev/null || (echo "WiX Toolset required: https://wixtoolset.org" ; exit 1)
 ```
-**Installer Features:**
+**CI Integration:**
 
-- Silent installation option for enterprise deployment
-- Automatic PATH configuration
-- Service registration with recovery policies
-- Uninstall cleanup script
+1. Binary Building:
+    - Added to existing Linux build pipeline
+    - Requires only Go toolchain
+    - Produces raw Windows executables
+2. Packaging:
+    - Requires specialized Windows CI runner
+    - Needs NSIS and WiX pre-installed
+    - Triggered only on release tags
 
 
-####  Configuration Management Module
+###  Configuration Management Module
 
 **Objective:** Enable dynamic configuration updates without service interruption
 
@@ -418,3 +503,10 @@ func main() {
 | Permission enforcement       | Non-admin execution attempts                                   |
 | Network disruption     | Disable during cloudcore communication                            |
 | Long-running stability | 72h continuous operation test   
+
+## Rollout Plan
+1. Phase 1: Implement service abstraction layer
+2. Phase 2: Add Windows service implementation
+3. Phase 3: Integrate with keadm commands
+4. Phase 4: Add CI builds for Windows binaries
+5. Phase 5 (Optional): Set up dedicated packaging pipeline
