@@ -29,7 +29,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/api/apis/common/constants"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	commfake "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common/fake"
+	"github.com/kubeedge/kubeedge/pkg/util/execs"
+	"github.com/kubeedge/kubeedge/pkg/util/files"
 )
 
 const (
@@ -51,40 +56,6 @@ func (m MockFileInfo) Mode() os.FileMode  { return m.fileMode }
 func (m MockFileInfo) ModTime() time.Time { return m.modTime }
 func (m MockFileInfo) IsDir() bool        { return m.isDir }
 func (m MockFileInfo) Sys() interface{}   { return m.sys }
-
-type MockOSTypeInstaller struct {
-	isProcessRunning  bool
-	processRunningErr error
-	installErr        error
-	killErr           error
-}
-
-func (m *MockOSTypeInstaller) InstallMQTT() error {
-	return nil
-}
-
-func (m *MockOSTypeInstaller) IsK8SComponentInstalled(kubeConfig, master string) error {
-	return nil
-}
-
-func (m *MockOSTypeInstaller) SetKubeEdgeVersion(version semver.Version) {
-}
-
-func (m *MockOSTypeInstaller) InstallKubeEdge(options types.InstallOptions) error {
-	return m.installErr
-}
-
-func (m *MockOSTypeInstaller) RunEdgeCore() error {
-	return nil
-}
-
-func (m *MockOSTypeInstaller) KillKubeEdgeBinary(proc string) error {
-	return m.killErr
-}
-
-func (m *MockOSTypeInstaller) IsKubeEdgeProcessRunning(proc string) (bool, error) {
-	return m.isProcessRunning, m.processRunningErr
-}
 
 func TestIsKubeEdgeProcessRunningOthers(t *testing.T) {
 	tests := []struct {
@@ -110,17 +81,17 @@ func TestIsKubeEdgeProcessRunningOthers(t *testing.T) {
 			patches := gomonkey.NewPatches()
 			defer patches.Reset()
 
-			mockCmd := &Command{
+			mockCmd := &execs.Command{
 				ExitCode: tt.exitCode,
 			}
 
-			patches.ApplyFunc(NewCommand, func(command string) *Command {
+			patches.ApplyFunc(execs.NewCommand, func(command string) *execs.Command {
 				expected := fmt.Sprintf("pidof %s 2>&1", tt.process)
 				assert.Equal(t, expected, command)
 				return mockCmd
 			})
 
-			patches.ApplyMethod(mockCmd, "Exec", func(*Command) error {
+			patches.ApplyMethod(mockCmd, "Exec", func(*execs.Command) error {
 				return tt.execErr
 			})
 
@@ -176,13 +147,13 @@ func TestHasSystemdOthers(t *testing.T) {
 			patches := gomonkey.NewPatches()
 			defer patches.Reset()
 
-			mockCmd := &Command{}
-			patches.ApplyFunc(NewCommand, func(command string) *Command {
+			mockCmd := &execs.Command{}
+			patches.ApplyFunc(execs.NewCommand, func(command string) *execs.Command {
 				assert.Equal(t, "file /sbin/init", command)
 				return mockCmd
 			})
 
-			patches.ApplyMethod(mockCmd, "Exec", func(*Command) error {
+			patches.ApplyMethod(mockCmd, "Exec", func(*execs.Command) error {
 				if tt.cmdSuccess {
 					return nil
 				}
@@ -190,7 +161,7 @@ func TestHasSystemdOthers(t *testing.T) {
 			})
 
 			patches.ApplyFunc(os.Lstat, func(name string) (os.FileInfo, error) {
-				assert.Equal(t, SystemdBootPath, name)
+				assert.Equal(t, common.SystemdBootPath, name)
 				if tt.fileInitErr != nil {
 					return nil, tt.fileInitErr
 				}
@@ -209,27 +180,27 @@ func TestHasSystemdOthers(t *testing.T) {
 func TestRunningModuleV2Others(t *testing.T) {
 	tests := []struct {
 		name           string
-		cloudRunning   types.ModuleRunning
-		edgeRunning    types.ModuleRunning
-		expectedResult types.ModuleRunning
+		cloudRunning   common.ModuleRunning
+		edgeRunning    common.ModuleRunning
+		expectedResult common.ModuleRunning
 	}{
 		{
 			name:           "Cloud running",
-			cloudRunning:   types.KubeEdgeCloudRunning,
-			edgeRunning:    types.NoneRunning,
-			expectedResult: types.KubeEdgeCloudRunning,
+			cloudRunning:   common.KubeEdgeCloudRunning,
+			edgeRunning:    common.NoneRunning,
+			expectedResult: common.KubeEdgeCloudRunning,
 		},
 		{
 			name:           "Edge running",
-			cloudRunning:   types.NoneRunning,
-			edgeRunning:    types.KubeEdgeEdgeRunning,
-			expectedResult: types.KubeEdgeEdgeRunning,
+			cloudRunning:   common.NoneRunning,
+			edgeRunning:    common.KubeEdgeEdgeRunning,
+			expectedResult: common.KubeEdgeEdgeRunning,
 		},
 		{
 			name:           "Nothing running",
-			cloudRunning:   types.NoneRunning,
-			edgeRunning:    types.NoneRunning,
-			expectedResult: types.NoneRunning,
+			cloudRunning:   common.NoneRunning,
+			edgeRunning:    common.NoneRunning,
+			expectedResult: common.NoneRunning,
 		},
 	}
 
@@ -238,15 +209,15 @@ func TestRunningModuleV2Others(t *testing.T) {
 			patches := gomonkey.NewPatches()
 			defer patches.Reset()
 
-			patches.ApplyFunc(CloudCoreRunningModuleV2, func(*types.ResetOptions) types.ModuleRunning {
+			patches.ApplyFunc(CloudCoreRunningModuleV2, func(*common.ResetOptions) common.ModuleRunning {
 				return tt.cloudRunning
 			})
 
-			patches.ApplyFunc(EdgeCoreRunningModuleV2, func(*types.ResetOptions) types.ModuleRunning {
+			patches.ApplyFunc(EdgeCoreRunningModuleV2, func(*common.ResetOptions) common.ModuleRunning {
 				return tt.edgeRunning
 			})
 
-			opt := &types.ResetOptions{}
+			opt := &common.ResetOptions{}
 			result := RunningModuleV2(opt)
 			assert.Equal(t, tt.expectedResult, result)
 		})
@@ -258,25 +229,25 @@ func TestCloudCoreRunningModuleV2Others(t *testing.T) {
 		name      string
 		isRunning bool
 		hasError  bool
-		expected  types.ModuleRunning
+		expected  common.ModuleRunning
 	}{
 		{
 			name:      "CloudCore running",
 			isRunning: true,
 			hasError:  false,
-			expected:  types.KubeEdgeCloudRunning,
+			expected:  common.KubeEdgeCloudRunning,
 		},
 		{
 			name:      "CloudCore not running",
 			isRunning: false,
 			hasError:  false,
-			expected:  types.NoneRunning,
+			expected:  common.NoneRunning,
 		},
 		{
 			name:      "Error checking CloudCore",
 			isRunning: false,
 			hasError:  true,
-			expected:  types.NoneRunning,
+			expected:  common.NoneRunning,
 		},
 	}
 
@@ -294,7 +265,7 @@ func TestCloudCoreRunningModuleV2Others(t *testing.T) {
 
 			patches.ApplyFunc(klog.Warningf, func(format string, args ...interface{}) {})
 
-			opt := &types.ResetOptions{}
+			opt := &common.ResetOptions{}
 			result := CloudCoreRunningModuleV2(opt)
 			assert.Equal(t, tt.expected, result)
 		})
@@ -306,25 +277,25 @@ func TestEdgeCoreRunningModuleV2Others(t *testing.T) {
 		name       string
 		isRunning  bool
 		runningErr error
-		expected   types.ModuleRunning
+		expected   common.ModuleRunning
 	}{
 		{
 			name:       "Edge running",
 			isRunning:  true,
 			runningErr: nil,
-			expected:   types.KubeEdgeEdgeRunning,
+			expected:   common.KubeEdgeEdgeRunning,
 		},
 		{
 			name:       "Edge not running",
 			isRunning:  false,
 			runningErr: nil,
-			expected:   types.NoneRunning,
+			expected:   common.NoneRunning,
 		},
 		{
 			name:       "Error checking Edge",
 			isRunning:  false,
 			runningErr: fmt.Errorf("error checking process"),
-			expected:   types.NoneRunning,
+			expected:   common.NoneRunning,
 		},
 	}
 
@@ -333,18 +304,18 @@ func TestEdgeCoreRunningModuleV2Others(t *testing.T) {
 			patches := gomonkey.NewPatches()
 			defer patches.Reset()
 
-			mockOS := &MockOSTypeInstaller{
-				isProcessRunning:  tt.isRunning,
-				processRunningErr: tt.runningErr,
+			mockOS := &commfake.MockOSTypeInstaller{
+				IsProcessRunning:  tt.isRunning,
+				ProcessRunningErr: tt.runningErr,
 			}
 
-			patches.ApplyFunc(GetOSInterface, func() types.OSTypeInstaller {
+			patches.ApplyFunc(GetOSInterface, func() common.OSTypeInstaller {
 				return mockOS
 			})
 
 			patches.ApplyFunc(klog.Warningf, func(format string, args ...interface{}) {})
 
-			opt := &types.ResetOptions{}
+			opt := &common.ResetOptions{}
 			result := EdgeCoreRunningModuleV2(opt)
 			assert.Equal(t, tt.expected, result)
 		})
@@ -406,7 +377,7 @@ func TestKillKubeEdgeBinaryOthers(t *testing.T) {
 			})
 
 			patches.ApplyFunc(isEdgeCoreServiceRunning, func(serviceName string) (bool, error) {
-				if serviceName == "edge" || serviceName == KubeEdgeBinaryName {
+				if serviceName == "edge" || serviceName == constants.KubeEdgeBinaryName {
 					return tt.edgeRunning, tt.edgeRunningErr
 				}
 				return false, nil
@@ -414,7 +385,7 @@ func TestKillKubeEdgeBinaryOthers(t *testing.T) {
 
 			patches.ApplyFunc(os.Stat, func(name string) (os.FileInfo, error) {
 				if name == fmt.Sprintf("/etc/systemd/system/%s.service", "edge") ||
-					name == fmt.Sprintf("/etc/systemd/system/%s.service", KubeEdgeBinaryName) {
+					name == fmt.Sprintf("/etc/systemd/system/%s.service", constants.KubeEdgeBinaryName) {
 					if tt.edgeRunning {
 						return &MockFileInfo{}, nil
 					}
@@ -422,12 +393,12 @@ func TestKillKubeEdgeBinaryOthers(t *testing.T) {
 				return nil, os.ErrNotExist
 			})
 
-			mockCmd := &Command{}
-			patches.ApplyFunc(NewCommand, func(command string) *Command {
+			mockCmd := &execs.Command{}
+			patches.ApplyFunc(execs.NewCommand, func(command string) *execs.Command {
 				return mockCmd
 			})
 
-			patches.ApplyMethod(mockCmd, "Exec", func(*Command) error {
+			patches.ApplyMethod(mockCmd, "Exec", func(*execs.Command) error {
 				return tt.cmdExecErr
 			})
 
@@ -509,19 +480,19 @@ func TestCheckSumOthers(t *testing.T) {
 				return []byte(expectedChecksum), nil
 			})
 
-			mockCmd := &Command{}
-			patches.ApplyFunc(NewCommand, func(command string) *Command {
+			mockCmd := &execs.Command{}
+			patches.ApplyFunc(execs.NewCommand, func(command string) *execs.Command {
 				return mockCmd
 			})
 
-			patches.ApplyMethod(mockCmd, "Exec", func(*Command) error {
+			patches.ApplyMethod(mockCmd, "Exec", func(*execs.Command) error {
 				if tt.downloadFails {
 					return fmt.Errorf("download failed")
 				}
 				return nil
 			})
 
-			patches.ApplyMethod(mockCmd, "GetStdOut", func(*Command) string {
+			patches.ApplyMethod(mockCmd, "GetStdOut", func(*execs.Command) string {
 				return expectedChecksum
 			})
 
@@ -579,12 +550,12 @@ func TestRetryDownloadOthers(t *testing.T) {
 			defer patches.Reset()
 
 			checksumFailOnFirst := tt.checksumFails
-			mockCmd := &Command{}
-			patches.ApplyFunc(NewCommand, func(command string) *Command {
+			mockCmd := &execs.Command{}
+			patches.ApplyFunc(execs.NewCommand, func(command string) *execs.Command {
 				return mockCmd
 			})
 
-			patches.ApplyMethod(mockCmd, "Exec", func(*Command) error {
+			patches.ApplyMethod(mockCmd, "Exec", func(*execs.Command) error {
 				if tt.downloadFails {
 					return fmt.Errorf("download failed")
 				}
@@ -644,15 +615,15 @@ func TestIsEdgeCoreServiceRunningOthers(t *testing.T) {
 			patches := gomonkey.NewPatches()
 			defer patches.Reset()
 
-			mockCmd := &Command{
+			mockCmd := &execs.Command{
 				ExitCode: tt.exitCode,
 			}
 
-			patches.ApplyFunc(NewCommand, func(command string) *Command {
+			patches.ApplyFunc(execs.NewCommand, func(command string) *execs.Command {
 				return mockCmd
 			})
 
-			patches.ApplyMethod(mockCmd, "Exec", func(*Command) error {
+			patches.ApplyMethod(mockCmd, "Exec", func(*execs.Command) error {
 				return tt.execErr
 			})
 
@@ -719,16 +690,16 @@ func TestRunEdgeCoreOthers(t *testing.T) {
 				return tt.hasSystemd
 			})
 
-			mockCmd := &Command{}
-			patches.ApplyFunc(NewCommand, func(command string) *Command {
+			mockCmd := &execs.Command{}
+			patches.ApplyFunc(execs.NewCommand, func(command string) *execs.Command {
 				return mockCmd
 			})
 
-			patches.ApplyMethod(mockCmd, "Exec", func(*Command) error {
+			patches.ApplyMethod(mockCmd, "Exec", func(*execs.Command) error {
 				return tt.cmdExecErr
 			})
 
-			patches.ApplyMethod(mockCmd, "GetStdOut", func(*Command) string {
+			patches.ApplyMethod(mockCmd, "GetStdOut", func(*execs.Command) string {
 				return "mock stdout"
 			})
 
@@ -859,7 +830,7 @@ func TestInstallKubeEdgeOthers(t *testing.T) {
 			defer patches.Reset()
 
 			patches.ApplyFunc(os.MkdirAll, func(path string, perm os.FileMode) error {
-				if path != KubeEdgePath && tt.mkdirErr != nil {
+				if path != constants.KubeEdgePath && tt.mkdirErr != nil {
 					return tt.mkdirErr
 				}
 				return nil
@@ -888,16 +859,16 @@ func TestInstallKubeEdgeOthers(t *testing.T) {
 				return tt.serviceFileErr
 			})
 
-			mockCmd := &Command{}
-			patches.ApplyFunc(NewCommand, func(command string) *Command {
+			mockCmd := &execs.Command{}
+			patches.ApplyFunc(execs.NewCommand, func(command string) *execs.Command {
 				return mockCmd
 			})
 
-			patches.ApplyMethod(mockCmd, "Exec", func(*Command) error {
+			patches.ApplyMethod(mockCmd, "Exec", func(*execs.Command) error {
 				return tt.cmdExecErr
 			})
 
-			patches.ApplyMethod(mockCmd, "GetStdOut", func(*Command) string {
+			patches.ApplyMethod(mockCmd, "GetStdOut", func(*execs.Command) string {
 				return "mock stdout"
 			})
 
@@ -1077,12 +1048,12 @@ func TestDownloadServiceFileOthers(t *testing.T) {
 				return "v1.0.0", nil
 			})
 
-			mockCmd := &Command{}
-			patches.ApplyFunc(NewCommand, func(command string) *Command {
+			mockCmd := &execs.Command{}
+			patches.ApplyFunc(execs.NewCommand, func(command string) *execs.Command {
 				return mockCmd
 			})
 
-			patches.ApplyMethod(mockCmd, "Exec", func(*Command) error {
+			patches.ApplyMethod(mockCmd, "Exec", func(*execs.Command) error {
 				return tt.cmdExecErr
 			})
 
@@ -1104,19 +1075,42 @@ func TestDownloadServiceFileOthers(t *testing.T) {
 
 func TestGetOSInterfaceOthers(t *testing.T) {
 	tests := []struct {
-		name         string
-		expectedType string
+		packageManager string
+		expectedType   string
+		wantErr        bool
 	}{
 		{
-			name:         "Get OS Interface",
-			expectedType: "*util.DebOS",
+			packageManager: APT,
+			expectedType:   "*util.DebOS",
+		},
+		{
+			packageManager: YUM,
+			expectedType:   "*util.RpmOS",
+		},
+		{
+			packageManager: PACMAN,
+			expectedType:   "*util.PacmanOS",
+		},
+		{
+			packageManager: "Unknown",
+			wantErr:        true,
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run("package type "+tt.packageManager, func(t *testing.T) {
+			patches := gomonkey.NewPatches()
+			defer patches.Reset()
+
+			patches.ApplyFuncReturn(GetPackageManager, tt.packageManager)
+
+			if tt.wantErr {
+				defer func() {
+					errmsg := recover().(string)
+					assert.Equal(t, "Failed to detect supported package manager command(apt, yum, pacman), exit", errmsg)
+				}()
+			}
 			result := GetOSInterface()
-			assert.NotNil(t, result)
 			assert.Equal(t, tt.expectedType, fmt.Sprintf("%T", result))
 		})
 	}
@@ -1148,17 +1142,17 @@ func TestIsCloudcoreContainerRunningOthers(t *testing.T) {
 			patches := gomonkey.NewPatches()
 			defer patches.Reset()
 
-			mockCmd := &Command{
+			mockCmd := &execs.Command{
 				ExitCode: tt.cmdExitCode,
 			}
-			patches.ApplyFunc(NewCommand, func(command string) *Command {
+			patches.ApplyFunc(execs.NewCommand, func(command string) *execs.Command {
 				expectedCmd := fmt.Sprintf("kubectl get deployment -n %s %s --kubeconfig=%s",
 					tt.namespace, "cloudcore", tt.kubeconfig)
 				assert.Contains(t, command, expectedCmd)
 				return mockCmd
 			})
 
-			patches.ApplyMethod(mockCmd, "Exec", func(*Command) error {
+			patches.ApplyMethod(mockCmd, "Exec", func(*execs.Command) error {
 				return tt.cmdErr
 			})
 
@@ -1200,7 +1194,7 @@ func TestFileExistsOthers(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := FileExists(tt.path)
+			result := files.FileExists(tt.path)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
@@ -1257,12 +1251,12 @@ func TestGetPackageManagerOthers(t *testing.T) {
 			patches := gomonkey.NewPatches()
 			defer patches.Reset()
 
-			mockCmd := &Command{}
-			patches.ApplyFunc(NewCommand, func(command string) *Command {
+			mockCmd := &execs.Command{}
+			patches.ApplyFunc(execs.NewCommand, func(command string) *execs.Command {
 				return mockCmd
 			})
 
-			patches.ApplyMethod(mockCmd, "Exec", func(cmd *Command) error {
+			patches.ApplyMethod(mockCmd, "Exec", func(cmd *execs.Command) error {
 				if (tt.aptExists && cmd.GetCommand() == "bash -c which apt") ||
 					(tt.yumExists && cmd.GetCommand() == "bash -c which yum") ||
 					(tt.pacmanExists && cmd.GetCommand() == "bash -c which pacman") {
@@ -1311,7 +1305,7 @@ func TestCommandOthers(t *testing.T) {
 			patches := gomonkey.NewPatches()
 			defer patches.Reset()
 
-			cmd := NewCommand(tt.command)
+			cmd := execs.NewCommand(tt.command)
 			assert.Equal(t, "bash -c "+tt.command, cmd.GetCommand())
 
 			cmd.StdOut = tt.stdout
