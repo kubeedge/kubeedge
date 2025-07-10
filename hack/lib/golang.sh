@@ -58,7 +58,14 @@ kubeedge::version::get_version_info() {
   fi
 
   GIT_VERSION=$(git describe --tags --abbrev=14 "${GIT_COMMIT}^{commit}" 2>/dev/null)
+  if [[ -z "${GIT_VERSION}" ]]; then
+    echo 
+    echo "⚠️  No git tags found."
+    echo "⚠️  Falling back to default version: v0.0.0"
+    echo "⚠️  To avoid this, consider running: git fetch --tags"
 
+    GIT_VERSION="v0.0.0"
+  fi
   # This translates the "git describe" to an actual semver.org
   # compatible semantic version that looks something like this:
   #   v1.1.0-alpha.0.6+84c76d1142ea4d
