@@ -1,4 +1,5 @@
 //go:build windows
+
 /*
 Copyright 2025 The KubeEdge Authors.
 
@@ -24,22 +25,24 @@ import (
 
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/kubeedge/kubeedge/pkg/util/execs"
 )
 
 const testServiceName = "testService"
 
-func setupCommandMock(t *testing.T, execError error, expectedCmd string) (*Command, []*gomonkey.Patches) {
-	cmd := &Command{}
+func setupCommandMock(t *testing.T, execError error, expectedCmd string) (*execs.Command, []*gomonkey.Patches) {
+	cmd := &execs.Command{}
 	patches := make([]*gomonkey.Patches, 0, 2)
 
 	p1 := gomonkey.ApplyMethod(reflect.TypeOf(cmd), "Exec",
-		func(_ *Command) error {
+		func(_ *execs.Command) error {
 			return execError
 		})
 	patches = append(patches, p1)
 
-	p2 := gomonkey.ApplyFunc(NewCommand,
-		func(command string) *Command {
+	p2 := gomonkey.ApplyFunc(execs.NewCommand,
+		func(command string) *execs.Command {
 			if expectedCmd != "" {
 				assert.Equal(t, expectedCmd, command)
 			}
