@@ -35,6 +35,8 @@ type CommWorker struct {
 
 // Start worker
 func (cw CommWorker) Start() {
+	ticker := time.NewTicker(60 * time.Second)
+	defer ticker.Stop()
 	for {
 		select {
 		case msg, ok := <-cw.ReceiverChan:
@@ -53,7 +55,7 @@ func (cw CommWorker) Start() {
 				}
 			}
 
-		case <-time.After(time.Duration(60) * time.Second):
+		case <-ticker.C:
 			cw.checkConfirm(cw.DTContexts)
 		case v, ok := <-cw.HeartBeatChan:
 			if !ok {
