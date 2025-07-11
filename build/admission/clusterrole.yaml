@@ -28,3 +28,6 @@ rules:
   - apiGroups: ["operations.kubeedge.io"]
     resources: ["nodeupgradejobs", "imageprepulljobs", "configupdatejobs"]
     verbs: ["get", "list"]
+  - apiGroups: [ "apps.kubeedge.io" ]
+    resources: [ "edgeapplications", "nodegroups"]
+    verbs: [ "get", "list" ]
