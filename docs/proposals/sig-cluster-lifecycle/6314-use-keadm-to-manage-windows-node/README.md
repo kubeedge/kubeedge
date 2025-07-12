@@ -82,8 +82,8 @@ func (sysd WindowsInitSystem) ServiceEnable(service string) error {
 }
 
 func (WindowsInitSystem) ServiceDisable(service string) error {
-	args := []string{"delete", service, "default"}
-	return exec.Command("rc-update", args...).Run()
+	args := []string{"delete", service}
+	return exec.Command("sc", args...).Run()
 }
 
 func (sysd SystemdExtSystem) ServiceEnable(service string) error {
