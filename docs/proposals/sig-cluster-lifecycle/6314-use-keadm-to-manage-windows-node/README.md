@@ -81,18 +81,13 @@ func (sysd WindowsInitSystem) ServiceEnable(service string) error {
 	return exec.Command(sysd.EnableCommand(service)).Run()
 }
 
-func (WindowsInitSystem) ServiceDisable(service string) error {
+func (sysd WindowsInitSystem) ServiceDisable(service string) error {
 	args := []string{"delete", service}
 	return exec.Command("sc", args...).Run()
 }
 
 func (sysd SystemdExtSystem) ServiceEnable(service string) error {
 	return exec.Command(sysd.EnableCommand(service)).Run()
-}
-
-func (SystemdExtSystem) ServiceDisable(service string) error {
-	args := []string{"disable", service}
-	return exec.Command("systemctl", args...).Run()
 }
 
 func (sysd SystemdExtSystem) ServiceCreate(service string) error {
@@ -104,7 +99,7 @@ func (sysd SystemdExtSystem) ServiceRemove(service string) error {
 }
 
 func GetExtSystem() (ExtSystem, error) {
-    return &WindowsInitSystem{}, nils
+    return &WindowsInitSystem{}, nil
 }
 ```
 
