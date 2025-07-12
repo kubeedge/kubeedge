@@ -10,7 +10,7 @@ status: Implementable
 ---
 # KubeEdge device management practice cases optimization
 ## Motivation
-The Kubeedge Examples repository provides users with many use cases, allowing them to quickly get started. However, many of the examples in the repository are currently developed based on the old version of kubeedge (before v1.15), and there are compatibility issues with the new version of kubeedge. Therefore, we need to optimize the examples in the repository so that they can run under the new version.
+The KubeEdge Examples repository provides users with many use cases, allowing them to quickly get started. However, many of the examples in the repository are currently developed based on the old version of KubeEdge (before v1.15), and there are compatibility issues with the new version of KubeEdge. Therefore, we need to optimize the examples in the repository so that they can run under the new version.
 
 ## Goals
 
@@ -34,14 +34,14 @@ For the original Device-IoT cases in the KubeEdge Example repository, select at 
   - Therefore, the main tasks to be completed next are the development of the Driver and CRD components. This involves implementing the standardization of Modbus protocol data for the Device, completing functions such as device connection, data reading and writing, and specifically requires refining the DeviceType based on Device-Instance.yaml and implementing interfaces such as InitDevice, GetDeviceData, StopDevice, and SetDeviceData.
   - Finally, it is necessary to verify the functionality of the Mapper plugin. This can be done through RESTful API, cloud-based Twins viewing, MQTT, and checking Mapper logs, among other methods.
 >Related APIs:
-Modify Status:api/v1/devicemethod/default/temperature-instance/UpdateStatus/status/{data}
+Control Switch:api/v1/devicemethod/default/temperature-instance/SwitchControl/temperature-switch/{data}
 Modify Temperature:api/v1/devicemethod/default/temperature-instance/UpdateTemperature/temperature/{data}
 Get Temperature: api/v1/device/default/temperature-instance/temperature
 Get Status: api/v1/device/default/temperature-instance/status 
 #### 1.2 CRDS Development
 ***Temperature-model.yaml***: 
 Reference [v1beta1/device_model_types](https://github.com/kubeedge/kubeedge/blob/master/staging/src/github.com/kubeedge/api/apis/devices/v1beta1/device_model_types.go)
-  - Add the two fields temperature and status as attributes of the Temperature Sensor Model 
+  - Add the two fields temperature and temperature-switch as attributes of the Temperature Sensor Model 
 ```yaml
 apiVersion: devices.kubeedge.io/v1beta1
 kind: DeviceModel
@@ -52,14 +52,14 @@ spec:
   protocol: modbus
   properties:
     - name: temperature 
-      description: actual temperature *10 
+      description: actual temperature 
       type: FLOAT   # ENUM: INT,FLOAT,DOUBLE,STRING,BOOLEAN,BYTES
       accessMode: ReadWrite
       minimum: "0"  
       maximum: "100.0"  
       unit: "Celsius" 
-    - name: status
-      description: "device working status 0:off,1:on"
+    - name: temperature-switch
+      description: "the switch of device 0:off,1:on"
       type: INT  
       accessMode: ReadWrite
 ```
@@ -112,7 +112,7 @@ spec:
       #     qos: 0
       #     address: "tcp://172.18.0.3:31883"  # replace the address with your mqtt broker address
       #     retained: false
-    - name: status
+    - name: temperature-switch
       collectCycle: 10000
       reportCycle: 10000
       reportToCloud: true
@@ -129,10 +129,10 @@ spec:
           isSwap: false
           isRegisterSwap: false
   methods:
-    - name: UpdateStatus
-      description: update the status of the device
+    - name: SwitchControl
+      description: control the switch of the device
       propertyNames:
-        - status
+        - temperature-switch
     - name: UpdateTemperature
       description: update the temperature of the device
       propertyNames:
@@ -161,7 +161,7 @@ spec:
       1. Create TCP Server
       2. Add a register node list, where SlaveID = 1, the starting relative address of Coil is 0, the quantity is 1, representing the working status (0: Off, 1: On). The starting relative address of HoldingRegister is 0, the quantity is 1, representing the current temperature.
       3. Start the TCP server to listen on port 5502 
-```Go
+```go
 package main
 
 import (
@@ -187,9 +187,9 @@ func main() {
   - Prior to this, the development of modbus-simulator and mapper had been completed, and cloudcore and edgecore had been configured. 
   - First, deploy modbus-simulator and mapper on the edge node. 
   - Next, deploy the model and instance in the CRDs.
-  - Then, access the mapper's RESTful API via port 7777 to verify the device data collected in the mapper. Additionally, you can check the twins.reported field in the device.yaml file on the cloud to verify whether the data has been uploaded to the cloud. 
+  - Then, access the mapper's RESTful API via port **7777**(The API port is specified by the user, the default is 7777) to verify the device data collected in the mapper. Additionally, you can check the twins.reported field in the device.yaml file on the cloud to verify whether the data has been uploaded to the cloud. 
   - Finally, a web app can be built and deployed to the cloud for visual inspection of the results
-### 2. kubeedge-counter-demo Case Optimization
+### 2. KubeEdge-counter-demo Case Optimization
 #### 2.1 Insufficient analysis
   - Usability: In the new version, manual installation of MQTT Broker is required, and the deployment steps are rather cumbersome.
   - Compatibility: 
