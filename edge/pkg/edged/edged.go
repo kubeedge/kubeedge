@@ -247,7 +247,7 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 			return nil, fmt.Errorf("create %s static pod path failed: %v", kubeletConfig.StaticPodPath, err)
 		}
 	} else {
-		klog.ErrorS(fmt.Errorf("static pod path is nil"), "Static pod path is nil in newEdged")
+		klog.ErrorS(nil, "Static pod path is empty in newEdged")
 	}
 
 	// set edged version
@@ -431,7 +431,7 @@ func (e *edged) handlePodListFromMetaManager(content []byte, updatesChan chan<- 
 	var lists []string
 	err = json.Unmarshal(content, &lists)
 	if err != nil {
-		klog.ErrorS(err, "Failed to unmarshal pod list from MetaManager")
+		klog.ErrorS(err, "Failed to unmarshal pod list from MetaManager in handlePodListFromMetaManager")
 		return err
 	}
 
@@ -440,7 +440,7 @@ func (e *edged) handlePodListFromMetaManager(content []byte, updatesChan chan<- 
 		var pod v1.Pod
 		err = json.Unmarshal([]byte(list), &pod)
 		if err != nil {
-			klog.ErrorS(err, "Failed to unmarshal pod from MetaManager list")
+			klog.ErrorS(err, "Failed to unmarshal pod from MetaManager list in handlePodListFromMetaManager")
 			return err
 		}
 
@@ -459,7 +459,7 @@ func (e *edged) handlePodListFromEdgeController(content []byte, updatesChan chan
 	var podLists []v1.Pod
 	var pods []*v1.Pod
 	if err := json.Unmarshal(content, &podLists); err != nil {
-		klog.ErrorS(err, "Failed to unmarshal pod list from EdgeController")
+		klog.ErrorS(err, "Failed to unmarshal pod list from EdgeController in handlePodListFromEdgeController")
 		return err
 	}
 
