@@ -214,7 +214,7 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 	var kubeletFlags kubeletoptions.KubeletFlags
 	err = edgedconfig.ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(edgedconfig.Config.TailoredKubeletConfig, &kubeletConfig, nil)
 	if err != nil {
-		klog.ErrorS(err, "Failed to convert kubelet config")
+		klog.ErrorS(err, "Failed to convert kubelet config in newEdged")
 		return nil, fmt.Errorf("failed to construct kubelet configuration")
 	}
 	edgedconfig.ConvertConfigEdgedFlagToConfigKubeletFlag(&edgedconfig.Config.TailoredKubeletFlag, &kubeletFlags)
@@ -224,11 +224,13 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 	if err := utilfeature.DefaultMutableFeatureGate.Add(map[featuregate.Feature]featuregate.FeatureSpec{
 		featurekey: {Default: false, PreRelease: featuregate.Alpha},
 	}); err != nil {
+		klog.ErrorS(err, "Failed to set default DisableCSIVolumePlugin feature gate in newEdged")
 		return nil, fmt.Errorf("failed to set default DisableCSIVolumePlugin feature gate : %w", err)
 	}
 
 	// set feature gates from initial flags-based config
 	if err := utilfeature.DefaultMutableFeatureGate.SetFromMap(kubeletConfig.FeatureGates); err != nil {
+		klog.ErrorS(err, "Failed to set feature gates from initial flags-based config in newEdged")
 		return nil, fmt.Errorf("failed to set feature gates from initial flags-based config: %w", err)
 	}
 
@@ -241,10 +243,11 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 	// make directory for static pod
 	if kubeletConfig.StaticPodPath != "" {
 		if err := os.MkdirAll(kubeletConfig.StaticPodPath, os.ModePerm); err != nil {
+			klog.ErrorS(err, "Failed to create static pod path in newEdged", "path", kubeletConfig.StaticPodPath)
 			return nil, fmt.Errorf("create %s static pod path failed: %v", kubeletConfig.StaticPodPath, err)
 		}
 	} else {
-		klog.ErrorS(err, "static pod path is nil!")
+		klog.ErrorS(fmt.Errorf("static pod path is nil"), "Static pod path is nil in newEdged")
 	}
 
 	// set edged version
@@ -253,7 +256,7 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 	// use kubeletServer to construct the default KubeletDeps
 	kubeletDeps, err := DefaultKubeletDeps(&kubeletServer, utilfeature.DefaultFeatureGate)
 	if err != nil {
-		klog.ErrorS(err, "Failed to construct kubelet dependencies")
+		klog.ErrorS(err, "Failed to construct kubelet dependencies in newEdged")
 		return nil, fmt.Errorf("failed to construct kubelet dependencies")
 	}
 	MakeKubeClientBridge(kubeletDeps)
@@ -273,6 +276,7 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 		namespace:     namespace,
 	}
 
+	klog.InfoS("Successfully created new edged instance", "nodeName", nodeName, "namespace", namespace)
 	return ed, nil
 }
 
@@ -382,6 +386,7 @@ func (e *edged) handlePod(op string, content []byte, updatesChan chan<- interfac
 	var pod v1.Pod
 	err = json.Unmarshal(content, &pod)
 	if err != nil {
+		klog.ErrorS(err, "Failed to unmarshal pod in handlePod")
 		return err
 	}
 
@@ -395,6 +400,7 @@ func (e *edged) handlePod(op string, content []byte, updatesChan chan<- interfac
 		info := model.NewMessage("").BuildRouter(e.Name(), e.Group(), e.namespace+"/"+model.ResourceTypePod,
 			model.QueryOperation)
 		beehiveContext.Send(modules.MetaManagerModuleName, *info)
+		klog.InfoS("Queried MetaManager for pod list due to empty pod spec on delete", "podName", pod.Name)
 		return nil
 	}
 
@@ -413,6 +419,9 @@ func (e *edged) handlePod(op string, content []byte, updatesChan chan<- interfac
 		}
 		updates := &kubelettypes.PodUpdate{Op: podOp, Pods: pods, Source: kubelettypes.ApiserverSource}
 		updatesChan <- *updates
+		klog.InfoS("Pod update sent to kubelet", "operation", op, "podName", pod.Name)
+	} else {
+		klog.V(3).InfoS("Pod does not match node name, ignoring", "podName", pod.Name, "nodeName", pod.Spec.NodeName, "expectedNodeName", e.nodeName)
 	}
 
 	return nil
@@ -422,6 +431,7 @@ func (e *edged) handlePodListFromMetaManager(content []byte, updatesChan chan<- 
 	var lists []string
 	err = json.Unmarshal(content, &lists)
 	if err != nil {
+		klog.ErrorS(err, "Failed to unmarshal pod list from MetaManager")
 		return err
 	}
 
@@ -430,6 +440,7 @@ func (e *edged) handlePodListFromMetaManager(content []byte, updatesChan chan<- 
 		var pod v1.Pod
 		err = json.Unmarshal([]byte(list), &pod)
 		if err != nil {
+			klog.ErrorS(err, "Failed to unmarshal pod from MetaManager list")
 			return err
 		}
 
@@ -440,7 +451,7 @@ func (e *edged) handlePodListFromMetaManager(content []byte, updatesChan chan<- 
 
 	updates := &kubelettypes.PodUpdate{Op: kubelettypes.SET, Pods: pods, Source: kubelettypes.ApiserverSource}
 	updatesChan <- *updates
-
+	klog.InfoS("Successfully handled pod list from MetaManager", "podCount", len(pods))
 	return nil
 }
 
@@ -448,6 +459,7 @@ func (e *edged) handlePodListFromEdgeController(content []byte, updatesChan chan
 	var podLists []v1.Pod
 	var pods []*v1.Pod
 	if err := json.Unmarshal(content, &podLists); err != nil {
+		klog.ErrorS(err, "Failed to unmarshal pod list from EdgeController")
 		return err
 	}
 
@@ -458,7 +470,7 @@ func (e *edged) handlePodListFromEdgeController(content []byte, updatesChan chan
 	}
 	updates := &kubelettypes.PodUpdate{Op: kubelettypes.SET, Pods: pods, Source: kubelettypes.ApiserverSource}
 	updatesChan <- *updates
-
+	klog.InfoS("Successfully handled pod list from EdgeController", "podCount", len(pods))
 	return nil
 }
 
