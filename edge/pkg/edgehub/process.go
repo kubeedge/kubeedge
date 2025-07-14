@@ -67,7 +67,6 @@ func (eh *EdgeHub) sendToCloud(message model.Message) error {
 	err := eh.chClient.Send(message)
 	eh.keeperLock.Unlock()
 	if err != nil {
-		klog.ErrorS(err, "Failed to send message to cloud", "messageID", message.GetID())
 		return fmt.Errorf("failed to send message, error: %v", err)
 	}
 	klog.V(4).InfoS("Message sent to cloud successfully", "messageID", message.GetID())
