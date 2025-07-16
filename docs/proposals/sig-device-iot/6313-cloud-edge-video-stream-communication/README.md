@@ -93,7 +93,7 @@ These settings define essential ports, addresses, and TLS credentials to ensure 
 
 ### Stream Establishment and Reuse
 
-<img src="./cloud-edge-vide-stream-communication.png" alt="Cloud-edge video stream communication diagram"/>
+<img src="./cloud-edge-video-stream-communication.png" alt="Cloud-edge video stream communication diagram"/>
 
 There are two types of channels between the cloud and edge: a control channel and a video stream channel.
 The control channel, similar to the one used in existing CloudStream/EdgeStream modules, is established during initial cloud-edge connection and used to transmit command messages(e.g., addVideo, removeVideo).
