@@ -79,6 +79,21 @@ On the cloud side, users can apply the annotation `edge.kubeedge.io/hold-upgrade
 
 When a resource is marked with the annotation `edge.kubeedge.io/hold-upgrade: "true"`, the MetaManager module on the edge intercepts and handles the update message before it reaches edged.
 
+**0. How Resources Are Held**
+
+At the edge, the hold logic is based on a key observation:
+
+> A Pod upgrade is always implemented as the creation of a new Pod to replace the old one.
+
+Therefore, the new Pod (with Pending status) is intercepted at the edge node before it can be launched. The logic works as follows:
+
+    - The MetaManager receives the new Pod update message from CloudCore.
+    - If the Pod has edge.kubeedge.io/hold-upgrade: "true", it is treated as a holdable upgrade.
+    - Instead of letting this pod proceed to runtime, the edge node stores this Pod in an internal queue and skips execution.
+    - This ensures the new Pod will not start running until the upgrade is explicitly confirmed.
+
+This logic isolates edge resource upgrades, allowing fine-grained lifecycle control at the device level.
+
 **1. Check Hold Condition**
 
 Upon receiving a Pod update message:
@@ -115,6 +130,35 @@ When the user explicitly confirms the upgrade (e.g., using keadm ctl unhold-upgr
 - edged retrieves the held update message from the internal map.
 - Applies the update to the local runtime.
 - Removes the stored entry from the map.
+
+**5. Recover Held Updates on Edge Restart**
+
+When the edge node restarts, edged reconnects to the metaserver and retrieves the last known Pod states.
+
+To ensure upgrade continuity:
+
+    If a Pod has the annotation edge.kubeedge.io/hold-upgrade=true and its phase is still Pending, it is treated as a recoverable upgrade.
+
+    edged recognizes such pods as previously-held upgrades and restores their hold status.
+
+    These Pods are automatically added back to the heldPodUpdates queue.
+
+This ensures that the hold behavior persists across restarts, and the Pod will remain paused until a manual unhold command is issued.
+
+Sample code path for recovery:
+
+```go
+func (e *edged) handlePodListFromMetaManager(content []byte, updatesChan chan<- interface{}) (err error) {
+    ....
+		if filterPodByNodeName(&pod, e.nodeName) {
+			if pod.Annotations["edge.kubeedge.io/hold-upgrade"] == "true" && pod.Status.Phase == v1.PodPending {
+				key := fmt.Sprintf("%s/%s", pod.Namespace, pod.Name)
+				e.heldPodUpdates[key] = append(e.heldPodUpdates[key], kubelettypes.PodUpdate{Op: kubelettypes.SET, Pods: []*v1.Pod{&pod}, Source: kubelettypes.ApiserverSource})
+				continue
+			}
+```
+
+This recovery logic prevents unexpected resource upgrades due to edge system restarts or reboots.
 
 ### MetaServer/MetaService API
 
