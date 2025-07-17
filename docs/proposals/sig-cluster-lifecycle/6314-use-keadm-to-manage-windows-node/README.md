@@ -86,16 +86,21 @@ func (sysd WindowsInitSystem) ServiceDisable(service string) error {
 	return exec.Command("sc", args...).Run()
 }
 
-func (sysd SystemdExtSystem) ServiceEnable(service string) error {
+func (sysd WindowsInitSystem) ServiceEnable(service string) error {
 	return exec.Command(sysd.EnableCommand(service)).Run()
 }
 
-func (sysd SystemdExtSystem) ServiceCreate(service string) error {
-	return sysd.ServiceStart(service)
+func (sysd WindowsExtSystem) ServiceCreate(service string, cmd string, envs map[string]string) error {
+	args := []string{"create", service, "binPath=", cmd}
+	for key, value := range envs {
+		args = append(args, "env", key+"="+value)
+	}
+	return exec.Command("sc", args...).Run()
 }
 
-func (sysd SystemdExtSystem) ServiceRemove(service string) error {
-	return sysd.ServiceStop(service)
+func (sysd WindowsInitSystem) ServiceRemove(service string) error {
+	args := []string{"delete", service}
+	return exec.Command("sc", args...).Run()
 }
 
 func GetExtSystem() (ExtSystem, error) {
@@ -240,7 +245,7 @@ check-packaging-tools:
 | Upgrade rollback    | Inject binary corruption               |
 | Permission enforcement       | Non-admin execution attempts                                   |
 | Network disruption     | Disable during cloudcore communication                            |
-| Long-running stability | 72h continuous operation test   
+| Long-running stability | 72h continuous operation test   |
 
 ## Rollout Plan
 1. Phase 1: Implement service abstraction layer
