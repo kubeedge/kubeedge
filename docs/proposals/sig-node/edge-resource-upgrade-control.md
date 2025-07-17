@@ -90,21 +90,54 @@ Therefore, the new Pod (with Pending status) is intercepted at the edge node bef
     - The MetaManager receives the new Pod update message from CloudCore.
     - If the Pod has edge.kubeedge.io/hold-upgrade: "true", it is treated as a holdable upgrade.
     - Instead of letting this pod proceed to runtime, the edge node stores this Pod in an internal queue and skips execution.
-    - This ensures the new Pod will not start running until the upgrade is explicitly confirmed.
 
 This logic isolates edge resource upgrades, allowing fine-grained lifecycle control at the device level.
 
-**1. Check Hold Condition**
+**1. Hold Logic**
 
-Upon receiving a Pod update message:
+When edged receives a Pod from MetaManager, it checks the following:
 
-- Parse the incoming Pod metadata.
-- If the annotation `edge.kubeedge.io/hold-upgrade: "true"` is not present, forward the message to edged and process normally.
-- If the annotation is present, proceed with hold-handling logic.
+```go
+func (e *edged) handlePod(..) {
+  ...
+    case model.UpdateOperation:
+			hold, err := e.holdUpgrade(&pod)
+			if err != nil {
+				return err
+			}
 
-**2. Set PodCondition**
+			if hold {
+				return nil
+			}
+      ...
+}
 
-edged augments the incoming Pod object with the following condition:
+func (e *edged) holdUpgrade(pod *v1.Pod) (bool, error) {
+	if pod.Annotations["edge.kubeedge.io/hold-upgrade"] != "true" {
+		return false, nil
+	}
+
+	if pod.Status.Phase != v1.PodPending {
+		return false, nil
+	}
+
+	v := kubelettypes.PodUpdate{
+		Op:     kubelettypes.UPDATE,
+		Pods:   []*v1.Pod{pod},
+		Source: kubelettypes.ApiserverSource,
+	}
+
+	key := fmt.Sprintf("%s/%s", pod.Namespace, pod.Name)
+	e.heldPodUpdates[key] = append(e.heldPodUpdates[key], v)
+  ...
+}
+```
+
+- If the condition is met, the Pod update is stored in memory (heldPodUpdates) and not passed to the runtime.
+- This ensures the new Pod will not start running until the upgrade is explicitly confirmed.
+
+
+Additionally, a new Pod condition is injected:
 
 ```yaml
 status:
@@ -118,20 +151,7 @@ status:
 - This condition notifies cloud that the update is intentionally being held.
 - edged sends a new Pod status update (with the HeldUpgrade condition) to cloudcore.
 
-**3. Store the Latest Update**
-
-- The update message is not applied immediately.
-- Instead, it is stored in an internal map, keyed by Pod name.
-
-**4. Apply Update on Confirmation**
-
-When the user explicitly confirms the upgrade (e.g., using keadm ctl unhold-upgrade), MetaManager:
-
-- edged retrieves the held update message from the internal map.
-- Applies the update to the local runtime.
-- Removes the stored entry from the map.
-
-**5. Recover Held Updates on Edge Restart**
+**2. Recovery on Edge Restart**
 
 When the edge node restarts, edged reconnects to the metaserver and retrieves the last known Pod states.
 
@@ -160,9 +180,29 @@ func (e *edged) handlePodListFromMetaManager(content []byte, updatesChan chan<- 
 
 This recovery logic prevents unexpected resource upgrades due to edge system restarts or reboots.
 
+**3. Unhold and Resume Upgrade**
+
+The syncPod goroutine in edged listens for an UnholdPodUpgrade message from MetaManager:
+```go
+func (e *edged) syncPod(podCfg *config.PodConfig) {
+  ...
+  case model.UnholdPodUpgrade:
+      key := string(content)
+      if updates, exists := e.heldPodUpdates[key]; exists {
+          for _, update := range updates {
+              rawUpdateChan <- update
+          }
+          delete(e.heldPodUpdates, key)
+      }
+```
+
+- On receiving the unhold message, all cached updates for the Pod are re-sent to the runtime via rawUpdateChan.
+- The Pod upgrade process resumes as normal.
+
+
 ### MetaServer/MetaService API
 
-It needs to extend KubeEdge metaserver with new endpoints, `POST /edge/unhold/pod/{podName}` — clears the hold annotation and resumes upgrades, and likewise for node-level holds.
+It needs to extend KubeEdge metaserver with new endpoints, clears the hold annotation and resumes upgrades, and likewise for node-level holds.
 
 ### `keadm ctl` Extension
 
