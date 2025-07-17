@@ -39,6 +39,8 @@ const (
 	ResourceTypeSaAccess            = "serviceaccountaccess"
 	ResourceTypeCSR                 = "certificatesigningrequest"
 
+	UnholdPodUpgrade = "unhold-pod-upgrade"
+
 	ResourceTypeK8sCA = "k8s/ca.crt"
 )
 
