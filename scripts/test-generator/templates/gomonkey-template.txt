@@ -1,0 +1,71 @@
+package {{.PackageName}}
+
+import (
+	"testing"
+	"reflect"
+	"errors"
+	
+	"github.com/agiledragon/gomonkey/v2"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestExampleWithMocking(t *testing.T) {
+	tests := []struct {
+		name           string
+		input          interface{}
+		expectedResult interface{}
+		expectedError  bool
+		mockSetup      func() *gomonkey.Patches
+	}{
+		{
+			name:           "success case with mocked dependencies",
+			input:          "test input",
+			expectedResult: "expected output",
+			expectedError:  false,
+			mockSetup: func() *gomonkey.Patches {
+				patches := gomonkey.NewPatches()
+				
+				// Example: Mock external function call
+				// patches.ApplyFunc(os.ReadFile, func(filename string) ([]byte, error) {
+				//     return []byte("mocked content"), nil
+				// })
+				
+				return patches
+			},
+		},
+		{
+			name:           "error case with mocked failure",
+			input:          "invalid input",
+			expectedResult: nil,
+			expectedError:  true,
+			mockSetup: func() *gomonkey.Patches {
+				patches := gomonkey.NewPatches()
+				
+				// Mock function to return error
+				// patches.ApplyFunc(SomeExternalFunc, func() error {
+				//     return errors.New("mocked error")
+				// })
+				
+				return patches
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup mocks
+			patches := tt.mockSetup()
+			defer patches.Reset()
+
+			// Call the function being tested
+			// result, err := YourFunction(tt.input)
+
+			if tt.expectedError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				// assert.Equal(t, tt.expectedResult, result)
+			}
+		})
+	}
+}

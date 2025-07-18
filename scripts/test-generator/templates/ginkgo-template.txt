@@ -1,0 +1,58 @@
+package {{.PackageName}}
+
+import (
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+)
+
+var _ = Describe("{{.ComponentName}}", func() {
+	var (
+		testInput  string
+		testResult interface{}
+		testError  error
+	)
+
+	BeforeEach(func() {
+		testInput = "default test input"
+	})
+
+	AfterEach(func() {
+		testResult = nil
+		testError = nil
+	})
+
+	Context("when function is called", func() {
+		Context("with valid input", func() {
+			BeforeEach(func() {
+				testInput = "valid input"
+			})
+
+			It("should return expected result", func() {
+				// testResult, testError = YourFunction(testInput)
+				
+				Expect(testError).ToNot(HaveOccurred())
+				// Expect(testResult).To(Equal("expected result"))
+			})
+
+			It("should handle edge cases", func() {
+				// Test edge cases
+				// testResult, testError = YourFunction("")
+				
+				Expect(testError).ToNot(HaveOccurred())
+			})
+		})
+
+		Context("with invalid input", func() {
+			BeforeEach(func() {
+				testInput = ""
+			})
+
+			It("should return an error", func() {
+				// testResult, testError = YourFunction(testInput)
+				
+				Expect(testError).To(HaveOccurred())
+				Expect(testResult).To(BeNil())
+			})
+		})
+	})
+})
