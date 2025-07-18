@@ -86,10 +86,6 @@ func (sysd WindowsInitSystem) ServiceDisable(service string) error {
 	return exec.Command("sc", args...).Run()
 }
 
-func (sysd WindowsInitSystem) ServiceEnable(service string) error {
-	return exec.Command(sysd.EnableCommand(service)).Run()
-}
-
 func (sysd WindowsExtSystem) ServiceCreate(service string, cmd string, envs map[string]string) error {
 	args := []string{"create", service, "binPath=", cmd}
 	for key, value := range envs {
