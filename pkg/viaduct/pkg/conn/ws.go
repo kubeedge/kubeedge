@@ -151,6 +151,11 @@ func (conn *WSConnection) handleMessage() {
 
 func (conn *WSConnection) SetReadDeadline(t time.Time) error {
 	conn.ReadDeadline = t
+	conn.locker.Lock()
+	defer conn.locker.Unlock()
+	if conn.wsConn != nil {
+		return conn.wsConn.SetReadDeadline(t)
+	}
 	return nil
 }
 
@@ -198,16 +203,31 @@ func (conn *WSConnection) ReadMessage(msg *model.Message) error {
 }
 
 func (conn *WSConnection) RemoteAddr() net.Addr {
-	return conn.wsConn.RemoteAddr()
+	conn.locker.Lock()
+	defer conn.locker.Unlock()
+	if conn.wsConn != nil {
+		return conn.wsConn.RemoteAddr()
+	}
+	return nil
 }
 
 func (conn *WSConnection) LocalAddr() net.Addr {
-	return conn.wsConn.LocalAddr()
+	conn.locker.Lock()
+	defer conn.locker.Unlock()
+	if conn.wsConn != nil {
+		return conn.wsConn.LocalAddr()
+	}
+	return nil
 }
 
 func (conn *WSConnection) Close() error {
 	conn.messageFifo.Close()
-	return conn.wsConn.Close()
+	conn.locker.Lock()
+	defer conn.locker.Unlock()
+	if conn.wsConn != nil {
+		return conn.wsConn.Close()
+	}
+	return nil
 }
 
 // get connection state
