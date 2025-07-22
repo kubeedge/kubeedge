@@ -50,6 +50,7 @@ func StartHTTPServer() error {
 		TLSConfig: &tls.Config{
 			Certificates: []tls.Certificate{cert},
 			ClientAuth:   tls.RequestClientCert,
+			MinVersion:   tls.VersionTLS12,
 		},
 	}
 	return server.ListenAndServeTLS("", "")
