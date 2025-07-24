@@ -24,13 +24,18 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
 )
 
+// newMetaMessageHandler returns a SimpleHandler for meta messages (resource/function).
+// It filters messages by group and dispatches them to the appropriate module based on the parentID.
 func newMetaMessageHandler() *SimpleHandler {
 	return &SimpleHandler{
+		// FilterFunc determines whether the message belongs to the meta group (resource/function).
 		FilterFunc: func(msg *model.Message) bool {
 			group := msg.GetGroup()
 			return group == message.ResourceGroupName ||
 				group == message.FuncGroupName
 		},
+		// ProcessFunc processes the matched message: if ParentID is set, sends a response;
+		// otherwise, dispatches the message to the MetaGroup.
 		ProcessFunc: func(msg *model.Message, _clientHub clients.Adapter) error {
 			if msg.GetParentID() != "" {
 				beehiveContext.SendResp(*msg)
