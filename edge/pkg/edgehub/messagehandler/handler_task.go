@@ -24,11 +24,15 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
 )
 
+// newTaskMessageHandler returns a SimpleHandler for task messages (taskmanager group).
+// It filters messages by group and dispatches them to the TaskManager module.
 func newTaskMessageHandler() *SimpleHandler {
 	return &SimpleHandler{
+		// FilterFunc determines whether the message belongs to the taskmanager group.
 		FilterFunc: func(msg *model.Message) bool {
 			return msg.GetGroup() == cloudmodules.TaskManagerModuleName
 		},
+		// ProcessFunc processes the matched message and dispatches it to TaskManager.
 		ProcessFunc: func(msg *model.Message, _clientHub clients.Adapter) error {
 			beehiveContext.Send(modules.TaskManagerModuleName, *msg)
 			return nil
