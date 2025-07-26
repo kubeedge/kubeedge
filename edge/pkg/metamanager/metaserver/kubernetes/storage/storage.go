@@ -24,8 +24,8 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/storage"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
+	remote "k8s.io/cri-client/pkg"
 	"k8s.io/klog/v2"
-	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
 
 	"github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/config"

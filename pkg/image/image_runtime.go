@@ -26,7 +26,7 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
+	remote "k8s.io/cri-client/pkg"
 )
 
 type Runtime interface {
