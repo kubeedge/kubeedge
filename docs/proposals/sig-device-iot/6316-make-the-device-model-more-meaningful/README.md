@@ -15,186 +15,134 @@ Currently, KubeEdge's definition of the device model is relatively simplistic, w
 
 ## Goals
 
-1. Merge the device model and product concept to form a "real device product" model.
-2. Use this model to describe the specifications, connection protocols, and attribute acquisition methods of device products.
-3. Device instances share the model configuration and only need to configure different connection addresses.
-4. Reduce the cost of model splitting and improve configuration reusability.
+1. Merge the device model with the product concept to create a "Device Product" model.
+2. Extract some fields from the existing device instance into the device model to establish default instance configurations.
+3. Device instances share this model configuration, requiring only the configuration of different connection addresses.
+4. Reduce the cost of model separation and improve configuration reusability.
 
 1.将设备模型与产品概念合并，形成"现实设备产品"模型。
-2.通过该模型描述设备产品的规格、连接协议、属性获取方式等。
+2.将现有的设备实例模型的一些字段抽取到model层中，形成默认实例配置。
 3.设备实例共享该模型配置，仅需配置不同的连接地址。
 4.降低模型拆分的成本，提高配置复用性。
 
 ## Proposal Design
 
-### Model Structure
+### Property
 
-The new "real device product" model will contain the following main fields: 
-1. Name: The unique identifier of the device product. 
-2. Specification: Describes the specifications of the device product, including supported properties, commands, etc. 
-3. Connection Protocol: The connection protocol used by the device, such as MQTT, HTTP, etc. 
-4. Property Access Method: Describes how to obtain device properties, such as polling, event triggering, etc. 
-5. Metadata: Other metadata related to the device product.
+device_model struct will add the following fields:
 
-新的"现实设备产品"模型将包含以下主要字段：
-1.名称：设备产品的唯一标识。
-2.规格：描述设备产品的规格，包括支持的属性、命令等。
-3.连接协议：设备使用的连接协议，如 MQTT、HTTP 等。
-4.属性获取方式：描述如何获取设备属性，例如轮询、事件触发等。
-5.元数据：其他与设备产品相关的元数据。
+device_model层将新增以下字段：
+
+```go
+type DefaultInstanceProperty struct{
+    Visitors *VisitorConfig `json:"visitors,omitempty"`
+    
+    ReportCycle *int64 `json:"reportCycle,omitempty"`
+    CollectCycle *int64 `json:"collectCycle,omitempty"`
+    
+    ReportToCloud *bool `json:"reportToCloud,omitempty"`
+
+    PushMethod *PushMethod `json:"pushMethod,omitempty"`
+}
+```
 
 ### Relationship between Device Instance and Model
 
 A device instance will reference the "real device product" model and share its specifications, connection protocol, property access methods, and other configurations. The device instance only needs to configure its specific connection address, while all other configurations are inherited from the model.
 
 设备实例与模型的关系
-设备实例将引用"现实设备产品"模型，共享其规格、连接协议、属性获取方式等配置。设备实例只需配置特定的连接地址，其他配置均从模型中继承。
+设备实例将引用"现实设备产品"模型，共享其规格、连接协议、属性获取方式等配置。设备实例只需配置其特有的属性，其他配置均从模型中继承，同时也可以根据需求重写默认的配置。
 
-### CRD Design
+<img src="./new-device-crd.jpg">
 
-#### Real Device Product CRD
-
-```yaml
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  name: deviceproducts.devices.kubeedge.io
-spec:
-  group: devices.kubeedge.io
-  names:
-    kind: DeviceProduct
-    plural: deviceproducts
-    singular: deviceproduct
-    shortNames:
-      - dp
-  scope: Namespaced
-  versions:
-    - name: v1alpha1
-      served: true
-      storage: true
-      schema:
-        openAPIV3Schema:
-          type: object
-          properties:
-            spec:
-              type: object
-              properties:
-                name:
-                  type: string
-                specification:
-                  type: object
-                  properties:
-                    properties:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          name:
-                            type: string
-                          type:
-                            type: string
-                    commands:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          name:
-                            type: string
-                          parameters:
-                            type: array
-                            items:
-                              type: object
-                              properties:
-                                name:
-                                  type: string
-                                type:
-                                  type: string
-                connectionProtocol:
-                  type: string
-                propertyAccessMethod:
-                  type: string
-                metadata:
-                  type: object
-```
-
-#### Device Instance CRD
-
-The Device Instance CRD will reference the Real Device Product Model and configure specific connection addresses.
-
-设备实例 CRD 将引用现实设备产品模型，并配置特定的连接地址。
-
-```yaml
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  name: deviceinstances.devices.kubeedge.io
-spec:
-  group: devices.kubeedge.io
-  names:
-    kind: DeviceInstance
-    plural: deviceinstances
-    singular: deviceinstance
-    shortNames:
-      - di
-  scope: Namespaced
-  versions:
-    - name: v1alpha1
-      served: true
-      storage: true
-      schema:
-        openAPIV3Schema:
-          type: object
-          properties:
-            spec:
-              type: object
-              properties:
-                name:
-                  type: string
-                deviceProductRef:
-                  type: string
-                connectionAddress:
-                  type: string
-```
-### Device Provisioning Improvement
-
-1. Device Product Provisioning
-- Distribute the Real Device Product Model to edge nodes.
-- Edge nodes receive the device product model and parse its configurations including specifications, protocols, properties, and commands.
-- Edge nodes configure the device product's specifications, connection protocols, and attribute acquisition methods based on the device product model.
-
-1、设备产品下发：
-（1）将现实设备产品模型下发到边缘节点。
-（2）边缘节点接收设备产品模型，解析其规格、协议、属性、命令等配置。
-（3）边缘节点根据设备产品模型，配置设备产品的规格、连接协议、属性获取方式等。
-
-2. Device Instance Provisioning
-- Distribute device instances to edge nodes.
-- Edge nodes receive device instances and resolve their referenced device product models.
-- Edge nodes configure the connection addresses for device instances based on the referenced device product models.
-
-2、设备实例下发：
-（1）将设备实例下发到边缘节点。
-（2）边缘节点接收设备实例，解析其引用的设备产品模型。
-（3）边缘节点根据设备实例引用的设备产品模型，配置设备实例的连接地址。
 
 ### DMI Compatibility Improvement
 
-DMI (Device Mapper Interface) is the interface for device-system interaction and needs to be compatible with the new device product model and device instance model. DMI compatibility design includes the following:
+DMI (Device Mapper Interface) is the interface through which devices interact with the system and needs to be compatible with the new device product model.  
+The DMI compatibility design will be implemented by modifying the `dealMetaDeviceOperation` function in the file `edge\pkg\devicetwin\dtmanager\dmiworker.go`. The main purpose is to rewrite the fields of the received `device_instance`.
 
-DMI（Device Mapper Interface）是设备与系统交互的接口，需要兼容新的设备产品模型和设备实例模型。DMI 兼容设计包括以下内容：
+DMI（Device Mapper Interface）是设备与系统交互的接口，需要兼容新的设备产品模型。
+DMI 兼容设计将在edge\pkg\devicetwin\dtmanager\dmiworker.go文件中的dealMetaDeviceOperation函数处做修改，主要作用是对接收到的device_instance进行字段重写
 
-1. DMI Interface Adjustments
-- Add support for device product model and device instance model in the DMI interface.
-- Ensure the DMI interface can handle device product model configurations such as specifications, connection protocols, property access methods, etc.
-- Ensure the DMI interface can handle device instance connection addresses.
+1.Field rewriting trigger conditions
+- Inserting device instance
+- Updating device instance
 
-2. Compatibility Handling
-Ensure existing DMI interfaces can be compatible with the new device product model and device instance model. Additionally, add parsing and application logic for device product models and device instance models in the DMI interface.
+2.Field rewriting logic
+- Retrieve the device model
+- Check whether default configurations exist
+- Rewrite the device instance properties: if a certain field is empty, replace it with the default value
 
-1、 DMI 接口调整
-（1）在 DMI 接口中，增加对设备产品模型和设备实例模型的支持。
-（2）确保 DMI 接口能够处理设备产品模型的规格、连接协议、属性获取方式等配置。
-（3）确保 DMI 接口能够处理设备实例的连接地址。
-2、 兼容性处理
-确保现有 DMI 接口能够兼容新的设备产品模型和设备实例模型。并且在 DMI 接口中，增加对设备产品模型和设备实例模型的解析和应用逻辑。
+1、 字段重写触发时机
+（1）插入设备实例
+（2）更新设备实例
+2、 字段重写逻辑
+（1）获取device model
+（2）检查是否有默认配置
+（3）device instance properties重写，即如果某个字段为空，则用默认字段代替它
 
+```go
+// mergeDevicePropertiesWithModel merges device properties with model defaults
+func (dw *DMIWorker) mergeDevicePropertiesWithModel(device *v1beta1.Device) error {
+	if device.Spec.DeviceModelRef == nil {
+		return fmt.Errorf("device %s has no device model reference", device.Name)
+	}
+
+	// Get device model from cache
+	deviceModelID := util.GetResourceID(device.Namespace, device.Spec.DeviceModelRef.Name)
+	dw.dmiCache.DeviceModelMu.Lock()
+	deviceModel, exists := dw.dmiCache.DeviceModelList[deviceModelID]
+	dw.dmiCache.DeviceModelMu.Unlock()
+
+	if !exists {
+		return fmt.Errorf("device model %s not found for device %s", device.Spec.DeviceModelRef.Name, device.Name)
+	}
+
+	// If device model has no default instance property, no merging needed
+	if deviceModel.Spec.DefaultInstanceProperty == nil {
+		klog.Infof("Device model %s has no default instance property, skipping merge for device %s", deviceModel.Name, device.Name)
+		return nil
+	}
+
+	klog.Infof("Merging device properties with model defaults for device %s using model %s", device.Name, deviceModel.Name)
+
+	defaultProps := deviceModel.Spec.DefaultInstanceProperty
+
+	// Merge properties
+	for i := range device.Spec.Properties {
+		deviceProp := &device.Spec.Properties[i]
+
+		// Apply default visitors if not set (check if visitors is empty or has no protocol name)
+		if (deviceProp.Visitors.ProtocolName == "" || deviceProp.Visitors.ConfigData == nil) && defaultProps.Visitors != nil {
+			deviceProp.Visitors = *defaultProps.Visitors
+			klog.Infof("Applied default visitors to property %s of device %s", deviceProp.Name, device.Name)
+		}
+
+		// Apply default report cycle if not set
+		if deviceProp.ReportCycle == 0 && defaultProps.ReportCycle != nil {
+			deviceProp.ReportCycle = *defaultProps.ReportCycle
+			klog.Infof("Applied default report cycle %d to property %s of device %s", *defaultProps.ReportCycle, deviceProp.Name, device.Name)
+		}
+
+		// Apply default collect cycle if not set
+		if deviceProp.CollectCycle == 0 && defaultProps.CollectCycle != nil {
+			deviceProp.CollectCycle = *defaultProps.CollectCycle
+			klog.Infof("Applied default collect cycle %d to property %s of device %s", *defaultProps.CollectCycle, deviceProp.Name, device.Name)
+		}
+
+		// Apply default report to cloud if not set
+		if !deviceProp.ReportToCloud && defaultProps.ReportToCloud != nil {
+			deviceProp.ReportToCloud = *defaultProps.ReportToCloud
+			klog.Infof("Applied default report to cloud %v to property %s of device %s", *defaultProps.ReportToCloud, deviceProp.Name, device.Name)
+		}
+
+		// Apply default push method if not set
+		if deviceProp.PushMethod == nil && defaultProps.PushMethod != nil {
+			deviceProp.PushMethod = defaultProps.PushMethod
+			klog.Infof("Applied default push method to property %s of device %s", deviceProp.Name, device.Name)
+		}
+	}
+
+	return nil
+}
+```
