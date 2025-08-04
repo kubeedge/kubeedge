@@ -99,13 +99,11 @@ kubeedge::version::get_version_info() {
     fi
   fi
 
-  # If GIT_VERSION is not a valid Semantic Version, then use a default version.
+  # If GIT_VERSION is not a valid Semantic Version, then refuse to build.
   if ! [[ "${GIT_VERSION}" =~ ^v([0-9]+)\.([0-9]+)(\.[0-9]+)?(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
-      echo "GIT_VERSION is not a valid Semantic Version. Current value: ${GIT_VERSION}"
-      echo "Using default version v1.0.0-dev"
-      GIT_VERSION="v1.0.0-dev"
-      GIT_MAJOR="1"
-      GIT_MINOR="0"
+      echo "GIT_VERSION should be a valid Semantic Version. Current value: ${GIT_VERSION}"
+      echo "Please see more details here: https://semver.org"
+      exit 1
   fi
 }
 
@@ -232,7 +230,7 @@ kubeedge::golang::build_binaries() {
 
   local goldflags gogcflags
   # If GOLDFLAGS is unset, then set it to the a default of "-s -w".
-  goldflags="${GOLDFLAGS=-s -w -buildid=}"
+  goldflags="${GOLDFLAGS=-s -w -buildid=} $(kubeedge::version::ldflags)"
   gogcflags="${GOGCFLAGS:-}"
 
   mkdir -p ${KUBEEDGE_OUTPUT_BINPATH}
@@ -240,7 +238,7 @@ kubeedge::golang::build_binaries() {
     echo "building $bin"
     local name="${bin##*/}"
     set -x
-    go build -o ${KUBEEDGE_OUTPUT_BINPATH}/${name} -gcflags="${gogcflags:-}" -ldflags "${goldflags:-}" "$bin"
+    go build -o ${KUBEEDGE_OUTPUT_BINPATH}/${name} -gcflags="${gogcflags:-}" -ldflags "${goldflags:-}" $bin
     set +x
   done
 
