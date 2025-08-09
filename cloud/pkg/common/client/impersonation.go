@@ -17,69 +17,68 @@ limitations under the License.
 package client
 
 import (
-	"fmt"
-	"net/http"
-	"strings"
+    "net/http"
+    "strings"
 
-	authenticationv1 "k8s.io/api/authentication/v1"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-	"k8s.io/klog/v2"
+    authenticationv1 "k8s.io/api/authentication/v1"
+    "k8s.io/client-go/dynamic"
+    "k8s.io/client-go/kubernetes"
+    "k8s.io/client-go/rest"
+    "k8s.io/klog/v2"
 
-	crdClientset "github.com/kubeedge/api/client/clientset/versioned"
+    crdClientset "github.com/kubeedge/api/client/clientset/versioned"
 )
 
-func newForK8sConfigOrDie(c *rest.Config, enableImpersonation bool) *kubernetes.Clientset {
+func newForK8sConfig(c *rest.Config, enableImpersonation bool) (*kubernetes.Clientset, error) {
 	configShallowCopy := *c
 
 	if configShallowCopy.UserAgent == "" {
 		configShallowCopy.UserAgent = rest.DefaultKubernetesUserAgent()
 	}
 
-	httpClient, err := httpClientFor(&configShallowCopy, enableImpersonation)
-	if err != nil {
-		panic(fmt.Errorf("failed to create a httpclient for the clientset, err: %v", err))
-	}
+    httpClient, err := httpClientFor(&configShallowCopy, enableImpersonation)
+    if err != nil {
+        return nil, err
+    }
 
-	cs, err := kubernetes.NewForConfigAndClient(&configShallowCopy, httpClient)
-	if err != nil {
-		panic(fmt.Errorf("failed to create a clientset, err: %v", err))
-	}
-	return cs
+    cs, err := kubernetes.NewForConfigAndClient(&configShallowCopy, httpClient)
+    if err != nil {
+        return nil, err
+    }
+    return cs, nil
 }
 
-func newForDynamicConfigOrDie(c *rest.Config, enableImpersonation bool) *dynamic.DynamicClient {
+func newForDynamicConfig(c *rest.Config, enableImpersonation bool) (*dynamic.DynamicClient, error) {
 	configShallowCopy := dynamic.ConfigFor(c)
-	httpClient, err := httpClientFor(configShallowCopy, enableImpersonation)
-	if err != nil {
-		panic(fmt.Errorf("failed to create a httpclient for the dynamic-client, err: %v", err))
-	}
+    httpClient, err := httpClientFor(configShallowCopy, enableImpersonation)
+    if err != nil {
+        return nil, err
+    }
 
-	cs, err := dynamic.NewForConfigAndClient(configShallowCopy, httpClient)
-	if err != nil {
-		panic(fmt.Errorf("failed to create a dynamic-client, err: %v", err))
-	}
-	return cs
+    cs, err := dynamic.NewForConfigAndClient(configShallowCopy, httpClient)
+    if err != nil {
+        return nil, err
+    }
+    return cs, nil
 }
 
-func newForCrdConfigOrDie(c *rest.Config, enableImpersonation bool) *crdClientset.Clientset {
+func newForCrdConfig(c *rest.Config, enableImpersonation bool) (*crdClientset.Clientset, error) {
 	configShallowCopy := *c
 
 	if configShallowCopy.UserAgent == "" {
 		configShallowCopy.UserAgent = rest.DefaultKubernetesUserAgent()
 	}
 
-	httpClient, err := httpClientFor(&configShallowCopy, enableImpersonation)
-	if err != nil {
-		panic(fmt.Errorf("failed to create a httpclient for the crd clientset, err: %v", err))
-	}
+    httpClient, err := httpClientFor(&configShallowCopy, enableImpersonation)
+    if err != nil {
+        return nil, err
+    }
 
-	cs, err := crdClientset.NewForConfigAndClient(&configShallowCopy, httpClient)
-	if err != nil {
-		panic(fmt.Errorf("failed to create a crd clientset, err: %v", err))
-	}
-	return cs
+    cs, err := crdClientset.NewForConfigAndClient(&configShallowCopy, httpClient)
+    if err != nil {
+        return nil, err
+    }
+    return cs, nil
 }
 
 func httpClientFor(c *rest.Config, enableImpersonation bool) (*http.Client, error) {

@@ -188,11 +188,10 @@ func (s *TunnelServer) Start() {
 		klog.Info("Succeed in loading TunnelCert and Key from CloudHub")
 	}
 
-	certificate, err := tls.X509KeyPair(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: cert}), pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: key}))
-	if err != nil {
-		klog.Error("Failed to load TLSTunnelCert and Key")
-		panic(err)
-	}
+    certificate, err := tls.X509KeyPair(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: cert}), pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: key}))
+    if err != nil {
+        klog.Exitf("Failed to load TLSTunnelCert and Key: %v", err)
+    }
 
 	tunnelServer := &http.Server{
 		Addr:    fmt.Sprintf(":%d", streamconfig.Config.TunnelPort),
