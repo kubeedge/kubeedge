@@ -247,7 +247,7 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 			return nil, fmt.Errorf("create %s static pod path failed: %v", kubeletConfig.StaticPodPath, err)
 		}
 	} else {
-		klog.ErrorS(nil, "Static pod path is empty in newEdged")
+		klog.WarningS(nil, "Static pod path is empty, static pods will not be loaded")
 	}
 
 	// set edged version
