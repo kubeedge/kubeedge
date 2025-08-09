@@ -1,9 +1,8 @@
 package cloudhub
 
 import (
-	"errors"
-	"fmt"
-	"os"
+    "errors"
+    "os"
 
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
@@ -51,10 +50,10 @@ func newCloudHub(enable bool) *cloudHub {
 		clusterObjectSyncInformer.Lister(), client.GetCRDClient())
 
 	config := getAuthConfig()
-	authorizer, err := config.New()
-	if err != nil {
-		panic(fmt.Sprintf("unable to create new authorizer for CloudHub: %v", err))
-	}
+    authorizer, err := config.New()
+    if err != nil {
+        klog.Exitf("unable to create new authorizer for CloudHub: %v", err)
+    }
 
 	messageHandler := handler.NewMessageHandler(
 		int(hubconfig.Config.KeepaliveInterval),

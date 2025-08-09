@@ -59,7 +59,7 @@ func (s *nonBlockingGRPCServer) Start(endpoint string, ids csi.IdentityServer, c
 		defer s.wg.Done()
 		err := s.serve(endpoint, ids, cs, ns)
 		if err != nil {
-			panic(err.Error())
+            klog.Exitf("CSI gRPC server failed to start: %v", err)
 		}
 	}()
 }

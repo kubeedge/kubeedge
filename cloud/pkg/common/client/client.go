@@ -43,27 +43,45 @@ var (
 	CrdConfig  *rest.Config
 )
 
-func InitKubeEdgeClient(config *cloudcoreConfig.KubeAPIConfig, enableImpersonation bool) {
-	initOnce.Do(func() {
-		kubeConfig, err := clientcmd.BuildConfigFromFlags(config.Master, config.KubeConfig)
-		if err != nil {
-			panic(fmt.Errorf("failed to build kube config, err: %v", err))
-		}
-		kubeConfig.QPS = float32(config.QPS)
-		kubeConfig.Burst = int(config.Burst)
+func InitKubeEdgeClient(config *cloudcoreConfig.KubeAPIConfig, enableImpersonation bool) error {
+    var initErr error
+    initOnce.Do(func() {
+        kubeConfig, err := clientcmd.BuildConfigFromFlags(config.Master, config.KubeConfig)
+        if err != nil {
+            initErr = fmt.Errorf("failed to build kube config: %w", err)
+            return
+        }
+        kubeConfig.QPS = float32(config.QPS)
+        kubeConfig.Burst = int(config.Burst)
 
-		KubeConfig = kubeConfig
+        KubeConfig = kubeConfig
 
-		dynamicClient = newForDynamicConfigOrDie(kubeConfig, enableImpersonation)
+        dyn, err := newForDynamicConfig(kubeConfig, enableImpersonation)
+        if err != nil {
+            initErr = fmt.Errorf("failed to create dynamic client: %w", err)
+            return
+        }
+        dynamicClient = dyn
 
-		kubeConfig.ContentType = runtime.ContentTypeProtobuf
-		kubeClient = newForK8sConfigOrDie(kubeConfig, enableImpersonation)
+        kubeConfig.ContentType = runtime.ContentTypeProtobuf
+        kc, err := newForK8sConfig(kubeConfig, enableImpersonation)
+        if err != nil {
+            initErr = fmt.Errorf("failed to create kubernetes clientset: %w", err)
+            return
+        }
+        kubeClient = kc
 
-		crdKubeConfig := rest.CopyConfig(kubeConfig)
-		crdKubeConfig.ContentType = runtime.ContentTypeJSON
-		CrdConfig = crdKubeConfig
-		crdClient = newForCrdConfigOrDie(crdKubeConfig, enableImpersonation)
-	})
+        crdKubeConfig := rest.CopyConfig(kubeConfig)
+        crdKubeConfig.ContentType = runtime.ContentTypeJSON
+        CrdConfig = crdKubeConfig
+        cc, err := newForCrdConfig(crdKubeConfig, enableImpersonation)
+        if err != nil {
+            initErr = fmt.Errorf("failed to create crd clientset: %w", err)
+            return
+        }
+        crdClient = cc
+    })
+    return initErr
 }
 
 func GetKubeClient() kubernetes.Interface {
