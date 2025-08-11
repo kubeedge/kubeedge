@@ -551,6 +551,7 @@ func ExecShellFilter(c string) (string, error) {
 
 func ParseEdgecoreConfig(edgecorePath string) (*v1alpha2.EdgeCoreConfig, error) {
 	edgeCoreConfig := v1alpha2.NewDefaultEdgeCoreConfig()
+	edgeCoreConfig.EdgeCoreVersion = pkgversion.Get().String()
 	if err := edgeCoreConfig.Parse(edgecorePath); err != nil {
 		return nil, err
 	}

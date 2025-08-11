@@ -56,6 +56,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edged"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
+	"github.com/kubeedge/kubeedge/pkg/version"
 )
 
 type hollowEdgeNodeConfig struct {
@@ -140,6 +141,7 @@ func EdgeCoreConfig(config *hollowEdgeNodeConfig) *v1alpha2.EdgeCoreConfig {
 	trueFlag := true
 
 	// overWrite config
+	edgeCoreConfig.EdgeCoreVersion = version.Get().String()
 	edgeCoreConfig.DataBase.DataSource = "/edgecore.db"
 	edgeCoreConfig.Modules.EdgeHub.Token = config.Token
 	edgeCoreConfig.Modules.EdgeHub.HTTPServer = config.HTTPServer
