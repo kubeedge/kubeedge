@@ -8,7 +8,7 @@ approvers:
   - "@Shelley-BaoYue"
   - "@zhijiayang"
 creation-date: 2025-07-04
-last-updated: 2025-07-04
+last-updated: 2025-08-12
 ---
 
 # Implementing Mapper Framework in C language
@@ -311,3 +311,8 @@ int main() {
     return 0;
 }
 ```
+## Plan
+
+In version 1.22
+
+- Implement the initial version of the mapper-framework in C language, including core framework structure and APIs.
