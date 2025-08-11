@@ -27,7 +27,6 @@ import (
 	"github.com/kubeedge/api/apis/common/constants"
 	metaconfig "github.com/kubeedge/api/apis/componentconfig/meta/v1alpha1"
 	"github.com/kubeedge/api/apis/util"
-	"github.com/kubeedge/kubeedge/pkg/version"
 )
 
 // NewDefaultEdgeCoreConfig returns a full EdgeCoreConfig object
@@ -160,7 +159,6 @@ func NewDefaultEdgeCoreConfig() (config *EdgeCoreConfig) {
 				Enable: false,
 			},
 		},
-		EdgeCoreVersion: version.Get().String(),
 	}
 	return
 }
@@ -234,7 +232,6 @@ func NewMinEdgeCoreConfig() (config *EdgeCoreConfig) {
 				MqttMode:           MqttModeExternal,
 			},
 		},
-		EdgeCoreVersion: version.Get().String(),
 	}
 	return
 }

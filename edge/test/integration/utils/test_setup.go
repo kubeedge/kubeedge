@@ -9,6 +9,7 @@ import (
 
 	edgecore "github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/edge"
+	"github.com/kubeedge/kubeedge/pkg/version"
 )
 
 const (
@@ -19,6 +20,7 @@ const (
 
 func CreateEdgeCoreConfigFile(nodeName string) error {
 	c := edgecore.NewDefaultEdgeCoreConfig()
+	c.EdgeCoreVersion = version.Get().String()
 	c.Modules.Edged.HostnameOverride = nodeName
 	c.Modules.EdgeHub.TLSCAFile = "/tmp/edgecore/rootCA.crt"
 	c.Modules.EdgeHub.TLSCertFile = "/tmp/edgecore/kubeedge.crt"
