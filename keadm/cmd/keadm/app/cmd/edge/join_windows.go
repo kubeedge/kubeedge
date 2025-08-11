@@ -42,6 +42,7 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
 	"github.com/kubeedge/kubeedge/pkg/util/files"
+	"github.com/kubeedge/kubeedge/pkg/version"
 	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/api"
 )
 
@@ -112,6 +113,7 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 		edgeCoreConfig = v1alpha2.NewDefaultEdgeCoreConfig()
 	}
 
+	edgeCoreConfig.EdgeCoreVersion = version.Get().String()
 	// TODO: remove this after release 1.14
 	// this is for keeping backward compatibility
 	// don't save token in configuration edgecore.yaml

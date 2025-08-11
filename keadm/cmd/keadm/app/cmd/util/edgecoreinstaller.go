@@ -29,6 +29,7 @@ import (
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2/validation"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/pkg/util"
+	"github.com/kubeedge/kubeedge/pkg/version"
 	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/api"
 )
 
@@ -93,6 +94,7 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 	}
 
 	edgeCoreConfig := v1alpha2.NewDefaultEdgeCoreConfig()
+	edgeCoreConfig.EdgeCoreVersion = version.Get().String()
 	if ku.EdgeNodeName != "" {
 		edgeCoreConfig.Modules.Edged.HostnameOverride = ku.EdgeNodeName
 	}
