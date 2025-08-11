@@ -43,3 +43,10 @@ const TCPFinTimeoutNamespacedKernelVersion = "4.6"
 // IPVSConnReuseModeFixedKernelVersion is the kernel version in which net.ipv4.vs.conn_reuse_mode was fixed.
 // (ref: https://github.com/torvalds/linux/commit/35dfb013149f74c2be1ff9c78f14e6a3cd1539d1)
 const IPVSConnReuseModeFixedKernelVersion = "5.9"
+
+const TmpfsNoswapSupportKernelVersion = "6.4"
+
+// NFTablesKubeProxyKernelVersion is the lowest kernel version kube-proxy supports using
+// nftables mode with by default. This is not directly related to any specific kernel
+// commit; see https://issues.k8s.io/122743#issuecomment-1893922424
+const NFTablesKubeProxyKernelVersion = "5.13"

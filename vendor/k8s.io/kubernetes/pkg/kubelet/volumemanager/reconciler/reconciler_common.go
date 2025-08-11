@@ -119,7 +119,6 @@ func NewReconciler(
 		timeOfLastSync:                  time.Time{},
 		volumesFailedReconstruction:     make([]podVolume, 0),
 		volumesNeedUpdateFromNodeStatus: make([]v1.UniqueVolumeName, 0),
-		volumesNeedReportedInUse:        make([]v1.UniqueVolumeName, 0),
 	}
 }
 
@@ -143,7 +142,6 @@ type reconciler struct {
 	timeOfLastSync                  time.Time
 	volumesFailedReconstruction     []podVolume
 	volumesNeedUpdateFromNodeStatus []v1.UniqueVolumeName
-	volumesNeedReportedInUse        []v1.UniqueVolumeName
 }
 
 func (rc *reconciler) unmountVolumes() {
@@ -250,9 +248,10 @@ func (rc *reconciler) waitForVolumeAttach(volumeToMount cache.VolumeToMount) {
 		// Volume is not attached to node, kubelet attach is enabled, volume implements an attacher,
 		// so attach it
 		volumeToAttach := operationexecutor.VolumeToAttach{
-			VolumeName: volumeToMount.VolumeName,
-			VolumeSpec: volumeToMount.VolumeSpec,
-			NodeName:   rc.nodeName,
+			VolumeName:    volumeToMount.VolumeName,
+			VolumeSpec:    volumeToMount.VolumeSpec,
+			NodeName:      rc.nodeName,
+			ScheduledPods: []*v1.Pod{volumeToMount.Pod},
 		}
 		klog.V(5).InfoS(volumeToAttach.GenerateMsgDetailed("Starting operationExecutor.AttachVolume", ""), "pod", klog.KObj(volumeToMount.Pod))
 		err := rc.operationExecutor.AttachVolume(logger, volumeToAttach, rc.actualStateOfWorld)
@@ -270,6 +269,11 @@ func (rc *reconciler) unmountDetachDevices() {
 		// Check IsOperationPending to avoid marking a volume as detached if it's in the process of mounting.
 		if !rc.desiredStateOfWorld.VolumeExists(attachedVolume.VolumeName, attachedVolume.SELinuxMountContext) &&
 			!rc.operationExecutor.IsOperationPending(attachedVolume.VolumeName, nestedpendingoperations.EmptyUniquePodName, nestedpendingoperations.EmptyNodeName) {
+
+			// Re-read the actual state of the world, maybe the volume got mounted in the meantime.
+			// This is safe, because there is no pending operation (checked above) and no new operation
+			// could start in the meantime. The only goroutine that adds new operations is this reconciler.
+			attachedVolume, _ = rc.actualStateOfWorld.GetAttachedVolume(attachedVolume.VolumeName)
 			if attachedVolume.DeviceMayBeMounted() {
 				// Volume is globally mounted to device, unmount it
 				klog.V(5).InfoS(attachedVolume.GenerateMsgDetailed("Starting operationExecutor.UnmountDevice", ""))

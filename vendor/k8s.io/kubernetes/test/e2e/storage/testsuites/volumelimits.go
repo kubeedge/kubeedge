@@ -18,6 +18,7 @@ package testsuites
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -170,7 +171,7 @@ func (t *volumeLimitsTestSuite) DefineTests(driver storageframework.TestDriver, 
 			// Create <limit> Pods.
 			ginkgo.By(fmt.Sprintf("Creating %d Pod(s) with one volume each", limit))
 			for i := 0; i < limit; i++ {
-				pod := StartInPodWithVolumeSource(ctx, l.cs, *l.resource.VolSource, l.ns.Name, "volume-limits", "sleep 1000000", selection)
+				pod := StartInPodWithVolumeSource(ctx, l.cs, *l.resource.VolSource, l.ns.Name, "volume-limits", e2epod.InfiniteSleepCommand, selection)
 				l.podNames = append(l.podNames, pod.Name)
 				l.pvcNames = append(l.pvcNames, ephemeral.VolumeClaimName(pod, &pod.Spec.Volumes[0]))
 			}
@@ -214,7 +215,7 @@ func (t *volumeLimitsTestSuite) DefineTests(driver storageframework.TestDriver, 
 		}
 
 		ginkgo.By("Creating an extra pod with one volume to exceed the limit")
-		pod := StartInPodWithVolumeSource(ctx, l.cs, *l.resource.VolSource, l.ns.Name, "volume-limits-exceeded", "sleep 10000", selection)
+		pod := StartInPodWithVolumeSource(ctx, l.cs, *l.resource.VolSource, l.ns.Name, "volume-limits-exceeded", e2epod.InfiniteSleepCommand, selection)
 		l.podNames = append(l.podNames, pod.Name)
 
 		ginkgo.By("Waiting for the pod to get unschedulable with the right message")
@@ -314,7 +315,7 @@ func cleanupTest(ctx context.Context, cs clientset.Interface, ns string, podName
 		cleanupErrors = append(cleanupErrors, fmt.Sprintf("timed out waiting for PVs to be deleted: %s", err))
 	}
 	if len(cleanupErrors) != 0 {
-		return fmt.Errorf("test cleanup failed: " + strings.Join(cleanupErrors, "; "))
+		return errors.New("test cleanup failed: " + strings.Join(cleanupErrors, "; "))
 	}
 	return nil
 }

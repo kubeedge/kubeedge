@@ -233,6 +233,18 @@ type ActualStateOfWorldMounterUpdater interface {
 	// IsVolumeDeviceReconstructed returns true if volume device identified by volumeName has been
 	// found during reconstruction.
 	IsVolumeDeviceReconstructed(volumeName v1.UniqueVolumeName) bool
+
+	// MarkVolumeExpansionFailedWithFinalError marks volume as failed with a final error, so as
+	// this state doesn't have to be recorded in the API server
+	MarkVolumeExpansionFailedWithFinalError(volumeName v1.UniqueVolumeName)
+
+	// RemoveVolumeFromFailedWithFinalErrors removes volume from list that indicates that volume
+	// has failed expansion with a final error
+	RemoveVolumeFromFailedWithFinalErrors(volumeName v1.UniqueVolumeName)
+
+	// CheckVolumeInFailedExpansionWithFinalErrors verifies if volume expansion has failed with a final
+	// error
+	CheckVolumeInFailedExpansionWithFinalErrors(volumeName v1.UniqueVolumeName) bool
 }
 
 // ActualStateOfWorldAttacherUpdater defines a set of operations updating the
@@ -358,13 +370,13 @@ func (volume *VolumeToAttach) GenerateMsg(prefixMsg, suffixMsg string) (simpleMs
 
 // GenerateErrorDetailed returns detailed errors for volumes to attach
 func (volume *VolumeToAttach) GenerateErrorDetailed(prefixMsg string, err error) (detailedErr error) {
-	return fmt.Errorf(volume.GenerateMsgDetailed(prefixMsg, errSuffix(err)))
+	return errors.New(volume.GenerateMsgDetailed(prefixMsg, errSuffix(err)))
 }
 
 // GenerateError returns simple and detailed errors for volumes to attach
 func (volume *VolumeToAttach) GenerateError(prefixMsg string, err error) (simpleErr, detailedErr error) {
 	simpleMsg, detailedMsg := volume.GenerateMsg(prefixMsg, errSuffix(err))
-	return fmt.Errorf(simpleMsg), fmt.Errorf(detailedMsg)
+	return errors.New(simpleMsg), errors.New(detailedMsg)
 }
 
 // String combines key fields of the volume for logging in text format.
@@ -523,13 +535,13 @@ func (volume *VolumeToMount) GenerateMsg(prefixMsg, suffixMsg string) (simpleMsg
 
 // GenerateErrorDetailed returns detailed errors for volumes to mount
 func (volume *VolumeToMount) GenerateErrorDetailed(prefixMsg string, err error) (detailedErr error) {
-	return fmt.Errorf(volume.GenerateMsgDetailed(prefixMsg, errSuffix(err)))
+	return errors.New(volume.GenerateMsgDetailed(prefixMsg, errSuffix(err)))
 }
 
 // GenerateError returns simple and detailed errors for volumes to mount
 func (volume *VolumeToMount) GenerateError(prefixMsg string, err error) (simpleErr, detailedErr error) {
 	simpleMsg, detailedMsg := volume.GenerateMsg(prefixMsg, errSuffix(err))
-	return fmt.Errorf(simpleMsg), fmt.Errorf(detailedMsg)
+	return errors.New(simpleMsg), errors.New(detailedMsg)
 }
 
 // AttachedVolume represents a volume that is attached to a node.
@@ -585,13 +597,13 @@ func (volume *AttachedVolume) GenerateMsg(prefixMsg, suffixMsg string) (simpleMs
 
 // GenerateErrorDetailed returns detailed errors for attached volumes
 func (volume *AttachedVolume) GenerateErrorDetailed(prefixMsg string, err error) (detailedErr error) {
-	return fmt.Errorf(volume.GenerateMsgDetailed(prefixMsg, errSuffix(err)))
+	return errors.New(volume.GenerateMsgDetailed(prefixMsg, errSuffix(err)))
 }
 
 // GenerateError returns simple and detailed errors for attached volumes
 func (volume *AttachedVolume) GenerateError(prefixMsg string, err error) (simpleErr, detailedErr error) {
 	simpleMsg, detailedMsg := volume.GenerateMsg(prefixMsg, errSuffix(err))
-	return fmt.Errorf(simpleMsg), fmt.Errorf(detailedMsg)
+	return errors.New(simpleMsg), errors.New(detailedMsg)
 }
 
 // String combines key fields of the volume for logging in text format.
@@ -757,13 +769,13 @@ func (volume *MountedVolume) GenerateMsg(prefixMsg, suffixMsg string) (simpleMsg
 
 // GenerateErrorDetailed returns simple and detailed errors for mounted volumes
 func (volume *MountedVolume) GenerateErrorDetailed(prefixMsg string, err error) (detailedErr error) {
-	return fmt.Errorf(volume.GenerateMsgDetailed(prefixMsg, errSuffix(err)))
+	return errors.New(volume.GenerateMsgDetailed(prefixMsg, errSuffix(err)))
 }
 
 // GenerateError returns simple and detailed errors for mounted volumes
 func (volume *MountedVolume) GenerateError(prefixMsg string, err error) (simpleErr, detailedErr error) {
 	simpleMsg, detailedMsg := volume.GenerateMsg(prefixMsg, errSuffix(err))
-	return fmt.Errorf(simpleMsg), fmt.Errorf(detailedMsg)
+	return errors.New(simpleMsg), errors.New(detailedMsg)
 }
 
 type operationExecutor struct {
@@ -831,89 +843,10 @@ func (oe *operationExecutor) VerifyVolumesAreAttached(
 	attachedVolumes map[types.NodeName][]AttachedVolume,
 	actualStateOfWorld ActualStateOfWorldAttacherUpdater) {
 
-	// A map of plugin names and nodes on which they exist with volumes they manage
-	bulkVerifyPluginsByNode := make(map[string]map[types.NodeName][]*volume.Spec)
-	volumeSpecMapByPlugin := make(map[string]map[*volume.Spec]v1.UniqueVolumeName)
-
 	for node, nodeAttachedVolumes := range attachedVolumes {
-		needIndividualVerifyVolumes := []AttachedVolume{}
-		for _, volumeAttached := range nodeAttachedVolumes {
-			if volumeAttached.VolumeSpec == nil {
-				klog.Errorf("VerifyVolumesAreAttached: nil spec for volume %s", volumeAttached.VolumeName)
-				continue
-			}
-
-			volumePlugin, err :=
-				oe.operationGenerator.GetVolumePluginMgr().FindPluginBySpec(volumeAttached.VolumeSpec)
-			if err != nil {
-				klog.Errorf(
-					"VolumesAreAttached.FindPluginBySpec failed for volume %q (spec.Name: %q) on node %q with error: %v",
-					volumeAttached.VolumeName,
-					volumeAttached.VolumeSpec.Name(),
-					volumeAttached.NodeName,
-					err)
-				continue
-			}
-			if volumePlugin == nil {
-				// should never happen since FindPluginBySpec always returns error if volumePlugin = nil
-				klog.Errorf(
-					"Failed to find volume plugin for volume %q (spec.Name: %q) on node %q",
-					volumeAttached.VolumeName,
-					volumeAttached.VolumeSpec.Name(),
-					volumeAttached.NodeName)
-				continue
-			}
-
-			pluginName := volumePlugin.GetPluginName()
-
-			if volumePlugin.SupportsBulkVolumeVerification() {
-				pluginNodes, pluginNodesExist := bulkVerifyPluginsByNode[pluginName]
-
-				if !pluginNodesExist {
-					pluginNodes = make(map[types.NodeName][]*volume.Spec)
-				}
-
-				volumeSpecList, nodeExists := pluginNodes[node]
-				if !nodeExists {
-					volumeSpecList = []*volume.Spec{}
-				}
-				volumeSpecList = append(volumeSpecList, volumeAttached.VolumeSpec)
-				pluginNodes[node] = volumeSpecList
-
-				bulkVerifyPluginsByNode[pluginName] = pluginNodes
-				volumeSpecMap, mapExists := volumeSpecMapByPlugin[pluginName]
-
-				if !mapExists {
-					volumeSpecMap = make(map[*volume.Spec]v1.UniqueVolumeName)
-				}
-				volumeSpecMap[volumeAttached.VolumeSpec] = volumeAttached.VolumeName
-				volumeSpecMapByPlugin[pluginName] = volumeSpecMap
-				continue
-			}
-			// If node doesn't support Bulk volume polling it is best to poll individually
-			needIndividualVerifyVolumes = append(needIndividualVerifyVolumes, volumeAttached)
-		}
-		nodeError := oe.VerifyVolumesAreAttachedPerNode(needIndividualVerifyVolumes, node, actualStateOfWorld)
+		nodeError := oe.VerifyVolumesAreAttachedPerNode(nodeAttachedVolumes, node, actualStateOfWorld)
 		if nodeError != nil {
-			klog.Errorf("VerifyVolumesAreAttached failed for volumes %v, node %q with error %v", needIndividualVerifyVolumes, node, nodeError)
-		}
-	}
-
-	for pluginName, pluginNodeVolumes := range bulkVerifyPluginsByNode {
-		generatedOperations, err := oe.operationGenerator.GenerateBulkVolumeVerifyFunc(
-			pluginNodeVolumes,
-			pluginName,
-			volumeSpecMapByPlugin[pluginName],
-			actualStateOfWorld)
-		if err != nil {
-			klog.Errorf("BulkVerifyVolumes.GenerateBulkVolumeVerifyFunc error bulk verifying volumes for plugin %q with  %v", pluginName, err)
-		}
-
-		// Ugly hack to ensure - we don't do parallel bulk polling of same volume plugin
-		uniquePluginName := v1.UniqueVolumeName(pluginName)
-		err = oe.pendingOperations.Run(uniquePluginName, "" /* Pod Name */, "" /* nodeName */, generatedOperations)
-		if err != nil {
-			klog.Errorf("BulkVerifyVolumes.Run Error bulk volume verification for plugin %q  with %v", pluginName, err)
+			klog.Errorf("VerifyVolumesAreAttached failed for volumes %v, node %q with error %v", nodeAttachedVolumes, node, nodeError)
 		}
 	}
 }
