@@ -117,6 +117,14 @@ func (wsc *WebSocketClient) Send(message model.Message) error {
 
 // Receive reads the binary message through the connection
 func (wsc *WebSocketClient) Receive() (model.Message, error) {
+	// Set the read deadline before reading
+	var deadline time.Time
+	if wsc.config.ReadDeadline > 0 {
+		deadline = time.Now().Add(wsc.config.ReadDeadline)
+	} // else deadline is zero value, disables timeout
+	if err := wsc.connection.SetReadDeadline(deadline); err != nil {
+		return model.Message{}, err
+	}
 	message := model.Message{}
 	err := wsc.connection.ReadMessage(&message)
 	return message, err
