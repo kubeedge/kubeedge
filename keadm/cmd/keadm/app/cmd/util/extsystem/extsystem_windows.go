@@ -18,11 +18,20 @@ limitations under the License.
 
 package extsystem
 
-import "errors"
+import (
+	"errors"
+	"os/exec"
 
-// GetExtSystem returns an ExtSystem for the current system, or nil
-// if we cannot detect a supported init system.
-// This indicates we will skip init system checks, not an error.
+	"k8s.io/kubernetes/cmd/kubeadm/app/util/initsystem"
+)
+
+type WindowsExtSystem struct {
+	initsystem.WindowsInitSystem
+}
+
+func (w WindowsExtSystem) ServiceEnable(service string) error {
+	return exec.Command(w.EnableCommand(service)).Run()
+}
 func GetExtSystem() (ExtSystem, error) {
 	// TODO: Implement this method when we need.
 	// Refer to: k8s.io/kubernetes/cmd/kubeadm/app/util/initsystem/initsystem_windows.go
