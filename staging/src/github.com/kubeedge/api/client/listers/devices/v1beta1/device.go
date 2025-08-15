@@ -20,8 +20,8 @@ package v1beta1
 
 import (
 	v1beta1 "github.com/kubeedge/api/apis/devices/v1beta1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/listers"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -38,25 +38,17 @@ type DeviceLister interface {
 
 // deviceLister implements the DeviceLister interface.
 type deviceLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*v1beta1.Device]
 }
 
 // NewDeviceLister returns a new DeviceLister.
 func NewDeviceLister(indexer cache.Indexer) DeviceLister {
-	return &deviceLister{indexer: indexer}
-}
-
-// List lists all Devices in the indexer.
-func (s *deviceLister) List(selector labels.Selector) (ret []*v1beta1.Device, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta1.Device))
-	})
-	return ret, err
+	return &deviceLister{listers.New[*v1beta1.Device](indexer, v1beta1.Resource("device"))}
 }
 
 // Devices returns an object that can list and get Devices.
 func (s *deviceLister) Devices(namespace string) DeviceNamespaceLister {
-	return deviceNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return deviceNamespaceLister{listers.NewNamespaced[*v1beta1.Device](s.ResourceIndexer, namespace)}
 }
 
 // DeviceNamespaceLister helps list and get Devices.
@@ -74,26 +66,5 @@ type DeviceNamespaceLister interface {
 // deviceNamespaceLister implements the DeviceNamespaceLister
 // interface.
 type deviceNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all Devices in the indexer for a given namespace.
-func (s deviceNamespaceLister) List(selector labels.Selector) (ret []*v1beta1.Device, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta1.Device))
-	})
-	return ret, err
-}
-
-// Get retrieves the Device from the indexer for a given namespace and name.
-func (s deviceNamespaceLister) Get(name string) (*v1beta1.Device, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1beta1.Resource("device"), name)
-	}
-	return obj.(*v1beta1.Device), nil
+	listers.ResourceIndexer[*v1beta1.Device]
 }

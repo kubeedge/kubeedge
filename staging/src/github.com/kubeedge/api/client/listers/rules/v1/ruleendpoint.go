@@ -20,8 +20,8 @@ package v1
 
 import (
 	v1 "github.com/kubeedge/api/apis/rules/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/listers"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -38,25 +38,17 @@ type RuleEndpointLister interface {
 
 // ruleEndpointLister implements the RuleEndpointLister interface.
 type ruleEndpointLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*v1.RuleEndpoint]
 }
 
 // NewRuleEndpointLister returns a new RuleEndpointLister.
 func NewRuleEndpointLister(indexer cache.Indexer) RuleEndpointLister {
-	return &ruleEndpointLister{indexer: indexer}
-}
-
-// List lists all RuleEndpoints in the indexer.
-func (s *ruleEndpointLister) List(selector labels.Selector) (ret []*v1.RuleEndpoint, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1.RuleEndpoint))
-	})
-	return ret, err
+	return &ruleEndpointLister{listers.New[*v1.RuleEndpoint](indexer, v1.Resource("ruleendpoint"))}
 }
 
 // RuleEndpoints returns an object that can list and get RuleEndpoints.
 func (s *ruleEndpointLister) RuleEndpoints(namespace string) RuleEndpointNamespaceLister {
-	return ruleEndpointNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return ruleEndpointNamespaceLister{listers.NewNamespaced[*v1.RuleEndpoint](s.ResourceIndexer, namespace)}
 }
 
 // RuleEndpointNamespaceLister helps list and get RuleEndpoints.
@@ -74,26 +66,5 @@ type RuleEndpointNamespaceLister interface {
 // ruleEndpointNamespaceLister implements the RuleEndpointNamespaceLister
 // interface.
 type ruleEndpointNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all RuleEndpoints in the indexer for a given namespace.
-func (s ruleEndpointNamespaceLister) List(selector labels.Selector) (ret []*v1.RuleEndpoint, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1.RuleEndpoint))
-	})
-	return ret, err
-}
-
-// Get retrieves the RuleEndpoint from the indexer for a given namespace and name.
-func (s ruleEndpointNamespaceLister) Get(name string) (*v1.RuleEndpoint, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1.Resource("ruleendpoint"), name)
-	}
-	return obj.(*v1.RuleEndpoint), nil
+	listers.ResourceIndexer[*v1.RuleEndpoint]
 }
