@@ -20,8 +20,10 @@ package extsystem
 
 import (
 	"errors"
+	"fmt"
 	"os/exec"
 
+	"golang.org/x/sys/windows/svc/mgr"
 	"k8s.io/kubernetes/cmd/kubeadm/app/util/initsystem"
 )
 
@@ -29,11 +31,83 @@ type WindowsExtSystem struct {
 	initsystem.WindowsInitSystem
 }
 
-func (w WindowsExtSystem) ServiceEnable(service string) error {
-	return exec.Command(w.EnableCommand(service)).Run()
+func (WindowsExtSystem) ServiceCreate(service, cmdline string, _ map[string]string) error {
+	m, err := mgr.Connect()
+	if err != nil {
+		return err
+	}
+	defer m.Disconnect()
+
+	if s, err := m.OpenService(service); err == nil {
+		_ = s.Close()
+		return nil
+	}
+	cfg := mgr.Config{
+		DisplayName: service,
+		StartType:   mgr.StartAutomatic,
+	}
+	s, err := m.CreateService(service, cmdline, cfg)
+	if err != nil {
+		return err
+	}
+	defer s.Close()
+	return nil
+}
+
+func (WindowsExtSystem) ServiceRemove(service string) error {
+	m, err := mgr.Connect()
+	if err != nil {
+		return err
+	}
+	defer m.Disconnect()
+
+	s, err := m.OpenService(service)
+	if err != nil {
+		return err
+	}
+	defer s.Close()
+	return s.Delete()
+}
+
+func (WindowsExtSystem) ServiceEnable(service string) error {
+	cmd := exec.Command("PowerShell", "-NoProfile", "-Command",
+		fmt.Sprintf("Set-Service '%s' -StartupType Automatic", service))
+	return cmd.Run()
+}
+
+func (w WindowsExtSystem) ServiceStart(service string) error {
+	return w.ServiceStart(service)
+}
+
+func (w WindowsExtSystem) ServiceStop(service string) error {
+	return w.ServiceStop(service)
+}
+
+func (w WindowsExtSystem) ServiceRestart(service string) error {
+	return w.ServiceRestart(service)
+}
+
+func (w WindowsExtSystem) ServiceExists(service string) bool {
+	return w.ServiceExists(service)
+}
+
+func (w WindowsExtSystem) ServiceIsEnabled(service string) bool {
+	return w.ServiceIsEnabled(service)
+}
+
+func (w WindowsExtSystem) ServiceIsActive(service string) bool {
+	return w.ServiceIsActive(service)
+}
+func (WindowsExtSystem) ServiceDisable(service string) error {
+	cmd := exec.Command("PowerShell", "-NoProfile", "-Command",
+		fmt.Sprintf("Set-Service '%s' -StartupType Disabled", service))
+	return cmd.Run()
 }
 func GetExtSystem() (ExtSystem, error) {
-	// TODO: Implement this method when we need.
-	// Refer to: k8s.io/kubernetes/cmd/kubeadm/app/util/initsystem/initsystem_windows.go
-	return nil, errors.New("no supported init system detected")
+	m, err := mgr.Connect()
+	if err != nil {
+		return nil, errors.New("connect to Windows Service Manager failed")
+	}
+	_ = m.Disconnect()
+	return &WindowsExtSystem{}, nil
 }
