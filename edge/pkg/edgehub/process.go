@@ -45,7 +45,7 @@ func (eh *EdgeHub) routeToEdge() {
 	for {
 		select {
 		case <-beehiveContext.Done():
-			klog.WarningS(nil, "EdgeHub RouteToEdge stop")
+			klog.Warningf("EdgeHub RouteToEdge stop")
 			return
 		default:
 		}
@@ -79,7 +79,7 @@ func (eh *EdgeHub) routeToCloud() {
 	for {
 		select {
 		case <-beehiveContext.Done():
-			klog.WarningS(nil, "EdgeHub RouteToCloud stop")
+			klog.Warningf("EdgeHub RouteToCloud stop")
 			return
 		default:
 		}
