@@ -14,17 +14,30 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package ratelimiter
+package controller
 
-import "time"
+import (
+	"fmt"
+	"sync"
 
-// RateLimiter is an identical interface of client-go workqueue RateLimiter.
-type RateLimiter interface {
-	// When gets an item and gets to decide how long that item should wait
-	When(item interface{}) time.Duration
-	// Forget indicates that an item is finished being retried.  Doesn't matter whether its for perm failing
-	// or for success, we'll stop tracking it
-	Forget(item interface{})
-	// NumRequeues returns back how many failures the item has had
-	NumRequeues(item interface{}) int
+	"k8s.io/apimachinery/pkg/util/sets"
+)
+
+var nameLock sync.Mutex
+var usedNames sets.Set[string]
+
+func checkName(name string) error {
+	nameLock.Lock()
+	defer nameLock.Unlock()
+	if usedNames == nil {
+		usedNames = sets.Set[string]{}
+	}
+
+	if usedNames.Has(name) {
+		return fmt.Errorf("controller with name %s already exists. Controller names must be unique to avoid multiple controllers reporting to the same metric", name)
+	}
+
+	usedNames.Insert(name)
+
+	return nil
 }
