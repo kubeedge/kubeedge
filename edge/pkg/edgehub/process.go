@@ -86,11 +86,9 @@ func (eh *EdgeHub) routeToCloud() {
 			time.Sleep(time.Second)
 			continue
 		}
-
-		// Add message to priority queue instead of sending directly
-		priority := GetPriorityForMessage(&message)
-		eh.priorityQueue.Push(&message, priority)
-		klog.V(4).Infof("Added message to priority queue with priority %d", priority)
+		classifyPriorityEdge(&message)
+		// enqueue for prioritized sending; throttling applied in sender
+		eh.sendPQ.Add(message)
 	}
 }
 
@@ -106,9 +104,9 @@ func (eh *EdgeHub) keepalive() {
 			BuildRouter(modules.EdgeHubModuleName, "resource", "node", messagepkg.OperationKeepalive).
 			FillBody("ping")
 
-		// Add heartbeat message to priority queue with emergency priority
-		eh.priorityQueue.Push(msg, PriorityEmergency)
-		klog.V(4).Infof("Added heartbeat message to priority queue with emergency priority")
+		// enqueue keepalive to priority queue
+		classifyPriorityEdge(msg)
+		eh.sendPQ.Add(*msg)
 
 		time.Sleep(time.Duration(config.Config.Heartbeat) * time.Second)
 	}
@@ -160,37 +158,21 @@ func (eh *EdgeHub) tryThrottle(msgID string) error {
 	return nil
 }
 
-// processPriorityQueue processes messages from the priority queue
-func (eh *EdgeHub) processPriorityQueue() {
-	for {
-		select {
-		case <-beehiveContext.Done():
-			klog.Warning("EdgeHub ProcessPriorityQueue stop")
-			return
-		default:
-		}
-
-		// Get the highest priority message from the queue
-		message := eh.priorityQueue.Pop()
-		if message == nil {
-			// Queue is empty, sleep for a short time
-			time.Sleep(10 * time.Millisecond)
-			continue
-		}
-
-		// Apply rate limiting
-		err := eh.tryThrottle(message.GetID())
-		if err != nil {
-			klog.Errorf("msgID: %s, client rate limiter returned an error: %v ", message.GetID(), err)
-			continue
-		}
-
-		// Send message to cloud hub
-		err = eh.sendToCloud(*message)
-		if err != nil {
-			klog.Errorf("failed to send message to cloud: %v", err)
-			eh.reconnectChan <- struct{}{}
-			return
-		}
+// classifyPriorityEdge: apply rule table to override default priority, except for responses.
+func classifyPriorityEdge(msg *model.Message) {
+	// response inherit: keep as-is
+	if msg.GetOperation() == model.ResponseOperation {
+		return
 	}
+	// simple rules for edge->cloud (customize as needed)
+	if msg.GetOperation() == model.DeleteOperation {
+		msg.SetPriority(model.PriorityImportant)
+		return
+	}
+	// keepalive should be important to maintain session health
+	if msg.GetOperation() == messagepkg.OperationKeepalive {
+		msg.SetPriority(model.PriorityImportant)
+		return
+	}
+	// other messages keep default PriorityNormal (already set by NewMessage)
 }

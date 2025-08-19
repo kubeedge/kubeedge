@@ -107,6 +107,9 @@ type messageDispatcher struct {
 
 	// clusterObjectSyncLister can list/get clusterObjectSync from the shared informer's store
 	clusterObjectSyncLister synclisters.ClusterObjectSyncLister
+
+	// local downstream priority queue for CloudHub
+	downstreamPQ *prioritySendQueueCloud
 }
 
 // NewMessageDispatcher initializes a new MessageDispatcher
@@ -115,12 +118,15 @@ func NewMessageDispatcher(
 	objectSyncLister synclisters.ObjectSyncLister,
 	clusterObjectSyncLister synclisters.ClusterObjectSyncLister,
 	reliableClient reliableclient.Interface) MessageDispatcher {
-	return &messageDispatcher{
+	md := &messageDispatcher{
 		objectSyncLister:        objectSyncLister,
 		clusterObjectSyncLister: clusterObjectSyncLister,
 		reliableClient:          reliableClient,
 		SessionManager:          sessionManager,
+		downstreamPQ:            newPrioritySendQueueCloud(),
 	}
+	go md.runDownstreamPrioritySender()
+	return md
 }
 
 func (md *messageDispatcher) DispatchDownstream() {
@@ -137,27 +143,46 @@ func (md *messageDispatcher) DispatchDownstream() {
 				continue
 			}
 
-			klog.V(4).Infof("[DispatchDownstream] dispatch Message to edge: %+v", msg)
+			classifyPriority(&msg)
 
-			nodeID, err := GetNodeID(&msg)
-			if nodeID == "" || err != nil {
-				klog.Warningf("node id is not found in the message: %+v", msg)
-				continue
-			}
-
-			if !model.IsToEdge(&msg) {
-				klog.Warningf("skip message not to edge node %s: %+v", nodeID, msg)
-				continue
-			}
-
-			switch {
-			case noAckRequired(&msg):
-				md.enqueueNoAckMessage(nodeID, &msg)
-			default:
-				md.enqueueAckMessage(nodeID, &msg)
-			}
+			// enqueue to downstream priority queue; sender will process
+			md.downstreamPQ.Add(msg)
 		}
 	}
+}
+
+// classifyPriority sets message priority based on response inheritance and rules.
+func classifyPriority(msg *beehivemodel.Message) {
+	// response inheritance: keep as-is
+	if msg.GetOperation() == beehivemodel.ResponseOperation {
+		// responses inherit priority at creation time
+		return
+	}
+	// rule table
+	rules := []struct {
+		match func(m *beehivemodel.Message) bool
+		val   int32
+	}{
+		{func(m *beehivemodel.Message) bool { return m.GetOperation() == beehivemodel.DeleteOperation }, beehivemodel.PriorityImportant},
+		{func(m *beehivemodel.Message) bool {
+			return strings.Contains(m.GetResource(), beehivemodel.ResourceTypePodStatus)
+		}, beehivemodel.PriorityImportant},
+		{func(m *beehivemodel.Message) bool {
+			return strings.Contains(m.GetResource(), beehivemodel.ResourceTypeNode)
+		}, beehivemodel.PriorityImportant},
+		{func(m *beehivemodel.Message) bool {
+			return strings.Contains(m.GetResource(), beehivemodel.ResourceTypeLease)
+		}, beehivemodel.PriorityImportant},
+		{func(m *beehivemodel.Message) bool { return m.GetOperation() == beehivemodel.UploadOperation }, beehivemodel.PriorityLow},
+		{func(m *beehivemodel.Message) bool { return m.GetOperation() == model.OpKeepalive }, beehivemodel.PriorityImportant},
+	}
+	for _, r := range rules {
+		if r.match(msg) {
+			msg.SetPriority(r.val)
+			return
+		}
+	}
+	// other messages keep default PriorityNormal (already set by NewMessage)
 }
 
 func (md *messageDispatcher) DispatchUpstream(message *beehivemodel.Message, info *model.HubInfo) {

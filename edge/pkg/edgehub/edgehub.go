@@ -25,7 +25,10 @@ type EdgeHub struct {
 	rateLimiter   flowcontrol.RateLimiter
 	keeperLock    sync.RWMutex
 	enable        bool
-	priorityQueue *MessagePriorityQueue
+
+	// local priority send queue for edge->cloud
+	sendPQ     *prioritySendQueue
+	sendPQStop chan struct{}
 }
 
 var _ core.Module = (*EdgeHub)(nil)
@@ -50,7 +53,8 @@ func newEdgeHub(enable bool) *EdgeHub {
 		rateLimiter: flowcontrol.NewTokenBucketRateLimiter(
 			float32(config.Config.EdgeHub.MessageQPS),
 			int(config.Config.EdgeHub.MessageBurst)),
-		priorityQueue: NewMessagePriorityQueue(),
+		sendPQ:     newPrioritySendQueue(),
+		sendPQStop: make(chan struct{}),
 	}
 }
 
@@ -113,15 +117,21 @@ func (eh *EdgeHub) Start() {
 		}
 		// execute hook func after connect
 		eh.pubConnectInfo(true)
+		// (re)create sender queue and start sender for this session
+		eh.sendPQ = newPrioritySendQueue()
+		eh.sendPQStop = make(chan struct{})
 		go eh.routeToEdge()
 		go eh.routeToCloud()
-		go eh.processPriorityQueue()
+		go eh.runPrioritySender()
 		go eh.keepalive()
 
 		// wait the stop signal
 		// stop authinfo manager/websocket connection
 		<-eh.reconnectChan
 		eh.chClient.UnInit()
+		// stop current sender
+		close(eh.sendPQStop)
+		eh.sendPQ.Close()
 
 		// execute hook fun after disconnect
 		eh.pubConnectInfo(false)
