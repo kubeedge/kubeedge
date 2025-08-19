@@ -30,7 +30,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/klog/v2"
 	phases "k8s.io/kubernetes/cmd/kubeadm/app/cmd/phases/reset"
-	utilsexec "k8s.io/utils/exec"
 
 	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
@@ -101,7 +100,7 @@ func NewOtherEdgeReset() *cobra.Command {
 				return err
 			}
 			step.Printf("clean up containers managed by KubeEdge")
-			if err := util.RemoveContainers(reset.Endpoint, utilsexec.New()); err != nil {
+			if err := util.RemoveContainers(reset.Endpoint); err != nil {
 				klog.Warningf("failed to clean up containers, err: %v", err)
 			}
 			step.Printf("clean up dirs created by KubeEdge")

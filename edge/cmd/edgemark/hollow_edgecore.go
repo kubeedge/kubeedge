@@ -31,6 +31,7 @@ import (
 	"k8s.io/component-base/featuregate"
 	remote "k8s.io/cri-client/pkg"
 	fakeremote "k8s.io/cri-client/pkg/fake"
+	"k8s.io/klog/v2"
 	kubeletapp "k8s.io/kubernetes/cmd/kubelet/app"
 	kubeletoptions "k8s.io/kubernetes/cmd/kubelet/app/options"
 	"k8s.io/kubernetes/pkg/kubelet"
@@ -112,7 +113,7 @@ func run(config *hollowEdgeNodeConfig) {
 
 	edged.DefaultRunLiteKubelet = func(ctx context.Context, s *kubeletoptions.KubeletServer,
 		kubeDeps *kubelet.Dependencies, featureGate featuregate.FeatureGate) error {
-		return kubeletapp.RunKubelet(s, kubeDeps, false)
+		return kubeletapp.RunKubelet(ctx, s, kubeDeps, false)
 	}
 
 	edged.Register(c.Modules.Edged)
@@ -170,7 +171,8 @@ func GetFakeKubeletDeps(
 		return nil, fmt.Errorf("failed to start fake runtime %v", err)
 	}
 
-	runtimeService, err := remote.NewRemoteRuntimeService(endpoint, 15*time.Second, oteltrace.NewNoopTracerProvider())
+	logger := klog.Background()
+	runtimeService, err := remote.NewRemoteRuntimeService(endpoint, 15*time.Second, oteltrace.NewNoopTracerProvider(), &logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to init runtime service %v", err)
 	}

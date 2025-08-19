@@ -59,19 +59,18 @@ func (m *mockRuntime) RemoveContainers(containers []string) error {
 }
 
 func TestRemoveContainers(t *testing.T) {
-	execer := &fakeExecer{}
 	p := gomonkey.NewPatches()
 	defer p.Reset()
 
 	t.Run("WithProvidedSocket", func(t *testing.T) {
 		p1 := gomonkey.ApplyFunc(utilruntime.NewContainerRuntime,
-			func(e utilsexec.Interface, criSocketPath string) (utilruntime.ContainerRuntime, error) {
+			func(criSocketPath string) utilruntime.ContainerRuntime {
 				r := &mockRuntime{}
-				return r, nil
+				return r
 			})
 		defer p1.Reset()
 
-		err := RemoveContainers("/test/socket", execer)
+		err := RemoveContainers("/test/socket")
 		if err != nil {
 			t.Errorf("Expected no error with provided socket, got: %v", err)
 		}
@@ -85,28 +84,15 @@ func TestRemoveContainers(t *testing.T) {
 		defer p1.Reset()
 
 		p2 := gomonkey.ApplyFunc(utilruntime.NewContainerRuntime,
-			func(e utilsexec.Interface, criSocketPath string) (utilruntime.ContainerRuntime, error) {
+			func(criSocketPath string) utilruntime.ContainerRuntime {
 				r := &mockRuntime{}
-				return r, nil
+				return r
 			})
 		defer p2.Reset()
 
-		err := RemoveContainers("", execer)
+		err := RemoveContainers("")
 		if err != nil {
 			t.Errorf("Expected no error with detected socket, got: %v", err)
-		}
-	})
-
-	t.Run("RuntimeCreationFails", func(t *testing.T) {
-		p1 := gomonkey.ApplyFunc(utilruntime.NewContainerRuntime,
-			func(e utilsexec.Interface, criSocketPath string) (utilruntime.ContainerRuntime, error) {
-				return nil, errors.New("mock runtime error")
-			})
-		defer p1.Reset()
-
-		err := RemoveContainers("/test/socket", execer)
-		if err == nil {
-			t.Error("Expected error when runtime creation fails, got nil")
 		}
 	})
 
@@ -114,8 +100,8 @@ func TestRemoveContainers(t *testing.T) {
 		mr := &mockRuntime{}
 
 		p1 := gomonkey.ApplyFunc(utilruntime.NewContainerRuntime,
-			func(e utilsexec.Interface, criSocketPath string) (utilruntime.ContainerRuntime, error) {
-				return mr, nil
+			func(criSocketPath string) utilruntime.ContainerRuntime {
+				return mr
 			})
 		defer p1.Reset()
 
@@ -125,7 +111,7 @@ func TestRemoveContainers(t *testing.T) {
 			})
 		defer p2.Reset()
 
-		err := RemoveContainers("/test/socket", execer)
+		err := RemoveContainers("/test/socket")
 		if err == nil {
 			t.Error("Expected error when listing containers fails, got nil")
 		}
@@ -135,8 +121,8 @@ func TestRemoveContainers(t *testing.T) {
 		mr := &mockRuntime{}
 
 		p1 := gomonkey.ApplyFunc(utilruntime.NewContainerRuntime,
-			func(e utilsexec.Interface, criSocketPath string) (utilruntime.ContainerRuntime, error) {
-				return mr, nil
+			func(criSocketPath string) utilruntime.ContainerRuntime {
+				return mr
 			})
 		defer p1.Reset()
 
@@ -146,7 +132,7 @@ func TestRemoveContainers(t *testing.T) {
 			})
 		defer p2.Reset()
 
-		err := RemoveContainers("/test/socket", execer)
+		err := RemoveContainers("/test/socket")
 		if err == nil {
 			t.Error("Expected error when removing containers fails, got nil")
 		}

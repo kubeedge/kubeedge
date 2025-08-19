@@ -37,20 +37,15 @@ type validator struct {
 	getter serviceaccount.ServiceAccountTokenGetter
 }
 
-var _ = serviceaccount.Validator(&validator{})
+var _ = serviceaccount.Validator[privateClaims](&validator{})
 
-func NewValidator(getter serviceaccount.ServiceAccountTokenGetter) serviceaccount.Validator {
+func NewValidator(getter serviceaccount.ServiceAccountTokenGetter) serviceaccount.Validator[privateClaims] {
 	return &validator{
 		getter: getter,
 	}
 }
 
-func (v *validator) Validate(_ context.Context, _ string, public *jwt.Claims, privateObj interface{}) (*apiserverserviceaccount.ServiceAccountInfo, error) {
-	private, ok := privateObj.(*privateClaims)
-	if !ok {
-		klog.Errorf("service account jwt validator expected private claim of type *privateClaims but got: %T", privateObj)
-		return nil, fmt.Errorf("service account token claims could not be validated due to unexpected private claim")
-	}
+func (v *validator) Validate(_ context.Context, _ string, public *jwt.Claims, private *privateClaims) (*apiserverserviceaccount.ServiceAccountInfo, error) {
 	nowTime := now()
 	err := public.Validate(jwt.Expected{
 		Time: nowTime,

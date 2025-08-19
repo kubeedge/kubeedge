@@ -199,7 +199,6 @@ func ConvertConfigEdgedFlagToConfigKubeletFlag(in *v1alpha2.TailoredKubeletFlag,
 	out.MaxPerPodContainerCount = in.MaxPerPodContainerCount
 	out.MaxContainerCount = in.MaxContainerCount
 	out.RegisterSchedulable = in.RegisterSchedulable
-	out.KeepTerminatedPodVolumes = in.KeepTerminatedPodVolumes
 	out.SeccompDefault = in.SeccompDefault
 	out.WindowsPriorityClass = in.WindowsPriorityClass
 	// out.WindowsService may always be false, or kubelet will try to install itself as a windows service.

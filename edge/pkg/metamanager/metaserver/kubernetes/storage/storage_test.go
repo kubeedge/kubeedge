@@ -636,7 +636,7 @@ func (f *fakeRuntimeService) CheckpointContainer(ctx context.Context, options *r
 	return f.CheckpointContainerF(ctx, options)
 }
 
-func (f *fakeRuntimeService) GetContainerEvents(containerEventsCh chan *runtimeapi.ContainerEventResponse) error {
+func (f *fakeRuntimeService) GetContainerEvents(ctx context.Context, containerEventsCh chan *runtimeapi.ContainerEventResponse, connectionEstablishedCallback func(runtimeapi.RuntimeService_GetContainerEventsClient)) error {
 	return f.GetContainerEventsF(containerEventsCh)
 }
 

@@ -27,7 +27,6 @@ import (
 
 	"github.com/spf13/cobra"
 	phases "k8s.io/kubernetes/cmd/kubeadm/app/cmd/phases/reset"
-	utilsexec "k8s.io/utils/exec"
 
 	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/cloud"
@@ -124,7 +123,7 @@ func NewKubeEdgeReset() *cobra.Command {
 
 			// 2. Remove containers managed by KubeEdge. Only for edge node.
 			if isEdgeNode {
-				if err := util.RemoveContainers(reset.Endpoint, utilsexec.New()); err != nil {
+				if err := util.RemoveContainers(reset.Endpoint); err != nil {
 					fmt.Printf("Failed to remove containers: %v\n", err)
 				}
 			}
