@@ -55,7 +55,8 @@ func NewContainerRuntime(endpoint, cgroupDriver string) (ContainerRuntime, error
 	if err != nil {
 		return nil, err
 	}
-	ctrsvc, err := remote.NewRemoteRuntimeService(endpoint, timeout, noop.NewTracerProvider())
+	logger := klog.Background()
+	ctrsvc, err := remote.NewRemoteRuntimeService(endpoint, timeout, noop.NewTracerProvider(), &logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to new remote runtime service, err: %v", err)
 	}

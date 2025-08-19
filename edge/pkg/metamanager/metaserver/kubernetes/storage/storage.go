@@ -343,7 +343,8 @@ func (r *REST) Restart(ctx context.Context, restartInfo common.RestartInfo) *typ
 	}
 
 	endpoint := config.Config.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint
-	remoteRuntimeService, err := remote.NewRemoteRuntimeService(endpoint, time.Second*10, oteltrace.NewNoopTracerProvider())
+	logger := klog.Background()
+	remoteRuntimeService, err := remote.NewRemoteRuntimeService(endpoint, time.Second*10, oteltrace.NewNoopTracerProvider(), &logger)
 	if err != nil {
 		errMessage := fmt.Sprintf("new remote runtimeservice with err: %v", err)
 		klog.Errorf("[metaserver/restart] %v", errMessage)
@@ -416,7 +417,8 @@ func (r *REST) Logs(ctx context.Context, logsInfo common.LogsInfo) (*types.LogsR
 	}
 
 	endpoint := config.Config.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint
-	remoteRuntimeService, err := remote.NewRemoteRuntimeService(endpoint, time.Second*10, oteltrace.NewNoopTracerProvider())
+	logger := klog.Background()
+	remoteRuntimeService, err := remote.NewRemoteRuntimeService(endpoint, time.Second*10, oteltrace.NewNoopTracerProvider(), &logger)
 	if err != nil {
 		errMessage := fmt.Sprintf("new remote runtimeservice with err: %v", err)
 		klog.Errorf("[metaserver/logs] %v", errMessage)
@@ -505,7 +507,8 @@ func (r *REST) Exec(ctx context.Context, execInfo common.ExecInfo) (*types.ExecR
 	}
 
 	endpoint := config.Config.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint
-	remoteRuntimeService, err := remote.NewRemoteRuntimeService(endpoint, time.Second*10, oteltrace.NewNoopTracerProvider())
+	logger := klog.Background()
+	remoteRuntimeService, err := remote.NewRemoteRuntimeService(endpoint, time.Second*10, oteltrace.NewNoopTracerProvider(), &logger)
 	if err != nil {
 		errMessage := fmt.Sprintf("new remote runtimeservice with err: %v", err)
 		klog.Errorf("[metaserver/exec] %v", errMessage)

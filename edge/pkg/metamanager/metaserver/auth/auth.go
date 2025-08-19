@@ -16,21 +16,21 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 )
 
-type jwtTokenAuthenticator struct {
+type jwtTokenAuthenticator[privateClaims any] struct {
 	// TODO implement cache indexer to authenticate token
 	indexer      cache.Indexer
 	issuers      map[string]bool
 	keys         []interface{}
-	validator    serviceaccount.Validator
+	validator    serviceaccount.Validator[privateClaims]
 	implicitAuds authenticator.Audiences
 }
 
-func JWTTokenAuthenticator(indexer cache.Indexer, issuers []string, keys []interface{}, implicitAuds authenticator.Audiences, validator serviceaccount.Validator) authenticator.Token {
+func JWTTokenAuthenticator[privateClaims any](indexer cache.Indexer, issuers []string, keys []interface{}, implicitAuds authenticator.Audiences, validator serviceaccount.Validator[privateClaims]) authenticator.Token {
 	issuersMap := make(map[string]bool)
 	for _, issuer := range issuers {
 		issuersMap[issuer] = true
 	}
-	return &jwtTokenAuthenticator{
+	return &jwtTokenAuthenticator[privateClaims]{
 		indexer:      indexer,
 		issuers:      issuersMap,
 		keys:         keys,
@@ -39,7 +39,7 @@ func JWTTokenAuthenticator(indexer cache.Indexer, issuers []string, keys []inter
 	}
 }
 
-func (j *jwtTokenAuthenticator) hasCorrectIssuer(tokenData string) bool {
+func (j *jwtTokenAuthenticator[privateClaims]) hasCorrectIssuer(tokenData string) bool {
 	parts := strings.Split(tokenData, ".")
 	if len(parts) != 3 {
 		return false
@@ -58,12 +58,12 @@ func (j *jwtTokenAuthenticator) hasCorrectIssuer(tokenData string) bool {
 	return j.issuers[claims.Issuer]
 }
 
-func (j *jwtTokenAuthenticator) AuthenticateToken(ctx context.Context, tokenData string) (*authenticator.Response, bool, error) {
+func (j *jwtTokenAuthenticator[privateClaims]) AuthenticateToken(ctx context.Context, tokenData string) (*authenticator.Response, bool, error) {
 	if !j.hasCorrectIssuer(tokenData) {
 		return nil, false, nil
 	}
 	public := &jwt.Claims{}
-	private := j.validator.NewPrivateClaims()
+	private := new(privateClaims)
 	if err := parseSigned(tokenData, public, private); err != nil {
 		return nil, false, err
 	}
