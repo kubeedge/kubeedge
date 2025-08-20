@@ -43,6 +43,10 @@ func (r *router) Enable() bool {
 	return r.enable
 }
 
+func (r *router) RestartPolicy() *core.ModuleRestartPolicy {
+	return nil
+}
+
 func (r *router) Start() {
 	klog.Info("In router module, start...")
 	listener.Process(r.Name())
