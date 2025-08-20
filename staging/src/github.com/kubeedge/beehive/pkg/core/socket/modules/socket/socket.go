@@ -2,6 +2,8 @@ package socket
 
 import (
 	"net"
+
+	"github.com/kubeedge/beehive/pkg/core"
 )
 
 // Server module socket server
@@ -35,4 +37,8 @@ func (m *Server) Start() {
 // Enable enable
 func (m *Server) Enable() bool {
 	return m.enable
+}
+
+func (m *Server) RestartPolicy() *core.ModuleRestartPolicy {
+	return nil
 }

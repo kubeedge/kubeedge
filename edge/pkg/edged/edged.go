@@ -61,6 +61,7 @@ import (
 	kubebridge "github.com/kubeedge/kubeedge/edge/pkg/edged/kubeclientbridge"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	metaclient "github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
+	"github.com/kubeedge/kubeedge/pkg/features"
 	kefeatures "github.com/kubeedge/kubeedge/pkg/features"
 	"github.com/kubeedge/kubeedge/pkg/version"
 )
@@ -118,6 +119,16 @@ func (e *edged) Group() string {
 // Enable indicates whether this module is enabled
 func (e *edged) Enable() bool {
 	return edgedconfig.Config.Enable
+}
+
+func (e *edged) RestartPolicy() *core.ModuleRestartPolicy {
+	if !features.DefaultFeatureGate.Enabled(features.ModuleRestart) {
+		return nil
+	}
+	return &core.ModuleRestartPolicy{
+		RestartType:            core.RestartTypeOnFailure,
+		IntervalTimeGrowthRate: 2.0,
+	}
 }
 
 func (e *edged) Start() {

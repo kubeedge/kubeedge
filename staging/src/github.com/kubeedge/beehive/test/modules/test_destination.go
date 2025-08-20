@@ -56,3 +56,7 @@ func (m *testModuleDest) Start() {
 	//	c.SendResp(*resp)
 	//}
 }
+
+func (m *testModuleDest) RestartPolicy() *core.ModuleRestartPolicy {
+	return nil
+}
