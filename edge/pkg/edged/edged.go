@@ -123,6 +123,16 @@ func (e *edged) Enable() bool {
 	return edgedconfig.Config.Enable
 }
 
+func (e *edged) RestartPolicy() *core.ModuleRestartPolicy {
+	if !kefeatures.DefaultFeatureGate.Enabled(kefeatures.ModuleRestart) {
+		return nil
+	}
+	return &core.ModuleRestartPolicy{
+		RestartType:            core.RestartTypeOnFailure,
+		IntervalTimeGrowthRate: 2.0,
+	}
+}
+
 func (e *edged) Start() {
 	klog.Info("Starting edged...")
 	kubeletErrChan := make(chan error, 1)

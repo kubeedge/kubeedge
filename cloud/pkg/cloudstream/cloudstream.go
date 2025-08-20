@@ -69,3 +69,7 @@ func (s *cloudStream) Start() {
 func (s *cloudStream) Enable() bool {
 	return s.enable
 }
+
+func (s *cloudStream) RestartPolicy() *core.ModuleRestartPolicy {
+	return nil
+}

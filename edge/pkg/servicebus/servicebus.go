@@ -24,6 +24,7 @@ import (
 	servicebusConfig "github.com/kubeedge/kubeedge/edge/pkg/servicebus/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/servicebus/dao"
 	"github.com/kubeedge/kubeedge/edge/pkg/servicebus/util"
+	"github.com/kubeedge/kubeedge/pkg/features"
 )
 
 var (
@@ -86,6 +87,16 @@ func (*servicebus) Group() string {
 
 func (sb *servicebus) Enable() bool {
 	return sb.enable
+}
+
+func (sb *servicebus) RestartPolicy() *core.ModuleRestartPolicy {
+	if !features.DefaultFeatureGate.Enabled(features.ModuleRestart) {
+		return nil
+	}
+	return &core.ModuleRestartPolicy{
+		RestartType:            core.RestartTypeOnFailure,
+		IntervalTimeGrowthRate: 2.0,
+	}
 }
 
 func (sb *servicebus) Start() {
