@@ -27,11 +27,13 @@ var (
 func (eh *EdgeHub) initial() (err error) {
 	cloudHubClient, err := clients.GetClient()
 	if err != nil {
+		klog.ErrorS(err, "Failed to get cloud hub client in initial")
 		return err
 	}
 
 	eh.chClient = cloudHubClient
 
+	klog.InfoS("Cloud hub client initialized successfully in initial")
 	return nil
 }
 
@@ -43,32 +45,33 @@ func (eh *EdgeHub) routeToEdge() {
 	for {
 		select {
 		case <-beehiveContext.Done():
-			klog.Warning("EdgeHub RouteToEdge stop")
+			klog.Warningf("EdgeHub RouteToEdge stop")
 			return
 		default:
 		}
 		message, err := eh.chClient.Receive()
 		if err != nil {
-			klog.Errorf("websocket read error: %v", err)
+			klog.ErrorS(err, "Websocket read error in routeToEdge")
 			eh.reconnectChan <- struct{}{}
 			return
 		}
-		klog.V(4).Infof("[edgehub/routeToEdge] receive msg from cloud, msg: %+v", message)
+		klog.V(4).InfoS("Received message from cloud in routeToEdge", "messageID", message.GetID())
 		if err = eh.dispatch(message); err != nil {
-			klog.Error(err)
+			klog.ErrorS(err, "Failed to dispatch message in routeToEdge", "messageID", message.GetID())
 		}
 	}
 }
 
 func (eh *EdgeHub) sendToCloud(message model.Message) error {
 	eh.keeperLock.Lock()
-	klog.V(4).Infof("[edgehub/sendToCloud] send msg to cloud, msg: %+v", message)
+	klog.V(4).InfoS("Sending message to cloud", "messageID", message.GetID())
 	err := eh.chClient.Send(message)
 	eh.keeperLock.Unlock()
 	if err != nil {
 		return fmt.Errorf("failed to send message, error: %v", err)
 	}
 
+	klog.V(4).InfoS("Message sent to cloud successfully", "messageID", message.GetID())
 	return nil
 }
 
@@ -76,27 +79,27 @@ func (eh *EdgeHub) routeToCloud() {
 	for {
 		select {
 		case <-beehiveContext.Done():
-			klog.Warning("EdgeHub RouteToCloud stop")
+			klog.Warningf("EdgeHub RouteToCloud stop")
 			return
 		default:
 		}
 		message, err := beehiveContext.Receive(modules.EdgeHubModuleName)
 		if err != nil {
-			klog.Errorf("failed to receive message from edge: %v", err)
+			klog.ErrorS(err, "Failed to receive message from edge in routeToCloud")
 			time.Sleep(time.Second)
 			continue
 		}
 
 		err = eh.tryThrottle(message.GetID())
 		if err != nil {
-			klog.Errorf("msgID: %s, client rate limiter returned an error: %v ", message.GetID(), err)
+			klog.ErrorS(err, "Client rate limiter returned an error in routeToCloud", "messageID", message.GetID())
 			continue
 		}
 
 		// post message to cloud hub
 		err = eh.sendToCloud(message)
 		if err != nil {
-			klog.Errorf("failed to send message to cloud: %v", err)
+			klog.ErrorS(err, "Failed to send message to cloud in routeToCloud", "messageID", message.GetID())
 			eh.reconnectChan <- struct{}{}
 			return
 		}

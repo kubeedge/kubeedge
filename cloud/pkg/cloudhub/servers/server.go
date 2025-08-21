@@ -30,15 +30,15 @@ func StartCloudHub(messageHandler handler.Handler) {
 func createTLSConfig(ca, cert, key []byte) tls.Config {
 	// init certificate
 	pool := x509.NewCertPool()
-	ok := pool.AppendCertsFromPEM(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: ca}))
-	if !ok {
-		panic(fmt.Errorf("fail to load ca content"))
-	}
+    ok := pool.AppendCertsFromPEM(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: ca}))
+    if !ok {
+        klog.Exit(fmt.Errorf("fail to load ca content"))
+    }
 
-	certificate, err := tls.X509KeyPair(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: cert}), pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: key}))
-	if err != nil {
-		panic(err)
-	}
+    certificate, err := tls.X509KeyPair(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: cert}), pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: key}))
+    if err != nil {
+        klog.Exit(err)
+    }
 	return tls.Config{
 		ClientCAs:    pool,
 		ClientAuth:   tls.RequireAndVerifyClientCert,
