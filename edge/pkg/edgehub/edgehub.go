@@ -25,6 +25,7 @@ type EdgeHub struct {
 	rateLimiter   flowcontrol.RateLimiter
 	keeperLock    sync.RWMutex
 	enable        bool
+	priorityQueue *MessagePriorityQueue
 }
 
 var _ core.Module = (*EdgeHub)(nil)
@@ -49,6 +50,7 @@ func newEdgeHub(enable bool) *EdgeHub {
 		rateLimiter: flowcontrol.NewTokenBucketRateLimiter(
 			float32(config.Config.EdgeHub.MessageQPS),
 			int(config.Config.EdgeHub.MessageBurst)),
+		priorityQueue: NewMessagePriorityQueue(),
 	}
 }
 
@@ -113,6 +115,7 @@ func (eh *EdgeHub) Start() {
 		eh.pubConnectInfo(true)
 		go eh.routeToEdge()
 		go eh.routeToCloud()
+		go eh.processPriorityQueue()
 		go eh.keepalive()
 
 		// wait the stop signal
