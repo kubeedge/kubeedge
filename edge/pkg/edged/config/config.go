@@ -185,6 +185,9 @@ func ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(in *v1alpha2.T
 	}
 	out.ContainerRuntimeEndpoint = in.ContainerRuntimeEndpoint
 	out.ImageServiceEndpoint = in.ImageServiceEndpoint
+	if err := v1.Convert_Pointer_bool_To_bool(&in.FailCgroupV1, &out.FailCgroupV1, s); err != nil {
+		return err
+	}
 	return nil
 }
 
