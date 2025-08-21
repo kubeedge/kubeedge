@@ -650,6 +650,8 @@ type TailoredKubeletConfiguration struct {
 	EnableSystemLogHandler *bool `json:"enableSystemLogHandler,omitempty"`
 	// enableSystemLogQuery enables the node log query feature on the /logs endpoint.
 	// EnableSystemLogHandler has to be enabled in addition for this feature to work.
+	// Enabling this feature has security implications. The recommendation is to enable it on a need basis for debugging
+	// purposes and disabling otherwise.
 	// Default: false
 	// +featureGate=NodeLogQuery
 	// +optional
@@ -773,6 +775,13 @@ type TailoredKubeletConfiguration struct {
 	// If not specified, the value in containerRuntimeEndpoint is used.
 	// +optional
 	ImageServiceEndpoint string `json:"imageServiceEndpoint,omitempty"`
+	// FailCgroupV1 prevents the kubelet from starting on hosts
+	// that use cgroup v1. By default, this is set to 'false', meaning
+	// the kubelet is allowed to start on cgroup v1 hosts unless this
+	// option is explicitly enabled.
+	// Default: false
+	// +optional
+	FailCgroupV1 *bool `json:"failCgroupV1,omitempty"`
 }
 
 // TailoredKubeletFlag indicates the tailored kubelet flag
@@ -821,9 +830,6 @@ type TailoredKubeletFlag struct {
 	// schedulable. Won't have any effect if register-node is false.
 	// DEPRECATED: use registerWithTaints instead
 	RegisterSchedulable bool `json:"registerSchedulable,omitempty"`
-	// This flag, if set, instructs the edged to keep volumes from terminated pods mounted to the node.
-	// This can be useful for debugging volume related issues.
-	KeepTerminatedPodVolumes bool `json:"keepTerminatedPodVolumes,omitempty"`
 	// SeccompDefault enables the use of `RuntimeDefault` as the default seccomp profile for all workloads on the node.
 	// To use this flag, the corresponding SeccompDefault feature gate must be enabled.
 	SeccompDefault bool `json:"seccompDefault,omitempty"`

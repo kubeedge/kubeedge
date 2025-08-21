@@ -108,4 +108,5 @@ func SetDefaultsKubeletConfiguration(obj *TailoredKubeletConfiguration) {
 	obj.LocalStorageCapacityIsolation = utilpointer.Bool(true)
 	obj.ContainerRuntimeEndpoint = constants.DefaultRemoteRuntimeEndpoint
 	obj.ImageServiceEndpoint = constants.DefaultRemoteImageEndpoint
+	obj.FailCgroupV1 = utilpointer.Bool(false)
 }
