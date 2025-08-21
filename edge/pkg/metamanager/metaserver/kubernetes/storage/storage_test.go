@@ -17,7 +17,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	cri "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
+	remote "k8s.io/cri-client/pkg"
 
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -636,7 +636,7 @@ func (f *fakeRuntimeService) CheckpointContainer(ctx context.Context, options *r
 	return f.CheckpointContainerF(ctx, options)
 }
 
-func (f *fakeRuntimeService) GetContainerEvents(containerEventsCh chan *runtimeapi.ContainerEventResponse) error {
+func (f *fakeRuntimeService) GetContainerEvents(ctx context.Context, containerEventsCh chan *runtimeapi.ContainerEventResponse, connectionEstablishedCallback func(runtimeapi.RuntimeService_GetContainerEventsClient)) error {
 	return f.GetContainerEventsF(containerEventsCh)
 }
 

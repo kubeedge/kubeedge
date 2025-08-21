@@ -40,20 +40,22 @@ var nodegroupsKind = v1alpha1.SchemeGroupVersion.WithKind("NodeGroup")
 
 // Get takes name of the nodeGroup, and returns the corresponding nodeGroup object, and an error if there is any.
 func (c *FakeNodeGroups) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.NodeGroup, err error) {
+	emptyResult := &v1alpha1.NodeGroup{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootGetAction(nodegroupsResource, name), &v1alpha1.NodeGroup{})
+		Invokes(testing.NewRootGetActionWithOptions(nodegroupsResource, name, options), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.NodeGroup), err
 }
 
 // List takes label and field selectors, and returns the list of NodeGroups that match those selectors.
 func (c *FakeNodeGroups) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.NodeGroupList, err error) {
+	emptyResult := &v1alpha1.NodeGroupList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootListAction(nodegroupsResource, nodegroupsKind, opts), &v1alpha1.NodeGroupList{})
+		Invokes(testing.NewRootListActionWithOptions(nodegroupsResource, nodegroupsKind, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -72,36 +74,39 @@ func (c *FakeNodeGroups) List(ctx context.Context, opts v1.ListOptions) (result 
 // Watch returns a watch.Interface that watches the requested nodeGroups.
 func (c *FakeNodeGroups) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewRootWatchAction(nodegroupsResource, opts))
+		InvokesWatch(testing.NewRootWatchActionWithOptions(nodegroupsResource, opts))
 }
 
 // Create takes the representation of a nodeGroup and creates it.  Returns the server's representation of the nodeGroup, and an error, if there is any.
 func (c *FakeNodeGroups) Create(ctx context.Context, nodeGroup *v1alpha1.NodeGroup, opts v1.CreateOptions) (result *v1alpha1.NodeGroup, err error) {
+	emptyResult := &v1alpha1.NodeGroup{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootCreateAction(nodegroupsResource, nodeGroup), &v1alpha1.NodeGroup{})
+		Invokes(testing.NewRootCreateActionWithOptions(nodegroupsResource, nodeGroup, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.NodeGroup), err
 }
 
 // Update takes the representation of a nodeGroup and updates it. Returns the server's representation of the nodeGroup, and an error, if there is any.
 func (c *FakeNodeGroups) Update(ctx context.Context, nodeGroup *v1alpha1.NodeGroup, opts v1.UpdateOptions) (result *v1alpha1.NodeGroup, err error) {
+	emptyResult := &v1alpha1.NodeGroup{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateAction(nodegroupsResource, nodeGroup), &v1alpha1.NodeGroup{})
+		Invokes(testing.NewRootUpdateActionWithOptions(nodegroupsResource, nodeGroup, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.NodeGroup), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeNodeGroups) UpdateStatus(ctx context.Context, nodeGroup *v1alpha1.NodeGroup, opts v1.UpdateOptions) (*v1alpha1.NodeGroup, error) {
+func (c *FakeNodeGroups) UpdateStatus(ctx context.Context, nodeGroup *v1alpha1.NodeGroup, opts v1.UpdateOptions) (result *v1alpha1.NodeGroup, err error) {
+	emptyResult := &v1alpha1.NodeGroup{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateSubresourceAction(nodegroupsResource, "status", nodeGroup), &v1alpha1.NodeGroup{})
+		Invokes(testing.NewRootUpdateSubresourceActionWithOptions(nodegroupsResource, "status", nodeGroup, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.NodeGroup), err
 }
@@ -115,7 +120,7 @@ func (c *FakeNodeGroups) Delete(ctx context.Context, name string, opts v1.Delete
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeNodeGroups) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(nodegroupsResource, listOpts)
+	action := testing.NewRootDeleteCollectionActionWithOptions(nodegroupsResource, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.NodeGroupList{})
 	return err
@@ -123,10 +128,11 @@ func (c *FakeNodeGroups) DeleteCollection(ctx context.Context, opts v1.DeleteOpt
 
 // Patch applies the patch and returns the patched nodeGroup.
 func (c *FakeNodeGroups) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.NodeGroup, err error) {
+	emptyResult := &v1alpha1.NodeGroup{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(nodegroupsResource, name, pt, data, subresources...), &v1alpha1.NodeGroup{})
+		Invokes(testing.NewRootPatchSubresourceActionWithOptions(nodegroupsResource, name, pt, data, opts, subresources...), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.NodeGroup), err
 }

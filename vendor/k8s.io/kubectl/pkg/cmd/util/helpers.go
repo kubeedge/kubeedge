@@ -27,9 +27,9 @@ import (
 	"strings"
 	"time"
 
-	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	jsonpatch "gopkg.in/evanphx/json-patch.v4"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -243,7 +243,7 @@ func statusCausesToAggrError(scs []metav1.StatusCause) utilerrors.Aggregate {
 // commands.
 func StandardErrorMessage(err error) (string, bool) {
 	if debugErr, ok := err.(debugError); ok {
-		klog.V(4).Infof(debugErr.DebugError())
+		klog.V(4).Info(debugErr.DebugError())
 	}
 	status, isStatus := err.(apierrors.APIStatus)
 	switch {

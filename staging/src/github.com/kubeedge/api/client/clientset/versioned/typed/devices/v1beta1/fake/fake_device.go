@@ -41,22 +41,24 @@ var devicesKind = v1beta1.SchemeGroupVersion.WithKind("Device")
 
 // Get takes name of the device, and returns the corresponding device object, and an error if there is any.
 func (c *FakeDevices) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.Device, err error) {
+	emptyResult := &v1beta1.Device{}
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(devicesResource, c.ns, name), &v1beta1.Device{})
+		Invokes(testing.NewGetActionWithOptions(devicesResource, c.ns, name, options), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.Device), err
 }
 
 // List takes label and field selectors, and returns the list of Devices that match those selectors.
 func (c *FakeDevices) List(ctx context.Context, opts v1.ListOptions) (result *v1beta1.DeviceList, err error) {
+	emptyResult := &v1beta1.DeviceList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(devicesResource, devicesKind, c.ns, opts), &v1beta1.DeviceList{})
+		Invokes(testing.NewListActionWithOptions(devicesResource, devicesKind, c.ns, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -75,40 +77,43 @@ func (c *FakeDevices) List(ctx context.Context, opts v1.ListOptions) (result *v1
 // Watch returns a watch.Interface that watches the requested devices.
 func (c *FakeDevices) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(devicesResource, c.ns, opts))
+		InvokesWatch(testing.NewWatchActionWithOptions(devicesResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a device and creates it.  Returns the server's representation of the device, and an error, if there is any.
 func (c *FakeDevices) Create(ctx context.Context, device *v1beta1.Device, opts v1.CreateOptions) (result *v1beta1.Device, err error) {
+	emptyResult := &v1beta1.Device{}
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(devicesResource, c.ns, device), &v1beta1.Device{})
+		Invokes(testing.NewCreateActionWithOptions(devicesResource, c.ns, device, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.Device), err
 }
 
 // Update takes the representation of a device and updates it. Returns the server's representation of the device, and an error, if there is any.
 func (c *FakeDevices) Update(ctx context.Context, device *v1beta1.Device, opts v1.UpdateOptions) (result *v1beta1.Device, err error) {
+	emptyResult := &v1beta1.Device{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(devicesResource, c.ns, device), &v1beta1.Device{})
+		Invokes(testing.NewUpdateActionWithOptions(devicesResource, c.ns, device, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.Device), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeDevices) UpdateStatus(ctx context.Context, device *v1beta1.Device, opts v1.UpdateOptions) (*v1beta1.Device, error) {
+func (c *FakeDevices) UpdateStatus(ctx context.Context, device *v1beta1.Device, opts v1.UpdateOptions) (result *v1beta1.Device, err error) {
+	emptyResult := &v1beta1.Device{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceAction(devicesResource, "status", c.ns, device), &v1beta1.Device{})
+		Invokes(testing.NewUpdateSubresourceActionWithOptions(devicesResource, "status", c.ns, device, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.Device), err
 }
@@ -123,7 +128,7 @@ func (c *FakeDevices) Delete(ctx context.Context, name string, opts v1.DeleteOpt
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeDevices) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(devicesResource, c.ns, listOpts)
+	action := testing.NewDeleteCollectionActionWithOptions(devicesResource, c.ns, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1beta1.DeviceList{})
 	return err
@@ -131,11 +136,12 @@ func (c *FakeDevices) DeleteCollection(ctx context.Context, opts v1.DeleteOption
 
 // Patch applies the patch and returns the patched device.
 func (c *FakeDevices) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.Device, err error) {
+	emptyResult := &v1beta1.Device{}
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(devicesResource, c.ns, name, pt, data, subresources...), &v1beta1.Device{})
+		Invokes(testing.NewPatchSubresourceActionWithOptions(devicesResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.Device), err
 }

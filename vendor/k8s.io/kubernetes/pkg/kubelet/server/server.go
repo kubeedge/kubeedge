@@ -102,8 +102,8 @@ type Server struct {
 	auth                 AuthInterface
 	host                 HostInterface
 	restfulCont          containerInterface
-	metricsBuckets       sets.String
-	metricsMethodBuckets sets.String
+	metricsBuckets       sets.Set[string]
+	metricsMethodBuckets sets.Set[string]
 	resourceAnalyzer     stats.ResourceAnalyzer
 }
 
@@ -155,7 +155,12 @@ func ListenAndServeKubeletServer(
 	address := netutils.ParseIPSloppy(kubeCfg.Address)
 	port := uint(kubeCfg.Port)
 	klog.InfoS("Starting to listen", "address", address, "port", port)
-	handler := NewServer(host, resourceAnalyzer, auth, tp, kubeCfg)
+	handler := NewServer(host, resourceAnalyzer, auth, kubeCfg)
+
+	if utilfeature.DefaultFeatureGate.Enabled(features.KubeletTracing) {
+		handler.InstallTracingFilter(tp)
+	}
+
 	s := &http.Server{
 		Addr:           net.JoinHostPort(address.String(), strconv.FormatUint(uint64(port), 10)),
 		Handler:        &handler,
@@ -184,12 +189,16 @@ func ListenAndServeKubeletServer(
 func ListenAndServeKubeletReadOnlyServer(
 	host HostInterface,
 	resourceAnalyzer stats.ResourceAnalyzer,
-	kubeCfg *kubeletconfiginternal.KubeletConfiguration) {
+	kubeCfg *kubeletconfiginternal.KubeletConfiguration,
+	tp oteltrace.TracerProvider) {
 	address := net.ParseIP(kubeCfg.Address)
 	port := uint(kubeCfg.ReadOnlyPort)
 	klog.InfoS("Starting to listen read-only", "address", address, "port", port)
-	// TODO: https://github.com/kubernetes/kubernetes/issues/109829 tracer should use WithPublicEndpoint
-	s := NewServer(host, resourceAnalyzer, nil, oteltrace.NewNoopTracerProvider(), kubeCfg)
+	s := NewServer(host, resourceAnalyzer, nil, kubeCfg)
+
+	if utilfeature.DefaultFeatureGate.Enabled(features.KubeletTracing) {
+		s.InstallTracingFilter(tp, otelrestful.WithPublicEndpoint())
+	}
 
 	server := &http.Server{
 		Addr:           net.JoinHostPort(address.String(), strconv.FormatUint(uint64(port), 10)),
@@ -239,7 +248,6 @@ func NewServer(
 	host HostInterface,
 	resourceAnalyzer stats.ResourceAnalyzer,
 	auth AuthInterface,
-	tp oteltrace.TracerProvider,
 	kubeCfg *kubeletconfiginternal.KubeletConfiguration) Server {
 
 	server := Server{
@@ -247,14 +255,11 @@ func NewServer(
 		resourceAnalyzer:     resourceAnalyzer,
 		auth:                 auth,
 		restfulCont:          &filteringContainer{Container: restful.NewContainer()},
-		metricsBuckets:       sets.NewString(),
-		metricsMethodBuckets: sets.NewString("OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE", "TRACE", "CONNECT"),
+		metricsBuckets:       sets.New[string](),
+		metricsMethodBuckets: sets.New[string]("OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE", "TRACE", "CONNECT"),
 	}
 	if auth != nil {
 		server.InstallAuthFilter()
-	}
-	if utilfeature.DefaultFeatureGate.Enabled(features.KubeletTracing) {
-		server.InstallTracingFilter(tp)
 	}
 	server.InstallDefaultHandlers()
 	if kubeCfg != nil && kubeCfg.EnableDebuggingHandlers {
@@ -309,8 +314,8 @@ func (s *Server) InstallAuthFilter() {
 }
 
 // InstallTracingFilter installs OpenTelemetry tracing filter with the restful Container.
-func (s *Server) InstallTracingFilter(tp oteltrace.TracerProvider) {
-	s.restfulCont.Filter(otelrestful.OTelFilter("kubelet", otelrestful.WithTracerProvider(tp)))
+func (s *Server) InstallTracingFilter(tp oteltrace.TracerProvider, opts ...otelrestful.Option) {
+	s.restfulCont.Filter(otelrestful.OTelFilter("kubelet", append(opts, otelrestful.WithTracerProvider(tp))...))
 }
 
 // addMetricsBucketMatcher adds a regexp matcher and the relevant bucket to use when
@@ -412,17 +417,6 @@ func (s *Server) InstallDefaultHandlers() {
 	s.restfulCont.Handle(proberMetricsPath,
 		compbasemetrics.HandlerFor(p, compbasemetrics.HandlerOpts{ErrorHandling: compbasemetrics.ContinueOnError}),
 	)
-
-	// Only enable checkpoint API if the feature is enabled
-	if utilfeature.DefaultFeatureGate.Enabled(features.ContainerCheckpoint) {
-		s.addMetricsBucketMatcher("checkpoint")
-		ws = &restful.WebService{}
-		ws.Path(checkpointPath).Produces(restful.MIME_JSON)
-		ws.Route(ws.POST("/{podNamespace}/{podID}/{containerName}").
-			To(s.checkpoint).
-			Operation("checkpoint"))
-		s.restfulCont.Add(ws)
-	}
 }
 
 // InstallDebuggingHandlers registers the HTTP request patterns that serve logs or run commands/containers
@@ -517,6 +511,17 @@ func (s *Server) InstallDebuggingHandlers() {
 		To(s.getRunningPods).
 		Operation("getRunningPods"))
 	s.restfulCont.Add(ws)
+
+	// Only enable checkpoint API if the feature is enabled
+	if utilfeature.DefaultFeatureGate.Enabled(features.ContainerCheckpoint) {
+		s.addMetricsBucketMatcher("checkpoint")
+		ws = &restful.WebService{}
+		ws.Path(checkpointPath).Produces(restful.MIME_JSON)
+		ws.Route(ws.POST("/{podNamespace}/{podID}/{containerName}").
+			To(s.checkpoint).
+			Operation("checkpoint"))
+		s.restfulCont.Add(ws)
+	}
 }
 
 // InstallDebuggingDisabledHandlers registers the HTTP request patterns that provide better error message

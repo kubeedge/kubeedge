@@ -40,20 +40,22 @@ var nodeupgradejobsKind = v1alpha2.SchemeGroupVersion.WithKind("NodeUpgradeJob")
 
 // Get takes name of the nodeUpgradeJob, and returns the corresponding nodeUpgradeJob object, and an error if there is any.
 func (c *FakeNodeUpgradeJobs) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha2.NodeUpgradeJob, err error) {
+	emptyResult := &v1alpha2.NodeUpgradeJob{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootGetAction(nodeupgradejobsResource, name), &v1alpha2.NodeUpgradeJob{})
+		Invokes(testing.NewRootGetActionWithOptions(nodeupgradejobsResource, name, options), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha2.NodeUpgradeJob), err
 }
 
 // List takes label and field selectors, and returns the list of NodeUpgradeJobs that match those selectors.
 func (c *FakeNodeUpgradeJobs) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha2.NodeUpgradeJobList, err error) {
+	emptyResult := &v1alpha2.NodeUpgradeJobList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootListAction(nodeupgradejobsResource, nodeupgradejobsKind, opts), &v1alpha2.NodeUpgradeJobList{})
+		Invokes(testing.NewRootListActionWithOptions(nodeupgradejobsResource, nodeupgradejobsKind, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -72,36 +74,39 @@ func (c *FakeNodeUpgradeJobs) List(ctx context.Context, opts v1.ListOptions) (re
 // Watch returns a watch.Interface that watches the requested nodeUpgradeJobs.
 func (c *FakeNodeUpgradeJobs) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewRootWatchAction(nodeupgradejobsResource, opts))
+		InvokesWatch(testing.NewRootWatchActionWithOptions(nodeupgradejobsResource, opts))
 }
 
 // Create takes the representation of a nodeUpgradeJob and creates it.  Returns the server's representation of the nodeUpgradeJob, and an error, if there is any.
 func (c *FakeNodeUpgradeJobs) Create(ctx context.Context, nodeUpgradeJob *v1alpha2.NodeUpgradeJob, opts v1.CreateOptions) (result *v1alpha2.NodeUpgradeJob, err error) {
+	emptyResult := &v1alpha2.NodeUpgradeJob{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootCreateAction(nodeupgradejobsResource, nodeUpgradeJob), &v1alpha2.NodeUpgradeJob{})
+		Invokes(testing.NewRootCreateActionWithOptions(nodeupgradejobsResource, nodeUpgradeJob, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha2.NodeUpgradeJob), err
 }
 
 // Update takes the representation of a nodeUpgradeJob and updates it. Returns the server's representation of the nodeUpgradeJob, and an error, if there is any.
 func (c *FakeNodeUpgradeJobs) Update(ctx context.Context, nodeUpgradeJob *v1alpha2.NodeUpgradeJob, opts v1.UpdateOptions) (result *v1alpha2.NodeUpgradeJob, err error) {
+	emptyResult := &v1alpha2.NodeUpgradeJob{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateAction(nodeupgradejobsResource, nodeUpgradeJob), &v1alpha2.NodeUpgradeJob{})
+		Invokes(testing.NewRootUpdateActionWithOptions(nodeupgradejobsResource, nodeUpgradeJob, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha2.NodeUpgradeJob), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeNodeUpgradeJobs) UpdateStatus(ctx context.Context, nodeUpgradeJob *v1alpha2.NodeUpgradeJob, opts v1.UpdateOptions) (*v1alpha2.NodeUpgradeJob, error) {
+func (c *FakeNodeUpgradeJobs) UpdateStatus(ctx context.Context, nodeUpgradeJob *v1alpha2.NodeUpgradeJob, opts v1.UpdateOptions) (result *v1alpha2.NodeUpgradeJob, err error) {
+	emptyResult := &v1alpha2.NodeUpgradeJob{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateSubresourceAction(nodeupgradejobsResource, "status", nodeUpgradeJob), &v1alpha2.NodeUpgradeJob{})
+		Invokes(testing.NewRootUpdateSubresourceActionWithOptions(nodeupgradejobsResource, "status", nodeUpgradeJob, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha2.NodeUpgradeJob), err
 }
@@ -115,7 +120,7 @@ func (c *FakeNodeUpgradeJobs) Delete(ctx context.Context, name string, opts v1.D
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeNodeUpgradeJobs) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(nodeupgradejobsResource, listOpts)
+	action := testing.NewRootDeleteCollectionActionWithOptions(nodeupgradejobsResource, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha2.NodeUpgradeJobList{})
 	return err
@@ -123,10 +128,11 @@ func (c *FakeNodeUpgradeJobs) DeleteCollection(ctx context.Context, opts v1.Dele
 
 // Patch applies the patch and returns the patched nodeUpgradeJob.
 func (c *FakeNodeUpgradeJobs) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha2.NodeUpgradeJob, err error) {
+	emptyResult := &v1alpha2.NodeUpgradeJob{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(nodeupgradejobsResource, name, pt, data, subresources...), &v1alpha2.NodeUpgradeJob{})
+		Invokes(testing.NewRootPatchSubresourceActionWithOptions(nodeupgradejobsResource, name, pt, data, opts, subresources...), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha2.NodeUpgradeJob), err
 }

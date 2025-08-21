@@ -146,6 +146,10 @@ func (s *store) RequestWatchProgress(context.Context) error {
 	panic("Do not call this function")
 }
 
+func (s *store) ReadinessCheck() error {
+	return nil
+}
+
 func New() storage.Interface {
 	return newStore()
 }

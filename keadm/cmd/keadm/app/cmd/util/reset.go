@@ -22,7 +22,6 @@ import (
 
 	"k8s.io/klog/v2"
 	utilruntime "k8s.io/kubernetes/cmd/kubeadm/app/util/runtime"
-	utilsexec "k8s.io/utils/exec"
 
 	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
@@ -34,7 +33,7 @@ func NewResetOptions() *common.ResetOptions {
 }
 
 // RemoveContainers removes all Kubernetes-managed containers
-func RemoveContainers(criSocketPath string, execer utilsexec.Interface) error {
+func RemoveContainers(criSocketPath string) error {
 	if criSocketPath == "" {
 		var err error
 		criSocketPath, err = utilruntime.DetectCRISocket()
@@ -43,10 +42,7 @@ func RemoveContainers(criSocketPath string, execer utilsexec.Interface) error {
 		}
 	}
 
-	containerRuntime, err := utilruntime.NewContainerRuntime(execer, criSocketPath)
-	if err != nil {
-		return err
-	}
+	containerRuntime := utilruntime.NewContainerRuntime(criSocketPath)
 
 	containers, err := containerRuntime.ListKubeContainers()
 	if err != nil {

@@ -20,8 +20,8 @@ package v1alpha2
 
 import (
 	v1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/listers"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -39,30 +39,10 @@ type ConfigUpdateJobLister interface {
 
 // configUpdateJobLister implements the ConfigUpdateJobLister interface.
 type configUpdateJobLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*v1alpha2.ConfigUpdateJob]
 }
 
 // NewConfigUpdateJobLister returns a new ConfigUpdateJobLister.
 func NewConfigUpdateJobLister(indexer cache.Indexer) ConfigUpdateJobLister {
-	return &configUpdateJobLister{indexer: indexer}
-}
-
-// List lists all ConfigUpdateJobs in the indexer.
-func (s *configUpdateJobLister) List(selector labels.Selector) (ret []*v1alpha2.ConfigUpdateJob, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha2.ConfigUpdateJob))
-	})
-	return ret, err
-}
-
-// Get retrieves the ConfigUpdateJob from the index for a given name.
-func (s *configUpdateJobLister) Get(name string) (*v1alpha2.ConfigUpdateJob, error) {
-	obj, exists, err := s.indexer.GetByKey(name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1alpha2.Resource("configupdatejob"), name)
-	}
-	return obj.(*v1alpha2.ConfigUpdateJob), nil
+	return &configUpdateJobLister{listers.New[*v1alpha2.ConfigUpdateJob](indexer, v1alpha2.Resource("configupdatejob"))}
 }

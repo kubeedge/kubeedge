@@ -20,8 +20,8 @@ package v1alpha1
 
 import (
 	v1alpha1 "github.com/kubeedge/api/apis/operations/v1alpha1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/listers"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -39,30 +39,10 @@ type NodeUpgradeJobLister interface {
 
 // nodeUpgradeJobLister implements the NodeUpgradeJobLister interface.
 type nodeUpgradeJobLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*v1alpha1.NodeUpgradeJob]
 }
 
 // NewNodeUpgradeJobLister returns a new NodeUpgradeJobLister.
 func NewNodeUpgradeJobLister(indexer cache.Indexer) NodeUpgradeJobLister {
-	return &nodeUpgradeJobLister{indexer: indexer}
-}
-
-// List lists all NodeUpgradeJobs in the indexer.
-func (s *nodeUpgradeJobLister) List(selector labels.Selector) (ret []*v1alpha1.NodeUpgradeJob, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.NodeUpgradeJob))
-	})
-	return ret, err
-}
-
-// Get retrieves the NodeUpgradeJob from the index for a given name.
-func (s *nodeUpgradeJobLister) Get(name string) (*v1alpha1.NodeUpgradeJob, error) {
-	obj, exists, err := s.indexer.GetByKey(name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1alpha1.Resource("nodeupgradejob"), name)
-	}
-	return obj.(*v1alpha1.NodeUpgradeJob), nil
+	return &nodeUpgradeJobLister{listers.New[*v1alpha1.NodeUpgradeJob](indexer, v1alpha1.Resource("nodeupgradejob"))}
 }
