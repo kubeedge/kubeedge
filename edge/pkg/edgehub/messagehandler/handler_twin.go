@@ -23,11 +23,15 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
 )
 
+// newTwinMessageHandler returns a SimpleHandler for twin messages (TwinGroup).
+// It filters messages by group and dispatches them to the TwinGroup module.
 func newTwinMessageHandler() *SimpleHandler {
 	return &SimpleHandler{
+		// FilterFunc determines whether the message belongs to the twinmanager group.
 		FilterFunc: func(msg *model.Message) bool {
 			return msg.GetGroup() == modules.TwinGroup
 		},
+		// ProcessFunc processes the matched message and dispatches it to TwinGroup.
 		ProcessFunc: func(message *model.Message, _clientHub clients.Adapter) error {
 			beehiveContext.SendToGroup(modules.TwinGroup, *message)
 			return nil

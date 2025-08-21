@@ -26,11 +26,15 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
 )
 
+// newBusMessageHandler returns a SimpleHandler for bus messages (eventbus/servicebus).
+// It filters messages by group and dispatches them to the appropriate module based on the source.
 func newBusMessageHandler() *SimpleHandler {
 	return &SimpleHandler{
+		//FilterFunc determines whether the message belongs to the user group (bus).
 		FilterFunc: func(msg *model.Message) bool {
 			return msg.GetGroup() == message.UserGroupName
 		},
+		// ProcessFunc processes the matched message and dispatches it to EventBus or ServiceBus.
 		ProcessFunc: func(msg *model.Message, _clientHub clients.Adapter) error {
 			if msg.GetParentID() != "" {
 				beehiveContext.SendResp(*msg)
