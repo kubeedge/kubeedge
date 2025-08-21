@@ -11,10 +11,10 @@ import (
 
 // Priority levels for messages
 const (
-	PriorityEmergency = 0 // 紧急消息：心跳、健康检查
-	PriorityImportant = 1 // 重要消息：事件通知、任务分发
-	PriorityNormal    = 2 // 普通消息：数据同步、资源请求
-	PriorityLow       = 3 // 一般消息：日志、状态报告
+	PriorityEmergency = 0 // Emergency message: heartbeat, health check
+	PriorityImportant = 1 // Important message: event notification, task dispatch
+	PriorityNormal    = 2 // Normal message: data synchronization, resource request
+	PriorityLow       = 3 // Low message: log, status report
 )
 
 // PriorityMessage wraps a message with priority information
@@ -127,7 +127,7 @@ func GetPriorityForMessage(message *model.Message) int {
 
 	// Check if it's an ACK response message
 	if message.GetOperation() == "response" {
-		return PriorityImportant // ACK响应设为重要优先级
+		return PriorityImportant // ACK response is important
 	}
 
 	// Check message source and operation for other priorities
