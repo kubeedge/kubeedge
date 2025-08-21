@@ -16,9 +16,14 @@ limitations under the License.
 package edgehub
 
 import (
+	"os"
+	"strconv"
+	"time"
+
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/priority"
+	"github.com/kubeedge/kubeedge/pkg/features"
 )
 
 // runPrioritySender drains sendPQ and writes to cloud
@@ -47,5 +52,15 @@ func (eh *EdgeHub) runPrioritySender() {
 type prioritySendQueue struct{ *priority.MessagePriorityQueue }
 
 func newPrioritySendQueue() *prioritySendQueue {
-	return &prioritySendQueue{MessagePriorityQueue: priority.NewMessagePriorityQueue()}
+	pq := &prioritySendQueue{MessagePriorityQueue: priority.NewMessagePriorityQueue()}
+	if features.DefaultFeatureGate.Enabled(features.PriorityQueueAging) {
+		interval := 2 * time.Second
+		if s := os.Getenv("EDGEHUB_PRIORITY_AGING_INTERVAL_SEC"); s != "" {
+			if v, err := strconv.Atoi(s); err == nil && v > 0 {
+				interval = time.Duration(v) * time.Second
+			}
+		}
+		pq.EnableAging(interval)
+	}
+	return pq
 }

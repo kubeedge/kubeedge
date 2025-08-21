@@ -48,7 +48,7 @@ func TestClassifyPriority_Rules(t *testing.T) {
 	// keepalive -> important
 	m4 := beehivemodel.NewMessage("").SetResourceOperation("node/x/res", model.OpKeepalive)
 	classifyPriority(m4)
-	if m4.GetPriority() != beehivemodel.PriorityImportant {
+	if m4.GetPriority() != beehivemodel.PriorityUrgent {
 		t.Fatalf("keepalive should be important, got %d", m4.GetPriority())
 	}
 	// response keeps

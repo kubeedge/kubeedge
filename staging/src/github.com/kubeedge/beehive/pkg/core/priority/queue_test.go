@@ -75,3 +75,40 @@ func TestPriorityQueue_CloseUnblocksWaiters(t *testing.T) {
 	}
 	wg.Wait()
 }
+
+func TestPriorityQueue_AgingPreventsStarvation(t *testing.T) {
+	q := NewMessagePriorityQueue()
+	base := time.Unix(1000, 0)
+	cur := base
+	q.setNowFunc(func() time.Time { return cur })
+	q.EnableAging(2 * time.Second)
+
+	mk := func(p int32, id string) model.Message {
+		m := model.NewMessage("")
+		m.SetPriority(p)
+		m.BuildRouter("src", "grp", id, "op")
+		return *m
+	}
+
+	// Add one urgent and one low; then many urgent to simulate pressure
+	q.Add(mk(model.PriorityUrgent, "u0"))
+	q.Add(mk(model.PriorityLow, "low"))
+	for i := 1; i <= 5; i++ {
+		q.Add(mk(model.PriorityUrgent, "u"))
+	}
+
+	// First pop should be urgent
+	msg, ok := q.Get()
+	if !ok || msg.GetResource() != "u0" {
+		t.Fatalf("expect first urgent u0, got ok=%v id=%s", ok, msg.GetResource())
+	}
+
+	// Advance time enough to age low to urgent (>= 3 steps from low->urgent)
+	cur = base.Add(10 * time.Second)
+
+	// Next pop should promote and return the previously low item before newly added urgents due to lower seq
+	msg, ok = q.Get()
+	if !ok || msg.GetResource() != "low" {
+		t.Fatalf("expect aged low to be promoted to urgent and returned, got %s", msg.GetResource())
+	}
+}

@@ -18,6 +18,7 @@ package priority
 import (
 	"container/heap"
 	"sync"
+	"time"
 
 	"k8s.io/klog/v2"
 
@@ -32,13 +33,23 @@ type MessagePriorityQueue struct {
 	heap    messageHeap
 	stopped bool
 	seq     int64
+
+	// aging config
+	agingEnabled  bool
+	agingInterval time.Duration
+	nextAgingAt   time.Time
+
+	// now is for testability
+	now func() time.Time
 }
 
 type messageItem struct {
-	msg      model.Message
-	priority int32
-	seq      int64
-	index    int
+	msg          model.Message
+	priority     int32
+	basePriority int32
+	seq          int64
+	index        int
+	enqueuedAt   time.Time
 }
 
 type messageHeap []*messageItem
@@ -71,7 +82,27 @@ func NewMessagePriorityQueue() *MessagePriorityQueue {
 	q := &MessagePriorityQueue{}
 	q.cond = sync.NewCond(&q.mu)
 	heap.Init(&q.heap)
+	q.now = time.Now
 	return q
+}
+
+// EnableAging turns on anti-starvation aging with the given interval.
+// Each full interval waited promotes a message by one priority level, capped at highest.
+func (q *MessagePriorityQueue) EnableAging(interval time.Duration) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	q.agingEnabled = interval > 0
+	q.agingInterval = interval
+	if q.agingEnabled && q.nextAgingAt.IsZero() {
+		q.nextAgingAt = q.now().Add(q.agingInterval)
+	}
+}
+
+// setNowFunc is only for tests in this package.
+func (q *MessagePriorityQueue) setNowFunc(now func() time.Time) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	q.now = now
 }
 
 func (q *MessagePriorityQueue) Add(msg model.Message) {
@@ -82,9 +113,56 @@ func (q *MessagePriorityQueue) Add(msg model.Message) {
 		return
 	}
 	q.seq++
-	heap.Push(&q.heap, &messageItem{msg: msg, priority: msg.GetPriority(), seq: q.seq})
+	now := q.now()
+	item := &messageItem{
+		msg:          msg,
+		priority:     msg.GetPriority(),
+		basePriority: msg.GetPriority(),
+		seq:          q.seq,
+		enqueuedAt:   now,
+	}
+	heap.Push(&q.heap, item)
+	if q.agingEnabled && (q.nextAgingAt.IsZero() || now.Add(q.agingInterval).Before(q.nextAgingAt)) {
+		q.nextAgingAt = now.Add(q.agingInterval)
+	}
 	q.cond.Signal()
 	q.mu.Unlock()
+}
+
+func (q *MessagePriorityQueue) applyAgingLocked(now time.Time) {
+	if !q.agingEnabled || q.heap.Len() == 0 {
+		return
+	}
+	if now.Before(q.nextAgingAt) {
+		return
+	}
+	// Promote items by the number of full intervals they have waited.
+	updated := false
+	for i, it := range q.heap {
+		waited := now.Sub(it.enqueuedAt)
+		if waited <= 0 {
+			continue
+		}
+		steps := int(waited / q.agingInterval)
+		if steps <= 0 {
+			continue
+		}
+		newPriority := it.basePriority - int32(steps)
+		if newPriority < model.PriorityUrgent {
+			newPriority = model.PriorityUrgent
+		}
+		if newPriority != it.priority {
+			it.priority = newPriority
+			heap.Fix(&q.heap, i)
+			updated = true
+		}
+	}
+	if updated {
+		q.nextAgingAt = now.Add(q.agingInterval)
+	} else {
+		// No updates; schedule next check soon to avoid tight loops.
+		q.nextAgingAt = now.Add(q.agingInterval)
+	}
 }
 
 func (q *MessagePriorityQueue) Get() (model.Message, bool) {
@@ -95,6 +173,9 @@ func (q *MessagePriorityQueue) Get() (model.Message, bool) {
 	}
 	if q.stopped {
 		return model.Message{}, false
+	}
+	if q.agingEnabled {
+		q.applyAgingLocked(q.now())
 	}
 	item := heap.Pop(&q.heap).(*messageItem)
 	return item.msg, true

@@ -16,35 +16,49 @@ limitations under the License.
 package dispatcher
 
 import (
+	"os"
+	"strconv"
 	"time"
+
+	"k8s.io/klog/v2"
 
 	beehivecontext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/priority"
-	chmodel "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
-	"k8s.io/klog/v2"
+	model "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
+
+	"github.com/kubeedge/kubeedge/pkg/features"
 )
 
-// runDownstreamPrioritySender pops from queue and processes like original DispatchDownstream body
-func (md *messageDispatcher) runDownstreamPrioritySender() {
+// runDownstreamPrioritySenderForNode pops from per-node queue and enqueues into that node's ack/noack
+func (md *messageDispatcher) runDownstreamPrioritySenderForNode(nodeID string, pq *prioritySendQueueCloud, stop <-chan struct{}) {
 	for {
 		select {
 		case <-beehivecontext.Done():
-			klog.Warning("CloudHub downstream sender stopped")
+			klog.Warningf("CloudHub downstream sender stopped for node %s", nodeID)
+			return
+		case <-stop:
+			klog.V(4).Infof("CloudHub downstream sender stop signal for node %s", nodeID)
 			return
 		default:
 		}
-		msg, ok := md.downstreamPQ.Get()
+		msg, ok := pq.Get()
 		if !ok {
 			return
 		}
-
-		nodeID, err := GetNodeID(&msg)
-		if nodeID == "" || err != nil {
-			klog.Warningf("node id is not found in the message: %+v", msg)
+		// safety: double-check routing and nodeID
+		mid, err := GetNodeID(&msg)
+		if mid == "" || err != nil {
+			klog.Warningf("node id not found in message (expected %s): %+v", nodeID, msg)
 			continue
 		}
-		if !chmodel.IsToEdge(&msg) {
-			klog.Warningf("skip message not to edge node %s: %+v", nodeID, msg)
+		if mid != nodeID {
+			// put back to the right node queue if mismatch
+			other := md.getOrCreateNodePQ(mid)
+			other.Add(msg)
+			continue
+		}
+		if !model.IsToEdge(&msg) {
+			klog.V(4).Infof("skip message not to edge node %s: %+v", nodeID, msg)
 			continue
 		}
 
@@ -52,8 +66,7 @@ func (md *messageDispatcher) runDownstreamPrioritySender() {
 		nodeMessagePool := md.GetNodeMessagePool(nodeID)
 		if noAckRequired(&msg) {
 			if nodeMessagePool.NoAckMessageQueue.Len() >= noAckQueueHighWatermark {
-				// requeue and wait briefly to let downstream drain
-				md.downstreamPQ.Add(msg)
+				pq.Add(msg)
 				time.Sleep(10 * time.Millisecond)
 				continue
 			}
@@ -61,8 +74,7 @@ func (md *messageDispatcher) runDownstreamPrioritySender() {
 			continue
 		}
 		if nodeMessagePool.AckMessageQueue.Len() >= ackQueueHighWatermark {
-			// requeue and wait briefly to let downstream drain
-			md.downstreamPQ.Add(msg)
+			pq.Add(msg)
 			time.Sleep(10 * time.Millisecond)
 			continue
 		}
@@ -80,5 +92,15 @@ const (
 type prioritySendQueueCloud struct{ *priority.MessagePriorityQueue }
 
 func newPrioritySendQueueCloud() *prioritySendQueueCloud {
-	return &prioritySendQueueCloud{MessagePriorityQueue: priority.NewMessagePriorityQueue()}
+	pq := &prioritySendQueueCloud{MessagePriorityQueue: priority.NewMessagePriorityQueue()}
+	if features.DefaultFeatureGate.Enabled(features.PriorityQueueAging) {
+		interval := 2 * time.Second
+		if s := os.Getenv("CLOUDHUB_PRIORITY_AGING_INTERVAL_SEC"); s != "" {
+			if v, err := strconv.Atoi(s); err == nil && v > 0 {
+				interval = time.Duration(v) * time.Second
+			}
+		}
+		pq.EnableAging(interval)
+	}
+	return pq
 }

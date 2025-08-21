@@ -329,8 +329,6 @@ func TestRouteToCloud(t *testing.T) {
 
 			// optional: register module (kept from historical test)
 			core.Register(&EdgeHub{enable: true})
-
-			// start routeToCloud feeder and priority sender
 			go tt.hub.routeToCloud()
 			go tt.hub.runPrioritySender()
 			time.Sleep(100 * time.Millisecond)
@@ -380,6 +378,7 @@ func TestKeepalive(t *testing.T) {
 
 			go tt.hub.keepalive()
 			go tt.hub.runPrioritySender()
+			time.Sleep(200 * time.Millisecond)
 
 			// allow first send only (heartbeat=2s prevents a second send during test)
 			time.Sleep(200 * time.Millisecond)

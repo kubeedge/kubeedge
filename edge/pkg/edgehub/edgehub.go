@@ -117,19 +117,19 @@ func (eh *EdgeHub) Start() {
 		}
 		// execute hook func after connect
 		eh.pubConnectInfo(true)
-		// (re)create sender queue and start sender for this session
+
 		eh.sendPQ = newPrioritySendQueue()
 		eh.sendPQStop = make(chan struct{})
+		go eh.runPrioritySender()
 		go eh.routeToEdge()
 		go eh.routeToCloud()
-		go eh.runPrioritySender()
 		go eh.keepalive()
 
 		// wait the stop signal
 		// stop authinfo manager/websocket connection
 		<-eh.reconnectChan
 		eh.chClient.UnInit()
-		// stop current sender
+		// stop current sende
 		close(eh.sendPQStop)
 		eh.sendPQ.Close()
 
