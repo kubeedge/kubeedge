@@ -32,7 +32,7 @@ func TestClassifyPriorityEdge_Rules(t *testing.T) {
 	// keepalive -> important
 	m2 := model.NewMessage("").BuildRouter("src", "grp", "res", messagepkg.OperationKeepalive)
 	classifyPriorityEdge(m2)
-	if m2.GetPriority() != model.PriorityImportant {
+	if m2.GetPriority() != model.PriorityUrgent {
 		t.Fatalf("keepalive should be important, got %d", m2.GetPriority())
 	}
 	// response keeps

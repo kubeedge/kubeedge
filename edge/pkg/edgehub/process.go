@@ -171,7 +171,7 @@ func classifyPriorityEdge(msg *model.Message) {
 	}
 	// keepalive should be important to maintain session health
 	if msg.GetOperation() == messagepkg.OperationKeepalive {
-		msg.SetPriority(model.PriorityImportant)
+		msg.SetPriority(model.PriorityUrgent)
 		return
 	}
 	// other messages keep default PriorityNormal (already set by NewMessage)
