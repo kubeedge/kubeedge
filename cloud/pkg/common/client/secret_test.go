@@ -95,10 +95,10 @@ func TestGetSecret(t *testing.T) {
 			if !tc.expectErr && err != nil {
 				t.Errorf("Expected no error but got: %v", err)
 			}
-			if tc.expectNil && result != nil {
+			if tc.expectNil && result.Data != nil {
 				t.Errorf("Expected nil result but got: %v", result)
 			}
-			if !tc.expectNil && result == nil {
+			if !tc.expectNil && result.Data == nil {
 				t.Error("Expected non-nil result but got nil")
 			}
 		})
