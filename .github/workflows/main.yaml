@@ -169,17 +169,17 @@ jobs:
       matrix:
         cases:
           - protocol: WebSocket
+            version: v1.31.0
+          - protocol: WebSocket
             version: v1.30.0
           - protocol: WebSocket
             version: v1.29.0
-          - protocol: WebSocket
-            version: v1.28.0
+          - protocol: QUIC
+            version: v1.31.0
           - protocol: QUIC
             version: v1.30.0
           - protocol: QUIC
             version: v1.29.0
-          - protocol: QUIC
-            version: v1.28.0
     timeout-minutes: 60
     name: E2e test
     needs: image-prepare
@@ -199,8 +199,8 @@ jobs:
       - name: Install dependencies
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
-          go install sigs.k8s.io/kind@v0.23.0
-          curl -LO https://dl.k8s.io/release/v1.30.7/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          go install sigs.k8s.io/kind@v0.25.0
+          curl -LO https://dl.k8s.io/release/v1.31.11/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -262,8 +262,8 @@ jobs:
       - name: Install dependencies
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
-          go install sigs.k8s.io/kind@v0.23.0
-          curl -LO https://dl.k8s.io/release/v1.30.7/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          go install sigs.k8s.io/kind@v0.25.0
+          curl -LO https://dl.k8s.io/release/v1.31.11/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -309,8 +309,8 @@ jobs:
       - name: Install dependencies
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
-          go install sigs.k8s.io/kind@v0.23.0
-          curl -LO https://dl.k8s.io/release/v1.30.7/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          go install sigs.k8s.io/kind@v0.25.0
+          curl -LO https://dl.k8s.io/release/v1.31.11/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -376,8 +376,8 @@ jobs:
       - name: Install dependencies
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
-          go install sigs.k8s.io/kind@v0.23.0
-          curl -LO https://dl.k8s.io/release/v1.30.7/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          go install sigs.k8s.io/kind@v0.25.0
+          curl -LO https://dl.k8s.io/release/v1.31.11/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -424,8 +424,8 @@ jobs:
 
         - name: Install dependencies
           run: |
-            go install sigs.k8s.io/kind@v0.23.0
-            curl -LO https://dl.k8s.io/release/v1.30.7/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+            go install sigs.k8s.io/kind@v0.25.0
+            curl -LO https://dl.k8s.io/release/v1.31.11/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
         - name: Checkout code
           uses: actions/checkout@v4
@@ -460,7 +460,7 @@ jobs:
 
         - name: Run conformance e2e
           run: |
-            export KIND_IMAGE=kindest/node:v1.30.0
+            export KIND_IMAGE=kindest/node:v1.31.2
             export CONFORMANCE_TYPE=${{ matrix.cases.conformance-type }}
             make conformance_e2e
 
