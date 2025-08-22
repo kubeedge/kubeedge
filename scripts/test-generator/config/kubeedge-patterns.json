@@ -1,0 +1,25 @@
+{
+  "components": {
+    "keadm": {
+      "patterns": ["exec.Command", "os.Stat", "os.ReadFile", "os.WriteFile"],
+      "imports": ["os", "os/exec", "github.com/agiledragon/gomonkey/v2"]
+    },
+    "cloud": {
+      "patterns": ["client.Get", "client.Create", "kubernetes.NewForConfig"],
+      "imports": ["context", "k8s.io/client-go/kubernetes", "github.com/agiledragon/gomonkey/v2"]
+    },
+    "edge": {
+      "patterns": ["orm.RegisterDriver", "orm.NewOrmUsingDB"],
+      "imports": ["context", "github.com/beego/beego/v2/client/orm", "github.com/agiledragon/gomonkey/v2"]
+    },
+    "pkg": {
+      "patterns": ["fmt.", "strings.", "strconv."],
+      "imports": ["github.com/agiledragon/gomonkey/v2"]
+    }
+  },
+  "testing": {
+    "frameworks": ["standard", "gomonkey", "ginkgo"],
+    "default_framework": "gomonkey",
+    "coverage_threshold": 40.0
+  }
+}
