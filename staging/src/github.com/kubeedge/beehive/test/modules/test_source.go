@@ -52,3 +52,7 @@ func (m *testModuleSource) Start() {
 		SetResourceOperation("test", model.DeleteOperation).FillBody("fine")
 	beehiveContext.SendToGroup(DestinationGroup, *message)
 }
+
+func (m *testModuleSource) RestartPolicy() *core.ModuleRestartPolicy {
+	return nil
+}

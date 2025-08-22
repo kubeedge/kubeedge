@@ -14,6 +14,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver"
 	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
+	"github.com/kubeedge/kubeedge/pkg/features"
 )
 
 type metaManager struct {
@@ -57,6 +58,16 @@ func (*metaManager) Group() string {
 
 func (m *metaManager) Enable() bool {
 	return m.enable
+}
+
+func (m *metaManager) RestartPolicy() *core.ModuleRestartPolicy {
+	if !features.DefaultFeatureGate.Enabled(features.ModuleRestart) {
+		return nil
+	}
+	return &core.ModuleRestartPolicy{
+		RestartType:            core.RestartTypeOnFailure,
+		IntervalTimeGrowthRate: 2.0,
+	}
 }
 
 func (m *metaManager) Start() {

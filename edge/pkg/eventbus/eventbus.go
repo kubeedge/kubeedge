@@ -17,6 +17,7 @@ import (
 	eventconfig "github.com/kubeedge/kubeedge/edge/pkg/eventbus/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/dao"
 	mqttBus "github.com/kubeedge/kubeedge/edge/pkg/eventbus/mqtt"
+	"github.com/kubeedge/kubeedge/pkg/features"
 )
 
 var mqttServer *mqttBus.Server
@@ -52,6 +53,16 @@ func (*eventbus) Group() string {
 // Enable indicates whether this module is enabled
 func (eb *eventbus) Enable() bool {
 	return eb.enable
+}
+
+func (eb *eventbus) RestartPolicy() *core.ModuleRestartPolicy {
+	if !features.DefaultFeatureGate.Enabled(features.ModuleRestart) {
+		return nil
+	}
+	return &core.ModuleRestartPolicy{
+		RestartType:            core.RestartTypeOnFailure,
+		IntervalTimeGrowthRate: 2.0,
+	}
 }
 
 func (eb *eventbus) Start() {

@@ -107,6 +107,10 @@ func (tm TaskManager) Enable() bool {
 	return tm.enable
 }
 
+func (TaskManager) RestartPolicy() *core.ModuleRestartPolicy {
+	return nil
+}
+
 // Start the task manager module.
 func (tm *TaskManager) Start() {
 	ctx := beehiveContext.GetContext()

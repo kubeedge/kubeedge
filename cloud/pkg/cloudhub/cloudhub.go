@@ -92,6 +92,10 @@ func (ch *cloudHub) Enable() bool {
 	return ch.enable
 }
 
+func (m *cloudHub) RestartPolicy() *core.ModuleRestartPolicy {
+	return nil
+}
+
 func (ch *cloudHub) Start() {
 	if !cache.WaitForCacheSync(beehiveContext.Done(), ch.informersSyncedFuncs...) {
 		klog.Errorf("unable to sync caches for objectSyncController")

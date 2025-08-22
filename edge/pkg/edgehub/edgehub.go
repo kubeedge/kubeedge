@@ -15,6 +15,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
 	msghandler "github.com/kubeedge/kubeedge/edge/pkg/edgehub/messagehandler"
+	"github.com/kubeedge/kubeedge/pkg/features"
 )
 
 // EdgeHub defines edgehub object structure
@@ -75,6 +76,16 @@ func (eh *EdgeHub) Group() string {
 // Enable indicates whether this module is enabled
 func (eh *EdgeHub) Enable() bool {
 	return eh.enable
+}
+
+func (eh *EdgeHub) RestartPolicy() *core.ModuleRestartPolicy {
+	if !features.DefaultFeatureGate.Enabled(features.ModuleRestart) {
+		return nil
+	}
+	return &core.ModuleRestartPolicy{
+		RestartType:            core.RestartTypeOnFailure,
+		IntervalTimeGrowthRate: 2.0,
+	}
 }
 
 // Start sets context and starts the controller
