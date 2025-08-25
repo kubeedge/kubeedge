@@ -86,20 +86,9 @@ func (eh *EdgeHub) routeToCloud() {
 			time.Sleep(time.Second)
 			continue
 		}
-
-		err = eh.tryThrottle(message.GetID())
-		if err != nil {
-			klog.Errorf("msgID: %s, client rate limiter returned an error: %v ", message.GetID(), err)
-			continue
-		}
-
-		// post message to cloud hub
-		err = eh.sendToCloud(message)
-		if err != nil {
-			klog.Errorf("failed to send message to cloud: %v", err)
-			eh.reconnectChan <- struct{}{}
-			return
-		}
+		classifyPriorityEdge(&message)
+		// enqueue for prioritized sending; throttling applied in sender
+		eh.sendPQ.Add(message)
 	}
 }
 
@@ -115,13 +104,9 @@ func (eh *EdgeHub) keepalive() {
 			BuildRouter(modules.EdgeHubModuleName, "resource", "node", messagepkg.OperationKeepalive).
 			FillBody("ping")
 
-		// post message to cloud hub
-		err := eh.sendToCloud(*msg)
-		if err != nil {
-			klog.Errorf("websocket write error: %v", err)
-			eh.reconnectChan <- struct{}{}
-			return
-		}
+		// enqueue keepalive to priority queue
+		classifyPriorityEdge(msg)
+		eh.sendPQ.Add(*msg)
 
 		time.Sleep(time.Duration(config.Config.Heartbeat) * time.Second)
 	}
@@ -171,4 +156,23 @@ func (eh *EdgeHub) tryThrottle(msgID string) error {
 	}
 
 	return nil
+}
+
+// classifyPriorityEdge: apply rule table to override default priority, except for responses.
+func classifyPriorityEdge(msg *model.Message) {
+	// response inherit: keep as-is
+	if msg.GetOperation() == model.ResponseOperation {
+		return
+	}
+	// simple rules for edge->cloud (customize as needed)
+	if msg.GetOperation() == model.DeleteOperation {
+		msg.SetPriority(model.PriorityImportant)
+		return
+	}
+	// keepalive should be important to maintain session health
+	if msg.GetOperation() == messagepkg.OperationKeepalive {
+		msg.SetPriority(model.PriorityUrgent)
+		return
+	}
+	// other messages keep default PriorityNormal (already set by NewMessage)
 }

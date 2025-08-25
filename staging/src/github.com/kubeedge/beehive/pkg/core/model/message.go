@@ -82,7 +82,17 @@ type MessageHeader struct {
 	// message type indicates the context type that delivers the message, such as channel, unixsocket, etc.
 	// if the value is empty, the channel context type will be used.
 	MessageType string `json:"type,omitempty"`
+	// priority of the message, lower value means higher priority (0: urgent, 1: important, 2: normal, 3: low).
+	Priority int32 `json:"priority,omitempty"`
 }
+
+// Priority levels
+const (
+	PriorityUrgent    int32 = 0
+	PriorityImportant int32 = 1
+	PriorityNormal    int32 = 2
+	PriorityLow       int32 = 3
+)
 
 // BuildRouter sets route and resource operation in message
 func (msg *Message) BuildRouter(source, group, res, opr string) *Message {
@@ -106,6 +116,17 @@ func (msg *Message) SetDestination(dest string) *Message {
 // GetType get message context type
 func (msg *Message) GetType() string {
 	return msg.Header.MessageType
+}
+
+// SetPriority sets message priority
+func (msg *Message) SetPriority(priority int32) *Message {
+	msg.Header.Priority = priority
+	return msg
+}
+
+// GetPriority gets message priority
+func (msg *Message) GetPriority() int32 {
+	return msg.Header.Priority
 }
 
 // IsEmpty is empty
@@ -233,6 +254,8 @@ func NewMessage(parentID string) *Message {
 	msg.Header.ID = uuid.New().String()
 	msg.Header.ParentID = parentID
 	msg.Header.Timestamp = time.Now().UnixNano() / 1e6
+	// default to normal priority if not specified later
+	msg.Header.Priority = PriorityNormal
 	return msg
 }
 
@@ -250,6 +273,7 @@ func (msg *Message) NewRespByMessage(message *Message, content interface{}) *Mes
 	return NewMessage(message.GetID()).SetRoute(message.GetSource(), message.GetGroup()).
 		SetResourceOperation(message.GetResource(), ResponseOperation).
 		SetType(message.GetType()).
+		SetPriority(message.GetPriority()).
 		FillBody(content)
 }
 
