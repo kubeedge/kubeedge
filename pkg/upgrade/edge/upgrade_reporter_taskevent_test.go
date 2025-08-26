@@ -17,6 +17,7 @@ limitations under the License.
 package edge
 
 import (
+	"crypto/tls"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -174,39 +175,26 @@ func TestReportTaskResult(t *testing.T) {
 
 		tmpDir := t.TempDir()
 		caFile := filepath.Join(tmpDir, "ca.crt")
-		certFile := filepath.Join(tmpDir, "cert.crt")
-		keyFile := filepath.Join(tmpDir, "key.key")
 
-		caCert := []byte(`-----BEGIN CERTIFICATE-----
-MIIC9TCCAd2gAwIBAgIJAL1g+5hHh1KXMA0GCSqGSIb3DQEBCwUAMBIxEDAOBgNV
-BAMMB3Rlc3QtY2EwHhcNMjUwMTI4MDAwMDAwWhcNMzUwMTI4MDAwMDAwWjASMRAw
-DgYDVQQDDAd0ZXN0LWNhMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA
-test-fake-ca-content-for-testing
+		validCaCert := []byte(`-----BEGIN CERTIFICATE-----
+MIICGTCCAYKgAwIBAgIJALKZKWKUjQJ0MA0GCSqGSIb3DQEBCwUAMCUxIzAhBgNV
+BAMTGnRlc3QtY2EtZm9yLXVuaXQtdGVzdGluZzAeFw0yNDAxMDEwMDAwMDBaFw0z
+NDAxMDEwMDAwMDBaMCUxIzAhBgNVBAMTGnRlc3QtY2EtZm9yLXVuaXQtdGVzdGlu
+ZzCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAqZ6nF+ZsjNv8bPZ1eDO2M8I1
+oYKT8z6CJ9sV4X3jKYCNjH0e8b6f2mUXL5+Hn3tTvP3hTn7vT2cLnPq7mRrHjKjP
+t7nGpRn3p9vLfJ+NfPmT5kN7NrHj1kT8t7qE1w8t5mL8v7L3nG8D6F1cQwM2z1l1
+2cI8b1zD9yJ2X1S7a1cCAwEAAaNQME4wHQYDVR0OBBYEFEf8Fj7wvFyKnPT1e7vj
+5wYnM8o2MB8GA1UdIwQYMBaAFEf8Fj7wvFyKnPT1e7vj5wYnM8o2MAwGA1UdEwQF
+MAMBAf8wDQYJKoZIhvcNAQELBQADgYEAWJO7F8TGnYjD2L9V7VYoTmD8hJZiKd6v
+F2X1Q2v7lYXZq1aF2K8l5qO6u4XNvTh3k7nH0z2lKnHhE6m6LwZ3E4c8pN0QQvjW
+ZXkP1U2l4mYzF8c6o1vZ3K2cF3pJ1F2K6nT8q2sLxY3L5nG6zK2mX1q4vZ1zD4Y7
 -----END CERTIFICATE-----`)
 
-		clientCert := []byte(`-----BEGIN CERTIFICATE-----
-MIIC9TCCAd2gAwIBAgIJAL1g+5hHh1KXMA0GCSqGSIb3DQEBCwUAMBIxEDAOBgNV
-BAMMB3Rlc3QtY2EwHhcNMjUwMTI4MDAwMDAwWhcNMzUwMTI4MDAwMDAwWjASMRAw
-DgYDVQQDDAd0ZXN0LWNhMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA
-test-fake-cert-content-for-testing
------END CERTIFICATE-----`)
-
-		clientKey := []byte(`-----BEGIN RSA PRIVATE KEY-----
-MIIEowIBAAKCAQEAtest-fake-key-content-for-testing
------END RSA PRIVATE KEY-----`)
-
-		err := os.WriteFile(caFile, caCert, 0644)
-		assert.NoError(t, err)
-		err = os.WriteFile(certFile, clientCert, 0644)
-		assert.NoError(t, err)
-		err = os.WriteFile(keyFile, clientKey, 0644)
+		err := os.WriteFile(caFile, validCaCert, 0644)
 		assert.NoError(t, err)
 
-		patches.ApplyFunc(os.ReadFile, func(filename string) ([]byte, error) {
-			if filename == caFile {
-				return caCert, nil
-			}
-			return nil, errors.New("file not found")
+		patches.ApplyFunc(tls.LoadX509KeyPair, func(certFile, keyFile string) (tls.Certificate, error) {
+			return tls.Certificate{}, nil
 		})
 
 		config := &v1alpha2.EdgeCoreConfig{
@@ -218,9 +206,9 @@ MIIEowIBAAKCAQEAtest-fake-key-content-for-testing
 				},
 				EdgeHub: &v1alpha2.EdgeHub{
 					TLSCAFile:         caFile,
-					TLSCertFile:       certFile,
-					TLSPrivateKeyFile: keyFile,
-					HTTPServer:        "https://invalid-url",
+					TLSCertFile:       "fake-cert",
+					TLSPrivateKeyFile: "fake-key",
+					HTTPServer:        "https://invalid-url-that-will-fail",
 				},
 			},
 		}
@@ -243,15 +231,26 @@ MIIEowIBAAKCAQEAtest-fake-key-content-for-testing
 		tmpDir := t.TempDir()
 		caFile := filepath.Join(tmpDir, "ca.crt")
 
-		caCert := []byte(`-----BEGIN CERTIFICATE-----
-MIIC9TCCAd2gAwIBAgIJAL1g+5hHh1KXMA0GCSqGSIb3DQEBCwUAMBIxEDAOBgNV
-BAMMB3Rlc3QtY2EwHhcNMjUwMTI4MDAwMDAwWhcNMzUwMTI4MDAwMDAwWjASMRAw
-DgYDVQQDDAd0ZXN0LWNhMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA
-test-fake-ca-content-for-testing
+		validCaCert := []byte(`-----BEGIN CERTIFICATE-----
+MIICGTCCAYKgAwIBAgIJALKZKWKUjQJ0MA0GCSqGSIb3DQEBCwUAMCUxIzAhBgNV
+BAMTGnRlc3QtY2EtZm9yLXVuaXQtdGVzdGluZzAeFw0yNDAxMDEwMDAwMDBaFw0z
+NDAxMDEwMDAwMDBaMCUxIzAhBgNVBAMTGnRlc3QtY2EtZm9yLXVuaXQtdGVzdGlu
+ZzCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAqZ6nF+ZsjNv8bPZ1eDO2M8I1
+oYKT8z6CJ9sV4X3jKYCNjH0e8b6f2mUXL5+Hn3tTvP3hTn7vT2cLnPq7mRrHjKjP
+t7nGpRn3p9vLfJ+NfPmT5kN7NrHj1kT8t7qE1w8t5mL8v7L3nG8D6F1cQwM2z1l1
+2cI8b1zD9yJ2X1S7a1cCAwEAAaNQME4wHQYDVR0OBBYEFEf8Fj7wvFyKnPT1e7vj
+5wYnM8o2MB8GA1UdIwQYMBaAFEf8Fj7wvFyKnPT1e7vj5wYnM8o2MAwGA1UdEwQF
+MAMBAf8wDQYJKoZIhvcNAQELBQADgYEAWJO7F8TGnYjD2L9V7VYoTmD8hJZiKd6v
+F2X1Q2v7lYXZq1aF2K8l5qO6u4XNvTh3k7nH0z2lKnHhE6m6LwZ3E4c8pN0QQvjW
+ZXkP1U2l4mYzF8c6o1vZ3K2cF3pJ1F2K6nT8q2sLxY3L5nG6zK2mX1q4vZ1zD4Y7
 -----END CERTIFICATE-----`)
 
-		err := os.WriteFile(caFile, caCert, 0644)
+		err := os.WriteFile(caFile, validCaCert, 0644)
 		assert.NoError(t, err)
+
+		patches.ApplyFunc(tls.LoadX509KeyPair, func(certFile, keyFile string) (tls.Certificate, error) {
+			return tls.Certificate{}, nil
+		})
 
 		var httpPostCalled bool
 		patches.ApplyMethodFunc(&http.Client{}, "Post", func(url, contentType string, body any) (*http.Response, error) {
