@@ -20,8 +20,8 @@ package v1alpha1
 
 import (
 	v1alpha1 "github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/listers"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -38,25 +38,17 @@ type ObjectSyncLister interface {
 
 // objectSyncLister implements the ObjectSyncLister interface.
 type objectSyncLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*v1alpha1.ObjectSync]
 }
 
 // NewObjectSyncLister returns a new ObjectSyncLister.
 func NewObjectSyncLister(indexer cache.Indexer) ObjectSyncLister {
-	return &objectSyncLister{indexer: indexer}
-}
-
-// List lists all ObjectSyncs in the indexer.
-func (s *objectSyncLister) List(selector labels.Selector) (ret []*v1alpha1.ObjectSync, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.ObjectSync))
-	})
-	return ret, err
+	return &objectSyncLister{listers.New[*v1alpha1.ObjectSync](indexer, v1alpha1.Resource("objectsync"))}
 }
 
 // ObjectSyncs returns an object that can list and get ObjectSyncs.
 func (s *objectSyncLister) ObjectSyncs(namespace string) ObjectSyncNamespaceLister {
-	return objectSyncNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return objectSyncNamespaceLister{listers.NewNamespaced[*v1alpha1.ObjectSync](s.ResourceIndexer, namespace)}
 }
 
 // ObjectSyncNamespaceLister helps list and get ObjectSyncs.
@@ -74,26 +66,5 @@ type ObjectSyncNamespaceLister interface {
 // objectSyncNamespaceLister implements the ObjectSyncNamespaceLister
 // interface.
 type objectSyncNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all ObjectSyncs in the indexer for a given namespace.
-func (s objectSyncNamespaceLister) List(selector labels.Selector) (ret []*v1alpha1.ObjectSync, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.ObjectSync))
-	})
-	return ret, err
-}
-
-// Get retrieves the ObjectSync from the indexer for a given namespace and name.
-func (s objectSyncNamespaceLister) Get(name string) (*v1alpha1.ObjectSync, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1alpha1.Resource("objectsync"), name)
-	}
-	return obj.(*v1alpha1.ObjectSync), nil
+	listers.ResourceIndexer[*v1alpha1.ObjectSync]
 }

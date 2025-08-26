@@ -20,8 +20,8 @@ package v1beta1
 
 import (
 	v1beta1 "github.com/kubeedge/api/apis/devices/v1beta1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/listers"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -38,25 +38,17 @@ type DeviceModelLister interface {
 
 // deviceModelLister implements the DeviceModelLister interface.
 type deviceModelLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*v1beta1.DeviceModel]
 }
 
 // NewDeviceModelLister returns a new DeviceModelLister.
 func NewDeviceModelLister(indexer cache.Indexer) DeviceModelLister {
-	return &deviceModelLister{indexer: indexer}
-}
-
-// List lists all DeviceModels in the indexer.
-func (s *deviceModelLister) List(selector labels.Selector) (ret []*v1beta1.DeviceModel, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta1.DeviceModel))
-	})
-	return ret, err
+	return &deviceModelLister{listers.New[*v1beta1.DeviceModel](indexer, v1beta1.Resource("devicemodel"))}
 }
 
 // DeviceModels returns an object that can list and get DeviceModels.
 func (s *deviceModelLister) DeviceModels(namespace string) DeviceModelNamespaceLister {
-	return deviceModelNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return deviceModelNamespaceLister{listers.NewNamespaced[*v1beta1.DeviceModel](s.ResourceIndexer, namespace)}
 }
 
 // DeviceModelNamespaceLister helps list and get DeviceModels.
@@ -74,26 +66,5 @@ type DeviceModelNamespaceLister interface {
 // deviceModelNamespaceLister implements the DeviceModelNamespaceLister
 // interface.
 type deviceModelNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all DeviceModels in the indexer for a given namespace.
-func (s deviceModelNamespaceLister) List(selector labels.Selector) (ret []*v1beta1.DeviceModel, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta1.DeviceModel))
-	})
-	return ret, err
-}
-
-// Get retrieves the DeviceModel from the indexer for a given namespace and name.
-func (s deviceModelNamespaceLister) Get(name string) (*v1beta1.DeviceModel, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1beta1.Resource("devicemodel"), name)
-	}
-	return obj.(*v1beta1.DeviceModel), nil
+	listers.ResourceIndexer[*v1beta1.DeviceModel]
 }

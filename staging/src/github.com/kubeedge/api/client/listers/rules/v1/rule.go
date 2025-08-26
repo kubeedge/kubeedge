@@ -20,8 +20,8 @@ package v1
 
 import (
 	v1 "github.com/kubeedge/api/apis/rules/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/listers"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -38,25 +38,17 @@ type RuleLister interface {
 
 // ruleLister implements the RuleLister interface.
 type ruleLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*v1.Rule]
 }
 
 // NewRuleLister returns a new RuleLister.
 func NewRuleLister(indexer cache.Indexer) RuleLister {
-	return &ruleLister{indexer: indexer}
-}
-
-// List lists all Rules in the indexer.
-func (s *ruleLister) List(selector labels.Selector) (ret []*v1.Rule, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1.Rule))
-	})
-	return ret, err
+	return &ruleLister{listers.New[*v1.Rule](indexer, v1.Resource("rule"))}
 }
 
 // Rules returns an object that can list and get Rules.
 func (s *ruleLister) Rules(namespace string) RuleNamespaceLister {
-	return ruleNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return ruleNamespaceLister{listers.NewNamespaced[*v1.Rule](s.ResourceIndexer, namespace)}
 }
 
 // RuleNamespaceLister helps list and get Rules.
@@ -74,26 +66,5 @@ type RuleNamespaceLister interface {
 // ruleNamespaceLister implements the RuleNamespaceLister
 // interface.
 type ruleNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all Rules in the indexer for a given namespace.
-func (s ruleNamespaceLister) List(selector labels.Selector) (ret []*v1.Rule, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1.Rule))
-	})
-	return ret, err
-}
-
-// Get retrieves the Rule from the indexer for a given namespace and name.
-func (s ruleNamespaceLister) Get(name string) (*v1.Rule, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1.Resource("rule"), name)
-	}
-	return obj.(*v1.Rule), nil
+	listers.ResourceIndexer[*v1.Rule]
 }

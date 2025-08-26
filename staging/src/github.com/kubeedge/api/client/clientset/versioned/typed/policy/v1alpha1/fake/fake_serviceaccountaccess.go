@@ -41,22 +41,24 @@ var serviceaccountaccessesKind = v1alpha1.SchemeGroupVersion.WithKind("ServiceAc
 
 // Get takes name of the serviceAccountAccess, and returns the corresponding serviceAccountAccess object, and an error if there is any.
 func (c *FakeServiceAccountAccesses) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.ServiceAccountAccess, err error) {
+	emptyResult := &v1alpha1.ServiceAccountAccess{}
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(serviceaccountaccessesResource, c.ns, name), &v1alpha1.ServiceAccountAccess{})
+		Invokes(testing.NewGetActionWithOptions(serviceaccountaccessesResource, c.ns, name, options), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.ServiceAccountAccess), err
 }
 
 // List takes label and field selectors, and returns the list of ServiceAccountAccesses that match those selectors.
 func (c *FakeServiceAccountAccesses) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.ServiceAccountAccessList, err error) {
+	emptyResult := &v1alpha1.ServiceAccountAccessList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(serviceaccountaccessesResource, serviceaccountaccessesKind, c.ns, opts), &v1alpha1.ServiceAccountAccessList{})
+		Invokes(testing.NewListActionWithOptions(serviceaccountaccessesResource, serviceaccountaccessesKind, c.ns, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -75,40 +77,43 @@ func (c *FakeServiceAccountAccesses) List(ctx context.Context, opts v1.ListOptio
 // Watch returns a watch.Interface that watches the requested serviceAccountAccesses.
 func (c *FakeServiceAccountAccesses) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(serviceaccountaccessesResource, c.ns, opts))
+		InvokesWatch(testing.NewWatchActionWithOptions(serviceaccountaccessesResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a serviceAccountAccess and creates it.  Returns the server's representation of the serviceAccountAccess, and an error, if there is any.
 func (c *FakeServiceAccountAccesses) Create(ctx context.Context, serviceAccountAccess *v1alpha1.ServiceAccountAccess, opts v1.CreateOptions) (result *v1alpha1.ServiceAccountAccess, err error) {
+	emptyResult := &v1alpha1.ServiceAccountAccess{}
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(serviceaccountaccessesResource, c.ns, serviceAccountAccess), &v1alpha1.ServiceAccountAccess{})
+		Invokes(testing.NewCreateActionWithOptions(serviceaccountaccessesResource, c.ns, serviceAccountAccess, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.ServiceAccountAccess), err
 }
 
 // Update takes the representation of a serviceAccountAccess and updates it. Returns the server's representation of the serviceAccountAccess, and an error, if there is any.
 func (c *FakeServiceAccountAccesses) Update(ctx context.Context, serviceAccountAccess *v1alpha1.ServiceAccountAccess, opts v1.UpdateOptions) (result *v1alpha1.ServiceAccountAccess, err error) {
+	emptyResult := &v1alpha1.ServiceAccountAccess{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(serviceaccountaccessesResource, c.ns, serviceAccountAccess), &v1alpha1.ServiceAccountAccess{})
+		Invokes(testing.NewUpdateActionWithOptions(serviceaccountaccessesResource, c.ns, serviceAccountAccess, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.ServiceAccountAccess), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeServiceAccountAccesses) UpdateStatus(ctx context.Context, serviceAccountAccess *v1alpha1.ServiceAccountAccess, opts v1.UpdateOptions) (*v1alpha1.ServiceAccountAccess, error) {
+func (c *FakeServiceAccountAccesses) UpdateStatus(ctx context.Context, serviceAccountAccess *v1alpha1.ServiceAccountAccess, opts v1.UpdateOptions) (result *v1alpha1.ServiceAccountAccess, err error) {
+	emptyResult := &v1alpha1.ServiceAccountAccess{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceAction(serviceaccountaccessesResource, "status", c.ns, serviceAccountAccess), &v1alpha1.ServiceAccountAccess{})
+		Invokes(testing.NewUpdateSubresourceActionWithOptions(serviceaccountaccessesResource, "status", c.ns, serviceAccountAccess, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.ServiceAccountAccess), err
 }
@@ -123,7 +128,7 @@ func (c *FakeServiceAccountAccesses) Delete(ctx context.Context, name string, op
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeServiceAccountAccesses) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(serviceaccountaccessesResource, c.ns, listOpts)
+	action := testing.NewDeleteCollectionActionWithOptions(serviceaccountaccessesResource, c.ns, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.ServiceAccountAccessList{})
 	return err
@@ -131,11 +136,12 @@ func (c *FakeServiceAccountAccesses) DeleteCollection(ctx context.Context, opts 
 
 // Patch applies the patch and returns the patched serviceAccountAccess.
 func (c *FakeServiceAccountAccesses) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.ServiceAccountAccess, err error) {
+	emptyResult := &v1alpha1.ServiceAccountAccess{}
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(serviceaccountaccessesResource, c.ns, name, pt, data, subresources...), &v1alpha1.ServiceAccountAccess{})
+		Invokes(testing.NewPatchSubresourceActionWithOptions(serviceaccountaccessesResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.ServiceAccountAccess), err
 }

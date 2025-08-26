@@ -40,20 +40,22 @@ var configupdatejobsKind = v1alpha2.SchemeGroupVersion.WithKind("ConfigUpdateJob
 
 // Get takes name of the configUpdateJob, and returns the corresponding configUpdateJob object, and an error if there is any.
 func (c *FakeConfigUpdateJobs) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha2.ConfigUpdateJob, err error) {
+	emptyResult := &v1alpha2.ConfigUpdateJob{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootGetAction(configupdatejobsResource, name), &v1alpha2.ConfigUpdateJob{})
+		Invokes(testing.NewRootGetActionWithOptions(configupdatejobsResource, name, options), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha2.ConfigUpdateJob), err
 }
 
 // List takes label and field selectors, and returns the list of ConfigUpdateJobs that match those selectors.
 func (c *FakeConfigUpdateJobs) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha2.ConfigUpdateJobList, err error) {
+	emptyResult := &v1alpha2.ConfigUpdateJobList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootListAction(configupdatejobsResource, configupdatejobsKind, opts), &v1alpha2.ConfigUpdateJobList{})
+		Invokes(testing.NewRootListActionWithOptions(configupdatejobsResource, configupdatejobsKind, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -72,36 +74,39 @@ func (c *FakeConfigUpdateJobs) List(ctx context.Context, opts v1.ListOptions) (r
 // Watch returns a watch.Interface that watches the requested configUpdateJobs.
 func (c *FakeConfigUpdateJobs) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewRootWatchAction(configupdatejobsResource, opts))
+		InvokesWatch(testing.NewRootWatchActionWithOptions(configupdatejobsResource, opts))
 }
 
 // Create takes the representation of a configUpdateJob and creates it.  Returns the server's representation of the configUpdateJob, and an error, if there is any.
 func (c *FakeConfigUpdateJobs) Create(ctx context.Context, configUpdateJob *v1alpha2.ConfigUpdateJob, opts v1.CreateOptions) (result *v1alpha2.ConfigUpdateJob, err error) {
+	emptyResult := &v1alpha2.ConfigUpdateJob{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootCreateAction(configupdatejobsResource, configUpdateJob), &v1alpha2.ConfigUpdateJob{})
+		Invokes(testing.NewRootCreateActionWithOptions(configupdatejobsResource, configUpdateJob, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha2.ConfigUpdateJob), err
 }
 
 // Update takes the representation of a configUpdateJob and updates it. Returns the server's representation of the configUpdateJob, and an error, if there is any.
 func (c *FakeConfigUpdateJobs) Update(ctx context.Context, configUpdateJob *v1alpha2.ConfigUpdateJob, opts v1.UpdateOptions) (result *v1alpha2.ConfigUpdateJob, err error) {
+	emptyResult := &v1alpha2.ConfigUpdateJob{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateAction(configupdatejobsResource, configUpdateJob), &v1alpha2.ConfigUpdateJob{})
+		Invokes(testing.NewRootUpdateActionWithOptions(configupdatejobsResource, configUpdateJob, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha2.ConfigUpdateJob), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeConfigUpdateJobs) UpdateStatus(ctx context.Context, configUpdateJob *v1alpha2.ConfigUpdateJob, opts v1.UpdateOptions) (*v1alpha2.ConfigUpdateJob, error) {
+func (c *FakeConfigUpdateJobs) UpdateStatus(ctx context.Context, configUpdateJob *v1alpha2.ConfigUpdateJob, opts v1.UpdateOptions) (result *v1alpha2.ConfigUpdateJob, err error) {
+	emptyResult := &v1alpha2.ConfigUpdateJob{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateSubresourceAction(configupdatejobsResource, "status", configUpdateJob), &v1alpha2.ConfigUpdateJob{})
+		Invokes(testing.NewRootUpdateSubresourceActionWithOptions(configupdatejobsResource, "status", configUpdateJob, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha2.ConfigUpdateJob), err
 }
@@ -115,7 +120,7 @@ func (c *FakeConfigUpdateJobs) Delete(ctx context.Context, name string, opts v1.
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeConfigUpdateJobs) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(configupdatejobsResource, listOpts)
+	action := testing.NewRootDeleteCollectionActionWithOptions(configupdatejobsResource, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha2.ConfigUpdateJobList{})
 	return err
@@ -123,10 +128,11 @@ func (c *FakeConfigUpdateJobs) DeleteCollection(ctx context.Context, opts v1.Del
 
 // Patch applies the patch and returns the patched configUpdateJob.
 func (c *FakeConfigUpdateJobs) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha2.ConfigUpdateJob, err error) {
+	emptyResult := &v1alpha2.ConfigUpdateJob{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(configupdatejobsResource, name, pt, data, subresources...), &v1alpha2.ConfigUpdateJob{})
+		Invokes(testing.NewRootPatchSubresourceActionWithOptions(configupdatejobsResource, name, pt, data, opts, subresources...), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha2.ConfigUpdateJob), err
 }

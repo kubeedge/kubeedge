@@ -20,8 +20,8 @@ package v1alpha1
 
 import (
 	v1alpha1 "github.com/kubeedge/api/apis/policy/v1alpha1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/listers"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -38,25 +38,17 @@ type ServiceAccountAccessLister interface {
 
 // serviceAccountAccessLister implements the ServiceAccountAccessLister interface.
 type serviceAccountAccessLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*v1alpha1.ServiceAccountAccess]
 }
 
 // NewServiceAccountAccessLister returns a new ServiceAccountAccessLister.
 func NewServiceAccountAccessLister(indexer cache.Indexer) ServiceAccountAccessLister {
-	return &serviceAccountAccessLister{indexer: indexer}
-}
-
-// List lists all ServiceAccountAccesses in the indexer.
-func (s *serviceAccountAccessLister) List(selector labels.Selector) (ret []*v1alpha1.ServiceAccountAccess, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.ServiceAccountAccess))
-	})
-	return ret, err
+	return &serviceAccountAccessLister{listers.New[*v1alpha1.ServiceAccountAccess](indexer, v1alpha1.Resource("serviceaccountaccess"))}
 }
 
 // ServiceAccountAccesses returns an object that can list and get ServiceAccountAccesses.
 func (s *serviceAccountAccessLister) ServiceAccountAccesses(namespace string) ServiceAccountAccessNamespaceLister {
-	return serviceAccountAccessNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return serviceAccountAccessNamespaceLister{listers.NewNamespaced[*v1alpha1.ServiceAccountAccess](s.ResourceIndexer, namespace)}
 }
 
 // ServiceAccountAccessNamespaceLister helps list and get ServiceAccountAccesses.
@@ -74,26 +66,5 @@ type ServiceAccountAccessNamespaceLister interface {
 // serviceAccountAccessNamespaceLister implements the ServiceAccountAccessNamespaceLister
 // interface.
 type serviceAccountAccessNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all ServiceAccountAccesses in the indexer for a given namespace.
-func (s serviceAccountAccessNamespaceLister) List(selector labels.Selector) (ret []*v1alpha1.ServiceAccountAccess, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.ServiceAccountAccess))
-	})
-	return ret, err
-}
-
-// Get retrieves the ServiceAccountAccess from the indexer for a given namespace and name.
-func (s serviceAccountAccessNamespaceLister) Get(name string) (*v1alpha1.ServiceAccountAccess, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1alpha1.Resource("serviceaccountaccess"), name)
-	}
-	return obj.(*v1alpha1.ServiceAccountAccess), nil
+	listers.ResourceIndexer[*v1alpha1.ServiceAccountAccess]
 }

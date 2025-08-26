@@ -41,22 +41,24 @@ var edgeapplicationsKind = v1alpha1.SchemeGroupVersion.WithKind("EdgeApplication
 
 // Get takes name of the edgeApplication, and returns the corresponding edgeApplication object, and an error if there is any.
 func (c *FakeEdgeApplications) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.EdgeApplication, err error) {
+	emptyResult := &v1alpha1.EdgeApplication{}
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(edgeapplicationsResource, c.ns, name), &v1alpha1.EdgeApplication{})
+		Invokes(testing.NewGetActionWithOptions(edgeapplicationsResource, c.ns, name, options), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.EdgeApplication), err
 }
 
 // List takes label and field selectors, and returns the list of EdgeApplications that match those selectors.
 func (c *FakeEdgeApplications) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.EdgeApplicationList, err error) {
+	emptyResult := &v1alpha1.EdgeApplicationList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(edgeapplicationsResource, edgeapplicationsKind, c.ns, opts), &v1alpha1.EdgeApplicationList{})
+		Invokes(testing.NewListActionWithOptions(edgeapplicationsResource, edgeapplicationsKind, c.ns, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -75,40 +77,43 @@ func (c *FakeEdgeApplications) List(ctx context.Context, opts v1.ListOptions) (r
 // Watch returns a watch.Interface that watches the requested edgeApplications.
 func (c *FakeEdgeApplications) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(edgeapplicationsResource, c.ns, opts))
+		InvokesWatch(testing.NewWatchActionWithOptions(edgeapplicationsResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a edgeApplication and creates it.  Returns the server's representation of the edgeApplication, and an error, if there is any.
 func (c *FakeEdgeApplications) Create(ctx context.Context, edgeApplication *v1alpha1.EdgeApplication, opts v1.CreateOptions) (result *v1alpha1.EdgeApplication, err error) {
+	emptyResult := &v1alpha1.EdgeApplication{}
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(edgeapplicationsResource, c.ns, edgeApplication), &v1alpha1.EdgeApplication{})
+		Invokes(testing.NewCreateActionWithOptions(edgeapplicationsResource, c.ns, edgeApplication, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.EdgeApplication), err
 }
 
 // Update takes the representation of a edgeApplication and updates it. Returns the server's representation of the edgeApplication, and an error, if there is any.
 func (c *FakeEdgeApplications) Update(ctx context.Context, edgeApplication *v1alpha1.EdgeApplication, opts v1.UpdateOptions) (result *v1alpha1.EdgeApplication, err error) {
+	emptyResult := &v1alpha1.EdgeApplication{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(edgeapplicationsResource, c.ns, edgeApplication), &v1alpha1.EdgeApplication{})
+		Invokes(testing.NewUpdateActionWithOptions(edgeapplicationsResource, c.ns, edgeApplication, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.EdgeApplication), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeEdgeApplications) UpdateStatus(ctx context.Context, edgeApplication *v1alpha1.EdgeApplication, opts v1.UpdateOptions) (*v1alpha1.EdgeApplication, error) {
+func (c *FakeEdgeApplications) UpdateStatus(ctx context.Context, edgeApplication *v1alpha1.EdgeApplication, opts v1.UpdateOptions) (result *v1alpha1.EdgeApplication, err error) {
+	emptyResult := &v1alpha1.EdgeApplication{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceAction(edgeapplicationsResource, "status", c.ns, edgeApplication), &v1alpha1.EdgeApplication{})
+		Invokes(testing.NewUpdateSubresourceActionWithOptions(edgeapplicationsResource, "status", c.ns, edgeApplication, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.EdgeApplication), err
 }
@@ -123,7 +128,7 @@ func (c *FakeEdgeApplications) Delete(ctx context.Context, name string, opts v1.
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeEdgeApplications) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(edgeapplicationsResource, c.ns, listOpts)
+	action := testing.NewDeleteCollectionActionWithOptions(edgeapplicationsResource, c.ns, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.EdgeApplicationList{})
 	return err
@@ -131,11 +136,12 @@ func (c *FakeEdgeApplications) DeleteCollection(ctx context.Context, opts v1.Del
 
 // Patch applies the patch and returns the patched edgeApplication.
 func (c *FakeEdgeApplications) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.EdgeApplication, err error) {
+	emptyResult := &v1alpha1.EdgeApplication{}
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(edgeapplicationsResource, c.ns, name, pt, data, subresources...), &v1alpha1.EdgeApplication{})
+		Invokes(testing.NewPatchSubresourceActionWithOptions(edgeapplicationsResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.EdgeApplication), err
 }
