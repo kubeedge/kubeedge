@@ -97,7 +97,7 @@ var PluginHandler = &RegistrationHandler{}
 // ValidatePlugin is called by kubelet's plugin watcher upon detection
 // of a new registration socket opened by CSI Driver registrar side car.
 func (h *RegistrationHandler) ValidatePlugin(pluginName string, endpoint string, versions []string) error {
-	klog.Infof(log("Trying to validate a new CSI Driver with name: %s endpoint: %s versions: %s",
+	klog.Info(log("Trying to validate a new CSI Driver with name: %s endpoint: %s versions: %s",
 		pluginName, endpoint, strings.Join(versions, ",")))
 
 	_, err := h.validateVersions("ValidatePlugin", pluginName, endpoint, versions)
@@ -110,7 +110,7 @@ func (h *RegistrationHandler) ValidatePlugin(pluginName string, endpoint string,
 
 // RegisterPlugin is called when a plugin can be registered
 func (h *RegistrationHandler) RegisterPlugin(pluginName string, endpoint string, versions []string, pluginClientTimeout *time.Duration) error {
-	klog.Infof(log("Register new plugin with name: %s at endpoint: %s", pluginName, endpoint))
+	klog.Info(log("Register new plugin with name: %s at endpoint: %s", pluginName, endpoint))
 
 	highestSupportedVersion, err := h.validateVersions("RegisterPlugin", pluginName, endpoint, versions)
 	if err != nil {
@@ -250,9 +250,6 @@ func (p *csiPlugin) Init(host volume.VolumeHost) error {
 		csitranslationplugins.PortworxVolumePluginName: func() bool {
 			return utilfeature.DefaultFeatureGate.Enabled(features.CSIMigrationPortworx)
 		},
-		csitranslationplugins.RBDVolumePluginName: func() bool {
-			return utilfeature.DefaultFeatureGate.Enabled(features.CSIMigrationRBD)
-		},
 	}
 
 	// Initializing the label management channels
@@ -370,8 +367,7 @@ func (p *csiPlugin) RequiresRemount(spec *volume.Spec) bool {
 
 func (p *csiPlugin) NewMounter(
 	spec *volume.Spec,
-	pod *api.Pod,
-	_ volume.VolumeOptions) (volume.Mounter, error) {
+	pod *api.Pod) (volume.Mounter, error) {
 
 	volSrc, pvSrc, err := getSourceFromSpec(spec)
 	if err != nil {
@@ -436,7 +432,7 @@ func (p *csiPlugin) NewMounter(
 }
 
 func (p *csiPlugin) NewUnmounter(specName string, podUID types.UID) (volume.Unmounter, error) {
-	klog.V(4).Infof(log("setting up unmounter for [name=%v, podUID=%v]", specName, podUID))
+	klog.V(4).Info(log("setting up unmounter for [name=%v, podUID=%v]", specName, podUID))
 
 	kvh, ok := p.host.(volume.KubeletVolumeHost)
 	if !ok {
@@ -532,10 +528,6 @@ func (p *csiPlugin) SupportsMountOption() bool {
 	return true
 }
 
-func (p *csiPlugin) SupportsBulkVolumeVerification() bool {
-	return false
-}
-
 func (p *csiPlugin) SupportsSELinuxContextMount(spec *volume.Spec) (bool, error) {
 	if utilfeature.DefaultFeatureGate.Enabled(features.SELinuxMountReadWriteOncePod) {
 		driver, err := GetCSIDriverName(spec)
@@ -628,7 +620,7 @@ func (p *csiPlugin) GetDeviceMountRefs(deviceMountPath string) ([]string, error)
 // BlockVolumePlugin methods
 var _ volume.BlockVolumePlugin = &csiPlugin{}
 
-func (p *csiPlugin) NewBlockVolumeMapper(spec *volume.Spec, podRef *api.Pod, opts volume.VolumeOptions) (volume.BlockVolumeMapper, error) {
+func (p *csiPlugin) NewBlockVolumeMapper(spec *volume.Spec, podRef *api.Pod) (volume.BlockVolumeMapper, error) {
 	pvSource, err := getCSISourceFromSpec(spec)
 	if err != nil {
 		return nil, err
@@ -705,7 +697,7 @@ func (p *csiPlugin) NewBlockVolumeMapper(spec *volume.Spec, podRef *api.Pod, opt
 }
 
 func (p *csiPlugin) NewBlockVolumeUnmapper(volName string, podUID types.UID) (volume.BlockVolumeUnmapper, error) {
-	klog.V(4).Infof(log("setting up block unmapper for [Spec=%v, podUID=%v]", volName, podUID))
+	klog.V(4).Info(log("setting up block unmapper for [Spec=%v, podUID=%v]", volName, podUID))
 	unmapper := &csiBlockMapper{
 		plugin:   p,
 		podUID:   podUID,
@@ -847,7 +839,7 @@ func (p *csiPlugin) podInfoEnabled(driverName string) (bool, error) {
 	csiDriver, err := p.getCSIDriver(driverName)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			klog.V(4).Infof(log("CSIDriver %q not found, not adding pod information", driverName))
+			klog.V(4).Info(log("CSIDriver %q not found, not adding pod information", driverName))
 			return false, nil
 		}
 		return false, err
@@ -855,7 +847,7 @@ func (p *csiPlugin) podInfoEnabled(driverName string) (bool, error) {
 
 	// if PodInfoOnMount is not set or false we do not set pod attributes
 	if csiDriver.Spec.PodInfoOnMount == nil || *csiDriver.Spec.PodInfoOnMount == false {
-		klog.V(4).Infof(log("CSIDriver %q does not require pod information", driverName))
+		klog.V(4).Info(log("CSIDriver %q does not require pod information", driverName))
 		return false, nil
 	}
 	return true, nil
@@ -888,7 +880,7 @@ func waitForAPIServerForever(client clientset.Interface, nodeName types.NodeName
 		// Get a CSINode from API server to make sure 1) kubelet can reach API server
 		// and 2) it has enough permissions. Kubelet may have restricted permissions
 		// when it's bootstrapping TLS.
-		// https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet-tls-bootstrapping/
+		// https://kubernetes.io/docs/reference/access-authn-authz/kubelet-tls-bootstrapping/
 		_, lastErr = client.StorageV1().CSINodes().Get(context.TODO(), string(nodeName), opts)
 		if lastErr == nil || apierrors.IsNotFound(lastErr) {
 			// API server contacted
