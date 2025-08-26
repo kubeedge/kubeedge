@@ -1,0 +1,323 @@
+name: KubeEdge Auto Test Generator
+
+on:
+  pull_request_target:
+    types: [closed]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "**/OWNERS"
+      - "**/MAINTAINERS"
+      - "vendor/**"
+      - "hack/**"
+      - "**/*_test.go"
+
+env:
+  COVERAGE_THRESHOLD: 40.0
+  MAX_RETRIES: 3
+
+jobs:
+  auto-test-generator:
+    if: github.event.pull_request.merged == true && github.repository == 'vivekbisen04/kubeedge'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    name: Generate Unit Tests for Low Coverage Files
+
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: read
+
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.22.x
+          cache: true
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install goimports for code cleanup
+        run: go install golang.org/x/tools/cmd/goimports@latest
+
+      - name: Get merged PR files and analyze coverage
+        id: coverage_check
+        run: |
+          set -e
+          
+          echo "🔍 Analyzing merged PR files for coverage..."
+          
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          ALL_CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD | grep '\.go$' | grep -v '_test\.go$' | grep -v 'vendor/' | grep -v 'hack/' | grep -v 'docs/' || echo "")
+          
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "pr_author=${{ github.event.pull_request.user.login }}" >> $GITHUB_OUTPUT
+          
+          if [ -z "$ALL_CHANGED_FILES" ]; then
+            echo "No Go files to analyze"
+            echo "files_to_process=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Filter files to only include core KubeEdge directories
+          TARGET_DIRS="cloud/ edge/ keadm/ pkg/"
+          CHANGED_FILES=""
+          
+          echo "📂 Checking files in target directories: $TARGET_DIRS"
+          
+          for file in $ALL_CHANGED_FILES; do
+            for target_dir in $TARGET_DIRS; do
+              if [[ "$file" == "$target_dir"* ]]; then
+                CHANGED_FILES="$CHANGED_FILES$file\n"
+                echo "✅ Including: $file (in $target_dir)"
+                break
+              fi
+            done
+          done
+          
+          # Remove empty lines
+          CHANGED_FILES=$(echo -e "$CHANGED_FILES" | sed '/^$/d')
+          
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "🚫 No Go files found in target directories (cloud/, edge/, keadm/, pkg/)"
+            echo "ℹ️ Workflow will not proceed - files are outside core KubeEdge components"
+            echo "files_to_process=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Convert to comma-separated list for simplified generator
+          COMMA_SEPARATED_FILES=$(echo "$CHANGED_FILES" | tr '\n' ',' | sed 's/,$//')
+          
+          echo "🎯 Files to process: $COMMA_SEPARATED_FILES"
+          
+          echo "files_to_process=$COMMA_SEPARATED_FILES" >> $GITHUB_OUTPUT
+          
+          if [ -n "$COMMA_SEPARATED_FILES" ]; then
+            echo "🎯 Files needing test generation:"
+            echo "$COMMA_SEPARATED_FILES" | tr ',' '\n'
+          else
+            echo "✅ All files have sufficient coverage!"
+          fi
+
+      - name: Setup test generator
+        if: steps.coverage_check.outputs.files_to_process != ''
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          echo "⚙️ Setting up test generator..."
+          
+          if [ ! -f go.mod ] || ! grep -q "github.com/kubeedge/kubeedge" go.mod; then
+            echo "❌ Not in KubeEdge repository root"
+            exit 1
+          fi
+          
+          cd scripts/test-generator
+          mkdir -p logs results
+          
+          if [ -z "$GEMINI_API_KEY" ]; then
+            echo "❌ GEMINI_API_KEY not configured in repository secrets"
+            exit 1
+          fi
+          
+          echo "✅ Test generator ready"
+
+      - name: Generate and validate tests
+        if: steps.coverage_check.outputs.files_to_process != ''
+        id: generate_tests
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          set -e
+          
+          echo "🤖 Generating unit tests with simplified approach..."
+          cd scripts/test-generator
+          
+          FILES_TO_PROCESS="${{ steps.coverage_check.outputs.files_to_process }}"
+          
+          if [ -z "$FILES_TO_PROCESS" ]; then
+            echo "No files to process"
+            exit 0
+          fi
+          
+          echo "🚀 Running simplified test generator..."
+          echo "Files: $FILES_TO_PROCESS"
+          
+          # Run test generator and capture output for parsing
+          if OUTPUT=$(go run . \
+            --changed-files="$FILES_TO_PROCESS" \
+            --coverage-threshold="${{ env.COVERAGE_THRESHOLD }}" \
+            --max-retries="${{ env.MAX_RETRIES }}" \
+            --gemini-api-key="$GEMINI_API_KEY" \
+            --debug=true \
+            --working-dir="../../" \
+            --create-pr \
+            --github-token="${{ secrets.GITHUB_TOKEN }}" \
+            --repo-owner="vivekbisen04" \
+            --repo-name="kubeedge" 2>&1); then
+            
+            echo "✅ Test generation workflow completed"
+            echo "$OUTPUT"
+            
+            # Parse success count from logs
+            SUCCESS_COUNT=$(echo "$OUTPUT" | grep "WORKFLOW_SUCCESS_COUNT=" | cut -d'=' -f2)
+            FAILURE_COUNT=$(echo "$OUTPUT" | grep "WORKFLOW_FAILURE_COUNT=" | cut -d'=' -f2)
+            
+            # Set default values if parsing fails
+            SUCCESS_COUNT=${SUCCESS_COUNT:-0}
+            FAILURE_COUNT=${FAILURE_COUNT:-0}
+            
+            echo "success_count=$SUCCESS_COUNT" >> $GITHUB_OUTPUT
+            echo "failure_count=$FAILURE_COUNT" >> $GITHUB_OUTPUT
+            
+            if [ "$SUCCESS_COUNT" -gt 0 ]; then
+              echo "has_successful_tests=true" >> $GITHUB_OUTPUT
+              echo "🎉 Successfully generated tests for $SUCCESS_COUNT files with coverage improvement"
+              
+              # Extract and save successful tests for PR creation
+              echo "$OUTPUT" | sed -n '/WORKFLOW_SUCCESSFUL_TESTS_START/,/WORKFLOW_SUCCESSFUL_TESTS_END/p' | \
+                grep "WORKFLOW_SUCCESS:" | sed 's/.*WORKFLOW_SUCCESS: //' > successful_tests.txt
+            else
+              echo "has_successful_tests=false" >> $GITHUB_OUTPUT
+              echo "⚠️ No tests generated with meaningful coverage improvement"
+            fi
+            
+          else
+            echo "❌ Test generation failed"
+            echo "$OUTPUT"
+            echo "success_count=0" >> $GITHUB_OUTPUT
+            echo "has_successful_tests=false" >> $GITHUB_OUTPUT
+            echo "failure_count=1" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create PR for successful tests
+        if: steps.generate_tests.outputs.has_successful_tests == 'true'
+        run: |
+          echo "📝 Creating PR for generated tests..."
+          
+          cd scripts/test-generator
+          
+          BRANCH_NAME="auto-tests-pr-${{ steps.coverage_check.outputs.pr_number }}-$(date +%Y%m%d-%H%M%S)"
+          
+          cd ../../
+          git config --global user.name "KubeEdge Auto Test Generator"
+          git config --global user.email "action@github.com"
+          
+          git checkout -b "$BRANCH_NAME"
+          
+          # Add all generated test files
+          while IFS='|' read -r source_file test_file before_coverage after_coverage; do
+            if [ -f "$test_file" ]; then
+              git add "$test_file"
+              echo "📁 Added $test_file to git"
+            fi
+          done < scripts/test-generator/successful_tests.txt
+          
+          # Create commit message
+          COMMIT_MESSAGE="Add auto-generated unit tests
+
+          Generated tests for files with coverage < ${{ env.COVERAGE_THRESHOLD }}%
+          Source PR: #${{ steps.coverage_check.outputs.pr_number }}
+
+          Coverage improvements:"
+          
+          while IFS='|' read -r source_file test_file before_coverage after_coverage; do
+            COMMIT_MESSAGE="$COMMIT_MESSAGE
+          - $(basename "$source_file"): ${before_coverage}% → ${after_coverage}%"
+          done < scripts/test-generator/successful_tests.txt
+          
+          COMMIT_MESSAGE="$COMMIT_MESSAGE
+
+          Generated by KubeEdge Auto Test Generator"
+          
+          git commit -m "$COMMIT_MESSAGE"
+          git push origin "$BRANCH_NAME"
+          
+          # Create coverage table for PR body
+          COVERAGE_TABLE="| File | Before | After | Improvement |
+          |------|--------|-------|-------------|"
+          
+          while IFS='|' read -r source_file test_file before_coverage after_coverage; do
+            improvement=$((${after_coverage%.*} - ${before_coverage%.*}))
+            COVERAGE_TABLE="$COVERAGE_TABLE
+          | \`$(basename "$source_file")\` | ${before_coverage}% | ${after_coverage}% | +${improvement}% |"
+          done < scripts/test-generator/successful_tests.txt
+          
+          # Create PR using GitHub CLI
+          gh pr create \
+            --title "🤖 Auto-generated unit tests for PR #${{ steps.coverage_check.outputs.pr_number }}" \
+            --body "## 🤖 Auto-Generated Unit Tests
+
+          This PR contains automatically generated unit tests for files with low coverage from PR #${{ steps.coverage_check.outputs.pr_number }}.
+
+          ### 📊 Coverage Improvements
+
+          $COVERAGE_TABLE
+
+          ### ✅ Validation Status
+          - All generated tests compile successfully
+          - All generated tests pass execution  
+          - Failed tests automatically removed (smart cleanup)
+          - Coverage improvements verified
+
+          ### 🤖 Generation Details
+          - **Trigger**: PR #${{ steps.coverage_check.outputs.pr_number }} merge
+          - **Coverage Threshold**: ${{ env.COVERAGE_THRESHOLD }}%
+          - **LLM Provider**: Gemini 1.5 Flash
+          - **Approach**: Simplified whole-file analysis
+          - **Files Processed**: ${{ steps.generate_tests.outputs.success_count }}
+          - **Generation Time**: $(date)
+
+          ### 🔧 How Tests Were Generated
+          1. LLM analyzed entire source files (not individual functions)
+          2. LLM decided testing approach (standard/mocking) automatically
+          3. Generated comprehensive test cases with edge cases
+          4. **Smart Cleanup**: Automatically removed failing tests, kept passing ones
+          5. Validated compilation and coverage improvement
+
+          ### 📝 Next Steps
+          1. Review the generated tests for accuracy and completeness
+          2. Run \`make test\` to verify integration with KubeEdge test suite
+          3. Merge when satisfied with test quality
+
+          ---
+          *Generated by KubeEdge Auto Test Generator*" \
+            --head "$BRANCH_NAME" \
+            --base master
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary report
+        if: always()
+        run: |
+          echo "📋 Test Generation Summary"
+          echo "========================="
+          
+          SUCCESS_COUNT="${{ steps.generate_tests.outputs.success_count }}"
+          FAILURE_COUNT="${{ steps.generate_tests.outputs.failure_count }}"
+          
+          echo "📊 Results:"
+          echo "  ✅ Successful: ${SUCCESS_COUNT:-0}"
+          echo "  ❌ Failed: ${FAILURE_COUNT:-0}"
+          
+          if [ -f "scripts/test-generator/successful_tests.txt" ]; then
+            echo ""
+            echo "✅ Successfully generated tests:"
+            while IFS='|' read -r source_file test_file before_coverage after_coverage; do
+              improvement=$((${after_coverage%.*} - ${before_coverage%.*}))
+              echo "  - $(basename "$source_file"): ${before_coverage}% → ${after_coverage}% (+${improvement}%)"
+            done < scripts/test-generator/successful_tests.txt
+          fi
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-generation-results
+          path: |
+            scripts/test-generator/logs/
+            scripts/test-generator/successful_tests.txt
+          retention-days: 7
