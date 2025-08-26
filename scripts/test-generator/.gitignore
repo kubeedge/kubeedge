@@ -1,0 +1,42 @@
+.env
+*.env
+scripts/test-generator/logs/*
+# KubeEdge Auto Test Generator
+# ============================
+
+# Environment files (contains API keys)
+.env
+*.env
+.env.*
+scripts/test-generator/.env
+scripts/test-generator/*.env
+
+# Generated logs
+scripts/test-generator/logs/
+scripts/test-generator/logs/*
+*.log
+
+# Temporary test generation files
+scripts/test-generator/temp/
+scripts/test-generator/*.tmp
+scripts/test-generator/*.backup
+
+# Generated test artifacts
+scripts/test-generator/coverage.out
+scripts/test-generator/test-output/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Go build artifacts
+scripts/test-generator/test-generator
+scripts/test-generator/*.exe
+

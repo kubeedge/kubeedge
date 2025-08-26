@@ -21,3 +21,4 @@ build/edge/tmp
 
 coverage.out
 go.work.sum
+.env
