@@ -76,27 +76,27 @@ func (WindowsExtSystem) ServiceEnable(service string) error {
 }
 
 func (w WindowsExtSystem) ServiceStart(service string) error {
-	return w.ServiceStart(service)
+	return w.WindowsInitSystem.ServiceStart(service)
 }
 
 func (w WindowsExtSystem) ServiceStop(service string) error {
-	return w.ServiceStop(service)
+	return w.WindowsInitSystem.ServiceStop(service)
 }
 
 func (w WindowsExtSystem) ServiceRestart(service string) error {
-	return w.ServiceRestart(service)
+	return w.WindowsInitSystem.ServiceRestart(service)
 }
 
 func (w WindowsExtSystem) ServiceExists(service string) bool {
-	return w.ServiceExists(service)
+	return w.WindowsInitSystem.ServiceExists(service)
 }
 
 func (w WindowsExtSystem) ServiceIsEnabled(service string) bool {
-	return w.ServiceIsEnabled(service)
+	return w.WindowsInitSystem.ServiceIsEnabled(service)
 }
 
 func (w WindowsExtSystem) ServiceIsActive(service string) bool {
-	return w.ServiceIsActive(service)
+	return w.WindowsInitSystem.ServiceIsActive(service)
 }
 func (WindowsExtSystem) ServiceDisable(service string) error {
 	cmd := exec.Command("PowerShell", "-NoProfile", "-Command",
