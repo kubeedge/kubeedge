@@ -200,7 +200,7 @@ jobs:
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
           go install sigs.k8s.io/kind@v0.25.0
-          curl -LO https://dl.k8s.io/release/v1.31.11/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          curl -LO https://dl.k8s.io/release/v1.31.12/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -263,7 +263,7 @@ jobs:
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
           go install sigs.k8s.io/kind@v0.25.0
-          curl -LO https://dl.k8s.io/release/v1.31.11/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          curl -LO https://dl.k8s.io/release/v1.31.12/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -310,7 +310,7 @@ jobs:
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
           go install sigs.k8s.io/kind@v0.25.0
-          curl -LO https://dl.k8s.io/release/v1.31.11/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          curl -LO https://dl.k8s.io/release/v1.31.12/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -377,7 +377,7 @@ jobs:
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
           go install sigs.k8s.io/kind@v0.25.0
-          curl -LO https://dl.k8s.io/release/v1.31.11/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          curl -LO https://dl.k8s.io/release/v1.31.12/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -425,7 +425,7 @@ jobs:
         - name: Install dependencies
           run: |
             go install sigs.k8s.io/kind@v0.25.0
-            curl -LO https://dl.k8s.io/release/v1.31.11/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+            curl -LO https://dl.k8s.io/release/v1.31.12/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
         - name: Checkout code
           uses: actions/checkout@v4

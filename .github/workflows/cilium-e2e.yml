@@ -44,7 +44,7 @@ jobs:
       - name: Install dependencies
         run: |
           go install sigs.k8s.io/kind@v0.25.0
-          curl -LO https://dl.k8s.io/release/v1.31.11/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          curl -LO https://dl.k8s.io/release/v1.31.12/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
           curl -L --remote-name-all https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz
           sudo tar xzvfC cilium-linux-amd64.tar.gz /usr/local/bin
 
