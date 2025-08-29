@@ -106,10 +106,13 @@ func (executor *configUpdateExecutor) configUpdate(opts ConfigUpdateOptions) err
 		return fmt.Errorf("failed to write new edgecore config: %v", err)
 	}
 
-	cmd := execs.NewCommand("sudo systemctl restart edgecore.service")
-	err = cmd.Exec()
-	if err != nil {
-		return fmt.Errorf("failed restart edgecore %v", err)
+	// Use nohup to restart edgecore service in background with delay
+	// Delay 5 seconds to ensure current task status can be reported properly
+	restartCmd := "nohup sh -c 'sleep 5 && sudo systemctl restart edgecore.service' > /dev/null 2>&1 &"
+	cmd := execs.NewCommand(restartCmd)
+	if err := cmd.Exec(); err != nil {
+		klog.Warningf("failed to schedule edgecore restart: %v", err)
+		// Don't return error as restart failure shouldn't affect config update
 	}
 
 	return nil
