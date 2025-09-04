@@ -319,7 +319,7 @@ func (e *edged) syncPod(podCfg *config.PodConfig) {
 		}
 
 		op := result.GetOperation()
-		_, resType, resID, err := commonmsg.ParseResourceEdge(result.GetResource(), op)
+		ns, resType, resID, err := commonmsg.ParseResourceEdge(result.GetResource(), op)
 		if err != nil {
 			klog.Errorf("failed to parse the Resource: %v", err)
 			continue
@@ -332,17 +332,6 @@ func (e *edged) syncPod(podCfg *config.PodConfig) {
 		}
 
 		switch resType {
-		case model.UnholdUpgradeOperation:
-			key := string(content)
-			if updates, exists := e.heldPodUpdates[key]; exists {
-				klog.V(4).Infof("Unholding pod upgrade: %s", key)
-				for _, update := range updates {
-					rawUpdateChan <- update
-				}
-				delete(e.heldPodUpdates, key)
-			} else {
-				klog.V(4).Infof("No held updates found for pod %s", key)
-			}
 		case model.ResourceTypePod:
 			if op == model.ResponseOperation && resID == "" && result.GetSource() == modules.MetaManagerModuleName {
 				err := e.handlePodListFromMetaManager(content, rawUpdateChan)
@@ -358,6 +347,18 @@ func (e *edged) syncPod(podCfg *config.PodConfig) {
 					continue
 				}
 				podCfg.SetInitPodReady(true)
+			} else if op == model.UnholdUpgradeOperation {
+				key := fmt.Sprintf("%s/%s", ns, resID)
+				if updates, exists := e.heldPodUpdates[key]; exists {
+					klog.V(4).Infof("Unholding pod upgrade: %s", key)
+					for _, update := range updates {
+						rawUpdateChan <- update
+					}
+					delete(e.heldPodUpdates, key)
+				} else {
+					klog.V(4).Infof("No held updates found for pod %s", key)
+				}
+				continue
 			} else {
 				err = e.handlePod(op, content, rawUpdateChan)
 				if err != nil {

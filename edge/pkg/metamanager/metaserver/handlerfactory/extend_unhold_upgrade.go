@@ -75,11 +75,10 @@ func (f *Factory) UnholdUpgrade() http.Handler {
 			return
 		}
 
-		resource := fmt.Sprintf("namespace/%s/id", model.UnholdUpgradeOperation)
+		// resource := fmt.Sprintf("namespace/%s/pod/%s", namespace, name)
+		resource := fmt.Sprintf("%s/pod/%s", namespace, name)
 		msg := model.NewMessage("").
-			BuildRouter(modules.MetaManagerModuleName, "", resource, model.UpdateOperation).
-			FillBody(keyBytes)
-
+			BuildRouter(modules.MetaManagerModuleName, "", resource, model.UnholdUpgradeOperation)
 		beehiveContext.Send(modules.EdgedModuleName, *msg)
 
 		w.WriteHeader(http.StatusOK)

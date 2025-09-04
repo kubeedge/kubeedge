@@ -62,6 +62,7 @@ func unholdPodUpgrade(target string) error {
 	result := clientset.CoreV1().RESTClient().Post().
 		Resource("pods").
 		SubResource("unhold-upgrade").
+		SetHeader("Content-Type", "text/plain").
 		Body([]byte(target)).
 		Do(ctx)
 
