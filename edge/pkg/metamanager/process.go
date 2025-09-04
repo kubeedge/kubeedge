@@ -227,14 +227,14 @@ func (m *metaManager) processInsert(message model.Message) {
 }
 
 func (m *metaManager) processUpdate(message model.Message) {
-	if _, resType, _ := parseResource(&message); resType == model.ResourceTypeEvent {
+	_, resType, _ := parseResource(&message)
+	if resType == model.ResourceTypeEvent {
 		sendToCloud(&message)
 		return
 	}
 	imitator.DefaultV2Client.Inject(message)
 
 	msgSource := message.GetSource()
-	_, resType, _ := parseResource(&message)
 	if msgSource == modules.EdgedModuleName && resType == model.ResourceTypeLease {
 		if !connect.IsConnected() {
 			klog.Warningf("process remote failed, req[%s], err: %v", msgDebugInfo(&message), errNotConnected)

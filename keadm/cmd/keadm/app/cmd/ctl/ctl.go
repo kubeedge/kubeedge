@@ -26,6 +26,7 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/get"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/logs"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/restart"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/unhold"
 )
 
 var ctlShortDescription = `Commands operating on the data plane at edge`
@@ -41,6 +42,7 @@ func NewCtl() *cobra.Command {
 	cmd.AddCommand(get.NewEdgeGet())
 	cmd.AddCommand(restart.NewEdgeRestart())
 	cmd.AddCommand(confirm.NewEdgeConfirm())
+	cmd.AddCommand(unhold.NewEdgeUnholdUpgrade())
 	cmd.AddCommand(logs.NewEdgePodLogs())
 	cmd.AddCommand(exec.NewEdgePodExec())
 	cmd.AddCommand(describe.NewEdgeDescribe())
