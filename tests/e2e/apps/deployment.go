@@ -384,5 +384,67 @@ var _ = GroupDescribe("Application deployment test in E2E scenario", func() {
 				g.Expect(currentPod.Status.Phase).To(gomega.Equal(corev1.PodRunning))
 			}, constants.Timeout, constants.Interval).Should(gomega.Succeed())
 		})
+
+		ginkgo.It("E2E_ES_NODE_HOLD_UPGRADE_2: Create multiple pods with hold-upgrade annotation on a node, expect pending, unhold node-wide, expect all pods running", func() {
+			nodeName := "edge-node"
+			podNames := []string{
+				"pod-node-hold-1-" + utils.GetRandomString(5),
+				"pod-node-hold-2-" + utils.GetRandomString(5),
+			}
+
+			// Create multiple pods with hold-upgrade annotation
+			for _, podName := range podNames {
+				pod := utils.NewPod(podName, utils.LoadConfig().AppImageURL[0])
+				pod.Annotations = map[string]string{"edge.kubeedge.io/hold-upgrade": "true"}
+
+				ginkgo.By(fmt.Sprintf("Creating pod %s with hold-upgrade annotation ", podName))
+				_, err := clientSet.CoreV1().Pods(metav1.NamespaceDefault).Create(context.TODO(), pod, metav1.CreateOptions{})
+				gomega.Expect(err).To(gomega.BeNil())
+			}
+
+			// Wait for all pods to be in pending state
+			for _, podName := range podNames {
+				gomega.Eventually(func(g gomega.Gomega) {
+					currentPod, err := clientSet.CoreV1().Pods(metav1.NamespaceDefault).Get(context.TODO(), podName, metav1.GetOptions{})
+					g.Expect(err).To(gomega.BeNil())
+					ginkgo.By(fmt.Sprintf("Pod %s phase=%s, conditions=%v", podName, currentPod.Status.Phase, currentPod.Status.Conditions))
+					g.Expect(currentPod.Status.Phase).To(gomega.Equal(corev1.PodPending))
+					held := false
+					for _, cond := range currentPod.Status.Conditions {
+						if cond.Type == "HeldUpgrade" && cond.Status == corev1.ConditionTrue {
+							held = true
+							break
+						}
+					}
+					g.Expect(held).To(gomega.BeTrue())
+				}, constants.Timeout, constants.Interval).Should(gomega.Succeed())
+			}
+
+			// Call metaserver unhold-upgrade API for node
+			ginkgo.By(fmt.Sprintf("Calling metaserver unhold-upgrade API for node %s", nodeName))
+			metaClient, err := clientset.NewForConfig(&rest.Config{
+				Host: kconstants.DefaultMetaServerAddr,
+			})
+			gomega.Expect(err).To(gomega.BeNil())
+
+			err = metaClient.CoreV1().RESTClient().Post().
+				Resource("nodes").
+				SubResource("unhold-upgrade").
+				SetHeader("Content-Type", "text/plain").
+				Body([]byte(nodeName)).
+				Do(context.TODO()).
+				Error()
+			gomega.Expect(err).To(gomega.BeNil())
+
+			// Wait for all pods to be running
+			for _, podName := range podNames {
+				gomega.Eventually(func(g gomega.Gomega) {
+					currentPod, err := clientSet.CoreV1().Pods(metav1.NamespaceDefault).Get(context.TODO(), podName, metav1.GetOptions{})
+					g.Expect(err).To(gomega.BeNil())
+					ginkgo.By(fmt.Sprintf("Pod %s phase=%s, conditions=%v", podName, currentPod.Status.Phase, currentPod.Status.Conditions))
+					g.Expect(currentPod.Status.Phase).To(gomega.Equal(corev1.PodRunning))
+				}, constants.Timeout, constants.Interval).Should(gomega.Succeed())
+			}
+		})
 	})
 })

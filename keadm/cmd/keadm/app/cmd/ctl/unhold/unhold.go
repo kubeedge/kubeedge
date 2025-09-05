@@ -24,25 +24,38 @@ import (
 	"github.com/spf13/cobra"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/kubeedge/api/apis/common/constants"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/metaclient"
 )
 
 // NewEdgeUnholdUpgrade returns KubeEdge unhold-upgrade command.
 func NewEdgeUnholdUpgrade() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "unhold-upgrade pod <pod-name>  [--namespace namespace]",
-		Short: "Unhold an upgrade for a pod",
-		Args:  cobra.ExactArgs(2),
+		Use:   "unhold-upgrade <resource-type> [<name>] [--namespace namespace]",
+		Short: "Unhold an upgrade for a pod or node-wide",
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) != 2 {
-				return fmt.Errorf("error: requires exactly two arguments (resource type and name, e.g.,  'pod <pod-name>')")
-			}
 			resourceType := args[0]
-			resourceName := args[1]
+			var resourceName string
+			if len(args) > 1 {
+				resourceName = args[1]
+			}
 			namespace, _ := cmd.Flags().GetString("namespace")
-
 			if resourceType == "pod" {
+				if resourceName == "" {
+					return fmt.Errorf("pod name is required")
+				}
 				return unholdPodUpgrade(fmt.Sprintf("%s/%s", namespace, resourceName))
+			} else if resourceType == "node" {
+				if resourceName == "" {
+					var err error
+					resourceName, err = getCurrentNodeName()
+					if err != nil {
+						return err
+					}
+				}
+				return unholdNodeUpgrade(resourceName)
 			} else {
 				return fmt.Errorf("error: unknown resource type: %s", resourceType)
 			}
@@ -53,6 +66,14 @@ func NewEdgeUnholdUpgrade() *cobra.Command {
 }
 
 func unholdPodUpgrade(target string) error {
+	return unholdResourceUpgrade("pods", target)
+}
+
+func unholdNodeUpgrade(target string) error {
+	return unholdResourceUpgrade("nodes", target)
+}
+
+func unholdResourceUpgrade(resource, target string) error {
 	ctx := context.Background()
 	clientset, err := metaclient.KubeClient()
 	if err != nil {
@@ -60,7 +81,7 @@ func unholdPodUpgrade(target string) error {
 	}
 
 	result := clientset.CoreV1().RESTClient().Post().
-		Resource("pods").
+		Resource(resource).
 		SubResource("unhold-upgrade").
 		SetHeader("Content-Type", "text/plain").
 		Body([]byte(target)).
@@ -76,11 +97,20 @@ func unholdPodUpgrade(target string) error {
 			} else {
 				msg = stErr.Status().Message
 			}
-			return fmt.Errorf("failed to unhold pod upgrade, status code: %d, message: %s",
-				stErr.Status().Code, msg)
+			return fmt.Errorf("failed to unhold %s upgrade, status code: %d, message: %s",
+				resource, stErr.Status().Code, msg)
 		}
 		return fmt.Errorf("failed to send unhold request to MetaService API, err: %v", result.Error())
 	}
 
 	return nil
+}
+
+func getCurrentNodeName() (string, error) {
+	config, err := util.ParseEdgecoreConfig(constants.EdgecoreConfigPath)
+	if err != nil {
+		return "", fmt.Errorf("get edge config failed with err:%v", err)
+	}
+	nodeName := config.Modules.Edged.HostnameOverride
+	return nodeName, nil
 }

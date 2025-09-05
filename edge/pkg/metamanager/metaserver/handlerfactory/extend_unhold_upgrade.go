@@ -23,6 +23,7 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -75,11 +76,64 @@ func (f *Factory) UnholdUpgrade() http.Handler {
 			return
 		}
 
-		// resource := fmt.Sprintf("namespace/%s/pod/%s", namespace, name)
 		resource := fmt.Sprintf("%s/pod/%s", namespace, name)
 		msg := model.NewMessage("").
 			BuildRouter(modules.MetaManagerModuleName, "", resource, model.UnholdUpgradeOperation)
 		beehiveContext.Send(modules.EdgedModuleName, *msg)
+
+		w.WriteHeader(http.StatusOK)
+	})
+	return h
+}
+
+func (f *Factory) UnholdUpgradeNode() http.Handler {
+	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
+		logger := klog.FromContext(ctx).WithName("unholdUpgradeNode")
+		logger.V(4).Info("start to unhold node-wide upgrade")
+
+		keyBytes, err := limitedReadBody(req, int64(3*1024*1024))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		nodeName := strings.TrimSpace(string(keyBytes))
+		if nodeName == "" {
+			http.Error(w, "node name required in body", http.StatusBadRequest)
+			return
+		}
+
+		clientset, err := metaclient.KubeClient()
+		if err != nil {
+			http.Error(w, fmt.Sprintf("cannot init kube client: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		_, err = clientset.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
+		if err != nil {
+			http.Error(w, fmt.Sprintf("node not found: %v", err), http.StatusNotFound)
+			return
+		}
+
+		fieldSelector := fields.SelectorFromSet(fields.Set{"spec.nodeName": nodeName}).String()
+		podList, err := clientset.CoreV1().Pods(metav1.NamespaceAll).List(ctx, metav1.ListOptions{
+			FieldSelector: fieldSelector,
+		})
+		if err != nil {
+			http.Error(w, fmt.Sprintf("failed to list pods: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		for _, pod := range podList.Items {
+			if pod.Annotations["edge.kubeedge.io/hold-upgrade"] != "true" || pod.Status.Phase != v1.PodPending {
+				continue
+			}
+			resource := fmt.Sprintf("%s/pod/%s", pod.Namespace, pod.Name)
+			msg := model.NewMessage("").
+				BuildRouter(modules.MetaManagerModuleName, "", resource, model.UnholdUpgradeOperation)
+			beehiveContext.Send(modules.EdgedModuleName, *msg)
+			logger.V(4).Info(fmt.Sprintf("Unhold message sent for pod %s/%s on node %s", pod.Namespace, pod.Name, nodeName))
+		}
 
 		w.WriteHeader(http.StatusOK)
 	})
