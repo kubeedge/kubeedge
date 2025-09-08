@@ -21,7 +21,7 @@ KUBEEDGE_ROOT=$PWD
 TEST_DIR=$(realpath $(dirname $0)/..)
 
 GOPATH=${GOPATH:-$(go env GOPATH)}
-KIND_IMAGE=${1:-"kindest/node:v1.30.0"}
+KIND_IMAGE=${1:-"kindest/node:v1.31.2"}
 CONFORMANCE_TYPE=${2:-"nodeconformance"}
 VERSION=$(git rev-parse --short=12 HEAD)
 

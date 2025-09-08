@@ -464,3 +464,7 @@ func (cs *controllerServer) ListSnapshots(context.Context, *csi.ListSnapshotsReq
 func (cs *controllerServer) ControllerGetVolume(context.Context, *csi.ControllerGetVolumeRequest) (*csi.ControllerGetVolumeResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "ControllerGetVolume is not yet implemented")
 }
+
+func (cs *controllerServer) ControllerModifyVolume(ctx context.Context, req *csi.ControllerModifyVolumeRequest) (*csi.ControllerModifyVolumeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ControllerModifyVolume not implemented")
+}

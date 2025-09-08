@@ -26,9 +26,9 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
+	remote "k8s.io/cri-client/pkg"
 	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/kubelet/cm"
-	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
 
 	apiconsts "github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
@@ -55,7 +55,8 @@ func NewContainerRuntime(endpoint, cgroupDriver string) (ContainerRuntime, error
 	if err != nil {
 		return nil, err
 	}
-	ctrsvc, err := remote.NewRemoteRuntimeService(endpoint, timeout, noop.NewTracerProvider())
+	logger := klog.Background()
+	ctrsvc, err := remote.NewRemoteRuntimeService(endpoint, timeout, noop.NewTracerProvider(), &logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to new remote runtime service, err: %v", err)
 	}

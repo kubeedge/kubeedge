@@ -13,11 +13,11 @@ require (
 	github.com/kubeedge/mapper-framework v0.0.0
 	github.com/sailorvii/goav v0.1.4
 	github.com/taosdata/driver-go/v3 v3.5.1
-	go.opentelemetry.io/otel v1.23.0
-	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.23.0
-	go.opentelemetry.io/otel/metric v1.23.0
-	go.opentelemetry.io/otel/sdk v1.23.0
-	go.opentelemetry.io/otel/sdk/metric v1.23.0
+	go.opentelemetry.io/otel v1.30.0
+	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.30.0
+	go.opentelemetry.io/otel/metric v1.30.0
+	go.opentelemetry.io/otel/sdk v1.30.0
+	go.opentelemetry.io/otel/sdk/metric v1.30.0
 	k8s.io/klog/v2 v2.120.1
 )
 

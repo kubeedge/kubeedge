@@ -41,22 +41,24 @@ var objectsyncsKind = v1alpha1.SchemeGroupVersion.WithKind("ObjectSync")
 
 // Get takes name of the objectSync, and returns the corresponding objectSync object, and an error if there is any.
 func (c *FakeObjectSyncs) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.ObjectSync, err error) {
+	emptyResult := &v1alpha1.ObjectSync{}
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(objectsyncsResource, c.ns, name), &v1alpha1.ObjectSync{})
+		Invokes(testing.NewGetActionWithOptions(objectsyncsResource, c.ns, name, options), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.ObjectSync), err
 }
 
 // List takes label and field selectors, and returns the list of ObjectSyncs that match those selectors.
 func (c *FakeObjectSyncs) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.ObjectSyncList, err error) {
+	emptyResult := &v1alpha1.ObjectSyncList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(objectsyncsResource, objectsyncsKind, c.ns, opts), &v1alpha1.ObjectSyncList{})
+		Invokes(testing.NewListActionWithOptions(objectsyncsResource, objectsyncsKind, c.ns, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -75,40 +77,43 @@ func (c *FakeObjectSyncs) List(ctx context.Context, opts v1.ListOptions) (result
 // Watch returns a watch.Interface that watches the requested objectSyncs.
 func (c *FakeObjectSyncs) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(objectsyncsResource, c.ns, opts))
+		InvokesWatch(testing.NewWatchActionWithOptions(objectsyncsResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a objectSync and creates it.  Returns the server's representation of the objectSync, and an error, if there is any.
 func (c *FakeObjectSyncs) Create(ctx context.Context, objectSync *v1alpha1.ObjectSync, opts v1.CreateOptions) (result *v1alpha1.ObjectSync, err error) {
+	emptyResult := &v1alpha1.ObjectSync{}
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(objectsyncsResource, c.ns, objectSync), &v1alpha1.ObjectSync{})
+		Invokes(testing.NewCreateActionWithOptions(objectsyncsResource, c.ns, objectSync, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.ObjectSync), err
 }
 
 // Update takes the representation of a objectSync and updates it. Returns the server's representation of the objectSync, and an error, if there is any.
 func (c *FakeObjectSyncs) Update(ctx context.Context, objectSync *v1alpha1.ObjectSync, opts v1.UpdateOptions) (result *v1alpha1.ObjectSync, err error) {
+	emptyResult := &v1alpha1.ObjectSync{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(objectsyncsResource, c.ns, objectSync), &v1alpha1.ObjectSync{})
+		Invokes(testing.NewUpdateActionWithOptions(objectsyncsResource, c.ns, objectSync, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.ObjectSync), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeObjectSyncs) UpdateStatus(ctx context.Context, objectSync *v1alpha1.ObjectSync, opts v1.UpdateOptions) (*v1alpha1.ObjectSync, error) {
+func (c *FakeObjectSyncs) UpdateStatus(ctx context.Context, objectSync *v1alpha1.ObjectSync, opts v1.UpdateOptions) (result *v1alpha1.ObjectSync, err error) {
+	emptyResult := &v1alpha1.ObjectSync{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceAction(objectsyncsResource, "status", c.ns, objectSync), &v1alpha1.ObjectSync{})
+		Invokes(testing.NewUpdateSubresourceActionWithOptions(objectsyncsResource, "status", c.ns, objectSync, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.ObjectSync), err
 }
@@ -123,7 +128,7 @@ func (c *FakeObjectSyncs) Delete(ctx context.Context, name string, opts v1.Delet
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeObjectSyncs) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(objectsyncsResource, c.ns, listOpts)
+	action := testing.NewDeleteCollectionActionWithOptions(objectsyncsResource, c.ns, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.ObjectSyncList{})
 	return err
@@ -131,11 +136,12 @@ func (c *FakeObjectSyncs) DeleteCollection(ctx context.Context, opts v1.DeleteOp
 
 // Patch applies the patch and returns the patched objectSync.
 func (c *FakeObjectSyncs) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.ObjectSync, err error) {
+	emptyResult := &v1alpha1.ObjectSync{}
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(objectsyncsResource, c.ns, name, pt, data, subresources...), &v1alpha1.ObjectSync{})
+		Invokes(testing.NewPatchSubresourceActionWithOptions(objectsyncsResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.ObjectSync), err
 }

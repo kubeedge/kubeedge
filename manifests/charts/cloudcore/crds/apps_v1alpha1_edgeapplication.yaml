@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.15.0
+    controller-gen.kubebuilder.io/version: v0.16.5
   name: edgeapplications.apps.kubeedge.io
 spec:
   group: apps.kubeedge.io
@@ -185,9 +185,7 @@ spec:
                                                     This field is effectively required, but due to backwards compatibility is
                                                     allowed to be empty. Instances of this type with an empty value here are
                                                     almost certainly wrong.
-                                                    TODO: Add other useful fields. apiVersion, kind, uid?
                                                     More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                                    TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                                   type: string
                                                 optional:
                                                   description: Specify whether the
@@ -258,9 +256,7 @@ spec:
                                                     This field is effectively required, but due to backwards compatibility is
                                                     allowed to be empty. Instances of this type with an empty value here are
                                                     almost certainly wrong.
-                                                    TODO: Add other useful fields. apiVersion, kind, uid?
                                                     More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                                    TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                                   type: string
                                                 optional:
                                                   description: Specify whether the
@@ -318,7 +314,6 @@ spec:
                                     description: |-
                                       Predicate filters images before applying the rule.
 
-
                                       Defaults to nil, in that case, the system will automatically detect image fields if the resource type is
                                       Pod, ReplicaSet, Deployment or StatefulSet by following rule:
                                         - Pod: /spec/containers/<N>/image
@@ -326,7 +321,6 @@ spec:
                                         - Deployment: /spec/template/spec/containers/<N>/image
                                         - StatefulSet: /spec/template/spec/containers/<N>/image
                                       In addition, all images will be processed if the resource object has more than one containers.
-
 
                                       If not nil, only images matches the filters will be processed.
                                     properties:
@@ -372,10 +366,8 @@ spec:
                                           Claims lists the names of resources, defined in spec.resourceClaims,
                                           that are used by this container.
 
-
                                           This is an alpha field and requires enabling the
                                           DynamicResourceAllocation feature gate.
-
 
                                           This field is immutable. It can only be set for containers.
                                         items:
@@ -387,6 +379,12 @@ spec:
                                                 Name must match the name of one entry in pod.spec.resourceClaims of
                                                 the Pod where this field is used. It makes that resource available
                                                 inside a container.
+                                              type: string
+                                            request:
+                                              description: |-
+                                                Request is the name chosen for a request in the referenced claim.
+                                                If empty, everything from the claim is made available, otherwise
+                                                only the result of this request.
                                               type: string
                                           required:
                                           - name
@@ -422,6 +420,7 @@ spec:
                                     type: object
                                 required:
                                 - containerName
+                                - value
                                 type: object
                               type: array
                           type: object
@@ -615,9 +614,7 @@ spec:
                                                     This field is effectively required, but due to backwards compatibility is
                                                     allowed to be empty. Instances of this type with an empty value here are
                                                     almost certainly wrong.
-                                                    TODO: Add other useful fields. apiVersion, kind, uid?
                                                     More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                                    TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                                   type: string
                                                 optional:
                                                   description: Specify whether the
@@ -688,9 +685,7 @@ spec:
                                                     This field is effectively required, but due to backwards compatibility is
                                                     allowed to be empty. Instances of this type with an empty value here are
                                                     almost certainly wrong.
-                                                    TODO: Add other useful fields. apiVersion, kind, uid?
                                                     More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                                    TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                                   type: string
                                                 optional:
                                                   description: Specify whether the
@@ -748,7 +743,6 @@ spec:
                                     description: |-
                                       Predicate filters images before applying the rule.
 
-
                                       Defaults to nil, in that case, the system will automatically detect image fields if the resource type is
                                       Pod, ReplicaSet, Deployment or StatefulSet by following rule:
                                         - Pod: /spec/containers/<N>/image
@@ -756,7 +750,6 @@ spec:
                                         - Deployment: /spec/template/spec/containers/<N>/image
                                         - StatefulSet: /spec/template/spec/containers/<N>/image
                                       In addition, all images will be processed if the resource object has more than one containers.
-
 
                                       If not nil, only images matches the filters will be processed.
                                     properties:
@@ -802,10 +795,8 @@ spec:
                                           Claims lists the names of resources, defined in spec.resourceClaims,
                                           that are used by this container.
 
-
                                           This is an alpha field and requires enabling the
                                           DynamicResourceAllocation feature gate.
-
 
                                           This field is immutable. It can only be set for containers.
                                         items:
@@ -817,6 +808,12 @@ spec:
                                                 Name must match the name of one entry in pod.spec.resourceClaims of
                                                 the Pod where this field is used. It makes that resource available
                                                 inside a container.
+                                              type: string
+                                            request:
+                                              description: |-
+                                                Request is the name chosen for a request in the referenced claim.
+                                                If empty, everything from the claim is made available, otherwise
+                                                only the result of this request.
                                               type: string
                                           required:
                                           - name
@@ -852,6 +849,7 @@ spec:
                                     type: object
                                 required:
                                 - containerName
+                                - value
                                 type: object
                               type: array
                           type: object
@@ -932,6 +930,8 @@ spec:
                   type: object
                 type: array
             type: object
+        required:
+        - spec
         type: object
     served: true
     storage: true

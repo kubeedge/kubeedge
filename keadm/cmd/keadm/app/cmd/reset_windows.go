@@ -149,11 +149,8 @@ func RemoveContainers(execer utilsexec.Interface) error {
 		return err
 	}
 
-	containerRuntime, err := utilruntime.NewContainerRuntime(execer, criSocketPath)
-	if err != nil {
-		return err
-	}
-
+	containerRuntime := utilruntime.NewContainerRuntime(criSocketPath)
+	
 	containers, err := containerRuntime.ListKubeContainers()
 	if err != nil {
 		return err

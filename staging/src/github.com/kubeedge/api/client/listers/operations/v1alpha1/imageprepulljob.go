@@ -20,8 +20,8 @@ package v1alpha1
 
 import (
 	v1alpha1 "github.com/kubeedge/api/apis/operations/v1alpha1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/listers"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -39,30 +39,10 @@ type ImagePrePullJobLister interface {
 
 // imagePrePullJobLister implements the ImagePrePullJobLister interface.
 type imagePrePullJobLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*v1alpha1.ImagePrePullJob]
 }
 
 // NewImagePrePullJobLister returns a new ImagePrePullJobLister.
 func NewImagePrePullJobLister(indexer cache.Indexer) ImagePrePullJobLister {
-	return &imagePrePullJobLister{indexer: indexer}
-}
-
-// List lists all ImagePrePullJobs in the indexer.
-func (s *imagePrePullJobLister) List(selector labels.Selector) (ret []*v1alpha1.ImagePrePullJob, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.ImagePrePullJob))
-	})
-	return ret, err
-}
-
-// Get retrieves the ImagePrePullJob from the index for a given name.
-func (s *imagePrePullJobLister) Get(name string) (*v1alpha1.ImagePrePullJob, error) {
-	obj, exists, err := s.indexer.GetByKey(name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1alpha1.Resource("imageprepulljob"), name)
-	}
-	return obj.(*v1alpha1.ImagePrePullJob), nil
+	return &imagePrePullJobLister{listers.New[*v1alpha1.ImagePrePullJob](indexer, v1alpha1.Resource("imageprepulljob"))}
 }

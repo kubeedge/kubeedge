@@ -1,6 +1,3 @@
-//go:build !providerless
-// +build !providerless
-
 /*
 Copyright 2019 The Kubernetes Authors.
 
@@ -20,9 +17,6 @@ limitations under the License.
 package app
 
 import (
-	// Credential providers
-	_ "k8s.io/kubernetes/pkg/credentialprovider/gcp"
-
 	"k8s.io/component-base/featuregate"
 	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/volume"

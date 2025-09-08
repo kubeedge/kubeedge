@@ -26,7 +26,8 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
+	remote "k8s.io/cri-client/pkg"
+	"k8s.io/klog/v2"
 )
 
 type Runtime interface {
@@ -48,7 +49,8 @@ type RuntimeImpl struct {
 var _ Runtime = (*RuntimeImpl)(nil)
 
 func NewImageRuntime(endpoint string, timeout time.Duration) (*RuntimeImpl, error) {
-	imgsvc, err := remote.NewRemoteImageService(endpoint, timeout, noop.NewTracerProvider())
+	logger := klog.Background()
+	imgsvc, err := remote.NewRemoteImageService(endpoint, timeout, noop.NewTracerProvider(), &logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to new remote image service, err: %v", err)
 	}

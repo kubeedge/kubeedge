@@ -40,20 +40,22 @@ var imageprepulljobsKind = v1alpha1.SchemeGroupVersion.WithKind("ImagePrePullJob
 
 // Get takes name of the imagePrePullJob, and returns the corresponding imagePrePullJob object, and an error if there is any.
 func (c *FakeImagePrePullJobs) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.ImagePrePullJob, err error) {
+	emptyResult := &v1alpha1.ImagePrePullJob{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootGetAction(imageprepulljobsResource, name), &v1alpha1.ImagePrePullJob{})
+		Invokes(testing.NewRootGetActionWithOptions(imageprepulljobsResource, name, options), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.ImagePrePullJob), err
 }
 
 // List takes label and field selectors, and returns the list of ImagePrePullJobs that match those selectors.
 func (c *FakeImagePrePullJobs) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.ImagePrePullJobList, err error) {
+	emptyResult := &v1alpha1.ImagePrePullJobList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootListAction(imageprepulljobsResource, imageprepulljobsKind, opts), &v1alpha1.ImagePrePullJobList{})
+		Invokes(testing.NewRootListActionWithOptions(imageprepulljobsResource, imageprepulljobsKind, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -72,36 +74,39 @@ func (c *FakeImagePrePullJobs) List(ctx context.Context, opts v1.ListOptions) (r
 // Watch returns a watch.Interface that watches the requested imagePrePullJobs.
 func (c *FakeImagePrePullJobs) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewRootWatchAction(imageprepulljobsResource, opts))
+		InvokesWatch(testing.NewRootWatchActionWithOptions(imageprepulljobsResource, opts))
 }
 
 // Create takes the representation of a imagePrePullJob and creates it.  Returns the server's representation of the imagePrePullJob, and an error, if there is any.
 func (c *FakeImagePrePullJobs) Create(ctx context.Context, imagePrePullJob *v1alpha1.ImagePrePullJob, opts v1.CreateOptions) (result *v1alpha1.ImagePrePullJob, err error) {
+	emptyResult := &v1alpha1.ImagePrePullJob{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootCreateAction(imageprepulljobsResource, imagePrePullJob), &v1alpha1.ImagePrePullJob{})
+		Invokes(testing.NewRootCreateActionWithOptions(imageprepulljobsResource, imagePrePullJob, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.ImagePrePullJob), err
 }
 
 // Update takes the representation of a imagePrePullJob and updates it. Returns the server's representation of the imagePrePullJob, and an error, if there is any.
 func (c *FakeImagePrePullJobs) Update(ctx context.Context, imagePrePullJob *v1alpha1.ImagePrePullJob, opts v1.UpdateOptions) (result *v1alpha1.ImagePrePullJob, err error) {
+	emptyResult := &v1alpha1.ImagePrePullJob{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateAction(imageprepulljobsResource, imagePrePullJob), &v1alpha1.ImagePrePullJob{})
+		Invokes(testing.NewRootUpdateActionWithOptions(imageprepulljobsResource, imagePrePullJob, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.ImagePrePullJob), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeImagePrePullJobs) UpdateStatus(ctx context.Context, imagePrePullJob *v1alpha1.ImagePrePullJob, opts v1.UpdateOptions) (*v1alpha1.ImagePrePullJob, error) {
+func (c *FakeImagePrePullJobs) UpdateStatus(ctx context.Context, imagePrePullJob *v1alpha1.ImagePrePullJob, opts v1.UpdateOptions) (result *v1alpha1.ImagePrePullJob, err error) {
+	emptyResult := &v1alpha1.ImagePrePullJob{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateSubresourceAction(imageprepulljobsResource, "status", imagePrePullJob), &v1alpha1.ImagePrePullJob{})
+		Invokes(testing.NewRootUpdateSubresourceActionWithOptions(imageprepulljobsResource, "status", imagePrePullJob, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.ImagePrePullJob), err
 }
@@ -115,7 +120,7 @@ func (c *FakeImagePrePullJobs) Delete(ctx context.Context, name string, opts v1.
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeImagePrePullJobs) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(imageprepulljobsResource, listOpts)
+	action := testing.NewRootDeleteCollectionActionWithOptions(imageprepulljobsResource, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.ImagePrePullJobList{})
 	return err
@@ -123,10 +128,11 @@ func (c *FakeImagePrePullJobs) DeleteCollection(ctx context.Context, opts v1.Del
 
 // Patch applies the patch and returns the patched imagePrePullJob.
 func (c *FakeImagePrePullJobs) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.ImagePrePullJob, err error) {
+	emptyResult := &v1alpha1.ImagePrePullJob{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(imageprepulljobsResource, name, pt, data, subresources...), &v1alpha1.ImagePrePullJob{})
+		Invokes(testing.NewRootPatchSubresourceActionWithOptions(imageprepulljobsResource, name, pt, data, opts, subresources...), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.ImagePrePullJob), err
 }
