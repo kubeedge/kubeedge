@@ -36,6 +36,7 @@ import (
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/golang/protobuf/jsonpb"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	"k8s.io/component-base/featuregate"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -85,16 +86,19 @@ var DefaultRunLiteKubelet RunLiteKubelet = kubeletserver.Run
 
 // edged is the main edged implementation.
 type edged struct {
-	enable        bool
-	KubeletServer *kubeletoptions.KubeletServer
-	KubeletDeps   *kubelet.Dependencies
-	FeatureGate   featuregate.FeatureGate
-	context       context.Context
-	nodeName      string
-	namespace     string
+	enable         bool
+	KubeletServer  *kubeletoptions.KubeletServer
+	KubeletDeps    *kubelet.Dependencies
+	FeatureGate    featuregate.FeatureGate
+	context        context.Context
+	nodeName       string
+	namespace      string
+	heldPodUpdates map[string][]kubelettypes.PodUpdate
 }
 
 var _ core.Module = (*edged)(nil)
+
+const holdUpgradeLabel = "edge.kubeedge.io/hold-upgrade"
 
 // Register register edged
 func Register(e *v1alpha2.Edged) {
@@ -264,13 +268,14 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 	kubeletDeps.PodConfig = config.NewPodConfig(config.PodConfigNotificationIncremental, kubeletDeps.Recorder, kubeletDeps.PodStartupLatencyTracker)
 
 	ed = &edged{
-		enable:        true,
-		context:       context.Background(),
-		KubeletServer: &kubeletServer,
-		KubeletDeps:   kubeletDeps,
-		FeatureGate:   utilfeature.DefaultFeatureGate,
-		nodeName:      nodeName,
-		namespace:     namespace,
+		enable:         true,
+		context:        context.Background(),
+		KubeletServer:  &kubeletServer,
+		KubeletDeps:    kubeletDeps,
+		FeatureGate:    utilfeature.DefaultFeatureGate,
+		nodeName:       nodeName,
+		namespace:      namespace,
+		heldPodUpdates: make(map[string][]kubelettypes.PodUpdate),
 	}
 
 	return ed, nil
@@ -313,12 +318,12 @@ func (e *edged) syncPod(podCfg *config.PodConfig) {
 			continue
 		}
 
-		_, resType, resID, err := commonmsg.ParseResourceEdge(result.GetResource(), result.GetOperation())
+		op := result.GetOperation()
+		ns, resType, resID, err := commonmsg.ParseResourceEdge(result.GetResource(), op)
 		if err != nil {
 			klog.Errorf("failed to parse the Resource: %v", err)
 			continue
 		}
-		op := result.GetOperation()
 
 		content, err := result.GetContentData()
 		if err != nil {
@@ -342,6 +347,18 @@ func (e *edged) syncPod(podCfg *config.PodConfig) {
 					continue
 				}
 				podCfg.SetInitPodReady(true)
+			} else if op == model.UnholdUpgradeOperation {
+				key := fmt.Sprintf("%s/%s", ns, resID)
+				if updates, exists := e.heldPodUpdates[key]; exists {
+					klog.V(4).Infof("Unholding pod upgrade: %s", key)
+					for _, update := range updates {
+						rawUpdateChan <- update
+					}
+					delete(e.heldPodUpdates, key)
+				} else {
+					klog.V(4).Infof("No held updates found for pod %s", key)
+				}
+				continue
 			} else {
 				err = e.handlePod(op, content, rawUpdateChan)
 				if err != nil {
@@ -404,8 +421,20 @@ func (e *edged) handlePod(op string, content []byte, updatesChan chan<- interfac
 	if filterPodByNodeName(&pod, e.nodeName) {
 		var podOp kubelettypes.PodOperation
 		switch op {
-		case model.InsertOperation, model.UpdateOperation:
-			klog.V(4).InfoS("Receive message of add/update pods", "operation", op, "pods", klog.KObjSlice(pods))
+		case model.InsertOperation:
+			klog.V(4).InfoS("Receive message of add pods", "operation", op, "pods", klog.KObjSlice(pods))
+			podOp = kubelettypes.UPDATE
+		case model.UpdateOperation:
+			klog.V(4).InfoS("Receive message of update pods", "operation", op, "pods", klog.KObjSlice(pods))
+
+			hold, err := e.holdUpgrade(&pod)
+			if err != nil {
+				return err
+			}
+			if hold {
+				return nil
+			}
+
 			podOp = kubelettypes.UPDATE
 		case model.DeleteOperation:
 			klog.V(4).InfoS("Receive message of deleting pods", "pods", klog.KObjSlice(pods))
@@ -414,6 +443,75 @@ func (e *edged) handlePod(op string, content []byte, updatesChan chan<- interfac
 		updates := &kubelettypes.PodUpdate{Op: podOp, Pods: pods, Source: kubelettypes.ApiserverSource}
 		updatesChan <- *updates
 	}
+
+	return nil
+}
+
+func (e *edged) holdUpgrade(pod *v1.Pod) (bool, error) {
+	if pod.DeletionTimestamp != nil {
+		return false, nil
+	}
+
+	if pod.Annotations[holdUpgradeLabel] != "true" {
+		return false, nil
+	}
+
+	if pod.Status.Phase != v1.PodPending {
+		return false, nil
+	}
+
+	klog.V(4).InfoS("Holding pod upgrade due to hold-upgrade annotation", "pod", klog.KObj(pod))
+
+	v := kubelettypes.PodUpdate{
+		Op:     kubelettypes.UPDATE,
+		Pods:   []*v1.Pod{pod},
+		Source: kubelettypes.ApiserverSource,
+	}
+
+	key := fmt.Sprintf("%s/%s", pod.Namespace, pod.Name)
+	e.heldPodUpdates[key] = append(e.heldPodUpdates[key], v)
+
+	klog.V(4).InfoS("Pod update held and cached", "pod", klog.KObj(pod))
+	return true, e.updateHeldUpgradeCondition(pod)
+}
+
+func (e *edged) updateHeldUpgradeCondition(pod *v1.Pod) error {
+	patch := struct {
+		Status struct {
+			Conditions []v1.PodCondition `json:"conditions"`
+		} `json:"status"`
+	}{
+		Status: struct {
+			Conditions []v1.PodCondition `json:"conditions"`
+		}{
+			Conditions: []v1.PodCondition{
+				{
+					Type:               "HeldUpgrade",
+					Status:             v1.ConditionTrue,
+					Reason:             "HoldUpgradeEnabled",
+					Message:            "Upgrade is currently held due to edge-hold-upgrade annotation",
+					LastTransitionTime: metav1.Now(),
+				},
+			},
+		},
+	}
+
+	content, err := json.Marshal(patch)
+	if err != nil {
+		klog.Errorf("Failed to marshal patch for Pod %s/%s: %v", pod.Namespace, pod.Name, err)
+		return fmt.Errorf("failed to marshal patch: %v", err)
+	}
+
+	klog.V(4).Infof("Generated patch for Pod %s/%s, length: %d, content: %s", pod.Namespace, pod.Name, len(content), string(content))
+
+	resource := fmt.Sprintf("%s/%s/%s", pod.Namespace, model.ResourceTypePodPatch, pod.Name)
+
+	msg := model.NewMessage("").
+		BuildRouter(e.Name(), modules.MetaGroup, resource, model.PatchOperation).
+		FillBody(string(content))
+
+	klog.V(4).Infof("Sending status update for Pod %s/%s to edged, msgID: %s", pod.Namespace, pod.Name, msg.GetID())
+	beehiveContext.Send(modules.MetaManagerModuleName, *msg)
 
 	return nil
 }
@@ -434,6 +532,12 @@ func (e *edged) handlePodListFromMetaManager(content []byte, updatesChan chan<- 
 		}
 
 		if filterPodByNodeName(&pod, e.nodeName) {
+			if pod.Annotations[holdUpgradeLabel] == "true" && pod.Status.Phase == v1.PodPending {
+				key := fmt.Sprintf("%s/%s", pod.Namespace, pod.Name)
+				e.heldPodUpdates[key] = append(e.heldPodUpdates[key], kubelettypes.PodUpdate{Op: kubelettypes.SET, Pods: []*v1.Pod{&pod}, Source: kubelettypes.ApiserverSource})
+				continue
+			}
+
 			pods = append(pods, &pod)
 		}
 	}

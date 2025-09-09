@@ -294,6 +294,10 @@ function start_edgecore {
 
   echo "start edgecore..."
   export CHECK_EDGECORE_ENVIRONMENT="false"
+
+  sudo mkdir -p /etc/kubeedge/config
+  sudo ln -sf ${EDGE_CONFIGFILE} /etc/kubeedge/config/edgecore.yaml
+
   nohup sudo -E ${EDGE_BIN} --config=${EDGE_CONFIGFILE} --v=${LOG_LEVEL} >"${EDGECORE_LOG}" 2>&1 &
   EDGECORE_PID=$!
 }
