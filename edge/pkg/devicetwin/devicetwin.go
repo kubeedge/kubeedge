@@ -10,6 +10,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtmodule"
+	"github.com/kubeedge/kubeedge/pkg/features"
 )
 
 // DeviceTwin the module
@@ -51,6 +52,16 @@ func (dt *DeviceTwin) Group() string {
 // Enable indicates whether this module is enabled
 func (dt *DeviceTwin) Enable() bool {
 	return dt.enable
+}
+
+func (dt *DeviceTwin) RestartPolicy() *core.ModuleRestartPolicy {
+	if !features.DefaultFeatureGate.Enabled(features.ModuleRestart) {
+		return nil
+	}
+	return &core.ModuleRestartPolicy{
+		RestartType:            core.RestartTypeOnFailure,
+		IntervalTimeGrowthRate: 2.0,
+	}
 }
 
 // Start run the module
