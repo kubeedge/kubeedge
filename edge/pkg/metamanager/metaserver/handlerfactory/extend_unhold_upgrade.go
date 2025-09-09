@@ -29,6 +29,7 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/metaclient"
 )
 
@@ -125,7 +126,7 @@ func (f *Factory) UnholdUpgradeNode() http.Handler {
 		}
 
 		for _, pod := range podList.Items {
-			if pod.Annotations["edge.kubeedge.io/hold-upgrade"] != "true" || pod.Status.Phase != v1.PodPending {
+			if pod.Annotations["edge.kubeedge.io/hold-upgrade"] != common.TrueStr || pod.Status.Phase != v1.PodPending {
 				continue
 			}
 			resource := fmt.Sprintf("%s/pod/%s", pod.Namespace, pod.Name)
