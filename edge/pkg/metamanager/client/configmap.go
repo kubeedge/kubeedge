@@ -9,7 +9,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 )
 
 // ConfigMapsGetter has a method to return a ConfigMapInterface.
@@ -69,7 +69,7 @@ func (c *configMaps) Get(name string) (*api.ConfigMap, error) {
 		return handleConfigMapFromMetaManager(content)
 	}
 
-	metas, err := dao.QueryMeta("key", resource)
+	metas, err := dbclient.NewMetaService().QueryMeta("key", resource)
 	if err != nil || len(*metas) == 0 {
 		return remoteGet()
 	}

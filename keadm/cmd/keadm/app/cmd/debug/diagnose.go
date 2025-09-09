@@ -10,7 +10,7 @@ import (
 	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/common/types"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/kubeedge/kubeedge/pkg/util/files"
@@ -227,7 +227,7 @@ func QueryPodFromDatabase(resNamePaces string, podName string) (*v1.PodStatus, e
 	conditionsPod := fmt.Sprintf("%v/pod/%v",
 		resNamePaces,
 		podName)
-	resultPod, err := dao.QueryMeta("key", conditionsPod)
+	resultPod, err := dbclient.NewMetaService().QueryMeta("key", conditionsPod)
 	if err != nil {
 		return nil, fmt.Errorf("read database fail: %s", err.Error())
 	}
@@ -239,7 +239,7 @@ func QueryPodFromDatabase(resNamePaces string, podName string) (*v1.PodStatus, e
 	conditionsStatus := fmt.Sprintf("%v/podstatus/%v",
 		resNamePaces,
 		podName)
-	resultStatus, err := dao.QueryMeta("key", conditionsStatus)
+	resultStatus, err := dbclient.NewMetaService().QueryMeta("key", conditionsStatus)
 	if err != nil {
 		return nil, fmt.Errorf("read database fail: %s", err.Error())
 	}
