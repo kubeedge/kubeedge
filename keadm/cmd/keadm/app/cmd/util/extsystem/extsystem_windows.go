@@ -19,9 +19,12 @@ limitations under the License.
 package extsystem
 
 import (
-	"errors"
 	"fmt"
 	"os/exec"
+	"time"
+
+	"github.com/pkg/errors"
+	"golang.org/x/sys/windows/svc"
 
 	"golang.org/x/sys/windows/svc/mgr"
 	"k8s.io/kubernetes/cmd/kubeadm/app/util/initsystem"
@@ -76,7 +79,63 @@ func (WindowsExtSystem) ServiceEnable(service string) error {
 }
 
 func (w WindowsExtSystem) ServiceStart(service string) error {
-	return w.WindowsInitSystem.ServiceStart(service)
+	m, err := mgr.Connect()
+	if err != nil {
+		return err
+	}
+	defer m.Disconnect()
+
+	s, err := m.OpenService(service)
+	if err != nil {
+		return errors.Wrapf(err, "could not access service %s", service)
+	}
+	defer s.Close()
+
+	// Check if service is already started
+	status, err := s.Query()
+	if err != nil {
+		return errors.Wrapf(err, "could not query service %s", service)
+	}
+
+	if status.State != svc.Stopped && status.State != svc.StopPending {
+		return nil
+	}
+
+	timeout := time.Now().Add(10 * time.Second)
+	for status.State != svc.Stopped {
+		if timeout.Before(time.Now()) {
+			return errors.Errorf("timeout waiting for %s service to stop", service)
+		}
+		time.Sleep(300 * time.Millisecond)
+		status, err = s.Query()
+		if err != nil {
+			return errors.Wrapf(err, "could not retrieve %s service status", service)
+		}
+	}
+
+	// Start the service
+	err = s.Start()
+	if err != nil {
+		return errors.Wrapf(err, "could not start service %s", service)
+	}
+
+	// Check that the start was successful
+	status, err = s.Query()
+	if err != nil {
+		return errors.Wrapf(err, "could not query service %s", service)
+	}
+	timeout = time.Now().Add(10 * time.Second)
+	for status.State != svc.Running {
+		if timeout.Before(time.Now()) {
+			return errors.Errorf("timeout waiting for %s service to start", service)
+		}
+		time.Sleep(300 * time.Millisecond)
+		status, err = s.Query()
+		if err != nil {
+			return errors.Wrapf(err, "could not retrieve %s service status", service)
+		}
+	}
+	return nil
 }
 
 func (w WindowsExtSystem) ServiceStop(service string) error {
