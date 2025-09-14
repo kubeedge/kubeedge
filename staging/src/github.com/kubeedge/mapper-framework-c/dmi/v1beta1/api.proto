@@ -1,0 +1,465 @@
+/*
+Copyright 2023 The KubeEdge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// To regenerate api.pb.go run hack/generate-dmi-proto.sh
+syntax = "proto3";
+
+//option go_package = "path;name";
+option go_package = "./;v1beta1";
+package v1beta1;
+
+import "google/protobuf/any.proto";
+
+// DeviceManagerService defines the public APIS for remote device management.
+// The server is implemented by the module of device manager in edgecore
+// and the client is implemented by the device mapper for upstreaming.
+// The mapper should register itself to the device manager when it is online
+// to get the list of devices. And then the mapper can report the device status to the device manager.
+service DeviceManagerService {
+    // MapperRegister registers the information of the mapper to device manager
+    // when the mapper is online. Device manager returns the list of devices and device models which
+    // this mapper should manage.
+    rpc MapperRegister(MapperRegisterRequest) returns (MapperRegisterResponse) {}
+    // ReportDeviceStatus reports the status of devices to device manager.
+    // When the mapper collects some properties of a device, it can make them a map of device twins
+    // and report it to the device manager through the interface of ReportDeviceStatus.
+    rpc ReportDeviceStatus(ReportDeviceStatusRequest) returns (ReportDeviceStatusResponse) {}
+    // TODO Rename ReportDeviceStatus to ReportDeviceTwins
+    // ReportDeviceStates reports the state of devices to device manager.
+    rpc ReportDeviceStates(ReportDeviceStatesRequest) returns (ReportDeviceStatesResponse) {}
+}
+
+// DeviceMapperService defines the public APIS for remote device management.
+// The server is implemented by the device mapper
+// and the client is implemented by the module of device manager in edgecore for downstreaming.
+// The device manager can manage the device life cycle through these interfaces provided by DeviceMapperService.
+// When device manager gets a message of device management from cloudcore, it should call the corresponding grpc interface
+// to make the mapper maintain the list of device information.
+service DeviceMapperService {
+    // RegisterDevice registers a device to the device mapper.
+    // Device manager registers a device instance with the information of device
+    // to the mapper through the interface of RegisterDevice.
+    // When the mapper gets the request of register with device information,
+    // it should add the device to the device list and connect to the real physical device via the specific protocol.
+    rpc RegisterDevice(RegisterDeviceRequest) returns (RegisterDeviceResponse) {}
+    // RemoveDevice unregisters a device to the device mapper.
+    // Device manager unregisters a device instance with the name of device
+    // to the mapper through the interface of RemoveDevice.
+    // When the mapper gets the request of unregister with device name,
+    // it should remove the device from the device list and disconnect to the real physical device.
+    rpc RemoveDevice(RemoveDeviceRequest) returns (RemoveDeviceResponse) {}
+    // UpdateDevice updates a device to the device mapper
+    // Device manager updates the information of a device used by the mapper
+    // through the interface of UpdateDevice.
+    // The information of a device includes the meta data and the status data of a device.
+    // When the mapper gets the request of updating with the information of a device,
+    // it should update the device of the device list and connect to the real physical device via the updated information.
+    rpc UpdateDevice(UpdateDeviceRequest) returns (UpdateDeviceResponse) {}
+    // CreateDeviceModel creates a device model to the device mapper.
+    // Device manager sends the information of device model to the mapper
+    // through the interface of CreateDeviceModel.
+    // When the mapper gets the request of creating with the information of device model,
+    // it should create a new device model to the list of device models.
+    rpc CreateDeviceModel(CreateDeviceModelRequest) returns (CreateDeviceModelResponse) {}
+    // RemoveDeviceModel remove a device model to the device mapper.
+    // Device manager sends the name of device model to the mapper
+    // through the interface of RemoveDeviceModel.
+    // When the mapper gets the request of removing with the name of device model,
+    // it should remove the device model to the list of device models.
+    rpc RemoveDeviceModel(RemoveDeviceModelRequest) returns (RemoveDeviceModelResponse) {}
+    // UpdateDeviceModel update a device model to the device mapper.
+    // Device manager sends the information of device model to the mapper
+    // through the interface of UpdateDeviceModel.
+    // When the mapper gets the request of updating with the information of device model,
+    // it should update the device model to the list of device models.
+    rpc UpdateDeviceModel(UpdateDeviceModelRequest) returns (UpdateDeviceModelResponse) {}
+    // GetDevice get the information of a device from the device mapper.
+    // Device sends the request of querying device information with the device name to the mapper
+    // through the interface of GetDevice.
+    // When the mapper gets the request of querying with the device name,
+    // it should return the device information.
+    rpc GetDevice(GetDeviceRequest) returns (GetDeviceResponse) {}
+}
+
+message MapperRegisterRequest {
+    // The flag to show how device manager returns.
+    // True means device manager should return the device list in the response.
+    // False means device manager should just return nothing.
+    bool withData = 1;
+    // Mapper information to be registered to the device manager.
+    MapperInfo mapper = 2;
+}
+
+message MapperRegisterResponse {
+    // List of device models which the mapper maintains.
+    repeated DeviceModel modelList = 1;
+    // List of devices which the mapper maintains.
+    repeated Device deviceList = 2;
+}
+
+// DeviceModel specifies the information of a device model.
+message DeviceModel {
+    // Name of a device model.
+    string name = 1;
+    // Specification of a device model.
+    DeviceModelSpec spec = 2;
+    // Namespace of the device model.
+    string namespace = 3;
+}
+
+// DeviceModelSpec is the specification of a device model.
+message DeviceModelSpec {
+    // The properties provided by the device of this device model.
+    repeated ModelProperty properties = 1;
+    // The commands executed by the device of this device model.
+    repeated DeviceCommand commands = 2;
+}
+
+// ModelProperty is the property of a device.
+message ModelProperty {
+    // The name of this property.
+    string name = 1;
+    // The description of this property.
+    string description = 2;
+    // The specific type of this property.
+    string type = 3;
+    // The access mode of this property, ReadOnly or ReadWrite.
+    string accessMode = 4;
+    // The minimum value of this property.
+    string minimum = 5;
+    // The maximum value of this property.
+    string maximum = 6;
+    // The unit of this property.
+    string unit = 7;
+}
+
+// DeviceCommond is the description of a command which the device supports.
+message DeviceCommand {
+    // Name of the command.
+    string name = 1;
+    // Url of the command to access.
+    string url = 2;
+    // Method of the command.
+    string method = 3;
+    // Status code list which the command can return.
+    repeated string status_code = 4;
+    // Parameter list which the command carries.
+    repeated string parameters = 5;
+    // Response examples of the command.
+    bytes response = 6;
+}
+
+// Device is the description of a device instance.
+message Device {
+    // Name of the device.
+    string name = 1;
+    // Specification of the device.
+    DeviceSpec spec = 2;
+    // Status of the device.
+    DeviceStatus status = 3;
+    // Namespace of the device.
+    string namespace = 4;
+}
+
+// DeviceSpec is the specification of the device.
+message DeviceSpec {
+    // The device model which the device references.
+    string deviceModelReference = 1;
+    // The specific config of the protocol to access to the device.
+    ProtocolConfig protocol = 2;
+    // List of properties which describe the device properties.
+    repeated DeviceProperty properties = 3;
+    // List of methods which describe the device methods.
+    repeated DeviceMethod methods = 4;
+}
+
+// DeviceMethod describes the specifics all the methods of the device.
+message DeviceMethod {
+    // The device method name to be accessed. It must be unique.
+    string name = 1;
+    // the description of the device method.
+    string description = 2;
+    // the list of device properties that device methods can control.
+    repeated string propertyNames = 3;
+}
+
+// DeviceProperty describes the specifics all the properties of the device.
+message DeviceProperty {
+    // The device property name to be accessed. It must be unique.
+    string name = 1;
+    // the desired value of the property configured by device manager.
+    TwinProperty desired = 2;
+    // Visitors are intended to be consumed by device mappers which connect to devices
+    // and collect data / perform actions on the device.
+    VisitorConfig visitors = 3;
+    // Define how frequent mapper will report the value.
+    int64 reportCycle = 4;
+    // Define how frequent mapper will collect from device.
+    int64 collectCycle = 5;
+    // whether be reported to the cloud
+    bool reportToCloud = 6;
+    // PushMethod represents the protocol used to push data,
+    PushMethod pushMethod = 7;
+}
+
+// ProtocolConfig is the specific config of the protocol to access to the device.
+message ProtocolConfig {
+    // the name of the customized protocol.
+    string protocolName = 1;
+    // the config data of the customized protocol.
+    CustomizedValue configData = 2;
+}
+
+// the visitor to collect the properties of the device of customized protocol.
+message VisitorConfig {
+    // the name of the customized protocol.
+    string protocolName = 1;
+    // the config data of the customized protocol.
+    CustomizedValue configData = 2;
+}
+
+// CustomizedValue is the customized value for developers.
+message CustomizedValue {
+    // data is the customized value and it can be any form.
+    map<string, google.protobuf.Any> data = 1;
+}
+
+message PushMethod {
+    PushMethodHTTP http = 1;
+    PushMethodMQTT mqtt = 2;
+    PushMethodOTEL otel = 4;
+    DBMethod dbMethod = 3;
+}
+
+message PushMethodHTTP {
+    string hostname = 1;
+    int64 port = 2;
+    string requestpath = 3;
+    int64 timeout = 4;
+}
+
+message PushMethodMQTT {
+    // broker address, like mqtt://127.0.0.1:1883
+    string address = 1;
+    // publish topic for mqtt
+    string topic = 2;
+    // qos of mqtt publish param
+    int32 qos = 3;
+    // Is the message retained
+    bool retained = 4;
+}
+
+message PushMethodOTEL {
+    // the target endpoint URL the Exporter will connect to, like https://localhost:4318/v1/metrics
+	string endpointURL = 1;
+}
+
+message DBMethod{
+    // the config of database .
+    DBMethodInfluxdb2 influxdb2 = 1;
+    DBMethodRedis redis = 2;
+    DBMethodTDEngine tdengine = 3;
+    DBMethodMySQL mysql = 4;
+}
+
+message DBMethodInfluxdb2{
+    // the config of influx database.
+    Influxdb2ClientConfig influxdb2ClientConfig = 1;
+    Influxdb2DataConfig influxdb2DataConfig = 2;
+}
+
+message Influxdb2DataConfig{
+    // data config when push data to influx
+    string measurement = 1;
+    map<string, string> tag = 2;
+    string fieldKey = 3;
+}
+
+message Influxdb2ClientConfig{
+    // influx database url
+    string url = 1;
+    // usr org in influx database
+    string org = 2;
+    // usr bucket in influx database
+    string bucket = 3;
+}
+
+message DBMethodRedis{
+    // data config when push data to redis
+    RedisClientConfig redisClientConfig = 1;
+}
+
+message RedisClientConfig{
+    // redis address
+    string addr = 1;
+    // number of redis db
+    int32 db = 2;
+    // number of redis poolsize
+    int32 poolsize  = 3;
+    // number of redis minidleconns
+    int32 minIdleConns =4;
+}
+
+message DBMethodTDEngine{
+    // data config when push data to tdengine
+    TDEngineClientConfig tdEngineClientConfig = 1;
+}
+
+message TDEngineClientConfig{
+    // tdengine address,like 127.0.0.1:6041
+    string addr = 1;
+    // tdengine database name
+    string dbname = 2;
+}
+
+
+message DBMethodMySQL{
+    MySQLClientConfig mysqlClientConfig = 1;
+}
+
+message MySQLClientConfig{
+    //mysql address,like localhost:3306
+    string addr = 1;
+    //database name
+    string database = 2;
+    //user name
+    string userName = 3;
+}
+
+message DBMethodOTEL{
+    OTELExporterConfig otelExporterConfig = 1;
+}
+
+message OTELExporterConfig{
+    //the target endpoint URL the Exporter will connect to, like https://localhost:4318/v1/metrics
+    string endpointURL = 1;
+}
+
+// MapperInfo is the information of mapper.
+message MapperInfo {
+    // name of the mapper.
+    string name = 1;
+    // version of the mapper.
+    string version = 2;
+    // api version of the mapper.
+    string api_version = 3;
+    // the protocol of the mapper.
+    string protocol = 4;
+    // the address of the mapper. it is a unix domain socket of grpc.
+    bytes address = 5;
+    // the state of the mapper.
+    string state = 6;
+}
+
+message ReportDeviceStatusRequest {
+    string deviceName = 1;
+    DeviceStatus reportedDevice = 2;
+    string deviceNamespace = 3;
+}
+
+
+message ReportDeviceStatesRequest {
+    string deviceName = 1;
+    string deviceNamespace = 2;
+    string state = 3;
+}
+
+
+// DeviceStatus is the status of the device.
+message DeviceStatus {
+    // the device twins of the device.
+    repeated Twin twins = 1;
+    // whether be reported to the cloud
+    bool reportToCloud = 2;
+    // Define how frequent mapper will report the value.
+    int64 reportCycle = 3;
+
+}
+
+// Twin is the digital model of a device. It contains a series of properties.
+message Twin {
+    // the name of the property.
+    string propertyName = 1;
+    // the observedDesired value of the property configured by mapper.
+    TwinProperty observedDesired = 2;
+    // the reported value of the property from the real device.
+    TwinProperty reported = 3;
+}
+
+// TwinProperty is the specification of the property.
+message TwinProperty {
+    // the value of the property.
+    string value = 1;
+    // the metadata to describe this property.
+    map<string, string> metadata = 2;
+}
+
+message ReportDeviceStatusResponse {}
+
+message ReportDeviceStatesResponse {}
+
+message RegisterDeviceRequest {
+    Device device = 1;
+}
+
+message RegisterDeviceResponse {
+    string deviceName = 1;
+    string deviceNamespace = 2;
+}
+
+message CreateDeviceModelRequest {
+    DeviceModel model = 1;
+}
+
+message CreateDeviceModelResponse {
+    string deviceModelName = 1;
+    string deviceModelNamespace = 2;
+}
+
+message RemoveDeviceRequest {
+    string deviceName = 1;
+    string deviceNamespace = 2;
+}
+
+message RemoveDeviceResponse {}
+
+message RemoveDeviceModelRequest {
+    string modelName = 1;
+    string modelNamespace = 2;
+}
+
+message RemoveDeviceModelResponse {}
+
+message UpdateDeviceRequest {
+    Device device = 1;
+}
+
+message UpdateDeviceResponse {}
+
+message UpdateDeviceModelRequest {
+    DeviceModel model = 1;
+}
+
+message UpdateDeviceModelResponse {}
+
+message GetDeviceRequest {
+    string deviceName = 1;
+    string deviceNamespace = 2;
+}
+
+message GetDeviceResponse {
+    Device device = 1;
+}

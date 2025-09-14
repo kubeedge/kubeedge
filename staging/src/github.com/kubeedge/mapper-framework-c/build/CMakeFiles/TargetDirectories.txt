@@ -1,0 +1,7 @@
+/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles/main.dir
+/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles/edit_cache.dir
+/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles/rebuild_cache.dir
+/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles/list_install_components.dir
+/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles/install.dir
+/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles/install/local.dir
+/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles/install/strip.dir
