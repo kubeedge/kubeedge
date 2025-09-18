@@ -104,6 +104,96 @@ func (dw *DMIWorker) initDMIActionCallBack() {
 	dw.dmiActionCallBack[dtcommon.MetaDeviceOperation] = dw.dealMetaDeviceOperation
 }
 
+// overrideDeviceInstanceConfig overrides device instance configuration with model defaults
+func (dw *DMIWorker) overrideDeviceInstanceConfig(device *v1beta1.Device) error {
+	if device.Spec.DeviceModelRef == nil {
+		return fmt.Errorf("device %s has no device model reference", device.Name)
+	}
+
+	// Get device model from cache
+	deviceModelID := util.GetResourceID(device.Namespace, device.Spec.DeviceModelRef.Name)
+	dw.dmiCache.DeviceModelMu.Lock()
+	deviceModel, _ := dw.dmiCache.DeviceModelList[deviceModelID]
+	dw.dmiCache.DeviceModelMu.Unlock()
+
+	klog.Infof("Overriding device properties for device %s using model %s", device.Name, deviceModel.Name)
+
+	// Store original device properties in temporary variables
+	originalProperties := make([]v1beta1.DeviceProperty, len(device.Spec.Properties))
+	copy(originalProperties, device.Spec.Properties)
+
+	// Apply model visitors
+	for i := range device.Spec.Properties {
+		deviceProp := &device.Spec.Properties[i]
+
+		// Find corresponding model property
+		if modelProp := findModelProperty(deviceModel.Spec.Properties, deviceProp.Name); modelProp != nil {
+			// Apply model visitors
+			deviceProp.Visitors = *modelProp.Visitors
+			klog.Infof("Applied model visitors to property %s of device %s", deviceProp.Name, device.Name)
+		}
+	}
+
+	// Merge with original instance data (instance data takes precedence)
+	for i, originalProp := range originalProperties {
+		deviceProp := &device.Spec.Properties[i]
+
+		// Merge visitors: keep model defaults but override with instance values
+		if originalProp.Visitors.ConfigData != nil && originalProp.Visitors.ConfigData.Data != nil {
+			// If device property has model visitors, merge the config data
+			if deviceProp.Visitors.ConfigData != nil && deviceProp.Visitors.ConfigData.Data != nil {
+				// Merge: instance data overrides model data
+				for key, value := range originalProp.Visitors.ConfigData.Data {
+					deviceProp.Visitors.ConfigData.Data[key] = value
+				}
+				klog.Infof("Merged instance visitors for property %s of device %s", deviceProp.Name, device.Name)
+			} else {
+				// No model visitors, use instance visitors directly
+				deviceProp.Visitors = originalProp.Visitors
+				klog.Infof("Used instance visitors for property %s of device %s", deviceProp.Name, device.Name)
+			}
+		}
+		// If original property has no visitors config, keep the model visitors (already applied above)
+	}
+
+	// Handle protocol config data
+	// Store original protocol config
+	originalProtocolConfig := device.Spec.Protocol.ConfigData
+
+	// Apply model protocol config (may be nil)
+	device.Spec.Protocol.ConfigData = deviceModel.Spec.ProtocolConfigData
+	if deviceModel.Spec.ProtocolConfigData != nil {
+		klog.Infof("Applied model protocol config data to device %s", device.Name)
+	}
+
+	// Merge with instance protocol config if exists (instance data takes precedence)
+	if originalProtocolConfig != nil && originalProtocolConfig.Data != nil {
+		if device.Spec.Protocol.ConfigData != nil && device.Spec.Protocol.ConfigData.Data != nil {
+			// Merge: instance data overrides model data
+			for key, value := range originalProtocolConfig.Data {
+				device.Spec.Protocol.ConfigData.Data[key] = value
+			}
+			klog.Infof("Merged instance protocol config data for device %s", device.Name)
+		} else {
+			// No model config data, use instance config directly
+			device.Spec.Protocol.ConfigData = originalProtocolConfig
+			klog.Infof("Used instance protocol config data for device %s", device.Name)
+		}
+	}
+
+	return nil
+}
+
+// findModelProperty finds a model property by name
+func findModelProperty(properties []v1beta1.ModelProperty, name string) *v1beta1.ModelProperty {
+	for i := range properties {
+		if properties[i].Name == name {
+			return &properties[i]
+		}
+	}
+	return nil
+}
+
 func (dw *DMIWorker) dealMetaDeviceOperation(_ *dtcontext.DTContext, _ string, msg interface{}) error {
 	message, ok := msg.(*model.Message)
 	if !ok {
@@ -124,6 +214,12 @@ func (dw *DMIWorker) dealMetaDeviceOperation(_ *dtcontext.DTContext, _ string, m
 		deviceID := util.GetResourceID(device.Namespace, device.Name)
 		switch message.GetOperation() {
 		case model.InsertOperation:
+			// Override device instance config with model defaults before registering
+			err = dw.overrideDeviceInstanceConfig(&device)
+			if err != nil {
+				klog.Errorf("override device instance config failed for device %s: %v", device.Name, err)
+				return err
+			}
 			dw.dmiCache.DeviceMu.Lock()
 			dw.dmiCache.DeviceList[deviceID] = &device
 			dw.dmiCache.DeviceMu.Unlock()
@@ -142,6 +238,12 @@ func (dw *DMIWorker) dealMetaDeviceOperation(_ *dtcontext.DTContext, _ string, m
 			delete(dw.dmiCache.DeviceList, deviceID)
 			dw.dmiCache.DeviceMu.Unlock()
 		case model.UpdateOperation:
+			// Override device instance config with model defaults before updating
+			err = dw.overrideDeviceInstanceConfig(&device)
+			if err != nil {
+				klog.Errorf("override device instance config failed for device %s: %v", device.Name, err)
+				return err
+			}
 			dw.dmiCache.DeviceMu.Lock()
 			dw.dmiCache.DeviceList[deviceID] = &device
 			dw.dmiCache.DeviceMu.Unlock()

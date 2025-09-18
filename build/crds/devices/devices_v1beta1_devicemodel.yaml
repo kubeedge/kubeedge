@@ -227,11 +227,29 @@ spec:
                     unit:
                       description: The unit of the property
                       type: string
+                    visitors:
+                      description: |-
+                        Visitors are intended to be consumed by device mappers which connect to devices
+                        and collect data / perform actions on the device.
+                        Required: Protocol relevant config details about the how to access the device property.
+                      properties:
+                        configData:
+                          description: 'Required: The configData of customized protocol'
+                          type: object
+                          x-kubernetes-preserve-unknown-fields: true
+                        protocolName:
+                          description: 'Required: name of customized protocol'
+                          type: string
+                      type: object  
                   type: object
                 type: array
               protocol:
                 description: 'Required: Protocol name used by the device.'
                 type: string
+              protocolConfigData:
+                description: Any config data
+                type: object
+                x-kubernetes-preserve-unknown-fields: true  
             type: object
         type: object
     served: true
