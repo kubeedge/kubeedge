@@ -45,7 +45,7 @@ func TestNewAuthorizer(t *testing.T) {
 			_, err := tt.config.New()
 			if err != nil {
 				if !tt.wantErr {
-					t.Errorf("New(): unexpect error: %v", err)
+					t.Errorf("New(): unexpected error: %v", err)
 				}
 				return
 			}

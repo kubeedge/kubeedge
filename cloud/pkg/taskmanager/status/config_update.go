@@ -29,7 +29,7 @@ import (
 func tryUpdateConfigUpdateJobStatus(ctx context.Context, cli crdcliset.Interface, opts TryUpdateStatusOptions) error {
 	job, err := cli.OperationsV1alpha2().ConfigUpdateJobs().Get(ctx, opts.JobName, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("faield to get configupdate job %s, err: %v", opts.JobName, err)
+		return fmt.Errorf("failed to get configupdate job %s, err: %v", opts.JobName, err)
 	}
 
 	// Find the node task status by node name. If not found, return error.

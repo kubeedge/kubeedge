@@ -166,7 +166,7 @@ func createCertsToSecret(ctx context.Context) error {
 	return nil
 }
 
-// GenerateAndRefreshToken creates a token and save it to secret, then craete a timer to refresh the token.
+// GenerateAndRefreshToken creates a token and save it to secret, then create a timer to refresh the token.
 func GenerateAndRefreshToken(ctx context.Context) error {
 	if err := createNewToken(ctx); err != nil {
 		return err

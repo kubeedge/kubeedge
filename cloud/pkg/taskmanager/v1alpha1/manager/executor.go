@@ -93,7 +93,7 @@ func (em *ExecutorMachine) syncTask() {
 			}
 			err := GetExecutor(msg).HandleMessage(msg.Status)
 			if err != nil {
-				klog.Errorf("Failed to handel %s message due to error %s", msg.Type, err.Error())
+				klog.Errorf("Failed to handle %s message due to error %s", msg.Type, err.Error())
 				break
 			}
 		}
