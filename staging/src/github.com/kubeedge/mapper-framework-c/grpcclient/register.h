@@ -12,6 +12,8 @@ int RegisterMapper(
     DeviceModel **outModelList, int *outModelCount
 );
 
+int ReportDeviceStatus(const char *namespace_, const char *deviceName, const char *status);
+
 #ifdef __cplusplus
 }
 #endif

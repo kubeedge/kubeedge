@@ -28,4 +28,13 @@ int publisher_publish_data(Publisher *publisher, const DataModel *data);
 PublishMethodType publisher_get_type_from_string(const char *method_name);
 const char *publisher_get_type_string(PublishMethodType type);
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif // PUBLISHER_H

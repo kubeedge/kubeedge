@@ -53,10 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c
+CMAKE_SOURCE_DIR = /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build
+CMAKE_BINARY_DIR = /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/main.dir/depend.make
@@ -70,424 +70,424 @@ include CMakeFiles/main.dir/progress.make
 include CMakeFiles/main.dir/flags.make
 
 CMakeFiles/main.dir/main.c.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/main.c.o: /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/main.c
+CMakeFiles/main.dir/main.c.o: /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/main.c
 CMakeFiles/main.dir/main.c.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building C object CMakeFiles/main.dir/main.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/main.c.o -MF CMakeFiles/main.dir/main.c.o.d -o CMakeFiles/main.dir/main.c.o -c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/main.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building C object CMakeFiles/main.dir/main.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/main.c.o -MF CMakeFiles/main.dir/main.c.o.d -o CMakeFiles/main.dir/main.c.o -c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/main.c
 
 CMakeFiles/main.dir/main.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/main.dir/main.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/main.c > CMakeFiles/main.dir/main.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/main.c > CMakeFiles/main.dir/main.c.i
 
 CMakeFiles/main.dir/main.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/main.dir/main.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/main.c -o CMakeFiles/main.dir/main.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/main.c -o CMakeFiles/main.dir/main.c.s
 
 CMakeFiles/main.dir/config/config.c.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/config/config.c.o: /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/config/config.c
+CMakeFiles/main.dir/config/config.c.o: /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/config/config.c
 CMakeFiles/main.dir/config/config.c.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building C object CMakeFiles/main.dir/config/config.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/config/config.c.o -MF CMakeFiles/main.dir/config/config.c.o.d -o CMakeFiles/main.dir/config/config.c.o -c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/config/config.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building C object CMakeFiles/main.dir/config/config.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/config/config.c.o -MF CMakeFiles/main.dir/config/config.c.o.d -o CMakeFiles/main.dir/config/config.c.o -c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/config/config.c
 
 CMakeFiles/main.dir/config/config.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/main.dir/config/config.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/config/config.c > CMakeFiles/main.dir/config/config.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/config/config.c > CMakeFiles/main.dir/config/config.c.i
 
 CMakeFiles/main.dir/config/config.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/main.dir/config/config.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/config/config.c -o CMakeFiles/main.dir/config/config.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/config/config.c -o CMakeFiles/main.dir/config/config.c.s
 
 CMakeFiles/main.dir/log/log.c.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/log/log.c.o: /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/log/log.c
+CMakeFiles/main.dir/log/log.c.o: /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/log/log.c
 CMakeFiles/main.dir/log/log.c.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building C object CMakeFiles/main.dir/log/log.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/log/log.c.o -MF CMakeFiles/main.dir/log/log.c.o.d -o CMakeFiles/main.dir/log/log.c.o -c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/log/log.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building C object CMakeFiles/main.dir/log/log.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/log/log.c.o -MF CMakeFiles/main.dir/log/log.c.o.d -o CMakeFiles/main.dir/log/log.c.o -c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/log/log.c
 
 CMakeFiles/main.dir/log/log.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/main.dir/log/log.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/log/log.c > CMakeFiles/main.dir/log/log.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/log/log.c > CMakeFiles/main.dir/log/log.c.i
 
 CMakeFiles/main.dir/log/log.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/main.dir/log/log.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/log/log.c -o CMakeFiles/main.dir/log/log.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/log/log.c -o CMakeFiles/main.dir/log/log.c.s
 
 CMakeFiles/main.dir/common/dataconverter.c.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/common/dataconverter.c.o: /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/dataconverter.c
+CMakeFiles/main.dir/common/dataconverter.c.o: /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/dataconverter.c
 CMakeFiles/main.dir/common/dataconverter.c.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building C object CMakeFiles/main.dir/common/dataconverter.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/common/dataconverter.c.o -MF CMakeFiles/main.dir/common/dataconverter.c.o.d -o CMakeFiles/main.dir/common/dataconverter.c.o -c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/dataconverter.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building C object CMakeFiles/main.dir/common/dataconverter.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/common/dataconverter.c.o -MF CMakeFiles/main.dir/common/dataconverter.c.o.d -o CMakeFiles/main.dir/common/dataconverter.c.o -c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/dataconverter.c
 
 CMakeFiles/main.dir/common/dataconverter.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/main.dir/common/dataconverter.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/dataconverter.c > CMakeFiles/main.dir/common/dataconverter.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/dataconverter.c > CMakeFiles/main.dir/common/dataconverter.c.i
 
 CMakeFiles/main.dir/common/dataconverter.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/main.dir/common/dataconverter.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/dataconverter.c -o CMakeFiles/main.dir/common/dataconverter.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/dataconverter.c -o CMakeFiles/main.dir/common/dataconverter.c.s
 
 CMakeFiles/main.dir/common/datamodel.c.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/common/datamodel.c.o: /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/datamodel.c
+CMakeFiles/main.dir/common/datamodel.c.o: /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/datamodel.c
 CMakeFiles/main.dir/common/datamodel.c.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building C object CMakeFiles/main.dir/common/datamodel.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/common/datamodel.c.o -MF CMakeFiles/main.dir/common/datamodel.c.o.d -o CMakeFiles/main.dir/common/datamodel.c.o -c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/datamodel.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building C object CMakeFiles/main.dir/common/datamodel.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/common/datamodel.c.o -MF CMakeFiles/main.dir/common/datamodel.c.o.d -o CMakeFiles/main.dir/common/datamodel.c.o -c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/datamodel.c
 
 CMakeFiles/main.dir/common/datamodel.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/main.dir/common/datamodel.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/datamodel.c > CMakeFiles/main.dir/common/datamodel.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/datamodel.c > CMakeFiles/main.dir/common/datamodel.c.i
 
 CMakeFiles/main.dir/common/datamodel.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/main.dir/common/datamodel.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/datamodel.c -o CMakeFiles/main.dir/common/datamodel.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/datamodel.c -o CMakeFiles/main.dir/common/datamodel.c.s
 
 CMakeFiles/main.dir/common/event.c.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/common/event.c.o: /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/event.c
+CMakeFiles/main.dir/common/event.c.o: /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/event.c
 CMakeFiles/main.dir/common/event.c.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building C object CMakeFiles/main.dir/common/event.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/common/event.c.o -MF CMakeFiles/main.dir/common/event.c.o.d -o CMakeFiles/main.dir/common/event.c.o -c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/event.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building C object CMakeFiles/main.dir/common/event.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/common/event.c.o -MF CMakeFiles/main.dir/common/event.c.o.d -o CMakeFiles/main.dir/common/event.c.o -c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/event.c
 
 CMakeFiles/main.dir/common/event.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/main.dir/common/event.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/event.c > CMakeFiles/main.dir/common/event.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/event.c > CMakeFiles/main.dir/common/event.c.i
 
 CMakeFiles/main.dir/common/event.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/main.dir/common/event.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/event.c -o CMakeFiles/main.dir/common/event.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/event.c -o CMakeFiles/main.dir/common/event.c.s
 
 CMakeFiles/main.dir/util/parse/grpc.c.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/util/parse/grpc.c.o: /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/util/parse/grpc.c
+CMakeFiles/main.dir/util/parse/grpc.c.o: /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/util/parse/grpc.c
 CMakeFiles/main.dir/util/parse/grpc.c.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building C object CMakeFiles/main.dir/util/parse/grpc.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/util/parse/grpc.c.o -MF CMakeFiles/main.dir/util/parse/grpc.c.o.d -o CMakeFiles/main.dir/util/parse/grpc.c.o -c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/util/parse/grpc.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building C object CMakeFiles/main.dir/util/parse/grpc.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/util/parse/grpc.c.o -MF CMakeFiles/main.dir/util/parse/grpc.c.o.d -o CMakeFiles/main.dir/util/parse/grpc.c.o -c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/util/parse/grpc.c
 
 CMakeFiles/main.dir/util/parse/grpc.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/main.dir/util/parse/grpc.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/util/parse/grpc.c > CMakeFiles/main.dir/util/parse/grpc.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/util/parse/grpc.c > CMakeFiles/main.dir/util/parse/grpc.c.i
 
 CMakeFiles/main.dir/util/parse/grpc.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/main.dir/util/parse/grpc.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/util/parse/grpc.c -o CMakeFiles/main.dir/util/parse/grpc.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/util/parse/grpc.c -o CMakeFiles/main.dir/util/parse/grpc.c.s
 
 CMakeFiles/main.dir/dmi/v1beta1/api.pb-c.c.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/dmi/v1beta1/api.pb-c.c.o: /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/dmi/v1beta1/api.pb-c.c
+CMakeFiles/main.dir/dmi/v1beta1/api.pb-c.c.o: /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/dmi/v1beta1/api.pb-c.c
 CMakeFiles/main.dir/dmi/v1beta1/api.pb-c.c.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building C object CMakeFiles/main.dir/dmi/v1beta1/api.pb-c.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/dmi/v1beta1/api.pb-c.c.o -MF CMakeFiles/main.dir/dmi/v1beta1/api.pb-c.c.o.d -o CMakeFiles/main.dir/dmi/v1beta1/api.pb-c.c.o -c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/dmi/v1beta1/api.pb-c.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building C object CMakeFiles/main.dir/dmi/v1beta1/api.pb-c.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/dmi/v1beta1/api.pb-c.c.o -MF CMakeFiles/main.dir/dmi/v1beta1/api.pb-c.c.o.d -o CMakeFiles/main.dir/dmi/v1beta1/api.pb-c.c.o -c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/dmi/v1beta1/api.pb-c.c
 
 CMakeFiles/main.dir/dmi/v1beta1/api.pb-c.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/main.dir/dmi/v1beta1/api.pb-c.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/dmi/v1beta1/api.pb-c.c > CMakeFiles/main.dir/dmi/v1beta1/api.pb-c.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/dmi/v1beta1/api.pb-c.c > CMakeFiles/main.dir/dmi/v1beta1/api.pb-c.c.i
 
 CMakeFiles/main.dir/dmi/v1beta1/api.pb-c.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/main.dir/dmi/v1beta1/api.pb-c.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/dmi/v1beta1/api.pb-c.c -o CMakeFiles/main.dir/dmi/v1beta1/api.pb-c.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/dmi/v1beta1/api.pb-c.c -o CMakeFiles/main.dir/dmi/v1beta1/api.pb-c.c.s
 
 CMakeFiles/main.dir/dmi/v1beta1/api.pb.cc.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/dmi/v1beta1/api.pb.cc.o: /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/dmi/v1beta1/api.pb.cc
+CMakeFiles/main.dir/dmi/v1beta1/api.pb.cc.o: /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/dmi/v1beta1/api.pb.cc
 CMakeFiles/main.dir/dmi/v1beta1/api.pb.cc.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/main.dir/dmi/v1beta1/api.pb.cc.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/dmi/v1beta1/api.pb.cc.o -MF CMakeFiles/main.dir/dmi/v1beta1/api.pb.cc.o.d -o CMakeFiles/main.dir/dmi/v1beta1/api.pb.cc.o -c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/dmi/v1beta1/api.pb.cc
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/main.dir/dmi/v1beta1/api.pb.cc.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/dmi/v1beta1/api.pb.cc.o -MF CMakeFiles/main.dir/dmi/v1beta1/api.pb.cc.o.d -o CMakeFiles/main.dir/dmi/v1beta1/api.pb.cc.o -c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/dmi/v1beta1/api.pb.cc
 
 CMakeFiles/main.dir/dmi/v1beta1/api.pb.cc.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/main.dir/dmi/v1beta1/api.pb.cc.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/dmi/v1beta1/api.pb.cc > CMakeFiles/main.dir/dmi/v1beta1/api.pb.cc.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/dmi/v1beta1/api.pb.cc > CMakeFiles/main.dir/dmi/v1beta1/api.pb.cc.i
 
 CMakeFiles/main.dir/dmi/v1beta1/api.pb.cc.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/main.dir/dmi/v1beta1/api.pb.cc.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/dmi/v1beta1/api.pb.cc -o CMakeFiles/main.dir/dmi/v1beta1/api.pb.cc.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/dmi/v1beta1/api.pb.cc -o CMakeFiles/main.dir/dmi/v1beta1/api.pb.cc.s
 
 CMakeFiles/main.dir/dmi/v1beta1/api.grpc.pb.cc.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/dmi/v1beta1/api.grpc.pb.cc.o: /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/dmi/v1beta1/api.grpc.pb.cc
+CMakeFiles/main.dir/dmi/v1beta1/api.grpc.pb.cc.o: /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/dmi/v1beta1/api.grpc.pb.cc
 CMakeFiles/main.dir/dmi/v1beta1/api.grpc.pb.cc.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/main.dir/dmi/v1beta1/api.grpc.pb.cc.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/dmi/v1beta1/api.grpc.pb.cc.o -MF CMakeFiles/main.dir/dmi/v1beta1/api.grpc.pb.cc.o.d -o CMakeFiles/main.dir/dmi/v1beta1/api.grpc.pb.cc.o -c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/dmi/v1beta1/api.grpc.pb.cc
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/main.dir/dmi/v1beta1/api.grpc.pb.cc.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/dmi/v1beta1/api.grpc.pb.cc.o -MF CMakeFiles/main.dir/dmi/v1beta1/api.grpc.pb.cc.o.d -o CMakeFiles/main.dir/dmi/v1beta1/api.grpc.pb.cc.o -c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/dmi/v1beta1/api.grpc.pb.cc
 
 CMakeFiles/main.dir/dmi/v1beta1/api.grpc.pb.cc.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/main.dir/dmi/v1beta1/api.grpc.pb.cc.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/dmi/v1beta1/api.grpc.pb.cc > CMakeFiles/main.dir/dmi/v1beta1/api.grpc.pb.cc.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/dmi/v1beta1/api.grpc.pb.cc > CMakeFiles/main.dir/dmi/v1beta1/api.grpc.pb.cc.i
 
 CMakeFiles/main.dir/dmi/v1beta1/api.grpc.pb.cc.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/main.dir/dmi/v1beta1/api.grpc.pb.cc.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/dmi/v1beta1/api.grpc.pb.cc -o CMakeFiles/main.dir/dmi/v1beta1/api.grpc.pb.cc.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/dmi/v1beta1/api.grpc.pb.cc -o CMakeFiles/main.dir/dmi/v1beta1/api.grpc.pb.cc.s
 
 CMakeFiles/main.dir/google/protobuf/any.pb-c.c.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/google/protobuf/any.pb-c.c.o: /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/google/protobuf/any.pb-c.c
+CMakeFiles/main.dir/google/protobuf/any.pb-c.c.o: /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/google/protobuf/any.pb-c.c
 CMakeFiles/main.dir/google/protobuf/any.pb-c.c.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building C object CMakeFiles/main.dir/google/protobuf/any.pb-c.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/google/protobuf/any.pb-c.c.o -MF CMakeFiles/main.dir/google/protobuf/any.pb-c.c.o.d -o CMakeFiles/main.dir/google/protobuf/any.pb-c.c.o -c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/google/protobuf/any.pb-c.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building C object CMakeFiles/main.dir/google/protobuf/any.pb-c.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/google/protobuf/any.pb-c.c.o -MF CMakeFiles/main.dir/google/protobuf/any.pb-c.c.o.d -o CMakeFiles/main.dir/google/protobuf/any.pb-c.c.o -c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/google/protobuf/any.pb-c.c
 
 CMakeFiles/main.dir/google/protobuf/any.pb-c.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/main.dir/google/protobuf/any.pb-c.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/google/protobuf/any.pb-c.c > CMakeFiles/main.dir/google/protobuf/any.pb-c.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/google/protobuf/any.pb-c.c > CMakeFiles/main.dir/google/protobuf/any.pb-c.c.i
 
 CMakeFiles/main.dir/google/protobuf/any.pb-c.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/main.dir/google/protobuf/any.pb-c.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/google/protobuf/any.pb-c.c -o CMakeFiles/main.dir/google/protobuf/any.pb-c.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/google/protobuf/any.pb-c.c -o CMakeFiles/main.dir/google/protobuf/any.pb-c.c.s
 
 CMakeFiles/main.dir/google/protobuf/wrappers.pb-c.c.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/google/protobuf/wrappers.pb-c.c.o: /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/google/protobuf/wrappers.pb-c.c
+CMakeFiles/main.dir/google/protobuf/wrappers.pb-c.c.o: /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/google/protobuf/wrappers.pb-c.c
 CMakeFiles/main.dir/google/protobuf/wrappers.pb-c.c.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building C object CMakeFiles/main.dir/google/protobuf/wrappers.pb-c.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/google/protobuf/wrappers.pb-c.c.o -MF CMakeFiles/main.dir/google/protobuf/wrappers.pb-c.c.o.d -o CMakeFiles/main.dir/google/protobuf/wrappers.pb-c.c.o -c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/google/protobuf/wrappers.pb-c.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building C object CMakeFiles/main.dir/google/protobuf/wrappers.pb-c.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/google/protobuf/wrappers.pb-c.c.o -MF CMakeFiles/main.dir/google/protobuf/wrappers.pb-c.c.o.d -o CMakeFiles/main.dir/google/protobuf/wrappers.pb-c.c.o -c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/google/protobuf/wrappers.pb-c.c
 
 CMakeFiles/main.dir/google/protobuf/wrappers.pb-c.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/main.dir/google/protobuf/wrappers.pb-c.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/google/protobuf/wrappers.pb-c.c > CMakeFiles/main.dir/google/protobuf/wrappers.pb-c.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/google/protobuf/wrappers.pb-c.c > CMakeFiles/main.dir/google/protobuf/wrappers.pb-c.c.i
 
 CMakeFiles/main.dir/google/protobuf/wrappers.pb-c.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/main.dir/google/protobuf/wrappers.pb-c.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/google/protobuf/wrappers.pb-c.c -o CMakeFiles/main.dir/google/protobuf/wrappers.pb-c.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/google/protobuf/wrappers.pb-c.c -o CMakeFiles/main.dir/google/protobuf/wrappers.pb-c.c.s
 
 CMakeFiles/main.dir/httpserver/httpserver.c.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/httpserver/httpserver.c.o: /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/httpserver/httpserver.c
+CMakeFiles/main.dir/httpserver/httpserver.c.o: /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/httpserver/httpserver.c
 CMakeFiles/main.dir/httpserver/httpserver.c.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building C object CMakeFiles/main.dir/httpserver/httpserver.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/httpserver/httpserver.c.o -MF CMakeFiles/main.dir/httpserver/httpserver.c.o.d -o CMakeFiles/main.dir/httpserver/httpserver.c.o -c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/httpserver/httpserver.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building C object CMakeFiles/main.dir/httpserver/httpserver.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/httpserver/httpserver.c.o -MF CMakeFiles/main.dir/httpserver/httpserver.c.o.d -o CMakeFiles/main.dir/httpserver/httpserver.c.o -c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/httpserver/httpserver.c
 
 CMakeFiles/main.dir/httpserver/httpserver.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/main.dir/httpserver/httpserver.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/httpserver/httpserver.c > CMakeFiles/main.dir/httpserver/httpserver.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/httpserver/httpserver.c > CMakeFiles/main.dir/httpserver/httpserver.c.i
 
 CMakeFiles/main.dir/httpserver/httpserver.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/main.dir/httpserver/httpserver.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/httpserver/httpserver.c -o CMakeFiles/main.dir/httpserver/httpserver.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/httpserver/httpserver.c -o CMakeFiles/main.dir/httpserver/httpserver.c.s
 
 CMakeFiles/main.dir/grpcclient/register.cc.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/grpcclient/register.cc.o: /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/grpcclient/register.cc
+CMakeFiles/main.dir/grpcclient/register.cc.o: /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/grpcclient/register.cc
 CMakeFiles/main.dir/grpcclient/register.cc.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/main.dir/grpcclient/register.cc.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/grpcclient/register.cc.o -MF CMakeFiles/main.dir/grpcclient/register.cc.o.d -o CMakeFiles/main.dir/grpcclient/register.cc.o -c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/grpcclient/register.cc
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/main.dir/grpcclient/register.cc.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/grpcclient/register.cc.o -MF CMakeFiles/main.dir/grpcclient/register.cc.o.d -o CMakeFiles/main.dir/grpcclient/register.cc.o -c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/grpcclient/register.cc
 
 CMakeFiles/main.dir/grpcclient/register.cc.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/main.dir/grpcclient/register.cc.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/grpcclient/register.cc > CMakeFiles/main.dir/grpcclient/register.cc.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/grpcclient/register.cc > CMakeFiles/main.dir/grpcclient/register.cc.i
 
 CMakeFiles/main.dir/grpcclient/register.cc.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/main.dir/grpcclient/register.cc.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/grpcclient/register.cc -o CMakeFiles/main.dir/grpcclient/register.cc.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/grpcclient/register.cc -o CMakeFiles/main.dir/grpcclient/register.cc.s
 
 CMakeFiles/main.dir/grpcserver/server.cc.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/grpcserver/server.cc.o: /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/grpcserver/server.cc
+CMakeFiles/main.dir/grpcserver/server.cc.o: /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/grpcserver/server.cc
 CMakeFiles/main.dir/grpcserver/server.cc.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object CMakeFiles/main.dir/grpcserver/server.cc.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/grpcserver/server.cc.o -MF CMakeFiles/main.dir/grpcserver/server.cc.o.d -o CMakeFiles/main.dir/grpcserver/server.cc.o -c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/grpcserver/server.cc
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object CMakeFiles/main.dir/grpcserver/server.cc.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/grpcserver/server.cc.o -MF CMakeFiles/main.dir/grpcserver/server.cc.o.d -o CMakeFiles/main.dir/grpcserver/server.cc.o -c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/grpcserver/server.cc
 
 CMakeFiles/main.dir/grpcserver/server.cc.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/main.dir/grpcserver/server.cc.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/grpcserver/server.cc > CMakeFiles/main.dir/grpcserver/server.cc.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/grpcserver/server.cc > CMakeFiles/main.dir/grpcserver/server.cc.i
 
 CMakeFiles/main.dir/grpcserver/server.cc.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/main.dir/grpcserver/server.cc.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/grpcserver/server.cc -o CMakeFiles/main.dir/grpcserver/server.cc.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/grpcserver/server.cc -o CMakeFiles/main.dir/grpcserver/server.cc.s
 
 CMakeFiles/main.dir/device/device.c.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/device/device.c.o: /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/device.c
+CMakeFiles/main.dir/device/device.c.o: /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/device.c
 CMakeFiles/main.dir/device/device.c.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Building C object CMakeFiles/main.dir/device/device.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/device/device.c.o -MF CMakeFiles/main.dir/device/device.c.o.d -o CMakeFiles/main.dir/device/device.c.o -c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/device.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Building C object CMakeFiles/main.dir/device/device.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/device/device.c.o -MF CMakeFiles/main.dir/device/device.c.o.d -o CMakeFiles/main.dir/device/device.c.o -c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/device.c
 
 CMakeFiles/main.dir/device/device.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/main.dir/device/device.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/device.c > CMakeFiles/main.dir/device/device.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/device.c > CMakeFiles/main.dir/device/device.c.i
 
 CMakeFiles/main.dir/device/device.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/main.dir/device/device.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/device.c -o CMakeFiles/main.dir/device/device.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/device.c -o CMakeFiles/main.dir/device/device.c.s
 
 CMakeFiles/main.dir/device/devicestatus.c.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/device/devicestatus.c.o: /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/devicestatus.c
+CMakeFiles/main.dir/device/devicestatus.c.o: /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/devicestatus.c
 CMakeFiles/main.dir/device/devicestatus.c.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_17) "Building C object CMakeFiles/main.dir/device/devicestatus.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/device/devicestatus.c.o -MF CMakeFiles/main.dir/device/devicestatus.c.o.d -o CMakeFiles/main.dir/device/devicestatus.c.o -c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/devicestatus.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_17) "Building C object CMakeFiles/main.dir/device/devicestatus.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/device/devicestatus.c.o -MF CMakeFiles/main.dir/device/devicestatus.c.o.d -o CMakeFiles/main.dir/device/devicestatus.c.o -c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/devicestatus.c
 
 CMakeFiles/main.dir/device/devicestatus.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/main.dir/device/devicestatus.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/devicestatus.c > CMakeFiles/main.dir/device/devicestatus.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/devicestatus.c > CMakeFiles/main.dir/device/devicestatus.c.i
 
 CMakeFiles/main.dir/device/devicestatus.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/main.dir/device/devicestatus.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/devicestatus.c -o CMakeFiles/main.dir/device/devicestatus.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/devicestatus.c -o CMakeFiles/main.dir/device/devicestatus.c.s
 
 CMakeFiles/main.dir/device/devicetwin.c.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/device/devicetwin.c.o: /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/devicetwin.c
+CMakeFiles/main.dir/device/devicetwin.c.o: /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/devicetwin.c
 CMakeFiles/main.dir/device/devicetwin.c.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Building C object CMakeFiles/main.dir/device/devicetwin.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/device/devicetwin.c.o -MF CMakeFiles/main.dir/device/devicetwin.c.o.d -o CMakeFiles/main.dir/device/devicetwin.c.o -c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/devicetwin.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Building C object CMakeFiles/main.dir/device/devicetwin.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/device/devicetwin.c.o -MF CMakeFiles/main.dir/device/devicetwin.c.o.d -o CMakeFiles/main.dir/device/devicetwin.c.o -c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/devicetwin.c
 
 CMakeFiles/main.dir/device/devicetwin.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/main.dir/device/devicetwin.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/devicetwin.c > CMakeFiles/main.dir/device/devicetwin.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/devicetwin.c > CMakeFiles/main.dir/device/devicetwin.c.i
 
 CMakeFiles/main.dir/device/devicetwin.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/main.dir/device/devicetwin.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/devicetwin.c -o CMakeFiles/main.dir/device/devicetwin.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/devicetwin.c -o CMakeFiles/main.dir/device/devicetwin.c.s
 
 CMakeFiles/main.dir/device/dev_panel.c.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/device/dev_panel.c.o: /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/dev_panel.c
+CMakeFiles/main.dir/device/dev_panel.c.o: /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/dev_panel.c
 CMakeFiles/main.dir/device/dev_panel.c.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_19) "Building C object CMakeFiles/main.dir/device/dev_panel.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/device/dev_panel.c.o -MF CMakeFiles/main.dir/device/dev_panel.c.o.d -o CMakeFiles/main.dir/device/dev_panel.c.o -c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/dev_panel.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_19) "Building C object CMakeFiles/main.dir/device/dev_panel.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/device/dev_panel.c.o -MF CMakeFiles/main.dir/device/dev_panel.c.o.d -o CMakeFiles/main.dir/device/dev_panel.c.o -c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/dev_panel.c
 
 CMakeFiles/main.dir/device/dev_panel.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/main.dir/device/dev_panel.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/dev_panel.c > CMakeFiles/main.dir/device/dev_panel.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/dev_panel.c > CMakeFiles/main.dir/device/dev_panel.c.i
 
 CMakeFiles/main.dir/device/dev_panel.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/main.dir/device/dev_panel.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/dev_panel.c -o CMakeFiles/main.dir/device/dev_panel.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/dev_panel.c -o CMakeFiles/main.dir/device/dev_panel.c.s
 
 CMakeFiles/main.dir/driver/driver.c.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/driver/driver.c.o: /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/driver/driver.c
+CMakeFiles/main.dir/driver/driver.c.o: /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/driver/driver.c
 CMakeFiles/main.dir/driver/driver.c.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_20) "Building C object CMakeFiles/main.dir/driver/driver.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/driver/driver.c.o -MF CMakeFiles/main.dir/driver/driver.c.o.d -o CMakeFiles/main.dir/driver/driver.c.o -c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/driver/driver.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_20) "Building C object CMakeFiles/main.dir/driver/driver.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/driver/driver.c.o -MF CMakeFiles/main.dir/driver/driver.c.o.d -o CMakeFiles/main.dir/driver/driver.c.o -c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/driver/driver.c
 
 CMakeFiles/main.dir/driver/driver.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/main.dir/driver/driver.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/driver/driver.c > CMakeFiles/main.dir/driver/driver.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/driver/driver.c > CMakeFiles/main.dir/driver/driver.c.i
 
 CMakeFiles/main.dir/driver/driver.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/main.dir/driver/driver.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/driver/driver.c -o CMakeFiles/main.dir/driver/driver.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/driver/driver.c -o CMakeFiles/main.dir/driver/driver.c.s
 
 CMakeFiles/main.dir/data/dbmethod/mysql/mysql_client.c.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/data/dbmethod/mysql/mysql_client.c.o: /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/mysql/mysql_client.c
+CMakeFiles/main.dir/data/dbmethod/mysql/mysql_client.c.o: /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/mysql/mysql_client.c
 CMakeFiles/main.dir/data/dbmethod/mysql/mysql_client.c.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_21) "Building C object CMakeFiles/main.dir/data/dbmethod/mysql/mysql_client.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/data/dbmethod/mysql/mysql_client.c.o -MF CMakeFiles/main.dir/data/dbmethod/mysql/mysql_client.c.o.d -o CMakeFiles/main.dir/data/dbmethod/mysql/mysql_client.c.o -c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/mysql/mysql_client.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_21) "Building C object CMakeFiles/main.dir/data/dbmethod/mysql/mysql_client.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/data/dbmethod/mysql/mysql_client.c.o -MF CMakeFiles/main.dir/data/dbmethod/mysql/mysql_client.c.o.d -o CMakeFiles/main.dir/data/dbmethod/mysql/mysql_client.c.o -c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/mysql/mysql_client.c
 
 CMakeFiles/main.dir/data/dbmethod/mysql/mysql_client.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/main.dir/data/dbmethod/mysql/mysql_client.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/mysql/mysql_client.c > CMakeFiles/main.dir/data/dbmethod/mysql/mysql_client.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/mysql/mysql_client.c > CMakeFiles/main.dir/data/dbmethod/mysql/mysql_client.c.i
 
 CMakeFiles/main.dir/data/dbmethod/mysql/mysql_client.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/main.dir/data/dbmethod/mysql/mysql_client.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/mysql/mysql_client.c -o CMakeFiles/main.dir/data/dbmethod/mysql/mysql_client.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/mysql/mysql_client.c -o CMakeFiles/main.dir/data/dbmethod/mysql/mysql_client.c.s
 
 CMakeFiles/main.dir/data/dbmethod/mysql/recorder.c.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/data/dbmethod/mysql/recorder.c.o: /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/mysql/recorder.c
+CMakeFiles/main.dir/data/dbmethod/mysql/recorder.c.o: /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/mysql/recorder.c
 CMakeFiles/main.dir/data/dbmethod/mysql/recorder.c.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_22) "Building C object CMakeFiles/main.dir/data/dbmethod/mysql/recorder.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/data/dbmethod/mysql/recorder.c.o -MF CMakeFiles/main.dir/data/dbmethod/mysql/recorder.c.o.d -o CMakeFiles/main.dir/data/dbmethod/mysql/recorder.c.o -c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/mysql/recorder.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_22) "Building C object CMakeFiles/main.dir/data/dbmethod/mysql/recorder.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/data/dbmethod/mysql/recorder.c.o -MF CMakeFiles/main.dir/data/dbmethod/mysql/recorder.c.o.d -o CMakeFiles/main.dir/data/dbmethod/mysql/recorder.c.o -c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/mysql/recorder.c
 
 CMakeFiles/main.dir/data/dbmethod/mysql/recorder.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/main.dir/data/dbmethod/mysql/recorder.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/mysql/recorder.c > CMakeFiles/main.dir/data/dbmethod/mysql/recorder.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/mysql/recorder.c > CMakeFiles/main.dir/data/dbmethod/mysql/recorder.c.i
 
 CMakeFiles/main.dir/data/dbmethod/mysql/recorder.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/main.dir/data/dbmethod/mysql/recorder.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/mysql/recorder.c -o CMakeFiles/main.dir/data/dbmethod/mysql/recorder.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/mysql/recorder.c -o CMakeFiles/main.dir/data/dbmethod/mysql/recorder.c.s
 
 CMakeFiles/main.dir/data/dbmethod/influxdb2/influxdb2_client.c.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/data/dbmethod/influxdb2/influxdb2_client.c.o: /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/influxdb2/influxdb2_client.c
+CMakeFiles/main.dir/data/dbmethod/influxdb2/influxdb2_client.c.o: /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/influxdb2/influxdb2_client.c
 CMakeFiles/main.dir/data/dbmethod/influxdb2/influxdb2_client.c.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_23) "Building C object CMakeFiles/main.dir/data/dbmethod/influxdb2/influxdb2_client.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/data/dbmethod/influxdb2/influxdb2_client.c.o -MF CMakeFiles/main.dir/data/dbmethod/influxdb2/influxdb2_client.c.o.d -o CMakeFiles/main.dir/data/dbmethod/influxdb2/influxdb2_client.c.o -c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/influxdb2/influxdb2_client.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_23) "Building C object CMakeFiles/main.dir/data/dbmethod/influxdb2/influxdb2_client.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/data/dbmethod/influxdb2/influxdb2_client.c.o -MF CMakeFiles/main.dir/data/dbmethod/influxdb2/influxdb2_client.c.o.d -o CMakeFiles/main.dir/data/dbmethod/influxdb2/influxdb2_client.c.o -c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/influxdb2/influxdb2_client.c
 
 CMakeFiles/main.dir/data/dbmethod/influxdb2/influxdb2_client.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/main.dir/data/dbmethod/influxdb2/influxdb2_client.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/influxdb2/influxdb2_client.c > CMakeFiles/main.dir/data/dbmethod/influxdb2/influxdb2_client.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/influxdb2/influxdb2_client.c > CMakeFiles/main.dir/data/dbmethod/influxdb2/influxdb2_client.c.i
 
 CMakeFiles/main.dir/data/dbmethod/influxdb2/influxdb2_client.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/main.dir/data/dbmethod/influxdb2/influxdb2_client.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/influxdb2/influxdb2_client.c -o CMakeFiles/main.dir/data/dbmethod/influxdb2/influxdb2_client.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/influxdb2/influxdb2_client.c -o CMakeFiles/main.dir/data/dbmethod/influxdb2/influxdb2_client.c.s
 
 CMakeFiles/main.dir/data/dbmethod/redis/redis_client.c.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/data/dbmethod/redis/redis_client.c.o: /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/redis/redis_client.c
+CMakeFiles/main.dir/data/dbmethod/redis/redis_client.c.o: /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/redis/redis_client.c
 CMakeFiles/main.dir/data/dbmethod/redis/redis_client.c.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_24) "Building C object CMakeFiles/main.dir/data/dbmethod/redis/redis_client.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/data/dbmethod/redis/redis_client.c.o -MF CMakeFiles/main.dir/data/dbmethod/redis/redis_client.c.o.d -o CMakeFiles/main.dir/data/dbmethod/redis/redis_client.c.o -c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/redis/redis_client.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_24) "Building C object CMakeFiles/main.dir/data/dbmethod/redis/redis_client.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/data/dbmethod/redis/redis_client.c.o -MF CMakeFiles/main.dir/data/dbmethod/redis/redis_client.c.o.d -o CMakeFiles/main.dir/data/dbmethod/redis/redis_client.c.o -c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/redis/redis_client.c
 
 CMakeFiles/main.dir/data/dbmethod/redis/redis_client.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/main.dir/data/dbmethod/redis/redis_client.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/redis/redis_client.c > CMakeFiles/main.dir/data/dbmethod/redis/redis_client.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/redis/redis_client.c > CMakeFiles/main.dir/data/dbmethod/redis/redis_client.c.i
 
 CMakeFiles/main.dir/data/dbmethod/redis/redis_client.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/main.dir/data/dbmethod/redis/redis_client.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/redis/redis_client.c -o CMakeFiles/main.dir/data/dbmethod/redis/redis_client.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/redis/redis_client.c -o CMakeFiles/main.dir/data/dbmethod/redis/redis_client.c.s
 
 CMakeFiles/main.dir/data/publish/publisher.c.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/data/publish/publisher.c.o: /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/publisher.c
+CMakeFiles/main.dir/data/publish/publisher.c.o: /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/publisher.c
 CMakeFiles/main.dir/data/publish/publisher.c.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_25) "Building C object CMakeFiles/main.dir/data/publish/publisher.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/data/publish/publisher.c.o -MF CMakeFiles/main.dir/data/publish/publisher.c.o.d -o CMakeFiles/main.dir/data/publish/publisher.c.o -c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/publisher.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_25) "Building C object CMakeFiles/main.dir/data/publish/publisher.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/data/publish/publisher.c.o -MF CMakeFiles/main.dir/data/publish/publisher.c.o.d -o CMakeFiles/main.dir/data/publish/publisher.c.o -c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/publisher.c
 
 CMakeFiles/main.dir/data/publish/publisher.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/main.dir/data/publish/publisher.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/publisher.c > CMakeFiles/main.dir/data/publish/publisher.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/publisher.c > CMakeFiles/main.dir/data/publish/publisher.c.i
 
 CMakeFiles/main.dir/data/publish/publisher.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/main.dir/data/publish/publisher.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/publisher.c -o CMakeFiles/main.dir/data/publish/publisher.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/publisher.c -o CMakeFiles/main.dir/data/publish/publisher.c.s
 
 CMakeFiles/main.dir/data/publish/http/http_publisher.c.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/data/publish/http/http_publisher.c.o: /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/http/http_publisher.c
+CMakeFiles/main.dir/data/publish/http/http_publisher.c.o: /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/http/http_publisher.c
 CMakeFiles/main.dir/data/publish/http/http_publisher.c.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_26) "Building C object CMakeFiles/main.dir/data/publish/http/http_publisher.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/data/publish/http/http_publisher.c.o -MF CMakeFiles/main.dir/data/publish/http/http_publisher.c.o.d -o CMakeFiles/main.dir/data/publish/http/http_publisher.c.o -c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/http/http_publisher.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_26) "Building C object CMakeFiles/main.dir/data/publish/http/http_publisher.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/data/publish/http/http_publisher.c.o -MF CMakeFiles/main.dir/data/publish/http/http_publisher.c.o.d -o CMakeFiles/main.dir/data/publish/http/http_publisher.c.o -c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/http/http_publisher.c
 
 CMakeFiles/main.dir/data/publish/http/http_publisher.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/main.dir/data/publish/http/http_publisher.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/http/http_publisher.c > CMakeFiles/main.dir/data/publish/http/http_publisher.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/http/http_publisher.c > CMakeFiles/main.dir/data/publish/http/http_publisher.c.i
 
 CMakeFiles/main.dir/data/publish/http/http_publisher.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/main.dir/data/publish/http/http_publisher.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/http/http_publisher.c -o CMakeFiles/main.dir/data/publish/http/http_publisher.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/http/http_publisher.c -o CMakeFiles/main.dir/data/publish/http/http_publisher.c.s
 
 CMakeFiles/main.dir/data/publish/otel/otel_publisher.c.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/data/publish/otel/otel_publisher.c.o: /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/otel/otel_publisher.c
+CMakeFiles/main.dir/data/publish/otel/otel_publisher.c.o: /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/otel/otel_publisher.c
 CMakeFiles/main.dir/data/publish/otel/otel_publisher.c.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_27) "Building C object CMakeFiles/main.dir/data/publish/otel/otel_publisher.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/data/publish/otel/otel_publisher.c.o -MF CMakeFiles/main.dir/data/publish/otel/otel_publisher.c.o.d -o CMakeFiles/main.dir/data/publish/otel/otel_publisher.c.o -c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/otel/otel_publisher.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_27) "Building C object CMakeFiles/main.dir/data/publish/otel/otel_publisher.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/data/publish/otel/otel_publisher.c.o -MF CMakeFiles/main.dir/data/publish/otel/otel_publisher.c.o.d -o CMakeFiles/main.dir/data/publish/otel/otel_publisher.c.o -c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/otel/otel_publisher.c
 
 CMakeFiles/main.dir/data/publish/otel/otel_publisher.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/main.dir/data/publish/otel/otel_publisher.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/otel/otel_publisher.c > CMakeFiles/main.dir/data/publish/otel/otel_publisher.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/otel/otel_publisher.c > CMakeFiles/main.dir/data/publish/otel/otel_publisher.c.i
 
 CMakeFiles/main.dir/data/publish/otel/otel_publisher.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/main.dir/data/publish/otel/otel_publisher.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/otel/otel_publisher.c -o CMakeFiles/main.dir/data/publish/otel/otel_publisher.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/otel/otel_publisher.c -o CMakeFiles/main.dir/data/publish/otel/otel_publisher.c.s
 
 CMakeFiles/main.dir/data/dbmethod/tdengine/tdengine_client.c.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/data/dbmethod/tdengine/tdengine_client.c.o: /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/tdengine/tdengine_client.c
+CMakeFiles/main.dir/data/dbmethod/tdengine/tdengine_client.c.o: /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/tdengine/tdengine_client.c
 CMakeFiles/main.dir/data/dbmethod/tdengine/tdengine_client.c.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_28) "Building C object CMakeFiles/main.dir/data/dbmethod/tdengine/tdengine_client.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/data/dbmethod/tdengine/tdengine_client.c.o -MF CMakeFiles/main.dir/data/dbmethod/tdengine/tdengine_client.c.o.d -o CMakeFiles/main.dir/data/dbmethod/tdengine/tdengine_client.c.o -c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/tdengine/tdengine_client.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_28) "Building C object CMakeFiles/main.dir/data/dbmethod/tdengine/tdengine_client.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/data/dbmethod/tdengine/tdengine_client.c.o -MF CMakeFiles/main.dir/data/dbmethod/tdengine/tdengine_client.c.o.d -o CMakeFiles/main.dir/data/dbmethod/tdengine/tdengine_client.c.o -c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/tdengine/tdengine_client.c
 
 CMakeFiles/main.dir/data/dbmethod/tdengine/tdengine_client.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/main.dir/data/dbmethod/tdengine/tdengine_client.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/tdengine/tdengine_client.c > CMakeFiles/main.dir/data/dbmethod/tdengine/tdengine_client.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/tdengine/tdengine_client.c > CMakeFiles/main.dir/data/dbmethod/tdengine/tdengine_client.c.i
 
 CMakeFiles/main.dir/data/dbmethod/tdengine/tdengine_client.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/main.dir/data/dbmethod/tdengine/tdengine_client.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/tdengine/tdengine_client.c -o CMakeFiles/main.dir/data/dbmethod/tdengine/tdengine_client.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/tdengine/tdengine_client.c -o CMakeFiles/main.dir/data/dbmethod/tdengine/tdengine_client.c.s
 
 CMakeFiles/main.dir/data/stream/stream.c.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/data/stream/stream.c.o: /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/stream/stream.c
+CMakeFiles/main.dir/data/stream/stream.c.o: /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/stream/stream.c
 CMakeFiles/main.dir/data/stream/stream.c.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_29) "Building C object CMakeFiles/main.dir/data/stream/stream.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/data/stream/stream.c.o -MF CMakeFiles/main.dir/data/stream/stream.c.o.d -o CMakeFiles/main.dir/data/stream/stream.c.o -c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/stream/stream.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_29) "Building C object CMakeFiles/main.dir/data/stream/stream.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/data/stream/stream.c.o -MF CMakeFiles/main.dir/data/stream/stream.c.o.d -o CMakeFiles/main.dir/data/stream/stream.c.o -c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/stream/stream.c
 
 CMakeFiles/main.dir/data/stream/stream.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/main.dir/data/stream/stream.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/stream/stream.c > CMakeFiles/main.dir/data/stream/stream.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/stream/stream.c > CMakeFiles/main.dir/data/stream/stream.c.i
 
 CMakeFiles/main.dir/data/stream/stream.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/main.dir/data/stream/stream.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/stream/stream.c -o CMakeFiles/main.dir/data/stream/stream.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/stream/stream.c -o CMakeFiles/main.dir/data/stream/stream.c.s
 
 CMakeFiles/main.dir/data/publish/mqtt/mqtt_publisher.c.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/data/publish/mqtt/mqtt_publisher.c.o: /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/mqtt/mqtt_publisher.c
+CMakeFiles/main.dir/data/publish/mqtt/mqtt_publisher.c.o: /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/mqtt/mqtt_publisher.c
 CMakeFiles/main.dir/data/publish/mqtt/mqtt_publisher.c.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_30) "Building C object CMakeFiles/main.dir/data/publish/mqtt/mqtt_publisher.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/data/publish/mqtt/mqtt_publisher.c.o -MF CMakeFiles/main.dir/data/publish/mqtt/mqtt_publisher.c.o.d -o CMakeFiles/main.dir/data/publish/mqtt/mqtt_publisher.c.o -c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/mqtt/mqtt_publisher.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_30) "Building C object CMakeFiles/main.dir/data/publish/mqtt/mqtt_publisher.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/main.dir/data/publish/mqtt/mqtt_publisher.c.o -MF CMakeFiles/main.dir/data/publish/mqtt/mqtt_publisher.c.o.d -o CMakeFiles/main.dir/data/publish/mqtt/mqtt_publisher.c.o -c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/mqtt/mqtt_publisher.c
 
 CMakeFiles/main.dir/data/publish/mqtt/mqtt_publisher.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/main.dir/data/publish/mqtt/mqtt_publisher.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/mqtt/mqtt_publisher.c > CMakeFiles/main.dir/data/publish/mqtt/mqtt_publisher.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/mqtt/mqtt_publisher.c > CMakeFiles/main.dir/data/publish/mqtt/mqtt_publisher.c.i
 
 CMakeFiles/main.dir/data/publish/mqtt/mqtt_publisher.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/main.dir/data/publish/mqtt/mqtt_publisher.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/mqtt/mqtt_publisher.c -o CMakeFiles/main.dir/data/publish/mqtt/mqtt_publisher.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/mqtt/mqtt_publisher.c -o CMakeFiles/main.dir/data/publish/mqtt/mqtt_publisher.c.s
 
 # Object files for target main
 main_OBJECTS = \
@@ -666,7 +666,7 @@ main: /usr/local/lib/libabsl_throw_delegate.so.2505.0.0
 main: /usr/local/lib/libabsl_raw_logging_internal.so.2505.0.0
 main: /usr/local/lib/libabsl_log_severity.so.2505.0.0
 main: CMakeFiles/main.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_31) "Linking CXX executable main"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_31) "Linking CXX executable main"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/main.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
@@ -678,6 +678,6 @@ CMakeFiles/main.dir/clean:
 .PHONY : CMakeFiles/main.dir/clean
 
 CMakeFiles/main.dir/depend:
-	cd /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles/main.dir/DependInfo.cmake "--color=$(COLOR)"
+	cd /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/build/CMakeFiles/main.dir/DependInfo.cmake "--color=$(COLOR)"
 .PHONY : CMakeFiles/main.dir/depend
 

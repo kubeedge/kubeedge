@@ -1,7 +1,7 @@
 CMakeFiles/main.dir/google/protobuf/wrappers.pb-c.c.o: \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/google/protobuf/wrappers.pb-c.c \
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/google/protobuf/wrappers.pb-c.c \
  /usr/include/stdc-predef.h \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/google/protobuf/wrappers.pb-c.h \
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/google/protobuf/wrappers.pb-c.h \
  /usr/local/include/protobuf-c/protobuf-c.h /usr/include/assert.h \
  /usr/include/features.h /usr/include/features-time64.h \
  /usr/include/x86_64-linux-gnu/bits/wordsize.h \
