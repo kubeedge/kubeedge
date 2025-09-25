@@ -1,5 +1,5 @@
 CMakeFiles/main.dir/main.c.o: \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/main.c \
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/main.c \
  /usr/include/stdc-predef.h /usr/include/stdio.h \
  /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
  /usr/include/features.h /usr/include/features-time64.h \
@@ -118,21 +118,21 @@ CMakeFiles/main.dir/main.c.o: \
  /usr/include/linux/errno.h /usr/include/x86_64-linux-gnu/asm/errno.h \
  /usr/include/asm-generic/errno.h /usr/include/asm-generic/errno-base.h \
  /usr/include/x86_64-linux-gnu/bits/types/error_t.h \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/log/log.h \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/config/config.h \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/device.h \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/configmaptype.h \
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/log/log.h \
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/config/config.h \
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/device.h \
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/configmaptype.h \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h /usr/include/stdint.h \
  /usr/include/x86_64-linux-gnu/bits/wchar.h \
  /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
  /usr/include/x86_64-linux-gnu/bits/stdint-least.h \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdbool.h \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/eventtype.h \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/driver/driver.h \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/grpcclient/register.h \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/datamodel.h \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/grpcserver/server.h \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/httpserver/httpserver.h \
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/eventtype.h \
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/driver/driver.h \
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/grpcclient/register.h \
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/datamodel.h \
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/grpcserver/server.h \
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/httpserver/httpserver.h \
  /usr/include/microhttpd.h /usr/include/x86_64-linux-gnu/sys/time.h \
  /usr/include/x86_64-linux-gnu/sys/socket.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_iovec.h \
@@ -144,10 +144,10 @@ CMakeFiles/main.dir/main.c.o: \
  /usr/include/x86_64-linux-gnu/asm/sockios.h \
  /usr/include/asm-generic/sockios.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_osockaddr.h \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/device.h \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/configmaptype.h \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/const.h \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/mysql/mysql_client.h \
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/device/device.h \
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/configmaptype.h \
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/const.h \
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/mysql/mysql_client.h \
  /usr/include/mysql.h /usr/include/mysql_version.h \
  /usr/include/mysql_com.h /usr/include/binary_log_types.h \
  /usr/include/my_command.h /usr/include/mysql_time.h \
@@ -155,6 +155,6 @@ CMakeFiles/main.dir/main.c.o: \
  /usr/include/mysql/plugin_auth_common.h /usr/include/typelib.h \
  /usr/include/my_alloc.h /usr/include/mysql/psi/psi_memory.h \
  /usr/include/mysql/psi/psi_base.h \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/mysql/recorder.h \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/mysql/mysql_client.h \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/publisher.h
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/mysql/recorder.h \
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/dbmethod/mysql/mysql_client.h \
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/data/publish/publisher.h

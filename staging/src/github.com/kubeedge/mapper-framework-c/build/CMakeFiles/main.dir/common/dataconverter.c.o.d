@@ -1,7 +1,7 @@
 CMakeFiles/main.dir/common/dataconverter.c.o: \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/dataconverter.c \
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/dataconverter.c \
  /usr/include/stdc-predef.h \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/dataconverter.h \
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/dataconverter.h \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h /usr/include/stdint.h \
  /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
  /usr/include/features.h /usr/include/features-time64.h \
@@ -20,7 +20,7 @@ CMakeFiles/main.dir/common/dataconverter.c.o: \
  /usr/include/x86_64-linux-gnu/bits/stdint-least.h \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdbool.h \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/google/protobuf/any.pb-c.h \
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/google/protobuf/any.pb-c.h \
  /usr/local/include/protobuf-c/protobuf-c.h /usr/include/assert.h \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/limits.h \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/syslimits.h \
@@ -68,4 +68,4 @@ CMakeFiles/main.dir/common/dataconverter.c.o: \
  /usr/include/x86_64-linux-gnu/bits/types/struct_FILE.h \
  /usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h \
  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/google/protobuf/wrappers.pb-c.h
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/google/protobuf/wrappers.pb-c.h

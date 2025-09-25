@@ -1,7 +1,7 @@
 CMakeFiles/main.dir/dmi/v1beta1/api.pb.cc.o: \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/dmi/v1beta1/api.pb.cc \
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/dmi/v1beta1/api.pb.cc \
  /usr/include/stdc-predef.h \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/dmi/v1beta1/api.pb.h \
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/dmi/v1beta1/api.pb.h \
  /usr/include/c++/13/limits \
  /usr/include/x86_64-linux-gnu/c++/13/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/os_defines.h \

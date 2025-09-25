@@ -1,7 +1,7 @@
 CMakeFiles/main.dir/log/log.c.o: \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/log/log.c \
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/log/log.c \
  /usr/include/stdc-predef.h \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/log/log.h \
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/log/log.h \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdarg.h /usr/include/stdlib.h \
  /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
  /usr/include/features.h /usr/include/features-time64.h \

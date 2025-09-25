@@ -1,8 +1,8 @@
 CMakeFiles/main.dir/driver/driver.c.o: \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/driver/driver.c \
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/driver/driver.c \
  /usr/include/stdc-predef.h \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/driver/driver.h \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/configmaptype.h \
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/driver/driver.h \
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/configmaptype.h \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h /usr/include/stdint.h \
  /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
  /usr/include/features.h /usr/include/features-time64.h \
@@ -61,4 +61,4 @@ CMakeFiles/main.dir/driver/driver.c.o: \
  /usr/include/x86_64-linux-gnu/bits/types/struct_timeval.h \
  /usr/include/alloca.h /usr/include/x86_64-linux-gnu/bits/stdlib-float.h \
  /usr/include/string.h /usr/include/strings.h \
- /home/zhang/下载/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/const.h
+ /home/zhang/kubeedge-mapper-framework-c/staging/src/github.com/kubeedge/mapper-framework-c/common/const.h

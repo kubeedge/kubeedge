@@ -3,6 +3,7 @@
 #include "common/const.h"
 #include "data/publish/publisher.h"
 #include "data/dbmethod/mysql/recorder.h"
+#include "grpcclient/register.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -14,11 +15,6 @@
 extern Publisher *g_publisher;
 
 
-// Function sim_temperature_enabled
-static int sim_temperature_enabled(void) {
-    const char *v = getenv("MAPPER_SIM_TEMPERATURE");
-    return v && (*v == '1' || strcasecmp(v, "true") == 0 || strcasecmp(v, "on") == 0);
-}
 
 
 // Function json_get_str
@@ -147,25 +143,10 @@ static void normalize_host_port(const char *rawHost, int rawPort,
     *outPort = p;
 }
 
-
-// Function simulate_temperature_data
-static int simulate_temperature_data(int *current, int *direction) {
-    if (!current || !direction) return -1;
-    if (*current >= 100) {
-        *direction = -1;
-    } else if (*current <= 1) {
-        *direction = 1;
-    }
-    *current += *direction;
-    return *current;
-}
 static void *device_data_thread(void *arg) {
     Device *device = (Device*)arg;
     log_info("Device data thread started for device: %s",
              device->instance.name ? device->instance.name : "unknown");
-
-    int simulated_temperature = 1;
-    int direction = 1;
 
     while (device->dataThreadRunning) {
         pthread_mutex_lock(&device->mutex);
@@ -180,34 +161,15 @@ static void *device_data_thread(void *arg) {
             Twin *twin = &device->instance.twins[i];
             if (!twin || !twin->propertyName) continue;
 
-            if (strcmp(twin->propertyName, "temperature") == 0 && sim_temperature_enabled()) {
-                int simulated_value = simulate_temperature_data(&simulated_temperature, &direction);
-                char buf[32];
-                snprintf(buf, sizeof(buf), "%d", simulated_value);
-
-
-                if (!twin->reported.value || strcmp(twin->reported.value, buf) != 0) {
-                    free(twin->reported.value);
-                    twin->reported.value = strdup(buf);
-                    char ts[32];
-                    now_iso8601(ts);
-                    free(twin->reported.metadata.timestamp);
-                    twin->reported.metadata.timestamp = strdup(ts);
-                }
-
-
+            if (twin->reported.value) {
                 mysql_recorder_record(
                     device->instance.namespace_ ? device->instance.namespace_ : "default",
                     device->instance.name ? device->instance.name : "unknown",
                     twin->propertyName,
-                    buf,
+                    twin->reported.value,
                     (long long)time(NULL) * 1000
                 );
-
-                continue;
             }
-
-
             device_deal_twin(device, twin);
         }
 
@@ -591,36 +553,34 @@ int device_start(Device *device) {
     device_runtime_rebuild(device);
     log_info("Starting device: %s", device->instance.name);
 
-
     if (device->dataThreadRunning) {
         log_warn("Device %s is already running", device->instance.name);
         pthread_mutex_unlock(&device->mutex);
         return 0;
     }
 
-
     if (device->client) {
         if (InitDevice(device->client) != 0) {
             log_error("Failed to initialize device client for %s", device->instance.name);
             device_set_status(device, DEVICE_STATUS_OFFLINE);
+            ReportDeviceStatus(device->instance.namespace_, device->instance.name, DEVICE_STATUS_OFFLINE);
             pthread_mutex_unlock(&device->mutex);
             return -1;
         }
     }
 
     device_set_status(device, DEVICE_STATUS_OK);
-
+    ReportDeviceStatus(device->instance.namespace_, device->instance.name, DEVICE_STATUS_OK);
 
     device->dataThreadRunning = 1;
     if (pthread_create(&device->dataThread, NULL, device_data_thread, device) != 0) {
         log_error("Failed to create data thread for device %s", device->instance.name);
         device->dataThreadRunning = 0;
         device_set_status(device, DEVICE_STATUS_OFFLINE);
+        ReportDeviceStatus(device->instance.namespace_, device->instance.name, DEVICE_STATUS_OFFLINE);
         pthread_mutex_unlock(&device->mutex);
         return -1;
     }
-
-
 
     pthread_mutex_unlock(&device->mutex);
 
@@ -637,24 +597,20 @@ int device_stop(Device *device) {
 
     log_info("Stopping device: %s", device->instance.name);
 
-
     device->stopChan = 1;
     device->dataThreadRunning = 0;
-
 
     if (device->client) {
         StopDevice(device->client);
     }
 
-
     device_set_status(device, DEVICE_STATUS_OFFLINE);
+    ReportDeviceStatus(device->instance.namespace_, device->instance.name, DEVICE_STATUS_OFFLINE);
 
     pthread_mutex_unlock(&device->mutex);
 
-
     if (device->dataThread) {
         for (int i = 0; i < 10; ++i) {
-
             if (!device->dataThreadRunning) break;
             usleep(50000);
         }
@@ -698,12 +654,6 @@ int device_deal_twin(Device *device, const Twin *twin_in) {
     if (!device || !twin_in) return -1;
     Twin *twin = (Twin*)twin_in;
 
-    if (sim_temperature_enabled() && twin->propertyName &&
-        strcmp(twin->propertyName, "temperature") == 0) {
-        log_debug("Skip device_deal_twin for simulated temperature");
-        return 0;
-    }
-
     const char *prop = twin->propertyName ? twin->propertyName : "(null)";
     const char *desired = twin->observedDesired.value;
     const char *reported = twin->reported.value;
@@ -716,7 +666,6 @@ int device_deal_twin(Device *device, const Twin *twin_in) {
         log_debug("Twin %s desired == reported (%s), skip", prop, desired);
         return 0;
     }
-
 
     char ip[64] = "127.0.0.1";
     int port = 1502;
@@ -733,7 +682,6 @@ int device_deal_twin(Device *device, const Twin *twin_in) {
     }
 
     int value = atoi(desired);
-
 
     char hostBuf[128];
     int portFixed;
@@ -757,7 +705,6 @@ int device_deal_twin(Device *device, const Twin *twin_in) {
     int exit_code = -1;
     if (rcRaw != -1) {
         if (WIFEXITED(rcRaw)) exit_code = WEXITSTATUS(rcRaw);
-// Function if
         else if (WIFSIGNALED(rcRaw)) exit_code = 128 + WTERMSIG(rcRaw);
     }
     if (exit_code != 0) {
@@ -767,7 +714,6 @@ int device_deal_twin(Device *device, const Twin *twin_in) {
     }
     log_info("Twin %s: mbpoll write ok host=%s port=%d offset=%d val=%d",
              prop, hostBuf, portFixed, offset, value);
-
 
     free(twin->reported.value);
     char ts[32]; now_iso8601(ts);

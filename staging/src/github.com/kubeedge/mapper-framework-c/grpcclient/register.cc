@@ -15,6 +15,11 @@
 #include "util/parse/grpc.h"
 #include "common/datamodel.h"
 #include "log/log.h"
+extern "C" {
+#include "data/publish/publisher.h"
+}
+
+extern Publisher *g_publisher;
 
 using namespace std;
 
@@ -161,4 +166,31 @@ extern "C" int RegisterMapper(
         }
     }
     return 0;
+}
+
+int ReportDeviceStatus(const char *namespace_, const char *deviceName, const char *status) {
+    const char *ns = (namespace_ && *namespace_) ? namespace_ : "default";
+    const char *dn = (deviceName && *deviceName) ? deviceName : "unknown";
+    const char *st = (status && *status) ? status : "unknown";
+
+    if (!g_publisher) {
+        log_warn("ReportDeviceStatus: no publisher, ns=%s device=%s status=%s", ns, dn, st);
+        return -1;
+    }
+
+    DataModel dm{};  
+    dm.namespace_   = (char*)ns;
+    dm.deviceName   = (char*)dn;
+    dm.propertyName = (char*)"status";
+    dm.type         = (char*)"string";
+    dm.value        = (char*)st;
+    dm.timeStamp    = (int64_t)time(NULL) * 1000;
+
+    int rc = publisher_publish_data(g_publisher, &dm);
+    if (rc != 0) {
+        log_warn("ReportDeviceStatus publish failed: ns=%s device=%s status=%s rc=%d", ns, dn, st, rc);
+    } else {
+        log_info("ReportDeviceStatus ok: ns=%s device=%s status=%s", ns, dn, st);
+    }
+    return rc;
 }
