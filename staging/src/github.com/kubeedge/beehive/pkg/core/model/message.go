@@ -20,6 +20,7 @@ const (
 	UploadOperation        = "upload"
 	ResponseOperation      = "response"
 	ResponseErrorOperation = "error"
+	UnholdUpgradeOperation = "unhold-upgrade"
 
 	ResourceTypePod                 = "pod"
 	ResourceTypeEvent               = "event"

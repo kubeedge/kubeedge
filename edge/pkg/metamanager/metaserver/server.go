@@ -189,6 +189,14 @@ func (ls *MetaServer) BuildBasicHandler() http.Handler {
 			case reqInfo.Verb == "create":
 				if reqInfo.Name == "restart" {
 					ls.Factory.Restart(reqInfo.Namespace).ServeHTTP(w, req)
+				} else if reqInfo.Name == "unhold-upgrade" {
+					if reqInfo.Resource == "pods" {
+						ls.Factory.UnholdUpgrade().ServeHTTP(w, req)
+					} else if reqInfo.Resource == "nodes" {
+						ls.Factory.UnholdUpgradeNode().ServeHTTP(w, req)
+					} else {
+						http.Error(w, "unsupported resource for unhold-upgrade", http.StatusBadRequest)
+					}
 				} else if reqInfo.Name == "confirm-upgrade" {
 					ls.Factory.ConfirmUpgrade().ServeHTTP(w, req)
 				} else if reqInfo.Subresource == "exec" {

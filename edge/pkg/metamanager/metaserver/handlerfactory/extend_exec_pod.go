@@ -25,8 +25,6 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/common"
 )
 
-const trueStr = "true"
-
 func (f *Factory) Exec(request *request.RequestInfo) http.Handler {
 	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		queryparams := req.URL.Query()
@@ -38,10 +36,10 @@ func (f *Factory) Exec(request *request.RequestInfo) http.Handler {
 		stderrStr := queryparams.Get("stderr")
 		ttyStr := queryparams.Get("tty")
 
-		stdin := stdinStr == trueStr
-		stdout := stdoutStr == trueStr
-		stderr := stderrStr == trueStr
-		tty := ttyStr == trueStr
+		stdin := stdinStr == common.TrueStr
+		stdout := stdoutStr == common.TrueStr
+		stderr := stderrStr == common.TrueStr
+		tty := ttyStr == common.TrueStr
 
 		execInfo := common.ExecInfo{
 			Namespace: request.Namespace,
