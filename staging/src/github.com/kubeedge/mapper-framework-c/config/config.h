@@ -47,6 +47,9 @@ typedef struct Config {
 // Parses the configuration file
 Config* config_parse(const char *filename);
 
+// Apply config to environment variables (e.g., database settings)
+int config_apply_env(const Config *cfg);
+
 // Frees the memory allocated for the configuration
 void config_free(Config *cfg);
 

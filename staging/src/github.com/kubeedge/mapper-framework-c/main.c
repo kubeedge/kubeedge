@@ -28,7 +28,6 @@ static volatile int running = 1;
 static DeviceManager *g_deviceManager = NULL;
 static GrpcServer *g_grpcServer = NULL;
 static RestServer *g_httpServer = NULL;
-static MySQLDataBaseConfig *g_mysql = NULL;
 // Global publisher (matches extern in device.c)
 Publisher *g_publisher = NULL;
 static pthread_t g_grpcThread = 0;
@@ -130,15 +129,7 @@ static void cleanup_resources(void) {
 
     // 4) MySQL
     log_info("[cleanup] closing MySQL...");
-    if (g_mysql) {
-        mysql_close_client(g_mysql);
-        free(g_mysql->config.addr);
-        free(g_mysql->config.database);
-        free(g_mysql->config.userName);
-        free(g_mysql->config.password);
-        free(g_mysql);
-        g_mysql = NULL;
-    }
+    mysql_recorder_shutdown();
     log_info("[cleanup] MySQL done");
 
     // 5) Publisher
@@ -205,92 +196,13 @@ int main(int argc, char **argv) {
     }
 
     log_info("Configuration loaded successfully");
-    log_info("MySQL cfg parsed: enabled=%d addr=%s db=%s user=%s",
-             config->database.mysql.enabled,
-             config->database.mysql.addr[0] ? config->database.mysql.addr : "(empty)",
-             config->database.mysql.database[0] ? config->database.mysql.database : "(empty)",
-             config->database.mysql.username[0] ? config->database.mysql.username : "(empty)");
-    log_info("MySQL ssl_mode=%s", config->database.mysql.ssl_mode[0] ? config->database.mysql.ssl_mode : "DISABLED");
-    setenv("MYSQL_SSL_MODE",
-       config->database.mysql.ssl_mode[0] ? config->database.mysql.ssl_mode : "DISABLED",
-       1);
 
-    // Environment override: 1/true to enable, 0/false to disable
-    const char *env_mysql = getenv("MYSQL_ENABLED");
-    if (env_mysql && *env_mysql) {
-        if (*env_mysql=='0' || strcasecmp(env_mysql,"false")==0) {
-            log_warn("MYSQL_ENABLED env overrides config: disabling MySQL");
-            config->database.mysql.enabled = 0;
-        } else if (*env_mysql=='1' || strcasecmp(env_mysql,"true")==0) {
-            log_warn("MYSQL_ENABLED env overrides config: enabling MySQL");
-            config->database.mysql.enabled = 1;
-        }
-    }
-
-    // Initialize MySQL (self-test)
-    if (config->database.mysql.enabled) {
-        // Increase buffer to avoid snprintf warnings
-        char json[512];
-        snprintf(json, sizeof(json),
-                 "{\"addr\":\"%s\",\"database\":\"%s\",\"userName\":\"%s\",\"password\":\"%s\",\"port\":%d,\"ssl_mode\":\"%s\"}",
-                 config->database.mysql.addr[0] ? config->database.mysql.addr : "127.0.0.1",
-                 config->database.mysql.database[0] ? config->database.mysql.database : "testdb",
-                 config->database.mysql.username[0] ? config->database.mysql.username : "mapper",
-                 config->database.mysql.password[0] ? config->database.mysql.password : "",
-                 config->database.mysql.port > 0 ? config->database.mysql.port : 3306,
-                 config->database.mysql.ssl_mode[0] ? config->database.mysql.ssl_mode : "DISABLED");
-        // Also export to env (if mysql_parse_client_config reads env or prioritizes it)
-        if (config->database.mysql.password[0]) {
-            setenv("MYSQL_PASSWORD", config->database.mysql.password, 1);
-        }
-
-        MySQLClientConfig clientCfg = (MySQLClientConfig){0};
-        if (mysql_parse_client_config(json, &clientCfg) != 0) {
-            log_error("MySQL client config parse failed");
-        } else {
-            g_mysql = (MySQLDataBaseConfig*)calloc(1, sizeof(MySQLDataBaseConfig));
-            g_mysql->config = clientCfg;
-            if (mysql_init_client(g_mysql) != 0) {
-                log_error("MySQL init failed (host=%s db=%s user=%s). Set MYSQL_PASSWORD and MYSQL_PORT if needed.",
-                          clientCfg.addr, clientCfg.database, clientCfg.userName);
-            } else {
-                log_info("MySQL connected (host=%s db=%s user=%s pw_len=%zu)",
-                         clientCfg.addr, clientCfg.database, clientCfg.userName,
-                         clientCfg.password ? strlen(clientCfg.password) : 0);
-                DataModel dm = (DataModel){0};
-                dm.namespace_   = "default";
-                dm.deviceName   = "mysql-selftest";
-                dm.propertyName = "ping";
-                dm.type         = "string";
-                dm.value        = "ok";
-                dm.timeStamp    = time(NULL);
-                if (mysql_add_data(g_mysql, &dm) == 0) {
-                    log_info("MySQL self-test OK -> `%s/%s/%s`", dm.namespace_, dm.deviceName, dm.propertyName);
-                } else {
-                    log_error("MySQL self-test insert failed");
-                }
-                mysql_recorder_set_db(g_mysql);
-            }
-        }
+    // Export DB config from config.yaml to environment variables
+    if (mysql_recorder_init_from_env() != 0) {
+        log_warn("MySQL recorder init failed; DB recording disabled");
     } else {
-        log_info("MySQL disabled in config");
+        log_info("MySQL recorder init done");
     }
-
-    // Initialize Publisher (via environment variables)
-    const char *pm = getenv("PUBLISH_METHOD");     // http | mqtt | otel
-    const char *pc = getenv("PUBLISH_CONFIG");     // channel-specific JSON
-    if (pm && *pm && pc && *pc) {
-        PublishMethodType t = publisher_get_type_from_string(pm);
-        g_publisher = publisher_new(t, pc);
-        if (g_publisher) {
-            log_info("Publish channel ready: %s", pm);
-        } else {
-            log_warn("Failed to init publish channel: %s", pm);
-        }
-    } else {
-        log_info("Publish channel disabled (set PUBLISH_METHOD and PUBLISH_CONFIG to enable)");
-    }
-
     // Create DeviceManager first (used by gRPC callbacks)
     g_deviceManager = device_manager_new();
     if (!g_deviceManager) {

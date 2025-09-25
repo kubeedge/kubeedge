@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <strings.h>
 
 // Global MySQL database configuration
 static MySQLDataBaseConfig *g_mysql_db = NULL;
@@ -67,4 +68,58 @@ int mysql_recorder_record(const char *ns,
         log_debug("MySQL record ok: %s/%s/%s=%s", ns_s, dev_s, prop_s, dm.value);
     }
     return rc;
+}
+
+int mysql_recorder_init_from_env(void) {
+    const char *env_mysql = getenv("MYSQL_ENABLED");
+    if (env_mysql && *env_mysql) {
+        if (*env_mysql=='0' || strcasecmp(env_mysql,"false")==0) {
+            log_info("MySQL recorder disabled by MYSQL_ENABLED");
+            g_mysql_db = NULL;
+            mysql_recorder_set_db(NULL);
+            return 0;
+        }
+    }
+
+    MySQLClientConfig clientCfg = (MySQLClientConfig){0};
+    if (mysql_parse_client_config(NULL, &clientCfg) != 0) {
+        log_error("MySQL client config parse from env failed");
+        return -1;
+    }
+
+    MySQLDataBaseConfig *db = (MySQLDataBaseConfig*)calloc(1, sizeof(MySQLDataBaseConfig));
+    if (!db) {
+        free(clientCfg.addr); free(clientCfg.database); free(clientCfg.userName); free(clientCfg.password);
+        return -1;
+    }
+    db->config = clientCfg;
+
+    if (mysql_init_client(db) != 0) {
+        log_error("MySQL init failed (host=%s db=%s user=%s)",
+                  clientCfg.addr ? clientCfg.addr : "(nil)",
+                  clientCfg.database ? clientCfg.database : "(nil)",
+                  clientCfg.userName ? clientCfg.userName : "(nil)");
+        free(db->config.addr); free(db->config.database); free(db->config.userName); free(db->config.password);
+        free(db);
+        return -1;
+    }
+
+    g_mysql_db = db;
+    mysql_recorder_set_db(g_mysql_db);
+    log_info("MySQL recorder initialized");
+    return 0;
+}
+
+void mysql_recorder_shutdown(void) {
+    if (g_mysql_db) {
+        mysql_close_client(g_mysql_db);
+        free(g_mysql_db->config.addr);
+        free(g_mysql_db->config.database);
+        free(g_mysql_db->config.userName);
+        free(g_mysql_db->config.password);
+        free(g_mysql_db);
+        g_mysql_db = NULL;
+        mysql_recorder_set_db(NULL);
+        log_info("MySQL recorder shutdown complete");
+    }
 }

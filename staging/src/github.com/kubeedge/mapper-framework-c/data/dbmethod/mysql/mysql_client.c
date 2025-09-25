@@ -44,7 +44,7 @@ int mysql_parse_client_config(const char *json, MySQLClientConfig *out) {
     const char *env_db   = getenv_def("MYSQL_DB",   "testdb");
     const char *env_user = getenv_def("MYSQL_USER", "mapper");
     const char *env_pwd  = getenv("MYSQL_PASSWORD");
-    if (!env_pwd || !*env_pwd) env_pwd = getenv("PASSWORD");
+    if (!env_pwd || !*env_pwd) env_pwd = "123456";
 
     out->addr     = strdup(env_addr);
     out->database = strdup(env_db);

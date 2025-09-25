@@ -17,6 +17,13 @@ int mysql_recorder_record(const char *ns,
                           const char *value,
                           long long ts_ms);
 
+// Initialize recorder by reading MySQL config from environment variables.
+// No-op if MYSQL_ENABLED is "0" or "false".
+int mysql_recorder_init_from_env(void);
+
+// Shutdown recorder and free resources (if initialized).
+void mysql_recorder_shutdown(void);
+
 #ifdef __cplusplus
 }
 #endif

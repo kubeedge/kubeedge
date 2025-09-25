@@ -146,3 +146,4 @@ void config_free(Config *cfg)
     if (cfg)
         free(cfg);
 }
+
