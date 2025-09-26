@@ -49,7 +49,7 @@ The below illustrations describe the flow of events that would occur when NodeUp
 Users create the NodeUpgradeJob CRs to trigger upgrade edge node jobs directly using `kubectl`, NodeUpgradeJob Controller watch the resource with List-Watch, and then send upgrade message to edge node. edgecore of edge node will use `keadm` to do the upgrade operation. keadm will report upgrade result to cloud. And then cloud will record upgrade result to NodeUpgradeJob status. Users can check whether upgrade is successful or not by looking into status field.
 
 NodeUpgradeJob Controller Downstream will do:
-- Use List-Watch mechanism to monitor NodeUpgradeJob CRD resouces, after receiving events from K8s APIServer, then store it in local cache using map.
+- Use List-Watch mechanism to monitor NodeUpgradeJob CRD resources, after receiving events from K8s APIServer, then store it in local cache using map.
 
 - Check whether the upgrade job is completed(all or partial node upgrade state is completed).
   If so, we don't need to send upgrade message to edge node again. And only when the upgrade is not completed, we'll send upgrade message to edge node. This operation is to prevent cloudcore from repeating sending upgrade message to edge nodes, such as under circumstance when cloudcore restart.
@@ -83,7 +83,7 @@ Keadm will do:
   Stop the edgecore, rollback files, copy files of backup dir `/etc/kubeedge/backup/{From_Version}` to the origin path,
   and then start the origin edgecore.
 
-- report upgrade result and failure reason(if failed) to CloudHub Http service regradless of the upgrade is successful or failed.
+- report upgrade result and failure reason(if failed) to CloudHub Http service regardless of the upgrade is successful or failed.
 
 CloudHub will do:
 - CloudHub Http service will add an interface `/nodeupgrade` to transform the upgrade response message to the NodeUpgradeJob Controller Upstream.

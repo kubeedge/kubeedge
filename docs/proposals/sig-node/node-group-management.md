@@ -50,7 +50,7 @@ However, with the number of locations increasing, operation and maintenance of a
 * Limit service endpoints in the same location as the client pod, called service scope feature below.
 
 ### Non-goals
-* Create another systematic machanism to take over the work of application lifetime management, such as rolling update which is the responsibility of deployment.
+* Create another systematic mechanism to take over the work of application lifetime management, such as rolling update which is the responsibility of deployment.
 * Create a new CRD for each kind of application.
 
 ## Design Details
@@ -64,7 +64,7 @@ NodeGroup will organize nodes according to their labels which should be set base
 The EdgeApplication resource contains the template of the application to deploy.Through EdgeApplication API, users can apply the different editions of the application template for each node group, such as specifying the image registry for each node group. After applying the EdgeApplication resource, the EdgeApplication controller will take the application template and override it generating serval different editions according to the specification. And then these applications will run in their nodegroups respectively.
 
 ### GroupManagementControllerManager 
-`GroupManagementControllerManager` contains two controllers, called `NodeGroupController`, and `EdgeApplicationController`, which take over the lifetime mangement of EdgeApplication and NodeGroup respectively.
+`GroupManagementControllerManager` contains two controllers, called `NodeGroupController`, and `EdgeApplicationController`, which take over the lifetime management of EdgeApplication and NodeGroup respectively.
 
 #### NodeGroupController
 `NodeGroupController` is responsible for collecting nodes belonging to the NodeGroup according to node names or labels and filling the status field. `NodeGroupController` watches the nodegroup resource and node resource. When nodes are added, deleted or their labels are updated, it will add/remove these nodes in/from the relative node groups.

@@ -199,7 +199,7 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 	step.Printf("Register edgecore as windows service")
 	if err := util.InstallNSSMService(constants.KubeEdgeBinaryName, filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName+".exe"),
 		"--config", filepath.Join(constants.KubeEdgePath, "config/edgecore.yaml")); err != nil {
-		return fmt.Errorf("install edgecore useing nssm fail: %v", err)
+		return fmt.Errorf("install edgecore using nssm fail: %v", err)
 	}
 
 	if err := util.SetNSSMServiceStdout(constants.KubeEdgeBinaryName, filepath.Join(common.KubeEdgeLogPath, "out.log")); err != nil {
