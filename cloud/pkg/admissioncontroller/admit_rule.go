@@ -51,7 +51,7 @@ func validateRule(rule *rulesv1.Rule) error {
 	sourceKey := fmt.Sprintf("%s/%s", rule.Namespace, rule.Spec.Source)
 	sourceEndpoint, err := controller.getRuleEndpoint(rule.Namespace, rule.Spec.Source)
 	if err != nil {
-		return fmt.Errorf("cant get source ruleEndpoint %s. Reason: %w", sourceKey, err)
+		return fmt.Errorf("can't get source ruleEndpoint %s. Reason: %w", sourceKey, err)
 	} else if sourceEndpoint == nil {
 		return fmt.Errorf("source ruleEndpoint %s has not been created", sourceKey)
 	}
@@ -61,7 +61,7 @@ func validateRule(rule *rulesv1.Rule) error {
 	targetKey := fmt.Sprintf("%s/%s", rule.Namespace, rule.Spec.Target)
 	targetEndpoint, err := controller.getRuleEndpoint(rule.Namespace, rule.Spec.Target)
 	if err != nil {
-		return fmt.Errorf("cant get target ruleEndpoint %s. Reason: %w", targetKey, err)
+		return fmt.Errorf("can't get target ruleEndpoint %s. Reason: %w", targetKey, err)
 	} else if targetEndpoint == nil {
 		return fmt.Errorf("target ruleEndpoint %s has not been created", targetKey)
 	}

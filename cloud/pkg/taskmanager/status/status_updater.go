@@ -58,7 +58,7 @@ type TryUpdateStatusOptions struct {
 	ActionStatus any
 }
 
-// TryUpdateFun defines the function type for updateing the status.
+// TryUpdateFun defines the function type for updating the status.
 type TryUpdateFun func(ctx context.Context, cli crdcliset.Interface, opts TryUpdateStatusOptions) error
 
 // StatusUpdater defines the updater of the node task status.

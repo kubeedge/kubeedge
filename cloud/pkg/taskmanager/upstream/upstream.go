@@ -102,7 +102,7 @@ func parseUpstreamMessage(msg model.Message,
 		err = fmt.Errorf("failed to unmarshal upstream message, err: %v", err)
 		return
 	}
-	// parse the message resoure.
+	// parse the message resource.
 	res = taskmsg.ParseResource(msg.GetResource())
 	return
 }

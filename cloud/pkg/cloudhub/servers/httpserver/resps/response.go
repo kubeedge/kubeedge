@@ -16,7 +16,7 @@ func ErrorMessage(w http.ResponseWriter, code int, msg string) {
 	}
 	w.WriteHeader(code)
 	if _, err := w.Write([]byte(msg)); err != nil {
-		klog.Errorf("failed to write a error messge to the response, err: %v", err)
+		klog.Errorf("failed to write a error message to the response, err: %v", err)
 	}
 }
 

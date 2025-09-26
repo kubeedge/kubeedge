@@ -52,7 +52,7 @@ func TestAuthorize(t *testing.T) {
 			decision, _, err := authz.Authorize(context.Background(), tt.attrs)
 			if err != nil {
 				if !tt.wantErr {
-					t.Errorf("Authorize(): unexpect error: %v", err)
+					t.Errorf("Authorize(): unexpected error: %v", err)
 				}
 				return
 			}

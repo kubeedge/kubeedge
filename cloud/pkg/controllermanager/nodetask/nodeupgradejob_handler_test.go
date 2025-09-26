@@ -198,7 +198,7 @@ func TestNodeUpgradeJobIsFinalPhase(t *testing.T) {
 			want: false,
 		},
 		{
-			name: "complated is a final phase",
+			name: "completed is a final phase",
 			obj: &operationsv1alpha2.NodeUpgradeJob{
 				Status: operationsv1alpha2.NodeUpgradeJobStatus{
 					Phase: operationsv1alpha2.JobPhaseCompleted,
