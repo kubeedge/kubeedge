@@ -218,6 +218,12 @@ const (
 	// Disable any functionality in kube-apiserver, kube-controller-manager and kubelet related to the `--cloud-provider` component flag.
 	DisableCloudProviders featuregate.Feature = "DisableCloudProviders"
 
+	// owner: @kubeedge
+	// alpha: v1.31.12-kubeedge2
+	//
+	// DisableCSIVolumePlugin disables the in-tree CSI volume plugin support.
+	DisableCSIVolumePlugin featuregate.Feature = "DisableCSIVolumePlugin"
+
 	// owner: @andrewsykim
 	// alpha: v1.23
 	// beta: v1.29
@@ -384,6 +390,12 @@ const (
 	// The user namespace has to be created before running kubelet.
 	// All the node components such as CRI need to be running in the same user namespace.
 	KubeletInUserNamespace featuregate.Feature = "KubeletInUserNamespace"
+
+	// owner: @kubeedge
+	// alpha: v1.31.12-kubeedge2
+	//
+	// Enables the kubelet's pod resources grpc endpoint
+	KubeletPodResources featuregate.Feature = "KubeletPodResources"
 
 	// owner: @moshe010
 	// alpha: v1.27
@@ -1061,6 +1073,8 @@ var defaultKubernetesFeatureGates = map[featuregate.Feature]featuregate.FeatureS
 
 	DisableCloudProviders: {Default: true, PreRelease: featuregate.GA, LockToDefault: true},
 
+	DisableCSIVolumePlugin: {Default: false, PreRelease: featuregate.Alpha},
+
 	DisableKubeletCloudCredentialProviders: {Default: true, PreRelease: featuregate.GA, LockToDefault: true},
 
 	DisableNodeKubeProxyVersion: {Default: false, PreRelease: featuregate.Deprecated}, // default on in 1.33
@@ -1102,6 +1116,8 @@ var defaultKubernetesFeatureGates = map[featuregate.Feature]featuregate.FeatureS
 	KubeletCgroupDriverFromCRI: {Default: true, PreRelease: featuregate.Beta},
 
 	KubeletInUserNamespace: {Default: false, PreRelease: featuregate.Alpha},
+
+	KubeletPodResources: {Default: false, PreRelease: featuregate.Alpha},
 
 	KubeletPodResourcesDynamicResources: {Default: false, PreRelease: featuregate.Alpha},
 
