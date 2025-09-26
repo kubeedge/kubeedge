@@ -659,7 +659,7 @@ flowchart TB
 
 Downstream uses informer to watch resources changes of node job CRs. If the node job is in the executable phase, use the executor to sends the task to the edge, so that the edge node can complete the task.
 
-The logic of node job downstream is basically the same, so we abstracted through the DownstreamHandler interface to handle differential operations. The node jobs needs to implement the DownstreamHandler interface to complate the downstream capabilities.
+The logic of node job downstream is basically the same, so we abstracted through the DownstreamHandler interface to handle differential operations. The node jobs needs to implement the DownstreamHandler interface to complete the downstream capabilities.
 ```golang
 type DownstreamHandler interface {
     // Logger returns the downstream handler logger.
@@ -937,7 +937,7 @@ type TryUpdateStatusOptions struct {
 	ActionStatus any
 }
 
-// TryUpdateFun defines the function type for updateing the status.
+// TryUpdateFun defines the function type for updating the status.
 type TryUpdateFun func(ctx context.Context, cli crdcliset.Interface, opts TryUpdateStatusOptions) error
 
 // StatusUpdater defines the updater of the node task status.

@@ -147,7 +147,7 @@ func (dw *DMIWorker) dealMetaDeviceOperation(_ *dtcontext.DTContext, _ string, m
 			dw.dmiCache.DeviceMu.Unlock()
 			err = dmiclient.DMIClientsImp.UpdateDevice(&device)
 			if err != nil {
-				klog.Errorf("udpate device %s failed with err: %v", device.Name, err)
+				klog.Errorf("update device %s failed with err: %v", device.Name, err)
 				return err
 			}
 		default:

@@ -177,7 +177,7 @@ func (cm *CertManager) rotate() {
 func (cm *CertManager) nextRotationDeadline() (time.Time, error) {
 	cert, err := cm.getCurrent()
 	if err != nil {
-		return time.Time{}, fmt.Errorf("faild to get current certificate")
+		return time.Time{}, fmt.Errorf("failed to get current certificate")
 	}
 	notAfter := cert.Leaf.NotAfter
 	totalDuration := float64(notAfter.Sub(cert.Leaf.NotBefore))

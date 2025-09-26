@@ -62,7 +62,7 @@ As an example, consider the task of node upgrade.
 Users create the NodeUpgradeJob CRs to trigger upgrade edge node jobs directly using `kubectl`, NodeUpgrade Controller watch the resource with List-Watch, and then send upgrade message to edge node. edgecore of edge node will use `keadm` to do the upgrade operation. keadm will report upgrade result to cloud. And then cloud will record upgrade result to NodeUpgradeJob status. Users can check whether upgrade is successful or not by looking into status field.
 
 NodeUpgrade Controller will do:
-- Use List-Watch mechanism to monitor NodeUpgradeJob CRD resouces, after receiving events from K8s APIServer, then store it in local cache using map.
+- Use List-Watch mechanism to monitor NodeUpgradeJob CRD resources, after receiving events from K8s APIServer, then store it in local cache using map.
 
 - Use K8s informer to get node list according to NodeNames or LabelSelector specified in CR, and
   filter out nodes that don't meet upgrade requirements(1. edge node already on the desired upgrade version. 2. not edge nod                                                                    e,
@@ -98,7 +98,7 @@ Keadm will do:
   Stop the edgecore, rollback files, copy files of backup dir `/etc/kubeedge/backup/{From_Version}` to the origin path,
   and then start the origin edgecore.
 
-- report upgrade result and failure reason(if failed) to CloudHub Http service regradless of the upgrade is successful or failed.
+- report upgrade result and failure reason(if failed) to CloudHub Http service regardless of the upgrade is successful or failed.
 
 CloudHub will do: 
 - CloudHub Http service will add an interface `/task/{taskID}/node/{nodeID}/status` to transform the upgrade response message to the Tasks Manager Upstream.
