@@ -41,6 +41,7 @@ import (
 	taskutil "github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/v1alpha1/util"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
 	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	"github.com/kubeedge/kubeedge/pkg/features"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 	taskmsg "github.com/kubeedge/kubeedge/pkg/nodetask/message"
@@ -107,6 +108,10 @@ type messageDispatcher struct {
 
 	// clusterObjectSyncLister can list/get clusterObjectSync from the shared informer's store
 	clusterObjectSyncLister synclisters.ClusterObjectSyncLister
+
+	// per-node downstream priority queues and their stop channels
+	nodeDownstreamPQ sync.Map // nodeID -> *prioritySendQueueCloud
+	nodeSenderStops  sync.Map // nodeID -> chan struct{}
 }
 
 // NewMessageDispatcher initializes a new MessageDispatcher
@@ -115,12 +120,13 @@ func NewMessageDispatcher(
 	objectSyncLister synclisters.ObjectSyncLister,
 	clusterObjectSyncLister synclisters.ClusterObjectSyncLister,
 	reliableClient reliableclient.Interface) MessageDispatcher {
-	return &messageDispatcher{
+	md := &messageDispatcher{
 		objectSyncLister:        objectSyncLister,
 		clusterObjectSyncLister: clusterObjectSyncLister,
 		reliableClient:          reliableClient,
 		SessionManager:          sessionManager,
 	}
+	return md
 }
 
 func (md *messageDispatcher) DispatchDownstream() {
@@ -137,27 +143,85 @@ func (md *messageDispatcher) DispatchDownstream() {
 				continue
 			}
 
-			klog.V(4).Infof("[DispatchDownstream] dispatch Message to edge: %+v", msg)
+			classifyPriority(&msg)
 
+			// enqueue to per-node downstream priority queue; sender for the node will process
 			nodeID, err := GetNodeID(&msg)
-			if nodeID == "" || err != nil {
-				klog.Warningf("node id is not found in the message: %+v", msg)
+			if err != nil || nodeID == "" {
+				klog.Warningf("skip downstream message without node id: %v, err: %v", msg.String(), err)
 				continue
 			}
-
 			if !model.IsToEdge(&msg) {
-				klog.Warningf("skip message not to edge node %s: %+v", nodeID, msg)
+				// not a downstream-to-edge message
 				continue
 			}
-
-			switch {
-			case noAckRequired(&msg):
-				md.enqueueNoAckMessage(nodeID, &msg)
-			default:
-				md.enqueueAckMessage(nodeID, &msg)
+			if features.DefaultFeatureGate.Enabled(features.MessagePriorityQueues) {
+				pq := md.getOrCreateNodePQ(nodeID)
+				pq.Add(msg)
+				continue
 			}
+			// fallback: bypass PQ and enqueue directly to Ack/NoAck
+			if noAckRequired(&msg) {
+				md.enqueueNoAckMessage(nodeID, &msg)
+				continue
+			}
+			md.enqueueAckMessage(nodeID, &msg)
 		}
 	}
+}
+
+// getOrCreateNodePQ returns existing per-node PQ or creates one and starts its sender
+func (md *messageDispatcher) getOrCreateNodePQ(nodeID string) *prioritySendQueueCloud {
+	if v, ok := md.nodeDownstreamPQ.Load(nodeID); ok {
+		return v.(*prioritySendQueueCloud)
+	}
+	pq := newPrioritySendQueueCloud()
+	stop := make(chan struct{})
+	if v, loaded := md.nodeDownstreamPQ.LoadOrStore(nodeID, pq); loaded {
+		// someone else stored concurrently
+		close(stop)
+		return v.(*prioritySendQueueCloud)
+	}
+	md.nodeSenderStops.Store(nodeID, stop)
+	go md.runDownstreamPrioritySenderForNode(nodeID, pq, stop)
+	return pq
+}
+
+// classifyPriority sets message priority based on response inheritance and rules.
+func classifyPriority(msg *beehivemodel.Message) {
+	// response inheritance: keep as-is
+	if msg.GetOperation() == beehivemodel.ResponseOperation {
+		// responses inherit priority at creation time
+		return
+	}
+
+	// promote critical resource types precisely by resource type
+	rType, _ := messagelayer.GetResourceType(*msg)
+	switch rType {
+	case beehivemodel.ResourceTypeNode, beehivemodel.ResourceTypeLease:
+		msg.SetPriority(beehivemodel.PriorityImportant)
+		return
+	}
+
+	// rule table
+	rules := []struct {
+		match func(m *beehivemodel.Message) bool
+		val   int32
+	}{
+		{func(m *beehivemodel.Message) bool { return m.GetOperation() == beehivemodel.DeleteOperation }, beehivemodel.PriorityImportant},
+		{func(m *beehivemodel.Message) bool {
+			return strings.Contains(m.GetResource(), beehivemodel.ResourceTypePodStatus)
+		}, beehivemodel.PriorityImportant},
+		{func(m *beehivemodel.Message) bool { return m.GetOperation() == beehivemodel.UploadOperation }, beehivemodel.PriorityLow},
+		{func(m *beehivemodel.Message) bool { return m.GetOperation() == model.OpKeepalive }, beehivemodel.PriorityUrgent},
+	}
+	for _, r := range rules {
+		if r.match(msg) {
+			msg.SetPriority(r.val)
+			return
+		}
+	}
+	// other messages keep default PriorityNormal (already set by NewMessage)
 }
 
 func (md *messageDispatcher) DispatchUpstream(message *beehivemodel.Message, info *model.HubInfo) {
@@ -516,22 +580,30 @@ func (md *messageDispatcher) GetNodeMessagePool(nodeID string) *common.NodeMessa
 
 func (md *messageDispatcher) AddNodeMessagePool(nodeID string, pool *common.NodeMessagePool) {
 	md.NodeMessagePools.Store(nodeID, pool)
+	// ensure per-node PQ and sender exist when node message pool is added
+	md.getOrCreateNodePQ(nodeID)
 }
 
 func (md *messageDispatcher) DeleteNodeMessagePool(nodeID string, pool *common.NodeMessagePool) {
 	nsp, exist := md.NodeMessagePools.Load(nodeID)
 	if !exist {
 		klog.Warningf("message pool not found for node %s", nodeID)
-		return
+		// still attempt to stop sender/PQ if exists
+	} else {
+		// This usually happens when the node is disconnect then quickly reconnect
+		if nsp.(*common.NodeMessagePool) != pool {
+			klog.Warningf("the message pool %s already deleted", nodeID)
+		} else {
+			md.NodeMessagePools.Delete(nodeID)
+		}
 	}
-
-	// This usually happens when the node is disconnect then quickly reconnect
-	if nsp.(*common.NodeMessagePool) != pool {
-		klog.Warningf("the message pool %s already deleted", nodeID)
-		return
+	// stop and delete per-node sender and PQ
+	if v, ok := md.nodeSenderStops.LoadAndDelete(nodeID); ok {
+		close(v.(chan struct{}))
 	}
-
-	md.NodeMessagePools.Delete(nodeID)
+	if v, ok := md.nodeDownstreamPQ.LoadAndDelete(nodeID); ok {
+		v.(*prioritySendQueueCloud).Close()
+	}
 }
 
 func (md *messageDispatcher) Publish(msg *beehivemodel.Message) error {
