@@ -31,7 +31,7 @@ import (
 	"github.com/kubeedge/kubeedge/common/types"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
-	daov2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 	"github.com/kubeedge/kubeedge/pkg/containers"
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
 	"github.com/kubeedge/kubeedge/pkg/version"
@@ -86,10 +86,48 @@ func initUpgrade(taskReq types.NodeTaskRequest) (event fsm.Event) {
 		return
 	}
 
-	upgradedao := daov2.NewUpgradeV1alpha1()
+	upgradedao := dbclient.NewUpgradeV1alpha1()
 	err = upgradedao.Save(&taskReq)
 	if err != nil {
 		return
+	}
+	if upgradeReq.RequireConfirmation {
+		dbc := dbclient.NewMetaV2Service()
+		var upgradeJobReqDB = commontypes.NodeUpgradeJobRequest{
+			UpgradeID:           upgradeReq.UpgradeID,
+			HistoryID:           upgradeReq.HistoryID,
+			Version:             upgradeReq.Version,
+			UpgradeTool:         upgradeReq.UpgradeTool,
+			Image:               upgradeReq.Image,
+			ImageDigest:         upgradeReq.ImageDigest,
+			RequireConfirmation: upgradeReq.RequireConfirmation,
+		}
+		if err = dbc.SaveNodeUpgradeJobRequestToMetaV2(upgradeJobReqDB); err != nil {
+			event.Action = api.ActionFailure
+			event.Msg = err.Error()
+		}
+		e, _ := GetExecutor(TaskUpgrade)
+		var taskReqDB = types.NodeTaskRequest{
+			TaskID: e.Name(),
+			Type:   "Confirm",
+			State:  string(api.NodeUpgrading),
+			Item:   "Wait for a confirm for upgrade request on the edge site.",
+		}
+		if err = dbc.SaveNodeTaskRequestToMetaV2(taskReqDB); err != nil {
+			event.Action = api.ActionFailure
+			event.Msg = err.Error()
+		}
+		return fsm.Event{
+			Type:   "Confirm",
+			Action: api.ActionConfirmation,
+			Msg:    "Wait for a confirm for upgrade request on the edge site.",
+		}
+	}
+	if upgradeReq.Version == version.Get().String() {
+		return fsm.Event{
+			Type:   "Upgrading",
+			Action: api.ActionSuccess,
+		}
 	}
 
 	if upgradeReq.RequireConfirmation {
@@ -128,7 +166,7 @@ func upgrade(taskReq types.NodeTaskRequest) (event fsm.Event) {
 	// The NodeTaskRequest of v1alpha1 upgrade node job only needs data when confirming.
 	// The edgecore process will be interrupted when keadm executes the upgrade command,
 	// so the data needs to be cleaned up in advance.
-	upgradedao := daov2.NewUpgradeV1alpha1()
+	upgradedao := dbclient.NewUpgradeV1alpha1()
 	if err := upgradedao.Delete(); err != nil {
 		return
 	}

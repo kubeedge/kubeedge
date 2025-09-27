@@ -18,7 +18,8 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	metaManagerConfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
 )
 
@@ -134,24 +135,24 @@ func (m *metaManager) handleMessage(message *model.Message) error {
 			klog.Errorf("get message content data failed, message: %s, error: %s", msgDebugInfo(message), err)
 			return fmt.Errorf("get message content data failed, error: %s", err)
 		}
-		meta := &dao.Meta{
+		meta := &models.Meta{
 			Key:   resKey,
 			Type:  resType,
 			Value: string(content)}
-		err = dao.InsertOrUpdate(meta)
+		err = m.metaService.InsertOrUpdate(meta)
 		if err != nil {
 			klog.Errorf("insert or update meta failed, message: %s, error: %v", msgDebugInfo(message), err)
 			return fmt.Errorf("insert or update meta failed, %s", err)
 		}
 	case model.DeleteOperation:
 		if resType == model.ResourceTypePod {
-			err := processDeletePodDB(*message)
+			err := processDeletePodDB(*message, m.metaService)
 			if err != nil {
 				klog.Errorf("delete pod meta failed, message %s, err: %v", msgDebugInfo(message), err)
 				return fmt.Errorf("failed to delete pod meta to DB: %s", err)
 			}
 		} else {
-			err := dao.DeleteMetaByKey(resKey)
+			err := m.metaService.DeleteMetaByKey(resKey)
 			if err != nil {
 				klog.Errorf("delete meta failed, %s", msgDebugInfo(message))
 				return fmt.Errorf("delete meta failed, %s", err)
@@ -161,7 +162,7 @@ func (m *metaManager) handleMessage(message *model.Message) error {
 	return nil
 }
 
-func processDeletePodDB(message model.Message) error {
+func processDeletePodDB(message model.Message, ms *dbclient.MetaService) error {
 	var msgPod corev1.Pod
 	msgContent, err := message.GetContentData()
 	if err != nil {
@@ -173,7 +174,7 @@ func processDeletePodDB(message model.Message) error {
 		return err
 	}
 
-	num, err := dao.DeleteMetaByKeyAndPodUID(message.GetResource(), string(msgPod.UID))
+	num, err := ms.DeleteMetaByKeyAndPodUID(message.GetResource(), string(msgPod.UID))
 	if err != nil {
 		return err
 	}
@@ -185,7 +186,7 @@ func processDeletePodDB(message model.Message) error {
 	podPatchKey := strings.Replace(message.GetResource(),
 		constants.ResourceSep+model.ResourceTypePod+constants.ResourceSep,
 		constants.ResourceSep+model.ResourceTypePodPatch+constants.ResourceSep, 1)
-	err = dao.DeleteMetaByKey(podPatchKey)
+	err = ms.DeleteMetaByKey(podPatchKey)
 	if err != nil {
 		return err
 	}
@@ -347,9 +348,9 @@ func (m *metaManager) processQuery(message model.Message) {
 
 	if resID == "" {
 		// Get specific type resources
-		metas, err = dao.QueryMeta("type", resType)
+		metas, err = m.metaService.QueryMeta("type", resType)
 	} else {
-		metas, err = dao.QueryMeta("key", resKey)
+		metas, err = m.metaService.QueryMeta("key", resKey)
 	}
 	if err != nil {
 		klog.Errorf("query meta failed, %s", msgDebugInfo(&message))
