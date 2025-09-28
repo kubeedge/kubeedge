@@ -19,7 +19,6 @@ limitations under the License.
 package util
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -30,6 +29,7 @@ import (
 
 	"github.com/kubeedge/api/apis/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	extsys "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/extsystem"
 	"github.com/kubeedge/kubeedge/pkg/util/execs"
 	"github.com/kubeedge/kubeedge/pkg/util/files"
 )
@@ -76,7 +76,7 @@ func CopyFile(src, dst string) error {
 // RunningModuleV2 identifies cloudcore/edgecore running or not.
 // only used for cloudcore container install and edgecore binary install
 func RunningModuleV2(opt *types.ResetOptions) types.ModuleRunning {
-	if IsNSSMServiceExist(constants.KubeEdgeBinaryName) {
+	if IsServiceExist(constants.KubeEdgeBinaryName) {
 		return types.KubeEdgeEdgeRunning
 	}
 	return types.NoneRunning
@@ -233,11 +233,19 @@ func retryDownload(filename, checksumFilename string, version semver.Version, ta
 }
 
 func runEdgeCore() error {
-	return errors.New("not implemented")
+	svc, err := extsys.GetExtSystem()
+	if err != nil {
+		return err
+	}
+	return svc.ServiceStart(constants.KubeEdgeBinaryName)
 }
 
 func KillKubeEdgeBinary(proc string) error {
-	return errors.New("not implemented")
+	svc, err := extsys.GetExtSystem()
+	if err != nil {
+		return err
+	}
+	return svc.ServiceStop(proc)
 }
 
 func EdgeCoreRunningModuleV2(opt *types.ResetOptions) types.ModuleRunning {
