@@ -168,7 +168,8 @@ func TestDeviceManagerDeviceMap(t *testing.T) {
 	assert.False(t, ok)
 }
 
-func TestDeviceManagerConcurrency(t *testing.T) {
+// TestDeviceManagerConcurrency does not use t, so use _ to avoid compile error
+func TestDeviceManagerConcurrency(_ *testing.T) {
 	dm := &DeviceManager{
 		Device: sync.Map{},
 		events: make(chan watch.Event, 100),
