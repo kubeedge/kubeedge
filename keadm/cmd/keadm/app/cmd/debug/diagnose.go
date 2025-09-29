@@ -138,7 +138,7 @@ func DiagnoseNode(ops *common.DiagnoseOptions) error {
 		return fmt.Errorf("parse edgecore config failed")
 	}
 
-	// check datebase
+	// check database
 	dataSource := v1alpha2.DataBaseDataSource
 	if edgeconfig.DataBase.DataSource != "" {
 		dataSource = edgeconfig.DataBase.DataSource
@@ -232,7 +232,7 @@ func QueryPodFromDatabase(resNamePaces string, podName string) (*v1.PodStatus, e
 		return nil, fmt.Errorf("read database fail: %s", err.Error())
 	}
 	if len(*resultPod) == 0 {
-		return nil, fmt.Errorf("not find %v in datebase", conditionsPod)
+		return nil, fmt.Errorf("could not find %v in database", conditionsPod)
 	}
 	fmt.Printf("Pod %s is exist \n", podName)
 
@@ -244,7 +244,7 @@ func QueryPodFromDatabase(resNamePaces string, podName string) (*v1.PodStatus, e
 		return nil, fmt.Errorf("read database fail: %s", err.Error())
 	}
 	if len(*resultStatus) == 0 {
-		fmt.Printf("not find %v in datebase\n", conditionsStatus)
+		fmt.Printf("could not find %v in database\n", conditionsStatus)
 		r := *resultPod
 		pod := &v1.Pod{}
 		err = json.Unmarshal([]byte(r[0]), pod)

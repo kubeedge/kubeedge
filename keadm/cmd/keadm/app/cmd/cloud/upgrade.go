@@ -82,7 +82,7 @@ func addUpgradeOptionFlags(cmd *cobra.Command, opts *types.CloudUpgradeOptions) 
 		"reuse the last release's values and merge in any overrides from the command line via --set and -f.")
 
 	fs.BoolVar(&opts.PrintFinalValues, types.FlagNamePrintFinalValues, false,
-		"Print the final values configuration for debuging")
+		"Print the final values configuration for debugging")
 
 	fs.StringVar(&opts.ImageRepository, types.FlagNameImageRepository, opts.ImageRepository,
 		"Choose a container image repository to pull the image of the kubedge component.")
