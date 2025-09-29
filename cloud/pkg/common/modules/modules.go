@@ -28,8 +28,15 @@ const (
 	CloudStreamModuleName = "cloudStream"
 	CloudStreamGroupName  = "cloudStream"
 
+	CloudDataStreamModuleName = "cloudDataStream"
+	CloudDataStreamGroupName  = "cloudDataStream"
+
 	RouterModuleName = "router"
 	RouterGroupName  = "router"
+
+	StreamRuleControllerModuleName = "streamrulecontroller"
+	StreamRuleControllerGroupName  = "streamrulecontroller"
+	StreamRuleEndpointProvider     = "streamrule_endpoint"
 
 	UserGroup = "user"
 

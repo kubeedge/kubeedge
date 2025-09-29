@@ -13,4 +13,5 @@ const (
 	MessageTypeRemoveConnect
 	MessageTypeCloseConnect
 	MessageTypeAttachConnect
+	MessageTypeVideoConnect
 )

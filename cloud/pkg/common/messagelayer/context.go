@@ -51,6 +51,9 @@ func (cml *ContextMessageLayer) Send(message model.Message) error {
 	if len(cml.SendRouterModuleName) != 0 && isRouterMsg(message) {
 		module = cml.SendRouterModuleName
 	}
+	if len(cml.SendRouterModuleName) != 0 && isStreamruleMsg(message) {
+		module = "streamrulecontroller"
+	}
 	beehiveContext.Send(module, message)
 	return nil
 }
@@ -69,6 +72,11 @@ func (cml *ContextMessageLayer) Response(message model.Message) error {
 func isRouterMsg(message model.Message) bool {
 	resourceArray := strings.Split(message.GetResource(), constants.ResourceSep)
 	return len(resourceArray) == 2 && (resourceArray[0] == model.ResourceTypeRule || resourceArray[0] == model.ResourceTypeRuleEndpoint)
+}
+
+func isStreamruleMsg(message model.Message) bool {
+	resourceArray := strings.Split(message.GetResource(), constants.ResourceSep)
+	return len(resourceArray) == 2 && (resourceArray[0] == "streamrule" || resourceArray[0] == "streamruleendpoint")
 }
 
 func EdgeControllerMessageLayer() MessageLayer {

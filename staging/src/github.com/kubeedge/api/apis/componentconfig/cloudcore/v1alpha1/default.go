@@ -137,6 +137,17 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 				TLSStreamPrivateKeyFile: constants.DefaultStreamKeyFile,
 				StreamPort:              10003,
 			},
+			CloudDataStream: &CloudDataStream{
+				Enable:                  false,
+				TLSTunnelCAFile:         constants.DefaultCAFile,
+				TLSTunnelCertFile:       constants.DefaultCertFile,
+				TLSTunnelPrivateKeyFile: constants.DefaultKeyFile,
+				TunnelPort:              constants.DefaultDataTunnelPort,
+				TLSStreamCAFile:         constants.DefaultStreamCAFile,
+				TLSStreamCertFile:       constants.DefaultStreamCertFile,
+				TLSStreamPrivateKeyFile: constants.DefaultStreamKeyFile,
+				StreamPort:              10005,
+			},
 			Router: &Router{
 				Enable:      false,
 				Address:     "0.0.0.0",
@@ -146,6 +157,9 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 			IptablesManager: &IptablesManager{
 				Enable: true,
 				Mode:   InternalMode,
+			},
+			StreamRuleController: &StreamRuleController{
+				Enable: false,
 			},
 		},
 	}
@@ -175,6 +189,7 @@ func getDefaultEdgeControllerLoad(nodeLimit int32) *EdgeControllerLoad {
 		CreateLeaseWorkers:                nodeLimit,
 		QueryLeaseWorkers:                 constants.DefaultQueryLeaseWorkers,
 		UpdateRuleStatusWorkers:           constants.DefaultUpdateRuleStatusWorkers,
+		UpdateStreamruleStatusWorkers:     constants.DefaultUpdateStreamruleStatusWorkers,
 		ServiceAccountTokenWorkers:        constants.DefaultServiceAccountTokenWorkers,
 		CreatePodWorks:                    constants.DefaultCreatePodWorkers,
 		CertificateSigningRequestWorkers:  constants.DefaultCertificateSigningRequestWorkers,
