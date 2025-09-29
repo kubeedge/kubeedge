@@ -437,7 +437,7 @@ spec:
       share: /export
 ```
 Refer to the NFS share information and create a PersistentVolume.
-`server: 127.0.0.1` and `share: /export` in the `volumeAttributes` are used to speficy the NFS share information.
+`server: 127.0.0.1` and `share: /export` in the `volumeAttributes` are used to specify the NFS share information.
 
 PersistentVolumeClaim Example:
 ```yaml
