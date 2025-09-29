@@ -26,6 +26,7 @@ import (
 	policyv1alpha1 "github.com/kubeedge/api/apis/policy/v1alpha1"
 	reliablesyncsv1alpha1 "github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
 	rulesv1 "github.com/kubeedge/api/apis/rules/v1"
+	streamrulesv1alpha1 "github.com/kubeedge/api/apis/streamrules/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -44,6 +45,7 @@ var localSchemeBuilder = runtime.SchemeBuilder{
 	policyv1alpha1.AddToScheme,
 	reliablesyncsv1alpha1.AddToScheme,
 	rulesv1.AddToScheme,
+	streamrulesv1alpha1.AddToScheme,
 }
 
 // AddToScheme adds all types of this clientset into the given scheme. This allows composition

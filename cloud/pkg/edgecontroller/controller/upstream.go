@@ -51,6 +51,7 @@ import (
 
 	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 	rulesv1 "github.com/kubeedge/api/apis/rules/v1"
+	streamrulesv1alpha1 "github.com/kubeedge/api/apis/streamrules/v1alpha1"
 	crdClientset "github.com/kubeedge/api/client/clientset/versioned"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -62,6 +63,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/types"
 	routerrule "github.com/kubeedge/kubeedge/cloud/pkg/router/rule"
+	streamrulecontrollerstreamrule "github.com/kubeedge/kubeedge/cloud/pkg/streamrulecontroller/streamrule"
 	comconstants "github.com/kubeedge/kubeedge/common/constants"
 	common "github.com/kubeedge/kubeedge/common/constants"
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
@@ -121,6 +123,7 @@ type UpstreamController struct {
 	patchPodChan                   chan model.Message
 	podDeleteChan                  chan model.Message
 	ruleStatusChan                 chan model.Message
+	streamruleStatusChan           chan model.Message
 	createLeaseChan                chan model.Message
 	queryLeaseChan                 chan model.Message
 	createPodChan                  chan model.Message
@@ -193,6 +196,9 @@ func (uc *UpstreamController) Start() error {
 	}
 	for i := 0; i < int(uc.config.Load.UpdateRuleStatusWorkers); i++ {
 		go uc.updateRuleStatus()
+	}
+	for i := 0; i < int(uc.config.Load.UpdateStreamruleStatusWorkers); i++ {
+		go uc.updateStreamruleStatus()
 	}
 	for i := 0; i < int(uc.config.Load.CreatePodWorks); i++ {
 		go uc.createPod()
@@ -273,6 +279,8 @@ func (uc *UpstreamController) dispatchMessage() {
 			}
 		case model.ResourceTypeRuleStatus:
 			uc.ruleStatusChan <- msg
+		case "streamrulestatus":
+			uc.streamruleStatusChan <- msg
 		case model.ResourceTypeLease:
 			switch msg.GetOperation() {
 			case model.InsertOperation, model.UpdateOperation:
@@ -394,6 +402,63 @@ func (uc *UpstreamController) updateRuleStatus() {
 				klog.Warningf("message: %s process failure, update ruleStatus failed with error: %s, namespace: %s, name: %s", msg.GetID(), err, namespace, ruleID)
 			} else {
 				klog.Infof("UpdateRulestatus successfully!")
+			}
+		}
+	}
+}
+
+func (uc *UpstreamController) updateStreamruleStatus() {
+	for {
+		select {
+		case <-beehiveContext.Done():
+			klog.Warning("stop updateStreamruleStatus")
+			return
+		case msg := <-uc.streamruleStatusChan:
+			klog.V(5).Infof("message %s, operation is : %s , and resource is %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
+			namespace, err := messagelayer.GetNamespace(msg)
+			if err != nil {
+				klog.Warningf("message: %s process failure, get namespace failed with error: %s", msg.GetID(), err)
+				continue
+			}
+			streamruleID, err := messagelayer.GetResourceName(msg)
+			if err != nil {
+				klog.Warningf("message: %s process failure, get resource name failed with error: %s", msg.GetID(), err)
+				continue
+			}
+			var streamrule *streamrulesv1alpha1.StreamRule
+			streamrule, err = uc.crdClient.StreamrulesV1alpha1().StreamRules(namespace).Get(context.Background(), streamruleID, metaV1.GetOptions{})
+			if err != nil {
+				klog.Warningf("message: %s process failure, get streamrule with error: %s, namespaces: %s name: %s", msg.GetID(), err, namespace, streamruleID)
+				continue
+			}
+			content, ok := msg.Content.(streamrulecontrollerstreamrule.ExecResult)
+			if !ok {
+				klog.Warningf("message: %s process failure, get streamrule content with error: %s, namespaces: %s name: %s", msg.GetID(), err, namespace, streamruleID)
+				continue
+			}
+			if content.Status == "SUCCESS" {
+				streamrule.Status.SuccessMessages++
+			}
+			if content.Status == "FAIL" {
+				streamrule.Status.FailMessages++
+				errSlice := make([]string, 0)
+				streamrule.Status.Errors = append(errSlice, content.Error.Detail)
+			}
+			newStatus := &streamrulesv1alpha1.StreamRuleStatus{
+				SuccessMessages: streamrule.Status.SuccessMessages,
+				FailMessages:    streamrule.Status.FailMessages,
+				Errors:          streamrule.Status.Errors,
+			}
+			body, err := json.Marshal(newStatus)
+			if err != nil {
+				klog.Warningf("message: %s process failure, content marshal err: %s", msg.GetID(), err)
+				continue
+			}
+			_, err = uc.crdClient.StreamrulesV1alpha1().StreamRules(namespace).Patch(context.Background(), streamruleID, controller.MergePatchType, body, metaV1.PatchOptions{})
+			if err != nil {
+				klog.Warningf("message: %s process failure, update streamruleStatus failed with error: %s, namespace: %s, name: %s", msg.GetID(), err, namespace, streamruleID)
+			} else {
+				klog.Infof("UpdateStreamrulestatus successfully!")
 			}
 		}
 	}

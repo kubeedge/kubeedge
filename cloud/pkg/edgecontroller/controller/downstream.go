@@ -14,6 +14,7 @@ import (
 
 	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 	routerv1 "github.com/kubeedge/api/apis/rules/v1"
+	streamrulev1alpha1 "github.com/kubeedge/api/apis/streamrules/v1alpha1"
 	crdinformers "github.com/kubeedge/api/client/informers/externalversions"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -43,6 +44,10 @@ type DownstreamController struct {
 	rulesManager *manager.RuleManager
 
 	ruleEndpointsManager *manager.RuleEndpointManager
+
+	streamRuleManager *manager.StreamRuleManager
+
+	streamRuleEndpointManager *manager.StreamRuleEndpointManager
 
 	lc *manager.LocationCache
 
@@ -329,6 +334,94 @@ func (dc *DownstreamController) syncRuleEndpoint() {
 	}
 }
 
+func (dc *DownstreamController) syncStreamRule() {
+	for {
+		select {
+		case <-beehiveContext.Done():
+			klog.Warning("Stop edgecontroller downstream syncRule loop")
+			return
+		case e := <-dc.streamRuleManager.Events():
+			klog.V(4).Infof("Get streamrule events: event type: %s.", e.Type)
+			streamrule, ok := e.Object.(*streamrulev1alpha1.StreamRule)
+			if !ok {
+				klog.Warningf("object type: %T unsupported", e.Object)
+				continue
+			}
+			klog.V(4).Infof("Get streamrule events: streamrule object: %+v.", streamrule)
+
+			resource, err := messagelayer.BuildResourceForRouter("streamrule", streamrule.Name)
+			if err != nil {
+				klog.Warningf("built message resource failed with error: %s", err)
+				continue
+			}
+			msg := model.NewMessage("").
+				SetResourceVersion(streamrule.ResourceVersion).
+				FillBody(streamrule)
+			switch e.Type {
+			case watch.Added:
+				msg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.InsertOperation)
+			case watch.Deleted:
+				msg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.DeleteOperation)
+			case watch.Modified:
+				klog.Warningf("streamrule event type: %s unsupported", e.Type)
+				continue
+			default:
+				klog.Warningf("streamrule event type: %s unsupported", e.Type)
+				continue
+			}
+			if err := dc.messageLayer.Send(*msg); err != nil {
+				klog.Warningf("send message failed with error: %s, operation: %s, resource: %s. Reason: %v", err, msg.GetOperation(), msg.GetResource(), err)
+			} else {
+				klog.V(4).Infof("send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
+			}
+		}
+	}
+}
+
+func (dc *DownstreamController) syncStreamRuleEndpoint() {
+	for {
+		select {
+		case <-beehiveContext.Done():
+			klog.Warning("Stop edgecontroller downstream syncStreamRuleEndpoint loop")
+			return
+		case e := <-dc.streamRuleEndpointManager.Events():
+			klog.V(4).Infof("Get streamruleEndpoint events: event type: %s.", e.Type)
+			streamruleEndpoint, ok := e.Object.(*streamrulev1alpha1.StreamRuleEndpoint)
+			if !ok {
+				klog.Warningf("object type: %T unsupported", e.Object)
+				continue
+			}
+			klog.V(4).Infof("Get streamruleEndpoint events: streamruleEndpoint object: %+v.", streamruleEndpoint)
+
+			resource, err := messagelayer.BuildResourceForRouter("streamruleendpoint", streamruleEndpoint.Name)
+			if err != nil {
+				klog.Warningf("built message resource failed with error: %s", err)
+				continue
+			}
+			msg := model.NewMessage("").
+				SetResourceVersion(streamruleEndpoint.ResourceVersion).
+				FillBody(streamruleEndpoint)
+			switch e.Type {
+			case watch.Added:
+				msg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.InsertOperation)
+			case watch.Deleted:
+				msg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.DeleteOperation)
+			case watch.Modified:
+				klog.Warningf("streamruleEndpoint event type: %s unsupported", e.Type)
+				continue
+			default:
+				klog.Warningf("streamruleEndpoint event type: %s unsupported", e.Type)
+				continue
+			}
+			if err := dc.messageLayer.Send(*msg); err != nil {
+				klog.Warningf("send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
+			} else {
+				klog.V(4).Infof("send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
+			}
+		}
+	}
+}
+
 // Start DownstreamController
 func (dc *DownstreamController) Start() error {
 	klog.Info("start downstream controller")
@@ -349,6 +442,12 @@ func (dc *DownstreamController) Start() error {
 
 	// ruleendpoint
 	go dc.syncRuleEndpoint()
+
+	// streamrule
+	go dc.syncStreamRule()
+
+	// streamruleendpoint
+	go dc.syncStreamRuleEndpoint()
 
 	return nil
 }
@@ -424,17 +523,33 @@ func NewDownstreamController(config *v1alpha1.EdgeController, k8sInformerFactory
 		return nil, err
 	}
 
+	streamrulesInformer := crdInformerFactory.Streamrules().V1alpha1().StreamRules().Informer()
+	streamrulesManager, err := manager.NewStreamRuleManager(config, streamrulesInformer)
+	if err != nil {
+		klog.Warningf("Create streamrulesManager failed with error: %s", err)
+		return nil, err
+	}
+
+	streamruleEndpointsInformer := crdInformerFactory.Streamrules().V1alpha1().StreamRuleEndpoints().Informer()
+	streamruleEndpointsManager, err := manager.NewStreamRuleEndpointManager(config, streamruleEndpointsInformer)
+	if err != nil {
+		klog.Warningf("Create streamruleEndpointsManager failed with error: %s", err)
+		return nil, err
+	}
+
 	dc := &DownstreamController{
-		kubeClient:           client.GetKubeClient(),
-		podManager:           podManager,
-		configmapManager:     configMapManager,
-		secretManager:        secretManager,
-		nodeManager:          nodesManager,
-		messageLayer:         messagelayer.EdgeControllerMessageLayer(),
-		lc:                   lc,
-		podLister:            podInformer.Lister(),
-		rulesManager:         rulesManager,
-		ruleEndpointsManager: ruleEndpointsManager,
+		kubeClient:                client.GetKubeClient(),
+		podManager:                podManager,
+		configmapManager:          configMapManager,
+		secretManager:             secretManager,
+		nodeManager:               nodesManager,
+		messageLayer:              messagelayer.EdgeControllerMessageLayer(),
+		lc:                        lc,
+		podLister:                 podInformer.Lister(),
+		rulesManager:              rulesManager,
+		ruleEndpointsManager:      ruleEndpointsManager,
+		streamRuleManager:         streamrulesManager,
+		streamRuleEndpointManager: streamruleEndpointsManager,
 	}
 	if err := dc.initLocating(); err != nil {
 		return nil, err

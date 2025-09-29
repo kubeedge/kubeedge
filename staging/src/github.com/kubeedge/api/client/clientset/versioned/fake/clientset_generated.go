@@ -34,6 +34,8 @@ import (
 	fakereliablesyncsv1alpha1 "github.com/kubeedge/api/client/clientset/versioned/typed/reliablesyncs/v1alpha1/fake"
 	rulesv1 "github.com/kubeedge/api/client/clientset/versioned/typed/rules/v1"
 	fakerulesv1 "github.com/kubeedge/api/client/clientset/versioned/typed/rules/v1/fake"
+	streamrulesv1alpha1 "github.com/kubeedge/api/client/clientset/versioned/typed/streamrules/v1alpha1"
+	fakestreamrulesv1alpha1 "github.com/kubeedge/api/client/clientset/versioned/typed/streamrules/v1alpha1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -124,4 +126,9 @@ func (c *Clientset) ReliablesyncsV1alpha1() reliablesyncsv1alpha1.ReliablesyncsV
 // RulesV1 retrieves the RulesV1Client
 func (c *Clientset) RulesV1() rulesv1.RulesV1Interface {
 	return &fakerulesv1.FakeRulesV1{Fake: &c.Fake}
+}
+
+// StreamrulesV1alpha1 retrieves the StreamrulesV1alpha1Client
+func (c *Clientset) StreamrulesV1alpha1() streamrulesv1alpha1.StreamrulesV1alpha1Interface {
+	return &fakestreamrulesv1alpha1.FakeStreamrulesV1alpha1{Fake: &c.Fake}
 }

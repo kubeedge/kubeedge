@@ -28,6 +28,7 @@ import (
 	policyv1alpha1 "github.com/kubeedge/api/apis/policy/v1alpha1"
 	reliablesyncsv1alpha1 "github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
 	v1 "github.com/kubeedge/api/apis/rules/v1"
+	streamrulesv1alpha1 "github.com/kubeedge/api/apis/streamrules/v1alpha1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -99,6 +100,12 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Rules().V1().Rules().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("ruleendpoints"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Rules().V1().RuleEndpoints().Informer()}, nil
+
+		// Group=streamrules.kubeedge.io, Version=v1alpha1
+	case streamrulesv1alpha1.SchemeGroupVersion.WithResource("streamrules"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Streamrules().V1alpha1().StreamRules().Informer()}, nil
+	case streamrulesv1alpha1.SchemeGroupVersion.WithResource("streamruleendpoints"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Streamrules().V1alpha1().StreamRuleEndpoints().Informer()}, nil
 
 	}
 
