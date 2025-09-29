@@ -14,7 +14,7 @@ status: implementable
 
 ## Introduction
 
-Kubernetes (k8s) Event is a report of an event occured somewhere in the k8s cluster. It generally denotes some state change in the system. Some examples of k8s events are as follows: 
+Kubernetes (k8s) Event is a report of an event occurred somewhere in the k8s cluster. It generally denotes some state change in the system. Some examples of k8s events are as follows: 
 1. A pod is allocated to a specific node. 
 2. A node failed to pull a specific image since image registry is not accessible. 
 3. A Pod is evicted by a node because of insuffucient node resource.   
