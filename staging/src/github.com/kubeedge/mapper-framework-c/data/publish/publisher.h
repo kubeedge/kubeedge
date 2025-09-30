@@ -5,7 +5,8 @@
 #include "driver/driver.h"
 
 // Enum for publish method types
-typedef enum {
+typedef enum
+{
     PUBLISH_METHOD_HTTP = 0,
     PUBLISH_METHOD_MQTT,
     PUBLISH_METHOD_OTEL,
@@ -13,10 +14,11 @@ typedef enum {
 } PublishMethodType;
 
 // Generic publisher interface
-typedef struct {
-    PublishMethodType type;   // Publish method type
-    char *config_json;        // Publish configuration in JSON format
-    void *client_handle;      // Specific client handle
+typedef struct
+{
+    PublishMethodType type;
+    char *config_json;
+    void *client_handle;
 } Publisher;
 
 // Publisher interface functions
@@ -29,9 +31,9 @@ PublishMethodType publisher_get_type_from_string(const char *method_name);
 const char *publisher_get_type_string(PublishMethodType type);
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
-
 
 #ifdef __cplusplus
 }

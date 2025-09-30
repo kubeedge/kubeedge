@@ -1,47 +1,3 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-TEMPLATE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
-PARENT_DIR="$(cd "${TEMPLATE_DIR}/.." && pwd -P)"
-
-if [[ $# -lt 2 ]] || [[ -z "${1:-}" ]] || [[ -z "${2:-}" ]]; then
-  read -p "Please input the mapper name (like 'Bluetooth', 'BLE'): " name
-  if [[ -z "${name}" ]]; then
-    echo "the mapper name is required"
-    exit 1
-  fi
-  read -p "Please input the build method (stream/nostream): " buildMethod
-  if [[ -z "${buildMethod}" ]]; then
-    echo "the build method is required"
-    exit 1
-  fi
-else
-  name="$1"
-  buildMethod="$2"
-fi
-
-target="${PARENT_DIR}/${name}"
-
-echo "[generate] TEMPLATE_DIR=${TEMPLATE_DIR}"
-echo "[generate] TARGET_DIR=${target}"
-
-if [[ -e "${target}" ]]; then
-  echo "Target folder already exists: ${target}"
-  exit 1
-fi
-mkdir -p "${target}"
-
-if command -v rsync >/dev/null 2>&1; then
-  rsync -a --delete \
-    --exclude '/build' \
-    --exclude '/.git' \
-    --exclude '/mappers' \
-    "${TEMPLATE_DIR}/" "${target}/"
-else
-  ( cd "${TEMPLATE_DIR}" && tar --exclude='./build' --exclude='./.git' --exclude='./mappers' -cf - . ) | ( cd "${target}" && tar -xf - )
-fi
-
-cat > "${target}/Dockerfile" <<'EOF'
 FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get purge -y libprotobuf-dev protobuf-compiler || true
@@ -102,17 +58,3 @@ RUN mkdir -p build && cd build && cmake .. && make -j$(nproc)
 
 ENV EDGECORE_SOCK=/etc/kubeedge/dmi.sock
 CMD ["/app/build/main", "/app/config.yaml"]
-EOF
-
-cat > "${target}/.dockerignore" <<'EOF'
-build
-.git
-mappers
-*.log
-*.swp
-*.swo
-EOF
-
-echo "Mapper project generated at: ${target}"
-echo "Build method: ${buildMethod}"
-echo "You can now run: make build NAME=${name}

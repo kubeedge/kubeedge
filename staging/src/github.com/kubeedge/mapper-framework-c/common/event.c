@@ -42,5 +42,5 @@ char *create_message_twin_update(const char *name, const char *valueType, const 
     char *json_str = cJSON_PrintUnformatted(root);
 
     cJSON_Delete(root);
-    return json_str; // caller must free
+    return json_str; 
 }

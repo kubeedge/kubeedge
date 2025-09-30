@@ -5,47 +5,43 @@
 #include "device/device.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-// Device panel interface functions
+    int panel_init(void);
+    void panel_free(void);
+    DeviceManager *panel_get_manager(void);
 
-// Retrieve the twin result of a device
-int dev_panel_get_twin_result(DeviceManager *manager, const char *deviceId, 
-                              const char *propertyName, char **value, char **datatype);
+    int panel_dev_init(DeviceInstance *deviceList, int deviceCount, DeviceModel *modelList, int modelCount);
 
-// Write data to a device
-int dev_panel_write_device(DeviceManager *manager, const char *method, 
-                           const char *deviceId, const char *propertyName, const char *data);
+    int panel_dev_start(void);
+    int panel_dev_stop(void);
 
-// Retrieve the methods of a device
-int dev_panel_get_device_method(DeviceManager *manager, const char *deviceId,
-                                char ***method_map, int *method_count,
-                                char ***property_map, int *property_count);
+    int dev_panel_get_twin_result(DeviceManager *manager, const char *deviceId,
+                                  const char *propertyName, char **value, char **datatype);
 
-// Retrieve device information
-int dev_panel_get_device(DeviceManager *manager, const char *deviceId, DeviceInstance *instance);
+    int dev_panel_write_device(DeviceManager *manager, const char *method,
+                               const char *deviceId, const char *propertyName, const char *data);
 
-// Retrieve the model of a device
-int dev_panel_get_model(DeviceManager *manager, const char *modelId, DeviceModel *model);
+    int dev_panel_get_device_method(DeviceManager *manager, const char *deviceId,
+                                    char ***method_map, int *method_count,
+                                    char ***property_map, int *property_count);
 
-// Retrieve all twins of devices
-int dev_panel_get_all_twins(DeviceManager *manager, char **response);
+    int dev_panel_get_device(DeviceManager *manager, const char *deviceId, DeviceInstance *instance);
 
-// Check if a device exists
-int dev_panel_has_device(DeviceManager *manager, const char *deviceId);
+    int dev_panel_get_model(DeviceManager *manager, const char *modelId, DeviceModel *model);
 
-// Update a device
-int dev_panel_update_dev(DeviceManager *manager, const DeviceModel *model, const DeviceInstance *instance);
+    int dev_panel_has_device(DeviceManager *manager, const char *deviceId);
 
-// Update a model
-int dev_panel_update_model(DeviceManager *manager, const DeviceModel *model);
+    int dev_panel_update_dev(DeviceManager *manager, const DeviceModel *model, const DeviceInstance *instance);
 
-// Remove a model
-int dev_panel_remove_model(DeviceManager *manager, const char *modelId);
+    int dev_panel_update_model(DeviceManager *manager, const DeviceModel *model);
+
+    int dev_panel_remove_model(DeviceManager *manager, const char *modelId);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // DEVICE_DEV_PANEL_H
+#endif // DEVICE_DEVPANEL_H

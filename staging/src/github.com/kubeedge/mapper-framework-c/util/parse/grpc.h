@@ -36,6 +36,7 @@ int get_device_from_grpc(const V1beta1__Device *device, const DeviceModel *commo
 // Generates a resource ID from a namespace and name
 void get_resource_id(const char *ns, const char *name, char *out, size_t outlen);
 
+
 #ifdef __cplusplus
 }
 #endif

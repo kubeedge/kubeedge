@@ -5,15 +5,17 @@
 #include <curl/curl.h>
 
 // OpenTelemetry publish configuration
-typedef struct {
-    char *endpoint;        // OTLP endpoint URL
-    char *service_name;    // Service name
-    char *service_version; // Service version
-    int timeout_ms;        // Timeout in milliseconds
+typedef struct
+{
+    char *endpoint;
+    char *service_name;
+    char *service_version;
+    int timeout_ms;
 } OtelPublishConfig;
 
 // OpenTelemetry publisher
-typedef struct {
+typedef struct
+{
     OtelPublishConfig config;
     CURL *curl;
     struct curl_slist *headers;

@@ -8,7 +8,7 @@ name="${1:-${NAME:-mapper_default}}"
 target="${PARENT_DIR}/${name}"
 
 if [[ ! -d "${target}" ]]; then
-  echo "Folder not found: ${target}. Run: make generate ${name}"
+  echo "Folder not found: ${target}. Run: make generate NAME=${name}"
   exit 1
 fi
 

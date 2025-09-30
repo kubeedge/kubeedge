@@ -9,13 +9,3 @@ common:
   address: "127.0.0.1"
   http_port: "7777"
   edgecore_sock: /etc/kubeedge/dmi.sock
-
-database:
-  mysql:
-    enabled: true
-    addr: "127.0.0.1"
-    database: "testdb"
-    username: "mapper"
-    password: "123456"
-    port: 3306
-    ssl_mode: "DISABLED"  

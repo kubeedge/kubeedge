@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <yaml.h>
-#include <strings.h>  // Added: strcasecmp
+#include <strings.h> 
 
 Config *config_parse(const char *filename)
 {
@@ -18,15 +18,13 @@ Config *config_parse(const char *filename)
         return NULL;
     }
 
-    // Initialize default values inside config_parse
     memset(&cfg->database, 0, sizeof(cfg->database));
-    // cfg->database.mysql.enabled = 0 (disabled by default)
 
     yaml_parser_t parser;
     yaml_token_t token;
     char key[128] = {0};
     int in_grpc_server = 0, in_common = 0;
-    int in_database = 0, in_mysql = 0;  // Added
+    int in_database = 0, in_mysql = 0, in_redis = 0, in_influxdb = 0, in_tdengine = 0;
 
     if (!yaml_parser_initialize(&parser))
     {
@@ -63,15 +61,20 @@ Config *config_parse(const char *filename)
             } while (token.type == YAML_VALUE_TOKEN);
 
             if (token.type == YAML_BLOCK_MAPPING_START_TOKEN) {
-                // Enter sub-mapping
                 if (strcmp(key, "grpc_server") == 0) {
-                    in_grpc_server = 1; in_common = 0; in_database = 0; in_mysql = 0;
+                    in_grpc_server = 1; in_common = 0; in_database = 0; in_mysql = 0; in_redis = 0; in_influxdb = 0; in_tdengine = 0;
                 } else if (strcmp(key, "common") == 0) {
-                    in_common = 1; in_grpc_server = 0; in_database = 0; in_mysql = 0;
+                    in_common = 1; in_grpc_server = 0; in_database = 0; in_mysql = 0; in_redis = 0; in_influxdb = 0; in_tdengine = 0;
                 } else if (strcmp(key, "database") == 0) {
-                    in_database = 1; in_common = 0; in_grpc_server = 0; in_mysql = 0;
+                    in_database = 1; in_common = 0; in_grpc_server = 0; in_mysql = 0; in_redis = 0; in_influxdb = 0; in_tdengine = 0;
                 } else if (in_database && strcmp(key, "mysql") == 0) {
-                    in_mysql = 1;
+                    in_mysql = 1; in_redis = 0; in_influxdb = 0; in_tdengine = 0;
+                } else if (in_database && strcmp(key, "redis") == 0) {
+                    in_redis = 1; in_mysql = 0; in_influxdb = 0; in_tdengine = 0;
+                } else if (in_database && (strcmp(key, "influxdb") == 0 || strcmp(key, "influxdb2") == 0)) {
+                    in_influxdb = 1; in_mysql = 0; in_redis = 0; in_tdengine = 0;
+                } else if (in_database && (strcmp(key, "tdengine") == 0 || strcmp(key, "taos") == 0)) {
+                    in_tdengine = 1; in_mysql = 0; in_redis = 0; in_influxdb = 0;
                 }
                 yaml_token_delete(&token);
                 continue;
@@ -114,8 +117,54 @@ Config *config_parse(const char *filename)
                         strlcpy(cfg->database.mysql.password, (char *)token.data.scalar.value, sizeof(cfg->database.mysql.password));
                     } else if (strcmp(key, "port") == 0) {
                         cfg->database.mysql.port = atoi((char *)token.data.scalar.value);
-                    } else if (strcmp(key, "ssl_mode") == 0) {  // Added parsing
+                    } else if (strcmp(key, "ssl_mode") == 0) {  
                         strlcpy(cfg->database.mysql.ssl_mode, (char *)token.data.scalar.value, sizeof(cfg->database.mysql.ssl_mode));
+                    }
+                }
+                else if (in_redis) {
+                    if (strcmp(key, "enabled") == 0) {
+                        const char *v = (char *)token.data.scalar.value;
+                        cfg->database.redis.enabled = (!strcasecmp(v,"true") || !strcmp(v,"1")) ? 1 : 0;
+                    } else if (strcmp(key, "addr") == 0) {
+                        strlcpy(cfg->database.redis.addr, (char *)token.data.scalar.value, sizeof(cfg->database.redis.addr));
+                    } else if (strcmp(key, "password") == 0) {
+                        strlcpy(cfg->database.redis.password, (char *)token.data.scalar.value, sizeof(cfg->database.redis.password));
+                    } else if (strcmp(key, "db") == 0) {
+                        cfg->database.redis.db = atoi((char *)token.data.scalar.value);
+                    } else if (strcmp(key, "poolSize") == 0 || strcmp(key, "pool_size") == 0) {
+                        cfg->database.redis.poolSize = atoi((char *)token.data.scalar.value);
+                    } else if (strcmp(key, "minIdleConns") == 0 || strcmp(key, "min_idle_conns") == 0) {
+                        cfg->database.redis.minIdleConns = atoi((char *)token.data.scalar.value);
+                    }
+                }
+                else if (in_influxdb) {
+                    if (strcmp(key, "enabled") == 0) {
+                        const char *v = (char *)token.data.scalar.value;
+                        cfg->database.influxdb2.enabled = (!strcasecmp(v,"true") || !strcmp(v,"1")) ? 1 : 0;
+                    } else if (strcmp(key, "url") == 0) {
+                        strlcpy(cfg->database.influxdb2.url, (char *)token.data.scalar.value, sizeof(cfg->database.influxdb2.url));
+                    } else if (strcmp(key, "org") == 0) {
+                        strlcpy(cfg->database.influxdb2.org, (char *)token.data.scalar.value, sizeof(cfg->database.influxdb2.org));
+                    } else if (strcmp(key, "bucket") == 0) {
+                        strlcpy(cfg->database.influxdb2.bucket, (char *)token.data.scalar.value, sizeof(cfg->database.influxdb2.bucket));
+                    } else if (strcmp(key, "token") == 0) {
+                        strlcpy(cfg->database.influxdb2.token, (char *)token.data.scalar.value, sizeof(cfg->database.influxdb2.token));
+                    }
+                }
+                else if (in_tdengine) {
+                    if (strcmp(key, "enabled") == 0) {
+                        const char *v = (char *)token.data.scalar.value;
+                        cfg->database.tdengine.enabled = (!strcasecmp(v,"true") || !strcmp(v,"1")) ? 1 : 0;
+                    } else if (strcmp(key, "addr") == 0) {
+                        strlcpy(cfg->database.tdengine.addr, (char *)token.data.scalar.value, sizeof(cfg->database.tdengine.addr));
+                    } else if (strcmp(key, "dbName") == 0 || strcmp(key, "dbname") == 0) {
+                        strlcpy(cfg->database.tdengine.dbName, (char *)token.data.scalar.value, sizeof(cfg->database.tdengine.dbName));
+                    } else if (strcmp(key, "username") == 0 || strcmp(key, "user") == 0) {
+                        strlcpy(cfg->database.tdengine.username, (char *)token.data.scalar.value, sizeof(cfg->database.tdengine.username));
+                    } else if (strcmp(key, "password") == 0) {
+                        strlcpy(cfg->database.tdengine.password, (char *)token.data.scalar.value, sizeof(cfg->database.tdengine.password));
+                    } else if (strcmp(key, "port") == 0) {
+                        cfg->database.tdengine.port = atoi((char *)token.data.scalar.value);
                     }
                 }
                 yaml_token_delete(&token);
@@ -124,8 +173,10 @@ Config *config_parse(const char *filename)
             }
         }
         else if (token.type == YAML_BLOCK_END_TOKEN) {
-            // Exit sub-mapping
-            if (in_mysql) { in_mysql = 0; }
+            if (in_tdengine) { in_tdengine = 0; }
+            else if (in_influxdb) { in_influxdb = 0; }
+            else if (in_redis) { in_redis = 0; }
+            else if (in_mysql) { in_mysql = 0; }
             else if (in_database) { in_database = 0; }
             else if (in_common) { in_common = 0; }
             else if (in_grpc_server) { in_grpc_server = 0; }

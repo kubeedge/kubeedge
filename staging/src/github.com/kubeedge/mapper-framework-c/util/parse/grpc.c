@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <cjson/cJSON.h>
+#include "google/protobuf/wrappers.pb-c.h"
+#include "google/protobuf/any.pb-c.h"
 
 // Safely duplicates a string
 static char *strdup_safe(const char *s) {
@@ -12,13 +14,45 @@ static char *strdup_safe(const char *s) {
     return copy;
 }
 
-// Converts a Google Protobuf Any object to a string
-static char *any_to_string(const Google__Protobuf__Any *any) {
-    if (!any || !any->value.data || any->value.len == 0) return strdup_safe("");
-    char *str = malloc(any->value.len + 1);
-    memcpy(str, any->value.data, any->value.len);
-    str[any->value.len] = '\0';
-    return str;
+
+char *parse_any_to_string(const char *type_url, const ProtobufCBinaryData *value) {
+    if (!value || value->len == 0 || !value->data) return NULL;
+    if (type_url) {
+        if (strstr(type_url, "StringValue")) {
+            Google__Protobuf__StringValue *sv = google__protobuf__string_value__unpack(NULL, value->len, value->data);
+            if (sv) { char *s = strdup(sv->value ? sv->value : ""); google__protobuf__string_value__free_unpacked(sv, NULL); return s; }
+        }
+        if (strstr(type_url, "Int32Value")) {
+            Google__Protobuf__Int32Value *v = google__protobuf__int32_value__unpack(NULL, value->len, value->data);
+            if (v) { char buf[64]; snprintf(buf, sizeof(buf), "%d", v->value); google__protobuf__int32_value__free_unpacked(v, NULL); return strdup(buf); }
+        }
+        if (strstr(type_url, "Int64Value")) {
+            Google__Protobuf__Int64Value *v = google__protobuf__int64_value__unpack(NULL, value->len, value->data);
+            if (v) { char buf[64]; snprintf(buf, sizeof(buf), "%lld", (long long)v->value); google__protobuf__int64_value__free_unpacked(v, NULL); return strdup(buf); }
+        }
+        if (strstr(type_url, "DoubleValue")) {
+            Google__Protobuf__DoubleValue *v = google__protobuf__double_value__unpack(NULL, value->len, value->data);
+            if (v) { char buf[64]; snprintf(buf, sizeof(buf), "%g", v->value); google__protobuf__double_value__free_unpacked(v, NULL); return strdup(buf); }
+        }
+        if (strstr(type_url, "BoolValue")) {
+            Google__Protobuf__BoolValue *v = google__protobuf__bool_value__unpack(NULL, value->len, value->data);
+            if (v) { char *s = strdup(v->value ? "true" : "false"); google__protobuf__bool_value__free_unpacked(v, NULL); return s; }
+        }
+    }
+    char *s = malloc(value->len + 1);
+    if (!s) return NULL;
+    memcpy(s, value->data, value->len);
+    s[value->len] = '\0';
+    if (s[0] == '{' || s[0] == '[') {
+        cJSON *root = cJSON_Parse(s);
+        if (root) {
+            cJSON *v = cJSON_GetObjectItem(root, "value");
+            if (cJSON_IsString(v) && v->valuestring) { char *res = strdup(v->valuestring); cJSON_Delete(root); free(s); return res; }
+            if (cJSON_IsNumber(v)) { char buf[64]; if (v->valuedouble == (double)(long long)v->valuedouble) snprintf(buf, sizeof(buf), "%lld", (long long)v->valuedouble); else snprintf(buf, sizeof(buf), "%g", v->valuedouble); char *res = strdup(buf); cJSON_Delete(root); free(s); return res; }
+            cJSON_Delete(root);
+        }
+    }
+    return s;
 }
 
 // Retrieves the protocol name from a gRPC device object
@@ -45,9 +79,10 @@ int build_protocol_from_grpc(const V1beta1__Device *device, ProtocolConfig *out)
         for (size_t i = 0; i < device->spec->protocol->configdata->n_data; ++i) {
             V1beta1__CustomizedValue__DataEntry *entry = device->spec->protocol->configdata->data[i];
             Google__Protobuf__Any *any = entry->value;
-            char *valstr = any_to_string(any);
-            cJSON_AddStringToObject(recvAdapter, entry->key, valstr);
-            free(valstr);
+            char *valstr = NULL;
+            if (any) valstr = parse_any_to_string(any->type_url, &any->value);
+             cJSON_AddStringToObject(recvAdapter, entry->key, valstr);
+             free(valstr);
         }
         cJSON_AddItemToObject(customizedProtocol, "configData", recvAdapter);
     }
@@ -81,6 +116,13 @@ int build_twins_from_grpc(const V1beta1__Device *device, Twin **out, int *out_co
                     twins[i].observedDesired.metadata.type = strdup_safe(meta->value);
             }
         }
+    if (property->desired) {
+        if (!twins[i].observedDesired.value) {
+            if (property->desired->value) {
+                twins[i].observedDesired.value = strdup_safe(property->desired->value);
+            } 
+        }
+    }
     }
     *out = twins;
     *out_count = count;
@@ -117,9 +159,10 @@ int build_properties_from_grpc(const V1beta1__Device *device, DeviceProperty **o
                 for (size_t j = 0; j < pptv->visitors->configdata->n_data; ++j) {
                     V1beta1__CustomizedValue__DataEntry *entry = pptv->visitors->configdata->data[j];
                     Google__Protobuf__Any *any = entry->value;
-                    char *valstr = any_to_string(any);
-                    cJSON_AddStringToObject(recvAdapter, entry->key, valstr);
-                    free(valstr);
+                    char *valstr = NULL;
+                    if (any) valstr = parse_any_to_string(any->type_url, &any->value);
+                     cJSON_AddStringToObject(recvAdapter, entry->key, valstr);
+                     free(valstr);
                 }
             }
             cJSON_AddItemToObject(visitorConfig, "configData", recvAdapter);
@@ -162,28 +205,19 @@ int build_methods_from_grpc(const V1beta1__Device *device, DeviceMethod **out, i
 }
 
 // Builds a DeviceModel structure from a gRPC device model object
-int get_device_model_from_grpc(const V1beta1__DeviceModel *model, DeviceModel *out) {
-    if (!model || !out) return -1;
-    out->id = NULL;
-    out->name = strdup_safe(model->name);
-    out->namespace_ = model->namespace_;
-    out->description = NULL;
-    if (model->spec && model->spec->n_properties > 0) {
-        out->propertiesCount = model->spec->n_properties;
-        out->properties = calloc(out->propertiesCount, sizeof(ModelProperty));
-        for (int i = 0; i < out->propertiesCount; ++i) {
-            V1beta1__ModelProperty *property = model->spec->properties[i];
-            out->properties[i].name = strdup_safe(property->name);
-            out->properties[i].dataType = strdup_safe(property->type);
-            out->properties[i].description = property->description ? strdup_safe(property->description) : NULL;
-            out->properties[i].accessMode = property->accessmode ? strdup_safe(property->accessmode) : NULL;
-            out->properties[i].minimum = property->minimum ? strdup_safe(property->minimum) : NULL;
-            out->properties[i].maximum = property->maximum ? strdup_safe(property->maximum) : NULL;
-            out->properties[i].unit = property->unit ? strdup_safe(property->unit) : NULL;
+int get_device_model_from_grpc(const V1beta1__DeviceModel *src, DeviceModel *dst) {
+    if (!src || !dst) return -1;
+    dst->name = src->name ? strdup(src->name) : NULL;
+    dst->namespace_ = src->namespace_ ? strdup(src->namespace_) : strdup("default");
+    if (dst->namespace_) {
+        int ok = 0;
+        for (char *p = dst->namespace_; *p; ++p) {
+            if (*p >= 32 && *p < 127) { ok = 1; break; }
         }
-    } else {
-        out->properties = NULL;
-        out->propertiesCount = 0;
+        if (!ok) {
+            free(dst->namespace_);
+            dst->namespace_ = strdup("default");
+        }
     }
     return 0;
 }
@@ -196,7 +230,7 @@ int get_device_from_grpc(const V1beta1__Device *device, const DeviceModel *commo
 
     out->id = NULL;
     out->name = strdup_safe(device->name);
-    out->namespace_ = device->namespace_;
+    out->namespace_ = strdup_safe(device->namespace_);
     if (protocolName) {
         out->protocolName = malloc(strlen(protocolName) + strlen(device->name) + 2);
         sprintf(out->protocolName, "%s-%s", protocolName, device->name);
@@ -233,7 +267,6 @@ int get_device_from_grpc(const V1beta1__Device *device, const DeviceModel *commo
             }
         }
     }
-    log_info("final instance data from grpc built");
     return 0;
 }
 

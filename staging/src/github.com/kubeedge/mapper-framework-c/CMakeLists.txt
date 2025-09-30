@@ -1,24 +1,20 @@
 cmake_minimum_required(VERSION 3.10)
 project(mapper_framework_c C CXX)
 
-# Set C and C++ standards
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 20)
 
-# Required packages
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(YAML REQUIRED yaml-0.1)
 find_package(CURL REQUIRED)
 find_package(Threads REQUIRED)
 
-# Protobuf and gRPC
 find_package(Protobuf CONFIG QUIET)
 if(NOT Protobuf_FOUND)
   find_package(Protobuf REQUIRED)
 endif()
 find_package(gRPC CONFIG QUIET)
 
-# FFmpeg (optional)
 pkg_check_modules(FFMPEG
   libavformat
   libavcodec
@@ -33,7 +29,6 @@ else()
   set(STREAM_FOUND TRUE)
 endif()
 
-# hiredis library
 find_path(HIREDIS_INCLUDE_DIR hiredis/hiredis.h
   PATHS /usr/include /usr/local/include)
 find_library(HIREDIS_LIBRARY hiredis
@@ -42,7 +37,6 @@ if(NOT HIREDIS_INCLUDE_DIR OR NOT HIREDIS_LIBRARY)
   message(FATAL_ERROR "hiredis library not found. Please install libhiredis-dev")
 endif()
 
-# TDengine (optional)
 find_path(TAOS_INCLUDE_DIR taos.h
   PATHS /usr/include /usr/local/include /usr/local/taos/include)
 find_library(TAOS_LIBRARY taos
@@ -55,7 +49,6 @@ else()
   set(TAOS_FOUND TRUE)
 endif()
 
-# cJSON and protobuf-c headers
 include_directories(/usr/include/cjson)
 include_directories(/usr/local/include/protobuf-c)
 set(CJSON_LIBRARIES cjson)
@@ -92,6 +85,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/device
   ${CMAKE_CURRENT_SOURCE_DIR}/data/dbmethod/mysql
   ${CMAKE_CURRENT_SOURCE_DIR}/data/dbmethod/influxdb2
+  ${CMAKE_CURRENT_SOURCE_DIR}/data/dbmethod/tdengine
   ${CMAKE_CURRENT_SOURCE_DIR}/data/dbmethod/redis
   ${CMAKE_CURRENT_SOURCE_DIR}/data/publish
   ${CMAKE_CURRENT_SOURCE_DIR}/data/publish/http
@@ -116,7 +110,6 @@ if(STREAM_FOUND)
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/data/stream)
 endif()
 
-# absl libraries (used as fallback)
 set(ABSL_LIBS
   absl_log_internal_check_op
   absl_log_internal_message
@@ -138,78 +131,73 @@ set(ABSL_LIBS
   absl_hash
 )
 
-# Source files
 set(COMMON_SOURCES
-  # Core modules
   config/config.c
   log/log.c
   common/dataconverter.c
   common/datamodel.c
   common/event.c
+  common/json_util.c
+  common/string_util.c
   util/parse/grpc.c
-  # Protobuf generated files
   dmi/v1beta1/api.pb-c.c
   dmi/v1beta1/api.pb.cc
   dmi/v1beta1/api.grpc.pb.cc
   google/protobuf/any.pb-c.c
   google/protobuf/wrappers.pb-c.c
-  # Network services
   httpserver/httpserver.c
   grpcclient/register.cc
   grpcserver/server.cc
-  # Device management
   device/device.c
   device/devicestatus.c
   device/devicetwin.c
   device/dev_panel.c
-  # Driver framework
   driver/driver.c
-  # Database clients
+  data/dbmethod/recorder.c
+  data/dbmethod/client.c
   data/dbmethod/mysql/mysql_client.c
   data/dbmethod/mysql/recorder.c
   data/dbmethod/influxdb2/influxdb2_client.c
+  data/dbmethod/influxdb2/recorder.c
   data/dbmethod/redis/redis_client.c
-  # Publish modules (HTTP/OTEL, MQTT optional)
+  data/dbmethod/redis/recorder.c
+  data/dbmethod/tdengine/tdengine_client.c
+  data/dbmethod/tdengine/recorder.c
   data/publish/publisher.c
   data/publish/http/http_publisher.c
+  data/publish/mqtt/mqtt_publisher.c
   data/publish/otel/otel_publisher.c
 )
 
-# Optional TDengine
 if(TAOS_FOUND)
   list(APPEND COMMON_SOURCES
     data/dbmethod/tdengine/tdengine_client.c
   )
 endif()
 
-# Optional Stream
 if(STREAM_FOUND)
   list(APPEND COMMON_SOURCES
     data/stream/stream.c
   )
 endif()
 
-# Optional MQTT publish
 if(MOSQUITTO_FOUND)
   list(APPEND COMMON_SOURCES
     data/publish/mqtt/mqtt_publisher.c
   )
 endif()
 
-# Conditional compilation definitions
 add_compile_definitions(
   $<$<BOOL:${TAOS_FOUND}>:TAOS_FOUND>
   $<$<BOOL:${STREAM_FOUND}>:ENABLE_STREAM>
   $<$<BOOL:${MOSQUITTO_FOUND}>:ENABLE_MQTT_PUBLISH>
 )
 
-# Main executable
 add_executable(main
   main.c
   ${COMMON_SOURCES}
 )
 
-# gRPC/Protobuf libraries
 set(GRPC_LINK_LIBS "")
 set(PROTOBUF_LINK_LIB "")
 
@@ -236,7 +224,6 @@ else()
   list(APPEND PROTOBUF_LINK_LIB protobuf)
 endif()
 
-# Common libraries
 set(COMMON_LIBRARIES
   ${CJSON_LIBRARIES}
   ${YAML_LIBRARIES}
@@ -267,18 +254,15 @@ endif()
 
 target_link_libraries(main PRIVATE ${COMMON_LIBRARIES})
 
-# Compiler options
 target_compile_options(main PRIVATE
   $<$<COMPILE_LANGUAGE:C>:-Wall -Wextra -Wno-unused-parameter>
   $<$<COMPILE_LANGUAGE:CXX>:-Wall -Wextra -Wno-unused-parameter>
 )
 
-# Copy configuration file to build directory
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/config.yaml
                COPYONLY)
 
-# Example programs
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/examples)
   file(GLOB EXAMPLE_SRC examples/*.c)
   foreach(examplefile ${EXAMPLE_SRC})
@@ -290,7 +274,6 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/examples)
   endforeach()
 endif()
 
-# Installation rules
 install(TARGETS main
   RUNTIME DESTINATION bin
 )
@@ -305,7 +288,6 @@ install(DIRECTORY
   FILES_MATCHING PATTERN "*.h"
 )
 
-# Print build configuration
 message(STATUS "=== Build Configuration ===")
 message(STATUS "C Standard: ${CMAKE_C_STANDARD}")
 message(STATUS "CXX Standard: ${CMAKE_CXX_STANDARD}")
@@ -341,7 +323,6 @@ list(LENGTH COMMON_SOURCES SOURCE_COUNT)
 message(STATUS "Total source files: ${SOURCE_COUNT}")
 message(STATUS "================================")
 
-# Debug information
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   message(STATUS "")
   message(STATUS "=== Debug Information ===")

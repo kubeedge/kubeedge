@@ -36,7 +36,6 @@ typedef struct {
 int64_t get_timestamp_ms(void);
 
 // Create twin update message, output as JSON string
-// Caller is responsible for freeing the returned string
 char *create_message_twin_update(const char *name, const char *valueType, const char *value, const char *expectValue);
 
 #endif // EVENT_H

@@ -5,19 +5,21 @@
 #include <mosquitto.h>
 
 // MQTT publish configuration
-typedef struct {
-    char *broker_url;    // MQTT broker address
-    int port;            // Port number
-    char *client_id;     // Client ID
-    char *username;      // Username
-    char *password;      // Password
-    char *topic_prefix;  // Topic prefix
-    int qos;             // Quality of Service level
-    int keep_alive;      // Keep-alive interval
+typedef struct
+{
+    char *broker_url;
+    int port;
+    char *client_id;
+    char *username;
+    char *password;
+    char *topic_prefix;
+    int qos;
+    int keep_alive;
 } MqttPublishConfig;
 
 // MQTT publisher
-typedef struct {
+typedef struct
+{
     MqttPublishConfig config;
     struct mosquitto *mosq;
     int connected;
