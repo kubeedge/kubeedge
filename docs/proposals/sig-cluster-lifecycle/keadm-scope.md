@@ -51,7 +51,7 @@ For edge, commands shall be:
 
 ## Design of the commands
 
-**NOTE**: All the below steps are executed as root user, to execute as sudo user. Please add `sudo` infront of all the commands.
+**NOTE**: All the below steps are executed as root user, to execute as sudo user. Please add `sudo` in front of all the commands.
 
 ### kubeedge --help or kubeedge
 
@@ -159,7 +159,7 @@ Flags:
 It checks if the pre-requisites are installed already,
 If not installed, this command will help in download,
 install and execute on the host.
-It will also connect with cloud component to receieve
+It will also connect with cloud component to receive
 further instructions and forward telemetry data from
 devices to cloud
 

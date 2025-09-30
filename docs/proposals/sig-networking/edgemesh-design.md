@@ -204,7 +204,7 @@ type Rule struct {
 	SuccessMessages uint64    `orm:"column(success_messages); default(0)" json:"success_messages" `
 	// FailMessages in the number of fail messages for this rule
 	FailMessages    uint64    `orm:"column(fail_messages); default(0)" json:"fail_messages" `
-	// Error is reverse maping of error messages for this rule
+	// Error is reverse mapping of error messages for this rule
 	Error           []*Error  `orm:"reverse(many)" json:"-"`
 }
 ```

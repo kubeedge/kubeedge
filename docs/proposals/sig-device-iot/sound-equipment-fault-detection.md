@@ -29,7 +29,7 @@ KubeEdge 1.15+ <br>
 
 ## 1 Modbus mapper
 reference: https://release-1-17.docs.kubeedge.io/docs/developer/mappers <br>
-KubeEdge uses Device Controller, Device Twin and Mapper to control the devices. The Device Controller is on the cloud side, it uses CRD to define and control devices. The Device Twin is on the edge side, it stores the value/status from the Mapper and transfers the messages with Device Controller and Mapper. Meanwhile, DMI in the Device Twin is used for registing mapper and transfer Device Instance and Device Model to user Mapper. <br>
+KubeEdge uses Device Controller, Device Twin and Mapper to control the devices. The Device Controller is on the cloud side, it uses CRD to define and control devices. The Device Twin is on the edge side, it stores the value/status from the Mapper and transfers the messages with Device Controller and Mapper. Meanwhile, DMI in the Device Twin is used for registering mapper and transfer Device Instance and Device Model to user Mapper. <br>
 1. Modbus mapper receives information about audio devices, no modification is required in actual applications. <br>
 2. Use go program to simulate audio devices, push sound information to modbus client, and replace with actual microphone devices in actual applications. <br>
 - modbus-microphone-device-instance.yaml

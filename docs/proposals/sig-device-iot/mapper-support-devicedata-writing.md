@@ -32,7 +32,7 @@ Although this method conforms to the native definition of Kubernetes, in edge sc
 which may cause the device write control command to be unable to send to the edge. At the same time, if the device write
 request volume is large, may cause the cloud edge channel to be blocked.
 
-Therefore, this solution shown bellow refers to the way the Mapper Framework data plane processes device data and provides a
+Therefore, this solution shown below refers to the way the Mapper Framework data plane processes device data and provides a
 device writing interface on the data plane. With this interface, users can directly send device write commands
 to the mapper data plane to prevent cloud edge channel blocking.
 

@@ -13,7 +13,7 @@ approvers:
   - "@gy95"
 creation-date: 2021-12-28
 last-updated: 2022-01-14
-status: Implememted
+status: Implemented
 ---
 
 ## Plan A: using operator and CRD

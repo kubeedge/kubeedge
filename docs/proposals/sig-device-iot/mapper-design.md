@@ -108,7 +108,7 @@ b) Keep a watch on the expected state of the twin-attributes of the device and p
 
 c) To report the actual state of twin attributes.
 
-**4) Data-Converter**: Data received from the devices can be in complex formats. eg: HexDecimal with bytes shuffled. This data cannot be directly understood by KubeEdge.
+**4) Data-Converter**: Data received from the devices can be in complex formats. eg: hexadecimal with bytes shuffled. This data cannot be directly understood by KubeEdge.
 The responsibility of data-converter is the convert the readings into a format understood by KubeEdge.
 Many protocols have a standard defined for the reading returned by the device. Hence, a common/configurable logic can be used.
 
