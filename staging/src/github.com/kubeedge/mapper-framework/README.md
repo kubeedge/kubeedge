@@ -18,7 +18,7 @@ A project named as your input will be generated. The file tree is as below:
 mapper
 ├── cmd ------------------------ Main process.
 │ └── main.go ------------------ Almost need not change.
-├── config.yaml ---------------- Configuration file including DMI's grpc settting
+├── config.yaml ---------------- Configuration file including DMI's grpc setting
 ├── data ----------------------- Publish data and database implementation layer, almost need not change
 │ ├── dbmethod ----------------- Provider implement database interfaces to save data
 │ │ ├── influxdb2 -------------- Implementation of Time Series Database(InfluxDB)

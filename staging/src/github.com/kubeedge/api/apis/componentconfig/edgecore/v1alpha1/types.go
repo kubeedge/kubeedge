@@ -99,7 +99,7 @@ type Modules struct {
 	EdgeStream *EdgeStream `json:"edgeStream,omitempty"`
 }
 
-// Edged indicates the config fo edged module
+// Edged indicates the config of edged module
 // edged is lighted-kubelet
 type Edged struct {
 	// Enable indicates whether edged is enabled,
