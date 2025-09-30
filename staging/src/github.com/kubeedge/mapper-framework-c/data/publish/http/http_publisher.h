@@ -5,17 +5,19 @@
 #include <curl/curl.h>
 
 // HTTP publish configuration
-typedef struct {
-    char *endpoint;      // HTTP endpoint URL
-    char *method;        // HTTP method (POST/PUT)
-    char *auth_token;    // Authentication token
-    char *content_type;  // Content type
-    int timeout_ms;      // Timeout in milliseconds
-    int retry_count;     // Number of retry attempts
+typedef struct
+{
+    char *endpoint;
+    char *method;
+    char *auth_token;
+    char *content_type;
+    int timeout_ms;
+    int retry_count;
 } HttpPublishConfig;
 
 // HTTP publisher client
-typedef struct {
+typedef struct
+{
     HttpPublishConfig config;
     CURL *curl;
     struct curl_slist *headers;

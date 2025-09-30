@@ -3,14 +3,16 @@
 #include <curl/curl.h>
 #include "common/datamodel.h"
 
-typedef struct {
+typedef struct
+{
     char *url;
     char *org;
     char *bucket;
     char *token;
 } Influxdb2ClientConfig;
 
-typedef struct {
+typedef struct
+{
     char *measurement;
     char **tag_keys;
     char **tag_values;
@@ -18,12 +20,14 @@ typedef struct {
     char *fieldKey;
 } Influxdb2DataConfig;
 
-typedef struct {
+typedef struct
+{
     Influxdb2ClientConfig clientConfig;
     Influxdb2DataConfig dataConfig;
 } Influxdb2DataBaseConfig;
 
-typedef struct {
+typedef struct
+{
     CURL *curl;
 } Influxdb2Client;
 

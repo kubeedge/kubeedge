@@ -5,22 +5,22 @@
 
 // Parameter defines a parameter for a method.
 typedef struct {
-    char *propertyName; // Name of the property
-    char *valueType;    // Value type of the property
+    char *propertyName; 
+    char *valueType;  
 } Parameter;
 
 // Method defines a device method.
 typedef struct {
-    char *name;           // Method name
-    char *path;           // Method path
-    Parameter *parameters; // Array of parameters
-    size_t parametersCount; // Number of parameters
+    char *name;          
+    char *path; 
+    Parameter *parameters; 
+    size_t parametersCount; 
 } Method;
 
 // DataMethod defines standard model for deviceMethod.
 typedef struct {
-    Method *methods;      // Array of methods
-    size_t methodsCount;  // Number of methods
+    Method *methods;
+    size_t methodsCount;
 } DataMethod;
 
 #endif // DATAMETHOD_H

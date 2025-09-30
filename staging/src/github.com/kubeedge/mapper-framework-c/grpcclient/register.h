@@ -3,16 +3,16 @@
 #include "common/datamodel.h"
 #include "common/configmaptype.h"
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-int RegisterMapper(
-    int withData,
-    DeviceInstance **outDeviceList, int *outDeviceCount,
-    DeviceModel **outModelList, int *outModelCount
-);
+    int RegisterMapper(
+        int withData,
+        DeviceInstance **outDeviceList, int *outDeviceCount,
+        DeviceModel **outModelList, int *outModelCount);
 
-int ReportDeviceStatus(const char *namespace_, const char *deviceName, const char *status);
+    int ReportDeviceStatus(const char *namespace_, const char *deviceName, const char *status);
 
 #ifdef __cplusplus
 }

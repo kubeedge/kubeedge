@@ -7,41 +7,69 @@ extern "C" {
 
 // Configuration for the gRPC server
 typedef struct {
-    char socket_path[256]; // Path to the gRPC server socket
+    char socket_path[256]; 
 } GRPCServerConfig;
 
 // Common configuration for the framework
 typedef struct {
-    char name[64];         // Framework name
-    char version[32];      // Framework version
-    char api_version[32];  // API version
-    char protocol[32];     // Communication protocol
-    char address[128];     // Address of the framework
-    char edgecore_sock[256]; // Path to the EdgeCore socket
-    char http_port[16];    // HTTP server port
+    char name[64];         
+    char version[32];      
+    char api_version[32]; 
+    char protocol[32];     
+    char address[128];     
+    char edgecore_sock[256]; 
+    char http_port[16];  
 } CommonConfig;
 
-// Configuration for MySQL database
 typedef struct {
-    int  enabled;          // Whether MySQL is enabled
-    char addr[128];        // MySQL server address
-    char database[64];     // Database name
-    char username[64];     // Username for authentication
-    int  port;             // MySQL server port
-    char ssl_mode[16];     // SSL mode (DISABLED, PREFERRED, REQUIRED, etc.)
-    char password[64];     // Password for authentication
+    int  enabled;
+    char addr[128];
+    char database[64];
+    char username[64];
+    int  port;
+    char ssl_mode[16];
+    char password[64];
 } DatabaseMySQLConfig;
 
-// Group of database configurations
 typedef struct {
-    DatabaseMySQLConfig mysql; // MySQL configuration
+    int enabled;
+    char addr[128];
+    int port;
+    int db;
+    int poolSize;
+    int minIdleConns;
+    char password[64];
+} DatabaseRedisConfig;
+
+typedef struct {
+    int enabled;
+    char url[256];
+    char org[64];
+    char bucket[64];
+    char token[128];
+} DatabaseInfluxdbConfig;
+
+typedef struct {
+    int enabled;
+    char addr[128];
+    char dbName[64];
+    char username[64];
+    char password[64];
+    int port;
+} DatabaseTDEngineConfig;
+
+typedef struct {
+    DatabaseMySQLConfig mysql;
+    DatabaseRedisConfig redis;
+    DatabaseInfluxdbConfig influxdb2;
+    DatabaseTDEngineConfig tdengine;
 } DatabaseConfigGroup;
 
 // Main configuration structure
 typedef struct Config {
-    GRPCServerConfig grpc_server; // gRPC server configuration
-    CommonConfig common;          // Common framework configuration
-    DatabaseConfigGroup database; // Database configuration group
+    GRPCServerConfig grpc_server; 
+    CommonConfig common;          
+    DatabaseConfigGroup database; 
 } Config;
 
 // Parses the configuration file
