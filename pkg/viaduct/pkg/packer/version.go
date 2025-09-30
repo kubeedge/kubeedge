@@ -1,7 +1,7 @@
 package packer
 
 const (
-	// pakcage version
+	// package version
 	MajorVersion = 1
 	MinorVersion = 1
 	FixVersion   = 1

@@ -101,7 +101,7 @@ func (conn *QuicConnection) serveControlLan() {
 	}
 }
 
-// ServeSession accept steams from remote peer
+// ServeSession accept streams from remote peer
 // then, receive messages from the steam
 func (conn *QuicConnection) serveSession() {
 	for {

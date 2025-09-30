@@ -61,7 +61,7 @@ func GetLocalIP(hostName string) (string, error) {
 		}
 	}
 	if ipAddr == nil {
-		return "", fmt.Errorf("can not get any useable node IP")
+		return "", fmt.Errorf("can not get any usable node IP")
 	}
 
 	return ipAddr.String(), nil

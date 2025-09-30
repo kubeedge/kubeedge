@@ -155,7 +155,7 @@ admission:
   labels:
     k8s-app: kubeedge-admission
     kubeedge: kubeedge-admission
-  annoations: {}
+  annotations: {}
   affinity:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
