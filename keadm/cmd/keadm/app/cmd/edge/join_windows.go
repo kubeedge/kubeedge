@@ -93,7 +93,7 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 		return fmt.Errorf("parse kubeedge version failed, %v", err)
 	}
 	if v.Major <= 1 && v.Minor < 15 {
-		return errors.New("edgecore for windows dont support version earlier than v1.15.0")
+		return errors.New("edgecore for windows don't support version earlier than v1.15.0")
 	}
 
 	configFilePath := filepath.Join(constants.KubeEdgePath, "config/edgecore.yaml")
@@ -199,7 +199,7 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 	step.Printf("Register edgecore as windows service")
 	if err := util.InstallNSSMService(constants.KubeEdgeBinaryName, filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName+".exe"),
 		"--config", filepath.Join(constants.KubeEdgePath, "config/edgecore.yaml")); err != nil {
-		return fmt.Errorf("install edgecore useing nssm fail: %v", err)
+		return fmt.Errorf("install edgecore using nssm fail: %v", err)
 	}
 
 	if err := util.SetNSSMServiceStdout(constants.KubeEdgeBinaryName, filepath.Join(common.KubeEdgeLogPath, "out.log")); err != nil {

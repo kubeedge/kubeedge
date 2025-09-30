@@ -79,7 +79,7 @@ echo "running 'go mod vendor' for repo root"
 GOWORK=off go mod vendor
 
 # create a symlink in vendor directory pointing to the staging components.
-# This lets other packages and tools use the local staging components as if they were vendored.
+# This let's other packages and tools use the local staging components as if they were vendored.
 for repo in $(kubeedge::util::list_staging_repos); do
   rm -fr "${KUBEEDGE_ROOT}/vendor/github.com/kubeedge/${repo}"
   ln -s "../../../staging/src/github.com/kubeedge/${repo}/" "${KUBEEDGE_ROOT}/vendor/github.com/kubeedge/${repo}"
