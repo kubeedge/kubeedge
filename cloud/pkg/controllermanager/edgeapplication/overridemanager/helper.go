@@ -1,7 +1,7 @@
 /*
 CHANGELOG
 KubeEdge Authors:
-- This File is drived from github.com/karmada-io/karmada/pkg/util/helper/unstructured.go
+- This File is derived from github.com/karmada-io/karmada/pkg/util/helper/unstructured.go
 - pick some functions to handle apis, including pod, replicaset, deployment, deamonset, statefulset
   and job.
 */

@@ -81,10 +81,10 @@ func TestVerifyAuthorization(t *testing.T) {
 			containsError: "token validation failure, token is empty",
 		},
 		{
-			name:          "not splited token",
+			name:          "not split token",
 			token:         "xxxx",
 			wantCode:      http.StatusUnauthorized,
-			containsError: "token validation failure, token cannot be splited",
+			containsError: "token validation failure, token cannot be split",
 		},
 		{
 			name:          "invalid token",
