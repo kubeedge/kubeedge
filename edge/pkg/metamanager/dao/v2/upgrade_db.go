@@ -99,7 +99,7 @@ func (dao *Upgrade) Get() (string, string, *operationv1alpha2.NodeUpgradeJobSpec
 // Save saves jobname, nodename and NodeUpgradeJobSpec to metav2 table.
 // A node will only retain one piece of upgrade data.
 func (dao *Upgrade) Save(jobname, nodename string, spec *operationv1alpha2.NodeUpgradeJobSpec) error {
-	// Cleaning up historical nodeupgradejobtaskrequests datas
+	// Cleaning up historical nodeupgradejobtaskrequests data
 	if err := dao.Delete(); err != nil {
 		return err
 	}
@@ -194,7 +194,7 @@ func (dao *UpgradeV1alpha1) Get() (*types.NodeTaskRequest, error) {
 // Save saves the NodeTaskRequest to metav2 table.
 // A node will only retain one piece of upgrade data.
 func (dao *UpgradeV1alpha1) Save(request *types.NodeTaskRequest) error {
-	// Cleaning up historical nodeupgradejobtaskrequests datas
+	// Cleaning up historical nodeupgradejobtaskrequests data
 	if err := dao.Delete(); err != nil {
 		return err
 	}

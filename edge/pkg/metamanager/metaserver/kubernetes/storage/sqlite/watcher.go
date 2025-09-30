@@ -61,7 +61,7 @@ type watchChan struct {
 	ctx               context.Context
 	cancel            context.CancelFunc
 	incomingEventChan chan *watch.Event
-	// added is map show an obj whether it has been added to watch chan befor
+	// added is map show an obj whether it has been added to watch chan before
 	added      map[string]bool
 	resultChan chan watch.Event
 	errChan    chan error
