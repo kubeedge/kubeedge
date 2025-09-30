@@ -672,7 +672,7 @@ edge config is exists: /etc/kubeedge/config/edgecore.yaml
 docker is running
 dataSource is exists: /var/lib/kubeedge/edgecore.db
 cloudcore websocket connection successDatabase /var/lib/kubeedge/edgecore.db is exist
-not find kube-system/pod/nginx-ds-85jch in datebase
+not find kube-system/pod/nginx-ds-85jch in database
 
 |-------------------|
 |diagnose pod failed|
