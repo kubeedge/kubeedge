@@ -28,9 +28,9 @@ type BaseOptions struct {
 	// Config is the path to the edgecore config file.
 	// The default value is /etc/kubeedge/config/edgecore.yaml.
 	Config string
-	// PreRun defins the shell file to run before upgrading.
+	// PreRun defines the shell file to run before upgrading.
 	PreRun string
-	// PostRun defins the shell file to run after upgrading.
+	// PostRun defines the shell file to run after upgrading.
 	PostRun string
 }
 

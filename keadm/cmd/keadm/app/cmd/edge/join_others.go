@@ -311,13 +311,13 @@ func selinuxLabelRevision(enable bool) error {
 
 	label, err := selinux.FileLabel(filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName))
 	if err != nil {
-		return fmt.Errorf("get selinux context of edgecore faild with error:%w", err)
+		return fmt.Errorf("get selinux context of edgecore failed with error:%w", err)
 	}
 
 	if label != util.EdgeCoreSELinuxLabel {
 		if err = selinux.SetFileLabel(filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName),
 			util.EdgeCoreSELinuxLabel); err != nil {
-			return fmt.Errorf("reset selinux context on edgecore faild with error:%w", err)
+			return fmt.Errorf("reset selinux context on edgecore failed with error:%w", err)
 		}
 	}
 	return nil

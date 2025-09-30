@@ -244,7 +244,7 @@ func (cu *KubeCloudHelmInstTool) buildRenderer(baseHelmRoot string) (*Renderer, 
 func (cu *KubeCloudHelmInstTool) runHelmManifest(r *Renderer, stdout io.Writer) error {
 	manifests, err := r.RenderManifest()
 	if err != nil {
-		return fmt.Errorf("cannot render the given compoent %s, error: %s", r.componentName, err.Error())
+		return fmt.Errorf("cannot render the given component %s, error: %s", r.componentName, err.Error())
 	}
 
 	// combine the given manifests and the rendered manifests

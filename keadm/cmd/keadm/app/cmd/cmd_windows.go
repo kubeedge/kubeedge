@@ -41,11 +41,11 @@ var (
 
 `
 	keadmExample = `
-    +-----------------------------------------------------------------+
-    | On the edge machine(current dont support cloudcore on windows): |                                    |
-    +-----------------------------------------------------------------+
-    | worker node (at the edge)# keadm join <flags>                   |
-    +-----------------------------------------------------------------+
+    +------------------------------------------------------------------+
+    | On the edge machine(current don't support cloudcore on windows): |                                    |
+    +------------------------------------------------------------------+
+    | worker node (at the edge)# keadm join <flags>                    |
+    +------------------------------------------------------------------+
 
     You can then repeat the second step on, as many other machines as you like.
 `
