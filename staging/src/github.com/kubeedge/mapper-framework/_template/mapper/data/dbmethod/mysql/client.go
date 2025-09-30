@@ -63,7 +63,7 @@ func (d *DataBaseConfig) InitDbClient() error {
 	var err error
 	DB, err = sql.Open("mysql", dataSourceName)
 	if err != nil {
-		return fmt.Errorf("connection to %s of mysql faild with err:%v", dataBase, err)
+		return fmt.Errorf("connection to %s of mysql failed with err:%v", dataBase, err)
 	}
 
 	return nil
@@ -83,7 +83,7 @@ func (d *DataBaseConfig) AddData(data *common.DataModel) error {
 	createTable := fmt.Sprintf("CREATE TABLE IF NOT EXISTS `%s` (id INT AUTO_INCREMENT PRIMARY KEY, ts  DATETIME NOT NULL,field TEXT)", tableName)
 	_, err := DB.Exec(createTable)
 	if err != nil {
-		return fmt.Errorf("create tabe into mysql failed with err:%v", err)
+		return fmt.Errorf("create table into mysql failed with err:%v", err)
 	}
 
 	stmt, err := DB.Prepare(fmt.Sprintf("INSERT INTO `%s` (ts,field) VALUES (?,?)", tableName))

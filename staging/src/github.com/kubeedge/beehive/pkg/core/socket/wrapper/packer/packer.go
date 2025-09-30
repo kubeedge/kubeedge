@@ -13,7 +13,7 @@ const (
 	versionSize  = 2
 	reservedSize = 2
 
-	// MessageLenOffest message len offest
+	// MessageLenOffest message len offset
 	MessageLenOffest = magicSize + versionSize + reservedSize
 	// MessageOffset message offset
 	MessageOffset = MessageLenOffest + 4

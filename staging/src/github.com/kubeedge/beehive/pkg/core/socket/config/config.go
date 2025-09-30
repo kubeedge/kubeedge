@@ -21,7 +21,7 @@ type SocketConfig struct {
 	Key           string `json:"key,omitempty"`
 }
 
-// BuildinModuleConfig buildin module config
+// BuildinModuleConfig building module config
 type BuildinModuleConfig struct {
 	// socket
 	socketList []SocketConfig
@@ -44,7 +44,7 @@ var (
 	buildinModuleConfig *BuildinModuleConfig
 )
 
-// InitBuildinModuleConfig init buildin module config
+// InitBuildinModuleConfig init building module config
 func InitBuildinModuleConfig(filepath string) *BuildinModuleConfig {
 	moduleConfig := BuildinModuleConfig{}
 	data, err := os.ReadFile(filepath)
