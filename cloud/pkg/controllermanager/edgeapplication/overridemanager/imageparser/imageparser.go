@@ -1,7 +1,7 @@
 /*
 CHANGELOG
 KubeEdge Authors:
-- This File is drived from github.com/karmada-io/karmada/pkg/util/imageparser/parser.go
+- This File is derived from github.com/karmada-io/karmada/pkg/util/imageparser/parser.go
 */
 
 package imageparser
