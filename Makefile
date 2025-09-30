@@ -495,7 +495,7 @@ endef
 .PHONY: spellcheck
 ifeq ($(HELP),y)
 spellcheck:
-	@echo "$$CODESPELL_HELP_INFO"
+	@echo "$$SPELLCHECK_HELP_INFO"
 else
 spellcheck:
 	codespell --config codespell.cfg
