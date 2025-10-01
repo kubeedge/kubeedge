@@ -65,12 +65,12 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/version"
 )
 
-// GetKubeletDeps returns a Dependencies suitable for light kubelet being run.
+// GetKubeletDeps returns a Dependencies suitable for lite kubelet being run.
 type GetKubeletDeps func(
 	s *kubeletoptions.KubeletServer,
 	featureGate featuregate.FeatureGate) (*kubelet.Dependencies, error)
 
-// RunLiteKubelet runs the specified light kubelet with the given Dependencies.
+// RunLiteKubelet runs the specified lite kubelet with the given Dependencies.
 type RunLiteKubelet func(
 	ctx context.Context,
 	s *kubeletoptions.KubeletServer,
