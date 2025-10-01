@@ -13,10 +13,10 @@ const (
 	versionSize  = 2
 	reservedSize = 2
 
-	// MessageLenOffest message len offset
-	MessageLenOffest = magicSize + versionSize + reservedSize
+	// MessageLenOffset message len offset
+	MessageLenOffset = magicSize + versionSize + reservedSize
 	// MessageOffset message offset
-	MessageOffset = MessageLenOffest + 4
+	MessageOffset = MessageLenOffset + 4
 	// HeaderLen header len
 	HeaderLen = MessageOffset
 )
@@ -60,10 +60,10 @@ func (p *Packer) Validate(data []byte) bool {
 // Write write
 func (p *Packer) Write(writer io.Writer) error {
 	// fill message len
-	headerTags[MessageLenOffest] = byte(uint32(p.Length) >> 24)
-	headerTags[MessageLenOffest+1] = byte(uint32(p.Length) >> 16)
-	headerTags[MessageLenOffest+2] = byte(uint32(p.Length) >> 8)
-	headerTags[MessageLenOffest+3] = byte(uint32(p.Length))
+	headerTags[MessageLenOffset] = byte(uint32(p.Length) >> 24)
+	headerTags[MessageLenOffset+1] = byte(uint32(p.Length) >> 16)
+	headerTags[MessageLenOffset+2] = byte(uint32(p.Length) >> 8)
+	headerTags[MessageLenOffset+3] = byte(uint32(p.Length))
 	err := binary.Write(writer, binary.BigEndian, &headerTags)
 	if err != nil {
 		return err
@@ -106,7 +106,7 @@ func (p *Packer) GetMessageLen(data []byte) int32 {
 	if len(data) < MessageOffset {
 		return length
 	}
-	err := binary.Read(bytes.NewReader(data[MessageLenOffest:MessageOffset]), binary.BigEndian, &length)
+	err := binary.Read(bytes.NewReader(data[MessageLenOffset:MessageOffset]), binary.BigEndian, &length)
 	if err != nil {
 		klog.Errorf("binary Read err %+v", err)
 	}

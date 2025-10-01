@@ -20,7 +20,7 @@ func NewTran() *MessageTranslator {
 
 func (t *MessageTranslator) protoToModel(src *message.Message, dst *model.Message) error {
 	dst.BuildHeader(src.Header.ID, src.Header.ParentID, int64(src.Header.Timestamp)).
-		BuildRouter(src.Router.Source, src.Router.Group, src.Router.Resouce, src.Router.Operaion).
+		BuildRouter(src.Router.Source, src.Router.Group, src.Router.Resouce, src.Router.Operation).
 		FillBody(src.Content)
 
 	// TODO:
@@ -37,7 +37,7 @@ func (t *MessageTranslator) modelToProto(src *model.Message, dst *message.Messag
 	dst.Router.Source = src.GetSource()
 	dst.Router.Group = src.GetGroup()
 	dst.Router.Resouce = src.GetResource()
-	dst.Router.Operaion = src.GetOperation()
+	dst.Router.Operation = src.GetOperation()
 	if content := src.GetContent(); content != nil {
 		switch content := content.(type) {
 		case []byte:

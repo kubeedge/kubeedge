@@ -27,7 +27,7 @@ type MessageRouter struct {
 	// where the message will send to
 	Group string `protobuf:"bytes,2,opt,name=Group,proto3" json:"Group,omitempty"`
 	// what's the operation on resource
-	Operaion string `protobuf:"bytes,3,opt,name=Operaion,proto3" json:"Operaion,omitempty"`
+	Operation string `protobuf:"bytes,3,opt,name=Operation,proto3" json:"Operation,omitempty"`
 	// what's the resource want to operate
 	Resouce              string   `protobuf:"bytes,4,opt,name=Resouce,proto3" json:"Resouce,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -74,9 +74,9 @@ func (m *MessageRouter) GetGroup() string {
 	return ""
 }
 
-func (m *MessageRouter) GetOperaion() string {
+func (m *MessageRouter) GetOperation() string {
 	if m != nil {
-		return m.Operaion
+		return m.Operation
 	}
 	return ""
 }
