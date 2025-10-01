@@ -1,4 +1,3 @@
-
 /*
 Copyright The KubeEdge Authors.
 

@@ -1,7 +1,7 @@
 /*
 CHANGELOG
 KubeEdge Authors:
-- This File is drived from github.com/karmada-io/karmada/pkg/util/constants.go
+- This File is derived from github.com/karmada-io/karmada/pkg/util/constants.go
 - pick some constants used by imageoverrider
 */
 

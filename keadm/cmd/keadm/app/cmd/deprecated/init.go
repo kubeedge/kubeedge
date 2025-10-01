@@ -86,7 +86,7 @@ type InitBaseOptions struct {
 	TarballPath      string
 }
 
-// newInitOptions will initialise new instance of options everytime
+// newInitOptions will initialise new instance of options every time
 func newInitOptions() *InitBaseOptions {
 	opts := &InitBaseOptions{}
 	opts.KubeConfig = types.DefaultKubeConfig

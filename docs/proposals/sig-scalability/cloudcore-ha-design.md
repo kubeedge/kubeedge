@@ -31,7 +31,7 @@ At present, CloudCore is essentially an edge-resource distribution center, which
 
 - DownStream (in EdgeController)
 
-  When DownStream init, it will `Watch` all pod-event, and picks out pod-events which are assigned to edgenodes(labeled by "node-role.kubernetes.io/edge:"). Because of `pod.Spec.NodeName`, DownStream could directly build `Message.Router.Resource` when generate pod-related messages, but for configmaps and secrets, there is no such similar field. So when DownStream delivery pod, it will check if the pod refers to configmaps the secrets, and record configmapNames and secretNames and their dest-node.The list of edgenodes and the list of configmaps and secrets to dest-node are recored in **LocationCache**(aka. resource distribution route ), which is declared below:
+  When DownStream init, it will `Watch` all pod-event, and picks out pod-events which are assigned to edgenodes(labeled by "node-role.kubernetes.io/edge:"). Because of `pod.Spec.NodeName`, DownStream could directly build `Message.Router.Resource` when generate pod-related messages, but for configmaps and secrets, there is no such similar field. So when DownStream delivery pod, it will check if the pod refers to configmaps the secrets, and record configmapNames and secretNames and their dest-node.The list of edgenodes and the list of configmaps and secrets to dest-node are recorded in **LocationCache**(aka. resource distribution route ), which is declared below:
   ```go
    // LocationCache cache the map of node, pod, configmap, secret
   type LocationCache struct {

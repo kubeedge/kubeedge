@@ -72,7 +72,7 @@ type ReconcileHandler[T NodeJobType] interface {
 	// UpdateJobStatus updates the node job status by controller-runtime Client.
 	UpdateJobStatus(ctx context.Context, job *T) error
 
-	// CheckTimeout checks whather the node task has timed out. If so,
+	// CheckTimeout checks whether the node task has timed out. If so,
 	// the node task needs to set the status to unknown, and update the resources.
 	CheckTimeout(ctx context.Context, jobName string) error
 }

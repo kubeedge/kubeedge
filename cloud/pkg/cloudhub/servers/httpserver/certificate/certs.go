@@ -118,7 +118,7 @@ func verifyAuthorization(authorization string) (int, error) {
 	}
 	bearerToken := strings.Split(authorization, " ")
 	if len(bearerToken) != 2 {
-		return http.StatusUnauthorized, errors.New("token validation failure, token cannot be splited")
+		return http.StatusUnauthorized, errors.New("token validation failure, token cannot be split")
 	}
 	valid, err := token.Verify(bearerToken[1], hubconfig.Config.CaKey)
 	if err != nil {

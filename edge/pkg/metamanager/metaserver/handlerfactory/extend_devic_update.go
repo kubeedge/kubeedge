@@ -46,7 +46,7 @@ func updateEdgeDevice() http.Handler {
 
 		source := modules.MetaManagerModuleName
 		target := modules.DeviceTwinModuleName
-		resourece := device.Namespace + "/device/updated"
+		resource := device.Namespace + "/device/updated"
 
 		operation := model.UpdateOperation
 
@@ -58,7 +58,7 @@ func updateEdgeDevice() http.Handler {
 		modelMsg := model.NewMessage("").
 			SetResourceVersion(device.ResourceVersion).
 			FillBody(device)
-		modelMsg.BuildRouter(source, target, resourece, operation)
+		modelMsg.BuildRouter(source, target, resource, operation)
 		resp, err := beehiveContext.SendSync(source, *modelMsg, 1*time.Minute)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

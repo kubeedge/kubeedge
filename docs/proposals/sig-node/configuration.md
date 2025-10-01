@@ -55,7 +55,7 @@ We recommend referring to the kubernetes component config api design to redesign
 
 ## Goals
 
-* KubeEdge components use one configuration file instead of the original 3 configuration files. It supports json or yaml format, defaut is yaml.
+* KubeEdge components use one configuration file instead of the original 3 configuration files. It supports json or yaml format, default is yaml.
 
 * Start the KubeEdge component with the --config flag, this flag set to the path of the component's config file. The component will then load its config from this file, if --config flag not set, component will read a default configuration file.
 
@@ -523,7 +523,7 @@ type Modules struct {
 	EdgeMesh *EdgeMesh `json:"edgeMesh,omitempty"`
 }
 
-// Edged indicates the config fo edged module
+// Edged indicates the config of edged module
 // edged is lighted-kubelet
 type Edged struct {
 	// Enable indicates whether edged is enabled,
