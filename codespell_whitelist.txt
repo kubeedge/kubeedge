@@ -3,9 +3,9 @@ Convertor
 deviceC
 DeviceC
 inBraces
+lets
 NotIn
 ons
-Operaion
 Resouce
 ser
 stdio
