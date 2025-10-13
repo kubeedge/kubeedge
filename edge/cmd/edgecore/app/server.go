@@ -171,7 +171,8 @@ func cleanupToken(config v1alpha2.EdgeCoreConfig, file string) error {
 		return err
 	}
 
-	return os.WriteFile(file, d, 0640)
+	// 安全权限，只有拥有者可读写
+	return os.WriteFile(file, d, 0600)
 }
 
 // environmentCheck check the environment before edgecore start
