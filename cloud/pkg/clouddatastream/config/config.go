@@ -29,7 +29,12 @@ func InitConfigure(stream *v1alpha1.CloudDataStream) {
 		ca, err := os.ReadFile(stream.TLSTunnelCAFile)
 		if err == nil {
 			block, _ := pem.Decode(ca)
-			ca = block.Bytes
+			if block == nil {
+				klog.Warningf("Failed to decode PEM block from ca file: %s", stream.TLSTunnelCAFile)
+				ca = nil
+			} else {
+				ca = block.Bytes
+			}
 		}
 		if ca != nil {
 			Config.Ca = ca
@@ -38,13 +43,23 @@ func InitConfigure(stream *v1alpha1.CloudDataStream) {
 		cert, err := os.ReadFile(stream.TLSTunnelCertFile)
 		if err == nil {
 			block, _ := pem.Decode(cert)
-			cert = block.Bytes
+			if block == nil {
+				klog.Warningf("Failed to decode PEM block from cert file: %s", stream.TLSTunnelCertFile)
+				cert = nil
+			} else {
+				cert = block.Bytes
+			}
 		}
 
 		key, err := os.ReadFile(stream.TLSTunnelPrivateKeyFile)
 		if err == nil {
 			block, _ := pem.Decode(key)
-			key = block.Bytes
+			if block == nil {
+				klog.Warningf("Failed to decode PEM block from key file: %s", stream.TLSTunnelPrivateKeyFile)
+				key = nil
+			} else {
+				key = block.Bytes
+			}
 		}
 
 		if cert != nil && key != nil {

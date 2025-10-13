@@ -51,7 +51,7 @@ func (r *ContainerRTSPConnection) WriteToAPIServer(p []byte) (int, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	// 遍历所有 WebSocket 客户端
+	// Iterate over all WebSocket clients
 	for i := 0; i < len(r.wsConns); {
 		ws := r.wsConns[i]
 		err := ws.WriteMessage(websocket.BinaryMessage, p)
@@ -59,7 +59,7 @@ func (r *ContainerRTSPConnection) WriteToAPIServer(p []byte) (int, error) {
 			klog.Errorf("write to wsConn error: %v, removing it", err)
 			ws.Close()
 
-			// 移除失效连接
+			// Remove Failed Connections
 			r.wsConns = append(r.wsConns[:i], r.wsConns[i+1:]...)
 			continue
 		}

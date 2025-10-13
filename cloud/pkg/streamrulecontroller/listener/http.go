@@ -36,8 +36,11 @@ type StreamruleHandler struct {
 func initKubeClient() {
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		// 如果集群内失败，尝试 kubeconfig
-		config, err = clientcmd.BuildConfigFromFlags("", "/root/.kube/config")
+		loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+		configOverrides := &clientcmd.ConfigOverrides{}
+		clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
+
+		config, err = clientConfig.ClientConfig()
 		if err != nil {
 			fmt.Printf("warn: kube client init failed: %v\n", err)
 			kubeClient = nil

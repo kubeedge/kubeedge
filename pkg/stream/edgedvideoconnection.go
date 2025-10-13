@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"net/url"
 	"os/exec"
-	"strings"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"k8s.io/klog/v2"
 )
 
@@ -100,12 +100,12 @@ func isClosedConnError(err error) bool {
 	if err == nil {
 		return false
 	}
-	// 根据错误字符串判断
-	errStr := err.Error()
-	return strings.Contains(errStr, "use of closed network connection") ||
-		strings.Contains(errStr, "broken pipe") ||
-		strings.Contains(errStr, "connection reset by peer") ||
-		strings.Contains(errStr, "EOF")
+
+	return websocket.IsCloseError(err,
+		websocket.CloseNormalClosure,
+		websocket.CloseGoingAway,
+		websocket.CloseAbnormalClosure,
+	) || websocket.IsUnexpectedCloseError(err)
 }
 
 func (v *EdgedVideoConnection) Serve(tunnel SafeWriteTunneler) error {

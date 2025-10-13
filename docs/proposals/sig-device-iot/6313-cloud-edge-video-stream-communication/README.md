@@ -63,7 +63,6 @@ Each edge-initiated stream corresponds to a WebSocket session on the cloud. The 
 type VideoSession struct {
   Session      *Session                 // Represents the WebSocket tunnel
   VideoConnID  uint64                   // Unique ID for each stream
-  StopChannels map[string]chan struct{} // One stop signal per downstream consumer
   sync.Mutex
 }
 
