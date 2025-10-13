@@ -13,7 +13,7 @@ authors:
 
 Edgecore modules could fail to start due to non-configurable and recoverable matters such as process starting order. For example, if edgecore starts before containerd.socket is ready, edged fails to run kubelet and edgecore exits.
 
-In fact, it costs a lot if a program alway exits for matters outside the program itself. And delay of restarting the program is unbearable in some time-sensitive situations. For errors outside KubeEdge, it would be better if we could only retry the failing modules after some interval.
+In fact, it costs a lot if a program always exits for matters outside the program itself. And delay of restarting the program is unbearable in some time-sensitive situations. For errors outside KubeEdge, it would be better if we could only retry the failing modules after some interval.
 
 ## Goals
 
@@ -38,7 +38,7 @@ If a module is enabled in configuration files, neither users or developers want 
 
 Modules are started by BeeHive, so apparently BeeHive is responsible for modules' lifecycle. BeeHive is the communication framework of KubeEdge but works not only for communication. If a module fails, BeeHive should decide what to do next. Modules can tell BeeHive to keep module running or to exit the program, but modules should not exit the program directly to ruin other modules' normal procedure, causing potential data loss. 
 
-In `module.Start()`, errors are variant. Semantically, for some module `m`, it's `m`'s own job to handle errors occured in `m`'s main logic. If `m` doesn't have ability to handle the error, `m` should inform BeeHive that `m` failed in its main loop. After `m`'s failure infomation, BeeHive knows `m` has failed, and retries `m.Start()` to keep it working or exits.
+In `module.Start()`, errors are variant. Semantically, for some module `m`, it's `m`'s own job to handle errors occurred in `m`'s main logic. If `m` doesn't have ability to handle the error, `m` should inform BeeHive that `m` failed in its main loop. After `m`'s failure information, BeeHive knows `m` has failed, and retries `m.Start()` to keep it working or exits.
 
 Activity diagram for module restarting: 
 
