@@ -122,8 +122,7 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 			if config.Modules.Edged.CustomInterfaceName != "" {
 				ip, err := netutil.ChooseBindAddressForInterface(config.Modules.Edged.CustomInterfaceName)
 				if err != nil {
-					klog.Errorf("Failed to get IP address by custom interface %s, err: %v", config.Modules.Edged.CustomInterfaceName, err)
-					os.Exit(1)
+					klog.Exitf("Failed to get IP address by custom interface %s, err: %v", config.Modules.Edged.CustomInterfaceName, err)
 				}
 				config.Modules.Edged.NodeIP = ip.String()
 				klog.Infof("Get IP address by custom interface successfully, %s: %s", config.Modules.Edged.CustomInterfaceName, config.Modules.Edged.NodeIP)
