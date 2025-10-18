@@ -61,16 +61,11 @@ void mqtt_free_config(MqttPublishConfig *config)
 static void mqtt_connect_callback(struct mosquitto *mosq, void *userdata, int result)
 {
     MqttPublisher *publisher = (MqttPublisher *)userdata;
-
-    if (result == 0)
-    {
+    if (result == 0) {
         publisher->connected = 1;
-        log_debug("MQTT connected successfully");
-    }
-    else
-    {
+    } else {
         publisher->connected = 0;
-        log_error("MQTT connection failed: %s", mosquitto_connack_string(result));
+        log_error("MQTT conn failed: %s", mosquitto_connack_string(result));
     }
 }
 
@@ -85,35 +80,14 @@ static void mqtt_disconnect_callback(struct mosquitto *mosq, void *userdata, int
 // Create MQTT publisher
 MqttPublisher *mqtt_publisher_new(const char *config_json)
 {
-    if (!config_json)
-        return NULL;
-
+    if (!config_json) return NULL;
     mosquitto_lib_init();
-
     MqttPublisher *publisher = calloc(1, sizeof(MqttPublisher));
-    if (!publisher)
-    {
-        mosquitto_lib_cleanup();
-        return NULL;
-    }
-
-    if (mqtt_parse_config(config_json, &publisher->config) != 0)
-    {
-        free(publisher);
-        mosquitto_lib_cleanup();
-        return NULL;
-    }
-
+    if (!publisher) { mosquitto_lib_cleanup(); return NULL; }
+    if (mqtt_parse_config(config_json, &publisher->config) != 0) { free(publisher); mosquitto_lib_cleanup(); return NULL; }
     publisher->connected = 0;
     publisher->mosq = mosquitto_new(publisher->config.client_id, true, publisher);
-    if (!publisher->mosq)
-    {
-        log_error("Failed to create MQTT client");
-        mqtt_free_config(&publisher->config);
-        free(publisher);
-        mosquitto_lib_cleanup();
-        return NULL;
-    }
+    if (!publisher->mosq) { log_error("MQTT new client failed"); mqtt_free_config(&publisher->config); free(publisher); mosquitto_lib_cleanup(); return NULL; }
 
     mosquitto_connect_callback_set(publisher->mosq, mqtt_connect_callback);
     mosquitto_disconnect_callback_set(publisher->mosq, mqtt_disconnect_callback);
@@ -123,8 +97,6 @@ MqttPublisher *mqtt_publisher_new(const char *config_json)
         mosquitto_username_pw_set(publisher->mosq, publisher->config.username, publisher->config.password);
     }
 
-    log_info("MQTT publisher created for broker: %s:%d",
-             publisher->config.broker_url, publisher->config.port);
     return publisher;
 }
 
@@ -158,7 +130,6 @@ static int mqtt_ensure_connected(MqttPublisher *publisher)
                                 publisher->config.port, publisher->config.keep_alive);
     if (ret != MOSQ_ERR_SUCCESS)
     {
-        log_error("Failed to connect to MQTT broker: %s", mosquitto_strerror(ret));
         return -1;
     }
 

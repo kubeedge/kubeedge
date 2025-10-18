@@ -10,7 +10,7 @@ if [[ $# -lt 2 ]] || [[ -z "${1:-}" ]] || [[ -z "${2:-}" ]]; then
     echo "the mapper name is required"
     exit 1
   fi
-  read -p "Please input the build method (stream/nostream): " buildMethod
+  read -p "Please input the build method (stream/nostream)(stream currently not supported): " buildMethod
   if [[ -z "${buildMethod}" ]]; then
     echo "the build method is required"
     exit 1
@@ -93,7 +93,7 @@ WORKDIR /app
 COPY . .
 RUN protoc --proto_path=/app/dmi/v1beta1 \
            --cpp_out=/app/dmi/v1beta1 \
-           --grpc_out=/app/dmi/v1beta1 \
+           --grpc_out=/app/dmi/vn1beta1 \
            --plugin=protoc-gen-grpc=`which grpc_cpp_plugin` \
            /app/dmi/v1beta1/api.proto
 
@@ -115,4 +115,4 @@ EOF
 
 echo "Mapper project generated at: ${target}"
 echo "Build method: ${buildMethod}"
-echo "You can now run: make build NAME=${name}
+echo "You can now run: make build NAME=${name}"

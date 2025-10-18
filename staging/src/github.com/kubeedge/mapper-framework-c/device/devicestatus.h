@@ -27,9 +27,6 @@ extern "C"
     int device_status_check_change(Device *device, const char *currentStatus);
     const char *device_status_get_current(Device *device);
     long long device_status_get_last_update_time(Device *device);
-    int device_status_health_check(Device *device);
-    int device_status_start_health_monitor(Device *device);
-    int device_status_stop_health_monitor(Device *device);
     int device_status_send_event(Device *device, const char *eventType, const char *message);
     int device_status_handle_offline(Device *device);
     int device_status_handle_online(Device *device);
