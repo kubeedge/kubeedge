@@ -188,13 +188,6 @@ int ReportDeviceStatus(const char *namespace_, const char *deviceName, const cha
     dm.timeStamp = (int64_t)time(NULL) * 1000;
 
     int rc = publisher_publish_data(g_publisher, &dm);
-    if (rc != 0)
-    {
-        log_warn("ReportDeviceStatus publish failed: ns=%s device=%s status=%s rc=%d", ns, dn, st, rc);
-    }
-    else
-    {
-        log_info("ReportDeviceStatus ok: ns=%s device=%s status=%s", ns, dn, st);
-    }
+
     return rc;
 }

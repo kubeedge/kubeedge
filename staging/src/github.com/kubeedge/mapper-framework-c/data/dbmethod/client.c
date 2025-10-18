@@ -31,59 +31,7 @@ int dbmethod_global_init(void) {
             }
         }
     }
-    // Redis
-    {
-        RedisClientConfig rcfg = {0};
-        if (redis_parse_client_config(NULL, &rcfg) == 0) {
-            g_redis = (RedisDataBaseConfig*)calloc(1, sizeof(RedisDataBaseConfig));
-            if (g_redis) {
-                g_redis->config = rcfg;
-                if (redis_init_client(g_redis) == 0) {
-                    redis_recorder_set_db(g_redis);
-                } else {
-                    redis_close_client(g_redis);
-                    free(g_redis);
-                    g_redis = NULL;
-                }
-            }
-        }
-    }
-    // InfluxDB2
-    {
-        Influxdb2ClientConfig icfg = {0};
-        Influxdb2DataConfig dcfg = {0};
-        if (influxdb2_parse_client_config(NULL, &icfg) == 0) {
-            Influxdb2DataBaseConfig dbcfg = {0};
-            dbcfg.clientConfig = icfg;
-            dbcfg.dataConfig = dcfg;
-            influxdb2_recorder_set_db(&dbcfg);
-            g_influxdb2 = (Influxdb2Client*)calloc(1, sizeof(Influxdb2Client));
-            if (g_influxdb2) {
-                if (influxdb2_init_client(&icfg, g_influxdb2) != 0) {
-                    influxdb2_close_client(g_influxdb2);
-                    free(g_influxdb2);
-                    g_influxdb2 = NULL;
-                }
-            }
-        }
-    }
-    // TDengine
-    {
-        TDEngineClientConfig tcfg = {0};
-        if (tdengine_parse_client_config(NULL, &tcfg) == 0) {
-            g_tdengine = (TDEngineDataBaseConfig*)calloc(1, sizeof(TDEngineDataBaseConfig));
-            if (g_tdengine) {
-                g_tdengine->config = tcfg;
-                if (tdengine_init_client(g_tdengine) == 0) {
-                    tdengine_recorder_set_db(g_tdengine);
-                } else {
-                    tdengine_close_client(g_tdengine);
-                    free(g_tdengine);
-                    g_tdengine = NULL;
-                }
-            }
-        }
-    }
+
     return 0;
 }
 

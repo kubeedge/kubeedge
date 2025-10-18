@@ -99,7 +99,6 @@ HttpPublisher *http_publisher_new(const char *config_json)
     }
 
     curl_easy_setopt(publisher->curl, CURLOPT_HTTPHEADER, publisher->headers);
-    log_info("HTTP publisher created for endpoint: %s", publisher->config.endpoint);
     return publisher;
 }
 
@@ -126,7 +125,7 @@ void http_publisher_free(HttpPublisher *publisher)
 // Publish data to HTTP (synchronous)
 int http_publisher_publish(HttpPublisher *publisher, const DataModel *data)
 {
-    if (!publisher || !data)
+    if (!publisher || !publisher->curl || !data)
         return -1;
 
     cJSON *json = cJSON_CreateObject();
@@ -137,14 +136,33 @@ int http_publisher_publish(HttpPublisher *publisher, const DataModel *data)
     cJSON_AddStringToObject(json, "type", data->type ? data->type : "string");
     cJSON_AddNumberToObject(json, "timestamp", data->timeStamp);
 
+    if (data->value && *data->value) {
+        char *endp = NULL;
+        double dv = strtod(data->value, &endp);
+        if (endp && endp != data->value && *endp == '\0') {
+            cJSON_AddNumberToObject(json, "numericValue", dv);
+        }
+    }
+
+    const char *unit = getenv("PUBLISH_DEFAULT_UNIT");
+    if (unit && *unit) {
+        cJSON_AddStringToObject(json, "unit", unit);
+    }
+    const char *node = getenv("MAPPER_NODE_NAME");
+    if (node && *node) {
+        cJSON_AddStringToObject(json, "nodeName", node);
+    }
+
     char *json_string = cJSON_PrintUnformatted(json);
     cJSON_Delete(json);
 
     if (!json_string)
     {
-        log_error("Failed to create JSON data");
+        log_error("HTTP publish: failed to create JSON payload");
         return -1;
     }
+
+
 
     curl_easy_setopt(publisher->curl, CURLOPT_URL, publisher->config.endpoint);
     curl_easy_setopt(publisher->curl, CURLOPT_POSTFIELDS, json_string);
@@ -155,40 +173,31 @@ int http_publisher_publish(HttpPublisher *publisher, const DataModel *data)
     }
     else
     {
-        curl_easy_setopt(publisher->curl, CURLOPT_POST, 1L);
+        curl_easy_setopt(publisher->curl, CURLOPT_CUSTOMREQUEST, "POST");
     }
 
-    CURLcode res;
-    int retry_count = 0;
-    do
+    const char *verb = getenv("PUBLISH_HTTP_VERBOSE");
+    if (verb && strcmp(verb, "1") == 0)
+        curl_easy_setopt(publisher->curl, CURLOPT_VERBOSE, 1L);
+
+    int attempts = (publisher->config.retry_count > 0) ? (publisher->config.retry_count + 1) : 1;
+    CURLcode rc = CURLE_OK;
+    long http_code = 0;
+    int ok = 0;
+
+    for (int i = 0; i < attempts; ++i)
     {
-        res = curl_easy_perform(publisher->curl);
-        if (res == CURLE_OK)
-        {
-            long response_code;
-            curl_easy_getinfo(publisher->curl, CURLINFO_RESPONSE_CODE, &response_code);
+        rc = curl_easy_perform(publisher->curl);
+        curl_easy_getinfo(publisher->curl, CURLINFO_RESPONSE_CODE, &http_code);
 
-            if (response_code >= 200 && response_code < 300)
-            {
-                log_debug("HTTP publish success: %ld", response_code);
-                free(json_string);
-                return 0;
-            }
-            else
-            {
-                log_warn("HTTP publish failed with code: %ld", response_code);
-            }
-        }
-        else
+        if (rc == CURLE_OK && http_code >= 200 && http_code < 300)
         {
-            log_warn("HTTP publish failed: %s (attempt %d/%d)",
-                     curl_easy_strerror(res), retry_count + 1, publisher->config.retry_count);
+            ok = 1;
+            break;
         }
 
-        retry_count++;
-    } while (retry_count < publisher->config.retry_count);
+    }
 
     free(json_string);
-    log_error("HTTP publish failed after %d attempts", publisher->config.retry_count);
-    return -1;
+    return ok ? 0 : -1;
 }

@@ -67,7 +67,6 @@ Publisher *publisher_new(PublishMethodType type, const char *config_json)
         free(p);
         return NULL;
     }
-    log_info("Publisher created: type=%s", publisher_get_type_string(type));
     return p;
 }
 
@@ -102,6 +101,7 @@ int publisher_publish_data(Publisher *publisher, const DataModel *data)
 {
     if (!publisher || !publisher->client_handle || !data)
         return -1;
+
     switch (publisher->type)
     {
     case PUBLISH_METHOD_HTTP:

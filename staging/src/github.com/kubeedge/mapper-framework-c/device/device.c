@@ -143,19 +143,8 @@ Device *device_new(const DeviceInstance *instance, const DeviceModel *model)
             {
                 dstTwin->reported.metadata.type = strdup(srcTwin->reported.metadata.type);
             }
-            if (srcTwin->property)
-            {
-                dstTwin->property = malloc(sizeof(DeviceProperty));
-                if (dstTwin->property)
-                {
-                    memcpy(dstTwin->property, srcTwin->property, sizeof(DeviceProperty));
 
-                    if (srcTwin->property->name)
-                    {
-                        dstTwin->property->name = strdup(srcTwin->property->name);
-                    }
-                }
-            }
+            dstTwin->property = NULL;
         }
     }
 
@@ -177,10 +166,46 @@ Device *device_new(const DeviceInstance *instance, const DeviceModel *model)
                 dstProp->modelName = strdup(srcProp->modelName);
             if (srcProp->protocol)
                 dstProp->protocol = strdup(srcProp->protocol);
+            if (srcProp->pushMethod) {
+                dstProp->pushMethod = calloc(1, sizeof(PushMethodConfig));
+                if (srcProp->pushMethod->methodName) dstProp->pushMethod->methodName = strdup(srcProp->pushMethod->methodName);
+                if (srcProp->pushMethod->methodConfig) dstProp->pushMethod->methodConfig = strdup(srcProp->pushMethod->methodConfig);
+                if (srcProp->pushMethod->dbMethod) {
+                    dstProp->pushMethod->dbMethod = calloc(1, sizeof(DBMethodConfig));
+                    if (srcProp->pushMethod->dbMethod->dbMethodName) dstProp->pushMethod->dbMethod->dbMethodName = strdup(srcProp->pushMethod->dbMethod->dbMethodName);
+                    if (srcProp->pushMethod->dbMethod->dbConfig) {
+                        dstProp->pushMethod->dbMethod->dbConfig = calloc(1, sizeof(DBConfig));
+                        if (srcProp->pushMethod->dbMethod->dbConfig->mysqlClientConfig)
+                            dstProp->pushMethod->dbMethod->dbConfig->mysqlClientConfig = strdup(srcProp->pushMethod->dbMethod->dbConfig->mysqlClientConfig);
+                        if (srcProp->pushMethod->dbMethod->dbConfig->redisClientConfig)
+                            dstProp->pushMethod->dbMethod->dbConfig->redisClientConfig = strdup(srcProp->pushMethod->dbMethod->dbConfig->redisClientConfig);
+                        if (srcProp->pushMethod->dbMethod->dbConfig->influxdb2ClientConfig)
+                            dstProp->pushMethod->dbMethod->dbConfig->influxdb2ClientConfig = strdup(srcProp->pushMethod->dbMethod->dbConfig->influxdb2ClientConfig);
+                        if (srcProp->pushMethod->dbMethod->dbConfig->tdengineClientConfig)
+                            dstProp->pushMethod->dbMethod->dbConfig->tdengineClientConfig = strdup(srcProp->pushMethod->dbMethod->dbConfig->tdengineClientConfig);
+                    }
+                }
+            }
 
             dstProp->collectCycle = srcProp->collectCycle;
             dstProp->reportCycle = srcProp->reportCycle;
             dstProp->reportToCloud = srcProp->reportToCloud;
+        }
+
+        for (int t = 0; t < d->instance.twinsCount; ++t)
+        {
+            Twin *tw = &d->instance.twins[t];
+            if (!tw->propertyName) continue;
+            for (int j = 0; j < d->instance.propertiesCount; ++j)
+            {
+                DeviceProperty *p = &d->instance.properties[j];
+                const char *pname = p->name ? p->name : p->propertyName;
+                if (pname && strcmp(pname, tw->propertyName) == 0)
+                {
+                    tw->property = p;  
+                    break;
+                }
+            }
         }
     }
 
@@ -652,8 +677,7 @@ int device_deal_twin(Device *device, const Twin *twin_in)
     }
     if (exit_code != 0)
     {
-        log_error("Twin %s: mbpoll write failed (exit=%d raw=%d). cmd=%s",
-                  twin_in->propertyName, exit_code, rcRaw, cmd);
+
         return -1;
     }
 

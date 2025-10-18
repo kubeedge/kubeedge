@@ -170,8 +170,23 @@ int build_properties_from_grpc(const V1beta1__Device *device, DeviceProperty **o
         props[i].visitors = cJSON_PrintUnformatted(visitorConfig);
         cJSON_Delete(visitorConfig);
 
-        props[i].pushMethod = NULL;
-        props[i].pProperty = NULL;
+        if (pptv->pushmethod && pptv->pushmethod->dbmethod && pptv->pushmethod->dbmethod->mysql && pptv->pushmethod->dbmethod->mysql->mysqlclientconfig) {
+            cJSON *mc = cJSON_CreateObject();
+            if (pptv->pushmethod->dbmethod->mysql->mysqlclientconfig->addr) cJSON_AddStringToObject(mc, "addr", pptv->pushmethod->dbmethod->mysql->mysqlclientconfig->addr);
+            if (pptv->pushmethod->dbmethod->mysql->mysqlclientconfig->database) cJSON_AddStringToObject(mc, "database", pptv->pushmethod->dbmethod->mysql->mysqlclientconfig->database);
+            if (pptv->pushmethod->dbmethod->mysql->mysqlclientconfig->username) cJSON_AddStringToObject(mc, "userName", pptv->pushmethod->dbmethod->mysql->mysqlclientconfig->username);
+            char *mj = cJSON_PrintUnformatted(mc);
+            cJSON_Delete(mc);
+            if (mj) {
+                props[i].pushMethod = calloc(1, sizeof(PushMethodConfig));
+                props[i].pushMethod->methodName = strdup_safe("mysql");
+                props[i].pushMethod->dbMethod = calloc(1, sizeof(DBMethodConfig));
+                props[i].pushMethod->dbMethod->dbMethodName = strdup_safe("mysql");
+                props[i].pushMethod->dbMethod->dbConfig = calloc(1, sizeof(DBConfig));
+                props[i].pushMethod->dbMethod->dbConfig->mysqlClientConfig = mj;
+            }
+        }
+         props[i].pProperty = NULL;
     }
     *out = props;
     *out_count = count;

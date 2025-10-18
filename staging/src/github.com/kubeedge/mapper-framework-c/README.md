@@ -109,7 +109,7 @@ These environment variables enable publishing device data to various sinks:
 ```sh
 export PUBLISH_METHOD=http
 export PUBLISH_CONFIG='{"endpoint":"http://127.0.0.1:8080/ingest","method":"POST"}'
-cd build && ./main ../config.yaml
+cd build && ./main
 ```
 
 Simple HTTP sink for testing (save as http_sink.py):
@@ -224,22 +224,50 @@ Run:
 python modbus_server.py
 ```
 
-### Patch desired value via kubectl
-
-```sh
-kubectl -n default patch device demo-1 --type='json' -p='[
-  {"op":"replace","path":"/spec/properties/1/desired/value","value":"74"}
-]'
-```
 
 ---
 
-## Additional notes
 
-- For quick local tests, ensure the DMI socket path is reachable or unset it in config.yaml.
-- The HTTP server (REST) and gRPC server are started automatically.
-- An example of the driver:
+
+## HTTP API
+curl -sS http://127.0.0.1:7777/api/v1/ping | jq .
 ```
+
+Read device data (namespace=default):
+```sh
+curl -sS http://127.0.0.1:7777/api/v1/device/namespace/device/property | jq .
+```
+like 
+```sh
+curl -sS http://127.0.0.1:7777/api/v1/device/default/demo-1/threshold   | jq .
+```
+Get device model metadata:
+```sh
+curl -sS http://127.0.0.1:7777/api/v1/meta/model/namespace/device | jq .
+```
+like
+```
+curl -sS http://127.0.0.1:7777/api/v1/meta/model/default/demo-1 | jq .
+```
+List writable methods:
+```sh
+curl -sS http://127.0.0.1:7777/api/v1/devicemethod/namespace/device | jq .
+```
+like
+```sh
+curl -sS http://127.0.0.1:7777/api/v1/devicemethod/default/demo-1 | jq .
+```
+Write device:
+```sh
+curl -sS "http://127.0.0.1:7777/api/v1/devicemethod/namespace/device/SetProperty/property/value" | jq .
+```
+like
+```sh
+curl -sS "http://127.0.0.1:7777/api/v1/devicemethod/default/demo-1/SetProperty/threshold/42" | jq .
+```
+
+### An example of driver
+```C
 #include "driver/driver.h"
 #include "log/log.h"
 #include <stdlib.h>

@@ -31,9 +31,7 @@ int device_status_update(Device *device, const char *newStatus)
         return 0;
     char *old = device->status;
     device->status = strdup(newStatus);
-    log_info("Device %s status %s -> %s",
-             device->instance.name ? device->instance.name : "(null)",
-             old, newStatus);
+
     free(old);
     return 0;
 }
