@@ -23,7 +23,10 @@ Currently, KubeEdge's definition of the device model is relatively simplistic, w
 
 ### New Field
 
-The device_model layer will add a new field protocolConfigData , which is used for the override of protocol configuration; among them, the properties field will add a new visitors field, which is used for the override of access methods.
+To establish default configurations in the device model, we will add fields that can be overridden at the device instance level. Specifically:
+
+- A `protocolConfigData` field will be added to `DeviceModelSpec` to define default protocol configurations.
+- A `visitors` field will be added to `ModelProperty` to define default access methods for properties.
 
 ```go
 Visitors *VisitorConfig `json:"visitors,omitempty"`
