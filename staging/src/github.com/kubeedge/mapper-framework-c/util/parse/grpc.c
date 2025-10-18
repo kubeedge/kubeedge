@@ -5,6 +5,7 @@
 #include <cjson/cJSON.h>
 #include "google/protobuf/wrappers.pb-c.h"
 #include "google/protobuf/any.pb-c.h"
+#include <ctype.h>
 
 // Safely duplicates a string
 static char *strdup_safe(const char *s) {
@@ -12,6 +13,20 @@ static char *strdup_safe(const char *s) {
     char *copy = malloc(strlen(s) + 1);
     if (copy) strcpy(copy, s);
     return copy;
+}
+
+static void split_addr_port(const char *addr, char **host_out, int *port_out) {
+    if (!addr) return;
+    const char *p = strstr(addr, "://");
+    const char *s = p ? p + 3 : addr;
+    const char *colon = strrchr(s, ':');
+    if (colon && colon > s) {
+        *host_out = strndup(s, (size_t)(colon - s));
+        *port_out = atoi(colon + 1);
+    } else {
+        *host_out = strdup(s);
+        *port_out = 80;
+    }
 }
 
 
@@ -170,23 +185,58 @@ int build_properties_from_grpc(const V1beta1__Device *device, DeviceProperty **o
         props[i].visitors = cJSON_PrintUnformatted(visitorConfig);
         cJSON_Delete(visitorConfig);
 
+        if (pptv->pushmethod && pptv->pushmethod->mqtt) {
+            char *host = NULL; int port = 1883;
+            if (pptv->pushmethod->mqtt->address) split_addr_port(pptv->pushmethod->mqtt->address, &host, &port);
+            cJSON *mc = cJSON_CreateObject();
+            cJSON_AddStringToObject(mc, "brokerUrl", host ? host : "127.0.0.1");
+            cJSON_AddNumberToObject(mc, "port", port);
+            if (pptv->pushmethod->mqtt->topic) cJSON_AddStringToObject(mc, "topicPrefix", pptv->pushmethod->mqtt->topic);
+            if (pptv->pushmethod->mqtt->qos) cJSON_AddNumberToObject(mc, "qos", (double)pptv->pushmethod->mqtt->qos);
+            cJSON_AddNumberToObject(mc, "keepAlive", 60);
+            cJSON_AddStringToObject(mc, "clientId", "mapper_c");
+            char *mj = cJSON_PrintUnformatted(mc);
+            free(host); cJSON_Delete(mc);
+            if (!props[i].pushMethod) props[i].pushMethod = calloc(1, sizeof(PushMethodConfig));
+            props[i].pushMethod->methodName = strdup_safe("mqtt");
+            props[i].pushMethod->methodConfig = mj;
+        } else if (pptv->pushmethod && pptv->pushmethod->http) {
+            char *host = NULL; int port = pptv->pushmethod->http->port ? (int)pptv->pushmethod->http->port : 80;
+            if (pptv->pushmethod->http->hostname) split_addr_port(pptv->pushmethod->http->hostname, &host, &port);
+            const char *path = pptv->pushmethod->http->requestpath ? pptv->pushmethod->http->requestpath : "/ingest";
+            char endpoint[512]; snprintf(endpoint, sizeof(endpoint), "http://%s:%d%s", host ? host : "127.0.0.1", port, path);
+            cJSON *hc = cJSON_CreateObject();
+            cJSON_AddStringToObject(hc, "endpoint", endpoint);
+            cJSON_AddStringToObject(hc, "method", "POST");
+            if (pptv->pushmethod->http->timeout) cJSON_AddNumberToObject(hc, "timeout", (double)pptv->pushmethod->http->timeout);
+            char *hj = cJSON_PrintUnformatted(hc);
+            free(host); cJSON_Delete(hc);
+            if (!props[i].pushMethod) props[i].pushMethod = calloc(1, sizeof(PushMethodConfig));
+            props[i].pushMethod->methodName = strdup_safe("http");
+            props[i].pushMethod->methodConfig = hj;
+        } else if (pptv->pushmethod && pptv->pushmethod->otel) {
+            cJSON *oc = cJSON_CreateObject();
+            if (pptv->pushmethod->otel->endpointurl) cJSON_AddStringToObject(oc, "endpointUrl", pptv->pushmethod->otel->endpointurl);
+            char *oj = cJSON_PrintUnformatted(oc);
+            cJSON_Delete(oc);
+            if (!props[i].pushMethod) props[i].pushMethod = calloc(1, sizeof(PushMethodConfig));
+            props[i].pushMethod->methodName = strdup_safe("otel");
+            props[i].pushMethod->methodConfig = oj;
+        }
         if (pptv->pushmethod && pptv->pushmethod->dbmethod && pptv->pushmethod->dbmethod->mysql && pptv->pushmethod->dbmethod->mysql->mysqlclientconfig) {
             cJSON *mc = cJSON_CreateObject();
-            if (pptv->pushmethod->dbmethod->mysql->mysqlclientconfig->addr) cJSON_AddStringToObject(mc, "addr", pptv->pushmethod->dbmethod->mysql->mysqlclientconfig->addr);
+            if (pptv->pushmethod->dbmethod->mysql->mysqlclientconfig->addr)     cJSON_AddStringToObject(mc, "addr",     pptv->pushmethod->dbmethod->mysql->mysqlclientconfig->addr);
             if (pptv->pushmethod->dbmethod->mysql->mysqlclientconfig->database) cJSON_AddStringToObject(mc, "database", pptv->pushmethod->dbmethod->mysql->mysqlclientconfig->database);
             if (pptv->pushmethod->dbmethod->mysql->mysqlclientconfig->username) cJSON_AddStringToObject(mc, "userName", pptv->pushmethod->dbmethod->mysql->mysqlclientconfig->username);
             char *mj = cJSON_PrintUnformatted(mc);
             cJSON_Delete(mc);
-            if (mj) {
-                props[i].pushMethod = calloc(1, sizeof(PushMethodConfig));
-                props[i].pushMethod->methodName = strdup_safe("mysql");
-                props[i].pushMethod->dbMethod = calloc(1, sizeof(DBMethodConfig));
-                props[i].pushMethod->dbMethod->dbMethodName = strdup_safe("mysql");
-                props[i].pushMethod->dbMethod->dbConfig = calloc(1, sizeof(DBConfig));
-                props[i].pushMethod->dbMethod->dbConfig->mysqlClientConfig = mj;
-            }
+            if (!props[i].pushMethod) props[i].pushMethod = calloc(1, sizeof(PushMethodConfig));
+            if (!props[i].pushMethod->dbMethod) props[i].pushMethod->dbMethod = calloc(1, sizeof(DBMethodConfig));
+            if (!props[i].pushMethod->dbMethod->dbConfig) props[i].pushMethod->dbMethod->dbConfig = calloc(1, sizeof(DBConfig));
+            props[i].pushMethod->dbMethod->dbMethodName = strdup_safe("mysql");
+            props[i].pushMethod->dbMethod->dbConfig->mysqlClientConfig = mj;
         }
-         props[i].pProperty = NULL;
+        props[i].pProperty = NULL;
     }
     *out = props;
     *out_count = count;

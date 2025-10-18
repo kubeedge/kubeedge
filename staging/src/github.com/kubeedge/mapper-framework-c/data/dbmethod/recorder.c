@@ -4,6 +4,7 @@
 #include "data/dbmethod/redis/recorder.h"
 #include "data/dbmethod/influxdb2/recorder.h"
 #include "data/dbmethod/tdengine/recorder.h"
+#include "grpcclient/register.h"
 #include <string.h>
 #include <stdio.h>
 #include "log/log.h"
@@ -32,7 +33,6 @@ int dbmethod_recorder_record(Device *device, const char *propertyName, const cha
     if (!device || !prop || !value) return -1;
     int rc = -1;
     DeviceProperty *p = find_property(device, propertyName);
-    
     if (p && p->pushMethod) {
         if (p->pushMethod->dbMethod && p->pushMethod->dbMethod->dbConfig) {
             if (p->pushMethod->dbMethod->dbConfig->mysqlClientConfig) {
@@ -45,29 +45,17 @@ int dbmethod_recorder_record(Device *device, const char *propertyName, const cha
                 rc = tdengine_recorder_record(ns, dev, prop, value, timestamp);
             }
         }
-        if (rc < 0 && p->pushMethod->methodName) {
-            if (strcmp(p->pushMethod->methodName, "mysql") == 0) {
-                log_info("dbmethod_recorder_record: backend=mysql (methodName)");
-            } else if (strcmp(p->pushMethod->methodName, "redis") == 0) {
-                log_info("dbmethod_recorder_record: backend=redis (methodName)");
-            } else if (strcmp(p->pushMethod->methodName, "influxdb2") == 0) {
-                log_info("dbmethod_recorder_record: backend=influxdb2 (methodName)");
-            } else if (strcmp(p->pushMethod->methodName, "tdengine") == 0) {
-                log_info("dbmethod_recorder_record: backend=tdengine (methodName)");
-            }
-        }
     }
-
-    if (g_publisher) {
-        DataModel dm = {0};
-        dm.namespace_   = (char *)ns;
-        dm.deviceName   = (char *)dev;
-        dm.propertyName = (char *)prop;
-        dm.type         = (char *)"string";
-        dm.value        = (char *)(value ? value : "");
-        dm.timeStamp    = (int64_t)timestamp;
-        publisher_publish_data(g_publisher, &dm);
+    DataModel dm = {0};
+    dm.namespace_   = (char *)ns;
+    dm.deviceName   = (char *)dev;
+    dm.propertyName = (char *)prop;
+    dm.type         = (char *)"string";
+    dm.value        = (char *)(value ? value : "");
+    dm.timeStamp    = (int64_t)timestamp;
+    if (p && p->pushMethod && p->pushMethod->methodName && p->pushMethod->methodConfig) {
+        publisher_publish_dynamic(p->pushMethod->methodName, p->pushMethod->methodConfig, &dm);
     }
-
+    ReportTwinKV(ns, dev, prop, dm.value, dm.type);
     return rc;
 }

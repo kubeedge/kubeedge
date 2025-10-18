@@ -48,8 +48,7 @@ extern "C"
     Device *device_manager_get(DeviceManager *manager, const char *deviceId);
     int device_manager_start_all(DeviceManager *manager);
     int device_manager_stop_all(DeviceManager *manager);
-    int device_resolve_offset(struct Device *device, const char *propName);
-
+    int device_resolve_offset(Device *device, const char *propName);
 #ifdef __cplusplus
 }
 #endif

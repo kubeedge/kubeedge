@@ -68,23 +68,8 @@ long long device_status_get_last_update_time(Device *device)
     return now_ms();
 }
 
-int device_status_start_health_monitor(Device *device)
-{
-    (void)device;
-    return 0;
-}
 
-int device_status_stop_health_monitor(Device *device)
-{
-    (void)device;
-    return 0;
-}
 
-int device_status_health_check(Device *device)
-{
-    (void)device;
-    return 0;
-}
 
 int device_status_send_event(Device *device, const char *eventType, const char *message)
 {

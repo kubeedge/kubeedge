@@ -136,14 +136,10 @@ int main(int argc, char **argv)
     }
     else
     {
-        dbmethod_global_init();
-        const char *pm = getenv("PUBLISH_METHOD");
-        const char *pc = getenv("PUBLISH_CONFIG");
-        if (pm && *pm && pc && *pc)
-        {
-            PublishMethodType t = publisher_get_type_from_string(pm);
-            g_publisher = publisher_new(t, pc);
+        if (config->common.edgecore_sock[0]) {
+            register_set_dmi_sock(config->common.edgecore_sock);
         }
+         dbmethod_global_init();
 
         if (panel_init() != 0)
         {

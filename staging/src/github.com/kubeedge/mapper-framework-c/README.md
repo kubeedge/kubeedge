@@ -1,18 +1,21 @@
 # Mapper Framework-C
 
-The Mapper module acts as a translator between KubeEdge and devices. It enables KubeEdge to:
-- Interact with devices via various protocols
-- Retrieve device status and properties
-- Read and write device data at the edge
+The **Mapper** module acts as a translator between **KubeEdge** and devices.
+It enables KubeEdge to:
 
-This repository provides a C/C++-based mapper framework for quickly building custom protocol mappers.
+* Interact with devices via various protocols
+* Retrieve device status and properties
+* Read and write device data at the edge
+
+This repository provides a **C/C++-based mapper framework** for quickly building custom protocol mappers.
 
 ---
 
-## Create your own mapper (recommended flow)
+## Create Your Own Mapper (Recommended Flow)
 
-### 1) Generate a new mapper project (sibling folder)
-Create a sibling folder (same level as mapper-framework-c) by copying the full framework code as a scaffold.
+### 1. Generate a New Mapper Project
+
+Create a sibling folder (same level as `mapper-framework-c`) by copying the full framework code as a scaffold:
 
 ```sh
 # Run at the root of mapper-framework-c
@@ -20,7 +23,8 @@ make generate MyMapper
 # If not provided, defaults to 'mapper_default'
 ```
 
-The generated structure (simplified):
+Generated structure (simplified):
+
 ```
 MyMapper
 ├── CMakeLists.txt
@@ -30,33 +34,40 @@ MyMapper
 ├── hack/make-rules/
 │   ├── generate.sh
 │   └── build.sh
-├── common/       # data types and model
-├── config/       # config parser
-├── data/         # db and publish implementations
-├── device/       # device & twin management
-├── driver/       # driver interfaces
-├── grpcclient/   # DMI client
-├── grpcserver/   # DMI server
-├── httpserver/   # REST API server
-├── log/          # logging
-└── util/         # misc utils
+├── common/       (data types and model)
+├── config/       (config parser)
+├── data/         (db and publish implementations)
+├── device/       (device & twin management)
+├── driver/       (driver interfaces)
+├── grpcclient/   (DMI client)
+├── grpcserver/   (DMI server)
+├── httpserver/   (REST API server)
+├── log/          (logging)
+└── util/         (misc utils)
 ```
 
-### 2) Design your DeviceModel and Device CRDs
-If unfamiliar with the CRDs, refer to KubeEdge’s proposal:
-https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/device-crd-v1beta1.md
+---
 
-### 3) Customize your driver
+### 2. Design Your DeviceModel and Device CRDs
+
+If unfamiliar with the CRDs, refer to KubeEdge’s proposal:
+[https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/device-crd-v1beta1.md](https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/device-crd-v1beta1.md)
+
+---
+
+### 3. Customize Your Driver
+
 Implement protocol-specific logic for:
-- Initialize/stop device
-- Read/write device data
-- Protocol and visitor configs
+
+* Initialize / Stop device
+* Read / Write device data
+* Protocol and visitor configurations
 
 ---
 
 ## Build
 
-### A) Local build with CMake (for development)
+### A. Local Build with CMake (for Development)
 
 ```sh
 mkdir -p build && cd build
@@ -64,7 +75,7 @@ cmake ..
 make -j
 ```
 
-### B) Build a Docker image (optional)
+### B. Build a Docker Image (Optional)
 
 ```sh
 # Build image for the generated sibling folder
@@ -78,18 +89,19 @@ make build MyMapper
 
 ## Run
 
-After building locally, simply run the binary from the build directory:
+After building locally, run the binary from the build directory:
 
 ```sh
 cd build
-./main ../config.yaml
+./main
 ```
 
-Notes:
-- On startup the local gRPC server binds to a Unix socket (e.g., /tmp/mapper_dmi.sock).
-- If the EdgeCore DMI socket is not reachable, the first registration RPC may time out (~5s) and then proceed.
+**Notes:**
 
-To run the Docker image (if built):
+* On startup, the local gRPC server binds to a Unix socket (e.g., `/tmp/mapper_dmi.sock`).
+* If the EdgeCore DMI socket is not reachable, the first registration RPC may time out (~5s) and then proceed.
+
+Run the Docker image (if built):
 
 ```sh
 IMAGE=MyMapper TAG=latest make run
@@ -97,97 +109,11 @@ IMAGE=MyMapper TAG=latest make run
 
 ---
 
-## Publish (environment variables and demos)
-
-These environment variables enable publishing device data to various sinks:
-
-- PUBLISH_METHOD: http | mqtt | otel
-- PUBLISH_CONFIG: channel-specific JSON
-
-### HTTP publish example
-
-```sh
-export PUBLISH_METHOD=http
-export PUBLISH_CONFIG='{"endpoint":"http://127.0.0.1:8080/ingest","method":"POST"}'
-cd build && ./main
-```
-
-Simple HTTP sink for testing (save as http_sink.py):
-
-```python
-import sys
-from http.server import BaseHTTPRequestHandler, HTTPServer
-class H(BaseHTTPRequestHandler):
-    def do_POST(self):
-        l = int(self.headers.get('Content-Length','0'))
-        body = self.rfile.read(l) if l>0 else b''
-        print("POST", self.path, body.decode('utf-8', 'ignore'))
-        self.send_response(200); self.end_headers()
-        self.wfile.write(b"ok")
-    def do_PUT(self): self.do_POST()
-addr = sys.argv[1] if len(sys.argv)>1 else '0.0.0.0'
-port = int(sys.argv[2]) if len(sys.argv)>2 else 8080
-print(f"Listening on http://{addr}:{port}")
-HTTPServer((addr,port), H).serve_forever()
-```
-
-Run sink:
-
-```sh
-python http_sink.py 0.0.0.0 8080
-```
-
-### MQTT publish example
-
-```sh
-# Subscribe to all device topics (adjust broker/port as needed)
-mosquitto_sub -h 127.0.0.1 -p 1885 -t 'kubeedge/device/#' -v -d
-
-export PUBLISH_METHOD=mqtt
-export PUBLISH_CONFIG='{"brokerUrl":"127.0.0.1","port":1885,"clientId":"mapper_client","topicPrefix":"kubeedge/device","qos":1,"keepAlive":60}'
-cd build && ./main ../config.yaml
-```
-
-### OTEL (HTTP) publish example
-
-```sh
-export PUBLISH_METHOD=otel
-export PUBLISH_CONFIG='{"endpoint":"http://127.0.0.1:4318/v1/metrics","serviceName":"mapper-c"}'
-cd build && ./main ../config.yaml
-```
-
-Simple HTTP sink (save as http_sink.py):
-
-```python
-import sys
-from http.server import BaseHTTPRequestHandler, HTTPServer
-class H(BaseHTTPRequestHandler):
-    def do_POST(self):
-        l = int(self.headers.get('Content-Length','0'))
-        body = self.rfile.read(l) if l>0 else b''
-        print("POST", self.path, body.decode('utf-8', 'ignore'))
-        self.send_response(200); self.end_headers()
-        self.wfile.write(b"ok")
-    def do_PUT(self): self.do_POST()
-addr = sys.argv[1] if len(sys.argv)>1 else '0.0.0.0'
-port = int(sys.argv[2]) if len(sys.argv)>2 else 4318
-print(f"Listening on http://{addr}:{port}")
-HTTPServer((addr,port), H).serve_forever()
-```
-
-Run sink:
-
-```sh
-python http_sink.py 0.0.0.0 4318
-```
-
----
-
 ## Demos
 
-### Modbus simulator (example)
+### Modbus Simulator Example
 
-Python (pymodbus) TCP server on 0.0.0.0:1502:
+Python (`pymodbus`) TCP server on `0.0.0.0:1502`:
 
 ```python
 import asyncio
@@ -219,55 +145,170 @@ if __name__ == "__main__":
 Run:
 
 ```sh
-# Install pymodbus in a virtualenv or system python
-# python -m venv venv && source venv/bin/activate && pip install pymodbus
 python modbus_server.py
 ```
 
-
 ---
 
-
-
 ## HTTP API
+
+Ping the API:
+
+```sh
 curl -sS http://127.0.0.1:7777/api/v1/ping | jq .
 ```
 
-Read device data (namespace=default):
+Read device data (namespace = `default`):
+
 ```sh
-curl -sS http://127.0.0.1:7777/api/v1/device/namespace/device/property | jq .
-```
-like 
-```sh
-curl -sS http://127.0.0.1:7777/api/v1/device/default/demo-1/threshold   | jq .
-```
-Get device model metadata:
-```sh
-curl -sS http://127.0.0.1:7777/api/v1/meta/model/namespace/device | jq .
-```
-like
-```
-curl -sS http://127.0.0.1:7777/api/v1/meta/model/default/demo-1 | jq .
-```
-List writable methods:
-```sh
-curl -sS http://127.0.0.1:7777/api/v1/devicemethod/namespace/device | jq .
-```
-like
-```sh
-curl -sS http://127.0.0.1:7777/api/v1/devicemethod/default/demo-1 | jq .
-```
-Write device:
-```sh
-curl -sS "http://127.0.0.1:7777/api/v1/devicemethod/namespace/device/SetProperty/property/value" | jq .
-```
-like
-```sh
-curl -sS "http://127.0.0.1:7777/api/v1/devicemethod/default/demo-1/SetProperty/threshold/42" | jq .
+curl -sS http://127.0.0.1:7777/api/v1/device/default/device/threshold | jq .
 ```
 
-### An example of driver
-```C
+Get device model metadata:
+
+```sh
+curl -sS http://127.0.0.1:7777/api/v1/meta/model/default/device1 | jq .
+```
+
+List writable methods:
+
+```sh
+curl -sS http://127.0.0.1:7777/api/v1/devicemethod/default/device1 | jq .
+```
+
+Write to device:
+
+```sh
+curl -sS "http://127.0.0.1:7777/api/v1/devicemethod/default/device1/SetProperty/threshold/42" | jq .
+```
+
+---
+
+## Example CRDs
+
+Below are example **DeviceModel** and **Device** definitions for testing this framework.
+
+```yaml
+apiVersion: devices.kubeedge.io/v1beta1
+kind: DeviceModel
+metadata:
+  name: sensor-model
+  namespace: default
+spec:
+  properties:
+    - name: temperature
+      description: "temperature sensor"
+      type: STRING
+      accessMode: ReadOnly
+    - name: threshold
+      description: "alarm threshold"
+      type: STRING
+      accessMode: ReadWrite
+---
+apiVersion: devices.kubeedge.io/v1beta1
+kind: Device
+metadata:
+  name: device1
+  namespace: default
+  annotations:
+    devices.kubeedge.io/mapper: arduino-mapper
+spec:
+  nodeName: physical-machine
+  deviceModelRef:
+    name: sensor-model
+  properties:
+    - name: temperature
+      desired:
+        value: "25.0"
+      reportToCloud: true
+      pushMethod:
+        mqtt:
+          address: tcp://127.0.0.1:1885
+          topic: kubeedge/device
+          qos: 1
+          retained: false
+        dbMethod:
+          mysql:
+            mysqlClientConfig:
+              addr: "127.0.0.1:3306"
+              database: "sensordb"
+              userName: "mapper"
+    - name: threshold
+      desired:
+        value: "50.0"
+      reportToCloud: true
+      pushMethod:
+        mqtt:
+          address: tcp://127.0.0.1:1883
+          topic: threshold
+          qos: 0
+          retained: false
+        dbMethod:
+          mysql:
+            mysqlClientConfig:
+              addr: "127.0.0.1:3306"
+              database: "sensordb"
+              userName: "mapper"
+  protocol:
+    protocolName: modbus-tcp
+    configData:
+      ip: "127.0.0.1"
+      port: "1502"
+---
+apiVersion: devices.kubeedge.io/v1beta1
+kind: Device
+metadata:
+  name: device2
+  namespace: default
+  annotations:
+    devices.kubeedge.io/mapper: arduino-mapper
+spec:
+  nodeName: physical-machine
+  deviceModelRef:
+    name: sensor-model
+  properties:
+    - name: temperature
+      desired:
+        value: "25.0"
+      reportToCloud: true
+      pushMethod:
+        http:
+          hostName: 127.0.0.1
+          port: 8080
+          requestPath: /callback/threshold
+          timeout: 3
+        dbMethod:
+          mysql:
+            mysqlClientConfig:
+              addr: "127.0.0.1:3306"
+              database: "sensordb"
+              userName: "mapper"
+    - name: threshold
+      desired:
+        value: "50.0"
+      reportToCloud: true
+      pushMethod:
+        http:
+          hostName: 127.0.0.1
+          port: 8080
+          requestPath: /callback/threshold
+          timeout: 3000
+        dbMethod:
+          mysql:
+            mysqlClientConfig:
+              addr: "127.0.0.1:3306"
+              database: "sensordb"
+              userName: "mapper"
+  protocol:
+    protocolName: modbus-tcp
+    configData:
+      ip: "127.0.0.1"
+      port: "1502"
+```
+
+## Example Driver (C)
+
+```c
 #include "driver/driver.h"
 #include "log/log.h"
 #include <stdlib.h>

@@ -114,3 +114,42 @@ int publisher_publish_data(Publisher *publisher, const DataModel *data)
         return -1;
     }
 }
+
+typedef struct {
+    char *key;        
+    Publisher *pub;
+} PubCacheEntry;
+static PubCacheEntry g_pub_cache[8]; 
+
+static int key_equal(const char *a, const char *b){ return a && b && strcmp(a,b)==0; }
+static void cache_put(const char *key, Publisher *p) {
+    for (int i = 0; i < (int)(sizeof(g_pub_cache)/sizeof(g_pub_cache[0])); ++i) {
+        if (!g_pub_cache[i].key) {
+            g_pub_cache[i].key = strdup(key);
+            g_pub_cache[i].pub = p;
+            return;
+        }
+    }
+    if (g_pub_cache[0].pub) publisher_free(g_pub_cache[0].pub);
+    free(g_pub_cache[0].key);
+    g_pub_cache[0].key = strdup(key);
+    g_pub_cache[0].pub = p;
+}
+
+int publisher_publish_dynamic(const char *methodName, const char *methodConfigJson, const DataModel *data) {
+    if (!methodName || !*methodName || !data) return -1;
+    char key[256]; snprintf(key, sizeof(key), "%s|%s", methodName, methodConfigJson ? methodConfigJson : "");
+    for (int i = 0; i < (int)(sizeof(g_pub_cache)/sizeof(g_pub_cache[0])); ++i) {
+        if (g_pub_cache[i].key && key_equal(g_pub_cache[i].key, key)) {
+            return publisher_publish_data(g_pub_cache[i].pub, data);
+        }
+    }
+    PublishMethodType t = publisher_get_type_from_string(methodName);
+    Publisher *p = publisher_new(t, methodConfigJson);
+    if (!p) {
+        log_error("publish dynamic new publisher failed method=%s", methodName);
+        return -1;
+    }
+    cache_put(key, p);
+    return publisher_publish_data(p, data);
+}

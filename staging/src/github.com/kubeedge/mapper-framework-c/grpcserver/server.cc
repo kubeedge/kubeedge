@@ -88,6 +88,8 @@ public:
                                 const ::v1beta1::UpdateDeviceRequest *request,
                                 ::v1beta1::UpdateDeviceResponse *response) override
     {
+        log_info("grpc UpdateDevice: name=%s", request->device().name().c_str());
+
         if (!request || !request->has_device())
         {
             return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "empty request");
@@ -218,7 +220,7 @@ public:
                                      const ::v1beta1::UpdateDeviceModelRequest *request,
                                      ::v1beta1::UpdateDeviceModelResponse *response) override
     {
-        log_info("UpdateDeviceModel called");
+        log_info("grpc UpdateDeviceModel: received");
         return ::grpc::Status::OK;
     }
 

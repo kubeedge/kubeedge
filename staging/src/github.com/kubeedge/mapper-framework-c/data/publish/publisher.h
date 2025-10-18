@@ -25,6 +25,7 @@ typedef struct
 Publisher *publisher_new(PublishMethodType type, const char *config_json);
 void publisher_free(Publisher *publisher);
 int publisher_publish_data(Publisher *publisher, const DataModel *data);
+int publisher_publish_dynamic(const char *methodName, const char *methodConfigJson, const DataModel *data);
 
 // Helper functions
 PublishMethodType publisher_get_type_from_string(const char *method_name);
