@@ -113,7 +113,10 @@ func (dw *DMIWorker) overrideDeviceInstanceConfig(device *v1beta1.Device) error 
 	// Get device model from cache
 	deviceModelID := util.GetResourceID(device.Namespace, device.Spec.DeviceModelRef.Name)
 	dw.dmiCache.DeviceModelMu.Lock()
-	deviceModel, _ := dw.dmiCache.DeviceModelList[deviceModelID]
+	deviceModel, ok := dw.dmiCache.DeviceModelList[deviceModelID]
+	if !ok {
+		return fmt.Errorf("device model %s not found in cache for device %s", device.Spec.DeviceModelRef.Name, device.Name)
+	}
 	dw.dmiCache.DeviceModelMu.Unlock()
 
 	klog.Infof("Overriding device properties for device %s using model %s", device.Name, deviceModel.Name)
@@ -129,8 +132,10 @@ func (dw *DMIWorker) overrideDeviceInstanceConfig(device *v1beta1.Device) error 
 		// Find corresponding model property
 		if modelProp := findModelProperty(deviceModel.Spec.Properties, deviceProp.Name); modelProp != nil {
 			// Apply model visitors
-			deviceProp.Visitors = *modelProp.Visitors
-			klog.Infof("Applied model visitors to property %s of device %s", deviceProp.Name, device.Name)
+			if modelProp.Visitors != nil {
+				deviceProp.Visitors = *modelProp.Visitors
+				klog.Infof("Applied model visitors to property %s of device %s", deviceProp.Name, device.Name)
+			}
 		}
 	}
 
@@ -148,9 +153,9 @@ func (dw *DMIWorker) overrideDeviceInstanceConfig(device *v1beta1.Device) error 
 				}
 				klog.Infof("Merged instance visitors for property %s of device %s", deviceProp.Name, device.Name)
 			} else {
-				// No model visitors, use instance visitors directly
-				deviceProp.Visitors = originalProp.Visitors
-				klog.Infof("Used instance visitors for property %s of device %s", deviceProp.Name, device.Name)
+				// No model visitors config data, use instance visitors config data directly
+				deviceProp.Visitors.ConfigData = originalProp.Visitors.ConfigData
+				klog.Infof("Used instance visitors config data for property %s of device %s", deviceProp.Name, device.Name)
 			}
 		}
 		// If original property has no visitors config, keep the model visitors (already applied above)

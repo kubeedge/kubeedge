@@ -467,6 +467,86 @@ func TestDMIWorker_overrideDeviceInstanceConfig(t *testing.T) {
 			},
 			expectError: false,
 		},
+		{
+			name: "model has ProtocolName but no ConfigData, instance has ConfigData",
+			deviceModel: &v1beta1.DeviceModel{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "protocol-only-model",
+					Namespace: "default",
+				},
+				Spec: v1beta1.DeviceModelSpec{
+					Protocol: "modbus",
+					Properties: []v1beta1.ModelProperty{
+						{
+							Name:       "temperature",
+							Type:       v1beta1.FLOAT,
+							AccessMode: v1beta1.ReadOnly,
+							Visitors: &v1beta1.VisitorConfig{
+								ProtocolName: "modbus-tcp", // Model provides ProtocolName
+								// No ConfigData in model
+							},
+						},
+					},
+				},
+			},
+			device: &v1beta1.Device{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "instance-with-config",
+					Namespace: "default",
+				},
+				Spec: v1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{
+						Name: "protocol-only-model",
+					},
+					Protocol: v1beta1.ProtocolConfig{
+						ProtocolName: "modbus",
+					},
+					Properties: []v1beta1.DeviceProperty{
+						{
+							Name: "temperature",
+							Visitors: v1beta1.VisitorConfig{
+								// Instance provides ConfigData but no ProtocolName
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"address": 40001,
+										"scale":   0.1,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedDevice: &v1beta1.Device{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "instance-with-config",
+					Namespace: "default",
+				},
+				Spec: v1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{
+						Name: "protocol-only-model",
+					},
+					Protocol: v1beta1.ProtocolConfig{
+						ProtocolName: "modbus",
+					},
+					Properties: []v1beta1.DeviceProperty{
+						{
+							Name: "temperature",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus-tcp", // Should preserve model's ProtocolName
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"address": 40001, // Should use instance's ConfigData
+										"scale":   0.1,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectError: false,
+		},
 	}
 
 	for _, tt := range tests {
