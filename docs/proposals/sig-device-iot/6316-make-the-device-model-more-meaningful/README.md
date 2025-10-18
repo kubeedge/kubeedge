@@ -58,5 +58,5 @@ The DMI compatibility design will be implemented by modifying the `dealMetaDevic
 - Reassign the fields from tmp back to the fields of the device instance
 
 
-The following are an example of the deivce instance override.
+The following is an example of the deivce instance override.
 <img src="./device-override.jpg">
