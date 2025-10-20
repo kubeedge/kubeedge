@@ -117,9 +117,12 @@ func (mh *messageHandler) HandleMessage(container *mux.MessageContainer, _ mux.R
 }
 
 // HandleConnection is invoked when a new connection is established
+// HandleConnection is invoked when a new connection is established
 func (mh *messageHandler) HandleConnection(connection conn.Connection) {
 	nodeID := connection.ConnectionState().Headers.Get("node_id")
 	projectID := connection.ConnectionState().Headers.Get("project_id")
+
+	klog.Infof("Handling new connection from node %s in project %s", nodeID, projectID)
 
 	if err := mh.authorizer.AuthenticateConnection(connection); err != nil {
 		klog.Errorf("The connection is rejected by CloudHub: node=%q, error=%v", nodeID, err)
@@ -152,17 +155,28 @@ func (mh *messageHandler) HandleConnection(connection conn.Connection) {
 			keepaliveInterval, nodeMessagePool, mh.reliableClient)
 		// add node session to the session manager
 		mh.SessionManager.AddSession(nodeSession)
+		
+		// 添加连接超时检查
+		connectCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		
 		go func() {
 			err := retry.Do(
 				func() error {
-					return controller.UpdateAnnotation(context.TODO(), nodeID)
+					return controller.UpdateAnnotation(connectCtx, nodeID)
 				},
 				retry.Delay(1*time.Second),
 				retry.Attempts(3),
 				retry.DelayType(retry.FixedDelay),
+				// 添加重试时的日志
+				retry.OnRetry(func(n uint, err error) {
+					klog.Warningf("Retry %d to update annotation for node %s: %v", n, nodeID, err)
+				}),
 			)
 			if err != nil {
-				klog.Error(err.Error())
+				klog.Errorf("Failed to update annotation for node %s after 3 attempts: %v", nodeID, err)
+			} else {
+				klog.Infof("Successfully updated annotation for node %s", nodeID)
 			}
 		}()
 
