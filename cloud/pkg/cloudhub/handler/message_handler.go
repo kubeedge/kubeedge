@@ -117,7 +117,6 @@ func (mh *messageHandler) HandleMessage(container *mux.MessageContainer, _ mux.R
 }
 
 // HandleConnection is invoked when a new connection is established
-// HandleConnection is invoked when a new connection is established
 func (mh *messageHandler) HandleConnection(connection conn.Connection) {
 	nodeID := connection.ConnectionState().Headers.Get("node_id")
 	projectID := connection.ConnectionState().Headers.Get("project_id")
