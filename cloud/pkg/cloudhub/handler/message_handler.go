@@ -156,7 +156,6 @@ func (mh *messageHandler) HandleConnection(connection conn.Connection) {
 		// add node session to the session manager
 		mh.SessionManager.AddSession(nodeSession)
 		
-		// 添加连接超时检查
 		connectCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		
@@ -168,7 +167,7 @@ func (mh *messageHandler) HandleConnection(connection conn.Connection) {
 				retry.Delay(1*time.Second),
 				retry.Attempts(3),
 				retry.DelayType(retry.FixedDelay),
-				// 添加重试时的日志
+				
 				retry.OnRetry(func(n uint, err error) {
 					klog.Warningf("Retry %d to update annotation for node %s: %v", n, nodeID, err)
 				}),
