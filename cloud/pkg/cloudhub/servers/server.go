@@ -30,30 +30,26 @@ func StartCloudHub(messageHandler handler.Handler) {
 func createTLSConfig(ca, cert, key []byte) tls.Config {
 	// init certificate
 	pool := x509.NewCertPool()
-	ok := pool.AppendCertsFromPEM(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: ca}))
-	if !ok {
-		panic(fmt.Errorf("fail to load ca content"))
-	}
+    ok := pool.AppendCertsFromPEM(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: ca}))
+    if !ok {
+        klog.Exit(fmt.Errorf("fail to load ca content"))
+    }
 
-	certificate, err := tls.X509KeyPair(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: cert}), pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: key}))
-	if err != nil {
-		panic(err)
-	}
+    certificate, err := tls.X509KeyPair(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: cert}), pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: key}))
+    if err != nil {
+        klog.Exit(err)
+    }
 	return tls.Config{
 		ClientCAs:    pool,
 		ClientAuth:   tls.RequireAndVerifyClientCert,
 		Certificates: []tls.Certificate{certificate},
 		MinVersion:   tls.VersionTLS12,
-		// has to match cipher used by NewPrivateKey method, currently is ECDSA
-		CipherSuites: []uint16{
-			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,
-		},
+        // Rely on Go's modern defaults (AEAD: AES-GCM/ChaCha20-Poly1305) for TLS 1.2+
 	}
 }
 
 func startWebsocketServer(messageHandler handler.Handler) {
-	tlsConfig := createTLSConfig(hubconfig.Config.Ca, hubconfig.Config.Cert, hubconfig.Config.Key)
+    tlsConfig := createTLSConfig(hubconfig.Config.Ca, hubconfig.Config.Cert, hubconfig.Config.Key)
 	svc := server.Server{
 		Type:               api.ProtocolTypeWS,
 		TLSConfig:          &tlsConfig,
@@ -64,11 +60,11 @@ func startWebsocketServer(messageHandler handler.Handler) {
 		ExOpts:             api.WSServerOption{Path: "/"},
 	}
 	klog.Infof("Starting cloudhub %s server", api.ProtocolTypeWS)
-	klog.Exit(svc.ListenAndServeTLS("", ""))
+    klog.Exit(svc.ListenAndServeTLS("", ""))
 }
 
 func startQuicServer(messageHandler handler.Handler) {
-	tlsConfig := createTLSConfig(hubconfig.Config.Ca, hubconfig.Config.Cert, hubconfig.Config.Key)
+    tlsConfig := createTLSConfig(hubconfig.Config.Ca, hubconfig.Config.Cert, hubconfig.Config.Key)
 	svc := server.Server{
 		Type:               api.ProtocolTypeQuic,
 		TLSConfig:          &tlsConfig,
@@ -80,5 +76,5 @@ func startQuicServer(messageHandler handler.Handler) {
 	}
 
 	klog.Infof("Starting cloudhub %s server", api.ProtocolTypeQuic)
-	klog.Exit(svc.ListenAndServeTLS("", ""))
+    klog.Exit(svc.ListenAndServeTLS("", ""))
 }
