@@ -3,8 +3,7 @@ package cloudhub
 import (
 	"errors"
 	"fmt"
-	"os"
-
+	"time"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/kubeapiserver/authorizer/modes"
@@ -75,8 +74,18 @@ func newCloudHub(enable bool) *cloudHub {
 }
 
 func Register(hub *v1alpha1.CloudHub) {
-	hubconfig.InitConfigure(hub)
-	core.Register(newCloudHub(hub.Enable))
+    klog.Info("Registering CloudHub module")
+    hubconfig.InitConfigure(hub)
+    
+    // 记录关键配置
+    if hubconfig.Config.UnixSocket.Enable {
+        klog.Infof("UDS server enabled at: %s", hubconfig.Config.UnixSocket.Address)
+    }
+    klog.Infof("CloudHub node limit: %d", hubconfig.Config.NodeLimit)
+    klog.Infof("CloudHub keepalive interval: %d", hubconfig.Config.KeepaliveInterval)
+    
+    core.Register(newCloudHub(hub.Enable))
+    klog.Info("CloudHub module registered successfully")
 }
 
 func (ch *cloudHub) Name() string {
@@ -93,44 +102,65 @@ func (ch *cloudHub) Enable() bool {
 }
 
 func (ch *cloudHub) Start() {
-	if !cache.WaitForCacheSync(beehiveContext.Done(), ch.informersSyncedFuncs...) {
-		klog.Errorf("unable to sync caches for objectSyncController")
-		os.Exit(1)
-	}
-	ctx := beehiveContext.GetContext()
+    klog.Info("Starting CloudHub module")
+    startTime := time.Now()
+    
+    if !cache.WaitForCacheSync(beehiveContext.Done(), ch.informersSyncedFuncs...) {
+        klog.Exitf("unable to sync caches for objectSyncController")
+    }
+    klog.Infof("Cache sync completed in %v", time.Since(startTime))
 
-	// start dispatch message from the cloud to edge node
-	go ch.dispatcher.DispatchDownstream()
+    ctx := beehiveContext.GetContext()
 
-	// check whether the certificates exist in the local directory,
-	// and then check whether certificates exist in the secret, generate if they don't exist
-	if err := httpserver.PrepareAllCerts(ctx); err != nil {
-		klog.Exit(err)
-	}
-	// TODO: Will improve in the future
-	DoneTLSTunnelCerts <- true
-	close(DoneTLSTunnelCerts)
+    // start dispatch message from the cloud to edge node
+    klog.Info("Starting downstream message dispatcher")
+    go ch.dispatcher.DispatchDownstream()
 
-	// generate Token
-	if err := httpserver.GenerateAndRefreshToken(ctx); err != nil {
-		klog.Exit(err)
-	}
+    // check whether the certificates exist in the local directory,
+    // and then check whether certificates exist in the secret, generate if they don't exist
+    klog.Info("Preparing TLS certificates")
+    certStart := time.Now()
+    if err := httpserver.PrepareAllCerts(ctx); err != nil {
+        klog.Exit(err)
+    }
+    klog.Infof("Certificate preparation completed in %v", time.Since(certStart))
+    
+    // TODO: Will improve in the future
+    DoneTLSTunnelCerts <- true
+    close(DoneTLSTunnelCerts)
 
-	// HttpServer mainly used to issue certificates for the edge
-	go func() {
-		if err := httpserver.StartHTTPServer(); err != nil {
-			klog.Exit(err)
-		}
-	}()
+    // generate Token
+    klog.Info("Generating and refreshing authentication token")
+    tokenStart := time.Now()
+    if err := httpserver.GenerateAndRefreshToken(ctx); err != nil {
+        klog.Exit(err)
+    }
+    klog.Infof("Token generation completed in %v", time.Since(tokenStart))
 
-	servers.StartCloudHub(ch.messageHandler)
+    // HttpServer mainly used to issue certificates for the edge
+    klog.Info("Starting HTTP server for certificate issuance")
+    go func() {
+        if err := httpserver.StartHTTPServer(); err != nil {
+            klog.Exit(err)
+        }
+    }()
 
-	if hubconfig.Config.UnixSocket.Enable {
-		// The uds server is only used to communicate with csi driver from kubeedge on cloud.
-		// It is not used to communicate between cloud and edge.
-		go udsserver.StartServer(hubconfig.Config.UnixSocket.Address)
-	}
+    klog.Info("Starting CloudHub message servers")
+    serverStart := time.Now()
+    servers.StartCloudHub(ch.messageHandler)
+    klog.Infof("CloudHub servers started in %v", time.Since(serverStart))
+
+    if hubconfig.Config.UnixSocket.Enable {
+        klog.Infof("Starting UDS server at %s", hubconfig.Config.UnixSocket.Address)
+        // The uds server is only used to communicate with csi driver from kubeedge on cloud.
+        // It is not used to communicate between cloud and edge.
+        go udsserver.StartServer(hubconfig.Config.UnixSocket.Address)
+    }
+    
+    totalTime := time.Since(startTime)
+    klog.Infof("CloudHub module started successfully in %v", totalTime)
 }
+
 
 func getAuthConfig() authorization.Config {
 	enabled := hubconfig.Config.Authorization != nil && hubconfig.Config.Authorization.Enable
