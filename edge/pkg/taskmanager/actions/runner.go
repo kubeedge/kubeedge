@@ -32,9 +32,14 @@ var runners = map[string]*ActionRunner{}
 
 // Init registers the node job action runner.
 func Init() {
-	RegisterRunner(operationsv1alpha2.ResourceImagePrePullJob, newImagePrePullJobRunner())
-	RegisterRunner(operationsv1alpha2.ResourceConfigUpdateJob, newConfigUpdateJobRunner())
-	RegisterRunner(operationsv1alpha2.ResourceConfigUpdateJob, newNodeUpgradeJobRunner())
+	runnersToRegister := map[string]func() *ActionRunner{
+		operationsv1alpha2.ResourceImagePrePullJob: newImagePrePullJobRunner,
+		operationsv1alpha2.ResourceConfigUpdateJob: newConfigUpdateJobRunner,
+		operationsv1alpha2.ResourceNodeUpgradeJob:  newNodeUpgradeJobRunner,
+	}
+	for name, factory := range runnersToRegister {
+		RegisterRunner(name, factory())
+	}
 }
 
 // registerRunner registers the implementation of the job action runner.
