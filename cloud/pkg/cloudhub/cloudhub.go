@@ -77,7 +77,6 @@ func Register(hub *v1alpha1.CloudHub) {
     klog.Info("Registering CloudHub module")
     hubconfig.InitConfigure(hub)
     
-    // 记录关键配置
     if hubconfig.Config.UnixSocket.Enable {
         klog.Infof("UDS server enabled at: %s", hubconfig.Config.UnixSocket.Address)
     }
