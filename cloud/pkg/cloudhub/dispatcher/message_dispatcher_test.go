@@ -405,3 +405,78 @@ func TestDeleteNodeMessagePool(t *testing.T) {
 		t.Errorf("expected pool not exist but got it")
 	}
 }
+
+func TestPerNodePriorityIsolation(t *testing.T) {
+	client := &fake.Clientset{}
+	manager := session.NewSessionManager(10)
+
+	objectSyncInformer := syncinformer.NewSharedInformerFactory(client, 0).Reliablesyncs().V1alpha1().ObjectSyncs()
+	clusterObjectSyncInformer := syncinformer.NewSharedInformerFactory(client, 0).Reliablesyncs().V1alpha1().ClusterObjectSyncs()
+
+	dispatcher := NewMessageDispatcher(manager, objectSyncInformer.Lister(), clusterObjectSyncInformer.Lister(), client).(*messageDispatcher)
+
+	// init two node pools
+	nodeA := "edge-node-a"
+	nodeB := "edge-node-b"
+	nmpA := common.InitNodeMessagePool(nodeA)
+	nmpB := common.InitNodeMessagePool(nodeB)
+	dispatcher.AddNodeMessagePool(nodeA, nmpA)
+	dispatcher.AddNodeMessagePool(nodeB, nmpB)
+
+	// craft messages: for each node, one low priority and one urgent
+	mALow := beehivemodel.NewMessage("").SetPriority(beehivemodel.PriorityLow).SetResourceOperation(fmt.Sprintf("node/%s/default/pod/test", nodeA), beehivemodel.ResponseOperation).SetRoute("edgecontroller", "resource")
+	mAUrg := beehivemodel.NewMessage("").SetPriority(beehivemodel.PriorityUrgent).SetResourceOperation(fmt.Sprintf("node/%s/default/pod/test", nodeA), beehivemodel.ResponseOperation).SetRoute("edgecontroller", "resource")
+	mBLow := beehivemodel.NewMessage("").SetPriority(beehivemodel.PriorityLow).SetResourceOperation(fmt.Sprintf("node/%s/default/pod/test", nodeB), beehivemodel.ResponseOperation).SetRoute("edgecontroller", "resource")
+	mBUrg := beehivemodel.NewMessage("").SetPriority(beehivemodel.PriorityUrgent).SetResourceOperation(fmt.Sprintf("node/%s/default/pod/test", nodeB), beehivemodel.ResponseOperation).SetRoute("edgecontroller", "resource")
+
+	// enqueue in interleaved order into dispatcher per-node PQs
+	pqA := dispatcher.getOrCreateNodePQ(nodeA)
+	pqB := dispatcher.getOrCreateNodePQ(nodeB)
+	pqA.Add(*mALow)
+	pqB.Add(*mBLow)
+	pqA.Add(*mAUrg)
+	pqB.Add(*mBUrg)
+
+	// run one step of per-node sender by pulling from PQs and enqueue to node queues
+	// use small loop to drain two items each
+	pull := func(nodeID string, pq *prioritySendQueueCloud) []beehivemodel.Message {
+		var out []beehivemodel.Message
+		for i := 0; i < 2; i++ {
+			msg, ok := pq.Get()
+			if !ok {
+				break
+			}
+			// emulate sender enqueue path: choose ack/no-ack like real sender
+			if noAckRequired(&msg) {
+				dispatcher.enqueueNoAckMessage(nodeID, &msg)
+			} else {
+				dispatcher.enqueueAckMessage(nodeID, &msg)
+			}
+			out = append(out, msg)
+		}
+		return out
+	}
+
+	gotA := pull(nodeA, pqA)
+	gotB := pull(nodeB, pqB)
+
+	if len(gotA) != 2 || len(gotB) != 2 {
+		t.Fatalf("expected 2 msgs per node, got A=%d B=%d", len(gotA), len(gotB))
+	}
+	if gotA[0].GetPriority() > gotA[1].GetPriority() {
+		t.Errorf("nodeA priority order wrong: %+v", gotA)
+	}
+	if gotB[0].GetPriority() > gotB[1].GetPriority() {
+		t.Errorf("nodeB priority order wrong: %+v", gotB)
+	}
+
+	// verify each node enqueued exactly two messages (ack or no-ack), asserting isolation
+	totalA := nmpA.AckMessageQueue.Len() + nmpA.NoAckMessageQueue.Len()
+	totalB := nmpB.AckMessageQueue.Len() + nmpB.NoAckMessageQueue.Len()
+	if totalA != 2 {
+		t.Errorf("nodeA total enqueued want 2, got %d (ack=%d, noack=%d)", totalA, nmpA.AckMessageQueue.Len(), nmpA.NoAckMessageQueue.Len())
+	}
+	if totalB != 2 {
+		t.Errorf("nodeB total enqueued want 2, got %d (ack=%d, noack=%d)", totalB, nmpB.AckMessageQueue.Len(), nmpB.NoAckMessageQueue.Len())
+	}
+}

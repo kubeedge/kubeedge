@@ -602,6 +602,7 @@ github.com/kubeedge/beehive/pkg/core
 github.com/kubeedge/beehive/pkg/core/channel
 github.com/kubeedge/beehive/pkg/core/context
 github.com/kubeedge/beehive/pkg/core/model
+github.com/kubeedge/beehive/pkg/core/priority
 github.com/kubeedge/beehive/pkg/core/socket
 github.com/kubeedge/beehive/pkg/core/socket/broker
 github.com/kubeedge/beehive/pkg/core/socket/config

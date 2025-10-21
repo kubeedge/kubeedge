@@ -39,6 +39,12 @@ const (
 	DisableNodeTaskV1alpha2 featuregate.Feature = "disableNodeTaskV1alpha2"
 	// DisableCSIVolumePlugin disables the in-tree CSI volume plugin support.
 	DisableCSIVolumePlugin featuregate.Feature = "DisableCSIVolumePlugin"
+
+	// PriorityQueueAging enables aging-based anti-starvation in message priority queues.
+	PriorityQueueAging featuregate.Feature = "priorityQueueAging"
+
+	// MessagePriorityQueues toggles the whole priority-queue path (edge and cloud).
+	MessagePriorityQueues featuregate.Feature = "messagePriorityQueues"
 )
 
 // defaultFeatureGates consists of all known Kubeedge-specific feature keys.
@@ -48,4 +54,6 @@ var defaultFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
 	RequireAuthorization:    {Default: false, PreRelease: featuregate.Alpha},
 	ModuleRestart:           {Default: false, PreRelease: featuregate.Alpha},
 	DisableNodeTaskV1alpha2: {Default: false, PreRelease: featuregate.Alpha},
+	PriorityQueueAging:      {Default: false, PreRelease: featuregate.Alpha},
+	MessagePriorityQueues:   {Default: true, PreRelease: featuregate.Alpha},
 }

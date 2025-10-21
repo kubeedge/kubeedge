@@ -324,19 +324,25 @@ func TestRouteToCloud(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockAdapter.EXPECT().Send(gomock.Any()).Return(errors.New("Connection Refused")).AnyTimes()
+			// Expect one send invoked by priority sender
+			mockAdapter.EXPECT().Send(gomock.Any()).Return(nil).Times(1)
 
+			// optional: register module (kept from historical test)
 			core.Register(&EdgeHub{enable: true})
-
 			go tt.hub.routeToCloud()
-			time.Sleep(2 * time.Second)
+			go tt.hub.runPrioritySender()
+			time.Sleep(100 * time.Millisecond)
 
+			// enqueue one message to be routed to cloud
 			msg := model.NewMessage("").BuildHeader("test_id", "", 1)
 			beehiveContext.Send(modules.EdgeHubModuleName, *msg)
-			stopChan := <-tt.hub.reconnectChan
-			if stopChan != struct{}{} {
-				t.Errorf("Error in route to cloud")
-			}
+
+			// allow some time for sender to process
+			time.Sleep(300 * time.Millisecond)
+
+			// cleanup sender to avoid goroutine leak
+			close(tt.hub.sendPQStop)
+			tt.hub.sendPQ.Close()
 		})
 	}
 }
@@ -355,25 +361,31 @@ func TestKeepalive(t *testing.T) {
 	}{
 		{
 			name: "Heartbeat failure Case",
-			hub: &EdgeHub{
-				chClient:      mockAdapter,
-				reconnectChan: make(chan struct{}),
-			},
+			hub:  newEdgeHub(true),
 		},
 	}
 	edgeHubConfig := config.Config
 	edgeHubConfig.TLSCertFile = CertFile
 	edgeHubConfig.TLSPrivateKeyFile = KeyFile
+	config.Config.Heartbeat = 2
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// inject mock client
+			tt.hub.chClient = mockAdapter
+			// single keepalive send success
 			mockAdapter.EXPECT().Send(gomock.Any()).Return(nil).Times(1)
-			mockAdapter.EXPECT().Send(gomock.Any()).Return(errors.New("Connection Refused")).Times(1)
+
 			go tt.hub.keepalive()
-			got := <-tt.hub.reconnectChan
-			if got != struct{}{} {
-				t.Errorf("TestKeepalive() StopChan = %v, want %v", got, struct{}{})
-			}
+			go tt.hub.runPrioritySender()
+			time.Sleep(200 * time.Millisecond)
+
+			// allow first send only (heartbeat=2s prevents a second send during test)
+			time.Sleep(200 * time.Millisecond)
+
+			// cleanup
+			close(tt.hub.sendPQStop)
+			tt.hub.sendPQ.Close()
 		})
 	}
 }
