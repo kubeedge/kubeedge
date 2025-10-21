@@ -34,7 +34,7 @@ func DataHandler(ctx context.Context, twin *common.Twin, client *driver.Customiz
 	}
 	err = dbConfig.InitDbClient()
 	if err != nil {
-		klog.Errorf("init redis database client err: %v", err)
+		klog.Errorf("init mysql database client err: %v", err)
 		return
 	}
 	reportCycle := time.Duration(twin.Property.ReportCycle)
