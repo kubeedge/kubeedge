@@ -105,6 +105,7 @@ func (ch *cloudHub) Start() {
 	// check whether the certificates exist in the local directory,
 	// and then check whether certificates exist in the secret, generate if they don't exist
 	if err := httpserver.PrepareAllCerts(ctx); err != nil {
+		klog.Errorf("Failed to prepare certificates: %v", err)
 		klog.Exit(err)
 	}
 	// TODO: Will improve in the future
@@ -113,12 +114,14 @@ func (ch *cloudHub) Start() {
 
 	// generate Token
 	if err := httpserver.GenerateAndRefreshToken(ctx); err != nil {
+		klog.Errorf("Failed to generate and refresh token: %v", err)
 		klog.Exit(err)
 	}
 
 	// HttpServer mainly used to issue certificates for the edge
 	go func() {
 		if err := httpserver.StartHTTPServer(); err != nil {
+			klog.Errorf("HTTP server failed to start: %v", err)
 			klog.Exit(err)
 		}
 	}()
