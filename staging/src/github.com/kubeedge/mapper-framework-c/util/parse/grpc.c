@@ -201,20 +201,24 @@ int build_properties_from_grpc(const V1beta1__Device *device, DeviceProperty **o
             props[i].pushMethod->methodName = strdup_safe("mqtt");
             props[i].pushMethod->methodConfig = mj;
         } else if (pptv->pushmethod && pptv->pushmethod->http) {
-            char *host = NULL; int port = pptv->pushmethod->http->port ? (int)pptv->pushmethod->http->port : 80;
+            char *host = NULL;
+            int port = pptv->pushmethod->http->port ? (int)pptv->pushmethod->http->port : 0;
+            const char *raw_host = pptv->pushmethod->http->hostname ? pptv->pushmethod->http->hostname : "(null)";
+            log_info("grpc: before split host_raw=%s proto_port=%lld prop=%s", raw_host, (long long)pptv->pushmethod->http->port, pptv->name ? pptv->name : "(nil)");
             if (pptv->pushmethod->http->hostname) split_addr_port(pptv->pushmethod->http->hostname, &host, &port);
-            const char *path = pptv->pushmethod->http->requestpath ? pptv->pushmethod->http->requestpath : "/ingest";
-            char endpoint[512]; snprintf(endpoint, sizeof(endpoint), "http://%s:%d%s", host ? host : "127.0.0.1", port, path);
-            cJSON *hc = cJSON_CreateObject();
-            cJSON_AddStringToObject(hc, "endpoint", endpoint);
-            cJSON_AddStringToObject(hc, "method", "POST");
-            if (pptv->pushmethod->http->timeout) cJSON_AddNumberToObject(hc, "timeout", (double)pptv->pushmethod->http->timeout);
-            char *hj = cJSON_PrintUnformatted(hc);
-            free(host); cJSON_Delete(hc);
-            if (!props[i].pushMethod) props[i].pushMethod = calloc(1, sizeof(PushMethodConfig));
-            props[i].pushMethod->methodName = strdup_safe("http");
-            props[i].pushMethod->methodConfig = hj;
-        } else if (pptv->pushmethod && pptv->pushmethod->otel) {
+            log_info("grpc: after split host=%s port=%d prop=%s", host ? host : "(null)", port, pptv->name ? pptv->name : "(nil)");
+             const char *path = pptv->pushmethod->http->requestpath ? pptv->pushmethod->http->requestpath : "/ingest";
+             char endpoint[512]; snprintf(endpoint, sizeof(endpoint), "http://%s:%d%s", host ? host : "127.0.0.1", port, path);
+             cJSON *hc = cJSON_CreateObject();
+             cJSON_AddStringToObject(hc, "endpoint", endpoint);
+             cJSON_AddStringToObject(hc, "method", "POST");
+             if (pptv->pushmethod->http->timeout) cJSON_AddNumberToObject(hc, "timeout", (double)pptv->pushmethod->http->timeout);
+             char *hj = cJSON_PrintUnformatted(hc);
+             free(host); cJSON_Delete(hc);
+             if (!props[i].pushMethod) props[i].pushMethod = calloc(1, sizeof(PushMethodConfig));
+             props[i].pushMethod->methodName = strdup_safe("http");
+             props[i].pushMethod->methodConfig = hj;
+         } else if (pptv->pushmethod && pptv->pushmethod->otel) {
             cJSON *oc = cJSON_CreateObject();
             if (pptv->pushmethod->otel->endpointurl) cJSON_AddStringToObject(oc, "endpointUrl", pptv->pushmethod->otel->endpointurl);
             char *oj = cJSON_PrintUnformatted(oc);
