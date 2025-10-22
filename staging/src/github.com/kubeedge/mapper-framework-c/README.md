@@ -161,14 +161,9 @@ curl -sS http://127.0.0.1:7777/api/v1/ping | jq .
 Read device data (namespace = `default`):
 
 ```sh
-curl -sS http://127.0.0.1:7777/api/v1/device/default/device/threshold | jq .
+curl -sS http://127.0.0.1:7777/api/v1/device/default/device1/temperature | jq .
 ```
 
-Get device model metadata:
-
-```sh
-curl -sS http://127.0.0.1:7777/api/v1/meta/model/default/device1 | jq .
-```
 
 List writable methods:
 
@@ -179,7 +174,7 @@ curl -sS http://127.0.0.1:7777/api/v1/devicemethod/default/device1 | jq .
 Write to device:
 
 ```sh
-curl -sS "http://127.0.0.1:7777/api/v1/devicemethod/default/device1/SetProperty/threshold/42" | jq .
+curl -sS http://127.0.0.1:7777/api/v1/devicemethod/default/device1/SetProperty/temperature/42 | jq .
 ```
 
 ---
@@ -317,6 +312,7 @@ spec:
 #include "common/const.h"
 #include <time.h>
 #include <math.h>
+#include <strings.h>
 
 #define MAX_SIM_CLIENTS 64
 static void *sim_clients[MAX_SIM_CLIENTS];
@@ -347,11 +343,12 @@ static void sim_register_client(void *client)
             sim_clients[i] = client;
             sim_baseline[i] = 25.0;
             sim_threshold[i] = 50.0;
-            sim_threshold_offset[i] = -1;
+            sim_threshold_offset[i] = 2; // offsets are 1-based in device layer: temperature=1, threshold=2
             return;
         }
     }
 }
+
 static void sim_unregister_client(void *client)
 {
     if (!client)
@@ -368,6 +365,7 @@ static void sim_unregister_client(void *client)
         }
     }
 }
+
 static double *sim_find_baseline_ptr(void *client)
 {
     int idx = sim_index_of(client);
@@ -375,6 +373,7 @@ static double *sim_find_baseline_ptr(void *client)
         return NULL;
     return &sim_baseline[idx];
 }
+
 static double *sim_find_threshold_ptr(void *client)
 {
     int idx = sim_index_of(client);
@@ -382,6 +381,7 @@ static double *sim_find_threshold_ptr(void *client)
         return NULL;
     return &sim_threshold[idx];
 }
+
 static int *sim_find_threshold_offset_ptr(void *client)
 {
     int idx = sim_index_of(client);
@@ -467,11 +467,9 @@ CustomizedClient *NewClient(const ProtocolConfig *protocol)
                 *toff = (int)v;
         }
     }
-
     return c;
 }
 
-// Destructor for CustomizedClient
 void FreeClient(CustomizedClient *client)
 {
     if (!client)
@@ -483,7 +481,6 @@ void FreeClient(CustomizedClient *client)
     free(client);
 }
 
-// Initialize the device
 int InitDevice(CustomizedClient *client)
 {
     if (!client)
@@ -493,7 +490,10 @@ int InitDevice(CustomizedClient *client)
     return 0;
 }
 
-// Read data from the device
+static inline int is_threshold_name(const char *s) {
+    return s && strcasecmp(s, "threshold") == 0;
+}
+
 int GetDeviceData(CustomizedClient *client, const VisitorConfig *visitor, void **out_data)
 {
     if (!client || !visitor || !out_data)
@@ -501,45 +501,29 @@ int GetDeviceData(CustomizedClient *client, const VisitorConfig *visitor, void *
 
     pthread_mutex_lock(&client->deviceMutex);
 
-    int *toff_ptr = sim_find_threshold_offset_ptr((void *)client);
-    int proto_toff = toff_ptr ? *toff_ptr : -1;
+    const char *pname = visitor->propertyName ? visitor->propertyName : "";
+    double thr_val = 50.0;
     double *tp = sim_find_threshold_ptr((void *)client);
-    double proto_threshold = tp ? *tp : 50.0;
+    if (tp) thr_val = *tp;
 
-    int effective_toff = proto_toff;
-    double effective_threshold = proto_threshold;
-    if (visitor && visitor->configData)
-    {
-        double vv = 0;
-        if (parse_number_field(visitor->configData, "threshold_offset", &vv))
-        {
-            effective_toff = (int)vv;
-        }
-        if (parse_number_field(visitor->configData, "threshold", &vv))
-        {
-            effective_threshold = vv;
-        }
-    }
-    int voffset = visitor->offset;
-    if (effective_toff >= 0 && voffset == effective_toff)
-    {
-        char tbuf[64];
-        snprintf(tbuf, sizeof(tbuf), "%.2f", effective_threshold);
-        *out_data = strdup(tbuf);
+    if (strcasecmp(pname, "threshold") == 0) {
+        char buf[32];
+        snprintf(buf, sizeof(buf), "%.2f", thr_val);
+        *out_data = strdup(buf);
         pthread_mutex_unlock(&client->deviceMutex);
-        int rc = 0;
-        return rc;
+        return 0;
     }
 
     double baseline = 25.0;
     double *bp = sim_find_baseline_ptr((void *)client);
-    if (bp)
-        baseline = *bp;
+    if (bp) baseline = *bp;
+
     time_t now = time(NULL);
     double slow = sin((double)now / 60.0) * 0.5;
     double jitter = ((double)(rand() % 100) - 50.0) / 200.0;
     double value = baseline + slow + jitter;
-    char buf[64];
+
+    char buf[32];
     snprintf(buf, sizeof(buf), "%.2f", value);
     *out_data = strdup(buf);
 
@@ -547,88 +531,69 @@ int GetDeviceData(CustomizedClient *client, const VisitorConfig *visitor, void *
     return 0;
 }
 
-// Write data to the device
+
 int DeviceDataWrite(CustomizedClient *client, const VisitorConfig *visitor, const char *deviceMethodName, const char *propertyName, const void *data)
 {
     if (!client || !visitor)
         return -1;
     pthread_mutex_lock(&client->deviceMutex);
+
+    const char *pname = propertyName ? propertyName : "";
     int *toff_ptr = sim_find_threshold_offset_ptr((void *)client);
-    int toff = toff_ptr ? *toff_ptr : -1;
-    int voffset = visitor->offset;
-    if (data)
-    {
+    int cfg_off = toff_ptr ? *toff_ptr : -1;
+    log_info("driver:DeviceDataWrite name='%s' offset=%d cfg_off=%d data='%s'",
+             pname, visitor->offset, cfg_off, (const char*)data);
+
+    if (data) {
         char *endptr = NULL;
         double val = strtod((const char *)data, &endptr);
-        if (endptr != (const char *)data)
-        {
-            if (toff >= 0 && voffset == toff)
-            {
-                double *tp = sim_find_threshold_ptr((void *)client);
-                if (tp)
-                    *tp = val;
-                log_info("driver: DeviceDataWrite set threshold to %.2f (client=%p offset=%d)", val, (void *)client, voffset);
-            }
-            else
-            {
+        if (endptr != (const char *)data) {
+            if (is_threshold_name(pname)) {
+                log_info("driver:DeviceDataWrite THRESHOLD read-only, ignore");
+            } else {
                 double *bp = sim_find_baseline_ptr((void *)client);
-                if (bp)
-                    *bp = val;
-                log_info("driver: DeviceDataWrite adjusted baseline to %.2f (client=%p)", val, (void *)client);
+                if (bp) *bp = val;
+                log_info("driver:DeviceDataWrite TEMPERATURE baseline->%.2f", val);
             }
-        }
-        else
-        {
-            log_info("driver: DeviceDataWrite received non-numeric data, ignored (client=%p)", (void *)client);
+        } else {
+            log_info("driver:DeviceDataWrite received non-numeric data, ignored");
         }
     }
     pthread_mutex_unlock(&client->deviceMutex);
     return 0;
 }
 
-// Set data on the device
 int SetDeviceData(CustomizedClient *client, const void *data, const VisitorConfig *visitor)
 {
-    log_info("driver: SetDeviceData called client=%p data=%p visitor=%p", (void *)client, data, (void *)visitor);
     if (!client || !visitor)
         return -1;
     pthread_mutex_lock(&client->deviceMutex);
+
+    const char *pname = visitor->propertyName ? visitor->propertyName : "";
     int *toff_ptr = sim_find_threshold_offset_ptr((void *)client);
-    int toff = toff_ptr ? *toff_ptr : -1;
-    int voffset = visitor->offset;
-    if (data)
-    {
+    int cfg_off = toff_ptr ? *toff_ptr : -1;
+    log_info("driver:SetDeviceData name='%s' offset=%d cfg_off=%d data='%s'",
+             pname, visitor->offset, cfg_off, (const char*)data);
+
+    if (data) {
         char *endptr = NULL;
         double val = strtod((const char *)data, &endptr);
-        if (endptr != (const char *)data)
-        {
-            if (toff >= 0 && voffset == toff)
-            {
-                double *tp = sim_find_threshold_ptr((void *)client);
-                if (tp)
-                    *tp = val;
-                log_info("driver: SetDeviceData set threshold to %.2f (client=%p offset=%d)", val, (void *)client, voffset);
-            }
-            else
-            {
+        if (endptr != (const char *)data) {
+            if (is_threshold_name(pname)) {
+                log_info("driver:SetDeviceData THRESHOLD read-only, ignore");
+            } else {
                 double *bp = sim_find_baseline_ptr((void *)client);
-                if (bp)
-                    *bp = val;
-                log_info("driver: SetDeviceData adjusted baseline to %.2f (client=%p)", val, (void *)client);
+                if (bp) *bp = val;
+                log_info("driver:SetDeviceData TEMPERATURE baseline->%.2f", val);
             }
-        }
-        else
-        {
-            log_info("driver: SetDeviceData received non-numeric data, ignored (client=%p)", (void *)client);
+        } else {
+            log_info("driver:SetDeviceData received non-numeric data, ignored");
         }
     }
     pthread_mutex_unlock(&client->deviceMutex);
-    int rc = 0;
-    log_info("driver: SetDeviceData -> rc=%d", rc);
-    return rc;
+    return 0;
 }
 
-// Stop the device
 int StopDevice(CustomizedClient *client)
 {
     if (!client)
@@ -638,7 +603,6 @@ int StopDevice(CustomizedClient *client)
     return 0;
 }
 
-// Get the current state of the device
 const char *GetDeviceStates(CustomizedClient *client)
 {
     if (!client)

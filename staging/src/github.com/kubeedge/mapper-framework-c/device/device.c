@@ -37,10 +37,11 @@ static void *device_data_thread(void *arg)
             if (device->client)
             {
                 void *drv_out = NULL;
-                VisitorConfig vis = {0};
+                VisitorConfig vis = (VisitorConfig){0};
                 int off = device_resolve_offset(device, twin->propertyName);
                 if (off > 0)
                     vis.offset = off;
+                vis.propertyName = twin->propertyName;
 
                 int drv_rc = GetDeviceData(device->client, &vis, &drv_out);
 
