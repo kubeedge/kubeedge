@@ -100,6 +100,12 @@ func Run(opt *options.AdmissionOptions) error {
 		return fmt.Errorf("failed to register the webhook with error: %v", err)
 	}
 
+	// Add health check endpoint
+	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	})
+	
 	http.HandleFunc("/devices", serveDevice)
 	http.HandleFunc("/devicemodels", serveDeviceModel)
 	http.HandleFunc("/rules", serveRule)
@@ -117,6 +123,7 @@ func Run(opt *options.AdmissionOptions) error {
 		TLSConfig: tlsConfig,
 	}
 
+	klog.Infof("Starting admission webhook server on port %v", opt.Port)
 	if err := server.ListenAndServeTLS("", ""); err != nil {
 		return fmt.Errorf("start server failed with error: %v", err)
 	}
