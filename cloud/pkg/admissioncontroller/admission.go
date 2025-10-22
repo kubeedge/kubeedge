@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	admissionv1 "k8s.io/api/admission/v1"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
@@ -100,6 +101,19 @@ func Run(opt *options.AdmissionOptions) error {
 		return fmt.Errorf("failed to register the webhook with error: %v", err)
 	}
 
+	// Add comprehensive health check endpoints
+	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		handleLivenessProbe(w, r)
+	})
+	
+	http.HandleFunc("/readyz", func(w http.ResponseWriter, r *http.Request) {
+		handleReadinessProbe(w, r)
+	})
+	
+	http.HandleFunc("/livez", func(w http.ResponseWriter, r *http.Request) {
+		handleLivenessProbe(w, r)
+	})
+	
 	http.HandleFunc("/devices", serveDevice)
 	http.HandleFunc("/devicemodels", serveDeviceModel)
 	http.HandleFunc("/rules", serveRule)
@@ -117,10 +131,64 @@ func Run(opt *options.AdmissionOptions) error {
 		TLSConfig: tlsConfig,
 	}
 
+	klog.Infof("Starting admission webhook server on port %v", opt.Port)
 	if err := server.ListenAndServeTLS("", ""); err != nil {
 		return fmt.Errorf("start server failed with error: %v", err)
 	}
 	return nil
+}
+
+// handleLivenessProbe checks if the service process is alive
+func handleLivenessProbe(w http.ResponseWriter, r *http.Request) {
+	// Simple check - if we can respond, we're alive
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("ok"))
+	klog.V(5).Info("Liveness probe passed")
+}
+
+// handleReadinessProbe checks if the service is ready to handle requests
+func handleReadinessProbe(w http.ResponseWriter, r *http.Request) {
+	// Check if clients are initialized
+	if controller.Client == nil {
+		klog.Error("Readiness check failed: kubernetes client not initialized")
+		w.WriteHeader(http.StatusServiceUnavailable)
+		w.Write([]byte("kubernetes client not initialized"))
+		return
+	}
+
+	if controller.CrdClient == nil {
+		klog.Error("Readiness check failed: CRD client not initialized")
+		w.WriteHeader(http.StatusServiceUnavailable)
+		w.Write([]byte("CRD client not initialized"))
+		return
+	}
+
+	// Check Kubernetes API connectivity with timeout
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	// Test basic API server connectivity
+	_, err := controller.Client.Discovery().ServerVersion()
+	if err != nil {
+		klog.Errorf("Readiness check failed: cannot connect to Kubernetes API: %v", err)
+		w.WriteHeader(http.StatusServiceUnavailable)
+		w.Write([]byte("cannot connect to Kubernetes API"))
+		return
+	}
+
+	// Test CRD API connectivity by listing namespaces (lightweight operation)
+	_, err = controller.Client.CoreV1().Namespaces().List(ctx, metav1.ListOptions{Limit: 1})
+	if err != nil {
+		klog.Errorf("Readiness check failed: cannot list namespaces: %v", err)
+		w.WriteHeader(http.StatusServiceUnavailable)
+		w.Write([]byte("cannot access Kubernetes API resources"))
+		return
+	}
+
+	// All checks passed
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("ok"))
+	klog.V(4).Info("Readiness probe passed")
 }
 
 // configTLS is a helper function that generate tls certificates from directly defined tls config or kubeconfig
