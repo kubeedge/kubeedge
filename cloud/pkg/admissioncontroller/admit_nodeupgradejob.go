@@ -82,14 +82,26 @@ func admitNodeUpgradeJob(review admissionv1.AdmissionReview) *admissionv1.Admiss
 }
 
 func validateNodeUpgradeJob(upgrade *v1alpha1.NodeUpgradeJob) error {
-	// version must be valid
+	// version must be valid and non-empty
+	if upgrade.Spec.Version == "" {
+		return fmt.Errorf("version must not be empty")
+	}
+	
 	if !strings.HasPrefix(upgrade.Spec.Version, "v") {
 		return fmt.Errorf("version must begin with prefix 'v'")
 	}
 
-	_, err := semver.Parse(strings.TrimPrefix(upgrade.Spec.Version, "v"))
+	versionStr := strings.TrimPrefix(upgrade.Spec.Version, "v")
+	parsedVersion, err := semver.Parse(versionStr)
 	if err != nil {
 		return fmt.Errorf("version is not a semver compatible version: %v", err)
+	}
+
+	// Validate that version has all required components (major.minor.patch)
+	if len(parsedVersion.Pre) == 0 && len(parsedVersion.Build) == 0 {
+		if parsedVersion.Major == 0 && parsedVersion.Minor == 0 && parsedVersion.Patch == 0 {
+			return fmt.Errorf("version must contain at least major.minor.patch components")
+		}
 	}
 
 	// we must specify NodeNames or LabelSelector, and we can only specify only one
