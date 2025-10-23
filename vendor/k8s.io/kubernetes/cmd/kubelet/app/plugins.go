@@ -60,7 +60,9 @@ func ProbeVolumePlugins(featureGate featuregate.FeatureGate) ([]volume.VolumePlu
 	allPlugins = append(allPlugins, configmap.ProbeVolumePlugins()...)
 	allPlugins = append(allPlugins, projected.ProbeVolumePlugins()...)
 	allPlugins = append(allPlugins, local.ProbeVolumePlugins()...)
-	allPlugins = append(allPlugins, csi.ProbeVolumePlugins()...)
+	if !featureGate.Enabled(features.DisableCSIVolumePlugin) {
+		allPlugins = append(allPlugins, csi.ProbeVolumePlugins()...)
+	}
 	if featureGate.Enabled(features.ImageVolume) {
 		allPlugins = append(allPlugins, image.ProbeVolumePlugins()...)
 	}

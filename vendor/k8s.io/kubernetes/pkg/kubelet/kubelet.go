@@ -69,6 +69,7 @@ import (
 	"k8s.io/kubernetes/pkg/api/v1/resource"
 	"k8s.io/kubernetes/pkg/features"
 	kubeletconfiginternal "k8s.io/kubernetes/pkg/kubelet/apis/config"
+	"k8s.io/kubernetes/pkg/kubelet/apis/podresources"
 	"k8s.io/kubernetes/pkg/kubelet/cadvisor"
 	"k8s.io/kubernetes/pkg/kubelet/clustertrustbundle"
 	"k8s.io/kubernetes/pkg/kubelet/cm"
@@ -233,6 +234,7 @@ type Bootstrap interface {
 	StartGarbageCollection()
 	ListenAndServe(kubeCfg *kubeletconfiginternal.KubeletConfiguration, tlsOptions *server.TLSOptions, auth server.AuthInterface, tp trace.TracerProvider)
 	ListenAndServeReadOnly(kubeCfg *kubeletconfiginternal.KubeletConfiguration, tp trace.TracerProvider)
+	ListenAndServePodResources()
 	Run(<-chan kubetypes.PodUpdate)
 }
 
@@ -2804,6 +2806,25 @@ func (kl *Kubelet) ListenAndServe(kubeCfg *kubeletconfiginternal.KubeletConfigur
 // ListenAndServeReadOnly runs the kubelet HTTP server in read-only mode.
 func (kl *Kubelet) ListenAndServeReadOnly(kubeCfg *kubeletconfiginternal.KubeletConfiguration, tp trace.TracerProvider) {
 	server.ListenAndServeKubeletReadOnlyServer(kl, kl.resourceAnalyzer, kubeCfg, tp)
+}
+
+// ListenAndServePodResources runs the kubelet podresources grpc service
+func (kl *Kubelet) ListenAndServePodResources() {
+	endpoint, err := util.LocalEndpoint(kl.getPodResourcesDir(), podresources.Socket)
+	if err != nil {
+		klog.V(2).InfoS("Failed to get local endpoint for PodResources endpoint", "err", err)
+		return
+	}
+
+	providers := podresources.PodResourcesProviders{
+		Pods:             kl.podManager,
+		Devices:          kl.containerManager,
+		Cpus:             kl.containerManager,
+		Memory:           kl.containerManager,
+		DynamicResources: kl.containerManager,
+	}
+
+	server.ListenAndServePodResources(endpoint, providers)
 }
 
 // Delete the eligible dead container instances in a pod. Depending on the configuration, the latest dead containers may be kept around.
