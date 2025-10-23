@@ -483,12 +483,8 @@ func (kl *Kubelet) tryUpdateNodeStatus(ctx context.Context, tryNumber int) error
 	var originalNode *v1.Node
 	var err error
 
-	if tryNumber == 0 {
-		originalNode, err = kl.nodeLister.Get(string(kl.nodeName))
-	} else {
-		opts := metav1.GetOptions{}
-		originalNode, err = kl.heartbeatClient.CoreV1().Nodes().Get(ctx, string(kl.nodeName), opts)
-	}
+	opts := metav1.GetOptions{}
+	originalNode, err = kl.heartbeatClient.CoreV1().Nodes().Get(ctx, string(kl.nodeName), opts)
 	if err != nil {
 		return fmt.Errorf("error getting node %q: %v", kl.nodeName, err)
 	}
