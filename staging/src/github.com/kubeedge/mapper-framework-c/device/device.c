@@ -5,8 +5,9 @@
 #include "common/json_util.h"
 #include "common/string_util.h"
 #include "data/publish/publisher.h"
-#include "data/dbmethod/recorder.h"
 #include "grpcclient/register.h"
+#include "device/devicestatus.h"
+#include "data/dbmethod/recorder.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -28,9 +29,10 @@ static int device_update_status_from_driver(Device *device, int force_report, co
     if (!device || !device->client) return 0;
     const char *drv = GetDeviceStates(device->client);
     const char *newst = normalize_status(drv);
-    if (force_report) device_set_status(device, newst);
+    int need_report = force_report || device_status_check_change(device, newst);
+    if (need_report) device_set_status(device, newst);
     if (out_new_status) *out_new_status = newst;
-    return force_report;
+    return need_report;
 }
 
 static void *device_data_thread(void *arg)
@@ -52,8 +54,10 @@ static void *device_data_thread(void *arg)
         if (strcmp(device->status, DEVICE_STATUS_OK) != 0)
         {
             pthread_mutex_unlock(&device->mutex);
-            if (need_report_status && status_to_report)
-                ReportDeviceStatus(ns, name, status_to_report);
+            if (need_report_status && status_to_report) {
+                ReportDeviceStates(ns, name, status_to_report);                 // 上报设备状态
+                ReportTwinKV(ns, name, "status", status_to_report, "string");   // 作为属性同步到云端
+            }
             usleep(1000000);
             continue;
         }
@@ -94,8 +98,10 @@ static void *device_data_thread(void *arg)
 
         pthread_mutex_unlock(&device->mutex);
 
-        if (need_report_status && status_to_report)
-            ReportDeviceStatus(ns, name, status_to_report);
+        if (need_report_status && status_to_report) {
+            ReportDeviceStates(ns, name, status_to_report);
+            ReportTwinKV(ns, name, "status", status_to_report, "string");
+        }
 
         usleep(1000000);
     }
@@ -539,23 +545,23 @@ int device_start(Device *device)
 {
     if (!device)
         return -1;
-
     pthread_mutex_lock(&device->mutex);
     device_runtime_rebuild(device);
-
     if (device->dataThreadRunning)
     {
         pthread_mutex_unlock(&device->mutex);
         return 0;
     }
-
     if (device->client)
     {
         if (InitDevice(device->client) != 0)
         {
             log_error("device_start: InitDevice failed for device %s", device->instance.name);
             device_set_status(device, DEVICE_STATUS_OFFLINE);
-            ReportDeviceStatus(device->instance.namespace_, device->instance.name, DEVICE_STATUS_OFFLINE);
+            ReportDeviceStates(device->instance.namespace_, device->instance.name, DEVICE_STATUS_OFFLINE);
+            ReportTwinKV(device->instance.namespace_ ? device->instance.namespace_ : "default",
+                         device->instance.name ? device->instance.name : "unknown",
+                         "status", DEVICE_STATUS_OFFLINE, "string");
             pthread_mutex_unlock(&device->mutex);
             return -1;
         }
@@ -570,7 +576,10 @@ int device_start(Device *device)
         int need = device_update_status_from_driver(device, 1, &init_st);
         const char *ns = device->instance.namespace_ ? device->instance.namespace_ : "default";
         const char *name = device->instance.name ? device->instance.name : "unknown";
-        if (need && init_st) ReportDeviceStatus(ns, name, init_st);
+        if (need && init_st) {
+            ReportDeviceStates(ns, name, init_st);
+            ReportTwinKV(ns, name, "status", init_st, "string");
+        }
     }
 
     device->dataThreadRunning = 1;
@@ -579,13 +588,14 @@ int device_start(Device *device)
         log_error("Failed to create data thread for device %s", device->instance.name);
         device->dataThreadRunning = 0;
         device_set_status(device, DEVICE_STATUS_OFFLINE);
-        ReportDeviceStatus(device->instance.namespace_, device->instance.name, DEVICE_STATUS_OFFLINE);
+        ReportDeviceStates(device->instance.namespace_, device->instance.name, DEVICE_STATUS_OFFLINE);
+        ReportTwinKV(device->instance.namespace_ ? device->instance.namespace_ : "default",
+                     device->instance.name ? device->instance.name : "unknown",
+                     "status", DEVICE_STATUS_OFFLINE, "string");
         pthread_mutex_unlock(&device->mutex);
         return -1;
     }
-
     pthread_mutex_unlock(&device->mutex);
-
     return 0;
 }
 
