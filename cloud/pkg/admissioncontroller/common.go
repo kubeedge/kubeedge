@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"time"
 
 	admissionv1 "k8s.io/api/admission/v1"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
@@ -19,21 +20,43 @@ import (
 func registerValidateWebhook(client admissionregistrationv1client.ValidatingWebhookConfigurationInterface,
 	webhooks []admissionregistrationv1.ValidatingWebhookConfiguration) error {
 	for _, hook := range webhooks {
-		existing, err := client.Get(context.Background(), hook.Name, metav1.GetOptions{})
-		if err != nil && !apierrors.IsNotFound(err) {
-			return err
-		}
-		if err == nil && existing != nil {
-			existing.Webhooks = hook.Webhooks
-			klog.Infof("Updating ValidatingWebhookConfiguration: %v", hook.Name)
-			if _, err := client.Update(context.Background(), existing, metav1.UpdateOptions{}); err != nil {
-				return err
+		var lastErr error
+		for retry := 0; retry < constants.MaxWebhookRetryCount; retry++ {
+			existing, err := client.Get(context.Background(), hook.Name, metav1.GetOptions{})
+			if err != nil && !apierrors.IsNotFound(err) {
+				lastErr = err
+				klog.Warningf("Failed to get ValidatingWebhookConfiguration %s (attempt %d): %v", hook.Name, retry+1, err)
+				if retry < constants.MaxWebhookRetryCount-1 {
+					time.Sleep(time.Duration(retry+1) * constants.WebhookRetryBackoffInterval)
+					continue
+				}
+				return lastErr
 			}
-		} else {
-			klog.Infof("Creating ValidatingWebhookConfiguration: %v", hook.Name)
-			if _, err := client.Create(context.Background(), &hook, metav1.CreateOptions{}); err != nil {
-				return err
+			if err == nil && existing != nil {
+				existing.Webhooks = hook.Webhooks
+				klog.Infof("Updating ValidatingWebhookConfiguration: %v", hook.Name)
+				if _, err := client.Update(context.Background(), existing, metav1.UpdateOptions{}); err != nil {
+					lastErr = err
+					klog.Warningf("Failed to update ValidatingWebhookConfiguration %s (attempt %d): %v", hook.Name, retry+1, err)
+					if retry < constants.MaxWebhookRetryCount-1 {
+						time.Sleep(time.Duration(retry+1) * constants.WebhookRetryBackoffInterval)
+						continue
+					}
+					return lastErr
+				}
+			} else {
+				klog.Infof("Creating ValidatingWebhookConfiguration: %v", hook.Name)
+				if _, err := client.Create(context.Background(), &hook, metav1.CreateOptions{}); err != nil {
+					lastErr = err
+					klog.Warningf("Failed to create ValidatingWebhookConfiguration %s (attempt %d): %v", hook.Name, retry+1, err)
+					if retry < constants.MaxWebhookRetryCount-1 {
+						time.Sleep(time.Duration(retry+1) * constants.WebhookRetryBackoffInterval)
+						continue
+					}
+					return lastErr
+				}
 			}
+			break
 		}
 	}
 	return nil
@@ -42,21 +65,43 @@ func registerValidateWebhook(client admissionregistrationv1client.ValidatingWebh
 func registerMutatingWebhook(client admissionregistrationv1client.MutatingWebhookConfigurationInterface,
 	webhooks []admissionregistrationv1.MutatingWebhookConfiguration) error {
 	for _, hook := range webhooks {
-		existing, err := client.Get(context.Background(), hook.Name, metav1.GetOptions{})
-		if err != nil && !apierrors.IsNotFound(err) {
-			return err
-		}
-		if err == nil && existing != nil {
-			existing.Webhooks = hook.Webhooks
-			klog.Infof("Updating MutatingWebhookConfiguration: %v", hook.Name)
-			if _, err := client.Update(context.Background(), existing, metav1.UpdateOptions{}); err != nil {
-				return err
+		var lastErr error
+		for retry := 0; retry < constants.MaxWebhookRetryCount; retry++ {
+			existing, err := client.Get(context.Background(), hook.Name, metav1.GetOptions{})
+			if err != nil && !apierrors.IsNotFound(err) {
+				lastErr = err
+				klog.Warningf("Failed to get MutatingWebhookConfiguration %s (attempt %d): %v", hook.Name, retry+1, err)
+				if retry < constants.MaxWebhookRetryCount-1 {
+					time.Sleep(time.Duration(retry+1) * constants.WebhookRetryBackoffInterval)
+					continue
+				}
+				return lastErr
 			}
-		} else {
-			klog.Infof("Creating MutatingWebhookConfiguration: %v", hook.Name)
-			if _, err := client.Create(context.Background(), &hook, metav1.CreateOptions{}); err != nil {
-				return err
+			if err == nil && existing != nil {
+				existing.Webhooks = hook.Webhooks
+				klog.Infof("Updating MutatingWebhookConfiguration: %v", hook.Name)
+				if _, err := client.Update(context.Background(), existing, metav1.UpdateOptions{}); err != nil {
+					lastErr = err
+					klog.Warningf("Failed to update MutatingWebhookConfiguration %s (attempt %d): %v", hook.Name, retry+1, err)
+					if retry < constants.MaxWebhookRetryCount-1 {
+						time.Sleep(time.Duration(retry+1) * constants.WebhookRetryBackoffInterval)
+						continue
+					}
+					return lastErr
+				}
+			} else {
+				klog.Infof("Creating MutatingWebhookConfiguration: %v", hook.Name)
+				if _, err := client.Create(context.Background(), &hook, metav1.CreateOptions{}); err != nil {
+					lastErr = err
+					klog.Warningf("Failed to create MutatingWebhookConfiguration %s (attempt %d): %v", hook.Name, retry+1, err)
+					if retry < constants.MaxWebhookRetryCount-1 {
+						time.Sleep(time.Duration(retry+1) * constants.WebhookRetryBackoffInterval)
+						continue
+					}
+					return lastErr
+				}
 			}
+			break
 		}
 	}
 	return nil
