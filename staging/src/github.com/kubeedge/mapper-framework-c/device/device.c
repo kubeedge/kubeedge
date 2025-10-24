@@ -667,62 +667,16 @@ int device_deal_twin(Device *device, const Twin *twin_in)
         return 0;
     }
 
-    char ip[64] = "127.0.0.1";
-    int port = 1502;
-    if (device->instance.pProtocol.configData)
-    {
-        json_get_str(device->instance.pProtocol.configData, "ip", ip, sizeof(ip));
-        json_get_int(device->instance.pProtocol.configData, "port", &port);
-        cleanup_escape_prefix(ip);
-    }
-
+    VisitorConfig vis = (VisitorConfig){0};
+    vis.propertyName = twin_in->propertyName;
     int offset = device_resolve_offset(device, twin_in->propertyName);
-    if (offset <= 0)
-    {
-        log_warn("Twin %s: cannot resolve offset, skip", twin_in->propertyName);
-        return 0;
-    }
-
-    int value = atoi(desired);
-
-    char hostBuf[128];
-    int portFixed;
-    normalize_host_port(ip, port, hostBuf, sizeof(hostBuf), &portFixed);
-
-    int timeout_s = 2;
-    const char *env_to = getenv("MAPPER_MBPOLL_TIMEOUT_S");
-    if (env_to && *env_to)
-    {
-        int tv = atoi(env_to);
-        if (tv > 0 && tv < 30)
-            timeout_s = tv;
-    }
-
-    char cmd[512];
-    snprintf(cmd, sizeof(cmd),
-             "timeout %d /usr/bin/mbpoll -1 -m tcp %s -p %d -a 1 -t 4 -r %d %d >/dev/null 2>&1",
-             timeout_s, hostBuf, portFixed, offset, value);
-
-    int rcRaw = system(cmd);
-    int exit_code = -1;
-    if (rcRaw != -1)
-    {
-        if (WIFEXITED(rcRaw))
-            exit_code = WEXITSTATUS(rcRaw);
-        else if (WIFSIGNALED(rcRaw))
-            exit_code = 128 + WTERMSIG(rcRaw);
-    }
-    if (exit_code != 0)
-    {
-
+    if (offset > 0) vis.offset = offset;
+    int rc = SetDeviceData(device->client, desired, &vis);
+    if (rc != 0) {
         return -1;
     }
-
-    free(twin_in->reported.value);
-    free(twin_in->reported.metadata.timestamp);
-
-    log_info("Twin %s write success: offset=%d value=%d (ip=%s:%d); reported updated",
-             twin_in->propertyName, offset, value, hostBuf, portFixed);
+    free(((Twin *)twin_in)->reported.value);
+    ((Twin *)twin_in)->reported.value = strdup(desired);
 
     dbmethod_recorder_record(device,
                              twin_in->propertyName ? twin_in->propertyName : "unknown",
