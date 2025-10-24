@@ -9,7 +9,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/common/util"
-	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/dao"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 )
 
 const UploadTopic = "SYS/dis/upload_records"
@@ -88,7 +88,7 @@ func onSubConnect(client MQTT.Client) {
 		}
 		klog.Infof("edge-hub-cli subscribe topic to %s", t)
 	}
-	topics, err := dao.QueryAllTopics()
+	topics, err := dbclient.NewEventBusService().QueryAllTopics()
 	if err != nil {
 		klog.Errorf("list edge-hub-cli-topics failed: %v", err)
 		return

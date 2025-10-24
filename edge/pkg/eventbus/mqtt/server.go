@@ -23,7 +23,7 @@ import (
 	"github.com/256dpi/gomqtt/transport"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/dao"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 )
 
 // Server serve as an internal mqtt broker.
@@ -104,7 +104,7 @@ func (m *Server) InitInternalTopics() {
 		m.tree.Set(v, packet.Subscription{Topic: v, QOS: packet.QOS(m.qos)})
 		klog.Infof("Subscribe internal topic to %s", v)
 	}
-	topics, err := dao.QueryAllTopics()
+	topics, err := dbclient.NewEventBusService().QueryAllTopics()
 	if err != nil {
 		klog.Errorf("list edge-hub-cli-topics failed: %v", err)
 		return

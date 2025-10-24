@@ -37,7 +37,7 @@ import (
 	deviceconst "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	edgeconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
-	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/conn"
 )
@@ -378,7 +378,7 @@ func (ns *NodeSession) saveSuccessPoint(msg *beehivemodel.Message) {
 
 	case msg.GetGroup() == edgeconst.GroupResource:
 		resourceNamespace, _ := messagelayer.GetNamespace(*msg)
-		if resourceNamespace == v2.NullNamespace {
+		if resourceNamespace == models.NullNamespace {
 			ns.saveNonNamespaceResourceSuccess(msg)
 		} else {
 			ns.saveNamespaceResourceSuccess(msg)
@@ -545,7 +545,7 @@ func (ns *NodeSession) saveNonNamespaceResourceSuccess(msg *beehivemodel.Message
 }
 
 func (ns *NodeSession) deleteSuccessPoint(resourceNamespace, objectSyncName string, msg *beehivemodel.Message) {
-	if resourceNamespace == v2.NullNamespace {
+	if resourceNamespace == models.NullNamespace {
 		err := ns.reliableClient.
 			ReliablesyncsV1alpha1().ClusterObjectSyncs().
 			Delete(context.Background(), objectSyncName, *metav1.NewDeleteOptions(0))

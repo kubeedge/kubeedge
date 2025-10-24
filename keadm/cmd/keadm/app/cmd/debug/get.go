@@ -20,8 +20,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/beego/beego/v2/client/orm"
 	"github.com/spf13/cobra"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,9 +38,9 @@ import (
 	edgecoreCfg "github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	commonmsg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 )
 
 const (
@@ -85,6 +86,7 @@ keadm debug get all -o yaml`
 		"endpoint":   constants.ResourceTypeEndpoints,
 		"endpoints":  constants.ResourceTypeEndpoints,
 	}
+	ms = dbclient.NewMetaService()
 )
 
 // NewCmdDebugGet returns keadm debug get command.
@@ -248,8 +250,8 @@ func (g *GetOptions) Validate(args []string) error {
 	return nil
 }
 
-func (g *GetOptions) queryDataFromDatabase(resType string, resNames []string) ([]dao.Meta, error) {
-	var result []dao.Meta
+func (g *GetOptions) queryDataFromDatabase(resType string, resNames []string) ([]models.Meta, error) {
+	var result []models.Meta
 
 	switch resType {
 	case model.ResourceTypePod:
@@ -292,12 +294,12 @@ func (g *GetOptions) queryDataFromDatabase(resType string, resNames []string) ([
 	return result, nil
 }
 
-func (g *GetOptions) getPodsFromDatabase(resNS string, resNames []string) ([]dao.Meta, error) {
-	var results []dao.Meta
+func (g *GetOptions) getPodsFromDatabase(resNS string, resNames []string) ([]models.Meta, error) {
+	var results []models.Meta
 	podJSON := make(map[string]interface{})
 	podStatusJSON := make(map[string]interface{})
 
-	podRecords, err := dao.QueryAllMeta("type", model.ResourceTypePod)
+	podRecords, err := ms.QueryAllMeta("type", model.ResourceTypePod)
 	if err != nil {
 		return nil, err
 	}
@@ -312,7 +314,7 @@ func (g *GetOptions) getPodsFromDatabase(resNS string, resNames []string) ([]dao
 
 		podKey := strings.Replace(v.Key, constants.ResourceSep+model.ResourceTypePod+constants.ResourceSep,
 			constants.ResourceSep+model.ResourceTypePodStatus+constants.ResourceSep, 1)
-		podStatusRecords, err := dao.QueryMeta("key", podKey)
+		podStatusRecords, err := ms.QueryMeta("key", podKey)
 		if err != nil {
 			return nil, err
 		}
@@ -338,12 +340,12 @@ func (g *GetOptions) getPodsFromDatabase(resNS string, resNames []string) ([]dao
 	return results, nil
 }
 
-func (g *GetOptions) getNodeFromDatabase(resNS string, resNames []string) ([]dao.Meta, error) {
-	var results []dao.Meta
+func (g *GetOptions) getNodeFromDatabase(resNS string, resNames []string) ([]models.Meta, error) {
+	var results []models.Meta
 	nodeJSON := make(map[string]interface{})
 	nodeStatusJSON := make(map[string]interface{})
 
-	nodeRecords, err := dao.QueryAllMeta("type", model.ResourceTypeNode)
+	nodeRecords, err := ms.QueryAllMeta("type", model.ResourceTypeNode)
 	if err != nil {
 		return nil, err
 	}
@@ -358,7 +360,7 @@ func (g *GetOptions) getNodeFromDatabase(resNS string, resNames []string) ([]dao
 
 		nodeKey := strings.Replace(v.Key, constants.ResourceSep+model.ResourceTypeNode+constants.ResourceSep,
 			constants.ResourceSep+model.ResourceTypeNodeStatus+constants.ResourceSep, 1)
-		nodeStatusRecords, err := dao.QueryMeta("key", nodeKey)
+		nodeStatusRecords, err := ms.QueryMeta("key", nodeKey)
 		if err != nil {
 			return nil, err
 		}
@@ -384,10 +386,10 @@ func (g *GetOptions) getNodeFromDatabase(resNS string, resNames []string) ([]dao
 	return results, nil
 }
 
-func (g *GetOptions) getResourceFromDatabase(resNS string, resNames []string, resType string) ([]dao.Meta, error) {
-	var results []dao.Meta
+func (g *GetOptions) getResourceFromDatabase(resNS string, resNames []string, resType string) ([]models.Meta, error) {
+	var results []models.Meta
 
-	resRecords, err := dao.QueryAllMeta("type", resType)
+	resRecords, err := ms.QueryAllMeta("type", resType)
 	if err != nil {
 		return nil, err
 	}
@@ -406,8 +408,8 @@ func (g *GetOptions) getResourceFromDatabase(resNS string, resNames []string, re
 }
 
 // FilterSelector filter resource by selector
-func FilterSelector(data []dao.Meta, selector string) ([]dao.Meta, error) {
-	var results []dao.Meta
+func FilterSelector(data []models.Meta, selector string) ([]models.Meta, error) {
+	var results []models.Meta
 	var jsonValue = make(map[string]interface{})
 
 	selectors, err := SplitSelectorParameters(selector)
@@ -455,25 +457,26 @@ func isFileExist(path string) bool {
 
 // InitDB Init DB info
 func InitDB(driverName, dbName, dataSource string) error {
-	if err := orm.RegisterDriver(driverName, orm.DRSqlite); err != nil {
-		return fmt.Errorf("failed to register driver: %v ", err)
-	}
-	if err := orm.RegisterDataBase(
-		dbName,
-		driverName,
-		dataSource); err != nil {
-		return fmt.Errorf("failed to register db: %v ", err)
-	}
-	orm.RegisterModel(new(dao.Meta))
+	// Initialize GORM database connection
+	var err error
+	var db *gorm.DB
 
-	// create orm
-	defer func() {
-		if err := recover(); err != nil {
-			fmt.Printf("using db access error as %v", err)
-			return
-		}
-	}()
-	dbm.DBAccess = orm.NewOrmUsingDB(dbName)
+	if driverName == "sqlite" {
+		// Use GORM's SQLite driver to connect to the database
+		db, err = gorm.Open(sqlite.Open(dataSource), &gorm.Config{})
+	} else {
+		return fmt.Errorf("unsupported driver: %v", driverName)
+	}
+
+	if err != nil {
+		return fmt.Errorf("failed to connect to the database: %v", err)
+	}
+
+	// Perform migrations (auto-create tables based on the models)
+	if err := db.AutoMigrate(&models.Meta{}); err != nil {
+		return fmt.Errorf("failed to auto-migrate the database: %v", err)
+	}
+
 	return nil
 }
 
@@ -538,7 +541,7 @@ func SplitSelectorParameters(args string) ([]Selector, error) {
 	return results, nil
 }
 
-func HumanReadablePrint(results []dao.Meta, printer printers.ResourcePrinter) error {
+func HumanReadablePrint(results []models.Meta, printer printers.ResourcePrinter) error {
 	res, err := ParseMetaToAPIList(results)
 	if err != nil {
 		return err
@@ -559,7 +562,7 @@ func HumanReadablePrint(results []dao.Meta, printer printers.ResourcePrinter) er
 // Only use this type definition to get the table header processing handle,
 // and automatically obtain the ColumnDefinitions of the table according to the type
 // Only used by HumanReadablePrint.
-func ParseMetaToAPIList(metas []dao.Meta) (res []runtime.Object, err error) {
+func ParseMetaToAPIList(metas []models.Meta) (res []runtime.Object, err error) {
 	var (
 		podList       api.PodList
 		serviceList   api.ServiceList
@@ -645,7 +648,7 @@ func ConvertDataToTable(obj runtime.Object) (runtime.Object, error) {
 }
 
 // JSONYamlPrint Output the data in json|yaml format
-func JSONYamlPrint(results []dao.Meta, printer printers.ResourcePrinter) error {
+func JSONYamlPrint(results []models.Meta, printer printers.ResourcePrinter) error {
 	var obj runtime.Object
 	list := v1.List{
 		TypeMeta: metav1.TypeMeta{
@@ -689,7 +692,7 @@ func JSONYamlPrint(results []dao.Meta, printer printers.ResourcePrinter) error {
 // The type definition used by apiserver does not have the omitempty definition of json, will introduce a lot of useless null information
 // Use v1 type definition to get data here
 // Only used by JSONYamlPrint.
-func ParseMetaToV1List(results []dao.Meta) ([]runtime.Object, error) {
+func ParseMetaToV1List(results []models.Meta) ([]runtime.Object, error) {
 	value := make(map[string]interface{})
 	list := make([]runtime.Object, 0)
 

@@ -11,7 +11,7 @@ import (
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/klog/v2"
 
-	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	models "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
@@ -43,10 +43,10 @@ func KeyFuncObj(obj runtime.Object) (string, error) {
 	name := accessor.GetName()
 
 	if group == "" {
-		group = v2.GroupCore
+		group = models.GroupCore
 	}
 	if namespace == "" {
-		namespace = v2.NullNamespace
+		namespace = models.NullNamespace
 	}
 
 	key := fmt.Sprintf("/%s/%s/%s/%s/%s", group, version, resource, namespace, name)
@@ -66,7 +66,7 @@ func KeyFuncReq(ctx context.Context, _ string) (string, error) {
 	group := ""
 	switch info.APIPrefix {
 	case "api":
-		group = v2.GroupCore
+		group = models.GroupCore
 	case "apis":
 		if info.APIGroup == "" {
 			return "", fmt.Errorf("failed to get key from request info")
@@ -82,13 +82,13 @@ func KeyFuncReq(ctx context.Context, _ string) (string, error) {
 
 	// if the request resource is namespaces, set the ns to null in the key
 	if resource == "namespaces" {
-		namespace = v2.NullNamespace
+		namespace = models.NullNamespace
 	}
 	if namespace == "" {
-		namespace = v2.NullNamespace
+		namespace = models.NullNamespace
 	}
 	if name == "" {
-		name = v2.NullName
+		name = models.NullName
 	}
 
 	key := fmt.Sprintf("/%s/%s/%s/%s/%s", group, version, resource, namespace, name)
@@ -143,7 +143,7 @@ func ParseKey(key string) (gvr schema.GroupVersionResource, namespace string, na
 	IndexCheck(length, &groupIndex, &versionIndex, &resourceIndex, &namespaceIndex, &nameIndex)
 
 	group := slices[groupIndex]
-	if group == v2.GroupCore {
+	if group == models.GroupCore {
 		group = ""
 	}
 
@@ -155,11 +155,11 @@ func ParseKey(key string) (gvr schema.GroupVersionResource, namespace string, na
 
 	gvr = gv.WithResource(slices[resourceIndex])
 	namespace = slices[namespaceIndex]
-	if namespace == v2.NullNamespace {
+	if namespace == models.NullNamespace {
 		namespace = ""
 	}
 	name = slices[nameIndex]
-	if name == v2.NullName {
+	if name == models.NullName {
 		name = ""
 	}
 

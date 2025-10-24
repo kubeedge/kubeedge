@@ -15,7 +15,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/filter"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
-	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
@@ -63,7 +63,7 @@ func (l *SelectorListener) sendObj(event watch.Event, messageLayer messagelayer.
 
 	namespace := accessor.GetNamespace()
 	if namespace == "" {
-		namespace = v2.NullNamespace
+		namespace = models.NullNamespace
 	}
 	kind := util.UnsafeResourceToKind(l.gvr.Resource)
 	resourceType := strings.ToLower(kind)

@@ -9,17 +9,17 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/kubeedge/beehive/pkg/core/model"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator/watchhook"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
 )
@@ -75,7 +75,7 @@ func (s *imitator) InsertOrUpdateObj(_ context.Context, obj runtime.Object) erro
 		return err
 	}
 	objRv, err := s.versioner.ObjectResourceVersion(obj)
-	m := v2.MetaV2{
+	m := models.MetaV2{
 		Key:                  key,
 		GroupVersionResource: gvr.String(),
 		Namespace:            ns,
@@ -86,18 +86,16 @@ func (s *imitator) InsertOrUpdateObj(_ context.Context, obj runtime.Object) erro
 	return s.insertOrReplaceMetaV2(m, objRv)
 }
 
-func (s *imitator) insertOrReplaceMetaV2(m v2.MetaV2, objRv uint64) error {
+func (s *imitator) insertOrReplaceMetaV2(m models.MetaV2, objRv uint64) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	_, err := dbm.DBAccess.Raw("INSERT OR REPLACE INTO meta_v2 (key, groupversionresource, namespace,name,resourceversion,value) VALUES (?,?,?,?,?,?)", m.Key, m.GroupVersionResource, m.Namespace, m.Name, m.ResourceVersion, m.Value).Exec()
-	var maxRetryTimes = 3
-	for i := 1; err != nil; i++ {
-		klog.Errorf("failed to access database:%v", err)
-		if i == maxRetryTimes {
-			return fmt.Errorf("failed to access database after %v times try", i)
-		}
-		_, err = dbm.DBAccess.Raw("INSERT OR REPLACE INTO meta_v2 (key, groupversionresource, namespace,name,resourceversion,value) VALUES (?,?,?,?,?,?)", m.Key, m.GroupVersionResource, m.Namespace, m.Name, m.ResourceVersion, m.Value).Exec()
+
+	err := dbclient.NewMetaV2Service().RetryInsertOrReplaceMetaV2(&m, 3)
+	if err != nil {
+		klog.Errorf("failed to access database after retries: %v", err)
+		return err
 	}
+
 	if objRv > s.GetRevision() {
 		s.SetRevision(objRv)
 	}
@@ -105,44 +103,37 @@ func (s *imitator) insertOrReplaceMetaV2(m v2.MetaV2, objRv uint64) error {
 	return nil
 }
 
+func (s *imitator) GetPassThroughObj(_ context.Context, key string) ([]byte, error) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	result, err := dbclient.NewMetaV2Service().GetByKey(key)
+	if err != nil {
+		return nil, err
+	}
+	klog.V(4).Infof("[metaserver]successfully queried obj:%v", key)
+	return []byte(result.Value), nil
+}
+
+func (s *imitator) Delete(_ context.Context, key string) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	err := dbclient.NewMetaV2Service().DeleteByKey(key)
+	if err != nil {
+		klog.Errorf("[imitator] delete error: %v", err)
+	}
+	return err
+}
+
 func (s *imitator) InsertOrUpdatePassThroughObj(_ context.Context, obj []byte, key string) error {
-	m := v2.MetaV2{
+	m := models.MetaV2{
 		Key:   key,
 		Value: string(obj),
 	}
 	return s.insertOrReplaceMetaV2(m, 0)
 }
 
-func (s *imitator) GetPassThroughObj(_ context.Context, key string) ([]byte, error) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-	results := new([]v2.MetaV2)
-	_, err := dbm.DBAccess.QueryTable(v2.NewMetaTableName).Filter(v2.KEY, key).All(results)
-	if err != nil {
-		return nil, err
-	}
-
-	switch {
-	case len(*results) == 1:
-		klog.V(4).Infof("[metaserver]successfully insert or update obj:%v", key)
-		return []byte((*results)[0].Value), nil
-	default:
-		return nil, fmt.Errorf("the server could not find the requested resource")
-	}
-}
-
-func (s *imitator) Delete(_ context.Context, key string) error {
-	m := v2.MetaV2{
-		Key: key,
-	}
-	s.lock.Lock()
-	_, err := dbm.DBAccess.Delete(&m)
-	if err != nil {
-		klog.Errorf("[imitator] delete error: %v", err)
-	}
-	s.lock.Unlock()
-	return nil
-}
 func (s *imitator) DeleteObj(_ context.Context, obj runtime.Object) error {
 	key, err := metaserver.KeyFuncObj(obj)
 	if err != nil {
@@ -151,10 +142,11 @@ func (s *imitator) DeleteObj(_ context.Context, obj runtime.Object) error {
 	err = s.Delete(context.TODO(), key)
 	return err
 }
+
 func (s *imitator) Get(_ context.Context, key string) (Resp, error) {
 	var resp Resp
 	s.lock.RLock()
-	results, err := v2.RawMetaByGVRNN(metaserver.ParseKey(key))
+	results, err := dbclient.NewMetaV2Service().RawMetaByGVRNN(metaserver.ParseKey(key))
 	resp.Revision = s.revision
 	s.lock.RUnlock()
 	if err != nil {
@@ -176,7 +168,7 @@ func (s *imitator) List(_ context.Context, key string) (Resp, error) {
 	klog.Infof("%v,%v,%v", gvr, ns, name)
 	var resp Resp
 	s.lock.RLock()
-	results, err := v2.RawMetaByGVRNN(gvr, ns, name)
+	results, err := dbclient.NewMetaV2Service().RawMetaByGVRNN(gvr, ns, name)
 	resp.Revision = s.revision
 
 	s.lock.RUnlock()

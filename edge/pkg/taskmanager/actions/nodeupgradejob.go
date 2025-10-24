@@ -32,7 +32,7 @@ import (
 	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
-	daov2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 	"github.com/kubeedge/kubeedge/pkg/containers"
 	"github.com/kubeedge/kubeedge/pkg/nodetask/actionflow"
 	taskmsg "github.com/kubeedge/kubeedge/pkg/nodetask/message"
@@ -89,7 +89,7 @@ func (nodeUpgradeJobActionHandler) preRun(
 	if !ok {
 		return fmt.Errorf("failed to conv spec to NodeUpgradeJobSpec, actual type %T", specser.GetSpec())
 	}
-	upgradeDao := daov2.NewUpgrade()
+	upgradeDao := dbclient.NewUpgrade()
 	if err := upgradeDao.Save(jobname, nodename, spec); err != nil {
 		return err
 	}
@@ -104,7 +104,7 @@ func (nodeUpgradeJobActionHandler) postRun(
 	// Since the keadm upgrade / rollback command is asynchronous, so this method can not be executed now.
 	// When obtaining the task report in the taskmanager module, it is also necessary to determine whether
 	// to delete the record in the meta_v2 table(hub_connected_hooker.go).
-	upgradeDao := daov2.NewUpgrade()
+	upgradeDao := dbclient.NewUpgrade()
 	if err := upgradeDao.Delete(); err != nil {
 		return err
 	}
