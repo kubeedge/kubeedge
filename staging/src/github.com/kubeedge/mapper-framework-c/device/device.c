@@ -16,15 +16,44 @@
 #include <ctype.h>
 
 extern Publisher *g_publisher;
+
+static const char *normalize_status(const char *s) {
+    if (!s || !*s) return DEVICE_STATUS_OFFLINE;
+    if (strcasecmp(s, "OK") == 0 || strcasecmp(s, "ONLINE") == 0) return DEVICE_STATUS_OK;
+    if (strcasecmp(s, "OFFLINE") == 0 || strcasecmp(s, "DOWN") == 0) return DEVICE_STATUS_OFFLINE;
+    return s;
+}
+
+static int device_update_status_from_driver(Device *device, int force_report, const char **out_new_status) {
+    if (!device || !device->client) return 0;
+    const char *drv = GetDeviceStates(device->client);
+    const char *newst = normalize_status(drv);
+    if (force_report) device_set_status(device, newst);
+    if (out_new_status) *out_new_status = newst;
+    return force_report;
+}
+
 static void *device_data_thread(void *arg)
 {
     Device *device = (Device *)arg;
     while (device->dataThreadRunning)
     {
+        int need_report_status = 0;
+        const char *status_to_report = NULL;
+        const char *ns = NULL;
+        const char *name = NULL;
+
         pthread_mutex_lock(&device->mutex);
+
+        need_report_status = device_update_status_from_driver(device, 0, &status_to_report);
+        ns = device->instance.namespace_ ? device->instance.namespace_ : "default";
+        name = device->instance.name ? device->instance.name : "unknown";
+
         if (strcmp(device->status, DEVICE_STATUS_OK) != 0)
         {
             pthread_mutex_unlock(&device->mutex);
+            if (need_report_status && status_to_report)
+                ReportDeviceStatus(ns, name, status_to_report);
             usleep(1000000);
             continue;
         }
@@ -64,6 +93,10 @@ static void *device_data_thread(void *arg)
         }
 
         pthread_mutex_unlock(&device->mutex);
+
+        if (need_report_status && status_to_report)
+            ReportDeviceStatus(ns, name, status_to_report);
+
         usleep(1000000);
     }
 
@@ -532,10 +565,13 @@ int device_start(Device *device)
         log_warn("device_start: no client to Init for device %s", device->instance.name);
     }
 
-    device_set_status(device, DEVICE_STATUS_OK);
-    ReportDeviceStatus(device->instance.namespace_ ? device->instance.namespace_ : "default",
-                       device->instance.name ? device->instance.name : "unknown",
-                       DEVICE_STATUS_OK);
+    {
+        const char *init_st = NULL;
+        int need = device_update_status_from_driver(device, 1, &init_st);
+        const char *ns = device->instance.namespace_ ? device->instance.namespace_ : "default";
+        const char *name = device->instance.name ? device->instance.name : "unknown";
+        if (need && init_st) ReportDeviceStatus(ns, name, init_st);
+    }
 
     device->dataThreadRunning = 1;
     if (pthread_create(&device->dataThread, NULL, device_data_thread, device) != 0)
