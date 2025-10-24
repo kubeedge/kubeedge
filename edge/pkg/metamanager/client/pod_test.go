@@ -21,11 +21,15 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/mocks/beego"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
@@ -230,6 +234,146 @@ func TestHandlePodFromMetaDB(t *testing.T) {
 				assert.Equal(test.expectedPod.ObjectMeta.Namespace, pod.ObjectMeta.Namespace)
 				assert.Equal(test.expectedPod.Spec.Containers[0].Name, pod.Spec.Containers[0].Name)
 				assert.Equal(test.expectedPod.Spec.Containers[0].Image, pod.Spec.Containers[0].Image)
+			}
+		})
+	}
+}
+
+func TestPod_Patch(t *testing.T) {
+	assert := assert.New(t)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock := beego.NewMockOrmer(mockCtrl)
+	rawSetterMock := beego.NewMockRawSeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
+	podName := "test-patchpod"
+	patchData := []byte(`{"metadata":{"labels":{"test":"label"}}}`)
+	expectedPod := &corev1.Pod{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Pod",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      podName,
+			Namespace: namespace,
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "test-container",
+					Image: "test-image",
+				},
+			},
+		},
+	}
+
+	expectedPod1 := &corev1.Pod{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Pod",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      podName,
+			Namespace: namespace,
+			Labels: map[string]string{
+				"test": "label",
+			},
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "test-container",
+					Image: "test-image",
+				},
+			},
+		},
+	}
+
+	testCases := []struct {
+		name        string
+		respFunc    func(*model.Message) (*model.Message, error)
+		expectedPod *corev1.Pod
+		expectErr   bool
+	}{
+		{
+			name: "Successful Patch",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				resp := model.NewMessage(message.GetID())
+				if message.GetOperation() == model.QueryOperation {
+					content, _ := json.Marshal(expectedPod)
+					resp.Content = []string{string(content)}
+				}
+				if message.GetOperation() == model.PatchOperation {
+					podResp := PodResp{
+						Object: nil,
+						Err:    apierrors.StatusError{},
+					}
+					content, _ := json.Marshal(podResp)
+					resp.Content = content
+				}
+				return resp, nil
+			},
+			expectedPod: expectedPod1,
+			expectErr:   false,
+		},
+		{
+			name: "Error response",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				resp := model.NewMessage(message.GetID())
+				podResp := PodResp{
+					Object: nil,
+					Err: apierrors.StatusError{
+						ErrStatus: metav1.Status{
+							Message: "Test error msg",
+							Reason:  metav1.StatusReasonInternalError,
+							Code:    500,
+						},
+					},
+				}
+				content, _ := json.Marshal(podResp)
+				resp.Content = content
+				return resp, nil
+			},
+			expectedPod: nil,
+			expectErr:   true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			mockSend := &mockSendInterface{}
+			mockSend.sendSyncFunc = func(message *model.Message) (*model.Message, error) {
+				assert.Equal(modules.MetaGroup, message.GetGroup())
+				assert.Equal(modules.EdgedModuleName, message.GetSource())
+				assert.NotEmpty(message.GetID())
+				if message.GetOperation() == model.QueryOperation {
+					assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypePod, podName), message.GetResource())
+				}
+				if message.GetOperation() == model.PatchOperation {
+					assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypePodPatch, podName), message.GetResource())
+					content, err := message.GetContentData()
+					assert.NoError(err)
+					assert.Equal(string(patchData), string(content))
+				}
+
+				return test.respFunc(message)
+			}
+
+			if !test.expectErr {
+				ormerMock.EXPECT().Raw(gomock.Any(), gomock.Any()).Return(rawSetterMock).Times(1)
+				rawSetterMock.EXPECT().Exec().Return(nil, nil).Times(1)
+			}
+
+			podClient := newPods(namespace, mockSend)
+
+			patchedPod, err := podClient.Patch(podName, patchData)
+			if test.expectErr {
+				assert.Error(err)
+				assert.Nil(patchedPod)
+			} else {
+				assert.NoError(err)
+				assert.Equal(test.expectedPod, patchedPod)
 			}
 		})
 	}

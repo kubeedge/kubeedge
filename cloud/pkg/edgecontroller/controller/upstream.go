@@ -1018,7 +1018,7 @@ func (uc *UpstreamController) patchNode() {
 
 			resMsg := model.NewMessage(msg.GetID()).
 				SetResourceVersion(node.ResourceVersion).
-				FillBody(&edgeapi.ObjectResp{Object: node, Err: err}).
+				FillBody(&edgeapi.ObjectResp{Object: nil, Err: err}).
 				BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, msg.GetResource(), model.ResponseOperation)
 			if err = uc.messageLayer.Response(*resMsg); err != nil {
 				klog.Warningf("Message: %s process failure, response failed with error: %v", msg.GetID(), err)
@@ -1161,7 +1161,7 @@ func (uc *UpstreamController) patchPod() {
 
 			resMsg := model.NewMessage(msg.GetID()).
 				SetResourceVersion(updatedPod.ResourceVersion).
-				FillBody(&edgeapi.ObjectResp{Object: updatedPod, Err: err}).
+				FillBody(&edgeapi.ObjectResp{Object: nil, Err: err}).
 				BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, msg.GetResource(), model.ResponseOperation)
 			if err = uc.messageLayer.Response(*resMsg); err != nil {
 				klog.Errorf("Message: %s process failure, response failed with error: %v", msg.GetID(), err)

@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -28,6 +29,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/mocks/beego"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
@@ -44,9 +47,17 @@ func TestNewNodes(t *testing.T) {
 
 func TestNode_Create(t *testing.T) {
 	assert := assert.New(t)
-
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock := beego.NewMockOrmer(mockCtrl)
+	rawSetterMock := beego.NewMockRawSeter(mockCtrl)
+	dbm.DBAccess = ormerMock
 	nodeName := "test-node"
 	inputNode := &api.Node{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Node",
+			APIVersion: "v1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: nodeName,
 		},
@@ -115,9 +126,11 @@ func TestNode_Create(t *testing.T) {
 
 				return test.respFunc(message)
 			}
-
+			if !test.expectErr {
+				ormerMock.EXPECT().Raw(gomock.Any(), gomock.Any()).Return(rawSetterMock).Times(1)
+				rawSetterMock.EXPECT().Exec().Return(nil, nil).Times(1)
+			}
 			nodeClient := newNodes(namespace, mockSend)
-
 			createdNode, err := nodeClient.Create(inputNode)
 
 			if test.expectErr {
@@ -133,11 +146,29 @@ func TestNode_Create(t *testing.T) {
 
 func TestNode_Patch(t *testing.T) {
 	assert := assert.New(t)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock := beego.NewMockOrmer(mockCtrl)
+	rawSetterMock := beego.NewMockRawSeter(mockCtrl)
+	dbm.DBAccess = ormerMock
 
 	nodeName := "test-node"
 	patchData := []byte(`{"metadata":{"labels":{"test":"label"}}}`)
 
 	expectedNode := &api.Node{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Node",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: nodeName,
+		},
+	}
+	expectedNode1 := &api.Node{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Node",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: nodeName,
 			Labels: map[string]string{
@@ -156,15 +187,21 @@ func TestNode_Patch(t *testing.T) {
 			name: "Successful Patch",
 			respFunc: func(message *model.Message) (*model.Message, error) {
 				resp := model.NewMessage(message.GetID())
-				nodeResp := NodeResp{
-					Object: expectedNode,
-					Err:    apierrors.StatusError{},
+				if message.GetOperation() == model.QueryOperation {
+					content, _ := json.Marshal(expectedNode)
+					resp.Content = content
 				}
-				content, _ := json.Marshal(nodeResp)
-				resp.Content = content
+				if message.GetOperation() == model.PatchOperation {
+					nodeResp := NodeResp{
+						Object: nil,
+						Err:    apierrors.StatusError{},
+					}
+					content, _ := json.Marshal(nodeResp)
+					resp.Content = content
+				}
 				return resp, nil
 			},
-			expectedNode: expectedNode,
+			expectedNode: expectedNode1,
 			expectErr:    false,
 		},
 		{
@@ -197,20 +234,27 @@ func TestNode_Patch(t *testing.T) {
 				assert.Equal(modules.MetaGroup, message.GetGroup())
 				assert.Equal(modules.EdgedModuleName, message.GetSource())
 				assert.NotEmpty(message.GetID())
-				assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypeNodePatch, nodeName), message.GetResource())
-				assert.Equal(model.PatchOperation, message.GetOperation())
-
-				content, err := message.GetContentData()
-				assert.NoError(err)
-				assert.Equal(string(patchData), string(content))
+				if message.GetOperation() == model.QueryOperation {
+					assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypeNode, nodeName), message.GetResource())
+				}
+				if message.GetOperation() == model.PatchOperation {
+					assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypeNodePatch, nodeName), message.GetResource())
+					content, err := message.GetContentData()
+					assert.NoError(err)
+					assert.Equal(string(patchData), string(content))
+				}
 
 				return test.respFunc(message)
+			}
+
+			if !test.expectErr {
+				ormerMock.EXPECT().Raw(gomock.Any(), gomock.Any()).Return(rawSetterMock).Times(1)
+				rawSetterMock.EXPECT().Exec().Return(nil, nil).Times(1)
 			}
 
 			nodeClient := newNodes(namespace, mockSend)
 
 			patchedNode, err := nodeClient.Patch(nodeName, patchData)
-
 			if test.expectErr {
 				assert.Error(err)
 				assert.Nil(patchedNode)
@@ -297,9 +341,18 @@ func TestHandleNodeFromMetaManager(t *testing.T) {
 
 func TestHandleNodeResp(t *testing.T) {
 	assert := assert.New(t)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock := beego.NewMockOrmer(mockCtrl)
+	rawSetterMock := beego.NewMockRawSeter(mockCtrl)
+	dbm.DBAccess = ormerMock
 
 	// Test case 1: Valid node response
 	node := &api.Node{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Node",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-node",
 		},
@@ -309,7 +362,10 @@ func TestHandleNodeResp(t *testing.T) {
 	}
 	content, _ := json.Marshal(nodeResp)
 
-	result, err := handleNodeResp(content)
+	resource := "/default/node/" + node.Name
+	ormerMock.EXPECT().Raw(gomock.Any(), gomock.Any()).Return(rawSetterMock).Times(1)
+	rawSetterMock.EXPECT().Exec().Return(nil, nil).Times(1)
+	result, err := handleNodeResp(resource, content)
 	assert.NoError(err)
 	assert.Equal(node, result)
 
@@ -326,7 +382,7 @@ func TestHandleNodeResp(t *testing.T) {
 	}
 	content, _ = json.Marshal(nodeResp)
 
-	result, err = handleNodeResp(content)
+	result, err = handleNodeResp(resource, content)
 	assert.Error(err)
 	assert.Nil(result)
 	assert.Equal(&statusErr, err)
@@ -334,8 +390,77 @@ func TestHandleNodeResp(t *testing.T) {
 	// Test case 3: Invalid JSON
 	invalidContent := []byte(`{"invalid": json}`)
 
-	result, err = handleNodeResp(invalidContent)
+	result, err = handleNodeResp(resource, invalidContent)
 	assert.Error(err)
 	assert.Nil(result)
 	assert.Contains(err.Error(), "unmarshal message to node failed")
+}
+
+func TestNode_Get(t *testing.T) {
+	assert := assert.New(t)
+
+	nodeName := "test-getnode"
+	expectedNode := &api.Node{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Node",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: nodeName,
+		},
+	}
+
+	testCases := []struct {
+		name      string
+		respFunc  func(*model.Message) (*model.Message, error)
+		stdResult *api.Node
+		expectErr bool
+	}{
+		{
+			name: "Get Node Success",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				resp := model.NewMessage(message.GetID())
+				nodeJSON, _ := json.Marshal(expectedNode)
+				resp.Content = nodeJSON
+				return resp, nil
+			},
+			stdResult: expectedNode,
+			expectErr: false,
+		},
+		{
+			name: "Get Node Error",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				return nil, fmt.Errorf("test error")
+			},
+			stdResult: nil,
+			expectErr: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			mockSend := &mockSendInterface{}
+			mockSend.sendSyncFunc = func(message *model.Message) (*model.Message, error) {
+				assert.Equal(modules.MetaGroup, message.GetGroup())
+				assert.Equal(modules.EdgedModuleName, message.GetSource())
+				assert.NotEmpty(message.GetID())
+				assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypeNode, nodeName), message.GetResource())
+				assert.Equal(model.QueryOperation, message.GetOperation())
+
+				return test.respFunc(message)
+			}
+
+			nodesClient := newNodes(namespace, mockSend)
+
+			node, err := nodesClient.Get(nodeName)
+
+			if test.expectErr {
+				assert.Error(err)
+				assert.Nil(node)
+			} else {
+				assert.NoError(err)
+				assert.Equal(test.stdResult, node)
+			}
+		})
+	}
 }

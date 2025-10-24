@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,7 +11,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -18,6 +22,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
+	patchutil "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/util"
 )
 
 // PodsGetter is interface to get pods
@@ -126,7 +131,45 @@ func (c *pods) Patch(name string, patchBytes []byte) (*corev1.Pod, error) {
 		return nil, errors.New(string(content))
 	}
 
-	return handlePodResp(resource, content)
+	var podResp PodResp
+	err = json.Unmarshal(content, &podResp)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshal message to pod failed, err: %v", err)
+	}
+
+	if reflect.DeepEqual(podResp.Err, apierrors.StatusError{}) {
+		pod, err := c.Get(name)
+		if err != nil {
+			return nil, err
+		}
+
+		toUnstructured, err := runtime.DefaultUnstructuredConverter.ToUnstructured(pod)
+		if err != nil {
+			return nil, err
+		}
+		originalObj := &unstructured.Unstructured{Object: toUnstructured}
+		defaultScheme := scheme.Scheme
+		defaulter := runtime.ObjectDefaulter(defaultScheme)
+		updatedResource := new(unstructured.Unstructured)
+		GroupVersionKind := originalObj.GroupVersionKind()
+		schemaReferenceObj, err := defaultScheme.New(GroupVersionKind)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build schema reference object, err: %+v", err)
+		}
+		ctx := context.Background()
+		if err = patchutil.StrategicPatchObject(ctx, defaulter, originalObj, patchBytes, updatedResource, schemaReferenceObj, ""); err != nil {
+			return nil, err
+		}
+		updatedPod := &corev1.Pod{}
+		if err = runtime.DefaultUnstructuredConverter.FromUnstructured(updatedResource.UnstructuredContent(), updatedPod); err != nil {
+			return nil, err
+		}
+		if err = updatePodDB(resource, updatedPod); err != nil {
+			return nil, fmt.Errorf("update pod meta failed, err: %v", err)
+		}
+		return updatedPod, nil
+	}
+	return nil, &podResp.Err
 }
 
 func handlePodFromMetaDB(name string, content []byte) (*corev1.Pod, error) {
