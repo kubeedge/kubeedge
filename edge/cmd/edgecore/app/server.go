@@ -1,7 +1,6 @@
 package app
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -174,30 +173,40 @@ func cleanupToken(config v1alpha2.EdgeCoreConfig, file string) error {
 	return os.WriteFile(file, d, 0640)
 }
 
-// environmentCheck check the environment before edgecore start
-// if Check failed,  return errors
+// environmentCheck checks the environment before edgecore starts
+// if check failed, returns error
 func environmentCheck(skipCheck bool) error {
-	if skipCheck {
-		return nil
-	}
-	processes, err := ps.Processes()
-	if err != nil {
-		return err
-	}
+    if skipCheck {
+        return nil
+    }
 
-	for _, process := range processes {
-		processName, err := process.Name()
-		if err != nil {
-			// err usually cant be fixed by user, so just skip it instead of return error (we only check named process)
-			continue
-		}
-		switch processName {
-		case "kubelet": // if kubelet is running, return error
-			return errors.New("kubelet should not be running on edge node when starting edgecore")
-		}
-	}
+    // Support custom process list via environment variable
+    checkProcesses := []string{"kubelet"}
+    if env := os.Getenv("EDGECORE_CHECK_PROCESSES"); env != "" {
+        customProcesses := strings.Split(env, ",")
+        checkProcesses = append(checkProcesses, customProcesses...)
+    }
 
-	return nil
+    processes, err := ps.Processes()
+    if err != nil {
+        return err
+    }
+
+    for _, process := range processes {
+        processName, err := process.Name()
+        if err != nil {
+            // Skip processes we cannot get the name
+            continue
+        }
+        
+        for _, p := range checkProcesses {
+            if strings.EqualFold(processName, p) {
+                return fmt.Errorf("%s should not be running on edge node when starting edgecore", processName)
+            }
+        }
+    }
+
+    return nil
 }
 
 // registerModules register all the modules started in edgecore
