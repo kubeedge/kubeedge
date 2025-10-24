@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-   http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,223 +19,167 @@ package controller
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/kubeedge/api/apis/devices/v1beta1"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewUpstreamController(t *testing.T) {
-	assert := assert.New(t)
+	a := assert.New(t)
 
 	dc := &DownstreamController{}
 	uc, err := NewUpstreamController(dc)
-	assert.NoError(err)
-	assert.NotNil(uc)
 
-	assert.NotNil(uc.messageLayer)
-	assert.NotNil(uc.dc)
-	assert.Equal(dc, uc.dc)
+	a.NoError(err)
+	a.NotNil(uc)
+	a.NotNil(uc.messageLayer)
+	a.NotNil(uc.dc)
+	a.Equal(dc, uc.dc)
 
-	// Channels are not initialized (they should be initialized in Start())
-	assert.Nil(uc.deviceTwinsChan)
-	assert.Nil(uc.deviceStatesChan)
+	// Channels are not initialized (should be initialized in Start()).
+	a.Nil(uc.deviceTwinsChan)
+	a.Nil(uc.deviceStatesChan)
 }
 
 func TestFindOrCreateTwinByName(t *testing.T) {
-	assert := assert.New(t)
-
-	tests := []struct {
+	type twinCase struct {
 		name       string
 		twinName   string
-		properties []v1beta1.DeviceProperty
-		status     *DeviceStatus
-		expected   *v1beta1.Twin
-	}{
+		properties []string
+		initial    []twinData
+		expected   *twinData
+	}
+
+	cases := []twinCase{
 		{
-			name:     "finding existing twin",
-			twinName: "temperature",
-			properties: []v1beta1.DeviceProperty{
-				{
-					Name: "temperature",
-				},
-			},
-			status: &DeviceStatus{
-				Status: v1beta1.DeviceStatus{
-					Twins: []v1beta1.Twin{
-						{
-							PropertyName: "temperature",
-							Reported: v1beta1.TwinProperty{
-								Value: "25",
-							},
-						},
-					},
-				},
-			},
-			expected: &v1beta1.Twin{
-				PropertyName: "temperature",
-				Reported: v1beta1.TwinProperty{
-					Value: "25",
-				},
-			},
+			name:       "finding existing twin",
+			twinName:   "temperature",
+			properties: []string{"temperature"},
+			initial:    []twinData{{"temperature", "25"}},
+			expected:   &twinData{"temperature", "25"},
 		},
 		{
-			name:     "creating new twin",
-			twinName: "humidity",
-			properties: []v1beta1.DeviceProperty{
-				{
-					Name: "humidity",
-				},
-			},
-			status: &DeviceStatus{
-				Status: v1beta1.DeviceStatus{
-					Twins: []v1beta1.Twin{},
-				},
-			},
-			expected: &v1beta1.Twin{
-				PropertyName: "humidity",
-			},
+			name:       "creating new twin",
+			twinName:   "humidity",
+			properties: []string{"humidity"},
+			initial:    nil,
+			expected:   &twinData{"humidity", ""},
 		},
 		{
-			name:     "property not found",
-			twinName: "nonexistent",
-			properties: []v1beta1.DeviceProperty{
-				{
-					Name: "temperature",
-				},
-			},
-			status: &DeviceStatus{
-				Status: v1beta1.DeviceStatus{
-					Twins: []v1beta1.Twin{},
-				},
-			},
-			expected: nil,
+			name:       "property not found",
+			twinName:   "nonexistent",
+			properties: []string{"temperature"},
+			initial:    nil,
+			expected:   nil,
 		},
 		{
-			name:     "multiple properties",
-			twinName: "temperature",
-			properties: []v1beta1.DeviceProperty{
-				{
-					Name: "humidity",
-				},
-				{
-					Name: "temperature",
-				},
-			},
-			status: &DeviceStatus{
-				Status: v1beta1.DeviceStatus{
-					Twins: []v1beta1.Twin{
-						{
-							PropertyName: "humidity",
-							Reported: v1beta1.TwinProperty{
-								Value: "60",
-							},
-						},
-					},
-				},
-			},
-			expected: &v1beta1.Twin{
-				PropertyName: "temperature",
-			},
+			name:       "multiple properties",
+			twinName:   "temperature",
+			properties: []string{"humidity", "temperature"},
+			initial:    []twinData{{"humidity", "60"}},
+			expected:   &twinData{"temperature", ""},
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := findOrCreateTwinByName(tt.twinName, tt.properties, tt.status)
-			if tt.expected == nil {
-				assert.Nil(result)
-			} else {
-				assert.Equal(tt.expected.PropertyName, result.PropertyName)
-				if tt.expected.Reported.Value != "" {
-					assert.Equal(tt.expected.Reported, result.Reported)
-				}
-				// Verify twin was added to DeviceStatus if created
-				if len(tt.status.Status.Twins) > 0 {
-					found := false
-					for _, twin := range tt.status.Status.Twins {
-						if twin.PropertyName == tt.twinName {
-							found = true
-							break
-						}
-					}
-					assert.True(found)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			status := &DeviceStatus{
+				Status: v1beta1.DeviceStatus{Twins: buildTwins(tc.initial)},
+			}
+			props := buildProperties(tc.properties)
+
+			result := findOrCreateTwinByName(tc.twinName, props, status)
+			if tc.expected == nil {
+				assert.Nil(t, result)
+				return
+			}
+
+			assert.Equal(t, tc.expected.name, result.PropertyName)
+			if tc.expected.value != "" {
+				assert.Equal(t, tc.expected.value, result.Reported.Value)
+			}
+
+			// Verify twin was added if it was supposed to be created.
+			found := false
+			for _, twin := range status.Status.Twins {
+				if twin.PropertyName == tc.twinName {
+					found = true
+					break
 				}
 			}
+			assert.True(t, found)
 		})
 	}
 }
 
 func TestFindTwinByName(t *testing.T) {
-	tests := []struct {
-		name         string
-		twinName     string
-		deviceStatus *DeviceStatus
-		expected     *v1beta1.Twin
-	}{
+	type twinCase struct {
+		name     string
+		twinName string
+		initial  []twinData
+		expected *twinData
+	}
+
+	cases := []twinCase{
 		{
 			name:     "twin exists",
 			twinName: "temperature",
-			deviceStatus: &DeviceStatus{
-				Status: v1beta1.DeviceStatus{
-					Twins: []v1beta1.Twin{
-						{
-							PropertyName: "temperature",
-							Reported: v1beta1.TwinProperty{
-								Value: "25",
-							},
-						},
-						{
-							PropertyName: "humidity",
-							Reported: v1beta1.TwinProperty{
-								Value: "60",
-							},
-						},
-					},
-				},
-			},
-			expected: &v1beta1.Twin{
-				PropertyName: "temperature",
-				Reported: v1beta1.TwinProperty{
-					Value: "25",
-				},
-			},
+			initial:  []twinData{{"temperature", "25"}, {"humidity", "60"}},
+			expected: &twinData{"temperature", "25"},
 		},
 		{
 			name:     "twin doesn't exist",
 			twinName: "pressure",
-			deviceStatus: &DeviceStatus{
-				Status: v1beta1.DeviceStatus{
-					Twins: []v1beta1.Twin{
-						{
-							PropertyName: "temperature",
-							Reported: v1beta1.TwinProperty{
-								Value: "25",
-							},
-						},
-					},
-				},
-			},
+			initial:  []twinData{{"temperature", "25"}},
 			expected: nil,
 		},
 		{
-			name:     "device status is nil",
+			name:     "device status empty",
 			twinName: "temperature",
-			deviceStatus: &DeviceStatus{
-				Status: v1beta1.DeviceStatus{},
-			},
+			initial:  nil,
 			expected: nil,
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := findTwinByName(tt.twinName, tt.deviceStatus)
-			if tt.expected == nil {
-				assert.Nil(t, result)
-			} else {
-				assert.Equal(t, tt.expected.PropertyName, result.PropertyName)
-				assert.Equal(t, tt.expected.Reported, result.Reported)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			status := &DeviceStatus{
+				Status: v1beta1.DeviceStatus{Twins: buildTwins(tc.initial)},
 			}
+
+			result := findTwinByName(tc.twinName, status)
+			if tc.expected == nil {
+				assert.Nil(t, result)
+				return
+			}
+
+			assert.Equal(t, tc.expected.name, result.PropertyName)
+			assert.Equal(t, tc.expected.value, result.Reported.Value)
 		})
 	}
+}
+
+// ---------- helpers to reduce boilerplate ----------
+
+type twinData struct {
+	name  string
+	value string
+}
+
+func buildProperties(names []string) []v1beta1.DeviceProperty {
+	props := make([]v1beta1.DeviceProperty, len(names))
+	for i, n := range names {
+		props[i] = v1beta1.DeviceProperty{Name: n}
+	}
+	return props
+}
+
+func buildTwins(data []twinData) []v1beta1.Twin {
+	twins := make([]v1beta1.Twin, len(data))
+	for i, d := range data {
+		twins[i] = v1beta1.Twin{
+			PropertyName: d.name,
+			Reported:     v1beta1.TwinProperty{Value: d.value},
+		}
+	}
+	return twins
 }
