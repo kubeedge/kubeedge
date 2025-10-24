@@ -93,18 +93,22 @@ func Register(dc *v1alpha1.TaskManager) {
 }
 
 // Name of controller.
-func (TaskManager) Name() string {
+func (tm *TaskManager) Name() string {
 	return modules.TaskManagerModuleName
 }
 
 // Group of controller.
-func (TaskManager) Group() string {
+func (tm *TaskManager) Group() string {
 	return modules.TaskManagerModuleGroup
 }
 
 // Enable indicates whether enable this module.
-func (tm TaskManager) Enable() bool {
+func (tm *TaskManager) Enable() bool {
 	return tm.enable
+}
+
+func (tm *TaskManager) RestartPolicy() *core.ModuleRestartPolicy {
+	return nil
 }
 
 // Start the task manager module.

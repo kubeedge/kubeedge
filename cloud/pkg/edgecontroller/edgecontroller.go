@@ -56,6 +56,10 @@ func (ec *EdgeController) Enable() bool {
 	return ec.config.Enable
 }
 
+func (ec *EdgeController) RestartPolicy() *core.ModuleRestartPolicy {
+	return nil
+}
+
 // Start controller
 func (ec *EdgeController) Start() {
 	if err := ec.upstream.Start(); err != nil {
