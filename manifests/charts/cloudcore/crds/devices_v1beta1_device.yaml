@@ -38,7 +38,7 @@ spec:
             type: object
           spec:
             description: DeviceSpec represents a single device instance. It is an
-              instantation of a device model.
+              instantiation of a device model.
             properties:
               data:
                 description: |-

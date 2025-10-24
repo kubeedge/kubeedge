@@ -35,9 +35,9 @@ var (
 	MemberUpdate = "$hw/events/edgeGroup/%s/membership/updated"
 	// GroupUpdate updates a edgegroup
 	GroupUpdate = "$hw/events/edgeGroup/%s/updated"
-	// GroupAuthGet get temperary aksk from cloudhub
+	// GroupAuthGet get temporary aksk from cloudhub
 	GroupAuthGet = "$hw/events/edgeGroup/%s/authInfo/get"
-	// GroupAuthGetRes temperary aksk from cloudhub
+	// GroupAuthGetRes temporary aksk from cloudhub
 	GroupAuthGetRes = "$hw/events/edgeGroup/%s/authInfo/get/result"
 	// SubTopics which edge-client should be sub
 	SubTopics = []string{

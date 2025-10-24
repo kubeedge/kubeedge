@@ -274,7 +274,7 @@ func (m *metaManager) processUpdate(message model.Message) {
 		resp := message.NewRespByMessage(&message, OK)
 		sentToMetamanager(resp, message.IsSync())
 	default:
-		klog.Errorf("unsupport message source, %s", msgSource)
+		klog.Errorf("unsupported message source, %s", msgSource)
 	}
 }
 

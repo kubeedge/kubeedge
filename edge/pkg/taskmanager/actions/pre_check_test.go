@@ -46,7 +46,7 @@ func TestPreCheck(t *testing.T) {
 	err := PreCheck([]string{"cpu", "mem", "disk"})
 	assert.NoError(t, err)
 
-	err = PreCheck([]string{"unsupport"})
+	err = PreCheck([]string{"unsupported"})
 	assert.Error(t, err)
 }
 

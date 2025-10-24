@@ -25,20 +25,20 @@ In addition, there is another problem that some errors in the processing process
 ## Proposal
 ### Node Job Status
 
-The node job status consists of phase and nodeStatus fields. The phase field is one of there values: Init, InProgress, Complated or Failure. 
+The node job status consists of phase and nodeStatus fields. The phase field is one of there values: Init, InProgress, Completed or Failure. 
 
 ```mermaid
 graph LR
 A[Init] --> B[InProgress]
 B --> C{Succ?}
-C --> |Y| D[Complated]
+C --> |Y| D[Completed]
 C --> |N| E[Failure]
 A --Fail--> E
 ```
 
 - **Init** - After creating a node job CR, ControllerManager will initialize the matching node and set the node job phase to "Init".
 - **InProgress** - The node job phase will be "InProgress" when any node starts processing the node task.
-- **Complated** - All node tasks are already final status and the number of node tasks failures is not greater than the defined failure rate, then set the phase to "Complated".
+- **Completed** - All node tasks are already final status and the number of node tasks failures is not greater than the defined failure rate, then set the phase to "Completed".
 - **Failure** - If the initialization of node tasks fails, or the number of failures for node tasks is greater than the defined failure rate, set the phase to "Failure".
 
 When each node reports the execution results, the node job phase will be calculated and updated. 
@@ -53,7 +53,7 @@ The node task status consists of phase, action, and reason. The phase field is o
 graph LR
 A[Pending] --> B[InProgress]
 B --> C{Succ?}
-C --> |Y| D[Complated]
+C --> |Y| D[Completed]
 C --> |N| E[Failure]
 C --> |no response| F[Unknown]
 B --> F
@@ -137,7 +137,7 @@ type JobPhase string
 const (
     JobPhaseInit       JobPhase = "Init"
     JobPhaseInProgress JobPhase = "InProgress"
-    JobPhaseComplated  JobPhase = "Complated"
+    JobPhaseCompleted  JobPhase = "Completed"
     JobPhaseFailure    JobPhase = "Failure"
 )
 
@@ -359,7 +359,7 @@ type ReconcileHandler[T operationsv1alpha2.NodeJobType] interface {
     CalculateStatus(ctx context.Context, job *T) bool
     // UpdateJobStatus updates the node job status by controller-runtime Client.
     UpdateJobStatus(ctx context.Context, job *T) error
-    // CheckTimeout checks whather the node task has timed out. If so,
+    // CheckTimeout checks whether the node task has timed out. If so,
     // the node task needs to set the status to unknown, and update the resources.
     CheckTimeout(ctx context.Context, jobName string) error
 }
@@ -526,7 +526,7 @@ func CalculatePhaseWithCounts(total, proc, fail int64,
         return operationsv1alpha2.JobPhaseFailure
     }
     // succ == total || fail / total <= failureTolerate
-    return operationsv1alpha2.JobPhaseComplated
+    return operationsv1alpha2.JobPhaseCompleted
 }
 ```
 
@@ -1093,7 +1093,7 @@ type ActionResponse interface {
 // when triggered elsewhere.
 type ActionFun = func(ctx context.Context, specser SpecSerializer) ActionResponse
 
-// baseActionRunner defines the abstruct of the job action runner.
+// baseActionRunner defines the abstract of the job action runner.
 // The implementation of ActionRunner must compose this structure.
 type ActionRunner struct {
     // actions defines the function implementation of each action.

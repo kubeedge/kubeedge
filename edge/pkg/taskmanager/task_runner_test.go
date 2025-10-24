@@ -41,9 +41,9 @@ func TestRunTask(t *testing.T) {
 	t.Run("runner is nil", func(t *testing.T) {
 		msg := model.NewMessage("").
 			SetRoute(modules.TaskManagerModuleName, modules.TaskManagerModuleGroup).
-			SetResourceOperation("operations.kubeedge.io/v1alpha2/unknow/taskname/nodes/node1", "")
+			SetResourceOperation("operations.kubeedge.io/v1alpha2/unknown/taskname/nodes/node1", "")
 		err := RunTask(msg)
-		require.ErrorContains(t, err, "invalid resource type unknow")
+		require.ErrorContains(t, err, "invalid resource type unknown")
 	})
 
 	t.Run("process successful", func(t *testing.T) {

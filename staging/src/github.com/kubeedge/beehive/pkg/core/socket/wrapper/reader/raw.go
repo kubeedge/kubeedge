@@ -57,7 +57,7 @@ func (r *RawReader) ReadJSON(obj interface{}) error {
 	}
 	err = json.Unmarshal(buf, obj)
 	if err != nil {
-		klog.Errorf("failed to unmarshal message, context: %s, errpr: %+v", string(buf), err)
+		klog.Errorf("failed to unmarshal message, context: %s, error: %+v", string(buf), err)
 		return fmt.Errorf("failed to unmarshal message, error:%+v, context: %+v", err, string(buf))
 	}
 	return nil

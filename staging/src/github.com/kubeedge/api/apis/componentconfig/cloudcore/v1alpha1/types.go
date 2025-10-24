@@ -220,7 +220,7 @@ type CloudHubAuthorization struct {
 	Modes []AuthorizationMode `json:"modes"`
 }
 
-// AuthorizationMode indicates an authorization mdoe
+// AuthorizationMode indicates an authorization mode
 type AuthorizationMode struct {
 	// Node node authorization
 	Node *NodeAuthorization `json:"node,omitempty"`

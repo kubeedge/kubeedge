@@ -32,7 +32,7 @@ password=root
 
 echo "Generating key request for kubeedge"
 
-# Generete Root Key
+# Generate Root Key
 sudo openssl genrsa -des3 -passout pass:$password -out rootCA.key 4096
 # Generate Root Certificate
 sudo openssl req -x509 -new -nodes -key rootCA.key -sha256 -days 1024 -out rootCA.crt -passin pass:$password \

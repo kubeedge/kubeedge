@@ -143,7 +143,7 @@ func getBuiltinResourceAttributes(router beehivemodel.MessageRoute) (*authorizat
 			verb = "create"
 		}
 	default:
-		return nil, fmt.Errorf("unknown opeation %q", router.Operation)
+		return nil, fmt.Errorf("unknown operation %q", router.Operation)
 	}
 
 	if !kubeRes.namespaced {
