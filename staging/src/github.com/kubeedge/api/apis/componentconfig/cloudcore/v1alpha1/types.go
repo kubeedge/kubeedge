@@ -43,6 +43,9 @@ type CommonConfig struct {
 	// TunnelPort indicates the port that the cloudcore tunnel listened
 	TunnelPort int `json:"tunnelPort,omitempty"`
 
+	// DataTunnelPort indicates the port that the cloudcore data tunnel listened
+	DataTunnelPort int `json:"dataTunnelPort,omitempty"`
+
 	// MonitorServer holds config that exposes prometheus metrics and pprof
 	MonitorServer MonitorServer `json:"monitorServer,omitempty"`
 }
@@ -96,8 +99,12 @@ type Modules struct {
 	DynamicController *DynamicController `json:"dynamicController,omitempty"`
 	// CloudStream indicates cloudstream module config
 	CloudStream *CloudStream `json:"cloudStream,omitempty"`
+	// CloudDataStream indicates clouddatastream module config
+	CloudDataStream *CloudDataStream `json:"cloudDataStream,omitempty"`
 	// Router indicates router module config
 	Router *Router `json:"router,omitempty"`
+	// StreamRuleController indicates streamruleController module config
+	StreamRuleController *StreamRuleController `json:"streamruleController,omitempty"`
 	// IptablesManager indicates iptables module config
 	IptablesManager *IptablesManager `json:"iptablesManager,omitempty"`
 }
@@ -280,6 +287,12 @@ type EdgeControllerBuffer struct {
 	// RuleEndpointsEvent indicates the buffer of endpoint event
 	// default 1
 	RuleEndpointsEvent int32 `json:"ruleEndpointsEvent,omitempty"`
+	// StreamRulesEvent indicates the buffer of rule event
+	// default 1
+	StreamRulesEvent int32 `json:"streamrulesEvent,omitempty"`
+	// StreamRuleEndpointsEvent indicates the buffer of endpoint event
+	// default 1
+	StreamRuleEndpointsEvent int32 `json:"streamruleEndpointsEvent,omitempty"`
 	// QueryPersistentVolume indicates the buffer of query persistent volume
 	// default 1024
 	QueryPersistentVolume int32 `json:"queryPersistentVolume,omitempty"`
@@ -377,6 +390,9 @@ type EdgeControllerLoad struct {
 	// UpdateRuleStatusWorkers indicates the load of update rule status
 	// default 4
 	UpdateRuleStatusWorkers int32 `json:"UpdateRuleStatusWorkers,omitempty"`
+	// UpdateStreamruleStatusWorkers indicates the load of update streamrule status
+	// default 4
+	UpdateStreamruleStatusWorkers int32 `json:"UpdateStreamruleStatusWorkers,omitempty"`
 	// ServiceAccountTokenWorkers indicates the load of service account token
 	// default 4
 	ServiceAccountTokenWorkers int32 `json:"ServiceAccountTokenWorkers,omitempty"`
@@ -530,7 +546,47 @@ type CloudStream struct {
 	StreamPort uint32 `json:"streamPort,omitempty"`
 }
 
+type CloudDataStream struct {
+	// Enable indicates whether cloudstream is enabled, if set to false (for debugging etc.), skip checking other configs.
+	// default true
+	Enable bool `json:"enable"`
+
+	// TLSTunnelCAFile indicates ca file path
+	// default /etc/kubeedge/ca/rootCA.crt
+	TLSTunnelCAFile string `json:"tlsTunnelCAFile,omitempty"`
+	// TLSTunnelCertFile indicates cert file path
+	// default /etc/kubeedge/certs/server.crt
+	TLSTunnelCertFile string `json:"tlsTunnelCertFile,omitempty"`
+	// TLSTunnelPrivateKeyFile indicates key file path
+	// default /etc/kubeedge/certs/server.key
+	TLSTunnelPrivateKeyFile string `json:"tlsTunnelPrivateKeyFile,omitempty"`
+	// TunnelPort set open port for tunnel server
+	// default 10006
+	TunnelPort uint32 `json:"tunnelPort,omitempty"`
+
+	// TLSStreamCAFile indicates kube-apiserver ca file path
+	// default /etc/kubeedge/ca/streamCA.crt
+	TLSStreamCAFile string `json:"tlsStreamCAFile,omitempty"`
+	// TLSStreamCertFile indicates cert file path
+	// default /etc/kubeedge/certs/stream.crt
+	TLSStreamCertFile string `json:"tlsStreamCertFile,omitempty"`
+	// TLSStreamPrivateKeyFile indicates key file path
+	// default /etc/kubeedge/certs/stream.key
+	TLSStreamPrivateKeyFile string `json:"tlsStreamPrivateKeyFile,omitempty"`
+	// StreamPort set open port for stream server
+	// default 10005
+	StreamPort uint32 `json:"streamPort,omitempty"`
+}
+
 type Router struct {
+	// default true
+	Enable      bool   `json:"enable"`
+	Address     string `json:"address,omitempty"`
+	Port        uint32 `json:"port,omitempty"`
+	RestTimeout uint32 `json:"restTimeout,omitempty"`
+}
+
+type StreamRuleController struct {
 	// default true
 	Enable      bool   `json:"enable"`
 	Address     string `json:"address,omitempty"`

@@ -158,6 +158,16 @@ func NewDefaultEdgeCoreConfig() (config *EdgeCoreConfig) {
 			TaskManager: &TaskManager{
 				Enable: false,
 			},
+			StreamRuleEndpoint: &StreamRuleEndpoint{
+				Enable:                  false,
+				TLSTunnelCAFile:         constants.DefaultCAFile,
+				TLSTunnelCertFile:       constants.DefaultCertFile,
+				TLSTunnelPrivateKeyFile: constants.DefaultKeyFile,
+				HandshakeTimeout:        30,
+				ReadDeadline:            15,
+				TunnelServer:            net.JoinHostPort("127.0.0.1", strconv.Itoa(constants.DefaultDataTunnelPort)),
+				WriteDeadline:           15,
+			},
 		},
 	}
 	return

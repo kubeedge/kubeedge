@@ -85,6 +85,8 @@ type Modules struct {
 	MetaManager *MetaManager `json:"metaManager,omitempty"`
 	// ServiceBus indicates serviceBus module config
 	ServiceBus *ServiceBus `json:"serviceBus,omitempty"`
+	// StreamRuleEndpoint indicates StreamRuleEndpoint module config
+	StreamRuleEndpoint *StreamRuleEndpoint `json:"streamruleEndpoint,omitempty"`
 	// DeviceTwin indicates deviceTwin module config
 	DeviceTwin *DeviceTwin `json:"deviceTwin,omitempty"`
 	// DBTest indicates dbTest module config
@@ -1035,6 +1037,43 @@ type ServiceBus struct {
 	Port int `json:"port"`
 	// Timeout indicates timeout for servicebus receive mseeage
 	Timeout int `json:"timeout"`
+}
+
+// StreamRuleEndpoint indicates the StreamRuleEndpoint module config
+type StreamRuleEndpoint struct {
+	// Enable indicates whether StreamRuleEndpoint is enabled,
+	// if set to false (for debugging etc.), skip checking other StreamRuleEndpoint configs.
+	// default false
+	Enable bool `json:"enable"`
+
+	// // Address indicates address for http server
+	// Server string `json:"server"`
+	// // Port indicates port for http server
+	// Port int `json:"port"`
+
+	// TunnelServer indicates websocket server address (ip:port)
+	// +Required
+	TunnelServer string `json:"server,omitempty"`
+	// TLSTunnelCAFile indicates ca file path
+	// default /etc/kubeedge/ca/rootCA.crt
+	TLSTunnelCAFile string `json:"tlsTunnelCAFile,omitempty"`
+
+	// TLSTunnelCertFile indicates the file containing x509 Certificate for HTTPS
+	// default /etc/kubeedge/certs/server.crt
+	TLSTunnelCertFile string `json:"tlsTunnelCertFile,omitempty"`
+	// TLSTunnelPrivateKeyFile indicates the file containing x509 private key matching tlsCertFile
+	// default /etc/kubeedge/certs/server.key
+	TLSTunnelPrivateKeyFile string `json:"tlsTunnelPrivateKeyFile,omitempty"`
+
+	// HandshakeTimeout indicates handshake timeout (second)
+	// default 30
+	HandshakeTimeout int32 `json:"handshakeTimeout,omitempty"`
+	// ReadDeadline indicates read deadline (second)
+	// default 15
+	ReadDeadline int32 `json:"readDeadline,omitempty"`
+	// WriteDeadline indicates write deadline (second)
+	// default 15
+	WriteDeadline int32 `json:"writeDeadline,omitempty"`
 }
 
 // DeviceTwin indicates the DeviceTwin module config
