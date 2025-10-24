@@ -87,7 +87,6 @@ HttpPublisher *http_publisher_new(const char *config_json) {
     }
     
     curl_easy_setopt(publisher->curl, CURLOPT_HTTPHEADER, publisher->headers);
-    log_info("HTTP publisher created for endpoint: %s", publisher->config.endpoint);
     return publisher;
 }
 
@@ -151,15 +150,11 @@ int http_publisher_publish(HttpPublisher *publisher, const DataModel *data) {
             } else {
                 log_warn("HTTP publish failed with code: %ld", response_code);
             }
-        } else {
-            log_warn("HTTP publish failed: %s (attempt %d/%d)", 
-                    curl_easy_strerror(res), retry_count + 1, publisher->config.retry_count);
         }
         
         retry_count++;
     } while (retry_count < publisher->config.retry_count);
     
     free(json_string);
-    log_error("HTTP publish failed after %d attempts", publisher->config.retry_count);
     return -1;
 }

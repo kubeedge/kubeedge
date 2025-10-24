@@ -25,7 +25,9 @@ static void split_addr_port(const char *addr, char **host_out, int *port_out) {
         *port_out = atoi(colon + 1);
     } else {
         *host_out = strdup(s);
-        *port_out = 80;
+        if (port_out && *port_out == 0) {
+            *port_out = 80;
+        }
     }
 }
 
@@ -203,10 +205,7 @@ int build_properties_from_grpc(const V1beta1__Device *device, DeviceProperty **o
         } else if (pptv->pushmethod && pptv->pushmethod->http) {
             char *host = NULL;
             int port = pptv->pushmethod->http->port ? (int)pptv->pushmethod->http->port : 0;
-            const char *raw_host = pptv->pushmethod->http->hostname ? pptv->pushmethod->http->hostname : "(null)";
-            log_info("grpc: before split host_raw=%s proto_port=%lld prop=%s", raw_host, (long long)pptv->pushmethod->http->port, pptv->name ? pptv->name : "(nil)");
             if (pptv->pushmethod->http->hostname) split_addr_port(pptv->pushmethod->http->hostname, &host, &port);
-            log_info("grpc: after split host=%s port=%d prop=%s", host ? host : "(null)", port, pptv->name ? pptv->name : "(nil)");
              const char *path = pptv->pushmethod->http->requestpath ? pptv->pushmethod->http->requestpath : "/ingest";
              char endpoint[512]; snprintf(endpoint, sizeof(endpoint), "http://%s:%d%s", host ? host : "127.0.0.1", port, path);
              cJSON *hc = cJSON_CreateObject();
