@@ -164,7 +164,7 @@ in the configuration file.
 // Get Config
 func getConfig() *Config {
 	....
-	Check for rumtime type and if not provided set to docker
+	Check for runtime type and if not provided set to docker
         if runtimeType is remote
 		Get edged memory capacity and set to default of 2G if not provided
 		Get remote runtime endpoint and set to /var/run/containerd/container.sock if not provided
@@ -217,7 +217,7 @@ func (e *edged) consumePodAddition(namespacedName *types.NamespacedName) error {
   ....
   switch based on runtime type {
     case DockerContainerRuntime:
-	 Ensure iamge exists for docker runtime
+	 Ensure image exists for docker runtime
 	 Start pod with docker runtime
 
     case RemoteContainerRuntime:
@@ -267,7 +267,7 @@ PLEG and update pod status
 ```
 func NewGenericLifecycleRemote(runtime kubecontainer.Runtime, probeManager prober.Manager, channelCapacity int,
         relistPeriod time.Duration, podManager podmanager.Manager, statusManager status.Manager, podCache kubecontainer.Cache, clock clock.Clock, iface string) pleg.PodLifecycleEventGenerator {
-	Intialize with additional parameters
+	Initialize with additional parameters
 }
 
 
