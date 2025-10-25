@@ -247,6 +247,7 @@ spec:
                 description: 'Optional: Any config data.It can be overridden in the
                   device instance.'
                 type: object
+                x-kubernetes-preserve-unknown-fields: true
             type: object
         type: object
     served: true
