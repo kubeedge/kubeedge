@@ -27,6 +27,9 @@ type DeviceModelSpec struct {
 	Properties []ModelProperty `json:"properties,omitempty"`
 	// Required: Protocol name used by the device.
 	Protocol string `json:"protocol,omitempty"`
+	// Optional: Any config data.It can be overridden in the device instance.
+	// +kubebuilder:validation:XPreserveUnknownFields
+	ProtocolConfigData *CustomizedValue `json:"protocolConfigData,omitempty"`	
 }
 
 // ModelProperty describes an individual device property / attribute like temperature / humidity etc.
@@ -48,6 +51,9 @@ type ModelProperty struct {
 	// The unit of the property
 	// +optional
 	Unit string `json:"unit,omitempty"`
+	// +optional
+	// Note: It can be overridden in the device instance
+	Visitors *VisitorConfig `json:"visitors,omitempty"`
 }
 
 // The type of device property.
