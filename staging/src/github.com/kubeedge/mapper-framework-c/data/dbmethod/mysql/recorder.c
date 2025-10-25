@@ -5,46 +5,48 @@
 #include <time.h>
 #include <pthread.h>
 #include <mysql/mysql.h>
+#include "data/dbmethod/mysql/mysql_client.h"
+#include "common/string_util.h"
 
 static MySQLDataBaseConfig *g_mysql_db = NULL;
 static pthread_mutex_t g_mysql_rec_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-// Set the global MySQL database configuration
 void mysql_recorder_set_db(MySQLDataBaseConfig *db)
 {
     g_mysql_db = db;
 }
 
-// Sanitize an identifier (e.g., namespace, device name, property name)
-static void sanitize_id(const char *in, char *out, size_t outsz, const char *fallback)
+static int ensure_mysql_ready_locked(void)
 {
-    if (!in || !*in)
-    {
-        strlcpy(out, fallback, outsz);
-        return;
+    if (g_mysql_db && g_mysql_db->conn)
+        return 0;
+
+    MySQLClientConfig cfg = {0};
+    if (mysql_parse_client_config(NULL, &cfg) != 0) {
+        log_error("MySQL recorder: parse client config failed");
+        return -1;
     }
-    size_t j = 0;
-    for (size_t i = 0; in[i] && j + 1 < outsz; ++i)
-    {
-        unsigned char c = (unsigned char)in[i];
-        if (c >= 'A' && c <= 'Z')
-            c = (unsigned char)(c - 'A' + 'a');
-        if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') ||
-            c == '-' || c == '_' || c == '/')
-        {
-            out[j++] = (char)c;
-        }
-        else
-        {
-            out[j++] = '_';
-        }
+
+    MySQLDataBaseConfig *db = calloc(1, sizeof(*db));
+    if (!db) {
+        log_error("MySQL recorder: alloc db failed");
+        free(cfg.addr); free(cfg.database); free(cfg.userName); free(cfg.password);
+        return -1;
     }
-    out[j] = '\0';
-    if (j == 0)
-        strlcpy(out, fallback, outsz);
+    db->config = cfg;
+    db->conn = NULL;
+
+    if (mysql_init_client(db) != 0) {
+        log_error("MySQL recorder: init client failed");
+        free(db->config.addr); free(db->config.database); free(db->config.userName); free(db->config.password);
+        free(db);
+        return -1;
+    }
+
+    g_mysql_db = db;
+    return 0;
 }
 
-// Record a time-series data entry in the MySQL database
 int mysql_recorder_record(const char *ns,
                           const char *deviceName,
                           const char *propertyName,
@@ -55,18 +57,18 @@ int mysql_recorder_record(const char *ns,
         return -1;
 
     pthread_mutex_lock(&g_mysql_rec_mutex);
-    if (!g_mysql_db || !g_mysql_db->conn)
-    {
-        log_error("MySQL recorder: no DB or connection (detached or NULL)");
-        pthread_mutex_unlock(&g_mysql_rec_mutex);
-        return -1;
+
+    if (!g_mysql_db || !g_mysql_db->conn) {
+        if (ensure_mysql_ready_locked() != 0) {
+            log_error("MySQL recorder: ensure_mysql_ready failed");
+            pthread_mutex_unlock(&g_mysql_rec_mutex);
+            return -1;
+        }
     }
 
-    /* verify connection is alive; if dead, avoid using it and return error */
     if (mysql_ping((MYSQL *)g_mysql_db->conn) != 0)
     {
         log_error("MySQL recorder: connection lost (mysql_ping failed): %s", mysql_error((MYSQL *)g_mysql_db->conn));
-        /* avoid further use until set_db is called again or reconnect logic added */
         pthread_mutex_unlock(&g_mysql_rec_mutex);
         return -1;
     }
@@ -88,12 +90,11 @@ int mysql_recorder_record(const char *ns,
     if (rc != 0)
     {
         log_warn("MySQL record failed: %s/%s/%s val=%s", ns_s, dev_s, prop_s, dm.value);
-        pthread_mutex_unlock(&g_mysql_rec_mutex);
     }
     else
     {
         log_debug("MySQL record ok: %s/%s/%s=%s", ns_s, dev_s, prop_s, dm.value);
-        pthread_mutex_unlock(&g_mysql_rec_mutex);
     }
+    pthread_mutex_unlock(&g_mysql_rec_mutex);
     return rc;
 }

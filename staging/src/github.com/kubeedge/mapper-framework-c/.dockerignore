@@ -1,0 +1,6 @@
+build
+.git
+mappers
+*.log
+*.swp
+*.swo

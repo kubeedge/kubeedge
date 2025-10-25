@@ -12,6 +12,7 @@ void sanitize_host(char *s);
 void cleanup_escape_prefix(char *s);
 void normalize_host_port(const char *rawHost, int rawPort,
                          char *outHost, size_t outHostSz, int *outPort);
+void sanitize_id(const char *in, char *out, size_t outsz, const char *fallback);
 
 #ifdef __cplusplus
 }

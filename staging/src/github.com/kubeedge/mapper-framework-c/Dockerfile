@@ -49,7 +49,7 @@ WORKDIR /app
 COPY . .
 RUN protoc --proto_path=/app/dmi/v1beta1 \
            --cpp_out=/app/dmi/v1beta1 \
-           --grpc_out=/app/dmi/v1beta1 \
+           --grpc_out=/app/dmi/vn1beta1 \
            --plugin=protoc-gen-grpc=`which grpc_cpp_plugin` \
            /app/dmi/v1beta1/api.proto
 

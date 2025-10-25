@@ -18,7 +18,6 @@
 #include "httpserver/httpserver.h"
 #include "common/configmaptype.h"
 #include "common/const.h"
-#include "data/dbmethod/client.h"
 #include "data/publish/publisher.h"
 #include "device/dev_panel.h"
 
@@ -26,7 +25,6 @@ static volatile int running = 1;
 static DeviceManager *g_deviceManager = NULL;
 static GrpcServer *g_grpcServer = NULL;
 static RestServer *g_httpServer = NULL;
-Publisher *g_publisher = NULL;
 static pthread_t g_grpcThread = 0;
 static char g_grpcSockPath[PATH_MAX] = {0};
 static pthread_t g_devStartThread = 0;
@@ -98,12 +96,6 @@ static void cleanup_resources(void)
         unlink(g_grpcSockPath);
         g_grpcSockPath[0] = '\0';
     }
-    dbmethod_global_free();
-    if (g_publisher)
-    {
-        publisher_free(g_publisher);
-        g_publisher = NULL;
-    }
 }
 
 static void *grpc_server_thread(void *arg)
@@ -139,7 +131,6 @@ int main(int argc, char **argv)
         if (config->common.edgecore_sock[0]) {
             register_set_dmi_sock(config->common.edgecore_sock);
         }
-         dbmethod_global_init();
 
         if (panel_init() != 0)
         {

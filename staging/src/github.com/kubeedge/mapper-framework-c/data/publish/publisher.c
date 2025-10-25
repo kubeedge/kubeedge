@@ -5,6 +5,7 @@
 #include "log/log.h"
 #include <stdlib.h>
 #include <string.h>
+#include "../device/device.h"
 
 // Convert method name string to PublishMethodType
 PublishMethodType publisher_get_type_from_string(const char *method_name)
@@ -20,21 +21,7 @@ PublishMethodType publisher_get_type_from_string(const char *method_name)
     return PUBLISH_METHOD_UNKNOWN;
 }
 
-// Convert PublishMethodType to string
-const char *publisher_get_type_string(PublishMethodType type)
-{
-    switch (type)
-    {
-    case PUBLISH_METHOD_HTTP:
-        return "http";
-    case PUBLISH_METHOD_MQTT:
-        return "mqtt";
-    case PUBLISH_METHOD_OTEL:
-        return "otel";
-    default:
-        return "unknown";
-    }
-}
+
 
 // Create a new publisher
 Publisher *publisher_new(PublishMethodType type, const char *config_json)
@@ -152,4 +139,39 @@ int publisher_publish_dynamic(const char *methodName, const char *methodConfigJs
     }
     cache_put(key, p);
     return publisher_publish_data(p, data);
+}
+
+static DeviceProperty *find_property_in_device(const Device *device, const char *propName)
+{
+    if (!device || !propName) return NULL;
+    for (int i = 0; i < device->instance.propertiesCount; ++i) {
+        DeviceProperty *p = &device->instance.properties[i];
+        if (p->propertyName && strcmp(p->propertyName, propName) == 0)
+            return p;
+    }
+    return NULL;
+}
+
+int publisher_publish_from_device(const void *devptr, const char *propertyName, const char *value, long long timestamp)
+{
+    if (!devptr || !propertyName || !value) return -1;
+    const Device *device = (const Device *)devptr;
+    DeviceProperty *p = find_property_in_device(device, propertyName);
+    if (!p) return -1;
+
+    const char *ns = device->instance.namespace_ ? device->instance.namespace_ : "default";
+    const char *dev = device->instance.name ? device->instance.name : "unknown";
+
+    DataModel dm = {0};
+    dm.namespace_   = (char *)ns;
+    dm.deviceName   = (char *)dev;
+    dm.propertyName = (char *)propertyName;
+    dm.type         = (char *)"string";
+    dm.value        = (char *)(value ? value : "");
+    dm.timeStamp    = (int64_t)timestamp;
+
+    if (p->pushMethod && p->pushMethod->methodName && p->pushMethod->methodConfig) {
+        return publisher_publish_dynamic(p->pushMethod->methodName, p->pushMethod->methodConfig, &dm);
+    }
+    return -1;
 }

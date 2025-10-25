@@ -48,41 +48,15 @@ static std::atomic<bool> g_batch_loop_started{false};
 static std::atomic<bool> g_batch_stop{false};
 static std::thread g_batch_thread;
 static std::once_flag g_atexit_once;
-static int g_twin_start_delay_ms = []{
-    const char* x = getenv("MAPPER_TWIN_START_DELAY_MS");
-    int v = x && *x ? atoi(x) : 1500; 
-    if (v < 0) v = 0;
-    if (v > 60000) v = 60000;
-    return v;
-}();
+static int g_twin_start_delay_ms = 1500;
 static const long long g_batch_start_ms = []{
     return std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::steady_clock::now().time_since_epoch()).count();
 }();
-static bool g_disable_twin = []{
-     const char* x = getenv("MAPPER_DISABLE_TWIN");
-     return x && *x && (strcmp(x, "1")==0 || strcasecmp(x,"true")==0);
- }();
-static int g_twin_min_interval_ms = []{
-    const char* x = getenv("MAPPER_TWIN_MIN_INTERVAL_MS");
-    int v = x && *x ? atoi(x) : 1000;
-    if (v < 100) v = 100;
-    return v;
-}();
-static int g_twin_jitter_ms = []{
-    const char* x = getenv("MAPPER_TWIN_JITTER_MS");
-    int v = x && *x ? atoi(x) : 30;
-    if (v < 0) v = 0;
-    if (v > 500) v = 500;
-    return v;
-}();
-static int g_twin_max_failures = []{
-    const char* x = getenv("MAPPER_TWIN_MAX_FAILURES");
-    int v = x && *x ? atoi(x) : 5;
-    if (v < 1) v = 1;
-    if (v > 100) v = 100;
-    return v;
-}();
+static bool g_disable_twin = false;
+static int g_twin_min_interval_ms = 1000;
+static int g_twin_jitter_ms = 30;
+static int g_twin_max_failures = 5;
 static std::atomic<int> g_twin_failures{0};
 
 static inline std::string uds_with_scheme(const char *p);
@@ -371,11 +345,7 @@ int ReportDeviceStates(const char *namespace_, const char *deviceName, const cha
         }
         break;
     }
-    if (!ok) {
-        log_error("ReportDeviceStates fail code=%d msg=%s", last_code, last_msg.c_str());
-        return -1;
-    }
-    log_info("ReportDeviceStates OK ns=%s dev=%s state=%s", namespace_, deviceName, state);
+
     return 0;
 }
 

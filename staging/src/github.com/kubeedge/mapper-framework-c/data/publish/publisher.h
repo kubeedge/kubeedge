@@ -26,10 +26,8 @@ Publisher *publisher_new(PublishMethodType type, const char *config_json);
 void publisher_free(Publisher *publisher);
 int publisher_publish_data(Publisher *publisher, const DataModel *data);
 int publisher_publish_dynamic(const char *methodName, const char *methodConfigJson, const DataModel *data);
-
-// Helper functions
+int publisher_publish_from_device(const void *device , const char *propertyName, const char *value, long long timestamp);
 PublishMethodType publisher_get_type_from_string(const char *method_name);
-const char *publisher_get_type_string(PublishMethodType type);
 
 #ifdef __cplusplus
 extern "C"

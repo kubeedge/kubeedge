@@ -16,22 +16,29 @@
 #include <time.h>
 #include <ctype.h>
 
-extern Publisher *g_publisher;
 
-static const char *normalize_status(const char *s) {
-    if (!s || !*s) return DEVICE_STATUS_OFFLINE;
-    if (strcasecmp(s, "OK") == 0 || strcasecmp(s, "ONLINE") == 0) return DEVICE_STATUS_OK;
-    if (strcasecmp(s, "OFFLINE") == 0 || strcasecmp(s, "DOWN") == 0) return DEVICE_STATUS_OFFLINE;
+static const char *normalize_status(const char *s)
+{
+    if (!s || !*s)
+        return DEVICE_STATUS_OFFLINE;
+    if (strcasecmp(s, "OK") == 0 || strcasecmp(s, "ONLINE") == 0)
+        return DEVICE_STATUS_OK;
+    if (strcasecmp(s, "OFFLINE") == 0 || strcasecmp(s, "DOWN") == 0)
+        return DEVICE_STATUS_OFFLINE;
     return s;
 }
 
-static int device_update_status_from_driver(Device *device, int force_report, const char **out_new_status) {
-    if (!device || !device->client) return 0;
+static int device_update_status_from_driver(Device *device, int force_report, const char **out_new_status)
+{
+    if (!device || !device->client)
+        return 0;
     const char *drv = GetDeviceStates(device->client);
     const char *newst = normalize_status(drv);
     int need_report = force_report || device_status_check_change(device, newst);
-    if (need_report) device_set_status(device, newst);
-    if (out_new_status) *out_new_status = newst;
+    if (need_report)
+        device_set_status(device, newst);
+    if (out_new_status)
+        *out_new_status = newst;
     return need_report;
 }
 
@@ -54,9 +61,10 @@ static void *device_data_thread(void *arg)
         if (strcmp(device->status, DEVICE_STATUS_OK) != 0)
         {
             pthread_mutex_unlock(&device->mutex);
-            if (need_report_status && status_to_report) {
-                ReportDeviceStates(ns, name, status_to_report);                 // 上报设备状态
-                ReportTwinKV(ns, name, "status", status_to_report, "string");   // 作为属性同步到云端
+            if (need_report_status && status_to_report)
+            {
+                ReportDeviceStates(ns, name, status_to_report);
+                ReportTwinKV(ns, name, "status", status_to_report, "string");
             }
             usleep(1000000);
             continue;
@@ -77,6 +85,10 @@ static void *device_data_thread(void *arg)
                 vis.propertyName = twin->propertyName;
 
                 int drv_rc = GetDeviceData(device->client, &vis, &drv_out);
+                const char *ns2 = device->instance.namespace_ ? device->instance.namespace_ : "default";
+                const char *name2 = device->instance.name ? device->instance.name : "unknown";
+                ReportDeviceStates(ns2, name2, device->status);
+                ReportTwinKV(ns2, name2, "status", device->status ? device->status : "unknown", "string");
 
                 if (drv_rc == 0 && drv_out)
                 {
@@ -88,20 +100,25 @@ static void *device_data_thread(void *arg)
                              twin->propertyName ? twin->propertyName : "(nil)",
                              twin->reported.value ? twin->reported.value : "(nil)");
                     dbmethod_recorder_record(device,
-                                             twin->propertyName ? twin->propertyName : "unknown",
-                                             twin->reported.value ? twin->reported.value : "(nil)",
-                                             (long long)time(NULL) * 1000);
+                                                         twin->propertyName ? twin->propertyName : "unknown",
+                                                         twin->reported.value ? twin->reported.value : "(nil)",
+                                                         (long long)time(NULL) * 1000);
+                    
+                    publisher_publish_from_device(device,
+                                                              twin->propertyName ? twin->propertyName : "unknown",
+                                                              twin->reported.value ? twin->reported.value : "(nil)",
+                                                              (long long)time(NULL) * 1000);
+                    
+                    ReportTwinKV(ns, name,
+                                 twin->propertyName ? twin->propertyName : "unknown",
+                                 twin->reported.value ? twin->reported.value : "(nil)",
+                                 "string");
                 }
             }
             device_deal_twin(device, twin);
         }
 
         pthread_mutex_unlock(&device->mutex);
-
-        if (need_report_status && status_to_report) {
-            ReportDeviceStates(ns, name, status_to_report);
-            ReportTwinKV(ns, name, "status", status_to_report, "string");
-        }
 
         usleep(1000000);
     }
@@ -111,12 +128,9 @@ static void *device_data_thread(void *arg)
 
 Device *device_new(const DeviceInstance *instance, const DeviceModel *model)
 {
-    Device *d = calloc(1, sizeof(*d));
+    Device *d = calloc(1, sizeof(Device));
     if (!d)
-    {
-        log_error("Failed to allocate memory for device");
         return NULL;
-    }
     memset(&d->instance, 0, sizeof(DeviceInstance));
 
     if (instance->id)
@@ -206,14 +220,20 @@ Device *device_new(const DeviceInstance *instance, const DeviceModel *model)
                 dstProp->modelName = strdup(srcProp->modelName);
             if (srcProp->protocol)
                 dstProp->protocol = strdup(srcProp->protocol);
-            if (srcProp->pushMethod) {
+            if (srcProp->pushMethod)
+            {
                 dstProp->pushMethod = calloc(1, sizeof(PushMethodConfig));
-                if (srcProp->pushMethod->methodName) dstProp->pushMethod->methodName = strdup(srcProp->pushMethod->methodName);
-                if (srcProp->pushMethod->methodConfig) dstProp->pushMethod->methodConfig = strdup(srcProp->pushMethod->methodConfig);
-                if (srcProp->pushMethod->dbMethod) {
+                if (srcProp->pushMethod->methodName)
+                    dstProp->pushMethod->methodName = strdup(srcProp->pushMethod->methodName);
+                if (srcProp->pushMethod->methodConfig)
+                    dstProp->pushMethod->methodConfig = strdup(srcProp->pushMethod->methodConfig);
+                if (srcProp->pushMethod->dbMethod)
+                {
                     dstProp->pushMethod->dbMethod = calloc(1, sizeof(DBMethodConfig));
-                    if (srcProp->pushMethod->dbMethod->dbMethodName) dstProp->pushMethod->dbMethod->dbMethodName = strdup(srcProp->pushMethod->dbMethod->dbMethodName);
-                    if (srcProp->pushMethod->dbMethod->dbConfig) {
+                    if (srcProp->pushMethod->dbMethod->dbMethodName)
+                        dstProp->pushMethod->dbMethod->dbMethodName = strdup(srcProp->pushMethod->dbMethod->dbMethodName);
+                    if (srcProp->pushMethod->dbMethod->dbConfig)
+                    {
                         dstProp->pushMethod->dbMethod->dbConfig = calloc(1, sizeof(DBConfig));
                         if (srcProp->pushMethod->dbMethod->dbConfig->mysqlClientConfig)
                             dstProp->pushMethod->dbMethod->dbConfig->mysqlClientConfig = strdup(srcProp->pushMethod->dbMethod->dbConfig->mysqlClientConfig);
@@ -235,14 +255,15 @@ Device *device_new(const DeviceInstance *instance, const DeviceModel *model)
         for (int t = 0; t < d->instance.twinsCount; ++t)
         {
             Twin *tw = &d->instance.twins[t];
-            if (!tw->propertyName) continue;
+            if (!tw->propertyName)
+                continue;
             for (int j = 0; j < d->instance.propertiesCount; ++j)
             {
                 DeviceProperty *p = &d->instance.properties[j];
                 const char *pname = p->name ? p->name : p->propertyName;
                 if (pname && strcmp(pname, tw->propertyName) == 0)
                 {
-                    tw->property = p;  
+                    tw->property = p;
                     break;
                 }
             }
@@ -326,13 +347,8 @@ Device *device_new(const DeviceInstance *instance, const DeviceModel *model)
     d->status = strdup(DEVICE_STATUS_UNKNOWN);
     d->stopChan = 0;
     d->dataThreadRunning = 0;
-
-    if (pthread_mutex_init(&d->mutex, NULL) != 0)
-    {
-        log_error("Failed to initialize device mutex");
-        device_free(d);
-        return NULL;
-    }
+    d->removing = 0;
+    pthread_mutex_init(&d->mutex, NULL);
 
     if (d->instance.pProtocol.protocolName)
     {
@@ -379,7 +395,6 @@ Device *device_new(const DeviceInstance *instance, const DeviceModel *model)
     return d;
 }
 
-// Destroy device_free
 void device_free(Device *device)
 {
     if (!device)
@@ -540,7 +555,6 @@ static void device_runtime_rebuild(Device *device)
     }
 }
 
-// Function device_start
 int device_start(Device *device)
 {
     if (!device)
@@ -576,7 +590,8 @@ int device_start(Device *device)
         int need = device_update_status_from_driver(device, 1, &init_st);
         const char *ns = device->instance.namespace_ ? device->instance.namespace_ : "default";
         const char *name = device->instance.name ? device->instance.name : "unknown";
-        if (need && init_st) {
+        if (need && init_st)
+        {
             ReportDeviceStates(ns, name, init_st);
             ReportTwinKV(ns, name, "status", init_st, "string");
         }
@@ -599,7 +614,6 @@ int device_start(Device *device)
     return 0;
 }
 
-// Function device_stop
 int device_stop(Device *device)
 {
     if (!device)
@@ -634,27 +648,7 @@ int device_stop(Device *device)
     }
     return 0;
 }
-// Function device_restart
-int device_restart(Device *device)
-{
-    if (!device)
-        return -1;
-    if (device_stop(device) != 0)
-    {
-        log_error("Failed to stop device %s during restart", device->instance.name);
-        return -1;
-    }
-    usleep(100000);
-    if (device_start(device) != 0)
-    {
-        log_error("Failed to start device %s during restart", device->instance.name);
-        return -1;
-    }
 
-    return 0;
-}
-
-// Function device_deal_twin
 int device_deal_twin(Device *device, const Twin *twin_in)
 {
     if (!device->client)
@@ -680,31 +674,31 @@ int device_deal_twin(Device *device, const Twin *twin_in)
     VisitorConfig vis = (VisitorConfig){0};
     vis.propertyName = twin_in->propertyName;
     int offset = device_resolve_offset(device, twin_in->propertyName);
-    if (offset > 0) vis.offset = offset;
+    if (offset > 0)
+        vis.offset = offset;
     int rc = SetDeviceData(device->client, desired, &vis);
-    if (rc != 0) {
+    if (rc != 0)
+    {
+        log_warn("SetDeviceData failed for device=%s prop=%s rc=%d", device->instance.name, twin_in->propertyName, rc);
         return -1;
     }
-    free(((Twin *)twin_in)->reported.value);
-    ((Twin *)twin_in)->reported.value = strdup(desired);
 
-    dbmethod_recorder_record(device,
-                             twin_in->propertyName ? twin_in->propertyName : "unknown",
-                             twin_in->reported.value ? twin_in->reported.value : "(nil)",
-                             (long long)time(NULL) * 1000);
-    if (g_publisher)
+    char *new_reported = NULL;
+    void *drv_out = NULL;
+    int get_rc = GetDeviceData(device->client, &vis, &drv_out);
+    if (get_rc == 0 && drv_out)
     {
-        DataModel dm = (DataModel){0};
-        dm.namespace_ = device->instance.namespace_ ? device->instance.namespace_ : "default";
-        dm.deviceName = device->instance.name ? device->instance.name : "unknown";
-        dm.propertyName = twin_in->propertyName ? twin_in->propertyName : "unknown";
-        dm.type = "string";
-        dm.value = (char *)desired;
-        dm.timeStamp = (int64_t)time(NULL) * 1000;
-        int prc = publisher_publish_data(g_publisher, &dm);
-        if (prc != 0)
-            log_warn("Publish failed (write success) for %s", dm.propertyName);
+        new_reported = strdup((char *)drv_out);
+        free(drv_out);
     }
+    else
+    {
+        new_reported = strdup(desired);
+    }
+
+    free(((Twin *)twin_in)->reported.value);
+    ((Twin *)twin_in)->reported.value = new_reported;
+
     return 0;
 }
 
@@ -733,7 +727,6 @@ DeviceManager *device_manager_new(void)
     return manager;
 }
 
-// Destroy device_manager_free
 void device_manager_free(DeviceManager *manager)
 {
     if (!manager)
@@ -753,7 +746,6 @@ void device_manager_free(DeviceManager *manager)
     free(manager);
 }
 
-// Function device_manager_add
 int device_manager_add(DeviceManager *manager, Device *device)
 {
     if (!manager || !device)
@@ -778,38 +770,6 @@ int device_manager_add(DeviceManager *manager, Device *device)
 
     pthread_mutex_unlock(&manager->managerMutex);
     return 0;
-}
-
-// Function device_manager_remove
-int device_manager_remove(DeviceManager *manager, const char *deviceId)
-{
-    if (!manager || !deviceId)
-        return -1;
-
-    pthread_mutex_lock(&manager->managerMutex);
-
-    for (int i = 0; i < manager->deviceCount; i++)
-    {
-        if (manager->devices[i] && manager->devices[i]->instance.name &&
-            strcmp(manager->devices[i]->instance.name, deviceId) == 0)
-        {
-
-            device_free(manager->devices[i]);
-
-            for (int j = i; j < manager->deviceCount - 1; j++)
-            {
-                manager->devices[j] = manager->devices[j + 1];
-            }
-            manager->deviceCount--;
-
-            pthread_mutex_unlock(&manager->managerMutex);
-            return 0;
-        }
-    }
-
-    pthread_mutex_unlock(&manager->managerMutex);
-    log_warn("Device %s not found in manager", deviceId);
-    return -1;
 }
 
 Device *device_manager_get(DeviceManager *manager, const char *deviceId)
@@ -852,7 +812,6 @@ Device *device_manager_get(DeviceManager *manager, const char *deviceId)
     return NULL;
 }
 
-// Function device_manager_start_all
 int device_manager_start_all(DeviceManager *manager)
 {
     if (!manager)
@@ -875,7 +834,6 @@ int device_manager_start_all(DeviceManager *manager)
     return success == manager->deviceCount ? 0 : -1;
 }
 
-// Function device_manager_stop_all
 int device_manager_stop_all(DeviceManager *manager)
 {
     if (!manager)

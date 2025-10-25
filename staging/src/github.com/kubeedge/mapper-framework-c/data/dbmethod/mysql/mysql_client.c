@@ -8,21 +8,28 @@
 #include <cjson/cJSON.h>
 #include <ctype.h>
 #include <mysql.h>
+#include <pthread.h>
+
 #ifndef MYSQL_VERSION_ID
 #define MYSQL_VERSION_ID 0
 #endif
 
-// Retrieves an environment variable or returns a default value
-static const char *getenv_def(const char *key, const char *default_value)
-{
-    const char *value = getenv(key);
-    return (value && *value) ? value : default_value;
-}
-// Parses the MySQL client configuration from JSON
+static const char *DEFAULT_MYSQL_HOST = "127.0.0.1";
+static const char *DEFAULT_MYSQL_DB = "testdb";
+static const char *DEFAULT_MYSQL_USER = "mapper";
+static const char *DEFAULT_MYSQL_PASS = NULL;
+static const int DEFAULT_MYSQL_PORT = 3306;
+
 int mysql_parse_client_config(const char *json, MySQLClientConfig *out)
 {
     if (!out)
         return -1;
+
+    out->addr = NULL;
+    out->database = NULL;
+    out->userName = NULL;
+    out->password = NULL;
+    out->port = 0;
 
     if (json && *json)
     {
@@ -34,66 +41,37 @@ int mysql_parse_client_config(const char *json, MySQLClientConfig *out)
             cJSON *juser = cJSON_GetObjectItem(root, "userName");
             cJSON *jpwd = cJSON_GetObjectItem(root, "password");
             cJSON *jport = cJSON_GetObjectItem(root, "port");
-            cJSON *jssl = cJSON_GetObjectItem(root, "ssl_mode");
 
-            out->addr = jaddr && cJSON_IsString(jaddr) ? strdup(jaddr->valuestring) : NULL;
-            out->database = jdb && cJSON_IsString(jdb) ? strdup(jdb->valuestring) : NULL;
-            out->userName = juser && cJSON_IsString(juser) ? strdup(juser->valuestring) : NULL;
-            out->password = jpwd && cJSON_IsString(jpwd) ? strdup(jpwd->valuestring) : NULL;
-            out->port = (jport && cJSON_IsNumber(jport)) ? (int)jport->valuedouble : 0;
+            if (jaddr && cJSON_IsString(jaddr)) out->addr = strdup(jaddr->valuestring);
+            if (jdb && cJSON_IsString(jdb)) out->database = strdup(jdb->valuestring);
+            if (juser && cJSON_IsString(juser)) out->userName = strdup(juser->valuestring);
+            if (jpwd && cJSON_IsString(jpwd)) out->password = strdup(jpwd->valuestring);
+            if (jport && cJSON_IsNumber(jport)) out->port = (int)jport->valuedouble;
 
-            if (jssl && cJSON_IsString(jssl))
-            {
-                setenv("MYSQL_SSL_MODE", jssl->valuestring, 1);
-            }
             cJSON_Delete(root);
-
-            if (!out->addr)
-                out->addr = strdup(getenv_def("MYSQL_HOST", "127.0.0.1"));
-            if (!out->database)
-                out->database = strdup(getenv_def("MYSQL_DB", "testdb"));
-            if (!out->userName)
-                out->userName = strdup(getenv_def("MYSQL_USER", "mapper"));
-            if (!out->password)
-            {
-                const char *env_pwd = getenv("MYSQL_PASSWORD");
-                if (!env_pwd || !*env_pwd)
-                    env_pwd = getenv("PASSWORD");
-                out->password = env_pwd ? strdup(env_pwd) : NULL;
-            }
-            if (out->port <= 0)
-            {
-                const char *env_port = getenv("MYSQL_PORT");
-                int portVal = (env_port && *env_port) ? atoi(env_port) : 3306;
-                out->port = (portVal > 0 ? portVal : 3306);
-            }
-            return 0;
         }
         else
         {
-            log_warn("mysql_parse_client_config: failed to parse JSON, falling back to env");
+            log_warn("mysql_parse_client_config: invalid JSON, using defaults");
         }
     }
 
-    const char *env_addr = getenv_def("MYSQL_HOST", "127.0.0.1");
-    const char *env_db = getenv_def("MYSQL_DB", "testdb");
-    const char *env_user = getenv_def("MYSQL_USER", "mapper");
-    const char *env_pwd = getenv("MYSQL_PASSWORD");
-    if (!env_pwd || !*env_pwd)
-        env_pwd = getenv("PASSWORD");
+    if (!out->addr) out->addr = strdup(DEFAULT_MYSQL_HOST);
+    if (!out->database) out->database = strdup(DEFAULT_MYSQL_DB);
+    if (!out->userName) out->userName = strdup(DEFAULT_MYSQL_USER);
 
-    out->addr = strdup(env_addr);
-    out->database = strdup(env_db);
-    out->userName = strdup(env_user);
-    out->password = env_pwd ? strdup(env_pwd) : NULL;
+    if (!out->password) {
+        const char *envpwd = getenv("PASSWORD");
+        if (!envpwd || !*envpwd) envpwd = getenv("MYSQL_PASSWORD");
+        if (envpwd && *envpwd) out->password = strdup(envpwd);
+        else if (DEFAULT_MYSQL_PASS) out->password = strdup(DEFAULT_MYSQL_PASS);
+        else out->password = NULL;
+    }
+    if (out->port <= 0) out->port = DEFAULT_MYSQL_PORT;
 
-    const char *env_port = getenv("MYSQL_PORT");
-    int portVal = (env_port && *env_port) ? atoi(env_port) : 3306;
-    out->port = (portVal > 0 ? portVal : 3306);
     return 0;
 }
 
-// Initializes the MySQL client
 int mysql_init_client(MySQLDataBaseConfig *db)
 {
     if (!db)
@@ -108,32 +86,23 @@ int mysql_init_client(MySQLDataBaseConfig *db)
     unsigned int timeout = 10;
     mysql_options(db->conn, MYSQL_OPT_CONNECT_TIMEOUT, &timeout);
 
-    const char *host = (db->config.addr && *db->config.addr) ? db->config.addr : "127.0.0.1";
-    unsigned int port = (db->config.port > 0) ? (unsigned int)db->config.port : 3306;
-    const char *user = db->config.userName ? db->config.userName : "mapper";
-    const char *pass = db->config.password;
-    if (!pass || !*pass)
-    {
-        const char *envp = getenv("MYSQL_PASSWORD");
-        if (envp && *envp)
-            pass = envp;
-    }
-    if (!pass)
-        pass = "123456";
-    const char *dbname = db->config.database ? db->config.database : "testdb";
+    const char *host = (db->config.addr && *db->config.addr) ? db->config.addr : DEFAULT_MYSQL_HOST;
+    int port = (db->config.port > 0) ? db->config.port : DEFAULT_MYSQL_PORT;
+    const char *user = db->config.userName ? db->config.userName : DEFAULT_MYSQL_USER;
+    const char *pass = db->config.password ? db->config.password : DEFAULT_MYSQL_PASS;
+    const char *dbname = db->config.database ? db->config.database : DEFAULT_MYSQL_DB;
 
-    const char *unix_sock = getenv("MYSQL_UNIX_SOCKET");
-    if (!(unix_sock && *unix_sock))
-        unix_sock = NULL;
+
     if (!mysql_real_connect(db->conn,
                             host,
                             user,
                             pass,
                             dbname,
-                            unix_sock ? 0 : port,
-                            unix_sock,
+                            port,
+                            NULL,
                             0))
     {
+        log_error("mysql_real_connect failed to %s:%u db=%s user=%s : %s", host, port, dbname, user, mysql_error(db->conn));
         mysql_close(db->conn);
         db->conn = NULL;
         return -1;
@@ -157,12 +126,12 @@ int mysql_add_data(MySQLDataBaseConfig *db, const DataModel *data)
         return -1;
 
     char tableName[256];
-    snprintf(tableName, sizeof(tableName), "%s/%s/%s",
+    snprintf(tableName, sizeof(tableName), "%s_%s_%s",
              data->namespace_ ? data->namespace_ : "default",
              data->deviceName ? data->deviceName : "device",
              data->propertyName ? data->propertyName : "property");
 
-    char createTable[512];
+    char createTable[1024];
     snprintf(createTable, sizeof(createTable),
              "CREATE TABLE IF NOT EXISTS `%s` ("
              "  id INT AUTO_INCREMENT PRIMARY KEY,"
@@ -233,4 +202,117 @@ int mysql_add_data(MySQLDataBaseConfig *db, const DataModel *data)
 
     mysql_stmt_close(stmt);
     return 0;
+}
+
+typedef struct MysqlCacheEntry {
+    char *key;
+    MySQLDataBaseConfig *db;
+    int refcount;
+    struct MysqlCacheEntry *next;
+} MysqlCacheEntry;
+
+static MysqlCacheEntry *g_mysql_cache = NULL;
+static pthread_mutex_t g_mysql_cache_mu = PTHREAD_MUTEX_INITIALIZER;
+
+static char *make_mysql_key(const MySQLClientConfig *cfg)
+{
+    if (!cfg) return NULL;
+    const char *addr = cfg->addr ? cfg->addr : DEFAULT_MYSQL_HOST;
+    const char *dbn = cfg->database ? cfg->database : DEFAULT_MYSQL_DB;
+    const char *user = cfg->userName ? cfg->userName : DEFAULT_MYSQL_USER;
+    int port = cfg->port > 0 ? cfg->port : DEFAULT_MYSQL_PORT;
+    size_t n = strlen(addr) + strlen(dbn) + strlen(user) + 32;
+    char *k = calloc(1, n);
+    if (!k) return NULL;
+    snprintf(k, n, "%s:%d/%s@%s", addr, port, dbn, user);
+    return k;
+}
+
+MySQLDataBaseConfig *mysql_get_cached_db(const MySQLClientConfig *cfg)
+{
+    if (!cfg) return NULL;
+    char *key = make_mysql_key(cfg);
+    if (!key) return NULL;
+
+    pthread_mutex_lock(&g_mysql_cache_mu);
+
+    for (MysqlCacheEntry *e = g_mysql_cache; e; e = e->next) {
+        if (e->key && strcmp(e->key, key) == 0) {
+            e->refcount++;
+            free(key);
+            pthread_mutex_unlock(&g_mysql_cache_mu);
+            return e->db;
+        }
+    }
+
+    MysqlCacheEntry *ne = calloc(1, sizeof(*ne));
+    if (!ne) {
+        free(key);
+        pthread_mutex_unlock(&g_mysql_cache_mu);
+        return NULL;
+    }
+    ne->key = key;
+    ne->db = calloc(1, sizeof(*ne->db));
+    if (!ne->db) {
+        free(ne->key);
+        free(ne);
+        pthread_mutex_unlock(&g_mysql_cache_mu);
+        return NULL;
+    }
+    ne->db->config.addr = cfg->addr ? strdup(cfg->addr) : strdup(DEFAULT_MYSQL_HOST);
+    ne->db->config.database = cfg->database ? strdup(cfg->database) : strdup(DEFAULT_MYSQL_DB);
+    ne->db->config.userName = cfg->userName ? strdup(cfg->userName) : strdup(DEFAULT_MYSQL_USER);
+    if (cfg->password && *cfg->password) {
+        ne->db->config.password = strdup(cfg->password);
+    } else {
+        const char *envpwd = getenv("PASSWORD");
+        if (!envpwd || !*envpwd) envpwd = getenv("MYSQL_PASSWORD");
+        ne->db->config.password = envpwd && *envpwd ? strdup(envpwd) : (DEFAULT_MYSQL_PASS ? strdup(DEFAULT_MYSQL_PASS) : NULL);
+    }
+    ne->db->config.port = cfg->port > 0 ? cfg->port : DEFAULT_MYSQL_PORT;
+    ne->db->conn = NULL;
+    ne->refcount = 1;
+
+    if (mysql_init_client(ne->db) != 0) {
+        log_error("mysql_get_cached_db: init failed for key=%s", ne->key);
+        free(ne->db->config.addr); free(ne->db->config.database); free(ne->db->config.userName);
+        free(ne->db->config.password);
+        free(ne->db);
+        free(ne->key);
+        free(ne);
+        pthread_mutex_unlock(&g_mysql_cache_mu);
+        return NULL;
+    }
+
+    ne->next = g_mysql_cache;
+    g_mysql_cache = ne;
+
+    pthread_mutex_unlock(&g_mysql_cache_mu);
+    return ne->db;
+}
+
+void mysql_release_cached_db(MySQLDataBaseConfig *db)
+{
+    if (!db) return;
+    pthread_mutex_lock(&g_mysql_cache_mu);
+    MysqlCacheEntry *prev = NULL;
+    for (MysqlCacheEntry *e = g_mysql_cache; e; prev = e, e = e->next) {
+        if (e->db == db) {
+            e->refcount--;
+            if (e->refcount <= 0) {
+                if (prev) prev->next = e->next;
+                else g_mysql_cache = e->next;
+                mysql_close_client(e->db);
+                free(e->db->config.addr);
+                free(e->db->config.database);
+                free(e->db->config.userName);
+                free(e->db->config.password);
+                free(e->db);
+                free(e->key);
+                free(e);
+            }
+            break;
+        }
+    }
+    pthread_mutex_unlock(&g_mysql_cache_mu);
 }
