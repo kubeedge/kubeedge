@@ -1,0 +1,11 @@
+grpc_server:
+  socket_path: /tmp/mapper.sock
+
+common:
+  name: "arduino-mapper"
+  version: "v1.13.0"
+  api_version: "v1.0.0"
+  protocol: "modbus-tcp"
+  address: "127.0.0.1"
+  http_port: "7777"
+  edgecore_sock: /etc/kubeedge/dmi.sock
