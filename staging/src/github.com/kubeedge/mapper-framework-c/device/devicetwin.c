@@ -15,51 +15,7 @@ static long long get_current_time_ms(void)
     return ts.tv_sec * 1000LL + ts.tv_nsec / 1000000LL;
 }
 
-int devicetwin_deal(Device *device, const Twin *twin)
-{
-    if (!device || !twin || !twin->propertyName)
-    {
-        log_error("Invalid parameters for devicetwin_deal");
-        return -1;
-    }
 
-    log_debug("Processing twin for device %s, property: %s",
-              device->instance.name, twin->propertyName);
-
-    if (!twin->property)
-    {
-        log_error("Twin property is NULL for %s", twin->propertyName);
-        return -1;
-    }
-
-    TwinResult result = {0};
-    if (devicetwin_get(device, twin->propertyName, &result) == 0)
-    {
-        devicetwin_report_to_cloud(device, twin->propertyName, result.value);
-        free(result.value);
-        free(result.error);
-    }
-
-    if (twin->observedDesired.value && twin->reported.value)
-    {
-        if (strcmp(twin->observedDesired.value, twin->reported.value) != 0)
-        {
-            log_info("Desired value changed for %s: %s -> %s",
-                     twin->propertyName, twin->reported.value, twin->observedDesired.value);
-
-            TwinResult setResult = {0};
-            if (devicetwin_set(device, twin->propertyName,
-                               twin->observedDesired.value, &setResult) == 0)
-            {
-                devicetwin_report_to_cloud(device, twin->propertyName, setResult.value);
-            }
-            free(setResult.value);
-            free(setResult.error);
-        }
-    }
-
-    return 0;
-}
 
 int devicetwin_get(Device *device, const char *propertyName, TwinResult *result)
 {
@@ -206,14 +162,6 @@ int devicetwin_validate_data(const Twin *twin, const char *value)
     return 0;
 }
 
-int devicetwin_convert_data(const Twin *twin, const char *rawValue, char **convertedValue)
-{
-    if (!twin || !twin->property || !rawValue || !convertedValue)
-        return -1;
-
-    *convertedValue = strdup(rawValue);
-    return 0;
-}
 
 char *devicetwin_build_report_data(const char *propertyName, const char *value, long long timestamp)
 {
@@ -252,75 +200,6 @@ int devicetwin_report_to_cloud(Device *device, const char *propertyName, const c
     return 0;
 }
 
-int devicetwin_start_auto_report(Device *device, const Twin *twin)
-{
-    if (!device || !twin)
-        return -1;
-
-    log_info("Starting auto report for twin property: %s", twin->propertyName);
-
-    return 0;
-}
-
-int devicetwin_stop_auto_report(Device *device, const char *propertyName)
-{
-    if (!device || !propertyName)
-        return -1;
-
-    log_info("Stopping auto report for twin property: %s", propertyName);
-
-    return 0;
-}
-
-int devicetwin_handle_desired_change(Device *device, const Twin *twin, const char *newValue)
-{
-    if (!device || !twin || !newValue)
-        return -1;
-
-    log_info("Handling desired change for %s: new value = %s", twin->propertyName, newValue);
-
-    TwinResult result = {0};
-    if (devicetwin_set(device, twin->propertyName, newValue, &result) == 0)
-    {
-        devicetwin_report_to_cloud(device, twin->propertyName, result.value);
-    }
-
-    free(result.value);
-    free(result.error);
-    return 0;
-}
-
-int devicetwin_handle_reported_update(Device *device, const Twin *twin, const char *newValue)
-{
-    if (!device || !twin || !newValue)
-        return -1;
-
-    log_debug("Handling reported update for %s: new value = %s", twin->propertyName, newValue);
-
-    return devicetwin_report_to_cloud(device, twin->propertyName, newValue);
-}
-
-int devicetwin_parse_visitor_config(const char *configData, VisitorConfig *config)
-{
-    if (!configData || !config)
-        return -1;
-
-    cJSON *root = cJSON_Parse(configData);
-    if (!root)
-        return -1;
-
-    cJSON *protocol = cJSON_GetObjectItem(root, "protocolName");
-    if (protocol && cJSON_IsString(protocol))
-    {
-        config->protocolName = strdup(protocol->valuestring);
-    }
-
-    config->configData = strdup(configData);
-
-    cJSON_Delete(root);
-    return 0;
-}
-
 TwinProcessor *devicetwin_processor_new(const Twin *twin)
 {
     if (!twin)
@@ -354,43 +233,3 @@ void devicetwin_processor_free(TwinProcessor *processor)
     free(processor);
 }
 
-TwinManager *devicetwin_manager_new(void)
-{
-    TwinManager *manager = calloc(1, sizeof(TwinManager));
-    if (!manager)
-        return NULL;
-
-    manager->capacity = 10;
-    manager->processors = calloc(manager->capacity, sizeof(TwinProcessor *));
-    if (!manager->processors)
-    {
-        free(manager);
-        return NULL;
-    }
-
-    if (pthread_mutex_init(&manager->twinMutex, NULL) != 0)
-    {
-        free(manager->processors);
-        free(manager);
-        return NULL;
-    }
-
-    return manager;
-}
-
-void devicetwin_manager_free(TwinManager *manager)
-{
-    if (!manager)
-        return;
-
-    pthread_mutex_lock(&manager->twinMutex);
-    for (int i = 0; i < manager->processorCount; i++)
-    {
-        devicetwin_processor_free(manager->processors[i]);
-    }
-    free(manager->processors);
-    pthread_mutex_unlock(&manager->twinMutex);
-
-    pthread_mutex_destroy(&manager->twinMutex);
-    free(manager);
-}

@@ -1,5 +1,5 @@
 grpc_server:
-  socket_path: "/tmp/mapper_dmi.sock"
+  socket_path: /tmp/mapper.sock
 
 common:
   name: "arduino-mapper"

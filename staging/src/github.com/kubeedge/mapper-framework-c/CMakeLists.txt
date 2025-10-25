@@ -134,9 +134,7 @@ set(ABSL_LIBS
 set(COMMON_SOURCES
   config/config.c
   log/log.c
-  common/dataconverter.c
   common/datamodel.c
-  common/event.c
   common/json_util.c
   common/string_util.c
   util/parse/grpc.c
@@ -154,7 +152,6 @@ set(COMMON_SOURCES
   device/dev_panel.c
   driver/driver.c
   data/dbmethod/recorder.c
-  data/dbmethod/client.c
   data/dbmethod/mysql/mysql_client.c
   data/dbmethod/mysql/recorder.c
   data/dbmethod/influxdb2/influxdb2_client.c

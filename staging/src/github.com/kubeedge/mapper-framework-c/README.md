@@ -569,27 +569,6 @@ int SetDeviceData(CustomizedClient *client, const void *data, const VisitorConfi
         return -1;
     pthread_mutex_lock(&client->deviceMutex);
 
-    const char *pname = visitor->propertyName ? visitor->propertyName : "";
-    int *toff_ptr = sim_find_threshold_offset_ptr((void *)client);
-    int cfg_off = toff_ptr ? *toff_ptr : -1;
-    log_info("driver:SetDeviceData name='%s' offset=%d cfg_off=%d data='%s'",
-             pname, visitor->offset, cfg_off, (const char*)data);
-
-    if (data) {
-        char *endptr = NULL;
-        double val = strtod((const char *)data, &endptr);
-        if (endptr != (const char *)data) {
-            if (is_threshold_name(pname)) {
-                log_info("driver:SetDeviceData THRESHOLD read-only, ignore");
-            } else {
-                double *bp = sim_find_baseline_ptr((void *)client);
-                if (bp) *bp = val;
-                log_info("driver:SetDeviceData TEMPERATURE baseline->%.2f", val);
-            }
-        } else {
-            log_info("driver:SetDeviceData received non-numeric data, ignored");
-        }
-    }
     pthread_mutex_unlock(&client->deviceMutex);
     return 0;
 }

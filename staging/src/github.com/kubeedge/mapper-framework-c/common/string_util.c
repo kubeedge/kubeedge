@@ -70,3 +70,26 @@ void normalize_host_port(const char *rawHost, int rawPort,
     if (p <= 0 || p > 65535) p = 1502;
     *outPort = p;
 }
+
+void sanitize_id(const char *in, char *out, size_t outsz, const char *fallback)
+{
+    if (!out || outsz == 0) return;
+    if (!in || !*in) {
+        snprintf(out, outsz, "%s", fallback);
+        return;
+    }
+    size_t j = 0;
+    for (size_t i = 0; in[i] && j + 1 < outsz; ++i) {
+        unsigned char c = (unsigned char)in[i];
+        if (c >= 'A' && c <= 'Z') c = (unsigned char)(c - 'A' + 'a');
+        if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') ||
+            c == '-' || c == '_' || c == '/')
+        {
+            out[j++] = (char)c;
+        } else {
+            out[j++] = '_';
+        }
+    }
+    out[j] = '\0';
+    if (j == 0) snprintf(out, outsz, "%s", fallback);
+}

@@ -5,7 +5,10 @@
 #include "driver/driver.h"
 #include <mysql.h>
 
-// MySQL client configuration
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct
 {
     char *addr;
@@ -15,28 +18,23 @@ typedef struct
     int port;
 } MySQLClientConfig;
 
-// MySQL database configuration
 typedef struct
 {
     MySQLClientConfig config;
     MYSQL *conn;
 } MySQLDataBaseConfig;
 
-// MySQL data handler arguments
-typedef struct
-{
-    MySQLDataBaseConfig dbConfig;
-    DataModel *dataModel;
-    int reportCycleMs;
-    CustomizedClient *customizedClient;
-    VisitorConfig *visitorConfig;
-    int running;
-} MySQLDataHandlerArgs;
 
-// MySQL client functions
 int mysql_parse_client_config(const char *json, MySQLClientConfig *out);
 int mysql_init_client(MySQLDataBaseConfig *db);
 void mysql_close_client(MySQLDataBaseConfig *db);
 int mysql_add_data(MySQLDataBaseConfig *db, const DataModel *data);
+
+MySQLDataBaseConfig *mysql_get_cached_db(const MySQLClientConfig *cfg);
+void mysql_release_cached_db(MySQLDataBaseConfig *db);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

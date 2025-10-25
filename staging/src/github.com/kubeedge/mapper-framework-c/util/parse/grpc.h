@@ -9,7 +9,6 @@ extern "C" {
 #include "common/configmaptype.h"
 #include "common/datamodel.h"
 #include "common/datamethod.h"
-#include "common/dataconverter.h"
 #include "log/log.h"
 
 // Retrieves the protocol name from a gRPC device object

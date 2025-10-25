@@ -9,8 +9,6 @@
 #include <stdio.h>
 #include "log/log.h"
 #include "common/datamodel.h"
-#include "data/publish/publisher.h"
-extern Publisher *g_publisher;
 
 static DeviceProperty *find_property(Device *device, const char *propName)
 {
@@ -46,16 +44,5 @@ int dbmethod_recorder_record(Device *device, const char *propertyName, const cha
             }
         }
     }
-    DataModel dm = {0};
-    dm.namespace_   = (char *)ns;
-    dm.deviceName   = (char *)dev;
-    dm.propertyName = (char *)prop;
-    dm.type         = (char *)"string";
-    dm.value        = (char *)(value ? value : "");
-    dm.timeStamp    = (int64_t)timestamp;
-    if (p && p->pushMethod && p->pushMethod->methodName && p->pushMethod->methodConfig) {
-        publisher_publish_dynamic(p->pushMethod->methodName, p->pushMethod->methodConfig, &dm);
-    }
-    ReportTwinKV(ns, dev, prop, dm.value, dm.type);
     return rc;
 }

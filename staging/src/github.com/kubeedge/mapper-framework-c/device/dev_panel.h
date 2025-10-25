@@ -32,8 +32,6 @@ extern "C"
 
     int dev_panel_get_model(DeviceManager *manager, const char *modelId, DeviceModel *model);
 
-    int dev_panel_has_device(DeviceManager *manager, const char *deviceId);
-
     int dev_panel_update_dev(DeviceManager *manager, const DeviceModel *model, const DeviceInstance *instance);
 
     int dev_panel_update_model(DeviceManager *manager, const DeviceModel *model);
