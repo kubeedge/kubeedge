@@ -4,8 +4,8 @@ status: implementable
 authors:
   - "@HaojieZhang6848"
 approvers:
-creation-date: 2025-10-10
-last-updated: 2025-10-10
+creation-date: 2025-10-27
+last-updated: 2025-10-27
 ---
 
 # KubeEdge: Device Anomaly Detection Framework
@@ -107,238 +107,227 @@ While the above process reports device states fully to the cloud, there are seve
 
 ## 3. Overall Solution Design
 
-### 3.1 Design Principles
+The overall anomaly detection workflow is illustrated in the following diagram:
 
-When designing the KubeEdge device anomaly detection framework, this solution follows the following principles:
+<img src="./workflow.jpg" alt="Workflow" width="600"/>
+<!-- ![Workflow](./workflow.png) -->
 
-1. **Non-intrusiveness**  
-   - Does not modify the existing device state reporting link, and does not block the normal update of Device CRD by DeviceController.  
-   - Detection and data collection modules work in a bypass manner, ensuring that anomalies or timeouts do not affect the main business process.
+1. **Data Collection Phase**
+   - Mapper runs on the edge side, responsible for collecting property data from devices (e.g., temperature, current, status, etc.).
+   - Mapper pushes the collected property data in real-time via Push Properties Data to: External Anomaly Detection System (cloud-side anomaly detection system) or Eco System (e.g., message queues MQ, databases DB, third-party data storage, etc.).
 
-2. **Scalability**  
-   - Supports the integration of various detection algorithms and models, including rules, statistical methods, machine learning, and deep learning models.  
-   - Supports running multiple detector instances simultaneously, with different detectors serving different device groups.
+2. **Anomaly Detection Phase (Cloud)**
+   - External Anomaly Detection System receives property data from multiple sources (pushed by Mapper or pulled from Eco System).
+   - The system utilizes algorithms or rules to analyze device properties and detect whether anomalies exist (e.g., excessive temperature, signal anomalies, data loss, etc.).
 
-3. **Decoupling and Modularity**  
-   - Splits the data collection, storage, visualization, and online detection functionalities into independent components to reduce coupling.  
-   - Each component can be independently deployed, upgraded, and scaled.
-
-4. **Security and Isolation**  
-   - Cloud-edge communication and detector calls use mTLS encryption and identity authentication.  
-   - Supports access control based on namespaces, device labels, etc., to achieve multi-tenant isolation.
-
-### 3.2 System Overall Architecture
-
-The entire anomaly detection framework consists of two parallel workflows:
-
-1. **Data Collection and Dataset Generation Workflow**
-   - **TelemetryMirrorHook**: Deployed inside CloudCore’s DeviceController, responsible for mirroring all received `{namespace, device name, property name, property value, timestamp}` data and forwarding it to the data collection component.  
-   - **TelemetryDataHub**: Receives mirrored data and persists it, supporting queries based on namespace, device, properties, etc.  
-   - **DataHub Console**: Provides a visual interface for users to filter target device groups, time ranges, and properties, and download the selected dataset for offline model training and analysis.
-
-2. **Online Detection and Anomaly Marking Workflow**
-   - **DetectorRouterHook**: Deployed inside CloudCore’s DeviceController, supports configuring multiple instances, each bound to a filter condition (Filter) and a target detector (AnomalyDetector).  
-   - **AnomalyDetector**: An independently deployed detection service that communicates with DeviceController via gRPC bidirectional streams, receives reported data that meets the filter conditions, performs real-time inference using built-in models, and returns detection results.  
-   - **Result Writing and Alarm**: DeviceController updates the detection results to the corresponding `status.anomaly` field of the Device CRD and triggers a Kubernetes Event for integration with visualization and alarm systems.
-
-The overall architecture of the anomaly detection framework is shown in the diagram below:
-
-![](architecture.png)
-
-### 3.3 Data and Control Flow Description
-
-#### Data Collection Flow (Offline Training Link)
-1. **Device** → **Mapper** → **EdgeCore** → **CloudCore/DeviceController**  
-2. **TelemetryMirrorHook** bypasses and mirrors data → **TelemetryDataHub** persists  
-3. User queries and exports via **DataHub Console** → Offline model training → Model deployment to **AnomalyDetector**
-
-Data collection flow is shown in the diagram below:
-
-![](data-collection-flow.png)
-
-#### Online Detection Flow (Real-time Detection Link)
-1. **Device** → **Mapper** → **EdgeCore** → **CloudCore/DeviceController**  
-2. **DetectorRouterHook** matches the Filter and sends data to the target **AnomalyDetector**  
-3. **AnomalyDetector** model inference → Returns anomaly results → **DeviceController** updates CRD and triggers events  
-
-Online detection flow is shown in the diagram below:
-
-![](online-detection-flow.png)
-
+3. **Result Update Phase (Cloud and API Server)**
+   
+   Once an anomaly is detected, External Anomaly Detection System updates the detection results (e.g., anomaly indicators, confidence scores, timestamps, etc.) to the Kubernetes API Server:
+   - Updates the `extensions` field in DeviceStatus CRD to record anomaly detection results.
+   - In this way, users and upper-layer applications can query DeviceStatus CRD to obtain the latest device status and anomaly information.
 
 ## 4. Key Component Descriptions
 
 This solution consists of multiple decoupled components, each with clear responsibilities and interfaces, making it easy to deploy, expand, and maintain.
 
-### 4.1 TelemetryMirrorHook
+### 4.1 DeviceStatus CRD
 
-**Location**: Deployed inside CloudCore’s DeviceController.
-
-**Function**:  
-- Non-blocking mirroring of all device state report events received by DeviceController.  
-- Sends `{namespace, device name, property name, property value, timestamp, metadata}` to **TelemetryDataHub**.  
-- Does not affect the main business link, even if the downstream DataHub is unavailable, it will not block the CRD update.
-
-**Characteristics**:  
-- **Bypass design**: Completely decoupled from the DeviceController’s state update logic.  
-- **High throughput support**: Reduces impact on the DeviceController main thread by using asynchronous queues or batch sending.  
-- **Fault tolerance**: Buffers and retries in case of network failures (short-term memory buffering, discarding long-term failures).
-
-The configuration for TelemetryMirrorHook can be set in the `cloudcore` configuration file as shown below:
+The device state (including Observed Desired State, Reported State, and future anomaly detection results) will be recorded in the CRD in the API Server. The existing Device CRD contains both Spec and Status sections. Considering that the Status section will contain more fields in the future and will be frequently modified by multiple components (such as DeviceController in CloudCore, anomaly detectors, etc.), we decided to split DeviceStatus into a separate new CRD to prevent frequent Status changes from causing `resourceVersion` to change too rapidly, which would affect operations on the Spec section. The structure of the new DeviceStatus CRD is as follows:
 
 ```yaml
-deviceController:
-  buffer:
-    deviceEvent: 1
-    deviceModelEvent: 1
-    updateDeviceStatus: 1024
-  enable: true
-  load:
-    updateDeviceStatusWorkers: 1
-
-  # ===== New: Full Mirroring Hook Configuration =====
-  telemetryMirrorHook:
-    enable: true                       # Enable mirroring hook
-    targetEndpoint: "http://datahub.kubeedge.svc.cluster.local:8080/ingest"
-    batchSize: 100                      # Batch size
-    flushInterval: 2s                   # Batch send interval
-    retry:
-      maxRetries: 3
-      backoff: 1s                       # Retry interval
-    tls:
-      enable: false                     # Enable TLS
-      caFile: ""
-      certFile: ""
-      keyFile: ""
-    metadata:
-      includeMapper: true               # Include Mapper/EdgeCore metadata
-      includeUnit: true                 # Include unit information
+apiVersion: devices.kubeedge.io/v1alpha2
+kind: DeviceStatus
+metadata:
+  name: temperature-sensor # Same as Device CRD
+  namespace: default # Same as Device CRD
+spec:
+  deviceRef:
+    name: temperature-sensor-01 # Reference to Device CRD
+    namespace: default # Reference to Device CRD
+status:
+  lastOnlineTime: '2025-10-26T08:00:00Z'
+  twins:
+    properties:
+      - propertyName: temperature
+        observedDesired:
+          value: ''
+        reported:
+          metadata:
+            timestamp: "1760944813469"
+            type: string
+         value: "22.5"
+  # newly added field for extensible status data (i.e., anomaly detection results)
+  extensions:
+    anomaly-detector: # business name or detector name
+      lastUpdated: '2025-10-26T08:05:00Z'
+      data:
+        anomalyScore: 0.02
+        confidence: 0.98
+    energy-monitor:
+      lastUpdated: '2025-10-26T08:06:00Z'
+      data:
+        powerUsage: 132.5
+        unit: W
+    maintenance-system:
+      lastUpdated: '2025-10-26T08:10:00Z'
+      data:
+        nextService: '2025-12-01'
+        technician: 'auto-assign'
 ```
 
-### 4.2 TelemetryDataHub
+### 4.2 CloudCore Updates to DeviceStatus
 
-**Location**: Independent cloud-side service, can be deployed separately from CloudCore.
+Since the Device CRD has been split into Device CRD and DeviceStatus CRD, the code in CloudCore responsible for updating device status must also be modified accordingly. Specifically, the relevant logic in `cloud/pkg/devicecontroller/controller/upstream.go` needs to be modified. When StateUpdate and TwinUpdate messages are received, the original logic of updating Device CRD should be changed to update DeviceStatus CRD instead. If the corresponding DeviceStatus CRD does not exist, a new DeviceStatus CRD instance must be created first, and then updated. The specific workflow is as follows:
 
-**Function**:  
-- Receives full mirrored data from **TelemetryMirrorHook**.  
-- Indexes and persists data based on `{namespace, device name, property name, timestamp}`.  
-- Provides query APIs and dataset export functionality, supporting multiple formats (CSV, Parquet, JSONLines).
+1. Receive StateUpdate or TwinUpdate messages.
+2. Check if the corresponding DeviceStatus CRD exists.
+   - If it exists, update the DeviceStatus CRD.
+   - If it does not exist, create a new DeviceStatus CRD instance and perform initialization.
+3. After completing the update, return the processing result.
 
-**DataHub Console (Submodule)**:  
-- Provides a web interface where users can filter data by namespace, label, device group, properties, time range, and download the selected dataset for offline model training and analysis.
+### 4.3 Mapper PushMethod Extension
 
-**Characteristics**:  
-- **Easily expandable storage**: Initially can use lightweight time-series databases or object storage, with future migration to distributed columnar storage.  
-- **Pluggable output**: Supports pushing data to external data lakes or analytics platforms.
+The PushMethod section in Device CRD supports configuring the method of device data push. After configuring PushMethod, Mapper can directly push device-generated data to external systems without going through the WebSocket channel between KubeEdge's CloudCore and EdgeCore. Currently, PushMethod supports various external storage systems such as TDEngine, InfluxDB2, MySQL, Redis, as well as multiple message transmission protocols including HTTP, MQTT, OTEL, etc. Anomaly detection models can run on the cloud side or the edge side. To reduce pressure on the CloudCore/EdgeCore channel, we plan to extend PushMethod to support Mapper directly pushing device data to anomaly detectors.
 
-### 4.3 DetectorRouterHook
+First, in the Device CRD, add AnomalyDetection-related configuration items to the PushMethod of each Property. The content of AnomalyDetection configuration items can be defined by users according to their needs, allowing them to configure how Mapper pushes device data to anomaly detectors.
 
-**Location**: Deployed inside CloudCore’s DeviceController, supports configuring multiple instances.
+<img src="./anomaly_detection_pushmethod.jpg" alt="Device CRD PushMethod AnomalyDetection" width="600"/>
 
-**Function**:  
-- Matches reported data based on configured **Filter** conditions (namespace, device label, property name, etc.).  
-- Sends matched data via **gRPC** bidirectional stream to the designated **AnomalyDetector** service for inference.  
-- Supports connecting multiple **AnomalyDetector** instances, each serving a different device group.
+Next, modify the PushMethodConfig class definition in Mapper by adding ADMethod-related fields to support parsing the AnomalyDetection configuration items in Device CRD.
 
-**Characteristics**:  
-- **Multi-path routing**: A single reported data can be routed to multiple detectors (satisfying multiple Filters).  
-- **Dynamically configurable**: Filter conditions and target detectors can be updated at runtime (via ConfigMap or CRD).  
-- **Degradation strategy**: When the detector times out or becomes unavailable, it defaults to pass-through and logs the event.
+```go
+// PushMethodConfig is structure to store push config
+type PushMethodConfig struct {
+	MethodName   string          `json:"MethodName"`
+	MethodConfig json.RawMessage `json:"MethodConfig"`
+	DBMethod     DBMethodConfig  `json:"dbMethod,omitempty"`
+	// New
+	ADMethod     AnomalyDetectionConfig `json:"adMethod,omitempty"`
+}
 
-You can configure the related parameters for DetectorRouterHook in the `cloudcore` configuration file as shown below:
+// DBMethodConfig is structure to store database config
+type DBMethodConfig struct {
+	DBMethodName string   `json:"dbMethodName"`
+	DBConfig     DBConfig `json:"dbConfig"`
+}
 
-```yaml
-deviceController:
-  buffer:
-    deviceEvent: 1
-    deviceModelEvent: 1
-    updateDeviceStatus: 1024
-  enable: true
-  load:
-    updateDeviceStatusWorkers: 1
+type DBConfig struct {
+	Influxdb2ClientConfig json.RawMessage `json:"influxdb2ClientConfig"`
+	Influxdb2DataConfig   json.RawMessage `json:"influxdb2DataConfig"`
+	RedisClientConfig     json.RawMessage `json:"redisClientConfig"`
+	TDEngineClientConfig  json.RawMessage `json:"TDEngineClientConfig"`
+	MySQLClientConfig     json.RawMessage `json:"mysqlClientConfig"`
+}
 
-  # ===== New: Detector Router Hook Configuration =====
-  detectorRouterHooks:
-    - name: "temp-detector"              # Detector name
-      enable: true
-      filter:
-        namespace: "factory-a"
-        deviceLabels:
-          model: "pump-x"
-        properties:
-          - "temp"
-          - "pressure"
-      detectorEndpoint: "grpc://detector-temp.kubeedge.svc.cluster.local:50051"
-      timeout: 500ms                     # Detector inference timeout
-      retry:
-        maxRetries: 2
-        backoff: 200ms
-      tls:
-        enable: true
-        caFile: "/etc/kubeedge/certs/ca.crt"
-        certFile: "/etc/kubeedge/certs/client.crt"
-        keyFile: "/etc/kubeedge/certs/client.key"
-
-    - name: "statuscode-detector"        # Another detector
-      enable: true
-      filter:
-        namespace: "factory-b"
-        properties:
-          - "status_code"
-      detectorEndpoint: "grpc://detector-status.kubeedge.svc.cluster.local:50051"
-      timeout: 500ms
-      retry:
-        maxRetries: 2
-        backoff: 200ms
-      tls:
-        enable: false
+type AnomalyDetectionConfig struct {
+	// Detailed structured can be defined by user
+	// As long as it corresponds to the Anomaly Detection config defined in Device CRD PushMethod
+}
 ```
 
-### 4.4 AnomalyDetector
+Finally, users can implement the logic to push device data to anomaly detectors in the generated Mapper's `device/device.go` based on the AnomalyDetection configuration items. The specific implementation can be customized according to user requirements and the anomaly detector's interface.
 
-**Location**: Independent cloud-side detection service, can be deployed in multiple instances.
+Example code snippet from `device/device.go`:
 
-**Function**:  
-- Receives device state data from **DetectorRouterHook** via gRPC bidirectional streams.  
-- Calls built-in detection algorithms or loaded models for real-time inference.  
-- Returns `{anomaly mark, anomaly type, score, reason, model version}` to **DeviceController**.  
-- Optionally writes detection results to its own database for statistics and analysis.
+```go
+dataModel := common.NewDataModel(dev.Instance.Name, twin.Property.PropertyName, dev.Instance.Namespace, common.WithType(twin.ObservedDesired.Metadata.Type))
+// handle push method
+if twin.Property.PushMethod.MethodConfig != nil && twin.Property.PushMethod.MethodName != "" {
+   pushHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
+}
+// handle database
+if twin.Property.PushMethod.DBMethod.DBMethodName != "" {
+   dbHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
+   switch twin.Property.PushMethod.DBMethod.DBMethodName {
+   // TODO add more database
+   case "influx":
+      dbInflux.DataHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
+   case "redis":
+      dbRedis.DataHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
+   case "tdengine":
+      dbTdengine.DataHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
+   case "mysql":
+      dbMysql.DataHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
+   }
+}
 
-**Detector Console (Submodule)**:  
-- Provides real-time detection results, including device state curves, anomaly point markers, and detection hit rate statistics.  
-- Supports model version management and switching (with security controls).
+// New: handle anomaly detection method
+adMethod.AnomalyDetectionHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
+```
 
-**Characteristics**:  
-- **Algorithm plug-in**: Supports interfaces for rules, statistics, machine learning, deep learning, and other algorithms.  
-- **Model hot loading**: Supports switching models without interrupting services.  
-- **Horizontal scaling**: Can scale according to load, supporting load balancing or device sharding.
+Example code snippet from `data/admethod/client.go`:
 
-### 4.5 Result Writing and Alarm Module
+```go
+func AnomalyDetectionHandler(ctx context.Context, twin *common.Twin, client *driver.CustomizedClient, visitorConfig *driver.VisitorConfig, dataModel *common.DataModel) {
+	// User can implement their own logic to send the data to the anomaly detection system here.
+}
+```
 
-**Location**: Integrated within **DeviceController**.
 
-**Function**:  
-- Updates detection results to the corresponding `status.anomaly` field of the **Device CRD**, including the most recent detection state, score, type, and timestamp.  
-- Triggers **Kubernetes Event**, for integration with existing alarm systems (e.g., Alertmanager, Webhook).
+### 4.4 Integration with External Anomaly Detectors
 
-**Characteristics**:  
-- **Traceable results**: Anomaly information is stored in CRD, which can be collected and displayed by Prometheus, Grafana, etc.  
-- **Flexible alarms**: Alarm strategies can be based on Event or direct subscription to CRD state changes.
+External anomaly detectors accept device data pushed by Mapper, perform real-time anomaly detection, and write the detection results back to DeviceStatus CRD or other systems. The data protocol between external anomaly detectors and Mapper, as well as the final result feedback mechanism, can be implemented by users themselves. This proposal plans to implement an example external anomaly detector for user reference and submit it to the `examples` directory. The communication interface between the example anomaly detector and Mapper is defined as follows:
 
-### 5. Conclusion
+```proto
+syntax = "proto3";
 
-This technical solution addresses existing issues in KubeEdge’s device state management, such as **lack of credibility**, **lack of real-time anomaly detection**, and **low data utilization efficiency**, by proposing a **non-intrusive, scalable, decoupled, secure** device anomaly detection framework. The key features of the solution include:
+package kubeedge.anomalydetector.v1;
 
-#### Full data mirroring and visual export  
-- **TelemetryMirrorHook** enables bypass collection of device state reporting data, without affecting the performance or stability of DeviceController’s main link.  
-- **TelemetryDataHub** provides standardized data storage, filtering, and export capabilities, making offline model training and data analysis more convenient.
+option go_package = "github.com/kubeedge/edge-anomaly/api/v1;v1";
 
-#### Pluggable real-time anomaly detection  
-- **DetectorRouterHook** routes data under different device groups and conditions to corresponding **AnomalyDetector**, supporting multi-algorithm, multi-model parallel operation.  
-- Detection results are written back to **Device CRD**, triggering alarms, thus enabling an end-to-end anomaly detection and response loop.
+// ------------------------------------------------------------
+// Message definitions
+// ------------------------------------------------------------
 
-#### Security and maintainability  
-- Full-link support for **mTLS** and **namespace/label-level** access control ensures isolation and security for multi-tenant and multi-business scenarios.  
-- Decoupled component deployment, supporting independent scaling, reducing maintenance risks.
+// DevicePropertyData represents a single property update
+// reported by a specific device through the Mapper.
+// Each message carries basic identification info and a property value.
+message DevicePropertyData {
+  string device_name = 1;   // Device name (unique within the namespace)
+  string namespace = 2;     // Kubernetes namespace of the device
+  string property_name = 3; // Property name (e.g., temperature, humidity)
+  string property_value = 4;// Property value (string format for flexibility)
+  string timestamp = 5;     // Timestamp when the value was measured (ISO8601/RFC3339)
+}
 
-This design fully considers system stability and future scalability, introducing extendable anomaly detection capabilities while preserving the integrity of the existing **KubeEdge** architecture. Through this framework, the platform can not only identify potential device anomalies earlier, reducing fault detection time but also accumulate high-quality historical data, laying the groundwork for more complex causal analysis, predictive maintenance, and intelligent optimization in the future.
+// AnomalyResponse is returned by the anomaly detector after
+// processing each incoming property data message.
+message AnomalyResponse {
+  string status = 1;        // "ok" or an error/alert string
+  string message = 2;       // Optional descriptive message
+  string timestamp = 3;     // Timestamp when this response was generated
+}
+
+// ------------------------------------------------------------
+// Service definition
+// ------------------------------------------------------------
+
+// AnomalyDetectionService provides a bidirectional streaming RPC
+// between Mapper and the external anomaly detection system.
+//
+// - Mapper continuously streams DevicePropertyData messages
+//   containing device metrics or sensor readings.
+// - The anomaly detector consumes these messages and responds
+//   with a simple acknowledgement (e.g., "ok") or an anomaly alert.
+//
+// This design allows real-time analysis and feedback while keeping
+// the protocol lightweight and extensible.
+service AnomalyDetectionService {
+  rpc StreamDetect(stream DevicePropertyData) returns (stream AnomalyResponse);
+}
+```
+
+## 5. Conclusion
+
+This proposal introduces a device anomaly detection framework for KubeEdge to enhance the reliability and trustworthiness of device state data. The solution includes four key components:
+
+1. **DeviceStatus CRD**: A new CRD separated from Device CRD to store device status and anomaly detection results in the `extensions` field, preventing frequent `resourceVersion` changes.
+
+2. **CloudCore DeviceController Updates**: Modifies the logic in `cloud/pkg/devicecontroller/controller/upstream.go` to update DeviceStatus CRD instead of Device CRD when receiving StateUpdate and TwinUpdate messages, with automatic creation of DeviceStatus instances when they don't exist.
+
+3. **Mapper PushMethod Extension**: Extends the existing PushMethod mechanism to allow Mappers to directly push device data to external anomaly detection systems, reducing pressure on the CloudCore/EdgeCore channel.
+
+4. **External Anomaly Detector Integration**: Provides a reference implementation and gRPC interface definition for integrating external anomaly detection services that can analyze device data and update results back to DeviceStatus CRD.
+
+The framework operates in a non-intrusive bypass manner, ensuring backward compatibility while enabling users to deploy custom anomaly detection algorithms for various device types and scenarios.
+
