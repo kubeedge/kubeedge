@@ -76,6 +76,23 @@ static void build_instance_min(const v1beta1::Device &src, DeviceInstance *out)
         }
         if (sp.properties_size() > 0)
         {
+            out->twinsCount = sp.properties_size();
+            out->twins = (Twin *)calloc(out->twinsCount, sizeof(Twin));
+            for (int t = 0; t < out->twinsCount; ++t) {
+                const auto &pp = sp.properties(t);
+                if (!pp.name().empty())
+                    out->twins[t].propertyName = strdup(pp.name().c_str());
+                if (pp.has_desired() && !pp.desired().value().empty()) {
+                    out->twins[t].observedDesired.value = strdup(pp.desired().value().c_str());
+                    // optional: set metadata timestamp now
+                    char tsbuf[64];
+                    time_t now = time(NULL);
+                    snprintf(tsbuf, sizeof(tsbuf), "%lld", (long long)now * 1000);
+                    out->twins[t].observedDesired.metadata.timestamp = strdup(tsbuf);
+                    out->twins[t].observedDesired.metadata.type = strdup("string");
+                }
+                out->twins[t].reported.value = NULL;
+            }
             out->propertiesCount = sp.properties_size();
             out->properties = (DeviceProperty *)calloc(out->propertiesCount, sizeof(DeviceProperty));
             for (int i = 0; i < out->propertiesCount; ++i)
@@ -85,7 +102,6 @@ static void build_instance_min(const v1beta1::Device &src, DeviceInstance *out)
                     out->properties[i].name = strdup(p.name().c_str());
                     out->properties[i].propertyName = strdup(p.name().c_str());
                 }
-
                 if (p.has_pushmethod()) {
                     out->properties[i].pushMethod = (PushMethodConfig *)calloc(1, sizeof(PushMethodConfig));
                     const auto &pm = p.pushmethod();
@@ -178,9 +194,9 @@ static void build_instance_min(const v1beta1::Device &src, DeviceInstance *out)
                 
                 }
             }
-        }
-    }
-}
+         }
+     }
+ }
 
 static void free_model_min(DeviceModel *m)
 {
@@ -229,6 +245,19 @@ static void free_instance_min(DeviceInstance *d)
             }
         }
         free(d->properties);
+    }
+    if (d->twins) {
+        for (int i = 0; i < d->twinsCount; ++i) {
+            Twin *t = &d->twins[i];
+            free(t->propertyName);
+            free(t->observedDesired.value);
+            free(t->observedDesired.metadata.timestamp);
+            free(t->observedDesired.metadata.type);
+            free(t->reported.value);
+            free(t->reported.metadata.timestamp);
+            free(t->reported.metadata.type);
+        }
+        free(d->twins);
     }
     memset(d, 0, sizeof(*d));
 }
@@ -293,40 +322,13 @@ public:
             DeviceInstance inst;
             build_model_min(dev, &mdl);
             build_instance_min(dev, &inst);
+            // submit updated instance (including desired copied above) to dev_panel
             (void)dev_panel_update_dev(panel_get_manager(), &mdl, &inst);
             free_model_min(&mdl);
             free_instance_min(&inst);
         }
 
-        if (dev.has_spec())
-        {
-            const auto &spec = dev.spec();
-            int ok = 0;
-            std::string key = dev.namespace_().empty() ? dev.name() : (dev.namespace_() + "/" + dev.name());
-            for (int i = 0; i < spec.properties_size(); ++i)
-            {
-                const auto &p = spec.properties(i);
-                if (!p.has_desired())
-                    continue;
-                const std::string propName = p.name();
-                const std::string desired = p.desired().value();
-                if (desired.empty())
-                    continue;
-
-                int wrc = dev_panel_write_device(panel_get_manager(),
-                                                 NULL,
-                                                 key.c_str(),
-                                                 propName.c_str(),
-                                                 desired.c_str());
-                log_info("UpdateDevice: DirectWrite prop=%s val=%s rc=%d", propName.c_str(), desired.c_str(), wrc);
-                if (wrc == 0)
-                    ok++;
-            }
-            if (ok > 0)
-            {
-                return ::grpc::Status::OK;
-            }
-        }
+        // desired values are applied by device layer when processing twins (device_deal_twin -> SetDeviceData)
         return ::grpc::Status::OK;
     }
 
