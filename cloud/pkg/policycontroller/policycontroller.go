@@ -99,6 +99,10 @@ func (pc *policyController) Enable() bool {
 	return kefeatures.DefaultFeatureGate.Enabled(kefeatures.RequireAuthorization)
 }
 
+func (pc *policyController) RestartPolicy() *core.ModuleRestartPolicy {
+	return nil
+}
+
 // Start controller
 func (pc *policyController) Start() {
 	// mgr.Start will block until the manager has stopped

@@ -1,12 +1,13 @@
 package core
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"k8s.io/klog/v2"
+	klog "k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/common"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -92,42 +93,81 @@ func moduleKeeper(name string, moduleInfo *ModuleInfo, m common.ModuleInfo) {
 }
 
 // localModuleKeeper starts and tries to keep module running when module exited.
-// Call EnableModuleRestart() to enable auto-restarting feature in alpha version.
 func localModuleKeeper(m *ModuleInfo) {
-	if !moduleRestartEnabled {
+	ctx := beehiveContext.GetContext()
+	policy := m.module.RestartPolicy()
+
+	// policy is nil, just start module
+	if policy == nil {
 		m.module.Start()
 		return
 	}
 
-	ctx := beehiveContext.GetContext()
-	backoffDuration := time.Second
+	var (
+		restartCount int32
+		intervalTime time.Duration
+	)
 
-	// do if module exits
-	afterFunc := func() {
-		if r := recover(); r != nil {
-			klog.Errorf("module %s panicking: %v", m.module.Name(), r)
-		}
-		klog.Errorf("module %s exited, will restart in %ds", m.module.Name(), int(backoffDuration.Seconds()))
+	if policy.IntervalSecond > 0 {
+		intervalTime = time.Duration(policy.IntervalSecond) * time.Second
+	} else {
+		intervalTime = time.Duration(DefaultIntervalSecond) * time.Second
 	}
 
 	for {
-		func() {
-			defer afterFunc()
-			m.module.Start()
-		}()
+		err := startModule(m)
+		if err == nil && policy.RestartType == RestartTypeOnFailure {
+			return
+		}
+		if err != nil {
+			klog.Errorf("module %s start failed, err: %v", m.module.Name(), err)
+		}
+		restartCount++
+
+		if policy.Retries > 0 && restartCount > policy.Retries {
+			klog.Infof("module %s restart limit has been reached, count: %d, policy.Retries: %d",
+				m.module.Name(), restartCount-1, policy.Retries)
+			if policy.ErrorHandler != nil {
+				policy.ErrorHandler(err)
+			}
+			return
+		}
 
 		select {
 		case <-ctx.Done():
 			klog.Infof("module %s shutdown", m.module.Name())
 			return
-		case <-time.After(backoffDuration):
+		case <-time.After(intervalTime):
 		}
-
-		if backoffDuration < 30*time.Second {
-			backoffDuration *= 2
-			if backoffDuration > 30*time.Second {
-				backoffDuration = 30 * time.Second
-			}
-		}
+		intervalTime = calculateIntervalTime(intervalTime,
+			policy.RestartIntervalLimit, policy.IntervalTimeGrowthRate)
 	}
+}
+
+func startModule(m *ModuleInfo) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("%v", r)
+		}
+	}()
+	m.module.Start()
+	return
+}
+
+func calculateIntervalTime(curr time.Duration, limit time.Duration, growthRate float64) (intervalTime time.Duration) {
+	intervalTime = curr
+	if growthRate <= 1 {
+		return
+	}
+	if limit == 0 {
+		limit = DefaultRestartIntervalLimit
+	}
+	if curr == limit {
+		return
+	}
+	intervalTime = time.Duration(float64(intervalTime) * growthRate)
+	if intervalTime > limit {
+		intervalTime = limit
+	}
+	return
 }

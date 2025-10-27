@@ -39,3 +39,7 @@ func (m *testModuleDestGroup) Start() {
 		beehiveContext.SendResp(*resp)
 	}
 }
+
+func (m *testModuleDestGroup) RestartPolicy() *core.ModuleRestartPolicy {
+	return nil
+}
