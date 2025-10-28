@@ -1,3 +1,19 @@
+/*
+Copyright 2025 The KubeEdge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package listener
 
 import (
@@ -10,13 +26,14 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kubeedge/kubeedge/cloud/pkg/router/utils"
-	streamruleConfig "github.com/kubeedge/kubeedge/cloud/pkg/streamrulecontroller/config"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
+
+	"github.com/kubeedge/kubeedge/cloud/pkg/router/utils"
+	streamruleConfig "github.com/kubeedge/kubeedge/cloud/pkg/streamrulecontroller/config"
 )
 
 const MaxMessageBytes = 12 * (1 << 20)
@@ -205,12 +222,11 @@ func (sh *StreamruleHandler) httpHandler(w http.ResponseWriter, r *http.Request)
 		_, err = w.Write([]byte("No streamrule match"))
 		klog.Infof("no streamrule match, write result: %v", err)
 	}
-
 }
 
 func isNodeName(str string) bool {
 	if kubeClient == nil {
-		// kube client 没初始化成功时，总是直接返回 true
+		// Always returns true when the kube client has not been initialized successfully
 		klog.Warningf("kube client is nil")
 		return true
 	}

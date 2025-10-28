@@ -1,3 +1,19 @@
+/*
+Copyright 2025 The KubeEdge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package clouddatastream
 
 import (
@@ -11,8 +27,9 @@ import (
 
 	"github.com/emicklei/go-restful"
 	"github.com/gorilla/websocket"
-	"github.com/kubeedge/kubeedge/cloud/pkg/clouddatastream/config"
 	"k8s.io/klog/v2"
+
+	"github.com/kubeedge/kubeedge/cloud/pkg/clouddatastream/config"
 )
 
 var upgrader = websocket.Upgrader{
@@ -59,7 +76,6 @@ func (s *StreamServer) installDebugHandler() {
 	ws.Route(ws.GET("").
 		To(s.getRTSP))
 	s.container.Add(ws)
-
 }
 
 func (s *StreamServer) addVideoSession(id string, session *Session, videoConnID uint64) {
@@ -108,7 +124,7 @@ func (s *StreamServer) getRTSP(r *restful.Request, w *restful.Response) {
 	}
 
 	if sess, ok := s.getVideoSession(ep); ok {
-		// rtsp流已经在传输
+		// The RTSP stream is already being transmitted
 		session = sess.Session
 		videoConnID = sess.VideoConnID
 		conn, err := session.GetAPIServerConnection(videoConnID)
@@ -117,14 +133,14 @@ func (s *StreamServer) getRTSP(r *restful.Request, w *restful.Response) {
 			return
 		}
 
-		// 使用类型断言
+		// Use type assertion
 		if videoConn, ok := conn.(*ContainerRTSPConnection); ok {
 			videoConn.AddWSConn(wsconn)
 		} else {
 			klog.Warningf("APIServerConnection is not a ContainerRTSPConnection, got %T", conn)
 		}
 
-		<-r.Request.Context().Done() // 客户端断开
+		<-r.Request.Context().Done()
 		klog.Infof("client closed connection.")
 
 	} else {
@@ -164,13 +180,12 @@ func (s *StreamServer) getRTSP(r *restful.Request, w *restful.Response) {
 		}()
 
 		<-videoConnection.(*ContainerRTSPConnection).emptyChan
-		// 没有人在听对应视频流，清理 session
+		// No listeners for this video stream remain, cleaning up the session
 		klog.Infof("[rtspvideo] no listeners left, deleting videoSession %s", ep)
 
 		s.deleteVideoSession(ep)
 		return
 	}
-
 }
 
 func (s *StreamServer) Start() {
