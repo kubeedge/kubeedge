@@ -84,7 +84,6 @@ static void build_instance_min(const v1beta1::Device &src, DeviceInstance *out)
                     out->twins[t].propertyName = strdup(pp.name().c_str());
                 if (pp.has_desired() && !pp.desired().value().empty()) {
                     out->twins[t].observedDesired.value = strdup(pp.desired().value().c_str());
-                    // optional: set metadata timestamp now
                     char tsbuf[64];
                     time_t now = time(NULL);
                     snprintf(tsbuf, sizeof(tsbuf), "%lld", (long long)now * 1000);
