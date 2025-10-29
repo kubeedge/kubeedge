@@ -45,6 +45,8 @@ func newBusMessageHandler() *SimpleHandler {
 				beehiveContext.Send(modules.EventBusModuleName, *msg)
 			case "router_servicebus":
 				beehiveContext.Send(modules.ServiceBusModuleName, *msg)
+			case "streamrule_endpoint":
+				beehiveContext.Send(modules.StreamRuleEndpointModuleName, *msg)
 			default:
 				klog.Warningf("unsupported bus message source '%s', message lost", msg.GetSource())
 			}

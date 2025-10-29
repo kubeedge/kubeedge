@@ -17,4 +17,6 @@ const (
 	MetaManagerModuleName = "metamanager"
 	// TaskManagerModuleName is a module name of taskmanager.
 	TaskManagerModuleName = "taskmanager"
+	// StreamRuleEndpointModuleName streamruleendpoint module name
+	StreamRuleEndpointModuleName = "streamruleendpoint"
 )

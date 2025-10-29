@@ -29,6 +29,7 @@ const (
 	DefaultWebSocketPort               = 10000
 	DefaultQuicPort                    = 10001
 	DefaultTunnelPort                  = 10004
+	DefaultDataTunnelPort              = 10006
 	DefaultClusterDomain               = "cluster.local"
 
 	// MetaManager
@@ -54,6 +55,7 @@ const (
 	DefaultPatchPodWorkers                   = 100
 	DefaultDeletePodWorkers                  = 100
 	DefaultUpdateRuleStatusWorkers           = 4
+	DefaultUpdateStreamruleStatusWorkers     = 4
 	DefaultQueryLeaseWorkers                 = 100
 	DefaultServiceAccountTokenWorkers        = 100
 	DefaultCreatePodWorkers                  = 4

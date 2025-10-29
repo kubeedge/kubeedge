@@ -27,6 +27,7 @@ API_VERSIONS=(
     "devices:v1beta1"
     "reliablesyncs:v1alpha1"
     "rules:v1"
+    "streamrules:v1alpha1"
     "apps:v1alpha1"
     "operations:v1alpha1"
     "operations:v1alpha2"

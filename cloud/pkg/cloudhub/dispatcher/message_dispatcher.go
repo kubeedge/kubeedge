@@ -184,6 +184,10 @@ func (md *messageDispatcher) DispatchUpstream(message *beehivemodel.Message, inf
 
 	case message.GetOperation() == beehivemodel.UploadOperation && message.GetGroup() == modules.UserGroup:
 		message.Router.Resource = fmt.Sprintf("node/%s/%s", info.NodeID, message.Router.Resource)
+		if message.Router.Source == "streamruleendpoint" {
+			beehivecontext.Send(modules.StreamRuleControllerModuleName, *message)
+			return
+		}
 		beehivecontext.Send(modules.RouterModuleName, *message)
 
 	case message.GetOperation() == taskutil.TaskPrePull ||

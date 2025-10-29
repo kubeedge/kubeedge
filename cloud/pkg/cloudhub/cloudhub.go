@@ -25,7 +25,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 )
 
-var DoneTLSTunnelCerts = make(chan bool, 1)
+var DoneTLSTunnelCerts = make(chan bool, 2)
 var sessionMgr *session.Manager
 
 type cloudHub struct {
@@ -112,6 +112,7 @@ func (ch *cloudHub) Start() {
 		klog.Exit(err)
 	}
 	// TODO: Will improve in the future
+	DoneTLSTunnelCerts <- true
 	DoneTLSTunnelCerts <- true
 	close(DoneTLSTunnelCerts)
 

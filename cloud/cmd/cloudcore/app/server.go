@@ -39,6 +39,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/cmd/cloudcore/app/options"
+	"github.com/kubeedge/kubeedge/cloud/pkg/clouddatastream"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/iptables"
@@ -52,6 +53,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/policycontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router"
+	"github.com/kubeedge/kubeedge/cloud/pkg/streamrulecontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/taskmanager"
 	"github.com/kubeedge/kubeedge/common/constants"
@@ -173,7 +175,9 @@ func registerModules(c *v1alpha1.CloudCoreConfig) {
 	taskmanager.Register(c.Modules.TaskManager)
 	synccontroller.Register(c.Modules.SyncController)
 	cloudstream.Register(c.Modules.CloudStream, c.CommonConfig)
+	clouddatastream.Register(c.Modules.CloudDataStream, c.CommonConfig)
 	router.Register(c.Modules.Router)
+	streamrulecontroller.Register(c.Modules.StreamRuleController)
 	dynamiccontroller.Register(c.Modules.DynamicController, enableAuthorization)
 	policycontroller.Register(client.CrdConfig)
 }

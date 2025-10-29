@@ -31,6 +31,7 @@ import (
 	policy "github.com/kubeedge/api/client/informers/externalversions/policy"
 	reliablesyncs "github.com/kubeedge/api/client/informers/externalversions/reliablesyncs"
 	rules "github.com/kubeedge/api/client/informers/externalversions/rules"
+	streamrules "github.com/kubeedge/api/client/informers/externalversions/streamrules"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -265,6 +266,7 @@ type SharedInformerFactory interface {
 	Policy() policy.Interface
 	Reliablesyncs() reliablesyncs.Interface
 	Rules() rules.Interface
+	Streamrules() streamrules.Interface
 }
 
 func (f *sharedInformerFactory) Apps() apps.Interface {
@@ -289,4 +291,8 @@ func (f *sharedInformerFactory) Reliablesyncs() reliablesyncs.Interface {
 
 func (f *sharedInformerFactory) Rules() rules.Interface {
 	return rules.New(f, f.namespace, f.tweakListOptions)
+}
+
+func (f *sharedInformerFactory) Streamrules() streamrules.Interface {
+	return streamrules.New(f, f.namespace, f.tweakListOptions)
 }

@@ -29,6 +29,7 @@ import (
 	policyv1alpha1 "github.com/kubeedge/api/client/clientset/versioned/typed/policy/v1alpha1"
 	reliablesyncsv1alpha1 "github.com/kubeedge/api/client/clientset/versioned/typed/reliablesyncs/v1alpha1"
 	rulesv1 "github.com/kubeedge/api/client/clientset/versioned/typed/rules/v1"
+	streamrulesv1alpha1 "github.com/kubeedge/api/client/clientset/versioned/typed/streamrules/v1alpha1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
@@ -43,6 +44,7 @@ type Interface interface {
 	PolicyV1alpha1() policyv1alpha1.PolicyV1alpha1Interface
 	ReliablesyncsV1alpha1() reliablesyncsv1alpha1.ReliablesyncsV1alpha1Interface
 	RulesV1() rulesv1.RulesV1Interface
+	StreamrulesV1alpha1() streamrulesv1alpha1.StreamrulesV1alpha1Interface
 }
 
 // Clientset contains the clients for groups.
@@ -55,6 +57,7 @@ type Clientset struct {
 	policyV1alpha1        *policyv1alpha1.PolicyV1alpha1Client
 	reliablesyncsV1alpha1 *reliablesyncsv1alpha1.ReliablesyncsV1alpha1Client
 	rulesV1               *rulesv1.RulesV1Client
+	streamrulesV1alpha1   *streamrulesv1alpha1.StreamrulesV1alpha1Client
 }
 
 // AppsV1alpha1 retrieves the AppsV1alpha1Client
@@ -90,6 +93,11 @@ func (c *Clientset) ReliablesyncsV1alpha1() reliablesyncsv1alpha1.ReliablesyncsV
 // RulesV1 retrieves the RulesV1Client
 func (c *Clientset) RulesV1() rulesv1.RulesV1Interface {
 	return c.rulesV1
+}
+
+// StreamrulesV1alpha1 retrieves the StreamrulesV1alpha1Client
+func (c *Clientset) StreamrulesV1alpha1() streamrulesv1alpha1.StreamrulesV1alpha1Interface {
+	return c.streamrulesV1alpha1
 }
 
 // Discovery retrieves the DiscoveryClient
@@ -164,6 +172,10 @@ func NewForConfigAndClient(c *rest.Config, httpClient *http.Client) (*Clientset,
 	if err != nil {
 		return nil, err
 	}
+	cs.streamrulesV1alpha1, err = streamrulesv1alpha1.NewForConfigAndClient(&configShallowCopy, httpClient)
+	if err != nil {
+		return nil, err
+	}
 
 	cs.DiscoveryClient, err = discovery.NewDiscoveryClientForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
@@ -192,6 +204,7 @@ func New(c rest.Interface) *Clientset {
 	cs.policyV1alpha1 = policyv1alpha1.New(c)
 	cs.reliablesyncsV1alpha1 = reliablesyncsv1alpha1.New(c)
 	cs.rulesV1 = rulesv1.New(c)
+	cs.streamrulesV1alpha1 = streamrulesv1alpha1.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)
 	return &cs

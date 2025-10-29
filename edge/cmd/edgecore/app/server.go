@@ -29,6 +29,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/servicebus"
+	"github.com/kubeedge/kubeedge/edge/pkg/streamruleendpoint"
 	"github.com/kubeedge/kubeedge/edge/pkg/taskmanager"
 	"github.com/kubeedge/kubeedge/edge/test"
 	"github.com/kubeedge/kubeedge/pkg/features"
@@ -203,6 +204,7 @@ func registerModules(c *v1alpha2.EdgeCoreConfig) {
 	eventbus.Register(c.Modules.EventBus, c.Modules.Edged.HostnameOverride)
 	metamanager.Register(c.Modules.MetaManager)
 	servicebus.Register(c.Modules.ServiceBus)
+	streamruleendpoint.Register(c.Modules.StreamRuleEndpoint, c.Modules.Edged.HostnameOverride)
 	edgestream.Register(c.Modules.EdgeStream, c.Modules.Edged.HostnameOverride, c.Modules.Edged.NodeIP)
 	taskmanager.Register(c.Modules.TaskManager)
 	test.Register(c.Modules.DBTest)
