@@ -19,6 +19,7 @@ package otel
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"go.opentelemetry.io/otel/metric"
@@ -67,7 +68,15 @@ func DataHandler(ctx context.Context, twin *common.Twin, client *driver.Customiz
 			return fmt.Errorf("get device data fail: %v", err)
 		}
 
-		o.ObserveFloat64(gauge, data.(float64))
+		strData, err := common.ConvertToString(data)
+		if err != nil {
+			return fmt.Errorf("failed to parse device data to string: %v", err)
+		}
+		floatData, err := strconv.ParseFloat(strData, 64)
+		if err != nil {
+			return fmt.Errorf("failed to parse device data to float64: %v", err)
+		}
+		o.ObserveFloat64(gauge, floatData)
 		return nil
 	}, gauge)
 	if err != nil {
