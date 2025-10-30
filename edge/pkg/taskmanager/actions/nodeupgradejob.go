@@ -155,7 +155,7 @@ func (nodeUpgradeJobActionHandler) checkItems(
 		case runtime.GOARCH == "amd64" && getter.AMD64 != "":
 			expectedDigest = getter.AMD64
 		default:
-			resp.err = fmt.Errorf("unsupport the arch %s to verify the image digest", runtime.GOARCH)
+			resp.err = fmt.Errorf("unsupported the arch %s to verify the image digest", runtime.GOARCH)
 			return resp
 		}
 		local, err := ctrcli.GetImageDigest(ctx, image)

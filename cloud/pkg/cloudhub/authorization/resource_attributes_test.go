@@ -69,7 +69,7 @@ func TestGetBuiltinResourceAttributes(t *testing.T) {
 			got, err := getBuiltinResourceAttributes(tt.router)
 			if err != nil {
 				if !tt.wantErr {
-					t.Errorf("getBuiltinResourceAttributes(): unexpect error: %v", err)
+					t.Errorf("getBuiltinResourceAttributes(): unexpected error: %v", err)
 				}
 				return
 			}
@@ -185,7 +185,7 @@ func TestGetAuthorizerAttributes(t *testing.T) {
 			got, err := getAuthorizerAttributes(tt.router, tt.hubInfo)
 			if err != nil {
 				if !tt.wantErr {
-					t.Errorf("getAuthorizerAttributes(): unexpect error: %v", err)
+					t.Errorf("getAuthorizerAttributes(): unexpected error: %v", err)
 				}
 				return
 			}

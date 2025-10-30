@@ -484,3 +484,19 @@ else
 conformance_e2e:
 	tests/scripts/conformance_e2e.sh ${KIND_IMAGE} ${CONFORMANCE_TYPE}
 endif
+
+define SPELLCHECK_HELP_INFO
+# run spellcheck check.
+#
+# Example:
+#   make spellcheck
+#   make spellcheck HELP=y
+endef
+.PHONY: spellcheck
+ifeq ($(HELP),y)
+spellcheck:
+	@echo "$$SPELLCHECK_HELP_INFO"
+else
+spellcheck:
+	codespell --config codespell.cfg
+endif

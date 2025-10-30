@@ -52,7 +52,7 @@ Providing a common MQTT mapper using the latest mapper-framework aims to help de
 
 The architecture for providing a common Mapper will be modular to ensure scalability and maintainability. The main components include:
 
-- Base Environment Setup: Utilizes the latest mapper-framework to create a MQTT mapper for standardized operatons and interactions.
+- Base Environment Setup: Utilizes the latest mapper-framework to create a MQTT mapper for standardized operations and interactions.
 
 - Main algorithm design: Parses the attribute values from the message using common serialization methods(JSON, YAML, XML).
 
@@ -84,12 +84,12 @@ The architectures and related concepts are shown in the below figure. In the fig
    apiVersion: devices.kubeedge.io/v1beta1
    kind: DeviceModel
    metadata:
-     name: temperture-model
+     name: temperature-model
      namespace: default
    spec:
      properties:
-       - name: temperture
-         description: Temperture sensor model
+       - name: temperature
+         description: Temperature sensor model
          type: INT
          accessMode: ReadWrite
          maximum: "100"
@@ -107,7 +107,7 @@ The architectures and related concepts are shown in the below figure. In the fig
      name: beta1-device
    spec:
      deviceModelRef:
-       name: temperture-model
+       name: temperature-model
      nodeName: k8s-worker1
      properties:
        - name: temperature
@@ -119,7 +119,7 @@ The architectures and related concepts are shown in the below figure. In the fig
          pushMethod:
            mqtt:
              address: tcp://101.133.150.110:1883
-             topic: temperture/update/json
+             topic: temperature/update/json
              qos: 0
              retained: false
            dbMethod:
@@ -129,10 +129,10 @@ The architectures and related concepts are shown in the below figure. In the fig
                  org: test-org
                  bucket: test-bucket
                influxdb2DataConfig:
-                 measurement: temperture_stats
+                 measurement: temperature_stats
                  tag:
                    unit: temperature
-                 fieldKey: temperture_value
+                 fieldKey: temperature_value
          visitors:
            protocolName: mqtt
            configData:

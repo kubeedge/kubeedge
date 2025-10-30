@@ -86,7 +86,7 @@ func (t TaskManager) Start() {
 		msg, err := beehiveContext.Receive(modules.TaskManagerModuleName)
 		if err != nil {
 			t.logger.Error(err, "failed to receive message, wait 10s")
-			time.Sleep(10 * time.Second) // Prevent logs from flooding the screen when the chennel is closed.
+			time.Sleep(10 * time.Second) // Prevent logs from flooding the screen when the channel is closed.
 			continue
 		}
 		t.logger.V(2).Info("receive the message", "source", msg.GetSource(), "resource", msg.GetResource(),

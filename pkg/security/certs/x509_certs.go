@@ -58,11 +58,11 @@ func (h x509CertsHandler) CreateCSR(sub pkix.Name, pkw PrivateKeyWrap, alt *cert
 	}
 	pk, err := pkw.Signer()
 	if err != nil {
-		return nil, fmt.Errorf("faild to parse the private key der to Signer, err: %v", err)
+		return nil, fmt.Errorf("failed to parse the private key der to Signer, err: %v", err)
 	}
 	csrDER, err := x509.CreateCertificateRequest(rand.Reader, &tpl, pk)
 	if err != nil {
-		return nil, fmt.Errorf("faild to create x509 certificate request, err %v", err)
+		return nil, fmt.Errorf("failed to create x509 certificate request, err %v", err)
 	}
 	return &pem.Block{Type: certutil.CertificateRequestBlockType, Bytes: csrDER}, nil
 }

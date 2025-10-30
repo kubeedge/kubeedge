@@ -202,7 +202,7 @@ we can use protobuf and protoc-gen-grpc-java to automatically generate the java 
 Consider keeping the development environment as close to the main project as possible,
 we choose **protoc v3.19.4** and **protoc-gen-grpc-java v1.26.0**. 
 We can place the api.proto in mapper/src/main/java/dmi/v1beta1, 
-before automically generate java version file, we need make small change to the api.proto:
+before automatically generate java version file, we need make small change to the api.proto:
 ```
 option go_package = "./;v1beta1";
 option java_package = "dmi.v1beta1";// new added
