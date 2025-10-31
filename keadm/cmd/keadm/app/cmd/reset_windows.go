@@ -32,6 +32,7 @@ import (
 	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
+	extsys "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/extsystem"
 )
 
 var (
@@ -59,13 +60,13 @@ func NewKubeEdgeReset() *cobra.Command {
 		Long:    resetLongDescription,
 		Example: resetExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if !util.IsNSSMInstalled() {
-				fmt.Println("Seems like you haven't exec 'keadm join' in this host, because nssm not found in system path (auto installed by 'keadm join'), exit")
+			if _, err := extsys.GetExtSystem(); err != nil {
+				fmt.Println("Windows Service Manager not available, exit")
 				os.Exit(0)
 			}
 			whoRunning := util.RunningModuleV2(reset)
 			if whoRunning == common.NoneRunning && !reset.Force {
-				fmt.Println("Edgecore service installed by nssm not found in this host, exit. If you want to clean the related files, using flag --force")
+				fmt.Println("Edgecore Windows service not found in this host, exit. If you want to clean the related files, use flag --force")
 				os.Exit(0)
 			}
 			return nil
@@ -86,7 +87,7 @@ func NewKubeEdgeReset() *cobra.Command {
 			// 1. kill edgecore process.
 			// For edgecore, don't delete node from K8S
 			if err := TearDownKubeEdge(reset.Kubeconfig); err != nil {
-				err = fmt.Errorf("err when stop and remove edgecore using nssm: %s", err.Error())
+				err = fmt.Errorf("err when stop and remove edgecore service: %s", err.Error())
 				fmt.Print("[reset] No edgecore running now, do you want to clean all the related directories? [y/N]: ")
 				s := bufio.NewScanner(os.Stdin)
 				s.Scan()
@@ -122,22 +123,23 @@ func NewKubeEdgeReset() *cobra.Command {
 // TearDownKubeEdge will bring down edge components,
 // depending upon in which type of node it is executed
 func TearDownKubeEdge(_ string) error {
-	// 1.1 stop check if running now, stop it if running
-	if util.IsNSSMServiceRunning(constants.KubeEdgeBinaryName) {
-		fmt.Println("Egdecore service is running, stop...")
-		if _err := util.StopNSSMService(constants.KubeEdgeBinaryName); _err != nil {
+	svc, err := extsys.GetExtSystem()
+	if err != nil {
+		return err
+	}
+	if svc.ServiceIsActive(constants.KubeEdgeBinaryName) {
+		fmt.Println("Edgecore service is running, stop...")
+		if _err := svc.ServiceStop(constants.KubeEdgeBinaryName); _err != nil {
 			return _err
 		}
-		fmt.Println("Egdecore service stop success.")
+		fmt.Println("Edgecore service stop success.")
 	}
 
-	// 1.2 remove nssm service
-	fmt.Println("Start removing egdecore service using nssm")
-	_err := util.UninstallNSSMService(constants.KubeEdgeBinaryName)
-	if _err != nil {
+	fmt.Println("Start removing edgecore service")
+	if _err := svc.ServiceRemove(constants.KubeEdgeBinaryName); _err != nil {
 		return _err
 	}
-	fmt.Println("Egdecore service remove complete")
+	fmt.Println("Edgecore service remove complete")
 	return nil
 }
 

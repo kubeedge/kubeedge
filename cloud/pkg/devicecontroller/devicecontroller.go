@@ -61,6 +61,10 @@ func (dc *DeviceController) Enable() bool {
 	return dc.enable
 }
 
+func (dc *DeviceController) RestartPolicy() *core.ModuleRestartPolicy {
+	return nil
+}
+
 // Start controller
 func (dc *DeviceController) Start() {
 	if err := dc.downstream.Start(); err != nil {
