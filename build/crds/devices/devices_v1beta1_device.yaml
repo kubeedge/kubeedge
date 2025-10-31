@@ -778,11 +778,6 @@ spec:
                                 connect to, like https://localhost:4318/v1/metrics
                               type: string
                           type: object
-                        anomalyDetection:
-                          description: |-
-                            AnomalyDetection Push method configuration for pushing data to anomaly detection system
-                          # does not restrict the structure of anomaly detection config
-                          type: object
                       type: object
                     reportCycle:
                       description: Define how frequent mapper will report the value.

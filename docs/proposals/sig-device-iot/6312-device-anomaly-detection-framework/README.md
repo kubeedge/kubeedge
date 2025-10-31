@@ -4,8 +4,8 @@ status: implementable
 authors:
   - "@HaojieZhang6848"
 approvers:
-creation-date: 2025-10-27
-last-updated: 2025-10-27
+creation-date: 2025-10-15
+last-updated: 2025-10-31
 ---
 
 # KubeEdge: Device Anomaly Detection Framework
@@ -132,18 +132,20 @@ This solution consists of multiple decoupled components, each with clear respons
 
 ### 4.1 DeviceStatus CRD
 
-The device state (including Observed Desired State, Reported State, and future anomaly detection results) will be recorded in the CRD in the API Server. The existing Device CRD contains both Spec and Status sections. Considering that the Status section will contain more fields in the future and will be frequently modified by multiple components (such as DeviceController in CloudCore, anomaly detectors, etc.), we decided to split DeviceStatus into a separate new CRD to prevent frequent Status changes from causing `resourceVersion` to change too rapidly, which would affect operations on the Spec section. The structure of the new DeviceStatus CRD is as follows:
+The device state (including Observed Desired State, Reported State, and future anomaly detection results) will be recorded in the CRD in the API Server. The existing Device CRD contains both Spec and Status sections. Considering that the Status section will contain more fields in the future and will be frequently modified by multiple components (such as DeviceController in CloudCore, anomaly detectors, etc.), we decided to split DeviceStatus into a separate new CRD to prevent frequent Status changes from causing `resourceVersion` to change too rapidly, which would affect operations on the Spec section. In order to maintain the association between the DeviceStatus CRD and the Device CRD, the new CRD will reference the corresponding Device CRD instance through the ownerReferences field. The structure of the new DeviceStatus CRD is as follows:
 
 ```yaml
-apiVersion: devices.kubeedge.io/v1alpha2
+apiVersion: devices.kubeedge.io/v1beta1
 kind: DeviceStatus
 metadata:
   name: temperature-sensor # Same as Device CRD
   namespace: default # Same as Device CRD
+  ownerReferences:
+    - apiVersion: devices.kubeedge.io/v1beta1
+      kind: Device
+      name: temperature-sensor-01
+      uid: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 spec:
-  deviceRef:
-    name: temperature-sensor-01 # Reference to Device CRD
-    namespace: default # Reference to Device CRD
 status:
   lastOnlineTime: '2025-10-26T08:00:00Z'
   twins:
@@ -184,6 +186,8 @@ Since the Device CRD has been split into Device CRD and DeviceStatus CRD, the co
    - If it exists, update the DeviceStatus CRD.
    - If it does not exist, create a new DeviceStatus CRD instance and perform initialization.
 3. After completing the update, return the processing result.
+
+Additionally, when creating a new Device CRD, the DeviceController should also create a corresponding DeviceStatus CRD instance and set the ownerReferences field to maintain the association between the two CRDs.
 
 ### 4.3 Mapper PushMethod Extension
 
