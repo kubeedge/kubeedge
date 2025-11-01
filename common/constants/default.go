@@ -34,6 +34,8 @@ const (
 	DefaultHostnameOverride = "default-edge-node"
 
 	CurrentSupportK8sVersion = "v1.31.12"
+	MaxWebhookRetryCount = 3
+	WebhookRetryBackoffInterval = time.Second * 2
 
 	// MetaManager
 	DefaultMetaServerAddr = "127.0.0.1:10550"
