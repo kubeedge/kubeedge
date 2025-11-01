@@ -118,7 +118,7 @@ func RunReconcile[T NodeJobType](
 	// The final phase does not need to be calculated.
 	if handler.IsFinalPhase(job) {
 		logger.V(2).Info("the node job is final phase")
-		// If job is in final phase, the the timeout job needs to be stopped.
+		// If job is in final phase, the timeout job needs to be stopped.
 		ReleaseTimeoutJob[T](ctx, req.Name, handler.GetResource())
 		return nil
 	}

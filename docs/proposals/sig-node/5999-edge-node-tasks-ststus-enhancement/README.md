@@ -25,20 +25,20 @@ In addition, there is another problem that some errors in the processing process
 ## Proposal
 ### Node Job Status
 
-The node job status consists of phase and nodeStatus fields. The phase field is one of there values: Init, InProgress, Complated or Failure. 
+The node job status consists of phase and nodeStatus fields. The phase field is one of there values: Init, InProgress, Completed or Failure. 
 
 ```mermaid
 graph LR
 A[Init] --> B[InProgress]
 B --> C{Succ?}
-C --> |Y| D[Complated]
+C --> |Y| D[Completed]
 C --> |N| E[Failure]
 A --Fail--> E
 ```
 
 - **Init** - After creating a node job CR, ControllerManager will initialize the matching node and set the node job phase to "Init".
 - **InProgress** - The node job phase will be "InProgress" when any node starts processing the node task.
-- **Complated** - All node tasks are already final status and the number of node tasks failures is not greater than the defined failure rate, then set the phase to "Complated".
+- **Completed** - All node tasks are already final status and the number of node tasks failures is not greater than the defined failure rate, then set the phase to "Completed".
 - **Failure** - If the initialization of node tasks fails, or the number of failures for node tasks is greater than the defined failure rate, set the phase to "Failure".
 
 When each node reports the execution results, the node job phase will be calculated and updated. 
@@ -53,7 +53,7 @@ The node task status consists of phase, action, and reason. The phase field is o
 graph LR
 A[Pending] --> B[InProgress]
 B --> C{Succ?}
-C --> |Y| D[Complated]
+C --> |Y| D[Completed]
 C --> |N| E[Failure]
 C --> |no response| F[Unknown]
 B --> F
@@ -137,7 +137,7 @@ type JobPhase string
 const (
     JobPhaseInit       JobPhase = "Init"
     JobPhaseInProgress JobPhase = "InProgress"
-    JobPhaseComplated  JobPhase = "Complated"
+    JobPhaseCompleted  JobPhase = "Completed"
     JobPhaseFailure    JobPhase = "Failure"
 )
 
@@ -394,7 +394,7 @@ func RunReconcile[T operationsv1alpha2.NodeJobType](
 
     // 5. The final phase does not need to be calculated.
     if handler.IsFinalPhase(job) {
-        // If job is in final phase, the the timeout job needs to be stopped.
+        // If job is in final phase, the timeout job needs to be stopped.
         ...
         return nil
     }

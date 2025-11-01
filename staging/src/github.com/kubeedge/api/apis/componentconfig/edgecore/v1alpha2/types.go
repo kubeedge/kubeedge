@@ -96,7 +96,7 @@ type Modules struct {
 	TaskManager *TaskManager `json:"taskManager,omitempty"`
 }
 
-// Edged indicates the config fo edged module
+// Edged indicates the config for edged module
 // edged is lighted-kubelet
 type Edged struct {
 	// Enable indicates whether EdgeHub is enabled,

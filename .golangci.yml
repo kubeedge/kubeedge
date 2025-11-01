@@ -74,7 +74,6 @@ linters-settings:
     ignore-words:
       - mosquitto
       - creater  # creater
-      - resouce  # resource
   revive:
     rules:
       - name: dot-imports

@@ -8,9 +8,9 @@ message MessageRouter {
     // where the message will send to
     string Group = 2;
     // what's the operation on resource
-    string Operaion = 3;
+    string Operation = 3;
     // what's the resource want to operate
-    string Resouce = 4;
+    string Resource = 4;
 }
 
 message MessageHeader {
