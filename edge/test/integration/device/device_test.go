@@ -99,7 +99,7 @@ var DeviceTW dttype.Device
 
 // Run Test cases
 var _ = Describe("Event Bus Testing", func() {
-	Context("Publish on eventbus topics throgh MQTT internal broker", func() {
+	Context("Publish on eventbus topics through MQTT internal broker", func() {
 		BeforeEach(func() {
 			ClientOpts = helpers.HubClientInit(ctx.Cfg.MqttEndpoint, ClientID, "", "")
 			Client = MQTT.NewClient(ClientOpts)
@@ -184,7 +184,7 @@ var _ = Describe("Event Bus Testing", func() {
 		})
 	})
 
-	Context("Publish on eventbus topics throgh MQTT internal broker", func() {
+	Context("Publish on eventbus topics through MQTT internal broker", func() {
 		BeforeEach(func() {
 			common.Infof("Adding Mock device to edgenode !!")
 
