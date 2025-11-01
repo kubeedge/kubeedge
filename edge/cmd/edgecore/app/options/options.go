@@ -29,7 +29,8 @@ import (
 )
 
 type EdgeCoreOptions struct {
-	ConfigFile string
+	ConfigFile  string
+	ShowVersion bool
 }
 
 var edgeCoreOptions *EdgeCoreOptions
@@ -53,6 +54,7 @@ func NewEdgeCoreOptions() *EdgeCoreOptions {
 func (o *EdgeCoreOptions) Flags() (fss cliflag.NamedFlagSets) {
 	fs := fss.FlagSet("global")
 	fs.StringVar(&o.ConfigFile, "config", o.ConfigFile, "The path to the configuration file. Flags override values in this file.")
+	fs.BoolVarP(&o.ShowVersion, "version", "", false, "Print the version of edgecore")
 	return
 }
 
