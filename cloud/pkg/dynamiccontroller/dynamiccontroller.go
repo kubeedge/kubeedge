@@ -67,6 +67,10 @@ func (dctl *DynamicController) Enable() bool {
 	return dctl.enable
 }
 
+func (dctl *DynamicController) RestartPolicy() *core.ModuleRestartPolicy {
+	return nil
+}
+
 // Start controller
 func (dctl *DynamicController) Start() {
 	endpointresource.Register()

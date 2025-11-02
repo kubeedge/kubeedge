@@ -29,6 +29,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	taskmgrv1alpha1 "github.com/kubeedge/kubeedge/edge/pkg/taskmanager/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/features"
 	nodetaskmsg "github.com/kubeedge/kubeedge/pkg/nodetask/message"
 )
 
@@ -61,6 +62,16 @@ func (TaskManager) Group() string {
 
 func (t *TaskManager) Enable() bool {
 	return t.cfg != nil && t.cfg.Enable
+}
+
+func (t *TaskManager) RestartPolicy() *core.ModuleRestartPolicy {
+	if !features.DefaultFeatureGate.Enabled(features.ModuleRestart) {
+		return nil
+	}
+	return &core.ModuleRestartPolicy{
+		RestartType:            core.RestartTypeOnFailure,
+		IntervalTimeGrowthRate: 2.0,
+	}
 }
 
 func (t TaskManager) Start() {

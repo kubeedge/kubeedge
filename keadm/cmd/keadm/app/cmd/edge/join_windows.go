@@ -19,14 +19,12 @@ limitations under the License.
 package edge
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"net"
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/blang/semver"
@@ -40,6 +38,7 @@ import (
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2/validation"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
+	extsys "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/extsystem"
 	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
 	"github.com/kubeedge/kubeedge/pkg/util/files"
 	"github.com/kubeedge/kubeedge/pkg/version"
@@ -179,10 +178,6 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 		return err
 	}
 
-	if err := prepareWindowsNssm(step); err != nil {
-		return fmt.Errorf("prepare windows nssm service fail: %v", err)
-	}
-
 	step.Printf("Check edge bin exist")
 	// check if the binary download successfully manual
 	if !files.FileExists(filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName+".exe")) {
@@ -196,17 +191,22 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 		}
 	}
 
-	step.Printf("Register edgecore as windows service")
-	if err := util.InstallNSSMService(constants.KubeEdgeBinaryName, filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName+".exe"),
-		"--config", filepath.Join(constants.KubeEdgePath, "config/edgecore.yaml")); err != nil {
-		return fmt.Errorf("failed to install edgecore using nssm: %v", err)
+	step.Printf("Register edgecore as native Windows service")
+	svc, err := extsys.GetExtSystem()
+	if err != nil {
+		return fmt.Errorf("detect windows service manager failed: %v", err)
 	}
-
-	if err := util.SetNSSMServiceStdout(constants.KubeEdgeBinaryName, filepath.Join(common.KubeEdgeLogPath, "out.log")); err != nil {
-		return fmt.Errorf("setting edgecore stdout log using nssm fail: %v", err)
-	}
-	if err := util.SetNSSMServiceStderr(constants.KubeEdgeBinaryName, filepath.Join(common.KubeEdgeLogPath, "err.log")); err != nil {
-		return fmt.Errorf("setting edgecore stderr log using nssm fail: %v", err)
+	bin := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName+".exe")
+	cfg := filepath.Join(constants.KubeEdgePath, "config/edgecore.yaml")
+	// Windows service BinaryPathName accepts full command line (exe + args)
+	cmdline := fmt.Sprintf("\"%s\" --config \"%s\"", bin, cfg)
+	if !svc.ServiceExists(constants.KubeEdgeBinaryName) {
+		if err := svc.ServiceCreate(constants.KubeEdgeBinaryName, cmdline, nil); err != nil {
+			return fmt.Errorf("create windows service for edgecore failed: %v", err)
+		}
+		if err := svc.ServiceEnable(constants.KubeEdgeBinaryName); err != nil {
+			klog.Warningf("enable service failed: %v", err)
+		}
 	}
 
 	// write token to bootstrap configure file
@@ -222,7 +222,7 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 	}
 
 	step.Printf("Run EdgeCore daemon")
-	err := runEdgeCore()
+	err = runEdgeCore()
 	if err != nil {
 		return fmt.Errorf("start edgecore failed: %v", err)
 	}
@@ -247,25 +247,9 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 }
 
 func runEdgeCore() error {
-	return util.StartNSSMService(constants.KubeEdgeBinaryName)
-}
-
-func prepareWindowsNssm(step *common.Step) error {
-	step.Printf("Check if nssm installed")
-	if util.IsNSSMInstalled() {
-		return nil
-	}
-
-	fmt.Print("[join] Nssm not found, auto install now? [y/N]: ")
-	s := bufio.NewScanner(os.Stdin)
-	s.Scan()
-	if err := s.Err(); err != nil {
+	svc, err := extsys.GetExtSystem()
+	if err != nil {
 		return err
 	}
-	if strings.ToLower(s.Text()) != "y" {
-		return fmt.Errorf("aborted join operation, please install nssm manually and retry")
-	}
-
-	step.Printf("Nssm not found, start install under $env:ProgramFiles\\nssm")
-	return util.InstallNSSM()
+	return svc.ServiceStart(constants.KubeEdgeBinaryName)
 }

@@ -48,6 +48,10 @@ func (tm *testManager) Enable() bool {
 	return tm.enable
 }
 
+func (tm *testManager) RestartPolicy() *core.ModuleRestartPolicy {
+	return nil
+}
+
 // Function to get the pods from Edged
 func GetPodListFromEdged(w http.ResponseWriter) error {
 	var pods v1.PodList

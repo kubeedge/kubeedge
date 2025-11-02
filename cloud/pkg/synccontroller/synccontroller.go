@@ -109,6 +109,10 @@ func (sctl *SyncController) Enable() bool {
 	return sctl.enable
 }
 
+func (sctl *SyncController) RestartPolicy() *core.ModuleRestartPolicy {
+	return nil
+}
+
 // Start controller
 func (sctl *SyncController) Start() {
 	if !cache.WaitForCacheSync(beehiveContext.Done(), sctl.informersSyncedFuncs...) {
