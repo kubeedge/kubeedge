@@ -53,13 +53,13 @@ KubeEdge consists of cloud part and edge part.
 
 ## Kubernetes compatibility
 
-|                        | Kubernetes 1.25 | Kubernetes 1.26 | Kubernetes 1.27 | Kubernetes 1.28 | Kubernetes 1.29 | Kubernetes 1.30 | 
-|------------------------| --------------- |-----------------|-----------------| --------------- | --------------- |-----------------|
-| KubeEdge 1.17          | +               | ✓               | ✓               | ✓               | -               | -               |
-| KubeEdge 1.18          | +               | +               | ✓               | ✓               | ✓               | -               |
-| KubeEdge 1.19          | +               | +               | ✓               | ✓               | ✓               | -               |
-| KubeEdge 1.20          | +               | +               | +               | ✓               | ✓               | ✓               |
-| KubeEdge 1.21          | +               | +               | +               | ✓               | ✓               | ✓               |
+|                        | Kubernetes 1.26 | Kubernetes 1.27 | Kubernetes 1.28 | Kubernetes 1.29 | Kubernetes 1.30 | Kubernetes 1.31 |
+|------------------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|
+| KubeEdge 1.18          | +               | ✓               | ✓               | ✓               | -               | -               |
+| KubeEdge 1.19          | +               | ✓               | ✓               | ✓               | -               | -               |
+| KubeEdge 1.20          | +               | +               | ✓               | ✓               | ✓               | -               |
+| KubeEdge 1.21          | +               | +               | ✓               | ✓               | ✓               | -               |
+| KubeEdge 1.22          | +               | +               | +               | ✓               | ✓               | ✓               |
 | KubeEdge HEAD (master) | +               | +               | +               | ✓               | ✓               | ✓               |
 
 Key:
