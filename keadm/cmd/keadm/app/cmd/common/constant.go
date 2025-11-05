@@ -126,7 +126,7 @@ const (
 	DefaultK8SMinimumVersion = 11
 
 	// DefaultKubeEdgeVersion is the default KubeEdge version, it must have no prefix 'v'
-	DefaultKubeEdgeVersion = "1.21.0"
+	DefaultKubeEdgeVersion = "1.22.0"
 
 	// Helm action
 	HelmInstallAction  = "install"
