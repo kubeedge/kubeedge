@@ -17,6 +17,7 @@ limitations under the License.
 package dtmanager
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -29,13 +30,16 @@ import (
 	pb "github.com/kubeedge/api/apis/dmi/v1beta1"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
+	commonConstants "github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dmiclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dmiserver"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
 	"github.com/kubeedge/kubeedge/pkg/util"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 // DMIWorker deal dmi event
@@ -199,6 +203,32 @@ func findModelProperty(properties []v1beta1.ModelProperty, name string) *v1beta1
 	return nil
 }
 
+// persistUpdatedDevice persists updated device to database
+func (dw *DMIWorker) persistUpdatedDevice(device *v1beta1.Device) error {
+	deviceBytes, err := json.Marshal(device)
+	if err != nil {
+		return fmt.Errorf("failed to marshal device %s: %v", device.Name, err)
+	}
+	var unstrDev unstructured.Unstructured
+	err = json.Unmarshal(deviceBytes, &unstrDev)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal device %s: %v", device.Name, err)
+	}
+	if err := imitator.DefaultV2Client.InsertOrUpdateObj(context.TODO(), &unstrDev); err != nil {
+		return err
+	}
+	slash := commonConstants.ResourceSep
+	meta := dao.Meta{
+		Key:   fmt.Sprintf("%s%s%s%s%s", device.ObjectMeta.Namespace, slash, constants.ResourceTypeDevice, slash, device.ObjectMeta.Name),
+		Type:  constants.ResourceTypeDevice,
+		Value: string(deviceBytes),
+	}
+	if err := dao.InsertOrUpdate(&meta); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (dw *DMIWorker) dealMetaDeviceOperation(_ *dtcontext.DTContext, _ string, msg interface{}) error {
 	message, ok := msg.(*model.Message)
 	if !ok {
@@ -225,6 +255,11 @@ func (dw *DMIWorker) dealMetaDeviceOperation(_ *dtcontext.DTContext, _ string, m
 				klog.Errorf("override device instance config failed for device %s: %v", device.Name, err)
 				return err
 			}
+			err = dw.persistUpdatedDevice(&device)
+			if err != nil {
+				klog.Errorf("persist updated device %s failed: %v", device.Name, err)
+				return err
+			}
 			dw.dmiCache.DeviceMu.Lock()
 			dw.dmiCache.DeviceList[deviceID] = &device
 			dw.dmiCache.DeviceMu.Unlock()
@@ -247,6 +282,11 @@ func (dw *DMIWorker) dealMetaDeviceOperation(_ *dtcontext.DTContext, _ string, m
 			err = dw.overrideDeviceInstanceConfig(&device)
 			if err != nil {
 				klog.Errorf("override device instance config failed for device %s: %v", device.Name, err)
+				return err
+			}
+			err = dw.persistUpdatedDevice(&device)
+			if err != nil {
+				klog.Errorf("persist updated device %s failed: %v", device.Name, err)
 				return err
 			}
 			dw.dmiCache.DeviceMu.Lock()
