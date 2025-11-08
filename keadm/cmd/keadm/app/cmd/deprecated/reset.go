@@ -145,6 +145,9 @@ func RemoveContainers(isEdgeNode bool) error {
 	}
 
 	containerRuntime := utilruntime.NewContainerRuntime(criSocketPath)
+	if err := containerRuntime.Connect(); err != nil {
+		return err
+	}
 
 	containers, err := containerRuntime.ListKubeContainers()
 	if err != nil {
