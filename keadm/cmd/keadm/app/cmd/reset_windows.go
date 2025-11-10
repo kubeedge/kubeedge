@@ -142,7 +142,7 @@ func TearDownKubeEdge(_ string) error {
 // RemoveContainers removes all Kubernetes-managed containers
 func RemoveContainers() error {
 	fmt.Println("Start removing containers managed by KubeEdge")
-	err = util.RemoveContainers("")
+	err := util.RemoveContainers("")
 	if err != nil {
 		return err
 	}
