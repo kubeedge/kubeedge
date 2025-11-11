@@ -68,19 +68,31 @@ func validateRule(rule *rulesv1.Rule) error {
 	if err = validateTargetRuleEndpoint(targetEndpoint, rule.Spec.TargetResource); err != nil {
 		return err
 	}
-	var exist bool
-	for _, s2t := range sourceToTarget {
-		if s2t[0] == sourceEndpoint.Spec.RuleEndpointType && s2t[1] == targetEndpoint.Spec.RuleEndpointType {
-			exist = true
-			break
-		}
-	}
-	if !exist {
+	
+	if !isValidEndpointMapping(sourceEndpoint.Spec.RuleEndpointType, targetEndpoint.Spec.RuleEndpointType) {
 		return fmt.Errorf("the rule which is from source ruleEndpoint type %s to target ruleEndpoint type %s is not validate ",
 			sourceEndpoint.Spec.RuleEndpointType, targetEndpoint.Spec.RuleEndpointType)
 	}
 	return nil
 }
+
+func isValidEndpointMapping(source, target rulesv1.RuleEndpointTypeDef) bool {
+	validMappings := map[rulesv1.RuleEndpointTypeDef]map[rulesv1.RuleEndpointTypeDef]bool{
+		rulesv1.RuleEndpointTypeRest: {
+			rulesv1.RuleEndpointTypeEventBus:  true,
+			rulesv1.RuleEndpointTypeServiceBus: true,
+		},
+		rulesv1.RuleEndpointTypeEventBus: {
+			rulesv1.RuleEndpointTypeRest: true,
+		},
+	}
+	
+	if targetMap, exists := validMappings[source]; exists {
+		return targetMap[target]
+	}
+	return false
+}
+
 func validateSourceRuleEndpoint(ruleEndpoint *rulesv1.RuleEndpoint, sourceResource map[string]string) error {
 	switch ruleEndpoint.Spec.RuleEndpointType {
 	case rulesv1.RuleEndpointTypeRest:
