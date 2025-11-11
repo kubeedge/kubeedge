@@ -114,11 +114,11 @@ Refer to the link for more details. ([#4914](https://github.com/kubeedge/kubeedg
 
 The device API is updated from `v1alpha2` to `v1beta1`, in v1beta1 API updates include:
 
-- The built-in protocols incude Modbus, Opc-UA and Bluetooth are removed in device instance, and the built-in mappers for these proytocols
-still exists and will be maintained and updated to latest verison.
+- The built-in protocols incude Modbus, Opc-UA and Bluetooth are removed in device instance, and the built-in mappers for these protocols
+still exists and will be maintained and updated to latest version.
 - Users must define the protocol config through `CustomizedValue` in `ProtocolConfig`.
 - DMI date plane related fields are added, users can config the collection and reporting frequency of device data, and the destination
-to whcih(such as database, httpserver) data is pushed.
+to which(such as database, httpserver) data is pushed.
 - Controls whether to report device data to cloud.
 
 Refer to the link for more details. ([#4983](https://github.com/kubeedge/kubeedge/pull/4983))

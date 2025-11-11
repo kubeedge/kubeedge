@@ -67,7 +67,7 @@ func TestMessageBroker_SendReceive(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to receive message, error: %+v", err)
 		}
-		fmt.Printf("recive message: %+v", message)
+		fmt.Printf("receive message: %+v", message)
 		if message.GetContent() != "hello" {
 			t.Fatalf("bad message content")
 		}
@@ -98,7 +98,7 @@ func TestMessageBroker_SendReceive(t *testing.T) {
 	select {
 	case _, ok := <-time.After(syncMessageTimeoutDefault):
 		if ok {
-			t.Fatalf("time out ti recive message")
+			t.Fatalf("time out to receive message")
 		}
 	case _, ok := <-stopChan:
 		if ok {
