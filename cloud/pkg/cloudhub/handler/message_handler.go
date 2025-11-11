@@ -123,11 +123,17 @@ func (mh *messageHandler) HandleConnection(connection conn.Connection) {
 
 	if err := mh.authorizer.AuthenticateConnection(connection); err != nil {
 		klog.Errorf("The connection is rejected by CloudHub: node=%q, error=%v", nodeID, err)
+		if closeErr := connection.Close(); closeErr != nil {
+			klog.Warningf("Failed to close connection for node %s: %v", nodeID, closeErr)
+		}
 		return
 	}
 
 	if mh.SessionManager.ReachLimit() {
 		klog.Errorf("Fail to serve node %s, reach node limit", nodeID)
+		if closeErr := connection.Close(); closeErr != nil {
+			klog.Warningf("Failed to close connection for node %s: %v", nodeID, closeErr)
+		}
 		return
 	}
 
@@ -135,6 +141,9 @@ func (mh *messageHandler) HandleConnection(connection conn.Connection) {
 
 	if err := mh.OnEdgeNodeConnect(nodeInfo, connection); err != nil {
 		klog.Errorf("publish connect event for node %s, err %v", nodeInfo.NodeID, err)
+		if closeErr := connection.Close(); closeErr != nil {
+			klog.Warningf("Failed to close connection for node %s: %v", nodeInfo.NodeID, closeErr)
+		}
 		return
 	}
 
