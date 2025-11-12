@@ -50,6 +50,10 @@ type mockRuntime struct {
 	utilruntime.ContainerRuntime
 }
 
+func (m *mockRuntime) Connect() error {
+	return nil
+}
+
 func (m *mockRuntime) ListKubeContainers() ([]string, error) {
 	return []string{"container1", "container2"}, nil
 }
