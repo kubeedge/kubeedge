@@ -192,7 +192,10 @@ EOF'
 }
 
 function install_docker() {
-  CRIDOCKERD_VERSION="v0.3.8"
+  CRIDOCKERD_VERSION=$(curl -s "https://api.github.com/repos/Mirantis/cri-dockerd/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+  if [ -z "$CRIDOCKERD_VERSION" ]; then
+      CRIDOCKERD_VERSION="v0.3.21"
+  fi
   sudo apt-get update
   sudo apt-get install \
     apt-transport-https \
