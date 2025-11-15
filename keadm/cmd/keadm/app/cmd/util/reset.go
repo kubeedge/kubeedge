@@ -43,6 +43,12 @@ func RemoveContainers(criSocketPath string) error {
 	}
 
 	containerRuntime := utilruntime.NewContainerRuntime(criSocketPath)
+	if err := containerRuntime.Connect(); err != nil {
+		return err
+	}
+	// TODO: add defer after upgrade to specific k8s version
+	// see https://github.com/kubeedge/kubeedge/pull/6536#discussion_r2508874149
+	// defer containerRuntime.Close()
 
 	containers, err := containerRuntime.ListKubeContainers()
 	if err != nil {
