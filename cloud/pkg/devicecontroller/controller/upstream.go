@@ -39,7 +39,7 @@ import (
 
 // DeviceStatus is structure to patch device status
 type DeviceStatus struct {
-	Status v1beta1.DeviceStatus `json:"status"`
+	Status v1beta1.DeviceStatusStatus `json:"status"`
 }
 
 const (
@@ -47,6 +47,8 @@ const (
 	MergePatchType = "application/merge-patch+json"
 	// ResourceTypeDevices is plural of device resource in apiserver
 	ResourceTypeDevices = "devices"
+	// ResourceTypeDeviceStatuses is plural of device status resource in apiserver
+	ResourceTypeDeviceStatuses = "devicestatuses"
 )
 
 // UpstreamController subscribe messages from edge and sync to k8s api server
@@ -128,6 +130,7 @@ func (uc *UpstreamController) updateDeviceStatus() {
 				klog.Warning("Failed to get device id")
 				continue
 			}
+			
 			device, ok := uc.dc.deviceManager.Device.Load(deviceID)
 			if !ok {
 				klog.Warningf("Device %s does not exist in upstream controller", deviceID)
@@ -139,20 +142,39 @@ func (uc *UpstreamController) updateDeviceStatus() {
 				continue
 			}
 
-			// Store the status in cache so that when update is received by informer, it is not processed by downstream controller
-			cacheDevice.Status.State = msgState.Device.State
-			cacheDevice.Status.LastOnlineTime = msgState.Device.LastOnlineTime
-			uc.dc.deviceManager.Device.Store(deviceID, cacheDevice)
+			deviceStatus, ok := uc.dc.deviceStatusManager.DeviceStatus.Load(deviceID)
+			var cachedDeviceStatus *v1beta1.DeviceStatus
+			if !ok {
+				cachedDeviceStatus, err = uc.dc.ensureDeviceStatusForDevice(cacheDevice)
+				if err != nil {
+					klog.Warningf("Failed to ensure device status for device %s", deviceID)
+					continue
+				}
+			}
+			if cachedDeviceStatus == nil {
+				cachedDeviceStatus, ok = deviceStatus.(*v1beta1.DeviceStatus)
+				if !ok {
+					klog.Warning("Failed to assert to DeviceStatus type")
+					continue
+				}
+			}
 
-			body, err := json.Marshal(cacheDevice.Status)
+			// Store the status in cache so that when update is received by informer
+			cachedDeviceStatus.Status.State = msgState.Device.State
+			cachedDeviceStatus.Status.LastOnlineTime = msgState.Device.LastOnlineTime
+			uc.dc.deviceStatusManager.DeviceStatus.Store(deviceID, cachedDeviceStatus)
+
+			deviceStatusPatch := &DeviceStatus{Status: cachedDeviceStatus.Status}
+
+			body, err := json.Marshal(deviceStatusPatch)
 			if err != nil {
-				klog.Errorf("Failed to marshal device states %v", cacheDevice.Status)
+				klog.Errorf("Failed to marshal device states %v", cachedDeviceStatus.Status)
 				continue
 			}
-			err = uc.crdClient.DevicesV1beta1().RESTClient().Patch(MergePatchType).Namespace(cacheDevice.Namespace).Resource(ResourceTypeDevices).Name(cacheDevice.Name).Body(body).Do(context.Background()).Error()
+			err = uc.crdClient.DevicesV1beta1().RESTClient().Patch(MergePatchType).Namespace(cachedDeviceStatus.Namespace).Resource(ResourceTypeDeviceStatuses).Name(cachedDeviceStatus.Name).Body(body).Do(context.Background()).Error()
 			if err != nil {
-				klog.Errorf("Failed to patch device states %v of device %v in namespace %v, err: %v", cacheDevice,
-					deviceID, cacheDevice.Namespace, err)
+				klog.Errorf("Failed to patch device states %v of device %v in namespace %v, err: %v", cachedDeviceStatus,
+					deviceID, cachedDeviceStatus.Namespace, err)
 				continue
 			}
 
@@ -188,6 +210,7 @@ func (uc *UpstreamController) updateDeviceStatus() {
 				klog.Warning("Failed to get device id")
 				continue
 			}
+			
 			device, ok := uc.dc.deviceManager.Device.Load(deviceID)
 			if !ok {
 				klog.Warningf("Device %s does not exist in downstream controller", deviceID)
@@ -198,9 +221,27 @@ func (uc *UpstreamController) updateDeviceStatus() {
 				klog.Warning("Failed to assert to CacheDevice type")
 				continue
 			}
-			deviceStatus := &DeviceStatus{Status: cacheDevice.Status}
+
+			deviceStatus, ok := uc.dc.deviceStatusManager.DeviceStatus.Load(deviceID)
+			var cachedDeviceStatus *v1beta1.DeviceStatus
+			if !ok {
+				cachedDeviceStatus, err = uc.dc.ensureDeviceStatusForDevice(cacheDevice)
+				if err != nil {
+					klog.Warningf("Failed to ensure device status for device %s", deviceID)
+					continue
+				}
+			}
+			if cachedDeviceStatus == nil {
+				cachedDeviceStatus, ok = deviceStatus.(*v1beta1.DeviceStatus)
+				if !ok {
+					klog.Warning("Failed to assert to DeviceStatus type")
+					continue
+				}
+			}
+
+			deviceStatusPatch := &DeviceStatus{Status: cachedDeviceStatus.Status}
 			for twinName, twin := range msgTwin.Twin {
-				deviceTwin := findOrCreateTwinByName(twinName, cacheDevice.Spec.Properties, deviceStatus)
+				deviceTwin := findOrCreateTwinByName(twinName, cacheDevice.Spec.Properties, deviceStatusPatch)
 				if deviceTwin != nil {
 					if twin.Actual != nil && twin.Actual.Value != nil {
 						reported := v1beta1.TwinProperty{}
@@ -230,18 +271,18 @@ func (uc *UpstreamController) updateDeviceStatus() {
 				}
 			}
 
-			// Store the status in cache so that when update is received by informer, it is not processed by downstream controller
-			cacheDevice.Status = deviceStatus.Status
-			uc.dc.deviceManager.Device.Store(deviceID, cacheDevice)
+			// Store the status in cache so that when update is received by informer
+			cachedDeviceStatus.Status = deviceStatusPatch.Status
+			uc.dc.deviceStatusManager.DeviceStatus.Store(deviceID, cachedDeviceStatus)
 
-			body, err := json.Marshal(deviceStatus)
+			body, err := json.Marshal(deviceStatusPatch)
 			if err != nil {
-				klog.Errorf("Failed to marshal device status %v", deviceStatus)
+				klog.Errorf("Failed to marshal device status %v", deviceStatusPatch)
 				continue
 			}
-			err = uc.crdClient.DevicesV1beta1().RESTClient().Patch(MergePatchType).Namespace(cacheDevice.Namespace).Resource(ResourceTypeDevices).Name(cacheDevice.Name).Body(body).Do(utilcontext.FromMessage(context.Background(), msg)).Error()
+			err = uc.crdClient.DevicesV1beta1().RESTClient().Patch(MergePatchType).Namespace(cacheDevice.Namespace).Resource(ResourceTypeDeviceStatuses).Name(cachedDeviceStatus.Name).Body(body).Do(utilcontext.FromMessage(context.Background(), msg)).Error()
 			if err != nil {
-				klog.Errorf("Failed to patch device status %v of device %v in namespace %v, err: %v", deviceStatus, deviceID, cacheDevice.Namespace, err)
+				klog.Errorf("Failed to patch device status %v of device %v in namespace %v, err: %v", deviceStatusPatch, deviceID, cacheDevice.Namespace, err)
 				continue
 			}
 			//send confirm message to edge twin
