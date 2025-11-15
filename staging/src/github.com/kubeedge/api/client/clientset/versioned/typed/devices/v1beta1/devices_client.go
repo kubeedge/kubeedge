@@ -30,6 +30,7 @@ type DevicesV1beta1Interface interface {
 	RESTClient() rest.Interface
 	DevicesGetter
 	DeviceModelsGetter
+	DeviceStatusesGetter
 }
 
 // DevicesV1beta1Client is used to interact with features provided by the devices group.
@@ -43,6 +44,10 @@ func (c *DevicesV1beta1Client) Devices(namespace string) DeviceInterface {
 
 func (c *DevicesV1beta1Client) DeviceModels(namespace string) DeviceModelInterface {
 	return newDeviceModels(c, namespace)
+}
+
+func (c *DevicesV1beta1Client) DeviceStatuses(namespace string) DeviceStatusInterface {
+	return newDeviceStatuses(c, namespace)
 }
 
 // NewForConfig creates a new DevicesV1beta1Client for the given config.

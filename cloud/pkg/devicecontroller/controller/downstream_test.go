@@ -26,9 +26,10 @@ import (
 
 func TestRemoveTwinWithNameChanged(t *testing.T) {
 	tests := []struct {
-		name     string
-		device   *v1beta1.Device
-		expected []v1beta1.Twin
+		name         string
+		device       *v1beta1.Device
+		deviceStatus *v1beta1.DeviceStatus
+		expected     []v1beta1.Twin
 	}{
 		{
 			name: "Remove twin with changed property name",
@@ -43,7 +44,9 @@ func TestRemoveTwinWithNameChanged(t *testing.T) {
 						},
 					},
 				},
-				Status: v1beta1.DeviceStatus{
+			},
+			deviceStatus: &v1beta1.DeviceStatus{
+				Status: v1beta1.DeviceStatusStatus{
 					Twins: []v1beta1.Twin{
 						{
 							PropertyName: "temp",
@@ -52,7 +55,7 @@ func TestRemoveTwinWithNameChanged(t *testing.T) {
 							},
 						},
 						{
-							PropertyName: "pressure", // This will be be removed
+							PropertyName: "pressure", // This will be removed
 							Reported: v1beta1.TwinProperty{
 								Value: "1000",
 							},
@@ -91,7 +94,9 @@ func TestRemoveTwinWithNameChanged(t *testing.T) {
 						},
 					},
 				},
-				Status: v1beta1.DeviceStatus{
+			},
+			deviceStatus: &v1beta1.DeviceStatus{
+				Status: v1beta1.DeviceStatusStatus{
 					Twins: []v1beta1.Twin{
 						{
 							PropertyName: "temp",
@@ -115,8 +120,8 @@ func TestRemoveTwinWithNameChanged(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			removeTwinWithNameChanged(tt.device)
-			assert.Equal(t, tt.expected, tt.device.Status.Twins)
+			removeTwinWithNameChanged(tt.deviceStatus, tt.device)
+			assert.Equal(t, tt.expected, tt.deviceStatus.Status.Twins)
 		})
 	}
 }

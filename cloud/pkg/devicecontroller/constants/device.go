@@ -30,7 +30,8 @@ const (
 	ResourceTypeDevice       = "device"
 	ResourceTypeDeviceMapper = "devicemapper"
 
-	KindTypeDevice      = "Device"
-	KindTypeDeviceModel = "DeviceModel"
-	UnixNetworkType     = "unix"
+	KindTypeDevice       = "Device"
+	KindTypeDeviceModel  = "DeviceModel"
+	KindTypeDeviceStatus = "DeviceStatus"
+	UnixNetworkType      = "unix"
 )

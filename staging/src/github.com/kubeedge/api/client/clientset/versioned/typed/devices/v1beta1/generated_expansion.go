@@ -21,3 +21,5 @@ package v1beta1
 type DeviceExpansion interface{}
 
 type DeviceModelExpansion interface{}
+
+type DeviceStatusExpansion interface{}

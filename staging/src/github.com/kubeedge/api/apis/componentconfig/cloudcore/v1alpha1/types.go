@@ -414,6 +414,9 @@ type DeviceControllerBuffer struct {
 	// DeviceModelEvent indicates the buffer of device model event
 	// default 1
 	DeviceModelEvent int32 `json:"deviceModelEvent,omitempty"`
+	// DeviceStatusEvent indicates the buffer of device status event
+	// default 1
+	DeviceStatusEvent int32 `json:"deviceStatusEvent,omitempty"`
 }
 
 // DeviceControllerLoad indicates the deviceController load
