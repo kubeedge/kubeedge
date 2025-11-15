@@ -570,7 +570,7 @@ func TestDMIWorker_overrideDeviceInstanceConfig(t *testing.T) {
 			}
 
 			// Execute the function
-			err := dw.overrideDeviceInstanceConfig(tt.device)
+			err := dw.dmiCache.OverrideDeviceInstanceConfig(tt.device)
 
 			// Check error expectation
 			if tt.expectError {
