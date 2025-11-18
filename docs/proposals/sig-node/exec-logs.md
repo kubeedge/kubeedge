@@ -34,7 +34,7 @@ The native kubernetes cluster is set up in data center, so kube-apiserver can di
 
 However, in edge computing scenarios, edge nodes are mostly in private network environments, and kube-apiserver cannot directly access edge nodes, so the native `kubectl exec`, `kubectl logs` and `kubectl attach` commands can not work.
 
-Therefore, we need to establish a data tunnel to forward data requestes between the cloud and the node.
+Therefore, we need to establish a data tunnel to forward data requests between the cloud and the node.
 
 ## Goals
 

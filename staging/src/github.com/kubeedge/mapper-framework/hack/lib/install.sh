@@ -38,7 +38,7 @@ function check_kind {
       exit 1
     fi
 
-    # avoid modifing go.sum and go.mod when installing the kind
+    # avoid modifying go.sum and go.mod when installing the kind
     git checkout -- go.mod go.sum
 
     export PATH=$PATH:$GOPATH/bin

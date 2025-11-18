@@ -99,7 +99,7 @@ type Common struct {
 	Master      string
 }
 
-// SetOSInterface defines a method to set the implemtation of the OS interface
+// SetOSInterface defines a method to set the implementation of the OS interface
 func (co *Common) SetOSInterface(intf types.OSTypeInstaller) {
 	co.OSTypeInstaller = intf
 }
@@ -627,7 +627,7 @@ func downloadServiceFile(componentType types.ComponentType, version semver.Versi
 				return err
 			}
 		} else {
-			fmt.Printf("[Run as service] service file already exisits in %s, skip download\n", ServiceFilePath)
+			fmt.Printf("[Run as service] service file already exists in %s, skip download\n", ServiceFilePath)
 		}
 	}
 	return nil

@@ -70,7 +70,7 @@ Hash the CA certificate, and compare it with the cahash in the token to verify t
 
 **Step4:**
 
-Generate a pair of key and store the private key locally. Submit the certificate signing request(CSR) to CloudCore with token in the http header(this time only EdgeCore varifies the certificate of CloudCore using cacert from step2).
+Generate a pair of key and store the private key locally. Submit the certificate signing request(CSR) to CloudCore with token in the http header(this time only EdgeCore verifies the certificate of CloudCore using cacert from step2).
 
 **Step5&6:**
 

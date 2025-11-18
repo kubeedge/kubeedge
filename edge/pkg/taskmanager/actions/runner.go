@@ -90,7 +90,7 @@ type RunnHookFunc func(
 	specser SpecSerializer,
 ) error
 
-// baseActionRunner defines the abstruct of the job action runner.
+// baseActionRunner defines the abstract of the job action runner.
 // The implementation of ActionRunner must compose this structure.
 type ActionRunner struct {
 	// actions defines the function implementation of each action.

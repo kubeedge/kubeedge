@@ -206,7 +206,7 @@ It needs to extend KubeEdge metaserver with new endpoints, clears the hold annot
 
 ### `keadm ctl` Extension
 
-We can add the subcommand to `keadm ctl` as followings.
+We can add the subcommand to `keadm ctl` as following.
 
 ```bash
 keadm ctl unhold-upgrade pod <pod-name>   ### release the specific pod upgrade only

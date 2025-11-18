@@ -110,7 +110,7 @@ func DecodeAnyValue(value *anypb.Any) (interface{}, error) {
 
 	messageTypeName := getMessageTypeName(typeURL)
 	if messageTypeName == "" {
-		return nil, fmt.Errorf("cant get message type：%s", typeURL)
+		return nil, fmt.Errorf("can't get message type：%s", typeURL)
 	}
 	if strings.Contains(messageTypeName, "google.protobuf.") {
 		switch messageTypeName {
@@ -130,7 +130,7 @@ func DecodeAnyValue(value *anypb.Any) (interface{}, error) {
 	}
 	messageType := proto.MessageType(messageTypeName)
 	if messageType == nil {
-		return nil, fmt.Errorf("cant get message type：%s", messageTypeName)
+		return nil, fmt.Errorf("can't get message type：%s", messageTypeName)
 	}
 
 	if !reflect.TypeOf((*proto.Message)(nil)).Elem().AssignableTo(messageType) {
@@ -151,7 +151,7 @@ func decodeWrapperValue(value *anypb.Any, wrapper proto.Message) (interface{}, e
 	wrapperValue := reflect.ValueOf(wrapper).Elem()
 	valueField := wrapperValue.FieldByName("Value")
 	if !valueField.IsValid() {
-		return nil, fmt.Errorf("cant get wrapperValue")
+		return nil, fmt.Errorf("can't get wrapperValue")
 	}
 	return valueField.Interface(), nil
 }

@@ -92,7 +92,7 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 		return fmt.Errorf("parse kubeedge version failed, %v", err)
 	}
 	if v.Major <= 1 && v.Minor < 15 {
-		return errors.New("edgecore for windows dont support version earlier than v1.15.0")
+		return errors.New("edgecore for windows don't support version earlier than v1.15.0")
 	}
 
 	configFilePath := filepath.Join(constants.KubeEdgePath, "config/edgecore.yaml")

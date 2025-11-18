@@ -23,7 +23,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// DeviceSpec represents a single device instance. It is an instantation of a device model.
+// DeviceSpec represents a single device instance. It is an instantiation of a device model.
 type DeviceSpec struct {
 	// Required: DeviceModelRef is reference to the device model used as a template
 	// to create the device instance.

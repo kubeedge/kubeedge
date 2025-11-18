@@ -1,0 +1,21 @@
+name: codespell
+
+on: pull_request
+
+jobs:
+  spellcheck:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies with pip
+        run: pip install --no-warn-script-location --user codespell
+
+      - name: Spellcheck
+        run: make spellcheck

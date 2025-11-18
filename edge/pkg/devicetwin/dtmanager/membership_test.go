@@ -341,7 +341,7 @@ func TestDealMembershipGetInnerInValid(t *testing.T) {
 	}
 }
 
-//Commented As we are not considering about the coverage incase for coverage we can uncomment below cases.
+//Commented As we are not considering about the coverage in case for coverage we can uncomment below cases.
 /*
 func TestAdded(t *testing.T) {
 	dtc := &dtcontext.DTContext{

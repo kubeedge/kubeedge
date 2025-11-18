@@ -63,7 +63,7 @@ func NewKubeEdgeReset() *cobra.Command {
 		Long:    resetLongDescription,
 		Example: resetExample,
 		PreRunE: func(_ *cobra.Command, _ []string) error {
-			// TODO: remove thie hint after version v1.22
+			// TODO: remove this hint after version v1.22
 			fmt.Println("WARNING: 'keadm reset' is no longer supported after version v1.22.")
 			fmt.Println("You must use the third-level command 'keadm reset cloud' or 'keadm reset edge'.")
 

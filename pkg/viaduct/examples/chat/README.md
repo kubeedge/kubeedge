@@ -1,7 +1,7 @@
 # Generate Certificates
 ca certificate and a cert/key pair is required to have a setup for examples/chat. Same cert/key pair can be used in both server and client.
 
-	# Generete Root Key
+	# Generate Root Key
 	openssl genrsa -des3 -out ca.key 4096
 	# Generate Root Certificate
 	openssl req -x509 -new -nodes -key ca.key -sha256 -days 1024 -out ca.crt

@@ -10,7 +10,7 @@ approvers:
   - "@kadisi"
 creation-date: 2019-12-23
 last-updated: 2019-12-23
-status: Implememted
+status: Implemented
 ---
 
 # Reliable message delivery

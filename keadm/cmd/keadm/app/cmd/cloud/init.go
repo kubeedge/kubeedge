@@ -64,7 +64,7 @@ func NewCloudInit() *cobra.Command {
 	return cmd
 }
 
-// newInitOptions will initialise new instance of options everytime
+// newInitOptions will initialise new instance of options every time
 func newInitOptions() *types.InitOptions {
 	opts := &types.InitOptions{}
 	opts.KubeConfig = types.DefaultKubeConfig

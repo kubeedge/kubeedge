@@ -1,7 +1,7 @@
 /*
 CHANGELOG
 KubeEdge Authors:
-- This File is drived from github.com/karmada-io/karmada/pkg/util/overridemanager/commandoverride.go
+- This File is derived from github.com/karmada-io/karmada/pkg/util/overridemanager/commandoverride.go
 - refactor commandOverrider as a struct that implements the Overrider interface
 */
 package overridemanager

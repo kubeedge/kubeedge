@@ -121,9 +121,9 @@ var _ = Describe("Test NodeGroup Controller", func() {
 
 		When("delete nodegroup", func() {
 			BeforeEach(func() {
-				By("creat one node in the cluster")
+				By("create one node in the cluster")
 				Expect(k8sClient.Create(ctx, node1)).Should(Succeed())
-				By("creat nodegroup in the cluster")
+				By("create nodegroup in the cluster")
 				nodegroup1.Spec.Nodes = []string{node1.Name}
 				Expect(k8sClient.Create(ctx, nodegroup1)).Should(Succeed())
 				By("wait for the node to be labeled")

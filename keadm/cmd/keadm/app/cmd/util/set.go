@@ -79,7 +79,7 @@ func parseSetByEqual(set []string) ([]string, []string) {
 	return names, vals
 }
 
-// ParseSetValue parses the value in the splited set line.
+// ParseSetValue parses the value in the split set line.
 // The type of value must be interpreted by int, float64, string and array.
 func parseSetValue(vals []string) []interface{} {
 	parsedvals := make([]interface{}, len(vals))
@@ -534,12 +534,12 @@ func ParseSet(cfg interface{}, set string) error {
 		status := getNameFormStatus(name)
 		parseTagName := parseTag(cfg, name)
 		switch status {
-		//name1.nam2=val
+		//name1.name2=val
 		case 0:
 			if err := setCommonValue(cfg, parseTagName, parseVals[i]); err != nil {
 				return err
 			}
-		//name1.nam[1].var=val
+		//name1.name[1].var=val
 		case 1:
 			if err := setVariableValue(cfg, parseTagName, parseVals[i]); err != nil {
 				return err
