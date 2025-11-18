@@ -130,7 +130,6 @@ func (uc *UpstreamController) updateDeviceStatus() {
 				klog.Warning("Failed to get device id")
 				continue
 			}
-
 			device, ok := uc.dc.deviceManager.Device.Load(deviceID)
 			if !ok {
 				klog.Warningf("Device %s does not exist in upstream controller", deviceID)
@@ -199,7 +198,6 @@ func (uc *UpstreamController) updateDeviceStatus() {
 				klog.Warning("Failed to get device id")
 				continue
 			}
-
 			device, ok := uc.dc.deviceManager.Device.Load(deviceID)
 			if !ok {
 				klog.Warningf("Device %s does not exist in downstream controller", deviceID)

@@ -3,6 +3,8 @@ package parse
 import (
 	"encoding/json"
 
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/anypb"
 	"k8s.io/klog/v2"
 
 	dmiapi "github.com/kubeedge/api/apis/dmi/v1beta1"
@@ -106,6 +108,8 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 		var dbconfig common.DBConfig
 		var pushMethod []byte
 		var pushMethodName string
+		var adMethod []byte
+		var adEnabled bool
 		if pptv.PushMethod != nil && pptv.PushMethod.DbMethod != nil {
 			//parse dbmethod filed
 			switch {
@@ -183,6 +187,13 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 					klog.Errorf("err: %+v", err)
 					return nil
 				}
+			case pptv.PushMethod.AnomalyDetection != nil && pptv.PushMethod.AnomalyDetection.Data != nil:
+				adMethod, err = marshalAnyMap(pptv.PushMethod.AnomalyDetection.Data)
+				if err != nil {
+					klog.Errorf("err: %+v", err)
+					return nil
+				}
+				adEnabled = true
 			default:
 				klog.Errorf("get PushMethod err: Unsupported pushmethod type")
 			}
@@ -199,8 +210,10 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 			Protocol:      protocolName,
 			Visitors:      visitorConfig,
 			PushMethod: common.PushMethodConfig{
-				MethodName:   pushMethodName,
-				MethodConfig: pushMethod,
+				MethodName:              pushMethodName,
+				MethodConfig:            pushMethod,
+				AnomalyDetectionEnabled: adEnabled,
+				AnomalyDetectionConfig:  adMethod,
 				DBMethod: common.DBMethodConfig{
 					DBMethodName: dbMethodName,
 					DBConfig:     dbconfig,
@@ -210,6 +223,31 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 		res = append(res, cur)
 	}
 	return res
+}
+
+func marshalAnyMap(m map[string]*anypb.Any) ([]byte, error) {
+	out := make(map[string]interface{})
+	for k, v := range m {
+		msg, err := v.UnmarshalNew()
+		if err != nil {
+			return nil, err
+		}
+		b, err := protojson.Marshal(msg)
+		if err != nil {
+			return nil, err
+		}
+		var val interface{}
+		err = json.Unmarshal(b, &val)
+		if err != nil {
+			return nil, err
+		}
+		out[k] = val
+	}
+	b, err := json.Marshal(out)
+	if err != nil {
+		return nil, err
+	}
+	return b, nil
 }
 
 // buildMethodsFromGrpc parse device method from grpc
