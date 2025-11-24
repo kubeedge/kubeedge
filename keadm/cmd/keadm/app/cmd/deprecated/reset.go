@@ -24,7 +24,6 @@ import (
 
 	"github.com/spf13/cobra"
 	phases "k8s.io/kubernetes/cmd/kubeadm/app/cmd/phases/reset"
-	utilruntime "k8s.io/kubernetes/cmd/kubeadm/app/util/runtime"
 
 	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
@@ -139,19 +138,7 @@ func RemoveContainers(isEdgeNode bool) error {
 		return nil
 	}
 
-	criSocketPath, err := utilruntime.DetectCRISocket()
-	if err != nil {
-		return err
-	}
-
-	containerRuntime := utilruntime.NewContainerRuntime(criSocketPath)
-
-	containers, err := containerRuntime.ListKubeContainers()
-	if err != nil {
-		return err
-	}
-
-	return containerRuntime.RemoveContainers(containers)
+	return util.RemoveContainers("")
 }
 
 func cleanDirectories(isEdgeNode bool) error {
