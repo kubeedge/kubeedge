@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package dtmanager
+package dmiserver
 
 import (
 	"sync"
@@ -26,7 +26,6 @@ import (
 
 	"github.com/kubeedge/api/apis/devices/v1beta1"
 	pb "github.com/kubeedge/api/apis/dmi/v1beta1"
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dmiserver"
 	"github.com/kubeedge/kubeedge/pkg/util"
 )
 
@@ -52,6 +51,11 @@ func TestDMIWorker_overrideDeviceInstanceConfig(t *testing.T) {
 							"timeout":    5000,
 							"retryTimes": 3,
 							"baudRate":   9600,
+							"items":      []interface{}{"item1", "item2"},
+							"settings": map[string]interface{}{
+								"parity":   "none",
+								"stopBits": 1,
+							},
 						},
 					},
 					Properties: []v1beta1.ModelProperty{
@@ -148,10 +152,15 @@ func TestDMIWorker_overrideDeviceInstanceConfig(t *testing.T) {
 						ProtocolName: "modbus",
 						ConfigData: &v1beta1.CustomizedValue{
 							Data: map[string]interface{}{
-								"timeout":    3000, // instance overrides
-								"slaveID":    2,    // instance specific
-								"retryTimes": 3,    // from model
-								"baudRate":   9600, // from model
+								"timeout":    3000,                            // instance overrides
+								"slaveID":    2,                               // instance specific
+								"retryTimes": 3,                               // from model
+								"baudRate":   9600,                            // from model
+								"items":      []interface{}{"item1", "item2"}, // from model
+								"settings": map[string]interface{}{
+									"parity":   "none",
+									"stopBits": 1,
+								}, // from model
 							},
 						},
 					},
@@ -551,27 +560,24 @@ func TestDMIWorker_overrideDeviceInstanceConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Setup DMIWorker with cache
-			dw := &DMIWorker{
-				dmiCache: &dmiserver.DMICache{
-					MapperMu:        &sync.Mutex{},
-					DeviceMu:        &sync.Mutex{},
-					DeviceModelMu:   &sync.Mutex{},
-					MapperList:      make(map[string]*pb.MapperInfo),
-					DeviceList:      make(map[string]*v1beta1.Device),
-					DeviceModelList: make(map[string]*v1beta1.DeviceModel),
-				},
+			// Setup DMICache
+			dmiCache := &DMICache{
+				MapperMu:        &sync.Mutex{},
+				DeviceMu:        &sync.Mutex{},
+				DeviceModelMu:   &sync.Mutex{},
+				MapperList:      make(map[string]*pb.MapperInfo),
+				DeviceList:      make(map[string]*v1beta1.Device),
+				DeviceModelList: make(map[string]*v1beta1.DeviceModel),
 			}
 
 			// Add device model to cache if provided
 			if tt.deviceModel != nil {
 				deviceModelID := util.GetResourceID(tt.deviceModel.Namespace, tt.deviceModel.Name)
-				dw.dmiCache.DeviceModelList[deviceModelID] = tt.deviceModel
+				dmiCache.DeviceModelList[deviceModelID] = tt.deviceModel
 			}
 
 			// Execute the function
-			err := dw.overrideDeviceInstanceConfig(tt.device)
-
+			err := dmiCache.OverrideDeviceInstanceConfig(tt.device)
 			// Check error expectation
 			if tt.expectError {
 				assert.Error(t, err)
