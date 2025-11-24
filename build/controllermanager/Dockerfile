@@ -1,4 +1,4 @@
-FROM golang:1.22.9-alpine3.19 AS builder
+FROM golang:1.23.12-alpine3.21 AS builder
 
 ARG GO_LDFLAGS
 
@@ -8,7 +8,7 @@ RUN CGO_ENABLED=0 GO111MODULE=off go build -v -o /usr/local/bin/controllermanage
     github.com/kubeedge/kubeedge/cloud/cmd/controllermanager
 
 
-FROM alpine:3.19
+FROM alpine:3.21
 
 COPY --from=builder /usr/local/bin/controllermanager /usr/local/bin/controllermanager
 
