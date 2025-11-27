@@ -32,6 +32,7 @@ import (
 	fakecorev1 "k8s.io/client-go/kubernetes/typed/core/v1/fake"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
+	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
 )
 
 // NodesBridge implements NodeInterface
@@ -42,17 +43,17 @@ type NodesBridge struct {
 
 // Create takes the representation of a node and create it in cluster
 func (c *NodesBridge) Create(_ context.Context, node *corev1.Node, _ metav1.CreateOptions) (*corev1.Node, error) {
-	return c.MetaClient.Nodes(metav1.NamespaceDefault).Create(node)
+	return c.MetaClient.Nodes(v2.NullNamespace).Create(node)
 }
 
 // Get takes name of the node, and returns the corresponding node object
 func (c *NodesBridge) Get(_ context.Context, name string, _ metav1.GetOptions) (result *corev1.Node, err error) {
-	return c.MetaClient.Nodes(metav1.NamespaceDefault).Get(name)
+	return c.MetaClient.Nodes(v2.NullNamespace).Get(name)
 }
 
 // Update takes the representation of a node and updates it
 func (c *NodesBridge) Update(_ context.Context, node *corev1.Node, _ metav1.UpdateOptions) (result *corev1.Node, err error) {
-	err = c.MetaClient.Nodes(metav1.NamespaceDefault).Update(node)
+	err = c.MetaClient.Nodes(v2.NullNamespace).Update(node)
 	if err != nil {
 		return nil, err
 	}
@@ -61,5 +62,5 @@ func (c *NodesBridge) Update(_ context.Context, node *corev1.Node, _ metav1.Upda
 
 // Patch takes the node patch bytes and updates node status
 func (c *NodesBridge) Patch(_ context.Context, name string, _ kubetypes.PatchType, patchBytes []byte, _ metav1.PatchOptions, _ ...string) (result *corev1.Node, err error) {
-	return c.MetaClient.Nodes(metav1.NamespaceDefault).Patch(name, patchBytes)
+	return c.MetaClient.Nodes(v2.NullNamespace).Patch(name, patchBytes)
 }

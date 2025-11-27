@@ -114,7 +114,6 @@ func requireRemoteQuery(resType string) bool {
 		resType == constants.ResourceTypePersistentVolume ||
 		resType == constants.ResourceTypePersistentVolumeClaim ||
 		resType == constants.ResourceTypeVolumeAttachment ||
-		resType == model.ResourceTypeNode ||
 		resType == model.ResourceTypeServiceAccountToken ||
 		resType == model.ResourceTypeLease ||
 		resType == model.ResourceTypeCSR ||
