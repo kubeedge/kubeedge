@@ -151,6 +151,10 @@ func (conn *WSConnection) handleMessage() {
 
 func (conn *WSConnection) SetReadDeadline(t time.Time) error {
 	conn.ReadDeadline = t
+	// Actually set the deadline on the underlying websocket connection
+	if conn.wsConn != nil {
+		return conn.wsConn.SetReadDeadline(t)
+	}
 	return nil
 }
 
