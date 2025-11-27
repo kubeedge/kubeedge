@@ -22,7 +22,9 @@ import (
 	"io"
 	"net"
 	"strconv"
+	"time"
 
+	"github.com/avast/retry-go"
 	"github.com/emicklei/go-restful"
 	"k8s.io/klog/v2"
 
@@ -111,15 +113,25 @@ func (ms *ContainerMetricsConnection) Serve() error {
 		case <-ms.ctx.Done():
 			// if apiserver request end, send close message to edge
 			msg := stream.NewMessage(ms.MessageID, stream.MessageTypeRemoveConnect, nil)
-			for retry := 0; retry < 3; retry++ {
-				if err := ms.WriteToTunnel(msg); err != nil {
-					klog.Warningf("%v send %s message to edge error %v", ms, msg.MessageType, err)
-				} else {
-					break
-				}
+			err := retry.Do(
+				func() error {
+					if err := ms.WriteToTunnel(msg); err != nil {
+						klog.Warningf("%v send %s message to edge error %v", ms, msg.MessageType, err)
+						return err
+					}
+					return nil
+				},
+				retry.Delay(1*time.Second),
+				retry.Attempts(3),
+				retry.DelayType(retry.FixedDelay),
+			)
+			if err == nil {
+				klog.Infof("%s send close message to edge successfully", ms.String())
+				return nil
 			}
-			klog.Infof("%s send close message to edge successfully", ms.String())
-			return nil
+			klog.Warningf("%v send %s message to edge error %v", ms, msg.MessageType, err)
+			return err
+
 		case <-ms.EdgePeerDone():
 			klog.V(6).Infof("%s find edge peer done, so stop this connection", ms.String())
 			return fmt.Errorf("%s find edge peer done, so stop this connection", ms.String())
