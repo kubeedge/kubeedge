@@ -99,9 +99,11 @@ type DeviceProperty struct {
 
 // PushMethodConfig is structure to store push config
 type PushMethodConfig struct {
-	MethodName   string          `json:"MethodName"`
-	MethodConfig json.RawMessage `json:"MethodConfig"`
-	DBMethod     DBMethodConfig  `json:"dbMethod,omitempty"`
+	MethodName              string          `json:"MethodName"`
+	MethodConfig            json.RawMessage `json:"MethodConfig"`
+	DBMethod                DBMethodConfig  `json:"dbMethod,omitempty"`
+	AnomalyDetectionEnabled bool            `json:"anomalyDetectionEnabled,omitempty"`
+	AnomalyDetectionConfig  json.RawMessage `json:"anomalyDetectionConfig,omitempty"`
 }
 
 // DBMethodConfig is structure to store database config

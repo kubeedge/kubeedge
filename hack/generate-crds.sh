@@ -97,6 +97,12 @@ function remove_suffix_s {
   fi
 }
 
+function remove_suffix_es {
+  if [ "${1: -2}" == "es" ]; then
+    echo ${1%??}
+  fi
+}
+
 function :copy:to:destination {
   # rename files, copy files
   mkdir -p ${CRD_OUTPUTS}/devices
@@ -108,8 +114,12 @@ function :copy:to:destination {
   for entry in `ls /tmp/crds/*.yaml`; do
       CRD_NAME=$(echo ${entry} | cut -d'.' -f3 | cut -d'_' -f2)
 
-      if [ "$CRD_NAME" == "devices" ] || [ "$CRD_NAME" == "devicemodels" ]; then
-          CRD_NAME=$(remove_suffix_s "$CRD_NAME") 
+      if [ "$CRD_NAME" == "devices" ] || [ "$CRD_NAME" == "devicemodels" ] || [ "$CRD_NAME" == "devicestatuses" ]; then
+          if [ "$CRD_NAME" == "devicestatuses" ]; then
+              CRD_NAME=$(remove_suffix_es "$CRD_NAME")
+          else
+              CRD_NAME=$(remove_suffix_s "$CRD_NAME")
+          fi
           cp -v ${entry} ${CRD_OUTPUTS}/devices/devices_${DEVICES_VERSION}_${CRD_NAME}.yaml
           cp -v ${entry} ${HELM_CRDS_DIR}/devices_${DEVICES_VERSION}_${CRD_NAME}.yaml 
       elif [ "$CRD_NAME" == "edgeapplications" ] || [ "$CRD_NAME" == "nodegroups" ]; then

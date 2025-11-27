@@ -108,6 +108,16 @@ func ConvertDevice(device *v1beta1.Device) (*pb.Device, error) {
 	}
 	edgeDevice.Namespace = device.Namespace
 
+	// state's ReportCycle and ReportToCloud used to be in device status, since we have split device crd and device status crd, these two fields are moved to device spec.
+	// in order to perseve backward compatibility, if spec.state has value, we use value in spec.state as state's ReportCycle and ReportToCloud.
+	// if spec.state is nil, the old logic is preserved, we use ReportCycle and ReportToCloud in device status.
+	if device.Spec.State != nil {
+		if edgeDevice.Status == nil {
+			edgeDevice.Status = &pb.DeviceStatus{}
+		}
+		edgeDevice.Status.ReportCycle = device.Spec.State.ReportCycle
+		edgeDevice.Status.ReportToCloud = device.Spec.State.ReportToCloud
+	}
 	return &edgeDevice, nil
 }
 func convertDeviceProperty(prop *v1beta1.DeviceProperty) (*pb.DeviceProperty, error) {
@@ -133,6 +143,18 @@ func convertDeviceProperty(prop *v1beta1.DeviceProperty) (*pb.DeviceProperty, er
 			configAnyData[k] = anyValue
 		}
 		item.Visitors.ConfigData.Data = configAnyData
+	}
+
+	if prop.PushMethod != nil && prop.PushMethod.AnomalyDetection != nil && prop.PushMethod.AnomalyDetection.Data != nil {
+		anomalyDetectionAnyData := make(map[string]*anypb.Any)
+		for k, v := range prop.PushMethod.AnomalyDetection.Data {
+			anyValue, err := dataToAny(v)
+			if err != nil {
+				return nil, fmt.Errorf("failed to convert anomaly detection data: %v", err)
+			}
+			anomalyDetectionAnyData[k] = anyValue
+		}
+		item.PushMethod.AnomalyDetection.Data = anomalyDetectionAnyData
 	}
 
 	return item, nil
