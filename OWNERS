@@ -8,6 +8,7 @@ approvers:
   - sids-b
   - skdwriting
   - WillardHu
+
 reviewers:
   - chendave
   - daixiang0
@@ -22,6 +23,7 @@ reviewers:
   - wbc6080
   - WillardHu
   - zc2638
+  - fujitatomoya
 
 emeritus_approvers:
   - CindyXing
