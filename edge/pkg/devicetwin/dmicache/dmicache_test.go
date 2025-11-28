@@ -14,10 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package dmiserver
+package dmicache
 
 import (
-	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -26,10 +25,603 @@ import (
 
 	"github.com/kubeedge/api/apis/devices/v1beta1"
 	pb "github.com/kubeedge/api/apis/dmi/v1beta1"
-	"github.com/kubeedge/kubeedge/pkg/util"
 )
 
-func TestDMIWorker_overrideDeviceInstanceConfig(t *testing.T) {
+func TestNewDMICache(t *testing.T) {
+	cache := NewDMICache()
+	assert.NotNil(t, cache)
+	assert.NotNil(t, cache.mapperMu)
+	assert.NotNil(t, cache.deviceMu)
+	assert.NotNil(t, cache.deviceModelMu)
+	assert.NotNil(t, cache.mapperList)
+	assert.NotNil(t, cache.deviceModelList)
+	assert.NotNil(t, cache.deviceList)
+	assert.Equal(t, 0, len(cache.mapperList))
+	assert.Equal(t, 0, len(cache.deviceModelList))
+	assert.Equal(t, 0, len(cache.deviceList))
+}
+
+func TestDMICache_Mapper_Operations(t *testing.T) {
+	cache := NewDMICache()
+
+	// Test data
+	mapper1 := &pb.MapperInfo{
+		Name:       "test-mapper-1",
+		Version:    "v1.0.0",
+		ApiVersion: "v1beta1",
+		Protocol:   "modbus",
+		Address:    []byte("tcp://localhost:1502"),
+		State:      "MAPPER_CONNECTED",
+	}
+
+	mapper2 := &pb.MapperInfo{
+		Name:       "test-mapper-2",
+		Version:    "v1.1.0",
+		ApiVersion: "v1beta1",
+		Protocol:   "opcua",
+		Address:    []byte("opc.tcp://localhost:4840"),
+		State:      "MAPPER_DISCONNECTED",
+	}
+
+	t.Run("PutMapper and GetMapper", func(t *testing.T) {
+		// Put mapper1
+		cache.PutMapper(mapper1)
+
+		// Get mapper1
+		retrieved, exists := cache.GetMapper("test-mapper-1")
+		assert.True(t, exists)
+		assert.Equal(t, mapper1, retrieved)
+
+		// Get non-existent mapper
+		retrieved, exists = cache.GetMapper("non-existent")
+		assert.False(t, exists)
+		assert.Nil(t, retrieved)
+
+		// Put mapper2
+		cache.PutMapper(mapper2)
+
+		// Get mapper2
+		retrieved, exists = cache.GetMapper("test-mapper-2")
+		assert.True(t, exists)
+		assert.Equal(t, mapper2, retrieved)
+
+		// mapper1 should still exist
+		retrieved, exists = cache.GetMapper("test-mapper-1")
+		assert.True(t, exists)
+		assert.Equal(t, mapper1, retrieved)
+	})
+
+	t.Run("RemoveMapper", func(t *testing.T) {
+		// Remove mapper1
+		cache.RemoveMapper("test-mapper-1")
+
+		// mapper1 should not exist
+		retrieved, exists := cache.GetMapper("test-mapper-1")
+		assert.False(t, exists)
+		assert.Nil(t, retrieved)
+
+		// mapper2 should still exist
+		retrieved, exists = cache.GetMapper("test-mapper-2")
+		assert.True(t, exists)
+		assert.Equal(t, mapper2, retrieved)
+
+		// Remove mapper2
+		cache.RemoveMapper("test-mapper-2")
+		retrieved, exists = cache.GetMapper("test-mapper-2")
+		assert.False(t, exists)
+		assert.Nil(t, retrieved)
+
+		// Remove non-existent mapper (should not panic)
+		cache.RemoveMapper("non-existent")
+	})
+
+	t.Run("PutMapper overwrites existing", func(t *testing.T) {
+		// Put original mapper
+		cache.PutMapper(mapper1)
+
+		// Create updated mapper with same name
+		updatedMapper := &pb.MapperInfo{
+			Name:       "test-mapper-1",
+			Version:    "v2.0.0", // Different version
+			ApiVersion: "v1beta1",
+			Protocol:   "modbus",
+			Address:    []byte("tcp://localhost:1503"), // Different address
+			State:      "MAPPER_CONNECTED",
+		}
+
+		// Put updated mapper
+		cache.PutMapper(updatedMapper)
+
+		// Should get updated mapper
+		retrieved, exists := cache.GetMapper("test-mapper-1")
+		assert.True(t, exists)
+		assert.Equal(t, updatedMapper, retrieved)
+		assert.Equal(t, "v2.0.0", retrieved.Version)
+		assert.Equal(t, []byte("tcp://localhost:1503"), retrieved.Address)
+	})
+}
+
+func TestDMICache_DeviceModel_Operations(t *testing.T) {
+	cache := NewDMICache()
+
+	// Test data
+	deviceModel1 := &v1beta1.DeviceModel{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "temperature-sensor",
+			Namespace: "default",
+		},
+		Spec: v1beta1.DeviceModelSpec{
+			Protocol: "modbus",
+			Properties: []v1beta1.ModelProperty{
+				{
+					Name:       "temperature",
+					Type:       v1beta1.FLOAT,
+					AccessMode: v1beta1.ReadOnly,
+				},
+			},
+		},
+	}
+
+	deviceModel2 := &v1beta1.DeviceModel{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "humidity-sensor",
+			Namespace: "test-namespace",
+		},
+		Spec: v1beta1.DeviceModelSpec{
+			Protocol: "opcua",
+			Properties: []v1beta1.ModelProperty{
+				{
+					Name:       "humidity",
+					Type:       v1beta1.FLOAT,
+					AccessMode: v1beta1.ReadOnly,
+				},
+			},
+		},
+	}
+
+	t.Run("PutDeviceModel and GetDeviceModel", func(t *testing.T) {
+		// Put deviceModel1
+		cache.PutDeviceModel(deviceModel1)
+
+		// Get deviceModel1
+		retrieved, exists := cache.GetDeviceModel("default", "temperature-sensor")
+		assert.True(t, exists)
+		assert.Equal(t, deviceModel1, retrieved)
+
+		// Get non-existent device model
+		retrieved, exists = cache.GetDeviceModel("default", "non-existent")
+		assert.False(t, exists)
+		assert.Nil(t, retrieved)
+
+		// Put deviceModel2
+		cache.PutDeviceModel(deviceModel2)
+
+		// Get deviceModel2
+		retrieved, exists = cache.GetDeviceModel("test-namespace", "humidity-sensor")
+		assert.True(t, exists)
+		assert.Equal(t, deviceModel2, retrieved)
+
+		// deviceModel1 should still exist
+		retrieved, exists = cache.GetDeviceModel("default", "temperature-sensor")
+		assert.True(t, exists)
+		assert.Equal(t, deviceModel1, retrieved)
+	})
+
+	t.Run("RemoveDeviceModel", func(t *testing.T) {
+		// Remove deviceModel1
+		cache.RemoveDeviceModel("default", "temperature-sensor")
+
+		// deviceModel1 should not exist
+		retrieved, exists := cache.GetDeviceModel("default", "temperature-sensor")
+		assert.False(t, exists)
+		assert.Nil(t, retrieved)
+
+		// deviceModel2 should still exist
+		retrieved, exists = cache.GetDeviceModel("test-namespace", "humidity-sensor")
+		assert.True(t, exists)
+		assert.Equal(t, deviceModel2, retrieved)
+
+		// Remove deviceModel2
+		cache.RemoveDeviceModel("test-namespace", "humidity-sensor")
+		retrieved, exists = cache.GetDeviceModel("test-namespace", "humidity-sensor")
+		assert.False(t, exists)
+		assert.Nil(t, retrieved)
+
+		// Remove non-existent device model (should not panic)
+		cache.RemoveDeviceModel("default", "non-existent")
+	})
+}
+
+func TestDMICache_Device_Operations(t *testing.T) {
+	cache := NewDMICache()
+
+	// Test data
+	deviceModel := &v1beta1.DeviceModel{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "temp-sensor-model",
+			Namespace: "default",
+		},
+		Spec: v1beta1.DeviceModelSpec{
+			Protocol: "modbus",
+			Properties: []v1beta1.ModelProperty{
+				{
+					Name:       "temperature",
+					Type:       v1beta1.FLOAT,
+					AccessMode: v1beta1.ReadOnly,
+					Visitors: &v1beta1.VisitorConfig{
+						ProtocolName: "modbus",
+						ConfigData: &v1beta1.CustomizedValue{
+							Data: map[string]interface{}{
+								"register": "HoldingRegister",
+								"address":  40001,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	device1 := &v1beta1.Device{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "sensor-001",
+			Namespace: "default",
+		},
+		Spec: v1beta1.DeviceSpec{
+			DeviceModelRef: &v1.LocalObjectReference{
+				Name: "temp-sensor-model",
+			},
+			Protocol: v1beta1.ProtocolConfig{
+				ProtocolName: "modbus",
+			},
+			Properties: []v1beta1.DeviceProperty{
+				{
+					Name: "temperature",
+					Visitors: v1beta1.VisitorConfig{
+						ProtocolName: "modbus",
+					},
+				},
+			},
+		},
+	}
+
+	// Device model for device2 (same content, different namespace)
+	deviceModel2 := &v1beta1.DeviceModel{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "temp-sensor-model",
+			Namespace: "test-namespace",
+		},
+		Spec: v1beta1.DeviceModelSpec{
+			Protocol: "modbus",
+			Properties: []v1beta1.ModelProperty{
+				{
+					Name:       "temperature",
+					Type:       v1beta1.FLOAT,
+					AccessMode: v1beta1.ReadOnly,
+					Visitors: &v1beta1.VisitorConfig{
+						ProtocolName: "modbus",
+						ConfigData: &v1beta1.CustomizedValue{
+							Data: map[string]interface{}{
+								"register": "HoldingRegister",
+								"address":  40001,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	device2 := &v1beta1.Device{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "sensor-002",
+			Namespace: "test-namespace",
+		},
+		Spec: v1beta1.DeviceSpec{
+			DeviceModelRef: &v1.LocalObjectReference{
+				Name: "temp-sensor-model",
+			},
+			Protocol: v1beta1.ProtocolConfig{
+				ProtocolName: "modbus",
+			},
+			Properties: []v1beta1.DeviceProperty{
+				{
+					Name: "temperature",
+					Visitors: v1beta1.VisitorConfig{
+						ProtocolName: "modbus",
+					},
+				},
+			},
+		},
+	}
+
+	t.Run("PutDevice and GetOverriddenDevice", func(t *testing.T) {
+		// Put device model first
+		cache.PutDeviceModel(deviceModel)
+
+		// Put device1
+		cache.PutDevice(device1)
+
+		// Get overridden device1
+		retrieved, err := cache.GetOverriddenDevice("default", "sensor-001")
+		assert.NoError(t, err)
+		assert.NotNil(t, retrieved)
+		assert.Equal(t, "sensor-001", retrieved.Name)
+		assert.Equal(t, "default", retrieved.Namespace)
+
+		// Get non-existent device
+		retrieved, err = cache.GetOverriddenDevice("default", "non-existent")
+		assert.Error(t, err)
+		assert.Nil(t, retrieved)
+		assert.Contains(t, err.Error(), "not found in cache")
+
+		// Put device model for device2
+		cache.PutDeviceModel(deviceModel2)
+
+		// Put device2
+		cache.PutDevice(device2)
+
+		// Get overridden device2
+		retrieved, err = cache.GetOverriddenDevice("test-namespace", "sensor-002")
+		assert.NoError(t, err)
+		assert.NotNil(t, retrieved)
+		assert.Equal(t, "sensor-002", retrieved.Name)
+		assert.Equal(t, "test-namespace", retrieved.Namespace)
+	})
+
+	t.Run("GetOverriddenDevice without DeviceModel", func(t *testing.T) {
+		// Create device without corresponding device model in cache
+		deviceWithoutModel := &v1beta1.Device{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "orphan-device",
+				Namespace: "default",
+			},
+			Spec: v1beta1.DeviceSpec{
+				DeviceModelRef: &v1.LocalObjectReference{
+					Name: "non-existent-model",
+				},
+			},
+		}
+
+		cache.PutDevice(deviceWithoutModel)
+
+		// Should get error when device model not found
+		retrieved, err := cache.GetOverriddenDevice("default", "orphan-device")
+		assert.Error(t, err)
+		assert.Nil(t, retrieved)
+		assert.Contains(t, err.Error(), "not found in cache")
+	})
+
+	t.Run("GetOverriddenDevice without DeviceModelRef", func(t *testing.T) {
+		// Create device without DeviceModelRef
+		deviceWithoutRef := &v1beta1.Device{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "no-ref-device",
+				Namespace: "default",
+			},
+			Spec: v1beta1.DeviceSpec{
+				// No DeviceModelRef
+			},
+		}
+
+		cache.PutDevice(deviceWithoutRef)
+
+		// Should get error when DeviceModelRef is nil
+		retrieved, err := cache.GetOverriddenDevice("default", "no-ref-device")
+		assert.Error(t, err)
+		assert.Nil(t, retrieved)
+		assert.Contains(t, err.Error(), "has no device model reference")
+	})
+
+	t.Run("DeviceIds", func(t *testing.T) {
+		// Clear cache first
+		cache = NewDMICache()
+
+		// Initially should be empty
+		ids := cache.DeviceIds()
+		assert.Equal(t, 0, len(ids))
+
+		// Add devices
+		cache.PutDevice(device1)
+		cache.PutDevice(device2)
+
+		// Should have 2 device IDs
+		ids = cache.DeviceIds()
+		assert.Equal(t, 2, len(ids))
+
+		// Check that IDs contain expected values
+		expectedIds := []string{
+			"default/sensor-001",
+			"test-namespace/sensor-002",
+		}
+		for _, expectedId := range expectedIds {
+			assert.Contains(t, ids, expectedId)
+		}
+	})
+
+	t.Run("RemoveDevice", func(t *testing.T) {
+		// Remove device1
+		cache.RemoveDevice("default", "sensor-001")
+
+		// device1 should not exist
+		retrieved, err := cache.GetOverriddenDevice("default", "sensor-001")
+		assert.Error(t, err)
+		assert.Nil(t, retrieved)
+
+		// device2 should still exist
+		cache.PutDeviceModel(deviceModel2) // Re-add device model for device2
+		retrieved, err = cache.GetOverriddenDevice("test-namespace", "sensor-002")
+		assert.NoError(t, err)
+		assert.NotNil(t, retrieved)
+
+		// DeviceIds should only contain device2
+		ids := cache.DeviceIds()
+		assert.Equal(t, 1, len(ids))
+		assert.Contains(t, ids, "test-namespace/sensor-002")
+
+		// Remove device2
+		cache.RemoveDevice("test-namespace", "sensor-002")
+		retrieved, err = cache.GetOverriddenDevice("test-namespace", "sensor-002")
+		assert.Error(t, err)
+		assert.Nil(t, retrieved)
+
+		// DeviceIds should be empty
+		ids = cache.DeviceIds()
+		assert.Equal(t, 0, len(ids))
+
+		// Remove non-existent device (should not panic)
+		cache.RemoveDevice("default", "non-existent")
+	})
+}
+
+func TestDMICache_DeepCopyCustomizedValue(t *testing.T) {
+	tests := []struct {
+		name     string
+		src      *v1beta1.CustomizedValue
+		expected *v1beta1.CustomizedValue
+	}{
+		{
+			name:     "nil input",
+			src:      nil,
+			expected: nil,
+		},
+		{
+			name:     "empty CustomizedValue",
+			src:      &v1beta1.CustomizedValue{},
+			expected: &v1beta1.CustomizedValue{},
+		},
+		{
+			name: "nil Data",
+			src: &v1beta1.CustomizedValue{
+				Data: nil,
+			},
+			expected: &v1beta1.CustomizedValue{},
+		},
+		{
+			name: "simple values",
+			src: &v1beta1.CustomizedValue{
+				Data: map[string]interface{}{
+					"string": "test",
+					"int":    42,
+					"float":  3.14,
+					"bool":   true,
+				},
+			},
+			expected: &v1beta1.CustomizedValue{
+				Data: map[string]interface{}{
+					"string": "test",
+					"int":    42,
+					"float":  3.14,
+					"bool":   true,
+				},
+			},
+		},
+		{
+			name: "nested map",
+			src: &v1beta1.CustomizedValue{
+				Data: map[string]interface{}{
+					"nested": map[string]interface{}{
+						"key1": "value1",
+						"key2": 123,
+					},
+					"simple": "value",
+				},
+			},
+			expected: &v1beta1.CustomizedValue{
+				Data: map[string]interface{}{
+					"nested": map[string]interface{}{
+						"key1": "value1",
+						"key2": 123,
+					},
+					"simple": "value",
+				},
+			},
+		},
+		{
+			name: "slice values",
+			src: &v1beta1.CustomizedValue{
+				Data: map[string]interface{}{
+					"items":   []interface{}{"item1", "item2", 42},
+					"numbers": []interface{}{1, 2, 3},
+				},
+			},
+			expected: &v1beta1.CustomizedValue{
+				Data: map[string]interface{}{
+					"items":   []interface{}{"item1", "item2", 42},
+					"numbers": []interface{}{1, 2, 3},
+				},
+			},
+		},
+		{
+			name: "complex nested structure",
+			src: &v1beta1.CustomizedValue{
+				Data: map[string]interface{}{
+					"config": map[string]interface{}{
+						"servers": []interface{}{
+							map[string]interface{}{
+								"name": "server1",
+								"port": 8080,
+							},
+							map[string]interface{}{
+								"name": "server2",
+								"port": 8081,
+							},
+						},
+						"timeout": 30,
+					},
+				},
+			},
+			expected: &v1beta1.CustomizedValue{
+				Data: map[string]interface{}{
+					"config": map[string]interface{}{
+						"servers": []interface{}{
+							map[string]interface{}{
+								"name": "server1",
+								"port": 8080,
+							},
+							map[string]interface{}{
+								"name": "server2",
+								"port": 8081,
+							},
+						},
+						"timeout": 30,
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := deepCopyCustomizedValue(tt.src)
+
+			if tt.expected == nil {
+				assert.Nil(t, result)
+				return
+			}
+
+			assert.NotNil(t, result)
+			assert.Equal(t, tt.expected, result)
+
+			// Verify it's a deep copy by modifying original and checking copy is unchanged
+			if tt.src != nil && tt.src.Data != nil {
+				// Modify original
+				if nestedMap, ok := tt.src.Data["config"]; ok {
+					if configMap, ok := nestedMap.(map[string]interface{}); ok {
+						configMap["modified"] = true
+					}
+				} else if _, exists := tt.src.Data["simple"]; exists {
+					tt.src.Data["modified"] = "changed"
+				}
+
+				// Original expected should not be affected since result is a deep copy
+				assert.Equal(t, tt.expected, result)
+			}
+		})
+	}
+}
+
+func TestDMICache_OverrideDeviceInstanceConfig(t *testing.T) {
 	tests := []struct {
 		name           string
 		deviceModel    *v1beta1.DeviceModel
@@ -561,19 +1153,11 @@ func TestDMIWorker_overrideDeviceInstanceConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup DMICache
-			dmiCache := &DMICache{
-				MapperMu:        &sync.Mutex{},
-				DeviceMu:        &sync.Mutex{},
-				DeviceModelMu:   &sync.Mutex{},
-				MapperList:      make(map[string]*pb.MapperInfo),
-				DeviceList:      make(map[string]*v1beta1.Device),
-				DeviceModelList: make(map[string]*v1beta1.DeviceModel),
-			}
+			dmiCache := NewDMICache()
 
 			// Add device model to cache if provided
 			if tt.deviceModel != nil {
-				deviceModelID := util.GetResourceID(tt.deviceModel.Namespace, tt.deviceModel.Name)
-				dmiCache.DeviceModelList[deviceModelID] = tt.deviceModel
+				dmiCache.PutDeviceModel(tt.deviceModel)
 			}
 
 			// Execute the function
