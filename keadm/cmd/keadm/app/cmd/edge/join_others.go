@@ -204,8 +204,8 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 	if err != nil {
 		return fmt.Errorf("failed to get ext system, err: %v", err)
 	}
-	systemdCmd := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName)
-	if err := extSystem.ServiceCreate(constants.KubeEdgeBinaryName, systemdCmd, nil); err != nil {
+	binpath := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName)
+	if err := extSystem.ServiceCreate(constants.KubeEdgeBinaryName, binpath, nil, nil); err != nil {
 		return fmt.Errorf("failed to create edgecore systemd service, err: %v", err)
 	}
 
