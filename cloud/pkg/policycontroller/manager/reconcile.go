@@ -33,12 +33,13 @@ import (
 
 type Controller struct {
 	client.Client
+	client.Reader
 	MessageLayer messagelayer.MessageLayer
 }
 
 func (c *Controller) Reconcile(ctx context.Context, request controllerruntime.Request) (controllerruntime.Result, error) {
 	acc := &policyv1alpha1.ServiceAccountAccess{}
-	if err := c.Client.Get(ctx, request.NamespacedName, acc); err != nil {
+	if err := c.Reader.Get(ctx, request.NamespacedName, acc); err != nil {
 		if apierrors.IsNotFound(err) {
 			return controllerruntime.Result{}, nil
 		}
@@ -53,7 +54,7 @@ func (c *Controller) Reconcile(ctx context.Context, request controllerruntime.Re
 
 func (c *Controller) filterResource(ctx context.Context, object client.Object) bool {
 	var p = &PolicyMatcher{}
-	matchTarget(ctx, c.Client, object, p.isMatchServiceAccount)
+	matchTarget(ctx, c.Reader, object, p.isMatchServiceAccount)
 	klog.V(4).Infof("filter resource %s/%s, %v", object.GetNamespace(), object.GetName(), p.match)
 	return p.match
 }
@@ -88,15 +89,15 @@ func (p *PolicyRequestVisitor) matchRuntimeRequest(acc *policyv1alpha1.ServiceAc
 	return true
 }
 
-func matchTarget(ctx context.Context, cli client.Client, object client.Object, visitor func(*policyv1alpha1.ServiceAccountAccess) bool) {
+func matchTarget(ctx context.Context, reader client.Reader, object client.Object, visitor func(*policyv1alpha1.ServiceAccountAccess) bool) {
 	accList := &policyv1alpha1.ServiceAccountAccessList{}
-	if err := cli.List(ctx, accList); err != nil {
+	if err := reader.List(ctx, accList); err != nil {
 		klog.Errorf("failed to list serviceaccountaccess, %v", err)
 		return
 	}
 
 	crbl := &rbacv1.ClusterRoleBindingList{}
-	if err := cli.List(ctx, crbl); err != nil {
+	if err := reader.List(ctx, crbl); err != nil {
 		klog.Errorf("failed to list clusterrolebindings, %v", err)
 		return
 	}
@@ -125,7 +126,7 @@ func matchTarget(ctx context.Context, cli client.Client, object client.Object, v
 				}
 			}
 			var roleBindingList = &rbacv1.RoleBindingList{}
-			if err := cli.List(ctx, roleBindingList, &client.ListOptions{Namespace: am.Spec.ServiceAccount.Namespace}); err != nil {
+			if err := reader.List(ctx, roleBindingList, &client.ListOptions{Namespace: am.Spec.ServiceAccount.Namespace}); err != nil {
 				klog.Errorf("failed to list rolebindings, %v", err)
 				return
 			}
@@ -140,7 +141,7 @@ func matchTarget(ctx context.Context, cli client.Client, object client.Object, v
 			}
 		case *rbacv1.Role:
 			var roleBindingList = &rbacv1.RoleBindingList{}
-			if err := cli.List(ctx, roleBindingList, &client.ListOptions{Namespace: am.Spec.ServiceAccount.Namespace}); err != nil {
+			if err := reader.List(ctx, roleBindingList, &client.ListOptions{Namespace: am.Spec.ServiceAccount.Namespace}); err != nil {
 				klog.Errorf("failed to list rolebindings, %v", err)
 				return
 			}
@@ -159,7 +160,7 @@ func matchTarget(ctx context.Context, cli client.Client, object client.Object, v
 
 func (c *Controller) mapRolesFunc(_ context.Context, object client.Object) []controllerruntime.Request {
 	var p = PolicyRequestVisitor{}
-	matchTarget(context.Background(), c.Client, object, p.matchRuntimeRequest)
+	matchTarget(context.Background(), c.Reader, object, p.matchRuntimeRequest)
 	klog.V(4).Infof("filter resource %s/%s, %v", object.GetNamespace(), object.GetName(), p.AuthPolicy)
 	return p.AuthPolicy
 }
@@ -178,7 +179,7 @@ func newSaAccessObject(sa corev1.ServiceAccount) *policyv1alpha1.ServiceAccountA
 
 func (c *Controller) mapObjectFunc(_ context.Context, object client.Object) []controllerruntime.Request {
 	accList := &policyv1alpha1.ServiceAccountAccessList{}
-	if err := c.Client.List(context.Background(), accList, &client.ListOptions{Namespace: object.GetNamespace()}); err != nil {
+	if err := c.Reader.List(context.Background(), accList, &client.ListOptions{Namespace: object.GetNamespace()}); err != nil {
 		klog.Errorf("failed to list serviceaccountaccess, %v", err)
 		return nil
 	}
@@ -187,11 +188,11 @@ func (c *Controller) mapObjectFunc(_ context.Context, object client.Object) []co
 		sa := obj.Spec.ServiceAccountName
 		for _, am := range accList.Items {
 			if am.Spec.ServiceAccount.Name == sa && am.Spec.ServiceAccount.Namespace == object.GetNamespace() {
+				op := "delete"
 				if obj.GetDeletionTimestamp() == nil {
-					// won't reconcile pod update event
-					return []controllerruntime.Request{}
+					op = "update"
 				}
-				klog.V(4).Infof("reconcile pod deleting %s/%s", obj.Namespace, obj.Name)
+				klog.V(4).Infof("reconcile pod %s %s/%s", op, obj.Namespace, obj.Name)
 				return []controllerruntime.Request{{NamespacedName: client.ObjectKey{Namespace: am.Namespace, Name: am.Name}}}
 			}
 		}
@@ -224,13 +225,13 @@ func (c *Controller) filterObject(ctx context.Context, object client.Object) boo
 	switch obj := object.(type) {
 	case *corev1.Pod:
 		node := obj.Spec.NodeName
-		if obj.Spec.ServiceAccountName == "" || node == "" || !isEdgeNode(ctx, c.Client, node) {
+		if obj.Spec.ServiceAccountName == "" || node == "" || !isEdgeNode(ctx, c.Reader, node) {
 			return false
 		}
 		return true
 	case *corev1.ServiceAccount:
 		accList := &policyv1alpha1.ServiceAccountAccessList{}
-		if err := c.Client.List(ctx, accList, &client.ListOptions{Namespace: object.GetNamespace()}); err != nil {
+		if err := c.Reader.List(ctx, accList, &client.ListOptions{Namespace: object.GetNamespace()}); err != nil {
 			klog.Errorf("failed to list serviceaccountaccess, %v", err)
 			return false
 		}
@@ -274,11 +275,11 @@ func (c *Controller) SetupWithManager(ctx context.Context, mgr controllerruntime
 		Complete(c)
 }
 
-func isEdgeNode(ctx context.Context, cli client.Client, name string) bool {
+func isEdgeNode(ctx context.Context, reader client.Reader, name string) bool {
 	set := labels.Set{commonconstants.EdgeNodeRoleKey: commonconstants.EdgeNodeRoleValue}
 	selector := labels.SelectorFromSet(set)
 	var edgeNodeList = &corev1.NodeList{}
-	if err := cli.List(ctx, edgeNodeList, &client.ListOptions{LabelSelector: selector}); err != nil {
+	if err := reader.List(ctx, edgeNodeList, &client.ListOptions{LabelSelector: selector}); err != nil {
 		klog.Errorf("failed to list edge nodes, %v", err)
 		return false
 	}
@@ -290,11 +291,11 @@ func isEdgeNode(ctx context.Context, cli client.Client, name string) bool {
 	return false
 }
 
-func getNodeListOfServiceAccountAccess(ctx context.Context, cli client.Client, acc *policyv1alpha1.ServiceAccountAccess) ([]string, error) {
+func getNodeListOfServiceAccountAccess(ctx context.Context, reader client.Reader, acc *policyv1alpha1.ServiceAccountAccess) ([]string, error) {
 	var nodeList []string
 	podList := &corev1.PodList{}
 	saNameSelector := fields.OneTermEqualSelector("spec.serviceAccountName", acc.Spec.ServiceAccount.Name)
-	if err := cli.List(ctx, podList, client.MatchingFieldsSelector{Selector: saNameSelector}, &client.ListOptions{Namespace: acc.Namespace}); err != nil {
+	if err := reader.List(ctx, podList, client.MatchingFieldsSelector{Selector: saNameSelector}, &client.ListOptions{Namespace: acc.Namespace}); err != nil {
 		klog.Errorf("failed to list pods through field selector serviceAccountName, %v", err)
 		return nil, err
 	}
@@ -307,7 +308,7 @@ func getNodeListOfServiceAccountAccess(ctx context.Context, cli client.Client, a
 		if nodeMap[pod.Spec.NodeName] {
 			continue
 		}
-		if !isEdgeNode(ctx, cli, pod.Spec.NodeName) {
+		if !isEdgeNode(ctx, reader, pod.Spec.NodeName) {
 			continue
 		}
 		nodeMap[pod.Spec.NodeName] = true
@@ -345,6 +346,8 @@ func subtractSlice(source, subTarget []string) []string {
 }
 
 func (c *Controller) send2Edge(acc *policyv1alpha1.ServiceAccountAccess, targets []string, opr string) {
+	klog.V(4).Infof("send2Edge for serviceaccount %s/%s: %v (%s)",
+		acc.Namespace, acc.Spec.ServiceAccount.Name, targets, opr)
 	sendObj := acc.DeepCopy()
 	for _, node := range targets {
 		resource, err := messagelayer.BuildResource(node, sendObj.Namespace, model.ResourceTypeSaAccess, sendObj.Name)
@@ -366,7 +369,7 @@ func (c *Controller) send2Edge(acc *policyv1alpha1.ServiceAccountAccess, targets
 
 func (c *Controller) syncRules(ctx context.Context, acc *policyv1alpha1.ServiceAccountAccess) (controllerruntime.Result, error) {
 	var newSA = &corev1.ServiceAccount{}
-	err := c.Client.Get(ctx, types.NamespacedName{Namespace: acc.Namespace, Name: acc.Spec.ServiceAccount.Name}, newSA)
+	err := c.Reader.Get(ctx, types.NamespacedName{Namespace: acc.Namespace, Name: acc.Spec.ServiceAccount.Name}, newSA)
 	if (err != nil && apierrors.IsNotFound(err)) || (err == nil && newSA.DeletionTimestamp != nil) {
 		klog.V(4).Infof("serviceaccount %s/%s is removed and delete the policy resource", acc.Namespace, acc.Spec.ServiceAccount.Name)
 		copyObj := acc.DeepCopy()
@@ -383,7 +386,7 @@ func (c *Controller) syncRules(ctx context.Context, acc *policyv1alpha1.ServiceA
 	userInfo := serviceaccount.UserInfo(newSA.Namespace, newSA.Name, string(newSA.UID))
 	var currentAcc = &policyv1alpha1.ServiceAccountAccess{}
 	c.VisitRulesFor(ctx, userInfo, acc.Namespace, currentAcc)
-	nodes, err := getNodeListOfServiceAccountAccess(ctx, c.Client, acc)
+	nodes, err := getNodeListOfServiceAccountAccess(ctx, c.Reader, acc)
 	if err != nil {
 		klog.Errorf("failed to get node list of serviceaccountaccess %s/%s, %v", acc.Namespace, acc.Name, err)
 		return controllerruntime.Result{Requeue: true}, err
@@ -551,7 +554,7 @@ func (c *Controller) GetRoleReferenceRules(ctx context.Context, roleRef rbacv1.R
 	switch roleRef.Kind {
 	case "Role":
 		var role = &rbacv1.Role{}
-		err := c.Client.Get(ctx, types.NamespacedName{Namespace: bindingNamespace, Name: roleRef.Name}, role)
+		err := c.Reader.Get(ctx, types.NamespacedName{Namespace: bindingNamespace, Name: roleRef.Name}, role)
 		if err != nil {
 			return nil, err
 		}
@@ -559,7 +562,7 @@ func (c *Controller) GetRoleReferenceRules(ctx context.Context, roleRef rbacv1.R
 
 	case "ClusterRole":
 		var clusterRole = &rbacv1.ClusterRole{}
-		err := c.Client.Get(ctx, types.NamespacedName{Name: roleRef.Name}, clusterRole)
+		err := c.Reader.Get(ctx, types.NamespacedName{Name: roleRef.Name}, clusterRole)
 		if err != nil {
 			return nil, err
 		}
@@ -572,7 +575,7 @@ func (c *Controller) GetRoleReferenceRules(ctx context.Context, roleRef rbacv1.R
 
 func (c *Controller) VisitRulesFor(ctx context.Context, user user.Info, namespace string, acc *policyv1alpha1.ServiceAccountAccess) {
 	crbl := &rbacv1.ClusterRoleBindingList{}
-	if err := c.Client.List(ctx, crbl); err != nil {
+	if err := c.Reader.List(ctx, crbl); err != nil {
 		klog.Errorf("failed to list clusterrolebindings, %v", err)
 		return
 	}
@@ -595,7 +598,7 @@ func (c *Controller) VisitRulesFor(ctx context.Context, user user.Info, namespac
 
 	if len(namespace) > 0 {
 		var roleBindingList = &rbacv1.RoleBindingList{}
-		if err := c.Client.List(ctx, roleBindingList, &client.ListOptions{Namespace: namespace}); err != nil {
+		if err := c.Reader.List(ctx, roleBindingList, &client.ListOptions{Namespace: namespace}); err != nil {
 			klog.Errorf("failed to list rolebindings, %v", err)
 			return
 		}
