@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	"k8s.io/kubernetes/cmd/kubeadm/app/util/initsystem"
 )
@@ -41,7 +42,7 @@ func (OpenRCExtSystem) ServiceDisable(service string) error {
 	return exec.Command("rc-update", args...).Run()
 }
 
-func (OpenRCExtSystem) ServiceCreate(_, _ string, _ map[string]string) error {
+func (OpenRCExtSystem) ServiceCreate(_service, _binpath string, _args []string, _envs map[string]string) error {
 	// TODO: Implement this method when we need.
 	return nil
 }
@@ -74,7 +75,7 @@ func (SystemdExtSystem) ServiceDisable(service string) error {
 //go:embed simple.service
 var simpleSystemdServiceTemplate string
 
-func (SystemdExtSystem) ServiceCreate(service, cmd string, envs map[string]string) error {
+func (SystemdExtSystem) ServiceCreate(service, binpath string, args []string, envs map[string]string) error {
 	var envsStr string
 	for k, v := range envs {
 		if envsStr != "" {
@@ -82,7 +83,11 @@ func (SystemdExtSystem) ServiceCreate(service, cmd string, envs map[string]strin
 		}
 		envsStr += fmt.Sprintf("\"%s=%s\"", k, v)
 	}
-	content := fmt.Sprintf(simpleSystemdServiceTemplate, service, cmd, envsStr)
+	cmdslice := []string{binpath}
+	if len(args) > 0 {
+		cmdslice = append(cmdslice, args...)
+	}
+	content := fmt.Sprintf(simpleSystemdServiceTemplate, service, strings.Join(cmdslice, " "), envsStr)
 	fp := fmt.Sprintf("%s/%s.service", systemdDir, service)
 	return os.WriteFile(fp, []byte(content), os.ModePerm)
 }

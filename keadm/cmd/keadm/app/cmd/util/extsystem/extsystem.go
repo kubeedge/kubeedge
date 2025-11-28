@@ -21,7 +21,7 @@ import "k8s.io/kubernetes/cmd/kubeadm/app/util/initsystem"
 type ExtSystem interface {
 	ServiceEnable(service string) error
 	ServiceDisable(service string) error
-	ServiceCreate(service, cmd string, envs map[string]string) error
+	ServiceCreate(service, binpath string, args []string, envs map[string]string) error
 	ServiceRemove(service string) error
 	initsystem.InitSystem
 }

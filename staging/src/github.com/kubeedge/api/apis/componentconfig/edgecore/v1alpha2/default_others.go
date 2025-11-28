@@ -15,6 +15,7 @@ const (
 	DefaultCgroupsPerQOS        = true
 	DefaultResolverConfig       = kubetypes.ResolvConfDefault
 	DefaultCPUCFSQuota          = true
+	DefaultWindowsService       = false
 	DefaultWindowsPriorityClass = ""
 )
 
