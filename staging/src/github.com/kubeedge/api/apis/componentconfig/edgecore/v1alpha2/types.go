@@ -974,6 +974,8 @@ type EventBus struct {
 	MqttMode MqttMode `json:"mqttMode"`
 	// Tls indicates tls config for EventBus module
 	TLS *EventBusTLS `json:"eventBusTLS,omitempty"`
+	// Rest indicates rest config for EventBus module to enable direct REST calls from edge
+	Rest *EventBusRest `json:"eventBusRest,omitempty"`
 }
 
 // EventBusTLS indicates the EventBus tls config with MQTT broker
@@ -991,6 +993,20 @@ type EventBusTLS struct {
 	// default "/etc/kubeedge/certs/server.key"
 	TLSMqttPrivateKeyFile string `json:"tlsMqttPrivateKeyFile,omitempty"`
 }
+
+// EventBusRest indicates the EventBus rest config for direct REST calls from edge
+type EventBusRest struct {
+	// Enable indicates whether enable direct REST calls from edge eventbus
+	// default false
+	Enable bool `json:"enable"`
+	// RestTimeout indicates timeout for REST calls in seconds
+	// default 30
+	RestTimeout int32 `json:"restTimeout,omitempty"`
+	// RestRetryCount indicates number of retries for failed REST calls
+	// default 3
+	RestRetryCount int32 `json:"restRetryCount,omitempty"`
+}
+
 
 // MetaManager indicates the MetaManager module config
 type MetaManager struct {

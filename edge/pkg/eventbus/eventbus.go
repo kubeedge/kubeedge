@@ -10,6 +10,7 @@ import (
 
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/beehive/pkg/core/model"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
@@ -17,6 +18,7 @@ import (
 	eventconfig "github.com/kubeedge/kubeedge/edge/pkg/eventbus/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/dao"
 	mqttBus "github.com/kubeedge/kubeedge/edge/pkg/eventbus/mqtt"
+	restClient "github.com/kubeedge/kubeedge/edge/pkg/eventbus/rest"
 	"github.com/kubeedge/kubeedge/pkg/features"
 )
 
@@ -175,6 +177,8 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 			topic := fmt.Sprintf("$hw/events/node/%s/authInfo/get/result", eventconfig.Config.NodeName)
 			payload, _ := json.Marshal(accessInfo.GetContent())
 			eb.publish(topic, payload)
+		case "rest": // Handle direct REST calls from edge
+			eb.handleRestMessage(accessInfo)
 		default:
 			klog.Warningf("Action not found")
 		}
@@ -231,4 +235,72 @@ func (eb *eventbus) unsubscribe(topic string) {
 	if err != nil {
 		klog.Errorf("Delete topic %s failed, %v", topic, err)
 	}
+}
+
+func (eb *eventbus) handleRestMessage(accessInfo model.Message) {
+	if !restClient.IsEnabled() {
+		klog.Warningf("REST functionality is not enabled in eventbus configuration")
+		return
+	}
+
+	content := accessInfo.GetContent()
+	var payload []byte
+	var err error
+
+	switch v := content.(type) {
+	case []byte:
+		payload = v
+	case string:
+		payload = []byte(v)
+	default:
+		klog.Errorf("Unsupported content type for REST message: %T", content)
+		return
+	}
+
+	// Parse the REST request
+	req, err := restClient.ParseRestRequest(payload)
+	if err != nil {
+		klog.Errorf("Failed to parse REST request: %v", err)
+		return
+	}
+
+	// Create REST client and make the call
+	client := restClient.NewClient()
+	resp, err := client.Call(req)
+	if err != nil {
+		klog.Errorf("REST call failed: %v", err)
+		// Publish error message back to MQTT topic if configured
+		eb.publishRestResponse(accessInfo.GetResource(), resp, err)
+		return
+	}
+
+	// Log the result
+	klog.Infof("REST call completed successfully. Endpoint: %s, Status: %d", req.Endpoint, resp.StatusCode)
+
+	// Publish response back to MQTT topic if configured
+	eb.publishRestResponse(accessInfo.GetResource(), resp, nil)
+}
+
+func (eb *eventbus) publishRestResponse(originalResource string, resp *restClient.RestResponse, err error) {
+	// Create response topic by appending "/response" to original topic
+	responseTopic := originalResource + "/response"
+
+	responseData := make(map[string]interface{})
+	if err != nil {
+		responseData["error"] = err.Error()
+		responseData["success"] = false
+	} else {
+		responseData["status_code"] = resp.StatusCode
+		responseData["headers"] = resp.Headers
+		responseData["body"] = resp.Body
+		responseData["success"] = true
+	}
+
+	payload, err := json.Marshal(responseData)
+	if err != nil {
+		klog.Errorf("Failed to marshal REST response: %v", err)
+		return
+	}
+
+	eb.publish(responseTopic, payload)
 }
