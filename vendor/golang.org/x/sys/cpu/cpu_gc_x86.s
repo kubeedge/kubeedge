@@ -3,8 +3,6 @@
 // license that can be found in the LICENSE file.
 
 //go:build (386 || amd64 || amd64p32) && gc
-// +build 386 amd64 amd64p32
-// +build gc
 
 #include "textflag.h"
 
@@ -20,7 +18,7 @@ TEXT ·cpuid(SB), NOSPLIT, $0-24
 	RET
 
 // func xgetbv() (eax, edx uint32)
-TEXT ·xgetbv(SB),NOSPLIT,$0-8
+TEXT ·xgetbv(SB), NOSPLIT, $0-8
 	MOVL $0, CX
 	XGETBV
 	MOVL AX, eax+0(FP)
