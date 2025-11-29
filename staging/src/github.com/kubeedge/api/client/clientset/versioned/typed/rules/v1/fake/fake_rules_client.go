@@ -29,11 +29,11 @@ type FakeRulesV1 struct {
 }
 
 func (c *FakeRulesV1) Rules(namespace string) v1.RuleInterface {
-	return &FakeRules{c, namespace}
+	return newFakeRules(c, namespace)
 }
 
 func (c *FakeRulesV1) RuleEndpoints(namespace string) v1.RuleEndpointInterface {
-	return &FakeRuleEndpoints{c, namespace}
+	return newFakeRuleEndpoints(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

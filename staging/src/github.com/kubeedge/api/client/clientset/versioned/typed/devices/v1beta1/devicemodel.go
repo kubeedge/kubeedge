@@ -19,9 +19,9 @@ limitations under the License.
 package v1beta1
 
 import (
-	"context"
+	context "context"
 
-	v1beta1 "github.com/kubeedge/api/apis/devices/v1beta1"
+	devicesv1beta1 "github.com/kubeedge/api/apis/devices/v1beta1"
 	scheme "github.com/kubeedge/api/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -37,31 +37,32 @@ type DeviceModelsGetter interface {
 
 // DeviceModelInterface has methods to work with DeviceModel resources.
 type DeviceModelInterface interface {
-	Create(ctx context.Context, deviceModel *v1beta1.DeviceModel, opts v1.CreateOptions) (*v1beta1.DeviceModel, error)
-	Update(ctx context.Context, deviceModel *v1beta1.DeviceModel, opts v1.UpdateOptions) (*v1beta1.DeviceModel, error)
+	Create(ctx context.Context, deviceModel *devicesv1beta1.DeviceModel, opts v1.CreateOptions) (*devicesv1beta1.DeviceModel, error)
+	Update(ctx context.Context, deviceModel *devicesv1beta1.DeviceModel, opts v1.UpdateOptions) (*devicesv1beta1.DeviceModel, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1beta1.DeviceModel, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1beta1.DeviceModelList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*devicesv1beta1.DeviceModel, error)
+	List(ctx context.Context, opts v1.ListOptions) (*devicesv1beta1.DeviceModelList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.DeviceModel, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *devicesv1beta1.DeviceModel, err error)
 	DeviceModelExpansion
 }
 
 // deviceModels implements DeviceModelInterface
 type deviceModels struct {
-	*gentype.ClientWithList[*v1beta1.DeviceModel, *v1beta1.DeviceModelList]
+	*gentype.ClientWithList[*devicesv1beta1.DeviceModel, *devicesv1beta1.DeviceModelList]
 }
 
 // newDeviceModels returns a DeviceModels
 func newDeviceModels(c *DevicesV1beta1Client, namespace string) *deviceModels {
 	return &deviceModels{
-		gentype.NewClientWithList[*v1beta1.DeviceModel, *v1beta1.DeviceModelList](
+		gentype.NewClientWithList[*devicesv1beta1.DeviceModel, *devicesv1beta1.DeviceModelList](
 			"devicemodels",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *v1beta1.DeviceModel { return &v1beta1.DeviceModel{} },
-			func() *v1beta1.DeviceModelList { return &v1beta1.DeviceModelList{} }),
+			func() *devicesv1beta1.DeviceModel { return &devicesv1beta1.DeviceModel{} },
+			func() *devicesv1beta1.DeviceModelList { return &devicesv1beta1.DeviceModelList{} },
+		),
 	}
 }

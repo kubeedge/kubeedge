@@ -29,11 +29,11 @@ type FakeAppsV1alpha1 struct {
 }
 
 func (c *FakeAppsV1alpha1) EdgeApplications(namespace string) v1alpha1.EdgeApplicationInterface {
-	return &FakeEdgeApplications{c, namespace}
+	return newFakeEdgeApplications(c, namespace)
 }
 
 func (c *FakeAppsV1alpha1) NodeGroups() v1alpha1.NodeGroupInterface {
-	return &FakeNodeGroups{c}
+	return newFakeNodeGroups(c)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

@@ -19,9 +19,9 @@ limitations under the License.
 package v1alpha2
 
 import (
-	"context"
+	context "context"
 
-	v1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
+	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 	scheme "github.com/kubeedge/api/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -37,33 +37,34 @@ type ConfigUpdateJobsGetter interface {
 
 // ConfigUpdateJobInterface has methods to work with ConfigUpdateJob resources.
 type ConfigUpdateJobInterface interface {
-	Create(ctx context.Context, configUpdateJob *v1alpha2.ConfigUpdateJob, opts v1.CreateOptions) (*v1alpha2.ConfigUpdateJob, error)
-	Update(ctx context.Context, configUpdateJob *v1alpha2.ConfigUpdateJob, opts v1.UpdateOptions) (*v1alpha2.ConfigUpdateJob, error)
+	Create(ctx context.Context, configUpdateJob *operationsv1alpha2.ConfigUpdateJob, opts v1.CreateOptions) (*operationsv1alpha2.ConfigUpdateJob, error)
+	Update(ctx context.Context, configUpdateJob *operationsv1alpha2.ConfigUpdateJob, opts v1.UpdateOptions) (*operationsv1alpha2.ConfigUpdateJob, error)
 	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-	UpdateStatus(ctx context.Context, configUpdateJob *v1alpha2.ConfigUpdateJob, opts v1.UpdateOptions) (*v1alpha2.ConfigUpdateJob, error)
+	UpdateStatus(ctx context.Context, configUpdateJob *operationsv1alpha2.ConfigUpdateJob, opts v1.UpdateOptions) (*operationsv1alpha2.ConfigUpdateJob, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha2.ConfigUpdateJob, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1alpha2.ConfigUpdateJobList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*operationsv1alpha2.ConfigUpdateJob, error)
+	List(ctx context.Context, opts v1.ListOptions) (*operationsv1alpha2.ConfigUpdateJobList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha2.ConfigUpdateJob, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *operationsv1alpha2.ConfigUpdateJob, err error)
 	ConfigUpdateJobExpansion
 }
 
 // configUpdateJobs implements ConfigUpdateJobInterface
 type configUpdateJobs struct {
-	*gentype.ClientWithList[*v1alpha2.ConfigUpdateJob, *v1alpha2.ConfigUpdateJobList]
+	*gentype.ClientWithList[*operationsv1alpha2.ConfigUpdateJob, *operationsv1alpha2.ConfigUpdateJobList]
 }
 
 // newConfigUpdateJobs returns a ConfigUpdateJobs
 func newConfigUpdateJobs(c *OperationsV1alpha2Client) *configUpdateJobs {
 	return &configUpdateJobs{
-		gentype.NewClientWithList[*v1alpha2.ConfigUpdateJob, *v1alpha2.ConfigUpdateJobList](
+		gentype.NewClientWithList[*operationsv1alpha2.ConfigUpdateJob, *operationsv1alpha2.ConfigUpdateJobList](
 			"configupdatejobs",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			"",
-			func() *v1alpha2.ConfigUpdateJob { return &v1alpha2.ConfigUpdateJob{} },
-			func() *v1alpha2.ConfigUpdateJobList { return &v1alpha2.ConfigUpdateJobList{} }),
+			func() *operationsv1alpha2.ConfigUpdateJob { return &operationsv1alpha2.ConfigUpdateJob{} },
+			func() *operationsv1alpha2.ConfigUpdateJobList { return &operationsv1alpha2.ConfigUpdateJobList{} },
+		),
 	}
 }

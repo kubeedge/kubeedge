@@ -19,129 +19,34 @@ limitations under the License.
 package fake
 
 import (
-	"context"
-
 	v1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	labels "k8s.io/apimachinery/pkg/labels"
-	types "k8s.io/apimachinery/pkg/types"
-	watch "k8s.io/apimachinery/pkg/watch"
-	testing "k8s.io/client-go/testing"
+	appsv1alpha1 "github.com/kubeedge/api/client/clientset/versioned/typed/apps/v1alpha1"
+	gentype "k8s.io/client-go/gentype"
 )
 
-// FakeEdgeApplications implements EdgeApplicationInterface
-type FakeEdgeApplications struct {
+// fakeEdgeApplications implements EdgeApplicationInterface
+type fakeEdgeApplications struct {
+	*gentype.FakeClientWithList[*v1alpha1.EdgeApplication, *v1alpha1.EdgeApplicationList]
 	Fake *FakeAppsV1alpha1
-	ns   string
 }
 
-var edgeapplicationsResource = v1alpha1.SchemeGroupVersion.WithResource("edgeapplications")
-
-var edgeapplicationsKind = v1alpha1.SchemeGroupVersion.WithKind("EdgeApplication")
-
-// Get takes name of the edgeApplication, and returns the corresponding edgeApplication object, and an error if there is any.
-func (c *FakeEdgeApplications) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.EdgeApplication, err error) {
-	emptyResult := &v1alpha1.EdgeApplication{}
-	obj, err := c.Fake.
-		Invokes(testing.NewGetActionWithOptions(edgeapplicationsResource, c.ns, name, options), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
+func newFakeEdgeApplications(fake *FakeAppsV1alpha1, namespace string) appsv1alpha1.EdgeApplicationInterface {
+	return &fakeEdgeApplications{
+		gentype.NewFakeClientWithList[*v1alpha1.EdgeApplication, *v1alpha1.EdgeApplicationList](
+			fake.Fake,
+			namespace,
+			v1alpha1.SchemeGroupVersion.WithResource("edgeapplications"),
+			v1alpha1.SchemeGroupVersion.WithKind("EdgeApplication"),
+			func() *v1alpha1.EdgeApplication { return &v1alpha1.EdgeApplication{} },
+			func() *v1alpha1.EdgeApplicationList { return &v1alpha1.EdgeApplicationList{} },
+			func(dst, src *v1alpha1.EdgeApplicationList) { dst.ListMeta = src.ListMeta },
+			func(list *v1alpha1.EdgeApplicationList) []*v1alpha1.EdgeApplication {
+				return gentype.ToPointerSlice(list.Items)
+			},
+			func(list *v1alpha1.EdgeApplicationList, items []*v1alpha1.EdgeApplication) {
+				list.Items = gentype.FromPointerSlice(items)
+			},
+		),
+		fake,
 	}
-	return obj.(*v1alpha1.EdgeApplication), err
-}
-
-// List takes label and field selectors, and returns the list of EdgeApplications that match those selectors.
-func (c *FakeEdgeApplications) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.EdgeApplicationList, err error) {
-	emptyResult := &v1alpha1.EdgeApplicationList{}
-	obj, err := c.Fake.
-		Invokes(testing.NewListActionWithOptions(edgeapplicationsResource, edgeapplicationsKind, c.ns, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-
-	label, _, _ := testing.ExtractFromListOptions(opts)
-	if label == nil {
-		label = labels.Everything()
-	}
-	list := &v1alpha1.EdgeApplicationList{ListMeta: obj.(*v1alpha1.EdgeApplicationList).ListMeta}
-	for _, item := range obj.(*v1alpha1.EdgeApplicationList).Items {
-		if label.Matches(labels.Set(item.Labels)) {
-			list.Items = append(list.Items, item)
-		}
-	}
-	return list, err
-}
-
-// Watch returns a watch.Interface that watches the requested edgeApplications.
-func (c *FakeEdgeApplications) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
-	return c.Fake.
-		InvokesWatch(testing.NewWatchActionWithOptions(edgeapplicationsResource, c.ns, opts))
-
-}
-
-// Create takes the representation of a edgeApplication and creates it.  Returns the server's representation of the edgeApplication, and an error, if there is any.
-func (c *FakeEdgeApplications) Create(ctx context.Context, edgeApplication *v1alpha1.EdgeApplication, opts v1.CreateOptions) (result *v1alpha1.EdgeApplication, err error) {
-	emptyResult := &v1alpha1.EdgeApplication{}
-	obj, err := c.Fake.
-		Invokes(testing.NewCreateActionWithOptions(edgeapplicationsResource, c.ns, edgeApplication, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.EdgeApplication), err
-}
-
-// Update takes the representation of a edgeApplication and updates it. Returns the server's representation of the edgeApplication, and an error, if there is any.
-func (c *FakeEdgeApplications) Update(ctx context.Context, edgeApplication *v1alpha1.EdgeApplication, opts v1.UpdateOptions) (result *v1alpha1.EdgeApplication, err error) {
-	emptyResult := &v1alpha1.EdgeApplication{}
-	obj, err := c.Fake.
-		Invokes(testing.NewUpdateActionWithOptions(edgeapplicationsResource, c.ns, edgeApplication, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.EdgeApplication), err
-}
-
-// UpdateStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeEdgeApplications) UpdateStatus(ctx context.Context, edgeApplication *v1alpha1.EdgeApplication, opts v1.UpdateOptions) (result *v1alpha1.EdgeApplication, err error) {
-	emptyResult := &v1alpha1.EdgeApplication{}
-	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceActionWithOptions(edgeapplicationsResource, "status", c.ns, edgeApplication, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.EdgeApplication), err
-}
-
-// Delete takes name of the edgeApplication and deletes it. Returns an error if one occurs.
-func (c *FakeEdgeApplications) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	_, err := c.Fake.
-		Invokes(testing.NewDeleteActionWithOptions(edgeapplicationsResource, c.ns, name, opts), &v1alpha1.EdgeApplication{})
-
-	return err
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *FakeEdgeApplications) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewDeleteCollectionActionWithOptions(edgeapplicationsResource, c.ns, opts, listOpts)
-
-	_, err := c.Fake.Invokes(action, &v1alpha1.EdgeApplicationList{})
-	return err
-}
-
-// Patch applies the patch and returns the patched edgeApplication.
-func (c *FakeEdgeApplications) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.EdgeApplication, err error) {
-	emptyResult := &v1alpha1.EdgeApplication{}
-	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceActionWithOptions(edgeapplicationsResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.EdgeApplication), err
 }

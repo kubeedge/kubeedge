@@ -19,120 +19,34 @@ limitations under the License.
 package fake
 
 import (
-	"context"
-
 	v1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	labels "k8s.io/apimachinery/pkg/labels"
-	types "k8s.io/apimachinery/pkg/types"
-	watch "k8s.io/apimachinery/pkg/watch"
-	testing "k8s.io/client-go/testing"
+	operationsv1alpha2 "github.com/kubeedge/api/client/clientset/versioned/typed/operations/v1alpha2"
+	gentype "k8s.io/client-go/gentype"
 )
 
-// FakeImagePrePullJobs implements ImagePrePullJobInterface
-type FakeImagePrePullJobs struct {
+// fakeImagePrePullJobs implements ImagePrePullJobInterface
+type fakeImagePrePullJobs struct {
+	*gentype.FakeClientWithList[*v1alpha2.ImagePrePullJob, *v1alpha2.ImagePrePullJobList]
 	Fake *FakeOperationsV1alpha2
 }
 
-var imageprepulljobsResource = v1alpha2.SchemeGroupVersion.WithResource("imageprepulljobs")
-
-var imageprepulljobsKind = v1alpha2.SchemeGroupVersion.WithKind("ImagePrePullJob")
-
-// Get takes name of the imagePrePullJob, and returns the corresponding imagePrePullJob object, and an error if there is any.
-func (c *FakeImagePrePullJobs) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha2.ImagePrePullJob, err error) {
-	emptyResult := &v1alpha2.ImagePrePullJob{}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootGetActionWithOptions(imageprepulljobsResource, name, options), emptyResult)
-	if obj == nil {
-		return emptyResult, err
+func newFakeImagePrePullJobs(fake *FakeOperationsV1alpha2) operationsv1alpha2.ImagePrePullJobInterface {
+	return &fakeImagePrePullJobs{
+		gentype.NewFakeClientWithList[*v1alpha2.ImagePrePullJob, *v1alpha2.ImagePrePullJobList](
+			fake.Fake,
+			"",
+			v1alpha2.SchemeGroupVersion.WithResource("imageprepulljobs"),
+			v1alpha2.SchemeGroupVersion.WithKind("ImagePrePullJob"),
+			func() *v1alpha2.ImagePrePullJob { return &v1alpha2.ImagePrePullJob{} },
+			func() *v1alpha2.ImagePrePullJobList { return &v1alpha2.ImagePrePullJobList{} },
+			func(dst, src *v1alpha2.ImagePrePullJobList) { dst.ListMeta = src.ListMeta },
+			func(list *v1alpha2.ImagePrePullJobList) []*v1alpha2.ImagePrePullJob {
+				return gentype.ToPointerSlice(list.Items)
+			},
+			func(list *v1alpha2.ImagePrePullJobList, items []*v1alpha2.ImagePrePullJob) {
+				list.Items = gentype.FromPointerSlice(items)
+			},
+		),
+		fake,
 	}
-	return obj.(*v1alpha2.ImagePrePullJob), err
-}
-
-// List takes label and field selectors, and returns the list of ImagePrePullJobs that match those selectors.
-func (c *FakeImagePrePullJobs) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha2.ImagePrePullJobList, err error) {
-	emptyResult := &v1alpha2.ImagePrePullJobList{}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootListActionWithOptions(imageprepulljobsResource, imageprepulljobsKind, opts), emptyResult)
-	if obj == nil {
-		return emptyResult, err
-	}
-
-	label, _, _ := testing.ExtractFromListOptions(opts)
-	if label == nil {
-		label = labels.Everything()
-	}
-	list := &v1alpha2.ImagePrePullJobList{ListMeta: obj.(*v1alpha2.ImagePrePullJobList).ListMeta}
-	for _, item := range obj.(*v1alpha2.ImagePrePullJobList).Items {
-		if label.Matches(labels.Set(item.Labels)) {
-			list.Items = append(list.Items, item)
-		}
-	}
-	return list, err
-}
-
-// Watch returns a watch.Interface that watches the requested imagePrePullJobs.
-func (c *FakeImagePrePullJobs) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
-	return c.Fake.
-		InvokesWatch(testing.NewRootWatchActionWithOptions(imageprepulljobsResource, opts))
-}
-
-// Create takes the representation of a imagePrePullJob and creates it.  Returns the server's representation of the imagePrePullJob, and an error, if there is any.
-func (c *FakeImagePrePullJobs) Create(ctx context.Context, imagePrePullJob *v1alpha2.ImagePrePullJob, opts v1.CreateOptions) (result *v1alpha2.ImagePrePullJob, err error) {
-	emptyResult := &v1alpha2.ImagePrePullJob{}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootCreateActionWithOptions(imageprepulljobsResource, imagePrePullJob, opts), emptyResult)
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha2.ImagePrePullJob), err
-}
-
-// Update takes the representation of a imagePrePullJob and updates it. Returns the server's representation of the imagePrePullJob, and an error, if there is any.
-func (c *FakeImagePrePullJobs) Update(ctx context.Context, imagePrePullJob *v1alpha2.ImagePrePullJob, opts v1.UpdateOptions) (result *v1alpha2.ImagePrePullJob, err error) {
-	emptyResult := &v1alpha2.ImagePrePullJob{}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateActionWithOptions(imageprepulljobsResource, imagePrePullJob, opts), emptyResult)
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha2.ImagePrePullJob), err
-}
-
-// UpdateStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeImagePrePullJobs) UpdateStatus(ctx context.Context, imagePrePullJob *v1alpha2.ImagePrePullJob, opts v1.UpdateOptions) (result *v1alpha2.ImagePrePullJob, err error) {
-	emptyResult := &v1alpha2.ImagePrePullJob{}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateSubresourceActionWithOptions(imageprepulljobsResource, "status", imagePrePullJob, opts), emptyResult)
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha2.ImagePrePullJob), err
-}
-
-// Delete takes name of the imagePrePullJob and deletes it. Returns an error if one occurs.
-func (c *FakeImagePrePullJobs) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteActionWithOptions(imageprepulljobsResource, name, opts), &v1alpha2.ImagePrePullJob{})
-	return err
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *FakeImagePrePullJobs) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionActionWithOptions(imageprepulljobsResource, opts, listOpts)
-
-	_, err := c.Fake.Invokes(action, &v1alpha2.ImagePrePullJobList{})
-	return err
-}
-
-// Patch applies the patch and returns the patched imagePrePullJob.
-func (c *FakeImagePrePullJobs) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha2.ImagePrePullJob, err error) {
-	emptyResult := &v1alpha2.ImagePrePullJob{}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceActionWithOptions(imageprepulljobsResource, name, pt, data, opts, subresources...), emptyResult)
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha2.ImagePrePullJob), err
 }

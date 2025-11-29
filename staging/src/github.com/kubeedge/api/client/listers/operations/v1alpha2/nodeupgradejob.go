@@ -19,10 +19,10 @@ limitations under the License.
 package v1alpha2
 
 import (
-	v1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/listers"
-	"k8s.io/client-go/tools/cache"
+	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // NodeUpgradeJobLister helps list NodeUpgradeJobs.
@@ -30,19 +30,19 @@ import (
 type NodeUpgradeJobLister interface {
 	// List lists all NodeUpgradeJobs in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha2.NodeUpgradeJob, err error)
+	List(selector labels.Selector) (ret []*operationsv1alpha2.NodeUpgradeJob, err error)
 	// Get retrieves the NodeUpgradeJob from the index for a given name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1alpha2.NodeUpgradeJob, error)
+	Get(name string) (*operationsv1alpha2.NodeUpgradeJob, error)
 	NodeUpgradeJobListerExpansion
 }
 
 // nodeUpgradeJobLister implements the NodeUpgradeJobLister interface.
 type nodeUpgradeJobLister struct {
-	listers.ResourceIndexer[*v1alpha2.NodeUpgradeJob]
+	listers.ResourceIndexer[*operationsv1alpha2.NodeUpgradeJob]
 }
 
 // NewNodeUpgradeJobLister returns a new NodeUpgradeJobLister.
 func NewNodeUpgradeJobLister(indexer cache.Indexer) NodeUpgradeJobLister {
-	return &nodeUpgradeJobLister{listers.New[*v1alpha2.NodeUpgradeJob](indexer, v1alpha2.Resource("nodeupgradejob"))}
+	return &nodeUpgradeJobLister{listers.New[*operationsv1alpha2.NodeUpgradeJob](indexer, operationsv1alpha2.Resource("nodeupgradejob"))}
 }
