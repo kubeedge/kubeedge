@@ -19,10 +19,10 @@ limitations under the License.
 package v1alpha1
 
 import (
-	v1alpha1 "github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/listers"
-	"k8s.io/client-go/tools/cache"
+	reliablesyncsv1alpha1 "github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // ObjectSyncLister helps list ObjectSyncs.
@@ -30,7 +30,7 @@ import (
 type ObjectSyncLister interface {
 	// List lists all ObjectSyncs in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.ObjectSync, err error)
+	List(selector labels.Selector) (ret []*reliablesyncsv1alpha1.ObjectSync, err error)
 	// ObjectSyncs returns an object that can list and get ObjectSyncs.
 	ObjectSyncs(namespace string) ObjectSyncNamespaceLister
 	ObjectSyncListerExpansion
@@ -38,17 +38,17 @@ type ObjectSyncLister interface {
 
 // objectSyncLister implements the ObjectSyncLister interface.
 type objectSyncLister struct {
-	listers.ResourceIndexer[*v1alpha1.ObjectSync]
+	listers.ResourceIndexer[*reliablesyncsv1alpha1.ObjectSync]
 }
 
 // NewObjectSyncLister returns a new ObjectSyncLister.
 func NewObjectSyncLister(indexer cache.Indexer) ObjectSyncLister {
-	return &objectSyncLister{listers.New[*v1alpha1.ObjectSync](indexer, v1alpha1.Resource("objectsync"))}
+	return &objectSyncLister{listers.New[*reliablesyncsv1alpha1.ObjectSync](indexer, reliablesyncsv1alpha1.Resource("objectsync"))}
 }
 
 // ObjectSyncs returns an object that can list and get ObjectSyncs.
 func (s *objectSyncLister) ObjectSyncs(namespace string) ObjectSyncNamespaceLister {
-	return objectSyncNamespaceLister{listers.NewNamespaced[*v1alpha1.ObjectSync](s.ResourceIndexer, namespace)}
+	return objectSyncNamespaceLister{listers.NewNamespaced[*reliablesyncsv1alpha1.ObjectSync](s.ResourceIndexer, namespace)}
 }
 
 // ObjectSyncNamespaceLister helps list and get ObjectSyncs.
@@ -56,15 +56,15 @@ func (s *objectSyncLister) ObjectSyncs(namespace string) ObjectSyncNamespaceList
 type ObjectSyncNamespaceLister interface {
 	// List lists all ObjectSyncs in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.ObjectSync, err error)
+	List(selector labels.Selector) (ret []*reliablesyncsv1alpha1.ObjectSync, err error)
 	// Get retrieves the ObjectSync from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1alpha1.ObjectSync, error)
+	Get(name string) (*reliablesyncsv1alpha1.ObjectSync, error)
 	ObjectSyncNamespaceListerExpansion
 }
 
 // objectSyncNamespaceLister implements the ObjectSyncNamespaceLister
 // interface.
 type objectSyncNamespaceLister struct {
-	listers.ResourceIndexer[*v1alpha1.ObjectSync]
+	listers.ResourceIndexer[*reliablesyncsv1alpha1.ObjectSync]
 }

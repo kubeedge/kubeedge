@@ -19,13 +19,13 @@ limitations under the License.
 package v1beta1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	devicesv1beta1 "github.com/kubeedge/api/apis/devices/v1beta1"
+	apisdevicesv1beta1 "github.com/kubeedge/api/apis/devices/v1beta1"
 	versioned "github.com/kubeedge/api/client/clientset/versioned"
 	internalinterfaces "github.com/kubeedge/api/client/informers/externalversions/internalinterfaces"
-	v1beta1 "github.com/kubeedge/api/client/listers/devices/v1beta1"
+	devicesv1beta1 "github.com/kubeedge/api/client/listers/devices/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -36,7 +36,7 @@ import (
 // DeviceModels.
 type DeviceModelInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1beta1.DeviceModelLister
+	Lister() devicesv1beta1.DeviceModelLister
 }
 
 type deviceModelInformer struct {
@@ -71,7 +71,7 @@ func NewFilteredDeviceModelInformer(client versioned.Interface, namespace string
 				return client.DevicesV1beta1().DeviceModels(namespace).Watch(context.TODO(), options)
 			},
 		},
-		&devicesv1beta1.DeviceModel{},
+		&apisdevicesv1beta1.DeviceModel{},
 		resyncPeriod,
 		indexers,
 	)
@@ -82,9 +82,9 @@ func (f *deviceModelInformer) defaultInformer(client versioned.Interface, resync
 }
 
 func (f *deviceModelInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&devicesv1beta1.DeviceModel{}, f.defaultInformer)
+	return f.factory.InformerFor(&apisdevicesv1beta1.DeviceModel{}, f.defaultInformer)
 }
 
-func (f *deviceModelInformer) Lister() v1beta1.DeviceModelLister {
-	return v1beta1.NewDeviceModelLister(f.Informer().GetIndexer())
+func (f *deviceModelInformer) Lister() devicesv1beta1.DeviceModelLister {
+	return devicesv1beta1.NewDeviceModelLister(f.Informer().GetIndexer())
 }

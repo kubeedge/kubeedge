@@ -19,10 +19,10 @@ limitations under the License.
 package v1alpha1
 
 import (
-	v1alpha1 "github.com/kubeedge/api/apis/policy/v1alpha1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/listers"
-	"k8s.io/client-go/tools/cache"
+	policyv1alpha1 "github.com/kubeedge/api/apis/policy/v1alpha1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // ServiceAccountAccessLister helps list ServiceAccountAccesses.
@@ -30,7 +30,7 @@ import (
 type ServiceAccountAccessLister interface {
 	// List lists all ServiceAccountAccesses in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.ServiceAccountAccess, err error)
+	List(selector labels.Selector) (ret []*policyv1alpha1.ServiceAccountAccess, err error)
 	// ServiceAccountAccesses returns an object that can list and get ServiceAccountAccesses.
 	ServiceAccountAccesses(namespace string) ServiceAccountAccessNamespaceLister
 	ServiceAccountAccessListerExpansion
@@ -38,17 +38,17 @@ type ServiceAccountAccessLister interface {
 
 // serviceAccountAccessLister implements the ServiceAccountAccessLister interface.
 type serviceAccountAccessLister struct {
-	listers.ResourceIndexer[*v1alpha1.ServiceAccountAccess]
+	listers.ResourceIndexer[*policyv1alpha1.ServiceAccountAccess]
 }
 
 // NewServiceAccountAccessLister returns a new ServiceAccountAccessLister.
 func NewServiceAccountAccessLister(indexer cache.Indexer) ServiceAccountAccessLister {
-	return &serviceAccountAccessLister{listers.New[*v1alpha1.ServiceAccountAccess](indexer, v1alpha1.Resource("serviceaccountaccess"))}
+	return &serviceAccountAccessLister{listers.New[*policyv1alpha1.ServiceAccountAccess](indexer, policyv1alpha1.Resource("serviceaccountaccess"))}
 }
 
 // ServiceAccountAccesses returns an object that can list and get ServiceAccountAccesses.
 func (s *serviceAccountAccessLister) ServiceAccountAccesses(namespace string) ServiceAccountAccessNamespaceLister {
-	return serviceAccountAccessNamespaceLister{listers.NewNamespaced[*v1alpha1.ServiceAccountAccess](s.ResourceIndexer, namespace)}
+	return serviceAccountAccessNamespaceLister{listers.NewNamespaced[*policyv1alpha1.ServiceAccountAccess](s.ResourceIndexer, namespace)}
 }
 
 // ServiceAccountAccessNamespaceLister helps list and get ServiceAccountAccesses.
@@ -56,15 +56,15 @@ func (s *serviceAccountAccessLister) ServiceAccountAccesses(namespace string) Se
 type ServiceAccountAccessNamespaceLister interface {
 	// List lists all ServiceAccountAccesses in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.ServiceAccountAccess, err error)
+	List(selector labels.Selector) (ret []*policyv1alpha1.ServiceAccountAccess, err error)
 	// Get retrieves the ServiceAccountAccess from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1alpha1.ServiceAccountAccess, error)
+	Get(name string) (*policyv1alpha1.ServiceAccountAccess, error)
 	ServiceAccountAccessNamespaceListerExpansion
 }
 
 // serviceAccountAccessNamespaceLister implements the ServiceAccountAccessNamespaceLister
 // interface.
 type serviceAccountAccessNamespaceLister struct {
-	listers.ResourceIndexer[*v1alpha1.ServiceAccountAccess]
+	listers.ResourceIndexer[*policyv1alpha1.ServiceAccountAccess]
 }

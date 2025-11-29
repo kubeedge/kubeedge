@@ -19,10 +19,10 @@ limitations under the License.
 package v1beta1
 
 import (
-	v1beta1 "github.com/kubeedge/api/apis/devices/v1beta1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/listers"
-	"k8s.io/client-go/tools/cache"
+	devicesv1beta1 "github.com/kubeedge/api/apis/devices/v1beta1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // DeviceModelLister helps list DeviceModels.
@@ -30,7 +30,7 @@ import (
 type DeviceModelLister interface {
 	// List lists all DeviceModels in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1beta1.DeviceModel, err error)
+	List(selector labels.Selector) (ret []*devicesv1beta1.DeviceModel, err error)
 	// DeviceModels returns an object that can list and get DeviceModels.
 	DeviceModels(namespace string) DeviceModelNamespaceLister
 	DeviceModelListerExpansion
@@ -38,17 +38,17 @@ type DeviceModelLister interface {
 
 // deviceModelLister implements the DeviceModelLister interface.
 type deviceModelLister struct {
-	listers.ResourceIndexer[*v1beta1.DeviceModel]
+	listers.ResourceIndexer[*devicesv1beta1.DeviceModel]
 }
 
 // NewDeviceModelLister returns a new DeviceModelLister.
 func NewDeviceModelLister(indexer cache.Indexer) DeviceModelLister {
-	return &deviceModelLister{listers.New[*v1beta1.DeviceModel](indexer, v1beta1.Resource("devicemodel"))}
+	return &deviceModelLister{listers.New[*devicesv1beta1.DeviceModel](indexer, devicesv1beta1.Resource("devicemodel"))}
 }
 
 // DeviceModels returns an object that can list and get DeviceModels.
 func (s *deviceModelLister) DeviceModels(namespace string) DeviceModelNamespaceLister {
-	return deviceModelNamespaceLister{listers.NewNamespaced[*v1beta1.DeviceModel](s.ResourceIndexer, namespace)}
+	return deviceModelNamespaceLister{listers.NewNamespaced[*devicesv1beta1.DeviceModel](s.ResourceIndexer, namespace)}
 }
 
 // DeviceModelNamespaceLister helps list and get DeviceModels.
@@ -56,15 +56,15 @@ func (s *deviceModelLister) DeviceModels(namespace string) DeviceModelNamespaceL
 type DeviceModelNamespaceLister interface {
 	// List lists all DeviceModels in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1beta1.DeviceModel, err error)
+	List(selector labels.Selector) (ret []*devicesv1beta1.DeviceModel, err error)
 	// Get retrieves the DeviceModel from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1beta1.DeviceModel, error)
+	Get(name string) (*devicesv1beta1.DeviceModel, error)
 	DeviceModelNamespaceListerExpansion
 }
 
 // deviceModelNamespaceLister implements the DeviceModelNamespaceLister
 // interface.
 type deviceModelNamespaceLister struct {
-	listers.ResourceIndexer[*v1beta1.DeviceModel]
+	listers.ResourceIndexer[*devicesv1beta1.DeviceModel]
 }

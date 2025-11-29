@@ -19,129 +19,30 @@ limitations under the License.
 package fake
 
 import (
-	"context"
-
 	v1 "github.com/kubeedge/api/apis/rules/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	labels "k8s.io/apimachinery/pkg/labels"
-	types "k8s.io/apimachinery/pkg/types"
-	watch "k8s.io/apimachinery/pkg/watch"
-	testing "k8s.io/client-go/testing"
+	rulesv1 "github.com/kubeedge/api/client/clientset/versioned/typed/rules/v1"
+	gentype "k8s.io/client-go/gentype"
 )
 
-// FakeRules implements RuleInterface
-type FakeRules struct {
+// fakeRules implements RuleInterface
+type fakeRules struct {
+	*gentype.FakeClientWithList[*v1.Rule, *v1.RuleList]
 	Fake *FakeRulesV1
-	ns   string
 }
 
-var rulesResource = v1.SchemeGroupVersion.WithResource("rules")
-
-var rulesKind = v1.SchemeGroupVersion.WithKind("Rule")
-
-// Get takes name of the rule, and returns the corresponding rule object, and an error if there is any.
-func (c *FakeRules) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.Rule, err error) {
-	emptyResult := &v1.Rule{}
-	obj, err := c.Fake.
-		Invokes(testing.NewGetActionWithOptions(rulesResource, c.ns, name, options), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
+func newFakeRules(fake *FakeRulesV1, namespace string) rulesv1.RuleInterface {
+	return &fakeRules{
+		gentype.NewFakeClientWithList[*v1.Rule, *v1.RuleList](
+			fake.Fake,
+			namespace,
+			v1.SchemeGroupVersion.WithResource("rules"),
+			v1.SchemeGroupVersion.WithKind("Rule"),
+			func() *v1.Rule { return &v1.Rule{} },
+			func() *v1.RuleList { return &v1.RuleList{} },
+			func(dst, src *v1.RuleList) { dst.ListMeta = src.ListMeta },
+			func(list *v1.RuleList) []*v1.Rule { return gentype.ToPointerSlice(list.Items) },
+			func(list *v1.RuleList, items []*v1.Rule) { list.Items = gentype.FromPointerSlice(items) },
+		),
+		fake,
 	}
-	return obj.(*v1.Rule), err
-}
-
-// List takes label and field selectors, and returns the list of Rules that match those selectors.
-func (c *FakeRules) List(ctx context.Context, opts metav1.ListOptions) (result *v1.RuleList, err error) {
-	emptyResult := &v1.RuleList{}
-	obj, err := c.Fake.
-		Invokes(testing.NewListActionWithOptions(rulesResource, rulesKind, c.ns, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-
-	label, _, _ := testing.ExtractFromListOptions(opts)
-	if label == nil {
-		label = labels.Everything()
-	}
-	list := &v1.RuleList{ListMeta: obj.(*v1.RuleList).ListMeta}
-	for _, item := range obj.(*v1.RuleList).Items {
-		if label.Matches(labels.Set(item.Labels)) {
-			list.Items = append(list.Items, item)
-		}
-	}
-	return list, err
-}
-
-// Watch returns a watch.Interface that watches the requested rules.
-func (c *FakeRules) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
-	return c.Fake.
-		InvokesWatch(testing.NewWatchActionWithOptions(rulesResource, c.ns, opts))
-
-}
-
-// Create takes the representation of a rule and creates it.  Returns the server's representation of the rule, and an error, if there is any.
-func (c *FakeRules) Create(ctx context.Context, rule *v1.Rule, opts metav1.CreateOptions) (result *v1.Rule, err error) {
-	emptyResult := &v1.Rule{}
-	obj, err := c.Fake.
-		Invokes(testing.NewCreateActionWithOptions(rulesResource, c.ns, rule, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1.Rule), err
-}
-
-// Update takes the representation of a rule and updates it. Returns the server's representation of the rule, and an error, if there is any.
-func (c *FakeRules) Update(ctx context.Context, rule *v1.Rule, opts metav1.UpdateOptions) (result *v1.Rule, err error) {
-	emptyResult := &v1.Rule{}
-	obj, err := c.Fake.
-		Invokes(testing.NewUpdateActionWithOptions(rulesResource, c.ns, rule, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1.Rule), err
-}
-
-// UpdateStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeRules) UpdateStatus(ctx context.Context, rule *v1.Rule, opts metav1.UpdateOptions) (result *v1.Rule, err error) {
-	emptyResult := &v1.Rule{}
-	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceActionWithOptions(rulesResource, "status", c.ns, rule, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1.Rule), err
-}
-
-// Delete takes name of the rule and deletes it. Returns an error if one occurs.
-func (c *FakeRules) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
-	_, err := c.Fake.
-		Invokes(testing.NewDeleteActionWithOptions(rulesResource, c.ns, name, opts), &v1.Rule{})
-
-	return err
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *FakeRules) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
-	action := testing.NewDeleteCollectionActionWithOptions(rulesResource, c.ns, opts, listOpts)
-
-	_, err := c.Fake.Invokes(action, &v1.RuleList{})
-	return err
-}
-
-// Patch applies the patch and returns the patched rule.
-func (c *FakeRules) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.Rule, err error) {
-	emptyResult := &v1.Rule{}
-	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceActionWithOptions(rulesResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1.Rule), err
 }

@@ -19,13 +19,13 @@ limitations under the License.
 package v1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	rulesv1 "github.com/kubeedge/api/apis/rules/v1"
+	apisrulesv1 "github.com/kubeedge/api/apis/rules/v1"
 	versioned "github.com/kubeedge/api/client/clientset/versioned"
 	internalinterfaces "github.com/kubeedge/api/client/informers/externalversions/internalinterfaces"
-	v1 "github.com/kubeedge/api/client/listers/rules/v1"
+	rulesv1 "github.com/kubeedge/api/client/listers/rules/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -36,7 +36,7 @@ import (
 // RuleEndpoints.
 type RuleEndpointInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1.RuleEndpointLister
+	Lister() rulesv1.RuleEndpointLister
 }
 
 type ruleEndpointInformer struct {
@@ -71,7 +71,7 @@ func NewFilteredRuleEndpointInformer(client versioned.Interface, namespace strin
 				return client.RulesV1().RuleEndpoints(namespace).Watch(context.TODO(), options)
 			},
 		},
-		&rulesv1.RuleEndpoint{},
+		&apisrulesv1.RuleEndpoint{},
 		resyncPeriod,
 		indexers,
 	)
@@ -82,9 +82,9 @@ func (f *ruleEndpointInformer) defaultInformer(client versioned.Interface, resyn
 }
 
 func (f *ruleEndpointInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&rulesv1.RuleEndpoint{}, f.defaultInformer)
+	return f.factory.InformerFor(&apisrulesv1.RuleEndpoint{}, f.defaultInformer)
 }
 
-func (f *ruleEndpointInformer) Lister() v1.RuleEndpointLister {
-	return v1.NewRuleEndpointLister(f.Informer().GetIndexer())
+func (f *ruleEndpointInformer) Lister() rulesv1.RuleEndpointLister {
+	return rulesv1.NewRuleEndpointLister(f.Informer().GetIndexer())
 }

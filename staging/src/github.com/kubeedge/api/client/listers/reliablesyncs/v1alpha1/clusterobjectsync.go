@@ -19,10 +19,10 @@ limitations under the License.
 package v1alpha1
 
 import (
-	v1alpha1 "github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/listers"
-	"k8s.io/client-go/tools/cache"
+	reliablesyncsv1alpha1 "github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // ClusterObjectSyncLister helps list ClusterObjectSyncs.
@@ -30,19 +30,19 @@ import (
 type ClusterObjectSyncLister interface {
 	// List lists all ClusterObjectSyncs in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.ClusterObjectSync, err error)
+	List(selector labels.Selector) (ret []*reliablesyncsv1alpha1.ClusterObjectSync, err error)
 	// Get retrieves the ClusterObjectSync from the index for a given name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1alpha1.ClusterObjectSync, error)
+	Get(name string) (*reliablesyncsv1alpha1.ClusterObjectSync, error)
 	ClusterObjectSyncListerExpansion
 }
 
 // clusterObjectSyncLister implements the ClusterObjectSyncLister interface.
 type clusterObjectSyncLister struct {
-	listers.ResourceIndexer[*v1alpha1.ClusterObjectSync]
+	listers.ResourceIndexer[*reliablesyncsv1alpha1.ClusterObjectSync]
 }
 
 // NewClusterObjectSyncLister returns a new ClusterObjectSyncLister.
 func NewClusterObjectSyncLister(indexer cache.Indexer) ClusterObjectSyncLister {
-	return &clusterObjectSyncLister{listers.New[*v1alpha1.ClusterObjectSync](indexer, v1alpha1.Resource("clusterobjectsync"))}
+	return &clusterObjectSyncLister{listers.New[*reliablesyncsv1alpha1.ClusterObjectSync](indexer, reliablesyncsv1alpha1.Resource("clusterobjectsync"))}
 }

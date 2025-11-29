@@ -29,11 +29,11 @@ type FakeReliablesyncsV1alpha1 struct {
 }
 
 func (c *FakeReliablesyncsV1alpha1) ClusterObjectSyncs() v1alpha1.ClusterObjectSyncInterface {
-	return &FakeClusterObjectSyncs{c}
+	return newFakeClusterObjectSyncs(c)
 }
 
 func (c *FakeReliablesyncsV1alpha1) ObjectSyncs(namespace string) v1alpha1.ObjectSyncInterface {
-	return &FakeObjectSyncs{c, namespace}
+	return newFakeObjectSyncs(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

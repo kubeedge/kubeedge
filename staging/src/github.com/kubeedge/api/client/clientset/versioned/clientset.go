@@ -19,8 +19,8 @@ limitations under the License.
 package versioned
 
 import (
-	"fmt"
-	"net/http"
+	fmt "fmt"
+	http "net/http"
 
 	appsv1alpha1 "github.com/kubeedge/api/client/clientset/versioned/typed/apps/v1alpha1"
 	devicesv1beta1 "github.com/kubeedge/api/client/clientset/versioned/typed/devices/v1beta1"

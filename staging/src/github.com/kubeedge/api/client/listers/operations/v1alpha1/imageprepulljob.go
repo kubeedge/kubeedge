@@ -19,10 +19,10 @@ limitations under the License.
 package v1alpha1
 
 import (
-	v1alpha1 "github.com/kubeedge/api/apis/operations/v1alpha1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/listers"
-	"k8s.io/client-go/tools/cache"
+	operationsv1alpha1 "github.com/kubeedge/api/apis/operations/v1alpha1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // ImagePrePullJobLister helps list ImagePrePullJobs.
@@ -30,19 +30,19 @@ import (
 type ImagePrePullJobLister interface {
 	// List lists all ImagePrePullJobs in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.ImagePrePullJob, err error)
+	List(selector labels.Selector) (ret []*operationsv1alpha1.ImagePrePullJob, err error)
 	// Get retrieves the ImagePrePullJob from the index for a given name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1alpha1.ImagePrePullJob, error)
+	Get(name string) (*operationsv1alpha1.ImagePrePullJob, error)
 	ImagePrePullJobListerExpansion
 }
 
 // imagePrePullJobLister implements the ImagePrePullJobLister interface.
 type imagePrePullJobLister struct {
-	listers.ResourceIndexer[*v1alpha1.ImagePrePullJob]
+	listers.ResourceIndexer[*operationsv1alpha1.ImagePrePullJob]
 }
 
 // NewImagePrePullJobLister returns a new ImagePrePullJobLister.
 func NewImagePrePullJobLister(indexer cache.Indexer) ImagePrePullJobLister {
-	return &imagePrePullJobLister{listers.New[*v1alpha1.ImagePrePullJob](indexer, v1alpha1.Resource("imageprepulljob"))}
+	return &imagePrePullJobLister{listers.New[*operationsv1alpha1.ImagePrePullJob](indexer, operationsv1alpha1.Resource("imageprepulljob"))}
 }

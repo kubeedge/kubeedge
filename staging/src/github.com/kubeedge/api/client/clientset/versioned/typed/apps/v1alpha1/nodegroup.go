@@ -19,9 +19,9 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 
-	v1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
+	appsv1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
 	scheme "github.com/kubeedge/api/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -37,33 +37,34 @@ type NodeGroupsGetter interface {
 
 // NodeGroupInterface has methods to work with NodeGroup resources.
 type NodeGroupInterface interface {
-	Create(ctx context.Context, nodeGroup *v1alpha1.NodeGroup, opts v1.CreateOptions) (*v1alpha1.NodeGroup, error)
-	Update(ctx context.Context, nodeGroup *v1alpha1.NodeGroup, opts v1.UpdateOptions) (*v1alpha1.NodeGroup, error)
+	Create(ctx context.Context, nodeGroup *appsv1alpha1.NodeGroup, opts v1.CreateOptions) (*appsv1alpha1.NodeGroup, error)
+	Update(ctx context.Context, nodeGroup *appsv1alpha1.NodeGroup, opts v1.UpdateOptions) (*appsv1alpha1.NodeGroup, error)
 	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-	UpdateStatus(ctx context.Context, nodeGroup *v1alpha1.NodeGroup, opts v1.UpdateOptions) (*v1alpha1.NodeGroup, error)
+	UpdateStatus(ctx context.Context, nodeGroup *appsv1alpha1.NodeGroup, opts v1.UpdateOptions) (*appsv1alpha1.NodeGroup, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.NodeGroup, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.NodeGroupList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*appsv1alpha1.NodeGroup, error)
+	List(ctx context.Context, opts v1.ListOptions) (*appsv1alpha1.NodeGroupList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.NodeGroup, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *appsv1alpha1.NodeGroup, err error)
 	NodeGroupExpansion
 }
 
 // nodeGroups implements NodeGroupInterface
 type nodeGroups struct {
-	*gentype.ClientWithList[*v1alpha1.NodeGroup, *v1alpha1.NodeGroupList]
+	*gentype.ClientWithList[*appsv1alpha1.NodeGroup, *appsv1alpha1.NodeGroupList]
 }
 
 // newNodeGroups returns a NodeGroups
 func newNodeGroups(c *AppsV1alpha1Client) *nodeGroups {
 	return &nodeGroups{
-		gentype.NewClientWithList[*v1alpha1.NodeGroup, *v1alpha1.NodeGroupList](
+		gentype.NewClientWithList[*appsv1alpha1.NodeGroup, *appsv1alpha1.NodeGroupList](
 			"nodegroups",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			"",
-			func() *v1alpha1.NodeGroup { return &v1alpha1.NodeGroup{} },
-			func() *v1alpha1.NodeGroupList { return &v1alpha1.NodeGroupList{} }),
+			func() *appsv1alpha1.NodeGroup { return &appsv1alpha1.NodeGroup{} },
+			func() *appsv1alpha1.NodeGroupList { return &appsv1alpha1.NodeGroupList{} },
+		),
 	}
 }

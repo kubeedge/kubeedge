@@ -19,10 +19,10 @@ limitations under the License.
 package v1beta1
 
 import (
-	v1beta1 "github.com/kubeedge/api/apis/devices/v1beta1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/listers"
-	"k8s.io/client-go/tools/cache"
+	devicesv1beta1 "github.com/kubeedge/api/apis/devices/v1beta1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // DeviceLister helps list Devices.
@@ -30,7 +30,7 @@ import (
 type DeviceLister interface {
 	// List lists all Devices in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1beta1.Device, err error)
+	List(selector labels.Selector) (ret []*devicesv1beta1.Device, err error)
 	// Devices returns an object that can list and get Devices.
 	Devices(namespace string) DeviceNamespaceLister
 	DeviceListerExpansion
@@ -38,17 +38,17 @@ type DeviceLister interface {
 
 // deviceLister implements the DeviceLister interface.
 type deviceLister struct {
-	listers.ResourceIndexer[*v1beta1.Device]
+	listers.ResourceIndexer[*devicesv1beta1.Device]
 }
 
 // NewDeviceLister returns a new DeviceLister.
 func NewDeviceLister(indexer cache.Indexer) DeviceLister {
-	return &deviceLister{listers.New[*v1beta1.Device](indexer, v1beta1.Resource("device"))}
+	return &deviceLister{listers.New[*devicesv1beta1.Device](indexer, devicesv1beta1.Resource("device"))}
 }
 
 // Devices returns an object that can list and get Devices.
 func (s *deviceLister) Devices(namespace string) DeviceNamespaceLister {
-	return deviceNamespaceLister{listers.NewNamespaced[*v1beta1.Device](s.ResourceIndexer, namespace)}
+	return deviceNamespaceLister{listers.NewNamespaced[*devicesv1beta1.Device](s.ResourceIndexer, namespace)}
 }
 
 // DeviceNamespaceLister helps list and get Devices.
@@ -56,15 +56,15 @@ func (s *deviceLister) Devices(namespace string) DeviceNamespaceLister {
 type DeviceNamespaceLister interface {
 	// List lists all Devices in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1beta1.Device, err error)
+	List(selector labels.Selector) (ret []*devicesv1beta1.Device, err error)
 	// Get retrieves the Device from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1beta1.Device, error)
+	Get(name string) (*devicesv1beta1.Device, error)
 	DeviceNamespaceListerExpansion
 }
 
 // deviceNamespaceLister implements the DeviceNamespaceLister
 // interface.
 type deviceNamespaceLister struct {
-	listers.ResourceIndexer[*v1beta1.Device]
+	listers.ResourceIndexer[*devicesv1beta1.Device]
 }

@@ -19,9 +19,9 @@ limitations under the License.
 package v1beta1
 
 import (
-	"context"
+	context "context"
 
-	v1beta1 "github.com/kubeedge/api/apis/devices/v1beta1"
+	devicesv1beta1 "github.com/kubeedge/api/apis/devices/v1beta1"
 	scheme "github.com/kubeedge/api/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -37,33 +37,34 @@ type DevicesGetter interface {
 
 // DeviceInterface has methods to work with Device resources.
 type DeviceInterface interface {
-	Create(ctx context.Context, device *v1beta1.Device, opts v1.CreateOptions) (*v1beta1.Device, error)
-	Update(ctx context.Context, device *v1beta1.Device, opts v1.UpdateOptions) (*v1beta1.Device, error)
+	Create(ctx context.Context, device *devicesv1beta1.Device, opts v1.CreateOptions) (*devicesv1beta1.Device, error)
+	Update(ctx context.Context, device *devicesv1beta1.Device, opts v1.UpdateOptions) (*devicesv1beta1.Device, error)
 	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-	UpdateStatus(ctx context.Context, device *v1beta1.Device, opts v1.UpdateOptions) (*v1beta1.Device, error)
+	UpdateStatus(ctx context.Context, device *devicesv1beta1.Device, opts v1.UpdateOptions) (*devicesv1beta1.Device, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1beta1.Device, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1beta1.DeviceList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*devicesv1beta1.Device, error)
+	List(ctx context.Context, opts v1.ListOptions) (*devicesv1beta1.DeviceList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.Device, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *devicesv1beta1.Device, err error)
 	DeviceExpansion
 }
 
 // devices implements DeviceInterface
 type devices struct {
-	*gentype.ClientWithList[*v1beta1.Device, *v1beta1.DeviceList]
+	*gentype.ClientWithList[*devicesv1beta1.Device, *devicesv1beta1.DeviceList]
 }
 
 // newDevices returns a Devices
 func newDevices(c *DevicesV1beta1Client, namespace string) *devices {
 	return &devices{
-		gentype.NewClientWithList[*v1beta1.Device, *v1beta1.DeviceList](
+		gentype.NewClientWithList[*devicesv1beta1.Device, *devicesv1beta1.DeviceList](
 			"devices",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *v1beta1.Device { return &v1beta1.Device{} },
-			func() *v1beta1.DeviceList { return &v1beta1.DeviceList{} }),
+			func() *devicesv1beta1.Device { return &devicesv1beta1.Device{} },
+			func() *devicesv1beta1.DeviceList { return &devicesv1beta1.DeviceList{} },
+		),
 	}
 }
