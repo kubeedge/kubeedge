@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"path"
 	"strings"
 	"sync"
 	"time"
@@ -58,6 +59,9 @@ func (g *OCIGetter) get(href string) (*bytes.Buffer, error) {
 
 	ref := strings.TrimPrefix(href, fmt.Sprintf("%s://", registry.OCIScheme))
 
+	if version := g.opts.version; version != "" && !strings.Contains(path.Base(ref), ":") {
+		ref = fmt.Sprintf("%s:%s", ref, version)
+	}
 	var pullOpts []registry.PullOption
 	requestingProv := strings.HasSuffix(ref, ".prov")
 	if requestingProv {
@@ -119,6 +123,7 @@ func (g *OCIGetter) newRegistryClient() (*registry.Client, error) {
 			IdleConnTimeout:       90 * time.Second,
 			TLSHandshakeTimeout:   10 * time.Second,
 			ExpectContinueTimeout: 1 * time.Second,
+			Proxy:                 http.ProxyFromEnvironment,
 		}
 	})
 
@@ -137,12 +142,15 @@ func (g *OCIGetter) newRegistryClient() (*registry.Client, error) {
 		g.transport.TLSClientConfig = tlsConf
 	}
 
-	client, err := registry.NewClient(
-		registry.ClientOptHTTPClient(&http.Client{
-			Transport: g.transport,
-			Timeout:   g.opts.timeout,
-		}),
-	)
+	opts := []registry.ClientOption{registry.ClientOptHTTPClient(&http.Client{
+		Transport: g.transport,
+		Timeout:   g.opts.timeout,
+	})}
+	if g.opts.plainHTTP {
+		opts = append(opts, registry.ClientOptPlainHTTP())
+	}
+
+	client, err := registry.NewClient(opts...)
 
 	if err != nil {
 		return nil, err
