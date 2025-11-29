@@ -277,7 +277,6 @@ replace (
 	go.etcd.io/bbolt => go.etcd.io/bbolt v1.3.6
 	go.etcd.io/etcd/client/v2 => go.etcd.io/etcd/client/v2 v2.305.0
 	go.opentelemetry.io/contrib/instrumentation/github.com/emicklei/go-restful/otelrestful => go.opentelemetry.io/contrib/instrumentation/github.com/emicklei/go-restful/otelrestful v0.44.0
-	golang.org/x/sys => golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f
 	k8s.io/api => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/api v1.32.10-kubeedge1-by1
 	k8s.io/apiextensions-apiserver => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/apiextensions-apiserver v1.32.10-kubeedge1-by1
 	k8s.io/apimachinery => github.com/Shelley-BaoYue/kubernetes/staging/src/k8s.io/apimachinery v1.32.10-kubeedge1-by1
