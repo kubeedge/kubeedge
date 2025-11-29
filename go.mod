@@ -74,6 +74,7 @@ require (
 	github.com/Microsoft/hnslib v0.1.1 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/containerd/containerd/api v1.8.0 // indirect
+	github.com/containerd/errdefs v0.3.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/lithammer/dedent v1.1.0 // indirect
@@ -107,7 +108,6 @@ require (
 	github.com/chai2010/gettext-go v1.0.2 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/containerd/containerd v1.7.0 // indirect
-	github.com/containerd/errdefs v0.3.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
 	github.com/containerd/ttrpc v1.2.5 // indirect
@@ -269,6 +269,7 @@ replace (
 	github.com/Sirupsen/logrus v1.3.0 => github.com/Sirupsen/logrus v1.0.6
 	github.com/Sirupsen/logrus v1.4.0 => github.com/sirupsen/logrus v1.0.6
 	github.com/containerd/containerd => github.com/containerd/containerd v1.7.25
+	github.com/containerd/errdefs => github.com/containerd/errdefs v0.1.0
 	github.com/emicklei/go-restful/v3 => github.com/emicklei/go-restful/v3 v3.7.5-0.20220308211933-7c971ca4d0fd
 	github.com/gopherjs/gopherjs v0.0.0 => github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/kubeedge/api => ./staging/src/github.com/kubeedge/api
