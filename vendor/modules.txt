@@ -140,7 +140,7 @@ github.com/containerd/containerd/api/services/tasks/v1
 github.com/containerd/containerd/api/services/version/v1
 github.com/containerd/containerd/api/types
 github.com/containerd/containerd/api/types/task
-# github.com/containerd/errdefs v0.3.0
+# github.com/containerd/errdefs v0.3.0 => github.com/containerd/errdefs v0.1.0
 ## explicit; go 1.20
 github.com/containerd/errdefs
 # github.com/containerd/log v0.1.0
@@ -2817,6 +2817,7 @@ sigs.k8s.io/yaml/goyaml.v3
 # github.com/Sirupsen/logrus v1.3.0 => github.com/Sirupsen/logrus v1.0.6
 # github.com/Sirupsen/logrus v1.4.0 => github.com/sirupsen/logrus v1.0.6
 # github.com/containerd/containerd => github.com/containerd/containerd v1.7.25
+# github.com/containerd/errdefs => github.com/containerd/errdefs v0.1.0
 # github.com/emicklei/go-restful/v3 => github.com/emicklei/go-restful/v3 v3.7.5-0.20220308211933-7c971ca4d0fd
 # github.com/gopherjs/gopherjs v0.0.0 => github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e
 # github.com/kubeedge/api => ./staging/src/github.com/kubeedge/api
