@@ -77,11 +77,10 @@ func (dmiCache *DMICache) OverrideDeviceInstanceConfig(device *v1beta1.Device) e
 	deviceModelID := util.GetResourceID(device.Namespace, device.Spec.DeviceModelRef.Name)
 	dmiCache.DeviceModelMu.Lock()
 	deviceModel, ok := dmiCache.DeviceModelList[deviceModelID]
+	dmiCache.DeviceModelMu.Unlock()
 	if !ok {
-		dmiCache.DeviceModelMu.Unlock()
 		return fmt.Errorf("device model %s not found in cache for device %s", device.Spec.DeviceModelRef.Name, device.Name)
 	}
-	dmiCache.DeviceModelMu.Unlock()
 
 	klog.Infof("Overriding device properties for device %s using model %s", device.Name, deviceModel.Name)
 
@@ -164,30 +163,29 @@ func findModelProperty(properties []v1beta1.ModelProperty, name string) *v1beta1
 	return nil
 }
 
+// deepCopyValue is a recursive function to deep copy interface{} values
+// as long as they are composed of maps, slices, and basic types.
+func deepCopyValue(v interface{}) interface{} {
+	switch val := v.(type) {
+	case map[string]interface{}:
+		newMap := make(map[string]interface{})
+		for k, v2 := range val {
+			newMap[k] = deepCopyValue(v2)
+		}
+		return newMap
+	case []interface{}:
+		newSlice := make([]interface{}, len(val))
+		for i, v2 := range val {
+			newSlice[i] = deepCopyValue(v2)
+		}
+		return newSlice
+	default:
+		return val
+	}
+}
+
 // deepCopyCustomizedValue creates a deep copy of CustomizedValue
 func deepCopyCustomizedValue(src *v1beta1.CustomizedValue) *v1beta1.CustomizedValue {
-	// deepCopyValue is a recursive function to deep copy interface{} values
-	// as long as they are composed of maps, slices, and basic types.
-	var deepCopyValue func(interface{}) interface{}
-	deepCopyValue = func(v interface{}) interface{} {
-		switch val := v.(type) {
-		case map[string]interface{}:
-			newMap := make(map[string]interface{})
-			for k, v2 := range val {
-				newMap[k] = deepCopyValue(v2)
-			}
-			return newMap
-		case []interface{}:
-			newSlice := make([]interface{}, len(val))
-			for i, v2 := range val {
-				newSlice[i] = deepCopyValue(v2)
-			}
-			return newSlice
-		default:
-			return val
-		}
-	}
-
 	if src == nil {
 		return nil
 	}
