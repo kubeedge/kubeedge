@@ -42,28 +42,26 @@ func TestNewDMICache(t *testing.T) {
 }
 
 func TestDMICache_Mapper_Operations(t *testing.T) {
-	cache := NewDMICache()
-
-	// Test data
-	mapper1 := &pb.MapperInfo{
-		Name:       "test-mapper-1",
-		Version:    "v1.0.0",
-		ApiVersion: "v1beta1",
-		Protocol:   "modbus",
-		Address:    []byte("tcp://localhost:1502"),
-		State:      "MAPPER_CONNECTED",
-	}
-
-	mapper2 := &pb.MapperInfo{
-		Name:       "test-mapper-2",
-		Version:    "v1.1.0",
-		ApiVersion: "v1beta1",
-		Protocol:   "opcua",
-		Address:    []byte("opc.tcp://localhost:4840"),
-		State:      "MAPPER_DISCONNECTED",
-	}
-
 	t.Run("PutMapper and GetMapper", func(t *testing.T) {
+		cache := NewDMICache()
+		mapper1 := &pb.MapperInfo{
+			Name:       "test-mapper-1",
+			Version:    "v1.0.0",
+			ApiVersion: "v1beta1",
+			Protocol:   "modbus",
+			Address:    []byte("tcp://localhost:1502"),
+			State:      "MAPPER_CONNECTED",
+		}
+
+		mapper2 := &pb.MapperInfo{
+			Name:       "test-mapper-2",
+			Version:    "v1.1.0",
+			ApiVersion: "v1beta1",
+			Protocol:   "opcua",
+			Address:    []byte("opc.tcp://localhost:4840"),
+			State:      "MAPPER_DISCONNECTED",
+		}
+
 		// Put mapper1
 		cache.PutMapper(mapper1)
 
@@ -92,6 +90,29 @@ func TestDMICache_Mapper_Operations(t *testing.T) {
 	})
 
 	t.Run("RemoveMapper", func(t *testing.T) {
+		cache := NewDMICache()
+		mapper1 := &pb.MapperInfo{
+			Name:       "test-mapper-1",
+			Version:    "v1.0.0",
+			ApiVersion: "v1beta1",
+			Protocol:   "modbus",
+			Address:    []byte("tcp://localhost:1502"),
+			State:      "MAPPER_CONNECTED",
+		}
+
+		mapper2 := &pb.MapperInfo{
+			Name:       "test-mapper-2",
+			Version:    "v1.1.0",
+			ApiVersion: "v1beta1",
+			Protocol:   "opcua",
+			Address:    []byte("opc.tcp://localhost:4840"),
+			State:      "MAPPER_DISCONNECTED",
+		}
+
+		// Setup: add both mappers
+		cache.PutMapper(mapper1)
+		cache.PutMapper(mapper2)
+
 		// Remove mapper1
 		cache.RemoveMapper("test-mapper-1")
 
@@ -116,6 +137,16 @@ func TestDMICache_Mapper_Operations(t *testing.T) {
 	})
 
 	t.Run("PutMapper overwrites existing", func(t *testing.T) {
+		cache := NewDMICache()
+		mapper1 := &pb.MapperInfo{
+			Name:       "test-mapper-1",
+			Version:    "v1.0.0",
+			ApiVersion: "v1beta1",
+			Protocol:   "modbus",
+			Address:    []byte("tcp://localhost:1502"),
+			State:      "MAPPER_CONNECTED",
+		}
+
 		// Put original mapper
 		cache.PutMapper(mapper1)
 
@@ -142,44 +173,42 @@ func TestDMICache_Mapper_Operations(t *testing.T) {
 }
 
 func TestDMICache_DeviceModel_Operations(t *testing.T) {
-	cache := NewDMICache()
-
-	// Test data
-	deviceModel1 := &v1beta1.DeviceModel{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "temperature-sensor",
-			Namespace: "default",
-		},
-		Spec: v1beta1.DeviceModelSpec{
-			Protocol: "modbus",
-			Properties: []v1beta1.ModelProperty{
-				{
-					Name:       "temperature",
-					Type:       v1beta1.FLOAT,
-					AccessMode: v1beta1.ReadOnly,
-				},
-			},
-		},
-	}
-
-	deviceModel2 := &v1beta1.DeviceModel{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "humidity-sensor",
-			Namespace: "test-namespace",
-		},
-		Spec: v1beta1.DeviceModelSpec{
-			Protocol: "opcua",
-			Properties: []v1beta1.ModelProperty{
-				{
-					Name:       "humidity",
-					Type:       v1beta1.FLOAT,
-					AccessMode: v1beta1.ReadOnly,
-				},
-			},
-		},
-	}
-
 	t.Run("PutDeviceModel and GetDeviceModel", func(t *testing.T) {
+		cache := NewDMICache()
+		deviceModel1 := &v1beta1.DeviceModel{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "temperature-sensor",
+				Namespace: "default",
+			},
+			Spec: v1beta1.DeviceModelSpec{
+				Protocol: "modbus",
+				Properties: []v1beta1.ModelProperty{
+					{
+						Name:       "temperature",
+						Type:       v1beta1.FLOAT,
+						AccessMode: v1beta1.ReadOnly,
+					},
+				},
+			},
+		}
+
+		deviceModel2 := &v1beta1.DeviceModel{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "humidity-sensor",
+				Namespace: "test-namespace",
+			},
+			Spec: v1beta1.DeviceModelSpec{
+				Protocol: "opcua",
+				Properties: []v1beta1.ModelProperty{
+					{
+						Name:       "humidity",
+						Type:       v1beta1.FLOAT,
+						AccessMode: v1beta1.ReadOnly,
+					},
+				},
+			},
+		}
+
 		// Put deviceModel1
 		cache.PutDeviceModel(deviceModel1)
 
@@ -208,6 +237,45 @@ func TestDMICache_DeviceModel_Operations(t *testing.T) {
 	})
 
 	t.Run("RemoveDeviceModel", func(t *testing.T) {
+		cache := NewDMICache()
+		deviceModel1 := &v1beta1.DeviceModel{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "temperature-sensor",
+				Namespace: "default",
+			},
+			Spec: v1beta1.DeviceModelSpec{
+				Protocol: "modbus",
+				Properties: []v1beta1.ModelProperty{
+					{
+						Name:       "temperature",
+						Type:       v1beta1.FLOAT,
+						AccessMode: v1beta1.ReadOnly,
+					},
+				},
+			},
+		}
+
+		deviceModel2 := &v1beta1.DeviceModel{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "humidity-sensor",
+				Namespace: "test-namespace",
+			},
+			Spec: v1beta1.DeviceModelSpec{
+				Protocol: "opcua",
+				Properties: []v1beta1.ModelProperty{
+					{
+						Name:       "humidity",
+						Type:       v1beta1.FLOAT,
+						AccessMode: v1beta1.ReadOnly,
+					},
+				},
+			},
+		}
+
+		// Setup: add both device models
+		cache.PutDeviceModel(deviceModel1)
+		cache.PutDeviceModel(deviceModel2)
+
 		// Remove deviceModel1
 		cache.RemoveDeviceModel("default", "temperature-sensor")
 
@@ -233,109 +301,195 @@ func TestDMICache_DeviceModel_Operations(t *testing.T) {
 }
 
 func TestDMICache_Device_Operations(t *testing.T) {
-	cache := NewDMICache()
-
-	// Test data
-	deviceModel := &v1beta1.DeviceModel{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "temp-sensor-model",
-			Namespace: "default",
-		},
-		Spec: v1beta1.DeviceModelSpec{
-			Protocol: "modbus",
-			Properties: []v1beta1.ModelProperty{
-				{
-					Name:       "temperature",
-					Type:       v1beta1.FLOAT,
-					AccessMode: v1beta1.ReadOnly,
-					Visitors: &v1beta1.VisitorConfig{
-						ProtocolName: "modbus",
-						ConfigData: &v1beta1.CustomizedValue{
-							Data: map[string]interface{}{
-								"register": "HoldingRegister",
-								"address":  40001,
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	device1 := &v1beta1.Device{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "sensor-001",
-			Namespace: "default",
-		},
-		Spec: v1beta1.DeviceSpec{
-			DeviceModelRef: &v1.LocalObjectReference{
-				Name: "temp-sensor-model",
-			},
-			Protocol: v1beta1.ProtocolConfig{
-				ProtocolName: "modbus",
-			},
-			Properties: []v1beta1.DeviceProperty{
-				{
-					Name: "temperature",
-					Visitors: v1beta1.VisitorConfig{
-						ProtocolName: "modbus",
-					},
-				},
-			},
-		},
-	}
-
-	// Device model for device2 (same content, different namespace)
-	deviceModel2 := &v1beta1.DeviceModel{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "temp-sensor-model",
-			Namespace: "test-namespace",
-		},
-		Spec: v1beta1.DeviceModelSpec{
-			Protocol: "modbus",
-			Properties: []v1beta1.ModelProperty{
-				{
-					Name:       "temperature",
-					Type:       v1beta1.FLOAT,
-					AccessMode: v1beta1.ReadOnly,
-					Visitors: &v1beta1.VisitorConfig{
-						ProtocolName: "modbus",
-						ConfigData: &v1beta1.CustomizedValue{
-							Data: map[string]interface{}{
-								"register": "HoldingRegister",
-								"address":  40001,
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	device2 := &v1beta1.Device{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "sensor-002",
-			Namespace: "test-namespace",
-		},
-		Spec: v1beta1.DeviceSpec{
-			DeviceModelRef: &v1.LocalObjectReference{
-				Name: "temp-sensor-model",
-			},
-			Protocol: v1beta1.ProtocolConfig{
-				ProtocolName: "modbus",
-			},
-			Properties: []v1beta1.DeviceProperty{
-				{
-					Name: "temperature",
-					Visitors: v1beta1.VisitorConfig{
-						ProtocolName: "modbus",
-					},
-				},
-			},
-		},
-	}
-
 	t.Run("PutDevice and GetOverriddenDevice", func(t *testing.T) {
+		cache := NewDMICache()
+		deviceModel := &v1beta1.DeviceModel{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "temp-sensor-model",
+				Namespace: "default",
+			},
+			Spec: v1beta1.DeviceModelSpec{
+				Protocol: "modbus",
+				Properties: []v1beta1.ModelProperty{
+					{
+						Name:       "temperature",
+						Type:       v1beta1.FLOAT,
+						AccessMode: v1beta1.ReadOnly,
+						Visitors: &v1beta1.VisitorConfig{
+							ProtocolName: "modbus",
+							ConfigData: &v1beta1.CustomizedValue{
+								Data: map[string]interface{}{
+									"register": "HoldingRegister",
+									"address":  40001,
+								},
+							},
+						},
+					},
+				},
+				ProtocolConfigData: &v1beta1.CustomizedValue{
+					Data: map[string]interface{}{
+						"slaveID": 1,
+						"timeout": 5000,
+					},
+				},
+			},
+		}
+
+		device1 := &v1beta1.Device{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "sensor-001",
+				Namespace: "default",
+			},
+			Spec: v1beta1.DeviceSpec{
+				DeviceModelRef: &v1.LocalObjectReference{
+					Name: "temp-sensor-model",
+				},
+				Protocol: v1beta1.ProtocolConfig{
+					ProtocolName: "modbus",
+				},
+				Properties: []v1beta1.DeviceProperty{
+					{
+						Name: "temperature",
+						Visitors: v1beta1.VisitorConfig{
+							ProtocolName: "modbus",
+							ConfigData: &v1beta1.CustomizedValue{
+								Data: map[string]interface{}{
+									"register": "HoldingRegister",
+									"address":  40002,
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		overridenDevice1 := &v1beta1.Device{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "sensor-001",
+				Namespace: "default",
+			},
+			Spec: v1beta1.DeviceSpec{
+				DeviceModelRef: &v1.LocalObjectReference{
+					Name: "temp-sensor-model",
+				},
+				Protocol: v1beta1.ProtocolConfig{
+					ProtocolName: "modbus",
+					ConfigData: &v1beta1.CustomizedValue{
+						Data: map[string]interface{}{
+							"slaveID": 1,
+							"timeout": 5000,
+						},
+					},
+				},
+				Properties: []v1beta1.DeviceProperty{
+					{
+						Name: "temperature",
+						Visitors: v1beta1.VisitorConfig{
+							ProtocolName: "modbus",
+							ConfigData: &v1beta1.CustomizedValue{
+								Data: map[string]interface{}{
+									"register": "HoldingRegister",
+									"address":  40002,
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		// Device model for device2 (same content, different namespace)
+		deviceModel2 := &v1beta1.DeviceModel{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "temp-sensor-model",
+				Namespace: "test-namespace",
+			},
+			Spec: v1beta1.DeviceModelSpec{
+				Protocol: "modbus",
+				Properties: []v1beta1.ModelProperty{
+					{
+						Name:       "temperature",
+						Type:       v1beta1.FLOAT,
+						AccessMode: v1beta1.ReadOnly,
+						Visitors: &v1beta1.VisitorConfig{
+							ProtocolName: "modbus",
+							ConfigData: &v1beta1.CustomizedValue{
+								Data: map[string]interface{}{
+									"register": "HoldingRegister",
+									"address":  40001,
+								},
+							},
+						},
+					},
+				},
+				ProtocolConfigData: &v1beta1.CustomizedValue{
+					Data: map[string]interface{}{
+						"slaveID": 1,
+						"timeout": 5000,
+					},
+				},
+			},
+		}
+
+		device2 := &v1beta1.Device{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "sensor-002",
+				Namespace: "test-namespace",
+			},
+			Spec: v1beta1.DeviceSpec{
+				DeviceModelRef: &v1.LocalObjectReference{
+					Name: "temp-sensor-model",
+				},
+				Protocol: v1beta1.ProtocolConfig{
+					ProtocolName: "modbus",
+				},
+				Properties: []v1beta1.DeviceProperty{
+					{
+						Name: "temperature",
+						Visitors: v1beta1.VisitorConfig{
+							ProtocolName: "modbus",
+						},
+					},
+				},
+			},
+		}
+
+		overridenDevice2 := &v1beta1.Device{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "sensor-002",
+				Namespace: "test-namespace",
+			},
+			Spec: v1beta1.DeviceSpec{
+				DeviceModelRef: &v1.LocalObjectReference{
+					Name: "temp-sensor-model",
+				},
+				Protocol: v1beta1.ProtocolConfig{
+					ProtocolName: "modbus",
+					ConfigData: &v1beta1.CustomizedValue{
+						Data: map[string]interface{}{
+							"slaveID": 1,
+							"timeout": 5000,
+						},
+					},
+				},
+				Properties: []v1beta1.DeviceProperty{
+					{
+						Name: "temperature",
+						Visitors: v1beta1.VisitorConfig{
+							ProtocolName: "modbus",
+							ConfigData: &v1beta1.CustomizedValue{
+								Data: map[string]interface{}{
+									"register": "HoldingRegister",
+									"address":  40001,
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
 		// Put device model first
 		cache.PutDeviceModel(deviceModel)
 
@@ -346,8 +500,7 @@ func TestDMICache_Device_Operations(t *testing.T) {
 		retrieved, err := cache.GetOverriddenDevice("default", "sensor-001")
 		assert.NoError(t, err)
 		assert.NotNil(t, retrieved)
-		assert.Equal(t, "sensor-001", retrieved.Name)
-		assert.Equal(t, "default", retrieved.Namespace)
+		assert.Equal(t, overridenDevice1, retrieved)
 
 		// Get non-existent device
 		retrieved, err = cache.GetOverriddenDevice("default", "non-existent")
@@ -365,11 +518,11 @@ func TestDMICache_Device_Operations(t *testing.T) {
 		retrieved, err = cache.GetOverriddenDevice("test-namespace", "sensor-002")
 		assert.NoError(t, err)
 		assert.NotNil(t, retrieved)
-		assert.Equal(t, "sensor-002", retrieved.Name)
-		assert.Equal(t, "test-namespace", retrieved.Namespace)
+		assert.Equal(t, overridenDevice2, retrieved)
 	})
 
 	t.Run("GetOverriddenDevice without DeviceModel", func(t *testing.T) {
+		cache := NewDMICache()
 		// Create device without corresponding device model in cache
 		deviceWithoutModel := &v1beta1.Device{
 			ObjectMeta: metav1.ObjectMeta{
@@ -393,6 +546,7 @@ func TestDMICache_Device_Operations(t *testing.T) {
 	})
 
 	t.Run("GetOverriddenDevice without DeviceModelRef", func(t *testing.T) {
+		cache := NewDMICache()
 		// Create device without DeviceModelRef
 		deviceWithoutRef := &v1beta1.Device{
 			ObjectMeta: metav1.ObjectMeta{
@@ -414,8 +568,21 @@ func TestDMICache_Device_Operations(t *testing.T) {
 	})
 
 	t.Run("DeviceIds", func(t *testing.T) {
-		// Clear cache first
-		cache = NewDMICache()
+		cache := NewDMICache()
+
+		device1 := &v1beta1.Device{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "sensor-001",
+				Namespace: "default",
+			},
+		}
+
+		device2 := &v1beta1.Device{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "sensor-002",
+				Namespace: "test-namespace",
+			},
+		}
 
 		// Initially should be empty
 		ids := cache.DeviceIds()
@@ -440,6 +607,112 @@ func TestDMICache_Device_Operations(t *testing.T) {
 	})
 
 	t.Run("RemoveDevice", func(t *testing.T) {
+		cache := NewDMICache()
+
+		deviceModel := &v1beta1.DeviceModel{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "temp-sensor-model",
+				Namespace: "default",
+			},
+			Spec: v1beta1.DeviceModelSpec{
+				Protocol: "modbus",
+				Properties: []v1beta1.ModelProperty{
+					{
+						Name:       "temperature",
+						Type:       v1beta1.FLOAT,
+						AccessMode: v1beta1.ReadOnly,
+						Visitors: &v1beta1.VisitorConfig{
+							ProtocolName: "modbus",
+							ConfigData: &v1beta1.CustomizedValue{
+								Data: map[string]interface{}{
+									"register": "HoldingRegister",
+									"address":  40001,
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		deviceModel2 := &v1beta1.DeviceModel{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "temp-sensor-model",
+				Namespace: "test-namespace",
+			},
+			Spec: v1beta1.DeviceModelSpec{
+				Protocol: "modbus",
+				Properties: []v1beta1.ModelProperty{
+					{
+						Name:       "temperature",
+						Type:       v1beta1.FLOAT,
+						AccessMode: v1beta1.ReadOnly,
+						Visitors: &v1beta1.VisitorConfig{
+							ProtocolName: "modbus",
+							ConfigData: &v1beta1.CustomizedValue{
+								Data: map[string]interface{}{
+									"register": "HoldingRegister",
+									"address":  40001,
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		device1 := &v1beta1.Device{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "sensor-001",
+				Namespace: "default",
+			},
+			Spec: v1beta1.DeviceSpec{
+				DeviceModelRef: &v1.LocalObjectReference{
+					Name: "temp-sensor-model",
+				},
+				Protocol: v1beta1.ProtocolConfig{
+					ProtocolName: "modbus",
+				},
+				Properties: []v1beta1.DeviceProperty{
+					{
+						Name: "temperature",
+						Visitors: v1beta1.VisitorConfig{
+							ProtocolName: "modbus",
+						},
+					},
+				},
+			},
+		}
+
+		device2 := &v1beta1.Device{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "sensor-002",
+				Namespace: "test-namespace",
+			},
+			Spec: v1beta1.DeviceSpec{
+				DeviceModelRef: &v1.LocalObjectReference{
+					Name: "temp-sensor-model",
+				},
+				Protocol: v1beta1.ProtocolConfig{
+					ProtocolName: "modbus",
+				},
+				Properties: []v1beta1.DeviceProperty{
+					{
+						Name: "temperature",
+						Visitors: v1beta1.VisitorConfig{
+							ProtocolName: "modbus",
+						},
+					},
+				},
+			},
+		}
+
+		// Setup: add device models and devices
+		cache.PutDeviceModel(deviceModel)
+		cache.PutDeviceModel(deviceModel2)
+		cache.PutDevice(device1)
+		cache.PutDevice(device2)
+
 		// Remove device1
 		cache.RemoveDevice("default", "sensor-001")
 
@@ -449,7 +722,6 @@ func TestDMICache_Device_Operations(t *testing.T) {
 		assert.Nil(t, retrieved)
 
 		// device2 should still exist
-		cache.PutDeviceModel(deviceModel2) // Re-add device model for device2
 		retrieved, err = cache.GetOverriddenDevice("test-namespace", "sensor-002")
 		assert.NoError(t, err)
 		assert.NotNil(t, retrieved)

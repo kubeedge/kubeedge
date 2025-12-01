@@ -12,9 +12,9 @@ import (
 )
 
 type DMICache struct {
-	mapperMu        *sync.Mutex
-	deviceMu        *sync.Mutex
-	deviceModelMu   *sync.Mutex
+	mapperMu        *sync.RWMutex
+	deviceMu        *sync.RWMutex
+	deviceModelMu   *sync.RWMutex
 	mapperList      map[string]*pb.MapperInfo
 	deviceModelList map[string]*v1beta1.DeviceModel
 	deviceList      map[string]*v1beta1.Device
@@ -22,9 +22,9 @@ type DMICache struct {
 
 func NewDMICache() *DMICache {
 	return &DMICache{
-		mapperMu:        &sync.Mutex{},
-		deviceMu:        &sync.Mutex{},
-		deviceModelMu:   &sync.Mutex{},
+		mapperMu:        &sync.RWMutex{},
+		deviceMu:        &sync.RWMutex{},
+		deviceModelMu:   &sync.RWMutex{},
 		mapperList:      make(map[string]*pb.MapperInfo),
 		deviceList:      make(map[string]*v1beta1.Device),
 		deviceModelList: make(map[string]*v1beta1.DeviceModel),
@@ -40,8 +40,8 @@ func (dmiCache *DMICache) PutMapper(mapper *pb.MapperInfo) {
 
 // GetMapper gets a mapper from the cache
 func (dmiCache *DMICache) GetMapper(name string) (*pb.MapperInfo, bool) {
-	dmiCache.mapperMu.Lock()
-	defer dmiCache.mapperMu.Unlock()
+	dmiCache.mapperMu.RLock()
+	defer dmiCache.mapperMu.RUnlock()
 	mapper, exists := dmiCache.mapperList[name]
 	return mapper, exists
 }
@@ -63,8 +63,8 @@ func (dmiCache *DMICache) PutDeviceModel(deviceModel *v1beta1.DeviceModel) {
 
 // GetDeviceModel gets a device model from the cache
 func (dmiCache *DMICache) GetDeviceModel(namespace, name string) (*v1beta1.DeviceModel, bool) {
-	dmiCache.deviceModelMu.Lock()
-	defer dmiCache.deviceModelMu.Unlock()
+	dmiCache.deviceModelMu.RLock()
+	defer dmiCache.deviceModelMu.RUnlock()
 	deviceModelID := util.GetResourceID(namespace, name)
 	deviceModel, exists := dmiCache.deviceModelList[deviceModelID]
 	return deviceModel, exists
@@ -88,23 +88,32 @@ func (dmiCache *DMICache) PutDevice(device *v1beta1.Device) {
 
 // GetOverriddenDevice gets an overridden device from the cache
 func (dmiCache *DMICache) GetOverriddenDevice(namespace, name string) (*v1beta1.Device, error) {
-	dmiCache.deviceMu.Lock()
-	defer dmiCache.deviceMu.Unlock()
 	deviceID := util.GetResourceID(namespace, name)
+	dmiCache.deviceMu.RLock()
 	device, exists := dmiCache.deviceList[deviceID]
+	dmiCache.deviceMu.RUnlock()
 	if !exists {
 		return nil, fmt.Errorf("device %s not found in cache", name)
 	}
-	if err := dmiCache.OverrideDeviceInstanceConfig(device); err != nil {
+
+	deviceCopy := device.DeepCopy()
+	// use deepCopyCustomizedValue instead of DeepCopy defined on *CustomizedValue to prevent data type loss
+	// before and after json marshal/unmarshal
+	deviceCopy.Spec.Protocol.ConfigData = deepCopyCustomizedValue(device.Spec.Protocol.ConfigData)
+	for i := range deviceCopy.Spec.Properties {
+		deviceCopy.Spec.Properties[i].Visitors.ConfigData = deepCopyCustomizedValue(device.Spec.Properties[i].Visitors.ConfigData)
+	}
+
+	if err := dmiCache.OverrideDeviceInstanceConfig(deviceCopy); err != nil {
 		return nil, fmt.Errorf("override device instance config failed for device %s: %v", name, err)
 	}
 
-	return device, nil
+	return deviceCopy, nil
 }
 
 func (dmiCache *DMICache) DeviceIds() []string {
-	dmiCache.deviceMu.Lock()
-	defer dmiCache.deviceMu.Unlock()
+	dmiCache.deviceMu.RLock()
+	defer dmiCache.deviceMu.RUnlock()
 	var deviceIDs []string
 	for deviceID := range dmiCache.deviceList {
 		deviceIDs = append(deviceIDs, deviceID)
@@ -128,9 +137,9 @@ func (dmiCache *DMICache) OverrideDeviceInstanceConfig(device *v1beta1.Device) e
 
 	// Get device model from cache
 	deviceModelID := util.GetResourceID(device.Namespace, device.Spec.DeviceModelRef.Name)
-	dmiCache.deviceModelMu.Lock()
+	dmiCache.deviceModelMu.RLock()
 	deviceModel, ok := dmiCache.deviceModelList[deviceModelID]
-	dmiCache.deviceModelMu.Unlock()
+	dmiCache.deviceModelMu.RUnlock()
 	if !ok {
 		return fmt.Errorf("device model %s not found in cache for device %s", device.Spec.DeviceModelRef.Name, device.Name)
 	}
