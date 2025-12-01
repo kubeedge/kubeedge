@@ -250,6 +250,8 @@ function start_edgecore {
     sed -i '/websocket:/{n;s/true/false/;}' ${EDGE_CONFIGFILE}
   fi
 
+  sed -i 's|cgroupDriver: .*|cgroupDriver: systemd|' ${EDGE_CONFIGFILE}
+
   # if we will use docker as edgecore container runtime
   # we need to change edgecore container runtime from default containerd to docker
   if [[ "${CONTAINER_RUNTIME}" = "docker" ]]; then
