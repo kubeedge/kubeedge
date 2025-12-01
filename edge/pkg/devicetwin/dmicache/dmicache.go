@@ -87,13 +87,13 @@ func (dmiCache *DMICache) PutDevice(device *v1beta1.Device) {
 }
 
 // GetOverriddenDevice gets an overridden device from the cache
-func (dmiCache *DMICache) GetOverriddenDevice(namespace, name string) (*v1beta1.Device, error) {
+func (dmiCache *DMICache) GetOverriddenDevice(namespace, name string) (*v1beta1.Device, *v1beta1.DeviceModel, error) {
 	deviceID := util.GetResourceID(namespace, name)
 	dmiCache.deviceMu.RLock()
 	device, exists := dmiCache.deviceList[deviceID]
 	dmiCache.deviceMu.RUnlock()
 	if !exists {
-		return nil, fmt.Errorf("device %s not found in cache", name)
+		return nil, nil, fmt.Errorf("device %s not found in cache", name)
 	}
 
 	deviceCopy := device.DeepCopy()
@@ -104,11 +104,12 @@ func (dmiCache *DMICache) GetOverriddenDevice(namespace, name string) (*v1beta1.
 		deviceCopy.Spec.Properties[i].Visitors.ConfigData = deepCopyCustomizedValue(device.Spec.Properties[i].Visitors.ConfigData)
 	}
 
-	if err := dmiCache.OverrideDeviceInstanceConfig(deviceCopy); err != nil {
-		return nil, fmt.Errorf("override device instance config failed for device %s: %v", name, err)
+	deviceCopy, deviceModel, err := dmiCache.overrideDeviceInstanceConfig(deviceCopy)
+	if err != nil {
+		return nil, nil, fmt.Errorf("override device instance config failed for device %s: %v", name, err)
 	}
 
-	return deviceCopy, nil
+	return deviceCopy, deviceModel, nil
 }
 
 func (dmiCache *DMICache) DeviceIds() []string {
@@ -130,9 +131,9 @@ func (dmiCache *DMICache) RemoveDevice(namespace, name string) {
 }
 
 // overrideDeviceInstanceConfig overrides device instance configuration with model defaults
-func (dmiCache *DMICache) OverrideDeviceInstanceConfig(device *v1beta1.Device) error {
+func (dmiCache *DMICache) overrideDeviceInstanceConfig(device *v1beta1.Device) (*v1beta1.Device, *v1beta1.DeviceModel, error) {
 	if device.Spec.DeviceModelRef == nil {
-		return fmt.Errorf("device %s has no device model reference", device.Name)
+		return nil, nil, fmt.Errorf("device %s has no device model reference", device.Name)
 	}
 
 	// Get device model from cache
@@ -141,7 +142,7 @@ func (dmiCache *DMICache) OverrideDeviceInstanceConfig(device *v1beta1.Device) e
 	deviceModel, ok := dmiCache.deviceModelList[deviceModelID]
 	dmiCache.deviceModelMu.RUnlock()
 	if !ok {
-		return fmt.Errorf("device model %s not found in cache for device %s", device.Spec.DeviceModelRef.Name, device.Name)
+		return nil, nil, fmt.Errorf("device model %s not found in cache for device %s", device.Spec.DeviceModelRef.Name, device.Name)
 	}
 
 	klog.Infof("Overriding device properties for device %s using model %s", device.Name, deviceModel.Name)
@@ -212,7 +213,7 @@ func (dmiCache *DMICache) OverrideDeviceInstanceConfig(device *v1beta1.Device) e
 		}
 	}
 
-	return nil
+	return device, deviceModel, nil
 }
 
 // findModelProperty finds a model property by name

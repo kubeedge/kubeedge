@@ -497,15 +497,18 @@ func TestDMICache_Device_Operations(t *testing.T) {
 		cache.PutDevice(device1)
 
 		// Get overridden device1
-		retrieved, err := cache.GetOverriddenDevice("default", "sensor-001")
+		retrieved, model, err := cache.GetOverriddenDevice("default", "sensor-001")
 		assert.NoError(t, err)
 		assert.NotNil(t, retrieved)
 		assert.Equal(t, overridenDevice1, retrieved)
+		assert.NotNil(t, model)
+		assert.Equal(t, deviceModel, model)
 
 		// Get non-existent device
-		retrieved, err = cache.GetOverriddenDevice("default", "non-existent")
+		retrieved, model, err = cache.GetOverriddenDevice("default", "non-existent")
 		assert.Error(t, err)
 		assert.Nil(t, retrieved)
+		assert.Nil(t, model)
 		assert.Contains(t, err.Error(), "not found in cache")
 
 		// Put device model for device2
@@ -515,10 +518,12 @@ func TestDMICache_Device_Operations(t *testing.T) {
 		cache.PutDevice(device2)
 
 		// Get overridden device2
-		retrieved, err = cache.GetOverriddenDevice("test-namespace", "sensor-002")
+		retrieved, model, err = cache.GetOverriddenDevice("test-namespace", "sensor-002")
 		assert.NoError(t, err)
 		assert.NotNil(t, retrieved)
 		assert.Equal(t, overridenDevice2, retrieved)
+		assert.NotNil(t, model)
+		assert.Equal(t, deviceModel2, model)
 	})
 
 	t.Run("GetOverriddenDevice without DeviceModel", func(t *testing.T) {
@@ -539,7 +544,8 @@ func TestDMICache_Device_Operations(t *testing.T) {
 		cache.PutDevice(deviceWithoutModel)
 
 		// Should get error when device model not found
-		retrieved, err := cache.GetOverriddenDevice("default", "orphan-device")
+		retrieved, model, err := cache.GetOverriddenDevice("default", "orphan-device")
+		assert.Nil(t, model)
 		assert.Error(t, err)
 		assert.Nil(t, retrieved)
 		assert.Contains(t, err.Error(), "not found in cache")
@@ -561,9 +567,10 @@ func TestDMICache_Device_Operations(t *testing.T) {
 		cache.PutDevice(deviceWithoutRef)
 
 		// Should get error when DeviceModelRef is nil
-		retrieved, err := cache.GetOverriddenDevice("default", "no-ref-device")
+		retrieved, model, err := cache.GetOverriddenDevice("default", "no-ref-device")
 		assert.Error(t, err)
 		assert.Nil(t, retrieved)
+		assert.Nil(t, model)
 		assert.Contains(t, err.Error(), "has no device model reference")
 	})
 
@@ -717,14 +724,16 @@ func TestDMICache_Device_Operations(t *testing.T) {
 		cache.RemoveDevice("default", "sensor-001")
 
 		// device1 should not exist
-		retrieved, err := cache.GetOverriddenDevice("default", "sensor-001")
+		retrieved, model, err := cache.GetOverriddenDevice("default", "sensor-001")
 		assert.Error(t, err)
 		assert.Nil(t, retrieved)
+		assert.Nil(t, model)
 
 		// device2 should still exist
-		retrieved, err = cache.GetOverriddenDevice("test-namespace", "sensor-002")
+		retrieved, model, err = cache.GetOverriddenDevice("test-namespace", "sensor-002")
 		assert.NoError(t, err)
 		assert.NotNil(t, retrieved)
+		assert.NotNil(t, model)
 
 		// DeviceIds should only contain device2
 		ids := cache.DeviceIds()
@@ -733,7 +742,7 @@ func TestDMICache_Device_Operations(t *testing.T) {
 
 		// Remove device2
 		cache.RemoveDevice("test-namespace", "sensor-002")
-		retrieved, err = cache.GetOverriddenDevice("test-namespace", "sensor-002")
+		retrieved, _, err = cache.GetOverriddenDevice("test-namespace", "sensor-002")
 		assert.Error(t, err)
 		assert.Nil(t, retrieved)
 
@@ -1433,7 +1442,7 @@ func TestDMICache_OverrideDeviceInstanceConfig(t *testing.T) {
 			}
 
 			// Execute the function
-			err := dmiCache.OverrideDeviceInstanceConfig(tt.device)
+			_, _, err := dmiCache.overrideDeviceInstanceConfig(tt.device)
 			// Check error expectation
 			if tt.expectError {
 				assert.Error(t, err)

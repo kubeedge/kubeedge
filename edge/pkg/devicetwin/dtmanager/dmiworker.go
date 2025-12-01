@@ -117,7 +117,7 @@ func (dw *DMIWorker) dealMetaDeviceOperation(_ *dtcontext.DTContext, _ string, m
 		case model.InsertOperation:
 			dw.dmiCache.PutDevice(&device)
 			// Override device instance config with model defaults before registering
-			devicePtr, err := dw.dmiCache.GetOverriddenDevice(device.Namespace, device.Name)
+			devicePtr, _, err := dw.dmiCache.GetOverriddenDevice(device.Namespace, device.Name)
 			if err != nil {
 				return err
 			}
@@ -136,7 +136,7 @@ func (dw *DMIWorker) dealMetaDeviceOperation(_ *dtcontext.DTContext, _ string, m
 		case model.UpdateOperation:
 			dw.dmiCache.PutDevice(&device)
 			// Override device instance config with model defaults before updating
-			devicePtr, err := dw.dmiCache.GetOverriddenDevice(device.Namespace, device.Name)
+			devicePtr, _, err := dw.dmiCache.GetOverriddenDevice(device.Namespace, device.Name)
 			if err != nil {
 				return err
 			}

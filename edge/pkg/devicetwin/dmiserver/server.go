@@ -90,19 +90,13 @@ func (s *server) MapperRegister(_ context.Context, in *pb.MapperRegisterRequest)
 			klog.Errorf("fail to get namespaced name from deviceID %s: %v", deviceID, err)
 			continue
 		}
-		dev, err := s.dmiCache.GetOverriddenDevice(ns, name)
+		dev, model, err := s.dmiCache.GetOverriddenDevice(ns, name)
 		if err != nil {
 			klog.Errorf("fail to get overridden device %s from cache: %v", deviceID, err)
 			continue
 		}
 
 		if dev.Spec.Protocol.ProtocolName != in.Mapper.Protocol {
-			continue
-		}
-
-		model, ok := s.dmiCache.GetDeviceModel(dev.Namespace, dev.Spec.DeviceModelRef.Name)
-		if !ok {
-			klog.Errorf("fail to get device model %s in deviceModelList", dev.Spec.DeviceModelRef.Name)
 			continue
 		}
 
