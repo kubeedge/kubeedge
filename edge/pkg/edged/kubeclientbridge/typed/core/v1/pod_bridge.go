@@ -25,13 +25,13 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
-	fakecorev1 "k8s.io/client-go/kubernetes/typed/core/v1/fake"
+	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 )
 
 type PodsBridge struct {
-	fakecorev1.FakePods
+	typedcorev1.PodInterface
 	ns         string
 	MetaClient client.CoreInterface
 }
