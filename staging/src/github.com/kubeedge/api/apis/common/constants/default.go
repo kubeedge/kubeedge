@@ -103,9 +103,6 @@ const (
 	DefaultQPS   = 30
 	DefaultBurst = 60
 
-	// DeviceTwin
-	DefaultDMISockPath = "/etc/kubeedge/dmi.sock"
-
 	KubeEdgeBinaryName = "edgecore"
 	KeadmBinaryName    = "keadm"
 )

@@ -27,7 +27,7 @@ import (
 	"time"
 
 	certutil "k8s.io/client-go/util/cert"
-	"k8s.io/klog/v2"
+	klog "k8s.io/klog/v2"
 )
 
 // GenerateTestCertificate generates fake certificates and stores them at the path specified.
