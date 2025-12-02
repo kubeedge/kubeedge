@@ -993,6 +993,7 @@ func TestFilterResource(t *testing.T) {
 		fakeClient := fake.NewClientBuilder().WithScheme(accessScheme).WithObjects(tc.input...).WithLists(nodeList).Build()
 		ctr := &Controller{
 			Client: fakeClient,
+			Reader: fakeClient,
 		}
 		if tc.rbacObj != nil {
 			got := ctr.filterResource(context.Background(), tc.rbacObj)
@@ -1076,8 +1077,10 @@ func TestMapObjectFunc(t *testing.T) {
 					AccessClusterRoleBinding: []policyv1alpha1.AccessClusterRoleBinding{{ClusterRoleBinding: crb1}},
 				},
 			},
-			obj:             &pod1,
-			reconcileResult: []controllerruntime.Request{},
+			obj: &pod1,
+			reconcileResult: []controllerruntime.Request{
+				{NamespacedName: types.NamespacedName{Name: "sa1", Namespace: "my-namespace"}},
+			},
 			output: &[]policyv1alpha1.ServiceAccountAccess{{
 				ObjectMeta: metav1.ObjectMeta{Name: "sa1", Namespace: "my-namespace"},
 				Spec: policyv1alpha1.AccessSpec{
@@ -1224,10 +1227,11 @@ func TestMapObjectFunc(t *testing.T) {
 		fakeClient := fake.NewClientBuilder().WithScheme(accessScheme).WithObjects(tc.input).Build()
 		ctr := &Controller{
 			Client: fakeClient,
+			Reader: fakeClient,
 		}
 		got := ctr.mapObjectFunc(context.Background(), tc.obj)
 		if !equality.Semantic.DeepEqual(got, tc.reconcileResult) {
-			t.Errorf("mapObjectFunc() = %v, want %v", got, tc.reconcileResult)
+			t.Errorf("case %q, mapObjectFunc() = %v, want %v", tc.name, got, tc.reconcileResult)
 		}
 		sort.Slice(*tc.output, func(i, j int) bool {
 			return (*tc.output)[i].Name < (*tc.output)[j].Name
@@ -1743,6 +1747,7 @@ func TestSyncRules(t *testing.T) {
 			fakeClient := fake.NewClientBuilder().WithScheme(accessScheme).WithObjects(tt.obj...).WithLists(nodeList).WithIndex(&v1.Pod{}, "spec.serviceAccountName", pdStrategyTypeIndexer).WithStatusSubresource(tt.input).Build()
 			ctr := &Controller{
 				Client:       fakeClient,
+				Reader:       fakeClient,
 				MessageLayer: messagelayer.PolicyControllerMessageLayer(),
 			}
 			var rst controllerruntime.Result
