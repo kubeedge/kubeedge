@@ -23,7 +23,7 @@ import (
 	"strings"
 	"sync"
 
-	"k8s.io/klog/v2"
+	klog "k8s.io/klog/v2"
 
 	"github.com/kubeedge/api/apis/devices/v1beta1"
 	pb "github.com/kubeedge/api/apis/dmi/v1beta1"
@@ -68,7 +68,12 @@ func (dw DMIWorker) Start() {
 	klog.Infoln("dmi worker start")
 	dw.init()
 
-	go dmiserver.StartDMIServer(dw.dmiCache)
+	go func() {
+		if err := dmiserver.StartDMIServer(dw.dmiCache); err != nil {
+			klog.Errorf("failed to start DMI Server with err: %v", err)
+			return
+		}
+	}()
 
 	for {
 		select {
