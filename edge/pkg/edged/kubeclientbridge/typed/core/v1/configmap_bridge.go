@@ -28,6 +28,9 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/watch"
+	appcorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	fakecorev1 "k8s.io/client-go/kubernetes/typed/core/v1/fake"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
@@ -35,9 +38,49 @@ import (
 
 // ConfigMapBridge implements ConfigmapInterface
 type ConfigMapBridge struct {
-	fakecorev1.FakeConfigMaps
+	fakecorev1.FakeCoreV1
 	ns         string
 	MetaClient client.CoreInterface
+}
+
+func (c *ConfigMapBridge) Create(ctx context.Context, configMap *corev1.ConfigMap, opts metav1.CreateOptions) (*corev1.ConfigMap, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *ConfigMapBridge) Update(ctx context.Context, configMap *corev1.ConfigMap, opts metav1.UpdateOptions) (*corev1.ConfigMap, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *ConfigMapBridge) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *ConfigMapBridge) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *ConfigMapBridge) List(ctx context.Context, opts metav1.ListOptions) (*corev1.ConfigMapList, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *ConfigMapBridge) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *ConfigMapBridge) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *corev1.ConfigMap, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *ConfigMapBridge) Apply(ctx context.Context, configMap *appcorev1.ConfigMapApplyConfiguration, opts metav1.ApplyOptions) (result *corev1.ConfigMap, err error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 // Get takes name of the configmap, and returns the corresponding configmap object

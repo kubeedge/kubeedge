@@ -28,6 +28,9 @@ import (
 
 	v1 "k8s.io/api/certificates/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/watch"
+	applyconfigurationscertificatesv1 "k8s.io/client-go/applyconfigurations/certificates/v1"
 	fakecertificates "k8s.io/client-go/kubernetes/typed/certificates/v1/fake"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
@@ -35,8 +38,58 @@ import (
 
 // CertificateSigningRequestsBridge implements CertificateSigningRequestInterface
 type CertificateSigningRequestsBridge struct {
-	fakecertificates.FakeCertificateSigningRequests
+	fakecertificates.FakeCertificatesV1
 	MetaClient client.CoreInterface
+}
+
+func (c *CertificateSigningRequestsBridge) Update(ctx context.Context, certificateSigningRequest *v1.CertificateSigningRequest, opts metav1.UpdateOptions) (*v1.CertificateSigningRequest, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *CertificateSigningRequestsBridge) UpdateStatus(ctx context.Context, certificateSigningRequest *v1.CertificateSigningRequest, opts metav1.UpdateOptions) (*v1.CertificateSigningRequest, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *CertificateSigningRequestsBridge) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *CertificateSigningRequestsBridge) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *CertificateSigningRequestsBridge) List(ctx context.Context, opts metav1.ListOptions) (*v1.CertificateSigningRequestList, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *CertificateSigningRequestsBridge) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *CertificateSigningRequestsBridge) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.CertificateSigningRequest, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *CertificateSigningRequestsBridge) Apply(ctx context.Context, certificateSigningRequest *applyconfigurationscertificatesv1.CertificateSigningRequestApplyConfiguration, opts metav1.ApplyOptions) (result *v1.CertificateSigningRequest, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *CertificateSigningRequestsBridge) ApplyStatus(ctx context.Context, certificateSigningRequest *applyconfigurationscertificatesv1.CertificateSigningRequestApplyConfiguration, opts metav1.ApplyOptions) (result *v1.CertificateSigningRequest, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *CertificateSigningRequestsBridge) UpdateApproval(ctx context.Context, certificateSigningRequestName string, certificateSigningRequest *v1.CertificateSigningRequest, opts metav1.UpdateOptions) (*v1.CertificateSigningRequest, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (c *CertificateSigningRequestsBridge) Create(_ context.Context, certificateSigningRequest *v1.CertificateSigningRequest, _ metav1.CreateOptions) (result *v1.CertificateSigningRequest, err error) {

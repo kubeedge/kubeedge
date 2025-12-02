@@ -93,8 +93,8 @@ func TestGet(t *testing.T) {
 	}
 
 	volumeAttachmentsBridge := &VolumeAttachmentsBridge{
-		FakeVolumeAttachments: fakestoragev1.FakeVolumeAttachments{},
-		MetaClient:            mockMetaClient,
+		FakeStorageV1: fakestoragev1.FakeStorageV1{},
+		MetaClient:    mockMetaClient,
 	}
 
 	result, err := volumeAttachmentsBridge.Get(context.Background(), "test-volume-attachment", metav1.GetOptions{})

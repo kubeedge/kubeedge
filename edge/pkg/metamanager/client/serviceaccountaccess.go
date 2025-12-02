@@ -26,7 +26,7 @@ const (
 type RoleGetter struct {
 }
 
-func (g *RoleGetter) GetRole(namespace, name string) (*rbacv1.Role, error) {
+func (g *RoleGetter) GetRole(ctx context.Context, namespace, name string) (*rbacv1.Role, error) {
 	rst, err := dao.QueryMeta("type", model.ResourceTypeSaAccess)
 	if err != nil {
 		return nil, err
@@ -57,7 +57,7 @@ func (g *RoleGetter) GetRole(namespace, name string) (*rbacv1.Role, error) {
 type RoleBindingLister struct {
 }
 
-func (l *RoleBindingLister) ListRoleBindings(namespace string) ([]*rbacv1.RoleBinding, error) {
+func (l *RoleBindingLister) ListRoleBindings(ctx context.Context, namespace string) ([]*rbacv1.RoleBinding, error) {
 	rst, err := dao.QueryMeta("type", model.ResourceTypeSaAccess)
 	if err != nil {
 		return nil, err
@@ -92,7 +92,7 @@ func (l *RoleBindingLister) ListRoleBindings(namespace string) ([]*rbacv1.RoleBi
 type ClusterRoleGetter struct {
 }
 
-func (g *ClusterRoleGetter) GetClusterRole(name string) (*rbacv1.ClusterRole, error) {
+func (g *ClusterRoleGetter) GetClusterRole(ctx context.Context, name string) (*rbacv1.ClusterRole, error) {
 	rst, err := dao.QueryMeta("type", model.ResourceTypeSaAccess)
 	if err != nil {
 		return nil, err
@@ -131,7 +131,7 @@ func (g *ClusterRoleGetter) GetClusterRole(name string) (*rbacv1.ClusterRole, er
 type ClusterRoleBindingLister struct {
 }
 
-func (l *ClusterRoleBindingLister) ListClusterRoleBindings() ([]*rbacv1.ClusterRoleBinding, error) {
+func (l *ClusterRoleBindingLister) ListClusterRoleBindings(context.Context) ([]*rbacv1.ClusterRoleBinding, error) {
 	rst, err := dao.QueryMeta("type", model.ResourceTypeSaAccess)
 	if err != nil {
 		klog.Errorf("failed to query meta %v", err)

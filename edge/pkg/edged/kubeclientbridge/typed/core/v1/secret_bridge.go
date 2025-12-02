@@ -28,6 +28,9 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/watch"
+	appcorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	fakecorev1 "k8s.io/client-go/kubernetes/typed/core/v1/fake"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
@@ -35,9 +38,49 @@ import (
 
 // SecretBridge implements SecretInterface
 type SecretBridge struct {
-	fakecorev1.FakeSecrets
+	fakecorev1.FakeCoreV1
 	ns         string
 	MetaClient client.CoreInterface
+}
+
+func (c *SecretBridge) Create(ctx context.Context, secret *corev1.Secret, opts metav1.CreateOptions) (*corev1.Secret, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *SecretBridge) Update(ctx context.Context, secret *corev1.Secret, opts metav1.UpdateOptions) (*corev1.Secret, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *SecretBridge) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *SecretBridge) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *SecretBridge) List(ctx context.Context, opts metav1.ListOptions) (*corev1.SecretList, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *SecretBridge) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *SecretBridge) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *corev1.Secret, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *SecretBridge) Apply(ctx context.Context, secret *appcorev1.SecretApplyConfiguration, opts metav1.ApplyOptions) (result *corev1.Secret, err error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 // Get takes name of the secret, and returns the corresponding secret object

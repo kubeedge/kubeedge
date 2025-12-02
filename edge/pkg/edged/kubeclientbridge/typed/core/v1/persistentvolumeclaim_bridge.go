@@ -28,6 +28,9 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/watch"
+	appcorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	fakecorev1 "k8s.io/client-go/kubernetes/typed/core/v1/fake"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
@@ -35,9 +38,59 @@ import (
 
 // PersistentVolumeClaimsBridge implements PersistentVolumeClaimInterface
 type PersistentVolumeClaimsBridge struct {
-	fakecorev1.FakePersistentVolumeClaims
+	fakecorev1.FakeCoreV1
 	ns         string
 	MetaClient client.CoreInterface
+}
+
+func (c *PersistentVolumeClaimsBridge) Create(ctx context.Context, persistentVolumeClaim *corev1.PersistentVolumeClaim, opts metav1.CreateOptions) (*corev1.PersistentVolumeClaim, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *PersistentVolumeClaimsBridge) Update(ctx context.Context, persistentVolumeClaim *corev1.PersistentVolumeClaim, opts metav1.UpdateOptions) (*corev1.PersistentVolumeClaim, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *PersistentVolumeClaimsBridge) UpdateStatus(ctx context.Context, persistentVolumeClaim *corev1.PersistentVolumeClaim, opts metav1.UpdateOptions) (*corev1.PersistentVolumeClaim, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *PersistentVolumeClaimsBridge) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *PersistentVolumeClaimsBridge) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *PersistentVolumeClaimsBridge) List(ctx context.Context, opts metav1.ListOptions) (*corev1.PersistentVolumeClaimList, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *PersistentVolumeClaimsBridge) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *PersistentVolumeClaimsBridge) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *corev1.PersistentVolumeClaim, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *PersistentVolumeClaimsBridge) Apply(ctx context.Context, persistentVolumeClaim *appcorev1.PersistentVolumeClaimApplyConfiguration, opts metav1.ApplyOptions) (result *corev1.PersistentVolumeClaim, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *PersistentVolumeClaimsBridge) ApplyStatus(ctx context.Context, persistentVolumeClaim *appcorev1.PersistentVolumeClaimApplyConfiguration, opts metav1.ApplyOptions) (result *corev1.PersistentVolumeClaim, err error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 // Get takes name of the persistentVolumeClaim, and returns the corresponding persistentVolumeClaim object

@@ -43,8 +43,8 @@ func (s *store) Create(context.Context, string, runtime.Object, runtime.Object, 
 	panic("Do not call this function")
 }
 
-func (s *store) Delete(context.Context, string, runtime.Object, *storage.Preconditions,
-	storage.ValidateObjectFunc, runtime.Object) error {
+func (s *store) Delete(ctx context.Context, key string, out runtime.Object, preconditions *storage.Preconditions,
+	validateDeletion storage.ValidateObjectFunc, cachedExistingObject runtime.Object, opts storage.DeleteOptions) error {
 	panic("Do not call this function")
 }
 
