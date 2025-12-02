@@ -29,57 +29,15 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubetypes "k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/watch"
-	appcorev1 "k8s.io/client-go/applyconfigurations/core/v1"
-	fakecorev1 "k8s.io/client-go/kubernetes/typed/core/v1/fake"
+	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 )
 
 // NodesBridge implements NodeInterface
 type NodesBridge struct {
-	fakecorev1.FakeCoreV1
+	typedcorev1.NodeInterface
 	MetaClient client.CoreInterface
-}
-
-func (c *NodesBridge) UpdateStatus(ctx context.Context, node *corev1.Node, opts metav1.UpdateOptions) (*corev1.Node, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *NodesBridge) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *NodesBridge) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *NodesBridge) List(ctx context.Context, opts metav1.ListOptions) (*corev1.NodeList, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *NodesBridge) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *NodesBridge) Apply(ctx context.Context, node *appcorev1.NodeApplyConfiguration, opts metav1.ApplyOptions) (result *corev1.Node, err error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *NodesBridge) ApplyStatus(ctx context.Context, node *appcorev1.NodeApplyConfiguration, opts metav1.ApplyOptions) (result *corev1.Node, err error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *NodesBridge) PatchStatus(ctx context.Context, nodeName string, data []byte) (*corev1.Node, error) {
-	//TODO implement me
-	panic("implement me")
 }
 
 // Create takes the representation of a node and create it in cluster

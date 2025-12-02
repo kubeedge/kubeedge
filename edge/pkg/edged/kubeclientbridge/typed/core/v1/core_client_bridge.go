@@ -37,33 +37,33 @@ type CoreV1Bridge struct {
 }
 
 func (c *CoreV1Bridge) Nodes() corev1.NodeInterface {
-	return &NodesBridge{c.FakeCoreV1, c.MetaClient}
+	return &NodesBridge{c.FakeCoreV1.Nodes(), c.MetaClient}
 }
 
 func (c *CoreV1Bridge) PersistentVolumes() corev1.PersistentVolumeInterface {
-	return &PersistentVolumesBridge{c.FakeCoreV1, c.MetaClient}
+	return &PersistentVolumesBridge{c.FakeCoreV1.PersistentVolumes(), c.MetaClient}
 }
 
 func (c *CoreV1Bridge) PersistentVolumeClaims(namespace string) corev1.PersistentVolumeClaimInterface {
-	return &PersistentVolumeClaimsBridge{c.FakeCoreV1, namespace, c.MetaClient}
+	return &PersistentVolumeClaimsBridge{c.FakeCoreV1.PersistentVolumeClaims(namespace), namespace, c.MetaClient}
 }
 
 func (c *CoreV1Bridge) ConfigMaps(namespace string) corev1.ConfigMapInterface {
-	return &ConfigMapBridge{c.FakeCoreV1, namespace, c.MetaClient}
+	return &ConfigMapBridge{c.FakeCoreV1.ConfigMaps(namespace), namespace, c.MetaClient}
 }
 
 func (c *CoreV1Bridge) Secrets(namespace string) corev1.SecretInterface {
-	return &SecretBridge{c.FakeCoreV1, namespace, c.MetaClient}
+	return &SecretBridge{c.FakeCoreV1.Secrets(namespace), namespace, c.MetaClient}
 }
 
 func (c *CoreV1Bridge) ServiceAccounts(namespace string) corev1.ServiceAccountInterface {
-	return &ServiceAccountsBridge{c.FakeCoreV1, namespace, c.MetaClient}
+	return &ServiceAccountsBridge{c.FakeCoreV1.ServiceAccounts(namespace), namespace, c.MetaClient}
 }
 
 func (c *CoreV1Bridge) Pods(namespace string) corev1.PodInterface {
-	return &PodsBridge{c.FakeCoreV1, namespace, c.MetaClient}
+	return &PodsBridge{c.FakeCoreV1.Pods(namespace), namespace, c.MetaClient}
 }
 
 func (c *CoreV1Bridge) Events(namespace string) corev1.EventInterface {
-	return &EventsBridge{c.FakeCoreV1, namespace, c.MetaClient}
+	return &EventsBridge{c.FakeCoreV1.Events(namespace), namespace, c.MetaClient}
 }

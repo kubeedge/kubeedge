@@ -42,4 +42,6 @@ func TestVolumeAttachments(t *testing.T) {
 	volumeAttachmentsBridge, ok := volumeAttachments.(*VolumeAttachmentsBridge)
 	assert.True(ok)
 	assert.Equal(metaClient, volumeAttachmentsBridge.MetaClient)
+	fake := fakestoragev1.FakeStorageV1{}
+	assert.IsType(fake.VolumeAttachments(), volumeAttachmentsBridge.VolumeAttachmentInterface)
 }

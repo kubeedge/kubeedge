@@ -21,12 +21,9 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/watch"
 	appcorev1 "k8s.io/client-go/applyconfigurations/core/v1"
-	fakecorev1 "k8s.io/client-go/kubernetes/typed/core/v1/fake"
+	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 )
@@ -34,34 +31,9 @@ import (
 // EventBridge is a structure that handles event operations.
 // FakeEvents is the whole set of Event api, and MetaClient includes a subset of FakeEvents.
 type EventsBridge struct {
-	fakecorev1.FakeCoreV1
+	typedcorev1.EventInterface
 	ns         string
 	MetaClient client.CoreInterface
-}
-
-func (e *EventsBridge) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (e *EventsBridge) List(ctx context.Context, opts metav1.ListOptions) (*corev1.EventList, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (e *EventsBridge) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (e *EventsBridge) Search(scheme *runtime.Scheme, objOrRef runtime.Object) (*corev1.EventList, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (e *EventsBridge) GetFieldSelector(involvedObjectName, involvedObjectNamespace, involvedObjectKind, involvedObjectUID *string) fields.Selector {
-	//TODO implement me
-	panic("implement me")
 }
 
 // Only XXXWithNamespace methods are actually used, the remaining methods are placeholders.

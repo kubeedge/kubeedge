@@ -28,68 +28,15 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/watch"
-	appcorev1 "k8s.io/client-go/applyconfigurations/core/v1"
-	fakecorev1 "k8s.io/client-go/kubernetes/typed/core/v1/fake"
+	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 )
 
 // PersistentVolumesBridge implements PersistentVolumeInterface
 type PersistentVolumesBridge struct {
-	fakecorev1.FakeCoreV1
+	typedcorev1.PersistentVolumeInterface
 	MetaClient client.CoreInterface
-}
-
-func (c *PersistentVolumesBridge) Create(ctx context.Context, persistentVolume *corev1.PersistentVolume, opts metav1.CreateOptions) (*corev1.PersistentVolume, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *PersistentVolumesBridge) Update(ctx context.Context, persistentVolume *corev1.PersistentVolume, opts metav1.UpdateOptions) (*corev1.PersistentVolume, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *PersistentVolumesBridge) UpdateStatus(ctx context.Context, persistentVolume *corev1.PersistentVolume, opts metav1.UpdateOptions) (*corev1.PersistentVolume, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *PersistentVolumesBridge) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *PersistentVolumesBridge) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *PersistentVolumesBridge) List(ctx context.Context, opts metav1.ListOptions) (*corev1.PersistentVolumeList, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *PersistentVolumesBridge) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *PersistentVolumesBridge) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *corev1.PersistentVolume, err error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *PersistentVolumesBridge) Apply(ctx context.Context, persistentVolume *appcorev1.PersistentVolumeApplyConfiguration, opts metav1.ApplyOptions) (result *corev1.PersistentVolume, err error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *PersistentVolumesBridge) ApplyStatus(ctx context.Context, persistentVolume *appcorev1.PersistentVolumeApplyConfiguration, opts metav1.ApplyOptions) (result *corev1.PersistentVolume, err error) {
-	//TODO implement me
-	panic("implement me")
 }
 
 // Get takes name of the persistentVolume, and returns the corresponding persistentVolume object, and an error if there is any.

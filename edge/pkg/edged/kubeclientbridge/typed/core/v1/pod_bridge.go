@@ -23,97 +23,17 @@ import (
 	"context"
 
 	corev1 "k8s.io/api/core/v1"
-	policyv1 "k8s.io/api/policy/v1"
-	policyv1beta1 "k8s.io/api/policy/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/watch"
-	appcorev1 "k8s.io/client-go/applyconfigurations/core/v1"
-	fakecorev1 "k8s.io/client-go/kubernetes/typed/core/v1/fake"
-	"k8s.io/client-go/rest"
+	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 )
 
 type PodsBridge struct {
-	fakecorev1.FakeCoreV1
+	typedcorev1.PodInterface
 	ns         string
 	MetaClient client.CoreInterface
-}
-
-func (c *PodsBridge) EvictV1(ctx context.Context, eviction *policyv1.Eviction) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *PodsBridge) EvictV1beta1(ctx context.Context, eviction *policyv1beta1.Eviction) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *PodsBridge) Update(ctx context.Context, pod *corev1.Pod, opts metav1.UpdateOptions) (*corev1.Pod, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *PodsBridge) UpdateStatus(ctx context.Context, pod *corev1.Pod, opts metav1.UpdateOptions) (*corev1.Pod, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *PodsBridge) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *PodsBridge) List(ctx context.Context, opts metav1.ListOptions) (*corev1.PodList, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *PodsBridge) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *PodsBridge) Apply(ctx context.Context, pod *appcorev1.PodApplyConfiguration, opts metav1.ApplyOptions) (result *corev1.Pod, err error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *PodsBridge) ApplyStatus(ctx context.Context, pod *appcorev1.PodApplyConfiguration, opts metav1.ApplyOptions) (result *corev1.Pod, err error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *PodsBridge) UpdateEphemeralContainers(ctx context.Context, podName string, pod *corev1.Pod, opts metav1.UpdateOptions) (*corev1.Pod, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *PodsBridge) UpdateResize(ctx context.Context, podName string, pod *corev1.Pod, opts metav1.UpdateOptions) (*corev1.Pod, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *PodsBridge) Bind(ctx context.Context, binding *corev1.Binding, opts metav1.CreateOptions) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *PodsBridge) Evict(ctx context.Context, eviction *policyv1beta1.Eviction) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *PodsBridge) GetLogs(name string, opts *corev1.PodLogOptions) *rest.Request {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *PodsBridge) ProxyGet(scheme, name, port, path string, params map[string]string) rest.ResponseWrapper {
-	//TODO implement me
-	panic("implement me")
 }
 
 func (c *PodsBridge) Get(_ context.Context, name string, _ metav1.GetOptions) (result *corev1.Pod, err error) {

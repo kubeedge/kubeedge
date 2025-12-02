@@ -36,5 +36,5 @@ type CertificateV1Bridge struct {
 }
 
 func (c *CertificateV1Bridge) CertificateSigningRequests() v1.CertificateSigningRequestInterface {
-	return &CertificateSigningRequestsBridge{c.FakeCertificatesV1, c.MetaClient}
+	return &CertificateSigningRequestsBridge{c.FakeCertificatesV1.CertificateSigningRequests(), c.MetaClient}
 }
