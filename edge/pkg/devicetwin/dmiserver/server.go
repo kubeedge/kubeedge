@@ -67,6 +67,140 @@ type DMICache struct {
 	DeviceList      map[string]*v1beta1.Device
 }
 
+// overrideDeviceInstanceConfig overrides device instance configuration with model defaults
+func (dmiCache *DMICache) OverrideDeviceInstanceConfig(device *v1beta1.Device) error {
+	if device.Spec.DeviceModelRef == nil {
+		return fmt.Errorf("device %s has no device model reference", device.Name)
+	}
+
+	// Get device model from cache
+	deviceModelID := util.GetResourceID(device.Namespace, device.Spec.DeviceModelRef.Name)
+	dmiCache.DeviceModelMu.Lock()
+	deviceModel, ok := dmiCache.DeviceModelList[deviceModelID]
+	dmiCache.DeviceModelMu.Unlock()
+	if !ok {
+		return fmt.Errorf("device model %s not found in cache for device %s", device.Spec.DeviceModelRef.Name, device.Name)
+	}
+
+	klog.Infof("Overriding device properties for device %s using model %s", device.Name, deviceModel.Name)
+
+	// Store original device properties in temporary variables
+	originalProperties := make([]v1beta1.DeviceProperty, len(device.Spec.Properties))
+	copy(originalProperties, device.Spec.Properties)
+
+	// Apply model visitors
+	for i := range device.Spec.Properties {
+		deviceProp := &device.Spec.Properties[i]
+
+		// Find corresponding model property
+		if modelProp := findModelProperty(deviceModel.Spec.Properties, deviceProp.Name); modelProp != nil {
+			// Apply model visitors
+			if modelProp.Visitors != nil {
+				deviceProp.Visitors = *modelProp.Visitors
+				deviceProp.Visitors.ConfigData = deepCopyCustomizedValue(modelProp.Visitors.ConfigData)
+				klog.Infof("Applied model visitors to property %s of device %s", deviceProp.Name, device.Name)
+			}
+		}
+	}
+
+	// Merge with original instance data (instance data takes precedence)
+	for i, originalProp := range originalProperties {
+		deviceProp := &device.Spec.Properties[i]
+
+		// Merge visitors: keep model defaults but override with instance values
+		if originalProp.Visitors.ConfigData != nil && originalProp.Visitors.ConfigData.Data != nil {
+			// If device property has model visitors, merge the config data
+			if deviceProp.Visitors.ConfigData != nil && deviceProp.Visitors.ConfigData.Data != nil {
+				// Merge: instance data overrides model data
+				for key, value := range originalProp.Visitors.ConfigData.Data {
+					deviceProp.Visitors.ConfigData.Data[key] = value
+				}
+				klog.Infof("Merged instance visitors for property %s of device %s", deviceProp.Name, device.Name)
+			} else {
+				// No model visitors config data, use instance visitors config data directly
+				deviceProp.Visitors.ConfigData = originalProp.Visitors.ConfigData
+				klog.Infof("Used instance visitors config data for property %s of device %s", deviceProp.Name, device.Name)
+			}
+		}
+		// If original property has no visitors config, keep the model visitors (already applied above)
+	}
+
+	// Handle protocol config data
+	// Store original protocol config
+	originalProtocolConfig := device.Spec.Protocol.ConfigData
+
+	// Apply model protocol config (may be nil)
+	device.Spec.Protocol.ConfigData = deepCopyCustomizedValue(deviceModel.Spec.ProtocolConfigData)
+	if deviceModel.Spec.ProtocolConfigData != nil {
+		klog.Infof("Applied model protocol config data to device %s", device.Name)
+	}
+
+	// Merge with instance protocol config if exists (instance data takes precedence)
+	if originalProtocolConfig != nil && originalProtocolConfig.Data != nil {
+		if device.Spec.Protocol.ConfigData != nil && device.Spec.Protocol.ConfigData.Data != nil {
+			// Merge: instance data overrides model data
+			for key, value := range originalProtocolConfig.Data {
+				device.Spec.Protocol.ConfigData.Data[key] = value
+			}
+			klog.Infof("Merged instance protocol config data for device %s", device.Name)
+		} else {
+			// No model config data, use instance config directly
+			device.Spec.Protocol.ConfigData = originalProtocolConfig
+			klog.Infof("Used instance protocol config data for device %s", device.Name)
+		}
+	}
+
+	return nil
+}
+
+// findModelProperty finds a model property by name
+func findModelProperty(properties []v1beta1.ModelProperty, name string) *v1beta1.ModelProperty {
+	for i := range properties {
+		if properties[i].Name == name {
+			return &properties[i]
+		}
+	}
+	return nil
+}
+
+// deepCopyValue is a recursive function to deep copy interface{} values
+// as long as they are composed of maps, slices, and basic types.
+func deepCopyValue(v interface{}) interface{} {
+	switch val := v.(type) {
+	case map[string]interface{}:
+		newMap := make(map[string]interface{})
+		for k, v2 := range val {
+			newMap[k] = deepCopyValue(v2)
+		}
+		return newMap
+	case []interface{}:
+		newSlice := make([]interface{}, len(val))
+		for i, v2 := range val {
+			newSlice[i] = deepCopyValue(v2)
+		}
+		return newSlice
+	default:
+		return val
+	}
+}
+
+// deepCopyCustomizedValue creates a deep copy of CustomizedValue
+func deepCopyCustomizedValue(src *v1beta1.CustomizedValue) *v1beta1.CustomizedValue {
+	if src == nil {
+		return nil
+	}
+	cp := &v1beta1.CustomizedValue{}
+	if src.Data == nil {
+		return cp
+	}
+
+	cp.Data = make(map[string]interface{})
+	for key, value := range src.Data {
+		cp.Data[key] = deepCopyValue(value)
+	}
+	return cp
+}
+
 func (s *server) MapperRegister(_ context.Context, in *pb.MapperRegisterRequest) (*pb.MapperRegisterResponse, error) {
 	if !s.limiter.Allow() {
 		return nil, fmt.Errorf("fail to register mapper because of too many request: %s", in.Mapper.Name)
@@ -96,6 +230,12 @@ func (s *server) MapperRegister(_ context.Context, in *pb.MapperRegisterRequest)
 	s.dmiCache.DeviceMu.Lock()
 	for _, device := range s.dmiCache.DeviceList {
 		if device.Spec.Protocol.ProtocolName == in.Mapper.Protocol {
+			err := s.dmiCache.OverrideDeviceInstanceConfig(device)
+			if err != nil {
+				klog.Errorf("override device instance config failed for device %s: %v", device.Name, err)
+				continue
+			}
+
 			dev, err := dtcommon.ConvertDevice(device)
 			if err != nil {
 				klog.Errorf("fail to convert device %s with err: %v", device.Name, err)
