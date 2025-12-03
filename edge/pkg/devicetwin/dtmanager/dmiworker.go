@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 	"sync"
 
@@ -143,6 +144,17 @@ func (dw *DMIWorker) dealMetaDeviceOperation(_ *dtcontext.DTContext, _ string, m
 			dw.dmiCache.DeviceMu.Unlock()
 		case model.UpdateOperation:
 			dw.dmiCache.DeviceMu.Lock()
+			oldDevice, ok := dw.dmiCache.DeviceList[deviceID]
+
+			// Determine whether the Spec has actually changed
+			if ok && oldDevice != nil && reflect.DeepEqual(oldDevice.Spec, device.Spec) {
+				klog.Infof("Device unchanged, Skip UpdateDevice for %s ", device.Name)
+				oldDevice.Status = device.Status
+				dw.dmiCache.DeviceList[deviceID] = oldDevice
+				dw.dmiCache.DeviceMu.Unlock()
+				return nil
+			}
+
 			dw.dmiCache.DeviceList[deviceID] = &device
 			dw.dmiCache.DeviceMu.Unlock()
 			err = dmiclient.DMIClientsImp.UpdateDevice(&device)
