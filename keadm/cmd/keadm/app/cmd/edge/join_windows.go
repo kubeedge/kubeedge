@@ -196,12 +196,10 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 	if err != nil {
 		return fmt.Errorf("detect windows service manager failed: %v", err)
 	}
-	bin := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName+".exe")
+	binpath := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName+".exe")
 	cfg := filepath.Join(constants.KubeEdgePath, "config/edgecore.yaml")
-	// Windows service BinaryPathName accepts full command line (exe + args)
-	cmdline := fmt.Sprintf("\"%s\" --config \"%s\"", bin, cfg)
 	if !svc.ServiceExists(constants.KubeEdgeBinaryName) {
-		if err := svc.ServiceCreate(constants.KubeEdgeBinaryName, cmdline, nil); err != nil {
+		if err := svc.ServiceCreate(constants.KubeEdgeBinaryName, binpath, []string{"--config", cfg}, nil); err != nil {
 			return fmt.Errorf("create windows service for edgecore failed: %v", err)
 		}
 		if err := svc.ServiceEnable(constants.KubeEdgeBinaryName); err != nil {

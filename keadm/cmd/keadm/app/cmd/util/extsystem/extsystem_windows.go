@@ -25,8 +25,8 @@ import (
 
 	"github.com/pkg/errors"
 	"golang.org/x/sys/windows/svc"
-
 	"golang.org/x/sys/windows/svc/mgr"
+	klog "k8s.io/klog/v2"
 	"k8s.io/kubernetes/cmd/kubeadm/app/util/initsystem"
 )
 
@@ -34,7 +34,7 @@ type WindowsExtSystem struct {
 	initsystem.WindowsInitSystem
 }
 
-func (WindowsExtSystem) ServiceCreate(service, cmdline string, _ map[string]string) error {
+func (WindowsExtSystem) ServiceCreate(service, binpath string, args []string, envs map[string]string) error {
 	m, err := mgr.Connect()
 	if err != nil {
 		return err
@@ -49,11 +49,20 @@ func (WindowsExtSystem) ServiceCreate(service, cmdline string, _ map[string]stri
 		DisplayName: service,
 		StartType:   mgr.StartAutomatic,
 	}
-	s, err := m.CreateService(service, cmdline, cfg)
+	var svc *mgr.Service
+	if len(args) > 0 {
+		svc, err = m.CreateService(service, binpath, cfg, args...)
+	} else {
+		svc, err = m.CreateService(service, binpath, cfg)
+	}
 	if err != nil {
 		return err
 	}
-	defer s.Close()
+	defer func() {
+		if err := svc.Close(); err != nil {
+			klog.Warningf("close windows service %s failed, err: %v", service, err)
+		}
+	}()
 	return nil
 }
 

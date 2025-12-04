@@ -13,6 +13,7 @@ const (
 	DefaultCgroupsPerQOS        = false
 	DefaultResolverConfig       = ""
 	DefaultCPUCFSQuota          = false
+	DefaultWindowsService       = true
 	DefaultWindowsPriorityClass = "NORMAL_PRIORITY_CLASS"
 )
 
