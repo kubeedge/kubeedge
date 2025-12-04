@@ -99,6 +99,8 @@ type JoinOptions struct {
 	ImageRepository       string
 	HubProtocol           string
 	TarballPath           string
+	// LogPath is the path to the log file, Windows only
+	LogPath string
 }
 
 type CheckOptions struct {
