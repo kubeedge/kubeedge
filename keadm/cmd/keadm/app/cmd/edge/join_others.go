@@ -286,12 +286,11 @@ func runEdgeCore() error {
 			"sudo systemctl daemon-reload && sudo systemctl enable %s && sudo systemctl start %s",
 			common.EdgeCore, common.EdgeCore)
 	} else {
-		tip = fmt.Sprintf("KubeEdge edgecore is running, For logs visit: %s%s.log", common.KubeEdgeLogPath, constants.KubeEdgeBinaryName)
-		binExec = fmt.Sprintf(
-			"%s > %skubeedge/edge/%s.log 2>&1 &",
+		logFiles := filepath.Join(constants.KubeEdgeLogPath, constants.KubeEdgeBinaryName+".log")
+		tip = fmt.Sprintf("KubeEdge edgecore is running, For logs visit: %s", logFiles)
+		binExec = fmt.Sprintf("%s > %s 2>&1 &",
 			filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName),
-			constants.KubeEdgePath,
-			constants.KubeEdgeBinaryName,
+			logFiles,
 		)
 	}
 

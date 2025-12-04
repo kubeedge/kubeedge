@@ -3,6 +3,7 @@ package util
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	apiconsts "github.com/kubeedge/api/apis/common/constants"
@@ -76,9 +77,9 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 // RunCloudCore starts cloudcore process
 func (cu *KubeCloudInstTool) RunCloudCore() error {
 	// create the log dir for kubeedge
-	err := os.MkdirAll(types.KubeEdgeLogPath, os.ModePerm)
+	err := os.MkdirAll(apiconsts.KubeEdgeLogPath, os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("not able to create %s folder path", types.KubeEdgeLogPath)
+		return fmt.Errorf("not able to create %s folder path", apiconsts.KubeEdgeLogPath)
 	}
 
 	if err := os.MkdirAll(apiconsts.KubeEdgeUsrBinPath, os.ModePerm); err != nil {
@@ -93,7 +94,9 @@ func (cu *KubeCloudInstTool) RunCloudCore() error {
 	}
 
 	// start cloudcore
-	command = fmt.Sprintf("%s/%s > %s/%s.log 2>&1 &", apiconsts.KubeEdgeUsrBinPath, KubeCloudBinaryName, types.KubeEdgeLogPath, KubeCloudBinaryName)
+	command = fmt.Sprintf("%s > %s 2>&1 &",
+		filepath.Join(apiconsts.KubeEdgeUsrBinPath, KubeCloudBinaryName),
+		filepath.Join(apiconsts.KubeEdgeLogPath, KubeCloudBinaryName+".log"))
 
 	cmd = execs.NewCommand(command)
 
@@ -103,7 +106,8 @@ func (cu *KubeCloudInstTool) RunCloudCore() error {
 
 	fmt.Println(cmd.GetStdOut())
 
-	fmt.Println("KubeEdge cloudcore is running, For logs visit: ", types.KubeEdgeLogPath+KubeCloudBinaryName+".log")
+	fmt.Println("KubeEdge cloudcore is running, For logs visit: ",
+		filepath.Join(apiconsts.KubeEdgeLogPath, KubeCloudBinaryName+".log"))
 
 	return nil
 }

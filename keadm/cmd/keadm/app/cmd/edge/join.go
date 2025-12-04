@@ -144,8 +144,8 @@ func createDirs() error {
 		return fmt.Errorf("create %s folder path failed: %v", util.KubeEdgeConfigDir, err)
 	}
 	// Create log directory
-	if err := os.MkdirAll(common.KubeEdgeLogPath, os.ModePerm); err != nil {
-		return fmt.Errorf("create %s folder path failed: %v", common.KubeEdgeLogPath, err)
+	if err := os.MkdirAll(constants.KubeEdgeLogPath, os.ModePerm); err != nil {
+		return fmt.Errorf("create %s folder path failed: %v", constants.KubeEdgeLogPath, err)
 	}
 	// Create resource directory
 	if err := os.MkdirAll(common.KubeEdgeSocketPath, os.ModePerm); err != nil {

@@ -99,6 +99,7 @@ type JoinOptions struct {
 	ImageRepository       string
 	HubProtocol           string
 	TarballPath           string
+	JoinOSExtOptions
 }
 
 type CheckOptions struct {

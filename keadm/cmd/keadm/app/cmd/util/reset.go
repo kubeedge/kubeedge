@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"os"
 
-	"k8s.io/klog/v2"
+	klog "k8s.io/klog/v2"
 	utilruntime "k8s.io/kubernetes/cmd/kubeadm/app/util/runtime"
 
 	"github.com/kubeedge/api/apis/common/constants"
@@ -61,7 +61,7 @@ func RemoveContainers(criSocketPath string) error {
 func CleanDirectories(isEdgeNode bool) error {
 	var dirToClean = []string{
 		constants.KubeEdgePath,
-		common.KubeEdgeLogPath,
+		constants.KubeEdgeLogPath,
 		common.KubeEdgeSocketPath,
 		common.EdgeRootDir,
 	}

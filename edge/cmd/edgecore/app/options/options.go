@@ -30,6 +30,7 @@ import (
 
 type EdgeCoreOptions struct {
 	ConfigFile string
+	OSExclusive
 }
 
 var edgeCoreOptions *EdgeCoreOptions
@@ -53,6 +54,7 @@ func NewEdgeCoreOptions() *EdgeCoreOptions {
 func (o *EdgeCoreOptions) Flags() (fss cliflag.NamedFlagSets) {
 	fs := fss.FlagSet("global")
 	fs.StringVar(&o.ConfigFile, "config", o.ConfigFile, "The path to the configuration file. Flags override values in this file.")
+	osExclusiveFlags(fs, o)
 	return
 }
 

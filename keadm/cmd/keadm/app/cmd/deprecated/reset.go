@@ -144,7 +144,7 @@ func RemoveContainers(isEdgeNode bool) error {
 func cleanDirectories(isEdgeNode bool) error {
 	var dirToClean = []string{
 		constants.KubeEdgePath,
-		common.KubeEdgeLogPath,
+		constants.KubeEdgeLogPath,
 		common.KubeEdgeSocketPath,
 		common.EdgeRootDir,
 	}

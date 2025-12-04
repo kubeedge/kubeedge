@@ -57,7 +57,7 @@ func addCollectOtherFlags(cmd *cobra.Command, collectOptions *common.CollectOpti
 		"Whether to print internal log output")
 	cmd.Flags().StringVarP(&collectOptions.OutputPath, "output-path", "o", collectOptions.OutputPath,
 		"Cache data and store data compression packages in a directory that default to the current directory")
-	cmd.Flags().StringVarP(&collectOptions.LogPath, "log-path", "l", common.KubeEdgeLogPath,
+	cmd.Flags().StringVarP(&collectOptions.LogPath, "log-path", "l", apiconsts.KubeEdgeLogPath,
 		"Specify log file")
 }
 
@@ -227,7 +227,7 @@ func collectEdgecoreData(tmpPath string, config *v1alpha2.EdgeCoreConfig, ops *c
 			return err
 		}
 	} else {
-		if err = CopyFile(common.KubeEdgeLogPath, fmt.Sprintf("%s/log", tmpPath)); err != nil {
+		if err = CopyFile(apiconsts.KubeEdgeLogPath, fmt.Sprintf("%s/log", tmpPath)); err != nil {
 			return err
 		}
 	}

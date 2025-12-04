@@ -216,9 +216,9 @@ func isEdgeCoreServiceRunning(serviceName string) (bool, error) {
 // runEdgeCore starts edgecore with logs being captured
 func runEdgeCore() error {
 	// create the log dir for kubeedge
-	err := os.MkdirAll(types.KubeEdgeLogPath, os.ModePerm)
+	err := os.MkdirAll(apiconsts.KubeEdgeLogPath, os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("not able to create %s folder path", types.KubeEdgeLogPath)
+		return fmt.Errorf("not able to create %s folder path", apiconsts.KubeEdgeLogPath)
 	}
 
 	systemdExist := HasSystemd()
@@ -240,7 +240,8 @@ func runEdgeCore() error {
 	if systemdExist {
 		fmt.Printf("KubeEdge edgecore is running, For logs visit: journalctl -u %s.service -xe\n", types.EdgeCore)
 	} else {
-		fmt.Println("KubeEdge edgecore is running, For logs visit: ", types.KubeEdgeLogPath+apiconsts.KubeEdgeBinaryName+".log")
+		fmt.Println("KubeEdge edgecore is running, For logs visit: ",
+			filepath.Join(apiconsts.KubeEdgeLogPath, apiconsts.KubeEdgeBinaryName+".log"))
 	}
 	return nil
 }
