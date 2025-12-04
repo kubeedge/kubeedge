@@ -56,14 +56,14 @@ KubeEdge 由云端和边缘端部分构成：
 
 ### Kubernetes 版本兼容
 
-|                        | Kubernetes 1.26 | Kubernetes 1.27 | Kubernetes 1.28 | Kubernetes 1.29 | Kubernetes 1.30 | Kubernetes 1.31 |
-|------------------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|
-| KubeEdge 1.18          | +               | ✓               | ✓               | ✓               | -               | -               |
-| KubeEdge 1.19          | +               | ✓               | ✓               | ✓               | -               | -               |
-| KubeEdge 1.20          | +               | +               | ✓               | ✓               | ✓               | -               |
-| KubeEdge 1.21          | +               | +               | ✓               | ✓               | ✓               | -               |
-| KubeEdge 1.22          | +               | +               | +               | ✓               | ✓               | ✓               |
-| KubeEdge HEAD (master) | +               | +               | +               | ✓               | ✓               | ✓               |
+|                        | Kubernetes 1.26 | Kubernetes 1.27 | Kubernetes 1.28 | Kubernetes 1.29 | Kubernetes 1.30 | Kubernetes 1.31 | Kubernetes 1.32 |
+|------------------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|
+| KubeEdge 1.18          | +               | ✓               | ✓               | ✓               | -               | -               | -               |
+| KubeEdge 1.19          | +               | ✓               | ✓               | ✓               | -               | -               | -               |
+| KubeEdge 1.20          | +               | +               | ✓               | ✓               | ✓               | -               | -               |
+| KubeEdge 1.21          | +               | +               | ✓               | ✓               | ✓               | -               | -               |
+| KubeEdge 1.22          | +               | +               | +               | ✓               | ✓               | ✓               | -               |
+| KubeEdge HEAD (master) | +               | +               | +               | +               | ✓               | ✓               | ✓               |
 
 说明：
 * `✓` KubeEdge 和 Kubernetes 的版本是完全兼容的
