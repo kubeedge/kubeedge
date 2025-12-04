@@ -76,6 +76,7 @@ func ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(in *v1alpha2.T
 		return err
 	}
 	out.CgroupDriver = in.CgroupDriver
+	out.SingleProcessOOMKill = (*bool)(unsafe.Pointer(in.SingleProcessOOMKill))
 	out.CPUManagerPolicy = in.CPUManagerPolicy
 	out.CPUManagerPolicyOptions = *(*map[string]string)(unsafe.Pointer(&in.CPUManagerPolicyOptions))
 	out.CPUManagerReconcilePeriod = in.CPUManagerReconcilePeriod
@@ -165,6 +166,7 @@ func ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(in *v1alpha2.T
 	out.ShutdownGracePeriod = in.ShutdownGracePeriod
 	out.ShutdownGracePeriodCriticalPods = in.ShutdownGracePeriodCriticalPods
 	out.ShutdownGracePeriodByPodPriority = *(*[]kubeletconfig.ShutdownGracePeriodByPodPriority)(unsafe.Pointer(&in.ShutdownGracePeriodByPodPriority))
+	out.CrashLoopBackOff.MaxContainerRestartPeriod = (*v1.Duration)(unsafe.Pointer(in.CrashLoopBackOff.MaxContainerRestartPeriod))
 	out.ReservedMemory = *(*[]kubeletconfig.MemoryReservation)(unsafe.Pointer(&in.ReservedMemory))
 	if err := v1.Convert_Pointer_bool_To_bool(&in.EnableProfilingHandler, &out.EnableProfilingHandler, s); err != nil {
 		return err
