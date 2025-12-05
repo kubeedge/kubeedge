@@ -1,7 +1,7 @@
 //go:build windows
 
 /*
-Copyright 2023 The KubeEdge Authors.
+Copyright 2025 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,25 +16,28 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package common
+package app
 
 import (
-	"os"
-	"path/filepath"
+	"flag"
+	"fmt"
+
+	klog "k8s.io/klog/v2"
+
+	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
 )
 
-const (
-	KubeEdgeBackupPath  = "C:\\etc\\kubeedge\\backup\\"
-	KubeEdgeUpgradePath = "C:\\etc\\kubeedge\\upgrade\\"
-	KubeEdgeSocketPath  = "C:\\var\\lib\\kubeedge\\"
-	EdgeRootDir         = "C:\\var\\lib\\edged"
-)
-
-func init() {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		DefaultKubeConfig = "C:\\Users\\Administrator\\.kube\\config"
-		return
+func initForOS(opts *options.EdgeCoreOptions) error {
+	flagset := flag.NewFlagSet("log", flag.ExitOnError)
+	klog.InitFlags(flagset)
+	args := map[string]string{
+		"log_file":    opts.LogFilePath,
+		"logtostderr": "false",
 	}
-	DefaultKubeConfig = filepath.Join(home, ".kube", "config")
+	for k, v := range args {
+		if err := flagset.Set(k, v); err != nil {
+			return fmt.Errorf("set flag %s failed: %w", k, err)
+		}
+	}
+	return nil
 }
