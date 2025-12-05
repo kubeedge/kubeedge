@@ -109,5 +109,4 @@ func SetDefaultsKubeletConfiguration(obj *TailoredKubeletConfiguration) {
 	obj.ContainerRuntimeEndpoint = constants.DefaultRemoteRuntimeEndpoint
 	obj.ImageServiceEndpoint = constants.DefaultRemoteImageEndpoint
 	obj.FailCgroupV1 = ptr.To(false)
-	obj.CrashLoopBackOff.MaxContainerRestartPeriod = &metav1.Duration{Duration: configv1beta1.MaxContainerBackOff}
 }

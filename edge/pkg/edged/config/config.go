@@ -4,6 +4,7 @@ import (
 	"sync"
 	"unsafe"
 
+	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/conversion"
@@ -11,8 +12,6 @@ import (
 	kubeletoptions "k8s.io/kubernetes/cmd/kubelet/app/options"
 	"k8s.io/kubernetes/pkg/kubelet"
 	kubeletconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
-
-	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 )
 
 var Config Configure
@@ -166,7 +165,6 @@ func ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(in *v1alpha2.T
 	out.ShutdownGracePeriod = in.ShutdownGracePeriod
 	out.ShutdownGracePeriodCriticalPods = in.ShutdownGracePeriodCriticalPods
 	out.ShutdownGracePeriodByPodPriority = *(*[]kubeletconfig.ShutdownGracePeriodByPodPriority)(unsafe.Pointer(&in.ShutdownGracePeriodByPodPriority))
-	out.CrashLoopBackOff.MaxContainerRestartPeriod = (*v1.Duration)(unsafe.Pointer(in.CrashLoopBackOff.MaxContainerRestartPeriod))
 	out.ReservedMemory = *(*[]kubeletconfig.MemoryReservation)(unsafe.Pointer(&in.ReservedMemory))
 	if err := v1.Convert_Pointer_bool_To_bool(&in.EnableProfilingHandler, &out.EnableProfilingHandler, s); err != nil {
 		return err
