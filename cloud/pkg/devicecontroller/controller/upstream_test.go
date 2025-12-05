@@ -60,7 +60,7 @@ func TestFindOrCreateTwinByName(t *testing.T) {
 				},
 			},
 			status: &DeviceStatus{
-				Status: v1beta1.DeviceStatus{
+				Status: v1beta1.DeviceStatusStatus{
 					Twins: []v1beta1.Twin{
 						{
 							PropertyName: "temperature",
@@ -87,7 +87,7 @@ func TestFindOrCreateTwinByName(t *testing.T) {
 				},
 			},
 			status: &DeviceStatus{
-				Status: v1beta1.DeviceStatus{
+				Status: v1beta1.DeviceStatusStatus{
 					Twins: []v1beta1.Twin{},
 				},
 			},
@@ -104,7 +104,7 @@ func TestFindOrCreateTwinByName(t *testing.T) {
 				},
 			},
 			status: &DeviceStatus{
-				Status: v1beta1.DeviceStatus{
+				Status: v1beta1.DeviceStatusStatus{
 					Twins: []v1beta1.Twin{},
 				},
 			},
@@ -122,7 +122,7 @@ func TestFindOrCreateTwinByName(t *testing.T) {
 				},
 			},
 			status: &DeviceStatus{
-				Status: v1beta1.DeviceStatus{
+				Status: v1beta1.DeviceStatusStatus{
 					Twins: []v1beta1.Twin{
 						{
 							PropertyName: "humidity",
@@ -176,7 +176,7 @@ func TestFindTwinByName(t *testing.T) {
 			name:     "twin exists",
 			twinName: "temperature",
 			deviceStatus: &DeviceStatus{
-				Status: v1beta1.DeviceStatus{
+				Status: v1beta1.DeviceStatusStatus{
 					Twins: []v1beta1.Twin{
 						{
 							PropertyName: "temperature",
@@ -204,7 +204,7 @@ func TestFindTwinByName(t *testing.T) {
 			name:     "twin doesn't exist",
 			twinName: "pressure",
 			deviceStatus: &DeviceStatus{
-				Status: v1beta1.DeviceStatus{
+				Status: v1beta1.DeviceStatusStatus{
 					Twins: []v1beta1.Twin{
 						{
 							PropertyName: "temperature",
@@ -221,7 +221,7 @@ func TestFindTwinByName(t *testing.T) {
 			name:     "device status is nil",
 			twinName: "temperature",
 			deviceStatus: &DeviceStatus{
-				Status: v1beta1.DeviceStatus{},
+				Status: v1beta1.DeviceStatusStatus{},
 			},
 			expected: nil,
 		},

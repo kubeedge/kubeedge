@@ -33,3 +33,11 @@ type DeviceModelListerExpansion interface{}
 // DeviceModelNamespaceListerExpansion allows custom methods to be added to
 // DeviceModelNamespaceLister.
 type DeviceModelNamespaceListerExpansion interface{}
+
+// DeviceStatusListerExpansion allows custom methods to be added to
+// DeviceStatusLister.
+type DeviceStatusListerExpansion interface{}
+
+// DeviceStatusNamespaceListerExpansion allows custom methods to be added to
+// DeviceStatusNamespaceLister.
+type DeviceStatusNamespaceListerExpansion interface{}

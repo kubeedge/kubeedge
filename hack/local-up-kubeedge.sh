@@ -168,6 +168,7 @@ function create_device_crd {
   echo "creating the device crd..."
   kubectl apply -f ${KUBEEDGE_ROOT}/build/crds/devices/devices_v1beta1_device.yaml
   kubectl apply -f ${KUBEEDGE_ROOT}/build/crds/devices/devices_v1beta1_devicemodel.yaml
+  kubectl apply -f ${KUBEEDGE_ROOT}/build/crds/devices/devices_v1beta1_devicestatus.yaml
 }
 
 function create_objectsync_crd {
@@ -248,6 +249,8 @@ function start_edgecore {
     sed -i '/quic:/{n;s/false/true/;}' ${EDGE_CONFIGFILE}
     sed -i '/websocket:/{n;s/true/false/;}' ${EDGE_CONFIGFILE}
   fi
+
+  sed -i 's|cgroupDriver: .*|cgroupDriver: systemd|' ${EDGE_CONFIGFILE}
 
   # if we will use docker as edgecore container runtime
   # we need to change edgecore container runtime from default containerd to docker
