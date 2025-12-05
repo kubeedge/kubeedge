@@ -1,0 +1,31 @@
+apiVersion: rules.kubeedge.io/v1
+kind: Rule
+metadata:
+  name: my-rule-eventbus-direct-rest
+  labels:
+    description: eventbusDirectRest
+spec:
+  source: "my-eventbus"
+  sourceResource: {"topic":"rest/demo","node_name":"edge-node"}
+  target: "my-direct-rest"
+  targetResource: {"resource":"http://api.example.com/webhook"}
+---
+apiVersion: rules.kubeedge.io/v1
+kind: RuleEndpoint
+metadata:
+  name: my-eventbus
+  labels:
+    description: eventbus
+spec:
+  ruleEndpointType: "eventbus"
+  properties: {}
+---
+apiVersion: rules.kubeedge.io/v1
+kind: RuleEndpoint
+metadata:
+  name: my-direct-rest
+  labels:
+    description: directRestEndpoint
+spec:
+  ruleEndpointType: "rest"
+  properties: {}
