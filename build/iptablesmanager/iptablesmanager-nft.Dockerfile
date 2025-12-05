@@ -1,4 +1,4 @@
-FROM golang:1.22.9-alpine3.19 AS builder
+FROM golang:1.23.12-alpine3.21 AS builder
 
 ARG GO_LDFLAGS
 

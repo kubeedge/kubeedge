@@ -32,7 +32,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.22.x
+          go-version: 1.23.x
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -64,9 +64,9 @@ jobs:
     steps:
       - name: Pull kubeedge/build-tools image
         run: |
-          docker pull kubeedge/build-tools:1.22.9-ke1
+          docker pull kubeedge/build-tools:1.23.12-ke1
           mkdir -p /home/runner/build-tools/
-          docker save kubeedge/build-tools:1.22.9-ke1 > /home/runner/build-tools/build-tools.tar
+          docker save kubeedge/build-tools:1.23.12-ke1 > /home/runner/build-tools/build-tools.tar
 
       - name: Temporarily save kubeedge/build-tools image
         uses: actions/upload-artifact@v4
@@ -124,7 +124,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.22.x
+          go-version: 1.23.x
 
       - uses: actions/cache@v4
         with:
@@ -189,7 +189,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.22.x
+          go-version: 1.23.x
 
       - uses: actions/cache@v4
         with:
@@ -260,7 +260,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.22.x
+          go-version: 1.23.x
 
       - uses: actions/cache@v4
         with:
@@ -315,7 +315,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.22.x
+          go-version: 1.23.x
 
       - uses: actions/cache@v4
         with:
@@ -390,7 +390,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.22.x
+          go-version: 1.23.x
 
       - uses: actions/cache@v4
         with:
@@ -450,7 +450,7 @@ jobs:
         - name: Install Go
           uses: actions/setup-go@v4
           with:
-            go-version: 1.22.x
+            go-version: 1.23.x
 
         - uses: actions/cache@v4
           with:

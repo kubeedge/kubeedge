@@ -538,7 +538,7 @@ github.com/klauspost/compress/zstd/internal/xxhash
 ## explicit
 github.com/kr/fs
 # github.com/kubeedge/api v0.0.0 => ./staging/src/github.com/kubeedge/api
-## explicit; go 1.22.9
+## explicit; go 1.23.12
 github.com/kubeedge/api/apis/apps/v1alpha1
 github.com/kubeedge/api/apis/common/constants
 github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1
@@ -596,7 +596,7 @@ github.com/kubeedge/api/client/listers/policy/v1alpha1
 github.com/kubeedge/api/client/listers/reliablesyncs/v1alpha1
 github.com/kubeedge/api/client/listers/rules/v1
 # github.com/kubeedge/beehive v0.0.0 => ./staging/src/github.com/kubeedge/beehive
-## explicit; go 1.22
+## explicit; go 1.23
 github.com/kubeedge/beehive/pkg/common
 github.com/kubeedge/beehive/pkg/core
 github.com/kubeedge/beehive/pkg/core/channel
