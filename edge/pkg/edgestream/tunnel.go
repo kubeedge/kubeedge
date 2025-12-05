@@ -141,7 +141,9 @@ func (s *TunnelSession) Close() {
 }
 
 func (s *TunnelSession) WriteToLocalConnection(m *stream.Message) {
-	if con, ok := s.GetLocalConnection(m.ConnectID); ok {
+	s.localConsLock.RLock()
+	defer s.localConsLock.RUnlock()
+	if con, ok := s.localCons[m.ConnectID]; ok {
 		con.CacheTunnelMessage(m)
 	}
 }
