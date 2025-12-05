@@ -19,9 +19,9 @@ limitations under the License.
 package v1
 
 import (
-	"context"
+	context "context"
 
-	v1 "github.com/kubeedge/api/apis/rules/v1"
+	rulesv1 "github.com/kubeedge/api/apis/rules/v1"
 	scheme "github.com/kubeedge/api/client/clientset/versioned/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -37,31 +37,32 @@ type RuleEndpointsGetter interface {
 
 // RuleEndpointInterface has methods to work with RuleEndpoint resources.
 type RuleEndpointInterface interface {
-	Create(ctx context.Context, ruleEndpoint *v1.RuleEndpoint, opts metav1.CreateOptions) (*v1.RuleEndpoint, error)
-	Update(ctx context.Context, ruleEndpoint *v1.RuleEndpoint, opts metav1.UpdateOptions) (*v1.RuleEndpoint, error)
+	Create(ctx context.Context, ruleEndpoint *rulesv1.RuleEndpoint, opts metav1.CreateOptions) (*rulesv1.RuleEndpoint, error)
+	Update(ctx context.Context, ruleEndpoint *rulesv1.RuleEndpoint, opts metav1.UpdateOptions) (*rulesv1.RuleEndpoint, error)
 	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error
-	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1.RuleEndpoint, error)
-	List(ctx context.Context, opts metav1.ListOptions) (*v1.RuleEndpointList, error)
+	Get(ctx context.Context, name string, opts metav1.GetOptions) (*rulesv1.RuleEndpoint, error)
+	List(ctx context.Context, opts metav1.ListOptions) (*rulesv1.RuleEndpointList, error)
 	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.RuleEndpoint, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *rulesv1.RuleEndpoint, err error)
 	RuleEndpointExpansion
 }
 
 // ruleEndpoints implements RuleEndpointInterface
 type ruleEndpoints struct {
-	*gentype.ClientWithList[*v1.RuleEndpoint, *v1.RuleEndpointList]
+	*gentype.ClientWithList[*rulesv1.RuleEndpoint, *rulesv1.RuleEndpointList]
 }
 
 // newRuleEndpoints returns a RuleEndpoints
 func newRuleEndpoints(c *RulesV1Client, namespace string) *ruleEndpoints {
 	return &ruleEndpoints{
-		gentype.NewClientWithList[*v1.RuleEndpoint, *v1.RuleEndpointList](
+		gentype.NewClientWithList[*rulesv1.RuleEndpoint, *rulesv1.RuleEndpointList](
 			"ruleendpoints",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *v1.RuleEndpoint { return &v1.RuleEndpoint{} },
-			func() *v1.RuleEndpointList { return &v1.RuleEndpointList{} }),
+			func() *rulesv1.RuleEndpoint { return &rulesv1.RuleEndpoint{} },
+			func() *rulesv1.RuleEndpointList { return &rulesv1.RuleEndpointList{} },
+		),
 	}
 }

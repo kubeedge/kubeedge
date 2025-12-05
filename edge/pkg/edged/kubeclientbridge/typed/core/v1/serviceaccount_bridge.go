@@ -30,14 +30,14 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	fakecorev1 "k8s.io/client-go/kubernetes/typed/core/v1/fake"
+	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 )
 
 // ServiceAccountsBridge implements ServiceAccountInterface
 type ServiceAccountsBridge struct {
-	fakecorev1.FakeServiceAccounts
+	typedcorev1.ServiceAccountInterface
 	ns         string
 	MetaClient client.CoreInterface
 }

@@ -19,129 +19,32 @@ limitations under the License.
 package fake
 
 import (
-	"context"
-
 	v1alpha1 "github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	labels "k8s.io/apimachinery/pkg/labels"
-	types "k8s.io/apimachinery/pkg/types"
-	watch "k8s.io/apimachinery/pkg/watch"
-	testing "k8s.io/client-go/testing"
+	reliablesyncsv1alpha1 "github.com/kubeedge/api/client/clientset/versioned/typed/reliablesyncs/v1alpha1"
+	gentype "k8s.io/client-go/gentype"
 )
 
-// FakeObjectSyncs implements ObjectSyncInterface
-type FakeObjectSyncs struct {
+// fakeObjectSyncs implements ObjectSyncInterface
+type fakeObjectSyncs struct {
+	*gentype.FakeClientWithList[*v1alpha1.ObjectSync, *v1alpha1.ObjectSyncList]
 	Fake *FakeReliablesyncsV1alpha1
-	ns   string
 }
 
-var objectsyncsResource = v1alpha1.SchemeGroupVersion.WithResource("objectsyncs")
-
-var objectsyncsKind = v1alpha1.SchemeGroupVersion.WithKind("ObjectSync")
-
-// Get takes name of the objectSync, and returns the corresponding objectSync object, and an error if there is any.
-func (c *FakeObjectSyncs) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.ObjectSync, err error) {
-	emptyResult := &v1alpha1.ObjectSync{}
-	obj, err := c.Fake.
-		Invokes(testing.NewGetActionWithOptions(objectsyncsResource, c.ns, name, options), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
+func newFakeObjectSyncs(fake *FakeReliablesyncsV1alpha1, namespace string) reliablesyncsv1alpha1.ObjectSyncInterface {
+	return &fakeObjectSyncs{
+		gentype.NewFakeClientWithList[*v1alpha1.ObjectSync, *v1alpha1.ObjectSyncList](
+			fake.Fake,
+			namespace,
+			v1alpha1.SchemeGroupVersion.WithResource("objectsyncs"),
+			v1alpha1.SchemeGroupVersion.WithKind("ObjectSync"),
+			func() *v1alpha1.ObjectSync { return &v1alpha1.ObjectSync{} },
+			func() *v1alpha1.ObjectSyncList { return &v1alpha1.ObjectSyncList{} },
+			func(dst, src *v1alpha1.ObjectSyncList) { dst.ListMeta = src.ListMeta },
+			func(list *v1alpha1.ObjectSyncList) []*v1alpha1.ObjectSync { return gentype.ToPointerSlice(list.Items) },
+			func(list *v1alpha1.ObjectSyncList, items []*v1alpha1.ObjectSync) {
+				list.Items = gentype.FromPointerSlice(items)
+			},
+		),
+		fake,
 	}
-	return obj.(*v1alpha1.ObjectSync), err
-}
-
-// List takes label and field selectors, and returns the list of ObjectSyncs that match those selectors.
-func (c *FakeObjectSyncs) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.ObjectSyncList, err error) {
-	emptyResult := &v1alpha1.ObjectSyncList{}
-	obj, err := c.Fake.
-		Invokes(testing.NewListActionWithOptions(objectsyncsResource, objectsyncsKind, c.ns, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-
-	label, _, _ := testing.ExtractFromListOptions(opts)
-	if label == nil {
-		label = labels.Everything()
-	}
-	list := &v1alpha1.ObjectSyncList{ListMeta: obj.(*v1alpha1.ObjectSyncList).ListMeta}
-	for _, item := range obj.(*v1alpha1.ObjectSyncList).Items {
-		if label.Matches(labels.Set(item.Labels)) {
-			list.Items = append(list.Items, item)
-		}
-	}
-	return list, err
-}
-
-// Watch returns a watch.Interface that watches the requested objectSyncs.
-func (c *FakeObjectSyncs) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
-	return c.Fake.
-		InvokesWatch(testing.NewWatchActionWithOptions(objectsyncsResource, c.ns, opts))
-
-}
-
-// Create takes the representation of a objectSync and creates it.  Returns the server's representation of the objectSync, and an error, if there is any.
-func (c *FakeObjectSyncs) Create(ctx context.Context, objectSync *v1alpha1.ObjectSync, opts v1.CreateOptions) (result *v1alpha1.ObjectSync, err error) {
-	emptyResult := &v1alpha1.ObjectSync{}
-	obj, err := c.Fake.
-		Invokes(testing.NewCreateActionWithOptions(objectsyncsResource, c.ns, objectSync, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.ObjectSync), err
-}
-
-// Update takes the representation of a objectSync and updates it. Returns the server's representation of the objectSync, and an error, if there is any.
-func (c *FakeObjectSyncs) Update(ctx context.Context, objectSync *v1alpha1.ObjectSync, opts v1.UpdateOptions) (result *v1alpha1.ObjectSync, err error) {
-	emptyResult := &v1alpha1.ObjectSync{}
-	obj, err := c.Fake.
-		Invokes(testing.NewUpdateActionWithOptions(objectsyncsResource, c.ns, objectSync, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.ObjectSync), err
-}
-
-// UpdateStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeObjectSyncs) UpdateStatus(ctx context.Context, objectSync *v1alpha1.ObjectSync, opts v1.UpdateOptions) (result *v1alpha1.ObjectSync, err error) {
-	emptyResult := &v1alpha1.ObjectSync{}
-	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceActionWithOptions(objectsyncsResource, "status", c.ns, objectSync, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.ObjectSync), err
-}
-
-// Delete takes name of the objectSync and deletes it. Returns an error if one occurs.
-func (c *FakeObjectSyncs) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	_, err := c.Fake.
-		Invokes(testing.NewDeleteActionWithOptions(objectsyncsResource, c.ns, name, opts), &v1alpha1.ObjectSync{})
-
-	return err
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *FakeObjectSyncs) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewDeleteCollectionActionWithOptions(objectsyncsResource, c.ns, opts, listOpts)
-
-	_, err := c.Fake.Invokes(action, &v1alpha1.ObjectSyncList{})
-	return err
-}
-
-// Patch applies the patch and returns the patched objectSync.
-func (c *FakeObjectSyncs) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.ObjectSync, err error) {
-	emptyResult := &v1alpha1.ObjectSync{}
-	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceActionWithOptions(objectsyncsResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.ObjectSync), err
 }

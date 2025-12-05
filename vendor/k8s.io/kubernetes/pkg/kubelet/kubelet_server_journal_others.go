@@ -24,11 +24,11 @@ import (
 )
 
 // getLoggingCmd on unsupported operating systems returns the echo command and a warning message (as strings)
-func getLoggingCmd(n *nodeLogQuery, services []string) (cmd string, args []string, cmdEnv []string, err error) {
+func getLoggingCmd(_ *nodeLogQuery, _ []string) (cmd string, args []string, cmdEnv []string, err error) {
 	return "", args, cmdEnv, errors.New("Operating System Not Supported")
 }
 
 // checkForNativeLogger on unsupported operating systems returns false
-func checkForNativeLogger(ctx context.Context, service string) bool {
+func checkForNativeLogger(_ context.Context, _ string) bool {
 	return false
 }

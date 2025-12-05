@@ -28,14 +28,14 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	fakecorev1 "k8s.io/client-go/kubernetes/typed/core/v1/fake"
+	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 )
 
 // SecretBridge implements SecretInterface
 type SecretBridge struct {
-	fakecorev1.FakeSecrets
+	typedcorev1.SecretInterface
 	ns         string
 	MetaClient client.CoreInterface
 }

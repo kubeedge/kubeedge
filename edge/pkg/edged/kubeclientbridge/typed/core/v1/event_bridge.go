@@ -23,7 +23,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	appcorev1 "k8s.io/client-go/applyconfigurations/core/v1"
-	fakecorev1 "k8s.io/client-go/kubernetes/typed/core/v1/fake"
+	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 )
@@ -31,7 +31,7 @@ import (
 // EventBridge is a structure that handles event operations.
 // FakeEvents is the whole set of Event api, and MetaClient includes a subset of FakeEvents.
 type EventsBridge struct {
-	fakecorev1.FakeEvents
+	typedcorev1.EventInterface
 	ns         string
 	MetaClient client.CoreInterface
 }

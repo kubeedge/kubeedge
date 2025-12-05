@@ -19,9 +19,9 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 
-	v1alpha1 "github.com/kubeedge/api/apis/operations/v1alpha1"
+	operationsv1alpha1 "github.com/kubeedge/api/apis/operations/v1alpha1"
 	scheme "github.com/kubeedge/api/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -37,33 +37,34 @@ type NodeUpgradeJobsGetter interface {
 
 // NodeUpgradeJobInterface has methods to work with NodeUpgradeJob resources.
 type NodeUpgradeJobInterface interface {
-	Create(ctx context.Context, nodeUpgradeJob *v1alpha1.NodeUpgradeJob, opts v1.CreateOptions) (*v1alpha1.NodeUpgradeJob, error)
-	Update(ctx context.Context, nodeUpgradeJob *v1alpha1.NodeUpgradeJob, opts v1.UpdateOptions) (*v1alpha1.NodeUpgradeJob, error)
+	Create(ctx context.Context, nodeUpgradeJob *operationsv1alpha1.NodeUpgradeJob, opts v1.CreateOptions) (*operationsv1alpha1.NodeUpgradeJob, error)
+	Update(ctx context.Context, nodeUpgradeJob *operationsv1alpha1.NodeUpgradeJob, opts v1.UpdateOptions) (*operationsv1alpha1.NodeUpgradeJob, error)
 	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-	UpdateStatus(ctx context.Context, nodeUpgradeJob *v1alpha1.NodeUpgradeJob, opts v1.UpdateOptions) (*v1alpha1.NodeUpgradeJob, error)
+	UpdateStatus(ctx context.Context, nodeUpgradeJob *operationsv1alpha1.NodeUpgradeJob, opts v1.UpdateOptions) (*operationsv1alpha1.NodeUpgradeJob, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.NodeUpgradeJob, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.NodeUpgradeJobList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*operationsv1alpha1.NodeUpgradeJob, error)
+	List(ctx context.Context, opts v1.ListOptions) (*operationsv1alpha1.NodeUpgradeJobList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.NodeUpgradeJob, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *operationsv1alpha1.NodeUpgradeJob, err error)
 	NodeUpgradeJobExpansion
 }
 
 // nodeUpgradeJobs implements NodeUpgradeJobInterface
 type nodeUpgradeJobs struct {
-	*gentype.ClientWithList[*v1alpha1.NodeUpgradeJob, *v1alpha1.NodeUpgradeJobList]
+	*gentype.ClientWithList[*operationsv1alpha1.NodeUpgradeJob, *operationsv1alpha1.NodeUpgradeJobList]
 }
 
 // newNodeUpgradeJobs returns a NodeUpgradeJobs
 func newNodeUpgradeJobs(c *OperationsV1alpha1Client) *nodeUpgradeJobs {
 	return &nodeUpgradeJobs{
-		gentype.NewClientWithList[*v1alpha1.NodeUpgradeJob, *v1alpha1.NodeUpgradeJobList](
+		gentype.NewClientWithList[*operationsv1alpha1.NodeUpgradeJob, *operationsv1alpha1.NodeUpgradeJobList](
 			"nodeupgradejobs",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			"",
-			func() *v1alpha1.NodeUpgradeJob { return &v1alpha1.NodeUpgradeJob{} },
-			func() *v1alpha1.NodeUpgradeJobList { return &v1alpha1.NodeUpgradeJobList{} }),
+			func() *operationsv1alpha1.NodeUpgradeJob { return &operationsv1alpha1.NodeUpgradeJob{} },
+			func() *operationsv1alpha1.NodeUpgradeJobList { return &operationsv1alpha1.NodeUpgradeJobList{} },
+		),
 	}
 }

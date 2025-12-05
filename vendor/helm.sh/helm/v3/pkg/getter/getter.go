@@ -37,6 +37,8 @@ type options struct {
 	caFile                string
 	unTar                 bool
 	insecureSkipVerifyTLS bool
+	plainHTTP             bool
+	acceptHeader          string
 	username              string
 	password              string
 	passCredentialsAll    bool
@@ -56,6 +58,13 @@ type Option func(*options)
 func WithURL(url string) Option {
 	return func(opts *options) {
 		opts.url = url
+	}
+}
+
+// WithAcceptHeader sets the request's Accept header as some REST APIs serve multiple content types
+func WithAcceptHeader(header string) Option {
+	return func(opts *options) {
+		opts.acceptHeader = header
 	}
 }
 
@@ -93,6 +102,12 @@ func WithTLSClientConfig(certFile, keyFile, caFile string) Option {
 		opts.certFile = certFile
 		opts.keyFile = keyFile
 		opts.caFile = caFile
+	}
+}
+
+func WithPlainHTTP(plainHTTP bool) Option {
+	return func(opts *options) {
+		opts.plainHTTP = plainHTTP
 	}
 }
 
@@ -172,9 +187,21 @@ func (p Providers) ByScheme(scheme string) (Getter, error) {
 	return nil, errors.Errorf("scheme %q not supported", scheme)
 }
 
+const (
+	// The cost timeout references curl's default connection timeout.
+	// https://github.com/curl/curl/blob/master/lib/connect.h#L40C21-L40C21
+	// The helm commands are usually executed manually. Considering the acceptable waiting time, we reduced the entire request time to 120s.
+	DefaultHTTPTimeout = 120
+)
+
+var defaultOptions = []Option{WithTimeout(time.Second * DefaultHTTPTimeout)}
+
 var httpProvider = Provider{
 	Schemes: []string{"http", "https"},
-	New:     NewHTTPGetter,
+	New: func(options ...Option) (Getter, error) {
+		options = append(options, defaultOptions...)
+		return NewHTTPGetter(options...)
+	},
 }
 
 var ociProvider = Provider{

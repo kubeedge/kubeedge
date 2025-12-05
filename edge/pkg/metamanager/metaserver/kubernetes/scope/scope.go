@@ -33,7 +33,7 @@ func NewRequestScope() *handlers.RequestScope {
 		schema.GroupVersionKind{},
 		schema.GroupVersion{},
 		"",
-		make(map[fieldpath.APIVersion]*fieldpath.Set),
+		make(map[fieldpath.APIVersion]fieldpath.Filter),
 	)
 	if err != nil {
 		klog.Errorf("Failed to create FieldManager: %v\n", err)

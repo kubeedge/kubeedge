@@ -29,15 +29,15 @@ type FakeOperationsV1alpha2 struct {
 }
 
 func (c *FakeOperationsV1alpha2) ConfigUpdateJobs() v1alpha2.ConfigUpdateJobInterface {
-	return &FakeConfigUpdateJobs{c}
+	return newFakeConfigUpdateJobs(c)
 }
 
 func (c *FakeOperationsV1alpha2) ImagePrePullJobs() v1alpha2.ImagePrePullJobInterface {
-	return &FakeImagePrePullJobs{c}
+	return newFakeImagePrePullJobs(c)
 }
 
 func (c *FakeOperationsV1alpha2) NodeUpgradeJobs() v1alpha2.NodeUpgradeJobInterface {
-	return &FakeNodeUpgradeJobs{c}
+	return newFakeNodeUpgradeJobs(c)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

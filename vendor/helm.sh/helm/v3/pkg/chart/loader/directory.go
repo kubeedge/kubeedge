@@ -25,9 +25,9 @@ import (
 
 	"github.com/pkg/errors"
 
-	"helm.sh/helm/v3/internal/ignore"
 	"helm.sh/helm/v3/internal/sympath"
 	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/ignore"
 )
 
 var utf8bom = []byte{0xEF, 0xBB, 0xBF}
@@ -99,6 +99,10 @@ func LoadDir(dir string) (*chart.Chart, error) {
 		// See https://golang.org/pkg/os/#FileMode for examples.
 		if !fi.Mode().IsRegular() {
 			return fmt.Errorf("cannot load irregular file %s as it has file mode type bits set", name)
+		}
+
+		if fi.Size() > MaxDecompressedFileSize {
+			return fmt.Errorf("chart file %q is larger than the maximum file size %d", fi.Name(), MaxDecompressedFileSize)
 		}
 
 		data, err := os.ReadFile(name)

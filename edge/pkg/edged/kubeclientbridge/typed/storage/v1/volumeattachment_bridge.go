@@ -28,14 +28,14 @@ import (
 
 	storagev1 "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	fakestoragev1 "k8s.io/client-go/kubernetes/typed/storage/v1/fake"
+	typedstoragev1 "k8s.io/client-go/kubernetes/typed/storage/v1"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 )
 
 // VolumeAttachmentsBridge implements PersistentVolumeInterface
 type VolumeAttachmentsBridge struct {
-	fakestoragev1.FakeVolumeAttachments
+	typedstoragev1.VolumeAttachmentInterface
 	MetaClient client.CoreInterface
 }
 

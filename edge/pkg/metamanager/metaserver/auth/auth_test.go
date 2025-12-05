@@ -150,7 +150,8 @@ func TestTokenGenerateAndValidate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error making generator: %v", err)
 	}
-	rsaToken, err := rsaGenerator.GenerateToken(serviceaccount.LegacyClaims(*serviceAccount, *rsaSecret))
+	rsaclaim, rsaRes := serviceaccount.LegacyClaims(*serviceAccount, *rsaSecret)
+	rsaToken, err := rsaGenerator.GenerateToken(context.Background(), rsaclaim, rsaRes)
 	if err != nil {
 		t.Fatalf("error generating token: %v", err)
 	}
@@ -168,7 +169,8 @@ func TestTokenGenerateAndValidate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error making generator: %v", err)
 	}
-	ecdsaToken, err := ecdsaGenerator.GenerateToken(serviceaccount.LegacyClaims(*serviceAccount, *ecdsaSecret))
+	ecdsaclaim, ecdsaRes := serviceaccount.LegacyClaims(*serviceAccount, *ecdsaSecret)
+	ecdsaToken, err := ecdsaGenerator.GenerateToken(context.Background(), ecdsaclaim, ecdsaRes)
 	if err != nil {
 		t.Fatalf("error generating token: %v", err)
 	}
@@ -186,7 +188,8 @@ func TestTokenGenerateAndValidate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error making generator: %v", err)
 	}
-	badIssuerToken, err := badIssuerGenerator.GenerateToken(serviceaccount.LegacyClaims(*serviceAccount, *rsaSecret))
+	badIssuerClaim, badIssuerRes := serviceaccount.LegacyClaims(*serviceAccount, *rsaSecret)
+	badIssuerToken, err := badIssuerGenerator.GenerateToken(context.Background(), badIssuerClaim, badIssuerRes)
 	if err != nil {
 		t.Fatalf("error generating token: %v", err)
 	}
@@ -196,7 +199,8 @@ func TestTokenGenerateAndValidate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error making generator: %v", err)
 	}
-	differentIssuerToken, err := differentIssuerGenerator.GenerateToken(serviceaccount.LegacyClaims(*serviceAccount, *rsaSecret))
+	differentIssuerClaim, differentIssuerRes := serviceaccount.LegacyClaims(*serviceAccount, *rsaSecret)
+	differentIssuerToken, err := differentIssuerGenerator.GenerateToken(context.Background(), differentIssuerClaim, differentIssuerRes)
 	if err != nil {
 		t.Fatalf("error generating token: %v", err)
 	}

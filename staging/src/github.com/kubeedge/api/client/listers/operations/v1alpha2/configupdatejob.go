@@ -19,10 +19,10 @@ limitations under the License.
 package v1alpha2
 
 import (
-	v1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/listers"
-	"k8s.io/client-go/tools/cache"
+	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // ConfigUpdateJobLister helps list ConfigUpdateJobs.
@@ -30,19 +30,19 @@ import (
 type ConfigUpdateJobLister interface {
 	// List lists all ConfigUpdateJobs in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha2.ConfigUpdateJob, err error)
+	List(selector labels.Selector) (ret []*operationsv1alpha2.ConfigUpdateJob, err error)
 	// Get retrieves the ConfigUpdateJob from the index for a given name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1alpha2.ConfigUpdateJob, error)
+	Get(name string) (*operationsv1alpha2.ConfigUpdateJob, error)
 	ConfigUpdateJobListerExpansion
 }
 
 // configUpdateJobLister implements the ConfigUpdateJobLister interface.
 type configUpdateJobLister struct {
-	listers.ResourceIndexer[*v1alpha2.ConfigUpdateJob]
+	listers.ResourceIndexer[*operationsv1alpha2.ConfigUpdateJob]
 }
 
 // NewConfigUpdateJobLister returns a new ConfigUpdateJobLister.
 func NewConfigUpdateJobLister(indexer cache.Indexer) ConfigUpdateJobLister {
-	return &configUpdateJobLister{listers.New[*v1alpha2.ConfigUpdateJob](indexer, v1alpha2.Resource("configupdatejob"))}
+	return &configUpdateJobLister{listers.New[*operationsv1alpha2.ConfigUpdateJob](indexer, operationsv1alpha2.Resource("configupdatejob"))}
 }

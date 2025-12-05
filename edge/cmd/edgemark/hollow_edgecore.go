@@ -113,7 +113,7 @@ func run(config *hollowEdgeNodeConfig) {
 
 	edged.DefaultRunLiteKubelet = func(ctx context.Context, s *kubeletoptions.KubeletServer,
 		kubeDeps *kubelet.Dependencies, featureGate featuregate.FeatureGate) error {
-		return kubeletapp.RunKubelet(ctx, s, kubeDeps, false)
+		return kubeletapp.RunKubelet(ctx, s, kubeDeps)
 	}
 
 	edged.Register(c.Modules.Edged)

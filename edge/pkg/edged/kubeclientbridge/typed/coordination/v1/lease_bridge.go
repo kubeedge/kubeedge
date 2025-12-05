@@ -28,14 +28,14 @@ import (
 
 	coordinationv1 "k8s.io/api/coordination/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	fakecoordinationv1 "k8s.io/client-go/kubernetes/typed/coordination/v1/fake"
+	typedcoordinationv1 "k8s.io/client-go/kubernetes/typed/coordination/v1"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 )
 
 // LeaseBridge implements LeaseInterface
 type LeaseBridge struct {
-	fakecoordinationv1.FakeLeases
+	typedcoordinationv1.LeaseInterface
 	ns         string
 	MetaClient client.CoreInterface
 }

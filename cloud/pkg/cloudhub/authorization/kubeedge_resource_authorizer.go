@@ -40,6 +40,6 @@ func (kubeedgeResourceAuthorizer) Authorize(_ context.Context, attrs authorizer.
 	return authorizer.DecisionNoOpinion, fmt.Sprintf("unknown request: verb=%s resource=%s, subresource=%s", attrs.GetVerb(), attrs.GetResource(), attrs.GetSubresource()), nil
 }
 
-func (kubeedgeResourceAuthorizer) RulesFor(user.Info, string) ([]authorizer.ResourceRuleInfo, []authorizer.NonResourceRuleInfo, bool, error) {
+func (kubeedgeResourceAuthorizer) RulesFor(context.Context, user.Info, string) ([]authorizer.ResourceRuleInfo, []authorizer.NonResourceRuleInfo, bool, error) {
 	return nil, nil, true, errors.New("kubeedge resource authorizer does not support user rule resolution")
 }

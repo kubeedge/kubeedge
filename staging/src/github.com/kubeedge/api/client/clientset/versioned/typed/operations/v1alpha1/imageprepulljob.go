@@ -19,9 +19,9 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 
-	v1alpha1 "github.com/kubeedge/api/apis/operations/v1alpha1"
+	operationsv1alpha1 "github.com/kubeedge/api/apis/operations/v1alpha1"
 	scheme "github.com/kubeedge/api/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -37,33 +37,34 @@ type ImagePrePullJobsGetter interface {
 
 // ImagePrePullJobInterface has methods to work with ImagePrePullJob resources.
 type ImagePrePullJobInterface interface {
-	Create(ctx context.Context, imagePrePullJob *v1alpha1.ImagePrePullJob, opts v1.CreateOptions) (*v1alpha1.ImagePrePullJob, error)
-	Update(ctx context.Context, imagePrePullJob *v1alpha1.ImagePrePullJob, opts v1.UpdateOptions) (*v1alpha1.ImagePrePullJob, error)
+	Create(ctx context.Context, imagePrePullJob *operationsv1alpha1.ImagePrePullJob, opts v1.CreateOptions) (*operationsv1alpha1.ImagePrePullJob, error)
+	Update(ctx context.Context, imagePrePullJob *operationsv1alpha1.ImagePrePullJob, opts v1.UpdateOptions) (*operationsv1alpha1.ImagePrePullJob, error)
 	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-	UpdateStatus(ctx context.Context, imagePrePullJob *v1alpha1.ImagePrePullJob, opts v1.UpdateOptions) (*v1alpha1.ImagePrePullJob, error)
+	UpdateStatus(ctx context.Context, imagePrePullJob *operationsv1alpha1.ImagePrePullJob, opts v1.UpdateOptions) (*operationsv1alpha1.ImagePrePullJob, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.ImagePrePullJob, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.ImagePrePullJobList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*operationsv1alpha1.ImagePrePullJob, error)
+	List(ctx context.Context, opts v1.ListOptions) (*operationsv1alpha1.ImagePrePullJobList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.ImagePrePullJob, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *operationsv1alpha1.ImagePrePullJob, err error)
 	ImagePrePullJobExpansion
 }
 
 // imagePrePullJobs implements ImagePrePullJobInterface
 type imagePrePullJobs struct {
-	*gentype.ClientWithList[*v1alpha1.ImagePrePullJob, *v1alpha1.ImagePrePullJobList]
+	*gentype.ClientWithList[*operationsv1alpha1.ImagePrePullJob, *operationsv1alpha1.ImagePrePullJobList]
 }
 
 // newImagePrePullJobs returns a ImagePrePullJobs
 func newImagePrePullJobs(c *OperationsV1alpha1Client) *imagePrePullJobs {
 	return &imagePrePullJobs{
-		gentype.NewClientWithList[*v1alpha1.ImagePrePullJob, *v1alpha1.ImagePrePullJobList](
+		gentype.NewClientWithList[*operationsv1alpha1.ImagePrePullJob, *operationsv1alpha1.ImagePrePullJobList](
 			"imageprepulljobs",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			"",
-			func() *v1alpha1.ImagePrePullJob { return &v1alpha1.ImagePrePullJob{} },
-			func() *v1alpha1.ImagePrePullJobList { return &v1alpha1.ImagePrePullJobList{} }),
+			func() *operationsv1alpha1.ImagePrePullJob { return &operationsv1alpha1.ImagePrePullJob{} },
+			func() *operationsv1alpha1.ImagePrePullJobList { return &operationsv1alpha1.ImagePrePullJobList{} },
+		),
 	}
 }

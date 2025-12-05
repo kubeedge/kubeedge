@@ -19,13 +19,13 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	operationsv1alpha1 "github.com/kubeedge/api/apis/operations/v1alpha1"
+	apisoperationsv1alpha1 "github.com/kubeedge/api/apis/operations/v1alpha1"
 	versioned "github.com/kubeedge/api/client/clientset/versioned"
 	internalinterfaces "github.com/kubeedge/api/client/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/kubeedge/api/client/listers/operations/v1alpha1"
+	operationsv1alpha1 "github.com/kubeedge/api/client/listers/operations/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -36,7 +36,7 @@ import (
 // NodeUpgradeJobs.
 type NodeUpgradeJobInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.NodeUpgradeJobLister
+	Lister() operationsv1alpha1.NodeUpgradeJobLister
 }
 
 type nodeUpgradeJobInformer struct {
@@ -70,7 +70,7 @@ func NewFilteredNodeUpgradeJobInformer(client versioned.Interface, resyncPeriod 
 				return client.OperationsV1alpha1().NodeUpgradeJobs().Watch(context.TODO(), options)
 			},
 		},
-		&operationsv1alpha1.NodeUpgradeJob{},
+		&apisoperationsv1alpha1.NodeUpgradeJob{},
 		resyncPeriod,
 		indexers,
 	)
@@ -81,9 +81,9 @@ func (f *nodeUpgradeJobInformer) defaultInformer(client versioned.Interface, res
 }
 
 func (f *nodeUpgradeJobInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&operationsv1alpha1.NodeUpgradeJob{}, f.defaultInformer)
+	return f.factory.InformerFor(&apisoperationsv1alpha1.NodeUpgradeJob{}, f.defaultInformer)
 }
 
-func (f *nodeUpgradeJobInformer) Lister() v1alpha1.NodeUpgradeJobLister {
-	return v1alpha1.NewNodeUpgradeJobLister(f.Informer().GetIndexer())
+func (f *nodeUpgradeJobInformer) Lister() operationsv1alpha1.NodeUpgradeJobLister {
+	return operationsv1alpha1.NewNodeUpgradeJobLister(f.Informer().GetIndexer())
 }

@@ -67,7 +67,7 @@ func TestAuthorize(t *testing.T) {
 func TestRulesFor(t *testing.T) {
 	var authz kubeedgeResourceAuthorizer
 
-	_, _, _, err := authz.RulesFor(&user.DefaultInfo{}, "")
+	_, _, _, err := authz.RulesFor(context.Background(), &user.DefaultInfo{}, "")
 	if err == nil {
 		t.Error("RulesFor() should not support user rule resolution")
 	}

@@ -36,5 +36,5 @@ type StorageV1Bridge struct {
 }
 
 func (c *StorageV1Bridge) VolumeAttachments() storagev1.VolumeAttachmentInterface {
-	return &VolumeAttachmentsBridge{fakestoragev1.FakeVolumeAttachments{Fake: &c.FakeStorageV1}, c.MetaClient}
+	return &VolumeAttachmentsBridge{c.FakeStorageV1.VolumeAttachments(), c.MetaClient}
 }
