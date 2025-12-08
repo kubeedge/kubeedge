@@ -636,6 +636,10 @@ func (in *PushMethod) DeepCopyInto(out *PushMethod) {
 		*out = new(DBMethodConfig)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.AnomalyDetection != nil {
+		in, out := &in.AnomalyDetection, &out.AnomalyDetection
+		*out = (*in).DeepCopy()
+	}
 	return
 }
 
