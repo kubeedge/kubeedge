@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/containerd/containerd/errdefs"
+	"github.com/containerd/errdefs"
 )
 
 /*
@@ -121,7 +121,7 @@ loop:
 		case tokenEOF:
 			break loop
 		default:
-			return nil, p.mkerrf(p.scanner.ppos, "unexpected input: %v", string(tok))
+			return nil, p.mkerr(p.scanner.ppos, "unexpected input: %v", string(tok))
 		}
 	}
 
@@ -226,7 +226,7 @@ func (p *parser) operator() (operator, error) {
 		case "~=":
 			return operatorMatches, nil
 		default:
-			return 0, p.mkerrf(pos, "unsupported operator %q", s)
+			return 0, p.mkerr(pos, "unsupported operator %q", s)
 		}
 	case tokenIllegal:
 		return 0, p.mkerr(pos, p.scanner.err)
@@ -257,7 +257,7 @@ func (p *parser) unquote(pos int, s string, allowAlts bool) (string, error) {
 
 	uq, err := unquote(s)
 	if err != nil {
-		return "", p.mkerrf(pos, "unquoting failed: %v", err)
+		return "", p.mkerr(pos, "unquoting failed: %v", err)
 	}
 
 	return uq, nil
@@ -281,14 +281,10 @@ func (pe parseError) Error() string {
 	return fmt.Sprintf("[%s]: %v", pe.input, pe.msg)
 }
 
-func (p *parser) mkerrf(pos int, format string, args ...interface{}) error {
-	return p.mkerr(pos, fmt.Sprintf(format, args...))
-}
-
-func (p *parser) mkerr(pos int, msg string) error {
+func (p *parser) mkerr(pos int, format string, args ...interface{}) error {
 	return fmt.Errorf("parse error: %w", parseError{
 		input: p.input,
 		pos:   pos,
-		msg:   msg,
+		msg:   fmt.Sprintf(format, args...),
 	})
 }

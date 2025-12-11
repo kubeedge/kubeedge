@@ -23,13 +23,15 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
+
+	helmtime "helm.sh/helm/v3/pkg/time"
 
 	"github.com/Masterminds/semver/v3"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	orascontext "oras.land/oras-go/pkg/context"
-	"oras.land/oras-go/pkg/registry"
 
 	"helm.sh/helm/v3/internal/tlsutil"
 	"helm.sh/helm/v3/pkg/chart"
@@ -62,8 +64,7 @@ func GetTagMatchingVersionOrConstraint(tags []string, versionString string) (str
 		// If string is empty, set wildcard constraint
 		constraint, _ = semver.NewConstraint("*")
 	} else {
-		// when customer input exact version, check whether have exact match
-		// one first
+		// when customer inputs specific version, check whether there's an exact match first
 		for _, v := range tags {
 			if versionString == v {
 				return v, nil
@@ -113,31 +114,6 @@ func ctx(out io.Writer, debug bool) context.Context {
 	return ctx
 }
 
-// parseReference will parse and validate the reference, and clean tags when
-// applicable tags are only cleaned when plus (+) signs are present, and are
-// converted to underscores (_) before pushing
-// See https://github.com/helm/helm/issues/10166
-func parseReference(raw string) (registry.Reference, error) {
-	// The sole possible reference modification is replacing plus (+) signs
-	// present in tags with underscores (_). To do this properly, we first
-	// need to identify a tag, and then pass it on to the reference parser
-	// NOTE: Passing immediately to the reference parser will fail since (+)
-	// signs are an invalid tag character, and simply replacing all plus (+)
-	// occurrences could invalidate other portions of the URI
-	parts := strings.Split(raw, ":")
-	if len(parts) > 1 && !strings.Contains(parts[len(parts)-1], "/") {
-		tag := parts[len(parts)-1]
-
-		if tag != "" {
-			// Replace any plus (+) signs with known underscore (_) conversion
-			newTag := strings.ReplaceAll(tag, "+", "_")
-			raw = strings.ReplaceAll(raw, tag, newTag)
-		}
-	}
-
-	return registry.ParseReference(raw)
-}
-
 // NewRegistryClientWithTLS is a helper function to create a new registry client with TLS enabled.
 func NewRegistryClientWithTLS(out io.Writer, certFile, keyFile, caFile string, insecureSkipTLSverify bool, registryConfig string, debug bool) (*Client, error) {
 	tlsConf, err := tlsutil.NewClientTLS(certFile, keyFile, caFile, insecureSkipTLSverify)
@@ -153,6 +129,7 @@ func NewRegistryClientWithTLS(out io.Writer, certFile, keyFile, caFile string, i
 		ClientOptHTTPClient(&http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: tlsConf,
+				Proxy:           http.ProxyFromEnvironment,
 			},
 		}),
 	)
@@ -163,10 +140,10 @@ func NewRegistryClientWithTLS(out io.Writer, certFile, keyFile, caFile string, i
 }
 
 // generateOCIAnnotations will generate OCI annotations to include within the OCI manifest
-func generateOCIAnnotations(meta *chart.Metadata) map[string]string {
+func generateOCIAnnotations(meta *chart.Metadata, creationTime string) map[string]string {
 
 	// Get annotations from Chart attributes
-	ociAnnotations := generateChartOCIAnnotations(meta)
+	ociAnnotations := generateChartOCIAnnotations(meta, creationTime)
 
 	// Copy Chart annotations
 annotations:
@@ -187,7 +164,7 @@ annotations:
 }
 
 // getChartOCIAnnotations will generate OCI annotations from the provided chart
-func generateChartOCIAnnotations(meta *chart.Metadata) map[string]string {
+func generateChartOCIAnnotations(meta *chart.Metadata, creationTime string) map[string]string {
 	chartOCIAnnotations := map[string]string{}
 
 	chartOCIAnnotations = addToMap(chartOCIAnnotations, ocispec.AnnotationDescription, meta.Description)
@@ -195,11 +172,17 @@ func generateChartOCIAnnotations(meta *chart.Metadata) map[string]string {
 	chartOCIAnnotations = addToMap(chartOCIAnnotations, ocispec.AnnotationVersion, meta.Version)
 	chartOCIAnnotations = addToMap(chartOCIAnnotations, ocispec.AnnotationURL, meta.Home)
 
+	if len(creationTime) == 0 {
+		creationTime = helmtime.Now().UTC().Format(time.RFC3339)
+	}
+
+	chartOCIAnnotations = addToMap(chartOCIAnnotations, ocispec.AnnotationCreated, creationTime)
+
 	if len(meta.Sources) > 0 {
 		chartOCIAnnotations = addToMap(chartOCIAnnotations, ocispec.AnnotationSource, meta.Sources[0])
 	}
 
-	if meta.Maintainers != nil && len(meta.Maintainers) > 0 {
+	if len(meta.Maintainers) > 0 {
 		var maintainerSb strings.Builder
 
 		for maintainerIdx, maintainer := range meta.Maintainers {

@@ -173,7 +173,7 @@ func (m *Manager) Update() error {
 	// has some information about them and, when possible, the index files
 	// locally.
 	// TODO(mattfarina): Repositories should be explicitly added by end users
-	// rather than automattic. In Helm v4 require users to add repositories. They
+	// rather than automatic. In Helm v4 require users to add repositories. They
 	// should have to add them in order to make sure they are aware of the
 	// repositories and opt-in to any locations, for security.
 	repoNames, err = m.ensureMissingRepos(repoNames, req)
@@ -246,9 +246,9 @@ func (m *Manager) downloadAll(deps []*chart.Dependency) error {
 	}
 
 	destPath := filepath.Join(m.ChartPath, "charts")
-	tmpPath := filepath.Join(m.ChartPath, "tmpcharts")
+	tmpPath := filepath.Join(m.ChartPath, fmt.Sprintf("tmpcharts-%d", os.Getpid()))
 
-	// Check if 'charts' directory is not actally a directory. If it does not exist, create it.
+	// Check if 'charts' directory is not actually a directory. If it does not exist, create it.
 	if fi, err := os.Stat(destPath); err == nil {
 		if !fi.IsDir() {
 			return errors.Errorf("%q is not a directory", destPath)
@@ -667,6 +667,7 @@ func (m *Manager) parallelRepoUpdate(repos []*repo.Entry) error {
 		if err != nil {
 			return err
 		}
+		r.CachePath = m.RepositoryCache
 		wg.Add(1)
 		go func(r *repo.ChartRepository) {
 			if _, err := r.DownloadIndexFile(); err != nil {
@@ -713,15 +714,21 @@ func (m *Manager) findChartURL(name, version, repoURL string, repos map[string]*
 			var entry repo.ChartVersions
 			entry, err = findEntryByName(name, cr)
 			if err != nil {
+				// TODO: Where linting is skipped in this function we should
+				// refactor to remove naked returns while ensuring the same
+				// behavior
+				//nolint:nakedret
 				return
 			}
 			var ve *repo.ChartVersion
 			ve, err = findVersionedEntry(version, entry)
 			if err != nil {
+				//nolint:nakedret
 				return
 			}
 			url, err = normalizeURL(repoURL, ve.URLs[0])
 			if err != nil {
+				//nolint:nakedret
 				return
 			}
 			username = cr.Config.Username
@@ -731,6 +738,7 @@ func (m *Manager) findChartURL(name, version, repoURL string, repos map[string]*
 			caFile = cr.Config.CAFile
 			certFile = cr.Config.CertFile
 			keyFile = cr.Config.KeyFile
+			//nolint:nakedret
 			return
 		}
 	}
@@ -844,6 +852,20 @@ func writeLock(chartpath string, lock *chart.Lock, legacyLockfile bool) error {
 		lockfileName = "requirements.lock"
 	}
 	dest := filepath.Join(chartpath, lockfileName)
+
+	info, err := os.Lstat(dest)
+	if err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("error getting info for %q: %w", dest, err)
+	} else if err == nil {
+		if info.Mode()&os.ModeSymlink != 0 {
+			link, err := os.Readlink(dest)
+			if err != nil {
+				return fmt.Errorf("error reading symlink for %q: %w", dest, err)
+			}
+			return fmt.Errorf("the %s file is a symlink to %q", lockfileName, link)
+		}
+	}
+
 	return os.WriteFile(dest, data, 0644)
 }
 
