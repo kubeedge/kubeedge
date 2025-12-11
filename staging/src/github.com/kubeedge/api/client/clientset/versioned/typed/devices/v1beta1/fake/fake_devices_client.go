@@ -29,11 +29,11 @@ type FakeDevicesV1beta1 struct {
 }
 
 func (c *FakeDevicesV1beta1) Devices(namespace string) v1beta1.DeviceInterface {
-	return &FakeDevices{c, namespace}
+	return newFakeDevices(c, namespace)
 }
 
 func (c *FakeDevicesV1beta1) DeviceModels(namespace string) v1beta1.DeviceModelInterface {
-	return &FakeDeviceModels{c, namespace}
+	return newFakeDeviceModels(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

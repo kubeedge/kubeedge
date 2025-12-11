@@ -19,9 +19,9 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 
-	v1alpha1 "github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
+	reliablesyncsv1alpha1 "github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
 	scheme "github.com/kubeedge/api/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -37,33 +37,34 @@ type ObjectSyncsGetter interface {
 
 // ObjectSyncInterface has methods to work with ObjectSync resources.
 type ObjectSyncInterface interface {
-	Create(ctx context.Context, objectSync *v1alpha1.ObjectSync, opts v1.CreateOptions) (*v1alpha1.ObjectSync, error)
-	Update(ctx context.Context, objectSync *v1alpha1.ObjectSync, opts v1.UpdateOptions) (*v1alpha1.ObjectSync, error)
+	Create(ctx context.Context, objectSync *reliablesyncsv1alpha1.ObjectSync, opts v1.CreateOptions) (*reliablesyncsv1alpha1.ObjectSync, error)
+	Update(ctx context.Context, objectSync *reliablesyncsv1alpha1.ObjectSync, opts v1.UpdateOptions) (*reliablesyncsv1alpha1.ObjectSync, error)
 	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-	UpdateStatus(ctx context.Context, objectSync *v1alpha1.ObjectSync, opts v1.UpdateOptions) (*v1alpha1.ObjectSync, error)
+	UpdateStatus(ctx context.Context, objectSync *reliablesyncsv1alpha1.ObjectSync, opts v1.UpdateOptions) (*reliablesyncsv1alpha1.ObjectSync, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.ObjectSync, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.ObjectSyncList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*reliablesyncsv1alpha1.ObjectSync, error)
+	List(ctx context.Context, opts v1.ListOptions) (*reliablesyncsv1alpha1.ObjectSyncList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.ObjectSync, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *reliablesyncsv1alpha1.ObjectSync, err error)
 	ObjectSyncExpansion
 }
 
 // objectSyncs implements ObjectSyncInterface
 type objectSyncs struct {
-	*gentype.ClientWithList[*v1alpha1.ObjectSync, *v1alpha1.ObjectSyncList]
+	*gentype.ClientWithList[*reliablesyncsv1alpha1.ObjectSync, *reliablesyncsv1alpha1.ObjectSyncList]
 }
 
 // newObjectSyncs returns a ObjectSyncs
 func newObjectSyncs(c *ReliablesyncsV1alpha1Client, namespace string) *objectSyncs {
 	return &objectSyncs{
-		gentype.NewClientWithList[*v1alpha1.ObjectSync, *v1alpha1.ObjectSyncList](
+		gentype.NewClientWithList[*reliablesyncsv1alpha1.ObjectSync, *reliablesyncsv1alpha1.ObjectSyncList](
 			"objectsyncs",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *v1alpha1.ObjectSync { return &v1alpha1.ObjectSync{} },
-			func() *v1alpha1.ObjectSyncList { return &v1alpha1.ObjectSyncList{} }),
+			func() *reliablesyncsv1alpha1.ObjectSync { return &reliablesyncsv1alpha1.ObjectSync{} },
+			func() *reliablesyncsv1alpha1.ObjectSyncList { return &reliablesyncsv1alpha1.ObjectSyncList{} },
+		),
 	}
 }

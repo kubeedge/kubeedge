@@ -29,7 +29,7 @@ type FakePolicyV1alpha1 struct {
 }
 
 func (c *FakePolicyV1alpha1) ServiceAccountAccesses(namespace string) v1alpha1.ServiceAccountAccessInterface {
-	return &FakeServiceAccountAccesses{c, namespace}
+	return newFakeServiceAccountAccesses(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

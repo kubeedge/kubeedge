@@ -19,9 +19,9 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 
-	v1alpha1 "github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
+	reliablesyncsv1alpha1 "github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
 	scheme "github.com/kubeedge/api/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -37,33 +37,36 @@ type ClusterObjectSyncsGetter interface {
 
 // ClusterObjectSyncInterface has methods to work with ClusterObjectSync resources.
 type ClusterObjectSyncInterface interface {
-	Create(ctx context.Context, clusterObjectSync *v1alpha1.ClusterObjectSync, opts v1.CreateOptions) (*v1alpha1.ClusterObjectSync, error)
-	Update(ctx context.Context, clusterObjectSync *v1alpha1.ClusterObjectSync, opts v1.UpdateOptions) (*v1alpha1.ClusterObjectSync, error)
+	Create(ctx context.Context, clusterObjectSync *reliablesyncsv1alpha1.ClusterObjectSync, opts v1.CreateOptions) (*reliablesyncsv1alpha1.ClusterObjectSync, error)
+	Update(ctx context.Context, clusterObjectSync *reliablesyncsv1alpha1.ClusterObjectSync, opts v1.UpdateOptions) (*reliablesyncsv1alpha1.ClusterObjectSync, error)
 	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-	UpdateStatus(ctx context.Context, clusterObjectSync *v1alpha1.ClusterObjectSync, opts v1.UpdateOptions) (*v1alpha1.ClusterObjectSync, error)
+	UpdateStatus(ctx context.Context, clusterObjectSync *reliablesyncsv1alpha1.ClusterObjectSync, opts v1.UpdateOptions) (*reliablesyncsv1alpha1.ClusterObjectSync, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.ClusterObjectSync, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.ClusterObjectSyncList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*reliablesyncsv1alpha1.ClusterObjectSync, error)
+	List(ctx context.Context, opts v1.ListOptions) (*reliablesyncsv1alpha1.ClusterObjectSyncList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.ClusterObjectSync, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *reliablesyncsv1alpha1.ClusterObjectSync, err error)
 	ClusterObjectSyncExpansion
 }
 
 // clusterObjectSyncs implements ClusterObjectSyncInterface
 type clusterObjectSyncs struct {
-	*gentype.ClientWithList[*v1alpha1.ClusterObjectSync, *v1alpha1.ClusterObjectSyncList]
+	*gentype.ClientWithList[*reliablesyncsv1alpha1.ClusterObjectSync, *reliablesyncsv1alpha1.ClusterObjectSyncList]
 }
 
 // newClusterObjectSyncs returns a ClusterObjectSyncs
 func newClusterObjectSyncs(c *ReliablesyncsV1alpha1Client) *clusterObjectSyncs {
 	return &clusterObjectSyncs{
-		gentype.NewClientWithList[*v1alpha1.ClusterObjectSync, *v1alpha1.ClusterObjectSyncList](
+		gentype.NewClientWithList[*reliablesyncsv1alpha1.ClusterObjectSync, *reliablesyncsv1alpha1.ClusterObjectSyncList](
 			"clusterobjectsyncs",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			"",
-			func() *v1alpha1.ClusterObjectSync { return &v1alpha1.ClusterObjectSync{} },
-			func() *v1alpha1.ClusterObjectSyncList { return &v1alpha1.ClusterObjectSyncList{} }),
+			func() *reliablesyncsv1alpha1.ClusterObjectSync { return &reliablesyncsv1alpha1.ClusterObjectSync{} },
+			func() *reliablesyncsv1alpha1.ClusterObjectSyncList {
+				return &reliablesyncsv1alpha1.ClusterObjectSyncList{}
+			},
+		),
 	}
 }

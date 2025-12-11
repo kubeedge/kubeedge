@@ -19,9 +19,9 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 
-	v1alpha1 "github.com/kubeedge/api/apis/policy/v1alpha1"
+	policyv1alpha1 "github.com/kubeedge/api/apis/policy/v1alpha1"
 	scheme "github.com/kubeedge/api/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -37,33 +37,34 @@ type ServiceAccountAccessesGetter interface {
 
 // ServiceAccountAccessInterface has methods to work with ServiceAccountAccess resources.
 type ServiceAccountAccessInterface interface {
-	Create(ctx context.Context, serviceAccountAccess *v1alpha1.ServiceAccountAccess, opts v1.CreateOptions) (*v1alpha1.ServiceAccountAccess, error)
-	Update(ctx context.Context, serviceAccountAccess *v1alpha1.ServiceAccountAccess, opts v1.UpdateOptions) (*v1alpha1.ServiceAccountAccess, error)
+	Create(ctx context.Context, serviceAccountAccess *policyv1alpha1.ServiceAccountAccess, opts v1.CreateOptions) (*policyv1alpha1.ServiceAccountAccess, error)
+	Update(ctx context.Context, serviceAccountAccess *policyv1alpha1.ServiceAccountAccess, opts v1.UpdateOptions) (*policyv1alpha1.ServiceAccountAccess, error)
 	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-	UpdateStatus(ctx context.Context, serviceAccountAccess *v1alpha1.ServiceAccountAccess, opts v1.UpdateOptions) (*v1alpha1.ServiceAccountAccess, error)
+	UpdateStatus(ctx context.Context, serviceAccountAccess *policyv1alpha1.ServiceAccountAccess, opts v1.UpdateOptions) (*policyv1alpha1.ServiceAccountAccess, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.ServiceAccountAccess, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.ServiceAccountAccessList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*policyv1alpha1.ServiceAccountAccess, error)
+	List(ctx context.Context, opts v1.ListOptions) (*policyv1alpha1.ServiceAccountAccessList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.ServiceAccountAccess, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *policyv1alpha1.ServiceAccountAccess, err error)
 	ServiceAccountAccessExpansion
 }
 
 // serviceAccountAccesses implements ServiceAccountAccessInterface
 type serviceAccountAccesses struct {
-	*gentype.ClientWithList[*v1alpha1.ServiceAccountAccess, *v1alpha1.ServiceAccountAccessList]
+	*gentype.ClientWithList[*policyv1alpha1.ServiceAccountAccess, *policyv1alpha1.ServiceAccountAccessList]
 }
 
 // newServiceAccountAccesses returns a ServiceAccountAccesses
 func newServiceAccountAccesses(c *PolicyV1alpha1Client, namespace string) *serviceAccountAccesses {
 	return &serviceAccountAccesses{
-		gentype.NewClientWithList[*v1alpha1.ServiceAccountAccess, *v1alpha1.ServiceAccountAccessList](
+		gentype.NewClientWithList[*policyv1alpha1.ServiceAccountAccess, *policyv1alpha1.ServiceAccountAccessList](
 			"serviceaccountaccesses",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *v1alpha1.ServiceAccountAccess { return &v1alpha1.ServiceAccountAccess{} },
-			func() *v1alpha1.ServiceAccountAccessList { return &v1alpha1.ServiceAccountAccessList{} }),
+			func() *policyv1alpha1.ServiceAccountAccess { return &policyv1alpha1.ServiceAccountAccess{} },
+			func() *policyv1alpha1.ServiceAccountAccessList { return &policyv1alpha1.ServiceAccountAccessList{} },
+		),
 	}
 }

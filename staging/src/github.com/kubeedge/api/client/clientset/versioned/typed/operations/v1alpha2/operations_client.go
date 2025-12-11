@@ -19,10 +19,10 @@ limitations under the License.
 package v1alpha2
 
 import (
-	"net/http"
+	http "net/http"
 
-	v1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
-	"github.com/kubeedge/api/client/clientset/versioned/scheme"
+	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
+	scheme "github.com/kubeedge/api/client/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )
 
@@ -95,10 +95,10 @@ func New(c rest.Interface) *OperationsV1alpha2Client {
 }
 
 func setConfigDefaults(config *rest.Config) error {
-	gv := v1alpha2.SchemeGroupVersion
+	gv := operationsv1alpha2.SchemeGroupVersion
 	config.GroupVersion = &gv
 	config.APIPath = "/apis"
-	config.NegotiatedSerializer = scheme.Codecs.WithoutConversion()
+	config.NegotiatedSerializer = rest.CodecFactoryForGeneratedClient(scheme.Scheme, scheme.Codecs).WithoutConversion()
 
 	if config.UserAgent == "" {
 		config.UserAgent = rest.DefaultKubernetesUserAgent()

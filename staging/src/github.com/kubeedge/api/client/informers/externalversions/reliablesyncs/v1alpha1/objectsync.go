@@ -19,13 +19,13 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	reliablesyncsv1alpha1 "github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
+	apisreliablesyncsv1alpha1 "github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
 	versioned "github.com/kubeedge/api/client/clientset/versioned"
 	internalinterfaces "github.com/kubeedge/api/client/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/kubeedge/api/client/listers/reliablesyncs/v1alpha1"
+	reliablesyncsv1alpha1 "github.com/kubeedge/api/client/listers/reliablesyncs/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -36,7 +36,7 @@ import (
 // ObjectSyncs.
 type ObjectSyncInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.ObjectSyncLister
+	Lister() reliablesyncsv1alpha1.ObjectSyncLister
 }
 
 type objectSyncInformer struct {
@@ -71,7 +71,7 @@ func NewFilteredObjectSyncInformer(client versioned.Interface, namespace string,
 				return client.ReliablesyncsV1alpha1().ObjectSyncs(namespace).Watch(context.TODO(), options)
 			},
 		},
-		&reliablesyncsv1alpha1.ObjectSync{},
+		&apisreliablesyncsv1alpha1.ObjectSync{},
 		resyncPeriod,
 		indexers,
 	)
@@ -82,9 +82,9 @@ func (f *objectSyncInformer) defaultInformer(client versioned.Interface, resyncP
 }
 
 func (f *objectSyncInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&reliablesyncsv1alpha1.ObjectSync{}, f.defaultInformer)
+	return f.factory.InformerFor(&apisreliablesyncsv1alpha1.ObjectSync{}, f.defaultInformer)
 }
 
-func (f *objectSyncInformer) Lister() v1alpha1.ObjectSyncLister {
-	return v1alpha1.NewObjectSyncLister(f.Informer().GetIndexer())
+func (f *objectSyncInformer) Lister() reliablesyncsv1alpha1.ObjectSyncLister {
+	return reliablesyncsv1alpha1.NewObjectSyncLister(f.Informer().GetIndexer())
 }

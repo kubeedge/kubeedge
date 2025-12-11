@@ -19,129 +19,34 @@ limitations under the License.
 package fake
 
 import (
-	"context"
-
 	v1alpha1 "github.com/kubeedge/api/apis/policy/v1alpha1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	labels "k8s.io/apimachinery/pkg/labels"
-	types "k8s.io/apimachinery/pkg/types"
-	watch "k8s.io/apimachinery/pkg/watch"
-	testing "k8s.io/client-go/testing"
+	policyv1alpha1 "github.com/kubeedge/api/client/clientset/versioned/typed/policy/v1alpha1"
+	gentype "k8s.io/client-go/gentype"
 )
 
-// FakeServiceAccountAccesses implements ServiceAccountAccessInterface
-type FakeServiceAccountAccesses struct {
+// fakeServiceAccountAccesses implements ServiceAccountAccessInterface
+type fakeServiceAccountAccesses struct {
+	*gentype.FakeClientWithList[*v1alpha1.ServiceAccountAccess, *v1alpha1.ServiceAccountAccessList]
 	Fake *FakePolicyV1alpha1
-	ns   string
 }
 
-var serviceaccountaccessesResource = v1alpha1.SchemeGroupVersion.WithResource("serviceaccountaccesses")
-
-var serviceaccountaccessesKind = v1alpha1.SchemeGroupVersion.WithKind("ServiceAccountAccess")
-
-// Get takes name of the serviceAccountAccess, and returns the corresponding serviceAccountAccess object, and an error if there is any.
-func (c *FakeServiceAccountAccesses) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.ServiceAccountAccess, err error) {
-	emptyResult := &v1alpha1.ServiceAccountAccess{}
-	obj, err := c.Fake.
-		Invokes(testing.NewGetActionWithOptions(serviceaccountaccessesResource, c.ns, name, options), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
+func newFakeServiceAccountAccesses(fake *FakePolicyV1alpha1, namespace string) policyv1alpha1.ServiceAccountAccessInterface {
+	return &fakeServiceAccountAccesses{
+		gentype.NewFakeClientWithList[*v1alpha1.ServiceAccountAccess, *v1alpha1.ServiceAccountAccessList](
+			fake.Fake,
+			namespace,
+			v1alpha1.SchemeGroupVersion.WithResource("serviceaccountaccesses"),
+			v1alpha1.SchemeGroupVersion.WithKind("ServiceAccountAccess"),
+			func() *v1alpha1.ServiceAccountAccess { return &v1alpha1.ServiceAccountAccess{} },
+			func() *v1alpha1.ServiceAccountAccessList { return &v1alpha1.ServiceAccountAccessList{} },
+			func(dst, src *v1alpha1.ServiceAccountAccessList) { dst.ListMeta = src.ListMeta },
+			func(list *v1alpha1.ServiceAccountAccessList) []*v1alpha1.ServiceAccountAccess {
+				return gentype.ToPointerSlice(list.Items)
+			},
+			func(list *v1alpha1.ServiceAccountAccessList, items []*v1alpha1.ServiceAccountAccess) {
+				list.Items = gentype.FromPointerSlice(items)
+			},
+		),
+		fake,
 	}
-	return obj.(*v1alpha1.ServiceAccountAccess), err
-}
-
-// List takes label and field selectors, and returns the list of ServiceAccountAccesses that match those selectors.
-func (c *FakeServiceAccountAccesses) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.ServiceAccountAccessList, err error) {
-	emptyResult := &v1alpha1.ServiceAccountAccessList{}
-	obj, err := c.Fake.
-		Invokes(testing.NewListActionWithOptions(serviceaccountaccessesResource, serviceaccountaccessesKind, c.ns, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-
-	label, _, _ := testing.ExtractFromListOptions(opts)
-	if label == nil {
-		label = labels.Everything()
-	}
-	list := &v1alpha1.ServiceAccountAccessList{ListMeta: obj.(*v1alpha1.ServiceAccountAccessList).ListMeta}
-	for _, item := range obj.(*v1alpha1.ServiceAccountAccessList).Items {
-		if label.Matches(labels.Set(item.Labels)) {
-			list.Items = append(list.Items, item)
-		}
-	}
-	return list, err
-}
-
-// Watch returns a watch.Interface that watches the requested serviceAccountAccesses.
-func (c *FakeServiceAccountAccesses) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
-	return c.Fake.
-		InvokesWatch(testing.NewWatchActionWithOptions(serviceaccountaccessesResource, c.ns, opts))
-
-}
-
-// Create takes the representation of a serviceAccountAccess and creates it.  Returns the server's representation of the serviceAccountAccess, and an error, if there is any.
-func (c *FakeServiceAccountAccesses) Create(ctx context.Context, serviceAccountAccess *v1alpha1.ServiceAccountAccess, opts v1.CreateOptions) (result *v1alpha1.ServiceAccountAccess, err error) {
-	emptyResult := &v1alpha1.ServiceAccountAccess{}
-	obj, err := c.Fake.
-		Invokes(testing.NewCreateActionWithOptions(serviceaccountaccessesResource, c.ns, serviceAccountAccess, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.ServiceAccountAccess), err
-}
-
-// Update takes the representation of a serviceAccountAccess and updates it. Returns the server's representation of the serviceAccountAccess, and an error, if there is any.
-func (c *FakeServiceAccountAccesses) Update(ctx context.Context, serviceAccountAccess *v1alpha1.ServiceAccountAccess, opts v1.UpdateOptions) (result *v1alpha1.ServiceAccountAccess, err error) {
-	emptyResult := &v1alpha1.ServiceAccountAccess{}
-	obj, err := c.Fake.
-		Invokes(testing.NewUpdateActionWithOptions(serviceaccountaccessesResource, c.ns, serviceAccountAccess, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.ServiceAccountAccess), err
-}
-
-// UpdateStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeServiceAccountAccesses) UpdateStatus(ctx context.Context, serviceAccountAccess *v1alpha1.ServiceAccountAccess, opts v1.UpdateOptions) (result *v1alpha1.ServiceAccountAccess, err error) {
-	emptyResult := &v1alpha1.ServiceAccountAccess{}
-	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceActionWithOptions(serviceaccountaccessesResource, "status", c.ns, serviceAccountAccess, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.ServiceAccountAccess), err
-}
-
-// Delete takes name of the serviceAccountAccess and deletes it. Returns an error if one occurs.
-func (c *FakeServiceAccountAccesses) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	_, err := c.Fake.
-		Invokes(testing.NewDeleteActionWithOptions(serviceaccountaccessesResource, c.ns, name, opts), &v1alpha1.ServiceAccountAccess{})
-
-	return err
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *FakeServiceAccountAccesses) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewDeleteCollectionActionWithOptions(serviceaccountaccessesResource, c.ns, opts, listOpts)
-
-	_, err := c.Fake.Invokes(action, &v1alpha1.ServiceAccountAccessList{})
-	return err
-}
-
-// Patch applies the patch and returns the patched serviceAccountAccess.
-func (c *FakeServiceAccountAccesses) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.ServiceAccountAccess, err error) {
-	emptyResult := &v1alpha1.ServiceAccountAccess{}
-	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceActionWithOptions(serviceaccountaccessesResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.ServiceAccountAccess), err
 }

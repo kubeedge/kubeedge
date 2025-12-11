@@ -19,10 +19,10 @@ limitations under the License.
 package v1
 
 import (
-	v1 "github.com/kubeedge/api/apis/rules/v1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/listers"
-	"k8s.io/client-go/tools/cache"
+	rulesv1 "github.com/kubeedge/api/apis/rules/v1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // RuleEndpointLister helps list RuleEndpoints.
@@ -30,7 +30,7 @@ import (
 type RuleEndpointLister interface {
 	// List lists all RuleEndpoints in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1.RuleEndpoint, err error)
+	List(selector labels.Selector) (ret []*rulesv1.RuleEndpoint, err error)
 	// RuleEndpoints returns an object that can list and get RuleEndpoints.
 	RuleEndpoints(namespace string) RuleEndpointNamespaceLister
 	RuleEndpointListerExpansion
@@ -38,17 +38,17 @@ type RuleEndpointLister interface {
 
 // ruleEndpointLister implements the RuleEndpointLister interface.
 type ruleEndpointLister struct {
-	listers.ResourceIndexer[*v1.RuleEndpoint]
+	listers.ResourceIndexer[*rulesv1.RuleEndpoint]
 }
 
 // NewRuleEndpointLister returns a new RuleEndpointLister.
 func NewRuleEndpointLister(indexer cache.Indexer) RuleEndpointLister {
-	return &ruleEndpointLister{listers.New[*v1.RuleEndpoint](indexer, v1.Resource("ruleendpoint"))}
+	return &ruleEndpointLister{listers.New[*rulesv1.RuleEndpoint](indexer, rulesv1.Resource("ruleendpoint"))}
 }
 
 // RuleEndpoints returns an object that can list and get RuleEndpoints.
 func (s *ruleEndpointLister) RuleEndpoints(namespace string) RuleEndpointNamespaceLister {
-	return ruleEndpointNamespaceLister{listers.NewNamespaced[*v1.RuleEndpoint](s.ResourceIndexer, namespace)}
+	return ruleEndpointNamespaceLister{listers.NewNamespaced[*rulesv1.RuleEndpoint](s.ResourceIndexer, namespace)}
 }
 
 // RuleEndpointNamespaceLister helps list and get RuleEndpoints.
@@ -56,15 +56,15 @@ func (s *ruleEndpointLister) RuleEndpoints(namespace string) RuleEndpointNamespa
 type RuleEndpointNamespaceLister interface {
 	// List lists all RuleEndpoints in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1.RuleEndpoint, err error)
+	List(selector labels.Selector) (ret []*rulesv1.RuleEndpoint, err error)
 	// Get retrieves the RuleEndpoint from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1.RuleEndpoint, error)
+	Get(name string) (*rulesv1.RuleEndpoint, error)
 	RuleEndpointNamespaceListerExpansion
 }
 
 // ruleEndpointNamespaceLister implements the RuleEndpointNamespaceLister
 // interface.
 type ruleEndpointNamespaceLister struct {
-	listers.ResourceIndexer[*v1.RuleEndpoint]
+	listers.ResourceIndexer[*rulesv1.RuleEndpoint]
 }
