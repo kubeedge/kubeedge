@@ -141,7 +141,7 @@ func NewDefaultEdgeCoreConfig() (config *EdgeCoreConfig) {
 			},
 			DeviceTwin: &DeviceTwin{
 				Enable:      true,
-				DMISockPath: constants.DefaultDMISockPath,
+				DMISockPath: constants.KubeEdgePath,
 			},
 			DBTest: &DBTest{
 				Enable: false,
@@ -182,7 +182,7 @@ func NewMinEdgeCoreConfig() (config *EdgeCoreConfig) {
 		},
 		Modules: &Modules{
 			DeviceTwin: &DeviceTwin{
-				DMISockPath: constants.DefaultDMISockPath,
+				DMISockPath: constants.KubeEdgePath,
 			},
 			Edged: &Edged{
 				Enable:                true,
