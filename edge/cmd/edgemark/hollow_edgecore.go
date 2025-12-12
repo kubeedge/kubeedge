@@ -20,7 +20,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -71,7 +70,8 @@ type hollowEdgeNodeConfig struct {
 func main() {
 	command := newHollowEdgeNodeCommand()
 	if err := command.Execute(); err != nil {
-		os.Exit(1)
+		//os.Exit(1)
+		klog.Exitf("Failed to execute hollow_edgecore: %v", err)
 	}
 }
 
