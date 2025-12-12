@@ -162,3 +162,12 @@ func ConcatStrings(ss ...string) string {
 func GetResourceID(namespace, name string) string {
 	return namespace + "/" + name
 }
+
+// GetNamespacedName return namespaced name
+func GetNamespacedName(resourceID string) (string, string, error) {
+	parts := strings.Split(resourceID, "/")
+	if len(parts) != 2 {
+		return "", "", fmt.Errorf("invalid resourceID %s", resourceID)
+	}
+	return parts[0], parts[1], nil
+}

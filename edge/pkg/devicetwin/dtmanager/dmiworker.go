@@ -21,7 +21,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"sync"
 
 	"k8s.io/klog/v2"
 
@@ -29,33 +28,26 @@ import (
 	pb "github.com/kubeedge/api/apis/dmi/v1beta1"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
+	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dmicache"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dmiclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dmiserver"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
-	"github.com/kubeedge/kubeedge/pkg/util"
 )
 
 // DMIWorker deal dmi event
 type DMIWorker struct {
 	Worker
 	Group    string
-	dmiCache *dmiserver.DMICache
+	dmiCache *dmicache.DMICache
 	//dmiActionCallBack map for action to callback
 	dmiActionCallBack map[string]CallBack
 }
 
 func (dw *DMIWorker) init() {
-	dw.dmiCache = &dmiserver.DMICache{
-		MapperMu:        &sync.Mutex{},
-		DeviceMu:        &sync.Mutex{},
-		DeviceModelMu:   &sync.Mutex{},
-		MapperList:      make(map[string]*pb.MapperInfo),
-		DeviceList:      make(map[string]*v1beta1.Device),
-		DeviceModelList: make(map[string]*v1beta1.DeviceModel),
-	}
+	dw.dmiCache = dmicache.NewDMICache()
 
 	dw.initDMIActionCallBack()
 	dw.initDeviceModelInfoFromDB()
@@ -121,21 +113,17 @@ func (dw *DMIWorker) dealMetaDeviceOperation(_ *dtcontext.DTContext, _ string, m
 		if err != nil {
 			return fmt.Errorf("invalid message content with err: %+v", err)
 		}
-		deviceID := util.GetResourceID(device.Namespace, device.Name)
 		switch message.GetOperation() {
 		case model.InsertOperation:
+			dw.dmiCache.PutDevice(&device)
 			// Override device instance config with model defaults before registering
-			err = dw.dmiCache.OverrideDeviceInstanceConfig(&device)
+			devicePtr, _, err := dw.dmiCache.GetOverriddenDevice(device.Namespace, device.Name)
 			if err != nil {
-				klog.Errorf("override device instance config failed for device %s: %v", device.Name, err)
 				return err
 			}
-			dw.dmiCache.DeviceMu.Lock()
-			dw.dmiCache.DeviceList[deviceID] = &device
-			dw.dmiCache.DeviceMu.Unlock()
-			err = dmiclient.DMIClientsImp.RegisterDevice(&device)
+			err = dmiclient.DMIClientsImp.RegisterDevice(devicePtr)
 			if err != nil {
-				klog.Errorf("add device %s failed with err: %v", device.Name, err)
+				klog.Errorf("add device %s failed with err: %v", devicePtr.Name, err)
 				return err
 			}
 		case model.DeleteOperation:
@@ -144,22 +132,17 @@ func (dw *DMIWorker) dealMetaDeviceOperation(_ *dtcontext.DTContext, _ string, m
 				klog.Errorf("delete device %s failed with err: %v", device.Name, err)
 				return err
 			}
-			dw.dmiCache.DeviceMu.Lock()
-			delete(dw.dmiCache.DeviceList, deviceID)
-			dw.dmiCache.DeviceMu.Unlock()
+			dw.dmiCache.RemoveDevice(device.Namespace, device.Name)
 		case model.UpdateOperation:
+			dw.dmiCache.PutDevice(&device)
 			// Override device instance config with model defaults before updating
-			err = dw.dmiCache.OverrideDeviceInstanceConfig(&device)
+			devicePtr, _, err := dw.dmiCache.GetOverriddenDevice(device.Namespace, device.Name)
 			if err != nil {
-				klog.Errorf("override device instance config failed for device %s: %v", device.Name, err)
 				return err
 			}
-			dw.dmiCache.DeviceMu.Lock()
-			dw.dmiCache.DeviceList[deviceID] = &device
-			dw.dmiCache.DeviceMu.Unlock()
-			err = dmiclient.DMIClientsImp.UpdateDevice(&device)
+			err = dmiclient.DMIClientsImp.UpdateDevice(devicePtr)
 			if err != nil {
-				klog.Errorf("update device %s failed with err: %v", device.Name, err)
+				klog.Errorf("update device %s failed with err: %v", devicePtr.Name, err)
 				return err
 			}
 		default:
@@ -170,12 +153,9 @@ func (dw *DMIWorker) dealMetaDeviceOperation(_ *dtcontext.DTContext, _ string, m
 		if err != nil {
 			return fmt.Errorf("invalid message content with err: %+v", err)
 		}
-		dmID := util.GetResourceID(dm.Namespace, dm.Name)
 		switch message.GetOperation() {
 		case model.InsertOperation:
-			dw.dmiCache.DeviceModelMu.Lock()
-			dw.dmiCache.DeviceModelList[dmID] = &dm
-			dw.dmiCache.DeviceModelMu.Unlock()
+			dw.dmiCache.PutDeviceModel(&dm)
 			err = dmiclient.DMIClientsImp.CreateDeviceModel(&dm)
 			if err != nil {
 				klog.Errorf("add device model %s failed with err: %v", dm.Name, err)
@@ -187,13 +167,9 @@ func (dw *DMIWorker) dealMetaDeviceOperation(_ *dtcontext.DTContext, _ string, m
 				klog.Errorf("delete device model %s failed with err: %v", dm.Name, err)
 				return err
 			}
-			dw.dmiCache.DeviceModelMu.Lock()
-			delete(dw.dmiCache.DeviceModelList, dmID)
-			dw.dmiCache.DeviceModelMu.Unlock()
+			dw.dmiCache.RemoveDeviceModel(dm.Namespace, dm.Name)
 		case model.UpdateOperation:
-			dw.dmiCache.DeviceModelMu.Lock()
-			dw.dmiCache.DeviceModelList[dmID] = &dm
-			dw.dmiCache.DeviceModelMu.Unlock()
+			dw.dmiCache.PutDeviceModel(&dm)
 			err = dmiclient.DMIClientsImp.UpdateDeviceModel(&dm)
 			if err != nil {
 				klog.Errorf("update device model %s failed with err: %v", dm.Name, err)
@@ -223,10 +199,7 @@ func (dw *DMIWorker) initDeviceModelInfoFromDB() {
 			klog.Errorf("fail to unmarshal device model info from db with err: %v", err)
 			return
 		}
-		deviceModelID := util.GetResourceID(deviceModel.Namespace, deviceModel.Name)
-		dw.dmiCache.DeviceModelMu.Lock()
-		dw.dmiCache.DeviceModelList[deviceModelID] = &deviceModel
-		dw.dmiCache.DeviceModelMu.Unlock()
+		dw.dmiCache.PutDeviceModel(&deviceModel)
 	}
 	klog.Infoln("success to init device model info from db")
 }
@@ -244,10 +217,7 @@ func (dw *DMIWorker) initDeviceInfoFromDB() {
 			klog.Errorf("fail to unmarshal device info from db with err: %v", err)
 			return
 		}
-		deviceID := util.GetResourceID(device.Namespace, device.Name)
-		dw.dmiCache.DeviceMu.Lock()
-		dw.dmiCache.DeviceList[deviceID] = &device
-		dw.dmiCache.DeviceMu.Unlock()
+		dw.dmiCache.PutDevice(&device)
 	}
 	klog.Infoln("success to init device info from db")
 }
@@ -265,9 +235,8 @@ func (dw *DMIWorker) initDeviceMapperInfoFromDB() {
 			klog.Errorf("fail to unmarshal device mapper info from db with err: %v", err)
 			return
 		}
-		dw.dmiCache.MapperMu.Lock()
-		dw.dmiCache.MapperList[deviceMapper.Name] = &deviceMapper
-		dw.dmiCache.MapperMu.Unlock()
+
+		dw.dmiCache.PutMapper(&deviceMapper)
 	}
 	klog.Infoln("success to init device mapper info from db")
 }
