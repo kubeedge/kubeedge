@@ -19,10 +19,10 @@ limitations under the License.
 package v1alpha1
 
 import (
-	v1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/listers"
-	"k8s.io/client-go/tools/cache"
+	appsv1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // NodeGroupLister helps list NodeGroups.
@@ -30,19 +30,19 @@ import (
 type NodeGroupLister interface {
 	// List lists all NodeGroups in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.NodeGroup, err error)
+	List(selector labels.Selector) (ret []*appsv1alpha1.NodeGroup, err error)
 	// Get retrieves the NodeGroup from the index for a given name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1alpha1.NodeGroup, error)
+	Get(name string) (*appsv1alpha1.NodeGroup, error)
 	NodeGroupListerExpansion
 }
 
 // nodeGroupLister implements the NodeGroupLister interface.
 type nodeGroupLister struct {
-	listers.ResourceIndexer[*v1alpha1.NodeGroup]
+	listers.ResourceIndexer[*appsv1alpha1.NodeGroup]
 }
 
 // NewNodeGroupLister returns a new NodeGroupLister.
 func NewNodeGroupLister(indexer cache.Indexer) NodeGroupLister {
-	return &nodeGroupLister{listers.New[*v1alpha1.NodeGroup](indexer, v1alpha1.Resource("nodegroup"))}
+	return &nodeGroupLister{listers.New[*appsv1alpha1.NodeGroup](indexer, appsv1alpha1.Resource("nodegroup"))}
 }

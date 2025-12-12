@@ -19,116 +19,32 @@ limitations under the License.
 package fake
 
 import (
-	"context"
-
 	v1beta1 "github.com/kubeedge/api/apis/devices/v1beta1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	labels "k8s.io/apimachinery/pkg/labels"
-	types "k8s.io/apimachinery/pkg/types"
-	watch "k8s.io/apimachinery/pkg/watch"
-	testing "k8s.io/client-go/testing"
+	devicesv1beta1 "github.com/kubeedge/api/client/clientset/versioned/typed/devices/v1beta1"
+	gentype "k8s.io/client-go/gentype"
 )
 
-// FakeDeviceModels implements DeviceModelInterface
-type FakeDeviceModels struct {
+// fakeDeviceModels implements DeviceModelInterface
+type fakeDeviceModels struct {
+	*gentype.FakeClientWithList[*v1beta1.DeviceModel, *v1beta1.DeviceModelList]
 	Fake *FakeDevicesV1beta1
-	ns   string
 }
 
-var devicemodelsResource = v1beta1.SchemeGroupVersion.WithResource("devicemodels")
-
-var devicemodelsKind = v1beta1.SchemeGroupVersion.WithKind("DeviceModel")
-
-// Get takes name of the deviceModel, and returns the corresponding deviceModel object, and an error if there is any.
-func (c *FakeDeviceModels) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.DeviceModel, err error) {
-	emptyResult := &v1beta1.DeviceModel{}
-	obj, err := c.Fake.
-		Invokes(testing.NewGetActionWithOptions(devicemodelsResource, c.ns, name, options), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
+func newFakeDeviceModels(fake *FakeDevicesV1beta1, namespace string) devicesv1beta1.DeviceModelInterface {
+	return &fakeDeviceModels{
+		gentype.NewFakeClientWithList[*v1beta1.DeviceModel, *v1beta1.DeviceModelList](
+			fake.Fake,
+			namespace,
+			v1beta1.SchemeGroupVersion.WithResource("devicemodels"),
+			v1beta1.SchemeGroupVersion.WithKind("DeviceModel"),
+			func() *v1beta1.DeviceModel { return &v1beta1.DeviceModel{} },
+			func() *v1beta1.DeviceModelList { return &v1beta1.DeviceModelList{} },
+			func(dst, src *v1beta1.DeviceModelList) { dst.ListMeta = src.ListMeta },
+			func(list *v1beta1.DeviceModelList) []*v1beta1.DeviceModel { return gentype.ToPointerSlice(list.Items) },
+			func(list *v1beta1.DeviceModelList, items []*v1beta1.DeviceModel) {
+				list.Items = gentype.FromPointerSlice(items)
+			},
+		),
+		fake,
 	}
-	return obj.(*v1beta1.DeviceModel), err
-}
-
-// List takes label and field selectors, and returns the list of DeviceModels that match those selectors.
-func (c *FakeDeviceModels) List(ctx context.Context, opts v1.ListOptions) (result *v1beta1.DeviceModelList, err error) {
-	emptyResult := &v1beta1.DeviceModelList{}
-	obj, err := c.Fake.
-		Invokes(testing.NewListActionWithOptions(devicemodelsResource, devicemodelsKind, c.ns, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-
-	label, _, _ := testing.ExtractFromListOptions(opts)
-	if label == nil {
-		label = labels.Everything()
-	}
-	list := &v1beta1.DeviceModelList{ListMeta: obj.(*v1beta1.DeviceModelList).ListMeta}
-	for _, item := range obj.(*v1beta1.DeviceModelList).Items {
-		if label.Matches(labels.Set(item.Labels)) {
-			list.Items = append(list.Items, item)
-		}
-	}
-	return list, err
-}
-
-// Watch returns a watch.Interface that watches the requested deviceModels.
-func (c *FakeDeviceModels) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
-	return c.Fake.
-		InvokesWatch(testing.NewWatchActionWithOptions(devicemodelsResource, c.ns, opts))
-
-}
-
-// Create takes the representation of a deviceModel and creates it.  Returns the server's representation of the deviceModel, and an error, if there is any.
-func (c *FakeDeviceModels) Create(ctx context.Context, deviceModel *v1beta1.DeviceModel, opts v1.CreateOptions) (result *v1beta1.DeviceModel, err error) {
-	emptyResult := &v1beta1.DeviceModel{}
-	obj, err := c.Fake.
-		Invokes(testing.NewCreateActionWithOptions(devicemodelsResource, c.ns, deviceModel, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1beta1.DeviceModel), err
-}
-
-// Update takes the representation of a deviceModel and updates it. Returns the server's representation of the deviceModel, and an error, if there is any.
-func (c *FakeDeviceModels) Update(ctx context.Context, deviceModel *v1beta1.DeviceModel, opts v1.UpdateOptions) (result *v1beta1.DeviceModel, err error) {
-	emptyResult := &v1beta1.DeviceModel{}
-	obj, err := c.Fake.
-		Invokes(testing.NewUpdateActionWithOptions(devicemodelsResource, c.ns, deviceModel, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1beta1.DeviceModel), err
-}
-
-// Delete takes name of the deviceModel and deletes it. Returns an error if one occurs.
-func (c *FakeDeviceModels) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	_, err := c.Fake.
-		Invokes(testing.NewDeleteActionWithOptions(devicemodelsResource, c.ns, name, opts), &v1beta1.DeviceModel{})
-
-	return err
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *FakeDeviceModels) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewDeleteCollectionActionWithOptions(devicemodelsResource, c.ns, opts, listOpts)
-
-	_, err := c.Fake.Invokes(action, &v1beta1.DeviceModelList{})
-	return err
-}
-
-// Patch applies the patch and returns the patched deviceModel.
-func (c *FakeDeviceModels) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.DeviceModel, err error) {
-	emptyResult := &v1beta1.DeviceModel{}
-	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceActionWithOptions(devicemodelsResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1beta1.DeviceModel), err
 }

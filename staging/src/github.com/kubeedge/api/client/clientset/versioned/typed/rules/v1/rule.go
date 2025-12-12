@@ -19,9 +19,9 @@ limitations under the License.
 package v1
 
 import (
-	"context"
+	context "context"
 
-	v1 "github.com/kubeedge/api/apis/rules/v1"
+	rulesv1 "github.com/kubeedge/api/apis/rules/v1"
 	scheme "github.com/kubeedge/api/client/clientset/versioned/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -37,33 +37,34 @@ type RulesGetter interface {
 
 // RuleInterface has methods to work with Rule resources.
 type RuleInterface interface {
-	Create(ctx context.Context, rule *v1.Rule, opts metav1.CreateOptions) (*v1.Rule, error)
-	Update(ctx context.Context, rule *v1.Rule, opts metav1.UpdateOptions) (*v1.Rule, error)
+	Create(ctx context.Context, rule *rulesv1.Rule, opts metav1.CreateOptions) (*rulesv1.Rule, error)
+	Update(ctx context.Context, rule *rulesv1.Rule, opts metav1.UpdateOptions) (*rulesv1.Rule, error)
 	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-	UpdateStatus(ctx context.Context, rule *v1.Rule, opts metav1.UpdateOptions) (*v1.Rule, error)
+	UpdateStatus(ctx context.Context, rule *rulesv1.Rule, opts metav1.UpdateOptions) (*rulesv1.Rule, error)
 	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error
-	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1.Rule, error)
-	List(ctx context.Context, opts metav1.ListOptions) (*v1.RuleList, error)
+	Get(ctx context.Context, name string, opts metav1.GetOptions) (*rulesv1.Rule, error)
+	List(ctx context.Context, opts metav1.ListOptions) (*rulesv1.RuleList, error)
 	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.Rule, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *rulesv1.Rule, err error)
 	RuleExpansion
 }
 
 // rules implements RuleInterface
 type rules struct {
-	*gentype.ClientWithList[*v1.Rule, *v1.RuleList]
+	*gentype.ClientWithList[*rulesv1.Rule, *rulesv1.RuleList]
 }
 
 // newRules returns a Rules
 func newRules(c *RulesV1Client, namespace string) *rules {
 	return &rules{
-		gentype.NewClientWithList[*v1.Rule, *v1.RuleList](
+		gentype.NewClientWithList[*rulesv1.Rule, *rulesv1.RuleList](
 			"rules",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *v1.Rule { return &v1.Rule{} },
-			func() *v1.RuleList { return &v1.RuleList{} }),
+			func() *rulesv1.Rule { return &rulesv1.Rule{} },
+			func() *rulesv1.RuleList { return &rulesv1.RuleList{} },
+		),
 	}
 }

@@ -32,7 +32,7 @@ import (
 	configv1beta1 "k8s.io/kubernetes/pkg/kubelet/apis/config/v1beta1"
 	"k8s.io/kubernetes/pkg/kubelet/eviction"
 	"k8s.io/kubernetes/pkg/kubelet/qos"
-	utilpointer "k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	"github.com/kubeedge/api/apis/common/constants"
 )
@@ -46,20 +46,20 @@ func SetDefaultsKubeletConfiguration(obj *TailoredKubeletConfiguration) {
 	obj.Address = constants.ServerAddress
 	obj.ReadOnlyPort = constants.ServerPort
 	obj.ClusterDomain = constants.DefaultClusterDomain
-	obj.RegistryPullQPS = utilpointer.Int32(5)
+	obj.RegistryPullQPS = ptr.To[int32](5)
 	obj.RegistryBurst = 10
-	obj.EventRecordQPS = utilpointer.Int32(50)
+	obj.EventRecordQPS = ptr.To[int32](50)
 	obj.EventBurst = 100
-	obj.EnableDebuggingHandlers = utilpointer.Bool(true)
-	obj.OOMScoreAdj = utilpointer.Int32(int32(qos.KubeletOOMScoreAdj))
+	obj.EnableDebuggingHandlers = ptr.To(true)
+	obj.OOMScoreAdj = ptr.To(int32(qos.KubeletOOMScoreAdj))
 	obj.StreamingConnectionIdleTimeout = metav1.Duration{Duration: 4 * time.Hour}
 	obj.NodeStatusReportFrequency = metav1.Duration{Duration: 5 * time.Minute}
 	obj.NodeStatusUpdateFrequency = metav1.Duration{Duration: 10 * time.Second}
 	obj.NodeLeaseDurationSeconds = 40
 	obj.ImageMinimumGCAge = metav1.Duration{Duration: 2 * time.Minute}
 	// default is below docker's default dm.min_free_space of 90%
-	obj.ImageGCHighThresholdPercent = utilpointer.Int32(85)
-	obj.ImageGCLowThresholdPercent = utilpointer.Int32(80)
+	obj.ImageGCHighThresholdPercent = ptr.To[int32](85)
+	obj.ImageGCLowThresholdPercent = ptr.To[int32](80)
 	obj.VolumeStatsAggPeriod = metav1.Duration{Duration: time.Minute}
 	obj.CPUManagerPolicy = "none"
 	// Keep the same as default NodeStatusUpdateFrequency
@@ -71,42 +71,42 @@ func SetDefaultsKubeletConfiguration(obj *TailoredKubeletConfiguration) {
 	obj.HairpinMode = kubeletconfigv1beta1.PromiscuousBridge
 	obj.MaxPods = 110
 	// default nil or negative value to -1 (implies node allocatable pid limit)
-	obj.PodPidsLimit = utilpointer.Int64(-1)
+	obj.PodPidsLimit = ptr.To[int64](-1)
 	obj.CPUCFSQuotaPeriod = &metav1.Duration{Duration: 100 * time.Millisecond}
-	obj.NodeStatusMaxImages = utilpointer.Int32(0)
+	obj.NodeStatusMaxImages = ptr.To[int32](0)
 	obj.MaxOpenFiles = 1000000
 	obj.ContentType = "application/json"
-	obj.SerializeImagePulls = utilpointer.Bool(true)
+	obj.SerializeImagePulls = ptr.To(true)
 	obj.EvictionHard = eviction.DefaultEvictionHard
 	obj.EvictionPressureTransitionPeriod = metav1.Duration{Duration: 5 * time.Minute}
-	obj.EnableControllerAttachDetach = utilpointer.Bool(true)
-	obj.MakeIPTablesUtilChains = utilpointer.Bool(true)
-	obj.IPTablesMasqueradeBit = utilpointer.Int32(configv1beta1.DefaultIPTablesMasqueradeBit)
-	obj.IPTablesDropBit = utilpointer.Int32(configv1beta1.DefaultIPTablesDropBit)
-	obj.FailSwapOn = utilpointer.Bool(false)
+	obj.EnableControllerAttachDetach = ptr.To(true)
+	obj.MakeIPTablesUtilChains = ptr.To(true)
+	obj.IPTablesMasqueradeBit = ptr.To[int32](configv1beta1.DefaultIPTablesMasqueradeBit)
+	obj.IPTablesDropBit = ptr.To[int32](configv1beta1.DefaultIPTablesDropBit)
+	obj.FailSwapOn = ptr.To(false)
 	obj.ContainerLogMaxSize = "10Mi"
-	obj.ContainerLogMaxFiles = utilpointer.Int32(5)
+	obj.ContainerLogMaxFiles = ptr.To[int32](5)
 	obj.ContainerLogMonitorInterval = &metav1.Duration{Duration: 10 * time.Second}
-	obj.ContainerLogMaxWorkers = utilpointer.Int32(1)
+	obj.ContainerLogMaxWorkers = ptr.To[int32](1)
 	obj.ConfigMapAndSecretChangeDetectionStrategy = kubeletconfigv1beta1.GetChangeDetectionStrategy
 	obj.EnforceNodeAllocatable = DefaultNodeAllocatableEnforcement
 	obj.VolumePluginDir = constants.DefaultVolumePluginDir
 	// Use the Default LoggingConfiguration option
 	logsapi.SetRecommendedLoggingConfiguration(&obj.Logging)
-	obj.EnableSystemLogHandler = utilpointer.Bool(true)
-	obj.EnableProfilingHandler = utilpointer.Bool(true)
-	obj.EnableDebugFlagsHandler = utilpointer.Bool(true)
-	obj.SeccompDefault = utilpointer.Bool(false)
-	obj.MemoryThrottlingFactor = utilpointer.Float64(configv1beta1.DefaultMemoryThrottlingFactor)
-	obj.RegisterNode = utilpointer.Bool(true)
+	obj.EnableSystemLogHandler = ptr.To(true)
+	obj.EnableProfilingHandler = ptr.To(true)
+	obj.EnableDebugFlagsHandler = ptr.To(true)
+	obj.SeccompDefault = ptr.To(false)
+	obj.MemoryThrottlingFactor = ptr.To(configv1beta1.DefaultMemoryThrottlingFactor)
+	obj.RegisterNode = ptr.To(true)
 
 	obj.EnforceNodeAllocatable = DefaultNodeAllocatableEnforcement
 	obj.CgroupDriver = DefaultCgroupDriver
-	obj.CgroupsPerQOS = utilpointer.Bool(DefaultCgroupsPerQOS)
-	obj.ResolverConfig = utilpointer.String(DefaultResolverConfig)
-	obj.CPUCFSQuota = utilpointer.Bool(DefaultCPUCFSQuota)
-	obj.LocalStorageCapacityIsolation = utilpointer.Bool(true)
+	obj.CgroupsPerQOS = ptr.To(DefaultCgroupsPerQOS)
+	obj.ResolverConfig = ptr.To(DefaultResolverConfig)
+	obj.CPUCFSQuota = ptr.To(DefaultCPUCFSQuota)
+	obj.LocalStorageCapacityIsolation = ptr.To(true)
 	obj.ContainerRuntimeEndpoint = constants.DefaultRemoteRuntimeEndpoint
 	obj.ImageServiceEndpoint = constants.DefaultRemoteImageEndpoint
-	obj.FailCgroupV1 = utilpointer.Bool(false)
+	obj.FailCgroupV1 = ptr.To(false)
 }

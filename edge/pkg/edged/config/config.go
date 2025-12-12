@@ -76,6 +76,7 @@ func ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(in *v1alpha2.T
 		return err
 	}
 	out.CgroupDriver = in.CgroupDriver
+	out.SingleProcessOOMKill = (*bool)(unsafe.Pointer(in.SingleProcessOOMKill))
 	out.CPUManagerPolicy = in.CPUManagerPolicy
 	out.CPUManagerPolicyOptions = *(*map[string]string)(unsafe.Pointer(&in.CPUManagerPolicyOptions))
 	out.CPUManagerReconcilePeriod = in.CPUManagerReconcilePeriod

@@ -28,14 +28,14 @@ import (
 
 	v1 "k8s.io/api/certificates/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	fakecertificates "k8s.io/client-go/kubernetes/typed/certificates/v1/fake"
+	typedcertificates "k8s.io/client-go/kubernetes/typed/certificates/v1"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 )
 
 // CertificateSigningRequestsBridge implements CertificateSigningRequestInterface
 type CertificateSigningRequestsBridge struct {
-	fakecertificates.FakeCertificateSigningRequests
+	typedcertificates.CertificateSigningRequestInterface
 	MetaClient client.CoreInterface
 }
 

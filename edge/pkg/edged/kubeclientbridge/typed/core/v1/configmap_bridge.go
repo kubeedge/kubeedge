@@ -28,14 +28,14 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	fakecorev1 "k8s.io/client-go/kubernetes/typed/core/v1/fake"
+	typecorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 )
 
 // ConfigMapBridge implements ConfigmapInterface
 type ConfigMapBridge struct {
-	fakecorev1.FakeConfigMaps
+	typecorev1.ConfigMapInterface
 	ns         string
 	MetaClient client.CoreInterface
 }

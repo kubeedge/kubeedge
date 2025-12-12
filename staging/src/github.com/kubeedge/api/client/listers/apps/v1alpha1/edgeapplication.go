@@ -19,10 +19,10 @@ limitations under the License.
 package v1alpha1
 
 import (
-	v1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/listers"
-	"k8s.io/client-go/tools/cache"
+	appsv1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // EdgeApplicationLister helps list EdgeApplications.
@@ -30,7 +30,7 @@ import (
 type EdgeApplicationLister interface {
 	// List lists all EdgeApplications in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.EdgeApplication, err error)
+	List(selector labels.Selector) (ret []*appsv1alpha1.EdgeApplication, err error)
 	// EdgeApplications returns an object that can list and get EdgeApplications.
 	EdgeApplications(namespace string) EdgeApplicationNamespaceLister
 	EdgeApplicationListerExpansion
@@ -38,17 +38,17 @@ type EdgeApplicationLister interface {
 
 // edgeApplicationLister implements the EdgeApplicationLister interface.
 type edgeApplicationLister struct {
-	listers.ResourceIndexer[*v1alpha1.EdgeApplication]
+	listers.ResourceIndexer[*appsv1alpha1.EdgeApplication]
 }
 
 // NewEdgeApplicationLister returns a new EdgeApplicationLister.
 func NewEdgeApplicationLister(indexer cache.Indexer) EdgeApplicationLister {
-	return &edgeApplicationLister{listers.New[*v1alpha1.EdgeApplication](indexer, v1alpha1.Resource("edgeapplication"))}
+	return &edgeApplicationLister{listers.New[*appsv1alpha1.EdgeApplication](indexer, appsv1alpha1.Resource("edgeapplication"))}
 }
 
 // EdgeApplications returns an object that can list and get EdgeApplications.
 func (s *edgeApplicationLister) EdgeApplications(namespace string) EdgeApplicationNamespaceLister {
-	return edgeApplicationNamespaceLister{listers.NewNamespaced[*v1alpha1.EdgeApplication](s.ResourceIndexer, namespace)}
+	return edgeApplicationNamespaceLister{listers.NewNamespaced[*appsv1alpha1.EdgeApplication](s.ResourceIndexer, namespace)}
 }
 
 // EdgeApplicationNamespaceLister helps list and get EdgeApplications.
@@ -56,15 +56,15 @@ func (s *edgeApplicationLister) EdgeApplications(namespace string) EdgeApplicati
 type EdgeApplicationNamespaceLister interface {
 	// List lists all EdgeApplications in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.EdgeApplication, err error)
+	List(selector labels.Selector) (ret []*appsv1alpha1.EdgeApplication, err error)
 	// Get retrieves the EdgeApplication from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1alpha1.EdgeApplication, error)
+	Get(name string) (*appsv1alpha1.EdgeApplication, error)
 	EdgeApplicationNamespaceListerExpansion
 }
 
 // edgeApplicationNamespaceLister implements the EdgeApplicationNamespaceLister
 // interface.
 type edgeApplicationNamespaceLister struct {
-	listers.ResourceIndexer[*v1alpha1.EdgeApplication]
+	listers.ResourceIndexer[*appsv1alpha1.EdgeApplication]
 }

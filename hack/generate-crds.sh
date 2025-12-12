@@ -62,7 +62,7 @@ function :pre:install: {
   # install controller-gen tool if not exist
   if [ "$(which controller-gen)" == "" ]; then
       echo "Start to install controller-gen tool"
-      GO111MODULE=on go install -v sigs.k8s.io/controller-tools/cmd/controller-gen@v0.16.5
+      GO111MODULE=on go install -v sigs.k8s.io/controller-tools/cmd/controller-gen@v0.17.3
       GOPATH="${GOPATH:-$(go env GOPATH)}"
       export PATH=$PATH:$GOPATH/bin
   fi

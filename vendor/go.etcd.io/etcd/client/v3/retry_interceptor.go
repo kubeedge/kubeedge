@@ -19,6 +19,7 @@ package clientv3
 
 import (
 	"context"
+	"errors"
 	"io"
 	"sync"
 	"time"
@@ -74,13 +75,7 @@ func (c *Client) unaryClientInterceptor(optFuncs ...retryOption) grpc.UnaryClien
 				continue
 			}
 			if c.shouldRefreshToken(lastErr, callOpts) {
-				// clear auth token before refreshing it.
-				// call c.Auth.Authenticate with an invalid token will always fail the auth check on the server-side,
-				// if the server has not apply the patch of pr #12165 (https://github.com/etcd-io/etcd/pull/12165)
-				// and a rpctypes.ErrInvalidAuthToken will recursively call c.getToken until system run out of resource.
-				c.authTokenBundle.UpdateAuthToken("")
-
-				gterr := c.getToken(ctx)
+				gterr := c.refreshToken(ctx)
 				if gterr != nil {
 					c.GetLogger().Warn(
 						"retrying of unary invoker failed to fetch new auth token",
@@ -91,7 +86,7 @@ func (c *Client) unaryClientInterceptor(optFuncs ...retryOption) grpc.UnaryClien
 				}
 				continue
 			}
-			if !isSafeRetry(c.lg, lastErr, callOpts) {
+			if !isSafeRetry(c, lastErr, callOpts) {
 				return lastErr
 			}
 		}
@@ -159,6 +154,24 @@ func (c *Client) shouldRefreshToken(err error, callOpts *options) bool {
 
 	return callOpts.retryAuth &&
 		(rpctypes.Error(err) == rpctypes.ErrInvalidAuthToken || rpctypes.Error(err) == rpctypes.ErrAuthOldRevision)
+}
+
+func (c *Client) refreshToken(ctx context.Context) error {
+	if c.authTokenBundle == nil {
+		// c.authTokenBundle will be initialized only when
+		// c.Username != "" && c.Password != "".
+		//
+		// When users use the TLS CommonName based authentication, the
+		// authTokenBundle is always nil. But it's possible for the clients
+		// to get `rpctypes.ErrAuthOldRevision` response when the clients
+		// concurrently modify auth data (e.g, addUser, deleteUser etc.).
+		// In this case, there is no need to refresh the token; instead the
+		// clients just need to retry the operations (e.g. Put, Delete etc).
+		return nil
+	}
+	// clear auth token before refreshing it.
+	c.authTokenBundle.UpdateAuthToken("")
+	return c.getToken(ctx)
 }
 
 // type serverStreamingRetryingStream is the implementation of grpc.ClientStream that acts as a
@@ -259,10 +272,7 @@ func (s *serverStreamingRetryingStream) receiveMsgAndIndicateRetry(m interface{}
 		return true, err
 	}
 	if s.client.shouldRefreshToken(err, s.callOpts) {
-		// clear auth token to avoid failure when call getToken
-		s.client.authTokenBundle.UpdateAuthToken("")
-
-		gterr := s.client.getToken(s.ctx)
+		gterr := s.client.refreshToken(s.ctx)
 		if gterr != nil {
 			s.client.lg.Warn("retry failed to fetch new auth token", zap.Error(gterr))
 			return false, err // return the original error for simplicity
@@ -270,7 +280,7 @@ func (s *serverStreamingRetryingStream) receiveMsgAndIndicateRetry(m interface{}
 		return true, err
 
 	}
-	return isSafeRetry(s.client.lg, err, s.callOpts), err
+	return isSafeRetry(s.client, err, s.callOpts), err
 }
 
 func (s *serverStreamingRetryingStream) reestablishStreamAndResendBuffer(callCtx context.Context) (grpc.ClientStream, error) {
@@ -310,17 +320,28 @@ func waitRetryBackoff(ctx context.Context, attempt uint, callOpts *options) erro
 }
 
 // isSafeRetry returns "true", if request is safe for retry with the given error.
-func isSafeRetry(lg *zap.Logger, err error, callOpts *options) bool {
+func isSafeRetry(c *Client, err error, callOpts *options) bool {
 	if isContextError(err) {
 		return false
 	}
+
+	// Situation when learner refuses RPC it is supposed to not serve is from the server
+	// perspective not retryable.
+	// But for backward-compatibility reasons we need  to support situation that
+	// customer provides mix of learners (not yet voters) and voters with an
+	// expectation to pick voter in the next attempt.
+	// TODO: Ideally client should be 'aware' which endpoint represents: leader/voter/learner with high probability.
+	if errors.Is(err, rpctypes.ErrGPRCNotSupportedForLearner) && len(c.Endpoints()) > 1 {
+		return true
+	}
+
 	switch callOpts.retryPolicy {
 	case repeatable:
 		return isSafeRetryImmutableRPC(err)
 	case nonRepeatable:
 		return isSafeRetryMutableRPC(err)
 	default:
-		lg.Warn("unrecognized retry policy", zap.String("retryPolicy", callOpts.retryPolicy.String()))
+		c.lg.Warn("unrecognized retry policy", zap.String("retryPolicy", callOpts.retryPolicy.String()))
 		return false
 	}
 }

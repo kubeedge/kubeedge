@@ -19,13 +19,13 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	appsv1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
+	apisappsv1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
 	versioned "github.com/kubeedge/api/client/clientset/versioned"
 	internalinterfaces "github.com/kubeedge/api/client/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/kubeedge/api/client/listers/apps/v1alpha1"
+	appsv1alpha1 "github.com/kubeedge/api/client/listers/apps/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -36,7 +36,7 @@ import (
 // NodeGroups.
 type NodeGroupInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.NodeGroupLister
+	Lister() appsv1alpha1.NodeGroupLister
 }
 
 type nodeGroupInformer struct {
@@ -70,7 +70,7 @@ func NewFilteredNodeGroupInformer(client versioned.Interface, resyncPeriod time.
 				return client.AppsV1alpha1().NodeGroups().Watch(context.TODO(), options)
 			},
 		},
-		&appsv1alpha1.NodeGroup{},
+		&apisappsv1alpha1.NodeGroup{},
 		resyncPeriod,
 		indexers,
 	)
@@ -81,9 +81,9 @@ func (f *nodeGroupInformer) defaultInformer(client versioned.Interface, resyncPe
 }
 
 func (f *nodeGroupInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&appsv1alpha1.NodeGroup{}, f.defaultInformer)
+	return f.factory.InformerFor(&apisappsv1alpha1.NodeGroup{}, f.defaultInformer)
 }
 
-func (f *nodeGroupInformer) Lister() v1alpha1.NodeGroupLister {
-	return v1alpha1.NewNodeGroupLister(f.Informer().GetIndexer())
+func (f *nodeGroupInformer) Lister() appsv1alpha1.NodeGroupLister {
+	return appsv1alpha1.NewNodeGroupLister(f.Informer().GetIndexer())
 }

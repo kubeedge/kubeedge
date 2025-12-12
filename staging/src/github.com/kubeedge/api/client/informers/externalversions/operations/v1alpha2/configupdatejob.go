@@ -19,13 +19,13 @@ limitations under the License.
 package v1alpha2
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
+	apisoperationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 	versioned "github.com/kubeedge/api/client/clientset/versioned"
 	internalinterfaces "github.com/kubeedge/api/client/informers/externalversions/internalinterfaces"
-	v1alpha2 "github.com/kubeedge/api/client/listers/operations/v1alpha2"
+	operationsv1alpha2 "github.com/kubeedge/api/client/listers/operations/v1alpha2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -36,7 +36,7 @@ import (
 // ConfigUpdateJobs.
 type ConfigUpdateJobInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha2.ConfigUpdateJobLister
+	Lister() operationsv1alpha2.ConfigUpdateJobLister
 }
 
 type configUpdateJobInformer struct {
@@ -70,7 +70,7 @@ func NewFilteredConfigUpdateJobInformer(client versioned.Interface, resyncPeriod
 				return client.OperationsV1alpha2().ConfigUpdateJobs().Watch(context.TODO(), options)
 			},
 		},
-		&operationsv1alpha2.ConfigUpdateJob{},
+		&apisoperationsv1alpha2.ConfigUpdateJob{},
 		resyncPeriod,
 		indexers,
 	)
@@ -81,9 +81,9 @@ func (f *configUpdateJobInformer) defaultInformer(client versioned.Interface, re
 }
 
 func (f *configUpdateJobInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&operationsv1alpha2.ConfigUpdateJob{}, f.defaultInformer)
+	return f.factory.InformerFor(&apisoperationsv1alpha2.ConfigUpdateJob{}, f.defaultInformer)
 }
 
-func (f *configUpdateJobInformer) Lister() v1alpha2.ConfigUpdateJobLister {
-	return v1alpha2.NewConfigUpdateJobLister(f.Informer().GetIndexer())
+func (f *configUpdateJobInformer) Lister() operationsv1alpha2.ConfigUpdateJobLister {
+	return operationsv1alpha2.NewConfigUpdateJobLister(f.Informer().GetIndexer())
 }

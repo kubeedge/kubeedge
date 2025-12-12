@@ -19,10 +19,10 @@ limitations under the License.
 package v1
 
 import (
-	v1 "github.com/kubeedge/api/apis/rules/v1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/listers"
-	"k8s.io/client-go/tools/cache"
+	rulesv1 "github.com/kubeedge/api/apis/rules/v1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // RuleLister helps list Rules.
@@ -30,7 +30,7 @@ import (
 type RuleLister interface {
 	// List lists all Rules in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1.Rule, err error)
+	List(selector labels.Selector) (ret []*rulesv1.Rule, err error)
 	// Rules returns an object that can list and get Rules.
 	Rules(namespace string) RuleNamespaceLister
 	RuleListerExpansion
@@ -38,17 +38,17 @@ type RuleLister interface {
 
 // ruleLister implements the RuleLister interface.
 type ruleLister struct {
-	listers.ResourceIndexer[*v1.Rule]
+	listers.ResourceIndexer[*rulesv1.Rule]
 }
 
 // NewRuleLister returns a new RuleLister.
 func NewRuleLister(indexer cache.Indexer) RuleLister {
-	return &ruleLister{listers.New[*v1.Rule](indexer, v1.Resource("rule"))}
+	return &ruleLister{listers.New[*rulesv1.Rule](indexer, rulesv1.Resource("rule"))}
 }
 
 // Rules returns an object that can list and get Rules.
 func (s *ruleLister) Rules(namespace string) RuleNamespaceLister {
-	return ruleNamespaceLister{listers.NewNamespaced[*v1.Rule](s.ResourceIndexer, namespace)}
+	return ruleNamespaceLister{listers.NewNamespaced[*rulesv1.Rule](s.ResourceIndexer, namespace)}
 }
 
 // RuleNamespaceLister helps list and get Rules.
@@ -56,15 +56,15 @@ func (s *ruleLister) Rules(namespace string) RuleNamespaceLister {
 type RuleNamespaceLister interface {
 	// List lists all Rules in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1.Rule, err error)
+	List(selector labels.Selector) (ret []*rulesv1.Rule, err error)
 	// Get retrieves the Rule from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1.Rule, error)
+	Get(name string) (*rulesv1.Rule, error)
 	RuleNamespaceListerExpansion
 }
 
 // ruleNamespaceLister implements the RuleNamespaceLister
 // interface.
 type ruleNamespaceLister struct {
-	listers.ResourceIndexer[*v1.Rule]
+	listers.ResourceIndexer[*rulesv1.Rule]
 }

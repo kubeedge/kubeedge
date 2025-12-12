@@ -19,13 +19,13 @@ limitations under the License.
 package v1alpha2
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
+	apisoperationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 	versioned "github.com/kubeedge/api/client/clientset/versioned"
 	internalinterfaces "github.com/kubeedge/api/client/informers/externalversions/internalinterfaces"
-	v1alpha2 "github.com/kubeedge/api/client/listers/operations/v1alpha2"
+	operationsv1alpha2 "github.com/kubeedge/api/client/listers/operations/v1alpha2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -36,7 +36,7 @@ import (
 // ImagePrePullJobs.
 type ImagePrePullJobInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha2.ImagePrePullJobLister
+	Lister() operationsv1alpha2.ImagePrePullJobLister
 }
 
 type imagePrePullJobInformer struct {
@@ -70,7 +70,7 @@ func NewFilteredImagePrePullJobInformer(client versioned.Interface, resyncPeriod
 				return client.OperationsV1alpha2().ImagePrePullJobs().Watch(context.TODO(), options)
 			},
 		},
-		&operationsv1alpha2.ImagePrePullJob{},
+		&apisoperationsv1alpha2.ImagePrePullJob{},
 		resyncPeriod,
 		indexers,
 	)
@@ -81,9 +81,9 @@ func (f *imagePrePullJobInformer) defaultInformer(client versioned.Interface, re
 }
 
 func (f *imagePrePullJobInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&operationsv1alpha2.ImagePrePullJob{}, f.defaultInformer)
+	return f.factory.InformerFor(&apisoperationsv1alpha2.ImagePrePullJob{}, f.defaultInformer)
 }
 
-func (f *imagePrePullJobInformer) Lister() v1alpha2.ImagePrePullJobLister {
-	return v1alpha2.NewImagePrePullJobLister(f.Informer().GetIndexer())
+func (f *imagePrePullJobInformer) Lister() operationsv1alpha2.ImagePrePullJobLister {
+	return operationsv1alpha2.NewImagePrePullJobLister(f.Informer().GetIndexer())
 }

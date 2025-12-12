@@ -300,6 +300,15 @@ type TailoredKubeletConfiguration struct {
 	// Default: "cgroupfs"
 	// +optional
 	CgroupDriver string `json:"cgroupDriver,omitempty"`
+	// singleProcessOOMKill, if true, will prevent the `memory.oom.group` flag from being set for container
+	// cgroups in cgroups v2. This causes processes in the container to be OOM killed individually instead of as
+	// a group. It means that if true, the behavior aligns with the behavior of cgroups v1.
+	// The default value is determined automatically when you don't specify.
+	// On non-linux such as windows, only null / absent is allowed.
+	// On cgroup v1 linux, only null / absent and true are allowed.
+	// On cgroup v2 linux, null / absent, true and false are allowed. The default value is false.
+	// +optional
+	SingleProcessOOMKill *bool `json:"singleProcessOOMKill,omitempty"`
 	// cpuManagerPolicy is the name of the policy to use.
 	// Requires the CPUManager feature gate to be enabled.
 	// Default: "None"
@@ -701,6 +710,11 @@ type TailoredKubeletConfiguration struct {
 	// +featureGate=GracefulNodeShutdownBasedOnPodPriority
 	// +optional
 	ShutdownGracePeriodByPodPriority []tailoredkubeletconfigv1beta1.ShutdownGracePeriodByPodPriority `json:"shutdownGracePeriodByPodPriority,omitempty"`
+	// CrashLoopBackOff contains config to modify node-level parameters for
+	// container restart behavior
+	// +featureGate=KubeletCrashLoopBackOffMax
+	// +optional
+	CrashLoopBackOff tailoredkubeletconfigv1beta1.CrashLoopBackOffConfig `json:"crashLoopBackOff,omitempty"`
 	// reservedMemory specifies a comma-separated list of memory reservations for NUMA nodes.
 	// The parameter makes sense only in the context of the memory manager feature.
 	// The memory manager will not allocate reserved memory for container workloads.

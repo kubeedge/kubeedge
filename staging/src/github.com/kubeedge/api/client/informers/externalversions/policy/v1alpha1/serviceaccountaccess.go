@@ -19,13 +19,13 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	policyv1alpha1 "github.com/kubeedge/api/apis/policy/v1alpha1"
+	apispolicyv1alpha1 "github.com/kubeedge/api/apis/policy/v1alpha1"
 	versioned "github.com/kubeedge/api/client/clientset/versioned"
 	internalinterfaces "github.com/kubeedge/api/client/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/kubeedge/api/client/listers/policy/v1alpha1"
+	policyv1alpha1 "github.com/kubeedge/api/client/listers/policy/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -36,7 +36,7 @@ import (
 // ServiceAccountAccesses.
 type ServiceAccountAccessInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.ServiceAccountAccessLister
+	Lister() policyv1alpha1.ServiceAccountAccessLister
 }
 
 type serviceAccountAccessInformer struct {
@@ -71,7 +71,7 @@ func NewFilteredServiceAccountAccessInformer(client versioned.Interface, namespa
 				return client.PolicyV1alpha1().ServiceAccountAccesses(namespace).Watch(context.TODO(), options)
 			},
 		},
-		&policyv1alpha1.ServiceAccountAccess{},
+		&apispolicyv1alpha1.ServiceAccountAccess{},
 		resyncPeriod,
 		indexers,
 	)
@@ -82,9 +82,9 @@ func (f *serviceAccountAccessInformer) defaultInformer(client versioned.Interfac
 }
 
 func (f *serviceAccountAccessInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&policyv1alpha1.ServiceAccountAccess{}, f.defaultInformer)
+	return f.factory.InformerFor(&apispolicyv1alpha1.ServiceAccountAccess{}, f.defaultInformer)
 }
 
-func (f *serviceAccountAccessInformer) Lister() v1alpha1.ServiceAccountAccessLister {
-	return v1alpha1.NewServiceAccountAccessLister(f.Informer().GetIndexer())
+func (f *serviceAccountAccessInformer) Lister() policyv1alpha1.ServiceAccountAccessLister {
+	return policyv1alpha1.NewServiceAccountAccessLister(f.Informer().GetIndexer())
 }

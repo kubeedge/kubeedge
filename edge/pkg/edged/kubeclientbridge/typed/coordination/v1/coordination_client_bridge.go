@@ -24,7 +24,7 @@ and made some variant
 package v1
 
 import (
-	v1 "k8s.io/client-go/kubernetes/typed/coordination/v1"
+	typedcoordinationv1 "k8s.io/client-go/kubernetes/typed/coordination/v1"
 	fakecoordinationv1 "k8s.io/client-go/kubernetes/typed/coordination/v1/fake"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
@@ -36,6 +36,7 @@ type CoordinationV1Bridge struct {
 	MetaClient client.CoreInterface
 }
 
-func (c *CoordinationV1Bridge) Leases(namespace string) v1.LeaseInterface {
-	return &LeaseBridge{fakecoordinationv1.FakeLeases{Fake: &c.FakeCoordinationV1}, namespace, c.MetaClient}
+func (c *CoordinationV1Bridge) Leases(namespace string) typedcoordinationv1.LeaseInterface {
+	fakeLeases := c.FakeCoordinationV1.Leases(namespace)
+	return &LeaseBridge{LeaseInterface: fakeLeases, ns: namespace, MetaClient: c.MetaClient}
 }
