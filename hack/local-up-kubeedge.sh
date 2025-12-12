@@ -168,6 +168,7 @@ function create_device_crd {
   echo "creating the device crd..."
   kubectl apply -f ${KUBEEDGE_ROOT}/build/crds/devices/devices_v1beta1_device.yaml
   kubectl apply -f ${KUBEEDGE_ROOT}/build/crds/devices/devices_v1beta1_devicemodel.yaml
+  kubectl apply -f ${KUBEEDGE_ROOT}/build/crds/devices/devices_v1beta1_devicestatus.yaml
 }
 
 function create_objectsync_crd {
