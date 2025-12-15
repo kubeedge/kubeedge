@@ -21,3 +21,4 @@
 - codename: should execute poststart exec hook properly
 - codename: should execute prestop exec hook properly
 - codename: should not cause race condition when used for configmaps
+- codename: should be able to pull from private registry with secret
