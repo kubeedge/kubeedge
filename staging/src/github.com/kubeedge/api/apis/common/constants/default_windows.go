@@ -7,39 +7,39 @@ const (
 	KubeEdgePath       = "C:\\etc\\kubeedge\\"
 	KubeEdgeUsrBinPath = "C:\\usr\\local\\bin"
 
-	DefaultConfigDir   = "c:\\etc\\kubeedge\\config\\"
-	EdgecoreConfigPath = "c:\\etc\\kubeedge\\config\\edgecore.yaml"
+	DefaultConfigDir   = "C:\\etc\\kubeedge\\config\\"
+	EdgecoreConfigPath = "C:\\etc\\kubeedge\\config\\edgecore.yaml"
 
 	KubeEdgeLogPath = "C:\\var\\log\\kubeedge\\"
 
 	// Certificates
 	// DefaultCertPath is the default certificate path in edge node
-	DefaultCertPath  = "c:\\etc\\kubeedge\\certs"
-	DefaultCAFile    = "c:\\etc\\kubeedge\\ca\\rootCA.crt"
-	DefaultCAKeyFile = "c:\\etc\\kubeedge\\ca\\rootCA.key"
-	DefaultCertFile  = "c:\\etc\\kubeedge\\certs\\server.crt"
-	DefaultKeyFile   = "c:\\etc\\kubeedge\\certs\\server.key"
+	DefaultCertPath  = "C:\\etc\\kubeedge\\certs"
+	DefaultCAFile    = "C:\\etc\\kubeedge\\ca\\rootCA.crt"
+	DefaultCAKeyFile = "C:\\etc\\kubeedge\\ca\\rootCA.key"
+	DefaultCertFile  = "C:\\etc\\kubeedge\\certs\\server.crt"
+	DefaultKeyFile   = "C:\\etc\\kubeedge\\certs\\server.key"
 
-	DefaultStreamCAFile   = "c:\\etc\\kubeedge\\ca\\streamCA.crt"
-	DefaultStreamCertFile = "c:\\etc\\kubeedge\\certs\\stream.crt"
-	DefaultStreamKeyFile  = "c:\\etc\\kubeedge\\certs\\stream.key"
+	DefaultStreamCAFile   = "C:\\etc\\kubeedge\\ca\\streamCA.crt"
+	DefaultStreamCertFile = "C:\\etc\\kubeedge\\certs\\stream.crt"
+	DefaultStreamKeyFile  = "C:\\etc\\kubeedge\\certs\\stream.key"
 
-	DefaultMqttCAFile   = "c:\\etc\\kubeedge\\ca\\rootCA.crt"
-	DefaultMqttCertFile = "c:\\etc\\kubeedge\\certs\\server.crt"
-	DefaultMqttKeyFile  = "c:\\etc\\kubeedge\\certs\\server.key"
+	DefaultMqttCAFile   = "C:\\etc\\kubeedge\\ca\\rootCA.crt"
+	DefaultMqttCertFile = "C:\\etc\\kubeedge\\certs\\server.crt"
+	DefaultMqttKeyFile  = "C:\\etc\\kubeedge\\certs\\server.key"
 
 	// Bootstrap file, contains token used by edgecore to apply for ca/cert
-	BootstrapFile = "c:\\etc\\kubeedge\\bootstrap-edgecore.conf"
+	BootstrapFile = "C:\\etc\\kubeedge\\bootstrap-edgecore.conf"
 
 	// Edged
-	DefaultRootDir               = "c:\\var\\lib\\kubelet"
+	DefaultRootDir               = "C:\\var\\lib\\kubelet"
 	DefaultRemoteRuntimeEndpoint = "npipe://./pipe/containerd-containerd"
 	DefaultRemoteImageEndpoint   = "npipe://./pipe/containerd-containerd"
-	DefaultCNIConfDir            = "c:\\etc\\cni\\net.d"
-	DefaultCNIBinDir             = "c:\\opt\\cni\\bin"
-	DefaultCNICacheDir           = "c:\\var\\lib\\cni\\cache"
+	DefaultCNIConfDir            = "C:\\etc\\cni\\net.d"
+	DefaultCNIBinDir             = "C:\\opt\\cni\\bin"
+	DefaultCNICacheDir           = "C:\\var\\lib\\cni\\cache"
 	DefaultVolumePluginDir       = "C:\\usr\\libexec\\kubernetes\\kubelet-plugins\\volume\\exec\\"
 
 	// DefaultManifestsDir edge node default static pod path
-	DefaultManifestsDir = "c:\\etc\\kubeedge\\manifests\\"
+	DefaultManifestsDir = "C:\\etc\\kubeedge\\manifests\\"
 )

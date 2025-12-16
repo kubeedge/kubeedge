@@ -18,6 +18,8 @@ limitations under the License.
 package common
 
 type JoinOSExtOptions struct {
-	// LogPath is the path to the log file, Windows only
+	// LogPath is the path to the log file.
 	LogPath string
+	// DownloadRepo is the url prefix to download the release assets.
+	DownloadRepo string
 }
