@@ -26,8 +26,6 @@ import (
 
 	"github.com/spf13/cobra"
 	phases "k8s.io/kubernetes/cmd/kubeadm/app/cmd/phases/reset"
-	utilruntime "k8s.io/kubernetes/cmd/kubeadm/app/util/runtime"
-	utilsexec "k8s.io/utils/exec"
 
 	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
@@ -100,7 +98,7 @@ func NewKubeEdgeReset() *cobra.Command {
 			}
 
 			// 2. Remove containers managed by KubeEdge.
-			if err := RemoveContainers(utilsexec.New()); err != nil {
+			if err := RemoveContainers(); err != nil {
 				fmt.Printf("Failed to remove containers: %v\n", err)
 			}
 
@@ -142,21 +140,9 @@ func TearDownKubeEdge(_ string) error {
 }
 
 // RemoveContainers removes all Kubernetes-managed containers
-func RemoveContainers(execer utilsexec.Interface) error {
+func RemoveContainers() error {
 	fmt.Println("Start removing containers managed by KubeEdge")
-	criSocketPath, err := utilruntime.DetectCRISocket()
-	if err != nil {
-		return err
-	}
-
-	containerRuntime := utilruntime.NewContainerRuntime(criSocketPath)
-	
-	containers, err := containerRuntime.ListKubeContainers()
-	if err != nil {
-		return err
-	}
-
-	err = containerRuntime.RemoveContainers(containers)
+	err := util.RemoveContainers("")
 	if err != nil {
 		return err
 	}
