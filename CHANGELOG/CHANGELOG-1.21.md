@@ -1,9 +1,28 @@
+* [v1.21.1](#v1211)
+    * [Downloads for v1.21.1](#downloads-for-v1211)
+    * [KubeEdge v1.21.1 Release Notes](#kubeedge-v1211-release-notes)
+        * [Changelog since v1.21.0](#changelog-since-v1210)
 * [v1.21.0](#v1210)
     * [Downloads for v1.21.0](#downloads-for-v1210)
     * [KubeEdge v1.21 Release Notes](#kubeedge-v121-release-notes)
         * [1.21 What's New](#121-whats-new)
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
 
+# v1.21.1
+
+## Downloads for v1.21.1
+
+Download v1.21.1 in the [v1.21.1 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.21.1).
+
+## KubeEdge v1.21.1 Release Notes
+
+### Changelog since v1.21.0
+
+- Fix incorrect runner register for NodeUpgradeJob. ([#6496](https://github.com/kubeedge/kubeedge/pull/6496), [@liuzhen21](https://github.com/liuzhen21))
+- Fix policyManager reconciliation with non-cached reader. ([#6558](https://github.com/kubeedge/kubeedge/pull/6558), [@mkhon](https://github.com/mkhon))
+- Fix Leases being parsed as Leas in MetaServer. ([#6567](https://github.com/kubeedge/kubeedge/pull/6567), [@brinker-tbaker](https://github.com/brinker-tbaker))
+- Fix keadm reset edge failed to remove containers for containerRuntime.Connect missed. ([#6575](https://github.com/kubeedge/kubeedge/pull/6575), [@will4j](https://github.com/will4j))
+- Fix data push operation in mapper-framework. ([#6578](https://github.com/kubeedge/kubeedge/pull/6578), [@aAAaqwq](https://github.com/aAAaqwq))
 
 # v1.21.0
 
