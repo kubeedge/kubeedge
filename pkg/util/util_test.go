@@ -291,3 +291,95 @@ func TestGetResourceID(t *testing.T) {
 		assert.Equal(c.expected, result)
 	}
 }
+
+func TestGetNamespacedName(t *testing.T) {
+	assert := assert.New(t)
+
+	cases := []struct {
+		name          string
+		resourceID    string
+		expectedNS    string
+		expectedName  string
+		expectedError bool
+		errorMessage  string
+	}{
+		{
+			name:          "valid resource ID with namespace and name",
+			resourceID:    "default/pod",
+			expectedNS:    "default",
+			expectedName:  "pod",
+			expectedError: false,
+		},
+		{
+			name:          "valid resource ID with empty namespace",
+			resourceID:    "/pod",
+			expectedNS:    "",
+			expectedName:  "pod",
+			expectedError: false,
+		},
+		{
+			name:          "valid resource ID with empty name",
+			resourceID:    "default/",
+			expectedNS:    "default",
+			expectedName:  "",
+			expectedError: false,
+		},
+		{
+			name:          "valid resource ID with both empty",
+			resourceID:    "/",
+			expectedNS:    "",
+			expectedName:  "",
+			expectedError: false,
+		},
+		{
+			name:          "invalid resource ID - no separator",
+			resourceID:    "defaultpod",
+			expectedNS:    "",
+			expectedName:  "",
+			expectedError: true,
+			errorMessage:  "invalid resourceID defaultpod",
+		},
+		{
+			name:          "invalid resource ID - multiple separators",
+			resourceID:    "default/namespace/pod",
+			expectedNS:    "",
+			expectedName:  "",
+			expectedError: true,
+			errorMessage:  "invalid resourceID default/namespace/pod",
+		},
+		{
+			name:          "invalid resource ID - empty string",
+			resourceID:    "",
+			expectedNS:    "",
+			expectedName:  "",
+			expectedError: true,
+			errorMessage:  "invalid resourceID ",
+		},
+		{
+			name:          "valid resource ID with long names",
+			resourceID:    "kube-system/very-long-pod-name-with-dashes",
+			expectedNS:    "kube-system",
+			expectedName:  "very-long-pod-name-with-dashes",
+			expectedError: false,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			namespace, name, err := GetNamespacedName(c.resourceID)
+
+			if c.expectedError {
+				assert.Error(err, "Expected error for case: %s", c.name)
+				if c.errorMessage != "" {
+					assert.Equal(c.errorMessage, err.Error(), "Error message should match for case: %s", c.name)
+				}
+				assert.Equal(c.expectedNS, namespace, "Namespace should be empty on error for case: %s", c.name)
+				assert.Equal(c.expectedName, name, "Name should be empty on error for case: %s", c.name)
+			} else {
+				assert.NoError(err, "No error expected for case: %s", c.name)
+				assert.Equal(c.expectedNS, namespace, "Namespace should match for case: %s", c.name)
+				assert.Equal(c.expectedName, name, "Name should match for case: %s", c.name)
+			}
+		})
+	}
+}
