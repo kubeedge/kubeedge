@@ -207,6 +207,17 @@ func getNameFormStatus(s string) int {
 	return -1
 }
 
+func isNumericKind(k reflect.Kind) bool {
+	switch k {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+		reflect.Float32, reflect.Float64:
+		return true
+	default:
+		return false
+	}
+}
+
 // SetCommonValue modifies the new value of the name in the config represented by struct.
 // The type of new value may be int, float, string, splic.
 // The name is represented by name1.name2.(...).nameM.
@@ -224,6 +235,13 @@ func setCommonValue(structPtr interface{}, fieldPath string, value interface{}) 
 	}
 
 	val := reflect.ValueOf(value)
+
+	// support numeric convert
+	if isNumericKind(fieldVal.Kind()) && isNumericKind(val.Kind()) {
+		if val.Type().ConvertibleTo(fieldVal.Type()) {
+			val = val.Convert(fieldVal.Type())
+		}
+	}
 
 	if fieldVal.Type() != val.Type() {
 		return fmt.Errorf("%s: Provided value type %s does not match field type %s", fieldPath, val.Type(), fieldVal.Type())
@@ -284,6 +302,14 @@ func setArrayValue(structPtr interface{}, fieldPath string, index int, newValue 
 	}
 	//Set new value
 	elem := reflect.ValueOf(newValue)
+
+	// support numeric convert
+	if isNumericKind(fieldVal.Type().Elem().Kind()) && isNumericKind(elem.Kind()) {
+		if elem.Type().ConvertibleTo(fieldVal.Type().Elem()) {
+			elem = elem.Convert(fieldVal.Type().Elem())
+		}
+	}
+
 	if elem.Type() != fieldVal.Type().Elem() {
 		return fmt.Errorf("type mismatch for field %s", pathParts[len(pathParts)-1])
 	}
