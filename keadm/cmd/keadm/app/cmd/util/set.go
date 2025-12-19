@@ -218,6 +218,17 @@ func getNameFormStatus(s string) int {
 	return -1
 }
 
+func isNumericKind(k reflect.Kind) bool {
+	switch k {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+		reflect.Float32, reflect.Float64:
+		return true
+	default:
+		return false
+	}
+}
+
 // SetCommonValue modifies the new value of the name in the config represented by struct.
 // The type of new value may be int, float, string, splic.
 // The name is represented by name1.name2.(...).nameM.
@@ -316,6 +327,12 @@ func convertTargetValue(targetType reflect.Type, valueToSet reflect.Value) (refl
 	// string to int or int to string is intentionally forbid to avoid ambiguity
 	if targetType.Kind() == valueToSet.Kind() && valueToSet.Type().ConvertibleTo(targetType) {
 		return valueToSet.Convert(targetType), nil
+	}
+	// support numeric convert
+	if isNumericKind(targetType.Kind()) && isNumericKind(valueToSet.Kind()) {
+		if valueToSet.Type().ConvertibleTo(targetType) {
+			return valueToSet.Convert(targetType), nil
+		}
 	}
 	// support point value
 	if targetType.Kind() == reflect.Ptr && valueToSet.Type().ConvertibleTo(targetType.Elem()) {
