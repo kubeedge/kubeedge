@@ -1,9 +1,27 @@
+* [v1.22.1](#v1221)
+    * [Downloads for v1.22.1](#downloads-for-v1221)
+    * [KubeEdge v1.22.1 Release Notes](#kubeedge-v1221-release-notes)
+        * [Changelog since v1.22.0](#changelog-since-v1220)
 * [v1.22.0](#v1220)
     * [Downloads for v1.22.0](#downloads-for-v1220)
     * [KubeEdge v1.22 Release Notes](#kubeedge-v122-release-notes)
         * [1.22 What's New](#122-whats-new)
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
 
+
+# v1.22.1
+
+## Downloads for v1.22.1
+
+Download v1.22.1 in the [v1.22.1 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.22.1).
+
+## KubeEdge v1.22.1 Release Notes
+
+### Changelog since v1.22.0
+
+- Fix deviceInstanceConfig override not implemented in MapperRegister. ([#6553](https://github.com/kubeedge/kubeedge/pull/6553), [@HaojieZhang6848](https://github.com/HaojieZhang6848))
+- Fix policyManager reconciliation with non-cached reader. ([#6558](https://github.com/kubeedge/kubeedge/pull/6558), [@mkhon](https://github.com/mkhon))
+- Fix keadm reset edge failed to remove containers for containerRuntime.Connect missed. ([#6575](https://github.com/kubeedge/kubeedge/pull/6575), [@will4j](https://github.com/will4j))
 
 # v1.22.0
 
