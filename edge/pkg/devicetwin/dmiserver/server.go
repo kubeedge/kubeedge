@@ -21,15 +21,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"golang.org/x/net/context"
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	"k8s.io/klog/v2"
+	criutil "k8s.io/cri-client/pkg/util"
+	klog "k8s.io/klog/v2"
 
+	apiconsts "github.com/kubeedge/api/apis/common/constants"
 	pb "github.com/kubeedge/api/apis/dmi/v1beta1"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
@@ -38,6 +41,7 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	commutil "github.com/kubeedge/kubeedge/edge/pkg/common/util"
 	deviceconfig "github.com/kubeedge/kubeedge/edge/pkg/devicetwin/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dmicache"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dmiclient"
@@ -57,7 +61,8 @@ type server struct {
 	dmiCache *dmicache.DMICache
 }
 
-func (s *server) MapperRegister(_ context.Context, in *pb.MapperRegisterRequest) (*pb.MapperRegisterResponse, error) {
+func (s *server) MapperRegister(_ctx context.Context, in *pb.MapperRegisterRequest,
+) (*pb.MapperRegisterResponse, error) {
 	if !s.limiter.Allow() {
 		return nil, fmt.Errorf("fail to register mapper because of too many request: %s", in.Mapper.Name)
 	}
@@ -123,8 +128,8 @@ func (s *server) MapperRegister(_ context.Context, in *pb.MapperRegisterRequest)
 	}, nil
 }
 
-func (s *server) ReportDeviceStatus(_ context.Context, in *pb.ReportDeviceStatusRequest) (*pb.
-	ReportDeviceStatusResponse, error) {
+func (s *server) ReportDeviceStatus(_ctx context.Context, in *pb.ReportDeviceStatusRequest,
+) (*pb.ReportDeviceStatusResponse, error) {
 	if !s.limiter.Allow() {
 		return nil, fmt.Errorf("fail to report device status because of too many request: %s", in.DeviceName)
 	}
@@ -145,8 +150,8 @@ func (s *server) ReportDeviceStatus(_ context.Context, in *pb.ReportDeviceStatus
 	return &pb.ReportDeviceStatusResponse{}, nil
 }
 
-func (s *server) ReportDeviceStates(_ context.Context, in *pb.ReportDeviceStatesRequest) (*pb.
-	ReportDeviceStatesResponse, error) {
+func (s *server) ReportDeviceStates(_ctx context.Context, in *pb.ReportDeviceStatesRequest,
+) (*pb.ReportDeviceStatesResponse, error) {
 	if !s.limiter.Allow() {
 		return nil, fmt.Errorf("fail to report device states because of too many request: %s", in.DeviceName)
 	}
@@ -212,23 +217,24 @@ func CreateMessageStateUpdate(in *pb.ReportDeviceStatesRequest) ([]byte, error) 
 	return msg, err
 }
 
-func StartDMIServer(cache *dmicache.DMICache) {
-	var DMISockPath string
-	if deviceconfig.Get().DeviceTwin.DMISockPath != "" {
-		DMISockPath = deviceconfig.Get().DeviceTwin.DMISockPath
-	} else {
-		DMISockPath = SockPath
+func StartDMIServer(cache *dmicache.DMICache) error {
+	socketPath := deviceconfig.Get().DeviceTwin.DMISockPath
+	// Compatibility with older configurations.
+	if strings.HasSuffix(socketPath, ".sock") {
+		socketPath = filepath.Dir(socketPath)
 	}
-	err := initSock(DMISockPath)
-	if err != nil {
-		klog.Fatalf("failed to remove uds socket with err: %v", err)
-		return
+	// Set default socket path if not specified.
+	if socketPath == "" {
+		socketPath = apiconsts.KubeEdgePath
 	}
 
-	lis, err := net.Listen(deviceconst.UnixNetworkType, DMISockPath)
+	endpoint, err := commutil.LocalEndpoint(socketPath, "dmi")
 	if err != nil {
-		klog.Errorf("failed to start DMI Server with err: %v", err)
-		return
+		return fmt.Errorf("fail to get local endpoint with err: %v", err)
+	}
+	lis, err := criutil.CreateListener(endpoint)
+	if err != nil {
+		return fmt.Errorf("fail to create listener with err: %v", err)
 	}
 
 	limiter := rate.NewLimiter(rate.Every(Limit*time.Millisecond), Burst)
@@ -241,10 +247,9 @@ func StartDMIServer(cache *dmicache.DMICache) {
 	reflection.Register(s)
 
 	if err := s.Serve(lis); err != nil {
-		klog.Errorf("failed to start DMI Server with err: %v", err)
-		return
+		return fmt.Errorf("failed to start DMI Server with err: %v", err)
 	}
-	klog.Infoln("success to start DMI Server")
+	return nil
 }
 
 func saveMapper(mapper *pb.MapperInfo) error {
