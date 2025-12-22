@@ -54,12 +54,13 @@ func FileCopy(src, dst string) error {
 	return err
 }
 
+// FileExists checks if a file exists and returns true ONLY if os.Stat succeeds.
 func FileExists(path string) bool {
 	_, err := os.Stat(path)
-	if err != nil {
-		return !os.IsNotExist(err)
+	if err == nil {
+		return true
 	}
-	return true
+	return false
 }
 
 // GetSubDirs returns the subdirectories of the given directory.
