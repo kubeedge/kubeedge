@@ -30,10 +30,10 @@ import (
 	"github.com/blang/semver"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/klog/v2"
+	klog "k8s.io/klog/v2"
 	"sigs.k8s.io/yaml"
 
-	"github.com/kubeedge/api/apis/common/constants"
+	apiconsts "github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2/validation"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
@@ -46,44 +46,48 @@ import (
 )
 
 func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
-	cmd.Flags().StringVar(&joinOptions.KubeEdgeVersion, common.FlagNameKubeEdgeVersion, joinOptions.KubeEdgeVersion,
+	flags := cmd.Flags()
+	flags.StringVar(&joinOptions.KubeEdgeVersion, common.FlagNameKubeEdgeVersion, joinOptions.KubeEdgeVersion,
 		"Use this key to download and use the required KubeEdge version")
-	cmd.Flags().Lookup(common.FlagNameKubeEdgeVersion).NoOptDefVal = joinOptions.KubeEdgeVersion
+	flags.Lookup(common.FlagNameKubeEdgeVersion).NoOptDefVal = joinOptions.KubeEdgeVersion
 
-	cmd.Flags().StringVar(&joinOptions.CertPath, common.FlagNameCertPath, joinOptions.CertPath,
-		fmt.Sprintf("The certPath used by edgecore, the default value is %s", constants.DefaultCertPath))
+	flags.StringVar(&joinOptions.CertPath, common.FlagNameCertPath, joinOptions.CertPath,
+		fmt.Sprintf("The certPath used by edgecore, the default value is %s", apiconsts.DefaultCertPath))
 
-	cmd.Flags().StringVarP(&joinOptions.CloudCoreIPPort, common.FlagNameCloudCoreIPPort, "e", joinOptions.CloudCoreIPPort,
+	flags.StringVarP(&joinOptions.CloudCoreIPPort, common.FlagNameCloudCoreIPPort, "e", joinOptions.CloudCoreIPPort,
 		"IP:Port address of KubeEdge CloudCore")
 
 	if err := cmd.MarkFlagRequired(common.FlagNameCloudCoreIPPort); err != nil {
 		fmt.Printf("mark flag required failed with error: %v\n", err)
 	}
 
-	cmd.Flags().StringVarP(&joinOptions.EdgeNodeName, common.FlagNameEdgeNodeName, "i", joinOptions.EdgeNodeName,
+	flags.StringVarP(&joinOptions.EdgeNodeName, common.FlagNameEdgeNodeName, "i", joinOptions.EdgeNodeName,
 		"KubeEdge Node unique identification string, if flag not used then the command will generate a unique id on its own")
 
-	cmd.Flags().StringVarP(&joinOptions.RemoteRuntimeEndpoint, common.FlagNameRemoteRuntimeEndpoint, "p", joinOptions.RemoteRuntimeEndpoint,
+	flags.StringVarP(&joinOptions.RemoteRuntimeEndpoint, common.FlagNameRemoteRuntimeEndpoint, "p", joinOptions.RemoteRuntimeEndpoint,
 		"KubeEdge Edge Node RemoteRuntimeEndpoint string.")
 
-	cmd.Flags().StringVarP(&joinOptions.Token, common.FlagNameToken, "t", joinOptions.Token,
+	flags.StringVarP(&joinOptions.Token, common.FlagNameToken, "t", joinOptions.Token,
 		"Used for edge to apply for the certificate")
 
-	cmd.Flags().StringVarP(&joinOptions.CertPort, common.FlagNameCertPort, "s", joinOptions.CertPort,
+	flags.StringVarP(&joinOptions.CertPort, common.FlagNameCertPort, "s", joinOptions.CertPort,
 		"The port where to apply for the edge certificate")
 
-	cmd.Flags().StringSliceVarP(&joinOptions.Labels, common.FlagNameLabels, "l", joinOptions.Labels,
-		`Use this key to set the customized labels for node, you can input customized labels like key1=value1,key2=value2`)
+	flags.StringSliceVarP(&joinOptions.Labels, common.FlagNameLabels, "l", joinOptions.Labels,
+		"Use this key to set the customized labels for node, you can input customized labels like key1=value1,key2=value2")
 
-	cmd.Flags().StringVar(&joinOptions.ImageRepository, common.FlagNameImageRepository, joinOptions.ImageRepository,
-		`Use this key to decide which image repository to pull images from`,
+	flags.StringVar(&joinOptions.ImageRepository, common.FlagNameImageRepository, joinOptions.ImageRepository,
+		"Use this key to decide which image repository to pull images from",
 	)
 
-	cmd.Flags().StringVar(&joinOptions.HubProtocol, common.HubProtocol, joinOptions.HubProtocol,
-		`Use this key to decide which communication protocol the edge node adopts.`)
+	flags.StringVar(&joinOptions.HubProtocol, common.HubProtocol, joinOptions.HubProtocol,
+		"Use this key to decide which communication protocol the edge node adopts.")
 
-	cmd.Flags().StringArrayVar(&joinOptions.Sets, common.FlagNameSet, joinOptions.Sets,
-		`Set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)`)
+	flags.StringArrayVar(&joinOptions.Sets, common.FlagNameSet, joinOptions.Sets,
+		"Set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
+
+	flags.StringVar(&joinOptions.LogPath, "log-file", filepath.Join(apiconsts.KubeEdgeLogPath, "edgecore.log"),
+		"Use this key to set the log file path for edgecore")
 }
 
 func createEdgeConfigFiles(opt *common.JoinOptions) error {
@@ -95,7 +99,7 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 		return errors.New("edgecore for windows don't support version earlier than v1.15.0")
 	}
 
-	configFilePath := filepath.Join(constants.KubeEdgePath, "config/edgecore.yaml")
+	configFilePath := filepath.Join(apiconsts.KubeEdgePath, "config/edgecore.yaml")
 	_, err = os.Stat(configFilePath)
 	if err == nil || os.IsExist(err) {
 		klog.Infoln("Read existing configuration file")
@@ -143,16 +147,16 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 		edgeCoreConfig.Modules.EdgeHub.Quic.Enable = true
 		edgeCoreConfig.Modules.EdgeHub.WebSocket.Enable = false
 		edgeCoreConfig.Modules.EdgeHub.Quic.Server = opt.CloudCoreIPPort
-		edgeCoreConfig.Modules.EdgeHub.WebSocket.Server = net.JoinHostPort(host, strconv.Itoa(constants.DefaultWebSocketPort))
+		edgeCoreConfig.Modules.EdgeHub.WebSocket.Server = net.JoinHostPort(host, strconv.Itoa(apiconsts.DefaultWebSocketPort))
 	case api.ProtocolTypeWS:
 		edgeCoreConfig.Modules.EdgeHub.Quic.Enable = false
 		edgeCoreConfig.Modules.EdgeHub.WebSocket.Enable = true
-		edgeCoreConfig.Modules.EdgeHub.Quic.Server = net.JoinHostPort(host, strconv.Itoa(constants.DefaultQuicPort))
+		edgeCoreConfig.Modules.EdgeHub.Quic.Server = net.JoinHostPort(host, strconv.Itoa(apiconsts.DefaultQuicPort))
 		edgeCoreConfig.Modules.EdgeHub.WebSocket.Server = opt.CloudCoreIPPort
 	default:
 		return fmt.Errorf("unsupported hub of protocol: %s", opt.HubProtocol)
 	}
-	edgeCoreConfig.Modules.EdgeStream.TunnelServer = net.JoinHostPort(host, strconv.Itoa(constants.DefaultTunnelPort))
+	edgeCoreConfig.Modules.EdgeStream.TunnelServer = net.JoinHostPort(host, strconv.Itoa(apiconsts.DefaultTunnelPort))
 
 	if len(opt.Labels) > 0 {
 		edgeCoreConfig.Modules.Edged.NodeLabels = setEdgedNodeLabels(opt)
@@ -180,7 +184,7 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 
 	step.Printf("Check edge bin exist")
 	// check if the binary download successfully manual
-	if !files.FileExists(filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName+".exe")) {
+	if !files.FileExists(filepath.Join(apiconsts.KubeEdgeUsrBinPath, apiconsts.KubeEdgeBinaryName+".exe")) {
 		fmt.Println("Edge binary not found, start download now")
 		v, err := semver.ParseTolerant(opt.KubeEdgeVersion)
 		if err != nil {
@@ -196,13 +200,14 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 	if err != nil {
 		return fmt.Errorf("detect windows service manager failed: %v", err)
 	}
-	binpath := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName+".exe")
-	cfg := filepath.Join(constants.KubeEdgePath, "config/edgecore.yaml")
-	if !svc.ServiceExists(constants.KubeEdgeBinaryName) {
-		if err := svc.ServiceCreate(constants.KubeEdgeBinaryName, binpath, []string{"--config", cfg}, nil); err != nil {
+	binpath := filepath.Join(apiconsts.KubeEdgeUsrBinPath, apiconsts.KubeEdgeBinaryName+".exe")
+	cfg := filepath.Join(apiconsts.KubeEdgePath, "config/edgecore.yaml")
+	if !svc.ServiceExists(apiconsts.KubeEdgeBinaryName) {
+		if err := svc.ServiceCreate(apiconsts.KubeEdgeBinaryName, binpath,
+			[]string{"--config", cfg, "--log-file", opt.LogPath}, nil); err != nil {
 			return fmt.Errorf("create windows service for edgecore failed: %v", err)
 		}
-		if err := svc.ServiceEnable(constants.KubeEdgeBinaryName); err != nil {
+		if err := svc.ServiceEnable(apiconsts.KubeEdgeBinaryName); err != nil {
 			klog.Warningf("enable service failed: %v", err)
 		}
 	}
@@ -212,7 +217,7 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 		return fmt.Errorf("create bootstrap file failed: %v", err)
 	}
 	// Delete the bootstrap file, so the credential used for TLS bootstrap is removed from disk
-	defer os.Remove(constants.BootstrapFile)
+	defer os.Remove(apiconsts.BootstrapFile)
 
 	step.Printf("Generate EdgeCore default configuration")
 	if err := createEdgeConfigFiles(opt); err != nil {
@@ -249,5 +254,5 @@ func runEdgeCore() error {
 	if err != nil {
 		return err
 	}
-	return svc.ServiceStart(constants.KubeEdgeBinaryName)
+	return svc.ServiceStart(apiconsts.KubeEdgeBinaryName)
 }

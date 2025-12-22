@@ -11,6 +11,8 @@ const (
 	// EdgecoreConfigPath is default edgecore config path
 	EdgecoreConfigPath = "/etc/kubeedge/config/edgecore.yaml"
 
+	KubeEdgeLogPath = "/var/log/kubeedge/"
+
 	// Certificates
 	// DefaultCertPath is the default certificate path in edge node
 	DefaultCertPath  = "/etc/kubeedge/certs"

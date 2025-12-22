@@ -156,7 +156,7 @@ func cleanDirectories() error {
 	fmt.Println("Start cleaning directories...")
 	var dirToClean = []string{
 		constants.KubeEdgePath,
-		common.KubeEdgeLogPath,
+		constants.KubeEdgeLogPath,
 		common.KubeEdgeSocketPath,
 		common.EdgeRootDir,
 		constants.KubeEdgeUsrBinPath,

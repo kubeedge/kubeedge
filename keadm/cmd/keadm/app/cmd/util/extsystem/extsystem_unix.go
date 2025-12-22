@@ -80,10 +80,7 @@ func (SystemdExtSystem) ServiceCreate(service, binpath string, args []string, en
 	for k, v := range envs {
 		envKVs = append(envKVs, fmt.Sprintf("\"%s=%s\"", k, v))
 	}
-	cmdslice := []string{binpath}
-	if len(args) > 0 {
-		cmdslice = append(cmdslice, args...)
-	}
+	cmdslice := append([]string{binpath}, args...)
 	content := fmt.Sprintf(simpleSystemdServiceTemplate, service,
 		strings.Join(cmdslice, " "), strings.Join(envKVs, " "))
 	fp := fmt.Sprintf("%s/%s.service", systemdDir, service)
