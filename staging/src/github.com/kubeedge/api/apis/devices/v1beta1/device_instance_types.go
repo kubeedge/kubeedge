@@ -43,9 +43,9 @@ type DeviceSpec struct {
 	// methods list item must be unique by method.Name.
 	// +optional
 	Methods []DeviceMethod `json:"methods,omitempty"`
-	// State represents the configuration of state reporting for a device.
+	// StateReport represents the configuration of state reporting for a device.
 	// +optional
-	State *DeviceState `json:"state,omitempty"`
+	StateReport *StateReportConfig `json:"stateReport,omitempty"`
 }
 
 // We schedule to extract the status field of Device CRD to a separate CRD DeviceStatus
@@ -61,12 +61,12 @@ type DeviceStatusOld struct {
 	ReportCycle int64 `json:"reportCycle,omitempty"`
 }
 
-// DeviceState represents the configuration of state reporting for a device.
-type DeviceState struct {
+// StateReportConfig represents the configuration of state reporting for a device.
+type StateReportConfig struct {
 	// Optional: whether be reported to the cloud
 	// +optional
 	ReportToCloud bool `json:"reportToCloud,omitempty"`
-	// Optional: Define how frequent mapper will report the device status.
+	// Optional: Define how frequent mapper will report the device state.
 	// +optional
 	ReportCycle int64 `json:"reportCycle,omitempty"`
 }
@@ -284,10 +284,10 @@ type VisitorConfig struct {
 type Device struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              DeviceSpec      `json:"spec,omitempty"`
+	Spec              DeviceSpec `json:"spec,omitempty"`
 	// +optional
 	// +kubebuilder:validation:XPreserveUnknownFields
-	Status            DeviceStatusOld `json:"status,omitempty"`
+	Status DeviceStatusOld `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

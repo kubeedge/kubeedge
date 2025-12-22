@@ -19,10 +19,10 @@ limitations under the License.
 package v1beta1
 
 import (
-	v1beta1 "github.com/kubeedge/api/apis/devices/v1beta1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/listers"
-	"k8s.io/client-go/tools/cache"
+	devicesv1beta1 "github.com/kubeedge/api/apis/devices/v1beta1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // DeviceStatusLister helps list DeviceStatuses.
@@ -30,7 +30,7 @@ import (
 type DeviceStatusLister interface {
 	// List lists all DeviceStatuses in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1beta1.DeviceStatus, err error)
+	List(selector labels.Selector) (ret []*devicesv1beta1.DeviceStatus, err error)
 	// DeviceStatuses returns an object that can list and get DeviceStatuses.
 	DeviceStatuses(namespace string) DeviceStatusNamespaceLister
 	DeviceStatusListerExpansion
@@ -38,17 +38,17 @@ type DeviceStatusLister interface {
 
 // deviceStatusLister implements the DeviceStatusLister interface.
 type deviceStatusLister struct {
-	listers.ResourceIndexer[*v1beta1.DeviceStatus]
+	listers.ResourceIndexer[*devicesv1beta1.DeviceStatus]
 }
 
 // NewDeviceStatusLister returns a new DeviceStatusLister.
 func NewDeviceStatusLister(indexer cache.Indexer) DeviceStatusLister {
-	return &deviceStatusLister{listers.New[*v1beta1.DeviceStatus](indexer, v1beta1.Resource("devicestatus"))}
+	return &deviceStatusLister{listers.New[*devicesv1beta1.DeviceStatus](indexer, devicesv1beta1.Resource("devicestatus"))}
 }
 
 // DeviceStatuses returns an object that can list and get DeviceStatuses.
 func (s *deviceStatusLister) DeviceStatuses(namespace string) DeviceStatusNamespaceLister {
-	return deviceStatusNamespaceLister{listers.NewNamespaced[*v1beta1.DeviceStatus](s.ResourceIndexer, namespace)}
+	return deviceStatusNamespaceLister{listers.NewNamespaced[*devicesv1beta1.DeviceStatus](s.ResourceIndexer, namespace)}
 }
 
 // DeviceStatusNamespaceLister helps list and get DeviceStatuses.
@@ -56,15 +56,15 @@ func (s *deviceStatusLister) DeviceStatuses(namespace string) DeviceStatusNamesp
 type DeviceStatusNamespaceLister interface {
 	// List lists all DeviceStatuses in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1beta1.DeviceStatus, err error)
+	List(selector labels.Selector) (ret []*devicesv1beta1.DeviceStatus, err error)
 	// Get retrieves the DeviceStatus from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1beta1.DeviceStatus, error)
+	Get(name string) (*devicesv1beta1.DeviceStatus, error)
 	DeviceStatusNamespaceListerExpansion
 }
 
 // deviceStatusNamespaceLister implements the DeviceStatusNamespaceLister
 // interface.
 type deviceStatusNamespaceLister struct {
-	listers.ResourceIndexer[*v1beta1.DeviceStatus]
+	listers.ResourceIndexer[*devicesv1beta1.DeviceStatus]
 }

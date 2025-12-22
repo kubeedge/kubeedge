@@ -466,7 +466,7 @@ func TestConvertDevice(t *testing.T) {
 					Name: "test-device-spec-state",
 				},
 				Spec: v1beta1.DeviceSpec{
-					State: &v1beta1.DeviceState{
+					StateReport: &v1beta1.StateReportConfig{
 						ReportCycle:   30,
 						ReportToCloud: true,
 					},

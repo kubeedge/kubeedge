@@ -37,7 +37,7 @@ func (c *FakeDevicesV1beta1) DeviceModels(namespace string) v1beta1.DeviceModelI
 }
 
 func (c *FakeDevicesV1beta1) DeviceStatuses(namespace string) v1beta1.DeviceStatusInterface {
-	return &FakeDeviceStatuses{c, namespace}
+	return newFakeDeviceStatuses(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate
