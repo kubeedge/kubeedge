@@ -17,6 +17,7 @@ limitations under the License.
 package dmicache
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -1520,6 +1521,1182 @@ func TestFindModelProperty(t *testing.T) {
 				assert.Equal(t, tt.expected.Name, result.Name)
 				assert.Equal(t, tt.expected.Type, result.Type)
 			}
+		})
+	}
+}
+
+func TestDMICache_CompareDeviceSpecHasChanged(t *testing.T) {
+	tests := []struct {
+		name                  string
+		oldDevice             *v1beta1.Device
+		newDevice             *v1beta1.Device
+		expectedCompareResult bool
+	}{
+		// 1 property、1 method, properties and methods are the same.
+		{
+			name: "1 property、1 method, properties and methods are the same",
+			oldDevice: &v1beta1.Device{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "sensor-001",
+					Namespace: "default",
+				},
+				Spec: v1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{
+						Name: "temp-sensor-model",
+					},
+					Protocol: v1beta1.ProtocolConfig{
+						ProtocolName: "modbus",
+					},
+					Properties: []v1beta1.DeviceProperty{
+						{
+							Name: "temperature",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40001,
+									},
+								},
+							},
+						},
+					},
+					Methods: []v1beta1.DeviceMethod{
+						{
+							Name:        "getStatus",
+							Description: "getStatus description",
+							PropertyNames: []string{
+								"temperature",
+							},
+						},
+					},
+				},
+			},
+			newDevice: &v1beta1.Device{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "sensor-001",
+					Namespace: "default",
+				},
+				Spec: v1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{
+						Name: "temp-sensor-model",
+					},
+					Protocol: v1beta1.ProtocolConfig{
+						ProtocolName: "modbus",
+					},
+					Properties: []v1beta1.DeviceProperty{
+						{
+							Name: "temperature",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40001,
+									},
+								},
+							},
+						},
+					},
+					Methods: []v1beta1.DeviceMethod{
+						{
+							Name:        "getStatus",
+							Description: "getStatus description",
+							PropertyNames: []string{
+								"temperature",
+							},
+						},
+					},
+				},
+			},
+			expectedCompareResult: false,
+		},
+
+		// 1 property、1 method, properties and methods are different.
+		{
+			name: "1 property、1 method, properties and methods are different",
+			oldDevice: &v1beta1.Device{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "sensor-001",
+					Namespace: "default",
+				},
+				Spec: v1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{
+						Name: "temp-sensor-model",
+					},
+					Protocol: v1beta1.ProtocolConfig{
+						ProtocolName: "modbus",
+					},
+					Properties: []v1beta1.DeviceProperty{
+						{
+							Name: "temperature",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40001,
+									},
+								},
+							},
+						},
+					},
+					Methods: []v1beta1.DeviceMethod{
+						{
+							Name:        "getStatus",
+							Description: "getStatus description",
+							PropertyNames: []string{
+								"temperature",
+							},
+						},
+					},
+				},
+			},
+			newDevice: &v1beta1.Device{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "sensor-001",
+					Namespace: "default",
+				},
+				Spec: v1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{
+						Name: "temp-sensor-model",
+					},
+					Protocol: v1beta1.ProtocolConfig{
+						ProtocolName: "modbus",
+					},
+					Properties: []v1beta1.DeviceProperty{
+						{
+							Name: "temperature",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40002,
+									},
+								},
+							},
+						},
+					},
+					Methods: []v1beta1.DeviceMethod{
+						{
+							Name:        "getTemperature",
+							Description: "getTemperature description",
+							PropertyNames: []string{
+								"temperature",
+							},
+						},
+					},
+				},
+			},
+			expectedCompareResult: true,
+		},
+
+		// 1 property、1 method, properties are different, methods are the same.
+		{
+			name: "1 property、1 method, properties are different, methods are the same",
+			oldDevice: &v1beta1.Device{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "sensor-001",
+					Namespace: "default",
+				},
+				Spec: v1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{
+						Name: "temp-sensor-model",
+					},
+					Protocol: v1beta1.ProtocolConfig{
+						ProtocolName: "modbus",
+					},
+					Properties: []v1beta1.DeviceProperty{
+						{
+							Name: "temperature",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40001,
+									},
+								},
+							},
+						},
+					},
+					Methods: []v1beta1.DeviceMethod{
+						{
+							Name:        "getStatus",
+							Description: "getStatus description",
+							PropertyNames: []string{
+								"temperature",
+							},
+						},
+					},
+				},
+			},
+			newDevice: &v1beta1.Device{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "sensor-001",
+					Namespace: "default",
+				},
+				Spec: v1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{
+						Name: "temp-sensor-model",
+					},
+					Protocol: v1beta1.ProtocolConfig{
+						ProtocolName: "modbus",
+					},
+					Properties: []v1beta1.DeviceProperty{
+						{
+							Name: "temperature",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40002,
+									},
+								},
+							},
+						},
+					},
+					Methods: []v1beta1.DeviceMethod{
+						{
+							Name:        "getStatus",
+							Description: "getStatus description",
+							PropertyNames: []string{
+								"temperature",
+							},
+						},
+					},
+				},
+			},
+			expectedCompareResult: true,
+		},
+		// 1 property、1 method, properties are the same, methods are different.
+		{
+			name: "1 property、1 method, properties are the same, methods are different",
+			oldDevice: &v1beta1.Device{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "sensor-001",
+					Namespace: "default",
+				},
+				Spec: v1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{
+						Name: "temp-sensor-model",
+					},
+					Protocol: v1beta1.ProtocolConfig{
+						ProtocolName: "modbus",
+					},
+					Properties: []v1beta1.DeviceProperty{
+						{
+							Name: "temperature",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40001,
+									},
+								},
+							},
+						},
+					},
+					Methods: []v1beta1.DeviceMethod{
+						{
+							Name:        "getTemperature",
+							Description: "getTemperature description",
+							PropertyNames: []string{
+								"temperature",
+							},
+						},
+					},
+				},
+			},
+			newDevice: &v1beta1.Device{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "sensor-001",
+					Namespace: "default",
+				},
+				Spec: v1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{
+						Name: "temp-sensor-model",
+					},
+					Protocol: v1beta1.ProtocolConfig{
+						ProtocolName: "modbus",
+					},
+					Properties: []v1beta1.DeviceProperty{
+						{
+							Name: "temperature",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40001,
+									},
+								},
+							},
+						},
+					},
+					Methods: []v1beta1.DeviceMethod{
+						{
+							Name:        "getStatus",
+							Description: "getStatus description",
+							PropertyNames: []string{
+								"temperature",
+							},
+						},
+					},
+				},
+			},
+			expectedCompareResult: true,
+		},
+		// 2 properties、2 methods, properties and methods are the same.
+		{
+			name: "2 properties、2 methods, properties and methods are the same",
+			oldDevice: &v1beta1.Device{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "sensor-001",
+					Namespace: "default",
+				},
+				Spec: v1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{
+						Name: "temp-sensor-model",
+					},
+					Protocol: v1beta1.ProtocolConfig{
+						ProtocolName: "modbus",
+					},
+					Properties: []v1beta1.DeviceProperty{
+						{
+							Name: "temperature",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40001,
+									},
+								},
+							},
+						},
+						{
+							Name: "humidity",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40002,
+									},
+								},
+							},
+						},
+					},
+					Methods: []v1beta1.DeviceMethod{
+						{
+							Name:        "turnOn",
+							Description: "turn on description",
+							PropertyNames: []string{
+								"temperature",
+								"humidity",
+							},
+						},
+						{
+							Name:        "turnOff",
+							Description: "turn off description",
+							PropertyNames: []string{
+								"temperature",
+								"humidity",
+							},
+						},
+					},
+				},
+			},
+			newDevice: &v1beta1.Device{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "sensor-001",
+					Namespace: "default",
+				},
+				Spec: v1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{
+						Name: "temp-sensor-model",
+					},
+					Protocol: v1beta1.ProtocolConfig{
+						ProtocolName: "modbus",
+					},
+					Properties: []v1beta1.DeviceProperty{
+						{
+							Name: "temperature",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40001,
+									},
+								},
+							},
+						},
+						{
+							Name: "humidity",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40002,
+									},
+								},
+							},
+						},
+					},
+					Methods: []v1beta1.DeviceMethod{
+						{
+							Name:        "turnOn",
+							Description: "turn on description",
+							PropertyNames: []string{
+								"temperature",
+								"humidity",
+							},
+						},
+						{
+							Name:        "turnOff",
+							Description: "turn off description",
+							PropertyNames: []string{
+								"temperature",
+								"humidity",
+							},
+						},
+					},
+				},
+			},
+			expectedCompareResult: false,
+		},
+		// 2 properties、2 methods, properties and methods are different.
+		{
+			name: "2 properties、2 methods, properties and methods are different",
+			oldDevice: &v1beta1.Device{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "sensor-001",
+					Namespace: "default",
+				},
+				Spec: v1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{
+						Name: "temp-sensor-model",
+					},
+					Protocol: v1beta1.ProtocolConfig{
+						ProtocolName: "modbus",
+					},
+					Properties: []v1beta1.DeviceProperty{
+						{
+							Name: "getTemperature",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40001,
+									},
+								},
+							},
+						},
+						{
+							Name: "getHumidity",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40002,
+									},
+								},
+							},
+						},
+					},
+					Methods: []v1beta1.DeviceMethod{
+						{
+							Name:        "turnOn",
+							Description: "turn on description",
+							PropertyNames: []string{
+								"getTemperature",
+								"getHumidity",
+							},
+						},
+						{
+							Name:        "turnOff",
+							Description: "turn off description",
+							PropertyNames: []string{
+								"getTemperature",
+								"getHumidity",
+							},
+						},
+					},
+				},
+			},
+			newDevice: &v1beta1.Device{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "sensor-001",
+					Namespace: "default",
+				},
+				Spec: v1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{
+						Name: "temp-sensor-model",
+					},
+					Protocol: v1beta1.ProtocolConfig{
+						ProtocolName: "modbus",
+					},
+					Properties: []v1beta1.DeviceProperty{
+						{
+							Name: "temperature",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40001,
+									},
+								},
+							},
+						},
+						{
+							Name: "humidity",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40002,
+									},
+								},
+							},
+						},
+					},
+					Methods: []v1beta1.DeviceMethod{
+						{
+							Name:        "setTemperature",
+							Description: "setTemperature description",
+							PropertyNames: []string{
+								"temperature",
+							},
+						},
+						{
+							Name:        "setHumidity",
+							Description: "setHumidity description",
+							PropertyNames: []string{
+								"humidity",
+							},
+						},
+					},
+				},
+			},
+			expectedCompareResult: true,
+		},
+		// 2 properties、2 methods, methods are the same, the only difference is the order of the properties.
+		{
+			name: "2 properties、2 methods, methods are the same, the only difference is the order of the properties",
+			oldDevice: &v1beta1.Device{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "sensor-001",
+					Namespace: "default",
+				},
+				Spec: v1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{
+						Name: "temp-sensor-model",
+					},
+					Protocol: v1beta1.ProtocolConfig{
+						ProtocolName: "modbus",
+					},
+					Properties: []v1beta1.DeviceProperty{
+						{
+							Name: "temperature",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40001,
+									},
+								},
+							},
+						},
+						{
+							Name: "humidity",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40002,
+									},
+								},
+							},
+						},
+					},
+					Methods: []v1beta1.DeviceMethod{
+						{
+							Name:        "turnOn",
+							Description: "turn on description",
+							PropertyNames: []string{
+								"temperature",
+								"humidity",
+							},
+						},
+						{
+							Name:        "turnOff",
+							Description: "turn off description",
+							PropertyNames: []string{
+								"temperature",
+								"humidity",
+							},
+						},
+					},
+				},
+			},
+			newDevice: &v1beta1.Device{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "sensor-001",
+					Namespace: "default",
+				},
+				Spec: v1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{
+						Name: "temp-sensor-model",
+					},
+					Protocol: v1beta1.ProtocolConfig{
+						ProtocolName: "modbus",
+					},
+					Properties: []v1beta1.DeviceProperty{
+						{
+							Name: "humidity",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40002,
+									},
+								},
+							},
+						},
+						{
+							Name: "temperature",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40001,
+									},
+								},
+							},
+						},
+					},
+					Methods: []v1beta1.DeviceMethod{
+						{
+							Name:        "turnOn",
+							Description: "turn on description",
+							PropertyNames: []string{
+								"temperature",
+								"humidity",
+							},
+						},
+						{
+							Name:        "turnOff",
+							Description: "turn off description",
+							PropertyNames: []string{
+								"temperature",
+								"humidity",
+							},
+						},
+					},
+				},
+			},
+			expectedCompareResult: false,
+		},
+		// 2 properties、2 methods, properties are the same, the only difference is the order of the properties methods.
+		{
+			name: "2 properties、2 methods, properties are the same, the only difference is the order of the properties methods",
+			oldDevice: &v1beta1.Device{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "sensor-001",
+					Namespace: "default",
+				},
+				Spec: v1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{
+						Name: "temp-sensor-model",
+					},
+					Protocol: v1beta1.ProtocolConfig{
+						ProtocolName: "modbus",
+					},
+					Properties: []v1beta1.DeviceProperty{
+						{
+							Name: "temperature",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40001,
+									},
+								},
+							},
+						},
+						{
+							Name: "humidity",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40002,
+									},
+								},
+							},
+						},
+					},
+					Methods: []v1beta1.DeviceMethod{
+						{
+							Name:        "turnOff",
+							Description: "turn off description",
+							PropertyNames: []string{
+								"temperature",
+								"humidity",
+							},
+						},
+						{
+							Name:        "turnOn",
+							Description: "turn on description",
+							PropertyNames: []string{
+								"temperature",
+								"humidity",
+							},
+						},
+					},
+				},
+			},
+			newDevice: &v1beta1.Device{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "sensor-001",
+					Namespace: "default",
+				},
+				Spec: v1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{
+						Name: "temp-sensor-model",
+					},
+					Protocol: v1beta1.ProtocolConfig{
+						ProtocolName: "modbus",
+					},
+					Properties: []v1beta1.DeviceProperty{
+						{
+							Name: "temperature",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40001,
+									},
+								},
+							},
+						},
+						{
+							Name: "humidity",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40002,
+									},
+								},
+							},
+						},
+					},
+					Methods: []v1beta1.DeviceMethod{
+						{
+							Name:        "turnOn",
+							Description: "turn on description",
+							PropertyNames: []string{
+								"temperature",
+								"humidity",
+							},
+						},
+						{
+							Name:        "turnOff",
+							Description: "turn off description",
+							PropertyNames: []string{
+								"temperature",
+								"humidity",
+							},
+						},
+					},
+				},
+			},
+			expectedCompareResult: false,
+		},
+		// 2 properties、2 methods, methods are the same, properties are different.
+		{
+			name: "2 properties、2 methods, methods are the same, properties are different",
+			oldDevice: &v1beta1.Device{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "sensor-001",
+					Namespace: "default",
+				},
+				Spec: v1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{
+						Name: "temp-sensor-model",
+					},
+					Protocol: v1beta1.ProtocolConfig{
+						ProtocolName: "modbus",
+					},
+					Properties: []v1beta1.DeviceProperty{
+						{
+							Name: "temperature",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40001,
+									},
+								},
+							},
+						},
+						{
+							Name: "humidity",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40002,
+									},
+								},
+							},
+						},
+					},
+					Methods: []v1beta1.DeviceMethod{
+						{
+							Name:        "turnOn",
+							Description: "turn on description",
+							PropertyNames: []string{
+								"temperature",
+								"humidity",
+							},
+						},
+						{
+							Name:        "turnOff",
+							Description: "turn off description",
+							PropertyNames: []string{
+								"temperature",
+								"humidity",
+							},
+						},
+					},
+				},
+			},
+			newDevice: &v1beta1.Device{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "sensor-001",
+					Namespace: "default",
+				},
+				Spec: v1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{
+						Name: "temp-sensor-model",
+					},
+					Protocol: v1beta1.ProtocolConfig{
+						ProtocolName: "modbus",
+					},
+					Properties: []v1beta1.DeviceProperty{
+						{
+							Name: "temperature",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40001,
+									},
+								},
+							},
+						},
+						{
+							Name: "humidity",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40003,
+									},
+								},
+							},
+						},
+					},
+					Methods: []v1beta1.DeviceMethod{
+						{
+							Name:        "turnOn",
+							Description: "turn on description",
+							PropertyNames: []string{
+								"temperature",
+								"humidity",
+							},
+						},
+						{
+							Name:        "turnOff",
+							Description: "turn off description",
+							PropertyNames: []string{
+								"temperature",
+								"humidity",
+							},
+						},
+					},
+				},
+			},
+			expectedCompareResult: true,
+		},
+		// 2 properties、2 methods, properties are the same, methods are different.
+		{
+			name: "2 properties、2 methods, properties are the same, methods are different",
+			oldDevice: &v1beta1.Device{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "sensor-001",
+					Namespace: "default",
+				},
+				Spec: v1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{
+						Name: "temp-sensor-model",
+					},
+					Protocol: v1beta1.ProtocolConfig{
+						ProtocolName: "modbus",
+					},
+					Properties: []v1beta1.DeviceProperty{
+						{
+							Name: "temperature",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40001,
+									},
+								},
+							},
+						},
+						{
+							Name: "humidity",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40002,
+									},
+								},
+							},
+						},
+					},
+					Methods: []v1beta1.DeviceMethod{
+						{
+							Name:        "turnOn",
+							Description: "turn on description",
+							PropertyNames: []string{
+								"temperature",
+								"humidity",
+							},
+						},
+						{
+							Name:        "turnOff",
+							Description: "turn off description",
+							PropertyNames: []string{
+								"temperature",
+								"humidity",
+							},
+						},
+					},
+				},
+			},
+			newDevice: &v1beta1.Device{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "sensor-001",
+					Namespace: "default",
+				},
+				Spec: v1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{
+						Name: "temp-sensor-model",
+					},
+					Protocol: v1beta1.ProtocolConfig{
+						ProtocolName: "modbus",
+					},
+					Properties: []v1beta1.DeviceProperty{
+						{
+							Name: "temperature",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40001,
+									},
+								},
+							},
+						},
+						{
+							Name: "humidity",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40002,
+									},
+								},
+							},
+						},
+					},
+					Methods: []v1beta1.DeviceMethod{
+						{
+							Name:        "getStatus",
+							Description: "getStatus description",
+							PropertyNames: []string{
+								"temperature",
+								"humidity",
+							},
+						},
+					},
+				},
+			},
+			expectedCompareResult: true,
+		},
+		// Different DeviceModelRef
+		{
+			name: "different device models",
+			oldDevice: &v1beta1.Device{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "sensor-001",
+					Namespace: "default",
+				},
+				Spec: v1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{
+						Name: "temp-sensor-model01",
+					},
+					Protocol: v1beta1.ProtocolConfig{
+						ProtocolName: "modbus",
+					},
+					Properties: []v1beta1.DeviceProperty{
+						{
+							Name: "temperature",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40001,
+									},
+								},
+							},
+						},
+						{
+							Name: "humidity",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40002,
+									},
+								},
+							},
+						},
+					},
+					Methods: []v1beta1.DeviceMethod{
+						{
+							Name:        "turnOn",
+							Description: "turn on description",
+							PropertyNames: []string{
+								"temperature",
+								"humidity",
+							},
+						},
+						{
+							Name:        "turnOff",
+							Description: "turn off description",
+							PropertyNames: []string{
+								"temperature",
+								"humidity",
+							},
+						},
+					},
+				},
+			},
+			newDevice: &v1beta1.Device{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "sensor-001",
+					Namespace: "default",
+				},
+				Spec: v1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{
+						Name: "temp-sensor-model02",
+					},
+					Protocol: v1beta1.ProtocolConfig{
+						ProtocolName: "modbus",
+					},
+					Properties: []v1beta1.DeviceProperty{
+						{
+							Name: "temperature",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40001,
+									},
+								},
+							},
+						},
+						{
+							Name: "humidity",
+							Visitors: v1beta1.VisitorConfig{
+								ProtocolName: "modbus",
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"register": "HoldingRegister",
+										"address":  40002,
+									},
+								},
+							},
+						},
+					},
+					Methods: []v1beta1.DeviceMethod{
+						{
+							Name:        "turnOn",
+							Description: "turn on description",
+							PropertyNames: []string{
+								"temperature",
+								"humidity",
+							},
+						},
+						{
+							Name:        "turnOff",
+							Description: "turn off description",
+							PropertyNames: []string{
+								"temperature",
+								"humidity",
+							},
+						},
+					},
+				},
+			},
+			expectedCompareResult: true,
+		},
+	}
+
+	// Setup DMICache
+	dmiCache := NewDMICache()
+
+	for i, test := range tests {
+		t.Run(fmt.Sprintf("Test %d: %s", i, test.name), func(t *testing.T) {
+			dmiCache.PutDevice(test.oldDevice)
+			changed := dmiCache.CompareDeviceSpecHasChanged(test.newDevice)
+			assert.Equal(t, test.expectedCompareResult, changed)
 		})
 	}
 }

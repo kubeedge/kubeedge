@@ -2,6 +2,8 @@ package dmicache
 
 import (
 	"fmt"
+	"reflect"
+	"sort"
 	"sync"
 
 	"k8s.io/klog/v2"
@@ -128,6 +130,41 @@ func (dmiCache *DMICache) RemoveDevice(namespace, name string) {
 	defer dmiCache.deviceMu.Unlock()
 	deviceID := util.GetResourceID(namespace, name)
 	delete(dmiCache.deviceList, deviceID)
+}
+
+// CompareDeviceSpecHasChanged checks whether the device spec has changed
+func (dmiCache *DMICache) CompareDeviceSpecHasChanged(device *v1beta1.Device) bool {
+	dmiCache.deviceMu.Lock()
+	defer dmiCache.deviceMu.Unlock()
+	deviceID := util.GetResourceID(device.Namespace, device.Name)
+	oldDevice, ok := dmiCache.deviceList[deviceID]
+
+	if ok && oldDevice != nil {
+		newSpec := device.Spec.DeepCopy()
+		oldSpec := oldDevice.Spec.DeepCopy()
+
+		sort.Slice(newSpec.Properties, func(i, j int) bool {
+			return newSpec.Properties[i].Name < newSpec.Properties[j].Name
+		})
+		sort.Slice(oldSpec.Properties, func(i, j int) bool {
+			return oldSpec.Properties[i].Name < oldSpec.Properties[j].Name
+		})
+
+		sort.Slice(newSpec.Methods, func(i, j int) bool {
+			return newSpec.Methods[i].Name < newSpec.Methods[j].Name
+		})
+		sort.Slice(oldSpec.Methods, func(i, j int) bool {
+			return oldSpec.Methods[i].Name < oldSpec.Methods[j].Name
+		})
+
+		if reflect.DeepEqual(oldSpec, newSpec) {
+			klog.Infof("Device unchanged, Skip UpdateDevice for %s ", device.Name)
+			oldDevice.Status = device.Status
+			return false
+		}
+	}
+
+	return true
 }
 
 // overrideDeviceInstanceConfig overrides device instance configuration with model defaults

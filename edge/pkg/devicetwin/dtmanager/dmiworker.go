@@ -134,16 +134,19 @@ func (dw *DMIWorker) dealMetaDeviceOperation(_ *dtcontext.DTContext, _ string, m
 			}
 			dw.dmiCache.RemoveDevice(device.Namespace, device.Name)
 		case model.UpdateOperation:
-			dw.dmiCache.PutDevice(&device)
-			// Override device instance config with model defaults before updating
-			devicePtr, _, err := dw.dmiCache.GetOverriddenDevice(device.Namespace, device.Name)
-			if err != nil {
-				return err
-			}
-			err = dmiclient.DMIClientsImp.UpdateDevice(devicePtr)
-			if err != nil {
-				klog.Errorf("update device %s failed with err: %v", devicePtr.Name, err)
-				return err
+			if dw.dmiCache.CompareDeviceSpecHasChanged(&device) {
+				dw.dmiCache.PutDevice(&device)
+				// Override device instance config with model defaults before updating
+				devicePtr, _, err := dw.dmiCache.GetOverriddenDevice(device.Namespace, device.Name)
+				if err != nil {
+					return err
+				}
+
+				err = dmiclient.DMIClientsImp.UpdateDevice(devicePtr)
+				if err != nil {
+					klog.Errorf("update device %s failed with err: %v", devicePtr.Name, err)
+					return err
+				}
 			}
 		default:
 			klog.Warningf("unsupported operation %s", message.GetOperation())
