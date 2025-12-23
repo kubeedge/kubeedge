@@ -21,6 +21,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 )
 
@@ -526,4 +528,19 @@ func TestSetEdgeCoreConfigWithPtrValue(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(*cfg.Modules.Edged.TailoredKubeletConfig.ImageGCHighThresholdPercent, *cfg.Modules.Edged.TailoredKubeletConfig.RegisterNode, cfg.Modules.Edged.ReportEvent)
+}
+
+func TestSetEdgeCoreConfigWithMultiIntValue(t *testing.T) {
+	cfg := v1alpha2.NewDefaultEdgeCoreConfig()
+	// MaxPods int32
+	// MaxOpenFiles int64
+	// ServiceBus.Port int
+	// MqttQOS uint8
+	if err := ParseSet(cfg, `Modules.Edged.TailoredKubeletConfig.MaxPods=111,Modules.Edged.TailoredKubeletConfig.MaxOpenFiles=1000001,Modules.ServiceBus.Port=9061,Modules.EventBus.MqttQOS=1`); err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, int32(111), cfg.Modules.Edged.TailoredKubeletConfig.MaxPods)
+	assert.Equal(t, int64(1000001), cfg.Modules.Edged.TailoredKubeletConfig.MaxOpenFiles)
+	assert.Equal(t, int(9061), cfg.Modules.ServiceBus.Port)
+	assert.Equal(t, uint8(1), cfg.Modules.EventBus.MqttQOS)
 }
