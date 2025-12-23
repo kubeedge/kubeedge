@@ -53,6 +53,17 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Free Disk Space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
       - name: Retrieve saved kubeedge/build-tools image
         uses: actions/download-artifact@v4
         with:
