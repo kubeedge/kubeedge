@@ -54,11 +54,11 @@ func NewAccessRoleControllerManager(ctx context.Context, kubeCfg *rest.Config) (
 }
 
 func setupControllers(ctx context.Context, mgr manager.Manager) error {
-	// This returned cli will directly acquire the unstructured objects from API Server which
+	// mgr.GetClient() will directly acquire the unstructured objects from API Server which
 	// have not be registered in the accessScheme.
-	cli := mgr.GetClient()
 	pc := &pm.Controller{
-		Client:       cli,
+		Client:       mgr.GetClient(),
+		Reader:       mgr.GetAPIReader(),
 		MessageLayer: messagelayer.PolicyControllerMessageLayer(),
 	}
 
