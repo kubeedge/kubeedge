@@ -169,17 +169,6 @@ func dataHandler(ctx context.Context, dev *driver.CustomizedDev) {
 		// handle database
 		if twin.Property.PushMethod.DBMethod.DBMethodName != "" {
 			dbHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
-			switch twin.Property.PushMethod.DBMethod.DBMethodName {
-			// TODO add more database
-			case "influx":
-				dbInflux.DataHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
-			case "redis":
-				dbRedis.DataHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
-			case "tdengine":
-				dbTdengine.DataHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
-			case "mysql":
-				dbMysql.DataHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
-			}
 		}
 	}
 }
