@@ -36,11 +36,9 @@ spec:
       {{- end }}
       containers:
         - args:
-            {{- if .Values.admission.certsSecretName }}
             - --tls-cert-file=/admission.local.config/certificates/tls.crt
             - --tls-private-key-file=/admission.local.config/certificates/tls.key
             - --ca-cert-file=/admission.local.config/certificates/ca.crt
-            {{- end }}
             - --webhook-namespace=kubeedge
             - --webhook-service-name=kubeedge-admission-service
             - --alsologtostderr
@@ -56,17 +54,13 @@ spec:
           ports:
           - containerPort: 443
             protocol: TCP
-          {{- if .Values.admission.certsSecretName }}
           volumeMounts:
             - mountPath: /admission.local.config/certificates
               name: admission-certs
               readOnly: true
-          {{- end }}
-      {{- if .Values.admission.certsSecretName }}
       volumes:
         - name: admission-certs
           secret:
             defaultMode: 420
-            secretName: {{ .Values.admission.certsSecretName }}
-      {{- end }}
+            secretName: {{ include "kubeedge.admission.certsSecretName" . }}
 {{- end }}
