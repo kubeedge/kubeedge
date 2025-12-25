@@ -166,6 +166,10 @@ func dataHandler(ctx context.Context, dev *driver.CustomizedDev) {
 		if twin.Property.PushMethod.MethodConfig != nil && twin.Property.PushMethod.MethodName != "" {
 			pushHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
 		}
+		// handle anomaly detection
+		if twin.Property.PushMethod.AnomalyDetectionConfig != nil && twin.Property.PushMethod.AnomalyDetectionEnabled {
+			adHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel, twin.Property.PushMethod.AnomalyDetectionConfig)
+		}
 		// handle database
 		if twin.Property.PushMethod.DBMethod.DBMethodName != "" {
 			dbHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
@@ -246,6 +250,43 @@ func dbHandler(ctx context.Context, twin *common.Twin, client *driver.Customized
 	case "mysql":
 		dbMysql.DataHandler(ctx, twin, client, visitorConfig, dataModel)
 	}
+}
+
+// adHandler start anomaly detection processing
+func adHandler(ctx context.Context, twin *common.Twin, client *driver.CustomizedClient, visitorConfig *driver.VisitorConfig, dataModel *common.DataModel, adConfig json.RawMessage) {
+	klog.Infof("Start anomaly detection processing for twin %s", twin.PropertyName)
+
+	reportCycle := time.Millisecond * time.Duration(twin.Property.ReportCycle)
+	if reportCycle <= 0 {
+		reportCycle = common.DefaultReportCycle
+	}
+
+	ticker := time.NewTicker(reportCycle)
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				deviceData, err := client.GetDeviceData(visitorConfig)
+				if err != nil {
+					klog.Errorf("Anomaly detection for %s get device data error: %v", twin.PropertyName, err)
+					continue
+				}
+				req := &driver.AnomalyDetectionRequest{
+					Enabled:                twin.Property.PushMethod.AnomalyDetectionEnabled,
+					AnomalyDetectionConfig: twin.Property.PushMethod.AnomalyDetectionConfig,
+					VisitorConfig:          *visitorConfig,
+					Data:                   deviceData,
+				}
+				err = client.AnomalyDetectionProcess(req)
+				if err != nil {
+					klog.Errorf("Anomaly detection processing for %s error: %v", twin.PropertyName, err)
+					continue
+				}
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
 }
 
 // setVisitor check if visitor property is readonly, if not then set it.
