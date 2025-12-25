@@ -26,6 +26,28 @@ make generate modbus nostream && echo "successfully generated mapper project"
 cd ${curpath} && git clone https://github.com/wbc6080/modbus.git
 cp -r ${curpath}/modbus/driver/* ${curpath}/staging/src/github.com/kubeedge/modbus/driver/
 cp -r ${curpath}/modbus/config.yaml ${curpath}/staging/src/github.com/kubeedge/modbus/
+
+# add encoding/json import and append AnomalyDetectionRequest struct to devicetype.go
+sed -i '/^import (/a\	"encoding/json"' ${curpath}/staging/src/github.com/kubeedge/modbus/driver/devicetype.go
+cat >> ${curpath}/staging/src/github.com/kubeedge/modbus/driver/devicetype.go << 'EOF'
+
+type AnomalyDetectionRequest struct {
+	Enabled                bool            `json:"enabled"`
+	VisitorConfig          VisitorConfig   `json:"visitorConfig"`
+	AnomalyDetectionConfig json.RawMessage `json:"anomalyDetectionConfig"`
+	Data                   interface{}     `json:"data"`
+}
+EOF
+
+# append AnomalyDetectionProcess function to driver.go
+cat >> ${curpath}/staging/src/github.com/kubeedge/modbus/driver/driver.go << 'EOF'
+
+func (c *CustomizedClient) AnomalyDetectionProcess(req *AnomalyDetectionRequest) error {
+    // TODO: add the code to process anomaly detection
+    return nil
+}
+EOF
+
 go work use ./staging/src/github.com/kubeedge/modbus
 
 # build modbus mapper image
