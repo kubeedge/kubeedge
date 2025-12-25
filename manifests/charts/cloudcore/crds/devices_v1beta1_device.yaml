@@ -653,6 +653,11 @@ spec:
                         PushMethod represents the protocol used to push data,
                         please ensure that the mapper can access the destination address.
                       properties:
+                        anomalyDetection:
+                          description: AnomalyDetection represents the method used
+                            to push data to anomaly detection service
+                          type: object
+                          x-kubernetes-preserve-unknown-fields: true
                         dbMethod:
                           description: |-
                             DBMethod represents the method used to push data to database,
