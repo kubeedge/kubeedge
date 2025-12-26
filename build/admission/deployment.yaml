@@ -30,7 +30,6 @@ spec:
             - --ca-cert-file=/admission.local.config/certificates/ca.crt
             - --webhook-namespace=kubeedge
             - --webhook-service-name=kubeedge-admission-service
-            - --alsologtostderr
             - --port=443
             - -v=4
             - 2>&1

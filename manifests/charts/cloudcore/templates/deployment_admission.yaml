@@ -43,7 +43,6 @@ spec:
             {{- end }}
             - --webhook-namespace=kubeedge
             - --webhook-service-name=kubeedge-admission-service
-            - --alsologtostderr
             - --port=443
             - -v=4
             - 2>&1
