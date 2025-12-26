@@ -261,7 +261,7 @@ install_isulad() {
   sudo git config --global --add safe.directory /tmp/build_isulad/lxc/lxc-4.0.3
   # build lxc
   cd $BUILD_DIR
-  sudo git clone https://gitee.com/src-openeuler/lxc.git -b openEuler-22.03-LTS-Next
+  sudo git clone https://atomgit.com/src-openeuler/lxc.git -b openEuler-22.03-LTS-Next
   cd lxc
   sudo ./apply-patches
   cd lxc-4.0.3
@@ -272,7 +272,7 @@ install_isulad() {
 
   # build lcr
   cd $BUILD_DIR
-  sudo git clone https://gitee.com/openeuler/lcr.git -b v2.1.4
+  sudo git clone https://atomgit.com/openeuler/lcr.git -b v2.1.4
   cd lcr
   sudo mkdir build
   cd build
@@ -282,7 +282,7 @@ install_isulad() {
 
   # build and install clibcni
   cd $BUILD_DIR
-  sudo git clone https://gitee.com/openeuler/clibcni.git -b v2.1.0
+  sudo git clone https://atomgit.com/openeuler/clibcni.git -b v2.1.0
   cd clibcni
   sudo mkdir build
   cd build
@@ -292,7 +292,7 @@ install_isulad() {
 
   # build and install iSulad
   cd $BUILD_DIR
-  sudo git clone https://gitee.com/openeuler/iSulad.git -b v2.1.5
+  sudo git clone https://atomgit.com/openeuler/iSulad.git -b v2.1.5
   cd iSulad
   sudo mkdir build
   cd build
