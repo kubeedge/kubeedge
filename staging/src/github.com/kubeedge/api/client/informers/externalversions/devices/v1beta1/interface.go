@@ -28,6 +28,8 @@ type Interface interface {
 	Devices() DeviceInformer
 	// DeviceModels returns a DeviceModelInformer.
 	DeviceModels() DeviceModelInformer
+	// DeviceStatuses returns a DeviceStatusInformer.
+	DeviceStatuses() DeviceStatusInformer
 }
 
 type version struct {
@@ -49,4 +51,9 @@ func (v *version) Devices() DeviceInformer {
 // DeviceModels returns a DeviceModelInformer.
 func (v *version) DeviceModels() DeviceModelInformer {
 	return &deviceModelInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// DeviceStatuses returns a DeviceStatusInformer.
+func (v *version) DeviceStatuses() DeviceStatusInformer {
+	return &deviceStatusInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }

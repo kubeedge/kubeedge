@@ -290,9 +290,9 @@ var _ = GroupDescribe("Device Management test in E2E scenario", func() {
 			gomega.Expect(err).To(gomega.BeNil())
 			time.Sleep(30 * time.Second)
 			// Check device status
-			device, err := utils.GetDevice(edgeClientSet, utils.DeviceName, utils.Namespace)
+			deviceStatus, err := utils.GetDeviceStatus(edgeClientSet, utils.DeviceName, utils.Namespace)
 			gomega.Expect(err).To(gomega.BeNil())
-			err = utils.CheckDeviceStatus(device, utils.PropertyName)
+			err = utils.CheckDeviceStatus(deviceStatus, utils.PropertyName)
 			gomega.Expect(err).To(gomega.BeNil())
 		})
 	})

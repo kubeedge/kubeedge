@@ -36,6 +36,10 @@ func (c *FakeDevicesV1beta1) DeviceModels(namespace string) v1beta1.DeviceModelI
 	return newFakeDeviceModels(c, namespace)
 }
 
+func (c *FakeDevicesV1beta1) DeviceStatuses(namespace string) v1beta1.DeviceStatusInterface {
+	return newFakeDeviceStatuses(c, namespace)
+}
+
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
 func (c *FakeDevicesV1beta1) RESTClient() rest.Interface {
