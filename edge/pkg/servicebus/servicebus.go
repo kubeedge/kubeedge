@@ -10,7 +10,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/beego/beego/v2/client/orm"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/klog/v2"
 
@@ -21,8 +20,8 @@ import (
 	commonType "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 	servicebusConfig "github.com/kubeedge/kubeedge/edge/pkg/servicebus/config"
-	"github.com/kubeedge/kubeedge/edge/pkg/servicebus/dao"
 	"github.com/kubeedge/kubeedge/edge/pkg/servicebus/util"
 	"github.com/kubeedge/kubeedge/pkg/features"
 )
@@ -44,6 +43,7 @@ type servicebus struct {
 	server  string
 	port    int
 	timeout int
+	sbs     *dbclient.ServiceBusService
 }
 
 type serverRequest struct {
@@ -67,6 +67,7 @@ func newServicebus(enable bool, server string, port, timeout int) *servicebus {
 		server:  server,
 		port:    port,
 		timeout: timeout,
+		sbs:     dbclient.NewServiceBusService(),
 	}
 }
 
@@ -74,7 +75,6 @@ func newServicebus(enable bool, server string, port, timeout int) *servicebus {
 func Register(s *v1alpha2.ServiceBus) {
 	servicebusConfig.InitConfigure(s)
 	core.Register(newServicebus(s.Enable, s.Server, s.Port, s.Timeout))
-	orm.RegisterModel(new(dao.TargetUrls))
 }
 
 func (*servicebus) Name() string {
@@ -103,7 +103,7 @@ func (sb *servicebus) Start() {
 	// no need to call TopicInit now, we have fixed topic
 	htc.Timeout = time.Second * 10
 	uc.Client = htc
-	if !dao.IsTableEmpty() {
+	if !sb.sbs.IsTableEmpty() {
 		if atomic.CompareAndSwapInt32(&inited, 0, 1) {
 			go server(c)
 		}
@@ -134,9 +134,10 @@ func processMessage(msg *beehiveModel.Message) {
 		return
 	}
 	resource := msg.GetResource()
+	dbc := dbclient.NewServiceBusService()
 	switch msg.GetOperation() {
 	case message.OperationStart:
-		if err := dao.InsertUrls(resource); err != nil {
+		if err := dbc.InsertUrls(resource); err != nil {
 			// TODO: handle err
 			klog.Error(err)
 		}
@@ -144,11 +145,12 @@ func processMessage(msg *beehiveModel.Message) {
 			go server(c)
 		}
 	case message.OperationStop:
-		if err := dao.DeleteUrlsByKey(resource); err != nil {
+		if err := dbc.DeleteUrlsByKey(resource); err != nil {
 			// TODO: handle err
 			klog.Error(err)
 		}
-		if dao.IsTableEmpty() {
+
+		if dbc.IsTableEmpty() {
 			c <- struct{}{}
 		}
 	default:
@@ -273,7 +275,7 @@ func buildBasicHandler(timeout time.Duration) http.Handler {
 			}
 			return
 		}
-		if targetURL, _ := dao.GetUrlsByKey(sReq.TargetURL); targetURL == nil {
+		if targetURL, _ := dbclient.NewServiceBusService().GetUrlsByKey(sReq.TargetURL); targetURL == nil {
 			sResp.Code = http.StatusBadRequest
 			sResp.Msg = fmt.Sprintf("url %s is not allowed and please make a rule for this url in the cloud", sReq.TargetURL)
 			if _, err := w.Write(marshalResult(sResp)); err != nil {
