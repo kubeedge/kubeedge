@@ -23,6 +23,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"net/http"
+	"time"
 
 	"k8s.io/apiserver/pkg/authentication/request/x509"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -45,16 +46,26 @@ type cloudhubAuthorizer struct {
 
 func (r *cloudhubAuthorizer) AdmitMessage(message beehivemodel.Message, hubInfo cloudhubmodel.HubInfo) error {
 	if !r.enabled {
+		klog.V(5).Infof("Authorization disabled, admitting message %s from node %s", message.Header.ID, hubInfo.NodeID)
 		return nil
 	}
 
+	startTime := time.Now()
 	err := r.admitMessage(message, hubInfo)
+	duration := time.Since(startTime)
+
 	if err == nil {
+		klog.V(4).Infof("Message admission successful: id=%s, node=%s, resource=%s, operation=%s, duration=%v", 
+			message.Header.ID, hubInfo.NodeID, message.Router.Resource, message.Router.Operation, duration)
 		return nil
 	}
 
-	klog.Error(err.Error())
+	// Log detailed audit failure
+	klog.Warningf("Message admission failed: id=%s, node=%s, resource=%s, operation=%s, error=%v, duration=%v",
+		message.Header.ID, hubInfo.NodeID, message.Router.Resource, message.Router.Operation, err, duration)
+	
 	if r.debug {
+		klog.V(3).Infof("Debug mode enabled, admitting message despite authorization failure: %s", message.Header.ID)
 		return nil
 	}
 	return err
@@ -62,16 +73,36 @@ func (r *cloudhubAuthorizer) AdmitMessage(message beehivemodel.Message, hubInfo 
 
 func (r *cloudhubAuthorizer) AuthenticateConnection(connection conn.Connection) error {
 	if !r.enabled {
+		klog.V(5).Infof("Authentication disabled, allowing connection")
 		return nil
 	}
 
+	startTime := time.Now()
 	err := r.authenticateConnection(connection)
+	duration := time.Since(startTime)
+
+	nodeID := connection.ConnectionState().Headers.Get("node_id")
+	peerCerts := connection.ConnectionState().PeerCertificates
+
 	if err == nil {
+		// Log successful authentication with certificate details
+		var certInfo string
+		if len(peerCerts) > 0 {
+			cert := peerCerts[0]
+			certInfo = fmt.Sprintf(", cert_subject=%s, cert_issuer=%s, cert_expiry=%s", 
+				cert.Subject.CommonName, cert.Issuer.CommonName, cert.NotAfter.Format(time.RFC3339))
+		}
+		klog.V(4).Infof("Connection authentication successful: node=%s, duration=%v%s", 
+			nodeID, duration, certInfo)
 		return nil
 	}
 
-	klog.Error(err.Error())
+	// Log authentication failure with details
+	klog.Warningf("Connection authentication failed: node=%s, error=%v, duration=%v", 
+		nodeID, err, duration)
+	
 	if r.debug {
+		klog.V(3).Infof("Debug mode enabled, allowing connection despite authentication failure for node: %s", nodeID)
 		return nil
 	}
 	return err
@@ -79,7 +110,8 @@ func (r *cloudhubAuthorizer) AuthenticateConnection(connection conn.Connection) 
 
 // admitMessage determines whether the message should be admitted.
 func (r *cloudhubAuthorizer) admitMessage(message beehivemodel.Message, hubInfo cloudhubmodel.HubInfo) error {
-	klog.V(4).Infof("message: %s: authorization start", message.Header.ID)
+	klog.V(4).Infof("Authorization starting: message_id=%s, node=%s, resource=%s, operation=%s", 
+		message.Header.ID, hubInfo.NodeID, message.Router.Resource, message.Router.Operation)
 
 	attrs, err := getAuthorizerAttributes(message.Router, hubInfo)
 	if err != nil {
@@ -93,10 +125,11 @@ func (r *cloudhubAuthorizer) admitMessage(message beehivemodel.Message, hubInfo 
 	}
 
 	if authorized != authorizer.DecisionAllow {
-		return fmt.Errorf("node %q deny: %s", hubInfo.NodeID, reason)
+		return fmt.Errorf("node %q authorization denied: %s", hubInfo.NodeID, reason)
 	}
 
-	klog.V(4).Infof("message: %s: authorization succeeded", message.Header.ID)
+	klog.V(4).Infof("Authorization completed successfully: message_id=%s, node=%s", 
+		message.Header.ID, hubInfo.NodeID)
 	return nil
 }
 
@@ -105,17 +138,27 @@ func (r *cloudhubAuthorizer) authenticateConnection(connection conn.Connection) 
 	peerCerts := connection.ConnectionState().PeerCertificates
 	nodeID := connection.ConnectionState().Headers.Get("node_id")
 
-	klog.V(4).Infof("node %q: authentication start", nodeID)
+	klog.V(4).Infof("Authentication starting: node=%s, peer_cert_count=%d", nodeID, len(peerCerts))
+	
 	switch len(peerCerts) {
 	case 0:
 		return fmt.Errorf("node %q: no client certificate provided", nodeID)
 	case 1:
+		// Log certificate details for audit purposes
+		cert := peerCerts[0]
+		klog.V(5).Infof("Peer certificate details: node=%s, subject=%s, issuer=%s, expiry=%s", 
+			nodeID, cert.Subject.CommonName, cert.Issuer.CommonName, cert.NotAfter.Format(time.RFC3339))
+		
+		// Check certificate expiry and log warning if expiring soon
+		if time.Until(cert.NotAfter) < 30*24*time.Hour { // 30 days
+			klog.Warningf("Certificate for node %s is expiring soon: %s", nodeID, cert.NotAfter.Format(time.RFC3339))
+		}
 	default:
-		return fmt.Errorf("node %q: immediate certificates are not supported", nodeID)
+		return fmt.Errorf("node %q: intermediate certificates are not supported, received %d certificates", nodeID, len(peerCerts))
 	}
 
 	options := x509.DefaultVerifyOptions()
-	// ca cloud be available util CloudHub starts
+	// ca could be available until CloudHub starts
 	options.Roots = stdx509.NewCertPool()
 	options.Roots.AppendCertsFromPEM(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: hubconfig.Config.Ca}))
 
@@ -126,9 +169,10 @@ func (r *cloudhubAuthorizer) authenticateConnection(connection conn.Connection) 
 	}
 
 	if resp.User.GetName() != constants.NodesUserPrefix+nodeID {
-		return fmt.Errorf("node %q: common name of peer certificate didn't match node ID", nodeID)
+		return fmt.Errorf("node %q: common name of peer certificate didn't match node ID, expected %s, got %s", 
+			nodeID, constants.NodesUserPrefix+nodeID, resp.User.GetName())
 	}
 
-	klog.V(4).Infof("node %q: authentication succeeded", nodeID)
+	klog.V(4).Infof("Authentication completed successfully: node=%s", nodeID)
 	return nil
 }
