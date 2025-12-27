@@ -35,7 +35,6 @@ func InitDBConfig(driverName, dbName, dataSource string) {
 		}()
 		// create orm
 		DBAccess = orm.NewOrmUsingDB(dbName)
-		klog.Infof("!!!!!!!!!!in db.go, DBAccess = %v", DBAccess)
 	})
 }
 
