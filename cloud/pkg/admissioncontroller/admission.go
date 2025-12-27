@@ -71,34 +71,40 @@ type AdmissionController struct {
 func strPtr(s string) *string { return &s }
 
 // Run starts the webhook service
+// Run starts the webhook service
 func Run(opt *options.AdmissionOptions) error {
 	klog.V(4).Infof("AdmissionOptions: %+v", *opt)
+	klog.Info("Initializing admission webhook controller")
+	
 	restConfig, err := clientcmd.BuildConfigFromFlags(opt.Master, opt.Kubeconfig)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to build REST config from flags: %v", err)
 	}
 
 	cli, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
-		return fmt.Errorf("create kube client failed with error: %v", err)
+		return fmt.Errorf("create kube client failed: %v", err)
 	}
 	vcli, err := versioned.NewForConfig(restConfig)
 	if err != nil {
-		return fmt.Errorf("create versioned client failed with error: %v", err)
+		return fmt.Errorf("create versioned client failed: %v", err)
 	}
 
 	controller.Client = cli
 	controller.CrdClient = vcli
+	klog.Info("Admission controller clients initialized successfully")
 
 	caBundle, err := os.ReadFile(opt.CaCertFile)
 	if err != nil {
-		return fmt.Errorf("unable to read cacert file: %v", err)
+		return fmt.Errorf("unable to read CA certificate file %s: %v", opt.CaCertFile, err)
 	}
+	klog.Info("CA certificate bundle loaded successfully")
 
-	//TODO: read somewhere to get what's kind of webhook is enabled, register those webhook only.
+	klog.Info("Registering admission webhooks")
 	if err = controller.registerWebhooks(opt, caBundle); err != nil {
-		return fmt.Errorf("failed to register the webhook with error: %v", err)
+		return fmt.Errorf("failed to register webhooks: %v", err)
 	}
+	klog.Info("Webhooks registered successfully")
 
 	http.HandleFunc("/devices", serveDevice)
 	http.HandleFunc("/devicemodels", serveDeviceModel)
@@ -108,18 +114,24 @@ func Run(opt *options.AdmissionOptions) error {
 	http.HandleFunc("/nodeupgradejobs", serveNodeUpgradeJob)
 	http.HandleFunc("/mutating/nodeupgradejobs", serveMutatingNodeUpgradeJob)
 
+	klog.Info("Configuring TLS for webhook server")
 	tlsConfig, err := configTLS(opt, restConfig)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to configure TLS: %v", err)
 	}
+	klog.Info("TLS configuration completed successfully")
+	
 	server := &http.Server{
 		Addr:      fmt.Sprintf(":%v", opt.Port),
 		TLSConfig: tlsConfig,
 	}
 
+	klog.Infof("Starting admission webhook server on port %v", opt.Port)
 	if err := server.ListenAndServeTLS("", ""); err != nil {
-		return fmt.Errorf("start server failed with error: %v", err)
+		return fmt.Errorf("webhook server failed: %v", err)
 	}
+	
+	klog.Info("Admission webhook server shutdown completed")
 	return nil
 }
 
@@ -128,35 +140,44 @@ func Run(opt *options.AdmissionOptions) error {
 // defined tls config, else use that defined in kubeconfig
 func configTLS(opt *options.AdmissionOptions, restConfig *restclient.Config) (*tls.Config, error) {
 	if len(opt.CertFile) != 0 && len(opt.KeyFile) != 0 {
+		klog.Infof("Loading TLS certificate from files: %s, %s", opt.CertFile, opt.KeyFile)
 		sCert, err := tls.LoadX509KeyPair(opt.CertFile, opt.KeyFile)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to load TLS key pair from files: %v", err)
 		}
 
+		klog.Info("TLS certificate loaded successfully from files")
 		return &tls.Config{
 			Certificates: []tls.Certificate{sCert},
 		}, nil
 	}
 
 	if len(restConfig.CertData) != 0 && len(restConfig.KeyData) != 0 {
+		klog.Info("Loading TLS certificate from REST config data")
 		sCert, err := tls.X509KeyPair(restConfig.CertData, restConfig.KeyData)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to load TLS key pair from config data: %v", err)
 		}
 
+		klog.Info("TLS certificate loaded successfully from config data")
 		return &tls.Config{
 			Certificates: []tls.Certificate{sCert},
 		}, nil
 	}
-	return nil, errors.New("tls: failed to find any tls config data")
+	
+	klog.Error("No TLS configuration data found")
+	return nil, errors.New("tls: failed to find any TLS configuration data, please provide certificate files or kubeconfig with certificate data")
 }
 
 // registerWebhooks registers the admission webhook.
 func (ac *AdmissionController) registerWebhooks(opt *options.AdmissionOptions, cabundle []byte) error {
+	klog.Info("Starting webhook registration process")
+	
 	ignorePolicy := admissionregistrationv1.Ignore
 	failPolicy := admissionregistrationv1.Fail
 	noneSideEffect := admissionregistrationv1.SideEffectClassNone
 
+	klog.Info("Creating validating webhook configuration")
 	// validating webhook configuration
 	validatingWebhookConfiguration := admissionregistrationv1.ValidatingWebhookConfiguration{
 		ObjectMeta: metav1.ObjectMeta{
@@ -304,15 +325,22 @@ func (ac *AdmissionController) registerWebhooks(opt *options.AdmissionOptions, c
 			},
 		},
 	}
+	
+	klog.Infof("Registering validating webhook configuration: %s", ValidateCRDWebhookConfigName)
 	if err := registerValidateWebhook(ac.Client.AdmissionregistrationV1().ValidatingWebhookConfigurations(),
 		[]admissionregistrationv1.ValidatingWebhookConfiguration{validatingWebhookConfiguration}); err != nil {
-		return err
+		klog.Errorf("Failed to register validating webhooks: %v", err)
+		return fmt.Errorf("failed to register validating webhooks: %v", err)
 	}
+	klog.Info("Validating webhooks registered successfully")
 
+	klog.Info("Creating mutating webhook configurations")
 	objectSelector, err := metav1.ParseToLabelSelector(AutonomyLabel)
 	if err != nil {
-		return err
+		klog.Errorf("Failed to parse object selector: %v", err)
+		return fmt.Errorf("failed to parse object selector: %v", err)
 	}
+	
 	// offlineMigration Mutating webhook
 	offlineMigrationWebhook := admissionregistrationv1.MutatingWebhookConfiguration{
 		ObjectMeta: metav1.ObjectMeta{
@@ -377,6 +405,7 @@ func (ac *AdmissionController) registerWebhooks(opt *options.AdmissionOptions, c
 		SideEffects:             &noneSideEffect,
 		AdmissionReviewVersions: []string{"v1"},
 	}
+	
 	// mutatingWebhook contains all the kubeedge related Mutating webhook
 	mutatingWebhook := admissionregistrationv1.MutatingWebhookConfiguration{
 		ObjectMeta: metav1.ObjectMeta{
@@ -387,8 +416,17 @@ func (ac *AdmissionController) registerWebhooks(opt *options.AdmissionOptions, c
 		},
 	}
 
-	return registerMutatingWebhook(ac.Client.AdmissionregistrationV1().MutatingWebhookConfigurations(),
-		[]admissionregistrationv1.MutatingWebhookConfiguration{offlineMigrationWebhook, mutatingWebhook})
+	klog.Infof("Registering mutating webhook configurations: %s, %s", 
+		OfflineMigrationConfigName, MutatingAdmissionWebhookName)
+		
+	if err := registerMutatingWebhook(ac.Client.AdmissionregistrationV1().MutatingWebhookConfigurations(),
+		[]admissionregistrationv1.MutatingWebhookConfiguration{offlineMigrationWebhook, mutatingWebhook}); err != nil {
+		klog.Errorf("Failed to register mutating webhooks: %v", err)
+		return fmt.Errorf("failed to register mutating webhooks: %v", err)
+	}
+	
+	klog.Info("Webhook configuration completed successfully")
+	return nil
 }
 
 func (ac *AdmissionController) getRuleEndpoint(namespace, name string) (*v1.RuleEndpoint, error) {
