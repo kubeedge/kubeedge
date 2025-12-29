@@ -480,7 +480,7 @@ func noAckRequired(msg *beehivemodel.Message) bool {
 	default:
 		if msg.GetSource() == modules.EdgeControllerModuleName {
 			resourceType, _ := messagelayer.GetResourceType(*msg)
-			if resourceType == beehivemodel.ResourceTypeNode ||
+			if resourceType == beehivemodel.ResourceTypeNode && msg.GetOperation() != beehivemodel.UpdateOperation ||
 				resourceType == beehivemodel.ResourceTypeLease ||
 				resourceType == beehivemodel.ResourceTypeNodePatch ||
 				resourceType == beehivemodel.ResourceTypePodPatch ||
