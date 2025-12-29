@@ -43,20 +43,16 @@ type DeviceSpec struct {
 	// methods list item must be unique by method.Name.
 	// +optional
 	Methods []DeviceMethod `json:"methods,omitempty"`
+	// StateReport represents the configuration of state reporting for a device.
+	// +optional
+	StateReport *StateReportConfig `json:"stateReport,omitempty"`
 }
 
-// DeviceStatus reports the device state and the desired/reported values of twin attributes.
-type DeviceStatus struct {
-	// A list of device twins containing desired/reported desired/reported values of twin properties.
-	// Optional: A passive device won't have twin properties and this list could be empty.
-	// +optional
-	Twins []Twin `json:"twins,omitempty"`
-	// Optional: The state of the device.
-	// +optional
-	State string `json:"state,omitempty"`
-	// Optional: The last time the device was online.
-	// +optional
-	LastOnlineTime string `json:"lastOnlineTime,omitempty"`
+// We schedule to extract the status field of Device CRD to a separate CRD DeviceStatus
+// The DeviceStatusOld is kept temporarily to avoid breaking changes during the transition period.
+// After the transition period, DeviceStatusOld and related code will be removed.
+// DeviceStatusOld represents the status of a device instance.
+type DeviceStatusOld struct {
 	// Optional: whether be reported to the cloud
 	// +optional
 	ReportToCloud bool `json:"reportToCloud,omitempty"`
@@ -65,25 +61,14 @@ type DeviceStatus struct {
 	ReportCycle int64 `json:"reportCycle,omitempty"`
 }
 
-// Twin provides a logical representation of control properties (writable properties in the
-// device model). The properties can have a Desired state and a Reported state. The cloud configures
-// the `Desired`state of a device property and this configuration update is pushed to the edge node.
-// The mapper sends a command to the device to change this property value as per the desired state .
-// It receives the `Reported` state of the property once the previous operation is complete and sends
-// the reported state to the cloud. Offline device interaction in the edge is possible via twin
-// properties for control/command operations.
-type Twin struct {
-	// Required: The property name for which the desired/reported values are specified.
-	// This property should be present in the device model.
-	PropertyName string `json:"propertyName,omitempty"`
-	// Required: the reported property value.
-	Reported TwinProperty `json:"reported,omitempty"`
-	// The meaning of here is to indicate desired value of `deviceProperty.Desired`
-	// that the mapper has received in current cycle.
-	// Useful in cases that people want to check whether the mapper is working
-	// appropriately and its internal status is up-to-date.
-	// This value should be only updated by devicecontroller upstream.
-	ObservedDesired TwinProperty `json:"observedDesired,omitempty"`
+// StateReportConfig represents the configuration of state reporting for a device.
+type StateReportConfig struct {
+	// Optional: whether be reported to the cloud
+	// +optional
+	ReportToCloud bool `json:"reportToCloud,omitempty"`
+	// Optional: Define how frequent mapper will report the device state.
+	// +optional
+	ReportCycle int64 `json:"reportCycle,omitempty"`
 }
 
 // TwinProperty represents the device property for which an Expected/Actual state can be defined.
@@ -299,8 +284,10 @@ type VisitorConfig struct {
 type Device struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              DeviceSpec   `json:"spec,omitempty"`
-	Status            DeviceStatus `json:"status,omitempty"`
+	Spec              DeviceSpec `json:"spec,omitempty"`
+	// +optional
+	// +kubebuilder:validation:XPreserveUnknownFields
+	Status DeviceStatusOld `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
