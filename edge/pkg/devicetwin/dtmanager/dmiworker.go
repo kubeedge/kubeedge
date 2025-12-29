@@ -244,7 +244,12 @@ func (dw *DMIWorker) initDeviceMapperInfoFromDB() {
 			return
 		}
 
+		err := dmiclient.DMIClientsImp.CreateDMIClientAndTryToConnect(deviceMapper.Protocol, string(deviceMapper.Address))
+		if err != nil {
+			continue
+		}
 		dw.dmiCache.PutMapper(&deviceMapper)
+		klog.Infof("device mapper %s loaded successfully", deviceMapper.Name)
 	}
 	klog.Infoln("success to init device mapper info from db")
 }

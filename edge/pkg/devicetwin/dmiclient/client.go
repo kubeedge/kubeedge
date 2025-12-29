@@ -78,8 +78,12 @@ func (dc *DMIClient) connect() error {
 }
 
 func (dc *DMIClient) close() {
-	dc.Conn.Close()
-	dc.CancelFunc()
+	if dc.Conn != nil {
+		dc.Conn.Close()
+	}
+	if dc.CancelFunc != nil {
+		dc.CancelFunc()
+	}
 }
 
 func createDeviceRequest(device *v1beta1.Device) (*dmiapi.RegisterDeviceRequest, error) {
@@ -166,6 +170,40 @@ func (dcs *DMIClients) CreateDMIClient(protocol, sockPath string) {
 		socket:   sockPath,
 	}
 	dcs.mutex.Unlock()
+}
+
+// CreateDMIClientAndTryToConnect If the dmi client of the protocol does not exist, create one and try to connect.
+// If a connection to the given sockPath cannot be established (e.g., the mapper app is not running), it indicates
+// that the mapper corresponding to the sockPath does not need to be re-registered; otherwise, the DMIClient
+// for that protocol will be created normally.
+func (dcs *DMIClients) CreateDMIClientAndTryToConnect(protocol, sockPath string) error {
+	dc, err := dcs.getDMIClientByProtocol(protocol)
+	if err == nil {
+		dcs.mutex.Lock()
+		dc.protocol = protocol
+		dc.socket = sockPath
+		dcs.mutex.Unlock()
+		return nil
+	}
+
+	dc = &DMIClient{
+		protocol: protocol,
+		socket:   sockPath,
+	}
+	defer dc.close()
+	err = dc.connect()
+	if err != nil {
+		return fmt.Errorf("fail to connect the mapper app for protocol %s with socket %s: %v", protocol, sockPath, err)
+	}
+	dcs.mutex.Lock()
+	defer dcs.mutex.Unlock()
+	c, ok := dcs.clients[protocol]
+	if ok {
+		c.close()
+	}
+	dcs.clients[protocol] = dc
+	klog.Infof("created dmi client for protocol %s with socket %s successfully", protocol, sockPath)
+	return nil
 }
 
 func (dcs *DMIClients) getDMIClientConn(protocol string) (*DMIClient, error) {
