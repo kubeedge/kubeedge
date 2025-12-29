@@ -18,7 +18,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
 	patchutil "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/util"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
@@ -168,7 +168,7 @@ func newStore() *store {
 func MergePatchedResource(ctx context.Context, originalObj *unstructured.Unstructured, resourceTypePatch string) error {
 	resKey := fmt.Sprintf("%s/%s/%s", originalObj.GetNamespace(), resourceTypePatch, originalObj.GetName())
 	var metas *[]string
-	metas, err := dao.QueryMeta("key", resKey)
+	metas, err := dbclient.NewMetaService().QueryMeta("key", resKey)
 	if err != nil {
 		return err
 	}

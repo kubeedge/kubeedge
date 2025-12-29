@@ -28,7 +28,7 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 )
 
 const (
@@ -99,7 +99,7 @@ func TestPersistentVolume_Get(t *testing.T) {
 	metaDBListJSON, _ := json.Marshal(metaDBList)
 
 	options := metav1.GetOptions{}
-	resource := fmt.Sprintf("%s/%s/%s", v2.NullNamespace, "persistentvolume", testPVName)
+	resource := fmt.Sprintf("%s/%s/%s", models.NullNamespace, "persistentvolume", testPVName)
 
 	testCases := []struct {
 		name        string

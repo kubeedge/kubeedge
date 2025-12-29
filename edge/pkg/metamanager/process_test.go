@@ -37,7 +37,6 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/mocks/beego"
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	metaManagerConfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
