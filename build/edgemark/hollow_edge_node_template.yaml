@@ -22,7 +22,6 @@ spec:
             - --name=$(NODE_NAME)
             - --http-server=https://{{server}}:10002
             - --websocket-server={{server}}:10000
-            - --alsologtostderr
             - --v=2
           env:
             - name: NODE_NAME
