@@ -339,12 +339,20 @@ func GetDevice(c edgeclientset.Interface, name, ns string) (*v1beta1.Device, err
 	return device, nil
 }
 
+func GetDeviceStatus(c edgeclientset.Interface, name, ns string) (*v1beta1.DeviceStatus, error) {
+	deviceStatus, err := c.DevicesV1beta1().DeviceStatuses(ns).Get(context.TODO(), name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return deviceStatus, nil
+}
+
 // CheckDeviceStatus check whether mapper reports device data correctly.
-func CheckDeviceStatus(device *v1beta1.Device, propertyname string) error {
-	if len(device.Status.Twins) == 0 {
+func CheckDeviceStatus(deviceStatus *v1beta1.DeviceStatus, propertyname string) error {
+	if len(deviceStatus.Status.Twins) == 0 {
 		return fmt.Errorf("the device twin is nil")
 	}
-	for _, twin := range device.Status.Twins {
+	for _, twin := range deviceStatus.Status.Twins {
 		if twin.PropertyName != propertyname {
 			continue
 		}
