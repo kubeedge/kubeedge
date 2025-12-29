@@ -76,10 +76,6 @@ func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
 	flags.StringSliceVarP(&joinOptions.Labels, common.FlagNameLabels, "l", joinOptions.Labels,
 		"Use this key to set the customized labels for node, you can input customized labels like key1=value1,key2=value2")
 
-	flags.StringVar(&joinOptions.ImageRepository, common.FlagNameImageRepository, joinOptions.ImageRepository,
-		"Use this key to decide which image repository to pull images from",
-	)
-
 	flags.StringVar(&joinOptions.HubProtocol, common.HubProtocol, joinOptions.HubProtocol,
 		"Use this key to decide which communication protocol the edge node adopts.")
 
@@ -88,6 +84,12 @@ func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
 
 	flags.StringVar(&joinOptions.LogPath, "log-file", filepath.Join(apiconsts.KubeEdgeLogPath, "edgecore.log"),
 		"Use this key to set the log file path for edgecore")
+
+	flags.StringVar(&joinOptions.TarballPath, common.FlagNameTarballPath, apiconsts.KubeEdgePath,
+		"Use this key to set the temp directory path for KubeEdge release assets, if not exist, download it")
+
+	flags.StringVar(&joinOptions.DownloadRepo, "download-repo", util.KubeEdgeDownloadURL,
+		"Use this key to set the download repository for KubeEdge release assets, the actual download url is <download-repo>/<kubeedge-version>/<asset>.tar.gz")
 }
 
 func createEdgeConfigFiles(opt *common.JoinOptions) error {
@@ -182,20 +184,12 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 		return err
 	}
 
-	step.Printf("Check edge bin exist")
-	// check if the binary download successfully manual
-	if !files.FileExists(filepath.Join(apiconsts.KubeEdgeUsrBinPath, apiconsts.KubeEdgeBinaryName+".exe")) {
-		fmt.Println("Edge binary not found, start download now")
-		v, err := semver.ParseTolerant(opt.KubeEdgeVersion)
-		if err != nil {
-			return fmt.Errorf("parse kubeedge version failed, %v", err)
-		}
-		if err = util.DownloadEdgecoreBin(common.InstallOptions{}, v); err != nil {
-			return err
-		}
+	step.Printf("Download the necessary resources")
+	if err := pullAndCopyResources(opt, step); err != nil {
+		return err
 	}
 
-	step.Printf("Register edgecore as native Windows service")
+	step.Printf("Register edgecore as a native Windows service")
 	svc, err := extsys.GetExtSystem()
 	if err != nil {
 		return fmt.Errorf("detect windows service manager failed: %v", err)
@@ -247,6 +241,20 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 	}
 	step.Printf("Install Complete!")
 	return err
+}
+
+func pullAndCopyResources(opt *common.JoinOptions, _step *common.Step) error {
+	v, err := semver.ParseTolerant(opt.KubeEdgeVersion)
+	if err != nil {
+		return fmt.Errorf("parse kubeedge version failed, %v", err)
+	}
+	if err = util.DownloadEdgecoreBin(common.InstallOptions{
+		TarballPath:  opt.TarballPath,
+		DownloadRepo: opt.DownloadRepo,
+	}, v); err != nil {
+		return err
+	}
+	return nil
 }
 
 func runEdgeCore() error {
