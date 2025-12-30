@@ -2,6 +2,8 @@ module github.com/kubeedge/kubeedge
 
 go 1.21
 
+toolchain go1.22.8
+
 require (
 	github.com/256dpi/gomqtt v0.10.4
 	github.com/blang/semver v3.5.1+incompatible
