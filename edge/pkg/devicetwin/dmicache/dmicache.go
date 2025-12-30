@@ -1,3 +1,19 @@
+/*
+Copyright 2025 The KubeEdge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package dmicache
 
 import (
@@ -13,6 +29,8 @@ import (
 	"github.com/kubeedge/api/apis/util"
 )
 
+const dmiCacheLoggerName = "dmiCache"
+
 type DMICache struct {
 	mapperMu        *sync.RWMutex
 	deviceMu        *sync.RWMutex
@@ -20,6 +38,7 @@ type DMICache struct {
 	mapperList      map[string]*pb.MapperInfo
 	deviceModelList map[string]*v1beta1.DeviceModel
 	deviceList      map[string]*v1beta1.Device
+	logger          klog.Logger
 }
 
 func NewDMICache() *DMICache {
@@ -30,6 +49,7 @@ func NewDMICache() *DMICache {
 		mapperList:      make(map[string]*pb.MapperInfo),
 		deviceList:      make(map[string]*v1beta1.Device),
 		deviceModelList: make(map[string]*v1beta1.DeviceModel),
+		logger:          klog.Background().WithName(dmiCacheLoggerName),
 	}
 }
 
@@ -117,7 +137,7 @@ func (dmiCache *DMICache) GetOverriddenDevice(namespace, name string) (*v1beta1.
 func (dmiCache *DMICache) DeviceIds() []string {
 	dmiCache.deviceMu.RLock()
 	defer dmiCache.deviceMu.RUnlock()
-	var deviceIDs []string
+	deviceIDs := make([]string, 0, len(dmiCache.deviceList))
 	for deviceID := range dmiCache.deviceList {
 		deviceIDs = append(deviceIDs, deviceID)
 	}
@@ -158,7 +178,7 @@ func (dmiCache *DMICache) CompareDeviceSpecHasChanged(device *v1beta1.Device) bo
 		})
 
 		if reflect.DeepEqual(oldSpec, newSpec) {
-			klog.Infof("Device unchanged, Skip UpdateDevice for %s ", device.Name)
+			dmiCache.logger.Info("device unchanged, skip updateDevice", "device", device.Name)
 			oldDevice.Status = device.Status
 			return false
 		}
@@ -182,7 +202,7 @@ func (dmiCache *DMICache) overrideDeviceInstanceConfig(device *v1beta1.Device) (
 		return nil, nil, fmt.Errorf("device model %s not found in cache for device %s", device.Spec.DeviceModelRef.Name, device.Name)
 	}
 
-	klog.Infof("Overriding device properties for device %s using model %s", device.Name, deviceModel.Name)
+	dmiCache.logger.Info("overriding device properties", "device", device.Name, "model", deviceModel.Name)
 
 	// Store original device properties in temporary variables
 	originalProperties := make([]v1beta1.DeviceProperty, len(device.Spec.Properties))
@@ -198,7 +218,7 @@ func (dmiCache *DMICache) overrideDeviceInstanceConfig(device *v1beta1.Device) (
 			if modelProp.Visitors != nil {
 				deviceProp.Visitors = *modelProp.Visitors
 				deviceProp.Visitors.ConfigData = deepCopyCustomizedValue(modelProp.Visitors.ConfigData)
-				klog.Infof("Applied model visitors to property %s of device %s", deviceProp.Name, device.Name)
+				dmiCache.logger.V(4).Info("applied model visitors to property", "property", deviceProp.Name, "device", device.Name)
 			}
 		}
 	}
@@ -215,11 +235,11 @@ func (dmiCache *DMICache) overrideDeviceInstanceConfig(device *v1beta1.Device) (
 				for key, value := range originalProp.Visitors.ConfigData.Data {
 					deviceProp.Visitors.ConfigData.Data[key] = value
 				}
-				klog.Infof("Merged instance visitors for property %s of device %s", deviceProp.Name, device.Name)
+				dmiCache.logger.V(4).Info("merged instance visitors for property", "property", deviceProp.Name, "device", device.Name)
 			} else {
 				// No model visitors config data, use instance visitors config data directly
 				deviceProp.Visitors.ConfigData = originalProp.Visitors.ConfigData
-				klog.Infof("Used instance visitors config data for property %s of device %s", deviceProp.Name, device.Name)
+				dmiCache.logger.V(4).Info("used instance visitors config data for property", "property", deviceProp.Name, "device", device.Name)
 			}
 		}
 		// If original property has no visitors config, keep the model visitors (already applied above)
@@ -232,7 +252,7 @@ func (dmiCache *DMICache) overrideDeviceInstanceConfig(device *v1beta1.Device) (
 	// Apply model protocol config (may be nil)
 	device.Spec.Protocol.ConfigData = deepCopyCustomizedValue(deviceModel.Spec.ProtocolConfigData)
 	if deviceModel.Spec.ProtocolConfigData != nil {
-		klog.Infof("Applied model protocol config data to device %s", device.Name)
+		dmiCache.logger.V(4).Info("applied model protocol config data", "device", device.Name)
 	}
 
 	// Merge with instance protocol config if exists (instance data takes precedence)
@@ -242,11 +262,11 @@ func (dmiCache *DMICache) overrideDeviceInstanceConfig(device *v1beta1.Device) (
 			for key, value := range originalProtocolConfig.Data {
 				device.Spec.Protocol.ConfigData.Data[key] = value
 			}
-			klog.Infof("Merged instance protocol config data for device %s", device.Name)
+			dmiCache.logger.V(4).Info("merged instance protocol config data", "device", device.Name)
 		} else {
 			// No model config data, use instance config directly
 			device.Spec.Protocol.ConfigData = originalProtocolConfig
-			klog.Infof("Used instance protocol config data for device %s", device.Name)
+			dmiCache.logger.V(4).Info("used instance protocol config data", "device", device.Name)
 		}
 	}
 
