@@ -32,7 +32,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.21.x
+          go-version: 1.22.x
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -120,7 +120,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.21.x
+          go-version: 1.22.x
 
       - uses: actions/cache@v4
         with:
@@ -185,7 +185,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.21.x
+          go-version: 1.22.x
 
       - uses: actions/cache@v4
         with:
@@ -256,7 +256,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.21.x
+          go-version: 1.22.x
 
       - uses: actions/cache@v4
         with:
@@ -311,7 +311,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.21.x
+          go-version: 1.22.x
 
       - uses: actions/cache@v4
         with:
@@ -386,7 +386,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.21.x
+          go-version: 1.22.x
 
       - uses: actions/cache@v4
         with:
@@ -446,7 +446,7 @@ jobs:
         - name: Install Go
           uses: actions/setup-go@v4
           with:
-            go-version: 1.21.x
+            go-version: 1.22.x
 
         - uses: actions/cache@v4
           with:
