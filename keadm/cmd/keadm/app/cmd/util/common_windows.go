@@ -19,13 +19,16 @@ limitations under the License.
 package util
 
 import (
+	"bytes"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
 
 	"github.com/blang/semver"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/api/apis/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
@@ -39,8 +42,7 @@ const (
 	downloadFileScript = `
 function DownloadFile($destination, $source) {
     Write-Host("Downloading $source to $destination")
-    curl.exe --silent --fail -Lo $destination $source
-
+    curl.exe -# -Lo $destination $source
     if (!$?) {
         Write-Error "Download $source failed"
         exit 1
@@ -115,12 +117,20 @@ func installKubeEdge(options types.InstallOptions, version semver.Version) error
 	//Currently it is missing and once checksum is in place, checksum check required
 	//to be added here.
 	dirname := fmt.Sprintf("kubeedge-v%s-windows-%s", version, arch)
+	defer func() {
+		// Clean up the extracted folder after copying the edgecore binary
+		folder := filepath.Join(options.TarballPath, dirname)
+		if err := removeFile(folder, true); err != nil {
+			klog.Warningf("clean up the extracted folder %s failed, err: %v", folder, err)
+		}
+	}()
+
 	filename := fmt.Sprintf("kubeedge-v%s-windows-%s.tar.gz", version, arch)
 	checksumFilename := fmt.Sprintf("checksum_kubeedge-v%s-windows-%s.tar.gz.txt", version, arch)
 	filePath := filepath.Join(options.TarballPath, filename)
 	if _, err = os.Stat(filePath); err == nil {
 		fmt.Printf("Expected or Default KubeEdge version %v is already downloaded and will checksum for it. \n", version)
-		if success, _ := checkSum(filename, checksumFilename, version, options.TarballPath); !success {
+		if success, _ := checkSum(filename, checksumFilename, version, options.TarballPath, options.DownloadRepo); !success {
 			fmt.Printf("%v in your path checksum failed and do you want to delete this file and try to download again? \n", filename)
 			for {
 				confirm, err := askForconfirm()
@@ -134,7 +144,8 @@ func installKubeEdge(options types.InstallOptions, version semver.Version) error
 						return err
 					}
 					fmt.Printf("%v have been deleted and will try to download again\n", filename)
-					if err := retryDownload(filename, checksumFilename, version, options.TarballPath); err != nil {
+					if err := retryDownload(filename, checksumFilename, version,
+						options.TarballPath, options.DownloadRepo); err != nil {
 						return err
 					}
 				} else {
@@ -145,10 +156,13 @@ func installKubeEdge(options types.InstallOptions, version semver.Version) error
 		} else {
 			fmt.Println("Expected or Default KubeEdge version", version, "is already downloaded")
 		}
-	} else if !os.IsNotExist(err) {
-		return err
 	} else {
-		if err := retryDownload(filename, checksumFilename, version, options.TarballPath); err != nil {
+		if !os.IsNotExist(err) {
+			return err
+		}
+		fmt.Printf("Edgecore package %s not found, starting download.\n", filePath)
+		if err := retryDownload(filename, checksumFilename, version,
+			options.TarballPath, options.DownloadRepo); err != nil {
 			return err
 		}
 	}
@@ -170,7 +184,13 @@ func installKubeEdge(options types.InstallOptions, version semver.Version) error
 	return nil
 }
 
-func checkSum(filename, checksumFilename string, version semver.Version, tarballPath string) (bool, error) {
+func checkSum(
+	filename,
+	checksumFilename string,
+	version semver.Version,
+	tarballPath string,
+	downloadRepo string,
+) (bool, error) {
 	//Verify the tar with checksum
 	fmt.Printf("%s checksum: \n", filename)
 
@@ -183,10 +203,12 @@ func checkSum(filename, checksumFilename string, version semver.Version, tarball
 	checksumFilepath := filepath.Join(tarballPath, checksumFilename)
 
 	if _, err := os.Stat(checksumFilepath); err != nil {
+		if downloadRepo == "" {
+			downloadRepo = KubeEdgeDownloadURL
+		}
 		// download checksum file
-		dwnldURL := fmt.Sprintf(downloadFileScript,
-			checksumFilepath, fmt.Sprintf("%s/v%s/%s", KubeEdgeDownloadURL, version, checksumFilename))
-		if err := execs.NewCommand(dwnldURL).Exec(); err != nil {
+		if err := runDownload(checksumFilepath,
+			fmt.Sprintf("%s/v%s/%s", downloadRepo, version, checksumFilename)); err != nil {
 			return false, err
 		}
 	}
@@ -205,18 +227,41 @@ func checkSum(filename, checksumFilename string, version semver.Version, tarball
 	return true, nil
 }
 
-func retryDownload(filename, checksumFilename string, version semver.Version, tarballPath string) error {
+func runDownload(dist string, url string) error {
+	var errbuff bytes.Buffer
+	script := fmt.Sprintf(downloadFileScript, dist, url)
+	cmd := exec.Command("powershell", "-c", script)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = &errbuff
+	if err := cmd.Run(); err != nil {
+		msg := fmt.Sprintf("download %s failed, err: %v", url, err)
+		if errbuff.Len() > 0 {
+			msg = fmt.Sprintf("%s, detail: %s", msg, errbuff.String())
+		}
+		return fmt.Errorf(msg)
+	}
+	return nil
+}
+
+func retryDownload(
+	filename,
+	checksumFilename string,
+	version semver.Version,
+	tarballPath string,
+	downloadRepo string,
+) error {
 	filePath := filepath.Join(tarballPath, filename)
+	if downloadRepo == "" {
+		downloadRepo = KubeEdgeDownloadURL
+	}
 	for try := 0; try < downloadRetryTimes; try++ {
 		//Download the tar from repo
-		dwnldURL := fmt.Sprintf(downloadFileScript,
-			filePath, fmt.Sprintf("%s/v%s/%s", KubeEdgeDownloadURL, version, filename))
-		if err := execs.NewCommand(dwnldURL).Exec(); err != nil {
+		if err := runDownload(filePath, fmt.Sprintf("%s/v%s/%s", downloadRepo, version, filename)); err != nil {
 			return err
 		}
 
 		//Verify the tar with checksum
-		success, err := checkSum(filename, checksumFilename, version, tarballPath)
+		success, err := checkSum(filename, checksumFilename, version, tarballPath, downloadRepo)
 		if err != nil {
 			return err
 		}
@@ -225,11 +270,23 @@ func retryDownload(filename, checksumFilename string, version semver.Version, ta
 		}
 		fmt.Printf("Failed to verify the checksum of %s, try to download it again ... \n\n", filename)
 		//Cleanup the downloaded files
-		if err = execs.NewCommand(fmt.Sprintf("Remove-Item -Force %s", filePath)).Exec(); err != nil {
+		if err = removeFile(filePath, false); err != nil {
 			return err
 		}
 	}
 	return fmt.Errorf("failed to download %s", filename)
+}
+
+func removeFile(filePath string, isDir bool) error {
+	var dirFlag string
+	if isDir {
+		dirFlag = "-Recurse"
+	}
+	if err := execs.NewCommand(fmt.Sprintf("Remove-Item -Path %s -Force %s", filePath, dirFlag)).
+		Exec(); err != nil {
+		return fmt.Errorf("remove %s failed, err: %w", filePath, err)
+	}
+	return nil
 }
 
 func runEdgeCore() error {

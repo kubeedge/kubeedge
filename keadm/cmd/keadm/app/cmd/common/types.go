@@ -234,6 +234,7 @@ const (
 type InstallOptions struct {
 	ComponentType ComponentType
 	TarballPath   string
+	DownloadRepo  string
 }
 
 // ToolsInstaller interface for tools with install and teardown methods.

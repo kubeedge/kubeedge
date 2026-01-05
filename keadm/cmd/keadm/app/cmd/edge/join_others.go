@@ -79,26 +79,25 @@ func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
 		"The port where to apply for the edge certificate")
 
 	cmd.Flags().StringVar(&joinOptions.TarballPath, common.FlagNameTarballPath, joinOptions.TarballPath,
-		"Use this key to set the temp directory path for KubeEdge tarball, if not exist, download it")
+		"Use this key to set the temp directory path for KubeEdge release assets, if not exist, download it")
 
 	cmd.Flags().StringSliceVarP(&joinOptions.Labels, common.FlagNameLabels, "l", joinOptions.Labels,
-		`Use this key to set the customized labels for node, you can input customized labels like key1=value1,key2=value2`)
+		"Use this key to set the customized labels for node, you can input customized labels like key1=value1,key2=value2")
 
 	cmd.Flags().StringVar(&joinOptions.ImageRepository, common.FlagNameImageRepository, joinOptions.ImageRepository,
-		`Use this key to decide which image repository to pull images from`,
-	)
+		"Use this key to decide which image repository to pull images from")
 
 	cmd.Flags().StringVar(&joinOptions.HubProtocol, common.HubProtocol, joinOptions.HubProtocol,
-		`Use this key to decide which communication protocol the edge node adopts.`)
+		"Use this key to decide which communication protocol the edge node adopts.")
 
 	cmd.Flags().StringArrayVar(&joinOptions.Sets, common.FlagNameSet, joinOptions.Sets,
-		`Set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)`)
+		"Set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
 
 	cmd.Flags().StringVar(&joinOptions.PreRun, common.FlagNamePreRun, joinOptions.PreRun,
-		`Execute the prescript before joining the node. (for example: keadm join --pre-run=./test-script.sh ...)`)
+		"Execute the prescript before joining the node. (for example: keadm join --pre-run=./test-script.sh ...)")
 
 	cmd.Flags().StringVar(&joinOptions.PostRun, common.FlagNamePostRun, joinOptions.PostRun,
-		`Execute the postscript after joining the node. (for example: keadm join --post-run=./test-script.sh ...)`)
+		"Execute the postscript after joining the node. (for example: keadm join --post-run=./test-script.sh ...)")
 }
 
 func createEdgeConfigFiles(opt *common.JoinOptions) error {
@@ -195,7 +194,7 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 
 	// Do not create any files in the management directory,
 	// you need to mount the contents of the mirror first.
-	if err := pullImagesAndCopyResources(opt, step); err != nil {
+	if err := pullAndCopyResources(opt, step); err != nil {
 		return err
 	}
 
@@ -245,7 +244,7 @@ func join(opt *common.JoinOptions, step *common.Step) error {
 	return err
 }
 
-func pullImagesAndCopyResources(opt *common.JoinOptions, step *common.Step) error {
+func pullAndCopyResources(opt *common.JoinOptions, step *common.Step) error {
 	ctx := context.Background()
 	imageSet := util.EdgeSet(opt)
 	images := imageSet.List()
