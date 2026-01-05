@@ -459,6 +459,33 @@ func TestConvertDevice(t *testing.T) {
 			wantErr: true,
 			errMsg:  "failed to convert property",
 		},
+		{
+			name: "use spec state config",
+			device: &v1beta1.Device{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-device-spec-state",
+				},
+				Spec: v1beta1.DeviceSpec{
+					StateReport: &v1beta1.StateReportConfig{
+						ReportCycle:   30,
+						ReportToCloud: true,
+					},
+					Properties: []v1beta1.DeviceProperty{
+						{
+							Name: "pressure",
+							Visitors: v1beta1.VisitorConfig{
+								ConfigData: &v1beta1.CustomizedValue{
+									Data: map[string]interface{}{
+										"topic": "pressure",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
 	}
 
 	for _, tt := range cases {
