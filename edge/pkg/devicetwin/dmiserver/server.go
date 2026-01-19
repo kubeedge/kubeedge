@@ -120,7 +120,11 @@ func (s *server) MapperRegister(_ctx context.Context, in *pb.MapperRegisterReque
 		deviceModelList = append(deviceModelList, pbModel)
 	}
 
-	dmiclient.DMIClientsImp.CreateDMIClient(in.Mapper.Protocol, string(in.Mapper.Address))
+	err = dmiclient.DMIClientsImp.CreateDMIClient(in.Mapper.Protocol, string(in.Mapper.Address), false)
+	if err != nil {
+		klog.Warningf("fail to create dmi client for device mapper %s: %v", in.Mapper.Name, err)
+		return nil, err
+	}
 
 	return &pb.MapperRegisterResponse{
 		DeviceList: deviceList,
