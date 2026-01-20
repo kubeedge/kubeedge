@@ -20,8 +20,11 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	utilwaitgroup "k8s.io/apimachinery/pkg/util/waitgroup"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
+	"k8s.io/apiserver/pkg/authentication/request/anonymous"
 	"k8s.io/apiserver/pkg/authentication/request/bearertoken"
+	authnunion "k8s.io/apiserver/pkg/authentication/request/union"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	authzunion "k8s.io/apiserver/pkg/authorization/union"
 	genericapifilters "k8s.io/apiserver/pkg/endpoints/filters"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
@@ -63,6 +66,23 @@ type metaServerAuth struct {
 	Authorizer    authorizer.Authorizer
 }
 
+type AlwaysAllowDiscoveryAuthorizer struct{}
+
+func (a *AlwaysAllowDiscoveryAuthorizer) Authorize(ctx context.Context, attrs authorizer.Attributes) (authorizer.Decision, string, error) {
+	// Only handle non-resource requests (discovery paths are non-resource)
+	if attrs.IsResourceRequest() {
+		return authorizer.DecisionNoOpinion, "", nil
+	}
+
+	path := attrs.GetPath()
+	// Use the centralized discovery path check from pass-through package
+	if passthrough.IsPassThroughPath(path, attrs.GetVerb()) {
+		return authorizer.DecisionAllow, "always allow discovery paths", nil
+	}
+
+	return authorizer.DecisionNoOpinion, "", nil
+}
+
 func buildAuth() *metaServerAuth {
 	newAuthorizer := rbac.New(
 		&client.RoleGetter{},
@@ -82,8 +102,18 @@ func buildAuth() *metaServerAuth {
 	tokenAuthenticator := auth.JWTTokenAuthenticator(nil,
 		metaserverconfig.Config.ServiceAccountIssuers, allPublicKeys, metaserverconfig.Config.APIAudiences,
 		auth.NewValidator(client.NewGetterFromClient(kubeclientbridge.NewSimpleClientset(client.New()))))
-	newAuthenticator := bearertoken.New(tokenAuthenticator)
-	return &metaServerAuth{newAuthenticator, newAuthorizer}
+	bearerTokenAuthenticator := bearertoken.New(tokenAuthenticator)
+
+	// Use union authenticator with anonymous fallback for discovery paths
+	// This follows Kubernetes API Server's standard approach for anonymous access
+	anonymousAuthenticator := anonymous.NewAuthenticator(nil)
+	newAuthenticator := authnunion.NewFailOnError(bearerTokenAuthenticator, anonymousAuthenticator)
+
+	// Use union authorizer with discovery paths allowed first, then RBAC
+	discoveryAuthorizer := &AlwaysAllowDiscoveryAuthorizer{}
+	unionAuthorizer := authzunion.New(discoveryAuthorizer, newAuthorizer)
+
+	return &metaServerAuth{newAuthenticator, unionAuthorizer}
 }
 
 func NewMetaServer() *MetaServer {
