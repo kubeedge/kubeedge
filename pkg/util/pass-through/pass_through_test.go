@@ -63,6 +63,48 @@ func TestIsPassThroughPath(t *testing.T) {
 			verb: "get",
 			want: true,
 		},
+		{
+			name: "/api::get is pass through path",
+			path: "/api",
+			verb: "get",
+			want: true,
+		},
+		{
+			name: "/apis::get is pass through path",
+			path: "/apis",
+			verb: "get",
+			want: true,
+		},
+		{
+			name: "/api/v1/namespaces/kube-system/pods::get is not pass through path",
+			path: "/api/v1/namespaces/kube-system/pods",
+			verb: "get",
+			want: false,
+		},
+		{
+			name: "/api/v1::get is pass through path",
+			path: "/api/v1",
+			verb: "get",
+			want: true,
+		},
+		{
+			name: "/apis/discovery.k8s.io/v1::get is pass through path",
+			path: "/apis/discovery.k8s.io/v1",
+			verb: "get",
+			want: true,
+		},
+		{
+			name: "/version/::get is pass through path",
+			path: "/version/",
+			verb: "get",
+			want: true,
+		},
+		{
+			name: "/openapi/v2::get is pass through path",
+			path: "/openapi/v2",
+			verb: "get",
+			want: true,
+		},
 	}
 
 	for _, testcase := range testcases {
