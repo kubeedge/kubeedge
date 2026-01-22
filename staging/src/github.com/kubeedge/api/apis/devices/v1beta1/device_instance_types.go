@@ -141,6 +141,10 @@ type PushMethod struct {
 	// please ensure that the mapper can access the destination address.
 	// +optional
 	DBMethod *DBMethodConfig `json:"dbMethod,omitempty"`
+	// AnomalyDetection represents the method used to push data to anomaly detection service
+	// +optional
+	// +kubebuilder:validation:XPreserveUnknownFields
+	AnomalyDetection *AnomalyDetectionConfig `json:"anomalyDetection,omitempty"`
 }
 
 type PushMethodHTTP struct {
@@ -273,6 +277,47 @@ type VisitorConfig struct {
 	// Required: The configData of customized protocol
 	// +kubebuilder:validation:XPreserveUnknownFields
 	ConfigData *CustomizedValue `json:"configData,omitempty"`
+}
+
+// +kubebuilder:validation:Type=object
+type AnomalyDetectionConfig struct {
+	Data map[string]interface{} `json:"data"`
+}
+
+func (in *AnomalyDetectionConfig) MarshalJSON() ([]byte, error) {
+	return json.Marshal(in.Data)
+}
+
+func (in *AnomalyDetectionConfig) UnmarshalJSON(data []byte) error {
+	var out map[string]interface{}
+	err := json.Unmarshal(data, &out)
+	if err != nil {
+		return err
+	}
+	in.Data = out
+	return nil
+}
+
+func (in *AnomalyDetectionConfig) DeepCopyInto(out *AnomalyDetectionConfig) {
+	bytes, err := json.Marshal(in.Data)
+	if err != nil {
+		panic(err)
+	}
+	var clone map[string]interface{}
+	err = json.Unmarshal(bytes, &clone)
+	if err != nil {
+		panic(err)
+	}
+	out.Data = clone
+}
+
+func (in *AnomalyDetectionConfig) DeepCopy() *AnomalyDetectionConfig {
+	if in == nil {
+		return nil
+	}
+	out := new(AnomalyDetectionConfig)
+	in.DeepCopyInto(out)
+	return out
 }
 
 // +genclient

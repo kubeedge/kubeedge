@@ -1,6 +1,7 @@
 package driver
 
 import (
+	"encoding/json"
 	"sync"
 
 	"github.com/kubeedge/mapper-framework/pkg/common"
@@ -35,4 +36,11 @@ type VisitorConfig struct {
 type VisitorConfigData struct {
 	// TODO: add your visitor config data
 	DataType string `json:"dataType"`
+}
+
+type AnomalyDetectionRequest struct {
+	Enabled                bool            `json:"enabled"`
+	VisitorConfig          VisitorConfig   `json:"visitorConfig"`
+	AnomalyDetectionConfig json.RawMessage `json:"anomalyDetectionConfig"`
+	Data                   interface{}     `json:"data"`
 }

@@ -242,6 +242,7 @@ message PushMethod {
     PushMethodMQTT mqtt = 2;
     PushMethodOTEL otel = 4;
     DBMethod dbMethod = 3;
+    AnomalyDetection anomalyDetection = 5;
 }
 
 message PushMethodHTTP {
@@ -346,6 +347,11 @@ message DBMethodOTEL{
 message OTELExporterConfig{
     //the target endpoint URL the Exporter will connect to, like https://localhost:4318/v1/metrics
     string endpointURL = 1;
+}
+
+message AnomalyDetection{
+    // data is the customized value and it can be any form.
+    map<string, google.protobuf.Any> data = 1;
 }
 
 // MapperInfo is the information of mapper.
