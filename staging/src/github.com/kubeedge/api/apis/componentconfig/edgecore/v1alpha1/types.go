@@ -363,6 +363,8 @@ type EventBus struct {
 	MqttMode MqttMode `json:"mqttMode"`
 	// Tls indicates tls config for EventBus module
 	TLS *EventBusTLS `json:"eventBusTLS,omitempty"`
+	// Rest indicates rest config for EventBus module to enable direct REST calls from edge
+	Rest *EventBusRest `json:"eventBusRest,omitempty"`
 }
 
 // EventBusTLS indicates the EventBus tls config with MQTT broker
