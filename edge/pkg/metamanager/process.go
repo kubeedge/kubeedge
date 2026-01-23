@@ -114,7 +114,6 @@ func requireRemoteQuery(resType string) bool {
 		resType == constants.ResourceTypePersistentVolume ||
 		resType == constants.ResourceTypePersistentVolumeClaim ||
 		resType == constants.ResourceTypeVolumeAttachment ||
-		resType == model.ResourceTypeNode ||
 		resType == model.ResourceTypeServiceAccountToken ||
 		resType == model.ResourceTypeLease ||
 		resType == model.ResourceTypeCSR ||
@@ -256,7 +255,9 @@ func (m *metaManager) processUpdate(message model.Message) {
 		resp := message.NewRespByMessage(&message, OK)
 		sendToEdged(resp, message.IsSync())
 	case cloudmodules.EdgeControllerModuleName, cloudmodules.DynamicControllerModuleName:
-		sendToEdged(&message, message.IsSync())
+		if resType != model.ResourceTypeNode {
+			sendToEdged(&message, message.IsSync())
+		}
 		resp := message.NewRespByMessage(&message, OK)
 		sendToCloud(resp)
 	case cloudmodules.DeviceControllerModuleName:

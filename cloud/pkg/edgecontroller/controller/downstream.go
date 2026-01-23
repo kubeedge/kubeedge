@@ -24,6 +24,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/manager"
 	commonconstants "github.com/kubeedge/kubeedge/common/constants"
+	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
 )
 
 // DownstreamController watch kubernetes api server and send change to edge
@@ -211,31 +212,39 @@ func (dc *DownstreamController) syncEdgeNodes() {
 				klog.Warningf("Object type: %T unsupported", e.Object)
 				continue
 			}
+
+			var msg *model.Message
+			resource, err := messagelayer.BuildResource(node.Name, v2.NullNamespace, constants.ResourceNode, node.Name)
+			if err != nil {
+				klog.Warningf("Built message resource failed with error: %s", err)
+				continue
+			}
 			switch e.Type {
 			case watch.Added:
 				fallthrough
 			case watch.Modified:
 				// update local cache
 				dc.lc.UpdateEdgeNode(node.ObjectMeta.Name)
+				msg = model.NewMessage("").SetResourceVersion(node.GetResourceVersion()).
+					BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.UpdateOperation).
+					FillBody(node)
 			case watch.Deleted:
 				dc.lc.DeleteNode(node.ObjectMeta.Name)
-
-				resource, err := messagelayer.BuildResource(node.Name, "namespace", constants.ResourceNode, node.Name)
-				if err != nil {
-					klog.Warningf("Built message resource failed with error: %s", err)
-					break
-				}
-				msg := model.NewMessage("").
+				msg = model.NewMessage("").
 					BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.DeleteOperation)
-				err = dc.messageLayer.Send(*msg)
-				if err != nil {
-					klog.Warningf("send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
-				} else {
-					klog.V(4).Infof("send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
-				}
 			default:
 				// unsupported operation, no need to send to any node
 				klog.Warningf("Node event type: %s unsupported", e.Type)
+			}
+
+			if msg == nil {
+				continue
+			}
+			err = dc.messageLayer.Send(*msg)
+			if err != nil {
+				klog.Warningf("send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
+			} else {
+				klog.V(4).Infof("send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
 			}
 		}
 	}

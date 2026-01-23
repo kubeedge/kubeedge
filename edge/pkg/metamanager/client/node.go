@@ -4,13 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 
 	api "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 )
 
 // NodesGetter to get node interface
@@ -58,7 +62,7 @@ func (c *nodes) Create(cm *api.Node) (*api.Node, error) {
 		return nil, fmt.Errorf("parse message to node failed, err: %v", err)
 	}
 
-	return handleNodeResp(content)
+	return handleNodeResp(resource, content)
 }
 
 func (c *nodes) Update(cm *api.Node) error {
@@ -84,7 +88,7 @@ func (c *nodes) Patch(name string, data []byte) (*api.Node, error) {
 		return nil, fmt.Errorf("parse message to node failed, err: %v", err)
 	}
 
-	return handleNodeResp(content)
+	return handleNodeResp(resource, content)
 }
 
 func (c *nodes) Delete(string) error {
@@ -138,7 +142,7 @@ func handleNodeFromMetaManager(content []byte) (*api.Node, error) {
 	return &node, nil
 }
 
-func handleNodeResp(content []byte) (*api.Node, error) {
+func handleNodeResp(resource string, content []byte) (*api.Node, error) {
 	var nodeResp NodeResp
 	err := json.Unmarshal(content, &nodeResp)
 	if err != nil {
@@ -146,7 +150,33 @@ func handleNodeResp(content []byte) (*api.Node, error) {
 	}
 
 	if reflect.DeepEqual(nodeResp.Err, apierrors.StatusError{}) {
+		if err = updateNodeDB(resource, nodeResp.Object); err != nil {
+			return nil, fmt.Errorf("update node meta failed, err: %v", err)
+		}
 		return nodeResp.Object, nil
 	}
 	return nodeResp.Object, &nodeResp.Err
+}
+
+func updateNodeDB(resource string, node *api.Node) error {
+	node.APIVersion = "v1"
+	node.Kind = "Node"
+	nodeContent, err := json.Marshal(node)
+	if err != nil {
+		klog.Errorf("unmarshal resp node failed, err: %v", err)
+		return err
+	}
+	nodeKey := strings.Replace(resource,
+		constants.ResourceSep+model.ResourceTypeNodePatch+constants.ResourceSep,
+		constants.ResourceSep+model.ResourceTypeNode+constants.ResourceSep, 1)
+
+	meta := &dao.Meta{
+		Key:   nodeKey,
+		Type:  model.ResourceTypeNode,
+		Value: string(nodeContent)}
+	err = dao.InsertOrUpdate(meta)
+	if err != nil {
+		return err
+	}
+	return nil
 }

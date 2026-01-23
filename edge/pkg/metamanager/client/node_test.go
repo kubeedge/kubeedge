@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -28,6 +29,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/mocks/beego"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
@@ -44,9 +47,17 @@ func TestNewNodes(t *testing.T) {
 
 func TestNode_Create(t *testing.T) {
 	assert := assert.New(t)
-
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock := beego.NewMockOrmer(mockCtrl)
+	rawSetterMock := beego.NewMockRawSeter(mockCtrl)
+	dbm.DBAccess = ormerMock
 	nodeName := "test-node"
 	inputNode := &api.Node{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Node",
+			APIVersion: "v1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: nodeName,
 		},
@@ -115,7 +126,10 @@ func TestNode_Create(t *testing.T) {
 
 				return test.respFunc(message)
 			}
-
+			if !test.expectErr {
+				ormerMock.EXPECT().Raw(gomock.Any(), gomock.Any()).Return(rawSetterMock).Times(1)
+				rawSetterMock.EXPECT().Exec().Return(nil, nil).Times(1)
+			}
 			nodeClient := newNodes(namespace, mockSend)
 
 			createdNode, err := nodeClient.Create(inputNode)
@@ -133,11 +147,19 @@ func TestNode_Create(t *testing.T) {
 
 func TestNode_Patch(t *testing.T) {
 	assert := assert.New(t)
-
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock := beego.NewMockOrmer(mockCtrl)
+	rawSetterMock := beego.NewMockRawSeter(mockCtrl)
+	dbm.DBAccess = ormerMock
 	nodeName := "test-node"
 	patchData := []byte(`{"metadata":{"labels":{"test":"label"}}}`)
 
 	expectedNode := &api.Node{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Node",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: nodeName,
 			Labels: map[string]string{
@@ -205,6 +227,11 @@ func TestNode_Patch(t *testing.T) {
 				assert.Equal(string(patchData), string(content))
 
 				return test.respFunc(message)
+			}
+
+			if !test.expectErr {
+				ormerMock.EXPECT().Raw(gomock.Any(), gomock.Any()).Return(rawSetterMock).Times(1)
+				rawSetterMock.EXPECT().Exec().Return(nil, nil).Times(1)
 			}
 
 			nodeClient := newNodes(namespace, mockSend)
@@ -297,9 +324,18 @@ func TestHandleNodeFromMetaManager(t *testing.T) {
 
 func TestHandleNodeResp(t *testing.T) {
 	assert := assert.New(t)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock := beego.NewMockOrmer(mockCtrl)
+	rawSetterMock := beego.NewMockRawSeter(mockCtrl)
+	dbm.DBAccess = ormerMock
 
 	// Test case 1: Valid node response
 	node := &api.Node{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Node",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-node",
 		},
@@ -307,9 +343,12 @@ func TestHandleNodeResp(t *testing.T) {
 	nodeResp := NodeResp{
 		Object: node,
 	}
+	resource := "/null/node/" + node.Name
 	content, _ := json.Marshal(nodeResp)
+	ormerMock.EXPECT().Raw(gomock.Any(), gomock.Any()).Return(rawSetterMock).Times(1)
+	rawSetterMock.EXPECT().Exec().Return(nil, nil).Times(1)
 
-	result, err := handleNodeResp(content)
+	result, err := handleNodeResp(resource, content)
 	assert.NoError(err)
 	assert.Equal(node, result)
 
@@ -326,7 +365,7 @@ func TestHandleNodeResp(t *testing.T) {
 	}
 	content, _ = json.Marshal(nodeResp)
 
-	result, err = handleNodeResp(content)
+	result, err = handleNodeResp(resource, content)
 	assert.Error(err)
 	assert.Nil(result)
 	assert.Equal(&statusErr, err)
@@ -334,7 +373,7 @@ func TestHandleNodeResp(t *testing.T) {
 	// Test case 3: Invalid JSON
 	invalidContent := []byte(`{"invalid": json}`)
 
-	result, err = handleNodeResp(invalidContent)
+	result, err = handleNodeResp(resource, invalidContent)
 	assert.Error(err)
 	assert.Nil(result)
 	assert.Contains(err.Error(), "unmarshal message to node failed")
