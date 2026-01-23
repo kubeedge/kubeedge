@@ -152,7 +152,7 @@ const (
 	EdgeCoreServer = "127.0.0.1:10350"
 
 	// CmdCopyFile is the cmd to copy file
-	CmdCopyFile = "cp -r %s %s/"
+	CmdCopyFile = "cp -rL %s %s/"
 
 	/*system info*/
 	CmdDiskInfo    = "df -h > %s/disk"
