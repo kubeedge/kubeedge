@@ -69,7 +69,7 @@ Key:
 
 ## Guides
 
-Get start with this [doc](https://kubeedge.io/en/docs).
+Get started with this [doc](https://kubeedge.io/en/docs).
 
 See our documentation on [kubeedge.io](https://kubeedge.io) for more details.
 
