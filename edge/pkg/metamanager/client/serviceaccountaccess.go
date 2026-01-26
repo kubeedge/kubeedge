@@ -57,7 +57,7 @@ func (g *RoleGetter) GetRole(ctx context.Context, namespace, name string) (*rbac
 type RoleBindingLister struct {
 }
 
-func (l *RoleBindingLister) ListRoleBindings(ctx context.Context, amespace string) ([]*rbacv1.RoleBinding, error) {
+func (l *RoleBindingLister) ListRoleBindings(ctx context.Context, namespace string) ([]*rbacv1.RoleBinding, error) {
 	rst, err := dbclient.NewMetaService().QueryMeta("type", model.ResourceTypeSaAccess)
 	if err != nil {
 		return nil, err
