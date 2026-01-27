@@ -48,6 +48,15 @@ var (
 		UploadTopic,
 		"+/user/#",
 	}
+
+	// EventBusServiceFactory is a function variable that can be mocked in tests
+	EventBusServiceFactory = func() interface {
+		InsertTopics(topic string) error
+		DeleteTopicsByKey(key string) error
+		QueryAllTopics() (*[]string, error)
+	} {
+		return dbclient.NewEventBusService()
+	}
 )
 
 // Client struct
@@ -88,7 +97,7 @@ func onSubConnect(client MQTT.Client) {
 		}
 		klog.Infof("edge-hub-cli subscribe topic to %s", t)
 	}
-	topics, err := dbclient.NewEventBusService().QueryAllTopics()
+	topics, err := EventBusServiceFactory().QueryAllTopics()
 	if err != nil {
 		klog.Errorf("list edge-hub-cli-topics failed: %v", err)
 		return

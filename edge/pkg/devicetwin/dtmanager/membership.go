@@ -22,6 +22,17 @@ import (
 var (
 	//memActionCallBack map for action to callback
 	memActionCallBack map[string]CallBack
+
+	// MembershipServiceFactory is a function variable that can be mocked in tests
+	MembershipServiceFactory = func() interface {
+		AddDeviceTrans(adds []models.Device, addAttrs []models.DeviceAttr, addTwins []models.DeviceTwin) error
+		DeleteDeviceTrans(deletes []string) error
+		QueryDevice(key string, condition string) ([]models.Device, error)
+		QueryDeviceAttr(key, condition string) (*[]models.DeviceAttr, error)
+		QueryDeviceTwin(key, condition string) (*[]models.DeviceTwin, error)
+	} {
+		return dbclient.NewDeviceService()
+	}
 )
 
 // MemWorker deal membership event
@@ -216,7 +227,7 @@ func addDevice(context *dtcontext.DTContext, toAdd []dttype.Device, baseMessage 
 			Description: device.Description,
 			State:       device.State})
 		for i := 1; i <= dtcommon.RetryTimes; i++ {
-			err = dbclient.NewDeviceService().AddDeviceTrans(adds, addAttr, addTwin)
+			err = MembershipServiceFactory().AddDeviceTrans(adds, addAttr, addTwin)
 			if err == nil {
 				break
 			}
@@ -287,7 +298,7 @@ func removeDevice(context *dtcontext.DTContext, toRemove []dttype.Device, baseMe
 		deletes := make([]string, 0)
 		deletes = append(deletes, device.ID)
 		for i := 1; i <= dtcommon.RetryTimes; i++ {
-			err := dbclient.NewDeviceService().DeleteDeviceTrans(deletes)
+			err := MembershipServiceFactory().DeleteDeviceTrans(deletes)
 			if err != nil {
 				klog.Errorf("Delete document of device %s failed at %d time, err: %#v", device.ID, i, err)
 			} else {
@@ -381,7 +392,7 @@ func SyncDeviceFromSqlite(context *dtcontext.DTContext, deviceID string) error {
 		context.DeviceMutex.Store(deviceID, &deviceMutex)
 	}
 
-	devices, err := dbclient.NewDeviceService().QueryDevice("id", deviceID)
+	devices, err := MembershipServiceFactory().QueryDevice("id", deviceID)
 	if err != nil {
 		klog.Errorf("query device failed, id: %s, err: %v", deviceID, err)
 		return err
@@ -391,13 +402,13 @@ func SyncDeviceFromSqlite(context *dtcontext.DTContext, deviceID string) error {
 	}
 	dbDoc := (devices)[0]
 
-	deviceAttr, err := dbclient.NewDeviceService().QueryDeviceAttr("deviceid", deviceID)
+	deviceAttr, err := MembershipServiceFactory().QueryDeviceAttr("deviceid", deviceID)
 	if err != nil {
 		klog.Errorf("query device attr failed, id: %s, err: %v", deviceID, err)
 		return err
 	}
 
-	deviceTwin, err := dbclient.NewDeviceService().QueryDeviceTwin("deviceid", deviceID)
+	deviceTwin, err := MembershipServiceFactory().QueryDeviceTwin("deviceid", deviceID)
 	if err != nil {
 		klog.Errorf("query device twin failed, id: %s, err: %v", deviceID, err)
 		return err

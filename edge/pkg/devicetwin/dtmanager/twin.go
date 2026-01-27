@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kubeedge/beehive/pkg/core/model"
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/beehive/pkg/core/model"
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
@@ -41,6 +41,16 @@ var (
 	//twinActionCallBack map for action to callback
 	twinActionCallBack         map[string]CallBack
 	initTwinActionCallBackOnce sync.Once
+
+	// TwinServiceFactory is a function variable that can be mocked in tests
+	TwinServiceFactory = func() interface {
+		DeviceTwinTrans(adds []models.DeviceTwin, deletes []models.DeviceDelete, updates []models.DeviceTwinUpdate) error
+		QueryDevice(key string, condition string) ([]models.Device, error)
+		QueryDeviceAttr(key, condition string) (*[]models.DeviceAttr, error)
+		QueryDeviceTwin(key, condition string) (*[]models.DeviceTwin, error)
+	} {
+		return dbclient.NewDeviceService()
+	}
 )
 
 // TwinWorker deal twin event
@@ -225,7 +235,7 @@ func DealDeviceTwin(context *dtcontext.DTContext, deviceID string, eventID strin
 	}
 	if len(add) != 0 || len(deletes) != 0 || len(update) != 0 {
 		for i := 1; i <= dtcommon.RetryTimes; i++ {
-			err = dbclient.NewDeviceService().DeviceTwinTrans(add, deletes, update)
+			err = TwinServiceFactory().DeviceTwinTrans(add, deletes, update)
 			if err == nil {
 				break
 			}
@@ -246,7 +256,7 @@ func DealDeviceTwin(context *dtcontext.DTContext, deviceID string, eventID strin
 			// TODO: handle error
 			klog.Error(err)
 		}
-		if err != nil { // The error returned by dtclient.DeviceTwinTrans()
+		if err != nil { // The error returned by TwinServiceFactory().DeviceTwinTrans()
 			return err
 		}
 	}

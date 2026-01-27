@@ -38,10 +38,10 @@ func TestNewNodes(t *testing.T) {
 	assert := assert.New(t)
 
 	s := newSend()
-	nodesClient := newNodes(namespace, s)
+	nodesClient := newNodes(testNamespace, s)
 
 	assert.NotNil(nodesClient)
-	assert.Equal(namespace, nodesClient.namespace)
+	assert.Equal(testNamespace, nodesClient.namespace)
 	assert.IsType(&send{}, nodesClient.send)
 }
 
@@ -114,7 +114,7 @@ func TestNode_Create(t *testing.T) {
 				assert.Equal(modules.MetaGroup, message.GetGroup())
 				assert.Equal(modules.EdgedModuleName, message.GetSource())
 				assert.NotEmpty(message.GetID())
-				assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypeNode, nodeName), message.GetResource())
+				assert.Equal(fmt.Sprintf("%s/%s/%s", testNamespace, model.ResourceTypeNode, nodeName), message.GetResource())
 				assert.Equal(model.InsertOperation, message.GetOperation())
 
 				content, err := message.GetContentData()
@@ -126,11 +126,13 @@ func TestNode_Create(t *testing.T) {
 
 				return test.respFunc(message)
 			}
+
 			if !test.expectErr {
 				ormerMock.EXPECT().Raw(gomock.Any(), gomock.Any()).Return(rawSetterMock).Times(1)
 				rawSetterMock.EXPECT().Exec().Return(nil, nil).Times(1)
 			}
-			nodeClient := newNodes(namespace, mockSend)
+
+			nodeClient := newNodes(testNamespace, mockSend)
 
 			createdNode, err := nodeClient.Create(inputNode)
 
@@ -219,7 +221,7 @@ func TestNode_Patch(t *testing.T) {
 				assert.Equal(modules.MetaGroup, message.GetGroup())
 				assert.Equal(modules.EdgedModuleName, message.GetSource())
 				assert.NotEmpty(message.GetID())
-				assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypeNodePatch, nodeName), message.GetResource())
+				assert.Equal(fmt.Sprintf("%s/%s/%s", testNamespace, model.ResourceTypeNodePatch, nodeName), message.GetResource())
 				assert.Equal(model.PatchOperation, message.GetOperation())
 
 				content, err := message.GetContentData()
@@ -234,7 +236,7 @@ func TestNode_Patch(t *testing.T) {
 				rawSetterMock.EXPECT().Exec().Return(nil, nil).Times(1)
 			}
 
-			nodeClient := newNodes(namespace, mockSend)
+			nodeClient := newNodes(testNamespace, mockSend)
 
 			patchedNode, err := nodeClient.Patch(nodeName, patchData)
 
@@ -252,7 +254,6 @@ func TestNode_Patch(t *testing.T) {
 func TestHandleNodeFromMetaDB(t *testing.T) {
 	assert := assert.New(t)
 
-	// Test case 1: Valid node JSON in list
 	node := &api.Node{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-node",
@@ -269,7 +270,6 @@ func TestHandleNodeFromMetaDB(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(node, result)
 
-	// Test case 2: Empty list
 	emptyList := []string{}
 	emptyContent, _ := json.Marshal(emptyList)
 
@@ -278,7 +278,6 @@ func TestHandleNodeFromMetaDB(t *testing.T) {
 	assert.Nil(result)
 	assert.Contains(err.Error(), "node length from meta db is 0")
 
-	// Test case 3: Invalid JSON in list
 	invalidList := []string{`{"invalid": json}`}
 	invalidContent, _ := json.Marshal(invalidList)
 
@@ -291,7 +290,6 @@ func TestHandleNodeFromMetaDB(t *testing.T) {
 func TestHandleNodeFromMetaManager(t *testing.T) {
 	assert := assert.New(t)
 
-	// Test case 1: Valid node JSON
 	node := &api.Node{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-node",
@@ -306,14 +304,12 @@ func TestHandleNodeFromMetaManager(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(node, result)
 
-	// Test case 2: Empty JSON
 	emptyContent := []byte(`{}`)
 
 	result, err = handleNodeFromMetaManager(emptyContent)
 	assert.NoError(err)
 	assert.Equal(&api.Node{}, result)
 
-	// Test case 3: Invalid JSON
 	invalidContent := []byte(`{"invalid": json}`)
 
 	result, err = handleNodeFromMetaManager(invalidContent)
@@ -330,7 +326,6 @@ func TestHandleNodeResp(t *testing.T) {
 	rawSetterMock := beego.NewMockRawSeter(mockCtrl)
 	dbm.DBAccess = ormerMock
 
-	// Test case 1: Valid node response
 	node := &api.Node{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
@@ -352,7 +347,6 @@ func TestHandleNodeResp(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(node, result)
 
-	// Test case 2: Response with error
 	statusErr := errors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "Test error",
@@ -367,14 +361,13 @@ func TestHandleNodeResp(t *testing.T) {
 
 	result, err = handleNodeResp(resource, content)
 	assert.Error(err)
-	assert.Nil(result)
+	assert.Nil(t, result)
 	assert.Equal(&statusErr, err)
 
-	// Test case 3: Invalid JSON
 	invalidContent := []byte(`{"invalid": json}`)
 
 	result, err = handleNodeResp(resource, invalidContent)
 	assert.Error(err)
-	assert.Nil(result)
+	assert.Nil(t, result)
 	assert.Contains(err.Error(), "unmarshal message to node failed")
 }

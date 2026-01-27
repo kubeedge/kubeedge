@@ -53,7 +53,6 @@ func (s *ServiceBusService) IsTableEmpty() bool {
 
 // GetUrlsByKey gets one record from target_urls by URL
 func (s *ServiceBusService) GetUrlsByKey(key string) (*models.TargetUrls, error) {
-
 	var target models.TargetUrls
 	err := s.db.Where("url = ?", key).First(&target).Error
 	if err != nil {

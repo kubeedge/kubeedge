@@ -24,12 +24,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
-
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/mocks"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
+)
+
+var (
+	originalMembershipServiceFactory = MembershipServiceFactory
 )
 
 func TestGetRemoveList(t *testing.T) {
@@ -179,8 +183,9 @@ func TestDealMembershipUpdateInvalidContent(t *testing.T) {
 }
 
 func TestDealMembershipUpdateValidAddedDevice(t *testing.T) {
-	ormerMock, _ := testtools.InitOrmerMock(t)
-	ormerMock.EXPECT().DoTx(gomock.Any()).Return(nil).Times(1)
+	defer func() {
+		MembershipServiceFactory = originalMembershipServiceFactory
+	}()
 
 	dtc := &dtcontext.DTContext{
 		DeviceList:  &sync.Map{},
@@ -205,6 +210,23 @@ func TestDealMembershipUpdateValidAddedDevice(t *testing.T) {
 	var m = &model.Message{
 		Content: content,
 	}
+
+	// Setup mock
+	mockService := mocks.NewMockDeviceService()
+	mockService.AddDeviceTransFunc = func(adds []models.Device, addAttrs []models.DeviceAttr, addTwins []models.DeviceTwin) error {
+		return nil
+	}
+
+	MembershipServiceFactory = func() interface {
+		AddDeviceTrans(adds []models.Device, addAttrs []models.DeviceAttr, addTwins []models.DeviceTwin) error
+		DeleteDeviceTrans(deletes []string) error
+		QueryDevice(key string, condition string) ([]models.Device, error)
+		QueryDeviceAttr(key, condition string) (*[]models.DeviceAttr, error)
+		QueryDeviceTwin(key, condition string) (*[]models.DeviceTwin, error)
+	} {
+		return mockService
+	}
+
 	err := dealMembershipUpdate(dtc, "t", m)
 	if err != nil {
 		t.Errorf("expected nil, but got error: %v", err)
@@ -212,6 +234,10 @@ func TestDealMembershipUpdateValidAddedDevice(t *testing.T) {
 }
 
 func TestDealMembershipUpdateValidRemovedDevice(t *testing.T) {
+	defer func() {
+		MembershipServiceFactory = originalMembershipServiceFactory
+	}()
+
 	dtc := &dtcontext.DTContext{
 		DeviceList:  &sync.Map{},
 		DeviceMutex: &sync.Map{},
@@ -340,55 +366,6 @@ func TestDealMembershipGetInnerInValid(t *testing.T) {
 	}
 }
 
-//Commented As we are not considering about the coverage in case for coverage we can uncomment below cases.
-/*
-func TestAdded(t *testing.T) {
-	dtc := &dtcontext.DTContext{
-		DeviceList:  &sync.Map{},
-		DeviceMutex: &sync.Map{},
-		Mutex:       &sync.Mutex{},
-		GroupID:     "1",
-	}
-	var d = []dttype.Device{{
-		ID:    "DeviceA",
-		Name:  "Router",
-		State: "unknown",
-	}}
-	var b = dttype.BaseMessage{
-		EventID: "eventid",
-	}
-	Added(dtc, d, b, true)
-}
-func TestRemoved(t *testing.T) {
-	ormerMock.EXPECT().Begin().Return(nil).Times(1)
-	ormerMock.EXPECT().Rollback().Return(nil).Times(0)
-	ormerMock.EXPECT().Commit().Return(nil).Times(1)
-	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).Times(3)
-	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(3)
-	// success delete
-	querySeterMock.EXPECT().Delete().Return(int64(1), nil).Times(3)
-	// fail delete
-	querySeterMock.EXPECT().Delete().Return(int64(1), errors.New("failed to delete")).Times(0)
-	dtc := &dtcontext.DTContext{
-		DeviceList:  &sync.Map{},
-		DeviceMutex: &sync.Map{},
-		Mutex:       &sync.Mutex{},
-		GroupID:     "1",
-	}
-	var device dttype.Device
-	dtc.DeviceList.Store("DeviceA", &device)
-	var d = []dttype.Device{{
-		ID:    "DeviceA",
-		Name:  "Router",
-		State: "unknown",
-	}}
-	var b = dttype.BaseMessage{
-		EventID: "eventid",
-	}
-	Removed(dtc, d, b, true)
-}
-*/
-
 func TestMemWorkerStart(t *testing.T) {
 	// Define a constant for sleep duration
 	const processingDelay = 100 * time.Millisecond
@@ -475,6 +452,10 @@ func TestInitMemActionCallBack(t *testing.T) {
 	}
 }
 func TestDealMembershipUpdate(t *testing.T) {
+	defer func() {
+		MembershipServiceFactory = originalMembershipServiceFactory
+	}()
+
 	dtc := &dtcontext.DTContext{
 		DeviceList:  &sync.Map{},
 		DeviceMutex: &sync.Map{},
@@ -497,9 +478,10 @@ func TestDealMembershipUpdate(t *testing.T) {
 	}
 
 	tests := []struct {
-		name    string
-		update  dttype.MembershipUpdate
-		wantErr bool
+		name      string
+		update    dttype.MembershipUpdate
+		setupMock func(*mocks.MockDeviceService)
+		wantErr   bool
 	}{
 		{
 			name: "valid remove device",
@@ -509,12 +491,34 @@ func TestDealMembershipUpdate(t *testing.T) {
 				},
 				RemoveDevices: []dttype.Device{validDevice},
 			},
+			setupMock: func(m *mocks.MockDeviceService) {
+				m.DeleteDeviceTransFunc = func(deletes []string) error {
+					return nil
+				}
+			},
 			wantErr: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Setup mock
+			mockService := mocks.NewMockDeviceService()
+			tt.setupMock(mockService)
+
+			MembershipServiceFactory = func() interface {
+				AddDeviceTrans(adds []models.Device, addAttrs []models.DeviceAttr, addTwins []models.DeviceTwin) error
+				DeleteDeviceTrans(deletes []string) error
+				QueryDevice(key string, condition string) ([]models.Device, error)
+				QueryDeviceAttr(key, condition string) (*[]models.DeviceAttr, error)
+				QueryDeviceTwin(key, condition string) (*[]models.DeviceTwin, error)
+			} {
+				return mockService
+			}
+
+			// First add device to context
+			dtc.DeviceList.Store("device1", &validDevice)
+
 			content, err := json.Marshal(tt.update)
 			if err != nil {
 				t.Fatalf("Failed to marshal test content: %v", err)

@@ -26,6 +26,17 @@ var (
 	EventActionMap map[string]map[string]string
 	//ActionModuleMap map for action to module
 	ActionModuleMap map[string]string
+
+	// DeviceServiceFactory is a function variable that can be mocked in tests
+	// By default it creates a real DeviceService, but tests can replace it with a mock
+	DeviceServiceFactory = func() interface {
+		QueryDeviceAll() ([]models.Device, error)
+		QueryDevice(key string, condition string) ([]models.Device, error)
+		QueryDeviceAttr(key, condition string) (*[]models.DeviceAttr, error)
+		QueryDeviceTwin(key, condition string) (*[]models.DeviceTwin, error)
+	} {
+		return dbclient.NewDeviceService()
+	}
 )
 
 // RegisterDTModule register dtmodule
@@ -118,7 +129,7 @@ func initActionModuleMap() {
 // SyncSqlite sync sqlite
 func SyncSqlite(context *dtcontext.DTContext) error {
 	klog.Info("Begin to sync sqlite ")
-	rows, queryErr := dbclient.NewDeviceService().QueryDeviceAll()
+	rows, queryErr := DeviceServiceFactory().QueryDeviceAll()
 	if queryErr != nil {
 		klog.Errorf("Query sqlite failed while syncing sqlite, err: %#v", queryErr)
 		return queryErr
@@ -148,7 +159,7 @@ func SyncDeviceFromSqlite(context *dtcontext.DTContext, deviceID string) error {
 	defer context.Unlock(deviceID)
 	context.Lock(deviceID)
 
-	devices, err := dbclient.NewDeviceService().QueryDevice("id", deviceID)
+	devices, err := DeviceServiceFactory().QueryDevice("id", deviceID)
 	if err != nil {
 		klog.Errorf("query device failed: %v", err)
 		return err
@@ -156,9 +167,9 @@ func SyncDeviceFromSqlite(context *dtcontext.DTContext, deviceID string) error {
 	if len(devices) <= 0 {
 		return errors.New("Not found device from db")
 	}
-	device := (devices)[0]
+	device := devices[0]
 
-	deviceAttr, err := dbclient.NewDeviceService().QueryDeviceAttr("deviceid", deviceID)
+	deviceAttr, err := DeviceServiceFactory().QueryDeviceAttr("deviceid", deviceID)
 	if err != nil {
 		klog.Errorf("query device attr failed: %v", err)
 		return err
@@ -166,7 +177,7 @@ func SyncDeviceFromSqlite(context *dtcontext.DTContext, deviceID string) error {
 	attributes := make([]models.DeviceAttr, 0)
 	attributes = append(attributes, *deviceAttr...)
 
-	deviceTwin, err := dbclient.NewDeviceService().QueryDeviceTwin("deviceid", deviceID)
+	deviceTwin, err := DeviceServiceFactory().QueryDeviceTwin("deviceid", deviceID)
 	if err != nil {
 		klog.Errorf("query device twin failed: %v", err)
 		return err

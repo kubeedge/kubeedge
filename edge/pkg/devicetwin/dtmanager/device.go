@@ -22,6 +22,14 @@ import (
 var (
 	//deviceActionCallBack map for action to callback
 	deviceActionCallBack map[string]CallBack
+
+	// DeviceServiceFactory is a function variable that can be mocked in tests
+	DeviceServiceFactory = func() interface {
+		UpdateDeviceFields(deviceID string, cols map[string]interface{}) error
+		DeviceAttrTrans(adds []models.DeviceAttr, deletes []models.DeviceDelete, updates []models.DeviceAttrUpdate) error
+	} {
+		return dbclient.NewDeviceService()
+	}
 )
 
 // DeviceWorker deal device event
@@ -102,7 +110,7 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 		lastOnline = time.Now().UTC().Format(time.RFC3339)
 	}
 	for i := 1; i <= dtcommon.RetryTimes; i++ {
-		err = dbclient.NewDeviceService().UpdateDeviceFields(
+		err = DeviceServiceFactory().UpdateDeviceFields(
 			device.ID,
 			map[string]interface{}{
 				"last_online": lastOnline,
@@ -187,7 +195,7 @@ func UpdateDeviceAttr(context *dtcontext.DTContext, deviceID string, attributes 
 	add, deviceAttrDelete, update, result := dealAttrResult.Add, dealAttrResult.Delete, dealAttrResult.Update, dealAttrResult.Result
 	if len(add) != 0 || len(deviceAttrDelete) != 0 || len(update) != 0 {
 		for i := 1; i <= dtcommon.RetryTimes; i++ {
-			err = dbclient.NewDeviceService().DeviceAttrTrans(add, deviceAttrDelete, update)
+			err = DeviceServiceFactory().DeviceAttrTrans(add, deviceAttrDelete, update)
 			if err == nil {
 				break
 			}

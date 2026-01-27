@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+   http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,215 +17,251 @@ limitations under the License.
 package client
 
 import (
-	"errors"
+	"encoding/json"
 	"fmt"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	api "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/mocks/beego"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
-const (
-	namespace = "test-namespace"
-	// FailedDBOperation is common Database operation fail message
-	FailedDBOperation = "Failed DB Operation"
-)
-
-var errFailedDBOperation = errors.New(FailedDBOperation)
-
-func TestNewConfigMaps(t *testing.T) {
-	assert := assert.New(t)
-
-	sender := newSend()
-
-	cm := newConfigMaps(namespace, sender)
-
-	assert.NotNil(cm)
-	assert.Equal(namespace, cm.namespace)
-	assert.Equal(sender, cm.send)
-}
-
-func TestConfigMaps_Get(t *testing.T) {
-	assert := assert.New(t)
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-	ormerMock := beego.NewMockOrmer(mockCtrl)
-	querySetterMock := beego.NewMockQuerySeter(mockCtrl)
-	dbm.DBAccess = ormerMock
-
-	configMapName := "test-configmap"
-	expectedConfigMap := &api.ConfigMap{
+func TestConfigMapsCreate(t *testing.T) {
+	cm := &api.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      configMapName,
-			Namespace: namespace,
+			Name:      "test-cm",
+			Namespace: "default",
 		},
 		Data: map[string]string{
 			"key": "value",
 		},
 	}
 
-	testCases := []struct {
-		name      string
-		respFunc  func(*model.Message) (*model.Message, error)
-		stdResult *api.ConfigMap
-		expectErr bool
-	}{
-		{
-			name: "Get from MetaManager",
-			respFunc: func(message *model.Message) (*model.Message, error) {
-				resp := model.NewMessage(message.GetID())
-				resp.Content = expectedConfigMap
-				return resp, nil
-			},
-			stdResult: expectedConfigMap,
-			expectErr: false,
-		},
-		{
-			name: "Error response",
-			respFunc: func(message *model.Message) (*model.Message, error) {
-				return nil, fmt.Errorf("test error")
-			},
-			stdResult: nil,
-			expectErr: true,
-		},
-	}
+	mockSend := &mockSendInterface{}
+	mockMeta := &MockMetaService{}
+	configMaps := NewConfigMapsWithMetaService("default", mockSend, mockMeta)
+	result, err := configMaps.Create(cm)
 
-	for _, test := range testCases {
-		t.Run(test.name, func(t *testing.T) {
-			mockSend := &mockSendInterface{}
-			mockSend.sendSyncFunc = func(message *model.Message) (*model.Message, error) {
-				assert.Equal(modules.MetaGroup, message.GetGroup())
-				assert.Equal(modules.EdgedModuleName, message.GetSource())
-				assert.NotEmpty(message.GetID())
-				assert.Equal("test-namespace/configmap/test-configmap", message.GetResource())
-				assert.Equal(model.QueryOperation, message.GetOperation())
-
-				return test.respFunc(message)
-			}
-
-			configMapsClient := newConfigMaps(namespace, mockSend)
-			querySetterMock.EXPECT().All(gomock.Any()).Return(int64(1), errFailedDBOperation).Times(1)
-			querySetterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySetterMock).Times(1)
-			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySetterMock).Times(1)
-			configMap, err := configMapsClient.Get(configMapName)
-
-			if test.expectErr {
-				assert.Error(err)
-				assert.Nil(configMap)
-			} else {
-				assert.NoError(err)
-				assert.Equal(test.stdResult, configMap)
-			}
-		})
-	}
+	assert.Nil(t, err)
+	assert.Nil(t, result)
 }
 
-func TestHandleConfigMapFromMetaDB(t *testing.T) {
-	assert := assert.New(t)
-
-	testCases := []struct {
-		name              string
-		metas             []string
-		expectedConfigMap *api.ConfigMap
-		expectedErr       bool
-	}{
-		{
-			name:  "Valid ConfigMap",
-			metas: []string{"{\"metadata\":{\"name\":\"test-config\",\"namespace\":\"default\"},\"data\":{\"key\":\"value\"}}"},
-			expectedConfigMap: &api.ConfigMap{
-				Data: map[string]string{"key": "value"},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-config",
-					Namespace: "default",
-				},
-			},
-			expectedErr: false,
+func TestConfigMapsUpdate(t *testing.T) {
+	cm := &api.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-cm",
+			Namespace: "default",
 		},
-		{
-			name:              "Invalid JSON",
-			metas:             []string{"invalid json"},
-			expectedConfigMap: nil,
-			expectedErr:       true,
-		},
-		{
-			name:              "Empty list",
-			metas:             []string{},
-			expectedConfigMap: nil,
-			expectedErr:       true,
-		},
-		{
-			name:              "Multiple ConfigMaps",
-			metas:             []string{"", ""},
-			expectedConfigMap: nil,
-			expectedErr:       true,
+		Data: map[string]string{
+			"key": "updated-value",
 		},
 	}
 
-	for _, test := range testCases {
-		t.Run(test.name, func(t *testing.T) {
-			cm, err := handleConfigMapFromMetaDB(&test.metas)
+	mockSend := &mockSendInterface{}
+	mockMeta := &MockMetaService{}
+	configMaps := NewConfigMapsWithMetaService("default", mockSend, mockMeta)
+	err := configMaps.Update(cm)
 
-			if test.expectedErr {
-				assert.Error(err)
-				assert.Nil(cm)
-			} else {
-				assert.NoError(err)
-				assert.Equal(test.expectedConfigMap.Data, cm.Data)
-				assert.Equal(test.expectedConfigMap.ObjectMeta.Name, cm.ObjectMeta.Name)
-				assert.Equal(test.expectedConfigMap.ObjectMeta.Namespace, cm.ObjectMeta.Namespace)
-			}
-		})
-	}
+	assert.Nil(t, err)
 }
 
-func TestHandleConfigMapFromMetaManager(t *testing.T) {
-	assert := assert.New(t)
+func TestConfigMapsDelete(t *testing.T) {
+	mockSend := &mockSendInterface{}
+	mockMeta := &MockMetaService{}
+	configMaps := NewConfigMapsWithMetaService("default", mockSend, mockMeta)
+	err := configMaps.Delete("test-cm")
 
-	testCases := []struct {
-		name              string
-		content           []byte
-		expectedconfigMap *api.ConfigMap
-		expectedErr       bool
-	}{
-		{
-			name:    "Valid ConfigMap",
-			content: []byte(`{"metadata":{"name":"test-config","namespace":"default"},"data":{"key":"value"}}`),
-			expectedconfigMap: &api.ConfigMap{
-				Data: map[string]string{"key": "value"},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-config",
-					Namespace: "default",
-				},
-			},
-			expectedErr: false,
+	assert.Nil(t, err)
+}
+
+func TestConfigMapsGetFromMetaDB_Success(t *testing.T) {
+	testCM := &api.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-cm",
+			Namespace: "default",
 		},
-		{
-			name:              "Invalid JSON",
-			content:           []byte(`{"invalid json"`),
-			expectedconfigMap: nil,
-			expectedErr:       true,
+		Data: map[string]string{
+			"key": "value",
 		},
 	}
 
-	for _, test := range testCases {
-		t.Run(test.name, func(t *testing.T) {
-			cm, err := handleConfigMapFromMetaManager(test.content)
+	cmData, _ := json.Marshal(testCM)
+	cmList := []string{string(cmData)}
 
-			if test.expectedErr {
-				assert.Error(err)
-				assert.Nil(cm)
-			} else {
-				assert.NoError(err)
-				assert.Equal(test.expectedconfigMap.Data, cm.Data)
-				assert.Equal(test.expectedconfigMap.ObjectMeta.Name, cm.ObjectMeta.Name)
-				assert.Equal(test.expectedconfigMap.ObjectMeta.Namespace, cm.ObjectMeta.Namespace)
-			}
-		})
+	mockMeta := &MockMetaService{
+		QueryMetaFunc: func(key, value string) (*[]string, error) {
+			return &cmList, nil
+		},
 	}
+
+	mockSend := &mockSendInterface{}
+	configMaps := NewConfigMapsWithMetaService("default", mockSend, mockMeta)
+	result, err := configMaps.Get("test-cm")
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, "test-cm", result.Name)
+	assert.Equal(t, "default", result.Namespace)
+	assert.Equal(t, "value", result.Data["key"])
+}
+
+func TestConfigMapsGetFromMetaDB_QueryError(t *testing.T) {
+	mockMeta := &MockMetaService{
+		QueryMetaFunc: func(key, value string) (*[]string, error) {
+			return nil, fmt.Errorf("query failed")
+		},
+	}
+
+	mockSend := &mockSendInterface{
+		sendSyncFunc: func(msg *model.Message) (*model.Message, error) {
+			return nil, fmt.Errorf("remote get failed")
+		},
+	}
+
+	configMaps := NewConfigMapsWithMetaService("default", mockSend, mockMeta)
+	result, err := configMaps.Get("test-cm")
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "remote get failed")
+}
+
+func TestConfigMapsGetFromMetaDB_Empty_FallbackToRemote(t *testing.T) {
+	testCM := &api.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-cm",
+			Namespace: "default",
+		},
+		Data: map[string]string{
+			"key": "value",
+		},
+	}
+
+	cmData, _ := json.Marshal(testCM)
+
+	mockMeta := &MockMetaService{
+		QueryMetaFunc: func(key, value string) (*[]string, error) {
+			return &[]string{}, nil
+		},
+	}
+
+	mockSend := &mockSendInterface{
+		sendSyncFunc: func(msg *model.Message) (*model.Message, error) {
+			return &model.Message{
+				Content: cmData,
+			}, nil
+		},
+	}
+
+	configMaps := NewConfigMapsWithMetaService("default", mockSend, mockMeta)
+	result, err := configMaps.Get("test-cm")
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, "test-cm", result.Name)
+}
+
+func TestHandleConfigMapFromMetaDB_Success(t *testing.T) {
+	testCM := &api.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-cm",
+			Namespace: "default",
+		},
+		Data: map[string]string{
+			"key": "value",
+		},
+	}
+
+	cmData, err := json.Marshal(testCM)
+	assert.NoError(t, err)
+
+	lists := []string{string(cmData)}
+	result, err := handleConfigMapFromMetaDB(&lists)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, testCM.Name, result.Name)
+	assert.Equal(t, testCM.Namespace, result.Namespace)
+	assert.Equal(t, testCM.Data, result.Data)
+}
+
+func TestHandleConfigMapFromMetaDB_EmptyList(t *testing.T) {
+	lists := []string{}
+	result, err := handleConfigMapFromMetaDB(&lists)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "ConfigMap length from meta db is 0")
+}
+
+func TestHandleConfigMapFromMetaDB_MultipleItems(t *testing.T) {
+	lists := []string{"cm1", "cm2"}
+	result, err := handleConfigMapFromMetaDB(&lists)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "ConfigMap length from meta db is 2")
+}
+
+func TestHandleConfigMapFromMetaDB_UnmarshalError(t *testing.T) {
+	lists := []string{"invalid-json"}
+	result, err := handleConfigMapFromMetaDB(&lists)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "unmarshal message to ConfigMap from db failed")
+}
+
+func TestHandleConfigMapFromMetaManager_Success(t *testing.T) {
+	testCM := &api.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-cm",
+			Namespace: "default",
+		},
+		Data: map[string]string{
+			"config":  "data",
+			"setting": "value",
+		},
+	}
+
+	content, err := json.Marshal(testCM)
+	assert.NoError(t, err)
+
+	result, err := handleConfigMapFromMetaManager(content)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, testCM.Name, result.Name)
+	assert.Equal(t, len(testCM.Data), len(result.Data))
+	assert.Equal(t, "data", result.Data["config"])
+}
+
+func TestHandleConfigMapFromMetaManager_UnmarshalError(t *testing.T) {
+	invalidContent := []byte("invalid-json")
+
+	result, err := handleConfigMapFromMetaManager(invalidContent)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "unmarshal message to ConfigMap failed")
+}
+
+func TestHandleConfigMapFromMetaManager_EmptyContent(t *testing.T) {
+	content := []byte("{}")
+
+	result, err := handleConfigMapFromMetaManager(content)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Empty(t, result.Name)
+}
+
+func TestConfigMapsInterface(t *testing.T) {
+	mockSend := newMockSend()
+	configMapsClient := newConfigMaps(testNamespace, mockSend)
+
+	var _ ConfigMapsInterface = configMapsClient
+	assert.NotNil(t, configMapsClient)
 }
