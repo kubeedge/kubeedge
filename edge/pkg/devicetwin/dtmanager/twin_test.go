@@ -24,14 +24,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/beego/beego/v2/client/orm"
-	"github.com/golang/mock/gomock"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 )
 
 var (
@@ -361,8 +360,6 @@ func TestDealTwinUpdate(t *testing.T) {
 
 // TestDealDeviceTwin is function to test DealDeviceTwin
 func TestDealDeviceTwin(t *testing.T) {
-	mockOrmer, mockQuerySeter := testtools.InitOrmerMock(t)
-
 	str := typeString
 	optionTrue := true
 	msgTwin := make(map[string]*dttype.MsgTwin)
@@ -404,70 +401,33 @@ func TestDealDeviceTwin(t *testing.T) {
 	contextDeviceC.DeviceList.Store(deviceC, &deviceCTwin)
 
 	tests := []struct {
-		name             string
-		context          *dtcontext.DTContext
-		deviceID         string
-		eventID          string
-		msgTwin          map[string]*dttype.MsgTwin
-		dealType         int
-		err              error
-		filterReturn     orm.QuerySeter
-		allReturnInt     int64
-		allReturnErr     error
-		queryTableReturn orm.QuerySeter
-		beginReturn      orm.TxOrmer
-
-		rollbackNums int
-		beginNums    int
-		commitNums   int
-		filterNums   int
-		insertNums   int
-		deleteNums   int
-		updateNums   int
-		queryNums    int
+		name     string
+		context  *dtcontext.DTContext
+		deviceID string
+		eventID  string
+		msgTwin  map[string]*dttype.MsgTwin
+		dealType int
+		err      error
 	}{
 		{
-			name:         "TestDealDeviceTwin(): Case 1: msgTwin is nil",
-			context:      &contextDeviceB,
-			deviceID:     deviceB,
-			dealType:     RestDealType,
-			err:          dttype.ErrorUpdate,
-			rollbackNums: 0,
-			beginNums:    1,
-			commitNums:   1,
-			filterNums:   0,
-			insertNums:   1,
-			deleteNums:   0,
-			updateNums:   0,
-			queryNums:    0,
+			name:     "TestDealDeviceTwin(): Case 1: msgTwin is nil",
+			context:  &contextDeviceB,
+			deviceID: deviceB,
+			dealType: RestDealType,
+			err:      dttype.ErrorUpdate,
 		},
 		{
-			name:             "TestDealDeviceTwin(): Case 2: Success Case",
-			context:          &contextDeviceC,
-			deviceID:         deviceC,
-			msgTwin:          msgTwin,
-			dealType:         RestDealType,
-			err:              nil,
-			filterReturn:     mockQuerySeter,
-			allReturnInt:     int64(1),
-			allReturnErr:     nil,
-			queryTableReturn: mockQuerySeter,
-			rollbackNums:     0,
-			beginNums:        1,
-			commitNums:       1,
-			filterNums:       0,
-			insertNums:       1,
-			deleteNums:       0,
-			updateNums:       0,
-			queryNums:        0,
+			name:     "TestDealDeviceTwin(): Case 2: Success Case",
+			context:  &contextDeviceC,
+			deviceID: deviceC,
+			msgTwin:  msgTwin,
+			dealType: RestDealType,
+			err:      nil,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			mockOrmer.EXPECT().DoTx(gomock.Any()).Return(test.allReturnErr).Times(test.insertNums)
-			mockOrmer.EXPECT().DoTx(gomock.Any()).Return(test.allReturnErr).Times(test.deleteNums)
-			mockOrmer.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(test.queryNums)
 			if err := DealDeviceTwin(test.context, test.deviceID, test.eventID, test.msgTwin, test.dealType); !reflect.DeepEqual(err, test.err) {
 				t.Errorf("DTManager.TestDealDeviceTwin() case failed: got = %v, Want = %v", err, test.err)
 			}
@@ -477,8 +437,6 @@ func TestDealDeviceTwin(t *testing.T) {
 
 // TestDealDeviceTwinResult is function to test DealDeviceTwin when dealTwinResult.Err is not nil
 func TestDealDeviceTwinResult(t *testing.T) {
-	mockOrmer, mockQuerySeter := testtools.InitOrmerMock(t)
-
 	str := typeString
 	optionTrue := true
 	value := valueType
@@ -499,58 +457,26 @@ func TestDealDeviceTwinResult(t *testing.T) {
 	contextDeviceA.DeviceList.Store(deviceA, &deviceATwin)
 
 	tests := []struct {
-		name             string
-		context          *dtcontext.DTContext
-		deviceID         string
-		eventID          string
-		msgTwin          map[string]*dttype.MsgTwin
-		dealType         int
-		err              error
-		filterReturn     orm.QuerySeter
-		allReturnInt     int64
-		allReturnErr     error
-		queryTableReturn orm.QuerySeter
+		name     string
+		context  *dtcontext.DTContext
+		deviceID string
+		eventID  string
+		msgTwin  map[string]*dttype.MsgTwin
+		dealType int
+		err      error
 	}{
 		{
-			name:             "TestDealDeviceTwinResult(): dealTwinResult error",
-			context:          &contextDeviceA,
-			deviceID:         deviceB,
-			msgTwin:          msgTwinValue,
-			dealType:         RestDealType,
-			err:              errors.New("the value type is not allowed"),
-			filterReturn:     mockQuerySeter,
-			allReturnInt:     int64(1),
-			allReturnErr:     nil,
-			queryTableReturn: mockQuerySeter,
+			name:     "TestDealDeviceTwinResult(): dealTwinResult error",
+			context:  &contextDeviceA,
+			deviceID: deviceB,
+			msgTwin:  msgTwinValue,
+			dealType: RestDealType,
+			err:      errors.New("the value type is not allowed"),
 		},
 	}
 
-	fakeDevice := new([]dtclient.Device)
-	fakeDeviceArray := make([]dtclient.Device, 1)
-	fakeDeviceArray[0] = dtclient.Device{ID: deviceB}
-	fakeDevice = &fakeDeviceArray
-
-	fakeDeviceAttr := new([]dtclient.DeviceAttr)
-	fakeDeviceAttrArray := make([]dtclient.DeviceAttr, 1)
-	fakeDeviceAttrArray[0] = dtclient.DeviceAttr{DeviceID: deviceB}
-	fakeDeviceAttr = &fakeDeviceAttrArray
-
-	fakeDeviceTwin := new([]dtclient.DeviceTwin)
-	fakeDeviceTwinArray := make([]dtclient.DeviceTwin, 1)
-	fakeDeviceTwinArray[0] = dtclient.DeviceTwin{DeviceID: deviceB}
-	fakeDeviceTwin = &fakeDeviceTwinArray
-
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			mockQuerySeter.EXPECT().All(gomock.Any()).SetArg(0, *fakeDevice).Return(test.allReturnInt, test.allReturnErr).Times(1)
-			mockQuerySeter.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
-			mockOrmer.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-			mockQuerySeter.EXPECT().All(gomock.Any()).SetArg(0, *fakeDeviceAttr).Return(test.allReturnInt, test.allReturnErr).Times(1)
-			mockQuerySeter.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
-			mockOrmer.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-			mockQuerySeter.EXPECT().All(gomock.Any()).SetArg(0, *fakeDeviceTwin).Return(test.allReturnInt, test.allReturnErr).Times(1)
-			mockQuerySeter.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
-			mockOrmer.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
 			if err := DealDeviceTwin(test.context, test.deviceID, test.eventID, test.msgTwin, test.dealType); !reflect.DeepEqual(err, test.err) {
 				t.Errorf("DTManager.TestDealDeviceTwinResult() case failed: got = %v, Want = %v", err, test.err)
 			}
@@ -560,8 +486,6 @@ func TestDealDeviceTwinResult(t *testing.T) {
 
 // TestDealDeviceTwinTrans is function to test DealDeviceTwin when DeviceTwinTrans() return error
 func TestDealDeviceTwinTrans(t *testing.T) {
-	mockOrmer, mockQuerySeter := testtools.InitOrmerMock(t)
-
 	str := typeString
 	optionTrue := true
 	msgTwin := make(map[string]*dttype.MsgTwin)
@@ -584,74 +508,26 @@ func TestDealDeviceTwinTrans(t *testing.T) {
 	contextDeviceB.DeviceList.Store(deviceB, &deviceBTwin)
 
 	tests := []struct {
-		name             string
-		context          *dtcontext.DTContext
-		deviceID         string
-		eventID          string
-		msgTwin          map[string]*dttype.MsgTwin
-		dealType         int
-		err              error
-		filterReturn     orm.QuerySeter
-		insertReturnInt  int64
-		insertReturnErr  error
-		deleteReturnInt  int64
-		deleteReturnErr  error
-		updateReturnInt  int64
-		updateReturnErr  error
-		allReturnInt     int64
-		allReturnErr     error
-		queryTableReturn orm.QuerySeter
+		name     string
+		context  *dtcontext.DTContext
+		deviceID string
+		eventID  string
+		msgTwin  map[string]*dttype.MsgTwin
+		dealType int
+		err      error
 	}{
 		{
-			name:             "TestDealDeviceTwinTrans(): DeviceTwinTrans error",
-			context:          &contextDeviceB,
-			deviceID:         deviceB,
-			msgTwin:          msgTwin,
-			dealType:         RestDealType,
-			err:              errors.New("failed DB Operation"),
-			filterReturn:     mockQuerySeter,
-			insertReturnInt:  int64(1),
-			insertReturnErr:  errors.New("failed DB Operation"),
-			deleteReturnInt:  int64(1),
-			deleteReturnErr:  nil,
-			updateReturnInt:  int64(1),
-			updateReturnErr:  nil,
-			allReturnInt:     int64(1),
-			allReturnErr:     nil,
-			queryTableReturn: mockQuerySeter,
+			name:     "TestDealDeviceTwinTrans(): DeviceTwinTrans error",
+			context:  &contextDeviceB,
+			deviceID: deviceB,
+			msgTwin:  msgTwin,
+			dealType: RestDealType,
+			err:      errors.New("failed DB Operation"),
 		},
 	}
 
-	fakeDevice := new([]dtclient.Device)
-	fakeDeviceArray := make([]dtclient.Device, 1)
-	fakeDeviceArray[0] = dtclient.Device{ID: deviceB}
-	fakeDevice = &fakeDeviceArray
-
-	fakeDeviceAttr := new([]dtclient.DeviceAttr)
-	fakeDeviceAttrArray := make([]dtclient.DeviceAttr, 1)
-	fakeDeviceAttrArray[0] = dtclient.DeviceAttr{DeviceID: deviceB}
-	fakeDeviceAttr = &fakeDeviceAttrArray
-
-	fakeDeviceTwin := new([]dtclient.DeviceTwin)
-	fakeDeviceTwinArray := make([]dtclient.DeviceTwin, 1)
-	fakeDeviceTwinArray[0] = dtclient.DeviceTwin{DeviceID: deviceB}
-	fakeDeviceTwin = &fakeDeviceTwinArray
-
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			mockOrmer.EXPECT().DoTx(gomock.Any()).Return(test.insertReturnErr).Times(5)
-			mockOrmer.EXPECT().DoTx(gomock.Any()).Return(test.deleteReturnErr).Times(0)
-			mockQuerySeter.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(0)
-			mockQuerySeter.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(0)
-			mockQuerySeter.EXPECT().All(gomock.Any()).SetArg(0, *fakeDevice).Return(test.allReturnInt, test.allReturnErr).Times(1)
-			mockQuerySeter.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
-			mockOrmer.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-			mockQuerySeter.EXPECT().All(gomock.Any()).SetArg(0, *fakeDeviceAttr).Return(test.allReturnInt, test.allReturnErr).Times(1)
-			mockQuerySeter.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
-			mockOrmer.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-			mockQuerySeter.EXPECT().All(gomock.Any()).SetArg(0, *fakeDeviceTwin).Return(test.allReturnInt, test.allReturnErr).Times(1)
-			mockQuerySeter.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
-			mockOrmer.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
 			if err := DealDeviceTwin(test.context, test.deviceID, test.eventID, test.msgTwin, test.dealType); !reflect.DeepEqual(err, test.err) {
 				t.Errorf("DTManager.TestDealDeviceTwinTrans() case failed: got = %v, Want = %v", err, test.err)
 			}
@@ -920,7 +796,7 @@ func TestDealTwinDelete(t *testing.T) {
 				Result: map[string]*dttype.MsgTwin{
 					key1: nil,
 				},
-				Update: []dtclient.DeviceTwinUpdate{{
+				Update: []models.DeviceTwinUpdate{{
 					DeviceID: deviceA,
 					Name:     key1,
 					Cols: map[string]interface{}{
@@ -971,7 +847,7 @@ func TestDealTwinDelete(t *testing.T) {
 				SyncResult: map[string]*dttype.MsgTwin{
 					key1: nil,
 				},
-				Update: []dtclient.DeviceTwinUpdate{{
+				Update: []models.DeviceTwinUpdate{{
 					DeviceID: deviceA,
 					Name:     key1,
 					Cols: map[string]interface{}{
@@ -1374,9 +1250,9 @@ func TestDealMsgTwin(t *testing.T) {
 	str := typeString
 	optionTrue := true
 	optionFalse := false
-	add := make([]dtclient.DeviceTwin, 0)
-	deletes := make([]dtclient.DeviceDelete, 0)
-	update := make([]dtclient.DeviceTwinUpdate, 0)
+	add := make([]models.DeviceTwin, 0)
+	deletes := make([]models.DeviceDelete, 0)
+	update := make([]models.DeviceTwinUpdate, 0)
 	result := make(map[string]*dttype.MsgTwin)
 	syncResult := make(map[string]*dttype.MsgTwin)
 	syncResultDevice := make(map[string]*dttype.MsgTwin)

@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -29,30 +30,111 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
+const testPodName = "test-pod"
+
 func TestNewPods(t *testing.T) {
-	assert := assert.New(t)
+	send := newMockSend()
 
-	send := newSend()
+	pods := newPods(testNamespace, send)
 
-	pods := newPods(namespace, send)
-	assert.NotNil(pods)
-	assert.Equal(namespace, pods.namespace)
-	assert.Equal(send, pods.send)
+	assert.NotNil(t, pods)
+	assert.Equal(t, testNamespace, pods.namespace)
+	assert.Equal(t, send, pods.send)
+}
+
+func TestPods_Create(t *testing.T) {
+	testCases := []struct {
+		name      string
+		pod       *corev1.Pod
+		expectErr bool
+	}{
+		{
+			name: "Create Pod Success",
+			pod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      testPodName,
+					Namespace: testNamespace,
+				},
+			},
+			expectErr: false,
+		},
+		{
+			name:      "Create with nil Pod",
+			pod:       nil,
+			expectErr: false,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			mockSend := &mockSendInterface{}
+			podsClient := newPods(testNamespace, mockSend)
+
+			result, err := podsClient.Create(test.pod)
+
+			if test.expectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Nil(t, result)
+			}
+		})
+	}
+}
+
+func TestPods_Update(t *testing.T) {
+	testCases := []struct {
+		name      string
+		pod       *corev1.Pod
+		expectErr bool
+	}{
+		{
+			name: "Update Pod Success",
+			pod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      testPodName,
+					Namespace: testNamespace,
+				},
+			},
+			expectErr: false,
+		},
+		{
+			name:      "Update with nil Pod",
+			pod:       nil,
+			expectErr: false,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			mockSend := &mockSendInterface{}
+			podsClient := newPods(testNamespace, mockSend)
+
+			err := podsClient.Update(test.pod)
+
+			if test.expectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
 }
 
 func TestPods_Delete(t *testing.T) {
-	assert := assert.New(t)
-
-	podName := "test-pod"
+	podName := testPodName
 	deleteOptions := metav1.DeleteOptions{}
 
 	testCases := []struct {
 		name      string
+		podName   string
 		respFunc  func(*model.Message) (*model.Message, error)
 		expectErr bool
+		errMsg    string
 	}{
 		{
-			name: "Delete Pod Success",
+			name:    "Delete Pod Success",
+			podName: podName,
 			respFunc: func(message *model.Message) (*model.Message, error) {
 				resp := model.NewMessage(message.GetID())
 				resp.Content = "OK"
@@ -61,9 +143,29 @@ func TestPods_Delete(t *testing.T) {
 			expectErr: false,
 		},
 		{
-			name: "Delete Pod Error",
+			name:    "Delete Pod Network Error",
+			podName: podName,
 			respFunc: func(message *model.Message) (*model.Message, error) {
-				return nil, fmt.Errorf("test error")
+				return nil, fmt.Errorf("network error")
+			},
+			expectErr: true,
+			errMsg:    "delete pod from metaManager failed",
+		},
+		{
+			name:    "Delete Pod with Empty Name",
+			podName: "",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				return nil, fmt.Errorf("invalid resource")
+			},
+			expectErr: true,
+		},
+		{
+			name:    "Delete Pod Message Parse Error",
+			podName: podName,
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				resp := model.NewMessage(message.GetID())
+				resp.Content = fmt.Errorf("pod not found")
+				return resp, nil
 			},
 			expectErr: true,
 		},
@@ -73,36 +175,36 @@ func TestPods_Delete(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			mockSend := &mockSendInterface{}
 			mockSend.sendSyncFunc = func(message *model.Message) (*model.Message, error) {
-				assert.Equal(modules.MetaGroup, message.GetGroup())
-				assert.Equal(modules.EdgedModuleName, message.GetSource())
-				assert.NotEmpty(message.GetID())
-				assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypePod, podName), message.GetResource())
-				assert.Equal(model.DeleteOperation, message.GetOperation())
+				assert.Equal(t, modules.MetaGroup, message.GetGroup())
+				assert.Equal(t, modules.EdgedModuleName, message.GetSource())
+				assert.NotEmpty(t, message.GetID())
+				assert.Equal(t, fmt.Sprintf("%s/%s/%s", testNamespace, model.ResourceTypePod, test.podName),
+					message.GetResource())
+				assert.Equal(t, model.DeleteOperation, message.GetOperation())
 
 				return test.respFunc(message)
 			}
 
-			podsClient := newPods(namespace, mockSend)
-
-			err := podsClient.Delete(podName, deleteOptions)
+			podsClient := newPods(testNamespace, mockSend)
+			err := podsClient.Delete(test.podName, deleteOptions)
 
 			if test.expectErr {
-				assert.Error(err)
+				assert.Error(t, err)
+				if test.errMsg != "" {
+					assert.Contains(t, err.Error(), test.errMsg)
+				}
 			} else {
-				assert.NoError(err)
+				assert.NoError(t, err)
 			}
 		})
 	}
 }
 
 func TestPods_Get(t *testing.T) {
-	assert := assert.New(t)
-
-	podName := "test-pod"
 	expectedPod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      podName,
-			Namespace: namespace,
+			Name:      testPodName,
+			Namespace: testNamespace,
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
@@ -116,28 +218,65 @@ func TestPods_Get(t *testing.T) {
 
 	testCases := []struct {
 		name      string
+		podName   string
 		respFunc  func(*model.Message) (*model.Message, error)
 		stdResult *corev1.Pod
 		expectErr bool
+		errMsg    string
 	}{
 		{
-			name: "Get Pod Success",
+			name:    "Get Pod Success",
+			podName: testPodName,
 			respFunc: func(message *model.Message) (*model.Message, error) {
 				resp := model.NewMessage(message.GetID())
 				podJSON, _ := json.Marshal(expectedPod)
-				resp.Content = []string{string(podJSON)}
+				resp.Content = string(podJSON)
 				return resp, nil
 			},
 			stdResult: expectedPod,
 			expectErr: false,
 		},
 		{
-			name: "Get Pod Error",
+			name:    "Get Pod Network Error",
+			podName: testPodName,
 			respFunc: func(message *model.Message) (*model.Message, error) {
-				return nil, fmt.Errorf("test error")
+				return nil, fmt.Errorf("connection refused")
 			},
 			stdResult: nil,
 			expectErr: true,
+			errMsg:    "get pod from metaManager failed",
+		},
+		{
+			name:    "Get Pod with Empty Name",
+			podName: "",
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				return nil, fmt.Errorf("invalid resource")
+			},
+			stdResult: nil,
+			expectErr: true,
+		},
+		{
+			name:    "Get Pod Parse Error",
+			podName: testPodName,
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				resp := model.NewMessage(message.GetID())
+				resp.Content = fmt.Errorf("pod not found")
+				return resp, nil
+			},
+			stdResult: nil,
+			expectErr: true,
+		},
+		{
+			name:    "Get Pod Invalid JSON",
+			podName: testPodName,
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				resp := model.NewMessage(message.GetID())
+				resp.Content = "invalid json"
+				return resp, nil
+			},
+			stdResult: nil,
+			expectErr: true,
+			errMsg:    "parse message to pod failed",
 		},
 	}
 
@@ -145,92 +284,196 @@ func TestPods_Get(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			mockSend := &mockSendInterface{}
 			mockSend.sendSyncFunc = func(message *model.Message) (*model.Message, error) {
-				assert.Equal(modules.MetaGroup, message.GetGroup())
-				assert.Equal(modules.EdgedModuleName, message.GetSource())
-				assert.NotEmpty(message.GetID())
-				assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypePod, podName), message.GetResource())
-				assert.Equal(model.QueryOperation, message.GetOperation())
+				assert.Equal(t, modules.MetaGroup, message.GetGroup())
+				assert.Equal(t, modules.EdgedModuleName, message.GetSource())
+				assert.NotEmpty(t, message.GetID())
+				assert.Equal(t, fmt.Sprintf("%s/%s/%s", testNamespace, model.ResourceTypePod, test.podName),
+					message.GetResource())
+				assert.Equal(t, model.QueryOperation, message.GetOperation())
 
 				return test.respFunc(message)
 			}
 
-			podsClient := newPods(namespace, mockSend)
-
-			pod, err := podsClient.Get(podName)
+			podsClient := newPods(testNamespace, mockSend)
+			pod, err := podsClient.Get(test.podName)
 
 			if test.expectErr {
-				assert.Error(err)
-				assert.Nil(pod)
+				assert.Error(t, err)
+				assert.Nil(t, pod)
+				if test.errMsg != "" {
+					assert.Contains(t, err.Error(), test.errMsg)
+				}
 			} else {
-				assert.NoError(err)
-				assert.Equal(test.stdResult, pod)
+				assert.NoError(t, err)
+				require.NotNil(t, pod)
+				assert.Equal(t, test.stdResult.ObjectMeta.Name, pod.ObjectMeta.Name)
+				assert.Equal(t, test.stdResult.ObjectMeta.Namespace, pod.ObjectMeta.Namespace)
 			}
 		})
 	}
 }
 
 func TestHandlePodFromMetaDB(t *testing.T) {
-	assert := assert.New(t)
+	validPod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      testPodName,
+			Namespace: "default",
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "test-container",
+					Image: "test-image",
+				},
+			},
+		},
+	}
 
 	testCases := []struct {
 		name        string
+		podName     string
 		content     []byte
 		expectedPod *corev1.Pod
-		expectedErr bool
+		expectErr   bool
+		errMsg      string
 	}{
 		{
 			name:    "Valid Pod",
-			content: []byte(`["{\"metadata\":{\"name\":\"test-pod\",\"namespace\":\"default\"},\"spec\":{\"containers\":[{\"name\":\"test-container\",\"image\":\"test-image\"}]}}"]`),
-			expectedPod: &corev1.Pod{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-pod",
-					Namespace: "default",
-				},
-				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{
-						{
-							Name:  "test-container",
-							Image: "test-image",
-						},
-					},
-				},
-			},
-			expectedErr: false,
+			podName: testPodName,
+			content: func() []byte {
+				podJSON, _ := json.Marshal(validPod)
+				return []byte(`[` + string(podJSON) + `]`)
+			}(),
+			expectedPod: validPod,
+			expectErr:   false,
 		},
 		{
 			name:        "Invalid JSON",
+			podName:     testPodName,
 			content:     []byte(`["invalid json"]`),
 			expectedPod: nil,
-			expectedErr: true,
+			expectErr:   true,
+			errMsg:      "unmarshal message to pod from db failed",
 		},
 		{
 			name:        "Empty list",
+			podName:     testPodName,
 			content:     []byte(`[]`),
 			expectedPod: nil,
-			expectedErr: true,
+			expectErr:   true,
+			errMsg:      "pod length from meta db is 0",
 		},
 		{
 			name:        "Multiple Pods",
+			podName:     testPodName,
 			content:     []byte(`["{}", "{}"]`),
 			expectedPod: nil,
-			expectedErr: true,
+			expectErr:   true,
+			errMsg:      "pod length from meta db is 2",
+		},
+		{
+			name:        "Malformed JSON Array",
+			podName:     testPodName,
+			content:     []byte(`{}`),
+			expectedPod: nil,
+			expectErr:   true,
+			errMsg:      "unmarshal message to pod from db failed",
+		},
+		{
+			name:        "Empty Content",
+			podName:     testPodName,
+			content:     []byte(``),
+			expectedPod: nil,
+			expectErr:   true,
 		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			pod, err := handlePodFromMetaDB("test-pod", test.content)
+			pod, err := handlePodFromMetaDB(test.podName, test.content)
 
-			if test.expectedErr {
-				assert.Error(err)
-				assert.Nil(pod)
+			if test.expectErr {
+				assert.Error(t, err)
+				assert.Nil(t, pod)
+				if test.errMsg != "" {
+					assert.Contains(t, err.Error(), test.errMsg)
+				}
 			} else {
-				assert.NoError(err)
-				assert.Equal(test.expectedPod.ObjectMeta.Name, pod.ObjectMeta.Name)
-				assert.Equal(test.expectedPod.ObjectMeta.Namespace, pod.ObjectMeta.Namespace)
-				assert.Equal(test.expectedPod.Spec.Containers[0].Name, pod.Spec.Containers[0].Name)
-				assert.Equal(test.expectedPod.Spec.Containers[0].Image, pod.Spec.Containers[0].Image)
+				assert.NoError(t, err)
+				require.NotNil(t, pod)
+				assert.Equal(t, test.expectedPod.ObjectMeta.Name, pod.ObjectMeta.Name)
+				assert.Equal(t, test.expectedPod.ObjectMeta.Namespace, pod.ObjectMeta.Namespace)
+				assert.Equal(t, len(test.expectedPod.Spec.Containers),
+					len(pod.Spec.Containers))
+				if len(pod.Spec.Containers) > 0 {
+					assert.Equal(t, test.expectedPod.Spec.Containers[0].Name,
+						pod.Spec.Containers[0].Name)
+					assert.Equal(t, test.expectedPod.Spec.Containers[0].Image,
+						pod.Spec.Containers[0].Image)
+				}
 			}
 		})
 	}
+}
+
+func TestPods_Interface(t *testing.T) {
+	// Verify that pods implements PodsInterface
+	var _ PodsInterface = &pods{}
+
+	mockSend := newMockSend()
+	podsClient := newPods(testNamespace, mockSend)
+
+	var _ PodsInterface = podsClient
+	assert.NotNil(t, podsClient)
+}
+
+func TestHandlePodFromMetaDB_WithComplexPod(t *testing.T) {
+	podName := "complex-pod"
+	complexPod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      podName,
+			Namespace: "kube-system",
+			Labels: map[string]string{
+				"app": "test",
+				"env": "prod",
+			},
+			Annotations: map[string]string{
+				"description": "test pod",
+			},
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "container1",
+					Image: "image:v1.0",
+					Ports: []corev1.ContainerPort{
+						{
+							Name:          "http",
+							ContainerPort: 8080,
+							Protocol:      corev1.ProtocolTCP,
+						},
+					},
+				},
+			},
+			RestartPolicy: corev1.RestartPolicyAlways,
+		},
+	}
+
+	podJSON, err := json.Marshal(complexPod)
+	require.NoError(t, err)
+
+	content := []byte(`[` + string(podJSON) + `]`)
+	pod, err := handlePodFromMetaDB(podName, content)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, pod)
+	assert.Equal(t, "kube-system", pod.ObjectMeta.Namespace)
+	assert.Equal(t, 2, len(pod.ObjectMeta.Labels))
+	assert.Equal(t, "test", pod.ObjectMeta.Labels["app"])
+	assert.Equal(t, "prod", pod.ObjectMeta.Labels["env"])
+	assert.Equal(t, 1, len(pod.Spec.Containers))
+	assert.Equal(t, "container1", pod.Spec.Containers[0].Name)
+	assert.Equal(t, "image:v1.0", pod.Spec.Containers[0].Image)
+	assert.Equal(t, int32(8080), pod.Spec.Containers[0].Ports[0].ContainerPort)
+	assert.Equal(t, corev1.RestartPolicyAlways, pod.Spec.RestartPolicy)
 }

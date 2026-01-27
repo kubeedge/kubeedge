@@ -29,6 +29,7 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/common/util"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 )
 
 type TestMessage struct {
@@ -219,7 +220,7 @@ func TestInitSubClient(t *testing.T) {
 	defer patchCheckClientToken.Reset()
 
 	customTopics := []string{"custom/topic1", "custom/topic2"}
-	patchQueryAllTopics := gomonkey.ApplyFunc(dao.QueryAllTopics, func() (*[]string, error) {
+	patchQueryAllTopics := gomonkey.ApplyFunc(dbclient.NewEventBusService().QueryAllTopics, func() (*[]string, error) {
 		return &customTopics, nil
 	})
 	defer patchQueryAllTopics.Reset()
@@ -324,7 +325,7 @@ func TestOnSubConnect(t *testing.T) {
 	defer patchCheckClientToken.Reset()
 
 	customTopics := []string{"custom/topic1", "custom/topic2"}
-	patchQueryAllTopics := gomonkey.ApplyFunc(dao.QueryAllTopics, func() (*[]string, error) {
+	patchQueryAllTopics := gomonkey.ApplyFunc(dbclient.NewEventBusService().QueryAllTopics, func() (*[]string, error) {
 		return &customTopics, nil
 	})
 	defer patchQueryAllTopics.Reset()
@@ -348,7 +349,7 @@ func TestOnSubConnectWithQueryError(t *testing.T) {
 	})
 	defer patchCheckClientToken.Reset()
 
-	patchQueryAllTopics := gomonkey.ApplyFunc(dao.QueryAllTopics, func() (*[]string, error) {
+	patchQueryAllTopics := gomonkey.ApplyFunc(dbclient.NewEventBusService().QueryAllTopics, func() (*[]string, error) {
 		return nil, errors.New("database error")
 	})
 	defer patchQueryAllTopics.Reset()
@@ -371,7 +372,7 @@ func TestOnSubConnectWithEmptyTopics(t *testing.T) {
 	defer patchCheckClientToken.Reset()
 
 	emptyTopics := []string{}
-	patchQueryAllTopics := gomonkey.ApplyFunc(dao.QueryAllTopics, func() (*[]string, error) {
+	patchQueryAllTopics := gomonkey.ApplyFunc(dbclient.NewEventBusService().QueryAllTopics, func() (*[]string, error) {
 		return &emptyTopics, nil
 	})
 	defer patchQueryAllTopics.Reset()

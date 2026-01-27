@@ -33,29 +33,13 @@ import (
 func TestNewCertificateSigningRequests(t *testing.T) {
 	assert := assert.New(t)
 
-	sendInterface := newSend()
+	sendInterface := newMockSend()
 
 	csr := newCertificateSigningRequests(sendInterface)
 	assert.NotNil(csr)
 
 	assert.NotNil(csr.send)
 	assert.Equal(sendInterface, csr.send)
-}
-
-// mockSendInterface is a mock implementation of SendInterface used by multiple test files in this package
-type mockSendInterface struct {
-	sendSyncFunc func(*model.Message) (*model.Message, error)
-	sendFunc     func(*model.Message)
-}
-
-func (s *mockSendInterface) SendSync(message *model.Message) (*model.Message, error) {
-	return s.sendSyncFunc(message)
-}
-
-func (s *mockSendInterface) Send(message *model.Message) {
-	if s.sendFunc != nil {
-		s.sendFunc(message)
-	}
 }
 
 func TestCertificateSigningRequests_Create(t *testing.T) {

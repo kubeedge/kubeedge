@@ -54,10 +54,10 @@ func TestNewPersistentVolumeClaims(t *testing.T) {
 	assert := assert.New(t)
 
 	s := newSend()
-	pvc := newPersistentVolumeClaims(namespace, s)
+	pvc := newPersistentVolumeClaims(testNamespace, s)
 
 	assert.NotNil(pvc)
-	assert.Equal(namespace, pvc.namespace)
+	assert.Equal(testNamespace, pvc.namespace)
 	assert.IsType(&send{}, pvc.send)
 }
 

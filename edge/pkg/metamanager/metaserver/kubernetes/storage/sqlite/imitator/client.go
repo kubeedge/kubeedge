@@ -62,5 +62,5 @@ func StorageInit() {
 	utilruntime.Must(err)
 
 	DefaultV2Client.SetRevision(meta.ResourceVersion)
-	klog.Infof("StorageInit set revision to: %s", meta.ResourceVersion)
+	klog.Infof("StorageInit set revision to: %d", meta.ResourceVersion)
 }

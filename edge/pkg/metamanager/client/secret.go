@@ -12,6 +12,11 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 )
 
+// MetaServiceInterface is interface for meta service operations
+type MetaServiceInterface interface {
+	QueryMeta(key, value string) (*[]string, error)
+}
+
 // SecretsGetter is interface to get client secrets
 type SecretsGetter interface {
 	Secrets(namespace string) SecretsInterface
@@ -26,14 +31,25 @@ type SecretsInterface interface {
 }
 
 type secrets struct {
-	namespace string
-	send      SendInterface
+	namespace   string
+	send        SendInterface
+	metaService MetaServiceInterface
 }
 
 func newSecrets(namespace string, s SendInterface) *secrets {
 	return &secrets{
-		send:      s,
-		namespace: namespace,
+		send:        s,
+		namespace:   namespace,
+		metaService: dbclient.NewMetaService(),
+	}
+}
+
+// NewSecretsWithMetaService creates a new secrets instance with custom meta service (for testing)
+func NewSecretsWithMetaService(namespace string, s SendInterface, metaService MetaServiceInterface) *secrets {
+	return &secrets{
+		send:        s,
+		namespace:   namespace,
+		metaService: metaService,
 	}
 }
 
@@ -68,7 +84,7 @@ func (c *secrets) Get(name string) (*api.Secret, error) {
 		return handleSecretFromMetaManager(content)
 	}
 
-	metas, err := dbclient.NewMetaService().QueryMeta("key", resource)
+	metas, err := c.metaService.QueryMeta("key", resource)
 	if err != nil || len(*metas) == 0 {
 		return remoteGet()
 	}

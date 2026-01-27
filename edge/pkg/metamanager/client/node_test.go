@@ -35,10 +35,10 @@ func TestNewNodes(t *testing.T) {
 	assert := assert.New(t)
 
 	s := newSend()
-	nodesClient := newNodes(namespace, s)
+	nodesClient := newNodes(testNamespace, s)
 
 	assert.NotNil(nodesClient)
-	assert.Equal(namespace, nodesClient.namespace)
+	assert.Equal(testNamespace, nodesClient.namespace)
 	assert.IsType(&send{}, nodesClient.send)
 }
 
@@ -103,7 +103,7 @@ func TestNode_Create(t *testing.T) {
 				assert.Equal(modules.MetaGroup, message.GetGroup())
 				assert.Equal(modules.EdgedModuleName, message.GetSource())
 				assert.NotEmpty(message.GetID())
-				assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypeNode, nodeName), message.GetResource())
+				assert.Equal(fmt.Sprintf("%s/%s/%s", testNamespace, model.ResourceTypeNode, nodeName), message.GetResource())
 				assert.Equal(model.InsertOperation, message.GetOperation())
 
 				content, err := message.GetContentData()
@@ -116,7 +116,7 @@ func TestNode_Create(t *testing.T) {
 				return test.respFunc(message)
 			}
 
-			nodeClient := newNodes(namespace, mockSend)
+			nodeClient := newNodes(testNamespace, mockSend)
 
 			createdNode, err := nodeClient.Create(inputNode)
 
@@ -197,7 +197,7 @@ func TestNode_Patch(t *testing.T) {
 				assert.Equal(modules.MetaGroup, message.GetGroup())
 				assert.Equal(modules.EdgedModuleName, message.GetSource())
 				assert.NotEmpty(message.GetID())
-				assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypeNodePatch, nodeName), message.GetResource())
+				assert.Equal(fmt.Sprintf("%s/%s/%s", testNamespace, model.ResourceTypeNodePatch, nodeName), message.GetResource())
 				assert.Equal(model.PatchOperation, message.GetOperation())
 
 				content, err := message.GetContentData()
@@ -207,7 +207,7 @@ func TestNode_Patch(t *testing.T) {
 				return test.respFunc(message)
 			}
 
-			nodeClient := newNodes(namespace, mockSend)
+			nodeClient := newNodes(testNamespace, mockSend)
 
 			patchedNode, err := nodeClient.Patch(nodeName, patchData)
 
