@@ -1,0 +1,38 @@
+name: Dispatch Trigger as expirement for SamYuan1990/OpenAI_CodeAgent-action
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  test-action:
+    name: GitHub Actions Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v4
+
+      - name: Test Local Action
+        id: test-action
+        uses: SamYuan1990/OpenAI_CodeAgent-action@main
+        with:
+          baseURL: https://api.deepseek.com
+          apiKey: ${{ secrets.API_KEY }}
+          fileOverWrite: true
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.MyPATToken }} # 使用 GitHub 提供的 token
+          branch: auto-pr-branch # 新分支名称
+          base: master # 目标分支
+          title: 'Automated PR: Update generated files'
+          body: 'This is an automated pull request created by GitHub Actions.'
+          commit-message: 'Auto-generated changes'
+          sign-commits: true
+          labels: automated # 可选：为 PR 添加标签
