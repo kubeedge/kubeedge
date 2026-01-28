@@ -34,10 +34,10 @@ func TestNewLeases(t *testing.T) {
 	assert := assert.New(t)
 
 	s := newSend()
-	leases := newLeases(namespace, s)
+	leases := newLeases(testNamespace, s)
 
 	assert.NotNil(leases)
-	assert.Equal(namespace, leases.namespace)
+	assert.Equal(testNamespace, leases.namespace)
 	assert.IsType(&send{}, leases.send)
 }
 
@@ -102,7 +102,7 @@ func TestLeases_Create(t *testing.T) {
 				assert.Equal(modules.MetaGroup, message.GetGroup())
 				assert.Equal(modules.EdgedModuleName, message.GetSource())
 				assert.NotEmpty(message.GetID())
-				assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypeLease, leaseName), message.GetResource())
+				assert.Equal(fmt.Sprintf("%s/%s/%s", testNamespace, model.ResourceTypeLease, leaseName), message.GetResource())
 				assert.Equal(model.InsertOperation, message.GetOperation())
 
 				content, err := message.GetContentData()
@@ -115,7 +115,7 @@ func TestLeases_Create(t *testing.T) {
 				return test.respFunc(message)
 			}
 
-			leaseClient := newLeases(namespace, mockSend)
+			leaseClient := newLeases(testNamespace, mockSend)
 
 			createdLease, err := leaseClient.Create(inputLease)
 
@@ -191,13 +191,13 @@ func TestLeases_Get(t *testing.T) {
 				assert.Equal(modules.MetaGroup, message.GetGroup())
 				assert.Equal(modules.EdgedModuleName, message.GetSource())
 				assert.NotEmpty(message.GetID())
-				assert.Equal(fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypeLease, leaseName), message.GetResource())
+				assert.Equal(fmt.Sprintf("%s/%s/%s", testNamespace, model.ResourceTypeLease, leaseName), message.GetResource())
 				assert.Equal(model.QueryOperation, message.GetOperation())
 
 				return test.respFunc(message)
 			}
 
-			leaseClient := newLeases(namespace, mockSend)
+			leaseClient := newLeases(testNamespace, mockSend)
 
 			lease, err := leaseClient.Get(leaseName)
 

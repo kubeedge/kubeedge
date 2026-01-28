@@ -24,13 +24,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
-
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
-	"github.com/kubeedge/kubeedge/pkg/testtools"
 )
 
 func TestGetRemoveList(t *testing.T) {
@@ -180,9 +177,6 @@ func TestDealMembershipUpdateInvalidContent(t *testing.T) {
 }
 
 func TestDealMembershipUpdateValidAddedDevice(t *testing.T) {
-	ormerMock, _ := testtools.InitOrmerMock(t)
-	ormerMock.EXPECT().DoTx(gomock.Any()).Return(nil).Times(1)
-
 	dtc := &dtcontext.DTContext{
 		DeviceList:  &sync.Map{},
 		DeviceMutex: &sync.Map{},

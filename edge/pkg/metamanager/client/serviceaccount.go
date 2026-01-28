@@ -14,7 +14,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 )
 
 // ServiceAccountTokenGetter is interface to get client service account token
@@ -41,7 +41,8 @@ func newServiceAccountToken(s SendInterface) *serviceAccountToken {
 }
 
 func (c *serviceAccountToken) DeleteServiceAccountToken(podUID types.UID) {
-	svcAccounts, err := dao.QueryAllMeta("type", model.ResourceTypeServiceAccountToken)
+	ms := dbclient.NewMetaService()
+	svcAccounts, err := ms.QueryAllMeta("type", model.ResourceTypeServiceAccountToken)
 	if err != nil {
 		klog.Errorf("query meta failed: %v", err)
 		return
@@ -54,7 +55,7 @@ func (c *serviceAccountToken) DeleteServiceAccountToken(podUID types.UID) {
 			continue
 		}
 		if podUID == tr.Spec.BoundObjectRef.UID {
-			err := dao.DeleteMetaByKey(sa.Key)
+			err := ms.DeleteMetaByKey(sa.Key)
 			if err != nil {
 				klog.Errorf("delete meta %s failed: %v", sa.Key, err)
 				return
@@ -103,7 +104,8 @@ func KeyFunc(name, namespace string, tr *authenticationv1.TokenRequest) string {
 
 func getTokenLocally(name, namespace string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
 	resKey := KeyFunc(name, namespace, tr)
-	metas, err := dao.QueryMeta("key", resKey)
+	ms := dbclient.NewMetaService()
+	metas, err := ms.QueryMeta("key", resKey)
 	if err != nil {
 		klog.Errorf("query meta %s failed: %v", resKey, err)
 		return nil, err
@@ -119,7 +121,7 @@ func getTokenLocally(name, namespace string, tr *authenticationv1.TokenRequest) 
 		return nil, err
 	}
 	if requiresRefresh(&tokenRequest) {
-		err := dao.DeleteMetaByKey(resKey)
+		err := ms.DeleteMetaByKey(resKey)
 		if err != nil {
 			klog.Errorf("delete meta %s failed: %v", resKey, err)
 			return nil, err
@@ -206,7 +208,7 @@ func newServiceAccount(namespace string) *serviceAccount {
 }
 
 func (s *serviceAccount) Get(name string) (*corev1.ServiceAccount, error) {
-	rst, err := dao.QueryMeta("type", model.ResourceTypeSaAccess)
+	rst, err := dbclient.NewMetaService().QueryMeta("type", model.ResourceTypeSaAccess)
 	if err != nil {
 		return nil, err
 	}
@@ -230,7 +232,7 @@ func CheckTokenExist(token string) bool {
 	if token == "" {
 		return false
 	}
-	metas, err := dao.QueryMeta("type", model.ResourceTypeServiceAccountToken)
+	metas, err := dbclient.NewMetaService().QueryMeta("type", model.ResourceTypeServiceAccountToken)
 	if err != nil {
 		klog.Errorf("query meta %s failed: %v", model.ResourceTypeServiceAccountToken, err)
 		return false

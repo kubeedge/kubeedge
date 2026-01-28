@@ -11,9 +11,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/mocks/beego"
 	"github.com/kubeedge/kubeedge/edge/mocks/beehive"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 )
 
@@ -82,10 +80,6 @@ func TestStart(t *testing.T) {
 
 	//test is for sending test messages from devicetwin module.
 	var test model.Message
-	// ormerMock is mocked Ormer implementation.
-	var ormerMock *beego.MockOrmer
-	// querySeterMock is mocked QuerySeter implementation.
-	var querySeterMock *beego.MockQuerySeter
 	// fakeModule is mocked implementation of TestModule.
 	var fakeModule *beehive.MockModule
 
@@ -95,11 +89,6 @@ func TestStart(t *testing.T) {
 
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-
-	ormerMock = beego.NewMockOrmer(mockCtrl)
-	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
-	fakeModule = beehive.NewMockModule(mockCtrl)
-	dbm.DBAccess = ormerMock
 
 	fakeModule.EXPECT().Enable().Return(true).Times(1)
 	fakeModule.EXPECT().Name().Return(TestModule).MaxTimes(5)
@@ -119,12 +108,6 @@ func TestStart(t *testing.T) {
 	}
 	beehiveContext.AddModule(addDt)
 	beehiveContext.AddModuleGroup(dt.Name(), dt.Group())
-	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).MinTimes(1)
-	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).MaxTimes(5)
-	querySeterMock.EXPECT().All(gomock.Any()).Return(int64(1), nil).MinTimes(1)
-	querySeterMock.EXPECT().All(gomock.Any()).Return(int64(1), nil).MaxTimes(5)
-	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).MinTimes(1)
-	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).MaxTimes(5)
 	go dt.Start()
 	time.Sleep(delay)
 	retry++

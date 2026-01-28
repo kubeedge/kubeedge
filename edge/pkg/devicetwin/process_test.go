@@ -22,64 +22,47 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/beego/beego/v2/client/orm"
-	"github.com/golang/mock/gomock"
-
 	"github.com/kubeedge/beehive/pkg/common"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtmodule"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/testutil"
-	"github.com/kubeedge/kubeedge/pkg/testtools"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 )
 
 type CasesDevice []struct {
-	name                  string
-	context               *dtcontext.DTContext
-	deviceID              string
-	wantErr               error
-	filterReturn          orm.QuerySeter
-	queryTableReturn      orm.QuerySeter
-	allReturnIntDevice    int64
-	allReturnErrDevice    error
-	allReturnIntAttribute int64
-	allReturnErrAttribute error
-	allReturnIntTwin      int64
-	allReturnErrTwin      error
-	queryTableMockTimes   int
-	filterMockTimes       int
-	deviceMockTimes       int
-	attributeMockTimes    int
-	twinMockTimes         int
+	name     string
+	context  *dtcontext.DTContext
+	deviceID string
+	wantErr  error
 }
 
 // createFakeDevice() is function to create fake device.
-func createFakeDevice() *[]dtclient.Device {
-	fakeDevice := new([]dtclient.Device)
-	fakeDeviceArray := make([]dtclient.Device, 1)
-	fakeDeviceArray[0] = dtclient.Device{ID: "Test"}
+func createFakeDevice() *[]models.Device {
+	fakeDevice := new([]models.Device)
+	fakeDeviceArray := make([]models.Device, 1)
+	fakeDeviceArray[0] = models.Device{ID: "Test"}
 	fakeDevice = &fakeDeviceArray
 	return fakeDevice
 }
 
 // createFakeAttribute() is function to create fake device attribute.
-func createFakeDeviceAttribute() *[]dtclient.DeviceAttr {
-	fakeDeviceAttr := new([]dtclient.DeviceAttr)
-	fakeDeviceAttrArray := make([]dtclient.DeviceAttr, 1)
-	fakeDeviceAttrArray[0] = dtclient.DeviceAttr{DeviceID: "Test"}
+func createFakeDeviceAttribute() *[]models.DeviceAttr {
+	fakeDeviceAttr := new([]models.DeviceAttr)
+	fakeDeviceAttrArray := make([]models.DeviceAttr, 1)
+	fakeDeviceAttrArray[0] = models.DeviceAttr{DeviceID: "Test"}
 	fakeDeviceAttr = &fakeDeviceAttrArray
 	return fakeDeviceAttr
 }
 
 // createFakeDeviceTwin() is function to create fake devicetwin.
-func createFakeDeviceTwin() *[]dtclient.DeviceTwin {
-	fakeDeviceTwin := new([]dtclient.DeviceTwin)
-	fakeDeviceTwinArray := make([]dtclient.DeviceTwin, 1)
-	fakeDeviceTwinArray[0] = dtclient.DeviceTwin{DeviceID: "Test"}
+func createFakeDeviceTwin() *[]models.DeviceTwin {
+	fakeDeviceTwin := new([]models.DeviceTwin)
+	fakeDeviceTwinArray := make([]models.DeviceTwin, 1)
+	fakeDeviceTwinArray[0] = models.DeviceTwin{DeviceID: "Test"}
 	fakeDeviceTwin = &fakeDeviceTwinArray
 	return fakeDeviceTwin
 }
@@ -214,62 +197,23 @@ func TestDTController_distributeMsg(t *testing.T) {
 func TestSyncSqlite(t *testing.T) {
 	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 
-	ormerMock, querySeterMock := testtools.InitOrmerMock(t)
-
 	dtContexts, _ := dtcontext.InitDTContext()
-	// fakeDevice is used to set the argument of All function
-	fakeDevice := createFakeDevice()
-	// fakeDeviceAttr is used to set the argument of All function
-	fakeDeviceAttr := createFakeDeviceAttribute()
-	// fakeDeviceTwin is used to set the argument of All function
-	fakeDeviceTwin := createFakeDeviceTwin()
 	tests := CasesDevice{
 		{
 			//Failure Case
-			name:                  "SyncSqliteTest-QuerySqliteFailed",
-			context:               dtContexts,
-			wantErr:               errors.New("Query sqlite failed while syncing sqlite"),
-			filterReturn:          querySeterMock,
-			queryTableReturn:      querySeterMock,
-			allReturnIntDevice:    int64(0),
-			allReturnErrDevice:    errors.New("Query sqlite failed while syncing sqlite"),
-			allReturnIntAttribute: int64(0),
-			allReturnErrAttribute: nil,
-			allReturnIntTwin:      int64(0),
-			allReturnErrTwin:      nil,
-			queryTableMockTimes:   int(1),
-			filterMockTimes:       int(0),
-			deviceMockTimes:       int(1),
-			attributeMockTimes:    int(0),
-			twinMockTimes:         int(0),
+			name:    "SyncSqliteTest-QuerySqliteFailed",
+			context: dtContexts,
+			wantErr: errors.New("Query sqlite failed while syncing sqlite"),
 		},
 		{
 			//Success Case
-			name:                  "SyncSqliteTest-QuerySqliteSuccess",
-			context:               dtContexts,
-			wantErr:               nil,
-			filterReturn:          querySeterMock,
-			queryTableReturn:      querySeterMock,
-			allReturnIntDevice:    int64(1),
-			allReturnErrDevice:    nil,
-			allReturnIntAttribute: int64(1),
-			allReturnErrAttribute: nil,
-			allReturnIntTwin:      int64(1),
-			allReturnErrTwin:      nil,
-			queryTableMockTimes:   int(4),
-			filterMockTimes:       int(3),
-			deviceMockTimes:       int(2),
-			attributeMockTimes:    int(1),
-			twinMockTimes:         int(1),
+			name:    "SyncSqliteTest-QuerySqliteSuccess",
+			context: dtContexts,
+			wantErr: nil,
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDevice).Return(test.allReturnIntDevice, test.allReturnErrDevice).Times(test.deviceMockTimes)
-			querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDeviceAttr).Return(test.allReturnIntAttribute, test.allReturnErrAttribute).Times(test.attributeMockTimes)
-			querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDeviceTwin).Return(test.allReturnIntTwin, test.allReturnErrTwin).Times(test.twinMockTimes)
-			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(test.filterMockTimes)
-			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(test.queryTableMockTimes)
 			if err := SyncSqlite(test.context); !reflect.DeepEqual(err, test.wantErr) {
 				t.Errorf("SyncSqlite() error = %v, wantError %v", err, test.wantErr)
 			}
@@ -280,104 +224,40 @@ func TestSyncSqlite(t *testing.T) {
 // TestSyncDeviceFromSqlite is function to test SyncDeviceFromSqlite().
 func TestSyncDeviceFromSqlite(t *testing.T) {
 	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
-	ormerMock, querySeterMock := testtools.InitOrmerMock(t)
 
 	dtContext, _ := dtcontext.InitDTContext()
-	// fakeDevice is used to set the argument of All function
-	fakeDevice := createFakeDevice()
-	// fakeDeviceAttr is used to set the argument of All function
-	fakeDeviceAttr := createFakeDeviceAttribute()
-	// fakeDeviceTwin is used to set the argument of All function
-	fakeDeviceTwin := createFakeDeviceTwin()
 	tests := CasesDevice{
 		{
 			//Failure Case
-			name:                  "TestSyncDeviceFromSqlite-QueryDeviceFailure",
-			context:               dtContext,
-			deviceID:              "DeviceA",
-			wantErr:               errors.New("Query Device Failed"),
-			filterReturn:          querySeterMock,
-			queryTableReturn:      querySeterMock,
-			allReturnIntDevice:    int64(0),
-			allReturnErrDevice:    errors.New("Query Device Failed"),
-			allReturnIntAttribute: int64(0),
-			allReturnErrAttribute: nil,
-			allReturnIntTwin:      int64(0),
-			allReturnErrTwin:      nil,
-			queryTableMockTimes:   int(1),
-			filterMockTimes:       int(1),
-			deviceMockTimes:       int(1),
-			attributeMockTimes:    int(0),
-			twinMockTimes:         int(0),
+			name:     "TestSyncDeviceFromSqlite-QueryDeviceFailure",
+			context:  dtContext,
+			deviceID: "DeviceA",
+			wantErr:  errors.New("Query Device Failed"),
 		},
 		{
 			//Failure Case
-			name:                  "TestSyncDeviceFromSqlite-QueryDeviceAttributeFailed",
-			context:               dtContext,
-			deviceID:              "DeviceB",
-			wantErr:               errors.New("query device attr failed"),
-			filterReturn:          querySeterMock,
-			queryTableReturn:      querySeterMock,
-			allReturnIntDevice:    int64(1),
-			allReturnErrDevice:    nil,
-			allReturnIntAttribute: int64(0),
-			allReturnErrAttribute: errors.New("query device attr failed"),
-			allReturnIntTwin:      int64(0),
-			allReturnErrTwin:      nil,
-			queryTableMockTimes:   int(2),
-			filterMockTimes:       int(2),
-			deviceMockTimes:       int(1),
-			attributeMockTimes:    int(1),
-			twinMockTimes:         int(0),
+			name:     "TestSyncDeviceFromSqlite-QueryDeviceAttributeFailed",
+			context:  dtContext,
+			deviceID: "DeviceB",
+			wantErr:  errors.New("query device attr failed"),
 		},
 		{
 			//Failure Case
-			name:                  "TestSyncDeviceFromSqlite-QueryDeviceTwinFailed",
-			context:               dtContext,
-			deviceID:              "DeviceC",
-			wantErr:               errors.New("query device twin failed"),
-			filterReturn:          querySeterMock,
-			queryTableReturn:      querySeterMock,
-			allReturnIntDevice:    int64(1),
-			allReturnErrDevice:    nil,
-			allReturnIntAttribute: int64(1),
-			allReturnErrAttribute: nil,
-			allReturnIntTwin:      int64(0),
-			allReturnErrTwin:      errors.New("query device twin failed"),
-			queryTableMockTimes:   int(3),
-			filterMockTimes:       int(3),
-			deviceMockTimes:       int(1),
-			attributeMockTimes:    int(1),
-			twinMockTimes:         int(1),
+			name:     "TestSyncDeviceFromSqlite-QueryDeviceTwinFailed",
+			context:  dtContext,
+			deviceID: "DeviceC",
+			wantErr:  errors.New("query device twin failed"),
 		},
 		{
 			//Success Case
-			name:                  "TestSyncDeviceFromSqlite-SuccessCase",
-			context:               dtContext,
-			deviceID:              "DeviceD",
-			wantErr:               nil,
-			filterReturn:          querySeterMock,
-			queryTableReturn:      querySeterMock,
-			allReturnIntDevice:    int64(1),
-			allReturnErrDevice:    nil,
-			allReturnIntAttribute: int64(1),
-			allReturnErrAttribute: nil,
-			allReturnIntTwin:      int64(1),
-			allReturnErrTwin:      nil,
-			queryTableMockTimes:   int(3),
-			filterMockTimes:       int(3),
-			deviceMockTimes:       int(1),
-			attributeMockTimes:    int(1),
-			twinMockTimes:         int(1),
+			name:     "TestSyncDeviceFromSqlite-SuccessCase",
+			context:  dtContext,
+			deviceID: "DeviceD",
+			wantErr:  nil,
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDevice).Return(test.allReturnIntDevice, test.allReturnErrDevice).Times(test.deviceMockTimes)
-			querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDeviceAttr).Return(test.allReturnIntAttribute, test.allReturnErrAttribute).Times(test.attributeMockTimes)
-			querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDeviceTwin).Return(test.allReturnIntTwin, test.allReturnErrTwin).Times(test.twinMockTimes)
-			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(test.filterMockTimes)
-			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(test.queryTableMockTimes)
 			if err := SyncDeviceFromSqlite(test.context, test.deviceID); !reflect.DeepEqual(err, test.wantErr) {
 				t.Errorf("SyncDeviceFromSqlite() error = %v, wantError %v", err, test.wantErr)
 			}

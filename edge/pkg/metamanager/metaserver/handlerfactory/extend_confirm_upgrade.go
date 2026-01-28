@@ -29,7 +29,7 @@ import (
 	commontypes "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
 	commonmsg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
-	daov2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/taskmanager/actions"
 	"github.com/kubeedge/kubeedge/edge/pkg/taskmanager/v1alpha1/taskexecutor"
 )
@@ -40,7 +40,7 @@ func (f *Factory) ConfirmUpgrade() http.Handler {
 		logger := klog.FromContext(ctx).WithName("confirmUpgrade")
 		logger.V(1).Info("start to confirm upgrade")
 
-		upgradeDao := daov2.NewUpgrade()
+		upgradeDao := dbclient.NewUpgrade()
 		jobname, nodename, spec, err := upgradeDao.Get()
 		if err != nil {
 			http.Error(w, fmt.Sprintf("failed to get upgrade spec, err: %v", err),
@@ -64,7 +64,7 @@ func (f *Factory) ConfirmUpgrade() http.Handler {
 				}
 			}()
 		} else { // v1alpha1
-			upgradeV1alpha1Dao := daov2.NewUpgradeV1alpha1()
+			upgradeV1alpha1Dao := dbclient.NewUpgradeV1alpha1()
 			upgradeReq, err := upgradeV1alpha1Dao.Get()
 			if err != nil {
 				http.Error(w, fmt.Sprintf("failed to get upgrade request, err: %v", err),

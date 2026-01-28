@@ -6,6 +6,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtmanager"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 )
 
 // DTModule module for devicetwin
@@ -52,6 +53,8 @@ func (dm *DTModule) InitWorker(recv chan interface{}, confirm chan interface{}, 
 				HeartBeatChan: heartBeat,
 				DTContexts:    dtContext,
 			},
+			DeviceService: dbclient.NewDeviceService(),
+			MetaService:   dbclient.NewMetaService(),
 		}
 	}
 }

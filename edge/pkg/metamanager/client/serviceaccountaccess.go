@@ -15,7 +15,7 @@ import (
 
 	policyv1alpha1 "github.com/kubeedge/api/apis/policy/v1alpha1"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 )
 
 const (
@@ -27,7 +27,7 @@ type RoleGetter struct {
 }
 
 func (g *RoleGetter) GetRole(ctx context.Context, namespace, name string) (*rbacv1.Role, error) {
-	rst, err := dao.QueryMeta("type", model.ResourceTypeSaAccess)
+	rst, err := dbclient.NewMetaService().QueryMeta("type", model.ResourceTypeSaAccess)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ type RoleBindingLister struct {
 }
 
 func (l *RoleBindingLister) ListRoleBindings(ctx context.Context, namespace string) ([]*rbacv1.RoleBinding, error) {
-	rst, err := dao.QueryMeta("type", model.ResourceTypeSaAccess)
+	rst, err := dbclient.NewMetaService().QueryMeta("type", model.ResourceTypeSaAccess)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +93,7 @@ type ClusterRoleGetter struct {
 }
 
 func (g *ClusterRoleGetter) GetClusterRole(ctx context.Context, name string) (*rbacv1.ClusterRole, error) {
-	rst, err := dao.QueryMeta("type", model.ResourceTypeSaAccess)
+	rst, err := dbclient.NewMetaService().QueryMeta("type", model.ResourceTypeSaAccess)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +132,7 @@ type ClusterRoleBindingLister struct {
 }
 
 func (l *ClusterRoleBindingLister) ListClusterRoleBindings(context.Context) ([]*rbacv1.ClusterRoleBinding, error) {
-	rst, err := dao.QueryMeta("type", model.ResourceTypeSaAccess)
+	rst, err := dbclient.NewMetaService().QueryMeta("type", model.ResourceTypeSaAccess)
 	if err != nil {
 		klog.Errorf("failed to query meta %v", err)
 		return nil, err

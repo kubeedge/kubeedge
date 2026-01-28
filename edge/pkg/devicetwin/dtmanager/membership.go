@@ -12,10 +12,11 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 )
 
 var (
@@ -206,16 +207,16 @@ func addDevice(context *dtcontext.DTContext, toAdd []dttype.Device, baseMessage 
 
 		//write to sqlite
 		var err error
-		adds := make([]dtclient.Device, 0)
-		addAttr := make([]dtclient.DeviceAttr, 0)
-		addTwin := make([]dtclient.DeviceTwin, 0)
-		adds = append(adds, dtclient.Device{
+		adds := make([]models.Device, 0)
+		addAttr := make([]models.DeviceAttr, 0)
+		addTwin := make([]models.DeviceTwin, 0)
+		adds = append(adds, models.Device{
 			ID:          device.ID,
 			Name:        device.Name,
 			Description: device.Description,
 			State:       device.State})
 		for i := 1; i <= dtcommon.RetryTimes; i++ {
-			err = dtclient.AddDeviceTrans(adds, addAttr, addTwin)
+			err = dbclient.NewDeviceService().AddDeviceTrans(adds, addAttr, addTwin)
 			if err == nil {
 				break
 			}
@@ -286,7 +287,7 @@ func removeDevice(context *dtcontext.DTContext, toRemove []dttype.Device, baseMe
 		deletes := make([]string, 0)
 		deletes = append(deletes, device.ID)
 		for i := 1; i <= dtcommon.RetryTimes; i++ {
-			err := dtclient.DeleteDeviceTrans(deletes)
+			err := dbclient.NewDeviceService().DeleteDeviceTrans(deletes)
 			if err != nil {
 				klog.Errorf("Delete document of device %s failed at %d time, err: %#v", device.ID, i, err)
 			} else {
@@ -380,23 +381,23 @@ func SyncDeviceFromSqlite(context *dtcontext.DTContext, deviceID string) error {
 		context.DeviceMutex.Store(deviceID, &deviceMutex)
 	}
 
-	devices, err := dtclient.QueryDevice("id", deviceID)
+	devices, err := dbclient.NewDeviceService().QueryDevice("id", deviceID)
 	if err != nil {
 		klog.Errorf("query device failed, id: %s, err: %v", deviceID, err)
 		return err
 	}
-	if len(*devices) == 0 {
+	if len(devices) == 0 {
 		return errors.New("not found device")
 	}
-	dbDoc := (*devices)[0]
+	dbDoc := (devices)[0]
 
-	deviceAttr, err := dtclient.QueryDeviceAttr("deviceid", deviceID)
+	deviceAttr, err := dbclient.NewDeviceService().QueryDeviceAttr("deviceid", deviceID)
 	if err != nil {
 		klog.Errorf("query device attr failed, id: %s, err: %v", deviceID, err)
 		return err
 	}
 
-	deviceTwin, err := dtclient.QueryDeviceTwin("deviceid", deviceID)
+	deviceTwin, err := dbclient.NewDeviceService().QueryDeviceTwin("deviceid", deviceID)
 	if err != nil {
 		klog.Errorf("query device twin failed, id: %s, err: %v", deviceID, err)
 		return err

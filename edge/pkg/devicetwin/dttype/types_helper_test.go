@@ -26,8 +26,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 )
 
 // TestUnmarshalMembershipDetail is function to test UnmarshalMembershipDetails()
@@ -148,8 +148,8 @@ func TestUnmarshalBaseMessage(t *testing.T) {
 func TestDeviceAttrToMsgAttr(t *testing.T) {
 	assert := assert.New(t)
 
-	var devAttr []dtclient.DeviceAttr
-	attr := dtclient.DeviceAttr{
+	var devAttr []models.DeviceAttr
+	attr := models.DeviceAttr{
 		ID:          00,
 		DeviceID:    "DeviceA",
 		Name:        "SensorTag",
@@ -172,7 +172,7 @@ func TestDeviceAttrToMsgAttr(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		deviceAttrs []dtclient.DeviceAttr
+		deviceAttrs []models.DeviceAttr
 		want        map[string]*MsgAttr
 	}{
 		{
@@ -197,14 +197,14 @@ func TestDeviceAttrToMsgAttr(t *testing.T) {
 }
 
 // createDeviceTwin() is function to create an array of DeviceTwin.
-func createDeviceTwin(devTwin dtclient.DeviceTwin) []dtclient.DeviceTwin {
-	deviceTwin := []dtclient.DeviceTwin{}
+func createDeviceTwin(devTwin models.DeviceTwin) []models.DeviceTwin {
+	deviceTwin := []models.DeviceTwin{}
 	deviceTwin = append(deviceTwin, devTwin)
 	return deviceTwin
 }
 
 // createMessageTwinFromDeviceTwin() is function to create MessageTwin corresponding to a particular DeviceTwin.
-func createMessageTwinFromDeviceTwin(t *testing.T, devTwin dtclient.DeviceTwin) map[string]*MsgTwin {
+func createMessageTwinFromDeviceTwin(t *testing.T, devTwin models.DeviceTwin) map[string]*MsgTwin {
 	var (
 		expectedMeta ValueMetadata
 		err          error
@@ -243,7 +243,7 @@ func createMessageTwinFromDeviceTwin(t *testing.T, devTwin dtclient.DeviceTwin) 
 func TestDeviceTwinToMsgTwin(t *testing.T) {
 	assert := assert.New(t)
 
-	devTwin := dtclient.DeviceTwin{
+	devTwin := models.DeviceTwin{
 		ID:              00,
 		DeviceID:        "DeviceA",
 		Name:            "SensorTag",
@@ -261,7 +261,7 @@ func TestDeviceTwinToMsgTwin(t *testing.T) {
 	msgTwins := createMessageTwinFromDeviceTwin(t, devTwin)
 	tests := []struct {
 		name        string
-		deviceTwins []dtclient.DeviceTwin
+		deviceTwins []models.DeviceTwin
 		want        map[string]*MsgTwin
 	}{
 		{
@@ -289,7 +289,7 @@ func TestMsgAttrToDeviceAttr(t *testing.T) {
 		Optional: &optional,
 		Metadata: metadata,
 	}
-	wantDeviceAttr := dtclient.DeviceAttr{
+	wantDeviceAttr := models.DeviceAttr{
 		Name:     "Sensor",
 		AttrType: metadata.Type,
 		Optional: optional,
@@ -299,7 +299,7 @@ func TestMsgAttrToDeviceAttr(t *testing.T) {
 		name         string
 		attrname     string
 		msgAttribute *MsgAttr
-		want         dtclient.DeviceAttr
+		want         models.DeviceAttr
 	}{
 		{
 			name:         "MsgAttrToDeviceAttrTest",
@@ -419,7 +419,7 @@ func TestMsgTwinToDeviceTwin(t *testing.T) {
 		name     string
 		twinName string
 		msgTwin  *MsgTwin
-		want     dtclient.DeviceTwin
+		want     models.DeviceTwin
 	}{
 		{
 			name:     "MsgTwinToDeviceTwinTest",
@@ -428,7 +428,7 @@ func TestMsgTwinToDeviceTwin(t *testing.T) {
 				Optional: &optional,
 				Metadata: &metadata,
 			},
-			want: dtclient.DeviceTwin{
+			want: models.DeviceTwin{
 				Name:     "DeviceA",
 				AttrType: metadata.Type,
 				Optional: optional,
@@ -495,7 +495,7 @@ func TestBuildDeviceAttrUpdate(t *testing.T) {
 		EventID:   uuid.New().String(),
 		Timestamp: time.Now().UnixNano() / 1e6,
 	}
-	attr := dtclient.DeviceAttr{
+	attr := models.DeviceAttr{
 		ID:          00,
 		DeviceID:    "DeviceA",
 		Name:        "SensorTag",
