@@ -125,10 +125,8 @@ func (ns *NodeSession) KeepAliveMessage() {
 
 // ReceiveMessageAck receive the message ack from edge node
 func (ns *NodeSession) ReceiveMessageAck(parentID string) {
-	ackChan, exist := ns.ackMessageCache.Load(parentID)
-	if exist {
-		close(ackChan.(chan struct{}))
-		ns.ackMessageCache.Delete(parentID)
+	if ch, loaded := ns.ackMessageCache.LoadAndDelete(parentID); loaded {
+		close(ch.(chan struct{}))
 	}
 }
 
@@ -239,6 +237,14 @@ func (ns *NodeSession) Terminating() {
 
 		// ignore close error
 		_ = ns.connection.Close()
+
+		// Clean up any remaining ack channels to unblock waiting goroutines
+		ns.ackMessageCache.Range(func(key, value interface{}) bool {
+			if ch, loaded := ns.ackMessageCache.LoadAndDelete(key); loaded {
+				close(ch.(chan struct{}))
+			}
+			return true
+		})
 	})
 }
 
@@ -337,11 +343,16 @@ func (ns *NodeSession) syncAckMessage() (bool, error) {
 
 func (ns *NodeSession) sendMessageWithRetry(copyMsg, msg *beehivemodel.Message) error {
 	ackChan := make(chan struct{})
-	ns.ackMessageCache.Store(copyMsg.GetID(), ackChan)
+	msgID := copyMsg.GetID()
+	ns.ackMessageCache.Store(msgID, ackChan)
 
-	// initialize retry count and timer for sending message
 	retryCount := 0
 	ticker := time.NewTimer(sendRetryInterval)
+
+	defer func() {
+		ticker.Stop()
+		ns.ackMessageCache.Delete(msgID)
+	}()
 
 	err := ns.connection.WriteMessageAsync(copyMsg)
 	if err != nil {
