@@ -22,6 +22,7 @@ import (
 	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator/watchhook"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
+	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
 // imitator is a storage based on metav2 that imitate the behavior of etcd
@@ -250,6 +251,22 @@ func (s *imitator) Event(msg *model.Message) []watch.Event {
 			return ret
 		}
 	}
+
+	// robustness: check and complete Kind if missing
+	var objMap map[string]interface{}
+	if err = json.Unmarshal(bytes, &objMap); err == nil {
+		u := &unstructured.Unstructured{Object: objMap}
+		if u.GetKind() == "" {
+			if kind := util.UnsafeResourceToKind(resType); kind != "" {
+				u.SetKind(kind)
+				if newBytes, err := u.MarshalJSON(); err == nil {
+					bytes = newBytes
+					klog.V(4).Infof("patched missing Kind: %s", kind)
+				}
+			}
+		}
+	}
+
 	var op watch.EventType
 	switch msg.Router.Operation {
 	case model.InsertOperation:
