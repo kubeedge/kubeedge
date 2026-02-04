@@ -280,10 +280,17 @@ func runEdgeCore() error {
 
 	var binExec, tip string
 	if systemdExist {
+
 		tip = fmt.Sprintf("KubeEdge edgecore is running, For logs visit: journalctl -u %s.service -xe", common.EdgeCore)
-		binExec = fmt.Sprintf(
-			"sudo systemctl daemon-reload && sudo systemctl enable %s && sudo systemctl start %s",
-			common.EdgeCore, common.EdgeCore)
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
+		defer cancel()
+
+		err := util.EnableAndRunSystemdUnit(ctx, "edgecore.service", true)
+		if err != nil {
+			return err
+		}
+
 	} else {
 		logFiles := filepath.Join(constants.KubeEdgeLogPath, constants.KubeEdgeBinaryName+".log")
 		tip = fmt.Sprintf("KubeEdge edgecore is running, For logs visit: %s", logFiles)
