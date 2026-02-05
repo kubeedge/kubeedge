@@ -37,3 +37,4 @@ rootCA.crt
 rootCA.srl
 verify_output.txt
 edge/test/integration/config.json
+

@@ -281,7 +281,9 @@ func runEdgeCore() error {
 		dst := filepath.Join("/etc/systemd/system", unitName)
 
 		if _, err := os.Stat(src); err == nil {
-			_ = os.Link(src, dst)
+			if err := os.Link(src, dst); err != nil && !os.IsExist(err) {
+				klog.Warningf("failed to link service file %s to %s: %v", src, dst, err)
+			}
 		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)

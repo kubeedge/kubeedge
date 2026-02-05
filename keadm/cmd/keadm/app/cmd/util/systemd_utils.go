@@ -21,12 +21,9 @@ func EnableAndRunSystemdUnit(ctx context.Context, unit string, reload bool) erro
 		}
 	}
 
-	enabled, _, err := conn.EnableUnitFilesContext(ctx, []string{unit}, false, true)
+	_, _, err = conn.EnableUnitFilesContext(ctx, []string{unit}, false, true)
 	if err != nil {
 		return fmt.Errorf("enable %s failed: %w", unit, err)
-	}
-	if !enabled {
-		return fmt.Errorf("enable %s failed: %s", unit, err)
 	}
 
 	done := make(chan string, 1)

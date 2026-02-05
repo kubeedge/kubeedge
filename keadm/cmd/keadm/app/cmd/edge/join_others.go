@@ -290,6 +290,8 @@ func runEdgeCore() error {
 		if err != nil {
 			return err
 		}
+		klog.Infoln(tip)
+		return nil
 
 	} else {
 		logFiles := filepath.Join(constants.KubeEdgeLogPath, constants.KubeEdgeBinaryName+".log")
