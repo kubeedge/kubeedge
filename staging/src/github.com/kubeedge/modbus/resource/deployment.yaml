@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mapper-test
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo
+  template:
+    metadata:
+      labels:
+        app: demo
+    spec:
+      nodeName: # replace with your edge node name
+      containers:
+        - name: demo
+          volumeMounts: # Required, mapper need to communicate with grpcclient and get the config
+            - name: test-volume
+              mountPath: /etc/kubeedge
+            - name: config
+              mountPath: /tmp
+          env: # Not Required, this field is used to mount the user database key
+            - name: TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: mysecret
+                  key: token
+          image:  # Replace with your mapper image name
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              cpu: 300m
+              memory: 500Mi
+            requests:
+              cpu: 100m
+              memory: 100Mi
+          command: [ "/bin/sh","-c" ]
+          args: [ "/kubeedge/main --config-file /tmp/config.yaml --v 4" ]
+      volumes:
+        - name: test-volume
+          hostPath:
+            path: /etc/kubeedge
+            type: Directory
+        - name: config
+          configMap:
+            name: cm-mapper
+            items:
+              - key: configData
+                path: config.yaml

@@ -1,7 +1,6 @@
 package client
 
 import (
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 	"time"
 
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -10,6 +9,7 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 )
 
 var (

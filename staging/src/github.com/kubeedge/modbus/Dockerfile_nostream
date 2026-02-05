@@ -1,0 +1,19 @@
+FROM golang:1.22.9-alpine3.19 AS builder
+
+WORKDIR /build
+
+ENV GO111MODULE=on \
+    GOPROXY=https://goproxy.cn,direct
+
+COPY . .
+
+
+
+FROM ubuntu:18.04
+
+RUN mkdir -p kubeedge
+
+COPY --from=builder /build/main kubeedge/
+COPY ./config.yaml kubeedge/
+
+WORKDIR kubeedge
