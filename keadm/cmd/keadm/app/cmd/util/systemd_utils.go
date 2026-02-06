@@ -7,6 +7,8 @@ import (
 	"github.com/coreos/go-systemd/v22/dbus"
 )
 
+const systemdDone = "done"
+
 func EnableAndRunSystemdUnit(ctx context.Context, unit string, reload bool) error {
 	conn, err := dbus.NewSystemConnectionContext(ctx)
 	if err != nil {
@@ -33,7 +35,7 @@ func EnableAndRunSystemdUnit(ctx context.Context, unit string, reload bool) erro
 	}
 
 	result := <-done
-	if result != "done" {
+	if result != systemdDone {
 		return fmt.Errorf("failed to start %s: %s", unit, result)
 	}
 	return nil
@@ -47,7 +49,7 @@ func DisableAndStopSystemdUnit(ctx context.Context, conn *dbus.Conn, unit string
 	}
 
 	result := <-done
-	if result != "done" {
+	if result != systemdDone {
 		return fmt.Errorf("failed to stop %s: %s", unit, result)
 	}
 
