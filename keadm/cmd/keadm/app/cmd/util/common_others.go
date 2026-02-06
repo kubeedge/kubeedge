@@ -257,7 +257,7 @@ func isEdgeCoreServiceRunning(serviceName string) (bool, error) {
 		return false, fmt.Errorf("%s is not running: %s", unitName, results[result].LoadState)
 	}
 
-	return false, err
+	return false, fmt.Errorf("service %s not found", unitName)
 }
 
 // runEdgeCore starts edgecore with logs being captured
