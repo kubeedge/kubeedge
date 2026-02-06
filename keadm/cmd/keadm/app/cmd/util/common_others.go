@@ -133,7 +133,6 @@ func KillKubeEdgeBinary(proc string) error {
 		defer conn.Close()
 
 		if systemdExist && serviceName != "" {
-
 			unitName := fmt.Sprintf("%s.service", serviceName)
 			err = DisableAndStopSystemdUnit(ctx, conn, unitName, true)
 			if err != nil {
@@ -142,7 +141,6 @@ func KillKubeEdgeBinary(proc string) error {
 				fmt.Println(proc, "is stopped")
 				return nil
 			}
-
 		} else {
 			binExec = fmt.Sprintf("pkill %s", proc)
 		}
@@ -223,7 +221,6 @@ func retryDownload(filename, checksumFilename string, version semver.Version, ta
 }
 
 func isEdgeCoreServiceRunning(serviceName string) (bool, error) {
-
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
 	defer cancel()
 
@@ -296,7 +293,6 @@ func runEdgeCore() error {
 
 		fmt.Printf("KubeEdge edgecore is running, For logs visit: journalctl -u %s -xe\n", unitName)
 		return nil
-
 	} else {
 		binExec = fmt.Sprintf("%s/%s > %skubeedge/edge/%s.log 2>&1 &", apiconsts.KubeEdgeUsrBinPath, apiconsts.KubeEdgeBinaryName, apiconsts.KubeEdgePath, apiconsts.KubeEdgeBinaryName)
 	}

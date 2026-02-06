@@ -280,7 +280,6 @@ func runEdgeCore() error {
 
 	var binExec, tip string
 	if systemdExist {
-
 		tip = fmt.Sprintf("KubeEdge edgecore is running, For logs visit: journalctl -u %s.service -xe", common.EdgeCore)
 
 		ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
@@ -292,7 +291,6 @@ func runEdgeCore() error {
 		}
 		klog.Infoln(tip)
 		return nil
-
 	} else {
 		logFiles := filepath.Join(constants.KubeEdgeLogPath, constants.KubeEdgeBinaryName+".log")
 		tip = fmt.Sprintf("KubeEdge edgecore is running, For logs visit: %s", logFiles)
