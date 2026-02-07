@@ -18,6 +18,7 @@ package edgestream
 
 import (
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -89,7 +90,7 @@ func (e *edgestream) Start() {
 	}
 	// TODO: Will improve in the future
 	if ok := <-edgehub.GetCertSyncChannel()[e.Name()]; !ok {
-		panic(fmt.Errorf("Failed to find cert key pair"))
+		panic(errors.New("Failed to find cert key pair"))
 	}
 
 	cert, err := tls.LoadX509KeyPair(config.Config.TLSTunnelCertFile, config.Config.TLSTunnelPrivateKeyFile)
