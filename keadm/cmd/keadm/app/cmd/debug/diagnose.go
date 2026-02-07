@@ -97,6 +97,7 @@ func (da Diagnose) ExecuteDiagnose(use string, ops *common.DiagnoseOptions, args
 	case common.ArgDiagnosePod:
 		if len(args) == 0 {
 			klog.Error("You must specify a pod name")
+			fmt.Println("error: You must specify a pod name")
 			return
 		}
 		// diagnose Pod, first diagnose node
@@ -110,6 +111,7 @@ func (da Diagnose) ExecuteDiagnose(use string, ops *common.DiagnoseOptions, args
 
 	if err != nil {
 		klog.Errorf("Diagnose failed: %v", err)
+		fmt.Println(err.Error())
 		util.PrintFail(use, common.StrDiagnose)
 	} else {
 		util.PrintSucceed(use, common.StrDiagnose)
@@ -231,7 +233,7 @@ func DiagnosePod(ops *common.DiagnoseOptions, podName string) error {
 	}
 	if ready {
 		fmt.Printf("Pod %s is Ready\n", podName)
-	klog.Infof("pod %s is ready", podName)
+		klog.Infof("pod %s is ready", podName)
 	} else {
 		return fmt.Errorf("pod %s is not Ready", podName)
 	}

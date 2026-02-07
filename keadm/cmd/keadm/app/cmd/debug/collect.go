@@ -93,7 +93,7 @@ func ExecuteCollect(collectOptions *common.CollectOptions) error {
 	err = collectSystemData(fmt.Sprintf("%s/system", tmpName))
 	if err != nil {
 		klog.Errorf("collect System data failed: %v", err)
-		fmt.Printf("collect System data failed")
+		fmt.Printf("collect System data failed: %v\n", err)
 	}
 	printDetail("collect systemd data finish")
 
@@ -106,7 +106,7 @@ func ExecuteCollect(collectOptions *common.CollectOptions) error {
 	err = collectEdgecoreData(fmt.Sprintf("%s/edgecore", tmpName), edgeconfig, collectOptions)
 	if err != nil {
 		klog.Errorf("collect edgecore data failed: %v", err)
-		fmt.Printf("collect edgecore data failed")
+		fmt.Printf("collect edgecore data failed: %v\n", err)
 	}
 	printDetail("collect edgecore data finish")
 

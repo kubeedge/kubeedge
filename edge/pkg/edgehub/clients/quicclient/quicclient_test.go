@@ -43,7 +43,6 @@ func init() {
 
 		if err != nil {
 			klog.Errorf("Failed to create certificate: %v", err)
-			fmt.Printf("Failed to create certificate: %v\n", err)
 		}
 	}
 }
