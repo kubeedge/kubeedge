@@ -64,7 +64,9 @@ func startWebsocketServer(messageHandler handler.Handler) {
 		ExOpts:             api.WSServerOption{Path: "/"},
 	}
 	klog.Infof("Starting cloudhub %s server", api.ProtocolTypeWS)
-	klog.Exit(svc.ListenAndServeTLS("", ""))
+	if err := svc.ListenAndServeTLS("", ""); err != nil {
+		panic(err)
+	}
 }
 
 func startQuicServer(messageHandler handler.Handler) {
@@ -80,5 +82,8 @@ func startQuicServer(messageHandler handler.Handler) {
 	}
 
 	klog.Infof("Starting cloudhub %s server", api.ProtocolTypeQuic)
-	klog.Exit(svc.ListenAndServeTLS("", ""))
+	err := svc.ListenAndServeTLS("", "")
+	if err != nil {
+		panic(err)
+	}
 }

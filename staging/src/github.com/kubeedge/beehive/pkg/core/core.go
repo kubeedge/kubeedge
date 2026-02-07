@@ -38,7 +38,7 @@ func StartModules() {
 				},
 			}
 		default:
-			klog.Exitf("unsupported context type: %s", module.contextType)
+			panic(fmt.Errorf("unsupported context type: %s", module.contextType))
 		}
 
 		beehiveContext.AddModule(&m)

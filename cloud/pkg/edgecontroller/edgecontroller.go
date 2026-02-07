@@ -1,7 +1,7 @@
 package edgecontroller
 
 import (
-	"k8s.io/klog/v2"
+	"fmt"
 
 	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 	"github.com/kubeedge/beehive/pkg/core"
@@ -27,12 +27,12 @@ func newEdgeController(config *v1alpha1.EdgeController) *EdgeController {
 	var err error
 	ec.upstream, err = controller.NewUpstreamController(config, informers.GetInformersManager().GetKubeInformerFactory())
 	if err != nil {
-		klog.Exitf("new upstream controller failed with error: %s", err)
+		panic(fmt.Errorf("new upstream controller failed with error: %s", err))
 	}
 
 	ec.downstream, err = controller.NewDownstreamController(config, informers.GetInformersManager().GetKubeInformerFactory(), informers.GetInformersManager(), informers.GetInformersManager().GetKubeEdgeInformerFactory())
 	if err != nil {
-		klog.Exitf("new downstream controller failed with error: %s", err)
+		panic(fmt.Errorf("new downstream controller failed with error: %s", err))
 	}
 	return ec
 }
@@ -63,10 +63,10 @@ func (ec *EdgeController) RestartPolicy() *core.ModuleRestartPolicy {
 // Start controller
 func (ec *EdgeController) Start() {
 	if err := ec.upstream.Start(); err != nil {
-		klog.Exitf("start upstream failed with error: %s", err)
+		panic(fmt.Errorf("start upstream failed with error: %s", err))
 	}
 
 	if err := ec.downstream.Start(); err != nil {
-		klog.Exitf("start downstream failed with error: %s", err)
+		panic(fmt.Errorf("start downstream failed with error: %s", err))
 	}
 }

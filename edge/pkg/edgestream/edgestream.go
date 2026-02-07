@@ -89,12 +89,12 @@ func (e *edgestream) Start() {
 	}
 	// TODO: Will improve in the future
 	if ok := <-edgehub.GetCertSyncChannel()[e.Name()]; !ok {
-		klog.Exitf("Failed to find cert key pair")
+		panic(fmt.Errorf("Failed to find cert key pair"))
 	}
 
 	cert, err := tls.LoadX509KeyPair(config.Config.TLSTunnelCertFile, config.Config.TLSTunnelPrivateKeyFile)
 	if err != nil {
-		klog.Exitf("Failed to load x509 key pair: %v", err)
+		panic(err)
 	}
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,
