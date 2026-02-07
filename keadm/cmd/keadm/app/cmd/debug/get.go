@@ -22,6 +22,7 @@ import (
 
 	"github.com/beego/beego/v2/client/orm"
 	"github.com/spf13/cobra"
+	"k8s.io/klog/v2"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -192,6 +193,7 @@ func (g *GetOptions) Run(args []string) error {
 	}
 
 	if len(results) == 0 {
+		klog.V(1).Infof("no resources found in %s namespace", g.Namespace)
 		if _, err := fmt.Printf("No resources found in %v namespace.\n", g.Namespace); err != nil {
 			return err
 		}
@@ -225,6 +227,7 @@ func (g *GetOptions) Validate(args []string) error {
 		return fmt.Errorf("unrecognized resource type: %v. ", args[0])
 	}
 	if len(g.DataPath) == 0 {
+		klog.V(1).Infof("EdgeCore database path not specified, using default path: %v", g.DataPath)
 		fmt.Printf("not specified the EdgeCore database path, use the default path: %v. ", g.DataPath)
 	}
 	if !isFileExist(g.DataPath) {
@@ -469,6 +472,7 @@ func InitDB(driverName, dbName, dataSource string) error {
 	// create orm
 	defer func() {
 		if err := recover(); err != nil {
+			klog.Errorf("database access error: %v", err)
 			fmt.Printf("using db access error as %v", err)
 			return
 		}

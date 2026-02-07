@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/api/apis/common/constants"
 	apiconsts "github.com/kubeedge/api/apis/common/constants"
@@ -40,6 +41,7 @@ func NewCollect() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			err := ExecuteCollect(collectOptions)
 			if err != nil {
+				klog.Errorf("Collect failed: %v", err)
 				fmt.Println(err)
 			}
 		},
@@ -80,6 +82,7 @@ func ExecuteCollect(collectOptions *common.CollectOptions) error {
 	}
 
 	fmt.Println("Start collecting data")
+	klog.Info("Starting data collection")
 	// create tmp direction
 	tmpName, timenow, err := makeDirTmp()
 	if err != nil {
@@ -89,6 +92,7 @@ func ExecuteCollect(collectOptions *common.CollectOptions) error {
 
 	err = collectSystemData(fmt.Sprintf("%s/system", tmpName))
 	if err != nil {
+		klog.Errorf("collect System data failed: %v", err)
 		fmt.Printf("collect System data failed")
 	}
 	printDetail("collect systemd data finish")
@@ -96,10 +100,12 @@ func ExecuteCollect(collectOptions *common.CollectOptions) error {
 	edgeconfig, err := util.ParseEdgecoreConfig(collectOptions.Config)
 
 	if err != nil {
+		klog.Errorf("failed to load edgecore config: %s", err.Error())
 		fmt.Printf("fail to load edgecore config: %s", err.Error())
 	}
 	err = collectEdgecoreData(fmt.Sprintf("%s/edgecore", tmpName), edgeconfig, collectOptions)
 	if err != nil {
+		klog.Errorf("collect edgecore data failed: %v", err)
 		fmt.Printf("collect edgecore data failed")
 	}
 	printDetail("collect edgecore data finish")
@@ -122,6 +128,7 @@ func ExecuteCollect(collectOptions *common.CollectOptions) error {
 	printDetail("Remove tmp data finish")
 
 	fmt.Printf("Data collected successfully, path: %s\n", zipName)
+	klog.Infof("data collection completed successfully: %s", zipName)
 	return nil
 }
 
