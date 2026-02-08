@@ -83,7 +83,7 @@ func TestEdgeHubStatusOptions_checkEdgeCoreStatus(t *testing.T) {
 			nodeName:       "test-node",
 			nodeReady:      false,
 			expectedStatus: "Not Ready",
-			expectError:    true,
+			expectError:    false,
 		},
 	}
 
@@ -156,7 +156,7 @@ func TestEdgeHubStatusOptions_checkEdgeHubConnection(t *testing.T) {
 			nodeName:       "test-node",
 			runningPods:    0,
 			expectedStatus: "Not Connected",
-			expectError:    true,
+			expectError:    false,
 		},
 	}
 

@@ -28,6 +28,15 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/metaclient"
 )
 
+const (
+	StatusRunning      = "Running"
+	StatusNotReady     = "Not Ready"
+	StatusConnected    = "Connected"
+	StatusNotConnected = "Not Connected"
+	StatusHealthy      = "Healthy"
+	StatusUnhealthy    = "Unhealthy"
+)
+
 type EdgeHubStatusOptions struct {
 	NodeName       string
 	edgeCoreStatus string
@@ -101,7 +110,6 @@ func (opts *EdgeHubStatusOptions) checkEdgeCoreStatus(kubeClient kubernetes.Inte
 	// Check node status to verify edgecore is running
 	node, err := kubeClient.CoreV1().Nodes().Get(ctx, opts.NodeName, metav1.GetOptions{})
 	if err != nil {
-		fmt.Printf("Failed to get node status: %v\n", err)
 		return err
 	}
 
@@ -109,14 +117,14 @@ func (opts *EdgeHubStatusOptions) checkEdgeCoreStatus(kubeClient kubernetes.Inte
 	for _, condition := range node.Status.Conditions {
 		if condition.Type == v1.NodeReady && condition.Status == v1.ConditionTrue {
 			fmt.Println("EdgeCore is running and node is ready")
-			opts.edgeCoreStatus = "Running"
+			opts.edgeCoreStatus = StatusRunning
 			return nil
 		}
 	}
 
 	fmt.Println("EdgeCore node is not ready")
-	opts.edgeCoreStatus = "Not Ready"
-	return fmt.Errorf("node not ready")
+	opts.edgeCoreStatus = StatusNotReady
+	return nil
 }
 
 // checkEdgeHubConnection checks EdgeHub connection to cloud
@@ -130,7 +138,6 @@ func (opts *EdgeHubStatusOptions) checkEdgeHubConnection(kubeClient kubernetes.I
 		FieldSelector: fmt.Sprintf("spec.nodeName=%s", opts.NodeName),
 	})
 	if err != nil {
-		fmt.Printf("Failed to list pods on node: %v\n", err)
 		return err
 	}
 
@@ -143,13 +150,13 @@ func (opts *EdgeHubStatusOptions) checkEdgeHubConnection(kubeClient kubernetes.I
 
 	if runningPods > 0 {
 		fmt.Printf("EdgeHub connection appears healthy (%d running pods)\n", runningPods)
-		opts.edgeHubStatus = "Connected"
+		opts.edgeHubStatus = StatusConnected
 		return nil
 	}
 
 	fmt.Println("No running pods found - EdgeHub may have connectivity issues")
-	opts.edgeHubStatus = "Not Connected"
-	return fmt.Errorf("no running pods found on node %s", opts.NodeName)
+	opts.edgeHubStatus = StatusNotConnected
+	return nil
 }
 
 // displayOverallStatus displays the overall status summary
@@ -160,9 +167,9 @@ func (opts *EdgeHubStatusOptions) displayOverallStatus() {
 	fmt.Printf("EdgeHub: %s\n", opts.edgeHubStatus)
 
 	// Determine overall status
-	if opts.edgeCoreStatus == "Running" && opts.edgeHubStatus == "Connected" {
-		fmt.Println("Overall Status: Healthy")
+	if opts.edgeCoreStatus == StatusRunning && opts.edgeHubStatus == StatusConnected {
+		fmt.Println("Overall Status:", StatusHealthy)
 	} else {
-		fmt.Println("Overall Status: Unhealthy")
+		fmt.Println("Overall Status:", StatusUnhealthy)
 	}
 }
