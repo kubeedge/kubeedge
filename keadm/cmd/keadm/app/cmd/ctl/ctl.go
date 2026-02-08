@@ -26,6 +26,7 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/get"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/logs"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/restart"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/status"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/unhold"
 )
 
@@ -47,5 +48,6 @@ func NewCtl() *cobra.Command {
 	cmd.AddCommand(exec.NewEdgePodExec())
 	cmd.AddCommand(describe.NewEdgeDescribe())
 	cmd.AddCommand(edit.NewEdgeEdit())
+	cmd.AddCommand(status.NewEdgeStatus())
 	return cmd
 }
