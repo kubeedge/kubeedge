@@ -21,13 +21,17 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/metaclient"
 )
 
 type EdgeHubStatusOptions struct {
-	NodeName string
+	NodeName       string
+	edgeCoreStatus string
+	edgeHubStatus  string
 }
 
 var (
@@ -67,13 +71,19 @@ func NewEdgeHubStatus() *cobra.Command {
 func (opts *EdgeHubStatusOptions) Run() error {
 	fmt.Printf("Checking EdgeHub status for node: %s\n\n", opts.NodeName)
 
+	// Initialize Kubernetes client once
+	kubeClient, err := metaclient.KubeClient()
+	if err != nil {
+		return fmt.Errorf("failed to get Kubernetes client: %v", err)
+	}
+
 	// Check if edgecore is running
-	if err := opts.checkEdgeCoreStatus(); err != nil {
+	if err := opts.checkEdgeCoreStatus(kubeClient); err != nil {
 		return fmt.Errorf("failed to check edgecore status: %v", err)
 	}
 
 	// Check EdgeHub connection status
-	if err := opts.checkEdgeHubConnection(); err != nil {
+	if err := opts.checkEdgeHubConnection(kubeClient); err != nil {
 		return fmt.Errorf("failed to check EdgeHub connection: %v", err)
 	}
 
@@ -83,14 +93,8 @@ func (opts *EdgeHubStatusOptions) Run() error {
 }
 
 // checkEdgeCoreStatus checks if edgecore process is running
-func (opts *EdgeHubStatusOptions) checkEdgeCoreStatus() error {
+func (opts *EdgeHubStatusOptions) checkEdgeCoreStatus(kubeClient kubernetes.Interface) error {
 	fmt.Println("Checking EdgeCore process status...")
-
-	kubeClient, err := metaclient.KubeClient()
-	if err != nil {
-		fmt.Printf("Failed to get Kubernetes client: %v\n", err)
-		return err
-	}
 
 	ctx := context.Background()
 
@@ -103,25 +107,21 @@ func (opts *EdgeHubStatusOptions) checkEdgeCoreStatus() error {
 
 	// Check if node is ready
 	for _, condition := range node.Status.Conditions {
-		if condition.Type == "Ready" && condition.Status == "True" {
+		if condition.Type == v1.NodeReady && condition.Status == v1.ConditionTrue {
 			fmt.Println("EdgeCore is running and node is ready")
+			opts.edgeCoreStatus = "Running"
 			return nil
 		}
 	}
 
 	fmt.Println("EdgeCore node is not ready")
+	opts.edgeCoreStatus = "Not Ready"
 	return fmt.Errorf("node not ready")
 }
 
 // checkEdgeHubConnection checks EdgeHub connection to cloud
-func (opts *EdgeHubStatusOptions) checkEdgeHubConnection() error {
+func (opts *EdgeHubStatusOptions) checkEdgeHubConnection(kubeClient kubernetes.Interface) error {
 	fmt.Println("Checking EdgeHub connection status...")
-
-	kubeClient, err := metaclient.KubeClient()
-	if err != nil {
-		fmt.Printf("Failed to get Kubernetes client: %v\n", err)
-		return err
-	}
 
 	ctx := context.Background()
 
@@ -136,25 +136,33 @@ func (opts *EdgeHubStatusOptions) checkEdgeHubConnection() error {
 
 	runningPods := 0
 	for _, pod := range pods.Items {
-		if pod.Status.Phase == "Running" {
+		if pod.Status.Phase == v1.PodRunning {
 			runningPods++
 		}
 	}
 
 	if runningPods > 0 {
 		fmt.Printf("EdgeHub connection appears healthy (%d running pods)\n", runningPods)
-	} else {
-		fmt.Println("No running pods found - EdgeHub may have connectivity issues")
+		opts.edgeHubStatus = "Connected"
+		return nil
 	}
 
-	return nil
+	fmt.Println("No running pods found - EdgeHub may have connectivity issues")
+	opts.edgeHubStatus = "Not Connected"
+	return fmt.Errorf("no running pods found on node %s", opts.NodeName)
 }
 
 // displayOverallStatus displays the overall status summary
 func (opts *EdgeHubStatusOptions) displayOverallStatus() {
 	fmt.Println("\nEdgeHub Status Summary:")
 	fmt.Printf("Node: %s\n", opts.NodeName)
-	fmt.Println("EdgeCore: Running")
-	fmt.Println("EdgeHub: Connected")
-	fmt.Println("Overall Status: Healthy")
+	fmt.Printf("EdgeCore: %s\n", opts.edgeCoreStatus)
+	fmt.Printf("EdgeHub: %s\n", opts.edgeHubStatus)
+
+	// Determine overall status
+	if opts.edgeCoreStatus == "Running" && opts.edgeHubStatus == "Connected" {
+		fmt.Println("Overall Status: Healthy")
+	} else {
+		fmt.Println("Overall Status: Unhealthy")
+	}
 }
