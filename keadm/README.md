@@ -2,9 +2,10 @@
 
 Click [here](https://kubeedge.io/en/docs/setup/keadm/) for detailed documentation of KubeEdge installer.
 
-## keadm ctl Command Examples
+## keadm ctl Commands
 
-For comprehensive examples and usage patterns for `keadm ctl` commands, see [ctl-examples.md](docs/ctl-examples.md).
+For comprehensive documentation and examples for `keadm ctl` commands, see the official documentation:
+- [keadm ctl Command Documentation](https://kubeedge.io/en/docs/setup/keadm-ctl/)
 
 ### Quick Examples
 
