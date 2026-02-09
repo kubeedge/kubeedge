@@ -359,7 +359,7 @@ func (e *edged) syncPod(podCfg *config.PodConfig) {
 				beehiveContext.SendResp(*resp)
 			}
 		default:
-			klog.Errorf("resType is not pod or configmap or secret or volume: resType is %s", resType)
+			klog.Errorf("resType is not pod or volume: resType is %s", resType)
 			continue
 		}
 	}
