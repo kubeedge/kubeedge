@@ -22,13 +22,13 @@ import (
 
 	"github.com/beego/beego/v2/client/orm"
 	"github.com/spf13/cobra"
-	"k8s.io/klog/v2"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/cli-runtime/pkg/printers"
+	"k8s.io/klog/v2"
 	api "k8s.io/kubernetes/pkg/apis/core"
 	k8s_v1_api "k8s.io/kubernetes/pkg/apis/core/v1"
 	k8sprinters "k8s.io/kubernetes/pkg/printers"
@@ -194,9 +194,7 @@ func (g *GetOptions) Run(args []string) error {
 
 	if len(results) == 0 {
 		klog.V(1).Infof("no resources found in %s namespace", g.Namespace)
-		if _, err := fmt.Printf("No resources found in %v namespace.\n", g.Namespace); err != nil {
-			return err
-		}
+		fmt.Printf("No resources found in %v namespace.\n", g.Namespace)
 		return nil
 	}
 	if *g.PrintFlags.OutputFormat == "" || *g.PrintFlags.OutputFormat == FormatTypeWIDE {
@@ -228,7 +226,6 @@ func (g *GetOptions) Validate(args []string) error {
 	}
 	if len(g.DataPath) == 0 {
 		klog.V(1).Infof("EdgeCore database path not specified, using default path: %v", g.DataPath)
-		fmt.Printf("not specified the EdgeCore database path, use the default path: %v. ", g.DataPath)
 	}
 	if !isFileExist(g.DataPath) {
 		return fmt.Errorf("edgeCore database file %v not exist. ", g.DataPath)
@@ -473,8 +470,6 @@ func InitDB(driverName, dbName, dataSource string) error {
 	defer func() {
 		if err := recover(); err != nil {
 			klog.Errorf("database access error: %v", err)
-			fmt.Printf("using db access error as %v", err)
-			return
 		}
 	}()
 	dbm.DBAccess = orm.NewOrmUsingDB(dbName)

@@ -42,7 +42,6 @@ func NewCollect() *cobra.Command {
 			err := ExecuteCollect(collectOptions)
 			if err != nil {
 				klog.Errorf("Collect failed: %v", err)
-				fmt.Println(err)
 			}
 		},
 	}
@@ -81,7 +80,6 @@ func ExecuteCollect(collectOptions *common.CollectOptions) error {
 		return err
 	}
 
-	fmt.Println("Start collecting data")
 	klog.Info("Starting data collection")
 	// create tmp direction
 	tmpName, timenow, err := makeDirTmp()
@@ -93,7 +91,6 @@ func ExecuteCollect(collectOptions *common.CollectOptions) error {
 	err = collectSystemData(fmt.Sprintf("%s/system", tmpName))
 	if err != nil {
 		klog.Errorf("collect System data failed: %v", err)
-		fmt.Printf("collect System data failed: %v\n", err)
 	}
 	printDetail("collect systemd data finish")
 
@@ -101,12 +98,10 @@ func ExecuteCollect(collectOptions *common.CollectOptions) error {
 
 	if err != nil {
 		klog.Errorf("failed to load edgecore config: %s", err.Error())
-		fmt.Printf("fail to load edgecore config: %s", err.Error())
 	}
 	err = collectEdgecoreData(fmt.Sprintf("%s/edgecore", tmpName), edgeconfig, collectOptions)
 	if err != nil {
 		klog.Errorf("collect edgecore data failed: %v", err)
-		fmt.Printf("collect edgecore data failed: %v\n", err)
 	}
 	printDetail("collect edgecore data finish")
 
@@ -127,7 +122,6 @@ func ExecuteCollect(collectOptions *common.CollectOptions) error {
 
 	printDetail("Remove tmp data finish")
 
-	fmt.Printf("Data collected successfully, path: %s\n", zipName)
 	klog.Infof("data collection completed successfully: %s", zipName)
 	return nil
 }
