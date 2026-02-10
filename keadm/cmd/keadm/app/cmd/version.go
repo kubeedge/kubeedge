@@ -50,14 +50,16 @@ func RunVersion(cmd *cobra.Command) error {
 			klog.Errorf("Failed to marshal version to YAML: %v", err)
 			return err
 		}
-		klog.V(2).Info("Displayed version in YAML format")
+		y, _ := yaml.Marshal(&v)
+		klog.V(2).Infof("Displayed version in YAML format: %s", y)
 	case "json":
 		_, err := json.MarshalIndent(&v, "", "  ")
 		if err != nil {
 			klog.Errorf("Failed to marshal version to JSON: %v", err)
 			return err
 		}
-		klog.V(2).Info("Displayed version in JSON format")
+		y, _ := json.MarshalIndent(&v, "", "  ")
+		klog.V(2).Infof("Displayed version in JSON format: %s", y)
 	default:
 		klog.Errorf("Invalid output format requested: %s", of)
 		return fmt.Errorf("invalid output format: %s", of)

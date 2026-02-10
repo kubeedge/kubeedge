@@ -194,7 +194,6 @@ func (g *GetOptions) Run(args []string) error {
 
 	if len(results) == 0 {
 		klog.V(1).Infof("no resources found in %s namespace", g.Namespace)
-		fmt.Printf("No resources found in %v namespace.\n", g.Namespace)
 		return nil
 	}
 	if *g.PrintFlags.OutputFormat == "" || *g.PrintFlags.OutputFormat == FormatTypeWIDE {
@@ -470,6 +469,7 @@ func InitDB(driverName, dbName, dataSource string) error {
 	defer func() {
 		if err := recover(); err != nil {
 			klog.Errorf("database access error: %v", err)
+			return
 		}
 	}()
 	dbm.DBAccess = orm.NewOrmUsingDB(dbName)
