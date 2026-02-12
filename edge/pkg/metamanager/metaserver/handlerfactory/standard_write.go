@@ -111,7 +111,7 @@ func (f *Factory) Update(req *request.RequestInfo) http.Handler {
 		ctx, cancel := context.WithTimeout(req.Context(), timeout)
 		defer cancel()
 
-		createBytes, err := limitedReadBody(req, scope.MaxRequestBodyBytes)
+		updateBytes, err := limitedReadBody(req, scope.MaxRequestBodyBytes)
 		if err != nil {
 			scope.err(err, w, req)
 			return
@@ -130,7 +130,7 @@ func (f *Factory) Update(req *request.RequestInfo) http.Handler {
 		}
 		options.TypeMeta.SetGroupVersionKind(metav1.SchemeGroupVersion.WithKind("UpdateOptions"))
 
-		obj, err := storage.DecodeAndConvert(createBytes)
+		obj, err := storage.DecodeAndConvert(updateBytes)
 		if err != nil {
 			scope.err(err, w, req)
 			return
