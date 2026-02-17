@@ -468,6 +468,12 @@ keadm_compatibility_e2e:
 	tests/scripts/keadm_compatibility_e2e.sh ${CLOUD_EDGE_VERSION}
 endif
 
+# keadm CRI-O e2e test
+# Run keadm join e2e test with CRI-O as container runtime
+.PHONY: keadm_crio_e2e
+keadm_crio_e2e:
+	tests/scripts/keadm_crio_e2e.sh
+
 define CONFORMANCE_E2E_HELP_INFO
 # conformance_e2e test.
 #
