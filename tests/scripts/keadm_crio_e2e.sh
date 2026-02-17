@@ -37,16 +37,16 @@ function build_image() {
 function start_kubeedge() {
   sudo mkdir -p /var/lib/kubeedge
   cd $KUBEEDGE_ROOT
-  export MASTER_IP=`kubectl get node test-control-plane -o jsonpath={.status.addresses[0].address}`
+  export MASTER_IP=$(kubectl get node test-control-plane -o jsonpath='{.status.addresses[0].address}')
   export KUBECONFIG=$HOME/.kube/config
-  docker run --rm kubeedge/installation-package:$IMAGE_TAG cat /usr/local/bin/keadm > /usr/local/bin/keadm && chmod +x /usr/local/bin/keadm
-  /usr/local/bin/keadm init --advertise-address=$MASTER_IP --kubeedge-version $KUBEEDGE_VERSION --set cloudCore.service.enable=false --kube-config=$KUBECONFIG --force
+  docker run --rm kubeedge/installation-package:$IMAGE_TAG cat /usr/local/bin/keadm | sudo tee /usr/local/bin/keadm >/dev/null && sudo chmod +x /usr/local/bin/keadm
+  sudo /usr/local/bin/keadm init --advertise-address=$MASTER_IP --kubeedge-version $KUBEEDGE_VERSION --set cloudCore.service.enable=false --kube-config=$KUBECONFIG --force
 
   # This is to ensure tokensecret is generated
-  while true; do
-      sleep 3
-      kubectl get secret -nkubeedge 2>/dev/null | grep -q tokensecret && break
-  done
+  if ! timeout 60s bash -c "while ! kubectl get secret -nkubeedge 2>/dev/null | grep -q tokensecret; do sleep 3; done"; then
+    echo "Timed out waiting for tokensecret"
+    exit 1
+  fi
 
   cd $KUBEEDGE_ROOT
   export TOKEN=$(sudo /usr/local/bin/keadm gettoken --kube-config=$KUBECONFIG)
@@ -61,10 +61,10 @@ function start_kubeedge() {
     --remote-runtime-endpoint=unix:///var/run/crio/crio.sock
 
   # This is to ensure edgenode is ready
-  while true; do
-      sleep 3
-      kubectl get node | grep edge-node | grep -q -w Ready && break
-  done
+  if ! timeout 60s bash -c 'while ! (kubectl get node | grep edge-node | grep -q -w Ready); do sleep 3; done'; then
+    echo "Timed out waiting for edge-node to be Ready"
+    exit 1
+  fi
 }
 
 set -Ee
