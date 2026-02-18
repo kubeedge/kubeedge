@@ -143,7 +143,11 @@ func EdgeCoreConfig(config *hollowEdgeNodeConfig) *v1alpha2.EdgeCoreConfig {
 
 	// overWrite config
 	edgeCoreConfig.EdgeCoreVersion = version.Get().String()
-	edgeCoreConfig.DataBase.DataSource = "/edgecore.db"
+	dataPath := os.Getenv("EDGEMARK_DB_PATH")
+	if dataPath == "" {
+		dataPath = "/var/lib/kubeedge/edgecore.db"
+	}
+	edgeCoreConfig.DataBase.DataSource = dataPath
 	edgeCoreConfig.Modules.EdgeHub.Token = config.Token
 	edgeCoreConfig.Modules.EdgeHub.HTTPServer = config.HTTPServer
 	edgeCoreConfig.Modules.EdgeHub.WebSocket.Server = config.WebsocketServer
