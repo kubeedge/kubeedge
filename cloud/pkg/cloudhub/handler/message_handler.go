@@ -153,16 +153,22 @@ func (mh *messageHandler) HandleConnection(connection conn.Connection) {
 		// add node session to the session manager
 		mh.SessionManager.AddSession(nodeSession)
 		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			
 			err := retry.Do(
 				func() error {
-					return controller.UpdateAnnotation(context.TODO(), nodeID)
+					return controller.UpdateAnnotation(ctx, nodeID)
 				},
-				retry.Delay(1*time.Second),
+				retry.Delay(100*time.Millisecond),
+				retry.MaxDelay(1*time.Second),
 				retry.Attempts(3),
-				retry.DelayType(retry.FixedDelay),
+				retry.OnRetry(func(n uint, err error) {
+					klog.V(2).Infof("Retrying annotation update for node %s (attempt %d): %v", nodeID, n+1, err)
+				}),
 			)
 			if err != nil {
-				klog.Error(err.Error())
+				klog.Errorf("Failed to update annotation for node %s: %v", nodeID, err)
 			}
 		}()
 
