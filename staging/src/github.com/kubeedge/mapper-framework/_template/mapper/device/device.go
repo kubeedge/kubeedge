@@ -168,7 +168,7 @@ func dataHandler(ctx context.Context, dev *driver.CustomizedDev) {
 		}
 		// handle anomaly detection
 		if twin.Property.PushMethod.AnomalyDetectionConfig != nil && twin.Property.PushMethod.AnomalyDetectionEnabled {
-			adHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel, twin.Property.PushMethod.AnomalyDetectionConfig)
+			adHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig)
 		}
 		// handle database
 		if twin.Property.PushMethod.DBMethod.DBMethodName != "" {
@@ -253,7 +253,7 @@ func dbHandler(ctx context.Context, twin *common.Twin, client *driver.Customized
 }
 
 // adHandler start anomaly detection processing
-func adHandler(ctx context.Context, twin *common.Twin, client *driver.CustomizedClient, visitorConfig *driver.VisitorConfig, dataModel *common.DataModel, adConfig json.RawMessage) {
+func adHandler(ctx context.Context, twin *common.Twin, client *driver.CustomizedClient, visitorConfig *driver.VisitorConfig) {
 	klog.Infof("Start anomaly detection processing for twin %s", twin.PropertyName)
 
 	reportCycle := time.Millisecond * time.Duration(twin.Property.ReportCycle)

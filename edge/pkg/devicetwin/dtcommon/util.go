@@ -154,6 +154,12 @@ func convertDeviceProperty(prop *v1beta1.DeviceProperty) (*pb.DeviceProperty, er
 			}
 			anomalyDetectionAnyData[k] = anyValue
 		}
+		if item.PushMethod == nil {
+			item.PushMethod = &pb.PushMethod{}
+		}
+		if item.PushMethod.AnomalyDetection == nil {
+			item.PushMethod.AnomalyDetection = &pb.AnomalyDetection{}
+		}
 		item.PushMethod.AnomalyDetection.Data = anomalyDetectionAnyData
 	}
 

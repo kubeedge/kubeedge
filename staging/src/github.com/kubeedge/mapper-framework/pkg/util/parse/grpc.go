@@ -226,7 +226,7 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 }
 
 func marshalAnyMap(m map[string]*anypb.Any) ([]byte, error) {
-	out := make(map[string]interface{})
+	out := make(map[string]json.RawMessage)
 	for k, v := range m {
 		msg, err := v.UnmarshalNew()
 		if err != nil {
@@ -236,18 +236,9 @@ func marshalAnyMap(m map[string]*anypb.Any) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		var val interface{}
-		err = json.Unmarshal(b, &val)
-		if err != nil {
-			return nil, err
-		}
-		out[k] = val
+		out[k] = b
 	}
-	b, err := json.Marshal(out)
-	if err != nil {
-		return nil, err
-	}
-	return b, nil
+	return json.Marshal(out)
 }
 
 // buildMethodsFromGrpc parse device method from grpc
