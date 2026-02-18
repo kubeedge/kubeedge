@@ -27,12 +27,13 @@ import (
 )
 
 const (
-	ValidateCRDWebhookConfigName    = "kubeedge-crds-validate-webhook-configuration"
-	ValidateDeviceWebhookName       = "validatedevice.kubeedge.io"
-	ValidateDeviceModelWebhookName  = "validatedevicemodel.kubeedge.io"
-	ValidateRuleWebhookName         = "validatedrule.kubeedge.io"
-	ValidateRuleEndpointWebhookName = "validatedruleendpoint.kubeedge.io"
-	ValidateNodeUpgradeWebhookName  = "validatenodeupgradejob.kubeedge.io"
+	ValidateCRDWebhookConfigName       = "kubeedge-crds-validate-webhook-configuration"
+	ValidateDeviceWebhookName          = "validatedevice.kubeedge.io"
+	ValidateDeviceModelWebhookName     = "validatedevicemodel.kubeedge.io"
+	ValidateRuleWebhookName            = "validatedrule.kubeedge.io"
+	ValidateRuleEndpointWebhookName    = "validatedruleendpoint.kubeedge.io"
+	ValidateNodeUpgradeWebhookName     = "validatenodeupgradejob.kubeedge.io"
+	ValidateEdgeApplicationWebhookName = "validateedgeapplication.kubeedge.io"
 
 	OfflineMigrationConfigName  = "mutate-offlinemigration"
 	OfflineMigrationWebhookName = "mutateofflinemigration.kubeedge.io"
@@ -107,6 +108,7 @@ func Run(opt *options.AdmissionOptions) error {
 	http.HandleFunc("/offlinemigration", serveOfflineMigration)
 	http.HandleFunc("/nodeupgradejobs", serveNodeUpgradeJob)
 	http.HandleFunc("/mutating/nodeupgradejobs", serveMutatingNodeUpgradeJob)
+	http.HandleFunc("/edgeapplications", serveEdgeApplication)
 
 	tlsConfig, err := configTLS(opt, restConfig)
 	if err != nil {
@@ -294,6 +296,34 @@ func (ac *AdmissionController) registerWebhooks(opt *options.AdmissionOptions, c
 						Namespace: opt.AdmissionServiceNamespace,
 						Name:      opt.AdmissionServiceName,
 						Path:      strPtr("/nodeupgradejobs"),
+						Port:      &opt.Port,
+					},
+					CABundle: cabundle,
+				},
+				FailurePolicy:           &failPolicy,
+				SideEffects:             &noneSideEffect,
+				AdmissionReviewVersions: []string{"v1"},
+			},
+			// EdgeApplication validating webhook
+			{
+				Name: ValidateEdgeApplicationWebhookName,
+				Rules: []admissionregistrationv1.RuleWithOperations{{
+					Operations: []admissionregistrationv1.OperationType{
+						admissionregistrationv1.Create,
+						admissionregistrationv1.Update,
+						admissionregistrationv1.Delete,
+					},
+					Rule: admissionregistrationv1.Rule{
+						APIGroups:   []string{"apps.kubeedge.io"},
+						APIVersions: []string{"v1alpha1"},
+						Resources:   []string{"edgeapplications"},
+					},
+				}},
+				ClientConfig: admissionregistrationv1.WebhookClientConfig{
+					Service: &admissionregistrationv1.ServiceReference{
+						Namespace: opt.AdmissionServiceNamespace,
+						Name:      opt.AdmissionServiceName,
+						Path:      strPtr("/edgeapplications"),
 						Port:      &opt.Port,
 					},
 					CABundle: cabundle,
