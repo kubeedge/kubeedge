@@ -1720,6 +1720,21 @@ func TestSyncRules(t *testing.T) {
 			},
 			msgOpr: []string{},
 		},
+		{
+			name:            "delete node only without spec update",
+			input:           saa2.DeepCopy(),
+			obj:             []client.Object{saa2.DeepCopy(), pod2.DeepCopy(), sa1.DeepCopy(), rb1.DeepCopy(), role1.DeepCopy(), crb1.DeepCopy(), cr1.DeepCopy()},
+			reconcileResult: controllerruntime.Result{},
+			output: &policyv1alpha1.ServiceAccountAccess{ObjectMeta: metav1.ObjectMeta{Name: "sa1", Namespace: "my-namespace"},
+				Spec: policyv1alpha1.AccessSpec{
+					ServiceAccount:           *sa1.DeepCopy(),
+					AccessRoleBinding:        []policyv1alpha1.AccessRoleBinding{{RoleBinding: *rb1.DeepCopy(), Rules: role1.Rules}},
+					AccessClusterRoleBinding: []policyv1alpha1.AccessClusterRoleBinding{{ClusterRoleBinding: *crb1.DeepCopy(), Rules: cr1.Rules}},
+				},
+				Status: policyv1alpha1.AccessStatus{NodeList: []string{"my-node-2"}},
+			},
+			msgOpr: []string{model.DeleteOperation},
+		},
 	}
 
 	for _, tt := range tests {
