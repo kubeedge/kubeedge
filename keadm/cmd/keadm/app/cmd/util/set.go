@@ -207,6 +207,17 @@ func getNameFormStatus(s string) int {
 	return -1
 }
 
+func isNumericKind(k reflect.Kind) bool {
+	switch k {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+		reflect.Float32, reflect.Float64:
+		return true
+	default:
+		return false
+	}
+}
+
 // SetCommonValue modifies the new value of the name in the config represented by struct.
 // The type of new value may be int, float, string, splic.
 // The name is represented by name1.name2.(...).nameM.
@@ -225,12 +236,38 @@ func setCommonValue(structPtr interface{}, fieldPath string, value interface{}) 
 
 	val := reflect.ValueOf(value)
 
+	newVal, err := convertTargetValue(fieldVal.Type(), val)
+	if err == nil {
+		val = newVal
+	}
+
 	if fieldVal.Type() != val.Type() {
 		return fmt.Errorf("%s: Provided value type %s does not match field type %s", fieldPath, val.Type(), fieldVal.Type())
 	}
 	fieldVal.Set(val)
 
 	return nil
+}
+
+func convertTargetValue(targetType reflect.Type, valueToSet reflect.Value) (reflect.Value, error) {
+	if targetType.Kind() == valueToSet.Kind() && valueToSet.Type().ConvertibleTo(targetType) {
+		return valueToSet.Convert(targetType), nil
+	}
+	// support numeric convert
+	if isNumericKind(targetType.Kind()) && isNumericKind(valueToSet.Kind()) {
+		if valueToSet.Type().ConvertibleTo(targetType) {
+			return valueToSet.Convert(targetType), nil
+		}
+	}
+	// support point value
+	if targetType.Kind() == reflect.Ptr && valueToSet.Type().ConvertibleTo(targetType.Elem()) {
+		ptr := reflect.New(targetType.Elem())
+		if valueToSet.Type().ConvertibleTo(targetType.Elem()) {
+			ptr.Elem().Set(valueToSet.Convert(targetType.Elem()))
+			return ptr, nil
+		}
+	}
+	return reflect.Value{}, fmt.Errorf("value type %s is not assignable to field type %s", valueToSet.Type(), targetType)
 }
 
 // GetFieldValue gets the fieldname of the struct.
@@ -284,6 +321,12 @@ func setArrayValue(structPtr interface{}, fieldPath string, index int, newValue 
 	}
 	//Set new value
 	elem := reflect.ValueOf(newValue)
+
+	newElem, err := convertTargetValue(fieldVal.Type().Elem(), elem)
+	if err == nil {
+		elem = newElem
+	}
+
 	if elem.Type() != fieldVal.Type().Elem() {
 		return fmt.Errorf("type mismatch for field %s", pathParts[len(pathParts)-1])
 	}
@@ -365,6 +408,12 @@ func setVariableValue(obj interface{}, fieldPath string, value interface{}) erro
 	}
 
 	valueToSet := reflect.ValueOf(value)
+
+	newVal, err := convertTargetValue(targetFieldValue.Type(), valueToSet)
+	if err == nil {
+		valueToSet = newVal
+	}
+
 	if !valueToSet.Type().AssignableTo(targetFieldValue.Type()) {
 		return fmt.Errorf("value type %s is not assignable to field %s type %s", valueToSet.Type(), targetFieldName, targetFieldValue.Type())
 	}
