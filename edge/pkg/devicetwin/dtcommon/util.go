@@ -145,6 +145,24 @@ func convertDeviceProperty(prop *v1beta1.DeviceProperty) (*pb.DeviceProperty, er
 		item.Visitors.ConfigData.Data = configAnyData
 	}
 
+	if prop.PushMethod != nil && prop.PushMethod.AnomalyDetection != nil && prop.PushMethod.AnomalyDetection.Data != nil {
+		anomalyDetectionAnyData := make(map[string]*anypb.Any)
+		for k, v := range prop.PushMethod.AnomalyDetection.Data {
+			anyValue, err := dataToAny(v)
+			if err != nil {
+				return nil, fmt.Errorf("failed to convert anomaly detection data: %v", err)
+			}
+			anomalyDetectionAnyData[k] = anyValue
+		}
+		if item.PushMethod == nil {
+			item.PushMethod = &pb.PushMethod{}
+		}
+		if item.PushMethod.AnomalyDetection == nil {
+			item.PushMethod.AnomalyDetection = &pb.AnomalyDetection{}
+		}
+		item.PushMethod.AnomalyDetection.Data = anomalyDetectionAnyData
+	}
+
 	return item, nil
 }
 func ConvertDeviceModel(model *v1beta1.DeviceModel) (*pb.DeviceModel, error) {
