@@ -18,6 +18,7 @@ package controllermanager
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -46,6 +47,16 @@ var (
 
 var _ = BeforeSuite(func() {
 	ctx, cancel = context.WithCancel(context.TODO())
+
+	if appsCRDDirectoryPath == "" {
+		appsCRDDirectoryPath = os.Getenv("KUBEEDGE_APPS_CRD_DIR")
+	}
+	if envtestBinDir == "" {
+		envtestBinDir = os.Getenv("KUBEEDGE_ENVTEST_BIN_DIR")
+	}
+	if envtestBinDir == "" {
+		envtestBinDir = os.Getenv("KUBEBUILDER_ASSETS")
+	}
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
@@ -76,6 +87,9 @@ var _ = BeforeSuite(func() {
 
 var _ = AfterSuite(func() {
 	cancel()
+	if testEnv == nil {
+		return
+	}
 	By("tearing down the test environment")
 	err := testEnv.Stop()
 	Expect(err).To(BeNil())

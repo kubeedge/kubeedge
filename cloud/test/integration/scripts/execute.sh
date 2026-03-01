@@ -19,18 +19,26 @@ TEST_DIR=$(dirname $(dirname "${BASH_SOURCE[0]}"))
 APPS_CRD_DIR="${ROOT_DIR}/build/crds/apps"
 ENVTEST_DOWNLOAD_DIR="/tmp/envtest/bin"
 ENVTEST_BIN_DIR=""
+ENVTEST_K8S_VERSION="1.23.5"
 
 function do_preparation() {
+    local go_os
+    local go_arch
+    local go_bin
+
+    go_os="$(go env GOOS)"
+    go_arch="$(go env GOARCH)"
+    go_bin="$(go env GOPATH)/bin"
+    export PATH="${go_bin}:${PATH}"
+
     which setup-envtest &> /dev/null || {
         go install sigs.k8s.io/controller-runtime/tools/setup-envtest@release-0.16
-        sudo cp $GOPATH/bin/setup-envtest /usr/bin/
     }
 
-    ENVTEST_BIN_DIR=$(setup-envtest use 1.22.1 --bin-dir=${ENVTEST_DOWNLOAD_DIR} -p path)
+    ENVTEST_BIN_DIR=$(setup-envtest use --use-deprecated-gcs=false --os="${go_os}" --arch="${go_arch}" "${ENVTEST_K8S_VERSION}" --bin-dir="${ENVTEST_DOWNLOAD_DIR}" -p path)
 
     which ginkgo &>/dev/null || {
-        go install github.com/onsi/ginkgo/ginkgo@latest
-        sudo cp $GOPATH/bin/ginkgo /usr/bin/
+        go install github.com/onsi/ginkgo/v2/ginkgo@latest
     }
 }
 
@@ -38,6 +46,10 @@ function run_test() {
     modpkg="$(head -1 ${ROOT_DIR}/go.mod | awk '{print $2}')"/cloud/test/integration/controllermanager
     ldflags="-X ${modpkg}.appsCRDDirectoryPath=${APPS_CRD_DIR} \
              -X ${modpkg}.envtestBinDir=${ENVTEST_BIN_DIR}"
+
+    export KUBEEDGE_APPS_CRD_DIR="${APPS_CRD_DIR}"
+    export KUBEEDGE_ENVTEST_BIN_DIR="${ENVTEST_BIN_DIR}"
+    export KUBEBUILDER_ASSETS="${ENVTEST_BIN_DIR}"
 
     ginkgo --ldflags "${ldflags}" -v ${TEST_DIR}/controllermanager
 }
