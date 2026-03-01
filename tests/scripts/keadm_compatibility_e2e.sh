@@ -15,7 +15,7 @@
 # limitations under the License.
 
 KUBEEDGE_ROOT=$PWD
-IMAGE_TAG=$(git describe --tags)
+IMAGE_TAG=$(git describe --tags 2>/dev/null || echo "v0.0.0")
 CLOUD_EDGE_VERSION=${1:-"v1.20.0"}
 
 source "${KUBEEDGE_ROOT}/hack/lib/install.sh"

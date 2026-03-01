@@ -21,7 +21,7 @@ set -o nounset
 set -o pipefail
 
 KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
-IMAGE_TAG=$(git describe --tags)
+IMAGE_TAG=$(git describe --tags 2>/dev/null || echo "v0.0.0")
 GO_LDFLAGS="$(${KUBEEDGE_ROOT}/hack/make-rules/version.sh)"
 IMAGE_REPO_NAME="${IMAGE_REPO_NAME:-kubeedge}"
 

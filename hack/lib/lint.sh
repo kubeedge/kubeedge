@@ -55,19 +55,57 @@ kubeedge::lint::check() {
     set +o pipefail
     echo "check any white noise ..."
     # skip deleted files
+    local -a files_to_check=()
+    local file
+    while IFS= read -r file; do
+      [[ -n "${file}" ]] && files_to_check+=("${file}")
+    done < <(git diff --cached --name-only --diff-filter=ACRMTU master | grep -Ev "externalversions|fake|vendor|images|adopters" || true)
+
+    local before_hashes
+    local after_hashes
+    before_hashes=$(mktemp)
+    after_hashes=$(mktemp)
+    trap 'rm -f "${before_hashes}" "${after_hashes}"' RETURN
+
+    for file in "${files_to_check[@]}"; do
+      if [[ -f "${file}" ]]; then
+        printf '%s\t%s\n' "$(git hash-object "${file}")" "${file}" >> "${before_hashes}"
+      fi
+    done
+
     if [[ "$OSTYPE" == "darwin"* ]]
     then
-      git diff --cached --name-only --diff-filter=ACRMTU master | grep -Ev "externalversions|fake|vendor|images|adopters" | xargs $SED_CMD -i 's/[ \t]*$//'
+      if [[ ${#files_to_check[@]} -gt 0 ]]; then
+        printf '%s\n' "${files_to_check[@]}" | xargs $SED_CMD -i 's/[ \t]*$//'
+      fi
     elif [[ "$OSTYPE" == "linux"* ]]
     then
-      git diff --cached --name-only --diff-filter=ACRMTU master | grep -Ev "externalversions|fake|vendor|images|adopters" | xargs --no-run-if-empty $SED_CMD -i 's/[ \t]*$//'
+      printf '%s\n' "${files_to_check[@]}" | xargs --no-run-if-empty $SED_CMD -i 's/[ \t]*$//'
     else
       echo "Unsupported OS $OSTYPE"
       exit 1
     fi
 
-    [[ $(git diff --name-only) ]] && {
+    for file in "${files_to_check[@]}"; do
+      if [[ -f "${file}" ]]; then
+        printf '%s\t%s\n' "$(git hash-object "${file}")" "${file}" >> "${after_hashes}"
+      fi
+    done
+
+    local -a white_noise_files=()
+    local before_hash
+    local after_hash
+    while IFS=$'\t' read -r before_hash file; do
+      after_hash=$(awk -F '\t' -v f="${file}" '$2 == f {print $1; exit}' "${after_hashes}")
+      if [[ "${before_hash}" != "${after_hash}" ]]; then
+        white_noise_files+=("${file}")
+      fi
+    done < "${before_hashes}"
+
+    [[ ${#white_noise_files[@]} -gt 0 ]] && {
       echo "Some files have white noise issue, please run \`make lint\` to solve and \`git status\` to find and fix this issue"
+      printf 'white noise fixed in files:\n'
+      printf '  %s\n' "${white_noise_files[@]}"
       return 1
     }
     set -o pipefail
