@@ -28,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic/fake"
 
+	devicesv1beta1 "github.com/kubeedge/api/apis/devices/v1beta1"
 	"github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
 	"github.com/kubeedge/beehive/pkg/common"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -116,12 +117,14 @@ func TestGCOrphanedObjectSync(t *testing.T) {
 	tests := []struct {
 		name             string
 		ExpectedResource string
+		ExpectedKind     string
 		ObjectSyncs      *v1alpha1.ObjectSync
 	}{
 		{
 			name:             "test gcOrphanedObjectSyncs",
 			ObjectSyncs:      tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "1"), "Pod"),
 			ExpectedResource: resource,
+			ExpectedKind:     "Pod",
 		},
 	}
 	cloudHub := &common.ModuleInfo{
@@ -141,6 +144,13 @@ func TestGCOrphanedObjectSync(t *testing.T) {
 			if !reflect.DeepEqual(message.GetResource(), tt.ExpectedResource) {
 				t.Errorf("gcOrphanedObjectSync() = %v, want %v", message.GetResource(), tt.ExpectedResource)
 			}
+			contentObj, ok := message.GetContent().(runtime.Object)
+			if !ok {
+				t.Fatalf("message content is not runtime.Object: %T", message.GetContent())
+			}
+			if contentObj.GetObjectKind().GroupVersionKind().Kind != tt.ExpectedKind {
+				t.Fatalf("unexpected object kind %q", contentObj.GetObjectKind().GroupVersionKind().Kind)
+			}
 		})
 	}
 }
@@ -150,11 +160,15 @@ func TestSendEvents(t *testing.T) {
 		name              string
 		ExpectedOperation string
 		ObjectSyncs       *v1alpha1.ObjectSync
+		EventObject       runtime.Object
+		ExpectedKind      string
 	}{
 		{
 			name:              "test sendEvents",
-			ObjectSyncs:       tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "1"), "Pod"),
+			ObjectSyncs:       tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "1"), "Device"),
+			EventObject:       &devicesv1beta1.Device{ObjectMeta: v1.ObjectMeta{Name: tf.TestPodName, Namespace: tf.TestNamespace, ResourceVersion: "2"}},
 			ExpectedOperation: model.UpdateOperation,
+			ExpectedKind:      "Device",
 		},
 	}
 	cloudHub := &common.ModuleInfo{
@@ -166,11 +180,20 @@ func TestSendEvents(t *testing.T) {
 	beehiveContext.AddModuleGroup(modules.CloudHubModuleName, modules.CloudHubModuleGroup)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tmp := tt.ObjectSyncs.DeepCopy()
-			go sendEvents(tf.TestNodeID, tt.ObjectSyncs, "pod", "2", tmp)
+			go sendEvents(tf.TestNodeID, tt.ObjectSyncs, "device", "2", tt.EventObject)
 			message, _ := beehiveContext.Receive(modules.CloudHubModuleName)
 			if !reflect.DeepEqual(message.GetOperation(), tt.ExpectedOperation) {
 				t.Errorf("sendEvents() = %v, want %v", message.GetResource(), tt.ExpectedOperation)
+			}
+			contentObj, ok := message.GetContent().(runtime.Object)
+			if !ok {
+				t.Fatalf("message content is not runtime.Object: %T", message.GetContent())
+			}
+			if contentObj.GetObjectKind().GroupVersionKind().Kind != tt.ExpectedKind {
+				t.Fatalf("unexpected object kind %q", contentObj.GetObjectKind().GroupVersionKind().Kind)
+			}
+			if contentObj.GetObjectKind().GroupVersionKind().GroupVersion().String() != devicesv1beta1.SchemeGroupVersion.String() {
+				t.Fatalf("unexpected object apiVersion %q", contentObj.GetObjectKind().GroupVersionKind().GroupVersion().String())
 			}
 		})
 	}

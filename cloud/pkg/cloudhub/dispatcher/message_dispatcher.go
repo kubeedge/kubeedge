@@ -24,6 +24,7 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
@@ -37,6 +38,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
+	edgectrconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
 	taskutil "github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/v1alpha1/util"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
@@ -149,6 +151,8 @@ func (md *messageDispatcher) DispatchDownstream() {
 				klog.Warningf("skip message not to edge node %s: %+v", nodeID, msg)
 				continue
 			}
+
+			normalizeDownstreamMessageContent(&msg)
 
 			switch {
 			case noAckRequired(&msg):
@@ -492,6 +496,29 @@ func noAckRequired(msg *beehivemodel.Message) bool {
 		}
 	}
 	return false
+}
+
+func normalizeDownstreamMessageContent(msg *beehivemodel.Message) {
+	if msg == nil || msg.GetGroup() != edgectrconst.GroupResource {
+		return
+	}
+
+	runtimeObj, ok := msg.Content.(runtime.Object)
+	if !ok {
+		return
+	}
+
+	resourceType, err := messagelayer.GetResourceType(*msg)
+	if err != nil {
+		if setErr := util.SetMetaType(runtimeObj); setErr != nil {
+			klog.Warningf("failed to set metatype for message %s: %v", msg.GetID(), setErr)
+		}
+		return
+	}
+
+	if err := util.SetMetaTypeByResource(runtimeObj, resourceType); err != nil {
+		klog.Warningf("failed to set metatype for resource %s, message %s: %v", resourceType, msg.GetID(), err)
+	}
 }
 
 func isVolumeOperation(op string) bool {

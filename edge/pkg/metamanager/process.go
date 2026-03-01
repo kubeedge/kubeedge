@@ -21,6 +21,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
+	metaserverutil "github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
 // Constants to check metamanager processes
@@ -75,20 +76,11 @@ func sentToMetamanager(message *model.Message, sync bool) {
 // return <reskey, restype, resid>
 func parseResource(message *model.Message) (string, string, string) {
 	resource := message.GetResource()
-	tokens := strings.Split(resource, constants.ResourceSep)
-	resType := ""
-	resID := ""
-	switch len(tokens) {
-	case 2:
-		resType = tokens[len(tokens)-1]
-	case 3:
-		resType = tokens[len(tokens)-2]
-		resID = tokens[len(tokens)-1]
-	default:
-	}
+	resType, resID := metaserverutil.ParseResourcePath(resource)
 	if resType != model.ResourceTypeServiceAccountToken {
 		return resource, resType, resID
 	}
+
 	var tokenReq authenticationv1.TokenRequest
 	content, err := message.GetContentData()
 	if err != nil {
@@ -100,12 +92,21 @@ func parseResource(message *model.Message) (string, string, string) {
 		return "", "", ""
 	}
 
-	trTokens := strings.Split(resource, constants.ResourceSep)
-	if len(trTokens) != 3 {
+	tokens := strings.Split(resource, constants.ResourceSep)
+	namespace := ""
+	name := ""
+	switch {
+	case len(tokens) >= 5 && tokens[0] == model.ResourceTypeNode:
+		namespace = tokens[2]
+		name = tokens[len(tokens)-1]
+	case len(tokens) >= 3:
+		namespace = tokens[0]
+		name = tokens[len(tokens)-1]
+	default:
 		klog.Errorf("failed to get resource %s name and namespace", resource)
 		return "", "", ""
 	}
-	return client.KeyFunc(trTokens[2], trTokens[0], &tokenReq), resType, ""
+	return client.KeyFunc(name, namespace, &tokenReq), resType, ""
 }
 
 // is resource type require remote query

@@ -4,6 +4,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/klog/v2"
+
+	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
 // Manager define the interface of a Manager, configmapManager and podManager implement it
@@ -21,6 +23,9 @@ func (c *CommonResourceEventHandler) obj2Event(t watch.EventType, obj interface{
 	if !ok {
 		klog.Warningf("unknown type: %T, ignore", obj)
 		return
+	}
+	if err := util.SetMetaType(eventObj); err != nil {
+		klog.Warningf("failed to set meta type :%v", err)
 	}
 	c.events <- watch.Event{Type: t, Object: eventObj}
 }

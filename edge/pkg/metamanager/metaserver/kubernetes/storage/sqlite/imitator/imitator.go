@@ -16,12 +16,12 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator/watchhook"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
+	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
 // imitator is a storage based on metav2 that imitate the behavior of etcd
@@ -35,6 +35,10 @@ type imitator struct {
 	// to co/decoder obj
 	codec runtime.Codec
 }
+
+const (
+	resourceTypeDevice = "device"
+)
 
 // Inject transform the message to watch.event, save internal obj/objs to table meta_v2
 // and trigger the corresponding hook to serve watch
@@ -228,15 +232,15 @@ func (s *imitator) Event(msg *model.Message) []watch.Event {
 		klog.V(4).Infof("skip status or node-lease messages")
 		return []watch.Event{}
 	}
-	var bytes []byte
+	var contentBytes []byte
 	var err error
 	var body = msg.GetContent()
 	// convert body to bytes
 	switch body := body.(type) {
 	case []byte:
-		bytes = body
+		contentBytes = body
 	default:
-		bytes, err = json.Marshal(body)
+		contentBytes, err = json.Marshal(body)
 		if err != nil {
 			klog.Errorf("failed to marshal msg content, err: %+v", err)
 			return ret
@@ -251,11 +255,29 @@ func (s *imitator) Event(msg *model.Message) []watch.Event {
 	case model.DeleteOperation:
 		op = watch.Deleted
 	}
+	if op == watch.Deleted && isDeleteOptionsPayload(contentBytes) {
+		klog.V(4).Infof("[metaserver]skip delete options payload for resource %q", msg.Router.Resource)
+		return ret
+	}
+	if msg.Router.Group == "resource" {
+		contentBytes = patchMissingKindForJSONObject(contentBytes, resType)
+	}
+
 	//TODO: support array List like []obj
 	obj := new(unstructured.Unstructured)
-	err = runtime.DecodeInto(s.codec, bytes, obj)
+	err = runtime.DecodeInto(s.codec, contentBytes, obj)
+	if err != nil && isMissingTypeMetaError(err) {
+		patched := patchMissingKindForJSONObject(contentBytes, resType)
+		if !bytes.Equal(contentBytes, patched) {
+			if retryErr := runtime.DecodeInto(s.codec, patched, obj); retryErr == nil {
+				err = nil
+			} else {
+				err = retryErr
+			}
+		}
+	}
 	if err != nil {
-		klog.Errorf("failed to unmarshal message content to unstructured obj: %+v", err)
+		klog.Errorf("failed to unmarshal message content to unstructured obj: resource=%q group=%q operation=%q err=%+v", msg.Router.Resource, msg.Router.Group, msg.Router.Operation, err)
 		return ret
 	}
 	if obj.IsList() {
@@ -278,19 +300,166 @@ func (s *imitator) Event(msg *model.Message) []watch.Event {
 	return ret
 }
 
+func patchMissingKindForJSONObject(raw []byte, resourceType string) []byte {
+	if len(raw) == 0 || resourceType == "" {
+		return raw
+	}
+
+	trimmed := bytes.TrimSpace(raw)
+	if len(trimmed) == 0 || trimmed[0] != '{' {
+		return raw
+	}
+
+	obj := make(map[string]interface{})
+	if err := json.Unmarshal(trimmed, &obj); err != nil {
+		return raw
+	}
+
+	if !looksLikeKubeObject(obj) {
+		return raw
+	}
+
+	kind, _ := obj["kind"].(string)
+	if kind == "" {
+		kind = inferKindFromResourceObject(obj, resourceType)
+		if kind == "" {
+			return raw
+		}
+		obj["kind"] = kind
+	}
+
+	if _, ok := obj["apiVersion"].(string); !ok || obj["apiVersion"] == "" {
+		if apiVersion := inferAPIVersion(obj, resourceType, kind); apiVersion != "" {
+			obj["apiVersion"] = apiVersion
+		}
+	}
+
+	patched, err := json.Marshal(obj)
+	if err != nil {
+		return raw
+	}
+
+	klog.V(4).Infof("[metaserver]patched typemeta for resource %q to kind=%q apiVersion=%q", resourceType, kind, obj["apiVersion"])
+	return patched
+}
+
+func isMissingTypeMetaError(err error) bool {
+	if err == nil {
+		return false
+	}
+	errText := err.Error()
+	return strings.Contains(errText, "Object 'Kind' is missing") || strings.Contains(errText, "Object 'apiVersion' is missing")
+}
+
+func looksLikeKubeObject(obj map[string]interface{}) bool {
+	if len(obj) == 0 {
+		return false
+	}
+	if _, ok := obj["metadata"]; ok {
+		return true
+	}
+	if _, ok := obj["spec"]; ok {
+		return true
+	}
+	if _, ok := obj["status"]; ok {
+		return true
+	}
+	if _, ok := obj["items"]; ok {
+		return true
+	}
+	return isDeleteOptionsObject(obj)
+}
+
+func inferKindFromResourceObject(obj map[string]interface{}, resourceType string) string {
+	if isDeleteOptionsObject(obj) {
+		return "DeleteOptions"
+	}
+	return util.UnsafeResourceToKind(strings.ToLower(resourceType))
+}
+
+func inferAPIVersion(obj map[string]interface{}, resourceType, kind string) string {
+	if apiVersion := apiVersionFromManagedFields(obj); apiVersion != "" {
+		return apiVersion
+	}
+
+	resType := strings.ToLower(resourceType)
+	switch resType {
+	case "node", "nodes",
+		"nodestatus", "nodepatch",
+		"pod", "pods",
+		"podstatus", "podpatch",
+		"service", "services",
+		"namespace", "namespaces",
+		"configmap", "configmaps",
+		"secret", "secrets",
+		"event", "events",
+		"endpoints":
+		return "v1"
+	case "endpointslice", "endpointslices":
+		return "discovery.k8s.io/v1"
+	case "lease", "leases":
+		return "coordination.k8s.io/v1"
+	case "csr", "certificatesigningrequest", "certificatesigningrequests":
+		return "certificates.k8s.io/v1"
+	case resourceTypeDevice, "devices", "devicemodel", "devicemodels", "devicestatus", "devicestatuses":
+		return "devices.kubeedge.io/v1beta1"
+	case "objectsync", "objectsyncs", "clusterobjectsync", "clusterobjectsyncs":
+		return "reliablesyncs.kubeedge.io/v1alpha1"
+	}
+
+	if strings.EqualFold(kind, "DeleteOptions") {
+		return "v1"
+	}
+	return ""
+}
+
+func apiVersionFromManagedFields(obj map[string]interface{}) string {
+	metadata, ok := obj["metadata"].(map[string]interface{})
+	if !ok {
+		return ""
+	}
+	managedFields, ok := metadata["managedFields"].([]interface{})
+	if !ok {
+		return ""
+	}
+	for _, field := range managedFields {
+		fieldMap, ok := field.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if apiVersion, ok := fieldMap["apiVersion"].(string); ok && apiVersion != "" {
+			return apiVersion
+		}
+	}
+	return ""
+}
+
+func isDeleteOptionsObject(obj map[string]interface{}) bool {
+	_, hasGracePeriod := obj["gracePeriodSeconds"]
+	_, hasPreconditions := obj["preconditions"]
+	if !hasGracePeriod && !hasPreconditions {
+		return false
+	}
+	_, hasMetadata := obj["metadata"]
+	return !hasMetadata
+}
+
+func isDeleteOptionsPayload(raw []byte) bool {
+	trimmed := bytes.TrimSpace(raw)
+	if len(trimmed) == 0 || trimmed[0] != '{' {
+		return false
+	}
+
+	obj := make(map[string]interface{})
+	if err := json.Unmarshal(trimmed, &obj); err != nil {
+		return false
+	}
+	return isDeleteOptionsObject(obj)
+}
+
 // Resource format: <namespace>/<restype>[/resid]
 // return <reskey, restype, resid>
 func parseResource(resource string) (string, string, string) {
-	tokens := strings.Split(resource, constants.ResourceSep)
-	resType := ""
-	resID := ""
-	switch len(tokens) {
-	case 2:
-		resType = tokens[len(tokens)-1]
-	case 3:
-		resType = tokens[len(tokens)-2]
-		resID = tokens[len(tokens)-1]
-	default:
-	}
+	resType, resID := util.ParseResourcePath(resource)
 	return resource, resType, resID
 }

@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2"
@@ -107,6 +108,12 @@ func buildEdgeControllerMessage(nodeName, namespace, resourceType, resourceName,
 	if err != nil {
 		klog.Warningf("build message resource failed with error: %s", err)
 		return nil
+	}
+
+	if runtimeObj, ok := obj.(runtime.Object); ok {
+		if err := util.SetMetaTypeByResource(runtimeObj, resourceType); err != nil {
+			klog.Warningf("failed to set metatype for %s/%s: %v", resourceType, resourceName, err)
+		}
 	}
 
 	resourceVersion := GetObjectResourceVersion(obj)
