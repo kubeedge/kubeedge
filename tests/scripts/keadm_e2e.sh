@@ -15,7 +15,7 @@
 # limitations under the License.
 
 KUBEEDGE_ROOT=$PWD
-IMAGE_TAG=$(git describe --tags)
+IMAGE_TAG=$(git describe --tags 2>/dev/null || echo "v0.0.0")
 KUBEEDGE_VERSION=$IMAGE_TAG
 
 source "${KUBEEDGE_ROOT}/hack/lib/install.sh"
@@ -77,6 +77,31 @@ function start_kubeedge() {
   done
 }
 
+function check_edgecore_missing_kind_error() {
+  local pattern="failed to unmarshal message content to unstructured obj:.*Object 'Kind' is missing"
+
+  if ! command -v journalctl >/dev/null 2>&1; then
+    echo "journalctl is not available, skip edgecore missing-kind log check"
+    return 0
+  fi
+
+  if ! sudo -n true >/dev/null 2>&1; then
+    echo "passwordless sudo is not available, skip edgecore missing-kind log check"
+    return 0
+  fi
+
+  local logs
+  logs=$(sudo -n journalctl -u edgecore --since "@${E2E_EDGECORE_LOG_SINCE}" --no-pager 2>/dev/null || true)
+  if echo "$logs" | grep -E "$pattern" >/dev/null 2>&1; then
+    echo "Found missing-kind decode error in edgecore logs:"
+    echo "$logs" | grep -E "$pattern"
+    return 1
+  fi
+
+  echo "No missing-kind decode error found in edgecore logs."
+  return 0
+}
+
 set -Ee
 trap cleanup EXIT
 #trap cleanup ERR
@@ -94,8 +119,19 @@ build_image
 
 install_cni_plugins
 
+export E2E_EDGECORE_LOG_SINCE=$(date +%s)
+
 echo -e "\nStarting kubeedge..."
 start_kubeedge
 
 echo -e "\nRunning test..."
+set +e
 run_test
+test_rc=$?
+check_edgecore_missing_kind_error
+log_rc=$?
+set -e
+
+if [[ $test_rc != 0 || $log_rc != 0 ]]; then
+  exit 1
+fi

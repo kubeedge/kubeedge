@@ -15,24 +15,35 @@
 # limitations under the License.
 
 TEST_DIR=$(dirname $(dirname "${BASH_SOURCE[0]}"))
+SUDO=()
+source "${TEST_DIR}/scripts/privileged_runner.sh"
+
+function is_edgecore_running() {
+  if command -v pidof >/dev/null 2>&1; then
+    pidof edgecore >/dev/null
+    return $?
+  fi
+  pgrep edgecore >/dev/null
+}
 
 function cleanup() {
   while true; do
-    sudo pkill edgecore || true
+    "${SUDO[@]}" pkill edgecore || true
     sleep 1
-    pidof edgecore >/dev/null || break
+    is_edgecore_running || break
   done
 
-  sudo rm -rf $TEST_DIR/appdeployment/appdeployment.test $TEST_DIR/device/device.test
+  "${SUDO[@]}" rm -rf $TEST_DIR/appdeployment/appdeployment.test $TEST_DIR/device/device.test
 }
 
 function do_preparation() {
-  sudo mkdir -p /var/lib/kubeedge
+  "${SUDO[@]}" mkdir -p /var/lib/kubeedge
 
-  which ginkgo &>/dev/null || {
-    go install github.com/onsi/ginkgo/v2/ginkgo@latest
-    sudo cp $GOPATH/bin/ginkgo /usr/bin/
-  }
+  local go_bin
+  go_bin="$(go env GOPATH)/bin"
+  export PATH="${go_bin}:${PATH}"
+
+  which ginkgo &>/dev/null || go install github.com/onsi/ginkgo/v2/ginkgo@latest
 
   # create cert files
   $TEST_DIR/scripts/generate_cert.sh
@@ -52,6 +63,8 @@ function run_test() {
 set -eE
 trap cleanup ERR
 trap cleanup EXIT
+
+configure_privileged_runner "integration tests"
 
 cleanup
 

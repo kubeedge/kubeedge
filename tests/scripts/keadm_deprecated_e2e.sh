@@ -15,6 +15,7 @@
 # limitations under the License.
 
 KUBEEDGE_ROOT=$PWD
+TAGLESS_COMPAT_VERSION="1.20.0"
 
 source "${KUBEEDGE_ROOT}/hack/lib/init.sh"
 source "${KUBEEDGE_ROOT}/hack/lib/install.sh"
@@ -37,7 +38,7 @@ function build_keadm() {
   cd $KUBEEDGE_ROOT
   make all WHAT=keadm
   cd $E2E_DIR
-  ginkgo build -r e2e_keadm/
+  run_ginkgo build -r e2e_keadm/
 }
 
 function start_kubeedge() {
@@ -73,7 +74,7 @@ function run_test() {
 
   export ACK_GINKGO_RC=true
 
-  ginkgo -v ./e2e_keadm/e2e_keadm.test -- \
+  run_ginkgo -v ./e2e_keadm/e2e_keadm.test -- \
   --image-url=nginx \
   --image-url=nginx \
   --kube-master="https://$MASTER_IP:6443" \
@@ -105,13 +106,58 @@ function change_apt_source() {
   sudo apt-get update
 }
 
+function stage_local_release_assets() {
+  local source_version="$1"
+  local install_version="$2"
+  local release_dir="${KUBEEDGE_ROOT}/_output/release/${source_version}"
+  local source_tar="${release_dir}/kubeedge-${source_version}-linux-amd64.tar.gz"
+  local source_checksum="${release_dir}/checksum_kubeedge-${source_version}-linux-amd64.tar.gz.txt"
+  local target_tar="/etc/kubeedge/kubeedge-v${install_version}-linux-amd64.tar.gz"
+  local target_checksum="/etc/kubeedge/checksum_kubeedge-v${install_version}-linux-amd64.tar.gz.txt"
+  local source_dir="kubeedge-${source_version}-linux-amd64"
+  local target_dir="kubeedge-v${install_version}-linux-amd64"
+  local target_tar_name="kubeedge-v${install_version}-linux-amd64.tar.gz"
+
+  if [[ ! -f "${source_tar}" ]]; then
+    echo "Local release tarball not found: ${source_tar}"
+    return 1
+  fi
+
+  sudo mkdir -p /etc/kubeedge
+
+  if [[ "${source_version}" == "v${install_version}" && -f "${source_checksum}" ]]; then
+    sudo cp "${source_tar}" "${target_tar}"
+    sudo cp "${source_checksum}" "${target_checksum}"
+    return 0
+  fi
+
+  local tmp_dir
+  tmp_dir=$(mktemp -d)
+  tar -C "${tmp_dir}" -xzf "${source_tar}"
+
+  if [[ ! -d "${tmp_dir}/${source_dir}" ]]; then
+    rm -rf "${tmp_dir}"
+    echo "Local release package dir not found in tarball: ${source_dir}"
+    return 1
+  fi
+
+  mv "${tmp_dir}/${source_dir}" "${tmp_dir}/${target_dir}"
+  tar -C "${tmp_dir}" -czf "${tmp_dir}/${target_tar_name}" "${target_dir}"
+  sudo cp "${tmp_dir}/${target_tar_name}" "${target_tar}"
+
+  local checksum
+  checksum=$(sha512sum "${tmp_dir}/${target_tar_name}" | awk '{print $1}')
+  echo "${checksum}" | sudo tee "${target_checksum}" >/dev/null
+  rm -rf "${tmp_dir}"
+}
+
 trap cleanup EXIT
 trap cleanup ERR
 
-echo -e "\nUsing latest commit code to do keadm_deprecated_e2e test..."
-
 echo -e "\nChange apt source"
 change_apt_source
+
+echo -e "\nUsing latest commit code to do keadm_deprecated_e2e test..."
 
 echo -e "\nBuilding keadm..."
 build_keadm
@@ -124,10 +170,11 @@ prepare_cluster
 install_cni_plugins
 
 kubeedge_version=${VERSION: 1}
-#if we use the local release version compiled with the latest codes, we need to copy release file and checksum file.
-sudo mkdir -p /etc/kubeedge
-
-sudo cp ${KUBEEDGE_ROOT}/_output/release/${VERSION}/kubeedge-${VERSION}-linux-amd64.tar.gz ${KUBEEDGE_ROOT}/_output/release/${VERSION}/checksum_kubeedge-${VERSION}-linux-amd64.tar.gz.txt /etc/kubeedge
+if [[ "${VERSION}" == v0.0.0* ]]; then
+  echo "Git tags are unavailable (VERSION=${VERSION}). Remapping deprecated-init version to ${TAGLESS_COMPAT_VERSION}."
+  kubeedge_version="${TAGLESS_COMPAT_VERSION}"
+fi
+stage_local_release_assets "${VERSION}" "${kubeedge_version}"
 
 echo -e "\nStarting kubeedge..." ${kubeedge_version}
 start_kubeedge ${kubeedge_version}

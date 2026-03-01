@@ -18,6 +18,8 @@ cd `dirname $0`
 workdir=`pwd`
 cd $workdir
 
+source "${workdir}/ginkgo_runner.sh"
+
 compilemodule=$1
 
 #setup env
@@ -31,7 +33,7 @@ export ACK_GINKGO_RC=true
 if [ $# -eq 0 ]
 then
     #run testcase
-    ginkgo -v ./e2e/e2e.test -- \
+    run_ginkgo -v ./e2e/e2e.test -- \
     --image-url=nginx \
     --image-url=nginx \
     --kube-master="https://$MASTER_IP:6443" \
@@ -39,7 +41,7 @@ then
     --test.v
     GINKGO_TESTING_RESULT=$?
 else
-   ginkgo -v ./$compilemodule/$compilemodule.test -- \
+   run_ginkgo -v ./$compilemodule/$compilemodule.test -- \
     --image-url=nginx \
     --image-url=nginx \
     --kube-master="https://$MASTER_IP:6443" \
