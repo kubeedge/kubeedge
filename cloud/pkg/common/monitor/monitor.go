@@ -96,5 +96,8 @@ func ServeMonitor(config config.MonitorServer) {
 	}()
 
 	klog.Infof("starting monitor server on addr: %s", config.BindAddress)
-	klog.Exit(s.ListenAndServe())
+	err := s.ListenAndServe()
+	if err != nil {
+		panic(err)
+	}
 }

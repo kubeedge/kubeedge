@@ -108,8 +108,7 @@ func (eh *EdgeHub) Start() {
 		}
 		err := eh.initial()
 		if err != nil {
-			klog.Exitf("failed to init controller: %v", err)
-			return
+			panic(err)
 		}
 
 		waitTime := time.Duration(config.Config.Heartbeat) * time.Second * 2

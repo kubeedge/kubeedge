@@ -149,7 +149,7 @@ func (e *edged) Start() {
 		err := DefaultRunLiteKubelet(e.context, e.KubeletServer, e.KubeletDeps, e.FeatureGate)
 		if err != nil {
 			if !kefeatures.DefaultFeatureGate.Enabled(kefeatures.ModuleRestart) {
-				klog.Exitf("Start edged failed, err: %v", err)
+				panic(err)
 			}
 			kubeletErrChan <- err
 		}

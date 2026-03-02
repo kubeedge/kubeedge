@@ -16,13 +16,13 @@ var once sync.Once
 func InitDBConfig(driverName, dbName, dataSource string) {
 	once.Do(func() {
 		if err := orm.RegisterDriver(driverName, orm.DRSqlite); err != nil {
-			klog.Exitf("Failed to register driver: %v", err)
+			panic(err)
 		}
 		if err := orm.RegisterDataBase(
 			dbName,
 			driverName,
 			dataSource); err != nil {
-			klog.Exitf("Failed to register db: %v", err)
+			panic(err)
 		}
 		// sync database schema
 		if err := orm.RunSyncdb(dbName, false, true); err != nil {
