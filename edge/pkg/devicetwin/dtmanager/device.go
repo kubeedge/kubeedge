@@ -127,8 +127,7 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 		dtcommon.CommModule,
 		context.BuildModelMessage(modules.BusGroup, "", topic, messagepkg.OperationPublish, payload))
 	if err != nil {
-		// TODO: handle error
-		klog.Error(err)
+		klog.Errorf("failed sending device state to edge for %s: %v", device.ID, err)
 	}
 
 	msgResource := "device/" + device.ID + dtcommon.DeviceETStateUpdateSuffix
@@ -137,8 +136,7 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 		dtcommon.CommModule,
 		context.BuildModelMessage("resource", "", msgResource, model.UpdateOperation, string(payload)))
 	if err != nil {
-		// TODO: handle error
-		klog.Error(err)
+		klog.Errorf("failed sending device state to cloud for %s: %v", device.ID, err)
 	}
 	return nil
 }
@@ -160,8 +158,7 @@ func dealDeviceAttrUpdate(context *dtcontext.DTContext, resource string, msg int
 	context.Lock(deviceID)
 	if _, err = UpdateDeviceAttr(context, deviceID, updatedDevice.Attributes,
 		dttype.BaseMessage{EventID: updatedDevice.EventID}, 0); err != nil {
-		// TODO: handle error
-		klog.Error(err)
+		klog.Errorf("update device attr failed for %s: %v", deviceID, err)
 	}
 	context.Unlock(deviceID)
 	return nil
@@ -197,8 +194,7 @@ func UpdateDeviceAttr(context *dtcontext.DTContext, deviceID string, attributes 
 
 		if err != nil {
 			if err := SyncDeviceFromSqlite(context, deviceID); err != nil {
-				// TODO: handle error
-				klog.Error(err)
+				klog.Errorf("Sync device from sqlite failed for device %s: %v", deviceID, err)
 			}
 			klog.Errorf("Update device failed due to writing sql error: %v", err)
 		} else {
@@ -212,8 +208,7 @@ func UpdateDeviceAttr(context *dtcontext.DTContext, deviceID string, attributes 
 			err = context.Send(deviceID, dtcommon.SendToEdge, dtcommon.CommModule,
 				context.BuildModelMessage(modules.BusGroup, "", topic, messagepkg.OperationPublish, payload))
 			if err != nil {
-				// TODO: handle error
-				klog.Error(err)
+				klog.Errorf("failed to send device attribute update for device %s: %v", deviceID, err)
 			}
 		}
 	}
